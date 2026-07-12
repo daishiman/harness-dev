@@ -45,6 +45,12 @@ ALLOWLIST = {
     "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md":
         "外部 fetch した YAML spec の cache mirror (ref-yaml-spec-fetcher 自動生成)。"
         "逐語の外部由来内容で能動層でないため凍結層と同等に扱う",
+    "doc/マルチ企業展開/README.md": "改名経緯 (skill-creator→harness-creator) と旧構成対応表の歴史記述",
+    "doc/マルチ企業展開/構築手順.md": "harness-creator への改名経緯の説明 (旧名→新名対応の意図的言及)",
+    "doc/マルチ企業展開/移管計画.md": "移管元である旧 meta-skill-creator repo 構造の歴史記述",
+    "doc/マルチ企業展開/クリーンアップ計画.md":
+        "実在する凍結層ディレクトリ doc/参考Skill/skill-creator/ への整理対象パス言及と"
+        "旧 repo 構造の歴史記述",
 }
 
 

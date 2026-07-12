@@ -30,6 +30,10 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "plugins" / "harness-creator" / "scripts" / "notion_config.py"
 
+# notion_config.py は同 dir の tenant_runtime を bare-import する。
+# 他テストの sys.path 挿入に依存すると単独実行で collection が落ちるため自立させる。
+sys.path.insert(0, str(SCRIPT.parent))
+
 _SPEC = importlib.util.spec_from_file_location("notion_config_sc_s4", SCRIPT)
 NC = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(NC)
@@ -37,6 +41,11 @@ _SPEC.loader.exec_module(NC)
 # 実値 UUID と compact / URL 表現
 UUID = "36607a0c-d18c-80bf-9eff-c74aa736645c"
 COMPACT = "36607a0cd18c80bf9effc74aa736645c"
+
+
+@pytest.fixture(autouse=True)
+def _tenant_ctx(xlocal_tenant_env):
+    """全テストを xlocal tenant 文脈で実行する (CI には ambient tenant が無い)。"""
 
 
 @pytest.fixture(autouse=True)

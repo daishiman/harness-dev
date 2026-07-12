@@ -25,6 +25,11 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "plugins" / "skill-intake" / "scripts" / "keychain_get_secret.py"
 
 
+# keychain_get_secret.py は同 dir の tenant_runtime を bare-import する。
+# 他テストの sys.path 挿入に依存すると単独実行で collection が落ちるため自立させる。
+sys.path.insert(0, str(SCRIPT.parent))
+
+
 def _load():
     spec = importlib.util.spec_from_file_location("keychain_get_secret_under_test", SCRIPT)
     m = importlib.util.module_from_spec(spec)
@@ -33,6 +38,11 @@ def _load():
 
 
 mod = _load()
+
+
+@pytest.fixture(autouse=True)
+def _tenant_ctx(xlocal_tenant_env):
+    """全テストを xlocal tenant 文脈で実行する (CI には ambient tenant が無い)。"""
 
 
 # ── mask_token (pure) ─────────────────────────────────────────────────────

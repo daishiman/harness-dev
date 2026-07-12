@@ -27,9 +27,18 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (ROOT / "plugins" / "skill-governance-automation" / "scripts"
           / "cross_platform_secret.py")
 
+# cross_platform_secret.py は同 dir の tenant_runtime を bare-import する。
+# 他テストの sys.path 挿入に依存すると単独実行で collection が落ちるため自立させる。
+sys.path.insert(0, str(SCRIPT.parent))
+
 _SPEC = importlib.util.spec_from_file_location("cross_platform_secret_s4", SCRIPT)
 CPS = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(CPS)
+
+
+@pytest.fixture(autouse=True)
+def _tenant_ctx(xlocal_tenant_env):
+    """全テストを xlocal tenant 文脈で実行する (CI には ambient tenant が無い)。"""
 
 
 def _force_os(monkeypatch, name):

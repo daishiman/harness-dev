@@ -66,7 +66,7 @@
 | 供給元 | `~/dev/dev/xlocal/xl-skills` |
 | 取り込み単位 | 原則として Git 管理ファイルのみ。cache / worktree / pycache / run artifact / local secrets は持ち込まない |
 | 企業固有値 | `tenants/xlocal/` に退避し、core から除去する |
-| 前提条件 | 本 repo(remote `daishiman/meta-skill-creator`)が **private** であること。`tenants/` に実企業名・企業別基準を Git 管理するため。public 化する場合は `tenants/` を別 private repo へ分離する |
+| 前提条件 | 本 repo(remote `daishiman/harness-dev`)が **private** であること。`tenants/` に実企業名・企業別基準を Git 管理するため。public 化する場合は `tenants/` を別 private repo へ分離する |
 | OS 前提(層別) | **マスター保守者マシン = macOS**(Keychain を実値の正とする現行運用)。企業側マシンの**目標契約**は macOS / Windows / Linux(WSL は Linux 扱い)。Windows は Credential Manager 等の暗号化 backend 実装・E2E 完了まで納品不可 |
 | plugin 正本 | 将来は harness 側 `plugins/` を正にし、`xl-skills` 側へ symlink 共有する |
 | 現在も実行しないこと | clean commit前のXLOCAL symlink cutover、秘密情報のGit格納、ユーザーが対象外としたGoogle Workspace DWD / 日本郵便IP許可の変更、公開 release |
@@ -115,7 +115,7 @@
 
 ## 3. 確定した方針
 
-1. **大元 = この harness リポジトリ**(`個人開発/harness`, remote `daishiman/meta-skill-creator`)を企業非依存の汎用 master にする。`xl-skills` は **XLOCAL テナント #1** として残す。
+1. **大元 = この harness リポジトリ**(`個人開発/harness`, remote `daishiman/harness-dev`)を企業非依存の汎用 master にする。`xl-skills` は **XLOCAL テナント #1** として残す。
    - **なぜ harness か(棄却した代替案)**: (a) 中立な新規 repo を master に新設する案は、統治基盤(lint 群・CI・installers・CONVENTIONS)の再構築コストと履歴の断絶に見合う利点がなく棄却。(b) `xl-skills` を直接 genericize して master 化する案は、XLOCAL の実運用 repo 上で破壊的変更を行うことになり、テナント #1 の安定稼働と正本の分離に反するため棄却。harness は統治基盤の開発起点であり企業非依存の正本に最も近い。
 2. **トポロジ = モノレポ + `tenants/<company>/` オーバーレイ**。企業追加は `tenants/<company>/` を 1 つ足すだけ。
 3. **カスタマイズ深度 = config のみで多社対応**。同一 plugin コードのまま、DB ID・会社プロフィール・鍵・ひな形パスを overlay 注入。企業ごとの品質/セキュリティ差は `ref-company-*-rules` の注入で吸収し、**plugin の fork はしない**。

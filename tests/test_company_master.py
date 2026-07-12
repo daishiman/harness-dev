@@ -45,6 +45,12 @@ HOOK_GUARD = PLUGIN_ROOT / "hooks" / "hook-guard-secret.py"
 
 # --- fixtures -----------------------------------------------------------------
 
+@pytest.fixture(autouse=True)
+def _tenant_ctx(xlocal_tenant_env):
+    """全テストを xlocal tenant 文脈で実行する (CI には ambient tenant が無い)。"""
+
+
+
 GBIZ_DETAIL_URL = "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"
 SAMPLE_ENTITY = {
     "company_name": "テスト商事",
