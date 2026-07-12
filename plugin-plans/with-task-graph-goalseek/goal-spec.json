@@ -1,0 +1,97 @@
+{
+  "purpose": "量産される出力ハーネスの goal-seek に『task-graph 順序駆動(依存充足順の実行 + 実行中に発見した新タスクの自己反映)』を、既存 with-goal-seek の engine 変種 `engine: task-graph` として追加し、生成 harness の skill / slash-command / sub-agent / script 横断 dependency graph を knowledge 化して各 surface が利用できるようにする開発計画を作る",
+  "background": "現状の生成物 goal-seek (with-goal-seek) は Goal+二値checklist の逐次反復のみで、タスク間の依存順序も実行中の新タスク発見(self-reflect)も持たない。ユーザーが求めるのは、生成された 1 ハーネスが実行中に新タスク/課題を見つけたら自分のタスク集合へ反映し、依存充足順(最適手順)で最終ゴールまで自己完結ループする能力である。設計原則は【単一truth】: 別状態ファイル(task-graph.json)を新設せず、with-goal-seek の既存状態(progress.json の checklist + intermediate.jsonl アンカー)を唯一の真実源とし、(1) checklist item へ依存順序 depends_on を additive 付与、(2) self-reflect = 実行中に発見した新タスクを『新しい checklist item』として追記する(単一truthゆえ discovered task が自動的に完了判定を gate し、未処理のまま [x] 完了にならない)、(3) 依存充足順の ready 集合を checklist から算出し逐次実行する。既存 build-pipeline (plugin-plans/harness-creator/) の compute-ready-set が同一 write_scope 候補を全除外するのは『バグ』ではなく複数 dispatcher 並列前提の意図的 fail-closed(conflicts を返し上位が直列化する契約)であり、逐次単一 self-writer の本機構では並列書込 race が構造的に発生しないため write_scope 並列衝突機構自体を持ち込まない(死機構を複製しない)。独立 combinator を新設せず with-goal-seek の engine 変種として畳むことで、default/opt-in 軸・状態二重化・reconciliation 欠落を構造的に排除する。 承認済み追加要件として、checklist item の依存順実行だけでなく、生成 harness 内の skill / slash-command / sub-agent / script surface 間の依存関係も graph として抽出し、Loop A(生成 harness)と Loop B(harness-creator)の knowledge に source_ref 付きで記録し、各 surface の実行前判断で consult できるようにする。",
+  "goal": "with-goal-seek の engine 変種 `engine: task-graph`(checklist を単一truth とする依存順序駆動 + self-reflect による checklist 追記)の buildable component を分解した component-inventory + 13 phase + index + handoff が生成され、単一truth設計・依存順序消費の機械検査・既存 fail-closed の正しい再framing・default軸(engine選択)と cross-surface dependency graph knowledge の抽出・記録・consult gate が明記され、同梱決定論ゲート11本が全 exit0 で通り、elegant-review C1-C4 全 PASS の設計が記述されている状態",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/with-task-graph-goalseek",
+  "out_dir": "plugin-plans/with-task-graph-goalseek",
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "component-inventory.json が A2(with-goal-seek engine 変種 `engine: task-graph`)の buildable 実体(C01-C08)を分解し、独立 combinator flag を新設せず with-goal-seek への engine 追加として構成し、plugin-level surfaces の採否を記録している。C06-C08 は skill / slash-command / sub-agent / script 横断 dependency graph の抽出・knowledge 記録・利用検査を担う",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "各 buildable component が core 規律 quality_gates + harness_coverage(block) を携帯している",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "handoff が各 component の builder/build_kind/build_args/build_target を持ち routes↔inventory が 1:1 対応する",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "index.md が P01..P13 昇順 + plugin_meta + 受入確認章 + 各 component の 1 行 role 表(kind/build_target/責務)を携帯している",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "component 依存 DAG が非循環で unassigned 0 件・DAG 矢印方向が depends_on 一方向で統一され、C06-C08 の cross-surface dependency knowledge 経路(C06抽出→C07記録→C08検査→C05統合)が閉じている",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "【単一truth】checklist を唯一の状態とし、self-reflect が discovered task を checklist item として追記して完了判定を gate する(別 task-graph.json 状態を新設しない・reconciliation 不要)設計が Phase02 に明記されている",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C7",
+      "criterion": "逐次単一 self-writer ゆえ write_scope 並列衝突機構は不要である旨、および既存 compute-ready-set の全除外は並列 dispatch 前提の意図的 fail-closed(バグでない)であることが file:line 引用付きで正しく再 framing されている",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "生成物が依存順序を実際に消費し discovered task が完了を gate すること、および skill / slash-command / sub-agent / script 横断 dependency graph knowledge を各 surface が consult することの機械検査(consumption verifier + lint-capability-graph-knowledge.py)が生成ハーネスの節へ埋め込まれている",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "既存 build-pipeline task-graph(plugin-plans/harness-creator の消費側機構)を無改変とする境界が constraints/index 受入確認に明記されている",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C10",
+      "criterion": "default/opt-in 軸が with-goal-seek の engine 選択(engine: inline 既定 / engine: task-graph opt-in)として確定し purpose と設計文書で一貫している",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C11",
+      "criterion": "同梱決定論ゲート(core 5 + 拡張 6 = 11 本)が全 exit0 で、11 本の core/拡張ラベル内訳が単一表で列挙され各 gate が checklist 項目へ結線されている",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C12",
+      "criterion": "適用される harness-creator 仕様 46 行の焼き先が反映され、C12 の機械判定(matrix coverage)と elegant-review C1-C4 全 PASS の設計意図(reasoning)が別項目に分離されている",
+      "done": true,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "実プラグイン/実コードは生成せず L3 plan (index + 13 phase + component-inventory + handoff) までに留める",
+    "既存 build-pipeline task-graph (planner producer / capability-build consumer・plugin-plans/harness-creator/) は別概念であり本計画で改変しない",
+    "独立 combinator flag (with_task_graph) を新設せず、with-goal-seek の engine 変種 `engine: task-graph` として畳む(A2 構造)",
+    "harness-creator は distributable:false の clone 専用基盤ゆえ配布登録動作をしない",
+    "build_target は全て plugins/harness-creator/skills/run-build-skill/ 配下",
+    "生成 harness の skill / slash-command / sub-agent / script 横断 dependency graph を knowledge 化し各 surface が consult できるようにする。consult 保証は3段設計とする: skill=consult token の fail-closed hard gate / slash-command・sub-agent=warning(token 強要は貼るだけの Goodhart 化を招くため advisory) / script=同梱実在+テンプレ byte-parity で代替。consult 実行証跡 (intermediate.jsonl への consult アンカー) の absence-as-violation 化は、『各 surface は着手前に○○を参照』型 prose 契約が新規注入される時の re-audit トリガとして将来拡張に留める"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": []
+}

@@ -1,0 +1,118 @@
+{
+  "plugin_concept": "plugin-dev-planner (既存プラグインの自己拡張) — 3 回の elegant-review で PASS 済みの run-plugin-dev-plan skill に残る機械検証可能性の残債 3 件 (target_plugin_slug 未束縛 / entry_points 未突合 / harness-coverage 12 軸の自 plugin 未適用) を、既存スクリプト/CI の拡張として解消する",
+  "derivation": "5 種 component_kind を全て検討したが、C1-C3 の変更対象は全て既存 run-plugin-dev-plan skill 内部の既存ファイル (scripts/check-runtime-portability.py, scripts/check-build-handoff.py) への Edit と、同スクリプト集合と同じ性質 (単一 skill 専有の決定論ゲート・CI 起動のみで skill 実行時には呼ばれない) を持つ新規スクリプト 1 本 (scripts/check-harness-coverage-selfcheck.py) の追加、および対応する tests/*.py の追加である。sub-agent は不要 (判断/独立文脈レビューが必要な新規判断面を持たず、既存 plugin-dev-plan-evaluator agent が計画の最終評価を既に担う)。slash-command は不要 (C1-C3 はユーザー向け新規操作面を追加せず、既存 /plugin-dev-plan と run-plugin-dev-plan の起動導線で足りる)。hook は不要 (C1-C3 は書き込み時に強制すべき新しい不変条件を持たず、既存 PostToolUse hook (hook-validate-plugin-plan.py) の検査対象を拡張しない)。script の独立 component 昇格も不要: 新規 check-harness-coverage-selfcheck.py は他の 15 本の script_refs (check-runtime-portability.py 等) と全く同型で、単一 skill (run-plugin-dev-plan) 専有・複数 skill 共有なし・280 行超の新規肥大なし (既存 8 本中最大の check-build-handoff.py でも 395 行だが Edit 対象であり新規肥大ではない) であり、no-split threshold のいずれも満たさないため親 skill の build へ畳む。結果、C1-C5 の範囲では buildable 実体は C01 (run-plugin-dev-plan skill, mode=update) の 1 件のみで、5 kind 検討の結果として skill 1 種へ収束したことを明示する (skill 偏重の既定選択ではなく検討済み帰結)。ユーザーの外側ループ追加指示 (層A: C6-C8・層B: C10-C12・整合性ゲート C9) についても同じ 5 kind 検討を再実施する。C6 (曖昧語彙 denylist 検出) と C7 (`_PHASE_SECTION_HINT` 完全一致検出) と C10/C11 (受入例・事前解決済み判断の存在検出) はいずれも生成時の機械検出ロジックであり、他 skill と共有せず・独立検証実体を持たず・280 行超の新規肥大でもない (2 本の新規 script、詳細設計は phase-05-implementation.md 参照) ため、no-split threshold のいずれも満たさず script 独立 component への昇格は不要で C01 (run-plugin-dev-plan) の build へ畳み込む。一方 C8 (下流実行着手可能な具体度の genuine 判定) と C12 (受入例・事前解決済み判断の実効性 genuine 判定) は、既存の assign-plugin-plan-evaluator skill (fork evaluator, R4) が持つべき意味評価軸の拡張であり、この skill は C01 とは別の物理ディレクトリ (plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/) を持つ独立した skill 実体である。「同一 component_kind の複数実体はそれぞれ独立 component」の原則 (references/component-domain.md) に従い、この既存 skill 実体を新規 component C02 として inventory へ遡及的に載せる (sub-agent/slash-command/hook への新規昇格ではない)。C02 は skill_kind=assign であり、feedback_contract.criteria (io-contract.md §11・B1) と goal_seek (D1/D2/D5) は skill_kind∈{run,wrap,delegate} のみが対象のため N/A (feedback_contract.skip_reason で明示)、prompt_layer:7layer は skill_kind∈{run,assign} が対象のため必須、combinators は全 skill 必須のため空配列で明示する。C9 (既存ゲート+pytest 全件の退行なし) は新規 component や新規 script を持たず、C01/C02 双方の checklist/output_contract が横断的に反映する既存実行結果そのものを完了条件とする。plugin-level surface のうち composition/harness_eval/references_config_assets/manifest/schemas は既存 plugin 実体が既に保持し本 plan では現状維持、vendor/mcp_app_connector/notion_config は plugin-dev-planner の性質上不要 (omitted_reason 参照)。C3 (harness-coverage 12 軸自己適用) の配線先は governance-check.yml の既存 plugin-dev-planner conformance block への 1 ステップ追加 + 新規 self-check script の組合せに確定した (根拠は phase-02-design.md 参照)。governance-check.yml 自体は plugins/ 配下にないため component 化せず、handoff.open_issues に repo-level 編集 gap として起票する。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-plugin-dev-plan",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-plugin-dev-plan",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["プラグイン開発計画の残債を機械検証可能にする", "target_plugin_slug 束縛", "harness-coverage 自己適用"],
+      "goal": "check-runtime-portability.py の target_plugin_slug 束縛・check-build-handoff.py の entry_points/inventory 突合・plugin-dev-planner 自身の harness-coverage 12 軸適用の 3 残債 (C1-C3) に加え、phase 本文の曖昧語彙・未カスタマイズのフォールバック文言の機械検出 (C6/C7) と各 phase 本文への受入例・事前解決済み判断の埋め込み検出 (C10/C11) が run-plugin-dev-plan の生成フローに組み込まれ、全て exit0 で機械検証可能になり、既存 388+ 件のテストと 46 行マトリクスの自己整合テストが退行なく green のままである (C9) 状態",
+      "purpose_background": "過去 3 回の elegant-review (2026-06-30/07-02/07-04) で 4 条件 PASS 済みだが、直近の再現性レビューで MEDIUM-3 (target_plugin_slug 未束縛)・MEDIUM-4 (entry_points 未突合)・dogfooding F1 (harness-coverage 12 軸の自 plugin 未適用) の 3 残債が識別された。さらにユーザーの外側ループ指示により、機械ゲート全緑だけでは生成される phase 本文が汎用テンプレ埋めのまま (層A)・仕様書自体が下流構築のハーネスとして機能しない (層B) 余地が残ることが判明したため、既存 skill を壊さず両ループを拡張する",
+      "checklist": ["target_plugin_slug 束縛の検出ロジック追加", "entry_points/inventory 突合の検出ロジック追加", "harness-coverage 12 軸自己適用の self-check 追加", "曖昧語彙 denylist 検出ロジック追加 (C6)", "_PHASE_SECTION_HINT 完全一致 (未カスタマイズ) 検出ロジック追加 (C7)", "phase 本文への受入例・事前解決済み判断サブ節の存在検出ロジック追加 (C10/C11)", "既存テスト回帰なし green 維持 (C9)", "46 行マトリクス整合維持"],
+      "output_contract": "check-runtime-portability.py の拡張 (target_plugin_slug 不一致検出) + check-build-handoff.py の拡張 (entry_points/inventory 突合検出) + 新規 scripts/check-harness-coverage-selfcheck.py + 新規 scripts/check-generative-fidelity.py (C6 曖昧語彙 denylist 検出 + C7 `_PHASE_SECTION_HINT` 完全一致検出) + 新規 scripts/check-downstream-harness.py (C10 受入例存在検出 + C11 事前解決済み判断存在検出) + governance-check.yml への 1 ステップ追記 (repo-level・open_issues 経由) + 対応する新規/拡張 pytest、全て exit0",
+      "boundary": "入力=既存 run-plugin-dev-plan skill の scripts/tests/references。出力=同 skill 内の Edit 差分 + 新規ファイル。plugins/plugin-dev-planner/.claude-plugin/plugin.json の entry_points/hooks 構成は変更しない。harness-creator 側の envelope executor 化 (plugin-scaffold の contract-only 解消) は constraints によりスコープ外",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "プラグイン構想 (今回は既存 plugin-dev-planner 自身の残債解消) からゴールとチェックリストをヒアリングして goal-spec.json を確定する", "prompt_required": true},
+        {"id": "R2-decompose", "summary": "capability を 5 種の component_kind へ写像し、単一 skill 収束かどうかの根拠込みで component-inventory.json を分解・確定する", "prompt_required": true},
+        {"id": "R3-emit-specs", "summary": "13 phase ファイル + index + envelope-draft + handoff を宣言型 section 床で生成する", "prompt_required": true},
+        {"id": "R4-verify-traceability", "summary": "決定論ゲートと goal-spec 要件のトレーサビリティを検証する。今回の拡張分として target_plugin_slug 束縛・entry_points/inventory 突合・harness-coverage 自己適用の 3 チェックの検証結果も突合する", "prompt_required": true}
+      ],
+      "cli_tools": ["python3"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["check-runtime-portability.py", "check-build-handoff.py", "check-harness-coverage-selfcheck.py", "check-generative-fidelity.py", "check-downstream-harness.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "check-runtime-portability.py が target_plugin_slug と異なる plugin 配下の build_target を検出したとき exit1 でその不一致を検出結果に含める", "verify_by": "script"},
+          {"id": "IN2", "loop_scope": "inner", "text": "check-build-handoff.py が envelope entry_points と component-inventory.json の component 集合を突合し、inventory に存在し envelope に未網羅の component id を検出結果に含める", "verify_by": "script"},
+          {"id": "IN3", "loop_scope": "inner", "text": "check-generative-fidelity.py が phase 本文・inventory component の goal/checklist/criterion 文字列に対して曖昧語彙 denylist (「適切に」「しっかり」「うまく」「品質を高める」等) を検出したとき、該当箇所を構造化結果 (WARN/FAIL) として報告する", "verify_by": "script"},
+          {"id": "IN4", "loop_scope": "inner", "text": "check-generative-fidelity.py が生成された phase 本文の宣言型 8 節と `_PHASE_SECTION_HINT` の汎用フォールバック文言との完全一致 (未カスタマイズ) を検出したとき、その箇所を検出結果に含める", "verify_by": "script"},
+          {"id": "IN5", "loop_scope": "inner", "text": "check-downstream-harness.py が各 phase ファイルの `## 完了チェックリスト` 直下に受入例 (満たす例/満たさない例) のサブ節が存在するかを検出し、フル要件対象 phase での欠落を検出結果に含める", "verify_by": "script"},
+          {"id": "IN6", "loop_scope": "inner", "text": "check-downstream-harness.py が各 phase ファイルの `## 完了チェックリスト` 直下に事前解決済み判断のサブ節が存在するかを検出し、フル要件対象 phase での欠落を検出結果に含める", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "plugins/plugin-dev-planner 配下の pytest 全件と check-spec-matrix-coverage.py --self-test が既存件数から退行なく exit0 で green のままである (C9: check-build-handoff/detect-unassigned/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage/check-surface-inventory/check-requirements-coverage/verify-index-topsort/check-runtime-portability を含む)", "verify_by": "test"},
+          {"id": "OUT2", "loop_scope": "outer", "text": "plugin-dev-planner の harness-coverage 12 軸自己適用状態を新規 check-harness-coverage-selfcheck.py が exit0 で検証し、EVALS.json の threshold_note と矛盾しない", "verify_by": "script"}
+        ]
+      },
+      "depends_on": [],
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "assign-plugin-plan-evaluator",
+      "skill_kind": "assign",
+      "kind": "assign",
+      "skill_name": "assign-plugin-plan-evaluator",
+      "prefix": "assign",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["生成された plan (13 phase + inventory) の意味的妥当性を fork 評価するとき", "C8/C12 の genuine 判定を実施するとき"],
+      "goal": "生成された phase 本文について、下流 builder AI が追加質問なしで実行着手できる具体度 (C8: purpose 解決可能性) と、C10/C11 で埋め込まれた受入例・事前解決済み判断が仕様書=下流ハーネスとして実効性を持つか (C12) を genuine に判定し、判定結果と曖昧箇所の具体的指摘が plan-findings.json に記録されている状態",
+      "purpose_background": "既存の 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) は plan の構造的完全性のみを判定し、生成された phase 本文の具体度や、仕様書自体が下流タスク構築のハーネスとして機能するかを判定する意味軸を持たない。C8/C12 はこの評価者の判定範囲を拡張し、機械層 (C6/C7/C10/C11) が検出した候補箇所を意味的に確定させる",
+      "checklist": ["C8: phase 本文の具体度 (purpose 解決可能性) を genuine に判定するプロンプト手順の追加", "C12: 受入例・事前解決済み判断の実効性を genuine に判定するプロンプト手順の追加", "判定結果と曖昧箇所の具体的指摘を plan-findings.json の findings[] へ新規 bucket で記録", "既存 conditions (C1-C4・additionalProperties:false・required 固定) 構造を変更しない"],
+      "output_contract": "prompts/R1-evaluate.md への C8/C12 判定ステップ追加 + schemas/plan-rubric.json への semantic_checks 追加 (deterministic_gates/conditions は不変) + plan-findings.json の findings[] への新規 bucket 記録、全て既存 test_evaluate_plan.py / test_gate_parity.py の parity アサーションを破壊しない",
+      "boundary": "conditions (C1-C4) の追加・変更は行わない。findings[] の新規 bucket 追加と semantic_checks の追加に留める。fork 実行契約 (plan 書き換え禁止・findings only 出力) は変更しない",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-evaluate", "summary": "plan の 4 条件 (C1-C4) を意味判定し、加えて C8 (phase 本文の下流実行着手可能な具体度) と C12 (受入例・事前解決済み判断の実効性) を genuine に判定し、判定結果と曖昧箇所の具体的指摘を plan-findings.json へ記録する", "prompt_required": true}
+      ],
+      "cli_tools": ["python3"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["evaluate-plan.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": false,
+      "prompt_layer": "7layer",
+      "combinators": [],
+      "feedback_contract": {"skip_reason": "assign kind は loop criteria 必須対象外 (fork evaluator は意味判定の結果を plan-findings.json へ記録する役割で、goal-seek/内外ループの対象ではない)"},
+      "depends_on": ["C01"],
+      "build_target": "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "assign=evaluator-verdict"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {"required": true, "path": ".claude-plugin/plugin.json"},
+    "composition": {"required": true, "path": "plugin-composition.yaml"},
+    "harness_eval": {"required": true, "path": "EVALS.json"},
+    "references_config_assets": {"required": true, "record_in": "index.plugin_meta.ssot_dedup"},
+    "schemas": {"required": true, "path": "skills/run-plugin-dev-plan/schemas/"},
+    "vendor": {"required": false, "omitted_reason": "plugin-dev-planner は distributable:false かつ NEVER_DISTRIBUTE denylist 対象で clone 前提のみのため cross-plugin SSOT の vendoring を持たない"},
+    "mcp_app_connector": {"required": false, "omitted_reason": "本 plan (C1-C12) はローカル決定論ゲートと CI 拡張・fork evaluator の意味評価軸拡張のみで MCP/app connector を新設しない"},
+    "notion_config": {"required": false, "omitted_reason": "run-plugin-dev-plan は Notion 等の外部 DB 同期を行わない (planning 専用 skill) ため notion_config surface は不要"}
+  }
+}

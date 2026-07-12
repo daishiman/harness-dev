@@ -1,0 +1,88 @@
+{
+  "schema": "improvement-handoff/v1",
+  "source": "live-empirical-investigation-2026-07-09",
+  "context": "前月↔今月比較 発行漏れレポートで発行済み社が『今月なし/今月金額=null/偽・発行漏れ』になる不具合の全段実データ調査。実レポートDB(39707a0c-d18c-8189-b475-e8162f25eec4=ユーザー提示URL)・月スコープ忠実reconcile(2606/2605)・両月C03通し・全段コードを突合。PR#85(0.4.0)は C05/C03/reconcile を直したが下流のR1が壊れているため症状継続。",
+  "retractions": [
+    {
+      "id": "RETRACT-1",
+      "claim": "名寄せ(英字/ローマ字カタカナ)の境界ミスが主因 (旧 RC-A / plan C01 偏重)",
+      "evidence": "実データで2nd Community/HOSONO/paws のシート取引先名は MF側と normalize 一致。名寄せ境界は主因でない。ただしシート665行全ての MF顧客ID が空(0%)で ID結合経路は未使用=名前依存の潜在脆さは残る(→C6へ降格)。"
+    },
+    {
+      "id": "RETRACT-2",
+      "claim": "REVIEW_QTY_MISMATCH=54 の系統的『期待明細数』バグ",
+      "evidence": "全665行(全月)を食わせた診断アーティファクト。実運用は query_sheet_rows が 年月=当月 で96行にスコープ。月スコープ実測の REVIEW_QTY_MISMATCH は 2606=1件・2605=2件。系統的バグは存在しない。"
+    }
+  ],
+  "findings": [
+    {
+      "id": "C1",
+      "title": "収集 billing-status フィルタ (status=invoice_issued) が発行済み請求を落とす",
+      "severity": "high",
+      "locus": "scripts/reconcile_invoices.py:277 collect_mf()",
+      "evidence": "2606 の qualified billing 171件中 account_transfer_notified=1(=PAWS有限会社 cid=6P49-M3GW amount=55000税込=50000税抜=実在) / stopped=2。collect_mf は status=invoice_issued のみ取得するため account_transfer_notified/stopped へ進んだ請求を取得段で除外→GAP→偽・発行漏れ。名前非依存・再発性。",
+      "named_company": "paws有限会社",
+      "fix_direction": "collect_mf の billing 取得を invoice_issued に限定せず、発行後に進行する後続 status(account_transfer_notified 等)も『発行済み』として収集する。transaction.status=passed の月帰属フィルタは維持。billing.status を捨てずに carrier へ保持し可視化。",
+      "verify": "paws の 2606 billing(account_transfer_notified)が mf_index に載り MATCH になること。status別の収集件数を fetch_audit で開示。"
+    },
+    {
+      "id": "C2",
+      "title": "R1-collect が当月 verdict 行を落とす (curr=None) — 決定論ブリッジの欠如 [構造的主因]",
+      "severity": "critical",
+      "locus": "skills/run-mf-invoice-report/prompts/R1-collect.md (LLM手組み) / curr-verdicts.json を吐く決定論スクリプトが存在しない",
+      "evidence": "実レポートDBで 2nd Community/HOSONO は 今月金額=null・コメント『今月行なし(curr=None)』。しかし月スコープ忠実 reconcile では両社とも MATCH_MONTHLY(actual 50000/210000/70000・reliable_issued=true)。実レポートの『今月金額=null かつ要対応』13件中7件が忠実reconcileでは発行済み=R1脱落による偽・発行漏れ(2nd Community/HOSONO/野嵩商会/芦田/マルブン/サクラパックス/エスホールディングス)。C05/C03/reconcile の PR#85 修正は全て R1 の下流ゆえ R1 が当月行を落とす限り永遠に直らない=『前回直したのに直らない』の真因。",
+      "named_company": "2nd Community株式会社 / HOSONO株式会社(細野)",
+      "fix_direction": "R1-collect を決定論スクリプト化(plan C05 mfk_verdict_export を第一級に格上げ)。lib/mfk_reconcile.reconcile を当月・先月で実行し全 row を carrier(actual_amount/reliable_issued/supply_state/canceled_at/verdict/現行単価/期待明細数/evidence)込みで curr-verdicts/prev-verdicts へ無損失に直列化。GAP/SUPPRESS 行も落とさず全 rec を persist(GAP-R1-COLLECT-CURR-PRESENT 根治)。差分該当社の 12ヶ月 lookback も同スクリプトが fetch。schema 検証で行数・carrier 欠落を fail-closed。",
+      "verify": "決定論producerの出力を C03 に通し 2nd Community/HOSONO が継続発行(今月金額=50000/210000)で出ること。実レポートで今月金額=null かつ忠実発行済み の偽発行漏れが 0 件。"
+    },
+    {
+      "id": "C3",
+      "title": "STATE_NEW 過剰要対応 (curr.verdict==MATCH_ANNUAL を正常根拠に使わず lookback 未供給で全要対応)",
+      "severity": "high",
+      "locus": "scripts/mfk_period_report.py classify_period_transition STATE_NEW 分岐 / _new_backing_found / _new_comment",
+      "evidence": "月スコープ忠実C03でも STATE_NEW 約25件が要対応。うち多数(オーイケ/ウェックス/クラビズ/SHONAI/中田建設/広島ドラゴンフライズ 等『100億ThinkTank利用料』)は curr.verdict=MATCH_ANNUAL=reconcileが年契約と判定済みなのに、NEWゲートは MATCH_ANNUAL を正常根拠に使わず 12ヶ月lookback未供給ゆえ要対応へ。『至る所で問題』の量的主犯。",
+      "fix_direction": "STATE_NEW 分類で curr.verdict∈{MATCH_ANNUAL} を dispositive な『年契約一括発行=正常』シグナルとして扱い lookback 無しでも正常化(SUPPRESS_ANNUAL 同様)。加えてオーケストレーション(R1/C07)が STATE_NEW 該当社へ --lookback-12mo を必ず供給する配線を機械強制。",
+      "verify": "MATCH_ANNUAL の新規行が lookback 無しでも正常(☑)。lookback 供給後に真の月次新規のみ要確認へ残る。"
+    },
+    {
+      "id": "C4",
+      "title": "prev=REVIEW_CANCELED(前月発行→取消) が継続契約を NEW 誤判定",
+      "severity": "medium",
+      "locus": "scripts/mfk_period_report.py compare_periods / _is_issued (prev の issued 判定)",
+      "evidence": "2nd Community は5月+6月とも発行、但し5月分が2026-07-03取消(prev verdict=REVIEW_CANCELED/supply_state=inactive_canceled)。_is_issued(prev)=False ゆえ 6月(MATCH_MONTHLY)が STATE_NEW→要対応。取消された前月を『発行なし』と同一視して継続を新規化。",
+      "named_company": "2nd Community株式会社",
+      "fix_direction": "prev が『発行後に取消』(REVIEW_CANCELED / supply_state=inactive_canceled で canceled_at あり)の場合、継続性判定では『前月は一度発行された』として扱い当月 MATCH を継続発行へ分類する(取消は別途コメント開示)。真の未発行(supply_state=none)とは区別。",
+      "verify": "2nd Community が STATE_NEW でなく継続発行(または取消注記付き継続)として分類され、今月金額=50000 が出る。"
+    },
+    {
+      "id": "C5",
+      "title": "代理店/複数エンドクライアント同一商品が compare_periods を崩し C04 collapse が発行済み金額を隠す",
+      "severity": "high",
+      "locus": "scripts/mfk_period_report.py compare_periods (_match_key setdefault) / scripts/notion_report_sink.py _prefer_action collapse",
+      "evidence": "HOSONO/マルブン/芦田/野嵩商会/サクラパックス は1商品『チイキズカン業務委託費』に複数契約(（タップス様）（スタートスイッチ様）等・異なる金額)。compare_periods の (取引先,商品) setdefault が1件しか残さず幻の NEW+STOPPED を生成→C04が(対象月,取引先名,商品名)で要対応優先collapse→発行済みの金額を隠して今月金額=null+要対応。実レポート偽発行漏れ7件中4〜5件がこれ。",
+      "named_company": "HOSONO株式会社",
+      "fix_direction": "compare_periods の突合をエンドクライアント（○○様）/契約ID粒度まで下げて幻の遷移を止める。C04 collapse は発行済み(reliable_issued)行の金額を要対応行で上書きして隠さない(K4権威訂正の対称適用)。代理店は8列固定では表現しきれないため契約ID/エンドクライアント列追加の要否を design で判断。",
+      "verify": "HOSONO の複数エンドクライアント発行が個別に(または合算で正しく)発行済み表示され、発行済み金額が隠れない。"
+    },
+    {
+      "id": "C6",
+      "title": "シート MF顧客ID が 0% で ID結合が未使用=名前依存の潜在脆さ",
+      "severity": "medium",
+      "locus": "請求確認シート(sheet_db) MF顧客ID列 / lib/mfk_reconcile.py _boundary_customers(MF顧客ID優先→名前fallback)",
+      "evidence": "シート665行全ての MF顧客ID が空(0%)。_boundary_customers の ID優先経路は一度も発火せず全契約が normalize(会社名) 一致に依存。今回の3社は名前一致で助かるが、名前ドリフト時は即 false GAP。",
+      "fix_direction": "MF /customers を引いて会社名→MF顧客ID を確定できる契約へ ID を backfill(既存 backfill 系スクリプトを拡張 or 新設)。以後 _boundary_customers が ID優先で名前ドリフト耐性を得る。ユーザー要望(MF側取引先idで判断)の恒久解。",
+      "verify": "backfill 後シートの MF顧客ID 充足率が主要契約で>0%になり、名前変更社でも ID経路で MATCH する回帰テスト。"
+    }
+  ],
+  "plan_impact": {
+    "demote": ["C01 mfk_name_match.py は主因でない=名寄せ堅牢化(C6文脈)へ降格し headline から外す"],
+    "elevate": ["C05 mfk_verdict_export.py(R1決定論)を RC-D 副次→C2 構造的主因=第一級 component へ格上げ"],
+    "add": [
+      "C1 収集 billing-status 是正 component (collect_mf)",
+      "C3 STATE_NEW/MATCH_ANNUAL 分類是正 (mfk_period_report)",
+      "C4 prev取消継続性 是正 (compare_periods/_is_issued)",
+      "C5 代理店 compare_periods粒度 + C04 collapse 発行済み保全",
+      "C6 MF顧客ID backfill"
+    ]
+  }
+}

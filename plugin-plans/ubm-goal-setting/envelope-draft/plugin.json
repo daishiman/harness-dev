@@ -1,0 +1,47 @@
+{
+  "name": "ubm-goal-setting",
+  "version": "0.2.0",
+  "distributable": false,
+  "description": "北原さん式ゴールセッティング、2-source YouTube全量/自動同期、根拠付きknowledge/harness artifact graph consultを提供する個人利用向けplugin。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-ubm-goal-setting",
+      "run-ubm-knowledge-sync",
+      "run-ubm-youtube-ingest",
+      "run-ubm-consult",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "goal-reviewer",
+      "info-collector",
+      "knowledge-extractor",
+      "output-formatter",
+      "phase3-coordinator",
+      "knowledge-relation-extractor",
+      "youtube-transcript-normalizer"
+    ],
+    "commands": [
+      "ubm-goal-setting",
+      "ubm-knowledge-sync",
+      "ubm-youtube-ingest",
+      "ubm-consult"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/ubm-write-path-guard.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".claude-plugin/plugin.json"
+    },
+    "composition": {
+      "required": false,
+      "omitted_reason": "既存プラグインは plugin-composition.yaml を持たず (find で不在確認)、本改善は既存 7 entry_point を維持する増分のため新設しない"
+    },
+    "harness_eval": {
+      "required": false,
+      "omitted_reason": "既存プラグインは EVALS.json を持たず (find で不在確認)、本改善は C01 の feedback_contract.criteria によるゴールデン fixture 回帰で受入を担保するため新設しない"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup"
+    },
+    "schemas": {
+      "required": false,
+      "omitted_reason": "既存 skill (run-mf-invoice-check/run-mf-invoice-reconcile) の schema 群は本改善のスコープ外で温存し、新規 schema を追加しない"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "cross-plugin SSOT を持たず、共有 script (C03/C04/C05/C06) は plugin-root hoist のみで携帯性を満たす"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "MF/Notion 連携は既存 Bash/Skill 経路で扱い、MCP/app connector を新設しない"
+    },
+    "notion_config": {
+      "required": true,
+      "resolution": "notion_config",
+      "token": "keychain",
+      "databases": [
+        {
+          "key": "report_parent_page",
+          "used_by": ["C01", "C04"],
+          "direction": "write"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "mfk_actuals.py (MF実績抽出器)",
+      "script_name": "mfk_actuals.py",
+      "purpose": "amount-gate 根治を新規 SSOT 純関数モジュールへ切り出す: build_mf_index を基盤に取引先×商品粒度で {issued: bool, actual_amount: int|null, supply_state, canceled_at} を当月/先月それぞれ抽出する。build_mf_index が既に確定保持する active/inactive_canceled/inactive_pending/excluded の三分別+canceled_at をそのまま supply_state へ写像し、actual_amount は active 供給に限定する(inactive の金額は取消前額であり実発行額ではないため actual_amount には格上げせず、取消前額である旨を supply_state 側で判別可能にする)。契約突合ゲート(期待額一致)から独立して実額を常に返すのが本 component の核であり、flowchart の第一級入力かつ金額列(D3)の権威になる。既存 lib/mfk_reconcile.py(find_mf_match/classify)と scripts/mfk_period_report.py が本モジュールを consume し、verdict行/比較レポート行へ実額を焼く統合配線を C05 の必須 integration output として扱う(既存 normalize/extract_names/has_end_basis/_classify_stopped/build_mf_index は再利用し再発明しない)。後段 builder は scripts/mfk_actuals.py だけを作って完了にしてはならず、lib/mfk_reconcile.py の amount_mismatch/no_supply/inactive 系に actual_amount/issued evidence を伝播する編集と guard allowlist 更新を同一 route のブロッキング成果物に含める",
+      "inputs": "build_mf_index の active/inactive 実績 + 対象月/前月",
+      "outputs": "取引先×商品粒度の {issued, actual_amount, supply_state ∈ [active, inactive_canceled, inactive_pending, excluded], canceled_at} 抽出結果(当月/先月)。actual_amount は active 供給に限定(inactive は null または取消前額フラグ付き)",
+      "exit_codes": "0=正常/1=検証違反/2=用法エラー",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "artifact_op": "create",
+      "integration_targets": ["plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py", "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py", "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"],
+      "required_file_edits": [
+        "plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py: find_mf_match/classify が C05 の actual_amount/issued evidence を consume し amount_mismatch/no_supply/inactive 系でも金額空白を作らない",
+        "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py: C03 境界で actual_amount を canonical field とし legacy evidence.amount/amount alias を正規化する",
+        "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py: mfk_actuals.py の sanctioned basename/signature を登録する"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_actuals.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "mfk_fetch_audit.py (新設)",
+      "script_name": "mfk_fetch_audit.py",
+      "purpose": "fetch fidelity 監査: pagination 完全性(has_next/end 整合)・total 件数突合・当月 issue_date 範囲・stale/欠落検出を機械検証し fidelity レポートを emit する。12ヶ月ルックバック窓についても各月ごとの pagination 完全性/部分取得を検出し、per-customer 粒度で前月在籍→今月内訳消失をアラートする(total件数の偶然一致による特定取引先欠落の見落としを防ぐ)。部分欠損時は fail-closed 全停止でなく該当行を「漏れ断定保留=要確認」へ降格する(D1裏取りは未確認へ降格し真の新規と断定しない)。C05(mfk_actuals)の抽出結果 + pagination/total メタも突合対象に含める。既存 lib/mfk_doctor.py(接続健全性=API到達/keychain/Notion疎通)とは責務境界を分離し、pagination/total件数検査ロジックのSSOT帰属はC06に一本化する。当月分の fidelity 違反(pagination NG/count不一致等)は従来通り fail-closed で下流(C03/C01)を止める。C06 単体で page metadata は作れないため、lib/mfk_api.py に items と pagination_trace を同時に返す read-only adapter を追加し、R1 collect/reconcile_invoices がその trace を C06 input として永続化する編集を必須 integration output とする",
+      "inputs": "MF実績ページネーション応答ログ(fetch_trace: page_no/items_count/pagination.has_next/pagination.end/pagination.total/params/issue_date_range) + 対象月 + C05(mfk_actuals)由来抽出結果 + 12ヶ月ルックバック窓の各月応答ログ + /transactions(per-billing)階層の total 突合。全 read-only fetch site(billings/transactions/lookback/customer-name)が trace を通すことを前提とし、trace 皆無(部分でなく完全不在)は fidelity violation として扱う",
+      "outputs": "fidelity レポート JSON(pagination_ok/count_match/issue_date_range_ok/stale_ids/lookback_window_completeness[各月のpagination完全性・部分取得検出]/per_customer_diff[前月在籍したのに今月内訳から消えた取引先アラート])",
+      "exit_codes": "0=fidelity OK/1=当月fidelity違反(fail-closed)/3=lookback部分欠損(降格・続行)/2=用法エラー",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C05"],
+      "artifact_op": "create",
+      "integration_targets": ["plugins/mf-kessai-invoice-check/lib/mfk_api.py", "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py", "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md", "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"],
+      "required_file_edits": [
+        "plugins/mf-kessai-invoice-check/lib/mfk_api.py: GET専用を維持したまま iter_all_with_trace 相当を追加し pagination metadata を捨てない",
+        "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py または R1 collect: curr/prev/lookback 取得時に fetch_trace を保存し C06 へ渡す",
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: fetch_trace 生成を責務チェックリストに追加する",
+        "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py: mfk_fetch_audit.py の sanctioned basename/signature を登録する"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_fetch_audit.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "mfk_period_report.py",
+      "script_name": "mfk_period_report.py",
+      "purpose": "前月↔今月比較 flowchart の判定入力を MF実績 issued+実額へ切替。STATE_NEW の gap_check を 12ヶ月ルックバック裏取りで gate(D1)。金額列=MF実績常時表示+差分フラグ(D3)。金額列(D3)実現には _amount_of の金額源優先順位を現行の期待額(現行単価/amount/expected_amount等)優先から MF実績(actual_amount/mfk_actuals)優先へ反転し、legacy evidence.amount/amount は境界で actual_amount へ正規化し、期待額はオーバーレイ表示へ降格する(evidence を埋めるだけでは不足)。今月MF供給なしは正常事情判定で行を残す(D2)。flowchart 自体の構造・分類は不変",
+      "inputs": "C05(mfk_actuals)由来抽出結果(lib/mfk_reconcile.py 経由の evidence 付き verdict含む) + C06 fidelity レポート + 対象月/前月 + 12ヶ月ルックバック実績。行母集合は MF実績issued ∪ 契約在籍(lib/mfk_reconcile.py 由来)の和集合とする(契約は駆動源から降格するが行母集合としては保持=D2)。canonical amount field は actual_amount で、legacy evidence.amount/amount は C03 境界で actual_amount へ正規化する",
+      "outputs": "比較レポート行 JSON(gap_check/actual_amount/prev_actual_amount/expected_amount/amount_diff_flag/period_diff/comment)。Notion sink 互換のため amount/prev_amount alias も emit するが、意味は MF実額とする",
+      "exit_codes": "0=正常/1=fidelity NG で fail-closed 停止/2=用法エラー",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C05", "C06"],
+      "artifact_op": "modify",
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "notion_report_sink.py",
+      "script_name": "notion_report_sink.py",
+      "purpose": "既存8列スキーマを維持したまま『先月の金額』『今月の金額』へ MF実額を冪等 upsert し、金額差フラグ/期待額差分/今月MFに無い旧行の残置理由を『先月と今月の比較』『コメント』へ明示する(重複行を生まない)。冪等upsertキー=取引先×商品×対象月(このキーでstale行を再照合し理由付き残置、重複行を生まない)。新しい Notion 物理列は追加せず、既存 DB の列順互換を維持する。後段で明示承認がある場合のみ MF実額専用列/金額差専用列の schema migration を別タスク化する",
+      "inputs": "C03 由来比較レポート行(actual_amount/prev_actual_amount/amount_diff_flag/comment + amount/prev_amount alias) + notion_config 論理キー(report_parent_page)",
+      "outputs": "Notion upsert 結果(追加/更新/stale 整理件数)。既存8列の今月/先月金額は MF実額、差分フラグは比較/コメントに格納",
+      "exit_codes": "0=正常/1=検証違反/2=用法エラー",
+      "network": true,
+      "write_scope": "notion-report-db",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C03"],
+      "artifact_op": "modify",
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-mf-invoice-report",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-mf-invoice-report",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["MF実績起点の発行漏れレポート", "前月今月比較レポート更新", "mf invoice report"],
+      "goal": "前月↔今月比較レポートの漏れチェック☑/金額列をMF実績由来で正しく駆動し、fetch fidelity監査がNGならfail-closedで停止した状態",
+      "purpose_background": "契約(シート)期待額駆動の単一設計偏りが症状①〜⑦を生むため、判定の権威をMF実績へ移し契約突合を説明オーバーレイへ格下げする",
+      "checklist": ["両月MF実績fetch", "fidelity監査ゲート", "flowchart分類(MF実績issued入力)", "Notion冪等sink"],
+      "output_contract": "前月↔今月比較レポート(漏れチェック☑・既存8列の先月/今月金額=MF実額・比較/コメント欄の金額差フラグ)のNotion冪等upsert結果",
+      "boundary": "入力=MF実績(GET専用)+既存契約シート/出力=Notion report DB upsert。書込みはNotionのみでMF APIへは書込まない",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-collect", "summary": "両月分のMF実績を参照専用APIで全GETをpagination_trace付きで取得・保存し、mfk_actualsのactual_amount/reliable-issuedをcurr/prev-verdicts JSONへ直列化してfetch fidelity監査(C06)をゲートする。STATE_NEW候補>0なら12ヶ月ルックバックを必須fetchし、欠落時は該当行を要確認固定(fail-closedでなく降格)してC06のlookback_window_completeness監査が実データで発火する条件にする", "prompt_required": true},
+        {"id": "R2-classify", "summary": "MF実績issued状態+actual_amountをflowchart入力にしD1/D2/D3の場合分けを反映した比較レポート行を組み立てる", "prompt_required": true},
+        {"id": "R3-verify", "summary": "mfk-report-verifier が偽陽性(両月発行済なのに漏れ扱い)・偽陰性(今月未発行なのに正常☑)・過少報告(C05 issued=true のキーが C01 レポート行に欠落=第3カテゴリ)を独立contextで検出する", "prompt_required": true},
+        {"id": "R4-render", "summary": "比較レポート行をNotionへ冪等upsertし今月MF無し旧行を残置理由付きで整理する", "prompt_required": true}
+      ],
+      "required_file_edits": [
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: 旧 component-ID(R1-collect.md:32 の C05=mfk_period_report)を plan 新採番へ揃える(参照整合の最小差し替え)",
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R2-classify.md: 旧 component-ID(R2-classify.md:20 の mfk_period_report=C05)を plan 新採番(C05=mfk_actuals/mfk_period_report=C03)へ揃える",
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R4-render.md: 旧 component-ID(R4-render.md:20 の notion_report_sink=C06)を plan 新採番(C06=mfk_fetch_audit/notion_report_sink=C04)へ揃える",
+        "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py: ヘッダ(:27 の C05)を plan 新採番(mfk_period_report=C03)へ揃え、executor の参照先取り違えを防ぐ"
+      ],
+      "cli_tools": [],
+      "mcp_tools": ["notion"],
+      "external_systems": ["MoneyForward Kessai API (GET専用)", "Notion API"],
+      "deterministic_checks": ["mfk_actuals.py", "mfk_fetch_audit.py", "guard-mfk-readonly.py", "guard-mfk-no-reinvent.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "mfk_fetch_audit の当月fetch fidelity監査(pagination完全性/total件数突合/当月issue_date範囲/stale検出)がNG(exit1)の場合のみレポート生成前にfail-closedで停止し、12ヶ月ルックバック窓の部分欠損(exit3)は停止せず per_customer_diff を C03 が読み該当行を要確認へ降格する", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "症状①〜⑦を各1件以上再現するMF実績ゴールデンfixtureに対し、漏れチェック☑と実額列がMF実績由来で期待レポート行と一致する回帰テストが全件PASSする(症状⑤はevidence-gate由来/fetch欠落由来の2ケースを各1件含む)", "verify_by": "test"},
+          {"id": "OUT2", "loop_scope": "outer", "text": "既存verdict SUPPRESS_ANNUAL(年契約抑制)/MATCH_ENDED_FINAL(契約終了最終請求判定)/J1名寄せ偽陰性封鎖が、判定入力をMF実績へ切替えた後も改修前と不変であることをcharacterization fixtureで凍結し全件PASSする", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C03", "C04", "C05", "C06"],
+      "artifact_op": "modify",
+      "build_target": "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter",
+          "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "sub-agent",
+      "name": "mfk-report-verifier",
+      "description": "MF実績ベースで両月発行済なのに漏れ扱い(偽陽性)/今月未発行なのに正常☑(偽陰性=漏れ隠蔽)/MF発行済(C05 mfk_actuals が issued=true)なのにC01レポート行が欠落(過少報告=第3カテゴリ)を独立contextで検出したいときに使う。C01レポートをC05実額/C06 fidelityと独立突合する(同一抽出の共倒れ回避・fetch層の完全性はC06が担保・分類層の偽陽性/偽陰性/過少報告の3セル検出はC02が担う・curr=None行欠落を安全網で拾う)",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-verify.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C01", "C05", "C06"],
+      "artifact_op": "modify",
+      "build_target": "plugins/mf-kessai-invoice-check/agents/mfk-report-verifier.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "run-mf-invoice-doctor",
+      "description": "fetch fidelity診断(pagination/件数/issue_date/stale/12ヶ月ルックバック窓/per-customer)を単独実行しMF実績取得の忠実性を検証する。既存 run-mf-invoice-doctor.md の modify(既存コマンドを差し替えでなく拡張)。既存 lib/mfk_doctor.py(接続健全性)とは責務境界を分離し、pagination/total件数検査のSSOT帰属はC06側とする",
+      "argument-hint": "[--month YYYY-MM]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C06"],
+      "artifact_op": "modify",
+      "build_target": "plugins/mf-kessai-invoice-check/commands/run-mf-invoice-doctor.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    }
+  ]
+}

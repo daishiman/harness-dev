@@ -1,0 +1,1573 @@
+{
+ "plugin_concept": "extract-system-blueprint — 参考システムのURLから、フロント表層の事実とバックエンド/UIUX設計意図の根拠つき推測を明示区別し、md+json+Mermaidの章別ドキュメント群としてローカルへ生成するハーネス",
+ "derivation": "capability を 5 種の buildable component_kind へ写像し、実体単位に分解する: 取得(fetch)→分析(事実/バックエンド推測/UIUX推測/コンテンツ・伝達意図推測/本質統合の5方向)→文書化→独立品質評価→自社適用 を単一責務へ分離した結果、command×1 / skill×3 (run=抽出本体, assign=proposer≠approverの独立忠実性評価, run=自社適用recommendations導出の下流run-blueprint-apply) / sub-agent×5 (静的HTTP観測の事実抽出・バックエンド推測・UIUX根拠・コンテンツ/伝達意図・本質統合の各独立context) / hook×1 (認可外・予算外フェッチのfail-closed遮断) / script×4 (fetch-snapshot/mermaid-validate/doc-emit/authz-classifyの共有決定論ユーティリティ) = 計14実体になった。単一skillへ縮退させず、事実(fact)・推測(inference)・欠測(observation_status)を分離することでC2を構造的に担保する。4 scriptは複数builder境界から共有されるためplugin-rootへhoistする。authz-classify.py(C12)は根拠付きAuthzEvidenceと低負荷request budget/crawl_profileの単一SSOTで、C08/C09がdepends_onで先行buildを強制し同じ判定を消費する。このinventoryはbuild軸の唯一SSOTで、人間可読なライフサイクルはphase-01..13.mdが担う(2軸直交)。機能拡張は原則topology 14不変の既存component契約拡張として吸収し(各機能の担当割の正本=各componentのdescription/purpose/output_contract/plugin_level_surfaces.schemas)、component追加を伴う構造変更はユーザー承認を要する。改善経緯の正本はimprovement-handoff-*.json (round順: R2 screenshot-persona=スクショ/layout/レンズの契約拡張 → R2.5 elegant-verify → R3 content-intent=ユーザー承認でC13新設(12→13) → R4 own-dev-leverage=tech_signals/nonfunctional契約拡張+ユーザー承認でC14新設(13→14) → R5 site-coverage-depth=機能マップ/security/CWV/compliance/サイト全域被覆の契約拡張・14不変)。全roundを通じ低負荷C8の瞬間負荷レバー既定値は一切緩めていない(引上げはユーザー承認対象)。",
+ "considered_component_kinds": [
+  "skill",
+  "sub-agent",
+  "slash-command",
+  "hook",
+  "script"
+ ],
+ "components": [
+  {
+   "id": "C09",
+   "component_kind": "script",
+   "name": "fetch-snapshot.py",
+   "script_name": "fetch-snapshot.py",
+   "purpose": "C12がallowしたAuthzEvidenceとrequest budgetを必須入力に、対象URLの静的/SSR HTTP応答・header・同一origin resource参照を取得して再利用可能なsnapshotへ保存する決定論ユーティリティ。urllibはJSを実行しないため実行後DOM/画面遷移/JS後通信をfactとして主張せず、それらはobservation_gap(JS実行後DOM/画面遷移/screenshotはブラウザ実行を要するため未観測)として記録する。加えてサイト全域被覆のURL discovery: sitemap.xml/robots.txt/取得済みHTMLのsame-originリンクグラフから連なるURL一覧をdiscovered_urls factとして台帳化し(C12のscope分類入力になる)、response headerからsecurity fact(Set-Cookie属性Secure/HttpOnly/SameSite・CSP全文・HSTS等)を、既知パスからcompliance表面(privacy policy/利用規約/特商法/robots)の存在・URLを追加request予算内で採取する。discovery自体もrequest budget/最小間隔に計上し瞬間負荷レバーを緩めない",
+   "inputs": "argv(--url URL --out-dir DIR --authz-evidence FILE --request-budget FILE [--discover-urls] [--discovered-urls-out FILE])",
+   "outputs": "stdout(snapshot path + request ledger path)/stderr(deny|unknown・予算超過・429/403・fetch失敗等のviolation)",
+   "exit_codes": "0=OK / 1=認可外URL・fetch失敗 / 2=usage",
+   "network": true,
+   "write_scope": "PLAN成果物ディレクトリ配下のみ",
+   "stdlib_only": true,
+   "tests_min": 80,
+   "depends_on": [
+    "C12"
+   ],
+   "placement_scope": "plugin-root",
+   "load_policy": {
+    "max_concurrency_per_origin": 1,
+    "max_requests_per_origin_per_run": 30,
+    "max_response_bytes": 5242880,
+    "min_interval_ms": 2000,
+    "cache_ttl_seconds": 86400,
+    "honor_retry_after": true,
+    "max_retries": 1,
+    "backoff": "bounded-exponential",
+    "same_origin_redirects_only": true,
+    "mode_note": "本数値はcrawl_mode=single時の既定ミラー(正本=C12発行budget file)。full_site時はC12 crawl_profile.full_siteのper-run予算が優先し、瞬間負荷レバーは両モード不変",
+    "stop_on": [
+     "429",
+     "403",
+     "robots-deny",
+     "budget-exhausted",
+     "unstable-response"
+    ]
+   },
+   "build_target": "plugins/extract-system-blueprint/scripts/fetch-snapshot.py",
+   "builder": "plugin-scaffold",
+   "build_kind": "script",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+coverage"
+   }
+  },
+  {
+   "id": "C15",
+   "component_kind": "script",
+   "name": "browser-render.py",
+   "script_name": "browser-render.py",
+   "purpose": "MCP非依存でブラウザがレンダリングした情報(JS実行後DOM・viewport screenshot)を取得する決定論ユーティリティ。ローカルのheadless Chrome/Chromiumバイナリをsubprocess(CLI)で起動する=MCPサーバー接続ではない。C12(authz-classify)のAuthzEvidenceとrequest budgetを必須入力に取り、allow以外(deny/unknown/期限切れ)は取得を一切行わずfail-closed(判定ロジックはC12をimport共有し重複実装しない)。ブラウザバイナリが解決できない環境ではexit3+status=browser-unavailableを返し、呼び出し側(C03)は該当観測をobservation_gap(blocked, reason=browser-unavailable)として記録し静的HTTP観測(C09のstatic-observation baseline)へ縮退する(graceful/progressive enhancement)。瞬間負荷レバー: 1起動=1navigation・min_interval尊重・subprocess timeout・remote font由来のハング回避(--disable-remote-fonts --virtual-time-budget)。budget消費はledgerへ記録",
+   "inputs": "argv(--url URL --out-dir DIR --authz-evidence FILE --request-budget FILE [--screenshot] [--viewport WxH] [--timeout SEC] [--browser-bin PATH] [--request-ledger FILE])/env(ESB_BROWSER_BIN)",
+   "outputs": "stdout(JSON {url,status,browser_bin,rendered_dom_path,screenshot_path,notes})/stderr(deny|unknown・バイナリ不在・起動失敗等のviolation)",
+   "exit_codes": "0=OK / 1=認可外・起動失敗 / 2=usage / 3=browser-unavailable(graceful縮退シグナル)",
+   "network": true,
+   "write_scope": "--out-dir配下および--request-ledgerで指定したPLAN成果物ファイルのみ",
+   "stdlib_only": true,
+   "tests_min": 80,
+   "depends_on": [
+    "C12"
+   ],
+   "placement_scope": "plugin-root",
+   "load_policy": {
+    "max_concurrency_per_origin": 1,
+    "min_interval_ms": 2000,
+    "honor_retry_after": true,
+    "one_navigation_per_launch": true,
+    "graceful_degrade": "browser-unavailable(exit3)時は該当観測をobservation_gapへ縮退し静的観測で続行",
+    "mode_note": "MCP非依存(subprocess CLI)。budget/瞬間負荷レバーはC12発行budgetを消費し両モード不変",
+    "stop_on": [
+     "deny",
+     "unknown",
+     "budget-exhausted",
+     "browser-unavailable"
+    ]
+   },
+   "build_target": "plugins/extract-system-blueprint/scripts/browser-render.py",
+   "builder": "plugin-scaffold",
+   "build_kind": "script",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+coverage"
+   }
+  },
+  {
+   "id": "C10",
+   "component_kind": "script",
+   "name": "mermaid-validate.py",
+   "script_name": "mermaid-validate.py",
+   "purpose": "生成物に対象システム接地の5種のMermaid図(必須図種enum=①対象システム全体構成図/②事実↔推測区別レイヤ図/③画面遷移図(screen-flow)/④データフロー・リクエスト/レスポンスのシーケンス図/⑤主要エンティティのデータモデル図)が全て存在し構文的に妥当であることを検証する決定論ゲート。harness-meta図(as-is/Before-After/plugin責務分離)は本plan自身の可読図であり製品出力契約=本ゲートの必須図種enumから除外する。run-extract-blueprint(C01)の自己検証とassign-blueprint-fidelity-evaluator(C02)の独立評価の双方から共有され、両者が同一の検証ロジックで判定することで基準の乖離を防ぐ",
+   "inputs": "argv(--docs-dir DIR)",
+   "outputs": "stdout(OK)/stderr(欠落図種別・構文violation)",
+   "exit_codes": "0=OK / 1=欠落・構文不正 / 2=usage",
+   "network": false,
+   "write_scope": "none",
+   "stdlib_only": true,
+   "tests_min": 80,
+   "depends_on": [],
+   "placement_scope": "plugin-root",
+   "build_target": "plugins/extract-system-blueprint/scripts/mermaid-validate.py",
+   "builder": "plugin-scaffold",
+   "build_kind": "script",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+coverage"
+   }
+  },
+  {
+   "id": "C11",
+   "component_kind": "script",
+   "name": "doc-emit.py",
+   "script_name": "doc-emit.py",
+   "purpose": "fact/inference/observation_gap区別済みの抽出結果(静的観測のlayout factを含む)をsystem-blueprint.schema.json準拠のmd+json正本へ整形し、観測できたlayout factからlayout.json(取得不能な画面配置はobservation_gap)を画面別に生成し、C06が合成したdesign-tokens.json(合成カラーパレット+type/spacing/radius/shadow(elevation)/breakpoint/z-layer scale+theme別color set+document brand色)をblueprintレベルで生成する決定論ライター。C11はstdlibで完結するテキスト演算(md/json/SVG/manifest/検査)へ責務を限定しstdlib_only=trueを維持する。内部はemit系(md/json/SVG/manifest)と検査系(--check-screens/--check-apply)の2 module構成を保つ。JS実行後DOM/画面遷移/screenshotはブラウザ実行を要するためobservation_gap(blocked)として記録し無言欠落させない。blueprintが参照するlayout/観測factの参照整合(観測済み画面のlayout欠落0・座標範囲/親子関係/reading_order・design-tokens.jsonのパレット/scale/theme別color setが要素で観測された色を漏れなく被覆=観測色のpalette孤児0)をemit時に検査する。加えてサイト全域被覆のsite coverage manifest(discovered/extracted/pending/excluded(+reason)のURL台帳)を生成し、feature_map/user_journeys/security_design/delivery_topology/compliance_surfaces/site_inventory章をblueprintへemitする。この完全性検査は `doc-emit.py --check-screens` として独立起動可能な共有entrypointであり(site coverage manifestのpending無言欠落=部分クロールを完全被覆と偽装する詐称もここで検出する)、生成側(C01自己検証)と評価側(C02独立評価)が同一決定論ロジックで判定して基準乖離を防ぐ。同様に `doc-emit.py --check-apply` はC14(run-blueprint-apply)のapply-recommendations.jsonをfail-closed検査する共有entrypoint: schema適合(全項目kind=inference)・evidence_refsのblueprint実在anchor解決率100%・kind=fact新規レコード0・分類がadopt|avoid|differentiateのみ、を決定論判定する(networkなし・blueprint本体へ書き込まない)。emit時にlayout.json/verbatimテキスト等テキスト系のPII・認証後情報・機微をredactしredaction_appliedを記録する(text redact-on-emit)。C11自身はnetworkを行わずローカルへのみ書き出す。各正本へ参考/学習目的限定注記を焼く",
+   "mermaid_marker_contract": {
+    "role": "final-markdown-emitter",
+    "syntax": "%% blueprint-diagram: <slug>",
+    "placement": "各 Mermaid fence 内の先頭 %% コメント行",
+    "required_slugs": [
+     "system-architecture",
+     "fact-inference-layers",
+     "screen-flow",
+     "data-flow-sequence",
+     "data-model"
+    ],
+    "preservation": "C06 source の正準 marker を最終 Markdown へ逐語保持し、欠落・重複・別名化・未知 slug を生成しない",
+    "validation": "plugins/extract-system-blueprint/scripts/mermaid-validate.py --docs-dir <generated-docs-dir> が5/5検出かつexit 0"
+   },
+   "inputs": "argv(--extraction JSON --out-dir DIR --request-ledger FILE [--check-screens] [--check-apply RECOMMENDATIONS_JSON --blueprint BLUEPRINT_JSON])",
+   "outputs": "stdout(生成パス一覧 + draft_hash)/stderr(schema|provenance|completeness violation)",
+   "exit_codes": "0=OK / 1=schema violation / 2=usage",
+   "network": false,
+   "write_scope": "PLAN成果物ディレクトリ配下のみ",
+   "stdlib_only": true,
+   "tests_min": 80,
+   "depends_on": [],
+   "placement_scope": "plugin-root",
+   "build_target": "plugins/extract-system-blueprint/scripts/doc-emit.py",
+   "builder": "plugin-scaffold",
+   "build_kind": "script",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+coverage"
+   }
+  },
+  {
+   "id": "C12",
+   "component_kind": "script",
+   "name": "authz-classify.py",
+   "script_name": "authz-classify.py",
+   "purpose": "対象URLの限定preflightでrobots応答・ToS判断根拠・認証要否・rate policy・取得時刻・policy versionをAuthzEvidenceへ固定し、allow|deny|unknownを判定すると同時にorigin単位request/byte/page/interaction budget(総origin byte上限を含む)を発行する安全ポリシーSSOT。根拠不在・期限切れ・unknownはdenyし、C08/C09/C03が同じevidenceとbudgetを消費する。加えてサイト全域被覆のscope分類SSOT: C09が発見したURL群を、system関連(same-origin+明示承認されたrelated origin)=in_scope、アフィリエイト/広告/外部SNS/トラッカー/utm付き外部リンク=excluded(reason付き)にfail-closed分類し(判定不能はexcluded)、crawl_profileを発行する。crawl_profileはsingle(既定=入口周辺)とfull_site(全in-scope URL被覆)の2モードを持ち、full_siteでも瞬間負荷レバー(origin並列1・最小間隔2000ms・Retry-After・有界backoff・stop条件)は一切緩めず、per-run有界予算(pages_per_run等)とmulti-run resumeで複数実行に分けて全URLへ到達する。full_siteのper-run既定引上げはユーザー承認対象",
+   "inputs": "argv(--url URL --evidence-out FILE --budget-out FILE [--operator-policy FILE] [--crawl-mode single|full_site] [--discovered-urls FILE] [--coverage-manifest-in FILE] [--scope-manifest-out FILE])",
+   "outputs": "stdout(allow|deny|unknown + evidence/budget paths)/stderr(usage|policy-evidence-error)",
+   "exit_codes": "0=allow / 1=deny(認可外) / 2=usage",
+   "network": true,
+   "write_scope": "PLAN成果物ディレクトリ配下のAuthzEvidence/request-budgetのみ",
+   "stdlib_only": true,
+   "tests_min": 80,
+   "depends_on": [],
+   "placement_scope": "plugin-root",
+   "load_policy": {
+    "max_concurrency_per_origin": 1,
+    "preflight_max_requests": 2,
+    "runtime_max_requests_per_origin": 30,
+    "runtime_max_bytes": 10485760,
+    "runtime_max_pages": 3,
+    "runtime_max_interactions": 5,
+    "min_interval_ms": 2000,
+    "total_origin_bytes_ceiling": 10485760,
+    "budget_mode_note": "runtime_max_*とtotal_origin_bytes_ceiling(=runtime_max_bytesと同値)はcrawl_mode=single時の既定。full_site時はcrawl_profile.full_siteのper-run予算が置換しtotal_origin_bytes_ceilingは適用しない。瞬間負荷レバー(max_concurrency_per_origin/min_interval_ms/honor_retry_after/backoff/stop条件)は両モード不変",
+    "unknown": "deny",
+    "evidence_ttl_seconds": 86400,
+    "budget_reset_on_retry": false,
+    "upward_override_requires_user_approval": true,
+    "crawl_profile": {
+     "modes": [
+      "single",
+      "full_site"
+     ],
+     "default": "single",
+     "full_site": {
+      "instant_load_levers_unchanged": true,
+      "pages_per_run": 20,
+      "bytes_per_run": 33554432,
+      "requests_per_run": 200,
+      "per_run_budget_note": "per-run予算はsingle既定と同一のページ当たり密度からの導出値(requests=10/page×20頁)。fetch byte床=bytes_per_runで、1 runの総byteはbytes_per_runを超えない",
+      "multi_run_resume": true,
+      "resume_state": "site coverage manifest(次runは--coverage-manifest-inで受領しpending∪未分類discoveredを分類対象へ再投入する) + request ledger + cache",
+      "per_run_default_override_requires_user_approval": true
+     }
+    }
+   },
+   "build_target": "plugins/extract-system-blueprint/scripts/authz-classify.py",
+   "builder": "plugin-scaffold",
+   "build_kind": "script",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+coverage"
+   }
+  },
+  {
+   "id": "C08",
+   "component_kind": "hook",
+   "name": "pre-fetch-authz-guard",
+   "purpose": "単一述語(fetch-authz): Bash/WebFetch経由の対象URLフェッチ試行をPreToolUseで捕捉し、C12のAuthzEvidenceと残予算(request/byte残予算)を検査してdeny|unknown・期限切れ・予算超過ならexit2でfail-closed遮断する。matcherは `Bash|WebFetch` でC01/C09/C03の静的HTTP取得経路を被覆し、素のBashの隙を残さない。非fetchのBashは通過し、曖昧なtool inputは安全側へ倒す。対象外originへのegressはC01契約で発生させない",
+   "event": "PreToolUse",
+   "matcher": "Bash|WebFetch",
+   "exit_semantics": "fail-closed-exit2",
+   "settings_wiring": "plugin.json hooks (manifest配線・repo慣行=envelope-draft/plugin.json hooks と同一表記が正本)",
+   "fail_closed": true,
+   "depends_on": [
+    "C12"
+   ],
+   "couples_with": [
+    "C09"
+   ],
+   "build_target": "plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py",
+   "builder": "run-build-skill",
+   "build_kind": "hook",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-script-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C03",
+   "component_kind": "sub-agent",
+   "name": "frontend-surface-analyzer",
+   "description": "参考システムの公開URLの静的/SSR HTTP応答(C09 snapshot)から観測できるフロント表層を独立contextでfactとして抽出する。JS実行を要する観測=実行後DOM・画面遷移・interaction state・computed style・viewport screenshot・JS後network traceはブラウザ実行経路が無いためfactとして主張せず、observation_status=not_observed|blockedのobservation_gapとして理由付きで記録する(色/typography/影/角丸/間隔/z-layer/breakpoint等のcomputed-style由来visual formationとscreenshotはここに含む)。【content fact】静的HTML/SSR DOMから見出し階層(h1-h6)・本文/CTA/microcopy/placeholder/alt/aria-labelのverbatimテキスト・meta/OGP/構造化データ(JSON-LD)・言語localeをcontent factとして採取する(文言の意味づけ/伝達意図の解釈はC13へ委譲しC03はfactに留める)。【tech/nonfunctional fact】既取得のresponse header(server/x-powered-by等)・meta generator・bundle/script srcパス・third-party request domain・cookie名をtech_signals factに、resource type別転送byte・request数・cache policy(Cache-Control/ETag)・content-encoding圧縮・画像format(avif/webp)・security headers(CSP/HSTS/X-Frame-Options/Referrer-Policy/Permissions-Policy)をnonfunctional_baseline factに、C09 snapshotから追加networkなしで採取する(named stack同定=『これはNext.jsだ』等の命名はC04のinferenceへ委譲しC03はsignal factに留める。baselineはbudget内で訪問した観測範囲scopeを明示する)。【feature/security fact】(i)機能アフォーダンスfact=各画面の静的DOMの操作可能要素(フォーム/入力フィールド構成・CTA・操作種別)を観測集約しfeature_map素材にする(ジャーニー解釈はC05へ委譲)、(ii)security観測fact=cookie属性(Secure/HttpOnly/SameSite)・認証UI観測(ログインフォーム/OAuthボタン/MFA手掛かり)・CSP全文(設計評価はC04へ委譲)、を採取する。CWV field実測はブラウザ計測APIを要するためobservation_gapとして記録する。【site被覆】full_siteモードではC12のcrawl_profileに従いin_scope URL台帳をper-run予算内でHTTP取得し、DOM構造署名(layout template hash相当)で同型ページを重複排除して無駄な観測を避け、未到達URLはsite coverage manifestのpendingとして残す(multi-run resumeで継続)。【共通規律】観測対象は画面全体→region→主要elementの階層manifestで網羅率を示し、採取不能フィールドは欠落させずnot_observed+reasonとする。観測はDan Abramov/Evan Youの実名見出し付き原則レンズで深めるが、実在個人の代弁/推薦を主張せず、レンズは何を観測するかだけを導きC03出力はfact/gapに限定する。WebFetchはlossyな静的補助経路であり、SPA実行済DOMを保証しない",
+   "tools": [
+    "Read",
+    "Grep",
+    "Bash",
+    "WebFetch"
+   ],
+   "mcp_tools": [],
+   "output_contract": "fact records(content{headings_outline(h1-h6階層),text_verbatim(本文/CTA/microcopy/placeholder/alt/aria-label),cta_inventory(label/位置/link先/種別),meta_seo{title,description,canonical,lang_locale},og_social,structured_data(JSON-LD種別),i18n_locales} + tech_signals{meta_generator,response_headers(server/x-powered-by等),bundle_script_src_paths,third_party_request_domains,cookie_names}(生シグナルのfact・named同定はC04へ委譲) + nonfunctional_baseline{transfer_bytes_by_type,request_count,cache_policy,compression,image_formats,security_headers{csp,hsts,x_frame_options,referrer_policy,permissions_policy},observed_scope(budget内訪問ページ範囲の明示)} + feature_affordances{per_screen:forms(fields),cta_actions,operation_types}(機能fact・journey解釈はC05) + security_observations{cookie_flags(secure,httponly,samesite),auth_ui(login_form,oauth_buttons,mfa_hints),csp_full}(設計評価はC04) + compliance_surfaces{privacy_policy,terms,tokushoho,cookie_banner_cmp:{present,url,structure_summary}} + site_inventory{discovered_urls,in_scope[],excluded[](url+reason),coverage:{discovered,extracted,pending,excluded},layout_template_hash} + observation coverage manifest + request ledger) + observation_gap records(実行後DOM・画面遷移・interaction state・computed style由来のvisual formation(色/typography/影/角丸/間隔/z-layer/breakpoint)・viewport screenshot・CWV field実測はブラウザ実行を要するためnot_observed|blocked+reasonで記録)。画面→region→主要elementのmanifestで対象数/抽出数/not_observed数を示し、未取得フィールドはnot_observed+reasonを必須化する。C03はinferenceを生成しない。要素単位トークンの合成palette化はC06、design-tokens.jsonのemitはC11が担う(観測できたstatic factの範囲で)。fact recordsは画面単位の分割JSONとしてPLAN成果物ディレクトリ配下へ直接書き出し、sub-agent最終応答はcoverage manifest+出力パス一覧のみとする(応答長起因の無言欠落を構造的に排除)",
+   "expert_lenses": [
+    {
+     "name": "Dan Abramov",
+     "prompt_heading": "Lens — Dan Abramov: state ownership and data flow",
+     "role": "状態所有・データフロー・UI状態境界から観測候補を列挙する",
+     "lane": "observation-planning-only"
+    },
+    {
+     "name": "Evan You",
+     "prompt_heading": "Lens — Evan You: component composition and responsive state",
+     "role": "component構成・reactivity・progressive enhancement・responsive状態から観測候補を列挙する",
+     "lane": "observation-planning-only"
+    }
+   ],
+   "prompt_contract": {
+    "names_must_appear_in_prompt": true,
+    "required_sections": [
+     "Observations",
+     "Lens — Dan Abramov: state ownership and data flow",
+     "Lens — Evan You: component composition and responsive state",
+     "Cross-lens conflicts",
+     "Neutral synthesis",
+     "Confidence and gaps"
+    ],
+    "guard_rules": [
+     "公開された設計原則を分析レンズとして用い、本人の口調を模倣しない",
+     "本人がレビュー・承認・推薦したと主張しない",
+     "名前を権威根拠にせず、fact laneはpersona-neutralに保つ",
+     "レンズは観測計画だけを導き、C03はinferenceを生成しない",
+     "一致点・対立点・反証候補をneutral synthesisへ残す"
+    ]
+   },
+   "load_policy": {
+    "max_concurrency_per_origin": 1,
+    "max_pages": 3,
+    "max_requests_per_origin": 30,
+    "max_bytes": 10485760,
+    "min_interval_ms": 2000,
+    "budget_reset_on_retry": false,
+    "mode_note": "max_pages/max_requests/max_bytesはcrawl_mode=single時の既定ミラー(正本=C12発行budget file)。full_site時はC12 crawl_profile.full_siteのper-run予算(pages_per_run/bytes_per_run/requests_per_run)が優先する。瞬間負荷レバー(並列1/min_interval_ms/Retry-After/stop条件)は両モード不変",
+    "screenshot_note": "viewport screenshot/computed-style観測はブラウザ実行を要するためobservation_gap。専用screenshot budgetは発行しない",
+    "stop_on": [
+     "429",
+     "403",
+     "robots-deny",
+     "budget-exhausted",
+     "unstable-response"
+    ]
+   },
+   "independent_context": true,
+   "responsibility_anchor": "prompts/R2-analyze.md",
+   "prompt_layer": "7layer",
+   "depends_on": [
+    "C09",
+    "C08"
+   ],
+   "build_target": "plugins/extract-system-blueprint/agents/frontend-surface-analyzer.md",
+   "builder": "run-build-skill",
+   "build_kind": "agent",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-skill-description",
+     "lint-agent-prompt-section"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C04",
+   "component_kind": "sub-agent",
+   "name": "backend-inference-analyzer",
+   "description": "フロント表層の観測事実(C03の静的HTTP観測fact)から、想定されるバックエンド機構を根拠+確度つき推測として独立contextで導出し、事実と明示区別して記録したいときに使う。加えてC03/C09のtech_signals fact(response header/meta generator/bundle・script srcパス/third-party domain/cookie名)を根拠に、技術スタックのnamed同定=framework/hosting/CDN/analytics/外部SaaSの命名(例: /_next/パス+ヘッダ群→Next.js/Vercel)をtech_stack.identified[]のinferenceとして導出する(命名は必ずsignal factへのevidence_refs+confidence付き=シグナルは事実・命名は推測のレーン二層化)。さらにsecurity_design推測(C03/C09のcookie属性・認証UI・CSP全文・security headers factを根拠に、認証方式/セッション管理/CSRF・XSS対策/CSP評価/攻撃面と『自社が真似すべき/避けるべきプラクティス』をOWASP ASVS/Top10観点で導出。受動観測のみ=侵入テスト/脆弱性スキャン/認証突破は一切行わない)とdelivery_topology推測(cache-control/age/x-cache/via/server header factとtech_signalsを根拠にCDN/edge/origin構成・static|SSR|ISR判定・キャッシュ階層を導出)をtech_stack同様のinferenceとして導出する。Martin Kleppmann/Werner Vogels/OWASPの実名(組織名)見出し付き原則レンズでデータ/分散失敗/セキュリティの三面を検討するが、本人/組織の代弁/推薦を主張せず、各レンズ主張はevidence_refs+confidence必須でfactへ混入させない",
+   "tools": [
+    "Read",
+    "Write"
+   ],
+   "independent_context": true,
+   "responsibility_anchor": "prompts/R2-analyze.md",
+   "prompt_layer": "7layer",
+   "expert_lenses": [
+    {
+     "name": "Martin Kleppmann",
+     "prompt_heading": "Lens — Martin Kleppmann: data models and consistency",
+     "role": "データモデル・一貫性・log/stream・storage/communication境界を推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "Werner Vogels",
+     "prompt_heading": "Lens — Werner Vogels: distributed failure and availability",
+     "role": "分散失敗・可用性・scaling・failure isolation・CDN/edge/origin配信トポロジー(static|SSR|ISR)を推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "OWASP",
+     "prompt_heading": "Lens — OWASP: security design (ASVS/Top10, passive)",
+     "role": "cookie属性/認証UI/CSP/security headers factから認証方式・セッション管理・CSRF/XSS対策・攻撃面と真似すべき/避けるべきプラクティスを受動観測のみで推論する(侵入テスト/脆弱性スキャン/認証突破は行わない)",
+     "lane": "inference"
+    }
+   ],
+   "prompt_contract": {
+    "names_must_appear_in_prompt": true,
+    "required_sections": [
+     "Observations",
+     "Lens — Martin Kleppmann: data models and consistency",
+     "Lens — Werner Vogels: distributed failure and availability",
+     "Lens — OWASP: security design (ASVS/Top10, passive)",
+     "Cross-lens conflicts",
+     "Neutral synthesis",
+     "Confidence and gaps"
+    ],
+    "guard_rules": [
+     "公開された設計原則を分析レンズとして用い、本人/組織の口調を模倣しない",
+     "本人/組織がレビュー・承認・推薦したと主張しない",
+     "全レンズ主張へevidence_refs+confidenceを付けfactへ混入させない",
+     "high confidenceは直接支持する複数evidence_refsがある場合だけ許す",
+     "security推測は受動観測のみを根拠とし、侵入テスト/脆弱性スキャン/認証突破を提案・実行しない",
+     "一致点・対立点・反証候補をneutral synthesisへ残す"
+    ]
+   },
+   "depends_on": [
+    "C03"
+   ],
+   "build_target": "plugins/extract-system-blueprint/agents/backend-inference-analyzer.md",
+   "builder": "run-build-skill",
+   "build_kind": "agent",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-skill-description",
+     "lint-agent-prompt-section"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C05",
+   "component_kind": "sub-agent",
+   "name": "uiux-rationale-analyzer",
+   "description": "観測事実(C03の静的HTTP観測fact・content/機能アフォーダンスfact含む)から、ボタン配置・情報設計・視線誘導等のUI/UX設計意図を根拠+確度つき推測として独立contextで導出したいときに使う。加えて主要タスク(登録/購入/問合せ等)の開始→完了user_journeys仮説を、静的DOMのCTA・フォーム構成・機能アフォーダンスfactを根拠にevidence_refs+confidence付きで導出する(feature_map=C03観測集約のfact / user_journeys=推測、の区別を保つ)。Josh Comeau/Sarah Drasnerの実名見出し付き原則レンズでCSS構成とinteraction/visual hierarchyの両面を検討するが、本人の代弁/推薦を主張せず、各レンズ主張はevidence_refs+confidence必須でfactへ混入させない。静的DOM構造はUI/UX推測の一次根拠として参照する(computed style/screenshotはobservation_gap)。バックエンド推測(C04)との突合・整合はC06の統合で行う",
+   "tools": [
+    "Read",
+    "Write"
+   ],
+   "independent_context": true,
+   "responsibility_anchor": "prompts/R2-analyze.md",
+   "prompt_layer": "7layer",
+   "expert_lenses": [
+    {
+     "name": "Josh Comeau",
+     "prompt_heading": "Lens — Josh Comeau: CSS layout and component composition",
+     "role": "CSS layout・component構成・responsive behaviorを推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "Sarah Drasner",
+     "prompt_heading": "Lens — Sarah Drasner: interaction and visual hierarchy",
+     "role": "interaction・animation・state transition・visual hierarchyを推論する",
+     "lane": "inference"
+    }
+   ],
+   "prompt_contract": {
+    "names_must_appear_in_prompt": true,
+    "required_sections": [
+     "Observations",
+     "Lens — Josh Comeau: CSS layout and component composition",
+     "Lens — Sarah Drasner: interaction and visual hierarchy",
+     "Cross-lens conflicts",
+     "Neutral synthesis",
+     "Confidence and gaps"
+    ],
+    "guard_rules": [
+     "公開された設計原則を分析レンズとして用い、本人の口調を模倣しない",
+     "本人がレビュー・承認・推薦したと主張しない",
+     "全レンズ主張へevidence_refs+confidenceを付けfactへ混入させない",
+     "high confidenceは直接支持する複数evidence_refsがある場合だけ許す",
+     "一致点・対立点・反証候補をneutral synthesisへ残す"
+    ]
+   },
+   "depends_on": [
+    "C03"
+   ],
+   "build_target": "plugins/extract-system-blueprint/agents/uiux-rationale-analyzer.md",
+   "builder": "run-build-skill",
+   "build_kind": "agent",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-skill-description",
+     "lint-agent-prompt-section"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C13",
+   "component_kind": "sub-agent",
+   "name": "content-intent-analyzer",
+   "description": "観測事実(C03の出力・verbatimコピー/見出し階層/CTA/meta・OGP/構造化データのcontent fact含む)から、コンテンツが伝えたいこと=価値提案・キーメッセージ・訴求の情報階層・想定読者・トーン&ボイス・CTA意図と、対象が解こうとする本質的問題(JTBD)仮説を根拠+確度つき推測として独立contextで導出したいときに使う。Kinneret Yifrah(microcopy/UXライティング)・Nielsen Norman Group(content usability)・Marty Cagan(製品価値)・Teresa Torres(機会発見/JTBD)の実名見出し付き原則レンズで文言と製品意図の両面を検討するが、本人/組織の代弁・推薦を主張せず、各レンズ主張はevidence_refs+confidence必須でfactへ混入させない。C04(backend)/C05(uiux)とは事実(C03)起点の直交する推測レンズであり、突合・統合は本エージェントでなくarchitecture-essence-synthesizer(C06)で行う(DAG深化を避ける)",
+   "tools": [
+    "Read",
+    "Write"
+   ],
+   "independent_context": true,
+   "responsibility_anchor": "prompts/R2-analyze.md",
+   "prompt_layer": "7layer",
+   "expert_lenses": [
+    {
+     "name": "Kinneret Yifrah",
+     "prompt_heading": "Lens — Kinneret Yifrah: microcopy and voice",
+     "role": "microcopy・トーン&ボイス・UXライティングの意図と一貫性を推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "Nielsen Norman Group",
+     "prompt_heading": "Lens — Nielsen Norman Group: content usability and information scent",
+     "role": "情報階層・スキャナビリティ・information scentから訴求の構造を推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "Marty Cagan",
+     "prompt_heading": "Lens — Marty Cagan: product value and viability",
+     "role": "価値提案・製品意図・viability仮説を推論する",
+     "lane": "inference"
+    },
+    {
+     "name": "Teresa Torres",
+     "prompt_heading": "Lens — Teresa Torres: opportunity and JTBD discovery",
+     "role": "対象が解く本質的問題(JTBD)・機会構造・想定読者を推論する",
+     "lane": "inference"
+    }
+   ],
+   "prompt_contract": {
+    "names_must_appear_in_prompt": true,
+    "required_sections": [
+     "Observations",
+     "Lens — Kinneret Yifrah: microcopy and voice",
+     "Lens — Nielsen Norman Group: content usability and information scent",
+     "Lens — Marty Cagan: product value and viability",
+     "Lens — Teresa Torres: opportunity and JTBD discovery",
+     "Cross-lens conflicts",
+     "Neutral synthesis",
+     "Confidence and gaps"
+    ],
+    "guard_rules": [
+     "公開された設計原則を分析レンズとして用い、本人/組織の口調を模倣しない",
+     "本人/組織がレビュー・承認・推薦したと主張しない",
+     "全レンズ主張へevidence_refs+confidenceを付けfactへ混入させない",
+     "high confidenceは直接支持する複数evidence_refsがある場合だけ許す",
+     "一致点・対立点・反証候補をneutral synthesisへ残す"
+    ]
+   },
+   "depends_on": [
+    "C03"
+   ],
+   "build_target": "plugins/extract-system-blueprint/agents/content-intent-analyzer.md",
+   "builder": "run-build-skill",
+   "build_kind": "agent",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-skill-description",
+     "lint-agent-prompt-section"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C06",
+   "component_kind": "sub-agent",
+   "name": "architecture-essence-synthesizer",
+   "description": "事実(C03の静的HTTP観測fact=content/機能アフォーダンス/security観測/compliance/site_inventory fact含む)・バックエンド/セキュリティ設計/配信トポロジー推測(C04)・UIUX根拠/user_journeys推測(C05)・コンテンツ/伝達意図推測(C13)を統合し、本質/目的/アーキテクチャの説明と5種のMermaid図を独立contextで生成したいときに使う。統合の第一級出力としてessence章=対象が解こうとする本質的問題(JTBD)・想定読者・価値提案・キーメッセージ・トーン&ボイス・positioning/差別化を明示し、各項目はevidence_refs+confidence付きinferenceとしてfactと区別する(『何を・誰に・なぜ伝えるか』を視覚/アーキと同格のblueprint成果物にする)。加えてfeature_map章(C03機能アフォーダンスfactの観測集約=各画面で何ができるかの機能一覧)とuser_journeys章(C05推測=主要タスクの開始→完了フロー)、security_design章(C04推測)、delivery_topology章(C04推測)をblueprintへ統合し、fact集約(feature_map)と推測(journeys/security/topology)を明示区別する。Martin Fowler/Kent Beckの実名見出し付き原則レンズで境界/統合と単純性/feedbackの両面を検討するが、本人の代弁/推薦を主張せず、各レンズ主張はevidence_refs+confidence必須。screen-flow図の各画面ノードにはC03のcontent/site_inventory factを対応付け、画面遷移をblueprintから辿れるようにする(screenshot/computed layoutはobservation_gap)。加えて静的に観測できたCSS由来の色/typography/影/角丸/間隔を重複排除して合成design-token palette(全カラーパレット=hard-coded色も含みbrand/primary/accent/bg/text/border/state等の役割ラベル付・type/spacing/radius/shadow(elevation)/breakpoint/z-layer scale・theme別color set)へ導出し、AIが色合いを一貫再現できるsourceとする(これは観測static factの機械的集約でありペルソナ推測を混ぜない。computed styleでしか得られない値はobservation_gap)",
+   "mermaid_marker_contract": {
+    "role": "diagram-source-producer",
+    "syntax": "%% blueprint-diagram: <slug>",
+    "placement": "各 Mermaid fence 内の先頭 %% コメント行",
+    "required_slugs": [
+     "system-architecture",
+     "fact-inference-layers",
+     "screen-flow",
+     "data-flow-sequence",
+     "data-model"
+    ],
+    "cardinality": "正準 slug ごとに1図以上を生成し、harness-meta は製品5図へ計上しない",
+    "handoff_to": "C11はmarkerを最終Markdownへ逐語保持する",
+    "validation": "plugins/extract-system-blueprint/scripts/mermaid-validate.py --docs-dir <generated-docs-dir> が5/5検出かつexit 0"
+   },
+   "tools": [
+    "Read",
+    "Bash"
+   ],
+   "independent_context": true,
+   "responsibility_anchor": "prompts/R2-analyze.md",
+   "prompt_layer": "7layer",
+   "expert_lenses": [
+    {
+     "name": "Martin Fowler",
+     "prompt_heading": "Lens — Martin Fowler: boundaries and integration patterns",
+     "role": "boundary・integration pattern・refactoring opportunityを統合評価する",
+     "lane": "inference"
+    },
+    {
+     "name": "Kent Beck",
+     "prompt_heading": "Lens — Kent Beck: simple design and feedback",
+     "role": "simple/evolutionary design・feedback・testabilityを統合評価する",
+     "lane": "inference"
+    }
+   ],
+   "prompt_contract": {
+    "names_must_appear_in_prompt": true,
+    "required_sections": [
+     "Observations",
+     "Lens — Martin Fowler: boundaries and integration patterns",
+     "Lens — Kent Beck: simple design and feedback",
+     "Cross-lens conflicts",
+     "Neutral synthesis",
+     "Confidence and gaps"
+    ],
+    "guard_rules": [
+     "公開された設計原則を分析レンズとして用い、本人の口調を模倣しない",
+     "本人がレビュー・承認・推薦したと主張しない",
+     "全レンズ主張へevidence_refs+confidenceを付けfactへ混入させない",
+     "high confidenceは直接支持する複数evidence_refsがある場合だけ許す",
+     "一致点・対立点・反証候補をneutral synthesisへ残す"
+    ]
+   },
+   "depends_on": [
+    "C03",
+    "C04",
+    "C05",
+    "C13",
+    "C10",
+    "C11"
+   ],
+   "build_target": "plugins/extract-system-blueprint/agents/architecture-essence-synthesizer.md",
+   "builder": "run-build-skill",
+   "build_kind": "agent",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter",
+     "lint-skill-description",
+     "lint-agent-prompt-section"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  },
+  {
+   "id": "C01",
+   "component_kind": "skill",
+   "name": "run-extract-blueprint",
+   "skill_kind": "run",
+   "kind": "run",
+   "skill_name": "run-extract-blueprint",
+   "prefix": "run",
+   "hierarchy_level": "L1",
+   "trigger_conditions": [
+    "対象URLの構造抽出を依頼されたとき",
+    "システムブループリント抽出",
+    "extract-blueprint"
+   ],
+   "goal": "対象システムのURL1件について、フロント表層の事実とバックエンド/設計意図の根拠つき推測を明示区別した章別ドキュメント群(md+json+Mermaid、事実推測区別図を含む5種のMermaid図解込み、加えて観測できたlayout.json・verbatimコピーのcontent fact・essence章=本質的問題(JTBD)/想定読者/価値提案/キーメッセージ/トーン/positioning)をローカルへ生成し、C02の独立品質評価がPASSした状態(screenshot/JS実行後DOMはobservation_gap)",
+   "purpose_background": "URLをブラウザ目視+F12確認する手作業3ステップ(週2.5回×平均90分)を排し、URL解析結果から自社実装の雛形・設計ドキュメントを即生成して自社構築の着手を速くするため",
+   "checklist": [
+    "フロント表層の事実抽出(UI要素・限定画面遷移・実行後DOM・観測通信)と欠測の別状態化",
+    "静的に観測できる範囲でfactを取得し(visual formation=色/typography/影/角丸/間隔等のcomputed-style由来項目・viewport screenshot・実行後DOMはブラウザ実行を要するためobservation_gap)、画面→region→主要elementのcoverage manifest、観測できたlayout.jsonとしてdocsへ埋込。未取得fieldはnot_observed+reason",
+    "根拠+確度つき推測としてバックエンド機構・設計意図を事実と明示区別して記録",
+    "文字(コピー)のverbatim content fact(見出し階層/本文/CTA/microcopy/meta・OGP/構造化データ/locale)を採取し、C13で伝えたいこと(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図)と本質的問題(JTBD)仮説を根拠+確度つき推測として導出し、C06のessence章(本質的問題/読者/価値提案/キーメッセージ/トーン/positioning・差別化)へ統合する",
+    "各analyzerの実プロンプトに著名エンジニア名付き原則レンズ見出し・cross-lens conflicts・neutral synthesisを明示し、本人の模倣/承認主張をせず、レンズ由来主張もevidence_refs+confidence必須でfactへ混入させない",
+    "5種Mermaid図の生成",
+    "ローカルdraft→独立verdict(ローカル品質評価)PASSの順序保証",
+    "認証必須領域への無断アクセスをしない",
+    "並列1・cache・request budget・Retry-After・停止条件で対象負荷を制限する"
+   ],
+   "output_contract": "事実/推測区別ドキュメント一式(md+json+Mermaid5種)。ローカルのみ",
+   "boundary": "入力=対象URL1件/出力=ローカルファイル一式。認証必須領域への到達・実侵入・認可外スクレイピングは行わない",
+   "output_language": "ja",
+   "placement_candidates": [
+    "Skill"
+   ],
+   "mass_production_profile": "strict",
+   "responsibilities": [
+    {
+     "id": "R1-fetch",
+     "summary": "C12のAuthzEvidence/request budgetとcrawl_profile(single|full_site)を確定し、C09のURL discovery(sitemap/robots/リンクグラフ)→C12のscope分類(in_scope/excluded+reason)でsystem関連URL台帳を作り、C08のfail-closed境界内でC09のHTTP snapshotとC03の静的HTTP観測を全in-scope画面へ取得する。full_siteでも瞬間負荷レバーは緩めずper-run有界+cache/ledgerによるmulti-run resumeで全URLへ到達する。再開runは前runのsite coverage manifestを読み、pendingと未分類discoveredをC12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)",
+     "prompt_required": true
+    },
+    {
+     "id": "R2-analyze",
+     "summary": "frontend-surface-analyzer(視覚/content/機能アフォーダンス/tech_signals/CWV/security/compliance/site_inventory fact)→backend-inference-analyzer(バックエンド/named同定/security_design(OWASP)/delivery_topology)/uiux-rationale-analyzer(UIUX/user_journeys)/content-intent-analyzer(C03出力起点の直交3レンズ)→architecture-essence-synthesizer(essence+feature_map+user_journeys+security/topology統合)へ順に委譲し、事実と根拠つき推測を明示区別して収集する。各analyzerの実プロンプトへinventory.expert_lensesの実名見出しとguard rulesを展開し、per-lens review→cross-lens conflicts→neutral synthesisを必須化する",
+     "prompt_required": true
+    },
+    {
+     "id": "R3-document",
+     "summary": "doc-emit.pyで章別ローカルdraft(md+json)と5種Mermaid図を確定しmermaid-validate.pyで自己検証する。観測できたlayout factからlayout.jsonとlayout-overlay.svg(テキスト演算)を生成し(screenshotはobservation_gap)、doc-emitのcompleteness検査(--check-screens)を通す",
+     "prompt_required": true
+    }
+   ],
+   "cli_tools": [],
+   "mcp_tools": [],
+   "external_systems": [
+    "対象システムの公開URL (HTTP fetch)"
+   ],
+   "deterministic_checks": [
+    "fetch-snapshot.py",
+    "mermaid-validate.py",
+    "doc-emit.py"
+   ],
+   "needs_independent_context": true,
+   "needs_lifecycle_enforcement": true,
+   "prompt_layer": "7layer",
+   "combinators": [
+    "with-goal-seek",
+    "with-feedback-contract"
+   ],
+   "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+   },
+   "feedback_contract": {
+    "criteria": [
+     {
+      "id": "IN1",
+      "loop_scope": "inner",
+      "text": "authz/fetch/mermaid/docの決定論チェックがexit0になり、重要fact欠落0、未観測の無断inference化0、request budget超過0、対象origin並列数1を確認する",
+      "verify_by": "script"
+     },
+     {
+      "id": "OUT1",
+      "loop_scope": "outer",
+      "text": "生成物でバックエンド機構・設計意図が根拠+確度つき推測として事実と明示区別され、AIへ渡した際に追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度であることを受入テストが確認する。EVALS.jsonのreconstruction-rehearsal LLM-evalが、生成blueprintから最小スカフォールド骨子を試導出し事実/推測/確度の必須フィールド欠落0を逆テストで確認する",
+      "verify_by": "test",
+      "eval_ref": "reconstruction-rehearsal"
+     }
+    ]
+   },
+   "depends_on": [
+    "C12",
+    "C09",
+    "C08",
+    "C10",
+    "C11",
+    "C03",
+    "C04",
+    "C05",
+    "C13",
+    "C06"
+   ],
+   "build_target": "plugins/extract-system-blueprint/skills/run-extract-blueprint/",
+   "builder": "run-skill-create",
+   "build_kind": "skill",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-skill-name",
+     "lint-skill-description",
+     "lint-skill-tree",
+     "validate-frontmatter",
+     "lint-dependency-direction",
+     "lint-skill-dep-step7",
+     "lint-forbidden-deps",
+     "lint-manifest-contents"
+    ],
+    "responsibility_anchor_parity": {
+     "owner_responsibility_id": "R2-analyze",
+     "anchor": "prompts/R2-analyze.md",
+     "delegated_components": [
+      "C03",
+      "C04",
+      "C05",
+      "C13",
+      "C06"
+     ],
+     "require_existing_anchor": true,
+     "require_shared_anchor": true,
+     "require_owner_summary_membership": true,
+     "fail_closed": true
+    },
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "loop=criteria-test+content-review-verdict"
+   }
+  },
+  {
+   "id": "C02",
+   "component_kind": "skill",
+   "name": "assign-blueprint-fidelity-evaluator",
+   "skill_kind": "assign",
+   "kind": "assign",
+   "skill_name": "assign-blueprint-fidelity-evaluator",
+   "prefix": "assign",
+   "hierarchy_level": "L1",
+   "trigger_conditions": [
+    "生成された抽出ドキュメントの忠実性を評価したいとき",
+    "事実/推測区別の妥当性を独立検証したいとき"
+   ],
+   "goal": "run-extract-blueprint(C01)が生成した章別ドキュメント群が事実と根拠つき推測を明示区別し、AIへ渡した際に追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度(事実+根拠つき推測+確度+主要画面のスクリーンショット/細かなレイアウトが揃っている)であることを、proposerと異なる独立contextでverdict判定した状態",
+   "purpose_background": "生成者(run-extract-blueprint)と同一contextで自己評価すると、事実/推測の混同や粒度不足を見落とすため、proposer≠approverの原則で独立に評価する。機械層のC10/C11共有は基準統一のためでcommon-mode誤りは排除しないため、非共有の再計数経路を最低1本持つ",
+   "checklist": [
+    "fact/inference/not_observed|blocked区別とprovenanceの妥当性判定",
+    "重要fact欠測0または明示FAIL判定",
+    "5種Mermaid網羅性判定(mermaid-validate.py併用)",
+    "主要画面のvisual formation全カテゴリ(identity/geometry/layout/paint(caret/accent/selection/scrollbar/text-decoration色・色値の正準表現含む)/typography(font provider/src含む)/media/effects/pseudo-elements/state(cursor含む)/motion/responsive/a11y/tokens)と画面→region→主要element coverage manifest、redacted screenshot、番号付き注釈overlayの網羅性を判定する。未取得fieldが無言欠落でなくnot_observed+reasonで、鍵画面gapはC9 FAIL。加えて合成design-tokens.json(カラーパレット+type/spacing/radius/shadow(elevation)/breakpoint/z-layer scale+theme別color set+document brand色)が要素で観測された色を漏れなく被覆(観測色のpalette孤児0)、light/dark両テーマ対応時は両color setが揃う、色値が正準表現(hex8+gamut)で保持される、ことを判定する",
+    "content/essence被覆判定: 主要画面のverbatimコピーfact(見出し/CTA/本文/meta・OGP)の欠落が無言でなく理由付きgapであること、C13のcontent-intent推測(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図/JTBD仮説)が全てevidence_refs+confidenceで接地していること、C06 essence章が本質的問題(JTBD)/読者/価値提案/キーメッセージ/トーン/positioning・差別化を明示しfactと区別していることを判定する",
+    "tech/nonfunctional被覆判定: tech_signals(header/generator/bundleパス/third-party domain/cookie名)とnonfunctional_baseline(転送byte/cache/圧縮/画像format/security headers)が既取得responseからのfactとしてobserved_scope付きで記録され、未観測が無言欠落でなく理由付きgapであること、tech_stack.identified[]のnamed同定(framework/hosting/CDN/analytics/SaaS)が全てsignal factへのevidence_refs+confidenceで接地しfactレーンへ混入していないことを判定する",
+    "被覆の深さ・広さ判定(R5): feature_map(機能アフォーダンスfact集約)とuser_journeys(推測)が明示区別されfeature/journey被覆があること、security_observations(cookie属性/認証UI/CSP)fact→security_design推測がOWASP観点でevidence接地し受動観測のみ(侵入テスト/脆弱性スキャン言及0)であること、delivery_topology推測がheader factに接地すること、cwv_field_sampleがscope_note付きfactであること、compliance_surfaces(privacy/規約/特商法/CMP)が記録されていること、site_inventoryのcoverage(discovered/extracted/pending/excluded+reason)が無言欠落なく、full_siteモードでpendingを残したまま完全被覆と偽装していない(部分被覆は明示)ことを判定する",
+    "C03-C06/C13の実プロンプトにinventory.prompt_contractの実名見出し・cross-lens conflicts・neutral synthesis・非模倣/非推薦guardが存在することを構造検査する。ただし評価は名前出現だけでPASSせず、レンズ由来推測のevidence_refs+confidence・fact非混入・highの複数直接根拠を判定する",
+    "AI入力粒度(追加ヒアリング不要)判定",
+    "再構築十分性の逆テスト: 生成blueprintから最小スカフォールド骨子を試導出し、top-level schema必須フィールド欠落0件かつ未回答質問0件を確認",
+    "request ledgerが低負荷policyを満たすことの判定",
+    "共有決定論ゲート(C10/C11)の出力のうち最低1不変量(例: 観測色のpalette孤児0)をC11実装と独立の手順(blueprint jsonからの再計数)で照合するcommon-mode破り検査",
+    "draft hashに束縛したverdict(PASS/FAIL)の発行"
+   ],
+   "output_contract": "draft_hashに束縛した評価verdict(PASS/FAIL) + 指摘一覧(該当箇所+理由) + observation completeness + load-policy result。PASS以外は自社適用(C14)へ進めない",
+   "boundary": "入力=run-extract-blueprintの生成物一式/出力=verdict。生成物自体の修正は行わずC01への差し戻しに留める",
+   "output_language": "ja",
+   "placement_candidates": [
+    "Skill"
+   ],
+   "mass_production_profile": "strict",
+   "responsibilities": [
+    {
+     "id": "R1-evaluate",
+     "summary": "生成物一式の事実/推測区別・5種Mermaid網羅・スクリーンショット/レイアウト網羅と画面配置の再現粒度・verbatimコピー/content-intent/essence章(本質的問題・JTBD)の被覆・ペルソナレンズ主張のevidence+confidence(fact非混入)・AI入力粒度・再構築十分性の逆テスト(最小スカフォールド骨子の試導出で必須フィールド欠落0とAI追加質問なし着手可を検証)をmermaid-validate.pyも併用しつつ独立contextで判定しverdictを返す",
+     "prompt_required": true
+    }
+   ],
+   "cli_tools": [],
+   "mcp_tools": [],
+   "external_systems": [],
+   "deterministic_checks": [
+    "mermaid-validate.py",
+    "doc-emit.py --check-screens"
+   ],
+   "needs_independent_context": true,
+   "needs_lifecycle_enforcement": true,
+   "prompt_layer": "7layer",
+   "combinators": [],
+   "feedback_contract": {
+    "skip_reason": "assign kind は loop criteria 必須対象外 (proposer≠approver の verdict 判定責務のため)"
+   },
+   "depends_on": [
+    "C01",
+    "C10",
+    "C11"
+   ],
+   "build_target": "plugins/extract-system-blueprint/skills/assign-blueprint-fidelity-evaluator/",
+   "builder": "run-skill-create",
+   "build_kind": "skill",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-skill-name",
+     "lint-skill-description",
+     "lint-skill-tree",
+     "validate-frontmatter",
+     "lint-dependency-direction",
+     "lint-skill-dep-step7",
+     "lint-forbidden-deps",
+     "lint-manifest-contents"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "assign=evaluator-verdict"
+   }
+  },
+  {
+   "id": "C14",
+   "component_kind": "skill",
+   "name": "run-blueprint-apply",
+   "skill_kind": "run",
+   "kind": "run",
+   "skill_name": "run-blueprint-apply",
+   "prefix": "run",
+   "hierarchy_level": "L1",
+   "trigger_conditions": [
+    "抽出済みblueprintを自社開発へ適用する推奨を導出したいとき",
+    "採用/回避/差別化の判断材料が欲しいとき",
+    "blueprint-apply"
+   ],
+   "goal": "C02 PASS済(同一draft_hash)のblueprint一式と自社コンテキスト(自社製品/技術制約の文書または自然文)を入力に、採用(adopt)/回避(avoid)/差別化機会(differentiate)の3分類apply-recommendations(md+json)をローカルへ導出し、全項目がblueprint実在anchorへのevidence_refs+confidence付きinferenceで、blueprint外の無根拠主張0件・blueprint本体への混入0件である状態",
+   "purpose_background": "blueprintは対象の忠実記述で完結し『自社ならどれを採用/回避すべきか・どこが差別化機会か』が出ないため、自社開発へ活かす最後の適用判断を独立した下流skillとして担う(R4ユーザー承認の構造変更13→14)。抽出(対象の記述)と適用(自社への判断)を分離することで、blueprintの忠実性と推奨の自社接地性を相互汚染させない",
+   "checklist": [
+    "C02 verdict(PASS+draft_hash一致)の事前検証: verdict不在/hash不一致/FAILはfail-closedに拒否する",
+    "自社コンテキスト(文書パスまたは自然文)の構造化取り込み: 自社の技術スタック/リソース制約/既存資産/対象ユーザーを推奨の接地先として明示する",
+    "blueprintのfact/inference(essence章・design tokens・tech_stack・nonfunctional_baseline含む)と自社コンテキストの突合から採用/回避/差別化機会の3分類recommendationsを導出する",
+    "全recommendation項目がkind=inference・evidence_refs=blueprint実在anchor・confidence{level,rationale}を持ち、blueprintに無い事実を新規主張しない",
+    "doc-emit.py --check-applyによる決定論自己検証(schema適合/evidence anchor解決率100%/fact新規レコード0/3分類のみ)がexit0",
+    "出力はローカルapply-recommendations.md+jsonのみ: blueprint本体を書き換えず、外部へ公開せず、対象originへ一切アクセスしない"
+   ],
+   "output_contract": "apply-recommendations.md+json(採用adopt/回避avoid/差別化機会differentiateの3分類・全項目kind=inference+evidence_refs(blueprint実在anchor)+confidence{level,rationale}+own_context_ref)。ローカルのみ(外部公開なし)・blueprint本体非混入",
+   "boundary": "入力=C02 PASS済blueprint一式+自社コンテキスト/出力=ローカルapply-recommendationsのみ。対象originへ一切アクセスせず(network 0)、blueprint本体を書き換えない。C02 verdict不在/FAILのblueprintは入力として拒否する",
+   "output_language": "ja",
+   "placement_candidates": [
+    "Skill"
+   ],
+   "mass_production_profile": "strict",
+   "responsibilities": [
+    {
+     "id": "R1-ground",
+     "summary": "blueprint一式とC02 PASS verdict(同一draft_hash)をfail-closedに検証し、自社コンテキスト(文書/自然文)を技術スタック/制約/既存資産/対象ユーザーへ構造化して取り込む",
+     "prompt_required": true
+    },
+    {
+     "id": "R2-recommend",
+     "summary": "blueprintのfact/inference(essence章・design tokens・tech_stack・nonfunctional_baseline含む)と自社コンテキストを突合し、採用/回避/差別化機会の3分類recommendationsを導出する。各項目はblueprint実在anchorへのevidence_refs+confidence必須のinferenceで、blueprintに無い事実を新規主張しない",
+     "prompt_required": true
+    },
+    {
+     "id": "R3-emit",
+     "summary": "apply-recommendations.md+jsonをschema準拠で出力し、doc-emit.py --check-applyでschema適合・evidence anchor実在・fact新規主張0を自己検証する。blueprint本体と外部へは書き込まない",
+     "prompt_required": true
+    }
+   ],
+   "cli_tools": [],
+   "mcp_tools": [],
+   "external_systems": [],
+   "deterministic_checks": [
+    "doc-emit.py --check-apply"
+   ],
+   "needs_independent_context": true,
+   "needs_lifecycle_enforcement": true,
+   "prompt_layer": "7layer",
+   "combinators": [
+    "with-goal-seek",
+    "with-feedback-contract"
+   ],
+   "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 3
+   },
+   "feedback_contract": {
+    "criteria": [
+     {
+      "id": "IN1",
+      "loop_scope": "inner",
+      "text": "doc-emit.py --check-applyがexit0(schema適合=全項目kind=inference・evidence_refsのblueprint実在anchor解決率100%・kind=fact新規レコード0・分類がadopt|avoid|differentiateのみ)で、C02 verdict(PASS+draft_hash一致)の事前検証とnetwork 0(対象origin非アクセス)を確認する",
+      "verify_by": "script"
+     },
+     {
+      "id": "OUT1",
+      "loop_scope": "outer",
+      "text": "生成されたapply-recommendationsが自社コンテキストの制約(技術スタック/リソース/既存資産)へ接地した採用/回避/差別化の実行可能な推奨になっており、blueprint外の無根拠主張0件で、独立レビューアがevidence_refs+confidenceから各判断を追跡できることを受入テストが確認する",
+      "verify_by": "test"
+     }
+    ]
+   },
+   "depends_on": [
+    "C01",
+    "C02",
+    "C11"
+   ],
+   "build_target": "plugins/extract-system-blueprint/skills/run-blueprint-apply/",
+   "builder": "run-skill-create",
+   "build_kind": "skill",
+   "quality_gates": {
+    "p0_lint": [
+     "lint-skill-name",
+     "lint-skill-description",
+     "lint-skill-tree",
+     "validate-frontmatter",
+     "lint-dependency-direction",
+     "lint-skill-dep-step7",
+     "lint-forbidden-deps",
+     "lint-manifest-contents"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "loop=criteria-test+content-review-verdict"
+   }
+  },
+  {
+   "id": "C07",
+   "component_kind": "slash-command",
+   "name": "extract-blueprint",
+   "description": "対象URLからC01のローカルdraft生成を起動し、C02の独立verdict(ローカルdraftの独立品質評価PASS/FAIL)を同一draft_hashで発行する。FAIL時はruntime request budgetをリセットしないまま有界差し戻しする",
+   "argument-hint": "<url> [--crawl-mode single|full_site] [--resume]",
+   "allowed-tools": [
+    "Read",
+    "Bash",
+    "Skill"
+   ],
+   "disable-model-invocation": false,
+   "depends_on": [
+    "C01",
+    "C02"
+   ],
+   "build_target": "plugins/extract-system-blueprint/commands/extract-blueprint.md",
+   "builder": "run-build-skill",
+   "build_kind": "command",
+   "quality_gates": {
+    "p0_lint": [
+     "validate-frontmatter"
+    ],
+    "build_trace": "required",
+    "elegant_review": {
+     "conditions": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
+     ],
+     "all_pass": true
+    },
+    "content_review": {
+     "verdict": "PASS",
+     "sha_match": true
+    },
+    "evaluator": {
+     "threshold": 80,
+     "high_max": 0
+    }
+   },
+   "harness_coverage": {
+    "min": 80,
+    "kind_pass": "content-review-verdict+test"
+   }
+  }
+ ],
+ "plugin_level_surfaces": {
+  "manifest": {
+   "required": true,
+   "path": ".claude-plugin/plugin.json",
+   "builder": "plugin-scaffold",
+   "build_kind": "plugin-surface",
+   "build_target": "plugins/extract-system-blueprint/.claude-plugin/plugin.json",
+   "write_scope": "plugins/extract-system-blueprint/.claude-plugin/plugin.json",
+   "quality_gates": {
+    "path_existence": {
+     "paths": [
+      "plugins/extract-system-blueprint/.claude-plugin/plugin.json"
+     ],
+     "all": true
+    },
+    "checks": [
+     {
+      "id": "manifest-json",
+      "kind": "json-parse"
+     },
+     {
+      "id": "manifest-lint",
+      "kind": "manifest-lint",
+      "assertions": [
+       "name-equals-plugin-directory",
+       "no-placeholder",
+       "entry-points-resolve",
+       "C08-hook-wired-fail-closed"
+      ]
+     }
+    ],
+    "all_pass": true
+   }
+  },
+  "composition": {
+   "required": true,
+   "path": "plugin-composition.yaml",
+   "builder": "plugin-scaffold",
+   "build_kind": "plugin-surface",
+   "build_target": "plugins/extract-system-blueprint/plugin-composition.yaml",
+   "write_scope": "plugins/extract-system-blueprint/plugin-composition.yaml",
+   "quality_gates": {
+    "path_existence": {
+     "paths": [
+      "plugins/extract-system-blueprint/plugin-composition.yaml"
+     ],
+     "all": true
+    },
+    "checks": [
+     {
+      "id": "composition-yaml",
+      "kind": "yaml-parse"
+     },
+     {
+      "id": "composition-lint",
+      "kind": "composition-lint",
+      "assertions": [
+       "capability-paths-resolve",
+       "manifest-entry-point-parity",
+       "no-duplicate-capability"
+      ]
+     }
+    ],
+    "all_pass": true
+   }
+  },
+  "responsibility_anchor_contract": {
+   "owner_component": "C01",
+   "owner_responsibility_id": "R2-analyze",
+   "anchor": "prompts/R2-analyze.md",
+   "delegated_components": [
+    "C03",
+    "C04",
+    "C05",
+    "C13",
+    "C06"
+   ],
+   "contract": "C01 responsibilities[id=R2-analyze] が分析工程の唯一のowner責務であり、delegated_components全件は同一の実在anchorを参照する。owner summaryには5 component名を全て含め、欠落・別anchor・dangling pathはquality gateをFAILにする。",
+   "marker_contract_preservation": "C06/C11のmermaid_marker_contractは本anchor正規化から独立した既存契約として逐語保持する。"
+  },
+  "harness_eval": {
+   "required": true,
+   "path": "EVALS.json",
+   "builder": "plugin-scaffold",
+   "build_kind": "plugin-surface",
+   "build_target": "plugins/extract-system-blueprint/EVALS.json",
+   "write_scope": "plugins/extract-system-blueprint/EVALS.json",
+   "quality_gates": {
+    "path_existence": {
+     "paths": [
+      "plugins/extract-system-blueprint/EVALS.json"
+     ],
+     "all": true
+    },
+    "checks": [
+     {
+      "id": "eval-json",
+      "kind": "json-parse"
+     },
+     {
+      "id": "eval-schema",
+      "kind": "schema-check",
+      "schema": "harness-evals"
+     },
+     {
+      "id": "eval-wiring",
+      "kind": "eval-lint",
+      "assertions": [
+       "component-wires-resolve",
+       "reconstruction-rehearsal-present",
+       "coverage-floor-not-lowered"
+      ]
+     }
+    ],
+    "all_pass": true
+   },
+   "llm_evals": [
+    {
+     "name": "reconstruction-rehearsal",
+     "wires": [
+      "C01.OUT1",
+      "C02"
+     ],
+     "intent": "生成blueprintから最小スカフォールド骨子を試導出し事実/推測/確度の必須フィールド欠落0とAI追加質問なし着手可を逆テストするLLM-eval"
+    }
+   ]
+  },
+  "references_config_assets": {
+   "required": true,
+   "record_in": "index.plugin_meta.ssot_dedup",
+   "builder": "plugin-scaffold",
+   "build_kind": "plugin-surface",
+   "build_target": "plugins/extract-system-blueprint/references/",
+   "write_scope": "plugins/extract-system-blueprint/references/",
+   "outputs": [
+    "plugins/extract-system-blueprint/references/expert-lens-roster.md"
+   ],
+   "quality_gates": {
+    "path_existence": {
+     "paths": [
+      "plugins/extract-system-blueprint/references/expert-lens-roster.md"
+     ],
+     "all": true
+    },
+    "checks": [
+     {
+      "id": "reference-nonempty",
+      "kind": "content-lint",
+      "assertions": [
+       "nonempty",
+       "no-placeholder",
+       "no-dangling-local-links"
+      ]
+     },
+     {
+      "id": "reference-contract-parity",
+      "kind": "contract-lint",
+      "assertions": [
+       "expert-lenses-match-C03-C06-C13"
+      ]
+     }
+    ],
+    "all_pass": true
+   },
+   "required_references": [
+    "references/expert-lens-roster.md"
+   ],
+   "contracts": {
+    "expert-lens-roster": "inventory C03-C06/C13 expert_lenses/prompt_contractを実プロンプトへ決定論展開する。実名見出し・役割・lane・非模倣/非承認guard・neutral synthesisの展開済み参照(構造化正本=inventory expert_lenses/prompt_contract)"
+   }
+  },
+  "schemas": {
+   "required": true,
+   "path": "schemas/fact-inference-confidence.schema.json",
+   "blueprint_path": "schemas/system-blueprint.schema.json",
+   "builder": "plugin-scaffold",
+   "build_kind": "plugin-surface",
+   "build_target": "plugins/extract-system-blueprint/schemas/",
+   "write_scope": "plugins/extract-system-blueprint/schemas/",
+   "outputs": [
+    "plugins/extract-system-blueprint/schemas/fact-inference-confidence.schema.json",
+    "plugins/extract-system-blueprint/schemas/system-blueprint.schema.json",
+    "plugins/extract-system-blueprint/schemas/goal-seek-loop.schema.json",
+    "plugins/extract-system-blueprint/schemas/validate-system-blueprint.py"
+   ],
+   "quality_gates": {
+    "path_existence": {
+     "paths": [
+      "plugins/extract-system-blueprint/schemas/fact-inference-confidence.schema.json",
+      "plugins/extract-system-blueprint/schemas/system-blueprint.schema.json",
+      "plugins/extract-system-blueprint/schemas/goal-seek-loop.schema.json",
+      "plugins/extract-system-blueprint/schemas/validate-system-blueprint.py"
+     ],
+     "all": true
+    },
+    "checks": [
+     {
+      "id": "schema-json",
+      "kind": "json-parse",
+      "targets": [
+       "plugins/extract-system-blueprint/schemas/fact-inference-confidence.schema.json",
+       "plugins/extract-system-blueprint/schemas/system-blueprint.schema.json",
+       "plugins/extract-system-blueprint/schemas/goal-seek-loop.schema.json"
+      ]
+     },
+     {
+      "id": "schema-meta",
+      "kind": "schema-check",
+      "draft": "2020-12",
+      "assertions": [
+       "meta-schema-valid",
+       "all-local-refs-resolve",
+       "required-discriminator-enforced",
+       "blueprint-required-fields-enforced"
+      ]
+     },
+     {
+      "id": "schema-runtime",
+      "kind": "schema-fixture-test",
+      "assertions": [
+       "valid-fixture-accepts",
+       "invalid-fact-inference-mix-rejects",
+       "dangling-evidence-rejects"
+      ]
+     }
+    ],
+    "all_pass": true
+   },
+   "contract": {
+    "intent": "fact/inference/欠測を相互排他的にし、再現可能な観測provenance(screenshot_ref・layout含む)とAIが追加質問なしに画面配置まで再現して着手するtop-level blueprint shape(screens[]含む)を共有する横断契約",
+    "required_fields": {
+     "kind": "oneOf discriminator enum: fact|inference|observation_gap",
+     "fact": "observation/value + source_url + locator + captured_at + method + snapshot_id (+任意 layout詳細・screenshot_ref。layout/screenshotもfactでありprovenance必須・原則レンズ解釈を含めない)",
+     "inference": "claim + evidence_refs(minItems=1) + confidence{level:high|medium|low,rationale} + source_observation (+任意 lens=適用した役割レンズ名。lens付与はevidence_refs/confidenceを免除しない=persona主張も接地必須)",
+     "observation_gap": "observation_status:not_observed|blocked + reason + attempted_method + budget_state。inferenceとして扱わない",
+     "apply_recommendation": "C14出力専用のinference shape拡張: inference必須フィールド(claim/evidence_refs/confidence/source_observation)に加え category enum: adopt|avoid|differentiate + own_context_ref(自社コンテキストの該当箇所参照) を必須とする。evidence_refsはblueprint実在anchorのみ許可(blueprint外の無根拠主張0)。doc-emit.py --check-applyがこのshapeをfail-closed検査する",
+     "screen": "screen_id + screenshot_ref(redacted original) + annotated_screenshot_ref(PNG) + layout_overlay_ref(SVG) + viewport{width,height,dpr,scroll_x,scroll_y,color_scheme,reduced_motion,locale} + captured_at + coverage{screen_regions_total,regions_extracted,elements_targeted,elements_extracted,fields_not_observed} + visual_formation_tree。各nodeは identity/geometry/layout/paint/typography/media/effects/pseudo_elements/state/motion/responsive/a11y/tokens/reading_order/layout_status を持ち、各fieldは observed value または {observation_status:not_observed|blocked,reason}。観測済み鍵画面はgap不可、参照先3 assetはローカル実在必須、注釈番号とelement_idは1:1対応。canvas/WebGL/closed shadow DOM等は無言欠落させない",
+     "blueprint": "metadata(+document_brand{theme_color_meta,favicon_dominant_colors,root_background,color_scheme_support})/source/snapshot/pages/routes/states/interactions/observed_requests/inferred_services/data_model/auth/ui_tokens/design_tokens{palette[role,value,canonical_hex8,gamut,usage_count],type_scale,spacing_scale,radius_scale,shadow_elevation_scale,breakpoints,z_layers,theme_variants}(C06合成・観測色の孤児0=漏れ検査対象)/content{per_screen_verbatim_copy,headings_outline,cta_inventory,meta_seo_og,structured_data,locales}(C03採取のfact)/tech_stack{signals{meta_generator,response_headers,bundle_script_src_paths,third_party_request_domains,cookie_names}(C03/C09採取のfact),identified[](name+category=framework|hosting|cdn|analytics|saas+evidence_refs+confidence)(C04のinference=シグナル事実と命名推測のレーン二層化)}/nonfunctional_baseline{transfer_bytes_by_type,request_count,cache_policy,compression,image_formats,security_headers{csp,hsts,x_frame_options,referrer_policy,permissions_policy},observed_scope}(C03/C09採取のfact・budget内訪問ページ範囲のbaselineである旨をobserved_scopeで明示)/feature_map{per_screen_affordances(forms/cta/operation_types)}(C03観測集約のfact)/user_journeys[]{task,steps[](screen_ref+action),evidence_refs,confidence}(C05のinference)/security_design{auth_method,session_mgmt,csrf_xss,csp_eval,attack_surface,adopt_avoid_practices}(C04のinference・OWASP観点・受動観測のみ)/delivery_topology{cdn_edge_origin,rendering(static|ssr|isr),cache_tiers}(C04のinference)/cwv_field_sample{lcp,cls,inp,ttfb,scope_note}(C03のfact・単一訪問参考値)/compliance_surfaces{privacy_policy,terms,tokushoho,cookie_banner_cmp:{present,url,structure_summary}}(C03/C09のfact)/site_inventory{discovered_urls,in_scope[],excluded[]{url,reason},coverage{discovered,extracted,pending,excluded},crawl_mode,layout_template_dedup}(C09採取・C12分類のfact・pending無言欠落禁止)/essence{core_problem_jtbd,target_audience,value_proposition,key_messages,tone_voice,positioning_differentiation}(C13推測→C06統合・全項目evidence_refs+confidence付きinferenceでfactと区別)/screens/mermaid_refs/unknowns/default_assumptions/request_ledger/sink_receipts"
+    }
+   }
+  },
+  "vendor": {
+   "required": false,
+   "omitted_reason": "cross-plugin SSOT を持たず plugin-root 共有 script (C09-C12) の hoist で携帯性を満たすため vendoring 不要"
+  },
+  "discovered_scripts": {
+   "required": false,
+   "omitted_reason": "surface_build_projection の射影対象外 (build 中 discovered-task 由来の還流記録。build node は各 discovered-task 側で消化済みのため新規 surface node を生成しない)",
+   "provenance": "2026-07-11 build 中 discovered-task + elegant-review 還流 (DBL-4/A2-IND-2)",
+   "outputs": [
+    "plugins/extract-system-blueprint/scripts/layout-template-dedup.py",
+    "plugins/extract-system-blueprint/scripts/validate-goal-seek-anchor.py"
+   ],
+   "consumers": {
+    "layout-template-dedup.py": "C03 layout_template_hash 同一群の代表画面決定論選択",
+    "validate-goal-seek-anchor.py": "C01/C14 goal-seek 周回末の anchor 改竄検出 (skills/ から scripts/ へ hoist 済)"
+   }
+  },
+  "mcp_app_connector": {
+   "required": false,
+   "omitted_reason": "外部runtime connectorは使わない。取得は静的HTTP(WebFetch/stdlib urllib)のみで自己完結し、JS実行を要する観測(実行後DOM/interaction/screenshot/computed style)はobservation_gap(blocked)として記録する",
+   "unconfigured_consequence": "未構成という状態自体が存在しない(外部runtime非依存)。JS実行を要する観測が当該対象の重要fact(受入C1必須fact)に該当し静的完結が実測で示せない場合はobservation_gap(blocked)を記録した上でC02をFAILにする。JS非依存で静的完結が実測で示せる場合はgap記録つきPASS可。他文書はこの条件文を参照する"
+  },
+  "surface_build_projection": {
+   "schema_version": "1.0",
+   "structural_task_ref": "PLAN-surfaces-as-build-nodes",
+   "source_selector": "plugin_level_surfaces.*[required=true]",
+   "node_id_template": "SURFACE-{surface_key}",
+   "node_kind": "plugin-surface-build",
+   "required_fields": [
+    "builder",
+    "build_kind",
+    "build_target",
+    "write_scope",
+    "quality_gates.path_existence",
+    "quality_gates.checks",
+    "quality_gates.all_pass"
+   ],
+   "projection_rule": {
+    "one_required_surface_one_node": true,
+    "dependencies": "component build nodes referenced by surface gate assertions",
+    "done_when": [
+     "builder completed",
+     "all quality_gates PASS",
+     "all declared outputs exist"
+    ],
+    "missing_required_field": "projection-fail"
+   },
+   "provenance_chain_trigger": {
+    "gate": "check-provenance-chain",
+    "pass_marker": ".gate/provenance-chain.pass",
+    "fire_when": {
+     "all_required_surface_nodes": "done",
+     "all_required_surface_quality_gates": "PASS",
+     "all_required_surface_outputs_exist": true,
+     "all_provenance_refs_resolve": true
+    },
+    "pin_inputs": [
+     "goal-spec.json",
+     "component-inventory.json",
+     "required-surface-output-sha256"
+    ],
+    "on_failure": "do-not-emit-or-refresh-pass-marker",
+    "fail_closed": true
+   }
+  }
+ }
+}

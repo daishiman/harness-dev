@@ -1,0 +1,39 @@
+{
+  "purpose": "Demonstrate the E1 intake-to-goal-spec contract and the E3 improvement-to-plan update contract.",
+  "background": "Updated from improvement-handoff.json after C04 and C05 pass markers were generated.",
+  "goal": "The updated plan records source_improvement and routes back to build without losing source_intake.",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "demo-boundary-skill",
+  "plan_dir": "plugin-plans/demo-boundary-skill",
+  "out_dir": null,
+  "source_intake": {
+    "ref": "plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json",
+    "schema_version": "2.0.0"
+  },
+  "source_improvement": {
+    "ref": "plugin-plans/harness-creator/fixtures/c9-update-flow/improvement-handoff.json",
+    "schema_version": "1.0.0"
+  },
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "The update keeps the original source_intake provenance.",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "The update records source_improvement provenance and carries validation_commands forward.",
+      "done": false,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "C11 must block --mode update when C04/C05 pass markers are missing or stale."
+  ],
+  "handoff_targets": [
+    "R2-decompose-components"
+  ],
+  "max_loops": 3,
+  "open_questions": []
+}

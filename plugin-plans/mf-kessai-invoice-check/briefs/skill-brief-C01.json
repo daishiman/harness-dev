@@ -1,0 +1,62 @@
+{
+  "skill_name": "run-mf-invoice-report",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "前月と今月の請求書発行状況を比較して漏れレポートを出して",
+    "MFの請求漏れ比較レポートを作って",
+    "run-mf-invoice-report"
+  ],
+  "output_contract": "レポートテーブル(取引先名/対象月/漏れチェック/商品名/先月の金額/今月の金額/先月と今月の比較/コメント の8列を『この左→右の順で固定』・Notion title プロパティ=取引先名(列順1番目=Notion table view は title 列を最左に固定描画するため取引先名を先頭・対象月を2列目・漏れチェック(checkbox)を3列目へ確定)・列7=テキスト説明・金額は税抜) + 判定内訳サマリ。継続発行(今月あり×前月あり)は権威ある月契約正常として漏れチェック=正常✓で必ず全行 emit し全請求書一覧を成す(非 emit は今月なし×前月なし=元々請求なしのみ)。要マスタ登録(MF実績あり×シート契約なし)も正常✓で emit する(漏れ扱いしない)。C06 sink 経由で単一恒久 DB へ書き、同月内の再実行は入力同定 {取引先(customer) × 契約ID(contract_id) × 商品(product)} と stored key (対象月,取引先名,商品名) で重複行を出さず日々追加し、契約ID違いは要対応優先で collapse 計上する(非破壊マージ=以前 run/別月の行は今回入力に無くても削除されない)。出力先 DB は明示 pin(config report_database_id・ビュー/DB URL 許容)を第一級(step0)で最優先し、未設定時のみ構造同定(トグル配下→見出し直下→ページ直下)で既存 report DB を更新する。明示 pin なし かつ 既存 report DB 未発見時は phantom DB を作らず警告停止し、新規作成は明示 opt-in 時のみ許す (出力先 DB 解決/冪等 upsert は C06 sink が所有・2026-07-10 要件1/2/3)",
+  "boundary": "入力=MF 掛け払い実績(参照専用 GET)+既存 mfk_reconcile の per-月 verdict+請求確認シート/出力=指定見出しに紐づく単一恒久レポート DB の冪等上書き。MF への書き込みはしない。イレギュラー分類の実体は C05 エンジン・出力先 DB 解決/冪等 upsert は C06 sink に委譲し、本 skill は収集→分類呼出→二段確認→冪等描画のオーケストレーションに徹する。既存 reconcile/check スキルの再設計はしない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "mfk_period_report.py",
+    "notion_report_sink.py"
+  ],
+  "external_systems": [
+    "MF KESSAI API",
+    "Notion API"
+  ],
+  "mcp_tools": [
+    "notion"
+  ],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "前月+今月+12ヶ月フル遡り収集(候補は取引先単位・分類は契約ID/商品名単位)",
+    "C05エンジンでイレギュラー分類+コメント生成",
+    "全component build後にC02 sub-agentで二段確認",
+    "C06 sinkでレポート DB へ冪等上書き"
+  ],
+  "goal": "前月↔今月の発行状況を突合し取引先名/対象月/漏れチェック/商品名/先月の金額/今月の金額/先月と今月の比較/コメントの列を持つレポートテーブルを、指定見出しに紐づく単一恒久 DB へ冪等に上書き(日々追加)生成し、12 ヶ月フル遡り(差分該当取引先のみ)で年契約/年→月切替/トライアル完了/契約終了を分類してイレギュラー行に事情コメントを焼き、真の発行漏れだけを漏れとして残し対象月列で月次履歴を保持した状態。今月は直近締め済みの請求対象月(例: 2026-07-02 実行なら 2026-06分)、先月はその1ヶ月前(2026-05分)を指す。継続発行(今月あり×前月あり)=権威ある月契約正常✓・要マスタ登録(MF実績あり×シート契約なし)=正常✓・出力先は明示 pin(report_database_id)を最優先し未設定時のみ構造同定へ fallback(phantom DB 抑止)する(2026-07-10 実運用フィードバック)",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "単月照合では拾えない前月↔今月の発行増減を一望し、正常イレギュラーと真の漏れを分離してなぜ問題ないかをコメント説明することで経理の請求漏れ確認を最新状態で回すため。継続発行=権威ある正常✓・要マスタ登録=正常✓・出力先は明示 pin 優先(2026-07-10)",
+  "responsibilities": [
+    {
+      "id": "R1-collect",
+      "summary": "対象月を決定し(例: 2026-07-02 実行なら今月=2026-06分・先月=2026-05分)、前月・今月の全取引先 MF 発行実績 (参照専用 GET) を収集して取引先×商品で状態遷移 (今月あり×前月あり/今月あり×前月なし/今月なし×前月なし/今月なし×前月あり) を抽出し、差分に現れた該当取引先のみ 12 ヶ月分の発行履歴を追加取得する。候補取得は取引先単位、分類照合は取引先×商品単位、同一取引先・同一商品の複数契約は契約IDで disambiguate できる index を作り、既存 mfk_reconcile の per-月 verdict(SUPPRESS_ENDED/SUPPRESS_ANNUAL/MATCH_ANNUAL 等・確認内容ベースの終了根拠 has_end_basis を含む)・請求確認シート由来の契約終了月も収集する。取引先の突合キーは既存 mfk_reconcile.normalize/extract_names で正規化して表記揺れを吸収する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-classify",
+      "summary": "C05 エンジンで前月↔今月の状態遷移をイレギュラー分類し各行の事情コメントを生成する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-verify",
+      "summary": "全 component build 後の runtime flow で sub-agent mfk-report-verifier を呼び、独立 context で真の漏れを問題ないと隠していないか二段確認する。C02.depends_on=[C01] は verifier prompt が C01 の出力契約を読むための build 順依存であり、C01 build が C02 実体を前提にする意味ではない",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-render",
+      "summary": "分類済みレポート行を C06 sink 経由で単一恒久レポート DB へ入力同定 {取引先×契約ID×商品} と stored key (対象月,取引先名,商品名) で冪等上書き(日々追加)し、取引先名/対象月/漏れチェック/商品名/先月の金額/今月の金額/先月と今月の比較/コメントのテーブルを最新状態にする",
+      "prompt_required": true
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "_generated": "phase-11 freshness manifest (現ビルド追随・第3次UI/essence-visual 証跡の provenance 固定)",
+  "captured_at_utc": "2026-07-11T12:03:15Z",
+  "verified_artifacts": {
+    "render-report.js": {
+      "sha256": "78269b3603eff6093b49fd46a90c98d459978c0358e5409fabd9db30a0f4529f",
+      "role": "report レンダラ + 72ch/15rem/1240px + idempotent scrollspy + print TOC非表示 + 外部font参照なし"
+    },
+    "mermaid-render.js": {
+      "sha256": "96e6ac923d3d8460f1f1420e53288b3c1e719e75bfb8b96762ee7d06ffe3e55c",
+      "role": "package-lock固定Mermaid bundleをinline携行する自己完結レンダラ"
+    },
+    "vendor/package.json": {
+      "sha256": "b51f9012e17cf7015209aaf150e8488be2b82d58c85b47e5038bee14114a20cc",
+      "role": "Mermaid 11.16.0 exact pin + Playwright + c8 test contract"
+    },
+    "vendor/package-lock.json": {
+      "sha256": "322e5b263d216a23ba9a6def2cc2131b8a85eb276313f86a58ecfea7133f029f",
+      "role": "npm resolved dependency lock (npm audit production vulnerabilities 0)"
+    },
+    "lint-vendor-parity.py": {
+      "sha256": "590e33576a49a125302acb3b78f7402a97e9249c6f413662795c54dead24aa94",
+      "role": "189 byte pins + 2 semantic pins; Mermaid exact SemVer/security floor/lock consistency"
+    },
+    "verify-report-runtime.js(C24)": {
+      "sha256": "a78c238785bce4182c7b2ca70fbc4638ef496b3570d8bcd48a880d410bad8bbf",
+      "role": "899/900/901/1024/1366/1600px + print + computed metrics + navigation event bundle"
+    },
+    "validate-report-visual.py(C25)": {
+      "sha256": "43a0fda267fbbf51a2018e4d58acf8ece81d42f6769465b9824ed51d81cc5e06",
+      "role": "決定論視覚ゲート + _check_uiux_shape(第3次UI shape回帰保護) + _check_essence_visual(role駆動) + --require-structure(fail-open封鎖)"
+    },
+    "report-structure.schema.json": {
+      "sha256": "72013eceba5fb1ab8ac68ed5444ca88fbf701f57bbedd2c2aff828565ee2c0b3",
+      "schemaVersion": "1.2.0",
+      "note": "essence-visual は既存 role/visual.kind を使い schema bump 不要 (1.3.0/visual.intent は撤回)"
+    },
+    "fixture:sample-report-structure.json": {
+      "sha256": "40fd0b790bab184f525a8e7f09b1a365dd1bfaf1d461e769f76f83feaa5f80a3"
+    },
+    "phase11:report.html": {
+      "sha256": "85dd9f39e62c2ecd1df8d6624ff2f8b9717d0feeb0b85742335092829ccdf707"
+    },
+    "phase11:runtime-bundle.json": {
+      "sha256": "6a958d7be64ad1d9db6837cc1792f6ff1d779a9aa5a98f6d7f36476df06b6061"
+    }
+  },
+  "viewports_verified": [
+    "899px",
+    "900px",
+    "901px",
+    "1024px",
+    "1366px",
+    "1600px",
+    "print (@media print・sidebar TOC非表示)"
+  ],
+  "gate_results_2026_07_11": {
+    "vendor_byte_parity": "189 sha256 + 2 additive-semantic = 191/191 PASS",
+    "pytest": "131 passed",
+    "vendor_js_tests": "npm test: render / mermaid / cross-deck / runtime self-test 全 PASS",
+    "npm_audit_production": "0 vulnerabilities (Mermaid 11.16.0 exact pin)",
+    "c19_node_coverage": "per-file lines: render-report.js 90.46% / mermaid-render.js 89.28% (>=80)",
+    "c24_runtime_bundle": "6 viewport + print + navigation/computed metrics findings 0 / PASS",
+    "c25_on_current_report": "strict warn 0 / fail 0 / exit0",
+    "c25_fail_open_closure": "--require-structure + structure 欠落 = exit2",
+    "c23_coverage": "validate-output-mode.py 92% (>80 床)",
+    "lint": "contract-drift 0 / reference-attribution ok / plugin-completeness PASS"
+  },
+  "essence_visual": {
+    "mechanism": "role駆動 (_ESSENCE_REQUIRED_ROLES={分析,主張,課題,解決,所見,影響} の論理節に非none visual を要求)",
+    "supersedes": "visual.intent={kind,message}/schema 1.3.0 (2026-07-11 plan reconcile で撤回)"
+  }
+}

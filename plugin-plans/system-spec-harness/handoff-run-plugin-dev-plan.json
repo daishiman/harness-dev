@@ -1,0 +1,339 @@
+{
+  "plan_dir": "plugin-plans/system-spec-harness",
+  "target_plugin_slug": "system-spec-harness",
+  "mode": "update",
+  "update_delta": {
+    "iteration": 3,
+    "new_components": ["C14"],
+    "respec_components": ["C01", "C02", "C03", "C04", "C05", "C11", "C12", "C14"],
+    "rebuild_required": true,
+    "new_assets": ["doctrine-anchor-registry.json", "required-info-catalog.json", "validate-knowledge-graph.py"],
+    "source": "improvement-handoff-20260712-knowledge-graph-doctrine.json + 30-method review iteration 3"
+  },
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes_status_note": "routes[].status は plan 時点の宣言 (planned) であり、実行状態の正本ではない。build 実行状態の正本は eval-log の最新 route build report / task-state を参照する (数値は本 note に焼かない。前回 build 時点の snapshot は旧 graph 基準で現 graph とはノード数が異なる。goal-spec.checklist.done=false と同型の宣言/実状態の分離)。",
+  "routes": [
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "validate-coverage-matrix.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-coverage-matrix.py"
+      },
+      "build_target": "plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+      "status": "planned"
+    },
+    {
+      "id": "C13",
+      "component_kind": "script",
+      "name": "validate-source-citation.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-source-citation.py"
+      },
+      "build_target": "plugins/system-spec-harness/scripts/validate-source-citation.py",
+      "status": "planned"
+    },
+    {
+      "id": "C14",
+      "component_kind": "script",
+      "name": "validate-knowledge-graph.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-knowledge-graph.py"
+      },
+      "build_target": "plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "name": "ref-system-design-knowledge",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C14"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "ref-system-design-knowledge",
+        "kind": "ref",
+        "brief_path": "briefs/skill-brief-C04.json"
+      },
+      "build_target": "plugins/system-spec-harness/skills/ref-system-design-knowledge/",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-system-spec-elicit",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C04", "C12", "C14"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-system-spec-elicit",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/system-spec-harness/skills/run-system-spec-elicit/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-system-spec-doc-fetch",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C13"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-system-spec-doc-fetch",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-system-spec-compile",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C04", "C12", "C13", "C14"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-system-spec-compile",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C03.json"
+      },
+      "build_target": "plugins/system-spec-harness/skills/run-system-spec-compile/",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "hook",
+      "name": "guard-confirmed-chapter-overwrite",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C03"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "guard-confirmed-chapter-overwrite"
+      },
+      "build_target": "plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "system-spec-hearing-auditor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "system-spec-hearing-auditor"
+      },
+      "build_target": "plugins/system-spec-harness/agents/system-spec-hearing-auditor.md",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "system-spec-matrix-auditor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C12"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "system-spec-matrix-auditor"
+      },
+      "build_target": "plugins/system-spec-harness/agents/system-spec-matrix-auditor.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "system-spec-doc-freshness-auditor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02", "C13"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "system-spec-doc-freshness-auditor"
+      },
+      "build_target": "plugins/system-spec-harness/agents/system-spec-doc-freshness-auditor.md",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "name": "assign-system-spec-completeness-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C03", "C04", "C06", "C07", "C08", "C12", "C13", "C14"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-system-spec-completeness-evaluator",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C05.json"
+      },
+      "build_target": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "slash-command",
+      "name": "spec-hearing-start",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "spec-hearing-start"
+      },
+      "build_target": "plugins/system-spec-harness/commands/spec-hearing-start.md",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "slash-command",
+      "name": "spec-compile",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03", "C05"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "spec-compile"
+      },
+      "build_target": "plugins/system-spec-harness/commands/spec-compile.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。GAP-ENVELOPE-001 として tracking し、script route 用 GAP-SCRIPT-BUILDER とは分離する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "ユーザー承認により distributable:true 確定済 (GAP-DISTRIBUTION-DECISION resolved・commit 00cf8f7)。.claude-plugin/marketplace.json と xl-skills-full bundle へ登録済みで approval は完了済 (status は check-build-handoff.py の ENVELOPE_STATUSES enum 内語彙 planned で resolved-user-approved 相当を表現する)"
+    },
+    "plugin_composition": {
+      "owner": "run-build-skill",
+      "status": "planned",
+      "build_kind": "plugin-composition",
+      "build_target": "plugins/system-spec-harness/plugin-composition.yaml"
+    },
+    "harness_eval": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/system-spec-harness/EVALS.json",
+      "gap_ref": "GAP-PLUGIN-SURFACE-BUILDER",
+      "gap_reason": "EVALS.json は required surface だが buildable component taxonomy 外。P05 preflight で scaffold owner と生成手段を確認する"
+    },
+    "references_config_assets": {
+      "owner": "C04",
+      "status": "planned",
+      "build_target": "plugins/system-spec-harness/skills/ref-system-design-knowledge/references/"
+    },
+    "governance_runbook": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/system-spec-harness/RUNBOOK.md"
+    },
+    "ci_workflow": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": ".github/workflows/governance-check.yml",
+      "gap_ref": "GAP-GOVERNANCE-SURFACE-BUILDER",
+      "gap_reason": "既存 governance-check workflow への plugin job wiring は component route外。P05 preflightでownerと変更範囲を確定する"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "medium",
+      "blocking": true,
+      "preflight": "P05開始前に scaffold executor の利用可能性または envelope-draft/plugin.json のmanual apply ownerを確認する",
+      "text": "plugin envelope executor is external to run-plugin-dev-plan"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "blocking": false,
+      "preflight": "P05開始前に harness-creator/scripts/build-script-route.py の実在と C12/C13/C14 route消費可否を確認する",
+      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。script route (C12/C13/C14) は harness-creator の build-script-route.py が消費し、gap_ref は routing 語彙の明示参照として維持する"
+    },
+    {
+      "id": "GAP-PLUGIN-SURFACE-BUILDER",
+      "severity": "medium",
+      "blocking": true,
+      "preflight": "P05開始前に EVALS.json の scaffold ownerと生成/検証コマンドを確定する",
+      "text": "required plugin-level surface EVALS.json は component route外のため、plugin-scaffold ownerが明示的に生成する"
+    },
+    {
+      "id": "GAP-GOVERNANCE-SURFACE-BUILDER",
+      "severity": "medium",
+      "blocking": true,
+      "preflight": "P05開始前に RUNBOOK.md owner と既存 governance-check workflow への非破壊job wiring手順を確定する",
+      "text": "plugin_metaでrequiredなrunbook/CI wiringはcomponent route外のため、plugin-scaffold ownerが明示的に生成・配線する"
+    },
+    {
+      "id": "GAP-MCP-DOCFETCH",
+      "severity": "low",
+      "text": "最新公式ドキュメント取得は当面 WebSearch/WebFetch のみで完結させ、MCP app connector 経由の取得は本 plan の対象外とする。将来的な MCP 連携拡張の要否は build 後の利用実績を踏まえてユーザーが判断する"
+    },
+    {
+      "id": "GAP-DISTRIBUTION-DECISION",
+      "severity": "medium",
+      "status": "resolved",
+      "resolution": "ユーザー承認により distributable:true 確定 (commit 00cf8f7)。plugin.json / index.plugin_meta.distribution / envelope-draft/plugin.json を true 化し、.claude-plugin/marketplace.json と xl-skills-full bundle へ登録済み",
+      "text": "marketplace 配布可否 (distributable) は goal-spec.open_questions の未確定事項だった。利用単位 (個人利用かチーム/複数プロジェクト共通の再利用資産か) の判断を含む。当初は distributable:false で計画していたが、ユーザー承認により distributable:true で確定した"
+    },
+    {
+      "id": "GAP-TASKGRAPH-P02-PROJECTION",
+      "severity": "high",
+      "blocking": true,
+      "status": "acknowledged-deferred",
+      "scope": "planner-wide (run-plugin-dev-plan の derive-task-graph.py 出力形状・本 plan の system-spec-harness 内容とは直交)",
+      "decision": "ユーザー承認 (2026-07-12): 改善要望 (知識依存グラフ C13/C14・doctrine anchor C15・必須情報カタログ C16) の反映は C1-C3 全 PASS + 決定論ゲート12本 exit0 で漏れなく完了と確認済み。本 issue は planner (run-plugin-dev-plan) 共通の task-graph 射影構造欠陥であり本 plan 内容と独立のため、planner 出力形状の構造変更は別案件として据え置き、本 plan は open_issue 明記のうえ確定する。system-spec-harness の plan 内容は完成扱い",
+      "build_impact": "task-graph mode で L4 build する際に phase-wide/他 component 固有 AC が無関係 component の write_scope へ複製され作業割当ノイズになる。回避策=fixed-13-phase の phase item を owner で解釈するか、planner 構造変更 (下記 preflight) を先に実施する",
+      "preflight": "構造変更を実施する場合: phase itemへscope=phase|componentとowner_entitiesを導入しderive-task-graph.pyを更新、task-graphを再生成してC4を再評価する",
+      "text": "phase checklist×entities_covered直積射影によりphase-wide/他component固有taskが無関係write_scopeへ接地する。task-graph.json手編集では直らずplanner出力形状の構造変更が必要。30思考法3独立Agentが同一根本原因をhighで検出"
+    }
+  ]
+}

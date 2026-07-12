@@ -1,0 +1,217 @@
+{
+  "plan_dir": "plugin-plans/slide-report-generator",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "staleness_rule": "本 findings は evaluated_inputs に記録した sha256 を鮮度アンカーとする。被評価ファイルの現 sha256 が evaluated_inputs の値と一致しない場合、本 verdict は stale として扱い再評価が必要 (SHA 手書換や無断更新後の使い回しは無効)。",
+  "evaluated_inputs": [
+    {"path": "index.md", "sha256": "bd2d9d25bd96e4659641d46fadf8d58c81d088403e3b891d1abfa4636366f467"},
+    {"path": "goal-spec.json", "sha256": "c259c8f42c3cddc0dc157f0cd258e970a8751f5562f90d38f82889753cf20b22"},
+    {"path": "source-inventory.md", "sha256": "ced60f4890bb44930bdf84f4958519c764705fa82a40e464ae0daa1570b3c5e2"},
+    {"path": "component-inventory.json", "sha256": "cbd80e7518dbc83ee9cca827751caa87e51272d15f041a92c268045c568af0f3"},
+    {"path": "handoff-run-plugin-dev-plan.json", "sha256": "fd2cee534b35bc22504fe3529d542e65354e5ed441ad5c8b8bcd0c8edc87cf9f"},
+    {"path": "envelope-draft/plugin.json", "sha256": "bed8a7748a1cb9f4e32a8fdca29b449cf821b181a90aec36da1f45e0fdd29040"},
+    {"path": "vendor-digest-manifest.json", "sha256": "95b517e9f1802b2719445fb3d0c3e81bf4b64a382baabfc80d01cb5c42e8305f"},
+    {"path": "phase-01-requirements.md", "sha256": "517480f713dae3c351ce6c4bff25be72ba8dfecb9496d4967d27c757d2488ea8"},
+    {"path": "phase-02-design.md", "sha256": "0d5fbb884db56b9df5bd3fe458c67e2487ac6f1a3497d1d79e39798b53e0f1d0"},
+    {"path": "phase-03-design-review.md", "sha256": "7c49155adada3b1d01c3efdb9a5a288aae6a04e6c4f255b25a23bbe9c200fe2c"},
+    {"path": "phase-04-test-design.md", "sha256": "117d96786562bf5fec2e477ed5c50e5cb650c2ac761d4b7df763507e88e6c4ac"},
+    {"path": "phase-05-implementation.md", "sha256": "beae1c222f6fa87637db5ef8e42ad3497f195c418806ae76b383722589a72459"},
+    {"path": "phase-06-test-run.md", "sha256": "24766212c1954471afd735a8953c8303dc4d97ba91d5f3f61f3433cbc8971cee"},
+    {"path": "phase-07-acceptance-criteria.md", "sha256": "329884f65f6f92a1685d6f394fe6a7292141c82e630710f761689b0d0ee89e2e"},
+    {"path": "phase-08-refactoring.md", "sha256": "52c41fc5e24cd93165165ab7970f43e0c4a9c38cb95dccbd1c2cbfced7dbe8ea"},
+    {"path": "phase-09-quality-assurance.md", "sha256": "254e528ce494e5c7f71a6bad2e0b6338e01fbf1a5fbcb068265b37ea62007ca4"},
+    {"path": "phase-10-final-review.md", "sha256": "6f1bfdd8c78dbeed6eb70ee36f24ff9520a81e9e8a36316a7c1730179bda3977"},
+    {"path": "phase-11-evidence.md", "sha256": "72ca721db784dfe6a615302257ef5486acb572affe8dca4a95b71463d379a65e"},
+    {"path": "phase-12-documentation.md", "sha256": "640529cf5bbca64ceefd5892e044b89312ffbd9215fd6c3a4a0a36ccad27131c"},
+    {"path": "phase-13-release.md", "sha256": "605dc7e8a389904986b6f80bd7fdc4cb2a2d2d723b9129e1439de7671d0729a6"}
+  ],
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし。前回 FAIL 判定時に残っていた distribution 方針の宙ぶらりん (distributable:true+bundles非空 vs meta-tool 系の distributable:false 前例) は index.md/envelope-draft/plugin.json とも distributable:false・bundles:[] に確定済で一致。vendor 携行方式も『whole-tree byte copy』へ全ドキュメント (index.md/goal-spec.json/source-inventory.md/component-inventory.json) で統一され、itemized allowlist との矛盾が解消。check-build-handoff exit=0。",
+      "evidence": [
+        "index.md plugin_meta.distribution: {distributable:false, bundles:[], marketplace:false}",
+        "envelope-draft/plugin.json: distributable=false, bundle_targets=[]",
+        "component-inventory.json plugin_level_surfaces.vendor.copy_mode='whole-tree' が index.md/goal-spec.json/source-inventory.md の『byte 携行』記述全てと整合",
+        "check-build-handoff.py 実行結果: exit_code=0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし。前回 FAIL の根拠であった vendor surface の itemized allowlist から共有ランタイム utils.js 等 4 本が欠落していた問題は、携行方式を『scripts/・assets/・schemas/・package.json をサブツリー丸ごと byte copy する whole-tree 方式』へ転換し解消。vendor-digest-manifest.json (195 files pinned) の scripts/ subtree に utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js が sha256 付きで実在し、component-inventory.json vendor.contents にも明記される。決定論ゲート全 exit0。",
+      "evidence": [
+        "component-inventory.json plugin_level_surfaces.vendor.copy_mode='whole-tree'・byte_parity_subtrees[0].policy='丸ごと byte copy。30 Node script(*.js/*.cjs 全数・utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む)+ hooks/deck-postgen-hook.js(移植元)+ templates/(118)+ test-fixtures/ を例外なく携行'",
+        "vendor-digest-manifest.json subtrees[0] (source=scripts/) files に utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js が個別 sha256 pin 済み (file_count=160, 実カウントと一致)",
+        "vendor-digest-manifest.json 全 subtree 合計 file_count=195 (scripts160+assets25+schemas8+package.json1+package-lock.json1) が component-inventory.json vendor.parity_scope.baseline の『195 files pinned』と一致",
+        "detect-unassigned.py exit=0 / check-surface-inventory.py exit=0 / check-requirements-coverage.py exit=0 / check-plugin-goal-spec.py exit=0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり。前回指摘の 118 templates 二重記載 (vendor と references_config_assets の両方に実体記載) は references_config_assets.pointer_only へ一本化し vendor 側のみを byte 正本とする設計で解消。schemas surface も真 schema 4本+新設1本と example fixture 3本の内訳を note に明記し二重 SSOT を回避。13 phase frontmatter/gates/matrix-coverage は全 exit0。",
+      "evidence": [
+        "component-inventory.json plugin_level_surfaces.references_config_assets.pointer_only.items に '118 HTML templates(実体= vendor scripts subtree の templates/)' と明記、byte_parity_owner='vendor(whole-tree)'",
+        "component-inventory.json plugin_level_surfaces.schemas.note が example fixture 3本の置き場を vendor.byte_parity_subtrees の schemas-fixtures subtree へ一本化明記 (LOW-2 解消の記述)",
+        "check-spec-frontmatter.py exit=0 / check-spec-gates.py exit=0",
+        "check-spec-matrix-coverage.py --self-test exit=0 (46行 table と reflection.md 一致)",
+        "check-spec-matrix-coverage.py plugin-plans/slide-report-generator exit=0 (OP=10/conditional=19/N-A=17, 計46)"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合。component 依存 DAG は非循環 (topsort exit0)。手動突合で確認: sub-agent のうち tools に Bash を持つ 10 本 (C06/C10/C11/C12/C13/C14/C15/C16/C18/C19) にのみ handoff routes[].requires_surfaces=['S-VENDOR'] が付与され、Bash を持たない設計系 6 本 (C04/C05/C07/C08/C09/C17) には付与されない厳密な 1:1対応。surface_tasks は S-VENDOR を order=1 で pre-routes 配置し S-SCHEMAS/S-REFERENCES が post-S-VENDOR で依存順序も整合。",
+      "evidence": [
+        "verify-index-topsort.py exit=0 / check-runtime-portability.py exit=0",
+        "python3 突合結果: tools に Bash を持つ sub-agent id集合 = {C06,C10,C11,C12,C13,C14,C15,C16,C18,C19} が handoff routes[].requires_surfaces=['S-VENDOR'] を持つ id集合と完全一致。C04/C05/C07/C08/C09/C17 (tools=[Read,Write]のみ) は requires_surfaces 未設定で一致",
+        "handoff-run-plugin-dev-plan.json surface_tasks: S-VENDOR(order=1,sequencing='pre-routes') → S-SCHEMAS/S-REFERENCES(order=2/3,sequencing='post-S-VENDOR') → S-COMPOSITION/S-EVALS(order=4/5,sequencing='post-routes')",
+        "check-build-handoff.py exit=0 (23 routes + envelope 契約充足)"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py", "--inventory", "plugin-plans/slide-report-generator/component-inventory.json", "--specs-dir", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C2", "C4"],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py", "--specs-dir", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py", "--specs-dir", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "--self-test"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46) / OK: 適用される全マトリクス行の焼き先が反映済み"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py", "plugin-plans/slide-report-generator/component-inventory.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py", "plugin-plans/slide-report-generator/handoff-run-plugin-dev-plan.json"],
+      "exit_code": 0,
+      "conditions": ["C1", "C4"],
+      "stdout": "OK: build handoff が 23 routes と envelope 契約を満たす"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py", "plugin-plans/slide-report-generator"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"
+    },
+    {
+      "id": "G11",
+      "name": "check-plugin-goal-spec",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py", "plugin-plans/slide-report-generator/goal-spec.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: plugin goal-spec schema + plugin anchors validated (拡張ゲート・runner 外を独立実行)"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C2",
+      "observation": "旧 plan-findings.json (verdict FAIL) の HIGH 根拠だった『vendor.contents の itemized allowlist から共有ランタイム utils.js が欠落』は、本改訂で vendor 携行方式を copy_mode=whole-tree (scripts/・assets/・schemas/・package.json をサブツリー丸ごと byte copy) へ転換し解消済みと現状ファイルから確認した。vendor-digest-manifest.json に utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む scripts subtree 160 ファイル (30 Node script + hooks 1 + templates 118 + test-fixtures 8 + 移植元 png 3) が sha256 pin 済みで実在する。",
+      "evidence": [
+        "component-inventory.json plugin_level_surfaces.vendor.copy_mode='whole-tree'",
+        "vendor-digest-manifest.json subtrees[0].files に utils.js(sha256=8b60b170db153b651f846d74d65a50f91ff53fb07ca55bc2b447b06bc41d6a19)・log_usage.js・html-scaffold.js・test-schema-builder-equivalence.js が実在"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C3",
+      "observation": "旧 findings の LOW 根拠だった『118 templates が vendor.contents と references_config_assets.contents の両方に実体記載され byte-parity owner が曖昧』は、references_config_assets.pointer_only 節を新設し owner を vendor(whole-tree) に一本化する形で解消済みと現状ファイルから確認した。schemas surface も真 4 schema+新設 1 と example fixture 3 本の置き場 (vendor schemas-fixtures subtree) を note で明示し二重 SSOT を回避している。",
+      "evidence": [
+        "component-inventory.json plugin_level_surfaces.references_config_assets.byte_parity_owner='vendor(whole-tree)。本 surface は文書/参照のみを byte 実体として保有し...二重管理しない(LOW-1 解消)'",
+        "component-inventory.json plugin_level_surfaces.schemas.note '...LOW-2: 置き場を vendor 側に確定し、本 surface は真 schema 4(+新設1)本の記録に専念する二重 SSOT 回避'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "open_question",
+      "observation": "handoff-run-plugin-dev-plan.json の open_issues に GAP-ENVELOPE-001 (manifest/marketplace scaffold executor が planner 外) と GAP-SCRIPT-BUILDER (plugin-scaffold が contract-only・C23/S-VENDOR の実行実体未整備) が severity=high のまま残存する。これらは build 段階でのみ解消可能な既知の構造的ギャップとして各 route/surface_task に fallback_builder・resolution_condition が明記されており、plan 段階の C1-C4 判定の FAIL 根拠にはしない (build 後にしか検証できない事項を plan 段階の FAIL 根拠にしないという評価方針に基づく)。",
+      "evidence": [
+        "handoff-run-plugin-dev-plan.json open_issues[0].id=GAP-ENVELOPE-001 (severity=high, resolution_condition記載)",
+        "handoff-run-plugin-dev-plan.json open_issues[1].id=GAP-SCRIPT-BUILDER (severity=high, resolution_condition記載)",
+        "routes[C23].fallback_builder='run-build-skill' / surface_tasks[S-VENDOR].builder_status='contract-only'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "決定論ゲートは plan-scope の core 6 invocation + 拡張 5 本 (check-plugin-goal-spec/check-surface-inventory/check-build-handoff/check-requirements-coverage/check-runtime-portability) = 計 11 invocation を本評価で独立に python3 実行し全 exit0 を確認した。check-plugin-surface-audit.py (build 済 plugins/ 実体前提) と check-upstream-pins.py (plugin-dev-planner 自身の upstream 引用台帳が対象) は plan-scope 外のため非対象。",
+      "evidence": [
+        "G1-G11 gate_results 全 exit_code=0",
+        "check-plugin-surface-audit.py docstring: 'This checks the real plugins/<name>/ directories, not a generated plan'",
+        "check-upstream-pins.py purpose: 'references/upstream-pins.json に台帳化した plugin 境界外の契約級引用の鮮度を検証' (plugin-dev-planner 自身のリファレンス台帳が対象で本 plan 非対象)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "schema_extension",
+      "observation": "本 findings に追加した evaluated_inputs / staleness_rule フィールドは、plan-findings.schema.json (additionalProperties:false・plan_dir/evaluator/verdict/conditions/gate_results/findings のみ許容) の現行定義には未収載。caller 指示により本 genuine 再評価の鮮度アンカーとして追加したが、スキーマ側の追従 (2 フィールドの許容) を owner_skill (assign-plugin-plan-evaluator) 側で別途検討されたい。",
+      "evidence": [
+        "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/schemas/plan-findings.schema.json top-level additionalProperties=false"
+      ]
+    }
+  ]
+}

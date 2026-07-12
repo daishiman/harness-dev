@@ -1,0 +1,55 @@
+{
+  "name": "ubm-goal-setting",
+  "version": "0.1.0",
+  "description": "北原さん式ゴールセッティングの目標設定・振り返り対話とナレッジ差分同期を提供する plugin の manifest draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/ubm-goal-setting/.claude-plugin/plugin.json へ適用する。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "config": {
+    "vault_root_env": "UBM_VAULT_ROOT"
+  },
+  "entry_points": {
+    "skills": [
+      "run-ubm-goal-setting",
+      "run-ubm-knowledge-sync"
+    ],
+    "agents": [
+      "info-collector",
+      "output-formatter",
+      "goal-reviewer",
+      "phase3-coordinator",
+      "step1-current-review",
+      "step2-gap-analysis",
+      "step3-goal-setting",
+      "step4-action-plan",
+      "step5-final-check",
+      "knowledge-extractor"
+    ],
+    "commands": [
+      "ubm-goal-setting",
+      "ubm-knowledge-sync"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/ubm-write-path-guard.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "productivity",
+  "tags": [
+    "goal-setting",
+    "knowledge-sync",
+    "obsidian"
+  ]
+}

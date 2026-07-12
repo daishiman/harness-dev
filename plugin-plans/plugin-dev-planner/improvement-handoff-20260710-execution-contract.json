@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "plugin-plans/plugin-dev-planner/index.md",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY"
+  },
+  "target_plugin_slug": "plugin-dev-planner",
+  "plan_dir": "plugin-plans/plugin-dev-planner",
+  "findings": [
+    {
+      "id": "F-EXEC-001",
+      "severity": "high",
+      "summary": "13 phase 文書、task-graph node、component route の役割分担が利用者向けに閉じておらず、各 node が13文書をすべて実行するのか、titleだけで実行するのかを判別できない",
+      "recommendation": "13 phase は共通ライフサイクル契約、node は1検証可能成果物の実行単位、route はbuildable componentへの写像と固定し、1 node は phase_ref で1つの phase policyだけを参照する三層モデルを正本化する",
+      "target_ref": "plugin-plans/plugin-dev-planner/index.md"
+    },
+    {
+      "id": "F-EXEC-002",
+      "severity": "high",
+      "summary": "現行 consumer は node title/phase_ref/entity_ref と先行成果物・handoff notesを個別に扱うが、SubAgentへ渡す完全な実行契約が単一 schema として存在せず、titleをprompt代わりに使う余地がある",
+      "recommendation": "execution_kind/task_spec_ref と TaskExecutionEnvelope を導入し、component-buildだけが明示route_refを持つ。entity_refは分類専用とし、node identity/objective、該当phase契約、route、二値受入基準、write_scope、先行成果物、handoff notes、knowledge refs、検証方法をdispatch前に決定論合成する。title単独・entity_ref暗黙routeをfail-closedで禁止する",
+      "target_ref": "plugins/harness-creator/commands/capability-build.md"
+    },
+    {
+      "id": "F-STATE-001",
+      "severity": "medium",
+      "summary": "利用者がtask-graph.jsonのstateを直接更新する設計と誤認しやすいが、canonical graphを実行中に更新するとgraph_hash pinが毎遷移で壊れる",
+      "recommendation": "構造SSOT=task-graph.json、可変状態SSOT=task-state.json、観測ビュー=task-graph-status.json/task-progress.mdを明示し、status更新はconsumer単一writerによるtask-state更新と投影で満たす。discovered-taskはpin済みgraphを直接更新せず外ループで新revision/hashへ反映する",
+      "target_ref": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/task-graph-contract.md"
+    },
+    {
+      "id": "F-KNOW-001",
+      "severity": "medium",
+      "summary": "完了済みtask仕様書・過去graph・蒸留knowledgeの棲み分けと、同一pluginの次改善cycleへ何を再利用するかがplan内で説明不足",
+      "recommendation": "完了spec/graphはcycle配下でimmutable provenanceとして保持し、plan-ledgerでlineageを結ぶ。次cycleには全文や過去nodeをactive DAGへ混在させず、根拠付きknowledge_refと明示的external artifact inputだけを有界注入する",
+      "target_ref": "plugin-plans/plugin-dev-planner/goal-spec.json"
+    },
+    {
+      "id": "F-SHAPE-001",
+      "severity": "medium",
+      "summary": "C10の『13ファイル固定解除』が、13 phase lifecycle自体を廃止する設計にも読めるため、共通phase policyと可変task specsの関係が曖昧",
+      "recommendation": "13 phase lifecycle policyは互換性のある共通ガードレールとして維持し、可変なのはtask-specs/<task-id>.md群と明記する。task-graph nodeはtask_spec_refで1件を参照し、phase_refは適用policyを指す",
+      "target_ref": "plugin-plans/plugin-dev-planner/goal-spec.json#C10"
+    },
+    {
+      "id": "F-DAG-001",
+      "severity": "high",
+      "summary": "component依存をentity_ref一致task集合間へ直積展開した結果、初期graphは105 nodes/1101 edgesとなり、同一title複製と推移冗長edgeが多数発生していた",
+      "recommendation": "component依存はcompletion barrierまたはproduces/consumes artifact joinへ1回だけ写像し、task集合の直積、推移冗長depends_on、同一phase/title/route複製、density上限超過をvalidatorで拒否する",
+      "target_ref": "plugin-plans/plugin-dev-planner/phase-04-test-design.md#C2-受入例-task-graph-導出--validator-exit0"
+    }
+  ],
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": "plugin-plans/plugin-dev-planner/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation-2026-07-10-plugin-dev-plan-task-graph-execution-contract"
+    }
+  }
+}

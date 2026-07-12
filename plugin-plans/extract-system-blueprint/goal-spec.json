@@ -1,0 +1,98 @@
+{
+  "purpose": "参考システム(LP/アプリ/Webシステム)のエントリURLから連なるシステム関連URL群(same-origin+承認済related origin。アフィリエイト/広告/外部SNS/トラッカーは除外)を低負荷で全域被覆し、各画面のフロント表層(見た目・画面配置・文字=コピー)・機能アフォーダンス・技術スタックの一次シグナル・非機能の観測値(CWV参考実測含む)・セキュリティ観測fact・コンプライアンス周辺表面を事実として、バックエンド機構・UI/UX設計意図・コンテンツの伝達意図・本質的問題(JTBD)・技術スタックnamed同定・ユーザージャーニー・セキュリティ設計・配信インフラ構成を根拠つき推測として抽出し、AIに渡せば自社版スカフォールドをそのまま生成でき、自社コンテキストを与えれば採用/回避/差別化の適用推奨まで導出できる構造化ドキュメント群(md+json+Mermaid)へ落とし込む plugin 規模のハーネスの開発計画を作る。",
+  "background": "現状は対象URLをブラウザで開き目視確認し検証ツール(F12)でHTML/CSS/通信を確認する手作業3ステップで、分析・仕様書作成・自社構築の前段作業に週2.5回×平均90分規模のコストがかかっている。深層課題(D2採択)は『URL解析結果から自社実装の雛形・設計ドキュメントを即生成し自社構築の着手を速くする』ことであり、単なるURLスクレイピングとの差別化は事実と根拠つき推測を明示区別しAI入力として機能する構造化文書を生成する点にある。抽出範囲はR2(フロント事実+根拠つき推測バックエンド、対象を縮小せず根拠つき推測の第一級化で『漏れなく全部』を実現)、出力構造はF2(章別分離 md+json+Mermaid)、実行単位はU2(plugin規模: command/skill/agentへの責務分離)を採用。第一読者は開発チームに加えAI(自社版スカフォールド生成の入力)でもある。",
+  "goal": "対象システムの公開URL 1件を起点に、sitemap/robots/same-originリンクグラフからシステム関連の全URLを台帳化(アフィリエイト/広告/外部SNS等はexcluded+reasonで除外)し、認可済み・低負荷budget内でcache+ledgerによる複数実行再開により全in-scope画面を調査し、provenance付きfact(視覚形成+verbatimコピー+tech_signals+nonfunctional_baseline)・根拠付きinference(バックエンド/UIUX/コンテンツ伝達意図/本質的問題JTBD/技術スタックnamed同定)・observation gapを明示区別した章別blueprint(md+json+対象接地Mermaid5種+essence章)をlocal draftへ生成し、独立C02 verdictが同一draft hashへPASSした状態で、AIが追加質問なしで自社版scaffoldへ着手でき、さらに自社コンテキストを与えたときはC14(run-blueprint-apply)がPASS済blueprintを入力に採用/回避/差別化のapply-recommendations(全項目evidence_refs+confidence付きinference)をローカルへ導出できる状態になっている。",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "out_dir": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "対象URLを調査したとき、静的/SSRのHTTP応答から観測できるUI要素・画面構造・観測通信(JS実行後DOM・画面遷移はレンダリングを要するためC15 browser-render取得時のみfact・ブラウザ不在時はobservation_gap)、および文字(コピー)を形成するcontent fact(見出し階層h1-h6・本文/CTA/microcopy/placeholder/alt/aria-labelのverbatimテキスト・meta/OGP/構造化データ・言語locale)、および既取得のresponse/network traceから追加networkなしで採取するtech_signals fact(response header(server/x-powered-by等)・meta generator・bundle/script srcパス・third-party request domain・cookie名)とnonfunctional_baseline fact(resource type別転送byte・request数・cache policy・content-encoding圧縮・画像format・security headers=CSP/HSTS/X-Frame-Options/Referrer-Policy/Permissions-Policy。観測はbudget内で訪問したページ範囲に限定される旨をスコープ明示)、機能アフォーダンスfact(各画面のフォーム/フィールド構成・CTA・入力検証UI・操作種別)、CWV参考実測fact(既存訪問sessionの計測APIからLCP/CLS/INP/TTFBを追加networkなしで採取し『単一訪問・単一環境の参考値』とscope_note明示)、security観測fact(cookie属性Secure/HttpOnly/SameSite・認証UI観測・CSP全文)、compliance表面fact(privacy policy/利用規約/特商法/cookieバナー・CMPの存在・URL・構成要約)、site URL台帳fact(sitemap.xml/robots/same-originリンクグラフから発見したURL一覧とin_scope/excluded分類)が provenance つきfactとしてmd+jsonへ抽出され、未観測/遮断箇所はinferenceへ昇格せずobservation_status=not_observed|blockedとして理由と共に記録済みの状態を満たす。",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C2",
+      "criterion": "フロント表層の観測事実が揃ったとき、ボタン配置の根拠や想定されるバックエンド機構・設計意図に加え、コンテンツが伝えたいこと=価値提案・キーメッセージ・訴求の情報階層・想定読者・トーン&ボイス・CTA意図と、対象が解こうとする本質的問題(JTBD)仮説、およびtech_signals factを根拠とする技術スタックのnamed同定(framework/hosting/CDN/analytics/外部SaaS。例: Next.js/Vercel/Stripe)、セキュリティ設計仮説(認証方式/セッション管理/CSRF・XSS対策/CSP評価/攻撃面と『真似すべき/避けるべきプラクティス』。OWASP観点レンズ・受動観測のみで侵入テスト/脆弱性スキャンは行わない)、配信トポロジー仮説(CDN/edge/origin構成・static|SSR|ISR判定・キャッシュ階層)、および主要タスク(登録/購入/問合せ等)の開始→完了ユーザージャーニー仮説が、根拠+確度つき推測として事実と明示区別されjsonへ記録済みの状態を満たす。機能アフォーダンス(各画面の操作可能要素=フォーム/フィールド構成/CTA/入力検証UI/操作種別)はC03のfactとして観測集約され、feature_mapとuser_journeysはjourney推測と明示区別される。推測の導出は著名エンジニアの役割レンズ(フロントエンド/バックエンド/UI-UX/コンテンツ・製品/アーキテクチャ/セキュリティ)を用いて深めるが、各レンズ由来の主張も evidence_refs+confidence を必須とし、fact レーンはペルソナ中立に保つ(意見を事実化しない)。自社コンテキスト提供時にC14が導出するapply-recommendations(採用/回避/差別化)も全項目この推測レーン規律(blueprint anchorへのevidence_refs+confidence必須)に従い、blueprint本体へ混入しない。",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C3",
+      "criterion": "ドキュメント生成が完了したとき、対象システム接地の5種のMermaid図(①対象システム全体構成図/②事実↔推測区別レイヤ図/③画面遷移図(screen-flow)/④データフロー・リクエスト/レスポンスのシーケンス図/⑤主要エンティティのデータモデル図)が製品出力に含まれている状態を満たす。harness-meta図(as-is/Before-After/plugin責務分離)は本plan自身の可読図であり製品出力契約から除外する。",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "抽出結果が確定したとき、ローカルファイル(md+json+Mermaid+観測できたlayout.json)へドキュメント群が出力され、独立C02 verdictの品質評価対象として揃っている状態を満たす(screenshot/JS実行後DOMはC15 browser-render取得時fact・ブラウザ不在時observation_gap・外部サービス公開なし・自己完結)。",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C5",
+      "criterion": "抽出作業全体を通じて、根拠付きAuthzEvidenceがallowの範囲だけを取得し、deny|unknown・期限切れ・認証必須領域をfail-closedに遮断したledgerが残り、無断アクセスや実侵入・認可外スクレイピングを一切行っていない状態を満たす。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "生成物一式をAIへ渡したとき、追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度(事実+根拠つき推測+確度が揃っている)を満たす。特にblueprintのessence章が『対象が解こうとする本質的問題(JTBD)・想定読者・価値提案・キーメッセージ・トーン&ボイス・positioning/差別化』を明示し、AIが見た目(色/配置)だけでなく『何を・誰に・なぜ伝えるか』まで含めて再構成できる状態を満たす(見た目のみ再現の空の器を禁止)。加えて自社コンテキスト(自社製品/技術制約の文書または自然文)を与えたとき、C14(run-blueprint-apply)がC02 PASS済blueprintのみを入力に採用(adopt)/回避(avoid)/差別化機会(differentiate)の3分類apply-recommendationsをローカルへ導出でき、全項目がblueprint実在anchorへのevidence_refs+confidence付きinferenceで、blueprint外の無根拠主張が0件である状態を満たす(自社コンテキスト未提供時はblueprint単体で完結しC14は発火しない)。またblueprintがfeature_map(機能一覧)とuser_journeys(主要タスクの開始→完了フロー)章を含み、AIが『どの画面で何ができ、ユーザーがどう目的を達するか』まで再構成できる状態を満たす。",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C7",
+      "criterion": "plugin構成が確定したとき、取得・分析・生成・品質評価・自社適用の責務がcommand/skill/agentへ単一責務分解されている状態を満たす。",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "調査の全期間を通じて、対象originごとの並列数1・request/byte/interaction予算・最小間隔・cache再利用・Retry-After尊重・有界backoff・429/403/robots/予算超過時の停止が適用され、対象システムへ過剰な負荷を与えていない状態を満たす。サイト全域被覆(full_siteモード)でも瞬間負荷レバー(origin並列1・最小間隔・上限)は一切緩めず、1実行はper-runページ/byte予算で有界とし、cache+request ledger+site coverage manifestで複数実行に分けて再開して全in-scope URLへ到達する(『ゆっくり確実に全部』)。full_siteモードのper-run既定を超える引上げはユーザー承認対象とする。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C9",
+      "criterion": "対象システムの主要画面について、再形成に必要なvisual formation全カテゴリが観測される(静的に観測できる範囲=宣言色/DOM構造/layout宣言/font token/a11yはprovenance付きfact、viewport screenshot/rendered DOM/computed幾何/interaction stateはC15 browser-render(任意のローカルheadless Chrome・MCP非依存)取得時のみfact・ブラウザ不在時はobservation_gap(browser-unavailable))。カテゴリは identity/content、geometry/box model、layout、paint(前景/背景色・画像/gradient(種別/角度/stops)・border/radius/outline・shadow・opacity・filter/blend・caret-color・accent-color・text-decoration-color・::selection色・scrollbar色。色値は正準表現hex8(RGBA)+広色域(oklch/display-p3使用時)+元記法を保持)、typography(font family/fallbacks/weight/style/size/line-height/letter-spacing/text系に加え、再現用にfont provider/@font-face src/format/variable軸)、media(image/SVG/icon/srcset)、effects(transform/clip-path/mask)、pseudo-elements(before/after/marker/placeholder/selection)、interaction state(default/hover/focus/active/disabled/checked/selected/expanded/open/validation/cursor)、motion(transition/animation/keyframe/reduced-motion)、responsive差分、a11y(role/name/tab/focus/hit-target/contrast)、CSS custom property/design token とする。加えて(A)これら要素単位の色/サイズ/影/角丸/間隔を重複排除して blueprint レベルの合成 design-token パレット(全カラーパレット=CSS変数未宣言のhard-coded色も含みbrand/primary/accent/bg/text/border/state等の役割ラベル付・type scale・spacing scale・radius scale・shadow/elevation scale・breakpoint・z-layer)へ合成し、AIが色合いを一貫再現できる source として design-tokens.json へ出力する(合成owner=C06・emit=C11・completeness=C02)。(B)対象が prefers-color-scheme で light/dark 等のテーマを持つ場合は両テーマの色セットを取得し(rendering必須分はC15 browser-render取得時) theme 別に記録する(未対応/未取得は理由付きgap)。(C)文書レベルのブランド色(meta name=theme-color・favicon/app-icon とその主要色・root背景・color-scheme対応)を metadata へ記録する。画面→region→主要elementのcoverage manifestを持ち、各fieldは観測値またはnot_observed|blocked+reasonのどちらかで、無言欠落を許さない。ローカルには常に観測できたlayout.json+番号付きlayout-overlay.svg(テキスト演算)を残し、C15 browser-render取得時はrendered DOM/viewport screenshotも残す(ブラウザ不在時はobservation_gap)。注釈番号とelement_idは1:1対応し、AIが追加質問なしに観測できた配置を再現できる粒度とする。鍵画面はgap不可、responsive未捕捉profileやcanvas/WebGL/closed shadow DOM等は理由付きgapとし、PII・機微は未redactのままlocal/evidenceへ残さない。サイト全域被覆時は台帳の全in-scope画面を観測対象としつつlayout template hashで同型ページを重複排除して無駄取得を避け、coverage manifestはdiscovered/extracted/pending/excluded(+reason)を無言欠落なく保持し、部分クロールを完全被覆と偽装しない(pendingをC02が判定する)。検証責務の対応: 機械床=doc-emit.py --check-screens(13カテゴリ/layout+overlay asset実在・browser-render取得時のrendered/screenshot含む/観測色palette孤児0/pending非偽装/browser不在時のgap非偽装)、粒度・redaction妥当性のLLM判定=C02 verdict。",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "スコープ外: UBM機能開発固有物のうち PR作成/Cloudflare/IPC は本構想に含まない。ただし『分析対象システムの細かなレイアウト記録(+C15 browser-render取得時の有界スクリーンショット/rendered DOM)』は本構想の製品成果物として in-scope(C9)であり、UBMがDROPした『自プラグイン自身のGUIランタイム証跡スクショ』とは別物(後者は本plugin成果物がMarkdown/CLI主体ゆえ引き続き不要=P11 evidence)。harness-creatorネイティブ規律(TDD/評価/goal-seek/feedback-contract)は伝播対象として保持する。",
+    "分析品質向上のため、C03(frontend)/C04(backend)/C05(uiux)/C13(content-intent)/C06(architecture) の各 responsibility anchor へ著名エンジニアの原則レンズを焼く。**構造化正本はcomponent-inventory.jsonの各expert_lenses/prompt_contract**。既定ロスター= C03: Dan Abramov(state ownership/data flow) / Evan You(component composition/reactivity/responsive state)、C04: Martin Kleppmann(data model/consistency/log/stream) / Werner Vogels(distributed failure/availability/scaling) / OWASP(ASVS・Top10観点=認証・セッション・アクセス制御・CSP/ヘッダ・攻撃面。受動観測のみで侵入テスト/脆弱性スキャンは行わない)、C05: Josh Comeau(CSS layout/component composition/responsive behavior) / Sarah Drasner(interaction/animation/state transition/visual hierarchy)、C13: Kinneret Yifrah(microcopy/UXライティング/トーン&ボイス) / Nielsen Norman Group(content usability/information scent) / Marty Cagan(product value/viability) / Teresa Torres(opportunity/JTBD discovery)、C06: Martin Fowler(boundary/integration/refactoring) / Kent Beck(simple/evolutionary design/feedback/testability)。実プロンプトには各実名付きLens見出し・Observations・Cross-lens conflicts・Neutral synthesis・Confidence and gapsを明示する。実在個人/組織の口調を模倣せず、本人がレビュー/承認/推薦したと主張せず、名前を権威根拠にしない。C03レンズは観測誘導専用で出力はfact/gapのみ。C04/C05/C13/C06のレンズ主張はinferenceレーンでevidence_refs+confidence必須、highは直接支持する複数evidence_refsがある場合のみ許す。C02は見出し存在を構造検査するが名前出現だけでPASSさせず、根拠品質・反証・fact非混入を評価する。",
+    "視覚形成(色/typography/影/角丸/間隔等)の宣言値・DOM構造・layout宣言は静的DOMから追加networkなしでfact採取する。viewport screenshot・computed style・JS実行後DOM・画面遷移・interaction stateはレンダリングを要するため、任意のローカルheadless Chrome(C15 browser-render・MCP非依存)取得時のみfact化し、ブラウザ不在時(exit3=browser-unavailable)はobservation_status=blockedのobservation_gapとして理由付きで記録する(専用screenshot budgetは発行せず、C12発行の共有authz/budgetを使う)。静的に観測できるcontent/tech_signals/nonfunctional/security/complianceのfactは読み込み済み静的DOMから追加networkなしで採取し、画面→region→主要elementの階層manifestに限定する。**対象への瞬間負荷レバー(origin並列数1・最小取得間隔・request/page上限)はC8の既定を一切緩めない(browser-renderも同一レバー・同一authz/budgetを共有)**。cache/reuseで再取得を避け、予算超過/block/unstable-responseは理由付きgapとして停止する。",
+    "製品出力先はローカル分離ドキュメント(md+json+Mermaid+観測できたlayout.json)のみで自己完結し、外部サービスへは公開しない。事実/推測/欠測・確度・図種・source_observation・draft_hashを保持し、独立C02 verdictの品質評価を経て自社適用(C14)へ渡す。対象システム由来の未redactテキスト/機微はlocal/evidenceへ残さない。",
+    "表面から観測できないバックエンド機構・設計意図は、実侵入・認可外スクレイピング等を行わず、公開ページから観測できる事実(UI/DOM/通信)を根拠として『推測』であることを明示し確度つきで記録する。事実と推測は出力上で明示区別する。",
+    "取得経路の分担: fetch-snapshot.py(C09)はstdlib(urllib)で静的/SSRのHTTP応答・header・同一origin resource参照を取得し、frontend-surface-analyzer(C03)はその静的snapshotとWebFetchの静的補助経路からフロント表層factを抽出する。WebFetchはlossyなHTML→Markdown取得でありSPAの実行後DOM/通信を保証しない。JS実行を要する観測(実行後DOM・限定操作・navigation・JS後network trace・screenshot)は任意のローカルheadless Chrome(C15 browser-render・MCP非依存)取得時のみfact化し、ブラウザ不在時(exit3=browser-unavailable)はinferenceへ昇格せずobservation_status=blockedとして記録し、C02は重要fact欠測時にPASSしない。",
+    "初版は入力を対象システムのURL単一に限定する。文書入力(PDF/Word/Markdown/JSON等)からの抽出は将来拡張とし本版のスコープ外(open_issue: 文書入力対応)。",
+    "認証必須領域(ログイン後の管理画面等)は原則対象外とし、無断アクセスは行わない。authz-classify.py(C12)はURL文字列だけでallowを推測せず、限定preflightで得たrobots応答・ToS判断根拠・認証要否・rate policy・取得時刻・policy versionをAuthzEvidenceとして保存してallow|deny|unknownを判定する。根拠不在/期限切れ/unknownはdeny。C08 hookとC09 fetchは共にC12へdepends_onし同じAuthzEvidenceを消費する。",
+    "対象システム負荷を抑える: originごとに並列数1、request/byte/page/interaction予算、最小取得間隔、同一URL cache、Retry-After尊重、有界指数backoffを適用する。429/403/robots拒否/予算超過/応答不安定時は追加取得を停止し、再試行で予算をリセットしない。既定値を緩和する変更はユーザー承認対象とする。",
+    "『見た目も本質もコピーして同一物を再構築』は参考/学習目的のスカフォールド生成を指し、著作権・意匠権・商標・利用規約に抵触する成果物の外部公開・商用転用は対象としない。成果物ヘッダへ『参考/学習目的限定』の利用目的注記を焼く責務はdoc-emit.py(C11)が担い、制約の明文化ownerはP01(requirements)とする(許容範囲の明文化はopen_questions)。",
+    "自社開発への活用(R4・ユーザー3選択): (a)tech_signals(生シグナル)=factとしてC03/C09の既取得response/network traceから追加network 0で採取し、named stack同定(Next.js/Vercel等の命名)はC04のinference(signal factへのevidence_refs+confidence必須)とするレーン二層化を守る=『パスに/_next/があるからNext.js』は事実でなく高確度推測。(b)nonfunctional_baselineは観測範囲内(budget内で訪問したページ)のbaselineである旨をスコープ明示し、サイト全体の性能主張へ拡大しない。(c)自社適用レイヤC14(run-blueprint-apply)はユーザー承認済の構造変更(13→14)で、blueprint生成パイプラインの下流に置く: 入力=C02 PASS済blueprint+自社コンテキストのみ(対象originへ一切アクセスしない)、出力=apply-recommendations.md+json(ローカルのみ・外部公開しない・blueprint本体へ混入しない)、機械の床=doc-emit.py --check-apply(schema適合/evidence anchor実在/fact新規主張0)。C14へ新規実名ロスターは追加しない。",
+    "被覆の深さ・広さ(R5・ユーザー4選択+URL全域指示・topology 14不変): (A)機能マップ+ユーザーフロー=機能アフォーダンスfact(C03)+journey推測(C05)をfeature_map/user_journeys章(C06)へ。(B)セキュリティ設計=cookie属性/認証UI/CSP全文fact(C03/C09)+OWASP観点の設計仮説inference(C04・受動観測のみ・侵入テスト/脆弱性スキャン禁止=C5不変)。(C)配信構成+CWV=cache/age/x-cache header fact→CDN/edge/origin・static|SSR|ISRトポロジー推測(C04)+CWV参考実測fact(C03・単一訪問参考値のscope_note)。(D)コンプラ周辺表面=privacy/規約/特商法/cookieバナー・CMPの存在・URL・構成要約fact(C03/C09・法的助言せず存在と構成の記録に徹する)。(E)サイト全域被覆=エントリURLから連なるsystem関連URL(same-origin+承認済related origin)をin_scope、アフィリエイト/広告/外部SNS/トラッカーをexcluded(reason付き・fact記録のみでクロールしない)にC12がfail-closed分類し、C12のcrawl_profile full_siteモード(瞬間負荷レバー不変・per-run有界+multi-run resume)でURL台帳の全in-scope画面へ到達する。全て既存component契約拡張でtopology 14不変。",
+    "ユーザーからcomponent本数の明示要求はないため requested_count は付与しない(R2/R3側の分解に委ね本数をgate強制しない)。"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 3,
+  "open_questions": [
+    "認証必須領域(ログイン後の管理画面等)の扱い: 完全対象外か、ユーザー自身のテスト用アカウント限定で許容するか。resolution owner=pre-fetch-authz-guard(C08)+authz-classify.py(C12)のfail-closed遮断(現版は完全対象外を既定)。",
+    "著作権・意匠権・商標・利用規約上の抽出範囲: 参考/学習目的への限定をどう明文化するか。resolution owner=P01(requirements)の制約明文化+doc-emit.py(C11)の利用目的限定注記。",
+    "SPA/ネイティブアプリ等、URLだけでは取得手段が成立しないケースの取得手段。resolution owner=frontend-surface-analyzer(C03)の静的HTTP観測。JS実行を要し静的完結できない箇所はC15 browser-render(任意headless Chrome・MCP非依存)取得時のみfact化し、ブラウザ不在時はobservation_status=blockedのobservation_gapとして明示し、重要fact欠測時はC02がPASSしない。ネイティブアプリは本版スコープ外。",
+    "事実/推測を区別する確度表現スキーマ(json構造)の確定方法。resolution owner=schemas/fact-inference-confidence.schema.json 契約(discriminator kind/evidence[]/confidence enum+rationale/source_observation)をC04/C05生成・C02評価・C11 emitが共有。"
+  ],
+  "source_intake": {
+    "ref": "../../plugins/skill-intake/output/url-system-blueprint-extract/intake.json",
+    "schema_version": "2.0.0"
+  },
+  "source_improvement": {
+    "ref": "improvement-handoff-site-coverage-depth.json",
+    "schema_version": "1.0.0"
+  }
+}

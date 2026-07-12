@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "plugin-plans/extract-system-blueprint/plan-findings.json",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (30-method reset review, round2.5)",
+    "ref_note": "refのplan-findings.jsonはround毎に上書きされる可変path。本recordは履歴でありEV-001..008は後続roundで全て反映済み"
+  },
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "findings": [
+    {"id": "EV-001", "severity": "high", "summary": "C08/C09がC12をimportすると宣言しながらdepends_onが欠落", "recommendation": "C12→C09/C08→C03をDAG・handoff・indexへ反映", "target_ref": "component-inventory.json#components"},
+    {"id": "EV-002", "severity": "high", "summary": "URLのみ/network=falseではrobots/ToS/rate-limit認可と低負荷制御が成立しない", "recommendation": "根拠付きAuthzEvidence、unknown deny、origin budget、cache/Retry-After/backoff/停止条件をC12へ契約化", "target_ref": "component-inventory.json#C12"},
+    {"id": "EV-003", "severity": "high", "summary": "WebFetchをSPA実行済DOM・通信観測経路として扱っている", "recommendation": "C03へbrowser-runtime能力とbudgetを追加し、未観測はgapとしてFAILへ送る", "target_ref": "component-inventory.json#C03"},
+    {"id": "EV-004", "severity": "high", "summary": "fact/inference要素schemaだけでtop-level blueprintと欠測を表現できない", "recommendation": "fact/inference/observation_gap oneOfとsystem-blueprint schemaを追加", "target_ref": "component-inventory.json#plugin_level_surfaces.schemas"},
+    {"id": "EV-005", "severity": "high", "summary": "C02独立verdictがNotion公開前ゲートへ配線されていない", "recommendation": "C07でC01 local draft→C02 draft-hash PASS→C01 publishを強制", "target_ref": "component-inventory.json#C07"},
+    {"id": "EV-006", "severity": "high", "summary": "task graphがphase checklist×全entityの直積でP02からbuild_targetをproduce", "recommendation": "P05だけをentity展開し、他phaseは横断nodeとして再導出", "target_ref": "task-graph.json"},
+    {"id": "EV-007", "severity": "high", "summary": "P11の機械品質5要素だけではC1-C8のruntime受入を証明できない", "recommendation": "AuthzEvidence/snapshot/ledger/schema/5図/verdict/Notion receiptを追加", "target_ref": "phase-11-evidence.md"},
+    {"id": "EV-008", "severity": "medium", "summary": "plan review 3周とruntime goal-seek 5周、Notion再実行、required surfaces ownerが曖昧", "recommendation": "loop namespace、冪等upsert、surface owner/status、brief pre-stepを明示", "target_ref": "index.md"}
+  ],
+  "provenance": {
+    "source_intake": "plugins/skill-intake/output/url-system-blueprint-extract/intake.json",
+    "prev_goal_spec": "plugin-plans/extract-system-blueprint/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation:/plugin-dev-plan extract-system-blueprint + low-load requirement"
+    }
+  }
+}

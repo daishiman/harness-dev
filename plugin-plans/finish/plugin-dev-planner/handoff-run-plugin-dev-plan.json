@@ -1,0 +1,63 @@
+{
+  "plan_dir": "plugin-plans/plugin-dev-planner",
+  "target_plugin_slug": "plugin-dev-planner",
+  "mode": "update",
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-plugin-dev-plan",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-plugin-dev-plan",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "brief_source": "build_args.brief_path (briefs/skill-brief-C01.json) は plan_dir に未実体化の生成物であり、build 時に render-skill-brief.py が component-inventory.json の C01 エントリから決定論射影する。plan 段では briefs/ ディレクトリは存在しない (実在しないのが正常)。",
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "assign-plugin-plan-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-plugin-plan-evaluator",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "brief_source": "build_args.brief_path (briefs/skill-brief-C02.json) は plan_dir に未実体化の生成物であり、build 時に render-skill-brief.py が component-inventory.json の C02 エントリから決定論射影する。plan 段では briefs/ ディレクトリは存在しない (実在しないのが正常)。",
+      "build_target": "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/plugin-dev-planner/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "note": "既存 manifest は entry_points/hooks 変更なしで現状維持だが、C2 (entry_points/inventory 突合ゲート) を本 plan 自身の build で実際に exercise する目的で draft を意図的に status=planned のまま検証対象に含める (dogfooding)"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "not_applicable",
+      "build_target": ".claude-plugin/marketplace.json",
+      "reason": "plugin-dev-planner は distributable:false かつ NEVER_DISTRIBUTE denylist (F3) 対象のため marketplace 登録は恒久的に非該当"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-GOVERNANCE-CI-001",
+      "severity": "blocking-release",
+      "text": "C3 (harness-coverage 12 軸自己適用) の配線先である .github/workflows/governance-check.yml は plugins/ 配下に無いため本 plan の component route 対象外。ただし release 前に必ず解消する blocking issue として扱う。phase-05-implementation.md の設計に従い、新規 check-harness-coverage-selfcheck.py の呼び出し 1 ステップを既存 plugin-dev-planner conformance block へ build PR 内で追記し、P13 完了チェックで解消確認する"
+    }
+  ]
+}

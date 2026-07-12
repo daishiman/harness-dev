@@ -1,0 +1,218 @@
+graph TD
+    classDef pending fill:#eee
+    classDef running fill:#bbf
+    classDef done fill:#bfb
+    classDef blocked fill:#fbb
+    P01["requirements"]:::pending
+    P01-x-01["purpose/background/goal が task-graph 追加という改善要求の文脈で一貫している。"]:::pending
+    P01-x-02["checklist C1-C19 それぞれに verify_byが付与されている。"]:::pending
+    P01-x-03["13 phaseは共通policy、node task specは実行契約、component routeはbuild写像という三層が区別されている。"]:::pending
+    P01-x-04["canonical graphを状態台帳として直接編集せず、task-stateとprojectionで進捗更新要求を満たす方針が固定されている。"]:::pending
+    P01-x-05["完了cycleのimmutable artifactsと次cycleへ渡す蒸留knowledgeの棲み分けが固定されている。"]:::pending
+    P01-x-06["target_plugin_slug が `plugin-dev-planner` に固定され、plan_dir が `plugin-plans/plugin-dev-planner` に固定されている。"]:::pending
+    P01-x-07["constraints の 5 点 (2軸非置換/メタ循環分離/単一writer/blocks派生専用/L4責務外) が本 plan 全体の設計判断へ反映される前提が明示されている。"]:::pending
+    P01-x-08["goal-spec.json の background が現サイクル前提 (既存 task-graph 機構の存在) で purpose/goal・phase-01 背景と一貫している。"]:::pending
+    P02["design"]:::pending
+    P02-x-01["considered_component_kinds が 5 種全て記載され、各不採用種に具体的な不採用根拠がある。"]:::pending
+    P02-x-02["C01/C02 の kind/build_target/builder/build_kind が確定している。"]:::pending
+    P02-x-03["依存 DAG (C02 depends_on C01) が非循環である。"]:::pending
+    P02-x-04["plugin_level_surfaces の採否 (8 種) が全て明示され、不採用種に omitted_reason がある。"]:::pending
+    P02-x-05["producer/consumer 境界 (対 harness-creator) が dispatch/state write-back/成果物注入/discovered-task emit の所有区分込みで明示され、harness-creator 側 goal-spec.json の語彙と一致している。cycle_id 携帯契約 (consumer は `handoff.cycle_id` から読み `plan_dir` パス解析を禁止) が明記されている。"]:::pending
+    P02-x-06["外部消費される producer script (compute-ready-set.py / derive-task-graph.py の canonicalize()・graph_hash() / check-task-state-schema.py) が harness-creator L4 runtime script の第二消費者を持つことが明示され、安定 CLI 契約 (固定パス + argv 形状 + stdout schema + exit codes) が references/pipeline-boundary-contract.md 追記対象として明記されている (plan-time / runtime script の起動主体・cwd 前提の構造差込み)。"]:::pending
+    P02-x-07["C13 (plan 出力ディレクトリ規約) の畳み込み根拠 (specfm.py 拡張 + check-plan-ledger.py + migrate-plan-layout.py の run-plugin-dev-plan skill 単独消費) が個別に判定され、C01 の build へ収束している。"]:::pending
+    P02-x-08["C14 (新旧shape非劣化ゲート) の分割配置 ((a)(c)=check-shape-non-regression.py で C01・(b)=A/B比較 genuine 判定で C02) が個別に判定され、C10⇔C14 相互参照 (shape 採用の前提条件) が明記されている。"]:::pending
+    P02-x-09["C15 (graph 可視化 renderer) が render-task-graph-mermaid.py として C01 へ畳み込まれる根拠が個別判定されている。"]:::pending
+    P02-x-10["C16 (実行時契約 schema SSOT) の所有 (C01=producer) と書込 (consumer=harness-creator) の分離が明記され、C11⇔C16 相互参照 (graph_hash の生成元) が個別判定されている。"]:::pending
+    P02-x-11["C17-C19がC01/C02へ責務分解され、component追加なしの根拠が明記されている。"]:::pending
+    P03["design-review"]:::pending
+    P03-x-01["C1-C4 が全て PASS している。"]:::pending
+    P04["test-design"]:::pending
+    P04-x-01["C2 の受入例 (満たす例/満たさない例) が具体的な node/edge データで内包されている。"]:::pending
+    P04-x-02["C4 の 4 テストケース (直列チェーン/ダイヤモンド/blocked伝播/write_scope衝突) + 「done だが成果物欠落」負例 (os.path.exists による consumes 成果物実在検査) が期待 ready-set 付きで内包されている。"]:::pending
+    P04-x-03["IN1-IN16/OUT1-OUT3 が component-inventory.json の C01.feedback_contract.criteria と一致する。"]:::pending
+    P04-x-04["C13 の plan-ledger.json fixture (満たす例/満たさない例) と `plan_output_dir()` の cycle_id 省略時後方互換動作が具体的に内包されている。"]:::pending
+    P04-x-05["C14 の A/B比較受入例 (旧shape fixture/新shape fixture) が (a)精度携帯率・(b)品質genuine判定・(c)再現性byte一致の3軸それぞれで満たす例/満たさない例付きで内包され、block/fallback 条件が明記されている。"]:::pending
+    P04-x-06["C15 の byte一致 render 例と graph 外要素非描画検査 (node id 集合の set 一致) が満たす例/満たさない例付きで内包されている。"]:::pending
+    P04-x-07["C16 の task-state schema 整合例と graph_hash pin 整合例 (満たす例/満たさない例) が具体的な fixture 付きで内包されている。"]:::pending
+    P04-x-08["C17-C19の正常/異常fixtureと期待exitが内包されている。"]:::pending
+    P05["implementation"]:::pending
+    P05-C01-01["C01 run-plugin-dev-plan update routeがC1-C19の実装設計を1つのbuildとして適用し、全受入条件と後方互換を満たす。"]:::pending
+    P06["test-run"]:::pending
+    P06-x-01["C01/C02 双方の harness_coverage.min が 80 以上に設計されている。"]:::pending
+    P06-x-02["kind_pass が component の kind (run/assign) に整合する型で記述されている。"]:::pending
+    P06-x-03["既存11本+追加3本がC1-C19を被覆する。"]:::pending
+    P07["acceptance-criteria"]:::pending
+    P07-x-01["C1-C19 全てに build 時の確認方法が存在する。"]:::pending
+    P08["refactoring"]:::pending
+    P08-x-01["新規スクリプト群と既存スクリプト群の検出対象が重複しないことが具体的に説明されている。"]:::pending
+    P09["quality-assurance"]:::pending
+    P09-C02-01["C02 evaluator skillを更新し、C01/C02双方についてp0_lint/build_trace/elegant_review/content_review/evaluatorの5要素とC17/C19のgenuine判定を検証できる。"]:::pending
+    P10["final-review"]:::pending
+    P10-x-01["C1-C4・governance・unassigned 0 が全て PASS している。"]:::pending
+    P11["evidence"]:::pending
+    P11-x-01["evidence 5 要素それぞれが本 plan のどのゲート/成果物に対応するか明示されている。"]:::pending
+    P11-x-02["task-graph 関連の新規ゲートの実行ログが lint exit0 ログへ合流することが明示されている。"]:::pending
+    P11-x-03["C01 の dogfooding 受入例 (build 後に自 plan へ derive-task-graph→compute-ready-set を適用し task 粒度の部分進捗を実証) が evidence として明示されている。"]:::pending
+    P11-x-04["C17-C19のexecution envelope/state projection/cycle knowledge evidenceが明示されている。"]:::pending
+    P12["documentation"]:::pending
+    P12-x-01["Part1/Part2 の 2 タスク雛形が task-graph という新概念に即して具体化されている。"]:::pending
+    P12-x-02["反映先 (新規 reference ファイルの位置と役割) が明示されている。"]:::pending
+    P12-x-03["install 手順への影響有無 (無し) が明示されている。"]:::pending
+    P12-x-04["13 phase/task spec/task graph/component/state/knowledgeの責務表と、MF決済インボイスチェックの再改善例がある。"]:::pending
+    P13["release"]:::pending
+    P13-x-01["release soft note が評価ゲートとして扱われないことが明示されている。"]:::pending
+    P01 ==> P01-x-01
+    P01 ==> P01-x-02
+    P01 ==> P01-x-03
+    P01 ==> P01-x-04
+    P01 ==> P01-x-05
+    P01 ==> P01-x-06
+    P01 ==> P01-x-07
+    P01 ==> P01-x-08
+    P02 ==> P02-x-01
+    P02 ==> P02-x-02
+    P02 ==> P02-x-03
+    P02 ==> P02-x-04
+    P02 ==> P02-x-05
+    P02 ==> P02-x-06
+    P02 ==> P02-x-07
+    P02 ==> P02-x-08
+    P02 ==> P02-x-09
+    P02 ==> P02-x-10
+    P02 ==> P02-x-11
+    P02-x-01 ==> P01
+    P02-x-02 ==> P01
+    P02-x-03 ==> P01
+    P02-x-04 ==> P01
+    P02-x-05 ==> P01
+    P02-x-06 ==> P01
+    P02-x-07 ==> P01
+    P02-x-08 ==> P01
+    P02-x-09 ==> P01
+    P02-x-10 ==> P01
+    P02-x-11 ==> P01
+    P03 ==> P03-x-01
+    P03-x-01 ==> P02
+    P04 ==> P04-x-01
+    P04 ==> P04-x-02
+    P04 ==> P04-x-03
+    P04 ==> P04-x-04
+    P04 ==> P04-x-05
+    P04 ==> P04-x-06
+    P04 ==> P04-x-07
+    P04 ==> P04-x-08
+    P04-x-01 ==> P03
+    P04-x-02 ==> P03
+    P04-x-03 ==> P03
+    P04-x-04 ==> P03
+    P04-x-05 ==> P03
+    P04-x-06 ==> P03
+    P04-x-07 ==> P03
+    P04-x-08 ==> P03
+    P05 ==> P05-C01-01
+    P05-C01-01 ==> P04
+    P06 ==> P06-x-01
+    P06 ==> P06-x-02
+    P06 ==> P06-x-03
+    P06-x-01 ==> P05
+    P06-x-02 ==> P05
+    P06-x-03 ==> P05
+    P07 ==> P07-x-01
+    P07-x-01 ==> P06
+    P08 ==> P08-x-01
+    P08-x-01 ==> P07
+    P09 ==> P09-C02-01
+    P09-C02-01 ==> P05-C01-01
+    P09-C02-01 ==> P08
+    P10 ==> P10-x-01
+    P10-x-01 ==> P09
+    P11 ==> P11-x-01
+    P11 ==> P11-x-02
+    P11 ==> P11-x-03
+    P11 ==> P11-x-04
+    P11-x-01 ==> P10
+    P11-x-02 ==> P10
+    P11-x-03 ==> P10
+    P11-x-04 ==> P10
+    P12 ==> P12-x-01
+    P12 ==> P12-x-02
+    P12 ==> P12-x-03
+    P12 ==> P12-x-04
+    P12-x-01 ==> P11
+    P12-x-02 ==> P11
+    P12-x-03 ==> P11
+    P12-x-04 ==> P11
+    P13 ==> P13-x-01
+    P13-x-01 ==> P12
+    P01 --> P01-x-01
+    P01 --> P01-x-02
+    P01 --> P01-x-03
+    P01 --> P01-x-04
+    P01 --> P01-x-05
+    P01 --> P01-x-06
+    P01 --> P01-x-07
+    P01 --> P01-x-08
+    P02 --> P02-x-01
+    P02 --> P02-x-02
+    P02 --> P02-x-03
+    P02 --> P02-x-04
+    P02 --> P02-x-05
+    P02 --> P02-x-06
+    P02 --> P02-x-07
+    P02 --> P02-x-08
+    P02 --> P02-x-09
+    P02 --> P02-x-10
+    P02 --> P02-x-11
+    P03 --> P03-x-01
+    P04 --> P04-x-01
+    P04 --> P04-x-02
+    P04 --> P04-x-03
+    P04 --> P04-x-04
+    P04 --> P04-x-05
+    P04 --> P04-x-06
+    P04 --> P04-x-07
+    P04 --> P04-x-08
+    P05 --> P05-C01-01
+    P06 --> P06-x-01
+    P06 --> P06-x-02
+    P06 --> P06-x-03
+    P07 --> P07-x-01
+    P08 --> P08-x-01
+    P09 --> P09-C02-01
+    P10 --> P10-x-01
+    P11 --> P11-x-01
+    P11 --> P11-x-02
+    P11 --> P11-x-03
+    P11 --> P11-x-04
+    P12 --> P12-x-01
+    P12 --> P12-x-02
+    P12 --> P12-x-03
+    P12 --> P12-x-04
+    P13 --> P13-x-01
+    P05-C01-01 -.-> plugins/plugin-dev-planner/skills/run-plugin-dev-plan/
+    P09-C02-01 -.-> plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/
+    linkStyle 0 stroke:#f66,stroke-width:3px
+    linkStyle 8 stroke:#f66,stroke-width:3px
+    linkStyle 19 stroke:#f66,stroke-width:3px
+    linkStyle 30 stroke:#f66,stroke-width:3px
+    linkStyle 31 stroke:#f66,stroke-width:3px
+    linkStyle 32 stroke:#f66,stroke-width:3px
+    linkStyle 40 stroke:#f66,stroke-width:3px
+    linkStyle 48 stroke:#f66,stroke-width:3px
+    linkStyle 49 stroke:#f66,stroke-width:3px
+    linkStyle 50 stroke:#f66,stroke-width:3px
+    linkStyle 53 stroke:#f66,stroke-width:3px
+    linkStyle 56 stroke:#f66,stroke-width:3px
+    linkStyle 57 stroke:#f66,stroke-width:3px
+    linkStyle 58 stroke:#f66,stroke-width:3px
+    linkStyle 59 stroke:#f66,stroke-width:3px
+    linkStyle 60 stroke:#f66,stroke-width:3px
+    linkStyle 62 stroke:#f66,stroke-width:3px
+    linkStyle 63 stroke:#f66,stroke-width:3px
+    linkStyle 64 stroke:#f66,stroke-width:3px
+    linkStyle 65 stroke:#f66,stroke-width:3px
+    linkStyle 69 stroke:#f66,stroke-width:3px
+    linkStyle 73 stroke:#f66,stroke-width:3px
+    linkStyle 77 stroke:#f66,stroke-width:3px
+    linkStyle 81 stroke:#f66,stroke-width:3px
+    linkStyle 82 stroke:#f66,stroke-width:3px

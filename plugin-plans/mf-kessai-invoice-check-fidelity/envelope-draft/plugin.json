@@ -1,0 +1,91 @@
+{
+  "name": "mf-kessai-invoice-check",
+  "version": "0.3.0",
+  "package_mode": "bundle",
+  "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理する。本体スキルに前月↔今月比較レポート (run-mf-invoice-report) を追加: 2営業日目以降に何度でも冪等再実行し、年契約/年→月切替/トライアル完了/契約終了のイレギュラーをコメント説明した漏れレポートを月次レポートDBへ上書き生成する。0.3.0: MF実績を第一級の真実として漏れチェック☑/金額列を駆動する改善 (fetch fidelity監査・amount-gate根治・D1/D2/D3判定) を追加。参照専用hook・二段確認subagent・冪等Notion upsert付き。改善要望は `/run-skill-feedback mf-kessai-invoice-check` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback)。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-06-19",
+  "last_audited": "2026-07-08",
+  "source": "plugins/mf-kessai-invoice-check",
+  "bundle_targets": [
+    "xl-skills-full"
+  ],
+  "bundles": [
+    "xl-skills-full"
+  ],
+  "entry_points": {
+    "skills": [
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "ref-mf-kessai-api",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-report"
+    ],
+    "agents": [
+      "mfk-gap-verifier",
+      "mfk-reconcile-verifier",
+      "mfk-report-verifier"
+    ],
+    "hooks": [
+      "guard-mfk-readonly",
+      "guard-mfk-no-reinvent"
+    ],
+    "commands": [
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-report",
+      "run-mf-invoice-doctor"
+    ]
+  },
+  "permissions": {
+    "network": [
+      "https://api.mfkessai.co.jp",
+      "https://sandbox-api.mfkessai.co.jp",
+      "https://api.notion.com",
+      "https://invoice.moneyforward.com",
+      "https://api.biz.moneyforward.com"
+    ],
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**",
+      "$CLAUDE_PROJECT_DIR/eval-log/**",
+      "$MFK_OUTPUT_DIR/eval-log/**"
+    ],
+    "secrets": [
+      "macos-keychain:mfkessai-api-key.xl-skills/xl-skills",
+      "macos-keychain:notion-api-key.xl-skills/xl-skills",
+      "macos-keychain:mf-invoice-oauth.xl-skills/xl-skills"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-readonly.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      }
+    ]
+  }
+}

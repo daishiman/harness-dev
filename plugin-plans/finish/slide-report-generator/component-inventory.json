@@ -1,0 +1,725 @@
+{
+  "plugin_concept": "slide-report-generator — presentation-slide-generator の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス",
+  "derivation": "既存 presentation-slide-generator(v8.4.2) の全資産(13 sub-agent / 42 references / 30 Node scripts / 118 templates / schemas 7本(真 schema 4 + example fixture 3。移植先は report-structure 新設で真 schema 計5) / Codex Image2 チェーン / 30種思考法評価ゲート / A4印刷 / GASデプロイ)を 1 つ残らず新 component or plugin-level surface へ写像する(抜け漏れ=平均回帰=禁止)。capability を 5 種の component_kind へ写像し実体単位に分解した: 主オーケストレータ/修正/横断レビューの 3 skill、既存 13 worker + report 新規 3(report-structure-designer/visual-strategist/report-composer)= 16 sub-agent、生成後評価を自動起動する 1 hook、手動起動/状況確認の 2 slash-command、output_mode/reportType の値域を送信前検証する共有 stdlib script 1 = 計 23 buildable 実体。Node 製レンダリング/画像/印刷/検証エンジン(render-slide.cjs/template-engine.cjs/style-builder.cjs/svg-builder.cjs/画像チェーン/検証 js/118 templates/print + report 新規 render-report.js/mermaid-render.js)は vendor surface として byte 維持で携行し Python-stdlib script へ書き換えない(既存資産の毀損回避)。skill/agent は Bash(node *) で起動する。意匠/技術層(Kanagawa配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ)は vendor + references + schemas の単一 SSOT で共有し slide/report で重複させず、コンテンツ意図層(slide=1メッセージ/chip強制 vs report=読み物/1項目1ビジュアル)のみ output_mode で分岐する。この inventory は build 軸の唯一 SSOT で、人間可読なライフサイクルは phase-01..13.md が担う(2 軸直交)。なお C24(report-quality-reviewer sub-agent)/C25(validate-report-visual.py script) は当初 23 実体確定後の Tier2 in-place conformance(2026-07-05)で追加した post-plan 実体であり、現行 build 済 plugin は 3 skill + 17 sub-agent + 1 hook + 2 slash-command + 2 script = 計 25 buildable 実体(各 component の provenance フィールド参照)。lint-reference-attribution.py/lint-vendor-parity.py/validate-plugin-completeness.py は per-component 単体テストを持たない CI governance glue のため primary inventory 対象外とし harness-creator-kit-ci 実行で検証する。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-slide-report-generate",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-slide-report-generate",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["スライドを作りたい", "レポートを作りたい", "slide-report-generate"],
+      "goal": "output_mode(slide/report)を確定し意匠/技術コアを共有したまま構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/Codex 画像)→生成後評価(30種思考法)まで駆動し、slide は1スライド1メッセージ/report は読み物・1項目1ビジュアルで視覚崩れ0の成果物が出力された状態",
+      "purpose_background": "既存 presentation-slide-generator の 7フェーズ総体ワークフローを 1 skill に集約し、意匠/技術は単一 SSOT 共有・コンテンツ意図のみ output_mode 分岐で 2 モードを 1 経路に統合するため",
+      "checklist": ["output_mode と reportType 確定", "構成設計と仕様確定ゲート通過", "生成(HTML/決定論/Codex画像)実行", "生成後評価(30種思考法・mode-aware)PASS"],
+      "output_contract": "生成レポート(output_mode/生成経路/評価スコア + 生成物パス(index.html/report.html) + 未達指摘一覧)",
+      "boundary": "入力=構想と output_mode/出力=HTML 成果物。既存成果物の修正は run-slide-report-modify、横断検証は run-cross-deck-review へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "hearing-facilitator を介し output_mode(slide/report)・reportType・読者・全面画像化ゲート・ビジュアル方針をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-structure", "summary": "確定 mode に応じて structure/report-structure を設計し仕様確定ゲート(structure-validator)を通す", "prompt_required": true},
+        {"id": "R3-generate-evaluate", "summary": "HTML/決定論/Codex 画像の各経路で生成し生成後評価(deck-evaluator・mode-aware)まで駆動して成果物を返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node", "codex"],
+      "mcp_tools": [],
+      "external_systems": ["Codex Image2 (codex exec)"],
+      "deterministic_checks": ["validate-output-mode.py", "validate-output-mode.py --preflight (環境 preflight: node/npm/node_modules/codex CLI 検出)", "validate-structure.js", "verify-slides.js", "evaluate-deck.js", "validate-ai-image-assets.js", "validate-print.js"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-output-mode で output_mode(slide/report)と reportType の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "生成後に slide は1スライド1メッセージ/長文なし・report は読み物/1項目1ビジュアルで、生成後評価(30種思考法)が視覚崩れ0で PASS することを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C17", "C18", "C19", "C23"],
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-generate/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-slide-report-modify",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-slide-report-modify",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["スライドを修正したい", "レポートを部分修正したい", "slide-report-modify"],
+      "goal": "既存の slide deck / report を output_mode を保ったまま指定箇所だけ部分修正し、意匠/技術コアと非対象箇所を壊さず修正後の生成後評価で視覚崩れ0の状態",
+      "purpose_background": "既存 slide-modifier(P4)の修正ワークフローを独立起動 skill として移植し、生成し直さず既存成果物の局所修正を安全に行うため",
+      "checklist": ["修正対象と output_mode 特定", "指定箇所のみ部分修正", "修正後の再評価(視覚崩れ0)"],
+      "output_contract": "修正レポート(修正箇所一覧 + 変更差分 + 再評価スコア)",
+      "boundary": "入力=既存成果物と修正指示/出力=局所修正済み HTML。新規生成は run-slide-report-generate、横断検証は run-cross-deck-review へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "修正対象の既存成果物と output_mode/修正指示をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-modify", "summary": "slide-report-modifier を介し指定箇所のみを部分修正する", "prompt_required": true},
+        {"id": "R3-reevaluate", "summary": "修正後に生成後評価を再実行し視覚崩れ0を確認して修正レポートを返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["validate-output-mode.py", "verify-slides.js"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-output-mode で既存成果物の output_mode を判定し修正対象の mode と reportType の値域整合を送信前検証し欠落が0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "指定箇所のみが修正され意匠/技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ0で PASS することを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C15", "C23"],
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-modify/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-cross-deck-review",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-cross-deck-review",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["シリーズ横断で整合性を確認したい", "複数 deck の用語ゆれを検出したい", "cross-deck-review"],
+      "goal": "複数 deck/report のシリーズ横断で用語/意匠/構成の整合性を検証し、用語ゆれ・意匠差・構成不整合が網羅的に検出された状態",
+      "purpose_background": "既存 cross-deck-reviewer(P5)のシリーズ横断検証を独立起動 skill として移植し、単一 deck では見えないシリーズ全体の整合崩れを検出するため",
+      "checklist": ["横断対象の deck/report 収集", "3並列分析(用語/意匠/構成)実行", "不整合の網羅検出と報告"],
+      "output_contract": "横断レポート(用語ゆれ一覧 + 意匠差一覧 + 構成不整合一覧 + 網羅率)",
+      "boundary": "入力=複数成果物/出力=横断整合レポート。個別成果物の修正は run-slide-report-modify へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "横断対象の deck/report 群と整合観点をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-analyze", "summary": "cross-deck-reviewer を介し用語/意匠/構成の 3並列分析を実行する", "prompt_required": true},
+        {"id": "R3-report", "summary": "不整合の網羅検出結果を横断レポートとして返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["cross-deck-consistency.js", "check-consistency.js"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "cross-deck-consistency で横断対象 deck/report の用語・意匠辞書を突合し分析入力の欠落が0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "既知の不整合(用語ゆれ/意匠差)を注入したシリーズで cross-deck-reviewer が全件検出し網羅性を受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C16"],
+      "build_target": "plugins/slide-report-generator/skills/run-cross-deck-review/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "hearing-facilitator",
+      "description": "ヒアリングを独立 context で行い output_mode(slide/report)・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/hearing-facilitator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/hearing-facilitator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "structure-designer",
+      "description": "slide 構成を独立 context で1スライド1メッセージへ分解し共通仕様セクション付き structure.json を設計したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/structure-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/structure-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "structure-validator",
+      "description": "slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043/phase-gate/spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/structure-validator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/structure-validator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "d3-diagram-designer",
+      "description": "D3 インタラクティブ図解を独立 context で設計し両モードの図解ノードへ配置したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/d3-diagram-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "data-visualizer",
+      "description": "データ可視化(グラフ/chart)を独立 context で設計し両モードのビジュアルノードへ配置したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/data-visualizer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/data-visualizer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C09",
+      "component_kind": "sub-agent",
+      "name": "html-generator",
+      "description": "slide HTML を独立 context で LLM 経路生成(従来 P3 経路)したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/html-generator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/html-generator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "slide-renderer",
+      "description": "決定論経路で render-slide.cjs(vendor Node engine)を Bash(node *) 起動し slide HTML を独立 context で生成したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/slide-renderer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/slide-renderer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C11",
+      "component_kind": "sub-agent",
+      "name": "layout-optimizer",
+      "description": "レイアウトを独立 context で最適化(precheck-layout/layout-calculator 連携)し両モードで崩れを抑えたいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/layout-optimizer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/layout-optimizer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C12",
+      "component_kind": "sub-agent",
+      "name": "ui-quality-reviewer",
+      "description": "UI 品質(テキスト切れ/改行/バランス S1-S26)を独立 context で検証(P3.5)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/ui-quality-reviewer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "deck-evaluator",
+      "description": "生成後に 30種思考法で mode-aware(slide=視覚崩れ/1メッセージ・report=可読性/図解適合/情報密度)の mode 別 rubric 次元で区分評価(P3.6)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/deck-evaluator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/deck-evaluator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C14",
+      "component_kind": "sub-agent",
+      "name": "ai-image-diagram-producer",
+      "description": "Codex Image2 全面画像/差替を独立 context で生成(build-image-prompts→generate-images-codex→build-deck-html→validate・PNG署名回収)したいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/ai-image-diagram-producer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/ai-image-diagram-producer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "slide-report-modifier",
+      "description": "既存成果物(slide deck / report)の指定箇所を独立 context で部分修正(P4)したいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/slide-report-modifier.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/slide-report-modifier.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C16",
+      "component_kind": "sub-agent",
+      "name": "cross-deck-reviewer",
+      "description": "シリーズ横断整合性を独立 context で 3並列分析×4条件で検証(P5)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/cross-deck-reviewer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C17",
+      "component_kind": "sub-agent",
+      "name": "report-structure-designer",
+      "description": "4 reportType 骨格(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)で report 構成(セクション+段落+1項目1ビジュアル指定)を独立 context で設計したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-structure-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/report-structure-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C18",
+      "component_kind": "sub-agent",
+      "name": "visual-strategist",
+      "description": "各セクションで SVG図解/Mermaid/Codex生成画像 の三択を独立 context で最適化し配置(grid/zones/readingOrder/focalPoint)を決めたいときに使う。固定比率なし・両モードに波及可",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/visual-strategist.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/visual-strategist.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C19",
+      "component_kind": "sub-agent",
+      "name": "report-composer",
+      "description": "report HTML/prose を独立 context で LLM 経路生成(文章多め・Markdown本文→HTML・visual-strategist 指定ビジュアル埋込)したいときに使う。slide の html-generator に対応する report 版",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-composer.md",
+      "prompt_layer": "7layer",
+      "build_contract": {
+        "additional_outputs": [
+          {"file": "plugins/slide-report-generator/vendor/scripts/render-report.js", "role": "report HTML レンダラ (新規実装)", "verification": "tests_min"},
+          {"file": "plugins/slide-report-generator/vendor/scripts/mermaid-render.js", "role": "report Mermaid 統合 (新規実装)", "verification": "tests_min"}
+        ],
+        "note": "vendor.additive_new_files の新規 2 Node (render-report.js/mermaid-render.js) の実装著者は本 component (C19 report-composer) の build 責務に含める (owner=C19)。byte-parity の対象外扱いは vendor.parity_scope 準拠・品質は tests_min>=80 + lint の別検査で担保する"
+      },
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/report-composer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C20",
+      "component_kind": "hook",
+      "name": "hook-postgen-eval",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit|MultiEdit",
+      "exit_semantics": "fail-soft-exit0",
+      "settings_wiring": "plugin-manifest",
+      "settings_wiring_note": "配線正本 = plugin manifest (envelope-draft/plugin.json の hooks ブロック)。settings.json 配線は廃止し二重宣言を解消 (裁定済み契約)",
+      "fail_closed": false,
+      "target_glob": ["**/index.html", "**/report.html", "**/styles.css", "**/scripts.js", "**/structure.*", "**/report-structure.*"],
+      "scope_guard": {
+        "non_target_behavior": "target_glob 対象外パスへの Write|Edit|MultiEdit は無条件 exit 0 (生成成果物以外の編集を遮らない)",
+        "fail_soft_scope": "target_glob 一致ファイルでも評価はブロックせず、生成後評価 (deck-evaluator) 起動を additionalContext で促すのみで常に exit 0 (fail-soft・非ブロッキング)。評価は hook 内で走らせない設計のため exit 2 は発火しない (実装 hooks/hook-postgen-eval.py の挙動が正)",
+        "evaluator_missing_behavior": "評価器 (deck-evaluator 起動経路 / vendor evaluate-deck.js) 不在時は stderr へ warn を出し exit 0 (非ブロック。不在自体は build ゲート側で検出する)"
+      },
+      "depends_on": ["C13"],
+      "build_target": "plugins/slide-report-generator/hooks/hook-postgen-eval.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test", "test_scenarios": ["target_glob 一致 (index.html/report.html/styles.css/scripts.js/structure.*/report-structure.*) で生成後評価 (deck-evaluator) の起動を促す additionalContext を出力する", "target_glob 対象外パスは無条件 exit 0 (ブロックしない)", "評価器不在時は warn + exit 0 (常に exit 0・fail-soft)"]}
+    },
+    {
+      "id": "C21",
+      "component_kind": "slash-command",
+      "name": "slide-report-generate",
+      "description": "スライド/レポート生成を手動起動する(--mode slide|report)",
+      "argument-hint": "[--mode slide|report]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C01"],
+      "build_target": "plugins/slide-report-generator/commands/slide-report-generate.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C22",
+      "component_kind": "slash-command",
+      "name": "slide-report-status",
+      "description": "生成/修正の進行状況・フェーズを確認する(既存 workflow-manager 相当)",
+      "argument-hint": "[--deck DIR]",
+      "allowed-tools": ["Read", "Bash"],
+      "disable-model-invocation": false,
+      "depends_on": ["C01"],
+      "build_target": "plugins/slide-report-generator/commands/slide-report-status.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C23",
+      "component_kind": "script",
+      "name": "validate-output-mode.py",
+      "script_name": "validate-output-mode.py",
+      "purpose": "output_mode(slide|report)と reportType(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)の値域を生成/修正の送信前に検証する薄い stdlib ゲート。--preflight モードで実行環境 preflight (node/npm/node_modules 存在・codex CLI 検出) も担う (環境 preflight 契約の正本)。Node engine ではなく harness glue のため Python で持つ",
+      "inputs": "argv(--mode slide|report [--report-type TYPE] | --preflight)",
+      "outputs": "stdout(OK)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/slide-report-generator/scripts/validate-output-mode.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C24",
+      "component_kind": "sub-agent",
+      "name": "report-quality-reviewer",
+      "description": "report 品質(読み物文体/段落密度/1項目1ビジュアル整合/reportType 骨格順守 RQ1-20)を独立 context で検証(P3.5 report 版)したいときに使う。slide の ui-quality-reviewer に対応する report 版",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-quality-reviewer.md",
+      "prompt_layer": "7layer",
+      "provenance": "post-plan Tier2 in-place conformance 追加 (2026-07-05)。C04-C19 の 16 sub-agent 確定後に report/slide 品質補正の対称性を回復するため新設 (slide=C11 layout-optimizer/C12 ui-quality-reviewer に対する report 対称)。当初 23 component 列挙時は未存在",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/report-quality-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C25",
+      "component_kind": "script",
+      "name": "validate-report-visual.py",
+      "script_name": "validate-report-visual.py",
+      "purpose": "report 決定論視覚ゲート (section 構造/1項目1ビジュアル/段落密度/placeholder/印刷を検証・0=PASS/1=崩れ/2=usage)。slide の verify-slides.js/validate-print.js に対称な report 版。Node engine ではなく harness glue のため Python-stdlib で持つ",
+      "inputs": "argv(<report.html> [--structure <report-structure.json>] [--strict] [--json])",
+      "outputs": "stdout(OK/JSON)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "provenance": "post-plan Tier2 in-place conformance 追加 (2026-07-05)。report が slide より品質補正・決定論ゲートで薄い負債を解消するため新設 (slide の verify-slides.js に対称)。tests/test_validate_report_visual.py で被覆。当初 23 component 列挙時は未存在",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/slide-report-generator/scripts/validate-report-visual.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {"required": true, "path": ".claude-plugin/plugin.json"},
+    "marketplace": {"required": true, "record_in": "index.plugin_meta.marketplace", "note": "source-inventory §4 の 9 surface 目 (欠落補完)。配布正本は index.plugin_meta.distribution (distributable:false・bundles 空) であり、本 surface は marketplace policy の記録先ポインタのみを持つ (掲載実体なし)"},
+    "composition": {"required": true, "path": "plugin-composition.yaml"},
+    "harness_eval": {"required": true, "path": "EVALS.json", "note": "mechanical + llm_eval。slide/report 両モードの受入を配線する"},
+    "schemas": {
+      "required": true,
+      "record_in": "index.plugin_meta",
+      "contents": ["structure.schema.json(移植)", "report-structure.schema.json(新設・4 reportType 骨格)", "image-deck-plan.schema.json(移植)", "evaluation-report.schema.json(移植)", "image-asset-manifest.schema.json(移植)"],
+      "note": "structure と report-structure は共通コア(nodes/edges/groups/theme/aiVisual)を共有する。既存 example fixture 3本(example.structure.json/example.v8.structure.json/example-full.structure.json)は真 schema と別置きで、byte 実体は vendor.byte_parity_subtrees の schemas-fixtures subtree に一本化して置く(LOW-2: 置き場を vendor 側に確定し、本 surface は真 schema 4(+新設1)本の記録に専念する二重 SSOT 回避)"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup",
+      "byte_parity_owner": "vendor(whole-tree)。本 surface は文書/参照のみを byte 実体として保有し、Node/テンプレ/意匠アセットの byte 実体は二重管理しない(LOW-1 解消)",
+      "contents": ["既存 42 references(*.md・本 surface が byte 正本)", "report新規 references(report-types/report-writing-rules/report-visual-strategy/mermaid-integration)", "feedback/*(運用知見・移植任意)"],
+      "pointer_only": {
+        "note": "以下は実体を vendor(whole-tree)が携行し、本 surface からは相互参照ポインタとしてのみ言及する(byte 実体の二重 SSOT にしない)",
+        "items": ["118 HTML templates(実体= vendor scripts subtree の templates/)", "pagination(.html/.css/.js)(実体= vendor assets subtree)", "print-styles.css(実体= vendor assets subtree)", "style-genome-kanagawa-comic-diagram.json(実体= vendor assets subtree)", "d3-components(実体= vendor assets subtree)", "gas-deploy-guide.md(実体= vendor assets subtree)"]
+      }
+    },
+    "vendor": {
+      "required": true,
+      "copy_mode": "whole-tree",
+      "derivation": "Node 製レンダリング/画像/印刷/検証エンジン一式を byte 維持で携行し Python-stdlib script へ書き換えない(既存資産の毀損回避)。skill/agent は Bash(node *) で起動する。携行単位はファイル個別列挙(allowlist)ではなく `scripts/`・`assets/`・`schemas/`・`package.json` をサブツリー丸ごと byte copy する whole-tree 方式とし、移植元 presentation-slide-generator の scripts/ 直下 *.js/*.cjs 実測30本(共有ランタイム utils.js、および log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む全数)+ scripts/hooks/deck-postgen-hook.js(移植元)+ scripts/templates/(118 templates)+ scripts/test-fixtures/ を1本の取りこぼしもなく携行する(cherry-pick しない=個別 import 依存の断線を構造的に排除)。個別ファイル名の記載は『代表例(非網羅)』であり allowlist として扱わない。report新規 Node(render-report.js/mermaid-render.js)はこの携行ツリーへの additive。source-inventory.md §5「30 Node scripts→vendor」は本 whole-tree 方式で 30本+新規2=漏れ0 で解消される。report新規 Node が要求する mermaid 依存は、byte copy 完了 (vendor-digest-manifest.json 照合 PASS) 後の additive 変更として package.json へ追記し package-lock.json も同時更新して依存解決を固定する (copy→manifest 照合→additive の順序規約。additive 変更部分は parity_scope.excluded_additive で照合除外し、品質は tests/lint の別検査で担保する)。",
+      "byte_parity_subtrees": [
+        {"source": "presentation-slide-generator/scripts/", "target": "plugins/slide-report-generator/vendor/scripts/", "policy": "丸ごと byte copy。30 Node script(*.js/*.cjs 全数・utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む)+ hooks/deck-postgen-hook.js(移植元)+ templates/(118)+ test-fixtures/ を例外なく携行。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
+        {"source": "presentation-slide-generator/assets/", "target": "plugins/slide-report-generator/vendor/assets/", "policy": "丸ごと byte copy。d3-components/(7)・src/scripts/(animations.js/main.js/slider.js)・src/styles/(4 css)・pagination.html/.css/.js・print-styles.css・style-genome-kanagawa-comic-diagram.json・gas-deploy-guide.md を含む意匠/技術トークン一式。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
+        {"source": "presentation-slide-generator/schemas/", "target": "plugins/slide-report-generator/vendor/schemas-fixtures/", "policy": "丸ごと byte copy。真 schema 4本(structure/image-deck-plan/evaluation-report/image-asset-manifest。正本記録は plugin_level_surfaces.schemas)+ example fixture 3本(example.structure.json/example.v8.structure.json/example-full.structure.json)+ README.md を fixture 置き場として一本化携行(LOW-2 解消: 真 schema は plugin_level_surfaces.schemas が正本記録、byte 実体と example fixture は本 subtree に集約)。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
+        {"source": "presentation-slide-generator/package.json", "target": "plugins/slide-report-generator/vendor/package.json", "policy": "byte copy。package-lock.json も携行し依存解決を固定。node_modules(playwright 等)は install 時に再取得。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (manifest では package.json/package-lock.json を個別 subtree として pinned・live tree 非依存)"}
+      ],
+      "source_digest_manifest": "vendor-digest-manifest.json",
+      "parity_baseline": "manifest",
+      "parity_scope": {
+        "baseline": "plan 同梱 vendor-digest-manifest.json (sha256・195 files pinned・upstream presentation-slide-generator v8.4.2)。byte-parity の比較先は live tree でなく本 manifest",
+        "verifier": "lint-vendor-parity.py (build 時に plugin scripts/ へ同梱予定・plan 段階では契約のみ)",
+        "byte_parity_targets": "byte_parity_subtrees 由来の全 file (copy 直後に manifest と全件照合)",
+        "excluded_additive": ["render-report.js (新規・owner C19)", "mermaid-render.js (新規・owner C19)", "package.json/package-lock.json への mermaid 依存 additive 追記 (derivation の順序規約)"],
+        "excluded_policy": "additive_new_files と依存追記は byte-parity の明示的除外 (byte 維持契約との矛盾解消)。品質は tests_min>=80 + lint の別検査で担保する"
+      },
+      "additive_new_files": [
+        {"file": "render-report.js", "role": "report HTML レンダラ (新規)", "owner": "C19", "verification": "tests_min"},
+        {"file": "mermaid-render.js", "role": "report Mermaid統合 (新規)", "owner": "C19", "verification": "tests_min"}
+      ],
+      "excluded": [],
+      "contents": ["render-slide.cjs", "template-engine.cjs", "style-builder.cjs", "svg-builder.cjs", "d3-bootstrap.cjs", "utils.js(共有ランタイム・11+箇所から import される中核依存)", "workflow-manager.js", "log_usage.js(workflow-manager.js の runbook step から参照)", "html-scaffold.js", "test-schema-builder-equivalence.js", "build-image-prompts.js", "generate-images-codex.js", "build-deck-html.js", "build-image-manifest.js", "build-single-html.js", "convert-to-webp.js", "validate-ai-image-assets.js", "evaluate-image-consistency.js", "validate-structure.js", "verify-slides.js", "evaluate-deck.js", "validate-print.js", "validate-d3.js", "sync-checker.js", "precheck-layout.js", "phase-gate.js", "cross-deck-consistency.js", "check-consistency.js", "auto-linebreak.js", "layout-calculator.js", "hooks/deck-postgen-hook.js(移植元)", "templates/*.tpl(118)", "test-fixtures/*(構造検証テスト用フィクスチャ)", "package.json", "package-lock.json", "render-report.js(新規)", "mermaid-render.js(新規)"],
+      "contents_note": "上記 contents は代表例の明示列挙(非網羅)。byte 実体の網羅性は allowlist ではなく copy_mode=whole-tree の byte_parity_subtrees が保証する(ファイル追加・依存追加時も自動被覆)"
+    },
+    "scripts": {
+      "required": true,
+      "record_in": "component C23 + build-time governance gates",
+      "note": "plugin scripts/ 直下の実体は3本。(1) validate-output-mode.py = C23 の buildable script component (output_mode/reportType 値域 + --preflight ゲート)。(2) lint-vendor-parity.py = vendor byte-parity ゲート (vendor.parity_scope.verifier・copy 直後に vendor-digest-manifest.json と全件照合・build 時 scripts/ へ同梱)。(3) validate-plugin-completeness.py = plugin surface completeness ゲート (配布可能性/surface 網羅を build 後に静的検証する build-time governance glue)。(2)(3) は buildable component ではなく plugin-root の governance glue のため buildable component 総数 23 は不変 (script component は C23 の1本のみ)",
+      "surface_files": ["validate-output-mode.py (C23 buildable script component)", "lint-vendor-parity.py (vendor byte-parity gate)", "validate-plugin-completeness.py (surface completeness gate)"]
+    },
+    "mcp_app_connector": {"required": false, "omitted_reason": "画像生成は codex exec(Bash)経由で扱う。MCP/app connector を新設しない"},
+    "notion_config": {"required": false, "omitted_reason": "Notion DB を読み書きしない(ローカル HTML 出力のみ)。改善要望の Notion 受け皿も設けず feedback_deploy は opt-out にする"}
+  }
+}

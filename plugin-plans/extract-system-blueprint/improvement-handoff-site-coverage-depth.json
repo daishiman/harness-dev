@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "verbal",
+    "ref": "conversation:/plugin-dev-plan --mode update extract-system-blueprint (feature-map/security/delivery+cwv/compliance/site-wide coverage, topology 14不変)",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (--mode update improvement intake round5)"
+  },
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "mode": "update",
+  "improvements": [
+    {
+      "id": "IMP-011",
+      "dimension": "feature-map-user-journeys",
+      "severity": "high",
+      "summary": "画面遷移図は『画面のつながり』であり『このシステムで何ができるか(機能一覧)』『ユーザーの目的の流れ(タスク完遂ジャーニー)』が第一級でなかった。自社再構築の起点情報の欠落。",
+      "decision": "レーン分離で二層化: (a)機能アフォーダンスインベントリ=fact: C03が各画面の操作可能要素(フォーム+フィールド構成/CTA/入力検証UI/操作種別)を観測集約しfeature_map素材にする。(b)ユーザージャーニー=inference: C05が主要タスク(登録/購入/問合せ等)の開始→完了経路仮説を画面遷移/CTA/フォーム構成を根拠にevidence_refs+confidence付きで導出。C06がfeature_map(観測集約)+user_journeys(推測)章としてblueprintへ統合。C1(affordance fact)+C2(journey inference)+C6(scaffold着手粒度)拡張。",
+      "target_ref": "component-inventory.json#C03/C05/C06 / schemas#blueprint.feature_map,user_journeys / goal-spec#C1 #C2 #C6"
+    },
+    {
+      "id": "IMP-012",
+      "dimension": "security-design-inference",
+      "severity": "high",
+      "summary": "security headers/cookie名のfactはR4で入ったが『設計として何をしているか』の評価レンズがない=素材だけあって料理がない状態。",
+      "decision": "C04へsecurity design推測を拡張: fact側はC03/C09がcookie属性(Secure/HttpOnly/SameSite)・認証UI観測(ログインフォーム/OAuthボタン/MFA手掛かり)・CSP全文を採取(既取得responseから追加network 0)。inference側はC04がOWASP(ASVS/Top10観点)の組織名原則レンズを追加して認証方式/セッション管理/CSRF・XSS対策/CSP評価/攻撃面の設計仮説と『自社が真似すべき/避けるべきプラクティス』をevidence_refs+confidence付きで導出。侵入テスト・脆弱性スキャン・攻撃的検証は一切行わない(受動観測のみ=C5不変)。C1(fact)+C2(inference)拡張。roster constraintへC04: +OWASP追記。",
+      "target_ref": "component-inventory.json#C04.expert_lenses(+OWASP)/C03 / schemas#blueprint.security_design / goal-spec#C2 #constraints(roster)"
+    },
+    {
+      "id": "IMP-013",
+      "dimension": "delivery-topology-cwv",
+      "severity": "medium",
+      "summary": "hosting/CDNのnamed同定はR4で入ったが『配信構成の全体像』(edge/origin/キャッシュ階層/レンダリング方式)が章として弱く、体感性能の実測参考値もない。",
+      "decision": "(a)delivery topology=inference: C04がcache-control/age/x-cache/via/server等のheader factとtech_signalsを根拠に、CDN/edge/origin構成・static|SSR|ISR判定・キャッシュ階層をevidence_refs+confidence付きで導出。(b)CWV参考実測=fact: C03が既存訪問sessionの計測API(PerformanceObserver等)からLCP/CLS/INP/TTFBを追加networkなしで採取し、『単一訪問・単一環境の参考値』とscope_noteで明示(サイト全体の性能保証と主張しない)。C1(cwv fact)+C2(topology inference)拡張。",
+      "target_ref": "component-inventory.json#C03/C04 / schemas#blueprint.delivery_topology,cwv_field_sample / goal-spec#C1 #C2"
+    },
+    {
+      "id": "IMP-014",
+      "dimension": "compliance-surfaces",
+      "severity": "medium",
+      "summary": "プライバシーポリシー/利用規約/特商法/cookieバナー・CMPなど『自社版を公開する時に必ず要る本体以外のmust-have周辺ページ』の写像がなかった。",
+      "decision": "C03/C09がcompliance_surfaces factを採取: privacy policy/利用規約/特商法表記/cookieバナー・同意管理(CMP)の存在・URL・構成要約(章立て/収集項目の見出しレベル)。これらのページはIMP-015のin-scope URL台帳に含めてクロールする。法的助言はせず存在と構成の記録に徹する(解釈はinference lane・確度付き)。C1拡張。",
+      "target_ref": "component-inventory.json#C03/C09 / schemas#blueprint.compliance_surfaces / goal-spec#C1"
+    },
+    {
+      "id": "IMP-015",
+      "dimension": "site-wide-coverage",
+      "severity": "high",
+      "summary": "ユーザー明示要望『エントリURLから連なる全てのシステム関連URLを確認し、アフィリエイト等は除外して、全ての画面・情報を取得できるように』。現行はmax_pages=3の入口周辺サンプリングで、サイト全域の被覆が構造的に不可能だった。",
+      "decision": "3层で実現し瞬間負荷レバーは不変: (1)URL台帳=C09がsitemap.xml/robots/same-originリンクグラフからdiscovered URL一覧をfact化。(2)scope分類=C12(authz-classify)を拡張し、system関連(same-origin+明示承認されたrelated origin)をin_scope、アフィリエイト/広告/外部SNS/トラッカー/utm付き外部リンクをexcluded(reason付き・fact記録はするがクロールしない)にfail-closed分類。(3)全域クロール=crawl_profile SSOT(C12)にfull_siteモードを新設: 瞬間負荷レバー(origin並列1・最小間隔2000ms・Retry-After・有界backoff)は一切緩めず、1回の実行はper-runページ/byte予算で有界、cache+request ledger+site coverage manifestで複数実行に分けて再開し、URL台帳の全in-scope URLへ到達するまで継続する(『ゆっくり・確実に・全部』)。観測は全in-scope画面を対象としつつlayout template hashで同型ページを重複排除して無駄取得を避ける(rendering必須のscreenshotはC15 browser-render取得時のみ)。coverage manifestはdiscovered/extracted/pending/excluded(+reason)を無言欠落なしで保持しC02が被覆を判定する。full_siteモードのper-run既定(pages_per_run=20等)を超える引上げは引き続きユーザー承認対象。",
+      "user_approval": "本改善はユーザーの自由記述指示(2026-07-10 AskUserQuestion回答内)によるページ予算のスコープ拡張承認そのもの。C8の『既定値緩和はユーザー承認対象』の承認記録としてここに残す。瞬間負荷レバーの緩和は承認対象外のまま不変。",
+      "target_ref": "component-inventory.json#C12(scope-classify+crawl_profile)/C09(discovery)/C03(page loop+template dedup)/C11(site coverage manifest)/C02(被覆判定)/C01(multi-run resume) / schemas#blueprint.site_inventory / goal-spec#C1 #C6 #C8 #C9"
+    }
+  ],
+  "id_policy": "新受入IDは追加しない(C10以降はcomponent idと文字列衝突するため回避=R2/R3/R4と同じ判断4回目)。機能アフォーダンス/セキュリティfact/CWV/コンプラ表面/URL台帳=C1拡張、ジャーニー/セキュリティ設計/配信構成のinference=C2拡張、feature_map+journeys含むscaffold粒度=C6拡張、full_site crawl profile=C8拡張、全画面screenshot+template dedup=C9拡張。",
+  "invariants_preserved": [
+    "瞬間負荷レバー不変: origin並列1・最小取得間隔2000ms・Retry-After尊重・有界backoff・stop条件はfull_siteモードでも一切緩めない。総量のみユーザー承認の下で複数実行に分散して拡張。",
+    "fact/inference/欠測の明示区別: アフォーダンス/CWV/コンプラ表面/URL台帳=fact、ジャーニー/セキュリティ設計/配信構成=inference(evidence_refs+confidence必須)。",
+    "認可fail-closed(C5): 受動観測のみ。侵入テスト・脆弱性スキャン・認証突破は行わない。excluded URLはfact記録のみでクロールしない。",
+    "local draft→C02 draft-hash PASS(ローカル品質verdict・外部公開なし)の順序。multi-run resumeは同一site coverage manifestに追記し、部分クロールを完全被覆と偽装しない(pendingを無言欠落させない)。",
+    "topology 14不変: 全て既存componentの契約拡張で新componentなし(構造変更なし)。"
+  ],
+  "provenance": {
+    "prev_improvement": "plugin-plans/extract-system-blueprint/improvement-handoff-own-dev-leverage.json",
+    "prev_goal_spec": "plugin-plans/extract-system-blueprint/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation: これ以外にも含むべきポイントは？(見た目/機能/UI/UX/アーキ/インフラ/セキュリティ) → AskUserQuestion 4件全選択 + 自由記述『連なっている全てのシステム関連URLを確認(アフィリエイト等は除外)し、全ての画面・情報を取得できるように』"
+    }
+  }
+}

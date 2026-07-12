@@ -1,0 +1,77 @@
+{
+  "skill_name": "run-prompt-creator-7layer",
+  "prefix": "run",
+  "role_suffix": null,
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "description": "doc/prompt-creator/ を skill-creator 仕様準拠で plugins/prompt-creator/skills/run-prompt-creator-7layer/ へ移植。Role/Context/Principles/Workflow/Constraints/Output/Evaluation の 7 層プロンプトアーキテクチャで SubAgent 向けプロンプト YAML を生成する skill。skill-creator (run-build-skill) から Step 7.5 でループ呼び出しされ、生成された SubAgent .md の Prompt Templates / Self-Evaluation セクションを自動充填する。",
+  "trigger_conditions": [
+    "skill-creator が SubAgent ファイルを量産する Step 7.5 で起動",
+    "ユーザーが /run-prompt-creator-7layer を直接呼び出して 7 層プロンプトを単独生成",
+    "既存 SubAgent の Prompt Templates / Self-Evaluation が欠落・更新必要なときに呼び出し"
+  ],
+  "output_contract": {
+    "primary": "plugins/<plugin>/agents/prompts/<role>.yaml (7 層 YAML)",
+    "secondary": "対象 SubAgent .md の Prompt Templates / Self-Evaluation セクションへ自動注入",
+    "trace": "eval-log/prompt-creator-trace.json"
+  },
+  "key_constraints": [
+    "SKILL.md 300 行以下",
+    "SubAgent ファイル 300 行以下",
+    "Progressive Disclosure: references/ は遅延読み込み",
+    "Script First: 決定論的処理は Node スクリプトで実行",
+    "1 Layer = 1 出力で個別生成→merge_layers で合算",
+    "質ベース判定: 数量ではなく実行可能性/検証可能性で判定",
+    "ループ整合性: run-build-skill が呼び lint-agent-prompt-section.py を通過する形で戻る"
+  ],
+  "boundary": {
+    "in_scope": [
+      "Role/Context/Principles/Workflow/Constraints/Output/Evaluation の 7 層生成",
+      "YAML/Markdown/JSON/XML フォーマット変換",
+      "SubAgent .md の Prompt Templates / Self-Evaluation 自動注入",
+      "Phase 4-C 自律評価 (最大 3 回反復)"
+    ],
+    "out_of_scope": [
+      "SubAgent 9 セクション骨格の生成 — run-build-skill 責務",
+      "SKILL.md 生成 — run-build-skill 責務",
+      "P0 lint 実行 — skill-governance-lint 責務",
+      "Governance 承認 — run-skill-rubric-governance 責務"
+    ]
+  },
+  "deterministic_checks": [
+    "scripts/merge_layers.js (7 層 YAML 合算)",
+    "scripts/validate_prompt.js (schema 検証)",
+    "scripts/convert_format.js (YAML→MD/JSON/XML)",
+    "scripts/verify_completeness.js (7 層充填確認)",
+    "lint-agent-prompt-section.py 連携検証"
+  ],
+  "external_systems": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "cli_tools": ["node", "python3"],
+  "mcp_tools": [],
+  "placement_candidates": [
+    "plugins/prompt-creator/skills/run-prompt-creator-7layer/"
+  ],
+  "base_skill": null,
+  "delegate_agent": null,
+  "rubric_refs": [
+    "plugins/skill-intake/skills/run-skill-intake-aggregator/references/quality-rubric.md",
+    "doc/prompt-creator/references/quality-criteria.md"
+  ],
+  "open_questions": [
+    "Q1: SubAgent 3本 (interview-user / generate-prompt / review-prompt) を plugins/prompt-creator/agents/ に並置するか?",
+    "Q2: scripts/ 8 個すべて移植するか、ループ統合に必要な 4 個 (merge_layers / validate_prompt / convert_format / verify_completeness) に絞るか?",
+    "Q3: doc/prompt-creator/ の package.json (npm 依存) を持ち込むか、Node 標準で書き直すか?",
+    "Q4: 既存 doc/prompt-creator/ は deprecated 残置か、削除か?"
+  ],
+  "source": "doc/prompt-creator/",
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "generate_pair_evaluator": false,
+  "loop_integration": {
+    "caller": "plugins/skill-creator/skills/run-build-skill (Step 7.5)",
+    "returns_to": "plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py",
+    "max_iterations": 3
+  }
+}

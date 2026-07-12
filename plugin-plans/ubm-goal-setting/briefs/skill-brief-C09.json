@@ -1,0 +1,58 @@
+{
+  "skill_name": "run-ubm-consult",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "相談したい",
+    "壁打ち",
+    "考え方を教えて",
+    "ubm-consult"
+  ],
+  "output_contract": "相談セッション記録(相談種別・引き出したユーザー文脈/制約/価値観/既試行・提示した考え方/思考フレーム(選択肢+適用視点)・ユーザー自身の言葉で言語化した解決策・現状→ゴール→ギャップ→次の一歩の行動計画)。処方的な単一解を出力しない",
+  "boundary": "具体解の処方を出力しない(考え方/フレームの提示に留める)。解決策の言語化はユーザー主導で、AI は構造化と検証のみ担う。knowledge graph / harness artifact graph は read-only consult(C06/C07 経由)。既存 capability A(21項目)/B(6カテゴリ)の契約を破壊しない(非後退・additive)",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "consult-harness-artifact-graph.py",
+    "validate-knowledge-graph.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "相談受理・論点特定",
+    "考え方/思考フレーム提示(具体解の処方ゼロ)",
+    "引き出しでユーザー自身の言葉で解決策を言語化",
+    "ゴール指向の次の一歩へ帰結・記録"
+  ],
+  "goal": "月間目標・目標設定以外も含む相談に対し、具体解の処方でなく考え方を提示し、引き出しとゴール指向の共創でユーザー主導の解決策構築を支援する",
+  "mass_production_profile": "standard",
+  "output_language": "ja",
+  "purpose_background": "既存 capability A(run-ubm-goal-setting)の Phase3 対話原則(愛情ある厳しさ・引き出し型)と knowledge 基盤(原則/事例/マインドセット)、C07 consult(knowledge graph + harness artifact graph の read-only 探索)を再利用するコーチング型相談 orchestrator。AI は具体解を処方せず、考え方/思考フレームの提示・文脈の外在化・解決策の構造化と検証を担い、解決策の言語化はユーザー主導とする。目標設定以外の相談にもゴール指向(現状→ゴール→ギャップ→次の一歩)を適用する。",
+  "responsibilities": [
+    {
+      "id": "R1-intake-issue",
+      "summary": "相談を受理し論点を特定する(相談種別判定・本質課題の言語化支援。具体解を出さない)",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-elicit",
+      "summary": "引き出し(ユーザーの文脈・制約・価値観・既試行を質問で外在化する)",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-frame-consult",
+      "summary": "思考フレームを選定・提示する(consult-harness-artifact-graph.py + knowledge-graph.json + 既存 knowledge の原則/マインドセット/事例から考え方を提示。処方でなく選択肢+適用視点)",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-cocreate-converge",
+      "summary": "共創・収束(ユーザー自身の言葉で解決策を言語化させ、ゴール指向=現状→ゴール→ギャップ→次の一歩の行動計画へ落とし記録する)",
+      "prompt_required": true
+    }
+  ]
+}

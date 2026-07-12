@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="slide-report-generator/render-report">
+<meta name="report-type" content="internal-analysis">
+<meta name="theme-name" content="kanagawa-lotus">
+<title>サポート問い合わせ自動分類の導入分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* §2 Kanagawa Lotus パレット (style-builder SPEC を流用 = 共有意匠 SSOT) */
+  --bg-dark: #fafafa;
+  --fg: #43436c;
+  --fg-dim: #727169;
+  --fg-muted: #54546d;
+  --wave-blue: #7E9CD8;
+  --spring-violet: #957FB8;
+  --sakura-pink: #D27E99;
+  --wave-aqua: #7FB4CA;
+  --autumn-yellow: #DCA561;
+  --fuji-gray: #727169;
+  --accent-blue-vivid: #3B7DD8;
+  --accent-pink-vivid: #D94B6E;
+  --accent-aqua-vivid: #2EA88F;
+  --accent-violet-vivid: #7B4FBA;
+  --accent-yellow-vivid: #F5A623;
+  --shadow-subtle: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-medium: 0 3px 10px rgba(0,0,0,0.10);
+  /* §3 フォント (SPEC 流用) */
+  --font-scale: 1.3;
+  --font-base: 'Noto Sans JP', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+  --fs-title: calc(2.6rem * var(--font-scale));
+  --fs-heading: calc(1.7rem * var(--font-scale));
+  --fs-subheading: calc(1.3rem * var(--font-scale));
+  --fs-body: calc(1.05rem * var(--font-scale));   /* 読み物本文・最小サイズは SPEC 準拠 */
+  --fs-small: calc(0.9rem * var(--font-scale));
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  /* report ページ幅 (A4 縦) */
+  --report-width: 190mm;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg-dark);
+  color: var(--fg);
+  font-family: var(--font-base);
+  font-size: var(--fs-body);
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== 読み物レイアウト (縦スクロール・A4 縦) ===== */
+.report {
+  max-width: var(--report-width);
+  margin: 0 auto;
+  padding: var(--space-7, 3rem) var(--space-6, 2rem) var(--space-8, 4rem);
+}
+.report-header { margin-bottom: var(--space-7, 3rem); border-bottom: 3px solid var(--report-accent, var(--accent-blue-vivid)); padding-bottom: var(--space-4, 1rem); }
+.report-title { font-size: var(--fs-title); font-weight: 800; line-height: 1.25; color: var(--fg); }
+.report-subtitle { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-subheading); color: var(--fg-dim); font-weight: 500; }
+.report-keymessage { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-body); color: var(--fg); font-weight: 500; border-left: 0.3rem solid var(--report-accent, var(--accent-blue-vivid)); padding-left: var(--space-3, 0.75rem); }
+.report-meta { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-dim); display: flex; flex-wrap: wrap; gap: var(--space-4, 1rem); align-items: center; }
+.report-meta .report-type-badge {
+  display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px;
+  background: var(--report-accent, var(--accent-blue-vivid)); color: #fff; font-weight: 700;
+}
+
+/* ===== section ===== */
+.report-section { margin-bottom: var(--space-7, 3rem); }
+.report-section > h2 {
+  font-size: var(--fs-heading); font-weight: 700; line-height: 1.35;
+  color: var(--fg);
+  padding-left: var(--space-3, 0.75rem);
+  border-left: 0.35rem solid var(--section-accent, var(--accent-blue-vivid));
+  margin-bottom: var(--space-4, 1rem);
+}
+.report-section p { font-size: var(--fs-body); margin-bottom: var(--space-4, 1rem); }
+.report-section strong { color: var(--section-accent, var(--accent-blue-vivid)); font-weight: 700; }
+.report-section code { font-family: var(--font-mono); font-size: 0.92em; background: rgba(59,125,216,0.10); padding: 0.1em 0.35em; border-radius: 0.25rem; }
+.report-section a { color: var(--accent-blue-vivid); }
+.report-section ul { margin: 0 0 var(--space-4, 1rem) var(--space-5, 1.5rem); }
+.report-section li { font-size: var(--fs-body); margin-bottom: var(--space-2, 0.5rem); }
+
+/* ===== callouts (注記/警告/ヒント) ===== */
+.report-callout { display: block; margin: var(--space-3, 0.75rem) 0; padding: var(--space-3, 0.75rem); border-radius: 0.5rem; font-size: var(--fs-small); border-left: 0.3rem solid var(--accent-blue-vivid); background: rgba(59,125,216,0.06); }
+.report-callout--warning, .report-callout--caution { border-left-color: var(--accent-pink-vivid); background: rgba(217,75,110,0.07); }
+.report-callout--tip { border-left-color: var(--accent-yellow-vivid); background: rgba(245,166,35,0.08); }
+
+/* ===== 1 section 1 visual ===== */
+.report-visual { margin: var(--space-5, 1.5rem) 0; text-align: center; }
+.report-visual svg { width: 100%; max-width: var(--report-width); height: auto; }
+.report-visual img { max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: var(--shadow-medium); }
+.report-visual figcaption { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-small); color: var(--fg-dim); }
+.report-visual--mermaid pre.mermaid {
+  display: block; text-align: left; font-family: var(--font-mono); font-size: var(--fs-small);
+  background: rgba(59,125,216,0.06); border: 1px solid rgba(67,67,108,0.14);
+  border-radius: 0.5rem; padding: var(--space-3, 0.75rem); overflow-x: auto; white-space: pre;
+}
+.report-visual--image .composite-overlay { list-style: none; margin: var(--space-2, 0.5rem) 0 0; padding: 0; font-size: var(--fs-small); color: var(--fg-dim); }
+
+.report-footer { margin-top: var(--space-8, 4rem); padding-top: var(--space-3, 0.75rem); border-top: 1px solid rgba(67,67,108,0.15); font-size: var(--fs-small); color: var(--fg-dim); text-align: center; }
+
+/* ===== 印刷 (A4 縦・読み物) ===== */
+@page { size: A4 portrait; margin: 18mm; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: #fff; }
+  .report { max-width: 100%; padding: 0; }
+  .report-section { break-inside: avoid-page; }
+  .report-visual { break-inside: avoid; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict' });
+</script>
+</head>
+<body style="--report-accent: var(--accent-blue-vivid);">
+<main class="report">
+  <header class="report-header">
+    <h1 class="report-title">サポート問い合わせ自動分類の導入分析</h1>
+    <p class="report-subtitle">2026 上期 社内報告</p>
+    <p class="report-keymessage">問い合わせの自動分類を導入すれば一次対応時間を約40%短縮でき、次四半期での試験導入を推奨する</p>
+    <div class="report-meta">
+      <span class="report-type-badge">社内報告分析</span>
+      <span>読者: カスタマーサポート部門長・経営企画</span>
+      <span>著者: サポート改善チーム</span>
+      <span>分量: 標準</span>
+    </div>
+  </header>
+<section class="report-section" id="section-summary" data-role="summary" style="--section-accent: var(--accent-blue-vivid);">
+  <h2>要約</h2>
+  <p>本レポートは、増加するサポート問い合わせに対する<strong>自動分類</strong>の導入可否を分析する。</p>
+  <p>結論として、一次対応時間を約 <strong>40%</strong> 短縮できる見込みがあり、次四半期での試験導入を推奨する。</p>
+  
+</section>
+<section class="report-section" id="section-background" data-role="background" style="--section-accent: var(--accent-blue-vivid);">
+  <h2>背景</h2>
+  <p>問い合わせ件数は前年同期比で 1.6 倍に増加し、一次対応の遅延が顧客満足度を押し下げている。</p>
+  <p>手作業での振り分けが対応コストの主要因となっており、自動化の必要性が高まっている。</p>
+  <figure class="report-visual report-visual--svg" role="img" aria-label="問い合わせ増加・対応コスト増・自動化ニーズの3ステップフロー図">
+  <svg viewBox="0 0 1080 540" role="img" aria-label="横フロー図" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-blue, #7E9CD8)"/></marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--sakura-pink, #D27E99)"/></marker>
+    <marker id="arrow-aqua" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--autumn-yellow, #DCA561)"/></marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--spring-violet, #957FB8)"/></marker>
+  </defs>
+  <line x1="360" y1="130" x2="380" y2="130" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <line x1="700" y1="130" x2="720" y2="130" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <g>
+      <rect x="40" y="65" width="320" height="130" rx="14" ry="14" fill="var(--wave-blue, #7E9CD8)" opacity="0.92"/>
+      <circle cx="68" cy="93" r="18" fill="#fff" opacity="0.95"/>
+      <text x="68" y="99" text-anchor="middle" fill="var(--wave-blue, #7E9CD8)" font-size="18" font-weight="800" font-family="'Noto Sans JP', sans-serif"><tspan x="68" dy="0">1</tspan></text>
+      <text x="200" y="138" text-anchor="middle" fill="#fff" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="200" dy="0">問い合わせ急増</tspan></text>
+    </g>
+  <g>
+      <rect x="380" y="65" width="320" height="130" rx="14" ry="14" fill="var(--wave-aqua, #7FB4CA)" opacity="0.92"/>
+      <circle cx="408" cy="93" r="18" fill="#fff" opacity="0.95"/>
+      <text x="408" y="99" text-anchor="middle" fill="var(--wave-aqua, #7FB4CA)" font-size="18" font-weight="800" font-family="'Noto Sans JP', sans-serif"><tspan x="408" dy="0">2</tspan></text>
+      <text x="540" y="138" text-anchor="middle" fill="#fff" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="540" dy="0">手作業振り分けコスト増</tspan></text>
+    </g>
+  <g>
+      <rect x="720" y="65" width="320" height="130" rx="14" ry="14" fill="var(--sakura-pink, #D27E99)" opacity="0.92"/>
+      <circle cx="748" cy="93" r="18" fill="#fff" opacity="0.95"/>
+      <text x="748" y="99" text-anchor="middle" fill="var(--sakura-pink, #D27E99)" font-size="18" font-weight="800" font-family="'Noto Sans JP', sans-serif"><tspan x="748" dy="0">3</tspan></text>
+      <text x="880" y="138" text-anchor="middle" fill="#fff" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="880" dy="0">自動分類ニーズ</tspan></text>
+    </g>
+  
+</svg>
+  <figcaption>問い合わせ増加から自動化ニーズに至る構造</figcaption>
+</figure>
+</section>
+<section class="report-section" id="section-analysis" data-role="analysis" style="--section-accent: var(--accent-blue-vivid);">
+  <h2>現状分析</h2>
+  <p>問い合わせは大きく「技術」「請求」「その他」の3系統に分かれ、ルールベースでの一次振り分けが可能である。</p>
+  <p>分類器を通した後に担当キューへ振り分けるフローが最も効果が高い。</p>
+  <figure class="report-visual report-visual--mermaid" role="img" aria-label="受信から自動分類を経て担当キューへ振り分けるフローチャート">
+  <pre class="mermaid">flowchart LR; A[問い合わせ受信] --&gt; B[自動分類]; B --&gt; C{系統判定}; C --&gt;|技術| D[技術キュー]; C --&gt;|請求| E[請求キュー]; C --&gt;|その他| F[一般キュー]</pre>
+  <figcaption>自動分類の処理フロー</figcaption>
+</figure>
+</section>
+<section class="report-section" id="section-findings" data-role="finding" style="--section-accent: var(--accent-blue-vivid);">
+  <h2>所見</h2>
+  <p>自動分類の精度は検証データで約 <strong>92%</strong> に達し、誤分類は再学習で改善が見込める。</p>
+  <p>対応時間のヒートマップから、ピーク帯の負荷集中が最も緩和されることが分かった。</p>
+  <figure class="report-visual report-visual--image">
+  <img src="images/support-heatmap.png" alt="曜日と時間帯ごとの問い合わせ対応負荷を示すヒートマップ画像">
+  <figcaption>曜日×時間帯の対応負荷ヒートマップ</figcaption>
+</figure>
+</section>
+<section class="report-section" id="section-next-action" data-role="next-action" style="--section-accent: var(--accent-blue-vivid);">
+  <h2>次アクション</h2>
+  <ul>
+    <li>次四半期に技術系問い合わせのみで試験導入する</li>
+  </ul>
+  <ul>
+    <li>2週間ごとに精度と対応時間を計測し再学習する</li>
+  </ul>
+  <ul>
+    <li>効果確認後、請求・その他系統へ段階展開する</li>
+  </ul>
+  <figure class="report-visual report-visual--svg" role="img" aria-label="試験導入・計測・再学習・展開の循環図">
+  <svg viewBox="0 0 1200 600" class="cycle-svg" role="img" aria-label="サイクル図" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-blue, #7E9CD8)"/></marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--sakura-pink, #D27E99)"/></marker>
+    <marker id="arrow-aqua" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--autumn-yellow, #DCA561)"/></marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--spring-violet, #957FB8)"/></marker>
+  </defs>
+  
+  <path d="M909.7,167.3 A 220 220 0 0 1 1012.7,270.3" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M1012.7,329.7 A 220 220 0 0 1 909.7,432.7" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M850.3,432.7 A 220 220 0 0 1 747.3,329.7" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M747.3,270.3 A 220 220 0 0 1 850.3,167.3" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <circle cx="880.0" cy="80.0" r="78" fill="var(--wave-blue, #7E9CD8)" opacity="0.92"/>
+      <text x="880" y="85" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="880" dy="0">試験導入</tspan></text>
+  <circle cx="1100.0" cy="300.0" r="78" fill="var(--wave-aqua, #7FB4CA)" opacity="0.92"/>
+      <text x="1100" y="305" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="1100" dy="0">精度計測</tspan></text>
+  <circle cx="880.0" cy="520.0" r="78" fill="var(--sakura-pink, #D27E99)" opacity="0.92"/>
+      <text x="880" y="525" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="880" dy="0">再学習</tspan></text>
+  <circle cx="660.0" cy="300.0" r="78" fill="var(--autumn-yellow, #DCA561)" opacity="0.92"/>
+      <text x="660" y="305" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="660" dy="0">段階展開</tspan></text>
+</svg>
+  <figcaption>段階導入のサイクル</figcaption>
+</figure>
+</section>
+  <footer class="report-footer">slide-report-generator · report mode · theme: kanagawa-lotus</footer>
+</main>
+</body>
+</html>

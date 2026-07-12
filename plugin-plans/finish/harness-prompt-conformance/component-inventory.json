@@ -1,0 +1,342 @@
+{
+  "build_status": "realized",
+  "build_status_reason": "2026-07-05 build 完了 (全9 component 実体化・決定論ゲート緑)。証跡=plugin-plans/harness-prompt-conformance/build-evidence.md。validate-plan-coverage.py の第一級ライフサイクル宣言 (realized=計画↔実体 completeness 照合の gate 対象)",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "depends_on": [],
+      "skill_name": "run-prompt-creator-7layer",
+      "prefix": "run",
+      "skill_kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "SubAgent 向け『plugin YAML frontmatter + 7層本文』ハイブリッド契約の新規 SSOT が未確定なとき",
+        "harness-creator 側 C02 の内容 lint / C09 の生成フロー配線が参照する契約文書が必要なとき"
+      ],
+      "output_contract": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md (新規) を返す。既存の純粋7層契約 (seven-layer-format.md) との相違点 (frontmatter=plugin YAML/本文=7層) を明記する",
+      "boundary": "harness-creator 側の内容 lint 実装 (C02)・生成フロー配線 (C09)・既存6 SubAgent の実是正 (C03-C08) は本 component の責務外",
+      "placement_candidates": ["Skill"],
+      "cli_tools": [],
+      "deterministic_checks": ["lint-agent-prompt-content.py (C02, 参照側)"],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": false,
+      "goal": "run-prompt-creator-7layer が SubAgent 向け『plugin YAML frontmatter + 7層本文』ハイブリッド契約の新規 SSOT reference (references/subagent-hybrid-format.md) を備え、既存の純粋7層契約 (seven-layer-format.md) との違いが明記されている状態になっている",
+      "purpose_background": "harness-creator の SubAgent (agents/*.md) は frontmatter がプラグイン YAML 形式 (name/description/tools/model/isolation 等) を維持しつつ本文のみ7層構造に従うべきだが、この形式を定義する正本が prompt-creator 側に存在しない。既存 seven-layer-format.md は skill 配下 prompts/*.md 向けの純粋7層 Markdown 契約であり、SubAgent 特有の frontmatter 差異を扱っていない",
+      "checklist": [
+        "references/subagent-hybrid-format.md が新設され、frontmatter=plugin YAML/本文=l5-contract v2.0.0 の構造を明記している",
+        "純粋7層契約 (seven-layer-format.md) との相違点 (frontmatter 形式・L5 サブ構造の扱い) が明文化されている",
+        "harness-creator 側 C02/C09 が参照可能な自己完結パス (plugins/prompt-creator/ 配下) に配置されている"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-hybrid-contract",
+          "summary": "SubAgent ハイブリッド契約の新規 reference ドキュメントを作成し、純粋7層契約との差異を明記する",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "references/subagent-hybrid-format.md が存在し、frontmatter=plugin YAML/本文=7層構造のハイブリッド契約を明記していることを lint で確認できる",
+            "verify_by": "lint"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "C02 の --mode agent 検証がこのハイブリッド契約を参照して harness-creator の SubAgent を判定できることを受入テストで確認する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "combinators": ["with-goal-seek"],
+      "build_target": "plugins/prompt-creator/skills/run-prompt-creator-7layer/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter",
+          "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "depends_on": ["C01"],
+      "placement_scope": "plugin-root",
+      "script_name": "lint-agent-prompt-content.py",
+      "purpose": "harness-creator の agents/*.md と skills/*/prompts/*.md の本文が prompt-creator の l5-contract v2.0.0 (7層構造・Layer5 サブ構造4ブロック・固定手順禁止) に準拠するかを --mode agent|prompt で fail-closed 検証する (配置 lint lint-prompt-placement.py とは直交する内容 lint)。--check-vendor-parity で prompt-creator の canonical verify-completeness.py から vendoring したコアロジックの byte 一致も検証する",
+      "inputs": "argv: --mode agent|prompt [--plugins-dir <plugin-root> (既定 plugins/harness-creator。単一 plugin root を指す — plugins 親ディレクトリを渡すと scanned=0)] | --check-vendor-parity | --self-test",
+      "outputs": "stdout: OK サマリ / stderr: 違反ファイル+違反節+理由の一覧",
+      "exit_codes": "0=OK / 1=violation / 2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "build_target": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "elegant-improvement-executor",
+      "description": "elegant-reviewで分析結果が揃ったとき、範囲を絞って改善を実装したいときに使う。",
+      "tools": ["Read", "Glob", "Grep", "Edit", "MultiEdit", "Write", "Bash(python3 *)"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-execute.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/elegant-improvement-executor.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "elegant-logical-structural-analyst",
+      "description": "elegant-reviewで俯瞰後に論理と構造を分析したいとき、4条件に照らして検証したいときに使う。",
+      "tools": ["Read", "Glob", "Grep"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/elegant-logical-structural-analyst.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "elegant-meta-divergent-analyst",
+      "description": "elegant-reviewで俯瞰後にメタ・抽象・発想拡張の分析をしたいとき、代替案を検討したいときに使う。",
+      "tools": ["Read", "Glob", "Grep"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/elegant-meta-divergent-analyst.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "elegant-reset-observer",
+      "description": "elegant-reviewで分析前に先入観なしの俯瞰確認が必要なとき、read-onlyで対象を観察したいときに使う。",
+      "tools": ["Read", "Glob", "Grep"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/elegant-reset-observer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "elegant-system-strategic-analyst",
+      "description": "elegant-reviewで俯瞰後にシステム・戦略・価値・根本原因を分析したいとき、優先順位を決めたいときに使う。",
+      "tools": ["Read", "Glob", "Grep"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/elegant-system-strategic-analyst.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "depends_on": ["C01", "C02", "C09"],
+      "name": "run-build-skill-subagent",
+      "description": "run-build-skillでbriefから単一スキル骨格を生成したいとき、独立workerで更新したいときに使う。",
+      "tools": ["Read", "Glob", "Grep", "Write", "Edit", "Bash(python3 *)"],
+      "independent_context": true,
+      "responsibility_anchor": "plugins/harness-creator/skills/run-build-skill/prompts/R1-scaffold.md",
+      "prompt_layer": "7layer",
+      "build_target": "plugins/harness-creator/agents/run-build-skill-subagent.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict"}
+    },
+    {
+      "id": "C09",
+      "component_kind": "skill",
+      "depends_on": ["C01", "C02"],
+      "skill_name": "run-build-skill",
+      "prefix": "run",
+      "skill_kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "SubAgent/prompt を生成・更新するとき", "agent/prompt 生成フローが prompt-creator を経由せず単独生成される抜け道を塞ぐ必要があるとき"
+      ],
+      "output_contract": "生成/更新された agents/*.md・skills/*/prompts/*.md が C02 の --mode agent|prompt を exit0 で通過し、build_trace/provenance に source_contract_ref と prompt_creator_invocation が残った状態で返る",
+      "boundary": "C02 の内容 lint 実装自体・C01 のハイブリッド契約策定・既存6 SubAgent の本文是正実務は本 component の責務外 (C01-C08 に委譲)",
+      "placement_candidates": ["Skill"],
+      "cli_tools": ["python3 scripts/lint-agent-prompt-content.py"],
+      "deterministic_checks": ["lint-agent-prompt-content.py (C02)"],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": true,
+      "goal": "run-build-skill の agent/prompt 生成フローが prompt-creator (C01 のハイブリッド契約準拠) を必ず経由し、C02 の内容 lint が fail-closed ゲートとして配線され、経由しない単独生成の抜け道が受入例で塞がれている状態になっている",
+      "purpose_background": "run-build-skill は prompt-placement-convention.md + lint-prompt-placement.py による『配置』規律は持つが、生成される prompts/*.md / agents/*.md の本文が7層構造に準拠しているかを検証する機構が無く、C02 が実装されても生成フローに配線されなければ実効性が無い",
+      "checklist": [
+        "agent/prompt 生成フローが prompt-creator 呼び出しを必須化している",
+        "C02 の --mode agent / --mode prompt 検証が生成直後に fail-closed ゲートとして実行される",
+        "build_trace/provenance に source_contract_ref と prompt_creator_invocation が記録される",
+        "prompt-creator 非経由の単独生成を試みる受入例 (バイパス不能性テスト: provenance 欠落または prompt_creator_invocation=false の生成物が exit1 で止まる) が用意されている",
+        "harness-creator-kit-ci.yml / governance-check.yml のいずれかで C02 が CI 配線されている"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-flow-wiring",
+          "summary": "agent/prompt 生成フローへ prompt-creator 呼び出し必須化と C02 の fail-closed ゲート配線を実装する",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "生成フロー内で C02 の --mode agent/--mode prompt 呼び出しが exit0 でなければ生成が完了しないことを lint で確認できる",
+            "verify_by": "lint"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "prompt-creator 非経由の単独生成を試みる受入例テストが、provenance 欠落または prompt_creator_invocation=false を exit1 として生成フローでブロックすることを受入テストで確認する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "combinators": ["with-goal-seek"],
+      "build_target": "plugins/harness-creator/skills/run-build-skill/",
+      "side_effect_targets": [".github/workflows/harness-creator-kit-ci.yml"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter",
+          "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": false,
+      "omitted_reason": "harness-creator/prompt-creator 双方の plugin.json は skills/agents/scripts をディレクトリ規約で自動発見するため、本 plan の新設 (C02 script 追加) ・更新 (C01/C03-C08/C09) はいずれも plugin.json の entry point 定義変更を要さない"
+    },
+    "composition": {
+      "required": false,
+      "omitted_reason": "plugin-composition.yaml の再計算は既存 /plugin-compose (build 後の定常処理) が担い、本 plan は capability 集合の追加ではなく既存 capability の本文是正+1 script 追加に留まる"
+    },
+    "harness_eval": {
+      "required": true,
+      "targets": [".github/workflows/harness-creator-kit-ci.yml"],
+      "note": "C09 が C02 (--mode agent|prompt) を生成直後の fail-closed ゲートとして配線するのに加え、CI (harness-creator-kit-ci.yml) でも所有プラグイン (harness-creator) 全走査 (agents/*.md 6本 + skills/*/prompts/*.md 自前全数・symlink 除外) を実行しバイパス不能性を担保する"
+    },
+    "references_config_assets": {
+      "required": true,
+      "targets": ["plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md"],
+      "note": "C01 が新設する SubAgent 向けハイブリッド契約 SSOT。既存 seven-layer-format.md (純粋7層・skill prompts/*.md 向け) との違いを明記する独立ファイル (既存ファイルへの追記でなく新規)"
+    },
+    "schemas": {
+      "required": false,
+      "omitted_reason": "本 plan はハイブリッド契約を Markdown reference として定義するに留め、新規 JSON Schema 契約は追加しない"
+    },
+    "vendor": {
+      "required": true,
+      "targets": ["plugins/harness-creator/vendor/prompt-creator/verify-completeness.py"],
+      "note": "C02 が prompt-creator の scripts/verify-completeness.py コアロジック (l5-contract 構造検証+固定手順検出) を byte 一致で vendoring する。携帯性は skill-intake の validate-plugin-vendor.py/_vendor.py 先行事例に倣い、C02 の --check-vendor-parity モードで byte 一致を検証する (実装は C02 の build スコープ内)"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "該当ケーパビリティなし。本 plan は MCP/App Connector 接続を伴わない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "本 plan が新設/更新する component (C01-C09) はいずれも Notion DB を新規に消費/生成しない (既存 harness-creator の notion_config 利用は変更対象外)"
+    }
+  }
+}

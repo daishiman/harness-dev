@@ -1,0 +1,43 @@
+{
+  "plan_dir": "plugin-plans/demo-boundary-skill",
+  "target_plugin_slug": "demo-boundary-skill",
+  "mode": "create",
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "demo-boundary-skill",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "demo-boundary-skill",
+        "kind": "run",
+        "mode": "create",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/demo-boundary-skill/skills/demo-boundary-skill/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "demo-boundary-check",
+      "depends_on": [
+        "C01"
+      ],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "demo-boundary-skill",
+        "script_path": "scripts/demo-boundary-check.py"
+      },
+      "build_target": "plugins/demo-boundary-skill/skills/demo-boundary-skill/scripts/demo-boundary-check.py",
+      "status": "planned"
+    }
+  ]
+}

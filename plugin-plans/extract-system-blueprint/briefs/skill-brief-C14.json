@@ -1,0 +1,53 @@
+{
+  "skill_name": "run-blueprint-apply",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "抽出済みblueprintを自社開発へ適用する推奨を導出したいとき",
+    "採用/回避/差別化の判断材料が欲しいとき",
+    "blueprint-apply"
+  ],
+  "output_contract": "apply-recommendations.md+json(採用adopt/回避avoid/差別化機会differentiateの3分類・全項目kind=inference+evidence_refs(blueprint実在anchor)+confidence{level,rationale}+own_context_ref)。ローカルのみ(外部公開なし)・blueprint本体非混入",
+  "boundary": "入力=C02 PASS済blueprint一式+自社コンテキスト/出力=ローカルapply-recommendationsのみ。対象originへ一切アクセスせず(network 0)、blueprint本体を書き換えない。C02 verdict不在/FAILのblueprintは入力として拒否する",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "doc-emit.py --check-apply"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "C02 verdict(PASS+draft_hash一致)の事前検証: verdict不在/hash不一致/FAILはfail-closedに拒否する",
+    "自社コンテキスト(文書パスまたは自然文)の構造化取り込み: 自社の技術スタック/リソース制約/既存資産/対象ユーザーを推奨の接地先として明示する",
+    "blueprintのfact/inference(essence章・design tokens・tech_stack・nonfunctional_baseline含む)と自社コンテキストの突合から採用/回避/差別化機会の3分類recommendationsを導出する",
+    "全recommendation項目がkind=inference・evidence_refs=blueprint実在anchor・confidence{level,rationale}を持ち、blueprintに無い事実を新規主張しない",
+    "doc-emit.py --check-applyによる決定論自己検証(schema適合/evidence anchor解決率100%/fact新規レコード0/3分類のみ)がexit0",
+    "出力はローカルapply-recommendations.md+jsonのみ: blueprint本体を書き換えず、外部へ公開せず、対象originへ一切アクセスしない"
+  ],
+  "goal": "C02 PASS済(同一draft_hash)のblueprint一式と自社コンテキスト(自社製品/技術制約の文書または自然文)を入力に、採用(adopt)/回避(avoid)/差別化機会(differentiate)の3分類apply-recommendations(md+json)をローカルへ導出し、全項目がblueprint実在anchorへのevidence_refs+confidence付きinferenceで、blueprint外の無根拠主張0件・blueprint本体への混入0件である状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "blueprintは対象の忠実記述で完結し『自社ならどれを採用/回避すべきか・どこが差別化機会か』が出ないため、自社開発へ活かす最後の適用判断を独立した下流skillとして担う(R4ユーザー承認の構造変更13→14)。抽出(対象の記述)と適用(自社への判断)を分離することで、blueprintの忠実性と推奨の自社接地性を相互汚染させない",
+  "responsibilities": [
+    {
+      "id": "R1-ground",
+      "summary": "blueprint一式とC02 PASS verdict(同一draft_hash)をfail-closedに検証し、自社コンテキスト(文書/自然文)を技術スタック/制約/既存資産/対象ユーザーへ構造化して取り込む",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-recommend",
+      "summary": "blueprintのfact/inference(essence章・design tokens・tech_stack・nonfunctional_baseline含む)と自社コンテキストを突合し、採用/回避/差別化機会の3分類recommendationsを導出する。各項目はblueprint実在anchorへのevidence_refs+confidence必須のinferenceで、blueprintに無い事実を新規主張しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-emit",
+      "summary": "apply-recommendations.md+jsonをschema準拠で出力し、doc-emit.py --check-applyでschema適合・evidence anchor実在・fact新規主張0を自己検証する。blueprint本体と外部へは書き込まない",
+      "prompt_required": true
+    }
+  ]
+}

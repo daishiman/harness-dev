@@ -1,0 +1,741 @@
+{
+  "build_status": "realized",
+  "build_status_reason": "2026-07-05 build 完了 + git 追跡 (commit) を同一操作で実施し realized 化 (全 11 component 実体化・tests 同梱)。schema は consumer 共置 (plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json) を正本とし inventory 宣言を実配置へ追随修正済 (elegant-review run-20260705-reflection)。証跡=build-evidence.md。validate-plan-coverage の計画↔実体 completeness gate 対象 (realized 化で発火)。",
+  "plugin_concept": "harness-creator の量産パイプライン (skill-intake→plugin-dev-planner→harness-creator build→改善) の 3 境界断線 (E1: intake→goal-spec, E2: plan→build, E3: 改善→plan) を解消する境界契約整備。各段の実行は分離維持し、producer/consumer 機械契約・検証ゲート・provenance のみを追加/更新する。",
+  "derivation": "E1 consumer 側 2 component (C01 skill 更新=intake_json 配線+--mode update 受理, C02 command 更新=引数追加) + provenance/検出ゲート 3 script (C03 既存 schema 更新, C04 情報漏れ検出 新設, C05 provenance chain 検証 新設)。E2 consumer 側 2 component (C06 skill 更新=brief_path 受理, C07 command 更新=routes[] 直接消費) + 突合ゲート 1 script (C08 新設・plugin-root 共有)。E3 emit 側 1 script (C09 新設・plugin-root 共有・3 既存 skill は無改修のまま出力を後付け正規化)。横断で fail-closed 強制 hook 1 件 (C11: --mode update を check-intake-consumption/check-provenance-chain 未 PASS で block) と、improvement-handoff 反映の意味的忠実性をレビューする独立 sub-agent 1 件 (C10) を追加し、5 種 component_kind を単一 skill 偏重なく実採用した。sub-agent/hook を採用したのは: hook=プロンプト依存でなく機械層で fail-closed 保証するため (memory: 保証要件は機械層で担保)、sub-agent=C05 の機械チェック (フィールド非空) を補完し improvement-handoff の反映が字面でなく意味的に正しいかを独立 context で判定するため。schema 新設 (improvement-handoff.schema.json) は独立 ref skill を新設せず C09 script の契約記述に折り込み過剰分解を避けた。",
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "components": [
+    {
+      "id": "C09",
+      "component_kind": "script",
+      "name": "emit-improvement-handoff",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/emit-improvement-handoff.py",
+      "side_effect_targets": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json"
+      ],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "emit-improvement-handoff.py",
+      "purpose": "改善成果物 (--source-kind elegant-review|content-review|evaluator|manual の既存出力) と構造化 findings[] を後付けで読み取り、improvement-handoff.schema.json 準拠の improvement-handoff.json (source{kind,ref}/target_plugin_slug/plan_dir/findings[]/provenance{source_intake,prev_goal_spec}・Notion read-back を伴わないローカル repo artifact) へ正規化して emit する。E3 emit 側の唯一の新規実体。改善元 skill 自体は無改修 (実行分離維持)。schema 正本は consumer 側 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json に共置。",
+      "inputs": "argv: --source-kind elegant-review|content-review|evaluator|manual --source-ref <改善成果物 path or id> --target-plugin-slug <slug> --plan-dir <plugin-plans/<slug>> --findings <findings JSON (bare array or {findings:[...]})> [--schema-version <既定 1.0.0>] [--generated-by <生成器>] [--source-intake <path>] [--prev-goal-spec <path>] [-o|--output <出力先 省略時 stdout>]",
+      "outputs": "stdout (省略時) or <output>: improvement-handoff.json {schema_version, source:{kind, ref, generated_by?}, target_plugin_slug, plan_dir, findings[{id, severity, summary, recommendation?, target_ref?}], provenance:{source_intake, prev_goal_spec}}",
+      "exit_codes": "0=OK / 1=source 解析不能または必須フィールド欠落 / 2=usage error",
+      "network": false,
+      "write_scope": "improvement-handoff.json のみ (指定 --out 以外へ書かない)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-plugin-goal-spec",
+      "depends_on": [],
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
+      "side_effect_targets": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "script_name": "check-plugin-goal-spec.py",
+      "purpose": "既存 plugin-goal-spec.schema.json / check-plugin-goal-spec.py へ provenance フィールド (source_intake: 消費した intake.json への相対パス or null、source_improvement: 消費した improvement-handoff.json への相対パス or null。共に未提供時は明示 null で fallback 経路を証跡化) を追加し、各 provenance フィールドが指すファイルが実在し schema_version が期待値であることを検証する既存ゲートへの追加検査を仕様化する。後方互換規則: source_intake/source_improvement フィールドが欠落する既存 goal-spec は provenance 未記録 (暗黙 null) として WARN 受理し、フィールドが存在して値が不正 (非実在パス/schema_version 不一致等) の場合のみ FAIL する (制約4 が既存 plan の編集を禁止するため必須化しない)。",
+      "inputs": "argv: <PLAN_DIR>/goal-spec.json",
+      "outputs": "stdout: OK summary / stderr: schema/provenance violation",
+      "exit_codes": "0=OK / 1=violation / 2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "check-route-component-parity",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/check-route-component-parity.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "check-route-component-parity.py",
+      "purpose": "harness-creator 側の build 実行入口 (run-skill-create の brief_path 消費 / capability-build の build_args 消費) が実行する前に、対象 handoff-run-plugin-dev-plan.json の routes[] (build_target/component 集合) と対象 plan の component-inventory.json の component 集合を突合し、一致しない route (仕様書に存在しない build_target、または plan にあって route が無い component) を検出して FAIL する事前ゲート。check-build-handoff.py (plan 内部の routes==inventory 整合) とは別軸で、本 script は「build 実行者が今まさに触ろうとしている routes[] が、参照した plan の inventory と現在も一致しているか」を build 直前に再確認する (plan 差し替え/陳腐化検出)。",
+      "inputs": "argv: <handoff-run-plugin-dev-plan.json> [--inventory <component-inventory.json> 省略時は handoff の plan_dir から解決]",
+      "outputs": "stdout: OK summary (一致 component 数) / stderr: 不一致 route 一覧 (欠落/余剰/build_target 相違)",
+      "exit_codes": "0=OK / 1=不一致検出 / 2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "check-intake-consumption",
+      "depends_on": [
+        "C03"
+      ],
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-intake-consumption.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "script_name": "check-intake-consumption.py",
+      "purpose": "goal-spec.json の source_intake (C03 追加フィールド) が指す intake.json を読み、§0 executive_summary / §3 purpose_excavator / next-action.json split_candidates[] のうち goal-spec の purpose/background/checklist いずれにも字面参照されない項目を検出して WARN/FAIL する情報漏れ検出ゲート。source_intake が null (intake.json 未提供) の場合は非適用として skip (exit0)。判定境界: intake 必須項目 (§0 executive_summary / §3 purpose_excavator 相当の必須軸) の未反映は exit1 FAIL、推奨・候補項目 (next-action.json split_candidates[] 等) の未反映は exit0 + WARN 一覧出力 (goal-spec 要件 C2 の WARN/FAIL 両態様と一致)。",
+      "inputs": "argv: <PLAN_DIR>/goal-spec.json [--intake <intake.json 既定は goal-spec.source_intake>] [--next-action <next-action.json>]",
+      "outputs": "stdout: OK summary (反映済み項目数) / stderr: 未反映項目一覧 (WARN) または FAIL 対象 / exit0 時: <plan_dir>/.gate/check-intake-consumption.pass.json (検証対象 artifact の sha256 digest を焼いた pass marker) を書く",
+      "exit_codes": "0=OK(全反映 or 非適用 or 推奨・候補項目のみ未反映=WARN) / 1=必須項目未反映(FAIL) / 2=usage error",
+      "network": false,
+      "write_scope": "<plan_dir>/.gate/check-intake-consumption.pass.json のみ",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "check-provenance-chain",
+      "depends_on": [
+        "C03",
+        "C09"
+      ],
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-provenance-chain.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "script_name": "check-provenance-chain.py",
+      "purpose": "intake.json→goal-spec(source_intake)→plan(handoff-run-plugin-dev-plan.json)→improvement-handoff.json(C09 emit・provenance.derived_from_artifact)→次サイクル goal-spec(source_improvement) というprovenance chain が途切れず追跡可能であることを検証する。各リンクの provenance フィールドが指すファイルの実在 + schema_version 整合を辿り、いずれかの provenance フィールド欠落/断裂を検出して FAIL する。新規作成フロー (source_intake のみ / source_improvement=null) と改善フロー (両方非 null) の双方を有効な chain として受理する。",
+      "inputs": "argv: <PLAN_DIR>/goal-spec.json [--history <過去サイクルの goal-spec/handoff/improvement-handoff 群>]",
+      "outputs": "stdout: OK summary (chain 各リンクの状態) / stderr: 断裂箇所 (欠落 provenance フィールド) / exit0 時: <plan_dir>/.gate/check-provenance-chain.pass.json (検証対象 artifact の sha256 digest を焼いた pass marker) を書く",
+      "exit_codes": "0=OK(chain 完全 or 新規作成フローとして妥当) / 1=断裂検出 / 2=usage error",
+      "network": false,
+      "write_scope": "<plan_dir>/.gate/check-provenance-chain.pass.json のみ",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-plugin-dev-plan",
+      "depends_on": [
+        "C09"
+      ],
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "skill_name": "run-plugin-dev-plan",
+      "prefix": "run",
+      "skill_kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "intake.json (skill-intake 出力) が引数として渡されたとき",
+        "intake.json 未提供で従来通り自由文構想のみが渡されたとき (fallback 維持)",
+        "--mode update で改善成果物 (improvement-handoff.json) が渡されたとき"
+      ],
+      "output_contract": "intake_json 提供時は R1 の purpose/background/goal へ §0 executive_summary / §3 purpose_excavator の内容を反映し goal-spec.source_intake にパスを記録する。--mode update + improvement-handoff.json 提供時は再生成する goal-spec/plan に goal-spec.source_improvement を記録し、改善成果物の findings[] (severity/summary/recommendation) を background/checklist へ反映する",
+      "boundary": "intake.json の妥当性検証・情報漏れ検出は check-intake-consumption.py (C04) の責務。provenance chain 全体の断裂検出は check-provenance-chain.py (C05) の責務。本 component は入力受理・反映ロジックの配線のみ",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "check-plugin-goal-spec.py",
+        "check-intake-consumption.py",
+        "check-provenance-chain.py"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": true,
+      "goal": "R1-elicit-goal.md §2.3 が任意入力として宣言するのみだった intake_json を実行ブロックへ配線し、提供時に purpose/background/goal へ反映する適用例と、未提供時に現行 fallback を維持する非適用例の両方が仕様として定義されている。加えて --mode update が改善成果物 (C09 emit-improvement-handoff.py 出力) をローカル repo artifact 経由で受理し、再生成 goal-spec/plan に provenance (source_intake/source_improvement) を記録する契約が定義されている",
+      "purpose_background": "E1(b): intake_json は documented-but-unwired (§2.3 表に載るが実行ブロック未参照)。E3: --mode update に改善成果物を受ける構造化入力契約が無く改善が仕様書へ還流しない (goal-spec 背景の E1/E3 該当箇所)",
+      "checklist": [
+        "intake_json 提供時: purpose/background/goal に §0/§3 の内容が反映され goal-spec.source_intake に intake.json への相対パスが記録される適用例が定義されている",
+        "intake_json 未提供時: 従来通り自由文のみから goal-spec が生成される非適用例 (source_intake:null) が定義されている",
+        "--mode update + improvement-handoff.json 提供時: goal-spec.source_improvement に provenance が記録され、residual_risks/validation_commands が背景/checklist に反映される適用例が定義されている"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-intake-wire",
+          "summary": "R1-elicit-goal.md 実行ブロックへ intake_json 反映ロジックを配線し goal-spec.source_intake を出力する",
+          "prompt_required": true
+        },
+        {
+          "id": "R1-update-wire",
+          "summary": "--mode update の入力契約へ improvement-handoff.json 受理ロジックを追加し goal-spec.source_improvement を出力する",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "R1-elicit-goal.md の frontmatter/lint が exit0 になり intake_json/--mode update の入力契約が §2.3 表と実行ブロックの両方に存在する",
+            "verify_by": "lint"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "intake_json 提供時に purpose/background/goal へ反映される適用例と未提供時の非適用例、--mode update の provenance 記録が受入テストで確認できる",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "combinators": [
+        "with-goal-seek"
+      ],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C02",
+      "component_kind": "slash-command",
+      "name": "plugin-dev-plan",
+      "depends_on": [
+        "C01"
+      ],
+      "build_target": "plugins/plugin-dev-planner/commands/plugin-dev-plan.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "description": "構想または intake.json を受理して run-plugin-dev-plan を起動する command へ intake_json 引数を追加",
+      "argument-hint": "[<構想文> | --intake-json <path> --next-action-json <path>] [--mode create|update] [--improvement-handoff <path>]",
+      "allowed-tools": [
+        "Read",
+        "Skill"
+      ],
+      "disable-model-invocation": false,
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C06",
+      "component_kind": "skill",
+      "name": "run-skill-create",
+      "depends_on": [
+        "C08"
+      ],
+      "build_target": "plugins/harness-creator/skills/run-skill-create/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "skill_name": "run-skill-create",
+      "prefix": "run",
+      "skill_kind": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "handoff-run-plugin-dev-plan.json の routes[] が component_kind=skill の route を brief_path 付きで渡すとき",
+        "従来通り topic 単体呼び出しのとき (fallback 維持)"
+      ],
+      "output_contract": "brief_path 提供時は render-skill-brief.py 出力 JSON を無加工消費し再ヒアリングなしで build を開始する。未提供時は既存 R1-elicit dialog にフォールバックする",
+      "boundary": "brief_path の内容の正当性 (component-inventory との整合) は check-route-component-parity.py (C08) の責務。本 component は消費経路の追加のみ",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "check-route-component-parity.py"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": false,
+      "goal": "prompts/R1-elicit.md の入力契約に brief_path (path, optional) を追加し、指定時は topic/mode 経由の対話ヒアリングを skip して brief_path の JSON を直接 skill-brief として採用する経路が実装可能な仕様として定義されている",
+      "purpose_background": "E2(a): routes[] の build_args.brief_path を持つ component を build する際、現状は topic+mode のみ受理し brief_path を読まないため、render-skill-brief.py の出力が再ヒアリングなしで build に届かない (documented-but-unwired と同型の断線)",
+      "checklist": [
+        "brief_path 指定時: R1-elicit dialog を skip し JSON を skill-brief として採用する適用例が定義されている",
+        "brief_path 未指定時: 既存 topic/mode dialog へ fallback する非適用例が定義されている",
+        "brief_path の JSON が skill-brief.schema.json に適合しない場合の fail-closed 挙動が定義されている"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-brief-path",
+          "summary": "R1-elicit.md の入力契約表へ brief_path (path, optional) を追加し、提供時の消費経路と非提供時の fallback を明記する",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "R1-elicit.md の §2.3 入力契約表に brief_path が追加され frontmatter/lint が exit0 になる",
+            "verify_by": "lint"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "brief_path 提供時に再ヒアリングなしで build が開始する適用例と、未提供時に既存 dialog へ fallback する非適用例の両方が受入テストで確認できる",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "combinators": [
+        "with-goal-seek"
+      ],
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "depends_on": [
+        "C08"
+      ],
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "description": "handoff-run-plugin-dev-plan.json の routes[] を直接消費し kind/name/--plugin を手写しせず起動する capability-build コマンドへの更新",
+      "argument-hint": "[<kind> <name> [--plugin=<plugin>] | --handoff <handoff-run-plugin-dev-plan.json> --route-id <component-id>]",
+      "allowed-tools": [
+        "Read",
+        "Skill",
+        "Bash(python3 *)"
+      ],
+      "disable-model-invocation": false,
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "plugin-dev-plan-improvement-reviewer",
+      "depends_on": [
+        "C01",
+        "C09"
+      ],
+      "build_target": "plugins/plugin-dev-planner/agents/plugin-dev-plan-improvement-reviewer.md",
+      "side_effect_targets": [
+        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "description": "--mode update で再生成された goal-spec/plan が、参照した improvement-handoff.json の residual_risks/validation_commands を意味的に (トークン一致でなく) 反映しているかを独立 context でレビューしたいときに使う",
+      "tools": [
+        "Read"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/improvement-merge-review.md",
+      "prompt_layer": "7layer",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    },
+    {
+      "id": "C11",
+      "component_kind": "hook",
+      "name": "enforce-provenance-chain",
+      "depends_on": [
+        "C04",
+        "C05"
+      ],
+      "build_target": "plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
+      "side_effect_targets": [
+        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "event": "PreToolUse",
+      "matcher": "Skill",
+      "exit_semantics": "fail-closed-exit2 (--mode update 呼び出し時に check-intake-consumption.py / check-provenance-chain.py が未 PASS なら Skill 呼び出しを block)",
+      "settings_wiring": "plugins/plugin-dev-planner/.claude-plugin/plugin.json の hooks.PreToolUse へ追加登録",
+      "hook_contract": {
+        "target_skill": "run-plugin-dev-plan",
+        "target_condition": "Tool payload の skill 名が run-plugin-dev-plan で、引数に --mode update または mode=update が含まれる場合のみ対象。create mode / 他 skill / Read 等の非 Skill tool は pass-through",
+        "extract_args": [
+          "plan_dir",
+          "improvement_handoff",
+          "intake_json",
+          "mode"
+        ],
+        "pass_markers": [
+          "<plan_dir>/.gate/check-intake-consumption.pass.json",
+          "<plan_dir>/.gate/check-provenance-chain.pass.json"
+        ],
+        "block_cases": [
+          "mode=update かつ improvement_handoff が未指定",
+          "mode=update かつ pass marker が欠落、または marker 記載の sha256 digest が現物 artifact の sha256 と一致しない",
+          "mode=update かつ pass marker の plan_dir が Tool payload の plan_dir と一致しない"
+        ],
+        "allow_cases": [
+          "mode=create",
+          "run-plugin-dev-plan 以外の Skill 呼び出し",
+          "mode=update で C04/C05 pass marker の記載 sha256 digest が現物 artifact の sha256 と一致し plan_dir が一致する"
+        ],
+        "tests": [
+          "誤block回避: create mode は exit0 pass-through",
+          "fail-closed: marker 欠落または digest 不一致の update は exit2 block",
+          "positive: marker 有効 (digest 一致) update は exit0 pass-through"
+        ]
+      },
+      "fail_closed": true,
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict"
+      }
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "targets": [
+        "plugins/harness-creator/.claude-plugin/plugin.json",
+        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
+      ],
+      "note": "envelope-draft/plugin.json は build handoff gate 用に inventory surface component の entry_points.skills/commands/agents を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json への反映は envelope build 境界で扱い、plugin-dev-planner 側 (.claude-plugin/plugin.json) への C10/C11 登録は該当 component 自身の build スコープ内で処理する"
+    },
+    "composition": {
+      "required": false,
+      "omitted_reason": "plugin-composition.yaml の再計算は既存 /plugin-compose (harness-creator README Step3) が build 後に処理する定常フローであり、本 plan は capability 集合の追加/更新を規定するに留まる"
+    },
+    "harness_eval": {
+      "required": false,
+      "omitted_reason": "EVALS.json への実 eval 登録は build 時 (run-skill-create/run-build-skill 内蔵ゲート) の定常処理。component 単位の quality_gates/harness_coverage 契約は既に components[] へ規定済み"
+    },
+    "references_config_assets": {
+      "required": true,
+      "targets": [
+        "plugins/harness-creator/references/pipeline-boundary-contract.md"
+      ],
+      "note": "cross-cutting 課題 (パイプライン全体像が harness-creator README:52-85 の人手手順のみで記述) に対し、新規リファレンス plugins/harness-creator/references/pipeline-boundary-contract.md を Phase02/Phase06 で整備し E1/E2/E3 の producer/consumer/gate/provenance 対応表を一元化する (C01/C05/C08/C09/C11 が参照)。対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 --mode update は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 は各 consumer 内の deterministic gate / route executor が明示入力を fail-closed 検証するため追加 hook は置かない)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する"
+    },
+    "schemas": {
+      "required": true,
+      "targets": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json"
+      ],
+      "note": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json (新設・C09 が出力する improvement-handoff.json の形状契約。consumer skill run-plugin-dev-plan の schemas/ に plugin-goal-spec/phase-spec と凝集配置=検証者近接) + 同 schemas/plugin-goal-spec.schema.json への source_intake/source_improvement 追加 (C03)。配置原則: cross-plugin schema は emit する producer 所有でなく validate/consume する consumer skill へ凝集配置し producer (C09=harness-creator) が cross-plugin 参照する (producer は schema を import せず stdlib 自己検証ゆえ共置コスト 0)。全 consumer (C01/C05/C10/C11) と producer C09 は同一パスを単一 SSOT として参照するため二重コピーが存在せず schema parity 二重化リスクは消失 (P09 parity 安全弁は SSOT 単一化により不要化)。check-runtime-portability の build_target パス接頭辞検査は cross-plugin runtime 参照を検出しないが、健全性は両 plugin 共在不変条件 (双方 distributable:false・repo-bundled・NEVER_DISTRIBUTE denylist) が担保する"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "本 plan の component はいずれも配布 vendoring 対象の外部依存資産を新設しない"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "該当ケーパビリティなし。パイプライン境界契約整備は MCP/App Connector 接続を伴わない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "harness-creator 既存の notion_config 利用 (run-skill-feedback → improvement-request DB 等) は本 plan の変更対象外。制約6により改善還流は Notion read-back を避けローカル repo artifact (improvement-handoff.json) を既定とするため、本 plan が新設/更新する component はいずれもNotion を新規に消費/生成しない"
+    }
+  }
+}

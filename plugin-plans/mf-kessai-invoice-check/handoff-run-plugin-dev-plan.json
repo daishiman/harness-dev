@@ -1,0 +1,242 @@
+{
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C04",
+      "component_kind": "hook",
+      "name": "guard-mfk-no-reinvent",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "guard-mfk-no-reinvent",
+        "operation": "extend-existing",
+        "preserve": [
+          "R1-anti-TODO",
+          "R2-anti-reinvention",
+          "R3-anti-Bash-bypass",
+          "allowlist",
+          "guard-mfk-readonly.py 配線",
+          "plugin.json hooks 配線(不変)"
+        ],
+        "add_sanctioned_basenames": [
+          "mfk_period_report.py"
+        ],
+        "add_reinvent_signatures": [
+          "compare",
+          "period_diff",
+          "classify_irregular"
+        ],
+        "reinvent_signature_match": "def 名の語幹前方一致 (def\\s+\\w*(compare|period_diff|classify)\\w*\\s*\\() として焼き def compare_periods(/diff_prev_curr( 等の派生名も捕捉する。または C05 実関数名を登録シグネチャへ byte 一致で揃える。名前ゆらぎ回帰テストを C04 完了条件に追加 (SS-F1・完全一致だと派生名がすり抜け C9 が vacuous 化するのを防ぐ)",
+        "add_domain_terms": [
+          "先月と今月の比較",
+          "発行漏れレポート",
+          "period-report"
+        ]
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "notion_report_sink.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-C06-EXTEND",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/notion_report_sink.py",
+        "operation": "extend-existing",
+        "preserve": [
+          "resolve_report_db(指定見出しに紐づく既存 report DB を in-block/under-heading/page の順で確認する構造。※新規作成条件は add_fix_2026_07_10 で上書き=明示 pin(report_database_id)を step0 最優先・明示 pin なし かつ 既存未発見時は page-created を抑止し警告停止・作成は明示 opt-in 時のみ)",
+          "upsert_report_rows 非破壊マージ(deleted=0)",
+          "cross-run safe guard(前 run の要対応を新 run の正常で下げない)",
+          "_prefer_action/collapsed_multi_contract(漏れ隠蔽防止)",
+          "既存6テスト(reuse/idempotent/non_destructive/collapse)",
+          "notion_transport._req 単一正本 + fake-store offline 契約"
+        ],
+        "add_design_d": [
+          "report_toggle_block を歴史的キー名のまま出力先指定見出しとして扱い、トグル見出し/プレーン見出し2両対応にする",
+          "既存 report DB があれば更新する(新規作成の無条件性は add_fix_2026_07_10 で上書き=明示 pin なし かつ 既存未発見時は phantom を作らず警告停止・作成は明示 opt-in 時のみ・report_parent_page 直下)",
+          "単一恒久 DB に対象月列(YYYY-MM)を持たせ、行キー=(対象月,取引先名,商品名)で同月のみ上書き・別月/以前行は非破壊保持する",
+          "stdout に report_db_id/db_location(in-block|under-heading|page|page-created)/db_created/placement を出す"
+        ],
+        "add_fix_2026_07_10": [
+          "resolve_report_db に report_database_id step0 pin 追加",
+          "明示 pin なし+既存未発見時は phantom DB 新規作成を抑止し警告停止",
+          "period_diff『継続発行』を _STRUCTURAL_NORMAL_MARKERS へ追加"
+        ]
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "mfk_period_report.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C04"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-C05-ANNUAL-STOPPED",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_period_report.py",
+        "operation": "extend-existing",
+        "preserve": [
+          "compare_periods/_classify_stopped/_rec_is_annual/_is_trial 等の既存分類ロジック(既存 34KB を新規再生成で上書きしない)",
+          "test_mfk_period_report の既存ケース(隔月/単発/契約終了/トライアルの curr-present 変種・test_stopped_when_curr_row_absent の月払い正解)",
+          "自由文非再パース原則(has_end_basis→SUPPRESS_ENDED を消費し確認内容の期間文字列を実行時解釈しない)"
+        ],
+        "add_annual_stopped_fix": [
+          "_classify_stopped の③年契約分岐(mfk_period_report.py:507)を curr.verdict 単独(:486 verdict=(curr or {}).get('verdict'))から prev.verdict∈{MATCH_ANNUAL,SUPPRESS_ANNUAL}(compare_periods が返す pair の prev)・_rec_is_annual(12ヶ月履歴)の一次トリガーへ拡張し、curr=None の年契約非請求月を GAP_OK(年契約周期)へ分類する(金子金物 systemic bug 是正)",
+          "curr=None は年契約固有でなく _classify_stopped 全分岐(①契約完了 SUPPRESS_ENDED/⑤隔月 SUPPRESS_OFFMONTH・単発 SUPPRESS_ONESHOT)が共有する curr 単独依存の前提欠陥。④トライアルのみ prev 参照で堅牢。①⑤も curr=None で⑥誤爆するか(reconcile が非請求月に当該 SUPPRESS_* を curr へ emit するか)を実データ/機構で確認する。ただし是正手段は分岐の識別性で変える: ③年契約(prev=MATCH_ANNUAL)は prev.verdict で是正可、⑤隔月/単発は prev=MATCH_MONTHLY が非識別的で prev.verdict 同型化は原理的に不能ゆえ入力層で curr-present 化(R1-collect が SUPPRESS_OFFMONTH/ONESHOT を --curr-verdicts へ含める)or cadence/DB1 配線で是正する(GAP-C05-ANNUAL-STOPPED の詳細に従い prev.verdict 同型化を⑤へ適用しない)",
+          "回帰テスト: 金子金物型(prev=MATCH_ANNUAL 180万・curr 不在)→GAP_OK。上記確認結果に応じ①(prev=SUPPRESS_ENDED/MATCH_ENDED_FINAL・curr 不在→契約完了正常)⑤(prev=隔月/単発・curr 不在→対象外正常)の curr=None 変種も追加する"
+        ],
+        "add_fix_2026_07_10": [
+          "STATE_CONTINUED→GAP_OK(継続発行=権威ある月契約正常)",
+          "_orphan_rows GAP_ACTION→GAP_OK(要マスタ登録=正常✓)",
+          "_classify_both_absent 両月なし安全網 surface 維持",
+          "period_diff『継続発行』を正規トークンで emit=C06 marker と byte 一致"
+        ],
+        "routing_note": "script builder 語彙(plugin-scaffold=contract-only)の一般 routing gap は open_issues GAP-SCRIPT-BUILDER が引き続き説明する。本 route の主 gap は要望③是正の GAP-C05-ANNUAL-STOPPED を指す(C06 route が GAP-C06-EXTEND を主 gap にするのと対称化=年契約是正が build へ fail-open するのを防ぐ)"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-mf-invoice-report",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C05",
+        "C06"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-mf-invoice-report",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "sub-agent",
+      "name": "mfk-report-verifier",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "mfk-report-verifier"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/agents/mfk-report-verifier.md",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "slash-command",
+      "name": "run-mf-invoice-report",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "run-mf-invoice-report"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/commands/run-mf-invoice-report.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": "plugins/mf-kessai-invoice-check/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "approval_reason": "既存 plugin の manifest は実在し hooks 配線 (guard-mfk-no-reinvent の Bash/Write|Edit|MultiEdit 両 matcher) は変更しない。entry_points への新 3 component (skill run-mf-invoice-report / command run-mf-invoice-report / agent mfk-report-verifier) は実 plugin (0.6.0) に既反映済で、envelope-draft の残差分は version を実 plugin 追随 (draft は実 plugin plugins/mf-kessai-invoice-check/.claude-plugin/plugin.json の version=0.6.0 を正本に追随) させることのみ。ユーザー承認後に envelope-draft/plugin.json を手動適用する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "既存 marketplace 登録(xl-skills-full bundle)を維持する。配布内容の再登録が要る場合のみユーザー承認後に実行する"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-2026-07-10-4REQ",
+      "severity": "high",
+      "build_status": "RECORDED_FOR_BUILD",
+      "text": "4要件(要件1 継続発行=権威ある正常✓ / 要件2 出力先 report_database_id pin / 要件3 要マスタ登録=正常✓ / 要件4 両月なし安全網)を C05/C06 の後段 /capability-build で実装する。既存 GAP-C05-ANNUAL-STOPPED / GAP-C06-EXTEND の BUILT 2026-07-08 は 07-08 分(年契約非請求月の curr=None 是正・Design D 出力先解決)のみで、07-10 delta(要件1 STATE_CONTINUED→GAP_OK + period_diff『継続発行』marker / 要件2 report_database_id step0 pin + phantom DB 抑止 / 要件3 _orphan_rows GAP_ACTION→GAP_OK / 要件4 _classify_both_absent 安全網)は未 build。本 delta は build 消費 SSOT 層(handoff routes[].build_args.add_fix_2026_07_10 / component-inventory C05・C06 purpose / notion_config report-database-id / plan-findings 4条件 / phase-02・04・05・07)へ伝播済で、後段 build がこの delta を fail-open で skip/未判定にしないための唯一の追跡アンカー。実プラグイン scripts/mfk_period_report.py・notion_report_sink.py のコード変更ゆえ本 plan は要件記録のみ。"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。C05 (mfk_period_report.py) / C06 (notion_report_sink.py) の script route は harness-creator の build-script-route.py が L4 で消費し、gap_ref は routing 語彙の明示参照として維持する"
+    },
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "low",
+      "text": "既存 plugin の manifest/marketplace は実在し、entry_points への新 3 component は実 plugin (0.6.0) に既反映済。envelope-draft/plugin.json の残差分は version を実 plugin (plugins/mf-kessai-invoice-check/.claude-plugin/plugin.json) へ追随させることのみで、単独自動生成する scaffold executor は planner の外部。envelope-draft/plugin.json を manual-apply artifact として version 追随のみユーザー承認後に手動適用する (hooks 配線・entry_points は不変)"
+    },
+    {
+      "id": "GAP-C04-EXTEND",
+      "severity": "medium",
+      "text": "C04 は既存稼働 hook guard-mfk-no-reinvent.py への in-place 拡張 (build_args.operation=extend-existing)。run-build-skill の新規 hook 生成で 203 行の既存実装 (R1-R3/allowlist) を上書き破壊しないよう、L4 build は build_args.preserve を保持した Edit 差分適用とし、SANCTIONED へ mfk_period_report.py を追加する変更を C05 エンジン生成より先行させる (C05.depends_on=[C04])。★現物確認(2026-07-08 Agent2/Agent4): guard-mfk-no-reinvent.py は既に :54 SANCTIONED へ mfk_period_report.py・:62 ドメイン語(先月と今月の比較/発行漏れレポート/period-report)・:68-76 語幹前方一致シグネチャ(\\w*(compare|period_diff|classify)\\w*)を含みデプロイ済(cluster B/W の是正が既に prior PR でコードへ反映)。したがって L4 は新規追加でなく現状パリティ検証(既存 203 行を Edit しない no-op idempotent 確認)として扱い、C04→C05 の順序 edge は既に充足済(vestigial だが向きは正・冪等ゆえ再適用しても害なし)"
+    },
+    {
+      "id": "GAP-NOTION-TOGGLE-PLACEMENT",
+      "severity": "info",
+      "status": "resolved",
+      "resolution": "Design D (ユーザー承認済み・2026-07-08) で解消。既存 report DB があれば更新し、無ければ見出しの下へ新規作成する。",
+      "text": "R9/C10 の核は『指定見出しに紐づく請求漏れ比較レポート DB を既存確認し、存在すれば上書き更新、無ければ見出しの下(ページ直下)へ新規作成する』へ確定。Notion API は database を block_id 親で作成できないが、UI でトグル配下/見出し直下に置いた既存 DB の更新(行 upsert・列 PATCH)は可能。C06 は report_toggle_block を歴史的キー名のまま出力先指定見出しとして扱い、トグル見出し/プレーン見出し2両対応で in-block → under-heading → page → page-created の順に解決する。単一恒久 DB に対象月列を持ち、行キー=(対象月,取引先名,商品名)で同月のみ上書き・別月/以前行は非破壊保持する。link_to_page 索引方式は採用しない。実 build 検証義務は GAP-C06-EXTEND を参照"
+    },
+    {
+      "id": "GAP-C05-ANNUAL-STOPPED",
+      "severity": "high",
+      "component": "C05 (scripts/mfk_period_report.py)",
+      "text": "systemic bug(2026-07-08 実データ実証・金子金物株式会社): 年契約(年間払い/年間一括更新)の非請求月は reconcile が今月 verdict 行を出さず C05 の _classify_stopped で curr=None になる。現行③の年契約分岐は curr.verdict ∈ {SUPPRESS_ANNUAL,MATCH_ANNUAL} だけを見るため(mfk_period_report.py:486 verdict=(curr or {}).get('verdict') → :507 if verdict in ANNUAL_NORMAL_VERDICTS)、年契約であっても抑制が発火せず⑥『発行漏れ候補・要対応』へ誤爆する(全年契約の非請求月が該当)。修正: _classify_stopped の年契約分岐(③)を curr.verdict 単独でなく (a) prev.verdict ∈ {MATCH_ANNUAL,SUPPRESS_ANNUAL}(=compare_periods が返す pair の prev=_classify_stopped の第1引数 prev。_pair_states という関数は実在しない)、(b) 12ヶ月履歴の年契約一括(_rec_is_annual)のいずれかを一次トリガーにする(既存 SSOT の構造化シグナル参照であり商品名キーワード推測=撤去済 annual_signal の復活ではない)。(c) DB1 支払サイクル ∈ {年間払い,年間一括更新} は独立入力源としては未配線だが、(a) の MATCH_ANNUAL verdict が reconcile 側で既に DB1 支払サイクルから導かれているため (a) が (c) を実質包含する(金子金物は (a) 単独で捕捉可能・独立 DB1 読取入力は追加しない)。ただし (a) 包含が破れる縁ケース(年間契約だが reconcile が MATCH_ANNUAL/(b) を emit していない=初年度・verdict 欠落)では (a)(b) とも外れ (c) 無配線ゆえ抑制が無防備になる(2026-07-08 Agent3 検出)。build 時に『prev に MATCH_ANNUAL 不在の年間契約』を回帰テストで縁ケース化し、抑制漏れが確認されたら (c) DB1 支払サイクルを (a)(b) と OR で独立配線して prev.verdict 単一点依存を補強する。★波及(ダブルループ・2026-07-08 Agent3 検出): curr=None は年契約固有でなく _classify_stopped 全分岐が共有する curr 単独依存の前提欠陥である。①契約完了(:490 verdict=='SUPPRESS_ENDED')・⑤隔月/単発(:523 verdict.startswith('SUPPRESS_'))も curr=None なら不発火し⑥へ落ちる(prev を読むのは④トライアル :515 _is_trial(prev) or _is_trial(curr) だけ)。ゆえに build 時は年契約③のみ直すのでなく①⑤も点検するが、prev.verdict による『年契約と同型』の横断是正は分岐ごとに識別性が違う点に注意する(2026-07-08 Agent2 検出): ③年契約は prev=MATCH_ANNUAL が識別的ゆえ prev.verdict トリガーで正常/漏れを分離できる。①契約完了は prev=MATCH_ENDED_FINAL なら識別的だが prev=MATCH_MONTHLY+終了注記のみの契約完了は prev.verdict では分離できず既存 has_end_basis→SUPPRESS_ENDED(--contract-end)経由でのみ判定できる。⑤隔月/単発は prev=MATCH_MONTHLY が非識別的で『隔月の対象外月(正常)』と『月次の真の漏れ(要対応)』が (prev.verdict, curr=None) 空間で完全一致するため prev.verdict 単独では原理的に分離不能(保全対象テスト test_stopped_when_curr_row_absent :242 の prev=月払い・curr 不在=真の漏れ と衝突する)。よって⑤(および①の MATCH_MONTHLY 型)に curr=None が生じる場合の健全な fix は prev.verdict 同型化ではなく、(i) 入力層で C01 R1-collect が reconcile の SUPPRESS_OFFMONTH/ONESHOT を --curr-verdicts に含め curr-present 化する(engine は mfk_reconcile.py:1112/1118 で当該 verdict を算出済ゆえ収集層で拾えば現状ロジックのまま③⑤が発火・コード非改変)、または (ii) 12ヶ月履歴の隔月 cadence / DB1 支払サイクル=隔月 を C05 の新シグナルとして配線する(この場合 C05 inputs 契約と『DB1 入力追加しない』原則の改訂を伴う)のいずれかとし、prev.verdict 単独の年契約同型化は⑤へ適用しない。また curr=None の真因は『reconcile が verdict を一切出さない』のではなく、engine は SUPPRESS_ANNUAL/OFFMONTH を算出する(mfk_reconcile.py:954/:978/:1112/:1118)が C05 の --curr-verdicts 入力(DB2 スナップショット由来)に suppress 行が persist されず落ちる収集層の欠落であり、build 時に修正 locus を症状側(_classify_stopped)固定か入力層(R1-collect)修正かを実データで決める。発生し得ないと確認できたらその根拠を記す。回帰テスト: prev=MATCH_ANNUAL(180万)・curr 不在(2606)の金子金物型ケースが『前月あり今月なし(年契約周期)』=GAP_OK に分類されることを test_mfk_period_report に追加。既存 test_stopped_when_curr_row_absent(:242 curr 不在→要対応)は月払い前提の正解ゆえ、年契約/契約完了/隔月・単発の curr=None 変種を別ケースとして追加し正解を分岐させる。これらは行カバレッジでは既存 curr-present テストで素通りするため、curr=None×prev-verdict 各値(年契約/契約完了/隔月・単発)の分岐カバレッジを C05 完了条件の hard gate とする(C06 の link coverage backstop と対称・幻テスト化防止)。L4 /capability-build で実装(本 plan は要件記録のみ・コード未変更)",
+      "build_status": "BUILT 2026-07-08 (/capability-build): _classify_stopped ③ を curr=None×(a)prev.verdict∈{MATCH_ANNUAL,SUPPRESS_ANNUAL}+(b)12ヶ月履歴の年契約一括で年契約周期 GAP_OK 化(金子金物型を CLI/テストで実証・exit0/正常)。elegant-review 30思考法(3独立analyst)で 2 件を追加是正: (F1 CRITICAL) (b)12ヶ月履歴トリガーが年→月切替後(prev=MATCH_MONTHLY)の真の月次漏れを旧年契約履歴で隠す false-negative を検出→(b)を『prev に dispositive verdict 無し(not prev_verdict)』時のみ発火に限定+_customer_is_annual_in_lookback を商品粒度突合へ(商品越境の誤抑制封鎖)。(F2 HIGH) plan 明示の①MATCH_ENDED_FINAL curr=None(契約完了 hard-gate 分岐)が未実装→③'として prev.verdict==MATCH_ENDED_FINAL を GAP_OK『契約完了』に追加。回帰テスト計10本追加(leak封鎖/商品越境/ended_final/月払い保護)・全730+緑。⑤隔月・①MATCH_MONTHLY型 の curr=None 根治(入力層 curr-present 化)は本修正のスコープ外=GAP-R1-COLLECT-CURR-PRESENT へ分離追跡(現状は⑤ curr=None も安全側 要対応)。(c)DB1支払サイクル OR 配線(初年度年契約の縁ケース)は未実装で要対応行 comment に確認経路を runtime 開示。(07-10 delta は未 build=GAP-2026-07-10-4REQ 参照。要件1 STATE_CONTINUED→GAP_OK+period_diff marker / 要件3 _orphan_rows GAP_OK / 要件4 _classify_both_absent 安全網 は本 BUILT 2026-07-08 に含まれない)"
+    },
+    {
+      "id": "GAP-C06-EXTEND",
+      "severity": "medium",
+      "text": "C06(notion_report_sink.py)は既存資産への in-place 改修(build_args.operation=extend-existing)。L4 build は build_args.preserve(resolve_report_db/upsert 非破壊マージ/cross-run safe guard/collapsed_multi_contract/既存テスト/notion_transport 単一正本)を保全した Edit 差分として、Design D の出力先 DB 解決(in-block/under-heading/page/page-created)・対象月列付き単一恒久 DB・行キー=(対象月,取引先名,商品名)・別月/以前行の非破壊保持・stdout report_db_id/db_location/db_created/placement を実装/維持する。link_to_page 索引・月次別DB・month_db_id 再利用前提は撤去済みで、fake-store は既存 DB 更新優先、対象月列後付け、月内冪等、別月共存を検証する",
+      "build_status": "BUILT→REVISED 2026-07-08 (/capability-build): 初回 Design C(ページ直下DB+トグル内 link_to_page 索引)から、ユーザー選択(トグル内/見出し下の既存 DB を単一DB上書き更新)+『下側』フォールバック案に従い **Design D へ再設計**。出力先を resolve_report_db で (1)トグル内 report DB → (2)プレーン見出し直下 report DB → (3)ページ直下 report DB → (4)見出しの下(ページ直下)へ新規作成、の順で解決し、単一恒久DBへ 対象月列(YYYY-MM)付きで複数月を非破壊 upsert(行キー=対象月×取引先×商品・同月のみ上書き)。_ensure_db_schema が旧DBへ対象月列を PATCH 後付け。Design C の link 機構(sync_toggle_link 等)+find_or_create_month_db+月次別DB前提を撤去しテストを Design D 用に全面書換。config/SKILL/R4/command を Design D へ更新。実 --apply は未実行(ユーザー了解後にドライラン→apply)。(07-10 delta は未 build=GAP-2026-07-10-4REQ 参照。要件2 report_database_id step0 pin+phantom DB 抑止 / 要件1 period_diff『継続発行』を _STRUCTURAL_NORMAL_MARKERS へ追加 は本 BUILT→REVISED 2026-07-08 に含まれない)"
+    },
+    {
+      "id": "GAP-R1-COLLECT-CURR-PRESENT",
+      "severity": "medium",
+      "component": "C01 (skills/run-mf-invoice-report/prompts/R1-collect.md)",
+      "status": "open",
+      "discovered_by": "elegant-review 30思考法 (2026-07-08 Agent2 F5/F2・Agent3 D)",
+      "text": "curr=None(今月の非請求月に verdict 行が出ない)の真因は症状側 C05 _classify_stopped でなく収集層にある: reconcile は SUPPRESS_OFFMONTH/ONESHOT/ANNUAL を算出する(mfk_reconcile.py:954/:1112/:1118)が、C05 の --curr-verdicts 入力(DB2 スナップショット由来)にこの抑制行が persist されず落ちる。GAP-C05-ANNUAL-STOPPED の build では③年契約(prev=MATCH_ANNUAL 識別的)と①MATCH_ENDED_FINAL(終端識別的)を症状側 prev.verdict で救済したが、⑤隔月/単発と①MATCH_MONTHLY+終了注記型は prev=MATCH_MONTHLY が非識別的で『対象外正常』と『真の月次漏れ』が(prev.verdict, curr=None)空間で衝突するため症状側では原理的に分離できず、現状は安全側で⑥要対応へ落ちる(漏れは隠さないが隔月/単発の対象外月を過剰報告)。健全な根治=R1-collect.md に『reconcile が返す全 rec(SUPPRESS_OFFMONTH/ONESHOT/ANNUAL 含む)を --curr-verdicts に persist して curr-present 化する』を Layer2 ドメインルール+5.3 チェックリスト項目として追加し、①③⑤を一様に curr-present で解決する(engine 非改変=収集層のみ)。加えて curr が非請求月の suppress 行を含むことを検証する機械 backstop(R1 golden or C05 assertion)を足す。副契約: suppress 行に正金額 evidence を載せない(_is_issued が True 化し STATE_CONTINUED 誤分類になるのを防ぐ・Agent3 Finding F)。C05 の症状側 fix は本 GAP 解決までの暫定・防御的冗長として残置する。"
+    }
+  ]
+}

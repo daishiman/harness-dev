@@ -1,0 +1,282 @@
+{
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "target_plugin_slug": "extract-system-blueprint",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C10",
+      "component_kind": "script",
+      "name": "mermaid-validate.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mermaid-validate.py"
+      },
+      "build_target": "plugins/extract-system-blueprint/scripts/mermaid-validate.py",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "doc-emit.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/doc-emit.py"
+      },
+      "build_target": "plugins/extract-system-blueprint/scripts/doc-emit.py",
+      "status": "planned"
+    },
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "authz-classify.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/authz-classify.py"
+      },
+      "build_target": "plugins/extract-system-blueprint/scripts/authz-classify.py",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "script",
+      "name": "fetch-snapshot.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C12"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/fetch-snapshot.py"
+      },
+      "build_target": "plugins/extract-system-blueprint/scripts/fetch-snapshot.py",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "hook",
+      "name": "pre-fetch-authz-guard",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C12"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "pre-fetch-authz-guard"
+      },
+      "build_target": "plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "sub-agent",
+      "name": "frontend-surface-analyzer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C09", "C08"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "frontend-surface-analyzer"
+      },
+      "build_target": "plugins/extract-system-blueprint/agents/frontend-surface-analyzer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "backend-inference-analyzer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "backend-inference-analyzer"
+      },
+      "build_target": "plugins/extract-system-blueprint/agents/backend-inference-analyzer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "uiux-rationale-analyzer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "uiux-rationale-analyzer"
+      },
+      "build_target": "plugins/extract-system-blueprint/agents/uiux-rationale-analyzer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "content-intent-analyzer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "content-intent-analyzer"
+      },
+      "build_target": "plugins/extract-system-blueprint/agents/content-intent-analyzer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "architecture-essence-synthesizer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03", "C04", "C05", "C13", "C10", "C11"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "architecture-essence-synthesizer"
+      },
+      "build_target": "plugins/extract-system-blueprint/agents/architecture-essence-synthesizer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-extract-blueprint",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C12", "C09", "C08", "C10", "C11", "C03", "C04", "C05", "C13", "C06"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-extract-blueprint",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/extract-system-blueprint/skills/run-extract-blueprint/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "assign-blueprint-fidelity-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C10", "C11"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-blueprint-fidelity-evaluator",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/extract-system-blueprint/skills/assign-blueprint-fidelity-evaluator/",
+      "status": "planned"
+    },
+    {
+      "id": "C14",
+      "component_kind": "skill",
+      "name": "run-blueprint-apply",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C11"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-blueprint-apply",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C14.json"
+      },
+      "build_target": "plugins/extract-system-blueprint/skills/run-blueprint-apply/",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "extract-blueprint",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "extract-blueprint"
+      },
+      "build_target": "plugins/extract-system-blueprint/commands/extract-blueprint.md",
+      "status": "planned"
+    }
+  ],
+  "pre_build_steps": [
+    {
+      "id": "render-skill-briefs",
+      "owner": "run-plugin-dev-plan",
+      "status": "ready",
+      "outputs": ["briefs/skill-brief-C01.json", "briefs/skill-brief-C02.json", "briefs/skill-brief-C14.json"],
+      "note": "briefはinventoryからの決定論射影。inventory変更後は消費前に render-skill-brief.py --inventory --component --out で再renderし、stale briefを消費しない"
+    }
+  ],
+  "plugin_surfaces": [
+    {"id": "composition", "owner": "run-build-skill", "status": "planned", "build_target": "plugins/extract-system-blueprint/plugin-composition.yaml"},
+    {"id": "harness-eval", "owner": "run-build-skill", "status": "planned", "build_target": "plugins/extract-system-blueprint/EVALS.json"},
+    {"id": "fact-schema", "owner": "plugin-scaffold", "status": "contract-only", "build_target": "plugins/extract-system-blueprint/schemas/fact-inference-confidence.schema.json", "gap_ref": "GAP-SCRIPT-BUILDER"},
+    {"id": "blueprint-schema", "owner": "plugin-scaffold", "status": "contract-only", "build_target": "plugins/extract-system-blueprint/schemas/system-blueprint.schema.json", "gap_ref": "GAP-SCRIPT-BUILDER"},
+    {"id": "runbook", "owner": "run-build-skill", "status": "planned", "build_target": "plugins/extract-system-blueprint/references/runbook.md"},
+    {"id": "expert-lens-roster", "owner": "run-build-skill", "status": "planned", "build_target": "plugins/extract-system-blueprint/references/expert-lens-roster.md"},
+    {"id": "ci", "owner": "run-build-skill", "status": "planned", "build_target": ".github/workflows/governance-check.yml"}
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/extract-system-blueprint/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。GAP-ENVELOPE-001 として tracking し、script route 用 GAP-SCRIPT-BUILDER とは分離する。draft注記: permissionsはfilesystemのみ(外部API連携なし・自己完結。対象システムoriginは実行時動的でC12 AuthzEvidence+C08 hookのbudget統制下にあるためallowlistへ固定しない)。hooks matcher/timeoutはinventory C08と同一表記(Bash|WebFetch)が正本"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "配布登録はユーザー承認後に実行する"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "medium",
+      "text": "plugin envelope executor is external to run-plugin-dev-plan"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。script route は harness-creator の build-script-route.py が消費し、gap_ref は routing 語彙の明示参照として維持する(parent-skill-buildはplanner語彙としては実在するが本planのroutesでは未使用)"
+    },
+    {
+      "id": "GAP-DYNAMIC-OBSERVATION",
+      "severity": "low",
+      "text": "SPAの実行後DOM・限定interaction・JS後network trace・screenshotはJS実行を要するため本pluginのスコープ外(取得は静的HTTP=WebFetch/stdlibのみ)。JS実行を要する重要factに該当する箇所はobservation_gap(blocked)として記録しC02がFAIL判定する(静的完結が実測で示せる場合はgap記録つきPASS可)。正本はinventory plugin_level_surfaces.mcp_app_connectorの条件文。静的WebFetchだけで無条件に成功扱いしない。"
+    }
+  ]
+}
