@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R2-agent-d3-diagram-designer.md を test -f 相当で実在確認(OK・21KB)。CLAUDE_PLUGIN_ROOT 読替後の本文参照先も同一実体で dangling なし。schema-conformance: name/kind=agent/version=0.1.0/owner/tools(Read,Write=設計成果を図解ノードへ書込むため妥当)/isolation=fork、description は『…配置したいときに使う。』トリガ形。owner-flow: run-slide-report-generate/workflow-manifest.json に d3-diagram-designer を Task 委譲対象として登録(Phase=R2-structure-gate)。adapter/SSOT tools(Read,Write)一致。placement-invariant: 9節薄 adapter で domain rule 非再掲、詳細正本は prompts/R2-*.md(SSOT ヘッダ明記)側で逆転なし。single-responsibility: D3 インタラクティブ図解の設計・両モード図解ノードへの配置に限定し、data-visualizer(chart/グラフ)や visual-strategist(三択最適化)と責務が明確に分離。lint-agent-prompt-section.py Tier1 exit0 実測で mechanical:true 妥当。減点点なし。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

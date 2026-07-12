@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/deck-evaluator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R3-agent-deck-evaluator.md を test -f 相当で実在確認(OK・35KB)。CLAUDE_PLUGIN_ROOT 読替後の本文参照先も同一実体で dangling なし。schema-conformance: name/kind=agent/version=0.1.0/owner/tools(Read,Bash=評価専任・書込不要に整合)/isolation=fork、description は『…区分評価(P3.6)…したいときに使う。』トリガ形。owner-flow: run-slide-report-generate/workflow-manifest.json に deck-evaluator を Task 委譲対象として登録(Phase=R3-generate-evaluate)。owner SKILL.md の feedback_contract(OUT1=生成後評価30種思考法で視覚崩れ0 PASS)と本 agent の生成後評価責務が突合し、汎用ゲート言い換えへ退化していない。adapter/SSOT tools(Read,Bash)一致。placement-invariant: 9節薄 adapter で mode 別 rubric 次元等の domain detail を再掲せず、詳細正本は prompts/R3-*.md(SSOT ヘッダ明記)側で逆転なし。single-responsibility: 生成後の mode-aware(slide/report)区分評価に一元化、ui-quality-reviewer(P3.5)や report-quality-reviewer(R3.5)と評価フェーズが分離。lint-agent-prompt-section.py Tier1 exit0 実測で mechanical:true 妥当。減点点なし。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

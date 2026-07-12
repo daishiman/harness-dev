@@ -1,0 +1,32 @@
+{
+  "detection": {
+    "consecutive_releases": 3,
+    "violation_rate_threshold": 0.2
+  },
+  "freeze": {
+    "consecutive_runs": 10,
+    "violation_rate_ceiling": 0.05
+  },
+  "grace_period": {
+    "min_releases": 1,
+    "min_days": 30
+  },
+  "limits": {
+    "manual_proposals_per_quarter": 1,
+    "major_bump_items_per_pr": 3
+  },
+  "solo_operator_mode": {
+    "enabled": false,
+    "self_approval_conditions": [
+      "安定版凍結済み: freeze.consecutive_runs 連続で violation_rate <= freeze.violation_rate_ceiling",
+      "newly_failing_count == 0 (plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py 出力)",
+      "LLM-reviewer pass: run-skill-rubric-governance の Step2 影響評価で problem=none"
+    ],
+    "note": "デフォルトは false（Proposer/Approver 兼任禁止＝Goodhart 罠回避）。1人運用で兼任が構造上不可避な場合に限り true に切替え、self_approval_conditions の3条件すべての evidence を governance log に必ず記録すること。true 中は major bump 禁止。組織メンバー追加時は false に戻す。"
+  },
+  "bootstrap_mode": {
+    "enabled": true,
+    "min_eval_log_records": 20,
+    "note": "eval-log/*.jsonl の合計件数が min_eval_log_records 未満のあいだは bootstrap フェーズと判定し、violation_rate 検出（detection）と freeze 判定を `pending` 扱いにする。bootstrap 中は run-skill-rubric-governance の Step2 影響評価で過去比較を要求せず（eval-log 不足は exit 2 ではなく exit 0+warning に降格）、まず最初の20件を蓄積することを優先する。閾値到達後は自動で false にする（lint-rubric-violation.py が件数を再判定）。"
+  }
+}

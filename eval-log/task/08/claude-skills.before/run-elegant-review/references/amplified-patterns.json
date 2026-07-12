@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "purpose": "正のフィードバックループで抽出された再利用可能パターンの蓄積先。各レビュー周回で抽出された設計DNAを記録し、後続のSkill開発・章執筆で参照する。",
+  "extract_granularity": "phase",
+  "patterns": [
+    {
+      "id": "P001",
+      "name": "禁止リストをデータで宣言→lintで機械強制",
+      "origin": "Phase H (forbidden_deps)",
+      "applies_to": ["dependency management", "naming rules", "tool restrictions"],
+      "transferred_to": ["creator-kit/manifest.json forbidden_dependencies", "lint-forbidden-deps.py"],
+      "principle": "ルールをMarkdownに閉じず、データ宣言+lintで両輪化する"
+    },
+    {
+      "id": "P002",
+      "name": "LLMに見せない契約をデータで宣言",
+      "origin": "Phase D (Keychain)",
+      "applies_to": ["secret management", "tool permission", "MCP配線"],
+      "transferred_to": ["scripts/secrets/keychain_helper.py", "audit_secret_leak.py"],
+      "principle": "機密はLLMコンテキストではなくOS機密ストア参照に統一する"
+    },
+    {
+      "id": "P003",
+      "name": "自己採点回避: 判定を機械生成にする",
+      "origin": "Phase I (二周目elegant-review)",
+      "applies_to": ["rubric scoring", "CI判定", "completion flag"],
+      "transferred_to": ["32章 更新ルール7 (自動暫定PASS降格)"],
+      "principle": "判定者と作成者を分離する。判定はCIまたは独立評価者に委譲する"
+    },
+    {
+      "id": "P004",
+      "name": "暫定PASS制度で不可逆判断を回避",
+      "origin": "25章L174",
+      "applies_to": ["未完了タスクの正直な表現", "CI未接続項目の扱い"],
+      "transferred_to": ["32章C4判定", "25章L11"],
+      "principle": "完全PASSと書く誘惑を断ち、条件付きPASSで延期価値を保持する"
+    }
+  ],
+  "update_rule": "elegant-review が新しいパターンを抽出したら、原則1周あたり1パターン追加。同種パターンは統合する。"
+}

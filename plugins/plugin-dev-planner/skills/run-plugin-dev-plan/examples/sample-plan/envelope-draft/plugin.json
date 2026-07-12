@@ -1,0 +1,48 @@
+{
+  "name": "notion-task-sync",
+  "version": "0.1.0",
+  "description": "タスク台帳を Notion DB へ冪等同期する plugin の manifest draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/notion-task-sync/.claude-plugin/plugin.json へ適用する。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-notion-task-sync",
+      "run-notion-task-backfill",
+      "run-notion-task-reconcile"
+    ],
+    "agents": [
+      "notion-sync-verifier",
+      "notion-reconcile-auditor",
+      "notion-backfill-auditor"
+    ],
+    "commands": [
+      "sync-tasks",
+      "reconcile-tasks"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-destructive-sync.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": true,
+  "bundle_targets": [
+    "harness-full"
+  ],
+  "category": "productivity",
+  "tags": [
+    "notion",
+    "sync",
+    "tasks"
+  ]
+}

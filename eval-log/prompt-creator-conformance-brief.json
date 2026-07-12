@@ -1,0 +1,38 @@
+{
+  "$comment": "Gate 1 brief — prompt-creator を skill-creator 仕様へ完全準拠させる migration。run-skill-create orchestrator により生成。",
+  "mode": "update",
+  "target_plugin": "plugins/prompt-creator",
+  "reference_spec": "plugins/skill-creator (plugin-composition.yaml + capability-manifest.schema.json + rubric.json)",
+  "scope": "full-conformance",
+  "user_decisions": {
+    "scope": "全12項目を完全準拠",
+    "scripts": "JS 9本をpython3へ全面移行",
+    "compatibility": "破壊的変更OK (命名統一・ファイル再配置可、必要ならaliasesで猶予)"
+  },
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "gap_items": [
+    {"id": 1, "title": "plugin-composition.yaml 欠落", "rubric": "PC-001/PC-002", "severity": "high", "must": true},
+    {"id": 2, "title": "各SKILL.md contract(intent/interface/invariant)欠落", "rubric": "commonCore", "severity": "high", "must": true},
+    {"id": 3, "title": "frontmatterキー命名揺らぎ(references vs reference_refs / responsibilities粒度)", "rubric": "FM", "severity": "medium", "must": true},
+    {"id": 4, "title": "resource-map.yaml フォーマット未統一(4skill三者三様)", "rubric": "PD", "severity": "medium", "must": false},
+    {"id": 5, "title": "workflow-manifest 命名衝突(elicit step名)", "rubric": "WF-001", "severity": "high", "must": true},
+    {"id": 6, "title": "JS scripts 9本 → python3 移行", "rubric": "NM-003/設計選択", "severity": "medium", "must": true},
+    {"id": 7, "title": "agents/*.md と skills/prompts/ の prompt二重定義(legacy injection)", "rubric": "AG", "severity": "medium", "must": false},
+    {"id": 8, "title": "plugin.json registration更新(scripts拡張子/bundle/agents整合)", "rubric": "—", "severity": "medium", "must": true},
+    {"id": 9, "title": "assign context:fork の manifest化", "rubric": "AG-002", "severity": "low", "must": false},
+    {"id": 10, "title": "plugin間互換チェック戦略(skill-creator依存のversion)", "rubric": "PC", "severity": "low", "must": false},
+    {"id": 11, "title": "schema互換性参照のfrontmatter明示(schema_refs整備)", "rubric": "—", "severity": "low", "must": false},
+    {"id": 12, "title": "governance-params evaluation_priorities の説明欠落", "rubric": "—", "severity": "low", "must": false}
+  ],
+  "completion_criteria": [
+    "plugin-composition.yaml が capability-manifest.schema.json#kindPluginComposition 準拠で新規作成され、DAG循環なし",
+    "4 SKILL.md 全てに contract(intent/interface/invariant)があり frontmatter キー命名統一",
+    "scripts 9本が python3 化され plugin.json/SKILL.md の参照が更新済み",
+    "resource-map.yaml が4skill統一フォーマット",
+    "workflow-manifest の phase/step 命名衝突解消",
+    "P0 lint pass + design-evaluator JSON pass (FAIL残存なし)"
+  ],
+  "gate1_approved": true,
+  "created": "2026-05-24"
+}

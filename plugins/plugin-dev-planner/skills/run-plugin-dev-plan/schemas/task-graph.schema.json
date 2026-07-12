@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task-graph.schema.json",
+  "title": "task-graph",
+  "description": "plan 成果物の第3の射影。13 phase §5 タスク項目 + component-inventory.json から derive-task-graph.py が決定論導出する型付き依存グラフ。単一 writer=derive-task-graph.py の canonicalize() のみが正準形を書く。手書き編集は validate-task-graph.py が非正準として拒否する。",
+  "type": "object",
+  "required": ["schema_version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "string"},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "phase_ref", "entity_ref", "state", "write_scope"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "title": {"type": "string"},
+          "phase_ref": {"type": "string", "description": "P01..P13 の phase id"},
+          "entity_ref": {"type": ["string", "null"], "description": "component id (entities_covered 由来)。component 非依存タスクは null"},
+          "state": {
+            "type": "string",
+            "const": "pending",
+            "description": "canonical graph の immutable seed。running/done/blocked は task-state.json にのみ記録し、ready は都度導出する"
+          },
+          "write_scope": {"type": "string", "minLength": 1, "description": "この task が排他的に書き込む成果物パス (並列衝突判定キー)。2 用法: entity 紐づき node は build_target の排他書込パス / checkpoint node (entity_ref=null の task・phase 仮想ルート) は自 node id の擬似 scope (定義上他 node と衝突しない)"},
+          "acceptance_criterion": {"type": "string", "minLength": 1, "description": "1 検証可能成果物に対応する受入基準 (C14 携帯率計測対象・fixed shape では optional、task-graph-derived の実行可能 leaf では validator が必須化)"},
+          "execution_kind": {
+            "type": "string",
+            "enum": ["direct-task", "component-build", "phase-gate"],
+            "description": "task node の実行分類 (C17・optional additive)。component-build だけが明示 route_ref を持ち dispatch 対象、direct-task は route_ref を持たない実行タスク、phase-gate は非 dispatch の phase 完了集約点。未携帯 (fixed-13-phase bootstrap) は legacy 直列解釈へ後方互換 fallback"
+          },
+          "route_ref": {
+            "type": ["string", "null"],
+            "minLength": 1,
+            "description": "execution_kind==component-build のとき必須の明示 route id (C17)。entity_ref を builder 選択へ流用する暗黙 route は fail-closed 拒否 (render-task-execution-envelope.py)。direct-task/phase-gate は null"
+          },
+          "task_spec_ref": {
+            "type": ["string", "null"],
+            "pattern": "^task-specs/[^/]+\\.md$",
+            "description": "可変 task spec (task-specs/<task-id>.md) への参照 (C17)。dispatch 対象 leaf は非 null 必須。phase-gate は集約点ゆえ null 可"
+          }
+        },
+        "allOf": [
+          {
+            "if": {"required": ["execution_kind"], "properties": {"execution_kind": {"const": "component-build"}}},
+            "then": {
+              "required": ["route_ref", "task_spec_ref"],
+              "properties": {"route_ref": {"type": "string", "minLength": 1}, "task_spec_ref": {"type": "string"}}
+            }
+          },
+          {
+            "if": {"required": ["execution_kind"], "properties": {"execution_kind": {"const": "direct-task"}}},
+            "then": {
+              "required": ["route_ref", "task_spec_ref"],
+              "properties": {"route_ref": {"type": "null"}, "task_spec_ref": {"type": "string"}}
+            }
+          },
+          {
+            "if": {"required": ["execution_kind"], "properties": {"execution_kind": {"const": "phase-gate"}}},
+            "then": {
+              "required": ["route_ref", "task_spec_ref"],
+              "properties": {"route_ref": {"type": "null"}, "task_spec_ref": {"type": "null"}}
+            }
+          }
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["parent_of", "depends_on", "produces", "consumes"],
+            "description": "blocks は独立宣言禁止の派生ビューゆえ列挙に含めない (schema レベル機械強制)"
+          },
+          "from": {"type": "string", "description": "node id または artifact id"},
+          "to": {"type": "string", "description": "node id または artifact id"}
+        }
+      }
+    }
+  }
+}

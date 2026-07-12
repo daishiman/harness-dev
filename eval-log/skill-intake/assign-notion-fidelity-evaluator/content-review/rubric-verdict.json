@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "assign-notion-fidelity-evaluator",
+    "skill_md_sha256": "a16d64dcb1f69400a56fb4cd79ee1a66de1a38aafa93b271d56833e0549768d3"
+  },
+  "review_kind": "rubric",
+  "reviewer": "assign-skill-design-evaluator",
+  "verdict": "PASS",
+  "reviewed_at": "2026-07-01T09:22:47Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "BD-001(## Purpose & Output Contract, L49)+ BD-002(## Gotchas, L120)の必須見出しが存在、NM-001 ディレクトリ名==name(assign-notion-fidelity-evaluator)一致、responsibility_refs(prompts/R1-R3.md)と schema_refs(schemas/output.schema.json)が実在確認済み、147 行 <= 300 行 cap で構造 rubric を満たす",
+      "role_suffix: evaluator が name 接尾辞(-evaluator)と整合し kind: assign / user-invocable: false / context: fork の assign 系規約に沿う。Additional Resources 表の references 5 本・prompts 3 本・scripts 3 本・workflow-manifest.json が全て実在し Progressive Disclosure(300 行制約下の分割)を満たす",
+      "feedback_contract は inner>=1(IN1=script: validate-notion-fidelity.py の重み/閾値/exit 決定論, IN2=lint: output.schema.json 適合)+ outer>=1(OUT1=elegant-review: 責務単一・越境禁止)を満たし、id が pattern ^(IN|OUT|C)[0-9]+$ 準拠。allowed-tools(Read/Bash/Grep/Glob)が JSON 構造比較のみ・Notion API 認証不保持の責務単一性と整合"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "改名後の現 SKILL.md を rubric 観点で実読検証。BD-001/BD-002 見出し存在、NM-001 dir==name、responsibility_refs/schema_refs/manifest 全て実ファイル確認済み(prompts/R1-R3.md, schemas/output.schema.json, workflow-manifest.json)。lint-skill-name 整合、lint-skill-description は単一トリガ文で VIOLATION=0。role_suffix は旧 fidelity-guard から evaluator へ更新済みで name 接尾辞と一致(旧 verdict の advisory 記述は現内容に不整合のため破棄)。IN1/IN2 はスコア重み・閾値・exit 写像・schema 適合という本スキル固有の機械検証点を、OUT1 は責務単一(構造粒度のみ)と越境禁止を捉え固定テンプレでない。inner+outer 双方充足で loop_scope=both 妥当。high finding=0 => PASS。"
+}

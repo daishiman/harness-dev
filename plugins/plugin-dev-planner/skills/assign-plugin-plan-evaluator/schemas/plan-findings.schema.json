@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://harness.local/plugin-dev-planner/plan-findings.schema.json",
+  "title": "plugin-dev-planner plan findings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_dir",
+    "evaluator",
+    "verdict",
+    "conditions",
+    "gate_results",
+    "findings"
+  ],
+  "properties": {
+    "plan_dir": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "context"],
+      "properties": {
+        "name": {
+          "const": "assign-plugin-plan-evaluator"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context": {
+          "const": "fork"
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL"]
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"$ref": "#/definitions/condition"},
+        "C2": {"$ref": "#/definitions/condition"},
+        "C3": {"$ref": "#/definitions/condition"},
+        "C4": {"$ref": "#/definitions/condition"}
+      }
+    },
+    "gate_results": {
+      "type": "array",
+      "minItems": 8,
+      "items": {"$ref": "#/definitions/gate_result"}
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "evaluated_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      },
+      "description": "評価時点の被評価ファイル digest pin。現物 sha256 と不一致の verdict は stale として扱う (鮮度の機械判定アンカー)。任意フィールド (後方互換)"
+    },
+    "staleness_rule": {
+      "type": "string",
+      "minLength": 1,
+      "description": "digest 不一致時の verdict 失効規則の宣言 (人間可読 1 行)"
+    }
+  },
+  "definitions": {
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "summary", "evidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": [
+            "no_contradiction",
+            "no_missing",
+            "consistent",
+            "dependency_integrity"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "N/A"]
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "command", "exit_code", "conditions"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "command": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string"}
+        },
+        "exit_code": {"type": "integer"},
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["C1", "C2", "C3", "C4"]
+          }
+        },
+        "stdout": {"type": "string"},
+        "stderr": {"type": "string"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "bucket", "observation", "evidence"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "info"]
+        },
+        "bucket": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "suggested_fix": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

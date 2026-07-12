@@ -1,0 +1,26 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-live-trial",
+    "skill_md_sha256": "f84185c25b5a3f9c8a6c8364d2065fd6e2236a5351a2c7bb9a339924d406bd9c"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-c",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
+    "positive_feedback": [
+      "全終了経路(DONE / STALL / HARD_CAP / 中断)で kill-session + reap を必ず実行しプロセスリークを防ぐ回収規律が Checklist・verdict+掃除節・Gotchas で反復され、denylist(DENY_TARGET_SKILLS 正本)を boot / verdict の二重機械 gate で拒否する OUT3 の要件が具体スクリプトと exit code(0 DONE/4 GATE/2 STALL/1 HARD_CAP/5 TICK_BUDGET)まで検証可能に記述されている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "quality-rubric.md の 5 次元で現 SKILL.md(sha256 f84185c2…)を採点。完全性=3(frontmatter・references・schemas・scripts 配置あり、completeness_exempt で prompts/manifest の免除理由を明記)。一貫性=3(判定ロジック表・正本参照・数値上限の二重宣言禁止が一貫)。深度=3(fork acceptance との直交、behavioral trait の決定論導出、完了の二層判定(成果物出現+busy 不在)、proxy 化防止の絶対ルール)。検証可能性=3(poll exit code 表・STALL 分岐表・self-test/pytest コマンド・actual_model gate など具体豊富)。簡潔性=2(密度は高いが表と局面カタログで構造化、生値は convergence-policy.json へ委譲)。全次元 ≥2 で PASS。改名追従(旧名 0・参照断線 0・意味論境界適合)も併せ確認。"
+}

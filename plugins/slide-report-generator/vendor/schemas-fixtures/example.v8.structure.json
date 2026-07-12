@@ -1,0 +1,152 @@
+{
+  "meta": {
+    "title": "Claude Code 概念ガイド (v8 サンプル)",
+    "audience": "非エンジニア・社内研修受講者",
+    "durationMinutes": 40,
+    "keyMessage": "Claude Code は文脈を覚え、決まった手順を再利用するチームのもう一人のメンバーです",
+    "language": "ja",
+    "version": "1.0.0",
+    "schemaVersion": "8.0.0",
+    "tagline": "AIに業務の勘所を覚えさせる",
+    "event": {
+      "name": "社内勉強会",
+      "date": "2026-05-07",
+      "venue": "オンライン",
+      "round": "第3回"
+    },
+    "hero": {
+      "kind": "icon",
+      "icon": "fa-brain",
+      "alt": "Claude Code が知識を覚えるイメージ"
+    }
+  },
+  "theme": {
+    "name": "kanagawa-lotus",
+    "mode": "light",
+    "accentColors": ["blue", "yellow", "aqua", "pink", "violet"],
+    "fontScale": 1.3,
+    "pagination": {
+      "style": "section-dots",
+      "milestoneEvery": 5,
+      "showSectionHighlight": true,
+      "showCurrentStep": true
+    },
+    "header": {
+      "show": true,
+      "showSection": true,
+      "showEventName": false,
+      "logoIcon": "fa-circle-nodes"
+    },
+    "footer": {
+      "show": true,
+      "left": "Claude Code 概念ガイド",
+      "right": "{page}/{total}"
+    }
+  },
+  "sections": [
+    {
+      "id": "section-intro",
+      "title": "イントロ",
+      "color": "blue",
+      "icon": "fa-flag",
+      "theme": { "primaryAccent": "blue", "background": "tint" },
+      "slides": [1, 2]
+    },
+    {
+      "id": "section-core",
+      "title": "7つの構成要素",
+      "color": "yellow",
+      "icon": "fa-cubes",
+      "theme": { "primaryAccent": "yellow", "secondaryAccent": "blue" },
+      "slides": [3, 4, 5]
+    }
+  ],
+  "slides": [
+    {
+      "id": "slide-001",
+      "section": "section-intro",
+      "slideType": "slide-hero",
+      "purpose": "P-EMO",
+      "structure": "S-SGL",
+      "content": { "title": "Claude Code 概念ガイド", "subtitle": "AIに業務の勘所を覚えさせる" },
+      "cover": {
+        "variant": "hero-icon",
+        "title": "Claude Code 概念ガイド",
+        "subtitle": "AIに業務の勘所を覚えさせる",
+        "tagline": "もう一人のチームメンバー",
+        "presenter": "山田 太郎",
+        "eventName": "社内勉強会 第3回",
+        "eventDate": "2026-05-07",
+        "hero": { "kind": "icon", "icon": "fa-brain" },
+        "background": "gradient"
+      },
+      "pageOverride": {
+        "pagination": { "show": false },
+        "background": "gradient"
+      }
+    },
+    {
+      "id": "slide-002",
+      "section": "section-intro",
+      "slideType": "slide-list",
+      "purpose": "P-WHL",
+      "structure": "S-LST",
+      "content": { "title": "本日のアジェンダ", "items": [
+        { "icon": "fa-flag", "label": "イントロ" },
+        { "icon": "fa-cubes", "label": "7つの構成要素" }
+      ] },
+      "index": {
+        "style": "stepper",
+        "showSectionNumbers": true,
+        "showSectionIcons": true,
+        "highlightCurrent": false,
+        "showStep": true
+      }
+    },
+    {
+      "id": "slide-003",
+      "section": "section-core",
+      "slideType": "diagram-mindmap",
+      "purpose": "P-CON",
+      "structure": "S-SYS",
+      "content": { "title": "7つの構成要素", "center": "Claude Code", "branches": [
+        "CLAUDE.md", "セッション", "スキル", "サブエージェント", "フック", "スラッシュコマンド", "MCP"
+      ] },
+      "diagram": {
+        "variant": "mindmap",
+        "layout": { "direction": "radial", "spacing": "normal" },
+        "nodes": [
+          { "id": "n-core", "label": "Claude Code", "icon": "fa-circle-nodes", "color": "blue", "level": 0, "shape": "circle" },
+          { "id": "n-claude-md", "label": "CLAUDE.md", "icon": "fa-file-lines", "color": "yellow", "level": 1 },
+          { "id": "n-session", "label": "セッション", "icon": "fa-clock-rotate-left", "color": "yellow", "level": 1 },
+          { "id": "n-skill", "label": "スキル", "icon": "fa-puzzle-piece", "color": "green", "level": 1 },
+          { "id": "n-subagent", "label": "サブエージェント", "icon": "fa-user-gear", "color": "green", "level": 1 },
+          { "id": "n-hook", "label": "フック", "icon": "fa-link", "color": "pink", "level": 1 },
+          { "id": "n-cmd", "label": "スラッシュコマンド", "icon": "fa-slash", "color": "pink", "level": 1 },
+          { "id": "n-mcp", "label": "MCP", "icon": "fa-plug", "color": "violet", "level": 1 }
+        ],
+        "edges": [
+          { "from": "n-core", "to": "n-claude-md" },
+          { "from": "n-core", "to": "n-session" },
+          { "from": "n-core", "to": "n-skill" },
+          { "from": "n-core", "to": "n-subagent" },
+          { "from": "n-core", "to": "n-hook" },
+          { "from": "n-core", "to": "n-cmd" },
+          { "from": "n-core", "to": "n-mcp" }
+        ],
+        "annotations": [
+          { "text": "プラグインとマーケットプレイスがこの7要素を束ねます", "kind": "tip", "anchor": "n-core", "icon": "fa-lightbulb" }
+        ],
+        "legend": {
+          "show": true,
+          "items": [
+            { "label": "記憶系", "color": "yellow", "icon": "fa-brain" },
+            { "label": "実行系", "color": "green", "icon": "fa-play" },
+            { "label": "拡張系", "color": "pink", "icon": "fa-plus" },
+            { "label": "外部連携", "color": "violet", "icon": "fa-network-wired" }
+          ]
+        }
+      }
+    }
+  ]
+}

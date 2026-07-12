@@ -1,0 +1,27 @@
+{
+  "target": {"plugin": "extract-system-blueprint", "skill": "pre-fetch-authz-guard", "skill_md_sha256": "dfcb96b28ae1c974e78f19dd5eb466e825dcfe3e79cf197bc927330bad78221d"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 1, "dependency_break": 0, "smell": 0},
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-07-11T02:36:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["4conditions", "content_review", "elegant_review.C1-C4"],
+    "positive_feedback": [
+      "判定ロジックの SSOT 共有が徹底している: C12 (authz-classify.py) を importlib で読み込み decide/_origin_of/_host_of/get_need_keys を再利用し、budget need→remaining-key 写像も get_need_keys() 経由で複製を排除。self-test (18) が写像先と build_budget の remaining キー集合の包含を single/full_site 両モードで検証し、schema 改名時の沈黙 mis-map を機械捕捉する。",
+      "publish-gate P4 の manifest-scoped 遮断 (file-upload payload を最新 manifest の draft_hash へ scope し、旧 draft の stale PASS receipt での資産流出を塞ぐ) と、tool 名非依存の _touches_notion_publish backstop (別名 MCP server / api.notion.com URL / /v1/(pages|blocks|file_uploads) / parent 構造マーカ) が、matcher 命名契約の非対称を tool_input 走査で閉じており多層防御として優れる。",
+      "run-scoping が「enforce スコープの切替のみ・アクティブ時の deny 規律は不変」で、(b)(c) は enforce 側 (安全側) へ倒す拡張と明記され、fail-closed 一貫規律 (module 読込不能/URL 解析不能/stdin 解釈不能/曖昧入力 → exit2) が docstring と実装で一致。--self-test 21/21 を本レビューで実走し全緑を確認 (genuine 実行)。"
+    ],
+    "negative_feedback": [
+      "[medium/inconsistency・帰属は C07/C01 側] run-scoping 判定 (a) `ESB_RUN == \"1\"` は「orchestrator の明示宣言」経路として実装されているが、宣言側 (C07 command Step1 / C01 SKILL) が採用する Bash セッション内 export は PreToolUse hook プロセスの env へ届かず、この経路は現配線では発火しない。実質の run 活性化は (c) の .esb-authz/.esb-verdict ディレクトリ発見に依存し、C12 発行前の窓は enforce 非アクティブのまま残る。hook 自身の記述 (「env ESB_RUN=1 (orchestrator の明示宣言)」) は経路を提供するだけで虚偽ではなく、fail-open 方向の規律変更もないため PASS を維持するが、(a) の実効性は宣言側配線の是正 (C07 verdict で high FAIL 済み) に依存することを記録する。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "hooks/pre-fetch-authz-guard.py 全 790 行を実読し、`python3 hooks/pre-fetch-authz-guard.py --self-test` を実走して 21/21 緑を確認 (fetch allow/未知 origin/deny/期限切れ/予算枯渇/非 fetch Bash 通過/publish receipt 皆無/FAIL receipt/PASS 一致/PASS 不一致 page/notion read/空 payload/stale receipt file-upload 遮断/現 draft PASS 通過/別名 notion page 不一致遮断/別名 api.notion.com write 遮断/別名一致通過/need-key import 一致×2)。inventory C08 と突合: event=PreToolUse・matcher `Bash|WebFetch|mcp__browser-runtime.*|mcp__notion.*`・exit_semantics=fail-closed-exit2・2 述語 (fetch-authz + publish-gate) 全一致。settings_wiring は .claude-plugin/plugin.json hooks に同一 matcher で配線済みを実読確認 (command: python3 $CLAUDE_PLUGIN_ROOT/hooks/pre-fetch-authz-guard.py, timeout 10)。depends_on C12: scripts/authz-classify.py 実在し、消費 API (decide/_origin_of/_host_of/get_need_keys/build_authz_evidence/build_budget) の実在を C12 実読で確認。couples_with C09 とは AuthzEvidence/budget の同一 shape 消費で整合。run-scoping (_esb_run_active) は ESB_RUN=1 / env dir 指定 / dir 発見の 3 経路で、非アクティブ時 exit0 素通し・アクティブ時 deny 規律不変を実装どおり確認。(a) 経路の宣言側断線は C07/C01 帰属の medium として記録 — 本 component 単体は 4 条件充足で PASS。"
+}

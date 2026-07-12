@@ -1,0 +1,94 @@
+# plugin-level resource-map (harness-creator)
+#
+# 28 章 resource-map 仕様の plugin スコープ拡張 (G9)。
+# skill 横断 references が「いつ読むべきか / 何を解決するか」を機械可読化し、
+# SubAgent / orchestrator が必要時のみ load することで context 肥大を防ぐ。
+#
+# schema:
+#   id           : kebab-case 一意 ID
+#   path         : plugin ルート相対パス
+#   kind         : reference | pattern | rubric | schema
+#   read_when    : 読み込み条件 (自然言語 + 機械トリガ)
+#   produced_by  : この reference の正本責任者 (skill or human role)
+#   consumed_by  : この reference を読む skill / SubAgent
+#   relates_to   : 関連 reference ID
+
+version: 1
+plugin: harness-creator
+
+references:
+  - id: di-quartet
+    path: references/di-quartet.md
+    kind: pattern
+    read_when:
+      - "新規 skill の prefix 選定時 (ref-/lookup-/assign-/run-)"
+      - "assign-* と run-* の責務境界が曖昧と感じた時"
+      - "assign-* が write 副作用を持つ提案を検出した時 (アンチパターン #2)"
+    produced_by: team-platform
+    consumed_by:
+      - run-skill-create
+      - run-skill-rename
+      - run-elegant-review
+      - assign-skill-design-evaluator
+    relates_to: [orchestrate-gate-pattern]
+
+  - id: orchestrate-gate-pattern
+    path: references/orchestrate-gate-pattern.md
+    kind: pattern
+    read_when:
+      - "Step 5 / 5.5 / 6 の三段ゲート設計を新規 plugin に展開する時"
+      - "Gate 間で同一 finding が重複検出された時 (優先順位 A>B>C>D を適用)"
+      - "1 ゲートで複数次元採点する設計提案を検出した時 (アンチパターン)"
+    produced_by: team-platform
+    consumed_by:
+      - run-plugin-package-check
+      - run-elegant-review
+      - assign-skill-design-evaluator
+    relates_to: [di-quartet]
+
+  - id: ssot-dedup-procedure
+    path: references/ssot-dedup-procedure.md
+    kind: pattern
+    read_when:
+      - "harness-creator or 生成 plugin を改善する前 (編集着手前の重複事前解析)"
+      - "似た内容でどちらを正本に採用すべきか曖昧な重複を検出した時"
+      - "redirect 宣言と本文が乖離した schema / reference を見つけた時"
+      - "情報が肥大化・点在して SSOT が崩れている疑いがある時"
+    produced_by: team-platform
+    consumed_by:
+      - run-build-skill
+      - run-elegant-review
+      - run-skill-create
+    relates_to: [orchestrate-gate-pattern]
+
+  - id: pipeline-boundary-contract
+    path: references/pipeline-boundary-contract.md
+    kind: reference
+    read_when:
+      - "skill-intake → plugin-dev-planner → harness-creator の E1/E2/E3/E4 境界契約を確認する時"
+      - "intake.json / handoff-run-plugin-dev-plan.json / improvement-handoff.json の producer-consumer を検証する時"
+      - "Notion 改善要望 DB を改善計画へ戻す設計判断を確認する時"
+    produced_by: team-platform
+    consumed_by:
+      - run-build-skill
+      - run-elegant-review
+      - run-skill-feedback
+      - run-plugin-package-check
+    relates_to: [feedback-to-improvement-runbook, orchestrate-gate-pattern]
+
+  - id: feedback-to-improvement-runbook
+    path: references/feedback-to-improvement-runbook.md
+    kind: reference
+    read_when:
+      - "run-skill-feedback が Notion に収集した改善要望を plugin-dev-planner --mode update へ橋渡しする時"
+      - "Notion 改善要望 DB の rollup を機械 read-back せず人間工程で扱う理由を確認する時"
+    produced_by: team-platform
+    consumed_by:
+      - run-skill-feedback
+      - run-elegant-review
+    relates_to: [pipeline-boundary-contract]
+
+read_policy:
+  default: "lazy (read_when 条件成立時のみ load)"
+  override: "orchestrator が明示的に require した場合は eager load 可"
+  context_budget_hint: "1 reference あたり 200 行以内、超過時は section 単位で部分 load"

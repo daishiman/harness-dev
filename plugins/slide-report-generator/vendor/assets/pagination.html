@@ -1,0 +1,64 @@
+<!-- =================================================================
+     pagination.html — 不変共通テンプレート（コピペ専用）
+
+     責務: ページネーション・前後送り・キーボード操作・セクション目次の
+           HTML 構造を 100% 再現可能な形で固定化する。
+
+     使い方:
+       1. プレゼンテーション HTML の <body> 直下にこの断片を貼り付ける。
+       2. 下記プレースホルダのみを置換する（それ以外は変更禁止）:
+            {{N_SLIDES}}    : 全スライド数（整数）
+            {{SECTIONS}}    : セクション目次の <button> リスト
+                              （セクションがない場合は空文字列でOK）
+       3. pagination.css と pagination.js を併せて読み込む。
+
+     不変ルール:
+       - クラス名（BEM）の変更禁止
+       - DOM 構造の変更禁止（追加/削除いずれも禁止）
+       - 変更が必要な場合は SKILL Spec の更新扱いとする
+     ================================================================= -->
+
+<!-- セクション目次ナビ（横並びタブ） — 不要な場合は <nav>...</nav> ごと削除可 -->
+<nav class="pg-section-nav" aria-label="セクション目次" data-pg-component="section-nav">
+  {{SECTIONS}}
+  <!-- {{SECTIONS}} に貼る各項目テンプレート（参考）:
+       <button type="button" class="pg-section-nav__item"
+               data-section="opening" data-first-slide="0">
+         <span class="pg-section-nav__dot" style="background: var(--accent-blue-vivid);"></span>
+         <span class="pg-section-nav__label">オープニング</span>
+         <span class="pg-section-nav__bar"></span>
+       </button>
+  -->
+</nav>
+
+<!-- 上部プログレスバー -->
+<div class="pg-progress" role="progressbar"
+     aria-label="プレゼンテーション進捗"
+     aria-valuemin="1" aria-valuemax="{{N_SLIDES}}" aria-valuenow="1">
+  <div class="pg-progress__bar"></div>
+</div>
+
+<!-- スライドカウンター（現在 / 全数） -->
+<div class="pg-counter" aria-live="polite" data-pg-component="counter">
+  <span class="pg-counter__current">1</span>
+  <span class="pg-counter__sep">/</span>
+  <span class="pg-counter__total">{{N_SLIDES}}</span>
+</div>
+
+<!-- 前後送りボタン -->
+<div class="pg-controls" data-pg-component="controls">
+  <button type="button" class="pg-controls__btn pg-controls__btn--prev"
+          aria-label="前のスライド (←)">
+    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+  </button>
+  <button type="button" class="pg-controls__btn pg-controls__btn--next"
+          aria-label="次のスライド (→)">
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+  </button>
+</div>
+
+<!-- 下部ドットページネーション（5個区切りマイルストーン: nth-child(5n)） -->
+<nav class="pg-dots" aria-label="スライド一覧" data-pg-component="dots"
+     data-total="{{N_SLIDES}}">
+  <!-- pagination.js が data-total の数だけ <button.pg-dots__item> を自動生成 -->
+</nav>

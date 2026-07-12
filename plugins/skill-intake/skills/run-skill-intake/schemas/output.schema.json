@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-skill-intake/orchestrator-trace.schema.json",
+  "title": "orchestrator-trace.json",
+  "description": "11 phase 委譲結果のトレース。各 phase の delegateType/delegateName 実行結果と最終成果物 URI を保持する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "phases", "artifacts"],
+  "properties": {
+    "session_id": {"type": "string"},
+    "topic_hint": {"type": "string"},
+    "phases": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "delegateType", "delegateName"],
+        "properties": {
+          "id": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "SKIP"]},
+          "delegateType": {"type": "string", "enum": ["skill", "agent"]},
+          "delegateName": {"type": "string"},
+          "delegateSkill": {"type": ["string", "null"]},
+          "output_schema": {"type": "string"},
+          "artifact_path": {"type": "string"},
+          "error": {"type": "string"}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intake_md", "intake_json"],
+      "properties": {
+        "intake_md": {"type": "string"},
+        "intake_json": {"type": "string"},
+        "notion_url": {"type": "string"}
+      }
+    }
+  }
+}

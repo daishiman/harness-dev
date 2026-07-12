@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "`python3 validate-build-plan.py --self-test` を実走し exit 0 (OK: validate-build-plan self-test (5 groups)) を確認。加えて被覆テスト tests/scripts-plugins/test_harness_creator__validate_build_plan.py が pass (derive_flags 純関数導出 / セクション正本=テンプレート / check のディスク突合 / CLI 契約を被覆、実テンプレ正本での欠落 exit1 回帰ゲート含む)。[soundness] フラグはモデル判断でなく brief 非空フィールドから純関数導出 (responsibilities→prompts, generate_pair_evaluator→evaluator, hook_events→hooks, knowledge_loop→knowledge, with_subagent_hint→subagent, kind∈loop→goal_seek/feedback_contract_required) を self-test/テストで固定。derive_acceptance_tier の決定論導出 (hooks or Skill/Agent/AskUserQuestion→live, loop kind→fork, 他→static) と、宣言<導出 (緩め方向) を違反判定する check_plan 分岐を静的信号ベースで検証。check はディスク実体を真実とし、未展開プレースホルダ (小文字テンプレ変数のみ、{{PROJECT_ROOT}} 等の抽象化変数と {{...}} メタ表記は許容)・必須セクション ⊆ 生成物・非スタブ (見出し直下本文行数>0)・成果物 file/dir/glob/frontmatter-key/pair-skill/agent-file の実在を検査。軽微な限界: _frontmatter_value はインライン 'allowed-tools: A, B' 形のみ読み、複数行 YAML リスト形は '' を返し derived tier を過小評価しうる (ただし false-negative=緩宣言見逃し方向のみで false-positive は生じず、skill frontmatter はインライン形が実態)。agent-file の .claude/agents フォールバックは cwd 相対 (副次経路)。いずれも欠陥ではない。[responsibility] brief→plan 導出 + ディスク突合の単一凝集責務。[error-handling] JSON/OS エラー→exit2 明示、--check で --skill-dir 欠如→exit2、brief 不在→NOTE+exit0 (文書化された意図的 skip=単発 build)、欠落検出→findings 列挙で exit1。握り潰し無し。[side-effect-safety] 書込みは --out 指定時のみ (parent mkdir)、network 無し、frontmatter の write-scope 宣言と整合 (--out は任意パスを取れるため宣言は代表値で強制ではない旨のみ注記)。stdlib のみ (json/re/sys/pathlib/tempfile) で portability 良好。[frontmatter] PEP723 メタ整合、requires-python>=3.10、dependencies[]、CLI 契約 (--brief/--out/--check/--skill-dir/--flags/--self-test) が inputs 記述と一致。実欠陥なし。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

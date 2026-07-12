@@ -1,0 +1,27 @@
+version: 1
+read_when:
+  - file: references/five-axes-priority.md
+    when: 5 軸の処理順序とスキップ条件を確認するとき
+  - file: references/question-plan.json
+    when: どの Q-ID を出すか (depth×軸→Q-ID) の決定論的選択正本を確認するとき
+  - file: references/abstract-answer-patterns.md
+    when: 抽象回答検出 (needs_excavation 判定) の基準を確認するとき
+  - file: references/question-bank-pointer.md
+    when: tier 別の質問雛形を引きたいとき (旧 aggregator references への案内)
+  - file: ../../references/intent-contract.schema.json
+    when: 入力→出力 intent_contract の slot/enum/停止条件を確認するとき
+  - file: ../../references/probe-pattern-table.json
+    when: ユーザーが言語化できず intent slot が未充足のときに聞く固定 probe を確認するとき
+run_scripts:
+  - file: ../../scripts/build-intent.py
+    when: qa_log から intent_contract と pending_probes を決定論的に生成するとき
+  - file: scripts/build-questions.py
+    when: 出す質問列を Q-ID で決定論的に確定するとき (質問の都度立案の代替)
+  - file: scripts/validate-answer-abstraction.py
+    when: 回答の抽象度を機械判定し needs_excavation を決定論化するとき
+  - file: scripts/build-sheet-json.py
+    when: sheet.md から intake-final-schema 互換の sheet.json/five_axes を生成するとき
+  - file: scripts/validate-interview-json.py
+    when: interview.json の schema/停止条件/PII 変数化を検査するとき
+  - file: scripts/check-five-axes-coverage.py
+    when: sheet.md の 5 軸見出しと空欄/[?] 残存を検査するとき

@@ -1,0 +1,27 @@
+{
+  "detection": {
+    "consecutive_releases": 3,
+    "violation_rate_threshold": 0.2
+  },
+  "freeze": {
+    "consecutive_runs": 10,
+    "violation_rate_ceiling": 0.05
+  },
+  "grace_period": {
+    "min_releases": 1,
+    "min_days": 30
+  },
+  "limits": {
+    "manual_proposals_per_quarter": 1,
+    "major_bump_items_per_pr": 3
+  },
+  "solo_operator_mode": {
+    "enabled": true,
+    "self_approval_conditions": [
+      "安定版凍結済み: freeze.consecutive_runs 連続で violation_rate <= freeze.violation_rate_ceiling",
+      "newly_failing_count == 0 (assess-rubric-impact.py 出力)",
+      "LLM-reviewer pass: run-skill-rubric-governance の Step2 影響評価で problem=none"
+    ],
+    "note": "solo_operator_mode が true の場合、Proposer と Approver の兼任を例外的に許可する。governance log に solo_operator: true と evidence を必ず記録し、major bump は禁止する。"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$comment": "run-prompt-create governance 自動承認パラメーター。自動承認条件の SSOT は workflow-manifest.json の governance.auto_approve_conditions (各条件に evidence=判定主体を 1:1 紐付け)。本ファイルは環境前提 (preconditions) の値と各条件の rationale を提供する (条件リストの再掲はドリフト源のため置かない)。",
+  "preconditions_note": "solo_operator_mode / stable_frozen は成果物の品質条件ではなく環境前提 (静的な運用構成値)。workflow-manifest.json governance.preconditions から参照される。いずれかが false の環境では auto_approve 評価に入らず手動承認フロー (run-skill-rubric-governance) へ。",
+  "solo_operator_mode": true,
+  "stable_frozen": true,
+  "newly_failing_threshold": 0,
+  "llm_reviewer_required_verdicts": ["C1", "C2", "C3", "C4"],
+  "fallback_skill": "run-skill-rubric-governance",
+  "auto_approve_default": true,
+  "user_question_budget": 1,
+  "user_question_budget_note": "ユーザーへの能動的質問は brief 確定の Gate 1 で 1 回まで。Gate 2-4 は条件充足時に solo_operator_auto。条件不充足時のみ AskUserQuestion を発行。",
+  "auto_approve_condition_rationale": {
+    "newly_failing": "HEAD 比の新規 FAIL は回帰。既存 FAIL (継承負債) と区別して 0 を強制",
+    "llm_reviewer": "C1-C4 verdict の FAIL は設計欠陥。findings.json (findings.schema.json 準拠) が承認判定の一次 artifact",
+    "layer_dependency_violations": "L7→L1 単方向依存違反はプロンプト品質の根本欠陥",
+    "completion_checklist_verifiable": "5.3 完了チェックリスト (ゴール到達の停止条件) が非空かつ全項目 YES/NO 判定可能でないと、ゴールシークの停止条件=再現性根拠が崩れる (l5-contract v2.0.0。旧 self_evaluation_checklist_present は旧構成 (数量レンジ) の報酬化だったため廃止)",
+    "markdown_format_default_kept": "YAML 新規作成は legacy 復活を意味し governance が必要",
+    "lint_agent_prompt_section": "Prompt Templates/Self-Evaluation 注入が機械検証済み",
+    "verify_completeness": "7 層網羅 + L5 ゴールシーク必須要素 + 固定手順不在を verify-completeness.py の exit 0 で機械保証 (旧 verify_completeness_score >= 0.95 は score 算出主体が実在しない名目条件だったため exit code 判定へ正準化)",
+    "responsibility_id_matches_owner_skill": "R-id 不整合は orchestration 破綻",
+    "atomic_field_violations": "1フィールド=1概念 (50字目安) 違反は精度低下要因",
+    "translated_placeholder_residue": "{{...}} / TODO / 英語仮文残存は未完成のサイン"
+  }
+}

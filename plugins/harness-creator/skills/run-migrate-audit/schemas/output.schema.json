@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-migrate-audit/output.schema.json",
+  "title": "run-migrate-audit output",
+  "description": "scripts/migrate/audit.py が .claude/handoff/migrate-audit-<session>.json に書き出す分類結果の契約。8 区分 (always-on/ref/run/wrap/assign/delegate/hook/docs) に分類した section と集計を持つ。",
+  "type": "object",
+  "required": ["input_file", "sections", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "input_file": {
+      "type": "string",
+      "description": "監査対象の CLAUDE.md / prompt ファイルパス"
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["article", "internal-doc", "external-spec", "unknown"],
+      "description": "入力パスから派生した由来 (doc/21 source-tier 自動派生用)。audit.py detect_origin の返値"
+    },
+    "sections": {
+      "type": "array",
+      "description": "見出し単位で 8 区分へ分類した結果",
+      "items": {
+        "type": "object",
+        "required": ["heading", "classification", "rationale", "suggested_skill_name"],
+        "additionalProperties": false,
+        "properties": {
+          "heading": {
+            "type": "string",
+            "description": "section の見出しテキスト"
+          },
+          "classification": {
+            "type": "string",
+            "enum": ["always-on", "ref", "run", "wrap", "assign", "delegate", "hook", "docs"],
+            "description": "doc/20 Step 1 の 8 区分。classification-rules.md 準拠"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "分類根拠 (1 行以内。後段 evaluator が judge 可能)"
+          },
+          "suggested_skill_name": {
+            "type": ["string", "null"],
+            "description": "移行先 Skill 名候補 (ref-*/run-*/wrap-*/assign-*/delegate-*)。always-on / docs は null"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["ref_candidates", "run_candidates", "hook_candidates", "kept_in_claude_md", "total_sections"],
+      "additionalProperties": false,
+      "properties": {
+        "ref_candidates": {"type": "integer", "minimum": 0},
+        "run_candidates": {"type": "integer", "minimum": 0},
+        "hook_candidates": {"type": "integer", "minimum": 0},
+        "kept_in_claude_md": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "always-on 分類数。CLAUDE.md に残す section 数 (0 だと警告)"
+        },
+        "total_sections": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

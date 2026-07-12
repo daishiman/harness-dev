@@ -1,0 +1,43 @@
+{
+  "run_id": "run-20260624-reset-30methods-rerun",
+  "scope_mode": "skill",
+  "target": "doc/run-notion-gmail-send-仕様と検証メモ.md (実装SSOT) + eval-log/skill-brief.json (v2, 整合済み)",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "status": "complete",
+  "force_pass": false,
+  "human_review_required": false,
+  "thought_method_coverage": {
+    "total": 30,
+    "completed": 30,
+    "breakdown": {
+      "A2_logical_structural": 9,
+      "A3_meta_divergent": 9,
+      "A4_system_strategic": 12
+    },
+    "note": "思考リセット後に3 SubAgentで論理構造9・メタ発想9・システム戦略12の計30思考法を並列適用し30/30を充足。"
+  },
+  "proposer_approver_separation": {
+    "proposer": "main-context (Phase3 改善実行: doc書換 + skill-brief v2同期)",
+    "approver": "独立 SubAgent 3件 (logical-structural / meta-divergent / system-strategic, read-only)",
+    "approver_verdict": "APPROVE",
+    "satisfied": true
+  },
+  "reason": "思考リセット→30思考法(9+9+12)並列分析→4条件検証を完了。root cause 4点(hookだけではscript内Gmail APIを遮断できない / Gmail送信成功後Notionログ失敗で二重送信し得る / dry-run承認がplanと機械照合されていない / 本文抽出・ログDB schema・reason_codeが不足)を構造的に解消。docとskill-briefをplan_hash承認、script内send_guard、reserved→sent/unknown_needs_reconcile、本文抽出規則、送信ログDB schemaへ同期し、jsonschema PASS。",
+  "user_decisions": {
+    "送信方式": "現状維持(dry-run全件承認→一括本送信)。下書きモード/canaryは将来オプションとして見送り。因果ループはplan_hash承認・人間承認ゲート・reserved事前予約で吸収。",
+    "ドキュメント形態": "自己完結の実装仕様書に再構成。経緯は末尾の決定ログへ。"
+  },
+  "residual_low_severity": [
+    "残存低リスク: To列にカンマ区切り複数アドレスがある場合、同一宛先行内で相互可視になる。仕様ではmulti_to_visible警告と承認echoで明示済み。",
+    "残存低リスク: Notion APIには一意制約がない。仕様では冪等キー検索で複数行検出時fail-closedにした。"
+  ],
+  "build_ready": true,
+  "build_precondition": "build前に外部実体(DWD承認/From sendAs alias/SA鍵svce-acct/送信ログDB ID/本文記入)はruntimeのpreflight gateとsend_guardで検証する設計。実値未確定・plan未承認・reservedログ行なしでは1通も送信しない。",
+  "resume_after": null,
+  "superseded_findings": "eval-log/elegant-review/findings.json は前回中断時点の反映ログ。正本は doc + skill-brief v2。"
+}

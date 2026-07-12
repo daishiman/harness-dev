@@ -1,0 +1,96 @@
+{
+  "agent": "elegant-logical-structural-analyst",
+  "paradigm_findings": [
+    {"method_id": "critical", "method_name": "批判的思考", "applied": true,
+     "issues": [
+       {"id": "A2-01", "severity": "high", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/EVALS.json:20",
+        "description": "EVALS.json と計画は validate-goal-output.py の品質根拠を「移植元 .sh との golden-master equivalence」に置くが、実 build の tests/ にはそれを検証する仕組みも証跡も一切存在しない (test_validate_goal_output.py は同梱 golden-sample-weekly.md との自己完結テストのみ)。「なぜ契約等価と言えるか」の根拠が実装に遡れない。",
+        "evidence": "EVALS.json:20「validate-goal-output.py は移植元 .sh との golden-master equivalence で契約等価性を確認する」/ index.md:88「旧 .sh の削除は golden-master equivalence 確認後に行う」に対し、tests/ に .sh 対 .py 比較テスト・等価確認ログが不在 (grep 'golden|equivalence' の一致は自己 sample テストと宣言文のみ)",
+        "recommendation": "同一コーパスで新旧出力を突合した equivalence 証跡を残すか、EVALS.json/計画の当該宣言を「golden-sample 回帰テスト」へ実態に合わせて訂正する (spec-first)。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "deduction", "method_name": "演繹思考", "applied": true,
+     "issues": [
+       {"id": "A2-02", "severity": "high", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py:34",
+        "description": "一般則 (計画 C04 matcher=\"Write|Edit\") を実装へ当てはめると齟齬: hook 本体は GUARDED_TOOLS に MultiEdit を含み SKILL.md も「Write|Edit|MultiEdit を fail-closed で阻む」と保証を掲げるが、plugin.json の PreToolUse matcher は計画通り \"Write|Edit\" のままで、matcher の正規表現アンカー次第で MultiEdit が hook 起動自体を素通りする。テストも MultiEdit ケース0件で保証が未検証。",
+        "evidence": "hooks/ubm-write-path-guard.py:34 GUARDED_TOOLS = {\"Write\", \"Edit\", \"MultiEdit\"} / .claude-plugin/plugin.json:36 \"matcher\": \"Write|Edit\" / component-inventory.json:93 \"matcher\": \"Write|Edit\" / skills/run-ubm-goal-setting/SKILL.md:90「Write|Edit|MultiEdit を fail-closed で阻む」/ tests/test_write_path_guard.py に MultiEdit の一致なし (grep 0件)",
+        "recommendation": "matcher を \"Write|Edit|MultiEdit\" へ揃え (計画 C04 と manifest 両辺)、tests/test_write_path_guard.py に MultiEdit 遮断ケースを追加する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "induction", "method_name": "帰納的思考", "applied": true,
+     "issues": [
+       {"id": "A2-03", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/knowledge/router.json:4",
+        "description": "ナレッジ件数フィールドを全数帰納すると4つの値が食い違う: router.json 宣言 total_entries=155、同ファイル categories.entry_count 合計=157 (43+35+9+18+25+27)、subcategory_counts 合計=154、実エントリ数 (id パターン grep 実測)=154。計画側も「計155エントリ」の直後に合計157になる内訳を併記しており同じ矛盾を継承している。実測 154 が正で、principles 43→実41・consultation 35→実34。",
+        "evidence": "router.json:4 \"total_entries\": 155 / router.json:11 principles entry_count 43 に対し subcategory_counts 合計41・grep 実測41 / component-inventory.json:509「計155エントリ(router.json集計:principles43/consultation35/case-studies27/mindset25/action-guides18/phase-advice9)」(合計157) / goal-spec.json:55「router.json集計155エントリ」/ knowledge 全 JSON の id 実測合計 154",
+        "recommendation": "実測値 154 に合わせて router.json の total_entries/entry_count (principles=41, consultation=34) と計画側 155 表記を一括訂正する。",
+        "auto_fixable": true}
+     ]},
+    {"method_id": "abduction", "method_name": "アブダクション", "applied": true,
+     "issues": [
+       {"id": "A2-04", "severity": "high", "condition_signal": "contradiction",
+        "location": "plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json:20",
+        "description": "実 plugin 18 実体が完成し CHANGELOG 0.1.0 (2026-07-04) まで刻まれているのに、handoff routes 全18件 status=\"planned\"・index フェーズ一覧 P01-P13 全て「未実施」・goal-spec checklist C1-C7 全て done:false のまま。根本原因は『handoff が計画→build の一方向契約で、build→計画への完了 writeback (status/done 反転・証跡格納) の責務者と機構が未定義』であること。",
+        "evidence": "handoff-run-plugin-dev-plan.json 全 routes \"status\": \"planned\" / index.md:93-105 全フェーズ「未実施」/ goal-spec.json:14 以降 \"done\": false ×7 / plugins/ubm-goal-setting/CHANGELOG.md:3「## 0.1.0 - 2026-07-04」/ plan-findings.json:2 \"plan_dir\": \".worktrees/task-20260703-124959-wt-7/...\" (現 worktree と不一致)",
+        "recommendation": "build 完了時に routes.status/phase status/goal-spec done を実測で反転する writeback ステップを handoff 契約へ追加し、今回分は検証済み項目のみ遡及更新する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "vertical", "method_name": "垂直思考", "applied": true,
+     "issues": [
+       {"id": "A2-05", "severity": "high", "condition_signal": "omission",
+        "location": "plugin-plans/ubm-goal-setting/phase-09-quality-assurance.md:38",
+        "description": "全18 component の quality_gates が content_review verdict PASS (sha_match) と build_trace required を必須携帯するが、P09/P11 の成果物 (verdict 18件・evidence 5要素 Markdown) に保存先パスが計画上一度も割り当てられておらず、build ツリーに証跡を格納する場所自体が存在しない。ゲート成果物がアンカー不在の宙吊り deliverable になっている。",
+        "evidence": "component-inventory.json 各 component \"build_trace\": \"required\" / \"content_review\": {\"verdict\": \"PASS\", \"sha_match\": true} に対し、plugins/ubm-goal-setting/ 配下で grep 'verdict|build-trace|content-review' が 0 ファイル。phase-11-evidence.md:34-39 の evidence 5要素 Markdown も実在せず、その格納先パスは計画のどこにも定義されていない",
+        "recommendation": "P09/P11 成果物の格納先パス (例: eval-log 配下) を計画に定義し、独立 SubAgent で現 SHA verdict と evidence 5要素を生成・格納する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "decomposition", "method_name": "要素分解", "applied": true,
+     "issues": [
+       {"id": "A2-06", "severity": "medium", "condition_signal": "dependency_break",
+        "location": "plugin-plans/ubm-goal-setting/component-inventory.json:118",
+        "description": "sub-agent 10本 (C05-C13/C15) が携帯する responsibility_anchor (prompts/R-collect.md 〜 R-extract.md) と C16/C17 responsibilities の prompt_required:true が指す prompts/ 正本が、実 build のどこにも存在しない (glob **/prompts/* = 0件)。agents/*.md は7層構造を内蔵する自己完結ファイルとして build されており、計画のアンカー参照が全10本で宙に浮いている (他フィールド — tools/isolation/argument-hint/build_target 等は18実体すべて一致)。",
+        "evidence": "component-inventory.json:118 \"responsibility_anchor\": \"prompts/R-collect.md\" (以降 C06-C15 も同型) に対し、plugins/ubm-goal-setting/ 配下に prompts/ ディレクトリ不在 (Glob 'plugins/ubm-goal-setting/**/prompts/*' → No files found)",
+        "recommendation": "prompts/ 正本を新設して agents/ を薄アダプタ化するか、responsibility_anchor を実在する agents/*.md へ計画側で更新する (spec-first で二者択一を明示)。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "mece", "method_name": "MECE", "applied": true,
+     "issues": [
+       {"id": "A2-07", "severity": "medium", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml:1",
+        "description": "reference は計画=8本 (references_config_assets.files) に対し実体=9本。resource-map.yaml が計画の分割外に存在し、しかも EVALS.json が references surface の enforcement 正本としてこの計画外ファイルを引用しており、計画の「8本」宣言と実体・評価系の記述が相反する (他の全数照合は一致・重複0)。",
+        "evidence": "component-inventory.json:489-501 に reference 8本のみ列挙 (resource-map.yaml 不在) / goal-spec.json:37・index.md:117「references 8本」/ 実体 references/ に9本目 resource-map.yaml / EVALS.json:40 \"references\": \"references/resource-map.yaml ... が Progressive Disclosure 索引を保持\"",
+        "recommendation": "resource-map.yaml を references_config_assets.files へ build 生成物として追記し「8本」表記を9本 (うち1本は build 時新設索引) へ更新する。",
+        "auto_fixable": true}
+     ]},
+    {"method_id": "two-axis", "method_name": "2軸思考", "applied": true,
+     "issues": [
+       {"id": "A2-08", "severity": "medium", "condition_signal": "smell",
+        "location": "plugins/ubm-goal-setting/EVALS.json:5",
+        "description": "C16/C17 の PASS 必須 p0_lint 8本のうち skill 系6本 (lint-skill-name/lint-skill-tree/lint-dependency-direction/lint-skill-dep-step7/lint-forbidden-deps/lint-manifest-contents=高重要・ゲート必須) が mechanical に未配線で surfaces_enforced_by の散文宣言止まりなのに、相対的に軽い check-knowledge-split (500行ガード) は実行コマンドとして配線済み (優先度逆転)。",
+        "evidence": "component-inventory.json:378 C16 p0_lint に lint-skill-name 等8本宣言 / EVALS.json:5-13 mechanical は pytest+lint-script-frontmatter+validate-frontmatter+lint-skill-description+lint-agent-prompt-section+check-knowledge-split のみ / EVALS.json:35 は同6本を surfaces_enforced_by (非実行宣言) に記載",
+        "recommendation": "skill 用 p0_lint 6本の実行コマンドを EVALS.json harness.mechanical へ追加し宣言と機械強制を一致させる。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "process", "method_name": "プロセス思考", "applied": true,
+     "issues": [
+       {"id": "A2-09", "severity": "high", "condition_signal": "dependency_break",
+        "location": "plugin-plans/ubm-goal-setting/phase-11-evidence.md:25",
+        "description": "phase01→13 の成果物連鎖で中間工程が抜け落ちている: P05 成果物=あり → P06 成果物 (EVALS.json)=あり → P09 成果物 (P0 lint exit0 ログ・content-review verdict 18件)=なし → P10 final-gate 通過記録=なし → P11 evidence=なし → P12 成果物 (RUNBOOK/CHANGELOG)=あり。後続工程の成果物が前提工程の成果物なしに存在しており、P11 の前提条件・P13 の「P01-P12 完了」前提が連鎖として不成立 (see A2-05)。",
+        "evidence": "phase-11-evidence.md:25「P10 の final-gate を通過している」・phase-13-release.md:25「P01-P12 が完了している」に対し、P09/P10/P11 の成果物が plan/build 両ツリーに不在。一方 RUNBOOK.md・CHANGELOG.md (P12 相当) は存在",
+        "recommendation": "P09→P10→P11 のゲート成果物を順に生成・格納してから P12/P13 の完了を宣言する (工程スキップの遡及補完)。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "why", "method_name": "why思考", "applied": true,
+     "issues": [
+       {"id": "A2-10", "severity": "low", "condition_signal": "omission",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py:1",
+        "description": "155/157/154 併存の根本原因連鎖: 移植時にエントリが整理されても router.json の集計フィールドが再生成されず、唯一のナレッジ機械ゲート check-knowledge-split.py は行数閾値のみ検査し、router.json の entry_count/total_entries と実エントリ数の一致 (count parity) を検査するゲートがどこにも計画・配線されていない。集計ドリフトは今後の sync でも再発し得る構造的漏れ。",
+        "evidence": "component-inventory.json:66 C03 purpose は「500 行閾値を超過していないか検査する」のみ / EVALS.json:12 の mechanical 配線も同 script の --dir 起動のみで、router 集計と実エントリ数の照合ゲートが存在しない",
+        "recommendation": "count-parity 検査を追加し EVALS.mechanical (pytest 経由可) へ配線する。",
+        "auto_fixable": false}
+     ]}
+  ],
+  "summary": "18実体・refs8/assets5/知識28JSON の存在面は計画と一致するが、計画↔実体の乖離は『build→計画への完了writeback機構の不在』(A2-04) を根本原因として status/checklist 全未更新・P09/P11 ゲート証跡ゼロ (A2-05/A2-09)・golden-master 宣言の裏付け不在 (A2-01) に波及している。安全面では guard hook の MultiEdit 三層不整合 (A2-02) が最優先の実害リスク、データ面では knowledge 集計 155/157/154 の多重矛盾 (A2-03/A2-10) が機械ゲート不在ゆえに固定化している。resource-map 計画外追加 (A2-07)・prompts 正本不在 (A2-06)・EVALS lint 部分配線 (A2-08) は spec-first 原則に基づき計画側更新または配線追加で解消可能。"
+}

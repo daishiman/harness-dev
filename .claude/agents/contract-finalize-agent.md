@@ -1,0 +1,1 @@
+../../plugins/contract-generator/agents/contract-finalize-agent.md

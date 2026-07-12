@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "knowledge-ref.schema.json",
+  "title": "knowledge-ref",
+  "description": "task spec と TaskExecutionEnvelope が共有する cross-cycle 蒸留 knowledge 参照 (C19)。出所・鮮度確認日・採否・理由を必須にし、任意 object の素通りを禁止する。",
+  "type": "object",
+  "required": [
+    "id",
+    "source_ref",
+    "freshness_checked_at",
+    "decision",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "source_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "repository root 配下に実在する蒸留 knowledge の相対パス"
+    },
+    "freshness_checked_at": {
+      "type": "string",
+      "format": "date",
+      "description": "参照内容を再確認した UTC 日付 (YYYY-MM-DD)"
+    },
+    "decision": {"type": "string", "enum": ["adopted", "rejected"]},
+    "reason": {"type": "string", "minLength": 1}
+  }
+}

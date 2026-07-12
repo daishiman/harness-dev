@@ -1,0 +1,35 @@
+{
+  "target": {
+    "plugin": "notion-gmail-send",
+    "skill": "run-notion-gmail-source-audit",
+    "skill_md_sha256": "edccc6ffe718a2c7fba11656745f5cec14fcc1a65bd44629dc7b42ca960a9476"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rubric-reviewer",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "inner",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "frontmatter が skill-design rubric に準拠: kind=run / prefix=run / effect=conversation-output(参照専用と整合) / disable-model-invocation=true・user-invocable=true / argument-hint と arguments が --db1/--db2 と一致 / allowed-tools=Read+Bash(python3 *) の最小権限(書き込みツールなし=conversation-output と矛盾なし)。feedback_contract.criteria(IN1=inner/verify_by=test, OUT1=outer/verify_by=elegant-review) が SSOT(scripts/feedback_contract_ssot.py)準拠で過不足なし。",
+      "スクリプトヘッダ規約準拠: audit_mail_dbs.py / mail_db_audit.py の PEP723 風メタ(name/purpose/inputs/outputs/contexts/network/write-scope=none/requires-python)が揃い、write-scope=none が read-only 設計と一致。exit code 規約(0=問題なし/1=改善推奨あり/2=接続設定エラー)も effect=conversation-output と整合。",
+      "IN1 の機械検証可能性が rubric の verify_by=test を満たす: audit テスト群が plugin 内テストで 50 passed、各検出コードに対応するテストが1対1で存在し、検証手段がスキル定義と一致。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "skill-design rubric 観点で genuine 採点。frontmatter(name/description/kind/prefix/effect/owner/since/version/source/source-tier/last-audited/audit-trigger/feedback_contract)が必須項目を満たし、description は2トリガ(品質点検したいとき/洗い出したいとき)で適正。SKILL.md 構成(Purpose & Output Contract / End-to-End Flow / ゴールシーク実行(Goal/Why/Checklist/Loop) / Key Rules / Gotchas / Additional Resources)が run-kind の標準骨格に沿い、本文行数も過大でなく簡潔。argument-hint=[--db1 <id>] [--db2 <id>] [--config <path>] [--json] が script の argparse 定義と一致(dangling/未実装フラグなし)。allowed-tools が Read と Bash(python3 *) のみで conversation-output(書き込みなし)と矛盾せず最小権限。IN1=inner loop_scope/verify_by=test, OUT1=outer loop_scope/verify_by=elegant-review が feedback_contract SSOT と整合。rubric 違反 0 件で PASS。criteria_evaluated は elegance verdict と分担(本 verdict は inner=IN1 機械検証性中心、OUT1 は outer 整合性を補助確認)し重複記載なし。"
+}

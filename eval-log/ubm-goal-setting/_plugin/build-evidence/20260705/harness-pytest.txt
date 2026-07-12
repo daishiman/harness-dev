@@ -1,0 +1,53 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.4, pytest-8.4.2, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-224508-wt-2/plugins/ubm-goal-setting
+plugins: cov-7.1.0, Faker-37.1.0, anyio-3.7.1
+collecting ... collected 44 items
+
+tests/test_check_knowledge_split.py::test_under_threshold_ok PASSED      [  2%]
+tests/test_check_knowledge_split.py::test_over_threshold_fails PASSED    [  4%]
+tests/test_check_knowledge_split.py::test_management_files_excluded PASSED [  6%]
+tests/test_check_knowledge_split.py::test_boundary_500_ok PASSED         [  9%]
+tests/test_check_knowledge_split.py::test_missing_dir_usage PASSED       [ 11%]
+tests/test_check_knowledge_split.py::test_no_dir_arg_usage PASSED        [ 13%]
+tests/test_check_knowledge_split.py::test_vendored_knowledge_passes PASSED [ 15%]
+tests/test_detect_knowledge_updates.py::test_new_when_unregistered PASSED [ 18%]
+tests/test_detect_knowledge_updates.py::test_modified_when_hash_differs PASSED [ 20%]
+tests/test_detect_knowledge_updates.py::test_all_forces_new PASSED       [ 22%]
+tests/test_detect_knowledge_updates.py::test_no_change_when_all_match PASSED [ 25%]
+tests/test_detect_knowledge_updates.py::test_source_type_classification PASSED [ 27%]
+tests/test_detect_knowledge_updates.py::test_missing_sources_returns_empty_success PASSED [ 29%]
+tests/test_detect_knowledge_updates.py::test_missing_registry_is_input_error PASSED [ 31%]
+tests/test_detect_knowledge_updates.py::test_missing_args_usage PASSED   [ 34%]
+tests/test_knowledge_counts.py::test_total_entries_matches_disk PASSED   [ 36%]
+tests/test_knowledge_counts.py::test_category_entry_count_matches_files PASSED [ 38%]
+tests/test_knowledge_counts.py::test_subcategory_counts_match_files_and_sum PASSED [ 40%]
+tests/test_knowledge_counts.py::test_no_orphan_knowledge_files PASSED    [ 43%]
+tests/test_knowledge_counts.py::test_registry_internal_consistency PASSED [ 45%]
+tests/test_knowledge_counts.py::test_registry_null_entry_ids_are_marked_legacy PASSED [ 47%]
+tests/test_validate_goal_output.py::test_golden_sample_passes PASSED     [ 50%]
+tests/test_validate_goal_output.py::test_unexpanded_placeholder_fails PASSED [ 52%]
+tests/test_validate_goal_output.py::test_zenkaku_digit_fails PASSED      [ 54%]
+tests/test_validate_goal_output.py::test_missing_required_heading_fails PASSED [ 56%]
+tests/test_validate_goal_output.py::test_ng_expression_fails PASSED      [ 59%]
+tests/test_validate_goal_output.py::test_bad_filename_prefix_fails PASSED [ 61%]
+tests/test_validate_goal_output.py::test_explicit_type_enforces_monthly_headings PASSED [ 63%]
+tests/test_validate_goal_output.py::test_missing_file_input_error PASSED [ 65%]
+tests/test_validate_goal_output.py::test_invalid_type_usage PASSED       [ 68%]
+tests/test_validate_goal_output.py::test_duplicate_heading_fails PASSED  [ 70%]
+tests/test_write_path_guard.py::test_allow_goal_save PASSED              [ 72%]
+tests/test_write_path_guard.py::test_allow_daily_embed PASSED            [ 75%]
+tests/test_write_path_guard.py::test_block_other_vault_path PASSED       [ 77%]
+tests/test_write_path_guard.py::test_block_vault_config PASSED           [ 79%]
+tests/test_write_path_guard.py::test_allow_outside_vault PASSED          [ 81%]
+tests/test_write_path_guard.py::test_allow_when_vault_unset PASSED       [ 84%]
+tests/test_write_path_guard.py::test_ignore_non_write_tool PASSED        [ 86%]
+tests/test_write_path_guard.py::test_unparseable_input_blocked_fail_closed PASSED [ 88%]
+tests/test_write_path_guard.py::test_missing_file_path_blocked_fail_closed PASSED [ 90%]
+tests/test_write_path_guard.py::test_edit_tool_also_guarded PASSED       [ 93%]
+tests/test_write_path_guard.py::test_multiedit_blocked_on_protected_path PASSED [ 95%]
+tests/test_write_path_guard.py::test_multiedit_allowed_on_goal_path PASSED [ 97%]
+tests/test_write_path_guard.py::test_manifest_matcher_matches_guarded_tools PASSED [100%]
+
+============================== 44 passed in 7.35s ==============================

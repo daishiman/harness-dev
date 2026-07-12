@@ -1,0 +1,18 @@
+{
+  "config_key": "hearing-sheet",
+  "title": "Skillヒアリングシート",
+  "title_property": "ヒアリングシート名",
+  "managed_properties": {
+    "ヒアリングシート名": {"type": "title"},
+    "紐づくプラグイン": {
+      "type": "relation",
+      "target_db": "skill-list",
+      "dual": true,
+      "synced_property_on_target": "紐づくヒアリングシート"
+    }
+  },
+  "preserved_properties_note": "既存の17プロパティ（ナレッジ資産・情報源・共有相手・真の課題・外部連携・出力先・ユーザープロファイル・担当者・パターン・図解枚数・価値実現スコア・未解決事項・作成日時・更新日時・スキル作成完了・ステータス）は運用中につき本SSOTでは管理せず温存する。",
+  "relation_invariant": {
+    "紐づくプラグイン": "0 or 1 (=1:1 with skill-list)"
+  }
+}

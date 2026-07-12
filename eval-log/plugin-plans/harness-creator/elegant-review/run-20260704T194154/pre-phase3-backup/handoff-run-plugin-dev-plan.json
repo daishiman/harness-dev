@@ -1,0 +1,212 @@
+{
+  "plan_dir": "plugin-plans/harness-creator",
+  "target_plugin_slug": "harness-creator",
+  "mode": "update",
+  "routes": [
+    {
+      "id": "C09",
+      "component_kind": "script",
+      "name": "emit-improvement-handoff",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/emit-improvement-handoff.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/emit-improvement-handoff.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-plugin-goal-spec",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-plugin-dev-plan",
+        "script_path": "scripts/check-plugin-goal-spec.py"
+      },
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "check-route-component-parity",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/check-route-component-parity.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/check-route-component-parity.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "check-intake-consumption",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03"],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-plugin-dev-plan",
+        "script_path": "scripts/check-intake-consumption.py"
+      },
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-intake-consumption.py",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "check-provenance-chain",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03", "C09"],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C01",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-plugin-dev-plan",
+        "script_path": "scripts/check-provenance-chain.py"
+      },
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-provenance-chain.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-plugin-dev-plan",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C09"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-plugin-dev-plan",
+        "kind": "run",
+        "mode": "update"
+      },
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "slash-command",
+      "name": "plugin-dev-plan",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "plugin-dev-plan"
+      },
+      "build_target": "plugins/plugin-dev-planner/commands/plugin-dev-plan.md",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "skill",
+      "name": "run-skill-create",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C08"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-skill-create",
+        "kind": "run",
+        "mode": "update"
+      },
+      "build_target": "plugins/harness-creator/skills/run-skill-create/",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C08"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "capability-build"
+      },
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "plugin-dev-plan-improvement-reviewer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "plugin-dev-plan-improvement-reviewer"
+      },
+      "build_target": "plugins/plugin-dev-planner/agents/plugin-dev-plan-improvement-reviewer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "hook",
+      "name": "enforce-provenance-chain",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C04", "C05"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "enforce-provenance-chain"
+      },
+      "build_target": "plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/harness-creator/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "note": "harness-creator はディレクトリ自動発見のため envelope-draft/plugin.json は現行値を無変更で mirror する (C06/C07/C08/C09 の追加/更新に manifest 差分は不要)。plugin-dev-planner 側 manifest (entry_points.agents[]/hooks.PreToolUse[]) への C10/C11 登録は本 envelope の対象外で、各 component (C10/C11) 自身の build スコープで処理する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "harness-creator/plugin-dev-planner はいずれも distributable:false (NEVER_DISTRIBUTE denylist) のため本 plan では marketplace 掲載を行わない。将来の配布判断はユーザー承認後に別途実行する"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独実行実体が未整備 (capability-gap 起票済・当面は run-build-skill の build フロー内で代替生成)。対象 route: C03,C04,C05 (parent-skill-build) / C08,C09 (plugin-scaffold)。代替生成手順: (1) run-build-skill が route.build_kind=script と build_args.script_path を読み、plugin-root script は build_target へ直接生成する、(2) requires_parent_scaffold を持つ skill 配下 script は親 skill C01 のディレクトリ実在を先に確認し、無ければ空 scaffold を作ってから script を配置する、(3) 生成後に check-build-handoff / check-runtime-portability / build_trace を再実行し、どの contract-only route をどの executor-backed 手順で展開したかを evidence に記録する"
+    }
+  ]
+}

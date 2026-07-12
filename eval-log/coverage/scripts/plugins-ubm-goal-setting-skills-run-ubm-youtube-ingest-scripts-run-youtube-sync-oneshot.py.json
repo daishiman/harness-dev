@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 82,
+    "notes": "冪等 one-shot 差分同期 (C02)。soundness: idempotency key=video_id で『一度だけ ingest・二回目0件・temporary_failure は次 run retry 回復』の OUT1 核が成立(テスト実証)、discovery は seen_cursors で fixture 循環 cursor でも停止、provenance 必須3キー欠落は fabrication 禁止で temporary_failure 保留、retry 超過は alert 化。lease は取得直後に disk 永続化+TTL 失効奪取で二重起動を排他(異常終了フォールト注入テスト有)。responsibility: 正規化ソース+registry/ledger 確定までに限定し意味抽出を下流 R3 へ委譲、C01 frontmatter 方言(引用付き span/coverage enum/untrusted_data_notice)は normalized-source-schema.md 準拠を実出力で確認。error-handling: registry 破損=exit1・引数不正=exit2、quota/auth は graceful stop を report へ記録し exit0。side-effect-safety: registry は tmp+os.replace の原子的書込、--dry-run は lease 含め書込ゼロ(テスト実証)、title の path 危険文字 sanitize 済。frontmatter: PEP723 様式完備。減点(実害候補の指摘): (1) --provider fixture で --fixture 欠落や fixture JSON 破損時に get_provider が素の TypeError/JSONDecodeError traceback で落ちる(書込前なので状態破損はないが exit2 の clean エラーであるべき)。(2) lease の check→write が file lock なしの非原子で、厳密同時起動では両者通過し得る(scheduler 単一起動前提+即永続化で主経路は閉じるが残余レース)。(3) 正規化ソース path が published_at+題名のみで video_id を含まず、同日同題の 2 動画で .md が相互上書きされ得る(registry は双方 ingested のまま=無音の lossless 破れ。命名は registry-ledger-schema の契約準拠のため契約側の課題)。tests/test_youtube_sync_oneshot.py 15件全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

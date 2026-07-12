@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "assign-notion-fidelity-evaluator",
+    "skill_md_sha256": "a16d64dcb1f69400a56fb4cd79ee1a66de1a38aafa93b271d56833e0549768d3"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-01T09:22:47Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "スコア重み(char_bounds 30% + required 40% + viz 30%)と閾値(pass>=0.85 / warn>=0.70 / fail<0.70)+ exit 0/1/2 写像が Key Rules 8-9・Gotchas 3・完了チェックリスト・実行コマンド・IN1 で完全一致し、granularity-rubric.md(section_score=0.30*char+0.40*field+0.30*viz)/ fidelity-check-rules.md(閾値表)/ validate-notion-fidelity.py(section_text_length())の実装まで矛盾なく貫通している",
+      "新設 +147行の『ゴールシーク実行』(Goal/Why/完了チェックリスト/ループ/実行コマンド)が pre-publish フックと post-publish 差分検証の双方を明記し、extract-canonical-snapshot.py(canonical 更新追従)/ validate-notion-fidelity.py(検査)/ extract-granularity-score.py(CI メトリクス)の3 script を漏れなく網羅、fail-fast != silent-fail(exit 2 でも JSON/MD 出力)を Output Contract・Key Rule 4・Gotchas 4・チェックリストで一貫させ漏れがない",
+      "責務単一(構造粒度の JSON 比較のみ)が Key Rule 1・Gotchas 5/6・関連スキルで一意化され、intake 妥当性=run-skill-intake / スキーマ存在=intake.schema.json / Notion API 公開=run-notion-intake-publish への委譲先が重複なく解決可能で、Notion API 認証情報を本スキル内で保持しない越境禁止設計(OUT1)を満たす。canonical SoT=section_canonical_map.json / 派生 snapshot 手書き禁止(DRY)も Key Rule 2・Gotchas 1 で整合"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "改名(run-notion-fidelity-guard -> assign-notion-fidelity-evaluator)後の現 SKILL.md 全 147 行を実読し 4 条件で再検証。(1)矛盾なし=重み/閾値/exit 写像/section_text_length() の単一定義が本文と scripts・references 実装まで一致、responsibility_refs(R1/R2/R3)と prompts/ 実在一致。(2)漏れなし=Purpose & Output Contract / Key Rules / ゴールシーク(Goal・Why・チェックリスト・ループ・コマンド)/ Gotchas / Additional Resources が pre/post-publish 双方と fail-fast!=silent-fail を網羅、147<=300 行。(3)整合性=canonical SoT 所有者を run-skill-intake へ一意化、snapshot 派生生成(手書き禁止)を Key Rule 2・Gotchas 1・チェックリストで重複整合。(4)依存関係整合=schema_refs(output.schema.json)/ scripts 3 本 / references 5 本 / prompts 3 本 / workflow-manifest.json いずれも実在、Notion API 認証を保持せず run-notion-intake-publish へ委譲。責務単一性・簡潔性ともに良好。feedback_contract(IN1/IN2/OUT1)が本文評価観点と一致。high finding=0 => PASS。"
+}

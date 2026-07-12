@@ -1,0 +1,35 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-system-design-knowledge の Progressive Disclosure 索引。
+# system-category-taxonomy.json は機械可読 contract (C01 seed 初期集合 SSOT)。
+# catalog entries は seed examples で非網羅。未知知識は open-world lifecycle から探索する。
+resources:
+  - file: open-world-knowledge-lifecycle.md
+    topic: 未知/追加知識の discover→qualify→deepen→goal map→candidate→promotion→freshness audit
+    read_when: seed外の知識が必要なとき / project candidateをcurated昇格するとき / stale監査時
+  - file: knowledge-catalog.json
+    topic: open-world宣言、seed card一覧、status、freshness classの機械可読索引
+    read_when: 利用可能なcurated/seed cardを探索するとき / validatorがcard parityを確認するとき
+  - file: knowledge-card.schema.json
+    topic: 深い知識cardとproject candidateの必須意味フィールド契約
+    read_when: C01/C02がcandidateを作るとき / C04へのcurated promotion review時
+  - file: system-category-taxonomy.json
+    topic: カテゴリ×canonical platform id の収集マトリクス初期集合 (C01 R1-init の正本)
+    read_when: C01 がマトリクスを初期化するとき / C12 のカテゴリ軸床と整合確認するとき
+  - file: clean-architecture.md
+    topic: クリーンアーキテクチャの目的・適用境界・失敗モード・goal寄与・一次資料・鮮度
+    read_when: backend/frontend の依存設計を章へ反映するとき
+  - file: design-patterns.md
+    topic: patternの目的・forces・適用/非適用・失敗モード・goal寄与・一次資料・鮮度
+    read_when: 拡張点の設計パターン選定を参照するとき
+  - file: api-design-patterns.md
+    topic: API契約の目的・interaction選定・適用/非適用・trade-off・一次資料・鮮度
+    read_when: backend の API 契約を章へ反映するとき
+  - file: secure-by-design.md
+    topic: secure-by-designの責任・threat/control・適用境界・失敗モード・一次資料・鮮度
+    read_when: security/auth カテゴリの脅威モデルを章へ反映するとき
+  - file: ddd.md
+    topic: DDDの目的・complex domain条件・境界/aggregate失敗モード・一次資料・鮮度
+    read_when: database/backend のドメインモデル境界を章へ反映するとき
+  - file: clean-code.md
+    topic: clean codeの目的・outcome・適用境界・過剰適用失敗モード・一次資料・鮮度
+    read_when: maintenance-ops のコード規約を章へ反映するとき

@@ -1,0 +1,96 @@
+{
+  "purpose": "skill-intake(ヒアリング)→plugin-dev-planner(タスク仕様書化)→harness-creator build(ハーネス構築)→改善(改善要望→再構築) という量産パイプラインの各段境界 (E1: intake→goal-spec、E2: plan→build、E3: 改善→plan) における producer/consumer 機械契約・検証ゲート・provenance の欠落を解消し、新規作成フローと改善フローの双方が依存関係を保って回るタスク仕様書を計画する",
+  "background": "各段はユーザー方針により実行を別々に維持したまま連携する。実地調査で 3 つの境界断線を確認した。E1 (intake→goal-spec): producer 側 (skill-intake の output/<hint>/intake.json v2.0.0 + next-action.json の handoff_target=plugin-dev-planner + handoff-contract.md:88-98 の写像仕様) は完備するが、`/plugin-dev-plan` に intake.json を渡す引数が無く、R1 プロンプト (prompts/R1-elicit-goal.md §2.3・実行ブロック 133-137 行) は intake_json を任意入力と宣言するのみで実行ブロックが未参照 (documented-but-unwired)。plugin-goal-spec にも消費した intake.json の provenance フィールドと消費保証ゲートが無く、plugin-plans/skill-intake/goal-spec.json は R1 で止まった未完 plan として現存する (情報漏れの物証)。E2 (plan→build): producer 側 (handoff-run-plugin-dev-plan.json の routes[]・render-skill-brief.py・build 前 gate check-build-handoff.py・build 後 gate verify-plan-coverage.py) は完備するが、routes[] を消費する実行入口が run-skill-create (topic+mode のみ受理・prompts/R1-elicit.md:56-61) にも capability-build.md (<kind> <name> パースのみ) にも無く、harness-creator README:59-63 が『routes[] を人手で走査し手写しで起動』を明記する。builder 語彙 plugin-scaffold/parent-skill-build は executor 不在の contract-only。E3 (改善→plan): run-elegant-review/run-skill-iter-improve/run-skill-feedback のいずれの出力も plugin-plans/ や --mode update を参照せず (grep 完全空)、update mode に改善成果物を受ける構造化入力契約が無いため改善が仕様書へ還流しない。横断としてパイプライン全体像は harness-creator README:52-85 の人手接続 6 ステップのみで記述され、CONVENTIONS.md にはフロー記述が無い。",
+  "goal": "plugin-plans/harness-creator/ にタスク仕様書一式 (13 phase + index) が存在し、E1 (intake.json 消費契約+情報漏れ検出ゲート)・E2 (routes[] 消費経路+無関係仕様書検出ゲート)・E3 (改善成果物の構造化入力契約+provenance)・E1-E3 を貫く provenance chain の検証契約・新規作成フローと改善フロー双方の一巡受入例が全て仕様として定義され、既存の決定論ゲート全種 (check-build-handoff/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage/check-surface-inventory/check-requirements-coverage/verify-index-topsort/check-runtime-portability) が exit0 で通過する状態",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/harness-creator",
+  "out_dir": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "`/plugin-dev-plan` (または後継 R1 相当) が intake.json を入力として受理し消費する producer→consumer 配線契約 (引数/入力経路) が、適用例 (intake.json 提供時に purpose/background へ反映される例) と非適用例 (未提供時のフォールバック) の両方を伴って少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "intake.json の §0 executive_summary / §3 purpose_excavator / next-action.json split_candidates[] のうち goal-spec 生成時に参照されなかった項目を検出し WARN/FAIL する情報漏れ検出ゲートの仕様が、検出例 (未反映項目あり/なし) 付きで少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "harness-creator 側で handoff-run-plugin-dev-plan.json の routes[] (builder/build_kind/build_args.brief_path/build_target) を読み込み check-build-handoff.py 通過後に実行する具体的な消費経路が、少なくとも 1 phase の受入例に定義され、executor 不在の contract-only builder (plugin-scaffold 等) は明示区別されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "routes[] の build_target/component 集合と対象 plan の component-inventory.json の component 集合を突合し不一致 (仕様書と無関係な build_target、またはその逆) を検出する機械ゲートの仕様が、一致例と不一致検出例の両方を伴って少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "run-plugin-dev-plan --mode update が run-elegant-review/run-skill-iter-improve/run-skill-feedback のいずれかが出力する構造化改善成果物 (changed_paths/validation_commands/residual_risks や eval-log 等) をローカル repo 内 artifact 経由で受理する入力契約 (Notion 改善要望 DB への直接 read-back を含まない) が、少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "改善フローで再生成される goal-spec/plan が、どの改善成果物 (C5 の入力) から派生したかを示す provenance フィールドを持つ契約が、少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "intake.json→goal-spec (E1)→plan→build handoff (E2)→改善成果物 (E3)→次サイクル goal-spec、という provenance chain が途切れず追跡可能であることを検証する機械ゲートの仕様が受入例付きで少なくとも 1 phase に定義され、chain 断裂 (いずれかの provenance フィールド欠落) を検出する例を含む",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "新規作成フロー (intake→goal-spec→plan→build) を最小 1 component で一巡実演する受入例が、下流実行者が追加質問なく再現できる具体度で少なくとも 1 phase (golden example 相当) に定義されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "改善フロー (build 成果への改善→plan --mode update→build 再実行) を最小 1 component で一巡実演する受入例が、下流実行者が追加質問なく再現できる具体度で少なくとも 1 phase に定義されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C10",
+      "criterion": "E1 consumer 修正 (plugins/plugin-dev-planner/ 配下)・E2 consumer 修正 (plugins/harness-creator/ 配下)・E3 emit (plugins/harness-creator/ 配下)・E3 consume (plugins/plugin-dev-planner/ 配下) の各 build_target が該当 phase / component-inventory に正しく routing され、check-runtime-portability.py (plugins/ 始まり・.. 禁止) を満たすことが仕様として確認できる",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "生成される plan のいずれの phase / component-inventory の build_target にも plugin-plans/plugin-dev-planner/ および plugin-plans/skill-intake/ 配下の既存ファイルが変更対象として含まれない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C12",
+      "criterion": "生成された harness-creator plan の 13 phase / component-inventory が specfm.GATE_SCOPE で plan-scoped と定義された決定論ゲート (verify-index-topsort / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage self-test+plan / check-requirements-coverage / check-surface-inventory / check-build-handoff / check-runtime-portability) の全てを exit0 で通過する",
+      "done": false,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "成果物はタスク仕様書 (13 phase plan) のみであり、実装・実 build はスコープ外 (ユーザー明言)",
+    "各段 (intake/plan/build/improve) の実行は別々のまま維持し、自動連鎖 orchestrator の新設はスコープ外。整備対象は各段境界の機械契約 (producer 成果物/consumer 入口/検証ゲート/provenance) であり実行の自動化ではない。ただし『次に何を実行すべきか』を機械可読に指す stage-handoff 資産の整備はスコープ内",
+    "パイプラインのエッジは必ず 2 plugin にまたがるため、consumer/producer 各修正は所有 plugin 側へ build_target を routing する (E1 consumer→plugins/plugin-dev-planner/、E2 consumer→plugins/harness-creator/、E3 emit→plugins/harness-creator/、E3 consume→plugins/plugin-dev-planner/)。関係 plugin は全て repo-bundled distributable:false であり、cross-plugin build_target は現行 check-runtime-portability (plugins/ 始まり・.. 禁止) を満たすため install 携帯性を毀損しない",
+    "既存の plugin-plans/plugin-dev-planner/ (別件完成 plan) と plugin-plans/skill-intake/ (別件未完 plan) には触れない (上書き・編集禁止)",
+    "skill-intake 側 producer 資産 (handoff-contract.md/intake.schema.json/mode-catalog) は既に完備しており原則変更しない。変更が必要な場合のみ最小差分に留める",
+    "改善還流は Notion 改善要望 DB への直接 read-back を避け、ローカル repo 内 artifact (run-elegant-review/run-skill-iter-improve/run-skill-feedback の構造化出力) 経由を既定とする (Notion は BYO config 依存で fail-open になりやすいため)"
+  ],
+  "handoff_targets": ["R2-decompose-components"],
+  "max_loops": 5,
+  "open_questions": [
+    "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独 executor が未整備のため、build 実行時は handoff-run-plugin-dev-plan.json.open_issues.GAP-SCRIPT-BUILDER の代替生成手順を通す"
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-ubm-goal-setting",
+  "skill": "run-ubm-goal-setting",
+  "description": "UBM goal-setting conversation, formatting, deterministic validation, and Daily.md embed update flow.",
+  "max_iterations": 5,
+  "phases": [
+    {
+      "id": "phase0-init",
+      "title": "Goal type selection",
+      "dependsOn": [],
+      "parallel": false,
+      "actor": "run-ubm-goal-setting",
+      "input": "argument type or AskUserQuestion response",
+      "output": "goal_type weekly|monthly|bimonthly and execution date",
+      "gate": "goal_type in [weekly, monthly, bimonthly]",
+      "resourceIds": ["SKILL.md"]
+    },
+    {
+      "id": "phase1-2-collect",
+      "title": "Context and knowledge collection",
+      "dependsOn": ["phase0-init"],
+      "parallel": true,
+      "actor": "info-collector",
+      "input": "goal_type, UBM_VAULT_ROOT, knowledge/router.json",
+      "output": "structured context summary for dialogue",
+      "gate": "required context sections emitted; missing external vault is reported as graceful zero-hit",
+      "consults": {
+        "script": "../../scripts/consult-harness-artifact-graph.py",
+        "query_types": ["local", "global", "relationship"],
+        "note": "info-collector の Step 3 デュアルパス検索の追加経路。C06 knowledge-graph.json と C05 harness-artifact-graph.json を read-only 探索する。グラフ未生成時は skip し既存パスへフォールバック (graceful zero-hit)。"
+      },
+      "resourceIds": ["../../agents/info-collector.md", "../../knowledge/router.json", "references/data-contract.md", "../../scripts/consult-harness-artifact-graph.py"]
+    },
+    {
+      "id": "phase2b-review",
+      "title": "Existing goal review",
+      "dependsOn": ["phase1-2-collect"],
+      "parallel": false,
+      "actor": "goal-reviewer",
+      "condition": "review mode or existing goal is present",
+      "input": "existing goal file and collected context",
+      "output": "8-point review summary",
+      "gate": "review summary is present or condition is not applicable",
+      "resourceIds": ["../../agents/goal-reviewer.md"]
+    },
+    {
+      "id": "phase3-dialogue",
+      "title": "Step 1-5 dialogue",
+      "dependsOn": ["phase1-2-collect", "phase2b-review"],
+      "parallel": false,
+      "actor": "phase3-coordinator",
+      "input": "context summary, optional review summary, R1-R5 prompts",
+      "output": "draft goal-setting content",
+      "gate": "all five dialogue steps have concrete answers",
+      "resourceIds": [
+        "../../agents/phase3-coordinator.md",
+        "prompts/R1-step1-current-review.md",
+        "prompts/R2-step2-gap-analysis.md",
+        "prompts/R3-step3-goal-setting.md",
+        "prompts/R4-step4-action-plan.md",
+        "prompts/R5-step5-final-check.md"
+      ]
+    },
+    {
+      "id": "phase4-format",
+      "title": "Template formatting",
+      "dependsOn": ["phase3-dialogue"],
+      "parallel": false,
+      "actor": "output-formatter",
+      "input": "draft goal-setting content",
+      "output": "Markdown file candidate in the 21-item hybrid structure",
+      "gate": "15 content quality checks are satisfied before deterministic validation",
+      "resourceIds": ["../../agents/output-formatter.md", "references/output-formats.md"]
+    },
+    {
+      "id": "phase5-validate",
+      "title": "Deterministic validation",
+      "dependsOn": ["phase4-format"],
+      "parallel": false,
+      "actor": "validate-goal-output.py",
+      "input": "Markdown file candidate and goal_type",
+      "output": "PASS/FAIL validation report",
+      "gate": "validate-goal-output.py exits 0 within 3 formatter repair attempts",
+      "command": "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type>",
+      "fatal_exit_codes": [1, 2],
+      "resourceIds": ["scripts/validate-goal-output.py", "references/data-contract.md"]
+    },
+    {
+      "id": "phase6-daily-update",
+      "title": "Daily.md embed update",
+      "dependsOn": ["phase5-validate"],
+      "parallel": false,
+      "actor": "run-ubm-goal-setting",
+      "input": "validated goal file path and UBM_VAULT_ROOT",
+      "output": "Daily.md embed line updated for the selected goal type",
+      "gate": "only the selected embed line is changed; non-vault or missing vault is reported without unrelated writes",
+      "resourceIds": ["../../hooks/ubm-write-path-guard.py"]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "handoff-notes.schema.json",
+  "title": "handoff-notes",
+  "description": "task 間で有界伝播する引継知見 (C12)。件数上限 (各カテゴリ maxItems 3)・文字数上限 (各要素 maxLength 200) を schema で機械強制する単一正本。task-state.schema.json の node.handoff_notes はこの schema を $ref で束縛し consumer 側で上限を再定義しない (二重定義 drift 防止)。状態理由 (blocked_reason/lease) はここへ混ぜない (advisory 予算 ≤3 を食わせない)。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "went_well": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {"type": "string", "maxLength": 200}
+    },
+    "friction_points": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {"type": "string", "maxLength": 200}
+    },
+    "downstream_watchouts": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {"type": "string", "maxLength": 200}
+    }
+  }
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{タイトル}}</title>
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- スライドスタイル（分離形式） -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 進捗バー -->
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <!-- スライダー（16:9アスペクト比を厳守） -->
+  <div class="slider" id="slider">
+    <!-- slide-area: 16:9を強制するコンテナ -->
+    <div class="slide-area">
+      <div class="slider__container">
+        <!-- ここにスライドを挿入 -->
+        {{スライドHTML}}
+      </div>
+    </div>
+  </div>
+
+  <!-- ナビゲーション -->
+  <ul class="slider-navigation" id="navigation"></ul>
+
+  <!-- コントロール -->
+  <div class="slider-controls">
+    <button id="prev"><i class="fas fa-chevron-left"></i></button>
+    <button id="next"><i class="fas fa-chevron-right"></i></button>
+  </div>
+
+  <!-- スライド番号 -->
+  <div class="slide-number" id="slideNumber">1 / {{総スライド数}}</div>
+
+  <!-- PDF出力: Cmd+P (Mac) / Ctrl+P (Windows) で印刷ダイアログを開く -->
+
+  <!-- スライドスクリプト（分離形式） -->
+  <script src="scripts.js"></script>
+</body>
+</html>

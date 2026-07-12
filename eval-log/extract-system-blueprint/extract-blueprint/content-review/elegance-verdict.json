@@ -1,0 +1,27 @@
+{
+  "target": {"plugin": "extract-system-blueprint", "skill": "extract-blueprint", "skill_md_sha256": "6b624d88c24d6a8c761e3f1710e1f833e00a74f4bed1db6af45278281bbeaee1"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 1, "dependency_break": 0, "smell": 0},
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-07-11T03:34:00Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["4conditions", "content_review", "elegant_review.C1-C4"],
+    "positive_feedback": [
+      "前回 high (command 層 mkdir 先行が Skill 内 C12 preflight を deadlock させる) は根治: Step1 (commands/extract-blueprint.md:23) から単独 mkdir 指示が撤去され、bootstrap 正本を『C01 R1 冒頭の combined call (mkdir -p .esb-authz && authz-classify の単一 Bash 呼び)』へ一元化したうえで、command 層での単独 mkdir 先行を deadlock 理由付きで明示禁止した。hook 実プロセス実測で liveness を確認: dir 不在 + combined command → exit0 (素通しの同一 call 内で dir+evidence が揃う) / 空 dir + C12 単独 → exit2 `AuthzEvidence 不在` (禁止根拠が機械層で実効) / evidence 有効下の C12 再実行 → exit0 (Step4 の --publish --resume 再起動時も R1 再 bootstrap が通過)。tests/test_guard.py:155 が回帰固定 (pytest 38 passed・self-test 21/21)。",
+      "正本文言が SKILL.md:157/190・references/runbook.md:60 と同一内容で伝播し drift ゼロ。command は『bootstrap は C01 側が正本』と参照するだけで実装詳細を持たず、薄いラッパの責務境界 (順序保証のみ・公開判定は C02 verdict + C08 機械層) が保たれている。",
+      "前回 PASS 維持事項の不変を再確認: --publish 非受理 (公開強制経路なし)・budget 非リセット保証 scope の精密化 (同一 out-dir 内)・二重ゲート (R4 再確認 + C08 publish-gate の独立要求)・verdict receipt パス規約 (${ESB_VERDICT_DIR:-.esb-verdict}/<draft_hash>.verdict.json ↔ hook _candidate_dirs 探索順) は今回差分の影響を受けていない。"
+    ],
+    "negative_feedback": [
+      "[medium/inconsistency] --resume の >24h 跨ぎ再開が bootstrap catch-22 (C01 側 medium と同一機構): 本 command は --resume を主引数として文書化する (§引数 / Step4) が、EVIDENCE_TTL_SECONDS=86400 (scripts/authz-classify.py:131) 失効後に同一 cwd で再開すると、dir 既存=hook アクティブのまま C01 R1 の正本 combined call 自身が exit2 遮断される (実測: 期限切れ evidence + combined → exit2 `authz=deny (evidence_expired)`)。同日内 resume・Step4 の同一 session publish は evidence allow 通過で成立するため主経路は無傷だが、multi-run resume の documented 能力 (full_site 全 URL 到達) が >24h 跨ぎで回復手順 undocumented のまま止まる。fail-closed 側への倒れで安全性毀損は無く、回復 (.esb-authz 除去→dir 不在から再 bootstrap・budget 会計は coverage manifest ledger 由来で非リセット保証と両立) は機構上健全なため medium。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "iteration 3 (最終)。commands/extract-blueprint.md 全 65 行を実読し、C08 hook (_esb_run_active:265-285 / _evaluate_bash:490-517)・C01 SKILL.md:157/190・prompts/R1-fetch.md §3.2・references/runbook.md:60 と突合。3 ファイルの bootstrap 正本文言は同一内容で伝播 drift 無し、旧『単独 mkdir 先行』手順の残存 0 (grep 全走査)。hook 実測 9 ケース (scratchpad hook_live_test.py・実プロセス+JSON stdin、期待付き 7 件 mismatch 0): dir不在+combined=0 / 空dir+C12単独=2 / 空dir+combined=2 / evidence有+同一origin fetch(WebFetch/curl)=0 / 未知origin=2 / C12再実行=0 / 期限切れ+combined=2 / 別origin C12発行=2。frontmatter (argument-hint/allowed-tools/entrypoint=run-extract-blueprint 実在)・順序保証 4 step・失敗時挙動の C08/C09/C11/C12 整合は前回同様 PASS を再確認。前回 high は解消・未解決 high 0。残 medium 1 件 (TTL-resume catch-22。related-origin 発行遮断は C01 verdict 側で計上) は副経路 edge であり 4条件の整合性を FAIL させる水準ではないと判定し PASS。評価のみで改善は行っていない。"
+}

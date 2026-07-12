@@ -1,0 +1,7 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "skill": "run-mf-invoice-reconcile", "skill_md_sha256": "8a5d65bbda1073fce5ab4c91bcf838c0473a1877f3c15200c32e29ce05a5fbcc"},
+  "review_kind": "elegance", "verdict": "PASS", "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
+  "reviewer": "independent-group-b/run-elegant-review", "reviewed_at": "2026-07-12T00:28:08Z", "iterations": 1, "human_review_required": false,
+  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "IN2", "OUT1"], "positive_feedback": ["30思考法で順/逆方向照合、presence-based、DB1/DB2、dry-run+verified、MF参照専用、人間列凍結を検査しC1-C4全PASS。", "test_mfk_reconcile、verdict mapping parity、notion reconcile sinkがIN1/IN2の判定語彙・当月限定・過去月不可侵をgenuineに検証。", "workflow-manifestのcollect→sync-master→reconcile→verify→sink DAGと4 prompts/schema SSOTが整合。"], "negative_feedback": ["非阻害smell: ドメイン例外が多く本文は長いが、promptsとschemaへ詳細停止条件を外出しし、再発明guardもある。"], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual", "next_action": "none"},
+  "notes": "IN1/IN2は専用tests、OUT1は責務DAGと安全境界を独立評価。"
+}

@@ -1,23 +1,126 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "daishiman-skills",
-  "description": "Claude Code用スキルコレクション。様々な用途のスキルを提供するマーケットプレイス。",
+  "name": "skills",
+  "description": "Skill creation, evaluation, governance, routing, and migration plugins for Claude Code.",
+  "version": "1.0.1",
+  "metadata": {
+    "description": "Skill creation, evaluation, governance, routing, and migration plugins for Claude Code.",
+    "version": "1.0.1"
+  },
   "owner": {
-    "name": "daishiman",
-    "email": "daishimanju@gmail.com"
+    "name": "skills maintainers"
   },
   "plugins": [
     {
-      "name": "daishiman-skill-creator",
-      "source": "./",
-      "description": "スキルを作成・更新・プロンプト改善するためのメタスキル。ユーザーと対話しながら共創し、抽象的なアイデアから具体的な実装まで柔軟に対応。",
-      "skills": ["./skills/skill-creator"]
+      "name": "skill-intake",
+      "source": "./plugins/skill-intake",
+      "description": "harness-creator の前段ヒアリングを非技術者にも開く plugin。Markdown/JSON/Notion ページを Keychain 経由で一括生成。図解マスト + 5 軸ヒアリング (出力先/情報源/共有相手/真の課題/ナレッジ資産) を機械検証。",
+      "version": "0.1.4",
+      "category": "productivity",
+      "tags": ["skills", "intake", "elicitation", "notion", "non-tech"]
     },
     {
-      "name": "daishiman-google-forms-generator",
-      "source": "./",
-      "description": "Google Forms APIを使用してフォームを自動生成するスキル。対話型インタビューでフォーム要件を収集し、GASデプロイ可能なフォームを作成。",
-      "skills": ["./skills/google-forms-generator"]
+      "name": "contract-generator",
+      "source": "./plugins/contract-generator",
+      "description": "企業別の業務委託契約書を、Drive上の.docxひな形(個人/法人)と管理台帳(Google Sheets)を照合して半自動生成。python-docxで差込・法人別紙生成、Slack承認2フェーズ、ひな形変更追従に対応。認証情報はOS資格情報ストアで管理。",
+      "version": "0.1.1",
+      "category": "productivity",
+      "tags": ["contract", "docx", "google-drive", "google-sheets", "slack", "automation"]
+    },
+    {
+      "name": "company-master",
+      "source": "./plugins/company-master",
+      "description": "会社名/住所/法人番号の断片から、gBizINFO(正式名称/所在地/法人番号)・日本郵便addresszip API(郵便番号)・Web検索(電話番号)で企業情報を補完し、Notion企業マスタDBへ法人番号キーでupsertする。確度4ラベル・取得失敗の備考定型文言・ネット検索値の確認用URLを保持。DB IDはnotion_config経由・Keychainトークン保管・PreToolUse hookで機密保護。",
+      "version": "0.1.1",
+      "category": "productivity",
+      "tags": ["notion", "company-master", "gbizinfo", "enrichment", "automation"]
+    },
+    {
+      "name": "skill-governance-config",
+      "source": "./plugins/skill-governance-config",
+      "description": "ガバナンスポリシー・rubric レジストリ・アダプタ登録・テンプレート変数など、governance 基盤の設定ファイル群を管理するプラグイン。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "config", "rubric", "policy"]
+    },
+    {
+      "name": "skill-governance-lint",
+      "source": "./plugins/skill-governance-lint",
+      "description": "Skill / Agent / Hook / manifest の静的解析スクリプト群。命名・依存方向・rubric 参照・frontmatter 整合などを自動検証する lint プラグイン。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "lint", "static-analysis", "rubric"]
+    },
+    {
+      "name": "skill-governance-hooks",
+      "source": "./plugins/skill-governance-hooks",
+      "description": "PreToolUse / PostToolUse / SubagentStop など Claude Code フックポイントで動作するガバナンスフックスクリプト群。rubric ガード・SKILL.md 検証・handoff 制御を担う。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "hooks", "guard", "validation"]
+    },
+    {
+      "name": "skill-governance-automation",
+      "source": "./plugins/skill-governance-automation",
+      "description": "rubric 合成・eval 記録・変更カテゴリガード・ドキュメント→スキル変換など、ガバナンス自動化スクリプト群を提供するプラグイン。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "automation", "rubric", "eval"]
+    },
+    {
+      "name": "skill-governance-adapters",
+      "source": "./plugins/skill-governance-adapters",
+      "description": "外部システム(Notion / GitHub / Slack など)との統合アダプタスクリプト群。skill-governance-config のアダプタレジストリと連動する。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "adapters", "notion", "github", "integration"]
+    },
+    {
+      "name": "skill-governance-migration",
+      "source": "./plugins/skill-governance-migration",
+      "description": "Skill / manifest の構造移行スクリプト群。旧バージョンの資産を最新スキーマへ安全に変換する migration プラグイン。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "migration", "schema", "upgrade"]
+    },
+    {
+      "name": "skill-governance-secrets",
+      "source": "./plugins/skill-governance-secrets",
+      "description": "macOS Keychain を介した機密管理スクリプト群。API キー・トークンの安全な保存・取得・ローテーションをサポートする secrets プラグイン。",
+      "version": "0.1.0",
+      "category": "governance",
+      "tags": ["governance", "secrets", "keychain", "security"]
+    },
+    {
+      "name": "mf-kessai-invoice-check",
+      "source": "./plugins/mf-kessai-invoice-check",
+      "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理するプラグイン。前月発行・今月未発行の取引先を /billings/qualified の差集合で洗い出し、商品名・金額・取引先企業名を突合してNotion DBへ冪等upsert。MF APIは参照専用(PreToolUse hookで変更系を遮断)、誤検出は独立contextのsubagentで二段確認。API鍵はKeychain保管。0.5.0で照合層の根本原因を根治 (R1収集の決定論 producer 化で「今月なし」取引先の構造的脱落を解消)。0.6.0で月跨ぎ突合を MF顧客ID 第一キー化 (取引先名 drift の分裂を根治)・新規年契約開始を支払サイクルで正常☑・先月今月とも未発行の月払いアクティブ契約を要対応 surface。0.7.0で出力先 report DB を明示 pin する report_database_id を追加し構造同定ズレによる phantom 書込を抑止 (既定 fail-closed)、請求書確認シートの月次アーカイブ&ロールオーバー (R5-archive) を追加 (対象月シート行を月別 DB へ完全移行し読み戻し検証成功行だけ正本から archive)。0.8.0で『今月金額があるのに漏れチェック☐』を根治: 今月に権威ある実発行がある行は定義上発行漏れでない不変則を STATE_NEW・collapse 経路へ一般化 (Fix A/B/C)、cross-run guard の NEW 盲点を解消、collapse を契約 identity で phantom (正常化) と別契約 (要対応保持=漏れ隠蔽封鎖) に二分、category fallback 由来の reliable_issued 誤陽性を非権威化する安全弁を追加。3体並列エレガント検証で4条件 PASS。",
+      "version": "0.8.1",
+      "category": "productivity",
+      "tags": ["money-forward", "invoice", "notion", "billing", "automation"]
+    },
+    {
+      "name": "notion-gmail-send",
+      "source": "./plugins/notion-gmail-send",
+      "description": "Notion 2DB（メール本文_DB／メール送信先_DB）を入力に、抑制条件を満たした宛先へ {{}} 差し込みで Gmail 一斉個別送信。承認済み plan＋人間承認ゲート＋冪等送信ログの三本柱で不可逆送信を安全化。",
+      "version": "0.1.0",
+      "category": "productivity",
+      "tags": ["notion", "gmail", "email", "send", "automation"]
+    },
+    {
+      "name": "system-spec-harness",
+      "source": "./plugins/system-spec-harness",
+      "description": "システム構築(Web/モバイル/タブレット/デスクトップ横断)に必要な仕様情報を、ユーザーとの往復ヒアリングでカテゴリ×プラットフォームの網羅マトリクスとして漏れなく収集し、設計知識 (クリーンアーキテクチャ/デザインパターン/API デザインパターン/セキュアバイデザイン/DDD/クリーンコード) の参照と最新公式ドキュメントの出典記録を添えて、章立て複数 Markdown ファイル + index の仕様書ドキュメントセットへまとめるハーネス plugin。ヒアリングは5周ごとに状態保存+resume で継続し未収集セルを完了扱いしない。収集マトリクス網羅性 (validate-coverage-matrix.py) と出典記録 (validate-source-citation.py) を決定論ゲートで検証し、独立 context の完成度評価 (assign-system-spec-completeness-evaluator) と 3 監査 sub-agent (hearing/matrix/doc-freshness) で網羅性を担保する。確定済み章は fail-closed hook で誤上書きを防ぐ。改善要望は `/run-skill-feedback system-spec-harness` で投入可能。",
+      "version": "0.1.0",
+      "category": "productivity",
+      "tags": ["spec", "hearing", "system-design"]
+    },
+    {
+      "name": "extract-system-blueprint",
+      "source": "./plugins/extract-system-blueprint",
+      "description": "参考システムの公開URLを認可・低負荷budget内で調査し、静的HTTP(WebFetch/stdlib静的DOM観測)+browser-render(MCP非依存のローカルheadless Chrome via Bash)の観測fact、根拠つきinference、欠測(observation_gap)を明示区別したmd+json+Mermaidのローカル章別ブループリントを生成するplugin。外部サービス連携(MCP/Notion)なしで自己完結する。",
+      "version": "0.2.0",
+      "category": "Productivity",
+      "tags": ["extraction", "blueprint", "mermaid", "documentation"]
     }
   ]
 }

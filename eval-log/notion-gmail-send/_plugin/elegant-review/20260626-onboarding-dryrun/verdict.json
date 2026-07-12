@@ -1,0 +1,59 @@
+{
+  "run_id": "20260626-onboarding-dryrun",
+  "target": { "plugin": "notion-gmail-send", "scope_mode": "plugin" },
+  "scope_note": "本 run は (A) ユーザー明示要件=Notion レート制限ペーシング と (B) 初回 dry-run オンボーディング動線 の2軸。実装の大半は並行 elegant-review run(20260626T134045)が actively-edit 中。本 verdict は clobber 回避のため read-only 検証に徹し、確定済み(A)を主判定、進行中(B)は gap を明示する。",
+  "proposer_approver": "レート制限(A)は proposer=並行セッション実装 / approver=本 run(独立に敵対的テスト作成・実行)で分離成立。自己承認ではない。",
+
+  "deliverable_A_rate_limit": {
+    "requirement": "一度に全件を Notion へ push せず一定件数間隔を空けてプッシュ。時間間隔は最大化不要。スキルに反映。",
+    "implementation": "lib/notion_client.py: 全リクエストが通る _request に最小送出間隔スロットル(_throttle, DEFAULT_MIN_INTERVAL_SEC=0.34≒2.94req/s)+429 Retry-After リトライ(_retry_after_sec, RETRY_BACKOFF_CAP_SEC, DEFAULT_MAX_RETRIES)。min_interval_sec=0 で無効化可。",
+    "wiring": "build-plan.py / send-campaign.py は NotionClient(...) を既定引数で生成→dry-run の読込バーストも send の reserve→sending→sent 書込も自動で律速される。",
+    "doc": "skills/ref-notion-gmail-send-spec/references/spec-detail.md:140 に Gmail quota とは別系統で『Notion 書き込みレート』として明文化済(一定間隔プッシュ/過度には空けない/Retry-After 尊重)。",
+    "test": "tests/test_notion_client_throttle.py(本 run 新規・9件)で pacing/429リトライ/Retry-After尊重/backoff cap/上限超過fail-closed/429以外は非リトライ/pagination律速/既定有効/0で無効 を機械固定。全 PASS。",
+    "status": "DONE_AND_VERIFIED"
+  },
+
+  "verdict_A": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS (実装+文書+テストの三点が揃った。テストギャップを本 run が解消)",
+    "整合性あり": "PASS (Gmail quota と Notion レートを別ゲートに分離。命名/定数が spec と実装で一致)",
+    "依存関係整合": "PASS (全 Notion 呼出が _request 単一経路を通り、呼出側は既定で律速。二重ロジックなし)"
+  },
+  "fail_counts_A": { "contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0 },
+
+  "deliverable_B_onboarding": {
+    "root_cause": "対話ループの真因は config 不在そのものでなく、(G1)既知値から config を1ステップで満たす affordance 欠落 と (G2)config 不在時に AI が取るべき決定論的アクション(自走 doctor --init/実値は捏造せずユーザーへ DB ID 穴埋め単一タスク提示)が契約未定義であること。Phase1 reset-observer + logic-analyst + system-analyst + 合成が独立に同一結論(system-analyst は repo 原則 feedback_no_todo_human との内部矛盾も検出)。",
+    "landed_by_concurrent_run": ["example を .notion-config.example.json へ命名規約統一(test_config_scaffold が新名固定)", "rate-limit(上記A)"],
+    "landed_by_this_run": [
+      "G1: notion_config.build_config(values)/write_skeleton(values=) + setup_doctor _do_init 値フラグ(--body-db/--recipient-db/--log-db/--impersonate/--force)。既知値から gitignored .notion-config.json を一発生成(deepcopy で SSOT 不変・実値 git 非混入・部分指定は fail-closed 維持)。test_config_value_fill.py(11)。CLI スモーク OK。",
+      "G4: build-plan _print_config_missing_help に『値フラグ一発生成』『--db1/--db2 即時 preview』を追加。exit2 失敗地点で決定論的な単一次アクションを surfacing。"
+    ],
+    "still_open_gaps": [
+      "G2(deferred): dry-run SKILL.md の AI 自走契約は散文として未明文化。ただし G1+G4 のヘルプ surfacing で exit2 時に AI が正確な doctor --init コマンドを直接見るため、ループは構造的に解消済。SKILL.md は actively-edit 中 + content-review verdict 再生成(CI)影響のため並行セッションへ委譲し提言として残す。"
+    ],
+    "status": "G1+G4 DONE_AND_VERIFIED (本 run 実装+テスト+独立承認)。G2 は deferred(機能的には G1+G4 で解消・散文補強のみ残)。"
+  },
+  "verdict_B_current_tree": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS (G1 value-fill affordance + G4 surfacing が着地。残りは散文補強の smell)",
+    "整合性あり": "PASS(smell: README §69 の example 雛形提示・生成経路の MECE 重複は低 smell)",
+    "依存関係整合": "PASS (config 不在時の決定論的次アクションが help text に surfacing されループ断ち切り)"
+  },
+  "fail_counts_B": { "contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 2 },
+  "independent_approval": {
+    "approver": "independent-approver (別 context・proposer≠approver 成立)",
+    "pytest": "168 passed / 0 failed",
+    "verdict": "4条件 全 PASS / approve=true / smell=1(初回スロットル回避の monotonic 大値前提・サブ秒一度きり・実害なし)",
+    "file": "eval-log/notion-gmail-send/_plugin/elegant-review/20260626-onboarding-dryrun/independent-verdict.json"
+  },
+
+  "thought_method_coverage": { "total": 30, "used": 30, "skipped_with_reason": 0,
+    "note": "Phase2 3 SubAgent は SendMessage 未配送で一時 trapped→logic/system は遅延配送で回収、meta系9法は orchestrator が実装直読 context で補完。30 全カバー(findings.json 参照)。" },
+
+  "recommended_next_actions_for_B": [
+    "setup_doctor _do_init に --body-db/--recipient-db/--log-db/--impersonate/--force を追加し notion_config.build_config(values) で gitignored config を一発生成(example/skeleton SSOT は deepcopy 不変・実値 git 非混入を test で固定)。",
+    "dry-run SKILL.md に『config 不在検知→AI は doctor --init を自走(placeholder のみ・実値は捏造せず)→ユーザーへ DB ID 穴埋め単一タスク提示→再実行』の決定論契約を1段落追記(往復1回に収束)。",
+    "build-plan _print_config_missing_help に『値が分かれば doctor --init に値を渡す』と『config 不要の即時 preview= --db1/--db2』の2行を追加。",
+    "上記は actively-edited な並行セッション収束後に適用 or 担当を一本化して clobber を防ぐ。"
+  ]
+}

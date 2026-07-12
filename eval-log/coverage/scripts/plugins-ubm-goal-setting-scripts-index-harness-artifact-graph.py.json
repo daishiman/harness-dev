@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "計画(task-graph/handoff)と実行(task-state/route-report/build-trace/実在 build_target)の read-only 突合 index (C05)。soundness: classify が二値シグナル(実在/report success/mtime鮮度/証跡/graph_hash)から planned/built/verified/stale を決定論導出、orphan produces・route id 重複・depends_on dangling・success主張なのに実体不在を violation 化。graph_hash は derive-task-graph の canonical 化を複製し task-state pin と突合。responsibility: 突合と正規化に限定し意味判定なし、violation 時は --out を書かない fail-closed。error-handling: usage=exit2/壊れた突合=exit1 を分離、route report 解析不能は violation、task-state 破損は exit1。side-effect-safety: write-scope=--out のみ、絶対時刻非焼込(mtime比較 boolean のみ)+repo相対posix正規化で byte-identical、出力全葉 secret redaction。frontmatter: PEP723 様式完備・exit 契約一致。軽微: route report の build_target が route と不一致でも『実在すれば』violation にしない緩い座(rename 許容の意図と読めるが不一致検出が片側)、docstring の planned 定義(実体なし)と classify(実体ありでも report 非success なら planned)に微小な記述ドリフト(inline コメントで意図は明示)、depends_on 重複辺の dedupe なし(消費側 setdefault で無害)。tests/test_index_harness_artifact_graph.py 11件(正常/壊れた突合/redaction/決定論/stale 2種/usage 3種)全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

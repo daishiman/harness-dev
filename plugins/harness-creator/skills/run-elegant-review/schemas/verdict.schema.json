@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/elegant-review-verdict.json",
+  "title": "Elegant Review Final Verdict (4 Conditions)",
+  "type": "object",
+  "required": ["plugin", "skill", "scope_mode", "verdict", "fail_counts", "thought_method_coverage", "iteration_count", "status"],
+  "properties": {
+    "plugin": {"type": "string"},
+    "skill": {"type": "string"},
+    "scope_mode": {"enum": ["skill", "plugin", "repo"]},
+    "run_id": {"type": "string"},
+    "aggregated_at": {"type": "string", "format": "date-time"},
+    "verdict": {
+      "type": "object",
+      "required": ["矛盾なし", "漏れなし", "整合性あり", "依存関係整合"],
+      "properties": {
+        "矛盾なし": {"enum": ["PASS", "FAIL"]},
+        "漏れなし": {"enum": ["PASS", "FAIL"]},
+        "整合性あり": {"enum": ["PASS", "FAIL"]},
+        "依存関係整合": {"enum": ["PASS", "FAIL"]}
+      },
+      "additionalProperties": false
+    },
+    "fail_counts": {
+      "type": "object",
+      "required": ["contradiction", "omission", "inconsistency", "dependency_break", "smell"],
+      "properties": {
+        "contradiction": {"type": "integer", "minimum": 0},
+        "omission": {"type": "integer", "minimum": 0},
+        "inconsistency": {"type": "integer", "minimum": 0},
+        "dependency_break": {"type": "integer", "minimum": 0},
+        "smell": {"type": "integer", "minimum": 0}
+      }
+    },
+    "thought_method_coverage": {
+      "type": "object",
+      "required": ["used", "skipped_with_reason", "total"],
+      "properties": {
+        "used": {"type": "array", "items": {"type": "string"}},
+        "skipped_with_reason": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["method", "reason"],
+            "properties": {
+              "method": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "total": {"const": 30}
+      }
+    },
+    "iteration_count": {"type": "integer", "minimum": 0, "maximum": 3},
+    "status": {
+      "enum": ["complete", "incomplete", "human_escalate"],
+      "description": "complete=4 条件 PASS、incomplete=max_iter 到達、human_escalate=発散検出"
+    },
+    "safety_valve_fired": {"type": "boolean", "default": false},
+    "observable_emitted": {
+      "type": "boolean",
+      "description": "elegant_review_4condition_failed event を meta-harness.jsonl に append したか"
+    }
+  },
+  "additionalProperties": false
+}

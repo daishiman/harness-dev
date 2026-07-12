@@ -1,0 +1,125 @@
+{
+  "agent": "meta-divergent",
+  "paradigm_findings": [
+    {
+      "thought_method": "メタ思考",
+      "severity": "contradiction",
+      "title": "要求「9列」→実装「8列+本文URL」の逸脱が設計判断ログの自己宣言のみで正当化され、ユーザー承認の証跡参照がない",
+      "description": "SKILL.md 設計判断ログ#6 は8列+ページ本文への変更理由を述べるが、要求変更にユーザーが合意した証跡への参照が無い。『準拠している』という宣言を検証する手段が宣言自体しかない自己宣言自己検証問題。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:173",
+      "auto_fixable": false,
+      "recommendation": "設計判断ログ#6 に『8列+本文方式へのユーザー合意』の証跡(日付・経路)を追記する。合意が未取得なら確認する。"
+    },
+    {
+      "thought_method": "メタ思考",
+      "severity": "omission",
+      "title": "機械担保の被覆フレームが二層に割れている: 決定論コードはpytest被覆、宣言層は lint 完全非対象",
+      "description": "company-master の SKILL.md frontmatter (script_refs/reference_refs の実在性、kind/effect enum)、agents 3体・commands 2件の frontmatter、plugin-composition.yaml と実体の整合は機械検証されない。.codex-plugin 言及(実体不在)がレビューをすり抜けたのはこの欠落の実証例。",
+      "location": "Makefile:17-19",
+      "auto_fixable": true,
+      "recommendation": "lint 系の対象を plugins/*/skills へ拡大するか refs 実在チェックを追加し、company-master を機械被覆に入れる。"
+    },
+    {
+      "thought_method": "抽象化思考",
+      "severity": "inconsistency",
+      "title": "vendored notion_config.py の drift guard 欠如と skill-intake 残骸 docstring",
+      "description": "company-master の copy は意図的拡張を含むため byte 一致は適用不能だが、代替の drift guard が無い。実害発生済み: docstring が『固定 Notion ヒアリングシート DB への既定出力先』(L30/L116) のまま、SETUP_DOC_REL (L65) は存在しない references/notion-per-repo-setup.md を指す。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/notion_config.py:30,65,116",
+      "auto_fixable": true,
+      "recommendation": "残骸 docstring/SETUP_DOC_REL を company-master 文脈へ修正。『正本+許容差分』方式の vendored-ssot lint へ汎化を検討。"
+    },
+    {
+      "thought_method": "ダブル・ループ思考",
+      "severity": "inconsistency",
+      "title": "skill-intake hook 堅牢化の学習 (fail-open封鎖+pytest配線) が hook-guard-secret.py に反映されず旧世代パターンを複製",
+      "description": "(1) stdin JSON 解釈不能で return 0 の明示的 fail-open (L42-43)、(2) -w/-g 検出が set(cmd.split()) のため引用符付きや変数間接で素通し、(3) tests に hook のテスト 0 件。前回封鎖した穴と同型を再導入。",
+      "location": "plugins/company-master/hooks/hook-guard-secret.py:42-43,55-56",
+      "auto_fixable": true,
+      "recommendation": "hook のブロック/素通し分岐を pytest に追加。JSON 不能時は保守的フォールバック。shlex/正規表現によるクォート耐性向上。"
+    },
+    {
+      "thought_method": "ブレインストーミング",
+      "severity": "smell",
+      "title": "settings-hardening の手動マージ依存に対し、代替案が未検討のまま『任意・推奨』で確定している",
+      "description": "(i)マージスクリプト同梱 (ii)doctor 検査 (iii)手順必須化 (iv)hook 起動時警告 (v)install 時案内、等の代替が比較されていない。非エンジニア対象ほど手動 JSON マージの完遂率は低い。",
+      "location": "plugins/company-master/skills/run-company-master-build/references/settings-hardening.json",
+      "auto_fixable": false,
+      "recommendation": "settings-hardening 適用チェッカーの採用検討。最低でも検査を bootstrap か doctor に組み込む。"
+    },
+    {
+      "thought_method": "水平思考",
+      "severity": "omission",
+      "title": "Notion live スキーマの drift 検証がない (同 repo 確立済みの notion-schema SSOT+sync/lint 解法が未移植)",
+      "description": "列名変更・select オプション改名等に対する検出機構がゼロ。validate_company_master.py はローカル record のみ検証。スキーマ drift 時は静かな列不整合として『100人中100人同一結果』を破る。",
+      "location": "plugins/company-master/skills/run-company-master-build/references/company-master-columns.md:10-19",
+      "auto_fixable": false,
+      "recommendation": "columns.md から機械可読 schema JSON を導出し、upsert/backfill 起動時に live DB と照合して不一致なら fail-closed する preflight を追加する。"
+    },
+    {
+      "thought_method": "逆説思考",
+      "severity": "contradiction",
+      "title": "『静的層をマージしない場合』(=既定状態) では二段防御が不成立なのに、SKILL.md は成立を前提に記述",
+      "description": "既定インストール状態は fail-open な動的 hook 一段のみ。任意手順に依存する層を防御の成立条件に数えるのは記述と実態の乖離。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:194 / plugins/company-master/README.md:133-136",
+      "auto_fixable": true,
+      "recommendation": "SKILL.md に『静的層未適用の既定状態では動的層のみ』を明記するか、静的層適用を必須手順へ昇格+機械化。"
+    },
+    {
+      "thought_method": "逆説思考",
+      "severity": "smell",
+      "title": "『平文を残さない』と謳う導入手順の既定経路が、トークン平文をチャット欄に貼らせる",
+      "description": "既定手順 5-1/5-2 は `! security add-generic-password ... -w '<TOKEN>'` をチャット欄へ貼らせるため、トークン平文が会話履歴に残る。安全な代替(聞かれてから渡す)が既定でない。",
+      "location": "plugins/company-master/README.md:96-101",
+      "auto_fixable": true,
+      "recommendation": "『Claude に登録を頼みトークンは聞かれてから渡す』方式を既定手順に昇格する。"
+    },
+    {
+      "thought_method": "類推思考",
+      "severity": "dependency_break",
+      "title": "SKILL.md が宣言する `.codex-plugin/plugin.json` が本 plugin にも repo 内全 plugin にも実在しない",
+      "description": "glob で plugins/*/.codex-plugin/* は 0 件。他 plugin との類推でも .codex-plugin は repo 規約に存在しない。存在しない成果物への参照は宣言層の依存断線。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:67",
+      "auto_fixable": true,
+      "recommendation": "SKILL.md の当該記述を削除する (削除推奨: 他 plugin に前例なし)。"
+    },
+    {
+      "thought_method": "類推思考",
+      "severity": "omission",
+      "title": "contract-generator 前例にある setup_doctor / plugin-local lint / tests 相当が欠落",
+      "description": "contract-generator は lib/setup_doctor.py 等を plugin 内同梱。company-master は doctor がなくトラブルシュートは手動表のみ。機械検証が全て repo 側でplugin 単独配布時に dangling になる(skill-intake 単独配布の学習と同型)。",
+      "location": "plugins/company-master/scripts/",
+      "auto_fixable": false,
+      "recommendation": "Keychain 2鍵・Notion 接続・DB 到達・settings 適用を一括診断する doctor サブコマンドを company_master.py に追加。"
+    },
+    {
+      "thought_method": "if思考",
+      "severity": "omission",
+      "title": "破壊試験: 書き込みゲートの機械層が wrapper 経路にしかなく、agent 経路・大量行・レート制限のシナリオが prompt 指示のみ",
+      "description": "agent 経路 (notion-upsert-agent が notion_upsert.py を直接実行) には検証 PASS ゲートの機械層がなく prompt 指示のみ。backfill の validate 迂回も同根の非対称。レート制限・リトライ挙動が未定義。",
+      "location": "plugins/company-master/agents/notion-upsert-agent.md:62-69",
+      "auto_fixable": false,
+      "recommendation": "notion_upsert.py 自体に validate_row ゲートを内蔵し、呼び出し元によらず検証 PASS を機械強制する。"
+    },
+    {
+      "thought_method": "素人思考",
+      "severity": "omission",
+      "title": "初見利用者が『自分の Notion DB』で使う導入経路が README に存在しない (既定 db_id は配布者の固定 DB)",
+      "description": "notion-config.fixed.json の db_id は xl-skills 側の固定 DB であり、別 workspace の初見利用者は接続手順自体が実行できない。自分で 8列 DB を作る手順と出力先切り替え手順が README 本文に無い。社内配布前提と一般配布前提が混線。",
+      "location": "plugins/company-master/README.md:68-70,122-131",
+      "auto_fixable": false,
+      "recommendation": "README に『自分のデータベースを使う場合』節を追加、または冒頭に対象読者(社内固定DB前提)を明記する。"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": ["メタ思考", "抽象化思考", "ダブル・ループ思考", "ブレインストーミング", "水平思考", "逆説思考", "類推思考", "if思考", "素人思考"],
+    "skipped_with_reason": []
+  },
+  "alternative_approaches": [
+    {"title": "宣言層 lint の全 plugin 拡大", "adopt": "recommend", "reason": "dependency_break (.codex-plugin) と inconsistency (docstring 残骸) は全て宣言層 lint 非被覆が根因。横展開コスト最小で再発防止効果最大。"},
+    {"title": "Notion live スキーマ preflight (notion-schema SSOT パターン移植)", "adopt": "recommend", "reason": "『DBスキーマが手で変えられたら』シナリオへの唯一の機械的防御。"},
+    {"title": "notion_upsert.py への validate ゲート内蔵", "adopt": "recommend", "reason": "backfill 迂回と agent 経路の prompt 指示のみ担保を一手で解消。"},
+    {"title": "setup doctor サブコマンド", "adopt": "consider", "reason": "API 疎通検証は実トークン到着後が現実的。"},
+    {"title": "vendored notion_config の allowed-patch 方式 drift lint", "adopt": "consider", "reason": "残骸 docstring の即時修正だけは無条件で実施すべき。"},
+    {"title": "skill 分割 (resolve/enrich/upsert を独立 skill 化)", "adopt": "reject", "reason": "3責務は単一ゴールへ直列従属し独立起動の業務的意味がなく、agents 3体+責務マッピングが既に事実上の責務分離を達成。contract-generator が複数 skill なのは業務段階が独立起動するためで前提が異なる。真の問題は分割でなく backfill 経路の検証対称化。"}
+  ]
+}

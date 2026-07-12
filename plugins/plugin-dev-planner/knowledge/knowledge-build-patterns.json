@@ -1,0 +1,73 @@
+{
+  "category": "build-patterns",
+  "label": "ビルド実行知見 (task-graph runtime lessons)",
+  "version": "1.0.0",
+  "created_at": "2026-07-11",
+  "description": "plugin-dev-planner が計画した task-graph を harness-creator が実行した際の教訓 (依存詰まり・成果物欠落・blocked 起点・再試行で解消した判断・route friction) を TG-C08 が蒸留追記する。次 cycle の計画時に検索され knowledge_refs の蒸留元になる。",
+  "keywords_global": [
+    "task-graph",
+    "runtime",
+    "build-execution",
+    "knowledge-loop"
+  ],
+  "source_note": "harness-creator/scripts/record-task-graph-knowledge.py (TG-C08) が task-events.jsonl / stall summary / route-build-report handoff_notes から source_ref 付きで蒸留する (生ログは複製しない)。",
+  "items": [
+    {
+      "id": "runtime-blocked-origin_3d2f034c9f",
+      "title": "blocked 起点故障: task P01-x-01 が route 失敗で blocked (起点故障) となった",
+      "intent": "route 実行失敗の起点 (origin-failure) を特定し人手救済導線を残すこと",
+      "background": "task P01-x-01 が route 失敗で blocked (起点故障) となった (発生源: task_id=P01-x-01, event_id=2026-07-10T14:34:28.083936Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-origin",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P01-x-01",
+        "event_id": "2026-07-10T14:34:28.083936Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-propagation_bb6f011f31",
+      "title": "blocked 伝播: task P01 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した",
+      "intent": "blocked の伝播連鎖を辿り起点故障へ帰着できるよう記録すること",
+      "background": "task P01 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した (発生源: task_id=P01, event_id=2026-07-10T14:34:28.084094Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-propagation",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P01",
+        "event_id": "2026-07-10T14:34:28.084094Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-propagation_ae7f42a89b",
+      "title": "blocked 伝播: task P02 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した",
+      "intent": "blocked の伝播連鎖を辿り起点故障へ帰着できるよう記録すること",
+      "background": "task P02 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した (発生源: task_id=P02, event_id=2026-07-10T14:34:28.084153Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-propagation",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P02",
+        "event_id": "2026-07-10T14:34:28.084153Z"
+      }
+    }
+  ]
+}

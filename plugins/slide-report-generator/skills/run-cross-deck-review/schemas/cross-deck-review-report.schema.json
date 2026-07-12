@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/slide-report-generator/run-cross-deck-review/cross-deck-review-report.schema.json",
+  "title": "Cross Deck/Report Review Report",
+  "type": "object",
+  "required": ["status", "scope", "coverage", "findings", "four_conditions"],
+  "additionalProperties": false,
+  "properties": {
+    "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+    "scope": {
+      "type": "object",
+      "required": ["root", "artifact_count"],
+      "additionalProperties": false,
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "artifact_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "severity", "message"],
+        "additionalProperties": false,
+        "properties": {
+          "category": { "type": "string", "enum": ["terminology", "visual", "structure", "technical"] },
+          "severity": { "type": "string", "enum": ["P0", "P1", "P2", "info"] },
+          "message": { "type": "string", "minLength": 1 },
+          "path": { "type": "string" }
+        }
+      }
+    },
+    "four_conditions": {
+      "type": "object",
+      "required": ["no_contradictions", "no_omissions", "consistent", "dependencies_aligned"],
+      "additionalProperties": false,
+      "properties": {
+        "no_contradictions": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+        "no_omissions": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+        "consistent": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+        "dependencies_aligned": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] }
+      }
+    }
+  }
+}

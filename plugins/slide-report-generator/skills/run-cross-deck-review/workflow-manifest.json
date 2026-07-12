@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-cross-deck-review",
+  "skill": "run-cross-deck-review",
+  "description": "複数 slide deck のシリーズ横断で用語 ／ 意匠 ／ 構成の整合性を、機械チェック先行 (cross-deck-consistency.js) → cross-deck-reviewer による 3 レンズ分析 (Agent A/B/C・単一 fork context 内多角分析・再 fork しない) × 4 条件で網羅検出し、横断整合レポート ＋ P0/P1/P2 修正提案リストを返す (read-only 検出専任・修正の適用は run-slide-report-modify へ委譲)。",
+  "_comment_gate": "phases[].gate の C1/C2/C3 は phase 順の gate ラベル (manifest 全体の慣例)。references/cross-deck-consistency-rules.md の検証項目 C1-C15 とは別概念。",
+  "phases": [
+    {
+      "id": "R1-collect-scope",
+      "step": 1,
+      "title": "横断対象の slide deck を Glob 列挙し比較基準 (共通用語・共通意匠 SSOT・章立て構成) を確定。デッキ 2 未満なら横断検証をスキップ",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "scope-fixed-or-single-deck-skip",
+      "resourceIds": [
+        "ref-consistency-rules"
+      ],
+      "fatal_exit_codes": []
+    },
+    {
+      "id": "R2-parallel-analysis",
+      "step": 2,
+      "title": "cross-deck-consistency.js --check all で機械チェック先行 (CONST_001) → cross-deck-reviewer を Task fork 起動し Agent A/B/C の 3 レンズ分析 (CONST_002・単一 fork context 内・再 fork しない) × 4 条件で C1-C15 を判定",
+      "gate": "C2",
+      "dependsOn": [
+        "R1-collect-scope"
+      ],
+      "entryHook": "cross-deck-consistency-all",
+      "exitHook": "3agent-4condition-complete",
+      "resourceIds": [
+        "ref-consistency-rules",
+        "script-cross-deck-consistency",
+        "script-check-consistency",
+        "subagent-cross-deck-reviewer"
+      ],
+      "fatal_exit_codes": [
+        2
+      ]
+    },
+    {
+      "id": "R3-report",
+      "step": 3,
+      "title": "機械結果 ＋ 3 Agent 結果を 4 条件へ集約し横断整合レポート (用語ゆれ一覧 ＋ 意匠差一覧 ＋ 構成不整合一覧 ＋ 網羅率) と P0/P1/P2 修正提案リストを生成。修正は run-slide-report-modify へ委譲",
+      "gate": "C3",
+      "dependsOn": [
+        "R2-parallel-analysis"
+      ],
+      "entryHook": null,
+      "exitHook": "coverage-report-emitted",
+      "resourceIds": [
+        "ref-consistency-rules",
+        "script-cross-deck-consistency",
+        "subagent-cross-deck-reviewer"
+      ],
+      "fatal_exit_codes": []
+    }
+  ],
+  "resources": [
+    {
+      "id": "ref-consistency-rules",
+      "kind": "reference",
+      "path": "./references/cross-deck-consistency-rules.md",
+      "phaseIds": [
+        "R1-collect-scope",
+        "R2-parallel-analysis",
+        "R3-report"
+      ],
+      "_role": "用語集 / 評価基準 / CONST_001-005 / 検証項目 C1-C15 / 判定マトリクス / Agent A/B/C 3レンズ分析テンプレート / headline 軸対応表 / 修正の優先度分類の逐語正本"
+    },
+    {
+      "id": "script-cross-deck-consistency",
+      "kind": "script",
+      "path": "../../vendor/scripts/cross-deck-consistency.js",
+      "phaseIds": [
+        "R2-parallel-analysis",
+        "R3-report"
+      ],
+      "_role": "必須入力欠落・shared-spec 差分・rem単位・CSS変数・GSAP・印刷・URL混入の機械検出 (C1-C2 / C11-C13 / C15 の一次根拠。C3命名/slide-typeはAgent A判定)"
+    },
+    {
+      "id": "script-check-consistency",
+      "kind": "script",
+      "path": "../../vendor/scripts/check-consistency.js",
+      "phaseIds": [
+        "R2-parallel-analysis"
+      ],
+      "_role": "個別成果物の統一感検証 (テーマ・スタイル整合)"
+    },
+    {
+      "id": "subagent-cross-deck-reviewer",
+      "kind": "subagent",
+      "name": "cross-deck-reviewer",
+      "phaseIds": [
+        "R2-parallel-analysis",
+        "R3-report"
+      ],
+      "_role": "独立 context (isolation: fork) で機械チェック結果を一次根拠に Agent A/B/C の 3 レンズ分析 (単一 fork context 内・再 fork しない) × 4 条件を実行する read-only worker。Task の name 参照で起動"
+    },
+    {
+      "id": "prompt-R2-agent-cross-deck-reviewer",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-cross-deck-reviewer.md",
+      "phaseIds": [
+        "R2-parallel-analysis",
+        "R3-report"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent cross-deck-reviewer; agents/cross-deck-reviewer.md is the 9-section adapter."
+    },
+    {
+      "id": "schema-cross-deck-review-report",
+      "kind": "schema",
+      "path": "./schemas/cross-deck-review-report.schema.json",
+      "phaseIds": [
+        "R3-report"
+      ],
+      "_role": "横断レポートの出力契約。用語/意匠/構成 findings と 4 条件判定を構造化する"
+    }
+  ]
+}

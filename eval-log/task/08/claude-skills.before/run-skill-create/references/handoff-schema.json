@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "run-skill-create handoff",
+  "type": "object",
+  "required": ["step", "timestamp", "skill_name", "mode", "state"],
+  "properties": {
+    "step": {"type": "string", "enum": ["after_elicit", "after_build", "after_lint", "after_evaluator", "after_elegant", "after_governance", "done"]},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "skill_name": {"type": "string"},
+    "mode": {"type": "string", "enum": ["create", "update"]},
+    "state": {
+      "type": "object",
+      "properties": {
+        "brief_path": {"type": "string"},
+        "skill_path": {"type": "string"},
+        "lint_results": {"type": "object"},
+        "evaluator_result": {"type": "object"},
+        "elegant_review_result": {"type": "object"},
+        "governance_decision": {"type": "string", "enum": ["solo_auto_approved", "manual_approved", "rejected", "pending"]},
+        "gates_passed": {"type": "array", "items": {"type": "integer"}},
+        "open_questions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "last_completed_gate": {"type": "integer"},
+    "rubric": {
+      "type": "object",
+      "properties": {
+        "rubric_id": {"type": "string"},
+        "rubric_version": {"type": "string"},
+        "rubric_hash": {"type": "string"}
+      }
+    },
+    "evaluator_summary": {
+      "type": "object",
+      "properties": {
+        "score": {"type": "number"},
+        "high_severity_count": {"type": "integer"},
+        "result_path": {"type": "string"}
+      }
+    },
+    "required_fixes": {"type": "array", "items": {"type": "string"}},
+    "resume_command": {"type": "string"},
+    "next_step": {"type": "string"}
+  }
+}

@@ -1,0 +1,88 @@
+# resource-map.yaml — ref-knowledge-loop リソース索引
+version: "0.2.0"
+
+categories:
+  construction:
+    label: "構築編 (§0-6)"
+    description: "パターン選択・構造・フィールド・品質ルーブリック"
+    file: knowledge-construction.md
+    tasks:
+      - knowledge/ の配置の抽象階層 (Loop A 生成物側 / Loop B メタ側)
+      - パターン選択 (Index-Search vs Router-Registry)
+      - knowledge/ を追加するタイミング判定
+      - ディレクトリ構造設計
+      - エントリ必須6フィールドの定義
+      - フィールド別品質ルーブリック (レベル1/2/3)
+      - エントリ作成6ステップ
+      - スタイルゲノム設計 (ペルソナ系)
+      - 品質チェックリスト
+
+  lifecycle:
+    label: "運用編 (§7-12)"
+    description: "検索・ライフサイクル・フィードバックループ"
+    file: knowledge-search-lifecycle.md
+    tasks:
+      - ファイル分割ルール (500行/25エントリ閾値)
+      - ナレッジ進化メカニズム (routing_rules マッチング)
+      - 3段階検索パイプライン (Stage1カテゴリ絞り/Stage2スコアリング/Stage3 AI)
+      - スコアリング重み表とカスタマイズ
+      - シノニムマップ設定
+      - 重みチューニング手順
+      - 成果物出力命名規則
+      - registry.json status遷移 (pending/processed/needs-update/deprecated)
+      - 廃棄ルール
+      - フィードバックループ (活用ログ/品質改善パターン4種)
+      - 日々のブラッシュアップ運用サイクル (検索→記録→分析→改善→status付与)
+
+templates:
+  skeleton_root: "../../../run-build-skill/templates/knowledge-skeleton/"
+  index_search:
+    label: "Index-Search型雛形"
+    files:
+      - file: "index-search/knowledge/knowledge-index.json"
+        desc: "索引ファイル雛形 ({{...}} 変数)"
+      - file: "index-search/knowledge/knowledge-{{category}}.json"
+        desc: "カテゴリファイル雛形 (サンプル3エントリ)"
+  router_registry:
+    label: "Router-Registry型雛形"
+    files:
+      - file: "router-registry/knowledge/router.json"
+        desc: "ルーターファイル雛形"
+      - file: "router-registry/knowledge/schema.json"
+        desc: "エントリ JSON Schema"
+      - file: "router-registry/knowledge/registry.json"
+        desc: "処理済みファイル追跡雛形"
+  scripts:
+    label: "Python スクリプト雛形"
+    files:
+      - file: "scripts/search_knowledge.py"
+        desc: "Stage1+Stage2 検索スクリプト"
+      - file: "scripts/build_index.py"
+        desc: "インデックス整合性検証・自動修正"
+      - file: "scripts/record_usage.py"
+        desc: "§12 活用ログ記録・パターン分析 (--analyze --emit-queue / --mark-needs-update)"
+      - file: "scripts/add_entry.py"
+        desc: "エントリ追加 (必須6フィールド検証つき・JSON手編集を排除)"
+
+lint:
+  script: "../../../run-build-skill/scripts/lint-knowledge-loop.py"
+  checks:
+    - "KL-001: index|router 存在 + ≥3エントリ"
+    - "KL-002: 各エントリ必須6フィールド有"
+    - "KL-003: search_knowledge.py 存在"
+    - "KL-004: record_usage.py 存在"
+    - "KL-005: 分割閾値の記述"
+    - "KL-006: add_entry.py 存在 (日々の追加の機械化, warn)"
+    - "KL-007: ストア物理位置と consult_at の一致 (Loop A=runtime / Loop B=build-time, 不一致/未宣言/不正値は error)"
+  selfTest:
+    - "schema↔lint 必須6フィールド drift 検出 (SSOT)"
+    - "lint↔CI 配線メタ検査 (governance-check.yml)"
+
+schema:
+  file: "../../../run-build-skill/schemas/knowledge-loop.schema.json"
+
+prompts:
+  search_summarize:
+    label: "R1-search-summarize (7層プロンプト)"
+    file: "../prompts/R1-search-summarize.md"
+    responsibility: "ナレッジループ仕様 (構築/運用) の検索・要約 (read-only SubAgent)"

@@ -1,0 +1,118 @@
+{
+  "agent": "elegant-system-strategic-analyst",
+  "paradigm_findings": [
+    {"method_id": "systems", "method_name": "システム思考", "applied": true,
+     "issues": [
+       {"id": "A4-01", "severity": "high", "condition_signal": "dependency_break",
+        "location": ".github/workflows/governance-check.yml:163-240 / plugin-plans/ubm-goal-setting/index.md:27",
+        "description": "計画は plugin_meta.ci.workflow=governance-check を宣言するが、governance-check.yml の per-plugin lint 群に ubm-goal-setting が未登録で、repo CI が本 plugin を恒久検証しない (pytest のみ harness-creator-kit-ci の plugins/ walk で拾われる)。",
+        "evidence": "governance-check.yml は prompt-creator/company-master/contract-generator/skill-intake/plugin-dev-planner を個別列挙、.github 配下に『ubm』の出現 0 件。index.md frontmatter は ci: workflow: governance-check",
+        "recommendation": "governance-check.yml へ ubm-goal-setting の lint ジョブ (validate-frontmatter/lint-skill-name/lint-skill-description + lint-plugin-composition) を他 plugin と同型で追加する。",
+        "auto_fixable": false},
+       {"id": "A4-02", "severity": "high", "condition_signal": "dependency_break",
+        "location": "plugins/ubm-goal-setting/EVALS.json:35",
+        "description": "EVALS.json 内部で二重帳簿化: surfaces_enforced_by.skills は 8 lint による強制を主張するが、harness.mechanical にはその 6 本の起動行が存在せず、計画 quality_gates.p0_lint が携帯を要求する lint が実行系のどこにも配線されていない。",
+        "evidence": "EVALS.json mechanical 7 行のみ。inventory C16 p0_lint は 8 lint を列挙 (component-inventory.json:378)",
+        "recommendation": "harness.mechanical へ不足 lint の起動行を追加し実行して緑を確認するか、実配線に合わせ surfaces_enforced_by を縮退させ A4-01 の CI 追加と同時に閉じる。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "causal", "method_name": "因果関係分析", "applied": true,
+     "issues": [
+       {"id": "A4-03", "severity": "high", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/.claude-plugin/plugin.json:36",
+        "description": "因果 chain: 計画 C04 matcher='Write|Edit' → manifest matcher も 'Write|Edit' → MultiEdit イベントで hook 発火保証なし → 実装 GUARDED_TOOLS の MultiEdit 分岐が死にコード化し、RUNBOOK:19,45 と SKILL.md:90 の『Write/Edit/MultiEdit を阻む』主張と配線が相反、vault 破壊書込の素通り経路が残る (tests にも MultiEdit ケースなし)。",
+        "evidence": "manifest: \"matcher\": \"Write|Edit\" / hook: GUARDED_TOOLS = {Write, Edit, MultiEdit} / RUNBOOK Acceptance Evidence C04",
+        "recommendation": "計画 C04 matcher・envelope-draft・実 manifest を 'Write|Edit|MultiEdit' へ揃え、test_write_path_guard.py に MultiEdit ブロックケースを追加する。",
+        "auto_fixable": true}
+     ]},
+    {"method_id": "causal-loop", "method_name": "因果ループ", "applied": true,
+     "issues": [
+       {"id": "A4-04", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/knowledge/router.json:4",
+        "description": "router.json シードが三重に食い違う (155/157/154)。knowledge-extractor の Rule D は増分更新のため、初期 drift が sync ループで永続再生産される負のループになる。計画も同じ矛盾を焼いている。",
+        "evidence": "router.json total_entries:155、principles entry_count:43 vs subcategory 合計41、consultation 35 vs 34。実測合計154",
+        "recommendation": "実ファイル集計から再シードし、計画側の『155』記述も spec-first で実測値へ更新する。",
+        "auto_fixable": true},
+       {"id": "A4-05", "severity": "medium", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/knowledge/registry.json:12",
+        "description": "SKILL.md Key Rules は『extracted_entry_ids は null 禁止』と定めるが、シード registry の 7 件が extracted_entry_ids:null (legacy)。該当ソースが MODIFIED になると旧エントリを削除できず再抽出分が重複蓄積する自己増殖ループが成立する。",
+        "evidence": "registry.json: \"extracted_entry_ids\": null ×7 + \"_note\": \"legacy...\" / SKILL.md:73『null 禁止』",
+        "recommendation": "SKILL.md に legacy null 7 件の移行規則 (初回 MODIFIED 時に全削除→再抽出で backfill) を明文化するか、シード時に既存エントリ id を逆引きして backfill する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "trade-on", "method_name": "トレードオン思考", "applied": true,
+     "issues": [
+       {"id": "A4-06", "severity": "medium", "condition_signal": "omission",
+        "location": "plugins/ubm-goal-setting/plugin-composition.yaml:25",
+        "description": "計画の L3 bookkeeping は『vendor 同梱と mutable 更新の両立』を writeback-config という第三案で止揚し GAP-KNOWLEDGE-003 が実装を P05 へ残置したが、build に writeback-config の実体が存在せず、invariant が実装の裏付けなく掲げられている。実装は plugin 同梱 knowledge/ への直書き。",
+        "evidence": "composition invariant / handoff open_issues GAP-KNOWLEDGE-003 / run-ubm-knowledge-sync/SKILL.md:81",
+        "recommendation": "『plugin 同梱 dir へ直書き』を writeback 方式として正式確定し plan L3 記述と composition invariant を実装に合わせて spec-first 更新するか、writeback-config を実装する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "plus-sum", "method_name": "プラスサム思考", "applied": true,
+     "issues": [
+       {"id": "A4-07", "severity": "low", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml:1",
+        "description": "builder 規約由来の resource-map.yaml は build 側の改善だが、計画の references_config_assets に不在の計画外 artifact で、EVALS surfaces_enforced_by.references がこれを enforcement 根拠に使うため、plan 追記で双方が得する整合化になる。",
+        "evidence": "component-inventory.json:488-502 の files は reference 8 + asset 5 のみ。EVALS.json:40",
+        "recommendation": "references_config_assets へ resource-map.yaml を builder-generated (source なし) として追記し、計画と EVALS の参照を一致させる。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "value-proposition", "method_name": "価値提案思考", "applied": true,
+     "issues": [
+       {"id": "A4-08", "severity": "high", "condition_signal": "omission",
+        "location": "plugin-plans/ubm-goal-setting/phase-11-evidence.md:34-39",
+        "description": "計画が purpose 充足の確認手段として契約した証跡が未生成: P11 evidence 5 要素 (P0 lint ログ/schema parity/build-trace/content-review verdict/harness coverage JSON) が eval-log/plugin 双方に不在で、golden-master equivalence も実行記録・fixture が無い — 『受入が確認可能』という計画の提供価値が実現していない。",
+        "evidence": "eval-log/ubm-goal-setting/ 配下は plan レビューログのみ (Glob 実測 0 件)。EVALS.json:20。phase-05:62 対応 fixture なし",
+        "recommendation": "P11 契約どおり evidence Markdown (5 要素) を生成し eval-log/ubm-goal-setting/ へ記録する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "strategic", "method_name": "戦略的思考", "applied": true,
+     "issues": [
+       {"id": "A4-09", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugin-plans/ubm-goal-setting/component-inventory.json:118",
+        "description": "inventory の 10 sub-agent は responsibility_anchor=prompts/R-*.md を宣言するが、build に prompts/ は存在せず agents/*.md 自身が正本宣言しており、正本所在が計画と実装で分裂 — 将来の prompt 改善ループが計画側 anchor を辿ると必ず断線する。",
+        "evidence": "C05: prompts/R-collect.md (C06-C15 同形)。prompts/ なし (Glob 実測)。agents/info-collector.md:420",
+        "recommendation": "inventory の responsibility_anchor を実体 (agents/*.md) へ spec-first で更新するか、prompts/R-*.md を正本生成し agents をアダプタ化する方針を確定する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "kaizen", "method_name": "改善思考", "applied": true,
+     "issues": [
+       {"id": "A4-10", "severity": "low", "condition_signal": "smell",
+        "location": "plugin-plans/ubm-goal-setting/plan-findings.json:2",
+        "description": "前回 findings で『stale provenance を現 worktree 実測で置換した』と是正した問題が再発: plan_dir と全 12 ゲート command が task-20260703-124959-wt-7 の絶対パスに pin されたままで、現 worktree では第三者再現不能な証跡に戻っている。",
+        "evidence": "plan-findings.json:2 plan_dir=旧worktree絶対パス。findings[0] は当時の是正記録",
+        "recommendation": "ゲートを現 worktree で再実行して provenance を再生成するか、command を repo 相対パスで記録する運用へ変える。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "hypothesis", "method_name": "仮説思考", "applied": true,
+     "issues": [
+       {"id": "A4-11", "severity": "low", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py:35-42",
+        "description": "C02 の source_type 語彙が計画 (『youtube/合宿/動画教材/月報フィードバック/minutes/UBM/other の7分類』) と実装 (youtube/camp/teaching-material/monthly-feedback/seminar/event/other) でラベル体系が異なり、パイプ出力 {source_type} の値契約が計画文言から検証できない (分類数 7 は一致)。",
+        "evidence": "component-inventory.json:39 の 7 分類記述 vs SOURCE_TYPE_RULES の英語ラベル",
+        "recommendation": "計画 C02 purpose の分類記述を実装の英語ラベルへ spec-first で更新し、consumer が期待する値集合を一箇所に pin する。",
+        "auto_fixable": true}
+     ]},
+    {"method_id": "issue", "method_name": "論点思考", "applied": true,
+     "issues": [
+       {"id": "A4-12", "severity": "medium", "condition_signal": "smell",
+        "location": "plugins/ubm-goal-setting/EVALS.json:5 (横断)",
+        "description": "本質論点は『機械 enforcement の正本はどこか』の一点: 計画 quality_gates (携帯宣言)・EVALS surfaces_enforced_by (主張)・repo CI (実行) の三層が独立記述されており、この正本が決まれば A4-01/A4-02 の修正形が一意に決まる。",
+        "evidence": "同一 lint 集合が component-inventory.json:378、EVALS.json:35、governance-check.yml (未登録) の 3 箇所で不一致のまま並存",
+        "recommendation": "『CI は EVALS.mechanical を起動するだけ』の単方向参照に統一し、lint 集合の正本を EVALS へ一本化してから A4-01/02 を閉じる。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "kj", "method_name": "KJ法", "applied": true,
+     "issues": [
+       {"id": "A4-13", "severity": "medium", "condition_signal": "smell",
+        "location": "plugin-plans/ubm-goal-setting/index.md:140-149 (build 実行者向け手引き)",
+        "description": "findings を島分けすると (1)配線断線島 A4-01/02/03、(2)シード整合島 A4-04/05、(3)証跡不在島 A4-08/10、(4)正本分裂島 A4-06/07/09/11 に集約され、共通構造は『計画は宣言するが build 後の接続・記録・追従を所有する機械ゲートが無い』こと — handoff 後の post-build 検証器不在という単一の根本 smell。",
+        "evidence": "index『build 実行者向け手引き』は build 手順のみで、build 後に plan↔plugin の反映を照合する決定論ゲートが存在しない",
+        "recommendation": "plan の決定論ゲート群と対になる post-build 照合器 (build_target 実在/matcher 一致/EVALS-lint 集合一致/router 集計一致) を 1 script で新設し CI へ配線する。",
+        "auto_fixable": false}
+     ]}
+  ],
+  "priority_order": ["A4-03", "A4-01", "A4-02", "A4-08", "A4-12", "A4-13", "A4-06", "A4-09", "A4-04", "A4-05", "A4-07", "A4-11", "A4-10"],
+  "summary": "18 component の実体・refs/assets/knowledge シードは計画と存在一致するが、guard hook の MultiEdit 発火欠落 (計画 matcher が根本原因)・repo CI 未登録・EVALS の lint 宣言と実配線の乖離という『接続の断線』が高優先で残る。加えて P11 evidence 5 要素と golden-master 等価確認の証跡が皆無で、計画が契約した『受入の確認可能性』が未達。根本構造は post-build の plan↔plugin 照合ゲート不在であり、matcher 修正→CI/EVALS 一本化→証跡生成の順で収束させるのが最短。"
+}

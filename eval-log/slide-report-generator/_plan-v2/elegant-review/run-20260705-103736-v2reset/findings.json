@@ -1,0 +1,98 @@
+{
+  "run_id": "run-20260705-103736-v2reset",
+  "target": {
+    "plugin": "slide-report-generator",
+    "scope_mode": "plan",
+    "plan_dir": "plugin-plans/slide-report-generator-v2"
+  },
+  "ground_truth": {
+    "deterministic_gates": "11/11 exit0",
+    "prior_findings_staleness": "sha256 all-match (drift 0)",
+    "prior_verdict": "PASS (info x7 only)",
+    "interpretation": "機械層は全緑。前回PASSは数値/構造/sha適合のみが根拠で、設計健全性の意味論を未検分。本レビューは機械ゲートが原理的に見ない意味論欠陥を対象とする。"
+  },
+  "thought_method_coverage": {
+    "total": 30,
+    "used": 30,
+    "skipped_with_reason": 0,
+    "by_agent": {
+      "logical_structural": 10,
+      "meta_divergent": 9,
+      "system_strategic": 11
+    }
+  },
+  "fail_counts": {
+    "contradiction": 4,
+    "omission": 2,
+    "inconsistency": 3,
+    "dependency_break": 2,
+    "smell": 6
+  },
+  "verdict": {
+    "矛盾なし": "FAIL",
+    "漏れなし": "FAIL",
+    "整合性あり": "FAIL",
+    "依存関係整合": "FAIL"
+  },
+  "verdict_note": "本 fresh review 時点の未改善 verdict。前回 plan-findings.json の PASS を上書きするものではなく、意味論層を新規検分した結果 4 条件が現状 FAIL であることを示す。Phase 3 改善で条件を PASS へ収束させる。",
+  "root_clusters": [
+    {
+      "id": "K1",
+      "title": "同一性と不可逆性 (v2 は独立成果物か v1 の破壊的上書きか)",
+      "priority": "最高",
+      "members": ["F-01", "F-02"],
+      "true_question": "build すると v2 は v1 を in-place 上書きする。温存 constraint と正面衝突し、v1 golden を破壊して OUT1 非回帰を検証不能にする。"
+    },
+    {
+      "id": "K2",
+      "title": "実行時知識アクセスの断線 (薄化 fork agent は移設先知識にどう到達するか)",
+      "priority": "最高",
+      "members": ["F-03", "F-04", "F-09"],
+      "true_question": "知識を skill 私有 references/ へ移すが、fork される agent の実行時 read 経路・per-agent golden が未設計。fork agent は skill が load した references を継承しない。"
+    },
+    {
+      "id": "K3",
+      "title": "機械検証の自己言及ギャップ (正しさを保証する機構自体が最も未整備)",
+      "priority": "高",
+      "members": ["F-05", "F-06"],
+      "true_question": "帰属機械検証の linchpin C24 が唯一の builder 不在部品。fallback は明記されるが実効未証明の約束手形。"
+    },
+    {
+      "id": "K4",
+      "title": "論点すり替えと価値配分逆進 (解くべきは知識重複/SSOTか agent 行数か)",
+      "priority": "中",
+      "members": ["F-07", "F-08", "F-10", "F-11"],
+      "true_question": "no_split 判定が実質行数 Goodhart。抽出先が非 SSOT の skill 私有で C01 一極集中を招き、plugin-root 一本化という正和解を逃す。"
+    },
+    {
+      "id": "K5",
+      "title": "計数・語彙・記述の局所整合 (cosmetic だが機械ゲートが見ない)",
+      "priority": "低〜中",
+      "members": ["F-12", "F-13", "F-14", "F-15"],
+      "true_question": "51不変 vs resource-map.md 除去 off-by-one、render/mermaid「新規実装」矛盾、placement_scope 定義欠落、非配布 vs marketplace=AVAILABLE。"
+    }
+  ],
+  "findings": [
+    {"id": "F-01", "cluster": "K1", "condition_signal": "contradiction", "severity": "high", "title": "v1「温存・改変しない」constraint と全 build_target の in-place 上書きが正面衝突", "location": "goal-spec.json:55 (constraints[0]) ↔ handoff consumer_steps.note:43 + routes 全24件 build_target", "confirmed_by": ["LS-01", "MD-06", "SS-04"], "triangulated": true, "auto_fixable": false, "reason_manual": "build_mode(in-place vs parallel_slug)の確定を要し、goal-spec constraint と slug 固定方針(constraints[1])に波及する設計判断。", "fix_direction": "build_mode をフィールド化し、in-place 選択時は constraints[0] を『v1 設計知識を温存・build 段階で golden 採取後に上書き』へ改訂、parallel_slug 選択時は build_target/slug を分岐。"},
+    {"id": "F-02", "cluster": "K1", "condition_signal": "contradiction", "severity": "high", "title": "in-place 上書きが v1 golden を破壊し OUT1『非回帰』を検証不能な空手形化 (ロールバック戦略不在)", "location": "handoff routes build_target + consumer_steps.note:43, component-inventory OUT1, phase-11-evidence.md:31", "confirmed_by": ["SS-02"], "triangulated": false, "novel": true, "auto_fixable": false, "reason_manual": "build 前 golden pin 工程の新設と build_mode 決定に依存。", "fix_direction": "build 前に v1 golden(代表 slide/report の生成 HTML)を eval-log へ pin → v2 を別パスへ先行 build → golden diff PASS 後に swap。P11 に『出力 before/after diff』を evidence 必須項として追加。"},
+    {"id": "F-03", "cluster": "K2", "condition_signal": "dependency_break", "severity": "high", "title": "薄化 fork agent が skill 私有 reference を実行時に読む経路が未定義", "location": "component-inventory C05-C17 delegation_target/extracted_reference, handoff C01 references_new, 対比 agents/structure-designer.md の ../references/ 慣用", "confirmed_by": ["MD-01", "SS-01"], "triangulated": true, "auto_fixable": false, "reason_manual": "reference 配置方針(skill 私有 vs plugin-root)の設計判断で、goal-spec C2(progressive disclosure 要件)と衝突。", "fix_direction": "抽出先を plugin-root references/(既存46件と同層)へ一本化し agent は既存 ../references/ 慣用のまま読む、または fork せず prompt 注入契約を明記。"},
+    {"id": "F-04", "cluster": "K2", "condition_signal": "inconsistency", "severity": "high", "title": "抽出先が skill 私有 references/ である前提が誤り (消費者=agent が到達できない階層へ SSOT を置く / オーナーシップ逆転)", "location": "component-inventory C01 progressive_disclosure.references_new, plugin_level_surfaces.references_config_assets", "confirmed_by": ["MD-01", "SS-05"], "triangulated": true, "auto_fixable": false, "reason_manual": "goal-spec C2 の progressive disclosure 要件そのものの是非に関わる。", "fix_direction": "案A: 抽出先を plugin-root references/ に一本化(既存46件と同一 owner 体系)。案B: prompts/*.md を7層 SSOT 正本として実体化(規約準拠)。"},
+    {"id": "F-05", "cluster": "K3", "condition_signal": "dependency_break", "severity": "high", "title": "機械検証の linchpin C24(lint-reference-attribution)が contract-only の自己言及的妥当性ギャップ", "location": "handoff routes C24 (builder_status=contract-only/gap_ref=GAP-SCRIPT-BUILDER), open_issues GAP-SCRIPT-BUILDER", "confirmed_by": ["SS-03"], "triangulated": false, "auto_fixable": false, "reason_manual": "GAP-SCRIPT-BUILDER の close 可否は build 段階の実生成に依存。plan 断面では routes 前ブロッキング化の判断のみ可能。", "fix_direction": "GAP-SCRIPT-BUILDER を must_run_before_routes のブロッキングへ格上げ(C23/C24 を run-build-skill で実生成し build trace 取得)。waiver 時は受入表に『帰属機械検証は未成立』と降格記載。"},
+    {"id": "F-06", "cluster": "K3", "condition_signal": "inconsistency", "severity": "medium", "title": "『機械検証可能』主張が C24+resource-map.yaml に全依存だが C24 自身が未 buildable の循環", "location": "component-inventory OUT2 x3, handoff S-REFERENCES/S-EVALS", "confirmed_by": ["SS-03", "LS(補強)"], "triangulated": false, "auto_fixable": false, "reason_manual": "F-05 と同根。", "fix_direction": "F-05 と一体で解消。"},
+    {"id": "F-07", "cluster": "K4", "condition_signal": "inconsistency", "severity": "medium-high", "title": "no_split_threshold が実質『行数閾値』(閾値 342→500 で 11件中7件が分類反転)", "location": "component-inventory no_split_threshold + 各 sub-agent rebalance_disposition", "confirmed_by": ["MD-03", "SS-06"], "triangulated": true, "auto_fixable": false, "reason_manual": "判定軸の変更は 7 component の disposition を反転させうる設計判断。", "fix_direction": "判定軸に『consumers[]≥2(複数 component が同一知識を消費)』を第一基準として追加。行数は起点シグナルに留める。"},
+    {"id": "F-08", "cluster": "K4", "condition_signal": "smell", "severity": "medium", "title": "C01 再集中は『均衡』でなく『山の移動』(抽出9件・5,077行=全体85%が C01 一極)", "location": "component-inventory C01 progressive_disclosure.references_new (9件)", "confirmed_by": ["MD-07"], "triangulated": false, "auto_fixable": false, "reason_manual": "配置方針(F-04)の設計判断に従属。", "fix_direction": "抽出を重複(consumers≥2)塊に限定し、残す塊を plugin-root references/ へ置き一極集中を回避。"},
+    {"id": "F-09", "cluster": "K2", "condition_signal": "omission", "severity": "medium-high", "title": "11 薄化 agent の非回帰 golden test が不在 (最高リスクの本体手術に専用 harness なし・pilot なし)", "location": "phase-04-test-design.md (entities=C01/C02/C03 のみ), phase-06-test-run.md 依存", "confirmed_by": ["MD-08", "SS-07"], "triangulated": true, "auto_fixable": false, "reason_manual": "P04 テスト設計スコープの拡張を要する。", "fix_direction": "11 thin-adapter に per-agent golden fixture を P04 へ追加。html-generator(990行)を pilot 先行薄化→ref 到達+出力 golden diff 検証→合格後に残10へ展開。"},
+    {"id": "F-10", "cluster": "K4", "condition_signal": "contradiction", "severity": "high", "title": "responsibility_anchor: prompts/*.md が v1 実体に無く生成 route も無い dangling anchor (正本の三重定義)", "location": "component-inventory 全16 sub-agent responsibility_anchor ↔ prompts/ 不在(Glob 実測) ↔ extracted_reference(skill references/)", "confirmed_by": ["LS-02", "MD-02"], "triangulated": true, "auto_fixable": false, "reason_manual": "案A/案B の配置方針決定後に anchor の指す実正本が定まる。", "fix_direction": "prompts/ 実体化(案B)なら build route 新設、skill/plugin-root references 方式なら responsibility_anchor を実正本 path へ書換え三重宣言を解消。"},
+    {"id": "F-11", "cluster": "K4", "condition_signal": "smell", "severity": "medium", "title": "抽出11件のうち単一 consumer の10件は anti-SSOT (『単一SSOT化』便益が幻)", "location": "component-inventory 各 thin-adapter rebalance_rationale", "confirmed_by": ["MD-04"], "triangulated": false, "auto_fixable": false, "reason_manual": "F-07/F-04 と同根の判定軸問題。", "fix_direction": "抽出対象を consumers[]≥2 が実証される知識に絞り、単一 consumer 知識は agent 本文に残す(maintain)。"},
+    {"id": "F-12", "cluster": "K5", "condition_signal": "inconsistency", "severity": "medium", "title": "『51 references 不変』と『resource-map.md 除去』の off-by-one 破れ", "location": "handoff S-REFERENCES (byte_copy 51不変 / removed_files resource-map.md / new_files resource-map.yaml)", "confirmed_by": ["LS-04"], "triangulated": false, "auto_fixable": true, "reason_auto": "計数定義の明確化のみで意味変更なし。", "fix_direction": "『51 は content reference の数、resource-map は帰属メタで51外』と定義を分離(content refs 50不変 + attribution map 1置換)。"},
+    {"id": "F-13", "cluster": "K5", "condition_signal": "contradiction", "severity": "medium", "title": "render-report.js/mermaid-render.js が『新規実装』かつ『v1温存・byte維持』の自己矛盾", "location": "component-inventory C19 build_contract + plugin_level_surfaces.vendor", "confirmed_by": ["LS-05"], "triangulated": false, "auto_fixable": true, "reason_auto": "両ファイルは v1 実在(Glob 実測)。語彙統一のみで意味変更なし。", "fix_direction": "『v1 build で追加済(upstream 比 additive)・v2 では byte 温存』へ統一し『新規実装』を削除。"},
+    {"id": "F-14", "cluster": "K5", "condition_signal": "inconsistency", "severity": "low", "title": "placement_scope 語彙の物理/論理オーバーロード(定義欠落)", "location": "component-inventory placement_scope 24件, index ドメイン知識に定義なし", "confirmed_by": ["LS-03"], "triangulated": false, "auto_fixable": true, "reason_auto": "定義の追記で解消。", "fix_direction": "placement_scope を『論理オーナーシップ(単一skill帰属/共有)』と index ドメイン知識へ明示定義。"},
+    {"id": "F-15", "cluster": "K5", "condition_signal": "inconsistency", "severity": "low", "title": "非配布(distributable:false/marketplace:false)なのに marketplace.policy=AVAILABLE/ON_INSTALL", "location": "index.md plugin_meta:11-21", "confirmed_by": ["LS-08"], "triangulated": false, "auto_fixable": true, "reason_auto": "note で優先順位は明記済。冗長 config の整合のみ。", "fix_direction": "distributable:false の間は installation を UNAVAILABLE へ、または『policy は将来配布時の既定値・現在は distribution が抑止』とコメント明記。"},
+    {"id": "F-16", "cluster": "K5", "condition_signal": "inconsistency", "severity": "low", "title": "P05『移動のみ・情報消失禁止』と P08『残存時は参照へ置換』の条件付き空役務", "location": "phase-05:32,51 ↔ phase-08:30,46", "confirmed_by": ["LS-06"], "triangulated": false, "auto_fixable": true, "reason_auto": "post_improvement で P08 は縮退済。残る『残存時置換』節の除去のみ。", "fix_direction": "P08 を純粋な invariant 検証(重複0を lint-reference-attribution で確認)に限定し『残存時置換』cleanup 節を削除。"},
+    {"id": "F-17", "cluster": "meta", "condition_signal": "smell", "severity": "medium", "title": "前回 plan-findings PASS が数値/構造/sha 適合のみで意味論を未検分(検証枠組みの盲点)", "location": "plan-findings.json conditions C1-C4 / findings info x7", "confirmed_by": ["LS-09", "MD-05", "SS-06"], "triangulated": true, "auto_fixable": false, "reason_manual": "評価契約の是正提案。plan 本体でなく評価器/plan-findings 意味論への注記。", "fix_direction": "elegant-review C1-C4 の evidence 契約に『goal-spec constraints の各項 × build_target/handoff の意味論突合』を必須化。"}
+  ],
+  "alternative_designs": [
+    {"id": "案A", "label": "plugin-root references/ 一本化", "recommended_by": ["meta_divergent(推奨・最小複雑度)", "system_strategic(最小介入点)"], "resolves": ["K2", "K4", "F-12(off-by-one)", "F-08(C01集中)", "C24単純化"], "cost": "goal-spec C2(progressive disclosure)要件の再解釈が必要", "benefit": "agent も skill も同一 SSOT に到達・実行時経路が既存 ../references/ 慣用のまま・二層化回避"},
+    {"id": "案B", "label": "prompts/*.md を7層 SSOT 正本として実体化", "recommended_by": ["meta_divergent(repo一貫性優先時)"], "resolves": ["F-10(anchor実体化)", "MD-02(規約逆行)"], "cost": "prompts/16本新設で案Aより重い・maintain 5件の境界設計要", "benefit": "responsibility_anchor が初めて実体を持つ・lint-prompt-placement 規約準拠"}
+  ]
+}

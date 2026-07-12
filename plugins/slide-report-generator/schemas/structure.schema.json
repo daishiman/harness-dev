@@ -1,0 +1,1816 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "presentation-slide-generator/structure.schema.json",
+  "title": "Presentation Structure",
+  "description": "presentation-slide-generator スキルの決定論的入力契約。structure.md 自然言語記述を補完/置換する。SR-ID（spec-registry.md）と DT-ID（slide-type-decision-tree.md）を参照する。",
+  "type": "object",
+  "required": ["meta", "theme", "slides"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/meta" },
+    "theme": { "$ref": "#/$defs/theme" },
+    "globalSpec": { "$ref": "#/$defs/globalSpec" },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/slide" }
+    }
+  },
+
+  "$defs": {
+
+    "meta": {
+      "type": "object",
+      "required": ["title", "audience", "durationMinutes", "keyMessage"],
+      "additionalProperties": false,
+      "properties": {
+        "title":            { "type": "string", "minLength": 1, "maxLength": 80 },
+        "subtitle":         { "type": "string", "maxLength": 120 },
+        "audience":         { "type": "string", "minLength": 1, "maxLength": 200 },
+        "durationMinutes":  { "type": "integer", "minimum": 1, "maximum": 600 },
+        "keyMessage":       { "type": "string", "minLength": 1, "maxLength": 200 },
+        "language":         { "type": "string", "enum": ["ja", "en"], "default": "ja" },
+        "presenter":        { "type": "string", "maxLength": 80 },
+        "createdAt":        { "type": "string", "format": "date-time" },
+        "version":          { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "schemaVersion":    { "type": "string", "enum": ["7.0.0", "8.0.0"], "default": "7.0.0", "description": "v8 拡張フィールド (cover/index/diagram/pageOverride/footer/header) を有効化するゲート。未指定時は 7.0.0 として扱う。" },
+        "event":            { "$ref": "#/$defs/eventMeta" },
+        "hero":             { "$ref": "#/$defs/heroMeta" },
+        "tagline":          { "type": "string", "maxLength": 80, "description": "v8: 表紙の腰キャッチ用サブコピー。" },
+        "narrative_pattern": {
+          "type": "string",
+          "enum": ["z-shape", "purpose-background-means-conclusion", "prep", "fabe", "scqa", "before-after", "problem-solution", "custom"],
+          "description": "SR-06 (2026-05-09 追加, optional): デッキ全体の物語構造パターン。'z-shape'=導入→展開→転換→結論のZ字型、'purpose-background-means-conclusion'=目的→背景→手段→結論（推奨デフォルト）、'prep'/'fabe'/'scqa'=ビジネスフレームワーク、'custom'=独自構成。required ではないが指定するとレビュー時に composition-patterns.md の該当パターンに従って章配分検証ができる。"
+        },
+        "total_slides":     { "type": "integer", "minimum": 1, "maximum": 200, "description": "SR-01 (2026-05-09): 構成上の総スライド数の正本。HTML 実装と sync-checker.js が突合する。" }
+      }
+    },
+
+    "eventMeta": {
+      "type": "object",
+      "description": "v8: 表紙・ヘッダで使うイベント情報。schemaVersion=8.0.0 のみ有効。",
+      "additionalProperties": false,
+      "properties": {
+        "name":     { "type": "string", "maxLength": 80 },
+        "date":     { "type": "string", "maxLength": 40 },
+        "venue":    { "type": "string", "maxLength": 80 },
+        "round":    { "type": "string", "maxLength": 40 }
+      }
+    },
+
+    "heroMeta": {
+      "type": "object",
+      "description": "v8: 表紙ヒーロビジュアル指定。",
+      "additionalProperties": false,
+      "properties": {
+        "kind":      { "type": "string", "enum": ["icon", "svg", "image", "diagram", "none"], "default": "none" },
+        "icon":      { "type": "string", "pattern": "^fa-", "description": "Font Awesome class (kind=icon)" },
+        "svgRef":    { "type": "string", "description": "svg-builder の関数名 (kind=svg)" },
+        "imagePath": { "type": "string", "description": "WebP相対パス (kind=image)" },
+        "diagramRef":{ "type": "string", "description": "slide.diagram と同一構造の参照 (kind=diagram)" },
+        "alt":       { "type": "string", "maxLength": 200 }
+      }
+    },
+
+    "theme": {
+      "type": "object",
+      "description": "Kanagawa テーマ固定。SR-2-01〜SR-2-09 参照。",
+      "required": ["name", "accentColors"],
+      "additionalProperties": false,
+      "properties": {
+        "name":   { "const": "kanagawa-lotus" },
+        "mode":   { "type": "string", "enum": ["light", "dark"], "default": "light" },
+        "accentColors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "description": "SR-2-05 / SR-2-06: 各スライドにビビッドアクセント1色以上。v7=最大2色、v8=最大8色（セクション別配色用）。",
+          "items": { "$ref": "#/$defs/accentColorEnum" }
+        },
+        "fontScale": {
+          "type": "number",
+          "minimum": 0.8,
+          "maximum": 2.0,
+          "default": 1.3,
+          "description": "SR-3-02 --font-scale。"
+        },
+        "pagination":  { "$ref": "#/$defs/paginationSpec" },
+        "footer":      { "$ref": "#/$defs/footerSpec" },
+        "header":      { "$ref": "#/$defs/headerSpec" }
+      }
+    },
+
+    "paginationSpec": {
+      "type": "object",
+      "description": "v8: ページネーション全体設定。schemaVersion=8.0.0 のみ。",
+      "additionalProperties": false,
+      "properties": {
+        "style":         { "type": "string", "enum": ["dots", "bar", "numeric", "section-dots", "none"], "default": "dots" },
+        "milestoneEvery":{ "type": "integer", "minimum": 0, "maximum": 20, "default": 5, "description": "0=マイルストーン無効。" },
+        "showSectionHighlight": { "type": "boolean", "default": false },
+        "showCurrentStep":      { "type": "boolean", "default": false }
+      }
+    },
+
+    "footerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "show":   { "type": "boolean", "default": false },
+        "left":   { "type": "string", "maxLength": 80 },
+        "center": { "type": "string", "maxLength": 80 },
+        "right":  { "type": "string", "maxLength": 80, "description": "{page}/{total} を含めるとページ番号置換。" }
+      }
+    },
+
+    "headerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "show":           { "type": "boolean", "default": false },
+        "showSection":    { "type": "boolean", "default": true },
+        "showEventName":  { "type": "boolean", "default": false },
+        "logoIcon":       { "type": "string", "pattern": "^fa-" }
+      }
+    },
+
+    "globalSpec": {
+      "type": "object",
+      "description": "SR-ID で参照される共通仕様の上書き。通常は空 {} を推奨。",
+      "additionalProperties": false,
+      "properties": {
+        "viewBoxDefault": { "$ref": "#/$defs/svgViewBox" },
+        "compareRatio": {
+          "type": "string",
+          "enum": ["48-4-48"],
+          "description": "SR-4-03 比較レイアウトの比率。固定値のみ許容。"
+        },
+        "minSvgFontSize": {
+          "type": "integer",
+          "minimum": 13,
+          "default": 13,
+          "description": "SR-3-05 SVG <text> 最小フォントサイズ（px）。"
+        },
+        "minGsapScale": {
+          "type": "number",
+          "minimum": 0.8,
+          "default": 0.8,
+          "description": "SR-6-01 GSAP scale 最小値。"
+        },
+        "maxBulletsPerSlide": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "default": 7,
+          "description": "1スライド当たりチャンク数の上限。"
+        }
+      }
+    },
+
+    "section": {
+      "type": "object",
+      "required": ["id", "title", "slides"],
+      "additionalProperties": false,
+      "properties": {
+        "id":     { "type": "string", "pattern": "^section-[a-z0-9-]+$" },
+        "title":  { "type": "string", "minLength": 1, "maxLength": 60 },
+        "color":  { "$ref": "#/$defs/accentColorEnum" },
+        "icon":   { "type": "string", "pattern": "^fa-", "description": "v8: index/agenda・ヘッダで使用するセクション代表アイコン。" },
+        "theme":  { "$ref": "#/$defs/sectionTheme" },
+        "slides": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+
+    "sectionTheme": {
+      "type": "object",
+      "description": "v8: セクション単位の配色・装飾上書き。schemaVersion=8.0.0 のみ。",
+      "additionalProperties": false,
+      "properties": {
+        "primaryAccent":    { "$ref": "#/$defs/accentColorEnum" },
+        "secondaryAccent":  { "$ref": "#/$defs/accentColorEnum" },
+        "background":       { "type": "string", "enum": ["default", "tint", "gradient", "dark"], "default": "default" },
+        "paginationColor":  { "$ref": "#/$defs/accentColorEnum" }
+      }
+    },
+
+    "slide": {
+      "type": "object",
+      "required": ["id", "slideType", "purpose", "structure", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "id":        { "type": "string", "pattern": "^slide-[0-9]{3,4}$" },
+        "section":   { "type": "string", "pattern": "^section-[a-z0-9-]+$" },
+        "slideType": { "$ref": "#/$defs/slideTypeEnum" },
+        "purpose":   { "$ref": "#/$defs/purposeEnum" },
+        "structure": { "$ref": "#/$defs/structureEnum" },
+        "content":   { "$ref": "#/$defs/content" },
+        "layout":    { "$ref": "#/$defs/layout" },
+        "animations":{ "$ref": "#/$defs/animations" },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "このスライド固有の制約上書き（globalSpec と同形）。",
+          "properties": {
+            "minSvgFontSize": { "type": "integer", "minimum": 13 },
+            "minGsapScale":   { "type": "number", "minimum": 0.8 },
+            "maxBulletsPerSlide": { "type": "integer", "minimum": 1, "maximum": 9 }
+          }
+        },
+        "notes":     { "type": "string", "maxLength": 500 },
+        "hidden":    { "type": "boolean", "default": false },
+        "cover":         { "$ref": "#/$defs/coverSpec" },
+        "index":         { "$ref": "#/$defs/indexSpec" },
+        "diagram":       { "$ref": "#/$defs/diagramSpec" },
+        "aiVisual":      { "$ref": "#/$defs/aiVisualSpec" },
+        "pageOverride":  { "$ref": "#/$defs/pageOverrideSpec" }
+      },
+      "allOf": [
+        { "$ref": "#/$defs/contentDispatch" },
+        {
+          "comment": "V-043 / SR-13-01: コード系 slideType（slide-code / slide-code-compare）は aiVisual で image-only にできず、textPolicy も baked-with-overlay にできない。コードは実HTMLコードブロックで描画するため画像へ焼き込まない。aiVisual を持たない純HTMLコードページが正規デフォルト（aiVisual 省略時は vacuously true）。",
+          "if": {
+            "properties": { "slideType": { "enum": ["slide-code", "slide-code-compare"] } },
+            "required": ["slideType"]
+          },
+          "then": {
+            "properties": {
+              "aiVisual": {
+                "properties": {
+                  "pattern":    { "not": { "const": "image-only" } },
+                  "textPolicy": { "not": { "const": "baked-with-overlay" } }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+
+    "coverSpec": {
+      "type": "object",
+      "description": "v8: 表紙スライド (slide-hero/slide-title) 用詳細指定。",
+      "additionalProperties": false,
+      "properties": {
+        "variant":    { "type": "string", "enum": ["minimal", "hero-icon", "hero-svg", "hero-image", "split", "centered-large"], "default": "minimal" },
+        "title":      { "type": "string", "maxLength": 80 },
+        "subtitle":   { "type": "string", "maxLength": 120 },
+        "tagline":    { "type": "string", "maxLength": 80 },
+        "presenter":  { "type": "string", "maxLength": 80 },
+        "eventName":  { "type": "string", "maxLength": 80 },
+        "eventDate":  { "type": "string", "maxLength": 40 },
+        "venue":      { "type": "string", "maxLength": 80 },
+        "hero":       { "$ref": "#/$defs/heroMeta" },
+        "background": { "type": "string", "enum": ["default", "tint", "gradient", "dark", "image"], "default": "default" }
+      }
+    },
+
+    "indexSpec": {
+      "type": "object",
+      "description": "v8: 目次・アジェンダ・章扉スライド用指定。",
+      "additionalProperties": false,
+      "properties": {
+        "style":           { "type": "string", "enum": ["list", "grid", "timeline", "stepper", "card"], "default": "list" },
+        "showSectionNumbers": { "type": "boolean", "default": true },
+        "showSectionIcons":   { "type": "boolean", "default": true },
+        "highlightCurrent":   { "type": "boolean", "default": false, "description": "中扉スライドで「今ここ」を強調。" },
+        "currentSection":     { "type": "string", "pattern": "^section-[a-z0-9-]+$" },
+        "showStep":           { "type": "boolean", "default": false, "description": "ステップ式 (1/3, 2/3...)。" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/indexItem" },
+          "description": "明示指定。省略時は sections から自動生成。"
+        }
+      }
+    },
+
+    "indexItem": {
+      "type": "object",
+      "required": ["label"],
+      "additionalProperties": false,
+      "properties": {
+        "label":   { "type": "string", "minLength": 1, "maxLength": 60 },
+        "subtext": { "type": "string", "maxLength": 80 },
+        "icon":    { "type": "string", "pattern": "^fa-" },
+        "color":   { "$ref": "#/$defs/accentColorEnum" },
+        "current": { "type": "boolean", "default": false }
+      }
+    },
+
+    "diagramSpec": {
+      "type": "object",
+      "description": "v8: 共通図解データモデル。slideType に応じて variant を解釈する。nodes/edges/groups を実データで持ち、レンダラが variant ごとに配置する。",
+      "additionalProperties": false,
+      "required": ["variant", "nodes"],
+      "properties": {
+        "variant": { "type": "string", "enum": [
+          "tree", "mindmap", "flow", "cycle", "pyramid", "matrix", "venn",
+          "network", "timeline", "roadmap", "chevron", "funnel",
+          "org", "concentric", "value-stack", "snake", "wave-step",
+          "comparison", "stepper", "custom"
+        ]},
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "direction": { "type": "string", "enum": ["horizontal", "vertical", "radial", "grid"], "default": "horizontal" },
+            "align":     { "type": "string", "enum": ["start", "center", "end", "space-between"], "default": "center" },
+            "spacing":   { "type": "string", "enum": ["compact", "normal", "spacious"], "default": "normal" }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 60,
+          "items": { "$ref": "#/$defs/diagramNode" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagramEdge" }
+        },
+        "groups": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagramGroup" }
+        },
+        "annotations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagramAnnotation" }
+        },
+        "legend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "show":  { "type": "boolean", "default": false },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["label", "color"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "maxLength": 40 },
+                  "color": { "$ref": "#/$defs/accentColorEnum" },
+                  "icon":  { "type": "string", "pattern": "^fa-" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "diagramNode": {
+      "type": "object",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id":       { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "label":    { "type": "string", "minLength": 1, "maxLength": 60 },
+        "subtext":  { "type": "string", "maxLength": 80 },
+        "icon":     { "type": "string", "pattern": "^fa-" },
+        "color":    { "$ref": "#/$defs/accentColorEnum" },
+        "level":    { "type": "integer", "minimum": 0, "maximum": 6, "description": "ピラミッド・ツリーの階層。" },
+        "weight":   { "type": "number", "minimum": 0, "description": "ファネル幅・ノードサイズ。" },
+        "position": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "明示座標 (0-100% で指定)。省略時はレンダラが自動配置。",
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 100 },
+            "y": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "shape":    { "type": "string", "enum": ["rect", "round", "circle", "hex", "diamond", "card"], "default": "rect" },
+        "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted", "warning"], "default": "normal" },
+        "group":    { "type": "string", "description": "diagramGroup.id への参照。" }
+      }
+    },
+
+    "diagramEdge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from":   { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "to":     { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "label":  { "type": "string", "maxLength": 40 },
+        "kind":   { "type": "string", "enum": ["arrow", "line", "dashed", "double", "thick"], "default": "arrow" },
+        "color":  { "$ref": "#/$defs/accentColorEnum" },
+        "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted"], "default": "normal" }
+      }
+    },
+
+    "diagramGroup": {
+      "type": "object",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id":     { "type": "string", "pattern": "^g-[a-z0-9-]+$" },
+        "label":  { "type": "string", "maxLength": 40 },
+        "color":  { "$ref": "#/$defs/accentColorEnum" },
+        "kind":   { "type": "string", "enum": ["box", "tint", "outline"], "default": "box" }
+      }
+    },
+
+    "diagramAnnotation": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "description": "警告・補足吹き出し。",
+      "properties": {
+        "text":   { "type": "string", "minLength": 1, "maxLength": 120 },
+        "kind":   { "type": "string", "enum": ["note", "warning", "tip", "caution"], "default": "note" },
+        "anchor": { "type": "string", "description": "ノード id または groups.id。" },
+        "icon":   { "type": "string", "pattern": "^fa-" }
+      }
+    },
+
+    "pageOverrideSpec": {
+      "type": "object",
+      "description": "v8: スライド単位の色・背景・装飾上書き。schemaVersion=8.0.0 のみ有効。",
+      "additionalProperties": false,
+      "properties": {
+        "primaryAccent":    { "$ref": "#/$defs/accentColorEnum" },
+        "secondaryAccent":  { "$ref": "#/$defs/accentColorEnum" },
+        "background":       { "type": "string", "enum": ["default", "tint", "gradient", "dark", "image"], "default": "default" },
+        "backgroundImage":  { "type": "string", "description": "background=image 時の WebP パス。" },
+        "pagination": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "show":  { "type": "boolean", "default": true, "description": "false で当該スライドのナビ非表示 (例: 表紙)。" },
+            "color": { "$ref": "#/$defs/accentColorEnum" }
+          }
+        },
+        "footer": { "$ref": "#/$defs/footerSpec" },
+        "header": { "$ref": "#/$defs/headerSpec" }
+      }
+    },
+
+    "aiVisualSpec": {
+      "type": "object",
+      "description": "v8: 明示指示時のみ使うAI画像/漫画チック図解の構造契約。値域は references/style-genome-packaging.md §4 と scripts/validate-ai-image-assets.js に同期する。コード系 slideType（slide-code / slide-code-compare）では image-only / baked-with-overlay は不可（V-043 / SR-13-01）。コードは実HTMLコードブロックで描画し画像へ焼き込まない。",
+      "required": ["pattern", "textPolicy", "backgroundSource", "styleGenome", "overlayText"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^slide-[0-9]{2,4}-[a-z0-9-]+$",
+          "description": "prompt/meta/asset の stem。"
+        },
+        "pattern": {
+          "type": "string",
+          "enum": ["image-only", "html-composite", "html-primary"]
+        },
+        "textPolicy": {
+          "type": "string",
+          "enum": ["baked-with-overlay", "overlay-only", "none"]
+        },
+        "backgroundSource": {
+          "type": "string",
+          "enum": ["raster", "svg", "none"]
+        },
+        "styleGenome": {
+          "type": "string",
+          "minLength": 1,
+          "description": "project-local assets/generated/style-genome.json を推奨。"
+        },
+        "styleReference": {
+          "type": "string",
+          "description": "同一画風を固定する参照画像パス。"
+        },
+        "source": {
+          "type": "string",
+          "default": "text-to-image-backend",
+          "description": "実際に使った画像生成バックエンド。codex は画像生成器ではないため、抽象名だけにしない。"
+        },
+        "decision": {
+          "type": "string",
+          "enum": ["generate-image", "use-svg-background", "html-only"],
+          "default": "generate-image"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "alt": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "asset": {
+          "type": "string",
+          "description": "raster 使用時の WebP/PNG パス。backgroundSource=svg/html-primary では省略可。"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "prompt.md パス。backgroundSource=svg/html-primary では設計メモでもよい。"
+        },
+        "overlayText": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+        },
+        "bakedText": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "description": "textPolicy=baked-with-overlay の時だけ画像内に入れる短文。"
+        },
+        "diagramPrimitives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "rounded-isometric-platform",
+              "glowing-flow-arrow",
+              "speech-label",
+              "explanation-panel",
+              "mini-table-panel",
+              "tool-workbench",
+              "quality-gate",
+              "notion-card-stack"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "pattern": { "const": "image-only" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "enum": ["baked-with-overlay", "overlay-only"] }, "backgroundSource": { "const": "none" } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "html-composite" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "const": "overlay-only" }, "backgroundSource": { "enum": ["raster", "svg"] } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "html-primary" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "const": "none" }, "backgroundSource": { "enum": ["none", "svg"] } } }
+        },
+        {
+          "if": { "properties": { "textPolicy": { "const": "baked-with-overlay" } }, "required": ["textPolicy"] },
+          "then": { "required": ["bakedText"] }
+        },
+        {
+          "if": { "properties": { "backgroundSource": { "const": "raster" } }, "required": ["backgroundSource"] },
+          "then": { "required": ["asset", "prompt"] }
+        }
+      ]
+    },
+
+    "purposeEnum": {
+      "type": "string",
+      "enum": ["P-EMO", "P-CON", "P-CMP", "P-STG", "P-WHL", "P-NUM", "P-CIT"]
+    },
+
+    "structureEnum": {
+      "type": "string",
+      "enum": ["S-SGL", "S-DUO", "S-LST", "S-FLW", "S-SYS", "S-VIZ", "S-COD"]
+    },
+
+    "slideTypeEnum": {
+      "type": "string",
+      "enum": [
+        "slide-hero", "slide-quote", "slide-message", "slide-title",
+        "slide-list", "slide-icon-grid", "slide-grid",
+        "slide-pyramid", "slide-circle", "slide-compare", "slide-code-compare",
+        "slide-flow", "slide-process", "slide-timeline",
+        "slide-table", "slide-code", "slide-highlight",
+
+        "diagram-mindmap", "diagram-concentric", "diagram-value-stack",
+        "diagram-venn-2", "diagram-venn-3", "diagram-vs",
+        "diagram-butterfly", "diagram-slope", "diagram-matrix",
+        "diagram-table-advanced", "diagram-parallel",
+        "diagram-snake", "diagram-flowchart", "diagram-growth",
+        "diagram-roadmap", "diagram-chevron", "diagram-vertical-timeline",
+        "diagram-wave-step", "diagram-gantt",
+        "diagram-cycle", "diagram-pdca", "diagram-triangle-cycle",
+        "diagram-org", "diagram-person-network",
+        "diagram-problem-solution", "diagram-value-prop", "diagram-point-cards",
+        "diagram-aidma", "diagram-prep", "diagram-star",
+        "diagram-fabe-horizontal", "diagram-fabe-vertical", "diagram-fabe-grid",
+        "diagram-fabe-timeline", "diagram-fabe-circular",
+        "diagram-persona", "diagram-icon-grid", "diagram-funnel",
+
+        "chart-bar-vertical", "chart-bar-horizontal", "chart-bar-stacked",
+        "chart-line", "chart-pie", "chart-clock-pie",
+        "chart-scatter", "chart-radar", "chart-gauge",
+
+        "d3-cycle", "d3-pdca", "d3-triangle-cycle", "d3-rotating-flow",
+        "d3-tree", "d3-org-chart", "d3-sunburst", "d3-treemap",
+        "d3-packed-circles", "d3-dendrogram", "d3-force", "d3-chord",
+        "d3-arc", "d3-sankey",
+        "d3-roadmap", "d3-vertical-timeline",
+        "d3-pyramid", "d3-funnel", "d3-waterfall",
+        "d3-bar", "d3-line", "d3-pie", "d3-donut", "d3-radar",
+        "d3-gauge", "d3-bubble", "d3-heatmap", "d3-radial-bar",
+        "d3-bullet", "d3-lollipop", "d3-calendar", "d3-isotype",
+        "d3-wordcloud"
+      ]
+    },
+
+    "accentColorEnum": {
+      "type": "string",
+      "enum": [
+        "blue", "pink", "green", "yellow", "aqua", "violet",
+        "wave-blue", "spring-violet", "sakura-pink", "wave-aqua",
+        "autumn-yellow", "fuji-gray",
+        "accent-blue-vivid", "accent-pink-vivid", "accent-aqua-vivid",
+        "accent-violet-vivid", "accent-yellow-vivid"
+      ]
+    },
+
+    "colorVar": {
+      "type": "string",
+      "description": "SR-2-02 / SR-2-08 CSS 変数表記必須。",
+      "pattern": "^var\\(--[a-z0-9-]+(,\\s*#[0-9A-Fa-f]{3,8})?\\)$"
+    },
+
+    "fontAwesomeIcon": {
+      "type": "string",
+      "description": "Font Awesome 6 のクラス表記。SR-3-06 SVG <text> 内 unicode 直書き禁止。",
+      "pattern": "^fa-(solid|regular|brands)\\s+fa-[a-z0-9-]+$"
+    },
+
+    "vwValue": {
+      "type": "string",
+      "description": "SR-1-04 vw 単位値。",
+      "pattern": "^[0-9]+(\\.[0-9]+)?vw$"
+    },
+
+    "remValue": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?rem$"
+    },
+
+    "svgViewBox": {
+      "type": "string",
+      "description": "SVG viewBox 値。SR-5-01 16:9系または専用形状。",
+      "pattern": "^-?[0-9]+(\\.[0-9]+)?(\\s+-?[0-9]+(\\.[0-9]+)?){3}$"
+    },
+
+    "langEnum": {
+      "type": "string",
+      "enum": ["python", "javascript", "typescript", "html", "css", "json", "yaml", "bash", "markdown", "plain"]
+    },
+
+    "iconOptional": {
+      "anyOf": [
+        { "$ref": "#/$defs/fontAwesomeIcon" },
+        { "type": "null" }
+      ]
+    },
+
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "viewBox":     { "$ref": "#/$defs/svgViewBox" },
+        "width":       { "$ref": "#/$defs/vwValue" },
+        "height":      { "$ref": "#/$defs/vwValue" },
+        "paddingTop":  { "$ref": "#/$defs/vwValue" },
+        "paddingX":    { "$ref": "#/$defs/vwValue" },
+        "paddingBottom": { "$ref": "#/$defs/vwValue" },
+        "gap":         { "$ref": "#/$defs/vwValue" },
+        "positions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "x", "y"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "x":  { "type": "number" },
+              "y":  { "type": "number" },
+              "w":  { "type": "number" },
+              "h":  { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+
+    "animations": {
+      "type": "object",
+      "description": "GSAP パラメータ。SR-6-01〜SR-6-08 参照。",
+      "additionalProperties": false,
+      "properties": {
+        "enter": { "$ref": "#/$defs/gsapTween" },
+        "leave": { "$ref": "#/$defs/gsapTween" },
+        "stagger": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ease": {
+          "type": "string",
+          "enum": [
+            "power1.in", "power1.out", "power1.inOut",
+            "power2.in", "power2.out", "power2.inOut",
+            "power3.in", "power3.out", "power3.inOut",
+            "back.in(1.7)", "back.out(1.7)", "back.inOut(1.7)",
+            "elastic.out(1, 0.3)", "expo.out", "sine.inOut"
+          ]
+        }
+      }
+    },
+
+    "gsapTween": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "duration": { "type": "number", "minimum": 0, "maximum": 5 },
+        "delay":    { "type": "number", "minimum": 0, "maximum": 5 },
+        "scale":    {
+          "type": "number",
+          "minimum": 0.8,
+          "maximum": 2.0,
+          "description": "SR-6-01 scale 最小 0.8 厳守。"
+        },
+        "x":        { "type": "number" },
+        "y":        { "type": "number" },
+        "opacity":  { "type": "number", "minimum": 0, "maximum": 1 },
+        "ease":     { "type": "string" }
+      }
+    },
+
+    "content": {
+      "description": "slideType ごとに contentDispatch（allOf if/then）で形が分岐。",
+      "type": "object"
+    },
+
+    "contentDispatch": {
+      "oneOf": [
+        { "$ref": "#/$defs/content_slide-hero" },
+        { "$ref": "#/$defs/content_slide-quote" },
+        { "$ref": "#/$defs/content_slide-message" },
+        { "$ref": "#/$defs/content_slide-title" },
+        { "$ref": "#/$defs/content_slide-list" },
+        { "$ref": "#/$defs/content_slide-icon-grid" },
+        { "$ref": "#/$defs/content_slide-grid" },
+        { "$ref": "#/$defs/content_slide-pyramid" },
+        { "$ref": "#/$defs/content_slide-circle" },
+        { "$ref": "#/$defs/content_slide-compare" },
+        { "$ref": "#/$defs/content_slide-code-compare" },
+        { "$ref": "#/$defs/content_slide-flow" },
+        { "$ref": "#/$defs/content_slide-process" },
+        { "$ref": "#/$defs/content_slide-timeline" },
+        { "$ref": "#/$defs/content_slide-table" },
+        { "$ref": "#/$defs/content_slide-code" },
+        { "$ref": "#/$defs/content_slide-highlight" },
+
+        { "$ref": "#/$defs/content_diagram-cycle" },
+        { "$ref": "#/$defs/content_diagram-comparison-1" },
+        { "$ref": "#/$defs/content_diagram-business-prep" },
+        { "$ref": "#/$defs/content_diagram-fabe-horizontal" },
+        { "$ref": "#/$defs/content_diagram-visual-1" },
+
+        { "$ref": "#/$defs/content_chart-bar" },
+        { "$ref": "#/$defs/content_chart-pie" },
+        { "$ref": "#/$defs/content_chart-line" },
+        { "$ref": "#/$defs/content_chart-radar" },
+
+        { "$ref": "#/$defs/content_d3-cycle" },
+        { "$ref": "#/$defs/content_d3-tree" },
+        { "$ref": "#/$defs/content_d3-sankey" },
+        { "$ref": "#/$defs/content_d3-bar" },
+
+        { "$ref": "#/$defs/content_generic" }
+      ]
+    },
+
+    "content_slide-hero": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-hero" },
+        "content": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": false,
+          "properties": {
+            "title":    { "type": "string", "minLength": 1, "maxLength": 20 },
+            "subtitle": { "type": "string", "maxLength": 30 },
+            "bgImage":  { "type": ["string", "null"], "format": "uri" },
+            "icon":     { "$ref": "#/$defs/iconOptional" }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-quote": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-quote" },
+        "content": {
+          "type": "object",
+          "required": ["quote", "author"],
+          "additionalProperties": false,
+          "properties": {
+            "quote":  { "type": "string", "minLength": 1, "maxLength": 80 },
+            "author": { "type": "string", "minLength": 1, "maxLength": 20 },
+            "role":   { "type": "string", "maxLength": 40 }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-message": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-message" },
+        "content": {
+          "type": "object",
+          "required": ["main", "accent"],
+          "additionalProperties": false,
+          "properties": {
+            "main":   { "type": "string", "minLength": 1, "maxLength": 60, "description": "30字×2行 = 60字上限。" },
+            "accent": { "$ref": "#/$defs/accentColorEnum" },
+            "icon":   { "$ref": "#/$defs/iconOptional" },
+            "subtext":{ "type": "string", "maxLength": 40 }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-title": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-title" },
+        "content": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": false,
+          "properties": {
+            "title":          { "type": "string", "minLength": 1, "maxLength": 25 },
+            "subtitle":       { "type": "string", "maxLength": 40 },
+            "section_number": { "type": "string", "pattern": "^[0-9]{1,2}$" }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-list": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-list" },
+        "content": {
+          "type": "object",
+          "required": ["title", "items"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "items": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 7,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 25 },
+                  "desc":  { "type": "string", "maxLength": 50 },
+                  "icon":  { "$ref": "#/$defs/iconOptional" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-icon-grid": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-icon-grid" },
+        "content": {
+          "type": "object",
+          "required": ["title", "items"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "columns": { "type": "integer", "minimum": 2, "maximum": 4, "default": 3 },
+            "items": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 9,
+              "items": {
+                "type": "object",
+                "required": ["icon", "label"],
+                "additionalProperties": false,
+                "properties": {
+                  "icon":     { "$ref": "#/$defs/fontAwesomeIcon" },
+                  "label":    { "type": "string", "minLength": 1, "maxLength": 12 },
+                  "selected": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-grid": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-grid" },
+        "content": {
+          "type": "object",
+          "required": ["title", "cards"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "cards": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["title"],
+                "additionalProperties": false,
+                "properties": {
+                  "title": { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "desc":  { "type": "string", "maxLength": 60 },
+                  "image": { "type": ["string", "null"], "format": "uri" },
+                  "icon":  { "$ref": "#/$defs/iconOptional" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-pyramid": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-pyramid" },
+        "content": {
+          "type": "object",
+          "required": ["title", "levels", "direction"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "direction": { "type": "string", "enum": ["up", "down"] },
+            "levels": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "desc":  { "type": "string", "maxLength": 60 }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-circle": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-circle" },
+        "content": {
+          "type": "object",
+          "required": ["title", "center", "satellites"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "center": {
+              "type": "object",
+              "required": ["label"],
+              "additionalProperties": false,
+              "properties": {
+                "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                "icon":  { "$ref": "#/$defs/iconOptional" }
+              }
+            },
+            "satellites": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                  "icon":  { "$ref": "#/$defs/iconOptional" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-compare": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-compare" },
+        "content": {
+          "type": "object",
+          "required": ["title", "left", "right"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "axis":  { "type": "string", "maxLength": 30 },
+            "left":  { "$ref": "#/$defs/comparePanel" },
+            "right": { "$ref": "#/$defs/comparePanel" }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "comparePanel": {
+      "type": "object",
+      "required": ["title", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "color": { "$ref": "#/$defs/accentColorEnum" },
+        "items": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 }
+        }
+      }
+    },
+
+    "content_slide-code-compare": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-code-compare" },
+        "content": {
+          "type": "object",
+          "required": ["title", "before", "after"],
+          "additionalProperties": false,
+          "properties": {
+            "title":  { "type": "string", "minLength": 1, "maxLength": 25 },
+            "before": { "$ref": "#/$defs/codePanel" },
+            "after":  { "$ref": "#/$defs/codePanel" }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "codePanel": {
+      "type": "object",
+      "required": ["label", "code", "lang"],
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+        "code":  { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "lang":  { "$ref": "#/$defs/langEnum" }
+      }
+    },
+
+    "content_slide-flow": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-flow" },
+        "content": {
+          "type": "object",
+          "required": ["title", "steps"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "direction": { "type": "string", "enum": ["horizontal"], "default": "horizontal" },
+            "steps": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 15 },
+                  "icon":  { "$ref": "#/$defs/iconOptional" },
+                  "desc":  { "type": "string", "maxLength": 40 }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-process": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-process" },
+        "content": {
+          "type": "object",
+          "required": ["title", "steps"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "direction": { "type": "string", "enum": ["vertical"], "default": "vertical" },
+            "steps": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["number", "label", "desc"],
+                "additionalProperties": false,
+                "properties": {
+                  "number": { "type": "integer", "minimum": 1, "maximum": 99 },
+                  "label":  { "type": "string", "minLength": 1, "maxLength": 25 },
+                  "desc":   { "type": "string", "minLength": 1, "maxLength": 80 }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-timeline": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-timeline" },
+        "content": {
+          "type": "object",
+          "required": ["title", "events"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "events": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": ["date", "label"],
+                "additionalProperties": false,
+                "properties": {
+                  "date":  { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "label": { "type": "string", "minLength": 1, "maxLength": 25 },
+                  "desc":  { "type": "string", "maxLength": 60 }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-table": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-table" },
+        "content": {
+          "type": "object",
+          "required": ["title", "headers", "rows"],
+          "additionalProperties": false,
+          "properties": {
+            "title":   { "type": "string", "minLength": 1, "maxLength": 25 },
+            "headers": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 6,
+              "items": { "type": "string", "minLength": 1, "maxLength": 20 }
+            },
+            "rows": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 10,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 6,
+                "items": { "type": "string", "maxLength": 40 }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-code": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-code" },
+        "content": {
+          "type": "object",
+          "required": ["title", "code", "lang"],
+          "additionalProperties": false,
+          "properties": {
+            "title":  { "type": "string", "minLength": 1, "maxLength": 25 },
+            "code":   { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "lang":   { "$ref": "#/$defs/langEnum" },
+            "highlight_lines": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_slide-highlight": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "slide-highlight" },
+        "content": {
+          "type": "object",
+          "required": ["value", "label"],
+          "additionalProperties": false,
+          "properties": {
+            "title":  { "type": "string", "maxLength": 25 },
+            "value":  { "type": "string", "minLength": 1, "maxLength": 12, "description": "例: '95%'" },
+            "label":  { "type": "string", "minLength": 1, "maxLength": 20 },
+            "context":{ "type": "string", "maxLength": 60 }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_diagram-cycle": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["diagram-cycle", "diagram-pdca", "diagram-triangle-cycle"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title", "steps"],
+          "additionalProperties": false,
+          "properties": {
+            "title":       { "type": "string", "minLength": 1, "maxLength": 30 },
+            "center_label":{ "type": ["string", "null"], "maxLength": 12 },
+            "steps": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 7,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                  "desc":  { "type": "string", "maxLength": 40 },
+                  "icon":  { "$ref": "#/$defs/iconOptional" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_diagram-comparison-1": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["diagram-vs", "diagram-butterfly", "diagram-slope"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title", "left", "right"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "left": {
+              "type": "object",
+              "required": ["title"],
+              "additionalProperties": true,
+              "properties": {
+                "title": { "type": "string", "minLength": 1, "maxLength": 20 },
+                "value": { "type": "number" },
+                "items": {
+                  "type": "array",
+                  "items": { "type": "string", "maxLength": 40 }
+                },
+                "color": { "$ref": "#/$defs/accentColorEnum" }
+              }
+            },
+            "right": {
+              "type": "object",
+              "required": ["title"],
+              "additionalProperties": true,
+              "properties": {
+                "title": { "type": "string", "minLength": 1, "maxLength": 20 },
+                "value": { "type": "number" },
+                "items": {
+                  "type": "array",
+                  "items": { "type": "string", "maxLength": 40 }
+                },
+                "color": { "$ref": "#/$defs/accentColorEnum" }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_diagram-business-prep": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "diagram-prep" },
+        "content": {
+          "type": "object",
+          "required": ["title", "point", "reason", "example", "point_again"],
+          "additionalProperties": false,
+          "properties": {
+            "title":       { "type": "string", "minLength": 1, "maxLength": 30 },
+            "point":       { "type": "string", "minLength": 1, "maxLength": 60 },
+            "reason":      { "type": "string", "minLength": 1, "maxLength": 80 },
+            "example":     { "type": "string", "minLength": 1, "maxLength": 80 },
+            "point_again": { "type": "string", "minLength": 1, "maxLength": 60 }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_diagram-fabe-horizontal": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": [
+            "diagram-fabe-horizontal", "diagram-fabe-vertical",
+            "diagram-fabe-grid", "diagram-fabe-timeline", "diagram-fabe-circular"
+          ]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title", "feature", "advantage", "benefit", "evidence"],
+          "additionalProperties": false,
+          "properties": {
+            "title":     { "type": "string", "minLength": 1, "maxLength": 30 },
+            "feature":   { "type": "string", "minLength": 1, "maxLength": 80 },
+            "advantage": { "type": "string", "minLength": 1, "maxLength": 80 },
+            "benefit":   { "type": "string", "minLength": 1, "maxLength": 80 },
+            "evidence":  { "type": "string", "minLength": 1, "maxLength": 100 },
+            "layout": {
+              "type": "string",
+              "enum": ["horizontal", "vertical", "grid_2x2", "timeline", "circular"]
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_diagram-visual-1": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["diagram-mindmap", "diagram-concentric", "diagram-value-stack",
+                   "diagram-venn-2", "diagram-venn-3"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": true,
+          "properties": {
+            "title":  { "type": "string", "minLength": 1, "maxLength": 30 },
+            "center": { "type": "string", "maxLength": 30 },
+            "branches": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 15 },
+                  "color": { "$ref": "#/$defs/accentColorEnum" }
+                }
+              }
+            },
+            "rings": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 15 },
+                  "desc":  { "type": "string", "maxLength": 40 }
+                }
+              }
+            },
+            "circles": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 15 },
+                  "desc":  { "type": "string", "maxLength": 40 }
+                }
+              }
+            },
+            "intersections": {
+              "type": "object",
+              "additionalProperties": { "type": "string", "maxLength": 40 }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_chart-bar": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["chart-bar-vertical", "chart-bar-horizontal", "chart-bar-stacked"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "title":   { "type": "string", "minLength": 1, "maxLength": 30 },
+            "x_label": { "type": "string", "maxLength": 20 },
+            "y_label": { "type": "string", "maxLength": 20 },
+            "horizontal": { "type": "boolean" },
+            "data": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 12,
+              "items": {
+                "type": "object",
+                "required": ["label", "value"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "value": { "type": "number" }
+                }
+              }
+            },
+            "series": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "values"],
+                "additionalProperties": false,
+                "properties": {
+                  "name":   { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "values": { "type": "array", "items": { "type": "number" } }
+                }
+              }
+            },
+            "categories": {
+              "type": "array",
+              "items": { "type": "string", "maxLength": 20 }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_chart-pie": {
+      "type": "object",
+      "properties": {
+        "slideType": { "enum": ["chart-pie", "chart-clock-pie"] },
+        "content": {
+          "type": "object",
+          "required": ["title", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "show_percentage": { "type": "boolean", "default": true },
+            "data": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": ["label", "value"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "value": { "type": "number", "minimum": 0 },
+                  "color": { "$ref": "#/$defs/accentColorEnum" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_chart-line": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "chart-line" },
+        "content": {
+          "type": "object",
+          "required": ["title", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "x_label": { "type": "string", "maxLength": 20 },
+            "y_label": { "type": "string", "maxLength": 20 },
+            "data": {
+              "type": "array",
+              "minItems": 3,
+              "items": {
+                "type": "object",
+                "required": ["label", "value"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "value": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_chart-radar": {
+      "type": "object",
+      "properties": {
+        "slideType": { "const": "chart-radar" },
+        "content": {
+          "type": "object",
+          "required": ["title", "axes", "series"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "axes": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 8,
+              "items": { "type": "string", "minLength": 1, "maxLength": 15 }
+            },
+            "series": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "required": ["name", "values"],
+                "additionalProperties": false,
+                "properties": {
+                  "name":   { "type": "string", "minLength": 1, "maxLength": 20 },
+                  "values": {
+                    "type": "array",
+                    "items": { "type": "number", "minimum": 0, "maximum": 100 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_d3-cycle": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["d3-cycle", "d3-pdca", "d3-triangle-cycle", "d3-rotating-flow"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["data_chart", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "data_chart": { "type": "string", "enum": ["cycle", "pdca", "triangle-cycle", "rotating-flow"] },
+            "title":      { "type": "string", "maxLength": 30 },
+            "data": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 7,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                  "desc":  { "type": "string", "maxLength": 40 }
+                }
+              }
+            },
+            "options": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "width":      { "type": "integer", "minimum": 200, "maximum": 2000 },
+                "height":     { "type": "integer", "minimum": 200, "maximum": 2000 },
+                "showArrows": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_d3-tree": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["d3-tree", "d3-org-chart", "d3-sunburst", "d3-treemap",
+                   "d3-packed-circles", "d3-dendrogram"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["data_chart", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "data_chart": { "type": "string", "enum": ["tree", "org-chart", "sunburst", "treemap", "packed", "dendrogram"] },
+            "title":      { "type": "string", "maxLength": 30 },
+            "data":       { "$ref": "#/$defs/treeNode" },
+            "options": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "horizontal": { "type": "boolean" },
+                "width":      { "type": "integer", "minimum": 200, "maximum": 2000 },
+                "height":     { "type": "integer", "minimum": 200, "maximum": 2000 }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "treeNode": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name":     { "type": "string", "minLength": 1, "maxLength": 30 },
+        "title":    { "type": "string", "maxLength": 30 },
+        "value":    { "type": "number" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/treeNode" }
+        }
+      }
+    },
+
+    "content_d3-sankey": {
+      "type": "object",
+      "properties": {
+        "slideType": { "enum": ["d3-sankey", "d3-force", "d3-chord", "d3-arc"] },
+        "content": {
+          "type": "object",
+          "required": ["data_chart", "data"],
+          "additionalProperties": false,
+          "properties": {
+            "data_chart": { "type": "string", "enum": ["sankey", "force", "chord", "arc"] },
+            "title":      { "type": "string", "maxLength": 30 },
+            "data": {
+              "type": "object",
+              "required": ["nodes", "links"],
+              "additionalProperties": false,
+              "properties": {
+                "nodes": {
+                  "type": "array",
+                  "minItems": 2,
+                  "items": {
+                    "type": "object",
+                    "required": ["id"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "id":    { "type": "string", "minLength": 1, "maxLength": 30 },
+                      "name":  { "type": "string", "maxLength": 30 },
+                      "group": { "type": ["string", "integer"] }
+                    }
+                  }
+                },
+                "links": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["source", "target"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "source": { "type": ["string", "integer"] },
+                      "target": { "type": ["string", "integer"] },
+                      "value":  { "type": "number", "minimum": 0 },
+                      "label":  { "type": "string", "maxLength": 30 }
+                    }
+                  }
+                }
+              }
+            },
+            "options": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "width":  { "type": "integer", "minimum": 200, "maximum": 2000 },
+                "height": { "type": "integer", "minimum": 200, "maximum": 2000 }
+              }
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_d3-bar": {
+      "type": "object",
+      "properties": {
+        "slideType": {
+          "enum": ["d3-bar", "d3-line", "d3-pie", "d3-donut", "d3-radar",
+                   "d3-gauge", "d3-bubble", "d3-heatmap", "d3-radial-bar",
+                   "d3-bullet", "d3-lollipop", "d3-calendar", "d3-isotype",
+                   "d3-wordcloud", "d3-pyramid", "d3-funnel", "d3-waterfall",
+                   "d3-roadmap", "d3-vertical-timeline"]
+        },
+        "content": {
+          "type": "object",
+          "required": ["data_chart", "data"],
+          "additionalProperties": true,
+          "properties": {
+            "data_chart": { "type": "string", "minLength": 1, "maxLength": 40 },
+            "title":      { "type": "string", "maxLength": 30 },
+            "data": {
+              "description": "D3チャートの種別ごとに形状が異なる（配列・スカラー・オブジェクト）。各チャートタイプ固有の検証は scripts/validate-structure.js 側で実施。",
+              "anyOf": [
+                { "type": "array", "minItems": 1, "maxItems": 366 },
+                { "type": "number" },
+                { "type": "object" }
+              ]
+            },
+            "options": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    },
+
+    "content_generic": {
+      "type": "object",
+      "description": "厳密定義されていないスライドタイプ用のフォールバック。content は最小限 title を持つ。",
+      "properties": {
+        "slideType": {
+          "enum": [
+            "diagram-snake", "diagram-flowchart", "diagram-growth",
+            "diagram-roadmap", "diagram-chevron", "diagram-vertical-timeline",
+            "diagram-wave-step", "diagram-gantt",
+            "diagram-org", "diagram-person-network",
+            "diagram-problem-solution", "diagram-value-prop",
+            "diagram-point-cards", "diagram-aidma", "diagram-star",
+            "diagram-persona", "diagram-icon-grid", "diagram-funnel",
+            "diagram-matrix", "diagram-table-advanced", "diagram-parallel",
+            "chart-scatter", "chart-gauge"
+          ]
+        },
+        "content": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": true,
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 30 }
+          }
+        }
+      },
+      "required": ["slideType", "content"]
+    }
+  }
+}

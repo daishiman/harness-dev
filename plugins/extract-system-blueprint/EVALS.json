@@ -1,0 +1,57 @@
+{
+  "plugin": "extract-system-blueprint",
+  "version": "0.2.0",
+  "harness": {
+    "mechanical": [
+      "python3 plugins/extract-system-blueprint/scripts/fetch-snapshot.py --self-test",
+      "python3 plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py --self-test",
+      "python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/extract-system-blueprint/plugin-composition.yaml",
+      "python3 plugins/extract-system-blueprint/scripts/mermaid-validate.py --docs-dir <blueprint-run-dir>",
+      "python3 plugins/extract-system-blueprint/scripts/doc-emit.py --extraction <extraction.json> --out-dir <run-dir> --request-ledger <ledger.json> --check-screens",
+      "python3 plugins/extract-system-blueprint/scripts/doc-emit.py --check-apply <apply-recommendations.json> --blueprint <blueprint.json>"
+    ],
+    "mechanical_note": "fetch-snapshot.py --self-test と pre-fetch-authz-guard.py --self-test は fixture/オフラインで単独 PASS する決定論 self-test。lint-plugin-composition.py は本 plugin-composition.yaml surface の構造ゲート (capabilities 重複/実在 + hooks↔.claude-plugin/plugin.json 配線 1:1) で、manifest surface (.claude-plugin/plugin.json) の build 後に PASS が確定する。mermaid-validate.py / doc-emit.py --check-screens / --check-apply は実 draft(<...>=run-dir/extraction/apply-recommendations)を必須入力とし単独 self-test を持たないため、C01 R3(自己検証)と C02(独立評価)/C14(--check-apply)が実行時に走らせる共有 entrypoint として配線する。",
+    "llm_eval": [
+      "assign-blueprint-fidelity-evaluator (C02 kind=assign, context:fork) が C01 生成 blueprint を proposer≠approver で独立評価し、fact/inference/observation_gap 分離・evidence_refs+confidence 接地・layout/observation_gap completeness (screenshot 等レンダリング必須 field は browser-render 取得時は fact・ブラウザ不在時は observation_gap 記録で検査)・5 種 Mermaid・essence 章の忠実性を verdict(PASS/FAIL)で確定する",
+      "reconstruction-rehearsal (C01.OUT1×C02 配線の LLM-eval): 生成 blueprint から最小スカフォールド骨子を試導出し、事実/推測/確度の必須フィールド欠落 0 と AI 追加質問なし着手可を逆テストする",
+      "run-extract-blueprint(C01)の feedback_contract criteria を各 buildable component の昇格前ゲートとして実行し、run-elegant-review C1-C4 all PASS を要求する"
+    ],
+    "llm_evals": [
+      {
+        "name": "reconstruction-rehearsal",
+        "wires": [
+          "C01.OUT1",
+          "C02"
+        ],
+        "intent": "生成blueprintから最小スカフォールド骨子を試導出し事実/推測/確度の必須フィールド欠落0とAI追加質問なし着手可を逆テストするLLM-eval"
+      }
+    ],
+    "threshold": 80,
+    "threshold_note": "threshold:80 は各 buildable component (build 計画正本 plugin-plans/extract-system-blueprint/component-inventory.json) が携帯する harness_coverage{min:80} の宣言値(kind_pass=content-review-verdict+coverage/test)。plugin 自身の行カバレッジは CI の per-plugin pytest が担い、本 harness 内に 80 と比較する plugin-local スコアラは持たない。",
+    "llm_eval_note": "llm_eval / llm_evals の各項は『どの独立 skill/契約がどの観点を fork で評価するか』の配線宣言であり採点器ではない。llm_evals[] の構造化正本は component-inventory.json plugin_level_surfaces.harness_eval.llm_evals であり、本 EVALS.json はその harness_eval surface 実体。数値判定は C02 の verdict(high==0 等)で確定する。"
+  },
+  "surfaces": [
+    "skills",
+    "agents",
+    "commands",
+    "hooks",
+    "scripts",
+    "schemas",
+    "references",
+    "plugin-manifest",
+    "plugin-composition",
+    "harness-evals"
+  ],
+  "surfaces_enforced_by": {
+    "skills": "governance-check + per-plugin pytest。frontmatter(name/description/kind/allowed-tools) + 7 層本文。C01/C02/C14 が plugin.json entry_points.skills と 1 対 1",
+    "agents": "frontmatter(name/description/kind:agent/tools/prompt_ref/prompt_layer) を機械固定 + lint-agent-prompt-section。C03-C06/C13 の 5 thin adapters が plugin.json entry_points.agents と 1 対 1、expert_lenses 実名見出し/guard_rules は references/expert-lens-roster.md ↔ inventory prompt_contract 展開で担保",
+    "commands": "frontmatter(name/description/argument-hint/allowed-tools) 契約。C07 extract-blueprint",
+    "hooks": "plugin.json PreToolUse 配線 (matcher=Bash|WebFetch) + pre-fetch-authz-guard.py --self-test の fail-closed(exit2) 挙動。fetch-authz 単一述語",
+    "scripts": "各 script frontmatter(lint-script-frontmatter) + fetch-snapshot.py --self-test。C09-C12 は plugin-root へ hoist した共有決定論ユーティリティで、C01 自己検証と C02 独立評価が同一ロジックを消費",
+    "schemas": "schemas/fact-inference-confidence.schema.json(fact|inference|observation_gap discriminator)と schemas/system-blueprint.schema.json(screens[] 含む top-level blueprint shape)が横断契約 SSOT。doc-emit.py が emit 時に適合検査",
+    "references": "references/expert-lens-roster.md(inventory expert_lenses/prompt_contract の決定論展開正本)と references/runbook.md(install/setup/run/被覆/観測フィールド一覧の運用正本)",
+    "plugin-manifest": ".claude-plugin/plugin.json (name↔folder 一致 / distributable / declared hooks 実在 / entry_points ↔ capabilities 1:1)。lint-plugin-composition.py が hooks 配線を照合",
+    "plugin-composition": "plugin-composition.yaml (本 surface と対) 。lint-plugin-composition.py が capabilities 重複/実在 + hooks↔plugin.json 配線 1:1 を機械検査",
+    "harness-evals": "declarative (本 EVALS.json 自体が harness。mechanical[] の全 invocation が一次、llm_evals[] は component-inventory.json plugin_level_surfaces.harness_eval と対応)"
+  }
+}

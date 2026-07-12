@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "name": "presentation-slide-generator",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "c8 --clean=true --silent --include scripts/render-report.js --include scripts/mermaid-render.js node tests/test-render-report.js && c8 --clean=false --check-coverage --lines 80 --per-file --reporter=text-summary --include scripts/render-report.js --include scripts/mermaid-render.js node tests/test-mermaid-render.js && node tests/test-cross-deck-consistency.js && node scripts/verify-report-runtime.js --self-test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mermaid": "11.16.0",
+    "playwright": "^1.60.0"
+  },
+  "devDependencies": {
+    "c8": "10.1.3"
+  }
+}

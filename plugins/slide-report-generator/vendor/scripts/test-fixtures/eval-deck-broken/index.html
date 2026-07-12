@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="UTF-8"><title>壊れたテストデッキ</title></head>
+<body>
+  <!-- ナビは prev のみ（next 欠落・dots 欠落・上部インデックス欠落）= D3 error/warn を誘発 -->
+  <nav class="nav" aria-label="ナビ">
+    <button class="nav__btn" id="prevBtn" aria-label="前のスライド" type="button">&#8249;</button>
+  </nav>
+
+  <div class="slider">
+    <div class="slide-area">
+      <div class="slider__container">
+        <section class="slider__item slide-title" data-type="title">
+          <div class="slider__content">
+            <h1>テスト</h1>
+            <!-- 実体の無いローカル画像 = D1 missingImage error -->
+            <img src="assets/nonexistent.png" alt="欠落画像">
+            <!-- テンプレート型崩れ = D1 corruption error -->
+            <p>[object Object]</p>
+            <!-- 極小SVGフォント = D2 svgMinPx warn -->
+            <svg viewBox="0 0 100 50"><text x="0" y="20" font-size="9">小さすぎ</text></svg>
+          </div>
+        </section>
+        <section class="slider__item slide-message" data-type="message">
+          <div class="slider__content"><h2>2枚目</h2></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

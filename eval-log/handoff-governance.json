@@ -1,0 +1,46 @@
+{
+  "phase": "governance",
+  "gate": 4,
+  "decision": "solo_operator_auto",
+  "timestamp": "2026-05-24",
+  "subject": "plugins/prompt-creator (skill-creator 仕様準拠化)",
+  "auto_approve_conditions": {
+    "solo_operator_mode": true,
+    "stable_frozen": true,
+    "newly_failing_threshold_met": true,
+    "llm_reviewer_verdicts": {
+      "design_evaluate": {"C1": "PASS", "C2": "PASS", "C3": "PASS", "C4": "PASS"},
+      "elegant_review":  {"C1": "PASS", "C2": "PASS", "C3": "PASS", "C4": "PASS"}
+    }
+  },
+  "p0_lint": {
+    "validate_frontmatter": "PASS",
+    "lint_skill_name": "PASS",
+    "lint_skill_description": "PASS",
+    "lint_skill_completeness": "PASS",
+    "lint_dependency_direction": "PASS",
+    "lint_script_frontmatter": "PASS",
+    "lint_script_naming": "PASS (PENDING_RENAME=7, VIOLATION=0)"
+  },
+  "findings_residual": {
+    "high": 0,
+    "medium": 1,
+    "low": 3,
+    "info": 3,
+    "deferred_to_roadmap": [
+      "C1 medium: run-prompt-creator-7layer Phase 1 と run-prompt-elicit の二重経路 (責務再設計)",
+      "C3 low: scaffold-prompt.py SKILL.md 本文呼び出し例不在",
+      "C3 low: 8 移行スクリプトの parse_known_args 黙殺設計",
+      "C3 info: frontmatter 内 YAML コメント (`# context-budget`) の正式フィールド昇格",
+      "C2 info: cross-skill script_refs の shared_scripts セクション化"
+    ]
+  },
+  "addressed_in_pr": [
+    "high C4: run-prompt-create SKILL.md 本文 TODO(human) 2 箇所除去",
+    "high C3: CHANGELOG.md / ROADMAP.md / EVALS.json / eval-log/.gitkeep を skill-creator precedent に倣い作成 (declaration=materialized)",
+    "medium C3: run-prompt-creator-7layer に responsibilities[] 追加 + source フィールド comment-mix 解消",
+    "medium C2: plugin-composition.yaml に cross-plugin DAG (out-going 2 / in-coming 1) 追記",
+    "medium C3 (elegant-review): log-usage.py write-scope 宣言を実書込先と一致させる"
+  ],
+  "next": "report"
+}

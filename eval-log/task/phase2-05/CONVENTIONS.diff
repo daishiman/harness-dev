@@ -1,0 +1,43 @@
+--- eval-log/task/phase2-05/CONVENTIONS.before.md	2026-05-20 16:01:08
++++ CONVENTIONS.md	2026-05-20 16:01:26
+@@ -70,3 +70,40 @@
+ 3. 層 C は移行中 drift の観測場所としてのみ使い、恒久仕様にしない。
+ 4. 層 A から層 B/C への参照を見つけた場合は、配布前 gate で失敗扱いにする。
+ 5. 層 C の残存は Phase 4 で撤廃対象として棚卸しする。
++
++## Phase 2 本番 (発効待ち: 層C 退役)
++
++> **発効条件**: 本セクションは `doc/migration/phase2/07-creator-kit-removal.md` (タスク 07) の DoD 全 PASS をもって発効する。タスク 07 完了前にこのセクションの内容を運用に適用してはならない。旧三層定義 (層 A / 層 B / 層 C, 空白付き表記) は削除せず、本セクションは発効待ち差分として追記する。
++
++| 項目 | 内容 |
++|---|---|
++| 適用条件 | `doc/migration/phase2/07-creator-kit-removal.md` DoD 全 PASS |
++| 層C 退役後の正本 | `plugins/<name>/` (層A) のみ |
++| 層B との関係 | 層B (= `.claude/settings.json` user セクション等) は不変 |
++| 縮退後の参照ルール | 層A 内の plugin 間参照は禁止。層B から層A は symlink 経由でのみ参照 |
++
++### 二層モデル縮退後の責務境界 (Phase 2 本番後)
++
++| 層 | 配置 | 責務 |
++|---|---|---|
++| 層A | `plugins/<name>/` | 配布対象。skill / agent / command / hook の正本 |
++| 層B | `.claude/` のうち手編集領域 | プロジェクト固有運用。settings.json user セクション、ローカル CLAUDE.md など |
++
++### 層C 退役 (retire) チェックリスト
++
++- [ ] `creator-kit/` が物理削除済 (`test ! -d creator-kit`)
++- [ ] `git log -- creator-kit/` が削除 commit を含む
++- [ ] CONVENTIONS.md の旧「層 C」(空白付き) 記述は本セクションへの参照に置換 (07 発効後)
++
++### 縮退後の plugin 一覧 (partition-plan.json v1.1 由来)
++
++層A 配下に並ぶ plugin 7 件 + 既存試験移行済 1 件:
++
++- `plugins/skill-creator/` (試験移行済)
++- `plugins/skill-governance-adapters/`
++- `plugins/skill-governance-hooks/`
++- `plugins/skill-governance-lint/`
++- `plugins/skill-governance-migration/`
++- `plugins/skill-governance-secrets/`
++- `plugins/skill-governance-config/`
++- `plugins/skill-governance-automation/`

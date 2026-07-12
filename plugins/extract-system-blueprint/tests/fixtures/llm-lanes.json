@@ -1,0 +1,69 @@
+{
+  "cwv_field_sample": {
+    "lcp": {"value_ms": 1850, "kind": "fact"},
+    "cls": {"value": 0.04, "kind": "fact"},
+    "inp": {"value_ms": 120, "kind": "fact"},
+    "ttfb": {"value_ms": 310, "kind": "fact"},
+    "scope_note": "single visit, desktop fixture, no additional network requests"
+  },
+  "compliance_surfaces": {
+    "privacy_policy": {
+      "present": true,
+      "url": "https://example.com/privacy",
+      "structure_summary": "purpose, retention, contact"
+    },
+    "terms": {
+      "present": true,
+      "url": "https://example.com/terms",
+      "structure_summary": "eligibility, prohibited use, termination"
+    },
+    "tokushoho": {
+      "present": true,
+      "url": "https://example.com/legal/tokushoho",
+      "structure_summary": "seller, price, payment, cancellation"
+    },
+    "cookie_banner_cmp": {
+      "present": true,
+      "url": "https://example.com/cookie-policy",
+      "structure_summary": "accept, reject, preferences"
+    }
+  },
+  "feature_map": {
+    "per_screen_affordances": [
+      {
+        "screen_ref": "screen-home",
+        "forms": ["search"],
+        "ctas": ["Start trial"],
+        "operation_types": ["query", "navigate"]
+      }
+    ]
+  },
+  "user_journeys": [
+    {
+      "task": "start a trial",
+      "steps": [
+        {"screen_ref": "screen-home", "action": "select Start trial"},
+        {"screen_ref": "screen-signup", "action": "submit registration"}
+      ],
+      "evidence_refs": ["screen-home.cta.start-trial", "screen-signup.form.registration"],
+      "confidence": {
+        "level": "medium",
+        "rationale": "CTA and registration form are directly observed"
+      }
+    }
+  ],
+  "layout_template_dedup": {
+    "pages": [
+      {"url": "https://example.com/products/a", "layout_template_hash": "sha256:product", "key_screen": true},
+      {"url": "https://example.com/products/b", "layout_template_hash": "sha256:product", "key_screen": false},
+      {"url": "https://example.com/help/a", "layout_template_hash": "sha256:help", "key_screen": false},
+      {"url": "https://example.com/help/b", "layout_template_hash": "sha256:help", "key_screen": false}
+    ],
+    "expected_representative_urls": [
+      "https://example.com/products/a",
+      "https://example.com/help/a"
+    ],
+    "expected_count_before": 4,
+    "expected_count_after": 2
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-intake-kickoff/kickoff.schema.json",
+  "title": "kickoff.json",
+  "description": "Phase 1 出力。pattern / depth / skill_name_hint / pain_ranking の 4 項目を確定する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pattern", "depth", "skill_name_hint", "pain_ranking", "initial_utterance", "timestamp"],
+  "properties": {
+    "pattern": {"type": "string", "enum": ["A", "B", "C", "D", "E"]},
+    "depth": {"type": "string", "enum": ["quick", "standard", "detailed"]},
+    "skill_name_hint": {"type": "string", "minLength": 1},
+    "pain_ranking": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task", "frequency_per_week", "minutes_per_run"],
+        "properties": {
+          "task": {"type": "string"},
+          "frequency_per_week": {"type": "number", "minimum": 0},
+          "minutes_per_run": {"type": "number", "minimum": 0}
+        }
+      }
+    },
+    "initial_utterance": {"type": "string"},
+    "timestamp": {"type": "string", "minLength": 1},
+    "plugin_scale": {"type": "boolean", "description": "任意: ヒアリング中に plugin 規模構想 (hook/command 等複数コンポーネント) が明示されたとき true。run-intake-next-action の decide-mode.py が mode P 判定入力として読む。"},
+    "qa_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "answer"],
+        "properties": {
+          "question": {"type": "string"},
+          "answer": {"type": "string"}
+        }
+      }
+    }
+  }
+}

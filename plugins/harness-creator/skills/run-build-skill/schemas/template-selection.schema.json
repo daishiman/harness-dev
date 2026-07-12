@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/template-selection.schema.json",
+  "title": "Template Selection",
+  "description": "skill subtype(kind=run/ref/assign/delegate/wrap) → templates/_base + combinator 選択ルールを宣言的に表現。Capability 7 kind は build-flags.schema.json#capability_kind で扱い、本 schema の kind とは混同しない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["composer_modes", "selection_rules"],
+  "properties": {
+    "composer_modes": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["template", "atomic"]},
+      "minItems": 1
+    },
+    "atomic_order": {
+      "type": "array",
+      "description": "atomic mode で combinator を適用する順序 (固定: kind → flag)",
+      "items": {"type": "string", "enum": ["kind", "flag"]}
+    },
+    "selection_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["match", "template", "combinators"],
+        "properties": {
+          "match": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["run", "ref", "assign", "delegate", "wrap"]},
+              "role_suffix": {"type": "string", "enum": ["generator", "evaluator"]},
+              "composite": {"type": "string", "enum": ["workflow", "agent-team", "orchestrator", "hook-integrated"]}
+            }
+          },
+          "template": {"type": "string", "description": "templates/ 配下の単一ファイルパス"},
+          "combinators": {
+            "type": "array",
+            "description": "_base.md に重ねる combinator パッチ列 (順序固定)",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "composer_modes": ["template", "atomic"],
+      "atomic_order": ["kind", "flag"],
+      "selection_rules": [
+        {"match": {"kind": "run", "composite": "workflow"}, "template": "templates/run.md", "combinators": ["_base.md", "with-run.patch"]},
+        {"match": {"kind": "run", "composite": "agent-team"}, "template": "templates/agent-team.md", "combinators": ["with-run.patch", "with-subagent.patch"]},
+        {"match": {"kind": "run", "composite": "orchestrator"}, "template": "templates/orchestrator.md", "combinators": ["with-run.patch", "with-subagent.patch"]},
+        {"match": {"kind": "run", "composite": "hook-integrated"}, "template": "templates/hook-integrated.md", "combinators": ["with-run.patch", "with-hooks.patch"]},
+        {"match": {"kind": "ref"}, "template": "templates/ref.md", "combinators": ["_base.md", "with-ref.patch"]},
+        {"match": {"kind": "assign", "role_suffix": "generator"}, "template": "templates/assign-generator.md", "combinators": ["with-assign-generator.patch", "with-evaluator.patch"]},
+        {"match": {"kind": "assign", "role_suffix": "evaluator"}, "template": "templates/assign-evaluator.md", "combinators": ["with-assign-evaluator.patch"]},
+        {"match": {"kind": "wrap"}, "template": "templates/wrap.md", "combinators": ["_base.md", "with-wrap.patch"]},
+        {"match": {"kind": "delegate"}, "template": "templates/delegate.md", "combinators": ["_base.md", "with-delegate.patch"]}
+      ]
+    }
+  ]
+}

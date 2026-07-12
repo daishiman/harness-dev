@@ -1,0 +1,65 @@
+{
+  "category": "build-patterns",
+  "label": "build-patterns",
+  "version": "1.0.0",
+  "created_at": "2026-07-11",
+  "items": [
+    {
+      "id": "runtime-deviation_ba1b0563d2",
+      "title": "計画からの逸脱 (route deviation): run-skill-create の子スキル (run-skill-elicit/run-build-skill/ass",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "run-skill-create の子スキル (run-skill-elicit/run-build-skill/assign-skill-design-evaluator 等) と Gate 承認フロー・build-trace 生成は本 route の単独 build context では起動せず、E2 直接消費の要点 (brief を Step1 成果物へ直接採用・SKILL.md 一式生成・… (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-deviation_e69750d163",
+      "title": "計画からの逸脱 (route deviation): evaluator ゲート (assign-skill-design-evaluator の独立 context for",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "evaluator ゲート (assign-skill-design-evaluator の独立 context fork) は本 build context で起動不能のため、prompts/R2-gate-review・skill-design-rubric の評価観点を新規 reasoning で自己適用した: (C1 目的最適反映) brief 全フィールド (goal/checklist… (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-deviation_02f8054524",
+      "title": "計画からの逸脱 (route deviation): run-skill-create 完了フロー中の run-elegant-review (content-review)",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "run-skill-create 完了フロー中の run-elegant-review (content-review) は独立 context 起動不能のため本 route では未起動。task-graph 外ループのエレガント検証工程 (TG) で別 context 実施を申し送る。 (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    }
+  ]
+}

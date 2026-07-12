@@ -1,0 +1,216 @@
+{
+  "agent": "elegant-logical-structural-analyst",
+  "run_id": "20260702T065933",
+  "paradigm_findings": [
+    {
+      "method": "批判的思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-01",
+          "summary": "評価層の rubric が命令型構造を合格条件化し、宣言型 (ゴールシーク) invariant と正面衝突。prompt-rubric.json C3-004「5.2 推論手順が 3-7 ステップで具体的」と C4-001「5.3 self_evaluation_checklist が 5-8 項目」は、正本テンプレ seven-layer-markdown-template.md の Layer 5 構成 (5.2=ゴール定義 / 5.3=完了チェックリスト / 5.4=実行方式・固定手順なし) と両立不能で、c1-c4-criteria.md C3 の Failing シグナル「『適宜判断』『状況に応じて』等の曖昧語」はゴールシークの「都度立案」型記述を FAIL へ誘導する。生成側がゴールシーク形を強制する一方、評価側が旧命令型を要求するため、パイプラインが収束する成果物は自 plugin の invariant を必ず破る。",
+          "location": "plugins/prompt-creator/skills/assign-prompt-design-evaluator/references/prompt-rubric.json:26,32 / references/c1-c4-criteria.md:C3-C4節 / skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md:74-89",
+          "condition_signal": "contradiction",
+          "severity": "critical",
+          "auto_fixable": false,
+          "recommendation": "prompt-rubric.json / c1-c4-criteria.md を宣言型基準へ全面改訂 (C3-004→「5.2 ゴール定義が成果状態で書かれ固定手順を含まない」、C4-001→「5.3 完了チェックリストが第三者検証可能」)。skill-creator の goal-seek-paradigm.md を rubric の正本参照に据え、改修は run-build-skill/skill-improve 経由で criteria 再生成する。"
+        },
+        {
+          "id": "A2-03",
+          "summary": "「数量カウントを排し質ベース判定」を核心原則と宣言しながら、機械ゲートは数量だらけ: C4-001 5-8 項目、C3-004 3-7 ステップ、trigger_conditions minItems 2 / maxItems 3、質問 3-5 問、評価優先度 2-3 個。review-prompt agent 自身も「数量基準でなく質ベース判定」と宣言した直後に count rubric を適用しており、原則と機構が自己矛盾。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/SKILL.md:120 / schemas/prompt-brief.schema.json:30 / assign-prompt-design-evaluator/references/prompt-rubric.json:26,32 / agents/prompt-creator-review-prompt.md:64",
+          "condition_signal": "contradiction",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "数量制約を「構造上の下限 (非空)」と「品質判定 (質ベース)」に二層分離し、品質判定側の count 条件を検証可能性ベースの判定質問へ置換。残す数値は rationale 併記で構造制約であることを明示する。"
+        }
+      ]
+    },
+    {
+      "method": "演繹思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-02",
+          "summary": "一般則 (「seven-layer-markdown-template.md を正本とする」宣言 + invariant「L5 固定手順禁止」) を個別事例へ当てはめると、plugin 所有の全 6 prompts (R1-main / R1-elicit / R2-gate-review / R3-governance-decide / R1-evaluate / R1-interview) が Layer 5 に「### 5.2 推論手順 (再現可能)」の固定ステップ列挙を持ち全滅。生成物にはゴールシークを強制し自身は命令型という dogfooding 断絶で、R1-main.md は出力指示で「Layer 5.2 の手順に従って」と固定手順追従まで命じている。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1-main.md:105-112,152 / run-prompt-create/prompts/R1-elicit.md:89-96 / R2-gate-review.md:81-87 / R3-governance-decide.md:79-85 / assign-prompt-design-evaluator/prompts/R1-evaluate.md:76-83 / run-prompt-elicit/prompts/R1-interview.md:78-84",
+          "condition_signal": "contradiction",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "6 prompts の Layer 5 を正本テンプレ準拠 (5.2 ゴール定義 / 5.3 完了チェックリスト / 5.4 実行方式) へ冪等更新。改修は skill-creator 機構 (goal-seek 規律 + lint) 経由で実施。"
+        },
+        {
+          "id": "A2-06",
+          "summary": "feedback_contract IN1 が主張する機械保証 (「固定手順を verify-completeness.py が検出し FAIL なら停止できる」) が名目化。検出ロジックは Layer 5 に『思考プロセス』と『ステップN』が同時出現する場合のみ FAIL で、「推論手順」「手順 1. 2. 3.」等の番号付き列挙 (現に自 prompts の 5.2 が該当) を素通しする。宣言型転換の中核 invariant に対応する実効的 lint が存在しない。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py:90-96 / SKILL.md:70 (feedback_contract IN1)",
+          "condition_signal": "dependency_break",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "固定手順検出を拡張 (Layer 5 内の連番リスト+動詞命令形パターン、『推論手順』『手順』『steps』見出し検出) し、曖昧語/二値チェックリスト検査を p0-lint に配線。IN1 の文言は実装能力と一致させる。"
+        }
+      ]
+    },
+    {
+      "method": "帰納的思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-08",
+          "summary": "evaluation_priorities の仕様が 4 箇所で三様にドリフト: workflow-guide.md Round 2.5「最大 2 つ・5 選択肢」、quality-criteria.md 7.3「最大 2 つ」、R1-interview.md と interview-user agent「2-3 個」、さらに agent の Round 3 質問テンプレは accuracy/completeness/conciseness/safety という別語彙を提示。別語彙で収集した優先度は quality-criteria 7.2 のマッピングに接続できず、Pass 0 動的評価基準生成が機能しない。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/workflow-guide.md:31-43 / references/quality-criteria.md:§7.3 / run-prompt-elicit/prompts/R1-interview.md:37,90 / agents/prompt-creator-interview-user.md:81-82",
+          "condition_signal": "inconsistency",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "優先度語彙と上限の正本を 1 ファイルに確定し、agent/prompt/guide は参照のみに書き換え。hearing-result.schema.json の evaluation_priorities に enum を付け機械検証化する。"
+        },
+        {
+          "id": "A2-12",
+          "summary": "README 5-2 の単体起動 Phase 表が 7layer SKILL.md の Phase 定義と食い違い、README=SKILL 同期パターンから逸脱。",
+          "location": "plugins/prompt-creator/README.md:134-142 / skills/run-prompt-creator-7layer/SKILL.md:120-138",
+          "condition_signal": "inconsistency",
+          "severity": "low",
+          "auto_fixable": false,
+          "recommendation": "README の Phase 表を SKILL.md の End-to-End Flow から転記生成 (または SKILL.md への参照へ縮退) し、二重管理を解消する。"
+        }
+      ]
+    },
+    {
+      "method": "アブダクション",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-15",
+          "summary": "観測群 (A2-01 rubric 命令型、A2-02 自 prompts 命令型、A2-06 検出器の穴、A2-05 brief 契約のゴール材料欠落) を最も良く説明する単一仮説: ゴールシーク原則は生成テンプレ層にのみ後付け retrofit され、評価層・自己プロンプト層・データ契約層は旧命令型設計のまま取り残された。rubric がゲートである以上、部分 retrofit は毎回命令型へ引き戻される。",
+          "location": "plugins/prompt-creator/ 全体 (層別: references/seven-layer-format.md=新 vs prompt-rubric.json・prompts/*・prompt-brief.schema.json=旧)",
+          "condition_signal": "contradiction",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "転換の実施順序を「評価層 rubric の宣言型化 (A2-01) → 検出器強化 (A2-06) → brief 契約拡張 (A2-05) → 自己プロンプト冪等更新 (A2-02)」とし、引き戻し源 (ゲート) から潰す。goal-seek-paradigm の 4 ブロック構造を全層の共通正本に指定する。"
+        },
+        {"ref": "A2-01"},
+        {"ref": "A2-02"}
+      ]
+    },
+    {
+      "method": "垂直思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-16",
+          "summary": "自 prompts の命令型が残存する根本原因: パイプラインは新規生成物のみ 4 ゲートで評価し、plugin 所有の既存 prompts/*.md には p0-lint も design-evaluate も走る配線がない。dogfooding は ROADMAP 長期 KPI に先送りされ、自己適用ゲートの不在が矛盾を検出不能にしている構造的漏れ。",
+          "location": "plugins/prompt-creator/ROADMAP.md:22 / skills/run-prompt-create/workflow-manifest.json:p0-lint (対象は ${PROMPT_OUTPUT} のみ)",
+          "condition_signal": "omission",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "verify-completeness.py / validate-prompt.py を plugin 所有 prompts/*.md にも走らせる自己適用 lint を CI に配線し、dogfooding を長期 ROADMAP から短期へ前倒しする。"
+        },
+        {"ref": "A2-02"}
+      ]
+    },
+    {
+      "method": "要素分解",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-04",
+          "summary": "機械可読層の参照実体が断線: workflow-manifest.json resourceIds・resource-map.yaml・SKILL.md 本文・R1-elicit.md 2.1 が `prompts/elicit.md` `prompts/gate-review.md` `prompts/governance-decide.md` `run-prompt-elicit/prompts/interview.md` を指すが、実体は R1-/R2-/R3- prefix 付きのみ。p0-lint 8 本にはこの dangling を検知する lint がなく、orchestrator が実行時に resourceIds を解決できない。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/workflow-manifest.json:16-19,89-92,107-110 / references/resource-map.yaml:21-29 / SKILL.md:143,146,167,203 / prompts/R1-elicit.md:33",
+          "condition_signal": "dependency_break",
+          "severity": "high",
+          "auto_fixable": true,
+          "recommendation": "参照を R-id 付き実ファイル名へ一括修正し、workflow-manifest の resourceIds 実在検証 lint を p0-lint に追加する。"
+        },
+        {
+          "id": "A2-10",
+          "summary": "prompts メタ表の layers_covered が実体と不一致: 部分宣言しながら全ファイルが Layer 1-7 の全節を実装。C1-003 はメタ表の存在のみ検査し宣言と実体の整合を検査しない。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/prompts/R1-elicit.md:13 / R2-gate-review.md:12 / R3-governance-decide.md:13 / assign-prompt-design-evaluator/prompts/R1-evaluate.md:10",
+          "condition_signal": "inconsistency",
+          "severity": "low",
+          "auto_fixable": true,
+          "recommendation": "layers_covered を実装済み Layer 全列挙へ修正するか、部分宣言の意味論を定義し、メタ表 vs 実 Layer 節の突合を validate-prompt.py に追加する。"
+        }
+      ]
+    },
+    {
+      "method": "MECE",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-05",
+          "summary": "宣言型プロンプトの中核材料 (goals / checklist / purpose / background / success_criteria) が、正本経路のデータ契約 prompt-brief.schema.json (additionalProperties:false) に一切存在せず、elicit→build 間で構造的に脱落する。一方 legacy sheet 経路は goals 必須+checklist ありで、経路によって宣言型材料の有無が分岐する重複かつ漏れの二重欠陥。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/schemas/prompt-brief.schema.json:8-45 / run-prompt-creator-7layer/schemas/hearing-result.schema.json:41-89 / references/quality-criteria.md:§1.1",
+          "condition_signal": "omission",
+          "severity": "critical",
+          "auto_fixable": false,
+          "recommendation": "prompt-brief.schema.json に goals[] (成果状態・必須) / checklist[] (YES-NO 判定基準付き) / purpose / background を追加し、legacy sheet schema と正本 brief の項目対応を単一マッピングにする。skill-creator の goal-spec.json と項目名を揃える。"
+        },
+        {"ref": "A2-03"}
+      ]
+    },
+    {
+      "method": "2軸思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-11",
+          "summary": "auto_approve 条件を「重要度×検証可能性」で象限分けすると、最重要条件群が検証不能象限に落ちる: solo_operator_mode / stable_frozen は静的定数で恒真、newly_failing==0 / llm_reviewer==PASS / atomic_field_violations==0 は算出主体・入力ファイルが未定義。Gate 4 の「機械評価」が実質 LLM の自己申告。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/references/governance-params.json:3-4 / workflow-manifest.json:113-126",
+          "condition_signal": "smell",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "各 auto_approve 条件に evaluator (script パス or 判定手続き) と入力 artifact を 1:1 で紐付ける evidence 列を manifest に追加し、恒真の静的条件は「環境前提」として分離。evaluate-create-gates.py を拡張して条件評価を集約する。"
+        }
+      ]
+    },
+    {
+      "method": "プロセス思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-07",
+          "summary": "orchestrator は「Gate 1 のみユーザー対話 / user_question_budget=1」を invariant とするが、委譲先 7layer は Phase 2 で導出確認→ユーザー承認 (skip 条件なし)、Phase 3 で AskUserQuestion、workflow-guide.md Phase 3 は出力先パス指定まで要求。ループ呼出 skip が明文化されているのは format のみで、orchestrator 経由時に予算違反となる。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/SKILL.md:28,111 / workflow-manifest.json:127-128 / run-prompt-creator-7layer/SKILL.md:150-160 / references/workflow-guide.md:56-69,75-82",
+          "condition_signal": "inconsistency",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "7layer 側に「orchestrator 呼出時 (brief 供給時) は Phase 1-3 の全ユーザー対話を skip し、導出確認は brief の user_confirmed に委譲する」を invariant として明文化し、workflow-guide.md の対話記述に呼出モード条件を付す。"
+        },
+        {
+          "id": "A2-14",
+          "summary": "ヒアリング工程が二重経路: run-prompt-elicit (Step 1) と 7layer Phase 1 が同一 agent prompt-creator-interview-user を呼ぶ重複が ROADMAP Follow-up に記録されたまま未解消。宣言型転換で brief に goals/checklist を載せる際、二重経路のままだと収集正本が割れドリフト源になる。",
+          "location": "plugins/prompt-creator/ROADMAP.md:14 / skills/run-prompt-creator-7layer/SKILL.md:144-148 / run-prompt-elicit/SKILL.md:95-97",
+          "condition_signal": "smell",
+          "severity": "low",
+          "auto_fixable": false,
+          "recommendation": "7layer Phase 1 を run-prompt-elicit への単純委譲に統合し、hearing-result→brief の正規化を単一経路にしてから brief schema 拡張を行う。"
+        }
+      ]
+    },
+    {
+      "method": "why思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A2-09",
+          "summary": "open_questions の処遇が二つの設計思想に分裂: R1-elicit.md は「open_questions 残存時は TODO(human) として brief に保持」(3 箇所) と人間差し戻し型を指示する一方、R1-interview.md 4.1 は「Step 4 で TODO 化しない (auto-resolve 試行)」と AI 自律解決型を指示。さらに rubric C4-003 は TODO(human) 残存を regex_absent で FAIL とし、goal-seek paradigm と No TODO(human) 規律にも反する。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/prompts/R1-elicit.md:15,56,94 / run-prompt-elicit/prompts/R1-interview.md:65 / assign-prompt-design-evaluator/references/prompt-rubric.json:34",
+          "condition_signal": "contradiction",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "open_questions の正本処遇を「AI 最尤仮説で補完し仮定として brief.open_questions に記録、TODO(human) は生成しない」に統一 (goal-seek-paradigm.md 準拠)。R1-elicit.md の TODO(human) 記述 3 箇所を削除し、C4-003 との整合を回復する。"
+        },
+        {"ref": "A2-15"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/feedback_contract_ssot.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "被覆テスト実走で確認 (self-test 無しの import 専用 SSOT モジュール)。tests/test_feedback_contract_ssot.py + tests/scripts-root/test_scripts__feedback_contract_ssot.py + tests/test_dogfooding_boundary.py + tests/test_feedback_contract_parity.py の 57 件が全て pass、加えて lint-feedback-contract/lint-content-review/render-combinators-feedback-contract/iter-improve-contract/all-skills-criteria の 234 件も緑。[soundness] validate_criteria の境界を静的+テストで検証: id 正規表現 ^(IN|OUT|C)[0-9]+$、verify_by enum (live-trial 追加 / live_trial 近傍 typo は拒否)、loop_scope inner|outer、id 重複、inner+outer 双方必須、非 dict 要素・空文字キーの負例を全て被覆。dogfooding 述語の非対称境界が正しい: is_content_review_exempt は常に False (生成器自身も CI 強制=dogfooding 維持)、is_stop_block_exempt/is_feedback_deploy_exempt は harness-creator のみ True (自己ブロック無限ループ回避・自己 symlink 循環回避)、requires_subject_copy は 自己plugin × ENGINE_SKILLS 閉包の交差時のみ True (他 plugin のエンジン名 skill は False) を truth-table で確認。consumer 4本が SSOT 述語へ委譲していることを textual grep + runtime import (_FC 解決) の二段で固定。extract_frontmatter は yaml 経路と、yaml を強制 ImportError させた最小パーサ経路 (_parse_feedback_contract_block: max_iterations の int 化 / skip_reason のクォート剥がし / criteria 抽出) の双方を実走被覆、feedback_contract: 行末インラインコメント許容も対応済。[responsibility] feedback_contract 制約 + dogfooding 境界の単一 SSOT に凝集、consumer 散在リテラルを一本化する明確な責務。[error-handling] 純関数はエラーを list で返し握り潰さない。extract の except Exception:pass は yaml 非搭載時のハンドパーサ fallback という設計上の意図で、結果は必ず返る (被覆済)。[side-effect-safety] import-time 副作用ゼロ (regex コンパイルと定数/関数定義のみ、I/O/network/print 無し)=portability 上健全。frontmatter の write-scope:none / network:false と実挙動一致。[frontmatter] PEP723 メタあり、'import 専用・CLI なし' の宣言通り __main__ 無し、requires-python>=3.10 は from __future__ import annotations 下の X|None 遅延評価と整合。実欠陥なし。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

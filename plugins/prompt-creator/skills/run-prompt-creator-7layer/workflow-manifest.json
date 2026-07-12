@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-prompt-creator-7layer",
+  "skill": "run-prompt-creator-7layer",
+  "description": "skill-brief または対話入力から 7 層プロンプト (L1 基本定義 / L2 ドメイン / L3 インフラ / L4 共通ポリシー / L5 エージェント / L6 オーケストレーション / L7 ユーザーインタラクション) を Layer 単位で生成する。brief / hearing-result 供給時は phase-interview を skip し、Phase 1-3 の全ユーザー対話を省略する (導出確認は brief.user_confirmed に委譲)。SubAgent .md 注入は owner_agent ありの場合のみ行う。phase id は worker 文脈固有 (phase-*) とし、orchestrator (run-prompt-create) の step id (elicit/build/p0-lint/...) と衝突させない。",
+  "phases": [
+    {
+      "id": "phase-interview",
+      "step": 1,
+      "title": "ヒアリング委譲: hearing-result / brief 供給時は skip。無ければ run-prompt-elicit へ委譲して hearing-result を取得する (interview-user agent を直接呼ばない = 収集経路一本化)",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": "load-resource-map",
+      "exitHook": null,
+      "resourceIds": ["ref-resource-map", "ref-prompt-sheet-template", "schema-hearing"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "phase-sheet",
+      "step": 2,
+      "title": "scaffold-prompt.py で Layer 別内部正規形 YAML 雛形を生成",
+      "gate": "C2",
+      "dependsOn": ["phase-interview"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-seven-layer", "ref-writing-style"],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "phase-layer-gen",
+      "step": 3,
+      "title": "Layer 単位 (1 Layer = 1 出力) で内容を充填",
+      "gate": "C3",
+      "dependsOn": ["phase-sheet"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-seven-layer", "ref-quality-criteria"],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "phase-convert",
+      "step": 4,
+      "title": "merge-layers.py で 7 Layer を内部正規形 YAML に統合し、指定 format へ変換",
+      "gate": "C4",
+      "dependsOn": ["phase-layer-gen"],
+      "entryHook": null,
+      "exitHook": "merge-layers",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "phase-return-verify",
+      "step": 5,
+      "title": "validate-prompt.py + verify-completeness.py + lint-agent-prompt-section.py 実行",
+      "gate": "C5",
+      "dependsOn": ["phase-convert"],
+      "entryHook": null,
+      "exitHook": "validate-prompt",
+      "resourceIds": ["schema-trace"],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "phase-design-gate",
+      "step": 6,
+      "title": "C1-C4 設計評価 (assign-prompt-design-evaluator を fork・findings 出力のみ)。worker 内蔵ゲート = 呼出元非依存の品質保証。呼出元が同等ゲートを機械証跡 (design-findings JSON パス) で保証する場合のみ skip",
+      "gate": "C6",
+      "dependsOn": ["phase-return-verify"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "phase-inject",
+      "step": 7,
+      "title": "SubAgent .md の Prompt Templates / Self-Evaluation (注入セクション名は呼出元非依存の不変契約) を Edit で注入 (owner_agent ありの場合のみ)",
+      "gate": "C7",
+      "dependsOn": ["phase-design-gate"],
+      "entryHook": null,
+      "exitHook": "log-usage",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["phase-interview"]},
+    {"id": "ref-prompt-sheet-template", "kind": "reference", "path": "./references/prompt-sheet-template.md", "phaseIds": ["phase-interview"]},
+    {"id": "ref-seven-layer", "kind": "reference", "path": "./references/seven-layer-format.md", "phaseIds": ["phase-sheet", "phase-layer-gen"]},
+    {"id": "ref-writing-style", "kind": "reference", "path": "./references/writing-style-principles.md", "phaseIds": ["phase-sheet"]},
+    {"id": "ref-quality-criteria", "kind": "reference", "path": "./references/quality-criteria.md", "phaseIds": ["phase-layer-gen"]},
+    {"id": "schema-hearing", "kind": "schema", "path": "./schemas/hearing-result.schema.json", "phaseIds": ["phase-interview"]},
+    {"id": "schema-trace", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["phase-return-verify"]}
+  ]
+}

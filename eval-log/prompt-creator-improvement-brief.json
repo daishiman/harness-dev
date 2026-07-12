@@ -1,0 +1,102 @@
+{
+  "title": "prompt-creator plugin 全面 skill-creator 仕様準拠化",
+  "mode": "update",
+  "scope": "plugin-wide",
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "current_state": {
+    "skills": ["run-prompt-creator-7layer"],
+    "agents": ["prompt-creator-interview-user", "prompt-creator-generate-prompt", "prompt-creator-review-prompt"],
+    "scripts": ["generate_sheet.js", "validate_sheet.js", "scaffold_prompt.js", "merge_layers.js", "validate_prompt.js", "verify_completeness.js", "convert_format.js", "log_usage.js"],
+    "has_workflow_manifest": true,
+    "has_schemas": ["hearing-result.schema.json", "output.schema.json"]
+  },
+  "gaps_vs_skill_creator": [
+    {"id": "G1", "area": "orchestrator", "gap": "run-skill-create 相当の端から端まで orchestrator skill (run-prompt-create) が存在しない。7layer skill は単独 worker のため Gate/handoff/eval-log 連鎖が無い"},
+    {"id": "G2", "area": "eval-log", "gap": "eval-log/ 配下に build-trace / findings / handoff / brief を schemas 準拠で永続化する仕組みが未実装"},
+    {"id": "G3", "area": "schemas", "gap": "build-trace.schema.json / findings.schema.json / handoff.schema.json / prompt-brief.schema.json が prompt-creator 側に未配置"},
+    {"id": "G4", "area": "design-evaluator", "gap": "assign-prompt-design-evaluator (C1-C4 評価) skill が無い。context:fork での Sycophancy 防止評価が機能不全"},
+    {"id": "G5", "area": "elicit", "gap": "run-prompt-elicit (要求ヒアリング→ brief.json 生成) skill が未独立。現状は interview-user agent が直接対話"},
+    {"id": "G6", "area": "P0-lint", "gap": "P0 lint pipeline 8 本相当が prompt-creator に未整備。lint-prompt-7layer / lint-yaml-front-matter / lint-references-existence などが skill-governance-lint 経由で未登録"},
+    {"id": "G7", "area": "governance", "gap": "run-skill-rubric-governance 相当の Gate 4 が無い。solo_operator_mode 判定経路が未接続"},
+    {"id": "G8", "area": "elegant-review", "gap": "run-elegant-review (C1-C4 パラダイム評価) を新規/大規模変更時に走らせる導線が無い"},
+    {"id": "G9", "area": "registration", "gap": "build-manifest-registration-plan / bundles.json (xl-skills-full 等) 登録判定経路が未整備"},
+    {"id": "G10", "area": "prompts", "gap": "skill 配下に prompts/elicit.md / gate-review.md / governance-decide.md (R1/R2/R3 責務別) が無い"},
+    {"id": "G11", "area": "markdown-first", "gap": "seven-layer-markdown-template.md (Markdown 既定の正本骨格) が未整備。YAML legacy が依然主流"},
+    {"id": "G12", "area": "plugin-manifest", "gap": "plugin.json に owner / since / commands / agents / skills メタが不足。マーケットプレイス情報が薄い"},
+    {"id": "G13", "area": "agent-metadata", "gap": "3 agent .md に owner_skill / responsibility_id / context:fork 指示が不足"},
+    {"id": "G14", "area": "resource-map", "gap": "plugin 全体の resource-map.yaml (skills/agents/scripts/schemas 全リソース横串) が未整備"},
+    {"id": "G15", "area": "validate-build-trace", "gap": "validate-build-trace.py (sha256 + regex 機械検証) と互換な trace 出力導線が薄い"}
+  ],
+  "proposed_phases": [
+    {
+      "id": "A",
+      "name": "schemas + eval-log + prompt-brief 基盤",
+      "deliverables": [
+        "plugins/prompt-creator/skills/run-prompt-creator-7layer/schemas/{build-trace,findings,handoff,prompt-brief}.schema.json",
+        "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/resource-map.yaml 拡張",
+        "eval-log/prompt-creator-trace.json サンプル更新"
+      ],
+      "gates": ["Gate 2 diff"],
+      "size_estimate": "lines:~400"
+    },
+    {
+      "id": "B",
+      "name": "orchestrator skill 新設 + Gate 連鎖",
+      "deliverables": [
+        "plugins/prompt-creator/skills/run-prompt-create/SKILL.md (orchestrator)",
+        "plugins/prompt-creator/skills/run-prompt-create/workflow-manifest.json",
+        "plugins/prompt-creator/skills/run-prompt-create/prompts/{elicit,gate-review,governance-decide}.md",
+        "plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py"
+      ],
+      "gates": ["Gate 1", "Gate 2", "Gate 2.5", "Gate 3", "Gate 4"],
+      "size_estimate": "lines:~600"
+    },
+    {
+      "id": "C",
+      "name": "新規 skill 分離 (elicit / design-evaluator)",
+      "deliverables": [
+        "plugins/prompt-creator/skills/run-prompt-elicit/SKILL.md",
+        "plugins/prompt-creator/skills/assign-prompt-design-evaluator/SKILL.md",
+        "interview-user agent を run-prompt-elicit から呼ぶ責務再配置"
+      ],
+      "gates": ["Gate 1", "Gate 2", "Gate 3", "Gate 4"],
+      "size_estimate": "lines:~500"
+    },
+    {
+      "id": "D",
+      "name": "P0 lint 統合 + governance/elegant-review 連携",
+      "deliverables": [
+        "skill-governance-lint へ lint-prompt-7layer.py 登録提案 (差分のみ)",
+        "workflow-manifest.json の p0-lint phase commands 拡充",
+        "run-skill-rubric-governance / run-elegant-review 呼出経路追加"
+      ],
+      "gates": ["Gate 2", "Gate 4"],
+      "size_estimate": "lines:~300"
+    },
+    {
+      "id": "E",
+      "name": "plugin.json 強化 + Markdown-first 移行 + agent metadata 整備",
+      "deliverables": [
+        "plugins/prompt-creator/.claude-plugin/plugin.json 拡張 (commands/agents/skills)",
+        "references/seven-layer-markdown-template.md 整備",
+        "3 agent .md に owner_skill / responsibility_id / context:fork 注記",
+        "bundles.json 登録判定"
+      ],
+      "gates": ["Gate 2.5", "Gate 2", "Gate 4"],
+      "size_estimate": "lines:~400"
+    }
+  ],
+  "execution_order": ["A", "B", "C", "D", "E"],
+  "quality_gates": {
+    "p0_lint": "required",
+    "design_evaluator": "required (context:fork)",
+    "elegant_review": "required (新規 skill 含むため)",
+    "governance": "required (solo_operator_mode 判定)"
+  },
+  "open_questions": [
+    "Phase A→E を本セッションで一括実行するか、Phase ごとに区切るか?",
+    "interview-user/generate-prompt/review-prompt agent を skill 配下 prompts/ に統合するか、現状 agents/ 配置を維持するか?",
+    "scripts 8 本を skill 配下に移管するか、plugin 直下のままで script_refs 維持か?"
+  ]
+}

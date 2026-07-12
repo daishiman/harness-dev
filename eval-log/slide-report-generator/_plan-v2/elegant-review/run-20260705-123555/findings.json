@@ -1,0 +1,1044 @@
+{
+  "version": 1,
+  "target": {
+    "type": "proposal",
+    "path": "plugin-plans/slide-report-generator-v2/",
+    "reviewed_at": "2026-07-05T13:30:00+09:00"
+  },
+  "loop_count": 1,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "verdict=PASS の認証本文 (plan-findings conditions.C4 evidence) が改善前の v1 パス記述のまま現物 (v2 パス) と食い違い、sha256 のみ同期される前提の空洞化を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "eval-log",
+          "description": "plan-findings.json conditions.C4/findings[3] evidence が v1 パス始まりを主張し post_improvement の v2 主張・現物と同一ファイル内矛盾 (解消済: W1 が as-of 付き実測更新)",
+          "recommended_intervention": "conditions evidence を改善後状態で as-of マーカー付き再記述",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 125,
+            "section": "conditions.C4.evidence"
+          },
+          "root_cause": "Phase3 差分パッチが sha 更新のみで conditions 認証ブロックを再生成しなかった"
+        },
+        {
+          "condition": "C1",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "no_split_threshold の第一軸 consumers>=2 が D2 下で自己成就する循環基準 (解消済: W4 が rule を前提+2軸の3段構成へ改稿)",
+          "recommended_intervention": "rule 文面の 3 段構成化",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/component-inventory.json",
+            "line": 6,
+            "section": "no_split_threshold.rule"
+          },
+          "root_cause": "K4 是正時に代替第一軸の判別力を検査しなかった"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "再現性アンカー則 (plan_dir↔slug 一致) と D2 一本化則を個別事例へ当てはめ、progress.json slug 不一致と phase-02/05 の旧語彙齟齬を導出"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "progress.json target_plugin_slug=slide-report-generator (v2 なし) が goal-spec の v2 slug・再現性アンカー constraint と不一致 (解消済: W1 が v2 slug へ更新)",
+          "recommended_intervention": "slug 更新+parity 検査のゲート化 (恒久側は planner backlog)",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 2
+          },
+          "root_cause": "D1 確定前の初期値が Phase3 パッチ範囲外で残存"
+        },
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "phase-05:19 目的節と phase-02:30 が『委譲先 skill 配下の references/』と D2 (plugin-root 一本化) に矛盾 (解消済: W2 が plugin-root 語彙へ修正・grep 残存 0 件)",
+          "recommended_intervention": "旧語彙の差分修正",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-05-implementation.md",
+            "line": 19,
+            "section": "目的"
+          },
+          "root_cause": "K2 語彙置換が別表現の旧語彙を取りこぼした"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "個別 stale 事例 4 件から『Phase3 改善は plan 本体を更新し記録系 3 成果物を系統的に更新しない』パターンを一般化。next_phase=14 は全 6 plan 共通規約と実測し反例棄却"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "gate_runs 第 3 記録・intermediate iteration 3 anchor・checklist C3 note の系統的更新漏れ (解消済: W1 が round3 追記+anchor 追記+2軸語彙化)",
+          "recommended_intervention": "記録系 3 点の同期追記",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 44,
+            "section": "gate_runs"
+          },
+          "root_cause": "Phase3 反映経路に記録系更新の契約が存在しない"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "6 箇所の stale 群を最尤仮説『前回改善が正規生成ループ外の差分パッチとして適用され記録系が同期契約外だった』に収束 (競合仮説 2 件は棄却)"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "stale 群は単一原因 (Phase3 パッチ経路に記録系同期契約なし) の症状群であり個別修正のみでは再発する (本 run で症状修正済・恒久契約は planner 側 backlog)",
+          "recommended_intervention": "Phase3 完了条件へ記録系 3 点同期を焼き込む (planner backlog)",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 390,
+            "section": "findings[post_improvement]"
+          },
+          "root_cause": "改善適用経路が生成ループの記録更新責務を継承していない"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Why×5 で『認証主体の混濁 (evaluator 名義ファイルに改善者の verdict 維持宣言が同居)』へ到達"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "plan-findings.json:386 の verdict 維持宣言が evaluator 名義内で非 evaluator 由来 (解消済: W1 が provenance 注記追加+本 run で独立 approver が genuine 再認証)",
+          "recommended_intervention": "provenance 注記+独立 approver 再認証",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 386,
+            "section": "findings[post_improvement]"
+          },
+          "root_cause": "書き手 context の機械宣言フィールドが契約にない"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "24 component を v1 実在物へ分解照合 (glob 実測): 3+16+2+1+2=24 で漏れ・重複・幽霊ゼロ。handoff routes と 1:1"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "index スコープ節の builder 列挙に plugin-scaffold が欠落 (解消済: W2 が追記)",
+          "recommended_intervention": "builder 3 者の列挙補完",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/index.md",
+            "line": 53,
+            "section": "スコープ(含まない)"
+          },
+          "root_cause": "handoff 側 builder 体制への追従漏れ"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "references 勘定の複数体系 (51/50/61/62) を実測で全検算し体系間矛盾なしを確認。新設 11 の内訳もファイル名重複なし"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "『既存46件と同層』の時点曖昧ラベル (v2 では content 45+yaml) (部分解消: W4 が定義箇所を時点明示化・W2 が index に換算表追加。残 4 箇所は据置=smell)",
+          "recommended_intervention": "時点明示表記への統一+換算表",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/component-inventory.json",
+            "line": 57,
+            "section": "C01.progressive_disclosure"
+          },
+          "root_cause": "K5 別勘定化の際に位置記述子が更新対象外だった"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×緊急度の象限化で『記録系同期是正』が open_issues にも findings にも未登録の空白象限にあることを検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "重要×緊急の記録系同期是正タスクが管理台帳上ゼロ件表示 (解消済: 本 run W1 が同期を実施し plan-findings へ本 run finding を登録)",
+          "recommended_intervention": "同期実施+finding 登録",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 582,
+            "section": "open_issues"
+          },
+          "root_cause": "起票トリガーが builder gap に限定されていた"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "phase 連鎖 (prev/next) は全 13 ファイルで単調連続・gate_type 系列は TDD ライフサイクル整合。S-REFERENCES の routes 前 checks が routes 産物に依存する時系列循環を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "S-REFERENCES の実行時点 (routes 前) と checks が要求する成果物 (新設 11 references+C24 61 件) の生成時点 (routes 内) が循環し write-owner も三重宣言 (解消済: W3 が 2 段化 checks_pre_routes/checks_post_routes+write-owner 一意化)",
+          "recommended_intervention": "S-REFERENCES の 2 段化と write-owner 確定",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 11,
+            "section": "build_readiness.must_run_before_routes"
+          },
+          "root_cause": "K3 の pre-routes 格上げ時に checks の時系列依存を検査しなかった"
+        },
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "schema",
+          "description": "phase-13 next_phase=14 の dangling は repo 全 6 plan 共通の終端番兵規約 (非修正・planner 上流課題として記録)",
+          "recommended_intervention": "planner 側で終端番兵の規約化 (backlog)",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-13-release.md",
+            "line": 7
+          },
+          "root_cause": "planner の固定 13 phase 仕様が終端意味論未定義"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『未実施』×『PASS』の語彙衝突は状態語彙分離ポリシーが先回り封鎖済で枠組み健全。真のクリティカルパスは 13 phase 軸でなく build_readiness に集中"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "評価者名義ファイルへの改善者追記で provenance 混濁 (paradigm 5 と同一事象・解消済: provenance 注記+独立 approver 再認証)",
+          "recommended_intervention": "provenance フィールドの契約化 (planner backlog)",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 386,
+            "section": "findings[post_improvement]"
+          },
+          "root_cause": "スキーマに書き手 provenance がない"
+        }
+      ],
+      "score": 0.72
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "本計画は built-plugin migration plan という再利用可能な抽象型 (parallel_slug/golden-pin/contract-only+fallback+waiver_downgrade/build_readiness stage) を事実上発明しており planner テンプレへ昇格可能"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "thin-adapter 11 件の rebalance_rationale が rule 判定文をほぼ同文で 11 回複製 (SSOT 複製 smell・改稿規模が大きいため backlog 据置)",
+          "recommended_intervention": "rationale をアンカー参照+固有根拠へ縮退 (backlog)",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/component-inventory.json",
+            "line": 291,
+            "section": "thin-adapter rebalance_rationale"
+          },
+          "root_cause": "判定根拠携帯要件を本文複製で満たした"
+        }
+      ],
+      "score": 0.78,
+      "reusable_abstraction": "既存 build 済 plugin の責務再配置は migration-plan テンプレート (parallel_slug/golden-pin/contract-only 三点セット) として planner へ昇格できる",
+      "reuse_surface": "template"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "前回改善 D1/D2 は計画本体には一貫反映済 (v1 パス残存 30 箇所は全て正当文脈)。lifecycle 記録系 3 ファイルにのみ反映漏れが集中と実測"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "progress slug 旧値の矛盾 (paradigm 2 と同一・解消済)",
+          "recommended_intervention": "slug 更新",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 2
+          },
+          "root_cause": "改善対象が evaluated_inputs 18 ファイルに閉じていた"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "conditions.C4 evidence の v1/v2 同一文書内矛盾 (paradigm 1 と同一・解消済)",
+          "recommended_intervention": "as-of 付き evidence 再記述",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 125,
+            "section": "conditions.C4.evidence"
+          },
+          "root_cause": "append-only 改善表現と sha 更新の時制分裂"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "eval-log",
+          "description": "gate_runs 第 3 記録欠落+C3 note 旧 framing (paradigm 3 と同一・解消済)",
+          "recommended_intervention": "round3 追記+note 更新",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 44,
+            "section": "gate_runs"
+          },
+          "root_cause": "証跡記録先の暗黙スコープ限定"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "代替案 7 件を発散。採用 D1/棄却 D2' の意思決定 trail は記録済。『agent thinness 恒久 lint』の不在を実質的漏れと同定"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "thin-adapter の薄さを維持する恒久機械ゲートが不在 (再肥大 unguarded) (解消済: W4 が C24 検査対象へ重複段落 0 を追加し EVALS mechanical 配線を宣言)",
+          "recommended_intervention": "維持ゲートの C24 拡張+EVALS 配線",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/component-inventory.json",
+            "line": 765,
+            "section": "plugin_level_surfaces.harness_eval"
+          },
+          "root_cause": "到達ゲートと維持ゲートの混同"
+        }
+      ],
+      "score": 0.68,
+      "reusable_abstraction": "リファクタ型計画は到達ゲート (一回性) と維持ゲート (恒久) を分けて設計すべき",
+      "reuse_surface": "hook"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "approval testing (golden master) 技法を非決定論 LLM 系へ無修正移植している構造を blue-green デプロイ比較で検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "rubric-governance",
+          "description": "golden diff の PASS 判定基準 (等価クラス) が未定義で、LLM 経路は byte-diff 恒常 FAIL か形骸 PASS に退化するリスク (解消済: W4 が phase-04 へ経路別等価クラス定義・phase-11 へ参照追記)",
+          "recommended_intervention": "経路別等価クラス (決定論=byte/LLM=正規化後構造等価+rubric) の契約化",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-11-evidence.md",
+            "line": 39,
+            "section": "golden diff"
+          },
+          "root_cause": "決定論前提技法の無修正借用"
+        }
+      ],
+      "score": 0.55,
+      "reusable_abstraction": "非決定論生成系への golden 比較導入時は等価クラス定義を証跡契約の必須フィールドにすべき",
+      "reuse_surface": "rubric"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『v2 を作らない場合』の検討から、D1 の便益根拠が等価クラス定義に依存することと、v1 温存の裏コスト (退役基準不在) を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "v1 退役 (sunset)/cutover 基準が計画のどこにも無く、build 完了と同時に未計画の意思決定が強制される (解消済: W4 が goal-spec open_questions 第 4 項+phase-13 soft note を追加)",
+          "recommended_intervention": "退役基準と cutover 手順の open_question 化+申し送り",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/index.md",
+            "line": 49,
+            "section": "基本定義"
+          },
+          "root_cause": "parallel_slug 決定が開始条件のみで終了条件を欠いた"
+        }
+      ],
+      "score": 0.55,
+      "reusable_abstraction": "並行成果物の新設決定は終了条件 (退役基準・併存期限・切替手順) をセットで宣言して初めて完結する",
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "sibling 計画 (harness-creator/skill-intake) との構造比較で build_status ライフサイクル契約の drift を検出。next_phase=14 は共通慣例として棄却"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "component-inventory に build_status:'planned' が無く、段階 build 途中で validate-plan-coverage の fail-closed 照合が発火し CI red になる (解消済: W4 が sibling 同形式で追加・--all ok=true 実証)",
+          "recommended_intervention": "build_status 宣言+realized 昇格手順の追記",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/component-inventory.json",
+            "line": 2,
+            "section": "top-level"
+          },
+          "root_cause": "新慣例 (commit 9c56b32) がテンプレ未反映のまま本計画が生成された"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "worst ケース『v2 build 完了』の破壊試験で、v1 と 21 同名 entry の .claude deploy namespace 衝突を検出 (build-claude-symlinks.py の conflict 判定を実測)。edge ケースで再実測義務→staleness_rule の自己無効化と golden-pin 失敗分岐の不在も検出"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "v2 build 完了時点で v1 と 21 同名 entry が .claude 展開で衝突し repo 全体の symlink 生成/CI が block (解消済: W3 が must_run_after_routes へ deploy namespace 項+S-COMPOSITION checks に --check 検証を追加、W4 が phase-13 へ cutover まで展開対象外を明記)",
+          "recommended_intervention": "deploy namespace 遷移手順の build_blocking 宣言",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/envelope-draft/plugin.json",
+            "line": 8,
+            "section": "entry_points"
+          },
+          "root_cause": "計画スコープが plugins/ 配下で閉じ repo インフラとの依存が未検討"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "再実測義務の実行が staleness_rule により verdict を自己無効化し再評価経路が未定義 (解消済: W3 が差分再評価→sha 更新→routes の順序を明記)",
+          "recommended_intervention": "再実測項へ差分再評価手順を追記",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 13,
+            "section": "must_run_before_routes[4]"
+          },
+          "root_cause": "鮮度保証と鮮度回復が別サイクルで導入され相互作用未突合"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "golden-pin 生成不能時の分岐 (waiver/降格) が未定義でデッドロックか黙殺かが不定 (解消済: W3 が preflight+waiver 条項を追記)",
+          "recommended_intervention": "golden-pin へ preflight と降格 waiver を明記",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 9,
+            "section": "must_run_before_routes[0]"
+          },
+          "root_cause": "waiver 語彙が GAP 発項目に限定されていた"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見 builder の導線 (読順宣言・用語初出定義) は概ね成立。references 勘定 3 体系の換算鍵と builder_status 語彙の初出位置に読解障壁を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "references 勘定 3 体系の換算表が無く off-by-one を矛盾と誤読しうる (解消済: W2 が index へ換算表追加)",
+          "recommended_intervention": "換算表の正本化",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/index.md",
+            "line": 81,
+            "section": "インフラ"
+          },
+          "root_cause": "勘定再定義の説明がインライン反復方式だった"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "builder_status 語彙が index 用語集に無く読順上定義前に使用へ到達 (解消済: W2 がドメイン知識へ 1 項追加)",
+          "recommended_intervention": "用語集への初出定義一元化",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/index.md",
+            "line": 55,
+            "section": "ドメイン知識"
+          },
+          "root_cause": "GAP 対応語彙が handoff 側で発生・成長し用語集昇格が未追随"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "routes 24 件の depends_on は dangling 0・循環なし・toposort 成立を全走査で確認。requires_surfaces と tools の相関も設計整合。局所最適 (plugins/ 分離) が deploy 層 (flat namespace) と衝突する系全体の依存を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "deploy namespace 衝突 (paradigm 18 と同一事象・解消済: 計画へ namespace 遷移手順を宣言)",
+          "recommended_intervention": "must_run_after_routes への namespace 項追加",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/envelope-draft/plugin.json",
+            "line": 8,
+            "section": "entry_points"
+          },
+          "root_cause": "build_readiness の stage 語彙が repo 統合 stage を持たなかった"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "build_readiness の因果順序は routes/surface_tasks の宣言と矛盾なし。plan-findings 内の evidence 因果連鎖の断線 (v1 パス主張が現物と切断) を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "rubric-governance",
+          "description": "conditions.C4 evidence の偽記述で PASS 維持 (paradigm 1/13 と同一事象・解消済: as-of 実測更新+独立 approver 再認証)",
+          "recommended_intervention": "evidence 再生成",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 125,
+            "section": "conditions.C4.evidence"
+          },
+          "root_cause": "staleness_rule が入力 sha のみを鮮度 anchor とし評価記録の内部整合を対象外とした"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "golden-pin→build→diff の非回帰ループは v1 温存と両立。waiver→降格→受入表の伝播経路に断絶 (C24 無条件要求 5 箇所) と eval-log namespace 二重化を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "waiver 選択時に C24 exit0 無条件要求 5 箇所が恒久充足不能となる deadlock ループ (解消済: W2/W3/W4 が全伝播先へ waiver 読み替えを追記+waiver_downgrade へ伝播先一覧明記)",
+          "recommended_intervention": "waiver 分岐の全伝播先への明文化",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 528,
+            "section": "S-REFERENCES.checks"
+          },
+          "root_cause": "checks 語彙に条件分岐が存在せず全項目が無条件形式だった"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "eval-log",
+          "description": "eval-log namespace の _plan-v2/plan-v2 二重化 (解消済: W2 が index 環境ポリシーへ統一規約を明記+本 run が自 run dir を _plan-v2 へ移設)",
+          "recommended_intervention": "namespace 統一規約の明文化",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 9,
+            "section": "build_readiness"
+          },
+          "root_cause": "plan 系 eval-log 命名の規約未明文化"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "v1 安全性×大規模再配置のトレードオフを parallel_slug+golden-pin で、分離の善×分離コストを 2 軸 threshold+D2 で、いずれもトレードオンとして止揚済み"
+      ],
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "planner/builder/v1 利用者/評価者の win-win 設計は成立。S-VENDOR の digest manifest 裸相対参照 1 点のみ消費可能性に曖昧さ"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "dependency-loop",
+          "description": "source_digest_manifest の裸ファイル名参照が v2 plan_dir 基準で dangling (解消済: W3 がリポジトリルート相対フルパス化・実在確認済)",
+          "recommended_intervention": "フルパス置換",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 484,
+            "section": "S-VENDOR.build_args"
+          },
+          "root_cause": "v1 handoff からの値引き写しで plan_dir 変更の影響が残存"
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "goal-spec C1-C7→index チェックリスト→受入表 6 観点の三者対応は追跡可能。受入表 row3 のみ D2 確定設計で恒久 FAIL の検証不能文言を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "受入表 row3『references/+scripts/ が実在する』が D2 と scripts_new=[] に矛盾し字義確認で必ず不成立 (解消済: W2 が D2 整合の確認手段へ書き換え)",
+          "recommended_intervention": "row3 の確認の見方を D2 整合化",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/index.md",
+            "line": 137,
+            "section": "受入確認"
+          },
+          "root_cause": "goal-spec 旧文言の引き写しが連動更新対象から外れた"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "3 ヶ月後視点で v1/v2 二重管理面積 (references 61+vendor+16 agents) の乖離リスクと退役手順不在を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "v1 置換手順・共存期限・v1 変更の v2 追随規約が不在で無期限二重管理が既定挙動 (解消済: W4 が phase-13 へ退役条件 soft note+goal-spec 第 4 open_question を追加)",
+          "recommended_intervention": "退役条件と同時反映規約の申し送り化",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-13-release.md",
+            "line": 32,
+            "section": "成果物"
+          },
+          "root_cause": "防御側決定 (壊さない) のみで攻め側終端 (置換完了) が未定義"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "全齟齬群の根本原因を『D1/D2 転換を差分パッチ適用し、その完全性を検証する機械ゲートが plan 本体しか覆っていない』に収束。G1-G12 は記録系相互整合を検査対象外とする構造的盲点"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "slug-parity・evidence path-prefix・intermediate anchor を検査するゲートが不在で『全ゲート緑』と『認証記録の陳腐化』が同時成立 (短期解消済: stale 6 箇所修正。恒久ゲート追加は planner backlog)",
+          "recommended_intervention": "stale 修正+planner ゲートへ slug-parity/path-prefix 検査追加 (backlog)",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/plan-findings.json",
+            "line": 130,
+            "section": "gate_results"
+          },
+          "root_cause": "ゲート設計が生成物内部整合に最適化され記録との相互整合が対象外"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "round-1 findings の閉ループは成立済。K1-K5 改善の記録層断線は round-1 で修正した『記録の陳腐化』class の再発 (re-occurrence) と同定"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "progress slug 矛盾の再発 (paradigm 2/13 と同一事象・解消済)",
+          "recommended_intervention": "slug 更新+parity 検査ゲート化 (backlog)",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 2
+          },
+          "root_cause": "staleness anchor 範囲に progress が含まれない"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "eval-log",
+          "description": "改善後ゲート緑主張が progress 実行台帳で裏付け不能 (paradigm 3/13 と同一事象・解消済: round3 追記+規約 1 行)",
+          "recommended_intervention": "gate_runs 追記とセット運用の規約化",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/run-plugin-dev-plan-progress.json",
+            "line": 44,
+            "section": "gate_runs"
+          },
+          "root_cause": "記録層更新を検査するゲート不在"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説『thin-adapter 化しても出力等価』の検証 3 層 (per-agent fixture/pilot 段階化/全体 golden diff) の骨格は成立。等価性判定規則の欠落が唯一の穴"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "LLM 非決定論下の『出力等価』判定規則欠落で検証器が flaky FAIL か形骸 PASS に退化するリスク (paradigm 15 と同一事象・解消済: 経路別等価クラス定義)",
+          "recommended_intervention": "P04 への等価性判定規則追加",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-04-test-design.md",
+            "line": 33,
+            "section": "ドメイン知識"
+          },
+          "root_cause": "verify_by enum に等価性意味論の置き場がない"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『何が決まれば残りが決まるか』= plugin-scaffold executor の実在と同定 (計画も blocking 格上げ済で論点同定は正しい)。resolution_condition の被覆漏れのみ検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "GAP close 条件が C23/C24 のみで S-VENDOR/S-COMPOSITION の実行主体が契約上空白のまま blocking を通過できる (解消済: W3 が fallback_builder 追加+close 条件へ実行主体確定を追記)",
+          "recommended_intervention": "fallback 宣言+close 条件の被覆拡張",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json",
+            "line": 598,
+            "section": "GAP-SCRIPT-BUILDER.resolution_condition"
+          },
+          "root_cause": "gap_ref を張る側と close 条件を持つ側の整合検査ゲート不在"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全検出事項を 5 島へ集約: (a)記録層 stale (b)contract-only 実行主体 (c)namespace (d)D2 反映残渣 (e)検証意味論。優先順位 c→a→b→d→e で全島 Phase3 にて処理"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "phase-05 目的節の D2 以前文言による誤実装誘導 (paradigm 2 と同一事象・解消済: W2 修正+横断 grep 0 件化)",
+          "recommended_intervention": "旧語彙修正+横断 grep 検証",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/slide-report-generator-v2/phase-05-implementation.md",
+            "line": 19,
+            "section": "目的"
+          },
+          "root_cause": "キーワード一致置換が別表現を対象にしなかった"
+        }
+      ],
+      "score": 0.6
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "why",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "独立 approver 実測: build_target v2 prefix 24/24 (inventory/handoff 両方)・progress slug=goal-spec slug 一致・D2 旧語彙 grep 0 件・新規追記三者 (goal-spec OQ4/phase-13/handoff) の cutover 記述一致"
+      ],
+      "violation_count": 0
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "独立 approver が改善 22 項全件を実ファイル確認 (S-REFERENCES 2 段化/deploy namespace/等価クラス/v1 退役/build_status/gate_runs round3/waiver 4 伝播先)"
+      ],
+      "violation_count": 0
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "builder_status 語彙の定義↔使用一致・references 換算表算術全一致 (45+5=50, 50+11=61, 61+1=62)・evaluated_inputs sha256 18/18 再計算一致・JSON/JSONL validity 全通過"
+      ],
+      "violation_count": 0
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "routes 24 件 Kahn toposort 成立・dangling 0・S-REFERENCES 2 段化後の循環再発なし・決定論ゲート 12 起動を独立 approver が第三者再実行し全 exit 0"
+      ],
+      "violation_count": 0
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "slide-report-generator-v2",
+      "variable_name": "{{TARGET_SLUG}}",
+      "source_trace": "goal-spec.json target_plugin_slug / handoff / envelope-draft"
+    },
+    {
+      "concrete_value": "slide-report-generator",
+      "variable_name": "{{SOURCE_SLUG}}",
+      "source_trace": "v1 実体 plugins/slide-report-generator/ (progress.json の stale 値は本 run で v2 へ是正済)"
+    },
+    {
+      "concrete_value": "plugins/slide-report-generator-v2/",
+      "variable_name": "{{BUILD_TARGET_ROOT}}",
+      "source_trace": "component-inventory/handoff 全 24 build_target prefix"
+    },
+    {
+      "concrete_value": "plugin-plans/slide-report-generator-v2",
+      "variable_name": "{{PLAN_DIR}}",
+      "source_trace": "goal-spec.json plan_dir / progress.json"
+    },
+    {
+      "concrete_value": "eval-log/slide-report-generator/_plan-v2/golden/",
+      "variable_name": "{{GOLDEN_PIN_DIR}}",
+      "source_trace": "handoff build_readiness.must_run_before_routes[0]"
+    },
+    {
+      "concrete_value": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/",
+      "variable_name": "{{PLANNER_SCRIPTS_DIR}}",
+      "source_trace": "決定論ゲート 12 種の正本 (全実在・全 exit 0)"
+    },
+    {
+      "concrete_value": "scripts/build-claude-symlinks.py",
+      "variable_name": "{{DEPLOY_GENERATOR}}",
+      "source_trace": ".claude 展開の conflict 判定器 (F-0018 の検証コマンド)"
+    },
+    {
+      "concrete_value": "plugin-plans/slide-report-generator/vendor-digest-manifest.json",
+      "variable_name": "{{VENDOR_DIGEST_MANIFEST}}",
+      "source_trace": "handoff S-VENDOR.build_args (F-0016 でフルパス化済)"
+    },
+    {
+      "concrete_value": "run-20260705-103736-v2reset",
+      "variable_name": "{{PRIOR_REVIEW_RUN_ID}}",
+      "source_trace": "plan-findings.json findings[7] (前回 elegant-review)"
+    },
+    {
+      "concrete_value": "run-20260705-123555",
+      "variable_name": "{{THIS_REVIEW_RUN_ID}}",
+      "source_trace": "本 run。eval-log/slide-report-generator/_plan-v2/elegant-review/ 配下"
+    },
+    {
+      "concrete_value": "2026-07-05 09:31 JST",
+      "variable_name": "{{MEASURED_AT}}",
+      "source_trace": "component-inventory.json no_split_threshold.measured_at"
+    }
+  ],
+  "total_score": 0.62
+}

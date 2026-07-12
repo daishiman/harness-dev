@@ -1,0 +1,13 @@
+--- a/_base.md
++++ b/_base.md
+@@ -20,6 +20,8 @@ description: {{description}}
+ kind: {{kind}}                              # ref | run | wrap | assign | delegate （atomic は旧仕様）
++effect: {{effect | default("local-artifact")}}
++role_suffix: {{role_suffix | default("workflow")}}
+ hierarchy_level: {{hierarchy_level}}        # L0 | L1 | L2
+ owner: {{owner}}
+ since: {{date}}
+# 注: run-kind の固有差分は上記 frontmatter のみ。
+# 実行手順は _base.md の `## ゴールシーク実行` 節を継承するため、固定手順 (### Step 1/2/3) は注入しない
+# (goal-seek 原則「固定手順は書かない」と矛盾するため。詳細 references/goal-seek-paradigm.md)。
+# このファイルはレビュー用。実適用は render-combinators.py の apply_semantic_patch("with-run.patch") が行う。

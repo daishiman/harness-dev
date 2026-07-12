@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "goal-spec",
+  "description": "ゴールシーク実行 (run-goal-seek) の入力契約。AI が既存コンテキストから推定した目的・背景・ゴールと、達成判定の完了チェックリストを保持する。",
+  "x-scope-note": "汎用タスクのゴールシーク用 (run-goal-elicit → run-goal-seek)。Skill 生成のゴール抽出には使わない (それは skill-brief.schema.json の goal/purpose_background/checklist。checklist 型が異なる: 本スキーマは構造化オブジェクト、brief は文字列配列)。両系統を混用しない。",
+  "type": "object",
+  "required": ["purpose", "background", "goal", "checklist"],
+  "additionalProperties": false,
+  "properties": {
+    "purpose": {
+      "type": "string",
+      "description": "なぜこのタスクをやるのか (目的)。1〜3文。ユーザーへの追加質問ではなく既存コンテキストから推定する。"
+    },
+    "background": {
+      "type": "string",
+      "description": "前提・経緯・制約となる文脈 (背景)。1〜3文。会話履歴・関連ファイル・差分から推定する。"
+    },
+    "goal": {
+      "type": "string",
+      "description": "達成すべき最終状態を1文・観測可能な完了形で。例: 「X が Y の状態になっている」。"
+    },
+    "checklist": {
+      "type": "array",
+      "minItems": 1,
+      "description": "ゴール達成の受入基準。各項目は YES/NO で判定できる観測可能な条件。",
+      "items": {
+        "type": "object",
+        "required": ["id", "criterion", "done"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^C[0-9]+$" },
+          "criterion": { "type": "string", "description": "検証可能な達成条件 (二値判定)。" },
+          "done": { "type": "boolean", "description": "達成済みか。初期値 false。" },
+          "verify_by": {
+            "type": "string",
+            "enum": ["reasoning", "script", "lint", "test", "human"],
+            "description": "判定手段。決定論的に検査できるものは script/lint/test に寄せる。"
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "守るべき制約・禁止事項、およびAIが補った合理的な仮定。"
+    },
+    "handoff_targets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "成果物を渡す後続 Capability 名 (skill / agent)。未確定なら空配列。"
+    },
+    "max_loops": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 5,
+      "description": "ゴールシークループの最大周回数。超過時は open_issues へ差し戻す。"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "目的・背景・ゴールが推定しきれなかった未確定事項。ユーザーへの即時質問ではなく、後段で仮定が破綻した場合の差し戻し材料。"
+    },
+    "forbidden_loosening": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "run-skill-iter-improve の iter 0 GOAL DECLARATION で宣言する緩め禁止リスト (この target で「やったら PASS 詐欺」になる操作の列挙)。一般形の正本は run-elegant-review/references/convergence-policy.json の anti_patterns で、本 field には target 固有の具体形のみ書く (二重宣言禁止)。手順は run-skill-iter-improve/references/goal-declaration.md。"
+    }
+  }
+}

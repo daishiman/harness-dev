@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。task-graph 射影の ROOT API。13 phase §5 チェックリスト項目 + inventory → task-graph.json を決定論導出。canonicalize() が唯一の正準 writer (nodes=id 昇順/edges=(type,from,to) 昇順/固定 key 順・冪等)。graph_hash()=\"sha256:\"+sha256(canonical_json)。--print-graph-hash は read-only サブコマンド (consumer 安定 CLI 契約 FC-4・argv/stdout/exit 固定)。TESTS: test_derive_task_graph.py 19 PASS。exit 0/1(graph不正)/2(IO)。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,256 @@
+# intake-final-prompts.yaml
+# intake-final-template の各 context ブロックを LLM 単独で埋めるための 7 層構造プロンプト集。
+# 既存 SubAgent を使わず prompt-creator-7layer 経由で context.json を生成したいときに使う。
+#
+# 各プロンプトは 7 層構造の Layer 1 / 2 / 4 / 5 / 7 を最小構成で持つ。
+# Layer 3 (インフラ) / 6 (オーケストレーション) は common セクションを参照。
+# 出力スキーマは intake-final-schema.json の対応サブツリーに準拠（必ず JSON で返す）。
+#
+# 使い方:
+#   prompt-creator-7layer に渡す:
+#     --inject-sections layer1,layer2,layer5,layer7
+#     --responsibility-id <intake-final-source-map.yaml の responsibility_id>
+#   または直接 LLM にこの YAML エントリをそのまま投げる。
+
+schema_version: "1.0"
+output_schema_ref: "intake-final-schema.json"
+
+# ============================================================
+# 共通: 全プロンプトで継承される Layer 3/4/6
+# ============================================================
+common:
+  layer3_infrastructure:
+    tools_available:
+      - "前段 SubAgent の出力 JSON（あれば）"
+      - "intake-final-schema.json（出力検証用）"
+    file_io:
+      input: "output/<hint>/ 配下の既生成 JSON 群"
+      output: "JSON one-shot（指定キーのみ）"
+  layer4_policy:
+    quality_baseline:
+      - "出力は厳密な JSON。前後説明や markdown フェンス禁止"
+      - "未確定値は null ではなく空文字を返さず、必ず確認質問を Layer 7 として返す"
+      - "クライアント実名・契約金額・個人IDは仮名化（例: 'クライアントA'）"
+    vocabulary_tier_hint: "context.meta.vocabulary_tier に従う（novice/intermediate/expert）"
+    char_budget:
+      narrative_fields: { min: 80, max: 400 }
+      one_liner_fields: { max: 120 }
+  layer6_orchestration:
+    pre_checks:
+      - "context.meta が埋まっているか確認。未確定なら meta プロンプトを先行"
+      - "依存ブロック（source-map の各 entry の output_file）が揃っているか確認"
+    post_checks:
+      - "出力 JSON が intake-final-schema.json の該当サブツリーに valid"
+      - "boolean 排他制約（adopted=1件 / is_top=1件）を満たす"
+
+# ============================================================
+# 各ブロック固有プロンプト
+# ============================================================
+prompts:
+
+  # ----- assumption -----
+  assumption:
+    id: prompts.assumption
+    title: "前提逆転（assumption-challenger）"
+    responsibility_id: R-INTAKE-FINAL-ASSUMPTION
+    layer1_basic:
+      purpose: "表層リクエストを 3 つの深層候補に分岐し、1 つを採択することで本丸の課題を特定する"
+      success_criteria:
+        - "candidates が 2-5 件、各候補が表層と明確に異なる視点"
+        - "candidates[].adopted=true がちょうど 1 件"
+        - "deep_problem が採択候補の言い換えではなく、なぜそこが本丸かの説明を含む"
+    layer2_domain:
+      terms:
+        surface_request: "ユーザーの最初の発話そのまま（リライト不可）"
+        deep_problem: "5 Whys で 1 段深掘った本丸課題"
+        blind_spot: "ユーザーが認識しているが未決定の論点"
+    layer5_agent_spec:
+      input_keys: ["context.meta", "kickoff.json/surface_request"]
+      output_keys: ["assumption.surface_request", "assumption.candidates", "assumption.deep_problem", "assumption.time_freed_intent", "assumption.blind_spots"]
+      output_shape_ref: "intake-final-schema.json#/properties/assumption"
+    layer7_interaction:
+      first_question: "あなたが今しんどいと感じている『情報収集』を、(D1)選別・キュレーション中心 / (D2)収集→要約→アウトプット一気通貫 / (D3)自分の代理人化、の3視点で見直すとどれが本丸ですか？"
+      followups:
+        - "採択した深層課題が解決されると、浮いた時間で何に取り組みますか？"
+        - "本人が認識しているがまだ決められていない論点は何ですか？"
+
+  # ----- profile -----
+  profile:
+    id: prompts.profile
+    title: "ユーザー像（user-profiler）"
+    responsibility_id: R-INTAKE-FINAL-PROFILE
+    layer1_basic:
+      purpose: "expertise/role/context/constraints/motivation/sharing_intent の 6 軸で立体的にユーザーを定義する"
+      success_criteria:
+        - "dimensions が 6 件すべて埋まる"
+        - "confidence が high のものは具体エビデンスを evidence に記述"
+        - "vocabulary_tier が後続プロンプトの語彙選択を決定づける一意の値"
+    layer2_domain:
+      terms:
+        expertise: "low/medium/high"
+        sharing_intent: "self / few / many / public の段階"
+    layer5_agent_spec:
+      input_keys: ["context.assumption", "対話履歴", "リポジトリ既存資産"]
+      output_keys: ["profile.dimensions", "profile.vocabulary_tier", "profile.implications"]
+      output_shape_ref: "intake-final-schema.json#/properties/profile"
+    layer7_interaction:
+      first_question: "あなたの 1 日の業務時間のうち、最も多く費やしている領域を 3 つ挙げてください"
+      followups:
+        - "成果物は誰に向けて出していますか（自分／少数／多数／公開）"
+        - "現状で最も時間を奪っている制約は何ですか"
+
+  # ----- purpose -----
+  purpose:
+    id: prompts.purpose
+    title: "真の目的の発掘（purpose-excavator）"
+    responsibility_id: R-INTAKE-FINAL-PURPOSE
+    layer1_basic:
+      purpose: "verb + object 形式で真の目的を 1 文に固定し、underlying motivation と output_priority を分離する"
+      success_criteria:
+        - "true_purpose が動詞起点・1 文・40 字以上"
+        - "output_priority[].is_top=true がちょうど 1 件"
+        - "techniques_used_str に 3 種以上の手法名（例: reverse_brief, 5whys, tacit_extraction, magic_wand）"
+    layer2_domain:
+      terms:
+        reverse_brief: "完成後の理想日を逆算して書かせる手法"
+        magic_wand: "魔法の杖で浮く時間の使い道を聞く手法"
+        tacit_extraction: "暗黙知の所在を特定する手法"
+    layer5_agent_spec:
+      input_keys: ["context.assumption", "context.profile"]
+      output_keys: ["purpose.true_purpose", "purpose.underlying_motivation", "purpose.output_priority", "purpose.tacit_where", "purpose.tacit_strategy", "purpose.handoff_questions"]
+      output_shape_ref: "intake-final-schema.json#/properties/purpose"
+    layer7_interaction:
+      first_question: "完成して 1 週間使った朝、最初に開いたときに一番見たいアウトプットは何ですか（Reverse Brief）"
+      followups:
+        - "そのアウトプットがあると、その日の何が変わりますか（5 Whys）"
+        - "今は言語化できていないが似た判断を過去にしている例はありますか（Tacit Extraction）"
+
+  # ----- options -----
+  options:
+    id: prompts.options
+    title: "選択肢提示（option-presenter）"
+    responsibility_id: R-INTAKE-FINAL-OPTIONS
+    layer1_basic:
+      purpose: "責務境界 / テーマ抽出 / 配信タイミングなど主要設計軸ごとに 2-4 選択肢を出し、各グループで 1 件を採択する"
+      success_criteria:
+        - "groups は最低 2 グループ。各グループに weight (軽/中/重) を明示"
+        - "groups[].options[].adopted=true が各グループ厳密に 1 件"
+        - "connectors.input_sources / outputs / scheduler が固有名詞レベルで具体的"
+    layer2_domain:
+      terms:
+        weight: "実装コスト・運用負荷の総合判定（軽/中/重）"
+    layer5_agent_spec:
+      input_keys: ["context.purpose", "既存スキルカタログ"]
+      output_keys: ["options.groups", "options.connectors"]
+      output_shape_ref: "intake-final-schema.json#/properties/options"
+    layer7_interaction:
+      first_question: "このスキルは既存スキルとの関係で (O1)オーケストレータ / (O2)ハイブリッド / (O3)独立 のどれにしますか"
+      followups:
+        - "テーマ抽出は (T1)静的 / (T2)動的 / (T3)ハイブリッド のどれですか"
+        - "配信タイミングは (S1)定刻 / (S2)オンデマンド / (S3)両対応 のどれですか"
+
+  # ----- figures -----
+  figures:
+    id: prompts.figures
+    title: "図解5枚（visualizer）"
+    responsibility_id: R-INTAKE-FINAL-FIGURES
+    layer1_basic:
+      purpose: "全体アーキ / テーマ抽出 / 日次パイプ / Before-After / 責務境界 の 5 枚を Mermaid で生成する"
+      success_criteria:
+        - "entries が exactly 5 件、順序固定"
+        - "各図 one_liner ≤120 字、legend に色凡例"
+        - "mandatory_rules_check 全項目 passed=true（ノード数 7±2、日本語ラベル ≤10 字、色凡例つき、Font Awesome 使用、言いたい一言付記、専門用語最小化）"
+    layer2_domain:
+      terms:
+        mandatory_rules: "visualization-mandatory-rules.md の 6 項目"
+    layer5_agent_spec:
+      input_keys: ["context.options", "context.purpose"]
+      output_keys: ["figures.entries", "figures.mandatory_rules_check"]
+      output_shape_ref: "intake-final-schema.json#/properties/figures"
+    layer7_interaction:
+      first_question: "全体アーキを描くとき『縦切り』に該当する中央ノードは何ですか"
+      followups:
+        - "Before-After 図で赤=現状の摩擦、緑=理想として、3 ステップずつ挙げてください"
+
+  # ----- five_axes -----
+  five_axes:
+    id: prompts.five_axes
+    title: "5軸サマリ（summarizer）"
+    responsibility_id: R-INTAKE-FINAL-FIVE-AXES
+    layer1_basic:
+      purpose: "出力先 / 情報源 / 共有相手 / 真の課題 / ナレッジ資産 の 5 軸を最終確定する"
+      success_criteria:
+        - "rows が exactly 5 件、順序固定"
+        - "intent_contract.slot_status が全 slot filled=true、pending_probes が空"
+        - "rows[出力先] は intent_contract.output_spec.sink、rows[情報源] は intent_contract.input_spec.sources から派生"
+        - "ナレッジ資産行は must=true、depth=deep"
+        - "pipeline.ingest/analysis/storage/retrieval/update が全件埋まる"
+    layer2_domain:
+      terms:
+        depth: "shallow=表層回答のみ / standard=具体名あり / deep=条件・閾値まで"
+    layer5_agent_spec:
+      input_keys: ["context.assumption", "context.profile", "context.purpose", "context.options", "context.interview.intent_contract", "context.interview.pending_probes"]
+      output_keys: ["five_axes.rows", "five_axes.pipeline", "five_axes.intent_contract"]
+      output_shape_ref: "intake-final-schema.json#/properties/five_axes"
+    layer7_interaction:
+      first_question: "pending_probes が残る場合は probe-pattern-table.json の該当 question_text をそのまま聞いてください"
+      followups:
+        - "update サイクルは daily / weekly / monthly / on-demand のどれですか"
+
+  # ----- design_decisions -----
+  design_decisions:
+    id: prompts.design_decisions
+    title: "設計選択サマリ"
+    responsibility_id: R-INTAKE-FINAL-DESIGN
+    layer1_basic:
+      purpose: "options.groups の adopted から派生する設計選択表を要約する"
+      success_criteria:
+        - "rows は options.groups と同数。各 axis/adopted/reason が固有名詞ベース"
+        - "output_priority は purpose.output_priority と整合"
+    layer5_agent_spec:
+      input_keys: ["context.options", "context.purpose.output_priority"]
+      output_keys: ["design_decisions.rows", "design_decisions.output_priority"]
+      output_shape_ref: "intake-final-schema.json#/properties/design_decisions"
+      derivable: true
+      notes: "render-intake-final.py が computed-field として自動派生可能（要拡張）"
+    layer7_interaction:
+      first_question: "（派生フィールド: 通常はユーザー対話不要）"
+
+  # ----- handoff -----
+  handoff:
+    id: prompts.handoff
+    title: "harness-creator への申し送り"
+    responsibility_id: R-INTAKE-FINAL-HANDOFF
+    layer1_basic:
+      purpose: "fast-track / standard / human-review / draft-only から引き渡しモードを 1 つ確定する"
+      success_criteria:
+        - "recommended_mode が enum に合致"
+        - "skip_to_phase が明示（例: 'Phase 2'）"
+        - "reason が 5 軸 verified などの根拠を含む"
+    layer5_agent_spec:
+      input_keys: ["context.five_axes", "context.open_questions", "validation 結果"]
+      output_keys: ["handoff.recommended_mode", "handoff.skip_to_phase", "handoff.reason", "handoff.starting_note"]
+      output_shape_ref: "intake-final-schema.json#/properties/handoff"
+    layer7_interaction:
+      first_question: "5 軸全 verified かつ blocking 未解決ゼロですか（fast-track 条件）"
+
+  # ----- self_update -----
+  self_update:
+    id: prompts.self_update
+    title: "自己進化結果（self-updater）"
+    responsibility_id: R-INTAKE-FINAL-SELF-UPDATE
+    layer1_basic:
+      purpose: "value_realized_score の自己採点と question-bank への追加候補を確定する"
+      success_criteria:
+        - "value_realized_score が 0-100、deductions と整合（100 - sum(deductions.points) = score）"
+        - "question_bank_additions に新規 3 件以上、各 technique を明示"
+        - "session_observations に再現可能な学び 2 件以上"
+    layer5_agent_spec:
+      input_keys: ["全フェーズの出力", "対話履歴"]
+      output_keys: ["self_update.value_realized_score", "self_update.deductions", "self_update.question_bank_additions", "self_update.session_observations", "self_update.skipped_phases"]
+      output_shape_ref: "intake-final-schema.json#/properties/self_update"
+    layer7_interaction:
+      first_question: "今回のセッションで決定打になった質問は何でしたか"
+      followups:
+        - "今後も使える質問として question-bank に追加すべきものは"
+        - "次回スキップできるフェーズと理由は"

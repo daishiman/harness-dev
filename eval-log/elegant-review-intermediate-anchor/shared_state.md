@@ -1,0 +1,1 @@
+中間成果物アンカー機構 6 ファイルを fresh 観察。散文(paradigm.md §中間成果物+Step4.5)/schema(intermediate_artifacts[] 5必須)/combinator(patch+render定数)/lint(三者SSOT drift+配線warning)/run-goal-seek Rule8 の 4 層構成。default-ON で run/wrap/delegate に注入。懸念: patch hunk 行番号脆性で実質 render 定数が主担保、OR マッチ lint の弱さ、drift_signal 非必須、additionalProperties:false の前方非互換、Step4.5 番号脆性、配線サブ未存在時の二重欠落見逃し。

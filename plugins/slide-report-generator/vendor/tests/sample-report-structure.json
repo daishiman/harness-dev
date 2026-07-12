@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "サポート問い合わせ自動分類の導入分析",
+    "subtitle": "2026 上期 社内報告",
+    "reportType": "internal-analysis",
+    "audience": "カスタマーサポート部門長・経営企画",
+    "keyMessage": "問い合わせの自動分類を導入すれば一次対応時間を約40%短縮でき、次四半期での試験導入を推奨する",
+    "length": "standard",
+    "language": "ja",
+    "author": "サポート改善チーム",
+    "visualPolicy": "balanced"
+  },
+  "theme": {
+    "name": "kanagawa-lotus",
+    "mode": "light",
+    "accentColors": ["blue", "aqua", "violet", "yellow", "pink"]
+  },
+  "sections": [
+    {
+      "id": "section-summary",
+      "heading": "要約",
+      "role": "summary",
+      "paragraphs": [
+        "本レポートは、増加するサポート問い合わせに対する**自動分類**の導入可否を分析する。",
+        "結論として、一次対応時間を約 **40%** 短縮できる見込みがあり、次四半期での試験導入を推奨する。"
+      ],
+      "visual": { "kind": "none" }
+    },
+    {
+      "id": "section-background",
+      "heading": "背景",
+      "role": "background",
+      "paragraphs": [
+        "問い合わせ件数は前年同期比で 1.6 倍に増加し、一次対応の遅延が顧客満足度を押し下げている。",
+        "手作業での振り分けが対応コストの主要因となっており、自動化の必要性が高まっている。"
+      ],
+      "visual": {
+        "kind": "svg",
+        "caption": "問い合わせ増加から自動化ニーズに至る構造",
+        "alt": "問い合わせ増加・対応コスト増・自動化ニーズの3ステップフロー図",
+        "rationale": "因果の連鎖を1本の流れで示すため flow を選択",
+        "spec": {
+          "variant": "flow",
+          "nodes": [
+            { "id": "n-volume", "label": "問い合わせ急増" },
+            { "id": "n-cost", "label": "手作業振り分けコスト増" },
+            { "id": "n-need", "label": "自動分類ニーズ" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "section-analysis",
+      "heading": "現状分析",
+      "role": "analysis",
+      "paragraphs": [
+        "問い合わせは大きく「技術」「請求」「その他」の3系統に分かれ、ルールベースでの一次振り分けが可能である。",
+        "分類器を通した後に担当キューへ振り分けるフローが最も効果が高い。"
+      ],
+      "visual": {
+        "kind": "mermaid",
+        "caption": "自動分類の処理フロー",
+        "alt": "受信から自動分類を経て担当キューへ振り分けるフローチャート",
+        "rationale": "分岐のある処理フローは Mermaid flowchart が最も簡潔",
+        "spec": {
+          "diagramType": "flowchart",
+          "direction": "LR",
+          "definition": "flowchart LR; A[問い合わせ受信] --> B[自動分類]; B --> C{系統判定}; C -->|技術| D[技術キュー]; C -->|請求| E[請求キュー]; C -->|その他| F[一般キュー]",
+          "fallback": "受信 → 自動分類 → 系統判定(技術/請求/その他) → 各担当キュー"
+        }
+      }
+    },
+    {
+      "id": "section-findings",
+      "heading": "所見",
+      "role": "finding",
+      "paragraphs": [
+        "自動分類の精度は検証データで約 **92%** に達し、誤分類は再学習で改善が見込める。",
+        "対応時間のヒートマップから、ピーク帯の負荷集中が最も緩和されることが分かった。"
+      ],
+      "visual": {
+        "kind": "codex-image",
+        "caption": "曜日×時間帯の対応負荷ヒートマップ",
+        "alt": "曜日と時間帯ごとの問い合わせ対応負荷を示すヒートマップ画像",
+        "rationale": "連続的な密度分布は生成画像が最も表現に適する",
+        "spec": {
+          "slug": "section-findings",
+          "asset": "images/support-heatmap.png",
+          "pattern": "html-composite",
+          "textPolicy": "overlay-only",
+          "backgroundSource": "raster",
+          "styleGenome": "assets/generated/style-genome.json",
+          "prompt": "曜日×時間帯ごとの問い合わせ対応負荷を示すヒートマップ。Kanagawa Lotus 配色・漫画チックな説明図スタイル。",
+          "overlayText": ["対応負荷ヒートマップ"]
+        }
+      }
+    },
+    {
+      "id": "section-next-action",
+      "heading": "次アクション",
+      "role": "next-action",
+      "paragraphs": [
+        "- 次四半期に技術系問い合わせのみで試験導入する",
+        "- 2週間ごとに精度と対応時間を計測し再学習する",
+        "- 効果確認後、請求・その他系統へ段階展開する"
+      ],
+      "visual": {
+        "kind": "svg",
+        "caption": "段階導入のサイクル",
+        "alt": "試験導入・計測・再学習・展開の循環図",
+        "rationale": "反復する改善プロセスは cycle が適する",
+        "spec": {
+          "variant": "cycle",
+          "nodes": [
+            { "id": "n-pilot", "label": "試験導入" },
+            { "id": "n-measure", "label": "精度計測" },
+            { "id": "n-retrain", "label": "再学習" },
+            { "id": "n-expand", "label": "段階展開" }
+          ]
+        }
+      }
+    }
+  ]
+}

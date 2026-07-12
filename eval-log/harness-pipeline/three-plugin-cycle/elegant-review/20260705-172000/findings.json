@@ -1,0 +1,75 @@
+{
+  "run_id": "20260705-172000",
+  "scope_mode": "repo",
+  "phases": ["reset-observe", "parallel-analysis(3 agents, 30 methods)", "improve", "independent-approve"],
+  "confirmed_findings": [
+    {
+      "id": "F1",
+      "condition_signal": "contradiction",
+      "severity": "medium",
+      "location": "plugins/harness-creator/skills/run-build-skill/references/feedback-loop-deployment.md:23,50-53",
+      "issue": "symlink禁止doctrineがblanketで、repo内メタplugin(skill-intake package.exclude / planner distributable:false)が正当に使うsymlinkパターンを禁止例に含めていた",
+      "fix": "distributable量産先のbundle同梱時のみ禁止と限定し、除外済みメタpluginのSSOTへのsymlinkを許容する例外を切り出し。実装(symlink)は無改変",
+      "status": "applied"
+    },
+    {
+      "id": "F2",
+      "condition_signal": "inconsistency",
+      "severity": "medium",
+      "location": "plugins/harness-creator/README.md ; plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md",
+      "issue": "harness-creatorのhook co-locate規約(top-level hooks/不在は意図)が未文書化。plannerのhook taxonomyがskill-scoped hookを表現不能",
+      "fix": "READMEにco-locate規約を明文化(hooks/不在=意図)。io-contractのhook build_target規約にskill-scoped hookはhand-built例外と注記。ユーザーの'hooks不要?'への回答=不要=意図",
+      "status": "applied"
+    },
+    {
+      "id": "F3",
+      "condition_signal": "inconsistency",
+      "severity": "medium",
+      "location": "plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py ; plugins/harness-creator/references/feedback-to-improvement-runbook.md:78",
+      "issue": "provenance hookがprimary fail-closedと読めるが、実際のprimary gateはSKILL.md inline検証ブロック(marker自己生成)。hookはmatcher(Bash|Task)被覆のbackstop。両analystが誤認するほど紛らわしい",
+      "fix": "hook docstringにhonest-labeling(primary=inline block / hook=defense-in-depth backstop)。runbookにmarker自己生成の旨を精緻化。matcherは無改変(過剰工事回避)",
+      "status": "applied"
+    },
+    {
+      "id": "F4",
+      "condition_signal": "inconsistency",
+      "severity": "medium",
+      "location": "plugins/harness-creator/scripts/emit-improvement-handoff.py ; plugins/harness-creator/tests/test_emit_handoff_schema_parity.py",
+      "issue": "emit-improvement-handoff.pyがplanner正本schemaをstdlib再実装しparity無。逆向き(harness->planner)引用が無防備でsilent drift可能",
+      "fix": "planner正本improvement-handoff.schema.jsonを実ロードしemit出力を検証するparityテスト新設(6 passed・負コントロールで真陽性実証)。emit実装は無改変",
+      "status": "applied"
+    },
+    {
+      "id": "F5",
+      "condition_signal": "dependency_break",
+      "severity": "medium",
+      "location": "plugins/harness-creator/commands/capability-build.md:24 ; plugins/harness-creator/references/pipeline-boundary-contract.md",
+      "issue": "render-skill-brief.py(brief射影器)が言及されるだけで実行フロー上のowner不在。build前にbriefがmaterializeされない",
+      "fix": "capability-build route preflightにbrief render配線(実CLI署名 --inventory/--component/--out使用)。boundary contractにmaterialize owner=capability-build route preflightを固定",
+      "status": "applied"
+    },
+    {
+      "id": "F7",
+      "condition_signal": "omission",
+      "severity": "low",
+      "location": "plugins/harness-creator/references/feedback-to-improvement-runbook.md",
+      "issue": "非エンジニアは収集(Stage0-1)まで、還流(Stage2-6)は開発担当のCLI作業という二役設計が非明示",
+      "fix": "「担い手モデル」節を新設し二役ループを明文化(ユーザー確定: 会話フロント新設せず明文化)",
+      "status": "applied"
+    }
+  ],
+  "confirmed_non_defects": [
+    {"topic": "upstream-pins鮮度(E4/E5)", "verdict": "健全 — pytest fail-closed強制・event-driven。修正不要"},
+    {"topic": "standalone disclosure-only(E9)", "verdict": "意図的honest degradation・planner distributable:false。修正不要"},
+    {"topic": "静的依存グラフ(E8)", "verdict": "非循環・健全。intake->planner soft非対称は意図的。修正不要"},
+    {"topic": "harness-creator hooks/dir不在", "verdict": "意図的・cohesion上健全。これがユーザーのhooks問いへの答え=不要"}
+  ],
+  "backlog": [
+    {"id": "F6", "topic": "closure完全性の機械可視化", "detail": "emit済み未クローズ改善要望のorphan-detector + source-refキーdedup。ユーザー確定でbacklog。future work"}
+  ],
+  "corrections_via_two_stage_verification": [
+    "E3 planner run-skill-feedback '不在'(Glob 0件)は偽陽性 — 実際はsymlink保持。Globのsymlink盲点",
+    "E2 severity HIGH->medium — 両analystがhook=primary gateと誤認。実際はSKILL.md inline blockがprimary、hookはbackstop",
+    "素人思考HIGH(runbook Stage3でexit2 block)は過大評価 — skillがmarker自己生成するため実際はblockしない"
+  ]
+}

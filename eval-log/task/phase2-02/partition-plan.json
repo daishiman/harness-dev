@@ -1,0 +1,500 @@
+{
+  "schema_version": "phase2-02.partition-plan.v1.2",
+  "generated_at": "2026-05-20T13:45:56.508070+09:00",
+  "source_inventory": "eval-log/task/phase2-01/residual-inventory.json",
+  "schema_change_log": [
+    {
+      "version": "v1.1",
+      "changed_at": "2026-05-20",
+      "change": "Added optional `keywords` field per partition (string[]). Source-of-truth for plugin.json keywords required by phase2-03 template normalization.",
+      "compat": "backward-compatible additive change"
+    },
+    {
+      "version": "v1.2",
+      "changed_at": "2026-05-20",
+      "change": "Corrected files[].rel to include `creator-kit/` prefix (was missing in v1/v1.1). All 59 file paths now resolve under creator-kit/, matching phase2-01 residual-inventory.json scope. Discovered via Phase2-06 pre-flight existence check (31/59 files unresolved with root-relative paths).",
+      "compat": "schema-additive but path-semantic-breaking; downstream phase2-03 migration-order.json unchanged; phase2-06 deploy must use prefixed paths"
+    }
+  ],
+  "partitions": [
+    {
+      "name": "skill-governance-adapters",
+      "description": "Skill governance adapter scripts",
+      "responsibility": "外部 sink / route adapter scripts を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "adapter",
+        "sink",
+        "route",
+        "dispatch"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/adapters/dispatch.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/resolve_route.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/sink_http.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/sink_local.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/sink_notion.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/sink_sheets.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/adapters/sink_slack.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": []
+    },
+    {
+      "name": "skill-governance-automation",
+      "description": "Skill governance automation scripts",
+      "responsibility": "build / compose / notify / rollback 等の orchestration scripts を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "automation",
+        "orchestration",
+        "build",
+        "rollback"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/build-manifest-registration-plan.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/compose-rubrics.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/compute-rubric-hash.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/cross_platform_secret.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/doc-to-skill-adapter.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/extract-session-events.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/guard-change-category.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/notify-if-governance-trigger.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/re-evaluate-on-rubric-bump.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/resolve-skill-dirs.ps1",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/resolve-skill-dirs.sh",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/rollback-to-stable.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/write-eval-log.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [
+        "skill-governance-config"
+      ],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": [
+        {
+          "source_rel": "scripts/guard-change-category.py",
+          "match": "creator-kit/config/governance-policy.json",
+          "target_rel": "config/governance-policy.json",
+          "target_plugin": "skill-governance-config",
+          "classification": "legacy_cross_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "scripts/resolve-skill-dirs.sh",
+          "match": "creator-kit/scripts/resolve-skill-dirs.sh",
+          "target_rel": "scripts/resolve-skill-dirs.sh",
+          "target_plugin": "skill-governance-automation",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "scripts/resolve-skill-dirs.sh",
+          "match": "creator-kit/scripts/resolve-skill-dirs.sh",
+          "target_rel": "scripts/resolve-skill-dirs.sh",
+          "target_plugin": "skill-governance-automation",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        }
+      ]
+    },
+    {
+      "name": "skill-governance-config",
+      "description": "Skill governance shared configuration payloads",
+      "responsibility": "governance 設定・registry・hook example を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "config",
+        "registry",
+        "hook-example"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/config/INSTALL_HOOKS.md",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/adapter-registry.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/claude-settings-hooks.json.example",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/governance-params.json.example",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/governance-policy.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/meta-harness-hooks.json.example",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/meta-harness-log-schema-v1.0.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/meta-harness-observables.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/output-routing.json.example",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/pattern-catalog.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/rubric-registry.json",
+          "kind": "config"
+        },
+        {
+          "rel": "creator-kit/config/template-variable-registry.json",
+          "kind": "config"
+        }
+      ],
+      "depends_on": [
+        "skill-governance-hooks",
+        "skill-governance-lint"
+      ],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": [
+        {
+          "source_rel": "config/INSTALL_HOOKS.md",
+          "match": "creator-kit/scripts/hook-guard-rubric.py",
+          "target_rel": "scripts/hook-guard-rubric.py",
+          "target_plugin": "skill-governance-hooks",
+          "classification": "legacy_cross_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/INSTALL_HOOKS.md",
+          "match": "creator-kit/config/claude-settings-hooks.json.example",
+          "target_rel": "config/claude-settings-hooks.json.example",
+          "target_plugin": "skill-governance-config",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/INSTALL_HOOKS.md",
+          "match": "creator-kit/config/claude-settings-hooks.json.example",
+          "target_rel": "config/claude-settings-hooks.json.example",
+          "target_plugin": "skill-governance-config",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/INSTALL_HOOKS.md",
+          "match": "creator-kit/config/claude-settings-hooks.json.example",
+          "target_rel": "config/claude-settings-hooks.json.example",
+          "target_plugin": "skill-governance-config",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/INSTALL_HOOKS.md",
+          "match": "creator-kit/scripts/hook-",
+          "target_rel": "scripts/hook-",
+          "target_plugin": null,
+          "classification": "unresolved_prose_or_prefix_candidate",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/governance-policy.json",
+          "match": "creator-kit/scripts/lint-script-frontmatter.py",
+          "target_rel": "scripts/lint-script-frontmatter.py",
+          "target_plugin": "skill-governance-lint",
+          "classification": "legacy_cross_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "config/governance-policy.json",
+          "match": "creator-kit/scripts/lint-rubric-violation.py",
+          "target_rel": "scripts/lint-rubric-violation.py",
+          "target_plugin": "skill-governance-lint",
+          "classification": "legacy_cross_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        }
+      ]
+    },
+    {
+      "name": "skill-governance-hooks",
+      "description": "Skill governance hook scripts",
+      "responsibility": "Claude hook entrypoint scripts を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "hook",
+        "claude-hook"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/hook-check-file-ownership.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/hook-guard-rubric.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/hook-handoff.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/hook-post-compact.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/hook-validate-skill-md.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/hook-verify-evaluator-json.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": []
+    },
+    {
+      "name": "skill-governance-lint",
+      "description": "Skill governance lint and validation scripts",
+      "responsibility": "lint / validate / check 系 gate scripts を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "lint",
+        "validate",
+        "gate"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/check-rubric-sync.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-dependency-direction.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-external-refs.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-forbidden-deps.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-manifest-contents.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-path-canonical.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-rubric-refs-exist.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-rubric-violation.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-script-frontmatter.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-skill-dep-step7.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-skill-description.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-skill-name.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-skill-tree.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/lint-template-variables.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/validate-frontmatter.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": [
+        {
+          "source_rel": "scripts/lint-path-canonical.py",
+          "match": "creator-kit/scripts/...",
+          "target_rel": null,
+          "target_plugin": null,
+          "classification": "unresolved_prose_or_prefix_candidate",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        },
+        {
+          "source_rel": "scripts/lint-skill-description.py",
+          "match": "creator-kit/scripts/validate-frontmatter.py",
+          "target_rel": "scripts/validate-frontmatter.py",
+          "target_plugin": "skill-governance-lint",
+          "classification": "legacy_intra_partition_path_rewrite_required",
+          "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+        }
+      ]
+    },
+    {
+      "name": "skill-governance-migration",
+      "description": "Skill migration helper scripts",
+      "responsibility": "migration audit / brief conversion helper を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "migration",
+        "audit"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/migrate/audit.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/migrate/backfill-source-tier.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/migrate/to-brief.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": []
+    },
+    {
+      "name": "skill-governance-secrets",
+      "description": "Skill governance secret helper scripts",
+      "responsibility": "secret audit / keychain helper を所有する",
+      "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+      "keywords": [
+        "skill-governance",
+        "secrets",
+        "keychain"
+      ],
+      "files": [
+        {
+          "rel": "creator-kit/scripts/secrets/README.md",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/secrets/audit_secret_leak.py",
+          "kind": "scripts"
+        },
+        {
+          "rel": "creator-kit/scripts/secrets/keychain_helper.py",
+          "kind": "scripts"
+        }
+      ],
+      "depends_on": [],
+      "skills": [],
+      "agents": [],
+      "commands": [],
+      "hooks": [],
+      "external_ref_exceptions": []
+    }
+  ]
+}

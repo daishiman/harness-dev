@@ -1,0 +1,50 @@
+{
+  "name": "contract-generator",
+  "version": "3.4.0",
+  "description": "取引基本契約書 対話式作成スキル - 7人の専門家による多角的レビュー",
+  "main": "scripts/contract-cli.js",
+  "bin": {
+    "contract": "./scripts/contract-cli.js"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "typecheck": "node --check scripts/*.js",
+    "lint": "node --check scripts/*.js",
+    "check": "node scripts/setup.js --check",
+    "cli": "node scripts/contract-cli.js",
+    "convert": "node scripts/contract-cli.js convert",
+    "validate": "node scripts/contract-cli.js validate",
+    "validate:layout": "node scripts/validate-layout.js",
+    "validate:contract": "node scripts/validate-contract.js",
+    "validate:input": "node scripts/validate-input.js",
+    "tax": "node scripts/determine-tax.js",
+    "docx": "node scripts/convert-to-docx.js",
+    "help": "node scripts/contract-cli.js --help"
+  },
+  "keywords": [
+    "contract",
+    "legal",
+    "japanese",
+    "business",
+    "ai-consulting",
+    "freelance"
+  ],
+  "author": "万壽本大嗣",
+  "license": "UNLICENSED",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "config": {
+    "pandoc_required": true,
+    "libreoffice_optional": true
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

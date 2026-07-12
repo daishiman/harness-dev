@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "assign-notion-fidelity-evaluator",
+  "skill": "assign-notion-fidelity-evaluator",
+  "description": "Notion ページ描画直前に section_canonical_map 基準で粒度を機械検証する。canonical snapshot 派生→fidelity check→delta report の 3 責務を順に実行する。",
+  "phases": [
+    {
+      "id": "P1-snapshot",
+      "step": 1,
+      "title": "canonical-page-snapshot.json を section_canonical_map.json から決定論派生",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "validate-snapshot-hash",
+      "resourceIds": ["ref-canonical-snapshot", "ref-abstraction-contract"],
+      "fatal_exit_codes": [64]
+    },
+    {
+      "id": "P2-fidelity-check",
+      "step": 2,
+      "title": "intake 出力を snapshot と比較し fidelity を計算",
+      "gate": "C2",
+      "dependsOn": ["P1-snapshot"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-fidelity-rules", "ref-granularity-rubric", "schema-fidelity-report"],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "P3-delta-report",
+      "step": 3,
+      "title": "差分を delta-report.json として出力 (描画 GO/NO-GO 判定付き)",
+      "gate": "C3",
+      "dependsOn": ["P2-fidelity-check"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schema-fidelity-report"],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-canonical-snapshot", "kind": "reference", "path": "./references/canonical-page-snapshot.json", "phaseIds": ["P1-snapshot", "P2-fidelity-check"]},
+    {"id": "ref-abstraction-contract", "kind": "reference", "path": "./references/abstraction-contract.md", "phaseIds": ["P1-snapshot"]},
+    {"id": "ref-fidelity-rules", "kind": "reference", "path": "./references/fidelity-check-rules.md", "phaseIds": ["P2-fidelity-check"]},
+    {"id": "ref-granularity-rubric", "kind": "reference", "path": "./references/granularity-rubric.md", "phaseIds": ["P2-fidelity-check"]},
+    {"id": "schema-fidelity-report", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P2-fidelity-check", "P3-delta-report"]}
+  ]
+}

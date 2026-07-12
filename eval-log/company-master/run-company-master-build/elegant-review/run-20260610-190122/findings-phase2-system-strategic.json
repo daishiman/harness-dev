@@ -1,0 +1,121 @@
+{
+  "agent": "system-strategic",
+  "paradigm_findings": [
+    {
+      "thought_method": "価値提案思考",
+      "severity": "contradiction",
+      "title": "自動確定条件の出力契約違反: 会社名のみ入力でも gBizINFO 1件返却なら『公的データで確認済み』に自動確定",
+      "description": "resolve_company.py:114 は `len(infos)==1 and (address is None or _address_match(...))` であり、住所未指定の会社名のみ入力で候補1件なら2要素一致なしに最高確度で自動確定する。中核価値『誤値>>空欄の非対称コスト原則』への直接違反。open_issues 未申告。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/resolve_company.py:114",
+      "auto_fixable": true,
+      "recommendation": "条件を `len(infos)==1 and address is not None and _address_match(...)` に変更し、会社名のみ入力は候補列挙へ倒す。name-only 非確定の回帰テストを追加 (offline 検証可能)。"
+    },
+    {
+      "thought_method": "因果関係分析",
+      "severity": "contradiction",
+      "title": "dogfooding 断絶: 自 repo で二段防御が 0 層稼働 (静的 deny 未マージ + plugin 未 enable)",
+      "description": "自 repo の .claude/settings.json に settings-hardening.json の 5 deny エントリが未マージ、enabledPlugins に company-master@xl-skills が無く hook-guard-secret も発火しない。『両方が揃って二段防御が成立』が作者自身の環境で 0 層。",
+      "location": ".claude/settings.json:3-9",
+      "auto_fixable": true,
+      "recommendation": "build-claude-settings.py の managed_permissions 機構経由で 5 deny を機械マージし、enabledPlugins へ company-master@xl-skills を追加。CI で deny 存在を --check 検証。"
+    },
+    {
+      "thought_method": "因果ループ",
+      "severity": "dependency_break",
+      "title": "backfill 検証迂回→誤値固着の自己強化ループ + 別PR送り根拠の不成立",
+      "description": "backfill.py:213 は validate_row を通さず PATCH。不正形式値が PATCH される→『既存非空セルは触らない』原則がその値を保護→誤値が恒久固着する amplifier。open_issues は『API トークン無しでは検証困難』を別PR根拠とするが、validate_row は純 offline 決定論で修正自体は API 疎通不要 = 別PR分離の根拠が成立しない。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/backfill.py:213",
+      "auto_fixable": true,
+      "recommendation": "patch_empty_cells 呼び出し前に validate_row(enriched) を実行し、違反行は deferred+replay 退避へ回す。offline テストで回帰固定。"
+    },
+    {
+      "thought_method": "システム思考",
+      "severity": "dependency_break",
+      "title": "機械担保の CI 未配線: company-master 専用 lint は make lint のみ、frontmatter lint 群は対象外",
+      "description": "(1) lint-company-master-vendored-deps.py は make lint のみ配線で CI (creator-kit-ci.yml) に含まれない。CI で走らない lint は『保証が無言で腐る』。(2) validate-frontmatter 等は --skills-dir plugins/skill-creator/skills 固定で company-master は機械検証圏外。pytest と build-claude-symlinks --check は全域被覆で生きており、断線は lint 層に集中。",
+      "location": ".github/workflows/creator-kit-ci.yml:50-54",
+      "auto_fixable": true,
+      "recommendation": "creator-kit-ci.yml に company-master lint step を追加し、governance-check.yml に validate-frontmatter / lint-skill-description --skills-dir plugins/company-master/skills を prompt-creator と同型で追加。"
+    },
+    {
+      "thought_method": "改善思考",
+      "severity": "inconsistency",
+      "title": "hook fail-open の再発: 解釈不能入力 exit 0 素通し (skill-intake hook 堅牢化の教訓未反映)",
+      "description": "hook-guard-secret.py:42-43 は stdin JSON 解釈不能時に exit 0 で素通し。2026-06-06 の hook-guard-skillgen 堅牢化で確立した『保証要件は機械層で fail-closed』の知見が新規 hook に反映されていない PDCA 断絶。`-wa` 等の連結フラグもすり抜ける。",
+      "location": "plugins/company-master/hooks/hook-guard-secret.py:42-43",
+      "auto_fixable": true,
+      "recommendation": "解釈不能入力は exit 2 (fail-closed) へ反転し、フラグ検出を正規表現ベースへ強化。tests に hook 単体 pytest を追加し CI 配線。"
+    },
+    {
+      "thought_method": "プラスサム思考",
+      "severity": "omission",
+      "title": "notion_config.py の vendoring が drift 検出なき fork 化 (byte一致 lint 不在)",
+      "description": "get_gbizinfo_token (L227-244)・DB_ENV_NAMES company-master エントリ (L136) を追加した機能 fork で、正本側の今後の修正が伝播せず無検出で乖離する。gBizINFO 拡張を正本へ還流すれば全 plugin が共有できる。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/notion_config.py:136,227-244",
+      "auto_fixable": false,
+      "recommendation": "gBizINFO token 解決を別モジュールへ分離して notion_config.py を正本 byte 一致へ戻すか、共通部分のみ照合する lint を追加し配線。"
+    },
+    {
+      "thought_method": "戦略的思考",
+      "severity": "dependency_break",
+      "title": ".codex-plugin manifest の宣言と実体不在 + agent ファイル名の将来衝突リスク",
+      "description": "(1) SKILL.md L67 の .codex-plugin は repo 全 plugin に実在しない将来構想の幻影参照。(2) agents ファイル名 (enrich-attributes-agent.md 等) は他 plugin の命名慣行 (plugin プレフィクス付き) から逸脱した汎用名で、build-claude-symlinks.py の flat な .claude/agents 名前空間で将来 conflict する構造リスク。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:67",
+      "auto_fixable": true,
+      "recommendation": "SKILL.md L67 の .codex-plugin 文を削除。agents ファイル名を company-master-*.md へリネームし symlink 再生成。"
+    },
+    {
+      "thought_method": "トレードオン思考",
+      "severity": "smell",
+      "title": "『settings 配布不可 vs 静的層必須』のトレードオフを手動マージで放置 (既存生成器で止揚可能)",
+      "description": "repo には build-claude-settings.py + managed_permissions 機構が既に存在し、repo 内利用については機械マージという第三案が取れる。現状は repo 原則に対し唯一プロンプト/手順書任せの箇所。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:172,191",
+      "auto_fixable": false,
+      "recommendation": "repo 内: managed_permissions に settings-hardening.json を source 登録し CI --check。配布先: 起動時に deny 有無を検査し未適用なら stderr 警告。"
+    },
+    {
+      "thought_method": "仮説思考",
+      "severity": "omission",
+      "title": "再現性の中心仮説『100人100同一結果』を崩す未担保の環境依存 2 点 (cwd 相対パス / KEN_ALL 版未記録)",
+      "description": "(1) REPLAY_LOG と goal-seek JSONL が cwd 相対 eval-log/ で、任意 cwd 実行ではリプレイ連鎖が断線。(2) KEN_ALL は TTL 30日の鮮度依存データだが取得日/版が記録されず再現検証が不能。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/backfill.py:47",
+      "auto_fixable": true,
+      "recommendation": "REPLAY_LOG を repo_root/plugin_root 起点へ解決。replay/upsert 結果に ken_all_cache_mtime を含めて版追跡可能にする。"
+    },
+    {
+      "thought_method": "論点思考",
+      "severity": "omission",
+      "title": "本質論点: plugin 横断の機械担保被覆を per-plugin 手書き配線でなく構造で決める",
+      "description": "plugin 追加のたびに Makefile target と CI step を個別手書きし、被覆まだらが構造的に再生産される。plugin-composition.yaml が enforcement を宣言しているのに CI 側機構がなく dead data 化。",
+      "location": "plugins/company-master/plugin-composition.yaml:53-57",
+      "auto_fixable": false,
+      "recommendation": "lint 群の --skills-dir を plugins 全走査既定へ寄せるか、plugin-composition.yaml の enforcement 宣言から CI matrix を生成する。"
+    },
+    {
+      "thought_method": "KJ法",
+      "severity": "inconsistency",
+      "title": "島集約: 全 findings は『宣言層と機械層の未配線』に収束 + 島B追加物証 (confirm-url 縮退の経路非対称 / script_refs 不完全)",
+      "description": "4島: (A)機械担保被覆差 (B)原則貫徹の経路非対称 — 追加物証: notion_upsert.py:269 の hojin 経路 create は _safe_confirm_url_children で縮退するのに :276 の代替キー経路は confirm_url.render_blocks 直呼びでテンプレ破損時に全体クラッシュ (C)記述と実体の乖離 — 追加物証: SKILL.md frontmatter script_refs に実在の ken_all.py・normalize.py・notion_config.py が不記載 (D)dogfooding 断絶。単一根本構造『宣言が hook/lint/CI/生成器に配線されないまま出荷された』に収束。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/notion_upsert.py:269,276",
+      "auto_fixable": true,
+      "recommendation": ":276 を _safe_confirm_url_children へ統一、script_refs へ 3 script を追記。横断対処は被覆一般化を親タスクとして実施。"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": ["システム思考", "因果関係分析", "因果ループ", "トレードオン思考", "プラスサム思考", "価値提案思考", "戦略的思考", "改善思考", "仮説思考", "論点思考", "KJ法"],
+    "skipped_with_reason": []
+  },
+  "priority_order": [
+    "自動確定条件の出力契約違反",
+    "dogfooding 断絶",
+    "backfill 検証迂回→誤値固着ループ",
+    "機械担保の CI 未配線",
+    "hook fail-open の再発",
+    "notion_config.py fork 化",
+    ".codex-plugin 幻影 + agent ファイル名衝突リスク",
+    "confirm-url 経路非対称 / script_refs 不完全",
+    "cwd 相対パス / KEN_ALL 版未記録",
+    "被覆の構造化",
+    "settings 手動マージの止揚"
+  ]
+}

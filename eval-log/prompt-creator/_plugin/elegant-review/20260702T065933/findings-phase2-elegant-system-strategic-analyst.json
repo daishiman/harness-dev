@@ -1,0 +1,245 @@
+{
+  "agent": "elegant-system-strategic-analyst",
+  "run_id": "20260702T065933",
+  "paradigm_findings": [
+    {
+      "method": "システム思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-03",
+          "summary": "宣言型化は plugin 内で閉じない。run-build-skill Step 7.5 が本 plugin へ prompt 生成委譲し、repo 全 skill の prompts/*.md が現行 7 層 Markdown 層構成 (5.2 推論手順/5.3 checklist) の写経で書かれ、lint-agent-prompt-section.py が注入セクション名を検証するため、Layer 5 正準構成の変更はこれら 3 系へ同時波及する。",
+          "location": "plugin-composition.yaml:dependencies / run-prompt-creator-7layer/SKILL.md:Phase 5 / seven-layer-markdown-template.md:skill-creator 連携節",
+          "condition_signal": "dependency_break",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "auto_fixable": false,
+          "recommendation": "新層構成 (5.2 ゴール定義/5.3 完了チェックリスト/5.4 実行方式) を lint 側が旧構成の上位互換として受理する段階移行とし、agents 注入セクション名 (Prompt Templates/Self-Evaluation) は不変に保つ。skill-creator 側 lint との parity を移行前に確認する。"
+        },
+        {
+          "id": "A4-04",
+          "summary": "plugin-composition.yaml invariant は「cross-plugin 参照は skill-creator への一方向のみ」と宣言するが、plugin.json depends_on と workflow-manifest p0-lint commands・7layer Phase 5 は skill-governance-lint スクリプトを直接呼ぶ。宣言と実依存 DAG が不一致。",
+          "location": "plugin-composition.yaml:contract.invariant / .claude-plugin/plugin.json:depends_on / run-prompt-create/workflow-manifest.json:phases[p0-lint].commands",
+          "condition_signal": "inconsistency",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "auto_fixable": false,
+          "recommendation": "invariant を「skill-creator + skill-governance-lint への一方向」に修正するか、lint 呼出を skill-creator 経由に集約して宣言と実体を一致させる。"
+        }
+      ]
+    },
+    {
+      "method": "因果関係分析",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-02",
+          "summary": "Gate 2 (verify-completeness.py は Layer 5 に『ゴール定義/完了チェックリスト/達成ゴール』の存在を要求) と Step 3b (prompt-rubric C4-001 high は『5.3 self_evaluation_checklist 5-8 項目』を要求、high 1 件で全体 FAIL) が相互矛盾し、ゴールシーク型生成物は C4-001 で、rubric 準拠の命令型生成物は verify-completeness で落ちるデッドロック。パイプラインは LLM の恣意的解釈でしか通過できない。",
+          "location": "run-prompt-creator-7layer/scripts/verify-completeness.py:79-96 / assign-prompt-design-evaluator/references/prompt-rubric.json:C4-001",
+          "condition_signal": "contradiction",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "auto_fixable": false,
+          "recommendation": "C4-001 の対象を『完了チェックリスト (客観判定可能な項目)』へ再定義し、verify-completeness.py と rubric が同一の Layer 5 正準構成を参照するよう単一定義から導出する。"
+        },
+        {
+          "id": "A4-13",
+          "summary": "SKILL.md 本文・workflow-manifest resourceIds・resource-map.yaml が `prompts/elicit.md` / `prompts/gate-review.md` / `prompts/governance-decide.md` を参照するが、実ファイルは R1-/R2-/R3- prefix 付きで dangling (frontmatter responsibility_refs のみ正しい)。リソース先読み (Key Rule 6) が実行時に破綻する。",
+          "location": "run-prompt-create/workflow-manifest.json:18-19,91,108-109 / run-prompt-create/SKILL.md:143,146,167,203 / run-prompt-create/references/resource-map.yaml:21-27",
+          "condition_signal": "dependency_break",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "auto_fixable": true,
+          "recommendation": "参照 11 箇所を R-prefix 実ファイル名へ一括是正し、lint-manifest-contents.py に resourceIds 実在検査が無ければ追加して再発を機械封鎖する。"
+        }
+      ]
+    },
+    {
+      "method": "因果ループ",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-01",
+          "summary": "命令型再生産の自己強化ループ: prompt-rubric C3-004『5.2 推論手順が 3-7 ステップで具体的』+ c1-c4-criteria C3 の Failing シグナル『状況に応じて等の曖昧語』が、seven-layer-format.md の正準ゴールシーク文言を FAIL 判定し、Step 3b findings→Step 2 差戻 (最大 3 周) で generator に固定手順の追記を強制する。Gate 4 auto_approve の self_evaluation_checklist_present も旧構成を報酬化し、ループを閉路化する amplifier。",
+          "location": "assign-prompt-design-evaluator/references/prompt-rubric.json:C3-004,C4-001 / references/c1-c4-criteria.md:C3節 / run-prompt-create/workflow-manifest.json:auto_approve_conditions",
+          "condition_signal": "contradiction",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "auto_fixable": false,
+          "recommendation": "ループの根 (rubric) を先に書き換える: C3-004 を『再現性根拠 = output_schema + script_refs + 検証可能な完了チェックリスト』へ、C4-001 を『完了チェックリストが客観判定可能』へ再定義し、c1-c4-criteria.md・evaluator SKILL.md C4 表・elicit-question-bank.md L5.3 記述・governance 条件を同時更新する。"
+        },
+        {
+          "id": "A4-16",
+          "summary": "ループの dampener 不在: verify-completeness.py はパイプライン実行時の生成物にしか走らず、plugin 自身の prompts/*.md 6 本に対する CI/pre-push でのゴールシーク検査が未配線。rubric を直しても命令型への回帰ドリフトを止める機械層がない。",
+          "location": "CHANGELOG.md:CI 配線節 (lint 5 ステップに goal-seek 検査なし) / eval-log/.gitkeep (空)",
+          "condition_signal": "omission",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "auto_fixable": false,
+          "recommendation": "verify-completeness.py (強化版) を plugin 内 prompts/*.md 全走査モードで CI に追加し、『保証要件は機械層で担保』の原則に沿って回帰を exit 非 0 で遮断する。"
+        }
+      ]
+    },
+    {
+      "method": "トレードオン思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-06",
+          "summary": "『再現性 (C3)』と『ゴールシーク自律性』は現 rubric ではトレードオフ扱いだが、rubric 自身の C3-003 が既に第三案を内包: 再現性根拠を手順の固定でなく schema + script_refs + 停止条件 (完了チェックリスト) に置く止揚が可能。",
+          "location": "assign-prompt-design-evaluator/references/prompt-rubric.json:C3-003 vs C3-004",
+          "condition_signal": "smell",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "auto_fixable": false,
+          "recommendation": "C3 を『決定論部分は script、意味判断はチェックリスト停止条件で拘束』の二層で定義し直し、C3-004 を『完了チェックリストが停止条件として機能するか』に置換して再現性と自律性を両立させる (A4-01 の解と同一施策)。"
+        },
+        {
+          "id": "A4-15",
+          "summary": "plugin は『質ベース判定・数量カウント禁止』を核心原則に掲げる一方、rubric C4-001『5-8 項目』・C3-004『3-7 ステップ』・prompt-brief trigger_conditions『minItems 2 maxItems 3』・elicit Step 5『2-3 件』と数量基準が自家撞着。",
+          "location": "prompt-rubric.json:C4-001,C3-004 / run-prompt-create/schemas/prompt-brief.schema.json:30 / run-prompt-elicit/SKILL.md:Step 5",
+          "condition_signal": "contradiction",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "auto_fixable": false,
+          "recommendation": "数量レンジは『機械判定可能な下限 (非空)』のみ残し、上限系は質基準 (原子性・客観判定可能性) へ置換。schema の硬い maxItems は警告化する。"
+        }
+      ]
+    },
+    {
+      "method": "プラスサム思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-07",
+          "summary": "宣言型化を rubric+テンプレ層で行えば、下流 (skill-creator Step 7.5 経由で量産される全 skill の prompts) と上流 (prompt-creator 自身) の双方が同一施策で改善される win-win 構造だが、その成立条件である『注入セクション名不変 + lint-agent-prompt-section.py との parity テスト』が存在しない。",
+          "location": "run-prompt-creator-7layer/SKILL.md:Key Rule 7-8 / plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py (戻り検証契約)",
+          "condition_signal": "omission",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "auto_fixable": false,
+          "recommendation": "新層構成で生成した fixture prompt を lint-agent-prompt-section.py と verify-completeness.py の両方に通す contract テストを追加し、双方向互換を機械保証してから展開する。"
+        }
+      ]
+    },
+    {
+      "method": "価値提案思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-05",
+          "summary": "宣言型の中核価値 (ゴール定義+完了チェックリスト) を運ぶデータが orchestrator 経路に無い: prompt-brief.schema.json (additionalProperties:false) は goals/checklist/success_criteria フィールドを持たず、7layer 側 sheet schema は goals を required とするため、Step 1→Step 2 の handoff で Layer 5 材料が脱落し再ヒアリング (二重経路) か AI 創作に依存する。",
+          "location": "run-prompt-create/schemas/prompt-brief.schema.json:required / run-prompt-creator-7layer/schemas/hearing-result.schema.json:goals",
+          "condition_signal": "omission",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "auto_fixable": false,
+          "recommendation": "prompt-brief.schema.json に goals[] (成果状態) と checklist[] (item+judgement) を追加し、elicit R1-interview の Round 2 収集値を brief へ正規化して 7layer Phase 1 skip を成立させる (二重ヒアリング経路の解消と同時に行う)。"
+        }
+      ]
+    },
+    {
+      "method": "戦略的思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-08",
+          "summary": "テンプレ正本二重化 (YAML 正規形/Markdown 補助テンプレは共にゴールシーク済) に対し、評価層 (rubric/c1-c4/question-bank) と自プロンプト 6 本は旧命令型層構成のまま取り残されており、正本間 drift を検出する parity lint が無い。3 ヶ月後に同型ドリフトが再発する構造 (PENDING rename 6 本・doc/ deprecated 参照残置も同根)。",
+          "location": "references/seven-layer-format.md vs references/seven-layer-markdown-template.md vs prompt-rubric.json / CHANGELOG.md:Pending",
+          "condition_signal": "inconsistency",
+          "severity": "high",
+          "bucket": "rubric-governance",
+          "auto_fixable": false,
+          "recommendation": "seven-layer-format.md を唯一の論理正本と宣言し、Markdown テンプレ・rubric の Layer 5 節構成をそこから導出 (または照合 lint で緊結)。rubric version を 2.0.0 へ上げ、テンプレ変更時に rubric 同時更新を change-governance で強制する。"
+        }
+      ]
+    },
+    {
+      "method": "改善思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-10",
+          "summary": "前回 elegant-review (2026-05-24, ROADMAP Follow-up 5 件) の指摘が全て未解消のまま残存: interview-user 二重経路、parse_known_args 黙殺、frontmatter コメント昇格、shared_scripts 未宣言。PDCA の C→A が回っていない再発パターン。",
+          "location": "ROADMAP.md:Follow-up 節 / run-prompt-creator-7layer/SKILL.md:50,Phase 1 / verify-completeness.py:parse_known_args",
+          "condition_signal": "inconsistency",
+          "severity": "medium",
+          "bucket": "eval-log",
+          "auto_fixable": false,
+          "recommendation": "今回の宣言型化 PR に Follow-up 5 件のうち二重経路解消 (A4-05 と同時) と parse_known_args failfast 化を同梱し、残りは期限付きで ROADMAP から issue 化して追跡可能にする。"
+        }
+      ]
+    },
+    {
+      "method": "仮説思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-09",
+          "summary": "中心仮説『ゴールシーク型 Layer 5 が命令型より品質・適応性で優る』を検証する評価データが皆無: EVALS.json は baseline 4 件のみ、plugin eval-log/ は .gitkeep のみ、observability 宣言の 3 metrics は一度も計測されていない。宣言型転換の効果検証手段が先に必要。",
+          "location": "EVALS.json / eval-log/.gitkeep / plugin-composition.yaml:observability",
+          "condition_signal": "omission",
+          "severity": "medium",
+          "bucket": "eval-log",
+          "auto_fixable": false,
+          "recommendation": "転換前に現 rubric での evaluator 実走 1 回分を eval-log に固定 (before)、転換後に同一 brief で再走 (after) して metrics を初計測し、仮説を反証可能にする。"
+        },
+        {
+          "id": "A4-14",
+          "summary": "feedback_contract IN1 (7layer) は『固定手順を含まないことを verify-completeness.py が検出し FAIL なら停止できる』と主張するが、実装は『思考プロセス』と『ステップN』の同時出現のみ検出で、実在する命令型パターン『5.2 推論手順 1. 2. 3.』を素通しする。機械検証の overclaim で、宣言型化の守りが実質 LLM 任せ。",
+          "location": "run-prompt-creator-7layer/SKILL.md:feedback_contract.IN1 / scripts/verify-completeness.py:90-96",
+          "condition_signal": "inconsistency",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "auto_fixable": false,
+          "recommendation": "検出を『Layer 5 内の番号付き手順列挙 (推論手順/手順/Steps 見出し配下の連番)』へ拡張し、許容パターン (実行方式.ループ) を allowlist 化。IN1 の文言は実装能力と一致させる。"
+        }
+      ]
+    },
+    {
+      "method": "論点思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-11",
+          "summary": "真に解くべき論点は『プロンプト本文の書き換え』ではなく『(1) Layer 5 正準節構成の確定 (テンプレ正本一本化) と (2) rubric の宣言型再定義』。これが決まれば本文・SKILL.md・scripts は従属的に決まる。逆順 (本文先行) だと Step 3b 評価ループ (A4-01) が書き換えを命令型へ巻き戻すため、着手順序自体が成否を分ける。",
+          "location": "plugin 全体 (改善設計の順序) / prompt-rubric.json / seven-layer-format.md",
+          "condition_signal": "omission",
+          "severity": "high",
+          "bucket": "rubric-governance",
+          "auto_fixable": false,
+          "recommendation": "executor の Phase 3 パッチ順を「正準構成確定 → rubric/criteria 書換 → 機械ガード強化 → 本文・SKILL.md 宣言型化」の直列で固定し、逆順・並行着手を禁止する。"
+        }
+      ]
+    },
+    {
+      "method": "KJ法",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A4-12",
+          "summary": "findings を島化すると根本構造は『4 正本分裂』: 評価層 2 (prompt-rubric.json / c1-c4-criteria.md) が旧命令型層構成、生成層 2 (seven-layer-format.md / markdown-template) がゴールシーク層構成で分裂し、その断層上で自プロンプト 6 本が旧構成に留まる dogfooding 違反の島を形成。ROADMAP は dogfooding を長期に先送りしており、生成物にだけゴールシークを課す非対称が plugin の説得力を毀損。",
+          "location": "prompts/R1-main.md:105 / R1-evaluate.md:76 / R1-interview.md:78 / R1-elicit.md:89 / R2-gate-review.md:81 / R3-governance-decide.md:79 / ROADMAP.md:長期",
+          "condition_signal": "inconsistency",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "auto_fixable": false,
+          "recommendation": "rubric 書換後、自プロンプト 6 本の Layer 5 を『ゴール定義+完了チェックリスト+実行方式』へ冪等更新 (決定論 script 呼出列は L3/L6 へ移す) し、dogfooding を本 PR スコープへ前倒す。SKILL.md 変更分は content-review verdict の現 SHA genuine 再生成を伴う。"
+        }
+      ]
+    }
+  ],
+  "priority_order": ["A4-01", "A4-02", "A4-11", "A4-12", "A4-08", "A4-05", "A4-14", "A4-03", "A4-16", "A4-06", "A4-15", "A4-13", "A4-07", "A4-10", "A4-09", "A4-04"],
+  "dependency_notes": "直列必須: A4-11/A4-08 (Layer 5 正準節構成の確定とテンプレ正本一本化) → A4-01/A4-06/A4-15 (rubric・c1-c4-criteria・question-bank・governance auto_approve 条件の宣言型再定義、5 ファイル同時更新でないと A4-02 デッドロックが残る) → A4-14/A4-16 (verify-completeness 検出強化と CI 配線、rubric 確定前に強化すると自プロンプトが即 FAIL して作業をブロック) → A4-12 (自プロンプト 6 本+SKILL.md の宣言型化、直後に content-review verdict 現 SHA 再生成)。A4-05 (brief schema 拡張) は正準構成確定後・A4-12 のパイプライン実走前に挿入し、A4-10 の二重経路解消と同一パッチで行う。A4-13 (dangling 参照修正) と A4-04 (invariant 文言整合) のみ独立で先行着手可。A4-09 の before 計測は全パッチ着手前に 1 回だけ実施する必要がある。"
+}

@@ -1,0 +1,41 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-prompt-create (orchestrator) の Progressive Disclosure 索引。
+# 上位 (workflow-manifest, schemas, prompts) は機械可読 contract。references/* は人間向け補助資料。
+# 一括ロード禁止 (CD-005)。各 Phase 開始時に必要なファイルだけ open する。
+resources:
+  - file: ../workflow-manifest.json
+    topic: Step/Gate/Phase 依存と委譲先 Skill の機械可読定義
+    read_when: フェーズ遷移・条件分岐・委譲先を確認するとき (最初に読む)
+  - file: ../schemas/prompt-brief.schema.json
+    topic: Step1(elicit)→Step2(build) 渡しの prompt-brief.json 正本スキーマ
+    read_when: brief の必須フィールドや型を検証するとき
+  - file: ../schemas/build-trace.schema.json
+    topic: run-prompt-creator-7layer が emit する prompt-build-trace.json の Layer 別 coverage 検査
+    read_when: Step 2 後に Gate 2 前提を確認するとき
+  - file: ../schemas/findings.schema.json
+    topic: evaluator / elegant-review が返す findings 共通形式 (C1-C4 verdict)
+    read_when: Step 3b/4 出力を検証・集約するとき
+  - file: ../schemas/handoff.schema.json
+    topic: Gate 通過時の handoff JSON 共通スキーマ
+    read_when: eval-log/handoff-<step>.json を生成・検証するとき
+  - file: ../prompts/R1-elicit.md
+    topic: Step 1 ヒアリング委譲プロンプト (R1)
+    read_when: run-prompt-elicit へ渡す context を組み立てるとき
+  - file: ../prompts/R2-gate-review.md
+    topic: Gate 1-4 共通 AskUserQuestion テンプレ (R2)
+    read_when: ゲート前にユーザー承認を取るとき
+  - file: ../prompts/R3-governance-decide.md
+    topic: Step 5 governance 自動承認判定プロンプト (R3。preconditions=solo_operator_mode/stable_frozen は環境前提)
+    read_when: governance 承認条件を機械評価するとき
+  - file: governance-params.json
+    topic: governance 自動承認しきい値パラメーター
+    read_when: governance 承認条件を機械評価するとき
+  - file: ../scripts/evaluate-create-gates.py
+    topic: elegant-review 起動可否 / --fast skip 判定
+    read_when: Step 4 (elegant-review) の起動可否を判定するとき
+  - file: ../../run-prompt-creator-7layer/scripts/verify-completeness.py
+    topic: Layer 充足検証 (Step 3a P0 lint で実行)
+    read_when: p0-lint で生成物の充足度を確認するとき
+  - file: ../../run-prompt-creator-7layer/scripts/validate-prompt.py
+    topic: schema/構造検証 (Step 3a P0 lint で prompt / trace 検証)
+    read_when: p0-lint で prompt 本文と prompt-build-trace.json を検証するとき

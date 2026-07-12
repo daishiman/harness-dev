@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-kickoff",
+  "skill": "run-intake-kickoff",
+  "description": "intake セッション最初の phase。pattern / depth / pain ranking 3 軸を AskUserQuestion で確定し kickoff.json を生成する。",
+  "phases": [
+    {
+      "id": "P1-pattern",
+      "step": 1,
+      "title": "pattern (A-E) 判定",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": "load-pattern-catalog",
+      "exitHook": null,
+      "resourceIds": ["ref-pattern-catalog"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-depth",
+      "step": 2,
+      "title": "depth (quick/standard/detailed) 確定",
+      "gate": "C2",
+      "dependsOn": ["P1-pattern"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-depth-criteria"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-pain",
+      "step": 3,
+      "title": "pain ranking 収集 (task / frequency / minutes)",
+      "gate": "C3",
+      "dependsOn": ["P2-depth"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-pain-ranking"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P4-emit",
+      "step": 4,
+      "title": "kickoff.json 生成と validate-kickoff-json.py 実行",
+      "gate": "C4",
+      "dependsOn": ["P3-pain"],
+      "entryHook": null,
+      "exitHook": "validate-kickoff-json",
+      "resourceIds": ["schema-kickoff"],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-pattern-catalog", "kind": "reference", "path": "./references/pattern-catalog.md", "phaseIds": ["P1-pattern"]},
+    {"id": "ref-depth-criteria", "kind": "reference", "path": "./references/depth-criteria.md", "phaseIds": ["P2-depth"]},
+    {"id": "ref-pain-ranking", "kind": "reference", "path": "./references/pain-ranking-template.md", "phaseIds": ["P3-pain"]},
+    {"id": "schema-kickoff", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P4-emit"]}
+  ]
+}

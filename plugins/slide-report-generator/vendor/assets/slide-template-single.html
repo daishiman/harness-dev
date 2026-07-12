@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{タイトル}}</title>
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* =================================================================
+       CHANGELOG
+       - v8.2.2: 全面画像デッキ主キャンバスを実体化（D2/F-0002）。規定クラス
+         .ai-slide-canvas（picture/img・object-fit:contain）と後方互換
+         エイリアス .slide-fullbg/.slide-bg/[data-role="main-canvas"] を
+         画面・印刷とも contain に統一。data-deck-mode="full-image" で印刷を
+         A4横16:9 letterbox（端欠けなし）へ切替（D1）。HTML表 世界観統一
+         ユーティリティ .wb-table を追加（D9）。通常デッキの印刷は温存。
+       ================================================================= */
+
+    /* =================================================================
+       Kanagawaテーマ - CSS変数
+       ================================================================= */
+    :root {
+      /* ========================================
+         Kanagawa Lotus White - 白背景カスタム版（デフォルト推奨）
+         ダークテーマは data-theme="dark" で切り替え
+         ======================================== */
+      /* Lotus White Theme (Default) */
+      --bg-dark: #fafafa;      /* ニュートラル白 */
+      --bg-dim: #f0f0f2;       /* 薄いグレー（青み） */
+      --bg-highlight: #e8e8ec; /* ハイライト背景 */
+      --bg-card: #e8e8ec;      /* カード背景（青み） */
+      --sumi-ink: #e0e0e4;     /* ニュートラルグレー */
+      --fg: #43436c;           /* lotusInk2 */
+      --fg-dim: #716e61;       /* lotusGray2 */
+      --fg-muted: #888888;
+
+      /* アクセントカラー（Lotus公式） */
+      --wave-blue: #4d699b;    /* lotusBlue4 */
+      --spring-violet: #624c83; /* lotusViolet4 */
+      --sakura-pink: #b35b79;  /* lotusPink */
+      --wave-aqua: #597b75;    /* lotusAqua */
+      --autumn-yellow: #de9800; /* lotusYellow3 */
+      --fuji-gray: #8a8a90;    /* ニュートラルグレー */
+
+      /* ===================================
+         世界観統一トークン（D9: HTML表/タイル）
+         画像図解と並ぶHTML表を kanagawa-comic-diagram に揃える
+         =================================== */
+      --surface: #f2f1ea;      /* 淡色面（角丸タイル背景） */
+      --ink: #2b3a55;          /* 紺アウトライン */
+      --accent: var(--wave-blue); /* 同色アクセント */
+      /* 主キャンバス letterbox 余白色 */
+      --canvas-letterbox: #fafafa;
+
+      /* ===================================
+         16:9 アスペクト比（必須制約）
+         =================================== */
+      --slide-aspect-ratio: 16 / 9;
+      /* ビューポートに収まる最大サイズを計算 */
+      --slide-max-width: min(100vw, calc(100vh * (16 / 9)));
+      --slide-max-height: min(100vh, calc(100vw * (9 / 16)));
+
+      /* ===================================
+         フォントサイズ（最小値を保証）
+         --font-scale で全体調整可能
+         =================================== */
+      --font-scale: 1.3;
+
+      /* 計算されたフォントサイズ（最小値付き） */
+      --fs-title: max(4.50vw, calc(6.25vw * var(--font-scale)));
+      --fs-subtitle: max(3.00vw, calc(3.13vw * var(--font-scale)));
+      --fs-heading: max(3.00vw, calc(3.75vw * var(--font-scale)));
+      --fs-subheading: max(2.50vw, calc(2.50vw * var(--font-scale)));
+      --fs-body: max(2.00vw, calc(1.88vw * var(--font-scale)));
+      --fs-body-lg: max(2.25vw, calc(2.25vw * var(--font-scale)));
+      --fs-small: max(1.75vw, calc(1.50vw * var(--font-scale)));
+      --fs-caption: max(1.50vw, calc(1.25vw * var(--font-scale)));
+      --fs-icon-lg: calc(7.50vw * var(--font-scale));
+      --fs-icon-md: calc(3.75vw * var(--font-scale));
+      --fs-icon-sm: calc(2.50vw * var(--font-scale));
+    }
+
+    /* ========================================
+       ダークテーマ（オプション）
+       使用方法: <html data-theme="dark">
+       ======================================== */
+    [data-theme="dark"] {
+      --bg-dark: #1F1F28;
+      --bg-dim: #2A2A37;
+      --bg-highlight: #363646;
+      --bg-card: #363646;
+      --sumi-ink: #16161D;
+      --fg: #DCD7BA;
+      --fg-dim: #C8C093;
+      --fg-muted: #727169;
+      /* 世界観統一トークン（ダーク版） */
+      --surface: #2A2A37;
+      --ink: #7E9CD8;
+      --canvas-letterbox: #1F1F28;
+    }
+
+    /* =================================================================
+       ユーティリティクラス
+       ================================================================= */
+    .text-note {
+      font-size: calc(1.38vw * var(--font-scale));
+      color: var(--fg-dim);
+    }
+
+    .text-emphasis {
+      font-size: calc(1.63vw * var(--font-scale));
+    }
+
+    .text-caption {
+      font-size: calc(1.50vw * var(--font-scale));
+    }
+
+    .highlight {
+      color: var(--autumn-yellow);
+      font-weight: 700;
+    }
+
+    .highlight-pink {
+      color: var(--sakura-pink);
+    }
+
+    .highlight-aqua {
+      color: var(--wave-aqua);
+    }
+
+    /* =================================================================
+       共通スタイル
+       ================================================================= */
+    *, *:after, *:before {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg-dark);
+      color: var(--fg);
+      overflow: hidden;
+    }
+
+    /* =================================================================
+       スライダー基本 - 16:9アスペクト比を厳守
+       ================================================================= */
+
+    /* スライダー全体: ビューポート中央に16:9で配置 */
+    .slider {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--bg-dark);
+    }
+
+    /* スライドエリア: 16:9を強制（レターボックス/ピラーボックス対応） */
+    .slide-area {
+      width: var(--slide-max-width);
+      height: var(--slide-max-height);
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-dark);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    /* スライドコンテナ: 横スクロール用 */
+    .slider__container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      transition: none;
+    }
+
+    /* 各スライド: 16:9エリア全体を使用 */
+    .slider__item {
+      min-width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3%;
+      aspect-ratio: 16 / 9;
+    }
+
+    /* スライドコンテンツ: 16:9内に収まるよう制約 */
+    .slider__content {
+      width: 100%;
+      max-width: 94%;
+      max-height: 94%;
+      visibility: hidden;
+      overflow: hidden;
+    }
+
+    /* =================================================================
+       アイコンスタイル
+       ================================================================= */
+    .icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--bg-dim);
+      margin-bottom: 1.25vw;
+    }
+
+    .icon-wrapper i {
+      font-size: 3.13vw;
+      color: var(--wave-blue);
+    }
+
+    .icon-wrapper.accent-pink i { color: var(--sakura-pink); }
+    .icon-wrapper.accent-aqua i { color: var(--wave-aqua); }
+    .icon-wrapper.accent-yellow i { color: var(--autumn-yellow); }
+    .icon-wrapper.accent-violet i { color: var(--spring-violet); }
+
+    /* =================================================================
+       進捗バー
+       ================================================================= */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--sumi-ink);
+      z-index: 100;
+    }
+
+    .progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--wave-blue), var(--sakura-pink));
+      transition: width 0.5s ease;
+    }
+
+    /* =================================================================
+       ナビゲーション（ライトテーマ対応）
+       ================================================================= */
+    .slider-navigation {
+      position: fixed;
+      bottom: 2.50vw;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.63vw;
+      padding: 0.63vw 1.25vw;
+      background: rgba(126, 156, 216, 0.15);
+      border: 1px solid rgba(126, 156, 216, 0.3);
+      border-radius: 20px;
+      z-index: 100;
+    }
+
+    .slider-navigation li {
+      list-style: none;
+    }
+
+    .slider-navigation a {
+      display: block;
+      width: 10px;
+      height: 10px;
+      background: var(--fuji-gray);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .slider-navigation a:hover {
+      background: var(--wave-blue);
+      transform: scale(1.3);
+    }
+
+    .slider-navigation a.is-active {
+      background: var(--wave-blue);
+      transform: scale(1.3);
+    }
+
+    /* 5個ごとのマーカー（5, 15, 25...）- 大きく、アクア色 */
+    .slider-navigation a.nav-mark-5 {
+      width: 14px;
+      height: 14px;
+      background: var(--wave-aqua);
+      border: 2px solid rgba(89, 123, 117, 0.4);
+    }
+
+    .slider-navigation a.nav-mark-5:hover {
+      background: var(--wave-aqua);
+      transform: scale(1.3);
+      box-shadow: 0 0 6px rgba(89, 123, 117, 0.5);
+    }
+
+    .slider-navigation a.nav-mark-5.is-active {
+      background: var(--wave-aqua);
+      transform: scale(1.4);
+      box-shadow: 0 0 10px rgba(89, 123, 117, 0.7);
+      border-color: var(--wave-aqua);
+    }
+
+    /* 10個ごとのマーカー（10, 20, 30...）- さらに大きく、オレンジ色 */
+    .slider-navigation a.nav-mark-10 {
+      width: 18px;
+      height: 18px;
+      background: var(--autumn-yellow);
+      border: 2px solid rgba(222, 152, 0, 0.4);
+    }
+
+    .slider-navigation a.nav-mark-10:hover {
+      background: var(--autumn-yellow);
+      transform: scale(1.3);
+      box-shadow: 0 0 8px rgba(222, 152, 0, 0.5);
+    }
+
+    .slider-navigation a.nav-mark-10.is-active {
+      background: var(--autumn-yellow);
+      transform: scale(1.4);
+      box-shadow: 0 0 12px rgba(222, 152, 0, 0.7);
+      border-color: var(--autumn-yellow);
+    }
+
+    /* =================================================================
+       スライド番号（ライトテーマ対応）
+       ================================================================= */
+    .slide-number {
+      position: fixed;
+      bottom: 1.88vw;
+      right: 2.50vw;
+      font-size: calc(var(--fs-small, 1.75vw) * 1.1);
+      color: #444;
+      background: rgba(126, 156, 216, 0.15);
+      border: 1px solid rgba(126, 156, 216, 0.3);
+      padding: 0.63vw 1.25vw;
+      border-radius: 20px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-weight: 600;
+      z-index: 100;
+    }
+
+    /* =================================================================
+       コントロール（ライトテーマ対応）
+       ================================================================= */
+    .slider-controls {
+      position: fixed;
+      top: 50%;
+      width: 100%;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      padding: 0 2.50vw;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .slider-controls button {
+      width: 50px;
+      height: 50px;
+      background: rgba(126, 156, 216, 0.2);
+      border: 2px solid var(--wave-blue);
+      border-radius: 50%;
+      color: var(--wave-blue);
+      font-size: 1.50vw;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      pointer-events: auto;
+    }
+
+    .slider-controls button:hover {
+      background: var(--wave-blue);
+      border-color: var(--wave-blue);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .slider-controls button:active {
+      transform: scale(0.95);
+    }
+
+    /* =================================================================
+       タイトルスライド
+       ================================================================= */
+    .slide-title .slider__content {
+      text-align: center;
+    }
+
+    .slide-title .main-title {
+      font-size: var(--fs-title);
+      font-weight: 700;
+      margin-bottom: 1.88vw;
+      line-height: 1.2;
+    }
+
+    .slide-title .sub-title {
+      font-size: var(--fs-subtitle);
+      color: var(--fg-dim);
+    }
+
+    .slide-title .title-icon {
+      font-size: var(--fs-icon-lg);
+      color: var(--wave-blue);
+      margin-bottom: 3.13vw;
+    }
+
+    /* =================================================================
+       メッセージスライド
+       ================================================================= */
+    .slide-message .slider__content {
+      text-align: center;
+    }
+
+    .slide-message .message-icon {
+      margin: 0 auto 2.50vw;
+    }
+
+    .slide-message .main-message {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .slide-message .sub-message {
+      font-size: var(--fs-body);
+      color: var(--fg-dim);
+      margin-top: 1.88vw;
+      max-width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* =================================================================
+       リストスライド
+       ================================================================= */
+    .slide-list .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.88vw;
+    }
+
+    .slide-list .list-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2.50vw;
+    }
+
+    .slide-list .list-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.88vw;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .slide-list .list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.88vw;
+      background: var(--bg-dim);
+      padding: 1.88vw 2.50vw;
+      border-radius: 16px;
+      border-left: 5px solid var(--wave-blue);
+      white-space: normal;
+      height: auto;
+      min-height: fit-content;
+    }
+
+    .slide-list .list-item i {
+      font-size: var(--fs-subheading);
+      color: var(--wave-blue);
+    }
+
+    .slide-list .list-item span {
+      font-size: var(--fs-body);
+    }
+
+    /* =================================================================
+       比較スライド
+       ================================================================= */
+    .slide-compare .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-compare .compare-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-compare .compare-container {
+      display: flex;
+      gap: 3.75vw;
+      justify-content: center;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .slide-compare .compare-item {
+      flex: 1;
+      max-width: 550px;
+      background: var(--bg-dim);
+      padding: 3.75vw;
+      border-radius: 20px;
+      text-align: center;
+    }
+
+    .slide-compare .compare-item.left {
+      border-top: 4px solid var(--sakura-pink);
+    }
+
+    .slide-compare .compare-item.right {
+      border-top: 4px solid var(--wave-aqua);
+    }
+
+    .slide-compare .compare-item h3 {
+      font-size: var(--fs-subheading);
+      margin-bottom: 1.88vw;
+    }
+
+    .slide-compare .compare-item .value {
+      font-size: var(--fs-title);
+      font-weight: 700;
+    }
+
+    .slide-compare .compare-item.left .value {
+      color: var(--sakura-pink);
+    }
+
+    .slide-compare .compare-item.right .value {
+      color: var(--wave-aqua);
+    }
+
+    .slide-compare .compare-vs {
+      display: flex;
+      align-items: center;
+      font-size: var(--fs-subheading);
+      font-weight: 700;
+      color: var(--autumn-yellow);
+    }
+
+    /* =================================================================
+       フロースライド
+       ================================================================= */
+    .slide-flow .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-flow .flow-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-flow .flow-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.88vw;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .slide-flow .flow-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.94vw;
+      background: var(--bg-dim);
+      padding: 2.50vw 3.13vw;
+      border-radius: 16px;
+      min-width: 180px;
+      flex: 1;
+      max-width: 280px;
+      height: auto;
+      min-height: fit-content;
+    }
+
+    .slide-flow .flow-step .step-number {
+      width: 50px;
+      height: 50px;
+      background: var(--wave-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.88vw;
+    }
+
+    .slide-flow .flow-step i {
+      font-size: var(--fs-icon-md);
+      color: var(--wave-aqua);
+      margin: 0.94vw 0;
+    }
+
+    .slide-flow .flow-step span {
+      font-size: var(--fs-body);
+      text-align: center;
+    }
+
+    .slide-flow .flow-arrow {
+      font-size: var(--fs-subheading);
+      color: var(--autumn-yellow);
+    }
+
+    /* =================================================================
+       タイムラインスライド
+       ================================================================= */
+    .slide-timeline .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-timeline .timeline-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-timeline .timeline-container {
+      position: relative;
+      padding-left: 5.00vw;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .slide-timeline .timeline-line {
+      position: absolute;
+      left: 1.88vw;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--wave-blue);
+      border-radius: 3px;
+    }
+
+    .slide-timeline .timeline-item {
+      position: relative;
+      padding: 1.88vw 0 1.88vw 3.13vw;
+      display: flex;
+      gap: 1.88vw;
+      align-items: flex-start;
+    }
+
+    .slide-timeline .timeline-dot {
+      position: absolute;
+      left: -3.75vw;
+      width: 24px;
+      height: 24px;
+      background: var(--wave-blue);
+      border-radius: 50%;
+      border: 5px solid var(--bg-dark);
+    }
+
+    .slide-timeline .timeline-content {
+      background: var(--bg-dim);
+      padding: 1.88vw 2.50vw;
+      border-radius: 12px;
+      flex: 1;
+    }
+
+    .slide-timeline .timeline-content h4 {
+      font-size: var(--fs-body);
+      color: var(--wave-blue);
+      margin-bottom: 0.94vw;
+    }
+
+    .slide-timeline .timeline-content p {
+      font-size: var(--fs-small);
+    }
+
+    /* =================================================================
+       テーブルスライド
+       ================================================================= */
+    .slide-table .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-table .table-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-table table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-dim);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .slide-table th {
+      background: var(--sumi-ink);
+      padding: 1.88vw 2.50vw;
+      text-align: left;
+      font-weight: 700;
+      font-size: var(--fs-body);
+      color: var(--wave-blue);
+      border-bottom: 3px solid var(--fuji-gray);
+    }
+
+    .slide-table td {
+      padding: 1.56vw 2.50vw;
+      font-size: var(--fs-small);
+      border-bottom: 1px solid var(--fuji-gray);
+    }
+
+    .slide-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .slide-table .table-icon {
+      color: var(--wave-aqua);
+      margin-right: 0.94vw;
+      font-size: 1.63vw;
+    }
+
+    /* =================================================================
+       アジェンダスライド
+       ================================================================= */
+    .slide-agenda .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 3.13vw;
+    }
+
+    .slide-agenda .agenda-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+      color: var(--wave-blue);
+    }
+
+    .slide-agenda .agenda-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25vw;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .slide-agenda .agenda-item {
+      display: flex;
+      align-items: center;
+      gap: 1.88vw;
+      background: var(--bg-dim);
+      padding: 1.88vw 3.13vw;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .slide-agenda .agenda-item:hover {
+      transform: translateX(10px);
+      background: var(--bg-card);
+    }
+
+    .slide-agenda .agenda-number {
+      width: 48px;
+      height: 48px;
+      background: var(--wave-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.88vw;
+      flex-shrink: 0;
+    }
+
+    .slide-agenda .agenda-item i {
+      font-size: var(--fs-body);
+      color: var(--wave-aqua);
+      width: 40px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .slide-agenda .agenda-text {
+      font-size: var(--fs-body);
+      flex: 1;
+    }
+
+    .slide-agenda .agenda-item.active {
+      border-left: 5px solid var(--sakura-pink);
+      background: var(--bg-card);
+    }
+
+    /* =================================================================
+       セクションヘッダースライド
+       ================================================================= */
+    .slide-section .slider__content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide-section .section-number {
+      font-size: var(--fs-body);
+      color: var(--fg-dim);
+      margin-bottom: 1.25vw;
+      letter-spacing: 0.3em;
+    }
+
+    .slide-section .section-icon {
+      font-size: var(--fs-icon-lg);
+      color: var(--wave-blue);
+      margin-bottom: 2.50vw;
+    }
+
+    .slide-section .section-title {
+      font-size: var(--fs-title);
+      font-weight: 700;
+      margin-bottom: 1.88vw;
+      line-height: 1.2;
+    }
+
+    .slide-section .section-subtitle {
+      font-size: var(--fs-subheading);
+      color: var(--fg-dim);
+      max-width: 80%;
+    }
+
+    .slide-section .section-divider {
+      width: 120px;
+      height: 5px;
+      background: linear-gradient(90deg, var(--wave-blue), var(--sakura-pink));
+      border-radius: 3px;
+      margin: 2.50vw 0;
+    }
+
+    /* =================================================================
+       統計スライド（大きな数字を強調）
+       ================================================================= */
+    .slide-stats .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-stats .stats-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-stats .stats-container {
+      display: flex;
+      gap: 3.75vw;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .slide-stats .stat-item {
+      flex: 1;
+      min-width: 200px;
+      max-width: 350px;
+      text-align: center;
+      background: var(--bg-dim);
+      padding: 3.75vw 2.50vw;
+      border-radius: 20px;
+    }
+
+    .slide-stats .stat-item i {
+      font-size: var(--fs-icon-md);
+      color: var(--wave-blue);
+      margin-bottom: 1.88vw;
+    }
+
+    .slide-stats .stat-value {
+      font-size: var(--fs-heading); /* --fs-titleより小さく、切れを防止 */
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.25vw;
+      white-space: nowrap; /* 改行防止 */
+      background: linear-gradient(135deg, var(--wave-blue), var(--sakura-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .slide-stats .stat-label {
+      font-size: var(--fs-body);
+      color: var(--fg-dim);
+    }
+
+    .slide-stats .stat-item:nth-child(2) .stat-value {
+      background: linear-gradient(135deg, var(--wave-aqua), var(--autumn-yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .slide-stats .stat-item:nth-child(3) .stat-value {
+      background: linear-gradient(135deg, var(--sakura-pink), var(--spring-violet));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* =================================================================
+       引用スライド
+       ================================================================= */
+    .slide-quote .slider__content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide-quote .quote-mark {
+      font-size: 10.00vw;
+      color: var(--wave-blue);
+      opacity: 0.3;
+      line-height: 0.5;
+      margin-bottom: 1.25vw;
+    }
+
+    .slide-quote .quote-text {
+      font-size: var(--fs-heading);
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.5;
+      max-width: 85%;
+      margin-bottom: 2.50vw;
+    }
+
+    .slide-quote .quote-author {
+      font-size: var(--fs-body);
+      color: var(--fg-dim);
+    }
+
+    .slide-quote .quote-author::before {
+      content: '— ';
+    }
+
+    .slide-quote .quote-source {
+      font-size: var(--fs-small);
+      color: var(--fuji-gray);
+      margin-top: 0.63vw;
+    }
+
+    /* =================================================================
+       画像スライド（画像+テキスト）
+       ================================================================= */
+    .slide-image .slider__content {
+      display: flex;
+      gap: 3.75vw;
+      align-items: center;
+    }
+
+    .slide-image .image-container {
+      flex: 1;
+      max-width: 55%;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .slide-image .image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .slide-image .image-content {
+      flex: 1;
+      max-width: 45%;
+    }
+
+    .slide-image .image-title {
+      font-size: var(--fs-subheading);
+      font-weight: 700;
+      margin-bottom: 1.88vw;
+    }
+
+    .slide-image .image-description {
+      font-size: var(--fs-body);
+      line-height: 1.6;
+      color: var(--fg);
+    }
+
+    .slide-image .image-caption {
+      font-size: 1.25vw;
+      color: var(--fg-dim);
+      margin-top: 1.88vw;
+      padding-top: 1.25vw;
+      border-top: 1px solid var(--fuji-gray);
+    }
+
+    /* 画像左配置バリエーション */
+    .slide-image.image-left .slider__content {
+      flex-direction: row;
+    }
+
+    /* 画像右配置バリエーション */
+    .slide-image.image-right .slider__content {
+      flex-direction: row-reverse;
+    }
+
+    /* =================================================================
+       フルスクリーン画像スライド
+       ================================================================= */
+    .slide-fullimage {
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+
+    .slide-fullimage::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg,
+        rgba(31, 31, 40, 0.3) 0%,
+        rgba(31, 31, 40, 0.7) 50%,
+        rgba(31, 31, 40, 0.9) 100%);
+    }
+
+    .slide-fullimage .slider__content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 10.00vw;
+    }
+
+    .slide-fullimage .fullimage-title {
+      font-size: var(--fs-title);
+      font-weight: 700;
+      margin-bottom: 1.25vw;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .slide-fullimage .fullimage-subtitle {
+      font-size: var(--fs-subheading);
+      color: var(--fg);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    /* =================================================================
+       図解スライド（ダイアグラム）
+       ================================================================= */
+    .slide-diagram .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-diagram .diagram-title {
+      font-size: var(--fs-heading);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-diagram .diagram-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2.50vw;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    /* サークル型図解 */
+    .slide-diagram .diagram-circle {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+
+    .slide-diagram .diagram-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      background: var(--wave-blue);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(126, 156, 216, 0.3);
+    }
+
+    .slide-diagram .diagram-center i {
+      font-size: 3.13vw;
+      margin-bottom: 0.63vw;
+    }
+
+    .slide-diagram .diagram-center span {
+      font-size: 1.50vw;
+      font-weight: 700;
+    }
+
+    .slide-diagram .diagram-node {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      background: var(--bg-dim);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 3px solid var(--fuji-gray);
+      transition: all 0.3s ease;
+    }
+
+    .slide-diagram .diagram-node:hover {
+      transform: scale(1.1);
+      border-color: var(--wave-blue);
+    }
+
+    .slide-diagram .diagram-node i {
+      font-size: 2.25vw;
+      color: var(--wave-aqua);
+      margin-bottom: 0.63vw;
+    }
+
+    .slide-diagram .diagram-node span {
+      font-size: 1.19vw;
+      font-weight: 600;
+    }
+
+    /* ノード位置（6つの場合の例） */
+    .slide-diagram .diagram-node:nth-child(2) { top: 0; left: 50%; transform: translateX(-50%); }
+    .slide-diagram .diagram-node:nth-child(3) { top: 15%; right: 5%; }
+    .slide-diagram .diagram-node:nth-child(4) { bottom: 15%; right: 5%; }
+    .slide-diagram .diagram-node:nth-child(5) { bottom: 0; left: 50%; transform: translateX(-50%); }
+    .slide-diagram .diagram-node:nth-child(6) { bottom: 15%; left: 5%; }
+    .slide-diagram .diagram-node:nth-child(7) { top: 15%; left: 5%; }
+
+    /* ピラミッド型図解 */
+    .slide-diagram .diagram-pyramid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.63vw;
+    }
+
+    .slide-diagram .pyramid-level {
+      background: var(--bg-dim);
+      padding: 1.88vw 2.50vw;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 1.25vw;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .slide-diagram .pyramid-level:nth-child(1) { width: 250px; background: var(--wave-blue); }
+    .slide-diagram .pyramid-level:nth-child(2) { width: 400px; }
+    .slide-diagram .pyramid-level:nth-child(3) { width: 550px; }
+    .slide-diagram .pyramid-level:nth-child(4) { width: 700px; }
+
+    .slide-diagram .pyramid-level i {
+      font-size: 1.88vw;
+    }
+
+    .slide-diagram .pyramid-level span {
+      font-size: 1.63vw;
+      font-weight: 600;
+    }
+
+    /* =================================================================
+       チャート/グラフスライド
+       ================================================================= */
+    .slide-chart .slider__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.50vw;
+    }
+
+    .slide-chart .chart-title {
+      font-size: 3.75vw;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .slide-chart .chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 2.50vw;
+      width: 100%;
+      padding: 2.50vw;
+    }
+
+    /* 棒グラフ */
+    .slide-chart .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3.75vw;
+      height: 400px;
+      padding: 2.50vw 0;
+    }
+
+    .slide-chart .bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25vw;
+    }
+
+    .slide-chart .bar {
+      width: 80px;
+      background: linear-gradient(180deg, var(--wave-blue), var(--spring-violet));
+      border-radius: 8px 8px 0 0;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .slide-chart .bar:hover {
+      transform: scaleY(1.02);
+    }
+
+    .slide-chart .bar-value {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.63vw;
+      font-weight: 700;
+      color: var(--wave-blue);
+    }
+
+    .slide-chart .bar-label {
+      font-size: 1.38vw;
+      color: var(--fg-dim);
+      text-align: center;
+      max-width: 100px;
+    }
+
+    .slide-chart .bar-item:nth-child(2) .bar {
+      background: linear-gradient(180deg, var(--sakura-pink), var(--autumn-yellow));
+    }
+    .slide-chart .bar-item:nth-child(2) .bar-value { color: var(--sakura-pink); }
+
+    .slide-chart .bar-item:nth-child(3) .bar {
+      background: linear-gradient(180deg, var(--wave-aqua), var(--wave-blue));
+    }
+    .slide-chart .bar-item:nth-child(3) .bar-value { color: var(--wave-aqua); }
+
+    .slide-chart .bar-item:nth-child(4) .bar {
+      background: linear-gradient(180deg, var(--autumn-yellow), var(--sakura-pink));
+    }
+    .slide-chart .bar-item:nth-child(4) .bar-value { color: var(--autumn-yellow); }
+
+    /* 円グラフ（CSS描画） */
+    .slide-chart .pie-chart {
+      display: flex;
+      align-items: center;
+      gap: 5.00vw;
+    }
+
+    .slide-chart .pie {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .slide-chart .pie-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25vw;
+    }
+
+    .slide-chart .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 1.25vw;
+    }
+
+    .slide-chart .legend-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+    }
+
+    .slide-chart .legend-label {
+      font-size: 1.50vw;
+    }
+
+    .slide-chart .legend-value {
+      font-size: 1.50vw;
+      font-weight: 700;
+      color: var(--wave-blue);
+    }
+
+    /* =================================================================
+       ユニバーサルカードホバー（必須）
+       全カード要素に統一されたホバーエフェクトを適用
+       ================================================================= */
+
+    /* 全カード要素の基本transition設定 */
+    .list-item,
+    .compare-item,
+    .flow-step,
+    .stat-item,
+    .grid-card,
+    .feature-card,
+    .persona-card,
+    .challenge-card,
+    .point-card,
+    .timeline-content,
+    .agenda-item,
+    .table-row,
+    .quote-card,
+    .diagram-node,
+    .pyramid-level,
+    .concentric-item,
+    .roadmap-item,
+    .value-item,
+    .aidma-stage,
+    .funnel-stage,
+    .org-node,
+    .chevron-stage,
+    .relation-node,
+    .pdca-item,
+    .triangle-node,
+    .wave-item,
+    .bar-item,
+    .legend-item,
+    .ig-item,
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+    }
+
+    /* 統一ホバーエフェクト - 浮き上がり + シャドウ強化 */
+    .list-item:hover,
+    .compare-item:hover,
+    .flow-step:hover,
+    .stat-item:hover,
+    .grid-card:hover,
+    .feature-card:hover,
+    .persona-card:hover,
+    .challenge-card:hover,
+    .point-card:hover,
+    .timeline-content:hover,
+    .agenda-item:hover,
+    .table-row:hover,
+    .quote-card:hover,
+    .diagram-node:hover,
+    .pyramid-level:hover,
+    .concentric-item:hover,
+    .roadmap-item:hover,
+    .value-item:hover,
+    .aidma-stage:hover,
+    .funnel-stage:hover,
+    .org-node:hover,
+    .chevron-stage:hover,
+    .relation-node:hover,
+    .pdca-item:hover,
+    .triangle-node:hover,
+    .wave-item:hover,
+    .bar-item:hover,
+    .legend-item:hover,
+    .ig-item:hover,
+    .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ライトテーマ用ホバー背景変化 */
+    .list-item:hover,
+    .flow-step:hover,
+    .stat-item:hover,
+    .agenda-item:hover,
+    .timeline-content:hover {
+      background: var(--bg-highlight);
+    }
+
+    /* アクセント付きカードのホバー時ボーダー強化 */
+    .compare-item.left:hover {
+      border-top-color: var(--sakura-pink);
+      border-top-width: 6px;
+    }
+
+    .compare-item.right:hover {
+      border-top-color: var(--wave-aqua);
+      border-top-width: 6px;
+    }
+
+    .list-item:hover {
+      border-left-color: var(--wave-blue);
+      border-left-width: 7px;
+    }
+
+    /* =================================================================
+       配置統一ルール（レイアウト一貫性）
+       タイトル・図・強調文の配置を標準化
+       ================================================================= */
+
+    /* タイトル配置: 全スライドタイプで一貫した上部配置 */
+    .list-title,
+    .compare-title,
+    .flow-title,
+    .timeline-title,
+    .table-title,
+    .agenda-title,
+    .stats-title,
+    .diagram-title,
+    .chart-title {
+      text-align: center;
+      margin-bottom: 2.50vw;
+      padding-bottom: 1.25vw;
+      position: relative;
+    }
+
+    /* タイトル下アンダーライン（統一デザイン） */
+    .list-title::after,
+    .compare-title::after,
+    .flow-title::after,
+    .stats-title::after,
+    .diagram-title::after,
+    .chart-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: var(--wave-blue);
+      border-radius: 2px;
+    }
+
+    /* コンテンツ配置: 中央揃えを基本に */
+    .list-container,
+    .compare-container,
+    .flow-container,
+    .stats-container,
+    .diagram-container,
+    .chart-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* カード内アイコン配置: 上部中央に統一 */
+    .list-item i,
+    .flow-step i,
+    .stat-item i,
+    .agenda-item i {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* 強調文の配置統一 */
+    .highlight,
+    .highlight-pink,
+    .highlight-aqua,
+    .highlight-yellow {
+      display: inline;
+      font-weight: 700;
+    }
+
+    /* 数値強調の統一スタイル */
+    .stat-value,
+    .compare-item .value {
+      text-align: center;
+      display: block;
+      width: 100%;
+    }
+
+    /* フローステップのテキスト整列 */
+    .flow-step {
+      text-align: center;
+    }
+
+    .flow-step span {
+      display: block;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* カード内テキスト整列の統一 */
+    .list-item span,
+    .agenda-text,
+    .stat-label {
+      flex: 1;
+      text-align: left;
+    }
+
+    /* 比較カード内の整列 */
+    .compare-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .compare-item h3,
+    .compare-item .value,
+    .compare-item p {
+      text-align: center;
+      width: 100%;
+    }
+
+    /* =================================================================
+       印刷用スタイル（PDF出力）
+       全ページ印刷対応 - Ctrl+P / Cmd+P で全スライドをPDF出力
+       ================================================================= */
+    @media print {
+      /* SR-09 印刷時のカード影は全要素で強制オフ（box-shadow がグレー塗りつぶしになる現象の恒久対策） */
+      * { box-shadow: none !important; }
+
+      /* グラデ文字(background-clip:text)は印刷で塗りつぶし矩形になり読めなくなるため通常色に戻す */
+      .gradient-text,
+      [style*="-webkit-background-clip: text"], [style*="background-clip: text"] {
+        background: none !important;
+        -webkit-background-clip: border-box !important; background-clip: border-box !important;
+        -webkit-text-fill-color: var(--accent-primary, #1F6FEB) !important; color: var(--accent-primary, #1F6FEB) !important;
+      }
+
+      /* ページ設定 */
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+
+      /* 印刷不要要素を非表示 */
+      .progress-bar,
+      .slider-navigation,
+      .slider-controls,
+      .slide-number {
+        display: none !important;
+      }
+
+      /* ボディ・HTML設定 */
+      body, html {
+        background: white !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+
+      /* スライダー設定 */
+      .slider {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+
+      /* スライドエリア - 重要: overflow: visible で全スライド表示 */
+      .slide-area {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        aspect-ratio: auto !important;
+      }
+
+      /* スライドコンテナ - 重要: flexからblockに変更して縦並びに */
+      .slider__container {
+        display: block !important;
+        transform: none !important;
+        width: 100% !important;
+      }
+
+      /* スライドアイテム（各ページ）- A4横向き16:9最適化 */
+      /* A4横: 297mm x 210mm、余白8mm → 有効領域: 281mm x 194mm */
+      /* 16:9比率: 幅281mm → 高さ158mm */
+      .slider__item {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        /* 16:9固定サイズ（A4横向き最適化） */
+        width: 281mm !important;
+        height: 158mm !important;
+        aspect-ratio: 16 / 9 !important;
+        /* 中央配置 */
+        margin: 18mm auto !important;
+        padding: 10mm !important;
+        background: #FAFAFA !important;
+        border: 1px solid #DDD !important;
+        border-radius: 4px !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+        overflow: hidden !important;
+      }
+
+      .slider__item:last-child {
+        page-break-after: auto !important;
+      }
+
+      /* -----------------------------------------------------------------
+         全面画像デッキ 印刷契約（D1/D2 / F-0001 / F-0002）
+
+         主キャンバス（.ai-slide-canvas + エイリアス）の印刷フィットを
+         contain に固定し cover による端切れを禁止。data-deck-mode="full-image"
+         を持つ全面画像デッキだけ A4横16:9 letterbox（297mm→167mm・上下
+         off-white 余白）へ切替。属性なしの通常デッキは上の 281×158mm 規則を温存。
+         ----------------------------------------------------------------- */
+      :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+        object-position: center !important;
+        display: block !important;
+      }
+      :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) {
+        position: absolute !important;
+        inset: 0 !important;
+        display: grid !important;
+        place-items: center !important;
+        overflow: hidden !important;
+        background: #FAFAFA !important;
+      }
+      [data-deck-mode="full-image"] .slider__item,
+      .slider[data-deck-mode="full-image"] .slider__item {
+        width: 297mm !important;
+        height: 167mm !important;
+        aspect-ratio: 16 / 9 !important;
+        margin: 21mm auto !important;
+        padding: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #FAFAFA !important;
+        overflow: hidden !important;
+      }
+
+      /* スライドコンテンツ */
+      .slider__content {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+      }
+
+      /* 各スライドタイプのdisplay維持 */
+      .slide-title .slider__content,
+      .slide-message .slider__content {
+        display: block !important;
+        text-align: center !important;
+      }
+
+      .slide-agenda .slider__content,
+      .slide-list .slider__content,
+      .slide-compare .slider__content,
+      .slide-flow .slider__content,
+      .slide-stats .slider__content,
+      .slide-section .slider__content {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+      }
+
+      /* コンテナのレイアウト維持 */
+      .agenda-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.00vw !important;
+        width: 100% !important;
+        visibility: visible !important;
+      }
+
+      .list-container {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 1.25vw !important;
+        justify-content: center !important;
+        width: 100% !important;
+        visibility: visible !important;
+      }
+
+      .compare-container {
+        display: flex !important;
+        gap: 1.88vw !important;
+        justify-content: center !important;
+        width: 100% !important;
+        visibility: visible !important;
+      }
+
+      .flow-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.63vw !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        visibility: visible !important;
+      }
+
+      .stats-container {
+        display: flex !important;
+        gap: 2.50vw !important;
+        justify-content: center !important;
+        width: 100% !important;
+        visibility: visible !important;
+      }
+
+      /* 全子要素の表示保証 */
+      .slider__content,
+      .slider__content * {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      /* 全スライドタイプ要素の表示保証 */
+      .agenda-item, .list-item, .compare-item, .flow-step, .flow-arrow,
+      .stat-item, .timeline-item, .timeline-content,
+      .compare-vs, .message-icon, .icon-wrapper,
+      /* circle */
+      .circle-container, .circle-center, .circle-item,
+      .circle-icon, .circle-label, .circle-description,
+      /* timeline */
+      .timeline-container, .timeline-line, .timeline-dot,
+      .timeline-date, .timeline-title, .timeline-desc,
+      /* pyramid */
+      .pyramid-container, .pyramid-level, .pyramid-text,
+      /* quote */
+      .quote-container, .quote-mark, .quote-text, .quote-author,
+      /* process */
+      .process-container, .process-step, .process-arrow,
+      .process-icon, .process-title, .process-desc,
+      /* grid */
+      .grid-container, .grid-card, .grid-icon,
+      .grid-title, .grid-text,
+      /* icon-grid */
+      .icon-grid-container, .icon-grid-item,
+      .icon-grid-icon, .icon-grid-text,
+      /* hero */
+      .hero-container, .hero-badge, .hero-title,
+      .hero-subtitle, .hero-stats, .hero-stat,
+      .hero-stat-value, .hero-stat-label,
+      /* highlight */
+      .highlight-icon, .highlight-value,
+      .highlight-label, .highlight-description,
+      /* fabe */
+      .fabe-container, .fabe-card, .fabe-icon,
+      .fabe-label, .fabe-title, .fabe-content,
+      /* matrix */
+      .matrix-container, .matrix-cell, .matrix-header,
+      .matrix-label, .matrix-content,
+      /* table */
+      .table-container, table, thead, tbody, tr, th, td,
+      /* その他共通要素 */
+      .main-title, .sub-title, .section-title,
+      .main-message, .sub-message, .title-icon {
+        visibility: visible !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      /* スライド番号（CSS counter使用） */
+      body {
+        counter-reset: slide-counter;
+      }
+
+      .slider__item {
+        counter-increment: slide-counter;
+      }
+
+      .slider__item::before {
+        content: counter(slide-counter) " / " attr(data-total);
+        position: absolute !important;
+        bottom: 10px !important;
+        right: 15px !important;
+        font-size: 9pt !important;
+        color: #888 !important;
+        font-family: 'Noto Sans JP', sans-serif !important;
+      }
+
+      /* フォントサイズ縮小（印刷用） */
+      .main-title { font-size: 2.50vw !important; }
+      .sub-title { font-size: 1.25vw !important; }
+      .section-title { font-size: 2.25vw !important; }
+      .list-title, .flow-title, .compare-title, .table-title,
+      .agenda-title, .stats-title { font-size: 1.63vw !important; }
+      .main-message { font-size: 1.88vw !important; }
+      .sub-message { font-size: 1.13vw !important; }
+      .stat-value { font-size: 2.50vw !important; }
+
+      .icon-wrapper {
+        width: 50px !important;
+        height: 50px !important;
+      }
+
+      .icon-wrapper i {
+        font-size: 1.88vw !important;
+      }
+
+      .title-icon {
+        font-size: 3.13vw !important;
+      }
+
+      /* カラー反転（ライトモード） */
+      .slider__item {
+        background: white !important;
+      }
+
+      .list-item, .compare-item, .flow-step, .timeline-content,
+      .agenda-item, .stat-item, .icon-wrapper {
+        background: #F5F5F5 !important;
+        border: 1px solid #DDD !important;
+      }
+
+      h1, h2, h3, h4, h5, h6, p, span, li, td, th,
+      .main-title, .sub-title, .main-message, .sub-message,
+      .list-title, .list-item span, .compare-title,
+      .flow-title, .flow-step span, .timeline-title,
+      .agenda-title, .agenda-text, .section-title,
+      .section-subtitle, .section-number, .stats-title, .stat-label {
+        color: #1F1F28 !important;
+        -webkit-text-fill-color: #1F1F28 !important;
+      }
+
+      .stat-value {
+        background: none !important;
+        -webkit-background-clip: unset !important;
+        background-clip: unset !important;
+        -webkit-text-fill-color: #7E9CD8 !important;
+        color: #7E9CD8 !important;
+      }
+
+      .text-note, .text-caption, .sub-title, .sub-message {
+        color: #666666 !important;
+        -webkit-text-fill-color: #666666 !important;
+      }
+
+      /* アクセントカラー維持 */
+      .highlight, .accent-yellow { color: #DCA561 !important; -webkit-text-fill-color: #DCA561 !important; }
+      .highlight-pink, .accent-pink { color: #D27E99 !important; -webkit-text-fill-color: #D27E99 !important; }
+      .highlight-aqua, .accent-aqua { color: #7AA89F !important; -webkit-text-fill-color: #7AA89F !important; }
+
+      i.fa, i.fas, i.far, i.fab, .icon, [class*="fa-"] {
+        color: #54546D !important;
+      }
+
+      .icon-wrapper i, .title-icon, .section-icon, .message-icon i,
+      .list-item i, .flow-step i, .stat-item i {
+        color: #7E9CD8 !important;
+      }
+
+      .icon-wrapper.accent-pink i { color: #D27E99 !important; }
+      .icon-wrapper.accent-aqua i { color: #7AA89F !important; }
+      .icon-wrapper.accent-yellow i { color: #DCA561 !important; }
+
+      .flow-arrow {
+        color: #DCA561 !important;
+      }
+
+      .step-number, .agenda-number {
+        background: #7E9CD8 !important;
+        color: white !important;
+      }
+
+      .section-divider {
+        background: linear-gradient(90deg, #7E9CD8, #D27E99) !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+      }
+
+      /* テーブル印刷用 */
+      table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+      }
+
+      th {
+        background: #E8E8E8 !important;
+        color: #1F1F28 !important;
+        border: 1px solid #CCC !important;
+      }
+
+      td {
+        background: white !important;
+        color: #1F1F28 !important;
+        border: 1px solid #DDD !important;
+      }
+    }
+    /* =================================================================
+       全面画像デッキ 主キャンバス（D2: .ai-slide-canvas 実体 + エイリアス）
+
+       規定 html-generator.md CONST_028A / full-image-deck-method.md §0.3。
+       規定クラス .ai-slide-canvas を正本とし、後方互換で慣用 .slide-fullbg /
+       .slide-bg、意味属性 [data-role="main-canvas"] も同じ contain 契約の
+       エイリアスとして受容する。:where() で詳細度ゼロ・クラス名密結合を回避。
+       画面・印刷とも object-fit:contain（D1 と矛盾なし）。
+       ================================================================= */
+    :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: var(--canvas-letterbox, #fafafa);
+    }
+    :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+    }
+    /* 装飾背景に限り cover を許可（imageFit: cover-safe 明示時のみ） */
+    .slide-bg--cover-safe img {
+      object-fit: cover;
+    }
+    /* 意味テキスト/UI を主キャンバス前面へ */
+    .visual-overlay { position: relative; z-index: 1; }
+
+    /* =================================================================
+       HTML表 世界観統一ユーティリティ（D9: 角丸タイル/淡色面/紺アウトライン）
+       .wb-table を付与した表のみ kanagawa-comic-diagram の見た目に揃える。
+       ================================================================= */
+    .wb-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1.5px solid var(--ink);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .wb-table th {
+      background: var(--ink);
+      color: var(--bg-dark);
+      border: none;
+    }
+    .wb-table td {
+      background: var(--surface);
+      color: var(--ink);
+      border: none;
+      border-bottom: 1px solid rgba(43, 58, 85, 0.18);
+    }
+    .wb-table .wb-accent { color: var(--accent); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <!-- 進捗バー -->
+  <div class="progress-bar">
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <!-- スライダー（16:9アスペクト比を厳守）
+       全面画像デッキの場合は開始タグを
+         <div class="slider" id="slider" data-deck-mode="full-image">
+       にして、印刷を A4横16:9 letterbox（contain・端欠けなし）へ切替える。
+       通常HTMLデッキは属性を付けず既存の full-bleed 印刷を温存する。 -->
+  <div class="slider" id="slider">
+    <!-- slide-area: 16:9を強制するコンテナ -->
+    <div class="slide-area">
+      <div class="slider__container">
+        <!-- ここにスライドを挿入 -->
+        {{スライドHTML}}
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       全面画像スライド テンプレ断片（D2: .ai-slide-canvas 実体）
+
+       {{スライドHTML}} に差し込む image-only ページの正本マークアップ。
+       主キャンバスは規定クラス .ai-slide-canvas（picture/img・object-fit:contain）。
+       後方互換で class を .slide-fullbg / .slide-bg にしても、または
+       data-role="main-canvas" を付けても、上の CSS が同じ contain 契約を適用する。
+       意味テキスト・コード・数値は画像に焼き込まず .visual-overlay に置く。
+
+       <div class="slider__item" data-ai-pattern="image-only" data-image-fit="contain">
+         <picture class="ai-slide-canvas">
+           <source srcset="assets/generated/slide-XX-{slug}.webp" type="image/webp">
+           <img src="assets/generated/slide-XX-{slug}.png" alt="{{意味が伝わる説明}}">
+         </picture>
+         <div class="slider__content visual-overlay">
+           {{overlayText / コード / QR / ページUI}}
+         </div>
+       </div>
+       ================================================================= -->
+
+  <!-- ナビゲーション -->
+  <ul class="slider-navigation" id="navigation"></ul>
+
+  <!-- コントロール -->
+  <div class="slider-controls">
+    <button id="prev"><i class="fas fa-chevron-left"></i></button>
+    <button id="next"><i class="fas fa-chevron-right"></i></button>
+  </div>
+
+  <!-- スライド番号 -->
+  <div class="slide-number" id="slideNumber">1 / {{総スライド数}}</div>
+
+  <!-- PDF出力: Cmd+P (Mac) / Ctrl+P (Windows) で印刷ダイアログを開く -->
+
+  <script>
+    // =================================================================
+    // アニメーション定義
+    // =================================================================
+    const animations = {
+      // タイトルスライド
+      'slide-title': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const icon = content.querySelector('.title-icon');
+          const title = content.querySelector('.main-title');
+          const subtitle = content.querySelector('.sub-title');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(icon,
+            { scale: 0, rotation: -180 },
+            { scale: 1, rotation: 0, duration: 0.4, ease: 'back.out(1.7)' }
+          )
+          .fromTo(title,
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.15'
+          )
+          .fromTo(subtitle,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out' },
+            '-=0.1'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            scale: 1.1,
+            opacity: 0,
+            duration: 0.2,
+            stagger: 0.05,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // メッセージスライド
+      'slide-message': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const icon = content.querySelector('.message-icon');
+          const message = content.querySelector('.main-message');
+          const sub = content.querySelector('.sub-message');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(icon,
+            { scale: 0 },
+            { scale: 1, duration: 0.25, ease: 'back.out(1.7)' }
+          )
+          .fromTo(message,
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.1'
+          );
+
+          if (sub) {
+            tl.fromTo(sub,
+              { y: 20, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.2, ease: 'power2.out' },
+              '-=0.1'
+            );
+          }
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            y: -50,
+            opacity: 0,
+            duration: 0.2,
+            stagger: 0.05,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // リストスライド
+      'slide-list': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.list-title');
+          const items = content.querySelectorAll('.list-item');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(items,
+            { x: -30, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.2, stagger: 0.05, ease: 'power2.out' },
+            '-=0.1'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const items = content.querySelectorAll('.list-item');
+          tl.to(items, {
+            x: 30,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // 比較スライド
+      'slide-compare': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.compare-title');
+          const left = content.querySelector('.compare-item.left');
+          const right = content.querySelector('.compare-item.right');
+          const vs = content.querySelector('.compare-vs');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(left,
+            { x: -100, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.1'
+          )
+          .fromTo(right,
+            { x: 100, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.3'
+          )
+          .fromTo(vs,
+            { scale: 0 },
+            { scale: 1, duration: 0.2, ease: 'back.out(1.7)' },
+            '-=0.15'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const left = content.querySelector('.compare-item.left');
+          const right = content.querySelector('.compare-item.right');
+          tl.to(left, { x: -50, opacity: 0, duration: 0.2, ease: 'power2.in' })
+            .to(right, { x: 50, opacity: 0, duration: 0.2, ease: 'power2.in' }, '-=0.2');
+          return tl;
+        }
+      },
+
+      // フロースライド
+      'slide-flow': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.flow-title');
+          const steps = content.querySelectorAll('.flow-step');
+          const arrows = content.querySelectorAll('.flow-arrow');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(steps,
+            { scale: 0, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.2, stagger: 0.08, ease: 'back.out(1.4)' },
+            '-=0.1'
+          )
+          .fromTo(arrows,
+            { opacity: 0, x: -10 },
+            { opacity: 1, x: 0, duration: 0.15, stagger: 0.05, ease: 'power2.out' },
+            '-=0.25'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const steps = content.querySelectorAll('.flow-step');
+          tl.to(steps, {
+            scale: 0,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // タイムラインスライド
+      'slide-timeline': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.timeline-title');
+          const line = content.querySelector('.timeline-line');
+          const items = content.querySelectorAll('.timeline-item');
+
+          gsap.set(content, { visibility: 'visible' });
+          gsap.set(line, { scaleY: 0, transformOrigin: 'top' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .to(line,
+            { scaleY: 1, duration: 0.4, ease: 'power2.out' },
+            '-=0.1'
+          )
+          .fromTo(items,
+            { x: -30, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.2, stagger: 0.1, ease: 'power2.out' },
+            '-=0.3'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const items = content.querySelectorAll('.timeline-item');
+          tl.to(items, {
+            y: -30,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // テーブルスライド
+      'slide-table': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.table-title');
+          const rows = content.querySelectorAll('tr');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(rows,
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.15, stagger: 0.04, ease: 'power2.out' },
+            '-=0.1'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.querySelector('table'), {
+            opacity: 0,
+            duration: 0.2,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // アジェンダスライド
+      'slide-agenda': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.agenda-title');
+          const items = content.querySelectorAll('.agenda-item');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(items,
+            { x: -50, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.2, stagger: 0.06, ease: 'power2.out' },
+            '-=0.1'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const items = content.querySelectorAll('.agenda-item');
+          tl.to(items, {
+            x: 50,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // セクションヘッダースライド
+      'slide-section': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const number = content.querySelector('.section-number');
+          const icon = content.querySelector('.section-icon');
+          const title = content.querySelector('.section-title');
+          const divider = content.querySelector('.section-divider');
+          const subtitle = content.querySelector('.section-subtitle');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          if (number) {
+            tl.fromTo(number,
+              { y: -20, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.2, ease: 'power2.out' }
+            );
+          }
+          if (icon) {
+            tl.fromTo(icon,
+              { scale: 0, rotation: -90 },
+              { scale: 1, rotation: 0, duration: 0.3, ease: 'back.out(1.7)' },
+              '-=0.1'
+            );
+          }
+          tl.fromTo(title,
+            { y: 50, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.15'
+          );
+          if (divider) {
+            tl.fromTo(divider,
+              { scaleX: 0 },
+              { scaleX: 1, duration: 0.25, ease: 'power2.out' },
+              '-=0.15'
+            );
+          }
+          if (subtitle) {
+            tl.fromTo(subtitle,
+              { y: 20, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.2, ease: 'power2.out' },
+              '-=0.1'
+            );
+          }
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            scale: 0.95,
+            opacity: 0,
+            duration: 0.2,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // 統計スライド
+      'slide-stats': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.stats-title');
+          const items = content.querySelectorAll('.stat-item');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          )
+          .fromTo(items,
+            { scale: 0.5, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 0.3, stagger: 0.08, ease: 'back.out(1.4)' },
+            '-=0.1'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const items = content.querySelectorAll('.stat-item');
+          tl.to(items, {
+            scale: 0.8,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // 引用スライド
+      'slide-quote': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const mark = content.querySelector('.quote-mark');
+          const text = content.querySelector('.quote-text');
+          const author = content.querySelector('.quote-author');
+          const source = content.querySelector('.quote-source');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          if (mark) {
+            tl.fromTo(mark,
+              { scale: 0, opacity: 0 },
+              { scale: 1, opacity: 0.3, duration: 0.3, ease: 'back.out(1.7)' }
+            );
+          }
+          tl.fromTo(text,
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' },
+            '-=0.1'
+          );
+          if (author) {
+            tl.fromTo(author,
+              { y: 20, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.2, ease: 'power2.out' },
+              '-=0.1'
+            );
+          }
+          if (source) {
+            tl.fromTo(source,
+              { opacity: 0 },
+              { opacity: 1, duration: 0.15, ease: 'power2.out' },
+              '-=0.05'
+            );
+          }
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            y: -30,
+            opacity: 0,
+            duration: 0.2,
+            stagger: 0.04,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // 画像スライド
+      'slide-image': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const imgContainer = content.querySelector('.image-container');
+          const imgContent = content.querySelector('.image-content');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(imgContainer,
+            { x: -50, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.3, ease: 'power3.out' }
+          )
+          .fromTo(imgContent?.children || [],
+            { x: 30, opacity: 0 },
+            { x: 0, opacity: 1, duration: 0.25, stagger: 0.05, ease: 'power2.out' },
+            '-=0.15'
+          );
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            opacity: 0,
+            duration: 0.2,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // フルスクリーン画像スライド
+      'slide-fullimage': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.fullimage-title');
+          const subtitle = content.querySelector('.fullimage-subtitle');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          if (title) {
+            tl.fromTo(title,
+              { y: 50, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.3, ease: 'power3.out' }
+            );
+          }
+          if (subtitle) {
+            tl.fromTo(subtitle,
+              { y: 30, opacity: 0 },
+              { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out' },
+              '-=0.15'
+            );
+          }
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.children, {
+            y: 30,
+            opacity: 0,
+            duration: 0.2,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // 図解スライド
+      'slide-diagram': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.diagram-title');
+          const center = content.querySelector('.diagram-center');
+          const nodes = content.querySelectorAll('.diagram-node');
+          const pyramidLevels = content.querySelectorAll('.pyramid-level');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          );
+
+          if (center) {
+            tl.fromTo(center,
+              { scale: 0 },
+              { scale: 1, duration: 0.3, ease: 'back.out(1.7)' },
+              '-=0.1'
+            );
+          }
+
+          if (nodes.length > 0) {
+            tl.fromTo(nodes,
+              { scale: 0, opacity: 0 },
+              { scale: 1, opacity: 1, duration: 0.2, stagger: 0.05, ease: 'back.out(1.4)' },
+              '-=0.15'
+            );
+          }
+
+          if (pyramidLevels.length > 0) {
+            tl.fromTo(pyramidLevels,
+              { scaleX: 0, opacity: 0 },
+              { scaleX: 1, opacity: 1, duration: 0.2, stagger: 0.06, ease: 'power2.out' },
+              '-=0.1'
+            );
+          }
+
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          const nodes = content.querySelectorAll('.diagram-node, .pyramid-level');
+          tl.to(nodes, {
+            scale: 0,
+            opacity: 0,
+            duration: 0.15,
+            stagger: 0.03,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      },
+
+      // チャートスライド
+      'slide-chart': {
+        enter: (content) => {
+          const tl = gsap.timeline();
+          const title = content.querySelector('.chart-title');
+          const bars = content.querySelectorAll('.bar');
+          const barLabels = content.querySelectorAll('.bar-label');
+          const pie = content.querySelector('.pie');
+          const legendItems = content.querySelectorAll('.legend-item');
+
+          gsap.set(content, { visibility: 'visible' });
+
+          tl.fromTo(title,
+            { y: -30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.25, ease: 'power3.out' }
+          );
+
+          if (bars.length > 0) {
+            tl.fromTo(bars,
+              { scaleY: 0, transformOrigin: 'bottom' },
+              { scaleY: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' },
+              '-=0.1'
+            )
+            .fromTo(barLabels,
+              { opacity: 0 },
+              { opacity: 1, duration: 0.15, stagger: 0.03 },
+              '-=0.15'
+            );
+          }
+
+          if (pie) {
+            tl.fromTo(pie,
+              { scale: 0, rotation: -180 },
+              { scale: 1, rotation: 0, duration: 0.4, ease: 'back.out(1.4)' },
+              '-=0.15'
+            );
+          }
+
+          if (legendItems.length > 0) {
+            tl.fromTo(legendItems,
+              { x: 20, opacity: 0 },
+              { x: 0, opacity: 1, duration: 0.15, stagger: 0.04, ease: 'power2.out' },
+              '-=0.2'
+            );
+          }
+
+          return tl;
+        },
+        leave: (content) => {
+          const tl = gsap.timeline();
+          tl.to(content.querySelector('.chart-container'), {
+            opacity: 0,
+            duration: 0.2,
+            ease: 'power2.in'
+          });
+          return tl;
+        }
+      }
+    };
+
+    // =================================================================
+    // TweenSliderクラス（16:9対応）
+    // =================================================================
+    class TweenSlider {
+      constructor(selector) {
+        this.slider = document.querySelector(selector);
+        this.slideArea = document.querySelector(selector + ' .slide-area');
+        this.container = document.querySelector(selector + ' .slider__container');
+        this.items = document.querySelectorAll(selector + ' .slider__item');
+        this.index = 0;
+        this.isAnimating = false;
+        // 16:9エリアの幅を使用（ビューポートではなく）
+        this.slideWidth = this.slideArea ? this.slideArea.offsetWidth : window.innerWidth;
+
+        this.init();
+      }
+
+      init() {
+        this.buildNavigation();
+        this.bindEvents();
+        this.makeActive(0);
+        this.playEnterAnimation(0);
+        this.updateProgress();
+      }
+
+      buildNavigation() {
+        const nav = document.getElementById('navigation');
+        this.items.forEach((_, i) => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '#' + i;
+          a.dataset.index = i;
+          // 5個ごと・10個ごとにマーカークラスを追加（1始まりで計算）
+          const slideNum = i + 1;
+          if (slideNum % 10 === 0) {
+            a.classList.add('nav-mark-10');
+          } else if (slideNum % 5 === 0) {
+            a.classList.add('nav-mark-5');
+          }
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.move(i);
+          });
+          li.appendChild(a);
+          nav.appendChild(li);
+        });
+      }
+
+      bindEvents() {
+        document.getElementById('next').addEventListener('click', () => this.moveToNext());
+        document.getElementById('prev').addEventListener('click', () => this.moveToPrev());
+
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === ' ') {
+            e.preventDefault();
+            this.moveToNext();
+          }
+          if (e.key === 'ArrowLeft') this.moveToPrev();
+        });
+
+        window.addEventListener('resize', () => {
+          // 16:9エリアの幅を再計算
+          this.slideWidth = this.slideArea ? this.slideArea.offsetWidth : window.innerWidth;
+          gsap.set(this.container, { x: -this.index * this.slideWidth });
+        });
+
+        // スワイプ対応
+        this.bindSwipeEvents();
+      }
+
+      bindSwipeEvents() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const minSwipeDistance = 50;
+        const target = this.slideArea || this.slider;
+
+        target.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+          touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+
+        target.addEventListener('touchend', (e) => {
+          const touchEndX = e.changedTouches[0].screenX;
+          const touchEndY = e.changedTouches[0].screenY;
+          const diffX = touchStartX - touchEndX;
+          const diffY = Math.abs(touchStartY - touchEndY);
+
+          // 横方向のスワイプのみ反応（縦スクロールを妨げない）
+          if (Math.abs(diffX) > minSwipeDistance && Math.abs(diffX) > diffY) {
+            if (diffX > 0) {
+              this.moveToNext();
+            } else {
+              this.moveToPrev();
+            }
+          }
+        }, { passive: true });
+      }
+
+      makeActive(index) {
+        const navItems = document.querySelectorAll('.slider-navigation a');
+        this.items.forEach((item, i) => {
+          item.classList.toggle('is-active', i === index);
+          navItems[i]?.classList.toggle('is-active', i === index);
+        });
+      }
+
+      getSlideType(slide) {
+        const classes = slide.className.split(' ');
+        for (const cls of classes) {
+          if (cls.startsWith('slide-') && cls !== 'slider__item') {
+            return cls;
+          }
+        }
+        return 'slide-message';
+      }
+
+      playEnterAnimation(index) {
+        const slide = this.items[index];
+        const content = slide.querySelector('.slider__content');
+        const type = this.getSlideType(slide);
+
+        if (animations[type] && animations[type].enter) {
+          return animations[type].enter(content);
+        } else {
+          gsap.set(content, { visibility: 'visible' });
+          return gsap.timeline();
+        }
+      }
+
+      playLeaveAnimation(index) {
+        const slide = this.items[index];
+        const content = slide.querySelector('.slider__content');
+        const type = this.getSlideType(slide);
+
+        if (animations[type] && animations[type].leave) {
+          return animations[type].leave(content);
+        } else {
+          return gsap.timeline();
+        }
+      }
+
+      async move(index) {
+        if (this.isAnimating || index === this.index || index < 0 || index >= this.items.length) {
+          return;
+        }
+
+        this.isAnimating = true;
+
+        const masterTl = gsap.timeline({
+          onComplete: () => {
+            this.isAnimating = false;
+          }
+        });
+
+        // Leave animation
+        masterTl.add(this.playLeaveAnimation(this.index));
+
+        // Slide movement
+        masterTl.to(this.container, {
+          x: -index * this.slideWidth,
+          duration: 0.25,
+          ease: 'power3.inOut'
+        }, '-=0.1');
+
+        // Enter animation
+        masterTl.add(this.playEnterAnimation(index), '-=0.15');
+
+        this.index = index;
+        this.makeActive(index);
+        this.updateProgress();
+      }
+
+      moveToNext() {
+        // ループ: 最後のスライド → 最初へ
+        const nextIndex = (this.index + 1) % this.items.length;
+        this.move(nextIndex);
+      }
+
+      moveToPrev() {
+        // ループ: 最初のスライド → 最後へ
+        const prevIndex = (this.index - 1 + this.items.length) % this.items.length;
+        this.move(prevIndex);
+      }
+
+      updateProgress() {
+        const progress = ((this.index + 1) / this.items.length) * 100;
+        document.getElementById('progress').style.width = progress + '%';
+        document.getElementById('slideNumber').textContent = (this.index + 1) + ' / ' + this.items.length;
+      }
+    }
+
+    // =================================================================
+    // AutoLineBreaker: 自動改行・カードサイズ動的調整
+    // =================================================================
+    class AutoLineBreaker {
+      constructor(options = {}) {
+        this.maxChars = options.maxChars || 35;
+        this.minChars = options.minChars || 15;
+
+        // 改行候補の優先度（高い順）
+        this.breakPriorities = [
+          { pattern: /([。！？])(?!<br>)/g, priority: 100 },  // 句点の後
+          { pattern: /([、])(?!<br>)/g, priority: 80 },       // 読点の後
+          { pattern: /(ます|です|した|ない)(?!<br>)/g, priority: 70 }, // 文末表現
+          { pattern: /(は|が|を|に|で|と|も|の)(?!<br>)/g, priority: 50 }, // 助詞の後
+          { pattern: /(、|・)(?!<br>)/g, priority: 40 },      // 中黒の後
+        ];
+
+        // 対象セレクタ
+        this.targetSelectors = [
+          '.list-item span',
+          '.flow-step span',
+          '.compare-item li',
+          '.grid-card p',
+          '.point-card p',
+          '.feature-card p',
+          '.timeline-content p',
+          '.persona-card p',
+          '.step-desc',
+          '.card-desc'
+        ];
+      }
+
+      init() {
+        this.processAllElements();
+        this.adjustCardHeights();
+      }
+
+      processAllElements() {
+        const selector = this.targetSelectors.join(', ');
+        const elements = document.querySelectorAll(selector);
+
+        elements.forEach(el => {
+          // 既に<br>が含まれている場合はスキップ
+          if (el.innerHTML.includes('<br>')) return;
+
+          const text = el.textContent.trim();
+          if (text.length > this.minChars) {
+            el.innerHTML = this.insertLineBreaks(text);
+          }
+        });
+      }
+
+      insertLineBreaks(text) {
+        // 短いテキストは改行不要
+        if (text.length <= this.maxChars) {
+          return text;
+        }
+
+        const breaks = [];
+        let lastBreakPos = 0;
+
+        while (lastBreakPos < text.length) {
+          const segment = text.slice(lastBreakPos, lastBreakPos + this.maxChars + 10);
+          let bestBreakPos = -1;
+          let bestPriority = 0;
+
+          // 各パターンで改行候補を探す
+          for (const rule of this.breakPriorities) {
+            const matches = [...segment.matchAll(rule.pattern)];
+            for (const m of matches) {
+              const pos = lastBreakPos + m.index + m[0].length;
+              const charsSinceLastBreak = pos - lastBreakPos;
+
+              // 最大文字数の70-110%の範囲で改行
+              if (charsSinceLastBreak >= this.maxChars * 0.7 &&
+                  charsSinceLastBreak <= this.maxChars * 1.3) {
+                if (rule.priority > bestPriority) {
+                  bestPriority = rule.priority;
+                  bestBreakPos = pos;
+                }
+              }
+            }
+          }
+
+          // 候補が見つからない場合、強制的に最大文字数で改行
+          if (bestBreakPos === -1) {
+            const forcePos = lastBreakPos + this.maxChars;
+            if (forcePos < text.length) {
+              bestBreakPos = forcePos;
+            } else {
+              break;
+            }
+          }
+
+          if (bestBreakPos > lastBreakPos) {
+            breaks.push(bestBreakPos);
+            lastBreakPos = bestBreakPos;
+          } else {
+            break;
+          }
+
+          // 無限ループ防止
+          if (breaks.length > 10) break;
+        }
+
+        // 改行を挿入（後ろから挿入して位置ズレを防ぐ）
+        let result = text;
+        for (let i = breaks.length - 1; i >= 0; i--) {
+          const pos = breaks[i];
+          if (pos < result.length) {
+            result = result.slice(0, pos) + '<br>' + result.slice(pos);
+          }
+        }
+
+        return result;
+      }
+
+      adjustCardHeights() {
+        // カードグループを検出して高さを揃える
+        const cardGroups = [
+          '.slide-list .list-item',
+          '.slide-flow .flow-step',
+          '.slide-compare .compare-item',
+          '.point-cards .point-card',
+          '.grid-container .grid-card'
+        ];
+
+        cardGroups.forEach(selector => {
+          const cards = document.querySelectorAll(selector);
+          if (cards.length === 0) return;
+
+          // 各スライド内で高さを揃える
+          const slides = document.querySelectorAll('.slider__item');
+          slides.forEach(slide => {
+            const slideCards = slide.querySelectorAll(selector.split(' ').pop());
+            if (slideCards.length === 0) return;
+
+            // 最大高さを計算
+            let maxHeight = 0;
+            slideCards.forEach(card => {
+              card.style.height = 'auto';
+              const height = card.offsetHeight;
+              if (height > maxHeight) maxHeight = height;
+            });
+
+            // 全カードに最大高さを適用（min-heightで統一）
+            slideCards.forEach(card => {
+              card.style.minHeight = maxHeight + 'px';
+            });
+          });
+        });
+      }
+    }
+
+    // 初期化
+    document.addEventListener('DOMContentLoaded', () => {
+      // AutoLineBreaker: デフォルトOFF（LLMによる意図的改行を優先）
+      // 機械的改行が必要な場合のみ有効化:
+      // new AutoLineBreaker({ maxChars: 35, minChars: 15 }).init();
+
+      // スライダー初期化
+      new TweenSlider('#slider');
+    });
+  </script>
+</body>
+</html>

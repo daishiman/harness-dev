@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task-state.schema.json",
+  "title": "task-state",
+  "description": "task-graph 駆動 build の runtime state (C16)。schema/pin 規約の所有=producer=plugin-dev-planner、task-state.json への実書込=consumer=harness-creator 単独 writer (所有/書込分離)。永続 state 値域は pending|running|done|blocked の 4 値 (computed-only の ready を除く)。check-task-state-schema.py が条件付き必須 (running→lease / blocked→blocked_reason) と graph_hash pin 整合を手書き検査する。",
+  "type": "object",
+  "required": ["schema_version", "graph_hash", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "string"},
+    "graph_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "build 開始時に pin した task-graph canonical bytes の sha256。derive-task-graph.graph_hash() の値と照合する"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "state"],
+        "additionalProperties": true,
+        "description": "consumer は運用フィールド (route_report/handoff_notes) を additive に付与してよい (additionalProperties:true・producer 必須キーのみ strict 検査)",
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "state": {
+            "type": "string",
+            "enum": ["pending", "running", "done", "blocked"],
+            "description": "永続 4 値。ready (computed-only) が現れたら check-task-state-schema.py が fail-closed 拒否"
+          },
+          "started_at": {"type": ["string", "null"], "format": "date-time", "description": "running 時は非 null 必須 (RFC3339/UTC Z)"},
+          "lease_expires_at": {"type": ["string", "null"], "format": "date-time", "description": "running 時は非 null 必須 (孤児 running 判別用)"},
+          "blocked_reason": {
+            "type": "string",
+            "enum": ["origin-failure", "propagated"],
+            "description": "state==blocked のとき条件付き必須の第一級 field。origin-failure=route 自体の失敗起点 / propagated=上流 blocked による下流連鎖。非 blocked での付与は violation"
+          },
+          "handoff_notes": {
+            "$ref": "handoff-notes.schema.json",
+            "description": "advisory 引継知見。上限は handoff-notes.schema.json が単一正本 (再定義しない)"
+          },
+          "route_report": {"type": ["string", "null"], "description": "consumer 運用フィールド (route-build-report path)"}
+        }
+      }
+    }
+  }
+}

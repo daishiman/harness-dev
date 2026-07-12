@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "assign-prompt-design-evaluator",
+    "skill_md_sha256": "c3a6c002021c039035fb77541b4157e529095830166b5f340d997856c1d59b12"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "完全性 3/3: Purpose & Output Contract・C1-C4 評価軸表・4 パスレビュー (Pass 0-4)・Key Rules・ゴール駆動評価の局面カタログ・Gotchas・Additional Resources を漏れなく備える。入出力契約 (prompt_path/brief/output→findings.json) と完了条件 (verdict 全付与+severity 配列) が明示。",
+      "一貫性 3/3・簡潔性 3/3: 用語統一 (C1-C4/Pass 0-4/findings/fork) が全節で一貫し、harness-creator 改名後も rubric_refs の正本注記が矛盾を残さない。120 行と簡潔で、詳細は references/prompt-rubric.json・c1-c4-criteria.md へ委譲する Progressive Disclosure が効いている。",
+      "検証可能性 3/3: C1-C4 各 Gate に合格条件 (l5-contract v2.0.0 参照付き) を条件で明記し、局面カタログに具体コマンド (verify-completeness.py --input / validate-prompt.py --phase prompt) と exit code 証跡化を指定。深度 2/3: mass_production_risk への high 付与や scripted-check 優先など評価器固有の設計判断が掘られている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。改名は記述品質を毀損せず、harness-creator 正本参照 (ref-skill-design-rubric) が rubric 継承宣言と整合。criteria は本 skill が feedback_contract 非携帯のため設計ゲート C1-C4 を採用。"
+}

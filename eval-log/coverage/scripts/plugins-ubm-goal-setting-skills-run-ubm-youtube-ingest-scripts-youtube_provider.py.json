@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/youtube_provider.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "provider 中立アダプタ契約 + fixture provider (library module)。soundness: 契約を list_channel_videos/fetch_transcript の2メソッド+typed error 4分類(QuotaExceeded=run打切/AuthRequired=要人間/TemporaryFailure=retry/TerminalUnavailable=確定)に最小固定し、one-shot が状態へ決定論写像できる。FixtureProvider の cursor 解決 (_page_index_after) は未知 cursor を len(pages)=空ページへ落とし停止保証、未同定 channel は空ページで required-primary を止めない(意図がコメントで明示)。frozen dataclass の値オブジェクト、caption→asr fallback の判断は provider 側で origin として運ぶ境界が正しい。responsibility: 実 provider は late-bind で get_provider が未実装を契約ドキュメント参照付き NotImplementedError で明示。error-handling: fixture の未知 error 名は ProviderError 基底へフォールバック。減点: get_provider('fixture') で fixture opt 欠落/None が KeyError/TypeError として素通り(呼び出し側 one-shot で traceback 化・clean な usage error にならない)、FixtureProvider.__init__ の JSON 破損も unwrapped。side-effect-safety: read-only/network:false(fixture のみ同梱)。frontmatter: PEP723 様式完備、`from __future__ import annotations` を使わない理由(importlib smoke ロードと dataclass の相互作用)まで文書化。mechanical: 専用テストファイルは無いが tests/test_youtube_sync_oneshot.py が subprocess 経由で fixture provider の全経路(複数ページ pagination/quota list_errors/typed error 写像/transcript 取得)を機械実行しており実質被覆(library module の既存慣行に整合)・全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

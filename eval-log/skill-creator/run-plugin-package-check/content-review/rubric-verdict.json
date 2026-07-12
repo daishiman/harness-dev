@@ -1,0 +1,35 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-plugin-package-check",
+    "skill_md_sha256": "7da14a0752a65ac64ae99e0a0f7bd2ac9aa9497437fa1a59e00de4e5ea21df15"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "FM 軸: name=run-plugin-package-check(run- 接頭辞/kebab/dir 名一致, len 23≤60 で FM-001)・description が『〜したいとき』trigger 2 句で句点終止し内部動作語(採点する/sha256/exit code)を含まない(FM-002/003/004) を満たす。",
+      "BD 軸: 英語 literal 見出し ## Purpose & Output Contract(BD-001)・## Gotchas(BD-002) が存在し、本文行数(frontmatter 除き 137 行)≤300(BD-003)、merge 後も description の 2 trigger が局面カタログ Step と 1:1 対応(BD-004)。",
+      "PD/KL 軸: 冒頭30行内に ## Purpose & Output Contract 見出し+Key Rule 禁則(『再定義しない』『独自定義禁止』『単独実行不可』)で PD-002 を充足、prompts/schemas/scripts への分割と Additional Resources 列挙で Progressive Disclosure を満たし、knowledge/ 不在ゆえ KL-001〜005 は存在ゲートで skip-PASS。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric/references/rubric.json(rubric_version 1.3.0, threshold 80, kind=skill 適用 rule)に照らし、dev 同期 merge 後の現 SKILL.md(SHA 7da14a07…)を精読して採点。stale だった旧 SHA(e632b8f9…)を実測値へ更新。FM-001〜005: name 規約・trigger 2 句(『検査したいとき』『一括実行したいとき』)・末尾句点・内部動作語非含有を全充足。BD-001/002/003/004: ## Purpose & Output Contract と ## Gotchas の厳格一致見出し、本文 137 行(≤300)、description↔局面カタログの整合を満たす。NM-001/002/003: dir basename(run-plugin-package-check)==frontmatter.name。PD-001/002: 本文>100 行だが prompts/schemas/scripts 分割+Additional Resources で Progressive Disclosure を担保、冒頭30行内に Purpose 見出し+禁則語。KL-001〜005: frontmatter.knowledge_loop も knowledge/ も不在のため存在ゲートで skip-PASS(誤減点なし)。merge 差分(ゴールシーク 5→6 ステップ・Step3/Step8 の script パス正式化)は rubric 観点では見出し構造・命名・PD に影響せず採点不変。criteria IN1/IN2(全件評価+exit 停止 / append-only 保存+observable 1 行)は検証可能性軸を、OUT1(契約適合と elegance・rubric の責務直交+委譲設計維持)は設計適合軸を満たす。high severity finding なしのため PASS。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  }
+}

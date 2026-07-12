@@ -1,0 +1,13 @@
+{
+  "artifact": "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 80,
+    "notes": "soundness=必須フィールド欠落/version|last_updatedいずれか必須/source_url host↔official_host一致/target_id重複/targets全件突合を検証する決定論assemblerで核心契約は健全。ただし実バグ検出: norm_host の host.lower().lstrip('www.') はstr.lstripが文字集合{w,.}を先頭から剥がすPythonの既知誤用で、先頭がw/.のhost(例 web.dev→eb.dev, wix.com→ix.com)を破壊する。host一致検証はderivedとnorm_host(host)の両辺に同じ変換を通すため判定結論は不変(検証は破綻しない)が、official_host省略時は host=derived(=破壊された正規化値)がそのまま出力official_hostに採用され、下流compileのcitation表示が破損するデータ忠実性バグ。修正はremoveprefix('www.')が正。影響は先頭w/.のhostかつofficial_host省略時に限定。responsibility=R3-recordの唯一の組み立て経路で単一責務、恒久キャッシュ/network無し。error-handling=RecordError→1、FileNotFoundError/JSONDecodeError/UnicodeDecodeError→2、argparse usage→2で分岐明確、targets突合欠落もRecordError→1。side-effect-safety=network:false、書込は--out or stdoutのみでwrite-scope宣言と整合。frontmatter=PEP723完全。近傍tests/test_build_fetched_references.pyに25テストありだが上記host破壊ケースは未カバー。核心は健全なためPASSだが上記lstripバグを明記。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

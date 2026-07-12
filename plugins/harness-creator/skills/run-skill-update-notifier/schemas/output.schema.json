@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-skill-update-notifier/output.schema.json",
+  "title": "run-skill-update-notifier output",
+  "type": "object",
+  "required": ["status", "installed", "latest"],
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "enum": ["update-available", "up-to-date", "unknown", "offline", "skipped"]},
+    "installed": {"type": ["string", "null"]},
+    "latest": {"type": ["string", "null"]},
+    "notice_emitted": {"type": "boolean"},
+    "cache_refreshed_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

@@ -1,0 +1,410 @@
+{
+  "category": "build-patterns",
+  "label": "ビルド設計パターン・パラダイム",
+  "version": "1.0.0",
+  "created_at": "2026-05-24",
+  "description": "harness-creator で Capability を作成する際に再利用する設計判断・パラダイム・原則。build-time で検索される。",
+  "keywords_global": [
+    "パラダイム",
+    "設計判断",
+    "再現性",
+    "SSOT"
+  ],
+  "source_note": "本リポジトリの運用で確立した原則 (memory/feedback・project エントリと整合) を蒸留。",
+  "items": [
+    {
+      "id": "build-patterns_001",
+      "title": "再現性は仕組み(lint/schema/CI)で担保し、内容判断にAI自由度を残す二層分離",
+      "intent": "固定手順への過剰拘束を避けつつ、品質の再現性を機械で保証すること",
+      "background": "Capability を多様な kind・ドメインで量産する文脈で、固定手順は前提が崩れると破綻し、全自由は再現性を失う。仕組み層(決定論検査)と判断層(AI)を分けることで両立した。",
+      "keywords": [
+        "二層分離",
+        "再現性最優先",
+        "lint",
+        "schema",
+        "CI",
+        "AI自由度",
+        "mechanism"
+      ],
+      "message": "再現性が必要な部分は lint/schema/CI で強制し、設計内容の判断は AI に委ねる。両者を混ぜない。",
+      "how_to_use": "新 Capability 設計時、まず『これは仕組みで縛るべきか、AI判断に委ねるべきか』を各要素について仕分けする。",
+      "source": {
+        "file": "memory/feedback_mechanism_plus_ai_freedom.md",
+        "type": "feedback",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_002",
+      "title": "重複は両方残さず上書き一本化する(SSOT dedup)",
+      "intent": "正本曖昧化による drift と保守コスト増を防ぐこと",
+      "background": "同一情報が複数箇所に再掲されると、片方だけ更新され矛盾が生じる。lint-ssot-duplication.py が DUP-SCHEMA-ID / REDIRECT-FAT-BODY / DUP-REQUIRED-SET / DUP-PASSAGE を検出し、ssot-dedup-procedure.md で機械化した。",
+      "keywords": [
+        "SSOT",
+        "重複排除",
+        "正本",
+        "dedup",
+        "上書き一本化",
+        "DUP-PASSAGE"
+      ],
+      "message": "情報の正本は1箇所。再掲せず参照で繋ぐ。重複検出は両方残しを禁止し上書きで一本化する。",
+      "how_to_use": "新規ファイル追加時、既存に同等仕様が無いか lint-ssot-duplication.py で事前確認。あれば参照に置換。",
+      "source": {
+        "file": "memory/project_ssot_dedup_mechanism.md",
+        "type": "project",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_003",
+      "title": "固定手順を廃しゴール+チェックリスト反復を中核に据える(goal-seekパラダイム)",
+      "intent": "実行時文脈(入力・lint失敗・差し戻し)に脆い固定手順を、未達項目を都度埋める反復に置き換えること",
+      "background": "run系・assign系など実行系 kind は前提が動的に変わる。ゴール(全ゲートPASS)と完了チェックリストを到達点に固定し、手順は未達項目から都度生成する正本 goal-seek-paradigm.md を確立した。",
+      "keywords": [
+        "ゴールシーク",
+        "goal-seek",
+        "チェックリスト",
+        "固定手順禁止",
+        "反復",
+        "未達項目"
+      ],
+      "message": "実行系 kind は手順を列挙せず、Goal+目的/背景+完了チェックリスト+ゴールシークループで構成する。",
+      "how_to_use": "run/assign/wrap/delegate を作るとき lint-goal-seek.py が固定 Step 連番羅列を警告する。ゴール節構成にする。",
+      "source": {
+        "file": "memory/project_goalseek_paradigm.md",
+        "type": "project",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_004",
+      "title": "判断を人間に委ねず、AIが文脈から最適解を選定して実装する",
+      "intent": "TODO(human) で停滞させず、蓄積文脈に基づき自律的に最善策を決めること",
+      "background": "TODO(human) を多用すると進行が止まり、文脈を持つ AI の強みを殺す。本リポジトリでは AI が文脈から最適解を選定し実装する方針を採用した(Learning スタイルの TODO(human) 要求より優先)。",
+      "keywords": [
+        "TODO禁止",
+        "自律判断",
+        "最適解選定",
+        "no-todo-human",
+        "文脈活用"
+      ],
+      "message": "設計判断は人間に丸投げせず、蓄積知見と文脈から最適解を選び、根拠を添えて実装する。",
+      "how_to_use": "迷う設計判断が出たら、まず knowledge/ と lessons-learned を検索し、過去判断を根拠に決める。",
+      "source": {
+        "file": "memory/feedback_no_todo_human.md",
+        "type": "feedback",
+        "date": "2026-05-22"
+      }
+    },
+    {
+      "id": "build-patterns_005",
+      "title": "改善時は分析→類似は上書き統合・無ければ新規で、肥大化を防ぐ",
+      "intent": "更新のたびにファイル/規則が無秩序に増えるのを防ぎ、冪等な改善にすること",
+      "background": "prompt や rubric の改善で安易に追記すると肥大化する。既存と類似なら上書き統合、本当に新しいものだけ新規追加する冪等更新を原則化した。",
+      "keywords": [
+        "冪等更新",
+        "上書き統合",
+        "肥大化防止",
+        "改善時分析",
+        "rubric提案"
+      ],
+      "message": "改善は『まず既存を分析』。類似は統合、新規は最小限。追記一辺倒にしない。",
+      "how_to_use": "rubric/prompt/reference を増やす前に既存を grep し、統合可能なら Edit、不可なら新規。",
+      "source": {
+        "file": "memory/feedback_prompt_creator_idempotent_update.md",
+        "type": "feedback",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_006",
+      "title": "新kindより横断combinatorを優先しkind爆発を避ける(積空間→和空間)",
+      "intent": "MECE性を保ちつつ機能追加コストを抑えること",
+      "background": "9テンプレ×Nフラグの積空間は追加コストが爆発する。1 atom + kind-combinator + flag-combinator の和空間にすると、横断関心(評価/hook/knowledge等)は combinator 1枚追加で全 kind に伝搬する。knowledge-loop もこの理由で新kindでなく with-knowledge combinator にした。",
+      "keywords": [
+        "combinator",
+        "kind爆発回避",
+        "和空間",
+        "横断関心",
+        "MECE",
+        "with-knowledge"
+      ],
+      "message": "新しい関心が全 kind 横断なら、新 kind を足さず combinator にする。kind 数は神聖に保つ。",
+      "how_to_use": "機能追加要望が来たら『これは既存7kindで表現できるか/横断関心か』をまず問う。横断なら combinator。",
+      "source": {
+        "file": "plugins/harness-creator/skills/run-build-skill/templates/combinators/README.md",
+        "type": "design-doc",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_007",
+      "title": "ゴールシークは散文継承だけでなくcombinator/schema/lintで実行機構として配る",
+      "intent": "生成スキル側でも『ゴールへ向けて自動ループを回す』挙動を再現可能な機構として強制すること",
+      "background": "ゴールシークは_base.md散文で全実行系に継承されていたが、実行可能な配線(goal-spec/progress JSON/fork委譲)が無く、run-goal-seekは独立起動のみだった。knowledge-loopが辿った『散文→with-knowledge combinator化』と同じ道を適用し、loop実行系(run/wrap/delegate)にwith-goal-seek.patchをdefault-ONで注入、goal-seek-loop.schema.jsonで周回状態を契約化、lint-goal-seekで二値チェックリスト・曖昧語をviolation/配線不在をwarningで検査した。",
+      "keywords": [
+        "ゴールシーク",
+        "combinator",
+        "with-goal-seek",
+        "goal-seek-loop",
+        "default-ON",
+        "二層分離",
+        "progress-json",
+        "fork委譲"
+      ],
+      "message": "横断パラダイムを生成物に配るときは、SSOT散文(意図)+combinator(注入)+schema(契約)+lint(強制)の4点セットにする。散文継承だけでは機構にならない。",
+      "how_to_use": "新パラダイムを量産スキルへ波及させる際、(1)既存lintベースラインを測り壊さない範囲で違反化、(2)既存が満たさない新条件はwarningに振る、(3)default-ON combinatorは実体.patchファイルとauto-select配線をセットで入れる(patch_path.exists()で即死防止)。",
+      "source": {
+        "file": "memory/feedback_mechanism_plus_ai_freedom.md",
+        "type": "feedback",
+        "date": "2026-05-24"
+      }
+    },
+    {
+      "id": "build-patterns_008",
+      "title": "task-graph実行知見はproposalでplannerへ戻し、knowledgeには蒸留して残す",
+      "intent": "Harness Creatorが依存グラフ実行中に見つけた新課題を安全にplanへ還流し、未解決課題を残したまま完了扱いにしないこと",
+      "background": "task-graph本体をHarness側が直接書くとplannerのDAG正本とruntime状態が二重writerになり、依存方向が崩れる。Harnessはdiscovered-task proposal、task-state、task-events、knowledgeだけを書き、plannerの次回updateがgraphを更新する一方向writerに分ける。knowledgeは生ログ全量ではなく依存詰まり・成果物欠落・blocked起点・解決判断をsource_ref付きで蒸留する。",
+      "keywords": [
+        "task-graph",
+        "discovered-task",
+        "knowledge-loop",
+        "completion-gate",
+        "一方向writer",
+        "Loop A",
+        "Loop B",
+        "依存DAG"
+      ],
+      "source": {
+        "file": "plugin-plans/harness-creator/goal-spec.json#C13"
+      }
+    },
+    {
+      "id": "runtime-blocked-origin_a2aef39013",
+      "title": "blocked 起点故障: task P01-x-04 が route 失敗で blocked (起点故障) となった",
+      "intent": "route 実行失敗の起点 (origin-failure) を特定し人手救済導線を残すこと",
+      "background": "task P01-x-04 が route 失敗で blocked (起点故障) となった (発生源: task_id=P01-x-04, event_id=2026-07-06T21:34:59.119113Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-origin",
+        "harness-creator"
+      ],
+      "source": {
+        "file": "eval-log/harness-creator/build/task-events.jsonl",
+        "task_id": "P01-x-04",
+        "event_id": "2026-07-06T21:34:59.119113Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-origin_b65368899f",
+      "title": "blocked 起点故障: task P03 が route 失敗で blocked (起点故障) となった",
+      "intent": "route 実行失敗の起点 (origin-failure) を特定し人手救済導線を残すこと",
+      "background": "task P03 が route 失敗で blocked (起点故障) となった (発生源: task_id=P03, event_id=2026-07-06T21:34:59.209445Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-origin",
+        "harness-creator"
+      ],
+      "source": {
+        "file": "eval-log/harness-creator/build/task-events.jsonl",
+        "task_id": "P03",
+        "event_id": "2026-07-06T21:34:59.209445Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-origin_32954d621b",
+      "title": "blocked 起点故障: task P03-x-02 が route 失敗で blocked (起点故障) となった",
+      "intent": "route 実行失敗の起点 (origin-failure) を特定し人手救済導線を残すこと",
+      "background": "task P03-x-02 が route 失敗で blocked (起点故障) となった (発生源: task_id=P03-x-02, event_id=2026-07-06T21:34:59.322994Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-origin",
+        "harness-creator"
+      ],
+      "source": {
+        "file": "eval-log/harness-creator/build/task-events.jsonl",
+        "task_id": "P03-x-02",
+        "event_id": "2026-07-06T21:34:59.322994Z"
+      }
+    },
+    {
+      "id": "runtime-deviation_ba1b0563d2",
+      "title": "計画からの逸脱 (route deviation): run-skill-create の子スキル (run-skill-elicit/run-build-skill/ass",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "run-skill-create の子スキル (run-skill-elicit/run-build-skill/assign-skill-design-evaluator 等) と Gate 承認フロー・build-trace 生成は本 route の単独 build context では起動せず、E2 直接消費の要点 (brief を Step1 成果物へ直接採用・SKILL.md 一式生成・… (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-deviation_e69750d163",
+      "title": "計画からの逸脱 (route deviation): evaluator ゲート (assign-skill-design-evaluator の独立 context for",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "evaluator ゲート (assign-skill-design-evaluator の独立 context fork) は本 build context で起動不能のため、prompts/R2-gate-review・skill-design-rubric の評価観点を新規 reasoning で自己適用した: (C1 目的最適反映) brief 全フィールド (goal/checklist… (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-deviation_02f8054524",
+      "title": "計画からの逸脱 (route deviation): run-skill-create 完了フロー中の run-elegant-review (content-review)",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "run-skill-create 完了フロー中の run-elegant-review (content-review) は独立 context 起動不能のため本 route では未起動。task-graph 外ループのエレガント検証工程 (TG) で別 context 実施を申し送る。 (発生源: task_id=P05-C01-01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "extract-system-blueprint"
+      ],
+      "source": {
+        "file": "eval-log/extract-system-blueprint/build/route-C01.json",
+        "task_id": "P05-C01-01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-blocked-origin_3d2f034c9f",
+      "title": "blocked 起点故障: task P01-x-01 が route 失敗で blocked (起点故障) となった",
+      "intent": "route 実行失敗の起点 (origin-failure) を特定し人手救済導線を残すこと",
+      "background": "task P01-x-01 が route 失敗で blocked (起点故障) となった (発生源: task_id=P01-x-01, event_id=2026-07-10T14:34:28.083936Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-origin",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P01-x-01",
+        "event_id": "2026-07-10T14:34:28.083936Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-propagation_bb6f011f31",
+      "title": "blocked 伝播: task P01 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した",
+      "intent": "blocked の伝播連鎖を辿り起点故障へ帰着できるよう記録すること",
+      "background": "task P01 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した (発生源: task_id=P01, event_id=2026-07-10T14:34:28.084094Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-propagation",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P01",
+        "event_id": "2026-07-10T14:34:28.084094Z"
+      }
+    },
+    {
+      "id": "runtime-blocked-propagation_ae7f42a89b",
+      "title": "blocked 伝播: task P02 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した",
+      "intent": "blocked の伝播連鎖を辿り起点故障へ帰着できるよう記録すること",
+      "background": "task P02 が origin P01-x-01 の失敗から伝播 blocked へ連鎖した (発生源: task_id=P02, event_id=2026-07-10T14:34:28.084153Z)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "blocked-propagation",
+        "plugin-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/plugin-dev-planner/build/task-events.jsonl",
+        "task_id": "P02",
+        "event_id": "2026-07-10T14:34:28.084153Z"
+      }
+    },
+    {
+      "id": "next-cycle-candidate_md1-checklist-verify-lightpath",
+      "title": "next-cycle-candidate (MD-1): execution_kind=checklist-verify の軽量実行経路",
+      "intent": "checkpoint/検証系 node に component-build と同一の重い dispatch 経路を使わず、軽量な checklist-verify 実行契約を設けること",
+      "background": "plugin-dev-planner build (2026-07-10) の elegant-review 30思考法 Phase2 (MD-1) で提起。entity_ref=null の plan-node-verification が component-build と同じ envelope/dispatch 機構に乗り過剰コスト。次 cycle で execution_kind へ checklist-verify 軽量経路を設計する (実装せず構造化起票)",
+      "keywords": [
+        "next-cycle-candidate",
+        "task-graph",
+        "execution_kind",
+        "checklist-verify",
+        "dispatch",
+        "plugin-dev-planner",
+        "elegant-review"
+      ],
+      "source": {
+        "file": "plugin-plans/plugin-dev-planner/elegant-review-20260710.md",
+        "route_id": "MD-1"
+      }
+    },
+    {
+      "id": "next-cycle-candidate_md8-all-dispatchable-plan-check",
+      "title": "next-cycle-candidate (MD-8): --all-dispatchable plan-time 一括検査 + knowledge_refs 必須キー",
+      "intent": "dispatch 対象全 leaf の envelope 合成可能性を plan-time に一括検査し、task spec の knowledge_refs を必須キー化して build-time 発覚を前倒しすること",
+      "background": "plugin-dev-planner build (2026-07-10) の elegant-review 30思考法 Phase2 (MD-8) で提起。render-task-execution-envelope は --task-id 単発のみで、全 leaf の合成可否は dispatch 時まで分からない。次 cycle で --all-dispatchable 一括検査と knowledge_refs 必須キー昇格を設計する (実装せず構造化起票)",
+      "keywords": [
+        "next-cycle-candidate",
+        "task-graph",
+        "execution-envelope",
+        "all-dispatchable",
+        "knowledge_refs",
+        "plugin-dev-planner",
+        "elegant-review"
+      ],
+      "source": {
+        "file": "plugin-plans/plugin-dev-planner/elegant-review-20260710.md",
+        "route_id": "MD-8"
+      }
+    },
+    {
+      "id": "next-cycle-candidate_ss5-bootstrap-target-migration-gate",
+      "title": "next-cycle-candidate (SS-5): bootstrap→target 移行 gate",
+      "intent": "自己適用 (bootstrap) で作った計画/生成物を target 運用へ切り替える境界に、移行条件を機械判定する gate を設けること",
+      "background": "plugin-dev-planner build (2026-07-10) の elegant-review 30思考法 Phase2 (SS-5) で提起。bootstrap 段階の暫定契約が target 運用へ暗黙に持ち越されるドリフト経路がある。次 cycle で bootstrap→target 移行 gate を設計する (実装せず構造化起票)",
+      "keywords": [
+        "next-cycle-candidate",
+        "bootstrap",
+        "migration-gate",
+        "self-application",
+        "plugin-dev-planner",
+        "elegant-review"
+      ],
+      "source": {
+        "file": "plugin-plans/plugin-dev-planner/elegant-review-20260710.md",
+        "route_id": "SS-5"
+      }
+    }
+  ]
+}

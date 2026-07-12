@@ -1,0 +1,27 @@
+{
+  "target": {"plugin": "notion-gmail-send", "skill": "run-notion-gmail-send", "skill_md_sha256": "34cb439a87c0fb2ec36f562eb5c34ded8df7d7b5c0854484241f25bc03fba984"},
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rubric-reviewer",
+  "reviewed_at": "2026-06-27",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1"],
+    "positive_feedback": [
+      "frontmatter 適合 PASS: kind=run/prefix=run/effect=external-mutation(不可逆 Gmail 送信と整合)/disable-model-invocation:true/user-invocable:true。argument-hint が argparse の3モードを過不足なく表現(既定=引数なし preview→--confirm-token <plan_hash>、無人cron=--auto-approve、厳格対話=--plan --approved-nonce、付帯 --canary/--db1/--db2/--config/--allow-resend を列挙)。description が『既定はNotionチェックを承認とみなす最小確認1回=preview→単一確認、無人cronは--auto-approveで確認0も可』を正確宣言し、R5 文末規約(「使う。」終わり)準拠で挙動宣言と用途節を1文へ統合(2026-06-27 並べ替え・情報同一/設計不変)。responsibility_refs(R1/R2)・schema_refs(send-verdict.schema.json)・feedback_contract が明示。",
+      "criteria 検証可能性 PASS: IN1/IN2/IN3=verify_by:test、OUT1=verify_by:elegant-review。IN3 が最小確認1回を exit10(preview・要約+CONFIRM_TOKEN・送信せず)/exit11(token 不一致で再 preview)/CONFIRM_TOKEN=plan_hash 束縛/source-audit 階層化(既定 preview は警告非全停止・無人 cron は run_full_audit gate で fail-closed)/canary opt-in+content dedup/C-1 recipient_db 未解決で fail-closed まで具体化。対応テスト実在 PASS=test_auto_send(exit10 line245・exit11 line268・auto-approve high fail-closed・canary・C-1)/test_plan_compose/test_send_campaign/test_idempotent_log/test_preflight。pytest 198 passed。",
+      "Goodhart 耐性を IN1 本文が言語化 PASS: 非対話の plan_hash/件数/content_hash 照合は同一プロセス内 self-derive ゆえ恒真(defense-in-depth=compose バグ検出に留まる)と正直に明記し、recompute backstop と実効独立検証(source-audit/fresh rebuild/C-1 subtract-only/From 検証/content dedup)へ保護価値を再配置。コード(send-campaign.py L319-324, 291-296)・doc §16 B3 と一致。",
+      "single-responsibility PASS: R1=orchestrate 統括、R2=presend-verify 二段確認の 1 prompt=1 責務。R2 メタが agent gmail-send-presend-verifier を『本文を持たない薄アダプタ』と宣言し prompt が SSOT 正本。",
+      "SSOT 規律 PASS: SKILL.md『各責務の停止条件詳細は prompts/Rn を正本(SSOT)とし本節は俯瞰のみ(片側更新ドリフト回避)』。schema 正本はコード側(send-verdict.schema.json を schema_refs 経由参照)。doc §7/§16(B1-B6)とも整合。",
+      "fail-closed の正直さ PASS: 『sent は到達保証でない』(Key Rules 8・コード L540 注記)、『非対話の plan_hash 照合は恒真=defense-in-depth で plan 改竄保護価値を持たない』(Key Rules 2/7・コメント L319-324)を誇張せず明示。context:fork 二段確認を厳格対話限定(Key Rules 7/R2 L6.1・非対話は proposer==approver になるため不使用)とした判断も正直に記述。"
+    ],
+    "negative_feedback": [
+      "[smell:low・非ブロッカー] argument-hint の厳格対話ブランチは `--plan <plan.json> --approved-nonce <確認語>` のみを示し、argparse が同時必須とする --approved-plan-hash/--approved-count/--approved-first-to を省略(代表値圧縮)。完全な APPROVE tuple は SKILL.md 本文・R1 L1.1・doc §8 が明記しており実害は無いが、hint だけ読む利用者には strict モードが過小指定に見える余地がある。"
+    ],
+    "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual", "next_action": "none"
+  },
+  "notes": "rubric(skill-design/evaluator-contract)5軸を現内容(コピーせず)で genuine 評価。2026-06-27 に description を R5 文末規約(「使う。」終わり)準拠へ並べ替え(git diff で frontmatter description 1行のみ変更・argument-hint/criteria/本文/prompts/コード/test 全不変=設計不変)したため新 sha で実体ベース再束縛。SHA 一致明記: skill_md_sha256=34cb439a87c0fb2ec36f562eb5c34ded8df7d7b5c0854484241f25bc03fba984 は `python3 -c hashlib.sha256(...SKILL.md)` 実測と一致(前 verdict 2f2cafd... は旧 description 版・371478... は確認0既定2モード時代の stale)。新 description も『最小確認1回=preview→単一確認』『無人cron --auto-approveで確認0』を明示し『description が挙動を正確宣言』軸を満たす(R5 準拠で改善)。(1)argument-hint↔argparse 3モード一致を実検証(--plan/--approved-*/--auto-approve(--yes)/--confirm-token/--canary(--limit)/--db1/--db2/--allow-resend/--config 全網羅、相互排他バリデーション L216-226 も整合)。(2)criteria↔test 1対1: IN3 の exit10/exit11/auto fail-closed/canary/C-1 を test_auto_send が逐条検証(rc==10@245, rc==11@268, fail-closed/canary/suppress)、IN1 件数偽装/nonce/from/suppress を test_send_campaign(count_injection/missing_nonce/suppress 各 test)、IN2 reserved→sent/unknown と content ベース冪等キーを test_idempotent_log(24 test: reserve/sent/sending→unknown/quota reactivate/duplicate fail-closed)が実証。pytest 198 passed。(3)SSOT 規律: prompts/Rn 正本・SKILL 俯瞰・schema コード側で片側ドリフト回避。(4)fail-closed 正直さ: 恒真照合=defense-in-depth/sent≠到達/fork 対話限定を過大表現せず明示。high finding 0・low smell 1(argument-hint の strict tuple 圧縮・非ブロッカー)につき閾値80超で PASS。"
+}

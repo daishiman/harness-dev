@@ -1,0 +1,59 @@
+{
+  "_doc": "task_kind から出力先を解決するマッピング正本の雛形。output-routing.json にコピーして使う。トークンは絶対直書き禁止、keychain:{{SECRET_NAMESPACE}}-service/account 参照のみ",
+  "schema_version": "1.0",
+  "defaults": {
+    "adapter": "local",
+    "params": { "path": "{{OUTPUT_BASE}}", "format": "json", "on_conflict": "update" },
+    "fallback": "local"
+  },
+  "routes": {
+    "task-spec": {
+      "adapter": "notion",
+      "params": {
+        "database_id": "{{NOTION_DATABASE_ID}}",
+        "on_conflict": "update",
+        "token_ref": "keychain:{{SECRET_NAMESPACE}}-notion/api-token"
+      },
+      "fallback": "local"
+    },
+    "meeting-minutes": {
+      "adapter": "sheets",
+      "params": {
+        "spreadsheet_id": "{{SHEETS_SPREADSHEET_ID}}",
+        "sheet": "{{SHEETS_TAB_NAME}}",
+        "on_conflict": "append",
+        "token_ref": "keychain:{{SECRET_NAMESPACE}}-google/oauth-token"
+      },
+      "fallback": "local"
+    },
+    "metrics-export": {
+      "adapter": "http",
+      "params": {
+        "url": "{{HTTP_ENDPOINT_URL}}",
+        "method": "POST",
+        "headers": { "Content-Type": "application/json" },
+        "auth": { "scheme": "bearer", "token_ref": "keychain:{{SECRET_NAMESPACE}}-metrics/api-token" }
+      }
+    },
+    "audit-log": {
+      "adapter": "local",
+      "params": { "path": "{{AUDIT_LOG_DIR}}", "format": "jsonl", "on_conflict": "append" }
+    },
+    "alerts": {
+      "adapter": "slack",
+      "params": { "channel": "{{SLACK_CHANNEL}}", "webhook_ref": "keychain:{{SECRET_NAMESPACE}}-slack/webhook-url" }
+    },
+    "design-doc": {
+      "adapters": ["notion", "local"],
+      "params": {
+        "notion": {
+          "database_id": "{{DESIGN_DOC_DATABASE_ID}}",
+          "on_conflict": "update",
+          "token_ref": "keychain:{{SECRET_NAMESPACE}}-notion/api-token"
+        },
+        "local": { "path": "{{DOC_OUTPUT_DIR}}", "format": "markdown", "on_conflict": "update" }
+      },
+      "fallback": "local"
+    }
+  }
+}

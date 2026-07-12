@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-rename",
+    "skill_md_sha256": "5a260cbe9cdefccba995ed6fe93d526cea570feb740469a5335d22f6b8343f40"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-rename-review-subagent-d",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "改名の不可分セット(ディレクトリ改名=git mv・frontmatter.name・aliases)を Key Rules・完了チェックリスト・Gotchas・ゴールシークループ差分の全層で一貫して強制しており、部分更新による参照不整合(第8条)を構造的に封じる設計が崩れていない。",
+      "6 ステップのゴールシーク手順を正本 ../run-build-skill/references/goal-seek-paradigm.md へ委譲し重複転記せず本スキル固有差分(対象パス $OUT_BASE/$OLD_NAME→$OUT_BASE/$NEW_NAME・検証コマンド・grep 参照元探索)のみ記述する SSOT 分離が保たれている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "plugin skill-creator→harness-creator 改名後の現 SKILL.md(sha256=5a260cbe…)を全文 read し 4 条件で genuine 精査。(a) 旧固有名残存: grep -E 'skill-creator|skill_creator|スキルクリエイター' で本スキル配下 0 件、残存なし。(b) 改名追従漏れ: 本文参照の plugins/harness-creator/skills/run-build-skill/scripts/resolve-skill-dirs.py・responsibility_refs prompts/R1-rename.md・schema_refs schemas/output.schema.json・plugins/skill-governance-lint/scripts の lint-skill-name.py/lint-skill-tree.py/validate-frontmatter.py いずれも実在で参照切れなし(skill-governance-lint は別 plugin で改名対象外)。(c) 意味論境界: 本スキルは単体スキルの改名操作=CONVENTIONS 用語規約 1『単体スキルを作る/改名する概念→skill 表現維持』に該当し run-skill-rename の skill 表現は正当、plugin path のみ harness-creator へ更新済みで境界違反なし。C1 矛盾0: git mv 必須/alias 必須/CHANGELOG 必須/参照元更新が Key Rules・チェックリスト・Gotchas で非矛盾。C2 漏れ0: 入力(old_name/new_name)・出力(改名済 dir/name 更新/aliases/CHANGELOG/参照元更新)・完了条件(lint exit0)が明示、責務鎖に欠落なし。C3 整合0: $OUT_BASE は resolve-skill-dirs.py 出力で解決、検証コマンドが決定論的。C4 依存0: 全参照先実在。重大問題なし=PASS。"
+}

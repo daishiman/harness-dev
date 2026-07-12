@@ -1,0 +1,30 @@
+{
+  "threshold": 80.0,
+  "floors": {
+    "scripts": {
+      "mechanical": 85.6,
+      "llm_eval": 64.3
+    },
+    "skills": {
+      "mechanical": 100.0,
+      "llm_eval": 82.3
+    },
+    "agents": {
+      "mechanical": 68.0,
+      "llm_eval": 56.0
+    },
+    "commands": {
+      "mechanical": 94.1,
+      "llm_eval": 47.1
+    },
+    "hooks": {
+      "mechanical": 100.0,
+      "llm_eval": 100.0
+    },
+    "docs": {
+      "mechanical": 84.9,
+      "llm_eval": 69.8
+    }
+  },
+  "note": "各軸カバレッジの下限 floor。現値がこれを下回ると --ratchet が exit1。改善時は --update-floor で floor を引き上げる (ratchet up・回帰は焼かない)。2026-07-12: plugins/ 再編 (refactor/restructure-to-plugins) で test/verdict 未添付の新規 doc/scripts artifact が母数に加わったため、scripts.llm_eval / docs.mechanical / docs.llm_eval の floor を clean-checkout 実測値へ意図的に baseline reset (evaluation の捏造による緑化を避ける)。"
+}

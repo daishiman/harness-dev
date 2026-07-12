@@ -1,0 +1,848 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugin-plans/ubm-goal-setting/ ↔ plugins/ubm-goal-setting/",
+    "reviewed_at": "2026-07-05T08:23:31+09:00"
+  },
+  "loop_count": 1,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "EVALS/計画の golden-master equivalence 宣言の根拠を実装まで遡及検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 20
+          },
+          "description": "golden-master equivalence 宣言に対し .sh 対 .py 比較テスト・等価確認ログが repo 内に不在 (A2-01)",
+          "recommended_intervention": "宣言を「同梱 golden-sample 回帰テスト (正本PASS+変異FAIL)」へ正直化 [解消済: E3 が EVALS.json :20/:39 を降格修正・literal 残存 0 件]",
+          "root_cause": "移植元 vault 資産は repo 外で shadow-run 不能なのに宣言だけ移送された"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "計画 C04 宣言→manifest→hook 実装→docs→tests への当てはめ齟齬を検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+            "line": 34
+          },
+          "description": "hook GUARDED_TOOLS は MultiEdit を含むが matcher は Write|Edit のままで MultiEdit が hook 起動を素通り。テストも 0 件 (A2-02)",
+          "recommended_intervention": "matcher 三重整合 + MultiEdit テスト追加 [解消済: E1 が plugin.json/envelope-draft、E4 が inventory C04 を Write|Edit|MultiEdit 化。遮断/許可/契約テスト追加・13 passed]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "ナレッジ件数フィールドを全数帰納し 155/157/154 の4値不一致を特定した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/knowledge/router.json",
+            "line": 4
+          },
+          "description": "total_entries=155 / entry_count 合計=157 / subcategory_counts 合計=154 / 実測=154 の多重矛盾。計画側も同矛盾を継承 (A2-03)",
+          "recommended_intervention": "実測 154 (principles41/consultation34) へ全系再シード [解消済: E2 が router.json を json.load 機械集計で再シード、E4 が計画側 155 表記を 154+正内訳へ更新]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "bookkeeping 全未更新・証跡不在・stale provenance の観測群を単一の最尤仮説に収束させた"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json",
+            "line": 20
+          },
+          "description": "実 build 完成済みなのに routes 全18件 planned・フェーズ全て未実施・checklist 全 done:false。根本原因は build→計画への完了 writeback の責務者と機構が未定義 (A2-04)",
+          "recommended_intervention": "実測ベースの遡及 writeback [解消済: E4 が routes 18件 built 化・goal-spec done 反転・index 更新、E5 が phase frontmatter P01-P12 完了化 (enum 実測確認済)。恒久 writeback 機構は planner 側課題として smell 残置]",
+          "root_cause": "handoff が計画→build の一方向契約で writeback 未定義"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Why を5回遡り、P09/P11 証跡不在の本質=格納先パス未割当に到達した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/phase-09-quality-assurance.md",
+            "line": 38
+          },
+          "description": "quality_gates が要求する verdict/build_trace の格納先が計画に未定義で、証跡が宙吊り deliverable になっていた (A2-05)",
+          "recommended_intervention": "格納先定義+実 evidence 生成 [解消済: E5 が phase-11 に格納先 (eval-log/ubm-goal-setting/_plugin/build-evidence/) を定義し、5要素 evidence を実走生成]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "18 component × 宣言フィールドを個別突合。tools/isolation/argument-hint/build_target は全実体一致を確認した"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/component-inventory.json",
+            "line": 118
+          },
+          "description": "sub-agent 10本の responsibility_anchor (prompts/R-*.md) が実 build に不在で全10本宙吊り (A2-06)",
+          "recommended_intervention": "anchor を実体 agents/*.md へ spec-first 更新 [解消済: E4 が 10本更新+「agents/*.md が7層内包の自己完結正本」注記追加]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "計画宣言要素の全数照合 (component18/refs/assets5/knowledge28+4/manifest/composition/EVALS/RUNBOOK/CHANGELOG) を実施、重複 0 を確認した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml",
+            "line": 1
+          },
+          "description": "reference 計画=8本 vs 実体=9本。計画外 resource-map.yaml を EVALS が enforcement 正本として参照 (A2-07)",
+          "recommended_intervention": "計画へ builder-generated として追記し 9 本化 [解消済: E4 が references_config_assets 追記+index/goal-spec の 8本→9本 更新]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×機械強制度の2軸で EVALS 配線の優先度逆転 (軽い check-knowledge-split 配線済 vs 重要 lint 6本未配線) を検出した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 5
+          },
+          "description": "p0_lint 8本中 skill 系6本が mechanical 未配線で散文宣言止まり (A2-08)",
+          "recommended_intervention": "6 lint を mechanical へ配線 [解消済: E3 が追加・13/13 exit 0 実走確認]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "P01→P13 の成果物連鎖を時系列分解し P09/P10/P11 の工程 gap を特定した"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "eval-log",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/phase-11-evidence.md",
+            "line": 25
+          },
+          "description": "P09-P11 の成果物なしに P12 成果物が存在し、P11 前提条件・P13 の P01-P12 完了前提が連鎖不成立 (A2-09)",
+          "recommended_intervention": "ゲート成果物の遡及補完 [解消済: E5 が P09-P11 証跡を実走生成し index/frontmatter を完了化。P13 は未実施のまま=正 (コミット未)]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "「反映=物理ファイル一致」だけでなく「状態逆流」「逆方向照合」を含む検証枠組み自体を再定義した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json",
+            "line": 20
+          },
+          "description": "計画側の状態 SSOT が build 完了に追従せず、どこまで反映済みかを機械判定できない (A3-01)",
+          "recommended_intervention": "status writeback [解消済: E4/E5 が routes/envelope(build_status)/frontmatter を実測反転。check-build-handoff の ENVELOPE_STATUSES enum に built が無いため envelope は build_status フィールド追加方式で gate 緑維持]"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "matcher Write|Edit は planner テンプレ既定値と同値であり、個別 plugin パッチでは全将来 plugin へ同型再発する構造を特定した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py",
+            "line": 1068
+          },
+          "description": "mf-kessai で得た MultiEdit 教訓がテンプレ SSOT (specfm.py 既定値) へ還流していない (A3-03)",
+          "recommended_intervention": "specfm 既定値の Write|Edit|MultiEdit 化+「GUARDED_TOOLS⊆matcher」検査の planner 焼込み [未実施: planner plugin はレビュー対象外。report-only で申し送り]"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "過去 review 教訓 (hook fail-open 穴封鎖・保証要件は機械層) の反映有無を前提レベルで検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+            "line": 56
+          },
+          "description": "計画は fail-closed-exit2 / fail_closed:true を宣言するが実装は parse 失敗→exit0・file_path 欠落→exit0 の fail-open 分岐を持ち、テストがそれを仕様として固定化 (A3-04)",
+          "recommended_intervention": "実装を計画宣言へ是正 [解消済: E1 が parse 失敗/file_path 欠落を exit2+stderr 化。UBM_VAULT_ROOT 未設定素通し (計画明記の責務境界) は維持。テスト反転+追加]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "EVALS 配線乖離の解消案を5件発散 (直接追記/集約script/正直化縮退/CI委譲/決定論射影器) してから収束した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 5
+          },
+          "description": "surfaces_enforced_by は 8 lint 主張・mechanical は 6 本欠落の同一ファイル内乖離 (A3-06)",
+          "recommended_intervention": "短期=直接追記 (案1) [解消済: E3]。恒久=quality_gates→EVALS 決定論射影器+parity gate (案5) [未実施: harness-creator 側課題として report-only]"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "DB migration の shadow-run/dual-run 手法を等価性主張の検証へ移植適用した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 20
+          },
+          "description": "equivalence 宣言に対応する比較コーパス・実行証跡が不在 (A3-07、A2-01 と同根)",
+          "recommended_intervention": "shadow-run fixture 化 or 宣言降格 [解消済: repo 内で旧 .sh 実行不能のため宣言降格 (正直化) を採用。E3 実施]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "「反映しない方が正しい」計画項目を探索し、廃止スタブ 7 本の faithful-transfer 非対称を検出した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/knowledge/principles.json",
+            "line": 4
+          },
+          "description": "vendor 28本中 7本は entries:[] の廃止移行スタブで、dead path 除去判断と非対称 (A3-08)",
+          "recommended_intervention": "温存理由の計画焼込み [解消済: E4 が L1 記述へ「28 JSON = live 21+廃止移行スタブ7 (旧ファイル名直Read後方互換で温存)」を明示]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "sibling plugin mf-kessai の matcher+契約テストという先行解と比較し、差分に設計理由がないことを確認した"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+            "line": 36
+          },
+          "description": "MultiEdit が hook へ dispatch されず vault 破壊書込が素通りする経路 (A3-09、A2-02/A4-03 と同根)",
+          "recommended_intervention": "mf-kessai の test_plugin_contract パターン移植で matcher↔GUARDED_TOOLS↔docs 3点一致を契約テスト化 [解消済: E1 が test_manifest_matcher_matches_guarded_tools を移植追加]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "knowledge 10倍成長・vault 不在・バッチ途中失敗の極端ケースで設計を破壊試験した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md",
+            "line": 55
+          },
+          "description": "Phase2-extract バッチ途中失敗時の中間状態回復契約が不在で数値 drift を構造的に生成 (A3-11)",
+          "recommended_intervention": "1トランザクション扱い+sync-log resume 手順の明文化 [解消済: E2 が SKILL.md Key Rules へ追記]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見ユーザーの到達経路 (install→env 設定→初回実行) を専門前提なしで追跡した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/README.md",
+            "line": 1
+          },
+          "description": "P12 が要求する README (install/UBM_VAULT_ROOT/Part1/Part2) が不在で初見ユーザーが到達不能 (A3-12)。加えて vendor データ内に旧名 check-knowledge-split.sh 参照が残存 (A3-13)",
+          "recommended_intervention": "README 生成+旧名参照修正 [解消済: E5 が P12 契約準拠 README を生成 (portability lint 緑)、E2 が router.json の .sh→.py 修正 (残存 0 件確認)]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "repo CI (governance-check.yml) との接続を全体系で検査し ubm 未登録を検出した"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": ".github/workflows/governance-check.yml",
+            "line": 163
+          },
+          "description": "計画 ci.workflow=governance-check 宣言に対し per-plugin lint 群に ubm-goal-setting 未登録で repo CI が恒久検証しない (A4-01)。EVALS 内も宣言と配線の二重帳簿 (A4-02)",
+          "recommended_intervention": "他 plugin 同型の conformance ブロック追加 [解消済: E3 が 3 step 配線、E6 が lint-plugin-composition を緑化して 4 step 目へ昇格。lint-skill-completeness は計画契約外につき理由付き未配線 (skill-intake 先例同型)]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "計画 matcher → manifest → hook 死にコード化 → docs 約束破綻の因果 chain を明示した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+            "line": 36
+          },
+          "description": "根本原因は計画 C04 matcher='Write|Edit' であり、そこから manifest→実装死にコード化→docs 相反が連鎖 (A4-03、paradigm 2/17 と同根)",
+          "recommended_intervention": "因果の根 (計画 matcher) から3辺一括修正 [解消済: E1+E4 で計画/manifest/envelope の3辺統一]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "増分更新 (Rule D) が初期 drift を永続再生産する負のループと、null registry の重複自己増殖ループを同定した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/knowledge/registry.json",
+            "line": 12
+          },
+          "description": "SKILL.md『extracted_entry_ids null 禁止』に対しシード 7 件が null (legacy)。MODIFIED 時に旧エントリ削除不能→重複蓄積ループが成立 (A4-05)",
+          "recommended_intervention": "legacy null 移行規則の明文化 [解消済: E2 が SKILL.md へ「初回 MODIFIED 検知時に全削除→再抽出 backfill・以後 null 禁止」を追記+テストで legacy 注記なし null を fail-closed 化]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "vendor 同梱×mutable 更新のトレードオフ止揚案 (writeback-config) の実装実態を検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/plugin-composition.yaml",
+            "line": 25
+          },
+          "description": "invariant が実装裏付けなく writeback-config を掲げていた。実装は plugin 同梱 knowledge/ への直書き (A4-06)",
+          "recommended_intervention": "直書き方式の正式確定 [解消済: E4 が GAP-KNOWLEDGE-003 resolved 化+composition invariant/plan L3 記述を実装へ spec-first 統一]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "resource-map の計画追記が計画網羅性と実装索引維持の双方に利する win-win 整合化であることを確認した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml",
+            "line": 1
+          },
+          "description": "builder 由来の計画外 artifact を EVALS が enforcement 根拠に使用 (A4-07、paradigm 7 と同根)",
+          "recommended_intervention": "[解消済: E4 が builder-generated (source:null) として計画追記+C17 非対称根拠も焼込み]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "計画 goal-spec の提供価値『受入が確認可能』の実現状態を evidence 実在で検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/phase-11-evidence.md",
+            "line": 34
+          },
+          "description": "P11 evidence 5 要素が eval-log/plugin 双方に不在 (A4-08、paradigm 5/9 と同根)",
+          "recommended_intervention": "[解消済: E5 が 5 要素を実走生成 — P0 lint 13/13 exit0・build-trace 18/18 sha256・pytest 44 passed・schema parity・content-review は elegant-review 本 run を正本と事実記録]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "3ヶ月後の prompt 改善ループが計画 anchor を辿ると断線する将来リスクを評価した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/component-inventory.json",
+            "line": 118
+          },
+          "description": "正本所在 (prompts/R-*.md vs agents/*.md) が計画と実装で分裂 (A4-09、paradigm 6 と同根)",
+          "recommended_intervention": "[解消済: E4 が anchor を実体へ更新し正本例外を計画に焼込み]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "数値ドリフトの根本原因連鎖を追跡し count parity ゲート不在に到達した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "schema",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py",
+            "line": 1
+          },
+          "description": "router 集計と実エントリ数の一致を検査するゲートが計画・配線のどこにも存在せず、ドリフトが構造的に再発し得る (A2-10)",
+          "recommended_intervention": "count parity の機械ゲート化 [解消済: E2 が tests/test_knowledge_counts.py (6テスト) を新設し中央 pytest+EVALS 経由で常時検査]",
+          "root_cause": "書込み器の更新責務のみに依存し読取り側検証が不在だった"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "前回 findings の re-occurrence を検査し stale provenance の再発を検出した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "eval-log",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/plan-findings.json",
+            "line": 2
+          },
+          "description": "plan_dir と全ゲート command が旧 worktree 絶対パスに pin されたまま (A4-10)",
+          "recommended_intervention": "[解消済: E4 が provenance_note 追記 (既存 findings は証跡改ざん防止で不改変・最新検証は本 run の eval-log を参照)。恒久策=repo 相対パス記録は planner 側課題]"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説『計画の数値・契約は build に忠実反映』を 18実体/refs/assets/registry/28JSON で検証し、語彙レベルの反例を特定した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+            "line": 35
+          },
+          "description": "C02 source_type 語彙が計画 (日本語混じり7分類) と実装 (英語7ラベル) で体系不一致 (A4-11)",
+          "recommended_intervention": "[解消済: E4 が計画 C02 を実装の英語7ラベルへ更新し写像関係も併記]"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『機械 enforcement の正本はどこか』が決まれば残りが決まる本質論点であることを同定した"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/EVALS.json",
+            "line": 5
+          },
+          "description": "計画 quality_gates・EVALS surfaces_enforced_by・repo CI の三層が独立記述で不一致 (A4-12)",
+          "recommended_intervention": "lint 集合の正本を EVALS.mechanical へ一本化 [解消済: 8/8 一致。『CI が EVALS.mechanical を動的起動する』単方向参照機構は全 plugin 横断改修のため report-only]"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "36 findings を配線断線島/シード整合島/証跡不在島/正本分裂島の4島に集約し、共通構造=post-build 照合ゲート不在を発見した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/ubm-goal-setting/index.md",
+            "line": 140
+          },
+          "description": "計画は宣言するが build 後の接続・記録・追従を所有する機械ゲートが無い、という単一根本 smell (A4-13)",
+          "recommended_intervention": "post-build 照合器 (build_target 実在/matcher 一致/EVALS-lint 集合一致/router 集計一致) の新設 [部分解消: 本 run で matcher 契約テスト・count parity テスト・composition lint CI 配線として個別機械化済み。統合照合器は harness-creator 側課題として report-only]"
+        }
+      ],
+      "score": 0.85
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "why",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "golden-master 宣言 vs 実態: EVALS.json を golden-sample 回帰テスト宣言へ正直化 (literal 残存 0 件)",
+        "matcher 三重矛盾: 計画 C04/plugin.json/envelope-draft を Write|Edit|MultiEdit へ統一し契約テストで固定 (test_manifest_matcher_matches_guarded_tools PASS)",
+        "fail-closed 宣言 vs fail-open 実装: parse 失敗/file_path 欠落を exit2+stderr へ是正 (13 passed)",
+        "bookkeeping 矛盾 (build 完成 vs 全て planned/未実施): routes built 化・frontmatter P01-P12 完了化・check-spec-frontmatter/check-build-handoff exit 0",
+        "registry null 禁止 vs null 7件: legacy 移行規則を SKILL.md へ明文化+テストで fail-closed 化",
+        "references 8本 vs 実体9本: 計画を 9 本化"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "P11 evidence 5 要素: eval-log/ubm-goal-setting/_plugin/build-evidence/20260705/ に実走生成 (P0 lint 13/13 exit0・build-trace 18/18 sha256・pytest 44 passed)",
+        "README 不在: P12 契約準拠 README.md 生成・portability lint exit 0",
+        "count parity ゲート不在: tests/test_knowledge_counts.py 6 テスト新設",
+        "バッチ途中失敗回復契約: SKILL.md へ 1 トランザクション+resume 手順追記",
+        "writeback-config 未実装: 直書き方式を正式確定し GAP-KNOWLEDGE-003 resolved",
+        "run-skill-feedback 未配備 (R7): harness-creator SSOT 正本から byte 一致配備し lint-feedback-protocol --strict exit 0"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "knowledge 4値不一致 (155/157/154): 実測 154 へ全系再シード (router/計画両辺)・test_knowledge_counts で機械固定",
+        "EVALS 宣言 vs 配線: p0_lint 8/8 を mechanical へ配線・全実走 exit 0",
+        "responsibility_anchor: 10 本を実体 agents/*.md へ更新",
+        "source_type 語彙: 計画を実装の英語 7 ラベルへ統一",
+        "旧名 .sh 参照: router.json を .py へ修正 (残存 0 件)",
+        "resource-map: 計画へ builder-generated として追記し EVALS 参照と一致",
+        "schemas surface パス: plugin-root 相対へ修正し validate-plan-coverage --all exit 0"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "MultiEdit dispatch 断線: matcher 統一+遮断テストで hook 発火経路成立",
+        "repo CI 未登録: governance-check.yml へ ubm conformance 4 step 配線 (CI cwd 実走全 exit 0)",
+        "plugin-composition lint: hook ref 形式/capability ref 解決を是正し exit 0 (宣言1=配線1 で wiring mismatch 解消)",
+        "P09→P13 工程連鎖: 証跡遡及補完で成立 (P13 未実施=コミット未は正)",
+        "plan 決定論ゲート 12 本 exit 0 (verify-index-topsort/check-build-handoff 等)"
+      ]
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "UBM_VAULT_ROOT",
+      "variable_name": "{{VAULT_ROOT_ENV}}",
+      "source_trace": "hooks/ubm-write-path-guard.py・README.md の書込境界 env"
+    },
+    {
+      "concrete_value": "~/dev/dev/ObsidianMemo/.claude/",
+      "variable_name": "{{SOURCE_VAULT_PATH}}",
+      "source_trace": "component-inventory.json vendor source (移植元 vault)"
+    },
+    {
+      "concrete_value": "plugins/ubm-goal-setting",
+      "variable_name": "{{PLUGIN_DIR}}",
+      "source_trace": "build_target 共通接頭辞"
+    },
+    {
+      "concrete_value": "task-20260703-124959-wt-7",
+      "variable_name": "{{PLAN_WORKTREE}}",
+      "source_trace": "plan-findings.json provenance (生成時 worktree)"
+    },
+    {
+      "concrete_value": "北原",
+      "variable_name": "{{METHOD_OWNER}}",
+      "source_trace": "knowledge L1 の手法名 (北原さん式ゴールセッティング)"
+    }
+  ],
+  "total_score": 0.89
+}

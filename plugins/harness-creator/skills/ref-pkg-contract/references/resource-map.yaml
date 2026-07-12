@@ -1,0 +1,12 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-pkg-contract の references/ ファイル索引
+resources:
+  - file: pkg-id-catalog.yaml
+    topic: PKG ID メタデータ (severity / 適用 phase / 依存スクリプト) の機械可読版
+    read_when: PKG ID の意味・適用 package_mode・依存スクリプトを判定したいとき
+prompts:
+  - file: ../prompts/lookup-pkg.md
+    purpose: R1 PKG ID 単発参照時の応答テンプレ
+schemas:
+  - file: ../schemas/package-contract.schema.json
+    purpose: package-contract.json の正本 JSON Schema

@@ -1,0 +1,84 @@
+# resource-map: task category -> 読むべき references。
+# context 予算を守るため、フェーズ/責務に応じて必要な reference のみ open する
+# (一括ロード禁止)。本ファイルは references/ が 3 ファイル以上のとき必須 (P1-2)。
+version: 1
+
+task_categories:
+  R1-elicit-goal:
+    description: 構想から goal-spec を固める (目的ドリブン要件定義)
+    read:
+      - references/purpose-driven-requirements.md
+      - references/plugin-creator-contract.md
+      - prompts/R1-elicit-goal.md
+  R2-decompose-components:
+    description: 5 種 × N 実体を component-inventory.json へ単一責務分解し依存 DAG + envelope 設計を確定 (Phase02 owner)
+    read:
+      - references/component-domain.md
+      - references/phase-lifecycle.md
+      - ../../agents/plugin-dev-plan-architect.md
+      - prompts/R2-decompose-components.md
+  R3-emit-specs:
+    description: 13 phase ファイル + index + component-inventory.json を生成し評価基準を component エントリへ携帯させる
+    read:
+      - references/io-contract.md
+      - references/plugin-creator-contract.md
+      - references/harness-creator-spec-reflection.md
+      - prompts/R3-emit-specs.md
+  R4-verify-traceability:
+    description: harness-creator 仕様反映と 4 条件・unassigned 0 件を検証
+    read:
+      - references/harness-creator-spec-reflection.md
+      - references/io-contract.md
+      - references/plugin-creator-contract.md
+      - ../../agents/plugin-dev-plan-evaluator.md
+      - prompts/R4-verify-traceability.md
+
+deterministic_checks:
+  - scripts/verify-index-topsort.py   # C4: index が P01..P13 phase_number 昇順で全列挙 + inventory DAG 非循環 (二層)
+  - scripts/check-plugin-goal-spec.py # R1: plugin-goal-spec + target_plugin_slug/plan_dir アンカー (requested_count は任意)
+  - scripts/detect-unassigned.py      # C2/C4: 13 phase ファイル全存在 + section 床 + 各 component が ≥1 phase の entities_covered に出現 (orphan 0) + build_target 非空
+  - scripts/check-spec-frontmatter.py # C2/C3: phase frontmatter (PHASE_REQUIRED) + inventory component_kind 別構造 + criteria/harness 携帯
+  - scripts/check-spec-gates.py       # C2/C3: inventory quality_gates / plugin_meta 値域検証
+  - scripts/check-spec-matrix-coverage.py # C3: harness-creator 仕様マトリクス全行反映 (self-test + PLAN の 2 invocations)
+  - scripts/check-requirements-coverage.py # C2: goal-spec checklist 各要件 id が index 完了/受入確認へ被覆 (要件 orphan 防止・SDD/RTM)
+  - scripts/check-surface-inventory.py # C2: 5 component_kind 検討証跡 + plugin-level surface 採否
+  - scripts/check-build-handoff.py    # C4/C5: L3→L4 build routing / builder / envelope gap 検証
+  - scripts/check-runtime-portability.py   # C2/C4: plugin-root 共有 script placement + build_target 自己完結(install 携帯性)
+  - scripts/check-plugin-surface-audit.py # 現物 plugins/ 配下の skill/agent/command/hook/script/test 等 surface 横断棚卸し
+  - scripts/render-spec-skeleton.py   # specfm 正本から最小 skeleton を生成
+
+plugin_surfaces:
+  skills:
+    - ../../skills/run-plugin-dev-plan/SKILL.md
+    - ../../skills/assign-plugin-plan-evaluator/SKILL.md
+  agents:
+    - ../../agents/plugin-dev-plan-elicitor.md
+    - ../../agents/plugin-dev-plan-architect.md
+    - ../../agents/plugin-dev-plan-evaluator.md
+  commands:
+    - ../../commands/plugin-dev-plan.md
+  hooks:
+    - ../../hooks/hook-validate-plugin-plan.py
+  harness:
+    - ../../EVALS.json
+  composition:
+    - ../../plugin-composition.yaml
+  examples:
+    - examples/sample-plan/component-inventory.json
+    - examples/sample-plan/index.md
+    - examples/sample-plan/phase-01-requirements.md
+    - examples/sample-plan/phase-02-design.md
+    - examples/sample-plan/phase-03-design-review.md
+    - examples/sample-plan/phase-04-test-design.md
+    - examples/sample-plan/phase-05-implementation.md
+    - examples/sample-plan/phase-06-test-run.md
+    - examples/sample-plan/phase-07-acceptance-criteria.md
+    - examples/sample-plan/phase-08-refactoring.md
+    - examples/sample-plan/phase-09-quality-assurance.md
+    - examples/sample-plan/phase-10-final-review.md
+    - examples/sample-plan/phase-11-evidence.md
+    - examples/sample-plan/phase-12-documentation.md
+    - examples/sample-plan/phase-13-release.md
+    - examples/sample-plan/handoff-run-plugin-dev-plan.json
+
+goal_seek_paradigm: ../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review + 30思考法検証。C06 graph + discovered task を Loop A/B knowledge へ source_ref 付き append/merge (既存 entry 不変)。id 既存は skip で冪等。演繹検証 (Agent2 F2) 反映: category を knowledge-index.json へ登録し index-search consult から発見可能化 (記録済みだが未登録=consult不能を解消)。各 entry は 6必須フィールド + 明示 source_ref。TESTS: tests/scripts-plugins/test_harness_creator__record_capability_graph_knowledge.py 15ケース PASS (summary/gap/task entry/source_ref/冪等skip/既存保持/index登録/idempotent/dry-run/CLI exit2)。coverage 92%。"
+  },
+  "reviewed_by": "elegant-review-30methods-phase3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

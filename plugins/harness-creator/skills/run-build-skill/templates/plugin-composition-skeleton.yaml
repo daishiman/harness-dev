@@ -1,0 +1,76 @@
+# Plugin Composition Skeleton (kind: plugin-composition)
+#
+# CapabilityManifest schema: definitions/kindPluginComposition
+# 用途: plugin 単位の CapabilityBundle 宣言 (plugins/*/plugin-composition.yaml)。
+# capabilities[] が DAG ノード、dependencies[] が edge。
+# eval_sinks / governance / observability で plugin 全体の運用契約を宣言する。
+#
+# TODO: build-skill が以下プレースホルダを置換する
+#   {{CAPABILITY_NAME}}  plugin 名 (kebab-case)
+#   {{OWNER}}            governance 担当
+#   {{PLUGIN_DIR}}       plugin root からの相対 prefix。plugin-composition.yaml 直下なら空文字。
+#                        `plugins/<name>/` を入れない (単独 install で壊れる)。
+---
+name: {{CAPABILITY_NAME}}
+description: {{PLUGIN_PURPOSE}}
+kind: plugin-composition
+version: 0.1.0
+owner: {{OWNER}}
+since: {{DATE}}
+
+contract:
+  intent: {{PLUGIN_INTENT}}
+  interface:
+    entrypoints: []       # TODO: user-invocable な capability ref を列挙
+  invariant:
+    - capabilities[] の ref は全て plugin-composition.yaml からの plugin-root 相対パスを指す
+    - ref/eval_sinks/changelog/roadmap/lessons_path に絶対パス、`..`、`plugins/<name>/` prefix を使わない
+    - dependencies[] は DAG (循環不可)
+    - rubric_refs と eval_sinks は governance ループの両端を成す
+
+capabilities:
+  # TODO: 本 plugin が公開する capability を列挙
+  - kind: skill          # skill|agent|hook|command|prompt|workflow
+    ref: skills/{{SKILL_NAME}}/SKILL.md
+    tier: core           # core|ref|extension
+  # - kind: agent
+  #   ref: agents/{{AGENT_NAME}}.md
+  #   tier: core
+  # - kind: hook
+  #   ref: hooks/{{HOOK_NAME}}.md
+  #   tier: extension
+  # - kind: command
+  #   ref: commands/{{COMMAND_NAME}}.md
+  #   tier: core
+  # - kind: prompt
+  #   ref: prompts/{{PROMPT_NAME}}.md
+  #   tier: ref
+  # - kind: workflow
+  #   ref: workflows/{{WORKFLOW_NAME}}.md
+  #   tier: core
+
+dependencies:
+  # TODO: capability 間の DAG edge を列挙。循環は lint で検出される
+  # - from: skills/{{A}}
+  #   to: skills/{{B}}
+  #   type: calls        # calls|reads|extends|evaluates
+
+eval_sinks:
+  # TODO: EVALS.json など評価ログ集約先
+  - EVALS.json
+
+governance:
+  rubric_refs:
+    # TODO: 依拠する rubric Skill name を列挙 (L0→L1→L2 deep-merge 順)
+    - ref-skill-design-rubric
+  changelog: CHANGELOG.md
+  roadmap: ROADMAP.md
+
+observability:
+  hooks:
+    # TODO: 配線済み hook 名 (capabilities[] 内の hook ref と一致)
+    - {{HOOK_REF}}
+  metrics:
+    # TODO: 観測するメトリクス名
+    - {{METRIC_NAME}}
+  lessons_path: LESSONS.md

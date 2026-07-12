@@ -1,0 +1,1 @@
+../../plugins/slide-report-generator/agents/data-visualizer.md

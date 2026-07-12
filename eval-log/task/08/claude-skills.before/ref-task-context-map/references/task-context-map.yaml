@@ -1,0 +1,48 @@
+# task-context-map.yaml
+# キーワード → 設計書章番号の静的索引 (設計書07章 §タスク文脈に応じた自動読込パターン)
+# run-build-skill Step 1 で参照して context 予算 (CD-005) を管理する
+
+# 使い方:
+#   grep "Progressive Disclosure" references/task-context-map.yaml
+#   → chapters: [07, "16§12", "§14"]
+
+entries:
+  - keywords: ["Progressive Disclosure", "参照層分割", "references/分割"]
+    chapters: ["07", "16§12", "§14"]
+    note: "SKILL.md 本文を薄くし詳細を references/ へ逃がす設計"
+
+  - keywords: ["dynamic injection", "context injection", "動的ロード", "!"]
+    chapters: ["14", "22"]
+    note: "frontmatter context-budget や動的 reference ロードのパターン"
+
+  - keywords: ["subagent", "hook", "fork", "agent-team"]
+    chapters: ["10", "17"]
+    note: "Subagent / Agent Teams / hooks の設定と責務分離"
+
+  - keywords: ["evaluator", "rubric", "score", "採点", "ゴーハート", "Goodhart"]
+    chapters: ["09", "27", "29"]
+    note: "評価分離・rubric governance・多重継承"
+
+  - keywords: ["naming", "prefix", "kebab", "命名", "改名"]
+    chapters: ["06", "08", "13"]
+    note: "命名規約・ディレクトリ構造・チェックリスト"
+
+  - keywords: ["frontmatter", "yaml", "trigger", "description"]
+    chapters: ["03", "ref-claude-code-skill-spec"]
+    note: "frontmatter フィールド設計・trigger 2条件"
+
+  - keywords: ["wrap", "delegate", "orchestrator", "E2E"]
+    chapters: ["06", "23", "25"]
+    note: "prefix 選定・メタSkillアーキテクチャ・runbook"
+
+  - keywords: ["dependency", "DAG", "lint", "forbidden"]
+    chapters: ["20", "22"]
+    note: "依存方向・禁止依存・lint スクリプト設計"
+
+  - keywords: ["governance", "solo_operator_mode", "semver"]
+    chapters: ["27", "ref-skill-design-rubric"]
+    note: "rubric 改正手続き・ソロ運用モード"
+
+  - keywords: ["Phase 0", "creator-kit", "plugin", "manifest"]
+    chapters: ["34", "creator-kit/manifest.json"]
+    note: "Phase 0 移行・プラグインレイアウト・manifest 登録"

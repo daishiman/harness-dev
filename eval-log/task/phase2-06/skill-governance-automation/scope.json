@@ -1,0 +1,100 @@
+{
+  "name": "skill-governance-automation",
+  "description": "Skill governance automation scripts",
+  "responsibility": "build / compose / notify / rollback 等の orchestration scripts を所有する",
+  "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+  "keywords": [
+    "skill-governance",
+    "automation",
+    "orchestration",
+    "build",
+    "rollback"
+  ],
+  "files": [
+    {
+      "rel": "creator-kit/scripts/build-manifest-registration-plan.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/compose-rubrics.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/compute-rubric-hash.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/cross_platform_secret.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/doc-to-skill-adapter.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/extract-session-events.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/guard-change-category.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/notify-if-governance-trigger.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/re-evaluate-on-rubric-bump.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/resolve-skill-dirs.ps1",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/resolve-skill-dirs.sh",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/rollback-to-stable.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/write-eval-log.py",
+      "kind": "scripts"
+    }
+  ],
+  "depends_on": [
+    "skill-governance-config"
+  ],
+  "skills": [],
+  "agents": [],
+  "commands": [],
+  "hooks": [],
+  "external_ref_exceptions": [
+    {
+      "source_rel": "scripts/guard-change-category.py",
+      "match": "creator-kit/config/governance-policy.json",
+      "target_rel": "config/governance-policy.json",
+      "target_plugin": "skill-governance-config",
+      "classification": "legacy_cross_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "scripts/resolve-skill-dirs.sh",
+      "match": "creator-kit/scripts/resolve-skill-dirs.sh",
+      "target_rel": "scripts/resolve-skill-dirs.sh",
+      "target_plugin": "skill-governance-automation",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "scripts/resolve-skill-dirs.sh",
+      "match": "creator-kit/scripts/resolve-skill-dirs.sh",
+      "target_rel": "scripts/resolve-skill-dirs.sh",
+      "target_plugin": "skill-governance-automation",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    }
+  ]
+}

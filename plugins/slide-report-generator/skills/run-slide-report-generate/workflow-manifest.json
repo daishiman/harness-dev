@@ -1,0 +1,461 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-slide-report-generate",
+  "skill": "run-slide-report-generate",
+  "description": "output_mode(slide/report) を送信前に fail-closed 検証して確定し、意匠/技術コアを共有したまま構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/report render-report.js/Codex 画像)→生成後評価(30 種思考法)まで 15 agent を Task name 起動で統率する主オーケストレータ。",
+  "phases": [
+    {
+      "id": "R1-hearing-mode",
+      "step": 1,
+      "title": "hearing-facilitator で output_mode/reportType/読者/長さ/ビジュアル方針を確定し validate-output-mode.py で送信前値域検証(fail-closed)して下流へ一貫伝播",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "validate-output-mode",
+      "resourceIds": [
+        "ref-resource-map",
+        "glue-validate-output-mode",
+        "schema-structure",
+        "schema-report-structure"
+      ],
+      "fatal_exit_codes": [
+        2
+      ]
+    },
+    {
+      "id": "R2-structure-gate",
+      "step": 2,
+      "title": "確定 mode で structure-designer/report-structure-designer(+d3/data-visualizer/visual-strategist) が構成を設計し structure-validator + validate-structure.js の仕様確定ゲートで P3 進入を制御(PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し)",
+      "gate": "C2",
+      "dependsOn": [
+        "R1-hearing-mode"
+      ],
+      "entryHook": null,
+      "exitHook": "validate-structure",
+      "resourceIds": [
+        "ref-structure-design-rules",
+        "ref-report-structure-types",
+        "ref-d3-diagram-rules",
+        "ref-data-visualization-rules",
+        "schema-structure",
+        "schema-report-structure",
+        "vendor-validate-structure",
+        "vendor-workflow-manager"
+      ],
+      "fatal_exit_codes": []
+    },
+    {
+      "id": "R3-generate-evaluate",
+      "step": 3,
+      "title": "経路(slide LLM=html-generator / slide 決定論=slide-renderer+render-slide.cjs / report=report-composer+render-report.js(+mermaid-render.js) / 画像明示=ai-image-diagram-producer)で成果物を生成し、slide は layout-optimizer/ui-quality-reviewer + verify-slides.js/evaluate-deck.js/validate-print.js、report は verify-report-runtime.js で899/900/901/1024/1366/1600px+printの実描画bundleを生成し、report-quality-reviewer + validate-report-visual.py がbundle必須で補正/検査する。最後に deck-evaluator の mode-aware 30 種思考法 rubric を最大 3 周 reloop。bundle欠落またはCRITICAL残存はhard-fail",
+      "gate": "C3",
+      "dependsOn": [
+        "R2-structure-gate"
+      ],
+      "entryHook": null,
+      "exitHook": "slide:evaluate-deck | report:validate-report-visual",
+      "resourceIds": [
+        "ref-html-generation-rules",
+        "ref-layout-optimization-rules",
+        "ref-ui-quality-checklist",
+        "ref-report-quality-checklist",
+        "ref-deck-evaluation-rubric",
+        "ref-ai-image-pipeline",
+        "schema-structure",
+        "schema-report-structure",
+        "vendor-render-slide",
+        "vendor-render-report",
+        "vendor-mermaid-render",
+        "vendor-build-image-prompts",
+        "vendor-generate-images-codex",
+        "vendor-build-deck-html",
+        "vendor-verify-slides",
+        "vendor-evaluate-deck",
+        "vendor-validate-print",
+        "vendor-verify-report-runtime",
+        "glue-validate-report-visual",
+        "vendor-validate-ai-image-assets",
+        "vendor-workflow-manager"
+      ],
+      "fatal_exit_codes": [],
+      "max_iterations": 3
+    }
+  ],
+  "resources": [
+    {
+      "id": "ref-structure-design-rules",
+      "kind": "reference",
+      "path": "./references/structure-design-rules.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "ref-report-structure-types",
+      "kind": "reference",
+      "path": "./references/report-structure-types.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "ref-d3-diagram-rules",
+      "kind": "reference",
+      "path": "./references/d3-diagram-rules.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "ref-data-visualization-rules",
+      "kind": "reference",
+      "path": "./references/data-visualization-rules.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "ref-html-generation-rules",
+      "kind": "reference",
+      "path": "./references/html-generation-rules.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-layout-optimization-rules",
+      "kind": "reference",
+      "path": "./references/layout-optimization-rules.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-ui-quality-checklist",
+      "kind": "reference",
+      "path": "./references/ui-quality-checklist.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-deck-evaluation-rubric",
+      "kind": "reference",
+      "path": "./references/deck-evaluation-rubric.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-ai-image-pipeline",
+      "kind": "reference",
+      "path": "./references/ai-image-pipeline.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-report-quality-checklist",
+      "kind": "reference",
+      "path": "./references/report-quality-checklist.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-resource-map",
+      "kind": "reference",
+      "path": "./references/resource-map.yaml",
+      "phaseIds": [
+        "R1-hearing-mode",
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "schema-structure",
+      "kind": "schema",
+      "path": "../../schemas/structure.schema.json",
+      "phaseIds": [
+        "R1-hearing-mode",
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "schema-report-structure",
+      "kind": "schema",
+      "path": "../../schemas/report-structure.schema.json",
+      "phaseIds": [
+        "R1-hearing-mode",
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "schema-generation-report",
+      "kind": "schema",
+      "path": "./schemas/generation-report.schema.json",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-output-mode",
+      "kind": "script",
+      "path": "../../scripts/validate-output-mode.py",
+      "phaseIds": [
+        "R1-hearing-mode"
+      ]
+    },
+    {
+      "id": "glue-validate-report-visual",
+      "kind": "script",
+      "path": "../../scripts/validate-report-visual.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-validate-structure",
+      "kind": "script",
+      "path": "../../vendor/scripts/validate-structure.js",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "vendor-render-slide",
+      "kind": "script",
+      "path": "../../vendor/scripts/render-slide.cjs",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-render-report",
+      "kind": "script",
+      "path": "../../vendor/scripts/render-report.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-mermaid-render",
+      "kind": "script",
+      "path": "../../vendor/scripts/mermaid-render.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-build-image-prompts",
+      "kind": "script",
+      "path": "../../vendor/scripts/build-image-prompts.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-generate-images-codex",
+      "kind": "script",
+      "path": "../../vendor/scripts/generate-images-codex.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-build-deck-html",
+      "kind": "script",
+      "path": "../../vendor/scripts/build-deck-html.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-verify-slides",
+      "kind": "script",
+      "path": "../../vendor/scripts/verify-slides.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-evaluate-deck",
+      "kind": "script",
+      "path": "../../vendor/scripts/evaluate-deck.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-validate-print",
+      "kind": "script",
+      "path": "../../vendor/scripts/validate-print.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-verify-report-runtime",
+      "kind": "script",
+      "path": "../../vendor/scripts/verify-report-runtime.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-validate-ai-image-assets",
+      "kind": "script",
+      "path": "../../vendor/scripts/validate-ai-image-assets.js",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "vendor-workflow-manager",
+      "kind": "script",
+      "path": "../../vendor/scripts/workflow-manager.js",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "prompt-R1-agent-hearing-facilitator",
+      "kind": "prompt",
+      "path": "./prompts/R1-agent-hearing-facilitator.md",
+      "phaseIds": [
+        "R1-hearing-mode"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent hearing-facilitator; agents/hearing-facilitator.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-structure-designer",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-structure-designer.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent structure-designer; agents/structure-designer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-report-structure-designer",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-report-structure-designer.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent report-structure-designer; agents/report-structure-designer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-structure-validator",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-structure-validator.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent structure-validator; agents/structure-validator.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-d3-diagram-designer",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-d3-diagram-designer.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent d3-diagram-designer; agents/d3-diagram-designer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-data-visualizer",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-data-visualizer.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent data-visualizer; agents/data-visualizer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R2-agent-visual-strategist",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-visual-strategist.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent visual-strategist; agents/visual-strategist.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-html-generator",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-html-generator.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent html-generator; agents/html-generator.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-slide-renderer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-slide-renderer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent slide-renderer; agents/slide-renderer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-report-composer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-report-composer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent report-composer; agents/report-composer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-ai-image-diagram-producer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-ai-image-diagram-producer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent ai-image-diagram-producer; agents/ai-image-diagram-producer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-layout-optimizer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-layout-optimizer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent layout-optimizer; agents/layout-optimizer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-ui-quality-reviewer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-ui-quality-reviewer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent ui-quality-reviewer; agents/ui-quality-reviewer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-report-quality-reviewer",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-report-quality-reviewer.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent report-quality-reviewer; agents/report-quality-reviewer.md is the 9-section adapter."
+    },
+    {
+      "id": "prompt-R3-agent-deck-evaluator",
+      "kind": "prompt",
+      "path": "./prompts/R3-agent-deck-evaluator.md",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent deck-evaluator; agents/deck-evaluator.md is the 9-section adapter."
+    }
+  ]
+}

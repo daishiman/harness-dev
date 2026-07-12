@@ -1,0 +1,20 @@
+{
+  "task_id": "phase2-07",
+  "reviewed_at": "2026-05-20T00:00:00+09:00",
+  "reviewer": "AI execution on behalf of solo_operator",
+  "decision": "approved",
+  "decision_basis": "creator-kit/ physically removed; keep-non-plugin assets relocated to installers/; defer assets relocated to deferred/; before/after build CLI checks pass with conflicts 0 and invariants_checked 12.",
+  "evidence": [
+    "eval-log/task/phase2-07/delete-final-check.log",
+    "eval-log/task/phase2-07/pre-delete-gate.log",
+    "eval-log/task/phase2-07/before-symlinks-check.json",
+    "eval-log/task/phase2-07/after-symlinks-check.json",
+    "eval-log/task/phase2-07/before-settings-check.json",
+    "eval-log/task/phase2-07/after-settings-check.json"
+  ],
+  "notes": [
+    "Phase2-01 inventory uses verdict_tentative; phase2-07 checks treat it as the active verdict field.",
+    "Three delete records had stale inventory SHA after later synchronized updates, but current plugin counterparts exist.",
+    "Generated cache records under __pycache__/ or *.pyc were treated as safely disposable."
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": "phase2-02.partition-dependency-graph.v1",
+  "inter_partition_refs": [
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "source_plugin": "skill-governance-config",
+      "match": "creator-kit/scripts/hook-guard-rubric.py",
+      "target_rel": "scripts/hook-guard-rubric.py",
+      "target_plugin": "skill-governance-hooks",
+      "classification": "legacy_cross_partition_path_rewrite_required"
+    },
+    {
+      "source_rel": "config/governance-policy.json",
+      "source_plugin": "skill-governance-config",
+      "match": "creator-kit/scripts/lint-script-frontmatter.py",
+      "target_rel": "scripts/lint-script-frontmatter.py",
+      "target_plugin": "skill-governance-lint",
+      "classification": "legacy_cross_partition_path_rewrite_required"
+    },
+    {
+      "source_rel": "config/governance-policy.json",
+      "source_plugin": "skill-governance-config",
+      "match": "creator-kit/scripts/lint-rubric-violation.py",
+      "target_rel": "scripts/lint-rubric-violation.py",
+      "target_plugin": "skill-governance-lint",
+      "classification": "legacy_cross_partition_path_rewrite_required"
+    },
+    {
+      "source_rel": "scripts/guard-change-category.py",
+      "source_plugin": "skill-governance-automation",
+      "match": "creator-kit/config/governance-policy.json",
+      "target_rel": "config/governance-policy.json",
+      "target_plugin": "skill-governance-config",
+      "classification": "legacy_cross_partition_path_rewrite_required"
+    }
+  ],
+  "inter_partition_ref_count": 4,
+  "migration_order_reasons": [
+    {
+      "plugin": "skill-governance-adapters",
+      "depends_on": [],
+      "reason": "No runtime inter-partition dependency recorded by phase2-02; phase2-03 may still order by migration cost / rollback blast radius."
+    },
+    {
+      "plugin": "skill-governance-automation",
+      "depends_on": [
+        "skill-governance-config"
+      ],
+      "reason": "Legacy path references create migration-order awareness; phase2-03 decides deploy order and rewrite plan. These are not approved post-migration runtime dependencies."
+    },
+    {
+      "plugin": "skill-governance-config",
+      "depends_on": [
+        "skill-governance-hooks",
+        "skill-governance-lint"
+      ],
+      "reason": "Legacy path references create migration-order awareness; phase2-03 decides deploy order and rewrite plan. These are not approved post-migration runtime dependencies."
+    },
+    {
+      "plugin": "skill-governance-hooks",
+      "depends_on": [],
+      "reason": "No runtime inter-partition dependency recorded by phase2-02; phase2-03 may still order by migration cost / rollback blast radius."
+    },
+    {
+      "plugin": "skill-governance-lint",
+      "depends_on": [],
+      "reason": "No runtime inter-partition dependency recorded by phase2-02; phase2-03 may still order by migration cost / rollback blast radius."
+    },
+    {
+      "plugin": "skill-governance-migration",
+      "depends_on": [],
+      "reason": "No runtime inter-partition dependency recorded by phase2-02; phase2-03 may still order by migration cost / rollback blast radius."
+    },
+    {
+      "plugin": "skill-governance-secrets",
+      "depends_on": [],
+      "reason": "No runtime inter-partition dependency recorded by phase2-02; phase2-03 may still order by migration cost / rollback blast radius."
+    }
+  ]
+}

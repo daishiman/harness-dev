@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "assign-blueprint-fidelity-evaluator",
+  "skill": "assign-blueprint-fidelity-evaluator",
+  "description": "C01 draft を独立 context で忠実性評価する。共有決定論ゲート再実行→非共有 palette 孤児再計数 (common-mode 破り)→三値排他/被覆/anti-overfit/ペルソナ意味判定→draft_hash 束縛 verdict 発行の 4 責務を順に実行する。runtime loop は回さず一発 read-only 採点。",
+  "phases": [
+    {
+      "id": "P1-shared-gates",
+      "step": 1,
+      "title": "共有決定論ゲート (C10 mermaid-validate / C11 doc-emit --check-screens) を C01 draft へ再実行し基準統一を確認",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r1-evaluate", "script-mermaid", "script-doc", "schema-verdict", "ref-rubric"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-nonshared-recount",
+      "step": 2,
+      "title": "非共有 recount-palette-orphans.py で観測色 palette 孤児を C11 と独立経路で再計数し照合 (common-mode 破り)",
+      "gate": "C2",
+      "dependsOn": ["P1-shared-gates"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["script-recount"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-semantic-eval",
+      "step": 3,
+      "title": "三値排他/粒度/被覆/anti-overfit/ペルソナ偽装/最小スカフォールド逆テストを判定し findings と集約フィールドを組立",
+      "gate": "C3",
+      "dependsOn": ["P2-nonshared-recount"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-rubric", "schema-verdict"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P4-emit-verdict",
+      "step": 4,
+      "title": "assessment へ決定論規則を適用し draft_hash 束縛 verdict を ESB_VERDICT_DIR へ発行",
+      "gate": "C4",
+      "dependsOn": ["P3-semantic-eval"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["script-emit-verdict", "schema-verdict"],
+      "fatal_exit_codes": [2]
+    }
+  ],
+  "resources": [
+    {"id": "prompt-r1-evaluate", "kind": "prompt", "path": "./prompts/R1-evaluate.md", "phaseIds": ["P1-shared-gates", "P2-nonshared-recount", "P3-semantic-eval", "P4-emit-verdict"]},
+    {"id": "script-mermaid", "kind": "script", "path": "../../scripts/mermaid-validate.py", "phaseIds": ["P1-shared-gates"]},
+    {"id": "script-doc", "kind": "script", "path": "../../scripts/doc-emit.py", "phaseIds": ["P1-shared-gates"]},
+    {"id": "script-recount", "kind": "script", "path": "./scripts/recount-palette-orphans.py", "phaseIds": ["P2-nonshared-recount"]},
+    {"id": "script-emit-verdict", "kind": "script", "path": "./scripts/emit-verdict.py", "phaseIds": ["P4-emit-verdict"]},
+    {"id": "schema-verdict", "kind": "schema", "path": "./schemas/verdict.schema.json", "phaseIds": ["P1-shared-gates", "P3-semantic-eval", "P4-emit-verdict"]},
+    {"id": "ref-rubric", "kind": "reference", "path": "./references/evaluation-rubric.md", "phaseIds": ["P1-shared-gates", "P3-semantic-eval"]}
+  ]
+}

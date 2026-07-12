@@ -1,0 +1,1 @@
+../../plugins/slide-report-generator/commands/slide-report-generate.md

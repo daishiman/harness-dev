@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-finalize",
+  "skill": "run-intake-finalize",
+  "description": "Phase 1-8 成果物を統合し intake.md (人間向け) と intake.json (harness-creator 入力) を決定論的に生成する。",
+  "phases": [
+    {
+      "id": "P1-collect",
+      "step": 1,
+      "title": "Phase 1-8 全成果物の存在と schema 適合を収集",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-validation-flow"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-render",
+      "step": 2,
+      "title": "Jinja2 で intake.md / intake.json を render",
+      "gate": "C2",
+      "dependsOn": ["P1-collect"],
+      "entryHook": null,
+      "exitHook": "render-intake-final",
+      "resourceIds": ["ref-template-pointer", "schema-intake-final"],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "P3-quality-gate",
+      "step": 3,
+      "title": "quality_gate.py 実行 (軸別品質判定)",
+      "gate": "C3",
+      "dependsOn": ["P2-render"],
+      "entryHook": null,
+      "exitHook": "quality-gate",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "P4-cross-check",
+      "step": 4,
+      "title": "cross_check.py 実行 (横断整合性)",
+      "gate": "C4",
+      "dependsOn": ["P3-quality-gate"],
+      "entryHook": null,
+      "exitHook": "cross-check",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-template-pointer", "kind": "reference", "path": "./references/template-pointer.md", "phaseIds": ["P2-render"]},
+    {"id": "ref-validation-flow", "kind": "reference", "path": "./references/validation-flow.md", "phaseIds": ["P1-collect", "P3-quality-gate", "P4-cross-check"]},
+    {"id": "schema-intake-final", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P2-render"]}
+  ]
+}

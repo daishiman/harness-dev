@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-extract-blueprint",
+  "skill": "run-extract-blueprint",
+  "description": "認可済み取得、独立分析、文書化を順に接続する実行manifest。",
+  "phases": [
+    {
+      "id": "R1-fetch",
+      "step": 1,
+      "title": "認可preflightと低負荷取得",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": "PreToolUse:C08",
+      "exitHook": null,
+      "resourceIds": ["prompt-r1", "script-authz", "script-fetch"],
+      "fatal_exit_codes": [1, 2]
+    },
+    {
+      "id": "R2-analyze",
+      "step": 2,
+      "title": "fact抽出とinference分析の独立fan-out/fan-in",
+      "gate": "OUT1",
+      "dependsOn": ["R1-fetch"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r2"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "R3-document",
+      "step": 3,
+      "title": "blueprint文書化と決定論検証",
+      "gate": "IN1",
+      "dependsOn": ["R2-analyze"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r3", "script-doc", "script-mermaid", "schema-blueprint"],
+      "fatal_exit_codes": [1, 2]
+    }
+  ],
+  "resources": [
+    {"id": "prompt-r1", "kind": "prompt", "path": "./prompts/R1-fetch.md", "phaseIds": ["R1-fetch"]},
+    {"id": "prompt-r2", "kind": "prompt", "path": "./prompts/R2-analyze.md", "phaseIds": ["R2-analyze"]},
+    {"id": "prompt-r3", "kind": "prompt", "path": "./prompts/R3-document.md", "phaseIds": ["R3-document"]},
+    {"id": "script-authz", "kind": "script", "path": "../../scripts/authz-classify.py", "phaseIds": ["R1-fetch"]},
+    {"id": "script-fetch", "kind": "script", "path": "../../scripts/fetch-snapshot.py", "phaseIds": ["R1-fetch"]},
+    {"id": "script-doc", "kind": "script", "path": "../../scripts/doc-emit.py", "phaseIds": ["R3-document"]},
+    {"id": "script-mermaid", "kind": "script", "path": "../../scripts/mermaid-validate.py", "phaseIds": ["R3-document"]},
+    {"id": "schema-blueprint", "kind": "schema", "path": "../../schemas/system-blueprint.schema.json", "phaseIds": ["R3-document"]}
+  ]
+}

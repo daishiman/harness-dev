@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UBMナレッジスキーマ",
+  "description": "北原孝彦さんの教え・アドバイスを構造化管理するスキーマ。ユーザーの悩みに的確なアドバイスを提供するための文脈付きナレッジ。",
+
+  "design_principle": {
+    "core_goal": "ユーザーが抱える経営課題・悩みに対して、北原さんのアドバイスを『なぜ言ったか・何を目的として・どういう流れで』まで含めて的確に届けること",
+    "information_quality": {
+      "rule": "1エントリの情報量が多くなっても問題ない。大切なのは意図が明確に伝わること",
+      "avoid": "断片的な言葉の記録。contentとquoteだけで背景・意図が伝わらないもの",
+      "require": [
+        "background: このアドバイスが生まれた具体的な状況・相談者の悩み",
+        "intent: 北原さんが何を達成しようとしているか（目的・意図）",
+        "root_cause: 表面的な問題の裏にある本質的な原因",
+        "expected_outcome: このアドバイスを実践した後の具体的な変化",
+        "how_to_use: エージェントがこの知識をユーザーへのアドバイスにどう活用するか"
+      ]
+    },
+    "extraction_questions": [
+      "Q1a: どういう状況パターンの経営者にこのアドバイスは有効か？（background：典型的な状況パターン）",
+      "Q1b: 北原さんはその状況で何を診断したか？（background：北原さんの診断・見立て）",
+      "Q2: このアドバイスで何を実現しようとしているのか？（intent）",
+      "Q3: ユーザーの表面的な問題の裏に何があるか？（root_cause）",
+      "Q4: このアドバイスを実践したらどうなるか？（expected_outcome）",
+      "Q5: この発言の前後に何があったか？個人情報を含まず一般化して記述（conversation_flow）",
+      "Q6: エージェントとしてどう使うか？（how_to_use）"
+    ]
+  },
+
+  "file_naming_convention": {
+    "description": "ファイル名だけで中身が分かること。連番（-1, -2）は絶対禁止。内容を表すサブトピック名を使う",
+    "base_files": {
+      "pattern": "{category}.json",
+      "examples": [
+        "principles.json",
+        "consultation.json",
+        "phase-advice.json",
+        "action-guides.json",
+        "mindset.json",
+        "case-studies.json"
+      ],
+      "usage": "エントリが少ない初期段階または特定テーマに絞れない場合"
+    },
+    "split_files": {
+      "trigger": "25エントリを超え、さらに新しいサブテーマが明確になったら内容でサブトピックに分割する。500行超過は check-knowledge-split.py が検知する機械的な肥大ガードとして扱う",
+      "pattern": "{category}-{subtopic}.json",
+      "subtopic_rule": "ファイル名を見ただけで「どんな悩みを持つユーザー向けか」が分かる単語を使う",
+      "naming_examples": {
+        "principles": [
+          "principles-relationship.json      ← 関係構築・外交・信頼に関する原則",
+          "principles-organization.json      ← 組織・マネジメント・リーダーシップの原則",
+          "principles-marketing.json         ← 集客・コンセプト・ブランディングの原則",
+          "principles-mindset.json           ← 経営者としての思考・姿勢に関する原則",
+          "principles-product.json           ← 商品設計・価格・サービスの原則"
+        ],
+        "consultation": [
+          "consultation-organization.json    ← 組織化・階層・報連相の相談パターン",
+          "consultation-marketing.json       ← 集客・デジタル化・コンセプトの相談パターン",
+          "consultation-hiring.json          ← 採用・人材育成・定着の相談パターン",
+          "consultation-business-model.json  ← ビジネスモデル・収益構造の相談パターン",
+          "consultation-mindset.json         ← 経営者マインド・思考整理の相談パターン"
+        ],
+        "phase-advice": [
+          "phase-advice-0to1.json            ← 0→1フェーズ（起業初期・最初の顧客）",
+          "phase-advice-1to10.json           ← 1→10フェーズ（安定化・再現性確立）",
+          "phase-advice-10to100.json         ← 10→100フェーズ（組織化・スケール）"
+        ],
+        "action-guides": [
+          "action-guides-relationship.json   ← 関係構築・外交の具体的行動",
+          "action-guides-organization.json   ← 組織運営・情報共有の具体的行動",
+          "action-guides-marketing.json      ← 集客・デジタル基盤整備の具体的行動",
+          "action-guides-sales.json          ← 販売・クロージングの具体的行動"
+        ],
+        "mindset": [
+          "mindset-relationship.json         ← 関係・外交に関するマインドセット転換",
+          "mindset-organization.json         ← 組織・リーダーシップのマインドセット転換",
+          "mindset-business.json             ← 事業・経営全般のマインドセット転換"
+        ],
+        "case-studies": [
+          "case-studies-success.json         ← 成功事例（再現したい行動パターン）",
+          "case-studies-failure.json         ← 失敗事例（避けるべきパターン）",
+          "case-studies-organization.json    ← 組織化・採用の事例",
+          "case-studies-marketing.json       ← 集客・ブランディングの事例"
+        ]
+      },
+      "bad_examples": [
+        "principles-1.json    ← NG: 連番は何が入っているか分からない",
+        "principles-2.json    ← NG: 連番は何が入っているか分からない",
+        "consultation-a.json  ← NG: アルファベット連番も同様"
+      ]
+    }
+  },
+
+  "knowledge_entry_schema": {
+    "type": "object",
+    "required": ["category", "description", "entry_count", "entries"],
+    "properties": {
+      "category": {
+        "type": "string",
+        "enum": ["principles", "consultation", "phase-advice", "action-guides", "mindset", "case-studies"]
+      },
+      "subcategory": {
+        "type": "string",
+        "description": "分割後のサブトピック名（ファイル名のsuffix部分）"
+      },
+      "description": { "type": "string" },
+      "entry_count": { "type": "integer" },
+      "entries": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["id", "content", "background", "intent", "tags", "phase", "source"],
+
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Z]{2,4}-\\d{3}$",
+              "description": "PR(原則) / CP(相談) / PA(フェーズ) / AG(行動) / MS(転換) / CS(事例)"
+            },
+
+            "content": {
+              "type": "string",
+              "description": "ナレッジの核心（1〜2文）。このアドバイスが一言でいうと何か"
+            },
+
+            "background": {
+              "type": "string",
+              "description": "【必須・詳しく書く】このアドバイスが必要になる典型的な状況パターンと北原さんの診断見解。相談者の個人名・会社名・固有業種・特定数値は含めず、『この種の経営者が陥りやすい構造的な状況』として記述する。北原さんが何を観察・診断したかに焦点を当て、2〜5文で具体的に記述する"
+            },
+
+            "intent": {
+              "type": "string",
+              "description": "【必須】北原さんがこのアドバイスで達成しようとしている目的・意図。『〜させること』『〜を防ぐこと』の形で1〜2文"
+            },
+
+            "root_cause": {
+              "type": "string",
+              "description": "【推奨・重要】表面的な問題の裏にある本質的な原因。北原さんが見抜いた構造的・心理的な根本。これが分かると的確なアドバイスができる"
+            },
+
+            "expected_outcome": {
+              "type": "string",
+              "description": "【推奨】このアドバイスを実践した場合に何がどう変わるか。短期・長期の変化を具体的に2〜4文で記述"
+            },
+
+            "detail": {
+              "type": "string",
+              "description": "補足説明・具体的な方法・実践上の注意点。本文では語りきれない詳細"
+            },
+
+            "quote": {
+              "type": "string",
+              "description": "北原さんの原文引用（ソースに発言がある場合は必ず抽出）"
+            },
+
+            "conversation_flow": {
+              "type": "string",
+              "description": "どういう質問・相談の流れでこのアドバイスが出てきたか。前後の文脈・展開を2〜3文で"
+            },
+
+            "tags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1,
+              "description": "検索タグ。ユーザーの悩みワードを含める（例: 関係構築, 外交, 売上, 組織, 集客, 採用）"
+            },
+
+            "phase": {
+              "type": "array",
+              "items": { "enum": ["0to1", "1to10", "10to100", "all"] }
+            },
+
+            "business_type": {
+              "type": "array",
+              "items": { "enum": ["store", "intangible", "all"] }
+            },
+
+            "applicable_when": {
+              "type": "string",
+              "description": "このナレッジを使うべきユーザーの状態・状況。どんな悩みを持つユーザーに対して使うか"
+            },
+
+            "how_to_use": {
+              "type": "string",
+              "description": "【推奨・重要】エージェントがこのナレッジを目標設定・アドバイスの会話にどう活用するか。具体的な使い方（引用タイミング・投げかける問い・次のアクション）を記述"
+            },
+
+            "related": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "関連する他エントリのID。組み合わせて使うと効果的なもの・前後のつながりがあるもの"
+            },
+
+            "expression": {
+              "type": "object",
+              "description": "北原さんの表現スタイル。アドバイス時の口調・言い回しを再現するために使う",
+              "properties": {
+                "tone": { "type": "string", "enum": ["厳しめ", "優しめ", "励まし", "警告", "問いかけ", "共感"] },
+                "phrasing": { "type": "string", "description": "北原さんらしい言い回し・フレーズ" },
+                "context_note": { "type": "string", "description": "どういう場面でこの口調・表現を使うか" }
+              }
+            },
+
+            "source": {
+              "type": "object",
+              "required": ["file", "type"],
+              "properties": {
+                "file": { "type": "string" },
+                "type": { "enum": ["youtube", "camp", "teaching-material", "monthly-feedback", "seminar", "event", "other"] },
+                "date": { "type": "string", "format": "date" },
+                "section": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "category_specific_fields": {
+    "consultation": {
+      "description": "事業相談パターン。典型的な経営課題パターン→北原さんの診断→アドバイス→期待される変化の流れを記録する。特定の相談者個人の情報は記録せず、『この種の状況の経営者』として普遍化する",
+      "additional_required": ["situation", "problem", "advice", "key_insight"],
+      "fields": {
+        "situation": "このアドバイスが適用される典型的な経営状況パターン（個人名・固有業種・特定数値は除き、フェーズ・構造的特徴のみ。例: 『1→10フェーズで売上は立っているが組織化に苦戦し、採用を条件訴求だけで解決しようとしている経営者』）",
+        "problem": "この種の状況の経営者が認識しがちな表面的な問題パターン（特定人物の悩みではなく、典型的な認識パターンとして記述）",
+        "background": "北原さんがこの種の状況で診断する構造的な背景・見立て（個人情報を含まず、なぜこの問題が構造的に起きやすいかを記述）",
+        "root_cause": "本質的な問題（北原さんの診断）。表面問題の奥にあるもの",
+        "advice": "北原さんのアドバイス内容（具体的・実践可能な形で）",
+        "intent": "このアドバイスで達成しようとしていること",
+        "expected_outcome": "アドバイスを実践した後の変化",
+        "key_insight": "この相談パターンから得られる普遍的な学び・他のユーザーにも適用できる法則",
+        "conversation_flow": "どういう相談の流れでこのアドバイスが出てきたか（個人情報を除いて一般化した形で記述）"
+      }
+    },
+    "mindset": {
+      "description": "マインドセット転換。なぜその転換が必要かの背景が最も重要",
+      "additional_required": ["before", "after", "why_the_shift_matters", "trigger"],
+      "fields": {
+        "before": "転換前の思考・前提（多くの経営者が陥りがちな考え方）",
+        "after": "転換後の思考・前提（北原さんが推奨する考え方）",
+        "background": "なぜこの転換が必要な状況が生まれるか（構造的な原因）",
+        "why_the_shift_matters": "この転換が経営・事業においてなぜ重要か。転換しないとどうなるか",
+        "trigger": "どういうユーザーの言動・状態がこの転換を必要としているか",
+        "expected_outcome": "転換後に何が変わるか（行動・結果・関係性の変化）"
+      }
+    },
+    "phase-advice": {
+      "description": "フェーズ別アドバイス。そのフェーズ特有の課題背景を必ず記録",
+      "additional_required": ["phase", "focus", "do", "dont", "key_question"],
+      "fields": {
+        "phase": "対象フェーズ（0to1/1to10/10to100）",
+        "background": "このフェーズで多くの経営者が直面する典型的な状況・課題",
+        "focus": "このフェーズで最も注力すべきこと（1〜2文）",
+        "intent": "このフェーズアドバイス全体の目的（次のフェーズに向けて何を確立するか）",
+        "do": "推奨行動リスト（具体的・実行可能なもの）",
+        "dont": "避けるべき行動リスト（陥りがちなミス）",
+        "key_question": "このフェーズで経営者に問い続けるべき問い"
+      }
+    },
+    "action-guides": {
+      "description": "行動指針。なぜその行動が必要かの背景と、実践しない場合のリスクを含める",
+      "additional_required": ["recommended", "not_recommended", "rationale"],
+      "fields": {
+        "background": "この行動指針が必要になる状況・典型的な失敗パターン",
+        "intent": "この行動指針で達成しようとしていること",
+        "recommended": "推奨行動リスト（ステップ形式で具体的に）",
+        "not_recommended": "非推奨行動リスト（なぜダメかの理由も含める）",
+        "rationale": "なぜこの行動が重要か・実践しないとどうなるか",
+        "expected_outcome": "この行動を継続した場合の変化"
+      }
+    },
+    "case-studies": {
+      "description": "事例・実績。単なる記録ではなく、他のユーザーが学べる再現可能な法則を抽出する。特定の相談者の情報ではなく、この種の経営者として普遍化する",
+      "additional_required": ["outcome", "lesson", "key_factor"],
+      "fields": {
+        "background": "この事例が示す典型的な経営状況パターン（相談者の個人名・会社名・固有業種・特定数値は除き、『この種の経営者が陥りがちな状況』として一般化して記述する）",
+        "outcome": "実際に起きた結果（成功/失敗・具体的な数字や変化）",
+        "key_factor": "成功・失敗を決めた最も重要な要因",
+        "lesson": "この事例から学べる普遍的な教訓",
+        "intent": "この事例を共有することで何を伝えたいか（どういう気づきを促すか）",
+        "lesson_applicable_when": "この事例・教訓が参考になる場面・ユーザーの状況",
+        "how_to_use": "目標設定・アドバイスの会話でどう活用するか"
+      }
+    }
+  },
+
+  "file_management_rules": {
+    "split_threshold": 25,
+    "split_unit": "エントリ数（entries配列の要素数。router.jsonのgrowth_rules.entry_thresholdと統一）",
+    "mechanical_line_guard": {
+      "threshold": 500,
+      "unit": "行数",
+      "enforced_by": "check-knowledge-split.py",
+      "purpose": "JSONファイルの肥大を検知する決定論ゲート。意味単位の分割判断は split_threshold=25 エントリを正本とする"
+    },
+    "split_process": [
+      "1. 25エントリを超えたカテゴリファイルのエントリをテーマ別にグループ化する",
+      "2. 各グループに内容を表すサブトピック名を付ける（命名規則参照）",
+      "3. {category}-{subtopic}.json としてknowledge/に保存する",
+      "4. router.jsonのfilesリストを更新する",
+      "5. 元のベースファイルは削除し、分割後ファイルで管理する"
+    ],
+    "subtopic_naming_guide": {
+      "principle": "ファイル名だけで『どんな悩みを持つユーザー向けか』が分かること",
+      "format": "半角英数・ハイフン区切り・小文字",
+      "good_examples": [
+        "relationship（関係構築・外交）",
+        "organization（組織化・マネジメント）",
+        "marketing（集客・ブランディング）",
+        "hiring（採用・人材）",
+        "mindset（経営者思考）",
+        "product（商品設計）",
+        "sales（販売・クロージング）",
+        "0to1, 1to10, 10to100（フェーズ別）"
+      ],
+      "bad_examples": [
+        "1, 2, 3（連番・中身不明）",
+        "a, b, c（アルファベット連番）",
+        "part1, part2（部分番号）",
+        "new, old（時制・中身不明）"
+      ]
+    }
+  },
+
+  "quality_checklist": {
+    "minimum_required": [
+      "content が1〜2文でアドバイスの核心を表している",
+      "background がある（なぜこのアドバイスが必要な状況か）",
+      "background が個人名・会社名・固有業種・特定数値を含まず、一般化された状況パターンとして記述されている",
+      "intent がある（北原さんが何を達成しようとしているか）",
+      "tags にユーザーが使うであろう悩みワードが含まれている",
+      "source.file が正確に記録されている"
+    ],
+    "recommended": [
+      "root_cause がある（表面問題の裏の本質）",
+      "expected_outcome がある（実践後の変化）",
+      "how_to_use がある（エージェントとしての活用方法）",
+      "related に関連エントリIDが設定されている",
+      "quote に北原さんの原文が記録されている"
+    ],
+    "quality_signal": "このエントリを読んだエージェントが、ユーザーの相談を受けた時に『どういう状況でどう使うか』がイメージできるか"
+  },
+
+  "registry_entry_schema": {
+    "type": "object",
+    "required": ["path", "source_type", "status"],
+    "properties": {
+      "path": { "type": "string" },
+      "source_type": { "enum": ["youtube", "camp", "teaching-material", "monthly-feedback", "seminar", "event", "other"] },
+      "status": { "enum": ["pending", "processed", "needs-update", "skipped"] },
+      "file_hash": { "type": "string" },
+      "file_modified": { "type": "string", "format": "date" },
+      "processed_date": { "type": "string", "format": "date-time" },
+      "entries_extracted": { "type": "integer" },
+      "target_categories": { "type": "array", "items": { "type": "string" } }
+    }
+  }
+}

@@ -1,0 +1,233 @@
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md b/plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md
+index cbf98c2..e619761 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md
+@@ -44,7 +44,8 @@ source-tier: internal
+ 2. **手順生成**: 未達項目を満たすための手順を、その時点の文脈から**その場で立てる**（事前固定しない）。不足情報はユーザーへ聞かず、仮定を明示して進める。
+ 3. **実行**: 立てた手順を実行する。
+ 4. **検証**: チェックリストを再評価し、満たした項目を `[x]` に更新する。決定論的に検査できる項目は `## 検証` の script/lint へ寄せる。
+-5. **反復 / 差し戻し**: 全 `[x]` まで 1→4 を繰り返す。規定周回（既定 5 周）を超えても未達なら、残項目を `open_issues` として記録し人間 or 上位 orchestrator に差し戻す。
++4.5. **中間成果物スナップショット (必須)**: 周回末に「中間成果物」を `eval-log/<skill>-intermediate.jsonl` へ追記する (詳細は下節「中間成果物」)。`original_goal`/`current_goal_snapshot`/`delta_from_original`/`merged_directive_for_next`/`drift_signal` を含める。Step 2 はこの直前周回の `merged_directive_for_next` と `original_goal` を**必須入力**として読む。
++5. **反復 / 差し戻し**: 全 `[x]` まで 1→4.5 を繰り返す。規定周回（既定 5 周）を超えても未達、または `drift_signal` が `stagnant`/`widening` で 2 周連続停滞した場合は、残項目と差分を `open_issues` として記録し人間 or 上位 orchestrator に差し戻す。
+ 
+ > ループ自体は固定で良い（これは「どう反復するか」の枠であり、「何をするか」の手順ではない）。固定してはいけないのは Step 2 の**中身**。
+ 
+@@ -75,6 +76,35 @@ source-tier: internal
+ 
+ > この二層（散文で意図を示し、combinator + schema + lint で機構を強制する）により、再現性は仕組みで担保しつつ、ループ Step 2 の「何をするか」は AI の自由度に委ねる。
+ 
++## 中間成果物（ドリフト圧縮アンカー）
++
++固定手順を持たないループは、放置すると AI が確率的に最尤＝**一般的に集約化された解**へ流れ、初期ユーザーゴール（具体寄りの要望）からドリフトする。これを防ぐため、**各周回の末で「中間成果物」を必ずスナップショットし、次周回の入力に必ず混ぜる**。これがアンカーとなり、初期ゴールから離れた瞬間に踏み直せる。
++
++### 中間成果物の役割
++- **アンカー**: 「最初にユーザーが求めたゴール」を不変保持し、毎周回そこへ視線を戻す。
++- **差分検知**: 今周回の手順生成が向かっている「現在ゴール」と「初期ゴール」の差分を観測可能にする。
++- **掛け合わせ入力**: 次周回の Step 2（手順生成）には *初期ゴール × 現在ゴール × 差分要約* を必ず入力として与える。AI が単独で再導出させない。
++
++### 周回ごとに残す 4 要素
++| キー | 内容 |
++|---|---|
++| `original_goal` | 初期に確定した（or 推定した）ユーザーゴール。**全周回で不変**。 |
++| `current_goal_snapshot` | 今周回で AI が向かっている到達点を 1 文で明示。 |
++| `delta_from_original` | `original_goal` と `current_goal_snapshot` の差分（抽象化しすぎ／論点ズレ／粒度ズレを言語化）。 |
++| `merged_directive_for_next` | 差分を埋めるため次周回 Step 2 に渡す指示。「`original_goal` の具体性を保ったまま `delta` を圧縮せよ」型。 |
++
++### 配線契約
++- 各周回末に `eval-log/<skill>-intermediate.jsonl` へ 1 行追記（append-only ログ）。schema は `schemas/goal-seek-loop.schema.json` の `intermediate_artifacts[]`。
++- 次周回 Step 2 の手順生成プロンプトは、直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み込む。読まずに新手順を立てるのは違反。
++- `delta_from_original` が 2 周連続で縮まらない、または `original_goal` から逸れる方向に拡大した場合、Step 5（反復/差し戻し）でアプローチを切り替える。
++
++### 集約化ドリフトの典型
++- 「具体名 X を扱う」が「汎用パターン Y を扱う」へ抽象化されて初期意図が消える。
++- ユーザー固有の制約・例外がループ内で「一般化されて」削ぎ落とされる。
++- チェックリスト項目が無意識に緩和される（達成しやすい言葉に書き換わる）。
++
++中間成果物がアンカーになる限り、上記の集約化は周回ごとに `delta_from_original` として可視化され、`merged_directive_for_next` で押し戻される。
++
+ ## チェックリストの良し悪し
+ 
+ - **良い**: 「`eval-log/result.json` が schema 検証を通過する」「テストが全て green」「成果物が後続 skill の入力契約を満たす」— 観測可能・二値判定。
+diff --git a/plugins/skill-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json b/plugins/skill-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
+index 088315a..c242231 100644
+--- a/plugins/skill-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
++++ b/plugins/skill-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
+@@ -71,6 +71,27 @@
+       "items": { "type": "string" },
+       "description": "max_loops 到達でも未達/blocked の項目と理由。人間 or 上位 orchestrator への差し戻し対象。"
+     },
++    "intermediate_artifacts": {
++      "type": "array",
++      "description": "各周回末に追記する中間成果物アンカー。original_goal は不変、current_goal_snapshot/delta/merged_directive_for_next を周回ごとに更新し、次周回 Step2 (手順生成) の必須入力にする。集約化ドリフト圧縮機構 (references/goal-seek-paradigm.md「中間成果物」)。",
++      "items": {
++        "type": "object",
++        "required": ["iteration", "original_goal", "current_goal_snapshot", "delta_from_original", "merged_directive_for_next"],
++        "additionalProperties": false,
++        "properties": {
++          "iteration": { "type": "integer", "minimum": 0, "description": "周回番号 (progress.iteration と対応)。" },
++          "original_goal": { "type": "string", "description": "初期確定 (or 推定) のユーザーゴール。**全周回で不変** — 周回をまたいで書き換えない。" },
++          "current_goal_snapshot": { "type": "string", "description": "今周回で AI が向かっている到達点を 1 文で明示。" },
++          "delta_from_original": { "type": "string", "description": "original_goal と current_goal_snapshot の差分 (抽象化しすぎ / 論点ズレ / 粒度ズレを言語化)。差分なしなら空文字。" },
++          "merged_directive_for_next": { "type": "string", "description": "差分を埋めるため次周回 Step2 へ渡す指示。「original_goal の具体性を保ったまま delta を圧縮せよ」型。" },
++          "drift_signal": {
++            "type": "string",
++            "enum": ["aligned", "compressing", "stagnant", "widening"],
++            "description": "前周回との比較。aligned=差分ゼロ / compressing=縮んでいる / stagnant=2周連続で変化なし (要アプローチ転換) / widening=広がっている (差し戻し検討)。"
++          }
++        }
++      }
++    },
+     "handoff": {
+       "type": "string",
+       "description": "達成後に出力した handoff-*.json のパス (任意)。後続 Capability への受け渡し。"
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py b/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
+index 10084a0..eb2f3af 100644
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
+@@ -52,6 +52,9 @@ VAGUE_TERMS = ("丁寧", "品質を高める", "適切に", "きちんと", "し
+ # 行頭の実見出しのみ一致 (本文に見出し名を引用しただけでは満たさない)。
+ WIRING_HEADING = "### ゴールシーク配線"
+ WIRING_HEADING_RE = re.compile(r"^###\s*ゴールシーク配線", re.MULTILINE)
++# 中間成果物アンカー (ドリフト圧縮機構) の配線存在検査。
++# 配線サブセクション内で必ず言及される 2 キー。両方欠ければ help 助言。
++INTERMEDIATE_KEYWORDS_RE = re.compile(r"(中間成果物|intermediate\.jsonl|original_goal)")
+ 
+ 
+ def parse_frontmatter(text: str) -> dict[str, str]:
+@@ -160,6 +163,14 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
+                 f"{path}: '{WIRING_HEADING}' が無い "
+                 "(with-goal-seek combinator で goal-spec/progress JSON/fork 委譲を配線推奨)"
+             )
++        # 中間成果物アンカー (ドリフト圧縮機構) の言及検査。
++        # 配線サブセクションが存在しても中間成果物への言及が無いと、AI が確率的最尤の抽象解へ
++        # 集約化していくドリフトを毎周回押し戻せない (references/goal-seek-paradigm.md「中間成果物」)。
++        elif not INTERMEDIATE_KEYWORDS_RE.search(body):
++            warnings.append(
++                f"{path}: ゴールシーク配線に中間成果物アンカー (intermediate.jsonl / original_goal) "
++                "の言及が無い (with-goal-seek combinator 再適用でドリフト圧縮機構を注入推奨)"
++            )
+ 
+     return findings, warnings
+ 
+@@ -175,6 +186,8 @@ _LOOP_SCHEMA = Path(__file__).resolve().parents[1] / "schemas" / "goal-seek-loop
+ _ENGINE_RE = re.compile(r"goal_seek\.engine \| default\(\\?\"([\w-]+)\\?\"\)")
+ _FORK_RE = re.compile(r"goal_seek\.fork \| default\(\\?\"([\w-]+)\\?\"\)")
+ _MAXLOOPS_RE = re.compile(r"goal_seek\.max_loops \| default\((\d+)\)")
++# 中間成果物ログファイル名の SSOT 検証 (render定数 / patch / schema description で同名であること)。
++_INTERMEDIATE_PATH_RE = re.compile(r"eval-log/\{\{skill_name\}\}-intermediate\.jsonl")
+ 
+ 
+ def _extract_defaults(text: str) -> dict[str, str | None]:
+@@ -240,6 +253,41 @@ def check_default_drift() -> list[str]:
+         findings.append(
+             f"self-test: max_loops 既定 drift — render({rml}) vs goal-seek-loop.schema({ls_maxloops})"
+         )
++
++    # 中間成果物アンカー: render定数 / patch / schema の三者一致を検査する。
++    # ファイル名 (eval-log/<skill>-intermediate.jsonl) は patch と render に必ず登場し、
++    # schema 側は intermediate_artifacts プロパティと description 内 jsonl 言及を持つ。
++    render_text = _RENDER.read_text(encoding="utf-8")
++    patch_text = _PATCH.read_text(encoding="utf-8")
++    render_has_intermediate = bool(_INTERMEDIATE_PATH_RE.search(render_text))
++    patch_has_intermediate = bool(_INTERMEDIATE_PATH_RE.search(patch_text))
++    schema_has_intermediate = "intermediate_artifacts" in loop_schema.get("properties", {})
++    if not render_has_intermediate:
++        findings.append(
++            "self-test: render-combinators.py から intermediate.jsonl 配線が欠落"
++        )
++    if not patch_has_intermediate:
++        findings.append(
++            "self-test: with-goal-seek.patch から intermediate.jsonl 配線が欠落"
++        )
++    if not schema_has_intermediate:
++        findings.append(
++            "self-test: goal-seek-loop.schema.json に intermediate_artifacts プロパティが欠落"
++        )
++    # 必須キーの一致 (schema が要求する 5 キーが render/patch 説明文に出現すること)。
++    if schema_has_intermediate:
++        required_keys = set(
++            loop_schema["properties"]["intermediate_artifacts"]["items"].get("required", [])
++        )
++        for key in required_keys:
++            if key not in render_text:
++                findings.append(
++                    f"self-test: intermediate_artifacts.{key} が render-combinators.py 配線テキストに不在"
++                )
++            if key not in patch_text:
++                findings.append(
++                    f"self-test: intermediate_artifacts.{key} が with-goal-seek.patch 配線テキストに不在"
++                )
+     return findings
+ 
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+index e3e351d..e3db598 100644
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+@@ -104,6 +104,7 @@ GOAL_SEEK_FM_BLOCK = (
+     "  engine: {{goal_seek.engine | default(\"inline\")}}      # inline(既定/自己完結・外部スキル不要) | run-goal-seek(同梱時のみ任意で使う重量オーケストレータ)\n"
+     "  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定\n"
+     "  progress: eval-log/{{skill_name}}-progress.json     # schemas/goal-seek-loop.schema.json 準拠\n"
++    "  intermediate: eval-log/{{skill_name}}-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)\n"
+     "  max_loops: {{goal_seek.max_loops | default(5)}}\n"
+     "  fork: {{goal_seek.fork | default(\"subagent\")}}        # subagent(既定/反復を分離contextで実行し親へ最終差分のみ) | agent-team | inline(軽量単発のみ opt-down)"
+ )
+@@ -129,7 +130,15 @@ GOAL_SEEK_WIRING_SECTION = (
+     "親には最終成果物と `handoff-*.json` 要約のみ返す（中間試行で親 context を汚さない）。"
+     "`fork: inline` は軽量単発時の opt-down。なお重い周回で `engine: run-goal-seek`（同梱時のみ）を"
+     "使うのは外部依存軸の任意最適化で、fork 分離とは独立（`references/goal-seek-paradigm.md`「コンテキスト分離」）。\n"
+-    "- **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達なら、残項目を `open_issues` に記録し"
++    "- **中間成果物アンカー (ドリフト圧縮)**: 各周回末に "
++    "`eval-log/{{skill_name}}-intermediate.jsonl` へ "
++    "`{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を "
++    "1 行追記する。`original_goal` は全周回で**不変**。次周回 Step2 (手順生成) は直前の "
++    "`merged_directive_for_next` と `original_goal` を**必須入力**として読み込み、AI が単独で再導出しない。"
++    "これにより固定手順なしの自由度を保ちつつ、AI が確率的最尤の抽象解へ集約化していくドリフトを"
++    "アンカーで毎周回押し戻す (`references/goal-seek-paradigm.md`「中間成果物」)。\n"
++    "- **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達、または "
++    "`drift_signal: stagnant`/`widening` が 2 周連続なら、残項目と差分を `open_issues` に記録し"
+     "人間 or 上位 orchestrator へ差し戻す。\n\n"
+     "> この配線により、本 Skill は配布先のどの環境でも「ゴールへ向けて自動でループを回す」挙動を同じ機構で再現する。"
+ )
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/combinators/with-goal-seek.patch b/plugins/skill-creator/skills/run-build-skill/templates/combinators/with-goal-seek.patch
+index ab360dc..3c9bd7d 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/combinators/with-goal-seek.patch
++++ b/plugins/skill-creator/skills/run-build-skill/templates/combinators/with-goal-seek.patch
+@@ -7,6 +7,7 @@
+ +  engine: {{goal_seek.engine | default("inline")}}      # inline(既定/自己完結・外部スキル不要) | run-goal-seek(同梱時のみ任意で使う重量オーケストレータ)
+ +  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定
+ +  progress: eval-log/{{skill_name}}-progress.json     # schemas/goal-seek-loop.schema.json 準拠
+++  intermediate: eval-log/{{skill_name}}-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)
+ +  max_loops: {{goal_seek.max_loops | default(5)}}
+ +  fork: {{goal_seek.fork | default("subagent")}}        # subagent(既定/反復を分離contextで実行し親へ最終差分のみ) | agent-team | inline(軽量単発のみ opt-down)
+  # doc/21 source-traceability
+@@ -22,7 +23,8 @@
+ +- **goal-spec**: `eval-log/goal-spec.json` があればロードして利用する（spec schema が同梱されていれば検証、無ければそのまま利用）。無ければ既存コンテキスト（直近依頼・制約・対象ファイル）から AI が最適ゴール+完了チェックリストを推定生成する（ユーザーへの追加質問は原則しない）。
+ +- **周回状態**: 各周回で `eval-log/{{skill_name}}-progress.json`（`run-build-skill/schemas/goal-seek-loop.schema.json` 準拠）に `iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` を記録する。
+ +- **コンテキスト分離（fork 軸）**: 反復ループは既定で SubAgent（`Agent`）に分離して実行し、親には最終成果物と `handoff-*.json` 要約のみ返す（中間試行で親 context を汚さない）。`fork: inline` は軽量単発時の opt-down。なお重い周回で `engine: run-goal-seek`（同梱時のみ）を使うのは外部依存軸の任意最適化で、fork 分離とは独立（`references/goal-seek-paradigm.md`「コンテキスト分離」）。
+-+- **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達なら、残項目を `open_issues` に記録し人間 or 上位 orchestrator へ差し戻す。
+++- **中間成果物アンカー (ドリフト圧縮)**: 各周回末に `eval-log/{{skill_name}}-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を 1 行追記する。`original_goal` は全周回で**不変**。次周回 Step2 (手順生成) は直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み込み、AI が単独で再導出しない。これにより固定手順なしの自由度を保ちつつ、AI が確率的最尤の抽象解へ集約化していくドリフトをアンカーで毎周回押し戻す (`references/goal-seek-paradigm.md`「中間成果物」)。
+++- **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達、または `drift_signal: stagnant`/`widening` が 2 周連続なら、残項目と差分を `open_issues` に記録し人間 or 上位 orchestrator へ差し戻す。
+ +
+ +> この配線により、本 Skill は配布先のどの環境でも「ゴールへ向けて自動でループを回す」挙動を同じ機構で再現する。
+ +
+diff --git a/plugins/skill-creator/skills/run-goal-seek/SKILL.md b/plugins/skill-creator/skills/run-goal-seek/SKILL.md
+index 070f152..8a9d59a 100644
+--- a/plugins/skill-creator/skills/run-goal-seek/SKILL.md
++++ b/plugins/skill-creator/skills/run-goal-seek/SKILL.md
+@@ -41,6 +41,7 @@ completeness_exempt:
+ - **出力**:
+   - 各タスク固有の成果物（goal で定義された最終状態）
+   - `eval-log/goal-seek-progress.json` — 各周回のチェックリスト状態と生成手順の記録
++  - `eval-log/goal-seek-intermediate.jsonl` — 各周回末の中間成果物アンカー (`original_goal`/`current_goal_snapshot`/`delta_from_original`/`merged_directive_for_next`/`drift_signal`)。次周回 Step2 への必須入力。集約化ドリフト圧縮機構 (`../run-build-skill/references/goal-seek-paradigm.md`「中間成果物」)
+   - `eval-log/handoff-goal-seek.json` — 成果物パスと達成チェックリスト（後続 skill が拾う汎用ハンドオフ）
+ - **完了条件**: `goal-spec.checklist` が全項目 `done:true`。または `max_loops` 到達で残項目を `open_issues` に記録して停止。
+ 
+@@ -57,6 +58,7 @@ completeness_exempt:
+ 5. **ハンドオフ**: 完了後、`handoff_targets` があれば各 skill へ成果物を渡す。無くても汎用 `handoff-goal-seek.json` を必ず出す。
+ 6. **コンテキスト分離（必須）**: ループは親セッションで直接回さず、`Agent` ツールで専用 SubAgent に fork して実行する。複数ゴールを並列で回すなら Agent Team に分離する。親に返すのは最終成果物パスと `handoff-goal-seek.json` 要約のみで、周回の中間情報（生成手順・試行錯誤）は fork 内に留める。詳細は `../run-build-skill/references/goal-seek-paradigm.md` の「コンテキスト分離」。
+ 7. **質問しない自走**: 不足情報は最尤仮説で補い、仮定を `goal-spec.constraints` / `goal-seek-progress.json.open_issues` に残す。
++8. **中間成果物アンカー（必須）**: 各周回末に `eval-log/goal-seek-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を 1 行追記する。`original_goal` は全周回で**不変**。次周回 Step2（手順生成）は直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み、AI が単独で再導出してはならない。これにより固定手順なしの自由度を保ちつつ、確率的最尤の抽象解へ集約化していくドリフトをアンカーで毎周回押し戻す。
+ 
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は `../run-build-skill/references/goal-seek-paradigm.md`。

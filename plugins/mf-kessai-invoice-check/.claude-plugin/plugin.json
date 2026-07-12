@@ -1,0 +1,91 @@
+{
+  "name": "mf-kessai-invoice-check",
+  "version": "0.8.1",
+  "package_mode": "bundle",
+  "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理する。本体スキルに前月↔今月比較レポート (run-mf-invoice-report) を追加: 2営業日目以降に何度でも冪等再実行し、年契約/年→月切替/トライアル完了/契約終了のイレギュラーをコメント説明した漏れレポートを月次レポートDBへ上書き生成する。0.4.0でMF実績を第一級の真実に切替 (amount-gate 根治): 契約期待額でなくMF実発行額 (mfk_actuals) を金額列・漏れ判定の駆動源にし、fetch fidelity 監査 (mfk_fetch_audit・pagination/件数/issue_date/stale を fail-closed 検証) と D1 (新規は12ヶ月ルックバック裏取り) を追加。0.5.0で照合層 (matching layer) の根本原因を根治 (確定6要因): R1収集を決定論 producer (mfk_collect_status) 化し「今月なし」取引先が構造的に脱落する主因を解消、顧客ID解決 (mfk_customer_id_resolve)・verdict export (mfk_verdict_export) を追加、severity 混在時の collapse 過少報告を対称 fold 化で修正。対症療法 (会社名ハードコード名寄せ) を撤去し fixture 過学習を排除。0.6.0で前月↔今月レポートの同定・分類を実運用フィードバックで是正: 月跨ぎ突合を MF顧客ID 第一キー化 (取引先名 drift による先月/今月の分裂=「前回取れたのに今回取れない」を根治)、新規の年契約開始は支払サイクルで正常☑ (12ヶ月履歴なしでも要確認へ誤爆しない)、先月も今月も未発行の月払いアクティブ契約 (契約完了未確認) を継続発行漏れとして要対応 surface。0.7.0で出力先 report DB を明示 pin する report_database_id (step0) を第一級解決経路として追加し、report_toggle_block の構造同定ズレで別 DB (phantom) へ書き込みチェックが本来 DB に反映されない症状を根治 (明示 pin なし かつ 既存 DB 未発見時は既定 fail-closed・新規作成は --allow-create の明示 opt-in 時のみ)。あわせて請求書確認シートの月次アーカイブ&ロールオーバー (R5-archive) を追加: レポート確定 (R4 --apply --verified) 後に自動連鎖し、対象月シート行を同じ親ページ配下の月別 DB『請求書確認シートYYMM』へ全プロパティ写像 (API 非対応型は rich_text 降格で値温存・長文は chunk 全文保持・冪等キー 元ページID) して移行、写像先を読み戻し全列 plain-text 一致を検証した行だけ正本シートから archive (in_trash・可逆) し、検証不一致/lossy(files)/例外行は温存する (--verified 必須の二段確認ゲートで正本からの誤削除を fail-closed 防止)。0.8.0で実運用フィードバック (今月金額があるのに漏れチェック☐) を根治し、3体並列エレガント検証で漏れ隠蔽の再オープンを封鎖: 「今月に権威ある実発行がある行は定義上発行漏れでない (漏れチェック✓)」不変則を要件1の STATE_CONTINUED から STATE_NEW (今月実発行の新規は年契約裏付け不在でも✓・未確認はコメント開示) と collapse 経路へ一般化し、金額列を実発行月のみ表示 (未発行月の期待額を出さず列とチェックの物語を一致)。sink collapse は契約 identity (契約ID+エンドクライアント) で phantom (同一契約の ID↔名前 split=正常化) と真の別契約 (エンドクライアント違い=要対応保持で漏れを隠さない) に二分し、cross-run guard の NEW 盲点 (新規/年→月切替 marker 追加) と別契約 collapse のゼロテレメトリを解消。category-agnostic fallback 由来の reliable_issued 誤陽性を非権威化する安全弁 (category_confirmed carrier) を追加し、誤陽性が真の月次漏れを正常✓へ上書きするのを防ぐ。参照専用hook・二段確認subagent・冪等Notion upsert付き。改善要望は `/run-skill-feedback mf-kessai-invoice-check` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-06-19",
+  "last_audited": "2026-07-08",
+  "source": "plugins/mf-kessai-invoice-check",
+  "bundle_targets": [
+    "skills-full"
+  ],
+  "bundles": [
+    "skills-full"
+  ],
+  "entry_points": {
+    "skills": [
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "ref-mf-kessai-api",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-report"
+    ],
+    "agents": [
+      "mfk-gap-verifier",
+      "mfk-reconcile-verifier",
+      "mfk-report-verifier"
+    ],
+    "hooks": [
+      "guard-mfk-readonly",
+      "guard-mfk-no-reinvent"
+    ],
+    "commands": [
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-report",
+      "run-mf-invoice-doctor"
+    ]
+  },
+  "permissions": {
+    "network": [
+      "https://api.mfkessai.co.jp",
+      "https://sandbox-api.mfkessai.co.jp",
+      "https://api.notion.com",
+      "https://invoice.moneyforward.com",
+      "https://api.biz.moneyforward.com"
+    ],
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**",
+      "$CLAUDE_PROJECT_DIR/eval-log/**",
+      "$MFK_OUTPUT_DIR/eval-log/**"
+    ],
+    "secrets": [
+      "macos-keychain:mfkessai-api-key.<keychain-prefix>/<keychain-prefix>",
+      "macos-keychain:notion-api-key.<keychain-prefix>/<keychain-prefix>",
+      "macos-keychain:mf-invoice-oauth.<keychain-prefix>/<keychain-prefix>"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-readonly.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      }
+    ]
+  }
+}

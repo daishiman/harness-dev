@@ -1,0 +1,17 @@
+{
+  "_doc": "company-master 二段防御の静的層。本ファイルを repo の .claude/settings.json (または settings.local.json) の permissions.deny へマージすると、Notion API token (notion-api-key.<keychain-prefix>) と gBizINFO API token (gbizinfo-api-token.<keychain-prefix>、どちらも account=<keychain-prefix>)、および日本郵便 DA API 機密 (service=japanpost-da-api.<keychain-prefix>、account=secret_key/proxy_token/client_id) の 3 鍵の平文流出・誤削除に対する deny が効く。japanpost-da-api.<keychain-prefix> の deny は service 名で照合し account を問わず全 account をカバーする。plugin は repo の settings.json を直接配布・上書きできないため、利用者が手動マージする (マージ手順は同階層 references/README-setup.md 参照)。動的層 hooks/hook-guard-secret.py(PreToolUse) の GUARD_ACCOUNTS および -w/-g 検査と対称。--print-unsafe ルールは account 非依存で全機密(security CLI 経由の平文出力)をブロックする。マージ方法: 既存 .claude/settings.json の permissions.deny 配列へ下記 10 エントリを追記 (重複は除く)。settings.json が無ければ {\"permissions\":{\"deny\":[...]}} を新規作成する。",
+  "permissions": {
+    "deny": [
+      "Bash(*find-generic-password*notion-api-key.<keychain-prefix>*-w*)",
+      "Bash(*find-generic-password*gbizinfo-api-token.<keychain-prefix>*-w*)",
+      "Bash(*find-generic-password*japanpost-da-api.<keychain-prefix>*-w*)",
+      "Bash(*find-generic-password*notion-api-key.<keychain-prefix>*-g*)",
+      "Bash(*find-generic-password*gbizinfo-api-token.<keychain-prefix>*-g*)",
+      "Bash(*find-generic-password*japanpost-da-api.<keychain-prefix>*-g*)",
+      "Bash(security delete-generic-password*notion-api-key.<keychain-prefix>*)",
+      "Bash(security delete-generic-password*gbizinfo-api-token.<keychain-prefix>*)",
+      "Bash(security delete-generic-password*japanpost-da-api.<keychain-prefix>*)",
+      "Bash(*--print-unsafe*)"
+    ]
+  }
+}

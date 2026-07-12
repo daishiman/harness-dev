@@ -1,0 +1,259 @@
+{
+  "agent": "elegant-logical-structural-analyst",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "README.md:113「既に repo に存在する 7 つの素地」の各行(README.md:117-124)を harness 実態と Glob/Grep で突合した。installers/install.sh・installers/manifest.json・scripts/build-notion-config.py・scripts/validate-plugin-completeness.py・.claude-plugin/bundles.json・plugins/skill-intake/scripts/notion_config.py は実在を確認(該当行は整合)",
+        "定量主張(README.md:45「36 箇所以上」)の再現手段の有無を検査した。移管計画.md:90-99 が実測主張に再現コマンドを付す規律を持つのと対照的に、README 側には検証コマンドがない"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "README.md:§5(113行, 121行)— 「既に repo に存在する 7 つの素地」として『config-version-lock.json + scripts/lint-config-version-sync.py』を挙げるが、harness 実態には両方存在しない(Glob 0件で確認)。移管計画.md:§4.5(83行)自身が「scripts/lint-config-version-sync.py …が未取込(…現状 harness に無い)」と認めており、README と移管計画が同一資産の存在について相反する",
+          "recommended_intervention": "README §5 の表に「所在」列を追加し、各資産が『harness に現存』か『xl-skills にあり Phase 1 で取り込む』かを明示する。少なくとも config-version-lock 行と 4層解決 vendored copy の行(company-master/harness-creator は harness 未取込)に取り込み前提の注記を付ける"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "README.md:§2(45行)— 「`.xl-skills` 定数(36 箇所以上)」の定量主張に再現コマンド・計測日がなく、genericize 完了判定(Phase 2)の母数として検証できない",
+          "recommended_intervention": "移管計画 §4.5 の「再現コマンド」節と同様に grep 集計コマンドを併記するか「Phase 2 実行時に lint-tenant-isolation.py で再計測する」と明記する"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "一般則「中立命名: core から xl-/XLOCAL/.xl-skills/実ドメインを排除」(構築手順.md:26, 移管計画.md:233)と「fail-closed: 未設定時に XLOCAL へフォールバックしない」(README.md:139)を全個別記述に当てはめた。fail-closed 側は 4 文書とも一貫(テナント仕様.md:127-132, 構築手順.md:72, 移管計画.md:184 で同一規則)で矛盾なし",
+        "tenant.json スキーマ(テナント仕様.md:28-58)を構築手順の各 Phase の記述に当てはめ、スキーマ外フィールドへの言及を検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§2(44行)と §4-3(170-172行)— §2 は「env PARTY_A_JSON_PATH。旧 XL_PARTY_A_JSON_PATH は期限付 alias」と新 env 名を正とするのに、§4-3 の解決順は「env `XL_PARTY_A_JSON_PATH` → …」のみで、tenant-build も「`XL_PARTY_A_JSON_PATH` としてエクスポートする」(172行)と旧名のみを使う。文書内で正となる env 名が相反する。さらに core が読む `XL_` 接頭辞 env は中立命名則(構築手順.md:26)違反だが、lint 検査パターン(構築手順.md:89 の XLOCAL/xlocal/.xl-skills/実ドメイン/UUID)では `XL_PARTY_A` を検出できず fail-closed 検査をすり抜ける",
+          "recommended_intervention": "§4-3 の解決順と tenant-build の記述を「PARTY_A_JSON_PATH(新)→ XL_PARTY_A_JSON_PATH(期限付 alias・WARN 付き)」に統一し、lint-tenant-isolation.py の検査パターンに `XL_` 接頭辞(alias 許容リスト付き)を追加する"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:§6-2(179行)— 「demo-corp の tenant.json に別の keychain_prefix / ダミー DB ID を設定」とあるが、tenant.json スキーマ(テナント仕様.md:28-58)に DB ID を書くフィールドは存在しない(DB ID は overlays.notion_config が指す notion-config.json 側)。スキーマ→事例の当てはめが齟齬",
+          "recommended_intervention": "「tenant.json に keychain_prefix、notion-config.json にダミー DB ID を設定」と書き分ける"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "overlay ファイルの扱いを 4 文書横断で一般化した。notion-config と party_a は『§1 ディレクトリ構成に記載 / §2 フィールド定義表に行あり / §5 契約定義あり / §7 Git 管理方針表に example+実値の 2 行 / 構築手順 Phase 3 の _template・tenants/xlocal 内容に記載 / README §4 ツリーに記載』という 6 点セットの共通パターンを持つ(テナント仕様.md:9-17, 70-71, 179-186, 219-224 / 構築手順.md:111-115 / README.md:76-79)",
+        "テナント仕様.md:§4-1(144-149行)の表の列分類を全行で検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§2(45行)・§5(188-195行)— gmail-config.json だけが上記 6 点セットから逸脱する。overlays スキーマ例(45行)と §5 契約節には登場するのに、§1 ディレクトリ構成(9-17行)に無く、§2 フィールド定義表(63-73行)に overlays.gmail_config 行が無く、§7 Git 管理方針表(214-226行)に gmail-config.json / gmail-config.example.json の行が無く、構築手順.md Phase 3(111-115行)の _template・tenants/xlocal の内容物にも、README.md:§4 ツリー(76-79行)にも現れない。構築手順.md:§2-3(85行)は impersonate=…@shonai.inc を「tenant へ」退避すると言うが、その受け皿ファイルが移設先リストに存在せず退避先が宙に浮く",
+          "recommended_intervention": "gmail_config を他 overlay と同格に昇格させる: §1 構成ツリー・§2 フィールド定義表(必須性=notion-gmail-send 有効時のみ)・§7 Git 管理方針(example は commit / 実値は gitignore)・構築手順 Phase 3 の _template と tenants/xlocal の内容・README §4 ツリーへ一斉追記する"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§4-1(146-147行)— 列名「焼き込み既定(genericize 後は placeholder)」に、skill-list / improvement-request の既定として「repo-root `.notion-config.json`」(= overlay 層②であって焼き込み層④ではない)が入っており、他行(*.fixed.json / *.default.json)と層の分類が揃っていない",
+          "recommended_intervention": "列名を「env 不在時のフォールバック先」に改めるか、skill-list/improvement-request 行に「焼き込み既定なし(overlay 必須・fail-closed)」と注記する"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "観測事実: (a) gmail_config が 6 箇所の定型記載のうち 2 箇所にしか無い(テナント仕様.md:45, 189)、(b) §5 に TODO(human) が残置(テナント仕様.md:191-195)、(c) §2 コメント自身が「従来 overlay 3種に退避先が無かった値の受け皿」(45行)と後付けであることを自認。最尤仮説: gmail_config slot は 4 文書執筆後に追加され、波及更新が未完のまま残っている",
+        "対立仮説: TODO(human) は意図的な設計保留(必須キー設計を人間に委ねる)であり未完ではない — しかしこの仮説でも §1 構成ツリーと §7 Git 管理方針への骨格追記(キー設計と独立に決まる)が無いことは説明できないため、最尤仮説は『slot 追加時の更新チェックリスト不在』が根本原因という側に収束する"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§5(191-195行)— gmail-config.json の必須キー契約が TODO(human) のまま未定義。本書は自らを「契約(何を置けば core がどう解決するか)を定義する」(3行)と規定しており、構築手順.md:§2-3(85行)の退避作業が依存する契約が欠落している。overlay slot 追加時に更新すべき箇所の一覧が存在しないことが根本原因で、今後の slot 追加でも同型の伝播漏れが再発する",
+          "recommended_intervention": "TODO(human) を解消して必須キー(impersonate、委任ドメイン、実値/example の commit 方針、fail-closed 規則)を確定する。あわせてテナント仕様に「overlay slot 追加時の更新チェックリスト(§1/§2表/§5/§7 + 構築手順 Phase 3 + README §4)」を追記する"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "gdrive-service-account の互換指定を Why で掘った: なぜ完全指定を許すか→既存 Keychain エントリ互換のため(テナント仕様.md:112)→既存エントリは何か→service=xl-skills-gdrive(162行)かつ README.md:45 は既存定数を account=\"xl-skills\" と報告→Keychain generic password は (service, account) の組で引く→では例の account=\"xlocal\"(テナント仕様.md:114)で既存エントリを引けるか→引けない可能性が高い→なぜ齟齬が生じたか→「互換」が service のみを指すのか account を含むのか、互換の定義が未定義だから"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§3(112-114行)— 既存互換のための完全指定例が `\"service\": \"xl-skills-gdrive\", \"account\": \"xlocal\"` となっているが、README.md:§2(45行)は既存定数を「`account=\"xl-skills\"` 定数」と報告している。(service, account) ペア不一致では既存 Keychain エントリを解決できず、互換目的の例が互換として機能しない疑いがある",
+          "recommended_intervention": "既存エントリの実 account 値を実測で確認し、例を実態(おそらく account=\"xl-skills\")に合わせる。あわせて §3 に「完全指定時は service/account の両方を既存エントリと一致させること」という互換の定義を 1 行追加する"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "構築手順.md:§2-2(75-81行)の退避対象値を要素分解し、各要素の再注入経路をテナント仕様.md:§4-1(144-149行)と突合した。company-master DB ID / hearing-sheet DB ID / sheet・reconcile 3 DB / keychain_service には注入経路があるが、mf-kessai の `database_id` だけ対応が無い",
+        "テナント仕様.md:§4-2(153-163行)の 6 purpose と §3 credentials 例(84-116行)の 5 purpose を要素単位で突合した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "構築手順.md:§2-2(81行)は mf-kessai-config.default.json の `database_id` を placeholder 化して退避すると定めるが、テナント仕様.md:§4-1(149行)の注入点マップには MFK_SHEET_DB_ID / MFK_RECONCILE_DB1_ID / MFK_RECONCILE_DB2_ID しか無く、`database_id` を tenant から再注入する env・overlay role が未定義。placeholder 化後に値を戻す経路が存在しない(fail-closed で常時停止する)",
+          "recommended_intervention": "テナント仕様 §4-1 に `database_id` 相当の行(env 名と overlay 内 role)を追加し、構築手順 §2-2 の退避対象と 1 対 1 対応させる"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:§2-2(81行)— 「照合 3 DB(`sheet_db_id`/`reconcile_db1_id`/`reconcile_db2_id`)」と括るが、テナント仕様.md:§4-1(149行)では sheet は「出力」、reconcile が「照合」であり、出力用 DB を「照合」に含める用語ゆらぎがある",
+          "recommended_intervention": "「出力 1 DB + 照合 2 DB」と書き改め、テナント仕様 §4-1 の role 名と揃える"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§3(84-116行)— credentials の推奨 purpose map 例に、§4-2(160行)で定義済みの `japanpost-da-api` purpose が欠落しており、company-master を有効にするテナントが tenant.json に何を書くべきか例から読み取れない",
+          "recommended_intervention": "§3 の例に japanpost-da-api エントリ(required: false)を追加し、§4-2 の purpose 一覧と例を全件一致させる"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "テナント選択の全経路を列挙した: ① env NOTION_CONFIG_PATH(テナント仕様.md:151「最優先・明示」)② env HARNESS_TENANT(206-207行)③ repo-root symlink(206行)。①の最優先は明記されるが、②と③が併存して食い違う場合の優先規則がどの文書にも無い",
+        "core を構成する path 集合の列挙を文書間で突合した: 移管計画.md:§3(30行)は plugins/, scripts/, .claude-plugin/, .claude/commands, installers/, tests/ の 6 つ、§6 Step 2(153-155行)はさらに .claude/agents, .github, references を加えた 9 つで、「core」の外延が節ごとに異なる"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§6(204-209行)— 有効化手段として HARNESS_TENANT env と symlink の 2 手段を列挙するが、両方が設定され別テナントを指す場合の優先順位・矛盾検出が未定義。二社分離を核とする設計(README.md:§2 50行「別社の DB が混入」防止)で、経路競合は誤テナントの DB へ書き込む事故に直結するため、列挙の網羅(競合ケース)に漏れがある",
+          "recommended_intervention": "§6 に優先順位(例: NOTION_CONFIG_PATH > HARNESS_TENANT > symlink)を明記し、tenant-doctor に「HARNESS_TENANT と symlink の指す先が不一致なら FAIL」の検査を追加する"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "移管計画.md:§3(30行)と §6 Step 2(153-155行)— 「core 出力」の path 列挙が節間で不一致(.claude/agents・.github・references の有無)。取り込み対象の外延が節により異なると、Step 3 の git clean 範囲確定(164-165行)の判断基準がぶれる",
+          "recommended_intervention": "§3 の表を §6 Step 2 の 9 path に合わせて更新し、core path 一覧を単一の定義に集約する"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:§2-1(72行)の keychain_prefix 供給順に env `HARNESS_KEYCHAIN_PREFIX` が登場するが、契約書たるテナント仕様.md の解決規則(§3 119-125行・§4 冒頭 138行)にはこの env が未記載で、解決規則の記載場所が 2 文書に分裂している",
+          "recommended_intervention": "テナント仕様 §4 に keychain_prefix の供給順(HARNESS_KEYCHAIN_PREFIX → tenant.json → fail-closed)を正として記載し、構築手順からは参照に置き換える"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×検証強度の 2 軸で各 Phase を配置した。Phase 7(symlink 共有)を「初回移管と分離し Phase 1-6 安定後」(構築手順.md:192)と劣後させ、移管計画.md:§9(234行)でも「symlink 化と genericize を同じ PR に混ぜない」と重ねて統制しており、リスク大×緊急度低の象限処理は適切(問題なし)",
+        "最重要と自認する Phase 2【中核】(構築手順.md:64)の検証強度を検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:§2 完了確認(101-102行)— 中核 Phase の手動 grep が lint 仕様(89行)より弱い: (a) `-e 'XLOCAL'` のみで小文字 `xlocal` を検査しない(89行は「大小」を要求)、(b) `grep -v placeholder` が同一行に placeholder を含む実ヒットを隠しうる、(c) 対象が `plugins scripts` のみで、lint が対象とする `.claude-plugin` の配布 *.json(実測で marketplace.json に「株式会社XLOCAL」残存を確認: .claude-plugin/marketplace.json:40)を含まない。重要度最高の工程に最弱の目視検証という不釣合い",
+          "recommended_intervention": "手動 grep を `-i` 付き・`-e 'xl-skills'` 追加・対象に `.claude-plugin installers` を含める形に強化するか、「目視 grep は補助であり判定は lint-tenant-isolation.py のみ」と役割を明記する"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "構築手順の Phase 0→7 と移管計画 §6 の Step 1→7 を時系列に並べて対応付けた: Step 2-4 ≒ Phase 1、Step 5 ≒ Phase 3、Step 6 ≒ Phase 2、Step 7 ≒ Phase 7。PR 分割(移管計画.md:§8)とも突合し、Phase 1 完了確認の「この時点では業務 plugin 内に XLOCAL が残っていてよい」(構築手順.md:49)が PR-2/PR-3 の分割と整合することは確認した",
+        "各 Phase が依存する資材の供給工程を遡って検査した"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "構築手順.md:§2→§3 と 移管計画.md:§6 Step 5→6 — 「core から抜く」と「tenant へ入れる」の順序が 2 文書で逆転している。構築手順は Phase 2(genericize, 64行)→ Phase 3(tenant 移設, 107行)の順、移管計画は Step 5(tenant へ退避, 174行)→ Step 6(genericize, 178行)の順。同一 PR 許容(構築手順.md:13)で実害は緩和されるが、Runbook として実行順が相反し、先に抜く順で別コミットにすると実値が一時消失するリスク判断を executor に委ねてしまう",
+          "recommended_intervention": "どちらかの順序を正と宣言する(推奨: 移管計画の「退避してから抜く」順)。構築手順 Phase 2 冒頭に「実値の tenant 退避(Phase 3 相当)を先行または同一コミットで行う」と明記して統一する"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "移管計画.md:§6 Step 2(153-155行)— archive 対象 path(plugins scripts tests installers .claude-plugin .claude/commands .claude/agents .github references)に、後続工程が依存する CONVENTIONS.md(Phase 0 のテナント軸追記対象: 構築手順.md:24)・Makefile(Phase 2-5 の `make config-version-lock`: 構築手順.md:95)・config-version-lock.json(lint-config-version-sync の入力)が含まれない。harness 側の現物は未追跡 stale コピーのみ(移管計画.md:§4.5 76行の自認と Glob 実測で一致)で、Step 3 の clean path にも含まれないため、stale なまま Phase 0/2 の編集対象になる工程間 gap がある",
+          "recommended_intervention": "Step 2 の archive path に CONVENTIONS.md・Makefile・config-version-lock.json(および .pre-commit-config.yaml 等 repo-root の統治ファイル)を追加するか、「repo-root 統治ファイルは個別に git show で取り込む」補足 step を挿入する"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "why思考",
+      "category": "G-problem",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "enabled_bundles の値の生存性を根本原因まで追跡した: テナント仕様.md:39 の例 `\"xl-skills-full\"` はなぜ壊れるか→構築手順.md:44 の Phase 1 Step 3 が bundle 名から企業色を排除する(`name: \"xl-skills\"` → 中立名)から→中立化後その名の bundle は存在せず tenant-build の bundle 解決が失敗する→なぜ例が旧名のままか→実測で harness の .claude-plugin/bundles.json:6 は既に \"skills-full\" であり、rename と tenant 契約(tenant.json)の間に同期を強制する仕組みが無いから→根本原因は「bundle 名 rename 時に tenants/*/tenant.json の enabled_bundles を検証する lint が計画に存在しない」こと"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§2(39行)— スキーマ例の `\"enabled_bundles\": [\"xl-skills-full\"]` は、構築手順.md:§1 Step 3(44行)の中立名化後に存在しなくなる bundle 名を参照する(実測: 現 harness の .claude-plugin/bundles.json は \"skills-full\"/\"skills-minimal\"/\"skills-intake\" で \"xl-skills-full\" は不在)。参照先が実在しない例のままでは、tenants/xlocal/tenant.json 作成(構築手順.md:115)時にこの例を写した tenant-build が bundle 解決に失敗する",
+          "recommended_intervention": "例を中立名(例: \"skills-full\")に更新する。あわせて validate-plugin-completeness.py または tenant-doctor に「enabled_bundles の各名が bundles.json に実在すること」の検査を追加し、rename と tenant 契約の非同期を fail-closed で検出する"
+        }
+      ],
+      "score": 0.5
+    }
+  ]
+}

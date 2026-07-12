@@ -1,0 +1,30 @@
+%%---
+%% template: flowchart-with-gates
+%% required_vars: [start_label, step1, step2, gate_label, approve_path, reject_path, end_label]
+%% optional_vars: [step3, gate2_label]
+%% score_formula: "complexity * 0.4 + decision_density * 0.6"
+%% non_tech_friendliness: ★★★
+%% use_case: 承認ゲートを含む業務フロー、ステップごとに分岐がある処理
+%%---
+flowchart TD
+    Start([{{start_label}}]):::startNode
+    S1[{{step1}}]:::process
+    S2[{{step2}}]:::process
+    Gate{{ {{gate_label}} }}:::gate
+    Approve[{{approve_path}}]:::ok
+    Reject[{{reject_path}}]:::ng
+    End([{{end_label}}]):::endNode
+
+    Start --> S1 --> S2 --> Gate
+    Gate -->|OK| Approve --> End
+    Gate -->|NG| Reject --> S1
+
+    classDef startNode fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef endNode fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef process fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef gate fill:#fff8e1,stroke:#f9a825,color:#e65100
+    classDef ok fill:#c8e6c9,stroke:#2e7d32,color:#1b5e20
+    classDef ng fill:#ffcdd2,stroke:#c62828,color:#b71c1c
+
+%% 凡例: 青=進行中 / 緑=完了 / 赤=注意 / 黄=判定
+%% 言いたい一言: {{message}}

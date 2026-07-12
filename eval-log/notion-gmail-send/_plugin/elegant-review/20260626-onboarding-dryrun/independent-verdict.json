@@ -1,0 +1,50 @@
+{
+  "pytest": { "passed": 168, "failed": 0 },
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "findings": [
+    {
+      "condition_signal": "dependency_break (確認・問題なし)",
+      "severity": "info",
+      "location": "build-plan.py:135 / send-campaign.py:122 / audit_mail_dbs.py:55 / setup-send-log-db.py:118",
+      "note": "全4つの NotionClient 生成箇所が NotionClient(secrets.get_notion_api_key()) と既定引数のみで生成しており、min_interval_sec=DEFAULT_MIN_INTERVAL_SEC(0.34)/max_retries=DEFAULT_MAX_RETRIES(5) が自動適用される。スロットルは呼出側に確実に効く。test_default_client_has_throttle_enabled で機械固定済。"
+    },
+    {
+      "condition_signal": "contradiction (確認・問題なし)",
+      "severity": "info",
+      "location": "lib/notion_client.py:37-39 ↔ spec-detail.md:140",
+      "note": "spec の定数名と挙動 (DEFAULT_MIN_INTERVAL_SEC=0.34s≈3req/sec安全側・Retry-After尊重・RETRY_BACKOFF_CAP_SEC・DEFAULT_MAX_RETRIES回・min_interval_sec=0で無効化) が実装と完全一致。spec §7 の Gmail 側バックオフ(最大3回/上限60秒)は gmail-send 別経路で Notion 側と独立、二重ロジックや矛盾なし。"
+    },
+    {
+      "condition_signal": "inconsistency (確認・問題なし)",
+      "severity": "info",
+      "location": "lib/notion_config.py:178-198, build_config()",
+      "note": "build_config は copy.deepcopy(CONFIG_SKELETON) で SSOT を不変保持し example/skeleton(git追跡) を一切変更しない。.notion-config.json は git check-ignore で追跡外を実機確認、追跡されるのは placeholder の .notion-config.example.json のみ。test_no_real_values_in_skeleton_or_example / test_build_config_does_not_touch_example_file PASS。実値の git 混入なし。"
+    },
+    {
+      "condition_signal": "omission (確認・問題なし)",
+      "severity": "info",
+      "location": "lib/notion_config.py:141-147 require_resolved_value / build-plan.py:133-134",
+      "note": "部分指定 value-fill で未指定キーは placeholder のまま残り、require_resolved_value/get_db_id/get_source_db_ids が ConfigError で fail-closed する。test_partial_values_keep_fail_closed_for_unfilled / test_doctor_init_partial_lists_remaining_placeholders PASS。fail-closed は弱まっていない。"
+    },
+    {
+      "condition_signal": "smell",
+      "severity": "low",
+      "location": "lib/notion_client.py:69 _last_request_ts=0.0",
+      "note": "初回スロットル無回避を time.monotonic() が大きな値を返す前提に依存。起動直後 (uptime<0.34s) のマシンでのみ初回1回が最大 min_interval だけ待つ可能性。サブ秒・一度きり・コメントとテストで明示済で実害なし。PASS を妨げない。"
+    }
+  ],
+  "approve": true,
+  "approver_note": "3変更とも実コードで4不変条件を確認 (スロットル既定適用/SSOT deepcopy で実値非混入/部分指定 fail-closed 維持/spec定数名一致)。pytest 168 passed・0 failed、対象3テスト30 passed、.notion-config.json は gitignore 実機確認。独立検証で APPROVE。"
+}

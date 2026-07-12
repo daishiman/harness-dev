@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "rubric_id": "skill-design",
+  "rubric_version": "1.3.0",
+  "layer": "L2",
+  "upstream_version_pin": "1.3.0",
+  "_doc": "設計書29 §3 L2: assign-skill-design-evaluator 固有 override (delta-only)。L0 正本 (ref-skill-design-rubric/references/rubric.json) の全コピーは保持しない。compose-rubrics.py の deep-merge は overlay に無いキーを base から継承し、rules を id 単位でマージするため、本ファイルは L0 に存在しない evaluator 固有 rule のみを宣言する。rubric_version は upstream_version_pin と同値で upstream に追随し、check-rubric-sync.py のバージョン同期モードで版ずれを検出する。",
+  "upstream": [
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "rules": [
+    {
+      "id": "PG-001",
+      "area": "prompt-generation",
+      "severity": "high",
+      "weight": 10,
+      "applies_to_kinds": ["skill"],
+      "check": "kind in (run, assign) AND brief.responsibilities[] non-empty => plugins/<plugin>/skills/<skill>/prompts/<R-id>.yaml exists for every R-id",
+      "rationale": "Phase 3: 責務単位プロンプトと SubAgent.md の 1:1 整合を物理ファイルレベルで担保"
+    },
+    {
+      "id": "PG-002",
+      "area": "prompt-generation",
+      "severity": "medium",
+      "weight": 5,
+      "applies_to_kinds": ["skill"],
+      "check": "対応 SubAgent.md に '<!-- responsibility: R[0-9]+ -->' anchor が responsibilities 集合と一致して付与されている",
+      "rationale": "Phase 3: anchor 集合一致で prompt-creator ループとの結合キーを保証"
+    },
+    {
+      "id": "BND-001",
+      "area": "bundle",
+      "severity": "high",
+      "weight": 8,
+      "_design_doc_id": "BD-001",
+      "applies_to_kinds": ["skill"],
+      "check": "plugins/<name>/ が新規追加された場合、.claude-plugin/bundles.json の少なくとも 1 bundle に登録されている",
+      "rationale": "Phase 3: 単独 plugin の install パスが bundle なしで欠落するのを防ぐ。設計文書では BD-001 と表記するが既存 body rubric BD-001 と衝突するため BND-001 に変更"
+    },
+    {
+      "id": "REG-001",
+      "area": "governance",
+      "severity": "high",
+      "weight": 7,
+      "_design_doc_id": "RG-001",
+      "applies_to_kinds": ["skill"],
+      "check": "scripts/validate-plugin-completeness.py と scripts/validate-build-trace.py が exit 0 で通る",
+      "rationale": "Phase 3: 配布完全性と再現性トレースの 2 gate を必須化。設計文書では RG-001 表記、既存 governance RG-001 と衝突回避で REG-001"
+    }
+  ]
+}

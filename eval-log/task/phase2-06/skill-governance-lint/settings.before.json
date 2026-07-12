@@ -1,0 +1,112 @@
+{
+  "_build_claude_settings": {
+    "managed_hooks": [],
+    "managed_permissions": []
+  },
+  "permissions": {
+    "deny": [
+      "Write(creator-kit/skills/ref-skill-design-rubric/**)",
+      "Edit(creator-kit/skills/ref-skill-design-rubric/**)",
+      "Write(.claude/skills/ref-skill-design-rubric/**)",
+      "Edit(.claude/skills/ref-skill-design-rubric/**)",
+      "Bash(rm -rf*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ],
+    "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-guard-rubric.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-validate-skill-md.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/re-evaluate-on-rubric-bump.py --post-tool-use"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-verify-evaluator-json.py"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-verify-evaluator-json.py"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-check-file-ownership.py"
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "SKILL.md",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-validate-skill-md.py"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-handoff.py"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-post-compact.py"
+          }
+        ]
+      }
+    ]
+  }
+}

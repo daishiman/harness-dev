@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "ループ入門 — プロンプトを打つのをやめて「ループを設計」する",
+    "subtitle": "Claude Code を単発の指示から自走するエージェントへ引き上げる4つのループ",
+    "reportType": "learning",
+    "audience": "Claude Code をより自律的に使いたい開発者",
+    "keyMessage": "生産性の差は「良いプロンプト」ではなく「良いループ設計」から生まれる。ゴールと検証を固定し、手順は AI に生成させる。",
+    "author": "slide-report-generator",
+    "length": "deep",
+    "toc": true,
+    "schemaVersion": "1.1.0",
+    "visualPolicy": "svg-first"
+  },
+  "theme": { "name": "kanagawa-lotus", "accentColors": ["accent-violet-vivid", "accent-aqua-vivid", "accent-pink-vivid"] },
+  "sections": [
+    {
+      "id": "section-summary",
+      "heading": "この記事の要点",
+      "role": "summary",
+      "narrative": {
+        "essence": "多くの人は「より良いプロンプト」を探し続けるが、本質的な課題は1回の指示の質ではなく、AI を自走させる反復構造＝ループの設計にある。",
+        "approach": "ゴール（到達状態）と検証（合否）を固定し、そこへ至る手順は毎回 AI に生成させる。人間は手順ではなくループを設計する。",
+        "leverage": "この視点を持つと、Turn/Goal/Time/Proactive の4種のループを状況に応じて組み合わせ、単発チャットの何倍もの成果を安定して引き出せる。"
+      },
+      "body": [
+        { "type": "paragraph", "text": "「うまくいくプロンプト」を探す時間を、==ループを設計する時間== に置き換える。それが本稿の主張だ。プロンプトは1手であり、ループは戦略である。" },
+        { "type": "key-point", "title": "本稿の結論", "text": "プロンプトを打つのをやめ、**ゴール＋検証＋反復**を設計せよ。手順（HOW）は固定せず AI に委ね、人間は到達状態（WHAT）と合否（判定）だけを握る。", "tone": "accent" },
+        { "type": "stat-tile", "stats": [
+          { "label": "扱うループ種別", "value": "4", "note": "Turn/Goal/Time/Proactive" },
+          { "label": "人間が固定するもの", "value": "2", "note": "ゴールと検証" },
+          { "label": "AI に委ねるもの", "value": "手順", "trend": "up", "note": "毎回生成" }
+        ]}
+      ]
+    },
+    {
+      "id": "section-what-is-loop",
+      "heading": "「ループ」とは — 定義と4つの型",
+      "role": "concept",
+      "narrative": {
+        "essence": "ループとは「ゴールに達するまで、生成→実行→検証→補正を繰り返す制御構造」。単発のプロンプトはこの1周目にすぎない。",
+        "approach": "反復の駆動源（何が次の周回を起こすか）で4つに分類できる。",
+        "leverage": "駆動源を意識すると、タスクごとに最適なループを選べる。"
+      },
+      "body": [
+        { "type": "paragraph", "text": "ループの核心は「終了条件」と「反復の駆動源」の2つだ。終了条件はゴールの充足で、駆動源は次の周回を発火させる仕組みを指す。" },
+        { "type": "bullet-list", "items": [
+          "**Turn-based**（チーム駆動）— 役割を持つ複数エージェントの応答が次を駆動する",
+          "**Goal-based**（ゴール駆動）— チェックリストの未達項目が次を駆動する",
+          "**Time-based**（時間駆動）— スケジュール/イベントが次を駆動する",
+          "**Proactive**（自律駆動）— エージェント自身の判断が次を駆動する"
+        ]},
+        { "type": "callout", "variant": "tip", "title": "選び方の勘所", "text": "1つに固執せず組み合わせる。例: Goal-based を主軸に、検証を Turn-based の別エージェントへ委ねると客観性が上がる。" }
+      ],
+      "visual": {
+        "kind": "svg",
+        "layout": { "grid": "2x1", "emphasis": "highlight" },
+        "caption": "反復の駆動源による4つのループ分類",
+        "alt": "Turn/Goal/Time/Proactive の4ループ",
+        "spec": {
+          "variant": "comparison",
+          "nodes": [
+            { "id": "n-turn", "label": "Turn-based", "subtext": "チーム駆動", "group": "g-interactive" },
+            { "id": "n-time", "label": "Time-based", "subtext": "時間駆動", "group": "g-interactive" },
+            { "id": "n-goal", "label": "Goal-based", "subtext": "ゴール駆動", "group": "g-autonomous" },
+            { "id": "n-proactive", "label": "Proactive", "subtext": "自律駆動", "group": "g-autonomous" }
+          ],
+          "groups": [
+            { "id": "g-interactive", "label": "外部が駆動", "kind": "box" },
+            { "id": "g-autonomous", "label": "内部が駆動", "kind": "box" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "section-turn-based",
+      "heading": "Turn-based loop（チーム駆動ループ）",
+      "role": "example-application",
+      "narrative": {
+        "essence": "1つのエージェントに全部やらせると視野が狭くなり、確証バイアスで自分の出力を過大評価する。",
+        "approach": "役割を分けた複数エージェントを立て、生成役と検証役を分離（proposer≠approver）する。",
+        "leverage": "レビュー・設計・監査のように「独立した視点」が品質を左右する場面で効く。"
+      },
+      "body": [
+        { "type": "paragraph", "text": "Turn-based は「会話の手番（turn）」が反復を駆動する。各エージェントは独立コンテキストを持ち、前のエージェントの出力だけを入力に受け取る。" },
+        { "type": "subheading", "text": "最小の実装イメージ", "level": 3 },
+        { "type": "code", "language": "text", "caption": "生成役と検証役を分けた2ターンの擬似ループ", "code": "proposer  -> draft.md      # 生成 (確証バイアスあり)\nreviewer  -> findings.json  # 別contextで独立検証\nif findings: proposer -> revise -> reviewer  # 収束まで反復" },
+        { "type": "key-point", "title": "なぜ分けるのか", "text": "同一コンテキストの自己レビューは ==見落としを再生産== する。別contextの初見レビューだけが確証バイアスを破れる。", "tone": "positive" }
+      ]
+    },
+    {
+      "id": "section-goal-based",
+      "heading": "Goal-based loop（ゴール駆動ループ）",
+      "role": "example-application",
+      "narrative": {
+        "essence": "手順を固定すると、前提が変わった瞬間に破綻する。だが人は手順を書きたがる。",
+        "approach": "ゴールと二値のチェックリストを到達点に固定し、未達項目を埋める手順を毎周回 AI に生成させる。",
+        "leverage": "仕様が揺れる・入力が多様なタスク（量産・移行・監査）で再現性を保てる。"
+      },
+      "body": [
+        { "type": "paragraph", "text": "Goal-based の中核は「現状評価 → 手順生成 → 実行 → 検証 → アンカー記録 → 反復」の6ステップだ。固定するのは順序ではなく**到達状態と合否基準**である。" },
+        { "type": "table", "caption": "固定するもの / 委ねるもの", "headers": ["対象", "固定 or 委任", "理由"],
+          "rows": [
+            ["ゴール（到達状態）", "人間が固定", "ブレると評価不能になる"],
+            ["検証（二値の合否）", "人間が固定", "Goodhart を防ぐ客観軸"],
+            ["手順（HOW）", "AI に委任", "前提変化に毎回適応させる"]
+          ]},
+        { "type": "callout", "variant": "warning", "title": "退化の罠", "text": "検証を「lint が通る」だけにすると、ゴール未達でも緑になる“緑のパラドクス”に陥る。検証はゴール由来の受入基準にする。" }
+      ]
+    },
+    {
+      "id": "section-comparison",
+      "heading": "はじめの一歩 — ループ選択と最初の一手",
+      "role": "conclusion",
+      "narrative": {
+        "essence": "4種を知っても、最初にどれを選ぶかで迷う。",
+        "approach": "タスクの性質（駆動源・終了条件・向く場面）で1枚の表に落とし、まず1つで回す。",
+        "leverage": "小さく1ループ回して手応えを掴めば、組み合わせは後から足せる。"
+      },
+      "body": [
+        { "type": "table", "caption": "4ループの早見表", "headers": ["ループ", "駆動源", "終了条件", "向く場面"],
+          "rows": [
+            ["Turn-based", "エージェントの手番", "全役割が合意", "レビュー/設計/監査"],
+            ["Goal-based", "未達チェックリスト", "全項目 PASS", "量産/移行/仕様駆動"],
+            ["Time-based", "スケジュール/イベント", "期限/条件到達", "監視/定期実行"],
+            ["Proactive", "エージェントの判断", "自己終了判断", "探索/自律運用"]
+          ]},
+        { "type": "ordered-list", "items": [
+          "作りたい成果物のゴールと「合否の見方」を1文で書く",
+          "まず Goal-based で1ループだけ回す（未達→補正→再評価）",
+          "客観性が要るなら検証を Turn-based の別エージェントへ切り出す"
+        ]},
+        { "type": "key-point", "title": "今日からの一歩", "text": "次にプロンプトを打つ前に、==ゴールと検証を1文ずつ== 書き出す。それが「ループを設計する」の最小実践だ。", "tone": "accent" },
+        { "type": "blockquote", "text": "プロンプトは1手、ループは戦略。手順ではなく到達状態を設計せよ。" }
+      ]
+    }
+  ]
+}

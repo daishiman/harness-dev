@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-intake",
+  "skill": "run-skill-intake",
+  "description": "intake 11 phase を子 Skill / SubAgent に順次委譲する薄い orchestrator。各 phase の業務ロジックは持たない。",
+  "phases": [
+    {"id": "P1-kickoff", "step": 1, "title": "Phase 1: kickoff", "dependsOn": [], "delegateType": "skill", "delegateName": "run-intake-kickoff", "delegateSkill": "run-intake-kickoff", "resourceIds": ["ref-handoff-contract", "ref-workflow-sequence"], "fatal_exit_codes": [2, 3]},
+    {"id": "P2-assumption", "step": 2, "title": "Phase 2: assumption (仮説生成・検証)", "dependsOn": ["P1-kickoff"], "delegateType": "agent", "delegateName": "skill-intake-assumption-challenger", "delegateSkill": null, "outputSchemaId": "schema-assumption", "resourceIds": ["ref-workflow-sequence", "schema-assumption"], "fatal_exit_codes": [2, 3]},
+    {"id": "P3-profile", "step": 3, "title": "Phase 3: vocabulary profile 確定", "dependsOn": ["P2-assumption"], "delegateType": "agent", "delegateName": "skill-intake-user-profiler", "delegateSkill": null, "outputSchemaId": "schema-profile", "resourceIds": ["ref-workflow-sequence", "schema-profile"], "fatal_exit_codes": [2, 3]},
+    {"id": "P4-interview", "step": 4, "title": "Phase 4: 5 軸シート充足", "dependsOn": ["P3-profile"], "delegateType": "skill", "delegateName": "run-intake-interview", "delegateSkill": "run-intake-interview", "resourceIds": ["ref-handoff-contract"], "fatal_exit_codes": [2, 3]},
+    {"id": "P5-excavation", "step": 5, "title": "Phase 5: 抽象回答の深掘り", "dependsOn": ["P4-interview"], "delegateType": "agent", "delegateName": "skill-intake-purpose-excavator", "delegateSkill": null, "outputSchemaId": "schema-purpose", "resourceIds": ["schema-purpose"], "fatal_exit_codes": [2, 3]},
+    {"id": "P6-options", "step": 6, "title": "Phase 6: 外部連携選択肢", "dependsOn": ["P5-excavation"], "delegateType": "skill", "delegateName": "run-intake-option-catalog", "delegateSkill": "run-intake-option-catalog", "resourceIds": [], "fatal_exit_codes": [2, 3]},
+    {"id": "P7-visualize", "step": 7, "title": "Phase 7: 図解配置", "dependsOn": ["P6-options"], "delegateType": "skill", "delegateName": "run-intake-visualize", "delegateSkill": "run-intake-visualize", "resourceIds": [], "fatal_exit_codes": [2, 3]},
+    {"id": "P8-summary", "step": 8, "title": "Phase 8: summary 抽出", "dependsOn": ["P7-visualize"], "delegateType": "agent", "delegateName": "skill-intake-summarizer", "delegateSkill": null, "outputSchemaId": "schema-summary", "resourceIds": ["schema-summary"], "fatal_exit_codes": [2, 3]},
+    {"id": "P9-finalize", "step": 9, "title": "Phase 9: intake.md / intake.json 生成", "dependsOn": ["P8-summary"], "delegateType": "skill", "delegateName": "run-intake-finalize", "delegateSkill": "run-intake-finalize", "resourceIds": ["ref-handoff-contract"], "fatal_exit_codes": [2, 3]},
+    {"id": "P10-notion", "step": 10, "title": "Phase 10: Notion 公開 (指定 page PATCH / fidelity-guard 経由)", "dependsOn": ["P9-finalize"], "delegateType": "skill", "delegateName": "run-notion-intake-publish", "delegateSkill": "run-notion-intake-publish", "resourceIds": [], "fatal_exit_codes": [2, 3]},
+    {"id": "P11-next-action", "step": 11, "title": "Phase 11: harness-creator 引き渡しモード判定 (Notion 公開後)", "dependsOn": ["P10-notion"], "delegateType": "skill", "delegateName": "run-intake-next-action", "delegateSkill": "run-intake-next-action", "resourceIds": [], "fatal_exit_codes": [2, 3]}
+  ],
+  "resources": [
+    {"id": "ref-handoff-contract", "kind": "reference", "path": "./references/handoff-contract.md", "phaseIds": ["P1-kickoff", "P4-interview", "P9-finalize"]},
+    {"id": "ref-workflow-sequence", "kind": "reference", "path": "./references/workflow-sequence.md", "phaseIds": ["P1-kickoff", "P2-assumption", "P3-profile"]},
+    {"id": "schema-orchestrator-trace", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": []},
+    {"id": "schema-assumption", "kind": "schema", "path": "./schemas/phase2-assumption.schema.json", "phaseIds": ["P2-assumption"]},
+    {"id": "schema-profile", "kind": "schema", "path": "./schemas/phase3-profile.schema.json", "phaseIds": ["P3-profile"]},
+    {"id": "schema-purpose", "kind": "schema", "path": "./schemas/phase5-purpose.schema.json", "phaseIds": ["P5-excavation"]},
+    {"id": "schema-summary", "kind": "schema", "path": "./schemas/phase8-summary.schema.json", "phaseIds": ["P8-summary"]}
+  ]
+}

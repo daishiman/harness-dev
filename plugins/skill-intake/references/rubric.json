@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "skill-intake-rubric",
+  "version": "1.1.0",
+  "description": "skill-intake plugin 全 SubAgent / skill / phase 出力に対する機械検証 rubric。lint_subagent_seven_layer.py が評価し findings.schema.json 準拠で結果を返す。Layer 5 は l5-contract v2.0.0 (宣言型ゴールシーク) 準拠。",
+  "scope": {
+    "subagents_glob": "plugins/skill-intake/agents/skill-intake-*.md",
+    "skills_glob": "plugins/skill-intake/skills/*/SKILL.md",
+    "schemas_dir": "plugins/skill-intake/skills/*/schemas/"
+  },
+  "rules": [
+    {
+      "rule_id": "SE-FM-required",
+      "category": "frontmatter",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "frontmatter に name / description / tools / model が揃っている",
+      "verifier": "regex",
+      "pattern": "^---\\nname:.*\\ndescription:.*\\ntools:.*\\nmodel:.*\\n---"
+    },
+    {
+      "rule_id": "SE-L1-L7-ordered",
+      "category": "structure",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "本文に Layer 1 〜 Layer 7 の見出しが順序通り存在",
+      "verifier": "ordered_headings",
+      "headings": [
+        "## Layer 1: 基本定義層",
+        "## Layer 2: ドメイン層",
+        "## Layer 3: インフラ層",
+        "## Layer 4: 共通ポリシー層",
+        "## Layer 5: エージェント層",
+        "## Layer 6: オーケストレーション層",
+        "## Layer 7: UI / 提示層"
+      ]
+    },
+    {
+      "rule_id": "SE-L5-rubric-min5",
+      "category": "self_evaluation",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "本文末尾の Self-Evaluation セクション (Layer 5 goal-seek 完了チェックリスト) に checklist が 5 項目以上",
+      "verifier": "checklist_count_gte",
+      "section": "## Self-Evaluation",
+      "min": 5
+    },
+    {
+      "rule_id": "SE-L5-goalseek",
+      "category": "structure",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "Layer 5 が宣言型 (### 5.2 ゴール定義 + ### 5.3 実行方式) で、固定手順見出し (推論手順/思考プロセス) を含まない (l5-contract v2.0.0)",
+      "verifier": "goalseek_layer5",
+      "required_headings": ["### 5.2 ゴール定義", "### 5.3 実行方式"],
+      "forbidden_heading_pattern": "推論手順|思考プロセス"
+    },
+    {
+      "rule_id": "SE-L2-io-schema",
+      "category": "contract",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "メタ表に input_schema / output_schema が記載され、参照先 .schema.json が実在する",
+      "verifier": "schema_path_exists"
+    },
+    {
+      "rule_id": "SE-meta-r-id",
+      "category": "responsibility",
+      "severity": "error",
+      "applies_to": "subagent",
+      "description": "responsibility_id が R<phase>-<slug> 形式",
+      "verifier": "regex",
+      "pattern": "responsibility_id\\s*\\|\\s*R[0-9]+-[a-z0-9-]+"
+    },
+    {
+      "rule_id": "SE-lang-jp-body",
+      "category": "language",
+      "severity": "warn",
+      "applies_to": "subagent",
+      "description": "本文 (Layer 1-7) が日本語主体。連続 80 char 超の英文段落があれば warn",
+      "verifier": "language_check"
+    },
+    {
+      "rule_id": "SE-no-todo",
+      "category": "cleanliness",
+      "severity": "error",
+      "applies_to": ["subagent", "skill"],
+      "description": "未展開 {{...}} / 残置 TODO (TODO(human) 除く) が無い。{{...}} は Prompt Templates 節内のみ置換変数として許容",
+      "verifier": "regex_absent",
+      "patterns": ["\\{\\{[^}]+\\}\\}", "\\bTODO\\b(?!\\(human\\))"],
+      "exempt_sections": {"\\{\\{[^}]+\\}\\}": ["## Prompt Templates"]}
+    },
+    {
+      "rule_id": "SE-handoff-schema",
+      "category": "contract",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "description": "eval-log/handoff-*.json が handoff.schema.json に準拠",
+      "verifier": "jsonschema",
+      "schema": "plugins/skill-intake/schemas/handoff.schema.json"
+    },
+    {
+      "rule_id": "SE-context-fork-justified",
+      "category": "agent_isolation",
+      "severity": "warn",
+      "applies_to": "subagent",
+      "description": "メタ表 context_fork=true なら Layer 5.1 に理由が記載されている",
+      "verifier": "section_nonempty",
+      "section": "### 5.1 context_fork 要否"
+    },
+    {
+      "rule_id": "SE-skill-rubric-ref",
+      "category": "governance",
+      "severity": "warn",
+      "applies_to": "skill",
+      "description": "SKILL.md の References セクションで rubric.json への参照がある",
+      "verifier": "contains",
+      "needle": "references/rubric.json"
+    },
+    {
+      "rule_id": "SE-intake-abstract-verb",
+      "category": "domain_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/purpose.json",
+      "target_field": "true_purpose.verb_object",
+      "description": "purpose.json の verb_object に抽象動詞が含まれていたら fail。skill-intake の根本原則 (purpose-excavator Layer 1.1) 違反。",
+      "verifier": "regex_absent",
+      "patterns": ["効率化", "最適化", "自動化", "改善", "見える化", "高度化", "強化"]
+    },
+    {
+      "rule_id": "SE-intake-pain-ranking-empty",
+      "category": "domain_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/kickoff.json",
+      "description": "pattern != 'E' (未定) なのに pain_ranking が空。痛点抽出失敗を意味し、後続 phase 全体の前提が崩れる。",
+      "verifier": "jsonpath_check",
+      "assertion": "pattern == 'E' || (pain_ranking is array && pain_ranking.length >= 1)"
+    },
+    {
+      "rule_id": "SE-intake-true-problem-shallow",
+      "category": "domain_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/summary.json",
+      "target_field": "five_axes.true_problem",
+      "description": "true_problem が 20 字未満。深掘り不足で Gate A 通過させてはいけない。",
+      "verifier": "min_length",
+      "min": 20
+    },
+    {
+      "rule_id": "SE-intake-viz-uniqueness",
+      "category": "notion_output_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/intake-final-context.json",
+      "description": "section_diagrams[].asset_id が章間で重複していないか。重複は Notion ページ上で『同じような図解』が並ぶ原因。§5 の 5 枚内部だけ重複許容 (fig1-5 は同一 visualizer 配下の同質シリーズのため例外)。",
+      "verifier": "asset_id_unique_across_sections",
+      "exempt_sections": ["5_visualizer"]
+    },
+    {
+      "rule_id": "SE-intake-viz-coverage",
+      "category": "notion_output_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/intake-final-context.json",
+      "description": "§1〜§10 の全章に mermaid_source または image を含む section_diagrams が最低 1 枚存在する。§5 は 5 枚必須 (既存 figures フィールド)。図解漏れは『情報が漏れていると失敗』ルール直接違反。",
+      "verifier": "section_has_diagram",
+      "required_sections": ["1_assumption_challenger", "2_user_profile", "3_purpose_excavator", "4_option_presenter", "6_five_axes_summary", "7_design_decisions", "8_open_questions", "9_handoff_contract", "10_self_updater"],
+      "min_per_section": 1
+    },
+    {
+      "rule_id": "SE-intake-section-parameters",
+      "category": "notion_output_quality",
+      "severity": "error",
+      "applies_to": "phase-output",
+      "target_file": "output/*/intake-final-context.json",
+      "description": "各章の section_canonical_map で宣言された required_fields (absence_behavior=block) が全て埋まっている。パラメーター漏れは失敗扱い。",
+      "verifier": "required_fields_present",
+      "schema_ref": "section_canonical_map.json#/sections[]"
+    },
+    {
+      "rule_id": "SE-intake-question-repetition",
+      "category": "domain_quality",
+      "severity": "warn",
+      "applies_to": "phase-output",
+      "target_file": "output/*/interview.json",
+      "description": "直前ラウンドと類似度 0.8 以上の質問が 2 回連続出題された。言い換え反復 (同意ループ予兆) として警告。",
+      "verifier": "similarity_consecutive",
+      "field": "rounds[].question_text",
+      "similarity_threshold": 0.8
+    }
+  ],
+  "thresholds": {
+    "fail_if_error_count_gte": 1,
+    "warn_if_warn_count_gte": 3,
+    "value_realized_score_min": 0.6
+  },
+  "evidence_emit": {
+    "format": "findings.schema.json",
+    "path_template": "eval-log/skill-intake/rubric-<YYYY-MM-DD>-<HHMMSS>.json"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "skill_name": "run-skill-intake",
+  "prefix": "run",
+  "kind": "run",
+  "role_suffix": null,
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "非エンジニアからスキル要件を引き出すとき",
+    "intake 11段階ワークフローを順次起動したいとき",
+    "run-skill-create Step 1 の非技術者向け代替が必要なとき"
+  ],
+  "output_contract": "output/<hint>/intake.md + intake.json + notion-url.txt + self-update.json。11 phase 全完了 + quality_gate.py PASS + cross_check.py PASS + Notion 公開成功で完了。子 Skill / SubAgent 起動順序と handoff JSON を eval-log/intake-trace.json に記録する。",
+  "boundary": "本スキルは orchestrator として子 Skill/SubAgent の起動順序と handoff のみを担当し、各フェーズの個別ロジック (kickoff 質問・interview シート充足・excavation 技法選択・visual 配置・summary 文章生成・next-action 判定・finalize render・Notion publish) は一切持たない。",
+  "key_constraints": [
+    "子 Skill / SubAgent への委譲のみで自身は対話質問を実行しない",
+    "各 phase 完了時に handoff JSON を eval-log/intake-trace.json に追記",
+    "失敗フェーズで停止し、再開ポイントを示す"
+  ],
+  "deterministic_checks": [
+    "scripts/quality_gate.py",
+    "scripts/cross_check.py",
+    "scripts/verify_notion_assets.py",
+    "scripts/intake_publish_pipeline.py"
+  ],
+  "external_systems": ["Notion REST API", "macOS Keychain"],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "cli_tools": ["python3", "security"],
+  "mcp_tools": [],
+  "placement_candidates": ["Skill", "Subagent"],
+  "base_skill": null,
+  "delegate_agent": null,
+  "rubric_refs": [],
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "responsibilities": [
+    {
+      "id": "R1",
+      "name": "phase-orchestration",
+      "scope": "11 phase の順次起動・handoff 受け渡し・失敗停止",
+      "owner_agent": null,
+      "prompt_required": true,
+      "vocabulary_tier": "intermediate"
+    },
+    {
+      "id": "R2",
+      "name": "completion-gate",
+      "scope": "全 phase 完了後の quality_gate / cross_check / publish pipeline 起動",
+      "owner_agent": null,
+      "prompt_required": false
+    }
+  ],
+  "prompt_creator_policy": "required",
+  "open_questions": [
+    "既存 run-skill-intake-aggregator との関係 (置き換え or 並存)。Phase C で aggregator を deprecate する想定。"
+  ],
+  "additional_resources": [
+    {"path": "references/workflow-sequence.md", "when_to_read": "11 phase の順序と handoff JSON 仕様を確認するとき"},
+    {"path": "references/handoff-contract.md", "when_to_read": "各 phase 間の JSON 契約を確認するとき"},
+    {"path": "references/resource-map.yaml", "when_to_read": "他 reference を読む前に進行段階に応じた最小読み込み先を確認するとき"}
+  ]
+}

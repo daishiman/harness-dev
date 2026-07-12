@@ -1,0 +1,29 @@
+{
+  "decision": "approved",
+  "approved_at": "2026-05-20T13:45:56.508070+09:00",
+  "approver": "solo_operator (user-directed execution request, 2026-05-20)",
+  "approved_partition_plan_sha256": "a16e1d812f78b4ed43db87e7ae78f2d0d33be64d9427c096a2510a7ebd3dfff0",
+  "selected_strategy": "A domain/cohesion",
+  "rejected_alternatives": [
+    "B lifecycle/prefix",
+    "C single-runtime-plugin"
+  ],
+  "open_todos_resolved": true,
+  "conditions": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "artifact_counts": {
+    "migrate_records": 59,
+    "partitions": 7,
+    "external_ref_candidates": 12,
+    "inter_partition_refs": 4
+  },
+  "external_ref_exception_policy": "All candidates are recorded in partition-plan external_ref_exceptions as phase2-03/06 rewrite inputs, not accepted final runtime dependencies.",
+  "known_notes": [
+    "v1.1 schema bump (2026-05-20): keywords field added per phase2-03 dependency. Backward-compatible additive change; no re-approval required.",
+    "v1.2 schema bump (2026-05-20): files[].rel prefixed with creator-kit/ to match phase2-01 inventory scope. Path-semantic correction discovered in Phase2-06 pre-flight; previously root-relative paths in v1/v1.1 were a documentation error."
+  ]
+}

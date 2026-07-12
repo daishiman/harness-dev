@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "adapters": [
+    {
+      "name": "local",
+      "script": "scripts/adapters/sink_local.py",
+      "requires_secret": false,
+      "description": "ローカルファイルシステムへの書き出し",
+      "params_schema": {
+        "path":        { "type": "string", "required": true },
+        "format":      { "type": "string", "enum": ["markdown", "json", "jsonl"], "default": "markdown" },
+        "on_conflict": { "type": "string", "enum": ["error", "update", "append", "skip"], "default": "append" }
+      }
+    },
+    {
+      "name": "http",
+      "script": "scripts/adapters/sink_http.py",
+      "requires_secret": "optional",
+      "description": "任意HTTP API (POST/PUT/PATCH)",
+      "params_schema": {
+        "url":     { "type": "string", "required": true },
+        "method":  { "type": "string", "enum": ["POST", "PUT", "PATCH"], "default": "POST" },
+        "headers": { "type": "object" },
+        "auth":    { "type": "object" }
+      }
+    },
+    {
+      "name": "notion",
+      "script": "scripts/adapters/sink_notion.py",
+      "requires_secret": true,
+      "description": "Notion DB pages作成・更新",
+      "params_schema": {
+        "database_id": { "type": "string", "required": true },
+        "on_conflict": { "type": "string", "enum": ["error", "update", "append", "skip"], "default": "update" },
+        "token_ref":   { "type": "string", "required": true }
+      }
+    },
+    {
+      "name": "sheets",
+      "script": "scripts/adapters/sink_sheets.py",
+      "requires_secret": true,
+      "description": "Google Sheets追記",
+      "params_schema": {
+        "spreadsheet_id": { "type": "string", "required": true },
+        "sheet":          { "type": "string", "default": "Sheet1" },
+        "on_conflict":    { "type": "string", "enum": ["append", "update"], "default": "append" },
+        "token_ref":      { "type": "string", "required": true }
+      }
+    },
+    {
+      "name": "slack",
+      "script": "scripts/adapters/sink_slack.py",
+      "requires_secret": true,
+      "description": "Slack webhook通知",
+      "params_schema": {
+        "channel":     { "type": "string" },
+        "webhook_ref": { "type": "string", "required": true }
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1.0",
+  "task_id": "phase2-01",
+  "approver": "solo_operator",
+  "approved_at": "2026-05-20T12:27:55.854449+09:00",
+  "decision": "approved",
+  "decision_basis": "DoD-1〜10 全 PASS + CI green + bypass-cooldown 容認 (bootstrap_phase)",
+  "reviewed_artifacts": [
+    "eval-log/task/phase2-01/residual-files.txt",
+    "eval-log/task/phase2-01/residual-inventory.json",
+    "eval-log/task/phase2-01/verdict-summary.txt",
+    "eval-log/task/phase2-01/dod-verification.md",
+    "doc/migration/phase2/README.md"
+  ],
+  "review_notes": [
+    "All creator-kit files are represented in residual-inventory.json.",
+    "Every record has one of the four allowed verdict_tentative values.",
+    "Delete records satisfy bidirectional condition: duplicate_of_plugin OR pyc/cache asset.",
+    "_bootstrap/, install.sh, and install.ps1 are classified as keep-non-plugin.",
+    "Deferred draft records include defer_reason.",
+    "All migrate-to-plugin records carry target_plugin field (null pending phase2-02 confirmation).",
+    "All keep-non-plugin records carry explicit reason.",
+    "Section 4 explicitly lists manifest.json / governance-log / plugin-pilot quality as out-of-scope."
+  ],
+  "inventory_record_count": 245,
+  "verdict_tentative_counts": {
+    "defer": 2,
+    "delete": 173,
+    "keep-non-plugin": 11,
+    "migrate-to-plugin": 59
+  },
+  "dod_results": {
+    "DoD-1": "pass",
+    "DoD-2": "pass",
+    "DoD-3": "pass",
+    "DoD-4": "pass",
+    "DoD-5": "pass",
+    "DoD-6": "pass",
+    "DoD-7": "pass",
+    "DoD-8": "pass",
+    "DoD-9": "pass",
+    "DoD-10": "pass"
+  }
+}

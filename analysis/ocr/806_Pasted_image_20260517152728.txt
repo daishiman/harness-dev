@@ -1,0 +1,38 @@
+Reference content adds knowledge Claude applies to your
+current work. Conventions, patterns, style guides, domain
+knowledge. This content runs inline so Claude can use it
+alongside your conversation context.
+
+eS                                                                     Oo +
+
+name: api-conventions
+
+description: API design patterns for this codebase
+
+When writing API endpoints:
+
+- Use RESTful naming conventions
+
+- Return consistent error formats
+
+- Include request validation
+Task content gives Claude step-by-step instructions fora
+specific action, like deployments, commits, or code
+generation. These are often actions you want to invoke
+directly with /skill-name rather than letting Claude decide
+when to run them. Add disable-model-invocation: true to
+prevent Claude from triggering it automatically.
+
+---                       © ロ を
+
+name: deploy
+
+description: Deploy the application to production
+
+context: fork
+
+disable-model-invocation: true
+
+Deploy the application:
+
+1. Run the test suite

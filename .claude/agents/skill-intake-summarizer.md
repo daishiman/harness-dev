@@ -1,0 +1,1 @@
+../../plugins/skill-intake/agents/skill-intake-summarizer.md

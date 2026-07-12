@@ -1,0 +1,36 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-goal-seek",
+    "skill_md_sha256": "cb2a849d07810475594105e2ae2c6a0578747565fb7886114f812aac86b22394"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "決定論層(IN1/IN2): 中間成果物アンカーの存在/行数(progress.iteration+1)/6必須キー/original_goal 不変/SHA-256 hash 一致/drift_signal enum を検証ブロック inline Python が機械判定(L125-146)し、完了判定が goal-spec.checklist 全 done または max_loops 到達時 open_issues 記録の二経路で明示的に閉じる(L68/L97/L148-152)。verify_by=lint/script の判定可能性を満たす",
+      "質的層(OUT1/OUT2): frontmatter allowed-tools の Agent 搭載と主要ルール6のコンテキスト分離(SubAgent/Agent Team fork・親返却は成果物パスと handoff 要約のみ)が構造整合、completeness_exempt の prompts/manifest 免除が汎用オーケストレーター責務と整合、固定手順非ハードコード原則と paradigm.md 共有正本参照で重複定義を回避(SSOT)"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "dev同期merge後の現 SKILL.md(sha256 cb2a849d...)を ref-skill-design-rubric/rubric.json(rubric_version 1.3.0)で genuine 採点。FM-001 name=run-goal-seek は prefix(run)+kebab・60字以下で PASS。FM-002/003 description は『〜とき』trigger 2個+末尾『。』で 2-3個レンジ PASS。FM-004 内部動作詞(採点する/sha256/exit code 等)を description に含まず PASS。FM-005 description 冒頭が名詞句で日本語動詞許容 PASS。BD-003 本文168行 ≤300(max_skill_md_lines)PASS。PD-001 references_refs 参照あり PASS。PD-002 冒頭30行に『## 目的と出力契約』(BD-001 の Purpose/Output Contract 日本語版)+禁則語『必須』『禁止』『不変』を含み日本語許容で PASS。BD-001『## Purpose & Output Contract』/BD-002『## Gotchas』は本文が日本語見出し『## 目的と出力契約』『## 注意点』のため厳格英語一致では非一致だが、リポジトリ確立キャリブレーション(日本語見出し許容=localization gap low smell)に従い減点せず。KL-001..005 は knowledge/ ディレクトリ不在・frontmatter.knowledge_loop 不在のため存在ゲートで無条件 PASS(skip)。AG/HK/CM/PC/PR/WF 系は applies_to_kinds が agent/hook/command/plugin-composition/prompt/workflow で本 kind=skill には非適用。high severity 0件=PASS。導出 IN1/IN2/OUT1/OUT2 は本スキル固有目的(アンカー不変機構/checklist完了判定/コンテキスト分離fork/都度生成原則)を反映し adequacy 確認。",
+  "retargeted_from": {
+    "eval_log_path": "eval-log/skill-creator/run-goal-seek/content-review/",
+    "retargeted_at": "2026-07-02"
+  }
+}

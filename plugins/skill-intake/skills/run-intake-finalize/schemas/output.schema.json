@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-intake-finalize/intake.schema.json",
+  "title": "intake.json",
+  "description": "Phase 9 出力。harness-creator への引き渡し JSON。validation field は quality_gate / cross_check の結果を保持する。トップレベル形状の正本は scripts/convert_md_to_json.py の convert() 出力 (本 schema はその実出力に追従する)。",
+  "$comment": "additionalProperties:false のまま convert_md_to_json.py が emit する全キー (user_profile / 5_axes / open_questions / integrations / raw_meta) を列挙して schema を実出力へ追従させた。コード挙動は不変。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name_hint", "pattern", "sections", "validation"],
+  "properties": {
+    "skill_name_hint": {"type": "string", "minLength": 1},
+    "pattern": {"type": "string", "enum": ["A", "B", "C", "D", "E"]},
+    "user_profile": {
+      "type": "string",
+      "description": "利用者プロファイル節の抽出テキスト (pick_user_profile)。未検出時は空文字。"
+    },
+    "5_axes": {
+      "type": "object",
+      "description": "5 軸サマリ (output_target / info_source / share_target / true_problem / knowledge_assets)。§6 に intent_contract fenced JSON があれば intent_contract キーも入る。"
+    },
+    "sections": {
+      "type": "object",
+      "description": "セクション ID をキーとし render 済み構造化データを保持する。実体は intake-final-schema.json (aggregator references) を参照。"
+    },
+    "open_questions": {
+      "type": "array",
+      "description": "未解決論点 (convert_md_to_json.py では既定 [])。"
+    },
+    "integrations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "front-matter integrations をカンマ分割した連携先リスト。"
+    },
+    "raw_meta": {
+      "type": "object",
+      "description": "intake.md front-matter の生 key/value マップ。"
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["render", "quality_gate", "cross_check"],
+      "properties": {
+        "render": {"type": "string", "enum": ["PASS", "FAIL"]},
+        "quality_gate": {"type": "string", "enum": ["PASS", "FAIL"]},
+        "cross_check": {"type": "string", "enum": ["PASS", "FAIL"]},
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["where", "reason", "retry_phase"],
+            "properties": {
+              "where": {"type": "string"},
+              "reason": {"type": "string"},
+              "retry_phase": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

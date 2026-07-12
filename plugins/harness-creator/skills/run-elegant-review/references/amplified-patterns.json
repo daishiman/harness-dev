@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "purpose": "正のフィードバックループで抽出された再利用可能パターンの蓄積先。各レビュー周回で抽出された設計DNAを記録し、後続のSkill開発・章執筆で参照する。",
+  "extract_granularity": "phase",
+  "patterns": [
+    {
+      "id": "P001",
+      "name": "禁止リストをデータで宣言→lintで機械強制",
+      "origin": "Phase H (forbidden_deps)",
+      "applies_to": ["dependency management", "naming rules", "tool restrictions"],
+      "transferred_to": ["plugins/harness-creator/.claude-plugin/plugin.json forbidden_dependencies", "lint-forbidden-deps.py"],
+      "principle": "ルールをMarkdownに閉じず、データ宣言+lintで両輪化する"
+    },
+    {
+      "id": "P002",
+      "name": "LLMに見せない契約をデータで宣言",
+      "origin": "Phase D (Keychain)",
+      "applies_to": ["secret management", "tool permission", "MCP配線"],
+      "transferred_to": ["scripts/secrets/keychain_helper.py", "audit_secret_leak.py"],
+      "principle": "機密はLLMコンテキストではなくOS機密ストア参照に統一する"
+    },
+    {
+      "id": "P003",
+      "name": "自己採点回避: 判定を機械生成にする",
+      "origin": "Phase I (二周目elegant-review)",
+      "applies_to": ["rubric scoring", "CI判定", "completion flag"],
+      "transferred_to": ["32章 更新ルール7 (自動暫定PASS降格)"],
+      "principle": "判定者と作成者を分離する。判定はCIまたは独立評価者に委譲する"
+    },
+    {
+      "id": "P004",
+      "name": "暫定PASS制度で不可逆判断を回避",
+      "origin": "25章L174",
+      "applies_to": ["未完了タスクの正直な表現", "CI未接続項目の扱い"],
+      "transferred_to": ["32章C4判定", "25章L11"],
+      "principle": "完全PASSと書く誘惑を断ち、条件付きPASSで延期価値を保持する"
+    },
+    {
+      "id": "P005",
+      "name": "セットアップ疎通確認 = install位置自己解決doctor + READMEチャット委譲 + 生パス降格",
+      "origin": "mf-kessai 生ターミナル $CLAUDE_PLUGIN_ROOT 空展開事故の elegant-review",
+      "applies_to": ["配布pluginのREADMEセットアップ手順", "外部依存(API/DB/秘密)の疎通確認", "install位置非依存の資産解決"],
+      "transferred_to": ["plugins/mf-kessai-invoice-check/lib/mfk_doctor.py", "plugins/mf-kessai-invoice-check/README.md Step3+故障モード警告", "scripts/lint-readme-plugin-root-portability.py", "plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md 層2"],
+      "principle": "導入者がコピペするREADMEに生 $CLAUDE_PLUGIN_ROOT/repo相対を書かず、疎通確認は __file__ 相対で自己解決する doctor へチャット委譲し、生パスは fallback 形 ${CLAUDE_PLUGIN_ROOT:-plugins/<name>} で開発者補足へ降格する。doctorは秘密マスク・WARN-not-FAIL・GET専用・既存lib再利用。再現性はREADME portability lintで機械担保する(re_audit_trigger: 新規配布plugin生成 / README bash編集)"
+    }
+  ],
+  "update_rule": "elegant-review が新しいパターンを抽出したら、原則1周あたり1パターン追加。同種パターンは統合する。"
+}

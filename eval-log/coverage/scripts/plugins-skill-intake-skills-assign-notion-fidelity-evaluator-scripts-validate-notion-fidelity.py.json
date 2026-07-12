@@ -1,0 +1,18 @@
+{
+ "artifact": "plugins/skill-intake/skills/assign-notion-fidelity-evaluator/scripts/validate-notion-fidelity.py",
+ "type": "scripts",
+ "mechanical": true,
+ "llm_eval": {
+  "verdict": "PASS",
+  "score": 88,
+  "notes": "Well-decomposed (char/field/viz/_decide_verdict/_render_markdown/evaluate); runs end-to-end producing correct verdict and exit codes (0/1/2/64). Explicit threshold-order and file-existence validation with stderr msgs; no bare except. Writes only to out_dir with mkdir exist_ok, no network/secret/destructive ops. Deduction: no PEP-723 frontmatter; snapshot['sections'] direct subscript (trusted bundled ref)."
+ },
+ "reviewed_by": "workflow-code-review",
+ "checked": [
+  "soundness",
+  "responsibility",
+  "error-handling",
+  "side-effect-safety",
+  "frontmatter"
+ ]
+}

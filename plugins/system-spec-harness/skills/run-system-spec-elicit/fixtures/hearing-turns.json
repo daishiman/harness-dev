@@ -1,0 +1,306 @@
+[
+  {
+    "question": "対象プラットフォームはどれですか?",
+    "answer": "本システムは社内向け Web アプリのみ。モバイル/タブレット/デスクトップは全カテゴリで対象外。",
+    "approval_id": "appr-001",
+    "approval_note": "ユーザー一括承認: 非 Web プラットフォームは全カテゴリで対象外",
+    "ops": [
+      {
+        "action": "exclude",
+        "category": "database",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "database",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "database",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "database",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "database",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "auth",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "auth",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "auth",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "auth",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "auth",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "ui-ux",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "ui-ux",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "ui-ux",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "ui-ux",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "ui-ux",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "security",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "security",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "security",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "security",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "security",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "infrastructure",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "infrastructure",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "infrastructure",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "infrastructure",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "infrastructure",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "backend",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "backend",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "backend",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "backend",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "backend",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "frontend",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "frontend",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "frontend",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "frontend",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "frontend",
+        "platform": "desktop-macos"
+      },
+      {
+        "action": "exclude",
+        "category": "maintenance-ops",
+        "platform": "mobile"
+      },
+      {
+        "action": "exclude",
+        "category": "maintenance-ops",
+        "platform": "tablet"
+      },
+      {
+        "action": "exclude",
+        "category": "maintenance-ops",
+        "platform": "desktop-windows"
+      },
+      {
+        "action": "exclude",
+        "category": "maintenance-ops",
+        "platform": "desktop-linux"
+      },
+      {
+        "action": "exclude",
+        "category": "maintenance-ops",
+        "platform": "desktop-macos"
+      }
+    ]
+  },
+  {
+    "question": "データベース（database）× Web の要件は?",
+    "answer": "PostgreSQL 15。ユーザー/請求/監査ログの3スキーマ。日次バックアップ。",
+    "qa_id": "qa-001",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "database",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "認証(ログイン)（auth）× Web の要件は?",
+    "answer": "OIDC(社内 IdP)+ ロールベース認可。セッションは 8h。",
+    "qa_id": "qa-002",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "auth",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "UI-UX（ui-ux）× Web の要件は?",
+    "answer": "レスポンシブ Web。WCAG 2.1 AA 目標。主要動線は3クリック以内。",
+    "qa_id": "qa-003",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "ui-ux",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "セキュリティ（security）× Web の要件は?",
+    "answer": "TLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。",
+    "qa_id": "qa-004",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "security",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "インフラ（infrastructure）× Web の要件は?",
+    "answer": "コンテナを社内 k8s にデプロイ。CI/CD は GitHub Actions。",
+    "qa_id": "qa-005",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "infrastructure",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "バックエンド（backend）× Web の要件は?",
+    "answer": "Python/FastAPI。REST + 非同期ジョブ(キュー)。",
+    "qa_id": "qa-006",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "backend",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "フロントエンド（frontend）× Web の要件は?",
+    "answer": "React + TypeScript。状態管理は最小限のグローバルストア。",
+    "qa_id": "qa-007",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "frontend",
+        "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "保守運用管理（maintenance-ops）× Web の要件は?",
+    "answer": "オンコール輪番・障害 runbook・週次リストア訓練。",
+    "qa_id": "qa-008",
+    "ops": [
+      {
+        "action": "confirm",
+        "category": "maintenance-ops",
+        "platform": "web"
+      }
+    ]
+  }
+]

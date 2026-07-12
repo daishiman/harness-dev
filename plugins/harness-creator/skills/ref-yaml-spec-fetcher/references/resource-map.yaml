@@ -1,0 +1,18 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-yaml-spec-fetcher の references/ ファイル索引
+# NOTE: yaml-spec-cache.md と spec-diff-history.md は週次更新で別途配置される
+resources:
+  - file: yaml-spec-cache.md
+    topic: Claude Code 公式 frontmatter 仕様の週次キャッシュ (last_fetched 付き)
+    read_when: 公式仕様の現行値を参照したいとき
+    status: pending-fetch  # 初回取得は ref-yaml-spec-fetcher の手動取得手順に従う
+  - file: spec-diff-history.md
+    topic: キャッシュ更新ごとの差分履歴 (追加/削除/変更フィールド)
+    read_when: 仕様が変わったか / いつ変わったかを確認したいとき
+    status: pending-fetch
+prompts:
+  - file: ../prompts/R1-search-summarize.md
+    purpose: R1 検索/要約 (query → matches[] + staleness フラグ)
+schemas:
+  - file: ../schemas/query-result.schema.json
+    purpose: search-summarize の出力スキーマ

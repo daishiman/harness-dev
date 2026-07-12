@@ -1,0 +1,1 @@
+../plugins/skill-governance-hooks/scripts/hook-verify-evaluator-json.py

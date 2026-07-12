@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/prompt-creator/run-prompt-create/schemas/build-trace.schema.json",
+  "title": "Prompt Build Trace",
+  "description": "run-prompt-creator-7layer が eval-log/prompt-build-trace.json に書く Layer 別 coverage 証跡。Gate 2 の前提として L1-L7 + Pass 0-4 を網羅する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prompt_name", "responsibility_id", "timestamp", "layer_coverage", "review_passes"],
+  "properties": {
+    "prompt_name": {"type": "string"},
+    "responsibility_id": {"type": "string", "pattern": "^R[0-9]+$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "mode": {"type": "string", "enum": ["create", "update"]},
+    "brief_path": {"type": "string"},
+    "output_path": {"type": "string", "description": "生成された .md/.yaml 実体のパス。"},
+    "sha256": {"type": "string", "description": "出力ファイルの sha256 (validate-build-trace.py 検証用)。"},
+    "path_convention": {"type": "string", "enum": ["skill-local-v1", "agents-legacy"]},
+    "format": {"type": "string", "enum": ["md", "yaml", "json", "xml"]},
+    "layer_coverage": {
+      "type": "object",
+      "description": "L1-L7 ごとの生成状態。PASS / N/A / skip(理由付き)。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^L[1-7]$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": {"type": "string", "enum": ["PASS", "N/A", "skip"]},
+            "reason": {"type": "string"},
+            "evidence": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "review_passes": {
+      "type": "object",
+      "description": "Phase 4-B 4 パスレビューの結果 (Pass 0-4)。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^Pass[0-4]$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+            "iteration": {"type": "integer", "minimum": 0, "maximum": 3},
+            "notes": {"type": "string"}
+          }
+        }
+      }
+    },
+    "completeness_score": {"type": "number", "minimum": 0, "maximum": 1, "description": "verify-completeness.py の充足率 (0-1)。"},
+    "autonomous_iterations": {"type": "integer", "minimum": 0, "maximum": 3, "description": "Phase 4-C 自律改善ループ回数。"},
+    "injected_target": {"type": ["string", "null"], "description": "Edit 注入対象の SubAgent .md パス (なければ null)。"},
+    "lint_result": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "lint-agent-prompt-section.py の結果。"}
+  }
+}

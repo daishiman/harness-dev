@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/findings.schema.json",
+  "title": "Findings Handoff Envelope",
+  "description": "run-skill-create orchestrator の handoff envelope (evaluator 集約結果の封筒)。C1-C4 verdict と severity-bucket-observations を持つ。producer 正本 (run-elegant-review が返す findings.json) は ../../run-elegant-review/schemas/findings.schema.json。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "evaluator", "verdicts", "findings"],
+  "properties": {
+    "skill_name": {"type": "string"},
+    "evaluator": {
+      "type": "string",
+      "enum": ["assign-skill-design-evaluator", "run-elegant-review", "rubric-aggregate"]
+    },
+    "timestamp": {"type": "string", "format": "date-time"},
+    "verdicts": {
+      "type": "object",
+      "description": "C1-C4 ゲート別 PASS/FAIL/N-A 判定。",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C2": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C3": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C4": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "bucket", "observations"],
+        "properties": {
+          "id": {"type": "string"},
+          "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+          "bucket": {
+            "type": "string",
+            "description": "C1-C4 のいずれか、または rubric カテゴリ (FM-001 等)。"
+          },
+          "observations": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1
+          },
+          "evidence_paths": {"type": "array", "items": {"type": "string"}},
+          "suggested_fix": {"type": "string"}
+        }
+      }
+    },
+    "pattern_ref_candidates": {"type": "array", "items": {"type": "string"}},
+    "new_patterns": {"type": "array", "items": {"type": "string"}},
+    "mass_production_risk": {"type": "string", "enum": ["low", "medium", "high"]}
+  }
+}

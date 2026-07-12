@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-intake-interview/interview.schema.json",
+  "title": "interview.json",
+  "description": "Phase 4 出力。5 軸シート充足状態、入力→出力 intent_contract、needs_excavation フラグを保持する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["filled_ratio", "five_axes_complete", "unresolved", "needs_excavation", "abstract_answers", "five_axes", "intent_contract", "pending_probes", "qa_log"],
+  "properties": {
+    "filled_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+    "five_axes_complete": {"type": "boolean"},
+    "unresolved": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "needs_excavation": {"type": "boolean"},
+    "abstract_answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["axis", "answer", "reason"],
+        "properties": {
+          "axis": {"type": "string", "enum": ["output", "source", "share", "true-pain", "knowledge-asset"]},
+          "answer": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "five_axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rows", "pipeline"],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "content", "depth"],
+            "properties": {
+              "name": {"type": "string", "enum": ["出力先", "情報源", "共有相手", "真の課題", "ナレッジ資産"]},
+              "content": {"type": "string", "minLength": 1},
+              "depth": {"type": "string", "enum": ["shallow", "standard", "deep"]},
+              "must": {"type": "boolean"}
+            }
+          }
+        },
+        "pipeline": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ingest", "analysis", "storage", "retrieval", "update"],
+          "properties": {
+            "ingest": {"type": "string", "minLength": 1},
+            "analysis": {"type": "string", "minLength": 1},
+            "storage": {"type": "string", "minLength": 1},
+            "retrieval": {"type": "string", "minLength": 1},
+            "update": {"type": "string", "enum": ["daily", "weekly", "monthly", "on-demand"]}
+          }
+        }
+      }
+    },
+    "intent_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_spec", "output_spec", "slot_status"],
+      "properties": {
+        "input_spec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sources", "trigger", "frequency", "raw_materials"],
+          "properties": {
+            "sources": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+            "trigger": {"type": "string", "minLength": 1},
+            "frequency": {"type": "string", "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]},
+            "raw_materials": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          }
+        },
+        "output_spec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sink", "format", "granularity", "audience", "cadence"],
+          "properties": {
+            "sink": {"type": "string", "minLength": 1},
+            "format": {"type": "string", "enum": ["bullet", "table", "prose", "document", "message", "dashboard", "other"]},
+            "granularity": {"type": "string", "minLength": 1},
+            "audience": {"type": "string", "minLength": 1},
+            "cadence": {"type": "string", "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]}
+          }
+        },
+        "slot_status": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "input_spec.sources",
+            "input_spec.trigger",
+            "input_spec.frequency",
+            "input_spec.raw_materials",
+            "output_spec.sink",
+            "output_spec.format",
+            "output_spec.granularity",
+            "output_spec.audience",
+            "output_spec.cadence"
+          ],
+          "properties": {
+            "input_spec.sources": {"$ref": "#/definitions/slot_status"},
+            "input_spec.trigger": {"$ref": "#/definitions/slot_status"},
+            "input_spec.frequency": {"$ref": "#/definitions/slot_status"},
+            "input_spec.raw_materials": {"$ref": "#/definitions/slot_status"},
+            "output_spec.sink": {"$ref": "#/definitions/slot_status"},
+            "output_spec.format": {"$ref": "#/definitions/slot_status"},
+            "output_spec.granularity": {"$ref": "#/definitions/slot_status"},
+            "output_spec.audience": {"$ref": "#/definitions/slot_status"},
+            "output_spec.cadence": {"$ref": "#/definitions/slot_status"}
+          }
+        }
+      }
+    },
+    "pending_probes": {
+      "type": "array",
+      "description": "未充足 intent slot がある場合に次に聞く probe_id。完了時は空配列。",
+      "items": {"type": "string"}
+    },
+    "qa_log": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question_text", "selected_option", "raw_answer", "normalized_answer"],
+        "anyOf": [
+          {"required": ["qid", "axis"]},
+          {"required": ["probe_id", "target_slot"]}
+        ],
+        "properties": {
+          "qid": {"type": "string", "pattern": "^Q[0-9]{2}$"},
+          "probe_id": {"type": "string", "pattern": "^PB-[A-Z]+-[A-Z]+$"},
+          "target_slot": {"type": "string", "pattern": "^(input_spec|output_spec)\\.[a-z_]+$"},
+          "answer_source": {"type": "string", "enum": ["direct_answer", "probe", "inferred"]},
+          "axis": {"type": "string", "enum": ["output", "source", "share", "true-pain", "knowledge-asset"]},
+          "question_text": {"type": "string", "minLength": 1},
+          "selected_option": {"type": "string"},
+          "raw_answer": {"type": "string", "minLength": 1},
+          "normalized_answer": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "procedure": {
+      "description": "現状実施手順 (as-is procedure)。5 軸ヒアリング完了後に抽出する 6 本目の軸。手順を言語化できるユーザーは mode=detailed で steps[] を、できないユーザーは mode=overview_fallback で difficulty_flag+overview を持つ。完全性の正本判定は plugin-root scripts/validate-procedure-completeness.py。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["detailed", "overview_fallback"]},
+        "steps": {
+          "type": "array",
+          "description": "detailed モードの順序付きステップ。各要素は action/input/output/tool/frequency を非空で持つ。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "input", "output", "tool", "frequency"],
+            "properties": {
+              "action": {"type": "string", "minLength": 1},
+              "input": {"type": "string", "minLength": 1},
+              "output": {"type": "string", "minLength": 1},
+              "tool": {"type": "string", "minLength": 1},
+              "frequency": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "difficulty_flag": {"type": "boolean"},
+        "overview": {
+          "type": "object",
+          "description": "overview_fallback モードの概略情報 (工程数目安/関与者/頻度)。",
+          "additionalProperties": false,
+          "required": ["step_count_estimate", "participants", "frequency"],
+          "properties": {
+            "step_count_estimate": {"type": "string", "minLength": 1},
+            "participants": {"type": "string", "minLength": 1},
+            "frequency": {"type": "string", "minLength": 1}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "detailed"}}, "required": ["mode"]},
+          "then": {"required": ["steps"], "properties": {"steps": {"minItems": 1}}}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "overview_fallback"}}, "required": ["mode"]},
+          "then": {"required": ["difficulty_flag", "overview"], "properties": {"difficulty_flag": {"const": true}}}
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "slot_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filled", "source"],
+      "properties": {
+        "filled": {"type": "boolean"},
+        "source": {"type": "string", "enum": ["direct_answer", "probe", "inferred"]},
+        "probe_ids": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

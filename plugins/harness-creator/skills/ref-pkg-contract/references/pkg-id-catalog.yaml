@@ -1,0 +1,177 @@
+# PKG ID 機械可読カタログ
+# 正本: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
+# 改廃: 27章 §4.1 rubric governance 経由必須
+version: "1.0"
+last_updated: "2026-05-23"
+source_chapter: "36"
+
+pkg_ids:
+  PKG-001:
+    name: "claude plugin validate --strict 通過"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/run-plugin-validate-strict.sh"
+    description: "公式 CLI strict validate が exit 0"
+
+  PKG-002:
+    name: "plugin.json frontmatter 完備"
+    phase: 0
+    package_modes: [bundle, skill-only]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-002"
+    description: "公式 plugin.json の name/version/description と references/package-contract.json の package_mode/entry_points 必須キー充足"
+
+  PKG-003:
+    name: "package 単位の名前空間衝突検査"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-003"
+    description: "同一 marketplace 内で skill/agent/hook/permission 名の衝突なし"
+    related_chapter: "34a §4"
+
+  PKG-004:
+    name: "SKILL.md frontmatter 完備"
+    phase: 0
+    package_modes: [bundle, skill-only]
+    severity: P0
+    script: "scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills"
+    description: "03章必須キー + responsibility_refs/schema_refs/manifest"
+
+  PKG-005:
+    name: "Agent definition 整合"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-005"
+    description: "agents/*.md の name と SKILL.md subagent_refs が一致"
+
+  PKG-006:
+    name: "Hook registration 整合"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-006"
+    description: "hooks/*.{json,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
+
+  PKG-007:
+    name: "script 存在 + 実行可能"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-007"
+    description: "参照される scripts/* が plugin root 配下、shebang あり、+x ビット"
+
+  PKG-008:
+    name: "settings 断片 lint"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-package.py --check pkg-008"
+    description: "34a 章 INV-1〜12 を満たし Layer3 衝突なし"
+
+  PKG-009:
+    name: "外部参照ゼロ"
+    phase: 0
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/lint-external-refs.py --skills-dir plugins/<plugin>/skills --fail-on-external"
+    description: "plugin 内ファイルが plugin root 外を参照しない（34章公式制約e）"
+
+  PKG-010:
+    name: "install smoke"
+    phase: 1
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/smoke-plugin-install.sh"
+    description: "local marketplace install smoke、Install UX Contract 検証"
+
+  PKG-011:
+    name: "uninstall 完全性"
+    phase: 2
+    package_modes: [bundle]
+    severity: P1
+    script: "scripts/smoke-plugin-uninstall.sh"
+    description: "uninstall 後に symlink/settings/hook 残存なし"
+
+  PKG-012:
+    name: "upgrade 冪等性"
+    phase: 2
+    package_modes: [bundle]
+    severity: P1
+    script: "scripts/smoke-plugin-upgrade.sh"
+    description: "同一 version re-install が no-op、異 version で破壊変更なし"
+
+  PKG-013a:
+    name: "tool permissions scope"
+    phase: 2
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013a"
+    description: "Bash 等の許可コマンド範囲が plugin スコープ宣言内"
+
+  PKG-013b:
+    name: "filesystem permissions scope"
+    phase: 2
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013b"
+    description: "読み書き対象が plugin root 配下に閉じる"
+
+  PKG-013c:
+    name: "network permissions scope"
+    phase: 2
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013c"
+    description: "外部通信先 allowlist が manifest 宣言と一致"
+
+  PKG-013d:
+    name: "MCP/external permissions scope"
+    phase: 2
+    package_modes: [bundle]
+    severity: P0
+    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013d"
+    description: "Notion/Drive/Gmail 等の MCP scope が manifest と一致"
+
+  PKG-014:
+    name: "runtime contract 検証"
+    phase: 2
+    package_modes: [bundle]
+    severity: P1
+    script: "scripts/validate-plugin-package.py --check pkg-014"
+    description: "SKILL.md kind/combinator 宣言と実 runtime 挙動の一致（28章）"
+
+  PKG-015:
+    name: "rubric 違反率しきい値"
+    phase: 2
+    package_modes: [bundle]
+    severity: P1
+    script: "scripts/lint-rubric-violation.py --logs <log-dir>"
+    description: "直近 release で 27章 rubric 違反率が governance 設定値未満"
+
+  PKG-016:
+    name: "予約（未確定）"
+    phase: null
+    package_modes: []
+    severity: null
+    script: null
+    description: "意味未確定。Phase 3 進行前に 36章 + 27章 §4.1 governance で確定"
+    reserved: true
+
+  PKG-017:
+    name: "予約（未確定）"
+    phase: null
+    package_modes: []
+    severity: null
+    script: null
+    description: "意味未確定。Phase 3 進行前に 36章 + 27章 §4.1 governance で確定"
+    reserved: true
+
+eval_log_pattern: "eval-log/{plugin}/pkg-{id}/{date}-{run}.{ext}"
+
+failure_mode_link:
+  meta_harness_failure_mode: "pkg_check_failed"
+  chapter: "35"
+  section: "observables"

@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/assign-skill-design-evaluator/evaluator-output.schema.json",
+  "title": "assign-skill-design-evaluator output",
+  "description": "SSOT: references/evaluator-contract.md と scripts/render-findings-score.py の実出力に一致させる。",
+  "type": "object",
+  "required": [
+    "rubric_id",
+    "rubric_version",
+    "rubric_hash",
+    "composition_hash",
+    "rubric_refs",
+    "target",
+    "score",
+    "threshold",
+    "passed",
+    "machine_checks",
+    "findings",
+    "required_fixes",
+    "pending_human"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "rubric_id": {"type": "string"},
+    "rubric_version": {"type": "string"},
+    "rubric_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "composition_hash": {"type": "string"},
+    "rubric_refs": {"type": "array", "items": {"type": "string"}},
+    "target": {"type": "string"},
+    "score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "threshold": {"type": "integer", "minimum": 0, "maximum": 100},
+    "passed": {"type": "boolean"},
+    "machine_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["check", "passed"],
+        "additionalProperties": false,
+        "properties": {
+          "check": {"type": "string"},
+          "passed": {"type": "boolean"}
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "area", "message"],
+        "additionalProperties": true,
+        "properties": {
+          "id": {"type": "string"},
+          "severity": {"type": "string", "enum": ["low", "medium", "high"]},
+          "area": {"type": "string"},
+          "message": {"type": "string"},
+          "loc": {"type": "string"}
+        }
+      }
+    },
+    "required_fixes": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "pending_human": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    }
+  }
+}

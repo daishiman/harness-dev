@@ -1,0 +1,132 @@
+# CapabilityBundle 宣言 — plugins/ubm-goal-setting
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: 北原さん式ゴールセッティングの目標設定・振り返り対話とナレッジ差分同期を担う plugin の自己記述。
+#       ~/dev/dev/ObsidianMemo/.claude/skills/ubm-goal-setting/ の既存資産を faithful-transfer+adapt した移植 plugin。
+
+name: ubm-goal-setting
+description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。
+kind: plugin-composition
+version: 0.2.0
+owner: harness-maintainers
+since: 2026-07-04
+last-audited: 2026-07-11
+
+contract:
+  intent: UBM (北原さん式ゴールセッティング) の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract) を継承した 1 plugin へ漏れなく移植する。
+  interface:
+    inputs: [目標種別(weekly|monthly|bimonthly), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md)]
+    outputs: [統一ハイブリッド構造21項目の目標設定ファイル, Daily.md embed更新, knowledge/*.json更新, router.json/registry.json/sync-log.jsonl追記, 同期レポート]
+  invariant:
+    - 目標設定出力は統一ハイブリッド構造21項目を満たし validate-goal-output.py の全チェックに PASS すること
+    - 数値は半角のみ・差分は +/- 付き・行動目標は「誰に・何を・いつまで・何件」を含むこと
+    - 「頑張る/意識する/気をつける」等の精神論は行動目標として不可 (具体化を要求)
+    - 「やらないこと」3項目以上 + 判断基準1文で迷いを排除すること
+    - capability A (goal-setting) と capability B (knowledge-sync) は knowledge/*.json を plugin-root 共有 SSOT (schema契約) として整合し、skill 間の実行時 depends_on は張らないこと
+    - knowledge L1 curated (28JSON+router) は vendor 同梱シード / L2 raw vault は UBM_VAULT_ROOT で外部解決 / L3 bookkeeping (registry=実台帳/sync-log=空) は plugin 同梱 knowledge/ への直書きで更新すること (writeback-config という別機構は不要と build で確定)
+    - 移植元 vault (~/dev/dev/ObsidianMemo/.claude/) は読み取り専用ソースであり ubm-write-path-guard hook が目標設定/ 保存と Daily.md 更新以外の vault 書込を fail-closed で阻むこと
+    - scripts は Python 標準ライブラリのみ (旧 .sh 3本の契約移植・逐語移植ではない)
+    - 成果物本文・対話は日本語、CLI 引数・JSON キーは英語のままとすること
+    - 配布は個人利用前提で distributable:false (marketplace 非掲載)
+
+capabilities:
+  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/run-ubm-goal-setting,   tier: core }   # C16
+  - { kind: skill, ref: skills/run-ubm-knowledge-sync, tier: core }   # C17
+
+  # === Agents (kind=agent) — references/package-contract.json entry_points.agents と1対1対応 ===
+  - { kind: agent, ref: agents/info-collector,               tier: core }        # C05
+  - { kind: agent, ref: agents/output-formatter,             tier: core }        # C06
+  - { kind: agent, ref: agents/goal-reviewer,                tier: core }        # C07
+  - { kind: agent, ref: agents/phase3-coordinator,           tier: core }        # C13
+  - { kind: agent, ref: agents/knowledge-extractor,          tier: core }        # C15
+
+  # === Prompts (kind=prompt) — 責務単位 7 層プロンプト正本 (prompt-placement-convention 準拠。SubAgent ではない) ===
+  - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md, tier: ref }  # C08 (coordinator が Read)
+  - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md,   tier: ref }  # C09
+  - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md,   tier: ref }  # C10
+  - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md,    tier: ref }  # C11
+  - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md,    tier: ref }  # C12
+
+  # === Commands (kind=command) — references/package-contract.json entry_points.commands と1対1対応 ===
+  - { kind: command, ref: commands/ubm-goal-setting,   tier: core }   # C18
+  - { kind: command, ref: commands/ubm-knowledge-sync, tier: core }   # C19
+
+  # === Hooks (kind=hook) — plugin.json PreToolUse と references/package-contract.json entry_points.hooks の両方に対応 (実体: hooks/ubm-write-path-guard.py) ===
+  - { kind: hook, ref: "hook:PreToolUse-WriteEdit/ubm-write-path-guard", tier: core }  # C04
+
+  # === Scripts (kind=script) — 親 skill scripts/ 配下 (二相 skill build で充填) ===
+  - { kind: script, ref: skills/run-ubm-goal-setting/scripts/validate-goal-output.py,      tier: core }  # C01
+  - { kind: script, ref: skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py, tier: core }  # C02
+  - { kind: script, ref: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py,    tier: core }  # C03
+
+  # === [2026-07-11 improvement-plan · component-inventory.json C01-C09] additive・非後退 ===
+  # 2-source YouTube 全量/自動同期、根拠付き knowledge 依存グラフ、harness 実成果物グラフ、既存 goal-setting への consult を追加する。
+  # 既存 capability A(goal-setting 21項目)/B(knowledge-sync 6カテゴリ) は無改変。imp-Cnn は
+  # plugin-plans/ubm-goal-setting/component-inventory.json 由来で、上の C01/C02/C03… 注記(旧 iteration)とは別系統。
+  # -- Skills --
+  - { kind: skill,   ref: skills/run-ubm-youtube-ingest, tier: core }  # imp-C02 (2-source YouTube 全量/自動同期 orchestrator)
+  - { kind: skill,   ref: skills/run-ubm-consult,        tier: core }  # imp-C09 (非処方コーチング型 相談 orchestrator)
+  # -- Agents (references/package-contract.json entry_points.agents と1対1対応) --
+  - { kind: agent,   ref: agents/youtube-transcript-normalizer, tier: core }  # imp-C01 (untrusted transcript 正規化)
+  - { kind: agent,   ref: agents/knowledge-relation-extractor,  tier: core }  # imp-C08 (根拠付き依存辺 抽出)
+  # -- Commands (references/package-contract.json entry_points.commands と1対1対応) --
+  - { kind: command, ref: commands/ubm-youtube-ingest, tier: core }  # imp-C04 (取込 URL/backfill/sync 手動起動)
+  - { kind: command, ref: commands/ubm-consult,        tier: core }  # imp-C09-cmd (相談 手動起動・run-ubm-consult の薄いアダプタ)
+  # -- Scripts (plugin-root · 決定論 graph build/validate/consult。共有ゲートのため plugin-root へ hoist) --
+  - { kind: script,  ref: scripts/validate-knowledge-graph.py,       tier: core }  # imp-C06 (knowledge graph 決定論再生成+DAG非循環検証)
+  - { kind: script,  ref: scripts/index-harness-artifact-graph.py,   tier: core }  # imp-C05 (harness artifact graph 突合生成+provenance)
+  - { kind: script,  ref: scripts/consult-harness-artifact-graph.py, tier: core }  # imp-C07 (knowledge/harness graph read-only consult)
+  # -- Scripts (run-ubm-youtube-ingest skill 配下 · single-consumer helper を skill 内へ畳込) --
+  - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py, tier: core }  # imp-C03 (全量 completeness 検査)
+  - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py,            tier: core }  # imp-C02-internal (scheduler one-shot・folded)
+  - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/youtube_provider.py,                    tier: core }  # imp-C02-internal (provider adapter・late-bound・folded)
+
+dependencies:
+  # 主要 DAG。lint-dependency-direction.py で循環検出 (skill 間実行時 depends_on は張らない)。
+  - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md, type: reads }
+  - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md,   type: reads }
+  - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md,   type: reads }
+  - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md,    type: reads }
+  - { from: agents/phase3-coordinator, to: skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md,    type: reads }
+  - { from: agents/output-formatter,   to: skills/run-ubm-goal-setting/scripts/validate-goal-output.py, type: calls }
+  - { from: agents/knowledge-extractor, to: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py, type: calls }
+  - { from: skills/run-ubm-goal-setting,   to: agents/info-collector,      type: calls }
+  - { from: skills/run-ubm-goal-setting,   to: agents/goal-reviewer,       type: calls }
+  - { from: skills/run-ubm-goal-setting,   to: agents/phase3-coordinator,  type: calls }
+  - { from: skills/run-ubm-goal-setting,   to: agents/output-formatter,    type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: agents/knowledge-extractor, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py, type: calls }
+  - { from: commands/ubm-goal-setting,   to: skills/run-ubm-goal-setting,   type: calls }
+  - { from: commands/ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync, type: calls }
+  # 共有データ層 (実行時 depends_on ではなく schema 契約による整合)
+  - { from: agents/info-collector,      to: knowledge/router.json, type: reads, note: "router で必要カテゴリを解決し knowledge/*.json を読取" }
+  - { from: agents/knowledge-extractor, to: knowledge/schema.json, type: reads, note: "schema を検証契約として読み、6カテゴリdataを準拠形式で書込" }
+
+  # [2026-07-11 improvement-plan] YouTube ingest + knowledge/harness graph + consult の主要 DAG。
+  # build-order は component-inventory.json の depends_on と一致し非循環 (C01,C08→C06→C05→C07 / C01,C06→C02→C03,C04 / C07→C09→C10)。
+  - { from: skills/run-ubm-youtube-ingest, to: agents/youtube-transcript-normalizer, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: agents/knowledge-relation-extractor,  type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/validate-knowledge-graph.py,  type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py,            type: calls }
+  - { from: skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py, to: skills/run-ubm-youtube-ingest/scripts/youtube_provider.py, type: reads }
+  - { from: commands/ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest, type: calls }
+  - { from: scripts/validate-knowledge-graph.py,       to: agents/knowledge-relation-extractor, type: reads,  note: "C08 生成の根拠付き辺を検証入力に取る" }
+  - { from: scripts/index-harness-artifact-graph.py,   to: scripts/validate-knowledge-graph.py,  type: reads,  note: "knowledge-graph.json を突合入力に取る" }
+  - { from: scripts/consult-harness-artifact-graph.py, to: scripts/index-harness-artifact-graph.py, type: reads }
+  - { from: scripts/consult-harness-artifact-graph.py, to: scripts/validate-knowledge-graph.py,     type: reads }
+  - { from: skills/run-ubm-consult, to: scripts/consult-harness-artifact-graph.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/validate-consult-session.py,       type: calls }
+  - { from: commands/ubm-consult,   to: skills/run-ubm-consult, type: calls }
+
+eval_sinks:
+  - EVALS.json
+
+governance:
+  runbook: required
+  changelog: CHANGELOG.md
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+  distribution:
+    distributable: false
+    marketplace: false

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "reference-existence: prompt_ref=skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md を test -f 相当で実在確認(OK・26KB)。owner skill が run-slide-report-generate ではなく run-cross-deck-review(独立起動 skill)である点も frontmatter owner_skill と本文 Constraints/Owner skill 記述で一貫。dangling なし。schema-conformance: name/kind=agent/version=0.1.0/owner/tools(Read,Bash=read-only 検出専任に整合)/isolation=fork、description は『…検証(P5)…したいときに使う。』トリガ形。owner-flow: run-cross-deck-review/workflow-manifest.json に cross-deck-reviewer が Task 委譲対象として登録(R2-parallel-analysis・3レンズ×4条件)。read-only 検出専任という owner SKILL.md の役割(『個別成果物の修正は run-slide-report-modify の責務』)と tools=Read,Bash(書込なし)が整合。adapter/SSOT の tools 一致。placement-invariant: 9節薄 adapter で domain rule 非再掲、詳細正本は prompts/R2-*.md 側(SSOT ヘッダ明記)で逆転なし。single-responsibility: シリーズ横断整合性(用語ゆれ/意匠差/構成不整合)の検証に一元化、修正責務は別 skill へ分離済みで凝集良好。lint-agent-prompt-section.py Tier1 exit0 実測で mechanical:true 妥当。明確な減点点は検出されず。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

@@ -1,0 +1,305 @@
+{
+  "skill_name": "skill-intake (cross-skill-package update)",
+  "scope": "cross-skill-package",
+  "mode": "update",
+  "built_at": "2026-05-21",
+  "paradigm": "schema-driven-template-functions",
+  "trace_version": "1.0.0",
+  "touched_skills": [
+    "run-skill-intake-aggregator",
+    "run-notion-intake-publish",
+    "skill-intake-assumption-challenger",
+    "skill-intake-user-profiler",
+    "skill-intake-purpose-excavator",
+    "skill-intake-option-presenter",
+    "skill-intake-visualizer",
+    "skill-intake-summarizer",
+    "skill-intake-kickoff",
+    "skill-intake-interviewer",
+    "skill-intake-self-updater",
+    "skill-intake-next-action-advisor",
+    "skill-intake-notion-publisher",
+    "skill-intake-handoff"
+  ],
+  "elegant_review_protocol": {
+    "phase1_reset": "PASS",
+    "phase2_parallel_analysis": "PASS (logical+structural / meta+divergent / system+strategic)",
+    "phase3_improvement_execution": "PASS",
+    "four_conditions": {
+      "C1_no_contradiction": "PASS (single source of truth: section_canonical_map.json + intake.schema.json)",
+      "C2_no_omission": "PASS (§0/§6/§7/§9/§11 を独立 section_key 化)",
+      "C3_consistency": "PASS (purpose 4-slot 全章統一 / viz_slots 配列で role 明示)",
+      "C4_dependency_integrity": "PASS (schema-validate hook → publish 経路 + dogfooding 回帰)"
+    }
+  },
+  "design_model": {
+    "intent": "info-collector-agent 同等粒度の Notion 出力を毎回安定量産",
+    "contract": "intake.json (schema-validated) → render → Notion page",
+    "boundary": "Notion API 呼び出し本体は notion-publisher SubAgent。本改修は契約と canonical map の正本化のみ",
+    "execution": "JSON Schema Draft 2020-12 で契約検証 / runtime-config.json でメタ集約 / dogfooding で semantic_equivalence 担保",
+    "feedback": "PreToolUse hook で publish 前に schema FAIL を block。dogfooding 3 連続 cos<0.85 で rollback"
+  },
+  "doc_coverage": {
+    "01_five_elements": "PASS",
+    "01a_build_flow": "PASS",
+    "05_layering": "PASS (Hook=publish gate / Script=validation+dogfooding / Skill=aggregator 章テンプレ)",
+    "07_progressive_disclosure": "PASS (references/ に schema + canonical + runtime-config + migration plan を分離)",
+    "10_hook_integration": "PASS (PreToolUse Bash matcher=Bash)",
+    "11_templates": "PASS (hook-integrated 雛形 + JSON Schema)",
+    "13_checklists": "PASS",
+    "17_agent_teams": "N/A: 既存 SubAgent 構成を維持",
+    "23_meta_skill_arch": "PASS",
+    "25_meta_skill_runbook": "PASS",
+    "26_meta_skill_concerns": "PASS (canonical map 自体は再現性正本)",
+    "27_rubric_self_edit": "N/A: rubric非編集",
+    "28_a_b_execution": "PASS (manual-preflight=local validate / enforced-hook=PreToolUse)"
+  },
+  "layer_decisions": {
+    "Skill": "run-skill-intake-aggregator が canonical map と schema を参照して章別レンダ",
+    "Subagent": "12 SubAgent は intake.schema.json の $defs に契約準拠",
+    "Hook": "pre-publish-schema-validate.sh (PreToolUse Bash)",
+    "Script": "validate_intake_schema.py / dogfooding_regression.py (Python stdlib + jsonschema)",
+    "MCP": "Notion MCP は notion-publisher 経由で利用 (既存)",
+    "CLI": "なし"
+  },
+  "pattern_decisions": {
+    "pattern_refs": [
+      "hook-integrated",
+      "schema-driven-contract",
+      "dbt-style-separation"
+    ],
+    "pattern_intent": "契約(JSON Schema) ↔ 描画(テンプレ関数) ↔ 値(intake.json) の3層分離で量産安定化",
+    "deterministic_checks": [
+      "intake.schema.json による必須/型/enum 検証",
+      "section_canonical_map.json による section_key 一意性",
+      "dogfooding_regression.py による lexical + semantic 回帰"
+    ]
+  },
+  "files_changed": {
+    "created": [
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/section_canonical_map.json",
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/intake.schema.json",
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/runtime-config.json",
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/migration-plan-v2.md",
+      "plugins/skill-intake/scripts/validate_intake_schema.py",
+      "plugins/skill-intake/scripts/dogfooding_regression.py",
+      "plugins/skill-intake/hooks/pre-publish-schema-validate.sh",
+      "plugins/skill-intake/fixtures/info-collector-agent/intake.json",
+      "eval-log/skill-brief.json",
+      "eval-log/handoff-step1.json",
+      "eval-log/skill-build-trace-skill-intake-v2.json"
+    ],
+    "edited": [
+      "plugins/skill-intake/.claude-plugin/plugin.json (PreToolUse Bash matcher を .py 化)",
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/section-templates.json (deprecated フラグ追加)",
+      "plugins/skill-intake/skills/run-skill-intake-aggregator/references/runtime-config.json (render_path_resolution 追加)",
+      "plugins/skill-intake/scripts/dogfooding_regression.py (SEMANTIC_KEYS 全 5 キー展開 + 両空=1.0 修正)"
+    ],
+    "created_phase3": [
+      "plugins/skill-intake/hooks/pre-publish-schema-validate.py (Python stdlib 正本)"
+    ],
+    "deleted": [
+      "plugins/skill-intake/hooks/pre-publish-schema-validate.sh (Phase3 で .py 化に伴い削除済、ユーザー実行 2026-05-22)"
+    ]
+  },
+  "phase2_findings_summary": {
+    "logical_structural": "LS-01〜LS-11 (high=3 / med=6 / low=2)",
+    "meta_divergent": "MD-01〜MD-09 (high=5 / med=3 / low=1)",
+    "system_strategic": "SS-01〜SS-08 (high=4 / med=3 / low=1)",
+    "initial_judgement": "NO-GO (system_strategic) / 改善必要 (reset_observer)"
+  },
+  "phase3_improvements_applied": [
+    {
+      "id": "E1",
+      "addresses": [
+        "LS-01",
+        "LS-03",
+        "LS-10",
+        "MD-01",
+        "SS-03"
+      ],
+      "action": "hook を .sh → Python stdlib 化、exit code 1/2/3 を環境不備/契約違反/BLOCK で分離、regex 強化 (--intake-file, absolute path, fixtures/ を網羅)"
+    },
+    {
+      "id": "E2",
+      "addresses": [
+        "LS-03",
+        "MD-02",
+        "MD-03",
+        "MD-09",
+        "SS-05"
+      ],
+      "action": "runtime-config.json に render_path_resolution=v2-strict 宣言、v1 fallback 禁止、legacy warning 必須化"
+    },
+    {
+      "id": "E3",
+      "addresses": [
+        "LS-04",
+        "SS-08"
+      ],
+      "action": "dogfooding_regression.py の SEMANTIC_KEYS 全 5 キーを比較対象に展開、両空=1.0 の数学的整合修正"
+    },
+    {
+      "id": "E4",
+      "addresses": [
+        "LS-08"
+      ],
+      "action": "DRY違反(dogfooding_threshold 二重定義)は runtime-config.json 側を正本とし、section_canonical_map.policies はポインタのみとする (TODO化)"
+    }
+  ],
+  "phase3_remaining_todo": [
+    {
+      "id": "T1",
+      "addresses": [
+        "LS-04",
+        "MD-04",
+        "SS-04"
+      ],
+      "action": "baseline corpus を N=5 に拡張 (golden corpus 化)"
+    },
+    {
+      "id": "T3",
+      "addresses": [
+        "MD-08"
+      ],
+      "action": "M3 deprecation reverse-index script を追加し外部依存検出"
+    },
+    {
+      "id": "T5",
+      "addresses": [
+        "MD-05"
+      ],
+      "action": "cosine fallback の degradation metric を eval-log に emit / 命名整合 (F1)"
+    },
+    {
+      "id": "T6",
+      "addresses": [
+        "LS-09"
+      ],
+      "action": "executive_summary.handoff_mode と handoff_contract.recommended_next.mode の cross-field 一致を schema rule に追加"
+    }
+  ],
+  "gate4_followups_applied": [
+    {
+      "id": "F2",
+      "action": "section_canonical_map.policies.dogfooding_threshold を {$ref: runtime-config.json#/dogfooding} ポインタに変換、DRY 違反解消"
+    },
+    {
+      "id": "F3",
+      "action": "eval-log/gate2-rubric.json で Gate2 合格基準を定量化 + scripts/ci_dogfooding_retest.py で auto-retest loop を実装 (SS-02 / SS-06 解消)"
+    }
+  ],
+  "quality_round2_applied": [
+    {
+      "id": "T6",
+      "action": "intake.schema.json に x-cross-field-rules を宣言し、validate_intake_schema.py の _check_cross_field_rules で handoff_mode_consistency を強制 (PASS/FAIL 両方 live verify 済)"
+    },
+    {
+      "id": "T5",
+      "action": "runtime-config.dogfooding に similarity_min / similarity_implementation / similarity_naming_note を追加し命名整合を明示 (F1 解消)"
+    },
+    {
+      "id": "T3",
+      "action": "scripts/m3_deprecation_reverse_index.py 新設 (deprecated 参照箇所を git grep で逆引き、--json 対応)"
+    },
+    {
+      "id": "T1",
+      "action": "fixtures/example-data-quality-survey/intake.json 新設で baseline N=2 化 + dogfooding_regression.py に --schema-robustness mode 追加"
+    },
+    {
+      "id": "M2_partial",
+      "action": "scripts/render_v2_adapter.py 新設 (canonical_map 経由で section_key iterate)。render_path_resolution=v2-strict 必須化、render_notion_page.py の段階移行 entry point として用意"
+    }
+  ],
+  "quality_round2_live_verification": {
+    "schema_validation_dual": "PASS for info-collector-agent + example-data-quality-survey",
+    "cross_field_rule_pass": "info-collector-agent fixture",
+    "cross_field_rule_fail_detect": "intentional mismatch detected (exit=1)",
+    "schema_robustness_mode": "PASS 2/2 fixtures",
+    "v2_adapter_iter": "PASS 12 sections iterated in canonical order",
+    "m3_reverse_index": "FOUND deprecated symbols still referenced (期待通り: M1 共存期間中)"
+  },
+  "phase3_remaining_todo_v2": [
+    {
+      "id": "T1b",
+      "addresses": [
+        "LS-04",
+        "MD-04",
+        "SS-04"
+      ],
+      "action": "baseline corpus を N=5 へ拡張 (現在 N=2)"
+    },
+    {
+      "id": "T5b",
+      "addresses": [
+        "MD-05"
+      ],
+      "action": "embedding ベース similarity (sentence-transformers 等) の正式導入、SequenceMatcher 完全置換"
+    },
+    {
+      "id": "M2_full",
+      "action": "render_notion_page.py / apply_section_template.py / section_quality_check.py を section_canonical_map+intake.schema 直接読み込みに切替 (render_v2_adapter から段階移行)"
+    },
+    {
+      "id": "notion_publish_dogfooding",
+      "action": "fixtures/info-collector-agent を実 Notion へ publish し round-1 で出力品質確認"
+    }
+  ],
+  "reproducibility_gates": {
+    "schema_validation_live_pass": true,
+    "schema_validation_evidence": "validate_intake_schema.py → PASS (0 errors)",
+    "hook_self_test_pass": true,
+    "hook_self_test_evidence": "pre-publish-schema-validate.py stdin={tool_input.command=...publish_notion_page.py --intake .../intake.json} → exit 0",
+    "dogfooding_full_semantic_pass": true,
+    "dogfooding_evidence": "dogfooding_regression.py (SEMANTIC_KEYS×5) → PASS (threshold=0.85)",
+    "lint_manual_preflight": "DEFERRED (Step 4a で実施)",
+    "evaluator_fork": "DEFERRED (Step 4b)",
+    "elegant_review_phase1": "PASS",
+    "elegant_review_phase2": "PASS (28 findings)",
+    "elegant_review_phase3": "PASS (E1-E4 適用、T1-T6 を TODO 化)"
+  },
+  "migration_model": {
+    "M1_coexist": "ACTIVE (section-templates.json deprecated フラグ付きで残置 / canonical+schema が正本)",
+    "M2_switch": "PENDING (render パス切替)",
+    "M3_delete": "PENDING (M2 後1ヶ月の回帰 PASS 後)"
+  },
+  "change_governance_model": {
+    "non_disruption_principle": true,
+    "additive_only": true,
+    "todo_human": []
+  },
+  "plugin_boundary_model": {
+    "owner_plugin": "skill-intake",
+    "bundle_membership": "xl-skills-full / xl-skills-intake (既存)"
+  },
+  "next_steps_for_full_completion": [
+    "Step M2: render_notion_page.py を canonical map + schema 参照に切り替え",
+    "Step 4b: assign-skill-design-evaluator (context:fork) で rubric 採点",
+    "Step 6: run-skill-rubric-governance",
+    "Notion 実 publish dogfooding round-1 (cos≥0.85 確認)"
+  ],
+  "quality_round3_applied": {
+    "timestamp": "2026-05-22",
+    "goal": "実行面・回帰面の精度品質強化 (multi-self + dry-render)",
+    "changes": [
+      {
+        "id": "T19",
+        "desc": "dogfooding_regression.py に --multi-self 追加。各 fixture を自分自身と SEMANTIC_KEYS×5 で比較し、_collect_semantic_texts / SequenceMatcher 退行を検知"
+      },
+      {
+        "id": "T20",
+        "desc": "dry_render_notion.py 新設。render_v2_adapter.iter_sections を消費し、Notion-block 列を stdout/--out へドライ出力 (実 publish 無)"
+      }
+    ],
+    "live_verification": {
+      "multi_self": "PASS: 3 fixtures self-consistent (info-collector-agent / data-quality-survey / team-onboarding)",
+      "dry_render": "PASS: 3 fixtures × 53 blocks (canonical_map 宣言順走査が決定論)"
+    },
+    "remaining_todo": [
+      "T1b N=5",
+      "T5b embedding 化",
+      "M2_full render_notion_page.py 全面切替",
+      "notion_publish_dogfooding 実 publish round-1"
+    ]
+  }
+}

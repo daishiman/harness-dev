@@ -1,0 +1,84 @@
+{
+  "purpose": "plugin-plans/slide-report-generator-v2/ は、既存 build 済 v1 プラグイン (plugins/slide-report-generator/・23 component・16 sub-agent 計7,623行) に過重した手続き知識・HTML/CSS規範・評価rubricを、plugin-root references/ 一層 (D2一本化) と 3 skill の progressive disclosure へ再配置する『責務再均衡 (responsibility rebalance)』の後継設計計画である。機能追加ではなく置き場所の是正を目的とし、v2 は parallel_slug (D1) で plugins/slide-report-generator-v2/ へ独立 build され、v1 は温存 (byte コピー元テンプレート兼 golden 比較源) される。計画自体は L3 契約 (13 phase + index + component-inventory 24件 + handoff 24 routes + envelope-draft) として決定論ゲートで検証可能な状態を狙う。",
+  "scope": {
+    "in_scope": [
+      "計画成果物一式の生成: index.md + phase-01..13 + component-inventory.json (24 component SSOT) + handoff-run-plugin-dev-plan.json (24 routes + build_readiness + surface_tasks 5件) + envelope-draft/plugin.json (L3 契約)",
+      "agent⇔skill 間の情報配置境界の再設計のみ: 16 sub-agent の maintain(5)/thin-adapter(11) 区分と rebalance_rationale、3 skill (C01/C02/C03) の progressive disclosure 方針、references 帰属マップの resource-map.md→resource-map.yaml 置換と新設 C24 (lint-reference-attribution.py) による機械検証",
+      "goal-spec.json checklist C1-C7 の被覆宣言と、core 5 scripts + 拡張ゲートによる決定論検証可能性",
+      "反映元 2 点 (v1 実装 plugins/slide-report-generator/ と v1 計画 plugin-plans/slide-report-generator/) の存在確認 (照合対象として)"
+    ],
+    "out_of_scope": [
+      "実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill / plugin-scaffold へ委譲)",
+      "PR/配布登録 (distribution.distributable=false・P13 では soft note 扱い)",
+      "既存 v1 プラグイン (plugins/slide-report-generator/) と v1 計画 (plugin-plans/slide-report-generator/) の削除・改変 (温存対象)",
+      "vendor Node engine (byte維持) と意匠/技術コア SSOT (schemas/vendor 共通コア) の再設計 (goal-spec C7 で不可侵)",
+      "v1 実装内容との深い比較・採点・パッチ (後続 phase の責務)"
+    ]
+  },
+  "stakeholders": [
+    "計画生成者: plugin-dev-planner (run-plugin-dev-plan / plugin-dev-plan-architect・R2-R3 担当)",
+    "独立評価者: assign-plugin-plan-evaluator (fork context・proposer≠approver・plan-findings.json 発行元)",
+    "後段 builder: run-skill-create (skill 3件) / run-build-skill (agent 16件・hook・command・fallback) / plugin-scaffold (contract-only・C23/C24・vendor/composition surface)",
+    "v1 プラグイン利用者・維持者 (既存機能非回帰 OUT1 と golden diff の受益者)",
+    "ユーザー (配布登録承認・waiver 承認・golden-pin→build→golden diff の build 段階実施承認)",
+    "xl-skills maintainers (envelope-draft/plugin.json author)"
+  ],
+  "first_impressions": [
+    "run-plugin-dev-plan-progress.json の target_plugin_slug が『slide-report-generator』(v2 なし) で、goal-spec.json の『slide-report-generator-v2』と表記が分かれており、slug の一貫性が確認事項として目に留まる (根拠: facts[15], facts[5])",
+    "plan-findings.json の C4 evidence に『build_target が plugins/slide-report-generator/ 始まり』(v1 パス) の記述が残る一方、後続 finding は『plugins/slide-report-generator-v2/ 始まり』(v2 パス) を主張しており、round 記録の時系列混在が読み手の追跡を要する (根拠: facts[13])",
+    "references 件数の勘定が『51 (直下46+feedback/5)』(v1 現況) と『content 50 (直下45+feedback/5)+帰属メタ1』『61 content+1=62』の複数体系で併存し、resource-map.md 別勘定の前提を読み落とすと矛盾に見える構造になっている (根拠: facts[3], facts[8])",
+    "帰属機械検証の要である C24 と vendor コピー等の builder=plugin-scaffold が contract-only のままで、実行は fallback_builder / waiver 前提 (GAP-SCRIPT-BUILDER / GAP-ENVELOPE-001 が severity=high で残存) になっている (根拠: facts[6], facts[7])",
+    "plan-findings.json には gate_runs round-2 (10:40 JST) 以後の elegant-review 反映 (run-20260705-103736-v2reset・K1-K5) と sha256 更新が findings として記録されているが、run-plugin-dev-plan-progress.json の gate_runs には対応する第3の実行記録が見当たらない (根拠: facts[12], facts[15])",
+    "phase-13 frontmatter の next_phase=14 が存在しない phase 番号を指している (根拠: facts[9])",
+    "実測行数 (measured_at=2026-07-05 09:31 JST) は並行 build により一度陳腐化した履歴を持ち、build 着工時の wc -l 再実測義務に計画全体の分類根拠が依存している (根拠: facts[0], facts[14])"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "記載されている: component-inventory.json に components 24件 (skill3/sub-agent16/slash-command2/hook1/script2)・no_split_threshold ブロック (measured_at=2026-07-05 09:31 JST・2軸判定 rule)・plugin_level_surfaces 8 surface (mcp/notion_config は omitted_reason 付き) が",
+      "記載されている: component-inventory.json の 16 sub-agent 全件に rebalance_disposition (maintain 5件=C04/C06/C10/C18/C19、thin-adapter 11件) と rebalance_rationale が、thin-adapter 11件には delegation_target (C01×9/C02×1/C03×1) と extracted_reference (../references/*.md) が",
+      "記載されている: component-inventory.json の C01/C02/C03 に progressive_disclosure (skill_md_scope / references_new 9+1+1件 / scripts_new 空 / no_split_reason) が",
+      "記載されている: component-inventory.json に C24 (lint-reference-attribution.py) が唯一の新設 component (温存23+新設1=24) として、references 勘定は content 61件 (既存50=直下45+feedback/5 + 新設11) + resource-map.yaml 帰属メタ1 = 総62 files として",
+      "記載されている: envelope-draft/plugin.json に name=slide-report-generator-v2 / version=0.1.0 / distributable=false / entry_points (skills3・agents16・commands2) / hooks PostToolUse (hook-postgen-eval.py) / author.name=xl-skills maintainers が",
+      "記載されている: goal-spec.json に purpose/background/goal/checklist C1-C7 (全 done=false)/constraints 6件/open_questions 3件 (うち2件が [CLOSED・D1=parallel_slug])・target_plugin_slug=slide-report-generator-v2 が",
+      "記載されている: handoff-run-plugin-dev-plan.json に routes 24件 (全件 builder/build_kind/build_args/build_target 保持・toposorted)・build_readiness (must_run_before_routes 5項: golden-pin/brief 生成/surface 実行/GAP-SCRIPT-BUILDER ブロッキング/再実測、must_run_after_routes 3項)・surface_tasks 5件 (S-VENDOR/S-SCHEMAS/S-REFERENCES/S-COMPOSITION/S-EVALS)・open_issues 2件 (GAP-ENVELOPE-001/GAP-SCRIPT-BUILDER・いずれも severity=high・waiver_required=true) が",
+      "記載されている: handoff-run-plugin-dev-plan.json の C23/C24 route と S-VENDOR/S-COMPOSITION に builder_status=contract-only が、C23/C24 には fallback_builder=run-build-skill と waiver_downgrade 条項 (帰属機械検証主張の取り下げ記載義務) が",
+      "記載されている: index.md に plugin_meta frontmatter (distribution.distributable=false・feedback_deploy.enabled=false・installation=NOT_AVAILABLE)・基本定義 (スコープ含む/含まない)・13 フェーズ一覧 (全行『未実施』)・完了チェックリスト 13項 (全て未チェック)・受入確認表 6観点 (C24 waiver 時の降格記載注記付き) が",
+      "存在する: phase-01..13 の 13 ファイルが同一の 8 節構成 (目的/背景/前提条件/ドメイン知識/成果物/スコープ外/完了チェックリスト/参照情報) と frontmatter (id/phase_number/gate_type/entities_covered) で。P01 に build 着工時 wc -l 再実測義務、P13 frontmatter に next_phase=14 が",
+      "記載されている: phase-04-test-design.md に 11 thin-adapter の per-agent 非回帰 golden fixture 設計 (reference 到達+出力等価の2点検証) と html-generator (C09・990行) の pilot 先行→残10展開の段階化が",
+      "記載されている: phase-05-implementation.md に thin-adapter 化・references_new 配置・resource-map.yaml 置換を P05 完了条件とし、phase-08 を残留重複0の invariant 検証に限定する責務分離 (P07 受入との順序整合の説明付き) が",
+      "記載されている: plan-findings.json に verdict=PASS・C1-C4 全 PASS・gate_results G1-G12 全 exit_code=0・evaluated_inputs 18 ファイルの sha256・staleness_rule・findings 8件 (全て severity=info) が",
+      "記載されている: plan-findings.json の C4 evidence に『全24 component の build_target が plugins/slide-report-generator/ で始まることを確認』(v1 パス) が、同ファイル末尾の post_improvement finding には『全 build_target が plugins/slide-report-generator-v2/ 始まり』(v2 パス) と『evaluated_inputs sha256 を 12/18 ファイル更新』が",
+      "記載されている: run-plugin-dev-plan-intermediate.jsonl に iteration 1-2 の 2 行 (original_goal 不変・drift_signal=low→none・round-2 で references 55→51 / 行数 8,121→7,623 の数値統一・次工程は build 委譲と着工時再実測) が",
+      "記載されている: run-plugin-dev-plan-progress.json に target_plugin_slug=slide-report-generator (『-v2』なし)・plan_dir=plugin-plans/slide-report-generator-v2・iteration=2・original_goal_hash・checklist_status C1-C7 (addressed_by 付き)・gate_runs 2件 (round1=09:50 JST / round2=10:40 JST・全 exit0) が",
+      "存在する: 反映元の v1 計画 plugin-plans/slide-report-generator/ (index.md 等) が同 worktree に",
+      "存在する: 反映元の v1 実装 plugins/slide-report-generator/ (agents/*.md 16件・.claude-plugin/plugin.json・vendor サブツリー含む) が同 worktree に"
+    ],
+    "assumptions": [
+      "と思われる: run-plugin-dev-plan-progress.json の target_plugin_slug『slide-report-generator』は、D1=parallel_slug 確定 (v2 slug 化) 前の iteration 初期値が未更新のまま残ったものと",
+      "と推測される: plan-findings.json C4 evidence の v1 パス記述は round-2 実行時点 (D1 反映前) の歴史的記録であり、現行 inventory の build_target (v2 パス) を検証したものではないと",
+      "と思われる: フェーズ一覧の全『未実施』と verdict=PASS の併存は、index 環境ポリシー『状態語彙の分離』の宣言どおり build lifecycle と plan artifact 検証の別軸を表すもので、矛盾ではないと",
+      "と推測される: evaluated_inputs の sha256 と現物ファイルの一致 (staleness_rule 上の鮮度) は本観察では未検証であり、後続 phase の照合点になると",
+      "と思われる: references_new 各件の抽出元行数根拠 (990行/682行等) の妥当性は、v1 実装 agents/*.md との対比読解によって検証可能と",
+      "と推測される: eval-log/slide-report-generator/_plan-v2/golden/ (golden-pin 先) は build 着工時に生成される予定のパスであり、現時点では実体を持たないと"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "slide-report-generator-v2", "kind": "proper-noun"},
+    {"value": "slide-report-generator", "kind": "proper-noun"},
+    {"value": "presentation-slide-generator", "kind": "proper-noun"},
+    {"value": "Codex Image2", "kind": "proper-noun"},
+    {"value": "Kanagawa", "kind": "proper-noun"},
+    {"value": "plugins/slide-report-generator-v2/", "kind": "fixed-path"},
+    {"value": "plugins/slide-report-generator/", "kind": "fixed-path"},
+    {"value": "plugin-plans/slide-report-generator-v2", "kind": "fixed-path"},
+    {"value": "plugin-plans/slide-report-generator/", "kind": "fixed-path"},
+    {"value": "eval-log/slide-report-generator/_plan-v2/golden/", "kind": "fixed-path"},
+    {"value": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/", "kind": "fixed-path"},
+    {"value": "vendor-digest-manifest.json", "kind": "fixed-path"},
+    {"value": "xl-skills maintainers", "kind": "fixed-owner"},
+    {"value": "plugin-dev-plan-architect", "kind": "fixed-owner"},
+    {"value": "assign-plugin-plan-evaluator", "kind": "fixed-owner"},
+    {"value": "2026-07-05 09:31 JST", "kind": "other"},
+    {"value": "run-20260705-103736-v2reset", "kind": "other"}
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "run_id": "20260625T165406",
+  "phase": "Phase3-改善実行",
+  "scope_mode": "plugin",
+  "target": "plugins/notion-gmail-send",
+  "executor": "elegant-review Phase3 executor (write可)",
+  "convergence_status": "converged",
+  "iteration_count": 1,
+  "verdict": {
+    "C1_矛盾なし": "PASS",
+    "C2_漏れなし": "PASS",
+    "C3_整合性あり": "PASS",
+    "C4_依存関係整合": "PASS"
+  },
+  "two_stage_verification": {
+    "method": "実DB read-only 照合を試行 (Notion REST GET /v1/databases/{DB2})",
+    "result": "skip_connection_unavailable",
+    "reason": "サンドボックスが外部 api.notion.com への接続を拒否 (curl 権限denied)。捏造せず skip。",
+    "db2_id_used": "38807a0cd18c80e9b47cd9ceb81463db (plugin .notion-config.json.example の焼き込み値)",
+    "keychain_present": "notion-api-key.xl-skills は Keychain に存在を確認 (値はマスク)",
+    "mitigation": "F7 のコード堅牢化で audit_recipient_db_schema を追加。実行時に audit が DB2 schema を取得し『部署名』残存を deprecated_property として機械検出する。静的照合に依存せず実行時機構で担保。",
+    "user_followup_steps": [
+      "ネットワーク許可下で `cd plugins/notion-gmail-send && python3 skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py --json` を実行",
+      "出力の recipient_db.schema_properties に『部署名』が無いこと、issues に deprecated_property が無いことを確認",
+      "schema_properties に『メール（プロ人材）』『メール（cc秘書）』『メールを送らない』『送信対象』が全角括弧含め厳密一致で存在することを確認",
+      "notion_client.py:36-42 の P_* 定数と schema_properties が厳密一致することを確認"
+    ]
+  },
+  "applied_patches": [
+    {
+      "group_id": 1,
+      "finding": "F7",
+      "theme": "DB2 schema 部署名残存検査 (要件1(d) 機械検証化)",
+      "severity": "medium",
+      "changed_paths": [
+        "lib/mail_db_audit.py",
+        "skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py"
+      ],
+      "source_trace": ["F7", "要件1(d)", "D1 部署名廃止"],
+      "detail": "DEPRECATED_RECIPIENT_PROPERTIES={部署名} と audit_recipient_db_schema() を追加。GET /databases/{id} の properties に部署名が残れば deprecated_property issue。本文トークン層(既存DEPRECATED_TOKENS)とは別の schema 層検査。audit_mail_dbs.py から配線・JSON 出力に schema_properties 追加。"
+    },
+    {
+      "group_id": 2,
+      "finding": "F1",
+      "theme": "cc_suppressed_due_to_to_overlap 警告の可視化",
+      "severity": "low",
+      "changed_paths": [
+        "lib/message_assemble.py",
+        "skills/run-notion-gmail-dry-run/scripts/build_plan.py"
+      ],
+      "source_trace": ["F1", "F8", "要件3 同一人物2通回避"],
+      "detail": "観測専用純関数 cc_suppressed_by_to() を追加し build_plan が unit に cc_suppressed_due_to_to_overlap を焼く+プレビュー警告表示。normalize_cc の除外挙動は不変(Goodhart回避)。content_hash は _normalize の固定7キーのみ拾うため観測メタで不変。"
+    },
+    {
+      "group_id": 3,
+      "finding": "F2/F4/F5/F8/用語表",
+      "theme": "doc/SSOT 明文化",
+      "severity": "low",
+      "changed_paths": [
+        "doc/run-notion-gmail-send-仕様と検証メモ.md",
+        "skills/ref-notion-gmail-send-spec/references/spec-detail.md",
+        "README.md"
+      ],
+      "source_trace": ["F2", "F4", "F5", "F8"],
+      "detail": "秘書CC任意(空ならTo のみ・F2/F5)、秘書==ToはCC除外(F1/F8)、created_time一次キー/page_id tie-break(F4)、送信対象false=dry-run母集団外/承認後false化のみsend_suppressed記録(F8)、content_hash recipient list用語注記(F2)、用語対応表(spec §8)を追記。"
+    }
+  ],
+  "validation_commands": [
+    {"cmd": "python3 -m pytest tests/ -q", "exit": 0, "result": "129 passed (before 87相当, +8 新規)"},
+    {"cmd": "python3 scripts/lint-skill-tree.py plugins/notion-gmail-send/skills/<each>", "exit": 0, "result": "全4 skill ok"},
+    {"cmd": "python3 scripts/lint-dependency-direction.py", "exit": 0, "result": "0 cycles, 0 violations"},
+    {"cmd": "python3 -m py_compile build_plan.py audit_mail_dbs.py", "exit": 0, "result": "OK"},
+    {"cmd": "lib import smoke (audit_recipient_db_schema / cc_suppressed_by_to)", "exit": 0, "result": "両関数 import OK"}
+  ],
+  "new_tests": [
+    "test_notion_mock.py::test_audit_recipient_db_schema_flags_deprecated_property (F7)",
+    "test_notion_mock.py::test_audit_recipient_db_schema_clean_when_property_removed (F7)",
+    "test_recipient_resolution.py::test_cc_suppressed_by_to_reports_overlap (F1)",
+    "test_recipient_resolution.py::test_cc_suppressed_by_to_empty_when_no_overlap (F1)",
+    "test_recipient_resolution.py::test_cc_suppressed_does_not_change_normalize_cc_result (F1不変性)",
+    "test_recipient_resolution.py::test_build_plan_records_cc_suppressed_warning_and_hash_unaffected (F1+content_hash不変)",
+    "test_contract_sync.py::test_docs_clarify_secretary_cc_optional_and_overlap_suppression (F2/F5/F8/F4 doc固定)",
+    "test_contract_sync.py::test_spec_has_user_to_impl_glossary (F2 用語表固定)"
+  ],
+  "f10_status": {
+    "finding": "F10 SEND_URL == users/me/messages/send 回帰テスト",
+    "result": "already_satisfied",
+    "evidence": "test_gmail_client.py:59 test_send_uses_gmail_messages_send_endpoint_for_sender_sent_history が seen['url']==gmail_client.SEND_URL かつ endswith('/gmail/v1/users/me/messages/send') を assert 済み。test_contract_sync.py:100 が doc 側も users.messages.send バインドを固定。重複追加せず(Goodhart回避)。"
+  },
+  "residual_risks": [
+    "二段確認(実DB照合)はサンドボックスのネットワーク制約で未実施。F7 のコード堅牢化で実行時機構に置換済みだが、現時点で実DB2の部署名削除状態・プロパティ厳密一致は未確認。user_followup_steps で運用者が audit 実行により確認可能。",
+    "lib/secrets.py / notion_config.py / setup_doctor.py の低 in-process カバレッジは subprocess 計測でないことに起因(harness-coverage spec の既知事項)。今回変更外。",
+    "plugin 全体が git untracked。コミットはユーザー承認待ち(前回 run の指摘と同根)。"
+  ],
+  "scope_discipline": {
+    "phase3_added_lines": 178,
+    "edited_files": 10,
+    "skill_md_edited": false,
+    "content_review_verdict_regen_required": false,
+    "note": "意味変更を伴う修正(normalize_cc でCC残す等)は不実施。除外挙動・content_hash・SEND_URL は不変を維持しテストで担保。"
+  }
+}

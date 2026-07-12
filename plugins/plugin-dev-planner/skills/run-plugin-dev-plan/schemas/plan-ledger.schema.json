@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "plan-ledger.schema.json",
+  "title": "plan-ledger",
+  "description": "複数改善 cycle が同一 plugin へ並走するときの build dir スコープ化と衝突排除の単一正本 (C13) + 過去 cycle の immutable provenance lineage (C19)。check-plan-ledger.py が cycle_id 形式・status 値域・非空・同時 active 高々1件・predecessor_cycle_id lineage (実在参照/自己参照禁止/閉路禁止) を fail-closed 検証する。cycle_id 形式/status 値域の実行可能正本は specfm.CYCLE_ID_RE / specfm.LEDGER_STATUSES。",
+  "type": "object",
+  "required": ["schema_version", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"type": "string"},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cycle_id", "status", "plan_dir", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "cycle_id": {"type": "string", "pattern": "^\\d{8}-[a-z0-9-]+$", "description": "YYYYMMDD-<concept-slug>"},
+          "status": {"type": "string", "enum": ["active", "finished", "superseded"], "description": "同時 active は高々 1 件 (fail-closed)"},
+          "plan_dir": {"type": "string", "minLength": 1, "description": "当該 cycle の plan 出力先 (plugin-plans/<slug>/<cycle_id>)"},
+          "summary": {"type": "string", "minLength": 1, "description": "cycle の 1 行要約"},
+          "predecessor_cycle_id": {
+            "type": ["string", "null"],
+            "description": "additive optional (C19)。直前 cycle への lineage。finished/superseded な過去 cycle を immutable provenance として結ぶ。台帳内に実在し、active でなく、自己参照でなく、predecessor 連鎖に閉路を作らないこと (過去 node を active DAG へ混在させず lineage だけを保持する)"
+          }
+        }
+      }
+    }
+  }
+}

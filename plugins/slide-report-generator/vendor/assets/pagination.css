@@ -1,0 +1,302 @@
+/* =================================================================
+   pagination.css — 不変共通テンプレート
+
+   責務: pagination.html のスタイル定義。
+   不変ルール: クラス名・寸法ロジック・nth-child(5n) 配色は変更禁止。
+   ================================================================= */
+
+:root {
+  --pg-accent: var(--wave-blue, #7E9CD8);
+  --pg-accent-strong: var(--sakura-pink, #D27E99);
+  --pg-milestone-5: var(--wave-aqua, #7FB4CA);
+  --pg-milestone-10: var(--autumn-yellow, #DCA561);
+  --pg-bg: rgba(31, 31, 40, 0.85);
+  --pg-bg-strong: rgba(31, 31, 40, 0.95);
+  --pg-fg: var(--fg, #DCD7BA);
+  --pg-fg-dim: var(--fg-dim, #A6A69C);
+  --pg-border: rgba(255, 255, 255, 0.15);
+  --pg-shadow: 0 0.4vh 1.6vh rgba(0, 0, 0, 0.35);
+  --pg-z: 200;
+  --pg-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =================================================================
+   1. 上部プログレスバー
+   ================================================================= */
+.pg-progress {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 0.4vh;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: var(--pg-z);
+  pointer-events: none;
+}
+
+.pg-progress__bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pg-accent), var(--pg-accent-strong));
+  transition: width 0.4s var(--pg-easing);
+  will-change: width;
+}
+
+/* =================================================================
+   2. スライドカウンター
+   ================================================================= */
+.pg-counter {
+  position: fixed;
+  top: 1.6vh; right: 1.6vw;
+  z-index: var(--pg-z);
+  display: flex;
+  align-items: baseline;
+  gap: 0.3vw;
+  padding: 0.6vh 1.2vw;
+  background: var(--pg-bg);
+  color: var(--pg-fg);
+  border: 1px solid var(--pg-border);
+  border-radius: 0.6vh;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.6vh;
+  font-weight: 600;
+  backdrop-filter: blur(0.5vh);
+  -webkit-backdrop-filter: blur(0.5vh);
+  pointer-events: none;
+  user-select: none;
+}
+
+.pg-counter__current { color: var(--pg-accent); font-size: 2vh; }
+.pg-counter__sep     { color: var(--pg-fg-dim); margin: 0 0.2vw; }
+.pg-counter__total   { color: var(--pg-fg-dim); }
+
+/* =================================================================
+   3. 前後送りボタン
+   ================================================================= */
+.pg-controls {
+  position: fixed;
+  bottom: 4vh; right: 1.6vw;
+  z-index: var(--pg-z);
+  display: flex;
+  gap: 0.8vw;
+}
+
+.pg-controls__btn {
+  width: 5vh;
+  height: 5vh;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pg-bg);
+  color: var(--pg-fg);
+  border: 1px solid var(--pg-border);
+  border-radius: 50%;
+  font-size: 2vh;
+  cursor: pointer;
+  box-shadow: var(--pg-shadow);
+  backdrop-filter: blur(0.5vh);
+  -webkit-backdrop-filter: blur(0.5vh);
+  transition: transform 0.2s var(--pg-easing),
+              background 0.2s var(--pg-easing),
+              color 0.2s var(--pg-easing);
+}
+
+.pg-controls__btn:hover {
+  background: var(--pg-accent);
+  color: #1F1F28;
+  transform: scale(1.08);
+}
+
+.pg-controls__btn:focus-visible {
+  outline: 2px solid var(--pg-accent-strong);
+  outline-offset: 2px;
+}
+
+.pg-controls__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =================================================================
+   4. 下部ドットページネーション
+   ================================================================= */
+.pg-dots {
+  position: fixed;
+  bottom: 1.6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--pg-z);
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0.8vh 1.4vw;
+  background: var(--pg-bg);
+  border: 1px solid var(--pg-border);
+  border-radius: 2vh;
+  box-shadow: var(--pg-shadow);
+  backdrop-filter: blur(0.5vh);
+  -webkit-backdrop-filter: blur(0.5vh);
+  max-width: 80vw;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pg-dots::-webkit-scrollbar { display: none; }
+
+.pg-dots__item {
+  position: relative;
+  width: 0.9vh;
+  height: 0.9vh;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.25s var(--pg-easing),
+              background 0.25s var(--pg-easing),
+              width 0.25s var(--pg-easing);
+}
+
+.pg-dots__item:hover {
+  background: var(--pg-fg-dim);
+  transform: scale(1.3);
+}
+
+.pg-dots__item:focus-visible {
+  outline: 2px solid var(--pg-accent);
+  outline-offset: 2px;
+}
+
+.pg-dots__item.is-active {
+  background: var(--pg-accent);
+  width: 2.4vh;
+  border-radius: 0.5vh;
+}
+
+/* マイルストーン: 5 個ごと（nth-child(5n)） — アクア色 + やや大きい */
+.pg-dots__item:nth-child(5n) {
+  background: rgba(127, 180, 202, 0.5);
+  width: 1.2vh;
+  height: 1.2vh;
+}
+.pg-dots__item:nth-child(5n):hover {
+  background: var(--pg-milestone-5);
+}
+
+/* マイルストーン: 10 個ごと（nth-child(10n)） — オレンジ + さらに大きい */
+.pg-dots__item:nth-child(10n) {
+  background: rgba(220, 165, 97, 0.55);
+  width: 1.4vh;
+  height: 1.4vh;
+}
+.pg-dots__item:nth-child(10n):hover {
+  background: var(--pg-milestone-10);
+}
+
+/* アクティブ時はマイルストーン色を上書き */
+.pg-dots__item:nth-child(5n).is-active,
+.pg-dots__item:nth-child(10n).is-active {
+  background: var(--pg-accent);
+  width: 2.4vh;
+  height: 0.9vh;
+  border-radius: 0.5vh;
+}
+
+/* =================================================================
+   5. セクション目次ナビ
+   ================================================================= */
+.pg-section-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: calc(var(--pg-z) - 1);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+  background: rgba(31, 31, 40, 0.92);
+  border-bottom: 1px solid var(--pg-border);
+  padding: 0 1.6vw;
+  backdrop-filter: blur(0.5vh);
+  -webkit-backdrop-filter: blur(0.5vh);
+}
+
+.pg-section-nav__item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4vw;
+  padding: 0.8vh 1.6vw;
+  border: none;
+  background: none;
+  color: var(--pg-fg);
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 1.5vh;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0.55;
+  transition: opacity 0.25s var(--pg-easing),
+              background 0.25s var(--pg-easing);
+}
+
+.pg-section-nav__item:hover {
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
+}
+.pg-section-nav__item:focus-visible {
+  outline: 2px solid var(--pg-accent);
+  outline-offset: -2px;
+}
+.pg-section-nav__item.is-active { opacity: 1; }
+
+.pg-section-nav__dot {
+  width: 0.9vh;
+  height: 0.9vh;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pg-section-nav__label { pointer-events: none; }
+
+.pg-section-nav__bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 0.3vh;
+  background: transparent;
+  transition: background 0.25s var(--pg-easing);
+}
+
+.pg-section-nav__item.is-active .pg-section-nav__bar {
+  background: var(--pg-accent);
+}
+
+/* =================================================================
+   6. アクセシビリティ: prefers-reduced-motion
+   ================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .pg-progress__bar,
+  .pg-controls__btn,
+  .pg-dots__item,
+  .pg-section-nav__item,
+  .pg-section-nav__bar {
+    transition: none !important;
+  }
+  .pg-controls__btn:hover,
+  .pg-dots__item:hover {
+    transform: none !important;
+  }
+}
+
+/* =================================================================
+   7. 印刷時は全 UI を非表示
+   ================================================================= */
+@media print {
+  .pg-progress,
+  .pg-counter,
+  .pg-controls,
+  .pg-dots,
+  .pg-section-nav {
+    display: none !important;
+  }
+}

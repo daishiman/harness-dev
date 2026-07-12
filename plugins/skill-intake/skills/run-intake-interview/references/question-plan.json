@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "description": "ヒアリング質問選択の決定論的正本。depth(light|standard|detailed) × 5 軸 に対し出す質問を Q-ID で固定し、LLM の『都度立案』を排除する。質問文面の正本は references/question-bank.md の索引表 (Q-ID → 文面)。本ファイルは『どの Q-ID を、どの順で出すか』のみを定義する。実行者が変わっても同じ (depth, pattern, 既記入軸) なら同じ質問列になることを保証する。",
+  "axis_order": ["output", "source", "share", "true-pain", "knowledge-asset"],
+  "axis_labels": {
+    "output": "出力先",
+    "source": "情報源",
+    "share": "共有相手",
+    "true-pain": "真の課題",
+    "knowledge-asset": "ナレッジ資産"
+  },
+  "ask_user_question_options": {
+    "output": [
+      {"id": "file", "label": "ファイル", "description": "Markdown/JSON/CSV などのファイルとして残す。"},
+      {"id": "notion", "label": "Notion", "description": "Notion ページまたは DB に残す。"},
+      {"id": "notification", "label": "通知", "description": "Slack/Discord/Email などに送る。"}
+    ],
+    "source": [
+      {"id": "local", "label": "手元データ", "description": "既存ファイルやメモから読む。"},
+      {"id": "web", "label": "Web/API", "description": "外部サイトや API から取得する。"},
+      {"id": "manual", "label": "手入力", "description": "ユーザーが都度入力する。"}
+    ],
+    "share": [
+      {"id": "self", "label": "自分", "description": "本人だけが見る。"},
+      {"id": "team", "label": "チーム", "description": "チーム内で共有する。"},
+      {"id": "public", "label": "公開相手", "description": "顧客・受講生・フォロワーなど外部に共有する。"}
+    ],
+    "true-pain": [
+      {"id": "time", "label": "時間削減", "description": "作業時間や待ち時間を減らす。"},
+      {"id": "quality", "label": "品質安定", "description": "ミスやばらつきを減らす。"},
+      {"id": "knowledge", "label": "知識活用", "description": "判断基準や暗黙知を使える形にする。"}
+    ],
+    "knowledge-asset": [
+      {"id": "none", "label": "まだない", "description": "これから蓄積する。"},
+      {"id": "notes", "label": "メモ/Notion", "description": "既存のメモや Notion がある。"},
+      {"id": "external", "label": "外部情報", "description": "記事・本・動画・論文などを使う。"}
+    ]
+  },
+  "invariant": "各軸は 1 問ずつ (L1.1)。深掘りは Phase 5 (purpose-excavator) の責務であり、本 interview では depth に応じて 1 軸 1 Q-ID を固定選択する。",
+  "plan_by_depth": {
+    "light": {
+      "output": "Q02",
+      "source": "Q09",
+      "share": "Q16",
+      "true-pain": "Q23",
+      "knowledge-asset": "Q33"
+    },
+    "standard": {
+      "output": "Q03",
+      "source": "Q10",
+      "share": "Q17",
+      "true-pain": "Q24",
+      "knowledge-asset": "Q35"
+    },
+    "detailed": {
+      "output": "Q05",
+      "source": "Q12",
+      "share": "Q19",
+      "true-pain": "Q26",
+      "knowledge-asset": "Q38"
+    }
+  },
+  "depth_aliases": {
+    "quick": "light",
+    "deep": "detailed"
+  },
+  "default_depth": "standard",
+  "skip_rules": {
+    "pattern_C_skips_axes": ["output", "source", "share"],
+    "note": "kickoff.json の pattern=C (プロンプト改善) は軸 output/source/share を skip 可 (five-axes-priority.md 準拠)。既に sheet.md に記入済みの軸も skip する。"
+  },
+  "procedure_axis": {
+    "label": "現状手順",
+    "note": "5 軸ヒアリング完了後に開始する 6 本目の as-is procedure 軸 (goal-spec C1/C2/C6)。axis_order には含めず (5 軸選択ロジックへ混ぜない)、本定義を SKILL.md が参照して 5 軸完了後に起動する。手順を言語化できるユーザーは detailed_questions で各ステップの action/input/output/tool/frequency を固有名詞・実例で聞き取り、procedure 軸で 2 連続の抽象判定/未回答 (validate-answer-abstraction.py --axis procedure が exit3) となった時点で overview_fallback_questions へ決定論的に切り替える。",
+    "detailed_questions": [
+      {"field": "action", "text": "その作業で行っている具体的な操作を、1 ステップずつ順番に教えてください (固有名詞・実例で)。"},
+      {"field": "input", "text": "そのステップの入力 (元データ・受け取るもの) は何で、どこから来ますか?"},
+      {"field": "output", "text": "そのステップの出力 (成果物・次に渡すもの) は何ですか?"},
+      {"field": "tool", "text": "そのステップで使うツール・アプリ・システムは何ですか? (製品名で)"},
+      {"field": "frequency", "text": "そのステップはどのくらいの頻度で行いますか? (毎日/週次/月次など)"}
+    ],
+    "overview_fallback_questions": [
+      {"field": "step_count_estimate", "text": "全体でだいたい何工程くらいありそうですか? (ざっくりで構いません)"},
+      {"field": "participants", "text": "その作業に関わる人は誰ですか? (自分だけ/経理担当/外注など)"},
+      {"field": "frequency", "text": "その一連の作業はどのくらいの頻度で発生しますか?"}
+    ],
+    "fallback_threshold": {
+      "consecutive_abstract_or_unanswered": 2,
+      "judge": "validate-answer-abstraction.py --axis procedure",
+      "note": "as-is 忠実性 (goal-spec C7/C8): 抽象・一般論的な回答が来ても正規化・要約せず追加質問で具体化を促す。ユーザーが自発的に述べた改善提案 (to-be) は handoff 対象 as-is フィールドへ記録しない。to-be 語彙の混入検出は validate-procedure-completeness.py の contamination check が担う。"
+    }
+  }
+}

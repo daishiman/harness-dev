@@ -1,0 +1,117 @@
+{
+  "agent": "logical-structural",
+  "paradigm_findings": [
+    {
+      "thought_method": "批判的思考",
+      "severity": "contradiction",
+      "title": "ユーザー要求「9列」vs 実装「8列+ページ本文URL」の差分に合意記録が無い",
+      "description": "要求(d)はNotion9列(確認用URL含む)だが、実装はDB 8列+確認用URLをページ本文へ出す構成 (SKILL.md:49, README.md:30)。設計判断ログ§6 (SKILL.md:173) に技術的根拠(列冗長化回避・冪等テンプレSSOT)はあるが、要求逸脱を設計者判断のみで確定しており、ユーザーがこの差分を承認した記録が plugin 内・repo 内のどこにも無い。確度4ラベル日本語・備考テンプレ・gBizINFO 採用の他要求は充足を確認済み。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:49",
+      "auto_fixable": false,
+      "recommendation": "8列+本文方式についてユーザー合意を取得し、合意結果を設計判断ログ§6 に『承認日・承認者』として追記する。未合意なら9列へ戻す選択肢を提示する。"
+    },
+    {
+      "thought_method": "演繹思考",
+      "severity": "contradiction",
+      "title": "一般則「自動確定は法人番号一致 or 会社名+住所2要素一致のみ」に対し、会社名のみ・単一ヒットで自動確定する実装",
+      "description": "SKILL.md:87 とR1プロンプト (prompts/R1-resolve-identity.md:23) は『自動確定は法人番号一致または会社名+住所2要素一致時のみ』を不変ルールとするが、resolve_company.resolve_by_name (resolve_company.py:114-122) は address が None でも gBizINFO ヒットが1件なら entity を『公的データで確認済み』で自動確定する。誤同定回避の非対称コスト原則 (誤値>>空欄) と相反。open_issues 未申告の規則違反。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/resolve_company.py:114",
+      "auto_fixable": true,
+      "recommendation": "address 未指定時は単一ヒットでも candidates 返却(未確定)へ倒す。SKILL.md チェックリストと実装を一致させ、pytest に『会社名のみ単一ヒット→非自動確定』の回帰テストを追加する。"
+    },
+    {
+      "thought_method": "帰納的思考",
+      "severity": "omission",
+      "title": "vendored notion_config.py に byte一致 lint が無く、skill-intake で確立した vendoring SSOT パターンから逸脱",
+      "description": "skill-intake は vendored SSOT を lint-intake-vendored-ssot.py で byte一致強制するパターンを確立したが、company-master の copy は get_gbizinfo_token 追加等で正本から分岐済みかつ drift 検出機構が無い。docstring も『固定 Notion ヒアリングシート DB への既定出力先』(notion_config.py:20-21,30) と旧文脈のまま。byte一致も fork 宣言もどちらも無い宙吊り状態。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/notion_config.py:20",
+      "auto_fixable": true,
+      "recommendation": "company-master 版を独立正本として宣言し docstring の skill-intake 残骸を更新する、または共通部を正本へ寄せ差分を機械検証する lint を追加する。"
+    },
+    {
+      "thought_method": "アブダクション",
+      "severity": "contradiction",
+      "title": "SKILL.md の `.codex-plugin/plugin.json` 言及に対し実体不在 — 最尤原因は他 plugin テンプレ流用時の適応漏れ",
+      "description": "SKILL.md:67 が『Codex 用 manifest は .codex-plugin/plugin.json』と記述するが plugin 配下に .codex-plugin は存在しない。notion_config.py の plugin_root() は .codex-plugin を探索する (L92) が空振り。テンプレ流用適応漏れが最尤原因。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:67",
+      "auto_fixable": true,
+      "recommendation": ".codex-plugin/plugin.json を同梱するか、SKILL.md:67 の言及を削除して .claude-plugin のみを宣言する。"
+    },
+    {
+      "thought_method": "垂直思考",
+      "severity": "omission",
+      "title": "hook-guard-secret の保証が3段で空洞化: fail-open / トークン分割バイパス / pytest ゼロ",
+      "description": "(1) hook-guard-secret.py:43 は JSON 解釈不能入力を return 0 で素通し — fail-closed 原則と逆行。(2) `-w` 検出が set(cmd.split()) の完全一致のため結合トークンで素通り。(3) tests/ に hook-guard-secret の pytest が存在せず遮断挙動が回帰検証されない。静的層 settings-hardening.json は `-g` パターンを持たず動的層と非対称。",
+      "location": "plugins/company-master/hooks/hook-guard-secret.py:43",
+      "auto_fixable": true,
+      "recommendation": "JSON 解釈不能時は fail-closed へ変更し、フラグ検出を正規表現ベースへ強化、静的層へ -g 相当 deny を追加。tests/test_company_master.py に hook pytest を追加して CI で保証する。"
+    },
+    {
+      "thought_method": "要素分解",
+      "severity": "omission",
+      "title": "frontmatter lint の被覆ゼロ: Makefile lint が skill-creator 配下固定で company-master の SKILL.md/agents/commands は機械検査対象外",
+      "description": "SKILL.md frontmatter・agents 3件・commands 2件の frontmatter は lint-skill-name / lint-skill-description / validate-frontmatter が --skills-dir plugins/skill-creator/skills 固定 (Makefile:17-19) のため一切走らない。skill-creator 仕様準拠を主張しながら準拠検査が 0 回実行。",
+      "location": "Makefile:17",
+      "auto_fixable": true,
+      "recommendation": "Makefile の 3 lint へ --skills-dir plugins/company-master/skills 実行を追加する。"
+    },
+    {
+      "thought_method": "要素分解",
+      "severity": "smell",
+      "title": "__pycache__/*.pyc が plugin 実体配下に滞留 (PKG hygiene)",
+      "description": "hooks/scripts/skill scripts 配下に cpython-311.pyc が存在する。.gitignore 対象だがローカル tar 配布や手動コピー時の混入リスク。",
+      "location": "plugins/company-master/hooks/__pycache__/",
+      "auto_fixable": true,
+      "recommendation": "ワークツリーから __pycache__ を削除する。"
+    },
+    {
+      "thought_method": "MECE",
+      "severity": "omission",
+      "title": "実行経路×入力種別カバレッジ表に「会社名のみ」行が欠落",
+      "description": "SKILL.md:157-162 のカバレッジ表は『法人番号 / 会社名+住所 / 住所のみ / Notion 既存 backfill』の4行のみで、resolve_by_name(address=None) で到達可能な『会社名のみ』入力が漏れている。この漏れが『会社名のみ単一ヒット自動確定』矛盾をレビューですり抜けさせた構造的原因。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:157",
+      "auto_fixable": true,
+      "recommendation": "表へ『会社名のみ』行を追加し、到達経路と自動確定可否を明記する。"
+    },
+    {
+      "thought_method": "2軸思考",
+      "severity": "smell",
+      "title": "重要度×機械担保の象限で、二段防御の成立条件が「任意・手動マージ」の静的層に依存",
+      "description": "SKILL.md:194 は『静的層と動的層の両方が揃って二段防御が成立』と宣言するが、静的層マージは README で『(任意・推奨)』とされ適用検査機構も無い。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:194",
+      "auto_fixable": false,
+      "recommendation": "二段防御の成立条件を『動的層単独で fail-closed 完結+静的層は深層防御の追加』へ再定義するか、適用検査を追加する。"
+    },
+    {
+      "thought_method": "プロセス思考",
+      "severity": "dependency_break",
+      "title": "eval-log 退避パスが CWD 相対で、単独 install 時のリプレイ工程が断線し得る",
+      "description": "REPLAY_LOG = Path(\"eval-log\")/... (backfill.py:47) と SKILL.md:104 の intermediate JSONL はいずれも CWD 相対。plugin 単独 install では退避先が散逸し『次回リプレイ可能』の工程連結が壊れる。",
+      "location": "plugins/company-master/skills/run-company-master-build/scripts/backfill.py:47",
+      "auto_fixable": true,
+      "recommendation": "退避パスを repo_root/plugin_root 起点へ解決するヘルパに統一する。"
+    },
+    {
+      "thought_method": "why思考",
+      "severity": "omission",
+      "title": "根本原因: 新 plugin 追加時に lint/test 対象へ自動編入する仕組みが無く、被覆漏れが構造的に再発する",
+      "description": "Makefile が plugin ごとの手動配線で、追加忘れを検出するメタ検査が無い。skill-intake vendored-ssot・PKG-003 など同型の被覆漏れが過去にも発生。",
+      "location": "Makefile:16",
+      "auto_fixable": false,
+      "recommendation": "lint ターゲットを plugins/*/skills 横断 glob へ一般化し、lint 対象外 plugin を CI で fail させるメタ検査を追加する。"
+    },
+    {
+      "thought_method": "プロセス思考",
+      "severity": "smell",
+      "title": "検証済み・既知事項の確認: open_issues 4件は実コードと突合して申告どおり",
+      "description": "VERT-01/DEDUCT-01/A4-SYSTEM-01/A4-VALUE-01 の記述と実装の対応を確認。SKILL.md:196-205 で別 PR 分離の方針付きで申告済み。",
+      "location": "plugins/company-master/skills/run-company-master-build/SKILL.md:196",
+      "auto_fixable": false,
+      "recommendation": "申告どおり別 PR で対処(ただし VERT-01 は offline 修正可能と判明、system-strategic findings 参照)。"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": ["批判的思考", "演繹思考", "帰納的思考", "アブダクション", "垂直思考", "要素分解", "MECE", "2軸思考", "プロセス思考", "why思考"],
+    "skipped_with_reason": []
+  }
+}

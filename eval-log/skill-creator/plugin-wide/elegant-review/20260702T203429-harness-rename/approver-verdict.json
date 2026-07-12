@@ -1,0 +1,28 @@
+{
+  "approver": "independent-approver-subagent",
+  "reviewed_at": "2026-07-02T23:30:00+09:00",
+  "decision": "APPROVE",
+  "checks": [
+    {"item": "(a) lint-legacy-plugin-name.py 再実行", "result": "PASS", "evidence": "exit 0 / '旧固有名の能動層残存 0 件'"},
+    {"item": "(b) lint-content-review.py --all 再実行", "result": "PASS", "evidence": "exit 0 / '47 skill(s) verified'"},
+    {"item": "(c) lint-vendored-ssot.py 再実行", "result": "PASS", "evidence": "exit 0 / 'vendored SSOT 2 件が正本と byte 一致'"},
+    {"item": "(d) check-upstream-pins.py 再実行", "result": "PASS", "evidence": "exit 0 / 'upstream pins 8 件 sha256 一致 (in-repo fail-closed)'"},
+    {"item": "(e) build-claude-symlinks.py --check 再実行", "result": "PASS", "evidence": "exit 0 / 'created=0 updated=0 noop=104 conflict=0'"},
+    {"item": "(f) 指定 pytest 3 本 再実行", "result": "PASS", "evidence": "'328 passed in 0.94s' / exit 0 (dogfooding_boundary + validate_plugin_completeness + coverage_records_integrity)"},
+    {"item": "(g) dangling symlink 検査", "result": "PASS", "evidence": "find -type l ! -exec test -e = 出力 0 件 (dangling 0)"},
+    {"item": "概念判定#2: run-skill-* 33 skill 名維持", "result": "PASS", "evidence": "plugins/harness-creator/skills/ 33 dir・run-skill-*/run-build-skill/wrap-git-commit-safe 実在・旧 plugins/skill-creator 消滅"},
+    {"item": "概念判定: plugin.json/composition/installers manifest description = ハーネス表現", "result": "PASS", "evidence": "plugin.json name=harness-creator desc='Claude Code のハーネス…メタプラグイン' / manifest kit_name=harness-creator-kit desc='…ハーネス構成部品一式'"},
+    {"item": "概念判定#7: feedback_contract_ssot.py:132 ADR コメント skill 表現維持", "result": "PASS", "evidence": "L132 'harness-creator 自身 (skill を量産する生成器メタプラグイン)' — 主語のみ plugin 名更新・量産対象記述 skill 維持 (台帳通り)"},
+    {"item": "概念判定#18: doc/参考Skill/skill-creator/ 無変更", "result": "PASS", "evidence": "git status --short 出力 0 行"},
+    {"item": "概念判定#17: eval-log/skill-creator/README.md tombstone 存在", "result": "PASS", "evidence": "712 byte / '凍結アーカイブ (tombstone)'・遡及書換しない旨明記"},
+    {"item": "概念判定#8/#12: NEVER_DISTRIBUTE 二重ロック+env 改名", "result": "PASS", "evidence": "NEVER_DISTRIBUTE=frozenset({harness-creator, prompt-creator, plugin-dev-planner}) / HARNESS_CREATOR_* 8 active files・旧 SKILL_CREATOR_* 能動層残存 0"},
+    {"item": "意味論境界 over-rename 監査 (ルール1)", "result": "PASS", "evidence": "run-harness-*/assign-harness-* 等の誤 skill 名 0・'ハーネスを作成/骨格/生成' の単体生成文脈への誤混入 0"},
+    {"item": "意味論境界 under-rename 監査 (ルール2/3)", "result": "PASS", "evidence": "git grep 旧固有名 (凍結層 eval-log/参考Skill/changelog/lessons-learned/CHANGELOG + allowlist 除外) = 0 件。能動層残存なし"},
+    {"item": "意味論境界正本の整合 (glossary/CONVENTIONS/README)", "result": "PASS", "evidence": "terms.md『ハーネス ⊃ skill 包含関係』・root CONVENTIONS.md 用語規約 ルール1-5・README 意味論境界テーブルが merged-directive ルール1-4 と一致"},
+    {"item": "verdict genuine性 sha256 全件突合", "result": "PASS", "evidence": "eval-log/harness-creator 配下 content-review verdict 36 件 skill_md_sha256 実測突合 = mismatch 0 / missing_skill 0"},
+    {"item": "verdict genuine性 criteria_evaluated 突合", "result": "PASS", "evidence": "run-skill-create/run-elegant-review とも criteria_evaluated=[IN1,IN2,OUT1,OUT2] が frontmatter criteria id 全件と一致"},
+    {"item": "verdict genuine性 feedback 実内容言及", "result": "PASS", "evidence": "run-skill-create rubric='三層委譲(workflow-manifest+prompts+schemas)/13項目checklist' 等・run-elegant-review elegance='orchestrate-gate-pattern.md L140/L148・Phase1/2 read-only' 等 skill 固有・行番号言及でテンプレ的でない"}
+  ],
+  "rejections": [],
+  "notes": "全 19 検査 PASS。機械検証7本は主張値を実測で完全再現 (旧名能動層0/content-review47/vendored2 byte一致/pins8/symlink conflict0/pytest328/dangling0)。概念判定台帳は 6 件 spot-check し実装と一致 (skill 名維持・description ハーネス化・ADR skill 維持・参考Skill無変更・tombstone・NEVER_DISTRIBUTE/env 改名)。意味論境界は over/under-rename とも独立走査で 0 件、正本 3 文書 (glossary/CONVENTIONS/README) がルール1-4を一貫記述。verdict は 36 件全 sha256 が現 SKILL.md 実測と一致し criteria/feedback も genuine (stale/テンプレなし)。非ブロッキング所見: plugins/harness-creator/{changelog,lessons-learned}/README.md が dir 目的説明に旧名『skill-creator』を含むが、これは lint の FROZEN_PARTS ({CHANGELOG.md, changelog, lessons-learned}) で意図的に凍結層扱い (header+CONVENTIONS.md ルール5『changelog 系』で明文化) であり、能動層 grep 0 件が示す通り機能・依存・テストへの実害なし。REJECT に該当する不整合は 0 件。"
+}

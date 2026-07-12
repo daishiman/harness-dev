@@ -1,0 +1,21 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-skill-intake-aggregator",
+    "skill_md_sha256": "5c18f2f940e968f4003dbc8de5db60af45161881390d914280b83f305ebebb1a"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-06T10:58:16Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "iterations": 1,
+  "human_review_required": false,
+  "notes": "score=100 / threshold=80 / passed=true (canonical render-findings-score.py, rubric skill-design 1.3.0, findings=[]). 二段確認で独立検証済み: FM) name=run-skill-intake-aggregator (prefix run + kebab, FM-001 OK), description は3トリガー (とき/場合/際 相当=3, FM-003 範囲内) かつ 。終端・名詞句始まり (FM-002/004/005 OK)。BD) body 206行 (<300, BD-003 OK), '## Purpose & Output Contract' 厳格一致 (BD-001 OK), '## Gotchas' 有 (BD-002 OK)。NM) dir basename == name (NM-001 OK)。PD) 依存方向健全 — SKILL.md 参照の全資産が実在し dependency_break=0: references 9/9, schemas 3/3, prompts 2/2, manifest, plugin-root scripts 15/15, agents 12/12 (kickoff..self-updater), hooks 4/4, commands 4/4, references/notion-per-repo-setup.md, sibling run-notion-intake-publish / run-skill-elicit いずれも実在。整合性: SKILL.md の '11 phase' と workflow-manifest.json phases (R1-R11=11個) 一致, '5 成果物' (intake.md/json/notion-url/notion-blocks/self-update) 記述一貫。単独配布化 PR の主眼である plugin-root scripts / references vendoring 参照に断線なし。high finding 0 のため SKILL.md/references の修正不要 (PR 非肥大化方針に従い無編集)。"
+}

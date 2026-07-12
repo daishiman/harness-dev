@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ref-yaml-spec-fetcher/schemas/query-result.schema.json",
+  "title": "YamlSpecFetcherQueryResult",
+  "type": "object",
+  "required": ["matches"],
+  "properties": {
+    "matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "excerpt", "score"],
+        "properties": {
+          "path": { "type": "string" },
+          "excerpt": { "type": "string" },
+          "score": { "type": "number" },
+          "field": { "type": "string", "description": "対象 frontmatter フィールド名" }
+        }
+      }
+    },
+    "staleness": {
+      "oneOf": [
+        { "type": "boolean" },
+        { "type": "string", "enum": ["missing", "fresh", "stale"] }
+      ],
+      "description": "キャッシュ鮮度 (true=stale / 'missing'=未配置 等)"
+    },
+    "last_fetched": { "type": "string", "description": "ISO 日付" },
+    "suggestions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

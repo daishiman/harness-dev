@@ -1,0 +1,61 @@
+{
+  "skill_name": "run-intake-interview",
+  "prefix": "run",
+  "kind": "run",
+  "role_suffix": null,
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "ヒアリングシートの 5 軸空欄を AskUserQuestion で順次埋めたいとき",
+    "[?] マーカー残存箇所を語彙 tier に合わせ言い換えて質問したいとき",
+    "抽象的回答を検出して excavator へハンドオフ判定したいとき"
+  ],
+  "output_contract": "output/<hint>/sheet.md (更新済) + output/<hint>/interview.json (filled_ratio / five_axes_complete / unresolved / needs_excavation)。5 軸 (出力先/情報源/共有相手/真の課題/ナレッジ資産) を優先順位順に処理する。",
+  "boundary": "本スキルは表層情報を 5 軸シートに充足させることに限定し、深掘り (5 Whys / JTBD などの excavation 技法) や仮説検証 (assumption-challenger 領域) や要約 (summarizer 領域) は実行しない。",
+  "key_constraints": [
+    "AskUserQuestion は 1 問ずつ実行 (最大 3 択推奨)",
+    "vocabulary_tier は profile.json から読み取り固定",
+    "抽象回答検出時は needs_excavation フラグを立てるのみで深掘りはしない"
+  ],
+  "deterministic_checks": [
+    "scripts/validate-interview-json.py",
+    "scripts/check-five-axes-coverage.py"
+  ],
+  "external_systems": [],
+  "needs_independent_context": false,
+  "needs_lifecycle_enforcement": false,
+  "cli_tools": ["python3"],
+  "mcp_tools": [],
+  "placement_candidates": ["Skill"],
+  "base_skill": null,
+  "delegate_agent": null,
+  "rubric_refs": [],
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "responsibilities": [
+    {
+      "id": "R1",
+      "name": "five-axes-sheet-filling",
+      "scope": "sheet.md の空欄 / [?] を 5 軸優先順位で質問・充足",
+      "owner_agent": null,
+      "prompt_required": true,
+      "vocabulary_tier": "beginner"
+    },
+    {
+      "id": "R2",
+      "name": "excavation-handoff-decision",
+      "scope": "抽象回答検出時に needs_excavation を立て purpose-excavator へ橋渡しする判定",
+      "owner_agent": null,
+      "prompt_required": true,
+      "vocabulary_tier": "intermediate"
+    }
+  ],
+  "prompt_creator_policy": "required",
+  "open_questions": [
+    "question-bank.md の正本配置 (現 aggregator/references から本スキル references/ へ移管するか共有 ref-* に切り出すか)。Phase B 着手時に確定する。"
+  ],
+  "additional_resources": [
+    {"path": "references/five-axes-priority.md", "when_to_read": "5 軸の処理順序とスキップ条件を確認するとき"},
+    {"path": "references/abstract-answer-patterns.md", "when_to_read": "needs_excavation を立てる基準を確認するとき"},
+    {"path": "references/question-bank-pointer.md", "when_to_read": "語彙 tier 別質問雛形の参照先を確認するとき"}
+  ]
+}

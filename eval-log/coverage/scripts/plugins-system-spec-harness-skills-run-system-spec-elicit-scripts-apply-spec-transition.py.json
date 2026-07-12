@@ -1,0 +1,13 @@
+{
+  "artifact": "plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "soundness=confirm/excludeが確定セルをTransitionErrorで拒否しreopen経由のみ確定変更を許すsingle-writer rollback防御が中核で堅牢。recompute_aggregatesが真理値表で集約を再導出(宣言値でなくセルから再計算)。set-foundationの確定条件(U1-U3値必須・U4-U9は明示N/A+理由可、かつapproval_log実在approval_ref)、set-decisionのcost_model/evidence https URL(username排除)/RFC3339検証、knowledge candidateのkebab id+lifecycle同一/1段階前進のみ、concrete_intents.serves dangling拒否まで機械検証。responsibility=spec-state.jsonへの唯一の書込経路で、bootstrap/init/apply/chunk/aggregate/set-targets/set-foundation/set-decision/set-knowledge-candidateの全subcommandがspec-state遷移という単一責務に凝集(1035行だが凝集高)。error-handling=TransitionError→1・OSError/JSONDecodeError→1・argparse required subparserでusage→2。side-effect-safety=network:false、_emitが--out|--state|stdoutへ書き宣言write-scope=spec-state.json(単一writer)と整合、load_json_argはJSON文字列/pathを安全判別。frontmatter=PEP723完全。近傍tests/test_spec_transition.pyに64テストあり遷移規則を実確認。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

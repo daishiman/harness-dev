@@ -1,0 +1,300 @@
+{
+ "agent": "logical-structural",
+ "paradigm_findings": [
+  {
+   "paradigm": "批判的思考",
+   "verified": "Phase1指摘のインライン埋め込み2件を一次ソースで検証し、SSOT宣言の根拠(lint-goal-seek --self-test実装/lint-feedback-protocol)まで遡って正当性を判定",
+   "matrix": {
+    "C1": "PARTIAL",
+    "C2": "PASS",
+    "C3": "PARTIAL",
+    "C4": "PASS"
+   },
+   "observations": [
+    "run-goal-seek/SKILL.md:93-131 の40行インラインPythonは lint-goal-seek.py:328-356 が render-combinators.py / with-goal-seek.patch / SKILL.md 三者の同型性を機械照合しており『正当な二重実装』。scripts/ へ分離すると self-test の参照先 (lint-goal-seek.py:331-333 が SKILL.md テキストを直接読む) が壊れるため、分離は不適切",
+    "run-skill-feedback の prompts 免除 (SKILL.md:40-41) は lint-feedback-protocol.py で schema 整合が機械検証される設計だが、免除理由の自己記述と本文実態に乖離あり"
+   ],
+   "findings": [
+    {
+     "id": "LS-201",
+     "severity": "contradiction",
+     "location": "plugins/skill-creator/skills/run-skill-feedback/SKILL.md:41",
+     "description": "completeness_exempt は『本 SKILL.md は schema を参照し scripts へ橋渡しするのみ』と宣言するが、実際は L118-204 に約90行の対話手順 (Step1-4 の質問文テンプレ・要望収集7項目) がインライン実装されており prompts/ 相当の責務を本文が抱えている。免除宣言と実態が不一致",
+     "proposed_fix": "exempt 理由を『対話手順は feedback_protocol 派生として本文に展開し lint-feedback-protocol.py で整合検証』へ事実通りに修正するか、局面カタログを prompts/R1-identify.md 等へ分離して免除を撤回する",
+     "auto_fixable": false
+    },
+    {
+     "id": "LS-202",
+     "severity": "smell",
+     "location": "plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py:61",
+     "description": "インライン bash の SSOT 保証は VERIFICATION_REQUIRED_TOKENS (required_keys/original_goal_hash/hashlib.sha256) の3トークン存在検査のみ。run-goal-seek/SKILL.md:95-131 の検査ロジック本体 (行数照合・anchor 不変性 assert) はトークンが残存する限り意味的に乖離しても検出されない",
+     "proposed_fix": "self-test に検査ロジックの正規化ハッシュ比較 (空白除去後の heredoc 部分一致) を追加するか、トークン集合に len(lines) == iters + 1 等の判定式トークンを追加する",
+     "auto_fixable": false
+    }
+   ]
+  },
+  {
+   "paradigm": "演繹思考",
+   "verified": "規約正本2 lint (lint-skill-tree.py の ALLOWED_DIRS/MAX300/P1-2、prompt-placement-convention.md の kind別prompt要否) を大前提に全28スキルへ当てはめ",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "FAIL",
+    "C3": "PASS",
+    "C4": "PASS"
+   },
+   "observations": [
+    "300行 cap: run-build-skill=299行 / run-elegant-review=298行 / run-skill-elicit=293行 (各 SKILL.md 末尾行で実測) — 全て MAX_SKILL_LINES=300 (lint-skill-tree.py:33) 以内で違反なし",
+    "run-goal-seek/run-goal-elicit/run-skill-feedback の prompts 不在は completeness_exempt 宣言 (各 SKILL.md frontmatter) により lint-skill-completeness.py:137-139 の免除経路で合法",
+    "演繹の大前提自体に強制力の穴を発見 (LS-203)"
+   ],
+   "findings": [
+    {
+     "id": "LS-203",
+     "severity": "omission",
+     "location": "plugins/skill-governance-lint/scripts/lint-skill-tree.py:187-189",
+     "description": "コメントは『extra top-level dirs allowed but warn』と書くが実装は pass のみで warn を一切出力しない。ALLOWED_DIRS (L28) は top-level ディレクトリに対して実質非強制であり、規約外ディレクトリ (例: data/, output/) を作っても無音で通過する。コメントと挙動の矛盾 + 機械層の漏れ",
+     "proposed_fix": "elif 分岐で stderr に [Warn] を出力する (コメント通りの挙動に修正)。exit 1 化は既存スキルへの影響確認後",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "帰納的思考",
+   "verified": "run-* 12本の共通パターン (workflow-manifest/resource-map/manifest frontmatter) と references/resource-map.yaml 全22ファイルのキー流儀を横断比較",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "FAIL",
+    "C3": "FAIL",
+    "C4": "PASS"
+   },
+   "observations": [
+    "workflow-manifest.json は run-* 12本中 10本に存在し、run-goal-seek / run-goal-elicit のみ不在 (Glob 実測)。両者の completeness_exempt は prompts のみで manifest 不在の理由宣言はない",
+    "resource-map.yaml 22ファイル中 10ファイルが `- path:` キー、残りが `- file:` キーを使用 (grep 実測)。run-elegant-review 等は両方混在。スキーマ lint 不在"
+   ],
+   "findings": [
+    {
+     "id": "LS-204",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/skills/run-goal-seek/SKILL.md:30",
+     "description": "run 系 12本中 10本が workflow-manifest.json を持ち frontmatter に manifest: を宣言するのに対し、run-goal-seek / run-goal-elicit は manifest 不在かつ理由付き N/A 宣言もない。『持つ or 理由付き N/A、空欄禁止』(lint-skill-completeness.py:23) の哲学から逸脱。ゴールシーク都度生成ゆえ phase 固定不能という正当理由があるなら宣言されるべき",
+     "proposed_fix": "両スキルの completeness_exempt に『manifest: ゴールシークループで手順を都度生成するため phase/gate 固定の workflow-manifest は適用外』を追記する (機械検査対象外でも宣言の対称性を回復)",
+     "auto_fixable": true
+    },
+    {
+     "id": "LS-205",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/skills/wrap-git-commit-safe/references/resource-map.yaml:2",
+     "description": "resource-map.yaml のエントリキーが skill 間で `path:`+`read_when` 系 (10ファイル) と `file:`+`topic`+`read_when` 系 (run-skill-create 等) に分裂。設計書06 第13条スキーマ準拠を自称するファイル (run-skill-create 版 L1) と異なる語彙のファイルが並存し、Progressive Disclosure の機械読取りが不安定",
+     "proposed_fix": "正本スキーマを 1 つ定め (file/topic/read_when 推奨)、lint-skill-tree.py の P1-2 検査に key スキーマ検証を追加。`path:` 系 10 ファイルを一括変換",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "アブダクション",
+   "verified": "同名異内容・stale パス群 (handoff×2 / findings×3 / creator-kit 残存参照×2) の観測から根本原因仮説を導出し収束",
+   "matrix": {
+    "C1": "FAIL",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS"
+   },
+   "observations": [
+    "仮説1 (採択・最尤): creator-kit→plugins 移行時の残渣処置基準が三様 (skill-brief=redirect 化 / handoff=『互換のため保持』(resource-map.yaml:36) / check-rubric-sync.py:37 と lint-rubric-refs-exist.py:58 = creator-kit パスのまま放置) で、単一の移行残渣棚卸し基準の欠如に収束する",
+    "仮説2 (棄却): 意図的な二系統運用 — references/handoff-schema.json (draft-07, required: state/skill_name) と schemas/handoff.schema.json (2020-12, required: gate_id/approver/artifacts) は必須フィールドが非互換で旧形式の読み手は eval-log 過去ログのみ。新規利用意図は認められず棄却"
+   ],
+   "findings": [
+    {
+     "id": "LS-206",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/skills/run-skill-create/references/handoff-schema.json:2",
+     "description": "references/handoff-schema.json (draft-07) と schemas/handoff.schema.json (draft 2020-12) が同名概念で必須フィールド非互換のまま並存。skill-brief-schema.json は $ref のみの redirect に縮約済み (同 references/skill-brief-schema.json:5-7) なのに handoff だけ『互換のため保持』(resource-map.yaml:35-37) と処置が非対称。SSOT 一本化原則 [[project_ssot_dedup_mechanism]] に反する",
+     "proposed_fix": "skill-brief と同型の x-canonical-redirect 化 (旧フィールドを廃し schemas/handoff.schema.json への $ref のみ残す)。旧形式 eval-log の読取りが必要なら x-legacy-note に旧 required を記録",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "垂直思考",
+   "verified": "legacy handoff-schema.json が『なぜ消せないか』を参照経路で深掘り → 量産テンプレ経由の増殖経路を特定",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "FAIL",
+    "C3": "PASS",
+    "C4": "FAIL"
+   },
+   "observations": [
+    "Why1: なぜ legacy が残る→resource-map が『旧形式を読むとき』用と恒久化。Why2: なぜ参照が切れない→run-build-skill/templates/orchestrator.md:97 が Additional Resources に `references/handoff-schema.json` を記載。Why3: これはテンプレなので新規生成される orchestrator skill 全てに legacy パスが転写される。Why4: 転写先 skill は references/handoff-schema.json を持たないため dangling 参照になる。Why5: テンプレと正本 schema の参照同期を検査する lint が無い"
+   ],
+   "findings": [
+    {
+     "id": "LS-207",
+     "severity": "dependency_break",
+     "location": "plugins/skill-creator/skills/run-build-skill/templates/orchestrator.md:97",
+     "description": "orchestrator 量産テンプレが `references/handoff-schema.json — Phase間 handoff 構造` を Additional Resources として残しており、正本 schemas/handoff.schema.json (run-skill-create/SKILL.md:57 ほか全運用箇所が参照) と逆向き。本テンプレから生成された skill は旧 draft-07 契約 (required: state/skill_name) を案内され、実際の handoff 検証契約 (required: gate_id/approver/artifacts) と矛盾する",
+     "proposed_fix": "L97 を `schemas/handoff.schema.json — Gate 通過時 handoff 共通形式` へ書き換える (1行修正)。LS-206 の redirect 化と同一 PR で実施",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "要素分解",
+   "verified": "run-skill-create の資産17ファイルと wrap-git-commit-safe の資産6ファイルを要素単位で実在照合 (resource-map エントリ vs Glob 実測)",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "FAIL"
+   },
+   "observations": [
+    "run-skill-create/references/resource-map.yaml の 12 エントリ中 3 件が実在しないパスを指す (実体は R-id prefix 付きへ改名済み)",
+    "wrap-git-commit-safe/references/ は 3 行の resource-map.yaml 単独。P1-2 (lint-skill-tree.py:203-212) は references 3 ファイル以上で resource-map 必須と定めるが、本件は逆に map だけが存在する過剰分離"
+   ],
+   "findings": [
+    {
+     "id": "LS-208",
+     "severity": "dependency_break",
+     "location": "plugins/skill-creator/skills/run-skill-create/references/resource-map.yaml:23",
+     "description": "L23 `../prompts/elicit.md`、L26 `../prompts/gate-review.md`、L29 `../prompts/governance-decide.md` の 3 エントリが dangling。実体は prompts/R1-elicit.md / R2-gate-review.md / R3-governance-decide.md (Glob 実測)。prompt-placement-convention の R-id 改名に resource-map が追従していない。Progressive Disclosure 索引として『最初に読む』導線が壊れている",
+     "proposed_fix": "3 エントリを R-id 付き実パスへ修正。あわせて lint-skill-tree P1-2 検査に resource-map エントリの実在検証 (lint-manifest-contents 同等の expect) を追加",
+     "auto_fixable": true
+    },
+    {
+     "id": "LS-209",
+     "severity": "smell",
+     "location": "plugins/skill-creator/skills/wrap-git-commit-safe/references/resource-map.yaml:1-3",
+     "description": "references/ ディレクトリが resource-map.yaml (3行・エントリ1件、しかも ../templates/ への越境参照のみ) 単独で存在。P1-2 の必須条件 (references 3 ファイル以上) を満たさず、索引対象の references 実体もゼロ。ディレクトリ分離が情報量に対して過剰",
+     "proposed_fix": "references/ ごと削除し、commit-template.md への案内は SKILL.md の Additional Resources 1 行へ縮約する (wrap kind の必須資産は scripts+schemas であり references は不要)",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "MECE",
+   "verified": "kind別必須資産表 (REQUIRED_BY_KIND) と充足手段4択が、実在する資産種と参照実体を漏れ・矛盾なくカバーするか検査",
+   "matrix": {
+    "C1": "FAIL",
+    "C2": "FAIL",
+    "C3": "PASS",
+    "C4": "PASS"
+   },
+   "observations": [
+    "REQUIRED_BY_KIND (lint-skill-completeness.py:48-55) のカテゴリ集合 {prompts, references, scripts, schemas, rubric} は実在資産種 {workflow-manifest, hooks, templates, examples} を対象外としており、manifest 有無 (LS-204) が機械検査の死角に入る",
+    "充足手段2 (*_refs 非空) は参照先の実在を検査しない (L147-149: 非空なら True)。assign-plugin-package-evaluator/SKILL.md:30-31 の rubric_refs: ref-pkg-contract は、ref-pkg-contract 配下に rubric.json が一切存在しない (Glob 実測: rubric.json は 4 skill のみ) のに completeness PASS する — 形式充足と実体充足の漏れ"
+   ],
+   "findings": [
+    {
+     "id": "LS-210",
+     "severity": "contradiction",
+     "location": "plugins/skill-governance-lint/scripts/lint-rubric-refs-exist.py:55-64",
+     "description": "rubric 正規パスが lint 間で矛盾。lint-skill-tree.py:221-229 は ref-*/assign-* 直下の rubric.json を禁止し references/rubric.json を期待パスと明示。一方 lint-rubric-refs-exist.py は ref-* の rubric_refs を creator-kit/skills/<ref>/rubric.json (削除済みディレクトリ) と .claude/skills/<ref>/rubric.json (直下) のみで解決し references/rubric.json を候補に含めない。両 lint の正規パスが排反で、rubric_refs: ref-* は構造的に解決不能",
+     "proposed_fix": "resolve_rubric_ref の candidates を plugins/*/skills/<ref>/references/rubric.json へ更新し creator-kit 候補を削除。lint-skill-completeness の *_refs 検査にも参照先実在チェックを追加",
+     "auto_fixable": true
+    },
+    {
+     "id": "LS-211",
+     "severity": "omission",
+     "location": "plugins/skill-governance-lint/scripts/lint-skill-completeness.py:48-55",
+     "description": "REQUIRED_BY_KIND が workflow-manifest / hooks / templates / examples を資産カテゴリとして持たず、『kind から要求される資産が揃っているか』(docstring L21) の検査範囲に漏れがある。run 系の manifest 有無が宣言なしで分岐している実態 (LS-204) はこの死角の帰結",
+     "proposed_fix": "run kind に 'manifest' カテゴリを追加し、満たし方は (1) workflow-manifest.json 実在 (2) completeness_exempt 宣言 の 2 択とする",
+     "auto_fixable": false
+    }
+   ]
+  },
+  {
+   "paradigm": "2軸思考",
+   "verified": "SKILL.md 行数 (cap 余裕) × 資産分離度の 2 軸で全 28 スキルを象限化し、過剰/不足分離と是正優先度を判定",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS"
+   },
+   "observations": [
+    "高行数×高分離 (run-build-skill 299行+資産30超 / run-elegant-review 298行 / run-skill-elicit 293行): cap 余裕 1-7 行で次の機能追加が即 300 行超過 → 分割を強制される。ただし run-elegant-review/SKILL.md:291 が自認する通り Additional Resources 節は frontmatter *_refs と重複列挙であり、本文側の縮退余地が既に存在する — 規約違反ではなく予防保全領域",
+    "低行数×無分離 (run-goal-seek 146行 SKILL.md 単独 / run-goal-elicit SKILL.md+schema 1): ゴールシーク都度生成という設計意図と整合し、責務分離の追加 (prompts/scripts 新設) はかえって self-test SSOT (LS-202) を壊すため不要 — 現構成が適正",
+    "低行数×高分離の過剰例は wrap-git-commit-safe references/ のみ (LS-209 で計上済み)。本象限分析では新規 issue なし"
+   ],
+   "findings": [
+    {
+     "id": "LS-212",
+     "severity": "smell",
+     "location": "plugins/skill-creator/skills/run-build-skill/SKILL.md:299",
+     "description": "cap 直下 3 件 (299/298/293 行、実測) のうち run-build-skill は余裕 1 行。Additional Resources 2 行 (L298-299) が references/ 11 ファイルを列挙するが、これは references/resource-map.yaml (実在) と役割重複しており、次回編集時に確実に分割作業が発生する時限債務",
+     "proposed_fix": "Additional Resources の列挙を『resource-map.yaml 参照』の 1 行に縮約し 5-10 行のバッファを先行確保する (run-elegant-review / run-skill-elicit も同型適用)",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "プロセス思考",
+   "verified": "rubric 発効工程 (改版→compute-hash→check-rubric-sync→commit) を時系列分解し step 間 gap を実測 — 実ドリフトの発生を確認",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "FAIL",
+    "C4": "FAIL"
+   },
+   "observations": [
+    "run-skill-rubric-governance/SKILL.md:88 の発効手順は compute-rubric-hash → check-rubric-sync (exit 0) → commit と定めるが、check-rubric-sync.py:36-45 は REPO_ROOT=parents[2] (= plugins/ ディレクトリ) 起点で creator-kit/skills/... (削除済み) を参照するため常に exit 1 'missing file' で停止する。工程 step 2 が恒久故障",
+    "故障の帰結としてドリフトが実際に素通りしている: ref-skill-design-rubric/references/rubric.json:4 = rubric_version 1.3.0 に対し assign-skill-design-evaluator/references/rubric.json:4 = 1.2.0 (実測)。upstream↔derived の版ずれ検出という本来の責務が果たされていない"
+   ],
+   "findings": [
+    {
+     "id": "LS-213",
+     "severity": "dependency_break",
+     "location": "plugins/skill-governance-lint/scripts/check-rubric-sync.py:36-45",
+     "description": "UPSTREAM/DERIVED が creator-kit/skills/ パス (移行で削除済み) かつ REPO_ROOT 算出も plugins/ を指す二重の誤りで、常に exit 1。run-skill-rubric-governance/SKILL.md:66 のチェックリスト『check-rubric-sync.py が exit 0』は恒久的に充足不能。現に ref 側 1.3.0 / assign 側 1.2.0 の rubric_version drift が未検出のまま残存している (実害発生中)",
+     "proposed_fix": "UPSTREAM=plugins/skill-creator/skills/ref-skill-design-rubric/references/rubric.json、DERIVED=同 assign-skill-design-evaluator/references/rubric.json、REPO_ROOT=parents[3] へ修正し CI へ配線。修正後に 1.2.0→1.3.0 の derived 追従 (または意図的据え置きの宣言) を実施",
+     "auto_fixable": true
+    },
+    {
+     "id": "LS-214",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/skills/run-skill-rubric-governance/SKILL.md:88",
+     "description": "発効手順が `compute-rubric-hash.py --rubric plugins/skill-creator/skills/ref-skill-design-rubric/rubric.json` と直下パスを記載するが、実体は references/rubric.json であり、かつ直下配置は lint-skill-tree.py:221-229 が明示的に禁止するパス。手順書通りに実行すると必ず失敗する stale 記述",
+     "proposed_fix": "パスを references/rubric.json へ修正 (LS-210/LS-213 と同一 PR で rubric パス正規化を一括実施)",
+     "auto_fixable": true
+    }
+   ]
+  },
+  {
+   "paradigm": "why思考",
+   "verified": "移行残渣 (creator-kit 参照・legacy schema・stale resource-map) が複数 lint/SKILL.md に同時残存する根本原因を Why 連鎖で追跡",
+   "matrix": {
+    "C1": "PASS",
+    "C2": "FAIL",
+    "C3": "PASS",
+    "C4": "PASS"
+   },
+   "observations": [
+    "Why1: なぜ stale 参照が 5 箇所以上残る→ creator-kit→plugins 移行時にパス張替えが participating ファイルに閉じた。Why2: なぜ漏れた→ lint 自身 (check-rubric-sync / lint-rubric-refs-exist) は『検査する側』でありパス検査の対象外だった。Why3: なぜ検出されないまま今に至る→ これらの lint が CI で常時実行されていれば即 fail して発覚したはず (installers/manifest.json:161 に配布対象として記載はある)。Why4: つまり配布物には含むが実行配線が欠けている。Why5 (根本): 『lint スクリプト自体の参照先実在』を検査するメタ lint と、移行時の残渣棚卸しチェックリストが存在しない"
+   ],
+   "findings": [
+    {
+     "id": "LS-215",
+     "severity": "omission",
+     "location": "plugins/skill-governance-lint/scripts/check-rubric-sync.py:37",
+     "description": "creator-kit パスを参照する lint (check-rubric-sync.py:37, lint-rubric-refs-exist.py:58) が移行後も検出されず残存している根本原因は、lint スクリプトのハードコードパス実在を検査する機構と移行残渣の棚卸し手順が無いこと。検査器自身が検査対象外という構造的死角",
+     "proposed_fix": "lint-path-canonical.py (既存) の検査対象に plugins/skill-governance-lint/scripts/*.py 内の `creator-kit/` 文字列を追加し、リポジトリ全体で deleted-root への参照を fail-closed 検出する",
+     "auto_fixable": false
+    }
+   ]
+  }
+ ],
+ "thought_method_coverage": {
+  "used": [
+   "批判的思考",
+   "演繹思考",
+   "帰納的思考",
+   "アブダクション",
+   "垂直思考",
+   "要素分解",
+   "MECE",
+   "2軸思考",
+   "プロセス思考",
+   "why思考"
+  ],
+  "skipped_with_reason": []
+ }
+}

@@ -1,0 +1,28 @@
+{
+  "_comment": "Router-Registry型 ルーターファイル雛形。{{...}} は生成時に実際の値で置換する。",
+  "consult_at": ["runtime"],
+  "categories": {
+    "{{CATEGORY_ID}}": {
+      "files": ["{{CATEGORY_ID}}-{{SUBTOPIC}}.json"],
+      "routing_rules": {
+        "{{CATEGORY_ID}}-{{SUBTOPIC}}.json": {
+          "topic": "{{SUBTOPIC_DESCRIPTION}}",
+          "tags": ["{{TAG1}}", "{{TAG2}}", "{{TAG3}}"],
+          "default": true
+        }
+      }
+    }
+  },
+  "quick_lookup": {
+    "by_phase": {
+      "{{PHASE_KEY}}": {
+        "files": ["{{CATEGORY_ID}}-{{SUBTOPIC}}.json"]
+      }
+    },
+    "by_issue": {
+      "{{ISSUE_KEYWORD}}": {
+        "files": ["{{CATEGORY_ID}}-{{SUBTOPIC}}.json"]
+      }
+    }
+  }
+}

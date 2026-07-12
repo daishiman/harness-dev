@@ -1,0 +1,135 @@
+{
+  "$schema": "https://harness/schemas/workflow-manifest.json",
+  "skill": "run-plugin-package-check",
+  "version": "1.0",
+  "source_chapter": "36",
+  "phases": [
+    {
+      "id": "input-validation",
+      "step": 0,
+      "phase_gate": "all",
+      "input": ["plugin", "phase", "pkg", "dry_run"],
+      "output": ["plugin_dir_resolved", "package_mode"],
+      "fatal_exit_codes": [2],
+      "failure_action": "abort"
+    },
+    {
+      "id": "pkg-001",
+      "step": 1,
+      "phase_gate": 0,
+      "command": "scripts/run-plugin-validate-strict.sh",
+      "args": ["--plugin", "${plugin}"],
+      "output": "eval-log/${plugin}/pkg-001/${date}-${run}.json",
+      "failure_action": "record_and_continue",
+      "env_skip_condition": "claude CLI not found"
+    },
+    {
+      "id": "pkg-002-008",
+      "step": 2,
+      "phase_gate": 0,
+      "delegateSkill": "assign-plugin-package-evaluator",
+      "delegate_context": "fork",
+      "delegate_args": {
+        "target_plugin": "${plugin}",
+        "pkg_ids": ["PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008"]
+      },
+      "output": "eval-log/${plugin}/pkg-batch/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "pkg-009",
+      "step": 3,
+      "phase_gate": 0,
+      "command": "../../../skill-governance-lint/scripts/lint-external-refs.py",
+      "args": ["--skills-dir", "plugins/${plugin}/skills", "--fail-on-external", "--json"],
+      "output": "eval-log/${plugin}/pkg-009/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "pkg-010",
+      "step": 4,
+      "phase_gate": 1,
+      "command": "scripts/smoke-plugin-install.sh",
+      "args": ["--plugin", "${plugin}", "${dry_run_flag}"],
+      "output": "eval-log/${plugin}/pkg-010/${date}-${run}.json",
+      "failure_action": "abort"
+    },
+    {
+      "id": "pkg-011",
+      "step": 5,
+      "phase_gate": 2,
+      "command": "scripts/smoke-plugin-uninstall.sh",
+      "args": ["--plugin", "${plugin}"],
+      "output": "eval-log/${plugin}/pkg-011/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "pkg-012",
+      "step": 5,
+      "phase_gate": 2,
+      "command": "scripts/smoke-plugin-upgrade.sh",
+      "args": ["--plugin", "${plugin}"],
+      "output": "eval-log/${plugin}/pkg-012/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "pkg-013",
+      "step": 6,
+      "phase_gate": 2,
+      "command": "scripts/validate-plugin-permissions.py",
+      "args": ["--plugin", "${plugin}", "--check", "013a,013b,013c,013d"],
+      "output": "eval-log/${plugin}/pkg-013/${date}-${run}.json",
+      "failure_action": "record_and_continue",
+      "aggregation": "all_must_pass"
+    },
+    {
+      "id": "pkg-014",
+      "step": 7,
+      "phase_gate": 2,
+      "delegateSkill": "assign-plugin-package-evaluator",
+      "delegate_context": "fork",
+      "delegate_args": {
+        "target_plugin": "${plugin}",
+        "pkg_ids": ["PKG-014"]
+      },
+      "output": "eval-log/${plugin}/pkg-014/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "pkg-015",
+      "step": 8,
+      "phase_gate": 2,
+      "command": "../../../skill-governance-lint/scripts/lint-rubric-violation.py",
+      "args": ["--log-dir", "eval-log/${plugin}", "--out", "eval-log/${plugin}/pkg-015/${date}-${run}.json"],
+      "output": "eval-log/${plugin}/pkg-015/${date}-${run}.json",
+      "failure_action": "record_and_continue"
+    },
+    {
+      "id": "aggregate",
+      "step": 9,
+      "phase_gate": "all",
+      "command": "scripts/aggregate-pkg-findings.py",
+      "args": ["--plugin", "${plugin}", "--out", "eval-log/${plugin}/pkg-summary/${date}-${run}.json"],
+      "side_effects": ["observable_emit:pkg_check_failed (if verdict.fail > 0)"]
+    }
+  ],
+  "completion_signals": {
+    "phase_0": {"required_pkg": ["PKG-001", "PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008", "PKG-009"], "fail_count_max": 0},
+    "phase_1": {"includes_phase_0": true, "required_pkg": ["PKG-010"], "fail_count_max": 0},
+    "phase_2": {"includes_phase_1": true, "required_pkg": ["PKG-011", "PKG-012", "PKG-013a", "PKG-013b", "PKG-013c", "PKG-013d", "PKG-014", "PKG-015"], "fail_count_max": 0}
+  },
+  "failure_modes": {
+    "pkg_check_failed": {
+      "trigger": "verdict.fail > 0",
+      "observable_chapter": "35",
+      "eval_log_glob": "eval-log/${plugin}/pkg-*/*.json"
+    }
+  },
+  "package_mode_handling": {
+    "bundle": "all PKG ids applicable",
+    "skill-only": {
+      "applicable": ["PKG-002", "PKG-004"],
+      "not_applicable_default": ["PKG-001", "PKG-003", "PKG-005", "PKG-006", "PKG-007", "PKG-008", "PKG-009", "PKG-010", "PKG-011", "PKG-012", "PKG-013a", "PKG-013b", "PKG-013c", "PKG-013d", "PKG-014", "PKG-015"]
+    }
+  }
+}

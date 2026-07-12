@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reconcile Internal Result",
+  "description": "mfk_reconcile.reconcile() と reconcile_invoices.py が R2/R3/R4 間で受け渡す内部結果JSONの契約。順方向は rows、逆方向は orphans に分け、summary は internal_verdict -> 件数の verdict count とする。DB2 sink へ渡す judge_label/ai_check/warning_class は verdict-mapping.json から build_sink_rows で導出する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_ym", "rows", "orphans", "summary"],
+  "properties": {
+    "target_ym": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "description": "対象月 YYMM(=取引月)。例 '2606'。月次照合では transaction.date 基準で帰属を決める。"
+    },
+    "rows": {
+      "type": "array",
+      "description": "順方向の契約展開行。請求確認シート/DB1契約マスタ由来の日本語キーを保持し、verdict/evidence/warning を付与する。",
+      "items": {
+        "type": "object",
+        "required": ["verdict"],
+        "additionalProperties": true,
+        "properties": {
+          "direction": {"type": "string", "enum": ["順方向"]},
+          "verdict": {
+            "type": "string",
+            "description": "verdict-mapping.json の internal_verdict 語彙SSOTと一致する内部判定。ORPHAN は orphans 側にのみ出す。"
+          },
+          "契約ID": {"type": ["string", "null"]},
+          "取引先": {"type": ["string", "null"]},
+          "商品": {"type": ["string", "null"]},
+          "エンドクライアント名": {"type": ["string", "null"]},
+          "現行単価": {"type": ["integer", "null"]},
+          "期待明細数": {"type": ["integer", "null"]},
+          "MF顧客ID": {"type": ["string", "null"]},
+          "warning": {"type": ["string", "null"]},
+          "evidence": {
+            "type": ["object", "null"],
+            "additionalProperties": true,
+            "description": "名寄せ単一照合関数(J1)が返したMF証跡。_aggregated_billing=true の場合、MF 1明細に契約ID境界内の複数シート行が合算されている。"
+          }
+        }
+      }
+    },
+    "orphans": {
+      "type": "array",
+      "description": "逆方向の MF実績のみ行。全月契約で名寄せしても未被覆の顧客/請求を要マスタ登録として出す。",
+      "items": {
+        "type": "object",
+        "required": ["verdict", "direction", "MF顧客ID", "cust", "amount"],
+        "additionalProperties": true,
+        "properties": {
+          "verdict": {"type": "string", "const": "ORPHAN"},
+          "direction": {"type": "string", "const": "逆方向orphan"},
+          "MF顧客ID": {"type": "string"},
+          "cust": {"type": "string"},
+          "amount": {"type": "integer"},
+          "desc": {"type": ["string", "null"]},
+          "services": {"type": "array"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": {"type": "integer"},
+      "description": "internal_verdict -> 件数。キーは verdict-mapping.json の internal_verdict 部分集合。"
+    }
+  }
+}

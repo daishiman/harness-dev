@@ -1,0 +1,1 @@
+../plugins/skill-governance-hooks/scripts/hook-guard-rubric.py

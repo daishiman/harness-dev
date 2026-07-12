@@ -1,0 +1,13 @@
+{
+  "artifact": "plugins/system-spec-harness/skills/ref-system-design-knowledge/scripts/validate-knowledge-cards.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 82,
+    "notes": "soundness=セクション抽出+MIN_BODY_CHARS深度+PLACEHOLDER正規表現+一次資料URL存在+freshness token(class/last_checked/review_by/trigger)+catalog parity(open_world=true・non-exhaustive semantics・knowledge_id重複)+lifecycle stage網羅を検証する決定論ゲートで、pointer-onlyの浅いカードを拒否する核心ロジックは健全。軽微2点を検出: (a) frontmatter inputs の argv 記述 '[--catalog FILE] [--references-dir DIR]' が実装と乖離(main は --root のみ受け、--catalog/--references-dir は存在しない)。(b) validate_root 内の knowledge-catalog.json / open-world-knowledge-lifecycle.md の read_text が未捕捉で、ファイル不在時は main に try/except が無くtracebackで落ち、frontmatterが謳う exit 0/1/2 の整然とした code に乗らない。responsibility=C04深度/catalog parity/open-world契約検証の単一責務。error-handling=violations→1・OK→0・argparse usage→2だが上記IO例外はexit code化されず。side-effect-safety=network:false・write-scope:noneでread-only、副作用なし。frontmatter=PEP723ブロックは揃うが inputs 記述が実argvと不一致。近傍tests/test_validate_knowledge_cards.pyは3本と手薄。核心は健全なためPASSだが上記2点を明記。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

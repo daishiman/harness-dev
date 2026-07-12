@@ -1,0 +1,8 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/report-composer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {"verdict": "PASS", "score": 89, "notes": "genuine実測: reference-existence=prompt_ref prompts/R3-agent-report-composer.md(338行)実在。prompt が引く vendor/scripts/render-report.js(node --check OK・458行の実 engine)、plugin共有 references/report-writing-rules.md・mermaid-integration.md・svg-diagram-primitives.md、schemas/report-structure.schema.json($CLAUDE_PLUGIN_ROOT/schemas/ に実在・22KB)全て解決。dangling 0。schema-conformance=name/description(トリガ形・slide html-generator 対応の report 版と明示)/kind=agent/version/owner/tools=Read,Write,Bash/isolation=fork 完備。Bash は Bash(node render-report.js) 決定論生成に必要で整合。owner-flow=SKILL.md L105『report 経路: report-composer→render-report.js で report.html 決定論生成』・workflow-manifest R3-generate-evaluate・prompt _role adapter/SSOT 明記。placement-invariant=prompt 338行 SSOT vs adapter 58行。single-responsibility=report HTML/prose 生成単一。減点: description が長め(パラ内詳細を含む)・共通 boilerplate 型ゆえ adapter 固有差分が薄い。"},
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]
+}

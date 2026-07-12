@@ -1,0 +1,30 @@
+{
+  "task_id": "07",
+  "approver": "codex_review_delegate",
+  "approved_at": "2026-05-20T01:11:08+09:00",
+  "reviewed_artifacts": [
+    "scripts/build-claude-settings.py",
+    "tests/test_build_claude_settings.py",
+    "eval-log/task/07/cli-contract-frozen.txt",
+    "eval-log/task/07/settings.before.json",
+    "eval-log/task/07/test-result.txt",
+    "eval-log/task/07/user-section.before.sha256",
+    "eval-log/task/07/user-section.after.sha256"
+  ],
+  "decision": "approved",
+  "review_notes": [
+    "Implemented the task 04 Section 7.1 CLI contract and Section 7.2 plan schema.",
+    "Unit tests cover INV-1 through INV-12, conflict exit 2, invalid layout exit 3, help output, check drift, and user-section hash output.",
+    "Applied the builder once to .claude/settings.json so two consecutive --check runs return exit 0 while preserving the user-section SHA256."
+  ],
+  "dod_results": {
+    "DoD-1": "pass",
+    "DoD-2": "pass",
+    "DoD-3": "pass",
+    "DoD-4": "pass",
+    "DoD-5": "pass",
+    "DoD-6": "pass",
+    "DoD-7": "pass",
+    "DoD-8": "pass"
+  }
+}

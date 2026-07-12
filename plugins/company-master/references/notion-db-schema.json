@@ -1,0 +1,22 @@
+{
+  "_doc": "Notion 企業マスタ DB の機械可読スキーマ (live preflight 照合用)。生成元正本は references/company-master-columns.md の7列定義 + 確度4ラベル値域。正式名称は独立列を廃止し会社名(title)へ統合 (official_name は source_by_field の provenance として保持・DB 列でない)。live に旧『正式名称』列が残っている場合も7列構成違反として preflight で fail-closed する。列の追加・改名・select オプション変更は columns.md を先に更新し、本ファイルを追従させること。scripts/notion_upsert.py の preflight_schema が upsert/backfill の書き込み前に Notion API GET database の live スキーマと照合し、必須7列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・禁止列/余剰列の存在・API 不達を fail-closed (書き込まず構造化エラー) で遮断する。",
+  "source_of_truth": "references/company-master-columns.md",
+  "properties": {
+    "会社名": {"type": "title"},
+    "住所": {"type": "rich_text"},
+    "郵便番号": {"type": "rich_text"},
+    "法人番号": {"type": "rich_text"},
+    "電話番号": {"type": "rich_text"},
+    "情報の確かさ": {
+      "type": "select",
+      "select_options": [
+        "公的データで確認済み",
+        "公的データ取得",
+        "ネット検索(要確認)",
+        "未確定(要確認)"
+      ]
+    },
+    "備考": {"type": "rich_text"}
+  },
+  "forbidden_properties": ["source", "last_verified", "確認用URL", "正式名称"]
+}

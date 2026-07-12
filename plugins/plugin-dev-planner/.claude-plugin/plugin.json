@@ -1,0 +1,56 @@
+{
+  "name": "plugin-dev-planner",
+  "distributable": false,
+  "version": "0.1.0",
+  "description": "プラグイン構想を index + 13 フェーズファイル(phase-01〜phase-13) + component-inventory.json へ目的ドリブンで分解し、skill/sub-agent/slash-command/hook/script/harness/manifest を漏れなく評価する前段の計画プラグイン。ライフサイクル軸=13 フェーズ / 成果物実体軸=N component の 2 軸直交に加え、タスク粒度の型付き依存グラフ (task-graph) を第 3 の射影として保持し、依存駆動の並列実行・成果物連結・discovered-task 還流を機械保証する。orchestrator skill (run-plugin-dev-plan) + prompt-creator 仕様準拠の agents (elicitor=R1 / architect=R2,R3 / evaluator=R4 / improvement-reviewer) + command + hook + harness で構成。実ビルドは harness-creator へ委譲し、本プラグインは計画生成までを担う。改善要望は `/run-skill-feedback plugin-dev-planner` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-06-29",
+  "last_audited": "2026-06-30",
+  "entry_points": {
+    "skills": [
+      "run-plugin-dev-plan",
+      "assign-plugin-plan-evaluator"
+    ],
+    "agents": [
+      "plugin-dev-plan-elicitor",
+      "plugin-dev-plan-architect",
+      "plugin-dev-plan-evaluator",
+      "plugin-dev-plan-improvement-reviewer"
+    ],
+    "commands": [
+      "plugin-dev-plan"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/hook-validate-plugin-plan.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/enforce-provenance-chain.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

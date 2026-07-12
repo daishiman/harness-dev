@@ -1,0 +1,1 @@
+../plugins/skill-governance-lint/scripts/validate-frontmatter.py

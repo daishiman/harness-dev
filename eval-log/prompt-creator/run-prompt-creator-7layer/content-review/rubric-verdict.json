@@ -1,0 +1,30 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "run-prompt-creator-7layer",
+    "skill_md_sha256": "9984ebe950b4be6a3639450db946116303961e185b3794ea7e33b8f8ebfd9814"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "完全性 3/3: 中核要件 (7 層 L1-L7・Layer 単位生成→merge・L5 ゴールシーク宣言 l5-contract v2.0.0・冪等更新・セッション分離・300 行制約・brief 供給時対話 skip・C1-C4 worker 内蔵ゲート・Phase 4-C アンカー) が contract invariant 9 項・Key Rules 12・局面カタログ 8 行・Gotchas 13 に漏れなく分担。旧 Steps の手順情報は workflow-manifest.json と workflow-guide.md へ損失なく移管。",
+      "一貫性 3/3・簡潔性 3/3: 改名後の harness-creator 参照 (L87/L100/L162/L199/L202 の 5 箇所) が全て plugin 総体を指す語として用語規約に適合し、単体スキル操作 (run-build-skill) は skill 表現を維持する意味論境界が保たれ矛盾なし。L5 サブ構造は seven-layer-format.md 正本へ従属、アンカー schema は goal-seek-loop.schema.json へ委譲し再宣言なし。SKILL.md 202 行で 300 行制約内。",
+      "検証可能性 3/3・深度 2/3: IN1 (verify-completeness.py の banned 見出し+連番検出・--layers N/A skip・l5-contract v2.0.0) と IN2 (validate-prompt.py の 7 層マーカー/placeholder/TODO 検出) の verify_by:script 主張が機械層の実能力と一致。機械検証対象外項目の LLM 層委譲先 (quality-criteria.md §8・idempotent-update-policy.md) を明示し二層分離の設計判断が掘られている。"
+    ],
+    "negative_feedback": [
+      "[low] (改名非依存・HEAD 継承) End-to-End Flow/局面カタログの『Phase 4-D 変換+注入 → Phase 5 戻り検証』順と workflow-manifest.json (return-verify → design-gate → inject) の順が逆転。正本宣言により実行は manifest へ決定論的に解決されるが文書間で整列が望ましい。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。改名 (skill-creator→harness-creator) 後の記述品質を確認: cross-plugin 参照 5 パスの実在・意味論境界の用語規約適合 (plugin 総体=harness-creator / 単体 skill 操作=skill)・旧固有名残存 0。導出 criteria IN1/IN2/OUT1 は本スキル固有目的から導出され frontmatter feedback_contract と一致。残 negative 1 件は改名非依存の HEAD 継承 low で設計欠陥に非ず。"
+}

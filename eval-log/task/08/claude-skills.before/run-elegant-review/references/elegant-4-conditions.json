@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "rubric_id": "elegant-4-conditions",
+  "applies_to": [
+    "skill",
+    "rubric",
+    "proposal"
+  ],
+  "rules": [
+    {
+      "id": "ELG-C1",
+      "title": "No internal contradictions",
+      "condition_ref": "C1",
+      "severity": "critical",
+      "weight": 1.0,
+      "check": {
+        "tool": "scripts/build-paradigm-scorecard.py",
+        "gate": "contradiction_edges == 0"
+      }
+    },
+    {
+      "id": "ELG-C2",
+      "title": "Completeness across 30 paradigms",
+      "condition_ref": "C2",
+      "severity": "high",
+      "weight": 1.0,
+      "check": {
+        "tool": "scripts/validate-paradigm-coverage.py",
+        "gate": "missing_paradigms == 0"
+      }
+    },
+    {
+      "id": "ELG-C3",
+      "title": "Coherence with parent rubric",
+      "condition_ref": "C3",
+      "severity": "critical",
+      "weight": 1.0,
+      "check": {
+        "tool": "rubric-diff",
+        "against": "ref-skill-design-rubric",
+        "gate": "violations == 0"
+      }
+    },
+    {
+      "id": "ELG-C4",
+      "title": "Dependency graph integrity",
+      "condition_ref": "C4",
+      "severity": "high",
+      "weight": 1.0,
+      "check": {
+        "tool": "dag-topological-sort",
+        "gate": "cycles == 0"
+      }
+    }
+  ],
+  "aggregation": {
+    "strategy": "all-must-pass",
+    "on_fail": "route-to-elegant-improvement-executor"
+  }
+}

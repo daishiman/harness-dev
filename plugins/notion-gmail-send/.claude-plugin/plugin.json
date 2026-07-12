@@ -1,0 +1,65 @@
+{
+  "name": "notion-gmail-send",
+  "version": "0.1.0",
+  "package_mode": "bundle",
+  "description": "Notion 2DB(メール本文_DB/メール送信先_DB)から本文×宛先を {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。既定はNotionの送信対象チェックを承認とみなす最小確認1回(preview→要約+CONFIRM_TOKEN→単一確認→送信)で、fresh rebuild + source-audit + send_guard + 事前予約つき冪等ログにより不可逆送信を安全化。無人cronは確認0(--auto-approve)、慎重運用は厳格対話(dry-run承認+二段確認subagent)も利用可。改善要望は `/run-skill-feedback notion-gmail-send`。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-06-24",
+  "last_audited": "2026-06-24",
+  "source": "plugins/notion-gmail-send",
+  "bundle_targets": [
+    "skills-full"
+  ],
+  "bundles": [
+    "skills-full"
+  ],
+  "entry_points": {
+    "skills": [
+      "ref-notion-gmail-send-spec",
+      "ref-gmail-dwd-setup",
+      "run-notion-gmail-sendlog-setup",
+      "run-notion-gmail-source-audit",
+      "run-notion-gmail-dry-run",
+      "run-notion-gmail-send"
+    ],
+    "agents": [
+      "gmail-send-presend-verifier"
+    ],
+    "hooks": [
+      "guard-gmail-send"
+    ]
+  },
+  "permissions": {
+    "network": [
+      "https://api.notion.com",
+      "https://gmail.googleapis.com",
+      "https://oauth2.googleapis.com"
+    ],
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**",
+      "$CLAUDE_PROJECT_DIR/.notion-config.json",
+      "$CLAUDE_PROJECT_DIR/eval-log/**",
+      "$NOTION_GMAIL_OUTPUT_DIR/eval-log/**"
+    ],
+    "secrets": [
+      "macos-keychain:notion-api-key.<keychain-prefix>/<keychain-prefix>",
+      "macos-keychain:google-sa.<keychain-prefix>/<keychain-prefix>"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-gmail-send.py"
+          }
+        ]
+      }
+    ]
+  }
+}

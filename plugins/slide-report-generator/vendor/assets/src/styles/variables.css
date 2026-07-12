@@ -1,0 +1,122 @@
+/* =================================================================
+   Kanagawaテーマ - CSS変数
+   ================================================================= */
+:root {
+  /* ========================================
+     Kanagawa Lotus White - 白背景カスタム版（デフォルト推奨）
+     ダークテーマは data-theme="dark" で切り替え
+     ======================================== */
+  /* Lotus White Theme (Default) */
+  --bg-dark: #fafafa;      /* ニュートラル白 */
+  --bg-dim: #f0f0f2;       /* 薄いグレー（青み） */
+  --bg-highlight: #e8e8ec; /* ハイライト背景 */
+  --bg-card: #e8e8ec;      /* カード背景（青み） */
+  --sumi-ink: #e0e0e4;     /* ニュートラルグレー */
+  --fg: #43436c;           /* lotusInk2 */
+  --fg-dim: #716e61;       /* lotusGray2 */
+  --fg-muted: #888888;     /* テキストミュート（Lotus/Dark共通） */
+
+  /* アクセントカラー（Lotus公式） */
+  --wave-blue: #4d699b;    /* lotusBlue4 */
+  --spring-violet: #624c83; /* lotusViolet4 */
+  --sakura-pink: #b35b79;  /* lotusPink */
+  --wave-aqua: #597b75;    /* lotusAqua */
+  --autumn-yellow: #de9800; /* lotusYellow3 */
+  --fuji-gray: #8a8a90;    /* ニュートラルグレー */
+
+  /* ===================================
+     16:9 アスペクト比（必須制約）
+     =================================== */
+  --slide-aspect-ratio: 16 / 9;
+  /* ビューポートに収まる最大サイズを計算 */
+  --slide-max-width: min(100vw, calc(100vh * (16 / 9)));
+  --slide-max-height: min(100vh, calc(100vw * (9 / 16)));
+
+  /* ===================================
+     フォントサイズ（vw 単位で正規化）
+     unit-system.md §3.1 に準拠（基準 viewport 1280px / A4横 297mm）
+     画面・印刷で同一スケールを保証（差分ゼロ化）
+     --font-scale は移行期の互換用（vw値に直接乗算）
+     =================================== */
+  --font-scale: 1.0;
+
+  /* 計算されたフォントサイズ（vw ベース、最小値付き）
+     1vw = 12.80px (画面1280px) = 2.97mm (印刷A4横) */
+  --fs-title: max(2.81vw, calc(6.25vw * var(--font-scale)));
+  --fs-subtitle: max(1.88vw, calc(3.13vw * var(--font-scale)));
+  --fs-heading: max(1.88vw, calc(3.75vw * var(--font-scale)));
+  --fs-subheading: max(1.56vw, calc(2.50vw * var(--font-scale)));
+  --fs-body: max(1.25vw, calc(1.88vw * var(--font-scale)));
+  --fs-body-lg: max(1.41vw, calc(2.25vw * var(--font-scale)));
+  --fs-small: max(1.09vw, calc(1.75vw * var(--font-scale)));
+  --fs-caption: max(0.94vw, calc(1.50vw * var(--font-scale)));
+  --fs-icon-lg: calc(7.50vw * var(--font-scale));
+  --fs-icon-md: calc(3.75vw * var(--font-scale));
+  --fs-icon-sm: calc(2.50vw * var(--font-scale));
+
+  /* ===================================
+     ビビッドアクセントカラー（彩度強化版）
+     =================================== */
+  --accent-blue-vivid:   #3B7DD8;
+  --accent-pink-vivid:   #D94B6E;
+  --accent-aqua-vivid:   #2EA88F;
+  --accent-violet-vivid: #7B4FBA;
+  --accent-yellow-vivid: #F5A623;
+
+  /* ===================================
+     グラデーション
+     =================================== */
+  --gradient-blue-pink:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-pink-vivid));
+  --gradient-blue-aqua:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-aqua-vivid));
+  --gradient-violet-pink: linear-gradient(135deg, var(--accent-violet-vivid), var(--accent-pink-vivid));
+  --gradient-subtle:      linear-gradient(135deg, var(--bg-dim), var(--bg-card));
+
+  /* ===================================
+     シャドウシステム（4段階 + グロウ3種）
+     =================================== */
+  --shadow-subtle:    0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-medium:    0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-prominent: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-elevated:  0 16px 48px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.08);
+  --glow-blue:  0 0 20px rgba(59, 125, 216, 0.3);
+  --glow-pink:  0 0 20px rgba(217, 75, 110, 0.3);
+  --glow-aqua:  0 0 20px rgba(46, 168, 143, 0.3);
+
+  /* ===================================
+     スペーシングスケール（vw 基準・1280px viewport 換算）
+     1rem = 1.25vw を基本換算とする
+     =================================== */
+  --space-1: 0.31vw;  /* 0.25rem 相当 */
+  --space-2: 0.63vw;  /* 0.5rem 相当 */
+  --space-3: 0.94vw;  /* 0.75rem 相当 */
+  --space-4: 1.25vw;  /* 1rem 相当 */
+  --space-5: 1.88vw;  /* 1.5rem 相当 */
+  --space-6: 2.50vw;  /* 2rem 相当 */
+  --space-7: 3.75vw;  /* 3rem 相当 */
+  --space-8: 5.00vw;  /* 4rem 相当 */
+  --space-9: 7.50vw;  /* 6rem 相当 */
+
+  /* ===================================
+     フォントウェイト
+     =================================== */
+  --fw-light: 300;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+}
+
+/* ========================================
+   ダークテーマ（オプション）
+   使用方法: <html data-theme="dark">
+   ======================================== */
+[data-theme="dark"] {
+  --bg-dark: #1F1F28;
+  --bg-dim: #2A2A37;
+  --bg-highlight: #363646;
+  --bg-card: #363646;
+  --sumi-ink: #16161D;
+  --fg: #DCD7BA;
+  --fg-dim: #C8C093;
+  --fg-muted: #727169;
+}

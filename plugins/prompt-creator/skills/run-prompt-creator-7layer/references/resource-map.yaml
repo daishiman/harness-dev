@@ -1,0 +1,68 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-prompt-creator-7layer の Progressive Disclosure 索引。
+# 上位 (workflow-manifest, schemas, scripts) は機械可読 contract。references/* は人間向け補助資料。
+# 章一括ロード禁止 (CD-005)。各 Phase 直前で必要分のみ open する。
+resources:
+  - file: ../workflow-manifest.json
+    topic: Phase 依存とリソース紐付けの機械可読定義 (worker フロー)
+    read_when: フェーズ遷移・条件分岐を確認するとき (最初に読む)
+  - file: seven-layer-format.md
+    topic: 7 層 YAML 正本テンプレ (論理構造の正本)
+    read_when: phase-layer-gen 直前 (Layer 単位生成開始時)
+  - file: seven-layer-markdown-template.md
+    topic: Markdown 提示形式の補助テンプレ
+    read_when: phase-layer-gen の scaffold 前
+  - file: subagent-hybrid-format.md
+    topic: SubAgent 向けハイブリッド契約 (frontmatter=plugin YAML / 本文=7層)。純粋7層 (seven-layer-format.md) との差分正本
+    read_when: agents/*.md を生成・検証するとき (harness-creator C02/C09 が参照)
+  - file: quality-criteria.md
+    topic: 動的評価基準 + 4 パス判定 + §8 冪等更新基準
+    read_when: phase-review (4 パスレビュー実行時)
+  - file: workflow-guide.md
+    topic: Phase 1-5 の詳細実行手順
+    read_when: Phase 全体のフローを確認するとき
+  - file: writing-style-principles.md
+    topic: 目的+背景併記 / 要素原子性の記述スタイル
+    read_when: phase-layer-gen 生成中 / phase-review 時
+  - file: prompt-sheet-template.md
+    topic: Prompt 作成シートの項目定義
+    read_when: phase-sheet (シート生成) のとき
+  - file: idempotent-update-policy.md
+    topic: 重複回避・上書き優先の冪等更新 + セッション分離
+    read_when: phase-review / phase-improve (既存改善・ゴールシーク反復) のとき
+  - file: ../schemas/hearing-result.schema.json
+    topic: legacy sheet/scaffold 入力スキーマ (raw hearing の正本は run-prompt-elicit 側)
+    read_when: legacy sheet/scaffold 入力を直接扱うとき
+  - file: ../schemas/output.schema.json
+    topic: worker-local trace 出力スキーマ (additionalProperties:false)
+    read_when: phase-return-verify で worker-local trace を出力・検証するとき
+  - file: ../../run-prompt-elicit/schemas/hearing-result.schema.json
+    topic: raw hearing result schema (canonical)
+    read_when: phase-interview 完了時に validate-prompt.py --phase hearing で検証するとき
+  - file: ../../run-prompt-create/schemas/build-trace.schema.json
+    topic: eval-log/prompt-build-trace.json schema (canonical)
+    read_when: orchestrator handoff 直前に validate-prompt.py --phase trace で検証するとき
+  - file: ../scripts/scaffold-prompt.py
+    topic: 7 層骨格を決定論的に生成 (内部正規形 YAML 雛形)
+    read_when: phase-layer-gen で骨格生成するとき
+  - file: ../scripts/merge-layers.py
+    topic: 7 Layer を内部正規形 YAML に統合
+    read_when: phase-layer-gen 終了時に合算するとき
+  - file: ../scripts/validate-prompt.py
+    topic: schema/構造検証 (hearing/sheet/prompt/trace の phase 別)
+    read_when: phase-sheet / phase-review / handoff で検証するとき
+  - file: ../scripts/verify-completeness.py
+    topic: Layer 充足検証 (ゴールシーク要素+固定手順不在チェック)
+    read_when: phase-improve で充足度を確認するとき
+  - file: ../scripts/convert-format.py
+    topic: 内部正規形 YAML → Markdown / JSON / XML 変換
+    read_when: phase-convert で最終フォーマットへ変換するとき
+  - file: ../scripts/generate-sheet.py
+    topic: ヒアリング結果から 7 層シートを生成 (legacy)
+    read_when: phase-sheet でシート生成するとき
+  - file: ../scripts/validate-sheet.py
+    topic: シート充足度検証 (legacy)
+    read_when: phase-sheet でシート充足度を検証するとき
+  - file: ../scripts/log-usage.py
+    topic: 利用統計 / 失敗パターンを LOGS.md へ追記
+    read_when: phase-return-verify 終了時に記録するとき

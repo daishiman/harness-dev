@@ -1,0 +1,26 @@
+--- a/_base.md
++++ b/_base.md
+@@ -10,6 +10,7 @@ argument-hint: {{argument_hint | default("[args...]")}}
+ allowed-tools: [Bash(python3 *)]
+ kind: wrap
+ effect: {{effect | default("external-side-effect")}}
++role_suffix: cli-wrapper
+ owner: {{owner}}
+ since: {{date}}
+ # permissions.deny に危険サブコマンドを明示すること（設計書04章）
+@@ -23,6 +24,16 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## Wrapped CLI
++
++- **対象CLI**: `{{wrapped_cli}}`
++- **想定バージョン**: {{cli_version | default("未固定")}}
++- **安全側デフォルト**: {{safe_defaults}}
++- **禁止サブコマンド**: {{forbidden_subcommands | default("(なし)")}}
++- **dry-run 既定**: {{dry_run_default | default("true")}}
++- **失敗時挙動**: {{failure_behavior | default("非ゼロ exit を上位に伝搬し、副作用は rollback しない")}}
++- **hook 連携**: PreToolUse で危険引数を検査（`scripts/hook-{{skill_name}}-pretooluse.py`）
++
+ ## Boundary
+ {{boundary}}

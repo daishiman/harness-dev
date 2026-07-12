@@ -1,0 +1,86 @@
+diff --git a/plugin-plans/ubm-goal-setting/component-inventory.json b/plugin-plans/ubm-goal-setting/component-inventory.json
+index 5e00cd0..91437eb 100644
+--- a/plugin-plans/ubm-goal-setting/component-inventory.json
++++ b/plugin-plans/ubm-goal-setting/component-inventory.json
+@@ -1,6 +1,6 @@
+ {
+   "plugin_concept": "ubm-goal-setting — 北原さん式ゴールセッティングの目標設定・振り返り対話とナレッジ差分同期を1 pluginへ移植する",
+-  "derivation": "本 plan は greenfield 構想ではなく ~/dev/dev/ObsidianMemo/.claude/ 配下の既存資産の移植 (port) である。P01 は要件の新規抽出でなく既存要件の棚卸し、P02 は再設計でなく faithful-transfer+adapt (.sh→.py 書き換え・vault パス変数化) の性格を持つ (13 phase 構造自体は保持する)。移植元は `.claude/commands/ai/ubm-goal-setting.md` / `.claude/commands/ai/ubm-knowledge-sync.md` が参照する `.claude/skills/ubm-goal-setting/` に確定する (同階層に併存する `skills/goal-setting/` は別資産であり移植対象外)。非量産資産 (slash-command 2 本・511 行の中核 skill・sub-agent 11 本・shell script 3 本・reference 8 本・asset 5 本・knowledge JSON 28 本 + schema/router/registry/sync-log) を capability A (目標設定・振り返り対話) と capability B (ナレッジ差分同期) の 2 系統へ分け、5 種 component_kind へ写像した。skill×2 (run-ubm-goal-setting / run-ubm-knowledge-sync)・sub-agent×10 (info-collector/output-formatter/goal-reviewer/phase3-coordinator + steps1-5/knowledge-extractor)・slash-command×2・script×3・hook×1 = 計 18 実体、うち 17 本が原資産の移植・1 本 (C04 ubm-write-path-guard) が破壊的書込防御のための新規追加である。旧 phase3-interviewer は新プラグインの別名前空間では旧 vault 側呼出し元 (`.claude/commands/ai/`) が到達せず inbound depends_on 0 の消費者ゼロ leaf となるため独立 component 化せず DROP し、その責務 (Phase3 対話制御) は phase3-coordinator + steps1-5 へ統合済みとして扱う (goal-spec checklist C3 は「10 active + interviewer 統合済み」へ調整済み)。3 本の .sh は goal-spec 制約により挙動逐語移植でなく契約移植 (検知/検証ロジック) を優先して stdlib Python へ書き換える。validate-goal-output.sh は 474 行で no-split threshold (>280 行) を単独で満たし、detect-knowledge-updates.sh (183 行) / check-knowledge-split.sh (67 行) は行数だけでは閾値未満だが goal-spec checklist C4 が 3 本明示要求するため同格で独立 component 化する。3 本とも単一 skill 専用消費 (第二消費者なし) のため placement_scope=skill で親 skill の scripts/ 配下へ畳む。ただし C01-C03 (script) は toposort 上 C16/C17 (親 skill) より先に build されるのに対し build_target は親 skill 配下パスであるため、build_target ディレクトリが物理的に未存在という順序の逆転が生じる。これは『二相 skill build』(run-skill-create が空 scaffold=scripts/ 等のサブディレクトリを含む骨組みを先行生成→parent-skill-build がその scripts/ を script 本体で充填→finalize) で調停する。build_sequencing_notes キーに詳細を記す。Obsidian vault 固有パス (05_Project/UBM/目標設定/、02_Configs/Daily/) は envelope-draft/plugin.json の config.vault_root_env (UBM_VAULT_ROOT 環境変数、既定は self-relative 解決) で変数化した。ナレッジは単一の vendor/非vendor 判断でなく data-tier 3 層で扱う: L1 curated (28 category JSON + router.json、北原知見の本体・計155エントリ) は plugin 同梱シード (vendor) とし fresh-install 直後から info-collector が router.json→knowledge/*.json を最優先で読める bootstrap を成立させる。L2 raw vault sources (05_Project/UBM/*.md, 02_Configs/Daily/, 02_Configs/Templates/Daily.md) は抽出元の生ソースであり vendor せず UBM_VAULT_ROOT で外部解決する。L3 bookkeeping (registry.json/sync-log.jsonl と knowledge-extractor が書込む asset kitahara-principles-db.md) は vendor しつつ install 後の書込先は writeback-config で解決する (mutable なため)。初期シードは registry.json を実台帳(処理済み74ファイル)・sync-log.jsonl を空(0エントリ)と区別してシードする(両者を混同しない)。schema.json は L1/L3 の構造契約として plugin-root 直下の共有 knowledge/ に hoist し、C16 (読取: info-collector) と C17 (書込: knowledge-extractor) が対称参照する共有 SSOT surface とする (goal-spec checklist C6 はこの共有データ層としての整合へ文言調整済み。skill間の実行時 depends_on は張らない)。配布は個人利用前提のため distributable:false (plugin_meta.distribution) に確定した (open_questions 解消)。C14 は当初 phase3-interviewer へ割り当てていた id だが、上記の DROP 統合に伴い欠番とした。既存の depends_on/entities_covered/handoff 参照 (C15-C19) を破壊しないため再採番で詰め直さず、id 安定性を優先して意図的に欠番のまま保持する (機械ゲートは id 連続性を要求しない)。knowledge-loop 規律の扱い: 本 plugin は capability A の info-collector が router.json→knowledge/*.json を runtime consult する『デュアルパス検索』(= harness-creator knowledge-loop の Loop A 相当) と、capability B の knowledge-extractor が 6 カテゴリへ蓄積する (= Loop B 相当) を持つが、C16/C17 の combinators には with-knowledge を採用せず with-goal-seek/with-feedback-contract のみとした。これは移植 (port) 元が既に bespoke な knowledge 機構 (28 category JSON+router+registry+schema+extractor) を持ち、標準 with-knowledge combinator へ作り替えるのでなく data-tier 3 層として faithful-transfer する設計判断による (KL の Loop A/B 対応関係は上記のとおり保持し、規律の意図は継承する)。将来 knowledge 機構を標準化する場合は with-knowledge/knowledge_loop feature への移行を検討する。移植元パス ~/dev/dev/ObsidianMemo/.claude/ は移植 (port) の read-only ソース位置であって build 後 plugin の runtime パスではない (runtime の vault 解決は config.vault_root_env=UBM_VAULT_ROOT)。本 plan に焼かれた当該絶対パスは実行時値でなく『この環境での移植元の所在』を指す機械依存の 1 回性入力であり、別環境で移植し直す場合は各所の当該パスを実ソース位置へ読み替える。",
++  "derivation": "本 plan は greenfield 構想ではなく ~/dev/dev/ObsidianMemo/.claude/ 配下の既存資産の移植 (port) である。P01 は要件の新規抽出でなく既存要件の棚卸し、P02 は再設計でなく faithful-transfer+adapt (.sh→.py 書き換え・vault パス変数化) の性格を持つ (13 phase 構造自体は保持する)。移植元は `.claude/commands/ai/ubm-goal-setting.md` / `.claude/commands/ai/ubm-knowledge-sync.md` が参照する `.claude/skills/ubm-goal-setting/` に確定する (同階層に併存する `skills/goal-setting/` は別資産であり移植対象外)。非量産資産 (slash-command 2 本・511 行の中核 skill・sub-agent 11 本・shell script 3 本・reference 8 本・asset 5 本・knowledge JSON 28 本 + schema/router/registry/sync-log) を capability A (目標設定・振り返り対話) と capability B (ナレッジ差分同期) の 2 系統へ分け、5 種 component_kind へ写像した。skill×2 (run-ubm-goal-setting / run-ubm-knowledge-sync)・sub-agent×10 (info-collector/output-formatter/goal-reviewer/phase3-coordinator + steps1-5/knowledge-extractor)・slash-command×2・script×3・hook×1 = 計 18 実体、うち 17 本が原資産の移植・1 本 (C04 ubm-write-path-guard) が破壊的書込防御のための新規追加である。旧 phase3-interviewer は新プラグインの別名前空間では旧 vault 側呼出し元 (`.claude/commands/ai/`) が到達せず inbound depends_on 0 の消費者ゼロ leaf となるため独立 component 化せず DROP し、その責務 (Phase3 対話制御) は phase3-coordinator + steps1-5 へ統合済みとして扱う (goal-spec checklist C3 は「10 active + interviewer 統合済み」へ調整済み)。3 本の .sh は goal-spec 制約により挙動逐語移植でなく契約移植 (検知/検証ロジック) を優先して stdlib Python へ書き換える。validate-goal-output.sh は 474 行で no-split threshold (>280 行) を単独で満たし、detect-knowledge-updates.sh (183 行) / check-knowledge-split.sh (67 行) は行数だけでは閾値未満だが goal-spec checklist C4 が 3 本明示要求するため同格で独立 component 化する。3 本とも単一 skill 専用消費 (第二消費者なし) のため placement_scope=skill で親 skill の scripts/ 配下へ畳む。ただし C01-C03 (script) は toposort 上 C16/C17 (親 skill) より先に build されるのに対し build_target は親 skill 配下パスであるため、build_target ディレクトリが物理的に未存在という順序の逆転が生じる。これは『二相 skill build』(run-skill-create が空 scaffold=scripts/ 等のサブディレクトリを含む骨組みを先行生成→parent-skill-build がその scripts/ を script 本体で充填→finalize) で調停する。build_sequencing_notes キーに詳細を記す。Obsidian vault 固有パス (05_Project/UBM/目標設定/、02_Configs/Daily/) は envelope-draft/plugin.json の config.vault_root_env (UBM_VAULT_ROOT 環境変数、既定は self-relative 解決) で変数化した。ナレッジは単一の vendor/非vendor 判断でなく data-tier 3 層で扱う: L1 curated (28 category JSON + router.json、北原知見の本体・計155エントリ) は plugin 同梱シード (vendor) とし fresh-install 直後から info-collector が router.json→knowledge/*.json を最優先で読める bootstrap を成立させる。L2 raw vault sources (05_Project/UBM/*.md, 02_Configs/Daily/, 02_Configs/Templates/Daily.md) は抽出元の生ソースであり vendor せず UBM_VAULT_ROOT で外部解決する。L3 bookkeeping (registry.json/sync-log.jsonl と knowledge-extractor が書込む asset kitahara-principles-db.md) は vendor しつつ install 後の書込先は writeback-config で解決する (mutable なため)。初期シードは registry.json を実台帳(処理済み67ファイル)・sync-log.jsonl を空(0エントリ)と区別してシードする(両者を混同しない)。schema.json は L1/L3 の構造契約として plugin-root 直下の共有 knowledge/ に hoist し、C16 (読取: info-collector) と C17 (書込: knowledge-extractor) が対称参照する共有 SSOT surface とする (goal-spec checklist C6 はこの共有データ層としての整合へ文言調整済み。skill間の実行時 depends_on は張らない)。配布は個人利用前提のため distributable:false (plugin_meta.distribution) に確定した (open_questions 解消)。C14 は当初 phase3-interviewer へ割り当てていた id だが、上記の DROP 統合に伴い欠番とした。既存の depends_on/entities_covered/handoff 参照 (C15-C19) を破壊しないため再採番で詰め直さず、id 安定性を優先して意図的に欠番のまま保持する (機械ゲートは id 連続性を要求しない)。knowledge-loop 規律の扱い: 本 plugin は capability A の info-collector が router.json→knowledge/*.json を runtime consult する『デュアルパス検索』(= harness-creator knowledge-loop の Loop A 相当) と、capability B の knowledge-extractor が 6 カテゴリへ蓄積する (= Loop B 相当) を持つが、C16/C17 の combinators には with-knowledge を採用せず with-goal-seek/with-feedback-contract のみとした。これは移植 (port) 元が既に bespoke な knowledge 機構 (28 category JSON+router+registry+schema+extractor) を持ち、標準 with-knowledge combinator へ作り替えるのでなく data-tier 3 層として faithful-transfer する設計判断による (KL の Loop A/B 対応関係は上記のとおり保持し、規律の意図は継承する)。将来 knowledge 機構を標準化する場合は with-knowledge/knowledge_loop feature への移行を検討する。移植元パス ~/dev/dev/ObsidianMemo/.claude/ は移植 (port) の read-only ソース位置であって build 後 plugin の runtime パスではない (runtime の vault 解決は config.vault_root_env=UBM_VAULT_ROOT)。本 plan に焼かれた当該絶対パスは実行時値でなく『この環境での移植元の所在』を指す機械依存の 1 回性入力であり、別環境で移植し直す場合は各所の当該パスを実ソース位置へ読み替える。",
+   "build_sequencing_notes": "二相 skill build: (1) run-skill-create が C16/C17 の skill scaffold (SKILL.md + 空の scripts//references//assets/ サブディレクトリ) を物理生成する。(2) parent-skill-build が C01 (validate-goal-output.py→run-ubm-goal-setting/scripts/) および C02/C03 (→run-ubm-knowledge-sync/scripts/) を (1) が作った scripts/ へ充填する。component-inventory の depends_on/toposort (C01-C03 が C16/C17 より前) は『criteria依存順』(skillのouter criteriaがscript合格を前提とする順) であり『物理ディレクトリ作成順』ではない。両者が食い違う場合は run-skill-create の scaffold 生成を最優先させ、parent-skill-build は scaffold 済み skill dir へのみ書き込む契約とする。P05 完了条件にこの二相性を明記する。後段 builder が handoff routes を配列順に消費すると C01-C03 (先頭付近) の build_target が未 scaffold で失敗しうるため、handoff-run-plugin-dev-plan.json の C01-C03 route に機械可読な requires_parent_scaffold (親 skill route id) を付し、consumer は散文 notes でなく当該キーで scaffold→fill の順序制約を守れるようにした。",
+   "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+   "components": [
+@@ -514,8 +514,8 @@
+           "resolved_by": "envelope-draft/plugin.json config.vault_root_env"
+         },
+         "L3_bookkeeping": {
+-          "description": "registry.jsonは移送元の実台帳(処理済み74ファイル)を初期値としてvendorし、install後の追記のみwriteback-config (UBM_VAULT_ROOT配下 or plugin data dir)で解決する(sync-log.jsonlは空の初期シードとしてvendor継続)。distributable:false個人移植ゆえ処理済み状態を保持し初回sync全件NEW誤検知を回避する。knowledge-extractorが更新するasset kitahara-principles-db.mdも同様にwriteback-config対象(mutableなためvendorは初期値のみ)。同ファイルは初期シード配置正本=references_config_assets / runtime writeback 正本=本L3 の役割対応で2 surfaceに跨る",
+-          "build_target": "plugins/ubm-goal-setting/knowledge/registry.json (実台帳初期シード・処理済み74ファイル), plugins/ubm-goal-setting/knowledge/sync-log.jsonl (空の初期シード・0エントリ), plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md (初期シードは references_config_assets が配置・runtime writeback 正本は本L3)"
++          "description": "registry.jsonは移送元の実台帳(処理済み67ファイル)を初期値としてvendorし、install後の追記のみwriteback-config (UBM_VAULT_ROOT配下 or plugin data dir)で解決する(sync-log.jsonlは空の初期シードとしてvendor継続)。distributable:false個人移植ゆえ処理済み状態を保持し初回sync全件NEW誤検知を回避する。knowledge-extractorが更新するasset kitahara-principles-db.mdも同様にwriteback-config対象(mutableなためvendorは初期値のみ)。同ファイルは初期シード配置正本=references_config_assets / runtime writeback 正本=本L3 の役割対応で2 surfaceに跨る",
++          "build_target": "plugins/ubm-goal-setting/knowledge/registry.json (実台帳初期シード・処理済み67ファイル), plugins/ubm-goal-setting/knowledge/sync-log.jsonl (空の初期シード・0エントリ), plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md (初期シードは references_config_assets が配置・runtime writeback 正本は本L3)"
+         }
+       }
+     },
+diff --git a/plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json b/plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json
+index 7ea45bc..232ed14 100644
+--- a/plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json
++++ b/plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json
+@@ -328,7 +328,7 @@
+       "id": "GAP-KNOWLEDGE-003",
+       "severity": "low",
+       "status": "resolved-design-residual-build",
+-      "text": "knowledge の data-tier 設計は確定済み (単一の vendor/非vendor判断でなく data-tier 3層: L1 curated=28 category JSON+router.jsonをplugin同梱シードとしてvendor / L2 raw vault sources=05_Project/UBM等の生ソースでUBM_VAULT_ROOTから外部解決 / L3 bookkeeping=registry.json(実台帳初期シード・処理済み74ファイル)+sync-log.jsonl(空の初期シード)+kitahara-principles-db.mdをvendorしinstall後はwriteback-configで書込先解決)。schema.jsonはplugin-root共有surfaceへhoistしC16/C17が対称参照する。残る低リスクは L3 書込先解決 (writeback-config) の具体実装で、これは build 段階 (P05) で確定する (設計は closed・実装のみ P05 へ残置)"
++      "text": "knowledge の data-tier 設計は確定済み (単一の vendor/非vendor判断でなく data-tier 3層: L1 curated=28 category JSON+router.jsonをplugin同梱シードとしてvendor / L2 raw vault sources=05_Project/UBM等の生ソースでUBM_VAULT_ROOTから外部解決 / L3 bookkeeping=registry.json(実台帳初期シード・処理済み67ファイル)+sync-log.jsonl(空の初期シード)+kitahara-principles-db.mdをvendorしinstall後はwriteback-configで書込先解決)。schema.jsonはplugin-root共有surfaceへhoistしC16/C17が対称参照する。残る低リスクは L3 書込先解決 (writeback-config) の具体実装で、これは build 段階 (P05) で確定する (設計は closed・実装のみ P05 へ残置)"
+     },
+     {
+       "id": "GAP-SCRIPT-BUILDER",
+diff --git a/plugin-plans/ubm-goal-setting/index.md b/plugin-plans/ubm-goal-setting/index.md
+index f2b9521..450d710 100644
+--- a/plugin-plans/ubm-goal-setting/index.md
++++ b/plugin-plans/ubm-goal-setting/index.md
+@@ -6,7 +6,7 @@ plugin_meta:
+     required: true
+     path: .claude-plugin/plugin.json
+     name_matches_folder: true
+-    no_todo_placeholders: true
++    no_unresolved_placeholders: true
+     validate_plugin: true
+   marketplace:
+     default_personal: true
+@@ -60,7 +60,7 @@ plugin_meta:
+ - **件数の軸区別と C14 欠番**: 移植元 sub-agent は原資産 **11 本** (旧 phase3-interviewer 含む)、うち 1 本 DROP で生成する active component は **10 本** (C05-C13, C15)。以降「11 本」=原資産棚卸し値・「10 本」=生成 component 数として使い分ける。id **C14** は当初 phase3-interviewer へ割当てていたが DROP 統合につき欠番とし、既存参照 (C15-C19) を壊さぬよう再採番せず id 安定性のため意図的に空けたまま保持する (機械ゲートは id 連続性を要求しない)。
+ - **phase ≠ component**: 13 はフェーズ数の固定値、N=18 は buildable 実体数で独立に決まる。phase は `entities_covered: [C01, ...]` の id 参照のみで component に紐づく。
+ - **移植 (port) ≠ greenfield**: 本 plan は既存資産 (`~/dev/dev/ObsidianMemo/.claude/` 配下) の faithful-transfer+adapt であり、13 phase 構造自体は保持しつつ P01=要件棚卸し・P02=再設計でなく写像設計という性格を持つ。
+-- **data-tier 3 層**: knowledge は単一の vendor/非vendor 判断でなく L1 curated (28 category JSON+router.jsonをplugin同梱シード) / L2 raw vault sources (`UBM_VAULT_ROOT`で外部解決) / L3 bookkeeping (registry.json=実台帳初期シード[処理済み74ファイル] / sync-log.jsonl=空の初期シード[0エントリ] / kitahara-principles-db.md + writeback-config) で扱う。
++- **data-tier 3 層**: knowledge は単一の vendor/非vendor 判断でなく L1 curated (28 category JSON+router.jsonをplugin同梱シード) / L2 raw vault sources (`UBM_VAULT_ROOT`で外部解決) / L3 bookkeeping (registry.json=実台帳初期シード[処理済み67ファイル。移植元の dead path は build 時に除去] / sync-log.jsonl=空の初期シード[0エントリ] / kitahara-principles-db.md + writeback-config) で扱う。
+ - **二相 skill build**: C01-C03 (script) は toposort 上 C16/C17 (親 skill) より先に build されるが build_target は親 skill 配下パスであるため、「run-skill-create が空 scaffold 先行生成→parent-skill-build が scripts/ を充填」の二相で調停する。
+ 
+ ## インフラ
+@@ -132,7 +132,7 @@ plugin_meta:
+ | ナレッジ差分が漏れなく検知・分類される | 既知の更新済みソースを投入し detect-knowledge-updates.py が全件検知、knowledge-extractor が6カテゴリへ正しく分類 | run-ubm-knowledge-sync (C17) の inner/outer criterion |
+ | vault固有パスが変数化され移植先非依存 | `UBM_VAULT_ROOT` 環境変数を差し替えても同一挙動になる (L2 raw vault sources のみ。L1 curated knowledge は vendor 同梱のため差し替え不要) | envelope-draft/plugin.json の config.vault_root_env |
+ | fresh-install 直後から知識ベースが機能する | install 直後 (vault 未接続でも) info-collector が vendor 同梱の L1 curated knowledge (router.json→knowledge/*.json) を読めることを確認する | plugin-root `knowledge/` の vendor tiers (L1_curated_seed) |
+-| 破壊的書き込みで元資産が消えない | ubm-write-path-guard hook が vault 外/禁止パスへの書き込みを fail-closed で阻む | guard hook (C04) |
++| 破壊的書き込みで元資産が消えない | ubm-write-path-guard hook が `UBM_VAULT_ROOT` 配下の許可外パスへの書き込みを fail-closed で阻む。vault 外(plugin同梱knowledge等)と `UBM_VAULT_ROOT` 未設定時は保護対象外として素通しする | guard hook (C04) |
+ | 目標保存後にDailyノート参照が最新化される | 目標保存後 Templates/Daily.md の種別該当embedが最新目標ファイルへ置換され他部分は不変更 | run-ubm-goal-setting (C16) の Phase6-daily-update responsibility + guard許可write |
+ 
+ build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たすプラグインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。
+diff --git a/plugin-plans/ubm-goal-setting/phase-07-acceptance-criteria.md b/plugin-plans/ubm-goal-setting/phase-07-acceptance-criteria.md
+index bc84cd1..29e2e56 100644
+--- a/plugin-plans/ubm-goal-setting/phase-07-acceptance-criteria.md
++++ b/plugin-plans/ubm-goal-setting/phase-07-acceptance-criteria.md
+@@ -29,12 +29,12 @@ applicability:
+ ## ドメイン知識
+ - AC (受入基準) と品質ゲートの区別: lint/coverage は「壊れていない」保証、AC は「purpose を満たす」保証 (両方必要・相互代替不可)。
+ - 統一ハイブリッド構造21項目の観測方法: 週報/月報/期報を生成し validate-goal-output.py が全21項目・NG表現0件・やらないこと3項目以上を検証して PASS することを観測する (C16 の outer criterion)。
+-- fail-closed: 判定不能・異常時に安全側 (拒否) へ倒す性質 (C04 hook の受入観点)。
++- fail-closed: `UBM_VAULT_ROOT` 配下の Write/Edit/MultiEdit で、許可リスト (目標設定保存先・Daily.md embed 更新先) に入らないパスを安全側 (拒否) へ倒す性質 (C04 hook の受入観点)。vault 外と `UBM_VAULT_ROOT` 未設定時は保護対象外として素通しする。
+ 
+ ## 成果物
+ - C16 (run-ubm-goal-setting): 週報/月報/期報の目標設定・振り返り対話を生成し、統一ハイブリッド構造21項目を満たし validate-goal-output.py が PASS することの判定結果。
+ - C17 (run-ubm-knowledge-sync): 既知の更新済みソースを投入し detect-knowledge-updates.py が検知、knowledge-extractor が6カテゴリへ分類し router.json/registry.json が同期完了することの判定結果。
+-- C04 (ubm-write-path-guard): vault 外への書き込みや破壊的操作が hook で fail-closed に阻まれることの判定結果。
++- C04 (ubm-write-path-guard): `UBM_VAULT_ROOT` 配下の許可外パスへの破壊的書き込みが hook で fail-closed に阻まれることの判定結果。
+ - C01-C03/C05-C13/C15/C18-C19: 各 component の output_contract が満たされ受入テストが二値で PASS することの判定結果。
+ - 全 component の AC 判定結果 (PASS/FAIL の二値)。
+ 

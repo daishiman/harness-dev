@@ -1,0 +1,13 @@
+<section class="slider__item slide-table" data-section="{{section}}" data-slide-type="table" data-index="{{index}}">
+  <div class="slider__content">
+    <h2>{{title}}</h2>
+    <table>
+      <thead><tr>{{#headers}}<th>{{.}}</th>{{/headers}}</tr></thead>
+      <tbody>
+        {{#rows}}
+        <tr>{{#cells}}<td>{{.}}</td>{{/cells}}</tr>
+        {{/rows}}
+      </tbody>
+    </table>
+  </div>
+</section>

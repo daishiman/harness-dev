@@ -1,0 +1,96 @@
+{
+  "run_id": "20260705-ubm-conformance",
+  "target": {"plugin": "ubm-goal-setting", "scope_mode": "plugin"},
+  "thought_method_coverage": {
+    "total": 30,
+    "used_by_agent": {"logical-structural": 10, "meta-divergent": 9, "system-strategic": 11},
+    "used_count": 30,
+    "skipped_with_reason": []
+  },
+  "issue_groups": [
+    {
+      "id": "I1",
+      "title": "composition capabilities の kind/tier/ref が capability-manifest schema の enum/形式に不適合の疑い",
+      "condition_signal": "contradiction",
+      "severity": "high",
+      "needs_self_verification": true,
+      "subitems": [
+        {"code":"I1a","desc":"kind: script (C01-C03) が kind enum [skill,agent,hook,command,prompt,workflow] 外の疑い","location":"plugin-composition.yaml:58-60"},
+        {"code":"I1b","desc":"tier: supporting (C08-C12) が tier enum [core,ref,extension] 外の疑い","location":"plugin-composition.yaml:44-48"},
+        {"code":"I1c","desc":"hook C04 ref が合成ID非相対パス(3形態分裂)","location":"plugin-composition.yaml:55"}
+      ],
+      "thought_methods": ["演繹思考","2軸思考","垂直思考","帰納的思考","要素分解"],
+      "auto_fixable": "partial"
+    },
+    {
+      "id": "I2",
+      "title": "pkg_checks が PKG-001..008 止まり (PKG-009..015 未記録)。phase-0 完全性未達 = false-green",
+      "condition_signal": "omission",
+      "severity": "high",
+      "location": "references/package-contract.json:35-77",
+      "thought_methods": ["MECE","因果関係分析","論点思考","価値提案思考"],
+      "recommendation": "009/013a/013b は実走記録、配布系010/011/012は not_applicable+skip_reason で honest 化",
+      "auto_fixable": true
+    },
+    {
+      "id": "I3",
+      "title": "knowledge-sync の prompt-placement 反転 + completeness_exempt 自己矛盾 (fat agent + thin英prompt + exempt)",
+      "condition_signal": "contradiction",
+      "severity": "high",
+      "location": "skills/run-ubm-knowledge-sync/SKILL.md:31,49-50 + prompts/R1-knowledge-extract.md + agents/knowledge-extractor.md",
+      "thought_methods": ["メタ思考","抽象化思考","ダブルループ思考","類推思考","逆説思考","if思考","素人思考","批判的思考"],
+      "recommendation": "案A(skill-intake purpose-excavator先例: prompts/R1削除・responsibility_refsから除去・exemptをprompts不在の真状態に修正) 推奨。案B(prompts/R1を日本語7層正本化+agent薄化)。",
+      "auto_fixable": false
+    },
+    {
+      "id": "I4",
+      "title": "knowledge_loop 記述子が frontmatter 不在 (Router-Registry実装済だが自己記述欠落)",
+      "condition_signal": "omission",
+      "severity": "medium",
+      "location": "両 SKILL.md frontmatter",
+      "thought_methods": ["システム思考","トレードオン思考","戦略的思考","プラスサム思考"],
+      "recommendation": "knowledge_loop:{pattern:router-registry,index:...} を宣言(5行)。4スクリプト実体化はdistributable:falseで過剰ゆえdefer。",
+      "auto_fixable": true
+    },
+    {
+      "id": "I5",
+      "title": "knowledge/schema.json registry status enum に deprecated 不在 (§11退避ループ起動不能)",
+      "condition_signal": "dependency_break",
+      "severity": "medium",
+      "location": "knowledge/schema.json:351",
+      "thought_methods": ["因果ループ"],
+      "auto_fixable": true
+    },
+    {
+      "id": "I6",
+      "title": "workflow-manifest gate_order [G1,G2,G3] が phase gate と未結線 (宙吊り識別子)",
+      "condition_signal": "dependency_break",
+      "severity": "low",
+      "location": "両 workflow-manifest.json:8",
+      "thought_methods": ["プロセス思考"],
+      "auto_fixable": true
+    },
+    {
+      "id": "I7",
+      "title": "router 非参照の空 tombstone 7件残存 + principles.json stale置換連鎖 (HC §7違反)",
+      "condition_signal": "inconsistency",
+      "severity": "low",
+      "location": "knowledge/{principles,principles-business,consultation,phase-advice,action-guides,mindset,case-studies}.json",
+      "thought_methods": ["KJ法","改善思考"],
+      "needs_self_verification": true,
+      "auto_fixable": true
+    },
+    {
+      "id": "I8",
+      "title": "capabilities C-id 採番が C14 欠番",
+      "condition_signal": "smell",
+      "severity": "low",
+      "location": "plugin-composition.yaml:33-60",
+      "thought_methods": ["要素分解"],
+      "needs_self_verification": true,
+      "auto_fixable": false
+    }
+  ],
+  "root_cause": "composition の capability-manifest.schema.json バリデーションと run-plugin-package-check --phase all が build/CI パイプラインに未配線。schema違反もPKG漏れも同根。",
+  "recommended_intervention_order": ["I2 (false-green即時解消)", "I4 (knowledge_loop記述子)", "I1 (schema enum適合)", "I3 (prompt-placement)", "I5 (status enum)", "I6/I7/I8 (低effort掃除)"]
+}

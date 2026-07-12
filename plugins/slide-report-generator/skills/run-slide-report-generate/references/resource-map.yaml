@@ -1,0 +1,36 @@
+version: 1
+# run-slide-report-generate 私有 references の帰属 + progressive disclosure マップ。
+# 各 reference は所有 skill の起動系 (agents/*.md thin-adapter) と SKILL.md の双方から
+# $CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/<file> で参照される SSOT。
+# lint-reference-attribution.py が本 map の網羅性 (orphan/dangling 0) を検査する (CI governance glue)。
+read_when:
+  - file: references/structure-design-rules.md
+    owner_agent: structure-designer
+    when: slide 構成設計 (1スライド1メッセージ分解・共通仕様セクション設計・スライドタイプ判定) の規範を確認するとき
+  - file: references/report-structure-types.md
+    owner_agent: report-structure-designer
+    when: report の 4 reportType 骨格 (社内報告分析/顧客提案WP/技術ドキュメント/学習解説) を確認するとき
+  - file: references/d3-diagram-rules.md
+    owner_agent: d3-diagram-designer
+    when: D3 インタラクティブ図解の意匠/実装規範・コンポーネントマッピングを確認するとき
+  - file: references/data-visualization-rules.md
+    owner_agent: data-visualizer
+    when: データ可視化 (グラフ/chart) の設計規範・データ変換パターンを確認するとき
+  - file: references/html-generation-rules.md
+    owner_agent: html-generator
+    when: slide HTML の LLM 経路生成規範 (CONST_001-038・HTML/CSS/SVG/GSAP/印刷の全生成規約) を確認するとき
+  - file: references/layout-optimization-rules.md
+    owner_agent: layout-optimizer
+    when: レイアウト最適化 (文字数カウント・カード/フォントサイズ決定・印刷 pt 換算) の計算式を確認するとき
+  - file: references/ui-quality-checklist.md
+    owner_agent: ui-quality-reviewer
+    when: UI 品質チェックリスト (S 系観点定義・判定基準) を確認するとき
+  - file: references/deck-evaluation-rubric.md
+    owner_agent: deck-evaluator
+    when: 生成後評価 (30 種思考法 mode-aware rubric・評価次元) の規範を確認するとき。hook-postgen-eval も消費 (consumers>=2)
+  - file: references/ai-image-pipeline.md
+    owner_agent: ai-image-diagram-producer
+    when: Codex Image2 全面画像/差替パイプライン規範を確認するとき
+  - file: references/report-quality-checklist.md
+    owner_agent: report-quality-reviewer
+    when: report の品質補正 (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守・印刷) の検証観点 RQ1-20 を確認するとき。validate-report-visual.py の決定論ゲートと対で機械/意味を分離

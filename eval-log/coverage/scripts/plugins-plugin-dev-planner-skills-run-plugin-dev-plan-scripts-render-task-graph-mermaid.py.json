@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-task-graph-mermaid.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。task-graph を canonical 順序で mermaid 導出 (byte一致再現性・graph 外要素は非描画)。canonicalize と同一順序規約を踏襲し独自ソートを持たない。TESTS: test_render_task_graph_mermaid.py 23 PASS。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

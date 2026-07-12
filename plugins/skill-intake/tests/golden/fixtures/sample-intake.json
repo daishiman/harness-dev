@@ -1,0 +1,164 @@
+{
+  "_comment": "全 section の absence_behavior=block required_fields と §6 intent_contract を充足する代表 intake 1 件。check_completeness.py --mode all が exit 0 になることを golden test が保証する。intent_contract は sample-answers.json を build-intent.py に通した結果と等価。",
+  "schema_version": "2.0.0",
+  "source_of_truth": "plugins/skill-intake/references/section_canonical_map.json",
+  "notion_target": {"mode": "create-explicit", "allow_create": true},
+  "sections": {
+    "0_executive_summary": {
+      "generated_at": "2026-07-01T09:00:00+09:00",
+      "pattern": "A",
+      "depth": "standard",
+      "vocabulary_tier": "intermediate",
+      "state": "handoff_ready",
+      "true_purpose_oneliner": "毎朝の情報収集を自動化してチームの朝会準備時間を削減する",
+      "handoff_mode": "standard"
+    },
+    "1_assumption_challenger": {
+      "surface_request": "毎朝ニュースをまとめてほしい",
+      "deep_candidates": [
+        {"id": "D1", "label": "朝会準備の情報収集を減らしたい", "adopted": true},
+        {"id": "D2", "label": "情報の見落としを防ぎたい", "adopted": false},
+        {"id": "D3", "label": "他社事例を追いたい", "adopted": false}
+      ],
+      "adopted_deep_problem": "朝会前の情報収集に毎日30分かかる負担を無くしたい"
+    },
+    "2_user_profile": {
+      "dimensions": [
+        {"dim": "expertise", "value": "mid", "confidence": "mid", "evidence": "業務3年"},
+        {"dim": "role", "value": "PM", "confidence": "high", "evidence": "自己申告"},
+        {"dim": "context", "value": "朝会運営", "confidence": "high", "evidence": "発話"},
+        {"dim": "constraints", "value": "時間制約", "confidence": "mid", "evidence": "発話"},
+        {"dim": "motivation", "value": "効率化", "confidence": "high", "evidence": "発話"},
+        {"dim": "sharing_intent", "value": "team", "confidence": "high", "evidence": "発話"}
+      ],
+      "vocabulary_tier": "intermediate"
+    },
+    "3_purpose_excavator": {
+      "techniques_used": ["5whys", "jtbd"],
+      "rounds": 2,
+      "true_purpose": "朝会前の情報収集負担を無くし準備を10分に短縮する",
+      "underlying_motivation": "チームの朝会を情報の質で価値ある場にしたい",
+      "output_priority": [
+        {"rank": 1, "output": "要点3行サマリ", "mandatory": true},
+        {"rank": 2, "output": "出典リンク", "mandatory": false}
+      ]
+    },
+    "4_option_presenter": {
+      "decision_tables": [
+        {
+          "axis": "配信タイミング",
+          "options": [
+            {"id": "O1", "label": "毎朝9時", "pro": "朝会前", "con": "固定", "weight": "重", "adopted": true},
+            {"id": "O2", "label": "随時", "pro": "柔軟", "con": "見落とし", "weight": "軽", "adopted": false}
+          ],
+          "adopted_id": "O1"
+        },
+        {
+          "axis": "出力先",
+          "options": [
+            {"id": "S1", "label": "Slack", "pro": "既存導線", "con": "流れる", "weight": "重", "adopted": true},
+            {"id": "S2", "label": "Notion", "pro": "蓄積", "con": "開く手間", "weight": "中", "adopted": false}
+          ],
+          "adopted_id": "S1"
+        }
+      ],
+      "connectors": {
+        "input_sources": ["Notion", "Web API"],
+        "knowledge_assets": ["過去要約DB"],
+        "outputs": ["Slack"],
+        "scheduler": "daily-0900"
+      }
+    },
+    "5_visualizer": {
+      "figures": [
+        {"index": 1, "title": "全体アーキ", "kind": "architecture", "mermaid_source": "flowchart LR\n A[入力]-->B[処理]-->C[出力]", "legend": "青=入力", "one_liner": "入力から出力までの全体俯瞰"},
+        {"index": 2, "title": "コア機構", "kind": "flowchart", "mermaid_source": "flowchart TB\n A[取得]-->B[要約]-->C[配信]", "legend": "緑=処理", "one_liner": "要約生成の中核ロジック"},
+        {"index": 3, "title": "日次パイプライン", "kind": "sequence", "mermaid_source": "sequenceDiagram\n A->>B: fetch\n B->>C: summarize", "legend": "矢印=呼出", "one_liner": "毎朝の実行順序フロー"},
+        {"index": 4, "title": "Before-After", "kind": "comparison", "mermaid_source": "flowchart LR\n A[手作業]-->B[自動化]", "legend": "赤=旧", "one_liner": "手作業から自動への変化"},
+        {"index": 5, "title": "責務境界", "kind": "flowchart", "mermaid_source": "flowchart TB\n A[intake]-->B[creator]", "legend": "枠=責務", "one_liner": "各agentの担当範囲整理"}
+      ],
+      "rules_check": {
+        "nodes_7_plus_minus_2": true,
+        "label_len_le_10": true,
+        "color_legend": true,
+        "no_emoji": true,
+        "one_liner_present": true
+      }
+    },
+    "6_five_axes_summary": {
+      "axes": [
+        {"axis_id": "output_to", "answer": "Slack の #daily チャンネルへ通知", "depth": "deep"},
+        {"axis_id": "input_from", "answer": "Notion と Web API", "depth": "deep"},
+        {"axis_id": "share_target", "answer": "チーム/同僚", "depth": "standard"},
+        {"axis_id": "real_problem", "answer": "朝会準備の情報収集負担", "depth": "deep"},
+        {"axis_id": "knowledge_asset", "answer": "過去要約の蓄積DB", "depth": "standard"}
+      ],
+      "intent_contract": {
+        "input_spec": {
+          "sources": ["Notion", "社内ツール", "Web", "外部 API"],
+          "trigger": "毎朝9時のスケジュール起動",
+          "frequency": "daily",
+          "raw_materials": ["文書(PDF", "Markdown)", "表(CSV)", "チャットのログ"]
+        },
+        "output_spec": {
+          "sink": "Slack の #daily チャンネルへ通知",
+          "format": "bullet",
+          "granularity": "要点だけの短いサマリ(3行以内)",
+          "audience": "チーム/同僚",
+          "cadence": "daily"
+        },
+        "slot_status": {
+          "input_spec.sources": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "input_spec.trigger": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "input_spec.frequency": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "input_spec.raw_materials": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "output_spec.sink": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "output_spec.format": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "output_spec.granularity": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "output_spec.audience": {"filled": true, "source": "direct_answer", "probe_ids": []},
+          "output_spec.cadence": {"filled": true, "source": "direct_answer", "probe_ids": []}
+        }
+      },
+      "knowledge_pipeline": {
+        "ingest": ["Web fetch"],
+        "analysis": ["要約"],
+        "storage": ["Notion DB"],
+        "retrieval": ["日付検索"],
+        "update": "daily"
+      }
+    },
+    "7_design_decisions": {
+      "adoptions": [
+        {"axis": "配信タイミング", "adopted_id": "O1", "reason_one_liner": "朝会前に届くため"},
+        {"axis": "出力先", "adopted_id": "S1", "reason_one_liner": "既存導線で摩擦なし"}
+      ],
+      "output_priority_finalized": [
+        {"rank": 1, "output": "要点3行サマリ", "mandatory": true}
+      ]
+    },
+    "8_open_questions": {
+      "blocking_count": 0,
+      "deferred_count": 1
+    },
+    "9_handoff_contract": {
+      "recommended_next": {"mode": "standard", "skip_to_phase": "design", "reason": "要件確定済み"},
+      "intake_json_path": "plugins/skill-intake/output/daily-brief/intake.json",
+      "starting_command": "/harness-creator plugins/skill-intake/output/daily-brief/intake.json"
+    },
+    "10_self_updater": {
+      "metrics": {
+        "candidates_detected": 3,
+        "candidates_applied": 1,
+        "skipped_duplicates": 0,
+        "value_realized_score_estimate": 82
+      },
+      "score_rationale": "5軸とintent_contract全充足、blocking0のため高評価"
+    },
+    "11_artifact_index": {
+      "artifacts": [
+        {"path": "intake.json", "role_one_liner": "ヒアリング正本", "generator_subagent": "skill-intake-handoff", "optional": false}
+      ],
+      "base_path": "plugins/skill-intake/output/daily-brief/"
+    }
+  }
+}

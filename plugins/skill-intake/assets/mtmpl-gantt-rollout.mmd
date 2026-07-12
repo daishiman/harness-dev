@@ -1,0 +1,22 @@
+%%---
+%% template: gantt-rollout
+%% required_vars: [title, phase1_name, phase1_start, phase1_dur, phase2_name, phase2_dur, phase3_name, phase3_dur]
+%% optional_vars: [phase4_name, phase4_dur]
+%% score_formula: "schedule_dependency * 0.7 + duration_visibility * 0.3"
+%% non_tech_friendliness: ★★
+%% use_case: 導入スケジュール、フェーズ別計画
+%%---
+gantt
+    title {{title}}
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m/%d
+
+    section 計画
+    {{phase1_name}}     :a1, {{phase1_start}}, {{phase1_dur}}
+    section 実装
+    {{phase2_name}}     :a2, after a1, {{phase2_dur}}
+    section 展開
+    {{phase3_name}}     :a3, after a2, {{phase3_dur}}
+
+%% 凡例: 左から右に時間が進む
+%% 言いたい一言: {{message}}

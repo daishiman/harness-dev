@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/scripts/skill-schema.json",
+  "title": "SKILL.md Frontmatter Schema",
+  "description": "16章 §10「Frontmatter 全項目」に基づく JSON Schema Draft-07。validate-frontmatter.py がこのスキーマを将来参照できるよう単独配置。",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Skill の display name。省略時は directory name。lowercase letters, numbers, hyphens のみ。最大 64 文字。",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}[a-z0-9]?$",
+      "maxLength": 64
+    },
+    "description": {
+      "type": "string",
+      "description": "何をするか、いつ使うか。Claude が自動適用判断に使う。when_to_use と合算で 1,536 文字 cap。",
+      "maxLength": 1536
+    },
+    "when_to_use": {
+      "type": "string",
+      "description": "invocation 条件の追加 context、trigger phrase、example request。description に append され 1,536 文字 cap に含まれる。"
+    },
+    "argument-hint": {
+      "type": "string",
+      "description": "autocomplete 中に期待引数を示す hint。例: [issue-number], [filename] [format]。"
+    },
+    "arguments": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "$name substitution 用の named positional arguments。space-separated string または YAML list。"
+    },
+    "disable-model-invocation": {
+      "type": ["boolean", "string"],
+      "description": "Claude の automatic loading を防ぐ。manual trigger したい workflow 用。subagent preload も防ぐ。default false。",
+      "enum": [true, false, "true", "false"]
+    },
+    "user-invocable": {
+      "type": ["boolean", "string"],
+      "description": "/ menu から隠す。user が直接呼ぶべきでない background knowledge 用。default true。",
+      "enum": [true, false, "true", "false"]
+    },
+    "allowed-tools": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "Skill active 中に permission prompt なしで使える tools。space-separated string または YAML list。"
+    },
+    "model": {
+      "type": "string",
+      "description": "Skill active 中の model override。current turn の残りだけ適用。次 prompt で session model に戻る。inherit 可。"
+    },
+    "effort": {
+      "type": "string",
+      "description": "Skill active 中の effort override。",
+      "enum": ["low", "medium", "high", "xhigh", "max"]
+    },
+    "context": {
+      "type": "string",
+      "description": "fork で forked subagent context 実行。explicit task を持つ Skill に使う。",
+      "enum": ["fork"]
+    },
+    "agent": {
+      "type": "string",
+      "description": "context: fork 時に使う subagent type。built-in Explore, Plan, general-purpose または custom subagent。省略時は general-purpose。"
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Skill lifecycle に scope された hooks。hooks in skills and agents の形式に従う。"
+    },
+    "paths": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "activation を file glob で制限。comma-separated string または YAML list。matching files 作業時だけ auto load。"
+    },
+    "shell": {
+      "type": "string",
+      "description": "! command / ! fenced block の shell。bash default、powershell 可。PowerShell は CLAUDE_CODE_USE_POWERSHELL_TOOL=1 が必要。",
+      "enum": ["bash", "powershell"]
+    },
+    "cross_platform": {
+      "type": ["boolean", "string"],
+      "description": "true のとき render-frontmatter.py が OS プリアンブル行を本文先頭に自動挿入する (14章)。",
+      "enum": [true, false, "true", "false"]
+    },
+    "os_preamble_required": {
+      "type": ["boolean", "string"],
+      "description": "cross_platform の代替フィールド名。どちらかが true なら OS プリアンブルが必要。",
+      "enum": [true, false, "true", "false"]
+    },
+    "kind": {
+      "type": "string",
+      "description": "設計書独自フィールド: Skill の種別。",
+      "enum": ["run", "ref", "assign", "wrap", "delegate", "workflow", "reference", "evaluator", "generator"]
+    },
+    "effect": {
+      "type": "string",
+      "description": "設計書独自フィールド: 副作用の種別。",
+      "enum": ["none", "conversation-output", "local-artifact", "external-mutation"]
+    },
+    "merge_strategy": {
+      "type": "string",
+      "description": "設計書独自フィールド: merge 戦略。",
+      "enum": ["deep-merge", "strict", "override", "layered"]
+    },
+    "conflict_policy": {
+      "type": "string",
+      "description": "設計書独自フィールド: 競合解決ポリシー。",
+      "enum": ["most-specific-wins", "error", "warn-and-merge"]
+    },
+    "rubric_refs": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "設計書独自フィールド: rubric 参照先。"
+    },
+    "reference_refs": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "設計書独自フィールド: reference 参照先。"
+    },
+    "script_refs": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ],
+      "description": "設計書独自フィールド: script 参照先。"
+    },
+    "base": {
+      "type": "string",
+      "description": "設計書独自フィールド: 継承元 Skill 名。"
+    },
+    "pair": {
+      "type": "string",
+      "description": "設計書独自フィールド: 対になる Skill 名。"
+    }
+  },
+  "additionalProperties": true,
+  "required": [],
+  "_notes": {
+    "source": "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md §10",
+    "retrieved": "2026-05-17",
+    "draft": "Draft-07",
+    "usage": "validate-frontmatter.py が将来このスキーマを参照できるよう scripts/ に配置。jsonschema ライブラリで: jsonschema.validate(fm_dict, schema)"
+  }
+}

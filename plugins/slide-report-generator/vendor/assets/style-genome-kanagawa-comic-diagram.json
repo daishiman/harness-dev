@@ -1,0 +1,454 @@
+{
+  "schemaVersion": "1.3.0",
+  "styleName": "kanagawa-comic-diagram",
+  "flowLegendRule": "If flow arrows use more than one color to encode different meanings (for example one color per stage or per data type), draw a small color-to-meaning legend tile in a lower corner; if all arrows share a single meaning, omit the legend.",
+  "lockTiers": {
+    "tier1": [
+      "camera geometry: 30-degree isometric axonometric projection, equal scale on all axes, no perspective foreshortening",
+      "deep navy #0B2A55 ink outlines on every shape, uniform medium weight, rounded corners",
+      "60-30-10 palette discipline with one dominant accent per slide over the bright off-white #FAFAFA base"
+    ],
+    "tier2": [
+      "registered motifs only, drawn per their genome appearance",
+      "rounded isometric platform tiles as the structural ground for every scene",
+      "flat matte vector surfaces with subtle cel-style single shading",
+      "cyan-white glow #BFD9FF reserved for AI mascot, flow arrows, and quality gates"
+    ],
+    "tier3": [
+      "faint dotted isometric grid floor density",
+      "single soft shadow length and direction within an upper-left key light",
+      "minor background scene props and ambient depth elements",
+      "non-dominant secondary accent colors drawn from the Kanagawa palette"
+    ]
+  },
+  "ambiguityReplacements": {
+    "high quality": "matte flat vector surfaces with uniform navy #0B2A55 outlines and clean rounded isometric geometry",
+    "beautiful": "balanced 60-30-10 Kanagawa desaturated palette with generous even negative space",
+    "nice": "tidy isometric composition with consistent navy outlines and a soft single shadow",
+    "detailed": "clearly separated labeled zones with legible motif silhouettes, not visual clutter",
+    "cool": "calm desaturated stepBlue #7E9CD8 accent with cyan-white #BFD9FF glow highlights",
+    "きれい": "clean off-white #FAFAFA base with uniform navy outlines and even spacing",
+    "おしゃれ": "restrained editorial Kanagawa palette with flat matte vector surfaces",
+    "いい感じ": "balanced isometric layout following the genome composition rules and 60-30-10 accent discipline"
+  },
+  "description": "複雑め・人物/AIロボットマスコット込みの漫画チックな説明図を、Kanagawa調の淡色パレット、角丸アイソメタイル、太い紺見出し、吹き出しラベル、青い発光フローラインで再現性高く量産するためのスタイルゲノム。半抽象の青服人物、白×淡青のAIロボットマスコット、歯車群やモニター群や蛇行フローを含むリッチなアイソメ・ジオラマ、章別レイアウトテンプレートを正本化する。単色角丸ボックス＋テキストだけの平坦図は禁止。これは特定構図のコピー金型ではなく、任意のプレゼン内容を内容に合わせてこの画風でビジュアル化するための生成ルールブックである(semanticMapping/contentAdaptationRules/layoutSelectionByStructure/figureUsageRules/colorSemantics/noveltyRule を備え、未知の多様なプレゼンにも対応する)。",
+  "referenceAssets": [
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-01-title-cover.png", "shows": "表紙ミニマル型: AIロボットマスコット全身＋右肩上がり折れ線。低密度の基準画風" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-02-self-intro.png", "shows": "人物複数(建設作業者+クレーン/エンジニア複数)+QRカード。職業別human-figureの描き分け" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-05-approach-roles.png", "shows": "左に立ち姿で話す人物+デバイス、右に机+歯車+モニター+植物+電卓のデスクジオラマ。左右二層対比型" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-06-cycle-workflow.png", "shows": "5ノード循環リング。構造系の循環図" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-08-intake-mechanism.png", "shows": "高密度: 左入力人物→蛇行する青い道に各フェーズの小人物+小物→右に書類束。蛇行メカニズム型の最高密度例" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-14-step2-skillcreator-hero.png", "shows": "章扉型: 巨大ゴースト章番号02＋中央の巨大歯車群ジオラマ＋STEPピルナビ＋QR。高密度章扉" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-15-skillcreator-two-layers.png", "shows": "左『仕組み(機械検証)』ブルー機械群 vs 右『判断(AI)』violet+AIロボ上半身。中央下に品質ゲート。左右二層対比型" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-16-step3-distribution-hero.png", "shows": "章扉型: ゴースト章番号03＋配送箱/トラック/ベルトコンベア/ロボットアーム/地球儀の配布ジオラマ" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/slide-19-feedback-loop.png", "shows": "4フェーズ直列型: 困りごと→シート→Notion蓄積→改善を発光矢印で連結+下に循環戻り矢印" },
+    { "path": "05_Project/スライド/slide-2026-06-13-skill-mass-production/index.deploy.html", "shows": "HTML合成・オーバーレイ実装の参照" }
+  ],
+  "artStyle": {
+    "family": "clean manga-like isometric explanatory infographic with rich detailed dioramas",
+    "rendering": "flat vector with soft depth, matte surfaces, subtle 1-stop shading, active use of occlusion and overlap for density, ambient occlusion contact shadows where objects overlap, crisp sharp edges with no blur or feathering",
+    "camera": {
+      "default": "true isometric 30-degree top-down",
+      "structural": "near top-down within 15 degrees when order, count, or table readability matters",
+      "geometry": "isometric, 30-degree axonometric projection, equal scale on all axes, no perspective foreshortening."
+    },
+    "line": "uniform thin navy outline, approximately 3px at 2560x1440",
+    "corners": "rounded geometric shapes, 8-18px radius depending on object scale",
+    "shadow": "single soft long shadow from upper-left 45-degree key light",
+    "background": "bright off-white with very faint dotted isometric grid floor",
+    "title": "large bold dark navy Japanese headline centered near top",
+    "labels": "rounded speech-bubble labels with pointer notch, colored fill matching accent, dark navy text",
+    "flow": "glowing blue-white arrows or thin luminous lines connecting scene tiles",
+    "figures": {
+      "humans": "half-abstract simplified isometric people, navy to dusty-blue clothing (occasionally grey), minimal featureless or near-featureless faces with no individual detail (no facial expression rendering), about one-quarter to one-third of the scene-tile height, placed as small diorama elements; reuse the same simplified style for every person; allow several people scattered across phases of a single scene; avoid uncanny realism and avoid drawing readable faces",
+      "humanVariationTokens": {
+        "note": "職業・姿勢・年齢で人物を描き分けるための差分トークン辞書。共通の不変条件(半抽象・無表情・顔の描き込み禁止・navy〜dusty-blue基調・1/4〜1/3タイル高)は全変種で固定し、職業差は持ち物/服の細部だけで表す。コピー金型ではなく、内容に合う職業・姿勢・年齢の組合せを選んで描く。色はnavy基調を保ち、職業色は小物に1点だけ載せる。",
+        "occupation": {
+          "office-worker": "会社員。ネイビーのシャツ/ジャケット、首掛けIDカード、書類かノートPCを携える",
+          "engineer-seated": "エンジニア(座位)。dusty-blueのパーカ/Tシャツ、机のノートPCに向かう、横にコーヒーカップ",
+          "construction-worker": "建設作業者。紺の作業着+黄色ヘルメット(amber-gold #DCA561の小面)、安全ベスト、クレーンや資材が近景",
+          "tablet-operator": "タブレット操作者。navyの上衣、両手でタブレット/パネルを持ち選択UIを操作する立ち姿",
+          "instructor-presenter": "講師/発表者。ジャケット姿で片手を軽く開く説明ジェスチャ、横にホワイトボード/モニター",
+          "child-learner": "子ども(学習者)。小柄(成人の3/4高)、丸みのある服、本かタブレットを抱える、教育文脈の縮尺記号",
+          "medical-staff": "医療従事者。白衣相当の淡色上衣に navy アウトライン、聴診器の小物(teal-greenの面)、機器が近景",
+          "logistics-worker": "物流作業者。navy作業着、台車/フォークリフトや積荷(cardboard #C9A26B)を扱う立ち姿"
+        },
+        "posture": {
+          "seated-desk": "机に向かう座位。入力・処理・個人作業を表す",
+          "standing-gesture": "片手を軽く開く立ち姿。説明・指示・対話を表す",
+          "operating-device": "デバイス/パネルを両手で操作する前傾の立ち姿。入力・選択を表す",
+          "walking-handoff": "歩いて受け渡す姿。フローのフェーズ移動・引き継ぎを表す",
+          "observing": "腕を組む/見上げる静止姿。観察・レビュー・待機を表す"
+        },
+        "age": {
+          "adult": "標準成人。タイル高の1/4〜1/3。既定",
+          "child": "成人の約3/4高、頭身を小さく、丸い輪郭。教育・家庭・初学文脈のみ",
+          "senior": "標準成人と同寸法、やや前傾/杖の小物を1点で示唆。顔の老化描写はしない"
+        },
+        "invariant": "全変種で共通: 無表情・顔の個別描写禁止・navy〜dusty-blue基調・細い紺#0B2A55アウトライン・マットなフラット塗り。職業色アクセントは小物1点に限定し人物本体を彩らない。1スライド同一人物の重複クローンを避ける(figureUsageRulesの人数上限に従う)。"
+      },
+      "aiRobotMascot": "a friendly recurring AI robot mascot: rounded white-to-pale-blue head (rounded square or oval), a dark navy face panel containing two cyan oval glowing eyes (screen-like), a short antenna with a small ball tip, thin navy outline like every other object; variants: full body with simple arms/joints (cover), floating head only (next to a select-UI tablet), or upper body holding a clipboard (judgment/AI side); often accompanied by small sparkle accents; expresses AI / judgment / automation; keep it cute and neutral-to-friendly, never photoreal",
+      "aiRobotMascotVariants": {
+        "note": "AIロボットマスコットの変種辞書。形状(白〜淡青の丸頭・紺フェイスパネル・シアン2つ目・短アンテナ)は不変、役割で持ち物/胴体の有無だけ変える。per-slide meta の robotMascot enum と一致させる。",
+        "full-body": "全身+簡素な腕関節。表紙/まとめ/象徴配置。原則1体",
+        "floating-head": "頭部のみ浮遊。選択UIタブレットの横などUI寄り添い",
+        "upper-body-clipboard": "上半身でクリップボードを持つ。判断/AI側・検証側の象徴",
+        "none": "AI/判断/生成が主題でないスライドでは登場させない"
+      }
+    }
+  },
+  "palette": {
+    "background": { "name": "bright off-white", "hex": "#FAFAFA" },
+    "surface": { "name": "light blue-gray panel", "hex": "#E8E8EC" },
+    "ink": { "name": "deep navy text and outline", "hex": "#0B2A55" },
+    "stepBlue": { "name": "calm desaturated blue", "hex": "#7E9CD8" },
+    "stepAqua": { "name": "muted teal-green", "hex": "#7AA89F" },
+    "stepYellow": { "name": "soft amber-gold", "hex": "#DCA561" },
+    "stepViolet": { "name": "dusty violet", "hex": "#957FB8" },
+    "problemPink": { "name": "muted rose-pink", "hex": "#D27E99" },
+    "glow": { "name": "blue-white flow glow", "hex": "#BFD9FF" },
+    "cardboard": { "name": "amber-brown shipping cardboard", "hex": "#C9A26B" },
+    "plantGreen": { "name": "muted teal-green foliage accent", "hex": "#7AA89F" },
+    "chapterDominantColors": {
+      "note": "各章/STEPで支配色を切り替えて色貫通させる。AIロボ・フロー矢印・品質ゲートのシアン発光(glow #BFD9FF)は全章共通アクセント。",
+      "intake_step1": "stepBlue",
+      "skillcreator_step2": "stepBlue",
+      "judgment_ai_side": "stepViolet",
+      "distribution_step3": "stepBlue + cardboard amber",
+      "feedback_step4": "stepViolet to stepAqua",
+      "problem_before": "problemPink"
+    },
+    "glowUsage": "glow(#BFD9FF) はAIロボットマスコット、発光フロー矢印・蛇行パス、品質ゲートの合格側に共通で使うシアン〜水色の発光色"
+  },
+  "compositionRules": {
+    "aspect": "16:9",
+    "targetResolution": "2560x1440",
+    "safeArea": "top/bottom 8%, left/right 6%",
+    "density": "スライド種別で密度を段階化する。表紙/章扉=低密度(主役1体+少数モチーフ)、フロー/対比図=中密度(独立タイル数個を矢印で連結)、メカニズム解説図=高密度(数十個の小物・人物・吹き出しを重なり(occlusion)と奥行きで密に配置し、蛇行パス沿いにミニシーンを数珠つなぎ)。高密度でも1スライド1メッセージは保つ。禁止するのは『単色角丸ボックス+テキストだけの平坦図(空のラベル枠)』であり、リッチな描き込みは推奨する。avoid-cluttered は表紙/章扉(低密度)にのみ適用する。",
+    "sceneTile": "use rounded rectangular isometric platform tiles as diagram containers; rich scenes place people, machines, documents and plants on and around the tiles",
+    "titlePlacement": "top center, dark navy, high contrast, no decorative card behind title",
+    "captionPlacement": "bottom center when needed, dark navy, short single line",
+    "structuralDiagram": "use near top-down so node count, arrow direction, table cells, and labels remain legible",
+    "layoutTemplates": {
+      "cover-minimal": "表紙ミニマル型: 中央〜やや右にAIロボットマスコット全身、右肩上がりの上昇折れ線、低密度、大きな余白。タイトルは上部中央",
+      "chapter-divider": "章扉型: 左に巨大な半透明ゴースト章番号(02/03等)、中央に1つの大型ジオラマ(その章の主モチーフ)、下部にSTEP1-4の角丸ピル進行ナビ、隅にQRカード。中〜高密度",
+      "two-layer-contrast": "左右二層対比型: 左右に対のシーンタイル(例 仕組みブルー vs 判断AIのviolet)、中央または下に品質ゲートや橋渡しの発光矢印。中密度",
+      "cycle-workflow": "循環ワークフロー型: 4〜6個の丸角タイルを円環状に等間隔配置し、時計回りの発光リング矢印で接続。中央に小さなコア/ハブを置き、順序と循環性を微俯瞰で正確に見せる。中密度",
+      "four-phase-serial": "4フェーズ直列型: 独立した大型ジオラマタイルを発光矢印で横一列に連結し、下に循環の戻り矢印。中密度",
+      "serpentine-mechanism": "蛇行メカニズム型: 左に入力人物→画面を横断する蛇行する青い道(serpentine path)→右に出力。道沿いに各フェーズの小人物+小物を数珠つなぎ。高密度",
+      "exploded-diagram": "分解図型: 中央の対象を縦または斜め軸に沿って均等間隔で組立順に分解し、各部品から細い引き出し線で番号付きコールアウトへ接続。片側に番号付き部品一覧。技術的・構造説明向け"
+    }
+  },
+  "motifs": [
+    { "name": "exploded-assembly", "meaning": "structural decomposition; show how a whole is built by separating its parts", "appearance": "components pulled apart along a vertical or diagonal axis at even intervals in assembly order, each part a rounded isometric piece with navy outline" },
+    { "name": "leader-line", "meaning": "connect a part to its numbered label", "appearance": "thin straight navy line from a component to a small numbered callout disc" },
+    { "name": "parts-list-panel", "meaning": "numbered list of the decomposed parts", "appearance": "compact pale rounded panel with a short numbered list 01-0N, navy text, aligned to one side" },
+    { "name": "rounded-isometric-platform", "meaning": "one process, scene, or conceptual block", "appearance": "thick rounded platform tile with tinted top face, navy outline, soft shadow" },
+    { "name": "glowing-flow-arrow", "meaning": "process flow, handoff, circulation", "appearance": "blue-white luminous curved arrow with soft outer glow" },
+    { "name": "speech-label", "meaning": "short label embedded in illustration", "appearance": "rounded speech bubble with notch, pale fill, colored border, bold navy Japanese text" },
+    { "name": "explanation-panel", "meaning": "short explanatory text inside a diagram", "appearance": "white or pale tinted rounded panel placed inside scene tile, max 2 short lines" },
+    { "name": "mini-table-panel", "meaning": "simple comparison or checklist table", "appearance": "small rounded white table card, up to 3 columns x 4 rows, large row blocks, no dense spreadsheet look" },
+    { "name": "tool-workbench", "meaning": "building, implementation, automation (generic workbench; prefer decomposing into gear-cluster/monitor-bank/document-stack for richer scenes)", "appearance": "workbench with gears, conveyor, documents, monitor, cables" },
+    { "name": "quality-gate", "meaning": "validation and pass/fail", "appearance": "gate arch with shield/check mark, teal glow for pass, muted pink rejected tile for fail" },
+    { "name": "notion-card-stack", "meaning": "knowledge base and sharing", "appearance": "stacked document/database cards, folder, cylinder database, small linked cards" },
+    { "name": "human-figure-seated", "meaning": "an engineer/worker entering input or processing at a desk", "appearance": "half-abstract simplified isometric person seated at a laptop or desktop, navy/dusty-blue clothing, featureless face, ~1/3 scene height" },
+    { "name": "human-figure-standing-gesture", "meaning": "a user simply talking to / instructing the AI", "appearance": "simplified standing person with arms slightly open in a talking gesture, navy sweater and grey pants, featureless face" },
+    { "name": "human-figure-tablet", "meaning": "an operator using a select-style UI", "appearance": "simplified person operating a tablet or panel, navy clothing, featureless face" },
+    { "name": "human-figure-worker", "meaning": "a role-specific worker (e.g. construction) for background/biography scenes", "appearance": "simplified isometric worker in role attire (e.g. construction worker with hard hat near a crane), navy/blue tones, featureless face" },
+    { "name": "ai-robot-mascot", "meaning": "AI, judgment, or automation symbol; the recurring signature character", "appearance": "rounded white-to-pale-blue robot, dark navy face panel with two cyan oval glowing eyes, short antenna with ball tip, thin navy outline; variants: full body with arms, floating head only, or upper body holding a clipboard; small sparkle accents" },
+    { "name": "serpentine-winding-path", "meaning": "a multi-step mechanism shown as one continuous route", "appearance": "a winding blue road/path crossing the slide left-to-right, with mini-scenes (people + small props) placed along it phase by phase" },
+    { "name": "gear-cluster", "meaning": "construction, automation, an engine that runs", "appearance": "a group of interlocking gears, often oversized and central, with smaller satellite gears" },
+    { "name": "monitor-bank", "meaning": "processing, verification, dashboards", "appearance": "several screens/monitors arranged together, some showing simple charts or check marks" },
+    { "name": "document-stack", "meaning": "requirements, outputs, paperwork", "appearance": "stacks of documents, binders, clipped paper, in/out trays" },
+    { "name": "checklist-clipboard", "meaning": "verification, quality check", "appearance": "a clipboard with a checklist and check marks" },
+    { "name": "potted-plant", "meaning": "a calm workspace life accent", "appearance": "a small potted plant with muted teal-green foliage, used as a scene accent" },
+    { "name": "cylinder-database", "meaning": "accumulation, knowledge base, storage", "appearance": "a stacked cylinder database, sometimes with linked cards" },
+    { "name": "shipping-box", "meaning": "distribution, delivery of a finished artifact", "appearance": "an amber-brown cardboard shipping box, sometimes open or stacked" },
+    { "name": "delivery-truck", "meaning": "distribution at scale, shipping out", "appearance": "a simplified isometric delivery truck" },
+    { "name": "conveyor-belt", "meaning": "a production / mass-output line", "appearance": "a conveyor belt carrying boxes or artifacts" },
+    { "name": "robot-arm", "meaning": "industrial automation, production", "appearance": "a simplified industrial robot arm over a line" },
+    { "name": "signal-tower", "meaning": "status, pass/fail signaling", "appearance": "a red-yellow-green stack light / signal pole" },
+    { "name": "filing-cabinet", "meaning": "storage of structured artifacts", "appearance": "a drawered filing cabinet" },
+    { "name": "magnifying-glass", "meaning": "inspection, analysis, review", "appearance": "an oversized magnifying glass over a document or scene" },
+    { "name": "calculator", "meaning": "estimation, numbers, calculation", "appearance": "a small isometric calculator as a desk prop" },
+    { "name": "qr-card", "meaning": "reference, link, distribution handle", "appearance": "a small card showing a QR-like code block (decorative, not a real scannable code unless a real overlay asset is composited)" },
+    { "name": "globe-screen", "meaning": "rollout, reach, global deployment", "appearance": "a globe or world-map screen/monitor" },
+    { "name": "coffee-cup", "meaning": "a human workspace life accent", "appearance": "a small coffee cup as a desk prop" },
+    { "name": "shelf-books", "meaning": "knowledge, references on hand", "appearance": "a shelf with a few books" },
+    { "name": "location-pin", "meaning": "a place / destination marker", "appearance": "a rounded map location pin" },
+    { "name": "speech-thought-bubble-cluster", "meaning": "questions, troubles, ideas gathered from people", "appearance": "a small cluster of speech/thought bubbles near people" },
+    { "name": "tablet-select-ui", "meaning": "a pochi-pochi (tap-to-select) choice UI", "appearance": "a tablet/panel showing simple selectable option rows" },
+    { "name": "ghost-chapter-number", "meaning": "chapter / STEP divider marker", "appearance": "a very large semi-transparent chapter number (e.g. 02, 03) behind the chapter-divider scene" },
+    { "name": "step-pill-nav", "meaning": "progress across STEP1-4", "appearance": "a row of rounded pills labeled STEP1..STEP4 with the current step highlighted" },
+    { "name": "upward-line-chart", "meaning": "growth, improvement over time", "appearance": "a rising broken-line chart trending up to the right" },
+    { "name": "sparkle-accent", "meaning": "AI magic / generation highlight", "appearance": "small four-point sparkle stars in cyan/white near the AI robot or generated output" }
+  ],
+  "patterns": {
+    "image-only": {
+      "pattern": "image-only",
+      "recommendedTextPolicy": ["baked-with-overlay", "overlay-only"],
+      "backgroundSource": "none (the generated image is the whole slide; no separate background layer)",
+      "useWhen": "スライド全体を1枚の漫画チック生成画像にする。図解の中に短い説明文、吹き出し、簡易表、人物、AIロボット、リッチなジオラマを含めたいとき。",
+      "rules": [
+        "large bold Japanese text only when baked-with-overlay",
+        "max 6-8 text blocks per slide",
+        "each block short and independently readable",
+        "overlayText remains the source of truth; fallback to HTML overlay when any text is distorted",
+        "rich dioramas are encouraged; only flat single-color label boxes are forbidden"
+      ]
+    },
+    "html-composite": {
+      "pattern": "html-composite",
+      "recommendedTextPolicy": ["overlay-only"],
+      "backgroundSource": ["raster", "svg"],
+      "useWhen": "HTML/CSS/JS/SVG が器。AI生成画像(raster)またはSVG/CSSで描いた背景(svg)の上に、見出し・説明文・表・数値をHTMLで重ねるとき。",
+      "rules": [
+        "image (or svg background) contains no readable text",
+        "background provides motif and visual tone only",
+        "HTML/CSS/SVG owns headings, labels, tables, numbers, and captions"
+      ]
+    },
+    "html-primary": {
+      "pattern": "html-primary",
+      "recommendedTextPolicy": ["none"],
+      "backgroundSource": ["none", "svg"],
+      "useWhen": "AI生成ラスター画像を使わない。正確な表・料金・数値・頻繁に変わる文言を扱うとき（退化耐性の安全弁。迷ったらここへ寄せる）。",
+      "rules": [
+        "no AI-generated raster image",
+        "everything is HTML/CSS/SVG; reuse the existing chassis and components"
+      ]
+    }
+  },
+  "textPolicies": {
+    "baked-with-overlay": "画像内に短い説明文・吹き出し・簡易表を焼き込む。overlayText が常に正本。崩れたら overlay を表示し画像内文字を装飾扱いにする。",
+    "overlay-only": "画像内に読めるテキストを描かない。全テキストを HTML/SVG で上載せする。",
+    "none": "画像内テキストの概念が無い（html-primary 等、ラスター画像にテキスト判定が不要なケース）。"
+  },
+  "backgroundSources": {
+    "raster": "AI生成ラスター画像（PNG/WebP）を背景・モチーフに使う。",
+    "svg": "SVG/CSS で背景を描く（ラスター画像なし）。HTML+CSS+JS+SVG背景での量産に使う。",
+    "none": "背景ビジュアルなし（フラットテーマ）。"
+  },
+  "machineContract": {
+    "validator": "scripts/validate-ai-image-assets.js",
+    "note": "pattern / textPolicy / backgroundSource の機械的な許容値と style-genome 必須キーは validate-ai-image-assets.js --strict-style-genome を正本(SSoT)とし、本ファイルと references/style-genome-packaging.md はそれに一致させる。pattern->textPolicy は image-only:{baked-with-overlay|overlay-only} / html-composite:overlay-only / html-primary:none。コード系 slideType（slide-code / slide-code-compare）は aiVisual で image-only / baked-with-overlay にできない（コードは実HTMLコードブロックで描画。slideType×aiVisual 整合は validate-structure.js V-043 が機械正本）。motifs は追加してよいが既存 name は削除・改名しない（per-slide meta の diagramPrimitives が参照するため）。"
+  },
+  "perSlideDiffContract": {
+    "note": "STYLE BIBLE を毎回直書きせず、スライドごとには差分だけを書く。人物の有無・人数・職業、AIロボットマスコットの有無と変種(全身/頭部浮遊/上半身)、ジオラマ要素(使用motif)、レイアウトテンプレート、章支配色、密度レベル(低/中/高)を per-slide で指定する。",
+    "requiredFields": ["slide", "slug", "pattern", "textPolicy", "backgroundSource", "styleGenome", "source", "decision", "reason", "alt", "overlayText", "prompt"],
+    "recommendedFields": ["diagramPrimitives", "layoutTemplate", "densityLevel", "figures", "robotMascot", "tableMode", "imageFit", "printIntent", "chapterColor"],
+    "diagramPrimitives": "このスライドで使う motif を motifs[].name の部分集合として列挙する（例: serpentine-winding-path, human-figure-seated, ai-robot-mascot, gear-cluster, monitor-bank）。motifs に存在しない名前は使わない。",
+    "figures": "登場する human-figure 系 motif と人数・配置を記述する（例: 'human-figure-standing-gesture x1 (left), human-figure-seated x2 (along path)')。",
+    "robotMascot": "AIロボットマスコットの有無と変種を記述する（none / full-body / floating-head / upper-body-clipboard）。",
+    "layoutTemplate": "compositionRules.layoutTemplates のいずれか（cover-minimal / chapter-divider / two-layer-contrast / four-phase-serial / serpentine-mechanism）。",
+    "densityLevel": "low / medium / high。章扉・表紙=low、フロー・対比=medium、メカニズム解説=high。",
+    "tableMode": "表・マトリックス・比較をどう扱うか（none / illustrated-mini-table / html-overlay-table / diagram-translation / html-primary）。正確な表や長い表はHTML正本、短い簡易表は画像内ミニ表、判断軸は図解変換。",
+    "imageFit": "HTML組み込み時のフィット契約（contain / html-composite-contain / cover-safe）。主キャンバスは原則 contain。cover-safe は装飾背景かつ端欠け確認済みの場合のみ。",
+    "printIntent": "印刷時に切れないためのスライド固有方針。例: 'keep all mini-scenes inside 6% horizontal and 8% vertical safe margins; no edge-cropped people or labels'."
+  },
+  "promptSuffix": "Style: clean manga-like isometric explanatory infographic with a richly detailed diorama, Kanagawa-inspired desaturated palette, bright off-white background with faint dotted isometric grid floor, rounded platform tiles, simple half-abstract people in navy/dusty-blue clothing with featureless faces, a friendly white-and-light-blue AI robot mascot (dark navy face panel, two cyan oval eyes, short antenna, small sparkles), interlocking gears, monitor banks, document stacks, potted plants, cylinder databases and other small props arranged with depth and overlap, bold dark navy Japanese title treatment, rounded speech-bubble labels, soft single shadow from upper-left, matte flat vector surfaces with subtle depth, glowing blue-white flow arrows, premium orderly consulting deck, 16:9.",
+  "negativePrompt": "photorealistic, 3d render, stock photo, empty single-color label boxes, flat boxes-with-text-only diagram, dark background, neon colors, high saturation, paper texture, rough hand-drawn wobble, logos, watermarks, brand marks, UI gibberish, distorted text, garbled characters, tiny unreadable labels, emoji-style pictograms, chaotic shadows, excessive gradients, distorted faces, detailed realistic faces, extra fingers, malformed hands, identical cloned duplicate people, uncanny humans",
+  "consistencyAnchors": [
+    "crisp sharp deep-navy #0B2A55 edges with no blurry, feathered, or doubled outlines, plus a clear ambient occlusion contact shadow where objects overlap",
+    "bright off-white #FAFAFA background with a very faint dotted isometric grid floor",
+    "uniform deep-navy #0B2A55 outlines on every object with even thin line weight (about 3px at 2560x1440)",
+    "rounded isometric platform tiles, 8-18px corner radius, as the only diagram containers",
+    "matte flat-vector surfaces in the Kanagawa desaturated palette with a single subtle one-stop shade",
+    "soft single long shadow cast from an upper-left 45-degree key light",
+    "cyan-white glow #BFD9FF reserved only for the AI robot mascot, glowing flow arrows, and quality gates",
+    "generous even negative space inside the top/bottom 8% and left/right 6% safe margins",
+    "no stray text, no watermark, no logo, no brand mark anywhere in the image"
+  ],
+  "semanticMapping": {
+    "note": "抽象概念をどの具体物motifで表すかの対応辞書。プレゼン内容から概念・動詞を拾い、ここで具体物を選ぶ。完全一致のコピーではなく、内容に合わせて選択・組合せ・取捨する。複数候補から内容に最も合うものを選ぶ。",
+    "process_flow": ["glowing-flow-arrow", "serpentine-winding-path", "conveyor-belt", "step-pill-nav"],
+    "accumulation_knowledge": ["cylinder-database", "document-stack", "notion-card-stack", "filing-cabinet", "shelf-books"],
+    "verification_quality": ["checklist-clipboard", "quality-gate", "magnifying-glass", "signal-tower", "monitor-bank"],
+    "automation_building": ["gear-cluster", "robot-arm", "tool-workbench", "conveyor-belt"],
+    "ai_judgment_intelligence": ["ai-robot-mascot", "sparkle-accent"],
+    "growth_improvement": ["upward-line-chart"],
+    "distribution_delivery": ["shipping-box", "delivery-truck", "globe-screen", "location-pin"],
+    "problem_trouble": ["speech-thought-bubble-cluster", "magnifying-glass"],
+    "people_roles": ["human-figure-seated", "human-figure-standing-gesture", "human-figure-tablet", "human-figure-worker"],
+    "input_dialogue": ["tablet-select-ui", "speech-label", "speech-thought-bubble-cluster"],
+    "data_processing": ["monitor-bank", "gear-cluster"],
+    "workspace_life_accent": ["potted-plant", "coffee-cup", "shelf-books"],
+    "calculation_numbers": ["calculator", "mini-table-panel"],
+    "reference_link": ["qr-card"],
+    "structure_block": ["rounded-isometric-platform", "explanation-panel"],
+    "decomposition_structure": ["exploded-assembly", "leader-line", "parts-list-panel"],
+    "label_callout": ["speech-label", "explanation-panel"],
+    "unknown_concept": "上記に無い概念は noveltyRule に従い、その概念を最もよく象徴する実在の具体物を1つ選び、共通画風で新規に描く"
+  },
+  "contentAdaptationRules": {
+    "note": "このゲノムは特定構図のコピー金型ではない。任意のプレゼン内容を、この画風で内容に合ったビジュアルへ変換するための手順。",
+    "steps": [
+      "1. スライドのメッセージ(1メッセージ)から主要な概念・動詞(流れ/蓄積/検証/比較/成長/問題/役割/自動化/判断/配布/循環/階層/時系列 等)を抽出する",
+      "2. semanticMapping で各概念に対応する具体物motifを選ぶ(該当が無ければ noveltyRule で新規に描く)",
+      "3. 内容の構造で layoutTemplate を選ぶ(layoutSelectionByStructure)",
+      "4. 情報量で densityLevel を選ぶ(低=表紙/章扉, 中=フロー/対比, 高=メカニズム解説)",
+      "5. figureUsageRules で人物・AIロボットの要否と人数を決める",
+      "6. colorSemantics と章別支配色で各要素に色を割り当てる",
+      "7. baked text は要点語のみ短く(overlayText が正本・崩れ対策)"
+    ],
+    "principle": "図解の中身(被写体・配置・ラベル・人物数・小物の組合せ)はスライドごとに可変。固定するのは画風・配色・motif語彙・構図ルールだけ。同じ構図を毎回再生産しない。内容が主役で、画風は一貫させる。",
+    "notACopyTemplate": "重要原則: これは特定構図のコピー金型ではなく『スタイル仕様(画風・配色・モチーフ語彙・構図ルール)の一貫適用』である。参照デッキの構図(歯車群/蛇行パス/章番号配置等)を丸写しせず、同じ画風で内容に合う構図・被写体を新規に組む。固定=スタイル仕様、可変=図解の中身(ノード数・配置・被写体・人物数)。",
+    "densityPreservation": {
+      "note": "再生成・文言差し替え時にリッチなアイソメ粒度を維持し、平坦な単色ボックス図への退化を防ぐための明示指示。テキスト指定を強めるとモデルは平坦化しやすいため、密度はプロンプトに毎回明記する。",
+      "densityLevels": {
+        "low": "表紙/章扉。主役1体+少数モチーフ。余白多め。それでも主役は描き込み(単色ボックス禁止)",
+        "medium": "フロー/対比図。独立シーンタイル3〜6個を発光矢印で連結。各タイル内に小物2〜4点と人物/ロボを配置",
+        "high": "メカニズム解説図。数十個の小物・人物・吹き出しを重なり(occlusion)と奥行きで密に配置し、蛇行パス沿いにミニシーンを数珠つなぎ。最高密度でも1スライド1メッセージは保つ"
+      },
+      "richnessFloor": "どの密度でも各シーンタイルは『プラットフォーム+主モチーフ+小物1点以上+影』を最低限持つ。空の角丸枠+テキストだけ(平坦ボックス)は全密度で禁止",
+      "degradationBan": "再生成で平坦化・単純化(小物の脱落・占有率の低下・ベタ塗りボックス化)が起きたら不合格とみなし、styleReference画像を渡して粒度を再固定する。promptに『リッチなアイソメ・ジオラマ粒度を維持/平坦なテキストボックス図は禁止』を毎回明記する",
+      "isometricGranularity": "true isometric 30度の奥行き・occlusion・overlap・1段シェードを保ち、フラットな真上図(構造図でnear top-downが必要な場合を除く)へ退化させない"
+    },
+    "biasPrevention": {
+      "note": "内容適応(motif任意選定)が偏らないための決定論手順。noveltyRule.biasGuard と同期する。",
+      "deterministicSelection": "概念→具体物は『semanticMapping/industryObjectTable の候補リスト先頭から、当該デッキで未使用のものを選ぶ』を既定とする(同点先頭優先)",
+      "coverageHint": "1デッキ内で semanticMapping カテゴリの被覆を広げ、同一motifの偏重(目安6回超)を避ける。意図的な再利用(同一概念の再出現)は一貫性として許容",
+      "traceRequirement": "選定根拠を per-slide meta.adaptationTrace(主題語→選択motif)に残し、根拠なき選択・偏りを観測可能にする"
+    }
+  },
+  "layoutSelectionByStructure": {
+    "note": "内容の論理構造から compositionRules.layoutTemplates を選ぶ目安。",
+    "single_message_or_cover": "cover-minimal",
+    "chapter_section_opening": "chapter-divider",
+    "two_way_comparison_or_before_after": "two-layer-contrast",
+    "sequential_steps_independent": "four-phase-serial",
+    "multi_step_mechanism_one_route": "serpentine-mechanism",
+    "central_concept_with_satellites": "中央+放射配置(本文で指定。near top-down)",
+    "timeline_history": "four-phase-serial を near top-down で並べる",
+    "cycle_loop": "four-phase-serial + 循環の戻り矢印"
+  },
+  "figureUsageRules": {
+    "aiRobotMascot": "AI・判断・自動化・生成が主題のスライドで使う。原則1体。表紙/まとめ/AI関連で象徴として配置。内容が物体・概念中心(表・比較・純粋な概念図)なら省略してよい。変種は full-body / floating-head / upper-body-clipboard",
+    "humans": "利用者・開発者・役割・体験・困りごとが主題のとき使う。半抽象・無表情・navy/dusty-blue服。1スライドあたり1〜3人まで。内容が主役なので装飾的に増やさない。顔の描き込みは禁止(distorted faces を避ける)",
+    "absence": "馬具・歯車・データ・抽象概念など物体/概念が主役のスライドでは、人物やロボを無理に入れない。意味のある要素だけ置く"
+  },
+  "colorSemantics": {
+    "note": "概念→アクセント色の汎用対応。章/STEP支配色(palette.chapterDominantColors)と併用する。",
+    "primary_standard": "stepBlue #7E9CD8",
+    "success_done": "stepAqua #7AA89F",
+    "emphasis_caution": "stepYellow #DCA561",
+    "support_ai_judgment": "stepViolet #957FB8",
+    "problem_before_warning": "problemPink #D27E99",
+    "ai_flow_pass_glow": "glow #BFD9FF",
+    "distribution_physical": "cardboard #C9A26B",
+    "life_nature_accent": "plantGreen #7AA89F"
+  },
+  "noveltyRule": {
+    "note": "semanticMapping に無い概念に出会ったときの拡張ルール。これによりゲノムは未知の多様なプレゼン内容にも対応する。任意選定が偏らないよう、業種ごとに具体物候補とフォールバック順を決定論的に定める。",
+    "steps": [
+      "1. まず industryObjectTable で主題の業種を判定し、その概念に対応する具体物を『候補リストの先頭から、まだ当該デッキで未使用のものを1つ』決定論的に選ぶ(同点なら先頭優先)。表に該当が無ければ fallbackOrder に従う",
+      "2. 共通artStyle(true isometric 30度, 角丸8-18px, 細い紺#0B2A55アウトライン, マットなフラット塗り+1段シェード, 左上45度のソフトシャドウ, off-white #FAFAFA 床のドットグリッド)で描く",
+      "3. 章/概念の支配色をその物体の主要面に当てる(colorSemantics)",
+      "4. per-slide meta の diagramPrimitives に新規名(kebab-case)を記録し、noveltyMotif として根拠(主題語→選択物の対応)を残す。3スライド以上で再利用するなら motifs への昇格を検討する",
+      "5. 1スライド1メッセージ・密度段階・平坦な単色ボックス図の禁止 は常に守る"
+    ],
+    "industryObjectTable": {
+      "note": "業種→概念→具体物候補の決定論テーブル。候補は『先頭優先・デッキ内未使用を選ぶ』で偏りを防ぐ。具体物は全てこの画風(角丸アイソメ・紺アウトライン)で描く。",
+      "IT_software": { "処理": ["monitor-bank", "gear-cluster"], "蓄積": ["cylinder-database", "filing-cabinet"], "配布": ["globe-screen", "shipping-box"], "象徴物": ["server-rack", "terminal-window", "cloud-shape"] },
+      "manufacturing": { "生産": ["robot-arm", "conveyor-belt"], "検査": ["signal-tower", "checklist-clipboard"], "象徴物": ["factory-line", "pallet-stack", "wrench-tool", "cnc-machine"] },
+      "medical": { "診断": ["magnifying-glass", "monitor-bank"], "象徴物": ["stethoscope", "medical-cross-panel", "iv-stand", "microscope"] },
+      "finance": { "計算": ["calculator", "upward-line-chart"], "象徴物": ["coin-stack", "safe-vault", "ledger-book", "balance-scale"] },
+      "education": { "学習": ["shelf-books", "checklist-clipboard"], "象徴物": ["whiteboard-easel", "graduation-cap", "open-book", "pencil-ruler"] },
+      "logistics": { "輸送": ["delivery-truck", "conveyor-belt"], "保管": ["shipping-box", "filing-cabinet"], "象徴物": ["forklift", "warehouse-shelf", "pallet-stack", "route-map-pin"] },
+      "construction": { "施工": ["gear-cluster", "tool-workbench"], "象徴物": ["crane-tower", "hard-hat", "blueprint-roll", "scaffold-frame"] },
+      "legal_admin": { "手続": ["document-stack", "checklist-clipboard"], "象徴物": ["stamp-seal", "contract-scroll", "gavel", "folder-binder"] }
+    },
+    "fallbackOrder": [
+      "1. industryObjectTable に主題業種が無ければ、概念の動詞(流れ/蓄積/検証/比較/成長/問題/役割/自動化/判断/配布/循環)で semanticMapping を再検索する",
+      "2. それでも無ければ、その概念を日常で最もよく象徴する実在物を1つ決める(例: セキュリティ→盾と鍵, 契約→印鑑と書面)",
+      "3. 象徴する実在物が存在しない純抽象(哲学/数式/関係概念)は noveltyRule を適用せず nonApplicableTypes に従う"
+    ],
+    "biasGuard": {
+      "note": "内容適応の任意選定が同一モチーフに偏らないための観測・抑制ルール。",
+      "deterministicPick": "候補リストは常に『先頭優先・デッキ内未使用を選ぶ』。同じ概念が複数スライドに出る場合のみ意図的に同一物を再利用してよい(一貫性のため)",
+      "usageBudgetHint": "1デッキ(20枚目安)で同一motifの登場が概ね6回を超えたら warn 相当。semanticMappingカテゴリの被覆を広げ、業種テーブルの別候補へ振る",
+      "trace": "選定根拠を per-slide meta.adaptationTrace(主題語→選択motif)に残し、根拠なき選択・同一物多用を後から観測可能にする"
+    },
+    "nonApplicableTypes": {
+      "note": "noveltyRule(具体物変換)を適用すべきでないスライド種別。具体物に落とすと退化・誤読を招くため、別経路へ退避する。",
+      "pure-abstract-or-math": "純抽象概念・数式中心は具体物化せず、関係を矢印/タイル/対比で表す diagram-translation か html-primary へ",
+      "code-or-api": "コード・APIレスポンスは画像化せず html-primary(実HTMLコードブロック)へ",
+      "precise-table-or-number": "精密な数値表・料金表は html-overlay-table か html-primary へ(tableAndMatrixRules)"
+    }
+  },
+  "tableAndMatrixRules": {
+    "note": "表形式・比較表・マトリックスをそのまま画像に焼くと画風差と文字崩れが出るため、内容の正確性と画風統一を分けて扱う。",
+    "policy": "正確な表・料金・数値はHTML前面(html-overlay-table / html-primary / frame-only-image)を正本にし、概念・比較・章扉はイラスト(diagram-translation優先)へ寄せる。画像図解とHTML表は同一世界観(角丸タイル/淡色面/紺アウトライン/同色アクセント)で統一する。",
+    "modes": {
+      "illustrated-mini-table": "3列x4行程度までの短い比較・チェックリスト。mini-table-panel / checklist-clipboard / document-stack としてジオラマ内に描く。文字は短語だけ、overlayText が正本。",
+      "illustrated-full-table": "見出し+全行を画像内に verbatim で焼き込む完全な表(image-only 向け・機械契約 enum 登録済み)。plan の tableContent{headers, rows[][], monospaceColumns?, caption?} で各セルを一字一句運び、build-image-prompts.js が 列数/行数明示・罫線・整列・legible・行列増減禁止 を決定論展開する。HTML のピンポイント重ね(位置ズレの原因)を使わず『すべて画像で作る』方式。textPolicy=baked-with-overlay 固定、overlayText に表全文を正本保持し崩れ時のみ HTML fallback。最大5列x6行・各セル短語(14字以内)・コマンド/識別子列は monospace・quality=high 推奨。料金/精密数値/長文/複数行コードは html-overlay-table / html-primary に寄せる。camera=structural(near top-down)と相補的で、表セルが正対し罫線・整列が読みやすくなるため焼き込み表では camera=structural を推奨する。",
+      "html-overlay-table": "列数・行数が多い、数値・料金・固有名詞・長文が重要な表。画像は机・カード束・書類・モニターなどの世界観だけを作り、実表はHTMLで重ねる。注意: HTML を画像上のピンポイント位置へ合わせるのは難しく位置ズレが起きやすい。image-only / 全面画像デッキでは原則 illustrated-full-table(全部画像で焼く)を優先し、本モードは精密数値/料金/頻繁更新の表に限定する。",
+      "diagram-translation": "表の意味を、左右対比・品質ゲート・工程ライン・カード束・チェックリストに翻訳する。表の罫線を主役にせず、意味のまとまりをビジュアル化する。概念・比較・判断基準の既定モード。",
+      "html-primary": "精密な料金表・数値表・コード・APIレスポンスなど、1文字の正確性が価値の中心のページ。画像化せずHTML/CSS/SVGで作る。",
+      "frame-only-image": "画像は表の外枠(机/カード束/モニター/角丸タイル+影)だけを生成し、セル文字はHTMLグリッドを画像枠内に絶対配置で嵌め込む。画風統一×文字正確×偏りなしを両立。画像内にセル文字を描かない。",
+      "two-layer-table": "背景に淡い世界観ラスター(html-composite+raster)を敷き、前面に半透明白パネルのHTML表を重ねる。HTML表に visualBalanceTokens(角丸/薄影/紺線)を適用し連続体に見せる。",
+      "icon-row-table": "各行を motif アイコン+短語chipにして表自体をビジュアル化する。罫線でなくアイコン行で読ませる。短い分類・特徴比較向け。",
+      "print-only-swap": "画面はミニ表画像、印刷はHTML表に差し替える。画面の世界観統一と印刷の文字正確性を両取りする。"
+    },
+    "selectionAxes": {
+      "note": "tableMode 選定を3軸で再構成する。列数・更新頻度・正確性要件で決定論的に絞る。",
+      "columnsRows": "3列x4行以内→illustrated-mini-table / icon-row-table 候補。5行超や多列→frame-only-image / html-overlay-table",
+      "updateFrequency": "頻繁に文言が変わる→HTML正本側(html-overlay-table / html-primary / frame-only-image)。固定→画像内表も可",
+      "accuracyRequirement": "1文字の正確性が価値の中心(料金/数値/API)→html-primary。比較・分類・判断基準が目的→diagram-translation を優先"
+    },
+    "selection": [
+      "image-only / 全面画像デッキで表を見せるなら illustrated-full-table を既定にする(見出し+全行を画像内に verbatim 焼き込み、HTML のピンポイント重ねを使わない=位置ズレを構造的に回避)。各セル短語(14字以内)・最大5列x6行・固定的な値に限る",
+      "短語中心・3列x4行以内・雰囲気だけ伝われば良い(文字を厳密に運ばない)なら illustrated-mini-table または icon-row-table",
+      "正確な数値/料金/長文/頻繁な更新/複数行コード/5列超または6行超なら html-overlay-table / html-primary(HTML 正本)。illustrated-full-table の焼き込み上限を超える表はこちら",
+      "表の目的が比較・分類・判断基準で表である必要が無いなら diagram-translation を優先し、ゲート/カード束/左右対比に変換する",
+      "illustrated-full-table の正テキストも overlayText に必ず保持し、画像の文字が崩れたときだけ HTML 表へ fallback する(常時 HTML 重ねはしない)"
+    ],
+    "visualBalanceTokens": {
+      "note": "HTML表・HTML前面部品に適用して画像版と世界観を揃えるトークン。palette由来の値を使い、ラスター枚とHTML枚が『同じジオラマを別カメラで見た』連続体に見えるようにする。",
+      "surface": "淡色面 = palette.surface #E8E8EC(セル/パネル背景)",
+      "outline": "紺アウトライン = palette.ink #0B2A55(枠線・主線)",
+      "cornerRadius": "角丸 8-18px(compositionRules.corners と一致)",
+      "shadow": "左上45度のソフトな薄影(artStyle.shadow と一致)",
+      "accent": "1表1アクセント = chapterDominantColors の章支配色を見出し行/強調セルに",
+      "props": "表の背後に書類/クリップ/チェック/モニター等の小物motifを淡く置き、急にフラットなHTML部品に見せない"
+    },
+    "visualBalance": "表だけが急にフラットなHTML部品に見えないよう、HTML表を使う場合も visualBalanceTokens(角丸タイル/淡色面/紺アウトライン/薄影/章アクセント/小物)を適用する。画像版とHTML版の余白・角丸・線色・影を揃える。",
+    "boundaryRule": "混在境界=slideType の意味境界に一致させる。世界観統一が要る概念・章扉・比喩ページはイラスト側、コード・精密表・逐語数値ページはHTML側へ。混在の有無そのものを良し悪しとせず、境界が意味境界(コード/表/数値)と一致しているかで判断する。概念ページが誤って html-primary 側に落ちていないか per-slide で点検する。"
+  },
+  "printReadinessRules": {
+    "note": "全面画像生成デッキでも全ページ印刷できることを前提にする。画像は印刷時に欠けない主キャンバスであり、重要テキストはHTML fallbackまたは十分大きな画像内短語で保持する。",
+    "imageCanvas": "16:9 / 2560x1440 を基準にし、主要被写体を safeArea(top/bottom 8%, left/right 6%) 内に置く。全面画像でも object-fit: contain を既定にし、cover は主要被写体切れを確認した場合だけ許可する。",
+    "textForPrint": "画像内テキストは大きく短くし、overlayText に同じ正テキストを保持する。精密表・コード・長文はHTML前面にして印刷でもベクタ/テキストとして出す。",
+    "contrast": "印刷時に淡すぎる線が消えないよう、主線は deep navy #0B2A55、本文相当の重要ラベルは濃紺、背景ドットは極薄に抑える。",
+    "validation": "生成後は validate-ai-image-assets.js --full-image-deck --strict-style-genome、verify-slides.js --check-ratio、印刷/PDF確認を通す。"
+  },
+  "reproducibility": {
+    "styleReference": "最も描き込まれた良質な1枚(表紙またはhero章扉)を styleReference 参照画像として固定し、後続の生成へ毎回渡して粒度・人物画風・ロボット形状を固定する。内容(文言)だけ差し替える時もリッチな描き込み密度を必ず維持する(テキスト指定を強めるとモデルは平坦なボックス図に退化しやすいため、プロンプトに『リッチなアイソメ・ジオラマ粒度を維持/平坦なテキストボックス図は禁止』を明記する)。",
+    "seed": "gpt-image-2 has no seed parameter; do not rely on seed. Reproducibility comes from prompt invariance (STYLE LOCK and lockTiers), the styleReference image-to-image chain, and the consistency eval.",
+    "files": [
+      "assets/generated/style-genome.json",
+      "assets/generated/slide-NN-slug.prompt.md",
+      "assets/generated/slide-NN-slug.meta.json",
+      "assets/generated/slide-NN-slug.png",
+      "assets/generated/slide-NN-slug.webp"
+    ],
+    "validation": [
+      "node scripts/validate-ai-image-assets.js <slide-dir> --strict-style-genome",
+      "node scripts/verify-slides.js <slide-dir>/index.html --check-ratio",
+      "node scripts/sync-checker.js <slide-dir>/index.html <slide-dir>/structure.md"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.3.0",
+      "summary": "ゲノム拡充(要求A/D)。人物バリエーション辞書・業界別決定論noveltyRule・密度保持/偏り防止・表visualBalance強化を後方互換で追加。既存フィールド/motifは削除せず追加のみ。",
+      "changes": [
+        "artStyle.figures.humanVariationTokens 新設: 職業8(会社員/エンジニア座位/建設作業者/タブレット操作者/講師/子ども/医療従事者/物流作業者)x姿勢5x年齢3の描き分けトークン。navy基調・無表情・顔描き込み禁止は不変、職業差は小物1点で表現",
+        "artStyle.figures.aiRobotMascotVariants 新設: full-body/floating-head/upper-body-clipboard/none を per-slide meta robotMascot enum と一致明記",
+        "noveltyRule 強化: industryObjectTable(8業種x概念x具体物候補)+fallbackOrder+biasGuard(決定論先頭優先・使用予算hint・trace)+nonApplicableTypes(純抽象/コード/精密表は非適用) を追加し業種偏り防止",
+        "contentAdaptationRules: notACopyTemplate(スタイル仕様の一貫適用=コピー金型でない)を明文化、densityPreservation(低/中/高段階・richnessFloor・退化禁止・アイソメ粒度維持)と biasPrevention(決定論選定・被覆・trace)を追加",
+        "tableAndMatrixRules 強化(要求D): policy明記、modes に frame-only-image/two-layer-table/icon-row-table/print-only-swap を追加、selectionAxes(列数x更新頻度x正確性)、visualBalanceTokens(palette由来の角丸/淡色面/紺線/薄影/章アクセント/小物)、boundaryRule(混在境界=意味境界)を追加"
+      ]
+    }
+  ]
+}

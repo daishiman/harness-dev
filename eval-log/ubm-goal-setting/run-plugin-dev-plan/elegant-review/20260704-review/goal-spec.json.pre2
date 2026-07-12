@@ -1,0 +1,69 @@
+{
+  "purpose": "UBM(北原さん式ゴールセッティング)の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、新 harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract/harness>=80%) を継承した 1 plugin へ漏れなく移植する開発計画を作る",
+  "background": "現状 ~/dev/dev/ObsidianMemo/.claude/ 配下に slash-command 2 本・511 行の中核 skill (Phase0-5 統一ハイブリッド構造)・sub-agent 11 本 (6 本 + phase3 step 5 本、うち phase3-interviewer は後方互換リダイレクトスタブ)・shell script 3 本・reference 8 本・asset 5 本・knowledge JSON 群 (6 カテゴリ + schema/router/registry/sync-log、各カテゴリ JSON は curated な北原知見本体) が個別資産として存在し、量産規律の外側で運用されている。新 harness-creator 配下へ plugin 化することで再現性と品質ゲートを獲得する。",
+  "goal": "component-inventory.json が UBM 目標設定・振り返り対話とナレッジ同期の両capabilityを担うcomponent (skill/sub-agent/slash-command/script) を漏れなく列挙し、13 phase ファイルと handoff が決定論ゲートで検証可能な状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "ubm-goal-setting",
+  "plan_dir": "plugin-plans/ubm-goal-setting",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "2 slash-command (ubm-goal-setting/ubm-knowledge-sync 相当) が component-inventory.json の slash-command component として漏れなく列挙されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "中核 skill (Phase0-5 統一ハイブリッド構造ワークフロー・SKILL.md 511行) が 1 skill component 以上として移植され、その goal/checklist が原文の責務を反映している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "sub-agent 10本 (info-collector/output-formatter/knowledge-extractor/goal-reviewer/phase3-coordinator + steps/step1-5) が漏れなく sub-agent component として inventory に列挙されている(旧 phase3-interviewer は新名前空間で消費者ゼロの後方互換スタブと判明したため、phase3-coordinator+steps への統合済みとして扱い独立component化しない)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "3 本の既存 shell script (validate-goal-output.sh/detect-knowledge-updates.sh/check-knowledge-split.sh) が Python 標準ライブラリのみの script component として書き換え対象に登録されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "knowledge JSON 群 (原則/相談/フェーズ/行動/転換/事例 6カテゴリ + schema.json/router.json/registry.json/sync-log.jsonl) + references 8本 + assets 5本 が plugin_level_surfaces に required:true (または根拠付き omitted_reason) で明示されている。knowledge JSON 本体 (L1 curated) は plugin 同梱シード (vendor) とし、抽出元の生 vault ソース (L2) のみ外部 env 解決とする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "目標設定対話 (capability A) とナレッジ同期 (capability B) が knowledge/*.json を plugin-root 共有 SSOT (schema契約 + P08 dedup) として整合している。skill間の実行時 depends_on でなく共有データ層としての整合であることを component-inventory の記述が明示している",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C7",
+      "criterion": "全 buildable component が feedback_contract.criteria (loop kind)/quality_gates/harness_coverage>=80 を携帯し harness-creator ネイティブ規律を継承している",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "knowledge JSON の正確な件数はR2の実棚卸しで確定する。ここでは6カテゴリ×複数ファイルの概数として扱う",
+    "既存 shell script (.sh) はプラグイン規約 (stdlib Python) に反しており R3 で書き換えが必須。挙動の逐語移植でなく検知/検証ロジックの契約移植を優先する",
+    "配布は個人利用想定でmarketplace既定オフ寄りだが、最終判断はR2/R3のplugin_meta.distributionに委ねる",
+    "移植元 (~/dev/dev/ObsidianMemo/.claude/ 配下) は読み取り専用ソースであり、フォーク・複製は禁止。抽出/参照のみで移植すること"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "Obsidian vault固有パス (05_Project/UBM/, 02_Configs/Daily/) を{{VAULT_ROOT}}等でどう変数化するかはR2のplacement/manifest設計に委ねる",
+    "knowledge/*.jsonをplugin内蔵(vendor)にするか、install後もvault側で更新可能な外部configとして扱うかは要設計判断",
+    "distributable(marketplace掲載)を有効にするかは個人利用前提のため未確定"
+  ]
+}

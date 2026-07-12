@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-visualize",
+  "skill": "run-intake-visualize",
+  "description": "sheet/purpose を基に各セクションに Mermaid/SVG を 1-3 図配置し visuals.json と PNG を生成する。",
+  "phases": [
+    {
+      "id": "P1-section-scan",
+      "step": 1,
+      "title": "§0-§11 各セクションの内容を抽出し図種候補を列挙",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-section-figure-mapping", "ref-viz-mandatory"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-select",
+      "step": 2,
+      "title": "カタログから 1-3 図を決定論的に選択 (LLM 創作禁止)",
+      "gate": "C2",
+      "dependsOn": ["P1-section-scan"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-section-figure-mapping"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-render",
+      "step": 3,
+      "title": "Mermaid/SVG を PNG 化 (render_to_image.py)",
+      "gate": "C3",
+      "dependsOn": ["P2-select"],
+      "entryHook": null,
+      "exitHook": "render-to-image",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 3]
+    },
+    {
+      "id": "P4-emit",
+      "step": 4,
+      "title": "visuals.json 生成と verify-visuals.py 実行",
+      "gate": "C4",
+      "dependsOn": ["P3-render"],
+      "entryHook": null,
+      "exitHook": "verify-visuals",
+      "resourceIds": ["schema-visuals"],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-section-figure-mapping", "kind": "reference", "path": "./references/section-figure-mapping.md", "phaseIds": ["P1-section-scan", "P2-select"]},
+    {"id": "ref-viz-mandatory", "kind": "reference", "path": "./references/visualization-mandatory-pointer.md", "phaseIds": ["P1-section-scan"]},
+    {"id": "schema-visuals", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P4-emit"]}
+  ]
+}

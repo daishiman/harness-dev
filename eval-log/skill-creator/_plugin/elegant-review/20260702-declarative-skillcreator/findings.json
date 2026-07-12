@@ -1,0 +1,691 @@
+{
+  "version": "2",
+  "target": {
+    "type": "plugin",
+    "path": "plugins/skill-creator/",
+    "reviewed_at": "2026-07-02",
+    "plugin": "skill-creator",
+    "skill": "_plugin",
+    "scope_mode": "plugin",
+    "focus": "宣言型スキルクリエイター化 — 抜け漏れの構造的防止 + 再現性の仕組み化"
+  },
+  "run_id": "20260702-declarative-skillcreator",
+  "loop_count": 2,
+  "root_cause": "宣言層 (md/yaml/json) は完備だが「宣言→実行の突合を検証する機械層」が不在。why 連鎖の終着点は保証系 sink と学習系 sink の責務未分離。",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-01",
+      "observations": [
+        "lint-goal-seek が CATALOG_MARKERS を本文全域 substring 検索しラベル1出現で Step 連番を全許容"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "宣言型化の中核 lint がラベル字面検査に留まり手続き列挙が素通し。ゲート停止もプロンプト文言依存。",
+          "recommended_intervention": "catalog 判定を見出しセクション span 限定へ。gate handoff 存在 lint は事後検証型で追加。",
+          "resolution": "resolved",
+          "note": "escape 封鎖済 (lint-goal-seek.py)。handoff 存在 lint は理由付き deferred (ROADMAP 記載)。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-02",
+      "observations": [
+        "「lint を manifest に登録しない」原則と姉妹 skill の commands 8本登録が二律背反"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "condition_signal": "contradiction",
+          "description": "lint 宣言の置き場ポリシーが plugin 内で不統一。安全クリティカルな 12 本が散文 bash で機械抽出不能。",
+          "recommended_intervention": "references/lint-matrix.json を単一正本化し全消費面を突合。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-03",
+      "observations": [
+        "断線の有無は宣言の新旧でなく突合 lint の有無で層別される (事例4件)"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "lint-plugin-composition.py dangling / proposals 実体不在 / quality-rubric 不在script参照 / capabilities 二重記載 / skill-creator の CI name-lint 欠落。",
+          "recommended_intervention": "lint-plugin-composition.py 実装 + CI 配線 + dangling 3件是正。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-04",
+      "observations": [
+        "EVALS 滞留は仮説収束の結果、sink 鮮度ゲート不在が最尤根本原因"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "condition_signal": "dependency_break",
+          "description": "eval_sinks 宣言の生存性を検査する機械層が無く version 0.1.0/1.1.0 乖離も未検出。",
+          "recommended_intervention": "version 一致 + deprecated 注記 + friction anomaly で detector 蘇生。鮮度 lint は deferred。",
+          "resolution": "resolved",
+          "note": "鮮度 lint 単体は deferred (friction anomaly が実質の生存シグナルを提供)。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-05",
+      "observations": [
+        "Why×5: 完了条件4系統分散の本質は checklist 原子単位に id が無いこと"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "criteria_evaluated の id 包含検査だけでは checklist→criteria の導出漏れを閉じられない。",
+          "recommended_intervention": "CL-n アンカー + criteria[].derived_from + lint-criteria-provenance.py。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-06",
+      "observations": [
+        "manual 3項は全て『生成側実装済・突合未配線』の同型"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "condition_signal": "omission",
+          "description": "rubric_refs 順序 / Phase 順序 / side_effect_scope の突合 lint 欠落。",
+          "recommended_intervention": "費用対効果順: Phase 順序のみ機械化 (--phase-order)、残 2 項は理由注記付き意図的残置。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-07",
+      "observations": [
+        "lint 3集合は A⊄B⊄C でどの包含も不成立。'P0 lint' が 4種/8本の二義"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "condition_signal": "inconsistency",
+          "description": "3集合の同一性を検証する機械層が存在せず本数直書きが自家撞着。",
+          "recommended_intervention": "lint-matrix.json 正本 + lint-matrix-sync.py + 本数直書き全廃。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-08",
+      "observations": [
+        "高重要×散文執行の最悪象限に中核要件が滞留。4-conditions redirect 並存は統制済二重化で非問題と判定"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "condition_signal": "smell",
+          "description": "機械化投資の優先順位が重要度と逆転。",
+          "recommended_intervention": "高重要象限4項 (lint集合/完了条件/ゲート/manual) へ機械層を先行投資。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-09",
+      "observations": [
+        "Gate 番号は歴史的挿入で順序性を喪失、散文が番号順=工程順と誤解釈"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "condition_signal": "contradiction",
+          "description": "SKILL.md:152 の Gate 1→2→2.5 記述が manifest 実順序 (1→2.5→2) と矛盾。step 値 number/string 混在。",
+          "recommended_intervention": "gate_order 配列を manifest に宣言し本文は正本参照化。step 型は消費者ゼロ確認で現状維持。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-META",
+      "observations": [
+        "宣言型の判定基準がラベル字面で改名により偽装可能"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "condition_signal": "contradiction",
+          "description": "Key Rule 19『固定手順禁止』宣言と lint 実装 (ラベル存在で全許容) が矛盾。宣言性そのものが未宣言。",
+          "recommended_intervention": "ラベル存在検査を見出し↔正本の写像検査へ置換。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-ABST",
+      "observations": [
+        "『機械ゲート+自由文 escape hatch』の単一パターンが5系統に独立実装"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "lint-feedback-contract の skip_reason escape が SSOT の FEEDBACK_SKIP_KINDS と未接続で loop-kind も素通し。",
+          "recommended_intervention": "skip_reason を lint/trace/coverage 3面で ref/assign 限定へ対称化。exemptions.json 完全版は deferred。",
+          "resolution": "resolved",
+          "note": "Escape Hatch Registry 完全版は理由付き deferred。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-DLOOP",
+      "observations": [
+        "過去改善は値 drift を潰したが『完了条件の正本はどれか』は一度も問われず"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "Checklist→criteria 変換だけが LLM 層に浮き抜け漏れの真の穴。skill-brief.schema.json 内部矛盾 (任意 vs 必須)。",
+          "recommended_intervention": "derived_from による対応 drift 検査 + schema description の allOf 準拠統一。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-BRAIN",
+      "observations": [
+        "manifest と SKILL.md の並行列挙が二重手保守で正本判定も突合も無い"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "condition_signal": "dependency_break",
+          "description": "phase:init-pre dangling / Step6 phase 無し / 7kind 宣言 vs 5kind filter 不整合 / capability_kind_map dangling (iteration 2 で独立レビューが検出)。",
+          "recommended_intervention": "init-pre phase 新設 + 適用範囲宣言 + 実在正本3分割参照 (build-flags#capability_kind / build-steps §I.1 / selection_rules)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-LATERAL",
+      "observations": [
+        "RTM (要求トレーサビリティ・マトリクス) の移植で抜け漏れゼロが lint 可能な命題になる"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "brief 要素の写像証跡が無く要望が欠落しても全ゲート PASS しうる (ユーザー報告の抜け漏れの直接原因)。",
+          "recommended_intervention": "trace に requirement_coverage[] を追加し validate-build-trace が被覆完全性を機械検査 (段階導入 WARN→FAIL)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-PARADOX",
+      "observations": [
+        "宣言を増やすこと自体が正本管理という手続きを生む。再現性の実体は単一正本+機械照合"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "condition_signal": "dependency_break",
+          "description": "Step4 lint 12本が SKILL.md 散文と CI に二重管理され片側変更を検出する機構なし。",
+          "recommended_intervention": "lint-matrix 一本化。Gotchas 等の経験則散文は宣言化対象から明示除外。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-ANALOGY",
+      "observations": [
+        "check_default_drift() の実証済みパターンが値一致系に留まり写像系へ未横展開"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "condition_signal": "inconsistency",
+          "description": "Step↔phase / Checklist↔criteria に同型 self-test が不在。",
+          "recommended_intervention": "matrix-sync / criteria-provenance が写像一致検査へ汎化 (負例含む self-test 同梱)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-IF",
+      "observations": [
+        "本文300行制限が内容を references へ押し出すほど sha 突合の被覆率が下がる自己弱体化ループ"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "verdict 鮮度が SKILL.md 単体 sha に固定され references/schemas の変更が再評価トリガにも stale 判定にも入らない。",
+          "recommended_intervention": "skill_dir_content_sha256 (ディレクトリ閉包 tree-hash) への拡張。全 verdict backfill を要するため verdict schema 改訂時に段階導入。",
+          "resolution": "deferred",
+          "note": "re_audit_trigger: references/ のみ変更して SKILL.md に触れない PR の merge 時。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "finding_id": "PF-NAIVE",
+      "observations": [
+        "『正本』注記131箇所超に散在、完了条件到達に6ホップ"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "condition_signal": "omission",
+          "description": "正本の所在こそが未宣言で初見探索コストが context 予算と衝突。",
+          "recommended_intervention": "canonical-registry.json (2ホップ上限)。採用条件 = 正本誤読の観測時。メタ不変条件が registry 自体にも突合を要求するためコスト増を考慮し deferred。",
+          "resolution": "deferred"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-SYS",
+      "observations": [
+        "完了条件4系統+αの分散で唯一の機械突合は criteria_evaluated のみ"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "checklist 項目追加が criteria へ写像し忘れても誰も検出しない = 抜け漏れの構造的発生点。",
+          "recommended_intervention": "frontmatter feedback_contract を単一正本に据え derived_from で checklist と機械接続。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-CAU",
+      "observations": [
+        "因果 chain: 保証層の成功→学習層の入力消滅→governance 自動トリガ死"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "PASS-only 保存により 3連続FAIL/score_drop detector が構造的発火不能。proposals 未生成・EVALS 凍結はその帰結。",
+          "recommended_intervention": "F-TRD の止揚を採用。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-CLP",
+      "observations": [
+        "queue は writer のみで consumer ゼロの偽装閉路"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "condition_signal": "inconsistency",
+          "description": "protocol の『queue を消化』宣言が虚偽。実閉路は Stop block + pre-push/CI の2層。",
+          "recommended_intervention": "protocol を真実合わせ (queue=診断ログ・自動 consumer 不在と明記)。queue 消費 lint は過剰設計として不採用。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-TRD",
+      "observations": [
+        "FAIL commit は CI 不変条件を壊す。止揚 = committed PASS verdict 内の摩擦データ流用"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "保証と学習の相反要求が同一 sink に同居し分離設計されていなかった。",
+          "recommended_intervention": "aggregate-evals.py に friction_density anomaly (iterations>=2 / neg>=2 / findings>=3、直近6中2件、実データ校正で発火率 2/47) を追加。新 writer/sink ゼロ。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-PLS",
+      "observations": [
+        "lessons→index→search→usage-log の片利設計 (upstream は書くが downstream が受け取らない)"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "condition_signal": "dependency_break",
+          "description": "auto-record-lesson が index を更新せず、テスト副産物 lesson が混入、usage-log 一度も未生成。",
+          "recommended_intervention": "index 同時 append + genuine 文脈ゲート + 副産物 lesson 削除。usage-log 生成は deferred。",
+          "resolution": "resolved",
+          "note": "usage-log.jsonl (Loop B §12) は理由付き deferred。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-VAL",
+      "observations": [
+        "knowledge-index の consult 宣言が run-build-skill 側で片肺"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "condition_signal": "inconsistency",
+          "description": "build 単独起動では consult 経路が無く宣言のみ。",
+          "recommended_intervention": "run-build-skill Step 1 へ elicit 同形の consult 節を追記。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-STR",
+      "observations": [
+        "outputs 宣言と writer 不在の背離が3ヶ月継続、レビュー毎に再調査コストが再発"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "condition_signal": "inconsistency",
+          "description": "EVALS evaluations[] は旧経路、compute-dogfooding-metrics.py は呼び出し元ゼロ。",
+          "recommended_intervention": "deprecated 注記 (読取互換維持)。SessionEnd 配線は git 追跡ファイルへの常時書込で作業ツリーが dirty 化するため deferred (書込先を state 領域へ変更してから)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "finding_id": "LS-10",
+      "observations": [
+        "全断線が同一点に到達: 宣言追加時に対向突合 lint を同時に足す義務が未宣言"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "メタ不変条件の欠落により第5の宣言面追加時に同型断線が再生産される。",
+          "recommended_intervention": "invariant へメタ不変条件追加 + lint-declaration-coverage.py ratchet (baseline=2)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-KAI",
+      "observations": [
+        "manual 3項が過去3回のレビューを経て残置 = C→A 断線の証跡"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "condition_signal": "omission",
+          "description": "機械化も『manual 維持の判断記録』も無く意図的残置と怠慢が区別不能。",
+          "recommended_intervention": "Phase 順序を --phase-order で機械化、残2項に理由注記、ratchet で増加を CI FAIL。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-HYP",
+      "observations": [
+        "自己除外は文書化された設計 (欠陥でない) が即時フィードバック層ゼロの代償"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "condition_signal": "omission",
+          "description": "skill-creator 自己変更の負債が push 時に一括顕在化 (stale verdict 再生成が PR 実ブロッカー化の運用実績)。",
+          "recommended_intervention": "Stop 時に self-plugin pending を block せず stdout 通知のみ (1分岐)。",
+          "resolution": "resolved"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-ISU",
+      "observations": [
+        "frontmatter feedback_contract を単一正本に据えれば checklist 突合/gate 表現/集計正規化が従属して決まる"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "condition_signal": "omission",
+          "description": "gate 停止はプロンプト文言依存で handoff 存在検証 lint も未配線。",
+          "recommended_intervention": "frontmatter 正本化 + derived_from (実施)。gate 事前ブロック hook は過剰と判断、handoff 存在 lint は deferred。",
+          "resolution": "resolved",
+          "note": "handoff-<step>.json 存在+schema 準拠の pre-push lint は理由付き deferred (ROADMAP 記載)。"
+        }
+      ]
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "finding_id": "F-KJ",
+      "observations": [
+        "島1宣言の空洞化/島2閉路の断線/島3自己適用の非対称 — 全島共通の同型は宣言層完備・実行層不在"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "condition_signal": "smell",
+          "description": "メタ観察: 改善方針の背骨 = 宣言→実行の突合を検証する機械層の新設。",
+          "recommended_intervention": "突合 lint 群 (matrix-sync/criteria-provenance/plugin-composition/declaration-coverage) + メタ不変条件。",
+          "resolution": "resolved"
+        }
+      ]
+    }
+  ],
+  "variable_abstraction": [
+    {
+      "concrete_value": "team-platform",
+      "variable_name": "{{OWNER_TEAM}}",
+      "source_trace": "全 SKILL.md frontmatter owner"
+    },
+    {
+      "concrete_value": "plugins/skill-creator/skills/",
+      "variable_name": "{{PLUGIN_SKILLS_DIR}}",
+      "source_trace": "run-build-skill SKILL.md 配置先表"
+    },
+    {
+      "concrete_value": "doc/ClaudeCodeスキルの設計書/",
+      "variable_name": "{{DESIGN_DOC_ROOT}}",
+      "source_trace": "run-build-skill frontmatter source"
+    },
+    {
+      "concrete_value": "plugins/skill-governance-lint",
+      "variable_name": "{{GOV_LINT_DIR}}",
+      "source_trace": "run-build-skill SKILL.md Step4 GOV_LINT_DIR 導出"
+    },
+    {
+      "concrete_value": "eval-log/skill-build-trace.json",
+      "variable_name": "{{BUILD_TRACE_PATH}}",
+      "source_trace": "run-build-skill SKILL.md Step3.5"
+    },
+    {
+      "concrete_value": ".github/workflows/governance-check.yml",
+      "variable_name": "{{CI_WORKFLOW}}",
+      "source_trace": "lint-matrix.json consumers.ci"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  }
+}

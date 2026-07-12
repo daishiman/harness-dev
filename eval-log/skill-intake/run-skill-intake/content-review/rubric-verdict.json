@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-skill-intake",
+    "skill_md_sha256": "b08fdc5849642d80f8cad7e1bb5bde3a0dcbef25ce687409a7a428088464c024"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-g",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "完全性/簡潔性 — ## Purpose & Output Contract が入力・成果物表 (11 phase)・完了条件を明示、## Gotchas 8件、## Key Rules / ## Additional Resources も揃い body 167 行で 300 行上限内。phases[] を本文へ複製せず manifest 参照へ徹底し詳細を references/ へ逃がす progressive disclosure。5次元 rubric の完全性/簡潔性を満たす。",
+      "一貫性 (改名) — Phase 11 引き渡し先を harness-creator へ更新 (L119/L152) しつつ、単一 skill 生成 skill (run-skill-create/run-build-skill/capability-build) は skill 表現を維持する意味論境界が一貫。旧名 skill-creator 残存 0・用語ゆれ 0。dirname==name (run-skill-intake)・prefix=run 整合。",
+      "検証可能性/深度 — IN1 を manifest SSOT lint、IN2 を hook-guard-skillgen test で構造担保し、context:fork 必須箇所 (P2/3/5/8)・Gate A 周回上限 2 周・Phase 5 skip 条件 (needs_excavation=false のみ+理由記録必須)・Notion target 保持 (create fallback 禁止) まで二値/数値で具体化。委譲先 7 Skill+4 SubAgent 実在で dependency break 0。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator 改名に伴う SKILL.md 変更への rubric 独立再評価。plugins/harness-creator/references/quality-rubric.md の 5次元 (完全性/一貫性/深度/検証可能性/簡潔性) で採点し全次元 >=2、FM/BD/NM/PD 系規範も違反 0。現 sha256=b08fdc5 実測 (旧 sha=b2365dc は改名前で stale)。改名観点: (1) 旧名 skill-creator/skill_creator/スキルクリエイター 残存 0 (grep)。(2) 引き渡し先=harness-creator と単一 skill 生成=run-skill-create の語の割当てが意味論境界に適合。(3) responsibility_refs/schema_refs 5件/reference_refs/manifest 実在で参照 drift なし。criteria IN1 (manifest SSOT lint)/IN2 (hook-guard skillgen test)/OUT1 (薄い orchestrator elegant-review) はスキル実目的に即した固有観点で充足。ブロッキング欠陥 0 で PASS。"
+}

@@ -1,0 +1,181 @@
+# intake-final-source-map.yaml
+# intake-final-template.md.tmpl の context 変数を「どこから埋めるか」の正本マッピング。
+#
+# 3つの経路:
+#   subagent: 既存 skill-intake-* SubAgent との対話で埋める（推奨）
+#   prompt:   intake-final-prompts.yaml の 7層構造プロンプトで LLM 単独実行
+#   manual:   人手記入 or 自動派生（rendered or computed）
+#
+# 各エントリ:
+#   path:          context オブジェクト内の dot-path（例: "purpose.true_purpose"）
+#   source_route:  subagent | prompt | manual
+#   subagent:      対応 SubAgent 名（source_route=subagent のとき）
+#   output_file:   SubAgent 出力 JSON 名（例: "purpose.json"）
+#   output_field:  出力 JSON 内の JSON Pointer
+#   prompt_id:     intake-final-prompts.yaml の id（source_route=prompt のとき）
+#   responsibility_id: prompt-creator-7layer の R-id（再生成時に渡す）
+#   notes:         備考
+
+schema_version: "1.0"
+template_ref: "intake-final-template.md.tmpl"
+schema_ref: "intake-final-schema.json"
+
+defaults:
+  fallback_when_missing: "block"   # block | warn | default-empty
+  responsibility_prefix: "R-INTAKE-FINAL-"
+
+mappings:
+
+  # ===== meta =====
+  - path: "meta.skill_name_hint"
+    source_route: subagent
+    subagent: skill-intake-kickoff
+    output_file: kickoff.json
+    output_field: "/skill_name_hint"
+    responsibility_id: R-INTAKE-FINAL-META-01
+  - path: "meta.generated_at"
+    source_route: manual
+    notes: "render-intake-final.py が ISO 8601 で自動付与可"
+  - path: "meta.pattern_code"
+    source_route: subagent
+    subagent: skill-intake-kickoff
+    output_file: kickoff.json
+    output_field: "/pattern_code"
+    responsibility_id: R-INTAKE-FINAL-META-02
+  - path: "meta.depth"
+    source_route: subagent
+    subagent: skill-intake-kickoff
+    output_file: kickoff.json
+    output_field: "/depth"
+    responsibility_id: R-INTAKE-FINAL-META-03
+  - path: "meta.vocabulary_tier"
+    source_route: subagent
+    subagent: skill-intake-user-profiler
+    output_file: profile.json
+    output_field: "/vocabulary_tier"
+    responsibility_id: R-INTAKE-FINAL-META-04
+  - path: "meta.value_realized_score"
+    source_route: subagent
+    subagent: skill-intake-self-updater
+    output_file: self-update.json
+    output_field: "/value_realized_score"
+    responsibility_id: R-INTAKE-FINAL-META-05
+
+  # ===== executive_summary =====
+  - path: "executive_summary.true_purpose"
+    source_route: subagent
+    subagent: skill-intake-purpose-excavator
+    output_file: purpose.json
+    output_field: "/true_purpose"
+    responsibility_id: R-INTAKE-FINAL-EXEC-01
+  - path: "executive_summary.design_choices"
+    source_route: subagent
+    subagent: skill-intake-option-presenter
+    output_file: options.json
+    output_field: "/adopted_summary"
+    responsibility_id: R-INTAKE-FINAL-EXEC-02
+  - path: "executive_summary.handoff_mode"
+    source_route: subagent
+    subagent: skill-intake-next-action-advisor
+    output_file: next-action.json
+    output_field: "/recommended_mode"
+    responsibility_id: R-INTAKE-FINAL-EXEC-03
+
+  # ===== assumption =====
+  - path: "assumption"
+    source_route: subagent
+    subagent: skill-intake-assumption-challenger
+    output_file: assumption.json
+    output_field: ""
+    prompt_id: prompts.assumption
+    responsibility_id: R-INTAKE-FINAL-ASSUMPTION
+    notes: "ブロック丸ごと assumption.json と同形。candidates[].adopted の boolean を必ず1件true"
+
+  # ===== profile =====
+  - path: "profile"
+    source_route: subagent
+    subagent: skill-intake-user-profiler
+    output_file: profile.json
+    output_field: ""
+    prompt_id: prompts.profile
+    responsibility_id: R-INTAKE-FINAL-PROFILE
+    notes: "dimensions は expertise/role/context/constraints/motivation/sharing_intent の6軸固定"
+
+  # ===== purpose =====
+  - path: "purpose"
+    source_route: subagent
+    subagent: skill-intake-purpose-excavator
+    output_file: purpose.json
+    output_field: ""
+    prompt_id: prompts.purpose
+    responsibility_id: R-INTAKE-FINAL-PURPOSE
+    notes: "techniques_used_str は ' → ' 区切り。output_priority の is_top は必ず1件true"
+
+  # ===== options =====
+  - path: "options"
+    source_route: subagent
+    subagent: skill-intake-option-presenter
+    output_file: options.json
+    output_field: ""
+    prompt_id: prompts.options
+    responsibility_id: R-INTAKE-FINAL-OPTIONS
+    notes: "groups[].options[].adopted は各グループ厳密に1件true（render-intake-final.py が検証）"
+
+  # ===== figures =====
+  - path: "figures"
+    source_route: subagent
+    subagent: skill-intake-visualizer
+    output_file: figures.json
+    output_field: ""
+    prompt_id: prompts.figures
+    responsibility_id: R-INTAKE-FINAL-FIGURES
+    notes: "entries は5枚固定（全体アーキ/テーマ抽出/日次パイプ/Before-After/責務境界）"
+
+  # ===== five_axes =====
+  - path: "five_axes"
+    source_route: subagent
+    subagent: skill-intake-summarizer
+    output_file: sheet.json
+    output_field: "/five_axes"
+    prompt_id: prompts.five_axes
+    responsibility_id: R-INTAKE-FINAL-FIVE-AXES
+    notes: "rows は出力先/情報源/共有相手/真の課題/ナレッジ資産の5軸固定。ナレッジ資産は must:true"
+
+  # ===== design_decisions =====
+  - path: "design_decisions"
+    source_route: prompt
+    prompt_id: prompts.design_decisions
+    responsibility_id: R-INTAKE-FINAL-DESIGN
+    notes: "options.json の adopted 群から派生可能。render-intake-final.py で computed 化候補"
+
+  # ===== open_questions =====
+  - path: "open_questions"
+    source_route: subagent
+    subagent: skill-intake-handoff
+    output_file: intake.json
+    output_field: "/open_questions"
+    responsibility_id: R-INTAKE-FINAL-QUESTIONS
+    notes: "extract_open_questions.py の出力をそのまま利用"
+
+  # ===== handoff =====
+  - path: "handoff"
+    source_route: subagent
+    subagent: skill-intake-next-action-advisor
+    output_file: next-action.json
+    output_field: ""
+    prompt_id: prompts.handoff
+    responsibility_id: R-INTAKE-FINAL-HANDOFF
+
+  # ===== self_update =====
+  - path: "self_update"
+    source_route: subagent
+    subagent: skill-intake-self-updater
+    output_file: self-update.json
+    output_field: ""
+    prompt_id: prompts.self_update
+    responsibility_id: R-INTAKE-FINAL-SELF-UPDATE
+
+  # ===== artifacts =====
+  - path: "artifacts"
+    source_route: manual
+    notes: "render-intake-final.py が output_dir の実ファイルを列挙して自動充填する候補"

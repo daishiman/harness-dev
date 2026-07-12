@@ -1,0 +1,13 @@
+{
+  "artifact": "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 91,
+    "notes": "soundness=aggregate_verdictが「全6観点(ASPECTS: foundation_trace/decision_guidance/matrix_coverage/design_knowledge_reflection/doc_freshness/prompt_quality)を過不足なく網羅・全PASS・high finding 0」のときだけPASSのfail-closed集約でGoodhart防止。validate_reportが形状(evaluator.name/context=fork/version、aspect↔auditor/component対応、findings非空でinfo必須、gaps配列)に加え、verdictを全観点+high数からaggregate_verdictで再導出し一致を確認する整合検査、FAIL時gaps非空検査まで実施し健全。responsibility=レポート形状検証+総合判定集約+coverage gate wrapperの凝集した決定論ヘルパで単一責務。error-handling=violations/gate exit≠0→1・report不在→2・JSONDecodeError/UnicodeDecodeError→2・--report/--matrix双方不在→ap.error(usage 2)。side-effect-safety=network:false・write-scope:none、run_coverage_gateはplugin-rootのvalidate-coverage-matrix.pyをsubprocess(check=False, stdout/stderr capture, sys.executable or python3)で実行するがread-only gateで副作用なし。frontmatter=PEP723完全。近傍tests/test_aggregate_completeness.pyに26テストありfail-closed境界を実確認。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

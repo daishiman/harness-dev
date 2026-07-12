@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "knowledge graph の決定論再生成 + 検証ゲート (C06) と C08 辺候補の永続化 owner。soundness: self-loop/evidence≥1/confidence 0..1(bool除外)/review_status/source_ref/relation_type enum/depends_on の DAG 循環(3色DFS・経路表示)を網羅検査、node id 重複検出、related は無方向連想として cycle 対象外・dangling drop 非致命。dangling 辺は violation でなく quarantine 縮退(構造的に有効な辺のみ退避・構造不正は fail-closed に残す区別が partition_dangling で厳密)。merge は canonical key first-write-wins で human review 済み status を候補が潰さない+冪等 byte-identical(テストで実証)。responsibility: C08 read-only 契約の永続化欠落を埋める owner 役を明確化。error-handling: usage=exit2/violation=exit1、merge 入力(既存/候補)破損は何も書かず exit1 差し戻し。side-effect-safety: FAIL 時は graph/relations/quarantine のいずれも書かない fail-closed(テスト有)、書込は宣言 3 ファイルのみ、edges=0 退化グラフは exit0+WARN 表面化。frontmatter: PEP723 様式が縮退・書込条件まで正確に記述。軽微: 『atomic』は検証ゲート意味論であり fs レベル tmp+rename ではない(quarantine 書込後に relations 書込が OSError の稀ケースで中間状態が残るが、再実行の冪等 merge で収束)、detect_cycle の再帰は巨大グラフで recursion limit(実運用規模で無害)。tests/test_validate_knowledge_graph.py 34件(merge 冪等/quarantine 3態/決定論/入力順非依存/負例多数)全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

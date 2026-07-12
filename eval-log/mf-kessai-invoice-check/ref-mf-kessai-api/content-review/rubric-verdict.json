@@ -1,0 +1,11 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "skill": "ref-mf-kessai-api", "skill_md_sha256": "5cb54e3b702669d79ba918e2690ba0ef88a255933c5711a85aedadce6ea00b26"},
+  "review_kind": "rubric", "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator", "reviewed_at": "2026-06-30T00:00:00Z",
+  "iterations": 1, "human_review_required": false,
+  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["REF-ACCURACY","REF-COHERENCE","REF-SSOT"],
+    "positive_feedback": ["正確性: API v2 仕様と整合(認証=apikey ヘッダで Bearer 否定・インボイスモードでは /billings が空ゆえ /billings/qualified 必須・カーソル型ページネーション・updated_at 不在で created_at/accepted_at 代替・status enum 列挙)が references の実レスポンス例で裏付けられ、transaction.date 帰属は API の issue_date フィルタ上に重ねた業務ロジック層として正しく位置づけられている", "参照正本性と境界: run-mf-invoice-check/reconcile/db-setup の SSOT であることと、実行コードは lib/(mfk_api.py/mfk_keychain.py)・詳細は references/ という参照先が明記され、Key Rule 1『参照専用・実行は lib/・POST は PreToolUse hook で抑止』で知識参照と実行の境界が ref kind 規範どおり保たれている"],
+    "negative_feedback": [],
+    "iteration": 1, "iteration_limit": 3, "hook_trigger": "Stop", "next_action": "none"},
+  "notes": "ref kind 規範3観点で評価。正確性=MF KESSAI API v2 の認証/エンドポイント/ページネーション/フィールド仕様が references 実レスポンス例と整合し、月帰属 transaction.date の追記も API フィールド(date/issue_date)の役割を取り違えず正確。参照正本性=本スキルが run-* の参照 SSOT である旨と参照先(references/lib)が Purpose & Output Contract と Additional Resources で明示。境界=実行コードを lib/ に委譲し POST を hook で遮断する参照専用境界が Key Rules/Gotchas で一貫。ref として frontmatter feedback_contract を持たないため criteria_evaluated は評価次元 REF-ACCURACY/REF-COHERENCE/REF-SSOT を使用。3観点すべて満たすため PASS。"
+}

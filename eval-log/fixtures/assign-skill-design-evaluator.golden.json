@@ -1,0 +1,26 @@
+{
+  "skill": "assign-skill-design-evaluator",
+  "golden": true,
+  "description": "高品質スキルの frontmatter golden fixture (CI diff 検証用)",
+  "frontmatter": {
+    "name": "assign-skill-design-evaluator",
+    "description": "生成済みSKILL.mdを評価したいとき、rubric準拠を確認したいときに使う。",
+    "user-invocable": "false",
+    "context": "fork",
+    "agent": "general-purpose",
+    "allowed-tools": "[Read, Grep, Bash(python3 *)]",
+    "pair": "run-build-skill",
+    "kind": "assign",
+    "effect": "conversation-output",
+    "role_suffix": "evaluator",
+    "owner": "team-skills",
+    "since": "2026-05-17",
+    "rubric_refs": "",
+    "reference_refs": "",
+    "script_refs": "",
+    "merge_strategy": "deep-merge",
+    "conflict_policy": "most-specific-wins"
+  },
+  "max_lines": 300,
+  "note": "LLM非決定性を避けるため frontmatter フィールドのみを比較対象とする"
+}

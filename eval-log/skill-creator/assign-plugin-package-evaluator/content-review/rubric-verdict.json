@@ -1,0 +1,27 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "assign-plugin-package-evaluator",
+    "skill_md_sha256": "c24e8693be80600d293da05afad504a1058f676eb02e402a0c0de29545d324ea"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-24T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "frontmatter の kind=assign / prefix=assign / role_suffix=evaluator / effect=conversation-output / pair=run-plugin-package-check / user-invocable=false が assign 評価器の命名規約と整合し、responsibility_refs・schema_refs・script_refs・reference_refs・rubric_refs が本文の参照先(prompts/R1・findings.schema.json・validate-plugin-package.py・render-pkg-findings.py・evaluator-contract.md・ref-pkg-contract)と一対一で整合している。",
+      "出力契約(findings.schema.json 準拠の findings 配列 + verdict サマリ)と完了条件(全 PKG ID で status∈{pass,fail,skip,not_applicable} 確定 + eval-log 保存)が Purpose・ゴール・完了チェックリストで一貫し、各 PKG ID の検査関数と fail 条件例が表として網羅され採点漏れを防ぐ rubric 網羅性が担保されている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "SKILL.md を全文精読し、評価器の rubric 観点(命名規約・参照整合・出力契約・採点網羅性)で adequacy を確認した。C1 矛盾なし: fail_fast=false 既定と全件網羅収集が Key Rules 4・完了チェックリストで一致し、skill-only の適用判定が複数箇所で齟齬なし。C2 漏れなし: PKG-002〜008 の 7 件全てに検査関数と fail 条件例が割り当てられ、PKG-001/009/010〜015 の対象外も明示で MECE。C3 整合性: frontmatter refs 群と本文 Additional Resources・PKG 検査表・findings フォーマットが相互参照整合。C4 依存整合: ref-pkg-contract への PKG 定義委譲・27章 eval-log パス委譲・34a/03章設計書参照が依存先として実在整合し既存 validate-plugin-completeness.py との責務分離も Gotchas 1 で明示。重大問題は検出されなかったため genuine PASS。assign は read-only 評価器のため feedback_contract.criteria は N/A。"
+}

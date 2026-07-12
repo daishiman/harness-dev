@@ -1,0 +1,3 @@
+# shared_state (Phase1→2 中継・200字以内)
+
+company-master の確認用URL生成と会社名/正式名称の扱いを5点変更。R1郵便番号URL=日本郵便トップ固定/R2電話番号URL=Google検索クエリ固定/R3会社名タイトルに登記名格納/R4正式名称列削除し会社名へ統合/R5本文の会社名bullet抑止。JAPANPOST_VERIFY_URLがpostal_apiとvalidateに二重定義、official_nameは列+source_by_field6属性+confirm_url+validateに分散。テスト多数破壊。

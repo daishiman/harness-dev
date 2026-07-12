@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "description": "システム構築仕様ヒアリングのカテゴリ×プラットフォーム収集マトリクスの seed 初期集合 SSOT。C01 (run-system-spec-elicit) R1-init がこれを Read してマトリクスを初期化し、C12 (validate-coverage-matrix.py) の GOAL_SPEC_CATEGORIES と整合する。現行カテゴリは非網羅の参考例で、open-world lifecycleに従いヒアリング/知識探索で未知カテゴリを発見・拡張できる。除外には理由が必要。",
+  "open_world": true,
+  "seed_examples_not_exhaustive": true,
+  "categories": [
+    {"id": "database", "label": "データベース", "hint": "データモデル・永続化・トランザクション・スキーマ移行"},
+    {"id": "auth", "label": "認証(ログイン)", "hint": "認証方式・認可・セッション・SSO/OAuth・MFA"},
+    {"id": "ui-ux", "label": "UI-UX", "hint": "画面設計・操作フロー・アクセシビリティ・レスポンシブ"},
+    {"id": "security", "label": "セキュリティ", "hint": "脅威モデル・暗号化・入力検証・監査ログ (secure-by-design 参照)"},
+    {"id": "infrastructure", "label": "インフラ", "hint": "実行環境・デプロイ・スケーリング・監視・CI/CD"},
+    {"id": "backend", "label": "バックエンド", "hint": "サーバ構成・API・ビジネスロジック・非同期処理"},
+    {"id": "frontend", "label": "フロントエンド", "hint": "クライアント構成・状態管理・レンダリング・ビルド"},
+    {"id": "maintenance-ops", "label": "保守運用管理", "hint": "運用手順・障害対応・バックアップ・バージョン管理・ドキュメント"}
+  ],
+  "platforms": [
+    {"id": "web", "label": "Web", "required": true},
+    {"id": "mobile", "label": "モバイル", "required": true},
+    {"id": "tablet", "label": "タブレット", "required": true},
+    {"id": "desktop-windows", "label": "デスクトップ (Windows)", "required": true},
+    {"id": "desktop-linux", "label": "デスクトップ (Linux)", "required": true},
+    {"id": "desktop-macos", "label": "デスクトップ (macOS)", "required": true}
+  ],
+  "cell_states": ["未収集", "対象外", "確定"],
+  "aggregate_truth_table": {
+    "全セル未収集": "未着手",
+    "未収集混在": "収集中",
+    "全セル対象外": "対象外",
+    "その他で未収集0": "確定"
+  }
+}

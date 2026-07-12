@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-intake-next-action/next-action.schema.json",
+  "title": "next-action.json",
+  "description": "Phase 11 出力。Notion 公開完了後の引き渡しモード A-E (harness-creator) / P (plugin-dev-planner) と split 候補を保持する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "reason", "multi_skill_suspicion", "confirmed_with_user", "handoff_target", "harness_creator_handoff_phase"],
+  "properties": {
+    "mode": {"type": "string", "enum": ["A", "B", "C", "D", "E", "P"]},
+    "reason": {"type": "string", "minLength": 1},
+    "multi_skill_suspicion": {"type": "boolean"},
+    "split_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "responsibility"],
+        "properties": {
+          "name": {"type": "string"},
+          "responsibility": {"type": "string"}
+        }
+      }
+    },
+    "confirmed_with_user": {"type": "boolean", "description": "kickoff.json.pattern と mode が不一致のとき AskUserQuestion で追認した結果。一致時は false のまま。"},
+    "handoff_target": {"type": "string", "enum": ["harness-creator", "plugin-dev-planner"], "description": "推奨引き渡し先。mode A-E は harness-creator (E は再 intake 完了後に到達)、mode P は plugin-dev-planner。"},
+    "harness_creator_handoff_phase": {"type": "string", "description": "references/mode-catalog.md 右列の逐語コピー。mode P では plugin-dev-planner の R1 phase を指す (フィールド名は後方互換のため据え置き)。"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "P"}}},
+      "then": {"properties": {"handoff_target": {"const": "plugin-dev-planner"}}},
+      "else": {"properties": {"handoff_target": {"const": "harness-creator"}}}
+    }
+  ]
+}

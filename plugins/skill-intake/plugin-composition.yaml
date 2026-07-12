@@ -1,0 +1,121 @@
+# CapabilityBundle 宣言 — plugins/skill-intake
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: skill-intake の公開 Capability・依存 DAG・統治を宣言する SSOT。
+#       .claude-plugin/plugin.json の entry_points / hooks 配線と1対1対応する。
+
+name: skill-intake
+description: harness-creator の前段ヒアリングを非エンジニアに開く plugin。曖昧要望から intake 仕様(Markdown 正本 + JSON 副本 + Notion ページ)を 11 phase で生成し、macOS Keychain 経由の Notion PAT で公開する。
+kind: plugin-composition
+version: 0.1.2
+owner: team-platform
+since: 2026-05-22
+last-audited: 2026-07-01
+# 単独配布対応: marketplace bundle (harness-full / harness-intake) で単独 install 可能。notion_config を同梱しコアフローが自己完結する。
+distribution: marketplace-bundle
+
+contract:
+  intent: 非エンジニアの曖昧な「スキルを作りたい」要望から、実装可能な intake 仕様まで橋渡しする。11 phase を子 Skill / SubAgent へ委譲する薄い orchestrator を核に、5 軸ヒアリング(出力先/情報源/共有相手/真の課題/ナレッジ資産)と図解マストを機械検証して品質を担保する。
+  interface:
+    inputs: [user-request, notion_target, workflow-manifest.json, references/rubric.json]
+    outputs: [intake.md, intake.json, notion-url.txt, next-action.json, eval-log/intake-trace.json]
+  invariant:
+    # enforcement 注記: 機械執行(hook/lint/script)がある項目はその名前を、無い項目は manual を併記する。
+    - "run-skill-intake は業務ロジックを持たない薄い orchestrator であり、11 phase を Skill / SubAgent へ委譲し handoff JSON 契約のみで橋渡しすること (enforcement: run-skill-intake feedback_contract IN1 / plugins/skill-governance-lint/scripts/lint-manifest-contents.py = repo 保守者専用・単独 install 非同梱)"
+    - "phases[] の SSOT は workflow-manifest.json であり、SKILL.md 本文へ複製しないこと(二重管理 drift 禁止) (enforcement: plugins/skill-governance-lint/scripts/lint-manifest-contents.py exit 0 = repo 保守者専用・単独 install 非同梱)"
+    - "intake 実行中にスキル生成スキル(run-skill-create / run-build-skill / capability-build)を Skill / Task / Bash いずれでも起動しないこと。保証主体は hook 層 (enforcement: hooks/hook-guard-skillgen.py PreToolUse:Skill|Task|Bash exit 2 + tests/test_skill_intake_guard_skillgen.py)"
+    - "Notion トークン等の機密はリポジトリへ書き込まず macOS Keychain から都度取得すること(Secret-Out-of-Repo) (enforcement: hooks/pre-publish-secret-scrub.sh + scripts/keychain_get_secret.py)"
+    - "各セクションに図解を最低 1 枚配置する図解マスト要件を満たすこと (enforcement: scripts/enforce_visualization_rules.py + references/visualization-mandatory-rules.md)"
+    - "Notion 明示指定(--page-url / --page-id / --database-id)は notion_target として Phase 10 publish まで保持し、update mode では PATCH 専用で page を新規作成しないこと (enforcement: manual + scripts/intake_publish_pipeline.py)"
+    - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(jinja2 / markupsafe / typing_extensions は vendor/ へ同梱)。単独 install でも全フックが exit 0 を維持する (enforcement: scripts/_vendor.py fail-soft ローダ)"
+    - "cross-boundary (他 plugin 契約 / 環境前提 / 観測宣言) の写しはインライン複製禁止。参照一本化 (正本ポインタ) または parity lint による byte/値一致検証を必須とする (enforcement: manual + references/handoff-contract.md の正本参照規約)"
+
+capabilities:
+  # === Skills (kind=skill) — .claude-plugin/plugin.json entry_points.skills と一致 ===
+  - { kind: skill, ref: skills/run-skill-intake,          tier: core }       # 11 phase orchestrator
+  - { kind: skill, ref: skills/run-intake-kickoff,        tier: core }       # P1
+  - { kind: skill, ref: skills/run-intake-interview,      tier: core }       # P4
+  - { kind: skill, ref: skills/run-intake-option-catalog, tier: core }       # P6
+  - { kind: skill, ref: skills/run-intake-visualize,      tier: core }       # P7
+  - { kind: skill, ref: skills/run-intake-finalize,       tier: core }       # P9
+  - { kind: skill, ref: skills/run-notion-intake-publish, tier: core }       # P10
+  - { kind: skill, ref: skills/assign-notion-fidelity-evaluator, tier: core }       # P10 内部
+  - { kind: skill, ref: skills/run-intake-next-action,    tier: core }       # P11
+  - { kind: skill, ref: skills/run-intake-revise,         tier: extension }  # /intake-revise
+  # run-skill-feedback は harness-creator/skills への symlink であり package exclude 対象。
+  # harness-creator 併用時のみ有効なため skill-intake の公開 capabilities には含めない。
+
+  # === Agents (kind=agent) — context:fork の SubAgent ===
+  - { kind: agent, ref: agents/skill-intake-assumption-challenger, tier: core }  # P2
+  - { kind: agent, ref: agents/skill-intake-user-profiler,         tier: core }  # P3
+  - { kind: agent, ref: agents/skill-intake-purpose-excavator,     tier: core }  # P5
+  - { kind: agent, ref: agents/skill-intake-summarizer,            tier: core }  # P8 (Gate A)
+
+  # === Commands (kind=command) ===
+  - { kind: command, ref: commands/intake,         tier: core }
+  - { kind: command, ref: commands/intake-publish, tier: extension }
+  - { kind: command, ref: commands/intake-revise,  tier: extension }
+  - { kind: command, ref: commands/intake-status,  tier: extension }
+
+  # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
+  - { kind: hook, ref: "hook:PreToolUse-Bash/hook-guard-skillgen",       tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-secret-scrub",  tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-schema-validate", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-SkillTask/hook-guard-skillgen",  tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-Bash/post-publish-notify",      tier: extension }
+  - { kind: hook, ref: "hook:PostToolUse-Skill/hook-guard-skillgen",     tier: core }
+  - { kind: hook, ref: "hook:Stop/hook-guard-skillgen",                  tier: core }
+  - { kind: hook, ref: "hook:SessionEnd/hook-guard-skillgen",            tier: core }
+
+dependencies:
+  # 主要 DAG(循環なし)。run-skill-intake が workflow-manifest.json 順に 11 phase を委譲する。
+  - { from: skills/run-skill-intake, to: skills/run-intake-kickoff,                   type: calls }   # P1
+  - { from: skills/run-skill-intake, to: agents/skill-intake-assumption-challenger,   type: calls }   # P2 fork
+  - { from: skills/run-skill-intake, to: agents/skill-intake-user-profiler,           type: calls }   # P3 fork
+  - { from: skills/run-skill-intake, to: skills/run-intake-interview,                 type: calls }   # P4
+  - { from: skills/run-skill-intake, to: agents/skill-intake-purpose-excavator,       type: calls }   # P5 fork
+  - { from: skills/run-skill-intake, to: skills/run-intake-option-catalog,            type: calls }   # P6
+  - { from: skills/run-skill-intake, to: skills/run-intake-visualize,                 type: calls }   # P7
+  - { from: skills/run-skill-intake, to: agents/skill-intake-summarizer,              type: calls }   # P8 fork / Gate A
+  - { from: skills/run-skill-intake, to: skills/run-intake-finalize,                  type: calls }   # P9
+  - { from: skills/run-skill-intake, to: skills/run-notion-intake-publish,            type: calls }   # P10
+  - { from: skills/run-skill-intake, to: skills/run-intake-next-action,               type: calls }   # P11
+  - { from: skills/run-notion-intake-publish, to: skills/assign-notion-fidelity-evaluator,   type: calls }   # P10 内部で粒度検証
+  - { from: commands/intake,         to: skills/run-skill-intake,          type: calls }
+  - { from: commands/intake-publish, to: skills/run-notion-intake-publish, type: calls }
+  - { from: commands/intake-revise,  to: skills/run-intake-revise,         type: calls }
+  - { from: skills/run-intake-visualize,      to: references/visualization-mandatory-rules.md, type: reads }
+  - { from: skills/run-notion-intake-publish, to: references/section_canonical_map.json,        type: reads }
+  - { from: skills/run-intake-interview,      to: references/intent-contract.schema.json,       type: reads }   # 入力→出力インテント正本
+  - { from: skills/run-intake-interview,      to: references/probe-pattern-table.json,          type: reads }   # 未充足時の引き出しの型
+  - { from: skills/run-intake-finalize,       to: references/intent-contract.schema.json,       type: reads }   # build-intent.py が参照
+  # cross-plugin 依存 (G4 配線): P11 mode=P のとき intake.json を plugin-dev-planner R1 の構想材料として推奨引き渡し (emits=成果物の受け手宣言。起動はしない。併用 install 時のみ有効)
+  - { from: skills/run-intake-next-action,    to: plugins/plugin-dev-planner/skills/run-plugin-dev-plan, type: emits }
+
+eval_sinks:
+  - EVALS.json
+  - eval-log/
+
+governance:
+  rubric_refs:
+    - references/rubric.json
+  changelog: CHANGELOG.md
+  roadmap: ROADMAP.md
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+
+observability:
+  hooks:
+    - PreToolUse-Bash/hook-guard-skillgen
+    - PreToolUse-SkillTask/hook-guard-skillgen
+    - PostToolUse-Skill/hook-guard-skillgen
+    - Stop/hook-guard-skillgen
+    - SessionEnd/hook-guard-skillgen
+    - PostToolUse-Bash/post-publish-notify
+  # metrics は宣言のみで集計 producer script は未実装 (ROADMAP 中期の compute-intake-metrics 前倒し対象)。
+  # 素材は scripts/append_eval_log.py の eval-log/skill-intake/<date>.jsonl と eval-log/intake-trace.json。
+  metrics:
+    - phases_completed_per_run
+    - gate_a_rejection_rate
+    - visualization_coverage
+    - notion_publish_success_rate
+  lessons_path: eval-log/

@@ -1,0 +1,48 @@
+# resource-map.yaml — run-company-master-backfill の Progressive Disclosure 索引
+# 必要時のみ open する。共有 SSOT (scripts / references / prompts) は plugin-root に集約し build skill と共有する。
+resources:
+  - file: ../../../commands/company-master-backfill.md
+    topic: Notion 企業マスタ DB の空欄・要確認行を backfill する起動導線
+    read_when: 既存 Notion DB を起点に空欄補完を起動したいとき
+  - file: ../../../scripts/backfill.py
+    topic: 本 skill 中核 — 空欄列選定・2パス制御・行単位縮退・replay JSONL
+    read_when: backfill の対象選定ロジック・2パス運用・リプレイ挙動を確認したいとき
+  - file: ../../../scripts/company_master.py
+    topic: プラグイン同梱の実行ラッパ (backfill サブコマンド)
+    read_when: Skill ではなく決定論コードで backfill を直接実行したいとき
+  - file: ../../../agents/company-master-enrich-attributes.md
+    topic: "SubAgent 分担: 郵便番号/電話番号/備考を補完しネット検索由来値の根拠URLを残す"
+    read_when: 2パス目の Web 検索・日本郵便API 郵便番号補完を fork したいとき
+  - file: ../../../agents/company-master-notion-upsert.md
+    topic: "SubAgent 分担: 固定 Notion DB へ既存非空セル保護で backfill する"
+    read_when: Notion 書き込み・既存非空セル保護・信頼キーを確認したいとき
+  - file: ../../../agents/company-master-resolve-identity.md
+    topic: "SubAgent 分担: 法人番号未確定行を同定する"
+    read_when: 会社名/住所のみで法人番号未確定の行を同定したいとき
+  - file: ../../../references/company-master-columns.md
+    topic: Notion 7列定義 (正式名称は会社名 title 統合) + 確度4ラベル・整合ルール (build と共有正本)
+    read_when: 列構成・フォーマット規約・deterministic_checks を確認したいとき
+  - file: ../../../references/data-sources.md
+    topic: gBizINFO/日本郵便API/Web検索の取得方針・fallback tier・確度マッピング・信頼キー
+    read_when: どの取得元でどの列をどの確度で埋めるか・許可段を判断したいとき
+  - file: ../../../references/keychain-setup.md
+    topic: Keychain 鍵セットアップのチームオンボーディング正本 (ロール別=メンバー/プロキシ運用者・Mac での送信元IP確認)
+    read_when: チームメンバーへ鍵設定を配布する/各自が自分の Keychain に鍵を登録するとき
+  - file: ../../../references/japanpost-api-setup.md
+    topic: 日本郵便 addresszip API のキー取得〜送信元IP登録〜Keychain 保存手順 (BYO・単独/少数拠点向けの正本)
+    read_when: 郵便番号取得の API キー/IP セットアップや doctor --probe の失敗を解消したいとき
+  - file: ../../../references/postal-proxy-deploy.md
+    topic: 中央プロキシのデプロイ/設定 (送信元IPを固定できない/拠点数>10 の例外オプトイン。鍵と固定IPを1台に集約。既定は BYO 直結)
+    read_when: 社内チーム/フルリモート/送信元IP>10 で郵便番号取得を中央集約したいとき
+  - file: ../../../references/notion-db-schema.json
+    topic: live スキーマ preflight 用の機械可読7列スキーマ
+    read_when: preflight 照合内容を確認したいとき
+  - file: ../../../references/remarks-templates.md
+    topic: 取得失敗時の『備考』定型テンプレート文言 (自由記述禁止の正本)
+    read_when: 空欄保留した項目の備考を記録するとき
+  - file: ../../../references/confirm-url-template.md
+    topic: 確認用URL ページ本文の固定テンプレート (URL非減少マージの対象)
+    read_when: 確認用URL本文のレンダリング文言を確認したいとき
+  - file: ../../../prompts/R1-resolve-identity.md
+    topic: resolve 同定判断の7層 prompt 正本 (build と共有)
+    read_when: 法人番号未確定行の同定判断ルールを確認したいとき

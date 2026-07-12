@@ -1,0 +1,2697 @@
+diff --git a/.github/workflows/harness-creator-kit-ci.yml b/.github/workflows/harness-creator-kit-ci.yml
+index 889db50..f94b811 100644
+--- a/.github/workflows/harness-creator-kit-ci.yml
++++ b/.github/workflows/harness-creator-kit-ci.yml
+@@ -223,6 +223,18 @@ jobs:
+       - name: Lint prompt placement (skill-local-v1 regex)
+         run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py
+ 
++      # C02 (harness-prompt-conformance): agents/*.md (frontmatter=plugin YAML + 本文7層) と
++      # skills/*/prompts/*.md (純粋7層) の本文が l5-contract v2.0.0 準拠かを検証する内容 lint。
++      # 配置 lint (上の lint-prompt-placement.py) とは直交する。C09 が生成直後 fail-closed ゲートとして
++      # 配線するのに加え、CI で harness-creator 配下走査 (agents 6本 + 自前 prompts 全数。symlink は
++      # 除外し所有元 plugin が各自 lint する) しバイパス不能性を担保する。scanned=0 は floor guard で exit1。
++      - name: Lint agent prompt content vendor parity (C02 vendored verify-completeness byte 一致)
++        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --check-vendor-parity
++      - name: Lint agent prompt content --mode agent (SubAgent 本文7層準拠)
++        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode agent
++      - name: Lint agent prompt content --mode prompt (skill prompts 本文7層準拠)
++        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode prompt
++
+       # G-D1: 既存skill群の回帰smoke test (現状 warn-only、ベースライン整備後に blocking 化)
+       - name: Skill fixture runner (regression smoke)
+         run: python3 scripts/skill-fixture-runner.py || true
+diff --git a/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
+index ac64b87..4740ae9 100644
+--- a/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "harness-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7"
++    "skill_md_sha256": "4a2f571c4d4aa4edfd6a285960afc5403968c834b32264d3ef6dd54a239c41f0"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+@@ -11,24 +11,27 @@
+     "omission": 0,
+     "inconsistency": 0,
+     "dependency_break": 0,
+-    "smell": 0
++    "smell": 1
+   },
+-  "reviewer": "independent-rename-review-subagent-a",
+-  "reviewed_at": "2026-07-02T22:00:00+09:00",
++  "reviewer": "elegant-review run-20260705-113702 配下の独立 content-reviewer SubAgent",
++  "reviewed_at": "2026-07-05T11:37:02+09:00",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "改名の意味論境界が本 skill で最も精緻に適用されている: 単一 Capability を 1 本構築する部品なので名前 run-build-skill を維持 (CONVENTIONS 用語規約 1 の明示例) しつつ、plugin 総体を指す横展開候補ラベルは『Harness Creator 基盤』(L134/L333) へ更新し、既存 harness 語 (ハーネス・カバレッジ仕様/doc/harness-coverage-spec.md) は同系譜として保持しており、部品=skill・総体=harness の境界が破綻なく共存する。",
+-      "SSOT 徹底が改名後も保たれている: max_iterations/inner-outer/hook queue の詳細を content-review-protocol.md へ、必須集合を capability-manifest.schema.json へ、lint 集合を lint-matrix.json へ委譲し本文再掲せず、criteria の derived_from が CL-1..CL-11 を重複欠落なく全被覆する provenance を維持している。"
++      "新設 Step 0.4 (Step 0 kind 分岐ナビ item 4「lint hook 連動」) が C02 内容 lint (lint-agent-prompt-content.py --mode agent / --mode prompt) を既存の kind→lint 対応表へ 1 行追加で統合しており、新規 Step を切らず最小複雑性で配線している。agent→section+content(--mode agent)、prompt→prompt-md+content(--mode prompt) と mode を kind 別に正しく分離。実測で lint-agent-prompt-content.py は plugins/harness-creator/scripts/ に実在。",
++      "新設 Step 3.5「agent/prompt 生成の provenance (C09)」が prompt_provenance ブロック (prompt_creator_invocation / source_contract_ref / content_lint) を既存の trace 生成 Step (3.5) に相乗りさせ、別成果物を増やさず SSOT 委譲スタイルを維持。fail-closed 強制の主張 (invocation=false・契約参照欠落・content_lint≠PASS・policy=required 時のブロック欠落で exit1) は vaporware でなく validate-build-trace.py の _validate_prompt_provenance (L317) と skill-build-trace.schema.json の prompt_provenance 定義 (required=[prompt_creator_invocation, source_contract_ref, content_lint]) で実装裏付けを実測確認。Step 0.4 の C02 lint ゲート (Step 4 起動) と Step 3.5 の trace 検証ゲートで二層防御を成し、plugin の『保証要件は機械層で担保・多層防御』方針と整合。",
++      "Step 0.4 末尾『単独生成の抜け道は Step 3.5 の prompt_provenance で塞ぐ』が両新設節を相互参照で結び、C02 (build lint 時) と C09 (trace 検証時) の役割分担が破綻なく接続されている。本文実測 ~244 行 (frontmatter L1-104 / 本文 L106-348) で 300 行上限内を維持。参照契約 subagent-hybrid-format.md / seven-layer-format.md / content-review-protocol.md / orchestrate-gate-pattern.md / lint-matrix.json / build-steps.md 等は全て実在 (dependency_break=0)。"
++    ],
++    "negative_feedback": [
++      "[smell/low・非阻害] Step 0.4 の bold 文『agent/prompt 生成は本文7層…C02 を fail-closed ゲートとして通す (契約: subagent-hybrid-format.md)』が、agent/prompt 双方を主語にしながら括弧内で agent 契約 subagent-hybrid-format.md のみを掲げる。一方 Step 3.5 は source_contract_ref を agent=subagent-hybrid-format.md / prompt=seven-layer-format.md と分離し、validate-build-trace.py L313 コメントも同分離を正本化している。Step 0.4 で止読した読者は prompt も subagent-hybrid-format.md 準拠と誤読しうる。直前の per-kind lint は --mode agent/prompt を正しく分離しており、seven-layer-format.md も有効な 7層契約であるため阻害ではないが、契約括弧を『kind 別: subagent-hybrid-format.md (agent) / seven-layer-format.md (prompt)』へ一般化するのが望ましい。backlog 相当。"
+     ],
+-    "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "skill-creator → harness-creator 改名後の現 SKILL.md (sha256=2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7、shasum 実測) を独立 context で全文精読し frontmatter feedback_contract の全 criteria (IN1/IN2/OUT1/OUT2) を C1-C4 で genuine 再評価。旧固有名 skill-creator/skill_creator/スキルクリエイター の残存 0 件 (grep 実測)。C1 矛盾 (IN1 系): max_iterations=3 が frontmatter/goal-seek/Step6/Step12 で同値、本文が P0-2 上限内、Purpose/Key Rules/完了チェックリストが整合。C2 漏れ (IN2 系): CL-1..CL-11 全アンカー実在、criteria derived_from 和集合 = CL-1..CL-11 全件被覆 (IN1=[CL-1,2,3,4,7,9,10,11]/IN2=[CL-6]/OUT1=[CL-5]/OUT2=[CL-8])。C3 不整合 (OUT1 系): Step5/Step6 の fork 評価 score>=80/high=0 と feedback_contract OUT1 が一致、content-review-protocol.md 委譲が Step12 と三者整合。C4 依存断 (OUT2 系): $PLUGIN_ROOT 基点 (=plugins/harness-creator) で orchestrate-gate-pattern.md/lint-matrix.json 実在、$SKILL_DIR 基点で build-steps.md/goal-seek-paradigm.md/content-review-protocol.md/build-flags.schema.json/capability-manifest.schema.json 全実在 (実測)、knowledge-skeleton/search_knowledge.py 参照パスも harness-creator 配下で解決。改名追従漏れ(参照先パス断線)なし。意味論境界違反なし: 部品 build 概念に skill 語を維持し、plugin 総体・カバレッジ装具に harness 語を適用。fail_counts 全 0 につき PASS。"
++  "notes": "現 SKILL.md (sha256=4a2f571c4d4aa4edfd6a285960afc5403968c834b32264d3ef6dd54a239c41f0、shasum 実測一致) を独立 context で全文精読し、07-05 build で追加された Step 0.4 (C02 内容 lint 配線) と Step 3.5 (prompt_provenance C09) を含めて genuine に elegance 評価。旧 verdict の sha=2515ed74 からの stale を実本文評価で更新。[整合性] Step 0.4/3.5 は既存フロー (kind→lint 対応表 item 4 / trace 生成 Step) への最小追加で、新規 Step を切らず SSOT 委譲を保持。C02 lint と C09 provenance が Step 4 lint ゲート + Step 3.5 trace 検証ゲートの二層防御を構成し、相互参照 (『単独生成の抜け道は Step 3.5 で塞ぐ』) で接続。[実装裏付け] 本文の fail-closed 主張を実測検証: validate-build-trace.py L317 _validate_prompt_provenance が4失敗条件を exit1 で強制、schema L170 prompt_provenance が required 3フィールドを定義、resolved_policy=required 分岐も L295/335 で実装済。バイパス不能性の主張は genuine。[dependency] 参照契約・lint (subagent-hybrid-format.md / seven-layer-format.md / lint-agent-prompt-content.py / content-review-protocol.md / orchestrate-gate-pattern.md / lint-matrix.json 他) を全て実在確認 (dependency_break=0)。[本文量] ~244 行で 300 行上限内。[唯一の smell/low] Step 0.4 の契約括弧が agent 契約のみを agent/prompt 双方へ付す不精 (Step 3.5・validator L313 は契約を kind 別分離)。非阻害ゆえ verdict=PASS・human_review_required=false・next_action=none、backlog として negative_feedback に記録。contradiction/omission/inconsistency/dependency_break=0、smell=1。"
+ }
+diff --git a/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
+index 8596432..d872047 100644
+--- a/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "harness-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7"
++    "skill_md_sha256": "4a2f571c4d4aa4edfd6a285960afc5403968c834b32264d3ef6dd54a239c41f0"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+@@ -11,24 +11,26 @@
+     "omission": 0,
+     "inconsistency": 0,
+     "dependency_break": 0,
+-    "smell": 0
++    "smell": 1
+   },
+-  "reviewer": "independent-rename-review-subagent-a",
+-  "reviewed_at": "2026-07-02T22:00:00+09:00",
++  "reviewer": "elegant-review run-20260705-113702 配下の独立 content-reviewer SubAgent",
++  "reviewed_at": "2026-07-05T11:37:02+09:00",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "検証可能性が高い: 完了チェックリスト CL-1..CL-11 が全て二値判定 (lint exit0 / score>=80 / high=0 / 本文行数<=300) で、数値根拠 (7 kind / 300 行 / score 80 / max_iter 3) が随所に具体化され、機械ゲートと LLM ゲートの役割境界が明示されている。",
+-      "簡潔性が SSOT 原則で担保: 必須集合・lint 集合・kind→skeleton 対応・content-review 詳細を各正本 (capability-manifest.schema.json / lint-matrix.json / build-steps.md / content-review-protocol.md) へ委譲して本文再掲せず、改名後も本文が上限行数内に収まっている。"
++      "検証可能性が高い: CL-1..CL-11 が全て二値判定で、新設 C02/C09 も機械検証点を持つ (C02=lint-agent-prompt-content.py exit code / C09=validate-build-trace.py の exit1 4条件)。数値根拠 (7 kind / 300 行 / score 80 / max_iter 3) が随所に具体化。",
++      "簡潔性が SSOT 委譲で担保: C09 の契約詳細 (agent=subagent-hybrid-format.md / prompt=seven-layer-format.md) と content-review 詳細を外部正本へ委譲し、Step 3.5 は provenance 3フィールド + fail-closed 条件のみを 1 段落で記述。Step 0.4 も既存 kind→lint 対応表へ 1 行追加に留め、本文 ~244 行で上限内。"
++    ],
++    "negative_feedback": [
++      "[一貫性 dimension・low・非阻害] Step 0.4 の契約括弧が subagent-hybrid-format.md のみを agent/prompt 双方に付す一方、Step 3.5 は agent/prompt で契約を分離。dimension スコアを 3 から落とすほどではない (他の断面整合は完全) が、契約括弧の kind 別明示が望ましい。"
+     ],
+-    "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "harness-creator quality-rubric.md 5 次元 (完全性0.25/一貫性0.20/深度0.25/検証可能性0.15/簡潔性0.15) で現 SKILL.md (sha256=2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7 実測) を独立採点。[完全性 3] commonCore 必須 5 キー完備、Capability 7 kind サポート資産を manifest/responsibility/template/schema/script/reference_refs で全参照、CL-6 で build-trace 章 coverage を空欄なく要求。[一貫性 3] 出力先2箇所・max_iterations=3・本文行数上限が全所で同値、改名で Harness Creator 基盤ラベルおよび harness-creator plugin パスに統一し manifest↔本文 drift なし、旧固有名残存なし。[深度 3] design claim/behavioral claim の証拠主張型直交、Gate A-D 分離、実行レイヤー判断表根拠 (Key Rule 9/01a) を反映。[検証可能性 3] CL 全項目が二値 lint コマンド、数値 3 個以上。[簡潔性 3] SSOT 委譲徹底で本文簡潔、同義反復なし。合計 15/15、全次元 >=2、参照先 (orchestrate-gate-pattern.md/lint-matrix.json/build-steps.md/goal-seek-paradigm.md/content-review-protocol.md/capability-manifest.schema.json/build-flags.schema.json) が harness-creator 配下で全実在につき rubric PASS。"
++  "notes": "harness-creator quality-rubric.md 5 次元 (完全性0.25/一貫性0.20/深度0.25/検証可能性0.15/簡潔性0.15) で現 SKILL.md (sha256=4a2f571c…実測一致) を独立採点。新設 Step 0.4 (C02)・Step 3.5 (C09 prompt_provenance) を含めて評価。[完全性 3] commonCore 5キー完備、Capability 7 kind サポート、CL-1..CL-11 全アンカー実在、C02 を kind→lint 対応表へ・C09 を prompt_provenance 3フィールド + fail-closed ゲートで完全記述。[一貫性 3] max_iterations=3・出力先・本文行数上限が全所同値、C02 の --mode agent/prompt 分離と C09 の契約 kind 別分離が validate-build-trace.py L313 実装と一致。唯一 Step 0.4 契約括弧の agent 寄り不精 (low smell) があるが他断面整合は完全ゆえ dimension は 3 維持。[深度 3] design/behavioral claim 直交 (Step 12 静的設計ゲート / Gate D 実走)、C02+C09 の二層防御、fail-closed 4条件が bypass 経路を先回りし『バイパス不能性』を validator L317 で実装裏付け。[検証可能性 3] CL 全項目二値、C02/C09 とも機械検証点あり、数値 3個以上。[簡潔性 3] SSOT 委譲徹底・本文 ~244 行・同義反復なし。全次元 >=2、合計 15/15、参照先全実在ゆえ rubric PASS。低 smell 1 件は backlog として記録 (human_review_required=false・next_action=none)。"
+ }
+diff --git a/plugin-plans/harness-creator/component-inventory.json b/plugin-plans/harness-creator/component-inventory.json
+index 1d8c8ec..fc0f9d7 100644
+--- a/plugin-plans/harness-creator/component-inventory.json
++++ b/plugin-plans/harness-creator/component-inventory.json
+@@ -17,6 +17,9 @@
+       "name": "emit-improvement-handoff",
+       "depends_on": [],
+       "build_target": "plugins/harness-creator/scripts/emit-improvement-handoff.py",
++      "side_effect_targets": [
++        "plugins/harness-creator/schemas/improvement-handoff.schema.json"
++      ],
+       "builder": "plugin-scaffold",
+       "build_kind": "script",
+       "placement_scope": "plugin-root",
+@@ -63,6 +66,9 @@
+       "name": "check-plugin-goal-spec",
+       "depends_on": [],
+       "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json"
++      ],
+       "builder": "parent-skill-build",
+       "build_kind": "script",
+       "placement_scope": "skill",
+@@ -567,6 +573,9 @@
+         "C09"
+       ],
+       "build_target": "plugins/plugin-dev-planner/agents/plugin-dev-plan-improvement-reviewer.md",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
++      ],
+       "builder": "run-build-skill",
+       "build_kind": "agent",
+       "description": "--mode update で再生成された goal-spec/plan が、参照した improvement-handoff.json の residual_risks/validation_commands を意味的に (トークン一致でなく) 反映しているかを独立 context でレビューしたいときに使う",
+@@ -615,6 +624,9 @@
+         "C05"
+       ],
+       "build_target": "plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
++      ],
+       "builder": "run-build-skill",
+       "build_kind": "hook",
+       "event": "PreToolUse",
+@@ -684,6 +696,10 @@
+   "plugin_level_surfaces": {
+     "manifest": {
+       "required": true,
++      "targets": [
++        "plugins/harness-creator/.claude-plugin/plugin.json",
++        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
++      ],
+       "note": "harness-creator の plugins/harness-creator/.claude-plugin/plugin.json は skills/commands/scripts を ディレクトリ規約で自動発見するため本 plan の新規/更新 component (C06/C07/C08/C09) は manifest 差分不要。plugin-dev-planner 側 (.claude-plugin/plugin.json) は entry_points.agents[] へ C10、hooks.PreToolUse へ C11 の登録が必要 (該当 component 自身の build スコープ内で処理し envelope surface としては現状維持)。envelope-draft/plugin.json は harness-creator 側を無変更で mirror する"
+     },
+     "composition": {
+@@ -696,11 +712,18 @@
+     },
+     "references_config_assets": {
+       "required": true,
++      "targets": [
++        "plugins/harness-creator/references/pipeline-boundary-contract.md"
++      ],
+       "note": "cross-cutting 課題 (パイプライン全体像が harness-creator README:52-85 の人手手順のみで記述) に対し、新規リファレンス plugins/harness-creator/references/pipeline-boundary-contract.md を Phase02/Phase06 で整備し E1/E2/E3 の producer/consumer/gate/provenance 対応表を一元化する (C01/C05/C08/C09/C11 が参照)。対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 --mode update は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 の create/build は非破壊・再実行可能ゆえ advisory gate)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する"
+     },
+     "schemas": {
+       "required": true,
+-      "note": "plugins/harness-creator/schemas/improvement-handoff.schema.json (新設・C09 が出力する improvement-handoff.json の形状契約) + plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json への source_intake/source_improvement 追加 (C03)"
++      "targets": [
++        "plugins/harness-creator/schemas/improvement-handoff.schema.json",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json"
++      ],
++      "note": "plugins/harness-creator/schemas/improvement-handoff.schema.json (新設・C09 が出力する improvement-handoff.json の形状契約) + plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json への source_intake/source_improvement 追加 (C03)。cross-plugin runtime 依存注記: improvement-handoff.schema.json は harness-creator 所有だが consumer C01/C05/C10/C11 は plugin-dev-planner 側であり、check-runtime-portability の build_target パス接頭辞検査ではこの跨参照を検出しない。健全性は両 plugin 共在不変条件 (双方 distributable:false・repo-bundled・NEVER_DISTRIBUTE denylist) に依存し、producer(C09 正本)↔consumer(C01/C05/C10/C11) の schema parity 検査を P09 の安全弁に置く (parity lint 未整備分は elegant-review backlog)"
+     },
+     "vendor": {
+       "required": false,
+diff --git a/plugin-plans/harness-creator/goal-spec.json b/plugin-plans/harness-creator/goal-spec.json
+index 8aa429c..9079e62 100644
+--- a/plugin-plans/harness-creator/goal-spec.json
++++ b/plugin-plans/harness-creator/goal-spec.json
+@@ -6,6 +6,8 @@
+   "target_plugin_slug": "harness-creator",
+   "plan_dir": "plugin-plans/harness-creator",
+   "out_dir": null,
++  "source_intake": null,
++  "source_improvement": null,
+   "checklist": [
+     {
+       "id": "C1",
+@@ -86,12 +88,12 @@
+     "パイプラインのエッジは必ず 2 plugin にまたがるため、consumer/producer 各修正は所有 plugin 側へ build_target を routing する (E1 consumer→plugins/plugin-dev-planner/、E2 consumer→plugins/harness-creator/、E3 emit→plugins/harness-creator/、E3 consume→plugins/plugin-dev-planner/)。関係 plugin は全て repo-bundled distributable:false であり、cross-plugin build_target は現行 check-runtime-portability (plugins/ 始まり・.. 禁止) を満たすため install 携帯性を毀損しない",
+     "既存の plugin-plans/plugin-dev-planner/ (別件完成 plan) と plugin-plans/skill-intake/ (別件未完 plan) には触れない (上書き・編集禁止)",
+     "skill-intake 側 producer 資産 (handoff-contract.md/intake.schema.json/mode-catalog) は既に完備しており原則変更しない。変更が必要な場合のみ最小差分に留める",
+-    "改善還流は Notion 改善要望 DB への直接 read-back を避け、ローカル repo 内 artifact (run-elegant-review/run-skill-iter-improve/run-skill-feedback の構造化出力) 経由を既定とする (Notion は BYO config 依存で fail-open になりやすいため)"
++    "改善還流は Notion 改善要望 DB への直接 read-back を避け、ローカル repo 内 artifact (run-elegant-review/run-skill-iter-improve/run-skill-feedback の構造化出力) 経由を既定とする (Notion は BYO config 依存で fail-open になりやすいため)",
++    "E3 の C09 起動は自動連鎖しない。改善 skill 完走後の verdict/log は next_action として C09 の手動実行コマンドを提示し、実行者が improvement-handoff.json を明示生成してから --mode update へ渡す (実行分離の不変条件維持)"
+   ],
+   "handoff_targets": ["R2-decompose-components"],
+   "max_loops": 5,
+   "open_questions": [
+-    "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独 executor が未整備のため、build 実行時は handoff-run-plugin-dev-plan.json.open_issues.GAP-SCRIPT-BUILDER の代替生成手順を通す",
+-    "E3 の『emit させる』契約が未定義: 改善 skill (run-elegant-review 等) 完走後に C09 実行を指す nudge (通知型 hook or verdict.json の next_action フィールド) の要否を build 時に設計判断する (自動実行にはしない・実行分離の不変条件維持)"
++    "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独 executor が未整備のため、build 実行時は handoff-run-plugin-dev-plan.json.open_issues.GAP-SCRIPT-BUILDER の代替生成手順を通す"
+   ]
+ }
+diff --git a/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json b/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json
+index 36cf583..bfbe8b5 100644
+--- a/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json
++++ b/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json
+@@ -18,6 +18,9 @@
+         "script_path": "scripts/emit-improvement-handoff.py"
+       },
+       "build_target": "plugins/harness-creator/scripts/emit-improvement-handoff.py",
++      "side_effect_targets": [
++        "plugins/harness-creator/schemas/improvement-handoff.schema.json"
++      ],
+       "status": "planned"
+     },
+     {
+@@ -37,6 +40,9 @@
+         "script_path": "scripts/check-plugin-goal-spec.py"
+       },
+       "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json"
++      ],
+       "status": "planned"
+     },
+     {
+@@ -169,6 +175,9 @@
+         "name": "plugin-dev-plan-improvement-reviewer"
+       },
+       "build_target": "plugins/plugin-dev-planner/agents/plugin-dev-plan-improvement-reviewer.md",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
++      ],
+       "status": "planned"
+     },
+     {
+@@ -184,6 +193,9 @@
+         "name": "enforce-provenance-chain"
+       },
+       "build_target": "plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
++      "side_effect_targets": [
++        "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
++      ],
+       "status": "planned"
+     }
+   ],
+diff --git a/plugin-plans/harness-creator/index.md b/plugin-plans/harness-creator/index.md
+index 968386b..dbb996e 100644
+--- a/plugin-plans/harness-creator/index.md
++++ b/plugin-plans/harness-creator/index.md
+@@ -6,7 +6,7 @@ plugin_meta:
+     required: true
+     path: .claude-plugin/plugin.json
+     name_matches_folder: true
+-    no_todo_placeholders: true
++    no_unresolved_placeholders: true
+     validate_plugin: true
+   marketplace:
+     default_personal: true
+@@ -58,14 +58,15 @@ plugin_meta:
+ - **2 軸直交**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (N=11 component・機械 SSOT) を二重に持たない。
+ - **component_kind (5 種)**: skill / sub-agent / slash-command / hook / script。同一 kind の複数実体はそれぞれ独立 component。本 plan は skill×2 (更新) / slash-command×2 (更新) / script×4 (新設) + script×1 (既存更新=C03) / sub-agent×1 (新設) / hook×1 (新設) = 計 11。
+ - **phase ≠ component**: 13 はフェーズ数の固定値、N=11 は buildable 実体数で独立に決まる。phase は `entities_covered: [C01, ...]` の id 参照のみで component に紐づく。
+-- **ID 名前空間**: 要件 checklist は `C1`..`C12`、component は `C01`..`C11`、elegant-review 4 条件は機械フィールド上 `C1`..`C4` だが本文では「4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合)」と併記して混同を避ける。
++- **ID 名前空間**: 要件 checklist は `C1`..`C12`、component は `C01`..`C11`、elegant-review 4 条件は機械フィールド上 `C1`..`C4` だが本文では「4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合)」と併記して混同を避ける。加えて golden fixture (`fixtures/c8-new-flow/`) 内の route id も `C01`/`C02` を採るが、これは demo プラグイン `demo-boundary-skill` のローカル route 名前空間であり本 plan の component `C01`..`C11` とは別軸である (P07 の `--route C02` は demo fixture の route=`demo-boundary-check` script を指し、本 plan の component C02=`plugin-dev-plan` command ではない)。
+ - **E1/E2/E3 用語集**: E1=intake→goal-spec 境界 (skill-intake の intake.json 消費契約欠落)、E2=plan→build 境界 (routes[] 消費経路欠落)、E3=改善→plan 境界 (改善成果物の構造化入力契約欠落)。provenance chain = intake.json→goal-spec(source_intake)→plan→build handoff→改善成果物(source_improvement)→次サイクル goal-spec の 5 ノード追跡可能性。
+-- **cross-plugin routing**: E1 consumer→`plugins/plugin-dev-planner/`、E2 consumer→`plugins/harness-creator/`、E3 emit→`plugins/harness-creator/`、E3 consume→`plugins/plugin-dev-planner/`。両 plugin とも repo-bundled `distributable:false` であり、`check-runtime-portability.py` (plugins/ 始まり・`..` 禁止) を満たすため install 携帯性を毀損しない。
++- **cross-plugin routing**: E1 consumer→`plugins/plugin-dev-planner/`、E2 consumer→`plugins/harness-creator/`、E3 emit→`plugins/harness-creator/`、E3 consume→`plugins/plugin-dev-planner/`。両 plugin とも repo-bundled `distributable:false` であり、`check-runtime-portability.py` (plugins/ 始まり・`..` 禁止) を満たすため build_target のパス形状は install 携帯性を毀損しない。**ただし携帯性ゲートは build_target のパス接頭辞のみを検査し、実行時に別 plugin 配下のファイルを読む cross-plugin runtime 参照は検査しない**。具体的に `improvement-handoff.schema.json` は producer (harness-creator) が所有し consumer C01/C05/C10/C11 (plugin-dev-planner 側) が参照する cross-plugin runtime 依存であり、その健全性は「両 plugin が常に共在する不変条件 (双方 `distributable:false`・repo-bundled・NEVER_DISTRIBUTE denylist で片方のみ配布しない)」に依存する。producer↔consumer の schema parity 検査を安全弁として P09 に置く (未整備分は本 review backlog)。
+ 
+ ## インフラ
+ - **実行環境**: スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・scripts 内 yaml import 禁止)。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。
+ - **同梱決定論ゲート (2 層命名・機械正本=`specfm.GATE_SCRIPTS`)**: core 5 scripts / 6 invocations = verify-index-topsort (§9 section 床+phase 完全性+DAG) / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage (--self-test + PLAN の 2 起動)。拡張ゲート = check-plugin-goal-spec / check-requirements-coverage / check-surface-inventory / check-build-handoff / check-runtime-portability / check-plugin-surface-audit (総数の人間可読正本=io-contract §11 表)。plan の C12 判定では `specfm.GATE_SCOPE=plan-scoped` のゲートを対象にし、`input-gate` (check-plugin-goal-spec) は R1 入力確定時の証跡、`dogfood` (check-plugin-surface-audit) は plugin-dev-planner 現物監査として分ける。
+-- **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes 配列を正本として消費する。skill 付随 script (C03/C04/C05) は `requires_parent_scaffold: C01` で親 skill scaffold 内へ二相 build する。plugin-root 共有 script (C08/C09) は `plugin-scaffold` (contract-only・`gap_ref: GAP-SCRIPT-BUILDER`) が実体化する (詳細手順と順序列挙は routes[] へ寄せ、本文へ重複保持しない)。
++- **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes 配列を正本として消費する。skill 付随 script (C03/C04/C05) は `requires_parent_scaffold: C01` で親 skill scaffold 内へ二相 build する (`requires_parent_scaffold` は `depends_on` DAG 辺ではなく配置境界指示であり、topsort が表現しない親 scaffold→child script→本体上書きの順序は本節と GAP-SCRIPT-BUILDER の代替生成手順が正本)。plugin-root 共有 script (C08/C09) は `plugin-scaffold` (contract-only・`gap_ref: GAP-SCRIPT-BUILDER`) が実体化する (詳細手順と順序列挙は routes[] へ寄せ、本文へ重複保持しない)。
++- **mode 語彙の分離**: `handoff-run-plugin-dev-plan.json` top-level と C01/C06 の `build_args.mode:update` は builder の**既存ファイル更新ビルドモード** (artifact_class=existing-plugin-update) を指し、run-plugin-dev-plan 自身の `--mode update` (E3 改善フロー再生成・C11 hook が provenance pass marker を要求する破壊的再生成) とは別語彙である。前者に C11 の pass marker 要求は適用されない。本 plan 自身の goal-spec が `source_intake/source_improvement:null` なのは from-scratch 起票 (改善フロー由来でない) ゆえであり、handoff の `mode:update` (=既存 plugin 更新ビルド) と矛盾しない。
+ - **コンポーネント目録の所在**: buildable な実体 (skill×2 / sub-agent×1 / slash-command×2 / hook×1 / script×5 = 計 11) は `component-inventory.json` が唯一の SSOT。build_target・依存 DAG・quality_gates・harness_coverage・feedback_contract を目録側が保持する。
+ - **Plugin-level surfaces**:
+ 
+@@ -85,7 +86,7 @@ plugin_meta:
+ - **現状値非焼込**: 「≥80% を満たす設計」を要件化し、harness 現状未達数値は component エントリへ焼かない (Goodhart 回避)。
+ - **実行分離の不変条件**: intake/plan/build/改善の各段実行は分離したまま維持する。本計画は producer/consumer 機械契約・検証ゲート・provenance の整備に留め、自動連鎖 orchestrator は新設しない。
+ - **regenerate-exempt**: plan_dir 内の `fixtures/` と `.gate/` は `--mode update` 再生成の対象外 (golden fixture と pass marker を再生成で破壊しない)。
+-- **エスカレーション**: ゲート未達は最大 3 周で findings を反映し再実行、超過時は `open_issues` に残し差し戻す。
++- **エスカレーション**: ゲート未達は最大 3 周で findings を反映し再実行、超過時は `open_issues` に残し差し戻す。この「最大 3 周」はゲート外周のエスカレーション予算であり、component 内部の goal-seek ループ (`goal_seek.max_loops=5`・skill 精緻化の内周) とは別スコープ。両者を混同しない (fixture の demo plan `max_loops:3` は demo 独自値)。
+ 
+ ## フェーズ一覧
+ 
+@@ -140,6 +141,6 @@ plugin_meta:
+ | E3: 改善反映が意味的に忠実か | C10 が独立 context で改善成果物と再生成 plan の意味的整合をレビュー | C10 の content-review verdict |
+ | 破壊的な --mode update が未検証で走らない | C11 hook が `run-plugin-dev-plan --mode update` の PreToolUse で C04/C05 pass marker を確認し、欠落時は exit2 block | C11 の受入テスト |
+ | C8: 新規作成フロー一巡 | P07 の `demo-boundary-skill` fixture で intake → C01 → C02 → C07 → C08 preflight → C06 build dispatch が追加質問なしに一巡できる | P07 の C8 判定 + evidence (P11) |
+-| C9: 改善フロー一巡 | P07 の `demo-boundary-skill` fixture で C09 → C11 preflight → C01 update → C05 → C10 → build 再実行が追加質問なしに一巡できる | P07 の C9 判定 + evidence (P11) |
++| C9: 改善フロー一巡 | P07 の `demo-boundary-skill` fixture で C09 → C04/C05 pass marker 生成 → C11 preflight → C01 update → C03/C05 → C10 → build 再実行が追加質問なしに一巡できる | P07 の C9 判定 + evidence (P11) |
+ 
+ build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose (E1/E2/E3 断線解消) を満たす量産パイプラインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。
+diff --git a/plugin-plans/harness-creator/phase-07-acceptance-criteria.md b/plugin-plans/harness-creator/phase-07-acceptance-criteria.md
+index c01dd74..ed3ae86 100644
+--- a/plugin-plans/harness-creator/phase-07-acceptance-criteria.md
++++ b/plugin-plans/harness-creator/phase-07-acceptance-criteria.md
+@@ -30,7 +30,8 @@ applicability:
+ - AC (受入基準) と品質ゲートの区別: lint/coverage は「壊れていない」保証、AC は「purpose (断線解消) を満たす」保証 (両方必要・相互代替不可)。
+ - checklist→component 対応: C1→C01/C02、C2→C04、C3→C06/C07、C4→C08、C5→C01、C6→C01/C03/C09、C7→C03/C05、C8/C9→複数 component を跨ぐ一巡実演 (下記)、要件 C10/C11→build_target routing (全 component 横断)、C12→plan-scoped ゲート exit0。
+ - build DAG と runtime 受入フローは別物として扱う。C08 は C06/C07 が build を始める前の preflight gate、component C11 (enforce-provenance-chain hook) は C01 の `--mode update` を呼ぶ前の PreToolUse fail-closed gate、C05/component C10 (merge-review sub-agent) は update 後の出力検証である。
+-- C8 の golden example: 題材 component は `demo-boundary-skill` (component_kind=skill) に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json` と `next-action.json`、期待生成物は `fixtures/c8-new-flow/expected-goal-spec.json`・`expected-handoff-run-plugin-dev-plan.json`・`expected-route-component-parity.txt`。実行順は `C01` が intake_json を消費して goal-spec.source_intake を記録 → `C02` が command 経由で起動できることを確認 → `C07` が routes[] を選択 → `C08` が routes↔inventory を preflight PASS → `C06` が brief_path を再ヒアリングなしで消費して build dispatch へ進む。未提供 fallback は同 fixture の `without-intake-command.txt` で source_intake=null を期待値にする。skill kind 偏重を避けるため、`demo-boundary-skill` 付随の script route 1 本も `fixtures/c8-new-flow/` 配下に fixture 化し、`C07` の `--from-handoff --route` 経路 → contract-only builder の代替生成手順 (build_target が既存ファイルの場合の update-in-place 分岐を含む) → 検査までを一巡ログに含める。
++- C7 (provenance chain 検証) の `verify_by` が `reasoning` である根拠: C7 の実体 C05 (check-provenance-chain.py) は単サイクル内で exit code を持つ機械ゲートだが、C7 が要求する intake→goal-spec→plan→handoff→improvement-handoff→次サイクル goal-spec の end-to-end chain は複数サイクル (session 跨ぎ) を要し単一 build 内の test では完走できないため reasoning とする。単サイクルで機械検証可能な部分 (C05 の exit0/exit1・pass marker digest 一致) は C12 (plan-scoped ゲート exit0) 側で test 済みであり、C4 (routes↔inventory 突合=単サイクル完結の機械ゲート・`verify_by:test`) との非対称はこの検査範囲差に由来する。
++- C8 の golden example: 題材 component は `demo-boundary-skill` (component_kind=skill) に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json` と `next-action.json`、期待生成物は `fixtures/c8-new-flow/expected-goal-spec.json`・`expected-handoff-run-plugin-dev-plan.json`・`expected-route-component-parity.txt`。実行順は `C01` が intake_json を消費して goal-spec.source_intake を記録 → `C02` が command 経由で起動できることを確認 → `C07` が routes[] を選択 → `C08` が routes↔inventory を preflight PASS (期待 exit_code=0) → `C06` が brief_path を再ヒアリングなしで消費して build dispatch へ進む。適用例 (intake 提供) の起動コマンドは `with-intake-command.txt` で source_intake=intake.json を期待値にし、未提供 fallback は同 fixture の `without-intake-command.txt` で source_intake=null を期待値にする。skill kind 偏重を避けるため、`demo-boundary-skill` 付随の script route 1 本も `fixtures/c8-new-flow/expected-script-route.json` へ fixture 化し、`C07 --from-handoff fixtures/c8-new-flow/expected-handoff-run-plugin-dev-plan.json --route C02` (この `--route C02` は demo fixture のローカル route id=`demo-boundary-check` script を指し、本 plan の component C02=`plugin-dev-plan` command とは別名前空間) 経路 → contract-only builder の代替生成手順 (build_target が既存ファイルの場合の update-in-place 分岐を含む) → 検査までを一巡ログに含める。
+ - C9 の golden example: 題材 component は C8 と同じ `demo-boundary-skill` に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c9-update-flow/improvement-handoff.json` と、C8 で得た `expected-goal-spec.json`。期待生成物は `expected-updated-goal-spec.json`・`expected-provenance-chain.txt`・`expected-improvement-review.txt`・`expected-hook-block.txt`。実行順は `C09` が improvement-handoff を emit → `C04`/`C05` を実行し exit0 時に `<plan_dir>/.gate/check-intake-consumption.pass.json`・`<plan_dir>/.gate/check-provenance-chain.pass.json` (検証対象 artifact の sha256 digest を焼いた pass marker) を生成 → component `C11` (enforce-provenance-chain hook) が `--mode update` 呼び出し前に C04/C05 の pass marker (marker 記載 sha256 == 現物 artifact sha256) を要求し、欠落/digest 不一致ケースでは exit2 block → pass marker 有効ケースで `C01` が source_improvement を記録 → `C03` (check-plugin-goal-spec.py) が再生成 goal-spec の source_intake/source_improvement provenance 検査を PASS → `C05` が provenance chain を検証 → component `C10` (merge-review sub-agent) が意味的忠実性を PASS → routes[] に戻して build 再実行へ進む。
+ 
+ ## 成果物
+diff --git a/plugin-plans/harness-creator/phase-09-quality-assurance.md b/plugin-plans/harness-creator/phase-09-quality-assurance.md
+index d0e02e3..b172509 100644
+--- a/plugin-plans/harness-creator/phase-09-quality-assurance.md
++++ b/plugin-plans/harness-creator/phase-09-quality-assurance.md
+@@ -29,7 +29,7 @@ applicability:
+ ## ドメイン知識
+ - genuine verdict: content-review verdict は現 SHA から独立 SubAgent が再生成したもののみ有効 (SHA 手書換は偽装として無効)。
+ - P0 lint は component_kind 別に集合が異なる (正本は `specfm.P0_LINT_BY_KIND`・全 kind 同一集合を仮定しない。script 系 5 件は `lint-script-frontmatter`、skill 系 2 件は skill 標準 8 種、command 系 2 件は `validate-frontmatter`、sub-agent/hook は agent/script 系の複合)。
+-- schema parity = frontmatter の required と schema の required の双方向一致 (片側追加は drift)。C03 (goal-spec schema 更新) と C09 (improvement-handoff schema 新設) が対象。
++- schema parity (2 軸): (1) frontmatter↔schema の required 双方向一致 (片側追加は drift)。C03 (goal-spec schema 更新) と C09 (improvement-handoff schema 新設) が対象。(2) cross-plugin producer↔consumer parity: improvement-handoff.schema.json は producer C09 (harness-creator 所有) が正本で、consumer C01/C05/C10/C11 (plugin-dev-planner 側) が期待するフィールド集合と正本 schema の required が一致することを確認する。別 plugin に跨る partial drift (schema_version は一致するが required 集合が片側追加) を検出する安全弁で、cross-plugin runtime 参照 (index「cross-plugin routing」節) の健全性を担保する。
+ 
+ ## 成果物
+ - 全 11 component の P0 lint / build-trace / schema parity / content-review verdict の結果一式。
+@@ -41,7 +41,7 @@ applicability:
+ 
+ ## 完了チェックリスト
+ - [ ] 全 11 component で P0 lint が component_kind 別に exit0。
+-- [ ] build-trace coverage が全 component で PASS し、schema parity (goal-spec schema/improvement-handoff schema の frontmatter↔schema required) が一致。
++- [ ] build-trace coverage が全 component で PASS し、schema parity が (1) frontmatter↔schema required と (2) improvement-handoff.schema.json の cross-plugin producer(C09)↔consumer(C01/C05/C10/C11) required の双方で一致。
+ - [ ] content-review verdict=PASS・sha_match=true を独立 SubAgent の現 SHA 再生成で得ている。
+ 
+ ## 参照情報
+diff --git a/plugin-plans/harness-creator/phase-11-evidence.md b/plugin-plans/harness-creator/phase-11-evidence.md
+index 9be68c5..f40538c 100644
+--- a/plugin-plans/harness-creator/phase-11-evidence.md
++++ b/plugin-plans/harness-creator/phase-11-evidence.md
+@@ -29,7 +29,7 @@ UBM 固有の GUI スクリーンショット検証は本ドメイン (CLI/プ
+ ## ドメイン知識
+ - 再現可能性の要件: 第三者が evidence 記載のコマンド/入力を再実行して同じ合否へ到達できること (ログ貼付だけでは不足)。
+ - DROP 読替の正本は `phase-lifecycle.md` §7 (UBM スクショ→Markdown evidence 5 要素)。他の plan 全体用語は index `## ドメイン知識` 参照。
+-- C8/C9 の evidence は P07 の golden example を正本にする。C8 は `fixtures/c8-new-flow/intake.json` / `next-action.json` を入力し、`demo-boundary-skill` の新規作成フローが `C01→C02→C07→C08 preflight→C06 build dispatch` へ進むログを記録する。C9 は `fixtures/c9-update-flow/improvement-handoff.json` を入力し、`C09→C11 preflight→C01 update→C05→C10→build 再実行` の PASS ログと、marker 欠落時に C11 が exit2 block する FAIL ログを両方記録する。
++- C8/C9 の evidence は P07 の golden example を正本にする。C8 は `fixtures/c8-new-flow/intake.json` / `next-action.json` を入力し、`demo-boundary-skill` の新規作成フローが `C01→C02→C07→C08 preflight→C06 build dispatch` へ進むログを記録する。C9 は `fixtures/c9-update-flow/improvement-handoff.json` を入力し、`C09→C04/C05 pass marker 生成→C11 preflight→C01 update→C03/C05→C10→build 再実行` の PASS ログと、marker 欠落時に C11 が exit2 block する FAIL ログを両方記録する。
+ 
+ ## 成果物
+ - evidence 5 要素 (P0 lint ログ / schema parity / build-trace coverage / content-review verdict / harness coverage JSON) を集約した Markdown 検証記録。
+diff --git a/plugin-plans/harness-creator/plan-findings.json b/plugin-plans/harness-creator/plan-findings.json
+index 6cf5143..94be757 100644
+--- a/plugin-plans/harness-creator/plan-findings.json
++++ b/plugin-plans/harness-creator/plan-findings.json
+@@ -1,47 +1,49 @@
+ {
+-  "plan_dir": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator",
++  "plan_dir": "plugin-plans/harness-creator",
+   "evaluator": {
+     "name": "assign-plugin-plan-evaluator",
+     "version": "0.1.0",
+-    "context": "fork"
++    "context": "current-worktree"
+   },
+   "verdict": "PASS",
+   "conditions": {
+     "C1": {
+       "id": "no_contradiction",
+       "status": "PASS",
+-      "summary": "矛盾なし: deterministic gates passed",
++      "summary": "矛盾なし: C9 order is consistent and build handoff passed.",
+       "evidence": [
+-        "check-build-handoff exit=0"
++        "check-build-handoff exit=0",
++        "rg stale C9 order exit=0"
+       ]
+     },
+     "C2": {
+       "id": "no_missing",
+       "status": "PASS",
+-      "summary": "漏れなし: deterministic gates passed",
++      "summary": "漏れなし: deterministic gates passed and C8/C9 fixtures plus side_effect_targets are present.",
+       "evidence": [
+         "detect-unassigned exit=0",
+         "check-spec-frontmatter exit=0",
+         "check-spec-gates exit=0",
+         "check-surface-inventory exit=0",
+-        "check-requirements-coverage exit=0"
++        "check-requirements-coverage exit=0",
++        "fixtures/c8-new-flow and fixtures/c9-update-flow present"
+       ]
+     },
+     "C3": {
+       "id": "consistent",
+       "status": "PASS",
+-      "summary": "整合性あり: deterministic gates passed",
++      "summary": "整合性あり: JSON syntax, matrix coverage, and current-worktree evidence are consistent.",
+       "evidence": [
+-        "check-spec-frontmatter exit=0",
+-        "check-spec-gates exit=0",
++        "python3 -m json.tool goal-spec/component-inventory/handoff exit=0",
+         "check-spec-matrix-coverage-self-test exit=0",
+-        "check-spec-matrix-coverage-plan exit=0"
++        "check-spec-matrix-coverage-plan exit=0",
++        "plan-findings uses relative current-worktree commands"
+       ]
+     },
+     "C4": {
+       "id": "dependency_integrity",
+       "status": "PASS",
+-      "summary": "依存関係整合: deterministic gates passed",
++      "summary": "依存関係整合: DAG, route order, runtime portability, and side effect targets are explicit.",
+       "evidence": [
+         "verify-index-topsort exit=0",
+         "detect-unassigned exit=0",
+@@ -51,13 +53,28 @@
+     }
+   },
+   "gate_results": [
++    {
++      "id": "G0",
++      "name": "json-syntax",
++      "command": [
++        "sh",
++        "-c",
++        "python3 -m json.tool plugin-plans/harness-creator/goal-spec.json >/dev/null && python3 -m json.tool plugin-plans/harness-creator/component-inventory.json >/dev/null && python3 -m json.tool plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json >/dev/null && python3 -m json.tool plugin-plans/harness-creator/plan-findings.json >/dev/null"
++      ],
++      "exit_code": 0,
++      "conditions": [
++        "C3"
++      ],
++      "stdout": "OK: JSON files parse",
++      "stderr": ""
++    },
+     {
+       "id": "G1",
+       "name": "verify-index-topsort",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -70,12 +87,12 @@
+       "id": "G2",
+       "name": "detect-unassigned",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+         "--inventory",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator/component-inventory.json",
++        "plugin-plans/harness-creator/component-inventory.json",
+         "--specs-dir",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -89,10 +106,10 @@
+       "id": "G3",
+       "name": "check-spec-frontmatter",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+         "--specs-dir",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -106,10 +123,10 @@
+       "id": "G4",
+       "name": "check-spec-gates",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+         "--specs-dir",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -123,8 +140,8 @@
+       "id": "G5",
+       "name": "check-spec-matrix-coverage-self-test",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+         "--self-test"
+       ],
+       "exit_code": 0,
+@@ -138,9 +155,9 @@
+       "id": "G6",
+       "name": "check-spec-matrix-coverage-plan",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -153,9 +170,9 @@
+       "id": "G7",
+       "name": "check-surface-inventory",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator/component-inventory.json"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
++        "plugin-plans/harness-creator/component-inventory.json"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -168,9 +185,9 @@
+       "id": "G8",
+       "name": "check-build-handoff",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
++        "plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -184,9 +201,9 @@
+       "id": "G9",
+       "name": "check-requirements-coverage",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -199,9 +216,9 @@
+       "id": "G10",
+       "name": "check-runtime-portability",
+       "command": [
+-        "/Users/dm/miniconda3/bin/python3",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
++        "plugin-plans/harness-creator"
+       ],
+       "exit_code": 0,
+       "conditions": [
+@@ -209,15 +226,32 @@
+       ],
+       "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結",
+       "stderr": ""
++    },
++    {
++      "id": "G11",
++      "name": "check-plugin-goal-spec",
++      "command": [
++        "python3",
++        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
++        "plugin-plans/harness-creator/goal-spec.json"
++      ],
++      "exit_code": 0,
++      "conditions": [
++        "C3"
++      ],
++      "stdout": "OK: plugin goal-spec schema + plugin anchors validated",
++      "stderr": "WARN: source_intake 不在: intake/改善 由来でない既存 goal-spec として WARN 受理 (後方互換)\nWARN: source_improvement 不在: intake/改善 由来でない既存 goal-spec として WARN 受理 (後方互換)"
+     }
+   ],
+   "findings": [
+     {
+       "severity": "info",
+       "bucket": "C1-C4",
+-      "observation": "All deterministic gates exited 0 and plugin-level surfaces were explicit.",
++      "observation": "All plan-scoped deterministic gates exited 0 in the current worktree after adding fixtures, side_effect_targets, explicit provenance nulls, and current-worktree evidence.",
+       "evidence": [
+-        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/harness-creator"
++        "plugin-plans/harness-creator",
++        "plugin-plans/harness-creator/fixtures/c8-new-flow",
++        "plugin-plans/harness-creator/fixtures/c9-update-flow"
+       ]
+     }
+   ]
+diff --git a/plugins/harness-creator/agents/elegant-improvement-executor.md b/plugins/harness-creator/agents/elegant-improvement-executor.md
+index aa8df26..1fa62a1 100644
+--- a/plugins/harness-creator/agents/elegant-improvement-executor.md
++++ b/plugins/harness-creator/agents/elegant-improvement-executor.md
+@@ -7,94 +7,99 @@ isolation: fork
+ owner_skill: run-elegant-review
+ phase_id: phase3-execute
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-execute.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-完了済み findings を統合し、整合する最小のパッチ集合を適用する。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-**適用層境界**: 本 executor の全件消化規律 (severity high 放置 0・DAG 全件) は「1 回のレビューの findings 一括改善 (eval 非帰属)」に適用される。実走 eval 駆動の反復改善ループ (`run-skill-iter-improve`) は効果帰属のため 1 iter 1-2 件厳守 (INVARIANT 5) であり、両者の編集エンジン・収束判定は共有しない。
++### 1.1 メタ情報
++- responsibility: run-elegant-review Phase 3。集約 findings を統合し整合する最小パッチ集合を適用する。
++- owner_skill: run-elegant-review / phase_id: phase3-execute。
+ 
+-# ゴール
++### 1.2 不変ルール
++- 最小パッチ原則・スコープ逸脱禁止。`source_trace[]` 外編集をしない。
++- `TODO(human)` を残さず、選択は findings と先例から自動決定する (`force_pass` 禁止)。
++- **適用層境界**: 本 executor の全件消化規律 (severity high 放置 0・DAG 全件) は「1 レビューの findings 一括改善 (eval 非帰属)」に適用され、実走 eval 駆動の反復改善 (`run-skill-iter-improve`, 1 iter 1-2 件) とは編集エンジン・収束判定を共有しない。
+ 
+-以下が成立した状態を到達点とする。グルーピング順序や検証コマンド選択は実行時に自律設計する。
++## Layer 2: ドメイン定義層
+ 
+-- severity high の finding が `source_trace[]` 経由で `changed_paths[]` から逆引きでき、放置 0
+-- 独立変更が別 group に分離され、依存変更は top-sort 順 `group_id` 昇順で並ぶ
+-- 具体値直書きが `variable_abstraction` に従い変数 / テンプレート / config example へ昇格済み
+-- 検証スクリプトが exit 0 で完了し、C1-C4 ゲート結果が JSON で報告される
+-- 人間判断委譲 (`TODO(human)`) を残さず、選択は findings と先例から自動決定
++### 2.1 単一責務
++- 担当: C1-C4 FAIL 項目へファイル/依存順グルーピングで最小パッチを適用し検証する。
++- 非担当: Phase 1 観察・Phase 2 思考法分析・findings の新規発見。
+ 
+-# 完了チェックリスト
++### 2.2 入出力契約
++- 入力: `{{aggregated_findings}}` (KJ 集約 + severity ソート済) / `{{iteration_count}}`。
++- 出力: `{changed_paths[], validation_commands[], residual_risks[], four_conditions{C1..C4}, iteration_count, convergence_status}`。
+ 
+-- [ ] `git diff` の hunk が全て `source_trace[]` に紐づく (findings 外編集 0)
+-- [ ] `validation_commands[]` 全件 exit 0、うち 1 件以上が既存 lint / `validate-build-trace.py`
+-- [ ] `git grep` で `variable_abstraction[].literal` 残存 0 件
+-- [ ] `convergence_status` が `complete|in_progress|diverging|human_escalate|incomplete` (owner `schemas/phase-output.schema.json#/definitions/phase3_output` enum 正本) のいずれかに一意決定
++### 2.3 出力要素
++- `convergence_status` enum は owner `schemas/phase-output.schema.json#/definitions/phase3_output` 正本 (`complete|in_progress|diverging|human_escalate|incomplete`)。
++- 具体値直書きは `variable_abstraction` に従い変数・テンプレート・config example へ昇格する。
+ 
+-# 出力
++## Layer 3: インフラストラクチャ定義層
+ 
+-変更パス、検証コマンド、残リスク、収束判定を返す。
++### 3.1 参照リソース
++- 起動文・パッチ契約の正本は `run-elegant-review/prompts/R3-phase3-execute.md`、収束閾値は `run-elegant-review/references/convergence-policy.json` (Δneg/Δpos) を参照する。
+ 
+-## Prompt Templates
++### 3.2 利用ツール
++- Read/Glob/Grep + Edit/MultiEdit/Write + Bash(python3 *) (検証スクリプト実行)。
+ 
+-本 agent は Phase 3 で起動される自動実行 worker。Phase 2 並列 3 agent の集約 findings を受け取り、最小パッチを適用する。ユーザとの対話はない。**なぜ**: 分析と実装を分離することで、観察事実と編集行為のトレーサビリティを保つため。
++## Layer 4: 共通ポリシー層
+ 
+-### Layer マッピング (7 層対応)
++### 4.1 品質基準
++- `validation_commands[]` は全件 exit 0、うち 1 件以上が既存 lint または `validate-build-trace.py`。
++- `git diff` の全 hunk が `source_trace[]` に紐づく (findings 外編集 0)。
+ 
+-| Layer | 本 agent での対応 |
+-|---|---|
+-| L1 基本定義 | 最小パッチ原則、スコープ逸脱禁止という不変ルール。通常パスは AI が自動収束し、`max_iterations=3` 超過の収束失敗時のみ安全弁として `human_escalate` (`force_pass` 禁止) |
+-| L2 ドメイン | `changed_paths[] / validation_commands[] / residual_risks[] / convergence_status` 出力契約 |
+-| L3 インフラ | Edit/MultiEdit/Write/Bash(python3) |
+-| L4 共通ポリシー | C1-C4 ゲート (`four_conditions{}`)、max 3 周回の安全弁 |
+-| L5 エージェント | executor 単体 (再帰起動なし) |
+-| L6 オーケスト | Phase 3 → 収束判定 → 次周回 Phase 2 or human_review |
+-| L7 UI | パッチ + 検証結果 JSON |
++### 4.2 失敗時挙動
++- max_iterations=3 の安全弁を超過し収束不能なら Handoff せず `convergence_status=human_escalate / blocked_dimensions[]` で orchestrator へ差し戻す (`force_pass` 禁止)。
+ 
+-### Round 1: orchestrator → executor の起動
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
+ 
+-- **目的**: severity high から順に最小パッチを適用し、収束ステップ数を最小化する。
+-- **背景**: 一括パッチは依存違反と rollback 困難を招く。グルーピングで独立性を保ち、レビュー粒度を確保する。
++### 5.1 担当 agent
++- elegant-improvement-executor / context_fork: true。executor 単体 (再帰起動なし)。
+ 
+-> 「Phase 2 集約 findings (`paradigm_findings[]` + severity ソート済み) を入力に、C1-C4 FAIL 項目に対してファイル/依存順でグルーピングし、最小パッチ集合を適用してください。具体値の直書きは `variable_abstraction` に従い変数・テンプレートへ昇格し、`source_trace` に由来を残してください。」
++### 5.2 ゴール定義
++- 目的: severity high から順に最小パッチを適用し収束ステップ数を最小化する。
++- 背景: 一括パッチは依存違反と rollback 困難を招く。グルーピングで独立性とレビュー粒度を確保する。
++- 達成ゴール: severity high の finding が `changed_paths[]` から逆引きでき放置 0、具体値が変数化され、検証が exit 0 で C1-C4 が JSON 報告された状態になっている。
+ 
+-- 入力 placeholder: `{{aggregated_findings}}` (KJ 集約済 + severity ソート済), `{{iteration_count}}`
+-- 依存 Layer: L2 (出力契約), L4 (C1-C4 ゲート, max 3)
+-- 出力 schema: `{patches[]: {group_id, changed_paths[], source_trace[]}, validation_commands[], four_conditions{C1,C2,C3,C4}}` (owner `phase-output.schema.json#/definitions/phase3_output` の `four_conditions` に合わせる)
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] `git diff` の hunk が全て `source_trace[]` に紐づく。
++- [ ] `validation_commands[]` 全件 exit 0、うち 1 件以上が既存 lint / `validate-build-trace.py`。
++- [ ] `git grep` で `variable_abstraction[].literal` 残存 0 件。
++- [ ] `convergence_status` が enum のいずれかに一意決定。
+ 
+-### Round 2: executor → orchestrator への結果報告
++### 5.4 実行方式
++- 固定手順を持たない。未充足チェックリスト項目 (未消化 high・余分 hunk・検証失敗) を特定し、グルーピング・パッチ・revert・依存順再計算を都度立案して全項目充足まで反復する。反復上限は Layer 4 (max 3) に従う。
+ 
+-- **目的**: ゲート結果と残リスクを返し、orchestrator の収束判定を可能にする。
+-- **背景**: 残リスク非開示だと次周回 Phase 2 が同一論点を再検出し、ループに陥る。
++## Layer 6: オーケストレーション層
+ 
+-> 「適用したパッチの `changed_paths[] / validation_commands[] / residual_risks[]` を返します。C1-C4 ゲート結果 (`four_conditions{}`) と `iteration_count` を含めます。収束未達なら次周回 Phase 2 を起動するか、安全弁 (max 3) 発火で `convergence_status: human_escalate` を選択し human_review に差し戻します。」
++### 6.1 接続
++- 呼び出し元: run-elegant-review Phase 3。後続: orchestrator が `convergence-policy.json` の Δneg/Δpos で収束判定し、次周回 Phase 2 起動か human_review を選ぶ。
+ 
+-- 出力 schema: `{changed_paths[], validation_commands[], residual_risks[], four_conditions{C1,C2,C3,C4}, iteration_count, convergence_status(complete|in_progress|diverging|human_escalate|incomplete)}` (enum は owner `phase-output.schema.json#/definitions/phase3_output` 正本)
+-- 依存 Layer: L6 (convergence-policy.json の Δneg/Δpos 閾値判定)
++### 6.2 並列性
++- Phase 2 集約完了後に単独直列で実行する。
+ 
+-## Self-Evaluation
++## Layer 7: UI / 提示層
++
++### 7.1 ユーザー提示
++- 対話なしの自動実行 worker。
+ 
+-5 次元で自己採点する。**判定は git diff / validation script exit / count で客観実施**。
++### 7.2 出力形式
++- `phase3_output` schema 準拠 JSON (パッチ + 検証結果。日本語本文 / schema key は英語)。
+ 
+-| 次元 | 観察可能な合格条件 |
+-|---|---|
+-| 完全性 | 入力 findings の `severity == high` 件数と `changed_paths[]` を `source_trace[]` 経由で逆引きしたカバー件数が一致 (放置ゼロ) |
+-| 一貫性 | `patches[]` の各 group 内で touch するファイルが他 group と重複しない (set 交差 == ∅)。依存関係順 (top-sort) で `group_id` が昇順 |
+-| 深度 | パッチ後の `git grep` で `variable_abstraction[].literal` の値が 0 件 (具体値の直書き残存なし) |
+-| 検証可能性 | `validation_commands[]` を実行し全 exit 0、かつ少なくとも 1 件は `validate-build-trace.py` または既存 lint script を含む |
+-| 簡潔性 | `changed_paths[]` の各ファイルにつき、`source_trace[]` で参照されない hunk が 0 件 (findings 外編集なし、`git diff --stat` で確認) |
++## Prompt Templates
++
++対話なしの自動実行 worker (対話なし: 自動実行 agent)。最小パッチ・グルーピング契約の起動文の正本は owner `run-elegant-review/prompts/R3-phase3-execute.md` を参照する。
+ 
+-### 未達時の自己修正手順
++## Self-Evaluation
+ 
+-1. **1 回目**: 不合格次元のみ修正パッチを追加適用 (例: 簡潔性 FAIL → 余分 hunk を revert)。
+-2. **2 回目**: 検証可能性 FAIL (script exit != 0) なら該当 patch を rollback し依存順を再計算。
+-3. **3 回目 (上限 = max iteration 3)**: なお未達なら Handoff せず `convergence_status=human_escalate / blocked_dimensions[]` で orchestrator に差し戻し、human_review へ (`force_pass` 禁止)。
+-4. **差し戻し条件**: 検証可能性 FAIL (exit != 0) または 完全性 FAIL (high severity 未消化) が 3 回連続、もしくは収束政策の Δneg/Δpos 閾値未達。
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。完全性は high severity 消化 (source_trace 逆引きカバー一致)、検証可能性は `validation_commands[]` 全 exit 0、簡潔性は findings 外 hunk 0 を `git diff --stat` で判定する。
+ 
+-# Handoff
++## Handoff
+ 
+-run-elegant-review orchestrator に `changed_paths / validation_commands / residual_risks / convergence_status` を返す。出力は owner `run-elegant-review/schemas/phase-output.schema.json#/definitions/phase3_output` 準拠 (`convergence_status` enum: `complete|in_progress|diverging|human_escalate|incomplete`)。収束判定は `run-elegant-review/references/convergence-policy.json` の Δneg/Δpos 閾値で行う。
++`changed_paths / validation_commands / residual_risks / convergence_status` を orchestrator へ返す。出力は owner `run-elegant-review/schemas/phase-output.schema.json#/definitions/phase3_output` 準拠。収束判定は `convergence-policy.json` の Δneg/Δpos で行う。
+diff --git a/plugins/harness-creator/agents/elegant-logical-structural-analyst.md b/plugins/harness-creator/agents/elegant-logical-structural-analyst.md
+index 2cf920d..a542f6c 100644
+--- a/plugins/harness-creator/agents/elegant-logical-structural-analyst.md
++++ b/plugins/harness-creator/agents/elegant-logical-structural-analyst.md
+@@ -7,78 +7,98 @@ isolation: fork
+ owner_skill: run-elegant-review
+ phase_id: phase2-parallel
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-論理分析系と構造分解系の思考法だけで対象を分析する。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-# 担当思考法
++### 1.1 メタ情報
++- responsibility: run-elegant-review Phase 2 の論理分析系・構造分解系レーン (A2)。
++- owner_skill: run-elegant-review / phase_id: phase2-parallel。
+ 
+-`run-elegant-review/references/thought-methods.yaml` の `logical_structural.methods` を正本として、そこに列挙された10種をすべて使う。
++### 1.2 不変ルール
++- read-only。ファイル編集をしない。
++- 割当思考法を 1〜2 個に絞らず全数実行し観点漏れを排除する。
+ 
+-# 出力
++## Layer 2: ドメイン定義層
+ 
+-10思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合は各 finding の `issues[]` で表現し、問題がない条件は issue を追加しない。各思考法に少なくとも1つの `observations` を含め、ファイル編集はしない。
++### 2.1 単一責務
++- 担当: `thought-methods.yaml` の `logical_structural.methods` 10 種を全て使い論理・構造の観点で対象を分析する。
++- 非担当: メタ発想拡張 (meta-divergent 担当)・システム戦略 (system-strategic 担当)・改善適用。
+ 
+-## Prompt Templates
++### 2.2 入出力契約
++- 入力: `{{phase1_output}}` (Phase 1 JSON) / `{{target_path}}`。
++- 出力: `paradigm_findings[]` を 10 思考法ぶん (各1件) 返す。C1-C4 違反のみ `issues[]` に追加し、違反なしは `issues: []` を明示する。
+ 
+-本 agent は Phase 2 で並列起動される自動実行 agent。Phase 1 reset-observer の出力を入力に、`thought-methods.yaml` で割り当てられた A2=10 思考法のマトリクスを返す。ユーザとの対話はない。**なぜ**: 並列他 agent (meta-divergent / system-strategic) と独立に動作することで、KJ 集約段階での観点重複を防ぐため。
++### 2.3 出力要素
++- finding: `{paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。
++- issue: `{condition(C1-C4), severity(low|medium|high|critical), bucket, description, recommended_intervention, location?, depends_on?}`。具体値は `variable_abstraction` に分離する。
+ 
+-### Layer マッピング (7 層対応)
++## Layer 3: インフラストラクチャ定義層
+ 
+-| Layer | 本 agent での対応 |
+-|---|---|
+-| L1 基本定義 | ファイル編集禁止・read-only という不変ルール |
+-| L2 ドメイン | A2 10 思考法 = 10 `paradigm_findings[]`、C1-C4 は `issues[].condition` で表現する出力契約 |
+-| L3 インフラ | Read/Glob/Grep のみ |
+-| L5 エージェント | 並列他 agent と独立 (中間結果非参照) |
+-| L6 オーケスト | Phase 2 並列起動 → KJ 集約 → Phase 3 |
+-| L7 UI | `paradigm_findings[]` JSON (日本語本文) |
++### 3.1 参照リソース
++- 思考法の割当正本は `run-elegant-review/references/thought-methods.yaml`、出力 schema と起動文の正本は `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
+ 
+-### Round 1: orchestrator → logical-structural-analyst の起動
++### 3.2 利用ツール
++- Read / Glob / Grep のみ。
+ 
+-- **目的**: A2 10 思考法の網羅実行を強制し、観点漏れを排除する。
+-- **背景**: 思考法を 1〜2 個に絞ると、批判的視点や MECE 検証が欠落し、後段 C2 漏れなしゲートが機能しない。
++## Layer 4: 共通ポリシー層
+ 
+-> 「Phase 1 の俯瞰結果を入力に、`thought-methods.yaml` の `logical_structural.methods` 10 思考法それぞれを1件の `paradigm_findings[]` として評価してください。C1/C2/C3/C4 の違反だけを `issues[]` に追加し、問題なしなら `issues: []` を明示してください。`observations` を必ず 1 件以上含め、具体値は `variable_abstraction` に分離してください。」
++### 4.1 品質基準
++- 各 finding の `observations[]` に `target_path:line` 形式の参照を 1 件以上含め grep 再現可能にする。
++- 異なる paradigm 間で `issues[]` の文字列完全一致を 0 に保つ (重複指摘なし)。
+ 
+-- 入力 placeholder: `{{phase1_output}}` (Phase 1 JSON), `{{target_path}}`
+-- 依存 Layer: L2 (出力契約), L1 (read-only)
+-- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。`issues[]` は `{condition(C1-C4), severity(low|medium|high|critical), bucket, description, recommended_intervention, location?, depends_on?}`。
++### 4.2 失敗時挙動
++- distinct `paradigm_id` < 10 (完全性 FAIL) または line 参照ゼロ (検証可能性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で orchestrator へ差し戻す。
+ 
+-### Round 2: logical-structural-analyst → Phase 3 への引き渡し
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
+ 
+-- **目的**: 10 件の paradigm finding を集約に渡し、Phase 3 のパッチ対象は `issues[]` の有無で絞る。
+-- **背景**: PASS まで全件渡すと executor が無関係箇所を編集し、スコープ逸脱を起こす。
++### 5.1 担当 agent
++- elegant-logical-structural-analyst / context_fork: true。並列他 agent の中間結果は参照しない (独立性確保)。
+ 
+-> 「A2 10 思考法の `paradigm_findings[]` を集約 findings に追加してください。並列他 agent (meta-divergent / system-strategic) の出力と KJ 法で集約後、`issues[].severity` でソートして Phase 3 に渡されます。」
++### 5.2 ゴール定義
++- 目的: A2 10 思考法の網羅実行で論理・構造上の C1-C4 違反を洗い出す。
++- 背景: 思考法を絞ると批判的視点や MECE 検証が欠落し後段 C2 漏れなしゲートが機能しない。
++- 達成ゴール: 10 思考法それぞれの `paradigm_findings[]` が観察付きで揃い、C1-C4 違反が `issues[]` に分離された状態になっている。
+ 
+-- 出力 schema: `{paradigm_findings[]}` (10件すべて)。`issues[]` が空の finding は PASS 扱い、`issues[].severity` は優先度ラベル。
+-- 依存 Layer: L6 (集約は orchestrator 責務)
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] `paradigm_findings[]` の distinct `paradigm_id` が 10。
++- [ ] 各 finding が `observations` を 1 件以上持つ。
++- [ ] 違反なし finding が `issues: []` を明示している。
++- [ ] `observations` の line 参照が grep で再現できる。
+ 
+-## Self-Evaluation
++### 5.4 実行方式
++- 固定手順を持たない。未充足チェックリスト項目 (欠落思考法・観察不足) を特定し再評価対象を都度立案して全項目充足まで反復する。反復上限は Layer 4 (`convergence-policy.json`) に従う。
++
++## Layer 6: オーケストレーション層
++
++### 6.1 接続
++- 呼び出し元: run-elegant-review Phase 2 (並列起動)。後続: orchestrator が並列 3 レーンを KJ 集約し severity 順に Phase 3 executor へ渡す。
++
++### 6.2 並列性
++- meta-divergent / system-strategic と独立並列。集約は orchestrator 責務。
+ 
+-5 次元で自己採点する。**判定は grep / count / 構造一致で客観実施**。
++## Layer 7: UI / 提示層
+ 
+-| 次元 | 観察可能な合格条件 |
+-|---|---|
+-| 完全性 | `paradigm_findings[]` に A2 10 思考法 = 10 エントリすべて存在。`paradigm_id` の distinct count == 10 |
+-| 一貫性 | 演繹 finding の `observations[0]` と帰納 finding の `observations[0]` が同一 raw_observation を引用する場合、status が一致 (両者矛盾なし)。MECE finding の `issues[]` に「重複」「漏れ」キーワードが混在しない |
+-| 深度 | アブダクション finding の `observations[]` 要素数 >= 2 (複数仮説提示) |
+-| 検証可能性 | 各 finding の `observations[]` 要素に `target_path:line` 形式の参照が 1 件以上 (grep で再現可能) |
+-| 簡潔性 | 異なる `paradigm` 間で `issues[]` の文字列完全一致が 0 件 (重複指摘なし) |
++### 7.1 ユーザー提示
++- 対話なしの自動実行 agent。
+ 
+-### 未達時の自己修正手順
++### 7.2 出力形式
++- `paradigm_findings[]` JSON (日本語本文 / schema key は英語)。
++
++## Prompt Templates
++
++対話なしの自動実行 agent (対話なし: 自動実行 agent)。A2 10 思考法の起動文・出力 schema の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` と `references/thought-methods.yaml` を参照する。
++
++## Self-Evaluation
+ 
+-1. **1 回目**: 不合格次元の該当 paradigm のみ再評価 (他 paradigm は保持)。
+-2. **2 回目**: 完全性 FAIL なら欠落エントリを生成、深度 FAIL ならアブダクションに仮説を追加。
+-3. **3 回目 (上限)**: なお未達なら Handoff せず `status=blocked / blocked_paradigms[]` を orchestrator に返す。
+-4. **差し戻し条件**: 完全性 FAIL (distinct `paradigm_id` < 10) または 検証可能性 FAIL (line 参照ゼロ) が 3 回連続。
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元 (完全性 = distinct paradigm_id==10 / 一貫性 / 深度 / 検証可能性 = line 参照再現 / 簡潔性 = issue 重複 0) で自己採点する。判定は grep / count / 構造一致で客観実施する。
+ 
+-# Handoff
++## Handoff
+ 
+-run-elegant-review orchestrator に `paradigm_findings[]` (A2 10 件) を返す。C1-C4 違反は各 finding の `issues[]` に格納する。並列他 agent の中間結果は参照しない (独立性確保)。集約は orchestrator 側で行う。
++`paradigm_findings[]` (A2 10 件) を orchestrator へ返す。C1-C4 違反は各 finding の `issues[]` に格納し、KJ 集約と severity ソートは orchestrator が行う。
+diff --git a/plugins/harness-creator/agents/elegant-meta-divergent-analyst.md b/plugins/harness-creator/agents/elegant-meta-divergent-analyst.md
+index e35091b..1551f4d 100644
+--- a/plugins/harness-creator/agents/elegant-meta-divergent-analyst.md
++++ b/plugins/harness-creator/agents/elegant-meta-divergent-analyst.md
+@@ -7,79 +7,97 @@ isolation: fork
+ owner_skill: run-elegant-review
+ phase_id: phase2-parallel
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-問題設定そのものを見直し、横展開できる代替案を探す。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-# 担当思考法
++### 1.1 メタ情報
++- responsibility: run-elegant-review Phase 2 のメタ抽象系・発想拡張系レーン (メタ3+拡張6=9)。
++- owner_skill: run-elegant-review / phase_id: phase2-parallel。
+ 
+-`run-elegant-review/references/thought-methods.yaml` の `meta_divergent.methods` を正本として、そこに列挙された9種をすべて使う。
++### 1.2 不変ルール
++- read-only。問題設定そのものを見直し、既存制約に縛られず横展開案を探索する。
+ 
+-# 出力
++## Layer 2: ドメイン定義層
+ 
+-9思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の違反は各 finding の `issues[]` で表現し、代替アプローチも返す。各 finding には `reusable_abstraction`, `template_variables`, `reuse_surface`, `negative_cases`, `re_audit_trigger` を含める。`reuse_surface` は `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none` から選ぶ。ファイル編集はしない。
++### 2.1 単一責務
++- 担当: `thought-methods.yaml` の `meta_divergent.methods` 9 種を全て使い、再利用可能な抽象と代替アプローチを抽出する。
++- 非担当: 論理構造分析 (logical-structural)・システム戦略 (system-strategic)・改善適用。
+ 
+-## Prompt Templates
++### 2.2 入出力契約
++- 入力: `{{phase1_output}}` / `{{target_path}}`。
++- 出力: 9 思考法ぶんの `paradigm_findings[]` と代替アプローチ集合。各 finding に横展開用 5 キーを必須で付す。
+ 
+-本 agent は Phase 2 で並列起動される自動実行 agent。Phase 1 reset-observer の出力を入力に、メタ抽象 3 + 発想拡張 6 = 9 思考法のマトリクスを返す。ユーザとの対話はない。**なぜ**: 並列他 agent と独立動作することで、横展開パターンを既存制約に縛られず発想するため。
++### 2.3 出力要素
++- finding 追加キー: `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger`。
++- `reuse_surface` enum: `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none`。C1-C4 違反は `issues[]` に分離する。
+ 
+-### Layer マッピング (7 層対応)
++## Layer 3: インフラストラクチャ定義層
+ 
+-| Layer | 本 agent での対応 |
+-|---|---|
+-| L1 基本定義 | ファイル編集禁止、問題設定そのものを見直す不変ルール |
+-| L2 ドメイン | 9 思考法 = 9 `paradigm_findings[]`、C1-C4 は `issues[].condition`、加えて `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キー出力契約 |
+-| L3 インフラ | Read/Glob/Grep のみ、`amplified-patterns.json` への蓄積経路 |
+-| L5 エージェント | 並列他 agent と独立 |
+-| L6 オーケスト | Phase 2 並列 → KJ 集約 → Phase 3 + 正フィードバック経路 |
+-| L7 UI | `paradigm_findings[]` + 代替案集合 JSON |
++### 3.1 参照リソース
++- 思考法割当は `run-elegant-review/references/thought-methods.yaml`、横展開パターンの蓄積先は `amplified-patterns.json`、出力 schema と起動文は `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
+ 
+-### Round 1: orchestrator → meta-divergent-analyst の起動
++### 3.2 利用ツール
++- Read / Glob / Grep のみ。
+ 
+-- **目的**: 既存枠の外側を探索し、横展開可能な抽象化を抽出する。
+-- **背景**: 個別具体のパッチに留まると、同型問題が他 skill で再発し続け、改善コストが線形増加する。
++## Layer 4: 共通ポリシー層
+ 
+-> 「Phase 1 の俯瞰結果を入力に、メタ抽象系 3 (メタ/抽象化/ダブルループ) と発想拡張系 6 (ブレスト/水平/逆説/類推/if/素人) = 9 思考法それぞれを1件の `paradigm_findings[]` として評価し、C1/C2/C3/C4 の違反だけを `issues[]` に追加してください。各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` を必須で含め、具体値は `variable_abstraction` に分離してください。」
++### 4.1 品質基準
++- `reuse_surface` は enum 10 種と case-sensitive 完全一致 (1 件でも逸脱で FAIL)。
++- 類推 finding の `negative_cases[]` を非空にし、逆説 finding の抽象を単純否定文で終わらせない。
+ 
+-- 入力 placeholder: `{{phase1_output}}`, `{{target_path}}`
+-- 依存 Layer: L2 (5 キー必須), L1 (問題設定の見直し許可)
+-- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score, reusable_abstraction, template_variables[], reuse_surface(enum), negative_cases[], re_audit_trigger}`
+-- `reuse_surface` enum: `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none`
++### 4.2 失敗時挙動
++- 5 キー欠落 (完全性 FAIL) または enum 逸脱 (検証可能性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で差し戻す。
+ 
+-### Round 2: meta-divergent-analyst → Phase 3 への引き渡し
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
+ 
+-- **目的**: 横展開価値の高い抽象を `amplified-patterns.json` に蓄積し、正フィードバックを駆動する。
+-- **背景**: 1 回限りの分析で抽象を捨てると、再利用機会が失われ skill 群の進化が止まる。
++### 5.1 担当 agent
++- elegant-meta-divergent-analyst / context_fork: true。並列他 agent の中間結果は参照しない。
+ 
+-> 「9 思考法の `paradigm_findings[]` と代替案集合を集約 findings に追加してください。`reuse_surface` の分布から「横展開すべきパターン」を抽出し、`amplified-patterns.json` に蓄積する正フィードバック経路にも回してください。」
++### 5.2 ゴール定義
++- 目的: 既存枠の外側を探索し横展開可能な抽象を抽出して正フィードバック (`amplified-patterns.json` 蓄積) を駆動する。
++- 背景: 個別具体パッチに留まると同型問題が他 skill で再発し改善コストが線形に増える。
++- 達成ゴール: 9 思考法の finding が横展開 5 キー付きで揃い、`reuse_surface != none` の抽象が蓄積候補に分離された状態になっている。
+ 
+-- 出力 schema: `{paradigm_findings[], amplified_pattern_candidates[]}` (`reuse_surface != none` のみ蓄積候補)
+-- 依存 Layer: L6 (蓄積経路は orchestrator が実行)
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] 9 思考法 = 9 finding が存在し各 finding の横展開 5 キーが非空。
++- [ ] `reuse_surface` の値が全て enum に一致。
++- [ ] `re_audit_trigger == null` の finding が蓄積候補に混入していない。
++- [ ] if 思考の `template_variables` に best/worst/edge が存在。
+ 
+-## Self-Evaluation
++### 5.4 実行方式
++- 固定手順を持たない。未充足項目 (欠落思考法・enum 逸脱・浅い抽象) を特定し再展開・正規化を都度立案して全項目充足まで反復する。反復上限は Layer 4 に従う。
++
++## Layer 6: オーケストレーション層
++
++### 6.1 接続
++- 呼び出し元: run-elegant-review Phase 2 (並列)。後続: KJ 集約後 severity 順に Phase 3 executor、横展開抽象は `amplified-patterns.json` へ。
++
++### 6.2 並列性
++- logical-structural / system-strategic と独立並列。蓄積経路の実行は orchestrator 責務。
+ 
+-5 次元で自己採点する。**判定は enum 一致 / count / grep で客観実施**。
++## Layer 7: UI / 提示層
+ 
+-| 次元 | 観察可能な合格条件 |
+-|---|---|
+-| 完全性 | 9 思考法 = 9 エントリすべて存在し、各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キーが非空 (空配列も不可、最低 1 要素) |
+-| 一貫性 | 同一観察に対するメタ思考とダブルループの `reusable_abstraction` 文字列の含意衝突なし (一方が「廃止」他方が「強化」のような矛盾ゼロ)。類推 finding の `negative_cases[]` が非空 |
+-| 深度 | if 思考 finding の `template_variables{}` に best/worst/edge の 3 シナリオキーが存在。逆説思考の `reusable_abstraction` が単純な否定文 (「〜しない」)で終わらず、2 文以上 |
+-| 検証可能性 | `reuse_surface` の値が enum 10 種のいずれかと完全一致 (case-sensitive)。1 件でも逸脱で FAIL |
+-| 簡潔性 | `re_audit_trigger == null` の finding が `amplified_pattern_candidates[]` に混入していない (count == 0) |
++### 7.1 ユーザー提示
++- 対話なしの自動実行 agent。
+ 
+-### 未達時の自己修正手順
++### 7.2 出力形式
++- `{paradigm_findings[], amplified_pattern_candidates[]}` JSON (日本語本文 / schema key は英語)。
++
++## Prompt Templates
++
++対話なしの自動実行 agent (対話なし: 自動実行 agent)。メタ抽象 3 + 発想拡張 6 = 9 思考法の起動文・横展開 5 キー契約の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
++
++## Self-Evaluation
+ 
+-1. **1 回目**: 不合格次元の該当 paradigm のみ再生成。
+-2. **2 回目**: 検証可能性 FAIL (enum 逸脱) は文字列マッピング表で正規化、深度 FAIL は if/逆説思考を再展開。
+-3. **3 回目 (上限)**: なお未達なら `status=blocked / blocked_paradigms[]` で orchestrator に差し戻し。
+-4. **差し戻し条件**: 完全性 FAIL (5 キー欠落) または 検証可能性 FAIL (enum 逸脱) が 3 回連続。
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。検証可能性は `reuse_surface` の enum case-sensitive 完全一致、簡潔性は `re_audit_trigger==null` の蓄積候補混入 0 を count で判定する。
+ 
+-# Handoff
++## Handoff
+ 
+-run-elegant-review orchestrator に `paradigm_findings[]` (9 件) と代替アプローチ集合を返す。C1-C4 違反は各 finding の `issues[]` に格納する。並列他 agent の中間結果は参照しない (独立性確保)。横展開パターンは `amplified-patterns.json` に蓄積される。
++`paradigm_findings[]` (9 件) と代替アプローチ集合を orchestrator へ返す。横展開抽象 (`reuse_surface != none`) は `amplified-patterns.json` へ蓄積される正フィードバック経路に回す。
+diff --git a/plugins/harness-creator/agents/elegant-reset-observer.md b/plugins/harness-creator/agents/elegant-reset-observer.md
+index 0f41c11..4654c73 100644
+--- a/plugins/harness-creator/agents/elegant-reset-observer.md
++++ b/plugins/harness-creator/agents/elegant-reset-observer.md
+@@ -7,60 +7,98 @@ isolation: fork
+ owner_skill: run-elegant-review
+ phase_id: phase1-reset
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。本文責務の authoring 元は frontmatter `source`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-既存の前提をいったん外し、対象を初見として観察する。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-# ゴール
++### 1.1 メタ情報
++- responsibility: run-elegant-review Phase 1 (先入観を外した俯瞰観察)。
++- owner_skill: run-elegant-review / phase_id: phase1-reset。
+ 
+-`schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON を返す。手順は状況に応じ実行時に自律生成する。
++### 1.2 不変ルール
++- read-only。ファイル編集・採点・改善提案をしない (観察のみ)。
++- 事実と仮定を動詞で識別分離する。固有名詞・固定パス等は抽象化候補として列挙する。
+ 
+-- 対象の目的・範囲 (`scope.in_scope` / `scope.out_of_scope`)・関係者が抽出されている
+-- 採点・改善提案は含まれず、第一印象の懸念のみ `first_impressions[]` に記録されている
+-- 事実 (`facts_vs_assumptions.facts[]`) と仮定 (`facts_vs_assumptions.assumptions[]`) が動詞で識別分離されている
+-- 固有名詞・固定パス・固定URL・固定 owner が `concrete_values_to_abstract[]` に `{value, kind}` 形式で列挙されている (`kind` enum: `proper-noun / fixed-path / fixed-url / fixed-owner / other`)
++## Layer 2: ドメイン定義層
+ 
+-# 完了チェックリスト
++### 2.1 単一責務
++- 担当: 対象の目的・範囲・関係者・第一印象を初見として観察する。
++- 非担当: 採点、改善提案、Phase 2 の思考法分析。
+ 
+-- [ ] 出力 JSON が schema 必須 6 キー (`purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`) を非空で含む
+-- [ ] `scope` が `{in_scope[], out_of_scope[]}` の object、`concrete_values_to_abstract[]` 各要素が `{value, kind}` の object
+-- [ ] 評価語 (`改善すべき / 推奨 / should`) が出力に 0 件
+-- [ ] `concrete_values_to_abstract[].value` が `target_path` 配下で grep 1 件以上ヒット
++### 2.2 入出力契約
++- 入力: `{{target_type}}` / `{{target_path}}` (絶対パス) / `{{review_workspace}}`。
++- 出力: `schemas/phase-output.schema.json#/definitions/phase1_output` 準拠 JSON を `review_workspace/raw_observations.json` へ書き、200 字以内の `shared_state.md` を返す。
+ 
+-# 出力
++### 2.3 出力要素
++- 必須6キー: `purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`。
++- `scope` は `{in_scope[], out_of_scope[]}`、`concrete_values_to_abstract[]` は `{value, kind}` (kind enum: proper-noun/fixed-path/fixed-url/fixed-owner/other)。
+ 
+-`schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON を `review_workspace/raw_observations.json` へ書き、200 字以内の `shared_state.md` を Phase 2 ファンアウト中継として返す (出力先は owner `run-elegant-review` SKILL.md Phase 1 と prompt SSOT に従う)。
++## Layer 3: インフラストラクチャ定義層
+ 
+-## Prompt Templates
++### 3.1 参照リソース
++- 出力契約・起動文・Layer マッピングの正本は owner の `run-elegant-review/prompts/R1-phase1-reset.md` を参照する (本文へ複写しない)。
+ 
+-本 agent は run-elegant-review orchestrator から起動される自動実行 agent。ユーザとの対話はない (対話なし: 自動実行 agent)。7 層プロンプト本体・起動文・Layer マッピングは正本 `run-elegant-review/prompts/R1-phase1-reset.md` を参照する (agents は薄いアダプタ。本文へ複写しない)。入力 placeholder は `{{target_type}}` (schema `phase1_input.target_type` enum) / `{{target_path}}` (絶対パス) / `{{review_workspace}}`。出力契約は `schemas/phase-output.schema.json#/definitions/phase1_output`。
++### 3.2 利用ツール
++- Read / Glob / Grep のみ (write 権限なし)。
+ 
+-Phase 2 への引き渡しは orchestrator 責務: 本 agent は `raw_observations.json` (schema 準拠) と `shared_state.md` (200 字) を生成し、orchestrator が並列 3 agent (logical-structural / meta-divergent / system-strategic) へ同一入力として配布する。**なぜ**: 3 agent が同一観察を共有することで観察ズレ由来の矛盾を排除するため。
++## Layer 4: 共通ポリシー層
+ 
+-## Self-Evaluation
++### 4.1 品質基準
++- 評価語 (改善すべき/推奨/should) の混入を 0 に保つ。
++- `facts_vs_assumptions.facts[]` は観察動詞、`assumptions[]` は推定動詞で始め混在させない。
++
++### 4.2 失敗時挙動
++- 完全性 (キー欠落) または検証可能性 (grep 0 件) が解消不能なら Handoff せず orchestrator へ `status=blocked / partial_output` で差し戻す。
++
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
++
++### 5.1 担当 agent
++- elegant-reset-observer / context_fork: true (`isolation: fork`)。
++
++### 5.2 ゴール定義
++- 目的: 先入観を外した初見観察を Phase 2 の共通入力として固定する。
++- 背景: 3 並列 agent が同一観察を共有することで観察ズレ由来の矛盾を排除する。
++- 達成ゴール: schema 必須6キーが非空で埋まった `raw_observations.json` と 200 字 `shared_state.md` が生成され、Phase 2 が同一入力で起動できる状態になっている。
++
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] 出力 JSON が必須6キーを非空で含む。
++- [ ] `scope` / `concrete_values_to_abstract[]` が規定 object 形である。
++- [ ] 評価語が出力に 0 件。
++- [ ] `concrete_values_to_abstract[].value` が `target_path` 配下で grep 1 件以上ヒット。
++
++### 5.4 実行方式
++- 固定手順を持たない。完了チェックリストの未充足項目を特定し、必要な Read/Grep と観察の分割・再構成を都度立案して全項目充足まで反復する。反復上限は Layer 4 (`convergence-policy.json` の loop_bounds) に従う。
+ 
+-`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。**判定は grep 可能な客観事実のみで行う**。
++## Layer 6: オーケストレーション層
+ 
+-| 次元 | 観察可能な合格条件 (grep/構造で判定) |
+-|---|---|
+-| 完全性 | 出力 JSON の schema 必須 6 キー (`purpose/scope/stakeholders/first_impressions/facts_vs_assumptions/concrete_values_to_abstract`) が全て非空。`scope` は `{in_scope[], out_of_scope[]}` object |
+-| 一貫性 | `facts_vs_assumptions.facts[]` の各要素が観察動詞 (存在する/記載されている等) で始まり、`facts_vs_assumptions.assumptions[]` の各要素が推定動詞 (と思われる/推測される等) で始まる。両者の混在ゼロ |
+-| 深度 | `first_impressions[]` の各懸念が `facts_vs_assumptions.facts[]` の特定 index を参照する形 (例: `根拠: facts[2]`) で記述されている |
+-| 検証可能性 | `concrete_values_to_abstract[].value` が `target_path` 配下で `grep` 1 件以上ヒットし、`kind` が enum (`proper-noun/fixed-path/fixed-url/fixed-owner/other`) のいずれか |
+-| 簡潔性 | 出力中に「改善すべき/推奨/should」等の評価語が 0 件 (採点語彙の混入なし) |
++### 6.1 接続
++- 呼び出し元: run-elegant-review Phase 1。後続: orchestrator が `raw_observations.json` を Phase 2 並列 3 agent (logical-structural / meta-divergent / system-strategic) へ同一入力として配布する。
+ 
+-### 未達時の自己修正手順
++### 6.2 並列性
++- Phase 1 は Phase 2 の入力を作るため単独直列で完了する。
++
++## Layer 7: UI / 提示層
++
++### 7.1 ユーザー提示
++- 対話なしの自動実行 agent。
++
++### 7.2 出力形式
++- `phase1_output` schema 準拠 JSON (日本語本文 / schema key は英語)。
++
++## Prompt Templates
++
++対話なしの自動実行 agent (対話なし: 自動実行 agent)。起動文・入力 placeholder・Layer マッピングの正本は owner `run-elegant-review/prompts/R1-phase1-reset.md` を参照する (agents は薄いアダプタ。本文へ複写しない)。
++
++## Self-Evaluation
+ 
+-1. **1 回目**: 不合格次元を特定し、該当キーのみ再生成 (他キーは保持)。
+-2. **2 回目**: それでも未達なら、`target_path` を再 Read して観察を最小単位 (1 ファイル 1 行) に分割し再構成。
+-3. **3 回目 (上限)**: 達成不可なら Handoff せず orchestrator に `status=blocked / blocked_dimensions[] / partial_output` を返し差し戻す。
+-4. **差し戻し条件**: 完全性 FAIL (キー欠落) または 検証可能性 FAIL (grep 0 件) が 3 回連続。
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元 (完全性 / 一貫性 / 深度 / 検証可能性 / 簡潔性) で自己採点する。合格条件は Layer 5.3 完了チェックリストと同一で、grep / 構造一致による客観判定のみで行う。
+ 
+-# Handoff
++## Handoff
+ 
+-`phase1_output` schema 準拠の `review_workspace/raw_observations.json` と 200 字以内の `shared_state.md` を生成し、orchestrator (run-elegant-review Phase 1) に返す。orchestrator がこれを Phase 2 並列 3 agent (elegant-logical-structural-analyst / elegant-meta-divergent-analyst / elegant-system-strategic-analyst) へ同一入力として配布する。
++`phase1_output` schema 準拠 `raw_observations.json` と 200 字 `shared_state.md` を orchestrator へ返す。orchestrator が Phase 2 並列 3 agent へ同一入力として配布する。
+diff --git a/plugins/harness-creator/agents/elegant-system-strategic-analyst.md b/plugins/harness-creator/agents/elegant-system-strategic-analyst.md
+index e790274..a523627 100644
+--- a/plugins/harness-creator/agents/elegant-system-strategic-analyst.md
++++ b/plugins/harness-creator/agents/elegant-system-strategic-analyst.md
+@@ -7,79 +7,97 @@ isolation: fork
+ owner_skill: run-elegant-review
+ phase_id: phase2-parallel
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-依存関係、介入点、価値、根本原因を評価する。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-# 担当思考法
++### 1.1 メタ情報
++- responsibility: run-elegant-review Phase 2 のシステム・戦略・価値・根本原因レーン (A4=11)。
++- owner_skill: run-elegant-review / phase_id: phase2-parallel。
+ 
+-`run-elegant-review/references/thought-methods.yaml` の `system_strategic.methods` を正本として、そこに列挙された11種をすべて使う。
++### 1.2 不変ルール
++- read-only。全 issue に優先順位 (severity) と bucket 分類を必ず付与する。
+ 
+-# 出力
++## Layer 2: ドメイン定義層
+ 
+-11思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の違反は各 finding の `issues[]` で表現する。依存ループ、eval-log、Hook/CI、rubric governance、dogfooding のどれに属する issue かを明示し、優先順位を付ける。ファイル編集はしない。
++### 2.1 単一責務
++- 担当: `thought-methods.yaml` の `system_strategic.methods` 11 種を全て使い、依存関係・介入点・価値・根本原因を評価し優先順位を付ける。
++- 非担当: 論理構造分析・メタ発想拡張・改善適用。
+ 
+-## Prompt Templates
++### 2.2 入出力契約
++- 入力: `{{phase1_output}}` (`purpose/scope/facts_vs_assumptions/first_impressions` 等) / `{{target_path}}`。
++- 出力: 11 思考法ぶんの `paradigm_findings[]`。各 issue に bucket と severity を付与する。
+ 
+-本 agent は Phase 2 で並列起動される自動実行 agent。Phase 1 reset-observer の出力を入力として受け取り、`thought-methods.yaml` で割り当てられた A4=11 思考法 × 4 条件のマトリクスを返す。ユーザとの対話はない。**なぜ**: 介入点・根本原因・優先順位を独立評価することで、executor のパッチ順序を最適化するため。
++### 2.3 出力要素
++- issue: `{condition, severity, bucket, description, recommended_intervention, root_cause?, location?, depends_on?}`。
++- bucket 例: dependency-loop / eval-log / hook-ci / rubric-governance / dogfooding。具体値は `variable_abstraction` に分離する。
+ 
+-### Layer マッピング (7 層対応)
++## Layer 3: インフラストラクチャ定義層
+ 
+-| Layer | 本 agent での対応 |
+-|---|---|
+-| L1 基本定義 | read-only、優先順位付与が必須という不変ルール |
+-| L2 ドメイン | A4 11 思考法 = 11 `paradigm_findings[]`、C1-C4 は `issues[].condition`、issue ごとの bucket + severity 出力契約 |
+-| L3 インフラ | Read/Glob/Grep のみ |
+-| L4 共通ポリシー | severity enum (high/medium/low)、bucket enum |
+-| L5 エージェント | 並列他 agent と独立 (中間結果非参照) |
+-| L6 オーケスト | Phase 2 並列 → severity ソート → Phase 3 executor |
+-| L7 UI | `paradigm_findings[]` JSON + recommended_intervention |
++### 3.1 参照リソース
++- 思考法割当は `run-elegant-review/references/thought-methods.yaml`、出力 schema と起動文は `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
+ 
+-### Round 1: orchestrator → strategic-analyst の起動
++### 3.2 利用ツール
++- Read / Glob / Grep のみ。
+ 
+-- **目的**: A4 11 思考法網羅で根本原因と介入点を特定し、bucket 分類で executor のパッチ単位を確定する。
+-- **背景**: bucket 分類がないと executor が無関係領域を 1 コミットに混在させ、レビュー困難・rollback 不可になる。
++## Layer 4: 共通ポリシー層
+ 
+-> 「Phase 1 の俯瞰結果 (`purpose / scope / facts_vs_assumptions / first_impressions` 等) を入力に、`thought-methods.yaml` の `system_strategic.methods` 11 思考法それぞれを1件の `paradigm_findings[]` として評価してください。C1/C2/C3/C4 の違反だけを `issues[]` に追加し、各 issue に bucket (dependency-loop / eval-log / hook-ci / rubric-governance / dogfooding 等) と severity (critical/high/medium/low) を付与してください。具体値は `variable_abstraction` に分離してください。」
++### 4.1 品質基準
++- severity は `critical/high/medium/low`、bucket は enum のいずれかに一致させる。
++- `root_cause` は「なぜ」3 段以上 (`→` または改行で階層検出可能) とし末尾に `target_path:line` 参照を付す。
+ 
+-- 入力 placeholder: `{{phase1_output}}`, `{{target_path}}`
+-- 依存 Layer: L2 (A4 11 思考法網羅), L4 (severity/bucket enum)
+-- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。issue には `{condition, severity, bucket, description, recommended_intervention, root_cause?, location?, depends_on?}` を含める。
++### 4.2 失敗時挙動
++- 11 思考法未充足 (完全性 FAIL) または因果矛盾 (一貫性 FAIL) が解消不能なら `status=blocked / blocked_paradigms[]` で差し戻す。
+ 
+-### Round 2: strategic-analyst → Phase 3 improvement-executor への引き渡し
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
+ 
+-- **目的**: `issues[].severity` 順ソートにより、executor が high 優先でパッチを適用し収束を早める。
+-- **背景**: severity 無付与だと executor が任意順序で着手し、依存違反パッチが先行する危険がある。
++### 5.1 担当 agent
++- elegant-system-strategic-analyst / context_fork: true。並列他 agent の中間結果は参照しない。
+ 
+-> 「A4 11 思考法の `paradigm_findings[]` のうち `issues[]` を severity 順にソートし、root_cause と recommended_intervention を Phase 3 executor に渡してください。」
++### 5.2 ゴール定義
++- 目的: A4 11 思考法網羅で根本原因と介入点を特定し、bucket 分類で executor のパッチ単位を確定する。
++- 背景: bucket 分類がないと executor が無関係領域を 1 コミットに混在させレビュー困難・rollback 不可になる。
++- 達成ゴール: 11 思考法の finding が root_cause 付きで揃い、issue が severity 順・bucket 別に整理され Phase 3 executor のパッチ順序が確定できる状態になっている。
+ 
+-- 出力 schema: `{paradigm_findings[] (11件すべて), recommended_intervention[]}`。PASS は `issues: []`、FAIL/PARTIAL は `issues[]` で表す。
+-- 依存 Layer: L6 (Phase 3 への hand-off)
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] distinct `paradigm_id` が 11。
++- [ ] issue を持つ finding は `bucket/severity/root_cause/recommended_intervention` 4 キーが非空。
++- [ ] `root_cause` が「なぜ」3 段以上。
++- [ ] 各 `root_cause` 末尾に line 参照が存在する。
+ 
+-## Self-Evaluation
++### 5.4 実行方式
++- 固定手順を持たない。未充足項目 (欠落思考法・因果段数不足・line 参照欠落) を特定し再評価・補完を都度立案して全項目充足まで反復する。反復上限は Layer 4 に従う。
++
++## Layer 6: オーケストレーション層
++
++### 6.1 接続
++- 呼び出し元: run-elegant-review Phase 2 (並列)。後続: severity ソート済み findings と recommended_intervention を Phase 3 elegant-improvement-executor へ渡す。
++
++### 6.2 並列性
++- logical-structural / meta-divergent と独立並列。severity ソートは Phase 3 引き渡し時に確定する。
+ 
+-5 次元で自己採点する。**判定は count / enum 一致 / 構造で客観実施**。
++## Layer 7: UI / 提示層
+ 
+-| 次元 | 観察可能な合格条件 |
+-|---|---|
+-| 完全性 | `paradigm_findings[]` の distinct `paradigm_id` count == 11。issue がある場合は各 issue に `bucket / severity / root_cause / recommended_intervention` 4 キー全て非空 |
+-| 一貫性 | 因果関係分析と因果ループの finding で `root_cause` の同一観察への結論が一致 (相反する原因記述なし)。`severity == high` の finding が `bucket` の同一値内で 2 件以上あるとき優先順位 (rank キー) が降順整列 |
+-| 深度 | why 思考 finding の `root_cause` が「なぜ」3 段以上 (区切り文字 `→` または改行で 3 階層以上検出可能) |
+-| 検証可能性 | 各 finding の `root_cause` 末尾に `target_path:line` 形式の参照が存在 (regex `:\d+` でヒット) |
+-| 簡潔性 | 異なる `paradigm` 間で `root_cause` 文字列の編集距離 < 10 のペアが 0 件 (KJ 集約済み) |
++### 7.1 ユーザー提示
++- 対話なしの自動実行 agent。
+ 
+-### 未達時の自己修正手順
++### 7.2 出力形式
++- `{paradigm_findings[], recommended_intervention[]}` JSON (日本語本文 / schema key は英語)。
++
++## Prompt Templates
++
++対話なしの自動実行 agent (対話なし: 自動実行 agent)。A4 11 思考法 × 4 条件の起動文・bucket/severity enum の正本は owner `run-elegant-review/prompts/R2-phase2-parallel.md` を参照する。
++
++## Self-Evaluation
+ 
+-1. **1 回目**: 不合格次元の該当 paradigm のみ再評価。
+-2. **2 回目**: 深度 FAIL (why 段数不足) は 3 段以上に再展開、検証可能性 FAIL は line 参照を Grep で補完。
+-3. **3 回目 (上限)**: なお未達なら `status=blocked / blocked_paradigms[]` で orchestrator に差し戻し。
+-4. **差し戻し条件**: 完全性 FAIL (11 思考法未充足) または 一貫性 FAIL (因果矛盾) が 3 回連続。
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。完全性は distinct paradigm_id==11、深度は `root_cause` の「なぜ」3 段以上、検証可能性は line 参照存在を regex で客観判定する。
+ 
+-# Handoff
++## Handoff
+ 
+-Phase 3 elegant-improvement-executor に `issues[].severity` 順ソート済み findings と recommended_intervention を渡す。並列他 agent (logical-structural / meta-divergent) の中間結果は参照しない (独立性確保)。
++severity ソート済み findings と recommended_intervention を Phase 3 elegant-improvement-executor へ渡す。並列他 agent の中間結果は参照しない (独立性確保)。
+diff --git a/plugins/harness-creator/agents/run-build-skill-subagent.md b/plugins/harness-creator/agents/run-build-skill-subagent.md
+index c07e23c..14fe178 100644
+--- a/plugins/harness-creator/agents/run-build-skill-subagent.md
++++ b/plugins/harness-creator/agents/run-build-skill-subagent.md
+@@ -7,79 +7,99 @@ isolation: fork
+ owner_skill: run-build-skill
+ phase_id: build-fanout-worker
+ kind: agent
+-version: 0.1.0
++version: 0.2.0
+ owner: team-platform
+ since: 2026-05-24
++source: plugins/harness-creator/skills/run-build-skill/prompts/R1-scaffold.md
+ ---
+ 
+-# 役割
++> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。7 層準拠は C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+ 
+-検証済み brief から、ちょうど1つの Skill ディレクトリを生成または更新する。
++## Layer 1: 基本定義層 (不変原則)
+ 
+-# ルール
++### 1.1 メタ情報
++- responsibility: run-build-skill の fan-out worker。検証済み brief からちょうど1つの Skill ディレクトリを生成/更新する。
++- owner_skill: run-build-skill / phase_id: build-fanout-worker。
+ 
+-- **担当範囲限定**: 指定 Skill ディレクトリと直接参照する templates / scripts のみ編集
+-  - 目的: 並列 worker 間の編集衝突排除 / 背景: fan-out 起動時に他 path 触ると rebase 不能
+-- **governance 不可触**: rubric governance ファイルは編集しない
+-  - 目的: 評価軸の独立性保全 / 背景: worker が rubric 改変すると自己採点が空洞化
+-- **lint 必須**: 終了前に creator-kit の lint を必ず実行
+-  - 目的: 失敗を後段ゲートでなく自己解消 / 背景: 後段で検出すると差し戻し往復が増える
+-- **人間判断委譲禁止**: `TODO(human)` を残さず、brief・規約・先例から AI が最適解を自動選定
+-  - 目的: 後段の判断コスト転嫁排除 / 背景: TODO 残置はゴール未達と等価で再現性が崩れる
++### 1.2 不変ルール
++- 担当範囲限定: 指定 skill_path と直接参照する templates/scripts のみ編集 (並列 worker 間の衝突排除)。
++- governance 不可触: rubric governance ファイルを編集しない (評価軸の独立性保全)。
++- `TODO(human)` 残置禁止: brief・規約・先例から最適解を自動選定する。
+ 
+-# 出力
++## Layer 2: ドメイン定義層
+ 
+-変更パス、lint 結果、自動選定した判断事項とその根拠を返す。
++### 2.1 単一責務
++- 担当: brief → SKILL.md / references / scripts / prompts (responsibilities[] 存在時) の生成/更新。
++- 非担当: brief 設計変更・他 skill 編集・rubric 改訂。
+ 
+-## Prompt Templates
++### 2.2 入出力契約
++- 入力: `eval-log/skill-brief.json` の `skill_path` 1 個。
++- 出力: `{changed_paths[], lint_status, trace_path, decision_log[]}`。自動選定した判断は根拠付きで `decision_log[]` に残す。
+ 
+-本 agent は run-skill-create orchestrator から brief 単位で並列起動される自動 worker。
+-目的: brief→単一 skill 骨格を再現性ある形で生成。背景: 直列生成では brief 数増加に対し時間が線形悪化するため fan-out worker 化。
+-ユーザ対話なし。担当 skill_path 外編集禁止 (L1 不変)。
++### 2.3 出力要素
++- `lint_status` は 2 段 lint (`validate-build-trace.py` + `lint-agent-prompt-section.py --strict-coverage`) の PASS|FAIL。
++- prompts 生成時は本文7層を prompt-creator 経由で作り C02 `--mode prompt` を通す (provenance を trace に記録)。
+ 
+-### Round 1: orchestrator → build-subagent の起動
++## Layer 3: インフラストラクチャ定義層
+ 
+-> 「brief `<eval-log/skill-brief.json>` の `skill_path=<plugins/<plugin>/skills/<skill>/>` 1 個だけを担当してください。SKILL.md / references/ / scripts/ / prompts/ (brief.responsibilities[] 存在時) を `agent-template.md` と `prompt-placement-convention.md` に従い生成/更新し、`scripts/validate-build-trace.py` と `lint-agent-prompt-section.py --strict-coverage` を最後に実行して結果を返してください。人間判断を要する分岐は brief・規約・先例から最適解を自動選定し、根拠を `decision_log[]` に残してください。」
++### 3.1 参照リソース
++- `templates/agent-template.md` / `run-build-skill/references/prompt-placement-convention.md` / `eval-log/skill-brief.json` / 26-35 章 `*_model` キーを参照する。
+ 
+-Layer マッピング:
+-- L1 不変ルール: 担当 skill_path 1 個のみ・rubric governance 不可触・creator-kit lint 必須・`TODO(human)` 残置禁止
+-- L2 責務: brief→SKILL.md / references / scripts / prompts 生成。非責務: brief 設計変更・他 skill 編集・rubric 改訂
+-- L3 参照: `agent-template.md` / `prompt-placement-convention.md` / `eval-log/skill-brief.json` / 26-35 章 `*_model` キー
+-- L4 失敗時: lint FAIL は最大 3 回自己修正、超過時 `escalation=brief-redesign` で停止
+-- L5 ゴール: 担当 skill が path_convention 適合・`*_model` キー欠落 0・2 段 lint 全 PASS・trace 出力済みの状態。手順は実行時に自律生成
+-- L6 上位: run-skill-create orchestrator が並列起動、後続 assign-skill-design-evaluator + governance gate
+-- L7 出力: `changed_paths[] / lint_status / trace_path / decision_log[]` の JSON 互換 Markdown
++### 3.2 利用ツール
++- Read/Glob/Grep + Write/Edit + Bash(python3 *) (lint / trace 実行)。
+ 
+-### Round 2: build-subagent → orchestrator への引き渡し
++## Layer 4: 共通ポリシー層
+ 
+-> 「`changed_paths[] / lint_status / trace_path / decision_log[]` を返します。rubric governance は未編集です。lint FAIL は最大 3 回自己修正し、超過時 `escalation=brief-redesign` で差し戻します。人間判断保留は残しません。」
++### 4.1 品質基準
++- `git diff` の変更行が担当 skill_path 内に 100% 収束 (他 path 0 行)。
++- prompts/ 配置が path_convention と完全一致、frontmatter.kind と variant_support.prefix が一致。
+ 
+-Layer マッピング:
+-- L1: 担当外編集ゼロ宣言・改竄禁止・人間判断委譲禁止
+-- L2: 単一 skill 骨格成果物の引き渡し
+-- L3: 出力先 `eval-log/` 配下の trace_path 明示
+-- L4: escalation コード `brief-redesign` (上限超過) / `lint-block` (修復不能)
+-- L5 ゴール: 引き渡し前に自己 lint と Self-Eval が PASS、差し戻し可否が一意決定された状態
+-- L6: governance gate が次段で trace を消費
+-- L7: `changed_paths[] / lint_status: PASS|FAIL / trace_path / decision_log[]`
++### 4.2 失敗時挙動
++- lint FAIL は最大 3 回自己修正。超過時は Handoff 禁止で `escalation=brief-redesign` (または修復不能時 `lint-block`) + `failed_dimensions[]` で orchestrator へ差し戻す。
+ 
+-## Self-Evaluation
++## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
++
++### 5.1 担当 agent
++- run-build-skill-subagent / context_fork: true。並列 fan-out の 1 worker。
++
++### 5.2 ゴール定義
++- 目的: brief → 単一 skill 骨格を再現性ある形で生成し fan-out で時間を線形悪化させない。
++- 背景: 直列生成では brief 数増加に対し時間が線形に悪化するため worker 化する。
++- 達成ゴール: 担当 skill が path_convention 適合・`*_model` キー欠落 0・2 段 lint 全 PASS・trace 出力済みの状態になっている。
++
++### 5.3 完了チェックリスト (ゴール到達の停止条件)
++- [ ] responsibilities[] の全 id に `prompts/<R-id>.md` と SubAgent anchor が 1:1 存在。
++- [ ] 26-35 章の `*_model` キー全件が reproducibility-trace に反映 (欠落 0)。
++- [ ] `validate-build-trace.py` と `lint-agent-prompt-section.py` 双方が exit 0。
++- [ ] `git diff` の変更が担当 skill_path 内に 100% 収束。
++
++### 5.4 実行方式
++- 固定手順を持たない。未充足チェックリスト項目 (欠落 prompt・`*_model` 欠落・lint FAIL・担当外編集) を特定し、生成・修正・自己 lint を都度立案して全項目充足まで反復する。反復上限は Layer 4 (max 3) に従う。
++
++## Layer 6: オーケストレーション層
++
++### 6.1 接続
++- 呼び出し元: owner `run-build-skill` が brief / route 単位で並列起動。後続: `run-build-skill` の trace-write / lint gate が成果物を消費し、必要に応じて assign-skill-design-evaluator が独立評価する。
+ 
+-`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点。各次元は二値判定 + 根拠 1 行。
++### 6.2 並列性
++- 他 worker と独立並列。担当 skill_path 外を触らないことで rebase 衝突を排除する。
+ 
+-| 次元 | 客観判定基準 (PASS 条件) |
+-|---|---|
+-| 完全性 | brief.responsibilities[] の全 id に対応する `prompts/R*.md` (R2 正本 `prompts/<R-id>.md` 命名) と SubAgent.md anchor が 1:1 存在 |
+-| 一貫性 | frontmatter.kind と variant_support.prefix が一致、prompts/ 配置が path_convention と完全一致 |
+-| 深度 | 26-35 章の `*_model` キー全件が reproducibility-trace に反映 (欠落 0) |
+-| 検証可能性 | validate-build-trace.py と lint-agent-prompt-section.py 双方が exit 0 |
+-| 簡潔性 | git diff の変更行が担当 skill_path 内に 100% 収束 (他 path 0 行) |
++## Layer 7: UI / 提示層
++
++### 7.1 ユーザー提示
++- 対話なしの自動実行 worker。
++
++### 7.2 出力形式
++- `{changed_paths[], lint_status: PASS|FAIL, trace_path, decision_log[]}` の JSON 互換 Markdown。
++
++## Prompt Templates
++
++対話なしの自動実行 worker (対話なし: 自動実行 agent)。brief→単一 skill 骨格生成の起動文・path_convention 契約の正本は owner `run-build-skill/prompts/R1-scaffold.md` を参照する。
++
++## Self-Evaluation
+ 
+-未達時挙動:
+-- 自己修正は最大 3 回 (`self_fix_count<=3`)、各回で対象次元と修正方針を 1 行記録
+-- 超過時は Handoff 禁止、orchestrator に `escalation=brief-redesign` + `failed_dimensions[]` で差し戻し
+-- 差し戻し条件: (a) brief 自体の責務未定義 (b) path_convention 矛盾 (c) lint 修復不能
++`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。完全性は responsibilities[] と `prompts/<R-id>.md` の 1:1、検証可能性は `validate-build-trace.py` + `lint-agent-prompt-section.py` の双方 exit 0、簡潔性は担当 skill_path 内 100% 収束を判定する。
+ 
+-# Handoff
++## Handoff
+ 
+-run-skill-create orchestrator に `changed_paths / lint_status / trace_path / decision_log` を返す。後続は assign-skill-design-evaluator (独立評価) と governance gate。
++`changed_paths / lint_status / trace_path / decision_log` を owner `run-build-skill` へ返す。後続は trace-write / validate-build-trace / assign-skill-design-evaluator (独立評価) と governance gate。rubric governance は未編集。
+diff --git a/plugins/harness-creator/commands/capability-build.md b/plugins/harness-creator/commands/capability-build.md
+index ec60ca5..b6f4304 100644
+--- a/plugins/harness-creator/commands/capability-build.md
++++ b/plugins/harness-creator/commands/capability-build.md
+@@ -1,6 +1,6 @@
+ ---
+ description: Capability (Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow) を新規作成または更新する統一入口。run-build-skill Skill を起動し、kind に応じた scaffold とリソースを生成する。
+-argument-hint: "<kind> <name> [options]  例: skill run-foo / agent reviewer-bar / hook on-save / command deploy"
++argument-hint: "<kind> <name> [options] | --handoff <path> --route-id <Cxx>  例: skill run-foo / agent reviewer-bar / --handoff plugin-plans/x/handoff-run-plugin-dev-plan.json --route-id C09"
+ allowed-tools: Read, Write, Edit, Bash
+ name: capability-build
+ kind: command
+@@ -12,23 +12,27 @@ entrypoint: run-build-skill
+ 
+ # /capability-build
+ 
+-`$ARGUMENTS` を `<kind> <name> [options]` としてパースし、`run-build-skill` Skill に委譲する薄いラッパ。Capability 種別の正規化と前提チェックのみを担当し、実体ロジックは Skill 側で実行する。
++`$ARGUMENTS` を `<kind> <name> [options]` または E2 の `--handoff <path> --route-id <Cxx>` としてパースし、`run-build-skill` Skill に委譲する薄いラッパ。Capability 種別の正規化・route 解析・前提チェックのみを担当し、実体ロジックは Skill 側で実行する (run-build-skill 本体は無改修)。
+ 
+ ## 振る舞い
+ 
+-1. `$ARGUMENTS` を空白区切りでパース。`kind` が `skill|agent|hook|command|plugin-composition|prompt|workflow` の 7 capability kind (この 7 種が正本) のいずれでなければ利用可能 kind を表示して停止。参照する `capability-manifest.schema.json#/definitions/commonCore.kind` はこの 7 種に加え skill sub-role prefix (`run/ref/assign/wrap/delegate`) も含む**上位集合**なので kind 受理判定にはそのまま使わず、本文の 7 種を厳密列挙として突合する (例: `run` は sub-role prefix であって capability kind ではない)。
+-   - `kind=skill` は scaffold 止まり。単体スキルを評価・統治まで端から端で作るなら `/run-skill-create` を使う (標準フローの Step2 も skill component は run-skill-create へ回す)。本 command は主に非 skill kind (agent/hook/command/prompt/workflow/plugin-composition) の入口。
+-2. `name` の命名規約を `ref-skill-naming-convention` 準拠で軽く検証 (run-/ref-/assign- prefix など)。
+-3. `run-build-skill` Skill を起動し、引数として `kind / name / options` を渡す。
+-4. 生成後に `validate-build-trace.py` を実行し、PASS/FAIL を報告。
++1. **入力形態の判別**: `--handoff` / `--route-id` があれば **route モード** (E2・下記 1r)、無ければ従来の **明示モード** (`<kind> <name>`・下記 1e)。
++   - **1e (明示モード)**: `$ARGUMENTS` を空白区切りでパース。`kind` が `skill|agent|hook|command|plugin-composition|prompt|workflow` の 7 capability kind (この 7 種が正本) のいずれでなければ利用可能 kind を表示して停止。参照する `capability-manifest.schema.json#/definitions/commonCore.kind` はこの 7 種に加え skill sub-role prefix (`run/ref/assign/wrap/delegate`) も含む**上位集合**なので kind 受理判定にはそのまま使わず、本文の 7 種を厳密列挙として突合する (例: `run` は sub-role prefix であって capability kind ではない)。
++     - `kind=skill` は scaffold 止まり。単体スキルを評価・統治まで端から端で作るなら `/run-skill-create` を使う (標準フローの Step2 も skill component は run-skill-create へ回す)。本 command は主に非 skill kind (agent/hook/command/prompt/workflow/plugin-composition) の入口。
++   - **1r (route モード / E2)**: `--handoff` の JSON を Read し `routes[]` から `--route-id` に一致する route を取り出す。まず `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py <handoff>)` で routes↔inventory 一致を preflight し (exit0 でなければ停止)、次に route の `build_kind` を `kind`、`build_args`(`name`/`script_path`)・`build_target` を明示引数として抽出する。`build_kind=script` の route は GAP-SCRIPT-BUILDER の代替生成手順に従い `script_path`/`build_target` を run-build-skill へ渡して直接生成する (parent-skill-build/plugin-scaffold は contract-only ゆえ run-build-skill 内代替)。
++2. `name` の命名規約を `ref-skill-naming-convention` 準拠で軽く検証 (run-/ref-/assign- prefix など)。route モードでは route.name を用いる。
++3. `run-build-skill` Skill を起動し、引数として `kind / name / options`(route モードでは加えて `script_path` / `build_target`) を渡す。
++4. 生成後に `validate-build-trace.py` を実行し、PASS/FAIL を報告。route モードでは併せて `check-route-component-parity.py` の exit0 を build_trace evidence に記録する。
+ 
+ ## 引数
+ 
+ | 引数 | 説明 |
+ |---|---|
+-| `kind` | capability 種別 (必須) |
+-| `name` | capability 名 (必須、命名規約準拠) |
++| `kind` | capability 種別 (明示モードで必須) |
++| `name` | capability 名 (明示モードで必須、命名規約準拠) |
+ | `options` | `--update` で既存更新、`--plugin=<name>` で配置先指定 |
++| `--handoff <path>` | route モード: `handoff-run-plugin-dev-plan.json` のパス (E2) |
++| `--route-id <Cxx>` | route モード: 消費する route の component id (例 C09) |
+ 
+ ## 失敗時
+ 
+diff --git a/plugins/harness-creator/scripts/validate-plan-coverage.py b/plugins/harness-creator/scripts/validate-plan-coverage.py
+index 2175775..f9df3e3 100644
+--- a/plugins/harness-creator/scripts/validate-plan-coverage.py
++++ b/plugins/harness-creator/scripts/validate-plan-coverage.py
+@@ -117,32 +117,44 @@ def verify(inventory: dict, repo_root: Path) -> tuple[list[str], list[str], dict
+         if not ok:
+             missing_components.append(f"{cid} ({kind}): {bt} — {detail}")
+ 
+-    # plugin-level surface 照合 (required=true かつ path を持つもののみ)。plugin-root
+-    # は build_target 群から導出する (1 inventory = 1 plugin 前提)。
++    # plugin-level surface 照合 (required=true のもののみ)。surface は 2 形式を持つ:
++    #   - path    : plugin-relative 単一パス。plugin-root を build_target 群から導出する
++    #               (1 plugin 前提)。cross-plugin inventory では root を一意に解決できない。
++    #   - targets : repo-relative パス配列。所有 plugin を跨ぐ計画 (artifact_class=
++    #               existing-plugin-update で C7 の cross-plugin routing を持つ plan) でも
++    #               各 target を repo_root 起点で直接照合できる (plugin-root 導出不要)。
++    # path も targets も持たない required surface (record_in / resolution 型: Notion config
++    # ・index 記録先など) はファイル実在照合の対象外。宣言妥当性は check-surface-inventory.py
++    # (inventory 内部整合) が担う (責務分離)。
+     missing_surfaces: list[str] = []
+     skipped_surfaces: list[str] = []
+     surfaces = inventory.get("plugin_level_surfaces") or {}
+-    if len(plugin_roots) == 1:
+-        pr = Path(next(iter(plugin_roots)))
+-        for name, spec in surfaces.items():
+-            if not isinstance(spec, dict) or not spec.get("required"):
+-                continue
+-            rel = spec.get("path")
+-            if not rel:
+-                # path を持たない required surface (record_in / resolution 型:
+-                # Notion config・index 記録先など) はファイル実在照合の対象外。宣言
+-                # そのものの妥当性は check-surface-inventory.py (inventory 内部整合)
+-                # が担う。責務分離のため本 gate は skip する。
+-                skipped_surfaces.append(name)
+-                continue
+-            if not (repo_root / pr / rel).exists():
+-                missing_surfaces.append(f"{name}: {pr}/{rel} 不在")
+-    elif len(plugin_roots) > 1:
+-        missing_surfaces.append(
+-            f"build_target が複数 plugin を跨ぐ ({sorted(plugin_roots)})。"
+-            "1 inventory = 1 plugin が前提のため surface 照合を実行できない。"
+-        )
+-    # plugin_roots が空 (components 全滅 or 空) の場合、surface 照合は対象なし。
++    for name, spec in surfaces.items():
++        if not isinstance(spec, dict) or not spec.get("required"):
++            continue
++        targets = spec.get("targets")
++        rel = spec.get("path")
++        if isinstance(targets, list) and targets:
++            # repo-relative 直接照合 (cross-plugin 安全)。
++            for t in targets:
++                if not isinstance(t, str) or not t.strip():
++                    continue
++                if not (repo_root / t).exists():
++                    missing_surfaces.append(f"{name}: {t} 不在")
++        elif rel:
++            # plugin-relative 単一パス: plugin-root 一意時のみ照合可能。
++            if len(plugin_roots) == 1:
++                pr = Path(next(iter(plugin_roots)))
++                if not (repo_root / pr / rel).exists():
++                    missing_surfaces.append(f"{name}: {pr}/{rel} 不在")
++            else:
++                missing_surfaces.append(
++                    f"{name}: plugin-relative path={rel!r} だが build_target が "
++                    f"{sorted(plugin_roots)} を跨ぎ plugin-root を一意解決できない "
++                    "(targets[] で repo-relative 宣言すれば cross-plugin 照合可能)"
++                )
++        else:
++            skipped_surfaces.append(name)
+ 
+     summary = {
+         "components_total": len(components),
+@@ -326,7 +338,7 @@ def _self_test() -> int:
+     mc, ms, _ = verify({"components": [{"id": "Cx", "component_kind": "hook"}]}, Path("/nonexistent"))
+     assert any("Cx" in e and "build_target" in e for e in mc), mc
+ 
+-    # 6. 複数 plugin 跨ぎ検出
++    # 6a. cross-plugin inventory + plugin-relative path surface: root 一意解決不可を報告
+     inv2 = {
+         "components": [
+             {"id": "C1", "component_kind": "script", "build_target": "plugins/a/scripts/x.py"},
+@@ -335,7 +347,21 @@ def _self_test() -> int:
+         "plugin_level_surfaces": {"manifest": {"required": True, "path": ".claude-plugin/plugin.json"}},
+     }
+     _, ms, _ = verify(inv2, Path("/nonexistent"))
+-    assert any("跨ぐ" in e for e in ms), ms
++    assert any("一意解決できない" in e for e in ms), ms
++
++    # 6b. cross-plugin inventory + targets[] surface: repo-relative 直接照合 (cross-plugin 安全)
++    inv2b = {
++        "components": [
++            {"id": "C1", "component_kind": "script", "build_target": "plugins/a/scripts/x.py"},
++            {"id": "C2", "component_kind": "script", "build_target": "plugins/b/scripts/y.py"},
++        ],
++        "plugin_level_surfaces": {
++            "ref": {"required": True, "targets": ["plugins/a/refs/z.md", "plugins/b/vendor/w.py"]},
++        },
++    }
++    _, ms2b, _ = verify(inv2b, Path("/nonexistent"))
++    assert any("plugins/a/refs/z.md 不在" in e for e in ms2b), ms2b
++    assert not any("一意解決できない" in e for e in ms2b), ms2b
+ 
+     # 7. 空 components → 漏れなし (照合対象なし)
+     mc, ms, _ = verify({"components": [], "plugin_level_surfaces": {}}, Path("/nonexistent"))
+diff --git a/plugins/harness-creator/skills/run-build-skill/SKILL.md b/plugins/harness-creator/skills/run-build-skill/SKILL.md
+index 2eb049a..9c1028f 100644
+--- a/plugins/harness-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/harness-creator/skills/run-build-skill/SKILL.md
+@@ -198,7 +198,7 @@ audit-trigger: quarterly
+ 1. **kind 確認**: 引数 `kind` または `brief.kind` を確定。既定は `skill`。未指定なら Step 1 のヒアリングで決める。7 kind 以外は exit 1。
+ 2. **対応 skeleton 選択**: kind 語彙の正本は `schemas/build-flags.schema.json#/properties/capability_kind` (7値 enum)、kind → skeleton/出力先/kind別lint の対応表の正本は `references/build-steps.md` §I.1 (本文に再掲しない=SSOT)。kind=skill 配下のサブ種別 5 値の template 選択は `schemas/template-selection.schema.json#/selection_rules` に従う。
+ 3. **Manifest 検証**: 全 kind で `CapabilityManifest commonCore` を `references/capability-manifest.schema.json` で検証。kind 別追加フィールド (`definitions/kindSkill`, `definitions/kindAgent` …) も同 schema で検証する。
+-4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py`、hook→`lint-script-frontmatter.py`、command→`lint-command-md.py`、plugin-composition→`lint-plugin-composition.py`、prompt→`lint-prompt-md.py`、workflow→`lint-workflow-md.py`)。未整備 lint (command/prompt/workflow) は warn 出力に留め、Hook/CI で再実行する (`lint-plugin-composition.py` は整備済・CI 配線済)。
++4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py` + **`lint-agent-prompt-content.py --mode agent`** (C02 内容 lint)、hook→`lint-script-frontmatter.py`、command→`lint-command-md.py`、plugin-composition→`lint-plugin-composition.py`、prompt→`lint-prompt-md.py` + **`lint-agent-prompt-content.py --mode prompt`** (C02)、workflow→`lint-workflow-md.py`)。未整備 lint (command/prompt/workflow) は warn 出力に留め、Hook/CI で再実行する (`lint-plugin-composition.py` は整備済・CI 配線済)。**agent/prompt 生成は本文7層 (l5-contract v2.0.0) を prompt-creator 経由で生成し C02 を fail-closed ゲートとして通す** (契約: `../../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`)。単独生成の抜け道は Step 3.5 の `prompt_provenance` で塞ぐ。
+ 
+ > 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。適用範囲の宣言: `workflow-manifest.json` の phase `init-pre` (本 Step) のみ Capability 7 kind 全てに適用され、`init` 以降の phase の `kind_filter` はこのサブ種別 5 値 (= kind=skill の場合) を指す。非 skill kind は init-pre で skeleton / kind 別 lint を確定し、scaffold 相当の生成 + Step 4 の kind 別 lint で完結する。
+ 
+@@ -242,6 +242,8 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
+ 
+ **要望カバレッジ (RTM)**: brief 経由 build は `requirement_coverage[]` を trace に記録する。brief の非空要求フィールド (例 `key_constraints[2]` / `boundary`) ごとに `disposition: mapped` (+`mapped_to`=反映先 criteria id/生成物) か `not_applicable` (+`reason`) を宣言する。被覆完全性と requirement_id 実在は `validate-build-trace.py` が機械検査し (段階導入: coverage 無しは WARN)、写像の意味的妥当性は Step 12 content-review (LLM 層) が判定する。
+ 
++**agent/prompt 生成の provenance (C09)**: agents/*.md・skills/*/prompts/*.md を生成/更新した build は `prompt_provenance` を trace に記録する。`prompt_creator_invocation`=true (prompt-creator 経由で本文7層を生成)・`source_contract_ref` (準拠契約: agent=`subagent-hybrid-format.md` / prompt=`seven-layer-format.md`)・`content_lint`={mode, status:PASS} (C02 `lint-agent-prompt-content.py` の結果) の3点を持つ。`run` / `assign` は prompt 生成必須のため `prompt_generation_model.policy_resolution.resolved_policy=optional|skip` を禁止し、`required` へ到達させる。`required` の build ではこのブロックが必須で、`validate-build-trace.py` が invocation=false・契約参照欠落・content_lint≠PASS・ブロック欠落のいずれも exit1 で止める (バイパス不能性)。
++
+ ### Step 4: 命名・構造 Lint (phase: scripts)
+ 
+ > lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
+diff --git a/plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md b/plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md
+index ebae2af..127a957 100644
+--- a/plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md
++++ b/plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md
+@@ -70,6 +70,7 @@ run-build-skill Step 3.5 はこの schema に従って各キーを埋めるこ
+ ### N/A 条件
+ 
+ - brief.kind ∈ {ref, wrap, delegate} かつ `prompt_creator_policy` が `skip` または resolved=skip の場合は、`per_responsibility: []` + `policy_resolution.resolved_policy: "skip"` + 理由を `resolved_via` に明記すれば N/A 扱い。
++- brief.kind ∈ {run, assign} は prompt 生成必須。`resolved_policy: "optional"` または `"skip"` は `prompt_provenance` 必須化を迂回する downgrade として exit 1。
+ - prompt-creator を 1 度も呼ばなかった場合、`cross_ref.prompt_creator_trace_path: null` を許容。ただし resolved=required で per_responsibility が空なら validate-build-trace.py が exit 1。
+ 
+ ## バリデーション
+@@ -84,10 +85,25 @@ N/A の場合は理由を必ず添えること（空欄禁止）。
+ 3. `anchor_coverage.missing_anchors` が空配列であること (SubAgent.md 側に必要 anchor が全て存在)。
+ 4. `sha256` は同一 brief で 2 回生成した場合に一致する (再現性ハッシュ)。差分が出た場合は `escalation` 非 none が必須。
+ 5. `layer_yaml_path` が次の正規表現に一致すること (`references/prompt-placement-convention.md` 準拠):
+-   - `path_convention == "skill-local-v1"`: `^plugins/[a-z][a-z0-9-]*/skills/(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*/prompts/R[0-9]+\.yaml$`
+-   - `path_convention == "agents-legacy"` (deprecated, 後方互換): `^plugins/[a-z][a-z0-9-]*/agents/prompts/[a-z][a-z0-9-]*\.yaml$`
++   - `path_convention == "skill-local-v1"`: `^plugins/[a-z][a-z0-9-]*/skills/(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*/prompts/R[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?\.(md|yaml)$`
++   - `path_convention == "agents-legacy"` (deprecated, 後方互換): `^plugins/[a-z][a-z0-9-]*/agents/prompts/[a-z][a-z0-9-]*\.(md|yaml)$`
++   - 正本は `scripts/validate-build-trace.py` の `LAYER_YAML_PATH_PATTERNS` (slug 付き `R1-elicit.md` 形式と `.yaml`/`.md` 両拡張子を受理。項目 6 と整合)。
+ 6. `layer_yaml_path` のファイル名先頭 (`R<N>` 部) が `per_responsibility[].id` と一致すること (例: `R1.yaml` / `R1-elicit.md` ↔ id=R1)。拡張子は `.yaml` / `.md` の両者を受理する。
+ 
++## `prompt_provenance` (C09 バイパス不能性)
++
++agents/*.md・skills/*/prompts/*.md を生成/更新した build が prompt-creator の7層契約を経由し、C02 内容 lint (`lint-agent-prompt-content.py`) を通過したことの証跡ブロック。スキーマは `schemas/skill-build-trace.schema.json#/properties/prompt_provenance`。
++
++- `prompt_creator_invocation` (boolean, 必須): prompt-creator 経由で本文7層を生成したか。**false は単独生成のバイパス試行として常に exit 1**。
++- `source_contract_ref` (string, 必須): 準拠した契約。agent は `subagent-hybrid-format.md`、prompt は `seven-layer-format.md` を参照する。
++- `content_lint` (object, 必須): `{mode: agent|prompt, status: PASS|FAIL|N/A, evidence?}`。C02 が exit0 でなければ status≠PASS となり生成未完了。
++
++検証 (`_validate_prompt_provenance`):
++1. `prompt_generation_model.policy_resolution.resolved_policy == "required"` の build では `prompt_provenance` を必須化 (欠落は exit 1)。`run`/`assign` では `optional`/`skip` への降格も exit 1。`optional`/`skip` の後方互換 escape は prompt 生成非必須 kind に限る。
++2. `prompt_creator_invocation != true` は exit 1 (bypass detected)。
++3. `source_contract_ref` が上記2契約のいずれも参照しなければ exit 1。
++4. `content_lint.status != PASS` または `mode` が agent/prompt 以外は exit 1。
++
+ ## path_convention deprecation policy
+ 
+ Phase 3 で確定 (2026-05-21)。
+@@ -110,4 +126,3 @@ Phase 3 で確定 (2026-05-21)。
+ - ソース: `eval-log/skill-build-trace.json#prompt_generation_model.per_responsibility[].path_convention`
+ - 集計単位: skill 単位 (同一 skill_build_id は 1 件としてカウント)。
+ - 計測スクリプト: `scripts/measure-path-convention-adoption.py` (未実装、KPI 計測ジョブとして 2026-Q3 中に追加予定)。
+-
+diff --git a/plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json b/plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
+index 8a6e785..cd6fbb3 100644
+--- a/plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
++++ b/plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
+@@ -167,6 +167,32 @@
+         }
+       }
+     },
++    "prompt_provenance": {
++      "type": "object",
++      "description": "C09: agents/*.md・skills/*/prompts/*.md を生成/更新する build が prompt-creator (7層契約) を経由し C02 内容 lint (lint-agent-prompt-content.py) を通過したことの証跡。prompt_generation_model.policy_resolution.resolved_policy=required の build では validate-build-trace.py が必須化する。prompt_creator_invocation=false または本ブロック欠落 (policy=required 時) は fail-closed で exit1 (バイパス不能性)。",
++      "additionalProperties": false,
++      "required": ["prompt_creator_invocation", "source_contract_ref", "content_lint"],
++      "properties": {
++        "prompt_creator_invocation": {
++          "type": "boolean",
++          "description": "prompt-creator (run-prompt-creator-7layer 相当) を経由して本文7層を生成したか。false は単独生成=禁止。"
++        },
++        "source_contract_ref": {
++          "type": "string",
++          "description": "準拠した7層契約への参照 (subagent-hybrid-format.md=agent / seven-layer-format.md=prompt)。"
++        },
++        "content_lint": {
++          "type": "object",
++          "additionalProperties": false,
++          "required": ["mode", "status"],
++          "properties": {
++            "mode": {"type": "string", "enum": ["agent", "prompt"]},
++            "status": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "prompt_provenance ブロック存在時 (=resolved_policy required の build) は validator (_validate_prompt_provenance) が PASS のみ受理し FAIL/N-A は exit 1。FAIL/N-A は将来の optional 記録用の値空間。"},
++            "evidence": {"type": "string", "description": "実行コマンド・exit code 等の証跡。"}
++          }
++        }
++      }
++    },
+     "brief_path": {
+       "type": "string",
+       "description": "本 build が参照した skill-brief.json のパス (cwd または trace 隣接からの相対)。未指定時は source_docs 内の skill-brief*.json 項目から推定される。requirement_coverage の突合先。"
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py b/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py
+index cd8dae9..9341ee1 100755
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py
+@@ -214,10 +214,10 @@ def _validate_prompt_generation_model(data: dict) -> list[str]:
+             )
+         if not str(policy.get("resolved_via", "")).strip():
+             errs.append("policy_resolution.resolved_via must explain derivation")
+-        if kind in PROMPT_REQUIRED_KINDS and resolved == "skip":
++        if kind in PROMPT_REQUIRED_KINDS and resolved in {"optional", "skip"}:
+             errs.append(
+-                f"resolved_policy=skip contradicts brief.kind={kind!r} "
+-                "(run/assign require prompt generation)"
++                f"resolved_policy={resolved} contradicts brief.kind={kind!r} "
++                "(run/assign require prompt generation and prompt_provenance)"
+             )
+         if kind in PROMPT_SKIP_KINDS and resolved == "required":
+             errs.append(
+@@ -309,6 +309,73 @@ def _validate_prompt_generation_model(data: dict) -> list[str]:
+     return errs
+ 
+ 
++# C09: agent/prompt 生成が prompt-creator (7層契約) を経由し C02 内容 lint を通過したことの証跡を強制する。
++# subagent-hybrid-format.md=agent 契約 / seven-layer-format.md=prompt 契約 を source_contract_ref に許容する。
++PROMPT_CONTRACT_REFS = ("subagent-hybrid-format.md", "seven-layer-format.md")
++
++
++def _validate_prompt_provenance(data: dict) -> list[str]:
++    """C09 バイパス不能性: agents/prompts 生成が prompt-creator 経由 + C02 lint 通過であることを検証。
++
++    prompt_generation_model.policy_resolution.resolved_policy=required の build では
++    prompt_provenance を必須化する。prompt_creator_invocation!=true / 契約参照欠落 /
++    content_lint.status!=PASS / (policy=required 時の) ブロック欠落 はいずれも FAIL。
++    """
++    errs: list[str] = []
++    model = data.get("prompt_generation_model")
++    resolved = ""
++    if isinstance(model, dict):
++        policy = model.get("policy_resolution")
++        if isinstance(policy, dict):
++            resolved = str(policy.get("resolved_policy", "")).strip().lower()
++
++    prov = data.get("prompt_provenance")
++    if not isinstance(prov, dict):
++        if resolved == "required":
++            errs.append(
++                "prompt_provenance is required when prompt_generation_model."
++                "policy_resolution.resolved_policy=required "
++                "(agent/prompt 生成は prompt-creator 経由 + C02 内容 lint 通過の証跡が必須)"
++            )
++        return errs
++
++    # invocation は true 必須 (false=単独生成のバイパス試行 → 常に FAIL)
++    invoked = prov.get("prompt_creator_invocation")
++    if invoked is not True:
++        errs.append(
++            f"prompt_provenance.prompt_creator_invocation must be true (got {invoked!r}) "
++            "— prompt-creator 非経由の単独生成は禁止 (bypass detected)"
++        )
++
++    ref = str(prov.get("source_contract_ref", "")).strip()
++    if not ref:
++        errs.append("prompt_provenance.source_contract_ref is empty (準拠した7層契約を明示すること)")
++    elif not any(c in ref for c in PROMPT_CONTRACT_REFS):
++        errs.append(
++            f"prompt_provenance.source_contract_ref={ref!r} must reference a 7層契約 "
++            f"({' / '.join(PROMPT_CONTRACT_REFS)})"
++        )
++
++    lint = prov.get("content_lint")
++    if not isinstance(lint, dict):
++        errs.append(
++            "prompt_provenance.content_lint missing "
++            "(C02 lint-agent-prompt-content --mode agent|prompt の結果を記録すること)"
++        )
++    else:
++        mode = str(lint.get("mode", "")).strip().lower()
++        if mode not in {"agent", "prompt"}:
++            errs.append(f"prompt_provenance.content_lint.mode invalid: {mode!r} (agent|prompt)")
++        status = str(lint.get("status", "")).strip().upper()
++        if status != "PASS":
++            errs.append(
++                f"prompt_provenance.content_lint.status={status!r} must be PASS "
++                "(C02 --mode agent|prompt が exit0 でなければ生成は未完了)"
++            )
++
++    return errs
++
++
+ # criteria 制約の正本は repo-root scripts/feedback_contract_ssot.py (単一 SSOT)。
+ # 従来 build-flags.schema / skill-build-trace.schema / 本ファイルに3者ミラーされていた
+ # id.pattern / verify_by.enum / loop_scope / kind 分類を一本化し drift を機械的に封じる。
+@@ -1370,6 +1437,8 @@ def main() -> int:
+ 
+     errs.extend(_validate_prompt_generation_model(data))
+ 
++    errs.extend(_validate_prompt_provenance(data))
++
+     errs.extend(_validate_feedback_contract(data))
+ 
+     variable_contract = data.get("variable_contract")
+diff --git a/plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md b/plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
+index 190602b..b9bff51 100644
+--- a/plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
++++ b/plugins/harness-creator/skills/run-elegant-review/prompts/R2-phase2-parallel.md
+@@ -161,8 +161,8 @@
+ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
+ 
+ 各エージェントは独立に担当 paradigm のレンズで `{{phase1_output}}` を観察し、
+-C1-C4 verdict を付与し、具体値を `variable_abstraction` に登録する。
+-集約後 30 件で `validate-paradigm-coverage.py` / `build-paradigm-scorecard.py` を実行する。
++各 paradigm finding の `condition_matrix.C1..C4` に PASS/FAIL/PARTIAL と evidence を付与し、具体値を `variable_abstraction` に登録する。
++集約後 30 件の `validate-paradigm-coverage.py` / `build-paradigm-scorecard.py` 実行は `phase2-exit` hook / orchestrator の責務であり、並列 agent 内では実行しない。
+ 他エージェントの中間結果を覗かない (検出時 exit 1)。
+ 
+ 出力は `./schemas/phase-output.schema.json#/definitions/phase2_output` 準拠の JSON のみ。
+diff --git a/plugins/harness-creator/skills/run-elegant-review/schemas/findings.schema.json b/plugins/harness-creator/skills/run-elegant-review/schemas/findings.schema.json
+index c180a0f..76a8918 100644
+--- a/plugins/harness-creator/skills/run-elegant-review/schemas/findings.schema.json
++++ b/plugins/harness-creator/skills/run-elegant-review/schemas/findings.schema.json
+@@ -73,13 +73,24 @@
+   "definitions": {
+     "paradigm_finding": {
+       "type": "object",
+-      "required": ["paradigm_id", "paradigm_name", "category", "agent", "observations", "issues", "score"],
++      "required": ["paradigm_id", "paradigm_name", "category", "agent", "observations", "condition_matrix", "issues", "score"],
+       "properties": {
+         "paradigm_id": {"type": "integer", "minimum": 1, "maximum": 30},
+         "paradigm_name": {"type": "string"},
+         "category": {"type": "string", "enum": ["A-logical", "B-structural", "C-meta", "D-divergent", "E-system", "F-strategic", "G-problem"]},
+         "agent": {"type": "string", "enum": ["elegant-logical-structural-analyst", "elegant-meta-divergent-analyst", "elegant-system-strategic-analyst"]},
+         "observations": {"type": "array", "minItems": 1, "items": {"type": "string"}},
++        "condition_matrix": {
++          "type": "object",
++          "required": ["C1", "C2", "C3", "C4"],
++          "properties": {
++            "C1": {"$ref": "#/definitions/condition_verdict"},
++            "C2": {"$ref": "#/definitions/condition_verdict"},
++            "C3": {"$ref": "#/definitions/condition_verdict"},
++            "C4": {"$ref": "#/definitions/condition_verdict"}
++          },
++          "additionalProperties": false
++        },
+         "issues": {
+           "type": "array",
+           "items": {
+@@ -122,7 +133,7 @@
+       "required": ["verdict", "evidence"],
+       "properties": {
+         "verdict": {"type": "string", "enum": ["PASS", "FAIL", "PARTIAL"]},
+-        "evidence": {"type": "array", "items": {"type": "string"}},
++        "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+         "violation_count": {"type": "integer", "minimum": 0}
+       }
+     }
+diff --git a/plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py b/plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+index 588498f..1a8d3d4 100644
+--- a/plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
++++ b/plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+@@ -191,6 +191,21 @@ def validate_structured_json(path: Path) -> tuple[bool, list[str]]:
+         issues = item.get("issues")
+         if not isinstance(observations, list) or not any(str(x).strip() for x in observations):
+             errors.append(f"paradigm {pid}: observations must contain non-empty text")
++        matrix = item.get("condition_matrix")
++        if not isinstance(matrix, dict):
++            errors.append(f"paradigm {pid}: condition_matrix must cover C1-C4")
++        else:
++            for cond in ("C1", "C2", "C3", "C4"):
++                verdict = matrix.get(cond)
++                if not isinstance(verdict, dict):
++                    errors.append(f"paradigm {pid}: condition_matrix.{cond} must be object")
++                    continue
++                status = verdict.get("verdict")
++                if status not in {"PASS", "FAIL", "PARTIAL"}:
++                    errors.append(f"paradigm {pid}: condition_matrix.{cond}.verdict invalid")
++                evidence = verdict.get("evidence")
++                if not isinstance(evidence, list) or not any(str(x).strip() for x in evidence):
++                    errors.append(f"paradigm {pid}: condition_matrix.{cond}.evidence must contain non-empty text")
+         if not isinstance(issues, list):
+             errors.append(f"paradigm {pid}: issues must be a list")
+             continue
+diff --git a/plugins/harness-creator/skills/run-skill-create/prompts/R1-elicit.md b/plugins/harness-creator/skills/run-skill-create/prompts/R1-elicit.md
+index ac8a963..d8abdf3 100644
+--- a/plugins/harness-creator/skills/run-skill-create/prompts/R1-elicit.md
++++ b/plugins/harness-creator/skills/run-skill-create/prompts/R1-elicit.md
+@@ -50,6 +50,11 @@
+   - **背景**: 不整合は 23 章 prefix-driven 構造違反
+ - **CONST_012 (wrap/delegate 必須項目)**: prefix=wrap なら base_skill、delegate なら delegate_agent 必須
+ - **CONST_013 (言語既定)**: output_language=ja, parameter_language_exception=true
++- **CONST_014 (E2 routes[] 直接消費)**: `brief_path` が与えられたら R1 ヒアリング (Skill(run-skill-elicit) / 対話) を skip し、射影済み skill-brief.json をそのまま Step1 成果物として採用する
++  - **目的**: plan→build 境界 (E2) で上流 handoff の routes[] を再ヒアリングなしに消費するため
++  - **背景**: README は brief_path 経由の自動投入を記述済みだが実装入口に無く drift していた (documented-but-unwired の解消)
++- **CONST_015 (parity preflight)**: `handoff` 併給時は build 開始前に `check-route-component-parity.py <handoff>` を実行し、exit0 (routes↔inventory 一致) でなければ build を停止する
++  - **目的**: 仕様書と無関係な build_target / 取りこぼしを build 前に fail-closed で止めるため
+ 
+ ### 2.3 入力契約
+ 
+@@ -59,6 +64,8 @@
+ | mode | enum | no | `dialog` / `batch`、default `dialog` |
+ | manifest | path | yes | workflow-manifest.json |
+ | schema | path | yes | schemas/skill-brief.schema.json |
++| brief_path | path | no | E2: 上流 (`run-plugin-dev-plan` の handoff) が `render-skill-brief.py` で決定論射影した skill-brief.json。**提供時は R1 ヒアリングを skip し brief を直接消費する** (再ヒアリングなし) |
++| handoff | path | no | E2: `handoff-run-plugin-dev-plan.json`。`brief_path` と併せて渡し、build 前に `check-route-component-parity.py` で routes↔inventory の一致を preflight する |
+ 
+ ### 2.4 出力契約
+ 
+@@ -123,6 +130,7 @@
+ - [ ] kind ∈ {run,assign} なら responsibilities に prompt_required=true が 1 件以上
+ - [ ] output_language=ja, parameter_language_exception=true
+ - [ ] open_questions は string 配列 (maxItems 10) で、解消可能な曖昧さは AI が補い、判断が分かれる細部のみ OPEN_QUESTION(escalate) としてユーザーへ返している (代理決定・TODO(human) ラベル禁止)
++- [ ] `brief_path` 提供時: R1 ヒアリングを skip し射影済み brief を採用した (再ヒアリングしていない)。`handoff` 併給時は `check-route-component-parity.py` が exit0 であることを build 前提に確認した
+ 
+ ### 5.4 実行方式 (動的手順生成ループ)
+ 
+@@ -159,4 +167,10 @@
+ 
+ ## 出力指示
+ 
+-LLM は Layer 5.2 ゴール + 5.3 完了チェックリストを停止条件として、5.4 ループで動的に手順を生成・実行する。`--page-url` / `--page-id` が topic に含まれる場合は、先に `validate-intake-publish-ready.py` で指定 Notion ページへの publish 完了を確認し、未完了なら skill-brief 生成へ進まない。通常時は `Skill(run-skill-elicit, args={{topic}})` を起点に、ユーザー要望から skill-brief.json を構築する。出力は `schemas/skill-brief.schema.json` 準拠の JSON のみ (`eval-log/skill-brief.json` へ保存)。前置き・後書き・思考過程出力は禁止。
++LLM は Layer 5.2 ゴール + 5.3 完了チェックリストを停止条件として、5.4 ループで動的に手順を生成・実行する。分岐は次の通り:
++
++- `{{brief_path}}` が与えられたら (E2 直接消費・CONST_014): R1 ヒアリングを skip し、`{{brief_path}}` の skill-brief.json を Read してそのまま Step1 成果物として採用する。`{{handoff}}` も与えられていれば (CONST_015)、build を dispatch する前に `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py {{handoff}})` を実行し exit0 を確認する (非0 なら停止し不一致を報告)。
++- `--page-url` / `--page-id` が topic に含まれる場合は、先に `validate-intake-publish-ready.py` で指定 Notion ページへの publish 完了を確認し、未完了なら skill-brief 生成へ進まない。
++- いずれでもない通常時は `Skill(run-skill-elicit, args={{topic}})` を起点に、ユーザー要望から skill-brief.json を構築する。
++
++出力は `schemas/skill-brief.schema.json` 準拠の JSON のみ (`eval-log/skill-brief.json` へ保存)。前置き・後書き・思考過程出力は禁止。
+diff --git a/plugins/plugin-dev-planner/.claude-plugin/plugin.json b/plugins/plugin-dev-planner/.claude-plugin/plugin.json
+index 06f5e74..16a5730 100644
+--- a/plugins/plugin-dev-planner/.claude-plugin/plugin.json
++++ b/plugins/plugin-dev-planner/.claude-plugin/plugin.json
+@@ -17,7 +17,8 @@
+     "agents": [
+       "plugin-dev-plan-elicitor",
+       "plugin-dev-plan-architect",
+-      "plugin-dev-plan-evaluator"
++      "plugin-dev-plan-evaluator",
++      "plugin-dev-plan-improvement-reviewer"
+     ],
+     "commands": [
+       "plugin-dev-plan"
+@@ -38,6 +39,18 @@
+           }
+         ]
+       }
++    ],
++    "PreToolUse": [
++      {
++        "matcher": "Bash|Task",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/enforce-provenance-chain.py",
++            "timeout": 10000
++          }
++        ]
++      }
+     ]
+   }
+ }
+diff --git a/plugins/plugin-dev-planner/commands/plugin-dev-plan.md b/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
+index 3ae1586..ad00b97 100644
+--- a/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
++++ b/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
+@@ -1,6 +1,6 @@
+ ---
+ description: プラグイン構想から index+13 フェーズファイル+component-inventory.json の plan を生成したいとき、skill/sub-agent/command/hook/script/harness/manifest を漏れなく分解したいときに使う。
+-argument-hint: "<plugin-concept> [--mode create|update] [--out-dir <path>]"
++argument-hint: "<plugin-concept> [--mode create|update] [--out-dir <path>] [--intake-json <path>] [--improvement-handoff <path>]"
+ allowed-tools: Read, Write, Edit, Bash(python3 *), Skill, Agent
+ entrypoint: run-plugin-dev-plan
+ name: plugin-dev-plan
+@@ -31,6 +31,8 @@ since: 2026-06-30
+ | `plugin-concept` | yes | — | プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望)。曖昧な場合も停止せず仮 slug + `open_questions` で進める |
+ | `--mode create\|update` | no | `create` | `update` は既存 plan への Edit 差分のみ (全書き換え禁止) |
+ | `--out-dir <path>` | no | `plugin-plans/<plugin-slug>/` | 計画成果物の出力先を明示上書きする (既定は可視・永続の tracked deliverable)。相対パスは repo root 基準。指定値も `goal-spec.plan_dir` に固定する |
++| `--intake-json <path>` | no | — | skill-intake の `intake.json` を R1 (`intake_json`) へ渡し E1 消費させる (§0/§3/split_candidates を反映し `source_intake` を記録)。未指定なら構想文のみで生成 |
++| `--improvement-handoff <path>` | no | — | E3 改善成果物 (`improvement-handoff.json`) を R1 (`improvement_handoff`) へ渡す。`--mode update` 時のみ有効で `source_improvement` を記録 |
+ 
+ > ライフサイクル軸は **13 フェーズ固定** (`phase-01-requirements.md` … `phase-13-release.md`)。buildable 実体数 N は `component-inventory.json` の `components[]` 件数として現れ 13 とは独立。ユーザーが具体的本数を求めた場合は `goal-spec.requested_count` に任意記録するが gate 強制しない。
+ 
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
+index 86577c1..fd04222 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
+@@ -42,6 +42,8 @@
+ - checklist 各項目は `{id:^C[0-9]+$, criterion, done, verify_by ∈ {reasoning,script,lint,test,human}}`。手順を checklist にしない
+ - criterion は EARS 形推奨 (「<状態/イベント> のとき <観測可能な結果> を満たす」・指針=`references/purpose-driven-requirements.md` SDD 節・非強制)。id は R3 が index 完了チェックリスト/受入確認で引用する RTM の追跡キー (`check-requirements-coverage.py` が被覆を機械検査)
+ - 推定根拠が弱い項目は `constraints`、未確定だが停止不要な事項は `open_questions` に明示する
++- **E1 (intake→goal-spec)**: `intake_json` 提供時は §0 executive_summary / §3 purpose_excavator / next-action の split_candidates[] を purpose/background/goal/checklist へ源泉反映し `source_intake` を記録する。反映漏れは `scripts/check-intake-consumption.py --intake <intake> --goal-spec <PLAN_DIR>/goal-spec.json` が検出する (未提供時は従来 fallback で動作する = 非適用例)
++- **E3 (改善→goal-spec)**: `mode=update` かつ `improvement_handoff` 提供時は `findings[]` を再生成材料として反映し `source_improvement` を記録する。provenance chain の連続性は `scripts/check-provenance-chain.py --goal-spec <PLAN_DIR>/goal-spec.json --plan-dir <PLAN_DIR>` が検証する
+ 
+ ### 2.3 入力契約
+ 
+@@ -49,11 +51,13 @@
+ |---|---|---|---|
+ | plugin_concept | text | yes | プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望) |
+ | mode | enum | no | create / update |
+-| intake_json | path | no | skill-intake の intake.json (schema_version 2.0.0)。§0 executive_summary / §3 purpose_excavator / next-action.json の split_candidates[] を plugin_concept の構造化材料として受理 (references/io-contract.md §9 正本) |
++| intake_json | path | no | skill-intake の intake.json (schema_version 2.0.0)。§0 executive_summary / §3 purpose_excavator / next-action.json の split_candidates[] を plugin_concept の構造化材料として受理 (references/io-contract.md §9 正本)。**提供時は下の実行ブロックで必ず消費し** `source_intake` を記録する (documented-but-unwired を解消) |
++| improvement_handoff | path | no | E3 改善成果物ハンドオフ (`schemas/improvement-handoff.schema.json` 準拠・harness-creator の `emit-improvement-handoff.py` が emit)。`mode=update` 時のみ受理し `findings[]` を再生成材料として消費、`source_improvement` を記録する |
+ 
+ ### 2.4 出力契約
+ - schema: `schemas/plugin-goal-spec.schema.json` 準拠。purpose/background/goal/checklist の抽出は harness-creator run-goal-elicit の goal-spec 概念に倣い、plugin 固有アンカーは専用 schema で検証する
+ - 必須フィールド: purpose / background / goal / checklist(≥1) / target_plugin_slug / plan_dir
++- provenance (任意・E1/E3 由来時は必須): `intake_json` 消費時は `source_intake: {ref, schema_version}`、`improvement_handoff` 消費時は `source_improvement: {ref, schema_version}` を goal-spec に記録する。欠落は `check-plugin-goal-spec.py` が後方互換で WARN 受理する
+ - 出力先: `<PLAN_DIR>/goal-spec.json` (既定 `<PLAN_DIR>` = `plugin-plans/<plugin-slug>/`)
+ 
+ ## Layer 3: インフラ層 (外部依存)
+@@ -99,6 +103,8 @@
+ - [ ] `target_plugin_slug` と `plan_dir` を固定し、既定時は `plugin-plans/<plugin-slug>/` になることを明示した
+ - [ ] plugin-plan の場合、manifest / marketplace / cachebuster / validate_plugin の契約を後続へ渡す意図を残した
+ - [ ] UBM 固有物 (IPC/Cloudflare/スクショ/PR) のみ除外し harness-creator ネイティブ規律の伝播意図を残した
++- [ ] `intake_json` 提供時: §0/§3/split_candidates を反映し `source_intake` を記録、`check-intake-consumption.py` が未反映 0 (fail-severity) を報告した (未提供時はこの項目を skip)
++- [ ] `mode=update` かつ `improvement_handoff` 提供時: `findings[]` を反映し `source_improvement` を記録、`check-provenance-chain.py` が断裂なしを報告した
+ - [ ] `<PLAN_DIR>/goal-spec.json` が `check-plugin-goal-spec.py` で schema 検証を通過した
+ 
+ ### 5.4 実行方式
+@@ -130,10 +136,23 @@
+ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
+ 
+ Layer 5.2 のゴール + 5.3 完了チェックリストを唯一の停止条件とし、5.4 ループで
+-動的に手順を生成・実行・自己評価する。入力 `{{plugin_concept}}` (と任意 `{{mode}}`) を
+-Read し、目的ドリブンで `goal-spec.json` を生成する。出力は次の 2 つのみとする:
+-
+-1. `<PLAN_DIR>/goal-spec.json` (plugin-goal-spec 準拠 / purpose・background・goal・checklist・target_plugin_slug・plan_dir。ユーザー本数要求があれば requested_count を任意記録)
+-2. 意図サマリ (Markdown 数行 / 採用ゴールの根拠と残仮定)
++動的に手順を生成・実行・自己評価する。入力 `{{plugin_concept}}` (と任意 `{{mode}}` /
++`{{intake_json}}` / `{{improvement_handoff}}`) を Read し、目的ドリブンで
++`goal-spec.json` を生成する。E1/E3 の消費を必ず配線する:
++
++- `{{intake_json}}` が与えられたら (E1): その §0 executive_summary / §3 purpose_excavator と
++  隣接 next-action の split_candidates[] を purpose/background/goal/checklist へ源泉反映し、
++  `source_intake: {ref: <intake_json>, schema_version: <intake の schema_version>}` を記録する。
++  生成後に `scripts/check-intake-consumption.py` を実行し fail-severity 未反映を 0 にする。
++  未提供なら従来通り `{{plugin_concept}}` のみで生成する (source_intake は記録しない)。
++- `{{mode}}=update` かつ `{{improvement_handoff}}` が与えられたら (E3): schema 準拠を確認のうえ
++  `findings[]` を再生成材料として反映し、`source_improvement: {ref, schema_version}` を記録する。
++  生成後に `scripts/check-provenance-chain.py --goal-spec <PLAN_DIR>/goal-spec.json --plan-dir <PLAN_DIR>`
++  で断裂なしを確認する。
++
++出力は次の 2 つのみとする:
++
++1. `<PLAN_DIR>/goal-spec.json` (plugin-goal-spec 準拠 / purpose・background・goal・checklist・target_plugin_slug・plan_dir。E1/E3 消費時は source_intake / source_improvement を記録。ユーザー本数要求があれば requested_count を任意記録)
++2. 意図サマリ (Markdown 数行 / 採用ゴールの根拠と残仮定・消費した intake/improvement の provenance)
+ 
+ 余計な前置き・後書き・思考過程出力は禁止。
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json
+index 1399cf9..df22b52 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json
+@@ -39,6 +39,26 @@
+     "constraints": { "type": "array", "items": { "type": "string" } },
+     "handoff_targets": { "type": "array", "items": { "type": "string" } },
+     "max_loops": { "type": "integer", "minimum": 1 },
+-    "open_questions": { "type": "array", "items": { "type": "string" } }
++    "open_questions": { "type": "array", "items": { "type": "string" } },
++    "source_intake": {
++      "description": "E1 provenance: 消費した intake.json の源泉参照 (任意)。欠落は後方互換で WARN 受理。",
++      "type": ["object", "null"],
++      "additionalProperties": false,
++      "required": ["ref", "schema_version"],
++      "properties": {
++        "ref": { "type": "string" },
++        "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
++      }
++    },
++    "source_improvement": {
++      "description": "E3 provenance: 受理した improvement-handoff.json の源泉参照 (任意)。欠落は後方互換で WARN 受理。",
++      "type": ["object", "null"],
++      "additionalProperties": false,
++      "required": ["ref", "schema_version"],
++      "properties": {
++        "ref": { "type": "string" },
++        "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
++      }
++    }
+   }
+ }
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py
+index d61235d..6c4e298 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py
+@@ -45,8 +45,15 @@ ALLOWED = REQUIRED | {
+     "max_loops",
+     "open_questions",
+     "requested_count",
++    # E1/E3 provenance (任意): 改善/intake 由来の再生成 goal-spec が源泉を追跡できるようにする。
++    # 欠落は後方互換で WARN 受理 (既存 goal-spec を壊さない)、present-but-malformed のみ fatal。
++    "source_intake",
++    "source_improvement",
+ }
+ SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
++SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
++# provenance フィールド (source_intake/source_improvement) が持つべき sub-key。
++_PROVENANCE_KEYS = ("source_intake", "source_improvement")
+ 
+ 
+ def _nonempty_str(data: dict, key: str, errors: list[str]) -> str:
+@@ -57,6 +64,43 @@ def _nonempty_str(data: dict, key: str, errors: list[str]) -> str:
+     return value.strip()
+ 
+ 
++def _provenance_field_errors(data: dict, key: str) -> list[str]:
++    """provenance フィールドが *存在するとき* の schema 準拠を検査する (欠落/null は WARN 側で扱う)。
++
++    存在時は object で {ref: 非空 string, schema_version: semver} を要求し、余分キーを禁止する。
++    欠落 (キー無し) / null は fatal でない (後方互換: provenance_warnings が WARN として受理)。
++    """
++    if key not in data or data.get(key) is None:
++        return []
++    val = data.get(key)
++    if not isinstance(val, dict):
++        return [f"{key} は object または null であること (現値 {type(val).__name__})"]
++    errors: list[str] = []
++    extra = sorted(set(val.keys()) - {"ref", "schema_version"})
++    if extra:
++        errors.append(f"{key} additionalProperties not allowed: {extra}")
++    ref = val.get("ref")
++    if not isinstance(ref, str) or not ref.strip():
++        errors.append(f"{key}.ref が非空 string でない")
++    sv = val.get("schema_version")
++    if not isinstance(sv, str) or not SEMVER_RE.match(sv):
++        errors.append(f"{key}.schema_version は semver (X.Y.Z) であること (現値 {sv!r})")
++    return errors
++
++
++def provenance_warnings(data: object) -> list[str]:
++    """provenance フィールド欠落を WARN として列挙する (fatal でない・後方互換受理)。"""
++    warnings: list[str] = []
++    if not isinstance(data, dict):
++        return warnings
++    for key in _PROVENANCE_KEYS:
++        if key not in data or data.get(key) is None:
++            warnings.append(
++                f"{key} 不在: intake/改善 由来でない既存 goal-spec として WARN 受理 (後方互換)"
++            )
++    return warnings
++
++
+ def validate(data: object) -> list[str]:
+     errors: list[str] = []
+     if not isinstance(data, dict):
+@@ -95,6 +139,10 @@ def validate(data: object) -> list[str]:
+     if artifact_class is not None and artifact_class not in {"skill-only", "plugin-plan", "existing-plugin-update"}:
+         errors.append("artifact_class は skill-only|plugin-plan|existing-plugin-update のみ")
+ 
++    # E1/E3 provenance: 存在時のみ schema 準拠を fatal 検査する (欠落は main が WARN 受理)。
++    for key in _PROVENANCE_KEYS:
++        errors.extend(_provenance_field_errors(data, key))
++
+     # requested_count は任意記録 (希望本数のメモ)。null または正の int の型のみ検査し、出力本数の
+     # 強制 (旧・本数 pin 機構) はしない (per-phase 転換で本数は 13 フェーズ固定)。
+     requested = data.get("requested_count")
+@@ -154,6 +202,9 @@ def main(argv: list[str] | None = None) -> int:
+         sys.stderr.write(f"JSON parse error: {exc}\n")
+         return 2
+     errors = validate(data)
++    # provenance 欠落は WARN (exit code に影響しない・後方互換受理)。
++    for warn in provenance_warnings(data):
++        sys.stderr.write("WARN: " + warn + "\n")
+     if not errors:
+         sys.stdout.write("OK: plugin goal-spec schema + plugin anchors validated\n")
+         return 0
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/conftest.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/conftest.py
+index 4a2d588..51e56d8 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/conftest.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/conftest.py
+@@ -41,6 +41,16 @@ def requirements_coverage() -> ModuleType:
+     return _load("check-requirements-coverage")
+ 
+ 
++@pytest.fixture(scope="session")
++def intake_consumption() -> ModuleType:
++    return _load("check-intake-consumption")
++
++
++@pytest.fixture(scope="session")
++def provenance_chain() -> ModuleType:
++    return _load("check-provenance-chain")
++
++
+ @pytest.fixture(scope="session")
+ def unassigned() -> ModuleType:
+     return _load("detect-unassigned")
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_plugin_goal_spec.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_plugin_goal_spec.py
+index dc843f5..3de6367 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_plugin_goal_spec.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_plugin_goal_spec.py
+@@ -172,3 +172,76 @@ def test_validator_enums_match_schema_behaviorally(plugin_goal_spec):
+     assert any("verify_by" in e for e in plugin_goal_spec.validate(d)), (
+         "validator が verify_by の enum 外値を拒否しない (enum drift)"
+     )
++
++
++# ─────────── E1/E3 provenance (source_intake / source_improvement) ───────────
++# C03: 存在時は schema 準拠を fatal 検査 (IN1)、欠落は WARN 受理 (OUT1・後方互換)。
++def _prov():
++    return {"ref": "plugins/plugin-dev-planner/.../intake.json", "schema_version": "2.0.0"}
++
++
++def test_provenance_present_valid_accepted(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = _prov()
++    data["source_improvement"] = {"ref": "improvement-handoff.json", "schema_version": "1.0.0"}
++    assert plugin_goal_spec.validate(data) == []
++
++
++def test_provenance_absent_is_not_fatal(plugin_goal_spec):
++    """欠落は validate() で error にならない (後方互換)。"""
++    data = _goal_spec()
++    assert not any("source_intake" in e or "source_improvement" in e for e in plugin_goal_spec.validate(data))
++
++
++def test_provenance_absent_emits_warnings(plugin_goal_spec):
++    """欠落は provenance_warnings が 2 件 (source_intake/source_improvement) を返す。"""
++    warns = plugin_goal_spec.provenance_warnings(_goal_spec())
++    assert len(warns) == 2
++    assert any("source_intake" in w for w in warns)
++
++
++def test_provenance_null_treated_as_absent(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = None
++    assert not any("source_intake" in e for e in plugin_goal_spec.validate(data))
++    assert any("source_intake" in w for w in plugin_goal_spec.provenance_warnings(data))
++
++
++def test_provenance_not_object_is_fatal(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = "intake.json"
++    assert any("source_intake は object" in e for e in plugin_goal_spec.validate(data))
++
++
++def test_provenance_missing_ref_is_fatal(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_improvement"] = {"schema_version": "1.0.0"}
++    assert any("source_improvement.ref" in e for e in plugin_goal_spec.validate(data))
++
++
++def test_provenance_bad_schema_version_is_fatal(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = {"ref": "intake.json", "schema_version": "2.0"}
++    assert any("source_intake.schema_version" in e and "semver" in e for e in plugin_goal_spec.validate(data))
++
++
++def test_provenance_extra_key_is_fatal(plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = {"ref": "intake.json", "schema_version": "2.0.0", "bogus": 1}
++    assert any("source_intake additionalProperties" in e for e in plugin_goal_spec.validate(data))
++
++
++def test_provenance_present_valid_main_exit_zero(tmp_path, plugin_goal_spec):
++    data = _goal_spec()
++    data["source_intake"] = _prov()
++    path = tmp_path / "goal-spec.json"
++    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
++    assert plugin_goal_spec.main([str(path)]) == 0
++
++
++def test_provenance_in_allowed_and_schema_properties(plugin_goal_spec):
++    """新 provenance フィールドが ALLOWED と schema.properties の双方に載る (parity 維持)。"""
++    schema = _schema()
++    for key in ("source_intake", "source_improvement"):
++        assert key in plugin_goal_spec.ALLOWED
++        assert key in schema["properties"]
+diff --git a/plugins/prompt-creator/skills/run-prompt-creator-7layer/references/resource-map.yaml b/plugins/prompt-creator/skills/run-prompt-creator-7layer/references/resource-map.yaml
+index 4e8eca3..089918d 100644
+--- a/plugins/prompt-creator/skills/run-prompt-creator-7layer/references/resource-map.yaml
++++ b/plugins/prompt-creator/skills/run-prompt-creator-7layer/references/resource-map.yaml
+@@ -12,6 +12,9 @@ resources:
+   - file: seven-layer-markdown-template.md
+     topic: Markdown 提示形式の補助テンプレ
+     read_when: phase-layer-gen の scaffold 前
++  - file: subagent-hybrid-format.md
++    topic: SubAgent 向けハイブリッド契約 (frontmatter=plugin YAML / 本文=7層)。純粋7層 (seven-layer-format.md) との差分正本
++    read_when: agents/*.md を生成・検証するとき (harness-creator C02/C09 が参照)
+   - file: quality-criteria.md
+     topic: 動的評価基準 + 4 パス判定 + §8 冪等更新基準
+     read_when: phase-review (4 パスレビュー実行時)
+diff --git a/scripts/lint-script-naming.py b/scripts/lint-script-naming.py
+index 4689094..18689ae 100644
+--- a/scripts/lint-script-naming.py
++++ b/scripts/lint-script-naming.py
+@@ -253,6 +253,17 @@ PENDING_RENAME_PATHS = {
+     "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+     "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+     "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
++    # harness-creator パイプライン境界契約 (E1/E2/E3) 初回投入: §4.3 (kebab-case) は満たすが
++    # verb (check/emit) が ALLOWED_VERBS 外。これらは既存の check-* 決定論ゲート族 (上記 19 本) と
++    # 同種で、plan の component-inventory.json / handoff-run-plugin-dev-plan.json の build_target が
++    # 正確なパスを参照する (C08 check-route-component-parity / check-build-handoff の parity) ため、
++    # 許可動詞化 (validate/render 系へのリネーム) は inventory/handoff/prompts/commands/tests 参照を
++    # 原子的に更新する後続 Change Governance PR まで PENDING (plugin-dev-planner check-* /
++    # notion-gmail-send emit-observable と同種の「初回投入時の verb pending」扱い)。
++    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-intake-consumption.py",
++    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-provenance-chain.py",
++    "plugins/harness-creator/scripts/check-route-component-parity.py",
++    "plugins/harness-creator/scripts/emit-improvement-handoff.py",
+     # specfm.py: check-spec-*.py / render-spec-skeleton.py / tests が `import specfm` する
+     # kind→必須キーの共有 SSOT module。Python import 上ハイフン不可のため <verb>-<target> 形に
+     # できず underscore も持たない単一トークン module 名で固定する (§4.3 恒久例外・
+diff --git a/scripts/lint-vendored-ssot.py b/scripts/lint-vendored-ssot.py
+index 5e782be..39e7f9c 100644
+--- a/scripts/lint-vendored-ssot.py
++++ b/scripts/lint-vendored-ssot.py
+@@ -36,6 +36,15 @@ VENDORED_PAIRS = [
+         ROOT / "scripts" / "feedback_contract_ssot.py",
+         ROOT / "plugins" / "harness-creator" / "scripts" / "feedback_contract_ssot.py",
+     ),
++    # harness-creator の内容 lint (lint-agent-prompt-content.py) が本文 7 層検証に用いる
++    # prompt-creator の verify-completeness.py コアロジック。C02 は agents/prompts の
++    # l5-contract v2.0.0 準拠検証を自己完結させるため canonical を byte 一致で vendoring し、
++    # lint-agent-prompt-content.py --check-vendor-parity と本 registry の両輪で drift を封じる。
++    (
++        ROOT / "plugins" / "prompt-creator" / "skills" / "run-prompt-creator-7layer"
++        / "scripts" / "verify-completeness.py",
++        ROOT / "plugins" / "harness-creator" / "vendor" / "prompt-creator" / "verify-completeness.py",
++    ),
+ ]
+ 
+ 
+diff --git a/tests/scripts-plugins/test_harness_creator__validate_build_trace_r3.py b/tests/scripts-plugins/test_harness_creator__validate_build_trace_r3.py
+index a6e5692..a33c48a 100644
+--- a/tests/scripts-plugins/test_harness_creator__validate_build_trace_r3.py
++++ b/tests/scripts-plugins/test_harness_creator__validate_build_trace_r3.py
+@@ -164,6 +164,11 @@ def _full_trace() -> dict:
+                 "prompt_creator_trace_path": "eval-log/pc.json",
+             },
+         },
++        "prompt_provenance": {
++            "prompt_creator_invocation": True,
++            "source_contract_ref": "references/seven-layer-format.md",
++            "content_lint": {"mode": "prompt", "status": "PASS"},
++        },
+         "feedback_contract": {
+             "criteria": [
+                 {
+@@ -1142,6 +1147,19 @@ def test_pgm_skip_contradicts_run():
+     assert any("resolved_policy=skip contradicts" in e for e in errs)
+ 
+ 
++def test_pgm_optional_contradicts_run_assign():
++    for kind in ("run", "assign"):
++        data = {
++            "variant_support": {"prefix": kind},
++            "prompt_generation_model": {
++                "policy_resolution": {"resolved_policy": "optional", "resolved_via": "x"},
++                "per_responsibility": [],
++            },
++        }
++        errs = M._validate_prompt_generation_model(data)
++        assert any("resolved_policy=optional contradicts" in e for e in errs)
++
++
+ def test_pgm_required_contradicts_delegate():
+     data = {
+         "variant_support": {"prefix": "delegate"},
+diff --git a/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage.py b/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage.py
+index 20727b7..f88353e 100644
+--- a/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage.py
++++ b/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage.py
+@@ -57,6 +57,12 @@ def _full_findings() -> dict:
+                 "category": category,
+                 "agent": agent,
+                 "observations": [f"observation for paradigm {pid}"],
++                "condition_matrix": {
++                    "C1": {"verdict": "PASS", "evidence": [f"C1 checked {pid}"]},
++                    "C2": {"verdict": "PASS", "evidence": [f"C2 checked {pid}"]},
++                    "C3": {"verdict": "PASS", "evidence": [f"C3 checked {pid}"]},
++                    "C4": {"verdict": "PASS", "evidence": [f"C4 checked {pid}"]},
++                },
+                 "issues": [
+                     {
+                         "condition": "C1",
+@@ -246,6 +252,26 @@ def test_structured_json_observations_not_list(tmp_path):
+     assert any("observations must contain non-empty text" in e for e in errors)
+ 
+ 
++def test_structured_json_missing_condition_matrix_fails(tmp_path):
++    data = _full_findings()
++    del data["paradigm_findings"][0]["condition_matrix"]
++    p = tmp_path / "f.json"
++    p.write_text(json.dumps(data), encoding="utf-8")
++    ok, errors = MOD.validate_structured_json(p)
++    assert ok is False
++    assert any("condition_matrix must cover C1-C4" in e for e in errors)
++
++
++def test_structured_json_condition_matrix_empty_evidence_fails(tmp_path):
++    data = _full_findings()
++    data["paradigm_findings"][0]["condition_matrix"]["C2"]["evidence"] = []
++    p = tmp_path / "f.json"
++    p.write_text(json.dumps(data), encoding="utf-8")
++    ok, errors = MOD.validate_structured_json(p)
++    assert ok is False
++    assert any("condition_matrix.C2.evidence" in e for e in errors)
++
++
+ def test_structured_json_issues_not_list(tmp_path):
+     data = _full_findings()
+     data["paradigm_findings"][0]["issues"] = {"condition": "C1"}
+diff --git a/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage_r4.py b/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage_r4.py
+index 200e08c..7363e4e 100644
+--- a/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage_r4.py
++++ b/tests/scripts-plugins/test_harness_creator__validate_paradigm_coverage_r4.py
+@@ -57,6 +57,12 @@ def _full_findings() -> dict:
+                 "category": category,
+                 "agent": agent,
+                 "observations": [f"observation for paradigm {pid}"],
++                "condition_matrix": {
++                    "C1": {"verdict": "PASS", "evidence": [f"C1 checked {pid}"]},
++                    "C2": {"verdict": "PASS", "evidence": [f"C2 checked {pid}"]},
++                    "C3": {"verdict": "PASS", "evidence": [f"C3 checked {pid}"]},
++                    "C4": {"verdict": "PASS", "evidence": [f"C4 checked {pid}"]},
++                },
+                 "issues": [
+                     {
+                         "condition": "C1",
+@@ -268,6 +274,24 @@ def test_structured_json_observations_not_list(tmp_path):
+     assert any("observations must contain non-empty text" in e for e in errors)
+ 
+ 
++def test_structured_json_missing_condition_matrix_fails(tmp_path):
++    data = _full_findings()
++    del data["paradigm_findings"][0]["condition_matrix"]
++    p = _write(tmp_path / "f.json", data)
++    ok, errors = MOD.validate_structured_json(p)
++    assert ok is False
++    assert any("condition_matrix must cover C1-C4" in e for e in errors)
++
++
++def test_structured_json_condition_matrix_empty_evidence_fails(tmp_path):
++    data = _full_findings()
++    data["paradigm_findings"][0]["condition_matrix"]["C2"]["evidence"] = []
++    p = _write(tmp_path / "f.json", data)
++    ok, errors = MOD.validate_structured_json(p)
++    assert ok is False
++    assert any("condition_matrix.C2.evidence" in e for e in errors)
++
++
+ def test_structured_json_issues_not_list(tmp_path):
+     data = _full_findings()
+     data["paradigm_findings"][0]["issues"] = "not-a-list"
+diff --git a/tests/scripts-plugins/test_harness_creator__validate_plan_coverage.py b/tests/scripts-plugins/test_harness_creator__validate_plan_coverage.py
+index 5bfec49..16870a5 100644
+--- a/tests/scripts-plugins/test_harness_creator__validate_plan_coverage.py
++++ b/tests/scripts-plugins/test_harness_creator__validate_plan_coverage.py
+@@ -115,7 +115,8 @@ def test_verify_component_not_object(tmp_path):
+     assert any("object でない" in e for e in mc)
+ 
+ 
+-def test_verify_multi_plugin_span(tmp_path):
++def test_verify_multi_plugin_span_path_surface_unresolvable(tmp_path):
++    # cross-plugin inventory + plugin-relative path surface: root を一意解決できないと報告
+     inv = {
+         "components": [
+             {"id": "C1", "component_kind": "script", "build_target": "plugins/a/scripts/x.py"},
+@@ -124,7 +125,31 @@ def test_verify_multi_plugin_span(tmp_path):
+         "plugin_level_surfaces": {"manifest": {"required": True, "path": ".claude-plugin/plugin.json"}},
+     }
+     _, ms, _ = MOD.verify(inv, tmp_path)
+-    assert any("跨ぐ" in e for e in ms)
++    assert any("一意解決できない" in e for e in ms)
++
++
++def test_verify_multi_plugin_span_targets_surface_checked(tmp_path):
++    # cross-plugin inventory + targets[] surface: repo-relative で各 target を直接照合 (C7)
++    (tmp_path / "plugins" / "a" / "scripts").mkdir(parents=True)
++    (tmp_path / "plugins" / "a" / "scripts" / "x.py").write_text("x", encoding="utf-8")
++    (tmp_path / "plugins" / "b" / "scripts").mkdir(parents=True)
++    (tmp_path / "plugins" / "b" / "scripts" / "y.py").write_text("y", encoding="utf-8")
++    (tmp_path / "plugins" / "a" / "refs").mkdir(parents=True)
++    (tmp_path / "plugins" / "a" / "refs" / "z.md").write_text("z", encoding="utf-8")
++    inv = {
++        "components": [
++            {"id": "C1", "component_kind": "script", "build_target": "plugins/a/scripts/x.py"},
++            {"id": "C2", "component_kind": "script", "build_target": "plugins/b/scripts/y.py"},
++        ],
++        "plugin_level_surfaces": {
++            "ref": {"required": True, "targets": ["plugins/a/refs/z.md", "plugins/b/vendor/missing.py"]},
++        },
++    }
++    _, ms, _ = MOD.verify(inv, tmp_path)
++    # 実在する z.md は通り、不在の missing.py だけ検出される (cross-plugin でも照合実行)
++    assert any("missing.py 不在" in e for e in ms)
++    assert not any("z.md 不在" in e for e in ms)
++    assert not any("一意解決できない" in e for e in ms)
+ 
+ 
+ def test_verify_empty(tmp_path):
+diff --git a/tests/test_validate_build_trace.py b/tests/test_validate_build_trace.py
+index c27b773..026ceb9 100644
+--- a/tests/test_validate_build_trace.py
++++ b/tests/test_validate_build_trace.py
+@@ -290,6 +290,121 @@ def test_requirement_coverage_non_array_fails(tmp_path):
+     assert errs == ["requirement_coverage must be array"]
+ 
+ 
++# --- C09: prompt_provenance バイパス不能性 (_validate_prompt_provenance) ---
++
++def _required_pgm():
++    """agent/prompt を実生成する build (resolved_policy=required) の最小 model。"""
++    return {"prompt_generation_model": {"policy_resolution": {"resolved_policy": "required"}}}
++
++
++def _valid_provenance():
++    return {
++        "prompt_creator_invocation": True,
++        "source_contract_ref": "references/subagent-hybrid-format.md",
++        "content_lint": {"mode": "agent", "status": "PASS"},
++    }
++
++
++def test_provenance_valid_required_build_has_no_errors():
++    data = _required_pgm()
++    data["prompt_provenance"] = _valid_provenance()
++    assert MOD._validate_prompt_provenance(data) == []
++
++
++def test_provenance_absent_on_required_build_fails():
++    # policy=required なのに prompt_provenance 欠落 → バイパス試行を検出
++    errs = MOD._validate_prompt_provenance(_required_pgm())
++    assert errs and any("prompt_provenance is required" in e for e in errs)
++
++
++def test_provenance_absent_on_optional_build_is_ok():
++    # policy=optional の従来 build は後方互換で prompt_provenance 不要
++    # (kind 未解決/非必須 kind のみ。run/assign は _validate_prompt_generation_model が弾く)。
++    data = {"prompt_generation_model": {"policy_resolution": {"resolved_policy": "optional"}}}
++    assert MOD._validate_prompt_provenance(data) == []
++
++
++def test_pgm_run_assign_optional_downgrade_fails():
++    # C09-1: run/assign は prompt 生成必須。resolved_policy=optional へ降格すると
++    # prompt_provenance 必須化を迂回できるため、policy 解決時点で fail-closed にする。
++    for kind in ("run", "assign"):
++        data = {
++            "variant_support": {"prefix": kind},
++            "prompt_generation_model": {
++                "policy_resolution": {
++                    "resolved_policy": "optional",
++                    "resolved_via": "brief override",
++                },
++                "per_responsibility": [],
++            },
++        }
++        errs = MOD._validate_prompt_generation_model(data)
++        assert any("resolved_policy=optional contradicts" in e for e in errs)
++        assert MOD._validate_prompt_provenance(data) == []
++
++
++def test_provenance_invocation_false_is_bypass_fail():
++    # 単独生成 (prompt-creator 非経由) を宣言する trace は常に FAIL
++    data = _required_pgm()
++    prov = _valid_provenance()
++    prov["prompt_creator_invocation"] = False
++    data["prompt_provenance"] = prov
++    errs = MOD._validate_prompt_provenance(data)
++    assert errs and any("bypass detected" in e for e in errs)
++
++
++def test_provenance_unknown_contract_ref_fails():
++    data = _required_pgm()
++    prov = _valid_provenance()
++    prov["source_contract_ref"] = "references/some-other-doc.md"
++    data["prompt_provenance"] = prov
++    errs = MOD._validate_prompt_provenance(data)
++    assert errs and any("must reference a 7層契約" in e for e in errs)
++
++
++def test_provenance_content_lint_not_pass_fails():
++    data = _required_pgm()
++    prov = _valid_provenance()
++    prov["content_lint"] = {"mode": "agent", "status": "FAIL"}
++    data["prompt_provenance"] = prov
++    errs = MOD._validate_prompt_provenance(data)
++    assert errs and any("content_lint.status" in e for e in errs)
++
++
++def test_provenance_content_lint_bad_mode_fails():
++    data = _required_pgm()
++    prov = _valid_provenance()
++    prov["content_lint"] = {"mode": "schema", "status": "PASS"}
++    data["prompt_provenance"] = prov
++    errs = MOD._validate_prompt_provenance(data)
++    assert errs and any("content_lint.mode invalid" in e for e in errs)
++
++
++def _load_full_valid_trace():
++    """CI が検証する実 trace (全必須トップフィールドを備える) を読み、E2E 受入の土台にする。"""
++    import json
++    return json.loads((ROOT / "eval-log" / "skill-build-trace.json").read_text(encoding="utf-8"))
++
++
++def test_e2e_bypass_trace_exits_1(tmp_path):
++    """受入例: prompt-creator 非経由 (invocation=false) の生成物 trace が CLI で exit1 になる。"""
++    import json
++    trace = _load_full_valid_trace()
++    trace.setdefault("prompt_generation_model", {}).setdefault(
++        "policy_resolution", {}
++    )["resolved_policy"] = "required"
++    trace["prompt_provenance"] = {
++        "prompt_creator_invocation": False,  # ← バイパス試行
++        "source_contract_ref": "references/subagent-hybrid-format.md",
++        "content_lint": {"mode": "agent", "status": "PASS"},
++    }
++    p = tmp_path / "bypass-trace.json"
++    p.write_text(json.dumps(trace, ensure_ascii=False), encoding="utf-8")
++    proc = subprocess.run([sys.executable, str(SCRIPT), str(p)], capture_output=True, text=True)
++    assert proc.returncode == 1
++    assert "bypass detected" in proc.stderr
++
++
+ # --- manifest 検証経路 (--self-test) が緑であること ---
+ 
+ def test_self_test_exits_zero():

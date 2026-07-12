@@ -1,0 +1,128 @@
+{
+  "name": "skill-governance-config",
+  "description": "Skill governance shared configuration payloads",
+  "responsibility": "governance 設定・registry・hook example を所有する",
+  "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+  "keywords": [
+    "skill-governance",
+    "config",
+    "registry",
+    "hook-example"
+  ],
+  "files": [
+    {
+      "rel": "creator-kit/config/INSTALL_HOOKS.md",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/adapter-registry.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/claude-settings-hooks.json.example",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/governance-params.json.example",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/governance-policy.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/meta-harness-hooks.json.example",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/meta-harness-log-schema-v1.0.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/meta-harness-observables.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/output-routing.json.example",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/pattern-catalog.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/rubric-registry.json",
+      "kind": "config"
+    },
+    {
+      "rel": "creator-kit/config/template-variable-registry.json",
+      "kind": "config"
+    }
+  ],
+  "depends_on": [
+    "skill-governance-hooks",
+    "skill-governance-lint"
+  ],
+  "skills": [],
+  "agents": [],
+  "commands": [],
+  "hooks": [],
+  "external_ref_exceptions": [
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "match": "creator-kit/scripts/hook-guard-rubric.py",
+      "target_rel": "scripts/hook-guard-rubric.py",
+      "target_plugin": "skill-governance-hooks",
+      "classification": "legacy_cross_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "match": "creator-kit/config/claude-settings-hooks.json.example",
+      "target_rel": "config/claude-settings-hooks.json.example",
+      "target_plugin": "skill-governance-config",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "match": "creator-kit/config/claude-settings-hooks.json.example",
+      "target_rel": "config/claude-settings-hooks.json.example",
+      "target_plugin": "skill-governance-config",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "match": "creator-kit/config/claude-settings-hooks.json.example",
+      "target_rel": "config/claude-settings-hooks.json.example",
+      "target_plugin": "skill-governance-config",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/INSTALL_HOOKS.md",
+      "match": "creator-kit/scripts/hook-",
+      "target_rel": "scripts/hook-",
+      "target_plugin": null,
+      "classification": "unresolved_prose_or_prefix_candidate",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/governance-policy.json",
+      "match": "creator-kit/scripts/lint-script-frontmatter.py",
+      "target_rel": "scripts/lint-script-frontmatter.py",
+      "target_plugin": "skill-governance-lint",
+      "classification": "legacy_cross_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "config/governance-policy.json",
+      "match": "creator-kit/scripts/lint-rubric-violation.py",
+      "target_rel": "scripts/lint-rubric-violation.py",
+      "target_plugin": "skill-governance-lint",
+      "classification": "legacy_cross_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    }
+  ]
+}

@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "business-types.json",
+  "title": "業務タイプ別ナレッジベース",
+  "description": "契約書生成時に参照する業務タイプ別の推奨設定・条項",
+  "version": "1.0.0",
+  "businessTypes": {
+    "ai-consulting": {
+      "id": "ai-consulting",
+      "name": "AIコンサルティング",
+      "description": "AI導入支援、AI研修、プロンプト制作等",
+      "weight": 1.0,
+      "searchKeywords": ["AI", "人工知能", "生成AI", "ChatGPT", "Claude", "プロンプト", "研修", "コンサル"],
+      "defaultServices": [
+        {
+          "name": "AIコンサルティング業務",
+          "description": "AI導入に向けた計画策定、業務選定、推進体制構築等の支援",
+          "contractType": "quasi-mandate",
+          "weight": 1.0
+        },
+        {
+          "name": "AI研修業務",
+          "description": "生成AI活用のための研修実施（座学、ワークショップ形式等）",
+          "contractType": "quasi-mandate",
+          "weight": 0.9
+        },
+        {
+          "name": "プロンプト制作業務",
+          "description": "業務用AIプロンプトの設計・制作・カスタマイズ",
+          "deliverables": "プロンプトテンプレート一式",
+          "contractType": "contract-for-work",
+          "weight": 0.9
+        }
+      ],
+      "recommendedClauses": {
+        "aiDisclaimer": {
+          "required": true,
+          "weight": 1.0,
+          "description": "AI利用に関する免責・説明条項"
+        },
+        "hallucination": {
+          "required": true,
+          "weight": 0.95,
+          "description": "ハルシネーション（誤情報生成）に関する免責"
+        },
+        "promptIP": {
+          "required": true,
+          "weight": 0.9,
+          "description": "プロンプトの知的財産権帰属"
+        },
+        "aiLearningProhibition": {
+          "required": true,
+          "weight": 0.85,
+          "description": "秘密情報のAI学習データ利用禁止"
+        }
+      },
+      "defaultSettings": {
+        "useAI": true,
+        "aiServices": ["ChatGPT", "Claude", "Gemini"],
+        "copyrightTransfer": "payment-completion",
+        "existingWorksRetained": true,
+        "knowhowRetained": true
+      },
+      "riskFactors": [
+        {
+          "id": "ai-output-quality",
+          "name": "AI出力品質リスク",
+          "description": "AIの出力結果は100%の正確性を保証できない",
+          "mitigation": "免責条項の明記、ユーザー確認義務の設定",
+          "weight": 0.9
+        },
+        {
+          "id": "confidential-data-leakage",
+          "name": "機密情報漏洩リスク",
+          "description": "AIサービスへの入力による情報漏洩可能性",
+          "mitigation": "秘密情報の取扱い規定、AI学習データ利用禁止条項",
+          "weight": 0.85
+        }
+      ]
+    },
+    "it-development": {
+      "id": "it-development",
+      "name": "IT開発",
+      "description": "システム開発、アプリ開発、Web開発等",
+      "weight": 0.95,
+      "searchKeywords": ["IT", "システム", "開発", "プログラミング", "アプリ", "Web", "ソフトウェア"],
+      "defaultServices": [
+        {
+          "name": "要件定義業務",
+          "description": "システム要件の分析・定義",
+          "contractType": "quasi-mandate",
+          "weight": 0.9
+        },
+        {
+          "name": "システム設計業務",
+          "description": "基本設計、詳細設計の実施",
+          "contractType": "quasi-mandate",
+          "weight": 0.9
+        },
+        {
+          "name": "システム開発業務",
+          "description": "プログラミング、テスト、デプロイ",
+          "deliverables": "ソースコード、テスト結果報告書",
+          "contractType": "contract-for-work",
+          "weight": 1.0
+        },
+        {
+          "name": "保守・運用業務",
+          "description": "システムの保守・運用・サポート",
+          "contractType": "quasi-mandate",
+          "weight": 0.7
+        }
+      ],
+      "recommendedClauses": {
+        "warranty": {
+          "required": true,
+          "weight": 1.0,
+          "description": "契約不適合責任（瑕疵担保）"
+        },
+        "acceptance": {
+          "required": true,
+          "weight": 0.95,
+          "description": "検収条件・期間"
+        },
+        "sourceCodeIP": {
+          "required": true,
+          "weight": 0.9,
+          "description": "ソースコードの知的財産権帰属"
+        }
+      },
+      "defaultSettings": {
+        "useAI": false,
+        "copyrightTransfer": "payment-completion",
+        "existingWorksRetained": true,
+        "damagesCap": "contract-amount"
+      },
+      "riskFactors": [
+        {
+          "id": "scope-creep",
+          "name": "スコープクリープリスク",
+          "description": "要件変更による作業範囲の拡大",
+          "mitigation": "変更管理条項、追加費用規定",
+          "weight": 0.85
+        },
+        {
+          "id": "delay",
+          "name": "納期遅延リスク",
+          "description": "開発遅延による納期超過",
+          "mitigation": "納期変更協議条項、免責事由の明記",
+          "weight": 0.8
+        }
+      ]
+    },
+    "design": {
+      "id": "design",
+      "name": "デザイン",
+      "description": "UI/UXデザイン、グラフィックデザイン、Webデザイン等",
+      "weight": 0.9,
+      "searchKeywords": ["デザイン", "UI", "UX", "グラフィック", "Web", "イラスト", "ロゴ"],
+      "defaultServices": [
+        {
+          "name": "UI/UXデザイン業務",
+          "description": "ユーザーインターフェース・体験の設計・制作",
+          "deliverables": "デザインファイル一式（Figma/Adobe XD等）",
+          "contractType": "contract-for-work",
+          "weight": 1.0
+        },
+        {
+          "name": "グラフィックデザイン業務",
+          "description": "ロゴ、バナー、印刷物等のデザイン制作",
+          "deliverables": "デザインファイル一式",
+          "contractType": "contract-for-work",
+          "weight": 0.9
+        }
+      ],
+      "recommendedClauses": {
+        "copyrightRetention": {
+          "required": true,
+          "weight": 1.0,
+          "description": "著作権の帰属・移転条件"
+        },
+        "moralRights": {
+          "required": true,
+          "weight": 0.9,
+          "description": "著作者人格権の不行使"
+        },
+        "portfolioUse": {
+          "required": false,
+          "weight": 0.7,
+          "description": "ポートフォリオ使用許諾"
+        }
+      },
+      "defaultSettings": {
+        "useAI": false,
+        "copyrightTransfer": "payment-completion",
+        "existingWorksRetained": true
+      },
+      "riskFactors": [
+        {
+          "id": "revision-loop",
+          "name": "修正ループリスク",
+          "description": "無制限の修正要求",
+          "mitigation": "修正回数制限、追加費用規定",
+          "weight": 0.85
+        }
+      ]
+    },
+    "consulting": {
+      "id": "consulting",
+      "name": "一般コンサルティング",
+      "description": "経営コンサルティング、業務改善、戦略立案等",
+      "weight": 0.85,
+      "searchKeywords": ["コンサル", "経営", "戦略", "業務改善", "顧問", "アドバイザリー"],
+      "defaultServices": [
+        {
+          "name": "経営コンサルティング業務",
+          "description": "経営戦略立案、業務改善提案等の支援",
+          "contractType": "quasi-mandate",
+          "weight": 1.0
+        },
+        {
+          "name": "顧問業務",
+          "description": "継続的なアドバイス・相談対応",
+          "contractType": "quasi-mandate",
+          "weight": 0.8
+        }
+      ],
+      "recommendedClauses": {
+        "confidentiality": {
+          "required": true,
+          "weight": 1.0,
+          "description": "秘密保持義務"
+        },
+        "competitionRestriction": {
+          "required": false,
+          "weight": 0.6,
+          "description": "競業避止義務"
+        }
+      },
+      "defaultSettings": {
+        "useAI": false,
+        "copyrightTransfer": "individual",
+        "damagesCap": "contract-amount"
+      },
+      "riskFactors": [
+        {
+          "id": "result-guarantee",
+          "name": "成果保証リスク",
+          "description": "コンサルティング結果の保証要求",
+          "mitigation": "成果非保証条項、善管注意義務の明記",
+          "weight": 0.8
+        }
+      ]
+    },
+    "other": {
+      "id": "other",
+      "name": "その他",
+      "description": "上記以外の業務",
+      "weight": 0.5,
+      "searchKeywords": ["その他", "カスタム"],
+      "defaultServices": [],
+      "recommendedClauses": {},
+      "defaultSettings": {
+        "useAI": false,
+        "copyrightTransfer": "individual"
+      },
+      "riskFactors": []
+    }
+  },
+  "contractTypes": {
+    "quasi-mandate": {
+      "id": "quasi-mandate",
+      "name": "準委任契約",
+      "description": "善管注意義務を負い、業務を遂行する契約",
+      "characteristics": [
+        "結果ではなく過程・行為に対する報酬",
+        "善管注意義務を負う",
+        "いつでも解除可能（民法651条）"
+      ],
+      "weight": 1.0
+    },
+    "contract-for-work": {
+      "id": "contract-for-work",
+      "name": "請負契約",
+      "description": "仕事の完成を約束し、結果に対して報酬を受ける契約",
+      "characteristics": [
+        "仕事の完成義務",
+        "契約不適合責任を負う",
+        "完成前の解除は損害賠償が必要"
+      ],
+      "weight": 1.0
+    }
+  }
+}

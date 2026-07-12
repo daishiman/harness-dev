@@ -1,0 +1,509 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 41db2b0..56d599f 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -1,8 +1,4 @@
+ {
+-  "_build_claude_settings": {
+-    "managed_hooks": [],
+-    "managed_permissions": []
+-  },
+   "permissions": {
+     "deny": [
+       "Write(.claude/skills/ref-skill-design-rubric/**)",
+@@ -106,5 +102,13 @@
+         ]
+       }
+     ]
++  },
++  "enabledPlugins": {
++    "skill-creator@xl-skills": true,
++    "skill-intake@xl-skills": true
++  },
++  "_build_claude_settings": {
++    "managed_hooks": [],
++    "managed_permissions": []
+   }
+ }
+diff --git a/.gitignore b/.gitignore
+index 0fdb244..3aa936a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -28,9 +28,14 @@ references/governance-params.json
+ .env.*
+ !.env.example
+ 
++# Per-repo Notion config (DB IDs / keychain service identity) - see plugins/skill-creator/references/notion-per-repo-setup.md
++.notion-config.json
++!.notion-config.example.json
++
+ # Session-local artifacts
+ output/
+ .claude/handoff/
++.worktrees/
+ # .claude/{agents,skills,commands} は build-claude-symlinks.py が
+ # plugins/ から生成する symlink を含むため tracked。ignore しない。
+ 
+diff --git a/.worktrees/.layout-b-wt.path b/.worktrees/.layout-b-wt.path
+deleted file mode 100644
+index 00585ef..0000000
+--- a/.worktrees/.layout-b-wt.path
++++ /dev/null
+@@ -1 +0,0 @@
+-/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260522-175959-wt-1
+diff --git a/doc/notion-schema/README.md b/doc/notion-schema/README.md
+index 8b4e006..f142cdf 100644
+--- a/doc/notion-schema/README.md
++++ b/doc/notion-schema/README.md
+@@ -1,14 +1,18 @@
+ # Notion スキーマ SSOT
+ 
+ xl-skills のプラグイン量産フローを Notion 上の 3 DB と連動させるための schema-as-code 定義。
++**スキーマ構造（properties 定義）は本 repo の SSOT、DB ID は per-repo 設定 (`.notion-config.json`) に分離**。
+ 
+ ## 構成
+ 
+-| ファイル | 対応 Notion DB | DB ID |
++| ファイル | 対応 Notion DB | config key |
+ |---|---|---|
+-| `hearing-sheet.schema.json` | Skillヒアリングシート | `36607a0c-d18c-80bf-9eff-c74aa736645c` |
+-| `skill-list.schema.json` | Skill一覧（プラグイン単位） | `36b07a0c-d18c-8073-b106-e70552e13308` |
+-| `improvement-request.schema.json` | Skill改善要望 | `36b07a0c-d18c-80db-aae0-d713838cd6f4` |
++| `hearing-sheet.schema.json` | Skillヒアリングシート | `hearing-sheet` |
++| `skill-list.schema.json` | Skill一覧（プラグイン単位） | `skill-list` |
++| `improvement-request.schema.json` | Skill改善要望 | `improvement-request` |
++
++実 DB ID は `<repo-root>/.notion-config.json#databases.<key>.db_id` で解決される。
++他リポジトリへの導入手順は **[plugins/skill-creator/references/notion-per-repo-setup.md](../../plugins/skill-creator/references/notion-per-repo-setup.md)** を参照。
+ 
+ ## リレーション
+ 
+@@ -31,7 +35,8 @@ python3 scripts/sync-notion-schema.py --check
+ python3 scripts/sync-notion-schema.py --apply
+ ```
+ 
+-Notion API キーは macOS Keychain (`security find-generic-password -s notion-api-key -w`) から取得。
++`.notion-config.json` が未配置の repo では `[notion_config] WARN: ... not found` を出して exit 0 (skip)。
++Notion API トークンは env `NOTION_TOKEN` → macOS Keychain (config の `keychain_service`/`keychain_account`) の順で解決。
+ 
+ ## 制約メモ
+ 
+diff --git a/doc/notion-schema/hearing-sheet.schema.json b/doc/notion-schema/hearing-sheet.schema.json
+index bc0aa95..f987c28 100644
+--- a/doc/notion-schema/hearing-sheet.schema.json
++++ b/doc/notion-schema/hearing-sheet.schema.json
+@@ -1,5 +1,5 @@
+ {
+-  "db_id": "36607a0c-d18c-80bf-9eff-c74aa736645c",
++  "config_key": "hearing-sheet",
+   "title": "Skillヒアリングシート",
+   "title_property": "ヒアリングシート名",
+   "managed_properties": {
+diff --git a/doc/notion-schema/improvement-request.schema.json b/doc/notion-schema/improvement-request.schema.json
+index 522a899..2750173 100644
+--- a/doc/notion-schema/improvement-request.schema.json
++++ b/doc/notion-schema/improvement-request.schema.json
+@@ -1,5 +1,5 @@
+ {
+-  "db_id": "36b07a0c-d18c-80db-aae0-d713838cd6f4",
++  "config_key": "improvement-request",
+   "title": "Skill改善要望",
+   "title_property": "要望タイトル",
+   "managed_properties": {
+diff --git a/doc/notion-schema/skill-list.schema.json b/doc/notion-schema/skill-list.schema.json
+index 7d7689d..70da76a 100644
+--- a/doc/notion-schema/skill-list.schema.json
++++ b/doc/notion-schema/skill-list.schema.json
+@@ -1,5 +1,5 @@
+ {
+-  "db_id": "36b07a0c-d18c-8073-b106-e70552e13308",
++  "config_key": "skill-list",
+   "title": "Skill一覧",
+   "title_property": "プラグイン名",
+   "row_unit": "plugin",
+diff --git a/plugins/skill-intake/README.md b/plugins/skill-intake/README.md
+index 99cf89e..d6d604c 100644
+--- a/plugins/skill-intake/README.md
++++ b/plugins/skill-intake/README.md
+@@ -8,16 +8,18 @@ skill-creator の前段ヒアリングを **非技術者にも開く** Claude Co
+ 
+ ## Non-Secrets（漏洩可情報）
+ 
+-以下は **スキル内・コード・README に直書きしてよい** 情報です。毎回ユーザーに問い合わせるのを回避するため、`schema.json` や設定ファイルに同梱されています。万一漏洩しても単体では不正利用できません。
++このプラグインは **複数 repository に symlink で共有される前提** のため、リポジトリ固有の Notion DB ID は
++プラグイン内に直書きせず **`<repo-root>/.notion-config.json` (gitignore対象)** に分離している。
++セットアップ手順は **[references/notion-per-repo-setup.md](references/notion-per-repo-setup.md)** 参照（symlink で skill-creator/references/ と共有）。
+ 
+ | 項目 | 値 | 格納場所 | 漏洩可否 |
+ |---|---|---|---|
+-| Notion Database ID | `36607a0cd18c80bf9effc74aa736645c` | `schema.json` の `database_id_default` | OK |
+-| Keychain service 名（既定） | `notion-api-key` | `scripts/keychain_get_secret.py` 既定値 / env `INTAKE_KEYCHAIN_SERVICE` で上書き可 | OK |
+-| Keychain account 名（既定） | `skill-intake` | `scripts/keychain_get_secret.py` 既定値 / env `INTAKE_KEYCHAIN_ACCOUNT` で上書き可 | OK |
++| Notion Database ID | per-repo 設定 | `<repo-root>/.notion-config.json#databases.hearing-sheet.db_id` (gitignore) | OK |
++| Keychain service 名（既定） | `notion-api-key` | `.notion-config.json#keychain_service` / env `INTAKE_KEYCHAIN_SERVICE` で上書き可 | OK |
++| Keychain account 名（既定） | `skill-intake` | `.notion-config.json#keychain_account` / env `INTAKE_KEYCHAIN_ACCOUNT` で上書き可 | OK |
+ | Notion-Version ヘッダ | `2022-06-28` | `scripts/notion_http.py` / env `INTAKE_NOTION_VERSION` で上書き可 | OK |
+ 
+-**これらはスキル内に直書きしてよい。毎回の問い合わせを回避するため。**
++DB ID 解決順: `--database-id` CLI > env `INTAKE_NOTION_DATABASE_ID` > `<repo-root>/.notion-config.json` > schema `database_id_default` (= null)。
+ 
+ ### 機密情報（Keychain のみ）との対比
+ 
+diff --git a/plugins/skill-intake/scripts/publish_notion_page.py b/plugins/skill-intake/scripts/publish_notion_page.py
+index c19557d..e617cd9 100755
+--- a/plugins/skill-intake/scripts/publish_notion_page.py
++++ b/plugins/skill-intake/scripts/publish_notion_page.py
+@@ -234,17 +234,26 @@ def main():
+                 schema_default = json.load(f).get('database_id_default')
+         except Exception:
+             schema_default = None
+-    # 3段 fallback: --database-id > env > schema.database_id_default
++    # 4段 fallback: --database-id > env > .notion-config.json > schema.database_id_default
++    repo_cfg_db_id = None
++    try:
++        sys.path.insert(0, str(SCRIPT_DIR))
++        import notion_config as _nc  # noqa
++        repo_cfg_db_id = _nc.get_db_id('hearing-sheet')
++    except Exception:
++        pass
+     if args.database_id:
+         database_id, db_id_source = args.database_id, 'arg'
+     elif os.environ.get('INTAKE_NOTION_DATABASE_ID'):
+         database_id, db_id_source = os.environ['INTAKE_NOTION_DATABASE_ID'], 'env'
++    elif repo_cfg_db_id:
++        database_id, db_id_source = repo_cfg_db_id, 'repo_config'
+     elif schema_default:
+         database_id, db_id_source = schema_default, 'schema_default'
+     else:
+         database_id, db_id_source = None, None
+     if not database_id:
+-        print('database_id is required (--database-id, INTAKE_NOTION_DATABASE_ID, or schema database_id_default)', file=sys.stderr)
++        print('database_id is required (--database-id, INTAKE_NOTION_DATABASE_ID, <repo-root>/.notion-config.json#databases.hearing-sheet, or schema database_id_default). See plugins/skill-creator/references/notion-per-repo-setup.md', file=sys.stderr)
+         return 2
+     try:
+         eval_log_dir = Path('eval-log')
+diff --git a/plugins/skill-intake/scripts/verify_notion_schema.py b/plugins/skill-intake/scripts/verify_notion_schema.py
+index 72f52f9..bf30add 100755
+--- a/plugins/skill-intake/scripts/verify_notion_schema.py
++++ b/plugins/skill-intake/scripts/verify_notion_schema.py
+@@ -59,17 +59,26 @@ def main():
+ 
+     with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
+         schema = json.load(f)
+-    # 3段 fallback: --database-id > env > schema.database_id_default
++    # 4段 fallback: --database-id > env > .notion-config.json > schema.database_id_default
++    repo_cfg_db_id = None
++    try:
++        sys.path.insert(0, str(Path(__file__).resolve().parent))
++        import notion_config as _nc  # noqa
++        repo_cfg_db_id = _nc.get_db_id('hearing-sheet')
++    except Exception:
++        pass
+     if args.database_id:
+         database_id, db_id_source = args.database_id, 'arg'
+     elif os.environ.get('INTAKE_NOTION_DATABASE_ID'):
+         database_id, db_id_source = os.environ['INTAKE_NOTION_DATABASE_ID'], 'env'
++    elif repo_cfg_db_id:
++        database_id, db_id_source = repo_cfg_db_id, 'repo_config'
+     elif schema.get('database_id_default'):
+         database_id, db_id_source = schema['database_id_default'], 'schema_default'
+     else:
+         database_id, db_id_source = None, None
+     if not database_id:
+-        print('database_id is required (--database-id, INTAKE_NOTION_DATABASE_ID, or schema database_id_default)', file=sys.stderr)
++        print('database_id is required (--database-id, INTAKE_NOTION_DATABASE_ID, <repo-root>/.notion-config.json#databases.hearing-sheet, or schema database_id_default). See plugins/skill-creator/references/notion-per-repo-setup.md', file=sys.stderr)
+         return 2
+     try:
+         eval_log_dir = Path('eval-log')
+diff --git a/plugins/skill-intake/skills/run-skill-intake-aggregator/SKILL.md b/plugins/skill-intake/skills/run-skill-intake-aggregator/SKILL.md
+index 8a071f2..be4cda8 100644
+--- a/plugins/skill-intake/skills/run-skill-intake-aggregator/SKILL.md
++++ b/plugins/skill-intake/skills/run-skill-intake-aggregator/SKILL.md
+@@ -125,7 +125,7 @@ Notion トークンは Keychain から都度取得。コード・コミット履
+ |--|--|--|
+ | service | `notion-api-key` | `INTAKE_KEYCHAIN_SERVICE` |
+ | account | `skill-intake` | `INTAKE_KEYCHAIN_ACCOUNT` |
+-| Notion DB ID | `references/notion-db-schema.json` の `database_id_default` (正本) | `INTAKE_NOTION_DATABASE_ID` (CI override 限定) |
++| Notion DB ID | per-repo: `<repo-root>/.notion-config.json#databases.hearing-sheet.db_id` (gitignore対象) | `--database-id` CLI > `INTAKE_NOTION_DATABASE_ID` env > config > schema default(null)。setup: `plugins/skill-creator/references/notion-per-repo-setup.md` |
+ | Notion-Version | `2022-06-28` | `INTAKE_NOTION_VERSION` |
+ 
+ 初回セットアップは `references/keychain-setup.md`。
+diff --git a/plugins/skill-intake/skills/run-skill-intake-aggregator/references/notion-db-schema.json b/plugins/skill-intake/skills/run-skill-intake-aggregator/references/notion-db-schema.json
+index 2a39696..9090b07 100644
+--- a/plugins/skill-intake/skills/run-skill-intake-aggregator/references/notion-db-schema.json
++++ b/plugins/skill-intake/skills/run-skill-intake-aggregator/references/notion-db-schema.json
+@@ -5,8 +5,11 @@
+   "schema_version": "2.0.0",
+   "supersedes": "1.0",
+   "canonical_source_for_values": "intake-final-schema.json#/properties/notion_db_properties",
+-  "database_id_default": "36607a0cd18c80bf9effc74aa736645c",
++  "database_id_default": null,
+   "database_id_env": "INTAKE_NOTION_DATABASE_ID",
++  "database_id_config_key": "hearing-sheet",
++  "database_id_config_path": "<repo-root>/.notion-config.json",
++  "database_id_setup_doc": "plugins/skill-creator/references/notion-per-repo-setup.md",
+   "properties": {
+     "名前": {
+       "type": "title",
+diff --git a/scripts/lint-notion-relations.py b/scripts/lint-notion-relations.py
+index ae23d62..e78d697 100755
+--- a/scripts/lint-notion-relations.py
++++ b/scripts/lint-notion-relations.py
+@@ -12,15 +12,10 @@ import json, os, subprocess, sys, tempfile
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+-SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+-
++sys.path.insert(0, str(ROOT / "plugins" / "skill-creator" / "scripts"))
++import notion_config  # noqa: E402
+ 
+-def token():
+-    if os.environ.get("NOTION_TOKEN"):
+-        return os.environ["NOTION_TOKEN"]
+-    return subprocess.check_output(
+-        ["security", "find-generic-password", "-s", "notion-api-key", "-w"]
+-    ).decode().strip()
++SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+ 
+ 
+ def curl(method, url, tk, body=None):
+@@ -55,19 +50,25 @@ def query_all(db_id, tk):
+ 
+ 
+ def main():
+-    tk = token()
+-    schemas = {k: json.loads((SCHEMA_DIR / f"{k}.schema.json").read_text())
+-               for k in ["hearing-sheet", "skill-list", "improvement-request"]}
++    cfg, tk = notion_config.require_or_skip()
++    if not cfg:
++        return 0
++    db_ids = {k: notion_config.get_db_id(k)
++              for k in ["hearing-sheet", "skill-list", "improvement-request"]}
++    missing = [k for k, v in db_ids.items() if not v]
++    if missing:
++        print(f"[SKIP] missing db_id in .notion-config.json: {missing}")
++        return 0
+     violations = []
+ 
+     # Rule 1: ヒアリングシート.紐づくプラグイン ≤ 1
+-    for p in query_all(schemas["hearing-sheet"]["db_id"], tk):
++    for p in query_all(db_ids["hearing-sheet"], tk):
+         rel = p["properties"].get("紐づくプラグイン", {}).get("relation", [])
+         if len(rel) > 1:
+             violations.append(f"hearing-sheet {p['id']}: 紐づくプラグインが {len(rel)} 件 (max 1)")
+ 
+     # Rule 2: 改善要望.対象プラグイン == 1
+-    for p in query_all(schemas["improvement-request"]["db_id"], tk):
++    for p in query_all(db_ids["improvement-request"], tk):
+         rel = p["properties"].get("対象プラグイン", {}).get("relation", [])
+         if len(rel) != 1:
+             title = "".join(t.get("plain_text","") for t in
+@@ -76,7 +77,7 @@ def main():
+ 
+     # Rule 3: スキル一覧.プラグイン名 重複なし
+     names = {}
+-    for p in query_all(schemas["skill-list"]["db_id"], tk):
++    for p in query_all(db_ids["skill-list"], tk):
+         title = "".join(t.get("plain_text","") for t in
+                         p["properties"].get("プラグイン名",{}).get("title",[]))
+         if not title: continue
+diff --git a/scripts/notion-submit-improvement.py b/scripts/notion-submit-improvement.py
+index 4a52fad..111d613 100644
+--- a/scripts/notion-submit-improvement.py
++++ b/scripts/notion-submit-improvement.py
+@@ -22,20 +22,15 @@ import argparse, json, os, subprocess, sys, tempfile
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parent.parent
++sys.path.insert(0, str(ROOT / "plugins" / "skill-creator" / "scripts"))
++import notion_config  # noqa: E402
++
+ SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+ 
+ REQ_TYPES = ["バグ","機能追加","プロンプト改善","ドキュメント","挙動変更"]
+ PRIORITY  = ["高","中","低"]
+ 
+ 
+-def get_token():
+-    if os.environ.get("NOTION_TOKEN"):
+-        return os.environ["NOTION_TOKEN"]
+-    return subprocess.check_output(
+-        ["security","find-generic-password","-s","notion-api-key","-w"]
+-    ).decode().strip()
+-
+-
+ def curl(method, url, token, body=None):
+     cmd = ["curl","-sS","-X",method,
+            "-H",f"Authorization: Bearer {token}",
+@@ -75,14 +70,18 @@ def main():
+     ap.add_argument("--dry-run", action="store_true")
+     args = ap.parse_args()
+ 
+-    req_schema = json.loads((SCHEMA_DIR / "improvement-request.schema.json").read_text())
+-    list_schema = json.loads((SCHEMA_DIR / "skill-list.schema.json").read_text())
+-
+     if args.dry_run:
+         print(json.dumps(vars(args), ensure_ascii=False, indent=2)); return
+ 
+-    token = get_token()
+-    plugin_page_id = find_plugin_page(list_schema["db_id"], args.plugin, token)
++    cfg, token = notion_config.require_or_skip("improvement-request")
++    if not cfg:
++        return 0
++    skill_list_db = notion_config.get_db_id("skill-list")
++    req_db = notion_config.get_db_id("improvement-request")
++    if not (skill_list_db and req_db):
++        print("[SKIP] skill-list / improvement-request db_id missing in .notion-config.json")
++        return 0
++    plugin_page_id = find_plugin_page(skill_list_db, args.plugin, token)
+     if not plugin_page_id:
+         print(f"[ERR] スキル一覧に '{args.plugin}' が存在しません。先に notion-upsert-plugin.py で登録してください")
+         sys.exit(2)
+@@ -102,7 +101,7 @@ def main():
+         props["関連PR/コミット"] = {"url": args.pr_url}
+ 
+     code, data = curl("POST","https://api.notion.com/v1/pages", token,
+-                      {"parent":{"database_id":req_schema["db_id"]},"properties":props})
++                      {"parent":{"database_id":req_db},"properties":props})
+     if code >= 300:
+         print(f"[ERR] create: {code} {data}"); sys.exit(2)
+     print(f"[CREATED] 改善要望: '{args.title}' -> {data['id']}")
+diff --git a/scripts/notion-upsert-plugin.py b/scripts/notion-upsert-plugin.py
+index 15a78ce..bfecfd6 100755
+--- a/scripts/notion-upsert-plugin.py
++++ b/scripts/notion-upsert-plugin.py
+@@ -17,25 +17,17 @@ Usage:
+ 
+ 冪等性: TITLE が一意キー。lint-notion-relations.py が重複検知。
+ 
+-環境: macOS Keychain `notion-api-key` から token 取得。CI など keychain 無い環境では NOTION_TOKEN 環境変数を fallback として読む。
++Per-repo 設定: <repo-root>/.notion-config.json (gitignore対象)
++  詳細: plugins/skill-creator/references/notion-per-repo-setup.md
+ """
+ import argparse, json, os, subprocess, sys, tempfile
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+-SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+-
++sys.path.insert(0, str(ROOT / "plugins" / "skill-creator" / "scripts"))
++import notion_config  # noqa: E402
+ 
+-def get_token():
+-    if os.environ.get("NOTION_TOKEN"):
+-        return os.environ["NOTION_TOKEN"]
+-    try:
+-        return subprocess.check_output(
+-            ["security","find-generic-password","-s","notion-api-key","-w"],
+-            stderr=subprocess.DEVNULL).decode().strip()
+-    except Exception:
+-        print("[ERR] Notion token not found (keychain 'notion-api-key' or $NOTION_TOKEN)")
+-        sys.exit(2)
++SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+ 
+ 
+ def curl(method, url, token, body=None):
+@@ -350,9 +342,6 @@ def main():
+     if not plugin_dir.is_dir():
+         print(f"[ERR] plugin dir not found: {plugin_dir}"); sys.exit(2)
+ 
+-    skill_list_schema = json.loads((SCHEMA_DIR / "skill-list.schema.json").read_text())
+-    db_id = skill_list_schema["db_id"]
+-
+     info = scan_plugin(plugin_dir)
+     props = build_properties(args.plugin, info, args.hearing_sheet_id)
+     children = build_page_children(args.plugin, info)
+@@ -363,7 +352,10 @@ def main():
+                           "children_count": len(children)}, ensure_ascii=False, indent=2))
+         return
+ 
+-    token = get_token()
++    cfg, token = notion_config.require_or_skip("skill-list")
++    if not cfg:
++        return 0
++    db_id = notion_config.get_db_id("skill-list")
+     existing = find_existing(db_id, args.plugin, token)
+ 
+     if existing:
+diff --git a/scripts/sync-notion-schema.py b/scripts/sync-notion-schema.py
+index afb0b09..d5b1bd5 100755
+--- a/scripts/sync-notion-schema.py
++++ b/scripts/sync-notion-schema.py
+@@ -1,28 +1,24 @@
+ #!/usr/bin/env python3
+-"""Notion 3DB スキーマ同期: doc/notion-schema/*.json を SSOT として差分検知・適用。
++"""Notion 3DB スキーマ同期: doc/notion-schema/*.schema.json を SSOT として差分検知・適用。
+ 
+ Usage:
+   python3 scripts/sync-notion-schema.py --check   # 差分のみ表示 (CI向け、非ゼロ終了で乖離検知)
+   python3 scripts/sync-notion-schema.py --apply   # Notion へ差分適用
+ 
+-API キー: macOS Keychain `notion-api-key` から取得 (security find-generic-password)。
++Per-repo 設定: <repo-root>/.notion-config.json (gitignore対象)
++  詳細: plugins/skill-creator/references/notion-per-repo-setup.md
+ """
+ import argparse, json, os, subprocess, sys, tempfile
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parent.parent
++sys.path.insert(0, str(ROOT / "plugins" / "skill-creator" / "scripts"))
++import notion_config  # noqa: E402
++
+ SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+ FILES = ["hearing-sheet", "skill-list", "improvement-request"]
+ 
+ 
+-def keychain_token():
+-    if os.environ.get("NOTION_TOKEN"):
+-        return os.environ["NOTION_TOKEN"]
+-    return subprocess.check_output(
+-        ["security", "find-generic-password", "-s", "notion-api-key", "-w"]
+-    ).decode().strip()
+-
+-
+ def curl(method, url, token, body=None):
+     cmd = ["curl", "-sS", "-X", method,
+            "-H", f"Authorization: Bearer {token}",
+@@ -85,13 +81,29 @@ def main():
+     g.add_argument("--apply", action="store_true")
+     args = ap.parse_args()
+ 
+-    token = keychain_token()
++    cfg, token = notion_config.require_or_skip()
++    if not cfg:
++        return 0
++
+     schemas = load_schemas()
+-    db_id_lookup = {k: v["db_id"] for k, v in schemas.items()}
++    db_id_lookup = {}
++    for key in FILES:
++        db_id = notion_config.get_db_id(key)
++        if not db_id:
++            print(f"[SKIP] {key}: databases.{key}.db_id missing in {cfg['__path__']}")
++            continue
++        db_id_lookup[key] = db_id
++
++    if not db_id_lookup:
++        print("[SKIP] no databases configured")
++        return 0
+ 
+     drift = False
+     for key, sc in schemas.items():
+-        code, payload = curl("GET", f"https://api.notion.com/v1/databases/{sc['db_id']}", token)
++        if key not in db_id_lookup:
++            continue
++        db_id = db_id_lookup[key]
++        code, payload = curl("GET", f"https://api.notion.com/v1/databases/{db_id}", token)
+         if code >= 300:
+             print(f"[ERR] GET {key}: {code} {payload[:200]}"); sys.exit(2)
+         remote = json.loads(payload)
+@@ -102,7 +114,7 @@ def main():
+         print(f"[DRIFT] {key}: +{len(additions)} props -> {list(additions.keys())}")
+         if args.apply:
+             code, payload = curl("PATCH",
+-                f"https://api.notion.com/v1/databases/{sc['db_id']}",
++                f"https://api.notion.com/v1/databases/{db_id}",
+                 token, {"properties": additions})
+             if code >= 300:
+                 print(f"  [ERR] apply: {code} {payload[:300]}"); sys.exit(2)

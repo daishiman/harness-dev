@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: comparison-table
+  required_vars: [title, attr1, attr2, attr3, opt1_name, opt1_v1, opt1_v2, opt1_v3, opt2_name, opt2_v1, opt2_v2, opt2_v3, opt3_name, opt3_v1, opt3_v2, opt3_v3]
+  optional_vars: [message]
+  use_case: 選択肢比較表。縦軸選択肢×横軸属性。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0d47a1; }
+    .header { fill: #1976d2; }
+    .header-text { font-size: 18px; font-weight: 700; fill: #fff; }
+    .row-odd { fill: #f5f9ff; }
+    .row-even { fill: #fff; }
+    .row-text { font-size: 18px; fill: #222; }
+    .opt-name { font-weight: 700; fill: #0d47a1; }
+    .border { stroke: #b0bec5; stroke-width: 1; fill: none; }
+    .legend { font-size: 14px; fill: #555; }
+  </style>
+
+  <text x="40" y="50" class="title">{{title}}</text>
+
+  <!-- ヘッダ -->
+  <rect x="40" y="90" width="1120" height="60" class="header"/>
+  <text x="160" y="130" class="header-text" text-anchor="middle">選択肢</text>
+  <text x="430" y="130" class="header-text" text-anchor="middle">{{attr1}}</text>
+  <text x="710" y="130" class="header-text" text-anchor="middle">{{attr2}}</text>
+  <text x="990" y="130" class="header-text" text-anchor="middle">{{attr3}}</text>
+
+  <!-- 行1 -->
+  <rect x="40" y="150" width="1120" height="100" class="row-odd"/>
+  <text x="160" y="205" class="row-text opt-name" text-anchor="middle">{{opt1_name}}</text>
+  <text x="430" y="205" class="row-text" text-anchor="middle">{{opt1_v1}}</text>
+  <text x="710" y="205" class="row-text" text-anchor="middle">{{opt1_v2}}</text>
+  <text x="990" y="205" class="row-text" text-anchor="middle">{{opt1_v3}}</text>
+
+  <!-- 行2 -->
+  <rect x="40" y="250" width="1120" height="100" class="row-even"/>
+  <text x="160" y="305" class="row-text opt-name" text-anchor="middle">{{opt2_name}}</text>
+  <text x="430" y="305" class="row-text" text-anchor="middle">{{opt2_v1}}</text>
+  <text x="710" y="305" class="row-text" text-anchor="middle">{{opt2_v2}}</text>
+  <text x="990" y="305" class="row-text" text-anchor="middle">{{opt2_v3}}</text>
+
+  <!-- 行3 -->
+  <rect x="40" y="350" width="1120" height="100" class="row-odd"/>
+  <text x="160" y="405" class="row-text opt-name" text-anchor="middle">{{opt3_name}}</text>
+  <text x="430" y="405" class="row-text" text-anchor="middle">{{opt3_v1}}</text>
+  <text x="710" y="405" class="row-text" text-anchor="middle">{{opt3_v2}}</text>
+  <text x="990" y="405" class="row-text" text-anchor="middle">{{opt3_v3}}</text>
+
+  <rect x="40" y="90" width="1120" height="360" class="border"/>
+  <line x1="280" y1="90" x2="280" y2="450" class="border"/>
+  <line x1="580" y1="90" x2="580" y2="450" class="border"/>
+  <line x1="850" y1="90" x2="850" y2="450" class="border"/>
+
+  <text x="40" y="500" class="legend">凡例: 太字青=選択肢名 / 行はストライプで識別</text>
+  <text x="40" y="525" class="legend">言いたい一言: {{message}}</text>
+</svg>

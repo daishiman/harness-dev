@@ -1,0 +1,64 @@
+{
+  "name": "slide-report-generator",
+  "version": "0.1.0",
+  "package_mode": "bundle",
+  "description": "presentation-slide-generator v8.4.2 の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa/16:9/GSAP/インライン SVG2/Codex Image2/決定論レンダラ/A4 印刷/style genome) を単一 SSOT で共有し、コンテンツ意図層のみ mode 別に分岐する。slide=1スライド1メッセージ/97 slideType、report=読み物/4 reportType/1項目1ビジュアル最適化/Mermaid 統合。Node 製レンダリング/画像/印刷/検証エンジンは vendor として byte 携行し Bash(node) で起動する。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-slide-report-generate",
+      "run-slide-report-modify",
+      "run-cross-deck-review"
+    ],
+    "agents": [
+      "hearing-facilitator",
+      "structure-designer",
+      "structure-validator",
+      "d3-diagram-designer",
+      "data-visualizer",
+      "html-generator",
+      "slide-renderer",
+      "layout-optimizer",
+      "ui-quality-reviewer",
+      "deck-evaluator",
+      "ai-image-diagram-producer",
+      "slide-report-modifier",
+      "cross-deck-reviewer",
+      "report-structure-designer",
+      "visual-strategist",
+      "report-composer",
+      "report-quality-reviewer"
+    ],
+    "commands": [
+      "slide-report-generate",
+      "slide-report-status"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/hook-postgen-eval.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "Productivity",
+  "tags": [
+    "slides",
+    "report",
+    "visual",
+    "presentation",
+    "codex-image",
+    "mermaid"
+  ]
+}

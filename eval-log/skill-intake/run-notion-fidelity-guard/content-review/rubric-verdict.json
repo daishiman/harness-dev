@@ -1,0 +1,21 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-notion-fidelity-guard",
+    "skill_md_sha256": "042c6374d392d8c66ca2ba52b143e4001e2508fd3ff1800c94cb887ccbea0c7b"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-07T08:25:00Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "iterations": 1,
+  "human_review_required": false,
+  "notes": "rubric lint 実測: lint-skill-name (第1-17条) ok / lint-skill-description VIOLATION=0 / 300行 cap 130<=300 / BD-001(## Purpose & Output Contract) + BD-002(## Gotchas) 存在 / NM-001 dir==name OK / responsibility_refs(prompts R1-R3) と schema_refs(schemas/output.schema.json) 実在。high findings=0 => PASS。smell 1件: validate-frontmatter の version 欠落指摘は skill-intake 全 skill 共通の advisory (PKG-002/004 非ブロッキング) で repo 横断対応方針のため本 PR 未編集。allowed-tools (Read/Bash/Grep/Glob) は JSON 構造比較のみで Notion API 認証を扱わない責務単一性と整合。role_suffix: fidelity-guard は命名規約 第17条 正式語彙外だが lint 非ブロッキング (governance amendment 候補として findings 記録)。"
+}

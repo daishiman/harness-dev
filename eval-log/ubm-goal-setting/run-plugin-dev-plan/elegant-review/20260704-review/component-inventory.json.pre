@@ -1,0 +1,523 @@
+{
+  "plugin_concept": "ubm-goal-setting — 北原さん式ゴールセッティングの目標設定・振り返り対話とナレッジ差分同期を1 pluginへ移植する",
+  "derivation": "本 plan は greenfield 構想ではなく ~/dev/dev/ObsidianMemo/.claude/ 配下の既存資産の移植 (port) である。P01 は要件の新規抽出でなく既存要件の棚卸し、P02 は再設計でなく faithful-transfer+adapt (.sh→.py 書き換え・vault パス変数化) の性格を持つ (13 phase 構造自体は保持する)。移植元は `.claude/commands/ai/ubm-goal-setting.md` / `.claude/commands/ai/ubm-knowledge-sync.md` が参照する `.claude/skills/ubm-goal-setting/` に確定する (同階層に併存する `skills/goal-setting/` は別資産であり移植対象外)。非量産資産 (slash-command 2 本・511 行の中核 skill・sub-agent 11 本・shell script 3 本・reference 8 本・asset 5 本・knowledge JSON 28 本 + schema/router/registry/sync-log) を capability A (目標設定・振り返り対話) と capability B (ナレッジ差分同期) の 2 系統へ分け、5 種 component_kind へ写像した。skill×2 (run-ubm-goal-setting / run-ubm-knowledge-sync)・sub-agent×10 (info-collector/output-formatter/goal-reviewer/phase3-coordinator + steps1-5/knowledge-extractor)・slash-command×2・script×3・hook×1 = 計 18 実体、うち 17 本が原資産の移植・1 本 (C04 ubm-write-path-guard) が破壊的書込防御のための新規追加である。旧 phase3-interviewer は新プラグインの別名前空間では旧 vault 側呼出し元 (`.claude/commands/ai/`) が到達せず inbound depends_on 0 の消費者ゼロ leaf となるため独立 component 化せず DROP し、その責務 (Phase3 対話制御) は phase3-coordinator + steps1-5 へ統合済みとして扱う (goal-spec checklist C3 は「10 active + interviewer 統合済み」へ調整済み)。3 本の .sh は goal-spec 制約により挙動逐語移植でなく契約移植 (検知/検証ロジック) を優先して stdlib Python へ書き換える。validate-goal-output.sh は 474 行で no-split threshold (>280 行) を単独で満たし、detect-knowledge-updates.sh (183 行) / check-knowledge-split.sh (67 行) は行数だけでは閾値未満だが goal-spec checklist C4 が 3 本明示要求するため同格で独立 component 化する。3 本とも単一 skill 専用消費 (第二消費者なし) のため placement_scope=skill で親 skill の scripts/ 配下へ畳む。ただし C01-C03 (script) は toposort 上 C16/C17 (親 skill) より先に build されるのに対し build_target は親 skill 配下パスであるため、build_target ディレクトリが物理的に未存在という順序の逆転が生じる。これは『二相 skill build』(run-skill-create が空 scaffold=scripts/ 等のサブディレクトリを含む骨組みを先行生成→parent-skill-build がその scripts/ を script 本体で充填→finalize) で調停する。build_sequencing_notes キーに詳細を記す。Obsidian vault 固有パス (05_Project/UBM/目標設定/、02_Configs/Daily/) は envelope-draft/plugin.json の config.vault_root_env (UBM_VAULT_ROOT 環境変数、既定は self-relative 解決) で変数化した。ナレッジは単一の vendor/非vendor 判断でなく data-tier 3 層で扱う: L1 curated (28 category JSON + router.json、北原知見の本体・各カテゴリ 5〜9 エントリ) は plugin 同梱シード (vendor) とし fresh-install 直後から info-collector が router.json→knowledge/*.json を最優先で読める bootstrap を成立させる。L2 raw vault sources (05_Project/UBM/*.md, 02_Configs/Daily/, 02_Configs/Templates/Daily.md) は抽出元の生ソースであり vendor せず UBM_VAULT_ROOT で外部解決する。L3 bookkeeping (registry.json/sync-log.jsonl と knowledge-extractor が書込む asset kitahara-principles-db.md) は空シードとして vendor しつつ install 後の書込先は writeback-config で解決する (mutable なため)。schema.json は L1/L3 の構造契約として plugin-root 直下の共有 knowledge/ に hoist し、C16 (読取: info-collector) と C17 (書込: knowledge-extractor) が対称参照する共有 SSOT surface とする (goal-spec checklist C6 はこの共有データ層としての整合へ文言調整済み。skill間の実行時 depends_on は張らない)。配布は個人利用前提のため distributable:false (plugin_meta.distribution) に確定した (open_questions 解消)。C14 は当初 phase3-interviewer へ割り当てていた id だが、上記の DROP 統合に伴い欠番とした。既存の depends_on/entities_covered/handoff 参照 (C15-C19) を破壊しないため再採番で詰め直さず、id 安定性を優先して意図的に欠番のまま保持する (機械ゲートは id 連続性を要求しない)。knowledge-loop 規律の扱い: 本 plugin は capability A の info-collector が router.json→knowledge/*.json を runtime consult する『デュアルパス検索』(= harness-creator knowledge-loop の Loop A 相当) と、capability B の knowledge-extractor が 6 カテゴリへ蓄積する (= Loop B 相当) を持つが、C16/C17 の combinators には with-knowledge を採用せず with-goal-seek/with-feedback-contract のみとした。これは移植 (port) 元が既に bespoke な knowledge 機構 (28 category JSON+router+registry+schema+extractor) を持ち、標準 with-knowledge combinator へ作り替えるのでなく data-tier 3 層として faithful-transfer する設計判断による (KL の Loop A/B 対応関係は上記のとおり保持し、規律の意図は継承する)。将来 knowledge 機構を標準化する場合は with-knowledge/knowledge_loop feature への移行を検討する。移植元パス ~/dev/dev/ObsidianMemo/.claude/ は移植 (port) の read-only ソース位置であって build 後 plugin の runtime パスではない (runtime の vault 解決は config.vault_root_env=UBM_VAULT_ROOT)。本 plan に焼かれた当該絶対パスは実行時値でなく『この環境での移植元の所在』を指す機械依存の 1 回性入力であり、別環境で移植し直す場合は各所の当該パスを実ソース位置へ読み替える。",
+  "build_sequencing_notes": "二相 skill build: (1) run-skill-create が C16/C17 の skill scaffold (SKILL.md + 空の scripts//references//assets/ サブディレクトリ) を物理生成する。(2) parent-skill-build が C01 (validate-goal-output.py→run-ubm-goal-setting/scripts/) および C02/C03 (→run-ubm-knowledge-sync/scripts/) を (1) が作った scripts/ へ充填する。component-inventory の depends_on/toposort (C01-C03 が C16/C17 より前) は『criteria依存順』(skillのouter criteriaがscript合格を前提とする順) であり『物理ディレクトリ作成順』ではない。両者が食い違う場合は run-skill-create の scaffold 生成を最優先させ、parent-skill-build は scaffold 済み skill dir へのみ書き込む契約とする。P05 完了条件にこの二相性を明記する。後段 builder が handoff routes を配列順に消費すると C01-C03 (先頭付近) の build_target が未 scaffold で失敗しうるため、handoff-run-plugin-dev-plan.json の C01-C03 route に機械可読な requires_parent_scaffold (親 skill route id) を付し、consumer は散文 notes でなく当該キーで scaffold→fill の順序制約を守れるようにした。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "validate-goal-output.py",
+      "script_name": "validate-goal-output.py",
+      "purpose": "目標設定・振り返り対話の出力 Markdown を保存前に検証する決定論ゲート (未展開プレースホルダ/ファイル名日付パターン/全角数字/差分+-表記/種別別必須見出し/見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針を検査。旧 validate-goal-output.sh 474 行の契約移植・逐語移植ではない)",
+      "inputs": "argv(--file PATH --type weekly|monthly|bimonthly)",
+      "outputs": "stdout(PASS詳細)/stderr(FAIL理由一覧)",
+      "exit_codes": "0=PASS/1=FAIL/2=usage",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "placement_scope": "skill",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "detect-knowledge-updates.py",
+      "script_name": "detect-knowledge-updates.py",
+      "purpose": "ナレッジソースを registry.json と MD5 ハッシュ照合し NEW/MODIFIED を検知する決定論ゲート (旧 detect-knowledge-updates.sh 183 行の契約移植。macOS bash 3.2 互換の declare -A 非使用/md5 -q 分岐は Python 標準ライブラリ化で解消)",
+      "inputs": "argv(--registry FILE --sources DIR)",
+      "outputs": "stdout({STATUS}|{source_type}|{file_hash}|{file_path} 形式で NEW/MODIFIED を列挙)",
+      "exit_codes": "0=検知完了/1=入力異常/2=usage",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "placement_scope": "skill",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-knowledge-split.py",
+      "script_name": "check-knowledge-split.py",
+      "purpose": "ナレッジ JSON ファイルが 500 行閾値を超過していないか検査する決定論ゲート (schema/router/registry.json は除外。旧 check-knowledge-split.sh 67 行の契約移植)",
+      "inputs": "argv(--dir knowledge/)",
+      "outputs": "stdout(OK)/stderr(超過ファイル一覧)",
+      "exit_codes": "0=OK/1=超過あり/2=usage",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "placement_scope": "skill",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "hook",
+      "name": "ubm-write-path-guard",
+      "event": "PreToolUse",
+      "matcher": "Write|Edit",
+      "exit_semantics": "fail-closed-exit2",
+      "settings_wiring": "settings.json",
+      "fail_closed": true,
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "info-collector",
+      "description": "目標設定対話の Phase1-2 で過去目標・合宿情報・ナレッジ (デュアルパス検索)・journal を並列収集し構造化サマリーを作りたいときに使う",
+      "tools": ["Read", "Grep", "Glob"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-collect.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/info-collector.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "output-formatter",
+      "description": "Phase4 で目標設定テンプレートへデータを整形し 15 項目品質チェック + validate-goal-output でバリデーション (最大3回改善) してファイル保存したいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-format.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C01"],
+      "build_target": "plugins/ubm-goal-setting/agents/output-formatter.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "goal-reviewer",
+      "description": "既存の目標設定を 8 項目 (基本2+合宿整合性3+関係構築3) で見直し・再評価したいときに使う",
+      "tools": ["Read"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-review.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "step1-current-review",
+      "description": "phase3-coordinator が対話 Step1 (現状振り返り) のプロフィール・適用思考法・分岐ロジック・ターンテンプレートを参照したいときに使う (Task tool による独立起動は行わない。coordinator が Read で読み込む inline 参照断片であり、自動起動対象の SubAgent ではない)",
+      "tools": ["Read"],
+      "independent_context": false,
+      "responsibility_anchor": "prompts/R-step1.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step1-current-review.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C09",
+      "component_kind": "sub-agent",
+      "name": "step2-gap-analysis",
+      "description": "phase3-coordinator が対話 Step2 (ギャップ分析) のプロフィール・適用思考法・分岐ロジック・ターンテンプレートを参照したいときに使う (Task tool による独立起動は行わない。coordinator が Read で読み込む inline 参照断片であり、自動起動対象の SubAgent ではない)",
+      "tools": ["Read"],
+      "independent_context": false,
+      "responsibility_anchor": "prompts/R-step2.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step2-gap-analysis.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "step3-goal-setting",
+      "description": "phase3-coordinator が対話 Step3 (目標設定) のプロフィール・適用思考法・分岐ロジック・ターンテンプレートを参照したいときに使う (Task tool による独立起動は行わない。coordinator が Read で読み込む inline 参照断片であり、自動起動対象の SubAgent ではない)",
+      "tools": ["Read"],
+      "independent_context": false,
+      "responsibility_anchor": "prompts/R-step3.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step3-goal-setting.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C11",
+      "component_kind": "sub-agent",
+      "name": "step4-action-plan",
+      "description": "phase3-coordinator が対話 Step4 (アクションプラン) のプロフィール・適用思考法・分岐ロジック・ターンテンプレートを参照したいときに使う (Task tool による独立起動は行わない。coordinator が Read で読み込む inline 参照断片であり、自動起動対象の SubAgent ではない)",
+      "tools": ["Read"],
+      "independent_context": false,
+      "responsibility_anchor": "prompts/R-step4.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step4-action-plan.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C12",
+      "component_kind": "sub-agent",
+      "name": "step5-final-check",
+      "description": "phase3-coordinator が対話 Step5 (最終確認) のプロフィール・適用思考法・分岐ロジック・ターンテンプレートを参照したいときに使う (Task tool による独立起動は行わない。coordinator が Read で読み込む inline 参照断片であり、自動起動対象の SubAgent ではない)",
+      "tools": ["Read"],
+      "independent_context": false,
+      "responsibility_anchor": "prompts/R-step5.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step5-final-check.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "phase3-coordinator",
+      "description": "Phase3 の対話全体 (interview_data 21フィールド・Step遷移条件) を steps/step1-5 を参照しながら coordinator 内で直接制御 (Task tool での SubAgent 起動ではなくインライン実行) したいときに使う。旧 phase3-interviewer (後方互換リダイレクトスタブ、消費者ゼロのため独立component化せずDROP) の責務はこの coordinator + steps1-5 へ統合済み",
+      "tools": ["Read"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-phase3.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C08", "C09", "C10", "C11", "C12"],
+      "build_target": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "knowledge-extractor",
+      "description": "ナレッジソースを 6 カテゴリ (principles/consultation/phase-advice/action-guides/mindset/case-studies) へ分類し Rule A-F (格納先決定/命名/ID採番/router更新順/新サブトピック判断/mode別処理) に従って knowledge/*.json + router.json/registry.json を更新したいときに使う",
+      "tools": ["Read", "Write", "Edit", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-extract.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C03"],
+      "build_target": "plugins/ubm-goal-setting/agents/knowledge-extractor.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C16",
+      "component_kind": "skill",
+      "name": "run-ubm-goal-setting",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-ubm-goal-setting",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["週報の目標設定をしたい", "月報の振り返り対話をしたい", "期報の目標設定対話をしたい"],
+      "goal": "週報/月報/期報の目標設定・振り返り対話が北原さん式21項目の統一ハイブリッド構造で出力され、validate-goal-outputの全チェックにPASSした状態",
+      "purpose_background": "手動での目標設定対話は過去実績・合宿情報・ナレッジの参照漏れや出力フォーマットのブレを生みやすいため、Phase0-5のワークフロー (情報収集→対話→整形→バリデーション) で一貫させる",
+      "checklist": ["info-collectorによる過去目標・合宿情報・ナレッジのデュアルパス検索並列収集", "goal-reviewerによる既存目標設定の8項目見直し・再評価 (振り返り対話時)", "phase3-coordinatorによるstep1-5対話 (目標設定・振り返り)", "output-formatterの15項目品質チェックとvalidate-goal-outputでのバリデーションPASS"],
+      "output_contract": "統一ハイブリッド構造21項目を満たすMarkdown目標設定ファイル + validate-goal-outputの検証結果 (PASS/FAIL)",
+      "boundary": "入力=過去目標/合宿情報/ナレッジJSON/対話回答。出力=目標設定ファイル1件。ナレッジそのものの更新はrun-ubm-knowledge-syncへ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "Phase0-init", "summary": "対象種別(週報/月報/期報)と実行日を確定し、以降のPhaseで参照する初期コンテキストを組み立てる", "prompt_required": true},
+        {"id": "Phase1-2-collect", "summary": "info-collectorが過去目標・合宿情報・ナレッジ(デュアルパス検索)・journalを並列収集し構造化サマリーを作る", "prompt_required": true},
+        {"id": "Phase2b-review", "summary": "振り返り対話時にgoal-reviewerが既存目標設定を8項目で見直し・再評価する", "prompt_required": true},
+        {"id": "Phase3-dialogue", "summary": "phase3-coordinatorがsteps1-5を参照しながらstep1-5対話(現状振り返り〜最終確認)を進行する", "prompt_required": true},
+        {"id": "Phase4-format", "summary": "output-formatterが目標設定テンプレートへ整形し15項目品質チェックを行う", "prompt_required": true},
+        {"id": "Phase5-validate", "summary": "validate-goal-output.pyで統一ハイブリッド構造21項目を検証し、最大3回まで改善してファイル保存する", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["validate-goal-output.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を検証し違反0件であることを確認する", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "週報/月報/期報を実際に生成しvalidate-goal-outputがPASSし目標設定・振り返り対話が北原さん式21項目を満たすことを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C05", "C06", "C07", "C13", "C01"],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C17",
+      "component_kind": "skill",
+      "name": "run-ubm-knowledge-sync",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-ubm-knowledge-sync",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["ナレッジを同期したい", "ナレッジ更新を検知して反映したい", "knowledge sync"],
+      "goal": "ナレッジソース(SKILL.md本文/references/対話ログ等)の追加・変更差分がregistry.jsonとの照合で検知され、knowledge-extractorによる6カテゴリ分類とrouter.json更新までナレッジ同期が完了した状態",
+      "purpose_background": "ナレッジファイルは対話から都度手動転記すると更新漏れ・重複格納が生じるため、detect-knowledge-updatesによる差分検知とknowledge-extractorによる自動分類・格納先決定 (Rule A-F) で同期を一貫させる",
+      "checklist": ["detect-knowledge-updatesによるNEW/MODIFIEDソースの検知", "knowledge-extractorによる6カテゴリ分類とrouter.json/registry.json更新", "check-knowledge-splitによる500行閾値超過ファイルの分割判断"],
+      "output_contract": "検知/抽出/分割チェックの結果レポート (NEW/MODIFIED件数・格納先・分割要否)",
+      "boundary": "入力=ナレッジソース(vault内)/knowledge/registry.json。出力=knowledge/*.json更新+router.json/registry.json/sync-log.jsonl追記。目標設定対話そのものはrun-ubm-goal-settingへ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "Phase1-detect", "summary": "detect-knowledge-updates.pyがregistry.jsonとのMD5照合でNEW/MODIFIEDソースを漏れなく検知する", "prompt_required": true},
+        {"id": "Phase2-extract", "summary": "knowledge-extractorが6カテゴリ(principles/consultation/phase-advice/action-guides/mindset/case-studies)へ分類しRule A-Fに従いknowledge/*.json+router.json/registry.jsonを更新する", "prompt_required": true},
+        {"id": "Phase3-split-check", "summary": "check-knowledge-split.pyがナレッジJSONの500行閾値超過を検査し分割要否を判定する", "prompt_required": true},
+        {"id": "Phase4-report", "summary": "検知/抽出/分割チェックの結果(NEW/MODIFIED件数・格納先・分割要否)をレポートする", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["detect-knowledge-updates.py", "check-knowledge-split.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "detect-knowledge-updates.pyがregistry.jsonとのMD5照合でNEW/MODIFIEDソースを漏れなく検知することをスクリプトで確認する", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "既知の更新済みソースを投入しknowledge-extractorが6カテゴリへ正しく分類しrouter.json/registry.jsonが同期完了することを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C15", "C02"],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C18",
+      "component_kind": "slash-command",
+      "name": "ubm-goal-setting",
+      "description": "週報/月報/期報の目標設定・振り返り対話を手動起動する",
+      "argument-hint": "[weekly|monthly|bimonthly]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C16"],
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C19",
+      "component_kind": "slash-command",
+      "name": "ubm-knowledge-sync",
+      "description": "ナレッジソースの差分検知→抽出→分割チェックの同期を手動起動する",
+      "argument-hint": "[--dry-run]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C17"],
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {"required": true, "path": ".claude-plugin/plugin.json"},
+    "composition": {"required": true, "path": "plugin-composition.yaml", "owner_phase": "P02", "owner_builder": "plugin-scaffold", "record_in": "handoff.envelope.plugin_composition"},
+    "harness_eval": {"required": true, "path": "EVALS.json", "owner_phase": "P06", "owner_builder": "run-build-skill", "record_in": "handoff.envelope.harness_eval_spec"},
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup",
+      "files": [
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/thinking-guide.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/thinking-methods-toolkit.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-methods-toolkit.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/thinking-process.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-process.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/output-formats.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/data-contract.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/version-history.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/knowledge-sources.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-sources.md"},
+        {"kind": "reference", "source": "skills/ubm-goal-setting/references/knowledge-design-principles.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-design-principles.md"},
+        {"kind": "asset", "source": "skills/ubm-goal-setting/assets/interview-quick-templates.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md"},
+        {"kind": "asset", "source": "skills/ubm-goal-setting/assets/golden-sample-weekly.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md"},
+        {"kind": "asset", "source": "skills/ubm-goal-setting/assets/action-goals-best-practices.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md"},
+        {"kind": "asset", "source": "skills/ubm-goal-setting/assets/execution-prompts.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/execution-prompts.md"},
+        {"kind": "asset", "source": "skills/ubm-goal-setting/assets/kitahara-principles-db.md", "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md", "tier": "L3_bookkeeping (knowledge-extractorが書込むmutable asset)。本エントリは初期シードの静的配置先、runtime の writeback 先解決は vendor.tiers.L3_bookkeeping (writeback-config) が正本。同一ファイルが2 surface に跨るため片方のみ更新するとドリフトする点に注意"}
+      ]
+    },
+    "schemas": {"required": true, "path": "plugins/ubm-goal-setting/knowledge/schema.json", "note": "C16 が内包する info-collector(C05・読取) と C17 が内包する knowledge-extractor(C15・書込) が対称参照する plugin-root 共有surfaceへhoist (skill配下に閉じない)。schema を実際に read/write するのは skill C16/C17 でなくその配下 agent C05/C15 であり、C16/C17 は skill レベルの対称参照を表す (id と name を混同しないこと)"},
+    "vendor": {
+      "required": true,
+      "tiers": {
+        "L1_curated_seed": {
+          "description": "28 category JSON (principles/consultation/phase-advice/action-guides/mindset/case-studies、北原知見本体・各カテゴリ5〜9エントリ) + router.json をplugin同梱シードとしてvendorする。fresh-install直後からinfo-collectorがrouter.json→knowledge/*.jsonを最優先で読めるbootstrapを成立させる",
+          "build_target": "plugins/ubm-goal-setting/knowledge/*.json, plugins/ubm-goal-setting/knowledge/router.json"
+        },
+        "L2_raw_vault_sources": {
+          "description": "05_Project/UBM/*.md, 02_Configs/Daily/, 02_Configs/Templates/Daily.md は抽出元の生ソースでありvendorしない。UBM_VAULT_ROOT env (config.vault_root_env) で外部解決する",
+          "resolved_by": "envelope-draft/plugin.json config.vault_root_env"
+        },
+        "L3_bookkeeping": {
+          "description": "registry.json/sync-log.jsonlは空シードとしてvendorし、install後はwriteback-config (UBM_VAULT_ROOT配下 or plugin data dir)へ書込先を解決する。knowledge-extractorが更新するasset kitahara-principles-db.mdも同様にwriteback-config対象(mutableなためvendorは初期値のみ)",
+          "build_target": "plugins/ubm-goal-setting/knowledge/registry.json (空seed), plugins/ubm-goal-setting/knowledge/sync-log.jsonl (空seed)"
+        }
+      }
+    },
+    "notion_config": {"required": false, "omitted_reason": "本プラグインの入出力は Obsidian vault のローカルファイルと Read/Write/Bash で完結し、機能上 Notion DB を読み書きしない (domain DB 不使用ゆえ surface は required:false)。harness-creator メタ改善ループの improvement-request sink は index.plugin_meta.feedback_deploy.notion_sink で別途宣言する。なお feedback_deploy.notion_sink.resolution の 'notion_config' は解決器 notion_config.py の名前参照であって本 surface (required:false) とは別レイヤであり、improvement-request DB の ID 供給 (設置先 .notion-config.json) は feedback 配備時に別途必要になる"},
+    "mcp_app_connector": {"required": false, "omitted_reason": "全ての入出力はローカルファイル(vault)とRead/Write/Bash経由で完結し、MCP/外部appコネクタを新設しない"}
+  }
+}

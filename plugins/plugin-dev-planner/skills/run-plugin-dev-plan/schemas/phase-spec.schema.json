@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "phase-spec",
+  "description": "run-plugin-dev-plan の per-phase 出力契約。各 phase-NN-<kebab>.md の frontmatter が携帯する必須キー。required は scripts/specfm.py の PHASE_REQUIRED と parity (tests/test_schema_parity.py が突合)。additionalProperties は緩め (true) で phase 固有の任意キーを許容する。",
+  "type": "object",
+  "required": [
+    "id",
+    "phase_number",
+    "phase_name",
+    "category",
+    "prev_phase",
+    "next_phase",
+    "status",
+    "gate_type",
+    "entities_covered",
+    "applicability"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^P(0[1-9]|1[0-3])$",
+      "description": "大文字ゼロ埋め 2 桁 (P01..P13)。specfm.PHASE_ID_RE と一致"
+    },
+    "phase_number": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 13,
+      "description": "1-13。id と一致し全 13 でユニーク"
+    },
+    "phase_name": {
+      "type": "string",
+      "enum": [
+        "requirements",
+        "design",
+        "design-review",
+        "test-design",
+        "implementation",
+        "test-run",
+        "acceptance-criteria",
+        "refactoring",
+        "quality-assurance",
+        "final-review",
+        "evidence",
+        "documentation",
+        "release"
+      ],
+      "description": "kebab 名。specfm.PHASE_NAMES の 13 enum"
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1,
+      "description": "日本語ラベル (enum 緩め・phase-lifecycle.md §8 の値)"
+    },
+    "prev_phase": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 13,
+      "description": "前フェーズ phase_number。P01 は 0"
+    },
+    "next_phase": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 14,
+      "description": "次フェーズ phase_number。P13 は 14"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["未実施", "進行中", "完了"],
+      "description": "specfm.PHASE_STATUS"
+    },
+    "gate_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "design-gate",
+        "final-gate",
+        "tdd-red",
+        "tdd-green",
+        "tdd-refactor",
+        "qa",
+        "evidence"
+      ],
+      "description": "specfm.GATE_TYPES"
+    },
+    "entities_covered": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "このフェーズが扱う inventory component の id 参照 (該当なければ [])"
+    },
+    "applicability": {
+      "type": "object",
+      "required": ["applicable", "reason"],
+      "additionalProperties": true,
+      "properties": {
+        "applicable": { "type": "boolean" },
+        "reason": {
+          "type": "string",
+          "description": "applicable:false のとき非空必須 (N/A の根拠)"
+        }
+      },
+      "description": "非該当フェーズの明示 N/A"
+    }
+  }
+}

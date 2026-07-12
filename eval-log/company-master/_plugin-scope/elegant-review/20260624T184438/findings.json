@@ -1,0 +1,602 @@
+{
+  "version": 1,
+  "target": {
+    "type": "config",
+    "path": "plugins/company-master/",
+    "reviewed_at": "2026-06-24T18:44:38Z"
+  },
+  "loop_count": 1,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "README導入手順(§4フォルダ選択・§6 marketplace add .)が clone 前提で、確定した『リモート主導(clone不要)』方針と正面衝突。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "README §4/§6 が repo-clone 前提を強制しリモート配布モデルと矛盾",
+          "recommended_intervention": "§6-1 を `/plugin marketplace add xl-manju/xl-skills` 一次化、clone は details へ降格"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "リモート利用者の cwd に plugins/ は存在せず、手打ち `! python3 plugins/...` は FileNotFound($CLAUDE_PLUGIN_ROOT は手打ち ! 行で空)。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "repo相対手打ちコマンドがリモートで不動作",
+          "recommended_intervention": "ユーザー文書の doctor 案内をチャット経由へ統一"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "commands は ${CLAUDE_PLUGIN_ROOT} で正、japanpost-api-setup⑥のみ免責注記。他文書へ未伝播の非対称。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "パス免責注記が一部文書にしか無い",
+          "recommended_intervention": "注記を README/README-setup/keychain-setup へ同一文言で伝播"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "配布モデルのリモート反転時に実装(commands/scripts)は追従したが文書が取り残された、が最有力仮説。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "反転時のユーザー文書追従漏れ",
+          "recommended_intervention": "文書層の配布モデル整合を是正、再発防止に lint 検討"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "install→doctor→upsert の手順がフォルダ前提崩壊で連鎖崩壊。チャット経路なら救済可。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "doctor到達経路が手打ちと混線",
+          "recommended_intervention": "doctor到達はチャット指示を一次経路に単独提示"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "構成要素の相対参照段数・frontmatter↔notion-db-schema↔resource-map が整合。二層分離(prompts=7層SSOT/agents=薄アダプタ)も一貫。構造健全。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "入力種別×到達経路・fallback tier×属性ホワイトリスト・確度4ラベル対応がいずれも漏れ重複なし(MECE)。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "設計2軸(起動独立性×LLM dispatch)は妥当。配布2軸では『リモート×手打ち』の無効象限をREADMEが提示。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "リモートで動かない手打ち象限を有効として併記",
+          "recommended_intervention": "手打ちはローカル開発者限定と明記し無効象限を排除"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "事前準備(§5-2.5)内で install 後成果物の doctor を要求し、install 前後の順序矛盾。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "事前準備内の doctor 要求が順序破綻",
+          "recommended_intervention": "当該節に『install 完了後に実施』を明記/順序を整合"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "README冒頭『Codeだけで完結』宣言と本文 repo相対リテラルパスの抽象度不整合。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "宣言と本文コマンドの整合崩れ",
+          "recommended_intervention": "チャット指示を主・直叩きを従に反転、前提注記を先頭へ"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『実装はリモート対応済・文書は clone 前提』という単一根本へ抽象化(他法の finding として展開)。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『repoをcloneして開く』隠れ前提そのものを疑い、確定方針との衝突を析出。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "clone前提という隠れ仮定",
+          "recommended_intervention": "marketplace導線を二系統化しリモートを既定に"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "リモート×初心者UX改善を発散(最短1本道分離/TL;DR/doctorスラッシュ化等7案)。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "鍵登録の集約UX・doctorスラッシュ化など別導線を提示(将来改善余地)。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "ドキュメント増加で初心者が迷う逆説=Keychain登録手順が4文書に重複展開。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "同一手順の4重展開",
+          "recommended_intervention": "正本を1つに宣言しREADMEは最短経路へ削ぎ、詳細はreferencesへ単一リンク"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "同marketplaceの mf-kessai README にある install-path-disclaimer を company-master が取りこぼし。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "横展開可能な前提注記の欠落",
+          "recommended_intervention": "mf-kessai相当の $CLAUDE_PLUGIN_ROOT 読み替え注記を先頭へ移植"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "純リモートで settings-hardening の `cat <このリポジトリのパス>/...`・marketplace.json直下確認が解決不能。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "解決不能プレースホルダ/repoツリー前提",
+          "recommended_intervention": "cat元を $CLAUDE_PLUGIN_ROOT へ・チャットで適用、直下確認はローカル限定へ降格"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "非エンジニアのつまずき: トークン目印の表記揺れ・gBizINFO発行待ち・送信元IP登録の冗長。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "初心者ケアの不足",
+          "recommended_intervention": "操作基準のトークン説明・申請先行の明記・IP登録の後置/折りたたみ"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "18箇所の repo相対手打ちが clone不要リモートで No such file。実装層(scripts/commands/hook)は cwd 非依存で健全。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "docs→ユーザー実行の依存契約が破断",
+          "recommended_intervention": "決定論コマンドの一次案内をチャット経由へ統一"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "japanpost⑥のみ正しい注記・他は生コマンド継続。根本は反転後の文書棚卸し漏れ。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "正しい認識と実際の指示の乖離",
+          "recommended_intervention": "⑥注記を docs横断SSOTへ昇格し全コマンド例を従わせる"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "鍵未設定→縮退→備考のフィードバックが正しく閉路(preflight/precondition gate 対称)。健全。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "BYO直結(既定)と中央プロキシ(例外)を送信元IP固定可否で振り分ける両取り設計は妥当。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "8列固定+本文確認用URL全項目化は DB可読性と監査追跡を両立する Win-Win。健全。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "誤値回避の非対称コスト価値(誤値>>空欄)は実装整合。ただし導入時の壊れコマンドで初回到達前に価値毀損リスク。"
+      ],
+      "issues": [],
+      "score": 1.0,
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "ランタイム層(scripts/commands/plugin.json/manifest)はリモート主導に既に適合。矛盾はdocs層に局在。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "docs層のみ実行モデル不整合",
+          "recommended_intervention": "Phase3はscripts不変・docsのみ整合で波及最小化"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "5why根本=ユーザー文書のパス可搬性を機械担保する lint 不在(『保証は機械層で』未適用)。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "文書層パス可搬性の機械担保不在",
+          "recommended_intervention": "チャット一次化で是正、文書層 repo相対コマンド検出 lint をCI追加(推奨)"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "settings-hardening の `cat <このリポジトリのパス>/...`(README-setup)がリモート解決不能。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "プレースホルダ解決不能",
+          "recommended_intervention": "cat元を $CLAUDE_PLUGIN_ROOT へ・チャットで『安全設定を適用して』"
+        }
+      ],
+      "score": 0.75,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "手打ちdoctor失敗→トラブル表も手打ち→二次失敗ループ仮説を支持。トラブル節が最優先。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "トラブル節の手打ち doctor が二次失敗ループ",
+          "recommended_intervention": "トラブル節 doctor 案内をチャット経由へ最優先で"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "真の論点は『docsの実行モデルをリモートへ一致』(scripts不変)。誤論点に時間を割くとPhase3肥大。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "論点の純化が必要",
+          "recommended_intervention": "実装は触らずdocsのコマンド案内のみリモート整合"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全findingを3クラスタ(K1 docs不整合/K2 ランタイム健全/K3 価値健全)へ集約。改善はK1のみに収束。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "改善対象のグルーピング",
+          "recommended_intervention": "K1(docs)へ全リソース集中、K2/K3はno-change"
+        }
+      ],
+      "score": 0.55,
+      "reuse_surface": "reference"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "README/§4/§6 をリモート marketplace(xl-manju/xl-skills, clone不要)一次化、clone は details/注記へ降格",
+        "手打ち `! python3 plugins/...` は開発者向け補足へ隔離、一次経路はチャット指示に統一",
+        "独立 approver(別context, general-purpose)が C1 PASS を確認"
+      ],
+      "violation_count": 0
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "TL;DR(最初の5分)追加・install→Keychain→Notion接続→doctor→試用の導線完備",
+        "gBizINFO 申請先行の助言・トークン目印・任意機能の明示を追記"
+      ],
+      "violation_count": 0
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "パス免責注記(install済みは $CLAUDE_PLUGIN_ROOT 自己解決・手打ち不要)を README/README-setup/keychain-setup/japanpost-api-setup/postal-proxy-deploy の全5文書へ伝播",
+        "approver が4文書一貫伝播を確認"
+      ],
+      "violation_count": 0
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "リモート一次経路に repo相対 `! python3 plugins/...` と `<このリポジトリのパス>` プレースホルダは残らず(全て開発者向け補足へ隔離)",
+        "settings-hardening の cat 元を $CLAUDE_PLUGIN_ROOT 化・チャット適用導線を追加",
+        "scripts/commands/plugin.json/manifest は cwd 非依存で不変(no-change が正)"
+      ],
+      "violation_count": 0
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "xl-manju/xl-skills",
+      "variable_name": "{{MARKETPLACE_REF}}",
+      "default_value": "<owner>/<repo>",
+      "source_trace": "README §6-1 リモート marketplace 登録先(public repo)"
+    },
+    {
+      "concrete_value": "company-master@xl-skills",
+      "variable_name": "{{PLUGIN_INSTALL_REF}}",
+      "default_value": "<plugin>@<marketplace-name>",
+      "source_trace": "README §6-2 /plugin install 対象"
+    },
+    {
+      "concrete_value": ".xl-skills",
+      "variable_name": "{{KEYCHAIN_NS}}",
+      "default_value": ".<namespace>",
+      "source_trace": "Keychain サービス名前空間 (notion/gbizinfo/japanpost)"
+    },
+    {
+      "concrete_value": "$CLAUDE_PLUGIN_ROOT",
+      "variable_name": "{{PLUGIN_ROOT_VAR}}",
+      "default_value": "$CLAUDE_PLUGIN_ROOT",
+      "source_trace": "install済みプラグインのスクリプト自己解決の基点(手打ち不要の根拠)"
+    }
+  ],
+  "total_score": 0.738
+}

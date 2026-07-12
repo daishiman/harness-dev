@@ -1,0 +1,45 @@
+{
+  "$comment": "C1-C4 機械判定ルール。LLM 判断揺れを抑えるため、できる限り regex / scripted check に落とす。L5 サブ構造 (5.1 担当 agent / 5.2 ゴール定義 / 5.3 完了チェックリスト / 5.4 実行方式) の判定対象・合格条件は l5_contract_source の「Layer 5 契約」に従属する。数量レンジ合格条件 (旧 C3-004「3-7 ステップ」/ 旧 C4-001「5-8 項目」) は同契約 v2.0.0 で廃止: 数量は構造上の下限 (非空) のみ機械判定し、品質は検証可能性 (質ベース) で判定する。",
+  "version": "2.0.0",
+  "l5_contract_version": "l5-contract v2.0.0",
+  "l5_contract_source": "../../run-prompt-creator-7layer/references/seven-layer-format.md#Layer 5 契約",
+  "C1": {
+    "name": "Layer 整合",
+    "checks": [
+      {"id": "C1-001", "description": "L1-L7 セクションが全て存在する", "scripted": true, "rule": "regex_match", "pattern": "^## Layer [1-7]:"},
+      {"id": "C1-002", "description": "Layer 番号と役割名が seven-layer-format.md と一致", "scripted": false, "severity": "high"},
+      {"id": "C1-003", "description": "メタ表が name/skill/responsibility/layers_covered/output_schema/reproducible を含む", "scripted": true, "severity": "medium"}
+    ]
+  },
+  "C2": {
+    "name": "依存方向 (L7→L1 単方向)",
+    "checks": [
+      {"id": "C2-001", "description": "Layer N から Layer N+k (k>0) への参照がない", "scripted": false, "severity": "high"},
+      {"id": "C2-002", "description": "L1 が L2-L7 を参照していない", "scripted": false, "severity": "high"},
+      {"id": "C2-003", "description": "ID 参照 (@agent_n) が使われ、暗黙参照に依存していない", "scripted": false, "severity": "medium"}
+    ]
+  },
+  "C3": {
+    "name": "再現性",
+    "checks": [
+      {"id": "C3-001", "description": "reproducible: true がメタに明記", "scripted": true, "rule": "regex_match", "pattern": "reproducible.*true"},
+      {"id": "C3-002", "description": "output_schema パスが存在する", "scripted": true, "severity": "high"},
+      {"id": "C3-003", "description": "再現性根拠の二層が揃う: 決定論部分は script_refs / schema_refs が同じ入力で同じ出力を保証し、意味判断部分は 5.3 完了チェックリスト (停止条件) で拘束される", "scripted": false, "severity": "medium"},
+      {"id": "C3-004", "description": "5.2 ゴール定義: 達成ゴールが観測可能な成果状態 (「〜の状態になっている」完了形) で書かれ、固定手順列挙を含まない。再現性根拠は手順の固定ではなく output_schema / script_refs / 検証可能な完了チェックリストで担保する (旧基準「5.2 推論手順が 3-7 ステップで具体的」は l5-contract v2.0.0 で廃止)", "scripted": true, "rule": "regex_absent", "scope": "layer5", "pattern": "推論手順|思考プロセス", "severity": "high", "note": "regex は廃止構成見出しの残存検出 (機械 signal)。禁止・廃止を宣言する注記行 (# コメント) は違反に数えない。成果状態か否か・連番手順混入の意味判定は LLM が行う。5.4 実行方式の動的手順生成宣言 (「状況に応じて必要な手順をその都度自ら設計」) とゴールシークループ 6 ステップ記述は正当パターンであり違反ではない"}
+    ]
+  },
+  "C4": {
+    "name": "Self-Evaluation 充足",
+    "checks": [
+      {"id": "C4-001", "description": "5.3 完了チェックリスト (ゴール到達の停止条件) が非空で、全項目が第三者に YES/NO 判定可能 (旧基準「5.3 self_evaluation_checklist が 5-8 項目」は l5-contract v2.0.0 で廃止。数量は下限=非空のみ構造制約とし、品質は検証可能性で判定する — 項目数は質を保証しないため)", "scripted": true, "severity": "high", "note": "非空は verify-completeness.py の Layer 5 必須要素検査 (完了チェックリスト存在) exit 0 が機械 signal。YES/NO 判定可能性は C4-002 とあわせて LLM が判定する"},
+      {"id": "C4-002", "description": "各チェックリスト項目が客観判定可能 (主語+動詞+合格条件) かつ原子的 (1 項目=1 判定)。項目への手順埋め込み (「Edit で X を書く」型) は違反 (l5-contract v2.0.0 禁止事項)", "scripted": false, "severity": "high"},
+      {"id": "C4-003", "description": "placeholder ({{...}}) / TODO / 英語仮文残存がない", "scripted": true, "rule": "regex_absent", "pattern": "\\{\\{[^}]+\\}\\}|TODO\\(human\\)"}
+    ]
+  },
+  "global_thresholds": {
+    "$comment": "completeness_score = (PASS した checks 数) / (N/A を除く全 checks 数)。評価者は findings.json の verdicts と同時にこの集計を行う。",
+    "completeness_score_minimum": 0.95,
+    "high_severity_max": 0,
+    "medium_severity_max": 2
+  }
+}

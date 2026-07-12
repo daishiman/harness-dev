@@ -1,0 +1,18 @@
+フィールド                       役割                                                                                       設計上の注意
+
+name                           Skill 名。省略時はディレクトリ名                                              lower-case / 数字 / ハイフン、最大 64 文字
+
+description           何をするか、いつ使うか                                    人間向け要約ではなくトリガー条件
+
+when_to_use                 発動条件の補足                                                                    description と合わせて 1,536 文字 cap
+
+disable-model-          Skill tool 経由の起動を全部止める (Claude 自律発動も、親 Skill が      デプロイ・送信・コミットなど副作用の強い手動 Skil、または ref-*※ のように
+invocation                       SkiLt( ) で呼ぶ経路も両方拒否される)                                              Read 経由でしか参照されない辞書 Skill に使う
+
+user-invocab Le            / メニュー表示を制御                                                          false はメニュー非表示。Skill tool アクセス自体の禁止ではない
+allowed-tools              Active 中に承認なしで使えるツール                                              禁止リストではない。 禁止は permissions の deny rule で行う
+context: fork           forked subagent context で実行                                       独立した評価・調査・重い作業に向く
+
+agent                   context: fork 時の agent 種別                                Explore / Plan / general-purpose など
+
+shell                  ! 動的注入のシェル                                          bash / powershell

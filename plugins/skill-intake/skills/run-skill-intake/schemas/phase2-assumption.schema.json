@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "skill-intake Phase 2 assumption.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["surface_request", "deep_candidates", "user_picked", "confirmed_deep_problem"],
+  "properties": {
+    "surface_request": {"type": "string", "minLength": 1},
+    "deep_candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "reason"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "user_picked": {"type": "string", "minLength": 1},
+    "confirmed_deep_problem": {"type": "string", "minLength": 1},
+    "time_freed_intent": {"type": "string"},
+    "blind_spots": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

@@ -1,0 +1,728 @@
+/* =================================================================
+   印刷用スタイル（PDF出力）
+
+   責務: プレゼンテーションスライドを印刷/PDF出力用に変換
+
+   レイアウト:
+   - A4横向き
+   - 1ページ1スライド
+   - ダークテーマ → ライトテーマに自動変換
+   - Flexbox/Grid維持方式: 元のレイアウトを保持
+
+   使用方法:
+   - Cmd+P (Mac) / Ctrl+P (Windows) で印刷ダイアログを開く
+   - HTMLファイルの<style>タグ内にインライン埋め込み
+
+   重要:
+   - .slider__itemはflex表示を維持（中央揃えのため）
+   - 各コンテナは元のdisplayモード（flex/grid）を維持
+   - 全子要素にvisibility: visibleを設定
+
+   CHANGELOG:
+   - v8.2.2: 全面画像デッキ印刷契約を追加（D1/F-0001/F-0002）。
+     主キャンバス（.ai-slide-canvas + エイリアス .slide-fullbg/.slide-bg/
+     [data-role="main-canvas"]）を印刷で object-fit:contain に強制し、
+     cover による端切れを禁止。A4横16:9 letterbox（297mm幅→167mm高・上下
+     off-white 余白）で全ページ端欠けなしを担保。通常HTMLデッキの full-bleed
+     印刷ルールは温存（後方互換）。HTML表 世界観統一ユーティリティ(.wb-table)を
+     追加（D9）。
+   ================================================================= */
+
+/* =================================================================
+   印刷メディアクエリ
+   ================================================================= */
+@media print {
+  /* SR-09 印刷時のカード影は全要素で強制オフ（box-shadow がグレー塗りつぶしになる現象の恒久対策） */
+  * { box-shadow: none !important; }
+
+  /* グラデ文字(background-clip:text)は印刷で塗りつぶし矩形になり読めなくなるため通常色に戻す */
+  .gradient-text,
+  [style*="-webkit-background-clip: text"], [style*="background-clip: text"] {
+    background: none !important;
+    -webkit-background-clip: border-box !important; background-clip: border-box !important;
+    -webkit-text-fill-color: var(--accent-primary, #1F6FEB) !important; color: var(--accent-primary, #1F6FEB) !important;
+  }
+
+  /* -----------------------------------------------------------------
+     ページ設定
+     ----------------------------------------------------------------- */
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  /* unit-system.md §4.1: viewport を A4横にロック → 1vw = 2.97mm が確定
+     これにより画面で書いた vw 値が印刷時に自動的に正しい mm へ換算される。
+     印刷専用の font-size 縮小ルールは不要（差分ゼロ化）。 */
+  html {
+    width: 297mm;
+    height: 210mm;
+    font-size: 16px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    width: 297mm;
+    height: 210mm;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* -----------------------------------------------------------------
+     非表示要素
+     ----------------------------------------------------------------- */
+  .progress-bar,
+  .slider-navigation,
+  .slider-controls,
+  .slide-number {
+    display: none !important;
+  }
+
+  /* -----------------------------------------------------------------
+     基本設定
+     ----------------------------------------------------------------- */
+  body, html {
+    background: white !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .slider {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .slider__container {
+    display: block !important;
+    transform: none !important;
+  }
+
+  /* -----------------------------------------------------------------
+     スライドアイテム（flexで中央揃え維持）
+     ----------------------------------------------------------------- */
+  .slider__item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 170mm !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    padding: 15px !important;
+    margin: 0 !important;
+    background: #FAFAFA !important;
+    border: 1px solid #DDD !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+  }
+
+  .slider__item:last-child {
+    page-break-after: auto !important;
+  }
+
+  /* -----------------------------------------------------------------
+     スライドコンテンツ - 全表示（display維持）
+     ----------------------------------------------------------------- */
+  .slider__content {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    /* display: 元のスタイルを維持（下記で個別指定） */
+  }
+
+  /* -----------------------------------------------------------------
+     各スライドタイプのdisplay維持
+     ----------------------------------------------------------------- */
+  .slide-title .slider__content,
+  .slide-message .slider__content {
+    display: block !important;
+    text-align: center !important;
+  }
+
+  .slide-agenda .slider__content,
+  .slide-list .slider__content,
+  .slide-compare .slider__content,
+  .slide-flow .slider__content,
+  .slide-stats .slider__content,
+  .slide-grid .slider__content,
+  .slide-pyramid .slider__content,
+  .slide-highlight .slider__content,
+  .slide-process .slider__content,
+  .slide-section .slider__content,
+  .slide-hero .slider__content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  /* -----------------------------------------------------------------
+     コンテナのレイアウト維持
+     ----------------------------------------------------------------- */
+  .agenda-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.00vw !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .list-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 1.25vw !important;
+    justify-content: center !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .compare-container {
+    display: flex !important;
+    gap: 1.88vw !important;
+    justify-content: center !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .flow-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.63vw !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .grid-container {
+    display: grid !important;
+    gap: 1.25vw !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+  .grid-container.grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-container.grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+  .grid-container.grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
+
+  .stats-container {
+    display: flex !important;
+    gap: 1.88vw !important;
+    justify-content: center !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .pyramid-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.63vw !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .highlight-container {
+    display: flex !important;
+    gap: 1.88vw !important;
+    justify-content: center !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  .process-container {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 0.38vw !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    visibility: visible !important;
+  }
+
+  /* -----------------------------------------------------------------
+     全子要素の表示保証
+     ----------------------------------------------------------------- */
+  .agenda-item, .list-item, .compare-item, .flow-step, .flow-arrow,
+  .grid-card, .stat-item, .pyramid-level, .highlight-item, .process-step,
+  .process-arrow, .timeline-item, .timeline-content, .table-wrapper,
+  .compare-vs, .message-icon, .icon-wrapper {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* -----------------------------------------------------------------
+     子要素のdisplay維持
+     ----------------------------------------------------------------- */
+  .agenda-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.00vw !important;
+    padding: 1.00vw 1.25vw !important;
+  }
+
+  /* リストアイテム（計算式ベース）
+     A4横: 265mm利用可能, 3カラム, gap 3mm×2 = 6mm
+     カード幅: (265 - 6) / 3 ≈ 86mm
+     14文字タイトル: フォント12pt（余裕を持たせる）*/
+  .list-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.75vw !important;
+    flex: 1 !important;
+    max-width: 86mm !important;
+    min-width: 80mm !important;
+    padding: 3mm !important;
+    text-align: center !important;
+  }
+
+  .list-item h4 {
+    font-size: 12pt !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+  }
+
+  .list-item span {
+    font-size: 9pt !important;
+    line-height: 1.3 !important;
+  }
+
+  .compare-item {
+    flex: 1 !important;
+    max-width: 45% !important;
+    padding: 1.88vw !important;
+    text-align: center !important;
+  }
+
+  /* フローステップ（計算式ベース）
+     A4横: 265mm利用可能, 4カラム+矢印3個
+     矢印幅: 6mm×3 = 18mm, gap 2mm×6 = 12mm
+     カード幅: (265 - 18 - 12) / 4 ≈ 59mm
+     6文字タイトル: フォント11pt */
+  .flow-step {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.50vw !important;
+    padding: 2mm !important;
+    min-width: 55mm !important;
+    max-width: 60mm !important;
+    text-align: center !important;
+  }
+
+  .flow-step h4 {
+    font-size: 11pt !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+  }
+
+  .flow-step span {
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .grid-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.63vw !important;
+    padding: 1.25vw !important;
+    text-align: center !important;
+  }
+
+  .stat-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.63vw !important;
+    padding: 1.25vw !important;
+    text-align: center !important;
+    flex: 1 !important;
+    max-width: 200px !important;
+  }
+
+  .pyramid-level {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1.00vw 1.88vw !important;
+    text-align: center !important;
+  }
+
+  .highlight-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.63vw !important;
+    padding: 1.25vw !important;
+    text-align: center !important;
+    flex: 1 !important;
+  }
+
+  .process-step {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.38vw !important;
+    padding: 0.75vw !important;
+    min-width: 80px !important;
+    max-width: 120px !important;
+    text-align: center !important;
+  }
+
+  .process-arrow, .flow-arrow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .compare-vs {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 0.63vw !important;
+  }
+
+  /* -----------------------------------------------------------------
+     全スライドタイプの基本設定
+     ----------------------------------------------------------------- */
+  .slide-title, .slide-message, .slide-list, .slide-compare,
+  .slide-flow, .slide-timeline, .slide-table, .slide-agenda,
+  .slide-section, .slide-stats, .slide-quote, .slide-image,
+  .slide-diagram, .slide-chart, .slide-grid, .slide-pyramid,
+  .slide-highlight, .slide-process, .slide-hero {
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* -----------------------------------------------------------------
+     スライド番号（CSS counter使用）
+     ※ {{総スライド数}} はHTML生成時に実際の数に置換
+     ----------------------------------------------------------------- */
+  body {
+    counter-reset: slide-counter;
+  }
+
+  .slider__item {
+    counter-increment: slide-counter;
+  }
+
+  .slider__item::before {
+    content: counter(slide-counter) " / {{総スライド数}}";
+    position: absolute !important;
+    bottom: 10px !important;
+    right: 15px !important;
+    font-size: 9pt !important;
+    color: #888 !important;
+    font-family: 'Noto Sans JP', sans-serif !important;
+  }
+
+  /* -----------------------------------------------------------------
+     フォントサイズ縮小・アイコンサイズ縮小: 削除済み（unit-system.md §3.3）
+     vw ベースで画面値がそのまま印刷値になるため、@media print 内での
+     font-size 上書きは禁止（差分ゼロ化）。
+     ----------------------------------------------------------------- */
+
+  /* -----------------------------------------------------------------
+     背景色変換（ダーク → ライト）
+     ----------------------------------------------------------------- */
+  .slider__item,
+  .slide-title,
+  .slide-message,
+  .slide-list,
+  .slide-compare,
+  .slide-flow,
+  .slide-timeline,
+  .slide-table,
+  .slide-agenda,
+  .slide-section,
+  .slide-stats,
+  .slide-quote,
+  .slide-image,
+  .slide-diagram,
+  .slide-chart,
+  .slide-grid,
+  .slide-pyramid,
+  .slide-highlight,
+  .slide-process,
+  .slide-hero {
+    background: white !important;
+  }
+
+  /* カード・アイテムの背景 */
+  .list-item,
+  .compare-item,
+  .flow-step,
+  .timeline-content,
+  .agenda-item,
+  .stat-item,
+  .diagram-node,
+  .pyramid-level,
+  .icon-wrapper,
+  .grid-card,
+  .highlight-item,
+  .process-step {
+    background: #F5F5F5 !important;
+    border: 1px solid #DDD !important;
+  }
+
+  /* -----------------------------------------------------------------
+     テキスト色変換（ライト → ダーク）
+     ----------------------------------------------------------------- */
+  h1, h2, h3, h4, h5, h6,
+  p, span, li, td, th,
+  .main-title, .sub-title,
+  .main-message, .sub-message,
+  .list-title, .list-item span,
+  .compare-title,
+  .flow-title, .flow-step span,
+  .timeline-title, .timeline-content h4, .timeline-content p,
+  .table-title,
+  .agenda-title, .agenda-text,
+  .section-title, .section-subtitle, .section-number,
+  .stats-title, .stat-label,
+  .grid-title, .grid-card h3, .grid-card p,
+  .pyramid-title, .pyramid-level span,
+  .highlight-title, .highlight-item h3, .highlight-item p,
+  .process-title, .process-step span,
+  .hero-title, .hero-subtitle, .hero-thanks {
+    color: #1F1F28 !important;
+    -webkit-text-fill-color: #1F1F28 !important;
+  }
+
+  /* 統計値のグラデーションテキストを単色に */
+  .stat-value {
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    -webkit-text-fill-color: #7E9CD8 !important;
+    color: #7E9CD8 !important;
+  }
+
+  /* 補足テキスト */
+  .text-note, .text-caption, .text-small,
+  .sub-title, .sub-message, .contact {
+    color: #666666 !important;
+    -webkit-text-fill-color: #666666 !important;
+  }
+
+  /* -----------------------------------------------------------------
+     アクセントカラー（維持）
+     ----------------------------------------------------------------- */
+  .highlight, .accent-yellow { color: #DCA561 !important; -webkit-text-fill-color: #DCA561 !important; }
+  .highlight-pink, .accent-pink { color: #D27E99 !important; -webkit-text-fill-color: #D27E99 !important; }
+  .highlight-aqua, .accent-aqua { color: #7AA89F !important; -webkit-text-fill-color: #7AA89F !important; }
+  .accent-blue { color: #7E9CD8 !important; -webkit-text-fill-color: #7E9CD8 !important; }
+  .accent-violet { color: #957FB8 !important; -webkit-text-fill-color: #957FB8 !important; }
+
+  /* -----------------------------------------------------------------
+     アイコン色
+     ----------------------------------------------------------------- */
+  i.fa, i.fas, i.far, i.fab,
+  .icon, [class*="fa-"] {
+    color: #54546D !important;
+  }
+
+  .icon-wrapper i,
+  .title-icon, .section-icon, .message-icon i,
+  .list-item i, .flow-step i, .stat-item i,
+  .grid-card i, .hero-icon {
+    color: #7E9CD8 !important;
+  }
+
+  .icon-wrapper.accent-pink i, .card-pink i { color: #D27E99 !important; }
+  .icon-wrapper.accent-aqua i, .card-aqua i { color: #7AA89F !important; }
+  .icon-wrapper.accent-yellow i, .card-yellow i { color: #DCA561 !important; }
+
+  /* -----------------------------------------------------------------
+     テーブル
+     ----------------------------------------------------------------- */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th {
+    background: #E8E8E8 !important;
+    color: #1F1F28 !important;
+    border: 1px solid #CCC !important;
+  }
+
+  td {
+    background: white !important;
+    color: #1F1F28 !important;
+    border: 1px solid #DDD !important;
+  }
+
+  tr:nth-child(even) td {
+    background: #F5F5F5 !important;
+  }
+
+  /* -----------------------------------------------------------------
+     フロー・タイムライン要素
+     ----------------------------------------------------------------- */
+  .flow-arrow {
+    color: #DCA561 !important;
+  }
+
+  .timeline-line {
+    background: #7E9CD8 !important;
+  }
+
+  .timeline-dot {
+    background: #7E9CD8 !important;
+    border-color: white !important;
+  }
+
+  .step-number, .agenda-number, .process-number {
+    background: #7E9CD8 !important;
+    color: white !important;
+  }
+
+  /* -----------------------------------------------------------------
+     比較スライド
+     ----------------------------------------------------------------- */
+  .compare-item.left, .compare-item.before {
+    border-top-color: #D27E99 !important;
+  }
+
+  .compare-item.right, .compare-item.after {
+    border-top-color: #7AA89F !important;
+  }
+
+  /* -----------------------------------------------------------------
+     図解（ピラミッド等）
+     ----------------------------------------------------------------- */
+  .pyramid-level:nth-child(1) {
+    background: #7E9CD8 !important;
+  }
+
+  .pyramid-level:nth-child(1) span {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+  }
+
+  /* -----------------------------------------------------------------
+     その他の要素
+     ----------------------------------------------------------------- */
+  .section-divider, .hero-badge {
+    background: linear-gradient(90deg, #7E9CD8, #D27E99) !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* -----------------------------------------------------------------
+     全面画像デッキ 主キャンバス印刷契約（D1 / F-0001 / html-generator.md CONST_028A）
+
+     対象: 全面AI画像化（image-only）スライドの主キャンバス画像。
+     規定 full-image-deck-method.md §0.3:59『印刷時は @media print で
+     object-fit: contain !important を適用』に準拠。
+
+     - 主キャンバス（.ai-slide-canvas）と後方互換エイリアス（.slide-fullbg /
+       .slide-bg）、意味属性 [data-role="main-canvas"] のいずれでも contain を強制。
+     - cover による端切れを禁止（焼込テキスト入り画像 baked-with-overlay が
+       印刷で欠けないことを優先）。画面表示も同じく contain（矛盾なし）。
+     - :where() で詳細度ゼロに束ね、クラス名密結合を避ける。
+     - 通常HTMLデッキの full-bleed 印刷ルールには一切干渉しない（後方互換）。
+     ----------------------------------------------------------------- */
+  :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) img,
+  :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) picture > img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    display: block !important;
+  }
+
+  /* 主キャンバスコンテナ: スライド枠いっぱいに敷き、余白色は off-white で letterbox */
+  :where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"]) {
+    position: absolute !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: hidden !important;
+    background: #FAFAFA !important;
+  }
+
+  /* -----------------------------------------------------------------
+     全面画像デッキ A4横 16:9 レターボックス（D1 / 端欠けなし担保）
+
+     A4横 297mm × 210mm を基準に、16:9 を幅 297mm へ合わせると高さ 167.06mm。
+     上下に (210 - 167) / 2 ≈ 21.5mm の off-white 余白（letterbox）が出る。
+     主キャンバスは contain なので 16:9 の中央配置で全ページ端欠けゼロ。
+     data-deck-mode="full-image" を持つ body / .slider のみに限定適用し、
+     通常デッキ（属性なし）の既存 .slider__item ルールは温存する。
+     ----------------------------------------------------------------- */
+  [data-deck-mode="full-image"] .slider__item,
+  .slider[data-deck-mode="full-image"] .slider__item {
+    width: 297mm !important;
+    height: 167mm !important;
+    aspect-ratio: 16 / 9 !important;
+    margin: 21mm auto !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: #FAFAFA !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    position: relative !important;
+  }
+
+  [data-deck-mode="full-image"] .slider__item:last-child,
+  .slider[data-deck-mode="full-image"] .slider__item:last-child {
+    page-break-after: auto !important;
+  }
+
+  /* -----------------------------------------------------------------
+     HTML表 世界観統一ユーティリティ（D9 / 角丸タイル・淡色面・紺アウトライン）
+
+     画像図解と並ぶ HTML 表・料金表を kanagawa-comic-diagram の見た目に揃える。
+     淡色面 var(--surface)・紺アウトライン var(--ink)・同色アクセント var(--accent)。
+     印刷では color-adjust:exact で面色を保持。任意適用（.wb-table 付与時のみ）。
+     ----------------------------------------------------------------- */
+  .wb-table {
+    --surface: #F2F1EA;
+    --ink: #2B3A55;
+    --accent: #4D699B;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1.5px solid var(--ink) !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  .wb-table th {
+    background: var(--ink) !important;
+    color: #FAFAFA !important;
+    border: none !important;
+    border-bottom: 1.5px solid var(--ink) !important;
+  }
+  .wb-table td {
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(43, 58, 85, 0.18) !important;
+  }
+  .wb-table tr:nth-child(even) td {
+    background: #FAFAF7 !important;
+  }
+  .wb-table .wb-accent {
+    color: var(--accent) !important;
+    -webkit-text-fill-color: var(--accent) !important;
+    font-weight: 700 !important;
+  }
+}

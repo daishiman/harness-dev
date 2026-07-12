@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-intake-revise/revision-log.schema.json",
+  "title": "revision-log.jsonl (1 line)",
+  "description": "intake revision 1 回ごとに 1 行追加する JSON Lines レコード。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["revision_no", "timestamp", "target_section", "user_request", "applied_changes", "notion_page_url"],
+  "properties": {
+    "revision_no": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "1 始まり、最大 5。超過時 exit 60。"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 (UTC) 反映完了時刻。"
+    },
+    "target_section": {
+      "type": "string",
+      "description": "対象章 (例: §1, §3, §7)。複数章のときはカンマ区切り。"
+    },
+    "user_request": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ユーザーの追加要望 (日本語、原文に近い表現)。"
+    },
+    "applied_changes": {
+      "type": "string",
+      "minLength": 1,
+      "description": "実際に Notion ページに適用された変更の要約 (日本語)。"
+    },
+    "notion_page_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "PATCH 更新された Notion ページの URL (同一ページ ID)。"
+    }
+  }
+}

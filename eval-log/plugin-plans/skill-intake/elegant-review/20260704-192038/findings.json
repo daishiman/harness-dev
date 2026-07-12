@@ -1,0 +1,1255 @@
+{
+ "version": 1,
+ "target": {
+  "type": "proposal",
+  "path": "plugin-plans/skill-intake",
+  "reviewed_at": "2026-07-04T19:20:38+09:00"
+ },
+ "loop_count": 1,
+ "paradigm_findings": [
+  {
+   "paradigm_id": 1,
+   "paradigm_name": "critical",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "R4 verdict=PASS (plugin-plans/skill-intake/plan-findings.json:8) を前提とせず再検証した。C1 no_contradiction の evidence は component-inventory↔handoff の構造化フィールド照合のみ (plan-findings.json:13-17) で、phase 自由文の主張は検査対象に含まれていないことを確認",
+    "index.md:73「script route (C02/C04) は plugin-root scaffold (plugin-scaffold) が消費する」は builder 実行実体の存在を前提とするが、handoff-run-plugin-dev-plan.json:32,67 の builder_status=contract-only と open_issues GAP-SCRIPT-BUILDER (handoff-run-plugin-dev-plan.json:93-99) がその前提を否定している",
+    "「to-be 語彙照合で混入を検出できる」前提 (phase-05-implementation.md:34) には語彙集外表現を見逃す構造的限界があるが、C01 OUT2 (component-inventory.json:57, verify_by=elegant-review) と trial シナリオ5 (phase-11-evidence.md:37) が意味層の補完として計画済みのため起票せず疑義として記録 (第一印象17の消化)",
+    "phase-11-evidence.md:30 の「verify_by: live-trial に相当」は inventory の criteria に live-trial 値が実在しない (component-inventory.json:54-57 は script/test/elegant-review のみ) が、「相当」の限定表現により厳密な矛盾とは言えず起票しない (第一印象12の消化)"
+   ],
+   "issues": [
+    {
+     "id": "F-1001",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "index.md:73 が C02/C04 の builder を「plugin-scaffold が消費する」と無条件記述する一方、handoff-run-plugin-dev-plan.json:32,67 は builder_status=contract-only (単独実行実体未整備) とし fallback (run-build-skill フロー) を正本指定 (handoff-run-plugin-dev-plan.json:36-37,72-73,97)。index だけを読む builder は実在しない builder を起動しようとする",
+     "recommended_intervention": "index.md:73 の script route 記述へ「(contract-only・単独実行実体は未整備。当面は handoff routes の fallback_builder/manual_contract に従い run-build-skill フロー内で代替生成する — GAP-SCRIPT-BUILDER)」の 1 文を追記し handoff と整合させる",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 73,
+      "section": "## インフラ / build の始め方"
+     },
+     "resolution": "applied (FIX-2)"
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "批判的思考"
+  },
+  {
+   "paradigm_id": 2,
+   "paradigm_name": "deduction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "一般則: index.md:74「buildable な実体は component-inventory.json が唯一の SSOT」+ handoff routes の C01/C03 builder=run-skill-create (handoff-run-plugin-dev-plan.json:12,48) + goal-spec.json:61 constraints[0]「実改修は後続 build (run-skill-create 等) へ委譲」。この上位仕様を phase-13 へ当てはめると phase-13-release.md:19 の記述が正面から食い違う",
+    "スキーマ実体からの演繹で第一印象5を反証: interview.json 側 five_axes.rows[name=\"真の課題\"] は plugins/skill-intake/skills/run-intake-interview/schemas/output.schema.json:44 の rows.name enum に、intake.json 側 axes[axis_id=\"real_problem\"] は plugins/skill-intake/references/intake.schema.json:320 の axis_id enum にそれぞれ正しく対応する。二重表現は各スキーマの実体差であり矛盾ではない (対応関係の明文化があれば尚良だが起票しない)"
+   ],
+   "issues": [
+    {
+     "id": "F-1002",
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "phase-13-release.md:19「後段ハンドオフ (run-skill-create/run-plugin-dev-plan は本改善では不要、build 実行者自身が C01-C04 を直接実装する)」が、builder 契約の正本である component-inventory.json (C01/C03 builder=run-skill-create, :62,:149)・handoff-run-plugin-dev-plan.json:12,48・index.md:73「skill route (C01/C03) は run-skill-create へ渡す」と正面衝突。P13 を読んだ build 実行者は handoff routes 全体を無効と解釈し得る",
+     "recommended_intervention": "phase-13-release.md:19 を「後段ハンドオフは handoff-run-plugin-dev-plan.json の routes に従う (C01/C03=run-skill-create --mode update、C02/C04=GAP-SCRIPT-BUILDER の fallback 手順)。run-plugin-dev-plan の再実行は不要」へ修正し SSOT (inventory/handoff) と一致させる",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 19,
+      "section": "## 目的"
+     },
+     "root_cause": "phase 自由文が builder 契約の SSOT (inventory/handoff) から独立に記述され、機械ゲートが自由文を検査しない (F-1004 参照)",
+     "resolution": "applied (FIX-1)"
+    }
+   ],
+   "score": 0.5,
+   "paradigm_name_ja": "演繹思考"
+  },
+  {
+   "paradigm_id": 3,
+   "paradigm_name": "induction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "類似 plan からの帰納: plugin-plans/plugin-dev-planner/index.md:69 と plugin-plans/ubm-goal-setting/index.md:69 はいずれも build の始め方に「brief_path (render-skill-brief.py) で inventory から skill-brief JSON を決定論射影して run-skill-create へ渡す」と生成手段を明記する共通 pattern を持つ。機械層も check-build-handoff.py:94 で brief_path を「render-skill-brief.py 出力先の宣言」と定義しており、briefs/ が build 前に存在しないのは正常 (第一印象2の「briefs/ 不在=欠落」を反証し、真の欠落は射影手段の宣言と再特定)",
+    "skill-intake/index.md:73 の同節には brief_path/render-skill-brief.py への言及が無く、handoff-run-plugin-dev-plan.json:18,54 の briefs/skill-brief-C01.json / C03.json が producer 不明のまま参照される (家族 pattern からの逸脱)",
+    "phase-13 frontmatter の next_phase:14 番兵 (phase-13-release.md:7) は plugin-dev-planner/phase-13-release.md:7 と同一の family 規約であり、本 plan 固有の欠陥ではない (第一印象13を反証)"
+   ],
+   "issues": [
+    {
+     "id": "F-1003",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "index.md:73「build の始め方」に、兄弟 plan (plugin-dev-planner/index.md:69, ubm-goal-setting/index.md:69) が共通して明記する brief_path の生成手段 (render-skill-brief.py による inventory からの決定論射影) の宣言が無く、handoff-run-plugin-dev-plan.json:18,54 の brief_path が producer 不在のまま宙に浮く",
+     "recommended_intervention": "index.md:73 の skill route 記述へ「brief_path は render-skill-brief.py が inventory から build 時に決定論射影する出力先宣言」の 1 文を追記 (家族 pattern と同型)",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 73,
+      "section": "## インフラ / build の始め方"
+     },
+     "resolution": "applied (FIX-2)"
+    }
+   ],
+   "score": 0.8,
+   "paradigm_name_ja": "帰納的思考"
+  },
+  {
+   "paradigm_id": 4,
+   "paradigm_name": "abduction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "観測事実: 10 機械ゲート全 PASS (run-plugin-dev-plan-progress.json:17-28) にもかかわらず、本レビューの残存欠陥は全て自由文 phase 本文↔構造化 SSOT 間の drift (phase-13-release.md:19 builder 矛盾 / index.md:73 gap 不記載 / phase-01-requirements.md:44 スキーマ別名 / phase-05-implementation.md:35↔36 dataflow) に集中している",
+    "仮説A: 機械ゲート群は構造化 JSON (inventory/handoff/frontmatter/matrix) のみを検査し自由文の意味的整合を検査しないため drift が素通りする — plan-findings.json:13-17 の C1 evidence が構造照合のみである事実と整合",
+    "仮説B: iteration2 の C7/C8 追記 (run-plugin-dev-plan-intermediate.jsonl:2) 時に旧記述の更新漏れが発生した — G1-G5 旧参照 (plan-findings.json:151, 修正済み) はこれで説明できるが、phase-13:19 の builder 記述は C7/C8 と無関係で説明できない。よって残存の生存原因としては仮説A が最尤 (B は一部欠陥の発生原因)",
+    "収束: 根本原因 = 自由文層に対する SSOT 語彙 (builder 名/スキーマファイル名/ゲート集合) の整合検証機構の不在"
+   ],
+   "issues": [
+    {
+     "id": "F-1004",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "rubric-governance",
+     "description": "phase 自由文中の SSOT 由来語 (builder 名・スキーマファイル名・ゲート集合・route 消費手順) を component-inventory.json/handoff と突合する検証が plan 検証群 (progress.json:17-28 の 10 本) のいずれにも存在せず、F-1001/F-1002/F-1011 型の drift が全ゲート PASS のまま残存する構造がある",
+     "recommended_intervention": "本レビューの改善実行で自由文側を SSOT に合わせて修正した上で、builder 名/スキーマ名の grep ベース整合チェックを plan 検証手順 (または後続 lint) へ追加することを backlog 起票する",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/run-plugin-dev-plan-progress.json",
+      "line": 17,
+      "section": "verification_status"
+     },
+     "root_cause": "機械ゲートの検査対象が構造化 JSON に限定されている",
+     "resolution": "backlog (planner側将来課題: 散文↔SSOT突合lint。plan編集対象外)"
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "アブダクション"
+  },
+  {
+   "paradigm_id": 5,
+   "paradigm_name": "vertical",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "Why1: phase-06-test-run.md:32(4) は C04 が validation.procedure_completeness.contamination.detected=true で exit1 する受入テストを要求 → Why2: C04 はその値を intake.json から読む (phase-05-implementation.md:36, component-inventory.json:165) → Why3: その値は C03 が「成功時のみ」格納する (phase-05-implementation.md:35) → Why4: C02 の成功 (exit0) は contamination.detected=false を意味する (component-inventory.json:81 exit_codes) → Why5: 故に仕様通りの統合フローでは intake.json に detected=true が載る経路が存在せず、C04 の to_be_contamination_detected 分岐は C03 迂回・intake.json 直接改変への防御的再検査としてのみ意味を持つ — がその位置づけはどこにも明記されていない (第一印象7を根本まで確認)"
+   ],
+   "issues": [
+    {
+     "id": "F-1005",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "phase-05-implementation.md:35 (C03: 成功時のみ C02 結果を intake.json へ格納) と phase-05-implementation.md:36 / phase-06-test-run.md:32(4) / component-inventory.json:165 (C04: contamination.detected=true で exit1) の間で、当該分岐の到達可能性の説明が欠落。仕様を字義通り読むと C04 の contamination 分岐は統合フロー上デッドパスに見え、P06 テスト(4) の入力がパイプラインで生成不能であることも無説明",
+     "recommended_intervention": "phase-05-implementation.md:36 と component-inventory.json C04.purpose へ「本分岐は C03 を迂回した intake.json 直接改変・仕様違反に対する防御的再検査 (defense-in-depth) であり、通常フローでは detected=false のみが格納される。P06 テスト(4) は合成 intake.json を入力とする単体テスト」の趣旨を 1 文追記する (または C03 を FAIL 時にも検証結果を格納する仕様へ変更するかを P02 判断として明記)",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 36,
+      "section": "## 成果物 / C04 実装仕様"
+     },
+     "resolution": "applied (FIX-6)"
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "垂直思考"
+  },
+  {
+   "paradigm_id": 6,
+   "paradigm_name": "decomposition",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "全 21 ファイルを正本 (goal-spec.json)/被覆 (index.md+phase-01..13)/機械 SSOT (component-inventory.json, handoff-run-plugin-dev-plan.json)/評価証跡 (progress.json, plan-findings.json, intermediate.jsonl, elegant-review-20260704.md) の 4 要素へ分解し、各ファイルの役割重複が無いこと・spec-first 宣言 (index.md:56) と整合することを確認",
+    "gate 集合の要素分解で 3 系統の列挙が併存: index.md:72,126「core 6 起動」 vs run-plugin-dev-plan-progress.json:17-28 の 10 本 vs plan-findings.json:57-146 の gate_results G1-G11 (11 本)。check-requirements-coverage は plan-findings.json:123-129 (G9) で実行記録があるが progress.json の verification_status には無い (第一印象8を確認)",
+    "id 名前空間の分解: elegant_review C1-C4 と goal-spec C1-C8 の衝突は index.md:89 の別名前空間注記で解消済み (第一印象10を反証)。一方ギャップ G1-G7 (phase-01-requirements.md:42-48) と gate id G1-G11 (plan-findings.json:59-145) の同一略号衝突には同種の注記が無い (第一印象9)"
+   ],
+   "issues": [
+    {
+     "id": "F-1006",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "決定論ゲートの列挙が 3 系統 (index.md:72「core 6」/ progress.json:17-28 の 10 本 / plan-findings.json gate_results の 11 本) で不一致のまま相互関係の記載が無く、progress.json verification_status には実行済みの check-requirements-coverage (plan-findings.json:123-129 G9) が欠落。加えてギャップ id G1-G7 と gate id G1-G11 が同一略号 G を別概念で使い分ける注記も無い",
+     "recommended_intervention": "progress.json verification_status へ check-requirements-coverage を追記し、index.md:72 へ「core 6 (specfm.GATE_SCRIPTS) に加え input/handoff/portability/requirements 系 4 本を実行 (記録は progress.json/plan-findings.json)」の関係を 1 行注記。G 略号は index.md:89 と同様の別名前空間注記を置く",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/run-plugin-dev-plan-progress.json",
+      "line": 17,
+      "section": "verification_status"
+     },
+     "resolution": "applied (FIX-14)"
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "要素分解"
+  },
+  {
+   "paradigm_id": 7,
+   "paradigm_name": "mece",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "checklist C1-C8 → phase の対応表 (phase-01-requirements.md:52-61) と RTM (phase-07-acceptance-criteria.md:34-43) を突合: 8 要件すべてに担当 phase/component が存在し被覆に穴は無い。verify_by の分類 (test=C1/C2/C3/C6/C7, reasoning=C4/C5/C8) は排他的で交差も無い (goal-spec.json:13-57 と一致)",
+    "C1-C8 → component の被覆: C1=C01/C02, C2=C01, C3=C03/C04, C6=C01, C7=C02/C03/C04(+C01 IN2), C8=C01 で全 4 component が少なくとも 1 要件を担い、要件を担わない component も無い",
+    "唯一の内部不整合: RTM C7 行 (phase-07-acceptance-criteria.md:42) は担当 component 列が「C02 (script), C03 (skill), C04 (script)」で C01 を含まないのに、検証方法列末尾が「C01 の IN2 criterion」を引用する (IN2 は component-inventory.json:56 で C01 の feedback_contract に定義)"
+   ],
+   "issues": [
+    {
+     "id": "F-1007",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "phase-07-acceptance-criteria.md:42 の RTM C7 行で、担当 component 列 (C02/C04/C03) に C01 が欠けたまま検証方法列が「C01 の IN2 criterion」(component-inventory.json:56 定義) を引用しており、行内で担当と検証手段の帰属が食い違う",
+     "recommended_intervention": "RTM C7 行の担当 component 列へ「C01 (skill)」を追加する (C01 は as-is フィールドへ to-be を保存しない責務 R3-as-is-fidelity の担い手でもあるため追加が正)",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-07-acceptance-criteria.md",
+      "line": 42,
+      "section": "## 成果物 / RTM"
+     },
+     "resolution": "applied (FIX-12)"
+    }
+   ],
+   "score": 0.85,
+   "paradigm_name_ja": "MECE"
+  },
+  {
+   "paradigm_id": 8,
+   "paradigm_name": "two-axis",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "2 軸直交 (ライフサイクル軸×成果物実体軸, index.md:66) の実効性を検査: P02〜P13 の entities_covered が一律 [C01,C02,C03,C04] 全列挙 (phase-02-design.md:10 〜 phase-13-release.md:10) であり、phase→component 射影が識別情報を持たず orphan 検出 (detect-unassigned) が実質無条件 PASS になる。兄弟 plan の P13 は entities_covered=[] (plugin-plans/plugin-dev-planner/phase-13-release.md:10) と差分被覆を採っており対照的 (第一印象14を確認)",
+    "重要度×緊急度で open_issue の優先度ラベルを検査: GAP-SCRIPT-BUILDER severity=medium (handoff-run-plugin-dev-plan.json:96) は fallback 手順 (routes の fallback_builder/manual_contract) が定義済みのため妥当。兄弟 plan が blocking-release を用いた GAP-GOVERNANCE-CI-001 (plugin-plans/plugin-dev-planner/handoff-run-plugin-dev-plan.json:57) は解消必須 gap であり、使い分けに優先度誤りは無い"
+   ],
+   "issues": [
+    {
+     "id": "F-1008",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "phase-02〜13 の entities_covered 一律全列挙 (例: phase-13-release.md:10) により、2 軸直交の phase→component 被覆ゲートが判別力を失い、特定 component が特定 phase で実際に扱われていない場合でも機械検出できない",
+     "recommended_intervention": "各 phase の entities_covered を実質関与する component のみに絞る。全列挙を意図として維持するなら「全 phase が全 component を横断的に扱う設計であり全列挙が意図である」旨を index ドメイン知識へ 1 行注記する",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 10,
+      "section": "frontmatter entities_covered"
+     },
+     "resolution": "applied (FIX-16)"
+    }
+   ],
+   "score": 0.8,
+   "paradigm_name_ja": "2軸思考"
+  },
+  {
+   "paradigm_id": 9,
+   "paradigm_name": "process",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "工程を時系列分解: P03 design-gate → P10 final-gate → P11 sign-off (phase-11-evidence.md:39) → P13 前提条件 (phase-13-release.md:25-26) のゲート連鎖は連結しており step 欠落なし。P06 の「C02 単体テスト先行 (mock 可) と統合 DAG 順の分離」(phase-06-test-run.md:33) も elegant-review-20260704.md:15 の修正が反映済みで矛盾なし",
+    "build 工程の step 分解で gap を検出: routes は top-sort C01→C02→C03→C04 消費 (index.md:73) だが、C01 の feedback_contract IN1/IN2 (component-inventory.json:54,56, verify_by=script) は C02 実体 validate-procedure-completeness.py の存在を要求する。C01.depends_on=[] (component-inventory.json:60)・C02.depends_on=[C01] (:86) の build 順では C01 build/受入時点で C02 が未存在であり、C01 criteria-test の実行 timing の規定が plan 内に無い (第一印象6を確認)",
+    "評価証跡工程の時系列: plan-findings.json (R4) と elegant-review-20260704.md の適用順がどちらのファイルにも記録されておらず (plan-findings.json:147-190 と elegant-review-20260704.md に相互参照なし)、elegant-review の修正 (P11 sign-off 追加等, elegant-review-20260704.md:17) 後に R4 ゲートが再実行されたかを証跡から判別できない (第一印象15を確認)"
+   ],
+   "issues": [
+    {
+     "id": "F-1009",
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "dependency-loop",
+     "description": "build 順 (C01→C02) と runtime 消費方向 (C01 の受入 criteria IN1/IN2 が C02 script の実行を要求, component-inventory.json:54,56) が逆向きで、C01 build 直後〜C02 build 完了までの期間に C01 の verify_by=script criteria を実行できない。この期間の扱い (遅延実行/保留) が index/phase-05/handoff のいずれにも未記述",
+     "recommended_intervention": "phase-05-implementation.md の C01 仕様 (または handoff C01 route) へ「C01 の IN1/IN2 criteria-test は C02 build 完了後に実行する (C01 build 直後は pending とし、C02 完了時点で C01-C02 を一括検証する)」を 1 行追記",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 54,
+      "section": "C01 feedback_contract"
+     },
+     "resolution": "applied (FIX-5)"
+    },
+    {
+     "id": "F-1010",
+     "condition": "C4",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "評価証跡 2 件 (plan-findings.json の R4 PASS と elegant-review-20260704.md の適用済み findings 8 件) の先後関係・優先関係がどちらにも明記されず、elegant-review 適用後の状態を R4 ゲート再実行で再検証したかが証跡上不明",
+     "recommended_intervention": "elegant-review-20260704.md 末尾へ「本レビューは R4 (plan-findings.json) の後に実施し、適用後に決定論ゲート一式を再実行して exit0 を確認した」等の時系列 1 行を事実に即して追記する",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/elegant-review-20260704.md",
+      "section": "全体"
+     },
+     "resolution": "applied (FIX-15)"
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "プロセス思考"
+  },
+  {
+   "paradigm_id": 10,
+   "paradigm_name": "meta",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "検証枠組み自体を点検: P02-P13 の全 12 phase が entities_covered=[C01,C02,C03,C04] を一律全列挙 (phase-02-design.md:10 ほか各 phase frontmatter で fresh Read 確認)、P01 のみ [] (phase-01-requirements.md:10)。detect-unassigned の orphan 検出は『各 component が ≥1 phase に出現』条件 (index.md:125) だが、全列挙記入慣行の下では恒真になり検出力を持たない (第一印象14を確認)",
+    "index.md:72 は同梱決定論ゲートを『core 6 起動』と宣言する一方、run-plugin-dev-plan-progress.json:17-28 は 10 本、plan-findings.json gate_results は G1-G11 の 11 本を記録。core 6 と残り 4-5 本の関係は index に説明がない (第一印象8を確認)",
+    "疑義 (起票せず): P05:33(3) は『validate-answer-abstraction.py の axis パラメータへ procedure を追加』と拡張作業を示唆するが、実体 plugins/skill-intake/skills/run-intake-interview/scripts/validate-answer-abstraction.py:8,84-95 では --axis は自由文字列で出力へ echo されるだけで判定ロジックに関与しない (plan-findings.json:175 も『既存で汎用対応済み』と認める)。機械保証されるのは 1 回答単位の抽象判定のみで、『2 連続』カウンタの所有者は C01 prompt 層である点は仕様上明示されていない",
+    "肯定的観察: 状態語彙の三層分離 (goal-spec done=false / progress covered=planned-ready / phase status=未実施) は index.md:57 で明示定義され、前回 review の改善が枠組みとして定着している"
+   ],
+   "issues": [
+    {
+     "id": "F-2001",
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "P02-P13 の entities_covered が一律 [C01,C02,C03,C04] 全列挙のため、orphan 検出 (detect-unassigned) が実質無条件 PASS となり『漏れ検出機構』が形骸化している。例: P12 documentation は実質 plugin_level_surfaces (schemas/references) の話だが C01-C04 全てを covered と主張する (phase-12-documentation.md:10)",
+     "recommended_intervention": "各 phase の entities_covered を『その phase 本文が実質的に仕様化する component のみ』へ絞る記入規範を index ドメイン知識 (2 軸直交節) に 1 行追記し、全 phase×全 component 列挙を smell として扱う",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-02-design.md",
+      "line": 10,
+      "section": "frontmatter entities_covered"
+     },
+     "root_cause": "カバレッジ宣言が『多く書くほど安全』という誤ったインセンティブを持ち、検出器の前提 (差分情報) を消している",
+     "resolution": "applied (FIX-16)"
+    },
+    {
+     "id": "F-2002",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "index.md:72 の『core 6 起動』と progress.json の verification_status 10 本 / plan-findings.json の gate_results 11 本の対応関係 (core とそれ以外の位置づけ) が plan 内のどこにも説明されていない",
+     "recommended_intervention": "index.md インフラ節に『core 6 は生成時必須ゲート、残り (check-build-handoff/check-requirements-coverage/check-runtime-portability/check-plugin-goal-spec) は handoff/評価時の追加ゲート』の対応 1 行を追記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 72,
+      "section": "インフラ"
+     },
+     "resolution": "applied (FIX-14)"
+    }
+   ],
+   "score": 0.72,
+   "reusable_abstraction": "カバレッジ宣言 (entities_covered 等) は差分があるときのみ情報量を持つ。全量列挙が慣行化した宣言フィールドは、その上に載る欠落検出器を恒真化する。宣言粒度規範 (実質関与のみ記入) と全列挙 WARN lint を対で設計せよ。",
+   "reuse_surface": "template",
+   "negative_cases": [
+    "component 数が 1-2 個の小規模 plan では全列挙が実態と一致するため絞り込み規範は不要",
+    "entities_covered を機械生成 (本文からの抽出) している場合は宣言でなく導出であり本パターン非該当"
+   ],
+   "re_audit_trigger": "plugin-dev-planner の phase spec テンプレ/検証 lint (detect-unassigned) を改訂するとき、または新規 plan で component 数 ≥3 の plan を生成するとき",
+   "paradigm_name_ja": "メタ思考"
+  },
+  {
+   "paradigm_id": 11,
+   "paradigm_name": "abstraction",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "本計画は『二重捕捉 (purpose+procedure) + 決定論フォールバック + 完全性ゲート + 汚染検出』という 4 部品パターンの具体例として読める。うち汚染検出 (contamination check) は『有限 denylist による意味検出』という一般クラスに属する: to-be-vocabulary-patterns.md の語彙集照合 (component-inventory.json:78, phase-05-implementation.md:34)",
+    "有限 denylist は false negative を構造的に持つ (語彙集に無い to-be 表現は素通り) が、その検出限界への言及が P04:37 (C7 テストケース)・P05:34 (C02 仕様)・P11:37 (trial 5) のいずれにも無いことを fresh Read で確認 (第一印象17を確認)。C8 側の OUT2 (verify_by=elegant-review, component-inventory.json:57) が意味層の補完レビューとして存在するが、C7 汚染検出との役割分担 (機械=下界検出/レビュー=意味判定) はどこにも明文化されていない",
+    "肯定的観察: 決定論分岐の仕様 (2 連続抽象判定/未回答) は P02:31/P04:35/P06:32/P11:35 で同一表現に統一されており、抽象化した際の部品間整合は高い"
+   ],
+   "issues": [
+    {
+     "id": "F-2003",
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "contamination check (C02) の検出限界 (語彙集に無い to-be 表現・言い換え・婉曲表現は検出不能) が P04/P05/P11 のどこにも記載されず、C7 の受入確認 (index.md:140) が『contamination check が混入なしと判定』のみを根拠とするため、機械ゲート PASS = C7 充足という過信を builder/受入者に与える",
+     "recommended_intervention": "P05:34 の C02 仕様と index.md 受入確認 C7 行に『denylist 照合は下界検出であり、語彙集外の to-be 表現は OUT2 (elegant-review) 側が意味判定で補完する』旨を各 1 行追記し、P11 trial 5 の入力に語彙集非掲載の to-be 言い換え (例:『こうした方が楽だと思う』) を含める",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 34,
+      "section": "C02 実装仕様"
+     },
+     "root_cause": "決定論ゲートの安心感が検出器の理論限界の明文化を省略させた",
+     "resolution": "applied (FIX-4)"
+    }
+   ],
+   "score": 0.78,
+   "reusable_abstraction": "有限 denylist による意味検出ゲートは『保証』ではなく『下界検出器』である。denylist ゲートを仕様化するときは (1) 検出限界の明記 (2) 意味層レビューとの役割分担宣言 (3) 語彙集の更新経路、の 3 点セットを常に添付する。",
+   "reuse_surface": "reference",
+   "negative_cases": [
+    "検出対象が閉集合 (enum 値・予約語など) の場合、denylist は完全検出器であり限界明記は不要",
+    "abstract-answer-patterns.md のように既に人間の再判定ループ内で使われる補助ヒントは保証を主張していないため対象外"
+   ],
+   "re_audit_trigger": "to-be-vocabulary-patterns.md の初版生成時 (build)、または他 plugin で語彙照合型ゲートを新設する plan が現れたとき",
+   "paradigm_name_ja": "抽象化思考"
+  },
+  {
+   "paradigm_id": 12,
+   "paradigm_name": "double-loop",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "前回 elegant-review-20260704.md の適用済み 8 findings を全数追跡: 状態語彙分離→progress.json:6 ✓ / open_questions=[]→goal-spec.json:76 ✓ / 格納先固定→P02:30 ✓ / C7 検査境界→P02:32 ✓ / 実装制御点 (question-plan.json 等)→P05:33(4) ✓ / P06 依存順序分離→P06:33 ✓ / builder gap fallback→handoff:36,72 ✓ / P11 後 sign-off→P11:39+P13:35 ✓。8 件とも artifact 上に実在する",
+    "ただし builder gap 修正 (elegant-review-20260704.md:16) の二次影響として、phase-13-release.md:19 が『run-skill-create/run-plugin-dev-plan は本改善では不要、build 実行者自身が C01-C04 を直接実装する』と全 component へ一般化しており、handoff routes の C01/C03 builder=run-skill-create (handoff-run-plugin-dev-plan.json:12,48) および index.md:73『skill route (C01/C03) は run-skill-create へ渡す』と正面衝突する (第一印象1を確認)。script 用 fallback (GAP-SCRIPT-BUILDER) の語彙が skill route まで漏れた過剰一般化",
+    "elegant-review-20260704.md と plan-findings.json (R4) の時系列・優先関係はどちらのファイルにも記載がなく (両ファイル全文 Read で確認)、後続監査が『どちらの PASS が最新の正か』を判定できない (第一印象15を確認)"
+   ],
+   "issues": [
+    {
+     "id": "F-2004",
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "phase-13-release.md:19 の『run-skill-create/run-plugin-dev-plan は本改善では不要、build 実行者自身が C01-C04 を直接実装』が、handoff routes (C01/C03 builder=run-skill-create, handoff-run-plugin-dev-plan.json:12,48) および index.md:73 の consumer 手順と矛盾。build 実行者は P13 を読むと handoff routes を無視してよいと解釈でき、builder 契約の正本が二重化している",
+     "recommended_intervention": "phase-13-release.md:19 を『C01/C03 は handoff routes に従い run-skill-create (--mode update) で、C02/C04 は GAP-SCRIPT-BUILDER の fallback (run-build-skill flow 内代替生成) で build する』へ修正し、builder 記述の正本は handoff routes のみとする",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 19,
+      "section": "目的"
+     },
+     "root_cause": "前回 review の builder-gap 修正 (script 限定の fallback) を release phase へ伝播する際、スコープが C02/C04 から C01-C04 全体へ過剰一般化された — 単一ループの修正が言い換え記述を持つ別 phase まで再点検されなかった",
+     "resolution": "applied (FIX-1)"
+    },
+    {
+     "id": "F-2005",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "elegant-review-20260704.md (適用済み 8 findings・4 条件 PASS) と plan-findings.json (R4 verdict=PASS) の実施順序・優先関係がどちらにも明記されず、両者の PASS が同一状態を指すのか別時点かを後続監査が判定できない (第一印象15)",
+     "recommended_intervention": "elegant-review-20260704.md 冒頭に実施時刻と『plan-findings.json (R4) の後/前に実施』の 1 行、および矛盾時の優先規則 (新しい方が正) を追記",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/elegant-review-20260704.md",
+      "line": 1,
+      "section": "Scope"
+     },
+     "depends_on": [],
+     "resolution": "applied (FIX-15)"
+    }
+   ],
+   "score": 0.62,
+   "reusable_abstraction": "レビュー修正の伝播先には『同じ事実を言い換えで持つ全記述』を含めなければ、単一ループ修正が二次矛盾を生む。owner/builder のような契約事実は単一正本 (handoff routes) に集約し、phase 本文は route 参照のみとする (契約記述の二重化禁止)。修正時は正本以外の言い換え記述を grep で全数再点検する。",
+   "reuse_surface": "governance-log",
+   "negative_cases": [
+    "phase 本文が route の値を引用元明記つきで逐語引用している場合は二重化でなく参照であり対象外",
+    "修正対象の事実が単一ファイル内で完結する場合は伝播再点検は不要"
+   ],
+   "re_audit_trigger": "handoff routes の builder/fallback を変更する全ての修正時、および elegant-review と R4 evaluator を同日に併走させたとき",
+   "paradigm_name_ja": "ダブル・ループ思考"
+  },
+  {
+   "paradigm_id": 13,
+   "paradigm_name": "brainstorming",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "代替案 6 件を発散生成し評価した: (a) procedure 抽出の独立 SubAgent 化 — component-inventory.json:3 derivation が非 adversarial 直接聴取を根拠に棄却済みで妥当、同等以下。(b) contamination check の LLM judge 化 — 決定論性を失うため現計画 (script) が優位。(c) to-be 発話の別フィールド退避 — goal-spec constraints (保存自体が to-be 設計) が明示棄却済み、同等。(d) handoff の brief_path が指す briefs/skill-brief-C01.json / C03.json (handoff-run-plugin-dev-plan.json:18,54) を plan が skeleton 同梱するか生成責務者を宣言する — plan_dir に briefs/ が不在 (Glob 全 21 ファイルで確認、第一印象2を確認) のため現計画より明確に優る→起票。(e) 薄い phase (P06/P08) の統合による 13→9 phase 化 — requested_count=13 と specfm 13 phase ライフサイクル規約に反するため劣後。(f) quality_gate.py 拡張を C03 内チェックへ一元化 — 二重防御 (skill 層+script 層) の意図的設計であり劣後",
+    "比較対象 plugin-plans/plugin-dev-planner/handoff-run-plugin-dev-plan.json:17,33 も briefs/ 不在のまま brief_path を参照しており、dangling brief_path は本 plan 固有でなく planner テンプレ由来の系統的パターンである"
+   ],
+   "issues": [
+    {
+     "id": "F-2006",
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "dependency-loop",
+     "description": "handoff routes C01/C03 の build_args.brief_path が briefs/skill-brief-C01.json / skill-brief-C03.json を参照するが、plan_dir 配下に briefs/ が存在しない。誰が・いつ brief を生成するかの宣言も無く、builder (run-skill-create) は起動即 dangling reference で停止する (第一印象2)",
+     "recommended_intervention": "最小修正: 各 route の build_args に generated_by (例: 'run-skill-create 起動前に orchestrator が component-inventory の該当エントリから射影生成する') を 1 キー追記するか、plan 生成時に briefs/ skeleton 2 件を同梱する。加えて check-build-handoff.py へ『brief_path は実在するか生成責務宣言を持つ』検査の追加を planner 側改善として提案",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json",
+      "line": 18,
+      "section": "routes[C01].build_args"
+     },
+     "root_cause": "planner テンプレが brief_path を規約として焼くが、brief 生成ステップがライフサイクルのどこにも割り当てられていない (plugin-dev-planner plan にも同型欠落あり=系統的)",
+     "resolution": "applied (FIX-3)"
+    }
+   ],
+   "score": 0.74,
+   "reusable_abstraction": "handoff 契約が参照する未生成 artifact (brief/skeleton/draft) は『実在する』か『生成責務者+生成時点が宣言されている』のいずれかでなければならない (dangling handoff reference 禁止)。この不変条件は handoff 検証ゲート (check-build-handoff) で機械強制できる。",
+   "reuse_surface": "skill",
+   "negative_cases": [
+    "build_target (成果物パス) は build が生成する約束そのものであり、実在検査の対象にしてはならない (planned-ready 状態の正)",
+    "参照先が外部 repo/実行時ダウンロード資産の場合は生成責務宣言でなく取得手順の宣言が正しい形"
+   ],
+   "re_audit_trigger": "check-build-handoff.py を改訂するとき、または run-skill-create が brief_path を実際に消費する build 実行の直前",
+   "paradigm_name_ja": "ブレインストーミング"
+  },
+  {
+   "paradigm_id": 14,
+   "paradigm_name": "lateral",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "データ工学の外部キー/マッピング宣言の視点から: true_purpose の所在が interview.json 側 five_axes.rows[name=\"真の課題\"].content (component-inventory.json:56 IN2) と intake.json 側 sections.6_five_axes_summary.axes[axis_id=\"real_problem\"].answer (component-inventory.json:165 C04) の二体系で表現され、rows[name]↔axes[axis_id] の対応表が plan 内に無いことを実 schema で裏取りした: run-intake-interview/schemas/output.schema.json:30-35 (five_axes.rows) と plugins/skill-intake/references/intake.schema.json:318-320 (axes.axis_id enum に real_problem) は実在し、変換は既存 render 経路の暗黙知になっている (第一印象5を確認)",
+    "ジャーナリズムの逐語引用 (quote) vs 言い換え (paraphrase) 区別の移植案: procedure.steps[] へ発話根拠 (evidence_quote) を持たせれば C7/C8 の検証が語彙照合から構造照合へ強化できるが、スキーマ表面積の増加と goal-spec constraints (格納先は R2 確定済み) に照らし現計画と同等トレードオフのため observation に留める"
+   ],
+   "issues": [
+    {
+     "id": "F-2007",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "C02 (interview.json の five_axes.rows[name=\"真の課題\"] を走査) と C04 (intake.json の axes[axis_id=\"real_problem\"] を走査) が同一概念を別キー体系で参照するが、rows[name] ↔ axes[axis_id] の対応宣言が plan のどこにも無い。builder が C02/C04 のテストデータを作る際、日本語 name キーと英語 axis_id enum の対応を既存コードのリバースエンジニアリングで推測する必要がある (第一印象5)",
+     "recommended_intervention": "P05 の references/schemas 更新仕様 (phase-05-implementation.md:37) に対応表 1 行 (『真の課題 (rows.name) ↔ real_problem (axes.axis_id): 変換は既存 render-intake-final 経路が担い本改善で変更しない』) を追記し、handoff-contract.md 更新仕様 (P12:32) にも同マッピングを含める",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 165,
+      "section": "C04.purpose"
+     },
+     "root_cause": "interview 層 (日本語 name) と intake 層 (英語 enum) の歴史的キー体系差が、二層をまたぐ新ゲート (C02/C04) の追加で初めて表面化した",
+     "resolution": "applied (FIX-7)"
+    }
+   ],
+   "score": 0.8,
+   "reusable_abstraction": "二つの schema が同一概念を異なるキー体系 (自然言語ラベル vs enum id) で保持する場合、それらをまたぐ検証器を新設する plan は必ず明示的 field mapping を契約文書へ焼く — 暗黙 join の禁止。マッピングの正本は変換を実装する既存経路の側に置き、plan は参照する。",
+   "reuse_surface": "reference",
+   "negative_cases": [
+    "同一ファイル内の別名 (alias) は schema の $defs/$ref で機械的に解決されるため対応表不要",
+    "検証器が単一層しか読まない場合 (C02 が interview.json のみ) は当該検証器にとって mapping は不要 — 二層をまたぐ C04 系との組で初めて必要になる"
+   ],
+   "re_audit_trigger": "intake.schema.json の axes enum または output.schema.json の rows.name 集合に変更が入るとき、および C02/C04 のテストデータ設計時",
+   "paradigm_name_ja": "水平思考"
+  },
+  {
+   "paradigm_id": 15,
+   "paradigm_name": "paradox",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "『C04 の contamination 分岐をやらない場合、何が失われるか』を検討した結果、仕様通りのパイプラインでは何も失われないことが判明: P05:35 で C03 は contamination.detected=true のとき差し戻し (intake.json を生成しない)、成功時のみ C02 stdout を intake.json.validation.procedure_completeness へ格納する。従って intake.json に contamination.detected=true が載る経路は仕様上存在せず、C04 の to_be_contamination_detected 分岐 (P05:36) と P06:32(4) のテストケースは pipeline 到達不能な状態を検査する dead path である (第一印象7を確認)",
+    "『P08 refactoring をやらない場合』— P08 は再確認のみで新規決定を持たないが、13 phase ライフサイクルの固定規約 (specfm) 上の必須 phase であり削除対象でない (クリーン)",
+    "『C04 拡張そのものをやらない場合』— C03 (skill 層) の LLM 実行が指示逸脱した際の script 層第二防御という defense-in-depth 意図が読み取れるが (component-inventory.json:117-118)、その防御対象 (C03 逸脱・intake.json 手動改変) は仕様に明文化されていない"
+   ],
+   "issues": [
+    {
+     "id": "F-2008",
+     "condition": "C1",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "P05:35 の『成功時のみ C02 stdout を intake.json.validation.procedure_completeness へ格納』と、P05:36/P06:32(4) の『C04 が validation.procedure_completeness.contamination.detected=true → exit 1』が両立しない: 成功時のみ格納なら contamination=true が intake.json に存在する状態は正規経路で発生せず、C04 の当該分岐と受入テストは到達不能仕様を検査している (第一印象7)",
+     "recommended_intervention": "P05:35 を『C03 は C02 実行結果を成否に関わらず validation.procedure_completeness へ格納した上で、FAIL 時は差し戻す (格納と合否制御の分離)』へ修正するのが最小。代替として現仕様を維持するなら、C04 分岐の目的を『C03 逸脱・intake.json 手動改変に対する第二防御』と P05:36 に明記し到達経路の非正規性を宣言する",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 35,
+      "section": "C03 実装仕様"
+     },
+     "root_cause": "検証結果の『永続化』と『合否制御』が単一の成功条件に束ねられ、下流ゲートの独立再判定可能性が設計時に検討されなかった",
+     "resolution": "applied (FIX-6)"
+    }
+   ],
+   "score": 0.7,
+   "reusable_abstraction": "ゲート結果の格納と合否制御は分離せよ — 検証結果は成否に関わらず永続化し、下流ゲートが独立に再判定できる形にする。FAIL 結果を格納しない設計は、下流の defense-in-depth 分岐を到達不能な dead path に変え、テストを空振りさせる。逆説的に『下流ゲートを消しても何も変わらない』状態は、上流の格納仕様の欠陥を示すシグナルとして使える。",
+   "reuse_surface": "rubric",
+   "negative_cases": [
+    "下流ゲートが上流と同一トランザクション内で実行され独立起動され得ない場合、二重判定自体が冗長であり分離は不要",
+    "格納先が外部公開される成果物で FAIL 詳細の露出が問題になる場合は、格納先を内部ログへ分けるのが正しく、無条件格納をそのまま適用しない"
+   ],
+   "re_audit_trigger": "C03/C04 の build 実装時 (テストが synthetic 入力でしか通らないことに気づく時点)、または intake.json スキーマの validation ブロックを確定するとき",
+   "paradigm_name_ja": "逆説思考"
+  },
+  {
+   "paradigm_id": 16,
+   "paradigm_name": "analogy",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "同型 plan plugin-plans/plugin-dev-planner/ と全面比較した。共通: 13 phase 構成・component-inventory/handoff/progress/findings の 4 点セット・brief_path 参照 (両者とも briefs/ 不在=系統的、F-2006 で起票済み)。相違1: open_issues の severity 語彙 — planner 側 GAP-GOVERNANCE-CI-001 は severity=blocking-release で『P13 完了チェックで解消確認する』と closure checkpoint を焼き込む (plugin-dev-planner/handoff-run-plugin-dev-plan.json:57-58) のに対し、skill-intake 側 GAP-SCRIPT-BUILDER は severity=medium で解消確認先の phase が無い (handoff-run-plugin-dev-plan.json:93-99)",
+    "相違2: skill-intake の phase-13-release.md:41-44 完了チェックリストは GAP-SCRIPT-BUILDER に一切言及せず、GAP が open のまま release 完了条件を満たせてしまう。planner plan との差分に設計上の理由 (envelope dogfooding の有無等) は読み取れず、単なる配線漏れと判断",
+    "相違3 (クリーン確認): envelope 節の扱い差 (planner=planned dogfooding / skill-intake=n/a) は artifact_class (plugin-plan vs existing-plugin-update) による正当な差であり issue でない"
+   ],
+   "issues": [
+    {
+     "id": "F-2009",
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "dependency-loop",
+     "description": "open_issue GAP-SCRIPT-BUILDER (handoff-run-plugin-dev-plan.json:93-99) に closure checkpoint が無い: どの phase の完了チェックが GAP 解消 (C02/C04 が fallback 経路で実際に生成されたこと) を確認するのか未配線で、P13 完了チェックリスト (phase-13-release.md:41-44) にも言及が無い。同型 plan (plugin-dev-planner) は GAP を P13 完了チェックへ配線しており、本 plan だけ欠けている",
+     "recommended_intervention": "phase-13-release.md 完了チェックリストへ『GAP-SCRIPT-BUILDER が fallback 経路 (run-build-skill flow 内生成) で解消され、C02/C04 の build_target が実在することを確認した』の 1 項目を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 41,
+      "section": "完了チェックリスト"
+     },
+     "root_cause": "open_issue の起票と release 条件の配線が別タイミングで行われ、同型 plan の先例パターン (GAP→P13 配線) が移植されなかった",
+     "resolution": "applied (FIX-10)"
+    }
+   ],
+   "score": 0.75,
+   "reusable_abstraction": "open_issue は『どの phase の完了チェックで解消を確認するか』(closure checkpoint) を必ず携帯する。checkpoint の無い open_issue は release を素通りする。同型 plan 間で open_issue の扱いに差があるとき、差分理由を説明できなければ配線漏れを疑う。",
+   "reuse_surface": "template",
+   "negative_cases": [
+    "open_issue が plan スコープ外の恒久制約 (例: 外部サービスの API 仕様) である場合、closure checkpoint でなく監視条件 (re_audit_trigger) を持つのが正しい形",
+    "severity=info の記録専用 issue (履歴保持目的) には closure 配線を要求しない"
+   ],
+   "re_audit_trigger": "handoff の open_issues に新規エントリが追加されるとき、および planner の handoff テンプレ/check-build-handoff.py を改訂するとき",
+   "paradigm_name_ja": "類推思考"
+  },
+  {
+   "paradigm_id": 17,
+   "paradigm_name": "if",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "極端ケースで破壊試験: 『ユーザーの as-is 業務それ自体が denylist 語彙を含む場合』(例: 業務が『広告運用の最適化』で、steps[].action が『入札単価を最適化する』、あるいは回答に『一般的にはこの画面から入る』が事実描写として含まれる) — C8/R3-as-is-fidelity (component-inventory.json:27,37) は固有語彙を置換・正規化せず忠実記録することを要求し、C7 contamination check (component-inventory.json:78: 『最適化』『一般的には』が denylist 掲載) は当該語彙を検出して exit 1 → C03 が Phase4 へ差し戻し (component-inventory.json:117)。忠実に記録し直す限り FAIL は再発し、言い換えれば C8 違反になる。両立不能の衝突であり、override/allowlist/文脈判定/差し戻し回数上限のいずれも plan 全 21 ファイルに存在しないことを確認した (新規問題・第一印象に無し)",
+    "『steps が 10 倍 (40-50 step) の場合』— steps[] に上限・分割指針が無いが、全要素非空を満たせば C02 は線形走査で成立し、破綻はゲートでなく会話運用側 (聞き取り時間) に留まるため起票せず",
+    "『全回答が具体的だが手順が存在しない業務 (非定型業務) の場合』— 抽象判定にかからず fallback へも入れないが、detailed で steps=1〜2 の縮退記録が可能であり仕様矛盾には至らないため起票せず"
+   ],
+   "issues": [
+    {
+     "id": "F-2010",
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "schema",
+     "description": "C7 の contamination check (denylist: べきである/理想は/最適化/より良い方法/一般的には) と C8 の as-is 忠実記録 (固有語彙を置換・正規化しない) が、『ユーザーの現状業務の語彙自体に denylist 語が含まれる』ケース (例: as-is の action が『入札単価を最適化する』) で両立不能: 忠実記録→C02 exit 1→Phase4 差し戻し→忠実に再記録→再 FAIL の恒久ループとなり、goal-spec C2 が排除したはずの『停止』が別レイヤで再発する。false-positive の escape hatch (文脈判定・per-field allowlist・人間確認・差し戻し回数上限) が plan のどこにも仕様化されていない",
+     "recommended_intervention": "P05:34 の C02 仕様へ最小の escape を追加: (1) matched_terms がユーザー発話の逐語引用内に出現する場合 (ユーザー自身の業務語彙) は detected=false とし fields へ warn として記録する文脈規則、または (2) C03 差し戻しに回数上限 (例: 2 回) を設け、超過時は contamination を warning へ降格して人間確認 1 回に切り替える経路。併せて to-be-vocabulary-patterns.md の文書化仕様 (P12:36) へ『名詞的用法 (業務名としての最適化) と提案的用法 (〜を最適化すべき) の判別基準』を含める",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 78,
+      "section": "C02.purpose"
+     },
+     "root_cause": "C7 (混入検出) と C8 (忠実記録) が別イテレーションで追加され、両者の要求が同一フィールド上で衝突する語彙重複域のケース分析が行われていない",
+     "resolution": "applied (FIX-4)"
+    }
+   ],
+   "score": 0.55,
+   "reusable_abstraction": "忠実記録原則 (入力語彙を保存せよ) と語彙 denylist ゲート (特定語彙を拒否せよ) を同一フィールドへ同時適用すると、入力語彙と denylist の交差域で系が到達不能 (恒久 FAIL ループ) になる。意味ゲートには必ず false-positive escape (文脈判定・override・上限付き差し戻し・人間確認) を対で設計し、差し戻しループには常に回数上限か降格経路を与える。",
+   "reuse_surface": "rubric",
+   "negative_cases": [
+    "ゲート対象フィールドが担当者の生成物のみでユーザー語彙を含まない場合 (例: 要約 section)、忠実記録原則が働かず衝突しないため escape は必須でない",
+    "denylist が構文的に一意な形式語 (TODO/FIXME 等) の場合、業務語彙との交差が事実上起きず文脈判定は過剰設計"
+   ],
+   "re_audit_trigger": "to-be-vocabulary-patterns.md の語彙を追加・変更するとき、および P11 trial シナリオ 5 の実施時 (denylist 語を含む実業務ペルソナを必ず 1 件含めて再試験する)",
+   "paradigm_name_ja": "if思考"
+  },
+  {
+   "paradigm_id": 18,
+   "paradigm_name": "naive",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "初見の build 実行者として index.md:73『build の始め方』だけを頼りに進める想定で通読: skill route は run-skill-create へ、script route は『plugin-scaffold が消費する』と無条件に案内されるが、plugin-scaffold は contract-only で単独実行実体が無い (handoff-run-plugin-dev-plan.json:95-98 GAP-SCRIPT-BUILDER)。gap と fallback は handoff JSON まで読まないと知り得ず、index 単体では実在しない builder を探して詰まる (第一印象3を確認)",
+    "初見者がスキーマ拡張対象を grep する想定: phase-01-requirements.md:44 (G3) と phase-08-refactoring.md:35 は『interview.schema.json』を参照するが、該当名のファイルは plugin に存在せず、実体は run-intake-interview/schemas/output.schema.json (phase-01:28 では正しくこの名で参照・実在確認済み)。同一 plan 内で同一ファイルが 2 つの名で呼ばれ、grep が空振りする (第一印象4を確認)",
+    "クリーン確認: 状態語彙 (なぜ全 phase 未実施なのに planned-ready か) は index.md:57 の分離宣言で初見でも誤解なく読めた。P13 の next_phase: 14 番兵も frontmatter 規約として推測可能な範囲 (第一印象13は観察に留め、他 analyst 領域と判断)"
+   ],
+   "issues": [
+    {
+     "id": "F-2011",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "index.md:73 が script route (C02/C04) を『plugin-root scaffold (plugin-scaffold) が消費する』と無条件記述し、GAP-SCRIPT-BUILDER (plugin-scaffold は contract-only・単独実行実体未整備) と fallback (run-build-skill flow 内代替生成) への言及が無い。consumer 手順の正面玄関が実在しない実行体を案内しており、初見 build 実行者が最初に詰まる (第一印象3)",
+     "recommended_intervention": "index.md:73 へ『(plugin-scaffold は contract-only。実行は handoff open_issues GAP-SCRIPT-BUILDER の fallback=run-build-skill flow 内生成に従う)』の括弧書き 1 文を追記",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 73,
+      "section": "インフラ/build の始め方"
+     },
+     "depends_on": [
+      "F-2009"
+     ],
+     "resolution": "applied (FIX-2)"
+    },
+    {
+     "id": "F-2012",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "phase-01-requirements.md:44 (G3) と phase-08-refactoring.md:35 が実在しない別名『interview.schema.json』でスキーマを参照する。実体は plugins/skill-intake/skills/run-intake-interview/schemas/output.schema.json であり、phase-01:28 は正名で参照しているため plan 内で同一ファイルの呼称が揺れている (第一印象4)",
+     "recommended_intervention": "2 箇所の『interview.schema.json』を『run-intake-interview/schemas/output.schema.json (interview.json の出力スキーマ)』へ置換",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-01-requirements.md",
+      "line": 44,
+      "section": "ギャップ一覧 G3"
+     },
+     "resolution": "applied (FIX-8)"
+    }
+   ],
+   "score": 0.7,
+   "reusable_abstraction": "consumer 向け導入文書 (index の『始め方』) は open_issues と同期させ、実在しない実行体を無条件に案内しない。ファイル参照は実パス逐語のみ許可し、概念名からの別名創作 (interview.json のスキーマ→interview.schema.json) を禁止する — 初見者の grep 空振りは別名創作の検出器になる。",
+   "reuse_surface": "template",
+   "negative_cases": [
+    "契約語彙としての builder 名 (plugin-scaffold) を将来実装予定の予約名として使う場合は、予約である旨の注記があれば phantom ではない",
+    "文書内で最初に正式パスを定義した上での短縮呼称 (『以下 output schema』) は別名創作に当たらない"
+   ],
+   "re_audit_trigger": "GAP-SCRIPT-BUILDER が解消され plugin-scaffold が実体化したとき (index 記述の再同期)、および plan 内の schema ファイル名を変更する全ての修正時",
+   "paradigm_name_ja": "素人思考"
+  },
+  {
+   "paradigm_id": 19,
+   "paradigm_name": "systems",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "既存 plugin 実体への波及面を fresh Read で確認: 拡張対象 quality_gate.py / cross_check.py / render-intake-final.py は plugins/skill-intake/scripts/ に実在 (Glob 全走査)。schema 変更は additive (sections.6_five_axes_summary.procedure + validation.procedure_completeness) で 12 section 契約維持を宣言 (component-inventory.json:210, phase-05-implementation.md:37)",
+    "ベースライン機械検証の verify-plan-coverage C02 FAIL は『計画にあって実体なし』であり build 前 planned-ready 状態の期待挙動。疑義 (起票せず): handoff routes の status=planned (handoff-run-plugin-dev-plan.json:21) を verify-plan-coverage が planned 除外として読むかは本 plan からは判定不能で、CI 配線次第では planned-ready 計画のコミットが恒常赤を生む可能性がある",
+    "CI/hook への波及: 新規 entry_point なし・governance-check 既存 workflow のまま (index.md:22-26)。P06 が CI 配線をスコープ外と明言 (phase-06-test-run.md:37)"
+   ],
+   "issues": [
+    {
+     "id": "F-3001",
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "C03 の output_contract は intake.{md,json} 両方に procedure を要求する (component-inventory.json:120) が、phase-05:35 の C03 実装仕様は intake.json への格納のみ規定し、intake.md 側の rendering 制御点 (render-intake-final.py 等) の拡張要否が無い。さらに cross_check.py (md↔json 整合確認) は『既存のまま』と宣言 (component-inventory.json:134) され、新 procedure 節追加で整合検査が破れないかの分析が無い。Notion 経路も『既存レンダリング経路にそのまま乗る』(component-inventory.json:222) と制御点根拠なしで断定",
+     "recommended_intervention": "phase-05 C03 仕様へ (a) intake.md 生成制御点の拡張要否判定 (b) cross_check.py への影響有無 の 2 点を 1 項追記し、inventory:134 の『既存のまま』に根拠を付す",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 35,
+      "section": "成果物 C03"
+     },
+     "root_cause": "C01 は制御点列挙方式へ前回レビューで是正されたが → C03 は json 格納経路のみ注目され md/レンダリング系消費者がシステム境界外として見落とされた → 機械ゲートは build_target の自己完結のみ検査し runtime 消費者グラフ (cross_check/render/Notion) を検査しないため — plugin-plans/skill-intake/component-inventory.json:120",
+     "resolution": "applied (FIX-13)"
+    },
+    {
+     "id": "F-3002",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "index.md:73 は『script route (C02/C04) は plugin-root scaffold (plugin-scaffold) が消費する』と無条件記述だが、handoff の open_issues GAP-SCRIPT-BUILDER (handoff-run-plugin-dev-plan.json:93-98) は plugin-scaffold を contract-only (単独実行実体未整備) と明記し fallback を定義。index 側に gap 言及が無く、index だけ読む builder は存在しない実行実体を探す",
+     "recommended_intervention": "index.md:73 へ『(contract-only、実体は GAP-SCRIPT-BUILDER の fallback=run-build-skill フローで代替)』の 1 文を追加",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 73,
+      "section": "インフラ"
+     },
+     "root_cause": "gap は handoff JSON 側にのみ追記された → 前回レビューの builder gap fix (elegant-review-20260704.md:16) が handoff を修正先に選び index 散文への伝播を伴わなかった → 散文と JSON の同一契約二重記述を突合するゲートが無いため — plugin-plans/skill-intake/index.md:73",
+     "resolution": "applied (FIX-2)"
+    }
+   ],
+   "score": 0.65,
+   "paradigm_name_ja": "システム思考"
+  },
+  {
+   "paradigm_id": 20,
+   "paradigm_name": "causal",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "第一印象7の因果 chain を確認: phase-05:35 C03『成功時のみ…C02 stdout を intake.json.validation.procedure_completeness へ格納』→ C02 成功 (exit0) は contamination.detected=false を含意 (component-inventory.json:81 exit_codes) → よって intake.json に contamination.detected=true が載る正規経路が仕様上存在しない → phase-05:36 C04 の to_be_contamination_detected 分岐と phase-06:32(4) のテストは pipeline 経由では到達不能な dead path",
+    "C04 の inputs は validation.procedure_completeness を含むと宣言 (component-inventory.json:166) するが、同フィールド欠落時 (C03 が失敗経路で格納しなかった場合や手作り intake.json) の C04 挙動が未規定"
+   ],
+   "issues": [
+    {
+     "id": "F-3003",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "C03『成功時のみ格納』(phase-05:35) と C04『contamination.detected=true → exit1』(phase-05:36, phase-06:32) が両立すると C04 の contamination 分岐は正規データフロー上 unreachable。defense-in-depth なら成立するが、その位置づけと validation フィールド欠落時の C04 挙動 (missing 扱いか PASS か) が未仕様",
+     "recommended_intervention": "phase-05 C03 を『成功/失敗を問わず C02 stdout を validation.procedure_completeness へ記録し、失敗時は差し戻す』へ変更するか、C04 仕様へ『defense-in-depth (改ざん/手動生成対策)。validation.procedure_completeness 欠落時は missing_procedure_validation として exit1』を追記",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 35,
+      "section": "成果物 C03/C04"
+     },
+     "root_cause": "C04 分岐が到達不能になった → C7 追記 iteration で contamination を C02/C04 へ並行追加した際、前 iteration 成果である C03 の『成功時のみ格納』条件文を更新しなかった → 機械ゲートはフィールド存在整合のみ検査し散文中のデータフロー条件 (格納の前提条件) を突合しないため — plugin-plans/skill-intake/phase-05-implementation.md:35",
+     "resolution": "applied (FIX-6)"
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "因果関係分析"
+  },
+  {
+   "paradigm_id": 21,
+   "paradigm_name": "causal-loop",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "統合 DAG (C01→C02→C03→C04) 自体は非循環 (component-inventory.json 各 depends_on 全確認、plan-findings.json:48 C4 PASS と一致)。前回レビュー指摘の P06 順序混同は分離済み (phase-06:33)",
+    "第一印象6を確認・拡張: C01.depends_on=[] (component-inventory.json:60) なのに C01.deterministic_checks が C02 を含み (同:44)、C01 の受入 criteria IN1/IN2 (verify_by=script, 同:54,56) は C02 実行を前提とする。build top-sort は C01 が先頭"
+   ],
+   "issues": [
+    {
+     "id": "F-3004",
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "build 順 C01→C02 に対し受入検証依存は C01←C02 と逆向き: C01 build 完了時点で C02 (validate-procedure-completeness.py) が未存在のため、C01 の criteria-test (IN1/IN2 verify_by=script) と harness_coverage kind_pass=loop=criteria-test (component-inventory.json:71) を C01 単独で green にできず、builder が route 先頭で stall する。C02 build 後に C01 criteria を遡及実行する 2-pass 受入の指示がどこにも無い",
+     "recommended_intervention": "handoff routes C01 へ acceptance 注記 (『IN1/IN2 の script criteria は C02 build 完了後に遡及実行』) を追加するか、phase-06 実行順序節へ同旨 1 文を追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 60,
+      "section": "C01.depends_on"
+     },
+     "root_cause": "C01 受入が build 時点で実行不能 → depends_on が runtime データ依存 (interview.json 形状が先に要る) から導出され検証依存 (C01 の検証は C02 に依存) を表現していない → planner の DAG 語彙が build 順序と受入順序を単一 depends_on で兼用し分離できない → 結果『build 直後に quality_gates を回す』標準フローと衝突する — plugin-plans/skill-intake/component-inventory.json:60",
+     "resolution": "applied (FIX-5)"
+    },
+    {
+     "id": "F-3005",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "再検証ループの縮退: index 完了チェックリストは『core 6 起動が全 exit0』のみ要求 (index.md:126) だが、実際の planned-ready 判定は 10 gate (run-plugin-dev-plan-progress.json:17-28) / 11 gate (plan-findings.json:57-146) で成立。index 基準で再検証すると check-build-handoff / check-requirements-coverage / check-runtime-portability / check-plugin-goal-spec が抜け、前回より弱い検査網で PASS する自己弱化ループ (第一印象8)",
+     "recommended_intervention": "index.md:126 を『core 6 + handoff/requirements/portability/goal-spec の計 10 ゲート』へ拡張するか、progress.json の verification_status を再検証の正本と 1 行明記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/index.md",
+      "line": 126,
+      "section": "完了チェックリスト"
+     },
+     "root_cause": "index の core 6 記述は specfm.GATE_SCRIPTS の正本引用に忠実である一方 → R4 evaluator は追加 4-5 ゲートを独自に走らせた → 追加ゲート群を index 側チェックリストへ還流する手順が無いため検査集合が版によって非対称になった — plugin-plans/skill-intake/index.md:126",
+     "resolution": "applied (FIX-14)"
+    }
+   ],
+   "score": 0.55,
+   "paradigm_name_ja": "因果ループ"
+  },
+  {
+   "paradigm_id": 22,
+   "paradigm_name": "trade-on",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "as-is 忠実性 (C7) vs 情報保全のトレードオフは『handoff 境界防御』で止揚済み: to-be 発話は handoff 対象 as-is フィールドへ保存しないが raw 会話ログは検査対象外として温存 (phase-05:34)。to-be 専用フィールド非新設の理由 (保存自体が to-be 設計の一形態) も index.md:68 で明示され設計判断として一貫",
+    "決定論 (語彙照合) vs 意味的網羅のトレードオフは、C01 プロンプト層 (保存抑止=第一線) + C02 語彙照合 (第二線) + OUT2 独立レビュー (第三線) の多層構造で事実上 trade-on になっている (component-inventory.json:26,56,57)"
+   ],
+   "issues": [
+    {
+     "id": "F-3006",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "上記多層防御の役割分担と、語彙集 (to-be-vocabulary-patterns.md) に無い to-be 表現を C02 が検出できない限界が phase-04:37 / phase-05:34 / phase-11:37 のいずれにも明文化されていない (第一印象17)。builder が『C02 単独で C7 を保証』と誤解し第一線 (C01 保存抑止) の実装を軽視するリスク",
+     "recommended_intervention": "phase-05:34 の C02 仕様へ『contamination check は語彙集ベースの第二線。第一線は C01 の保存抑止、第三線は OUT2 独立レビューであり、語彙集外表現の検出は第一線・第三線が担う』の 1 文を追記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 34,
+      "section": "成果物 C02"
+     },
+     "root_cause": "多層防御は derivation と criteria に分散して実在する → しかし各層の限界と補完関係を一望する記述が無い → 各層が別 iteration (C7 追記時) に別ファイルへ追加され統合視点の節が作られなかったため — plugin-plans/skill-intake/phase-05-implementation.md:34",
+     "resolution": "applied (FIX-4)"
+    }
+   ],
+   "score": 0.85,
+   "paradigm_name_ja": "トレードオン思考"
+  },
+  {
+   "paradigm_id": 23,
+   "paradigm_name": "plus-sum",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "upstream (planner) 側は fallback_builder / manual_contract (handoff-run-plugin-dev-plan.json:36,72) で builder gap を透明化し downstream が詰まらない配慮がある (win)",
+    "一方 downstream builder の開始条件である brief が欠落: handoff:18 (briefs/skill-brief-C01.json) と handoff:54 (briefs/skill-brief-C03.json) の参照先は plan_dir 配下に不存在 (Glob briefs/** = 0 件、第一印象2を実証)"
+   ],
+   "issues": [
+    {
+     "id": "F-3007",
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "schema",
+     "description": "handoff routes C01/C03 の build_args.brief_path が指す briefs/skill-brief-C01.json / skill-brief-C03.json が存在せず、brief の生成責務 (planner 成果物か、builder が phase-05 から起こすのか) がどこにも宣言されていない。check-build-handoff (plan-findings.json G8) はパス形式のみ検査し存在検査をしないため planned-ready 化を素通りした。run-skill-create route の最初の入力が欠けており builder が開始不能",
+     "recommended_intervention": "briefs/ 2 件を planner 成果物として生成するか、build_args へ brief_generator: 『phase-05 の C01/C03 実装仕様から builder が生成する』の明示フィールドを追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json",
+      "line": 18,
+      "section": "routes[C01].build_args"
+     },
+     "depends_on": [
+      "F-3019"
+     ],
+     "root_cause": "brief_path が dangling → handoff 生成時に brief_path が契約書式として埋められたが briefs 生成が planner の成果物一覧に含まれていない → check-build-handoff が参照先存在を検査対象外とするため未検出のまま planned-ready 化 → builder 契約自体の矛盾 (F-3019) が解決されない限り brief 要否も確定しない — plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json:18",
+     "resolution": "applied (FIX-3)"
+    }
+   ],
+   "score": 0.5,
+   "paradigm_name_ja": "プラスサム思考"
+  },
+  {
+   "paradigm_id": 24,
+   "paradigm_name": "value-proposition",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "goal-spec.purpose (ヒアリング↔構築間の情報乖離による手戻り解消) と C01-C04 連鎖の整合は強い: 抽出 (C01) → 完全性+混入検証 (C02) → 両方格納ゲート (C03) → 下流遮断 (C04) が purpose の因果に直結 (goal-spec.json:2, component-inventory.json:19,78,113,165)",
+    "価値実現の最終区間 = 下流 builder が procedure を実際に消費すること。この区間の担保を検証した (下記 issues)"
+   ],
+   "issues": [
+    {
+     "id": "F-3008",
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "C5『手順情報を無視したまま build へ進める既存経路が残らない』(goal-spec.json:37) の操作化が handoff-contract.md への契約行追記+『残さない旨を明記する』(phase-12:32) という文書宣言のみで、下流 (run-skill-create/run-plugin-dev-plan) 側に procedure 消費を機械強制する点が計画されていない。保証型要件が doc 層のみで担保され、残存リスクが open_issues (handoff:93 は GAP-SCRIPT-BUILDER のみ) にも記録されていない",
+     "recommended_intervention": "handoff open_issues へ『C5 の下流強制は本計画では doc 契約まで。機械強制 (下流 plugin 側の intake 消費 checklist/lint) は将来課題』を residual risk として 1 エントリ追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-12-documentation.md",
+      "line": 32,
+      "section": "成果物 handoff-contract.md"
+     },
+     "root_cause": "C5 が verify_by=reasoning とされ機械層の設計対象から外れた → 下流 plugin の改修は本 plan のスコープ外なので強制点を置く場所が無い → スコープ外なら residual risk として透明化すべきところ open_issues への記録慣行が GAP 系のみに使われているため漏れた — plugin-plans/skill-intake/goal-spec.json:37",
+     "resolution": "applied (FIX-11)"
+    },
+    {
+     "id": "F-3009",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "rubric-governance",
+     "description": "C2 (停止しないフォールバック) の受入が feedback_contract.criteria に不在: phase-11:30 は『verify_by: live-trial に相当』と述べるが inventory の criteria verify_by は script/test/elegant-review のみ (component-inventory.json:54-57、第一印象12)。P07 RTM の C2 行は責務 R2-procedure-fallback を根拠にし (phase-07:37)、P07 完了チェックリスト『test 系が criteria id と紐づく』(phase-07:52) と自己矛盾。EVALS 配線宣言 (index.md:143) から C2 の受入が漏れる",
+     "recommended_intervention": "C01 feedback_contract へ OUT3 (loop_scope=outer, C2 の停止せず切替を検証, verify_by=test) を追加し、phase-07 RTM C2 行と phase-11:30 を OUT3 参照へ揃える",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-07-acceptance-criteria.md",
+      "line": 37,
+      "section": "RTM C2 行"
+     },
+     "root_cause": "C2 の会話的性質 (停止しない) が既存 verify_by 語彙に収まらないと判断された → criterion 化を回避し責務+手動 trial へ逃がした → その結果 RTM 完了条件 (test 系は criteria 紐づけ) と衝突し、live-trial という enum 外語彙が散文に生まれた — plugin-plans/skill-intake/phase-11-evidence.md:30",
+     "resolution": "applied (FIX-9)"
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "価値提案思考"
+  },
+  {
+   "paradigm_id": 25,
+   "paradigm_name": "strategic",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "3ヶ月視点の外部依存を点検: specfm.PHASE_BODY_SECTIONS/GATE_SCRIPTS (plan 外正本, index.md:72)、run-build-skill 名 (handoff:36、命名 drift は doc-only 対応で据置決定済み)、plugin-scaffold の将来実体化。fallback/manual_contract による緩和は妥当",
+    "改名 churn が進行中の repo で、本 plan の builder 名依存は handoff JSON に集約されており修正コストは低い構造"
+   ],
+   "issues": [
+    {
+     "id": "F-3010",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "variable-abstraction",
+     "description": "version 具体値 0.1.2→0.1.3 が index.md:54 / phase-12:34 / phase-13:30,33,42 の 5 箇所へ焼かれている。build 前に別改修が 0.1.3 を先取りすると全箇所 stale になり、builder が誤った bump を実行し得る",
+     "recommended_intervention": "正本を phase-13 の 1 箇所に限定し、他は『現行 version + PATCH bump (正本=P13)』の相対表現へ置換",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 33,
+      "section": "version bump 仕様"
+     },
+     "root_cause": "具体性重視の書式 (受入を観測可能にする) が version にも適用された → version は plan 確定後も外部要因で動く可変値であり観測可能性より鮮度が支配的 → 可変値と不変値を区別する variable_abstraction の規約が phase 本文書式に無いため — plugin-plans/skill-intake/index.md:54",
+     "resolution": "applied (FIX-17)"
+    },
+    {
+     "id": "F-3011",
+     "condition": "C4",
+     "severity": "low",
+     "bucket": "other",
+     "description": "gate_type 語彙と §5 section 床の正本が plan 外 (plugin-dev-planner specfm) であり (第一印象18)、P05=tdd-green (実行を伴わない仕様 phase, phase-05:9)・P06=none (テスト実行を宣言する phase, phase-06:9) という名目的付与になっている。planner 側語彙が変わると plan 単独で妥当性を再検証できない",
+     "recommended_intervention": "index インフラ節へ『gate_type は build 後に有効化される specfm 予約語彙で plan 状態 (status=未実施) では名目。tdd-green は P05 仕様を満たす実装がテストを green にする後段条件を指す』の 1 行注記を追加",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-05-implementation.md",
+      "line": 9,
+      "section": "frontmatter gate_type"
+     },
+     "root_cause": "gate_type は build 後ライフサイクルの語彙 → 実装スコープ外の plan では全 gate が名目化する → 名目である旨の宣言が無いため読者が P06 gate_type=none を『テスト実行にゲートなし』と誤読し得る — plugin-plans/skill-intake/phase-06-test-run.md:9",
+     "resolution": "applied (FIX-18)"
+    }
+   ],
+   "score": 0.8,
+   "paradigm_name_ja": "戦略的思考"
+  },
+  {
+   "paradigm_id": 26,
+   "paradigm_name": "why",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "スキーマ別名 drift (第一印象4) を Why×5 で根本原因まで追跡: (1) phase-01-requirements.md:44 (G3) と phase-08-refactoring.md:35 が「interview.schema.json」を参照 → (2) plugin 実体を Glob 全数確認した結果 interview.schema.json という実ファイルは存在せず、正体は plugins/skill-intake/skills/run-intake-interview/schemas/output.schema.json → (3) phase-01-requirements.md:28 と phase-05-implementation.md:33(2) は正しい実体名を使用しており plan 内で呼称が分裂 → (4) 別名は実在する intake.schema.json (plugins/skill-intake/references/) の「<artifact>.schema.json」命名からの類推で発生したと推定 → (5) 根本原因: interview.json のスキーマに対する正式呼称が plan の用語集 (index ドメイン知識) に定義されておらず、書き手ごとに呼称が発散する"
+   ],
+   "issues": [
+    {
+     "id": "F-1011",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "schema",
+     "description": "phase-01-requirements.md:44 (G3) と phase-08-refactoring.md:35 が実在しないファイル名「interview.schema.json」を参照 (実体は run-intake-interview/schemas/output.schema.json。phase-01:28/phase-05:33 は正しい名前を使用)。G3 を読んだ builder が新規に interview.schema.json を作成する誤実装リスクがある",
+     "recommended_intervention": "phase-01-requirements.md:44 と phase-08-refactoring.md:35 の「interview.schema.json」を「run-intake-interview/schemas/output.schema.json (interview.json の出力スキーマ)」表記へ統一する",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-01-requirements.md",
+      "line": 44,
+      "section": "## 成果物 / ギャップ一覧 G3"
+     },
+     "root_cause": "interview.json スキーマの正式呼称が plan 用語集に未定義で呼称が発散した",
+     "resolution": "applied (FIX-8)"
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "why思考"
+  },
+  {
+   "paradigm_id": 27,
+   "paradigm_name": "kaizen",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "前回 elegant-review (elegant-review-20260704.md) の 8 fix の定着を全数照合: 状態語彙分離は progress.json state_semantics に定着 (run-plugin-dev-plan-progress.json:6)、P06 依存順序分離は定着 (phase-06:33)、G1-G5→G1-G7 は plan-findings.json findings[0] で resolved 確認済み (再発なし)",
+    "2 件の不完全伝播/新規 smell 化を検出 (下記 issues)。前回 fix 自体が新しい歪みを生む二次波及パターンが観察される"
+   ],
+   "issues": [
+    {
+     "id": "F-3012",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "前回 fix『sheet.md template という実体とずれた表現→制御点方式へ』(elegant-review-20260704.md:14) が phase-05:33(4) には適用済みだが、正本側の component-inventory.json:29 C01.output_contract に『sheet.md への procedure 節追記』の旧表現が残存 (第一印象16)。SSOT である inventory 側だけ古いという逆転",
+     "recommended_intervention": "component-inventory.json:29 を『制御点 (question-plan.json/build-questions.py/build-sheet-json.py) 拡張により runtime 出力 sheet.md/sheet.json に procedure 節が生成される』へ揃える",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 29,
+      "section": "C01.output_contract"
+     },
+     "root_cause": "前回 fix が phase 本文を修正先に選んだ → inventory の同義記述が同一 fix の適用対象として列挙されなかった → fix 適用時に同義記述の全出現を grep で洗う手順が改善フローに無いため — plugin-plans/skill-intake/component-inventory.json:29",
+     "resolution": "applied (FIX-19)"
+    },
+    {
+     "id": "F-3013",
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "schema",
+     "description": "前回 fix『open_questions を constraints へ移し open_questions=[]』(elegant-review-20260704.md:11) の結果、goal-spec.constraints[8..11] に『R2/P02 解決済み事項』4 件が入り constraint (制約) と decision (決定記録) の意味論が混合 (goal-spec.json:69-72、第一印象11)。constraints を制約として機械消費する将来コードに誤読リスク",
+     "recommended_intervention": "goal-spec へ resolved_decisions[] を追加して 4 件を移すのが本筋。schema 変更を避けるなら『R2/P02 解決済み事項:』prefix を decision 記録の規約として index ドメイン知識へ 1 行注記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/goal-spec.json",
+      "line": 69,
+      "section": "constraints"
+     },
+     "root_cause": "open_questions=[] を達成する必要があった → goal-spec schema に決定記録の受け皿フィールドが無い → 既存フィールドで最も近い constraints へ prefix 付きで退避した (schema の表現力不足を散文規約で補った) — plugin-plans/skill-intake/goal-spec.json:69",
+     "resolution": "applied (FIX-20)"
+    },
+    {
+     "id": "F-3014",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "elegant-review-20260704.md と plan-findings.json (R4) の実施順・優先関係がどちらにも無記載 (第一印象15)。次回 PDCA サイクルがどちらの findings を後勝ち (最新合意) として扱うべきか判定できない",
+     "recommended_intervention": "progress.json か両ファイル冒頭へ『実施順: R4 evaluate → elegant-review (後者が最終)』等の 1 行を追記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/elegant-review-20260704.md",
+      "line": 1,
+      "section": "冒頭"
+     },
+     "root_cause": "2 つの評価系 (R4 evaluator と elegant-review) が別フローとして走った → 双方とも自己完結の報告書式で相互参照フィールドを持たない → 評価成果物間の時系列を記録する場所が plan 構造に定義されていないため — plugin-plans/skill-intake/plan-findings.json:8",
+     "resolution": "applied (FIX-15)"
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "改善思考"
+  },
+  {
+   "paradigm_id": 28,
+   "paradigm_name": "hypothesis",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "計画の中心仮説を明文化: (H1)『procedure が構造化されて intake.json に載り、purpose と両方揃うまで進めないゲートがあれば、builder の推測起因の手戻りが解消する』(goal-spec.json:2-4)。(H2)『2 連続抽象判定/未回答という閾値が手順化困難ユーザーを正しく判別する』(goal-spec.json:70)。H2 は R2 決定として透明化され P04 境界値テスト+P11 シナリオ2/3 で反証可能 (phase-04:35, phase-11:34-35) — 検証可能性は良好",
+    "H1 の前段 (機構が動く) は C1-C8 で反証可能だが、後段 (手戻りが減る) の観測手段を点検した (下記 F-3015)"
+   ],
+   "issues": [
+    {
+     "id": "F-3015",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "eval-log",
+     "description": "中心仮説 H1 の帰結 (手戻り解消 = purpose の成果) を build 後に観測する指標が計画に無い。P11 は機構の動作 (C1/C2/C6/C7/C8) を検証するが手戻り減は未測定。既存 plugins/skill-intake/scripts/measure_value_realized.py が実在するのに接続されていない",
+     "recommended_intervention": "phase-11 か phase-13 へ『初回 dogfooding (intake→build 1 サイクル) で builder が手順を推測/追加質問した回数を証跡へ記録し手戻り指標のベースラインとする』を 1 行追加",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-11-evidence.md",
+      "line": 19,
+      "section": "目的"
+     },
+     "root_cause": "受入設計が goal-spec checklist (機構要件) 駆動 → purpose 文中の成果 (手戻り解消) は checklist 化されていない → checklist に無いものは phase へ操作化されない仕様駆動の構造ゆえ、成果指標が計画の盲点になった — plugin-plans/skill-intake/goal-spec.json:2",
+     "resolution": "applied (FIX-21)"
+    },
+    {
+     "id": "F-3016",
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "rubric-governance",
+     "description": "P02-P13 の entities_covered が一律 [C01,C02,C03,C04] 全列挙 (各 phase frontmatter :10、第一印象14) のため、detect-unassigned の orphan 検査が反証不能 (常に vacuous PASS)。phase↔component の実対応を弁別する検証力が無い",
+     "recommended_intervention": "少なくとも P12/P13 で実質関与 component のみへ絞り、全列挙が正当な phase (P05/P06/P07 等) と区別する",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-12-documentation.md",
+      "line": 10,
+      "section": "frontmatter entities_covered"
+     },
+     "root_cause": "orphan 0 件ゲートを確実に通す最短手が全列挙 → ゲートが列挙の妥当性 (本文に当該 component の実質記述があるか) を検査しない → 検査されない自由度は安全側 (全列挙) へ収斂する Goodhart 型の縮退 — plugin-plans/skill-intake/phase-04-test-design.md:10",
+     "resolution": "applied (FIX-16)"
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "仮説思考"
+  },
+  {
+   "paradigm_id": 29,
+   "paradigm_name": "issue",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "『何が決まれば残りが決まるか』を分析: 本計画の本質論点は (1)『builder 契約は誰か』(決まれば brief 要否 F-3007・quality_gates 実行主体・P13 完了条件が芋づるで決まる) と (2)『handoff 対象 as-is フィールドの正準全集合』(決まれば C7 ゲート範囲・C02 実装・P04 テスト・RTM C7 行が機械的に決まる) の 2 つ",
+    "論点(2) の現状: C02 検査対象は procedure.* + five_axes.rows[name=\"真の課題\"].content の 2 系で component-inventory.json:78 / phase-05:34 / phase-07:42 は一貫している"
+   ],
+   "issues": [
+    {
+     "id": "F-3017",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "保護宣言範囲と検査範囲の乖離: C01 checklist は『procedure/課題/流れ/実行したいこと の as-is フィールド』への混入禁止を宣言 (component-inventory.json:26) するが、C02 の検査対象は procedure.* と真の課題 row の 2 系のみ。『実行したいこと』『現状の流れ』(procedure 以外の部分) の格納フィールドと検査対象性が未定義。加えて interview.json 側 rows[name=\"真の課題\"] と intake.json 側 axes[axis_id=\"real_problem\"] (component-inventory.json:165) の対応が明示されていない (第一印象5)",
+     "recommended_intervention": "phase-02 ドメイン知識へ as-is フィールド正準表 (論理名 / interview.json パス / intake.json パス / C02 検査対象か) を 4 行の表として追加し、C01 checklist の 4 語彙と C02 検査 2 系の対応を閉じる",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/component-inventory.json",
+      "line": 26,
+      "section": "C01.checklist"
+     },
+     "root_cause": "C7/C8 追記時に保護対象の語彙 (課題/流れ/実行したいこと) が goal-spec purpose の文言から checklist へ直輸入された → 一方 C02 の検査対象は実装可能性から既存スキーマの実在パスで定義された → 両者を突き合わせる正準対応表という中間成果物が作られなかったため宣言と検査が別解像度のまま併存 — plugin-plans/skill-intake/component-inventory.json:78",
+     "resolution": "applied (FIX-7)"
+    },
+    {
+     "id": "F-3018",
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "スキーマ名の揺れ (第一印象4): 正準は run-intake-interview/schemas/output.schema.json (phase-01:28, phase-05:33) だが、phase-01:44 (G3 改善要否欄) と phase-08:35 が存在しない別名『interview.schema.json』を参照。G3 は要改善判定の実行指示を含むため builder が存在しないファイルを探す実害経路がある",
+     "recommended_intervention": "phase-01:44 と phase-08:35 の『interview.schema.json』を『interview.json スキーマ (run-intake-interview/schemas/output.schema.json)』表記へ統一",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-01-requirements.md",
+      "line": 44,
+      "section": "ギャップ一覧 G3"
+     },
+     "root_cause": "散文中で『interview.json のスキーマ』概念を短縮した通称が生まれた → 通称がファイル名形式 (.schema.json) で書かれ実在パスと区別不能になった → 機械ゲートは phase 本文中のファイル参照実在性を検査しないため残存 — plugin-plans/skill-intake/phase-08-refactoring.md:35",
+     "resolution": "applied (FIX-8)"
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "論点思考"
+  },
+  {
+   "paradigm_id": 30,
+   "paradigm_name": "kj",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "第一印象18件+本分析の新規発見を 4 島へ集約: 島(i) builder 契約断線 (印象1,2,3 + F-3004 受入順序) / 島(ii) フィールド・名称の正準表不在 (印象4,5,16 + F-3017) / 島(iii) 評価メタの名前空間・時系列 (印象8,9,10,15) / 島(iv) plan 外正本依存 (印象18 + verify-plan-coverage の planned 意味論)",
+    "島(iii) のうち C1-C4/C1-C8 衝突 (印象10) は index.md:89 の別名前空間注記で緩和済み、G1-G7/G1-G11 衝突 (印象9) は無注記だが両者が同一文書に併記される箇所が無く実害低 — いずれも観察に留め起票しない",
+    "phase-13:7 の next_phase:14 番兵 (印象13) は specfm 慣行由来と判断し観察に留める (verify-index-topsort が PASS しており規約側の意図)"
+   ],
+   "issues": [
+    {
+     "id": "F-3019",
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "島(i) の頂点 (第一印象1): phase-13:19『run-skill-create/run-plugin-dev-plan は本改善では不要、build 実行者自身が C01-C04 を直接実装する』が、handoff routes の builder=run-skill-create (handoff-run-plugin-dev-plan.json:12,49) および index.md:73『skill route (C01/C03) は run-skill-create へ渡し』と正面衝突。builder 契約が 2 通り存在し、どちらを採るかで brief 要否 (F-3007)・quality_gates の実行主体・build_trace の生成者が全て変わる",
+     "recommended_intervention": "phase-13:19 の括弧内を『skill route (C01/C03) は run-skill-create --mode update、script route (C02/C04) は GAP-SCRIPT-BUILDER の fallback (run-build-skill フロー) が実装する』へ差し替え、handoff routes を唯一の builder 正本と明記する (最小 1 文修正)",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/skill-intake/phase-13-release.md",
+      "line": 19,
+      "section": "目的"
+     },
+     "root_cause": "全体を貫く根本原因仮説: 機械可読正本 (inventory/handoff の JSON フィールド) に載る宣言は 11 ゲートで整合が強制され緑だが、散文にしか無い相互参照 (builder 名・brief パス・as-is フィールド対応・schema 別名・ゲート集合) はどのゲートも突合せず、goal-seek iteration2 の C7/C8 追記編集で drift が蓄積した — なぜ P13 だけ逆を言うか → P13 散文が『既存 skill の Edit 差分だから外部 builder 不要』という別解釈で書かれ handoff JSON 確定後に突合されなかった → なぜ突合されないか → check-build-handoff は handoff JSON 単体の形式検査で phase 本文の builder 言及を照合しない → なぜ照合対象外か → 計画ゲート群が機械可読フィールドのみを正本とし散文中の契約記述を検査対象外とする設計だから。介入点 = builder 実行を左右する散文契約 (builder・brief・as-is 対応表) の機械可読正本への昇格 — plugin-plans/skill-intake/phase-13-release.md:19",
+     "resolution": "applied (FIX-1)"
+    }
+   ],
+   "score": 0.5,
+   "paradigm_name_ja": "KJ法"
+  }
+ ],
+ "thought_method_coverage": {
+  "used": [
+   "critical",
+   "deduction",
+   "induction",
+   "abduction",
+   "vertical",
+   "decomposition",
+   "mece",
+   "two-axis",
+   "process",
+   "meta",
+   "abstraction",
+   "double-loop",
+   "brainstorming",
+   "lateral",
+   "paradox",
+   "analogy",
+   "if",
+   "naive",
+   "systems",
+   "causal",
+   "causal-loop",
+   "trade-on",
+   "plus-sum",
+   "value-proposition",
+   "strategic",
+   "why",
+   "kaizen",
+   "hypothesis",
+   "issue",
+   "kj"
+  ],
+  "skipped_with_reason": [],
+  "total": 30
+ },
+ "four_conditions": {
+  "C1": {
+   "verdict": "PASS",
+   "violation_count": 0,
+   "evidence": [
+    "contradiction 5件 (F-1002/F-2004/F-3019=phase-13 builder矛盾, F-2008=contamination dead-path, F-2010=C7×C8衝突) 全て FIX-1/4/6 で解消",
+    "独立再実行: 11 決定論ゲート全 PASS (check-plugin-goal-spec/verify-index-topsort/detect-unassigned/check-spec-frontmatter/check-spec-gates/check-spec-matrix×2/check-surface-inventory/check-build-handoff/check-requirements-coverage/check-runtime-portability)"
+   ]
+  },
+  "C2": {
+   "verdict": "PASS",
+   "violation_count": 0,
+   "evidence": [
+    "omission 5件 (F-1003 brief射影宣言, F-2003 denylist限界, F-2009 GAP closure, F-3001 md側制御点, F-3008 C5 residual) 全て FIX-2/4/10/13/11 で解消",
+    "verify-plan-coverage は既知の C02 未build (build前 planned-ready の期待値) のみで悪化なし"
+   ]
+  },
+  "C3": {
+   "verdict": "PASS",
+   "violation_count": 0,
+   "evidence": [
+    "inconsistency 14件 (index↔handoff gap記述, スキーマ別名, RTM帰属, ゲート集合3系統, as-is正準表 等) 全て FIX-2/6/7/8/9/12/14/15/19 で解消",
+    "phase-13/index.md/handoff の builder 契約は handoff routes 単一正本へ統一 (実ファイル確認済)"
+   ]
+  },
+  "C4": {
+   "verdict": "PASS",
+   "violation_count": 0,
+   "evidence": [
+    "dependency_break 4件 (F-1009/F-3004 C01↔C02受入順序, F-2006/F-3007 brief_path dangling) FIX-3/5 で解消 (2-pass受入明文化+brief_generation宣言)",
+    "check-build-handoff/verify-index-topsort PASS で DAG 整合を機械確認"
+   ]
+  }
+ },
+ "variable_abstraction": [
+  {
+   "concrete_value": "0.1.3",
+   "variable_name": "{{TARGET_VERSION}}",
+   "default_value": "current PATCH+1 (正本=phase-13)",
+   "source_trace": "F-3010: index.md:54 / phase-12:34 / phase-13:30,33,42 に version 具体値焼き込み"
+  }
+ ],
+ "total_score": 0.685
+}

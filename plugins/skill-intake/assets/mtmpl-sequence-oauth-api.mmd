@@ -1,0 +1,26 @@
+%%---
+%% template: sequence-oauth-api
+%% required_vars: [user, app, auth_server, api_server, resource_name]
+%% optional_vars: [token_label]
+%% score_formula: "actor_count * 0.3 + interaction_density * 0.7"
+%% non_tech_friendliness: ★★
+%% use_case: OAuth 認証＋API 呼び出しの流れを示す、認証フロー説明
+%%---
+sequenceDiagram
+    autonumber
+    actor U as {{user}}
+    participant A as {{app}}
+    participant Auth as {{auth_server}}
+    participant API as {{api_server}}
+
+    U->>A: 利用開始
+    A->>Auth: 認可要求
+    Auth-->>U: 同意画面
+    U-->>Auth: 同意
+    Auth-->>A: トークン発行
+    A->>API: {{resource_name}} 取得（トークン付）
+    API-->>A: データ返却
+    A-->>U: 結果表示
+
+%% 凡例: 実線=要求 / 破線=応答
+%% 言いたい一言: {{message}}

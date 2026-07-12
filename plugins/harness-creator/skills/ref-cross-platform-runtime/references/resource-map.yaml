@@ -1,0 +1,15 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-cross-platform-runtime の references/ ファイル索引
+resources:
+  - file: os-matrix.md
+    topic: macOS / Linux / Windows での挙動差分マトリクス
+    read_when: 他 Skill が host OS で分岐するとき、OS 判定に失敗したとき
+  - file: forbidden-clis.md
+    topic: cross-platform で使用禁止の CLI と代替コマンド一覧
+    read_when: 使用 CLI が host OS で動かない疑いがあるとき
+  - file: runtime-portability.md
+    topic: runtime hook と README/doctor 導入手順の単独 install ポータビリティ不変条件 (vendoring + fail-soft ローダ + README 空展開防止 + doctor 委譲) と機械担保 lint
+    read_when: hook が plugin 外モジュールを import するとき、単独 install で hook がクラッシュするとき、共有 SSOT を plugin へ vendoring するとき、README の疎通確認で unset CLAUDE_PLUGIN_ROOT / /lib 空展開 / repo 相対コマンド / doctor 導線を扱うとき
+prompts:
+  - file: ../prompts/R1-search-summarize.md
+    purpose: R1 検索/要約 (query → matches[])

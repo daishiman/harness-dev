@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/notion-gmail-send/run-notion-gmail-send/schemas/send-verdict.schema.json",
+  "title": "Gmail Send Preflight Verdict",
+  "description": "gmail-send-presend-verifier / verify-plan.py が返す送信前二段確認の判定。verdict=fail は送信を止める。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict"],
+  "properties": {
+    "verdict": {"type": "string", "enum": ["pass", "fail"]},
+    "plan_hash": {"type": ["string", "null"]},
+    "count": {"type": "integer", "minimum": 0},
+    "first_to": {"type": "string"},
+    "approval_nonce_unit": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "description": "dry-run preview 内で確認語が表示される送信単位番号。units が空なら null。"
+    },
+    "approval_nonce": {
+      "type": "string",
+      "description": "plan から決定論計算した確認語。承認者入力と一致しない場合は fail。"
+    },
+    "multi_to_visible_units": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 0},
+      "description": "To が複数 = 受信者相互可視の送信単位 index。承認 echo 対象。"
+    },
+    "mismatches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "check": {"type": "string"},
+          "unit": {"type": "integer"},
+          "detail": {"type": "string"}
+        }
+      },
+      "description": "空なら pass。plan_hash_recompute/approved_plan_hash/count/first_to/unresolved_token/invalid_addr/content_hash など。"
+    },
+    "error": {"type": "string", "description": "plan 読込失敗等の致命エラー要約 (秘密値を含めない)。"}
+  }
+}

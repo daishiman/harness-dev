@@ -1,0 +1,77 @@
+{
+  "purpose": "skill-intake のヒアリング機構 (5 軸ヒアリング + purpose-excavator の 8 技法) に、ユーザーが現在実際に行っている手順 (as-is procedure) を構造化抽出する軸とそのフォールバック経路を追加し、本質的課題 (purpose) と具体化された手順 (procedure) の両方を後続ハンドオフ成果物へ格納できるようにすることで、ヒアリング担当とハーネス構築担当の間の情報乖離による構築のやり直しを解消する。ヒアリングの第一目的は一般的なヒアリング情報の収集ではなく、クライアントが本当に解決したい課題・問題・現状の流れ (フロー)・実行したいことを相手固有の具体性で抽出し、それらを解決できるハーネスの構築材料にすることである。",
+  "background": "現状 run-intake-interview の 5 軸 (出力先/情報源/共有相手/真の課題/ナレッジ資産) と skill-intake-purpose-excavator の 8 技法 (5 Whys/JTBD/Magic Wand 等) は真の目的 (動詞+目的語) の深掘りを機構化しているが、intake.schema.json v2 の sections (0_executive_summary〜11_artifact_index) を含め、ユーザーが『今どういう手順で実施しているか』を構造的に聞き取り記録する軸・出力フィールドが存在しない。そのため『今現状やっているものをハーネス化したい』という構想では、現状手順が intake.json に載らないまま run-skill-create / run-plugin-dev-plan へハンドオフされ、ハーネス構築側が手順を推測して作り、ユーザーが思っているものと違う成果物になり手戻りが繰り返し発生している。ユーザーには手順を詳細に言語化できる人とできない人がいるため、既定では手順抽出を試みつつ、苦手なユーザーには概略レベルで停止せず進められるフォールバック経路が必要。加えて既存の目的抽出機構自体にも、手順情報との接続漏れや粒度の甘さなど改善余地がないか併せて洗い出す必要がある。さらに LLM 駆動のヒアリングには、相手固有の課題・手順・仕組みをもっともらしい平均的・一般的な回答へ丸め込む (平均回帰) 危険があり、as-is の忠実記録とヒアリング担当側の解釈・一般化・改善提案をフィールドレベルで分離して混入を防ぐ必要がある。手順の最適化・理想化 (to-be 設計・スキル化にあたって最高の手順を組み立てること) は後段 build の責務であり、ヒアリング段階の責務は相手が抱えている問題・流れ・仕組みの詳細な as-is 抽出に徹することである。",
+  "goal": "skill-intake のヒアリング成果物 (interview.json / purpose.json 相当、および intake.json の下流ハンドオフ) に、本質的課題 (purpose) に加えてユーザーの現状実施手順 (as-is procedure: 順序付きステップとその入力/出力/使用ツール/頻度) を構造化フィールドとして格納できる機構が計画化され、手順を言語化できるユーザーには詳細ステップ抽出、できないユーザーには停止せず進める概略フォールバック (工程数の目安・関与者・頻度等の最小情報 + 手順化困難フラグ) の両経路が、13 phase タスク仕様書 (plugin-plans/skill-intake/) として具体化されている状態。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "skill-intake",
+  "plan_dir": "plugin-plans/skill-intake",
+  "out_dir": null,
+  "requested_count": 13,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "手順を言語化できるユーザーに対し、ヒアリング機構がユーザー発話から現状実施手順を順序付きステップ (各ステップの入力/出力/使用ツール/頻度を含む) として構造化 JSON に格納したとき、当該 JSON が新設または拡張されたスキーマの validate を PASS する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "ユーザーが手順を具体的に言語化できない (未回答や抽象回答が続く) とき、ヒアリング機構が停止せず、手順化困難を示すフラグを立てた上で工程数の目安・関与者・頻度など最小限の概略情報のみを収集するフォールバック経路へ切り替える",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "後続ハンドオフ成果物 (intake.json 相当) に、本質的課題 (purpose-excavator の true_purpose) と現状手順 (procedure 抽出結果) の両方が格納され、いずれか一方が欠落したまま後続 handoff (run-skill-create / run-plugin-dev-plan) へ進めない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "既存の目的抽出機構 (5 軸ヒアリング + purpose-excavator 8 技法) について、手順情報との接続漏れ・抽出粒度の甘さを含む既知のギャップ一覧が洗い出され、各ギャップの改善要否が該当 phase (要件定義または設計) に明記されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "下流ハンドオフ契約 (references/handoff-contract.md 相当・run-skill-create / run-plugin-dev-plan 向け intake.json マッピング) に、手順抽出結果を build 時に参照する契約が追加され、ハーネス構築側が手順情報を無視したまま build へ進める既存経路が残らない",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C6",
+      "criterion": "手順抽出とそのフォールバックへの分岐条件が決定論的に定義され、同一のユーザー回答パターンに対して常に同じ経路 (詳細抽出 or 概略フォールバック) が選択される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "ヒアリング成果物において、as-is 抽出 (相手の課題・問題・流れ・仕組みの忠実記録) と to-be 提案 (改善・最適化・理想手順) がフィールドレベルで分離され、as-is フィールドにヒアリング担当側の解釈・一般化・最適化提案が混入していないことを検証するゲートが計画されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "ヒアリング機構が『解決したい課題・問題』『現状の流れ・仕組み』『実行したいこと』を相手固有の具体性 (固有名詞・実例・頻度・関与者など) で記録するよう質問設計・出力スキーマに明記され、一般論・平均的回答への置換を防ぐ指示が該当 phase 仕様に含まれている",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "実装 (run-intake-interview / purpose-excavator 等の実コード改修) は本 goal-spec のスコープ外。まず 13 phase タスク仕様書 (plugin-plans/skill-intake/) を構築することが本計画の成果物であり、実改修は後続 build (run-skill-create 等) へ委譲する",
+    "requested_count=13 はユーザーが『13 個のタスク仕様書』と明示した希望本数の透明化記録であり、13 フェーズ固定ライフサイクルと一致するため gate 強制しない",
+    "手順抽出結果の具体的な格納先 (新設 procedure.json / interview.json 拡張フィールド / intake.json 新設 section のいずれか) は R2 (architect) のコンポーネント分解判断に委ねる",
+    "手順化困難ユーザー向けフォールバックの具体的な質問文言・切替閾値 (何回未回答/抽象回答でフォールバックへ切り替えるか) は R2/R3 の実装判断に委ねる",
+    "既存 5 軸 (出力先/情報源/共有相手/真の課題/ナレッジ資産) の優先順位・スキップ条件自体は本改善のスコープ外とし、手順軸を独立新設するか既存軸へ統合するかは R2 が判断する",
+    "Notion 公開・Slack 通知・Keychain 認証まわりの既存契約は構想文に言及がないため本改善のスコープ外",
+    "ヒアリング段階では手順の最適化・理想化 (to-be 設計) を行わない。スキル化にあたって最高の手順を組み立てるのは後続 build の責務であり、ヒアリングは相手が抱えている課題・問題・流れ・仕組み・実行したいことの詳細な as-is 抽出に徹する",
+    "ヒアリングは一般的・平均的な情報収集シートを作ることが目的ではない。クライアントが本当に解決したい課題を解決できるハーネスの構築材料を得ることが第一目的であり、質問設計・出力スキーマはこの目的への寄与で採否を判断する",
+    "R2/P02 解決済み事項: procedure 抽出は新規 SubAgent ではなく既存 run-intake-interview (C01) の 6 本目の軸として拡張する",
+    "R2/P02 解決済み事項: 手順化困難ユーザーの判定は procedure 軸で 2 連続抽象判定または未回答となった時点で overview_fallback へ切り替える",
+    "R2/P02 解決済み事項: procedure の格納先は interview.json のトップレベル procedure と intake.json の sections.6_five_axes_summary.procedure とし、既存 12 section 契約を維持する",
+    "R2/P02 解決済み事項: 既存目的抽出機構のギャップは P01 の G1-G7 として洗い出し済み"
+  ],
+  "handoff_targets": ["R2-decompose-components"],
+  "max_loops": 5,
+  "open_questions": []
+}

@@ -1,0 +1,239 @@
+{
+  "version": "0.3.0",
+  "owner": "team-platform",
+  "purpose": "Map deterministic plan gates and semantic checks to the four evaluator conditions. semantic_checks (S1-S9) are two-layered: S1/S2 map to conditions (C1/C2) and can flip the verdict, while S3-S9 are llm-only advisory (bucket-tagged, conditions=[]) and do not feed the mechanical verdict accounting (evaluate-plan.py counts only deterministic-gate/surface findings).",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "label": "矛盾なし",
+      "pass_when": [
+        "check-build-handoff exits 0",
+        "semantic_contract_conflict_count is 0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "label": "漏れなし",
+      "pass_when": [
+        "detect-unassigned exits 0",
+        "check-spec-frontmatter exits 0",
+        "check-spec-gates exits 0",
+        "check-surface-inventory exits 0",
+        "check-requirements-coverage exits 0",
+        "semantic_surface_omission_count is 0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "label": "整合性あり",
+      "pass_when": [
+        "check-spec-frontmatter exits 0",
+        "check-spec-gates exits 0",
+        "check-spec-matrix-coverage --self-test exits 0",
+        "check-spec-matrix-coverage PLAN exits 0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "label": "依存関係整合",
+      "pass_when": [
+        "verify-index-topsort exits 0",
+        "detect-unassigned exits 0",
+        "check-build-handoff exits 0",
+        "validate-task-graph exits 0",
+        "check-runtime-portability exits 0"
+      ]
+    }
+  },
+  "deterministic_gates": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "conditions": [
+        "C4"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "conditions": [
+        "C3"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "conditions": [
+        "C3"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "conditions": [
+        "C2"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "conditions": [
+        "C2"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "conditions": [
+        "C4"
+      ],
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "G11",
+      "name": "validate-task-graph",
+      "conditions": [
+        "C4"
+      ],
+      "severity_on_fail": "high"
+    }
+  ],
+  "semantic_checks": [
+    {
+      "id": "S1",
+      "name": "contract-conflict",
+      "conditions": [
+        "C1"
+      ],
+      "severity_on_fail": "high",
+      "source": "handoff route builder and plugin_meta contract meaning",
+      "runner": "llm-only"
+    },
+    {
+      "id": "S2",
+      "name": "plugin-level-surface-coverage",
+      "conditions": [
+        "C2"
+      ],
+      "severity_on_fail": "high",
+      "source": "component-inventory.plugin_level_surfaces",
+      "runner": "mechanical-plus-llm"
+    },
+    {
+      "id": "S3",
+      "name": "layer-a-generative-fidelity",
+      "conditions": [],
+      "bucket": "layer-a-generative-fidelity",
+      "severity_on_fail": "medium",
+      "source": "generated phase prose specificity (C6/C7 mechanical detection + C8 genuine judgment)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 4条件verdictへ直接写像しない補助レイヤー。既定 medium、下流 builder が genuine に着手不能なほど空虚なときのみ high"
+    },
+    {
+      "id": "S4",
+      "name": "layer-b-downstream-harness",
+      "conditions": [],
+      "bucket": "layer-b-downstream-harness",
+      "severity_on_fail": "medium",
+      "source": "phase 完了チェックリストの 受入例/事前解決済み判断 サブ節 (C10/C11 mechanical detection + C12 genuine judgment)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 4条件verdictへ直接写像しない補助レイヤー。既定 medium、サブ節が形骸化し下流の追加質問を防げないときのみ high"
+    },
+    {
+      "id": "S5",
+      "name": "task-graph-semantics",
+      "conditions": [],
+      "bucket": "task-graph-semantics",
+      "severity_on_fail": "medium",
+      "source": "task-graph node の粒度と接地 (entity 単位で produces エッジ1件以上 — deriver は entity の先頭 node にのみ produces を張る — かつ各 node は write_scope で成果物パス (entity 紐づき) / 自 node id の擬似 scope (checkpoint) に接地) と edge 4型 (parent_of/depends_on/produces/consumes) の意味論正しさ (C8)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 4条件verdictへ直接写像しない補助レイヤー。既定 medium、粗すぎ(複数成果物束ね)/entity に produces 0件・write_scope 未接地 or parent_of の依存流用等エッジ型誤用で下流が着手不能なときのみ high"
+    },
+    {
+      "id": "S6",
+      "name": "shape-ab-comparison",
+      "conditions": [],
+      "bucket": "shape-ab-comparison",
+      "severity_on_fail": "medium",
+      "source": "同一構想の新旧shape (fixed-13-phase vs task-graph-derived) 生成物 A/B比較・acceptance_criterion の事前解決済み判断内包度の非劣化 (C14b)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 新shape task node が旧shape §5 項目の下流ハーネス実効性を下回るときのみ high (shape_marker task-graph-derived 採用を block・C10⇔C14 相互参照)"
+    },
+    {
+      "id": "S7",
+      "name": "task-graph-consumer",
+      "conditions": [],
+      "bucket": "task-graph-consumer",
+      "severity_on_fail": "medium",
+      "source": "consumer (harness-creator L4) の dispatch/state write-back/成果物注入/discovered-task emit が producer 契約 (安定 CLI 契約・graph_hash 照合・所有/書込分離) を逸脱していないか (harness C8 対向)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: consumer が producer 契約を逸脱し沈黙破綻 (CLI 契約破壊/graph_hash 未照合/task-state 二重 writer) を招くときのみ high"
+    },
+    {
+      "id": "S8",
+      "name": "execution-envelope",
+      "conditions": [],
+      "bucket": "execution-envelope",
+      "severity_on_fail": "medium",
+      "source": "TaskExecutionEnvelope (C17) が title 単独でない実行契約か: task_spec_ref は node が携帯し、その task spec の中身は envelope へ objective/verify として実質化される。envelope 自体は phase_policy_ref(単一 P0N)/component_route(component-build は明示 route_ref)/acceptance_criteria/write_scope/injected_inputs/injected_notes/knowledge_refs/verify を実質携帯し、下流 SubAgent builder が追加質問なしに着手できるか (render-task-execution-envelope.py <PLAN_DIR> --task-id <id> の構造完全性 exit code を機械根拠に、envelope 中身の実効性を genuine 判定)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 4条件verdictへ直接写像しない補助レイヤー。既定 medium、render-task-execution-envelope.py が exit0 でも objective/acceptance_criteria が二値判定不能なほど空虚 or (renderer が構造で弾く前段階として) title 単独/entity_ref 暗黙 route/13 phase 全文注入で builder が着手不能なときのみ high"
+    },
+    {
+      "id": "S9",
+      "name": "cycle-knowledge",
+      "conditions": [],
+      "bucket": "cycle-knowledge",
+      "severity_on_fail": "medium",
+      "source": "cross-cycle 再利用 knowledge (C19) の task spec knowledge_refs が {id/source_ref/freshness_checked_at/decision(adopted|rejected)/reason} を実質携帯し、過去 cycle の関連知見と明示 artifact だけを有界注入しているか (check-cycle-knowledge.py <PLAN_DIR> [--predecessor-graph <path>] の構造・lineage 検査 exit code を機械根拠に、全文履歴/stale 情報の無条件注入でない実効性を genuine 判定)",
+      "runner": "llm-only",
+      "verdict_impact": "advisory-graded: 4条件verdictへ直接写像しない補助レイヤー。既定 medium、source_ref/freshness_checked_at/採用理由を欠く or 過去 cycle 全文 spec/推移 notes/stale 情報を無条件注入し関連性が失われる or 過去 node を active graph へコピーするときのみ high"
+    }
+  ],
+  "global_thresholds": {
+    "high_max": 0,
+    "medium_max": 2,
+    "all_deterministic_gates_exit0": true
+  }
+}

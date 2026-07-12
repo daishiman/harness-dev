@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-migrate-audit",
+  "skill": "run-migrate-audit",
+  "description": "既存 prompt / CLAUDE.md / docs を doc/20-migration-path.md の 8 区分に分類し、棚卸し audit を機械化する。",
+  "phases": [
+    {
+      "id": "collect",
+      "step": 1,
+      "title": "対象資産の収集",
+      "resourceIds": ["ref-classification-rules"],
+      "entryHook": null,
+      "exitHook": null,
+      "output_artifact": "eval-log/migrate-audit-inputs.json"
+    },
+    {
+      "id": "classify",
+      "step": 2,
+      "title": "8 区分への分類",
+      "dependsOn": ["collect"],
+      "resourceIds": ["ref-classification-rules", "ref-abstraction-checklist"],
+      "output_artifact": "eval-log/migrate-audit-classification.json"
+    },
+    {
+      "id": "abstract",
+      "step": 3,
+      "title": "抽象化チェック",
+      "dependsOn": ["classify"],
+      "resourceIds": ["ref-abstraction-checklist"],
+      "output_artifact": "eval-log/migrate-audit-abstraction.json"
+    },
+    {
+      "id": "report",
+      "step": 4,
+      "title": "audit report 生成",
+      "dependsOn": ["abstract"],
+      "resourceIds": [],
+      "output_artifact": ".claude/handoff/migrate-audit-<session>.json"
+    }
+  ],
+  "fatal_exit_codes": [2, 3]
+}

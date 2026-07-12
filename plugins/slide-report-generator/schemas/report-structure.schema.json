@@ -1,0 +1,571 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "slide-report-generator/report-structure.schema.json",
+  "title": "Report Structure",
+  "description": "slide-report-generator の output_mode=report 決定論的入力契約。structure.schema.json（slide 版）と対になる report 版で、意匠/技術コアの共通コア $defs（theme=kanagawa-lotus 固定 / aiVisualSpec / diagramNode / diagramEdge / diagramGroup / colorVar / accentColorEnum / fontAwesomeIcon）を同一構造で共有する。slide の slides[] に対応する主配列は sections[]。各 section は読み物本文（paragraphs[]・markdown 可）と 1 項目 1 ビジュアル（visual: svg/mermaid/codex-image/none の三択＝visual-strategist の最適化結果）を持つ。render-report.js が本契約を読み report.html を決定論生成する。",
+  "type": "object",
+  "required": ["meta", "theme", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/meta" },
+    "theme": { "$ref": "#/$defs/theme" },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/section" }
+    }
+  },
+
+  "$defs": {
+
+    "meta": {
+      "type": "object",
+      "required": ["title", "reportType", "audience", "keyMessage"],
+      "additionalProperties": false,
+      "properties": {
+        "title":       { "type": "string", "minLength": 1, "maxLength": 120 },
+        "subtitle":    { "type": "string", "maxLength": 160 },
+        "reportType":  { "$ref": "#/$defs/reportTypeEnum" },
+        "audience":    { "type": "string", "minLength": 1, "maxLength": 200 },
+        "keyMessage":  { "type": "string", "minLength": 1, "maxLength": 240 },
+        "length":      { "type": "string", "enum": ["brief", "standard", "deep"], "default": "standard", "description": "読み物の長さ方針。brief=要点先行の短報 / standard=標準 / deep=網羅的な精読向け。段落密度・セクション数の目安を与える。" },
+        "language":    { "type": "string", "enum": ["ja", "en"], "default": "ja" },
+        "author":      { "type": "string", "maxLength": 80 },
+        "createdAt":   { "type": "string", "format": "date-time" },
+        "version":     { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "schemaVersion": { "type": "string", "enum": ["1.0.0", "1.1.0", "1.2.0"], "default": "1.0.0", "description": "1.1.0 で section.narrative（節内論理展開）/ section.body[]（構造化本文ブロック: 表/コード/番号リスト/小見出し/key-point/stat-tile/callout/blockquote）/ inline highlight（==要点==）/ placement live 化 / meta.toc を additive 追加。1.2.0 で meta.throughLine（文書全体の通し筋）/ meta.updatedDate・readingTime（文書メタ）/ section.role へ argument 追加（narrative 要否の条件付け）/ section.transition（節間の橋渡し1文）/ bodyBlock の新 type definition-list・footnote・task-list / placement の正規化 field emphasisZone（旧 emphasis の改名先・emphasis は deprecated alias で温存）・readingOrder・focalPoint を全 additive 追加。1.0.0 の paragraphs[] / 1.1.0 の body[] は後方互換で温存。" },
+        "toc": { "type": "boolean", "default": false, "description": "true で render-report.js が section heading から決定論的に目次（TOC）を先頭生成し、長尺レポートの wayfinding を与える（1.1.0）。" },
+        "throughLine": { "type": "string", "maxLength": 400, "description": "1.2.0。文書全体の通し筋（冒頭=本質課題→本論=解決→結=活用のアーク）。render-report.js が導入部にアーク帯として描画し、reportType 骨格の節順序だけでなく文書スケールの論理接続を宣言する。長尺(length=deep)では実質必須。" },
+        "throughLineParts": {
+          "type": "array",
+          "maxItems": 12,
+          "description": "1.2.0。大規模文書(多節)向けの part 単位 sub-arc。単一 throughLine(400字)に収まらない弧を『部(part)』へ分解し、各部の中間アークを宣言する。render-report.js が throughLine 帯の下に部構成リストとして描画し、50節級文書の読者の道標にする。少数節では省略可(throughLine のみで十分)。",
+          "items": {
+            "type": "object",
+            "required": ["arc"],
+            "additionalProperties": false,
+            "properties": {
+              "title": { "type": "string", "maxLength": 80, "description": "部の見出し（未指定なら render が『第N部』を採番）。" },
+              "arc":   { "type": "string", "minLength": 1, "maxLength": 300, "description": "その部の中間アーク（本質課題→解決→活用の部分弧）。" }
+            }
+          }
+        },
+        "updatedDate": { "type": "string", "format": "date", "description": "1.2.0。最終更新日（文書メタ）。version と併せ read-through の鮮度を読者に示す。" },
+        "readingTime": { "type": "string", "maxLength": 40, "description": "1.2.0。推定読了時間（例: '約8分'）。文書メタとして冒頭に表示する。" },
+        "visualPolicy": {
+          "type": "string",
+          "enum": ["svg-first", "mermaid-first", "codex-image-first", "balanced"],
+          "default": "balanced",
+          "description": "ビジュアル方針。visual-strategist の三択最適化に与える既定の傾き。balanced=内容適合で都度選ぶ（推奨）。hearing-facilitator が確定する。"
+        }
+      }
+    },
+
+    "theme": {
+      "type": "object",
+      "description": "Kanagawa テーマ固定。structure.schema.json の theme と同一構造キーを共有する（意匠/技術コアの単一 SSOT）。report は A4/レター読み物レイアウト（縦スクロール HTML）だが配色・フォント・最小サイズの意匠トークンは slide と共有する。",
+      "required": ["name", "accentColors"],
+      "additionalProperties": false,
+      "properties": {
+        "name":   { "const": "kanagawa-lotus" },
+        "mode":   { "type": "string", "enum": ["light", "dark"], "default": "light" },
+        "accentColors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "description": "各セクションにビビッドアクセント1色以上。最大8色（セクション別配色用）。",
+          "items": { "$ref": "#/$defs/accentColorEnum" }
+        },
+        "fontScale": {
+          "type": "number",
+          "minimum": 0.8,
+          "maximum": 2.0,
+          "default": 1.3,
+          "description": "--font-scale。本文最小 1.4rem を割らない範囲で調整する。"
+        },
+        "pagination": { "$ref": "#/$defs/paginationSpec" },
+        "footer":     { "$ref": "#/$defs/footerSpec" },
+        "header":     { "$ref": "#/$defs/headerSpec" }
+      }
+    },
+
+    "paginationSpec": {
+      "type": "object",
+      "description": "read-through レポートの目次・進捗インジケータ設定。structure.schema.json と同一構造キー。",
+      "additionalProperties": false,
+      "properties": {
+        "style":         { "type": "string", "enum": ["dots", "bar", "numeric", "section-dots", "none"], "default": "none" },
+        "milestoneEvery":{ "type": "integer", "minimum": 0, "maximum": 20, "default": 0 },
+        "showSectionHighlight": { "type": "boolean", "default": false },
+        "showCurrentStep":      { "type": "boolean", "default": false }
+      }
+    },
+
+    "footerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "show":   { "type": "boolean", "default": false },
+        "left":   { "type": "string", "maxLength": 80 },
+        "center": { "type": "string", "maxLength": 80 },
+        "right":  { "type": "string", "maxLength": 80, "description": "{page}/{total} を含めるとページ番号置換。" }
+      }
+    },
+
+    "headerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "show":          { "type": "boolean", "default": false },
+        "showSection":   { "type": "boolean", "default": true },
+        "showTitle":     { "type": "boolean", "default": false },
+        "logoIcon":      { "type": "string", "pattern": "^fa-" }
+      }
+    },
+
+    "section": {
+      "type": "object",
+      "description": "レポートの1セクション。1.0.0 は paragraphs[] に文章を持つ。1.1.0 では section.narrative（本質課題→解決→活用の節内論理展開）と section.body[]（構造化本文ブロック）を additive で持てる。body[] を持つ section では render-report.js は body[] を正とし paragraphs[] を無視する（排他移行・後方互換）。1項目1ビジュアル原則で visual を最大1つ持つ。",
+      "required": ["id", "heading"],
+      "anyOf": [
+        { "required": ["paragraphs"], "title": "1.0.0 互換: 段落配列" },
+        { "required": ["body"], "title": "1.1.0: 構造化本文ブロック" }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id":        { "type": "string", "pattern": "^section-[a-z0-9-]+$" },
+        "heading":   { "type": "string", "minLength": 1, "maxLength": 120 },
+        "reportType":{ "$ref": "#/$defs/reportTypeEnum", "description": "任意。meta.reportType と別の骨格節をこのセクションに適用する場合のみ。通常は meta 側で十分。" },
+        "role":      { "type": "string", "enum": ["summary", "background", "analysis", "argument", "finding", "next-action", "problem", "solution", "impact", "step", "cta", "overview", "prerequisite", "procedure", "caution", "reference", "question", "concept", "diagram-understanding", "example-application", "conclusion", "body"], "default": "body", "description": "4 reportType の骨格節に対応する節役割。report-structure-designer が骨格から割り当てる。1.2.0 で argument を追加。narrative 要否はこの role が決める（意味論の enforce は validate-report-visual.py=C25 が担う。schema は additive-safe を保つため hard require しない）: role∈{analysis, argument} は本質課題→解決の論理展開が要るため narrative を強く期待し、role∈{reference, procedure, summary} は列挙/手順/要約が主で narrative 不要（弧を強制すると category error）。" },
+        "transition": { "type": "string", "maxLength": 240, "description": "1.2.0。次節への橋渡し1文（節間接続）。throughLine（文書アーク）を節スケールで支え、羅列でなく流れのある読み物にする。render-report.js が節末に接続帯として描画する。" },
+        "narrative": { "$ref": "#/$defs/narrative", "description": "1.1.0。節内論理展開（本質課題→解決策→活用/含意）。reportType 骨格の節順序だけでなく節内部の論理構造を宣言し羅列退化を防ぐ。render-report.js が heading 直下にリード帯として描画する。1.2.0: role∈{analysis, argument} の節では実質必須（C25 が検査）、role∈{reference, procedure, summary} では任意。" },
+        "paragraphs": {
+          "type": "array",
+          "minItems": 1,
+          "description": "読み物本文。1要素=1段落（markdown 可: 太字/箇条書き/インラインコード/リンク/==要点ハイライト==）。slide の長文禁止を report では緩和し文章多めを許容する。1.1.0 で body[] を持つ section では無視される（body[] 優先）。",
+          "items": { "type": "string", "minLength": 1, "maxLength": 4000 }
+        },
+        "body": {
+          "type": "array",
+          "minItems": 1,
+          "description": "1.1.0。構造化本文ブロック配列。段落だけでなく表/コードブロック/番号リスト/小見出し/キーポイント強調ボックス/統計タイル/callout/引用を第一級で表現し「情報の羅列」を防ぐ。存在すれば paragraphs[] より優先される。",
+          "items": { "$ref": "#/$defs/bodyBlock" }
+        },
+        "visual":     { "$ref": "#/$defs/visual" },
+        "readingOrder": { "$ref": "#/$defs/readingOrderEnum" },
+        "focalPoint":   { "$ref": "#/$defs/focalPoint" },
+        "callouts": {
+          "type": "array",
+          "description": "任意。注記・警告・ヒント吹き出し。",
+          "items": { "$ref": "#/$defs/callout" }
+        }
+      }
+    },
+
+    "narrative": {
+      "type": "object",
+      "description": "1.1.0。節内論理展開。essence/approach/leverage の3点、または logic[] の役割付き列で本質課題→解決→活用の論理を宣言する。両方空は不可（少なくとも1つ）。",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "essence":  { "type": "string", "minLength": 1, "maxLength": 600, "description": "本質課題／核心（何が問題の本質か）。" },
+        "approach": { "type": "string", "minLength": 1, "maxLength": 600, "description": "解決策／どうやるか。" },
+        "leverage": { "type": "string", "minLength": 1, "maxLength": 600, "description": "活用／含意（この内容をどう活かすか）。" },
+        "logic": {
+          "type": "array",
+          "minItems": 1,
+          "description": "essence/approach/leverage の代わりに使える汎用の論理列（主張→根拠→含意→行動）。",
+          "items": {
+            "type": "object",
+            "required": ["role", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "role": { "type": "string", "enum": ["claim", "evidence", "implication", "action"] },
+              "text": { "type": "string", "minLength": 1, "maxLength": 600 }
+            }
+          }
+        }
+      }
+    },
+
+    "bodyBlock": {
+      "type": "object",
+      "description": "1.1.0。構造化本文ブロック。type で描画種別を判別し、type 別のフィールドを持つ。additionalProperties:false のため全 type のフィールドを列挙する（render-report.js が type で解釈する）。",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["paragraph", "subheading", "bullet-list", "ordered-list", "table", "code", "key-point", "stat-tile", "callout", "blockquote", "definition-list", "footnote", "task-list"] },
+        "text": { "type": "string", "maxLength": 4000, "description": "paragraph/subheading/key-point/blockquote/callout の本文（markdown inline 可・==要点== ハイライト可・[^id] で同一 section の footnote(id 付き)へインライン係り先参照）。" },
+        "level": { "type": "integer", "minimum": 3, "maximum": 4, "default": 3, "description": "subheading の見出しレベル（h3/h4）。" },
+        "items": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 800 }, "description": "bullet-list/ordered-list の項目（markdown inline 可）。" },
+        "headers": { "type": "array", "items": { "type": "string", "maxLength": 160 }, "description": "table のヘッダ行。" },
+        "rows": { "type": "array", "items": { "type": "array", "items": { "type": "string", "maxLength": 800 } }, "description": "table の各行（セル配列・markdown inline 可）。" },
+        "code": { "type": "string", "maxLength": 12000, "description": "code ブロックのソース（そのまま等幅表示・エスケープされる）。" },
+        "language": { "type": "string", "maxLength": 40, "description": "code の言語ラベル（表示のみ）。" },
+        "title": { "type": "string", "maxLength": 160, "description": "key-point/callout の見出し。" },
+        "variant": { "type": "string", "enum": ["note", "warning", "tip", "caution"], "default": "note", "description": "callout の種別（色分け）。" },
+        "tone": { "type": "string", "enum": ["accent", "positive", "caution", "neutral"], "default": "accent", "description": "key-point ボックスの配色トーン（意匠 accent 系を流用）。" },
+        "stats": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "description": "stat-tile の統計タイル群（label/value/trend）。",
+          "items": {
+            "type": "object",
+            "required": ["value"],
+            "additionalProperties": false,
+            "properties": {
+              "label": { "type": "string", "maxLength": 80 },
+              "value": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "trend": { "type": "string", "enum": ["up", "down", "flat"] },
+              "note":  { "type": "string", "maxLength": 80 }
+            }
+          }
+        },
+        "caption": { "type": "string", "maxLength": 200, "description": "table/code の図表キャプション（render-report.js が『表N/コードN』の図表番号を自動付与）。" },
+        "terms": {
+          "type": "array",
+          "minItems": 1,
+          "description": "1.2.0。definition-list の用語定義対（term↔definition）。tech-doc/learning の用語定義を第一級表現し羅列を防ぐ。",
+          "items": {
+            "type": "object",
+            "required": ["term", "definition"],
+            "additionalProperties": false,
+            "properties": {
+              "term":       { "type": "string", "minLength": 1, "maxLength": 120 },
+              "definition": { "type": "string", "minLength": 1, "maxLength": 800, "description": "markdown inline 可（==要点== ハイライト可）。" }
+            }
+          }
+        },
+        "footnotes": {
+          "type": "array",
+          "minItems": 1,
+          "description": "1.2.0。footnote ブロックの脚注引用群。根拠・出典を本文から分離し read-through の可検証性を与える。id 付き脚注は本文 text の [^id] を上付き marker として双方向リンク化し、render-report.js が section 末尾の脚注帯（role=doc-endnotes）へ採番描画する。id を持たない脚注は section スコープの巻末注として順次採番する。",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "additionalProperties": false,
+            "properties": {
+              "id":       { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "maxLength": 40, "description": "1.2.0。インライン係り先アンカー用の id。本文 text 中の `[^id]` 参照がこの脚注へリンクし、render-report.js が文書レベル連番を採番して双方向アンカー（本文↑↔脚注）を生成する。未指定なら従来どおり本文非係りの巻末注（marker or 連番）。" },
+              "marker":   { "type": "string", "maxLength": 12, "description": "任意の参照記号（id 未指定かつ marker も未指定なら render が連番採番）。" },
+              "text":     { "type": "string", "minLength": 1, "maxLength": 800, "description": "脚注本文（markdown inline 可）。" },
+              "citation": { "type": "string", "maxLength": 400, "description": "出典（URL/書誌）。render-report.js が cite として整形する。" }
+            }
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "description": "1.2.0。task-list の次アクション項目（意思決定・次アクションの第一級表現）。done でチェック状態を持つ。",
+          "items": {
+            "type": "object",
+            "required": ["text"],
+            "additionalProperties": false,
+            "properties": {
+              "text":  { "type": "string", "minLength": 1, "maxLength": 400, "description": "タスク内容（markdown inline 可）。" },
+              "done":  { "type": "boolean", "default": false, "description": "完了状態（チェックボックス）。" },
+              "owner": { "type": "string", "maxLength": 80, "description": "担当（任意）。" }
+            }
+          }
+        }
+      }
+    },
+
+    "visual": {
+      "type": "object",
+      "description": "1項目1ビジュアル。kind は SVG図解 / Mermaid / Codex生成画像 / なし の三択（＋none）で、visual-strategist が内容適合で最適化する。spec の形は kind により分岐する（allOf if/then）。",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "type": "string", "enum": ["svg", "mermaid", "codex-image", "none"] },
+        "spec": { "type": "object", "description": "kind 別のビジュアル仕様。kind=none では省略。" },
+        "layout": { "$ref": "#/$defs/placement" },
+        "caption": { "type": "string", "maxLength": 200 },
+        "alt":     { "type": "string", "maxLength": 200 },
+        "rationale": { "type": "string", "maxLength": 240, "description": "この kind を選んだ根拠（visual-strategist の三択判断の記録）。" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "svg" } }, "required": ["kind"] },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/svgSpec" } }, "required": ["spec"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "mermaid" } }, "required": ["kind"] },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/mermaidSpec" } }, "required": ["spec"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "codex-image" } }, "required": ["kind"] },
+          "then": { "properties": { "spec": { "$ref": "#/$defs/aiVisualSpec" } }, "required": ["spec"] }
+        }
+      ]
+    },
+
+    "svgSpec": {
+      "type": "object",
+      "description": "インライン SVG2 図解。structure.schema.json の diagramSpec と共通コア（variant/nodes/edges/groups）を共有する。svg-builder.cjs の意匠トークンで描画する。",
+      "required": ["variant", "nodes"],
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": [
+            "tree", "mindmap", "flow", "cycle", "pyramid", "matrix", "venn",
+            "network", "timeline", "roadmap", "chevron", "funnel",
+            "org", "concentric", "value-stack", "snake", "wave-step",
+            "comparison", "slope", "butterfly", "stepper", "custom"
+          ]
+        },
+        "viewBox": { "$ref": "#/$defs/svgViewBox" },
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 60,
+          "items": { "$ref": "#/$defs/diagramNode" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagramEdge" }
+        },
+        "groups": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagramGroup" }
+        }
+      }
+    },
+
+    "mermaidSpec": {
+      "type": "object",
+      "description": "Mermaid 図。render-report.js が mermaid-render.js 経由で SVG/HTML 片へ変換する（CLI/lib 不在時は <pre class=\"mermaid\"> フォールバック）。definition は Mermaid 記法文字列。",
+      "required": ["diagramType", "definition"],
+      "additionalProperties": false,
+      "properties": {
+        "diagramType": {
+          "type": "string",
+          "enum": ["flowchart", "sequence", "class", "state", "er", "gantt", "pie", "mindmap", "timeline", "journey", "gitgraph", "quadrant", "requirement"]
+        },
+        "definition": { "type": "string", "minLength": 1, "maxLength": 6000, "description": "Mermaid 記法の本体（例: 'flowchart LR; A-->B'）。theme init は render 側で kanagawa-lotus トークンを注入するため definition に配色を直書きしない。" },
+        "direction":  { "type": "string", "enum": ["TB", "TD", "BT", "LR", "RL"], "description": "flowchart/graph の向き。definition に含める場合は任意。" },
+        "fallback":   { "type": "string", "maxLength": 400, "description": "描画不能時に表示する説明文（read-through の可読性担保）。" }
+      }
+    },
+
+    "aiVisualSpec": {
+      "type": "object",
+      "description": "Codex Image2（gpt-image-2）生成画像の構造契約。structure.schema.json の aiVisualSpec と同一構造キーを共有する。値域は references/style-genome-packaging.md §4 と vendor/scripts/validate-ai-image-assets.js に同期する。",
+      "required": ["pattern", "textPolicy", "backgroundSource", "styleGenome", "overlayText"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "type": "string",
+          "pattern": "^section-[a-z0-9-]+$",
+          "description": "prompt/meta/asset の stem。report では section id を踏襲する。"
+        },
+        "pattern":          { "type": "string", "enum": ["image-only", "html-composite", "html-primary"] },
+        "textPolicy":       { "type": "string", "enum": ["baked-with-overlay", "overlay-only", "none"] },
+        "backgroundSource": { "type": "string", "enum": ["raster", "svg", "none"] },
+        "styleGenome":      { "type": "string", "minLength": 1, "description": "project-local assets/generated/style-genome.json を推奨。" },
+        "styleReference":   { "type": "string", "description": "同一画風を固定する参照画像パス。" },
+        "source":           { "type": "string", "default": "text-to-image-backend", "description": "実際に使った画像生成バックエンド。codex 単体を画像生成器扱いしない。" },
+        "decision":         { "type": "string", "enum": ["generate-image", "use-svg-background", "html-only"], "default": "generate-image" },
+        "reason":           { "type": "string", "minLength": 1, "maxLength": 200 },
+        "alt":              { "type": "string", "maxLength": 200 },
+        "asset":            { "type": "string", "description": "raster 使用時の WebP/PNG パス。" },
+        "prompt":           { "type": "string", "description": "prompt.md パス。backgroundSource=svg/html-primary では設計メモでもよい。" },
+        "overlayText": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        },
+        "bakedText": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "description": "textPolicy=baked-with-overlay の時だけ画像内に入れる短文。"
+        },
+        "diagramPrimitives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "rounded-isometric-platform",
+              "glowing-flow-arrow",
+              "speech-label",
+              "explanation-panel",
+              "mini-table-panel",
+              "tool-workbench",
+              "quality-gate",
+              "notion-card-stack"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "pattern": { "const": "image-only" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "enum": ["baked-with-overlay", "overlay-only"] }, "backgroundSource": { "const": "none" } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "html-composite" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "const": "overlay-only" }, "backgroundSource": { "enum": ["raster", "svg"] } } }
+        },
+        {
+          "if": { "properties": { "pattern": { "const": "html-primary" } }, "required": ["pattern"] },
+          "then": { "properties": { "textPolicy": { "const": "none" }, "backgroundSource": { "enum": ["none", "svg"] } } }
+        },
+        {
+          "if": { "properties": { "textPolicy": { "const": "baked-with-overlay" } }, "required": ["textPolicy"] },
+          "then": { "required": ["bakedText"] }
+        },
+        {
+          "if": { "properties": { "backgroundSource": { "const": "raster" } }, "required": ["backgroundSource"] },
+          "then": { "required": ["asset", "prompt"] }
+        }
+      ]
+    },
+
+    "placement": {
+      "type": "object",
+      "description": "visual-strategist（C18=幾何配置の唯一 owner）の配置決定。固定比率を強制しない。1.2.0 で正規化 field {grid, zones, emphasisZone, readingOrder, focalPoint} に統一し、visual.layout（=placement）へ readingOrder/focalPoint を移設。emphasis は emphasisZone へ改名（inline highlight の ==要点== との字面衝突回避）し、旧 emphasis は deprecated alias として温存する（後方互換）。render-report.js が emphasisZone/readingOrder/focalPoint を live 反映し、図が段落末尾全幅固定でなく本文の該当箇所へ意味的に配置される。",
+      "additionalProperties": false,
+      "properties": {
+        "grid":  { "type": "string", "pattern": "^[1-9][0-9]?x[1-9][0-9]?$", "description": "レイアウトグリッド（例: '2x1' = 本文とビジュアルの左右2分割）。" },
+        "zones": {
+          "type": "array",
+          "description": "セクション面内の領域割り当て（本文/ビジュアル/注記など）。注記: 基本 report レンダラ(render-report.js)は `grid`（2x* で本文↔図の2カラム分割）を配置の駆動源とし、`zones` は細粒度の領域意味を宣言する advisory メタである（AI 画像 pipeline / より richな将来レイアウトが消費）。base render は zones を grid-template-areas へは展開しない（過剰実装回避・grid で十分な read-through 配置を得る）。",
+          "items": {
+            "type": "object",
+            "required": ["id"],
+            "additionalProperties": false,
+            "properties": {
+              "id":    { "type": "string", "minLength": 1, "maxLength": 40 },
+              "role":  { "type": "string", "enum": ["prose", "visual", "callout", "caption"], "default": "visual" },
+              "span":  { "type": "string", "pattern": "^[1-9][0-9]?x[1-9][0-9]?$" }
+            }
+          }
+        },
+        "emphasisZone":  { "type": "string", "enum": ["normal", "highlight", "muted"], "default": "normal", "description": "1.2.0。ビジュアル配置の強調度（旧 emphasis の改名先）。render-report.js が該当 zone を視覚的に強調/減衰する。" },
+        "emphasis":      { "type": "string", "enum": ["normal", "highlight", "muted"], "default": "normal", "description": "deprecated（1.1.0 互換）。emphasisZone を使う。両指定時は emphasisZone を優先。" },
+        "readingOrder":  { "$ref": "#/$defs/readingOrderEnum", "description": "1.2.0。この配置での視線誘導の向き（placement へ移設・section.readingOrder と同語彙）。" },
+        "focalPoint":    { "$ref": "#/$defs/focalPoint", "description": "1.2.0。この配置での主ビジュアル重心（placement へ移設・section.focalPoint と同語彙）。" }
+      }
+    },
+
+    "callout": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "description": "注記・警告・ヒント吹き出し。structure.schema.json の diagramAnnotation と同語彙。",
+      "properties": {
+        "text": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "kind": { "type": "string", "enum": ["note", "warning", "tip", "caution"], "default": "note" },
+        "icon": { "type": "string", "pattern": "^fa-" }
+      }
+    },
+
+    "readingOrderEnum": {
+      "type": "string",
+      "description": "視線誘導の向き。full-image-deck-method §1.11 の readingOrder と同語彙。",
+      "enum": ["left-to-right", "top-to-bottom", "clockwise", "counter-clockwise", "z-shape", "radial"]
+    },
+
+    "focalPoint": {
+      "type": "object",
+      "description": "主ビジュアルの重心（0-100%）。full-image-deck-method §1.11 の focalPoint と同語彙。",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 100 },
+        "y": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+
+    "reportTypeEnum": {
+      "type": "string",
+      "description": "4 reportType 骨格。internal-analysis=社内報告分析（要約→背景→現状分析→所見→次アクション）/ client-proposal=顧客提案WP（課題→解決策→効果実績→導入ステップ→CTA）/ tech-doc=技術ドキュメント（概要→前提→手順構造→注意点→参照）/ learning=学習解説（問い→核心概念→図解理解→例応用→まとめ）。",
+      "enum": ["internal-analysis", "client-proposal", "tech-doc", "learning"]
+    },
+
+    "diagramNode": {
+      "type": "object",
+      "description": "structure.schema.json と同一構造キー（共通コア）。",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id":       { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "label":    { "type": "string", "minLength": 1, "maxLength": 60 },
+        "subtext":  { "type": "string", "maxLength": 80 },
+        "icon":     { "type": "string", "pattern": "^fa-" },
+        "color":    { "$ref": "#/$defs/accentColorEnum" },
+        "level":    { "type": "integer", "minimum": 0, "maximum": 6 },
+        "weight":   { "type": "number", "minimum": 0 },
+        "position": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "x": { "type": "number", "minimum": 0, "maximum": 100 },
+            "y": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "shape":    { "type": "string", "enum": ["rect", "round", "circle", "hex", "diamond", "card"], "default": "rect" },
+        "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted", "warning"], "default": "normal" },
+        "group":    { "type": "string", "description": "diagramGroup.id への参照。" }
+      }
+    },
+
+    "diagramEdge": {
+      "type": "object",
+      "description": "structure.schema.json と同一構造キー（共通コア）。",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from":   { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "to":     { "type": "string", "pattern": "^n-[a-z0-9-]+$" },
+        "label":  { "type": "string", "maxLength": 40 },
+        "kind":   { "type": "string", "enum": ["arrow", "line", "dashed", "double", "thick"], "default": "arrow" },
+        "color":  { "$ref": "#/$defs/accentColorEnum" },
+        "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted"], "default": "normal" }
+      }
+    },
+
+    "diagramGroup": {
+      "type": "object",
+      "description": "structure.schema.json と同一構造キー（共通コア）。",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id":     { "type": "string", "pattern": "^g-[a-z0-9-]+$" },
+        "label":  { "type": "string", "maxLength": 40 },
+        "color":  { "$ref": "#/$defs/accentColorEnum" },
+        "kind":   { "type": "string", "enum": ["box", "tint", "outline"], "default": "box" }
+      }
+    },
+
+    "accentColorEnum": {
+      "type": "string",
+      "description": "structure.schema.json と同一（共通コア）。",
+      "enum": [
+        "blue", "pink", "green", "yellow", "aqua", "violet",
+        "wave-blue", "spring-violet", "sakura-pink", "wave-aqua",
+        "autumn-yellow", "fuji-gray",
+        "accent-blue-vivid", "accent-pink-vivid", "accent-aqua-vivid",
+        "accent-violet-vivid", "accent-yellow-vivid"
+      ]
+    },
+
+    "colorVar": {
+      "type": "string",
+      "description": "structure.schema.json と同一（共通コア）。CSS 変数表記必須。",
+      "pattern": "^var\\(--[a-z0-9-]+(,\\s*#[0-9A-Fa-f]{3,8})?\\)$"
+    },
+
+    "fontAwesomeIcon": {
+      "type": "string",
+      "description": "structure.schema.json と同一（共通コア）。Font Awesome 6 のクラス表記。",
+      "pattern": "^fa-(solid|regular|brands)\\s+fa-[a-z0-9-]+$"
+    },
+
+    "svgViewBox": {
+      "type": "string",
+      "description": "SVG viewBox 値。structure.schema.json と同語彙。",
+      "pattern": "^-?[0-9]+(\\.[0-9]+)?(\\s+-?[0-9]+(\\.[0-9]+)?){3}$"
+    }
+  }
+}

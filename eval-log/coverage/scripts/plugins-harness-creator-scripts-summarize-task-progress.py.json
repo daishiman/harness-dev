@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/summarize-task-progress.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "genuine code-review (30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。summarize() は純関数 read-only (by_state 集計・completion_rate は total=0 で 0.0・route-*.json は件数集計のみ)。detect_stall() は ready_batch 空 かつ running==0 かつ 未完了>0 のみ停滞判定し、各診断を kind (spec-gap=depends_on/consumes 先が graph 不在 / build-failure=producer 実失敗) 分類 + has_spec_gap を返す (C06 の外ループ合流=structural emit 判定を機械化)。F9: blocked_reason を診断へ併記し伝播連鎖を辿れる。resolve_build_dir は C02 SSOT を import 再利用し独自 path 導出せず。TESTS: test_summarize_task_progress.py 26 PASS (kind分類・has_spec_gap真偽・非停滞None 含む)。exit 0/2。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

@@ -1,0 +1,446 @@
+{
+  "version": 1,
+  "target": {
+    "type": "skill",
+    "path": "plugins/company-master/skills/run-company-master-build (確認用URL全項目化+フォールバック多段化)",
+    "reviewed_at": "2026-06-10T22:03:08+09:00"
+  },
+  "loop_count": 2,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "footer/body_no_urls 文言が『URL無し=公的データ由来』と断定し、取得失敗・ユーザー入力由来でも偽になる行が生成され得ることを検出",
+        "解消: テンプレを由来種別ラベル付き全属性列挙形式へ改訂し断定文言を廃止。byte 一致テストはテンプレ md から期待値導出する SSOT 形式へ"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "現行バグの演繹的導出: 列は既存非空保護・本文は無条件全置換 ⇒ backfill 実行のたび『Web由来値が列に残存 ∧ 本文は出典なし』の (g) 違反状態が live 上に生成される",
+        "解消: sync_confirm_url_body を既存本文パース+URL 非減少マージへ変更 (列保護と対称化)。回帰テストで固定"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "ken_all/verify_phone/resolve の3実装が値+source_url を返す暗黙契約を帰納し、per-field 出典は新発明でなく既存契約の明示昇格 (source_by_field) で足りると特定",
+        "解消: source_by_field {field:{origin,url}} を正式契約化、source_urls は列順派生値へ降格 (後方互換)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "detail_page_url 破棄の最良説明は『公的データ由来は URL 不要』方針の分散ハードコード (バグでなく旧方針の忠実な実装) と推論。ゆえに本改修は方針正本の書き換えであり 6 面同期が必須と判断",
+        "解消: テンプレ・columns・validate・伝搬・SKILL.md・テストの 6 面を同一変更で同期"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "本文同期の深掘りで page_size=100 固定 (pagination 無し) と best-effort 黙認縮退を検出。出典が本文の第一級情報になる本改修後は保証欠落になる",
+        "解消: _fetch_all_children で pagination 対応、同期失敗は body_failed として顕在化+replay 退避 (黙認廃止)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "契約点を 6 分解し、起点の entity 契約 {hojin_bango, official_name, address} に出典スロットが無く resolve→enrich 境界で出典が構造的に脱落することを特定",
+        "解消: entity に source_url を追加し wrapper/backfill の merge で伝搬 (旧 replay は .get() 既定で後方互換)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "6属性×5由来の 30 組合せのうち定義済みは『Web×URL有り』のみで、由来分類に user_input が欠落 (company_name は確度すら未付与) なことを検出",
+        "解消: origin enum 5値 {gbizinfo, ken_all, web, user_input, none} を正本化し全6属性に origin 必須付与。本文表現は origin→{URL or 由来ラベル} の全単射で定義"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "経路(create/update/backfill)×情報面(列/本文)の2軸で軸間非対称 (列=保護/本文=全置換) が URL 喪失の構造原因と特定。取得結果×検証結果の2軸で『取得できるまで試す』と『誤値>>空欄』の両立条件 3 点 (検証ゲート通過のみ採用・確度昇格禁止・2要素一致不変) を導出",
+        "解消: 本文を URL 非減少マージで列と対称化。両立条件 3 点は validate の機械照合 (ORIGIN_CERTAINTY_CAP/FIELD_ALLOWED_ORIGINS) として実装"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "SKILL.md が backfill の電話補完を Claude 介入必須と定義するのに backfill.py に web_findings の受け口が無い工程断絶を検出",
+        "解消: backfill に --web-findings (page_id キー) を追加し、dry-run の needs_web_search 出力→agent が Web 検索→再投入の 2 パス運用を実装・文書化"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "なぜ URL が喪失するかの why 連鎖の終端: 出典が『Web 検索の副産物』として設計され record の第一級フィールドでないため、捨てても検証が PASS する。source_urls の単純拡張では URL を持てない由来が表現できない",
+        "解消: 出典の第一級化 (source_by_field 必須化+validate (g) の per-field 検査) が why 連鎖の終端に整合する唯一の解として採用"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『全項目に URL』は手段の固定化で、真の目的=トレーサビリティの最小成立条件は {値, 由来種別, 検証手段} の3つ組と特定。取得日時・クエリの本文記載は過剰 (冪等 byte 安定を壊す) として機械層 JSONL へ分離",
+        "採用: 人間層=最小タプル {属性, 由来ラベル, 検証URL} / 機械層=replay JSONL の二層分離"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "source_urls={attribute,url} は provenance record の退化形であり、origin 1 キー拡張で URL 有り/固定検証ページ/URL 原理的無しの 3 形を単一スキーマで表現できると抽象化",
+        "採用: provenance record {attribute, origin, url} パターン。外部情報を文書へ書く全 plugin へ横展開可能な共通スキーマとして findings に記録"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『全項目に per-value URL』の前提自体が KEN_ALL (ローカル逆引き)・ユーザー入力には成立しないことを前提批判で特定。『取得元 URL (strong)』と『検証手段 URL (weak: 固定検索ページ)』の 2 階建て provenance で全項目の検証可能性を正直に成立させる設計へ転換",
+        "採用: gBizINFO=strong (detail_page_url) / KEN_ALL=weak (日本郵便郵便番号検索固定 URL) / user_input=ラベルのみ。weak URL の存在で確度を昇格させない制約も機械化"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "実現案 6 案 (由来別固定URL表/originラベル/DB列復活/機械層JSONL/試行履歴備考/toggle UI) を発散し、a+b+d の複合を採用。DB 列復活はユーザー承認済み 8 列決定の蒸し返しのため reject、toggle UI は冪等置換の複雑化に見合わず reject"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "W3C PROV・HTTP Via・DNS リゾルバチェーンの類推から terminal-hop provenance (確定した段の由来のみ人間層へ、全試行は機械層へ。失敗時のみ備考にチェーン要約) を導出",
+        "採用: 成功=本文1行 / 失敗=備考+attempts の非対称ログ。段数 2-3 の現状では第n候補表記は省略 (origin ラベルで充足)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『取得できるまで最後まで動く』の文字通り実装は停止性を失う (Web 検索に自然停止が無い) と逆説検証。『早く正直に手段を尽くし、試行履歴を人間へ引き継ぐ』方が真の目的 (人間が後検証・引き継ぎできる) に適うと判断",
+        "採用: 停止条件 (有限1巡・同一 (source,pattern) 再試行禁止・MAX_ATTEMPTS_PER_FIELD=3・確度昇格禁止) を機械化し、attempts/missing_fields/備考定型文で人間裁定へ明示移譲"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "other",
+          "description": "backfill の要確認行再検索に冷却 TTL/試行済みマーカーが未実装 (attempts 引き継ぎ+同一 (source,pattern) スキップが一次抑止として機能するため恒常コストは限定的)",
+          "recommended_intervention": "backfill 大量運用の実測で再検索コストが顕在化したら、replay JSONL の attempts 履歴に前回試行日時を加え TTL 冷却を追加する"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "repo 既存 3 パターン (remarks の md表SSOT+expand / confirm-url の冪等置換 / replay JSONL の版併記) と同型に実装するのが最小驚きと特定し、origin→表示由来表を confirm-url-template.md へ md 表で増設",
+        "採用: SSOT 三点セット (md表正本/決定論レンダラ/byte一致テスト) と同型。試行履歴のみ前例なしのため terminal-hop 案で補完"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "破壊試験で 4 暴走モード (同名他社汚染/再resolve発振による信頼キー差し替え/コスト線形爆発/確度偽装 Goodhart) を特定",
+        "解消: 属性×段ホワイトリスト (postal は Web 不可等)・信頼キー不変条項 (web 由来住所は自動確定禁止・再 resolve 最大1回・法人番号不一致なら候補列挙へ降格)・MAX_ATTEMPTS_PER_FIELD・確度上限の機械照合で全モード遮断"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "業務担当者視点で『ネット検索由来の値はありません』が行き止まり文言 (何をどう検証するか教えない) と特定。KEN_ALL/gBizINFO は通じないため表示語彙を機関名+一般名 (日本郵便 郵便番号データ / 経済産業省 gBizINFO) へ",
+        "採用: 本文の属性名・順序は columns.md 列定義と一致 (視線移動最小)、値の本文複製はしない (列とのズレ防止)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "resolve→wrapper/backfill→enrich→validate→upsert の DAG で gBizINFO detail_page_url が entity 契約外のため 2 箇所 (wrapper/merge_entity_defaults) で破棄され、KEN_ALL は source_url 常空という同型断線を検出",
+        "解消: entity 契約拡張+伝搬配線を 1 パッチで貫通 (継ぎ接ぎ禁止)。実機 E2E で gBizINFO 3 属性の URL が本文に到達することを確認"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "現行バグの因果連鎖を特定 (rank1): backfill が web_findings 無しで enrich → source_urls 常空 → 全置換で既存出典 URL 喪失 → 本文が虚偽化。『冪等同期』が『最新 enrich 結果が常に完全』という誤前提を置いていた",
+        "解消: URL 非減少マージ (出典 URL 非減少の不変条件) を実装し、既存本文 URL あり×新 source 空→非減少の回帰テストで固定"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『Web で住所発見→再 resolve→2要素一致成立→公的データで確認済み』の確度ロンダリング正ループ (誤確定後は非空セル保護が誤値を固着) を検出",
+        "解消: address_provenance (user|master|web) を導入し web 由来住所では自動確定無効 (確度上限ネット検索(要確認)・候補列挙へ降格)。backfill の resolve_row は provenance=master を明示"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『取得率最大化 vs 誤値混入回避』を fallback tier 表 (tier→確度ラベル上限) で止揚: 手段は増やすが確度は手段の既定上限を超えない。手段追加は常にラベル降格とセット",
+        "解消: data-sources.md に tier 表を正本化し、validate が ORIGIN_CERTAINTY_CAP で機械照合 (prompt 任せを廃止)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "per-field 化は enrich agent (検索成果を捨てない)・業務担当者 (検証コスト減)・backfill (再検証削減) の win-win だが、旧形式 record/既存行/旧 replay を一律厳格化すると移行が止まると検出",
+        "解消: validate (g) は source_by_field がある新形式のみ per-field 必須、旧形式は現行検査へ縮退する後方互換 gating。既存行は次回 backfill タッチ時にマージ修正済みの本文同期で冪等移行"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "価値定義『業務担当者が Notion 行から各属性の真偽を 1 クリック検証できる』が電話番号でしか成立していなかったと検出",
+        "解消: 受け入れ基準を『行を開いて 6 属性すべての出典に到達可能』とし、実機 E2E で本文に全 6 属性の由来+URL が出力されることを確認 (2026-06-10)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "国税庁法人番号公表サイト API はトークン発行 2週〜1.5月で『即時取得可能』という gBizINFO 採用理由と矛盾するため optional tier (既定無効・別PR) と判断。jigyosyo.zip は同一日本郵便配布の決定論データで既存 DL+TTL+索引パターンへ低リスク追加可能と判断し本対応に編入",
+        "解消: jigyosyo 第二索引を ken_all.py に実装 (offline モックで検証)。国税庁 API は data-sources.md に optional tier 注記"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "other",
+          "description": "日本郵便 zip 直 DL が 2026-06-10 時点で HTTP 404 (HTML は 200・他ドメイン zip は取得可 → プログラム DL 遮断または配信障害)。jigyosyo/KEN_ALL の実データ E2E は手動取り込み待ち。フォールバック設計は実機で正しく縮退 (attempts 記録→空欄+備考引き継ぎ) を確認済み",
+          "recommended_intervention": "手動配置 zip の取り込み口 (refresh-ken-all --from-file)+doctor 診断+手順文書化を実装 (本ラウンド 2 周目で対処)。公式 API (2025-05 提供開始・要利用登録) への移行は optional tier として open_issues 管理"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "解消済み VERT-01 (backfill の検証迂回) と同型の非対称が本文同期で再発しており、回帰テストが byte 一致のみで経路横断の不変条件 (URL 喪失なし) を検査していないと検出",
+        "解消: URL 非減少回帰テスト+テンプレ期待値の SSOT 導出化 (md から導出) で同時更新を機械強制"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "要求2 の中心仮説『missing_fields+試行履歴を機械が出せば agent が gap を埋められる』が、attempts (棄却理由含む) の不在により検証不能だったと特定",
+        "解消: missing_fields[]+attempts[] ({field,source,pattern,result,reject_reason}) を enrich/resolve 出力と replay JSONL へ追加。『同一 attempts 入力→再試行 0 件』を offline テストで検証可能化。実機 E2E でも missing/attempts の出力を確認"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『何が決まれば残りが決まるか』= per-field 出典スキーマの正本と特定 (テンプレ文言から着手すると全面手戻り)。最初のパッチでスキーマ正本を確定し、テンプレ・validate・契約・マージ・テストの 5 面を従属導出する実装順序を採用"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "findings を 3 島へ集約: 島A『出典伝搬断線』(根=URL=Web由来のみという単一前提の全層固着)、島B『ループ制御不在』(根=試行の provenance と履歴が状態として存在しない)、島C『正本ガバナンス』(根=fallback tier と出典スキーマの正本不在)。島B は島A のスキーマに依存、島C が両島の前提を供給",
+        "解消: executor を島対応で分割 (F=島A+C 出典系 / G=島B フォールバック系) し直列実行。混在コミットを回避"
+      ],
+      "issues": [],
+      "score": 1.0
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "検出された矛盾 (footer 断定文言が事実と乖離 / backfill 全置換が (g) 不変条件を live 上で破る / SKILL.md の backfill Claude 介入定義 vs 受け口不在) を全て解消",
+        "『取得できるまで動く』と『誤値>>空欄』の両立を fallback tier 表+確度上限機械照合+信頼キー不変条項で実現 (原則の破棄なしに要求2 を充足)"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "要求1: 全6属性の取得由来+検証URL がページ本文へ出力される (origin enum 5値の全単射定義で漏れなし)。実機 E2E (2026-06-10) で gBizINFO 3属性=詳細ページURL・user_input/none=ラベルの本文出力を確認",
+        "要求2: tier1〜4 の多段フォールバック (gBizINFO 複数パターン・jigyosyo 第二索引・Web 検索 2 パス) と missing_fields/attempts の人間引き継ぎを実装。pytest 69 件 (repo 全体 83 件) で機械固定",
+        "2 周目で日本郵便 zip DL 遮断への縮退 (import_from_file 手動取り込み口・stale キャッシュ縮退・doctor 診断・ken_all_unavailable 備考区別) を実装。残 low 1 件 (backfill 冷却 TTL) は実測待ちの強化提案であり必須要件の漏れではない"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "origin enum は confirm-url-template.md 表+confirm_url.ORIGIN_KEYS+validate.VALID_ORIGINS の 3 点同期。表示語彙は機関名+一般名で columns.md 列名と一致",
+        "実装は repo 既存 SSOT 三点セット (md表正本/決定論レンダラ/byte一致テスト) と同型。byte 期待値はテンプレ md から導出する形へ統一",
+        "validate-frontmatter / lint-skill-description / lint-company-master-vendored-deps 全 PASS"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "resolve→wrapper/backfill→enrich→validate→upsert の出典伝搬 DAG を entity 契約拡張で貫通 (旧 replay/旧形式 record は .get()/gating で後方互換)",
+        "backfill の web_findings 受け口断線を --web-findings+needs_web_search の 2 パス運用で解消し SKILL.md 経路表と整合",
+        "pytest 69 passed (50→62→69 と各周回で非劣化)・実機 E2E で create→全6属性の per-field 出典本文出力→archive の全経路成功 (2026-06-10)"
+      ]
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango={13桁}",
+      "variable_name": "{{GBIZINFO_DETAIL_PAGE_URL}}",
+      "source_trace": "resolve_company.detail_page_url (strong provenance の正本)"
+    },
+    {
+      "concrete_value": "https://www.post.japanpost.jp/zipcode/",
+      "variable_name": "{{KEN_ALL_VERIFY_URL}}",
+      "source_trace": "ken_all.KEN_ALL_VERIFY_URL (weak provenance: 郵便番号の固定検証ページ)"
+    },
+    {
+      "concrete_value": "https://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip",
+      "variable_name": "{{JIGYOSYO_ZIP_URL}}",
+      "source_trace": "ken_all.py 第二索引 DL 元 (2026-06-10 時点でプログラム DL が 404 遮断)"
+    },
+    {
+      "concrete_value": "3",
+      "variable_name": "{{MAX_ATTEMPTS_PER_FIELD}}",
+      "default_value": "3",
+      "source_trace": "enrich_company.note_attempt (フォールバック停止条件)"
+    }
+  ],
+  "total_score": 0.98
+}

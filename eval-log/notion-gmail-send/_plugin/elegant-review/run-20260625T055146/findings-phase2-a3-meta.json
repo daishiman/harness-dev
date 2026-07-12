@@ -1,0 +1,21 @@
+{
+  "agent": "a3-meta",
+  "thought_method_coverage": {
+    "used": ["メタ","抽象化","ダブル・ループ","ブレインストーミング","水平","逆説","類推","if","素人"],
+    "skipped_with_reason": [],
+    "total_assigned": 9
+  },
+  "paradigm_findings": [
+    {"method":"素人","severity":"omission","location":"README.md:92-96 / setup-guide.md:126-127 / ref-gmail-dwd-setup/SKILL.md:85","claim":"doctor 起動が repo相対 python3 plugins/notion-gmail-send/lib/setup_doctor.py で、marketplace install(README一次案内)ユーザの cwd に存在せず、非エンジニアはセットアップ検証コマンドを1行も打てない。","evidence":"plugin.json に commands 不在で doctor は command 化されず。他経路は $CLAUDE_PLUGIN_ROOT。親裏取り済。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"水平","severity":"smell","location":"README.md:13,54","claim":"README が config を『repo-root の .notion-config.json』(clone開発者語彙)と書くが、実装は $CLAUDE_PROJECT_DIR(作業フォルダ)優先。marketplace ユーザに repo-root が物理的に不明。","evidence":"plugin.json:43 $CLAUDE_PROJECT_DIR/.notion-config.json、notion_config.py:42 が CLAUDE_PROJECT_DIR 優先探索。親裏取り済。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"if","severity":"omission","location":"README.md:9-19(TL;DR)","claim":"TL;DR に『送信前に doctor で認証成否を一括検証』ステップが無く、最短手順の素人は live-send G1 で初めて失敗する遅延失敗導線。","evidence":"doctor は README:92 セットアップ節のみ。preflight 中断の誘導先 send_campaign.py:47 も repo相対 doc。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"メタ","severity":"smell","location":"plugin 全体の起動作法","claim":"『ユーザーが手で打つコマンドの参照系』規約が二分裂(skill script=$CLAUDE_PLUGIN_ROOT / doctor・誘導doc=repo相対)。SSOT化されず将来ドリフトを誘発。","evidence":"3ファイル6箇所に同一 repo相対パス散在。","auto_fixable":true},
+    {"method":"抽象化","severity":"smell","location":"lib/setup_doctor.py / plugin.json(commands不在)","claim":"doctor の本質は『送信前にユーザが対話的に打つ診断入口』で skill/command と同抽象だが lib 直下の素 script に置かれ抽象レベル不一致。command/skill 昇格で $CLAUDE_PLUGIN_ROOT 解決と作法統一が一挙に得られる(根治・auto_fixable=false)。","evidence":"他ユーザ起動経路は user-invocable skill。doctor だけ entry_points 外。","auto_fixable":false},
+    {"method":"ダブル・ループ","severity":"smell","location":"焦点②③ の前提検証","claim":"焦点②canary・③README補強の一部は『既に解決済み』で、未対応 deferred として再対応する枠組み自体が誤り。canary は機構(build_plan)もdoc(README)も完備。再対応せず『解決済みと確認』と記録すべき(Goodhart回避)。","evidence":"build_plan.py:115-116 canary、send_campaign:215-221 quota exit3、README:132 日跨ぎ分割。親裏取り済。","auto_fixable":false,"verified_by_parent":true},
+    {"method":"逆説","severity":"smell","location":"中核安全機構(send_campaign 決定論セルフチェック/preflight/send_guard)","claim":"中核に関しては『何も変えない(No-op)が最善』が正しい。前回 critical/high 修正は genuine 実装済で追加安全装置は過剰防御。残課題はドキュメント層に限定しコード層は触らないのが最善。","evidence":"send_campaign.py:76-99 units 再計算 fail-closed、pytest 97 passed。","auto_fixable":false,"verified_by_parent":true},
+    {"method":"類推","severity":"smell","location":"plugin 横断(notion-gmail-send vs company-master/mf-kessai doctor)","claim":"company-master が確立した『doctor チャット統一・marketplace 一次化・パス免責注記』を本plugin doctor 経路に類推適用可。ただし送信系ゆえ doctor を送信前必須ゲートに寄せる点が差分。","evidence":"MEMORY company-master docs only 修正で4条件PASS。","auto_fixable":false},
+    {"method":"ブレインストーミング","severity":"smell","location":"README.md:43-50 + doctor 導線","claim":"doctor 作法統一の代替案: (a)slash command 化=根治 (b)パスを $CLAUDE_PLUGIN_ROOT/チャット一次へ統一+免責 (c)send 前段に自動組込 (d)install 形態2系統明示。低コストは(b)+(d)。","evidence":"現状どの案も未採用。company-master docs only テンプレ再利用可。","auto_fixable":true}
+  ],
+  "verdict_provisional": {"矛盾なし":"PASS(コア)","漏れなし":"PARTIAL(doc導線穴)","整合性あり":"PARTIAL(語彙乖離)","依存関係整合":"PASS"},
+  "alt_approaches": ["根治=doctor を slash command/skill 昇格","低コスト=company-master docs only テンプレ横展開(marketplace一次化+語彙統一+免責)","再発防止=文書層 repo相対コマンド検出 lint を CI 配線"]
+}

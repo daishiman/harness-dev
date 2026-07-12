@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "pattern": "index-search",
+  "description": "extract-system-blueprint の蓄積知見ストア (Loop A)。task-graph build (TG-C08 record-task-graph-knowledge.py) が route report の deviations/handover 等から蒸留した実行知見を追記し、次回の本 plugin 再 build・拡張時に build-time で検索して再利用する。",
+  "consult_at": ["build-time"],
+  "consult_note": "本 plugin を planner --mode update や capability-build で再 build・拡張する際に参照する (KL-007: ストアの所在 = Loop A)。",
+  "categories": [
+    {
+      "id": "build-patterns",
+      "label": "ビルド実行知見 (deviation/handover/friction 蒸留)",
+      "file": "knowledge-build-patterns.json",
+      "keywords": ["task-graph", "runtime", "build-execution", "deviation", "handover", "knowledge-loop"]
+    }
+  ],
+  "global_keywords": {
+    "deviation": ["build-patterns"],
+    "handover": ["build-patterns"],
+    "task-graph": ["build-patterns"]
+  },
+  "synonyms": {
+    "逸脱": ["deviation"],
+    "申し送り": ["handover"]
+  },
+  "scoring_weights": {
+    "title": 5,
+    "keywords": 3,
+    "quote": 2,
+    "voice": 2,
+    "fulltext": 1
+  }
+}

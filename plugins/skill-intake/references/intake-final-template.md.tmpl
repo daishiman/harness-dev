@@ -1,0 +1,276 @@
+{# ============================================================
+   intake-final-template.md.tmpl
+   skill-intake セッションの最終正本 Markdown を生成する Jinja2 テンプレ。
+   - 章立て・順序・図解5枚構成・5軸サマリ表構造は固定
+   - 中身（メタ情報・選択肢・採択ID・本文）のみ変数化
+   - 変数定義は intake-final-schema.json を正本とする
+   - レンダラー(後日実装): scripts/render-intake-final.py
+   - 由来JSON: kickoff.json / assumption.json / profile.json / purpose.json
+              options.json / figures.json / sheet.json / self-update.json
+   ============================================================ #}
+# {{ meta.skill_name_hint }} — ヒアリング正本（完全版）
+
+- 生成日時: {{ meta.generated_at }}
+- パターン: {{ meta.pattern_code }}（{{ meta.pattern_label }}）／ Workflow Pattern: {{ meta.workflow_pattern_code }}（{{ meta.workflow_pattern_label }}）
+- 深度: {{ meta.depth }}（{{ meta.depth_minutes }}分相当）
+- 語彙: {{ meta.vocabulary_tier }}
+- 状態: {{ meta.status }}
+- value_realized_score（自己評価）: {{ meta.value_realized_score }} / 100
+
+---
+
+## 0. エグゼクティブサマリ
+
+**真の目的**: 「{{ executive_summary.true_purpose }}」
+
+{{ executive_summary.purpose_narrative }}
+
+**設計選択**: {{ executive_summary.design_choices }}
+
+**引き渡しモード**: {{ executive_summary.handoff_mode }}（{{ executive_summary.handoff_note }}）
+
+---
+
+## 1. Phase: assumption-challenger（前提逆転）
+
+### 1.1 表層リクエスト
+
+> {{ assumption.surface_request }}
+
+### 1.2 深層候補（{{ assumption.candidates | length }}つ提示）
+
+| ID | ラベル |
+| --- | --- |
+{% for c in assumption.candidates -%}
+| {% if c.adopted %}**{{ c.id }} ✅ 採択**{% else %}{{ c.id }}{% endif %} | {% if c.adopted %}**{{ c.label }}**{% else %}{{ c.label }}{% endif %} |
+{% endfor %}
+
+### 1.3 確定した深層課題
+
+{{ assumption.deep_problem }}
+
+### 1.4 浮いた時間の使い道
+
+{{ assumption.time_freed_intent }}
+
+### 1.5 ブラインドスポット
+
+{% for bs in assumption.blind_spots -%}
+- {{ bs }}
+{% endfor %}
+
+---
+
+## 2. Phase: user-profiler（ユーザー像）
+
+| 次元 | 値 | 確信度 | 根拠 |
+| --- | --- | --- | --- |
+{% for dim in profile.dimensions -%}
+| {{ dim.name }} | {{ dim.value }} | {{ dim.confidence }} | {{ dim.evidence }} |
+{% endfor %}
+
+**vocabulary_tier**: `{{ profile.vocabulary_tier }}`
+
+### 次フェーズへの含意
+
+{% for imp in profile.implications -%}
+- {{ imp }}
+{% endfor %}
+
+---
+
+## 3. Phase: purpose-excavator（真の目的の発掘）
+
+### 3.1 使用技法と往復数
+
+- techniques_used: {{ purpose.techniques_used_str }}
+- rounds: {{ purpose.rounds }}
+- agreement_loop_detected: {{ purpose.agreement_loop_detected | lower }}
+
+### 3.2 真の目的（verb + object）
+
+**「{{ purpose.true_purpose }}」**
+
+### 3.3 underlying motivation
+
+{{ purpose.underlying_motivation }}
+
+### 3.4 {{ purpose.differentiation_title }}
+
+{{ purpose.differentiation_text }}
+
+### 3.5 浮いた時間の使い道（Magic Wand）
+
+{{ purpose.magic_wand_text }}
+
+### 3.6 アウトプット優先順位（Reverse Brief で確定）
+
+{% for o in purpose.output_priority -%}
+{{ loop.index }}. {% if o.is_top %}**{{ o.text }}**{% else %}{{ o.text }}{% endif %}
+{% endfor %}
+
+### 3.7 暗黙知の所在（Tacit Extraction）
+
+- where: {{ purpose.tacit_where }}
+- extraction_strategy_hint: {{ purpose.tacit_strategy }}
+
+### 3.8 残課題（option-presenter へ送る）
+
+{% for q in purpose.handoff_questions -%}
+- {{ q }}
+{% endfor %}
+
+---
+
+## 4. Phase: option-presenter（選択肢提示と確定）
+
+{% for group in options.groups %}
+### 4.{{ loop.index }} {{ group.title }}
+
+| ID | ラベル | Pro | Con | Weight |
+| --- | --- | --- | --- | --- |
+{% for opt in group.options -%}
+| {% if opt.adopted %}**{{ opt.id }} ✅**{% else %}{{ opt.id }}{% endif %} | {% if opt.adopted %}**{{ opt.label }}**{% else %}{{ opt.label }}{% endif %} | {{ opt.pro }} | {{ opt.con }} | {{ opt.weight }} |
+{% endfor %}
+{% endfor %}
+
+### 4.{{ options.groups | length + 1 }} コネクタ選択
+
+- **input_sources**: {{ options.connectors.input_sources }}
+- **knowledge_assets**: {{ options.connectors.knowledge_assets }}
+- **outputs**: {{ options.connectors.outputs }}
+- **scheduler**: {{ options.connectors.scheduler }}
+
+---
+
+## 5. Phase: visualizer（図解5枚）
+
+各図に「言いたい一言」を1行付記。ノード数 7±2、日本語10文字以内、Font Awesome アイコン使用。
+
+{% for fig in figures.entries %}
+### 図{{ loop.index }}. {{ fig.title }}
+
+**言いたい一言**: {{ fig.one_liner }}
+
+```mermaid
+{{ fig.mermaid }}
+```
+
+**凡例**: {{ fig.legend }}
+
+---
+{% endfor %}
+
+### visualization-mandatory-rules チェック
+
+{% for rule in figures.mandatory_rules_check -%}
+- [{{ 'x' if rule.passed else ' ' }}]  {{ rule.text }}
+{% endfor %}
+
+---
+
+## 6. 5軸サマリ（最終確定版）
+
+| 軸 | 内容 | 深度 |
+| --- | --- | --- |
+{% for axis in five_axes.rows -%}
+| {% if axis.must|default(false) %}**{{ axis.name }}（MUST）**{% else %}{{ axis.name }}{% endif %} | {{ axis.content }} | {{ axis.depth }} |
+{% endfor %}
+
+### ナレッジ抽出パイプライン
+
+- **ingest**: {{ five_axes.pipeline.ingest }}
+- **analysis**: {{ five_axes.pipeline.analysis }}
+- **storage**: {{ five_axes.pipeline.storage }}
+- **retrieval**: {{ five_axes.pipeline.retrieval }}
+- **update**: {{ five_axes.pipeline.update }}
+
+### 入力→出力 intent contract
+
+```json
+{{ five_axes.intent_contract | json_dumps }}
+```
+
+---
+
+## 7. 設計選択サマリ（option-presenter で確定）
+
+| 軸 | 採択 | 理由 |
+| --- | --- | --- |
+{% for d in design_decisions.rows -%}
+| {{ d.axis }} | **{{ d.adopted }}** | {{ d.reason }} |
+{% endfor %}
+
+### アウトプット優先順位
+
+{% for o in design_decisions.output_priority -%}
+{{ loop.index }}. {{ o }}
+{% endfor %}
+
+---
+
+## 8. 未解決事項（harness-creator 引き継ぎ）
+
+| 質問 | ブロッキング | 委譲先 |
+| --- | --- | --- |
+{% for q in open_questions -%}
+| {{ q.question }} | {{ '○' if q.blocking else '×' }} | {{ q.defer_to }} |
+{% endfor %}
+
+---
+
+## 9. harness-creator への申し送り（handoff-contract）
+
+- `recommended_next.mode = {{ handoff.recommended_mode }}`
+- `skip_to_phase = {{ handoff.skip_to_phase }}`
+- 理由: {{ handoff.reason }}
+- {{ handoff.starting_note }}
+
+---
+
+## 10. Phase: self-updater（自己進化結果）
+
+### 10.1 メトリクス
+
+- candidates_detected: {{ self_update.candidates_detected }}
+- candidates_applied: {{ self_update.candidates_applied }}
+- skipped_duplicates: {{ self_update.skipped_duplicates }}
+- value_realized_score_estimate: **{{ self_update.value_realized_score }} / 100**
+
+### 10.2 スコア根拠
+
+{{ self_update.score_rationale }}
+
+**控除点**:
+
+{% for d in self_update.deductions -%}
+- {{ d.reason }}（-{{ d.points }}）
+{% endfor %}
+
+### 10.3 question-bank.md に追加された質問
+
+| カテゴリ | 技法 | 質問文 |
+| --- | --- | --- |
+{% for qb in self_update.question_bank_additions -%}
+| {{ qb.category }} | {{ qb.technique }} | {{ qb.question }} |
+{% endfor %}
+
+### 10.4 セッション観察
+
+{% for obs in self_update.session_observations -%}
+- {{ obs }}
+{% endfor %}
+
+### 10.5 次フェーズスキップ
+
+{% for skip in self_update.skipped_phases -%}
+- {{ skip.name }}（{{ skip.reason }}）
+{% endfor %}
+
+---
+
+## 11. 出力ファイル一覧（`{{ artifacts.base_path }}`）
+
+{% for f in artifacts.files -%}
+- `{{ f.path }}` — {{ f.description }}
+{% endfor %}

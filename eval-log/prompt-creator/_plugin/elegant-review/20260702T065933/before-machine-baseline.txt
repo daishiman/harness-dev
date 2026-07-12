@@ -1,0 +1,70 @@
+# before-machine-baseline (A4-09)
+# run_id: 20260702T065933 / captured: 2026-07-01T22:23:43Z
+# scripts: run-prompt-creator-7layer/scripts/verify-completeness.py, validate-prompt.py
+# 対象: plugin 所有 6 prompts (変更着手前の生出力+exit code)
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R1-elicit.md ===
+FAIL incomplete:
+  - Layer 5: ゴール定義（目的・背景・達成ゴール） がない（ゴールシーク必須要素）
+  - Layer 5: 完了チェックリスト（停止条件） がない（ゴールシーク必須要素）
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R1-elicit.md ===
+OK phase=prompt layers=7 file=/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260702-065619-wt-3/plugins/prompt-creator/skills/run-prompt-create/prompts/R1-elicit.md
+exit_code: 0
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R2-gate-review.md ===
+FAIL incomplete:
+  - Layer 5: ゴール定義（目的・背景・達成ゴール） がない（ゴールシーク必須要素）
+  - Layer 5: 完了チェックリスト（停止条件） がない（ゴールシーク必須要素）
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R2-gate-review.md ===
+OK phase=prompt layers=7 file=/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260702-065619-wt-3/plugins/prompt-creator/skills/run-prompt-create/prompts/R2-gate-review.md
+exit_code: 0
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R3-governance-decide.md ===
+FAIL incomplete:
+  - Layer 5: ゴール定義（目的・背景・達成ゴール） がない（ゴールシーク必須要素）
+  - Layer 5: 完了チェックリスト（停止条件） がない（ゴールシーク必須要素）
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/run-prompt-create/prompts/R3-governance-decide.md ===
+OK phase=prompt layers=7 file=/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260702-065619-wt-3/plugins/prompt-creator/skills/run-prompt-create/prompts/R3-governance-decide.md
+exit_code: 0
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1-main.md ===
+FAIL incomplete:
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1-main.md ===
+OK phase=prompt layers=7 file=/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260702-065619-wt-3/plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1-main.md
+exit_code: 0
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/run-prompt-elicit/prompts/R1-interview.md ===
+FAIL incomplete:
+  - Layer 5: ゴール定義（目的・背景・達成ゴール） がない（ゴールシーク必須要素）
+  - Layer 5: 完了チェックリスト（停止条件） がない（ゴールシーク必須要素）
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/run-prompt-elicit/prompts/R1-interview.md ===
+FAIL prompt validation:
+  - TODO remains without TODO(human)
+exit_code: 1
+
+=== verify-completeness.py --input plugins/prompt-creator/skills/assign-prompt-design-evaluator/prompts/R1-evaluate.md ===
+FAIL incomplete:
+  - Layer 5: ゴール定義（目的・背景・達成ゴール） がない（ゴールシーク必須要素）
+  - Layer 5: 完了チェックリスト（停止条件） がない（ゴールシーク必須要素）
+  - Layer 5: 達成ゴール（成果状態） がない（ゴールシーク必須要素）
+exit_code: 1
+
+=== validate-prompt.py --input plugins/prompt-creator/skills/assign-prompt-design-evaluator/prompts/R1-evaluate.md ===
+OK phase=prompt layers=7 file=/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260702-065619-wt-3/plugins/prompt-creator/skills/assign-prompt-design-evaluator/prompts/R1-evaluate.md
+exit_code: 0
+

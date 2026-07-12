@@ -1,0 +1,126 @@
+# poll-llms-txt.yml — 週次 llms.txt 目次チャーンの記録のみ (C-4, record-only)
+# https://code.claude.com/docs/llms.txt を週次取得し、前回との diff を
+# eval-log/spec-drift.json に記録する。issue は起票しない。
+# llms.txt は「ドキュメント目次」であり新ページ追加で毎週変化するため、
+# ここでの検知は目次チャーンの軽量記録に留める。真の関心である
+# spec-drift issue は update-yaml-spec.yml が実仕様ページ変更時に起票する。
+name: Record llms.txt index churn (record-only)
+
+on:
+  schedule:
+    # 毎週日曜 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Fetch llms.txt and record drift
+        id: drift
+        run: |
+          python3 - << 'PYEOF'
+          import json
+          import urllib.request
+          import datetime
+          import sys
+          import os
+          import difflib
+          import hashlib
+          from pathlib import Path
+
+          URL = "https://code.claude.com/docs/llms.txt"
+          DRIFT_PATH = Path("eval-log/spec-drift.json")
+          FETCH_TIMEOUT = 30
+          DIFF_MAX_LINES = 60
+
+          now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          # fetch
+          try:
+              req = urllib.request.Request(URL, headers={"User-Agent": "xl-skills-drift-poller/1.0"})
+              with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:
+                  current_text = resp.read().decode("utf-8", errors="replace")
+          except Exception as e:
+              print(f"FETCH_FAILED: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          # fail-closed: 空応答は "全削除" の巨大誤検知になるため記録しない
+          if not current_text.strip():
+              print("EMPTY_RESPONSE: no-op (記録しない)")
+              sys.exit(0)
+
+          DRIFT_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+          # load history
+          history = []
+          if DRIFT_PATH.exists():
+              try:
+                  history = json.loads(DRIFT_PATH.read_text())
+              except (json.JSONDecodeError, ValueError):
+                  history = []
+
+          # compare with last entry (full content は最新エントリのみ保持)
+          last_text = history[-1].get("content") if history else None
+          has_diff = (last_text != current_text)
+
+          # diff_summary は has_diff と同一基準 (前回 content との比較) で算出
+          if has_diff and last_text is not None:
+              diff_lines = list(difflib.unified_diff(
+                  last_text.splitlines(),
+                  current_text.splitlines(),
+                  lineterm="",
+              ))
+              if len(diff_lines) > DIFF_MAX_LINES:
+                  truncated = len(diff_lines) - DIFF_MAX_LINES
+                  diff_summary = diff_lines[:DIFF_MAX_LINES] + [{"truncated_lines": truncated}]
+              else:
+                  diff_summary = diff_lines
+          elif has_diff:
+              diff_summary = {"note": "first_fetch"}
+          else:
+              diff_summary = {}
+
+          entry = {
+              "fetched_at": now,
+              "url": URL,
+              "has_diff": has_diff,
+              "diff_summary": diff_summary,
+              "content_sha256": hashlib.sha256(current_text.encode("utf-8")).hexdigest(),
+              "content": current_text,
+          }
+          # keep last 52 entries (1 year weekly); full content は最新1件のみ残す
+          history.append(entry)
+          history = history[-52:]
+          for older in history[:-1]:
+              older.pop("content", None)
+          DRIFT_PATH.write_text(json.dumps(history, indent=2, ensure_ascii=False) + "\n")
+
+          print(f"has_diff={has_diff}")
+          print(f"fetched_at={now}")
+          with open(os.environ.get("GITHUB_OUTPUT", "/dev/null"), "a") as gh_out:
+              gh_out.write(f"has_diff={'true' if has_diff else 'false'}\n")
+              gh_out.write(f"fetched_at={now}\n")
+          PYEOF
+
+      - name: Commit drift record
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add eval-log/spec-drift.json
+          git diff --staged --quiet || git commit -m "chore: update spec-drift.json (${{ steps.drift.outputs.fetched_at }})"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

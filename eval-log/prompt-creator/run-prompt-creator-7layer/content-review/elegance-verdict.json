@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "run-prompt-creator-7layer",
+    "skill_md_sha256": "9984ebe950b4be6a3639450db946116303961e185b3794ea7e33b8f8ebfd9814"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "改名 (skill-creator→harness-creator) の参照追従が本 skill で最も密だが全て正確に追従: 導入注記 L87『harness-creator 仕様準拠で移植した正本』、L100 の path_convention 正本『prompt-placement-convention.md (harness-creator 側)』、L162/L202 のアンカー schema 正本『harness-creator run-build-skill/schemas/goal-seek-loop.schema.json』、L199 の caller『plugins/harness-creator/skills/run-build-skill (Step 7.5)』が全て harness-creator 側実体へ解決 (5 パス実測で実在確認)。意味論境界も正確 — plugin 総体を指す語は harness-creator、単体スキル操作 (run-build-skill) は skill 表現を維持。旧固有名の残存は本 SKILL.md 全文 grep で 0 件。",
+      "IN2 の claim-implementation parity が健全: 機械検証 3 項目 (7 層マーカー実在 / Layer 本文の未展開 placeholder {{...}} 残存なし / TODO(human) 以外の TODO 残存なし) の担保先 validate-prompt.py が実在し、機械検証対象外 3 項目 (要素原子性・同一意図重複排除・スキーマ妥当性) を『Phase 4-B/4-C の LLM レビューで担保』と明示委譲、委譲先 quality-criteria.md §8・idempotent-update-policy.md も実在。二層分離 (機械層/LLM 層の責務境界) が criteria 上で明示され偽の安心を排除。",
+      "OUT1 (本質目的整合) と宣言型設計: 責務純化 (成果物プロンプト生成が主・SubAgent 注入は legacy 付随)・L7→L1 単方向依存・冪等更新 (類似は上書き統合)・ゴールシーク反復のセッション分離が invariant 9 項・Key Rules 12・局面カタログ 8 行・Gotchas 13 に矛盾なく分担。Phase 4-C アンカー契約は goal-seek-loop.schema.json intermediate_artifacts[] へ委譲し再宣言せず、SSOT 従属の向きが単方向。"
+    ],
+    "negative_feedback": [
+      "[low/inconsistency] (改名非依存・HEAD 継承) 注入と戻り検証の順序が SKILL (End-to-End Flow/局面カタログ: Phase 4-D 変換+注入 → Phase 5 戻り検証) と機械正本 workflow-manifest.json (return-verify → design-gate → inject の順で注入が最後) で逆転。SKILL 自身が manifest を実行順の正本と宣言するため実行器は決定論的に manifest へ解決し実行不能ではない (owner_agent legacy 経路のみ影響) が、文書間矛盾として次回改訂で整列すべき。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator 改名後の genuine 再評価。本 skill は cross-plugin 参照が最多 (harness-creator 側 5 パス) だが全て実在へ解決することを実測確認: prompt-placement-convention.md/goal-seek-loop.schema.json/goal-seek-paradigm.md/run-build-skill/references・schemas。意味論境界 (plugin 総体=harness-creator、単体 skill 操作=skill) が用語規約に適合、旧固有名残存 0。ローカル参照 (scripts 8/references 8/prompts R1-main.md/schemas 2/workflow-manifest.json/agents 2) も実在。4 条件のうち改名由来の defect なし。残 negative 1 件は改名非依存の HEAD 継承 low inconsistency (注入/戻り検証の manifest との順序) で、正本宣言により実行は決定論的ゆえ PASS。"
+}

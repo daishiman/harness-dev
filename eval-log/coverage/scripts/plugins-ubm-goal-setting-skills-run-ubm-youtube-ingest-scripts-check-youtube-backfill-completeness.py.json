@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "backfill 完全性ゲート (read-only)。soundness: 分母を authoritative snapshot に固定し registry 側除外で縮められない設計を機械化(registry にのみ存在する検査対象 channel の ID=分母縮小疑い、snapshot 重複 ID=水増し疑い、完走マーカー無し channel=pagination 欠落、をいずれも exit1)。content_coverage(waived を100%に数えない)と accountability_coverage(waiver_ref 付き除外のみ控除)の分離が Goodhart 封じとして正しく、waived かつ ref 無しは waiver_missing で fail。handle↔channel_id を sources[] で束ね source 表記ゆれの漏れを防ぐ。responsibility: 判定専任・registry read-only・修復や状態更新をしない。error-handling: snapshot 読めず/構造不正=exit2、registry 破損=『完全性を証明できない』として FAIL JSON+exit1、registry 不在=全 pending の fail-closed。失敗理由はバケット別にソート済 video ID で stderr へ決定論出力。side-effect-safety: write-scope:none/network:false を遵守、書込ゼロ。frontmatter: PEP723 様式完備・verdict/exit 契約が実装一致。軽微: argparse SystemExit を一律 return 2 にするため --help も exit2(実害なし)、discovered_total==0 のとき coverage=1.0 の空虚 PASS があり得るが pagination gap 検査が先に閉じるため実質到達しにくい。tests/test_check_youtube_backfill_completeness.py 15件(FULL/ACCOUNTABILITY/各 FAIL 軸/破損/決定論)全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

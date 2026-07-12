@@ -1,0 +1,30 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "assign-plugin-package-evaluator",
+    "skill_md_sha256": "8d685a9603bdb40b16fd8aca6cb2403f3a412188f5022c1e0a456981c5daf405"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-content-review-subagent",
+  "reviewed_at": "2026-07-05T05:37:17Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "完全性 3/3: 入力 yaml(line 41-48)・出力 contract(line 50)・完了条件(line 51)・Key Rules 7件・ゴールシーク Checklist・PKG-002〜008 検査表(line 90-98)・findings 出力例(line 104-138)・Gotchas 5件を空欄なく網羅。一貫性 3/3: PKG ID は ref-pkg-contract 経由再定義禁止(Key Rule 1)と skill-only の PKG-003/005/006/007/008 not_applicable 判定(Key Rule 3/Checklist/Gotchas 4)が本文全体で統一され矛盾なし",
+      "深度 3/3・検証可能性 3/3: 直近変更(PKG-002 検査関数の二段契約精緻化, line 92)が実装に忠実。SKILL.md の『plugin.json の name/version/description、または references/package-contract.json の package_mode/entry_points いずれか欠落』は validator の check_pkg_002 (PLUGIN_JSON_REQUIRED={name,version,description} → PACKAGE_CONTRACT_REQUIRED={package_mode,entry_points} の二段検査) と厳密一致。schema_refs(../ref-pkg-contract/schemas/package-contract.schema.json 実在)・rubric_refs(ref-pkg-contract 実在)とも整合。各 PKG に fail 条件例と location/evidence/severity 付与要求があり、--check pkg-<id> 単独実行(line 100, validator CLI と一致)+ schema 違反 exit2 で機械判定が担保される",
+      "簡潔性 2/3: PKG ID 表を本 skill 内で再定義せず ref-pkg-contract へ外出し(Key Rule 1)。PKG-002 の二段契約追従も 1 表セル内に収め schema を重複させず肥大化を回避。合計 14/15(閾値 80/100 相当を超過)"
+    ],
+    "negative_feedback": [
+      "低 severity(非ブロッキング): 検査表『検査関数』列の名称(validate_plugin_json_frontmatter / validate_package_contract / validate_namespace_conflict 等)は概念名であり、実装の実関数シンボル(check_pkg_002〜check_pkg_008)とは一致しない。全行に及ぶ既存の記述規約で今回変更が導入した退行ではなく、検証の正規入口は line 100 の CLI --check pkg-<id>(実 validator と一致)であるため実用上の検証可能性は保たれる。将来的に列見出しを『論理検査』等へ改めるか実関数名を併記すると code-search 追跡性が上がる"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SHA(8d685a96...)の SKILL.md を 5 次元(完全性/一貫性/深度/検証可能性/簡潔性)で genuine 再採点。変更点=PKG-002 検査関数記述の精緻化(line 92: 単一契約→plugin.json frontmatter + references/package-contract.json の二段契約への追従)1箇所。validator の check_pkg_002 実装(PLUGIN_JSON_REQUIRED / PACKAGE_CONTRACT_REQUIRED の二段)および package-contract.schema.json の required(package_mode/entry_points)と実地照合し忠実性を確認。合計 14/15(完全性3/一貫性3/深度3/検証可能性3/簡潔性2)、閾値超過で PASS。検査関数列の概念名 vs 実関数名の乖離を低 severity 所見として記録(非ブロッキング)。"
+}

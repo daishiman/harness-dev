@@ -1,0 +1,22 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# assign-prompt-design-evaluator (evaluator) の Progressive Disclosure 索引。
+# 上位 (rubric, schemas, scripts) は機械可読 contract。references/* は人間向け補助資料。
+resources:
+  - file: prompt-rubric.json
+    topic: C1-C4 機械判定ルール (regex_match / regex_absent / global_thresholds)
+    read_when: scripted_check / c1_c4_machine で Layer 構造と突合するとき (最初に読む)
+  - file: c1-c4-criteria.md
+    topic: C1-C4 の人間向け詳細基準
+    read_when: four_pass_llm で意味判定するとき
+  - file: ../../run-prompt-create/schemas/findings.schema.json
+    topic: evaluator が emit する findings 共通形式 (C1-C4 verdict)
+    read_when: emit_findings で出力を構築・検証するとき
+  - file: ../prompts/R1-evaluate.md
+    topic: R1 評価責務プロンプト
+    read_when: 評価フローの責務境界を確認するとき
+  - file: ../../run-prompt-creator-7layer/scripts/verify-completeness.py
+    topic: Layer 充足検証 (completeness_score 取得)
+    read_when: scripted_check で客観検証するとき
+  - file: ../../run-prompt-creator-7layer/scripts/validate-prompt.py
+    topic: schema/構造検証 (--phase prompt)
+    read_when: scripted_check で客観検証するとき

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/pkg-run-report.json",
+  "title": "Plugin Package Check Run Report",
+  "type": "object",
+  "required": ["plugin", "aggregated_at", "pkg_checks", "verdict"],
+  "properties": {
+    "plugin": {"type": "string"},
+    "aggregated_at": {"type": "string", "format": "date-time"},
+    "pkg_checks": {
+      "type": "object",
+      "patternProperties": {
+        "^PKG-(00[1-9]|01[0-2]|013|01[4-5])$": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {"enum": ["pass", "fail", "skip", "not_applicable"]},
+            "source_log": {"type": "string"},
+            "findings_count": {"type": "integer", "minimum": 0}
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "verdict": {
+      "type": "object",
+      "properties": {
+        "total": {"type": "integer"},
+        "pass": {"type": "integer"},
+        "fail": {"type": "integer"},
+        "skip": {"type": "integer"},
+        "not_applicable": {"type": "integer"}
+      }
+    }
+  }
+}

@@ -1,0 +1,496 @@
+diff --git a/plugins/notion-gmail-send/.claude-plugin/plugin.json b/plugins/notion-gmail-send/.claude-plugin/plugin.json
+index be9c39d..504abcd 100644
+--- a/plugins/notion-gmail-send/.claude-plugin/plugin.json
++++ b/plugins/notion-gmail-send/.claude-plugin/plugin.json
+@@ -2,7 +2,7 @@
+   "name": "notion-gmail-send",
+   "version": "0.1.0",
+   "package_mode": "bundle",
+-  "description": "Notion 2DB(メール本文_DB/メール送信先_DB)を入力に、メッセージ対象✅かつ本文非空の本文を 送信対象✅かつメールを送らない☐かつプロ人材メール非空 の宛先へ {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。メールを送らない最優先抑制・プロ人材重複は最新1件のみ・送信は送信者のSentに残る。承認済みplan + 人間承認ゲート + 事前予約つき冪等ログの三本柱で不可逆送信を安全化 (ref-notion-gmail-send-spec/ref-gmail-dwd-setup + run-notion-gmail-sendlog-setup/run-notion-gmail-source-audit/run-notion-gmail-dry-run/run-notion-gmail-send の6スキル + context:fork二段確認subagent + 補助防御hook)。改善要望は `/run-skill-feedback notion-gmail-send` で投入可能 (SSOT: skill-creator/skills/run-skill-feedback、symlink 配備)。",
++  "description": "Notion 2DB(メール本文_DB/メール送信先_DB)から本文×宛先を {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。承認済みplan + 人間承認ゲート + 事前予約つき冪等ログの三本柱で不可逆送信を安全化。6スキル(ref-spec/ref-dwd-setup/sendlog-setup/source-audit/dry-run/send)+二段確認subagent+補助防御hook。改善要望は `/run-skill-feedback notion-gmail-send`。",
+   "author": {
+     "name": "xl-skills maintainers"
+   },
+diff --git a/plugins/notion-gmail-send/.notion-config.example.json b/plugins/notion-gmail-send/.notion-config.example.json
+new file mode 100644
+index 0000000..a6a2fed
+--- /dev/null
++++ b/plugins/notion-gmail-send/.notion-config.example.json
+@@ -0,0 +1,24 @@
++{
++  "_comment": "作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone 開発者は repo-root)に .notion-config.json として置き、<...> を実値で埋める (.notion-config.json は gitignore 対象)。db_id は Notion ページURL末尾の32桁。雛形を自動生成するには doctor --init を実行。",
++  "databases": {
++    "gmail-send-log": {
++      "db_id": "<送信ログDBのid>",
++      "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える"
++    }
++  },
++  "notion_gmail_send": {
++    "source": {
++      "body_db": "<メール本文DBのid>",
++      "recipient_db": "<メール送信先_DBのid>",
++      "_note": "body_db=メール本文_DB / recipient_db=メール送信先_DB"
++    },
++    "sender": {
++      "impersonate": "<送信元アドレス @your-domain>",
++      "sa_keychain": {
++        "service": "gmail-sa.xl-skills",
++        "account": "xl-skills"
++      },
++      "_note": "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。実値は git に載せず config にのみ置く。sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
++    }
++  }
++}
+diff --git a/plugins/notion-gmail-send/.notion-config.json.example b/plugins/notion-gmail-send/.notion-config.json.example
+deleted file mode 100644
+index 2dc71a1..0000000
+--- a/plugins/notion-gmail-send/.notion-config.json.example
++++ /dev/null
+@@ -1,24 +0,0 @@
+-{
+-  "_comment": "このファイルを repo-root に .notion-config.json としてコピーし、実値を埋める (.notion-config.json は gitignore 対象)。db_id は Notion ページURL末尾の32桁、または共有設定済みDBの database_id。",
+-  "databases": {
+-    "gmail-send-log": {
+-      "db_id": "38907a0cd18c804dba05e05934ca2dbf",
+-      "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える"
+-    }
+-  },
+-  "notion_gmail_send": {
+-    "source": {
+-      "body_db": "38807a0cd18c80f1ae82f01a90ff5aa2",
+-      "recipient_db": "38807a0cd18c80e9b47cd9ceb81463db",
+-      "_note": "body_db=メール本文_DB / recipient_db=メール送信対象者DB"
+-    },
+-    "sender": {
+-      "impersonate": "no-reply@shonai.inc",
+-      "sa_keychain": {
+-        "service": "gmail-sa.xl-skills",
+-        "account": "xl-skills"
+-      },
+-      "_note": "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
+-    }
+-  }
+-}
+diff --git a/plugins/notion-gmail-send/README.md b/plugins/notion-gmail-send/README.md
+index 1cc8787..4c0adb9 100644
+--- a/plugins/notion-gmail-send/README.md
++++ b/plugins/notion-gmail-send/README.md
+@@ -21,7 +21,7 @@ Notion の2つのDB（メール本文_DB / メール送信先_DB）を入力に
+ 
+ 0→送信までの最短手順。各ステップの詳細は本 README 内の該当節（**太字**の見出し）を参照。
+ 
+-1. **Notion を3つのDBで用意し ID を登録** — メール本文_DB（本文テンプレ）・メール送信先_DB（送信先）・送信ログDB の3つを作り、それぞれの id を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json` に記入する。（→ **セットアップ** の「2. 設定ファイル」「4. 送信ログDB の構築」）
++1. **Notion を3つのDBで用意し ID を登録** — メール本文_DB（本文テンプレ）・メール送信先_DB（送信先）・送信ログDB の3つを作り、それぞれの id を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json` に記入する。空の雛形は Claude に「**doctor で初期化して**」と頼む（`doctor --init`）と自動生成され、`<…>` を実値で埋めるだけにできる。（→ **セットアップ** の「2. 設定ファイル」「4. 送信ログDB の構築」）
+ 2. **認証鍵を macOS Keychain に設定** — Notion API token（`notion-api-key.xl-skills`）と Google サービスアカウント鍵（`gmail-sa.xl-skills`）を登録し、Gmail 側の DWD / gmail.send scope / sendAs を設定する。**秘密値はチャットや issue に貼らない**。設定できたら Claude に「**doctor で確認して**」と頼めば、本送信せずに認証/設定の成否を一括点検でき、live-send まで進む前に不備を見つけられる。（→ **セットアップ** の「3. 認証鍵」/ `ref-gmail-dwd-setup`）
+ 3. **dry-run で件数と plan_hash を確認** — `/run-notion-gmail-dry-run` を実行すると、送信件数・`plan_hash`・全件プレビュー・`APPROVE` 文字列・`<確認語>` が出力される。少数検品は `--canary N`。**この段階では1通も送信しない**。（→ **使い方（推奨フロー）**）
+ 4. **全件プレビューを目視** — 誰に・どの本文が送られるかを必ず目視する。送信元データの品質点検は `/run-notion-gmail-source-audit`。（→ **使い方（推奨フロー）**）
+@@ -62,7 +62,15 @@ claude plugin install ./plugins/notion-gmail-send
+ 
+ ### 2. 設定ファイル `.notion-config.json`
+ 
+-下記のテンプレを**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下に `.notion-config.json` として作成し、実値を埋める（gitignore 対象・git に載らない。clone 済みなら `plugins/notion-gmail-send/.notion-config.json.example` を雛形に使える）。設定ファイルの探索順は `env(NOTION_GMAIL_CONFIG) > $CLAUDE_PROJECT_DIR > 上位ディレクトリ走査 > カレント`（`lib/notion_config.py`）。
++DB ID と送信元を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json`（gitignore 対象・git に載らない）に置く。**何を・どこに・どの値で**置くかは本節が唯一の正本。作り方は次の3通り（どれでも同じファイルができる）:
++
++- **A. 自動生成（推奨・install 形態を問わない）** — チャットで Claude に「**doctor で初期化して**」と頼む。plugin 同梱の `setup_doctor.py --init` を `$CLAUDE_PLUGIN_ROOT` 経由で解決し、placeholder 入りの `.notion-config.json` を作業フォルダへ生成する（ユーザーがパスを手で打つ必要はない）。生成後に `<…>` を実値で埋める。
++- **B. clone 開発者が自分のターミナルで生成** — `python3 plugins/notion-gmail-send/lib/setup_doctor.py --init`（repo を clone した場合のみ有効な相対パス）。
++- **C. 手書き** — 下記テンプレを `.notion-config.json` として保存し実値を埋める。clone 済みなら `plugins/notion-gmail-send/.notion-config.example.json` を雛形に使える。
++
++> どの方法でも生成直後は `<…>` の placeholder で、**実値を埋めるまで dry-run も送信もできない**（fail-closed）。`/run-notion-gmail-dry-run` を config 不在のまま実行しても、貼り付け用の雛形と保存先を案内して安全に停止する（1通も送らない）。
++
++設定ファイルの探索順は `env(NOTION_GMAIL_CONFIG) > $CLAUDE_PROJECT_DIR > 上位ディレクトリ走査 > カレント`（`lib/notion_config.py`）。clone 不要で任意の場所に置く上級者は `NOTION_GMAIL_CONFIG=<path>` で明示できる。
+ 
+ ```json
+ {
+diff --git a/plugins/notion-gmail-send/lib/notion_config.py b/plugins/notion-gmail-send/lib/notion_config.py
+index 668fa2d..c0ad78f 100644
+--- a/plugins/notion-gmail-send/lib/notion_config.py
++++ b/plugins/notion-gmail-send/lib/notion_config.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: notion_config
+-# purpose: repo-root の .notion-config.json (gitignore 対象) を SSOT として解決し、Notion DB ID / 送信元設定を返す。symlink 共有プラグインでも install パス非依存で動く。
++# purpose: 作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone は repo-root) の .notion-config.json (gitignore 対象) を SSOT として解決し、Notion DB ID / 送信元設定を返す。不在時は placeholder 雛形を生成する scaffold も提供。symlink 共有プラグインでも install パス非依存で動く。
+ # inputs:
+ #   - env: NOTION_GMAIL_CONFIG (任意) / CLAUDE_PROJECT_DIR (任意)
+ #   - file: .notion-config.json
+@@ -15,9 +15,14 @@
+ # ///
+ """Notion 設定ローダー (per-repo config SSOT)。
+ 
+-DB ID や送信元ドメインなど環境依存の固有値は repo-root の .notion-config.json に分離し、
+-コードには直書きしない (仕様書 §3 取得時の確定事項・abstraction_variables)。探索順は
++DB ID や送信元ドメインなど環境依存の固有値は作業フォルダ($CLAUDE_PROJECT_DIR 直下。
++clone 開発者は repo-root)の .notion-config.json に分離し、コードには直書きしない
++(仕様書 §3 取得時の確定事項・abstraction_variables)。探索順は
+ env(明示) > CLAUDE_PROJECT_DIR > __file__ から上位ディレクトリ走査 > CWD。
++
++config 不在の初回は ConfigError で fail-closed する。前進手段として placeholder 雛形を
++$CLAUDE_PROJECT_DIR 直下へ書き出す scaffold (write_skeleton / skeleton_json) を提供する。
++placeholder 値 (<...>) は解決不能なので、生成直後でも実値を埋めるまで送信できない (fail-closed 維持)。
+ """
+ from __future__ import annotations
+ 
+@@ -27,6 +32,40 @@ from pathlib import Path
+ 
+ CONFIG_FILENAME = ".notion-config.json"
+ 
++# placeholder config の唯一の真実源 (SSOT)。
++# (1) .notion-config.example.json / (2) write_skeleton が生成する雛形 /
++# (3) ConfigError が印字する貼り付け用 JSON は、すべてこの定数から導く。
++# 実 DB ID・実送信元は決してここに置かない (git 追跡ファイルへの実値拡散を機構的に防ぐ)。
++CONFIG_SKELETON: dict = {
++    "_comment": (
++        "作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone 開発者は repo-root)に "
++        ".notion-config.json として置き、<...> を実値で埋める (.notion-config.json は gitignore 対象)。"
++        "db_id は Notion ページURL末尾の32桁。雛形を自動生成するには doctor --init を実行。"
++    ),
++    "databases": {
++        "gmail-send-log": {
++            "db_id": "<送信ログDBのid>",
++            "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える",
++        }
++    },
++    "notion_gmail_send": {
++        "source": {
++            "body_db": "<メール本文DBのid>",
++            "recipient_db": "<メール送信先_DBのid>",
++            "_note": "body_db=メール本文_DB / recipient_db=メール送信先_DB",
++        },
++        "sender": {
++            "impersonate": "<送信元アドレス @your-domain>",
++            "sa_keychain": {"service": "gmail-sa.xl-skills", "account": "xl-skills"},
++            "_note": (
++                "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。"
++                "実値は git に載せず config にのみ置く。"
++                "sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
++            ),
++        },
++    },
++}
++
+ 
+ class ConfigError(Exception):
+     """設定不在 / キー欠落 (G2 で fail-closed させる)。"""
+@@ -71,8 +110,9 @@ def load_config(path: str | os.PathLike[str] | None = None) -> dict:
+     if resolved is None:
+         target = f"指定パス {path}" if path else CONFIG_FILENAME
+         raise ConfigError(
+-            f"{target} が見つかりません。repo-root に作成してください "
+-            f"(notion-gmail-send の例は .notion-config.json.example を参照)。"
++            f"{target} が見つかりません。作業フォルダ($CLAUDE_PROJECT_DIR 直下。"
++            f"clone 開発者は repo-root)に作成してください。雛形を自動生成するには "
++            f"doctor --init を実行できます (例は .notion-config.example.json)。"
+         )
+     try:
+         return json.loads(resolved.read_text(encoding="utf-8"))
+@@ -86,7 +126,7 @@ def get_db_id(name: str, config: dict | None = None) -> str:
+     databases = cfg.get("databases") or {}
+     if not isinstance(databases, dict):
+         raise ConfigError("databases は {name: {db_id: ...}} 形式の dict である必要があります "
+-                          "(.notion-config.json.example 参照)。")
++                          "(.notion-config.example.json 参照)。")
+     db = databases.get(name) or {}
+     db_id = db.get("db_id") if isinstance(db, dict) else None
+     if not db_id:
+@@ -98,3 +138,34 @@ def get_sender(config: dict | None = None) -> dict:
+     """送信元設定 (notion_gmail_send.sender)。from_domain / impersonate などの固有値。"""
+     cfg = config if config is not None else load_config()
+     return (cfg.get("notion_gmail_send") or {}).get("sender") or {}
++
++
++# ---- scaffold (config 不在時の前進手段。fail-closed を弱めない) ----
++
++def skeleton_json() -> str:
++    """貼り付け用の placeholder config JSON 文字列 (CONFIG_SKELETON の整形出力)。"""
++    return json.dumps(CONFIG_SKELETON, ensure_ascii=False, indent=2)
++
++
++def scaffold_target_path(explicit_path: str | os.PathLike[str] | None = None) -> Path:
++    """init で書き出す config の宛先。明示パス > CLAUDE_PROJECT_DIR 直下 > CWD 直下。"""
++    if explicit_path:
++        return Path(explicit_path)
++    proj = os.environ.get("CLAUDE_PROJECT_DIR")
++    base = Path(proj) if proj else Path.cwd()
++    return base / CONFIG_FILENAME
++
++
++def write_skeleton(explicit_path: str | os.PathLike[str] | None = None, *, overwrite: bool = False) -> Path:
++    """placeholder config を宛先へ書き出し Path を返す。
++
++    既存ファイルがあり overwrite=False なら ConfigError (実値を誤って潰さない)。
++    書き出す値は placeholder (<...>) で解決不能なため、生成直後でも実値を埋めるまで
++    dry-run も送信もできない (fail-closed を弱めない)。
++    """
++    dest = scaffold_target_path(explicit_path)
++    if dest.exists() and not overwrite:
++        raise ConfigError(f"{dest} は既に存在します (上書きしません)。中身を編集してください。")
++    dest.parent.mkdir(parents=True, exist_ok=True)
++    dest.write_text(skeleton_json() + "\n", encoding="utf-8")
++    return dest
+diff --git a/plugins/notion-gmail-send/lib/setup_doctor.py b/plugins/notion-gmail-send/lib/setup_doctor.py
+index 19aeb3c..eedee67 100644
+--- a/plugins/notion-gmail-send/lib/setup_doctor.py
++++ b/plugins/notion-gmail-send/lib/setup_doctor.py
+@@ -34,6 +34,29 @@ def _result(gate: str, passed: bool, reason: str = "", action: str = "", detail:
+     return {"gate": gate, "passed": passed, "reason": reason, "action": action, "detail": detail}
+ 
+ 
++def _do_init(config_path: str | None) -> int:
++    """config 不在時の前進手段。placeholder 雛形を作業フォルダへ生成する (送信はしない)。
++
++    placeholder 値は解決不能なので、生成しても実値を埋めるまで dry-run も送信もできない
++    (fail-closed を弱めない)。既存 config があれば上書きせず案内する。
++    """
++    try:
++        dest = notion_config.write_skeleton(config_path)
++    except notion_config.ConfigError as e:
++        print(f"[skip] {e}")
++        existing = notion_config.find_config_path(config_path)
++        if existing:
++            print(f"既存 config: {existing}")
++        return 0
++    print(f"placeholder config を生成しました: {dest}")
++    print("次の手順:")
++    print("  1) 上記ファイルの <...> を実値で埋める (db_id は Notion ページURL末尾の32桁)")
++    print("  2) 認証鍵を Keychain に登録 (README『セットアップ 3. 認証鍵』)")
++    print("  3) もう一度 doctor で点検 → /run-notion-gmail-dry-run で送信計画を生成")
++    print("※ placeholder のままでは1通も送信できません (実値を埋めるまで fail-closed)。")
++    return 0
++
++
+ def _print_text(results: list[dict]) -> None:
+     print("notion-gmail-send setup-doctor")
+     for r in results:
+@@ -54,8 +77,13 @@ def main() -> int:
+     ap.add_argument("--from", dest="from_addr", default="", help="sendAs 検証する From。未指定時は sender.impersonate")
+     ap.add_argument("--probe", action="store_true", help="Gmail 実APIで DWD/sendAs まで検証する")
+     ap.add_argument("--json", action="store_true", help="結果を JSON で出力する")
++    ap.add_argument("--init", action="store_true",
++                    help="config 不在時に placeholder 雛形を作業フォルダへ生成する (送信はしない)")
+     args = ap.parse_args()
+ 
++    if args.init:
++        return _do_init(args.config)
++
+     results: list[dict] = []
+     if args.config and not Path(args.config).is_file():
+         results.append(_result("G0.config", False, "config_missing", "create_config",
+@@ -64,6 +92,7 @@ def main() -> int:
+             print(json.dumps({"passed": False, "results": results}, ensure_ascii=False, indent=2))
+         else:
+             _print_text(results)
++            print("\nconfig がありません。placeholder 雛形を生成するには: doctor --init")
+         return 2
+     try:
+         cfg = notion_config.load_config(args.config)
+@@ -75,6 +104,7 @@ def main() -> int:
+             print(json.dumps({"passed": False, "results": results}, ensure_ascii=False, indent=2))
+         else:
+             _print_text(results)
++            print("\nconfig がありません。placeholder 雛形を生成するには: doctor --init")
+         return 2
+ 
+     try:
+diff --git a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
+index 601d686..d0b9861 100644
+--- a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
++++ b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
+@@ -6,7 +6,7 @@
+ 
+ ## 1. Notion 2DB 列マッピング（全表・§3）
+ 
+-### DB1「メール本文_DB」(`38807a0cd18c80f1ae82f01a90ff5aa2`)
++### DB1「メール本文_DB」（DB id は config `notion_gmail_send.source.body_db`）
+ 
+ | プロパティ | 型 | 役割 | メール組立での写像 |
+ |---|---|---|---|
+@@ -16,7 +16,7 @@
+ | メッセージ対象 | checkbox | ✅ かつ本文非空の行だけ送信 | 送信フィルタ |
+ | （ページ本文） | コードブロック | メール本文テンプレ（`{{}}` 置換対象） | Body |
+ 
+-### DB2「メール送信先_DB」(`38807a0cd18c80e9b47cd9ceb81463db`)
++### DB2「メール送信先_DB」（DB id は config `notion_gmail_send.source.recipient_db`）
+ 
+ | プロパティ(厳密名) | 型 | 役割 | メール組立での写像 |
+ |---|---|---|---|
+@@ -36,7 +36,7 @@
+ ### 取得時の確定事項
+ 
+ - From は `@shonai.inc`（Workspace ドメイン）。固有値は config へ退避し、承認状況は実行時に動的検証する（G1）。
+-- 現状 `メッセージ対象=✅` の2件は本文コードブロックが未記入（空）。空本文は送信対象外。送信には `{{}}` トークン入り本文の記入が必要（preflight で0通なら送信せず案内）。
++- `メッセージ対象=✅` でも本文コードブロックが空なら送信対象外（空本文は送信しない）。送信には `{{}}` トークン入り本文の記入が必要（preflight で0通なら送信せず案内）。
+ 
+ ---
+ 
+@@ -113,7 +113,7 @@ dry-run は送信ログDB が未確定でも第1段まで提示する。第2段
+ | 事前予約（§9,§11） | reserved ログ行ID | Gmail API 呼び出し前に Notion create/search | G3: reserved なしなら送信中断 |
+ | impersonate 送信（§6 From） | Keychain SA鍵 svce/acct | preflight で `security` 列挙確認 | G1: 取得不可なら中断 |
+ | Gmail 送信（§8-9） | shonai.inc の DWD + gmail.send 承認 + From sendAs alias | 実 API で動的検証 | G1: 未承認なら GCP 手順へ誘導 |
+-| 送信単位生成（§4） | 本文 true ≥ 1（✅2件の本文記入） | 本文コードブロック記入 | G2: 0通なら記入を促し終了 |
++| 送信単位生成（§4） | 本文 true ≥ 1（✅対象の本文記入） | 本文コードブロック記入 | G2: 0通なら記入を促し終了 |
+ 
+ ---
+ 
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
+index 0252a52..691c199 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
+@@ -85,6 +85,20 @@ def _stable_units(units: list[dict]) -> list[dict]:
+     return sorted(units, key=lambda u: (u["content_hash"], u.get("body_page_id", ""), u.get("recipient_page_id", "")))
+ 
+ 
++def _print_config_missing_help(config_path: str | None) -> None:
++    """config 不在で停止したとき、前進手段 (scaffold / 貼り付け雛形) を案内する。
++
++    停止 (exit 2) は維持しつつ、デッドエンドにせず次の一歩を示す。placeholder は解決不能なので
++    案内に従って生成しても、実値を埋めるまで1通も送信されない (fail-closed 維持)。
++    """
++    target = notion_config.scaffold_target_path(config_path)
++    print("\n設定ファイル (.notion-config.json) がまだありません。次のいずれかで設定してください:", file=sys.stderr)
++    print(f"  1) 雛形を自動生成: doctor --init  → {target} に placeholder を書き出します", file=sys.stderr)
++    print(f"  2) 下記を {target} に保存し <...> を実値で埋める:", file=sys.stderr)
++    print(notion_config.skeleton_json(), file=sys.stderr)
++    print("詳しい手順は README『セットアップ 2. 設定ファイル』を参照。", file=sys.stderr)
++
++
+ def main() -> int:
+     ap = argparse.ArgumentParser()
+     ap.add_argument("--out", default="", help="plan.json 出力先 (既定: eval-log/notion-gmail-send/plan-<campaign>.json)")
+@@ -109,7 +123,12 @@ def main() -> int:
+         client = notion_client.NotionClient(secrets.get_notion_api_key())
+         bodies, body_skipped = notion_client.fetch_bodies_true(client, db1)
+         resolution = notion_client.fetch_recipients_true(client, db2)
+-    except (notion_config.ConfigError, secrets.KeychainError, notion_client.NotionError) as e:
++    except notion_config.ConfigError as e:
++        print(f"[ERROR] dry-run preflight 失敗: {e}", file=sys.stderr)
++        if notion_config.find_config_path(args.config) is None:
++            _print_config_missing_help(args.config)
++        return 2
++    except (secrets.KeychainError, notion_client.NotionError) as e:
+         print(f"[ERROR] dry-run preflight 失敗: {e}", file=sys.stderr)
+         return 2
+ 
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md b/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
+index b843cb8..417f001 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
+@@ -60,7 +60,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+      --db-id <送信ログDBのid> --apply   # 省略時は config databases.gmail-send-log.db_id から解決
+    ```
+ 
+-3. **config 焼き込み案内** — `--write-config` で `databases.gmail-send-log.db_id` の設定スニペットを提示する。`.notion-config.json` は repo-root・gitignore 対象のため手動で追記する。
++3. **config 焼き込み案内** — `--write-config` で `databases.gmail-send-log.db_id` の設定スニペットを提示する。`.notion-config.json` は作業フォルダ（`$CLAUDE_PROJECT_DIR` 直下・clone は repo-root）・gitignore 対象のため手動で追記する。
+ 
+ 4. **再 dry-run** — 適用後に手順1を再実行し、差分0 (`✅ schema は期待と整合済み`) を確認する。
+ 
+@@ -126,7 +126,7 @@ PY
+ ## Gotchas
+ 
+ 1. **Notion integration 未接続**: 対象DBに integration が共有されていないと `404 object_not_found`。Notion MCP は未共有のため REST 直叩き (`notion-api-key.xl-skills`) を使う。
+-2. **`.notion-config.json` は gitignore 対象**: `--write-config` はスニペット提示のみで自動書き込みしない。repo-root に手動追記する (秘匿値を git に乗せない)。
++2. **`.notion-config.json` は gitignore 対象**: `--write-config` はスニペット提示のみで自動書き込みしない。作業フォルダ（`$CLAUDE_PROJECT_DIR` 直下・clone は repo-root）に手動追記する (秘匿値を git に乗せない)。
+ 3. **select 選択肢は既存温存**: status/reason_code は既存選択肢に不足分を**マージ**追加する。既存の独自選択肢は消さない。
+ 4. **dry-run の exit code**: 差分ありは exit 1 (整合済みは 0)。CI で「差分0」をゲートにする場合はこの戻り値を使う。
+ 5. **このDBは送信フローの前提**: ここが整わないと `run-notion-gmail-send` の preflight G2 が fail-closed で送信を止める。送信前に本スキルで差分0にしておく。
+diff --git a/plugins/notion-gmail-send/tests/test_config_scaffold.py b/plugins/notion-gmail-send/tests/test_config_scaffold.py
+new file mode 100644
+index 0000000..ca65a11
+--- /dev/null
++++ b/plugins/notion-gmail-send/tests/test_config_scaffold.py
+@@ -0,0 +1,95 @@
++# /// script
++# name: test_config_scaffold
++# purpose: config の placeholder SSOT (CONFIG_SKELETON) と scaffold (write_skeleton/--init 相当) を検証する。実 DB ID/送信元の git 追跡ファイルへの再混入(再leak)を機構的に遮断する。
++# inputs: []
++# outputs: []
++# contexts: [C]
++# network: false
++# write-scope: none
++# dependencies: ["pytest"]
++# requires-python: ">=3.9"
++# ///
++"""config scaffold / placeholder SSOT のテスト。
++
++example ファイル・write_skeleton・ConfigError 文言がすべて単一 SSOT (CONFIG_SKELETON) から
++導かれ、実値が git 追跡ファイルへ混入しないことを固定する。config 不在のオンボーディング破綻と
++実値漏洩の回帰を防ぐ。"""
++import json
++from pathlib import Path
++
++import pytest
++
++from lib import notion_config as nc
++
++PLUGIN_ROOT = Path(__file__).resolve().parents[1]
++EXAMPLE = PLUGIN_ROOT / ".notion-config.example.json"
++LEGACY_EXAMPLE = PLUGIN_ROOT / ".notion-config.json.example"
++
++# 過去に example へ焼き込まれていた実値の痕跡。git 追跡ファイルに二度と現れてはならない。
++REAL_VALUE_MARKERS = ["38807a0c", "38907a0c", "shonai.inc"]
++
++
++def test_example_follows_repo_naming_convention():
++    # repo 規約は <name>.example.json (skill-intake / mf-kessai と一致し .gitignore negation が効く)。
++    assert EXAMPLE.is_file(), ".notion-config.example.json が存在しません"
++    assert not LEGACY_EXAMPLE.exists(), "旧命名 .notion-config.json.example が残っています"
++
++
++def test_example_matches_skeleton_ssot():
++    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
++    assert data == nc.CONFIG_SKELETON, "example が CONFIG_SKELETON (SSOT) と一致しません"
++
++
++def test_no_real_values_in_skeleton_or_example():
++    blobs = {
++        "CONFIG_SKELETON": json.dumps(nc.CONFIG_SKELETON, ensure_ascii=False),
++        "example file": EXAMPLE.read_text(encoding="utf-8"),
++    }
++    for where, blob in blobs.items():
++        for marker in REAL_VALUE_MARKERS:
++            assert marker not in blob, f"{where} に実値 {marker} が混入しています (git に実値を載せない)"
++
++
++def test_skeleton_values_are_placeholders():
++    src = nc.CONFIG_SKELETON["notion_gmail_send"]["source"]
++    sender = nc.CONFIG_SKELETON["notion_gmail_send"]["sender"]
++    assert src["body_db"].startswith("<") and src["body_db"].endswith(">")
++    assert src["recipient_db"].startswith("<") and src["recipient_db"].endswith(">")
++    assert sender["impersonate"].startswith("<"), "送信元は placeholder でなければならない (git に実値を載せない)"
++    assert nc.CONFIG_SKELETON["databases"]["gmail-send-log"]["db_id"].startswith("<")
++
++
++def test_skeleton_uses_canonical_db_name():
++    note = nc.CONFIG_SKELETON["notion_gmail_send"]["source"]["_note"]
++    assert "メール送信先_DB" in note
++    assert "メール送信対象者DB" not in note, "宛先DB名称のドリフトが再発しています"
++
++
++def test_write_skeleton_creates_placeholder_config(tmp_path):
++    dest = tmp_path / "sub" / ".notion-config.json"
++    written = nc.write_skeleton(dest)
++    assert written == dest and dest.is_file()
++    assert json.loads(dest.read_text(encoding="utf-8")) == nc.CONFIG_SKELETON
++
++
++def test_write_skeleton_refuses_overwrite_then_allows_with_flag(tmp_path):
++    dest = tmp_path / ".notion-config.json"
++    nc.write_skeleton(dest)
++    with pytest.raises(nc.ConfigError):
++        nc.write_skeleton(dest)            # 既存を黙って潰さない
++    nc.write_skeleton(dest, overwrite=True)  # 明示時のみ許可
++
++
++def test_scaffold_target_prefers_claude_project_dir(monkeypatch, tmp_path):
++    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
++    assert nc.scaffold_target_path() == tmp_path / nc.CONFIG_FILENAME
++
++
++def test_config_missing_error_points_to_init_not_dead_end(monkeypatch):
++    # config 不在のエラーは scaffold (doctor --init) と placeholder 例を指し、デッドエンドにしない。
++    monkeypatch.setattr(nc, "find_config_path", lambda path=None: None)
++    with pytest.raises(nc.ConfigError) as ei:
++        nc.load_config()
++    msg = str(ei.value)
++    assert "doctor --init" in msg
++    assert ".notion-config.example.json" in msg

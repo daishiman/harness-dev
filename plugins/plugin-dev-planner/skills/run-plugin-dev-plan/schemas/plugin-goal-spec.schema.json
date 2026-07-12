@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "plugin-goal-spec",
+  "description": "run-plugin-dev-plan R1 の出力契約。run-goal-elicit の汎用 goal-spec に plugin 固有アンカーを加えた専用 schema。",
+  "type": "object",
+  "required": [
+    "purpose",
+    "background",
+    "goal",
+    "checklist",
+    "target_plugin_slug",
+    "plan_dir"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "purpose": { "type": "string" },
+    "background": { "type": "string" },
+    "goal": { "type": "string" },
+    "artifact_class": { "type": "string", "enum": ["skill-only", "plugin-plan", "existing-plugin-update"] },
+    "target_plugin_slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "plan_dir": { "type": "string" },
+    "out_dir": { "type": ["string", "null"] },
+    "requested_count": { "type": ["integer", "null"], "minimum": 1 },
+    "checklist": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "criterion", "done"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^C[0-9]+$" },
+          "criterion": { "type": "string" },
+          "done": { "type": "boolean" },
+          "verify_by": { "type": "string", "enum": ["reasoning", "script", "lint", "test", "human"] }
+        }
+      }
+    },
+    "constraints": { "type": "array", "items": { "type": "string" } },
+    "handoff_targets": { "type": "array", "items": { "type": "string" } },
+    "max_loops": { "type": "integer", "minimum": 1 },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "source_intake": {
+      "description": "E1 provenance: 消費した intake.json の源泉参照 (任意)。欠落は後方互換で WARN 受理。",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["ref", "schema_version"],
+      "properties": {
+        "ref": { "type": "string" },
+        "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      }
+    },
+    "source_improvement": {
+      "description": "E3 provenance: 受理した improvement-handoff.json の源泉参照 (任意)。欠落は後方互換で WARN 受理。",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["ref", "schema_version"],
+      "properties": {
+        "ref": { "type": "string" },
+        "schema_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      }
+    }
+  }
+}

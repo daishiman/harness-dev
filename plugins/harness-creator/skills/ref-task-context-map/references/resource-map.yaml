@@ -1,0 +1,12 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-task-context-map の references/ ファイル索引
+resources:
+  - file: task-context-map.yaml
+    topic: タスク文脈 → 設計書章番号の対応表 (trigger_keywords / chapter_refs)
+    read_when: 動的ロードすべき章を特定したいとき
+prompts:
+  - file: ../prompts/R1-search-summarize.md
+    purpose: R1 検索/要約 (query → matches[] + chapter_refs)
+schemas:
+  - file: ../schemas/query-result.schema.json
+    purpose: search-summarize の出力スキーマ

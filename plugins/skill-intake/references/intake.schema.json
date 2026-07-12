@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/plugins/skill-intake/intake.schema.json",
+  "title": "skill-intake intake.json contract",
+  "description": "ユーザー正本(info-collector-agent §0〜§11) と section_canonical_map.json (schema_version 2.0.0) から派生する、12 SubAgent 出力契約の機械検証スキーマ。SubAgent 出力 / aggregator 統合 / render_notion_page.py 入力の単一契約。",
+  "type": "object",
+  "required": ["schema_version", "source_of_truth", "sections", "notion_target"],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "source_of_truth": {
+      "const": "plugins/skill-intake/references/section_canonical_map.json"
+    },
+    "skill_name_hint": {"type": "string", "pattern": "^[a-z][a-z0-9-]{2,40}$"},
+    "notion_target": {
+      "type": "object",
+      "description": "Notion 出力先の正本。指定 page がある場合は update 専用で、create fallback を禁止する。",
+      "required": ["mode"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["update", "create-explicit"]},
+        "page_id": {"type": "string", "pattern": "^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"},
+        "page_url": {"type": "string"},
+        "database_id": {"type": "string"},
+        "source": {"type": "string", "enum": ["arg", "url", "result_file", "explicit_create"]},
+        "require_update": {"type": "boolean", "default": true},
+        "allow_create": {"type": "boolean", "default": false}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "update"}}},
+          "then": {"required": ["page_id"]}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "create-explicit"}}},
+          "then": {"properties": {"allow_create": {"const": true}}}
+        }
+      ]
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "0_executive_summary",
+        "1_assumption_challenger",
+        "2_user_profile",
+        "3_purpose_excavator",
+        "4_option_presenter",
+        "5_visualizer",
+        "6_five_axes_summary",
+        "7_design_decisions",
+        "8_open_questions",
+        "9_handoff_contract",
+        "10_self_updater",
+        "11_artifact_index"
+      ],
+      "properties": {
+        "0_executive_summary": {"$ref": "#/$defs/executive_summary"},
+        "1_assumption_challenger": {"$ref": "#/$defs/assumption_challenger"},
+        "2_user_profile": {"$ref": "#/$defs/user_profile"},
+        "3_purpose_excavator": {"$ref": "#/$defs/purpose_excavator"},
+        "4_option_presenter": {"$ref": "#/$defs/option_presenter"},
+        "5_visualizer": {"$ref": "#/$defs/visualizer"},
+        "6_five_axes_summary": {"$ref": "#/$defs/five_axes_summary"},
+        "7_design_decisions": {"$ref": "#/$defs/design_decisions"},
+        "8_open_questions": {"$ref": "#/$defs/open_questions"},
+        "9_handoff_contract": {"$ref": "#/$defs/handoff_contract"},
+        "10_self_updater": {"$ref": "#/$defs/self_updater"},
+        "11_artifact_index": {"$ref": "#/$defs/artifact_index"}
+      }
+    },
+    "validation": {"$ref": "#/$defs/validation_block"}
+  },
+  "$defs": {
+    "procedure": {
+      "type": "object",
+      "description": "現状実施手順 (as-is procedure)。interview.json.procedure と同一形状の additive ブロック。既存 12 section 契約を崩さず sections.6_five_axes_summary.procedure へ格納する。完全性/汚染の正本判定は scripts/validate-procedure-completeness.py (C02)。",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["detailed", "overview_fallback"]},
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "input", "output", "tool", "frequency"],
+            "properties": {
+              "action": {"type": "string", "minLength": 1},
+              "input": {"type": "string", "minLength": 1},
+              "output": {"type": "string", "minLength": 1},
+              "tool": {"type": "string", "minLength": 1},
+              "frequency": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "difficulty_flag": {"type": "boolean"},
+        "overview": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["step_count_estimate", "participants", "frequency"],
+          "properties": {
+            "step_count_estimate": {"type": "string", "minLength": 1},
+            "participants": {"type": "string", "minLength": 1},
+            "frequency": {"type": "string", "minLength": 1}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "detailed"}}, "required": ["mode"]},
+          "then": {"required": ["steps"], "properties": {"steps": {"minItems": 1}}}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "overview_fallback"}}, "required": ["mode"]},
+          "then": {"required": ["difficulty_flag", "overview"], "properties": {"difficulty_flag": {"const": true}}}
+        }
+      ]
+    },
+    "validation_block": {
+      "type": "object",
+      "description": "決定論ゲートの結果格納 (additive・任意)。procedure_completeness は validate-procedure-completeness.py (C02) の stdout をそのまま格納し、quality_gate.py (C04) が再利用する。",
+      "properties": {
+        "procedure_completeness": {
+          "type": "object",
+          "required": ["complete", "contamination"],
+          "properties": {
+            "complete": {"type": "boolean"},
+            "mode": {"type": ["string", "null"]},
+            "missing": {"type": "array", "items": {"type": "string"}},
+            "contamination": {
+              "type": "object",
+              "required": ["detected"],
+              "properties": {
+                "detected": {"type": "boolean"},
+                "fields": {"type": "array", "items": {"type": "string"}},
+                "matched_terms": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          }
+        }
+      }
+    },
+    "viz_slot_value": {
+      "type": "object",
+      "required": ["role", "mermaid_source"],
+      "properties": {
+        "role": {"type": "string"},
+        "mermaid_source": {"type": "string", "minLength": 10},
+        "one_liner": {"type": "string"},
+        "legend": {"type": "string"}
+      }
+    },
+    "executive_summary": {
+      "type": "object",
+      "required": ["generated_at", "pattern", "depth", "vocabulary_tier", "state", "true_purpose_oneliner", "handoff_mode"],
+      "properties": {
+        "generated_at": {"type": "string", "format": "date-time"},
+        "pattern": {"enum": ["A", "B", "C", "D", "E"]},
+        "workflow_pattern": {"type": "string", "default": "A単体"},
+        "depth": {"enum": ["shallow", "standard", "detailed"]},
+        "vocabulary_tier": {"enum": ["novice", "intermediate", "expert"]},
+        "state": {"enum": ["drafting", "gate_a_pending", "gate_a_approved", "handoff_ready"]},
+        "true_purpose_oneliner": {"type": "string", "minLength": 8, "maxLength": 300},
+        "design_decision_summary": {"type": "string", "default": ""},
+        "handoff_mode": {"enum": ["fast-track", "standard", "onboarding", "draft-only"]},
+        "value_realized_score": {"type": ["integer", "null"], "minimum": 0, "maximum": 100}
+      }
+    },
+    "assumption_challenger": {
+      "type": "object",
+      "required": ["surface_request", "deep_candidates", "adopted_deep_problem"],
+      "properties": {
+        "surface_request": {"type": "string", "minLength": 1},
+        "deep_candidates": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "adopted"],
+            "properties": {
+              "id": {"enum": ["D1", "D2", "D3"]},
+              "label": {"type": "string"},
+              "adopted": {"type": "boolean"}
+            }
+          }
+        },
+        "adopted_deep_problem": {"type": "string"},
+        "time_freed_intent": {"type": "string", "default": "未指定"},
+        "blindspots": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "user_profile": {
+      "type": "object",
+      "required": ["dimensions", "vocabulary_tier"],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["dim", "value", "confidence"],
+            "properties": {
+              "dim": {"enum": ["expertise", "role", "context", "constraints", "motivation", "sharing_intent"]},
+              "value": {"type": "string"},
+              "confidence": {"enum": ["low", "mid", "high"]},
+              "evidence": {"type": "string"}
+            }
+          }
+        },
+        "vocabulary_tier": {"enum": ["novice", "intermediate", "expert"]},
+        "implications_for_next_phase": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "purpose_excavator": {
+      "type": "object",
+      "required": ["techniques_used", "rounds", "true_purpose", "underlying_motivation", "output_priority"],
+      "properties": {
+        "techniques_used": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"enum": ["5whys", "jtbd", "reverse_brief", "magic_wand", "tacit_extraction", "premortem", "outcome_question", "constraint_relaxation"]}
+        },
+        "rounds": {"type": "integer", "minimum": 1},
+        "agreement_loop_detected": {"type": "boolean", "default": false},
+        "true_purpose": {"type": "string", "minLength": 8},
+        "underlying_motivation": {"type": "string"},
+        "differentiation": {"type": "string", "default": ""},
+        "output_priority": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["rank", "output", "mandatory"],
+            "properties": {
+              "rank": {"type": "integer", "minimum": 1},
+              "output": {"type": "string"},
+              "mandatory": {"type": "boolean"}
+            }
+          }
+        },
+        "tacit_locus": {
+          "type": ["object", "null"],
+          "properties": {
+            "where": {"type": "string"},
+            "extraction_strategy_hint": {"type": "string"}
+          },
+          "default": null
+        }
+      }
+    },
+    "option_presenter": {
+      "type": "object",
+      "required": ["decision_tables", "connectors"],
+      "properties": {
+        "decision_tables": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["axis", "options", "adopted_id"],
+            "properties": {
+              "axis": {"type": "string"},
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label", "pro", "con", "weight", "adopted"],
+                  "properties": {
+                    "id": {"type": "string"},
+                    "label": {"type": "string"},
+                    "pro": {"type": "string"},
+                    "con": {"type": "string"},
+                    "weight": {"enum": ["軽", "中", "重"]},
+                    "adopted": {"type": "boolean"}
+                  }
+                }
+              },
+              "adopted_id": {"type": "string"}
+            }
+          }
+        },
+        "connectors": {
+          "type": "object",
+          "required": ["input_sources", "outputs"],
+          "properties": {
+            "input_sources": {"type": "array", "items": {"type": "string"}},
+            "knowledge_assets": {"type": "array", "items": {"type": "string"}, "default": []},
+            "outputs": {"type": "array", "items": {"type": "string"}},
+            "scheduler": {"type": "string"}
+          }
+        }
+      }
+    },
+    "visualizer": {
+      "type": "object",
+      "required": ["figures", "rules_check"],
+      "properties": {
+        "figures": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["index", "title", "kind", "mermaid_source", "legend", "one_liner"],
+            "properties": {
+              "index": {"type": "integer", "minimum": 1, "maximum": 5},
+              "title": {"type": "string"},
+              "kind": {"enum": ["flowchart", "sequence", "mindmap", "quadrant", "journey", "comparison", "architecture"]},
+              "mermaid_source": {"type": "string", "minLength": 20},
+              "legend": {"type": "string"},
+              "one_liner": {"type": "string", "minLength": 8}
+            }
+          }
+        },
+        "rules_check": {
+          "type": "object",
+          "required": ["nodes_7_plus_minus_2", "label_len_le_10", "color_legend", "no_emoji", "one_liner_present"],
+          "properties": {
+            "nodes_7_plus_minus_2": {"const": true},
+            "label_len_le_10": {"const": true},
+            "color_legend": {"const": true},
+            "no_emoji": {"const": true},
+            "one_liner_present": {"const": true}
+          }
+        }
+      }
+    },
+    "intent_contract": {
+      "type": "object",
+      "description": "入力->出力インテント抽出の第一級契約。正本は references/intent-contract.schema.json。§6 の output_to は output_spec.sink、input_from は input_spec.sources から派生する。input_spec/output_spec の全 slot が filled になるまで intake は完了しない。",
+      "required": ["input_spec", "output_spec", "slot_status"],
+      "additionalProperties": false,
+      "properties": {
+        "input_spec": {
+          "type": "object",
+          "description": "何を入力するか。§6 input_from は sources から派生。",
+          "required": ["sources", "trigger", "frequency", "raw_materials"],
+          "additionalProperties": false,
+          "properties": {
+            "sources": {"type": "array", "items": {"type": "string"}},
+            "trigger": {"type": "string"},
+            "frequency": {"enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]},
+            "raw_materials": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "output_spec": {
+          "type": "object",
+          "description": "何をどう出力して欲しいか。§6 output_to は sink から派生。",
+          "required": ["sink", "format", "granularity", "audience", "cadence"],
+          "additionalProperties": false,
+          "properties": {
+            "sink": {"type": "string"},
+            "format": {"enum": ["bullet", "table", "prose", "document", "message", "dashboard", "other"]},
+            "granularity": {"type": "string"},
+            "audience": {"type": "string"},
+            "cadence": {"enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]}
+          }
+        },
+        "slot_status": {
+          "type": "object",
+          "description": "各 slot の provenance。全 slot filled=true で完了。",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["filled", "source"],
+            "additionalProperties": false,
+            "properties": {
+              "filled": {"type": "boolean"},
+              "source": {"enum": ["direct_answer", "probe", "inferred"]},
+              "probe_ids": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "five_axes_summary": {
+      "type": "object",
+      "required": ["axes", "intent_contract", "knowledge_pipeline"],
+      "properties": {
+        "intent_contract": {"$ref": "#/$defs/intent_contract"},
+        "procedure": {"$ref": "#/$defs/procedure"},
+        "axes": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["axis_id", "answer", "depth"],
+            "properties": {
+              "axis_id": {"enum": ["output_to", "input_from", "share_target", "real_problem", "knowledge_asset"]},
+              "answer": {"type": "string", "minLength": 1},
+              "depth": {"enum": ["deep", "standard", "shallow"]},
+              "evidence": {"type": "string"}
+            }
+          }
+        },
+        "knowledge_pipeline": {
+          "type": "object",
+          "required": ["ingest", "analysis", "storage", "retrieval", "update"],
+          "properties": {
+            "ingest": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "analysis": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "storage": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "retrieval": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+            "update": {"enum": ["daily", "weekly", "monthly", "event"]}
+          }
+        }
+      }
+    },
+    "design_decisions": {
+      "type": "object",
+      "required": ["adoptions", "output_priority_finalized"],
+      "properties": {
+        "adoptions": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["axis", "adopted_id", "reason_one_liner"],
+            "properties": {
+              "axis": {"type": "string"},
+              "adopted_id": {"type": "string"},
+              "reason_one_liner": {"type": "string", "maxLength": 200}
+            }
+          }
+        },
+        "output_priority_finalized": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rank", "output", "mandatory"],
+            "properties": {
+              "rank": {"type": "integer"},
+              "output": {"type": "string"},
+              "mandatory": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "object",
+      "required": ["blocking_count", "deferred_count"],
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["q", "blocking", "defer_to"],
+            "properties": {
+              "q": {"type": "string"},
+              "blocking": {"type": "boolean"},
+              "defer_to": {"type": "string"}
+            }
+          },
+          "default": []
+        },
+        "blocking_count": {"const": 0},
+        "deferred_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "handoff_contract": {
+      "type": "object",
+      "required": ["recommended_next", "intake_json_path", "starting_command"],
+      "properties": {
+        "recommended_next": {
+          "type": "object",
+          "required": ["mode", "skip_to_phase", "reason"],
+          "properties": {
+            "mode": {"enum": ["fast-track", "standard", "onboarding", "draft-only"]},
+            "skip_to_phase": {"type": "string"},
+            "reason": {"type": "string"}
+          }
+        },
+        "intake_json_path": {"type": "string"},
+        "starting_command": {"type": "string"}
+      }
+    },
+    "self_updater": {
+      "type": "object",
+      "required": ["metrics", "score_rationale"],
+      "properties": {
+        "metrics": {
+          "type": "object",
+          "required": ["candidates_detected", "candidates_applied", "skipped_duplicates", "value_realized_score_estimate"],
+          "properties": {
+            "candidates_detected": {"type": "integer", "minimum": 0},
+            "candidates_applied": {"type": "integer", "minimum": 0},
+            "skipped_duplicates": {"type": "integer", "minimum": 0},
+            "value_realized_score_estimate": {"type": "integer", "minimum": 0, "maximum": 100}
+          }
+        },
+        "score_rationale": {"type": "string"},
+        "deductions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["reason", "points"],
+            "properties": {
+              "reason": {"type": "string"},
+              "points": {"type": "integer"}
+            }
+          },
+          "default": []
+        },
+        "question_bank_additions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["category", "technique", "question_text"],
+            "properties": {
+              "category": {"type": "string"},
+              "technique": {"type": "string"},
+              "question_text": {"type": "string"}
+            }
+          },
+          "default": []
+        },
+        "session_observations": {"type": "array", "items": {"type": "string"}, "default": []},
+        "skipped_next_phases": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "artifact_index": {
+      "type": "object",
+      "required": ["base_path", "artifacts"],
+      "properties": {
+        "base_path": {"type": "string", "pattern": "^.+/output/[a-z][a-z0-9-]+/$"},
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "role_one_liner", "generator_subagent"],
+            "properties": {
+              "path": {"type": "string"},
+              "role_one_liner": {"type": "string"},
+              "generator_subagent": {"type": "string"},
+              "optional": {"type": "boolean", "default": false}
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-cross-field-rules": [
+    {
+      "id": "handoff_mode_consistency",
+      "comment": "T6 (LS-09 対応): JSON Schema は 2 フィールドの value 等価を宣言できないため、validate_intake_schema.py 内の cross-field check で強制する。",
+      "left": "sections.0_executive_summary.handoff_mode",
+      "operator": "equals",
+      "right": "sections.9_handoff_contract.recommended_next.mode"
+    }
+  ]
+}

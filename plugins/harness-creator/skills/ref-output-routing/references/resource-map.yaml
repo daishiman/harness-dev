@@ -1,0 +1,12 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# ref-output-routing の references/ ファイル索引
+resources:
+  - file: sink-contract.md
+    topic: 全 adapter 共通の sink 契約 (payload/result schema・exit code・on_conflict)
+    read_when: 出力先を切り替えたいとき、新 sink を追加したいとき
+  - file: security-model.md
+    topic: 出力先別のセキュリティ制約 (権限 / network / write 範囲)
+    read_when: sink 選定がセキュリティ条項に抵触しないか確認するとき
+prompts:
+  - file: ../prompts/R1-search-summarize.md
+    purpose: R1 検索/要約 (query → matches[])

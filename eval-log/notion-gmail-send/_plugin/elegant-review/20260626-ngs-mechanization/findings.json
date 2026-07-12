@@ -1,0 +1,33 @@
+{
+  "run_id": "20260626-ngs-mechanization",
+  "target": {"plugin": "notion-gmail-send", "scope_mode": "plugin+generator(skill-creator)"},
+  "question": "(1) marketplace 表示修正は正しいか (2) skill-creator 量産でも登録漏れが二度と起きない仕組みか",
+  "thought_method_coverage": {
+    "used_total": 30,
+    "by_agent": {"logical-structural": 10, "meta-divergent": 9, "system-strategic": 11},
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "consensus": {
+    "q1_fix_correctness": "PASS — marketplace.json/bundles.json 登録 + MK-001/002/003 検出 lint + CI3面 hard 配線。検出器が実体ディレクトリ起点(plugins/ iterdir)で巡回するため自己強化ループを遮断。fail-closed で漏れが本番に出ない最低保証は達成済み。",
+    "q2_prevention": "不十分 — 生成層(skill-creator)にルート marketplace.json/bundles.json へ登録する予防機構が無い。検出のみで成立し、次の量産でも『作る→手で登録し忘れる→CIで初めて落ちる』が再発する。",
+    "leverage_point": "validate-plugin-completeness.py に検出と同居する --fix(append-only 自動登録)を追加し、生成フロー(build-steps Phase G / workflow-manifest step3.5)に配線。検出と予防が単一 SSOT に閉じ drift しない。"
+  },
+  "issues": [
+    {"id": "F-CORE", "condition_signal": "dependency_break", "severity": "critical", "location": "plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py:152-160 / plugins/skill-creator/skills/run-skill-create/workflow-manifest.json step3.5 / build-steps.md Phase G", "description": "生成層に新形式 plugin.json を ルート marketplace.json/bundles.json へ登録する実行ステップが構造的に欠落。Gate2.5 の registration-plan は plugin.json 形式で proposals:{} 早期 return、step3.5 bundle-register は command/delegateSkill とも null、Phase G は alias/commit のみ。3分析が一致。", "merged_from": ["L1","L2","L3","L7","M1","S2","S3","S8"], "auto_fixable": false, "fix": "validate-plugin-completeness.py に --fix(append-only 登録+書込後自己再検証) を追加し、build-steps Phase G と workflow-manifest step3.5 に配線。完了チェックリストを実効化。"},
+    {"id": "F-PKG", "condition_signal": "omission", "severity": "high", "location": "plugins/skill-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml / run-plugin-package-check/SKILL.md", "description": "出荷前 PKG harness(PKG-001〜015)に marketplace/bundles 登録検査 ID が無く、PKG check 全 PASS でも未登録のまま出荷されうる。検出が PKG 外の独立 lint に一本化。", "merged_from": ["L5","M4","M5","S4"], "auto_fixable": false, "fix": "run-plugin-package-check の完了条件に validate-plugin-completeness.py を編入（PKG-016 は governance 未確定のため ID 新設は避け、既存 lint 参照で接続）。"},
+    {"id": "F-MK003", "condition_signal": "inconsistency", "severity": "low", "location": "scripts/validate-plugin-completeness.py:126-127", "description": "MK-003 は m.get('name') != plugin_name を再検査するが行88-89 と重複し、marketplace エントリの name フィールド値自体は検査していない(dict キーで引くため)。name 値が directory 名と異なると MK-001 が誤発火し MK-003 の独立検査が機能しない。", "merged_from": ["L9"], "auto_fixable": true, "fix": "MK-003 を『marketplace plugins[] の各 entry.name 値 == source basename == directory 名』の直接照合に書換え、重複を解消。"},
+    {"id": "F-COVERAGE", "condition_signal": "smell", "severity": "low", "location": "scripts/lint-plugin-lint-coverage.py:83-94", "description": "被覆メタ lint が marketplace.json 起点で巡回するため未登録 plugin は対象外(O9 構造の残存)。MK-001 が上流で塞ぐが両者の依存がコードに明記されず、片方を弱めると盲点復活。", "merged_from": ["L4","M3","S6"], "auto_fixable": true, "fix": "docstring に『marketplace 起点の盲点は validate-plugin-completeness.py(MK-001)が上流で塞ぐ前提。セット配線必須』を明記。理想は実体起点併用。"},
+    {"id": "F-BUNDLE-DUP", "condition_signal": "smell", "severity": "low", "location": "plugins/notion-gmail-send/.claude-plugin/plugin.json:13-18", "description": "bundle_targets と bundles が同一値(xl-skills-full)で二重宣言。実害は無いが自動登録器の真実源が一意でなくなる種。", "merged_from": ["L8","M7","S5","O11"], "auto_fixable": true, "fix": "自動登録器は bundle_targets を唯一の真実源として読む。plugin.json の重複は deferred(low・実害なし)で別途正規化。"},
+    {"id": "F-SSOT-ROOT", "condition_signal": "smell", "severity": "medium", "location": "marketplace.json + bundles.json + plugin.json + 実体ディレクトリ(4重 SSOT)", "description": "同一事実(この plugin は配布対象)が4箇所に重複保持。根治は marketplace/bundles を実体+plugin.json から自動生成する派生物へ格下げ(ALT-D)。", "merged_from": ["M2","ALT-D"], "auto_fixable": false, "fix": "DEFER。本命の根治だが大規模移行(手編集禁止+全 plugin description を plugin.json に一元化)。今回は --fix で予防を成立させ、ALT-D は将来課題として記録。"}
+  ],
+  "alternative_approaches": [
+    {"id": "ALT-A", "summary": "build-steps Phase G + PKG 完了条件の穴埋め(手順/検査)", "recommendation": "adopt(部分)"},
+    {"id": "ALT-B", "summary": "生成時自動登録(append-only)を予防層として追加", "recommendation": "adopt(コア・本命)"},
+    {"id": "ALT-C", "summary": "生成後 hook で自動 append", "recommendation": "reject(hook 腐敗リスク)"},
+    {"id": "ALT-D", "summary": "marketplace/bundles を実体から全自動生成し SSOT 一本化", "recommendation": "defer(根治だが大移行)"},
+    {"id": "ALT-E", "summary": "検出器の CI 配線自体を検査するメタ lint", "recommendation": "adopt(軽量・検出器腐敗の歯止め)"}
+  ],
+  "verdict_pre_phase3": {"矛盾なし": "FAIL", "漏れなし": "FAIL", "整合性あり": "FAIL", "依存関係整合": "FAIL"},
+  "phase1_reset_passed": true
+}

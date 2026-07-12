@@ -1,0 +1,361 @@
+diff --git a/.claude-plugin/bundles.json b/.claude-plugin/bundles.json
+index d4b3e52..448a021 100644
+--- a/.claude-plugin/bundles.json
++++ b/.claude-plugin/bundles.json
+@@ -4,12 +4,13 @@
+   "bundles": [
+     {
+       "name": "xl-skills-full",
+-      "description": "Recommended. All 10 plugins required for the full skill-creator → prompt-creator → governance → distribution pipeline.",
++      "description": "Recommended. All plugins required for the full skill-creator → prompt-creator → governance → distribution pipeline, plus the company-master enrichment plugin.",
+       "plugins": [
+         "skill-creator",
+         "prompt-creator",
+         "skill-intake",
+         "contract-generator",
++        "company-master",
+         "skill-governance-config",
+         "skill-governance-lint",
+         "skill-governance-hooks",
+diff --git a/.claude-plugin/marketplace.json b/.claude-plugin/marketplace.json
+index 244b46a..bd82b38 100644
+--- a/.claude-plugin/marketplace.json
++++ b/.claude-plugin/marketplace.json
+@@ -42,6 +42,14 @@
+       "category": "productivity",
+       "tags": ["contract", "docx", "google-drive", "google-sheets", "slack", "automation"]
+     },
++    {
++      "name": "company-master",
++      "source": "./plugins/company-master",
++      "description": "会社名/住所/法人番号の断片から、gBizINFO(正式名称/所在地/法人番号)・日本郵便KEN_ALL(郵便番号)・Web検索(電話番号)で企業情報を補完し、Notion企業マスタDBへ法人番号キーでupsertする。確度4ラベル・取得失敗の備考定型文言・ネット検索値の確認用URLを保持。DB IDはnotion_config経由・Keychainトークン保管・PreToolUse hookで機密保護。",
++      "version": "0.1.0",
++      "category": "productivity",
++      "tags": ["notion", "company-master", "gbizinfo", "enrichment", "automation"]
++    },
+     {
+       "name": "skill-governance-config",
+       "source": "./plugins/skill-governance-config",
+diff --git a/Makefile b/Makefile
+index fe630a6..c65edff 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,7 @@
+ # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
+ # CI では --check gate (creator-kit-ci.yml) が走るため二重防護となる。
+ 
+-.PHONY: sync sync-check lint plugin-package-check contract-intake vendored-ssot pytest test help
++.PHONY: sync sync-check lint plugin-package-check contract-intake vendored-ssot company-master-vendored pytest test help
+ 
+ ## sync: creator-kit/skills/ を .claude/skills/ に同期する（--apply）
+ sync:
+@@ -13,7 +13,7 @@ sync-check:
+ 	bash scripts/sync-skills-to-claude.sh --check
+ 
+ ## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT 検証を実行する
+-lint: contract-intake vendored-ssot
++lint: contract-intake vendored-ssot company-master-vendored
+ 	python3 scripts/lint-skill-name.py --skills-dir plugins/skill-creator/skills
+ 	python3 scripts/lint-skill-description.py --skills-dir plugins/skill-creator/skills
+ 	python3 scripts/validate-frontmatter.py --skills-dir plugins/skill-creator/skills
+@@ -22,6 +22,10 @@ lint: contract-intake vendored-ssot
+ vendored-ssot:
+ 	python3 scripts/lint-intake-vendored-ssot.py
+ 
++## company-master-vendored: company-master の scripts が外部依存ゼロ(空 vendor が正常)か機械検証
++company-master-vendored:
++	python3 scripts/lint-company-master-vendored-deps.py
++
+ ## contract-intake: skill-intake の enum SSOT / 軸分離 / 二重定義検出 contract test
+ contract-intake:
+ 	python3 scripts/contract-intake-enum-ssot.py
+diff --git a/doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md b/doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md
+index 6250f74..6512bf8 100644
+--- a/doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md
++++ b/doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md
+@@ -223,7 +223,7 @@ xl-skills/                          # marketplace リポジトリ
+ ```
+ [plugins/<name>/agents/foo.md]
+          │
+-         ▼ scripts/build-claude-symlinks.py（新設予定、Phase 0 中盤で着手）
++         ▼ scripts/build-claude-symlinks.py（実装済・規約正本 / CI --check で fail-closed 強制）
+          │
+ [.claude/agents/foo.md] = symlink → ../../plugins/<name>/agents/foo.md
+ ```
+@@ -272,7 +272,7 @@ xl-skills/                          # marketplace リポジトリ
+ 
+ - [ ] `classify_change()` 実装完了
+ - [ ] 全 SKILL.md の外部参照棚卸し完了
+-- [ ] `build-claude-symlinks.py` 実装と test
++- [x] `build-claude-symlinks.py` 実装と test（実装済: `scripts/build-claude-symlinks.py` + `tests/test_build_claude_symlinks.py`、CI `--check` 配線済）
+ - [ ] `build-claude-settings.py` 実装と test
+ - [ ] migrate スクリプトの `--dry-run` ログ取得
+ - [ ] **36章 PKG-001〜009 lint 実装**（package completeness check の P0 セット。`scripts/validate-plugin-package.py` として配置、Python stdlib 限定）
+diff --git a/eval-log/skill-build-trace.json b/eval-log/skill-build-trace.json
+index 64450a4..56540ba 100644
+--- a/eval-log/skill-build-trace.json
++++ b/eval-log/skill-build-trace.json
+@@ -1,96 +1,99 @@
+ {
+-  "skill_name": "run-contract-generate",
++  "skill_name": "run-company-master-build",
+   "skill_kind": "run",
+   "build_mode": "create",
+-  "skill_path": "plugins/contract-generator/skills/run-contract-generate",
++  "skill_path": "plugins/company-master/skills/run-company-master-build",
+   "source_docs": [
+     "eval-log/skill-brief.json",
+-    "output/contract-generator-v2/concept.md",
+-    "output/contract-generator-v2/ledger-individual-schema.md",
+-    "output/contract-generator-v2/ledger-corporate-schema.md",
+-    "doc/参考Skill/contract-generator/SKILL.md",
+-    ".claude/skills/run-build-skill/templates/run.md",
+-    ".claude/skills/run-build-skill/references/capability-manifest.schema.json",
+-    "plugins/skill-intake/scripts/keychain_get_secret.py"
++    "plugins/skill-creator/skills/run-build-skill/SKILL.md",
++    "plugins/skill-creator/skills/run-build-skill/templates/run.md",
++    "plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
++    "plugins/contract-generator/.claude-plugin/plugin.json",
++    "plugins/contract-generator/hooks/hook-guard-secret.py",
++    "plugins/skill-intake/notion-config.fixed.json",
++    "plugins/skill-intake/scripts/notion_config.py",
++    "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md"
+   ],
+   "context_map_decision": {
+-    "map": ".claude/skills/run-build-skill/references/resource-map.yaml を読み baseline-skill-build カテゴリの章を選択",
++    "map": "run-build-skill references/resource-map.yaml を読み baseline-skill-build カテゴリの章を選択",
+     "task_category": "baseline-skill-build",
+     "selected_docs": [
+       "eval-log/skill-brief.json",
+-      "output/contract-generator-v2/concept.md",
+-      "output/contract-generator-v2/ledger-individual-schema.md",
+-      "output/contract-generator-v2/ledger-corporate-schema.md",
+-      "doc/参考Skill/contract-generator/SKILL.md",
+-      ".claude/skills/run-build-skill/templates/run.md",
+-      ".claude/skills/run-build-skill/references/capability-manifest.schema.json",
+-      "plugins/skill-intake/scripts/keychain_get_secret.py"
++      "plugins/skill-creator/skills/run-build-skill/SKILL.md",
++      "plugins/skill-creator/skills/run-build-skill/templates/run.md",
++      "plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
++      "plugins/contract-generator/.claude-plugin/plugin.json",
++      "plugins/contract-generator/hooks/hook-guard-secret.py",
++      "plugins/skill-intake/notion-config.fixed.json",
++      "plugins/skill-intake/scripts/notion_config.py",
++      "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md"
+     ]
+   },
+   "design_model": {
+-    "intent": "管理台帳(Sheets)×Drive .docxひな形を照合し業務委託契約書を個人/法人で半自動量産する",
+-    "contract": "作成指示◯行ごとに黄色維持Google Docs版(監査用)+黄色除去PDF版(提出用)を生成し台帳へ書き戻す",
+-    "boundary": "差込生成・黄色二系統出力・法人別紙1-3生成(台帳別紙列から末尾同梱)・台帳整備/書き戻しまで。7専門家による法的レビュー/Notion/Markdown副系は対象外",
+-    "execution": "Skill(制御/対話補完)+python3 scripts(python-docx差込/Google API/drift検知)。MCPは書込不可のため不採用",
+-    "feedback": "drift検知(未置換マーカー/未マップ黄色run)とscan_template.pyでひな形変更を検知し停止・報告。--dry-runで安全検証"
++    "intent": "会社名/住所/法人番号の断片から信頼できる企業マスタ行を gBizINFO 確定法人番号で一意同定し確度付きで補完・維持する",
++    "contract": "resolve(同定)→enrich(属性補完) の2段で処理し、9列(6属性+情報の確かさ+備考+確認用URL)を notion_config.get_db_id('company-master') 解決のDBへ確度付きで upsert する",
++    "boundary": "同定(resolve)と属性補完(enrich)・確度保持のみ。契約書生成/与信判断/有料企業DB契約は対象外。電話番号は形式チェックのみで正確性は非保証",
++    "execution": "Skill(同定の判断/対話/ゴールシーク制御)+python3 scripts(gBizINFO照会/KEN_ALL逆引き/Web検索/Notion upsert/backfill)。MCPは書込不可のため不採用",
++    "feedback": "precondition gate(token不在 fail-closed exit2)と外部障害時のJSONL退避リプレイ(eval-log/backfill-replay.jsonl)。誤値より空欄優先で要確認保留"
+   },
+   "build_flow_coverage": [
+-    {"step": "problem-definition", "status": "PASS", "evidence": "skill-brief.json goal/checklist と concept.md で課題定義"},
+-    {"step": "execution-layer", "status": "PASS", "evidence": "layer_decisions で Skill+script 採用・MCP不採用を決定"},
++    {"step": "problem-definition", "status": "PASS", "evidence": "skill-brief.json goal/purpose_background/checklist で課題定義(断片→信頼マスタ)"},
++    {"step": "execution-layer", "status": "PASS", "evidence": "layer_decisions で Skill+script 採用・MCP不採用・Hook(二段防御)採用を決定"},
+     {"step": "classification", "status": "PASS", "evidence": "kind=run/L1/role_suffix=generator に分類"},
+-    {"step": "naming", "status": "PASS", "evidence": "run-contract-generate(lint-skill-name PASS)"},
+-    {"step": "frontmatter", "status": "PASS", "evidence": "commonCore(name/description/kind/version/owner)+effect=external-mutation(validate-frontmatter PASS)"},
+-    {"step": "body", "status": "PASS", "evidence": "SKILL.md 本文 300行未満・ゴールシーク構造・詳細はreferencesへ"},
+-    {"step": "support-files", "status": "PASS", "evidence": "references7点(README-setup含む)/scripts8点/prompts1点/template-mapping.json"},
+-    {"step": "permissions-hooks", "status": "PASS", "evidence": "二段防御実装: hooks/hook-guard-secret.py(PreToolUse/Bash, plugin.json配線)が鍵の平文出力/誤削除をブロック + references/settings-hardening.json(deny) + config許可ID限定 + --dry-run + 非破壊ensure_schema"},
+-    {"step": "validation", "status": "PASS", "evidence": "P0 lint群 exit0・deterministic_checks を validate.py/docx_fill.py に実装"},
+-    {"step": "operation-improvement", "status": "PASS", "evidence": "template-change-runbook.md+scan_template.py でひな形変更追従・/run-skill-feedback 周知"}
++    {"step": "naming", "status": "PASS", "evidence": "run-company-master-build(dir==name・plugin名非包含・lint-skill-name PASS)"},
++    {"step": "frontmatter", "status": "PASS", "evidence": "commonCore(name/description/kind/version/owner)+effect=external-mutation・description発動条件のみtrigger2件"},
++    {"step": "body", "status": "PASS", "evidence": "SKILL.md 本文300行未満・ゴールシーク構造(Goal+Why+Checklist+Loop+配線+検証)・詳細はreferencesへ退避"},
++    {"step": "support-files", "status": "PASS", "evidence": "references4点(columns/data-sources/remarks-templates/resource-map)/scripts9点(notion_config/normalize/ken_all/remarks/validate_company_master含む)/prompts1点(R1)"},
++    {"step": "permissions-hooks", "status": "PASS", "evidence": "二段防御: hooks/hook-guard-secret.py(PreToolUse/Bash, plugin.json配線)が Notion/gBizINFO トークンの平文出力/誤削除をブロック + precondition gate fail-closed"},
++    {"step": "validation", "status": "PASS", "evidence": "Step4 lint群 exit0・deterministic_checks(a-h)を validate_company_master.py で実判定・KEN_ALL逆引き/normalize共有/verify_phoneクロスチェック/alt_key決定性をネット非依存単体検証(ダミーCSV行・DL失敗フォールバック含む)"},
++    {"step": "operation-improvement", "status": "PASS", "evidence": "backfill(空欄列/要確認行のみ)+JSONL退避リプレイ+/run-skill-feedback 周知(plugin.json description)"}
+   ],
+   "doc_coverage": [
+     {"doc": "02-skill-structure", "status": "PASS", "evidence": "SKILL.md+references+scripts+prompts の標準構成"},
+-    {"doc": "03-frontmatter", "status": "PASS", "evidence": "commonCore充足・description発動条件のみ"},
++    {"doc": "03-frontmatter", "status": "PASS", "evidence": "commonCore充足・description発動条件のみ・trigger句2件"},
+     {"doc": "04-invocation-permissions", "status": "PASS", "evidence": "user-invocable=true/allowed-tools限定/effect=external-mutation"},
+-    {"doc": "05-layering", "status": "PASS", "evidence": "Skill制御層+script決定論層の二層分離"},
+-    {"doc": "06-classification-naming", "status": "PASS", "evidence": "run接頭辞・kebab-case・plugin名非包含"},
+-    {"doc": "07-progressive-disclosure", "status": "PASS", "evidence": "resource-map.yaml索引・本文から詳細をreferencesへ退避"},
+-    {"doc": "08-skill-writing-guidelines", "status": "PASS", "evidence": "description trigger句2件・日本語本文"},
++    {"doc": "05-layering", "status": "PASS", "evidence": "Skill制御層(同定判断)+script決定論層(照会/正規化/upsert)の二層分離"},
++    {"doc": "06-classification-naming", "status": "PASS", "evidence": "run接頭辞・kebab-case・plugin名非包含・dir==name"},
++    {"doc": "07-progressive-disclosure", "status": "PASS", "evidence": "resource-map.yaml索引・本文100行超の詳細をreferencesへ退避"},
++    {"doc": "08-skill-writing-guidelines", "status": "PASS", "evidence": "description trigger句2件・日本語本文・末尾『使う』"},
+     {"doc": "09-evaluation-orchestration", "status": "N/A", "reason": "assign-skill-design-evaluator は親context制約により別途fork実行(Step5 skipped)"},
+-    {"doc": "10-subagents-hooks-integration", "status": "PASS", "evidence": "PreToolUse hook(hook-guard-secret.py)をplugin.jsonに配線し鍵流出/誤削除を動的ブロック。Subagentは単一スキル完結のため不使用(重周回時のみrun-goal-seekへfork)"},
+-    {"doc": "11-templates", "status": "PASS", "evidence": "templates/run.md を写経して骨格生成"},
+-    {"doc": "13-checklists", "status": "PASS", "evidence": "ゴールシーク完了チェックリスト11項目を二値で記載"},
+-    {"doc": "14-dynamic-context-injection", "status": "PASS", "evidence": "環境依存値を.google-config.json/台帳から注入・本文直書きなし"},
+-    {"doc": "15-official-source-notes", "status": "PASS", "evidence": "capability-manifest.schema.json commonCoreを正本参照"},
++    {"doc": "10-subagents-hooks-integration", "status": "PASS", "evidence": "PreToolUse hook(hook-guard-secret.py)をplugin.jsonに配線。重周回時のみAgentへfork"},
++    {"doc": "11-templates", "status": "PASS", "evidence": "templates/run.md を写経して骨格生成・R1は7層markdownテンプレ写経"},
++    {"doc": "13-checklists", "status": "PASS", "evidence": "ゴールシーク完了チェックリスト13項目を二値で記載(brief.checklist反映)"},
++    {"doc": "14-dynamic-context-injection", "status": "PASS", "evidence": "DB ID/tokenを notion_config 経由で注入・本文直書きなし"},
++    {"doc": "15-official-source-notes", "status": "PASS", "evidence": "capability-manifest commonCore・gBizINFO公式API仕様(X-hojinInfo-api-token)を参照"},
+     {"doc": "16-official-skills-reference", "status": "PASS", "evidence": "templates/run.md(公式skeleton)準拠"},
+-    {"doc": "26-meta-skill-dogfooding", "status": "N/A", "reason": "本スキルは契約書生成の機能スキルでメタ自己適用対象外"},
++    {"doc": "26-meta-skill-dogfooding", "status": "N/A", "reason": "本スキルは企業マスタ補完の機能スキルでメタ自己適用対象外"},
+     {"doc": "27-rubric-governance-runbook", "status": "N/A", "reason": "rubric非編集・L1のためrubric_refs空"},
+-    {"doc": "28-script-execution-model", "status": "PASS", "evidence": "scripts は python3・PEP723拡張frontmatter付・lint-script-frontmatter PASS"},
++    {"doc": "28-script-execution-model", "status": "PASS", "evidence": "scripts は python3標準ライブラリ・PEP723拡張frontmatter付・lint-script-frontmatter PASS"},
+     {"doc": "29-multi-project-rubric-composition", "status": "N/A", "reason": "単一プロジェクト・rubric合成なし"},
+-    {"doc": "30-paradigm-analogy-map", "status": "PASS", "evidence": "concept.md で参考スキル(対話駆動)→照合・差込エンジンへの転換を明記"},
+-    {"doc": "31-output-routing-adapter-architecture", "status": "N/A", "reason": "出力先はDrive固定(個人/法人フォルダ)・アダプタ層不要"},
++    {"doc": "30-paradigm-analogy-map", "status": "PASS", "evidence": "skill-intake/contract-generator の notion_config vendoring + hook二段防御パターンを類比適用"},
++    {"doc": "31-output-routing-adapter-architecture", "status": "N/A", "reason": "出力先はNotion企業マスタDB固定・アダプタ層不要"},
+     {"doc": "32-creator-kit-implementation-ledger", "status": "PASS", "evidence": "本traceとskill-brief.jsonで生成物台帳を記録"},
+-    {"doc": "33-change-governance", "status": "PASS", "evidence": "ensure_schemaは非破壊追記・template-mapping.jsonでひな形変更を吸収"},
+-    {"doc": "34-plugin-governance-roadmap", "status": "PASS", "evidence": "新規plugin contract-generator/に配置・.claude/skillsはsymlink派生"},
+-    {"doc": "35-meta-harness-feedback-loop", "status": "N/A", "reason": "ナレッジループ未配線(台帳がSSOTのためLoop A不要)"}
++    {"doc": "33-change-governance", "status": "PASS", "evidence": "既存非空セル非上書き・新規plugin追加のみで既存スキル破壊変更なし"},
++    {"doc": "34-plugin-governance-roadmap", "status": "PASS", "evidence": "新規plugin company-master/に配置・notion_config/hookをvendoring実体配備(cross-plugin参照回避)"},
++    {"doc": "35-meta-harness-feedback-loop", "status": "N/A", "reason": "ナレッジループ未配線(企業マスタDB自体がSSOTのためLoop A不要)"}
+   ],
+   "layer_decisions": [
+-    {"layer": "Skill", "decision": "use", "reason": "欠損補完の対話判断とゴールシーク制御はLLM側が適任", "placement_evidence": "SKILL.md ゴールシーク実行節", "fallback": "なし(制御層は必須)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
+-    {"layer": "script", "decision": "use", "reason": "差込/Drive・Sheets I/O/バリデーション/drift検知は再現性のためコード化", "placement_evidence": "scripts/*.py(8本)", "fallback": "なし(決定論処理の本体)", "dependency_direction_ok": true, "macos_stdlib_ok": false, "deterministic": true},
+-    {"layer": "CLI", "decision": "use", "reason": "generate_contracts.py を CLI として起動(--type/--dry-run等)", "placement_evidence": "scripts/generate_contracts.py argparse", "fallback": "Skill本文からの逐次呼出", "dependency_direction_ok": true, "macos_stdlib_ok": false, "deterministic": true},
+-    {"layer": "Subagent", "decision": "skip", "reason": "単一スキルで完結。重い周回時のみ将来fork", "placement_evidence": "なし", "fallback": "ゴールシーク重周回時にAgentへfork", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
+-    {"layer": "Hook", "decision": "use", "reason": "effect=external-mutationの二段防御動的層として鍵の平文出力/誤削除をPreToolUseでブロック", "placement_evidence": "plugins/contract-generator/hooks/hook-guard-secret.py + plugin.json hooks.PreToolUse", "fallback": "references/settings.json.example の permissions.deny(静的層)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
+-    {"layer": "MCP", "decision": "skip", "reason": "claude.ai Drive MCPは書込(列追加/行更新)不可で要件を満たせない", "placement_evidence": "layer比較(README-setup ⑥)", "fallback": "Service Account公式API(採用)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true}
++    {"layer": "Skill", "decision": "use", "reason": "同定の確度判断・同名異企業/住所1:Nの分岐・電話/会社名候補のWeb検索・ゴールシーク制御はLLM側が適任(Pythonは検証・整形のみ)", "placement_evidence": "SKILL.md ゴールシーク実行節 + prompts/R1-resolve-identity.md + enrich_company.verify_phone(web_findings)", "fallback": "なし(制御層は必須)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
++    {"layer": "script", "decision": "use", "reason": "gBizINFO照会/KEN_ALL逆引き(決定論)/正規化共有/電話検証/Notion upsert/backfillは再現性のためコード化。Web検索APIは叩かない", "placement_evidence": "scripts/{normalize,ken_all,resolve_company,enrich_company,notion_upsert,backfill,notion_config,remarks,validate_company_master}.py", "fallback": "なし(決定論処理の本体)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
++    {"layer": "CLI", "decision": "use", "reason": "各scriptをCLI起動(--hojin-bango/--name/--address/--dry-run等)", "placement_evidence": "scripts/*.py argparse", "fallback": "Skill本文からの逐次呼出", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
++    {"layer": "Subagent", "decision": "skip", "reason": "単一スキルで完結。重い候補突合時のみ将来fork", "placement_evidence": "なし", "fallback": "ゴールシーク重周回時にAgentへfork", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
++    {"layer": "Hook", "decision": "use", "reason": "effect=external-mutationの二段防御動的層として Notion/gBizINFO トークンの平文出力/誤削除をPreToolUseでブロック", "placement_evidence": "plugins/company-master/hooks/hook-guard-secret.py + plugin.json hooks.PreToolUse", "fallback": "settings.json permissions.deny(静的層)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
++    {"layer": "MCP", "decision": "skip", "reason": "Notion MCPは未接続(404実績)・gBizINFOにMCPなし。REST直叩きで要件充足", "placement_evidence": "data-sources.md 取得元一覧", "fallback": "Notion/gBizINFO REST API(採用)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true}
+   ],
+   "variant_support": {
+     "prefix": "run",
+     "role_suffix": "generator",
+     "subagent": "none",
+-    "hook": "none"
++    "hook": "hook-guard-secret(PreToolUse/Bash)"
+   },
+   "pattern_decisions": [
+-    {"decision": "use", "pattern_ref": "orchestrator", "reason": "5責務(auth/schema/fill/render/writeback)をgenerate_contracts.pyが統括", "reuse_target": "Google Drive連携の量産スキル雛形"},
++    {"decision": "use", "pattern_ref": "orchestrator", "reason": "4責務(resolve/enrich/upsert/backfill)をSKILL.mdゴールシークが統括", "reuse_target": "Notion連携 + 公的API照合の量産スキル雛形"},
++    {"decision": "use", "pattern_ref": "vendored-ssot", "reason": "notion_config.py/hook-guard-secret.py を実体コピーしcross-plugin参照を回避(自己完結)", "reuse_target": "単独installable plugin の vendoring 規約"},
++    {"decision": "use", "pattern_ref": "claude-search-python-verify", "reason": "Web検索はClaude Code内蔵検索が実施しPythonは検証・整形のみ(スクリプトがWeb検索APIを叩く実装は禁止)。決定論データ(KEN_ALL)は純Python完結", "reuse_target": "LLM検索+Python検証の責務分離が必要な量産スキル"},
+     {"decision": "skip", "pattern_ref": "evaluator-pair", "reason": "生成系単独。評価はassign-skill-design-evaluatorを別途fork", "reuse_target": "N/A"},
+-    {"decision": "skip", "pattern_ref": "hook-integrated", "reason": "folderId検査hookは将来拡張", "reuse_target": "将来のfolder書込ガードhook"},
+-    {"decision": "skip", "pattern_ref": "adapter-backed", "reason": "Google API直叩きで十分・アダプタ層は過剰", "reuse_target": "出力先多様化時のrouting adapter"}
++    {"decision": "skip", "pattern_ref": "adapter-backed", "reason": "出力先はNotion企業マスタDB固定でアダプタ層は過剰", "reuse_target": "出力先多様化時のrouting adapter"}
+   ],
+   "reproducibility_gates": {
+     "lint": "PASS",
+@@ -100,31 +103,32 @@
+   },
+   "script_execution_model": {
+     "contexts": ["A", "B", "C", "D", "E"],
+-    "responsibility_matrix": "config_auth=認証 / ledger=台帳整備・抽出・書戻 / validate=検査 / docx_fill=差込エンジン / scan_template=drift検知 / render=Drive入出力 / generate_contracts=統括 / keychain_get_secret=機密取得",
+-    "priority_order": "config_auth → ledger.ensure_schema → ledger.select → validate → docx_fill → render → ledger.writeback",
+-    "permission_boundary": "鍵はKeychainのみ・平文保存禁止。書込はconfig許可の台帳/個人・法人フォルダに限定。--dry-runで外部副作用抑止",
++    "responsibility_matrix": "notion_config=DB ID/token/gBizINFOトークン解決(SSOT) / normalize=会社名・住所正規化と代替キー(共有正本) / ken_all=KEN_ALL初回DL+TTLキャッシュ+逆引き(純Python決定論) / resolve_company=gBizINFO同定(V1/V2フィールド吸収) / enrich_company=KEN_ALL郵便番号・電話検証(Claude検索結果)・確度付与・overall_certainty導出・備考展開 / remarks=remarks-templates.md(正本)をパースし定型文言展開 / notion_upsert=9列upsert(信頼キー/代替キー) / backfill=空欄列・要確認行の補完 / validate_company_master=deterministic_checks(a-h)実判定",
++    "priority_order": "precondition gate → resolve_company(法人番号>会社名>住所) → enrich_company(空欄属性のみ: ken_all逆引き+電話検証+overall_certainty導出+remarks展開) → notion_upsert(信頼キーupsert/代替キー新規追記) → validate_company_master(整合検査) → backfill(空欄列ごと)",
++    "permission_boundary": "トークンはKeychainのみ・平文保存禁止(hook-guard-secretがブロック)。書込はconfig解決の企業マスタDBに限定。--dry-runで外部副作用抑止。誤値より空欄優先。Web検索はClaudeが実施しPythonは検証のみ(スクリプトはWeb検索API非依存)",
+     "scripts": [
+-      {"path": "scripts/config_auth.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
+-      {"path": "scripts/ledger.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
+-      {"path": "scripts/validate.py", "type": "python", "allowed_contexts": ["C"], "frontmatter_status": "present"},
+-      {"path": "scripts/docx_fill.py", "type": "python", "allowed_contexts": ["C"], "frontmatter_status": "present"},
+-      {"path": "scripts/scan_template.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
+-      {"path": "scripts/render.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
+-      {"path": "scripts/generate_contracts.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
+-      {"path": "scripts/keychain_get_secret.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"}
++      {"path": "scripts/notion_config.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/normalize.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/ken_all.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/resolve_company.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/enrich_company.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/remarks.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/notion_upsert.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/validate_company_master.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
++      {"path": "scripts/backfill.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"}
+     ]
+   },
+   "governance_model": {
+     "rubric_version": "N/A (L1・rubric非依存)",
+     "rubric_hash": "N/A",
+     "proposal_required": "no (新規スキル・solo_operator_mode)",
+-    "impact_assessment": "新規plugin追加のみ。既存スキルへの破壊的変更なし。newly_failing=0",
++    "impact_assessment": "新規plugin company-master 追加のみ。既存スキルへの破壊的変更なし。newly_failing=0",
+     "newly_failing_count": 0,
+     "roles": {
+       "proposer": "xl-skills maintainers",
+       "reviewer": "assign-skill-design-evaluator(別途fork)",
+       "approver": "xl-skills maintainers(solo)",
+-      "tooling": "run-build-skill P0 lint群"
++      "tooling": "run-build-skill Step4 lint群"
+     }
+   },
+   "dogfooding_model": {
+@@ -132,25 +136,22 @@
+     "adapter": "N/A (skill直接生成)",
+     "forked_evaluator": "assign-skill-design-evaluator(Step5は親context制約でskipped・別途実行予定)",
+     "eval_log_path": "eval-log/skill-build-trace.json",
+-    "recursive_checks": ["lint-skill-name", "validate-frontmatter", "lint-skill-completeness", "lint-goal-seek", "validate-build-trace"]
++    "recursive_checks": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-script-frontmatter", "lint-skill-completeness", "lint-goal-seek", "lint-ssot-duplication", "validate-build-trace"]
+   },
+   "rubric_composition_model": {"status": "N/A", "reason": "単一プロジェクト・L1のためrubric合成なし"},
+-  "paradigm_analogy_model": {"status": "N/A", "reason": "concept.mdで参考スキルからの転換を記述済。形式モデル化は不要"},
+-  "output_routing_model": {"status": "N/A", "reason": "出力先はDrive個人/法人フォルダで固定。routing adapterは不要"},
++  "paradigm_analogy_model": {"status": "N/A", "reason": "skill-intake/contract-generator のvendoring+hookパターンを類比適用済。形式モデル化は不要"},
++  "output_routing_model": {"status": "N/A", "reason": "出力先はNotion企業マスタDBで固定。routing adapterは不要"},
+   "prompt_generation_model": {
+     "policy_resolution": {
+       "resolved_policy": "optional",
+-      "resolved_via": "select-and-fillの差込・欠損補完プロンプトを手動でMarkdown7層構造で作成(prompt-creator R-idループは未使用)。kind=runだが対話は欠損補完の補助のためoptionalに解決"
++      "resolved_via": "responsibilities[].prompt_required は resolve-identity のみ true。同責務のR1-resolve-identity.mdを7層markdown構造で手動作成(prompt-creator R-idループは未使用)。kind=runだが同定判断の補助プロンプト1点のためoptionalに解決"
+     },
+     "per_responsibility": []
+   },
+   "variable_contract": [
+-    {"name": "spreadsheet_id", "meaning": "管理台帳のスプレッドシートID", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": ".google-config.json / google-config.sample.json"},
+-    {"name": "templates_folder_id", "meaning": "ひな形フォルダID", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": ".google-config.json"},
+-    {"name": "individual_folder_id", "meaning": "個人契約書の出力フォルダID", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": ".google-config.json"},
+-    {"name": "corporate_folder_id", "meaning": "法人契約書の出力フォルダID", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": ".google-config.json"},
+-    {"name": "service_account_key", "meaning": "Google API認証用SA鍵JSON", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": "macOS Keychain(xl-skills-gdrive / contract-generate/service-account-json)"},
+-    {"name": "anchor_placeholder_map", "meaning": "台帳列⇄ひな形プレースホルダの差込定義", "default": "template-mapping.json同梱値", "required": true, "not_applicable_when": "N/A", "source_trace": "references/template-mapping.json"},
+-    {"name": "kou_fixed_values", "meaning": "甲(株式会社XLOCAL)の固定値", "default": "株式会社XLOCAL/山形県鶴岡市.../坂本大典", "required": false, "not_applicable_when": "甲を可変運用する場合", "source_trace": "references/template-mapping.json#common.fixed_values"}
++    {"name": "company-master_db_id", "meaning": "企業マスタNotion DBのID", "default": "37a07a0c-d18c-8091-b8a7-c7eb85872fb5 (notion-config.fixed.json)", "required": true, "not_applicable_when": "N/A", "source_trace": "notion-config.fixed.json#databases.company-master.db_id / notion_config.get_db_id('company-master')"},
++    {"name": "notion_token", "meaning": "Notion REST API認証トークン", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": "macOS Keychain(notion-api-key.xl-skills / xl-skills) / notion_config.get_token"},
++    {"name": "gbizinfo_api_token", "meaning": "gBizINFO API認証トークン(X-hojinInfo-api-token)", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": "macOS Keychain(gbizinfo-api-token.xl-skills / xl-skills) / notion_config.get_gbizinfo_token"},
++    {"name": "ken_all_cache_path", "meaning": "日本郵便KEN_ALLローカルキャッシュ", "default": "~/.cache/company-master/ken_all.csv", "required": false, "not_applicable_when": "郵便番号補完を行わない場合", "source_trace": "enrich_company.py#KEN_ALL_CACHE"}
+   ]
+ }
+diff --git a/plugins/skill-creator/skills/run-build-skill/SKILL.md b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+index 1e26def..a4d8d55 100644
+--- a/plugins/skill-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+@@ -287,7 +287,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB)
+ | Skill Creator 基盤 | `plugins/skill-creator/skills/<skill>/SKILL.md` | `plugins/skill-creator/skills/` |
+ | 他 plugin 所属     | `plugins/<plugin>/skills/<skill>/SKILL.md`      | `plugins/<plugin>/`             |
+ 
+-`.claude/skills/<skill>/` は symlink 派生 (直接書き込まない)。詳細: 34章 § plugin 物理レイアウトと symlink 戦略。
++`.claude/{skills,agents,commands}/<name>` は symlink 派生 (直接書き込まない)。**build/更新後は build 完了契約として `bash scripts/sync-skills-to-claude.sh --apply` (唯一の生成器 `scripts/build-claude-symlinks.py` を冪等呼び出し。`make sync` も可) を必ず実行**し、新規 skill/agent/command を `.claude/` へ展開する (未実行だと Claude Code が認識しない)。最終ゲートは CI `build-claude-symlinks.py --check` (orphan/broken/欠落 を fail-closed 検出)。生成器が SSOT であり、build 工程内に別途 symlink 生成を再実装しない。詳細: 34章 § plugin 物理レイアウトと symlink 戦略。
+ 
+ ## Gotchas
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/design-docs-index.md b/plugins/skill-creator/skills/run-build-skill/references/design-docs-index.md
+index 7d6d825..5f34a88 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/design-docs-index.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/design-docs-index.md
+@@ -40,7 +40,7 @@
+ | 31 | 31-output-routing-adapter-architecture.md | 出力先routing / adapter分離 |
+ | 32 | 32-creator-kit-implementation-ledger.md | 実装台帳 / 正本と派生 / 残課題 |
+ | 33 | 33-change-governance.md | 変更分類 / 承認 / cooldown / blast radius |
+-| 34 | 34-plugin-governance-roadmap.md | plugin境界 / 移行ゲート / 外部参照棚卸し |
++| 34 | 34-plugin-governance-roadmap.md | plugin境界 / 移行ゲート / 外部参照棚卸し / .claude symlink戦略 (build-claude-symlinks.py) |
+ | 35 | 35-meta-harness-feedback-loop.md | セッションログ由来の自己改善ループ |
+ 
+ ## 読み順（用途別）

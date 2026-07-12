@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/live-trial-verdict.json",
+  "title": "Live Trial Acceptance Verdict (runtime-evidence 契約 D10)",
+  "description": "run-skill-live-trial の実走 acceptance 証拠。sink=eval-log/<plugin>/<skill>/live-trial/<run-id>/verdict.json。behavioral claim の収束根拠はこの verdict + transcript のみ (Gate D)。",
+  "type": "object",
+  "required": [
+    "target_skill",
+    "args",
+    "requested_model",
+    "actual_model",
+    "nudge_count",
+    "gate_response_count",
+    "goal_verdict",
+    "overall",
+    "skill_dir_tree_sha",
+    "transcript_sha256",
+    "scenario_origin",
+    "environment",
+    "tier",
+    "downgrade_reason",
+    "timeline"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "target_skill": {
+      "type": "string",
+      "minLength": 1,
+      "description": "被験 skill (plugin:skill)。denylist (run-skill-live-trial / run-skill-iter-improve) は生成前に拒否される"
+    },
+    "args": {"type": "string", "description": "被験 skill へ渡したリテラル args (task.md 契約 #1 の引用)"},
+    "requested_model": {
+      "type": "string",
+      "description": "boot へ渡した model (空文字=ユーザー既定)。READY 行の MODEL: は requested の echo にすぎない"
+    },
+    "actual_model": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "transcript の assistant.message.model の unique 集合 (実走 model の唯一の証明)。proof trial は [requested_model] と完全一致必須"
+    },
+    "nudge_count": {"type": "integer", "minimum": 0},
+    "gate_response_count": {"type": "integer", "minimum": 0},
+    "goal_verdict": {
+      "type": "object",
+      "required": ["result", "blockers"],
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "enum": ["PASS", "FAIL"],
+          "description": "fresh evaluator の達成判定 (点数出力は禁止 — goal-seek-paradigm.md 達成判定節が正本)"
+        },
+        "blockers": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "overall": {
+      "type": "object",
+      "required": ["launch", "completion", "goal_fit", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "launch": {"enum": ["PASS", "FAIL"]},
+        "completion": {"enum": ["PASS", "FAIL"]},
+        "goal_fit": {"enum": ["PASS", "FAIL", "NOT_EVALUATED"]},
+        "verdict": {
+          "enum": ["PASS", "DEGRADED", "FAIL", "BLOCKED"],
+          "description": "PASS=✅ / DEGRADED=⚠️ (goal-proxy 乖離 or nudge・gate 応答 >0 の自走未達降格) / FAIL=❌ / BLOCKED=tmux 不在・HARD_CAP 超過等の fail-closed"
+        }
+      }
+    },
+    "skill_dir_tree_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "被験 skill の SKILL.md + scripts/ 複合 sha256 (どの版の skill を受け入れたかの固定)"
+    },
+    "transcript_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "回収した transcript.jsonl の sha256。transcript 不在 (tui 層のみ) は null"
+    },
+    "scenario_origin": {"enum": ["synthetic", "replay"]},
+    "environment": {
+      "type": "object",
+      "required": ["claude_version", "tmux", "transcript_layer", "permissions_mode"],
+      "additionalProperties": false,
+      "properties": {
+        "claude_version": {"type": ["string", "null"]},
+        "tmux": {"type": "boolean"},
+        "transcript_layer": {"enum": ["jsonl", "tui"]},
+        "permissions_mode": {"type": "string"}
+      }
+    },
+    "tier": {
+      "enum": ["static", "fork", "live"],
+      "description": "実施した受入段 (導出正本 validate-build-plan.py derive_acceptance_tier)"
+    },
+    "downgrade_reason": {
+      "type": ["string", "null"],
+      "description": "tier を導出値より下げた/verdict を降格した理由。降格なしは null"
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["boot_s", "poll_exit", "wall_clock_s"],
+      "additionalProperties": false,
+      "properties": {
+        "boot_s": {"type": ["number", "null"]},
+        "poll_exit": {"type": ["string", "null"], "description": "poll の終端 (DONE/STALL/GATE/HARD_CAP)"},
+        "wall_clock_s": {"type": ["number", "null"]}
+      }
+    }
+  }
+}

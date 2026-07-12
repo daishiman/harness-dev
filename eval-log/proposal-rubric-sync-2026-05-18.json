@@ -1,0 +1,29 @@
+{
+  "proposal_id": "PROP-2026-05-18-002",
+  "proposer": "elegant-improvement-executor",
+  "date": "2026-05-18",
+  "rubric_id": "skill-design",
+  "current_version": "1.0.0 (assign-side) / 1.1.0 (ref-side, upstream)",
+  "target_version": "1.1.0 (sync)",
+  "change": {
+    "type": "modify",
+    "rule_ids": ["FM-002", "FM-003", "FM-005"],
+    "area": "frontmatter",
+    "summary": "assign-skill-design-evaluator/references/rubric.json を upstream ref-skill-design-rubric/rubric.json 1.1.0 に同期。check 文の日本語 trigger phrase / 日本語動詞許容を反映 (緩和)。"
+  },
+  "bump": "minor",
+  "sunset_days": 0,
+  "sunset_waived_reason": "緩和方向の sync (既存 pass は全て継続 pass、新たに pass 増のみ)。後方互換のため猶予期間不要。",
+  "impact_assessment": {
+    "past_eval_logs": "eval-log/",
+    "expected_fail_rate_delta": "0 to -10% (緩和方向)",
+    "method": "新 check は旧 check の superset (英語条件は維持しつつ日本語条件を OR 追加) のため、過去 pass した SKILL.md は全て継続 pass。fail rate は同じか減るのみ。"
+  },
+  "reviewers": {
+    "proposer": "elegant-improvement-executor",
+    "third_party": "elegant-meta-divergent-analyst (Phase 2 finding F-2: rubric version 乖離指摘)",
+    "approver": "solo_operator",
+    "tooling": "guard-change-category.py + hook-guard-rubric.py"
+  },
+  "notes": "Phase 1 観察 O-9 / Phase 2 分析 F-2 で検出された rubric 二重管理 (assign 1.0.0 vs ref 1.1.0) の解消。ref 側 1.1.0 への bump 自体は別 governance で承認済みと推定 (履歴に残らないが、ref ファイルが既に 1.1.0 になっているため)。本提案は assign 側の遅延同期。\n変更内容: FM-002 (英語のみ → 日英両対応), FM-003 (\"when \" 数 → trigger phrase 数 日英両対応), FM-005 (動詞リスト英語のみ → 日本語動詞も許容)。"
+}

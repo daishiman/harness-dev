@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-revise",
+  "skill": "run-intake-revise",
+  "description": "既存 intake への追加要望を対話聞き取りし、Gate R 承認後に同一 Notion ページを PATCH 更新する。最大 5 回 / All-or-Nothing / 内部解析非開示。",
+  "phases": [
+    {
+      "id": "P1-load",
+      "step": 1,
+      "title": "既存 intake (intake.json/md/notion-url/internal-analysis) のロードと page-id 抽出",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-resource-map"],
+      "fatal_exit_codes": [44, 51, 60]
+    },
+    {
+      "id": "P2-hear",
+      "step": 2,
+      "title": "AskUserQuestion で対象章 / 変更内容 / 変更理由を収集",
+      "gate": "C2",
+      "dependsOn": ["P1-load"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-analyze",
+      "step": 3,
+      "title": "analyze_user_intent.py 再実行で internal-analysis.json 再生成 (非開示)",
+      "gate": "C3",
+      "dependsOn": ["P2-hear"],
+      "entryHook": null,
+      "exitHook": "analyze-user-intent",
+      "resourceIds": [],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P4-preview",
+      "step": 4,
+      "title": "差分プレビュー (該当章の text/figure/parameter diff) と要約理解テキスト提示",
+      "gate": "C4",
+      "dependsOn": ["P3-analyze"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P5-gateR",
+      "step": 5,
+      "title": "Gate R (apply / re-revise / cancel) 判定",
+      "gate": "C5",
+      "dependsOn": ["P4-preview"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P6-patch",
+      "step": 6,
+      "title": "render-intake-final.py で正本再生成 → intake_publish_pipeline.py --revise --page-id で PATCH 更新",
+      "gate": "C6",
+      "dependsOn": ["P5-gateR"],
+      "entryHook": null,
+      "exitHook": "intake-publish-pipeline-revise",
+      "resourceIds": [],
+      "fatal_exit_codes": [2, 44, 51]
+    },
+    {
+      "id": "P7-log",
+      "step": 7,
+      "title": "revision-log.jsonl に 1 行追記 (schemas/output.schema.json 準拠)",
+      "gate": "C7",
+      "dependsOn": ["P6-patch"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schema-revision-log"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P8-self-update",
+      "step": 8,
+      "title": "skill-intake-self-updater 再起動で question-bank 追記",
+      "gate": "C8",
+      "dependsOn": ["P7-log"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [61]
+    }
+  ],
+  "resources": [
+    {"id": "schema-revision-log", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P7-log"]},
+    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["P1-load"]}
+  ]
+}

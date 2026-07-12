@@ -1,0 +1,88 @@
+{
+  "run_at": "2026-07-05",
+  "cwd": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-224508-wt-2",
+  "source": "plugins/ubm-goal-setting/EVALS.json harness.mechanical",
+  "total": 13,
+  "green": 13,
+  "red": 0,
+  "results": [
+    {
+      "command": "cd plugins/ubm-goal-setting && python3 -m pytest tests/ -q",
+      "exit_code": 0,
+      "stdout_tail": "............................................                             [100%]\n44 passed in 8.14s",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "",
+      "stderr_tail": "OK (checked=3 pending=0)"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/ubm-goal-setting/hooks",
+      "exit_code": 0,
+      "stdout_tail": "",
+      "stderr_tail": "OK (checked=1 pending=0)"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "",
+      "stderr_tail": "run-ubm-goal-setting: warn: disable-model-invocation=true + user-invocable=true (unusual)\nrun-ubm-knowledge-sync: warn: disable-model-invocation=true + user-invocable=true (unusual)"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "ok: plugins/ubm-goal-setting/skills (2 skills)",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "summary: OK=2 VIOLATION=0",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "ok: plugins/ubm-goal-setting/skills (2 skills)",
+      "stderr_tail": "[Warn]LS-203: run-ubm-goal-setting: 規約外 top-level dir 'assets' (許可: examples, hooks, log, prompts, references, schemas, scripts, templates)\n[Warn]LS-203: run-ubm-knowledge-sync: 規約外 top-level dir 'assets' (許可: examples, hooks, log, prompts, references, schemas, scripts, templates)"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "  \"dependency_tracking\": \"Skill() invocations only (pair: excluded as ownership declaration)\",\n  \"invocation_graph\": {},\n  \"cycles\": [],\n  \"direction_violations\": [],\n  \"cycles_count\": 0,\n  \"violations_count\": 0\n}\nOK: no cycles, no direction violations (2 skills scanned)",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills",
+      "exit_code": 0,
+      "stdout_tail": "ok: doc/20 Step 7 全5条件 PASS (2 skills)",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py",
+      "exit_code": 0,
+      "stdout_tail": "",
+      "stderr_tail": "SKIP: /Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-224508-wt-2/plugins/skill-governance-lint/manifest.json not found (Phase 2 partition の名残。Phase 3 carry-over F-7 で manifest 再導入予定。lint は実行せず exit 0 で通す)"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
+      "exit_code": 0,
+      "stdout_tail": "OK: plugin manifest contents valid",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py --agents-dir plugins/ubm-goal-setting/agents",
+      "exit_code": 0,
+      "stdout_tail": "OK: 5 agent file(s) passed (Tier 1)",
+      "stderr_tail": ""
+    },
+    {
+      "command": "python3 plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py --dir plugins/ubm-goal-setting/knowledge",
+      "exit_code": 0,
+      "stdout_tail": "  [OK]    principles-business-product.json (148行)\n  [OK]    principles-business-strategy.json (260行)\n  [OK]    principles-business.json (9行)\n  [OK]    principles-mindset.json (204行)\n  [OK]    principles-relationship.json (232行)\n  [OK]    principles.json (7行)\n\n全ファイルが 500行以内です。分割不要。",
+      "stderr_tail": ""
+    }
+  ]
+}

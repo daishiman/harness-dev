@@ -1,0 +1,22 @@
+%%---
+%% template: er-io-contract
+%% required_vars: [input_entity, output_entity, relation_label, input_field1, input_field2, output_field1, output_field2]
+%% optional_vars: [intermediate_entity]
+%% score_formula: "field_count * 0.4 + relation_clarity * 0.6"
+%% non_tech_friendliness: ★★
+%% use_case: 入出力の契約、データの構造とつながり
+%%---
+erDiagram
+    {{input_entity}} ||--o{ {{output_entity}} : "{{relation_label}}"
+
+    {{input_entity}} {
+        string {{input_field1}}
+        string {{input_field2}}
+    }
+    {{output_entity}} {
+        string {{output_field1}}
+        string {{output_field2}}
+    }
+
+%% 凡例: ||--o{ は1対多
+%% 言いたい一言: {{message}}

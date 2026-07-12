@@ -1,0 +1,13 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-ubm-youtube-ingest の Progressive Disclosure 索引。
+# references/* は YouTube 取込パイプラインの各責務 (R1-R4) が参照する正本文書。
+resources:
+  - file: provider-adapter-contract.md
+    topic: YouTube 取得 provider 中立契約 (list_channel_videos/fetch_transcript・typed error・caption→ASR fallback・late-bind・fixture schema)
+    read_when: R2-fetch-normalize で取得 I/F と error 分類を確認するとき / 実 provider を late-bind するとき
+  - file: registry-ledger-schema.md
+    topic: youtube-registry.json の schema (source registry/video 状態集合/lease/cursor/ledger) と初期化手順
+    read_when: R1-source-mode で source priority を確定するとき / R4-sync-reconcile で ledger 状態を扱うとき
+  - file: sync-report-format.md
+    topic: one-shot sync report の正本形式と OUT1 受入不変則・exit code
+    read_when: R4-sync-reconcile で sync report を消費するとき / 冪等性・全量性を検証するとき

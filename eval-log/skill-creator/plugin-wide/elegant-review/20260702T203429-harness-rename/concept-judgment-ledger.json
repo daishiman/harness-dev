@@ -1,0 +1,28 @@
+{
+  "purpose": "意味論境界ルール (merged-directive.md / CONVENTIONS.md 用語規約) の概念判定台帳。固有名層は機械置換 (w2-replace-ledger.json)、本台帳は残余の概念判定 (一般語・境界例) の判定と根拠を記録する。",
+  "rubric": "操作/生成の対象の単位で判定 — 単一 skill なら skill、plugin 総体・Capability 横断なら harness。部品の集合名は harness 側。",
+  "judgments": [
+    {"target": "plugin 名 / dir 名 (plugins/harness-creator)", "concept": "ハーネス総体", "action": "改名 (git mv)", "reason": "plugin 総体そのもの。ユーザー確定指示"},
+    {"target": "内部 skill 名 run-skill-* / run-build-skill / wrap-git-commit-safe 等 33 skill", "concept": "単体スキル", "action": "維持", "reason": "操作対象が単一 skill (ルール1)。SKILL.md/skills/ はプラットフォーム予約語彙"},
+    {"target": "agents 6体 / commands 5本のファイル名 (skill-improve.md 含む)", "concept": "単体スキル", "action": "維持", "reason": "skill-improve は単一 skill の改善操作。他は elegant-review 系で固有名を含まない"},
+    {"target": "kit 系3点 (kit_name / installers dir / workflow ファイル名)", "concept": "ハーネス総体", "action": "harness-creator-kit 系へ改名", "reason": "kit = plugin 総体の配布物 (部品の集合名は harness 側)"},
+    {"target": "installers/manifest.json description『メタスキル群一式』", "concept": "ハーネス総体", "action": "『ハーネス構成部品一式』へ書換", "reason": "総体を構成する部品集合の呼称 (DEC-3 rubric)"},
+    {"target": "plugin.json / plugin-composition.yaml description", "concept": "ハーネス総体", "action": "ハーネス定義を先頭に書換", "reason": "plugin 総体の自己記述"},
+    {"target": "feedback_contract_ssot.py:132 ADR コメント『skill を量産する生成器メタプラグイン』", "concept": "単体スキル (量産対象)", "action": "維持", "reason": "量産対象は run-skill-feedback という単体 skill。技術的に正確。再編集すると pin bump 二重発生 (id21 制約) のため維持が両立解"},
+    {"target": "env 変数 SKILL_CREATOR_NO_REVIEW_BLOCK / _LESSONS_DIR / _PROPOSALS_DIR", "concept": "ハーネス総体 (plugin 固有名由来)", "action": "HARNESS_CREATOR_* へ改名", "reason": "plugin 名 prefix の API 名。旧名設定環境では opt-out が無効化される方向 = fail-closed 側で安全"},
+    {"target": "テストファイル名 test_skill_creator__* (39本) / criteria_roster plugin 列 / llm-coverage.json plugin キー", "concept": "ハーネス総体 (plugin 固有名由来)", "action": "harness_creator へ改名", "reason": "test_<plugin>__<script> 命名規約の plugin 部分"},
+    {"target": "spec-reflection.md ファイル名 (plugin-dev-planner)", "concept": "ハーネス総体", "action": "harness-creator-spec-reflection.md へ git mv + 本文/pins purpose 文追従", "reason": "plugin 総体の仕様反映文書"},
+    {"target": "doc 設計書の空白形『Skill Creator』/ camel『SkillCreator』", "concept": "ハーネス総体 (plugin 言及)", "action": "Harness Creator / HarnessCreator へ", "reason": "生きた設計書での plugin 言及"},
+    {"target": "install.sh:38 の $PROJECT_DIR/creator-kit 判定条件", "concept": "旧構造互換チェック", "action": "残置", "reason": "後続条件 $PROJECT_DIR* が包含し無害。挙動変更リスク回避"},
+    {"target": "install.sh/ps1 usage 文の creator-kit/install.sh パス", "concept": "stale パス (旧 repo 構造)", "action": "installers/install.sh へ修正", "reason": "現行の実パスに正確化 (改名と同時の親切修正)"},
+    {"target": ".pre-commit-config.yaml ^creator-kit/skills/ 参照", "concept": "旧構造 (層C) の stale 参照", "action": "残置", "reason": "存在しないパスでマッチせず無害。層C退役 (Phase 4) のスコープで別途除却"},
+    {"target": "CONVENTIONS.md 層C の creator-kit/ 記述", "concept": "歴史記述 (移行台帳)", "action": "残置", "reason": "旧構造の移行経緯の記録。書き換えると歴史が不正確になる"},
+    {"target": "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md ファイル名", "concept": "歴史台帳", "action": "残置", "reason": "creator-kit 時代の実装台帳 (凍結)。本文中の生きた workflow 参照のみ harness-creator-kit-ci へ追従済み"},
+    {"target": "eval-log/skill-creator/** 過去 run", "concept": "凍結層", "action": "凍結+tombstone README", "reason": "DEC-1。遡及書換は記録改変"},
+    {"target": "eval-log/{llm,code,harness}-coverage.json", "concept": "runtime 参照台帳", "action": "plugin キー更新", "reason": "criteria_roster / validate-harness-coverage が実行時に読む (履歴でなく現用台帳)"},
+    {"target": "doc/参考Skill/skill-creator/** (スキルクリエイター 4 出現含む)", "concept": "同名別物 (外部由来参考資産)", "action": "無変更", "reason": "独自 SKILL.md/JS を持つ別実体。字面一致は誤爆"},
+    {"target": "既存 harness 語 156 箇所 (harness-coverage-spec / meta-harness / live-trial harness)", "concept": "同系譜 (構築物総体の品質装具)", "action": "無変更+関係明文化 (spec 冒頭注記+glossary)", "reason": "ルール4: 衝突でなく統合先"}
+  ],
+  "over_rename_guard": "維持確定識別子 (run-skill-* 33 skill 名・SKILL.md・skills/ dir) は改名後も全件同名で実在することを W9 battery で確認",
+  "recorded_at": "2026-07-02"
+}

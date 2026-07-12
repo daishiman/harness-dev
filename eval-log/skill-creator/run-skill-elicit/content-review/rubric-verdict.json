@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-elicit",
+    "skill_md_sha256": "8ab6d69a3a7340eb1f140e451dab3f6649ff942a3f4ab06ee76ccb7197ccf5f2"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator-subagent",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "FM 系: name=run-skill-elicit が ^(run|ref|assign|wrap|delegate)-... に適合(FM-001)、description が『〜たいとき』trigger 句を 2 個含み句点終止(FM-002/003)、採点/JSON 等の内部動作語を含まず動詞句『使う』終止(FM-004/005)で frontmatter 規約を満たす。",
+      "BD/PD 系: 本文に '## Purpose & Output Contract'(BD-001)・'## Gotchas'(BD-002) が存在し、本文行数 300 以下(BD-003)、冒頭30行内に '## Purpose & Output Contract' + 禁則『禁止』を含み(PD-002)、references/ ディレクトリ実在で progressive disclosure(PD-001) を充足する。",
+      "NM/KL 系: ディレクトリ名 run-skill-elicit==frontmatter.name(NM-001)、knowledge/ ディレクトリを本スキルは所有せず frontmatter.knowledge_loop も無し→KL-001..005 は存在ゲートで PASS(skip)。boundary・重複回避(run-goal-elicit を呼ばない)・代理決定禁止(open_questions 退避)が SRP / Bounded Context として明文化され責務肥大なし。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "dev 同期 merge 後の現 SKILL.md (sha256=8ab6d69a...) を ref-skill-design-rubric/references/rubric.json (1.3.0) の applies_to_kinds=['skill'] / ['*'] 全 rule で genuine 採点。FM-001(name 正規/len<=60)PASS, FM-002(description『要望をbrief.jsonに固めたいとき、対話形式でrequirementsを収集したいときに使う。』に『たいとき』2 句+句点)PASS, FM-003(trigger 2〜3)PASS=2 句, FM-004(内部動作語なし)PASS, FM-005(『使う』動詞終止)PASS。BD-001('## Purpose & Output Contract' 厳格一致)PASS, BD-002('## Gotchas')PASS, BD-003(本文 300 行以下)PASS, BD-004(description trigger↔body 整合: 要望を brief 化/対話 requirements 収集→ゴールシーク実行・局面カタログに 1:1 対応)PASS。NM-001(basename==name)PASS。PD-001(references/ に brief-template.md/resource-map.yaml 実在)PASS, PD-002(冒頭30行に契約 heading+禁則)PASS。RG-001 は採点出力側ルール。KL-001..005 は knowledge/ 不在・frontmatter.knowledge_loop 不在で存在ゲートにより PASS(skip)。AG/HK/CM/PC/PR/WF 系は applies_to_kinds 不一致(kind=skill)で非対象。merge 差分(6 ステップ追従・agent_team_required 死にフィールド除去・resource-map 索引一本化)は本文行数を 300 以下に保ち契約・命名・責務に影響を与えず、rubric 観点で新規違反を導入していない。high severity 違反=0、重大設計欠陥(責務肥大・契約曖昧・検証不能)未検出ゆえ PASS。"
+}

@@ -1,0 +1,2775 @@
+diff --git a/Makefile b/Makefile
+index e349d74..36d186e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2,7 +2,12 @@
+ # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
+ # CI では --check gate (creator-kit-ci.yml) が走るため二重防護となる。
+ 
+-.PHONY: sync sync-check lint plugin-package-check contract-intake vendored-ssot feedback-contract content-review pytest test help
++.PHONY: sync sync-check lint plugin-package-check contract-intake vendored-ssot feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage test help
++
++# LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
++# coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
++LLM_COV_SINCE ?= 2026-06-24
++COV_THRESHOLD ?= 80
+ 
+ ## sync: creator-kit/skills/ を .claude/skills/ に同期する（--apply）
+ sync:
+@@ -45,8 +50,34 @@ content-review:
+ pytest:
+ 	python3 -m pytest tests/ -q
+ 
++## coverage: コード側の行カバレッジを pytest-cov で計測する (計測専用。テスト合否は `make pytest`/`make test` が担保)
++##   COVERAGE_FILE を絶対パス固定し subprocess 計測データを cwd 変更に依らず repo root へ集約する。
++##   この計測モードでは coverage .pth が subprocess 出力に混入し一部 IO テストが赤化するが、
++##   合否判定は coverage 無しの `make test` を正とするため許容 (|| true)。行カバレッジ数値のみ採取する。
++coverage:
++	python3 -m coverage erase || true
++	COVERAGE_FILE="$(PWD)/.coverage" COVERAGE_PROCESS_START="$(PWD)/.coveragerc" PYTHONPATH="$(PWD)" \
++	  python3 -m pytest tests/ -q --cov --cov-report=json:eval-log/code-coverage.json -p no:cacheprovider || true
++	@python3 -c "import json;d=json.load(open('eval-log/code-coverage.json'));p=round(d['totals']['percent_covered'],1);print(f'[coverage] code line coverage {p}% / 閾値 $(COV_THRESHOLD)%');print('[OK] code coverage >=閾値' if p>=$(COV_THRESHOLD) else '[WARN] code coverage <閾値 (ratchet)')"
++	@python3 -c "import json;d=json.load(open('eval-log/code-coverage.json'));p=round(d['totals']['percent_covered'],1);print(f'[coverage] code line coverage {p}% / 閾値 $(COV_THRESHOLD)%');print('[WARN] code coverage <閾値 (ratchet)' if p < $(COV_THRESHOLD) else '[OK] code coverage >=閾値')"
++
++## llm-coverage: LLM 駆動部分(criteria+checklist 被覆)のカバレッジを計測する (WARN, ratchet baseline)
++llm-coverage:
++	python3 scripts/validate-llm-coverage.py --all --threshold $(COV_THRESHOLD)
++
++## coverage-gate: 新規 loop-kind スキル(since>=LLM_COV_SINCE)が <80% なら fail-closed (CI gate)
++coverage-gate:
++	python3 scripts/validate-llm-coverage.py --all --threshold $(COV_THRESHOLD) \
++	  --gate-new --since $(LLM_COV_SINCE)
++
++## harness-coverage: ハーネス仕様(全種別×二軸 >=80%)の整備状況を横断集計する (doc/harness-coverage-spec.md)
++##   先に make coverage / llm-coverage を走らせ eval-log の *-coverage.json を生成しておくこと。
++harness-coverage:
++	python3 scripts/validate-harness-coverage.py --threshold $(COV_THRESHOLD)
++
+ ## test: sync-check + lint + plugin-package-check + feedback-contract + content-review + pytest + gate-phase0 を順に実行する
+-test: sync-check lint plugin-package-check feedback-contract content-review pytest
++##   (coverage / llm-coverage は WARN のため test には含めず、coverage-gate を CI で別途実行する)
++test: sync-check lint plugin-package-check feedback-contract content-review pytest llm-coverage
+ 	python3 scripts/gate-phase0.py
+ 
+ ## help: このメッセージを表示する
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+index d72329e..46454b0 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "cd5528e79be44639ec724801aa9661c6cfd66560fa2d55eb973d6d3f6259e9fc"
++    "skill_md_sha256": "4df5302b28d987716cbf3065ceef9800b165bfbc744ebac65f7028185be110d5"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+@@ -14,7 +14,7 @@
+     "smell": 0
+   },
+   "reviewer": "run-elegant-review-subagent-team",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewed_at": "2026-06-24",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+@@ -26,8 +26,8 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "Step12 を1段落要約+references/content-review-protocol.md への正本ポインタに圧縮し、本文再掲を排してSSOT原則を強化した",
+-      "圧縮で外した4箇条(elegant-review Phase1/2/3+evaluator起動と保存先 / feedback_contract inner-outer×正負 / hook queue化+Stop block+sha256一致検査 / --skip-content-review+max_iter=3 INCOMPLETE+human_review)の実体が全て reference 側に存在し情報欠落ゼロを確認した"
++      "完了チェックリストに『ハーネス・カバレッジ仕様を kind 別に満たす(scripts機能テスト/loop criteria/ref source-traceability)』を毎回必達項目として追加し、品質ゲートを kind 適合の検証へ一般化した。doc/harness-coverage-spec.md(31-41行)と SKILL.md 項目と R1-scaffold.md(42-45行)が同一パス・同一文言で三者整合している",
++      "ref(辞書型/参照型)を『全ゲート除外』でなく『source-traceability(source/source-tier/last-audited/audit-trigger + ref-review verdict)という ref 専用カバレッジパス』へ振り替え、既存の feedback_contract.skip_reason(behavioral criteria 免除)と矛盾せず補完関係として両立させた"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -35,5 +35,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "read-only検証: SKILL.md Step12 圧縮後本文と content-review-protocol.md を逐一照合。4箇条の実体は reference 側(Agent起動例+verdict保存先+Phase reset→3並列→改善 / Inner-Outerループ表+正負フィードバック / queue化+Stop decision:block+sha256一致 / --skip-content-review+max_iter=3→INCOMPLETE+human_review)に全存在。圧縮は再掲削減によるelegance改善で、矛盾/欠落/不整合/依存断絶/smell いずれもゼロ。 [propagation] frontmatter feedback_contract(IN1/IN2/OUT1/OUT2)を携帯化し criteria_evaluated を同期。"
++  "notes": "今回の差分(完了チェックリストへ kind 別ハーネス・カバレッジ80%ゲート + ref-kind source-traceability パス追加 / R1-scaffold のカバレッジルールを全 kind へ一般化)を 4 条件で genuine 再評価。矛盾なし=ref 専用パスは既存 skip_reason(behavioral 免除)と補完で衝突しない(spec 41行で『除外≠無検証』と明記)。漏れなし=scripts/loop/ref/assign/other 各 kind にカバレッジ軸が割当済。整合性=SKILL.md↔R1-scaffold↔doc/harness-coverage-spec が同一パス文言で一致。依存整合=参照先(doc/harness-coverage-spec.md, scripts/validate-llm-coverage.py, eval-log/coverage/skills/)は全て実在。本文225行(P0-2 300行以下)・lint-skill-tree exit0。PASS 維持。"
+ }
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+index 1071f03..63c6168 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -2,12 +2,12 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "cd5528e79be44639ec724801aa9661c6cfd66560fa2d55eb973d6d3f6259e9fc"
++    "skill_md_sha256": "4df5302b28d987716cbf3065ceef9800b165bfbc744ebac65f7028185be110d5"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+   "reviewer": "assign-skill-design-evaluator-equivalent",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewed_at": "2026-06-24",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+@@ -19,9 +19,9 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "BD-003(本文300行上限)を実測で順守: frontmatterは81行目で終わり本文は82-300行=219行と上限内。Step12圧縮が行数余裕を回復させた",
+-      "Key Rule#17と同型のSSOTポインタ方式でStep12を1段落+references/content-review-protocol.md参照へ統合し『本文に再掲しない＝SSOT』を明記。本文から外した4詳細(run-elegant-review reset→3並列→改善 Phase / feedback_contract inner-outer正負FB / hook queue+skill_md_sha256検査 / max_iter=3→INCOMPLETE+human_review)はreference側に欠落なく全て現存",
+-      "FM/NM/BD系の高severityルール(name=run-build-skill一致, ## Purpose & Output Contract と ## Gotchas 存置, descriptionは〜とき発動条件のみ)を維持し圧縮で破損していない"
++      "ハーネス・カバレッジ仕様の正本を doc/harness-coverage-spec.md 単一に保ち、SKILL.md 完了チェックリストと R1-scaffold.md は同正本を参照する記述に留めて重複定義を増やしていない(SSOT 維持)",
++      "ref-kind を criteria/content-review から除外しつつ source-traceability + ref-review verdict という別軸へ振り替え、品質ゲートを kind 適合に保ったまま『無検証 kind』を作らない(Goodhart 的ゲート回避を防止)",
++      "カバレッジ検証は既存 scripts/validate-llm-coverage.py と eval-log/coverage/ 規約へ接続し、新規サブシステムを増やさず fail-closed 経路を再利用している"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -29,5 +29,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "Step12のSSOTポインタ化編集をrubric観点でgenuine検証。実ファイルを読み、BD-003(本文219行)/BD-001/BD-002/FM-001..004/NM-001をPASS確認。reference側に移管詳細の欠落なし。high severity finding 0件。なお既存verdict(elegance/rubric)は旧SHA 2b4cb72...を保持しており本再生成で現行SHA 37211c3...へ更新する必要があった点が、lint-content-review.pyのsha256一致要件を満たす上で本verdict更新の根拠。被採点物への改変は一切行っていない(read-only)。 [propagation] frontmatter feedback_contract(IN1/IN2/OUT1/OUT2)を携帯化し criteria_evaluated を同期。"
++  "notes": "rubric観点で今回差分(kind 別ハーネス・カバレッジ80%ゲート + ref source-traceability パスの完了チェックリスト追加 / R1-scaffold の全 kind 一般化)を再評価。SSOT=doc/harness-coverage-spec.md 単一正本を参照し本文に再掲しない。評価分離=ref を別軸へ振替え無検証 kind を作らない。変数化/fail-closed lint/回帰テスト基盤(validate-llm-coverage)へ接続。本文225行(P0-2 300行以下)・lint-skill-tree exit0。新規サブシステム増設なし、high severity finding 0件。PASS 維持。"
+ }
+diff --git a/eval-log/skill-intake/run-intake-revise/content-review/elegance-verdict.json b/eval-log/skill-intake/run-intake-revise/content-review/elegance-verdict.json
+index 7bcb0dc..22805a8 100644
+--- a/eval-log/skill-intake/run-intake-revise/content-review/elegance-verdict.json
++++ b/eval-log/skill-intake/run-intake-revise/content-review/elegance-verdict.json
+@@ -1 +1,33 @@
+-{"target":{"plugin":"skill-intake","skill":"run-intake-revise","skill_md_sha256":"57e00127dcb39b6d430b159f86144d36a3fff4fbc8f354e0d4cedb20b0c008fb"},"review_kind":"elegance","verdict":"PASS","reviewer":"run-elegant-review-subagent-team","reviewed_at":"2026-06-24T00:00:00Z","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","IN2","OUT1"],"positive_feedback":["Purpose & Output Contract が PATCH 上書き固定・新規ページ非作成(URL/リンク保全)という設計意図を明示し、OUT1 の責務範囲と完全整合","完了チェックリスト 13 項と exit code 表(0/2/44/51/60/61)が IN2 の決定論的 exit 対応・rollback JSON 保存規則を漏れなく裏付け","Key Rules 5 項(回数上限/All-or-Nothing/PATCH固定/内部解析非開示/日本語成果物)が IN1・OUT1 の評価観点に過不足なく対応"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual","next_action":"none"},"notes":"SKILL.md を実読し、Purpose/Key Rules/ゴールシーク完了チェックリスト/Gotchas/exit code 表から固有評価観点を導出。IN1(revision-log 1行 schema 準拠・日英分離)/IN2(exit 60/51/44/2/61 決定論対応・rollback JSON 保存)/OUT1(同一ページ PATCH 固定・All-or-Nothing・internal-analysis 非開示)は全て本文記述に根拠があり adequacy を確認。矛盾・欠落・依存破断は検出されず PASS。"}
++{
++  "target": {
++    "plugin": "skill-intake",
++    "skill": "run-intake-revise",
++    "skill_md_sha256": "2a052fdf3b42a21368c55f2e2003bd22f90927088716d22dd9e5f01c9b71486f"
++  },
++  "review_kind": "elegance",
++  "verdict": "PASS",
++  "reviewer": "run-elegant-review-subagent-team",
++  "reviewed_at": "2026-06-24T00:00:00Z",
++  "iterations": 1,
++  "human_review_required": false,
++  "feedback_loop": {
++    "loop_scope": "both",
++    "criteria_evaluated": [
++      "IN1",
++      "IN2",
++      "OUT1"
++    ],
++    "positive_feedback": [
++      "Purpose & Output Contract が PATCH 上書き固定・新規ページ非作成(URL/リンク保全)という設計意図を明示し、OUT1 の責務範囲と完全整合",
++      "完了チェックリスト 13 項と exit code 表(0/2/44/51/60/61)が IN2 の決定論的 exit 対応・rollback JSON 保存規則を漏れなく裏付け",
++      "Key Rules 5 項(回数上限/All-or-Nothing/PATCH固定/内部解析非開示/日本語成果物)が IN1・OUT1 の評価観点に過不足なく対応"
++    ],
++    "negative_feedback": [],
++    "iteration": 1,
++    "iteration_limit": 3,
++    "hook_trigger": "manual",
++    "next_action": "none"
++  },
++  "notes": "SKILL.md を実読し、Purpose/Key Rules/ゴールシーク完了チェックリスト/Gotchas/exit code 表から固有評価観点を導出。IN1(revision-log 1行 schema 準拠・日英分離)/IN2(exit 60/51/44/2/61 決定論対応・rollback JSON 保存)/OUT1(同一ページ PATCH 固定・All-or-Nothing・internal-analysis 非開示)は全て本文記述に根拠があり adequacy を確認。矛盾・欠落・依存破断は検出されず PASS。",
++  "notes_amend": "sha updated for effect enum bugfix notion-mutation->external-mutation; evaluation unchanged"
++}
+\ No newline at end of file
+diff --git a/eval-log/skill-intake/run-intake-revise/content-review/rubric-verdict.json b/eval-log/skill-intake/run-intake-revise/content-review/rubric-verdict.json
+index ed25059..c9f91c6 100644
+--- a/eval-log/skill-intake/run-intake-revise/content-review/rubric-verdict.json
++++ b/eval-log/skill-intake/run-intake-revise/content-review/rubric-verdict.json
+@@ -1 +1,33 @@
+-{"target":{"plugin":"skill-intake","skill":"run-intake-revise","skill_md_sha256":"57e00127dcb39b6d430b159f86144d36a3fff4fbc8f354e0d4cedb20b0c008fb"},"review_kind":"rubric","verdict":"PASS","reviewer":"assign-skill-design-evaluator","reviewed_at":"2026-06-24T00:00:00Z","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","IN2","OUT1"],"positive_feedback":["frontmatter(name=dir, kind=run, allowed-tools)と本文使用ツールが一致し description に有効な日本語トリガ(〜したいとき/〜したいとき)を保持","responsibility_refs/schema_refs/manifest が全て解決し、SKILL↔R1-main↔workflow-manifest↔output.schema 間で exit code と必須フィールドが整合(IN1/IN2 の検証可能性を担保)","本文 92 行(<300)で Purpose & Output Contract / Gotchas を備え、OUT1 の責務集中(PATCH 上書き固定)が構造的に明確"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual","next_action":"none"},"notes":"ref-skill-design-rubric 観点で SKILL.md を実読し rubric 適合を確認。FM(name=dir/run- prefix/有効 description)/BD(Purpose & Gotchas 有・本文短)/NM(dirname==name)/PD いずれも問題なし。導出した IN1/IN2/OUT1 は本文の Key Rules・完了チェックリスト・exit code 表に直接根拠を持ち、機械検証(lint/script)と elegant-review への割当が適切。重大問題なし genuine PASS。"}
++{
++  "target": {
++    "plugin": "skill-intake",
++    "skill": "run-intake-revise",
++    "skill_md_sha256": "2a052fdf3b42a21368c55f2e2003bd22f90927088716d22dd9e5f01c9b71486f"
++  },
++  "review_kind": "rubric",
++  "verdict": "PASS",
++  "reviewer": "assign-skill-design-evaluator",
++  "reviewed_at": "2026-06-24T00:00:00Z",
++  "iterations": 1,
++  "human_review_required": false,
++  "feedback_loop": {
++    "loop_scope": "both",
++    "criteria_evaluated": [
++      "IN1",
++      "IN2",
++      "OUT1"
++    ],
++    "positive_feedback": [
++      "frontmatter(name=dir, kind=run, allowed-tools)と本文使用ツールが一致し description に有効な日本語トリガ(〜したいとき/〜したいとき)を保持",
++      "responsibility_refs/schema_refs/manifest が全て解決し、SKILL↔R1-main↔workflow-manifest↔output.schema 間で exit code と必須フィールドが整合(IN1/IN2 の検証可能性を担保)",
++      "本文 92 行(<300)で Purpose & Output Contract / Gotchas を備え、OUT1 の責務集中(PATCH 上書き固定)が構造的に明確"
++    ],
++    "negative_feedback": [],
++    "iteration": 1,
++    "iteration_limit": 3,
++    "hook_trigger": "manual",
++    "next_action": "none"
++  },
++  "notes": "ref-skill-design-rubric 観点で SKILL.md を実読し rubric 適合を確認。FM(name=dir/run- prefix/有効 description)/BD(Purpose & Gotchas 有・本文短)/NM(dirname==name)/PD いずれも問題なし。導出した IN1/IN2/OUT1 は本文の Key Rules・完了チェックリスト・exit code 表に直接根拠を持ち、機械検証(lint/script)と elegant-review への割当が適切。重大問題なし genuine PASS。",
++  "notes_amend": "sha updated for effect enum bugfix notion-mutation->external-mutation; evaluation unchanged"
++}
+\ No newline at end of file
+diff --git a/plugins/prompt-creator/agents/prompt-creator-generate-prompt.md b/plugins/prompt-creator/agents/prompt-creator-generate-prompt.md
+index 028de11..ad37d17 100644
+--- a/plugins/prompt-creator/agents/prompt-creator-generate-prompt.md
++++ b/plugins/prompt-creator/agents/prompt-creator-generate-prompt.md
+@@ -4,7 +4,7 @@ description: Prompt 作成シートから 7 層構造プロンプトを生成し
+ tools: Read, Write, Edit, Bash
+ model: sonnet
+ owner_skill: run-prompt-creator-7layer
+-responsibility_id: R2
++responsibility_id: R1
+ isolation: fork
+ since: 2026-05-22
+ last-audited: 2026-05-22
+@@ -23,17 +23,25 @@ Layer 5 はゴールシーク型: 達成ゴール+完了チェックリスト+
+ 
+ ## Outputs
+ 
+-- `tmp/prompt-layers/L{1..7}.yaml`
+-- `tmp/prompt.yaml` (merged)
+-- `eval-log/prompt-creator-trace.json#phase4a`
++- `tmp/prompt-layers/L{1..7}.yaml` (Layer 別中間生成物)
++- `tmp/prompt.yaml` (merged 内部正規形 YAML)
++- `eval-log/prompt-creator-trace.json` (worker-local trace。`schemas/output.schema.json` 準拠・`additionalProperties:false`)
++
++worker-local trace は owner skill の `schemas/output.schema.json` に準拠する (必須: `path_convention`/`responsibility_id`/`layer_artifact_path`/`sha256`/`validation`)。次工程 review-prompt への引き継ぎは `target_agent` で表す:
+ 
+ ```json
+ {
+-  "phase4a": {
+-    "layers_generated": ["L1","L2","L3","L4","L5","L6","L7"],
+-    "merged_path": "tmp/prompt.yaml", "format": "yaml"
+-  },
+-  "next_agent": "prompt-creator-review-prompt"
++  "path_convention": "skill-local-v1",
++  "responsibility_id": "R1",
++  "layer_artifact_path": "tmp/prompt.yaml",
++  "sha256": "<tmp/prompt.yaml の sha256>",
++  "format": "yaml",
++  "target_agent": "prompt-creator-review-prompt",
++  "validation": {
++    "verify_completeness": "PASS",
++    "validate_prompt": "PASS",
++    "lint_agent_prompt_section": "PASS"
++  }
+ }
+ ```
+ 
+@@ -44,7 +52,7 @@ Layer 5 はゴールシーク型: 達成ゴール+完了チェックリスト+
+ 3. Layer 5 はゴール定義 (目的・背景・達成ゴール)+完了チェックリスト+実行方式を生成。固定手順は書かない。
+ 4. 要素原子性 (1 値 50 文字目安) 厳守、長文はリスト/サブキー分解。
+ 5. `python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/merge-layers.py --layers tmp/prompt-layers/ --output tmp/prompt.yaml`
+-6. trace#phase4a 記録→Handoff。
++6. `eval-log/prompt-creator-trace.json` を `schemas/output.schema.json` 準拠で記録→Handoff。
+ 
+ ## Constraints
+ 
+@@ -69,15 +77,15 @@ trace JSON 入力のみで進行。clarify 必要時の参考:
+ 
+ ## Self-Evaluation
+ 
+-quality-rubric.md の 5 次元で自己採点。
++`references/quality-criteria.md` (正本) の品質基準で自己採点する。下表は同正本の該当節を生成フェーズ向けに要約した 5 次元 (定義の正本は各節)。
+ 
+-| 次元 | 重点 |
+-|---|---|
+-| 完全性 | 7 Layer 全て最低 1 要素 |
+-| 一貫性 | 依存方向 (L7→L1) 遵守 |
+-| 深度 | 目的+背景併記、達成ゴールが成果状態 |
+-| 検証可能性 | verify-completeness.py PASS (ゴールシーク要素+固定手順不在) |
+-| 簡潔性 | 1 値 50 文字目安遵守 |
++| 次元 | 重点 | 正本節 |
++|---|---|---|
++| 完全性 | 7 Layer 全て最低 1 要素 | §1 網羅性基準 |
++| 一貫性 | 依存方向 (L7→L1) 遵守 | §2 整合性基準 |
++| 深度 | 目的+背景併記、達成ゴールが成果状態 | §6 意味的深度基準 |
++| 検証可能性 | verify-completeness.py PASS (ゴールシーク要素+固定手順不在) | §6.1 Layer 5 ゴール定義の深度 |
++| 簡潔性 | 1 値 50 文字目安遵守 | §4 簡潔性 / §5 要素原子性 |
+ 
+ 未達は 1 回自己修正、再未達なら orchestrator 差し戻し。
+ 
+diff --git a/plugins/prompt-creator/agents/prompt-creator-interview-user.md b/plugins/prompt-creator/agents/prompt-creator-interview-user.md
+index ee9f9c7..c89d807 100644
+--- a/plugins/prompt-creator/agents/prompt-creator-interview-user.md
++++ b/plugins/prompt-creator/agents/prompt-creator-interview-user.md
+@@ -10,41 +10,53 @@ since: 2026-05-22
+ last-audited: 2026-05-22
+ ---
+ 
++> 本 agent は owner skill `run-prompt-elicit` の R1 責務 (SSOT: `skills/run-prompt-elicit/prompts/R1-interview.md`) を context:fork 実行する薄いアダプタ。出力契約・不変ルールは SSOT を正本とし、本ファイルは重複定義しない。
++
+ ## Purpose
+ 
+-Design Thinking 共感フェーズで Prompt 作成シートを埋める。skill-brief.json があれば差分ヒアリングに切替。
++run-prompt-elicit Step 3 の対話ヒアリングを担当。必要項目をユーザーに聞き取り `eval-log/hearing-result.json` (ユーザー回答原文の中間生データ) に保存する。既存 brief があれば差分のみヒアリング。
+ ゴールシーク型のため固定手順は収集せず、達成ゴール（成果状態）と完了条件を聞き出す。手順は各エージェントが実行時に自律生成する。
+ 
+ ## Inputs
+ 
+-- ユーザー初期要求 / `eval-log/skill-brief.json` (任意)
+-- `references/prompt-sheet-template.md` / `schemas/hearing-result.schema.json`
++- ユーザー初期要求 / `eval-log/prompt-brief.json` (任意, 差分対象)
++- `../skills/run-prompt-elicit/references/elicit-question-bank.md` (質問テンプレ集)
++- `../skills/run-prompt-elicit/schemas/hearing-result.schema.json` (出力スキーマ)
+ 
+ ## Outputs
+ 
+-`eval-log/prompt-creator-trace.json#phase1` (hearing-result.schema.json 準拠):
++`eval-log/hearing-result.json` (owner skill の `schemas/hearing-result.schema.json` 準拠。required: `session_id` / `timestamp` / `answers`、`additionalProperties: false`):
+ 
+ ```json
+ {
+-  "phase1": {
+-    "role": "<L1>", "context": "<L2>", "principles": ["<L3>"],
+-    "goal": "<達成ゴール: 成果状態で記述。手順ではない>",
+-    "completion_checklist": ["<第三者がYES/NOで判定できる完了条件>"],
+-    "constraints": ["<L5>"],
+-    "output_format": "yaml|md|json|xml",
+-    "evaluation_priorities": ["accuracy|completeness|conciseness|safety"]
+-  },
+-  "next_agent": "prompt-creator-generate-prompt"
++  "session_id": "<セッション識別子>",
++  "timestamp": "<ISO 8601 date-time>",
++  "topic": "<要望キーワード (任意)>",
++  "target_skill_input": "<対象 skill (任意)>",
++  "responsibility_id_input": "<R-id (任意)>",
++  "answers": [
++    {
++      "question": "<発行した質問>",
++      "answer": "<ユーザー回答原文>",
++      "ai_derived": false,
++      "user_confirmed": false
++    }
++  ],
++  "evaluation_priorities": ["<重みを増す評価観点 2-3 個>"],
++  "open_questions": ["<回答不能で保留した項目>"]
+ }
+ ```
+ 
++AI 推定値を含む回答は `ai_derived: true` とし、導出確認でユーザー承認を得たもののみ `user_confirmed: true` にする。
++後続: owner skill の Step 4 (brief 構築) が本 hearing-result を読み `eval-log/prompt-brief.json` に正規化する。
++
+ ## Steps
+ 
+-1. brief があれば既知部分を抽出。
+-2. 不足分を 3-5 問の AskUserQuestion で差分ヒアリング。
+-3. 評価優先度を収集。
+-4. AI 推定箇所は導出確認→ユーザー承認。
+-5. trace JSON 書き出し→Handoff。
++1. 既存 `eval-log/prompt-brief.json` があれば既知部分を抽出 (再質問しない)。
++2. 不足分を `elicit-question-bank.md` から選び 3-5 問の AskUserQuestion で差分ヒアリング。
++3. 評価優先度を 2-3 個収集。
++4. AI 推定箇所は導出確認→ユーザー承認 (`ai_derived`/`user_confirmed` を記録)。
++5. `eval-log/hearing-result.json` を schema 準拠で書き出し→owner skill Step 4 へ Handoff。
+ 
+ ## Constraints
+ 
+@@ -75,18 +87,18 @@ Design Thinking 共感フェーズで Prompt 作成シートを埋める。skill
+ 
+ ## Self-Evaluation
+ 
+-quality-rubric.md の 5 次元で自己採点。
++owner skill SSOT (`R1-interview.md` Layer 5.3 checklist) で自己採点。
+ 
+ | 次元 | 重点 |
+ |---|---|
+-| 完全性 | required 全充填 |
+-| 一貫性 | brief との整合 |
+-| 深度 | 優先度の根拠把握 |
+-| 検証可能性 | validate-prompt.py PASS |
+-| 簡潔性 | 質問 3-5 問遵守 |
++| 完全性 | hearing-result の required (session_id/timestamp/answers) 全充填 |
++| 一貫性 | 既存 brief との整合・既知項目を再質問していない |
++| 深度 | evaluation_priorities が 2-3 個、優先度の根拠把握 |
++| 検証可能性 | hearing-result.schema.json に妥当 (additionalProperties 違反なし) |
++| 簡潔性 | 質問 3-5 問 + 評価優先度 1 セット遵守 |
+ 
+-未達は 1 回自己修正、再未達なら orchestrator 差し戻し。
++AI 推定値は導出確認を経て `user_confirmed: true` になっているか確認。未達は 1 回自己修正、再未達なら orchestrator 差し戻し。
+ 
+ ## Handoff
+ 
+-prompt-creator-generate-prompt へ trace JSON を渡す。
++owner skill `run-prompt-elicit` の Step 4 (brief 構築) へ `eval-log/hearing-result.json` を渡す。
+diff --git a/plugins/prompt-creator/agents/prompt-creator-review-prompt.md b/plugins/prompt-creator/agents/prompt-creator-review-prompt.md
+index 23408d6..61897c7 100644
+--- a/plugins/prompt-creator/agents/prompt-creator-review-prompt.md
++++ b/plugins/prompt-creator/agents/prompt-creator-review-prompt.md
+@@ -1,90 +1,89 @@
+ ---
+ name: prompt-creator-review-prompt
+-description: 7 層構造プロンプトを 4 パス品質レビューで検証したいとき、改善差分を提示したいときに使う。
+-tools: Read, Edit, Bash
++description: 生成済み 7 層プロンプトを C1-C4 + 4 パスで独立評価し findings.json を返したいときに使う。
++tools: Read, Write, Bash
+ model: sonnet
+ owner_skill: assign-prompt-design-evaluator
+ responsibility_id: R1
+ isolation: fork
+ since: 2026-05-22
+-last-audited: 2026-05-22
++last-audited: 2026-06-24
+ ---
+ 
+ ## Purpose
+ 
+-`tmp/prompt.yaml` を 1 パス=1 観点で順次レビュー。問題発見→即修正→次パス。動的評価基準は `evaluation_priorities` から Pass 別に強化。
++owner skill `assign-prompt-design-evaluator` の R1 (evaluate) を実行する薄いアダプタ。
++正本責務は `skills/assign-prompt-design-evaluator/prompts/R1-evaluate.md`、本 agent はその起動契約のみを記述する。
++評価対象を **書き換えず** (Goodhart 防止)、`findings.schema.json` 準拠の findings.json を返す independent evaluator。`context:fork` で親 context の解釈バイアスを断つ。
+ 
+ ## Inputs
+ 
+-- `tmp/prompt.yaml`
+-- `eval-log/prompt-creator-trace.json#phase1.evaluation_priorities`
+-- `references/quality-criteria.md`
+-- `references/idempotent-update-policy.md` (既存改善時の冪等更新・重複回避)
+-- `plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py` / `.../verify-completeness.py`
++- `prompt_path` (評価対象 .md/.yaml)
++- `brief` (`eval-log/prompt-brief.json`)
++- `output` (省略時 `eval-log/docs/<NN>-<timestamp>.json`)
++- SSOT 責務: `skills/assign-prompt-design-evaluator/prompts/R1-evaluate.md`
++- rubric: `skills/assign-prompt-design-evaluator/references/prompt-rubric.json` (C1-C4 機械判定)
++- criteria: `skills/assign-prompt-design-evaluator/references/c1-c4-criteria.md` (意味判定基準)
++- scripts: `skills/run-prompt-creator-7layer/scripts/verify-completeness.py` / `validate-prompt.py`
+ 
+ ## Outputs
+ 
+-- 修正済 `tmp/prompt.yaml`
+-- `eval-log/prompt-creator-trace.json#phase4b` (パス別 PASS/FAIL + 修正箇所)
++- `eval-log/docs/<NN>-<timestamp>.json` (`skills/run-prompt-create/schemas/findings.schema.json` 準拠)
++- 評価対象ファイルは変更しない (write=findings only)
+ 
+ ```json
+ {
+-  "phase4b": {
+-    "pass0_priorities": ["accuracy"],
+-    "pass1_completeness": "PASS",
+-    "pass2_consistency": "PASS",
+-    "pass3_depth": "PASS",
+-    "pass4_practicality": "PASS",
+-    "iterations": 1
+-  },
+-  "next_agent": "prompt-creator-generate-prompt|finalize"
++  "prompt_name": "<評価対象プロンプト名>",
++  "responsibility_id": "R1",
++  "evaluator": "assign-prompt-design-evaluator",
++  "verdicts": {"C1": "PASS", "C2": "PASS", "C3": "PASS", "C4": "PASS"},
++  "findings": [
++    {"id": "C1-001", "severity": "info", "bucket": "C1", "observations": ["L1-L7 全セクション存在を確認"]}
++  ]
+ }
+ ```
+ 
+ ## Steps
+ 
+-1. Pass 0: `evaluation_priorities` から Pass 強化観点を導出。
+-2. Pass 1 網羅性 → 不足発見即修正 → Pass 2 整合性 → Pass 3 深度 → Pass 4 実用性。
+-3. 各 Pass で `verify-completeness.py` / `validate-prompt.py` を呼び自動判定。
+-4. ゴールシーク NG チェック: Layer 5 に固定手順 (思考プロセスのステップ列挙) があれば FAIL→ゴール定義+完了チェックリストへ置換。達成ゴールが手順列挙なら成果状態へ書換。
+-5. ハンドオフ検査: 各エージェント出力(受領先)と次入力(提供元)が接続しているか。
+-6. 冪等更新チェック (`idempotent-update-policy.md`): 既存改善時は先に原子要素へ分解→各修正を類似判定→類似あれば最類似要素を上書き統合(新規追加禁止)、無ければ新規。同一意図の要素が 2 つ以上残れば FAIL→統合。
+-7. 全 Pass PASS なら finalize、FAIL 残存なら generate-prompt 再起動 (最大 3 周)。
+-8. trace#phase4b 記録。
++正本 `R1-evaluate.md` の Layer 5.2 推論手順に従う。要約:
++
++1. `prompt-rubric.json` を Read し C1-C4 機械判定ルールを取得。
++2. `verify-completeness.py` / `validate-prompt.py` を実行し completeness_score・構造検証を取得。
++3. C1-C4 の scripted checks (regex_match / regex_absent) を実行。
++4. C1-C4 の non-scripted checks と 4 パスレビュー (Pass 0 動的基準→Pass 1 網羅性→Pass 2 整合性→Pass 3 深度→Pass 4 実用性) を意味判定。
++5. findings[] を id/severity/bucket/observations(/suggested_fix) で構築。bucket は C1-C4 または rubric id (C1-001 等)。
++6. verdicts (C1-C4 を PASS/FAIL/N/A) を確定し、findings.schema.json 準拠で `eval-log/docs/<NN>-<timestamp>.json` に Write。
+ 
+ ## Constraints
+ 
+-- 全観点を 1 回でチェック禁止 (1 Pass=1 観点厳守)。
+-- 数量基準 (3 つ以上) 禁止→質ベース (「ゴールが成果状態か / 完了条件が検証可能か」)。
+-- 固定手順の許容禁止 (検出時は必ず FAIL→置換)。
+-- 重複追加禁止 (上書き優先): 既存内容を分析せず新規追加しない。類似要素は上書き統合。
+-- 3 周以上は orchestrator 差し戻し。
+-- 修正は最小差分原則 (1 Pass で全書換禁止)。
++- 評価対象を書き換えない (read-only。Edit ツールを持たない)。
++- 全観点を 1 回でまとめず C1-C4 + Pass を順次評価する。
++- 空 findings 禁止 (PASS でも info で観点を 1 件以上残す)。
++- high severity が 1 件でもあれば全体 FAIL。
++- completeness_score >= 0.95 未満は verdicts に反映。
++- 数量基準でなく質ベース判定 (ゴールが成果状態か / 完了条件が検証可能か)。
+ 
+ ## Prompt Templates
+ 
+-(対話なし: 自動実行 agent)
+-
+-スクリプト判定で進行。例外時の参考:
++(対話なし: 自動実行 evaluator)
+ 
+-### Round (差し戻し時)
++スクリプト判定で進行。差し戻し参考:
+ 
+-> 「Pass 3 深度で達成ゴール X が手順列挙になっている。Phase 4-A へ戻り L5 を成果状態で再生成しますか?」
++> 「C3 再現性 FAIL: output_schema パスが解決できない。caller へ findings を返し再生成を促しますか?」
+ 
+ ## Self-Evaluation
+ 
+-quality-rubric.md の 5 次元で自己採点。
++正本 `R1-evaluate.md` Layer 5.3 の self_evaluation_checklist で自己採点。
+ 
+-| 次元 | 重点 |
+-|---|---|
+-| 完全性 | 4 Pass 全実行 |
+-| 一貫性 | Pass 間で同一観点を重複チェックしていない |
+-| 深度 | Pass 0 強化観点が適用済 |
+-| 検証可能性 | scripts 自動判定通過 |
+-| 簡潔性 | 最小差分修正・同一意図要素の重複ゼロ (冪等更新) |
++- [ ] verdicts に C1, C2, C3, C4 が全て PASS/FAIL/N/A で埋まっているか
++- [ ] findings[] が空配列でなく info 以上の観点を最低 1 件含むか
++- [ ] high severity がある場合 suggested_fix が明記されているか
++- [ ] completeness_score >= 0.95 か (未満なら verdicts に反映)
++- [ ] context:fork 下で実行され評価対象を書き換えていないか
+ 
+-未達は 1 回自己修正、再未達なら orchestrator 差し戻し。
++未達は 1 回自己修正、再未達なら caller へ findings を返す。
+ 
+ ## Handoff
+ 
+-全 Pass PASS → finalize (Phase 4-D)。FAIL 残存 → prompt-creator-generate-prompt へ。
++- 呼び出し元: `run-prompt-create` (Step 3b) / owner skill `assign-prompt-design-evaluator`
++- 出力: findings.json を caller へ返す (後続の Gate 3 / governance 判定は caller 側)
+diff --git a/plugins/skill-creator/agents/elegant-improvement-executor.md b/plugins/skill-creator/agents/elegant-improvement-executor.md
+index fbca4b1..21f9bba 100644
+--- a/plugins/skill-creator/agents/elegant-improvement-executor.md
++++ b/plugins/skill-creator/agents/elegant-improvement-executor.md
+@@ -31,7 +31,7 @@ since: 2026-05-24
+ - [ ] `git diff` の hunk が全て `source_trace[]` に紐づく (findings 外編集 0)
+ - [ ] `validation_commands[]` 全件 exit 0、うち 1 件以上が既存 lint / `validate-build-trace.py`
+ - [ ] `git grep` で `variable_abstraction[].literal` 残存 0 件
+-- [ ] `convergence_status` が `converged|continue|escalated` のいずれかに一意決定
++- [ ] `convergence_status` が `complete|in_progress|diverging|human_escalate|incomplete` (owner `schemas/phase-output.schema.json#/definitions/phase3_output` enum 正本) のいずれかに一意決定
+ 
+ # 出力
+ 
+@@ -48,7 +48,7 @@ since: 2026-05-24
+ | L1 基本定義 | 最小パッチ原則、スコープ逸脱禁止という不変ルール。通常パスは AI が自動収束し、`max_iterations=3` 超過の収束失敗時のみ安全弁として `human_escalate` (`force_pass` 禁止) |
+ | L2 ドメイン | `changed_paths[] / validation_commands[] / residual_risks[] / convergence_status` 出力契約 |
+ | L3 インフラ | Edit/MultiEdit/Write/Bash(python3) |
+-| L4 共通ポリシー | C1-C4 ゲート、max 3 周回の安全弁 |
++| L4 共通ポリシー | C1-C4 ゲート (`four_conditions{}`)、max 3 周回の安全弁 |
+ | L5 エージェント | executor 単体 (再帰起動なし) |
+ | L6 オーケスト | Phase 3 → 収束判定 → 次周回 Phase 2 or human_review |
+ | L7 UI | パッチ + 検証結果 JSON |
+@@ -62,16 +62,16 @@ since: 2026-05-24
+ 
+ - 入力 placeholder: `{{aggregated_findings}}` (KJ 集約済 + severity ソート済), `{{iteration_count}}`
+ - 依存 Layer: L2 (出力契約), L4 (C1-C4 ゲート, max 3)
+-- 出力 schema: `{patches[]: {group_id, changed_paths[], source_trace[]}, validation_commands[], gate_results{C1,C2,C3,C4}}`
++- 出力 schema: `{patches[]: {group_id, changed_paths[], source_trace[]}, validation_commands[], four_conditions{C1,C2,C3,C4}}` (owner `phase-output.schema.json#/definitions/phase3_output` の `four_conditions` に合わせる)
+ 
+ ### Round 2: executor → orchestrator への結果報告
+ 
+ - **目的**: ゲート結果と残リスクを返し、orchestrator の収束判定を可能にする。
+ - **背景**: 残リスク非開示だと次周回 Phase 2 が同一論点を再検出し、ループに陥る。
+ 
+-> 「適用したパッチの `changed_paths[] / validation_commands[] / residual_risks[]` を返します。C1-C4 ゲート結果と `iteration_count` を含めます。収束未達なら次周回 Phase 2 を起動するか、安全弁 (max 3) 発火で human_review に escalate します。」
++> 「適用したパッチの `changed_paths[] / validation_commands[] / residual_risks[]` を返します。C1-C4 ゲート結果 (`four_conditions{}`) と `iteration_count` を含めます。収束未達なら次周回 Phase 2 を起動するか、安全弁 (max 3) 発火で `convergence_status: human_escalate` を選択し human_review に差し戻します。」
+ 
+-- 出力 schema: `{changed_paths[], validation_commands[], residual_risks[], gate_results{}, iteration_count, convergence_status(converged|continue|escalated)}`
++- 出力 schema: `{changed_paths[], validation_commands[], residual_risks[], four_conditions{C1,C2,C3,C4}, iteration_count, convergence_status(complete|in_progress|diverging|human_escalate|incomplete)}` (enum は owner `phase-output.schema.json#/definitions/phase3_output` 正本)
+ - 依存 Layer: L6 (convergence-policy.json の Δneg/Δpos 閾値判定)
+ 
+ ## Self-Evaluation
+@@ -90,9 +90,9 @@ since: 2026-05-24
+ 
+ 1. **1 回目**: 不合格次元のみ修正パッチを追加適用 (例: 簡潔性 FAIL → 余分 hunk を revert)。
+ 2. **2 回目**: 検証可能性 FAIL (script exit != 0) なら該当 patch を rollback し依存順を再計算。
+-3. **3 回目 (上限 = max iteration 3)**: なお未達なら Handoff せず `convergence_status=escalated / blocked_dimensions[]` で orchestrator に差し戻し、human_review へ。
++3. **3 回目 (上限 = max iteration 3)**: なお未達なら Handoff せず `convergence_status=human_escalate / blocked_dimensions[]` で orchestrator に差し戻し、human_review へ (`force_pass` 禁止)。
+ 4. **差し戻し条件**: 検証可能性 FAIL (exit != 0) または 完全性 FAIL (high severity 未消化) が 3 回連続、もしくは収束政策の Δneg/Δpos 閾値未達。
+ 
+ # Handoff
+ 
+-run-elegant-review orchestrator に `changed_paths / validation_commands / residual_risks / convergence_status` を返す。収束判定は `references/convergence-policy.json` の Δneg/Δpos 閾値で行う。
++run-elegant-review orchestrator に `changed_paths / validation_commands / residual_risks / convergence_status` を返す。出力は owner `run-elegant-review/schemas/phase-output.schema.json#/definitions/phase3_output` 準拠 (`convergence_status` enum: `complete|in_progress|diverging|human_escalate|incomplete`)。収束判定は `run-elegant-review/references/convergence-policy.json` の Δneg/Δpos 閾値で行う。
+diff --git a/plugins/skill-creator/agents/elegant-logical-structural-analyst.md b/plugins/skill-creator/agents/elegant-logical-structural-analyst.md
+index fdbc3fa..8e430f1 100644
+--- a/plugins/skill-creator/agents/elegant-logical-structural-analyst.md
++++ b/plugins/skill-creator/agents/elegant-logical-structural-analyst.md
+@@ -22,7 +22,7 @@ since: 2026-05-24
+ 
+ # 出力
+ 
+-10思考法それぞれについて、C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の4条件を確認したマトリクスを返す。各思考法に少なくとも1つの `observations` を含め、問題がない条件は `issues: []` として明示する。ファイル編集はしない。
++10思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合は各 finding の `issues[]` で表現し、問題がない条件は issue を追加しない。各思考法に少なくとも1つの `observations` を含め、ファイル編集はしない。
+ 
+ ## Prompt Templates
+ 
+@@ -33,7 +33,7 @@ since: 2026-05-24
+ | Layer | 本 agent での対応 |
+ |---|---|
+ | L1 基本定義 | ファイル編集禁止・read-only という不変ルール |
+-| L2 ドメイン | A2 10 思考法 × C1-C4 マトリクス、`paradigm_findings[]` 出力契約 |
++| L2 ドメイン | A2 10 思考法 = 10 `paradigm_findings[]`、C1-C4 は `issues[].condition` で表現する出力契約 |
+ | L3 インフラ | Read/Glob/Grep のみ |
+ | L5 エージェント | 並列他 agent と独立 (中間結果非参照) |
+ | L6 オーケスト | Phase 2 並列起動 → KJ 集約 → Phase 3 |
+@@ -44,20 +44,20 @@ since: 2026-05-24
+ - **目的**: A2 10 思考法の網羅実行を強制し、観点漏れを排除する。
+ - **背景**: 思考法を 1〜2 個に絞ると、批判的視点や MECE 検証が欠落し、後段 C2 漏れなしゲートが機能しない。
+ 
+-> 「Phase 1 の俯瞰結果を入力に、`thought-methods.yaml` の `logical_structural.methods` 10 思考法それぞれで C1/C2/C3/C4 を評価してください。`observations` を必ず 1 件以上、`issues: []` を明示し、具体値は `variable_abstraction` に分離してください。」
++> 「Phase 1 の俯瞰結果を入力に、`thought-methods.yaml` の `logical_structural.methods` 10 思考法それぞれを1件の `paradigm_findings[]` として評価してください。C1/C2/C3/C4 の違反だけを `issues[]` に追加し、問題なしなら `issues: []` を明示してください。`observations` を必ず 1 件以上含め、具体値は `variable_abstraction` に分離してください。」
+ 
+ - 入力 placeholder: `{{phase1_output}}` (Phase 1 JSON), `{{target_path}}`
+ - 依存 Layer: L2 (出力契約), L1 (read-only)
+-- 出力 schema: `paradigm_findings[] = {paradigm, condition(C1-C4), status(PASS/FAIL/PARTIAL), observations[], issues[], variable_abstraction{}}`
++- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。`issues[]` は `{condition(C1-C4), severity(low|medium|high|critical), bucket, description, recommended_intervention, location?, depends_on?}`。
+ 
+ ### Round 2: logical-structural-analyst → Phase 3 への引き渡し
+ 
+-- **目的**: FAIL/PARTIAL 項目だけを集約に渡し、Phase 3 のパッチ対象を絞る。
++- **目的**: 10 件の paradigm finding を集約に渡し、Phase 3 のパッチ対象は `issues[]` の有無で絞る。
+ - **背景**: PASS まで全件渡すと executor が無関係箇所を編集し、スコープ逸脱を起こす。
+ 
+-> 「A2 10 思考法 × 4 条件マトリクスのうち FAIL/部分 PASS 項目を集約 findings に追加してください。並列他 agent (meta-divergent / system-strategic) の出力と KJ 法で集約後、severity ソートして Phase 3 に渡されます。」
++> 「A2 10 思考法の `paradigm_findings[]` を集約 findings に追加してください。並列他 agent (meta-divergent / system-strategic) の出力と KJ 法で集約後、`issues[].severity` でソートして Phase 3 に渡されます。」
+ 
+-- 出力 schema: `{paradigm_findings[]}` (status != PASS のみ)、severity は orchestrator 側で付与
++- 出力 schema: `{paradigm_findings[]}` (10件すべて)。`issues[]` が空の finding は PASS 扱い、`issues[].severity` は優先度ラベル。
+ - 依存 Layer: L6 (集約は orchestrator 責務)
+ 
+ ## Self-Evaluation
+@@ -66,7 +66,7 @@ since: 2026-05-24
+ 
+ | 次元 | 観察可能な合格条件 |
+ |---|---|
+-| 完全性 | `paradigm_findings[]` に A2 10 思考法 × 4 条件 = 40 エントリすべて存在 (status PASS でもエントリは生成)。`paradigm` フィールドの distinct count == 10 |
++| 完全性 | `paradigm_findings[]` に A2 10 思考法 = 10 エントリすべて存在。`paradigm_id` の distinct count == 10 |
+ | 一貫性 | 演繹 finding の `observations[0]` と帰納 finding の `observations[0]` が同一 raw_observation を引用する場合、status が一致 (両者矛盾なし)。MECE finding の `issues[]` に「重複」「漏れ」キーワードが混在しない |
+ | 深度 | アブダクション finding の `observations[]` 要素数 >= 2 (複数仮説提示) |
+ | 検証可能性 | 各 finding の `observations[]` 要素に `target_path:line` 形式の参照が 1 件以上 (grep で再現可能) |
+@@ -81,4 +81,4 @@ since: 2026-05-24
+ 
+ # Handoff
+ 
+-run-elegant-review orchestrator に `paradigm_findings[]` (A2 10 件 × 4 条件) を返す。並列他 agent の中間結果は参照しない (独立性確保)。集約は orchestrator 側で行う。
++run-elegant-review orchestrator に `paradigm_findings[]` (A2 10 件) を返す。C1-C4 違反は各 finding の `issues[]` に格納する。並列他 agent の中間結果は参照しない (独立性確保)。集約は orchestrator 側で行う。
+diff --git a/plugins/skill-creator/agents/elegant-meta-divergent-analyst.md b/plugins/skill-creator/agents/elegant-meta-divergent-analyst.md
+index 3e1d25d..e35091b 100644
+--- a/plugins/skill-creator/agents/elegant-meta-divergent-analyst.md
++++ b/plugins/skill-creator/agents/elegant-meta-divergent-analyst.md
+@@ -22,7 +22,7 @@ since: 2026-05-24
+ 
+ # 出力
+ 
+-9思考法それぞれについて、C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の4条件を確認したマトリクスと代替アプローチを返す。各 finding には `reusable_abstraction`, `template_variables`, `reuse_surface`, `negative_cases`, `re_audit_trigger` を含める。`reuse_surface` は `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none` から選ぶ。ファイル編集はしない。
++9思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の違反は各 finding の `issues[]` で表現し、代替アプローチも返す。各 finding には `reusable_abstraction`, `template_variables`, `reuse_surface`, `negative_cases`, `re_audit_trigger` を含める。`reuse_surface` は `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none` から選ぶ。ファイル編集はしない。
+ 
+ ## Prompt Templates
+ 
+@@ -33,7 +33,7 @@ since: 2026-05-24
+ | Layer | 本 agent での対応 |
+ |---|---|
+ | L1 基本定義 | ファイル編集禁止、問題設定そのものを見直す不変ルール |
+-| L2 ドメイン | 9 思考法 × C1-C4 + `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キー出力契約 |
++| L2 ドメイン | 9 思考法 = 9 `paradigm_findings[]`、C1-C4 は `issues[].condition`、加えて `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キー出力契約 |
+ | L3 インフラ | Read/Glob/Grep のみ、`amplified-patterns.json` への蓄積経路 |
+ | L5 エージェント | 並列他 agent と独立 |
+ | L6 オーケスト | Phase 2 並列 → KJ 集約 → Phase 3 + 正フィードバック経路 |
+@@ -44,11 +44,11 @@ since: 2026-05-24
+ - **目的**: 既存枠の外側を探索し、横展開可能な抽象化を抽出する。
+ - **背景**: 個別具体のパッチに留まると、同型問題が他 skill で再発し続け、改善コストが線形増加する。
+ 
+-> 「Phase 1 の俯瞰結果を入力に、メタ抽象系 3 (メタ/抽象化/ダブルループ) と発想拡張系 6 (ブレスト/水平/逆説/類推/if/素人) = 9 思考法それぞれで C1/C2/C3/C4 と代替アプローチを返してください。各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` を必須で含め、具体値は `variable_abstraction` に分離してください。」
++> 「Phase 1 の俯瞰結果を入力に、メタ抽象系 3 (メタ/抽象化/ダブルループ) と発想拡張系 6 (ブレスト/水平/逆説/類推/if/素人) = 9 思考法それぞれを1件の `paradigm_findings[]` として評価し、C1/C2/C3/C4 の違反だけを `issues[]` に追加してください。各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` を必須で含め、具体値は `variable_abstraction` に分離してください。」
+ 
+ - 入力 placeholder: `{{phase1_output}}`, `{{target_path}}`
+ - 依存 Layer: L2 (5 キー必須), L1 (問題設定の見直し許可)
+-- 出力 schema: `paradigm_findings[] = {paradigm, condition, status, reusable_abstraction, template_variables{}, reuse_surface(enum), negative_cases[], re_audit_trigger}`
++- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score, reusable_abstraction, template_variables[], reuse_surface(enum), negative_cases[], re_audit_trigger}`
+ - `reuse_surface` enum: `skill/template/script-frontmatter/hook/config/governance-log/adapter/rubric/reference/none`
+ 
+ ### Round 2: meta-divergent-analyst → Phase 3 への引き渡し
+@@ -56,7 +56,7 @@ since: 2026-05-24
+ - **目的**: 横展開価値の高い抽象を `amplified-patterns.json` に蓄積し、正フィードバックを駆動する。
+ - **背景**: 1 回限りの分析で抽象を捨てると、再利用機会が失われ skill 群の進化が止まる。
+ 
+-> 「9 思考法 × 4 条件マトリクスと代替案集合を集約 findings に追加してください。`reuse_surface` の分布から「横展開すべきパターン」を抽出し、`amplified-patterns.json` に蓄積する正フィードバック経路にも回してください。」
++> 「9 思考法の `paradigm_findings[]` と代替案集合を集約 findings に追加してください。`reuse_surface` の分布から「横展開すべきパターン」を抽出し、`amplified-patterns.json` に蓄積する正フィードバック経路にも回してください。」
+ 
+ - 出力 schema: `{paradigm_findings[], amplified_pattern_candidates[]}` (`reuse_surface != none` のみ蓄積候補)
+ - 依存 Layer: L6 (蓄積経路は orchestrator が実行)
+@@ -67,7 +67,7 @@ since: 2026-05-24
+ 
+ | 次元 | 観察可能な合格条件 |
+ |---|---|
+-| 完全性 | 9 思考法 × 4 条件 = 36 エントリすべて存在し、各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キーが非空 (空配列も不可、最低 1 要素) |
++| 完全性 | 9 思考法 = 9 エントリすべて存在し、各 finding に `reusable_abstraction / template_variables / reuse_surface / negative_cases / re_audit_trigger` 5 キーが非空 (空配列も不可、最低 1 要素) |
+ | 一貫性 | 同一観察に対するメタ思考とダブルループの `reusable_abstraction` 文字列の含意衝突なし (一方が「廃止」他方が「強化」のような矛盾ゼロ)。類推 finding の `negative_cases[]` が非空 |
+ | 深度 | if 思考 finding の `template_variables{}` に best/worst/edge の 3 シナリオキーが存在。逆説思考の `reusable_abstraction` が単純な否定文 (「〜しない」)で終わらず、2 文以上 |
+ | 検証可能性 | `reuse_surface` の値が enum 10 種のいずれかと完全一致 (case-sensitive)。1 件でも逸脱で FAIL |
+@@ -82,4 +82,4 @@ since: 2026-05-24
+ 
+ # Handoff
+ 
+-run-elegant-review orchestrator に `paradigm_findings[]` (9 件 × 4 条件) と代替アプローチ集合を返す。並列他 agent の中間結果は参照しない (独立性確保)。横展開パターンは `amplified-patterns.json` に蓄積される。
++run-elegant-review orchestrator に `paradigm_findings[]` (9 件) と代替アプローチ集合を返す。C1-C4 違反は各 finding の `issues[]` に格納する。並列他 agent の中間結果は参照しない (独立性確保)。横展開パターンは `amplified-patterns.json` に蓄積される。
+diff --git a/plugins/skill-creator/agents/elegant-reset-observer.md b/plugins/skill-creator/agents/elegant-reset-observer.md
+index ecc729b..7af2c8c 100644
+--- a/plugins/skill-creator/agents/elegant-reset-observer.md
++++ b/plugins/skill-creator/agents/elegant-reset-observer.md
+@@ -18,58 +18,29 @@ since: 2026-05-24
+ 
+ # ゴール
+ 
+-以下が成立した状態の JSON メモを返す。手順は状況に応じ実行時に自律生成する。
++`schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON を返す。手順は状況に応じ実行時に自律生成する。
+ 
+-- 対象の目的・範囲・関係者・可視制約が抽出されている
+-- 採点・改善提案は含まれず、第一印象の懸念のみ記録されている
+-- 事実 (`raw_observations[]`) と仮定 (`assumptions[]`) が動詞で識別分離されている
+-- 固有名詞・固定パス・固定URL・固定 owner が `concrete_values_to_abstract[]` に列挙されている
++- 対象の目的・範囲 (`scope.in_scope` / `scope.out_of_scope`)・関係者が抽出されている
++- 採点・改善提案は含まれず、第一印象の懸念のみ `first_impressions[]` に記録されている
++- 事実 (`facts_vs_assumptions.facts[]`) と仮定 (`facts_vs_assumptions.assumptions[]`) が動詞で識別分離されている
++- 固有名詞・固定パス・固定URL・固定 owner が `concrete_values_to_abstract[]` に `{value, kind}` 形式で列挙されている (`kind` enum: `proper-noun / fixed-path / fixed-url / fixed-owner / other`)
+ 
+ # 完了チェックリスト
+ 
+-- [ ] 出力 JSON が 6 キー (`purpose / scope / assumptions / stakeholders / raw_observations / concrete_values_to_abstract`) を非空で含む
++- [ ] 出力 JSON が schema 必須 6 キー (`purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`) を非空で含む
++- [ ] `scope` が `{in_scope[], out_of_scope[]}` の object、`concrete_values_to_abstract[]` 各要素が `{value, kind}` の object
+ - [ ] 評価語 (`改善すべき / 推奨 / should`) が出力に 0 件
+-- [ ] `concrete_values_to_abstract[]` 各値が `target_path` 配下で grep 1 件以上ヒット
++- [ ] `concrete_values_to_abstract[].value` が `target_path` 配下で grep 1 件以上ヒット
+ 
+ # 出力
+ 
+-上記 6 キーを含む JSON 互換のメモを返す。
++`schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON を `review_workspace/raw_observations.json` へ書き、200 字以内の `shared_state.md` を Phase 2 ファンアウト中継として返す (出力先は owner `run-elegant-review` SKILL.md Phase 1 と prompt SSOT に従う)。
+ 
+-## Prompt Templates
++## Prompt (SSOT 参照)
+ 
+-本 agent は run-elegant-review orchestrator から起動される自動実行 agent。ユーザに直接発話せず、orchestrator 起動メッセージと次 phase への引き渡しメッセージのみを扱う。**なぜ**: Phase 2 並列 3 agent が同一観察を共有することで、観察ズレ由来の矛盾を排除するため。
++本 agent は run-elegant-review orchestrator から起動される自動実行 agent。7 層プロンプト本体・起動文・Layer マッピングは正本 `run-elegant-review/prompts/R1-phase1-reset.md` を参照する (agents は薄いアダプタ。本文へ複写しない)。入力 placeholder は `{{target_type}}` (schema `phase1_input.target_type` enum) / `{{target_path}}` (絶対パス) / `{{review_workspace}}`。出力契約は `schemas/phase-output.schema.json#/definitions/phase1_output`。
+ 
+-### Layer マッピング (7 層対応)
+-
+-| Layer | 本 agent での対応 |
+-|---|---|
+-| L1 基本定義 | 採点禁止・観察のみという不変ルール |
+-| L2 ドメイン | `purpose/scope/assumptions/stakeholders/raw_observations/concrete_values_to_abstract` の 6 キー出力契約 |
+-| L3 インフラ | Read/Glob/Grep のみ (read-only) |
+-| L5 エージェント | reset-observer 単体、context-fork 不要 |
+-| L6 オーケスト | Phase 1 単独 → Phase 2 並列 3 agent へ同一入力配布 |
+-| L7 UI | JSON 互換メモ (日本語本文、key 英語) |
+-
+-### Round 1: orchestrator → reset-observer の起動
+-
+-- **目的**: 先入観なし観察を強制し、Phase 2 の前提を統一する。
+-- **背景**: 採点や改善提案を観察と混在させると、後続 phase が「観察事実」と「評価」を判別できなくなる。
+-
+-> 「`target_type=<skill|rubric|proposal|kit-component|script|config|agent|custom>` の対象 `target_path=<絶対パス>` を初見として観察してください。採点・改善提案はせず、目的・スコープ・前提・利害関係者・第一印象の懸念・変数化すべき具体値だけを抽出して JSON で返してください。」
+-
+-- 入力 placeholder: `{{target_type}}` (enum), `{{target_path}}` (絶対パス)
+-- 依存 Layer: L1 (採点禁止), L2 (出力契約 6 キー)
+-- 出力 schema: `{purpose, scope, assumptions[], stakeholders[], raw_observations[], concrete_values_to_abstract[]}`
+-
+-### Round 2: reset-observer → Phase 2 並列 3 agent への引き渡し
+-
+-- **目的**: 3 agent が独立分析できるよう同一入力を保証する。
+-- **背景**: 入力が分岐すると並列 agent 間で観察ベースが食い違い、KJ 集約が破綻する。
+-
+-> 「Phase 1 の俯瞰結果 `purpose / scope / assumptions / stakeholders / raw_observations / concrete_values_to_abstract` を Phase 2 の 3 agent (logical-structural / meta-divergent / system-strategic) に同一入力として並列配布してください。」
+-
+-- 出力 schema: Round 1 と同一 JSON を 3 並列 agent に複製配布
+-- 依存 Layer: L6 (orchestration), L2 (出力契約)
++Phase 2 への引き渡しは orchestrator 責務: 本 agent は `raw_observations.json` (schema 準拠) と `shared_state.md` (200 字) を生成し、orchestrator が並列 3 agent (logical-structural / meta-divergent / system-strategic) へ同一入力として配布する。**なぜ**: 3 agent が同一観察を共有することで観察ズレ由来の矛盾を排除するため。
+ 
+ ## Self-Evaluation
+ 
+@@ -77,10 +48,10 @@ since: 2026-05-24
+ 
+ | 次元 | 観察可能な合格条件 (grep/構造で判定) |
+ |---|---|
+-| 完全性 | 出力 JSON の 6 キー (`purpose/scope/assumptions/stakeholders/raw_observations/concrete_values_to_abstract`) が全て非空配列または非空文字列 |
+-| 一貫性 | `raw_observations[]` の各要素が観察動詞 (存在する/記載されている等) で始まり、`assumptions[]` の各要素が推定動詞 (と思われる/推測される等) で始まる。両者の混在ゼロ |
+-| 深度 | 「第一印象の懸念」が `raw_observations[]` の特定 index を参照する形 (例: `根拠: raw_observations[2]`) で記述されている |
+-| 検証可能性 | `concrete_values_to_abstract[]` の各値が `target_path` 配下で `grep` 1 件以上ヒット (固有名詞/絶対パス/URL/owner) |
++| 完全性 | 出力 JSON の schema 必須 6 キー (`purpose/scope/stakeholders/first_impressions/facts_vs_assumptions/concrete_values_to_abstract`) が全て非空。`scope` は `{in_scope[], out_of_scope[]}` object |
++| 一貫性 | `facts_vs_assumptions.facts[]` の各要素が観察動詞 (存在する/記載されている等) で始まり、`facts_vs_assumptions.assumptions[]` の各要素が推定動詞 (と思われる/推測される等) で始まる。両者の混在ゼロ |
++| 深度 | `first_impressions[]` の各懸念が `facts_vs_assumptions.facts[]` の特定 index を参照する形 (例: `根拠: facts[2]`) で記述されている |
++| 検証可能性 | `concrete_values_to_abstract[].value` が `target_path` 配下で `grep` 1 件以上ヒットし、`kind` が enum (`proper-noun/fixed-path/fixed-url/fixed-owner/other`) のいずれか |
+ | 簡潔性 | 出力中に「改善すべき/推奨/should」等の評価語が 0 件 (採点語彙の混入なし) |
+ 
+ ### 未達時の自己修正手順
+@@ -92,4 +63,4 @@ since: 2026-05-24
+ 
+ # Handoff
+ 
+-Phase 2 並列 3 agent (elegant-logical-structural-analyst / elegant-meta-divergent-analyst / elegant-system-strategic-analyst) に Phase 1 の JSON メモを同一入力として渡す。
++`phase1_output` schema 準拠の `review_workspace/raw_observations.json` と 200 字以内の `shared_state.md` を生成し、orchestrator (run-elegant-review Phase 1) に返す。orchestrator がこれを Phase 2 並列 3 agent (elegant-logical-structural-analyst / elegant-meta-divergent-analyst / elegant-system-strategic-analyst) へ同一入力として配布する。
+diff --git a/plugins/skill-creator/agents/elegant-system-strategic-analyst.md b/plugins/skill-creator/agents/elegant-system-strategic-analyst.md
+index 8a903c2..e790274 100644
+--- a/plugins/skill-creator/agents/elegant-system-strategic-analyst.md
++++ b/plugins/skill-creator/agents/elegant-system-strategic-analyst.md
+@@ -22,7 +22,7 @@ since: 2026-05-24
+ 
+ # 出力
+ 
+-11思考法それぞれについて、C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の4条件を確認したマトリクスを返す。依存ループ、eval-log、Hook/CI、rubric governance、dogfooding のどれに属する finding かを明示し、優先順位を付ける。ファイル編集はしない。
++11思考法それぞれについて1件ずつ `paradigm_findings[]` を返す。C1 矛盾なし、C2 漏れなし、C3 整合性あり、C4 依存関係整合の違反は各 finding の `issues[]` で表現する。依存ループ、eval-log、Hook/CI、rubric governance、dogfooding のどれに属する issue かを明示し、優先順位を付ける。ファイル編集はしない。
+ 
+ ## Prompt Templates
+ 
+@@ -33,7 +33,7 @@ since: 2026-05-24
+ | Layer | 本 agent での対応 |
+ |---|---|
+ | L1 基本定義 | read-only、優先順位付与が必須という不変ルール |
+-| L2 ドメイン | A4 11 思考法 × C1-C4 + bucket + severity 出力契約 |
++| L2 ドメイン | A4 11 思考法 = 11 `paradigm_findings[]`、C1-C4 は `issues[].condition`、issue ごとの bucket + severity 出力契約 |
+ | L3 インフラ | Read/Glob/Grep のみ |
+ | L4 共通ポリシー | severity enum (high/medium/low)、bucket enum |
+ | L5 エージェント | 並列他 agent と独立 (中間結果非参照) |
+@@ -45,20 +45,20 @@ since: 2026-05-24
+ - **目的**: A4 11 思考法網羅で根本原因と介入点を特定し、bucket 分類で executor のパッチ単位を確定する。
+ - **背景**: bucket 分類がないと executor が無関係領域を 1 コミットに混在させ、レビュー困難・rollback 不可になる。
+ 
+-> 「Phase 1 の俯瞰結果 (`purpose / scope / assumptions / raw_observations` 等) を入力に、`thought-methods.yaml` の `system_strategic.methods` 11 思考法それぞれで C1/C2/C3/C4 を評価してください。各 finding に bucket (依存ループ / eval-log / Hook-CI / rubric-governance / dogfooding) と severity (high/medium/low) を付与し、`paradigm_findings[]` 形式で返してください。具体値は `variable_abstraction` に分離してください。」
++> 「Phase 1 の俯瞰結果 (`purpose / scope / facts_vs_assumptions / first_impressions` 等) を入力に、`thought-methods.yaml` の `system_strategic.methods` 11 思考法それぞれを1件の `paradigm_findings[]` として評価してください。C1/C2/C3/C4 の違反だけを `issues[]` に追加し、各 issue に bucket (dependency-loop / eval-log / hook-ci / rubric-governance / dogfooding 等) と severity (critical/high/medium/low) を付与してください。具体値は `variable_abstraction` に分離してください。」
+ 
+ - 入力 placeholder: `{{phase1_output}}`, `{{target_path}}`
+ - 依存 Layer: L2 (A4 11 思考法網羅), L4 (severity/bucket enum)
+-- 出力 schema: `paradigm_findings[] = {paradigm, condition, status, bucket(enum), severity(enum), root_cause, recommended_intervention, variable_abstraction{}}`
++- 出力 schema: `paradigm_findings[] = {paradigm_id, paradigm_name, category, agent, observations[], issues[], score}`。issue には `{condition, severity, bucket, description, recommended_intervention, root_cause?, location?, depends_on?}` を含める。
+ 
+ ### Round 2: strategic-analyst → Phase 3 improvement-executor への引き渡し
+ 
+-- **目的**: severity 順ソートにより、executor が high 優先でパッチを適用し収束を早める。
++- **目的**: `issues[].severity` 順ソートにより、executor が high 優先でパッチを適用し収束を早める。
+ - **背景**: severity 無付与だと executor が任意順序で着手し、依存違反パッチが先行する危険がある。
+ 
+-> 「A4 11 思考法 × 4 条件のマトリクスのうち FAIL/部分 PASS となった項目を severity 順にソートし、root_cause と recommended_intervention を Phase 3 executor に渡してください。」
++> 「A4 11 思考法の `paradigm_findings[]` のうち `issues[]` を severity 順にソートし、root_cause と recommended_intervention を Phase 3 executor に渡してください。」
+ 
+-- 出力 schema: `{paradigm_findings[] (status != PASS, severity desc), recommended_intervention[]}`
++- 出力 schema: `{paradigm_findings[] (11件すべて), recommended_intervention[]}`。PASS は `issues: []`、FAIL/PARTIAL は `issues[]` で表す。
+ - 依存 Layer: L6 (Phase 3 への hand-off)
+ 
+ ## Self-Evaluation
+@@ -67,7 +67,7 @@ since: 2026-05-24
+ 
+ | 次元 | 観察可能な合格条件 |
+ |---|---|
+-| 完全性 | `paradigm_findings[]` の distinct `paradigm` count == 11。各 finding に `bucket / severity / root_cause / recommended_intervention` 4 キー全て非空 |
++| 完全性 | `paradigm_findings[]` の distinct `paradigm_id` count == 11。issue がある場合は各 issue に `bucket / severity / root_cause / recommended_intervention` 4 キー全て非空 |
+ | 一貫性 | 因果関係分析と因果ループの finding で `root_cause` の同一観察への結論が一致 (相反する原因記述なし)。`severity == high` の finding が `bucket` の同一値内で 2 件以上あるとき優先順位 (rank キー) が降順整列 |
+ | 深度 | why 思考 finding の `root_cause` が「なぜ」3 段以上 (区切り文字 `→` または改行で 3 階層以上検出可能) |
+ | 検証可能性 | 各 finding の `root_cause` 末尾に `target_path:line` 形式の参照が存在 (regex `:\d+` でヒット) |
+@@ -82,4 +82,4 @@ since: 2026-05-24
+ 
+ # Handoff
+ 
+-Phase 3 elegant-improvement-executor に severity 順ソート済み findings と recommended_intervention を渡す。並列他 agent (logical-structural / meta-divergent) の中間結果は参照しない (独立性確保)。
++Phase 3 elegant-improvement-executor に `issues[].severity` 順ソート済み findings と recommended_intervention を渡す。並列他 agent (logical-structural / meta-divergent) の中間結果は参照しない (独立性確保)。
+diff --git a/plugins/skill-creator/commands/capability-build.md b/plugins/skill-creator/commands/capability-build.md
+index 09230e4..999f871 100644
+--- a/plugins/skill-creator/commands/capability-build.md
++++ b/plugins/skill-creator/commands/capability-build.md
+@@ -1,5 +1,5 @@
+ ---
+-description: Capability (Skill/Agent/Hook/Command/Composition/Prompt/Workflow) を新規作成または更新する統一入口。run-build-skill Skill を起動し、kind に応じた scaffold とリソースを生成する。
++description: Capability (Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow) を新規作成または更新する統一入口。run-build-skill Skill を起動し、kind に応じた scaffold とリソースを生成する。
+ argument-hint: "<kind> <name> [options]  例: skill run-foo / agent reviewer-bar / hook on-save / command deploy"
+ allowed-tools: Read, Write, Edit, Bash
+ name: capability-build
+@@ -16,7 +16,7 @@ entrypoint: run-build-skill
+ 
+ ## 振る舞い
+ 
+-1. `$ARGUMENTS` を空白区切りでパース。`kind` が `skill|agent|hook|command|composition|prompt|workflow` のいずれでなければ利用可能 kind を表示して停止。
++1. `$ARGUMENTS` を空白区切りでパース。`kind` が `skill|agent|hook|command|plugin-composition|prompt|workflow` (正本 enum: `references/capability-manifest.schema.json#/definitions/commonCore.kind`) のいずれでなければ利用可能 kind を表示して停止。
+ 2. `name` の命名規約を `ref-skill-naming-convention` 準拠で軽く検証 (run-/ref-/assign- prefix など)。
+ 3. `run-build-skill` Skill を起動し、引数として `kind / name / options` を渡す。
+ 4. 生成後に `validate-build-trace.py` を実行し、PASS/FAIL を報告。
+diff --git a/plugins/skill-creator/commands/capability-review.md b/plugins/skill-creator/commands/capability-review.md
+index 4ce66d5..c828df9 100644
+--- a/plugins/skill-creator/commands/capability-review.md
++++ b/plugins/skill-creator/commands/capability-review.md
+@@ -1,6 +1,6 @@
+ ---
+-description: 既存 Capability に対し run-elegant-review を起動する。多視点 agent 並列レビュー → 集約 → ゲート判定までを一括実行する薄いラッパ。
+-argument-hint: "<target-path> [scope]  例: plugins/skill-creator/skills/run-build-skill / agents/elegant-reset-observer.md full"
++description: 既存 Capability に対し run-elegant-review を dry-run で起動する。多視点 agent 並列レビュー → 集約 → 4 条件ゲート判定までを analyse-only で実行する薄いラッパ (改善実行はしない)。
++argument-hint: "<target-path> [scope_mode]  例: plugins/skill-creator/skills/run-build-skill skill / plugins/skill-creator plugin"
+ allowed-tools: Read, Bash
+ name: capability-review
+ kind: command
+@@ -12,21 +12,21 @@ entrypoint: run-elegant-review
+ 
+ # /skill-creator:capability-review
+ 
+-`$ARGUMENTS` の `<target-path>` を `run-elegant-review` Skill に渡し、Phase 1 (発散) → Phase 2 (集約) → Phase 3 (収束判定) を起動する薄いラッパ。
++`$ARGUMENTS` の `<target-path>` を `run-elegant-review` Skill に `--dry-run` 付きで渡し、Phase 1 (思考リセット) → Phase 2 (並列多角的分析) → Phase 3 (改善実行) を起動する薄いラッパ。`--dry-run` のため Phase 3 は write を行わず、4 条件の verdict 判定のみを返す (analyse only)。
+ 
+ ## 振る舞い
+ 
+-1. `$ARGUMENTS` を `<target-path> [scope]` にパース。target が存在しなければ停止。
+-2. target_type を自動判定 (skill/agent/hook/command/composition)。
+-3. `run-elegant-review` Skill を起動。`scope` 省略時は `default` (severity high のみ)、`full` で全 severity 評価。
+-4. 集約後の C1〜C4 ゲート結果と residual_risks を報告。FAIL 時は `/skill-creator:skill-improve <target-path>` を案内。
++1. `$ARGUMENTS` を `<target-path> [scope_mode]` にパース。target が存在しなければ停止。
++2. target_path を `run-elegant-review` の `target` 構造体 (plugin / skill / scope_mode) に正規化。target_type は skill/agent/hook/command/composition を自動判定。
++3. `run-elegant-review` Skill を `--dry-run` 付きで起動。`scope_mode` 省略時は `skill`、`plugin` / `repo` で横断レビュー幅を拡張。
++4. 集約後の C1〜C4 ゲート結果 (`verdict`) と residual_risks を報告。FAIL 時は改善実行を行う `/skill-creator:skill-improve <target-path>` を案内。
+ 
+ ## 引数
+ 
+ | 引数 | 説明 |
+ |---|---|
+ | `target-path` | レビュー対象の絶対 or リポジトリ相対パス (必須) |
+-| `scope` | `default` / `full` / `quick` (省略時 default) |
++| `scope_mode` | `skill` / `plugin` / `repo` (レビュー幅、省略時 skill) |
+ 
+ ## 失敗時
+ 
+@@ -36,4 +36,4 @@ entrypoint: run-elegant-review
+ 
+ ## 注意
+ 
+-- 改善実行は行わない (analyse only)。実行は `/skill-creator:skill-improve` を使う。
++- 改善実行は行わない (analyse only)。`run-elegant-review` を `--dry-run` で起動するため Phase 3 でも write/auto-commit されない。改善を適用したい場合は `/skill-creator:skill-improve` を使う。
+diff --git a/plugins/skill-creator/commands/plugin-compose.md b/plugins/skill-creator/commands/plugin-compose.md
+index b6d47e7..8f037a1 100644
+--- a/plugins/skill-creator/commands/plugin-compose.md
++++ b/plugins/skill-creator/commands/plugin-compose.md
+@@ -7,7 +7,6 @@ kind: command
+ version: 0.1.0
+ owner: team-platform
+ since: 2026-05-24
+-entrypoint: plugin-compose
+ ---
+ 
+ # /skill-creator:plugin-compose
+diff --git a/plugins/skill-creator/plugin-composition.yaml b/plugins/skill-creator/plugin-composition.yaml
+index 582797b..d909185 100644
+--- a/plugins/skill-creator/plugin-composition.yaml
++++ b/plugins/skill-creator/plugin-composition.yaml
+@@ -34,8 +34,12 @@ capabilities:
+   - { kind: skill, ref: skills/run-plugin-package-check,    tier: core }
+   - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
+   - { kind: skill, ref: skills/run-skill-rename,            tier: extension }
++  - { kind: skill, ref: skills/run-skill-feedback,          tier: core }
+   - { kind: skill, ref: skills/run-skill-update-notifier,   tier: extension }
+   - { kind: skill, ref: skills/run-migrate-audit,           tier: extension }
++  - { kind: skill, ref: skills/run-contract-generate,       tier: extension }
++  - { kind: skill, ref: skills/run-contract-finalize,       tier: extension }
++  - { kind: skill, ref: skills/run-template-sync,           tier: extension }
+   - { kind: skill, ref: skills/assign-skill-design-evaluator, tier: core }
+   - { kind: skill, ref: skills/assign-plugin-package-evaluator, tier: core }
+   - { kind: skill, ref: skills/delegate-codex-skill-review, tier: extension }
+@@ -73,7 +77,7 @@ capabilities:
+   - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
+   - { kind: hook, ref: "hook:PostToolUse-Skill/auto-record-lesson",   tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-Skill/content-review-queue", tier: core }
+-  - { kind: hook, ref: "hook:PostToolUse-Edit/lint-capability-manifest", tier: core }
++  - { kind: hook, ref: "hook:PostToolUse-EditWrite/lint-capability-manifest", tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-EditWrite/content-review-queue", tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-Edit-rubric/diff-rubric-impact", tier: core }
+   - { kind: hook, ref: "hook:PreToolUse-Bash/wrap-git-commit-safe",   tier: extension }
+@@ -93,7 +97,10 @@ dependencies:
+   - { from: skills/run-build-skill,         to: skills/ref-skill-naming-convention, type: reads }
+   - { from: skills/run-build-skill,         to: skills/run-goal-seek,               type: emits }
+   - { from: skills/run-build-skill,         to: skills/ref-knowledge-loop,          type: reads }
++  - { from: skills/run-build-skill,         to: skills/run-skill-feedback,          type: calls }
+   - { from: skills/run-skill-elicit,        to: skills/ref-knowledge-loop,          type: reads }
++  - { from: skills/run-contract-generate,   to: skills/run-contract-finalize,       type: emits }
++  - { from: skills/run-template-sync,       to: skills/run-contract-generate,       type: reads }
+   - { from: skills/run-elegant-review,      to: agents/elegant-reset-observer,      type: calls }
+   - { from: skills/run-elegant-review,      to: agents/elegant-logical-structural-analyst, type: calls }
+   - { from: skills/run-elegant-review,      to: agents/elegant-meta-divergent-analyst, type: calls }
+@@ -108,6 +115,8 @@ dependencies:
+   - { from: commands/capability-review,     to: skills/run-elegant-review,          type: calls }
+   - { from: commands/skill-improve,         to: skills/run-elegant-review,          type: calls }
+   - { from: commands/plugin-compose,        to: skills/run-build-skill,             type: calls }
++  - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
++  - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
+ 
+ eval_sinks:
+   - EVALS.json
+diff --git a/plugins/skill-creator/skills/ref-cross-platform-runtime/references/resource-map.yaml b/plugins/skill-creator/skills/ref-cross-platform-runtime/references/resource-map.yaml
+index 4652020..8b7b927 100644
+--- a/plugins/skill-creator/skills/ref-cross-platform-runtime/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-cross-platform-runtime/references/resource-map.yaml
+@@ -8,5 +8,5 @@ resources:
+     topic: cross-platform で使用禁止の CLI と代替コマンド一覧
+     read_when: 使用 CLI が host OS で動かない疑いがあるとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[])
+diff --git a/plugins/skill-creator/skills/ref-domain-rubric-template/references/resource-map.yaml b/plugins/skill-creator/skills/ref-domain-rubric-template/references/resource-map.yaml
+index b6e92f8..2f878c6 100644
+--- a/plugins/skill-creator/skills/ref-domain-rubric-template/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-domain-rubric-template/references/resource-map.yaml
+@@ -5,5 +5,5 @@ resources:
+     topic: L1 (ドメイン特化) rubric の抽象テンプレート (`{{domain_name}}` 変数化済み)
+     read_when: 新規ドメイン用 L1 rubric を派生させたいとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[])
+diff --git a/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json b/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
+index edd31f7..bcf49dc 100644
+--- a/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
++++ b/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
+@@ -15,7 +15,7 @@
+   ],
+   "applies_to_kinds_default": ["skill"],
+   "upstream": [
+-    "plugins/skill-creator/skills/ref-skill-design-rubric/rubric.json"
++    "plugins/skill-creator/skills/ref-skill-design-rubric/references/rubric.json"
+   ],
+   "merge_strategy": "deep-merge",
+   "conflict_policy": "most-specific-wins",
+diff --git a/plugins/skill-creator/skills/ref-domain-task-spec-rubric/references/resource-map.yaml b/plugins/skill-creator/skills/ref-domain-task-spec-rubric/references/resource-map.yaml
+index 25de0cc..9618b7b 100644
+--- a/plugins/skill-creator/skills/ref-domain-task-spec-rubric/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-domain-task-spec-rubric/references/resource-map.yaml
+@@ -5,5 +5,5 @@ resources:
+     topic: L1 タスク仕様書ドメイン特化 rubric (Phase 1-13 整合 / SRP / ユビキタス言語)
+     read_when: タスク仕様書ドメイン固有の評価基準を参照したいとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[])
+diff --git a/plugins/skill-creator/skills/ref-knowledge-loop/references/resource-map.yaml b/plugins/skill-creator/skills/ref-knowledge-loop/references/resource-map.yaml
+index c8dc788..ea9155e 100644
+--- a/plugins/skill-creator/skills/ref-knowledge-loop/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-knowledge-loop/references/resource-map.yaml
+@@ -84,5 +84,5 @@ schema:
+ prompts:
+   search_summarize:
+     label: "R1-search-summarize (7層プロンプト)"
+-    file: "../prompts/search-summarize.md"
++    file: "../prompts/R1-search-summarize.md"
+     responsibility: "ナレッジループ仕様 (構築/運用) の検索・要約 (read-only SubAgent)"
+diff --git a/plugins/skill-creator/skills/ref-output-routing/references/resource-map.yaml b/plugins/skill-creator/skills/ref-output-routing/references/resource-map.yaml
+index d48baaa..169edef 100644
+--- a/plugins/skill-creator/skills/ref-output-routing/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-output-routing/references/resource-map.yaml
+@@ -8,5 +8,5 @@ resources:
+     topic: 出力先別のセキュリティ制約 (権限 / network / write 範囲)
+     read_when: sink 選定がセキュリティ条項に抵触しないか確認するとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[])
+diff --git a/plugins/skill-creator/skills/ref-skill-glossary/references/resource-map.yaml b/plugins/skill-creator/skills/ref-skill-glossary/references/resource-map.yaml
+index baf0319..4aa64a2 100644
+--- a/plugins/skill-creator/skills/ref-skill-glossary/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-skill-glossary/references/resource-map.yaml
+@@ -5,5 +5,5 @@ resources:
+     topic: Skill 領域の正式用語集 (定義 / 同義語 / 参照章番号)
+     read_when: 未知の用語に遭遇したとき、用語統一を確認するとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[])
+diff --git a/plugins/skill-creator/skills/ref-task-context-map/references/resource-map.yaml b/plugins/skill-creator/skills/ref-task-context-map/references/resource-map.yaml
+index fef35a3..7349116 100644
+--- a/plugins/skill-creator/skills/ref-task-context-map/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-task-context-map/references/resource-map.yaml
+@@ -5,7 +5,7 @@ resources:
+     topic: タスク文脈 → 設計書章番号の対応表 (trigger_keywords / chapter_refs)
+     read_when: 動的ロードすべき章を特定したいとき
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[] + chapter_refs)
+ schemas:
+   - file: ../schemas/query-result.schema.json
+diff --git a/plugins/skill-creator/skills/ref-yaml-spec-fetcher/references/resource-map.yaml b/plugins/skill-creator/skills/ref-yaml-spec-fetcher/references/resource-map.yaml
+index 2e08387..88b575d 100644
+--- a/plugins/skill-creator/skills/ref-yaml-spec-fetcher/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/ref-yaml-spec-fetcher/references/resource-map.yaml
+@@ -11,7 +11,7 @@ resources:
+     read_when: 仕様が変わったか / いつ変わったかを確認したいとき
+     status: pending-fetch
+ prompts:
+-  - file: ../prompts/search-summarize.md
++  - file: ../prompts/R1-search-summarize.md
+     purpose: R1 検索/要約 (query → matches[] + staleness フラグ)
+ schemas:
+   - file: ../schemas/query-result.schema.json
+diff --git a/plugins/skill-creator/skills/run-build-skill/SKILL.md b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+index 3450200..1070d27 100644
+--- a/plugins/skill-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+@@ -165,6 +165,11 @@ audit-trigger: quarterly
+ - [ ] fork した `assign-skill-design-evaluator` の score>=80 かつ high=0
+ - [ ] `eval-log/skill-build-trace.json` に `source_docs`/`doc_coverage`/`layer_decisions`/`reproducibility_gates` を空欄なく記録 (未使用は N/A 理由付き)
+ - [ ] (loop 実行系 run/wrap/delegate のみ) `feedback_contract.criteria` を `brief.goal`/完了チェックリストから導出し inner/outer 各1件以上を trace に記録 (ref/assign は `feedback_contract.skip_reason` で N/A)
++- [ ] **ハーネス・カバレッジ仕様 (`doc/harness-coverage-spec.md`) を kind 別に満たす** (毎回必達):
++  - 同梱 `scripts/` があれば `tests/` に機能テストを追加し当該スクリプト行カバレッジ ≥80% (network/secret 系は monkeypatch で副作用遮断し純関数・分岐・エラー経路を genuine に網羅)
++  - loop 実行系: criteria 検証テスト (inner=lint exit0 / outer=verdict PASS) で全 criterion を被覆 (`validate-llm-coverage.py --gate-new --since <today>` を ≥80% で通す)
++  - **ref (辞書型/参照型): source-traceability を検証する** — `source`/`source-tier`/`last-audited`/`audit-trigger` が埋まり、参照内容が `source` と整合することを `eval-log/coverage/skills/<plugin>__<skill>.json` の ref-review verdict (verdict=PASS) で記録。ref は behavioral criteria を持たない代わりにこの source 検証が必須カバレッジ (除外でなく ref 専用パス)
++  - assign: evaluator verdict、その他 kind: content-review verdict を `eval-log/coverage/` に記録
+ - [ ] (`--with-*` 指定時のみ) subagent/prompt/evaluator/hook 生成と整合 lint を完了
+ - [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) knowledge/ 雛形展開 + 4スクリプト同梱 + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`) + `lint-knowledge-loop.py` exit0 (KL-001..007)
+ 
+@@ -218,7 +223,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
+ 
+ ### Step 3.5: 再現性トレース生成 (phase: trace-write)
+ 
+-`eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を trace に固定する。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` が kind-aware に gating する。
++`eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を **生成 SKILL.md frontmatter と trace の両方** に固定する。frontmatter は量産先が携帯する評価基準の正本、trace は再現性証跡。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` と `lint-feedback-contract.py` が kind-aware に gating する。
+ 
+ ### Step 4: 命名・構造 Lint (phase: scripts)
+ 
+@@ -232,6 +237,7 @@ python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py "$OUT_BASE
+ python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py "$OUT_BASE/$SKILL_NAME"
+ python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py "$OUT_BASE/$SKILL_NAME"  # kind別必須サポート資産(prompts/references/schemas/scripts)を実在/共有正本参照/completeness_exempt理由付きのいずれかで充足。空欄(無宣言の欠落)は exit 1
+ python3 "$SKILL_DIR/scripts/lint-goal-seek.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
++python3 scripts/lint-feedback-contract.py --changed-only  # loop実行系(run/wrap/delegate)のSKILL.md frontmatterに feedback_contract.criteria(inner/outer) が無ければ fail
+ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$OUT_BASE")"  # SSOT 重複(正本曖昧/redirect 太り/required 二重定義/本文再掲)を検出。DUP-SCHEMA-ID は exit 1
+ python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..005 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
+ python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
+diff --git a/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md b/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
+index 7278ab6..f940d25 100644
+--- a/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
++++ b/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
+@@ -38,6 +38,11 @@
+ ### 2.2 ドメインルール
+ - SKILL.md は 170 行以下
+ - frontmatter に `responsibility_refs` と `manifest` を含める
++- loop 実行系 (run/wrap/delegate) の frontmatter には `feedback_contract.criteria` を inner/outer 各1件以上で含める
++- ハーネス・カバレッジ仕様 (`doc/harness-coverage-spec.md`) を **kind 別に毎回満たす** (二軸 ≥80%):
++  - loop 実行系 (run/wrap/delegate): 各 criterion id (IN*/OUT*) を検証する test/fixture を携帯し `validate-llm-coverage.py --gate-new` を ≥80% で通す。最小実装は `<skill>/coverage-manifest.json` に `covered_criteria` を列挙 (実テスト/fixture の裏付けがある id のみ。空宣言禁止)
++  - **ref (辞書型/参照型): source-traceability が唯一のカバレッジ軸** — `source`/`source-tier`/`last-audited`/`audit-trigger` を全て埋め、参照内容が `source` と整合することを ref-review verdict (`eval-log/coverage/skills/<plugin>__<skill>.json` の `llm_eval.verdict=PASS`) で記録する。ref は criteria/content-review の代わりにこの source 検証で品質ゲートを満たす (全ゲート除外にしない)
++  - 同梱 scripts があれば機能テストで行カバレッジ ≥80%
+ - kind→template 対応は `schemas/template-selection.schema.json#/selection_rules` を参照
+ 
+ ### 2.3 入力契約
+@@ -96,6 +101,7 @@
+ - [ ] SKILL.md が 170 行以下で frontmatter に responsibility_refs / manifest を含む
+ - [ ] kind→template 対応は schemas 参照 1 行のみで本文に表が無い
+ - [ ] 実行系 kind は `## ゴールシーク実行` を持ち固定 `### Step N:` を羅列していない (`ref-*` 除く)
++- [ ] loop 実行系 (run/wrap/delegate) は `feedback_contract.criteria` を frontmatter に携帯し、id/loop_scope/text/verify_by が埋まっている
+ - [ ] `{{goal}}` / `{{purpose_background}}` / `{{generated_checklist}}` が brief 由来で埋まりリテラル未残存
+ - [ ] 具体値は全て変数化され variable_contract.source_trace に brief フィールド由来が記録されている
+ - [ ] 依存方向 L7→L1 単方向 (逆参照 0)
+diff --git a/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md b/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
+index f727112..192190e 100644
+--- a/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
++++ b/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
+@@ -41,7 +41,7 @@
+ ### 2.2 ドメインルール
+ - `pattern_decisions / layer_decisions / reproducibility_gates (C1-C4)` を必ず記入
+ - `variable_contract` に変数化した具体値の source_trace を記録
+-- loop 実行系 (skill_kind=run/wrap/delegate) は `feedback_contract.criteria` を必ず記入。各 criterion は `id / loop_scope(inner|outer) / text / verify_by` を持ち、inner と outer を最低各1件。criteria は goal-seek checklist と**同源化**する (checklist=二値達成判定 / criteria=評価観点+verify_by の写像) ことで二重管理を回避する。ref/assign は `feedback_contract.skip_reason` で N/A escape。
++- loop 実行系 (skill_kind=run/wrap/delegate) は `feedback_contract.criteria` を trace と生成 SKILL.md frontmatter の両方に必ず記入。各 criterion は `id / loop_scope(inner|outer) / text / verify_by` を持ち、inner と outer を最低各1件。criteria は goal-seek checklist と**同源化**する (checklist=二値達成判定 / criteria=評価観点+verify_by の写像) ことで二重管理を回避する。ref/assign は `feedback_contract.skip_reason` で N/A escape。
+ - 最後に `validate-build-trace.py` で exit 0 を確認
+ 
+ ### 2.3 入力契約
+@@ -54,7 +54,7 @@
+ ### 2.4 出力契約
+ - schema: `schemas/skill-build-trace.schema.json`
+ - 必須: doc_coverage / pattern_decisions / layer_decisions / reproducibility_gates / variable_contract
+-- loop 実行系のみ追加必須: feedback_contract.criteria (inner/outer 各1件以上)
++- loop 実行系のみ追加必須: feedback_contract.criteria (SKILL.md frontmatter と trace の両方、inner/outer 各1件以上)
+ 
+ ## Layer 3: インフラ層 (外部依存)
+ 
+@@ -96,7 +96,7 @@
+ - [ ] doc_coverage の全章 ID (01/01a/02-35) を網羅、未読は status=na + reason 残存
+ - [ ] pattern_decisions / layer_decisions を記入
+ - [ ] variable_contract に変数化具体値の source_trace あり
+-- [ ] (loop 実行系のみ) feedback_contract.criteria に inner/outer 各1件以上 (id/loop_scope/text/verify_by 充足)、ref/assign は skip_reason
++- [ ] (loop 実行系のみ) SKILL.md frontmatter と trace の feedback_contract.criteria に inner/outer 各1件以上 (id/loop_scope/text/verify_by 充足)、ref/assign は skip_reason
+ - [ ] validate-build-trace.py exit 0
+ - [ ] 同 brief + 同 scaffold で trace JSON sha256 一致
+ 
+@@ -133,7 +133,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ
+ `eval-log/skill-build-trace.json` を `{{schema}}` に従って章別に記入し、
+ 未読章は `status=na + reason` を残す。`reproducibility_gates` の C1-C4 を必ず埋め、
+ `variable_contract` に source_trace を記録する。loop 実行系 (skill_kind=run/wrap/delegate)
+-は `feedback_contract.criteria` を goal-seek checklist と同源で導出し inner/outer 各1件以上
++は `feedback_contract.criteria` を goal-seek checklist と同源で導出し、生成 SKILL.md frontmatter と trace に inner/outer 各1件以上
+ (id/loop_scope/text/verify_by) を記入する (ref/assign は `feedback_contract.skip_reason`)。
+ 最後に `validate-build-trace.py` を実行し exit 0 を確認する。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/capability-manifest.schema.json b/plugins/skill-creator/skills/run-build-skill/references/capability-manifest.schema.json
+index 73d044f..739af13 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/capability-manifest.schema.json
++++ b/plugins/skill-creator/skills/run-build-skill/references/capability-manifest.schema.json
+@@ -153,7 +153,7 @@
+       "properties": {
+         "kind": { "const": "command" },
+         "argument-hint": { "type": "string", "description": "/command <hint> の <hint> 部分。" },
+-        "allowed-tools": { "type": "array", "items": { "type": "string" } },
++        "allowed-tools": { "oneOf": [ { "type": "string" }, { "type": "array", "items": { "type": "string" } } ], "description": "string(カンマ区切り) か array。scripts/skill-schema.json と同一定義。" },
+         "entrypoint": { "type": "string", "description": "実体ロジックを持つ Skill name。command は薄いラッパに保つ。" }
+       },
+       "required": ["argument-hint", "allowed-tools"]
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md b/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
+index 04a8df2..2498bcb 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
+@@ -84,7 +84,7 @@ Agent({
+ 
+ - `git diff origin/main...HEAD` から `plugins/*/skills/*/SKILL.md` 変更を抽出
+ - 各変更 skill について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
+-- `feedback_loop` は必須。`criteria_evaluated` は trace の `feedback_contract.criteria[].id` 全件と突合し、未評価 ID があれば PASS 不可
++- `feedback_loop` は必須。`criteria_evaluated` は**量産先 SKILL.md frontmatter** の `feedback_contract.criteria[].id` 全件と突合し、未評価 ID があれば PASS 不可（frontmatter が正本＝携帯する評価基準。trace は frontmatter 不在時の後方互換 fallback）
+ - `kind: ref` / symlink skill は対象外。`skill-creator` 自身は dogfooding 対象なので CI/pre-push では除外しない
+ - 違反時 exit 1 → merge ブロック
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+index a0df696..4d7c851 100644
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+@@ -48,6 +48,37 @@ FLAG_PATCHES = {
+ GOAL_SEEK_KINDS = ("run", "wrap", "delegate")
+ 
+ 
++FEEDBACK_CONTRACT_KINDS = ("run", "wrap", "delegate")
++
++
++FEEDBACK_CONTRACT_FM_BLOCK = (
++    "# feedback_contract: 量産先 Skill が携帯する per-skill 評価基準。"
++    "criteria は brief.goal / Checklist から導出し、content-review の criteria_evaluated と突合する。\n"
++    "feedback_contract:\n"
++    "  max_iterations: {{feedback_contract_max_iterations | default(3)}}\n"
++    "  criteria:\n"
++    "    - id: IN1\n"
++    "      loop_scope: inner\n"
++    "      text: {{feedback_contract_inner_criteria_text}}\n"
++    "      verify_by: lint\n"
++    "    - id: OUT1\n"
++    "      loop_scope: outer\n"
++    "      text: {{feedback_contract_outer_criteria_text}}\n"
++    "      verify_by: elegant-review"
++)
++
++
++FEEDBACK_CONTRACT_SECTION = (
++    "## 評価・改善ループ契約\n"
++    "`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。"
++    "inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。"
++    "content-review / evaluator / hook は同じ criteria id を参照し、"
++    "`criteria_evaluated` が全 id を覆うまで PASS にしない。"
++    "未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、"
++    "超過時は `INCOMPLETE` として human_review に差し戻す。"
++)
++
++
+ # with-knowledge.patch の決定論的注入内容。配布スキルが自己完結するよう、
+ # skill-creator 内部 (ref-knowledge-loop / templates/ / Loop B / --dir) への参照を一切含めない。
+ KNOWLEDGE_FM_BLOCK = (
+@@ -236,6 +267,10 @@ def selected_patches(args: argparse.Namespace) -> list[str]:
+     # goal-seek 配線は loop 実行系で default-ON (--no-goal-seek で opt-out)。
+     if args.kind in GOAL_SEEK_KINDS and not args.no_goal_seek:
+         patches.append("with-goal-seek.patch")
++    # feedback_contract は loop 実行系で default-ON。中身は brief 由来で R1/R4 が具体化し、
++    # lint-feedback-contract.py / lint-content-review.py が欠落や未評価を fail-closed にする。
++    if args.kind in FEEDBACK_CONTRACT_KINDS:
++        patches.append("with-feedback-contract.patch")
+     return patches
+ 
+ 
+@@ -463,6 +498,9 @@ def apply_semantic_patch(text: str, patch_name: str) -> str:
+     if patch_name == "with-goal-seek.patch":
+         text = ensure_frontmatter_line(text, GOAL_SEEK_FM_BLOCK, "rubric_refs")
+         return add_section_after(text, GOAL_SEEK_LOOP_ANCHOR, GOAL_SEEK_WIRING_SECTION)
++    if patch_name == "with-feedback-contract.patch":
++        text = ensure_frontmatter_line(text, FEEDBACK_CONTRACT_FM_BLOCK, "rubric_refs")
++        return add_section_after(text, "## 主要ルール\n{{key_constraints}}", FEEDBACK_CONTRACT_SECTION)
+     raise ComposeError(f"unknown combinator: {patch_name}")
+ 
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py b/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
+index 4da174b..0c835cc 100755
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
+@@ -40,6 +40,48 @@ def _normalize_value(value: object) -> str:
+     return str(value)
+ 
+ 
++def _feedback_contract_mapping(data: dict[str, object]) -> dict[str, object]:
++    """Return flat template vars for generated per-skill feedback criteria.
++
++    The source of truth is brief.feedback_contract.criteria when present. When
++    a brief does not provide concrete criteria yet, keep the generated SKILL.md
++    fail-closed by deriving a minimal inner/outer pair from the goal/checklist
++    context instead of leaving placeholders unresolved.
++    """
++    skill_name = str(data.get("skill_name") or data.get("name") or "this-skill")
++    goal = str(data.get("goal") or data.get("output_contract") or skill_name).strip()
++    checks = data.get("deterministic_checks") or []
++    # fallback 文面の正本は repo-root scripts/feedback_contract_ssot.py
++    # (fallback_inner_text / fallback_outer_text)。drift は
++    # tests/test_feedback_contract_parity.py が固定し、is_fallback_text が lint で検出する。
++    if isinstance(checks, list) and checks:
++        inner = " / ".join(str(item).strip() for item in checks if str(item).strip())
++    else:
++        inner = f"{skill_name} の完了チェックリストと決定論 lint が全て exit0 で通過する"
++    outer = f"{goal} がユーザー目的を満たし、run-elegant-review の4条件が全て PASS する"
++
++    max_iterations: object = 3
++    fc = data.get("feedback_contract")
++    if isinstance(fc, dict):
++        max_iterations = fc.get("max_iterations") or max_iterations
++        criteria = fc.get("criteria")
++        if isinstance(criteria, list):
++            for item in criteria:
++                if not isinstance(item, dict):
++                    continue
++                text = str(item.get("text", "")).strip()
++                scope = str(item.get("loop_scope", "")).strip().lower()
++                if scope == "inner" and text:
++                    inner = text
++                elif scope == "outer" and text:
++                    outer = text
++    return {
++        "feedback_contract_max_iterations": max_iterations,
++        "feedback_contract_inner_criteria_text": inner,
++        "feedback_contract_outer_criteria_text": outer,
++    }
++
++
+ def _parse_default(raw: str | None) -> str:
+     if raw is None:
+         return ""
+@@ -133,7 +175,7 @@ def brief_mapping(path: Path) -> dict[str, object]:
+     abstraction_variables = data.get("abstraction_variables") or []
+     template_inputs = data.get("template_inputs") or []
+     template_non_goals = data.get("template_non_goals") or []
+-    return {
++    mapping = {
+         "name": data.get("skill_name", ""),
+         "skill_name": data.get("skill_name", ""),
+         "kind": data.get("kind") or data.get("prefix", ""),
+@@ -197,6 +239,8 @@ def brief_mapping(path: Path) -> dict[str, object]:
+             template_non_goals,
+         ),
+     }
++    mapping.update(_feedback_contract_mapping(data))
++    return mapping
+ 
+ 
+ def _lines(items: list[object], empty: str) -> list[str]:
+@@ -371,6 +415,15 @@ def main() -> int:
+         "generated_gotchas": _generated_gotchas([], []),
+         "variable_contract": _variable_contract([], [], []),
+     }
++    mapping.update(
++        _feedback_contract_mapping(
++            {
++                "skill_name": args.name,
++                "output_contract": mapping["output_contract"],
++                "deterministic_checks": [],
++            }
++        )
++    )
+     if args.brief:
+         bpath = Path(args.brief)
+         if not bpath.exists():
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/delegate.md b/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
+index 2ded813..79765b2 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
+@@ -12,6 +12,17 @@ owner: {{owner}}
+ since: {{date}}
+ hierarchy_level: {{hierarchy_level | default("L2") }}  # delegate は通常 L2（外部実行委譲）
+ rubric_refs: {{rubric_refs | default([]) }}            # 委譲先の受け入れ判定 rubric
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -33,6 +44,9 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
+ 1. 入出力契約のみ定義、ロジックは subagent 側。
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、超過時は `INCOMPLETE` として human_review に差し戻す。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/run.md b/plugins/skill-creator/skills/run-build-skill/templates/run.md
+index c2426b0..70d63fe 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/run.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/run.md
+@@ -10,6 +10,17 @@ since: {{date}}
+ role_suffix: {{role_suffix}}
+ hierarchy_level: {{hierarchy_level}}        # L0=単独参照 / L1=連携 / L2=オーケストレーション
+ rubric_refs: {{rubric_refs | default([])}}  # 評価で参照する rubric Skill 名（複数可）。pair=evaluator がある場合は必須
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -30,6 +41,9 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
+ ## 主要ルール
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、超過時は `INCOMPLETE` として human_review に差し戻す。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ > ループを多周回す／重い試行錯誤を伴う場合は、親セッションを汚さないよう SubAgent（`Agent`）または Agent Team に fork して実行し、親へは最終成果物と要約のみ返す（同 references「コンテキスト分離」）。
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/wrap.md b/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
+index f1d74e0..45bc625 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
+@@ -15,6 +15,17 @@ last-audited: {{last_audited_date}}
+ audit-trigger: {{audit_trigger | default("quarterly") }}
+ hierarchy_level: {{hierarchy_level | default("L1") }}   # wrap は通常 L1（外部 CLI 連携）
+ rubric_refs: {{rubric_refs | default([]) }}            # ref-pr-conventions 等のラップ対象規約
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
+ # PreToolUse hook: 文脈次第の危険検査を hook で追加（二段防御）。例: plugins/skill-governance-config/config/claude-settings-hooks.json.example 参照
+ ---
+@@ -31,6 +42,9 @@ rubric_refs: {{rubric_refs | default([]) }}            # ref-pr-conventions 等
+ 1. 外部CLIを直接許可せず、Python stdlib adapter (`scripts/*.py`) 経由で入力検証・dry-run・ログ記録を行う。
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、超過時は `INCOMPLETE` として human_review に差し戻す。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+index 226a6ef..04f20c5 100644
+--- a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+@@ -38,7 +38,8 @@
+       "dependsOn": ["references"],
+       "kind_filter": ["run", "assign", "wrap", "delegate"],
+       "resourceIds": ["schema-skill-build-trace"],
+-      "output_artifact": "eval-log/skill-build-trace.json"
++      "output_artifact": "eval-log/skill-build-trace.json",
++      "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only"
+     },
+     {
+       "id": "templates",
+@@ -86,7 +87,7 @@
+       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+       "resourceIds": ["schema-skill-build-trace", "prompt-trace-write"],
+       "output_artifact": "eval-log/skill-build-trace.json",
+-      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。"
++      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。"
+     },
+     {
+       "id": "notion-register",
+diff --git a/plugins/skill-creator/skills/run-elegant-review/SKILL.md b/plugins/skill-creator/skills/run-elegant-review/SKILL.md
+index a03420f..8bab000 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/SKILL.md
++++ b/plugins/skill-creator/skills/run-elegant-review/SKILL.md
+@@ -75,7 +75,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+       verify_by: script
+     - id: IN2
+       loop_scope: inner
+-      text: 各 SubAgent が出力する findings.json が集約スキーマを通過し severity tag が定義済み列挙に収まる
++      text: 各 SubAgent が出力する findings.json が集約スキーマを通過し issues[].severity が優先度列挙、condition_signal が4条件 signal 列挙に収まる
+       verify_by: lint
+     - id: OUT1
+       loop_scope: outer
+@@ -107,10 +107,10 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ - [ ] Phase 1 思考リセットを経由し `shared_state.md`（200字以内）を生成した
+ - [ ] `thought_method_coverage.used + skipped_with_reason == 30`（30 思考法全て使用 or skip_reason 付き）
+-- [ ] `findings[].severity == contradiction` が 0 件（矛盾なし）
+-- [ ] `findings[].severity == omission` が 0 件（漏れなし）
+-- [ ] `findings[].severity == inconsistency` が 0 件（整合性あり）
+-- [ ] `findings[].severity == dependency_break` が 0 件（依存関係整合）
++- [ ] `fail_counts.contradiction == 0`（矛盾なし）
++- [ ] `fail_counts.omission == 0`（漏れなし）
++- [ ] `fail_counts.inconsistency == 0`（整合性あり）
++- [ ] `fail_counts.dependency_break == 0`（依存関係整合）
+ - [ ] `findings.json` が `schemas/findings.schema.json` を通過する
+ - [ ] proposer ≠ approver を満たす（自己承認禁止、別 SubAgent or 人間が承認）
+ - [ ] max_iter 未達のまま終了時は `status: incomplete` + force_pass 禁止で human_review へ差し戻した
+@@ -164,7 +164,7 @@ options:
+ 
+ ### 完了条件（4 条件 → 観測 signal）
+ 
+-各条件の PASS signal は上記ゴールシーク Checklist（`findings[].severity == <tag>` 件数 = 0）と下記「検証 4 条件」テーブルを正本とする。`smell` は警告枠（PASS を妨げない）。判定は `scripts/validate-paradigm-coverage.py` で機械実行。
++各条件の PASS signal は上記ゴールシーク Checklist（`fail_counts.<signal> == 0`）と下記「検証 4 条件」テーブルを正本とする。`issues[].severity` は low/medium/high/critical の優先度、`condition_signal` は contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal として分離する。`smell` は警告枠（PASS を妨げない）。判定は `scripts/validate-paradigm-coverage.py` と `verdict.json` で機械実行。
+ 
+ ---
+ 
+@@ -191,7 +191,7 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
+ 
+ ## 検証 4 条件
+ 
+-| # | 条件 | severity tag | 検査手法 |
++| # | 条件 | condition_signal | 検査手法 |
+ |---|------|---|------|
+ | C1 | 矛盾なし (Consistency) | `contradiction` | claim graph で contradiction edge 検出 |
+ | C2 | 漏れなし (Completeness) | `omission` | required-element checklist 全件 PASS |
+@@ -230,7 +230,7 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
+ 
+ - **担当**: `elegant-improvement-executor`（必要時 `delegate-codex-skill-review` へ委譲、B5）
+ - **入力**: Phase 2 全 SubAgent の findings 集約
+-- **操作**: 依存 DAG 生成（B3, `findings[].location` から自動構築）→ 優先順位決定（severity contradiction > omission > inconsistency > dependency_break > smell）→ 独立対象は並列・依存ありは直列で改善 → `auto_fixable=true` は自動 commit / `false` は提案のみ → 4 条件再検証（max_iter=3）
++- **操作**: 依存 DAG 生成（B3, `findings[].location` または `paradigm_findings[].issues[].location` から自動構築）→ 優先順位決定（`issues[].severity`: critical > high > medium > low）→ 独立対象は並列・依存ありは直列で改善 → `auto_fixable=true` は自動 commit / `false` は提案のみ → 4 条件再検証（max_iter=3）
+ - **出力**: `schemas/findings.schema.json` 準拠の `findings.json` 最終版 + 改善 PR ブランチ
+ - **完了判定 signal**: 4 条件 PASS（contradiction/omission/inconsistency/dependency_break 全て 0 件）
+ - **失敗時アクション**:
+diff --git a/plugins/skill-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md b/plugins/skill-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md
+index 1b9b005..f12519f 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md
++++ b/plugins/skill-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md
+@@ -47,7 +47,7 @@
+ 
+ ### 2.2 ドメインルール
+ - 第一印象の懸念を「事実」と「仮定」に分けて記録
+-- 固有名詞・固定パス・固定 URL・固定 owner を kind 付きで variable_candidates にマーク
++- 固有名詞・固定パス・固定 URL・固定 owner を `concrete_values_to_abstract[]` に `{value, kind}` 形式でマーク
+ - in_scope / out_of_scope を明示区別
+ 
+ ### 2.3 入力契約
+@@ -61,7 +61,7 @@
+ 
+ ### 2.4 出力契約
+ - schema: `./schemas/phase-output.schema.json#/definitions/phase1_output`
+-- 必須: facts / assumptions / variable_candidates / scope (in/out)
++- 必須: `purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`
+ 
+ ## Layer 3: インフラ層 (外部依存)
+ 
+@@ -102,13 +102,13 @@
+ ### 5.2 ゴール定義
+ - **目的**: 対象を素のまま観察し、Phase2 採点へ渡せる中立な観察ログを成立させる
+ - **背景**: 既存 rubric 語彙や編集を混ぜると採点バイアスと思考法多様性の損失を生むため、read-only と語彙隔離を要件化
+-- **達成ゴール**: facts / assumptions / variable_candidates / scope (in/out) が schema 準拠で記録され、同 target_path で決定論的に再現する状態
++- **達成ゴール**: `purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract` が schema 準拠で記録され、同 target_path で決定論的に再現する状態
+ 
+ ### 5.3 完了チェックリスト (停止条件)
+ - [ ] bias_reset: 既存 rubric の言葉を観察に持ち込まなかった
+ - [ ] read_only: 対象ファイルを編集しなかった (編集系ツール未使用)
+ - [ ] fact_assumption_split: 事実と仮定を明示分離
+-- [ ] variable_candidates: 固有名詞・固定パス・URL・owner を kind 付きで列挙
++- [ ] concrete_values_to_abstract: 固有名詞・固定パス・URL・owner を `{value, kind}` 形式で列挙
+ - [ ] scope_explicit: in_scope / out_of_scope を区別して記録
+ - [ ] schema_conform: `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠
+ - [ ] determinism: 同 target_path で facts が並び順含め一致 (sort 安定化)
+@@ -145,7 +145,7 @@
+ 
+ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
+ 
+-read-only で `{{target_path}}` を観察し、`facts / assumptions / variable_candidates / scope`
++read-only で `{{target_path}}` を観察し、`purpose / scope / stakeholders / first_impressions / facts_vs_assumptions / concrete_values_to_abstract`
+ を抽出する。編集系ツールは使用禁止 (検出時 exit 1)。採点・改善提案はしない。
+ 
+ 出力は `./schemas/phase-output.schema.json#/definitions/phase1_output` 準拠の JSON のみ。
+diff --git a/plugins/skill-creator/skills/run-elegant-review/references/agent-roles.md b/plugins/skill-creator/skills/run-elegant-review/references/agent-roles.md
+index 9891155..e1a8c06 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/references/agent-roles.md
++++ b/plugins/skill-creator/skills/run-elegant-review/references/agent-roles.md
+@@ -3,27 +3,27 @@
+ ## Agent 1: elegant-reset-observer (Phase1)
+ - 役割: 思考リセットして対象を俯瞰観察
+ - 入力: target_type, target_path
+-- 出力: { purpose, scope, assumptions, stakeholders, raw_observations[], concrete_values_to_abstract[] }
++- 出力: raw_observations.json `{ purpose, scope, stakeholders, first_impressions, facts_vs_assumptions, concrete_values_to_abstract }` + shared_state.md (200字以内)
+ - 担当思考法: なし (観察のみ、評価しない)
+ - 禁止: rubric参照、score算出、改善提案
+ 
+ ## Agent 2: elegant-logical-structural-analyst (Phase2 並列)
+ - 役割: 論理分析+構造分解で対象を解剖
+ - 入力: Agent1出力
+-- 出力: findings[] (paradigm × C1〜C4 マトリクス、9 paradigms分)
+-- 担当思考法 (9): 批判的思考/演繹思考/帰納的思考/アブダクション/垂直思考/要素分解/MECE/2軸思考/プロセス思考
++- 出力: paradigm_findings[] (10 paradigms分、各 finding の issues[] で C1〜C4 を表現)
++- 担当思考法 (10): 批判的思考/演繹思考/帰納的思考/アブダクション/垂直思考/要素分解/MECE/2軸思考/プロセス思考/why思考
+ 
+ ## Agent 3: elegant-meta-divergent-analyst (Phase2 並列)
+ - 役割: メタ抽象+発想拡張で別視点を生成
+ - 入力: Agent1出力
+-- 出力: findings[] (paradigm × C1〜C4、9 paradigms分) + reusable_abstraction + template_variables + negative_cases
++- 出力: paradigm_findings[] (9 paradigms分、各 finding の issues[] で C1〜C4 を表現) + reusable_abstraction + template_variables + negative_cases
+ - 担当思考法 (9): メタ思考/抽象化思考/ダブル・ループ思考/ブレインストーミング/水平思考/逆説思考/類推思考/if思考/素人思考
+ 
+ ## Agent 4: elegant-system-strategic-analyst (Phase2 並列)
+ - 役割: システム+戦略+問題解決で全体最適と実行性を評価
+ - 入力: Agent1出力
+-- 出力: findings[] (paradigm × C1〜C4、12 paradigms分)
+-- 担当思考法 (12): システム思考/因果関係分析/因果ループ/トレードオン思考/プラスサム思考/価値提案思考/戦略的思考/why思考/改善思考/仮説思考/論点思考/KJ法
++- 出力: paradigm_findings[] (11 paradigms分、各 finding の issues[] で C1〜C4 を表現)
++- 担当思考法 (11): システム思考/因果関係分析/因果ループ/トレードオン思考/プラスサム思考/価値提案思考/戦略的思考/改善思考/仮説思考/論点思考/KJ法
+ 
+ ## Agent 5: elegant-improvement-executor (Phase3)
+ - 役割: findings を取り込みパッチを生成・適用
+diff --git a/plugins/skill-creator/skills/run-elegant-review/references/orchestration-flow.md b/plugins/skill-creator/skills/run-elegant-review/references/orchestration-flow.md
+index a1949a6..3e3b4f8 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/references/orchestration-flow.md
++++ b/plugins/skill-creator/skills/run-elegant-review/references/orchestration-flow.md
+@@ -15,12 +15,12 @@
+ ┌──────────┐ ┌──────────┐ ┌──────────┐
+ │ Agent 2  │ │ Agent 3  │ │ Agent 4  │
+ │ 論理+構造│ │ メタ+発想│ │ Sys+戦略 │
+-│ 9思考法  │ │ 9思考法  │ │ 12思考法 │
++│ 10思考法 │ │ 9思考法  │ │ 11思考法 │
+ └──────────┘ └──────────┘ └──────────┘
+         │          │          │
+         └──────────┴──────────┘
+                    ▼
+-        scripts/validate-paradigm-coverage.py (==30)
++        scripts/validate-paradigm-coverage.py {{review_workspace}}/findings.json (used + skipped_with_reason == 30)
+                    │
+                    ▼
+         scripts/build-paradigm-scorecard.py
+@@ -47,7 +47,7 @@
+ - 3ループでも 4条件未達なら `escalate-to-human` イベント発火
+ 
+ ## ファイル受け渡し
+-- Phase1出力: `{{review_workspace}}/phase1.json`
++- Phase1出力: `{{review_workspace}}/raw_observations.json` + `{{review_workspace}}/shared_state.md`
+ - Phase2出力: `{{review_workspace}}/phase2-agent{2,3,4}.json`
+ - 集約: `{{review_workspace}}/findings.json`
+ - 最終: 対象ディレクトリ直下に `findings.json` + `review-<type>.md`
+diff --git a/plugins/skill-creator/skills/run-elegant-review/references/resource-map.yaml b/plugins/skill-creator/skills/run-elegant-review/references/resource-map.yaml
+index fd7bbad..f3c00cf 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/run-elegant-review/references/resource-map.yaml
+@@ -35,13 +35,13 @@ related_artifacts:
+   - file: ../schemas/phase-output.schema.json
+     topic: Phase1/2/3 間 handoff の共通入出力スキーマ
+     read_when: フェーズ間データ受け渡しの形式を確認するとき
+-  - file: ../prompts/phase1-reset.md
++  - file: ../prompts/R1-phase1-reset.md
+     topic: Phase1 elegant-reset-observer 起動プロンプト
+     read_when: Phase1 の責務・layers・self_evaluation を確認するとき
+-  - file: ../prompts/phase2-parallel.md
++  - file: ../prompts/R2-phase2-parallel.md
+     topic: Phase2 並列3エージェント起動プロンプト
+     read_when: Phase2 並列起動・思考法割当・独立性ルールを確認するとき
+-  - file: ../prompts/phase3-execute.md
++  - file: ../prompts/R3-phase3-execute.md
+     topic: Phase3 elegant-improvement-executor 起動プロンプト
+     read_when: Phase3 のパッチ適用範囲・収束判定・safety_valve を確認するとき
+ owner_agents:
+diff --git a/plugins/skill-creator/skills/run-elegant-review/schemas/finding.schema.json b/plugins/skill-creator/skills/run-elegant-review/schemas/finding.schema.json
+index 116bcd0..27ce548 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/schemas/finding.schema.json
++++ b/plugins/skill-creator/skills/run-elegant-review/schemas/finding.schema.json
+@@ -3,7 +3,7 @@
+   "$id": "https://xl-skills/schemas/elegant-review-finding.json",
+   "title": "Elegant Review Single Finding",
+   "type": "object",
+-  "required": ["id", "thought_method", "severity", "condition", "location", "evidence"],
++  "required": ["id", "thought_method", "condition_signal", "priority", "condition", "location", "evidence"],
+   "properties": {
+     "id": {
+       "type": "string",
+@@ -23,10 +23,14 @@
+         "why", "kaizen", "hypothesis", "issue", "kj"
+       ]
+     },
+-    "severity": {
++    "condition_signal": {
+       "enum": ["contradiction", "omission", "inconsistency", "dependency_break", "smell"],
+       "description": "4 条件 PASS 判定の機械観測 signal。smell は警告枠"
+     },
++    "priority": {
++      "enum": ["low", "medium", "high", "critical"],
++      "description": "Phase 3 の処理順を決める優先度。condition_signal とは分離する"
++    },
+     "condition": {
+       "enum": ["C1", "C2", "C3", "C4", "warning"],
+       "description": "C1=矛盾なし, C2=漏れなし, C3=整合性あり, C4=依存関係整合, warning=smell"
+diff --git a/plugins/skill-creator/skills/run-elegant-review/schemas/findings.schema.json b/plugins/skill-creator/skills/run-elegant-review/schemas/findings.schema.json
+index 6f8ea5c..c180a0f 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/schemas/findings.schema.json
++++ b/plugins/skill-creator/skills/run-elegant-review/schemas/findings.schema.json
+@@ -4,7 +4,7 @@
+   "title": "Elegant Review Findings",
+   "description": "30思考法 × C1-C4 マトリクスと variable_abstraction を含む findings の構造定義。",
+   "type": "object",
+-  "required": ["version", "target", "paradigm_findings", "four_conditions", "variable_abstraction"],
++  "required": ["version", "target", "paradigm_findings", "four_conditions", "variable_abstraction", "thought_method_coverage"],
+   "properties": {
+     "version": {"type": "integer", "const": 1},
+     "target": {
+@@ -19,10 +19,32 @@
+     "loop_count": {"type": "integer", "minimum": 0, "maximum": 3},
+     "paradigm_findings": {
+       "type": "array",
+-      "minItems": 30,
++      "minItems": 0,
+       "maxItems": 30,
+       "items": {"$ref": "#/definitions/paradigm_finding"}
+     },
++    "thought_method_coverage": {
++      "type": "object",
++      "required": ["used", "skipped_with_reason", "total"],
++      "properties": {
++        "used": {
++          "type": "array",
++          "items": {"type": "string"}
++        },
++        "skipped_with_reason": {
++          "type": "array",
++          "items": {
++            "type": "object",
++            "required": ["method", "reason"],
++            "properties": {
++              "method": {"type": "string"},
++              "reason": {"type": "string", "minLength": 1}
++            }
++          }
++        },
++        "total": {"type": "integer", "const": 30}
++      }
++    },
+     "four_conditions": {
+       "type": "object",
+       "required": ["C1", "C2", "C3", "C4"],
+@@ -68,7 +90,22 @@
+               "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+               "bucket": {"type": "string", "enum": ["dependency-loop", "eval-log", "hook-ci", "rubric-governance", "dogfooding", "variable-abstraction", "doc", "schema", "other"]},
+               "description": {"type": "string"},
+-              "recommended_intervention": {"type": "string"}
++              "recommended_intervention": {"type": "string"},
++              "condition_signal": {"type": "string", "enum": ["contradiction", "omission", "inconsistency", "dependency_break", "smell"]},
++              "location": {
++                "type": "object",
++                "required": ["file"],
++                "properties": {
++                  "file": {"type": "string"},
++                  "line": {"type": "integer", "minimum": 1},
++                  "section": {"type": "string"}
++                }
++              },
++              "depends_on": {
++                "type": "array",
++                "items": {"type": "string", "pattern": "^F-[0-9]{4}$"}
++              },
++              "root_cause": {"type": "string"}
+             }
+           }
+         },
+diff --git a/plugins/skill-creator/skills/run-elegant-review/schemas/phase-output.schema.json b/plugins/skill-creator/skills/run-elegant-review/schemas/phase-output.schema.json
+index 0f4579d..a8b73e1 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/schemas/phase-output.schema.json
++++ b/plugins/skill-creator/skills/run-elegant-review/schemas/phase-output.schema.json
+@@ -34,11 +34,12 @@
+     },
+     "phase2_output": {
+       "type": "object",
+-      "required": ["paradigm_findings", "four_conditions", "variable_abstraction"],
++      "required": ["paradigm_findings", "four_conditions", "variable_abstraction", "thought_method_coverage"],
+       "properties": {
+-        "paradigm_findings": {"type": "array", "minItems": 30, "maxItems": 30},
++        "paradigm_findings": {"type": "array", "minItems": 0, "maxItems": 30},
+         "four_conditions": {"type": "object"},
+         "variable_abstraction": {"type": "array"},
++        "thought_method_coverage": {"type": "object"},
+         "agent_outputs": {"type": "object", "properties": {"elegant-logical-structural-analyst": {"type": "object"}, "elegant-meta-divergent-analyst": {"type": "object"}, "elegant-system-strategic-analyst": {"type": "object"}}}
+       }
+     },
+diff --git a/plugins/skill-creator/skills/run-elegant-review/scripts/build-paradigm-scorecard.py b/plugins/skill-creator/skills/run-elegant-review/scripts/build-paradigm-scorecard.py
+index a099a58..7566db9 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/scripts/build-paradigm-scorecard.py
++++ b/plugins/skill-creator/skills/run-elegant-review/scripts/build-paradigm-scorecard.py
+@@ -70,15 +70,28 @@ def main(argv: list[str]) -> int:
+     src = Path(argv[1])
+     data = json.loads(src.read_text(encoding="utf-8"))
+     findings = {f["paradigm_id"]: f for f in data.get("paradigm_findings", [])}
+-    missing = [pid for pid, _, _ in EXPECTED_PARADIGMS if pid not in findings]
++    coverage = data.get("thought_method_coverage", {})
++    skipped = {
++        item.get("method"): item.get("reason", "")
++        for item in coverage.get("skipped_with_reason", [])
++        if isinstance(item, dict)
++    }
++    missing = [
++        pid
++        for pid, name, _ in EXPECTED_PARADIGMS
++        if pid not in findings and name not in skipped
++    ]
+     if missing:
+         print(f"missing paradigm_findings ids: {missing}", file=sys.stderr)
+         return 1
+ 
+     out_stream = open(argv[2], "w", encoding="utf-8", newline="") if len(argv) >= 3 else sys.stdout
+     writer = csv.writer(out_stream)
+-    writer.writerow(["paradigm_id", "paradigm_name", "category", *CONDITIONS, "score"])
++    writer.writerow(["paradigm_id", "paradigm_name", "category", *CONDITIONS, "score", "skip_reason"])
+     for pid, name, cat in EXPECTED_PARADIGMS:
++        if pid not in findings:
++            writer.writerow([pid, name, cat, *("SKIP" for _ in CONDITIONS), "", skipped.get(name, "")])
++            continue
+         f = findings[pid]
+         issues = f.get("issues", [])
+         cond_flags = {c: "PASS" for c in CONDITIONS}
+@@ -87,7 +100,7 @@ def main(argv: list[str]) -> int:
+             if c in cond_flags:
+                 cond_flags[c] = "FAIL"
+         score = f.get("score", 0.0)
+-        writer.writerow([pid, name, cat, *(cond_flags[c] for c in CONDITIONS), score])
++        writer.writerow([pid, name, cat, *(cond_flags[c] for c in CONDITIONS), score, ""])
+     if out_stream is not sys.stdout:
+         out_stream.close()
+     return 0
+diff --git a/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py b/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+index b57365a..ce4397c 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
++++ b/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+@@ -120,9 +120,53 @@ def validate_structured_json(path: Path) -> tuple[bool, list[str]]:
+             continue
+         by_id[pid] = item
+ 
+-    missing = [pid for pid in PARADIGMS if pid not in by_id]
++    coverage = data.get("thought_method_coverage")
++    skipped_by_method: dict[str, str] = {}
++    used_methods: set[str] = set()
++    if coverage is None:
++        errors.append("missing thought_method_coverage")
++    elif not isinstance(coverage, dict):
++        errors.append("thought_method_coverage must be an object")
++    else:
++        if coverage.get("total") != 30:
++            errors.append("thought_method_coverage.total must be 30")
++        used = coverage.get("used", [])
++        if not isinstance(used, list):
++            errors.append("thought_method_coverage.used must be a list")
++        else:
++            used_methods = {str(item).strip() for item in used if str(item).strip()}
++        skipped = coverage.get("skipped_with_reason", [])
++        if not isinstance(skipped, list):
++            errors.append("thought_method_coverage.skipped_with_reason must be a list")
++        else:
++            for idx, item in enumerate(skipped):
++                if not isinstance(item, dict):
++                    errors.append(f"skipped_with_reason[{idx}] must be object")
++                    continue
++                method = str(item.get("method", "")).strip()
++                reason = str(item.get("reason", "")).strip()
++                if not method or not reason:
++                    errors.append(f"skipped_with_reason[{idx}] requires method and reason")
++                    continue
++                skipped_by_method[method] = reason
++        covered_count = len(used_methods) + len(skipped_by_method)
++        if covered_count != 30:
++            errors.append(
++                "thought_method_coverage.used + skipped_with_reason must cover 30 distinct methods"
++            )
++        overlap = used_methods & set(skipped_by_method)
++        if overlap:
++            errors.append(f"thought_method_coverage used/skipped overlap: {sorted(overlap)}")
++
++    missing = []
++    for pid in PARADIGMS:
++        expected_name = EXPECTED_META[pid][0]
++        if pid not in by_id and expected_name not in skipped_by_method:
++            missing.append(pid)
++        if pid in by_id and coverage is not None and expected_name not in used_methods:
++            errors.append(f"paradigm {pid}: finding exists but method missing from coverage.used")
+     if missing:
+-        errors.append(f"missing paradigm_findings ids: {missing}")
++        errors.append(f"missing paradigm_findings ids without skip_reason: {missing}")
+ 
+     valid_conditions = {"C1", "C2", "C3", "C4"}
+     valid_severities = {"critical", "high", "medium", "low"}
+@@ -150,6 +194,10 @@ def validate_structured_json(path: Path) -> tuple[bool, list[str]]:
+                 errors.append(f"paradigm {pid} issue {i}: invalid condition")
+             if issue.get("severity") not in valid_severities:
+                 errors.append(f"paradigm {pid} issue {i}: invalid severity")
++            signal = issue.get("condition_signal")
++            valid_signals = {"contradiction", "omission", "inconsistency", "dependency_break", "smell"}
++            if signal is not None and signal not in valid_signals:
++                errors.append(f"paradigm {pid} issue {i}: invalid condition_signal")
+             if not str(issue.get("description", "")).strip():
+                 errors.append(f"paradigm {pid} issue {i}: missing description")
+             if not str(issue.get("recommended_intervention", "")).strip():
+diff --git a/plugins/skill-creator/skills/run-elegant-review/templates/findings.json b/plugins/skill-creator/skills/run-elegant-review/templates/findings.json
+index 54dd8d3..078f2cd 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/templates/findings.json
++++ b/plugins/skill-creator/skills/run-elegant-review/templates/findings.json
+@@ -359,6 +359,42 @@
+       "source_trace": "評価ログ出力先"
+     }
+   ],
++  "thought_method_coverage": {
++    "used": [
++      "critical",
++      "deduction",
++      "induction",
++      "abduction",
++      "vertical",
++      "decomposition",
++      "mece",
++      "two-axis",
++      "process",
++      "meta",
++      "abstraction",
++      "double-loop",
++      "brainstorming",
++      "lateral",
++      "paradox",
++      "analogy",
++      "if",
++      "naive",
++      "systems",
++      "causal",
++      "causal-loop",
++      "trade-on",
++      "plus-sum",
++      "value-proposition",
++      "strategic",
++      "why",
++      "kaizen",
++      "hypothesis",
++      "issue",
++      "kj"
++    ],
++    "skipped_with_reason": [],
++    "total": 30
++  },
+   "four_conditions": {
+     "C1": {
+       "verdict": "PASS",
+diff --git a/plugins/skill-creator/skills/run-elegant-review/workflow-manifest.json b/plugins/skill-creator/skills/run-elegant-review/workflow-manifest.json
+index 7726be1..03bed03 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-elegant-review/workflow-manifest.json
+@@ -28,7 +28,7 @@
+       "subagent": "elegant-reset-observer",
+       "context": "fork",
+       "parallel": false,
+-      "prompt": "./prompts/phase1-reset.md",
++      "prompt": "./prompts/R1-phase1-reset.md",
+       "input": {
+         "source": "input_contract.target",
+         "schema": "./schemas/phase-output.schema.json#/definitions/phase1_input",
+@@ -39,12 +39,13 @@
+         ]
+       },
+       "output": {
+-        "artifact": "shared_state.md",
++        "artifacts": ["raw_observations.json", "shared_state.md"],
+         "schema": "./schemas/phase-output.schema.json#/definitions/phase1_output"
+       },
+       "completion_signal": {
+         "type": "file-exists-and-schema-validate",
+-        "files": ["shared_state.md"],
++        "files": ["raw_observations.json", "shared_state.md"],
++        "schema_file": "raw_observations.json",
+         "must_include": ["purpose", "scope", "stakeholders", "concrete_values_to_abstract"]
+       },
+       "failure_action": {
+@@ -65,7 +66,7 @@
+         {"id": "elegant-system-strategic-analyst", "thought_methods_count": 11, "category": "A4"}
+       ],
+       "context": "fork",
+-      "prompt": "./prompts/phase2-parallel.md",
++      "prompt": "./prompts/R2-phase2-parallel.md",
+       "input": {
+         "source": "shared_state.md + references/thought-methods.yaml",
+         "schema": "./schemas/phase-output.schema.json#/definitions/phase2_input"
+@@ -81,8 +82,8 @@
+       },
+       "completion_signal": {
+         "type": "paradigm-coverage",
+-        "command": "python3 scripts/validate-paradigm-coverage.py",
+-        "rule": "thought_method_coverage.used + skipped_with_reason == 30 (B2, C1 緩和: 全種が finding or skip_reason)"
++        "command": "python3 scripts/validate-paradigm-coverage.py <log_dir>/findings.json",
++        "rule": "thought_method_coverage.used + skipped_with_reason == 30 and every skipped method has skip_reason (B2, C1 緩和)"
+       },
+       "failure_action": {
+         "policy": "partial-continue",
+@@ -98,14 +99,14 @@
+       "subagent": "elegant-improvement-executor",
+       "context": "fork",
+       "parallel": false,
+-      "prompt": "./prompts/phase3-execute.md",
++      "prompt": "./prompts/R3-phase3-execute.md",
+       "input": {
+         "source": "aggregated findings.json",
+         "schema": "./schemas/findings.schema.json"
+       },
+       "steps": [
+-        "step0: DAG 生成 (findings[].location + depends_on から依存グラフ構築、B3)",
+-        "step1: severity 優先順位 (contradiction > omission > inconsistency > dependency_break > smell)",
++        "step0: DAG 生成 (findings[].location + depends_on または paradigm_findings[].issues[].location + depends_on から依存グラフ構築、B3)",
++        "step1: issues[].severity 優先順位 (critical > high > medium > low)。4条件 signal は condition_signal/fail_counts で別管理",
+         "step2: 独立対象 parallel / 依存あり serial",
+         "step3: auto_fixable=true は pre-phase3.patch 記録後に自動 commit / false は提案のみ",
+         "step4: 4 条件再検証 (max_iter=options.max_iterations, default 3)",
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
+index 0fcbfd9..5533cd2 100755
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
+@@ -104,16 +104,25 @@ def cmd_refresh(args) -> int:
+     return 0
+ 
+ 
++def _v(version: str) -> str:
++    """semver 文字列に `v` 接頭辞を一度だけ付ける (二重 v 化しない)。"""
++    s = str(version).strip()
++    return s if s.startswith("v") else f"v{s}"
++
++
+ def _format_line(installed: str | None, latest: str | None) -> str:
+-    # TODO(human): R2 notification-formatting
+-    # 仕様:
+-    #   - installed と latest が両方あり、かつ異なるときのみ通知文字列を返す
+-    #   - それ以外 (片方欠落 / 一致) は空文字列を返す
+-    #   - フォーマット規約は references/output-format.md 参照:
+-    #     "(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"
+-    #   - 先頭の `v` 接頭辞が installed/latest どちらかに既に付いている場合は二重 v 化しない
+-    #   - locale 切替や ANSI カラーは出さない (純テキスト)
+-    raise NotImplementedError("R2 notification-formatting is TODO(human)")
++    """更新通知行を生成する (references/output-format.md 規約)。
++
++    - installed と latest が両方あり、かつ異なるときのみ通知文字列を返す
++    - それ以外 (片方欠落 / 一致) は空文字列を返す
++    - 形式: "(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"
++    - `v` 接頭辞は二重化しない / 純テキスト (locale 切替・ANSI 無し)
++    """
++    if not installed or not latest:
++        return ""
++    if str(installed).strip() == str(latest).strip():
++        return ""
++    return f"(installed: {_v(installed)} / latest: {_v(latest)} — /skill-update で更新)"
+ 
+ 
+ def cmd_notify(args) -> int:
+diff --git a/plugins/skill-governance-automation/scripts/compose-rubrics.py b/plugins/skill-governance-automation/scripts/compose-rubrics.py
+index 6345f85..ce44bf3 100644
+--- a/plugins/skill-governance-automation/scripts/compose-rubrics.py
++++ b/plugins/skill-governance-automation/scripts/compose-rubrics.py
+@@ -34,7 +34,11 @@ def canonical_json(value: Any) -> str:
+ def load_ref(ref: str) -> tuple[str, Path, dict]:
+     path = Path(ref)
+     if ref.startswith("ref-"):
++        # rubric.json は 2026-05-22 に各 ref-*-rubric skill の references/ 配下へ移動済。
++        # 後方互換のため root 直下も候補に残すが、references/ を優先解決する。
+         candidates = [
++            Path("plugins/skill-creator/skills") / ref / "references" / "rubric.json",
++            Path(".claude/skills") / ref / "references" / "rubric.json",
+             Path("plugins/skill-creator/skills") / ref / "rubric.json",
+             Path(".claude/skills") / ref / "rubric.json",
+         ]
+diff --git a/plugins/skill-governance-lint/scripts/check-rubric-sync.py b/plugins/skill-governance-lint/scripts/check-rubric-sync.py
+index b0b2b14..6747eef 100755
+--- a/plugins/skill-governance-lint/scripts/check-rubric-sync.py
++++ b/plugins/skill-governance-lint/scripts/check-rubric-sync.py
+@@ -33,11 +33,17 @@ import json
+ import sys
+ from pathlib import Path
+ 
+-REPO_ROOT = Path(__file__).resolve().parents[2]
+-UPSTREAM = REPO_ROOT / "creator-kit" / "skills" / "ref-skill-design-rubric" / "rubric.json"
++# scripts は plugins/skill-governance-lint/scripts/ にあるので repo root は parents[3]。
++# creator-kit→skill-creator のプラグイン移行に追従し、正本は references/ 配下。
++REPO_ROOT = Path(__file__).resolve().parents[3]
++UPSTREAM = (
++    REPO_ROOT / "plugins" / "skill-creator" / "skills" / "ref-skill-design-rubric"
++    / "references" / "rubric.json"
++)
+ DERIVED = (
+     REPO_ROOT
+-    / "creator-kit"
++    / "plugins"
++    / "skill-creator"
+     / "skills"
+     / "assign-skill-design-evaluator"
+     / "references"
+diff --git a/plugins/skill-governance-lint/scripts/lint-template-variables.py b/plugins/skill-governance-lint/scripts/lint-template-variables.py
+index 4157812..bcf773b 100644
+--- a/plugins/skill-governance-lint/scripts/lint-template-variables.py
++++ b/plugins/skill-governance-lint/scripts/lint-template-variables.py
+@@ -21,7 +21,8 @@ import sys
+ from pathlib import Path
+ 
+ KIT_ROOT = Path(__file__).resolve().parents[1]
+-REGISTRY = KIT_ROOT / "config" / "template-variable-registry.json"
++# registry の正本は兄弟プラグイン skill-governance-config/config/ (プラグイン分割で移動)。
++REGISTRY = KIT_ROOT.parent / "skill-governance-config" / "config" / "template-variable-registry.json"
+ VAR_RE = re.compile(r"\{\{[A-Z0-9_]+}}")
+ ABS_PATH_RE = re.compile(r"(?<![`<])/(Users|home|var|tmp)/[A-Za-z0-9._/\-]+")
+ URL_RE = re.compile(r"https?://(?!\{\{)[^\s\"')]+")
+diff --git a/plugins/skill-intake/agents/skill-intake-assumption-challenger.md b/plugins/skill-intake/agents/skill-intake-assumption-challenger.md
+index f9c32df..98334f5 100644
+--- a/plugins/skill-intake/agents/skill-intake-assumption-challenger.md
++++ b/plugins/skill-intake/agents/skill-intake-assumption-challenger.md
+@@ -12,7 +12,7 @@ model: sonnet
+ | responsibility_id | R2-assumption-challenge |
+ | phase | phase-02-assumption-challenge |
+ | input_schema | plugins/skill-intake/skills/run-intake-kickoff/schemas/output.schema.json |
+-| output_schema | (JSON schema は Wave 2 で追加予定。本文 §2.4 / Output Contract を暫定の出力契約とする) |
++| output_schema | plugins/skill-intake/skills/run-skill-intake/schemas/phase2-assumption.schema.json (owner=run-skill-intake / manifest resourceId=schema-assumption。本契約の SSOT は当該 schema) |
+ | context_fork | true (主スレッドが初期発話に同意的になるのを排除し、fresh context で adversarial に表層仮説を疑うため) |
+ | reproducible | true |
+ 
+@@ -48,16 +48,22 @@ model: sonnet
+ 入力スキーマ: `plugins/skill-intake/skills/run-intake-kickoff/schemas/output.schema.json` 準拠必須。
+ 
+ ### 2.4 出力契約
+-- schema: JSON schema は Wave 2 で追加予定。本文 `## Output Contract` を暫定の出力契約とする (AG-004)。
+-- 必須フィールド: surface_request, deep_candidates(3 件), user_picked, confirmed_deep_problem, time_freed_intent, blind_spots, confidence
+-- 完了条件: deep_candidates 3 件提示 + user_picked 確定 + confirmed_deep_problem 非空。
++- schema (SSOT): `plugins/skill-intake/skills/run-skill-intake/schemas/phase2-assumption.schema.json` に validate 必須 (`additionalProperties: false`)。
++- schema 必須フィールド: surface_request, deep_candidates, user_picked, confirmed_deep_problem。
++- schema 任意フィールド: time_freed_intent (string), blind_spots (array)。`confidence` 等の未定義キーは `additionalProperties: false` のため出力禁止 (validate FAIL)。
++- deep_candidates 各要素は `{id, label, reason}` 必須 (3 要素とも reason 非空)。
++- 本 agent の追加完了条件 (L1.1): deep_candidates を 3 件提示し user_picked 確定 + confirmed_deep_problem 非空。
+ 
+-出力 JSON 雛形:
++出力 JSON 雛形 (上記 schema に validate 適合):
+ 
+ ```json
+ {
+   "surface_request": "...",
+-  "deep_candidates": [{"id": "D1", "label": "..."}, {"id": "D2", "label": "..."}, {"id": "D3", "label": "..."}],
++  "deep_candidates": [
++    {"id": "D1", "label": "...", "reason": "..."},
++    {"id": "D2", "label": "...", "reason": "..."},
++    {"id": "D3", "label": "...", "reason": "..."}
++  ],
+   "user_picked": "D1",
+   "confirmed_deep_problem": "...",
+   "time_freed_intent": "...",
+@@ -175,17 +181,19 @@ L5.2 ゴール達成判定の唯一の停止条件。**目的**: 第三者が YE
+ 
+ 1 つでも NO なら 5.3 実行方式に従い該当項目の解消手順を立案・再実行する。
+ 
+-## Output Contract (暫定 / AG-004)
++## Output Contract
+ 
+-JSON schema ファイルは Wave 2 で追加予定。それまで本節を出力契約の正本とする。`output/<hint>/assumption.json` は以下を必須フィールドとして持つ。
++出力契約の正本 (SSOT) は owner skill `run-skill-intake` の `schemas/phase2-assumption.schema.json` (manifest resourceId=`schema-assumption`)。`output/<hint>/assumption.json` は当該 schema に validate (`additionalProperties: false`) 通過必須。本節は schema の意味づけ補足であり、フィールド定義の正本ではない。
+ 
+-- `surface_request` (string): 初期発話を汎用語化した表層要望 (PII 除去済)。
+-- `deep_candidates` (array, 3 件固定): 各要素 `{id, label}`。最低 2 件は表層と対立する角度であること。
+-- `user_picked` (string): ユーザーが選んだ candidate の id。
+-- `confirmed_deep_problem` (string, 非空): 確定した真の課題。
+-- `time_freed_intent` (string): 課題解決後に空いた時間の使途。
+-- `blind_spots` (array, ≥1): 見落とされやすい前提。
+-- `confidence` (enum: high|medium|low): confirmed_deep_problem の確からしさ。
++schema 由来の制約 (要約):
++
++- `surface_request` (string, 必須): 初期発話を汎用語化した表層要望 (PII 除去済)。
++- `deep_candidates` (array, 必須): 各要素 `{id, label, reason}` (全て非空必須)。本 agent は 3 件提示・最低 2 件は表層と対立する角度 (L1.1)。
++- `user_picked` (string, 必須): ユーザーが選んだ candidate の id。
++- `confirmed_deep_problem` (string, 必須・非空): 確定した真の課題。
++- `time_freed_intent` (string, 任意): 課題解決後に空いた時間の使途。
++- `blind_spots` (array, 任意): 見落とされやすい前提 (本 agent は L2.2 で ≥1 件を要求)。
++- schema 未定義キー (`confidence` 等) は出力禁止 (`additionalProperties: false` で validate FAIL)。
+ 
+ ## Context Boundary (AG-002)
+ 
+diff --git a/plugins/skill-intake/agents/skill-intake-purpose-excavator.md b/plugins/skill-intake/agents/skill-intake-purpose-excavator.md
+index 93b03fc..930b670 100644
+--- a/plugins/skill-intake/agents/skill-intake-purpose-excavator.md
++++ b/plugins/skill-intake/agents/skill-intake-purpose-excavator.md
+@@ -11,8 +11,8 @@ model: sonnet
+ |---|---|
+ | responsibility_id | R5-purpose-excavate |
+ | phase | phase-05-purpose-excavate |
+-| input_schema | sheet.md + interview.json (Wave 2 で `schemas/purpose-input.schema.json` として正式化予定) |
+-| output_schema | (Wave 2 で `schemas/purpose.schema.json` 追加予定) |
++| input_schema | sheet.md (R4 出力) + interview.json (R4 出力) |
++| output_schema | plugins/skill-intake/skills/run-skill-intake/schemas/phase5-purpose.schema.json (owner=run-skill-intake / manifest resourceId=schema-purpose。enforced gate / 本契約の SSOT は当該 schema) |
+ | context_fork | true (理由: 8 技法を独立適用し、直近 5 ターンの同意ループを fresh context で検出するため) |
+ | reproducible | true |
+ 
+@@ -21,7 +21,7 @@ model: sonnet
+ ### 1.1 不変ルール
+ 
+ - 抽象語 (効率化 / 最適化 / 自動化) を最終回答として確定しない。必ず動詞+目的語に落とす。
+-- rounds <= 5 で打ち切る (深度上限)。
++- rounds 要素数 <= 5 で打ち切る (深度上限。rounds は `{question,answer,finding}` の配列)。
+ - 同意ループ (直近 5 ターンで同一論点を反復) を検出したら fresh context で再評価。
+ 
+ ### 1.2 倫理ガード
+@@ -34,12 +34,12 @@ model: sonnet
+ ### 2.1 単一責務
+ 
+ - 担当: 8 技法 (5 Whys / JTBD / Magic Wand / Day in the Life / Pain Story / Reverse Brief / Tacit Extraction / Pre-mortem) を切り替え、真の目的 (動詞 + 目的語) を発掘する。
+-- 非担当: 5 軸シート充足 (R4 interview)、表層仮説検証 (R2 assumption-challenger)、要約 / Gate A (R8 summarizer)、連携候補提示 (R6 option-presenter)。
++- 非担当: 5 軸シート充足 (R4 interview)、表層仮説検証 (R2 assumption-challenger)、要約 / Gate A (R8 summarizer)、連携候補提示 (R6 run-intake-option-catalog)。
+ 
+ ### 2.2 ドメインルール
+ 
+ - true_purpose.verb_object は必ず「動詞 + 目的語」形式。
+-- time_freed_minutes_per_week と use_of_freed_time を取得し価値実現基準を満たす。
++- 価値実現基準 (浮く時間 / 使途) を対話で確認し `rounds[].finding` と `true_purpose.success_signal` / `underlying_motivation` に織り込む (schema 外キーは足さない)。
+ - agreement_loop_detected=true の場合は fresh context で再ラウンドを 1 回試行。
+ 
+ ### 2.3 入力契約
+@@ -49,28 +49,31 @@ model: sonnet
+ | sheet.md | file | yes | R4 出力 | 5 軸充足済みヒアリングシート |
+ | interview.json | file | yes | R4 出力 | needs_excavation=true の場合に起動 |
+ 
+-入力スキーマ: Wave 2 で `schemas/purpose-input.schema.json` として正式化予定。
++入力: R4 (`run-intake-interview`) の出力 `sheet.md` + `interview.json`。`interview.json.needs_excavation=true` のときのみ起動。
+ 
+ ### 2.4 出力契約
+ 
+-- schema: `output/<hint>/purpose.json` (Wave 2 で `schemas/purpose.schema.json` 追加予定)
+-- 必須フィールド: `techniques_used` / `rounds` / `agreement_loop_detected` / `true_purpose.verb_object` / `true_purpose.underlying_motivation` / `true_purpose.time_freed_minutes_per_week` / `true_purpose.use_of_freed_time` / `remaining_doubts`
+-- 完了条件: true_purpose.verb_object が動詞+目的語の形 + agreement_loop_detected=false + rounds <= 5。
++- 出力先: `output/<hint>/purpose.json`
++- schema (enforced gate): `run-skill-intake/schemas/phase5-purpose.schema.json` (`additionalProperties:false`)。purpose.json はこの schema を必ず validate PASS すること。
++- 必須フィールド: `techniques_used` (array, minItems 1) / `rounds` (array of `{question, answer, finding}`, minItems 1) / `agreement_loop_detected` (boolean) / `true_purpose` (required: `verb_object` / `underlying_motivation`、任意: `success_signal`)。
++- schema 外フィールド禁止: 上記以外のキー (例: 時間・使途・残懸念) を最上位や `true_purpose` に足さない (gate が reject)。価値実現基準 (浮く時間/使途) は対話で確認し `rounds[].finding` と `true_purpose.success_signal` / `underlying_motivation` に織り込む。
++- 完了条件: true_purpose.verb_object が動詞+目的語の形 + agreement_loop_detected=false + rounds の要素数 <= 5。
+ 
+ 出力 JSON 例:
+ 
+ ```json
+ {
+   "techniques_used": ["5whys", "magic_wand"],
+-  "rounds": 4,
++  "rounds": [
++    {"question": "なぜ可視化が必要ですか?", "answer": "リピートが伸びないから", "finding": "課題はリピート率"},
++    {"question": "もし可視化が叶ったら浮いた時間で何を?", "answer": "教材の中身を磨く", "finding": "週90分を教材改善に回したい"}
++  ],
+   "agreement_loop_detected": false,
+   "true_purpose": {
+     "verb_object": "受講者満足度を可視化する",
+     "underlying_motivation": "リピート率を上げる",
+-    "time_freed_minutes_per_week": 90,
+-    "use_of_freed_time": "教材の中身を磨く"
+-  },
+-  "remaining_doubts": []
++    "success_signal": "週90分が浮き教材改善に充てられる"
++  }
+ }
+ ```
+ 
+@@ -94,7 +97,7 @@ model: sonnet
+ 
+ ### 4.1 失敗時挙動
+ 
+-- rounds=5 到達かつ verb_object 未確定 → `remaining_doubts` に列挙し halt せず返却。
++- rounds 要素数 5 到達かつ verb_object 未確定 → 未解決点を `rounds[].finding` に明記し、orchestrator に `halt_reason=abstract_only` で返す (schema 外キーは書かない)。
+ - agreement_loop_detected=true が 2 回連続 → orchestrator に `halt_reason=agreement_loop` で返す。
+ 
+ ### 4.2 観測 / ロギング
+@@ -115,7 +118,7 @@ model: sonnet
+ 
+ - 目的: 表層的な要望から「動詞+目的語」形式の真の目的を引き出し、価値実現基準を満たす purpose.json を確定する。
+ - 背景: 抽象語 (効率化/最適化/自動化) のままでは後続 skill が何を実装すべきか決まらず、価値実現も測定できない。Sycophancy 防止のため fresh context が必要。
+-- 達成ゴール: `true_purpose.verb_object` が動詞+目的語形 + `time_freed_minutes_per_week`/`use_of_freed_time` が埋まり、agreement_loop_detected=false、rounds<=5 で purpose.json が書き出されている状態。
++- 達成ゴール: `true_purpose.verb_object` が動詞+目的語形 + `true_purpose.underlying_motivation` が埋まり (価値実現基準は success_signal / rounds[].finding に反映)、agreement_loop_detected=false、rounds 要素数 <=5 で `phase5-purpose.schema.json` validate PASS する purpose.json が書き出されている状態。
+ 
+ ### 5.3 実行方式
+ 
+@@ -126,8 +129,8 @@ model: sonnet
+ ### 6.1 上位 skill との接続
+ 
+ - 呼び出し元: `run-skill-intake` Phase 5 (interview.json.needs_excavation=true の場合)。
+-- 後続: R6 (run-intake-option-catalog Skill 経由 → skill-intake-option-presenter)。
+-- handoff: `eval-log/handoff-phase-05.json`。
++- 後続: Phase 6 (`run-intake-option-catalog`, Skill)。purpose.json の `true_purpose.verb_object` を起点に連携候補を引き当てる。
++- handoff: `output/<hint>/purpose.json` (`phase5-purpose.schema.json` validate PASS)。orchestrator が `intake-trace.json` に status を記録する。
+ 
+ ### 6.2 並列性
+ 
+@@ -157,7 +160,7 @@ model: sonnet
+ 
+ ## Prompt Templates
+ 
+-> L1 不変ルール (抽象語禁止/rounds<=5/同意ループ検出) + L2 ドメイン (動詞+目的語形+時間+使途) + L3 リソース (8 技法カタログ) + L4 失敗時挙動 (halt_reason) + L6 ハンドオフ (option-presenter) + L7 提示形式 (1 問ずつ) を反映した使用テンプレ。`{{...}}` は置換。
++> L1 不変ルール (抽象語禁止/rounds 要素数<=5/同意ループ検出) + L2 ドメイン (動詞+目的語形+価値実現基準) + L3 リソース (8 技法カタログ) + L4 失敗時挙動 (halt_reason) + L6 ハンドオフ (run-intake-option-catalog) + L7 提示形式 (1 問ずつ) を反映した使用テンプレ。`{{...}}` は置換。
+ 
+ ### Round 1: 5 Whys (初手)
+ 
+@@ -182,7 +185,7 @@ model: sonnet
+ 
+ > Layer 5 完了チェックリスト。全項目 YES でゴール到達=停止条件成立。固定手順は持たない。
+ 
+-- [ ] **完全性**: purpose.json の required (verb_object/underlying_motivation/time_freed_minutes_per_week/use_of_freed_time) が全て埋まっている (目的: 後続 R6 がカテゴリ推定可能 / 背景: 欠損は連携選択を阻害)
++- [ ] **完全性**: purpose.json が `phase5-purpose.schema.json` を validate PASS し required (techniques_used/rounds/agreement_loop_detected/true_purpose.{verb_object,underlying_motivation}) が全て埋まり、schema 外キーを含まない (目的: 後続 R6 がカテゴリ推定可能 / 背景: 欠損・余剰キーは gate reject)
+ - [ ] **抽象語排除**: 最終 verb_object に「効率化/最適化/自動化」等の抽象語を含めず、動詞+目的語形である (目的: 実装可能性確保 / 背景: 抽象語は何を作るか決められない)
+ - [ ] **同意ループ排除**: agreement_loop_detected=false かつ同一の問いを言い換えで 2 回連続出していない (目的: Sycophancy 回避 / 背景: 同意ループは真の目的に到達しない)
+ - [ ] **深度上限遵守**: rounds<=5 (目的: ユーザー疲弊回避 / 背景: 過度な深掘りは離脱を招く)
+@@ -200,5 +203,5 @@ model: sonnet
+ 
+ ## Handoff
+ 
+-- 成功時: orchestrator が Phase 6 (`run-intake-option-catalog` Skill) を起動し、`skill-intake-option-presenter` に purpose.json を渡す。
++- 成功時: orchestrator が Phase 6 (`run-intake-option-catalog`, Skill) を起動し、`output/<hint>/purpose.json` を渡す。
+ - 失敗時: orchestrator に `halt_reason=agreement_loop` または `halt_reason=abstract_only` で返す。
+diff --git a/plugins/skill-intake/agents/skill-intake-summarizer.md b/plugins/skill-intake/agents/skill-intake-summarizer.md
+index 252b557..8868060 100644
+--- a/plugins/skill-intake/agents/skill-intake-summarizer.md
++++ b/plugins/skill-intake/agents/skill-intake-summarizer.md
+@@ -12,7 +12,7 @@ model: sonnet
+ | responsibility_id | R8-summarize |
+ | phase | phase-08-summarize |
+ | input_schema | kickoff.json + assumption.json + profile.json + sheet.md + purpose.json + options.json + visuals.json (Phase 1-7 全成果物) |
+-| output_schema | (Wave 2 で追加予定。summary.md + summary.json を出力。本ファイル Layer 2.4 雛形を暫定契約とする) |
++| output_schema | summary.md (自然文) + summary.json (契約は run-skill-intake/schemas/phase8-summary.schema.json = workflow-manifest schema-summary が SSOT。本ファイル Layer 2.4 はその要約) |
+ | context_fork | true (理由: 生成側が自己肯定的になるのを避け、fresh context で Gate A を独立レビューする) |
+ | reproducible | true (同入力→同 5 軸抽出を保証。approval_status はユーザー入力依存のため除く) |
+ 
+@@ -36,7 +36,7 @@ model: sonnet
+ 
+ ### 2.2 ドメインルール
+ - 5 軸定義: `output_target` / `info_source` / `share_target` / `true_problem` / `knowledge_assets`。
+-- knowledge_assets は `{needed: bool, existing_sources: string[]}` 構造で保持。
++- knowledge_assets は `string[]` (利用可能なナレッジ資産・既存情報源を 1 件以上列挙)。schema は array(items string, minItems 1) を要求するため object 形式にしない。
+ - approval_status は `approved` / `revision_requested` の二値。
+ 
+ ### 2.3 入力契約
+@@ -46,16 +46,20 @@ model: sonnet
+ | kickoff | json | yes | Phase 1 | パターン選択等 |
+ | assumption | json | yes | Phase 2 | 前提整理 |
+ | profile | json | yes | Phase 3 | ユーザープロファイル |
+-| sheet | md | yes | Phase 6 | セクション要約 |
++| sheet | md | yes | Phase 4 | セクション要約 (run-intake-interview が生成) |
+ | purpose | json | yes | Phase 5 | verb_object と背景 |
+ | options | json | yes | Phase 6 | 選択肢提示結果 |
+ | visuals | json | yes | Phase 7 | 図解一覧 |
+ 
+-入力スキーマ: 各 phase の出力 schema に準拠。
++入力スキーマ: schema が wire 済みの phase (P2 assumption / P3 profile / P5 purpose, workflow-manifest の outputSchemaId 参照) はその schema に準拠した JSON を受け取る。他 phase は当該 skill の handoff JSON をそのまま読む。
+ 
+ ### 2.4 出力契約
++
++契約 SSOT は `run-skill-intake/schemas/phase8-summary.schema.json` (workflow-manifest `schema-summary`)。`additionalProperties:false` のため下記以外のキー (user_feedback 等) を summary.json に書かない。
++
+ - 出力: `output/<hint>/summary.md` (200〜400 字 + 補助箇条書き), `output/<hint>/summary.json`
+-- 必須フィールド: `five_axes.output_target`, `five_axes.info_source`, `five_axes.share_target`, `five_axes.true_problem`, `five_axes.knowledge_assets`, `approval_status`, `user_feedback`
++- 必須フィールド: `five_axes.output_target`, `five_axes.info_source`, `five_axes.share_target`, `five_axes.true_problem`, `five_axes.knowledge_assets` (string[] / minItems 1), `approval_status` (enum: approved | revision_requested)
++- 任意フィールド: `revision_notes` (修正要求・部分戻しの記述), `summary_md_path`, `summary_json_path`
+ - 完了条件: summary.md 200-400 字 + 5 軸全充足 + approval_status=approved (revision_requested は Phase 4 へ戻る)
+ 
+ ```json
+@@ -65,10 +69,10 @@ model: sonnet
+     "info_source": "...",
+     "share_target": "...",
+     "true_problem": "...",
+-    "knowledge_assets": {"needed": true, "existing_sources": ["..."]}
++    "knowledge_assets": ["..."]
+   },
+-  "approval_status": "approved|revision_requested",
+-  "user_feedback": "..."
++  "approval_status": "approved",
++  "revision_notes": "..."
+ }
+ ```
+ 
+@@ -160,7 +164,7 @@ model: sonnet
+ - 情報源 (info_source): {{...}}
+ - 共有相手 (share_target): {{...}}
+ - 真の課題 (true_problem): {{...}}
+-- ナレッジ資産 (knowledge_assets): needed={{bool}} / existing_sources=[{{...}}]
++- ナレッジ資産 (knowledge_assets): [{{利用可能なナレッジ資産・既存情報源を 1 件以上}}]
+ ```
+ 
+ ### Template 2: Gate A 承認確認 (AskUserQuestion, 最大 3 択)
+@@ -170,11 +174,11 @@ model: sonnet
+ 選択肢:
+ 1. はい、このまま進める (approval_status=approved)
+ 2. 修正したい (approval_status=revision_requested, Phase 4 に戻す)
+-3. 5 軸の一部だけ直したい (user_feedback に箇所を記述, Phase 4 に部分戻し)
++3. 5 軸の一部だけ直したい (revision_notes に箇所を記述, Phase 4 に部分戻し)
+ 
+ ### Template 3: 部分戻しフィードバック収集
+ 
+-> 「どの軸を直しますか? (output_target / info_source / share_target / true_problem / knowledge_assets) / どう直したいですか?」 → user_feedback に記録し Phase 4 へ。
++> 「どの軸を直しますか? (output_target / info_source / share_target / true_problem / knowledge_assets) / どう直したいですか?」 → revision_notes に記録し Phase 4 へ。
+ 
+ ## Self-Evaluation
+ 
+@@ -183,7 +187,7 @@ model: sonnet
+ - [ ] **5 軸完全性**: output_target / info_source / share_target / true_problem / knowledge_assets が全て埋まっている (目的: skill-creator が欠損なく実装計画を立てるため / 背景: 5 軸欠損は後続 Phase の停止要因)
+ - [ ] **字数遵守**: summary.md が 200-400 字 (目的: 読まれる長さ / 背景: 長文は確認時に読まれず短文は情報不足)
+ - [ ] **ユーザー語彙準拠**: Phase 4-5 で記録された言い回しを優先採用している (目的: ユーザーの「自分の言葉だ」感覚 / 背景: 翻訳語は心理的距離を生む)
+-- [ ] **Gate A 確定**: approval_status が approved / revision_requested の二値で確定し user_feedback が記録されている (目的: 後続 phase 分岐の決定論性)
++- [ ] **Gate A 確定**: approval_status が approved / revision_requested の二値で確定し、revision_requested 時は revision_notes が記録されている (目的: 後続 phase 分岐の決定論性)
+ - [ ] **再現性**: 同 Phase 1-7 入力から同じ 5 軸抽出になる (approval_status はユーザー入力依存のため除外) (目的: trace 性)
+ - [ ] **責務遵守**: 追加質問 (R4) / 深掘り (R5) / intake 生成 (R9) / Notion 公開 (R10) / 次アクション判定 (R11) を含めていない (目的: SRP 維持)
+ - [ ] **PII 非露出**: summary.md / summary.json に PII を直書きしていない (匿名化/抽象化済み) (目的: 倫理ガード)
+@@ -202,5 +206,5 @@ model: sonnet
+ ## Handoff
+ 
+ - 成功時 (approved): orchestrator に `summary.md` + `summary.json` + Phase 1-7 全 JSON を返し、Phase 9 `run-intake-finalize` へ進める。
+-- 修正要求時 (revision_requested): orchestrator 経由で `run-intake-interview` (Phase 4) に user_feedback を添えて戻す。
++- 修正要求時 (revision_requested): orchestrator 経由で `run-intake-interview` (Phase 4) に revision_notes を添えて戻す。
+ - 失敗時 (2 周超過): orchestrator に `halt_reason=gate_a_unreachable` で返す。
+diff --git a/plugins/skill-intake/agents/skill-intake-user-profiler.md b/plugins/skill-intake/agents/skill-intake-user-profiler.md
+index 231ce0d..fd8d7e9 100644
+--- a/plugins/skill-intake/agents/skill-intake-user-profiler.md
++++ b/plugins/skill-intake/agents/skill-intake-user-profiler.md
+@@ -11,8 +11,8 @@ model: sonnet
+ |---|---|
+ | responsibility_id | R3-user-profile |
+ | phase | phase-03-user-profile |
+-| input_schema | kickoff.json + assumption.json (Wave 2 で正式 schema 化) |
+-| output_schema | (未整備、Wave 2 で追加予定) |
++| input_schema | kickoff.json (run-intake-kickoff/schemas/output.schema.json) + assumption.json (run-skill-intake/schemas/phase2-assumption.schema.json) |
++| output_schema | plugins/skill-intake/skills/run-skill-intake/schemas/phase3-profile.schema.json |
+ | context_fork | true (発話履歴に引きずられない客観推定。主スレッドの「相手に合わせる」傾向を排除するため) |
+ | reproducible | true |
+ 
+@@ -30,7 +30,7 @@ model: sonnet
+ ## Layer 2: ドメイン層 (本質ロジック)
+ 
+ ### 2.1 単一責務
+-- 担当: 発話履歴から 6 軸 (expertise / role / context / constraints / motivation / sharing_intent) を推定、confidence を付与、vocabulary_tier (beginner / intermediate / expert) を確定する。
++- 担当: 発話履歴から 6 軸 (expertise / role / context / constraints / motivation / sharing_intent) を推定、confidence を付与、vocabulary_tier (non_technical / mixed / technical) を確定する。
+ - 非担当: 5 軸シート充足 (Phase 4)、表層仮説検証 (Phase 2)、真の課題発掘 (Phase 5)、セッション中の vocabulary_tier 変更。
+ 
+ ### 2.2 ドメインルール
+@@ -44,12 +44,13 @@ model: sonnet
+ | kickoff | object | yes | output/<hint>/kickoff.json | pattern/depth/痛点/初期発話 |
+ | assumption | object | yes | output/<hint>/assumption.json | confirmed_deep_problem 等 |
+ 
+-入力スキーマ: kickoff は `plugins/skill-intake/skills/run-intake-kickoff/schemas/output.schema.json`、assumption は Wave 2 で schema 化予定。
++入力スキーマ: kickoff は `plugins/skill-intake/skills/run-intake-kickoff/schemas/output.schema.json`、assumption は `plugins/skill-intake/skills/run-skill-intake/schemas/phase2-assumption.schema.json` (required: confirmed_deep_problem 等)。
+ 
+ ### 2.4 出力契約
+-- schema: (未整備、Wave 2 で追加予定)
+-- 必須フィールド: dimensions (6 軸すべて level/evidence/confidence)、vocabulary_tier
+-- 完了条件: 6 軸すべて非空 + vocabulary_tier 確定。
++- schema: `plugins/skill-intake/skills/run-skill-intake/schemas/phase3-profile.schema.json` (owner SKILL.md Phase 3 gate で validate PASS が必須)
++- 必須フィールド (schema required): dimensions (6 軸すべて level/evidence/confidence)、vocabulary_tier
++- vocabulary_tier は schema enum `non_technical | mixed | technical` のいずれか (それ以外は validate FAIL)。
++- 完了条件: 6 軸すべて非空 + vocabulary_tier 確定 + 上記 schema validate PASS。
+ 
+ 出力 JSON 雛形:
+ 
+@@ -63,7 +64,7 @@ model: sonnet
+     "motivation":     {"level": "...",  "evidence": "...", "confidence": "..."},
+     "sharing_intent": {"level": "...",  "evidence": "...", "confidence": "..."}
+   },
+-  "vocabulary_tier": "beginner|intermediate|expert"
++  "vocabulary_tier": "non_technical|mixed|technical"
+ }
+ ```
+ 
+@@ -102,7 +103,7 @@ model: sonnet
+ 
+ - 目的: 発話履歴と前 phase 出力から 6 軸プロファイル (expertise/role/context/constraints/motivation/sharing_intent) を客観推定し、後続 phase の語彙選択基準となる vocabulary_tier を確定する。
+ - 背景: 主スレッドの「相手に合わせる」傾向は推定を歪める。fresh context で独立推定し、各軸を evidence ベースで根拠付ける必要がある。tier は確定後セッション中に変更しないことで後続 phase の語彙整合性を担保する。
+-- 達成ゴール: 6 軸全てに level/evidence/confidence が付与され、vocabulary_tier が beginner/intermediate/expert のいずれかで確定し、profile.json が書き出されている状態。
++- 達成ゴール: 6 軸全てに level/evidence/confidence が付与され、vocabulary_tier が non_technical/mixed/technical のいずれかで確定し、profile.json が phase3-profile.schema.json validate PASS で書き出されている状態。
+ 
+ ### 5.3 実行方式
+ 
+@@ -174,14 +175,14 @@ model: sonnet
+ | motivation | {{...}} | {{...}} |
+ | sharing_intent | {{...}} | {{...}} |
+ 
+-vocabulary_tier: **{{beginner|intermediate|expert}}** (出力先: `output/<hint>/profile.json`)
++vocabulary_tier: **{{non_technical|mixed|technical}}** (出力先: `output/<hint>/profile.json`)
+ 
+ ## Self-Evaluation
+ 
+ > Layer 5 完了チェックリスト。全項目 YES でゴール到達=停止条件成立。固定手順は持たない。
+ 
+ - [ ] **完全性**: 6 軸すべてに level/evidence/confidence が埋まっている (目的: 後続 phase が語彙・深度選択可能 / 背景: 欠損軸は語彙ミスマッチ要因)
+-- [ ] **tier 確定**: vocabulary_tier が beginner/intermediate/expert のいずれかで確定 (目的: 後続 phase の語彙統一 / 背景: tier 未確定は語彙整合性破綻)
++- [ ] **tier 確定**: vocabulary_tier が schema enum non_technical/mixed/technical のいずれかで確定 (目的: 後続 phase の語彙統一 / 背景: tier 未確定・enum 外値は phase3-profile.schema.json validate FAIL)
+ - [ ] **tier 不変**: セッション中に vocabulary_tier を変更していない (目的: 整合性維持 / 背景: 途中変更は過去発話との齟齬を生む)
+ - [ ] **質問上限**: 直接質問が最大 2 問以内 (目的: ユーザー疲弊回避)
+ - [ ] **推定根拠の追跡性**: 各軸 evidence が入力データから引用可能 (発話の一部を含む) (目的: 推定の検証可能性 / 背景: 根拠なし推定は信頼できない)
+diff --git a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+index f38ab58..8a95ff1 100644
+--- a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
++++ b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+@@ -5,5 +5,5 @@
+   "page_id": "",
+   "url": "",
+   "mode": "",
+-  "logged_at": "2026-06-07T20:54:59+0900"
++  "logged_at": "2026-06-24T19:20:16+0900"
+ }
+diff --git a/plugins/skill-intake/hooks/README.md b/plugins/skill-intake/hooks/README.md
+index 105706a..4bacde6 100644
+--- a/plugins/skill-intake/hooks/README.md
++++ b/plugins/skill-intake/hooks/README.md
+@@ -6,6 +6,7 @@
+ |---|---|---|
+ | `hook-guard-skillgen.py` | PreToolUse(Skill\|Task\|Bash) / PostToolUse(Skill) / Stop / SessionEnd hook | **skill-intake 実行中にスキル生成 (`run-skill-create` / `run-build-skill` / `capability-build` / `run-build-skill-subagent`) が起動されるのをハーネス強制でブロック**。`run-skill-intake` 開始時に lock を立て (PreToolUse:Skill。`skill`/`skill_name`/`name` のキー揺れを網羅)、intake 実行中に Skill / Task / Bash 経由の生成呼び出しを検知すると exit 2 → ハーネスがツール実行を拒否。lock ファイル自体の削除・移動 (`rm`/`mv` 等) も exit 2 で封鎖し改ざん回避を防ぐ。lock の解除は **intake 正常終了 (PostToolUse:Skill) / SessionEnd / TTL 失効** のみ。**Stop では解除しない** (Stop は応答ターン毎に発火しうるため、intake が複数ターンに跨ると途中で lock が消え以降の生成が素通る fail-open を招く)。lock パスは `CLAUDE_PROJECT_DIR` を最優先 (cwd 揺れによる lock 分裂を防止)。**保証範囲**: Skill / Task 経路は名前正規化により決定的に遮断。Bash 経路は denylist 正規表現による best-effort であり、生成名を文字列に出さない間接起動 (変数展開・base64 等) は捕捉できない (汎用シェルの意味論を文字列から完全復元するのは原理的に不可)。LLM の指示遵守に依存しない保証層。実証: `tests/test_skill_intake_guard_skillgen.py` (CI: creator-kit-ci.yml の pytest ステップで回帰検証)。 |
+ | `pre-publish-secret-scrub.sh` | PreToolUse hook | Notion 公開前に `output/` 配下に Notion PAT / Internal Integration Secret / 汎用 Bearer / `.env` 形式キーが混入していないかを走査。検知で exit 2 → Claude Code が公開をブロック。 |
++| `pre-publish-schema-validate.py` | PreToolUse(Bash) hook | Notion 公開コマンド (`intake_publish_pipeline.py` / `publish_notion_page.py` / `render_notion_page.py`) の起動を捕捉し、`--intake[-file]` / 絶対パス / `output/<hint>/` / `fixtures/<...>/` から `intake.json` パスを抽出して `scripts/validate_intake_schema.py` 経由で `references/intake.schema.json` (required / enum / cross-field rules) に**実際に適合するか検証**する。schema FAIL は exit 2 でハーネスが公開をブロック。`--intake` を宣言しているのにパス抽出不能 / ファイル不在の場合も exit 2 (fail-closed: schema 検証を黙って素通りさせない)。`--intake` を取らない経路 (`render --ctx` 等) と検証対象外コマンドは exit 0 で pass-through。validator / schema 不在は exit 3 (環境不備)。Python stdlib のみで bash 委譲しない。 |
+ | `post-publish-notify.sh` | PostToolUse hook | Notion 公開成功後に Slack incoming webhook へ最小ペイロード (`intake published: <hint> -> <url>`) を送信。Webhook 未登録時は silent skip。Webhook 取得は `scripts/keychain_get_secret.py` 経由 (security 直叩き禁止)。 |
+ | `post-keychain-add.sh` | 手動実行 | Keychain 登録直後に `security find-generic-password` で取得可否を検証。本体は表示せず長さと prefix のみ出力。 |
+ 
+@@ -25,6 +26,10 @@
+           {
+             "type": "command",
+             "command": "$CLAUDE_PLUGIN_ROOT/hooks/pre-publish-secret-scrub.sh"
++          },
++          {
++            "type": "command",
++            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/pre-publish-schema-validate.py\""
+           }
+         ]
+       }
+diff --git a/plugins/skill-intake/skills/run-intake-interview/scripts/check-five-axes-coverage.py b/plugins/skill-intake/skills/run-intake-interview/scripts/check-five-axes-coverage.py
+index 826bf0c..0713dc1 100755
+--- a/plugins/skill-intake/skills/run-intake-interview/scripts/check-five-axes-coverage.py
++++ b/plugins/skill-intake/skills/run-intake-interview/scripts/check-five-axes-coverage.py
+@@ -1,14 +1,38 @@
+ #!/usr/bin/env python3
+ """sheet.md に 5 軸見出しが揃い、各見出しの下に空行以外の内容があるか検証。"""
+-import re, sys
++import re
++import sys
+ from pathlib import Path
++
+ AXES = ["出力先", "情報源", "共有相手", "真の課題", "ナレッジ資産"]
+-text = Path(sys.argv[1]).read_text(encoding="utf-8")
+-missing = []
+-for axis in AXES:
+-    m = re.search(rf"#+\s*{re.escape(axis)}\s*\n(.+?)(?=\n#+\s|\Z)", text, re.S)
+-    if not m or not m.group(1).strip() or "[?]" in m.group(1):
+-        missing.append(axis)
+-if missing:
+-    print(f"FAIL axes incomplete: {missing}", file=sys.stderr); sys.exit(1)
+-print("PASS")
++USAGE = "usage: check-five-axes-coverage.py <sheet.md>"
++
++
++def check(text: str) -> list[str]:
++    """5 軸のうち未充足 (見出し欠落 / 内容空 / [?] 残存) の軸名リストを返す。"""
++    missing = []
++    for axis in AXES:
++        m = re.search(rf"#+\s*{re.escape(axis)}\s*\n(.+?)(?=\n#+\s|\Z)", text, re.S)
++        if not m or not m.group(1).strip() or "[?]" in m.group(1):
++            missing.append(axis)
++    return missing
++
++
++def main(argv: list[str]) -> int:
++    if len(argv) != 1:
++        print(USAGE, file=sys.stderr)
++        return 2
++    path = Path(argv[0])
++    if not path.is_file():
++        print(f"FAIL: file not found: {path}", file=sys.stderr)
++        return 2
++    missing = check(path.read_text(encoding="utf-8"))
++    if missing:
++        print(f"FAIL axes incomplete: {missing}", file=sys.stderr)
++        return 1
++    print("PASS")
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv[1:]))
+diff --git a/plugins/skill-intake/skills/run-intake-revise/SKILL.md b/plugins/skill-intake/skills/run-intake-revise/SKILL.md
+index d8db0f9..1b9c23c 100644
+--- a/plugins/skill-intake/skills/run-intake-revise/SKILL.md
++++ b/plugins/skill-intake/skills/run-intake-revise/SKILL.md
+@@ -10,7 +10,7 @@ allowed-tools:
+   - Skill
+ kind: run
+ user-invocable: true
+-effect: notion-mutation
++effect: external-mutation  # Notion ページ PATCH = 外部変更 (run-notion-intake-publish と同値)
+ source: plugins/skill-intake
+ source-tier: internal
+ last-audited: 2026-05-24
+diff --git a/scripts/build-claude-settings.py b/scripts/build-claude-settings.py
+index 129d250..207a02b 100755
+--- a/scripts/build-claude-settings.py
++++ b/scripts/build-claude-settings.py
+@@ -10,13 +10,18 @@ import tempfile
+ from pathlib import Path
+ 
+ 
++# Claude Code の hook events。plugin manifest が実際に配線するイベントを網羅すること
++# (stale allowlist だと discover_plugins→normalize_hook_entries が LayoutError で exit3 する)。
+ HOOK_EVENTS = (
+     "PreToolUse",
+     "PostToolUse",
++    "UserPromptSubmit",
++    "UserPromptExpansion",
++    "Stop",
+     "SubagentStop",
+-    "TaskCompleted",
+-    "TaskCreated",
+-    "FileChanged",
++    "SessionStart",
++    "SessionEnd",
++    "Notification",
+     "PreCompact",
+     "PostCompact",
+ )
+diff --git a/scripts/feedback_contract_ssot.py b/scripts/feedback_contract_ssot.py
+index 52c007e..1a84d32 100644
+--- a/scripts/feedback_contract_ssot.py
++++ b/scripts/feedback_contract_ssot.py
+@@ -37,6 +37,42 @@ REQUIRED_CRITERION_KEYS = ("id", "loop_scope", "text", "verify_by")
+ FEEDBACK_LOOP_KINDS = {"run", "wrap", "delegate"}
+ FEEDBACK_SKIP_KINDS = {"ref", "assign"}
+ 
++# --- kind 抽出の単一実装 (lint 群が共有。末尾 # コメント / ハイフン kind を許容) ---
++# 従来 lint-feedback-contract.py と lint-content-review.py が別正規表現を持ち、
++# 片方だけ末尾コメントを許容する乖離 (kind: run  # ... を一方が None 誤判定) があった。
++_KIND_RE = re.compile(r"^kind:\s*([a-z-]+)\s*(?:#.*)?$", re.M)
++
++
++def read_kind(text: str) -> str | None:
++    """SKILL.md frontmatter から kind 値を抽出 (末尾コメント・ハイフン許容)。"""
++    m = _KIND_RE.search(text)
++    return m.group(1) if m else None
++
++
++# --- fail-closed フォールバック文面の単一正本 ---
++# brief が per-skill criteria を持たない場合、render-frontmatter.py が下記既定を焼き込む。
++# 全 loop-kind で skill 名/goal を差し替えただけの同語反復になり per-skill 性が空洞化する
++# (Goodhart の罠)。内容妥当性は LLM 層 (content-review) が担保する二層分離が前提だが、
++# 機械層でも「フォールバック既定がそのまま残存」は is_fallback_text で WARN 可視化する。
++FALLBACK_INNER_SUFFIX = "の完了チェックリストと決定論 lint が全て exit0 で通過する"
++FALLBACK_OUTER_SUFFIX = "がユーザー目的を満たし、run-elegant-review の4条件が全て PASS する"
++
++
++def fallback_inner_text(skill_name: str) -> str:
++    """brief 不在時の inner criteria 既定文 (render-frontmatter と同源)。"""
++    return f"{skill_name} {FALLBACK_INNER_SUFFIX}"
++
++
++def fallback_outer_text(goal: str) -> str:
++    """brief 不在時の outer criteria 既定文 (render-frontmatter と同源)。"""
++    return f"{goal} {FALLBACK_OUTER_SUFFIX}"
++
++
++def is_fallback_text(text: object) -> bool:
++    """criteria.text が brief 非導出のフォールバック既定 (同語反復) かを判定。"""
++    t = str(text or "").strip()
++    return t.endswith(FALLBACK_INNER_SUFFIX) or t.endswith(FALLBACK_OUTER_SUFFIX)
++
+ 
+ def validate_criteria(
+     criteria: object,
+diff --git a/scripts/lint-content-review.py b/scripts/lint-content-review.py
+index 9329fbe..ec4bc72 100755
+--- a/scripts/lint-content-review.py
++++ b/scripts/lint-content-review.py
+@@ -77,8 +77,7 @@ def _read_kind(plugin, skill):
+         text = md.read_text(encoding="utf-8")
+     except OSError:
+         return None
+-    m = re.search(r"^kind:\s*([a-z]+)\s*$", text, re.M)
+-    return m.group(1) if m else None
++    return FC.read_kind(text)  # kind 抽出は SSOT の単一実装に委譲 (lint 間の乖離を排除)
+ 
+ 
+ def _skill_sha256(plugin, skill):
+diff --git a/scripts/lint-feedback-contract.py b/scripts/lint-feedback-contract.py
+index d61a22e..970d8fb 100644
+--- a/scripts/lint-feedback-contract.py
++++ b/scripts/lint-feedback-contract.py
+@@ -79,8 +79,27 @@ def _all_skills() -> set[tuple[str, str]]:
+ 
+ 
+ def _read_kind(text: str) -> str | None:
+-    m = re.search(r"^kind:\s*([a-z-]+)\s*(?:#.*)?$", text, re.M)
+-    return m.group(1) if m else None
++    return FC.read_kind(text)  # kind 抽出は SSOT の単一実装に委譲 (lint 間の正規表現乖離を排除)
++
++
++def _fallback_warnings(plugin: str, skill: str, fc: dict) -> list[str]:
++    """criteria が brief 非導出のフォールバック既定 (同語反復) のままなら WARN を返す。
++
++    機構 (lint) は criteria の「存在」を fail-closed 保証するが「内容の per-skill 性」は
++    LLM 層の責務。ただしフォールバック既定の残存だけは機械検出して可視化し、
++    content-review が見落とした空洞 criteria を CI で surface する (Goodhart 対策)。
++    """
++    criteria = fc.get("criteria")
++    if not isinstance(criteria, list):
++        return []
++    warns: list[str] = []
++    for item in criteria:
++        if isinstance(item, dict) and FC.is_fallback_text(item.get("text")):
++            warns.append(
++                f"{plugin}/{skill}: criteria[{item.get('id', '?')}] が brief 非導出の"
++                " フォールバック既定文のまま (per-skill 評価基準へ具体化推奨)"
++            )
++    return warns
+ 
+ 
+ def _check_skill(plugin: str, skill: str) -> list[str]:
+@@ -119,16 +138,27 @@ def main() -> int:
+ 
+     targets = _git_changed_skills(args.base) if args.changed_only else _all_skills()
+     violations: list[str] = []
++    warnings: list[str] = []
+     checked = 0
+     for plugin, skill in sorted(targets):
+         md = PLUGINS_DIR / plugin / "skills" / skill / "SKILL.md"
+         if not md.is_file():
+             continue
+-        kind = _read_kind(md.read_text(encoding="utf-8"))
++        text = md.read_text(encoding="utf-8")
++        kind = _read_kind(text)
+         if kind in LOOP_KINDS:
+             checked += 1
++            fc = FC.extract_frontmatter_feedback_contract(text)
++            if isinstance(fc, dict):
++                warnings.extend(_fallback_warnings(plugin, skill, fc))
+         violations.extend(_check_skill(plugin, skill))
+ 
++    if warnings:
++        print(f"[WARN] lint-feedback-contract: {len(warnings)} fallback criteria (非 fail)")
++        for w in warnings:
++            print(f"  ~ {w}")
++        print()
++
+     if violations:
+         print(f"[FAIL] lint-feedback-contract: {len(violations)} violation(s)")
+         for v in violations:
+diff --git a/scripts/re-evaluate-on-rubric-bump.py b/scripts/re-evaluate-on-rubric-bump.py
+index fcccbf2..f62c9c3 100644
+--- a/scripts/re-evaluate-on-rubric-bump.py
++++ b/scripts/re-evaluate-on-rubric-bump.py
+@@ -36,9 +36,10 @@ import sys
+ from pathlib import Path
+ from typing import Iterable
+ 
+-REPO_ROOT = Path(__file__).resolve().parents[2]
++REPO_ROOT = Path(__file__).resolve().parents[1]  # scripts/ 直下なので repo root は parents[1]
+ UPSTREAM_RUBRIC = (
+-    REPO_ROOT / "plugins" / "skill-creator" / "skills" / "ref-skill-design-rubric" / "rubric.json"
++    REPO_ROOT / "plugins" / "skill-creator" / "skills" / "ref-skill-design-rubric"
++    / "references" / "rubric.json"
+ )
+ EVAL_LOG_DIR = REPO_ROOT / "eval-log"
+ 

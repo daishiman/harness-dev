@@ -1,0 +1,166 @@
+diff --git a/.claude-plugin/bundles.json b/.claude-plugin/bundles.json
+index b331703..4659e21 100644
+--- a/.claude-plugin/bundles.json
++++ b/.claude-plugin/bundles.json
+@@ -12,6 +12,7 @@
+         "contract-generator",
+         "company-master",
+         "mf-kessai-invoice-check",
++        "notion-gmail-send",
+         "skill-governance-config",
+         "skill-governance-lint",
+         "skill-governance-hooks",
+diff --git a/.claude-plugin/marketplace.json b/.claude-plugin/marketplace.json
+index 09ab734..681d028 100644
+--- a/.claude-plugin/marketplace.json
++++ b/.claude-plugin/marketplace.json
+@@ -113,6 +113,14 @@
+       "version": "0.1.0",
+       "category": "productivity",
+       "tags": ["money-forward", "invoice", "notion", "billing", "automation"]
++    },
++    {
++      "name": "notion-gmail-send",
++      "source": "./plugins/notion-gmail-send",
++      "description": "Notion 2DB（メール本文_DB／メール送信先_DB）を入力に、抑制条件を満たした宛先へ {{}} 差し込みで Gmail 一斉個別送信。承認済み plan＋人間承認ゲート＋冪等送信ログの三本柱で不可逆送信を安全化。",
++      "version": "0.1.0",
++      "category": "productivity",
++      "tags": ["notion", "gmail", "email", "send", "automation"]
+     }
+   ]
+ }
+diff --git a/.github/workflows/governance-check.yml b/.github/workflows/governance-check.yml
+index 20afa69..7f79365 100644
+--- a/.github/workflows/governance-check.yml
++++ b/.github/workflows/governance-check.yml
+@@ -69,6 +69,12 @@ jobs:
+             jq -e '.name and .version and .description' "$manifest" >/dev/null
+           done
+         continue-on-error: false
++      # marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査。
++      # 実体ディレクトリ起点で全 plugin の marketplace + bundles 登録を強制し、登録漏れ
++      # (notion-gmail-send 未表示) が自己強化ループで永久に見逃される事故を機械遮断する。
++      - name: validate plugin completeness (marketplace + bundles registration)
++        run: python3 scripts/validate-plugin-completeness.py
++        continue-on-error: false
+       - name: lint SSOT duplication (skill-creator 一本化強制)
+         run: python3 plugins/skill-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/skill-creator --strict
+         continue-on-error: false
+diff --git a/Makefile b/Makefile
+index 8c7b0af..96ba8f0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -36,6 +36,8 @@ lint: contract-intake vendored-ssot runtime-portability company-master-vendored
+ 	python3 scripts/lint-skill-description.py --skills-dir plugins/mf-kessai-invoice-check/skills
+ 	python3 scripts/validate-frontmatter.py --skills-dir plugins/mf-kessai-invoice-check/skills
+ 	python3 scripts/lint-plugin-lint-coverage.py
++	# marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査
++	python3 scripts/validate-plugin-completeness.py
+ 
+ ## vendored-ssot: plugin 同梱 SSOT (notion_config.py / feedback_contract_ssot.py) が正本と byte 一致か検証
+ vendored-ssot:
+diff --git a/scripts/run-ci-checks.sh b/scripts/run-ci-checks.sh
+index 27e6089..e937d57 100755
+--- a/scripts/run-ci-checks.sh
++++ b/scripts/run-ci-checks.sh
+@@ -113,6 +113,12 @@ else
+   echo "[WARN] jq 未インストールにつき manifest 検証 skip"
+ fi
+ 
++# ── marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) ──
++# 実体ディレクトリ起点で「全 plugin が marketplace.json + bundles.json 両方に登録」を
++# fail-closed 検査する。配線漏れで腐ると登録漏れ (notion-gmail-send 未表示) を永久に
++# 見逃す自己強化ループに陥るため hard 配線で再発を機械遮断する (F4/F5)。
++run "validate-plugin-completeness (MK/BD)" python3 scripts/validate-plugin-completeness.py
++
+ # ── サマリ ──
+ echo
+ echo "========================================"
+diff --git a/scripts/validate-plugin-completeness.py b/scripts/validate-plugin-completeness.py
+index 844c231..e2cb066 100755
+--- a/scripts/validate-plugin-completeness.py
++++ b/scripts/validate-plugin-completeness.py
+@@ -23,6 +23,7 @@ import sys
+ ROOT = pathlib.Path(__file__).resolve().parents[1]
+ PLUGINS_DIR = ROOT / "plugins"
+ BUNDLES_JSON = ROOT / ".claude-plugin" / "bundles.json"
++MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
+ 
+ 
+ def load_bundle_members() -> set[str]:
+@@ -36,6 +37,24 @@ def load_bundle_members() -> set[str]:
+     return members
+ 
+ 
++def load_marketplace_entries() -> dict[str, str]:
++    """marketplace.json plugins[] を {name: source} の dict で返す。
++
++    bundles loader と対称的に、ルート .claude-plugin/marketplace.json を
++    SSOT として読む。name -> source のマップを返すことで、登録漏れ (MK-001) /
++    source 実在 (MK-002) / name 一致 (MK-003) の各検査に供する。
++    """
++    if not MARKETPLACE_JSON.exists():
++        return {}
++    data = json.loads(MARKETPLACE_JSON.read_text())
++    entries: dict[str, str] = {}
++    for p in data.get("plugins", []):
++        name = p.get("name")
++        if name is not None:
++            entries[name] = p.get("source", "")
++    return entries
++
++
+ def collect(plugin_dir: pathlib.Path) -> dict:
+     out = {
+         "skills": sorted(p.parent.name for p in plugin_dir.glob("skills/*/SKILL.md")),
+@@ -50,7 +69,12 @@ def collect(plugin_dir: pathlib.Path) -> dict:
+     return out
+ 
+ 
+-def validate(plugin_name: str, data: dict, bundle_members: set[str]) -> list[str]:
++def validate(
++    plugin_name: str,
++    data: dict,
++    bundle_members: set[str],
++    marketplace_entries: dict[str, str],
++) -> list[str]:
+     errs: list[str] = []
+     m = data["manifest"]
+     if m is None:
+@@ -88,6 +112,20 @@ def validate(plugin_name: str, data: dict, bundle_members: set[str]) -> list[str
+     if plugin_name not in bundle_members:
+         errs.append(f"{plugin_name}: not registered in any .claude-plugin/bundles.json bundle (BD-001/BND-001)")
+ 
++    # MK-001: 実体ディレクトリがあるのに marketplace.json plugins[].name に未登録 →
++    # /plugin install のマーケットプレイス一覧に出ない (表示漏れの直接原因)。
++    if plugin_name not in marketplace_entries:
++        errs.append(f"{plugin_name}: not registered in .claude-plugin/marketplace.json plugins[] (MK-001)")
++    else:
++        # MK-002: marketplace エントリの source が実ディレクトリとして存在するか。
++        source = marketplace_entries[plugin_name]
++        source_dir = (ROOT / source).resolve() if source else None
++        if not source or source_dir is None or not source_dir.is_dir():
++            errs.append(f"{plugin_name}: marketplace.json source '{source}' is not an existing directory (MK-002)")
++        # MK-003: marketplace name == manifest.name == ディレクトリ名 の三者一致。
++        if m.get("name") != plugin_name:
++            errs.append(f"{plugin_name}: marketplace.json name '{plugin_name}' != manifest.name '{m.get('name')}' / directory name (MK-003)")
++
+     return errs
+ 
+ 
+@@ -97,13 +135,14 @@ def main() -> int:
+         return 2
+ 
+     bundle_members = load_bundle_members()
++    marketplace_entries = load_marketplace_entries()
+     all_errs: list[str] = []
+     summary = []
+     for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+         if not plugin_dir.is_dir() or plugin_dir.name.startswith("."):
+             continue
+         data = collect(plugin_dir)
+-        errs = validate(plugin_dir.name, data, bundle_members)
++        errs = validate(plugin_dir.name, data, bundle_members, marketplace_entries)
+         all_errs.extend(errs)
+         summary.append(
+             f"{plugin_dir.name}: skills={len(data['skills'])} "

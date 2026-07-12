@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/prompt-creator/run-prompt-create/schemas/prompt-brief.schema.json",
+  "title": "Prompt Brief (machine-readable)",
+  "description": "run-prompt-elicit → run-prompt-creator-7layer / run-prompt-create に渡される prompt-brief.json の正本スキーマ。skill-brief と並列で、7 層プロンプト生成に必要な要求を構造化する。宣言型 (l5-contract v2.0.0) の L5 材料 (goals/checklist/purpose/background) を運ぶ。項目名は harness-creator の goal-spec.schema.json (purpose/background/checklist) と 7layer 側 hearing-result (goals/checklist{item,judgement}) に揃える。モードは 2 系: skill 紐付け (target_skill あり → responsibility_id 必須) と standalone (target_skill なし → output_path 必須・responsibility_id 禁止)。判別は if/then/else が機械正本 (run-prompt-elicit SKILL.md Key Rule 4/5 と 1:1)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prompt_name",
+    "owner_agent_or_skill",
+    "layers_required",
+    "trigger_conditions",
+    "goals",
+    "checklist",
+    "output_contract",
+    "boundary",
+    "output_language"
+  ],
+  "if": {
+    "$comment": "モード判別子: target_skill キーの有無 (README 判別表・run-prompt-elicit standalone モードと 1:1)。",
+    "required": ["target_skill"]
+  },
+  "then": {
+    "$comment": "skill 紐付けモード: responsibility_id (target_skill の responsibilities[].id と 1:1) を必須化。",
+    "required": ["responsibility_id"]
+  },
+  "else": {
+    "$comment": "standalone モード: 生成物出力先 output_path (ユーザー指定) を必須化し、responsibility_id の混入を禁止 (R-id は skill 紐付け専用)。",
+    "required": ["output_path"],
+    "properties": {"responsibility_id": false}
+  },
+  "properties": {
+    "prompt_name": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$", "maxLength": 60, "description": "R-id-slug 形式 (例: elicit, gate-review)。"},
+    "responsibility_id": {"type": "string", "pattern": "^R[0-9]+$", "description": "Owner skill の brief.responsibilities[].id と 1:1。skill 紐付け時のみ必須 (standalone では禁止: else 節参照)。"},
+    "target_skill": {"type": "string", "description": "プロンプトを所有する skill 名 (例: run-skill-create)。キー省略時は standalone モード (skill 非紐付けの汎用プロンプト)。"},
+    "owner_agent_or_skill": {"type": "string", "description": "プロンプトを実行する agent / skill ID。"},
+    "layers_required": {
+      "type": "array",
+      "items": {"type": "string", "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L7"]},
+      "minItems": 1,
+      "description": "生成する 7 層のうち必須レイヤー。"
+    },
+    "trigger_conditions": {
+      "type": "array",
+      "items": {"type": "string", "maxLength": 80},
+      "minItems": 1,
+      "description": "プロンプト発動条件。数量は構造上の下限 (非空) のみ機械制約とし、旧 minItems 2 / maxItems 3 の数量レンジは撤廃 (件数は質を保証しないため。核心原則「質ベース判定」に従い、過不足は evaluator が検証可能性で判定する)。maxLength 80 は要素原子性 (1 値=1 短文) の構造制約。"
+    },
+    "purpose": {
+      "type": "string",
+      "description": "このプロンプトを作る目的 (なぜ必要か)。1-3 文。goal-spec.schema.json の purpose / hearing-result の purpose と同名対応。L5 5.2 ゴール定義「目的」の材料。"
+    },
+    "background": {
+      "type": "string",
+      "description": "目的が必要になった経緯・前提・制約。1-3 文。goal-spec.schema.json の background / hearing-result の background と同名対応。L5 5.2 ゴール定義「背景」の材料。"
+    },
+    "goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "達成ゴール。観測可能な成果状態 (「〜が〜の状態になっている」完了形) で記述し、手順・ステップでは書かない。hearing-result の goals と同名対応 (goal-spec.schema.json の goal 単数形に対する複数形)。L5 5.2 ゴール定義「達成ゴール」の材料。"
+    },
+    "checklist": {
+      "type": "array",
+      "minItems": 1,
+      "description": "完了チェックリスト (ゴール到達の停止条件)。L5 5.3 の材料。hearing-result の checklist{item,judgement} と同形 (goal-spec.schema.json の checklist.criterion ≒ item、verify_by は同一 enum)。",
+      "items": {
+        "type": "object",
+        "required": ["item", "judgement"],
+        "additionalProperties": false,
+        "properties": {
+          "item": {"type": "string", "minLength": 1, "description": "満たすべき達成条件 (状態で書く。手順を埋め込まない)。"},
+          "judgement": {"type": "string", "minLength": 1, "description": "第三者が YES/NO を客観判定できる基準。"},
+          "verify_by": {"type": "string", "enum": ["reasoning", "script", "lint", "test", "human"], "description": "判定手段 (goal-spec.schema.json と同一 enum)。決定論検査は script/lint/test へ寄せる。"}
+        }
+      }
+    },
+    "output_contract": {"type": "string", "description": "プロンプトが満たすべき出力契約 (1-3 文)。"},
+    "boundary": {"type": "string", "minLength": 1, "maxLength": 200, "description": "「やらないこと」を 1 文で。"},
+    "format": {"type": "string", "enum": ["md", "yaml", "json", "xml"], "default": "md"},
+    "inject_sections": {"type": "array", "items": {"type": "string"}, "default": ["Prompt Templates", "Self-Evaluation"]},
+    "output_path": {"type": "string", "description": "skill 紐付け時: skill-local-v1 / agents-legacy のいずれかに沿った出力先 (省略時は規約パス)。standalone 時: ユーザー指定の生成物出力先として必須 (規約パス自動解決に依存しない)。"},
+    "path_convention": {"type": "string", "enum": ["skill-local-v1", "agents-legacy"], "default": "skill-local-v1"},
+    "output_schema_ref": {"type": "string", "description": "出力 JSON の検証 schema へのパス。"},
+    "reproducible": {"type": "boolean", "default": true},
+    "self_evaluation_checklist": {"type": "array", "items": {"type": "string"}, "deprecated": true, "description": "旧 L5 構成 (l5-contract v2.0.0 で廃止) の材料。後継は checklist[] (item+judgement)。producer 互換のため受理のみ継続し、新規 brief では使用しない。"},
+    "user_confirmed": {"type": "boolean", "description": "Gate 1 (run-prompt-create) またはヒアリング時の導出確認でユーザー承認済みであることを示すフラグ。run-prompt-creator-7layer は brief 供給時に本フラグ=true を Phase 2 導出確認 skip の根拠とする (invariant「導出確認は brief.user_confirmed に委譲」)。false / 欠落時は skip せず、単独起動時と同様に導出確認を実施する。"},
+    "output_language": {"type": "string", "enum": ["ja"]},
+    "parameter_language_exception": {"type": "boolean", "default": true},
+    "open_questions": {"type": "array", "items": {"type": "string"}, "description": "推定しきれなかった未確定事項と AI が補完した仮定の記録 (人間差し戻しマーカーは生成しない)。数量上限 (旧 maxItems 10) は撤廃し非空制約も課さない (件数は質を保証しないため)。"},
+    "source_url_or_path": {"type": "string"},
+    "last_audited_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"}
+  }
+}

@@ -1,0 +1,174 @@
+# Progressive Disclosure リソースマップ
+# run-skill-intake が references/ を必要時のみロードするためのインデックス。
+# 各エントリは「いつ読むか (read_when)」と「何のために読むか (purpose)」を明示する。
+# SubAgent / orchestrator は対応 read_when 条件が満たされたタイミングだけファイルを読み込む。
+
+version: 1
+skill: run-skill-intake
+
+canonical_hierarchy:
+  intent_contract:
+    ssot: references/intent-contract.schema.json
+    role: "入力→出力インテント (input_spec / output_spec / slot_status) の唯一正本。ヒアリングの本質軸。section_canonical_map §6 の output_to / input_from はここから派生する。全 slot が filled になるまで intake は完了しない。"
+    derived:
+      - references/probe-pattern-table.json
+      - scripts/build-intent.py
+    derived_role: "probe-pattern-table.json は intent slot 未充足時に発火する『引き出しの型』(決定論・文面 verbatim)。build-intent.py は回答→intent_contract の決定論マッピング (LLM 非依存)。"
+  section_contract:
+    ssot: references/section_canonical_map.json
+    role: "§0〜§11 の章順、必須項目、粒度、section_diagrams 枠の正本。ヒアリングシート構造で判断が割れたら最優先で参照する。§6 の intent_contract は intent-contract.schema.json を正本とする。"
+  context_schema:
+    ssot: references/intake-final-schema.json
+    role: "render_notion_page.py と intake-final-template.md.tmpl に渡す context 型の正本。Notion DB properties もこの notion_db_properties を値の正本とする。"
+  markdown_renderer:
+    derived:
+      - references/intake-final-template.md.tmpl
+      - scripts/render-intake-final.py
+    role: "人間向け intake-final.md/intake.md を生成する派生 view。章順や必須性を新規定義しない。"
+  notion_renderer:
+    derived:
+      - scripts/render_notion_page.py
+      - references/notion-db-schema.json
+      - references/notion-integration.md
+    role: "Notion view の派生 renderer。DB property の型は notion-db-schema.json、値は intake-final-schema.json#/properties/notion_db_properties に従う。"
+  interview_phase:
+    ssot:
+      - skills/run-intake-interview/references/question-plan.json
+      - skills/run-intake-interview/schemas/output.schema.json
+    role: "質問列/選択肢/qa_log/sheet.json/interview.json の正本。質問の都度立案やランダム選択を禁止する。"
+  legacy_redirects:
+    note: "README.md、旧 migration 文書、旧 aggregator 由来の説明は実行契約の正本ではない。矛盾時は上記 ssot/derived 階層へ redirect する。"
+
+references:
+  elicitation-techniques:
+    path: references/elicitation-techniques.md
+    read_when: "skill-intake-interviewer / skill-intake-purpose-excavator 起動時、または 5 Whys/JTBD/Magic Wand 等の技法選択が必要なとき"
+    purpose: "8 技法の適用条件・問いかけ例・誤用を参照し、対話の型を選ぶ"
+
+  user-profile-dimensions:
+    path: references/user-profile-dimensions.md
+    read_when: "skill-intake-user-profiler 起動時、最初の 3 発話から技術熟練度／役割／文脈を推定するとき"
+    purpose: "6 軸の判定シグナルを使ってプロファイル確定。後続の語彙・図解選択に反映"
+
+  handoff-contract:
+    path: references/handoff-contract.md
+    read_when: "skill-intake-handoff が intake.json を生成するとき、または validate_intake.py が schema 検証するとき"
+    purpose: "JSON Schema (draft-07) に準拠した正規出力を生成・検証"
+
+  notion-integration:
+    path: references/notion-integration.md
+    read_when: "skill-intake-notion-publisher が REST API でページ作成するとき、または prepare_notion_assets.py 実行時"
+    purpose: "Notion REST API 直叩き手順、ブロック構造、All-or-Nothing 公開ルール、エラー対処"
+
+  keychain-setup:
+    path: references/keychain-setup.md
+    read_when: "初回セットアップ時、または scripts/keychain_get_secret.py が exit 44 で失敗したとき"
+    purpose: "macOS Keychain への Notion トークン登録手順を案内"
+
+  execution-contract:
+    path: references/execution-contract.md
+    read_when: "scripts の CLI 引数や終了コードを確認するとき、または別経路 (Codex / 手動 CLI) で動かしたいとき"
+    purpose: "Node 18+ / cwd / 引数規約 / exit code 0/1/2/3/44 / hook 連携の正本契約"
+
+  notion-db-schema:
+    path: references/notion-db-schema.json
+    read_when: "scripts/verify_notion_schema.py / create_notion_database.py 実行時"
+    purpose: "Skill Intake Reports DB の正規プロパティ定義（Name/Status/Pattern/User Level/Created/JTBD）"
+
+  question-bank:
+    path: references/question-bank.md
+    read_when: "skill-intake-interviewer が次の質問を選択するとき、または skill-intake-self-updater が追記候補を生成するとき"
+    purpose: "深度 × 5 軸の格子から最適な質問を抽出。ナレッジ資産軸 Q33-Q41 は MUST"
+
+  vocabulary-tiers:
+    path: references/vocabulary-tiers.md
+    read_when: "SubAgent 発話生成時に技術用語の階層変換が必要なとき (technical_level が確定後)"
+    purpose: "非技術／中級／上級 3 階層の用語変換テーブルを適用"
+
+  pattern-recognition-rules:
+    path: references/pattern-recognition-rules.md
+    read_when: "skill-intake-kickoff 起動直後、既存スキルとの類似度判定／マルチスキル疑い検出を行うとき"
+    purpose: "既存スキル特徴ベクトル × ユーザー発話で similarity スコアを算出"
+
+  completeness-criteria:
+    path: references/completeness-criteria.md
+    read_when: "scripts/check_completeness.py 実行時、または skill-intake-next-action-advisor がモード判定するとき"
+    purpose: "24 項目チェック・5 軸全充足・ナレッジ資産 MUST の判定基準"
+
+  failure-modes:
+    path: references/failure-modes.md
+    read_when: "scripts/quality_gate.py がフロー中の失敗パターンを検出したとき"
+    purpose: "10 種の失敗動作と対処を参照し、自動軌道修正を発動"
+
+  integration-catalog:
+    path: references/integration-catalog.md
+    read_when: "skill-intake-option-presenter が外部連携候補を提示するとき、制約フィルタを適用するとき"
+    purpose: "13 サービスのカタログから user_profile.constraints に応じて選択肢を組み立てる"
+
+  surface-vs-deep-patterns:
+    path: references/surface-vs-deep-patterns.md
+    read_when: "skill-intake-assumption-challenger / skill-intake-purpose-excavator が表層→深層変換を行うとき"
+    purpose: "12 パターンの表層要望→真の課題変換テンプレを適用"
+
+  value-realization-criteria:
+    path: references/value-realization-criteria.md
+    read_when: "scripts/measure_value_realized.py 実行時、または価値・KPI セクション生成時"
+    purpose: "Outcome 中心の KPI 設計、時間短縮 / 品質 / 露出 3 カテゴリの最低 1 つ確保"
+
+  mermaid-visualization-guide:
+    path: references/mermaid-visualization-guide.md
+    read_when: "skill-intake-visualizer 起動時、または scripts/select_diagram_type.py 実行時"
+    purpose: "20 種カタログ (Mermaid 12 + 独自 SVG 8) からセクション×ユーザー熟練度に応じて図種を選択"
+
+  quality-rubric:
+    path: references/quality-rubric.md
+    read_when: "各 SubAgent の出力後、自己採点フェーズ・scripts/quality_gate.py 実行時"
+    purpose: "5 次元 (完全性／一貫性／深度／検証可能性／簡潔性) の自己採点と閾値判定"
+
+  anti-patterns:
+    path: references/anti-patterns.md
+    read_when: "quality_gate.py が結果物の構造的失敗を検出したとき、または最終 cross_check 時"
+    purpose: "10 種のアンチパターン検出ルールで再ヒアリング SubAgent を自動 dispatch"
+
+  visualization-mandatory-rules:
+    path: references/visualization-mandatory-rules.md
+    read_when: "scripts/enforce_visualization_rules.py 実行時、または visualizer が図を出力するとき"
+    purpose: "図解マスト 8 ルール (ノード数／ラベル長／色／FontAwesome 等) の機械検証"
+
+  section-completeness-rules:
+    path: references/section-completeness-rules.md
+    read_when: "scripts/render-intake-final.py 実行時、または render_notion_page.py で context 投影時"
+    purpose: "人間向け解説。機械判定の正本は section_canonical_map.json と intake-final-schema.json に置く"
+
+  intent-contract-schema:
+    path: references/intent-contract.schema.json
+    read_when: "5軸/§6 の入力→出力インテントを確定するとき、scripts/build-intent.py 実行時、check_completeness.py --mode intent 実行時"
+    purpose: "入力→出力インテント (input_spec/output_spec/slot_status) の唯一正本 schema。再現性のアンカー。全 slot filled まで intake 未完了"
+
+  probe-pattern-table:
+    path: references/probe-pattern-table.json
+    read_when: "intent slot が未充足で追加ヒアリング (手を差し伸べる) が必要なとき、build-intent.py が pending_probes を返したとき"
+    purpose: "intent slot 未充足時に発火する決定論的 follow-up probe の唯一正本。発火条件=slot 未充足、文面=verbatim 固定。誰が実行しても同じ probe 列で同じ intent へ収束させる"
+
+  non-tech-vocabulary:
+    path: references/non-tech-vocabulary.md
+    read_when: "technical_level=非技術 のユーザー向け強制変換を実施するとき、または図解検証のルール 5 適用時"
+    purpose: "90 語以上の一律言い換え辞書で本文・図解の専門用語を排除"
+
+  execution-surface-rubric:
+    path: references/execution-surface-rubric.md
+    read_when: "execution_surface.primary (Claude Code / Cowork / 両方) を確定するとき、または notion_db_properties.実行環境 を投影する直前"
+    purpose: "判定木と観測フィーチャ表で実行サーフェスを一意に決定。intake-final-schema.json と notion-db-schema.json の値ドメイン正本"
+
+# 読み込み戦略
+load_strategy:
+  default: "lazy"               # 必要時のみ読む (Progressive Disclosure)
+  always_load: []               # 起動時から常駐するファイルは無し
+  preload_on_phase:
+    kickoff: ["pattern-recognition-rules"]
+    user-profiler: ["user-profile-dimensions"]
+    interviewer: ["elicitation-techniques", "question-bank", "surface-vs-deep-patterns"]
+    visualizer: ["mermaid-visualization-guide", "visualization-mandatory-rules"]
+    summarizer: ["quality-rubric", "completeness-criteria"]
+    handoff: ["handoff-contract"]
+    notion-publisher: ["notion-integration", "keychain-setup", "notion-db-schema"]

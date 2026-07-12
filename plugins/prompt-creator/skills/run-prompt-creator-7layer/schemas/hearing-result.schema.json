@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prompt Sheet Input",
+  "description": "7layer worker が legacy sheet/scaffold 入力として受け取る構造化済みJSONのスキーマ。raw hearing result の正本は run-prompt-elicit/schemas/hearing-result.schema.json。validate-sheet.py, generate-sheet.py, scaffold-prompt.py が入力として使用。ゴールシーク型: 固定手順(steps)は収集せず、達成ゴール(goals)と完了チェックリスト(checklist)を収集する。",
+  "type": "object",
+  "required": [
+    "prompt_name",
+    "target_user",
+    "purpose",
+    "background",
+    "success_criteria",
+    "goals",
+    "challenges"
+  ],
+  "properties": {
+    "prompt_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "素人でもこれを見ただけで分かるプロンプト名"
+    },
+    "target_user": {
+      "type": "string",
+      "minLength": 1,
+      "description": "このプロンプトを実際に使う人物像や役割"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "description": "このプロンプトを作ることで達成したい最終ゴール"
+    },
+    "background": {
+      "type": "string",
+      "minLength": 1,
+      "description": "なぜこのプロンプトが必要になったのか、その経緯や状況"
+    },
+    "success_criteria": {
+      "type": "string",
+      "minLength": 1,
+      "description": "どのような状態になれば完成と判断できるか"
+    },
+    "goals": {
+      "type": "array",
+      "minItems": 1,
+      "description": "達成ゴール（成果状態で記述。手順ではなく『何が出来上がれば到達か』）。Layer 5 ゴール定義の材料。",
+      "items": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["description"],
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "description": "達成ゴール（成果状態）"
+              },
+              "output_format": {
+                "type": "string",
+                "description": "このゴールの成果物フォーマット（変数テンプレート付き）"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "checklist": {
+      "type": "array",
+      "description": "完了チェックリスト（ゴール到達の停止条件。第三者がYES/NOで判定できる項目）。Layer 5 完了チェックリストの材料。",
+      "items": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          {
+            "type": "object",
+            "required": ["item"],
+            "properties": {
+              "item": {
+                "type": "string",
+                "minLength": 1,
+                "description": "達成条件"
+              },
+              "judgement": {
+                "type": "string",
+                "description": "YES/NO判定の基準"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "challenges": {
+      "type": "array",
+      "minItems": 1,
+      "description": "解決すべき課題",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required_info": {
+      "type": "array",
+      "description": "目的を達成するために必要な情報（推奨）",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "description": "注意点・制約条件（推奨）",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "prompt_issues": {
+      "type": "string",
+      "description": "プロンプトに対する課題（推奨）"
+    },
+    "test_cases": {
+      "type": "array",
+      "description": "テストケース（オプション）",
+      "items": {
+        "type": "object",
+        "required": ["input", "expected_output"],
+        "properties": {
+          "input": {
+            "type": "string",
+            "minLength": 1,
+            "description": "想定するユーザー入力"
+          },
+          "expected_output": {
+            "type": "string",
+            "minLength": 1,
+            "description": "期待される出力"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

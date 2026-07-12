@@ -1,0 +1,154 @@
+{
+  "name": "skill-intake",
+  "version": "0.1.4",
+  "package_mode": "bundle",
+  "description": "harness-creator の前段ヒアリングを非技術者にも開く plugin。Markdown 正本+JSON 副本+Notion ページを生成し、macOS Keychain 経由の Notion PAT/Internal Integration で公開する。図解マスト要件と 5 軸ヒアリング (出力先/情報源/共有相手/真の課題/ナレッジ資産) を機械検証する。本 plugin は単独インストールで intake→Notion publish のコアフローが自己完結動作する (notion_config.py を同梱)。改善要望投入 (`/run-skill-feedback`) は harness-creator 併用時のみ利用可能。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "bundles": [
+    "skills-full",
+    "skills-intake"
+  ],
+  "entry_points": {
+    "commands": [
+      "intake",
+      "intake-publish",
+      "intake-revise",
+      "intake-status"
+    ],
+    "skills": [
+      "run-skill-intake",
+      "run-intake-kickoff",
+      "run-intake-interview",
+      "run-intake-option-catalog",
+      "run-intake-visualize",
+      "run-intake-finalize",
+      "run-notion-intake-publish",
+      "assign-notion-fidelity-evaluator",
+      "run-intake-next-action",
+      "run-intake-revise"
+    ],
+    "agents": [
+      "skill-intake-assumption-challenger",
+      "skill-intake-purpose-excavator",
+      "skill-intake-summarizer",
+      "skill-intake-user-profiler"
+    ],
+    "hooks": [
+      "hook-guard-skillgen.py",
+      "pre-publish-secret-scrub.sh",
+      "pre-publish-schema-validate.py",
+      "post-publish-notify.sh",
+      "post-keychain-add.sh"
+    ],
+    "runtime": [
+      "scripts/_vendor.py",
+      "scripts/_jsonschema_compat.py",
+      "vendor/python/jinja2/__init__.py",
+      "vendor/python/markupsafe/__init__.py",
+      "vendor/python/typing_extensions.py"
+    ]
+  },
+  "package": {
+    "include": [
+      ".claude-plugin/plugin.json",
+      "commands/**",
+      "skills/**",
+      "agents/**",
+      "hooks/**",
+      "scripts/**",
+      "references/**",
+      "schemas/**",
+      "assets/**",
+      "vendor/**",
+      "notion-config.fixed.json",
+      ".notion-config.example.json",
+      "README.md"
+    ],
+    "exclude": [
+      "**/__pycache__/**",
+      "**/*.pyc",
+      "**/*.so",
+      "skills/run-skill-feedback/**",
+      "eval-log/**",
+      "output/**",
+      "references/migration-plan-v2.md",
+      "scripts/RENAME_PLAN.md",
+      "scripts/m3_deprecation_reverse_index.py",
+      "scripts/convert_v1_to_v2_context.py"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/hook-guard-skillgen.py\""
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/pre-publish-secret-scrub.sh\""
+          },
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/pre-publish-schema-validate.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Skill|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/hook-guard-skillgen.py\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/post-publish-notify.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/hook-guard-skillgen.py\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/hook-guard-skillgen.py\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/hook-guard-skillgen.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

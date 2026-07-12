@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-goal-seek",
+    "skill_md_sha256": "cb2a849d07810475594105e2ae2c6a0578747565fb7886114f812aac86b22394"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "dev同期mergeで frontmatter に追加された feedback_contract.criteria (IN1/IN2/OUT1/OUT2) が本文機構と逐語整合: IN1 のアンカー6必須キー(iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal)・original_goal 全行不変・progress.original_goal_hash の SHA-256 照合・drift_signal 固定enum(initial/aligned/compressing/stagnant/widening/oscillating)が主要ルール8とゴールシークループ Anchor Step と検証ブロック inline Python の三点で閉じる(本文 L83/L107/L125-145)",
+      "OUT1 のコンテキスト分離(ループを親で直接回さず Agent ツールで SubAgent/Agent Team へ fork し親へ返すのは最終成果物パスと handoff-goal-seek.json 要約のみ)が主要ルール6(L81)と目的と出力契約(L60)で必須化され allowed-tools に Agent を搭載、OUT2 の固定手順非ハードコード(Step1-3 を本文に焼かず paradigm.md を共有正本として参照し固有差分のみ記す)が主要ルール1(L76)・注意点先頭(L158)・ゴールシークループ(L101)で一貫"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none",
+    "loop_scope_note": "both"
+  },
+  "notes": "dev(main)同期merge後の現 SKILL.md(sha256 cb2a849d...)を全文 genuine 再評価。frontmatter に feedback_contract(max_iterations:3, criteria IN1/IN2/OUT1/OUT2)が新規追加され、本文も目的と出力契約/境界/主要ルール8項/ゴールシーク実行/検証/注意点/追加リソースに更新。4条件で精査: ①矛盾なし — 新規 feedback_contract.max_iterations:3(評価ループ上限)とゴールシークの max_loops(既定5, 主要ルール4 L79)は別概念で衝突せず、出力契約・境界・主要ルールの max_loops 記述が一貫。②漏れなし — goal-spec ロード→未達項目評価(L102)→手順都度生成(L104, merged_directive_for_next と original_goal を必須入力)→verify_by 判定(L106)→Anchor Step(L107)→反復/差し戻し(L108)→handoff 必須出力(L80)の責務鎖が欠落なく揃う。③整合性 — 中間成果物アンカーの6キー・不変性・hash 照合・drift_signal enum が主要ルール8(L83)・ゴールシークループ・検証 inline Python(L125-146)で逐語整合し、命名規約 eval-log/run-goal-seek-intermediate.jsonl(L66)も一致、新規 frontmatter criteria が本文機構を正しく射影。④依存整合 — schema_refs/reference_refs と追加リソースが ../run-goal-elicit/・../run-build-skill/goal-seek-paradigm.md を指し、L56 配布注記で repo-bundled 前提(単独配布非対応)を明示。findings_summary 全0=PASS。",
+  "retargeted_from": {
+    "eval_log_path": "eval-log/skill-creator/run-goal-seek/content-review/",
+    "retargeted_at": "2026-07-02"
+  }
+}

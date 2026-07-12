@@ -1,0 +1,33 @@
+{
+  "run_id": "20260705-ubm-conformance",
+  "target": {"plugin": "ubm-goal-setting", "scope_mode": "plugin"},
+  "objective": "ubm-goal-setting が harness-creator 仕様に全準拠しているか検証・改善",
+  "status": "complete",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 3},
+  "thought_method_coverage": {"used": 30, "skipped_with_reason": 0, "total": 30},
+  "proposer_approver": {"proposer": "elegant-improvement-executor", "approver": "independent elegant-logical-structural-analyst (fork)", "self_approval": false, "approver_verdict": "APPROVE"},
+  "fixes_applied": [
+    {"id": "F1", "condition": "inconsistency", "desc": "composition tier:supporting → ref (C08-C12, schema enum適合)"},
+    {"id": "F2", "condition": "contradiction", "desc": "knowledge-sync prompt-placement 反転/completeness_exempt自己矛盾を案Aで解消 (R1英語prompt削除+responsibility_refs除去)"},
+    {"id": "F3", "condition": "omission", "desc": "pkg_checks PKG-009..015 を実走ground truthでhonest化 (false-green解消)"},
+    {"id": "F4", "condition": "omission", "desc": "両SKILL に knowledge_loop 記述子追加 (router-registry)"},
+    {"id": "F5", "condition": "dependency_break", "desc": "両workflow-manifest の宙吊りgate_order削除"},
+    {"id": "F6", "condition": "inconsistency", "desc": "router非参照の空tombstone 7件削除 (HC§7準拠, stale置換連鎖も解消)"},
+    {"id": "F7", "condition": "governance", "desc": "CHANGELOG追記"}
+  ],
+  "verification": {"pytest": "44 passed", "json_valid": true, "yaml_valid": true, "pkg_009": "pass", "pkg_013a-d": "pass", "entries_parity": "154=154"},
+  "preserved_established_patterns": {"kind_script": "company-master も使用する確立パターンゆえ温存", "hook_synthetic_ref": "skill-intake 同形式ゆえ温存", "c14_gap": "component-inventory と一致(drift無)ゆえ温存"},
+  "backlog": [
+    {"id": "B1", "severity": "medium", "status": "RESOLVED", "desc": "kind:script が capability-manifest.schema.json の kind enum 外。ユーザー決定(選択肢A)により HC schema の capabilities.kind enum に script を追加(+ compute-dogfooding-metrics.py KNOWN_KINDS 同期)。ubm composition は更新schemaで jsonschema PASS を確認。影響テスト139 green。", "scope": "harness-creator SSOT", "resolution": "capability-manifest.schema.json:173 enum に script 追加・$comment で governance根拠明記"},
+    {"id": "B1b", "severity": "low", "desc": "company-master/plugin-composition.yaml は top-level が plugin:/summary: で capability-manifest schema の commonCore(name/description必須)非準拠。kind:script とは別の既存構造問題・本review スコープ外。company-master 単独 review で対応要。", "scope": "company-master"},
+    {"id": "B2", "severity": "low", "desc": "I5: knowledge/schema.json registry status enum に deprecated 追加 (§11退避ループ)。usage-log 実装と結合ゆえ defer。"},
+    {"id": "B3", "severity": "low", "desc": "knowledge/schema.json file_naming_convention.examples に削除済base名が例示として残存 (機能マニフェスト非該当・cosmetic)。"},
+    {"id": "B4", "severity": "low", "desc": "PKG-014 checker が validate-plugin-package.py に未実装 (PKG-002..008のみ)。runtime contract は手動確認。"}
+  ]
+}

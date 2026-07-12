@@ -1,0 +1,70 @@
+{
+  "run_id": "20260625T234836-ngs-marketplace",
+  "target": {"plugin": "notion-gmail-send", "scope_mode": "plugin"},
+  "symptom": "notion-gmail-send が Claude Code マーケットプレイス一覧に表示されない",
+  "thought_method_coverage": {
+    "used_total": 30,
+    "by_agent": {
+      "logical-structural": 10,
+      "meta-divergent": 9,
+      "system-strategic": 11
+    },
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "root_cause_consensus": "3 エージェント独立検証で一致: 直接原因は .claude-plugin/marketplace.json plugins[](13件)への notion-gmail-send 未登録。真因は plugin 公開の SSOT(実体ディレクトリ / marketplace.json / bundles.json)の3集合間に双方向整合を強制する機械ゲートが無く、bundles 漏れ検査器 validate-plugin-completeness.py(BD-001)は実装済だが CI 未配線で腐り、marketplace 漏れ検査器は不在であること。",
+  "issues": [
+    {
+      "id": "F1",
+      "condition_signal": "omission",
+      "severity": "critical",
+      "location": ".claude-plugin/marketplace.json plugins[]",
+      "description": "全14 plugin ディレクトリ中 notion-gmail-send だけが marketplace.json plugins[] に未登録(Grep 0件)。表示されない直接原因。",
+      "auto_fixable": true,
+      "fix": "plugins[] 末尾に {name,source,description(簡潔版),version:0.1.0,category:productivity,tags} を他13件と同形式で追加"
+    },
+    {
+      "id": "F2",
+      "condition_signal": "contradiction",
+      "severity": "high",
+      "location": ".claude-plugin/bundles.json xl-skills-full vs plugins/notion-gmail-send/.claude-plugin/plugin.json:13-18",
+      "description": "plugin.json は bundles/bundle_targets で xl-skills-full 所属を宣言しているのに bundles.json の xl-skills-full メンバー(13件)に notion-gmail-send が不在。双方向矛盾(C1)。",
+      "auto_fixable": true,
+      "fix": "bundles.json xl-skills-full の plugins[] に notion-gmail-send を追加(mf-kessai-invoice-check 近辺)"
+    },
+    {
+      "id": "F3",
+      "condition_signal": "smell",
+      "severity": "medium",
+      "location": ".claude-plugin/marketplace.json(追加エントリの description)",
+      "description": "plugin.json:5 の description は約500字で内部用語(✅/{{}}差し込み/6スキル名列挙)から始まり一覧表示に冗長。他13エントリは1-2文。core value が冒頭で伝わらない。",
+      "auto_fixable": true,
+      "fix": "marketplace エントリは README 冒頭ベースの1-2文簡潔版にし core value を文頭へ。詳細は plugin.json/README に残す"
+    },
+    {
+      "id": "F4",
+      "condition_signal": "dependency_break",
+      "severity": "high",
+      "location": "scripts/(marketplace↔plugins 双方向整合 lint 不在) / lint-plugin-lint-coverage.py(marketplace 起点で未登録を素通り)",
+      "description": "実体ディレクトリ起点で『全 plugin が marketplace 登録されているか』を検査する機構が無い。lint-plugin-lint-coverage.py は marketplace を起点に読むため未登録 plugin は検査集合に入らず永久に見逃す(漏れが漏れを隠す自己強化ループ)。",
+      "auto_fixable": false,
+      "fix": "validate-plugin-completeness.py に marketplace 整合検査を追加: 実体集合 ⊆ marketplace 登録集合 / source 実在 / name==manifest.name==ディレクトリ名 を fail-closed 検査"
+    },
+    {
+      "id": "F5",
+      "condition_signal": "omission",
+      "severity": "high",
+      "location": "scripts/validate-plugin-completeness.py(BD-001) が Makefile/run-ci-checks.sh/workflows に未配線",
+      "description": "bundles 漏れを FAIL にする BD-001 検査(88-89行)は実装済だが CI/Makefile のどこからも呼ばれず腐っている(check-rubric-sync 未配線腐敗 SS-205/213 と同型)。配線していれば F2 は検出されていた。",
+      "auto_fixable": false,
+      "fix": "validate-plugin-completeness.py を run-ci-checks.sh + Makefile + 適切な workflow に hard(非 soft)で配線"
+    }
+  ],
+  "verdict_before_fix": {
+    "矛盾なし": "FAIL",
+    "漏れなし": "FAIL",
+    "整合性あり": "FAIL",
+    "依存関係整合": "FAIL"
+  },
+  "user_decision": "フル(登録修正 + validate-plugin-completeness.py CI配線 + marketplace↔plugins 双方向整合検査新設)"
+}

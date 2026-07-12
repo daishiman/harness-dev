@@ -1,0 +1,25 @@
+--- a/_base.md
++++ b/_base.md
+@@ -10,6 +10,8 @@ argument-hint: {{argument_hint | default("[target]")}}
+ allowed-tools: {{allowed_tools | default([Read, Write, Edit, Bash(python3 *)])}}
+ kind: assign
+ effect: {{effect | default("local-artifact")}}
++role_suffix: generator
++pair: {{pair_skill}}                         # 対応する evaluator skill 名（必須）
+ owner: {{owner}}
+ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
+@@ -23,6 +25,14 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## 生成契約
++
++- **入力**: {{generator_input}}
++- **出力**: {{generator_output}}
++- **後段 evaluator**: `Skill({{pair_skill}})` が fork で評価
++- **再生成ループ**: evaluator findings を受け、最大 {{retry_max | default(3)}} 周まで自動再試行
++- **禁則**: 評価判断を generator 側で行わない（Goodhart 対策、09章）
++
+ ## Boundary
+ {{boundary}}

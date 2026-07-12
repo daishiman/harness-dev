@@ -1,0 +1,1 @@
+../plugins/skill-governance-lint/scripts/lint-dependency-direction.py

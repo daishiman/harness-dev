@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。task-graph の 6 検査を fail-soft で実行: DAG 非循環 / orphan 0 (全 node が edge に現れる) / producer 一意 / inventory depends_on 実現性 / consumes producer 実在 / 非正準拒否 (canonicalize 再適用と不一致=手書き編集検出)。accept-discovered-task の drain ゲートが本 validate() を fail-closed で呼ぶ。TESTS: test_validate_task_graph.py 20 PASS。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

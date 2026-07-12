@@ -1,0 +1,53 @@
+# Progressive Disclosure マップ — assign-blueprint-fidelity-evaluator
+# SKILL.md から必要リソースだけを最初に読むための地図。read 順は上から。
+
+skill: assign-blueprint-fidelity-evaluator
+kind: assign
+role: evaluator
+pairs_with: run-extract-blueprint   # proposer≠approver (frontmatter pair は step7 cross-plugin 制約で prose 表現)
+
+resources:
+  - id: manifest
+    path: ./workflow-manifest.json
+    kind: manifest
+    when_to_read: P1-P4 の phase 順序・dependsOn・resourceIds を確認するとき
+
+  - id: prompt-r1-evaluate
+    path: ./prompts/R1-evaluate.md
+    kind: prompt
+    when_to_read: 忠実性評価の 7 層責務 (三値排他/被覆/anti-overfit/ペルソナ/逆テスト) を実行するとき
+
+  - id: schema-verdict
+    path: ./schemas/verdict.schema.json
+    kind: schema
+    when_to_read: verdict receipt / assessment サブセットの必須キーを確認するとき
+
+  - id: script-recount
+    path: ./scripts/recount-palette-orphans.py
+    kind: script
+    when_to_read: 観測色 palette 孤児を C11 と独立経路で再計数する common-mode 破り検査時
+
+  - id: script-emit-verdict
+    path: ./scripts/emit-verdict.py
+    kind: script
+    when_to_read: assessment へ決定論規則を適用し draft_hash 束縛 verdict を発行するとき
+
+  - id: ref-rubric
+    path: ./references/evaluation-rubric.md
+    kind: reference
+    when_to_read: CL-1..CL-10 の severity 規約と各観点の詳細判定基準を確認するとき
+
+shared_gates:   # plugin-root 共有 (C01 自己検証と同一ロジック=基準統一)
+  - id: c10-mermaid-validate
+    path: $CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py
+    when_to_read: 5 種 Mermaid 網羅を再検証するとき
+  - id: c11-doc-emit
+    path: $CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py
+    invocation: --check-screens
+    when_to_read: screenshot/layout/palette 孤児/pending 無言欠落を再検証するとき
+
+downstream:
+  - id: c01-quality-gate
+    path: $CLAUDE_PLUGIN_ROOT/skills/run-extract-blueprint/SKILL.md
+    reads: ${ESB_VERDICT_DIR:-.esb-verdict}/<draft_hash>.verdict.json
+    when_to_read: verdict を C01 が周回内の品質ゲート/差し戻し判定で消費する契約を確認するとき

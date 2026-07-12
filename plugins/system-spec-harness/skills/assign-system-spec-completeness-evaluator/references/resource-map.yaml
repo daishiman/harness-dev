@@ -1,0 +1,53 @@
+# assign-system-spec-completeness-evaluator の参照リソース索引 (read_when 付き)
+# 正本ポインタ集約。本文に再掲せず、必要時に該当エントリを参照する。
+
+schemas:
+  - id: completeness_findings
+    path: schemas/completeness-findings.schema.json
+    read_when: 評価レポート (観点別スコア + 総合判定 + 不足事項一覧) の構造を確認する時
+
+scripts:
+  - id: aggregate
+    path: scripts/aggregate-completeness.py
+    read_when: レポート形状検証と全 6 観点→総合 fail-closed 集約を機械実行する時
+  - id: coverage_gate
+    path: ../../scripts/validate-coverage-matrix.py
+    read_when: マトリクス網羅性観点 (C07) の一次根拠を独立に回収する時 (C05 deterministic_check)
+  - id: citation_gate
+    path: ../../scripts/validate-source-citation.py
+    read_when: 最新ドキュメント出典観点 (C08) の形式層根拠を確認する時 (doc-freshness auditor が実行)
+
+references:
+  - id: rubric
+    path: references/scoring-rubric.json
+    read_when: 全 6 観点機械判定ルールと集約ポリシーを取得する時
+  - id: criteria
+    path: references/aspect-criteria.md
+    read_when: 観点別意味判定の詳細基準と観点↔監査 agent 対応を確認する時
+
+agents:
+  - id: matrix_auditor
+    path: ../../agents/system-spec-matrix-auditor.md
+    read_when: マトリクス網羅性 (C07) を fork 監査する起動契約を確認する時
+  - id: hearing_auditor
+    path: ../../agents/system-spec-hearing-auditor.md
+    read_when: matrix_coverage の sub-input (C06 ヒアリング品質: 聞き漏れ/誘導/早期停止/トレーサビリティ) を fork 監査する起動契約を確認する時
+  - id: doc_freshness_auditor
+    path: ../../agents/system-spec-doc-freshness-auditor.md
+    read_when: 最新ドキュメント出典 (C08) を fork 監査する起動契約を確認する時
+
+evaluated_inputs:
+  - id: spec_docs
+    path: system-spec/
+    read_when: 評価対象の章立て Markdown + index (C03 出力) を読む時
+  - id: spec_state
+    path: spec-state.json
+    read_when: 収集マトリクス (C01 出力) を読む時
+  - id: fetched_refs
+    path: fetched-references.json
+    read_when: 取得済み公式ドキュメント出典 (C02 出力) を読む時
+
+design_knowledge:
+  - id: design_ref
+    path: ../ref-system-design-knowledge/SKILL.md
+    read_when: 設計知識反映観点で章が反映すべき設計知識ポインタを確認する時

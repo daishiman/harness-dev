@@ -1,0 +1,8 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/report-quality-reviewer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {"verdict": "PASS", "score": 90, "notes": "genuine実測: reference-existence=prompt_ref prompts/R3-agent-report-quality-reviewer.md(344行)実在。prompt が引く skill私有 references/report-quality-checklist.md(RQ1-20)、plugin共有 references/report-types.md・report-visual-strategy.md・report-writing-rules.md・deck-evaluation-rubric.md 全て実在、決定論ゲート scripts/validate-report-visual.py(実行可・prompt 内 15 箇所引用)実在。dangling 0。schema-conformance=name/description(トリガ形・RQ1-RQ20 明示)/kind=agent/version/owner/tools=Read,Bash/isolation=fork 完備。read-only reviewer ゆえ Write 無し・Bash は validate-report-visual.py 起動用=責務に厳密整合(適切な最小権限)。owner-flow=SKILL.md L109『report: report-quality-reviewer 併用+validate-report-visual.py 決定論視覚ゲート(slide の verify-slides に対称)』・機械/意味分離が明快・prompt _role adapter/SSOT 明記。placement-invariant=prompt 344行 SSOT vs adapter 58行。single-responsibility=report 品質検証(R3.5)単一。減点: 共通 boilerplate 型で adapter 固有情報密度が低い(thin 設計の必然)。"},
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]
+}

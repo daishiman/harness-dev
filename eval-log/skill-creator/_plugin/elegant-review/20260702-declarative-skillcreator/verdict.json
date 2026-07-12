@@ -1,0 +1,50 @@
+{
+  "plugin": "skill-creator",
+  "skill": "_plugin",
+  "scope_mode": "plugin",
+  "run_id": "20260702-declarative-skillcreator",
+  "aggregated_at": "2026-07-02",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 7
+  },
+  "thought_method_coverage": {
+    "used": [
+      "critical", "deduction", "induction", "abduction", "vertical",
+      "decomposition", "mece", "two-axis", "process", "why",
+      "meta", "abstraction", "double-loop", "brainstorming", "lateral",
+      "paradox", "analogy", "if", "naive",
+      "systems", "causal", "causal-loop", "trade-on", "plus-sum",
+      "value-proposition", "strategic", "kaizen", "hypothesis", "issue", "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "proposer": "team-lead + exec-gate-hardening/exec-consistency-fix/exec-loop-revival (改善実装)",
+  "approver": "独立 approver SubAgent (general-purpose, read-only) — 機械 lint 10/10 実走 + サンプリング精査 7点で APPROVE",
+  "iterations": 2,
+  "iteration_note": "iteration 1 で run-build-skill の content-review 独立再生成が REJECT (capability_kind_map dangling + template-selection schema 正面矛盾) → 実在正本3分割参照へ修正 → iteration 2 で PASS。",
+  "verification": {
+    "central_pytest": "5990 passed, 4 skipped",
+    "lint_battery": "matrix-sync / criteria-provenance / declaration-coverage(baseline=2) / plugin-composition / content-review --all (45 skills) / feedback-contract --all (40 skills) / goal-seek / ssot-duplication --strict / phase-order / build-trace 全 exit 0",
+    "content_review_verdicts": "3 skill × elegance+rubric = 6 verdict を独立 SubAgent が現 SHA で genuine 再生成 (SHA 手書換なし)"
+  },
+  "deferred": [
+    {"id": "PF-IF", "item": "verdict 鮮度の tree-hash 化 (skill_dir_content_sha256)", "reason": "全 verdict backfill を要する schema 改訂。references のみ変更の PR merge 時が re-audit trigger"},
+    {"id": "PF-NAIVE", "item": "canonical-registry.json (正本レジストリ)", "reason": "採用条件 = 正本誤読の観測時。メタ不変条件が registry 自体にも突合を要求しコスト増"},
+    {"id": "PF-ABST-full", "item": "exemptions.json (Escape Hatch Registry 完全版)", "reason": "最小修正 (skip_reason 3面対称化) を先行。enum 理由コード網羅は escape 追加時に段階導入"},
+    {"id": "F-STR-wire", "item": "compute-dogfooding-metrics.py の SessionEnd 配線", "reason": "git 追跡 EVALS.json への常時書込で作業ツリー dirty 化。書込先を state 領域へ変更してから"},
+    {"id": "F-PLS-usage", "item": "knowledge/usage-log.jsonl 生成 (Loop B §12)", "reason": "record_usage.py 配線は consult 実運用の定着後"},
+    {"id": "F-ISU-handoff", "item": "handoff-<step>.json 存在+schema 準拠の pre-push lint", "reason": "gate 事前ブロック hook は過剰と判断。事後検証型 lint は次回 gate 変更時に同時配線"},
+    {"id": "misc", "item": "script-frontmatter の CI 配線 (既存違反の棚卸し後) / CI スコープ外 goal-seek 未 migration 7ファイル / build-steps.md §I.0 括弧列挙の schema ポインタ化 / run-skill-create L190 章集合の統一", "reason": "lint-matrix.json の ci_exclusion_reason と各 verdict notes に透明記録済み"}
+  ]
+}

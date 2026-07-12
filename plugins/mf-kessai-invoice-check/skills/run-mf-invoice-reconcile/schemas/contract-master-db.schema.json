@@ -1,0 +1,110 @@
+{
+  "title": "契約マスタ（MF発行整合チェック DB1）",
+  "description": "正規化済みの distinct 契約マスタ。1行=1契約(一意キー=契約ID)。sync-master は請求確認シートから初期値を自動生成し、--apply 時に契約IDキーでDB1へ冪等upsertする。reconcile engine はDB1相当の契約列(支払サイクル/契約開始日/現行単価/期待明細数)をSSOTとして読み、支払サイクル列に従って当月期待を展開する。金額は effective-dating: 現行単価=当月以降の期待算出元、単価改定履歴=軽量監査証跡、過去verdictはDB2の凍結値が真。config キー reconcile_db1_id に database_id を記録する。",
+  "properties": {
+    "契約ID": {
+      "type": "title",
+      "description": "一意キー(DB内upsert/DB2 relation基盤)。slug=normalize(取引先)|エンドクライアント名|商品|枝番。金額は識別キーに含めない(effective-dating で改定するため)。"
+    },
+    "取引先": {
+      "type": "rich_text",
+      "description": "請求先企業名(集約元のことあり)。非一意のため title から降格(東京中央食品4行)。名寄せ境界(契約=取引先境界で供給分割)に使用。"
+    },
+    "商品": {
+      "type": "select",
+      "options": [
+        "チイキズカン業務委託費",
+        "100億ThinkTank利用料",
+        "チイキズカン利用料（1年目）",
+        "チイキズカン利用料（2年目以降）"
+      ],
+      "description": "実4値。照合は補助シグナル(支払サイクルは商品名から推測せず支払サイクル列で明示)。"
+    },
+    "エンドクライアント名": {
+      "type": "rich_text",
+      "description": "名寄せ第2キー。MF顧客名/明細括弧内『（NAME様…）』と突合。空なら 取引先|商品|枝番 で契約IDを構成。"
+    },
+    "MF顧客ID": {
+      "type": "rich_text",
+      "description": "名寄せ第1キー(確定)。任意→必須化目標。未採番のみ 金額+エンドクライアント名(NFKC) にフォールバックし、証跡のMF顧客が取引先と不一致なら自動でREVIEW降格。"
+    },
+    "支払サイクル": {
+      "type": "select",
+      "options": [
+        "月払い",
+        "年間払い",
+        "年間一括更新",
+        "単発",
+        "分割",
+        "隔月",
+        "従量(都度)"
+      ],
+      "description": "MECE6値+従量 のSSOT。展開規則を駆動する最優先列(K1)。値は lib/mfk_invoice_diff.py の CADENCE_* 定数と byte一致必須(月払い/年間払いは既存定数互換)。sync-master が請求確認シートの確認内容/商品/MF実績シグナルから初期値を推定して投入し、以後の再実行では同列を展開規則の正本として読む。年間払い=初年度のみ一括→翌年月額(case b)。年間一括更新=毎年更新で再一括(case a, elapsed%12==0)。従量(都度)=期待額不定→常にREVIEW_METERED。"
+    },
+    "現行単価": {
+      "type": "number",
+      "description": "税抜・明細単価ベースの当月以降期待額算出元。立替(不課税)は含めない。"
+    },
+    "単価改定履歴": {
+      "type": "rich_text",
+      "description": "'YYMM:金額' 行の監査証跡(effective-dating 軽量実装)。過去verdictはDB2スナップショット凍結値が真。"
+    },
+    "初回年間月数": {
+      "type": "number",
+      "description": "既定12(年周期固定)。年間払い→月額移行点 と 年間一括更新の再一括周期。不規則期間(例ヤマチク約19ヶ月)を手上書き。"
+    },
+    "分割回数": {
+      "type": "number",
+      "description": "支払サイクル=分割 のときの対象月数(連続Nヶ月)。他サイクルでは空。"
+    },
+    "契約開始日": {
+      "type": "date",
+      "description": "elapsed起点(年間/年間一括更新/単発/隔月/分割)。期間も契約開始日も未記入で支払サイクル列も空の契約は月払い前提。人手設定の非月払いサイクルかつ空欄は REVIEW_DATA_INCOMPLETE(K1)。"
+    },
+    "契約終了月": {
+      "type": "date",
+      "description": "YYMMをdate(day=01)に統一。比較は月粒度。終了月M〜M+1のMF実績は最終請求として MATCH_ENDED_FINAL、MF実績なしは SUPPRESS_ENDED、M+2以降のMF実績のみ REVIEW_ENDED_BUT_BILLED。"
+    },
+    "ステータス": {
+      "type": "select",
+      "options": ["有効", "終了", "保留"],
+      "description": "有効のみ当月展開。保留=サイクル未確定/契約未締結等(従量4件の暫定置き場含む)。"
+    },
+    "期待明細数": {
+      "type": "number",
+      "description": "F1: 既定1。重複統合(distinct契約への畳み込み)時に原件数をここへ退避。reconcile は契約ID境界で 期待件数=Σ期待明細数 と MF供給件数(dedup後) を比較し REVIEW_QTY_MISMATCH を生成。畳むと期待件数が常に1になる数量差消失を防ぐ偽陰性監査の機械的封鎖条件(岩本鉄工所/大橋諒祐 期待2>MF1)。"
+    },
+    "最終更新日": {
+      "type": "last_edited_time",
+      "description": "マスタ鮮度機構(Notion自動)。バッチ実行日との乖離をstaleアラートに使用。"
+    },
+    "備考": {
+      "type": "rich_text",
+      "description": "旧確認内容原文/Slackリンク/移行時メモ。sync-master は請求確認シート由来の確認内容原文を初期投入する。"
+    },
+    "請求確認シートID": {
+      "type": "rich_text",
+      "description": "証跡。契約を構成する請求確認シート行の代表 page_id(複数行畳み込み時は代表1件)。sync-master が build_contracts から初期投入する。シートへの遡及参照に使用。"
+    }
+  },
+  "upsert_key": ["契約ID"],
+  "managed_columns": [
+    "取引先",
+    "商品",
+    "エンドクライアント名",
+    "MF顧客ID",
+    "支払サイクル",
+    "現行単価",
+    "単価改定履歴",
+    "初回年間月数",
+    "分割回数",
+    "契約開始日",
+    "契約終了月",
+    "ステータス",
+    "期待明細数",
+    "備考",
+    "請求確認シートID"
+  ],
+  "system_columns": ["最終更新日"],
+  "managed_columns_note": "DB1 データ列は sync-master が請求確認シート由来で初期生成・冪等upsertする。支払サイクル/契約開始日/現行単価/期待明細数は reconcile engine の展開入力であり、誤判定時は請求確認シートまたはDB1を補正して再dry-runする。最終更新日は Notion 自動(last_edited_time)。"
+}

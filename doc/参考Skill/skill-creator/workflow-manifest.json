@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "skill-creator",
+  "phases": [
+    {
+      "id": "requirements-gathering",
+      "title": "要件収集",
+      "entryHookId": "rg-entry",
+      "exitHookId": "rg-exit",
+      "resourceIds": ["agent-analyze-request"]
+    },
+    {
+      "id": "plan",
+      "title": "計画策定",
+      "dependsOn": ["requirements-gathering"],
+      "entryHookId": "plan-entry",
+      "exitHookId": "plan-exit",
+      "resourceIds": ["agent-define-boundary", "ref-core-principles"]
+    },
+    {
+      "id": "execute",
+      "title": "実行",
+      "dependsOn": ["plan"],
+      "entryHookId": "execute-entry",
+      "exitHookId": "execute-exit",
+      "resourceIds": ["ref-codex-best-practices", "schema-agent-definition"]
+    },
+    {
+      "id": "verify",
+      "title": "検証",
+      "dependsOn": ["execute"],
+      "entryHookId": "verify-entry",
+      "exitHookId": "verify-exit",
+      "resourceIds": ["schema-boundary"]
+    },
+    {
+      "id": "improve",
+      "title": "改善",
+      "dependsOn": ["verify"],
+      "entryHookId": "improve-entry",
+      "exitHookId": "improve-exit",
+      "resourceIds": ["agent-analyze-feedback"]
+    }
+  ],
+  "resources": [
+    {
+      "id": "agent-analyze-request",
+      "kind": "agent",
+      "path": "./agents/analyze-request.md",
+      "phaseIds": ["requirements-gathering"]
+    },
+    {
+      "id": "agent-define-boundary",
+      "kind": "agent",
+      "path": "./agents/define-boundary.md",
+      "phaseIds": ["plan"]
+    },
+    {
+      "id": "ref-core-principles",
+      "kind": "reference",
+      "path": "./references/core-principles.md",
+      "phaseIds": ["plan"]
+    },
+    {
+      "id": "ref-codex-best-practices",
+      "kind": "reference",
+      "path": "./references/codex-best-practices.md",
+      "phaseIds": ["execute"]
+    },
+    {
+      "id": "schema-agent-definition",
+      "kind": "schema",
+      "path": "./schemas/agent-definition.json",
+      "phaseIds": ["execute"]
+    },
+    {
+      "id": "schema-boundary",
+      "kind": "schema",
+      "path": "./schemas/boundary.json",
+      "phaseIds": ["verify"]
+    },
+    {
+      "id": "agent-analyze-feedback",
+      "kind": "agent",
+      "path": "./agents/analyze-feedback.md",
+      "phaseIds": ["improve"]
+    }
+  ],
+  "entry": [
+    {
+      "id": "rg-entry",
+      "command": "validate requirements input"
+    },
+    {
+      "id": "plan-entry",
+      "command": "validate plan prerequisites"
+    },
+    {
+      "id": "execute-entry",
+      "command": "validate execution context"
+    },
+    {
+      "id": "verify-entry",
+      "command": "validate verification scope"
+    },
+    {
+      "id": "improve-entry",
+      "command": "validate improvement targets"
+    }
+  ],
+  "exit": [
+    {
+      "id": "rg-exit",
+      "command": "handoff requirements summary"
+    },
+    {
+      "id": "plan-exit",
+      "command": "handoff plan artifacts"
+    },
+    {
+      "id": "execute-exit",
+      "command": "handoff generated artifacts"
+    },
+    {
+      "id": "verify-exit",
+      "command": "handoff verification report"
+    },
+    {
+      "id": "improve-exit",
+      "command": "handoff improvement summary"
+    }
+  ]
+}

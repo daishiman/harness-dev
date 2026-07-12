@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "run-prompt-create",
+    "skill_md_sha256": "ad6ed915a10391609641c6d8844f33666230dbf03466487ff9ad749d6e086cfc"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-content-review-subagent",
+  "reviewed_at": "2026-07-03T22:14:21Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "完全性 3/3: frontmatter が intent/interface (inputs topic,mode,fast / outputs seven-layer-prompt.md, prompt-build-trace.json, findings.json, handoff-*.json, completion-report)/invariant 6 項/script_refs/schema_refs 4/responsibility_refs 3/manifest を機械可読に宣言し、responsibilities R1-R3 (prompt_required=true) が prompts/R1-elicit.md・R2-gate-review.md・R3-governance-decide.md と 1:1 で実在。Phase 表 7 行が manifest 7 phase と対応。",
+      "検証可能性 3/3・一貫性 3/3: IN1 (verify_by=lint) の p0-lint 表記が manifest commands 9 要素 (distinct 8 本・validate-prompt 2 相) と粒度一致し、本数条件が機械実体と齟齬なく検証可能。IN2 (verify_by=script) は handoff 7 本の schema 準拠永続化と auto_approve_conditions evidence の 1:1 で証跡化。用語統一 (Gate/handoff/phase/fork) が全節で一貫。",
+      "深度 2/3・簡潔性 3/3: preconditions (環境前提) と auto_approve_conditions (品質条件) の分離、--fast の new_prompt 除外×diff<=30 の evaluate-create-gates.py 機械決定など orchestrator 固有の設計判断が掘られている。本文 188 行で 300 行制約内、手続き列挙を廃し workflow-manifest.json へ委譲する二重管理排除で冗長ゼロ。Key Rule 8 のテンプレ相対パス是正で参照導線も明確化。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SHA (ad6ed915...) の SKILL.md を quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。今回変更 (p0-lint 本数表記の粒度精緻化・テンプレ参照の相対パス是正) は前回 low negative 2 件を解消し、検証可能性・整合性を底上げ。導出 criteria IN1/IN2/OUT1 は本スキル固有目的 (P0 lint ゲート・handoff 証跡永続化・orchestrator 制御専従+fork 強制) から導出され frontmatter feedback_contract と一致。negative_feedback 空。"
+}

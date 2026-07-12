@@ -1,0 +1,57 @@
+{
+  "skill_name": "run-intake-kickoff",
+  "prefix": "run",
+  "kind": "run",
+  "role_suffix": null,
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "intake セッション起動直後にパターン選択を取りたいとき",
+    "深度 (quick/standard/detailed) を確定したいとき",
+    "痛点ランキングを引き出して skill_name_hint を決めたいとき"
+  ],
+  "output_contract": "output/<hint>/kickoff.json (pattern A-E / depth / skill_name_hint / pain_ranking / initial_utterance / timestamp)。AskUserQuestion で 3 軸を 1 軸ずつ取得し、語彙は beginner tier 既定で整形する。",
+  "boundary": "本スキルは初期 3 軸 (pattern/depth/pain) の確定のみを担い、表層仮説の検証 (assumption-challenger 領域) / 6 軸プロファイル推定 (user-profiler 領域) / 5 軸シート充足 (interview 領域) には踏み込まない。",
+  "key_constraints": [
+    "AskUserQuestion は 1 問ずつ実行",
+    "初期発話の口語→技術用語整形を行うが本旨は保持",
+    "kickoff.json は handoff-contract に準拠"
+  ],
+  "deterministic_checks": [
+    "scripts/validate-kickoff-json.py"
+  ],
+  "external_systems": [],
+  "needs_independent_context": false,
+  "needs_lifecycle_enforcement": false,
+  "cli_tools": ["python3"],
+  "mcp_tools": [],
+  "placement_candidates": ["Skill"],
+  "base_skill": null,
+  "delegate_agent": null,
+  "rubric_refs": [],
+  "output_language": "ja",
+  "parameter_language_exception": true,
+  "responsibilities": [
+    {
+      "id": "R1",
+      "name": "pattern-depth-pain-elicitation",
+      "scope": "3 軸 (pattern A-E / depth / pain ranking) を AskUserQuestion で確定",
+      "owner_agent": null,
+      "prompt_required": true,
+      "vocabulary_tier": "beginner"
+    },
+    {
+      "id": "R2",
+      "name": "kickoff-json-emit",
+      "scope": "確定結果を kickoff.json スキーマに揃えて Write",
+      "owner_agent": null,
+      "prompt_required": false
+    }
+  ],
+  "prompt_creator_policy": "required",
+  "open_questions": [],
+  "additional_resources": [
+    {"path": "references/pattern-catalog.md", "when_to_read": "pattern A-E の選択肢を提示するとき"},
+    {"path": "references/depth-criteria.md", "when_to_read": "quick/standard/detailed の判断基準を確認するとき"},
+    {"path": "references/pain-ranking-template.md", "when_to_read": "痛点を frequency / minutes で構造化するとき"}
+  ]
+}

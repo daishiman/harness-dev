@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/.claude-plugin/bundles-schema.json",
+  "title": "harness plugin bundles",
+  "description": "Schema for .claude-plugin/bundles.json — named, install-in-one-shot plugin bundles. Each bundle must list at least one plugin (minItems:1) so empty bundles cannot exist.",
+  "type": "object",
+  "required": ["bundles"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "bundles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description", "plugins"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "description": {
+            "type": "string"
+          },
+          "plugins": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

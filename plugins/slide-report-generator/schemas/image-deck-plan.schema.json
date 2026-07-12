@@ -1,0 +1,347 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "image-deck-plan.schema.json",
+  "title": "Image Deck Plan",
+  "description": "per-slide 差分の入力契約。1デッキ = 1 plan.json。style-genome.json と組み合わせて build-image-prompts.js が prompt.md / meta.json を機械展開する。スタイルゲノムは仕様(お手本)であり完全コピーの金型ではない。生成側 meta には build-image-prompts.js が builtBy:\"build-image-prompts\" マーカー(決定論チェーン由来の証跡)と safeAreaPx(genome safeArea から自動計算した px)を自動付与する。これらは plan 入力フィールドではないため本スキーマには定義しない。tableMode を明示しない場合は tableHints から推奨 tableMode を補助推論する。v8.2.3 以降、画像生成プロンプトを artifact spec として固定するため、purpose / audienceTakeaway / background / intendedUse / layout / generation は必須。",
+  "type": "object",
+  "required": ["styleGenome", "slides"],
+  "additionalProperties": false,
+  "properties": {
+    "styleGenome": {
+      "type": "string",
+      "description": "slide-dir 基準の相対パス。通常 assets/generated/style-genome.json"
+    },
+    "deck": {
+      "type": "object",
+      "description": "デッキ全体のメタ情報(任意)",
+      "additionalProperties": true,
+      "properties": {
+        "title": { "type": "string" },
+        "totalSlides": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "slides": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/slide" }
+    }
+  },
+  "definitions": {
+    "slide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slide",
+        "slug",
+        "pattern",
+        "textPolicy",
+        "backgroundSource",
+        "camera",
+        "accent",
+        "subject",
+        "diagramStructure",
+        "motifs",
+        "overlayText",
+        "purpose",
+        "audienceTakeaway",
+        "background",
+        "intendedUse",
+        "layout",
+        "generation",
+        "reason",
+        "alt"
+      ],
+      "properties": {
+        "slide": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "スライド番号(1始まり)"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "description": "kebab-case のファイル stem。通常 slide-NN-name 形式"
+        },
+        "pattern": {
+          "type": "string",
+          "enum": ["image-only", "html-composite", "html-primary"],
+          "description": "validate-ai-image-assets.js と同値の描画パターン"
+        },
+        "textPolicy": {
+          "type": "string",
+          "enum": ["baked-with-overlay", "overlay-only", "none"]
+        },
+        "backgroundSource": {
+          "type": "string",
+          "enum": ["raster", "svg", "none"]
+        },
+        "camera": {
+          "type": "string",
+          "enum": ["default", "structural"],
+          "description": "style-genome.artStyle.camera のキー名"
+        },
+        "accent": {
+          "type": "string",
+          "description": "palette のキー名 or \"multi\" or HEX 文字列"
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 40,
+          "description": "被写体・シーン(英語推奨・自由文)。具体名詞・視認可能属性・配置を含め、100人が同じ主題を想像できる粒度にする"
+        },
+        "diagramStructure": {
+          "type": "string",
+          "minLength": 40,
+          "description": "図解の構造説明(自由文)。要素数、相対配置、矢印/レイヤ/比較軸など、構成と構図を再生成できる粒度にする"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 12,
+          "description": "なぜこの図が要るか(目的)。このスライドを画像で表す狙い・解決する問い。必須。例: 量産フローの全体像を一望させ抜け漏れを防ぐ"
+        },
+        "audienceTakeaway": {
+          "type": "string",
+          "minLength": 12,
+          "description": "聴衆が読み取るべき一文(この絵を見た聴衆が得る1つの理解)。必須。例: 量産は5工程の循環で回ることが分かる"
+        },
+        "background": {
+          "type": "string",
+          "minLength": 20,
+          "description": "前後文脈・デッキ内の位置づけ(背景)。直前/直後スライドとの関係・聴衆の前提知識・目的背景手段結論のどの役割か。必須。"
+        },
+        "intendedUse": {
+          "type": "string",
+          "default": "presentation infographic / explanatory diagram",
+          "minLength": 20,
+          "description": "用途宣言(MODE setter)。OpenAI 画像生成は用途明示で仕上げモード・密度・精度が固定される。必須。既定相当は presentation infographic / explanatory diagram"
+        },
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["grid", "zones", "readingOrder", "focalPoint", "emphasis"],
+          "description": "構図(再現性のための配置・視線誘導の構造化指定)。必須。grid で全体骨格、zones で各エリアに置く要素、readingOrder で視線が辿る順序、focalPoint で主役、emphasis で強調方針を表す。",
+          "properties": {
+            "grid": {
+              "type": "string",
+              "enum": ["left-right", "top-bottom", "center-radial", "grid-2x2", "free"],
+              "description": "全体の配置骨格。left-right=左右二分/top-bottom=上下二層/center-radial=中央ハブ放射/grid-2x2=2x2四象限/free=自由"
+            },
+            "zones": {
+              "type": "array",
+              "minItems": 2,
+              "description": "各エリアに置く要素。area=配置領域、content=その領域に置く要素・役割",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["area", "content"],
+                "properties": {
+                  "area": {
+                    "type": "string",
+                    "enum": ["top", "bottom", "left", "right", "center", "foreground", "background"],
+                    "description": "配置領域"
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "その領域に置く要素・役割(自由文)"
+                  }
+                }
+              }
+            },
+            "readingOrder": {
+              "type": "array",
+              "minItems": 2,
+              "description": "視線が辿るエリアの順序。area-enum を視線順に並べる",
+              "items": {
+                "type": "string",
+                "enum": ["top", "bottom", "left", "right", "center", "foreground", "background"]
+              }
+            },
+            "focalPoint": {
+              "type": "string",
+              "enum": ["top", "bottom", "left", "right", "center", "foreground", "background"],
+              "description": "最初に目が行く主役の配置エリア(area-enum)"
+            },
+            "emphasis": {
+              "type": "string",
+              "minLength": 6,
+              "description": "強調方針(主役を大きく/対比要素を左右に等・自由文・任意)"
+            }
+          }
+        },
+        "generation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["modelSnapshot", "quality", "size"],
+          "description": "再現条件のピン留め記録。gpt-image-2(Image 3)は seed 非対応のためモデル/品質/サイズを明示記録する。size は両辺16px倍数。透過や input_fidelity は使用バックエンドの対応を確認する。必須。",
+          "properties": {
+            "modelSnapshot": { "type": "string", "default": "gpt-image-2-2026-04-21", "description": "画像モデルの日付付きスナップショットID" },
+            "quality": { "type": "string", "enum": ["auto", "low", "medium", "high"], "default": "high", "description": "密テキスト/図解は high" },
+            "size": { "type": "string", "default": "2560x1440", "description": "16:9。両辺16px倍数。" }
+          }
+        },
+        "styleReference": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "image-to-image 参照チェーン。前ページ/基準ページの確定画素を参照しページ間ドリフトを抑える。gpt-image-2 は seed 非対応のため、これが画素レベルの決定論アンカーになる。任意・後方互換。",
+          "properties": {
+            "anchorSlug": { "type": "string", "description": "デッキ統一の基準ページ slug(通常 slide-01)。全ページがこれを style 参照にする。" },
+            "refSlugs": { "type": "array", "maxItems": 15, "items": { "type": "string" }, "description": "追加で参照する確定済みページ slug(anchor と合わせ16以内)" },
+            "inheritMode": { "type": "string", "enum": ["style-only", "style-and-layout", "full"], "default": "style-only", "description": "参照から何を継承するか。style-only=画風のみ継承し主題は差分。" },
+            "preserve": { "type": "array", "items": { "type": "string" }, "description": "参照から必ず保持する要素(例: palette, navy outline, isometric geometry, layout)。任意。" },
+            "change": { "type": "array", "items": { "type": "string" }, "description": "参照から変更する要素(例: 主題・被写体の中身・ラベル)。任意。" }
+          }
+        },
+        "motifs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "style-genome.motifs[].name の部分集合。存在しない名前は不可"
+        },
+        "bakedText": {
+          "type": "array",
+          "items": { "type": "string", "maxLength": 18 },
+          "description": "baked-with-overlay 時に画像内へ描く短文(1件以上必須)"
+        },
+        "overlayText": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "HTML 正本テキスト(必須・1件以上)"
+        },
+        "negativeSpecific": {
+          "type": "string",
+          "description": "スライド固有の Negative 追記。camera=structural(順序/向き/個数が効く図)では必須(20字以上)。何ノードか・矢印の向き・対称性など、間違えてはいけない構成を列挙する(例: more or fewer than five nodes, broken or counter-clockwise ring, asymmetric node spacing)。default カメラでは任意。"
+        },
+        "layoutTemplate": {
+          "type": "string",
+          "description": "style-genome.compositionRules.layoutTemplates のキー。例: cover-minimal / chapter-divider / two-layer-contrast / cycle-workflow / four-phase-serial / serpentine-mechanism"
+        },
+        "densityLevel": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "参照画像の複雑度。low=表紙/章扉、medium=フロー/対比、high=蛇行メカニズムなど高密度ジオラマ"
+        },
+        "figures": {
+          "type": "string",
+          "description": "人物の有無・人数・配置。例: human-figure-standing-gesture x1 left / human-figure-seated x3 along path"
+        },
+        "robotMascot": {
+          "type": "string",
+          "enum": ["none", "full-body", "floating-head", "upper-body-clipboard"],
+          "description": "AIロボットマスコットの使い方"
+        },
+        "tableMode": {
+          "type": "string",
+          "enum": ["none", "illustrated-mini-table", "illustrated-full-table", "html-overlay-table", "diagram-translation", "html-primary"],
+          "description": "表・比較・マトリックスを画像内/HTML/図解変換のどれで扱うか。明示しない場合は tableHints から build-image-prompts.js が推奨値を補助推論する。illustrated-full-table=見出し+全行を画像内に verbatim 焼き込む(tableContent 必須・textPolicy=baked-with-overlay・HTML重ね不使用)。正確な料金/精密数値/長文/複数行コードは html-overlay-table / html-primary に寄せる"
+        },
+        "tableHints": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "tableMode 未指定時に build-image-prompts.js が推奨 tableMode を補助推論するための内容ヒント(任意)。明示 tableMode があればそちらが優先される。",
+          "properties": {
+            "columns": { "type": "integer", "minimum": 1, "description": "表の列数" },
+            "rows": { "type": "integer", "minimum": 1, "description": "表の行数" },
+            "numericPrecision": {
+              "type": "string",
+              "description": "数値の正確性要求(例: exact / high / low / price / fee)。正確・料金系は HTML 前面へ寄せる"
+            },
+            "updateFrequency": {
+              "type": "string",
+              "description": "更新頻度(例: high / frequent / monthly / low)。頻繁更新は HTML 前面へ寄せる"
+            },
+            "purpose": {
+              "type": "string",
+              "description": "表の目的(例: comparison / concept / judgment / classification)。概念比較は diagram-translation を優先する"
+            }
+          }
+        },
+        "tableContent": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "illustrated-full-table 時に画像内へ verbatim で焼くテーブル本文。bakedText の18字制限とは別経路。列見出しと各行セルを一字一句そのまま描かせ、行列の増減を禁止する。料金/精密数値/長文/複数行コードはここに入れず html-overlay-table / html-primary を使う。",
+          "required": ["headers", "rows"],
+          "properties": {
+            "headers": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 5,
+              "items": { "type": "string", "minLength": 1, "maxLength": 14 },
+              "description": "列見出し(verbatim)。列数=この配列長で固定する"
+            },
+            "rows": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "array",
+                "items": { "type": "string", "maxLength": 14 },
+                "description": "1行分のセル(verbatim)。要素数は headers と同数(列数一致)。空セルは空文字で明示する"
+              },
+              "description": "各行のセル。行数=この配列長で固定する"
+            },
+            "monospaceColumns": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 },
+              "description": "monospace で描くべき列の0始まりインデックス(コマンド/コード/識別子列)。任意。列数を超えるインデックス(>= headers 長)は build-image-prompts.js の validateSlide が範囲検査で止める(draft-07 では動的上限を表現できないため builder 側 assert を正本にする)"
+            },
+            "caption": { "type": "string", "maxLength": 40, "description": "表のキャプション(任意・1行・verbatim)" },
+            "note": { "type": "string", "maxLength": 60, "description": "表の補足(任意・1行・verbatim)" }
+          }
+        },
+        "imageFit": {
+          "type": "string",
+          "enum": ["contain", "cover-safe", "html-composite-contain"],
+          "description": "HTML組み込み時のフィット契約。原則 contain。cover-safe は主要被写体が安全余白内にある場合のみ"
+        },
+        "printIntent": {
+          "type": "string",
+          "description": "印刷時に切れないためのスライド固有の安全余白・被写体配置方針"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "画像化理由(必須)"
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "代替テキスト(必須)"
+        }
+      },
+      "allOf": [
+        {
+          "description": "textPolicy=baked-with-overlay のとき bakedText 1件以上必須",
+          "if": { "properties": { "textPolicy": { "const": "baked-with-overlay" } } },
+          "then": { "required": ["bakedText"], "properties": { "bakedText": { "minItems": 1 } } }
+        },
+        {
+          "description": "pattern=image-only -> textPolicy は baked-with-overlay|overlay-only",
+          "if": { "properties": { "pattern": { "const": "image-only" } } },
+          "then": { "properties": { "textPolicy": { "enum": ["baked-with-overlay", "overlay-only"] }, "backgroundSource": { "const": "none" } } }
+        },
+        {
+          "description": "pattern=html-composite -> textPolicy overlay-only / backgroundSource raster|svg",
+          "if": { "properties": { "pattern": { "const": "html-composite" } } },
+          "then": { "properties": { "textPolicy": { "const": "overlay-only" }, "backgroundSource": { "enum": ["raster", "svg"] } } }
+        },
+        {
+          "description": "pattern=html-primary -> textPolicy none / backgroundSource none|svg",
+          "if": { "properties": { "pattern": { "const": "html-primary" } } },
+          "then": { "properties": { "textPolicy": { "const": "none" }, "backgroundSource": { "enum": ["none", "svg"] } } }
+        },
+        {
+          "description": "camera=structural は主題正しさの負制約 negativeSpecific を必須化(誤ノード数/逆向き/対称崩れを止める)。build-image-prompts.js の validateSlide が同値を再assertする。",
+          "if": { "properties": { "camera": { "const": "structural" } }, "required": ["camera"] },
+          "then": { "required": ["negativeSpecific"], "properties": { "negativeSpecific": { "minLength": 20 } } }
+        },
+        {
+          "description": "tableMode=illustrated-full-table は tableContent 必須 + textPolicy=baked-with-overlay 固定(表を画像内に焼き込み HTML 重ねを使わない) + negativeSpecific 必須(表は行数/列数の取り違えが意味崩壊に直結する最も構造的な対象のため、camera=structural と同じく負制約を毎回宣言させる)。build-image-prompts.js の validateSlide が同値を再assertする。",
+          "if": { "properties": { "tableMode": { "const": "illustrated-full-table" } }, "required": ["tableMode"] },
+          "then": { "required": ["tableContent", "negativeSpecific"], "properties": { "textPolicy": { "const": "baked-with-overlay" }, "negativeSpecific": { "minLength": 20 } } }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review + 30思考法検証。compile OK / # /// script frontmatter 完備 / write-scope:none read-only。checklist の depends_on 全充足 pending を id 昇順 (C1<C2<C10 数値昇順) でステートレス算出。H1: write_scope/tie-break を構造的に持たない (逐次単一 self-writer ゆえ並列衝突が発生しない・compute-ready-set.py の tie-break を意図的に複製せず)。TESTS: tests/scripts-plugins/test_harness_creator__ready_set_from_checklist.py 17ケース PASS (依存充足/未充足除外/dangling not-ready/done・blocked除外/id不整合 exit1/CLI exit0・2)。coverage 100% (subprocess込み)。fail-closed: データ不整合 exit1。"
+  },
+  "reviewed_by": "elegant-review-30methods-phase3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "schema_version": "1.0.0",
+  "description": "これは『引き出しの型』の唯一正本。intent-contract.schema.json の各 intent slot が未充足のときに発火する決定論的 follow-up probe を定義する。発火条件は決定論(当該 slot が unfilled または is_placeholder)であり、文面は verbatim 固定である。これによりユーザーが言語化できなくても、誰が実行しても同じ probe 列で同じ intent に収束する。question-bank.md が『どの軸を聞くか』の索引であるのに対し、本表は『slot が埋まらないとき、何を verbatim で聞き、回答をどの slot 値へ写像するか』を固定する中間層である。深掘り(purpose-excavator)とは責務が異なり、本表はあくまで intent_contract の空 slot 充足のみを担う。絵文字禁止。",
+  "canonical_role": "intent_contract slot elicitation SSOT",
+  "aligns_with": {
+    "schema": "references/intent-contract.schema.json",
+    "target_slots": [
+      "input_spec.sources",
+      "input_spec.trigger",
+      "input_spec.frequency",
+      "input_spec.raw_materials",
+      "output_spec.sink",
+      "output_spec.format",
+      "output_spec.granularity",
+      "output_spec.audience",
+      "output_spec.cadence"
+    ],
+    "note": "fire_condition の判定と normalize_hint の enum 写像は scripts/build-intent.py が実装する。probe_type は医療問診票 OPQRST(Onset/Provocation/Quality/Region/Severity/Timing) と構造化インタビューの coding scheme を範とした分類軸である。"
+  },
+  "probe_type_enum": ["具体化", "形式", "頻度", "対象", "裏取り"],
+  "source_enum_on_fill": "probe",
+  "probe_order": [
+    "PB-IN-SOURCES",
+    "PB-IN-RAWMAT",
+    "PB-IN-TRIGGER",
+    "PB-IN-FREQ",
+    "PB-OUT-SINK",
+    "PB-OUT-FORMAT",
+    "PB-OUT-GRANULARITY",
+    "PB-OUT-AUDIENCE",
+    "PB-OUT-CADENCE"
+  ],
+  "probes": [
+    {
+      "probe_id": "PB-IN-SOURCES",
+      "target_slot": "input_spec.sources",
+      "probe_type": "具体化",
+      "fire_condition": "input_spec.sources が空配列、または要素が placeholder(未定/不明/わからない/TBD 等)のみ",
+      "question_text": "そのスキルが使う情報は、いま具体的にどこにありますか。手元のファイル、Notion、Web サイト、メール、頭の中のどれに一番近いか教えてください。",
+      "answer_options": {
+        "type": "single_choice_with_free",
+        "options": [
+          {"id": "local", "label": "手元のファイル/メモ"},
+          {"id": "notion", "label": "Notion/社内ツール"},
+          {"id": "web", "label": "Web/外部 API"},
+          {"id": "manual", "label": "その都度の手入力"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "回答テキストを情報源ラベルへ写像し input_spec.sources[] に追加する。複数該当なら全て列挙。自由入力は原文をそのまま 1 要素として保持。"
+    },
+    {
+      "probe_id": "PB-IN-RAWMAT",
+      "target_slot": "input_spec.raw_materials",
+      "probe_type": "具体化",
+      "fire_condition": "input_spec.raw_materials が空配列、または要素が placeholder のみ",
+      "question_text": "その情報は、どんな形の素材で手元に来ますか。たとえば PDF、スプレッドシート、チャットのログ、音声の文字起こし、写真などです。近いものを教えてください。",
+      "answer_options": {
+        "type": "multi_choice_with_free",
+        "options": [
+          {"id": "document", "label": "文書(PDF/Word/Markdown)"},
+          {"id": "spreadsheet", "label": "表(Excel/CSV/Sheets)"},
+          {"id": "chatlog", "label": "チャット/メールのログ"},
+          {"id": "media", "label": "音声/画像/動画"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "素材の種別語を input_spec.raw_materials[] に列挙する。ファイル拡張子や媒体名が回答に含まれればそのまま要素化。"
+    },
+    {
+      "probe_id": "PB-IN-TRIGGER",
+      "target_slot": "input_spec.trigger",
+      "probe_type": "頻度",
+      "fire_condition": "input_spec.trigger が空文字列、または placeholder",
+      "question_text": "その作業は、何がきっかけで始まりますか。決まった時刻ですか、それとも何かが届いた・依頼された・イベントが起きたタイミングですか。",
+      "answer_options": {
+        "type": "single_choice_with_free",
+        "options": [
+          {"id": "schedule", "label": "決まった時刻/曜日になったら"},
+          {"id": "arrival", "label": "データや連絡が届いたら"},
+          {"id": "request", "label": "自分/誰かが必要になったら"},
+          {"id": "event", "label": "特定のイベントが起きたら"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "回答の trigger 記述を input_spec.trigger に文字列として格納する。時刻表現(毎朝/毎週月曜 等)が含まれる場合は frequency 写像のヒントにも用いる。"
+    },
+    {
+      "probe_id": "PB-IN-FREQ",
+      "target_slot": "input_spec.frequency",
+      "probe_type": "頻度",
+      "fire_condition": "input_spec.frequency が enum(realtime/daily/weekly/monthly/event/ondemand)以外、空、または placeholder",
+      "question_text": "その入力は、どれくらいの頻度で発生しますか。常時、毎日、毎週、毎月、特定イベント時、必要になった時、のどれに近いですか。",
+      "answer_options": {
+        "type": "single_choice",
+        "options": [
+          {"id": "realtime", "label": "常時/リアルタイム"},
+          {"id": "daily", "label": "毎日"},
+          {"id": "weekly", "label": "毎週"},
+          {"id": "monthly", "label": "毎月"},
+          {"id": "event", "label": "特定イベント時"},
+          {"id": "ondemand", "label": "必要になった時だけ"}
+        ],
+        "allow_free_text": false
+      },
+      "normalize_hint": "FREQUENCY_MAP により日本語表現(毎朝/日次/毎週/月次/都度 等)を enum(realtime/daily/weekly/monthly/event/ondemand)へ写像し input_spec.frequency に格納する。写像不能なら filled=false のまま残す。"
+    },
+    {
+      "probe_id": "PB-OUT-SINK",
+      "target_slot": "output_spec.sink",
+      "probe_type": "具体化",
+      "fire_condition": "output_spec.sink が空文字列、または placeholder",
+      "question_text": "出てきた成果物は、最終的にどこに置きたいですか。ファイルとして残す、Notion に書く、Slack や Discord に流す、画面のダッシュボードで見る、のどれに近いですか。",
+      "answer_options": {
+        "type": "single_choice_with_free",
+        "options": [
+          {"id": "file", "label": "ファイル(Drive/ローカル)"},
+          {"id": "notion", "label": "Notion/ドキュメント"},
+          {"id": "notification", "label": "Slack/Discord/メール通知"},
+          {"id": "dashboard", "label": "ダッシュボード/画面"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "出力先ラベルまたは自由入力を output_spec.sink に文字列格納する。§6 output_to はここから派生する。"
+    },
+    {
+      "probe_id": "PB-OUT-FORMAT",
+      "target_slot": "output_spec.format",
+      "probe_type": "形式",
+      "fire_condition": "output_spec.format が enum(bullet/table/prose/document/message/dashboard/other)以外、空、または placeholder",
+      "question_text": "その成果物は、どんな見た目で欲しいですか。箇条書き、表、文章、まとまった文書、短いメッセージ、ダッシュボード、のどれに近いですか。",
+      "answer_options": {
+        "type": "single_choice",
+        "options": [
+          {"id": "bullet", "label": "箇条書き"},
+          {"id": "table", "label": "表"},
+          {"id": "prose", "label": "文章"},
+          {"id": "document", "label": "まとまった文書"},
+          {"id": "message", "label": "短いメッセージ"},
+          {"id": "dashboard", "label": "ダッシュボード"},
+          {"id": "other", "label": "その他"}
+        ],
+        "allow_free_text": false
+      },
+      "normalize_hint": "FORMAT_MAP により日本語表現(箇条書き/リスト→bullet, 表/テーブル→table, 文章/文→prose, 文書/レポート→document, メッセージ/通知文→message, ダッシュボード/画面→dashboard)を enum へ写像し output_spec.format に格納する。写像不能なら filled=false。"
+    },
+    {
+      "probe_id": "PB-OUT-GRANULARITY",
+      "target_slot": "output_spec.granularity",
+      "probe_type": "具体化",
+      "fire_condition": "output_spec.granularity が空文字列、または placeholder",
+      "question_text": "その成果物は、どれくらいの詳しさが欲しいですか。要点だけの短いものか、根拠や詳細まで含む厚いものか、近いほうを教えてください。",
+      "answer_options": {
+        "type": "single_choice_with_free",
+        "options": [
+          {"id": "summary", "label": "要点だけ(短い)"},
+          {"id": "standard", "label": "標準(要点+補足)"},
+          {"id": "detailed", "label": "詳細(根拠まで含む)"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "粒度ラベルまたは自由入力を output_spec.granularity に文字列格納する。enum 制約は無いため写像は緩く、原文保持を許容。"
+    },
+    {
+      "probe_id": "PB-OUT-AUDIENCE",
+      "target_slot": "output_spec.audience",
+      "probe_type": "対象",
+      "fire_condition": "output_spec.audience が空文字列、または placeholder",
+      "question_text": "その成果物は、誰が読みますか。自分だけ、チーム、上司や役員、社外の顧客や受講生、のどれに一番近いですか。",
+      "answer_options": {
+        "type": "single_choice_with_free",
+        "options": [
+          {"id": "self", "label": "自分だけ"},
+          {"id": "team", "label": "チーム/同僚"},
+          {"id": "management", "label": "上司/役員"},
+          {"id": "external", "label": "社外(顧客/受講生/公開)"}
+        ],
+        "allow_free_text": true
+      },
+      "normalize_hint": "対象読者ラベルまたは自由入力を output_spec.audience に文字列格納する。"
+    },
+    {
+      "probe_id": "PB-OUT-CADENCE",
+      "target_slot": "output_spec.cadence",
+      "probe_type": "頻度",
+      "fire_condition": "output_spec.cadence が enum(realtime/daily/weekly/monthly/event/ondemand)以外、空、または placeholder",
+      "question_text": "その成果物は、どれくらいの周期で欲しいですか。常時更新、毎日、毎週、毎月、イベント時、必要になった時、のどれに近いですか。",
+      "answer_options": {
+        "type": "single_choice",
+        "options": [
+          {"id": "realtime", "label": "常時更新"},
+          {"id": "daily", "label": "毎日"},
+          {"id": "weekly", "label": "毎週"},
+          {"id": "monthly", "label": "毎月"},
+          {"id": "event", "label": "イベント時"},
+          {"id": "ondemand", "label": "必要になった時だけ"}
+        ],
+        "allow_free_text": false
+      },
+      "normalize_hint": "CADENCE_MAP(FREQUENCY_MAP と同一 enum: realtime/daily/weekly/monthly/event/ondemand)により日本語表現を写像し output_spec.cadence に格納する。写像不能なら filled=false。"
+    }
+  ],
+  "裏取り_note": "probe_type=裏取り は本表の individual entry としては未使用だが、正規化後に filled=true になった slot について source=inferred で埋めた場合の再確認 probe として build-intent.py が pending_probes に追加しうる予約分類である。誤推論の verbatim 再確認に用いる。"
+}

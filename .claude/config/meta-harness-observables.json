@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "purpose": "log-driven ref-* 改善のための観測対象 failure mode の閉じた列挙",
+    "spec": "doc/ClaudeCodeスキルの設計書/33-change-governance.md § log-driven ref-* 改善",
+    "status": "INITIAL — 5項目で起動。追加は P0_breaking 扱い (33章ルール)。2026-05-20 pkg_check_failed 追加、2026-05-23 elegant_review_4condition_failed 追加",
+    "goodhart_guard": "本ファイルの failure_modes 配列を無制限に拡張しないこと。MECE維持を最優先。",
+    "mece_axis": "remediation_target を分割軸とし、description は「不足/過剰」の双子で分割。gate-driven 系（pkg_check_failed / elegant_review_4condition_failed）は別軸で並走",
+    "updated": "2026-05-23"
+  },
+  "schema_version": "0.1.0",
+  "compatible_schema_versions": [
+    "1.0"
+  ],
+  "failure_modes": [
+    {
+      "id": "FM-NOT-FIRED",
+      "name": "should-have-fired-but-did-not",
+      "observable_signal": "session内のユーザー発話に該当ドメインのキーワード(skill description定義の発動語以外の同義語)が含まれるが、対応 ref-* が invoke されなかった (tool_use イベント不在)",
+      "remediation_target": "description",
+      "remediation_direction": "expand",
+      "min_recurrence_for_action": 2,
+      "rationale": "発動漏れは description 不足の兆候。1回は偶発の可能性があるため、2回以上の観測で構造的不足と判定し振動的改善を予防する (G-05 R-04 mitigation)"
+    },
+    {
+      "id": "FM-MIS-FIRED",
+      "name": "fired-but-should-not-have",
+      "observable_signal": "ref-* が invoke されたが、続くassistant出力で当該skillの判断材料を全く参照していない、もしくは即座に別skillを再invoke している",
+      "remediation_target": "description",
+      "remediation_direction": "narrow",
+      "min_recurrence_for_action": 2,
+      "rationale": "誤発動は description 過剰。1回は偶発の可能性、2回で構造的"
+    },
+    {
+      "id": "FM-INSUFFICIENT-OUTPUT",
+      "name": "fired-but-output-insufficient",
+      "observable_signal": "ref-* invoke 直後の同一turn内でユーザーから「もっと/詳しく/具体的に/足りない」相当のfollow-up発話が発生",
+      "remediation_target": "body_decision_material",
+      "remediation_direction": "expand",
+      "min_recurrence_for_action": 2,
+      "rationale": "本文の判断材料不足。1回はタスク固有の可能性、2回で構造的"
+    },
+    {
+      "id": "FM-REPEATED-CORRECTION",
+      "name": "same-correction-across-sessions",
+      "observable_signal": "異なる session_id にまたがり、同一 ref-* の出力に対し、同型の修正指示(類似度しきい値≥0.8の発話)がユーザーから発生",
+      "remediation_target": "gotchas",
+      "remediation_direction": "pin",
+      "min_recurrence_for_action": 3,
+      "rationale": "偶発事象の恒久ルール化を防ぐため3セッション必須 (33章反パターン参照)"
+    },
+    {
+      "id": "FM-EXAMPLE-DRIFT",
+      "name": "user-provided-counter-example",
+      "observable_signal": "ユーザー発話に「こういう場合は」「逆のケースだと」等の境界条件提示があり、それが既存 examples/ に存在しない",
+      "remediation_target": "examples",
+      "remediation_direction": "add",
+      "min_recurrence_for_action": 2,
+      "rationale": "境界条件は examples で示すのが最も伝達効率が高い"
+    },
+    {
+      "id": "FM-PKG-CHECK-FAILED",
+      "name": "pkg_check_failed",
+      "observable_signal": "34章 Phase 0/1/2 ゲートで実行される 36章 PKG-001〜017 gate script の exit code 非ゼロ。eval-log は eval-log/<plugin>/pkg-<id>/ (27章 §3.1)",
+      "remediation_target": "pkg_contract",
+      "remediation_direction": "fix_or_revise_pkg_id",
+      "min_recurrence_for_action": 1,
+      "rationale": "P0 gate のため即時起票。35章 §PKG gate 連動の閉ループに従い 36章 §現状との差分に feedback",
+      "design_chapter_refs": ["35 §observables との対応", "36"]
+    },
+    {
+      "id": "FM-ELEGANT-REVIEW-4COND-FAILED",
+      "name": "elegant_review_4condition_failed",
+      "observable_signal": "run-elegant-review v2 Phase 3 完了時に verdict.json の verdict.*=FAIL または safety_valve_fired=true を scripts/emit-observable.py が検出し .claude/logs/meta-harness.jsonl に append。eval-log は eval-log/<plugin>/<skill>/elegant-review/<run-id>/ (27章 §3.1)",
+      "remediation_target": "thought_methods_catalog_or_rubric",
+      "remediation_direction": "strengthen_or_revise",
+      "min_recurrence_for_action": 1,
+      "rationale": "25章 §runbook Step 5.5 の設計 elegance gate。force_pass 禁止、proposer ≠ approver (23章)。30章 paradigm-analogy-map + 27章 §4 governance に feedback",
+      "design_chapter_refs": ["25 §runbook Step 5.5", "30", "35 §elegant-review v2 連動の閉ループ"]
+    }
+  ],
+  "remediation_targets_enum": [
+    "description",
+    "body_decision_material",
+    "gotchas",
+    "examples",
+    "pkg_contract",
+    "thought_methods_catalog_or_rubric"
+  ],
+  "remediation_direction_enum": [
+    "expand",
+    "narrow",
+    "pin",
+    "add",
+    "fix_or_revise_pkg_id",
+    "strengthen_or_revise"
+  ]
+}

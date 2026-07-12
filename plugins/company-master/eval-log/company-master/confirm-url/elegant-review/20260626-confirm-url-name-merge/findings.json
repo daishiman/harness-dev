@@ -1,0 +1,77 @@
+{
+  "run_id": "20260626-confirm-url-name-merge",
+  "target": {"plugin": "company-master", "scope_mode": "plugin"},
+  "requirements": {
+    "R1": "郵便番号確認用URL を https://www.post.japanpost.jp/ 固定",
+    "R2": "電話番号確認用URL を https://www.google.com/search?q=\"<電話番号>\" 固定(番号埋め込みGoogle検索)",
+    "R3": "Notion会社名タイトルに正式名称(official_name)を格納",
+    "R4": "正式名称DBプロパティを削除し会社名へ統合(live列削除はユーザー実施)",
+    "R5": "確認用URL本文の『会社名: ユーザー入力（URLなし）』bulletを出力しない(厳守)"
+  },
+  "thought_method_coverage": {
+    "total": 30,
+    "used": [
+      "批判的思考","演繹思考","帰納思考","アブダクション","垂直思考",
+      "要素分解","MECE","2軸思考","プロセス思考","why思考",
+      "メタ思考","抽象化思考","ダブルループ思考",
+      "ブレインストーミング","水平思考","逆説思考","類推思考","if思考","素人思考",
+      "システム思考","因果関係分析","因果ループ",
+      "トレードオン思考","プラスサム思考","価値提案思考","戦略的思考",
+      "改善思考","仮説思考","論点思考","KJ法"
+    ],
+    "skipped_with_reason": []
+  },
+  "verdict_pre_fix": {
+    "矛盾なし": "FAIL", "漏れなし": "FAIL", "整合性あり": "FAIL", "依存関係整合": "FAIL"
+  },
+  "fail_counts_pre_fix": {"contradiction": 2, "omission": 4, "inconsistency": 4, "dependency_break": 4, "smell": 6},
+  "key_findings": [
+    {"id": "F1", "signal": "dependency_break", "severity": "critical",
+     "title": "JAPANPOST_VERIFY_URL SSOT二重定義",
+     "location": "postal_api.py:72 / validate_company_master.py:103",
+     "detail": "validate(g):273 が url != JAPANPOST_VERIFY_URL(独立コピー) で全postal行reject。R1で postal_api 側のみ変更すると書込ゲート全停止。enrich:302 は postal_api 参照で自動追従するが validate は独立。",
+     "fix": "validate:103 を削除し postal_api から import。1箇所変更でR1完結。", "auto_fixable": true},
+    {"id": "F2", "signal": "contradiction", "severity": "critical",
+     "title": "R5(会社名bullet抑止)とR3(会社名へgBizINFO URL付official_name統合)の正面衝突",
+     "location": "confirm_url.py:159-303 / references/confirm-url-template.md:41 / tests:223",
+     "detail": "R5の正当化根拠(会社名=user_input・URLなし)とR3の効果(会社名=登記名・gBizINFO URLあり)が矛盾。文字通り抑止すると登記名のgBizINFO検証URLが本文から消える。",
+     "fix": "R5を『origin=user_input かつ URLなしの会社名bulletのみ抑止』へ精密化。会社名へ official_name(gbizinfo)を統合し1bulletに。正式名称単独bulletは廃止。", "auto_fixable": false},
+    {"id": "F3", "signal": "dependency_break", "severity": "high",
+     "title": "company_name の三役(title/alt_key/user_input由来)",
+     "location": "notion_upsert.py:289,502 / normalize.py alt_key / enrich.py:271",
+     "detail": "company_name フィールドを official_name で上書きすると alt_key(法人番号未確定行の代替キー)が変化し同一企業が二重行化。",
+     "fix": "(X1,Y1): title 表示値のみ official_name or company_name で描画。company_name フィールド・alt_key素材・user_input origin は温存。", "auto_fixable": false},
+    {"id": "F4", "signal": "omission", "severity": "high",
+     "title": "R4削除粒度未確定 + official_name の6構造焼き込み",
+     "location": "validate ATTRIBUTE_FIELDS/JP_COL_MAP/FIELD_ALLOWED_ORIGINS/列構成検査 / confirm_url ATTRIBUTE_FIELDS,FIELD_LABELS / enrich ATTRIBUTE_FIELDS / notion_upsert COL定数 / schema",
+     "detail": "official_name は列+source_by_field 6属性+confirm_url+validate に分散。列のみ削除か属性ごと削除かで更新範囲が二分。",
+     "fix": "列のみ削除(X1)。source_by_field provenance としては official_name を残す。8→7列。", "auto_fixable": false},
+    {"id": "F5", "signal": "dependency_break", "severity": "critical",
+     "title": "preflight 順序依存(forbidden追加で全書込ロック)",
+     "location": "notion_upsert.py:213-217 / notion-db-schema.json:22",
+     "detail": "正式名称を forbidden_properties へ追加 + live列が残存 → preflight exit2 で build/backfill 全停止。逆に schema必須から外す前に live列削除すると必須列不在FAIL。",
+     "fix": "正式名称を forbidden に追加しない。schema 必須から外すのみ(live列有無に関わらずpreflight PASS)。live列削除はユーザー実施。", "auto_fixable": false},
+    {"id": "F6", "signal": "omission", "severity": "high",
+     "title": "既存Notionデータ移行・テスト更新の欠落",
+     "location": "backfill.py row_from_page:137 / select_backfill_targets / tests/test_company_master.py 多数",
+     "detail": "既存行は 会社名=通称/正式名称=登記名。移行backfillと title→official_name 反転が無いと登記名喪失+新旧行で意味混在。company_name 空欄判定除外しないと無限backfill。test:223/367/61等が破壊。",
+     "fix": "backfill が旧正式名称列(存在すれば)を official_name として読み title 移行。select_backfill_targets から company_name 除外。全破壊テスト同一PR更新。", "auto_fixable": false},
+    {"id": "F7", "signal": "inconsistency", "severity": "high",
+     "title": "R2 URLエンコード + origin=web 意味変質",
+     "location": "enrich.py:196-217,335 / data-sources.md:36 / confirm-url-template.md:33",
+     "detail": "q=\"<電話番号>\" のダブルクォート%22+ハイフンのエンコード必須(byte安定)。origin=web の意味が strong根拠ページ→固定検索クエリ(weak)へ変質し doc定義と乖離。",
+     "fix": "google検索URL生成を決定論ヘルパでSSOT化(urllib.parse.quote)。origin=web 維持し doc の web定義を『per-value根拠URL または 固定検索URL』へ更新。", "auto_fixable": false},
+    {"id": "F8", "signal": "smell", "severity": "medium",
+     "title": "R1/R2 検証性低下(逆説思考・provenance theater)",
+     "location": "confirm-url-template.md / data-sources.md",
+     "detail": "トップURL化・Google検索クエリ化は『URL単独で値を再確認できない』方向。ただしユーザー明示指定のため受容済みtrade-off。",
+     "fix": "doc文言を実体に整合(『郵便番号検索の入口』『検索手段URL』)。受容済みsmellとして記録(PASSを妨げない)。", "auto_fixable": false}
+  ],
+  "reusable_abstractions": [
+    "AI由来値を人間提示するskillは『表示層(見せる値)』と『出所層(検証可能性)』を分離し、表示変更が出所を破壊しない不変条件を持つ(notion-gmail-send RecipientResolution と同型)",
+    "per-origin固定検証URLは値の正本表(md)を唯一SSOTとし複数scriptがimport参照、literal再定義をlintで禁止",
+    "既決invariantに抵触する要件は実装前に撤回/退け/折衷を信念レベルで明示決定しgovernanceログ化(沈黙の上書き禁止)",
+    "DB列削除を伴う要件は加法デプロイ→データ移行→破壊的削除の3相で、forbidden追加はlive列削除完了後に限定(preflight fail-closedと順序整合)"
+  ],
+  "status": "phase3_pending"
+}

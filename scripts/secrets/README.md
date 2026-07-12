@@ -1,0 +1,1 @@
+../../plugins/skill-governance-secrets/scripts/secrets/README.md

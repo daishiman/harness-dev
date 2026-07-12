@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/dispatch-ready-set.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review (capability-build 30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。merge_state() は純関数で入力 graph 不変。producer 側 compute-ready-set.py を tempfile 経由 subprocess で消費し ready_set アルゴリズムを再実装しない (SSOT遵守)。verify_graph_hash_pin() が derive-task-graph.py --print-graph-hash (read-only/FC-4) で周回ごとに pin 再検証し実行中の graph 変更混入を fail-closed (F10)。本 script は task-state.json を書かない read-only。TESTS: test_dispatch_ready_set.py 18 PASS (実 producer subprocess 統合ケース含む)。exit 0/1(mismatch・compute非0)/2(IO) 契約準拠。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/slide-report-modifier.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-modify/prompts/R2-agent-slide-report-modifier.md を CLAUDE_PLUGIN_ROOT=plugins/slide-report-generator 読替で test -f 相当実測(実在・374行/40KB・dangling なし)。本文が委譲する下流参照(references/modification-rules.md=slide 正本 / references/report-modification-rules.md=report 正本、vendor/scripts/render-report.js・verify-slides.js・evaluate-deck.js・validate-print.js、../../scripts/validate-output-mode.py)を owner SKILL.md 追加リソース経由で ls 実測、全て実体存在。schema-conformance: frontmatter name/description(『…部分修正(P4)したいときに使う。』トリガ形・句点付き)/kind=agent/version=0.1.0/owner=xl-skills maintainers/tools=Read,Write,Bash/isolation=fork/model=sonnet/owner_skill=run-slide-report-modify/prompt_ref/prompt_layer=7layer/since/last-audited を確認、adapter tools と prompt SSOT frontmatter tools(Read,Write,Bash)一致。owner-flow: owner skill run-slide-report-modify の R2『局所修正』が Task で本 agent(isolation:fork・Task 非保持で下流は本 skill が dispatch)を起動する設計と完全整合。Constraints の Phase=R2-local-modify は SKILL 追加リソースの manifest phase(R1-identify-target→R2-local-modify→R3-re-evaluate)と一致。placement-invariant: 本文は 8 節の薄 adapter で domain rule/CONST/修正フローを再掲せず、詳細正本は prompts/R2-*.md(ヘッダに『This file is the detailed prompt SSOT; agents/slide-report-modifier.md is a thin Task adapter.』明記)側に置かれ逆転なし。single-responsibility: 既存成果物の指定箇所局所修正(P4)に単一凝集。減点: slide/report 二経路 mode-aware を 1 agent が担うため責務がやや広いが、owner skill が『slide/report 双方修正を additive に』と明示し両経路が同一『局所修正』意図で凝集ゆえ分割不要と判断。lint-agent-prompt-section.py exit0 前提で mechanical:true 妥当。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

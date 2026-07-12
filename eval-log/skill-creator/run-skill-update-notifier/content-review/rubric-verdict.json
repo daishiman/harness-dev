@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-update-notifier",
+    "skill_md_sha256": "6f1ac6546d3c69284bed26935b740db0d0ac6ea50798dc42c94846e8baffdfaa"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator-subagent",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1"],
+    "positive_feedback": [
+      "FM-001..005: name=`run-skill-update-notifier` は `^(run|ref|assign|wrap|delegate)-` prefix・kebab-case・≤60 を満たし、description は『〜とき』trigger を2個含み句点で終止、内部動作詳細(sha256/exit code 等)を含まない(frontmatter 規約 PASS)。",
+      "BD-001/BD-003/PD-002: body に `## Purpose & Output Contract` 厳格一致 heading が存在し、frontmatter 除外 body は97行で300行制約を大きく下回り、冒頭30行に Purpose + Key Rules の禁則(非破壊/no-op)を集約している。さらに dev merge で `## Hook Integration Map` の event/matcher が `UserPromptSubmit (matcher=`.*`)`・`PostToolUse (matcher=`Skill`)` へ是正され、criteria IN2 の tool_name==Skill filter と本文記述が完全一致した(完全性/検証可能性)。",
+      "出力フォーマット規約を `references/output-format.md`、hook 配線案を `references/hook-wiring.md`、ゴールシーク手順を `../run-build-skill/references/goal-seek-paradigm.md`(6 ステップ)へ SSOT 委譲し SKILL 側で再定義しないことで片側更新ドリフトを回避、notifier-check.py の各 mode(cache-status/refresh/notify)が局面カタログに具体コマンドとして列挙され機械検証の入口が明示されている(一貫性/簡潔性/検証可能性)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric/references/rubric.json (rubric_version 1.3.0) の FM/BD/NM/PD/KL 系 rule を kind=run(skill) target に照合。dev 同期 merge 差分(git diff 67425a0 HEAD)は Hook Integration Map の event/matcher 是正と goal-seek 正本参照の『5→6 ステップ』更新の2点のみで、両者を本文実読で検証。high severity rule: FM-001(name prefix+≤60)PASS / BD-001(`## Purpose & Output Contract` 厳格一致 heading)PASS / BD-003(body 97行 ≤300)PASS / NM-001(dir basename==name=`run-skill-update-notifier`)PASS。merge 前は `UserPromptExpansion` が記載されていたが、これは Hook event 規約上 SKILL 本文の説明であり HK-001 の frontmatter event 検査対象外(本スキルは run kind で hook frontmatter を持たない)。merge により本文表記も有効 event 名へ是正され、Key Rules 5 / criteria IN2 との整合がさらに強化された(BD-004 description↔body 整合 PASS)。medium: FM-002/003(trigger 2個・句点)・FM-004(内部詳細非含有)・PD-002(冒頭30行 Purpose+禁則)PASS。low: FM-005・NM-003・PD-001(references/ 存在)・RG-001 PASS。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop 不在ゲートにより無条件 PASS(skip)。criteria IN1(graceful degradation)・IN2(filter+dedup)・IN3(非破壊 read-only+stdlib)・OUT1(責務分割の過不足)はいずれも Purpose/Boundary/Key Rules/Hook Integration Map/Checklist に漏れなく反映(完全性)。high severity 0 のため PASS と判定した。"
+}

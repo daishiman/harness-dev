@@ -1,0 +1,39 @@
+{
+  "run_id": "20260625T055146",
+  "scope_mode": "plugin",
+  "target": {"plugin": "notion-gmail-send"},
+  "thought_method_coverage": {"total": 30, "used": 30, "skipped_with_reason": [],
+    "by_agent": {"a2-logical": 10, "a3-meta": 9, "a4-system": 11}},
+  "phase1_reset": "shared_state.md 生成。reset-observer はハーネス不安定で stall したため親が fresh read を anchor 化(各 analyst は独立 context で再 read=リセット原則を per-agent で担保)。",
+  "convergence_note": "3 analyst が独立 context で『doctor 起動だけが $CLAUDE_PLUGIN_ROOT 作法から取り残された唯一の例外』へ強収束。A2 のみが SSOT 仕様メモの stale(canary見送り/3項APPROVE)を新規発見し、親が python3 で二段確認し実証。",
+  "genuine_findings_fixed": [
+    {"id": "F1", "severity": "inconsistency", "condition": "C3",
+     "title": "doctor 起動が repo相対 `python3 plugins/...` で marketplace install 不動作",
+     "location": ["plugins/notion-gmail-send/README.md", "skills/ref-gmail-dwd-setup/SKILL.md", "skills/ref-gmail-dwd-setup/references/setup-guide.md"],
+     "fix": "company-master 確立パターン(チャット一次=Claude が $CLAUDE_PLUGIN_ROOT 解決 / clone相対は補足 / パス免責注記)を3 doc に伝播。$CLAUDE_PLUGIN_ROOT は素ターミナル未定義の事実も明記。",
+     "auto_fixable": true},
+    {"id": "F2", "severity": "inconsistency", "condition": "C3,C4",
+     "title": "実装SSOT(仕様と検証メモ)が canary見送り・3項APPROVE のまま stale(実装は canary採用・4項nonce必須)",
+     "location": ["doc/run-notion-gmail-send-仕様と検証メモ.md:36,138,157,316,318-321"],
+     "fix": "APPROVE を4項 `<確認語>` 付きへ統一(L36/138/157)。§14 決定ログに 2026-06-25 の canary採用(dry-run限定方式)+nonce追加(S-F1)の推移注記を追加し、歴史を保持しつつ現状と整合。全SKILLが source 依存する SSOT の断線を解消。",
+     "auto_fixable": true},
+    {"id": "F3", "severity": "smell", "condition": "C2,C3",
+     "title": "README/ref の config 配置語彙が clone前提『repo-root』で marketplace ユーザに不明 + TL;DR に doctor 事前確認導線なし",
+     "location": ["plugins/notion-gmail-send/README.md:13,54", "TL;DR step2", "skills/ref-gmail-dwd-setup/SKILL.md:59", "skills/ref-gmail-dwd-setup/references/setup-guide.md:89"],
+     "fix": "config 配置を『作業フォルダ＝$CLAUDE_PROJECT_DIR(clone開発者は repo-root)』へ語彙統一(README+ref2)。探索順も明記。TL;DR step2 に『Claude に doctor で確認して』を追加し live-send 前の早期検出導線を新設。",
+     "auto_fixable": true}
+  ],
+  "confirmed_resolved_no_change": [
+    {"title": "大量送信 canary(焦点②)", "evidence": "build_plan.py:77,115-117 で --canary/--limit 実装済。承認は限定後 plan_hash に束縛。Goodhart回避でコード不変。"},
+    {"title": "quota安全停止+reserved自動再開", "evidence": "send_campaign.py:215-221 exit3+mark_reserved。README:132/160 と整合。"},
+    {"title": "nonce/content-dedup/SendOutcomeUnknown 等コア安全", "evidence": "pytest 97 passed、.py sha256 不変。前回 C1-C4 PASS の堅牢実装を維持。"}
+  ],
+  "verdict": {"矛盾なし": "PASS", "漏れなし": "PASS", "整合性あり": "PASS", "依存関係整合": "PASS"},
+  "approver": "independent general-purpose subagent → APPROVE",
+  "deferred_smell": [
+    "send_campaign.py:19 docstring が3項APPROVE表記(コード・実引数/照合は4項で正・指摘のみ)。コード sha256 不変維持のため未修正。",
+    "eval-log/elegant-review/{verdict,findings,shared_state}.json は前 run の stale(SSOT が『正本でない』と従属させており C1 非ブロッカー)。",
+    "doctor を slash command/skill へ昇格すれば抽象レベル不一致が根治(意味変更ゆえ auto_fixable=false・本 run scope 外)。",
+    "company-master 強推奨の『文書層 repo相対コマンド検出 lint』未配線。CI 追加で再発防止。"
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "version": "1.0",
+  "purpose": "run-elegant-review の収束判定ポリシー。正負フィードバック両輪 + 解像度3層 + 安全弁の3要素で構成する。本ファイルは有界反復 + 正負フィードバックの数値正本 (SSOT)。有界反復は5つの別ループ (goal-seek 手順反復=5 / content-review inner 再評価=3 / outer 再評価=3 / live-trial 実走 acceptance / iter-improve 改善反復=5) に分かれ、一意な定義は loop_bounds を見る (同名 'inner' の 3 と 5 を混同しない。新ループは位相語 inner/outer でなく機能語 acceptance/improve で呼ぶ)。各所はここを参照する (重複宣言禁止)。",
+  "resolution_layers": {
+    "L1_condition_pass_fail": "C1-C4 の PASS/FAIL (4bit)",
+    "L2_paradigm_score": "各C条件 0.0-1.0 + 30思考法 0.0-1.0 (約30bit)",
+    "L3_delta_vector": "周回間のΔベクトル (正/負 両方向で約60bit)"
+  },
+  "negative_feedback": {
+    "description": "問題検出と修正で品質ラインに到達させる方向のループ",
+    "detector_outputs": [
+      "C1-C4 違反項目",
+      "30思考法での破綻箇所",
+      "rubric低スコア項目"
+    ],
+    "thresholds": {
+      "all_conditions_score_min": 0.85,
+      "delta_findings_count_max_ratio": 0.20,
+      "no_regression": true
+    }
+  },
+  "positive_feedback": {
+    "description": "良点抽出と横展開で設計DNAを蓄積する方向のループ。Phase A-J実装で欠落していた成分",
+    "amplifier_outputs": [
+      "優れた設計判断 (Phase 単位で抽出)",
+      "再利用可能パターン",
+      "横展開すべき思想 (例: 禁止リストをデータ宣言→lint強制)"
+    ],
+    "extract_granularity": "phase",
+    "store_path": "references/amplified-patterns.json",
+    "thresholds": {
+      "min_amplify_targets_per_iteration": 1,
+      "delta_new_patterns_max": 1,
+      "horizontal_transfer_required": true
+    }
+  },
+  "halt_conditions": {
+    "converged": {
+      "rule": "delta_neg < 0.10 AND delta_pos < 0.10",
+      "status": "complete",
+      "description": "もう減らす問題も、増やす良点もない状態"
+    },
+    "diverged": {
+      "rule": "delta_neg increases for 2 consecutive iterations",
+      "status": "incomplete",
+      "action": "human_escalate",
+      "description": "問題が減らず増えている。改善方針自体に欠陥"
+    },
+    "max_iterations_reached": {
+      "rule": "iteration_count >= 3",
+      "status": "incomplete",
+      "action": "human_review",
+      "require_human_decision": true,
+      "log_remaining_findings": true,
+      "description": "安全弁。到達時は失敗扱い (force_pass禁止)。Goodhart罠回避"
+    }
+  },
+  "admission_control": {
+    "rule": "対象 SKILL.md の skill_md_sha256 が直近 verdict と一致するなら評価を skip",
+    "purpose": "無変更評価のトークン浪費を入口で抑止 (逆説: 回さない判断を最初に下す)",
+    "overridable_by": "--force-review"
+  },
+  "loop_bounds": {
+    "_note": "有界反復は5つの別ループに分かれ、うち2つはたまたま上限3。同名 'inner' の混同を避けるためここで一意に定義し、新ループは位相語 (inner/outer) でなく機能語 (trial_acceptance / iter_improve) で命名する。",
+    "goal_seek_inner": {
+      "param": "inner_max_loops",
+      "value": 5,
+      "scope": "goal-seek 手順反復 (手順生成→実行→検証→Anchor の周回)。AI が文脈から都度手順を導出する内ループ。",
+      "consumed_by": ["goal-seek-paradigm.md", "build-flags.schema.json#/properties/with_goal_seek/properties/max_loops"]
+    },
+    "content_review_inner_reeval": {
+      "param": "inner_loop.max_iterations",
+      "value": 3,
+      "scope": "content-review の inner 評価→改善→再評価 周回 (criteria[loop_scope=inner] を満たすまで)。",
+      "consumed_by": ["build-flags.schema.json#/properties/feedback_contract/properties/inner_loop", "content-review-protocol.md ループ分類表 Inner 行 上限列"]
+    },
+    "content_review_outer_reeval": {
+      "param": "max_iterations",
+      "value": 3,
+      "scope": "content-review outer / elegant-review の 4条件 再評価 周回 (本ファイル halt_conditions と同値)。",
+      "consumed_by": ["build-flags.schema.json#/properties/feedback_contract/properties/outer_loop", "本ファイル halt_conditions.max_iterations_reached"]
+    },
+    "trial_acceptance": {
+      "params": {
+        "nudge_max": 2,
+        "stall_limit_s": 600,
+        "hard_cap_s": 7200
+      },
+      "units": "nudge_max=回 / stall_limit_s=秒 / hard_cap_s=秒 (suffix _s は秒)",
+      "scope": "live-trial の実走 acceptance 周回。nudge_max=無応答時の催促上限回数、stall_limit_s=transcript 無進行で STALL 判定するまでの秒数、hard_cap_s=1 trial の絶対打切り秒数 (超過は verdict=BLOCKED で fail-closed)。",
+      "consumed_by": ["run-skill-live-trial"]
+    },
+    "iter_improve": {
+      "params": {
+        "max_iter": 5,
+        "batch_per_iter_max": 2,
+        "parallel_agents_default": 3,
+        "score_threshold_default": 90
+      },
+      "units": "max_iter=周回 / batch_per_iter_max=件 / parallel_agents_default=体 / score_threshold_default=点 (0-100)",
+      "scope": "iter-improve の eval帰属 改善→評価 反復。batch_per_iter_max=1周回で触る改善項目数の上限 (INVARIANT 5 の 1-2件/iter)、parallel_agents_default=独立評価 agent の既定数、score_threshold_default=収束とみなす既定スコア閾値。",
+      "consumed_by": ["run-skill-iter-improve"]
+    }
+  },
+  "parameters": {
+    "max_iterations": 3,
+    "inner_max_loops": 5,
+    "delta_threshold": 0.10,
+    "rubric_min_score": 4
+  },
+  "anti_patterns": [
+    "max_iterations到達を成功扱いにする (Goodhart罠)",
+    "負フィードバックのみ運用 (防衛的になり加点を取りに行かない)",
+    "L1 (4bit) のみで収束判定 (勾配が見えず振動を検出できない)",
+    "正フィードバック抽出を細粒度 (パラダイム単位) にする (冗長で維持不能)",
+    "evaluator緩和で score を通す (採点mode/threshold/採点対象/評価方法の易化 = PASS詐欺。手段を問わず禁止)",
+    "score急上昇 (+10pt超) を独立判定なしで採用する (generator改善由来か evaluator緩和由来かを別個体 fresh agent が判定するまで採用禁止)"
+  ]
+}

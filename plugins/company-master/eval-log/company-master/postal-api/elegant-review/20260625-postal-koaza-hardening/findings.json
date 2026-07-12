@@ -1,0 +1,104 @@
+{
+  "run_id": "20260625-postal-koaza-hardening",
+  "target": {"plugin": "company-master", "skill": "postal-api", "scope_mode": "plugin"},
+  "origin": "ユーザー報告: 山形県鶴岡市北京田字下鳥ノ巣23番地1 の小字付き住所で日本郵便APIが404→郵便番号が取れない。町域『北京田』まで削れば 997-0053。committed _town_variants で本体は解決済。本レビューは未コミット第二波(MAX除外/validate厳格化/docs同期)の独立検証。",
+  "thought_method_coverage": {
+    "total": 30,
+    "used": [
+      "批判的思考", "演繹思考", "帰納的思考", "アブダクション", "垂直思考",
+      "要素分解", "MECE", "2軸思考", "プロセス思考", "why思考",
+      "メタ思考", "抽象化思考", "ダブルループ思考", "ブレインストーミング", "水平思考",
+      "逆説思考", "類推思考", "if思考", "素人思考",
+      "システム思考", "因果関係分析", "因果ループ", "トレードオン思考", "プラスサム思考",
+      "価値提案思考", "戦略的思考", "改善思考", "仮説思考", "論点思考", "KJ法"
+    ],
+    "skipped_with_reason": []
+  },
+  "paradigm_findings": [
+    {
+      "id": "CORE-01",
+      "severity": "inconsistency",
+      "methods": ["演繹思考", "メタ思考", "因果関係分析", "why思考"],
+      "location": "postal_api.py:403 + enrich_company.py:110-114",
+      "claim": "3エージェント独立確証(true positive)。_town_variants の i>=1 が全て pattern='structured_town_trimmed' で、enrich の note_attempt が (field,source,pattern) dedup するため、大字+小字の4バリアントで hit が先行 miss に潰される。docs/コメント(enrich L42-43, data-sources L30, SKILL L75)の『japanpost sub-attempts 全件保持』と矛盾。値(997-0053)は postal_api 内部 early-return で正しく確定=純観測性バグ。",
+      "evidence": "実行検証済: lookup_postal('山形県鶴岡市大字北京田字下鳥ノ巣1') → attempts=[pref_city_town:miss, town_trimmed:miss, town_trimmed:miss, town_trimmed:hit], value=997-0053。note_attempt 転記後=[pref_city_town:miss, town_trimmed:miss] (hit 消失)。",
+      "auto_fixable": true
+    },
+    {
+      "id": "CORE-02",
+      "severity": "omission",
+      "methods": ["批判的思考", "素人思考", "改善思考"],
+      "location": "tests/test_company_master.py:1648-1676",
+      "claim": "回帰テスト test_enrich_preserves_all_japanpost_sub_attempts は4 attempts を全て distinct pattern で手作りし、実 _town_variants が生む『同一 pattern 複数』経路を踏まないため CORE-01 を構造的に検出不能。テストが実装の生成しない理想形を検証=回帰ガード無効。これがバグをすり抜けさせた根因。",
+      "evidence": "L1657-1666 stub patterns=[pref_city_town, town_trimmed, freeword, prefix_match] 全 distinct。実経路は town_trimmed×3。",
+      "auto_fixable": true
+    },
+    {
+      "id": "FIX-DECISION",
+      "severity": "smell",
+      "methods": ["垂直思考", "トレードオン思考", "仮説思考", "2軸思考"],
+      "location": "enrich_company.py:254-267 (transcription block)",
+      "claim": "修正案を4候補で評価。C1(pattern連番化)=pattern語彙churn・既存テスト2本破壊・設計意図(後方互換)違反。C2(note_attempt dedup免除)=cross-pass で japanpost miss 二重記録(2パス目postal再照会で累積)。C3(town を identity key 追加)=note_attempt 汎用契約を全field侵食・3箇所churn。C4(冪等スナップショット置換)採用=japanpost postal attempts は1呼び出しの完結スナップショットゆえ enrich で既存 japanpost postal 行を除去→verbatim extend。within-pass hit保持・cross-pass重複なし・pattern据置・note_attempt汎用維持・『全件保持』literally真。副産物: note_attempt の MAX除外(L113)が不要化し japanpost 特例を transcription 1箇所へ集約。",
+      "evidence": "C2 の cross-pass: enrich L236 が前パス attempts 引継→pass2 で postal miss 時 lookup 再実行→dedup撤廃で再append。C4 は snapshot 置換で冪等。test L1648 は distinct pattern stub なので C4 でも verbatim extend で green 維持。",
+      "auto_fixable": true
+    },
+    {
+      "id": "COMPAT-01",
+      "severity": "smell",
+      "methods": ["システム思考", "因果ループ", "要素分解"],
+      "location": "validate_company_master.py:94-101,261-301 / backfill.py:297-317",
+      "claim": "validate 厳格化(postal=japanpost必須/確度=公的データ取得/固定URL・FIELD_ALLOWED_ORIGINSからuser_input除去)の後方互換波及は安全。backfill は既存行を直接 re-validate せず enrich が source_by_field を必ず再生成した record を validate するため、postal origin は常に japanpost。enrich は postal を必ず空欄起点で derive し user_input で乗る正当経路は存在しない=除去は無害かつ防御的多層化(過剰制約でない)。因果ループ(退避自己強化)も形成しない。",
+      "evidence": "backfill.py:297-317 実Read。enrich L225 postal空起点・L255-274 japanpost のみ書込。validate L264-268+L279 で二重ガード。",
+      "auto_fixable": false
+    },
+    {
+      "id": "DEFER-01",
+      "severity": "smell",
+      "methods": ["ダブルループ思考", "戦略的思考"],
+      "location": "data-sources.md tier表 / FIELD_ALLOWED_ORIGINS[postal_code]",
+      "claim": "[deferred] gBizINFO レスポンスに郵便番号フィールドが含まれるなら tier0=gBizINFO postal 直取りで逆引き(脆い形態素処理)の発火頻度を下げられる。確度上限/検証URL規約の再設計を伴うため別タスク。",
+      "auto_fixable": false
+    },
+    {
+      "id": "DEFER-02",
+      "severity": "smell",
+      "methods": ["ブレインストーミング", "if思考"],
+      "location": "postal_api.py:_town_variants / _strip_banchi",
+      "claim": "[deferred] 見落とし住所クラス: 複数字(○○字△△字□□で2字目残存)/京都通り名(四条通寺町東入)/漢数字丁目/無番地。いずれも誤値でなく空欄縮退クラス(非対称コスト原則は保つ)で再現率の穴。negative-case ハーネスで『悪化させないこと』を先に保証する方針。",
+      "auto_fixable": false
+    },
+    {
+      "id": "DEFER-03",
+      "severity": "smell",
+      "methods": ["逆説思考"],
+      "location": "postal_api.py:pick_best L350-353",
+      "claim": "[deferred] 誤値非混入は zip収束依存で town identity 非依存。variant 削りすぎが別町域名に一致し zip 偶然収束する理論的隙。pick_best に『採用 town が元 town の包含関係』ゲートを足せば構造二重化できる。実害確証なし(smell)。",
+      "auto_fixable": false
+    },
+    {
+      "id": "RELEASE-01",
+      "severity": "smell",
+      "methods": ["論点思考", "戦略的思考", "価値提案思考"],
+      "location": "plugin.json version / リリース導線",
+      "claim": "[follow-up] ユーザーはインストール済み 0.1.0(修正前)を踏んだ=worktree との乖離が現場失敗の真因。コード修正後 version bump + PR で配布しないと価値が届かない。SKILL.md 変更時は content-review verdict を独立 SubAgent で現 SHA genuine 再生成(MEMORY キャリブレーション)。",
+      "auto_fixable": false
+    }
+  ],
+  "verdict_pre_fix": {
+    "矛盾なし": "FAIL",
+    "漏れなし": "FAIL",
+    "整合性あり": "FAIL",
+    "依存関係整合": "PASS"
+  },
+  "verdict_post_fix": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS",
+    "approver": "独立 SubAgent (proposer≠approver) APPROVE",
+    "tests": "107 passed / 0 failed",
+    "core_proof": "実 lookup_postal 駆動で修正前 HIT=0 → 修正後 HIT=1・value=997-0053・cross-pass 非重複"
+  },
+  "decided_fix": "C4 冪等スナップショット置換。enrich の postal transcription で既存 japanpost postal attempts を除去→postal_api の attempts を verbatim extend。note_attempt の MAX除外(L113)を revert し japanpost 特例を transcription 1箇所へ集約。回帰テスト=同一 pattern miss→hit を enrich 経由で流し hit 保持+cross-pass非重複を assert。docs 3点(enrich docstring/data-sources/SKILL)をスナップショット転記の記述へ同期。",
+  "deferred": ["DEFER-01 gBizINFO postal tier0", "DEFER-02 見落とし住所クラス negative harness", "DEFER-03 pick_best 包含ゲート", "RELEASE-01 version bump+PR+content-review verdict 再生成"]
+}

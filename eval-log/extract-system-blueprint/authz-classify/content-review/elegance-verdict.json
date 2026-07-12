@@ -1,0 +1,27 @@
+{
+  "target": {"plugin": "extract-system-blueprint", "skill": "authz-classify.py", "skill_md_sha256": "1bffe59947f3c0cd0fcbc640988c679cf9210ba0100f34ca70d5e4f68ab77ca4"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-07-11T02:40:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["4conditions", "content_review", "elegant_review.C1-C4"],
+    "positive_feedback": [
+      "焼き込みポリシー SSOT が inventory C12.load_policy と数値レベルで完全一致 (preflight 2 / single 30req/10MiB/3page/5int/6shot/8MiB/interval 2000 / ceiling 18MiB=導出値 / full_site 20/20/200/32MiB/24MiB) し、瞬間負荷レバーは operator-policy でも緩められない (override は related_origins と user 承認付き per-run 予算のみ) 構造が docstring と実装の両方で守られている。",
+      "R6 で根治した full_site 予算矛盾 (32MiB>18MiB ceiling) の解決が実装に正しく落ちている: full_site では total_origin_bytes_ceiling=None + 適用しない旨の note + run_total_bytes_max=fetch 床+screenshot 床、を実走で確認 (ceiling: None)。",
+      "BUDGET_NEED_KEYS / get_need_keys() を need→remaining-key 写像の唯一定義として公開し C08 が import 共有する複製排除設計、および deny 時も granted=false・remaining={denied:true} の budget を必ず書いて監査可能にする設計が良い。scope 分類は判定不能=excluded (undecidable_unparseable) の fail-closed を実走で確認。"
+    ],
+    "negative_feedback": [
+      "[low/smell] decide() の `operator_attested_allow_over_unknown` (decision_override=allow が robots unknown のみを allow へ昇格・robots/ToS deny は覆せない) は upward_override_requires_user_approval の operator 承認経路として一貫しているが、inventory C12 purpose の「根拠不在・期限切れ・unknownはdenyし」という無条件文言に対し例外条件が inventory 側に明記されていない。挙動は安全側条件付き (deny を覆せない) のため矛盾とまではしないが、inventory 文言との差分として記録する。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "scripts/authz-classify.py 全 784 行を実読。inventory C12 と突合: argv 契約 (--url/--evidence-out/--budget-out/[--operator-policy]/[--crawl-mode single|full_site]/[--discovered-urls]/[--coverage-manifest-in]/[--scope-manifest-out]) 一致・exit 0=allow / 1=deny(unknown 含む認可外) / 2=usage 一致・stdlib only・network は preflight robots 1 リクエストのみ (offline+stub で決定論)・write-scope は evidence/budget/scope-manifest のみ。AuthzEvidence は robots 応答/ToS 判断根拠/認証要否/rate policy/取得時刻/policy version/ttl(86400)/expires_at を固定し、decide() の優先順位 (期限切れ deny > operator hard deny > robots 制限 > ToS deny > 認証要求 deny > unknown fail-closed) を確認。offline stub fixture で実走し allow (exit0)・deny (exit1)・stub 不在 offline=unknown を genuine 確認。scope 分類は same_origin/approved_related_origin=in_scope、social/ad/tracker/affiliate/utm 付き外部/external_origin/undecidable=excluded+reason を実走確認 (same-origin の utm 付き URL は in_scope=契約どおり外部リンクのみ utm 除外)。crawl_profile は single (入口+max_pages 有界) / full_site (pages_per_run 有界 this_run/deferred 分割・multi_run_resume・pending∪未分類 discovered 再投入・per-run 引上げは approved_by_user 必須) を build_scope_manifest 実装と実走で確認。C08/C09 の消費 (import 共有) と evidence/budget shape が一致。4 条件充足で PASS。"
+}

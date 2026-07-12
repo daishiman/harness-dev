@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "clients.json",
+  "title": "クライアントナレッジベース",
+  "description": "取引実績のある企業・個人の情報を蓄積し、将来の契約作成に活用",
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-20",
+  "clients": {
+    "nikko-corp": {
+      "id": "nikko-corp",
+      "name": "日工株式会社",
+      "nameReading": "ニッコウカブシキガイシャ",
+      "shortName": "日工",
+      "entityType": "corporation",
+      "weight": 1.0,
+      "searchKeywords": ["日工", "ニッコウ", "NIKKO", "明石", "建設機械"],
+      "basicInfo": {
+        "address": "兵庫県明石市大久保町江井島1013番地の1",
+        "prefecture": "兵庫県",
+        "city": "明石市",
+        "representative": {
+          "name": null,
+          "title": "代表取締役"
+        },
+        "capitalStock": null,
+        "establishedDate": null,
+        "industry": "建設機械製造",
+        "employeeCount": null,
+        "website": null
+      },
+      "contractHistory": [
+        {
+          "contractId": "nikko-2026-001",
+          "contractDate": "2026-02-02",
+          "contractType": "取引基本契約書",
+          "contractFormat": "electronic",
+          "businessType": "ai-consulting",
+          "services": [
+            {
+              "name": "AIコンサルティング業務",
+              "description": "AI活用戦略の立案支援、AI導入に関する助言・提案を行う。月次定例会議、随時相談対応を含む。",
+              "contractType": "quasi-mandate"
+            },
+            {
+              "name": "AI研修業務",
+              "description": "生成AI（ChatGPT、Claude等）の活用方法に関する研修の企画・実施を行う。研修資料の作成、講師派遣を含む。",
+              "contractType": "quasi-mandate"
+            },
+            {
+              "name": "プロンプト制作業務",
+              "description": "業務効率化のためのプロンプト（AIへの指示文）の設計・作成を行う。納品物はプロンプト一式とする。",
+              "deliverables": "プロンプト一式",
+              "contractType": "contract-for-work"
+            }
+          ],
+          "paymentTerms": {
+            "closingDay": "月末",
+            "paymentDay": "翌月末",
+            "invoiceDeadline": "翌月10日",
+            "transferFee": "orderer"
+          },
+          "term": {
+            "duration": "1年間",
+            "autoRenewal": false,
+            "renewalNoticePeriod": null
+          },
+          "inspection": {
+            "period": "7日以内",
+            "deemedAcceptance": true
+          },
+          "liability": {
+            "aiLiabilityScope": "direct-negligence",
+            "damagesCap": "contract-amount",
+            "warrantyNoticePeriod": "60日"
+          },
+          "jurisdiction": "神戸地方裁判所",
+          "specialNotes": [
+            "電子契約形式",
+            "AI利用条項あり（ChatGPT、Claude、Gemini）",
+            "AI費用は各自負担",
+            "AI損害賠償は直接的な過失に限定+第11条参照",
+            "著作者人格権不行使（ポートフォリオ例外あり）",
+            "秘密保持義務3年間",
+            "損害賠償上限は報酬額",
+            "自動更新なし",
+            "任意解除は双方向（30日前通知）",
+            "フリーランス新法第3条対応"
+          ],
+          "negotiationHistory": {
+            "date": "2026-02-02",
+            "counterparty": "日工株式会社 法務課",
+            "totalItems": 13,
+            "acceptedAsIs": ["①印紙", "⑤支払期日", "⑦秘密保持", "⑧除外事由", "⑬電子契約"],
+            "acceptedWithConditions": [
+              {
+                "item": "②業務内容",
+                "condition": "検収規定追加、フリーランス新法対応"
+              },
+              {
+                "item": "③AI免責",
+                "condition": "過失を受入、ただし「直接的な」追加+第11条参照"
+              },
+              {
+                "item": "④帰責性",
+                "condition": "受入、ただし「成果物に関して」を追加"
+              },
+              {
+                "item": "⑥著作権",
+                "condition": "人格権不行使を受入、ポートフォリオ例外を追加"
+              },
+              {
+                "item": "⑨契約不適合",
+                "condition": "30日→60日を受入"
+              },
+              {
+                "item": "⑩契約期間",
+                "condition": "自動更新削除を受入、追加作業条項を追加"
+              },
+              {
+                "item": "⑪⑫解除",
+                "condition": "任意解除を双方向に変更、精算条項追加、信頼関係喪失を具体化"
+              }
+            ],
+            "documentPath": "05_Project/AIコンサル/日工株式会社/取引基本契約書作成/法務課修正依頼_分析レポート.md"
+          },
+          "documentPath": "05_Project/AIコンサル/日工株式会社/取引基本契約書作成/取引基本契約書（変更後）.md"
+        }
+      ],
+      "preferences": {
+        "preferredJurisdiction": "神戸地方裁判所",
+        "preferredPaymentCycle": {
+          "closingDay": "月末",
+          "paymentDay": "翌月末"
+        },
+        "notes": "建設機械メーカー。AI導入に積極的。"
+      },
+      "contacts": [],
+      "createdAt": "2026-01-20",
+      "updatedAt": "2026-01-20"
+    }
+  },
+  "contractors": {
+    "manjumoto-daishi": {
+      "id": "manjumoto-daishi",
+      "name": "万壽本大嗣",
+      "nameReading": "マンジュモトダイシ",
+      "entityType": "individual",
+      "weight": 1.0,
+      "searchKeywords": ["万壽本", "マンジュモト", "大嗣"],
+      "basicInfo": {
+        "address": "兵庫県明石市硯町3-6-31",
+        "prefecture": "兵庫県",
+        "city": "明石市",
+        "businessName": null,
+        "invoiceRegistration": null
+      },
+      "specialties": [
+        "AIコンサルティング",
+        "プロンプトエンジニアリング",
+        "生成AI研修"
+      ],
+      "aiServices": ["ChatGPT", "Claude", "Gemini"],
+      "createdAt": "2026-01-20",
+      "updatedAt": "2026-01-20"
+    }
+  },
+  "metadata": {
+    "totalClients": 1,
+    "totalContractors": 1,
+    "updatePolicy": "契約作成・更新時に随時追加・更新",
+    "retentionPeriod": "契約終了後5年間"
+  }
+}

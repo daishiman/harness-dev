@@ -1,0 +1,363 @@
+{
+  "version": 1,
+  "target": {
+    "type": "proposal",
+    "path": "plugins/skill-creator",
+    "reviewed_at": "2026-07-02T21:20:00+09:00"
+  },
+  "loop_count": 1,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Read確認: merged-directive.md ルール3が『機械的一括置換ではなく各出現箇所の概念判定』と明記し、『改名=文字列置換』という枠組みはユーザー自身が既に棄却済み。作業の本質は改名でなく『語彙リファクタリング (概念→表現の再割当て)』である",
+        "概念判定は LLM 判断であり機械検証不能。repo 確立済みの二層分離原則 (再現性は仕組みで担保・内容判断に AI 自由度) に照らすと、判定結果を仕組み側 (台帳) に固定しない限り 5704+80 箇所の判定は再現不能・監査不能になる",
+        "Read確認: 意味論境界ルールの正本が eval-log/skill-creator/plugin-wide/elegant-review/20260702T203429-harness-rename/merged-directive.md という per-run ワークスペース (履歴凍結層) に置かれており、恒久 governance 文書 (glossary/CONVENTIONS) に未昇格。加えて eval-log/coverage のファイル名・過去 run パス・git 履歴は書換え不能/不適な凍結層として残る"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "完了条件『抜け漏れなく追従』と2つの構造的事実が矛盾したまま: (a) 凍結層 (eval-log 過去run・git履歴・coverageファイル名) の旧名は書換え不能/不適で grep-zero は原理的に未達、(b) 概念判定の結果 skill 語が合法的に大量残存するため『旧名残存=漏れ』という検査自体が成立しない。層別+概念別の完了条件が宣言されていないと、レビュー時に達成/未達を判定できない",
+          "recommended_intervention": "完了条件を再定義して宣言する: 固有名3種 (skill-creator/skill_creator/スキルクリエイター) =凍結層+別実体 (doc/参考Skill/skill-creator) を除き0件 (機械検証)、一般語 skill/スキル=判定台帳に全境界例の判定と根拠が記録済み (監査可能性で検証)、凍結層=CHANGELOG に凍結宣言。境界ルール自体を merged-directive (揮発層) から glossary/CONVENTIONS (恒久層) へ昇格する",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "eval-log/skill-creator/plugin-wide/elegant-review/20260702T203429-harness-rename/merged-directive.md",
+            "line": 14
+          }
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "語彙リファクタリングのゴールは grep-zero ではなく『機械検証可能な固有名層の完了+監査可能な概念判定台帳の完備+凍結層の凍結宣言』の三点セットである。概念判定 (AI 自由度側) を導入した瞬間、その判定記録を仕組み側に固定する台帳が再現性の必要条件になる。判定基準の正本は per-run ワークスペースでなく恒久 governance 文書に置く",
+      "template_variables": [
+        "{{proper_noun_set}}",
+        "{{general_term_set}}",
+        "{{judgment_ledger}}",
+        "{{frozen_layers}}",
+        "{{boundary_rule_canonical_home}}"
+      ],
+      "reuse_surface": "governance-log",
+      "negative_cases": [
+        "固有名のみで一般語判定を伴わない単純改名では判定台帳は不要で層別宣言だけでよい",
+        "境界ルールが1回限りの作業指示で将来の再判定が発生しない場合は恒久層への昇格は過剰 — 本件は改名後も新規文書が境界判定を要するため該当しない"
+      ],
+      "re_audit_trigger": "改名完了宣言後に境界例の再判定要求 (新規ファイルの skill/harness 語選択の迷い) が発生した時、または凍結層以外で固有名3種が grep ヒットした時"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "確定境界を置換面の抽象化に適用すると2層に分離できる: (a) 固有名3種 (skill-creator 5704箇所 / skill_creator 80箇所 / スキルクリエイター 6箇所) は plugin 実体への参照でありほぼ全数が『ハーネス総体』概念=機械置換可能。除外集合は doc/参考Skill/skill-creator (Grep確認済みの別実体・同名参考資産) と凍結 eval-log のみ。(b) 一般語 skill/スキル のみが概念判定対象で、ルール3の『各出現箇所の概念判定』は実質この層に縮退できる",
+        "Grep確認: 意図的リテラルは判定不要で全て機械層 — NEVER_DISTRIBUTE (validate-plugin-completeness.py:64) の要素・SELF_DOGFOODING_PLUGIN (feedback_contract_ssot.py:149 正本+vendored の2箇所、lint-vendored-ssot.py:29,37 が byte 一致強制)・upstream-pins の path 6本は全て固有名=ハーネス総体概念で値切替が一意に決まる",
+        "Grep確認: scripts/lint-feedback-protocol.py 等の plugin_dir.name 動的導出層は改名に自動追従するため作業対象外 — 置換面は『動的導出 (0作業)/固有名 (機械置換+除外集合)/一般語 (概念判定)』の3層に整理できる"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "variable-abstraction",
+          "description": "ルール3を字義通り『全出現箇所を個別判定』と読むと 5704+80 箇所の LLM 判定になり非現実的かつ判定揺れを量産する。固有名層は概念判定不要 (機械置換+除外集合) である事実が directive に明文化されておらず、実施 agent が固有名まで個別判定したり、逆に一般語まで機械置換したりする実装ブレの余地がある",
+          "recommended_intervention": "置換面の3層分類 (動的導出=作業なし/固有名=機械置換+除外集合 [doc/参考Skill/skill-creator, 凍結eval-log]/一般語=パターン規則+残余の概念判定) を実施計画の正本に明記する。一般語層はまずパターン規則 (run-skill-* 等の単一skill系prefix=維持、plugin自己言及文=harness化) で大半を機械分類し、残余のみ台帳付き個別判定にする",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "scripts/feedback_contract_ssot.py",
+            "line": 149
+          }
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "『出現箇所ごとの概念判定』という指示は、置換面を『動的導出/固有名/一般語』の3層に分類すると固有名層で機械置換に縮退できる。概念判定 (AI 判断) は一般語層のみに限定し、さらにパターン規則で機械分類→残余のみ個別判定とすることで、判定面積を最小化しつつ二層分離原則 (仕組みで再現性・AI で内容判断) を保つ",
+      "template_variables": [
+        "{{dynamic_derivation_layer}}",
+        "{{proper_noun_layer_with_exclusions}}",
+        "{{general_term_patterns}}",
+        "{{residual_judgment_queue}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "NEVER_DISTRIBUTE のような意図的 fail-closed リテラルを動的導出へ『抽象化』すると存在理由 (フラグ漂流時の砦) が消えるため、3層分類の『動的導出層』へ移してはならず値切替のみ行う",
+        "固有名が別実体 (doc/参考Skill/skill-creator) と字面衝突している箇所は機械置換層から除外集合へ隔離しないと誤置換する"
+      ],
+      "re_audit_trigger": "固有名3種のいずれかを含む新規ファイルが凍結層外に出現した時、または一般語パターン規則で分類不能な新境界例が3件以上溜まった時"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Read確認: run-skill-rename/SKILL.md の教訓 — 不可分セット (ディレクトリ名+frontmatter.name+aliases 同時更新、SKILL.md:97)・git mv 履歴保持 (SKILL.md:103)・aliases による旧名吸収 (SKILL.md:66) — は skill 単位の成文化で、plugin 単位改名 (plugin.json name/CI固定パス/機械層定数/kit名) には未転写",
+        "Grep確認: vendoring 教訓は機械化済み (lint-vendored-ssot.py が正本と vendored の byte 一致を固定パス検証) で、改名時の片側更新は fail-closed 捕捉される。Read確認: upstream-pins.json:3 の『pin bump は該当行の再監査と同一変更』規約も反映済み — 過去教訓のうち機械化された分は今回の安全網として機能する",
+        "repo の二層分離原則 (再現性=仕組み/内容判断=AI 自由度) に照らすと、directive ルール3の概念判定は AI 自由度側であり、この教訓の適用形=『判定結果を台帳という仕組みに固定する』がまだ設計に現れていない"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "skill 層で確立済みの『aliases に旧名を登録して参照切れを防ぐ』教訓に相当する plugin 層の旧名吸収機構が改名設計に無い。repo 外部の旧名参照 (各開発環境のローカル settings・過去チャット・Notion 文書・他 checkout の未コミット作業) が silent dead link 化し、確定境界で作業スコープが精緻化されても旧名の受け皿は依然としてゼロのまま",
+          "recommended_intervention": "plugin 層の旧名吸収を明示設計する: CHANGELOG の改名エントリに旧名→新名対応を機械可読形式で記録し、README に旧名からの案内1行を置く。実体 symlink の併存は二重正本禁止の教訓 (aggregator 物理削除) に反するため採らない。あわせて run-skill-rename の plugin 版教訓 (不可分セット=dir/plugin.json name/機械層定数/kit名/CI paths) を lessons-learned へ成文化する",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/skill-creator/skills/run-skill-rename/SKILL.md",
+            "line": 66
+          }
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "改名は『新名整合』+『旧名吸収』の2値ゴールで設計し、吸収機構は二重正本を生まない形 (機械可読対応表+案内のみ) に限定する。下位層 (skill) で成文化済みの教訓は上位層 (plugin) へ昇格転写してから適用し、AI 判断を導入する工程には必ず対になる仕組み (判定台帳) を敷く — これが二層分離原則のダブルループ適用である",
+      "template_variables": [
+        "{{rename_lessons_source}}",
+        "{{alias_mechanism}}",
+        "{{plugin_level_atomic_set}}",
+        "{{judgment_recording_mechanism}}"
+      ],
+      "reuse_surface": "skill",
+      "negative_cases": [
+        "外部参照が構造的に存在しない未使用 plugin の改名では旧名吸収は不要でノイズになる",
+        "旧名ディレクトリへの実体 symlink 温存は aggregator 削除の教訓 (二重正本化) に反するため吸収機構として採用しない"
+      ],
+      "re_audit_trigger": "plugin 単位の改名が次に発生した時 (教訓転写の有無を確認)、または改名後に旧名参照由来の問い合わせ/エラーが記録された時"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "確定境界を前提に実施方式を再発散 (6案): (A) 単一PR全部入り (固有名+概念判定を一括)、(B) 2相分割 — 第1相=固有名切替PR (git mv+機械層定数+CI paths+kit名、fail-closed lint が全て機械検証)、第2相=語彙整合PR (一般語の概念判定+定義文書)、(C) パターン規則先行 — 判定規則表を先に作り lint 化してから置換、(D) run-skill-rename を run-plugin-rename に拡張し自己適用、(E) 概念判定を SubAgent fan-out で並列化、(F) 定義文書 (glossary/README) 先行PR で語義を確定してから改名",
+        "収束評価: 確定境界により (B) 2相分割の分割線が引けるようになった — name==dir 強制や byte一致 lint 等の fail-closed 連動は固有名層に集中しており、第1相単独で CI 緑にできる。一般語の概念判定は固有名切替と独立に進められる。旧分析での『層分割は lint 跨ぎで不成立』は固有名/一般語の軸なら成立する",
+        "Read確認: merged-directive.md ルール3は判定の実施方法 (誰が・どう記録し・どう検証するか) を規定しておらず、(C) 規則表と (E) 並列判定の組合せ余地が大きい"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "実施方式が未設計のまま: 概念判定の実施主体・記録形式・検証方法と、744ファイル規模PRの滞留/衝突時のロールバック設計、置換作業中に旧名参照が増殖し続ける問題 (本レビュー run 自体が eval-log に旧名パスを生成中) への手当てが検討されていない",
+          "recommended_intervention": "推奨方式 = (F)定義先行 → (B)第1相固有名切替PR (機械検証・最小diff・git mv) → (B)第2相語彙整合PR ((C)パターン規則+残余の台帳付き判定、必要なら(E)並列化) → 掃除 (凍結宣言+deny-old-name lint)。第1相直前に他 worktree/branch の旧名前提作業を確認する freeze window を設ける",
+          "condition_signal": "omission",
+          "location": {
+            "file": "eval-log/skill-creator/plugin-wide/elegant-review/20260702T203429-harness-rename/shared_state.md",
+            "line": 1
+          }
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "語彙リファクタリングは『定義先行 → 機械検証可能層の切替 → 判断層の整合 → 再流入防止』の4拍子に分解する。分割線は『fail-closed lint の連動が閉じる集合』かつ『機械置換/概念判定の境界』に沿ってのみ引ける — この2軸が一致する分割 (固有名/一般語) が最小リスクの分割である",
+      "template_variables": [
+        "{{definition_pr_scope}}",
+        "{{proper_noun_pr_scope}}",
+        "{{vocabulary_pr_scope}}",
+        "{{cleanup_scope}}",
+        "{{freeze_window}}"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "参照箇所2桁以下で概念判定を伴わない改名では4拍子は過剰で単一コミットが正しい",
+        "fail-closed lint が固有名/一般語の両層を跨いで連動する構造 (例: description 文言を assert するテスト) が多い repo では、この分割線は成立せず全部入りPRに戻す必要がある"
+      ],
+      "re_audit_trigger": "第1相PRのオープン期間が数日を超過した時、または第2相の概念判定完了前に第1相由来の CI 赤 (跨ぎ lint の見落とし) が発生した時"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "i18n/翻訳業界の解法移植: 『出現箇所ごとの概念判定』は翻訳業界の用語ベース (term base) +翻訳メモリの問題と同型。用語ベース (この語はこの概念のときこう訳す) を先に確定し、判定済み対を記録して再利用しないと、訳語が担当者間で揺れる。directive ルール1-2 はまさに用語ベースの2エントリであり、境界例を追記していく運用が定石",
+        "DBマイグレーションとの対応が確定境界で変わった: 固有名切替=スキーマ変更 (機械的・一意)、一般語の概念判定=データクレンジング (行ごとの判断・台帳必須) に分離できる。スキーマ変更とデータクレンジングを同一トランザクションに混ぜないのが定石で、2相分割を支持する",
+        "Grep確認: .claude/settings.json:114 の \"skill-creator@xl-skills\": true はクライアント側キャッシュと同型で、repo 内は同一PRで切替可能だが各開発者のローカル別 checkout・別マシンは PR 管理外。Grep確認: marketplace.json に skill-creator エントリ無し (distributable:false) で外部配布契約はゼロ — deprecation window 不要の根拠"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "other",
+          "description": "改名後、各開発環境のローカル .claude/settings.json に残る旧キー skill-creator@xl-skills は dead キーとして無害に残存するが、plugin 未ロードでもエラーが出ない silent failure になる (UserPromptSubmit/PreToolUse 等の hooks が黙って発火しなくなる)",
+          "recommended_intervention": "改名PR説明と README 移行節に『ローカル環境は enabledPlugins キーの旧名→新名切替が必要。旧キーは無害だが plugin は未ロードになる』を明記し、可能なら hook-cache-refresh 等の既存起動経路に旧キー検出の警告1行を追加する",
+          "condition_signal": "smell",
+          "location": {
+            "file": ".claude/settings.json",
+            "line": 114
+          }
+        }
+      ],
+      "score": 0.75,
+      "reusable_abstraction": "概念判定を伴う語彙変更には翻訳業界の用語ベース方式を移植する: 概念→表現の対応表を正本化し、境界例は判定のたびに対応表へ追記して以後の判定を機械化する。identity 変更の方式選定は外部契約の有無で分岐し (契約あり=expand-contract、なし=一括切替可)、クライアント側状態の移行手順明文化は常に必要",
+      "template_variables": [
+        "{{term_base}}",
+        "{{schema_change_scope}}",
+        "{{data_cleansing_scope}}",
+        "{{client_side_state_list}}"
+      ],
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "marketplace 掲載済み plugin には一括切替を適用できず deprecation window が必須",
+        "用語ベース方式は概念が2値で安定している場合に有効 — 概念自体が流動的な設計初期に対応表を固定すると誤った判定を量産する"
+      ],
+      "re_audit_trigger": "harness-creator の distributable フラグ true 化提案が出た時、または用語ベースの境界例追記が月3件を超えて概念境界自体の見直しが必要になった時"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『全部改名した場合 (skill 語も排除)』の検討: run-harness-create は単一 skill 生成なのに総体構築を偽装する誤名になる上、SKILL.md ファイル名・skills/ ディレクトリ・Skill tool は Claude Code プラットフォームの予約語彙で原理的に排除不能。ルール1 (単体スキル=skill 維持) は選択でなくプラットフォーム制約とも一致しており、境界線は恣意でなく安定 — 境界の必要性が逆側から証明される",
+        "『部分改名 (name のみ)』は Grep確認: validate-plugin-completeness.py:127 の manifest.name != directory name 検査が fail-closed 禁止 — 固有名層の不可分性は機械強制済み。一方、確定境界が公認した『語彙レベルの部分改名 (skill 語残存)』には対応する機械検査が存在せず、中間状態 (固有名切替済み・一般語判定未了) の完成度を測る手段が無い",
+        "Read確認: 旧分析で C1 high とした harness 二語義衝突は、ルール4 (既存 harness 語=構築物総体の品質仕様=同系・統合先) で解消。doc/harness-coverage-spec.md:15-16 の対象 artifact 列挙 (scripts/skills/agents/commands/hooks/docs) は実際に構築物総体を指しており、統合の意味論的整合を自分の Read で裏取り済み"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "2値境界 (単体スキル生成 or ハーネス総体構築) では判定できない境界例の判定基準が directive に無い: installers/manifest.json:5 の『メタスキル群一式』(総体を構成する部品集合の呼称)、skill-creator-kit / creator-kit-ci.yml (kit=総体か配布形態か)、ref-skill-glossary (skill 用語集だが harness 用語も収容予定)、run-skill-feedback (単体 skill だが全 plugin へ量産配備される) 等。判定基準なしでは実施 agent 間・PR 間で判定が揺れ、語彙の一貫性 (C3) が確保できない",
+          "recommended_intervention": "境界例の判定 rubric を1条追加する: 『迷ったら参照対象の単位で判定 — 操作/生成の対象が単一 skill なら skill、plugin 総体・Capability 横断なら harness。部品の集合名は harness 側 (例: メタスキル群一式→ハーネス構成部品一式)』。判定した境界例は用語ベース (glossary) に対訳として追記し以後を機械化する",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "installers/manifest.json",
+            "line": 5
+          }
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "境界の妥当性は両極端 (全部改名/改名なし) の帰結で検証する — 全部改名がプラットフォーム予約語で原理的に不可能なら、その境界線は恣意でなく制約由来であり安定している。ただし公認された語彙レベルの部分状態には機械検査が無いため、境界例の判定 rubric と完了の観測手段 (台帳の網羅) を境界ルール自体に同梱する必要がある",
+      "template_variables": [
+        "{{platform_reserved_vocabulary}}",
+        "{{edge_case_list}}",
+        "{{tiebreak_rubric}}",
+        "{{completeness_observable}}"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "境界例が構造的に発生しない (2値が完全排他の) 語彙変更では tiebreak rubric は不要",
+        "プラットフォーム予約語の無い自作語彙同士の入替では『全部改名』も実行可能な選択肢になり、この逆説検証は境界不要という逆の結論を出し得る"
+      ],
+      "re_audit_trigger": "境界例判定が rubric 追加後も agent 間で分裂した時、または Claude Code 側の予約語彙 (SKILL.md/skills/) の仕様変更時"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "prompt-creator との類推: 命名規則『<作る対象物>-creator』は保存され、確定境界により対象粒度の非対称 (prompt=単一 Capability / harness=総体) はむしろ意図された差になった。ただし Grep確認: prompt-creator/plugin-composition.yaml は skill-creator を8箇所参照 (calls/called-by/rubric path/invariant 文中) しており、固有名切替は NEVER_DISTRIBUTE 同居の兄弟 plugin 構成ファイルへ波及する",
+        "過去の同型改名 (notion-gmail-send の skill 3連改名、16ファイル・dangling 0) との差分: あれは機械層焼き込みゼロの plugin 内 skill 改名で、本件は機械層定数+CI 28箇所+upstream-pins 6本+概念判定を伴う語彙リファクタリング — 複雑度クラスが異なり工数/手順の外挿は不可",
+        "Read確認: plugin-dev-planner の references/skill-creator-spec-reflection.md は『plugin 総体の仕様反映』でありハーネス総体概念=ファイル名改名対象 (→harness-creator-spec-reflection.md)。upstream-pins.json:3 の purpose 文が matrix_rows の参照先としてこのファイル名を自然言語で自己言及しており、pins の path 配列 (checker が fail-closed 検知) と違い purpose 文とファイル名 rename の同期は機械検知されない"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "plugin-dev-planner 側で skill-creator-spec-reflection.md の (a)ファイル名 (b)本文44箇所 (c)upstream-pins.json purpose 文の自然言語参照 (d)pin 6本の path+sha256 が四つ巴で連動する。(d)のみ check-upstream-pins.py が fail-closed 検知し、(a)(b)(c) は機械検知ゼロ。確定境界の適用レベルに『ファイル名』が明示されたため (a) は必須作業になったが、grep 置換では git mv が漏れて『新名本文+旧名ファイル名』の不整合が残りやすい",
+          "recommended_intervention": "改名チェックリストに『ファイル名自体に固有名を含むファイルの git mv』を独立項目化し、skill-creator-spec-reflection.md → harness-creator-spec-reflection.md の rename・pins purpose 文・matrix_rows 参照・plugin-dev-planner SKILL.md 18箇所の更新を単一コミットで束ねる。pin bump 規約 (該当 matrix 行の再監査と同一変更) に従い plugin-dev-planner 側の再監査も同梱する",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json",
+            "line": 3
+          }
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "改名先例からの類推の適用条件は『機械層焼き込みの有無と形態』および『概念判定の有無』の一致である。焼き込みゼロ・判定なしの先例を、焼き込みあり・判定ありの案件へ外挿しない。『ファイル名自体が識別子を含む』ファイルは本文置換と別種の操作 (git mv+自然言語参照の同期) を要するため、チェックリストで独立項目に分離する",
+      "template_variables": [
+        "{{precedent_case}}",
+        "{{mechanical_binding_diff}}",
+        "{{files_named_after_old_name}}",
+        "{{natural_language_refs}}"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "notion-gmail-send の skill 改名 (機械層焼き込みゼロ・16ファイル) を本件の工数/手順見積りの根拠に使うことはできない",
+        "prompt-creator との『同じ creator 系』類推は命名規則の保存までで、対象粒度 (単一 Capability vs 総体) の設計判断には適用できない"
+      ],
+      "re_audit_trigger": "upstream-pins.json に pin が追加された時、またはファイル名に plugin 固有名を含む新規ファイルが plugin 境界を跨いで作成された時"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best ケース: 確定境界により deny-old-name lint の成立条件がむしろ改善 — 一般語 skill は合法のまま残るため denylist は固有名3種 (skill-creator/skill_creator/スキルクリエイター) のみでよく、誤検知面が最小。既存 fail-closed lint 網 (byte一致・name==dir・NEVER_DISTRIBUTE・pins sha) が固有名層の漏れを CI 捕捉する",
+        "worst ケース (依存10倍): upstream-pins.json:3 の『pin bump=該当行再監査と同一変更』規約により、pin 型参照が10 plugin に増殖すると改名PRが10 plugin 分の再監査を同時要求し事実上不可能化。5704箇所という現在値は改名コストが放置時間に線形増加する実証で、実施するなら今が最安",
+        "edge ケース (概念判定の揺れ): 判定台帳なしで第2相 (語彙整合) を進めると、並行 worktree・別 session の agent が同一境界例 (例: メタスキル群一式) を別判定し、merge 後に同一概念が2表記混在する。凍結層 (eval-log 過去run) と別実体 (doc/参考Skill/skill-creator) を allowlist 化しないと lint も誤検知する。また本レビュー run 自体が旧名パス (eval-log/skill-creator/...) を生成中で、作業中の旧名増殖は現在進行形"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "改名PRマージ後の旧名再流入と概念判定の flip-flop を禁じる機構が計画に無い。並行 worktree の未コミット作業・停滞ブランチから固有名3種が merge で復活しても現行 lint は検査せず silent に再増殖し、境界例の判定も session 間で揺れて語彙が再分裂する",
+          "recommended_intervention": "改名PRに2つの再発防止を同梱する: (1) 固有名3種の denylist lint (allowlist=凍結 eval-log 過去run・git 履歴・CHANGELOG 改名エントリ・glossary の旧名言及・doc/参考Skill/skill-creator) を governance-check.yml に配線、(2) 境界例判定の用語ベース (glossary 対訳表) を正本化し、新規判定は追記必須にする。これで再流入 (機械) と判定揺れ (語彙) の両輪を封鎖する",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": ".github/workflows/governance-check.yml",
+            "line": 1
+          }
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "改名の完了は『旧名の再流入が機械的に禁じられ、概念判定が台帳で固定された状態』と定義する。denylist lint は境界ルールが一般語を合法化しているほど固有名限定にでき誤検知が減る — 語彙境界の確定は再発防止 lint の実装可能性を高める側に働く。pin 型固定パス参照は改名コストを依存数に対し線形増加させるため、増殖前の早期実施か間接層導入を定期判断する",
+      "template_variables": [
+        "{{best_case_scenario}}",
+        "{{worst_case_scenario}}",
+        "{{edge_case_scenario}}"
+      ],
+      "reuse_surface": "hook",
+      "negative_cases": [
+        "旧名が一般語と字面衝突する場合 (今回の『skill』単体は denylist 不可) は固有名性の高いトークンのみ deny 対象にできる — 一般語まで deny すると誤検知だらけで lint が形骸化する",
+        "allowlist を広げ過ぎる (eval-log 全体除外) と新規 run の旧名パス生成を見逃し再発防止が機能しない"
+      ],
+      "re_audit_trigger": "deny-old-name lint の違反検出が改名後2週間ゼロ続きになった時 (撤去判断)、または用語ベースに無い新境界例の判定が台帳追記なしで merge された時"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見ユーザーの入口3ファイルを確認: plugin.json description は『Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow を作成・評価・統治するメタプラグイン』で harness 語ゼロ、installers/manifest.json:5 は『Claude Code Skill を作る/評価する/...メタスキル群一式』で skill 前提 — 『harness とは何か』の定義が入口に無い。確定境界 (harness ⊃ skill/agent/hook/command/評価/統治) はまさに必要な定義文だが、現在の所在は eval-log run ディレクトリの merged-directive.md のみで初見ユーザーの読書経路に存在しない",
+        "確定境界の帰結として harness-creator plugin 内に run-skill-create 等 skill 語の部品が意図的に共存する。包含関係 (ハーネス=総体、skill=部品単位) が README/glossary に明文化されて初めて、初見ユーザーはこの共存を『矛盾』でなく『設計』と読める",
+        "日本語表記『ハーネスクリエイター』は一般日本語でハーネスが犬の胴輪/安全帯を指すため非エンジニアには遠く、旧名『スキルクリエイター』の自己説明性が失われる — 定義1行の提示が名前の理解コストを回収する唯一の手段"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "確定した意味論境界 (harness=総体/skill=部品) が初見ユーザーの可視範囲に存在しない。定義の正本候補が eval-log run ワークスペースの merged-directive.md にしか無く、改名だけ先行すると『harness-creator の中身がなぜ全部 skill 操作なのか』が説明されないまま初見理解性が旧名より低下する。ref-skill-glossary/references/terms.md にも harness の構築物総体としての定義は無い (84行目は meta-harness 文脈の言及のみ、Grep確認済み)",
+          "recommended_intervention": "merged-directive のルール1-2 を原文として定義3点セットを改名PRに同梱する: (1) ref-skill-glossary/references/terms.md に『ハーネス』エントリ (総体の定義+skill=部品単位の包含関係+harness-coverage との同系性)、(2) README 冒頭1段落に『ハーネスとは何か・なぜ skill-creator から改名したか・内部 skill 名を維持する理由』、(3) plugin.json description 先頭を『ハーネス (Skill/Agent/.../Workflow の総体) を作成・評価・統治する』へ書き換え。installers/manifest.json:5 の description も境界例判定 rubric に従い追従させる",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/skill-creator/skills/ref-skill-glossary/references/terms.md",
+            "line": 84
+          }
+        }
+      ],
+      "score": 0.9,
+      "reusable_abstraction": "名前は定義への参照であり、定義の無い改名は参照切れの一種である。語彙境界を確定した場合、その境界文書自体を初見ユーザーの最初の読書経路 (glossary・README 第1段落・plugin.json description) に昇格させることが改名の Definition of Done に含まれる。部品語彙を意図的に残す設計は、包含関係の1文が可視でなければ初見には単なる矛盾に見える",
+      "template_variables": [
+        "{{new_term_definition}}",
+        "{{containment_statement}}",
+        "{{first_read_path}}",
+        "{{ja_notation_note}}"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "新名が業界標準語で自己説明的な場合は定義3点セットは過剰で glossary 1行に縮退できる",
+        "初見ユーザーが構造的に存在しない私的ツールでは初見理解性の重みを下げてよい — 本件は distributable:false でもチーム内複数利用者・依存 plugin 参照・installers 配布経路があるため該当しない"
+      ],
+      "re_audit_trigger": "harness の定義と実際の plugin 構成 (Capability 種別の増減) が乖離した時、または初見ユーザーからの『何をする plugin か分からない』系フィードバックが記録された時"
+    }
+  ]
+}

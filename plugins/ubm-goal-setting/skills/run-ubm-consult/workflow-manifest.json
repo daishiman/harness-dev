@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-ubm-consult",
+  "skill": "run-ubm-consult",
+  "description": "Coaching-style consult: intake/種別判定 → 引き出しで文脈外在化 → 考え方/思考フレームを選択肢+適用視点で提示 (read-only graph consult, graceful fallback) → ユーザー主導の解決策言語化とゴール指向の行動計画へ収束・記録.",
+  "max_iterations": 5,
+  "phases": [
+    {
+      "id": "r1-intake-issue",
+      "title": "Intake and issue framing",
+      "dependsOn": [],
+      "parallel": false,
+      "actor": "run-ubm-consult",
+      "input": "argument [相談内容] または最初の発話",
+      "output": "outcome (redirected_goal_setting|safety_redirect|consult_continue) + issue_statement + collaboration_mode + persistence_consent",
+      "gate": "goal-setting は会話内で完了 (既定非永続・保存同意がある場合のみ R4 と同経路で記録); safety/high-stakes は通常コーチングを止めて適切な支援へ分岐; 続行時は支援モードと保存同意をユーザーが選択; この段階で具体解を出さない",
+      "resourceIds": ["prompts/R1-intake-issue.md", "references/session-record-format.md"]
+    },
+    {
+      "id": "r2-elicit",
+      "title": "Elicitation of user context",
+      "dependsOn": ["r1-intake-issue"],
+      "parallel": false,
+      "actor": "run-ubm-consult",
+      "input": "consult_type=general-consult, issue_statement, collaboration_mode",
+      "output": "relevant_context (相談に必要な軸だけをユーザーの言葉で外在化)",
+      "gate": "選択された collaboration_mode と相談目的に必要な情報が揃う; 共同判断が残るターンでは引き出し質問 >=1; stop/summary/safety/final は質問を強制しない",
+      "resourceIds": ["prompts/R2-elicit.md", "../../agents/phase3-coordinator.md"]
+    },
+    {
+      "id": "r3-frame-consult",
+      "title": "Thinking-frame selection and presentation",
+      "dependsOn": ["r2-elicit"],
+      "parallel": false,
+      "actor": "run-ubm-consult",
+      "input": "issue_statement + collaboration_mode + relevant_context, references/consult-frames.md, knowledge/router.json",
+      "output": "frames[] (通常2件以上、reflect-onlyは1件以上・選択肢+適用視点+出典) + structured consult_evidence",
+      "gate": "支援モードに合うフレームを提示; hypothesis-example の例は仮説かつ採否をユーザーに委ねる; 単一解を押し付けない (IN1)",
+      "consults": {
+        "script": "../../scripts/consult-harness-artifact-graph.py",
+        "query_types": ["local", "global", "relationship"],
+        "note": "R3 の考え方提示の出典裏取り経路。C06 knowledge-graph.json (必須) と C05 harness-artifact-graph.json (任意) を read-only 探索する。harness graph 不在なら --harness-artifact-graph を省き knowledge 単独 consult、knowledge graph 不在/exit2 は skip し router.json デュアルパス (knowledge/*.json Read) へフォールバック (graceful zero-hit)。fallback 契約の正本は ../../references/graph-consult-fallback-contract.md。"
+      },
+      "resourceIds": [
+        "prompts/R3-frame-consult.md",
+        "references/consult-frames.md",
+        "../../knowledge/router.json",
+        "../../scripts/consult-harness-artifact-graph.py"
+      ]
+    },
+    {
+      "id": "r4-cocreate-converge",
+      "title": "Co-creation, goal-oriented convergence and record",
+      "dependsOn": ["r3-frame-consult"],
+      "parallel": false,
+      "actor": "run-ubm-consult",
+      "input": "frames[] + relevant_context + issue_statement + persistence_consent",
+      "output": "user_solution + chosen_closure(action|reflection) + consent-aware session_record",
+      "gate": "user_solution は role=user の発話参照; action lane は次の一歩、reflection lane は見えてきたこと/保留/再開条件; record は同意に依らず validate-consult-session.py を exit 0 で通し、保存同意時だけ session-id 別に書き込む (false は --ephemeral で検証し通過後破棄)",
+      "resourceIds": ["prompts/R4-cocreate-converge.md", "references/session-record-format.md", "../../scripts/validate-consult-session.py"]
+    }
+  ]
+}

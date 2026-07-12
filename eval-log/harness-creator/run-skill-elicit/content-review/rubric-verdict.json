@@ -1,0 +1,26 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-elicit",
+    "skill_md_sha256": "134ff25f1d97c38f82f0c3339b5575473cd13fc06c4c248b460506bead9257ad"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-c",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "完了チェックリスト 8 項目が全て二値判定可能(schema 準拠 / 必須フィールド確定 / 5 分岐網羅 / trigger 2〜3 個 / goal・checklist 埋込 / placement hint / cross_platform / 5 問以内)で検証可能性が高く、trigger 個数は lint-skill-description.py R1 と rubric FM-003 の合意値まで具体名で根拠づけられている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "quality-rubric.md の 5 次元で現 SKILL.md(sha256 134ff25f…)を採点。完全性=3(frontmatter commonCore 揃い・prompts/references/schemas 配置あり・必須フィールドと条件付き必須を全網羅)。一貫性=3(質問 5 問上限・出力先・prefix 分岐が矛盾なく一貫、harness-creator へ用語統一)。深度=3(prefix 5 分岐決定木+Decision tree の二段推定、19 章 factory 障害 #6 由来の決定論 hint、ref-knowledge-loop 5 条件由来のループ要否判定と判断根拠が伴う)。検証可能性=3(5 問以内 / 2〜3 個 / lint-skill-description.py R1 / rubric FM-003 など数値・具体名多数、Checklist が全て二値)。簡潔性=2(局面カタログとして構造化され冗長度は許容範囲、詳細は references/ と schema へ委譲)。全次元 ≥2 で PASS。改名追従の観点(旧名 0・参照断線 0・意味論境界適合)も併せ確認。"
+}

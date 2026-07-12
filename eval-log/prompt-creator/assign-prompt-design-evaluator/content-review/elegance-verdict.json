@@ -1,0 +1,35 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "assign-prompt-design-evaluator",
+    "skill_md_sha256": "c3a6c002021c039035fb77541b4157e529095830166b5f340d997856c1d59b12"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "改名 (skill-creator→harness-creator) に伴う参照追従が正確: rubric_refs の `ref-skill-design-rubric` が L0 共通設計 rubric として harness-creator 正本と注記され、実体 plugins/harness-creator/skills/ref-skill-design-rubric/ が実在する。旧固有名 (skill-creator/skill_creator/スキルクリエイター) の残存は本 SKILL.md 全文 grep で 0 件。意味論境界も正しい — 本 skill は単発設計評価器で、固有名の active 参照は plugin 名 harness-creator のみ、部品単位語 (findings/prompt/Layer) は skill 表現を維持している。",
+      "C4 依存整合を実測で確認: script_refs (../run-prompt-creator-7layer/scripts/verify-completeness.py・validate-prompt.py)、schema_refs (../run-prompt-create/schemas/findings.schema.json)、responsibility_refs (prompts/R1-evaluate.md)、references (prompt-rubric.json・c1-c4-criteria.md) が全て実在。相対パス参照は改名の影響外で健全。",
+      "C1/C2 整合: invariant 4 項 (context:fork 必須 / write=findings only による Goodhart 防止 / C1-C4 全付与+空 findings 禁止 / high 1 件で全体 FAIL) が本文 Key Rules 1-6・Gotchas 4 と矛盾なく一貫。goal-seek-paradigm 適用マトリクスで assign-* をループ非対象と明示し、feedback_contract 非携帯 (単発 read-only 評価器) の設計が自己整合。C3 再現性の合格条件も l5-contract v2.0.0 併記で prompt-rubric.json と同期。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator 改名後の genuine 再評価。旧固有名残存 0・harness-creator 参照および全ローカル/相対参照の実在を実測で確認。C1-C4 いずれも defect なし。本 skill は frontmatter に feedback_contract を持たない設計評価器のため criteria は設計ゲート C1-C4 を採る (期待 criteria 集合=空、schema の非空要件を C1-C4 で充足)。改名は依存破壊も意味論境界違反も導入していない。PASS。"
+}

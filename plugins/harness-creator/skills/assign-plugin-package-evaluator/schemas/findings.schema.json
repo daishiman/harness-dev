@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/pkg-validator-findings.json",
+  "title": "PKG Validator Findings",
+  "description": "assign-plugin-package-evaluator が出力する findings JSON の schema。PKG-002〜008 の検査結果を統一形式で表現。",
+  "type": "object",
+  "required": ["run_id", "target_plugin", "package_mode", "pkg_checks", "verdict"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "pattern": "^pkg-validate-[a-z0-9-]+-\\d{8}-\\d{3}$"
+    },
+    "target_plugin": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$"
+    },
+    "package_mode": {
+      "enum": ["bundle", "skill-only"]
+    },
+    "pkg_checks": {
+      "type": "object",
+      "patternProperties": {
+        "^PKG-(00[2-8])$": {
+          "type": "object",
+          "required": ["status", "findings", "last_run_at"],
+          "properties": {
+            "status": {
+              "enum": ["pass", "fail", "skip", "not_applicable"]
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "pkg_id", "severity", "location", "evidence"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^F-PKG\\d{3}-\\d{3}$"
+                  },
+                  "pkg_id": {
+                    "enum": ["PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008"]
+                  },
+                  "severity": {
+                    "enum": ["P0", "P1", "P2"]
+                  },
+                  "location": {
+                    "description": "file_path[:line_number] 形式",
+                    "type": "string"
+                  },
+                  "evidence": {
+                    "type": "string"
+                  },
+                  "suggested_fix": {
+                    "type": "string"
+                  },
+                  "auto_fixable": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "last_run_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "skip_reason": {
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "enum": ["skip", "not_applicable"]
+                  }
+                }
+              },
+              "then": {
+                "required": ["skip_reason"]
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "verdict": {
+      "type": "object",
+      "required": ["total", "pass", "fail", "skip", "not_applicable"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "pass": {"type": "integer", "minimum": 0},
+        "fail": {"type": "integer", "minimum": 0},
+        "skip": {"type": "integer", "minimum": 0},
+        "not_applicable": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

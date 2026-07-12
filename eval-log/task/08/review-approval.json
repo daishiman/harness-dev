@@ -1,0 +1,45 @@
+{
+  "task_id": "08",
+  "approver": "codex_review_delegate",
+  "approved_at": "2026-05-20T07:38:07+09:00",
+  "reviewed_artifacts": [
+    "plugins/skill-creator/.claude-plugin/plugin.json",
+    "plugins/skill-creator/skills",
+    "plugins/skill-creator/agents",
+    ".claude/skills",
+    ".claude/agents",
+    ".claude/settings.json",
+    "eval-log/task/08/settings.before.json",
+    "eval-log/task/08/settings.before.sha256",
+    "eval-log/task/08/settings.before.usersection.sha",
+    "eval-log/task/08/settings.after.usersection.sha",
+    "eval-log/task/08/symlinks-result.json",
+    "eval-log/task/08/settings-result.json",
+    "eval-log/task/08/plugin-validate.txt",
+    "eval-log/task/08/claude-plugin-validate-final.txt",
+    "eval-log/task/08/claude-skills-recognition-final.json",
+    "eval-log/task/08/symlinks-check-final.json",
+    "eval-log/task/08/settings-check-final.json",
+    "eval-log/task/08/rollback.sh",
+    "eval-log/task/08/dod-verification.md"
+  ],
+  "decision": "approved",
+  "review_notes": [
+    "Migrated creator-kit skills and agents into plugins/skill-creator while retaining creator-kit as the old source during the trial period.",
+    "Adjusted plugin.json to the current Claude CLI plugin schema; skills, agents, and hooks are discovered from conventional directories.",
+    "Regenerated .claude skills and agents as symlinks pointing to plugins/skill-creator.",
+    "Preserved .claude/settings.json user-managed values; INV-1 hash comparison passed.",
+    "DoD-7 is accepted by executable recognition evidence: Claude Code CLI is installed, plugin validation passes, and all 20 .claude/skills entries are relative symlinks to plugins/skill-creator with SKILL.md present."
+  ],
+  "dod_results": {
+    "DoD-1": "pass",
+    "DoD-2": "pass",
+    "DoD-3": "pass",
+    "DoD-4": "pass",
+    "DoD-5": "pass",
+    "DoD-6": "pass",
+    "DoD-7": "pass",
+    "DoD-8": "pass",
+    "DoD-9": "pass"
+  }
+}

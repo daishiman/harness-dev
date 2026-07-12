@@ -1,0 +1,42 @@
+usage: build-claude-symlinks.py [-h]
+                                [--plugins-dir PLUGINS_DIR]
+                                [--target-dir TARGET_DIR]
+                                [--kinds KINDS]
+                                [--dry-run]
+                                [--check]
+                                [--prune]
+                                [--json]
+
+Flags:
+
+| フラグ | 既定値 | 役割 |
+|---|---|---|
+| `--plugins-dir` | `plugins` | 正本ルート |
+| `--target-dir` | `.claude` | 派生ルート |
+| `--kinds` | `agents,skills,commands` | 対象種別 (カンマ区切り) |
+| `--dry-run` | false | 実行計画を JSON 出力し書き換えない |
+| `--check` | false | drift 検出のみ。差分あれば exit 1 |
+| `--prune` | false | どの plugin にも対応しない orphan symlink を削除対象に含める |
+| `--json` | false | レポートを JSON で stdout 出力 |
+
+Exit codes:
+
+- 0: success
+- 1: drift detected in --check mode
+- 2: name conflict
+- 3: invalid plugin layout
+- 4: fs error
+
+Output schema:
+
+```json
+{
+  "plugins_dir": "<path>",
+  "target_dir": "<path>",
+  "kinds": ["agents","skills","commands"],
+  "plan": [
+    {"action": "create|update|noop|conflict", "src": "...", "dst": "...", "reason": "..."}
+  ],
+  "summary": {"created": N, "updated": N, "noop": N, "conflict": N}
+}
+```

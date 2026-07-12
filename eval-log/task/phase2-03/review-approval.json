@@ -1,0 +1,35 @@
+{
+  "decision": "approved",
+  "approved_at": "2026-05-20T15:05:00+09:00",
+  "approver": "solo_operator (user-directed execution request, 2026-05-20)",
+  "scope": "phase2-03 per-plugin migration procedure",
+  "approved_artifacts": [
+    "eval-log/task/phase2-03/migration-procedure.md",
+    "eval-log/task/phase2-03/migration-order.json",
+    "eval-log/task/phase2-03/plugin.json.template",
+    "eval-log/task/phase2-03/deploy-plugin-spec.md",
+    "eval-log/task/phase2-03/cli-contract-verification.md",
+    "eval-log/task/phase2-03/dod-verification.md",
+    "eval-log/task/06/cli-help-frozen.txt",
+    "eval-log/task/07/cli-help-frozen.txt"
+  ],
+  "conditions": {
+    "phase2-02_dod_pass": "PASS",
+    "partition_plan_used": "PASS",
+    "intermediate_invariants_defined": "PASS",
+    "deploy_cli_contract_defined": "PASS",
+    "build_checks_current_state": "PASS",
+    "raw_help_snapshot_diff": "PASS",
+    "dry_run_executable": "PASS",
+    "plugin_json_template_placeholders": "PASS"
+  },
+  "known_notes": [
+    "Phase 0 cli-contract-frozen.txt files are Markdown contract documents; raw --help diff now uses cli-help-frozen.txt snapshots.",
+    "This task freezes procedure artifacts only; physical per-plugin deployment remains Phase2-06 responsibility.",
+    "dod-verification.md added to approved_artifacts for symmetry (improvement on 2026-05-20).",
+    "plugin.json.template normalized to 4 placeholders: {{plugin_name}}, {{version}}, {{description}}, {{keywords}}.",
+    "deploy-plugin.sh --dry-run path is the minimum frozen contract; full implementation is Phase2-06 responsibility.",
+    "partition-plan.json v1.1 (2026-05-20) supplies keywords for plugin.json.template; Phase2-06 will read partition record keywords directly.",
+    "partition-plan.json v1.2 (2026-05-20): files[].rel corrected with creator-kit/ prefix. Phase2-03 migration-order.json and per-plugin playbook reference partition record names (not paths), so no downstream changes required."
+  ]
+}

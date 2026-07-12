@@ -1,0 +1,76 @@
+{
+  "name": "harness-creator",
+  "distributable": false,
+  "version": "1.1.0",
+  "description": "Claude Code のハーネス — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と評価・統治機構の総体 — を構築・評価・統治するメタプラグイン。単体スキル生成は部品単位の能力として内包する",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "requirements": {
+    "external_clis": [
+      {
+        "name": "tmux",
+        "reason": "live-trial 輸送層(別プロセス本物claudeセッションのpane制御)。Python stdlib代替不能。不在時はlive-trial verdict=BLOCKEDでfail-closed",
+        "required_for": ["run-skill-live-trial"]
+      }
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py" },
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/ref-task-context-map/scripts/preload-context-map.py", "timeout": 3000 }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/wrap-git-commit-safe/scripts/preflight-git-commit.py", "timeout": 4000 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py" },
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py", "timeout": 5000 },
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/lint-capability-manifest.py", "timeout": 5000 },
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py", "timeout": 5000 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-rubric-governance/scripts/aggregate-evals.py", "timeout": 10000 }
+        ]
+      }
+    ]
+  }
+}

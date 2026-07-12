@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: icon-grid
+  required_vars: [title, icon1, label1, icon2, label2, icon3, label3, icon4, label4]
+  optional_vars: [icon5, label5, icon6, label6, icon7, label7, icon8, label8, icon9, label9, message]
+  use_case: アイコン格子で選択肢提示。最大9マス。icon* には FontAwesome Unicode を渡す（例: &#xf007;）。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0d47a1; }
+    .cell { fill: #fff; stroke: #1976d2; stroke-width: 2; }
+    .icon { font-family: 'FontAwesome'; font-size: 60px; fill: #1976d2; }
+    .label { font-size: 18px; fill: #0d47a1; }
+    .legend { font-size: 14px; fill: #555; }
+  </style>
+
+  <text x="40" y="50" class="title">{{title}}</text>
+
+  <!-- 3x3 grid -->
+  <g transform="translate(120,90)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon1}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label1}}</text>
+  </g>
+  <g transform="translate(420,90)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon2}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label2}}</text>
+  </g>
+  <g transform="translate(720,90)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon3}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label3}}</text>
+  </g>
+
+  <g transform="translate(120,240)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon4}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label4}}</text>
+  </g>
+  <g transform="translate(420,240)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon5}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label5}}</text>
+  </g>
+  <g transform="translate(720,240)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon6}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label6}}</text>
+  </g>
+
+  <g transform="translate(120,390)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon7}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label7}}</text>
+  </g>
+  <g transform="translate(420,390)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon8}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label8}}</text>
+  </g>
+  <g transform="translate(720,390)">
+    <rect x="0" y="0" width="280" height="130" rx="10" class="cell"/>
+    <text x="140" y="65" class="icon" text-anchor="middle">{{icon9}}</text>
+    <text x="140" y="110" class="label" text-anchor="middle">{{label9}}</text>
+  </g>
+
+  <text x="40" y="555" class="legend">凡例: 青枠=選択可能オプション / FontAwesomeで統一</text>
+  <text x="40" y="580" class="legend">言いたい一言: {{message}}</text>
+</svg>

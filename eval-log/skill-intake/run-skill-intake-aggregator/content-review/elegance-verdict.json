@@ -1,0 +1,21 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-skill-intake-aggregator",
+    "skill_md_sha256": "5c18f2f940e968f4003dbc8de5db60af45161881390d914280b83f305ebebb1a"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 1,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "elegant-improvement-executor",
+  "reviewed_at": "2026-06-06T10:52:56Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "notes": "skill-intake 単独配布化 PR の content-review (elegance, 完全性/一貫性/深度/簡潔性)。frontmatter 参照資産 (references 4 / schemas 3 / prompts 2 / lint 1 / workflow-manifest) と本文参照 scripts 13 本・hooks 4・commands は全て実在を確認。本 PR 変更行 (Notion 明示指定入力・flow で next-action-advisor を notion-publisher 後へ移動・DB setup パスを skill-creator→skill-intake へ修正・ゴールシーク正本を本plugin内自己完結へ) は単独配布の趣旨と整合し正当。検出 3 件を最小差分で修正: (1) inconsistency=Scripts セクション L232『合計37本=plugin直下34本+skills/<name>/scripts/配下3本』が実態(plugin直下41本・本スキル配下scripts/は不在)および SSOT である scripts/README.md(38本=35+3, 3本は別スキル配下)と矛盾。SKILL.md が README へ委譲しながら自前の総数を二重定義していた SSOT 違反。本数直書きを削り README を唯一の正本とし『本スキル直下にscripts/は持たない』を明記。(2) omission=references 見出し『31個』が実数34と乖離(腐る総数の直書き)→『実体が正本、抜粋』へ置換。(3) contradiction/omission=本PRで update mode(--revise)を大幅追加しているのに Slash Commands 表に対応する /intake-revise が欠落(commands/intake-revise.md は実在)→表に追加。残存数値(SubAgent 12 / mtmpl 12 / cvis 8 / msample 8)は全て実態一致のため保持。修正後 skill-creator 参照は協調関係説明のみで外部依存ゼロ、単独配布の自己完結性を確認。1 iteration で blocking 解消し PASS。"
+}

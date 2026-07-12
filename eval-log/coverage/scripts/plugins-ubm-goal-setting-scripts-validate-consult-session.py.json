@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/validate-consult-session.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "consult session record の分岐別契約検証 + gc (C 系ゲート)。soundness: outcome enum を先頭ゲートに redirect/safety/consult_completed の3分岐で必須項目を分離検査、user_solution.source_turn_ids は role=user turn の実在 id への包含で provenance を機械確認(assistant 発話内の『ユーザー:』偽装を通さない=テストで実証)。IN1/OUT1 マーカー regex を単一正本としてテストが import する SSOT 構造。transcript 未提供時の turn_ids 検査は fail-closed(検証不能を valid にしない)。responsibility: 検証と gc に限定、--ephemeral は persistence_consent のみ免除し他検査を緩めない(コメント+テストで固定)。error-handling: exit 0/1/2 分離、JSON shape 不正は exit2 で valid:false JSON を返す。side-effect-safety: 検証モード書込ゼロ、gc は dry-run 既定・--apply のみ削除+index.jsonl 追記、破損 handoff は誤削除回避で保持(テスト有)、secret 未 redaction を検査項目化。frontmatter: PEP723 様式完備・write-scope が --gc --apply 条件を明記し実装一致。軽微: gc で retention_until 欠落 record は永久保持(保守側に倒す設計だが表面化しない)、--apply の rmtree 成功後 index.jsonl 追記が失敗すると削除記録が残らない稀ケース。tests/test_validate_consult_session.py 21件+test_ubm_consult_contract.py で正例/負例/gc/ephemeral 網羅・全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "purpose": "plugins/skill-creator を『ハーネスクリエイター (harness-creator)』へ改名する提案のレビュー。提案理由は『このプラグインで構築しているのはスキルではなくハーネスだから』であり、リポジトリ全体の他の依存関係部分にも検索をかけて抜け漏れなく対応することが要望に含まれる。",
+  "scope": {
+    "in_scope": [
+      "plugins/skill-creator/ ディレクトリ名および .claude-plugin/plugin.json の name フィールド",
+      "plugin-composition.yaml の name/description/invariant 文中の固有名",
+      "固有名を保持する機械層定数: scripts/validate-plugin-completeness.py の NEVER_DISTRIBUTE、scripts/feedback_contract_ssot.py と plugins/skill-creator/scripts/feedback_contract_ssot.py の SELF_DOGFOODING_PLUGIN、scripts/lint-vendored-ssot.py の固定パス",
+      "CI workflow の固定パス: .github/workflows/governance-check.yml (28箇所) / creator-kit-ci.yml (7箇所) / update-yaml-spec.yml (6箇所) / contract-generator.yml (1箇所)、Makefile (3箇所)",
+      "依存 plugin 側の参照: plugin-dev-planner (upstream-pins.json の 6 固定パス、skill-creator-spec-reflection.md というファイル名自体、SKILL.md 18箇所)、skill-intake (plugin-composition.yaml / handoff-contract.md / hooks / vendored notion_config.py)、prompt-creator (plugin-composition.yaml 8箇所)、skill-governance-* 6 plugin と company-master / contract-generator / mf-kessai-invoice-check / notion-gmail-send の各 plugin.json 記述",
+      "テスト層: tests/scripts-plugins/test_skill_creator__*.py のファイル名群、tests/test_dogfooding_boundary.py の固有名 assert (25箇所)、tests/criteria/criteria_roster.py (16箇所)",
+      ".claude/settings.json の enabledPlugins キー skill-creator@xl-skills、.claude-plugin/marketplace.json 内 skill-intake description の言及 1箇所",
+      "installers/manifest.json の kit_name skill-creator-kit と install.sh / install.ps1",
+      "README.md (12箇所) / CONVENTIONS.md (5箇所) / doc/harness-coverage-spec.md 等ドキュメント層",
+      "underscore 変形 skill_creator (34ファイル80箇所: テストファイル名・import・schema 記述)"
+    ],
+    "out_of_scope": [
+      "doc/参考Skill/skill-creator/ — 同名の外部由来参考資産 (独自 SKILL.md / JS scripts / LOGS を持つ別物)。提案文は plugins/skill-creator を対象と明示",
+      "対象 plugin 内部の個別 skill 名 (run-skill-create / run-build-skill 等 30 skill) の改名 — 提案文は plugin 名のみ言及",
+      "eval-log/ 配下の過去 run 履歴パス・coverage ファイル名 (eval-log/skill-creator/**、skill-creator__*.json、plugins-skill-creator-*.json) の遡及書換の要否 — 提案文に指定なし",
+      ".obsidian/workspace.json 等エディタ状態ファイル (15箇所)",
+      "git 履歴・過去 PR 本文中の旧名"
+    ]
+  },
+  "stakeholders": [
+    "xl-skills maintainers (plugin.json author / marketplace owner)",
+    "team-platform (plugin-composition.yaml owner)",
+    "依存 plugin 群の維持者: plugin-dev-planner (upstream-pins で 6 ファイルを固定パス参照)、skill-intake (前段ヒアリング plugin として description で言及)、prompt-creator、skill-governance-config/lint/hooks/automation/adapters/migration、company-master、contract-generator、mf-kessai-invoice-check、notion-gmail-send",
+    "GitHub Actions CI (governance-check / creator-kit-ci / update-yaml-spec / contract-generator の 4 workflow)",
+    ".claude/settings.json で skill-creator@xl-skills を有効化しているローカル開発環境の利用者",
+    "中央 pytest スイート (tests/) の実行者"
+  ],
+  "first_impressions": [
+    "同名別物 doc/参考Skill/skill-creator/ (外部由来参考資産、日本語表記『スキルクリエイター』4箇所を含む) が repo 内に併存しており、repo 全体の機械的一括置換の走査範囲に同居している (根拠: facts[11], facts[2])",
+    "新名 harness-creator / ハーネスクリエイター は repo 内 0 件で名前衝突は無いが、harness 語自体は既に別概念 (harness-coverage-spec / validate-harness-coverage.py / meta-harness hooks / live-trial harness) で 40 ファイル 156 箇所使用されており、改名後は同一語が 2 系統の概念を指す状態になる (根拠: facts[12], facts[13])",
+    "固有名が NEVER_DISTRIBUTE denylist・SELF_DOGFOODING_PLUGIN (正本と vendored コピーの byte 一致 lint 付き)・plugin-dev-planner の upstream-pins 固定パス・CI workflow 固定パス 28 箇所に多層で機械連動しており、いずれか一方のみの置換は fail-closed 機構の作動条件に触れる連鎖構造になっている (根拠: facts[4], facts[5], facts[6], facts[10])",
+    "ハイフン形 skill-creator (5704箇所) とは別に underscore 形 skill_creator が 34 ファイル 80 箇所 (テストファイル名 test_skill_creator__*.py・import 文・coverage 記録) に存在し、ハイフン形の検索単独では走査から外れる (根拠: facts[2], facts[3])",
+    "eval-log 履歴 run ディレクトリ・coverage ファイル名 (skill-creator__* / plugins-skill-creator-* のフラット化命名)・本レビューの review_workspace 指定パス自体に旧名が埋め込まれており、遡及書換と併存のどちらで扱うかが提案文に現れていない (根拠: facts[15])",
+    "plugin.json の自己記述は『Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow を作成・評価・統治するメタプラグイン』であり、提案理由『スキルではなくハーネス』と現行の自己定義 (Capability) の対応関係が現行文書内に現れていない (根拠: facts[1])",
+    "内部 30 skill の名前 (run-skill-create 等 skill 語を含む命名) や installers の skill-creator-kit / creator-kit-ci.yml という複合命名について、改名の境界が提案文で指定されていない (根拠: facts[0], facts[14])",
+    "対象 plugin 自身が rename 用 skill (run-skill-rename) を保有しており、改名手段として自己適用可能な資産が対象内に存在する (根拠: facts[17])",
+    "marketplace.json の plugins[] に skill-creator は登録されておらず (distributable:false)、配布面の参照は skill-intake の description 文中 1 箇所に限られる一方、ローカル有効化キー skill-creator@xl-skills が .claude/settings.json に存在する (根拠: facts[7], facts[8])"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "存在する: plugins/skill-creator/ に skills 30 / agents 6 / commands 5 / 共有 scripts 3 / references 6 / knowledge / lessons-learned / changelog が配置されている",
+      "記載されている: plugins/skill-creator/.claude-plugin/plugin.json に name=skill-creator、distributable=false、version=1.1.0、description『Claude Code Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) を作成・評価・統治するメタプラグイン』",
+      "ヒットする: 文字列 skill-creator が repo 全体で 744 ファイル 5704 箇所",
+      "ヒットする: underscore 変形 skill_creator が 34 ファイル 80 箇所 (tests/scripts-plugins/test_skill_creator__*.py のファイル名・import・eval-log/code-coverage.json 等)",
+      "定義されている: scripts/validate-plugin-completeness.py:64 に NEVER_DISTRIBUTE = frozenset({\"skill-creator\", \"prompt-creator\", \"plugin-dev-planner\"}) が固有名 denylist として存在し、tests/scripts-root/test_root__validate_plugin_completeness.py が同名を assert している",
+      "定義されている: SELF_DOGFOODING_PLUGIN = \"skill-creator\" が scripts/feedback_contract_ssot.py:149 と plugins/skill-creator/scripts/feedback_contract_ssot.py:149 の 2 箇所に存在し、scripts/lint-vendored-ssot.py が両ファイルの固定パスを byte 一致検証しており、tests/test_dogfooding_boundary.py:69 が値を assert している",
+      "記述されている: .github/workflows/governance-check.yml に plugins/skill-creator/... 固定パス 28 箇所、Makefile 22-24 行に 3 箇所、creator-kit-ci.yml 7 箇所、update-yaml-spec.yml 6 箇所",
+      "登録されていない: .claude-plugin/marketplace.json の plugins[] に skill-creator エントリは無く、skill-intake の description 文中『skill-creator の前段ヒアリング...』に 1 箇所出現する",
+      "記載されている: .claude/settings.json:114 に \"skill-creator@xl-skills\": true",
+      "走査している: scripts/build-claude-symlinks.py は plugins/ を iterdir で動的発見し、skill-creator 固有名リテラルを含まない",
+      "参照している: plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json が plugins/skill-creator/ 配下 6 ファイルを固定パスで pin し、同 plugin の references/skill-creator-spec-reflection.md はファイル名自体に固有名を含み本文 44 箇所で参照する",
+      "存在する: doc/参考Skill/skill-creator/ という同名ディレクトリ (独自 SKILL.md / JS scripts / LOGS/_legacy.md 218 箇所を含む参考資産) が存在し、日本語表記『スキルクリエイター』は repo 全体 6 箇所 (うち 4 箇所が同参考資産内、2 箇所が eval-log 履歴) に出現する",
+      "ヒットしない: harness-creator および ハーネスクリエイター は repo 内 0 件",
+      "ヒットする: ハーネス|harness が 40 ファイル以上 156 箇所 (doc/harness-coverage-spec.md 12 箇所、scripts/validate-harness-coverage.py 11 箇所、.claude/config/meta-harness-observables.json、tests/test_live_trial_harness.py 等) に既出",
+      "記載されている: installers/manifest.json:3 に \"kit_name\": \"skill-creator-kit\"、.github/workflows/creator-kit-ci.yml が存在する",
+      "埋め込まれている: eval-log/coverage/ のファイル名が skill-creator__* / plugins-skill-creator-* 形式で plugin 名をフラット化し、eval-log/skill-creator/ 履歴 run ディレクトリ群と、文字列 eval-log/skill-creator の本文出現 29 箇所が存在する",
+      "宣言されている: plugins/skill-creator/plugin-composition.yaml に name: skill-creator、owner: team-platform、invariant 文中に skill-creator 固有名 (allowed_cross_plugins / NEVER_DISTRIBUTE 記述) が複数含まれる",
+      "存在する: 対象 plugin 内に rename 用 skill plugins/skill-creator/skills/run-skill-rename/SKILL.md",
+      "参照している: 依存 plugin 群 — skill-intake (plugin-composition.yaml 4 / references/handoff-contract.md 10 / hooks/hook-guard-skillgen.py 2 / vendored scripts/notion_config.py 2)、prompt-creator (plugin-composition.yaml 8 / README.md 6)、plugin-dev-planner (SKILL.md 18 ほか)、skill-governance-config/lint/hooks/automation/adapters/migration/secrets (各 plugin.json 1)、company-master / contract-generator / mf-kessai-invoice-check / notion-gmail-send (各 plugin.json 1)"
+    ],
+    "assumptions": [
+      "と思われる: 提案の改名対象は plugin ディレクトリ名 / plugin 名であり、内部 skill 名 (run-skill-create 等) や skill-intake / prompt-creator 等の他 plugin 名は含まれない",
+      "と推測される: doc/参考Skill/skill-creator/ は外部由来の同名参考資産であり、本提案の改名対象外である",
+      "と思われる: eval-log/ 配下の履歴パス・coverage ファイル名は過去 run の記録であり、遡及書換ではなく新名での新規生成に切り替わる想定である",
+      "と推測される: .claude/settings.json の enabledPlugins キーはローカル環境設定であり、改名後は各開発環境での再有効化操作が発生する",
+      "と思われる: installers/manifest.json の skill-creator-kit や creator-kit-ci.yml 等の複合命名も『抜け漏れなく対応』の対象に含める意図である (提案文に明示は無い)",
+      "と推測される: 提案理由の『ハーネス』は doc/harness-coverage-spec.md や meta-harness 系設定に既出の repo 内ハーネス概念の系譜を踏まえた用語選択である"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    { "value": "skill-creator", "kind": "proper-noun" },
+    { "value": "skill_creator", "kind": "other" },
+    { "value": "スキルクリエイター", "kind": "proper-noun" },
+    { "value": "plugins/skill-creator", "kind": "fixed-path" },
+    { "value": "plugins/skill-creator/scripts/feedback_contract_ssot.py", "kind": "fixed-path" },
+    { "value": "plugins/skill-creator/scripts/notion_config.py", "kind": "fixed-path" },
+    { "value": "doc/参考Skill/skill-creator", "kind": "fixed-path" },
+    { "value": "eval-log/skill-creator", "kind": "fixed-path" },
+    { "value": "skill-creator@xl-skills", "kind": "proper-noun" },
+    { "value": "skill-creator-kit", "kind": "proper-noun" },
+    { "value": "SELF_DOGFOODING_PLUGIN", "kind": "other" },
+    { "value": "NEVER_DISTRIBUTE", "kind": "other" },
+    { "value": "team-platform", "kind": "fixed-owner" },
+    { "value": "xl-skills maintainers", "kind": "fixed-owner" }
+  ]
+}

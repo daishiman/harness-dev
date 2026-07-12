@@ -1,0 +1,45 @@
+{
+  "run_id": "20260626-confirm-url-verify",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 2},
+  "thought_method_coverage": {"used": 30, "skipped_with_reason": 0, "total": 30},
+  "proposer_ne_approver": true,
+  "approver": "independent general-purpose SubAgent (adversarial, repro+pytest grounded)",
+  "approver_round1_decision": "REJECT",
+  "approver_round1_reason": "R5 backward辺で『会社名: ユーザー入力（URLなし）』が再同期で復活(本番render_blocks経路で再現)=提案者の見落としを捕捉",
+  "approver_round2_decision": "APPROVE",
+  "approver_round2_evidence": "5シナリオ(A-E)を本番render_blocks経路で独立再現。R5両bullet(正式名称/会社名:ユーザー入力)をforward/backward両辺で抑止・url有会社名は保持・元2バグ非退行。tests 123 passed。4条件全PASS",
+  "user_requirements": {
+    "R1_postal_fixed_url": "PASS",
+    "R2_phone_free_search": "PASS",
+    "R3_title_official_name": "PASS",
+    "R4_drop_official_column_LIVE_VERIFIED": "PASS (live DB GET=正式名称列なし・preflight PASS・コードと矛盾なく完了)",
+    "R5_no_extra_body_text": "PASS (修正後・forward/backward両辺抑止)"
+  },
+  "two_stage_verification": "orchestrator が live DB preflight・confirm_url merge/render・backfill 移行選定を独立repro実行。3アナリスト報告(クラスタ1/2)を実挙動で確証し、独立approverが追加でR5対称穴を捕捉→SSOT述語化で修正→再approver APPROVE。MEMORY feedback_verification_two_stage 準拠。",
+  "fixes_applied": [
+    "confirm_url.py: _canon_attribute(正式名称→会社名 parse正規化) + _company_bullet_suppressed(会社名抑止SSOT述語) を forward/backward両経路へ適用",
+    "backfill.py: select_backfill_targets 移行選定を hojin_bango ベースへ(resolve後patchで冪等判定) + row_from_page docstring正直化",
+    "confirm-url-template.md: R5抑止条件文言の精密化(user_input/none・backward辺明記)",
+    "SKILL.md(backfill): 移行モード記述を再resolveベースへ正直化",
+    "tests: 新規5件(parse正規化/正式名称非復活/会社名:ユーザー入力非復活/url有保持/row_from_page fallback) + false-greenテスト是正"
+  ],
+  "tests": "tests/test_company_master.py 123 passed",
+  "residual": [
+    {"severity": "low", "type": "ci_followup", "title": "編集したSKILL.md(backfill)のcontent-review verdict stale-sha",
+     "detail": "PR化時は独立SubAgentで現SHA genuine再生成が必要(SHA書換は偽装・禁止)"},
+    {"severity": "low", "type": "accepted_smell", "title": "前run eval-log archiveのspec D4/不変条件56が現schemaと表面ねじれ",
+     "detail": "履歴成果物ゆえ非改変。本run verdictがforbidden追加+live削除済=整合をsupersede記録"},
+    {"severity": "low", "type": "accepted_smell", "title": "R1/R2 weak provenance(トップURL/Google検索)",
+     "detail": "ユーザー明示指定。doc trade-off明記済(PASSを妨げない)"},
+    {"severity": "info", "type": "operational", "title": "live既存行の通称→登記名移行実行はユーザー判断",
+     "detail": "--migrate-company-title(opt-in)でコード対応済。dry-run併用可"}
+  ],
+  "status": "complete",
+  "iteration_count": 2
+}

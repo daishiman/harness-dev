@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "discovered-task.schema.json",
+  "title": "discovered-task",
+  "description": "build 進行中 (in-flight) に単一 route 実行者が発見した plan 未網羅タスク (E4 境界)。consumer=harness-creator emit-discovered-task.py が正規化し、producer accept-discovered-task.py が provenance 付きで受理する。build 完了後の全体改善還流 (E3=improvement-handoff) とは別境界。",
+  "type": "object",
+  "required": [
+    "discovering_task_id",
+    "reason",
+    "discovered_at_artifact",
+    "proposed_node",
+    "change_level"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "discovering_task_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "発見元 task の id (task-graph 上に実在すること)"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "発見理由"
+    },
+    "discovered_at_artifact": {
+      "type": "string",
+      "description": "発見時点の成果物参照 (top-level・provenance へネストしない)"
+    },
+    "proposed_node": {
+      "type": "object",
+      "description": "追加を提案する task node 実体 (task-graph node 相当)",
+      "required": [
+        "id",
+        "title",
+        "phase_ref",
+        "entity_ref",
+        "state",
+        "write_scope"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "phase_ref": {
+          "type": "string"
+        },
+        "entity_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "blocked"
+          ]
+        },
+        "write_scope": {
+          "type": "string"
+        },
+        "acceptance_criterion": {
+          "type": "string"
+        },
+        "couples_with": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "additive optional。接合が密な既存兄弟 component の entity_ref id 群。accept-discovered-task が受理時、同一 phase の当該兄弟 node へ直列化 depends_on (from=新ノード to=兄弟=新タスクは既存兄弟の後) を張り、外ループ追記でも盲目並列 (統合 finding 先送り) を防ぐ。新ノードは leaf dependent ゆえ cycle を作らず additive のまま (既存ノードの依存は書き換えない)"
+        }
+      }
+    },
+    "change_level": {
+      "type": "string",
+      "enum": [
+        "additive",
+        "structural"
+      ],
+      "description": "additive=追加ノードのみ (自動反映)・structural=既存エッジ張替え/component 追加 (ユーザー承認 --approved 必須の二段受理)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected",
+        "superseded"
+      ],
+      "description": "外ループ (spec-improvement loop) のライフサイクル状態。不在/pending=未処理 (consumer C08 完了ゲートが block)・accepted=planner --mode update inbox ドレインが task-graph へ反映済・rejected=受理不能で却下・superseded=後続 form に置換済。producer accept-discovered-task.py --inbox が additive 自動受理時に accepted を書き戻す (structural 未承認は pending 据置で block 継続=二段受理)"
+    },
+    "resulting_graph_hash": {
+      "type": "string",
+      "description": "additive optional。status=accepted 時に反映された task-graph の graph_hash (sha256:<64hex>)。どの graph 版へ焼かれたかの provenance で、consumer が再消費する graph の pin と突合できる"
+    },
+    "rejected_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "additive optional。status=rejected 時の却下理由 (必須欠落/discovering_task_id 不在/id 重複衝突 等)"
+    },
+    "provenance": {
+      "type": "object",
+      "description": "optional additive。consumer の発見元 route 情報を受理側で失わないための双方向 reconcile 用 (provenance を持たない既存 form も無改修で妥当)",
+      "additionalProperties": true,
+      "properties": {
+        "route_id": {
+          "type": "string"
+        }
+      }
+    },
+    "reflected": {
+      "type": "string",
+      "enum": [
+        "partial"
+      ],
+      "description": "additive optional。冪等 skip (proposed_node.id が graph に既存で無追加) の際に proposed_node と既存 node に field 差分があった場合、差分が graph へ反映されていないことを示す partial を書き戻す (graph は不変)。差分内訳は reflected_diff_fields"
+    },
+    "reflected_diff_fields": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "additive optional。reflected=partial 時の差分フィールド名一覧 (昇順)。次周回 planner が structural 反映要否を判断する材料"
+    }
+  }
+}

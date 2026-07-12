@@ -1,0 +1,108 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-elegant-review の references/ ファイル索引
+resources:
+  - file: 30-paradigms-full.md
+    topic: 30種の思考法の詳細定義 (カテゴリA〜Gの全パラダイム)
+    read_when: 各思考法の定義を確認するとき、findings を書くときの参照
+  - file: 4-conditions.json
+    topic: C1〜C4 (矛盾なし/漏れなし/整合性/依存関係整合) の機械可読定義
+    read_when: 4条件の判定ロジックを実装・確認するとき
+  - file: agent-roles.md
+    topic: Phase1〜3の各エージェント (elegant-reset-observer 等) の責務分担
+    read_when: どのエージェントが何を担当するか確認するとき
+  - file: amplified-patterns.json
+    topic: 正のフィードバックで蓄積された再利用可能な良設計パターン
+    read_when: 他 Skill/章へ横展開できる設計判断を参照するとき
+  - file: convergence-policy.json
+    topic: 収束ループの停止条件 (Δneg/Δpos しきい値、安全弁ルール)
+    read_when: Phase2→3 のループを終了させる条件を確認するとき
+  - file: elegant-4-conditions.json
+    topic: 4-conditions.json への後方互換 redirect (condition_ref のみ。定義の正本は 4-conditions.json)
+    read_when: 旧 rubric_id (elegant-4-conditions) 参照を解決するとき
+  - file: orchestration-flow.md
+    topic: Phase1→2→3 の詳細フロー図と各フェーズの入出力仕様
+    read_when: エージェント起動順序やデータフローを確認するとき
+  - file: variable-template-contract.md
+    topic: 具体情報をテンプレート変数へ戻し、横展開可能にする契約
+    read_when: 固有名詞・固定パス・実行環境差分を再利用成果物へ反映するとき
+  - file: thought-methods.yaml
+    topic: 30 思考法の 1-2 行適用テンプレ (D2 で本文から外部化。本文に再掲しない)
+    read_when: SubAgent 起動時に該当カテゴリのテンプレを引用渡しするとき
+  - file: observable-emit-examples.md
+    topic: 35章 observable の emit 実例 (safety_valve_fired 等)
+    read_when: emit-observable.py の出力形式・発火条件を確認するとき
+related_artifacts:
+  - file: ../workflow-manifest.json
+    topic: Phase1(reset) / Phase2(3並列) / Phase3(execute) のフェーズ定義・gate・依存
+    read_when: ワークフロー全体の依存関係や agent 起動順を確認するとき
+  - file: ../schemas/finding.schema.json
+    topic: 機械観測 signal 単数 (contradiction/omission/inconsistency/dependency_break/smell)
+    read_when: 個別 finding の構造を実装・検証するとき
+  - file: ../schemas/verdict.schema.json
+    topic: 最終 verdict (PASS/FAIL/safety_valve_fired) の機械可読定義
+    read_when: 収束判定結果を出力・検証するとき
+  - file: ../scripts/build-paradigm-scorecard.py
+    topic: paradigm scorecard 集計スクリプト
+    read_when: Phase2 出力から scorecard を生成するとき
+  - file: ../scripts/validate-paradigm-coverage.py
+    topic: thought_method_coverage.used + skipped_with_reason == 30 の機械検証
+    read_when: 30 思考法の全数カバレッジを検証するとき
+  - file: ../scripts/emit-observable.py
+    topic: 35章 observable の emit スクリプト
+    read_when: safety_valve_fired 等の observable を出力するとき
+  - file: ../examples/example-review-output.md
+    topic: レビュー出力の完成例
+    read_when: findings/verdict の書式実例を見たいとき
+  - file: ../examples/safety-valve-fired-verdict.json
+    topic: max_iter 到達 (failure 扱い) の verdict 実例
+    read_when: 安全弁発火時の出力形式を確認するとき
+  - file: ../schemas/findings.schema.json
+    topic: paradigm_findings (C1-C4 verdict / severity / bucket / observations / recommended_intervention) の機械可読定義
+    read_when: Phase2 出力の構造を実装・検証するとき
+  - file: ../schemas/phase-output.schema.json
+    topic: Phase1/2/3 間 handoff の共通入出力スキーマ
+    read_when: フェーズ間データ受け渡しの形式を確認するとき
+  - file: ../prompts/R1-phase1-reset.md
+    topic: Phase1 elegant-reset-observer 起動プロンプト
+    read_when: Phase1 の責務・layers・self_evaluation を確認するとき
+  - file: ../prompts/R2-phase2-parallel.md
+    topic: Phase2 並列3エージェント起動プロンプト
+    read_when: Phase2 並列起動・思考法割当・独立性ルールを確認するとき
+  - file: ../prompts/R3-phase3-execute.md
+    topic: Phase3 elegant-improvement-executor 起動プロンプト
+    read_when: Phase3 のパッチ適用範囲・収束判定・safety_valve を確認するとき
+related_skills:
+  - name: run-plugin-package-check
+    role: Step 5 で PKG 契約検査を実行 (PKG-006 と dependency_break 衝突時は PKG 側優先)
+  - name: assign-skill-design-evaluator
+    role: Step 6 のペア評価 (proposer ≠ approver)
+  - name: delegate-codex-skill-review
+    role: Phase 3 限定の Codex 委譲先
+  - name: ref-pkg-contract
+    role: PKG 契約の正本参照
+  - name: ref-skill-design-rubric
+    role: rubric 正本 (frontmatter rubric_refs)
+source_docs:
+  - doc: 09-evaluation-orchestration
+  - doc: 17-agent-teams-reference
+  - doc: 25-meta-skill-runbook
+    section: runbook Step 5.5
+  - doc: 26-meta-skill-dogfooding
+    section: dogfooding
+  - doc: 27-rubric-governance-runbook
+    section: "8.5 governance-log"
+  - doc: 30-paradigm-analogy-map
+  - doc: 35-meta-harness-feedback-loop
+    section: observables
+  - doc: 36-plugin-package-harness-contract
+owner_agents:
+  - file: ../../../agents/elegant-reset-observer.md
+    phase_id: phase1-reset
+  - file: ../../../agents/elegant-logical-structural-analyst.md
+    phase_id: phase2-parallel
+  - file: ../../../agents/elegant-meta-divergent-analyst.md
+    phase_id: phase2-parallel
+  - file: ../../../agents/elegant-system-strategic-analyst.md
+    phase_id: phase2-parallel
+  - file: ../../../agents/elegant-improvement-executor.md
+    phase_id: phase3-execute

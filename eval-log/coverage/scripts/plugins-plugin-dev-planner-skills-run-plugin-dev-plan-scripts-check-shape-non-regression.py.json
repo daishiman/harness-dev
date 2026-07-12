@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-shape-non-regression.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。新旧 shape (fixed-13-phase vs task-graph-derived) の非劣化を機械検査 (受入基準携帯率 + byte一致再現性)。C14(b) 品質の genuine 判定は assign-plugin-plan-evaluator へ委譲し、本 script は機械的非劣化のみ担う二層分離。TESTS: test_check_shape_non_regression.py 22 PASS。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}
