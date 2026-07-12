@@ -12,6 +12,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
@@ -523,8 +525,14 @@ def test_l_bootstrap_plans_migration_gate_non_firing():
     という additive 非回帰を直接証明する (plugin-plans/ は本 skill から read-only)。
     """
     repo_root = Path(__file__).resolve().parents[5]
+    plans_root = repo_root / "plugin-plans"
+    if not plans_root.is_dir():
+        # producer 所有の plugin-plans/ は全配置に存在するとは限らない (未移管 repo・
+        # 単独 install)。validate-plan-coverage --all の「不在→対象なしで OK」と同じ
+        # セマンティクスで、実配置が無い環境ではこの非回帰証明を対象なしとして skip する。
+        pytest.skip("plugin-plans/ 不在: bootstrap plan 実配置なし (対象なし)")
     for name in _BOOTSTRAP_PLAN_DIRS:
-        plan_dir = repo_root / "plugin-plans" / name
+        plan_dir = plans_root / name
         graph = json.loads((plan_dir / "task-graph.json").read_text(encoding="utf-8"))
         marker = dtg.shape_marker(plan_dir)
         v = vtg._check_migration_gate(vtg._nodes(graph), marker)
