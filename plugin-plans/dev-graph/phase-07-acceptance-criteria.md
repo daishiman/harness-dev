@@ -53,7 +53,7 @@ applicability:
 - [ ] C03/C14: `--dry-run` 指定時に GitHub 側への書込みが 0 件のまま反映/起票予定差分のみがプレビューされ、guard hook (C10) が gh write の暴発を阻むと判定できる (要件C13)。
 - [ ] C01/C02/C11: kind/subtype/API条件templateが適用され、必須section欠落やplaceholderだけの成果物はreadiness incompleteになる (要件C18-C20)。
 - [ ] C19: 仕様/architectureがsystem-spec-harness確定成果物とlineageを引用し、ロジック複製がない (要件C21)。
-- [ ] external system-dev-planner引用: 13 phase docsとN typed task specs、workstream inventory、非循環DAG、handoff draft、4条件PASSの判定はexternal plugin system-dev-plannerが所有し、dev-graph側は評価前draftをIssue/推薦に露出させず、同一digest PASS後だけC02がatomic promotionすると判定できる (要件C22-C23)。
+- [ ] external system-dev-planner引用: P01..P13 exact 13 executable task specs、13-entry inventory、13-node intra-feature DAG、handoff、4条件PASSを所有し、dev-graphはexpected/applied=13とphase/node exact-set後だけC02がatomic登録すると判定できる (要件C22-C23/C56)。
 - [ ] C24/C01/C02/C19: 同一symlinkを異なるrepoから実行して各repo固有docs/config/stateだけを扱い、cross-read/write・root外path・絶対path保存が0件と判定できる (要件C24-C26)。
 - [ ] C03/C26: linked PR closed未mergeではdoneにならず、default branchへmergedかつpolicy充足時だけIssue/Project/local completion evidenceが冪等収束する (要件C31-C34)。
 - [ ] C01/C25: plugin hookとproject settings fallbackの二重登録0件、既存settings全書換0件で、対象Claude eventだけが発火しTaskCompletedはpending_reviewへparkするがGitHub doneにせず、identity/owner不整合以外をblockしない (要件C35-C38)。

@@ -27,7 +27,7 @@ goal-spec checklist C2 は「component_kind をビルド対象語彙として保
 - `plugin-plans/dev-graph/templates/system-plan-contract.json` (draft) の `workstream_kinds` (9 値) が先行参照として存在する。
 
 ## ドメイン知識
-- **3射影**: lifecycle=13 phase、build=12 component、execution=N typed tasksを直交させる。
+- **メタ/実行分離**: 本plugin planのlifecycle=13 phaseとbuild=12 componentはメタ層。runtimeは1 featureをP01..P13 exact 13 executable tasksへ1:1変換し、別phase documentsを生成しない。
 - **workstream_kind / build_target_kind 二重フィールド設計** (本 plan の生成物側スキーマ、`references/workstream-inventory-schema-design.md` が正本): `workstream_kind` は system-dev-planner が生成するタスク仕様書の分類軸、`build_target_kind` は component_kind 5 値 + `application-code` (非 plugin-component の実装コード全般を指す汎用フォールバック) の計 6 値で、build_target_kind ∈ {skill,sub-agent,slash-command,hook,script} のときは plugin-dev-planner 同様の builder routing、`application-code` のときは task-graph build/capability-build への汎用 handoff とする。
 - **共有 script hoist 原則**: `check-implementation-readiness.py` (C08) は C01 (R3 emit 時ゲート) と C07 (tool-call 時ゲート) の 2 箇所から呼ばれる (第二消費者あり) ため単一 skill 配下に畳まず `placement_scope=plugin-root` で hoist する。
 - **assign kind の feedback_contract 省略**: `skill_kind=assign` (C02) は `FEEDBACK_LOOP_SKILL_KINDS` (run/wrap/delegate) に含まれないため `feedback_contract` を構造上省略できる (`assign-plugin-plan-evaluator` の実際の frontmatter で feedback_contract キーが存在しないことを precedent として確認済み)。

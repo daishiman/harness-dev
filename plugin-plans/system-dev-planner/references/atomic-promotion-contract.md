@@ -2,7 +2,7 @@
 
 ## Staging
 
-C01/C04 は caller repository の config が示す `.dev-graph/staging/<run_id>/` だけへ 13 phase、N task specs、workstream inventory、task graph、system-build handoff draft を生成する。各ファイルの SHA-256 と canonical manifest digest を `staging-manifest.json` に記録する。
+C01/C04 はcaller repositoryの`.dev-graph/staging/<run_id>/`だけへ、1 featureの`feature-package.json`、P01..P13に対応するexact 13 task specs、13-entry workstream inventory、13-node task graph、system-build handoff draftを生成する。別の13 phase文書セットや可変N taskは生成しない。各ファイルのSHA-256とcanonical manifest digestを`staging-manifest.json`に記録する。
 
 ## Promotion gates
 
@@ -21,6 +21,6 @@ C01/C04 は caller repository の config が示す `.dev-graph/staging/<run_id>/
 
 ## Registration
 
-promotion receipt の `published_digest` と `dev-graph-registration.json` の `source_digest` は同一でなければならない。dev-graph は receipt 後の task specs だけを `tasks/` graph node として登録する。登録 request は repo-relative `file_path`、stable `graph_node_id`、depends_on、resource_scope、acceptance、verification、source_lineage を持つ。
+promotion receiptの`published_digest`とregistrationの`source_digest`は同一でなければならない。dev-graphはreceipt後のexact 13 task specsだけを登録する。requestは共通`parent_feature`/`feature_package_id`とP01..P13 exact-setを持つ。
 
-登録はplan内のN taskを1 batchとして扱い、全nodeのschema/path/dependency/tracker bindingを先に検証してからC02の単一transactionでall-or-none commitする。成功時は`dev-graph-registration-receipt.json`へ`expected_count=applied_count=N`、正確な`registered_node_ids`、`source_digest`、commit後`graph_revision`を記録する。1件でも失敗した場合は`status=aborted, applied_count=0`とし、promotion済みgenerationは保持するがL4 handoffを出さない。再実行はper-node `graph_node_id+source_lineage.source_digest`とbatch `source_digest`で冪等でなければならない。
+登録は13 taskを1 batchとして扱い、schema/path、P01..P13 exact-set、同一parent/package、機能内dependency、tracker bindingを先に検証してからC02の単一transactionでall-or-none commitする。成功時は`expected_count=applied_count=13`、正確なnode/phase exact-set、`source_digest`、`graph_revision`をreceiptへ記録する。1件でも失敗した場合は`status=aborted, applied_count=0`とする。

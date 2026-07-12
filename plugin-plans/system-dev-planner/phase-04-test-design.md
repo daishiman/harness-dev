@@ -27,7 +27,7 @@ TDD 原則により実装 (P05) に先立って受入判定基準を固定する
 
 ## ドメイン知識
 - IN1 (inner loop, `verify_by: script`): `check-implementation-readiness.py` が system-spec-harness 確定成果物の必須章欠落を送信前検証し欠落 0 件。
-- OUT1 (outer loop, `verify_by: test`): implementation_readiness=complete の入力から生成した task-spec と task-graph が dev-graph の tasks/ グラフノード登録形式で全件検証可能なことを受入テストが確認する。
+- OUT1: implementation_readiness=completeの1 featureからP01..P13 exact 13 task specs/13-node DAGが生成され、expected/applied=13と共通parent/packageで登録できることを確認する。12/14件・phase重複・cross-feature edgeはnegative fixtureで拒否する。
 - IN2: host project-root不一致、repository_id不一致、absolute/traversal/root外symlink/別repo/broken content linkを拒否し、broken harness linkはhost launcher fixtureが起動前検出する。
 - OUT2: repo-A/repo-B並行fixtureでcontent/state/cache/lockが交差せず、init再実行が既存docsを上書きしない。
 - promotion test: digest mismatch/readiness incomplete/evaluator FAILでcurrent pointer不変、全PASS時だけatomic receiptを出す。

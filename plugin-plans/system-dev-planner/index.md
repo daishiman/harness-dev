@@ -63,19 +63,19 @@ plugin_meta:
 - **表記規約**: 要件 id は「要件C9」「goal-spec C10」のように接頭辞付きで表記し、component id (C09/C10 等の 0 埋め 2 桁) と区別する。
 - **プラグイン slug**: `system-dev-planner` (plan_dir=`plugin-plans/system-dev-planner/`・同一構想は常に同一出力先=再現性アンカー)。
 - **最上位目的 (purpose)**: dev-graph (マクロ層) が保持する 1 つの feature ノードを入力文脈に受け、system-spec-harness の確定成果物を引用しながら task-spec + task-graph が implementation_readiness を満たして確定した状態を、plugin-dev-planner 同型のゴールシーク型ライフサイクルで機械保証する per-feature ミクロファクトリ。
-- **仕様駆動 (大前提)**: 本計画は harness-creator 仕様を基に作成される。要件の正本は `goal-spec.json` の checklist (C1-C13)、仕様書 (本 index + 13 phase + typed task specs) はその被覆であり、実装との乖離が出たら仕様を先に更新してから build へ戻す。
+- **仕様駆動 (大前提)**: 要件の正本は`goal-spec.json` checklist C1-C16。L3 plugin planの13 phaseとruntime exact 13 task packageを別レイヤとして検証する。
 - **呼び出し元との境界**: 呼び出し元 `plugin-plans/dev-graph/` からの引用入力・呼出しインターフェースは goal-spec checklist C4 由来。内容構築 (仕様書/アーキテクチャの新規作成) は常に `plugins/system-spec-harness/` へ委譲し複製しない (checklist C3/C8)。
 - **プランナー選定 (入口の二者択一)**: 構築対象が `plugins/<slug>/` 配下の Claude Code plugin 実体なら plugin-dev-planner (`/plugin-dev-plan`) の管轄であり、そのタスクは `task-state.json` から beads へ直接投影する (dev-graph 非経由)。導入先リポジトリのアプリケーション/システムコードの構築のみが本 plugin (system-dev-planner) の管轄で、typed task spec → dev-graph atomic 登録 → execution-tracker contract の経路をとる。正本 = dev-graph plan の `references/execution-tracker-contract.md` §0 (二重登録禁止)。
 - **二層モデル (マクロ/ミクロ棲み分け、上記選定軸と直交)**: システム構築ルートの内部は want→dev-graph C14 マクロ分解→feature ノード生成→per-feature に本 plugin (system-dev-planner) 起動→13 タスク仕様書+機能内依存 DAG 生成→dev-graph へ parent_feature 登録、という二層構造をとる。dev-graph はマクロ層 (feature/architecture/機能間依存の保持 + 実行オーケストレーション) を担い、system-dev-planner はミクロ層 (1 feature → 13 タスク仕様書) を担う。system-dev-planner は feature 自体を生成せず (dev-graph 側の実体)、feature を消費して細分解するのみ。正本 = dev-graph plan の `references/execution-tracker-contract.md` §8 (二層モデル・feature 完了カスケード。マクロ/ミクロ責務境界・per-feature 起動・parent_feature・feature 完了ロールアップ・architecture_refs 解決境界を集約した durable 正本で、improvement-handoff-macro.json は transient 入力ゆえ正本にしない)。上記のプラグイン構築 vs システム構築の選定軸 (plugin 実体か否か) とは直交する軸である。
-- **スコープ (含む)**: index + 13 phase + N typed task specs + `component-inventory.json` + `workstream-inventory.json` output-shape contract + task DAG + system-build handoff draft + dev-graph登録契約 + atomic promotion契約 + envelope/composition/EVALS draft の生成 (計画=L3 契約)。
+- **スコープ (含む)**: system-dev-planner自身のL3 plugin plan (本index/13 phase/component inventory) と、runtime出力である1 feature→P01..P13 exact 13 executable task specs/13-node DAG/feature-package/登録receipt契約。両者の13を混同しない。
 - **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、system-spec-harness が担う仕様書内容構築、task-graph build/capability-build が担う実装コード生成、PR/配布登録、feature ノード自体の生成および program 全体の goal/scope の保持 (dev-graph マクロ層の責務)。
 
 ## ドメイン知識
-- **3 射影**: lifecycle=13 phase、build=12 component、execution=N typed task specs/DAG を分離する。phase数、component数、task数を一致させない。
+- **メタ/実行の分離**: 本pluginをbuildするL3計画は13 phase + 12 components。build後のruntimeは1 featureにつきexact 13 executable tasks。runtimeではphase slotとtaskを1:1にして別phase文書を作らない。
 - **component_kind (5 種、全検討済み)**: skill / sub-agent / slash-command / hook / script。skill×2 / sub-agent×3 / slash-command×1 / hook×1 / script×5 = 12 実体へ収束した。
 - **workstream_kind / build_target_kind 二重フィールド**: system-dev-planner が生成する `workstream-inventory.json` は、生成対象タスクの分類軸 `workstream_kind` (9 値: frontend/backend/api/data/infrastructure/security/quality/documentation/operations) と、ビルド対象語彙を保持する `build_target_kind` (6 値: `application-code` + component_kind 5 値) の 2 フィールドを持つ。`build_target_kind` ∈ {skill,sub-agent,slash-command,hook,script} のとき plugin-dev-planner 同様の builder routing へ、`application-code` のとき task-graph build/capability-build への汎用 handoff へ分岐する (goal-spec C2 の充足)。
 - **implementation-readiness**: system-spec-harness 側の完成度評価 (前提条件/設計知識/成果物/依存/完了チェックリスト等の充足度)。`complete` 未達では実装 handoff を fail-closed で停止する (goal-spec C4/constraints)。判定は C08 (`check-implementation-readiness.py`) が単一 SSOT として担い、C01 (emit 時) と C07 (tool-call 時) の 2 箇所から呼ばれる (第二消費者あり=plugin-root hoist の根拠)。
-- **dev-graph 登録契約**: N taskはpromotion後にall-or-none登録し、全taskが共有する`parent_feature`(起動時に解決したdev-graph featureノードのgraph_node_id)を伴って`dev-graph-registration-receipt.json`のexpected/applied count、node exact-set、graph revision一致後だけhandoffする。詳細は`dev-graph-registration-contract.json`。
+- **dev-graph 登録契約**: P01..P13 exact 13 taskをall-or-none登録し、共通`parent_feature`/`feature_package_id`、expected/applied=13、phase/node exact-set、graph revision一致後だけhandoffする。詳細は`feature-execution-package-contract.md`と`dev-graph-registration-contract.json`。
 - **Tracker publication/completion handoff**: typed task specは`tracker_binding_intent`、条件付きGitHub publication intent、linked-PR policyを宣言する。Beads/GitHub/Projects mutation・完了収束はdev-graphが所有し、system-dev-plannerはintentだけを持つ。`mode=both`のautoは曖昧として禁止する。
 - **branch/worktree handoff**: 各taskはone-task-one-branch、repository相対touches、worktree lease条件を持つ。system-dev-plannerは割当を実行せず、dev-graphのlease-aware schedulerとdefault-branch reconcilerが消費する。
 - **DRY 委譲とsource pin**: 仕様書・architectureの内容構築は `system-spec-harness` version `0.1.0` の `run-system-spec-compile` + `assign-system-spec-completeness-evaluator` (手動 command `/spec-compile`) へ委譲する。`system-spec-source-pin.json` と不一致なら停止する。
@@ -141,10 +141,11 @@ plugin_meta:
 - [ ] 要件 C9: `system-spec-source-pin.json` が system-spec-harness version 0.1.0 と compile/evaluator entrypointを固定し、repo-local確定成果物だけをcitation-onlyで消費する。
 - [ ] 要件 C10: caller repo root precedenceとhost project-root一致、repository_id再導出、repo-local config、relative-only/realpath containment、cross-read禁止、broken/moved content symlink診断、host broken-link preflight、repo別state/cache/lock、idempotent no-overwrite init、multi-repo isolation、same-digest atomic promotionがcomponent/phase/handoff/受入へ配線されている。
 - [ ] 要件 C11: typed task specのtracker binding/publication intentがdev-graph registrationへ写像され、binding別authorityへpublication可能である。
-- [ ] 要件 C12: N taskのall-or-none登録receiptを検証し、linkage/execution初期化とBeads/GitHub mutation/reconciliationをdev-graphへ委譲する。
+- [ ] 要件 C12: exact 13 taskのall-or-none登録receipt (expected/applied=13、P01..P13 exact-set、共通parent/package)を検証し、tracker mutation/reconciliationをdev-graphへ委譲する。
 - [ ] 要件 C13: task templateがone-task-one-branch、resource_scope、worktree lease、feature pending/default reconciliation契約を持つ。
 - [ ] 要件 C14: system-dev-planner がミクロ層として、自動起動時は dev-graph の feature ノード (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) を構造化入力として受理し goal-spec へ写像する経路を持ち、手動起動時 (`/system-dev-plan`) は自然文構想を受理する経路を持つ。
 - [ ] 要件 C15: 生成する typed task specification と dev-graph registration payload が `parent_feature` を持ち、1 run が生む全 promoted task が同一 `parent_feature` を共有して feature 配下へ atomic 登録される。
+- [ ] 要件 C16: runtime outputは別の13 lifecycle文書+可変N taskではなくP01..P13 exact 13 executable task specs/13-node DAGで、欠落・重複・14件目・層越え依存をfail-closedする。
 - [ ] `task-specs/*.md` が13 phase policyと12 component buildをdispatch可能な単一責務taskへ分解し、`shape_marker=task-graph-derived` のDAGを導出できる。
 - [ ] 各 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。
 - [ ] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0 (goal-spec 要件の被覆は check-requirements-coverage が機械検査)。
@@ -158,13 +159,13 @@ plugin_meta:
 |---|---|---|
 | system-spec-harness 確定成果物を引用しロジックを複製していない | C01 の実行ログが system-spec-harness の出力ファイルパスのみを引用しヒアリング/compile ロジックを再実装していないことを確認 | C01 (run-system-dev-plan) の IN1 criterion |
 | implementation_readiness 未達を fail-closed で停止する | 未完成な system-spec-harness 成果物を入力に注入し、C07 (hook) が Bash/Task 呼出しを exit2 で阻むことを確認 | C07 (guard-implementation-readiness) + C08 (check-implementation-readiness.py) |
-| 生成した task-spec が dev-graph tasks/ ノード登録形式を満たす | implementation_readiness=complete の入力から生成した task-spec/task-graph を dev-graph の登録スクリプトへ通し全件受理されることを確認 | C01 の OUT1 criterion + 受入テスト |
+| 1 featureがexact 13小タスクへ変換される | P01..P13各1件、13-node DAG、共通parent/packageとなり、12/14件・phase重複・cross-feature task edgeが拒否される | C01 OUT1/OUT3 + C12 + feature execution package contract |
 | 生成物が 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を満たす | C02 が独立 context で C05 (evaluator) を fork し `plan-findings.json` を出力、4 条件全 PASS を確認 | C02 (assign-system-dev-plan-evaluator) + C05 |
 | system-dev-planner 自身が決定論ゲートで検証可能 | core+拡張ゲート (11 本・12 起動) を repo-root cwd で実行し全 exit0 を確認 | `specfm.GATE_SCRIPTS` |
 | symlink導入先のcontentがrepo間で隔離される | repo-A/repo-Bが同一plugin sourceをsymlink共有するfixtureを並列実行し、相手repo markerを一度も読まずstate/cache/lock/promotion pathが交差しない | C09 + C01 OUT2 |
 | initが既存repository文書を壊さない | 同一repoでinitを2回実行し既存docs/specs/architecture/tasks/issuesのhash不変、2回目はcreated=0またはpreserved/skippedのみ | C10 |
 | 部分生成物を公開しない | evaluator digest mismatch/readiness incomplete/path escapeを注入しcurrent pointer不変、全PASS時だけatomic promotion receiptが生成される | C11 |
-| promoted taskをdev-graphへ登録できる | registration payloadが現行dev-graph graph-node schemaの全必須field、status=active、confirmed/pass/complete、object lineage、tasks/ path、publication intent、空linkage/execution、in-progress completionを満たし、全taskが同一`parent_feature`配下を共有し、旧payloadと生成時doneを拒否する | dev-graph-registration.schema.json + contract |
+| promoted taskをdev-graphへ登録できる | receiptがexpected/applied=13、P01..P13 exact-set、全task同一`parent_feature`/`feature_package_id`を証明し、旧payload・生成時done・partial registrationを拒否する | dev-graph-registration.schema.json + contract |
 | 複数worktree向け実行契約を引き渡せる | typed taskにone-task-one-branch、touches、lease、feature pending/default reconciliationがあり、dev-graph schedulerへ渡した際に同一task二重割当されない | system-task-spec-template + dev-graph registration contract |
 
 build 後、各 component の `feedback_contract.criteria` (C01) が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たす system-dev-planner が出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。

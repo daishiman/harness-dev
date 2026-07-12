@@ -53,7 +53,7 @@ plugin_meta:
 ## 基本定義
 - **プラグイン slug**: `dev-graph` (plan_dir=`plugin-plans/dev-graph/`・同一構想は常に同一出力先=再現性アンカー)。
 - **最上位目的 (purpose)**: ローカルtask graph/Markdownを正本に仕様成果物 (issue/task/specification/architecture/feature/document) を一元管理し、機能 (feature) ごとにpurpose/goal/scope_in/scope_out/acceptance/architecture_refsを保持して機能単位の実行をオーケストレーションしつつ、taskごとにBeadsまたはGitHubを単一実行projectionとして、要件定義・推薦・複数worktree実行・PR merge完了収束までを担う。
-- **仕様駆動 (大前提)**: 本計画は harness-creator 仕様を基に作成される。要件の正本は `goal-spec.json` の checklist 全件 (現行 C1-C55)、仕様書 (本 index + 13 phase) はその被覆であり、実装との乖離が出たら**仕様を先に更新**してから build へ戻す (spec-first)。
+- **仕様駆動 (大前提)**: 要件の正本は`goal-spec.json` checklist全件 (現行C1-C56)。仕様と実装がずれたら仕様を先に更新する。
 - **スコープ (含む)**: index + 13 フェーズ計画 + `component-inventory.json` の生成 (計画=L3 契約)。
 - **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、実タスクの実装コード生成 (既存 capability-build / task-graph build へ handoff)、PR/配布登録。
 
@@ -67,10 +67,10 @@ plugin_meta:
 - **handoff criteria解決**: handoff routeの`id`はinventory component idと1:1であり、`route.id → component-inventory.components[id].quality_gates / harness_coverage / feedback_contract.criteria`をcriteria参照規則とする。criteria本文をhandoffへ複製しない。
 - **task graph gateの読み方**: `P01..P13` nodeは非dispatchのphase完了集約markerで、自phaseleafへdepends_onする。実際のdispatch順序はD01→D02→…とD04→全B-Cxx→D06…の明示depends_onが担う。従ってmarker自体を次taskのprerequisiteにせず、各Dxx/B-Cxx acceptanceがgate ownerとなる。
 - **単一グラフ構造とタスク実行時の要件導出 (要件 C3)**: タスクグラフは issue/task/specification/architecture/document の各情報を単一のグラフ構造 (ノード+リンク) で保持する。分散した専用ストアを持たず、`run-dev-graph-node` (C02) が唯一の書込み経路としてスキーマ整合性を維持する (例外: C26 の restricted lifecycle projection のみ)。タスク実行時は `run-dev-graph-requirements` (C04) が横断情報から要件定義を導出する。
-- **実行トラッカーと公開投影 (要件 C4/C27-C30/C43-C48)**: C14はN taskをC02へall-or-none登録しreceiptを確認する。`tracker_binding=beads`はC28がbd issue/blocks edgeを所有し、必要なGitHub viewer mirrorは`bd github sync --push-only`だけを使う。`github`はC12がIssueと任意Projectsを所有し、`none`はlocal-only。Projects Statusは`local_to_project`でPR merge authorityを迂回しない。field value `updatedAt`は競合hint、`field_snapshot`は削除/renameも扱うcanonical 3-way baseとする。
+- **実行トラッカーと公開投影**: C14は1 featureのP01..P13 exact 13 taskをC02へall-or-none登録する。Beadsではfeature=epic、13 task=child issue、機能内edge=blocks。GitHubではfeature=Milestone/Project item、13 task=Issue。外部表示は完了authorityではない。
 
 - **入口と完了authority早見表**: Plugin実体の開発計画はplugin-dev-planner→`task-state.json`→`project-task-beads.py`（実装issue `harness-c1h`完了までfail-closed）。アプリ/システム開発はsystem-dev-planner→dev-graph atomic registration→C28/C12。完了事実はremote default branchのancestorと確認できるlinked PR mergeであり、graph/task Markdownをlocal transactionで確定後、外部Beads closeを最後に冪等実行する。
-- **ゼロ依存の静的可視化 (要件 C5)**: `run-dev-graph-render` (C05) が生成する成果物は追加ランタイム依存なしにブラウザで開ける SVG + インライン JS を含む静的 HTML/CSS 1 ファイル。外部 CDN・追加 npm 依存を持たず、リポジトリへコミットまたは CI 生成 (`render-graph-html.py` を CI step で実行) のいずれでも成立する。
+- **ゼロ依存の静的可視化 (要件 C5)**: `run-dev-graph-render` (C05) が生成する成果物は追加ランタイム依存なしにブラウザで開ける SVG + インライン JS を含む静的 HTML/CSS 1 ファイル。外部 CDN・追加 npm 依存を持たず、リポジトリへコミットまたは CI 生成 (`render-graph-html.py` を CI step で実行) のいずれでも成立する。beads 束縛タスクの live 実行看板には別途 doublej/beads-kanban を採用し (§9)、C05=6 種 artifact 全体の俯瞰スナップショット / beads-kanban=beads task の live 操作、と役割分担する (どちらも完了 authority ではない・authority は PR merged=true)。正本=`references/execution-tracker-contract.md` §9。
 - **capability-build への handoff 境界 (要件 C6)**: 本ハーネスの責務は管理 (グラフ保持・同期・可視化) と要件定義導出までであり、実タスクの実装コード生成は行わない。`run-dev-graph-requirements` (C04) が要件定義書を確定した時点で既存の capability-build / task-graph build へ handoff し、本ハーネス側のスキルはそれ以降の実装コード生成を担わない (責務境界は `component-inventory.json` C04 の `boundary` フィールドと `output_contract` に明記)。
 - **id+updated_at 競合の同時競合 (open_question 2 の解決)**: 上記タイブレーク規則 (「GitHub 双方向同期と競合解決」節) が正本。C03 の `feedback_contract.criteria` OUT2 が受入テストとして固定する。
 - **自然文/task specificationからIssue・Project publication (要件 C7/C27)**: C14は自然文の want をfeature+architecture+機能間depends_onへマクロ分解し (13タスク仕様書への細分解はsystem-dev-planner委譲・C50)、system-dev-planner/`/system-dev-plan`が返すpromoted typed task specsをparent_feature付きでC02 local commit→Issue起票→Project item-add→initial field editの順に実行する。`issue_linkage`と`github_project_linkages`を冪等キーとして再実行時の重複を防ぎ、外部部分失敗はpending retryへ送る。`--dry-run`ではIssue/Project外部write 0件で全publication previewを返す。
@@ -86,13 +86,13 @@ plugin_meta:
 - **修正改善容易性 (要件 C14)**: 全6種の人間可読Markdownを差分編集できる。分類frontmatter編集後はC11がschema/path parityを即時検証し、分類変更はC02のpreview付きmigration経路へ送り、C03/C05が不変 `graph_node_id` を使って追従する。全書換・物理削除・検証なしmoveは禁止する。
 - **artifact template正本 (要件 C18-C20)**: `templates/template-contract.json` と共通frontmatter、issue/task/document/specification/API/architecture基底+frontend/backend/infrastructure/data/security subtypeを正本にする。C01が`.dev-graph/templates/`へ冪等scaffold、C02がkind/subtypeを自動合成、C11が空/TODO/条件template欠落をfail-closed検出し`implementation_readiness`と不足sectionを算出する。
 - **system-spec-harness引用 (要件 C21)**: 仕様書・architectureの作成/更新はC19が`plugins/system-spec-harness/`の`run-system-spec-elicit`→必要時doc-fetch→`run-system-spec-compile`→独立completeness evaluatorを引用する。dev-graphは同等ロジックを複製せず、source plugin/path/versionと確定状態を保持してC02経由でグラフ登録する。
-- **system development task plan (要件 C22/C23・外部依存)**: システム開発タスク仕様書ハーネスの正本は独立plugin system-dev-plannerに一本化し、dev-graphはsystem-dev-planner pluginのrun-system-dev-planをSkill呼出しで引用する (external_contract_ref: `plugin-plans/system-dev-planner/handoff-run-plugin-dev-plan.json`)。implementation_readiness/validator (validate-system-plan.py) も同pluginが所有する。13 phase docs + N inventory + N typed task specs + DAG + handoff draft + 独立評価と9 system workstream語彙置換は同plugin側の契約に従い、C19由来confirmed/readiness completeを前提に生成されたplanはC02経由でtasksグラフへ登録され、最終handoffはC04だけが所有する。
+- **system development task plan (要件 C22/C23・外部依存)**: system-dev-plannerは1 featureをP01..P13 exact 13 executable task specs/13-node intra-feature DAGへ変換する。別の13 phase docsや可変N taskは作らない。正本=`plugin-plans/system-dev-planner/references/feature-execution-package-contract.md`。
 - **symlink multi-repo context (要件 C24-C26)**: harness code/assetsは共有sourceからsymlink参照するが、content/config/state authorityは毎回caller repository内に限定する。C24が`--repo-root > trusted project env > git rev-parse --show-toplevel > cwd marker`で候補rootを解決し、host宣言`$CLAUDE_PROJECT_DIR`とのrealpath一致と`.dev-graph/config.json`のrepo相対root containmentを検証する。symlink source/別repo/root外へのcontent read/write、共有cache/lock、broken content linkはfail-closed。harness自身のbroken symlinkは起動前host launcher/installer preflightで扱う。C01は各repoへ冪等initし既存docsを上書きしない。
 - **Projects設定とidentity (要件 C28/C29)**: `.dev-graph/config.json`はissue repositoryと複数Projectのalias/owner type/login/project number/default/auto-add/field mappingだけを正本化し、GitHub有効時は`default=true`をexactly oneにする。duplicate aliasはC12がpreflight拒否する。tokenとGitHub node IDは保存せず、C12が実行時解決しrepo-local cacheへ保持する。
 - **PR merge完了とProjects収束 (要件 C31-C34)**: 完了authorityはlinked PRがdefault branchへ`merged=true`となった事実であり、closed未mergeは完了にしない。GitHub Issue auto-closeとProjects built-in Doneをremote fast path、C03+C26をrepair/reconciliation経路とする。複数PR all/any、Issue reopen、revert、offline/hook未実行を状態機械で扱う。
 - **Claude Code hooks (要件 C35-C38)**: C25はplugin `hooks/hooks.json`を共有既定とし、`.claude/settings.json`は明示fallbackだけに使う。SessionStartは期限到来reconcile、成功済みBashのPostToolUseはasync reconcile、TaskCompletedは`[DG:<graph_node_id>]` leaseをpending_reviewへparkするだけでPR merge前も正常終了し、GitHub doneとは分離する。C01は既存settingsをpreview付きdeep-mergeし、managed/local override、disable、rollbackを診断する。
 - **複数worktree/branch (要件 C39-C42)**: C24がworktree root/git common dir/branch/HEAD/default branchを識別し、C27が検証済みcommon dir配下でephemeral lease/event ledgerを共有する。task/spec/graphは各worktree内に留め、feature branchではpending eventだけを記録する。C26はcleanなdefault-branch worktreeだけでdurable lifecycle projectionを更新し、不在/dirty/diverged時はpendingのまま停止する。
-- **実行トラッカー抽象化 (要件 C43-C47)**: AIエージェント実行=beads / 人間向け=GitHubのハイブリッド。repo単位選択=`execution_tracker`、ノード単位=`tracker_binding`単一publication authority、PR merged→bd close→task仕様書反映カスケード、C28単一チョークポイント+version window。プランナー選定 (§0: plugin構築=plugin-dev-planner / システム構築=本ハーネス経路) を含め、正本=`references/execution-tracker-contract.md`。
+- **実行トラッカー抽象化 (要件 C43-C47)**: AIエージェント実行=beads / 人間向け=GitHubのハイブリッド。repo単位選択=`execution_tracker`、ノード単位=`tracker_binding`単一publication authority、PR merged→bd close→task仕様書反映カスケード、C28単一チョークポイント+version window。live 看板は doublej/beads-kanban を採用し (repo-config `execution_tracker.beads.board`、`beads-kanban` 選択時は `server_mode=true` を機械強制・§9)、静的俯瞰は C05、と役割分担する。プランナー選定 (§0: plugin構築=plugin-dev-planner / システム構築=本ハーネス経路) は route-dev-planner router が構想文から機械 dispatch する (`plugin-plans/route-dev-planner/route-dev-planner-contract.md`)。正本=`references/execution-tracker-contract.md`。
 
 ### 正規ディレクトリとrouting例
 
@@ -216,7 +216,7 @@ plugin_meta:
 - [ ] 要件 C24: symlink code sourceとcaller repository content authorityを分離し、各repo固有docs/config/stateを読むroot resolutionが設計されている。
 - [ ] 要件 C25: host project-root一致、containment/cross-read禁止/broken content symlink/host link preflight/multi-repo isolationがfail-closedである。
 - [ ] 要件 C26: repo-local config/templates/stateの冪等init、既存docs非上書き、repo相対path、multi-repo fixtureが設計されている。
-- [ ] 要件 C27: promoted N taskがall-or-none登録receipt後にbinding別のBeads/GitHub/noneへ一気通貫接続される。
+- [ ] 要件 C27: promoted exact 13 phase taskがexpected/applied=13、phase/node exact-set、共通parent/package receipt後にbinding別trackerへ接続される。
 - [ ] 要件 C28: repo-local configがIssue repo、複数Project target、field mapping、auto-add policyを構造化管理しtoken/node IDを正本保存しない。
 - [ ] 要件 C29: issue_linkage/github_project_linkagesでIssue/Project itemが冪等1:1追跡される。
 - [ ] 要件 C30: Projects field value updatedAtをhint、snapshotをcanonical baseとした3-way conflict、pagination、permission/rate-limit/field drift、partial failure retry、dry-run外部write 0件が設計されている。
@@ -235,13 +235,14 @@ plugin_meta:
 - [ ] 要件 C46: C28のbd claimをauthority、C27をcontext reservation/saga coordinatorとし部分失敗repairとexecution_contextsを設計している。
 - [ ] 要件 C47: bd呼び出しがroute別bridge (systemルート=C28 / pluginルート=project-task-beads.py) に集約され、preflightでbd version受容window (>=1.1.0 <2.0.0) をfail-closedで検査する upstream変動耐性が `references/execution-tracker-contract.md` §7 に記載されている。
 - [ ] 要件 C48: pluginルートのbeads直接投影契約 (`references/execution-tracker-contract.md` §6) が実装owner (harness-creator TG-C09並置の`project-task-beads.py`) へのhandoffとして追跡されている。
+- [ ] 要件 C56: feature由来taskが`feature_package_id`/`phase_ref`を持ち、P01..P13 exact 13、同一package内前方DAG、exact 13全done+acceptance evidenceだけでfeature rollupとなる。
 - [ ] 要件 C49: `graph-node.schema.json` でartifact_kind=featureのノードがpurpose/goal/scope_in/scope_out/acceptance/architecture_refsを条件付きrequiredとして保持する設計が記載されている。
 - [ ] 要件 C50: C14 (`run-dev-graph-decompose`) のマクロ分解が自然文の「やりたいこと(大)」からfeatureノード群+architectureノード+機能間depends_onを生成し、13タスク仕様書への細分解は行わない責務境界が記載されている。
 - [ ] 要件 C51: ready feature (機能間depends_on充足) ごとにsystem-dev-planner (run-system-dev-plan) を自動起動でき、人間による手動`/system-dev-plan`実行結果も同じ登録経路として受理するフォールバックが設計されている。
 - [ ] 要件 C52: system-dev-plannerが生成したpromoted taskがparent_feature (feature ノードのgraph_node_id) を持って当該feature配下のtaskノードとしてC02経由でatomic登録される設計が記載されている。
 - [ ] 要件 C53: feature ノード間の機能間依存が既存depends_onフィールドを流用して表現され、C11 (`validate-graph-schema.py`) が非循環性をfail-closedで検査する設計が記載されている。
 - [ ] 要件 C54: feature 完了が配下task (parent_feature参照) 全doneからの機械導出 (feature.status=done) としてC26導出→C02単一writerで確定し、feature.statusの手動done昇格とactive子taskを残したままのfeature close/tombstoneがfail-closedになる完了カスケードが `references/execution-tracker-contract.md` §8.2 に記載されC11/C26へ配線されている。
-- [ ] 要件 C55: feature単位の子task完了進捗 (X/Y) がC05 renderで集約表示され、github/both profileではfeature→GitHub Milestone/beads `--parent` epic投影規則が §8.5 に定義され (local_onlyはC05集約表示が可視化を担い外部投影不要)、task.depends_onが同一parent_feature内に閉じ層越え参照をC11が違反計上する層分離 (§8.3) が設計されている。
+- [ ] 要件 C55: C05が13件中X/Yを表示し、Beadsではfeature epic→13 child issues、GitHubではfeature item/Milestone→13 Issuesへ投影し、task edgeは同一parent/package内に閉じる。
 
 ## 受入確認
 
@@ -252,7 +253,7 @@ plugin_meta:
 | issue/task/specification/architecture/document が単一グラフに一元管理される | 混在入力を連続追加・更新してもschema/frontmatter/path整合性が維持される | node skill (C02) の OUT criterion |
 | 初期化が冪等 | 同一リポジトリへ二回 init しても構造が変化しない | init skill (C01) の OUT criterion |
 | binding別trackerへ重複なく投影される | Beadsはissue/edge parity、GitHubはIssue/Project、noneはlocal-onlyを各1組維持し、矛盾bindingはwrite 0件で拒否 | C14 + C03 + C11/C12/C28 |
-| task specificationをBeads/GitHub/Projectsで管理できる | N task登録receiptのcount/exact-set一致、Beads edge parity、Projects Status一方向、partial retry、dry-run外部write 0件 | C02 + C14 + C03 + C12/C28 |
+| task specificationをBeads/GitHub/Projectsで管理できる | exact 13 receipt、Beads epic+13 child、GitHub feature+13 Issues、edge parity、partial retry、dry-run write 0件 | C02 + C14 + C03 + C12/C28 |
 | PR mergeでlocal task/Beads/Issue/Projectが収束する | remote default ancestor確認済みmergeだけでlocal stepsを確定し、外部close失敗はstep ledgerから再開する | C03 OUT9 + C26/C28 |
 | Claude Code hookが安全に自動発火する (要件 C35-C38) | event fixtureで対象操作だけ発火、async判定0件、TaskCompleted後はpending_reviewかつGitHub done 0件、settings二重登録/全書換0件 | C25 + C01 |
 | 複数worktreeで衝突なく並列開発できる (要件 C39-C42) | 同一task二重claim 0件、touches重複batch 0件、crash後TTL回復、feature branchの先行done 0件 | C24 + C27 + C15/C16 + C26 |
@@ -273,12 +274,12 @@ plugin_meta:
 | 規模増加時だけ段階分割できる (要件 C17) | 199/200/201件境界fixtureで201件時のみdomain partition、移動後もgraph_node_id不変、rollbackでlinkが復元する | C01 routing policy + C02/C03 migration + C11 gate |
 | artifact templateが完全適用される (要件 C18-C20) | kind/subtype/API条件別fixtureで必須section欠落0、placeholderのみはincompleteとなりmissing sectionsが表示される | C01/C02/C11/C04 |
 | system-spec-harnessを正本として仕様/architectureを構築する (要件 C21) | C19出力にsystem-spec source lineageとconfirmed状態があり、dev-graph内に同等compiler複製がない | C19 OUT1 |
-| system development task specsを生成する (要件 C22) | 13 phase、全該当workstream、非循環task DAG、handoff、4条件PASSが揃う | external system-dev-planner (run-system-dev-plan の OUT criteria + validate-system-plan.py) の引用で充足 |
+| system development task specsを生成する (要件 C22/C56) | P01..P13 exact 13 task、共通parent/package、13-node DAG、handoff、4条件PASSが揃い12/14件を拒否する | external system-dev-planner package contract + validate-system-plan.py |
 | 未完成仕様から実装へ進まない (要件 C23) | readiness未達でtask/Issue/handoff生成0、完成時はtasksノード登録後にC14/C15へ接続する | external system-dev-planner (readiness fail-closed) + C04 OUT2 |
 | symlink配布先ごとに固有文書を読む (要件 C24-C26) | 同一symlinkをrepo A/Bから実行し各repoのconfig/docs/stateだけを読み書き、cross-read/writeと絶対path保存0件、project-root不一致/broken content link/outside pathはfail-closed、harness linkはhost preflight | C24 resolver + C01 OUT3 + multi-repo fixture |
 | beads束縛タスクがPR mergeでbdまで収束する (要件 C43-C47) | PR merged→C26完了確定→C28 bd close冪等発行→task仕様書frontmatter反映 (C02経由) のカスケードが再実行しても差分0件で、tracker_binding排他 (C44) がfail-closedに検査される | C26 + C28 + C25 + C11 (`references/execution-tracker-contract.md` §3-§4) |
 | featureノードが機能単位のマクロ管理・実行オーケストレーションを担う (要件 C49-C53) | featureノードがpurpose/goal/scope_in/scope_out/acceptance/architecture_refsを保持し、C14はfeature+architecture+機能間depends_onまでしか生成せず、ready featureごとの自動system-dev-planner起動と手動`/system-dev-plan`双方の結果がpromoted taskのparent_feature一致で登録され、feature間depends_onの非循環がC11で検査される | C11 (`validate-graph-schema.py`) OUT + C14 (`run-dev-graph-decompose`) OUT6/OUT7 |
 | feature完了が忘れられず機械導出で収束する (要件 C54) | 配下task全doneでfeature.status=doneが機械導出され、手動done昇格・active子残しfeature closeがfail-closed、task→feature一方向でwriterはC02単一writer (§8.2) | C26 rollup + C02 + C11 |
-| feature進捗が可視化され層分離が保たれる (要件 C55) | C05がfeature単位の子task進捗X/Yを集約表示、task.depends_onが同一parent_feature内に閉じ層越え参照をC11が違反計上、github/bothはMilestone/`--parent`投影規則が§8.5に定義 | C05 + C11 (§8.3/§8.5) |
+| feature進捗が可視化され層分離が保たれる (要件 C55-C56) | 13件中X/Y、Beads epic+13 child、GitHub feature+13 Issues、same-package forward DAG、exact 13 rollupを確認 | C05 + C11 + C26/C28 (§8.2/§8.3/§8.5) |
 
 build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たすプラグインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。

@@ -2,9 +2,9 @@
   "schema_version": "2.0.0",
   "project_id": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY",
   "plan_dir": "plugin-plans/dev-graph",
-  "plan_digest": "sha256:89febf7685900fedf7ec0eca32477c309a6ebdcab299bff2b7819f677b20d6f4",
-  "graph_hash": "sha256:8e5348393f0ae3c9b57838e5c65dcdd17243347a49e1f3c3868f493efbefe765",
-  "reviewed_shape": {"requirements": 48, "components": 24, "routes": 24, "nodes": 49, "edges": 239},
+  "plan_digest": "sha256:299932b4eb00a87db1ace3060db55adfdd2da01596409154aa268d377856a1c7",
+  "graph_hash": "sha256:d14c3019a21192e1e9300177f1f69c7d0098e642736b88ccf483bcc0e60ba913",
+  "reviewed_shape": {"requirements": 56, "components": 24, "routes": 24, "nodes": 49, "edges": 239},
   "orchestration": {"phase1": "fresh-context read-only observation", "phase2": "three mutually independent reviews: 9 logical/structural, 9 meta/ideation, 12 system/strategy/problem-solving", "phase3": "KJ consolidation, minimal contract edits, task-graph derivation, schema fixtures and deterministic revalidation", "iterations": 1},
   "methods": [
     {"id": 1, "name": "批判的思考", "status": "applied", "result": "C28を独立bridgeとして残し、viewerやhookをauthority componentへ昇格させない境界を確認"},
@@ -40,15 +40,16 @@
   ],
   "consolidated_findings": [
     {"id": "EV30-01", "severity": "high", "methods": [1,7,12,28], "root_cause": "全task GitHub publication前提とbinding別authorityが矛盾", "fix": "beads/github/none投影、github+local_onlyとboth+autoのfail-closed", "status": "resolved"},
-    {"id": "EV30-02", "severity": "high", "methods": [5,19,20], "root_cause": "N task登録にbatch atomicity/receiptがなくpartial graphを観測可能", "fix": "all-or-none transactionとcount/exact-set/graph_revision receipt", "status": "resolved"},
+    {"id": "EV30-02", "severity": "high", "methods": [5,19,20], "root_cause": "feature task登録にbatch atomicity/receiptがなくpartial graphを観測可能", "fix": "exact 13 all-or-none transactionとphase/node exact-set receipt", "status": "resolved"},
     {"id": "EV30-03", "severity": "high", "methods": [16,21,26], "root_cause": "leaseとbd claim、local/external completionの部分失敗順序が未定", "fix": "C28 claim authority+C27 saga、local-first completion step ledger", "status": "resolved"},
     {"id": "EV30-04", "severity": "high", "methods": [2,6,7], "root_cause": "D06がC25-C28を検証対象から欠落", "fix": "D06 dependencyを全24 B-C tasksへ閉鎖しtask graph再導出", "status": "resolved"},
-    {"id": "EV30-05", "severity": "medium", "methods": [3,13,25], "root_cause": "template/config/schemaとBeads edge/workspace/mirror surfaceのdrift", "fix": "共通fields、push-only mirror、edge parity、workspace preflightを同期", "status": "resolved"}
+    {"id": "EV30-05", "severity": "medium", "methods": [3,13,25], "root_cause": "template/config/schemaとBeads edge/workspace/mirror surfaceのdrift", "fix": "共通fields、push-only mirror、edge parity、workspace preflightを同期", "status": "resolved"},
+    {"id": "EV30-06", "severity": "high", "methods": [6,7,10,12,18,19,24,29,30], "root_cause": "Dev Graphのfeature orchestrationとSystem Plannerの13-task生成、さらに13 phase文書+可変taskが混線", "fix": "feature macro層とexact 13-task micro packageを分離し、phase_ref/package schema、Beads epic+13 child、exact rollupを契約化", "status": "resolved"}
   ],
   "final_conditions": {
     "no_contradiction": {"status": "PASS", "evidence": ["single publication authority", "Projects Status local_to_project", "plan-findings PASS"]},
-    "no_missing": {"status": "PASS", "evidence": ["48 requirements traced", "24 components/routes", "30/30 methods", "D06 covers B-C01..19 and B-C24..28"]},
-    "consistent": {"status": "PASS", "evidence": ["schema/template/config fixtures PASS", "JSON parse PASS", "binding vocabulary aligned"]},
+    "no_missing": {"status": "PASS", "evidence": ["56 requirements traced", "24 components/routes", "30/30 methods", "exact 13 package contract"]},
+    "consistent": {"status": "PASS", "evidence": ["feature vs phase-task vocabulary aligned", "12/14/duplicate phase fixtures rejected", "JSON/schema PASS"]},
     "dependency_integrity": {"status": "PASS", "evidence": ["DAG acyclic", "49 nodes/239 edges valid", "inventory/handoff 24:24"]}
   },
   "final_independent_revalidation": [

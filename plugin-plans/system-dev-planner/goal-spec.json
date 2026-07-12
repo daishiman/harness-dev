@@ -1,7 +1,7 @@
 {
-  "purpose": "plugins/plugin-dev-planner/ の run-plugin-dev-plan と同型のゴールシーク型計画フロー (goal-spec 確定 → component/workstream 分解 → 13 lifecycle文書 + N typed task仕様書生成 → 独立評価 → task-graph 射影 → build handoff) を、プラグイン構築ではなくシステム開発向けに写像した独立ハーネス system-dev-planner を計画する。system-dev-planner は dev-graph (マクロ層) が保持する 1 つの feature ノード (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) を入力文脈に受け、その機能を達成する 13 lifecycle タスク仕様書 + 機能内依存 DAG を生成する per-feature ミクロファクトリであり、起動は自動 (dev-graph C14 が ready な feature ごとに Skill 呼出し) と手動 (人間が /system-dev-plan を実行) の両方に対応する。feature 自体の生成や program 全体の goal/scope の保持は扱わない (dev-graph マクロ層の責務)。分解語彙は plugin component_kind (skill/sub-agent/slash-command/hook/script) から system workstream (frontend/backend/api/data/infrastructure/security/quality/documentation/operations) へ置換し、仕様書・アーキテクチャの内容は plugins/system-spec-harness/ の確定成果物を引用して重複させず、生成した typed task は parent_feature=当該 feature として dev-graph へ atomic 登録される。",
-  "background": "呼び出し元 dev-graph (plugin-plans/dev-graph/) の goal-spec checklist C21-C23 で、仕様書・アーキテクチャの新規作成/更新は system-spec-harness を引用し内容ロジックを複製しないこと、システム開発タスク仕様書を生成する専用ハーネスが plugin-dev-planner と同型の 13 フェーズ lifecycle + workstream inventory + typed task DAG + handoff + 独立評価を持ち plugin component build 語彙を system workstream 語彙へ置換すること、system-spec-harness の確定成果物を引用入力とし implementation-readiness 未達では実装 handoff を fail-closed で停止し dev-graph の tasks/ グラフノードへ登録してから Issue 起票・推薦・並列実行へ接続することが既に要件化されている。dev-graph plan 配下の templates/system-task-spec.md と templates/system-plan-contract.json (draft) は本ハーネスの出力形状の先行ドラフトとして既に存在し、13 phase (requirements/architecture/design-review/test-design/implementation/test-run/acceptance/refactoring-migration/quality-assurance/final-review/evidence/documentation-operations/release-deploy)・workstream_kinds (frontend/backend/api/data/infrastructure/security/quality/documentation/operations)・required_inputs (system-spec-harness 確定成果物 + implementation_readiness=complete)・required_outputs (13 lifecycle文書 + N typed task specs + workstream-inventory.json + task-graph projection + handoff manifest + 4 条件評価)・quality_conditions (矛盾なし/漏れなし/整合性あり/依存関係整合) を示している。system-dev-planner はこのドラフト契約を継承しつつ、plugin-dev-planner の 13 フェーズ + component-inventory + task-graph + 独立評価器という構造を写像した独立 plugin 計画として、本 R1 で目的駆動要件を確定する。dev-graph 側は goal-spec/schema に feature ノード (artifact_kind=feature、purpose/goal/scope_in/scope_out/acceptance/architecture_refs を第一級に保持) を追加し、C14 のマクロ分解が ready な feature ごとに本ハーネスを Skill 呼出しする二層モデル (マクロ=dev-graph / ミクロ=system-dev-planner) を採用した。system-dev-planner は自動起動時に feature ノードを構造化入力として goal-spec 材料 (purpose/background/goal/checklist) へ写像し、手動起動時 (/system-dev-plan) は従来どおり自然文構想を受理する。",
-  "goal": "plugin-plans/system-dev-planner/ 配下の 13 phase ファイル + N typed task specs + buildable component inventory + system workstream inventory contract + task-graph + handoff + atomic promotion + multi-repository isolation contract が決定論ゲートと独立評価で検証可能な状態になっている",
+  "purpose": "dev-graphが管理する1つのfeatureを入力に、その機能を達成するPhase 1〜13の小さな実行タスク仕様書を各phaseちょうど1件、合計13件と機能内依存DAGへ変換するper-featureミクロファクトリsystem-dev-plannerを計画する。feature・architecture・feature間依存は生成せずdev-graphへ委譲し、13 taskは共通parent_feature/feature_package_idを持ってatomic登録される。",
+  "background": "従来の『13 lifecycle文書 + 可変N task』は、説明用phaseと実行taskを二重化し、Dev Graphのマクロ責務とSystem Dev Plannerのミクロ責務を混線させていた。新契約では1 featureをexact 13 executable task specsへ変換し、P01..P13の欠落・重複・14件目をfail-closedする。仕様/architecture内容はsystem-spec-harnessを引用し、feature間依存はdev-graphのfeature DAGを正本とする。実行中の追加作業は該当phaseへのEditまたは新feature candidateとしてマクロ層へ返す。",
+  "goal": "system-dev-planner自身のL3 plugin planと、runtime出力であるexact 13-task feature execution package契約・13-node DAG・handoff・atomic promotion・multi-repository isolationが決定論ゲートと独立評価で検証可能な状態になっている",
   "artifact_class": "plugin-plan",
   "target_plugin_slug": "system-dev-planner",
   "plan_dir": "plugin-plans/system-dev-planner",
@@ -76,7 +76,7 @@
     },
     {
       "id": "C12",
-      "criterion": "dev-graph registrationがN taskをall-or-none登録しcount/exact-set/graph_revision receiptを返す。トラッカー解決・起票・完了収束はdev-graphが所有し、system-dev-plannerはtracker/publication intentだけを宣言する境界が記載されている",
+      "criterion": "dev-graph registrationがP01..P13 exact 13 taskをall-or-none登録しexpected_count=applied_count=13、phase/node exact-set、共通parent/package、graph_revision receiptを返す境界が記載されている",
       "done": false,
       "verify_by": "script"
     },
@@ -97,6 +97,12 @@
       "criterion": "生成する typed task specification と dev-graph registration payload が parent_feature (起動時に解決した dev-graph feature ノードの graph_node_id) を持ち、system-dev-planner の 1 run が生む全 promoted task が同一 parent_feature を共有して feature 配下へ atomic 登録される設計になっている",
       "done": false,
       "verify_by": "script"
+    },
+    {
+      "id": "C16",
+      "criterion": "runtime outputが別の13 lifecycle文書+可変N taskではなく、P01..P13に1件ずつ対応するexact 13 executable task specsだけであり、13-node DAG、phaseの欠落/重複/追加拒否、追加作業のphase Editまたはfeature candidate返却がfeature-execution-package-contractで定義されている",
+      "done": false,
+      "verify_by": "script"
     }
   ],
   "constraints": [
@@ -105,7 +111,7 @@
     "実装コードの生成は行わず、生成したタスク仕様書確定後は既存の task-graph build / capability-build へ handoff する",
     "システム開発タスクの分解語彙は plugin-dev-planner の component_kind (skill/sub-agent/slash-command/hook/script) ではなく system workstream (frontend/backend/api/data/infrastructure/security/quality/documentation/operations) を用いる",
     "implementation_readiness=complete (system-spec-harness 側の完成度評価) 未達の場合、実装 handoff を fail-closed で停止する",
-    "生成したタスク仕様書はtracker_binding_intentを含むdev-graph node形式を持ち、N task all-or-none登録receipt後にBeads/GitHub投影・ready-set・並列実行へ接続される",
+    "生成したタスク仕様書はP01..P13 exact 13件で、共通parent_feature/feature_package_idを持ち、all-or-none登録receipt後にBeads/GitHub投影・ready-set・並列実行へ接続される",
     "plugin-plans/dev-graph/templates/system-task-spec.md・system-plan-contract.json (draft) を出力形状/フェーズ構成の先行参照として継承しつつ、正式な phase 名称・workstream-inventory スキーマ・component 分解の確定は R2/R3 で行う",
     "本計画は plugin-dev-planner 同型のゴールシーク型 (R1→R2→R3→R4) 構造を採用し、固定手順書ではなく達成ゴール + 完了チェックリストの反復で計画を確定する",
     "system-spec-harness は plugins/system-spec-harness/.claude-plugin/plugin.json の version=0.1.0 を pin し、run-system-spec-compile と assign-system-spec-completeness-evaluator (手動導線 /spec-compile) の確定出力だけを引用する。入力version/entrypoint不一致はfail-closedにする",

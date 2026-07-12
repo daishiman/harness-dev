@@ -427,7 +427,8 @@
           "required": [
             "issue_prefix",
             "server_mode",
-            "github_mirror"
+            "github_mirror",
+            "board"
           ],
           "properties": {
             "issue_prefix": {
@@ -436,12 +437,22 @@
             },
             "server_mode": {
               "type": "boolean",
-              "description": "人間向け運用hint。beads-kanban launcher/環境がserver lifecycleを管理する場合にtrueとするが、dev-graphの正否判定には使わない"
+              "description": "bd を server モード (bd init --server) で運用するか。board=beads-kanban のとき bd sql が必要なため true を要求する (下 allOf で強制)。board=static-render|omb-board|none の repo は embedded (false) のままでよい。"
             },
             "github_mirror": {
               "type": "string",
               "enum": [
                 "bd_github_push_only",
+                "none"
+              ]
+            },
+            "board": {
+              "type": "string",
+              "description": "beads 束縛タスクの live 看板 UI 選択 (references/execution-tracker-contract.md §9 正本)。beads-kanban=doublej/beads-kanban を採用 (bd sql/server mode 必須・外部依存・LICENSE要確認)。static-render=C05 render-graph-html のゼロ依存スナップショットのみ。omb-board=oh-my-beads 同梱の軽量 board (embedded 可)。none=看板なし。",
+              "enum": [
+                "beads-kanban",
+                "static-render",
+                "omb-board",
                 "none"
               ]
             }
@@ -464,6 +475,36 @@
             "required": [
               "beads"
             ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "beads": {
+                "properties": {
+                  "board": {
+                    "const": "beads-kanban"
+                  }
+                },
+                "required": [
+                  "board"
+                ]
+              }
+            },
+            "required": [
+              "beads"
+            ]
+          },
+          "then": {
+            "properties": {
+              "beads": {
+                "properties": {
+                  "server_mode": {
+                    "const": true
+                  }
+                }
+              }
+            }
           }
         }
       ]

@@ -1,0 +1,52 @@
+{
+  "purpose": "自然文の開発構想を入力に、それが『Claude Code plugin 実体の構築 (plugin ルート)』か『導入先リポジトリのアプリ/API/インフラ等 system 開発 (system ルート)』かを機械判定し、plugin ルートは plugin-dev-planner (/plugin-dev-plan)、system ルートは dev-graph マクロ分解 (/dev-graph decompose)→ready feature ごとに system-dev-planner (/system-dev-plan) へ dispatch する薄い独立 router skill route-dev-planner を計画する。分類はルーティング判断のみを担い、計画生成そのものは各プランナーへ委譲する。",
+  "background": "従来、plugin/system の選定は execution-tracker-contract.md §0 の判定表 (文書) に正本化されていたが、それを実行する機械 router が存在せず、人間/orchestrator が読んで従う運用だった。初見の利用者はどちらのプランナーを起動すべきか判断できず (素人思考ギャップ)、成果物の所属や external_ref prefix の二重登録防止も事後の衝突回避に依存していた。route-dev-planner は §0 判定表を decision table 正本として引用し、構想文から成果物種別を判定して正しいプランナーへ dispatch する。両方を含む構想は分割を促し、低信頼はユーザー確認へフォールバックする (fail-open 禁止)。分類ロジックの決定記録は route-dev-planner-contract.md §3 と plugin-plans/dev-graph/improvement-handoff-beads-kanban.json (EV-BK05) に保持する。",
+  "goal": "route-dev-planner の router-contract (入出力・分類シグナル・dispatch 表・フォールバック) が execution-tracker-contract §0 と矛盾なく、plugin/system の二者択一と split/ambiguous の扱いを決定論的に記述し、system ルートの dispatch が実在コマンド (/dev-graph decompose) と一致した状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "route-dev-planner",
+  "plan_dir": "plugin-plans/route-dev-planner",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "router-contract.md に入力 (構想文 + 任意 intake.json) と出力 (route/target_planner/confidence/reason/dispatch_command) の I/O 契約が定義されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C2",
+      "criterion": "classify_construction_target の分類シグナル (plugin 構築を示す signal / system 構築を示す signal / 判定不能の扱い) が定義され、execution-tracker-contract §0 の判定基準と一致している",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C3",
+      "criterion": "dispatch 表が plugin ルート→/plugin-dev-plan、system ルート→/dev-graph decompose (マクロ分解起点・ready feature ごとに下流で /system-dev-plan) を §0 と実在コマンドに一致して記述している",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C4",
+      "criterion": "split (plugin+system 両方を含む構想) と ambiguous (低信頼) のフォールバックが fail-open せず、分割誘導/ユーザー確認へ回す設計になっている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "router は計画生成・tracker 投影・build を自身で行わず dispatch のみを担う責務境界が記述され、external_ref prefix の二重登録防止 (§0) と整合している",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "router は成果物種別の判定と dispatch のみを担い、plan 生成・tracker 投影・build は各プランナー (plugin-dev-planner / dev-graph / system-dev-planner) へ委譲する (DRY)。",
+    "判定基準の正本は plugin-plans/dev-graph/references/execution-tracker-contract.md §0 とし、router-contract はそれを引用・機械化する (§0 を複製・改変しない)。",
+    "fail-open 禁止: 低信頼・両属性を含む構想は自動でどちらかへ流さず、split は分割誘導、ambiguous はユーザー確認へフォールバックする。",
+    "system ルートの dispatch は実在する dev-graph マクロ入口 (/dev-graph decompose) を起点とし、feature 解決済みを前提とする /system-dev-plan (system-dev-planner 所有) を素の構想へ直接起動しない。",
+    "本 plan は軽量 router のため 13 phase フル展開・component-inventory/task-graph/handoff を持たない router-contract 主体の build-deferred plan とする。フル plugin 化 (標準ゲート適合) が必要になった時点で /plugin-dev-plan で本 plan を入力に昇格する (follow-up)。"
+  ],
+  "handoff_targets": [],
+  "max_loops": 3,
+  "open_questions": []
+}

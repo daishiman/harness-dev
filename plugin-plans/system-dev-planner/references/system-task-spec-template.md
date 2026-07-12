@@ -10,8 +10,10 @@ draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (g
 
 ## Machine-readable registration fields
 
+- feature_package_id: <feature-package/<stable-id>; 13 taskで共有>
 - owners / tags / related_nodes: <values or empty arrays>
 - parent_feature: <起動元 dev-graph feature ノードの graph_node_id。自動起動はfeature文脈から、手動起動は解決済みfeature参照から充填し、1 runが生む全task specで共有する>
+- phase_ref: <P01..P13。1 package内で各値ちょうど1件>
 - classification: <confidence + reason + task candidate paths>
 - tracker_binding_intent: <auto|beads|github|none; execution_tracker.mode=both では auto 禁止>
 - github_publication: <mode + project_aliases + labels + milestone>
@@ -104,6 +106,7 @@ draft の既存参照を壊さない。P08 で正本化・P12 で最終確定 (g
 
 ## implementation-readiness 判定 (正本追記)
 
+- runtime outputは本テンプレートを使う実行task spec 13件だけで構成し、別の13 lifecycle文書や14件目のcanonical taskを生成しない。正本=`references/feature-execution-package-contract.md`。
 - 上記全 section が placeholder (`<...>`) のまま残っていないこと。
 - `Machine-readable registration fields`/`前提条件`/`成果物`/`Tracker publication and completion`/`Branch and worktree execution`/`Verification and evidence`/`Handoff` の 7 section は必須充足 (空・TODO 禁止)。空/TODO/未解決 `<...>` が 1 件でも残る場合、`check-implementation-readiness.py` (system-dev-planner C08) は `incomplete` を報告し、`missing_sections` に該当 section 名を列挙する。
 - `Workstream applicability` は該当しない workstream を `N/A: reason` で明示し、空欄のまま省略しない (適用外の理由を機械可読に残す)。

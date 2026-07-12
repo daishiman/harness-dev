@@ -24,6 +24,8 @@
     "related_nodes",
     "resource_scope",
     "parent_feature",
+    "feature_package_id",
+    "phase_ref",
     "file_path",
     "template_id",
     "template_version",
@@ -260,6 +262,16 @@
         "null"
       ],
       "description": "task ノードが属する feature ノードの graph_node_id。artifact_kind=task かつ feature 由来のときのみ非null (feature文脈を持たない単発taskはnull可)。artifact_kind!=task では常にnull。順序依存のないrelated_nodesや複数依存を表すdepends_onとは別概念の単一親参照 (MM-03)"
+    },
+    "feature_package_id": {
+      "type": ["string", "null"],
+      "pattern": "^feature-package/[A-Za-z0-9._/-]+$",
+      "description": "system-dev-plannerが1 featureから生成したexact 13 task package identity。feature由来taskは非null、他artifactと単発taskはnull"
+    },
+    "phase_ref": {
+      "type": ["string", "null"],
+      "enum": [null, "P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08", "P09", "P10", "P11", "P12", "P13"],
+      "description": "feature execution package内の一意phase slot。P01..P13各1件。feature由来task以外はnull"
     },
     "file_path": {
       "type": "string",
@@ -1038,7 +1050,43 @@
         "properties": {
           "parent_feature": {
             "const": null
+          },
+          "feature_package_id": {
+            "const": null
+          },
+          "phase_ref": {
+            "const": null
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["artifact_kind", "parent_feature"],
+        "properties": {
+          "artifact_kind": {"const": "task"},
+          "parent_feature": {"type": "string"}
+        }
+      },
+      "then": {
+        "properties": {
+          "feature_package_id": {"type": "string"},
+          "phase_ref": {"type": "string", "pattern": "^P(0[1-9]|1[0-3])$"}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["artifact_kind", "parent_feature"],
+        "properties": {
+          "artifact_kind": {"const": "task"},
+          "parent_feature": {"const": null}
+        }
+      },
+      "then": {
+        "properties": {
+          "feature_package_id": {"const": null},
+          "phase_ref": {"const": null}
         }
       }
     },

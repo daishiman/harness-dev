@@ -1,3 +1,5 @@
+<!-- LEGACY COMPATIBILITY ONLY: runtime生成禁止。exact 13 executable task specsへ統合。 -->
+
 # P<NN> — <phase name>
 
 ## 目的
@@ -46,4 +48,3 @@
 - System specification: <system-spec-harness output node>
 - Architecture: <system-spec-harness output node>
 - Typed tasks: <task graph nodes>
-

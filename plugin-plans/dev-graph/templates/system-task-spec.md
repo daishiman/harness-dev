@@ -1,76 +1,36 @@
-# System task overlay: <task title>
+<!--
+  POINTER (SSOT)。このファイルは独立テンプレートではない。
+  system 開発の実行タスク仕様 (runtime task spec) を emit する正本は system-dev-planner:
+    - plan 正本   : plugin-plans/system-dev-planner/references/system-task-spec-template.md (template_version 1.0.0)
+    - build 後資産 : plugins/system-dev-planner/references/system-task-spec-template.md
+  dev-graph は system 実行タスク仕様を emit しない (登録・投影・完了収束のみ担う)。
+  かつて本ファイルに存在した draft body は正本へ統合済み (SSOT 重複解消・EV-BK07 / system-dev-planner phase-08,phase-12)。
+  正本は本 draft の上位互換で、次を追加保持する:
+    Machine-readable registration fields / Source pin / Repository context /
+    Branch and worktree execution / implementation-readiness 判定。
+-->
 
-## 目的
+# System task overlay — POINTER
 
-<単一責務の実装完了時に成立するシステム状態。task.mdの全必須sectionも併用する>
+> **正本 = `plugin-plans/system-dev-planner/references/system-task-spec-template.md`。**
+> このファイルは後方互換のための pointer であり、内容の source of truth ではない。
+> system 開発タスク仕様の節構成・必須フィールド・implementation-readiness 判定は上記正本を参照すること。
 
-## 背景
+## 責務境界 (なぜ pointer なのか)
 
-<system-spec/architecture/phase docの根拠ノードとユーザー価値>
+- **emit する主体**: system-dev-planner (ミクロ層) が 1 feature → P01..P13 exact 13 executable task specs を正本テンプレートで生成する。
+- **dev-graph の役割**: 生成された 13 task を parent_feature 付きで atomic 登録し (§8 `references/execution-tracker-contract.md`)、tracker_binding を解決して beads/GitHub へ投影する。**dev-graph 自身は runtime task spec を emit しない**。
+- したがって本 overlay は dev-graph の scaffolding 上は vestigial であり、正本へのリダイレクトのみを担う。
 
-## 前提条件
+## dev-graph overlay 節 → 正本節の対応 (参照用・重複記述しない)
 
-- Required spec/architecture/phase/task nodes: <graph_node_id>
-- Entry gate: <machine-verifiable condition>
+| dev-graph overlay 節 (旧 draft) | 正本 (system-task-spec-template.md) の対応節 |
+|---|---|
+| Workstream applicability | Workstream applicability |
+| Architecture and deploy unit | Architecture and deploy unit |
+| Verification and evidence | Verification and evidence |
+| Rollout and rollback | Rollout and rollback |
+| Tracker publication and completion intent | Tracker publication and completion |
+| (正本のみ) | Machine-readable registration fields / Source pin / Repository context / Branch and worktree execution / implementation-readiness 判定 |
 
-## Workstream applicability
-
-- Frontend: <applicable + change | N/A: reason>
-- Backend: <applicable + change | N/A: reason>
-- API: <applicable + contract | N/A: reason>
-- Data: <applicable + migration | N/A: reason>
-- Infrastructure: <applicable + IaC/deploy | N/A: reason>
-- Security: <applicable + control | N/A: reason>
-- Quality: <applicable + tests/gates | N/A: reason>
-- Documentation: <applicable + docs | N/A: reason>
-- Operations: <applicable + runbook/monitoring | N/A: reason>
-
-## Architecture and deploy unit
-
-- Architecture decisions: <graph_node_id>
-- Deploy unit/environment: <unit or N/A: reason>
-- Compatibility/migration/backfill: <contract or N/A: reason>
-
-## 成果物
-
-- Produced artifacts: <paths and graph nodes>
-- Consumed artifacts: <paths and graph nodes>
-- Write scope/touches: <paths>
-
-## スコープ外
-
-- <explicit non-goal>
-
-## Verification and evidence
-
-- Automated commands: <commands>
-- Required evidence: <paths>
-
-## Rollout and rollback
-
-- Rollout: <steps/flags>
-- Rollback trigger and steps: <contract>
-
-## Handoff
-
-- Executor: <system build route>
-- Ready when: <confirmed + evaluation pass + readiness complete>
-
-## Tracker publication and completion intent
-
-- Tracker binding intent: <auto|beads|github|none; mode=bothではauto禁止>
-- Publication mode: <local_only|issue|issue_and_projects>
-- Project aliases: <configured aliases; empty means default auto-add targets>
-- Initial mapped fields: <status/priority/start_date/target_date/iteration>
-- Linkage owner: <dev-graph C14 resolves intent; C28 beads or C12 GitHub publishes>
-- Partial failure: <Project alias remains pending_retry without rolling back the promoted task>
-- Completion trigger: <linked PR merged into default branch; closed-unmerged is not completion>
-- Multiple PR policy: <all|required override>
-- PR body contract: <GitHub binding=closing keyword + Issue; Beads binding=graph_node_id marker or gh:pr gate>
-
-## 参照情報
-
-- System specification: <system-spec-harness output node>
-- Architecture: <system-spec-harness output node>
-- Phase doc: <system-phase-spec node>
-- Dependencies: <task graph node>
+> beads/GitHub 投影に要する id (=graph_node_id・登録時採番) / depends_on (task-graph DAG) / status (registration schema const) / parent (parent_feature) は、正本テンプレート + `dev-graph-registration.schema.json` + `task-graph.json` の合成で充足する (`references/execution-tracker-contract.md` §2 状態写像表が正本)。

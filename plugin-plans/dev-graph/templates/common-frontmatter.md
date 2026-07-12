@@ -40,6 +40,8 @@ scope_out: []
 acceptance: []
 architecture_refs: []
 parent_feature: null
+feature_package_id: null
+phase_ref: null
 classification_confidence: 0.0
 classification_reason: "<classification-reason>"
 classification_candidates: []

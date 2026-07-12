@@ -5,7 +5,7 @@
   "not_applicable_format": "N/A: <reason>",
   "common_frontmatter": {
     "template": "common-frontmatter.md",
-    "required": ["graph_node_id", "artifact_kind", "artifact_subtypes", "title", "project_id", "domain", "status", "priority", "start_date", "target_date", "iteration", "owners", "tags", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "created_at", "updated_at", "depends_on", "related_nodes", "resource_scope", "purpose", "goal", "scope_in", "scope_out", "acceptance", "architecture_refs", "parent_feature", "classification_confidence", "classification_reason", "classification_candidates", "tracker_binding", "beads_linkage", "github_publication", "issue_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"]
+    "required": ["graph_node_id", "artifact_kind", "artifact_subtypes", "title", "project_id", "domain", "status", "priority", "start_date", "target_date", "iteration", "owners", "tags", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "created_at", "updated_at", "depends_on", "related_nodes", "resource_scope", "purpose", "goal", "scope_in", "scope_out", "acceptance", "architecture_refs", "parent_feature", "feature_package_id", "phase_ref", "classification_confidence", "classification_reason", "classification_candidates", "tracker_binding", "beads_linkage", "github_publication", "issue_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"]
   },
   "artifacts": {
     "issue": {
@@ -58,9 +58,14 @@
     }
   },
   "system_plan": {
-    "phase_template": "system-phase-spec.md",
+    "phase_template": null,
+    "legacy_phase_template": "system-phase-spec.md (compatibility only; runtime emission forbidden)",
     "task_overlay": "system-task-spec.md",
-    "rule": "13 lifecycle phase documents and N typed task artifacts are separate; system task artifacts compose task.md plus system-task-spec.md",
+    "task_overlay_status": "pointer_to_canonical",
+    "task_overlay_canonical": "plugin-plans/system-dev-planner/references/system-task-spec-template.md",
+    "runtime_emission_owner": "system-dev-planner (dev-graph はruntime task specをemitせず登録・投影・完了収束のみ担う。templates/system-task-spec.md は後方互換のpointerで、節構成・必須フィールドの正本は canonical 側)",
+    "system_task_required_fields": ["parent_feature", "feature_package_id", "phase_ref"],
+    "rule": "one feature execution package contains exactly 13 executable task artifacts, one for each P01..P13; no separate phase-document set and no variable-N canonical tasks",
     "feature_boundary": "system-dev-planner consumes exactly one dev-graph feature node (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) as structured input context and never creates feature nodes; its promoted typed tasks register back into dev-graph with parent_feature=当該feature (MM-11)"
   },
   "readiness": {

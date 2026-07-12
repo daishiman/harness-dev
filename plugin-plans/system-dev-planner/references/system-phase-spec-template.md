@@ -1,5 +1,7 @@
 <!--
-正本: system-dev-planner (生成器) 側の 13 phase 文書テンプレート。
+LEGACY COMPATIBILITY ONLY。runtimeはこの別phase文書を生成しない。
+各phaseの内容はsystem-task-spec-template.mdを使うexact 13 executable tasksへ統合済み。
+正本: feature-execution-package-contract.md。
 `plugin-plans/dev-graph/templates/system-phase-spec.md` (draft) は現状独立ファイルであり、
 P08/P12 で本正本への pointer 化予定。節構成は draft と整合する非後退の骨子とし、
 phase 呼称は `references/system-plan-phase-names.md` (sdp 確定表) を正本とする。

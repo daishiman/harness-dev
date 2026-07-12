@@ -27,4 +27,6 @@
 ## Handoff
 
 - per-feature planning: <ready 時に system-dev-planner (run-system-dev-plan) を自動起動、または人間の手動 `/system-dev-plan` 実行結果を同じ登録経路として受理>
-- 生成物の登録先: <system-dev-planner が生成した promoted task を `parent_feature=<この graph_node_id>` で C02 経由 atomic 登録>
+- 生成物: <P01..P13 exact 13 executable task specs + 13-node intra-feature DAG>
+- 登録先: <全taskを同一`parent_feature`/`feature_package_id`でC02経由atomic登録。expected/applied=13必須>
+- 完了rollup: <exact 13全done + P07/P10/P11 evidenceがfeature acceptanceを満たす場合だけdone>

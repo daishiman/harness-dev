@@ -8,7 +8,7 @@
       "entity_ref": "C01",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/skills/run-system-dev-plan/",
-      "acceptance_criterion": "repo-local stagingへ13 phase+N tasks+DAGを生成し評価後にのみpromotionする",
+      "acceptance_criterion": "repo-local stagingへ別phase docsを作らずexact 13 phase tasks/13-node DAGを生成し、phase exact-set・共通parent/package・評価PASS後だけpromotionする",
       "execution_kind": "component-build",
       "route_ref": "C01",
       "task_spec_ref": "task-specs/B-C01.md"
@@ -44,7 +44,7 @@
       "entity_ref": "C04",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/agents/system-dev-plan-architect.md",
-      "acceptance_criterion": "9 workstream applicabilityと13 phase/N task DAGを単一責務分解する",
+      "acceptance_criterion": "1 featureを9 workstream観点で分析し、P01..P13各1件のexact 13 executable task specs/13-node intra-feature DAGへ分解する",
       "execution_kind": "component-build",
       "route_ref": "C04",
       "task_spec_ref": "task-specs/B-C04.md"
@@ -140,7 +140,7 @@
       "entity_ref": "C12",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/scripts/validate-system-plan.py",
-      "acceptance_criterion": "staging生成物 (13 phase docs + N SYS task specs + workstream-inventory + task-graph projection) をschema準拠/DAG非循環/placeholder残存/未解決参照で決定論検証しpromotion gate2の判定入力を返す",
+      "acceptance_criterion": "feature-package + P01..P13 exact 13 task specs + 13-entry inventory + 13-node DAGを検証し、12/14件・phase重複・mixed parent/package・cross-feature edgeをexit2で拒否する",
       "execution_kind": "component-build",
       "route_ref": "C12",
       "task_spec_ref": "task-specs/B-C12.md"
@@ -427,7 +427,7 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "plugin-plans/system-dev-planner/evidence/S12.json",
-      "acceptance_criterion": "13 phase task template、symlink導入、repo config、diagnostics、promotion rollback、dev-graph連携が説明される",
+      "acceptance_criterion": "1 feature→P01..P13 exact 13 executable task template、symlink導入、repo config、diagnostics、promotion rollback、dev-graph登録が説明される",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/S12.md"

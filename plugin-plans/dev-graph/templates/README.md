@@ -13,7 +13,7 @@ repo-local runtime 契約の共通正本は system-dev-planner の `plugin-plans
 3. API を公開・変更する仕様では `api-contract.md` を `specification.md` の API 契約へ合成する。
 4. 利用者へ保存先やテンプレート名を質問しない。分類 confidence が閾値未満の場合だけ、分類候補と生成予定 path を確認する。
 5. 空見出し、`TBD`、`TODO`、`未定` は充足と数えない。非該当は `N/A: <理由>` を必須とする。
-6. システム計画では13 lifecycle文書に`system-phase-spec.md`、N個の実行taskに`task.md`+`system-task-spec.md` overlayを使う。仕様書・アーキテクチャは`system-spec-harness`の確定成果物を引用する。
+6. システム計画では1 featureにつきP01..P13のexact 13件の実行task仕様書を生成する。別の13 lifecycle文書や可変N taskは生成しない。仕様書・アーキテクチャは`system-spec-harness`の確定成果物を引用する。**この実行task仕様を emit する主体は system-dev-planner (ミクロ層) であり、その正本テンプレートは `plugin-plans/system-dev-planner/references/system-task-spec-template.md`**。dev-graph 配下の `templates/system-task-spec.md` は当該正本への後方互換 pointer であり、dev-graph 自身は runtime task spec を emit せず登録・投影・完了収束のみを担う。
 7. project rootは`--repo-root`、trusted project env、`git rev-parse --show-toplevel`、cwd markerの順で候補を解決する。候補のrealpathがhost宣言`$CLAUDE_PROJECT_DIR`と一致する場合だけ採用し、symlinkの物理source pathをcontent rootに使わない。
 
 ## 検証規則

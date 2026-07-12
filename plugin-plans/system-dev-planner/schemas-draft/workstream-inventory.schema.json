@@ -2,11 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "workstream-inventory.schema.json",
   "title": "system-dev-planner workstream-inventory (draft)",
-  "description": "C01 (run-system-dev-plan) の R2-decompose 責務が実行時に生成する workstream-inventory.json のスキーマ draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 builder または人手承認で plugins/system-dev-planner/schemas/workstream-inventory.schema.json へ適用する。本 plan 自身の component-inventory.json (component_kind 5値) とは別スキーマである。詳細設計は references/workstream-inventory-schema-design.md を正本とする。",
+  "description": "C01が1 featureから生成するfeature execution packageの13 phase task inventory。runtime outputは可変N taskではなくP01..P13 exact-set。詳細はreferences/feature-execution-package-contract.mdとworkstream-inventory-schema-design.md。",
   "type": "object",
-  "required": ["schema_version", "repo_context", "source_lineage", "tasks"],
+  "required": ["schema_version", "feature_package_id", "parent_feature", "repo_context", "source_lineage", "tasks"],
   "properties": {
     "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+    "parent_feature": {"type": "string", "minLength": 1, "description": "起動元dev-graph feature graph_node_id。全13 taskと一致必須"},
     "repo_context": {
       "type": "object",
       "required": ["config_path", "repo_identity", "root_resolution_source"],
@@ -37,21 +39,40 @@
     },
     "tasks": {
       "type": "array",
-      "items": {"$ref": "#/$defs/task"},
-      "minItems": 1
+      "minItems": 13,
+      "maxItems": 13,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P01"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P02"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P03"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P04"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P05"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P06"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P07"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P08"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P09"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P10"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P11"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P12"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P13"}}}]}
+      ],
+      "items": false,
+      "description": "exactly 13 executable task specs in P01..P13 order; no separate phase-document axis"
     }
   },
   "additionalProperties": false,
   "$defs": {
     "task": {
       "type": "object",
-      "required": ["id", "title", "owners", "tags", "related_nodes", "workstream_kind", "build_target_kind", "phase_ref", "depends_on", "write_scope", "deploy_unit", "source_lineage", "classification", "tracker_binding_intent", "github_publication", "pr_completion_policy", "branch_policy", "acceptance", "verification", "rollback", "implementation_readiness", "graph_node_registration"],
+      "required": ["id", "feature_package_id", "parent_feature", "title", "owners", "tags", "related_nodes", "workstream_kind", "build_target_kind", "phase_ref", "depends_on", "write_scope", "deploy_unit", "source_lineage", "classification", "tracker_binding_intent", "github_publication", "pr_completion_policy", "branch_policy", "acceptance", "verification", "rollback", "implementation_readiness", "graph_node_registration"],
       "properties": {
         "id": {
           "type": "string",
           "pattern": "^SYS-[A-Z0-9][A-Z0-9-]*$",
           "description": "task-spec id。dev-graph の graph_node_id 割当規約への接続は dev-graph-registration-contract.json と schemas-draft/dev-graph-registration.schema.json の確定契約に従う"
         },
+        "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+        "parent_feature": {"type": "string", "minLength": 1},
         "title": {"type": "string", "minLength": 1},
         "owners": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
@@ -75,7 +96,7 @@
         "phase_ref": {
           "type": "string",
           "pattern": "^P(0[1-9]|1[0-3])$",
-          "description": "生成側 13 phase (references/system-plan-phase-names.md の sdp 確定呼称表) のうちどの phase に属するか"
+          "description": "13 taskの一意なphase slot。P01..P13を各1件、配列順も同順で持つ"
         },
         "depends_on": {
           "type": "array",
@@ -144,7 +165,10 @@
           "type": ["object", "null"],
           "properties": {
             "graph_node_id": {"type": ["string", "null"]},
-            "file_path": {"type": ["string", "null"]}
+            "file_path": {"type": ["string", "null"]},
+            "parent_feature": {"type": ["string", "null"]},
+            "feature_package_id": {"type": ["string", "null"]},
+            "phase_ref": {"type": ["string", "null"]}
           },
           "additionalProperties": false,
           "description": "dev-graph の tasks/ グラフノード登録形式。実登録は dev-graph 側の所有 (本 plan は形式のみ提供)"

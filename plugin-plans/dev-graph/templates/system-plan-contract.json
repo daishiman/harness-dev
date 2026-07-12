@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "purpose": "plugin-dev-plannerの13フェーズ計画フローを、plugin component buildではなくシステム開発workstreamへ置換する",
+  "purpose": "dev-graphの1 featureをPhase 1-13に1件ずつ対応するexact 13 executable task specificationsへ変換する",
   "required_inputs": [
     "system-spec-harness:system-spec/index.md",
     "system-spec-harness:system-spec/00-requirements-definition.md",
@@ -15,22 +15,22 @@
     {"number": 5, "id": "implementation", "owner": "dependency-ordered implementation tasks", "applicability": "required"},
     {"number": 6, "id": "test-run", "owner": "unit/contract/integration/e2e/security/performance tests", "applicability": "required"},
     {"number": 7, "id": "acceptance", "owner": "purpose-derived acceptance", "applicability": "required"},
-    {"number": 8, "id": "refactoring-migration", "owner": "refactor, data migration and compatibility", "applicability": "conditional-with-reason"},
+    {"number": 8, "id": "refactoring-migration", "owner": "refactor, data migration and compatibility", "applicability": "required-node-action-may-be-n-a-with-reason"},
     {"number": 9, "id": "quality-assurance", "owner": "quality, security and operational readiness", "applicability": "required"},
     {"number": 10, "id": "final-review", "owner": "independent final gate", "applicability": "required"},
     {"number": 11, "id": "evidence", "owner": "reproducible evidence", "applicability": "required"},
     {"number": 12, "id": "documentation-operations", "owner": "docs, runbooks and handover", "applicability": "required"},
-    {"number": 13, "id": "release-deploy", "owner": "rollout, rollback and post-release verification", "applicability": "conditional-with-reason"}
+    {"number": 13, "id": "release-deploy", "owner": "rollout, rollback and post-release verification", "applicability": "required-node-action-may-be-n-a-with-reason"}
   ],
   "workstream_kinds": ["frontend", "backend", "api", "data", "infrastructure", "security", "quality", "documentation", "operations"],
-  "required_outputs": ["13 lifecycle phase Markdown documents", "N typed task specifications", "workstream-inventory.json", "task-graph projection", "system-build handoff draft", "four-condition evaluation", "atomic promotion receipt"],
+  "required_outputs": ["feature-package.json", "exactly 13 executable phase task specifications", "workstream-inventory.json with P01..P13 exact-set", "13-node task-graph projection", "system-build handoff draft", "four-condition evaluation", "atomic promotion receipt"],
   "normalization": {
-    "lifecycle_axis": "13 phase documents (each phase has applicable or N/A: reason)",
-    "workstream_axis": "N system workstreams in one inventory",
-    "execution_axis": "typed task DAG derived from both axes",
-    "rule": "phase documents reference workstream/task ids; N task specs compose task.md + system-task-spec.md and alone own dependencies/write scopes/deploy units/rollback"
+    "lifecycle_axis": "P01..P13 fixed slots",
+    "workstream_axis": "each of the 13 tasks has one primary workstream and optional secondary workstreams",
+    "execution_axis": "the same 13 task specs are the executable DAG nodes",
+    "rule": "do not emit separate lifecycle documents plus N tasks; emit exactly one executable task spec per phase slot"
   },
   "quality_conditions": ["矛盾なし", "漏れなし", "整合性あり", "依存関係整合"],
   "promotion": {"staging": ["status=draft", "confirmation_status=draft", "evaluation_status=pending"], "publish_when": "same digest passes deterministic validation and independent four-condition evaluation", "published": ["status=active", "confirmation_status=confirmed", "evaluation_status=pass", "implementation_readiness=complete"]},
-  "boundary": "仕様書・アーキテクチャはsystem-spec-harness成果物を引用する。external plugin system-dev-planner (run-system-dev-plan) が検証済みplanとsystem-build handoff draftまでを生成し、最終handoffのauthorize/executeはC04だけが担う。実装コードは生成しない。"
+  "boundary": "dev-graph owns feature creation/architecture/inter-feature dependencies。system-dev-planner consumes one feature and emits exactly 13 intra-feature tasks。仕様書・アーキテクチャはsystem-spec-harness成果物を引用し、実装コードは生成しない。"
 }

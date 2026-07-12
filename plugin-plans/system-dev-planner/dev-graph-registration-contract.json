@@ -3,8 +3,9 @@
   "consumer": "dev-graph",
   "trigger": "after atomic-promotion-receipt status=promoted",
   "input": "dev-graph-registration.json",
+  "batch_identity_fields": ["feature_package_id", "parent_feature", "expected_count=13", "phase_refs=P01..P13"],
   "node_schema_ref": "../dev-graph/schemas-draft/graph-node.schema.json",
-  "required_fields": ["graph_node_id", "artifact_kind", "artifact_subtypes", "title", "project_id", "domain", "status", "priority", "start_date", "target_date", "iteration", "owners", "tags", "created_at", "updated_at", "depends_on", "related_nodes", "resource_scope", "parent_feature", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "classification_confidence", "classification_reason", "classification_candidates", "github_publication", "issue_linkage", "tracker_binding", "beads_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"],
+  "required_fields": ["graph_node_id", "artifact_kind", "artifact_subtypes", "title", "project_id", "domain", "status", "priority", "start_date", "target_date", "iteration", "owners", "tags", "created_at", "updated_at", "depends_on", "related_nodes", "resource_scope", "parent_feature", "feature_package_id", "phase_ref", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "classification_confidence", "classification_reason", "classification_candidates", "github_publication", "issue_linkage", "tracker_binding", "beads_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"],
   "fixed_values": {
     "artifact_kind": "task",
     "artifact_subtypes": [],
@@ -18,6 +19,7 @@
     "evaluation_status": "pass",
     "source_lineage.origin_kind": "system-dev-planner",
     "parent_feature": "system-dev-plannerの1 runが計画するfeatureのgraph_node_id。全promoted taskが共有。値は起動時にfeature文脈から解決する",
+    "feature_package_id": "feature-package/<stable-id>。exact 13 taskが共有",
     "issue_linkage": null,
     "tracker_binding": "repo-config-default",
     "beads_linkage": null,
@@ -44,6 +46,8 @@
     "related_nodes": "published typed task spec frontmatter related_nodes (無ければ空 array)",
     "resource_scope": "write_scope → resource_scope 写像 (published typed task spec frontmatter write_scope)",
     "parent_feature": "fixed_values.parent_feature由来。system-dev-plannerの起動元featureのgraph_node_id (自動起動はdev-graph feature文脈、手動起動は解決済みfeature参照)を1 run内の全promoted taskへ一律付与する。dev-graph側の実在feature参照解決とparent_feature整合検査はdev-graphが担う",
+    "feature_package_id": "workstream-inventory top-levelと各taskで共通のfeature_package_idを写像する",
+    "phase_ref": "P01..P13 exact-setを1 taskずつ写像する。欠落・重複・順序driftは登録前に拒否する",
     "file_path": "published tasks root 相対の task spec path (path_policy 準拠)",
     "template_id": "fixed_values.template_id=task 固定",
     "template_version": "references/system-task-spec-template.md の明示version=1.0.0",
@@ -72,16 +76,16 @@
     "atomicity": "all_or_none",
     "identity": "promotion_receipt.published_digest + registration source_digest",
     "per_node_idempotency_key": "graph_node_id+source_lineage.source_digest",
-    "preconditions": ["expected_count_equals_manifest_task_count", "binding_intents_keys_exactly_equal_node_ids", "all_graph_node_ids_unique", "all_dependencies_resolve_in_batch_or_existing_graph", "all_tracker_bindings_resolve", "all_paths_contained", "all_parent_features_resolve_to_existing_feature_node"],
+    "preconditions": ["expected_count_equals_13", "phase_refs_exactly_P01_through_P13", "single_parent_feature", "single_feature_package_id", "binding_intents_keys_exactly_equal_node_ids", "all_graph_node_ids_unique", "all_dependencies_resolve_within_same_feature_package", "all_tracker_bindings_resolve", "all_paths_contained", "parent_feature_resolves_to_existing_feature_node"],
     "receipt": {
       "path": "dev-graph-registration-receipt.json",
       "required_fields": ["status", "source_digest", "expected_count", "applied_count", "graph_revision", "registered_node_ids", "committed_at"],
-      "success_condition": "status=registered and expected_count=applied_count and registered_node_ids exact-set equals manifest task ids",
+      "success_condition": "status=registered and expected_count=applied_count=13 and registered_node_ids exact-set equals P01..P13 manifest task ids and one parent_feature/package identity",
       "failure_condition": "status=aborted and applied_count=0; partial success is forbidden"
     }
   },
   "path_policy": "file_path is relative to caller repository root and must resolve inside configured tasks root",
   "idempotency_key": "per node graph_node_id+source_lineage.source_digest; batch promotion digest is provenance and replay boundary, not a substitute for per-node digest",
   "outputs": ["tasks/ graph nodes", "Issue/Projects publication eligibility", "ready-set recommendation eligibility", "multi-worktree parallel execution eligibility", "linked-PR completion reconciliation eligibility"],
-  "fail_closed_on": ["missing_promotion_receipt", "digest_mismatch", "path_escape", "unknown_dependency", "duplicate_graph_node_id", "unresolved_tracker_binding", "ambiguous_auto_binding_in_both_mode", "github_binding_with_local_only_publication", "publication_intent_conflicts_with_resolved_tracker_binding", "batch_count_mismatch", "partial_registration", "unknown_parent_feature"]
+  "fail_closed_on": ["missing_promotion_receipt", "digest_mismatch", "path_escape", "unknown_dependency", "cross_feature_task_dependency", "duplicate_graph_node_id", "missing_or_duplicate_phase_ref", "task_count_not_13", "mixed_parent_feature", "mixed_feature_package_id", "unresolved_tracker_binding", "ambiguous_auto_binding_in_both_mode", "github_binding_with_local_only_publication", "publication_intent_conflicts_with_resolved_tracker_binding", "partial_registration", "unknown_parent_feature"]
 }

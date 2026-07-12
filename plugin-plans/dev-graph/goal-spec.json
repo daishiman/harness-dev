@@ -150,7 +150,7 @@
     },
     {
       "id": "C23",
-      "criterion": "system-dev-plannerは確定仕様を引用し、readiness未達を停止し、生成したN taskをall-or-none登録receiptで確認してからbinding別投影・推薦・並列実行へ接続する設計が記載されている",
+      "criterion": "system-dev-plannerは確定仕様を引用し、readiness未達を停止し、1 featureから生成したP01..P13 exact 13 taskをall-or-none receiptで確認してからbinding別投影・推薦・並列実行へ接続する設計が記載されている",
       "done": false,
       "verify_by": "reasoning"
     },
@@ -174,7 +174,7 @@
     },
     {
       "id": "C27",
-      "criterion": "system-dev-plannerが確定したN typed task specificationをdev-graphへall-or-none登録し、count/exact-set/graph_revision receiptを確認後、binding別authorityへ冪等投影するpublication契約が設計されている",
+      "criterion": "system-dev-plannerのP01..P13 exact 13 taskをdev-graphへall-or-none登録し、expected/applied=13、phase/node exact-set、共通parent/package、graph_revision receipt確認後にbinding別authorityへ投影する契約が設計されている",
       "done": false,
       "verify_by": "reasoning"
     },
@@ -342,9 +342,15 @@
     },
     {
       "id": "C55",
-      "criterion": "feature単位の子task完了進捗 (X/Y) がC05 renderで集約表示され、github/both profileではfeature→GitHub Milestone/beads --parent epic投影規則が§8.5に定義される (local_onlyは外部投影不要でC05集約表示が可視化を担う) 設計が記載され、task.depends_onが同一parent_feature内に閉じ層越え参照をC11が違反計上する層分離 (§8.3) が設計されている",
+      "criterion": "feature進捗が13件中X/Yで集約表示され、beads profileではfeature→epic/P01..P13→child issues、github profileではMilestone/Project feature item→13 Issuesへ投影される。task dependencyは同一parent_feature/package内の前方edgeに閉じる",
       "done": false,
       "verify_by": "reasoning"
+    },
+    {
+      "id": "C56",
+      "criterion": "feature由来taskがfeature_package_idとphase_refを持ち、同一feature/packageにP01..P13が各1件だけ存在することをC11/C02がfail-closed検査し、C26はexact 13全doneとacceptance evidence充足時だけfeatureをdoneへroll upする",
+      "done": false,
+      "verify_by": "script"
     }
   ],
   "constraints": [

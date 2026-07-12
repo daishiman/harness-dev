@@ -39,7 +39,7 @@ system-dev-planner の受入は 2 層に分かれる: (1) system-dev-planner 自
 ## 完了チェックリスト
 - [ ] 受入観点表が purpose 語彙から導出され build 後確認プロセスと紐づいている。
 - [ ] system-dev-planner 生成物側の 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) が C02/C05 の責務として受入確認表に記載されている。
-- [ ] promoted N task registrationがtracker binding/publication intent、empty linkage/execution、in-progress completion、one-task-one-branch/worktree leaseを持ち、all-or-none receiptのcount/exact-set一致後だけmutation/reconciliationをdev-graphへ委譲すると判定できる。
+- [ ] promoted P01..P13 exact 13 task registrationが共通parent_feature/feature_package_idを持ち、expected/applied=13とphase/node exact-set receipt後だけmutation/reconciliationをdev-graphへ委譲すると判定できる。
 
 ## 参照情報
 - index.md 受入確認章。
