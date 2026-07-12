@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+# /// script
+# name: tenant_runtime
+# version: 0.1.0
+# purpose: active tenant の同定と credential 参照名 (service/account/scoped env) の解決を行う
+#          vendored 共有 library。secret 値そのものは読まない・保存しない。
+# inputs:
+#   - env: HARNESS_TENANT / HARNESS_ROOT / HARNESS_TENANT_CONFIG
+#   - files: .notion-config.json (tenant symlink) / tenants/<slug>/tenant.json
+# outputs:
+#   - return: tenant slug / tenant config dict / credential 参照名を呼び出し側 module へ返す (stdout 出力なし)
+#   - exit: なし (import して関数利用する library)
+# contexts: [C, E]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.9"
+# ///
 """Tenant identity and credential-reference resolution shared by plugins.
 
 This module never reads or stores secret values. It resolves only the active

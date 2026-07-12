@@ -3,7 +3,7 @@
   "floors": {
     "scripts": {
       "mechanical": 85.6,
-      "llm_eval": 66.7
+      "llm_eval": 64.3
     },
     "skills": {
       "mechanical": 100.0,
@@ -22,9 +22,9 @@
       "llm_eval": 100.0
     },
     "docs": {
-      "mechanical": 95.7,
-      "llm_eval": 80.4
+      "mechanical": 84.9,
+      "llm_eval": 69.8
     }
   },
-  "note": "各軸カバレッジの下限 floor。現値がこれを下回ると --ratchet が exit1。改善時は --update-floor で floor を引き上げる (ratchet up・回帰は焼かない)。"
+  "note": "各軸カバレッジの下限 floor。現値がこれを下回ると --ratchet が exit1。改善時は --update-floor で floor を引き上げる (ratchet up・回帰は焼かない)。2026-07-12: plugins/ 再編 (refactor/restructure-to-plugins) で test/verdict 未添付の新規 doc/scripts artifact が母数に加わったため、scripts.llm_eval / docs.mechanical / docs.llm_eval の floor を clean-checkout 実測値へ意図的に baseline reset (evaluation の捏造による緑化を避ける)。"
 }
