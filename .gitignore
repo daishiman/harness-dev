@@ -1,67 +1,77 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.python-version
+
 # OS
 .DS_Store
 Thumbs.db
-Desktop.ini
 
 # Editor
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
-*.sublime-*
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Claude Code local artifacts
+.claude/logs/
+.claude/secrets/
 
-# Temporary files
-*.tmp
-**/.tmp/
-*.log
-tmp/
-temp/
+# Local config (機密含む可能性)
+*.local.json
+config/*.local.*
+references/governance-params.json
 
-# Environment (any depth)
-**/.env
-**/.env.*
-!**/.env.example
+# Secrets (絶対に commit しない)
+.env
+.env.*
+!.env.example
+.google-config.json
 
-# Build output
+# Per-repo Notion config (DB IDs / credential service identity)
+.notion-config.json
+!.notion-config.example.json
+
+# Tenant real-value overlays (templates and public contracts remain tracked)
+tenants/*/notion-config.json
+tenants/*/party_a.json
+tenants/*/google-config.json
+tenants/*/**/*.secret.*
+
+# Session-local artifacts
+output/
 dist/
-build/
-out/
+.claude/handoff/
+.worktrees/
+# run-* スキルの transient 作業ディレクトリ (skill-tree 第13条 nested dir 禁止)
+.run/
+# skill-intake 実行中フラグ lock (hook-guard-skillgen.py が生成・解除する揮発状態)
+eval-log/intake-locks/
+# .claude/{agents,skills,commands} は build-claude-symlinks.py が
+# plugins/ から生成する symlink を含むため tracked。ignore しない。
 
-# Cache
-.cache/
-*.cache
-.eslintcache
-.stylelintcache
+# Eval-log: 一時生成物 (再現性 schema 正本は plugins/ 配下)
+eval-log/skill-brief.json
+eval-log/skill-brief*.json
+# skill-intake eval-log は一時生成物だが content-review verdict は CI 検査対象のため追跡する
+eval-log/skill-intake/**
+!eval-log/skill-intake/*/
+!eval-log/skill-intake/*/content-review/
+!eval-log/skill-intake/*/content-review/**
+eval-log/docs/
+eval-log/notion-conflicts.json
 
-# Claude Code / MCP
-.playwright-mcp/
-.mcp-cache/
-.claude/settings.json
-.claude/settings.local.json
+# Plugin-local runtime
+plugins/skill-intake/output/
+plugins/skill-intake/.claude/
+plugins/prompt-creator/LOGS.md
 
-# Runtime generated (optional - uncomment if you don't want to track)
-# skills/**/LOGS.md
-# skills/**/EVALS.json
+# GitHub 100MB file-size limit: this local tarball cannot be pushed
+google-cloud-cli-darwin-arm.tar.gz
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-venv/
-.venv/
-
-# Test coverage
-coverage/
-.nyc_output/
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/

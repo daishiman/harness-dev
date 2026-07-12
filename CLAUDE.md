@@ -1,92 +1,77 @@
-# CLAUDE.md
+# Project Instructions for AI Agents
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides instructions and context for AI coding agents working on this project.
 
-## プロジェクト概要
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:6cd5cc61 -->
+## Beads Issue Tracker
 
-**daishiman-skills** - Claude Code用スキルコレクション。スキル作成メタツール、Google Forms自動生成など、様々なスキルを提供。
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
 
-## プラグイン構造
-
-```
-daishiman-skills/
-├── .claude-plugin/
-│   ├── plugin.json          # プラグインメタデータ（必須）
-│   └── marketplace.json     # マーケットプレイス定義
-├── skills/                  # スキル配置ディレクトリ
-│   ├── skill-creator/       # スキル作成メタスキル
-│   │   ├── SKILL.md
-│   │   ├── agents/
-│   │   ├── assets/
-│   │   ├── references/
-│   │   ├── schemas/
-│   │   └── scripts/
-│   └── google-forms-generator/  # Google Forms自動生成スキル
-│       ├── SKILL.md
-│       ├── agents/
-│       ├── references/
-│       ├── scripts/
-│       ├── templates/
-│       └── .env.example
-├── docs/                    # ユーザー向けドキュメント
-│   ├── skill-creator/       # Skill Creator個別ドキュメント
-│   └── google-forms-generator/ # Google Forms Generator個別ドキュメント
-├── .gitignore
-├── README.md
-└── CLAUDE.md
-```
-
-### ディレクトリ配置について
-
-| 用途 | パス | 説明 |
-|------|------|------|
-| プロジェクト固有スキル | `.claude/skills/` | プロジェクト内でのみ使用 |
-| **プラグイン配布** | `skills/` | ルート直下に配置（本プラグイン） |
-
-## コマンド
-
-### バリデーション
+### Quick Reference
 
 ```bash
-node skills/skill-creator/scripts/validate_all.js skills/skill-creator
-node skills/skill-creator/scripts/quick_validate.js skills/skill-creator
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
 ```
 
-### スキル生成
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+**Architecture in one line:** issues live in a local Dolt DB; sync uses `refs/dolt/data` on your git remote; `.beads/issues.jsonl` is a passive export. See https://github.com/gastownhall/beads/blob/main/docs/SYNC_CONCEPTS.md for details and anti-patterns.
+
+## Agent Context Profiles
+
+The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
+
+- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
+- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
+- **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
+
+## Session Completion
+
+This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
+
+1. **File issues for remaining work** - Create beads for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **Handle git/sync by active profile**:
+   ```bash
+   # Conservative/minimal/default: report status and proposed commands; wait for approval.
+   git status
+
+   # Team-maintainer opt-in only, unless current instructions forbid it:
+   git pull --rebase
+   git push
+   git status
+   ```
+5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
+
+**Critical rules:**
+- Explicit user or orchestrator instructions override this Beads block.
+- Do not commit or push without clear authority from the active profile or the current user request.
+- If a required sync or push is blocked, stop and report the exact command and error.
+<!-- END BEADS INTEGRATION -->
+
+
+## Build & Test
+
+_Add your build and test commands here_
 
 ```bash
-node skills/skill-creator/scripts/init_skill.js <skill-name> --path skills
-node skills/skill-creator/scripts/detect_mode.js --request "新規スキル"
+# Example:
+# npm install
+# npm test
 ```
 
-## 設計原則
+## Architecture Overview
 
-| 原則 | 説明 |
-|------|------|
-| **Problem First** | 機能の前に本質的な問題を特定する |
-| **Collaborative First** | ユーザーとの対話を通じて要件を明確化 |
-| Domain-Driven Design | ドメイン構造を明確化し高精度な設計を導く |
-| Clean Architecture | 層分離と依存関係ルールで変更に強い構造 |
-| **Script First** | 決定論的処理はスクリプトで実行 |
-| **Progressive Disclosure** | 必要な時に必要なリソースのみ読み込み |
+_Add a brief overview of your project architecture_
 
-## モード
+## Conventions & Patterns
 
-| モード | 用途 |
-|--------|------|
-| **collaborative** | ユーザー対話型スキル共創（推奨） |
-| **orchestrate** | 実行エンジン選択（Claude/Codex） |
-| create | 新規スキル作成 |
-| update | 既存スキル更新 |
-| improve-prompt | プロンプト改善 |
-
-## インストール
-
-```bash
-# Step 1: マーケットプレイスを追加
-/plugin marketplace add daishiman/daishiman-skills
-
-# Step 2: プラグインをインストール（個別選択）
-/plugin install daishiman-skill-creator
-/plugin install daishiman-google-forms-generator
-```
+_Add your project-specific conventions here_

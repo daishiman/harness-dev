@@ -1,0 +1,126 @@
+{
+  "_build_claude_settings": {
+    "managed_hooks": [],
+    "managed_permissions": []
+  },
+  "enabledPlugins": {
+    "contract-generator@skills": true,
+    "skill-creator@skills": true,
+    "skill-intake@skills": true
+  },
+  "hooks": {
+    "FileChanged": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-validate-skill-md.py",
+            "type": "command"
+          }
+        ],
+        "matcher": "SKILL.md"
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-post-compact.py",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-validate-skill-md.py",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/re-evaluate-on-rubric-bump.py --post-tool-use",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-handoff.py",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-guard-rubric.py",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime --hook-json",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-verify-evaluator-json.py",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-verify-evaluator-json.py",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/scripts/hook-check-file-ownership.py",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "ask": [],
+    "deny": [
+      "Write(.claude/skills/ref-skill-design-rubric/**)",
+      "Edit(.claude/skills/ref-skill-design-rubric/**)",
+      "Bash(rm -rf*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  }
+}
