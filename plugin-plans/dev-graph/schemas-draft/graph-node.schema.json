@@ -1,0 +1,1449 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "graph-node.schema.json",
+  "title": "dev-graph タスクグラフノード (draft)",
+  "description": "run-plugin-dev-plan が manual-apply artifact として出力する schema draft。後段 builder または人手承認で plugins/dev-graph/schemas/graph-node.schema.json へ適用する。issue/task/specification/architecture/feature/document の各成果物を単一グラフ構造で表現し、issues/tasks/specs/architecture/features/docs の正規ディレクトリへ自動routingする。feature はマクロ層 (purpose/goal/scope/acceptance/architecture_refs) を保持し、細タスク仕様書生成は external plugin system-dev-planner (ミクロ層) へ委譲する (MM-01)。",
+  "type": "object",
+  "required": [
+    "graph_node_id",
+    "artifact_kind",
+    "artifact_subtypes",
+    "title",
+    "project_id",
+    "domain",
+    "status",
+    "owners",
+    "tags",
+    "priority",
+    "start_date",
+    "target_date",
+    "iteration",
+    "created_at",
+    "updated_at",
+    "depends_on",
+    "related_nodes",
+    "resource_scope",
+    "parent_feature",
+    "file_path",
+    "template_id",
+    "template_version",
+    "confirmation_status",
+    "evaluation_status",
+    "confirmation_evidence",
+    "source_lineage",
+    "classification_confidence",
+    "classification_reason",
+    "classification_candidates",
+    "github_publication",
+    "issue_linkage",
+    "tracker_binding",
+    "beads_linkage",
+    "github_project_linkages",
+    "pull_request_linkages",
+    "execution_contexts",
+    "completion_evidence",
+    "implementation_readiness"
+  ],
+  "properties": {
+    "graph_node_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "移動・再分類・GitHub同期後も変化しない論理identity。file_pathはこのIDを参照する可変projectionでありidentityに使わない"
+    },
+    "id": {
+      "type": "string",
+      "deprecated": true,
+      "description": "後方互換alias。新規成果物ではgraph_node_idを正本とする"
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "issue",
+        "task",
+        "specification",
+        "architecture",
+        "feature",
+        "document"
+      ],
+      "description": "成果物種別。正規rootへ issue→issues/task→tasks/specification→specs/architecture→architecture/feature→features/document→docs と決定論写像する。feature はマクロ層の機能単位ノード (purpose/goal/scope_in/scope_out/acceptance/architecture_refs を第一級に保持、MM-01)"
+    },
+    "artifact_subtypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "frontend",
+          "backend",
+          "infrastructure",
+          "data",
+          "security",
+          "api"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "architecture subtype または specification の conditional template。architecture は1種以上、非該当kindは空配列を許す"
+    },
+    "kind": {
+      "type": "string",
+      "deprecated": true,
+      "enum": [
+        "issue",
+        "task",
+        "specification",
+        "architecture",
+        "feature",
+        "document"
+      ],
+      "description": "後方互換alias。新規成果物ではartifact_kindを正本とする"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "横断分類用project identifier。物理top-levelを決めず、閾値超過時だけsecondary partitionに使う"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "description": "横断分類用domain。1 leafが200件を超えた場合の第一partition key"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "物理配置から独立した横断検索タグ"
+    },
+    "priority": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "tracker/Projectsへ投影可能なrepo-local priority。nullは未設定"
+    },
+    "start_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "target_date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "iteration": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Projects iteration title等へ写像する安定した人間可読値"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "成果物の更新責任者"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "id + updated_at がGitHub双方向同期(要件C4)の競合解決キー"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "active",
+        "blocked",
+        "done",
+        "closed",
+        "tombstoned"
+      ],
+      "description": "全artifact共通workflow state。GitHub Issue openはactive、closeはclosedへ写像し、delete相当はtombstonedで物理削除しない"
+    },
+    "closed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "status=closed|tombstoned に遷移した時刻。close/delete のtombstone双方向伝播(要件C12)がこの時刻を記録する"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "依存先ノードid配列。ready-set算出(要件C8)の入力。feature ノード間の機能間依存もこのフィールドを流用する (新フィールド不要・MM-01)"
+    },
+    "related_nodes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "description": "順序依存を持たない関連ノード参照"
+    },
+    "resource_scope": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+      },
+      "description": "touches: このノードが触るファイル/ディレクトリパス配列。既定はディレクトリ単位、ノードがファイル単位を明示した場合はファイル単位を優先し、双方混在時は広い方(ディレクトリ単位)へフォールバックする。並列バッチのresource_scope重複回避(要件C10)の土台"
+    },
+    "purpose": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "feature ノードがなぜ必要かの説明 (JTBD/価値)。artifact_kind=feature のとき非null必須、他kindはnull (MM-01)"
+    },
+    "goal": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "feature ノードが達成する到達状態。旧 目標+ゴールの語彙を1本に統合した表現。artifact_kind=feature のとき非null必須、他kindはnull (MM-01)。program全体のgoalはgoal-spec.jsonが正本で、本フィールドは機能単位に閉じる"
+    },
+    "scope_in": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "feature ノードのスコープ内。artifact_kind=feature のとき1件以上必須、他kindは空配列 (MM-01)"
+    },
+    "scope_out": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "feature ノードのスコープ外。artifact_kind=feature のとき1件以上必須、他kindは空配列 (MM-01)"
+    },
+    "acceptance": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "feature ノードが確実に実行したい観測可能な二値条件。artifact_kind=feature のとき1件以上必須、他kindは空配列 (MM-01)"
+    },
+    "architecture_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "description": "feature ノードが参照する architecture ノードの graph_node_id 配列。artifact_kind=feature のとき1件以上必須、他kindは空配列 (MM-01)。system-spec-harness由来のarchitectureはlineage参照のみで複製しない (MM-12)"
+    },
+    "parent_feature": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "task ノードが属する feature ノードの graph_node_id。artifact_kind=task かつ feature 由来のときのみ非null (feature文脈を持たない単発taskはnull可)。artifact_kind!=task では常にnull。順序依存のないrelated_nodesや複数依存を表すdepends_onとは別概念の単一親参照 (MM-03)"
+    },
+    "file_path": {
+      "type": "string",
+      "pattern": "^(issues|tasks|specs|architecture|features|docs)/.+\\.md$",
+      "description": "全artifactが持つ正規root配下の人間可読Markdownへの参照。graph_node_idは不変、file_pathはrouting policyとpartition状態から再計算可能な派生値。feature は features/ 配下 (MM-02)"
+    },
+    "template_id": {
+      "type": "string",
+      "enum": [
+        "issue",
+        "task",
+        "document",
+        "specification",
+        "architecture",
+        "feature"
+      ],
+      "description": "artifact_kindから自動選択した基底テンプレート"
+    },
+    "template_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "生成時に使用したテンプレート契約版。正本更新時は既存文書を全書換せずmigration previewへ使う"
+    },
+    "confirmation_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "confirmed",
+        "superseded"
+      ],
+      "description": "内容確定状態。system plan入力はspecification/architectureがconfirmedであることを要求する"
+    },
+    "evaluation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "pass",
+        "fail",
+        "stale"
+      ],
+      "description": "独立評価状態。C14/C15/C04はpass以外をIssue起票・推薦・実装handoff対象にしない"
+    },
+    "confirmation_evidence": {
+      "type": "object",
+      "required": [
+        "evaluator",
+        "evidence_ref",
+        "evaluated_digest"
+      ],
+      "properties": {
+        "evaluator": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evaluated_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false,
+      "description": "confirmation/evaluationを同一artifact digestへpinしstale PASSを拒否する"
+    },
+    "source_lineage": {
+      "type": "object",
+      "required": [
+        "origin_kind",
+        "source_plugin",
+        "source_path",
+        "source_version",
+        "source_digest",
+        "imported_at"
+      ],
+      "properties": {
+        "origin_kind": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "github",
+            "system-spec-harness",
+            "system-dev-planner",
+            "generated"
+          ]
+        },
+        "source_plugin": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_path": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "source_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_digest": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "imported_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "description": "引用・import元を追跡し、C19およびexternal plugin system-dev-planner由来のimportが外部正本を利用したことを検証する"
+    },
+    "classification_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "artifact_kind/domain/project_id自動分類のconfidence。0.80以上かつ第2候補との差0.15以上で自動確定、それ未満はpreview後に確認"
+    },
+    "classification_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "自動分類の根拠。previewと監査証跡へ表示する"
+    },
+    "classification_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "artifact_kind",
+          "confidence",
+          "candidate_path"
+        ],
+        "properties": {
+          "artifact_kind": {
+            "$ref": "#/$defs/artifactKind"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "candidate_path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "previewに表示する上位候補。ユーザーへ保存先そのものを入力させない"
+    },
+    "issue_linkage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "GitHub Issue との紐付け。C14 (decompose) が起票した時点でissue_numberを書き込み、C03 (sync) はlinkage済みノードを新規起票せずupdated_at比較のみを行う (create→syncの起票非重複契約・要件C7)",
+      "properties": {
+        "issue_number": {
+          "type": "integer"
+        },
+        "repo": {
+          "type": "string"
+        },
+        "linked_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "issue_number",
+        "repo"
+      ]
+    },
+    "tracker_binding": {
+      "type": "string",
+      "enum": [
+        "beads",
+        "github",
+        "none",
+        "repo-config-default"
+      ],
+      "description": "issue_linkageと対称のtracker択一宣言。beads=bd issueとして実行管理、github=GitHub Issueとして実行管理、none=どちらにも投影しない。repo-config-default=登録搬送時のみの遅延束縛sentinel (dev-graph-registration payloadが搬送し、C02がatomic登録時に.dev-graph/config.jsonのexecution_trackerから解決する。永続ノードには現れてはならず、残存はC11がfail-closed検査する)。単一publication authority (references/execution-tracker-contract.md §4) の起点で、github_publication.modeとの排他はallOfでfail-closed検査する"
+    },
+    "beads_linkage": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "bd issueとの紐付け。issue_linkageと対称に、C28 (bd-bridge) の起票結果を受けてC02経由で記録する可変projection。以後は冪等upsertのsync_state更新だけを行う (external_ref=graph_node_idが冪等キー)。未起票 (unlinked) はbeads_linkage=nullで表現し、sync_state enumには含めない",
+      "additionalProperties": false,
+      "properties": {
+        "bd_issue_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "linked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sync_state": {
+          "type": "string",
+          "enum": [
+            "linked",
+            "synced",
+            "pending_retry",
+            "conflict"
+          ]
+        },
+        "github_mirror": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "repo",
+            "issue_number",
+            "sync_direction",
+            "linked_at"
+          ],
+          "properties": {
+            "repo": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+            },
+            "issue_number": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sync_direction": {
+              "const": "beads_to_github_push_only"
+            },
+            "linked_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "description": "bd github sync --push-onlyが作ったviewer用Issue identity。C12はIssue mutationせずPR marker/Projects auto-add照合だけに使う"
+        }
+      },
+      "required": [
+        "bd_issue_id",
+        "linked_at",
+        "sync_state"
+      ]
+    },
+    "github_publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "project_aliases",
+        "labels",
+        "milestone"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "local_only",
+            "issue",
+            "issue_and_projects"
+          ]
+        },
+        "project_aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "labels": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "milestone": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "description": "task specification確定後の外部publication intent。project_aliases空かつmode=issue_and_projectsの場合はrepo configのdefault/auto-add targetを使う。draft/unconfirmed/evaluation非pass/readiness非completeではmodeに関わらず外部write禁止。"
+    },
+    "github_project_linkages": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "1つのtask/issueを複数GitHub Projects v2へ関連付ける永続linkage。field valueのupdatedAtは競合hintに使い、削除/欠落/renameも扱うcanonical 3-way baseはfield_snapshotとする。Beads mirrorはviewer-onlyで本linkageのcustom-field同期対象外。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "project_alias",
+          "owner_type",
+          "owner_login",
+          "project_number",
+          "project_id",
+          "item_id",
+          "sync_state",
+          "field_snapshot",
+          "linked_at",
+          "last_synced_at"
+        ],
+        "properties": {
+          "project_alias": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner_type": {
+            "type": "string",
+            "enum": [
+              "organization",
+              "user"
+            ]
+          },
+          "owner_login": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "project_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "item_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sync_state": {
+            "type": "string",
+            "enum": [
+              "unlinked",
+              "linked",
+              "synced",
+              "pending_retry",
+              "conflict",
+              "detached"
+            ]
+          },
+          "field_snapshot": {
+            "type": "object",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "linked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "last_synced_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "last_error_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "pull_request_linkages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "repo",
+          "pr_number",
+          "url",
+          "base_branch",
+          "head_branch",
+          "state",
+          "merged_at",
+          "merge_commit_sha",
+          "linked_at",
+          "closing_reference_verified"
+        ],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+          },
+          "pr_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "base_branch": {
+            "type": "string",
+            "minLength": 1
+          },
+          "head_branch": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed_unmerged",
+              "merged"
+            ]
+          },
+          "merged_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "merge_commit_sha": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "linked_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closing_reference_verified": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "task/IssueへlinkされたPR fact。closed_unmergedとmergedを分離し、default branch向けclosing referenceが確認できたmerged PRだけを自動完了evidenceに使う。"
+    },
+    "execution_contexts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "worktree_id",
+          "branch",
+          "base_branch",
+          "head_sha",
+          "state",
+          "lease_acquired_at",
+          "last_seen_at",
+          "released_at"
+        ],
+        "properties": {
+          "worktree_id": {
+            "type": "string",
+            "pattern": "^wt_[0-9a-f]{16}$"
+          },
+          "branch": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "base_branch": {
+            "type": "string",
+            "minLength": 1
+          },
+          "head_sha": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{40}$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "claimed",
+              "in_progress",
+              "pending_review",
+              "pending_merge",
+              "merged",
+              "released",
+              "expired"
+            ]
+          },
+          "lease_acquired_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "released_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "git common dirのephemeral lease registryからdefault branch側で収束したdurable projection。worktree絶対pathやsession secretは保持しない。"
+    },
+    "completion_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy",
+        "status",
+        "source",
+        "completed_at",
+        "reconciled_at",
+        "evidence_refs"
+      ],
+      "properties": {
+        "policy": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "linked_pr_merged_all",
+            "linked_pr_merged_any",
+            "issue_closed"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "in_progress",
+            "blocked",
+            "done",
+            "not_applicable"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "github_pr_merge",
+            "github_issue_close",
+            "github_issue_reopen",
+            "manual",
+            "reconciliation"
+          ]
+        },
+        "completed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "reconciled_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "implementation_readiness": {
+      "type": "object",
+      "required": [
+        "status",
+        "missing_sections",
+        "checked_at"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "incomplete",
+            "not_applicable"
+          ]
+        },
+        "missing_sections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "checked_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "description": "template-contract.jsonの必須field/section、placeholder、conditional template、参照解決を検査した実装着手準備状態"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "const": "architecture"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifact_subtypes": {
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "frontend",
+                "backend",
+                "infrastructure",
+                "data",
+                "security"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "const": "specification"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifact_subtypes": {
+            "items": {
+              "enum": [
+                "api",
+                "frontend",
+                "backend",
+                "infrastructure",
+                "data",
+                "security"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "enum": [
+              "issue",
+              "task",
+              "document",
+              "feature"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifact_subtypes": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "const": "feature"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "goal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope_in": {
+            "minItems": 1
+          },
+          "scope_out": {
+            "minItems": 1
+          },
+          "acceptance": {
+            "minItems": 1
+          },
+          "architecture_refs": {
+            "minItems": 1
+          }
+        },
+        "required": [
+          "purpose",
+          "goal",
+          "scope_in",
+          "scope_out",
+          "acceptance",
+          "architecture_refs"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "enum": [
+              "issue",
+              "specification",
+              "architecture",
+              "document",
+              "feature"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "parent_feature": {
+            "const": null
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "evaluation_status": {
+            "const": "pass"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "confirmation_status": {
+            "const": "confirmed"
+          },
+          "confirmation_evidence": {
+            "properties": {
+              "evaluator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evaluated_digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "implementation_readiness": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              },
+              "missing_sections": {
+                "maxItems": 0
+              },
+              "checked_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "active"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "confirmation_status": {
+            "const": "confirmed"
+          },
+          "evaluation_status": {
+            "const": "pass"
+          },
+          "implementation_readiness": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "github_publication": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "issue",
+                  "issue_and_projects"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifact_kind": {
+            "enum": [
+              "issue",
+              "task"
+            ]
+          },
+          "confirmation_status": {
+            "const": "confirmed"
+          },
+          "evaluation_status": {
+            "const": "pass"
+          },
+          "implementation_readiness": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "completion_evidence": {
+            "properties": {
+              "status": {
+                "const": "done"
+              },
+              "policy": {
+                "const": "linked_pr_merged_all"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "done"
+          },
+          "pull_request_linkages": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "state": {
+                  "const": "merged"
+                }
+              }
+            }
+          },
+          "completion_evidence": {
+            "properties": {
+              "completed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reconciled_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "source": {
+                "const": "github_pr_merge"
+              },
+              "evidence_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "completion_evidence": {
+            "properties": {
+              "status": {
+                "const": "done"
+              },
+              "policy": {
+                "const": "linked_pr_merged_any"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "const": "done"
+          },
+          "pull_request_linkages": {
+            "minItems": 1,
+            "contains": {
+              "properties": {
+                "state": {
+                  "const": "merged"
+                }
+              }
+            }
+          },
+          "completion_evidence": {
+            "properties": {
+              "completed_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "reconciled_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "source": {
+                "const": "github_pr_merge"
+              },
+              "evidence_refs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source_lineage": {
+            "properties": {
+              "origin_kind": {
+                "enum": [
+                  "system-spec-harness",
+                  "system-dev-planner"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "source_lineage": {
+            "properties": {
+              "source_plugin": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "imported_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tracker_binding": {
+            "const": "beads"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "github_publication": {
+            "properties": {
+              "mode": {
+                "const": "local_only"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tracker_binding": {
+            "const": "github"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "beads_linkage": {
+            "const": null
+          },
+          "github_publication": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "issue",
+                  "issue_and_projects"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tracker_binding": {
+            "const": "github"
+          },
+          "completion_evidence": {
+            "properties": {
+              "status": {
+                "const": "done"
+              },
+              "policy": {
+                "const": "linked_pr_merged_all"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pull_request_linkages": {
+            "items": {
+              "properties": {
+                "closing_reference_verified": {
+                  "const": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tracker_binding": {
+            "const": "github"
+          },
+          "completion_evidence": {
+            "properties": {
+              "status": {
+                "const": "done"
+              },
+              "policy": {
+                "const": "linked_pr_merged_any"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pull_request_linkages": {
+            "contains": {
+              "properties": {
+                "closing_reference_verified": {
+                  "const": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tracker_binding": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "beads_linkage": {
+            "const": null
+          },
+          "github_publication": {
+            "properties": {
+              "mode": {
+                "const": "local_only"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "artifactKind": {
+      "type": "string",
+      "enum": [
+        "issue",
+        "task",
+        "specification",
+        "architecture",
+        "feature",
+        "document"
+      ]
+    }
+  }
+}

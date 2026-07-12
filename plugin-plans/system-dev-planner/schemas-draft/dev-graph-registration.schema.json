@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dev-graph-registration.schema.json",
+  "type": "object",
+  "required": ["schema_version", "source_digest", "promotion_receipt", "expected_count", "binding_intents", "nodes"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "promotion_receipt": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "expected_count": {"type": "integer", "minimum": 1},
+    "binding_intents": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string", "enum": ["auto", "beads", "github", "none"]},
+      "description": "key=graph_node_id。C02 deterministic checkがkeys exact-set == nodes[].graph_node_idおよびexpected_count == nodes lengthを検査する。mode=bothではautoを拒否する"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "allOf": [
+          {"$ref": "../../dev-graph/schemas-draft/graph-node.schema.json"},
+          {
+            "type": "object",
+            "properties": {
+              "artifact_kind": {"const": "task"},
+              "artifact_subtypes": {"maxItems": 0},
+              "parent_feature": {"type": "string", "minLength": 1},
+              "file_path": {"type": "string", "pattern": "^tasks/.+\\.md$"},
+              "status": {"const": "active"},
+              "template_id": {"const": "task"},
+              "confirmation_status": {"const": "confirmed"},
+              "evaluation_status": {"const": "pass"},
+              "issue_linkage": {"type": "null"},
+              "tracker_binding": {"const": "repo-config-default"},
+              "beads_linkage": {"type": "null"},
+              "github_project_linkages": {"maxItems": 0},
+              "pull_request_linkages": {"maxItems": 0},
+              "execution_contexts": {"maxItems": 0},
+              "completion_evidence": {
+                "type": "object",
+                "properties": {
+                  "policy": {"enum": ["linked_pr_merged_all", "linked_pr_merged_any"]},
+                  "status": {"const": "in_progress"},
+                  "source": {"type": "null"},
+                  "completed_at": {"type": "null"},
+                  "reconciled_at": {"type": "null"},
+                  "evidence_refs": {"maxItems": 0}
+                }
+              },
+              "source_lineage": {
+                "type": "object",
+                "properties": {"origin_kind": {"const": "system-dev-planner"}}
+              },
+              "implementation_readiness": {
+                "type": "object",
+                "properties": {"status": {"const": "complete"}}
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

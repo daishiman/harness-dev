@@ -1,0 +1,601 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "repo-config.schema.json",
+  "title": "dev-graph repository-local configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository_id",
+    "content_roots",
+    "local_state",
+    "github",
+    "execution_tracker",
+    "worktrees",
+    "claude_hooks",
+    "path_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "repository_id": {
+      "type": "string",
+      "description": "C24がcanonical GitHub remoteから再導出する github:<owner>/<repo>、またはremoteなしでgit common-dir realpathから導出するlocal fingerprint。設定値と再導出値の一致を必須とする。",
+      "pattern": "^(github:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|local:sha256:[0-9a-f]{64})$"
+    },
+    "content_roots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "issues",
+        "tasks",
+        "specifications",
+        "architecture",
+        "features",
+        "documents",
+        "system_spec"
+      ],
+      "properties": {
+        "issues": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "tasks": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "specifications": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "architecture": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "features": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "documents": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "system_spec": {
+          "$ref": "#/$defs/repoRelative"
+        }
+      }
+    },
+    "local_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "graph",
+        "cache",
+        "locks"
+      ],
+      "properties": {
+        "graph": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "cache": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "locks": {
+          "$ref": "#/$defs/repoRelative"
+        }
+      }
+    },
+    "github": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "issue_repository",
+        "projects",
+        "completion_policy"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "issue_repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "alias",
+              "owner_type",
+              "owner_login",
+              "project_number",
+              "default",
+              "auto_add",
+              "field_mappings"
+            ],
+            "properties": {
+              "alias": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_-]*$"
+              },
+              "owner_type": {
+                "type": "string",
+                "enum": [
+                  "organization",
+                  "user"
+                ]
+              },
+              "owner_login": {
+                "type": "string",
+                "minLength": 1
+              },
+              "project_number": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "default": {
+                "type": "boolean"
+              },
+              "auto_add": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "artifact_kinds",
+                  "confirmation_status",
+                  "evaluation_status",
+                  "implementation_readiness"
+                ],
+                "properties": {
+                  "artifact_kinds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "task",
+                        "issue"
+                      ]
+                    }
+                  },
+                  "confirmation_status": {
+                    "const": "confirmed"
+                  },
+                  "evaluation_status": {
+                    "const": "pass"
+                  },
+                  "implementation_readiness": {
+                    "const": "complete"
+                  }
+                }
+              },
+              "field_mappings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "local_field",
+                    "project_field_name",
+                    "value_type",
+                    "direction",
+                    "option_map"
+                  ],
+                  "properties": {
+                    "local_field": {
+                      "type": "string",
+                      "enum": [
+                        "status",
+                        "priority",
+                        "start_date",
+                        "target_date",
+                        "iteration"
+                      ]
+                    },
+                    "project_field_name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "value_type": {
+                      "type": "string",
+                      "enum": [
+                        "single_select",
+                        "text",
+                        "number",
+                        "date",
+                        "iteration"
+                      ]
+                    },
+                    "direction": {
+                      "type": "string",
+                      "enum": [
+                        "local_to_project",
+                        "bidirectional"
+                      ]
+                    },
+                    "option_map": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "local_field": {
+                            "const": "status"
+                          }
+                        }
+                      },
+                      "then": {
+                        "properties": {
+                          "direction": {
+                            "const": "local_to_project"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "completion_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "trigger",
+            "required_pull_requests",
+            "target_branch",
+            "closed_unmerged",
+            "issue_reopened",
+            "revert",
+            "local_reconciliation",
+            "scheduled_reconciliation"
+          ],
+          "properties": {
+            "trigger": {
+              "const": "linked_pr_merged"
+            },
+            "required_pull_requests": {
+              "type": "string",
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "target_branch": {
+              "const": "default"
+            },
+            "closed_unmerged": {
+              "type": "string",
+              "enum": [
+                "keep_active",
+                "mark_blocked"
+              ]
+            },
+            "issue_reopened": {
+              "const": "reopen_task"
+            },
+            "revert": {
+              "const": "create_follow_up_unless_issue_reopened"
+            },
+            "local_reconciliation": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "manual_sync",
+                  "claude_hook",
+                  "scheduled_sync"
+                ]
+              }
+            },
+            "scheduled_reconciliation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "enabled",
+                "interval_minutes",
+                "owner",
+                "entry_point"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "interval_minutes": {
+                  "type": "integer",
+                  "minimum": 5,
+                  "maximum": 10080
+                },
+                "owner": {
+                  "type": "string",
+                  "enum": [
+                    "claude_session_start",
+                    "host_scheduler"
+                  ]
+                },
+                "entry_point": {
+                  "const": "dev-graph sync --reconcile-lifecycle"
+                }
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "local_reconciliation": {
+                    "contains": {
+                      "const": "scheduled_sync"
+                    }
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "scheduled_reconciliation": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "scheduled_reconciliation": {
+                    "properties": {
+                      "enabled": {
+                        "const": true
+                      }
+                    }
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "local_reconciliation": {
+                    "contains": {
+                      "const": "scheduled_sync"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "projects": {
+                "minItems": 1,
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "default": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "default"
+                  ]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "execution_tracker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode"
+      ],
+      "description": "repo単位の実行トラッカー選択。既定・repoプロファイル別の選択基準はreferences/execution-tracker-contract.md §1の決定表を正本とする。",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "beads",
+            "github",
+            "both"
+          ]
+        },
+        "beads": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "issue_prefix",
+            "server_mode",
+            "github_mirror"
+          ],
+          "properties": {
+            "issue_prefix": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "server_mode": {
+              "type": "boolean",
+              "description": "人間向け運用hint。beads-kanban launcher/環境がserver lifecycleを管理する場合にtrueとするが、dev-graphの正否判定には使わない"
+            },
+            "github_mirror": {
+              "type": "string",
+              "enum": [
+                "bd_github_push_only",
+                "none"
+              ]
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "beads",
+                  "both"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "beads"
+            ]
+          }
+        }
+      ]
+    },
+    "worktrees": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "lease_ttl_seconds",
+        "heartbeat_seconds",
+        "coordination_store",
+        "completion_write_branch",
+        "dirty_worktree_policy"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "lease_ttl_seconds": {
+          "type": "integer",
+          "minimum": 300,
+          "maximum": 86400
+        },
+        "heartbeat_seconds": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 60
+        },
+        "coordination_store": {
+          "const": "git_common_dir"
+        },
+        "completion_write_branch": {
+          "const": "default"
+        },
+        "dirty_worktree_policy": {
+          "const": "fail_closed"
+        }
+      }
+    },
+    "claude_hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "project_plugin_link",
+        "session_start",
+        "post_tool_reconcile",
+        "task_completed_gate"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": [
+            "plugin",
+            "project",
+            "disabled"
+          ]
+        },
+        "project_plugin_link": {
+          "$ref": "#/$defs/repoRelative"
+        },
+        "session_start": {
+          "type": "boolean"
+        },
+        "post_tool_reconcile": {
+          "type": "boolean"
+        },
+        "task_completed_gate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "path_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority",
+        "stored_paths",
+        "allow_outside_repository",
+        "follow_content_symlinks_outside_repository"
+      ],
+      "properties": {
+        "authority": {
+          "const": "caller-repository"
+        },
+        "stored_paths": {
+          "const": "repository-relative"
+        },
+        "allow_outside_repository": {
+          "const": false
+        },
+        "follow_content_symlinks_outside_repository": {
+          "const": false
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "execution_tracker": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "github",
+                  "both"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "github": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "repoRelative": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    }
+  }
+}
