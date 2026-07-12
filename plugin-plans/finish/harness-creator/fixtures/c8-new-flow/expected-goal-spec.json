@@ -1,0 +1,36 @@
+{
+  "purpose": "Demonstrate the E1 intake-to-goal-spec contract and the E2 plan-to-build route handoff.",
+  "background": "Created from fixtures/c8-new-flow/intake.json section_0.executive_summary and section_3.purpose_excavator.",
+  "goal": "A generated goal-spec records source_intake and the handoff route can be consumed without additional questions.",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "demo-boundary-skill",
+  "plan_dir": "plugin-plans/demo-boundary-skill",
+  "out_dir": null,
+  "source_intake": {
+    "ref": "plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json",
+    "schema_version": "2.0.0"
+  },
+  "source_improvement": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "The generated goal-spec includes purpose/background content from intake.json.",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "The generated handoff contains a route for demo-boundary-skill.",
+      "done": false,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "Do not ask additional questions when intake_json is provided."
+  ],
+  "handoff_targets": [
+    "R2-decompose-components"
+  ],
+  "max_loops": 3,
+  "open_questions": []
+}

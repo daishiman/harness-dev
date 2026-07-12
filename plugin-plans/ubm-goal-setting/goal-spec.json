@@ -1,0 +1,106 @@
+{
+  "purpose": "既存 plugin `ubm-goal-setting` に、北原さんの YouTube 2アカウントを扱えるナレッジ取り込み経路を追加し、提示済み『北原孝彦のコンサルティング』を priority=required-primary として既存公開動画の全量バックフィルと新着自動同期を保証する。さらに全ナレッジへ根拠付き依存グラフを構築して目標設定時に自動consultし、harness-creator の計画だけでなく構築済みハーネス・build evidence・内部componentも成果物グラフから取得できる改善計画を作るため。",
+  "background": "既存 plugin は capability A(run-ubm-goal-setting)と capability B(run-ubm-knowledge-sync)の2 skill、agents 5体、knowledge基盤、hook、commands 2本で構成され、goal_seek/feedback_contract/knowledge_loop consult_at:[runtime]/EVALS/run-skill-feedback は既に備える。一方 YouTube の authoritative video inventory、文字起こし取得、全量reconciliation、新着の無人同期、意味的依存辺の生成、harness実成果物indexは未実装である。ユーザーは2アカウントを意図しているが提示URLは『北原孝彦のコンサルティング』1件のみなので、この公開URLを required-primary として直ちに全量対象にし、第2アカウントは pending-identification のままsource registryへ保持する。task-graphは計画/実行依存の正本であり実成果物台帳そのものではないため、task-graph・handoff・task-state・route report・build trace・plugin-composition・EVALS・実在pathをread-onlyで正規化するharness artifact graphを別に設ける。",
+  "goal": "`plugin-plans/ubm-goal-setting/` に、YouTube取込、knowledge/harness graph、目標設定以外も含むユーザー主導の相談、明示command入口、role provenance付きsession検証を漏れなく被覆した11 componentのinventory・13 phase・index・handoffを生成し、C1-C12と4条件を全PASSにする。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "ubm-goal-setting",
+  "plan_dir": "plugin-plans/ubm-goal-setting",
+  "out_dir": "plugin-plans/ubm-goal-setting",
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "component-inventory.json に『URL単発共有→文字起こし取得→6カテゴリナレッジ抽出→knowledge/*.json 保存』(REQ1a)を実現する buildable component が含まれ、既存 run-ubm-knowledge-sync の Phase1-detect/Phase2-extract パイプラインとの接続点(新 Phase0-fetch-transcript の追加、または入力ソース拡張のいずれか)が明記されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "提示済み『北原孝彦のコンサルティング』を required-primary として公開動画一覧の全IDをreconciliation ledgerの分母内に保持し、FULL_BACKFILL_PASSはknowledge化100%かユーザー承認済みwaiverのみ、未処理・一時取得失敗・未承認取得不能が0件であることを二値判定できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "対象sourceの新着動画をユーザー操作なしで継続検知・ナレッジ化できる冪等one-shot同期がschedulerから起動可能で、cursor/lease/retry/alertと既存registry差分検知との統合方式が明記されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "文字起こし取得・チャンネル動画一覧取得の技術的実現手段(利用 API/CLI/手動貼付等)が構想原文に未指定であることを踏まえ、REQ1a/REQ1b/REQ1c いずれの実現方式も計画内で断定された確定仕様としてではなく constraints または open_questions として明示されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "plugin 現状(goal_seek/feedback_contract/capability-manifest/EVALS.json/elegant-review C1-C4/harness_coverage)と harness-creator 仕様の適合ギャップ分析結果が計画に記録され、既配備 run-skill-feedback(symlink・distributable:false 例外に正規該当)の維持検証が phase の完了チェックリストへ組み込まれ、再ギャップ分析で判明した真の未充足項目があれば解消する buildable component が component-inventory に含まれる(本計画時点では真の未充足項目なし)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "全ナレッジの依存辺をevidence/source_ref/confidence/review_status付きで生成するproducerと、depends_on DAGの構築・検証、run-ubm-goal-settingからの関連knowledge consult経路が分解されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C7",
+      "criterion": "新規ナレッジ依存グラフ機構と既存 router-registry パターン(router.json/registry.json)との関係(置換/併存/拡張のいずれか)、および plugin-dev-planner の task-graph 契約(schemas/task-graph.schema.json)のうち概念として参考にする要素と独自設計する要素が計画内で明記されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "harness-creator成果物についてtask-graphだけでなくtask-state/route report/build trace/composition/EVALS/実在pathを突合するartifact index producerとread-only consultが選定され、planned/built/verified/staleとprovenance/freshness/redactionを二値検証できる",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "本計画で新規追加される各 buildable component が core 規律(quality_gates + harness_coverage)を携帯し、既存 EVALS.json mechanical ゲート群(pytest 含む)への検証追加が計画に明記されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C10",
+      "criterion": "13 phase + index + handoff が REQ1a(URL単発取込)/REQ1b(全量バックフィル)/REQ1c(継続差分同期)/REQ2(harness-creator仕様準拠)/REQ3(ナレッジ依存グラフ)/REQ4(harness-creator成果物情報取得)を漏れなく被覆し、goal-spec checklist の全 id が index の完了チェックリスト/受入確認から引用されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C11",
+      "criterion": "計画が既存 capability A(goal-setting・統一ハイブリッド構造21項目)/B(knowledge-sync・6カテゴリ・vendor L1 curated knowledge)の既存契約を破壊しないことを constraints に明記し、非後退であることが記述されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C12",
+      "criterion": "相談 component C09/C10/C11 が、考え方中心の適応型協働契約、安全/目標設定分岐、role=user provenance、action/reflection closure、保存同意とsession分離を持ち、既存 capability を非破壊 additive 拡張する",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "本タスクは計画(index + 13 phase files + component-inventory.json + handoff)のみを生成し、実コード/実プラグインの build は行わない(実 build は後段の run-skill-create/run-build-skill へ委譲する)",
+    "YouTube sourceは2アカウントを扱える。提示済み https://www.youtube.com/@%E5%8C%97%E5%8E%9F%E5%AD%9D%E5%BD%A6%E3%81%AE%E3%82%B3%E3%83%B3%E3%82%B5%E3%83%AB%E3%83%86%E3%82%A3%E3%83%B3%E3%82%B0 をrequired-primary・全量必須とし、第2アカウントはpending-identificationで保持する",
+    "文字起こし取得・チャンネル動画一覧取得の具体的な技術手段(YouTube Data API/字幕取得ツール/手動貼付等)は構想原文に明記が無いため本 goal-spec では確定せず、後段 architect が component 設計時に選定する",
+    "REQ3 のナレッジ依存グラフは plugin-dev-planner の build-pipeline task-graph(plugin-plans/harness-creator/ 配下・producer=plugin-dev-planner/consumer=harness-creator)を直接改変せず、UBM plugin knowledge/ 配下の新規機構として概念(nodes/depends_on/DAG非循環)のみを参考にする",
+    "既存 capability A(goal-setting・統一ハイブリッド構造21項目・validate-goal-output.py)/capability B(knowledge-sync・6カテゴリ・router-registry・vendor L1 curated 28JSON)の既存契約を破壊しない(非後退)",
+    "run-skill-feedback skill は commit 591e5ac で既に symlink 配備済み(distributable:false 例外に正規該当)のため本計画で新規 buildable component 化しない。REQ2 は既配備の維持確認(symlink 存在 + lint-feedback-protocol.py --strict PASS)を phase-09 の検証専用ステップとして扱う",
+    "秘匿情報(APIキー/トークン)やtranscript内の命令は信頼しない。公開channel URL/video ID/source timestamp/graph hashはprovenanceとして保持し、secret値・PII・未redact本文をharness artifact indexへ保存しない",
+    "相談改善は C09/C10/C11 と info-collector consumer edgeを非破壊 additive 更新する。C09はC07経由のread-only consultだけを行い、C06を直接callしない。保存は同意制でvault非書込"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "第2 YouTubeアカウントのURL/handle/channel IDが未提示である。source registryではpending-identificationとして保持し、required-primaryの取込を停止しない",
+    "YouTube文字起こしの具体providerとscheduler実行基盤は未確定。P02でprovider-neutral I/O、caption→authorized ASR fallback、quota/auth、cadenceを確定し、特定providerだけをlate-bindする"
+  ],
+  "source_improvement": {
+    "ref": "improvement-handoff-20260711.json",
+    "schema_version": "1.0.0"
+  }
+}

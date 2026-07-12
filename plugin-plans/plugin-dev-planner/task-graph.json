@@ -1,0 +1,1121 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "P01",
+      "title": "requirements",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01"
+    },
+    {
+      "id": "P01-x-01",
+      "title": "purpose/background/goal が task-graph 追加という改善要求の文脈で一貫している。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-01"
+    },
+    {
+      "id": "P01-x-02",
+      "title": "checklist C1-C19 それぞれに verify_byが付与されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-02"
+    },
+    {
+      "id": "P01-x-03",
+      "title": "13 phaseは共通policy、node task specは実行契約、component routeはbuild写像という三層が区別されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-03"
+    },
+    {
+      "id": "P01-x-04",
+      "title": "canonical graphを状態台帳として直接編集せず、task-stateとprojectionで進捗更新要求を満たす方針が固定されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-04"
+    },
+    {
+      "id": "P01-x-05",
+      "title": "完了cycleのimmutable artifactsと次cycleへ渡す蒸留knowledgeの棲み分けが固定されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-05"
+    },
+    {
+      "id": "P01-x-06",
+      "title": "target_plugin_slug が `plugin-dev-planner` に固定され、plan_dir が `plugin-plans/plugin-dev-planner` に固定されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-06"
+    },
+    {
+      "id": "P01-x-07",
+      "title": "constraints の 5 点 (2軸非置換/メタ循環分離/単一writer/blocks派生専用/L4責務外) が本 plan 全体の設計判断へ反映される前提が明示されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-07"
+    },
+    {
+      "id": "P01-x-08",
+      "title": "goal-spec.json の background が現サイクル前提 (既存 task-graph 機構の存在) で purpose/goal・phase-01 背景と一貫している。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-08"
+    },
+    {
+      "id": "P02",
+      "title": "design",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02"
+    },
+    {
+      "id": "P02-x-01",
+      "title": "considered_component_kinds が 5 種全て記載され、各不採用種に具体的な不採用根拠がある。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-01"
+    },
+    {
+      "id": "P02-x-02",
+      "title": "C01/C02 の kind/build_target/builder/build_kind が確定している。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-02"
+    },
+    {
+      "id": "P02-x-03",
+      "title": "依存 DAG (C02 depends_on C01) が非循環である。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-03"
+    },
+    {
+      "id": "P02-x-04",
+      "title": "plugin_level_surfaces の採否 (8 種) が全て明示され、不採用種に omitted_reason がある。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-04"
+    },
+    {
+      "id": "P02-x-05",
+      "title": "producer/consumer 境界 (対 harness-creator) が dispatch/state write-back/成果物注入/discovered-task emit の所有区分込みで明示され、harness-creator 側 goal-spec.json の語彙と一致している。cycle_id 携帯契約 (consumer は `handoff.cycle_id` から読み `plan_dir` パス解析を禁止) が明記されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-05"
+    },
+    {
+      "id": "P02-x-06",
+      "title": "外部消費される producer script (compute-ready-set.py / derive-task-graph.py の canonicalize()・graph_hash() / check-task-state-schema.py) が harness-creator L4 runtime script の第二消費者を持つことが明示され、安定 CLI 契約 (固定パス + argv 形状 + stdout schema + exit codes) が references/pipeline-boundary-contract.md 追記対象として明記されている (plan-time / runtime script の起動主体・cwd 前提の構造差込み)。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-06"
+    },
+    {
+      "id": "P02-x-07",
+      "title": "C13 (plan 出力ディレクトリ規約) の畳み込み根拠 (specfm.py 拡張 + check-plan-ledger.py + migrate-plan-layout.py の run-plugin-dev-plan skill 単独消費) が個別に判定され、C01 の build へ収束している。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-07"
+    },
+    {
+      "id": "P02-x-08",
+      "title": "C14 (新旧shape非劣化ゲート) の分割配置 ((a)(c)=check-shape-non-regression.py で C01・(b)=A/B比較 genuine 判定で C02) が個別に判定され、C10⇔C14 相互参照 (shape 採用の前提条件) が明記されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-08"
+    },
+    {
+      "id": "P02-x-09",
+      "title": "C15 (graph 可視化 renderer) が render-task-graph-mermaid.py として C01 へ畳み込まれる根拠が個別判定されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-09"
+    },
+    {
+      "id": "P02-x-10",
+      "title": "C16 (実行時契約 schema SSOT) の所有 (C01=producer) と書込 (consumer=harness-creator) の分離が明記され、C11⇔C16 相互参照 (graph_hash の生成元) が個別判定されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-10"
+    },
+    {
+      "id": "P02-x-11",
+      "title": "C17-C19がC01/C02へ責務分解され、component追加なしの根拠が明記されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-11"
+    },
+    {
+      "id": "P03",
+      "title": "design-review",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03"
+    },
+    {
+      "id": "P03-x-01",
+      "title": "C1-C4 が全て PASS している。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-01"
+    },
+    {
+      "id": "P04",
+      "title": "test-design",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04"
+    },
+    {
+      "id": "P04-x-01",
+      "title": "C2 の受入例 (満たす例/満たさない例) が具体的な node/edge データで内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-01"
+    },
+    {
+      "id": "P04-x-02",
+      "title": "C4 の 4 テストケース (直列チェーン/ダイヤモンド/blocked伝播/write_scope衝突) + 「done だが成果物欠落」負例 (os.path.exists による consumes 成果物実在検査) が期待 ready-set 付きで内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-02"
+    },
+    {
+      "id": "P04-x-03",
+      "title": "IN1-IN16/OUT1-OUT3 が component-inventory.json の C01.feedback_contract.criteria と一致する。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-03"
+    },
+    {
+      "id": "P04-x-04",
+      "title": "C13 の plan-ledger.json fixture (満たす例/満たさない例) と `plan_output_dir()` の cycle_id 省略時後方互換動作が具体的に内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-04"
+    },
+    {
+      "id": "P04-x-05",
+      "title": "C14 の A/B比較受入例 (旧shape fixture/新shape fixture) が (a)精度携帯率・(b)品質genuine判定・(c)再現性byte一致の3軸それぞれで満たす例/満たさない例付きで内包され、block/fallback 条件が明記されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-05"
+    },
+    {
+      "id": "P04-x-06",
+      "title": "C15 の byte一致 render 例と graph 外要素非描画検査 (node id 集合の set 一致) が満たす例/満たさない例付きで内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-06"
+    },
+    {
+      "id": "P04-x-07",
+      "title": "C16 の task-state schema 整合例と graph_hash pin 整合例 (満たす例/満たさない例) が具体的な fixture 付きで内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-07"
+    },
+    {
+      "id": "P04-x-08",
+      "title": "C17-C19の正常/異常fixtureと期待exitが内包されている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-08"
+    },
+    {
+      "id": "P05",
+      "title": "implementation",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P05"
+    },
+    {
+      "id": "P05-C01-01",
+      "title": "C01 run-plugin-dev-plan update routeがC1-C19の実装設計を1つのbuildとして適用し、全受入条件と後方互換を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/"
+    },
+    {
+      "id": "P06",
+      "title": "test-run",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06"
+    },
+    {
+      "id": "P06-x-01",
+      "title": "C01/C02 双方の harness_coverage.min が 80 以上に設計されている。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-01"
+    },
+    {
+      "id": "P06-x-02",
+      "title": "kind_pass が component の kind (run/assign) に整合する型で記述されている。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-02"
+    },
+    {
+      "id": "P06-x-03",
+      "title": "既存11本+追加3本がC1-C19を被覆する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-03"
+    },
+    {
+      "id": "P07",
+      "title": "acceptance-criteria",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07"
+    },
+    {
+      "id": "P07-x-01",
+      "title": "C1-C19 全てに build 時の確認方法が存在する。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-01"
+    },
+    {
+      "id": "P08",
+      "title": "refactoring",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08"
+    },
+    {
+      "id": "P08-x-01",
+      "title": "新規スクリプト群と既存スクリプト群の検出対象が重複しないことが具体的に説明されている。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-01"
+    },
+    {
+      "id": "P09",
+      "title": "quality-assurance",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09"
+    },
+    {
+      "id": "P09-C02-01",
+      "title": "C02 evaluator skillを更新し、C01/C02双方についてp0_lint/build_trace/elegant_review/content_review/evaluatorの5要素とC17/C19のgenuine判定を検証できる。",
+      "phase_ref": "P09",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/"
+    },
+    {
+      "id": "P10",
+      "title": "final-review",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10"
+    },
+    {
+      "id": "P10-x-01",
+      "title": "C1-C4・governance・unassigned 0 が全て PASS している。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-01"
+    },
+    {
+      "id": "P11",
+      "title": "evidence",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11"
+    },
+    {
+      "id": "P11-x-01",
+      "title": "evidence 5 要素それぞれが本 plan のどのゲート/成果物に対応するか明示されている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-01"
+    },
+    {
+      "id": "P11-x-02",
+      "title": "task-graph 関連の新規ゲートの実行ログが lint exit0 ログへ合流することが明示されている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-02"
+    },
+    {
+      "id": "P11-x-03",
+      "title": "C01 の dogfooding 受入例 (build 後に自 plan へ derive-task-graph→compute-ready-set を適用し task 粒度の部分進捗を実証) が evidence として明示されている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-03"
+    },
+    {
+      "id": "P11-x-04",
+      "title": "C17-C19のexecution envelope/state projection/cycle knowledge evidenceが明示されている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-04"
+    },
+    {
+      "id": "P12",
+      "title": "documentation",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12"
+    },
+    {
+      "id": "P12-x-01",
+      "title": "Part1/Part2 の 2 タスク雛形が task-graph という新概念に即して具体化されている。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-01"
+    },
+    {
+      "id": "P12-x-02",
+      "title": "反映先 (新規 reference ファイルの位置と役割) が明示されている。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-02"
+    },
+    {
+      "id": "P12-x-03",
+      "title": "install 手順への影響有無 (無し) が明示されている。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-03"
+    },
+    {
+      "id": "P12-x-04",
+      "title": "13 phase/task spec/task graph/component/state/knowledgeの責務表と、MF決済インボイスチェックの再改善例がある。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-04"
+    },
+    {
+      "id": "P13",
+      "title": "release",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13"
+    },
+    {
+      "id": "P13-x-01",
+      "title": "release soft note が評価ゲートとして扱われないことが明示されている。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-01"
+    }
+  ],
+  "edges": [
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-02",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-03",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-04",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-05",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-06",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-07",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-08",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-09",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-10",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-11",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-01",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-02",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-03",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-06",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-07",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-08",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-01",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-02",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-03",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-01",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-01",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-C02-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-C02-01",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-01",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-01",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-02",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-03",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-04",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-01",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-02",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-03",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-04",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-01",
+      "to": "P12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C01-01",
+      "to": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/"
+    },
+    {
+      "type": "produces",
+      "from": "P09-C02-01",
+      "to": "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/"
+    }
+  ]
+}

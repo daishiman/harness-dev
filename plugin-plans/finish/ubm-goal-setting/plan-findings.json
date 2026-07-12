@@ -1,0 +1,284 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting",
+  "provenance_note": "本 findings は生成時 worktree (task-20260703-124959-wt-7) の絶対パスを記録した当時の証跡であり書き換えない。最新の検証は eval-log/ubm-goal-setting/_plugin/elegant-review/20260705-082331/ を参照",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし: deterministic gates passed (FIX-D/FIX-E 適用後も再実行で緑を再確認)",
+      "evidence": [
+        "check-build-handoff exit=0",
+        "check-upstream-pins --self-test exit=0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし: deterministic gates passed。FIX-E で L3_bookkeeping の build_target から欠落していた mutable asset kitahara-principles-db.md の記載漏れを解消済み",
+      "evidence": [
+        "detect-unassigned exit=0",
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-surface-inventory exit=0",
+        "check-requirements-coverage exit=0",
+        "check-plugin-goal-spec exit=0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり: deterministic gates passed。FIX-D で index 受入確認の「15項目品質チェック」定義正本を既存「21項目」pin と対称形式で明示し、用語の宙ぶらりんを解消済み",
+      "evidence": [
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-spec-matrix-coverage-self-test exit=0",
+        "check-spec-matrix-coverage-plan exit=0",
+        "check-plugin-goal-spec exit=0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合: deterministic gates passed。FIX-E 後も references_config_assets 側の kitahara-principles-db.md build_target と L3_bookkeeping 側の記述に drift なし (2 surface 跨りは明示注記済み)",
+      "evidence": [
+        "verify-index-topsort exit=0",
+        "detect-unassigned exit=0",
+        "check-build-handoff exit=0",
+        "check-runtime-portability exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環",
+      "stderr": ""
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "--inventory",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting/component-inventory.json",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持",
+      "stderr": ""
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足",
+      "stderr": ""
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)",
+      "stderr": ""
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み",
+      "stderr": ""
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting/component-inventory.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み",
+      "stderr": ""
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "stdout": "OK: build handoff が 18 routes と envelope 契約を満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み",
+      "stderr": ""
+    },
+    {
+      "id": "G10",
+      "name": "check-plugin-goal-spec",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting/goal-spec.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: plugin goal-spec schema + plugin anchors validated",
+      "stderr": ""
+    },
+    {
+      "id": "G11",
+      "name": "check-runtime-portability",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結",
+      "stderr": ""
+    },
+    {
+      "id": "G12",
+      "name": "check-upstream-pins --self-test",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-upstream-pins.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1"
+      ],
+      "stdout": "OK: check-upstream-pins の drift/消失/standalone 検出が期待どおり",
+      "stderr": "注: 本ゲートは script 自体の内蔵 fixture による自己検査であり plan_dir を引数に取らない (toolchain 健全性の meta-check)"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "現 worktree (task-20260703-124959-wt-7) で全12ゲート起動を再実行し全て exit=0 を確認。stale provenance (旧 worktree task-20260701-214243-wt-1 の絶対パス) を現 worktree 実測結果で置換した。",
+      "evidence": [
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/ubm-goal-setting"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C3",
+      "observation": "FIX-D: index.md 受入確認節に「15項目品質チェック」の定義正本 (output-formatter sub-agent prompt の『品質チェックリスト(コンテンツ検証)』節 + references/output-formats.md の21項目ブロック順) を、既存の「21項目」pin と対称な1文で追記。用語の宙ぶらりんを解消しつつ、21項目=出力構造充足/15項目=保存前コンテンツ検証という役割区別を明示。既存パラグラフへの1文追加に留まり over-annotation ではない。",
+      "evidence": [
+        "plugin-plans/ubm-goal-setting/index.md:126"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2-C4",
+      "observation": "FIX-E: component-inventory.json の plugin_level_surfaces.vendor.tiers.L3_bookkeeping.build_target に、description で既に「kitahara-principles-db.mdも同様にwriteback-config対象」と言及されていながら列挙漏れだった mutable asset kitahara-principles-db.md のパスを追加し記述漏れ (漏れなし条件) を解消。references_config_assets 側の既存 build_target (line 499) と一致し、2 surface 跨りの drift 注記も追加済みで整合性を維持。",
+      "evidence": [
+        "plugin-plans/ubm-goal-setting/component-inventory.json:515-516",
+        "plugin-plans/ubm-goal-setting/component-inventory.json:499"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "単一 skill への退化なし: component-inventory.json の component_kind 内訳は skill×2 / sub-agent×10 / slash-command×2 / hook×1 / script×3 (計18) で FIX 適用前後とも変わらず分散が保たれている。",
+      "evidence": [
+        "plugin-plans/ubm-goal-setting/component-inventory.json"
+      ]
+    }
+  ]
+}

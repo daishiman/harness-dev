@@ -1,0 +1,145 @@
+{
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "evaluator": {
+    "name": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY",
+    "version": "1.0.0",
+    "context": "reset + 3 parallel read-only agents + local integration review",
+    "review_date": "2026-07-08"
+  },
+  "verdict": "PASS",
+  "staleness_rule": "本 findings は evaluated_inputs の sha256 を鮮度アンカーとする。被評価ファイルの現 sha256 が一致しない場合は stale として再評価する。",
+  "evaluated_inputs": [
+    {"path": "index.md", "sha256": "2e736653affd9539ae926b3d9e214cddd17d74853e9708112175399772144af8"},
+    {"path": "goal-spec.json", "sha256": "2d8dc46fdf27812e62fceb794171db5afd43105eb7dd3b77283b21fdb722d69d"},
+    {"path": "component-inventory.json", "sha256": "b007290dc7a8a347d70df173d4d3948bdff77af3ca8868d67d57212117be1846"},
+    {"path": "handoff-run-plugin-dev-plan.json", "sha256": "df4f95ce3187c5c655c657d1f89212769d291fb85e3a438885053839adbc5d26"},
+    {"path": "task-graph.json", "sha256": "59bc557dda15db1b3f7bd40c185a4f0c8b6bbc036fa199ad2a39637d461cfb88"},
+    {"path": "phase-01-requirements.md", "sha256": "9167dce948b32503d61d32246717ed9f90688f75d72d3afc665d0529e7a42686"},
+    {"path": "phase-02-design.md", "sha256": "d0c6155a6d96a4f381a501b1feebf7ef7405b83b72e8bab840c796eb827f80a0"},
+    {"path": "phase-03-design-review.md", "sha256": "6d36cabb1c7d089ec3ba25319115c229823d9549a778d1b25f09e087e2da158d"},
+    {"path": "phase-04-test-design.md", "sha256": "f35b44ae67cabf8c74bc9706016bc0cd460b86b361a25fb66ddb3a5ef2b32edc"},
+    {"path": "phase-05-implementation.md", "sha256": "817a712caeb1904b9af15bdf1579d21c3aa35cf80ef939f510287db652b7a541"},
+    {"path": "phase-06-test-run.md", "sha256": "7ae6fc2bdeaeb5ff6cf652547a6b63ffb2fb4a5eff94cafc3fabaed30171b6b2"},
+    {"path": "phase-07-acceptance-criteria.md", "sha256": "1b85f4ddcc87d45c2e26829e6cd84e311d9e84e1526312994df7ce911a088d70"},
+    {"path": "phase-08-refactoring.md", "sha256": "381b5f4481d50215ee886cb96878fec4665231af71dc20dc709e3071cbb6cf6a"},
+    {"path": "phase-09-quality-assurance.md", "sha256": "3931dbf69a03493af1d61e772b1528e015b8a966d7f2bb5fa731a566368f8213"},
+    {"path": "phase-10-final-review.md", "sha256": "3620238d7db52fd95f5164fc8e6af6502923b3773ee3854c03379f92b1f479e1"},
+    {"path": "phase-11-evidence.md", "sha256": "732acc31c9f1286ca5166c1f216cd972423174a8b9d4758a544a6f784598eaa8"},
+    {"path": "phase-12-documentation.md", "sha256": "f0ed9bf6d6717ec28745cb0cad5c0e0c816880aa21dfc8c8917abb5e336069a7"},
+    {"path": "phase-13-release.md", "sha256": "8f56174aaa7402b8c215259f0b6244f7114b441c0cf23229760bd89d87a146d0"}
+  ],
+  "thinking_methods_applied": [
+    "批判的思考", "演繹思考", "帰納的思考", "アブダクション", "垂直思考",
+    "要素分解", "MECE", "2軸思考", "プロセス思考",
+    "メタ思考", "抽象化思考", "ダブル・ループ思考", "ブレインストーミング", "水平思考",
+    "逆説思考", "類推思考", "if思考", "素人思考",
+    "システム思考", "因果関係分析", "因果ループ", "トレードオン思考", "プラスサム思考",
+    "価値提案思考", "戦略的思考", "why思考", "改善思考", "仮説思考", "論点思考", "KJ法"
+  ],
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし。新列追加前提を撤回し、既存8列の金額欄をMF実額へ意味変更、金額差/残置理由は比較/コメント欄へ格納する契約へ統一した。既存 manifest はすでに 0.3.0 のため version bump 前提を削除し、description 同期扱いにした。round2 では actual_amount carrier を行 top-level へ一意化し evidence:None 据え置きで別skill run-mf-invoice-reconcile DB2 を温存(K2)、GAP-R1-COLLECT-CURR-PRESENT を open_issue 化して⑤/D2 対象外月の partial を明示し closed 錯誤を解消した(K1)。",
+      "evidence": ["goal-spec C9", "component-inventory C04", "phase-12 documentation", "phase-13 release"]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし。Agent2/3/4 が検出した lib/mfk_reconcile.py、lib/mfk_api.py、R1 collect、guard allowlist、C02 false-positive/false-negative、script executor の漏れを required_file_edits/completion_gate として plan に追加した。round2 では C03/C04 route の completion_gate 追加(K5)・真 orphan 是正(K6)・全 fetch site trace 網羅+trace不在fail-closed(K7)・12ヶ月ルックバック必須fetch(K8)・cross-run guard への reliable MF-issued 訂正(K4)を required_file_edits/completion_gate へ追加した。",
+      "evidence": ["component-inventory required_file_edits", "handoff routes build_args.required_file_edits", "phase-04/05/07"]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり。canonical amount field を actual_amount とし、legacy evidence.amount/amount は C03 境界で正規化する方針に統一した。C01 responsibilities を既存 R1 collect/R2 classify/R3 verify/R4 render 構造へ合わせた。round2 では取消明細(inactive)の issued=False/actual_amount=null 強制(K3)・C02 過少報告 第3カテゴリ(K9)・旧採番 component-ID 整合(K10)・index D2 行母集合保持併記(K11)で整合を強化した。",
+      "evidence": ["component-inventory C03/C01", "handoff C03 canonical_fields", "phase-05"]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合。C01-C07 のDAGは非循環のまま、DAG外に見えていた実装必須ファイルを route required_file_edits に昇格した。script routes は executor_hint=plugins/harness-creator/scripts/build-script-route.py を持ち、C01/C02/C07だけで完了できない。round2 では C03/C04 route へ completion_gate と required_file_edits を追加し、DAG 非循環のまま fidelity二段ゲート/D1 flip を route レベルで機械固定した(K5)。",
+      "evidence": ["verify-index-topsort exit0", "check-build-handoff exit0", "check-runtime-portability exit0"]
+    }
+  },
+  "gate_results": [
+    {"id": "G1", "name": "verify-index-topsort", "exit_code": 0, "conditions": ["C4"], "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"},
+    {"id": "G2", "name": "check-plugin-goal-spec", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: plugin goal-spec schema + plugin anchors validated"},
+    {"id": "G3", "name": "detect-unassigned", "exit_code": 0, "conditions": ["C2", "C4"], "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"},
+    {"id": "G4", "name": "check-spec-frontmatter", "exit_code": 0, "conditions": ["C2", "C3"], "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"},
+    {"id": "G5", "name": "check-spec-gates", "exit_code": 0, "conditions": ["C2", "C3"], "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"},
+    {"id": "G6", "name": "check-spec-matrix-coverage-self-test", "exit_code": 0, "conditions": ["C3"], "stdout": "OK: 46行 table と reflection.md が一致"},
+    {"id": "G7", "name": "check-spec-matrix-coverage-plan", "exit_code": 0, "conditions": ["C3"], "stdout": "OK: 適用される全マトリクス行の焼き先が反映済み"},
+    {"id": "G8", "name": "check-surface-inventory", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"},
+    {"id": "G9", "name": "check-build-handoff", "exit_code": 0, "conditions": ["C1", "C4"], "stdout": "OK: build handoff が 7 routes と envelope 契約を満たす"},
+    {"id": "G10", "name": "validate-task-graph", "exit_code": 0, "conditions": ["C4"], "stdout": "OK"},
+    {"id": "G11", "name": "check-runtime-portability", "exit_code": 0, "conditions": ["C4"], "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"},
+    {"id": "G12", "name": "check-requirements-coverage", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"}
+  ],
+  "findings_resolved": [
+    {
+      "id": "A",
+      "severity": "high",
+      "detected_by": ["批判的思考", "演繹思考", "アブダクション", "因果関係分析", "why思考"],
+      "condition": "漏れなし/依存関係整合",
+      "issue": "lib/mfk_reconcile.py の必須変更が route 外にあり、C05 script だけ作ると amount_mismatch/no_supply の金額空白が残る。",
+      "fix": "C05 route に lib/mfk_reconcile.py/scripts/mfk_period_report.py/guard の required_file_edits と completion_gate を追加。",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "B",
+      "severity": "high",
+      "detected_by": ["システム思考", "因果関係分析", "仮説思考", "水平思考"],
+      "condition": "漏れなし",
+      "issue": "fetch fidelity 監査が必要とする pagination/total metadata を既存 mfk_api が捨てている。",
+      "fix": "C06 route に lib/mfk_api.py/R1 collect/reconcile_invoices の fetch_trace 生成 required_file_edits を追加。",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "C",
+      "severity": "medium",
+      "detected_by": ["MECE", "素人思考", "論点思考", "改善思考"],
+      "condition": "矛盾なし/整合性あり",
+      "issue": "Notion の MF実額列/金額差フラグ列が新物理列追加とも既存8列利用とも読める。",
+      "fix": "既存8列維持を正とし、金額欄=MF実額、比較/コメント欄=金額差フラグ/残置理由へ統一。",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "D",
+      "severity": "medium",
+      "detected_by": ["メタ思考", "抽象化思考", "プロセス思考"],
+      "condition": "整合性あり",
+      "issue": "既存 skill の R1-R4 workflow と plan C01 responsibilities がずれている。",
+      "fix": "C01 responsibilities を R1 collect/R2 classify/R3 verify/R4 render に合わせ、C02 の偽陽性/偽陰性 fixture を phase-04/07 に追加。",
+      "status": "RESOLVED"
+    },
+    {
+      "id": "E",
+      "severity": "medium",
+      "detected_by": ["戦略的思考", "トレードオン思考", "プラスサム思考"],
+      "condition": "依存関係整合",
+      "issue": "script routes が contract-only 語彙のままで実行可能 builder が不明。",
+      "fix": "handoff routes に executor_hint=plugins/harness-creator/scripts/build-script-route.py を追加し、goal-spec handoff_targets に同 script を追加。",
+      "status": "RESOLVED"
+    }
+  ],
+  "round2": {
+    "context": "independent adversarial round2 (3 analysts: 論理構造/メタ発想逆説/システム戦略) from reset context. 17 raw findings A1-A5/B1-B7/C1a-C1e → 11 KJ-clusters. All HIGH claims 二段確認'd against actual code before recording. Scope = plan artifacts only (--mode update).",
+    "handoff_ref": "improvement-handoff-round2.json",
+    "verdict_after_round2": "PASS (既存4条件を維持したまま増分反映)"
+  },
+  "round2_clusters_resolved": [
+    {"id": "K1", "severity": "high", "summary": "R1直列化契約に actual_amount/issued/curr-present 運搬が欠落 + GAP open_issue 未載 → GAP-R1-COLLECT-CURR-PRESENT を handoff.open_issues/goal-spec.open_questions/index/inventory へ載せ actual_amount/reliable-issued 直列化責務を明記"},
+    {"id": "K2", "severity": "high", "summary": "actual_amount carrier を行 top-level へ一意化し evidence:None 据え置きで別skill run-mf-invoice-reconcile DB2 matched_amount を温存(C05 completion_gate/C03 canonical_fields policy/C03-C04 merge_policy/phase-04-05)"},
+    {"id": "K3", "severity": "high", "summary": "取消明細(inactive)の偽陰性再生産を隔離: supply_state∈{inactive_canceled,inactive_pending} は issued=False/actual_amount=null 強制・evidence.amount fallback を active 限定・amount_mismatch 代表は scoped_candidates 同一スコープ選定"},
+    {"id": "K4", "severity": "high", "summary": "cross-run guard bypass に reliable MF-issued 権威訂正を追加し既存誤☐行へ訂正伝播(C04 required_file_edit/merge_policy bypass 事由除外/phase-04 fixture)"},
+    {"id": "K5", "severity": "medium", "summary": "C03/C04 route へ completion_gate 追加 + D1 flip/fidelity二段ゲートを route 機械固定・C06 exit_codes を三値(0/1/3/2)へ拡張し IN1 を当月スコープ限定"},
+    {"id": "K6", "severity": "medium", "summary": "既存Notion真orphan(旧runのphantom/誤☑)の残置理由付与是正責務を C04 upsert_report_rows へ追加(query_month 列挙+incoming差集合PATCH)"},
+    {"id": "K7", "severity": "medium", "summary": "全 read-only fetch site の trace 網羅 + trace 完全不在=fail-closed を C06 completion_gate/inputs へ明記(legacy iter_all 残置対策)"},
+    {"id": "K8", "severity": "medium", "summary": "STATE_NEW候補>0 で12ヶ月ルックバックを必須fetch・欠落は要確認降格を C01 R1-collect へ追加し C06 lookback_window_completeness を実データ発火"},
+    {"id": "K9", "severity": "medium", "summary": "C02 タクソノミへ過少報告(第3カテゴリ=C05 issued=true のキーが C01 レポート行に欠落)を追加し K1 curr=None 行欠落を安全網で拾う"},
+    {"id": "K10", "severity": "low", "summary": "既存プロンプト/ヘッダの旧 component-ID(C05/C06)を plan 新採番へ揃える required_file_edit を C01 へ明記(executor 参照取り違え防止)"},
+    {"id": "K11", "severity": "low", "summary": "index の『格下げ』表現に D2 行母集合(row-source=MF実績issued∪契約在籍)の必須保持を併記し builder のシート row-source 脱落を防ぐ"}
+  ]
+}

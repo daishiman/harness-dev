@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "elegant-review",
+    "ref": "plan-findings-30-method-review:2026-07-11",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY"
+  },
+  "target_plugin_slug": "ubm-goal-setting",
+  "plan_dir": "plugin-plans/ubm-goal-setting",
+  "findings": [
+    {
+      "id": "EV-01",
+      "severity": "high",
+      "summary": "2 YouTube accounts intent was narrowed to one without primary provenance.",
+      "recommendation": "Restore a multi-source registry with the supplied consulting channel as required priority 1 and the second account as pending identification.",
+      "target_ref": "goal-spec.json/C02/C03"
+    },
+    {
+      "id": "EV-02",
+      "severity": "high",
+      "summary": "REQ1c automatic updates were weakened to a manually invoked --watch command.",
+      "recommendation": "Fold a provider-neutral idempotent one-shot sync, cursor, lease, retry and alert contract into C02 and make it schedulable while retaining C04 as the manual control surface.",
+      "target_ref": "C02/C04"
+    },
+    {
+      "id": "EV-03",
+      "severity": "high",
+      "summary": "Backfill can report success after excluding unavailable videos from the denominator.",
+      "recommendation": "Keep every discovered video in the reconciliation ledger; temporary/unavailable states remain blockers unless explicitly waived, and FULL_BACKFILL_PASS requires content coverage 100 percent.",
+      "target_ref": "C02/C03/P07"
+    },
+    {
+      "id": "EV-04",
+      "severity": "high",
+      "summary": "Knowledge dependency edges have no producer, evidence, confidence or review-state owner.",
+      "recommendation": "Add C08 knowledge-relation-extractor and keep C06 focused on deterministic graph build and validation.",
+      "target_ref": "C08/C06"
+    },
+    {
+      "id": "EV-05",
+      "severity": "high",
+      "summary": "C07 treats plan task graphs as if they were built harness artifacts and has no artifact-index producer.",
+      "recommendation": "Add C05 harness-artifact indexer over task graph, task state, route reports, build traces, composition, EVALS and real paths; C07 consults the normalized index.",
+      "target_ref": "C05/C07"
+    },
+    {
+      "id": "EV-06",
+      "severity": "high",
+      "summary": "C07 passes shape validation but its parent-skill-build route is not executable for an existing parent outside inventory.",
+      "recommendation": "Hoist C07 to plugin-root/plugin-scaffold and add script-route dry-run verification to the handoff completion gate.",
+      "target_ref": "C07/handoff-run-plugin-dev-plan.json"
+    },
+    {
+      "id": "EV-07",
+      "severity": "high",
+      "summary": "The two-file non-regression allowlist contradicts required EVALS, manifest, composition, package contract and documentation updates.",
+      "recommendation": "Replace it with a surface-by-owner additive change matrix and parity tests.",
+      "target_ref": "index.md/P05/P09/P10/P12"
+    },
+    {
+      "id": "EV-08",
+      "severity": "medium",
+      "summary": "Non-skill components lack explicit binary acceptance contracts and P04 test ownership.",
+      "recommendation": "Add acceptance_contract blocks to every non-skill component and cover all eight components in P04/P07/P09.",
+      "target_ref": "component-inventory.json/P04/P07/P09"
+    }
+  ],
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": "goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "user-message:2026-07-11"
+    }
+  }
+}

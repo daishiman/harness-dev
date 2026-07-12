@@ -1,0 +1,346 @@
+{
+ "plan_dir": "plugin-plans/plugin-dev-planner",
+ "evaluated_at": "2026-07-11",
+ "evaluator": {
+  "name": "30-method-independent-review",
+  "context": "fresh-fork-3-way",
+  "agents": [
+   "logical-structural",
+   "meta-divergent",
+   "system-strategy-problem-solving"
+  ]
+ },
+ "verdict": "PASS",
+ "scope_note": "post-build。C01/C02実体とHarness Creator consumer/runtime量産境界までfresh-fork 3並列で再評価。",
+ "conditions": {
+  "C1": {
+   "id": "no_contradiction",
+   "status": "PASS",
+   "summary": "phase/task/component、graph/state/projection、revision/knowledgeの境界が相反せず統一された。",
+   "evidence": [
+    "goal-spec.json C1/C5/C17/C18/C19",
+    "index.md 基本定義/ドメイン知識",
+    "phase-04-test-design.md C17-C19 fixtures"
+   ]
+  },
+  "C2": {
+   "id": "no_missing",
+   "status": "PASS",
+   "summary": "C1-C19がindex/13 phase/inventory/briefへtraceされ、30思考法を全件適用した。",
+   "evidence": [
+    "check-requirements-coverage exit=0",
+    "elegant-review-20260711-capability-build-r2.md 30件表",
+    "skill-brief-C01/C02再射影"
+   ]
+  },
+  "C3": {
+   "id": "consistent",
+   "status": "PASS",
+   "summary": "schema・命名・frontmatter・matrix・handoff・briefの現行artifact間parityが成立。",
+   "evidence": [
+    "check-spec-frontmatter exit=0",
+    "check-spec-gates exit=0",
+    "check-spec-matrix-coverage exit=0",
+    "check-build-handoff exit=0"
+   ]
+  },
+  "C4": {
+   "id": "dependency_integrity",
+   "status": "PASS",
+   "summary": "component DAG非循環、task graph validator exit0、route/inventory/producerが各2件で1:1。bootstrap graphは58 nodes/130 edges、graph_hash=sha256:c636b6aaff4be0ea6d6648e2a184173a5f53afe17047f96337c56628d46b41a8、重複node 0。",
+   "evidence": [
+    "verify-index-topsort exit=0",
+    "validate-task-graph exit=0",
+    "task-graph.json",
+    "handoff-run-plugin-dev-plan.json"
+   ]
+  }
+ },
+ "graph_metrics": {
+  "before": {
+   "nodes": 105,
+   "edges": 1101,
+   "depends_on": 1007,
+   "duplicate_component_titles": 72
+  },
+  "after": {
+   "nodes": 58,
+   "edges": 130,
+   "depends_on": 83,
+   "parent_of": 45,
+   "produces": 2,
+   "consumes": 0,
+   "duplicate_phase_title_entity_keys": 0,
+   "route_nodes": {
+    "C01": 1,
+    "C02": 1
+   }
+  }
+ },
+ "thinking_methods": [
+  "批判的思考",
+  "演繹思考",
+  "帰納的思考",
+  "アブダクション",
+  "垂直思考",
+  "要素分解",
+  "MECE",
+  "2軸思考",
+  "プロセス思考",
+  "メタ思考",
+  "抽象化思考",
+  "ダブル・ループ思考",
+  "ブレインストーミング",
+  "水平思考",
+  "逆説思考",
+  "類推思考",
+  "if思考",
+  "素人思考",
+  "システム思考",
+  "因果関係分析",
+  "因果ループ",
+  "トレードオン思考",
+  "プラスサム思考",
+  "価値提案思考",
+  "戦略的思考",
+  "why思考",
+  "改善思考",
+  "仮説思考",
+  "論点思考",
+  "KJ法"
+ ],
+ "gate_results": [
+  {
+   "name": "check-plugin-goal-spec",
+   "exit_code": 0,
+   "note": "source_intake不在はlegacy WARN"
+  },
+  {
+   "name": "verify-index-topsort",
+   "exit_code": 0
+  },
+  {
+   "name": "detect-unassigned",
+   "exit_code": 0
+  },
+  {
+   "name": "check-spec-frontmatter",
+   "exit_code": 0
+  },
+  {
+   "name": "check-requirements-coverage",
+   "exit_code": 0
+  },
+  {
+   "name": "check-spec-gates",
+   "exit_code": 0
+  },
+  {
+   "name": "check-spec-matrix-coverage-self-test",
+   "exit_code": 0
+  },
+  {
+   "name": "check-spec-matrix-coverage-plan",
+   "exit_code": 0
+  },
+  {
+   "name": "check-surface-inventory",
+   "exit_code": 0
+  },
+  {
+   "name": "check-build-handoff",
+   "exit_code": 0
+  },
+  {
+   "name": "check-runtime-portability",
+   "exit_code": 0
+  },
+  {
+   "name": "check-plugin-surface-audit",
+   "exit_code": 0
+  },
+  {
+   "name": "check-generative-fidelity",
+   "exit_code": 0
+  },
+  {
+   "name": "check-downstream-harness",
+   "exit_code": 0
+  },
+  {
+   "name": "validate-task-graph",
+   "exit_code": 0
+  },
+  {
+   "name": "check-provenance-chain",
+   "exit_code": 0,
+   "note": "--allow-missing-intake --require-improvement --resolve"
+  }
+ ],
+ "findings": [
+  {
+   "severity": "info",
+   "bucket": "execution-identity",
+   "status": "resolved-in-plan",
+   "methods": [
+    "演繹思考",
+    "要素分解",
+    "因果関係分析"
+   ],
+   "observation": "entity_ref暗黙routeとtitle-only dispatchを廃し、execution_kind/route_ref/task_spec_ref/TaskExecutionEnvelopeをtarget contract化。"
+  },
+  {
+   "severity": "info",
+   "bucket": "dag-sparsity",
+   "status": "resolved-in-plan",
+   "methods": [
+    "批判的思考",
+    "逆説思考",
+    "システム思考"
+   ],
+   "observation": "component依存のtask直積を禁止しbarrier/artifact joinとdensity/redundancy gateを追加。bootstrap graphも105/1101から57/128へ縮約。"
+  },
+  {
+   "severity": "info",
+   "bucket": "state-revision",
+   "status": "resolved-in-plan",
+   "methods": [
+    "因果ループ",
+    "ダブル・ループ思考"
+   ],
+   "observation": "graph/state/projectionを分離し、discovered-taskはpin済みgraph直接更新でなく外ループの新revisionへ反映。"
+  },
+  {
+   "severity": "info",
+   "bucket": "cycle-knowledge",
+   "status": "resolved-in-plan",
+   "methods": [
+    "戦略的思考",
+    "価値提案思考"
+   ],
+   "observation": "完了cycleはimmutable provenance、次cycleはsource_ref付きknowledge/external inputだけを有界再利用。MF決済例をP12へ追加。"
+  },
+  {
+   "severity": "info",
+   "bucket": "task-graph-semantics",
+   "status": "resolved-in-build",
+   "methods": [
+    "批判的思考",
+    "帰納的思考",
+    "論点思考"
+   ],
+   "observation": "edge truth tableを depends_on=consumer task→producer task / produces=producer task→artifact / consumes=artifact→consumer task に統一し、plannerとHarness Creatorのready/input/stall/blocked伝播を同一契約で検証した。"
+  },
+  {
+   "severity": "info",
+   "bucket": "shape-ab-comparison",
+   "status": "genuine-pass",
+   "methods": [
+    "2軸思考",
+    "類推思考",
+    "仮説思考"
+   ],
+   "observation": "fixed-13-phaseはbyte後方互換、task-graph-derivedは全実行可能leafが二値acceptance+producesを100%携帯し、同一入力2回のgraph bytes/node/spec-file集合が一致する。"
+  },
+  {
+   "severity": "info",
+   "bucket": "task-graph-consumer",
+   "status": "resolved-in-build",
+   "methods": [
+    "システム思考",
+    "因果関係分析",
+    "プラスサム思考"
+   ],
+   "observation": "Harness Creator consumerはartifact producer不在をready/input/stall/blocked伝播でfail-closedにし、372 testsでcross-contractを確認した。"
+  },
+  {
+   "severity": "info",
+   "bucket": "execution-envelope",
+   "status": "resolved-in-build",
+   "methods": [
+    "メタ思考",
+    "逆説思考",
+    "if思考"
+   ],
+   "observation": "task-spec正本からtarget leafを導出し、全leaf renderability、route実在、PLAN_DIR containment、knowledge-ref形状をfail-closed検証した。"
+  },
+  {
+   "severity": "info",
+   "bucket": "cycle-knowledge",
+   "status": "resolved-in-build",
+   "methods": [
+    "要素分解",
+    "改善思考",
+    "戦略的思考"
+   ],
+   "observation": "knowledge-ref schema、日付形式、source実在、external input sha256、non-vacuous target scan、finished/superseded predecessorを検査し、final gateのLoop A/B記録3件を再生成した。"
+  },
+  {
+   "severity": "advisory",
+   "bucket": "legacy-provenance",
+   "status": "accepted-exception",
+   "methods": [
+    "論点思考"
+   ],
+   "observation": "元planのsource_intakeは存在しない。source_improvementは追跡可能。履歴を捏造せずallow-missing-intake明示で検査。"
+  },
+  {
+   "severity": "advisory",
+   "bucket": "plan-build-boundary",
+   "status": "resolved-in-build",
+   "methods": [
+    "プロセス思考"
+   ],
+   "observation": "C17 target producer、TaskExecutionEnvelope、C18三層parity、C19 knowledge/lineage、consumes artifact→task のproducer/consumer両側実装を完了。生成Harness側は checklist-graph の決定論量産までを機械化し、full task-spec graphは false claimで構造的follow-upとして分離。"
+  },
+  {
+   "severity": "info",
+   "bucket": "plan-build-boundary",
+   "status": "open",
+   "methods": [
+    "因果ループ"
+   ],
+   "observation": "R1 deferred MD-1: checklist-verify 軽量経路。build-summary 散文据置では drain 機構が無いため open として第一級登録 (R3)。次周回 plan update の検討対象。"
+  },
+  {
+   "severity": "info",
+   "bucket": "plan-build-boundary",
+   "status": "open",
+   "methods": [
+    "因果ループ"
+   ],
+   "observation": "R1 deferred MD-8: plan-time renderability 一括検査 + knowledge_refs 必須キー。open 第一級登録 (R3)。"
+  },
+  {
+   "severity": "medium",
+   "bucket": "state-revision",
+   "status": "open",
+   "methods": [
+    "因果ループ",
+    "戦略的思考"
+   ],
+   "observation": "R1 deferred SS-5: bootstrap→target 移行 gate (新規 plan の route_ref parity 必須化)。GAP-BOOTSTRAP-TARGET-SHAPE-001 の発火条件 (C01 build 完了) は成立済みだが gate 未実装のため、legacy join 許容が bootstrap 形状を自己強化する。次周回で derive-task-graph に shape gate を実装する。"
+  },
+  {
+   "severity": "low",
+   "bucket": "task-graph-consumer",
+   "status": "open",
+   "methods": [
+    "類推思考",
+    "プラスサム思考"
+   ],
+   "observation": "project-task-status.py が producer (parity 検査専用・write-scope: none) と consumer (TG-C09 投影 writer) の 2 箇所に同名異役で実在。単一 writer 契約は保たれている (両 frontmatter が帰属明記) が、動詞名 project- が producer 側の実挙動 (検査) を裏切る。改名候補 check-task-status-parity.py (shim 残置)・または lint-script-naming へ同名異役 across plugins 検査追加。"
+  },
+  {
+   "severity": "high",
+   "bucket": "plan-build-boundary",
+   "status": "open",
+   "methods": [
+    "戦略的思考",
+    "ダブル・ループ思考"
+   ],
+   "observation": "生成ハーネスへの full task-spec graph 同梱 (拡張要件) は full_task_spec_graph=false の fail-closed claim で宣言済み gap。承認判断を E3 improvement-handoff (plugin-plans/with-task-graph-goalseek/improvement-handoff-20260711-full-task-spec-graph.json) として第一級追跡 (R3)。承認時は with-task-graph-goalseek plan の単一 truth 境界を --mode update で改訂、非承認時は恒久宣言で rejected 化。"
+  }
+ ],
+ "review_artifact": "elegant-review-20260711-capability-build-r3.md"
+}

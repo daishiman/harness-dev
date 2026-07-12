@@ -1,0 +1,60 @@
+{
+  "skill_name": "run-ubm-youtube-ingest",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "YouTube動画をナレッジ化",
+    "北原さんのYouTube取り込み",
+    "ubm-youtube-ingest"
+  ],
+  "output_contract": "source registry(priority/status/channel identity)+authoritative video snapshot+reconciliation ledger+knowledge/*.json+youtube-registry.json+sync report。discovered videoはingested/temporary_failure/terminal_unavailable/waivedの状態を持ち、waiverはユーザー承認参照必須",
+  "boundary": "provider-neutral adapterとscheduler helperは単一consumerのため本skill内scriptsへ畳む。全モード--dry-run。transcriptはuntrusted dataとして扱う。具体provider/scheduler製品だけlate-bindし、取得契約・自動性・fallbackは未確定にしない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "check-youtube-backfill-completeness.py",
+    "validate-knowledge-graph.py"
+  ],
+  "external_systems": [
+    "YouTube provider adapter (late-bound)",
+    "host scheduler (late-bound, idempotent one-shot contract fixed)"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "URL単発文字起こし取込",
+    "required-primary全量content coverage 100%",
+    "scheduler無人差分同期",
+    "relation graph更新"
+  ],
+  "goal": "2-source registryを扱い、required-primaryのURL単発/厳格全量backfill/scheduler起動の新着syncをcaption→authorized ASR fallback付きでknowledge化し、C08/C06まで通して根拠付きgraphを更新する",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "具体providerをlate-bindしてもlist_channel_videos(cursor)/fetch_transcript(video_id)のI/O、typed error、quota/auth、caption fallback、video_id冪等性はP02で確定する。自動同期は長時間daemonでなくlease付きone-shotをhost schedulerが呼ぶportable設計とする",
+  "responsibilities": [
+    {
+      "id": "R1-source-mode",
+      "summary": "URL/backfill/syncとsource priorityを確定し、第2source pendingでもrequired-primaryを停止しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-fetch-normalize",
+      "summary": "authoritative inventoryをpagination完走しcaption→authorized ASR fallbackで取得、C01へ渡す",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-extract-graph",
+      "summary": "既存knowledge-extractorで6カテゴリ化しC08→C06で根拠付きgraphを更新する",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-sync-reconcile",
+      "summary": "cursor/lease/retry/alertを持つ冪等one-shotをschedulerから実行しledgerとreportを更新する",
+      "prompt_required": true
+    }
+  ]
+}

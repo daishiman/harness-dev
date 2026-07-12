@@ -1,0 +1,786 @@
+{
+  "plugin_concept": "slide-report-generator — presentation-slide-generator の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス",
+  "derivation": "既存 presentation-slide-generator(v8.4.2) の全資産(13 sub-agent / 42 references / 30 Node scripts / 118 templates / schemas 7本(真 schema 4 + example fixture 3。移植先は report-structure 新設で真 schema 計5) / Codex Image2 チェーン / 30種思考法評価ゲート / A4印刷 / GASデプロイ)を 1 つ残らず新 component or plugin-level surface へ写像する(抜け漏れ=平均回帰=禁止)。capability を 5 種の component_kind へ写像し実体単位に分解した: 主オーケストレータ/修正/横断レビューの 3 skill、既存 13 worker + report 新規 3(report-structure-designer/visual-strategist/report-composer)= 16 sub-agent、生成後評価を自動起動する 1 hook、手動起動/状況確認の 2 slash-command、output_mode/reportType の値域を送信前検証する共有 stdlib script 1 = 計 23 buildable 実体。Node 製レンダリング/画像/印刷/検証エンジン(render-slide.cjs/template-engine.cjs/style-builder.cjs/svg-builder.cjs/画像チェーン/検証 js/118 templates/print + report 新規 render-report.js/mermaid-render.js)は vendor surface として byte 維持で携行し Python-stdlib script へ書き換えない(既存資産の毀損回避)。skill/agent は Bash(node *) で起動する。意匠/技術層(Kanagawa配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ)は vendor + references + schemas の単一 SSOT で共有し slide/report で重複させず、コンテンツ意図層(slide=1メッセージ/chip強制 vs report=読み物/1項目1ビジュアル)のみ output_mode で分岐する。この inventory は build 軸の唯一 SSOT で、人間可読なライフサイクルは phase-01..13.md が担う(2 軸直交)。なお C24(report-quality-reviewer sub-agent)/C25(validate-report-visual.py script) は当初 23 実体確定後の Tier2 in-place conformance(2026-07-05)で追加した post-plan 実体であり、現行 plugin は 3 skill + 17 sub-agent + 1 hook + 2 slash-command + 2 script = 計 25 buildable 実体(各 component の provenance フィールド参照)。この 25 は L3 plan への post-plan additive として確定した component 集合であり「現行 build 済実体」の断定ではない: 実体の build 状態は outputs/ (phase-05..13 の完了記録) と plugins/slide-report-generator/ で追跡し、第2次/第3次 update (第2次: report 読み物化・schema 1.2.0 additive / 第3次: report-uiux-layout-improvement・render CSS のみで schema 非依存=schema は 1.2.0 のまま) が touch する route (C01/C17/C18/C19/C24/C25 + S-SCHEMAS/S-REFERENCES) は unchanged でなく rebuild 対象である。build 状態と route の change_surface 区分の裁定は index の完了記録注記 (フェーズ一覧の「未実施」表記と outputs/ 正本の関係) を参照する。depends_on のエッジ化基準: depends_on には build 順序に影響する参照のみをエッジ化する (runtime 参照は build_contract / deterministic_checks に記す)。この基準に従い C17(論理設計)→C18(幾何配置)→C19(render 消費) の意味連鎖は build 順序依存としてエッジ化し (C18.depends_on=[C17]・C19.depends_on=[C18,C25])、C19 の C25 依存は C25 決定論ゲートが C19 build 検証の前提であることによる。lint-reference-attribution.py/lint-vendor-parity.py/validate-plugin-completeness.py は per-component 単体テストを持たない CI governance glue のため primary inventory 対象外とし harness-creator-kit-ci 実行で検証する。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-slide-report-generate",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-slide-report-generate",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["スライドを作りたい", "レポートを作りたい", "slide-report-generate"],
+      "goal": "output_mode(slide/report)を確定し意匠/技術コアを共有したまま構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/Codex 画像)→生成後評価(30種思考法)まで駆動し、slide は1スライド1メッセージ/report は読み物・1項目1ビジュアルで視覚崩れ0の成果物が出力された状態",
+      "purpose_background": "既存 presentation-slide-generator の 7フェーズ総体ワークフローを 1 skill に集約し、意匠/技術は単一 SSOT 共有・コンテンツ意図のみ output_mode 分岐で 2 モードを 1 経路に統合するため",
+      "checklist": ["output_mode と reportType 確定", "構成設計と仕様確定ゲート通過", "生成(HTML/決定論/Codex画像)実行", "生成後評価(30種思考法・mode-aware)PASS"],
+      "output_contract": "生成レポート(output_mode/生成経路/評価スコア + 生成物パス(index.html/report.html) + 未達指摘一覧)",
+      "boundary": "入力=構想と output_mode/出力=HTML 成果物。既存成果物の修正は run-slide-report-modify、横断検証は run-cross-deck-review へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "hearing-facilitator を介し output_mode(slide/report)・reportType・読者・全面画像化ゲート・ビジュアル方針をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-structure", "summary": "確定 mode に応じて structure/report-structure を設計し仕様確定ゲート(structure-validator)を通す", "prompt_required": true},
+        {"id": "R3-generate-evaluate", "summary": "HTML/決定論/Codex 画像の各経路で生成し生成後評価(deck-evaluator・mode-aware)まで駆動して成果物を返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node", "codex"],
+      "mcp_tools": [],
+      "external_systems": ["Codex Image2 (codex exec)"],
+      "deterministic_checks": ["validate-output-mode.py", "validate-output-mode.py --preflight (環境 preflight: node/npm/node_modules/codex CLI 検出)", "validate-structure.js", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report決定論視覚ゲート・--structure欠落はexit2)", "Playwright computed-layout/navigation matrix (899/900/901/1024/1366/1600px + print、hash/click/scroll/font-ready/afterprint)", "evaluate-deck.js", "validate-ai-image-assets.js", "validate-print.js"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-output-mode で output_mode(slide/report)と reportType の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が0件", "verify_by": "script"},
+          {"id": "IN2", "loop_scope": "inner", "text": "report mode 生成時に validate-report-visual.py(C25)が section 構造 + block型多様性 + section.narrative 非空(role∈{analysis,argument}条件) + highlight/keyPoint 表現(色以外の第2チャネル weight/underline 併存) + 表・コード・番号リストの正 HTML 化(<br>で潰れていない) + reportType別必須横断要素(要約/キーテイクアウェイ/次アクション/根拠出典/リスク/TL;DR+型別)の存在 + placement.grid/zones が render 結果へ live 反映(図が section 末尾全幅固定へ退化していない) + 長尺 report での meta.throughLine 非空 を送信前に決定論検証し exit0", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "生成後に slide は1スライド1メッセージ/長文なし・report は読み物/1項目1ビジュアルで、生成後評価(30種思考法)が視覚崩れ0で PASS することを受入テストが確認する", "verify_by": "test"},
+          {"id": "OUT2", "loop_scope": "outer", "text": "report が構造化された読み物として論理・block・強調・意味的配置・型別横断要素を備えC24意味評価がPASSする。C16-C19のUI受入としてcomputed本文16-18px/line-height比1.6-1.8/title-body比<=2.2、card最小可読幅、hash着地とaria-current一致、print lifecycle復帰、essence-visual(論理節のvisual.kind非none・図が節の要旨を一目化するか)とrenderの一致をreport-structure.json+wide/narrow/print render bundleで確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C17", "C18", "C19", "C23", "C24", "C25"],
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-generate/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-slide-report-modify",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-slide-report-modify",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["スライドを修正したい", "レポートを部分修正したい", "slide-report-modify"],
+      "goal": "既存の slide deck / report を output_mode を保ったまま指定箇所だけ部分修正し、意匠/技術コアと非対象箇所を壊さず修正後の生成後評価で視覚崩れ0の状態",
+      "purpose_background": "既存 slide-modifier(P4)の修正ワークフローを独立起動 skill として移植し、生成し直さず既存成果物の局所修正を安全に行うため",
+      "checklist": ["修正対象と output_mode 特定", "指定箇所のみ部分修正", "修正後の再評価(視覚崩れ0)"],
+      "output_contract": "修正レポート(修正箇所一覧 + 変更差分 + 再評価スコア)",
+      "boundary": "入力=既存成果物と修正指示/出力=局所修正済み HTML。新規生成は run-slide-report-generate、横断検証は run-cross-deck-review へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "修正対象の既存成果物と output_mode/修正指示をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-modify", "summary": "slide-report-modifier を介し指定箇所のみを部分修正する", "prompt_required": true},
+        {"id": "R3-reevaluate", "summary": "修正後に生成後評価を再実行し視覚崩れ0を確認して修正レポートを返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["validate-output-mode.py", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report部分修正時・--structure欠落はexit2)", "report部分修正後にwide/narrow/print+hash navigation evidenceを再取得"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-output-mode で既存成果物の output_mode を判定し修正対象の mode と reportType の値域整合を送信前検証し欠落が0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "指定箇所のみが修正され意匠/技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ0で PASS することを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C13", "C15", "C23", "C25"],
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-modify/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-cross-deck-review",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-cross-deck-review",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["シリーズ横断で整合性を確認したい", "複数 deck の用語ゆれを検出したい", "cross-deck-review"],
+      "goal": "複数 deck/report のシリーズ横断で用語/意匠/構成の整合性を検証し、用語ゆれ・意匠差・構成不整合が網羅的に検出された状態",
+      "purpose_background": "既存 cross-deck-reviewer(P5)のシリーズ横断検証を独立起動 skill として移植し、単一 deck では見えないシリーズ全体の整合崩れを検出するため",
+      "checklist": ["横断対象の deck/report 収集", "3並列分析(用語/意匠/構成)実行", "不整合の網羅検出と報告"],
+      "output_contract": "横断レポート(用語ゆれ一覧 + 意匠差一覧 + 構成不整合一覧 + 網羅率)",
+      "boundary": "入力=複数成果物/出力=横断整合レポート。個別成果物の修正は run-slide-report-modify へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "横断対象の deck/report 群と整合観点をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-analyze", "summary": "cross-deck-reviewer を介し用語/意匠/構成の 3並列分析を実行する", "prompt_required": true},
+        {"id": "R3-report", "summary": "不整合の網羅検出結果を横断レポートとして返す", "prompt_required": true}
+      ],
+      "cli_tools": ["node"],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": ["cross-deck-consistency.js", "check-consistency.js"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "cross-deck-consistency で横断対象 deck/report の用語・意匠辞書を突合し分析入力の欠落が0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "既知の不整合(用語ゆれ/意匠差)を注入したシリーズで cross-deck-reviewer が全件検出し網羅性を受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C16"],
+      "build_target": "plugins/slide-report-generator/skills/run-cross-deck-review/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "hearing-facilitator",
+      "description": "ヒアリングを独立 context で行い output_mode(slide/report)・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/hearing-facilitator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/hearing-facilitator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "structure-designer",
+      "description": "slide 構成を独立 context で1スライド1メッセージへ分解し共通仕様セクション付き structure.json を設計したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/structure-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/structure-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "structure-validator",
+      "description": "slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043/phase-gate/spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/structure-validator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/structure-validator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "d3-diagram-designer",
+      "description": "D3 インタラクティブ図解を独立 context で設計し両モードの図解ノードへ配置したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/d3-diagram-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "data-visualizer",
+      "description": "データ可視化(グラフ/chart)を独立 context で設計し両モードのビジュアルノードへ配置したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/data-visualizer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/data-visualizer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C09",
+      "component_kind": "sub-agent",
+      "name": "html-generator",
+      "description": "slide HTML を独立 context で LLM 経路生成(従来 P3 経路)したいときに使う",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/html-generator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/html-generator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "slide-renderer",
+      "description": "決定論経路で render-slide.cjs(vendor Node engine)を Bash(node *) 起動し slide HTML を独立 context で生成したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/slide-renderer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/slide-renderer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C11",
+      "component_kind": "sub-agent",
+      "name": "layout-optimizer",
+      "description": "レイアウトを独立 context で最適化(precheck-layout/layout-calculator 連携)し両モードで崩れを抑えたいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/layout-optimizer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/layout-optimizer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C12",
+      "component_kind": "sub-agent",
+      "name": "ui-quality-reviewer",
+      "description": "UI 品質(テキスト切れ/改行/バランス S1-S26)を独立 context で検証(P3.5)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/ui-quality-reviewer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "deck-evaluator",
+      "description": "生成後に 30種思考法で mode-aware(slide=視覚崩れ/1メッセージ・report=可読性/図解適合/情報密度)の mode 別 rubric 次元で区分評価(P3.6)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/deck-evaluator.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/deck-evaluator.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C14",
+      "component_kind": "sub-agent",
+      "name": "ai-image-diagram-producer",
+      "description": "Codex Image2 全面画像/差替を独立 context で生成(build-image-prompts→generate-images-codex→build-deck-html→validate・PNG署名回収)したいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/ai-image-diagram-producer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/ai-image-diagram-producer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "slide-report-modifier",
+      "description": "既存成果物(slide deck / report)の指定箇所を独立 context で部分修正(P4)したいときに使う",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/slide-report-modifier.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/slide-report-modifier.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C16",
+      "component_kind": "sub-agent",
+      "name": "cross-deck-reviewer",
+      "description": "シリーズ横断整合性を独立 context で 3並列分析×4条件で検証(P5)したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/cross-deck-reviewer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C17",
+      "component_kind": "sub-agent",
+      "name": "report-structure-designer",
+      "description": "4 reportType 骨格 + 節内論理展開(本質課題→解決策→活用/含意の section.narrative)で report 構成(セクション + block構造[段落/markdownテーブル/コードブロック/番号リスト/小見出し/キーポイント強調ボックス/定義リスト/脚注引用/タスクリスト]の設計 + 要点の色付き強調 + 1項目1ビジュアルの意味的スロット割当[どの項目にどの図解種別を対応させるかの item↔visual pairing・第一候補提示])を独立 context で設計したいときに使う。加えて文書全体の通し筋 meta.throughLine(冒頭=本質課題→本論=解決→結=活用のアーク)と節間接続 section.transition(次節への橋渡し1文)の設計 owner・および各節の section.role 判定 owner(analysis/argument/reference/procedure/summary の分類で narrative 要否を決める)。幾何配置(grid/zones/focalPoint の live placement)決定は C18 visual-strategist へ委譲する(責務境界: C17=論理構造+throughLine/transition+section.role+意味的ペアリング / C18=幾何配置)。節の順序だけでなく節内部の論理構造と文書全体の弧(本質課題→解決→活用)を強制し羅列退化を防ぐ",
+      "tools": ["Read", "Write"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-structure-designer.md",
+      "prompt_layer": "7layer",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/report-structure-designer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C18",
+      "component_kind": "sub-agent",
+      "name": "visual-strategist",
+      "description": "各セクションでSVG/Mermaid/Codex生成画像の三択と幾何配置{grid,zones,emphasisZone,readingOrder,focalPoint}を独立contextで決めるowner。第3次updateでは形式三択より前に本文の論理構造を見極め、論理構造→図種の写像を行う(essence-visual/図種写像の設計owner)。論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響})は非none visual(visual.kind!=none)を必ず1枚持ち、図種は節の論理構造に一致させる(写像規律はreference report-visual-strategy.md §0.5.1とvisual-strategist VCONST_000が正本)。図解すべき論理節にvisualを省略する『なんとなく表』も装飾図表もC24が負値評価し両方を防ぐ。C24はreport-structure.json+実render bundleで図が節の要旨を一目化するかの意味適合を評価し、C25はessence-visualカバレッジ(論理節のvisual.kind非none)を検査する",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/visual-strategist.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C17"],
+      "build_target": "plugins/slide-report-generator/agents/visual-strategist.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C19",
+      "component_kind": "sub-agent",
+      "name": "report-composer",
+      "description": "report HTML/prose を独立 context で生成(文章多め・block構造[段落/markdownテーブル/フェンスドコードブロック/番号リスト/小見出し/キーポイント強調ボックス/統計タイル]→HTML・要点の色付き強調・placement.grid/zones/emphasis の意味的配置反映・visual-strategist 指定ビジュアル埋込)したいときに使う。決定論 render-report.js の著者責務を持ち slide の html-generator に対応する report 版。本更新(第3次: report-uiux-layout-improvement)では render-report.js/report 読書 CSS(buildReportCss() の CSS 出力)の著者責務として screen/print 幅二層化(screen=本文可読幅+sidebar レイアウト・print=190mm/A4 を @media print で温存)・sticky sidebar TOC + scrollspy(self-contained JS・print 無効・狭画面はインライン TOC へ degrade)・タイポグラフィ/密度スケール再調整(意匠 SSOT 無改変でスケール/spacing 変数のみ)を additive 実装する(要件 C16-C18)",
+      "tools": ["Read", "Write", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-composer.md",
+      "prompt_layer": "7layer",
+      "build_contract": {
+        "additional_outputs": [
+          {"file": "plugins/slide-report-generator/vendor/scripts/render-report.js", "role": "report HTML レンダラ (report-structure 1.2.0 の block[](定義リスト/脚注引用/タスクリスト含む)/section.narrative/section.transition/meta.throughLine/inline highlight(色+第2チャネル weight・underline)/placement.grid・zones・emphasisZone・readingOrder を決定論 HTML 化・新規実装)。本更新(第3次)で buildReportCss() の CSS 出力へ screen/print 二層レイアウト(screen=reading measure 基準の本文カラム+sidebar grid・print=190mm/A4 を @media print で温存)・sticky sidebar TOC 用マークアップ + IntersectionObserver ベースの self-contained scrollspy JS(print 無効)・タイポ/密度スケール変数(--fs-title 等の是正)を additive 実装し、essence-visual(既存 role/visual.kind・schema は 1.2.0 のまま)は render 側では素通し(設計値の消費者でなく producer=C18/evaluator=C24/検査=C25)とする", "verification": "tests_min", "test_file": "plugins/slide-report-generator/vendor/tests/test-render-report.js"},
+          {"file": "plugins/slide-report-generator/vendor/scripts/mermaid-render.js", "role": "report Mermaid 統合 (新規実装)", "verification": "tests_min", "test_file": "plugins/slide-report-generator/vendor/tests/test-mermaid-render.js"},
+          {"file": "plugins/slide-report-generator/vendor/package.json", "role": "mermaid 依存の additive 追記 (owner=C19・render-report.js/mermaid-render.js が要求する mermaid を byte copy 完了後の additive として package.json へ追記し package-lock.json も同時更新して依存解決を固定。parity_scope.excluded_additive で byte-parity 照合除外)", "verification": "diff-additive-only", "owner": "C19"}
+        ],
+        "structuring_scope": {
+          "block_renderers": ["paragraph", "table(markdown表→<table>・<br>で潰さない)", "code(フェンスド```→<pre><code>)", "ordered-list(1.→<ol>順序保持)", "bullet-list", "subheading(節内小見出し)", "key-point(色付きハイライトボックス)", "stat-tile(統計タイル)", "definition-list(用語定義 term↔def・1.2.0 additive)", "footnote+citation(末尾 reference-list 自動生成・1.2.0 additive)", "task-list(次アクション - [ ]・1.2.0 additive)", "callout(note/warning/tip)", "blockquote(引用/pull-quote)"],
+          "inline_emphasis": "highlight トークン(要点の色付き強調)を Kanagawa accent 配色で render。bold→accent 1種のみの現状を超える。1.2.0 additive: highlight は色単一チャネル脱却のため font-weight/underline/border 等の第2チャネル属性を必須付与し色覚アクセシビリティを担保する",
+          "semantic_placement": "正規化 placement field {grid, zones, emphasisZone, readingOrder, focalPoint} を反映し図解を段落末尾全幅固定でなく本文該当箇所へ配置(現状のデッドフィールドを live 化)。emphasisZone は旧 emphasis を inline highlight と字面衝突回避のため改名した幾何強調ゾーン",
+          "through_line": "meta.throughLine(文書アーク)と section.transition(節間橋渡し)を読み物の通し筋として render し、節を単なる羅列でなく本質課題→解決→活用の弧で連結する(1.2.0 additive)",
+          "report_css": "report 読書 CSS(block 装飾/reading measure ~65-75ch/縦リズム/section spacing)の正本責務は buildReportCss() の inline <style> 出力(独立ファイル vendor/assets/report.css への分離は将来オプション)。C25 が読書 CSS class 出力の存在を検査する",
+          "consumes_schema": "report-structure.schema.json 1.2.0 (S-SCHEMAS additive・1.1.0 を包含)。本更新(第3次)は既存 role/visual.kind(essence-visual)を消費し schema bump を伴わない(第3次UIは render CSS のみで schema 非依存・schema は 1.2.0 のまま)",
+          "screen_print_layout": "1.3.0追加スコープ。screenは.report-layout/--report-measure:72ch/--report-sidebar-w:15rem/--report-page-max:1240px、printは190mm/A4を温存する。55%利用幅条件はviewport<=2254pxで適用しultrawideは1240px上限を優先するpiecewise契約。本文内card/gridはrepeat(auto-fit,minmax(min(100%,28rem),1fr))相当・overflow-wrap:anywhereを持ち最小幅未満は1列へ落ちる。899/900/901/1024/1366/1600pxと長文card/table/code/stat-tile fixtureで実測する",
+          "sticky_toc_scrollspy": "1.3.0追加スコープ。.report-toc--sidebarをsticky化しIntersectionObserverで.is-activeとaria-current=locationを同期する。初期hash/TOC click/手動scroll/hashchange/popstate/document.fonts.ready後のlayout shiftでtargetをsticky offset内へ再着地させる。scrollspyはidempotent start/stopを持ちbeforeprintでstop、afterprintでstartしてactive状態を復旧する。900px以下はインラインTOCへdegradeしPlaywrightが期待sectionとの一致を検査する",
+          "typography_density": "1.3.0追加スコープ。report screen専用scaleを共有--font-scaleから分離し、font-scale=1.3入力でもgetComputedStyle()で本文16-18px・line-height比1.6-1.8・title/body比<=2.2を満たす。--fs-title:2.2remの宣言値だけでPASSさせない。slide最小1.4rem規律はslide-only、Kanagawa配色/フォントfamilyは不変。Playwright computed-styleを受入正本とする"
+        },
+        "note": "vendor.additive_new_files の新規 2 Node (render-report.js/mermaid-render.js) + report 読書 CSS(正本責務=render-report.js の buildReportCss() inline <style> 出力・CCONST_006 自己完結 HTML 契約と両立。分離は将来オプション=配置候補 vendor/assets/report.css・build 契約上の必須生成物ではないため additional_outputs には載せない。block 装飾/reading measure ~65-75ch/縦リズム line-height/section spacing を意匠 SSOT の Kanagawa トークンで表現し C25 が読書 CSS class 出力の存在を検査する)の実装著者は本 component (C19 report-composer) の build 責務に含める (owner=C19)。本 update では render-report.js に block レンダラ + inline highlight(第2チャネル) + placement(emphasisZone/readingOrder) 反映 + throughLine/transition + 定義リスト/脚注/タスクリスト block を追加実装する(既存 renderParagraphs/inlineMd を additive 拡張)。render-report.js/mermaid-render.js は tests/test-render-report.js/tests/test-mermaid-render.js で coverage(tests_min>=80)を持ち C25 の test 名指し provenance と対称化する。mermaid 依存は byte copy 完了後の package.json additive として追記し package-lock.json を同時更新する(S-VENDOR post_copy の順序規約)。byte-parity の対象外扱いは vendor.parity_scope 準拠・品質は tests_min>=80 + lint + C25 決定論ゲート の別検査で担保する。本更新(第3次: report-uiux-layout-improvement)では screen_print_layout/sticky_toc_scrollspy/typography_density の 3 スコープを additive 追加し、essence-visual(C18 owner・既存 role/visual.kind)は render 側で素通し消費するのみで新規 render ロジックを持たない"
+      },
+      "depends_on": ["C18", "C25"],
+      "build_target": "plugins/slide-report-generator/agents/report-composer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict", "vendor_js_coverage": {"min": 80, "kind_pass": "coverage", "targets": ["vendor/scripts/render-report.js", "vendor/scripts/mermaid-render.js"], "test_files": ["vendor/tests/test-render-report.js", "vendor/tests/test-mermaid-render.js"], "note": "C19 が著者責務で書く vendor Node 2本は tests_min>=80 の coverage を持ち、build+test(tests_min>=80 exit0)は handoff routes[C19].build_contract の verification step で実現する。C25 の test 名指し provenance(tests/test_validate_report_visual.py)と対称"}}
+    },
+    {
+      "id": "C20",
+      "component_kind": "hook",
+      "name": "hook-postgen-eval",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit|MultiEdit",
+      "exit_semantics": "fail-soft-exit0",
+      "settings_wiring": "plugin-manifest",
+      "settings_wiring_note": "配線正本 = plugin manifest (envelope-draft/plugin.json の hooks ブロック)。settings.json 配線は廃止し二重宣言を解消 (裁定済み契約)",
+      "fail_closed": false,
+      "target_glob": ["**/index.html", "**/report.html", "**/styles.css", "**/scripts.js", "**/structure.*", "**/report-structure.*"],
+      "scope_guard": {
+        "non_target_behavior": "target_glob 対象外パスへの Write|Edit|MultiEdit は無条件 exit 0 (生成成果物以外の編集を遮らない)",
+        "fail_soft_scope": "target_glob 一致ファイルでも評価はブロックせず、生成後評価 (deck-evaluator) 起動を additionalContext で促すのみで常に exit 0 (fail-soft・非ブロッキング)。評価は hook 内で走らせない設計のため exit 2 は発火しない (実装 hooks/hook-postgen-eval.py の挙動が正)",
+        "evaluator_missing_behavior": "評価器 (deck-evaluator 起動経路 / vendor evaluate-deck.js) 不在時は stderr へ warn を出し exit 0 (非ブロック。不在自体は build ゲート側で検出する)"
+      },
+      "depends_on": ["C13"],
+      "build_target": "plugins/slide-report-generator/hooks/hook-postgen-eval.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test", "test_scenarios": ["target_glob 一致 (index.html/report.html/styles.css/scripts.js/structure.*/report-structure.*) で生成後評価 (deck-evaluator) の起動を促す additionalContext を出力する", "target_glob 対象外パスは無条件 exit 0 (ブロックしない)", "評価器不在時は warn + exit 0 (常に exit 0・fail-soft)"]}
+    },
+    {
+      "id": "C21",
+      "component_kind": "slash-command",
+      "name": "slide-report-generate",
+      "description": "スライド/レポート生成を手動起動する(--mode slide|report)",
+      "argument-hint": "[--mode slide|report]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C01"],
+      "build_target": "plugins/slide-report-generator/commands/slide-report-generate.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C22",
+      "component_kind": "slash-command",
+      "name": "slide-report-status",
+      "description": "生成/修正の進行状況・フェーズを確認する(既存 workflow-manager 相当)",
+      "argument-hint": "[--deck DIR]",
+      "allowed-tools": ["Read", "Bash"],
+      "disable-model-invocation": false,
+      "depends_on": ["C01"],
+      "build_target": "plugins/slide-report-generator/commands/slide-report-status.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C23",
+      "component_kind": "script",
+      "name": "validate-output-mode.py",
+      "script_name": "validate-output-mode.py",
+      "purpose": "output_mode(slide|report)と reportType(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)の値域を生成/修正の送信前に検証する薄い stdlib ゲート。--preflight モードで実行環境 preflight (node/npm/node_modules 存在・codex CLI 検出) も担う (環境 preflight 契約の正本)。Node engine ではなく harness glue のため Python で持つ",
+      "inputs": "argv(--mode slide|report [--report-type TYPE] | --preflight)",
+      "outputs": "stdout(OK)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/slide-report-generator/scripts/validate-output-mode.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C24",
+      "component_kind": "sub-agent",
+      "name": "report-quality-reviewer",
+      "description": "report 品質(読み物文体/段落密度/1項目1ビジュアル整合/reportType 骨格順守 RQ1-20 + 積極評価次元 RQ21-: 節内論理展開[本質課題→解決→活用]の成立/節間の論理接続・流れの成立[through-line: throughLine と transition で節が羅列でなく弧で連結]/内容が要求する範囲での block 適合[必要な所に表・コード・リスト、不要な所は散文のまま=多様性 < 適合性を優先。単なる block 種類数の多さは評価しない]/要点強調の効き・色覚非依存[強調が色以外の手掛かり weight/underline も持つ]/図解の意味的配置/reportType 横断要素の充足[要約/キーテイクアウェイ/次アクション/根拠出典/リスク+型別]/見出しごとの整形 + 負次元 RQ: 強調・block が要点に集中し過剰・断片化していない[強調過多/構造過剰で読み物が断片化していない])を独立 context で検証(P3.5 report 版)したいときに使う。減点型だけでなく『構造化された読み物としての魅力』を積極評価し『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も塞ぐ双方向ゲート・slide の ui-quality-reviewer に対応する report 版。本更新(第3次: report-uiux-layout-improvement)で RQ 積極評価次元へ以下を追加する: ナビゲーション成立(sticky sidebar TOC + scrollspy でいま文書のどこを読んでいるか常時把握でき、任意の節へ1クリックで戻れるか・要件C17)/読み物としての密度バランス(screen 表示で本文と余白の比率・見出し階層の視覚差が適正で『空白>本文』の逆転が起きていないか・要件C16/C18)/図解適合(本文の主張と本質図解(essence-visual)の一致・図だけ見て節の要旨が掴めるか・図解すべき論理節での visual 省略または本文主張と乖離した装飾目的の図解は負値評価・要件C19) + 周回2 追加(R4 HIGH是正): print/狭画面 degrade の成立(print 出力で従来 190mm/A4 読了体験が退行していないか・sticky sidebar TOC/scrollspy が print で無効化され紙面を汚していないか・狭画面でインライン TOC への graceful degrade が読者の探索を妨げず成立しているか・要件C16/C17)。評価入力契約(周回3 追加・実描画盲点の閉鎖。周回4 で narrow 幅を degrade breakpoint 追随): Bash で vendor playwright(S-VENDOR post_copy で chromium 導入済)により wide(≥1600px)/narrow(≤900px・iPad 縦 820px 等の degrade 発火域を含む)/print emulation の 3 状態を実レンダリングし評価入力とする(HTML ソース Read のみで視覚品質を判定しない)。RQ rubric は総合 1 問『パッと見てわかるか』を頂点とし各次元はその根拠という階層構造で運用する(次元合算が総合を代替しない)。密度バランス/タイポの判定は S-REFERENCES report-writing-rules.md 追補のタイポ目標レンジ(screen 本文実効 16-18px 相当/見出し(title)・本文スケール比 ≤2.2/reading measure 65-75ch/本文カラム+sidebar 実効利用幅 ≥ viewport の 55%/縦リズム line-height 1.6-1.8)を引用して行う",
+      "evaluation_input_contract": {
+        "bundle": ["report-structure.json", "wide/narrow/print render", "computed-style/layout metrics", "navigation event log"],
+        "viewports": [899, 900, 901, 1024, 1366, 1600],
+        "interactions": ["initial-hash", "toc-click", "manual-scroll", "font-ready-layout-shift", "history-back-forward", "beforeprint-afterprint"],
+        "fail_closed": "structureまたはrender/metrics欠落時は図解適合・密度・navigationをPASSにしない"
+      },
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/report-quality-reviewer.md",
+      "prompt_layer": "7layer",
+      "provenance": "post-plan Tier2 in-place conformance 追加 (2026-07-05)。C04-C19 の 16 sub-agent 確定後に report/slide 品質補正の対称性を回復するため新設 (slide=C11 layout-optimizer/C12 ui-quality-reviewer に対する report 対称)。当初 23 component 列挙時は未存在",
+      "depends_on": [],
+      "build_target": "plugins/slide-report-generator/agents/report-quality-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C25",
+      "component_kind": "script",
+      "name": "validate-report-visual.py",
+      "script_name": "validate-report-visual.py",
+      "purpose": "report 決定論視覚ゲート (section 構造/1項目1ビジュアル/段落密度/placeholder/印刷 + 本 update 追加: block型多様性の存在/section.narrative[essence/approach/leverage] 非空/highlight・keyPoint 表現の有無/markdown表・フェンスドコード・番号リストが正しく HTML 化され<br>で潰れていないこと + 双方向の下限上限[下限=羅列でも破綻ゼロを塞ぐ、上限=body[]/paragraphs[] 二重充填の検出・節あたり highlight 過剰(要点1-2超)の検出=過剰構造化/強調過多を塞ぐ] + 本再検証追加の機械チェック(a)reportType別必須横断要素(要約/次アクション/根拠/リスク/TL;DR+型別[技術ドキュメント=前提/用語/手順/既知問題、学習解説=目標/要点/演習])の存在検出、(b)placement.grid/zones が render 結果へ live 反映(figure が section 末尾全幅固定に退化していない=DOM 位置 vs placement 指定一致)、(c)長尺 report での meta.throughLine 非空、(d)narrative 非空を section.role∈{analysis,argument}条件に限定(reference/procedure/summary は narrative 不要で category error 回避)、(e)block多様性の決定論閾値(N段落超 report は distinct block type>=2 or narrative+>=1構造 block)、(f)doc-level highlight密度の緩い上限(per-section cap に加え文書総量予算)、(g)inline highlight の非色属性(weight/underline)存在、(h)report読書CSS class 出力の存在 を検証・0=PASS/1=崩れ/2=usage)。減点型の破綻検出に加え『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も機械層で塞ぐ。slide の verify-slides.js/validate-print.js に対称な report 版。本更新(第3次: report-uiux-layout-improvement)で以下 3 種を追加検査する: (i)screen 用レイアウト CSS の存在を接合トークン pin で検査: `.report-layout` grid class・`--report-measure`(実装確定 72ch)変数・`--report-sidebar-w`(実装確定 15rem)・`--report-page-max`(実装確定 1240px)・`@media (max-width: 900px)` breakpoint(周回4 で 720→900 追随)のトークン群(C19 build_contract.structuring_scope.screen_print_layout と同一 pin。『相当する出力』の曖昧同定を排す)(要件C16)、(ii)TOC nav 要素(sticky class `.report-toc--sidebar`)+ scrollspy スクリプト(self-contained JS・active class `.is-active`)の出力存在(要件C17)、(iii)essence-visual カバレッジ検査: 論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響}=_ESSENCE_REQUIRED_ROLES)は非 none visual(visual.kind != none)を1枚持つ(表/テキストのみの『なんとなく表』を warn・--strict で fail 昇格)。非論理節(summary/reference/procedure 等)は text-first を許容し非該当=vacuous PASS(要件C19)。密度バランス(要件C18)とタイポの妥当性・図が節の要旨を一目化するかの意味適合は機械層でなく C24 evaluator へ委ねる(shape/存在の機械強制と意味適合の evaluator 判定の二層分離・Goodhart 回避)。周回2 追加(R4 HIGH是正・print/狭画面非退行の shape 検査欠落を是正): (j)`@media print` ブロックの出力存在 + 最小実質条件: print 内に `.report` 幅規則(190mm 相当)>=1 と新 block(table/code)の page-break 制御規則を持つ(空ブロックの恒真 PASS を封鎖・従来 190mm/A4 レイアウト温存の検査可能表現・要件C16)、(k)`@media print` 内での sidebar TOC 非表示規則 or scrollspy JS の print ガード(matchMedia/`window.print` 検知等)の実体の出力存在(空ガードの恒真 PASS を封鎖・要件C17)、(l)狭画面 breakpoint(`@media (max-width: ...)` 系)の出力存在 + 最小実質条件: breakpoint 内にレイアウト変更規則>=1 を持つ(空ブロックの恒真 PASS を封鎖・インライン TOC への graceful degrade の検査可能表現・要件C17)。degrade の読みやすさ・意味的成立は機械層でなく C24 evaluator へ委ねる(shape/存在と意味適合の二層分離を維持)。周回3 追加: report gate 用途では --structure 指定を必須とし欠落時 exit2(fail-open 封鎖)・placement live 検査は DOM 順序/包含関係の構造 proxy に限る(座標/視覚判定は行わない)。加えて report 読書 CSS 変数値の決定論パース検査を additive 追加する: S-REFERENCES report-writing-rules.md 追補のタイポ目標レンジ(screen 本文実効 16-18px 相当/見出し(title)・本文スケール比 ≤2.2/reading measure 65-75ch/本文カラム+sidebar 実効利用幅 ≥ viewport の 55%/縦リズム line-height 1.6-1.8)内に CSS 変数値(--fs-* スケール比・line-height・--report-measure 等)が収まることを検査する。Node engine ではなく harness glue のため Python-stdlib で持つ",
+      "purpose_override_1_3_0": "上記purpose内の旧『5種enum+任意補足』句および旧visual.intent={kind,message}句を廃止し、本フィールドを正とする。C25(iii)はessence-visualカバレッジ(論理節=role∈{分析/主張/課題/解決/所見/影響}=_ESSENCE_REQUIRED_ROLESが非none visual=visual.kind!=noneを1枚持つ)を機械検査する。schemaは1.2.0のまま(essence-visualは既存role/visual.kindを使いschema bump不要)。図が本質を突くか等の意味適合と、visual無し論理節の意味的不足はC24が判定する",
+      "uiux_additive_contract": {
+        "shape_checks": [".report-layout/card minmax/overflow-wrap", ".report-toc--sidebar/.is-active/aria-current", "beforeprint+afterprint lifecycle", "essence-visual coverage(論理節 role の visual.kind 非none)", "piecewise viewport<=2254px 55% rule"],
+        "runtime_delegate": "computed px/bounding boxes/hash-active一致/afterprint復旧はC24 Playwrightへ委譲し、C01/C02が結果bundleを必須消費する"
+      },
+      "inputs": "argv(<report.html> --structure <report-structure.json> [--strict] [--json]) (report gateでは--structure必須・欠落exit2)",
+      "outputs": "stdout(OK/JSON)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "provenance": "post-plan Tier2 in-place conformance 追加 (2026-07-05)。report が slide より品質補正・決定論ゲートで薄い負債を解消するため新設 (slide の verify-slides.js に対称)。tests/test_validate_report_visual.py で被覆。当初 23 component 列挙時は未存在",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/slide-report-generator/scripts/validate-report-visual.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {"required": true, "path": ".claude-plugin/plugin.json"},
+    "marketplace": {"required": true, "record_in": "index.plugin_meta.marketplace", "note": "source-inventory §4 の 9 surface 目 (欠落補完)。配布正本は index.plugin_meta.distribution (distributable:false・bundles 空) であり、本 surface は marketplace policy の記録先ポインタのみを持つ (掲載実体なし)"},
+    "composition": {"required": true, "path": "plugin-composition.yaml"},
+    "harness_eval": {"required": true, "path": "EVALS.json", "note": "mechanical + llm_eval。slide/report 両モードの受入を配線する"},
+    "schemas": {
+      "required": true,
+      "record_in": "index.plugin_meta",
+      "contents": ["structure.schema.json(移植・plugin-root live)", "report-structure.schema.json(新設・4 reportType 骨格・1.1.0 additive bump→本再検証で 1.2.0 additive 拡張[section.role/throughLine/transition/文書メタ/新block型/highlight第2チャネル/placement正規化]。第3次 update(report-uiux-layout-improvement)は render CSS のみで schema 非依存ゆえ schema は 1.2.0 のまま・plugin-root live)", "image-deck-plan.schema.json(移植・plugin-root live)", "evaluation-report.schema.json(移植・plugin-root live)", "image-asset-manifest.schema.json(移植・plugin-root live)"],
+      "report_structure_additive_1_1_0": {
+        "schemaVersion": "1.0.0 → 1.1.0 (additive・既存 paragraphs 後方互換維持)",
+        "added": [
+          "section.body[] block 型: {type: paragraph|table|code|ordered-list|bullet-list|subheading|key-point|stat-tile|callout|blockquote, ...} (羅列を block 構造化。callout=note/warning/tip/caution の注意喚起[既存 section.callouts を body inline へ拡張]、blockquote=引用/pull-quote は key-point[汎用ハイライト]と直交する意味的装置=M5)",
+          "section.narrative: {essence(本質課題), approach(解決策), leverage(活用/含意)} または logic:[{role: claim|evidence|implication|action}] (節内論理展開を強制)",
+          "inline highlight トークン + key-point/stat-tile ブロック (要点の色付き強調・意匠 accent 流用)",
+          "placement を live 化 (render-report.js が grid/zones/emphasis/focalPoint を反映・従来デッドフィールド)",
+          "図表番号+キャプション: table/code/visual block に caption + figureNumber(任意 additive)。render-report.js が『図1/表2』と caption を描画し相互参照可読性を担保(M4・技術ドキュメント/学習解説/提案WP で必須)",
+          "doc-level wayfinding(任意 additive): meta.toc(section heading から決定論導出する目次) + section 間 cross-reference(id 参照『第N節参照』)。長尺 report の読者移動を支える(M7)。短尺では省略可(omitted_reason)"
+        ],
+        "backward_compat": "既存 paragraphs[] は温存し body[] を optional additive として並置。schema は shape のみ additive 凍結し、意味の適合(論理が本質を突くか/強調が要点か)は C24 evaluator + report-narrative-logic.md に委ねる(Goodhart回避の二層分離)",
+        "precedence": "body[] と paragraphs[] が同一 section に共存した場合は body[] を正とし render-report.js は paragraphs[] を無視する(排他・移行既定)。legacy fixture は paragraphs のみで従来通り描画され後方互換を保つ。C25 が『body[] を持つ section で paragraphs[] も非空』の二重充填を検出し警告する(二重描画/drift 防止・S3/L7 解消)"
+      },
+      "report_structure_additive_1_2_0": {
+        "schemaVersion": "1.1.0 → 1.2.0 (additive・1.1.0 の paragraphs/body[]/narrative/highlight/placement を全温存し後方互換維持)",
+        "added": [
+          "section.role: enum {analysis, argument, reference, procedure, summary}。role により narrative を条件付き optional 化する: narrative 必須は role∈{analysis,argument} のみ、reference/procedure/summary は narrative 不要で category error(参考節・手順節に無理に本質課題→解決→活用を強いる誤り)を回避する(Grp F: MD-M1/A2-F7)",
+          "meta.throughLine: 文書全体の通し筋(冒頭=本質課題→本論=解決→結=活用のアーク)。長尺 report で非空を C25 が検査。任意 section.transition: 次節への橋渡し1文(節間接続)(Grp C: MD-H2)",
+          "meta 文書メタクラスタ: version / updatedDate / readingTime(本文語数から決定論導出) / audience(対象読者)(Grp E: MD-M8)",
+          "body[] block 型 additive: definition-list(用語定義 term↔def) / footnote+citation(末尾 reference-list 自動生成) / task-list(次アクション `- [ ]`)。details/collapsible は任意 additive(既知問題ゆえ opt-in)(Grp E: MD-M7)",
+          "inline highlight の非色冗長化: highlight トークンに font-weight/underline/border 等の第2チャネル属性を必須付与(色単一チャネル脱却=色覚アクセシビリティ。C25(g) が weight/underline 存在を検査)(Grp E: MD-M3)",
+          "placement field 正規化: producer(C18)/consumer(C19)/schema で field 集合を {grid, zones, emphasisZone, readingOrder, focalPoint} に統一。旧 placement.emphasis は inline highlight の色付き強調と字面衝突するため emphasisZone(幾何強調ゾーン)へ改名し、1.1.0 の emphasis は後方互換で別名残置(render-report.js は emphasisZone を優先し emphasis を alias 解釈)。readingOrder を consumer(C19)側にも配線(Grp H: A4-F5)",
+          "narrative 語彙の弧保存: 第1語彙(essence/approach/leverage)/第2語彙(claim/evidence/implication/action)いずれも『活用/含意/行動』相当の終端 role を必須とし、ユーザー核心弧(本質課題→解決→活用)を全 reportType で保存する。reportType→narrative 形式の binding は report-narrative-logic.md が正本(Grp F: A2-F7)"
+        ],
+        "backward_compat": "1.1.0 の全フィールドを温存する additive のみ。section.role の既定は未指定時 analysis 扱い(narrative 要求を弱めない)。shape は schema/lint/renderer で機械凍結し、意味の適合(role 判定が妥当か/throughLine が本質を突くか)は C24 evaluator + report-narrative-logic.md に委ねる(Goodhart 回避の二層分離)",
+        "placement_owner": "producer=C18 visual-strategist(emphasisZone/readingOrder/grid/zones/focalPoint を産出)・consumer=C19 report-composer(render-report.js が反映)・schema=本 surface が field 集合の SSOT。三者で field 名を統一し drift を防ぐ"
+      },
+      "report_structure_additive_1_3_0": {
+        "schemaVersion": "1.2.0 のまま(schema bump なし)。第3次 update(essence-visual/UI)は render-report.js の CSS/タイポのみで schema 非依存であり、essence-visual は既存 role/visual.kind を使うため schema フィールド追加を伴わない",
+        "added": [
+          "schema フィールド追加なし。essence-visual(本質図解)は既存の section.role(1.2.0)と visual.kind を使い、論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響}=_ESSENCE_REQUIRED_ROLES)が非 none visual(visual.kind != none)を1枚持つべき、という規律を C18(設計)/render(素通し)/C24(意味適合)/C25(カバレッジ機械検査)の各層で担保する(schema 非依存)。論理構造→図種の写像は reference report-visual-strategy.md §0.5.1 と visual-strategist VCONST_000 が正本",
+          "screen/print 幅二層化(要件C16)・sticky sidebar TOC+scrollspy(要件C17)・タイポグラフィ/密度スケール再調整(要件C18)は render-report.js/report 読書CSS(buildReportCss())の責務のみで完結し、schema フィールド追加を伴わない(renderer-only)"
+        ],
+        "backward_compat": "schema は 1.2.0 のまま後方互換を保つ(essence-visual は既存 role/visual.kind を使い schema bump 不要)。essence-visual カバレッジ(論理節=role∈{分析/主張/課題/解決/所見/影響}が visual.kind 非none を持つ)は C25 が既存フィールドで機械検査し、visual 無しでも本文に図解すべき論理構造がある場合は C24 が負値評価し vacuous PASS を防ぐ。図が本質を突くか等の意味適合は report-structure.json+render bundle で C24 が判定する",
+        "placement_owner": "producer=C18 visual-strategist(論理構造→図種の写像を形式三択に先立ち行う=essence-visual 設計 owner)・consumer=なし(render-report.js は既存 role/visual.kind を素通しするのみで新規描画ロジックを持たない)・evaluator=C24(図解適合の積極評価)・checker=C25(essence-visual カバレッジ=論理節の visual.kind 非none の機械検査)"
+      },
+      "note": "structure と report-structure は共通コア(nodes/edges/groups/theme/aiVisual)を共有する。本 update の 1.1.0/1.2.0 additive も slide の structure.schema.json 共通コアを複製せず共有する。真 schema 5本(structure/image-deck-plan/evaluation-report/image-asset-manifest の移植 4 + report-structure 新設 1)は plugin-root schemas/ が唯一 live SSOT(additive-bump 可能な live schema・vendor-digest 非 pin)。既存 example fixture 3本(example.structure.json/example.v8.structure.json/example-full.structure.json)+ README.md のみ upstream byte-frozen fixtures として vendor.byte_parity_subtrees の schemas-fixtures subtree に置く(Grp I/A4-F4: 真 schema は plugin-root live へ・fixture のみ vendor へ、で inventory↔handoff S-SCHEMAS を byte 一致させ byte-freeze 抵触を解消。二重 SSOT 回避)"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup",
+      "byte_parity_owner": "vendor(whole-tree)。本 surface は文書/参照のみを byte 実体として保有し、Node/テンプレ/意匠アセットの byte 実体は二重管理しない(LOW-1 解消)",
+      "contents": ["既存 42 references(*.md・本 surface が byte 正本)", "report新規 references(report-types/report-writing-rules/report-visual-strategy/mermaid-integration)", "report-narrative-logic.md(節内論理展開と横断要素カタログの正本)", "report-writing-rules.md/report-visual-strategy.md/report-quality-checklist.md(第3次UI追補: computed本文16-18px/title-body比<=2.2/line-height比1.6-1.8/65-75ch、55%条件はviewport<=2254px・ultrawideは1240px上限優先、card最小28rem相当と1列degrade、899/900/901境界、deep-link/aria-current/print lifecycle、essence-visual(論理構造→図種の写像・§0.5.1)と図解不足の負値評価)", "feedback/*(運用知見・移植任意)"],
+      "pointer_only": {
+        "note": "以下は実体を vendor(whole-tree)が携行し、本 surface からは相互参照ポインタとしてのみ言及する(byte 実体の二重 SSOT にしない)",
+        "items": ["118 HTML templates(実体= vendor scripts subtree の templates/)", "pagination(.html/.css/.js)(実体= vendor assets subtree)", "print-styles.css(実体= vendor assets subtree)", "style-genome-kanagawa-comic-diagram.json(実体= vendor assets subtree)", "d3-components(実体= vendor assets subtree)", "gas-deploy-guide.md(実体= vendor assets subtree)"]
+      }
+    },
+    "vendor": {
+      "required": true,
+      "copy_mode": "whole-tree",
+      "derivation": "Node 製レンダリング/画像/印刷/検証エンジン一式を byte 維持で携行し Python-stdlib script へ書き換えない(既存資産の毀損回避)。skill/agent は Bash(node *) で起動する。携行単位はファイル個別列挙(allowlist)ではなく `scripts/`・`assets/`・`schemas/`・`package.json` をサブツリー丸ごと byte copy する whole-tree 方式とし、移植元 presentation-slide-generator の scripts/ 直下 *.js/*.cjs 実測30本(共有ランタイム utils.js、および log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む全数)+ scripts/hooks/deck-postgen-hook.js(移植元)+ scripts/templates/(118 templates)+ scripts/test-fixtures/ を1本の取りこぼしもなく携行する(cherry-pick しない=個別 import 依存の断線を構造的に排除)。個別ファイル名の記載は『代表例(非網羅)』であり allowlist として扱わない。report新規 Node(render-report.js/mermaid-render.js)はこの携行ツリーへの additive。source-inventory.md §5「30 Node scripts→vendor」は本 whole-tree 方式で 30本+新規2=漏れ0 で解消される。report新規 Node が要求する mermaid 依存は、byte copy 完了 (vendor-digest-manifest.json 照合 PASS) 後の additive 変更として package.json へ追記し package-lock.json も同時更新して依存解決を固定する (copy→manifest 照合→additive の順序規約。additive 変更部分は parity_scope.excluded_additive で照合除外し、品質は tests/lint の別検査で担保する)。",
+      "byte_parity_subtrees": [
+        {"source": "presentation-slide-generator/scripts/", "target": "plugins/slide-report-generator/vendor/scripts/", "policy": "丸ごと byte copy。30 Node script(*.js/*.cjs 全数・utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む)+ hooks/deck-postgen-hook.js(移植元)+ templates/(118)+ test-fixtures/ を例外なく携行。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
+        {"source": "presentation-slide-generator/assets/", "target": "plugins/slide-report-generator/vendor/assets/", "policy": "丸ごと byte copy。d3-components/(7)・src/scripts/(animations.js/main.js/slider.js)・src/styles/(4 css)・pagination.html/.css/.js・print-styles.css・style-genome-kanagawa-comic-diagram.json・gas-deploy-guide.md を含む意匠/技術トークン一式。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
+        {"source": "presentation-slide-generator/schemas/ (example fixtures + README のみ)", "target": "plugins/slide-report-generator/vendor/schemas-fixtures/", "policy": "byte copy。本 subtree は upstream byte-frozen fixtures 専用 = example fixture 3本(example.structure.json/example.v8.structure.json/example-full.structure.json)+ README.md の 4 file のみ携行する。真 schema 4本(structure/image-deck-plan/evaluation-report/image-asset-manifest)は plugin-root schemas/ が唯一 live SSOT(additive-bump 可能な live schema)ゆえ本 subtree に置かず vendor-digest-manifest.json にも非 pin(Grp I/A4-F4 解消: 案A採用・inventory↔handoff S-SCHEMAS を byte 一致させ byte-freeze 抵触を回避)。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存・schemas subtree は README+fixture3=4 file を pin)"},
+        {"source": "presentation-slide-generator/package.json", "target": "plugins/slide-report-generator/vendor/package.json", "policy": "byte copy。package-lock.json も携行し依存解決を固定。node_modules(playwright 等)は install 時に再取得。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (manifest では package.json/package-lock.json を個別 subtree として pinned・live tree 非依存)"}
+      ],
+      "source_digest_manifest": "vendor-digest-manifest.json",
+      "parity_baseline": "manifest",
+      "parity_scope": {
+        "baseline": "plan 同梱 vendor-digest-manifest.json (sha256・191 files pinned・upstream presentation-slide-generator v8.4.2。schemas subtree は真 schema 4本を plugin-root live へ移し fixture3+README=4 file のみ pin ゆえ従来 195 から 4 減算=191)。byte-parity の比較先は live tree でなく本 manifest",
+        "verifier": "lint-vendor-parity.py (build 時に plugin scripts/ へ同梱予定・plan 段階では契約のみ)",
+        "byte_parity_targets": "byte_parity_subtrees 由来の全 file (copy 直後に manifest と全件照合)",
+        "excluded_additive": ["render-report.js (新規・owner C19)", "mermaid-render.js (新規・owner C19)", "package.json/package-lock.json への mermaid 依存 additive 追記 (derivation の順序規約)"],
+        "excluded_policy": "additive_new_files と依存追記は byte-parity の明示的除外 (byte 維持契約との矛盾解消)。品質は tests_min>=80 + lint の別検査で担保する"
+      },
+      "additive_new_files": [
+        {"file": "render-report.js", "role": "report HTML レンダラ (新規)", "owner": "C19", "verification": "tests_min"},
+        {"file": "mermaid-render.js", "role": "report Mermaid統合 (新規)", "owner": "C19", "verification": "tests_min"}
+      ],
+      "excluded": [],
+      "contents": ["render-slide.cjs", "template-engine.cjs", "style-builder.cjs", "svg-builder.cjs", "d3-bootstrap.cjs", "utils.js(共有ランタイム・11+箇所から import される中核依存)", "workflow-manager.js", "log_usage.js(workflow-manager.js の runbook step から参照)", "html-scaffold.js", "test-schema-builder-equivalence.js", "build-image-prompts.js", "generate-images-codex.js", "build-deck-html.js", "build-image-manifest.js", "build-single-html.js", "convert-to-webp.js", "validate-ai-image-assets.js", "evaluate-image-consistency.js", "validate-structure.js", "verify-slides.js", "evaluate-deck.js", "validate-print.js", "validate-d3.js", "sync-checker.js", "precheck-layout.js", "phase-gate.js", "cross-deck-consistency.js", "check-consistency.js", "auto-linebreak.js", "layout-calculator.js", "hooks/deck-postgen-hook.js(移植元)", "templates/*.tpl(118)", "test-fixtures/*(構造検証テスト用フィクスチャ)", "package.json", "package-lock.json", "render-report.js(新規)", "mermaid-render.js(新規)"],
+      "contents_note": "上記 contents は代表例の明示列挙(非網羅)。byte 実体の網羅性は allowlist ではなく copy_mode=whole-tree の byte_parity_subtrees が保証する(ファイル追加・依存追加時も自動被覆)"
+    },
+    "scripts": {
+      "required": true,
+      "record_in": "component C23 + C25 + build-time governance gates",
+      "note": "plugin scripts/ 直下の実体は6本。buildable script component は2本: (1) validate-output-mode.py = C23 (output_mode/reportType 値域 + --preflight ゲート)。(2) validate-report-visual.py = C25 (report 決定論視覚ゲート・本 update で block型多様性/narrative 非空/highlight 表現/表・コード・番号リストの正 HTML 化を追加検査)。残り4本は buildable component ではなく plugin-root の governance glue: lint-vendor-parity.py (vendor byte-parity・copy 直後に vendor-digest-manifest.json と全件照合)、validate-plugin-completeness.py (配布可能性/surface 網羅を build 後に静的検証)、lint-reference-attribution.py (references 出典帰属の静的検証)、lint-contract-drift.py (散文↔実装 contract drift 検証)。glue 4本は buildable 総数に数えないため buildable component 総数は 25 (script component は C23/C25 の2本)",
+      "surface_files": ["validate-output-mode.py (C23 buildable script component)", "validate-report-visual.py (C25 buildable script component・report 決定論視覚ゲート)", "lint-vendor-parity.py (vendor byte-parity gate)", "validate-plugin-completeness.py (surface completeness gate)", "lint-reference-attribution.py (reference attribution gate)", "lint-contract-drift.py (contract drift gate)"]
+    },
+    "mcp_app_connector": {"required": false, "omitted_reason": "画像生成は codex exec(Bash)経由で扱う。MCP/app connector を新設しない"},
+    "notion_config": {"required": false, "omitted_reason": "Notion DB を読み書きしない(ローカル HTML 出力のみ)。改善要望の Notion 受け皿も設けず feedback_deploy は opt-out にする"}
+  }
+}

@@ -1,0 +1,228 @@
+{
+  "build_status": "realized",
+  "build_status_reason": "2026-07-05 に本計画の 4 component (C01 run-intake-interview 拡張 / C02 validate-procedure-completeness.py 新設 / C03 run-intake-finalize 拡張 / C04 quality_gate.py 拡張) を実 build 完了。build_target 4 件は全て plugins/skill-intake/ 配下にディスク実在し、validate-plan-coverage の計画↔実体 completeness gate (build_target ディスク実在照合) が発火・PASS する状態。",
+  "plugin_concept": "skill-intake 更新 — 5 軸ヒアリング(run-intake-interview) + purpose-excavator 8 技法に、現状実施手順(as-is procedure)の構造化抽出軸とその決定論フォールバックを追加し、purpose と procedure の両方を intake.json ハンドオフへ格納する",
+  "derivation": "artifact_class=existing-plugin-update ゆえ本 plan は新規 plugin scaffold(envelope-draft)を生成しない(R3-emit-specs.md: envelope-draft は artifact_class=plugin-plan 限定)。既存 4 SubAgent (assumption-challenger/user-profiler/purpose-excavator/summarizer) は全て『起動独立性(context_fork=true・manifest 駆動の固定順次起動・非並列)』× 『LLM 自律 dispatch 非該当(workflow-manifest.json の delegateType/delegateName が唯一の起動契約)』という同型パターンを持ち、adversarial な仮説検証・sycophancy 回避の客観推定・自己肯定バイアス回避のレビューなど『主スレッドと対立/独立した判断』を要する場面でのみ SubAgent 化されている。as-is procedure 抽出はユーザーが既に認識している手順を順序立てて聞き取る直接的事実収集であり、run-intake-interview の既存 5 軸 (出力先/情報源/共有相手/真の課題/ナレッジ資産) の会話継続性の中で完結する性質が同一である(adversarial でも sycophancy 回避対象でもない)。よって新規 procedure-excavator 相当の独立 SubAgent は新設せず、run-intake-interview (C01) を拡張して 6 本目の procedure 軸として追加する。既存の抽象回答判定機構 (`validate-answer-abstraction.py` + `abstract-answer-patterns.md`) を procedure 軸へ拡張再利用し、2 連続抽象判定/未回答で overview フォールバックへ切り替える決定論閾値を新設する(C1/C2/C6)。purpose と procedure の両方が intake.json に揃うまで Phase 10/11 (ひいては run-skill-create/run-plugin-dev-plan へのハンドオフ) へ進めないゲートは、Phase 9 (run-intake-finalize, C03) と既存 plugin-root 決定論ゲート `quality_gate.py` (C04, 拡張)に実装する(C3)。procedure 完全性判定は run-intake-interview 自身の Phase4 完了ゲートと quality_gate.py の Phase9 ゲートの双方から参照される(第二消費者あり)ため no-split threshold を満たし、独立 script (C02, placement_scope=plugin-root) へ昇格する。新規 sub-agent/slash-command/hook は不要と判断した: (a) sub-agent — 上記の通り procedure 抽出は非 adversarial な直接聴取のため独立 context 化の動機がない。既存 purpose-excavator (8 技法) は『真の目的』の深掘りに特化し『現状の手順』の再構成を目的としないため、procedure 接続の拡張は本サイクルでは見送り(gap として P01 に明記のみ)。(b) slash-command — procedure 軸は既存の `run-skill-intake` → Phase4 自動フローに内包され、ユーザーが軸ごとに手動起動する新規エントリポイントを要しない。(c) hook — 本要件が必要とするのは『フェーズ遷移前の完全性ゲート』であり、これは決定論 script の exit code 判定(既存 workflow-manifest.json の fatal_exit_codes / Skill 完了チェックリストの枠組み)で足りる。ツール呼び出し単位の遮断(PreToolUse 等)を要する破壊的操作は存在しないため新規 hook は不要。追加 goal-spec checklist C7 (as-is/to-be フィールド分離+混入検証ゲート) / C8 (相手固有の具体性記録) についても新規 component は起こさない: C7 の混入検証は procedure ブロック完全性を既に判定している C02 (validate-procedure-completeness.py) の責務拡張として実装し (第二消費者関係を維持したまま no-split threshold に抵触しない)、C8 の具体性記録は C01 のプロンプト層 (質問設計・記録指示) 拡張として実装する。ヒアリング段階で to-be 設計・最適化提案そのものを行わない (goal-spec constraints) ため、to-be 専用の永続フィールドは新設しない — 『分離』は handoff 対象 as-is フィールド (`procedure.*` と `five_axes.rows[name=\"真の課題\"].content`) に to-be 語彙が混入していないことをゲートで強制する形で実現する。raw 会話ログ中の to-be 発話は検査対象外であり、C01 が handoff 対象 as-is フィールドへ保存しないことで混入なしを維持する。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-intake-interview",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-intake-interview",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "run-skill-intake から Phase 4 として呼ばれたとき",
+        "5 軸ヒアリングに加えユーザーの現状実施手順 (as-is procedure) を構造化抽出する必要があるとき"
+      ],
+      "goal": "5 軸ヒアリングシートと intent_contract 充足に加え、ユーザーの現状実施手順 (procedure: 順序付きステップ × 入力/出力/使用ツール/頻度) を構造化 JSON として interview.json に格納し、手順を言語化できないユーザーには工程数目安・関与者・頻度の概略 overview フォールバックへ決定論的に切り替わっている状態",
+      "purpose_background": "現状 interview.json に procedure 軸が存在せず、手順が推測ベースで build され手戻りが発生している (goal-spec background)。procedure 抽出は Phase4 の会話継続性の中で完結する非 adversarial な直接的事実収集であり、独立 context を要する既存 4 SubAgent の分離パターン (起動独立性 × LLM 自律 dispatch 要否) には該当しないため、新規 SubAgent を起こさず本 skill (Phase4) を拡張する",
+      "checklist": [
+        "procedure.mode が detailed / overview_fallback のいずれかで確定する",
+        "detailed モードは procedure.steps[] の各要素が action/input/output/tool/frequency を非空で持つ",
+        "overview_fallback モードは procedure.difficulty_flag=true かつ procedure.overview (step_count_estimate/participants/frequency) が非空",
+        "validate-answer-abstraction.py の抽象判定を procedure 軸 (axis=procedure) へ拡張し、2 連続抽象判定または未回答が続いたときのみ overview フォールバックへ決定論的に切り替える (同一回答パターン→同一経路)",
+        "procedure/課題/流れ/実行したいこと の as-is フィールドに、ヒアリング担当側の解釈・一般化・改善提案・to-be 提案 (べきである/理想は/最適化/より良い方法等) を混入させない (goal-spec C7)",
+        "『解決したい課題・問題』『現状の流れ・仕組み』『実行したいこと』を固有名詞・実例・頻度・関与者などの相手固有の具体性を伴って記録し、平均的・一般論的な言い回しへの置換や要約を行わない。回答が抽象的な場合は正規化せず追加質問で具体化を促す (goal-spec C8)"
+      ],
+      "output_contract": "procedure ブロックを含む拡張版 interview.json (schemas/output.schema.json 拡張) + 実在制御点 (question-plan.json/build-questions.py/build-sheet-json.py/check-five-axes-coverage.py) の拡張により runtime 出力 sheet.md/sheet.json に procedure 節が生成されること",
+      "boundary": "深掘り技法 (purpose-excavator 8 技法)・6 軸プロファイル推定・表層仮説検証には踏み込まない。procedure ブロックの完全性判定ロジックは validate-procedure-completeness.py (C02) に委ね、本 skill 内に重複実装しない。手順の最適化・理想化 (to-be 設計・最高の手順の組み立て) は本 skill のスコープ外であり後段 build の責務 (goal-spec constraints)。as-is フィールドへの改善提案・一般化の混入は許可しない",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-procedure-elicit", "summary": "ユーザー発話から現状実施手順を順序付きステップ (各ステップの入力/出力/使用ツール/頻度) として構造化抽出する", "prompt_required": true},
+        {"id": "R2-procedure-fallback", "summary": "手順化困難 (2 連続抽象判定/未回答) を決定論判定し overview フォールバックへ切り替え、工程数目安・関与者・頻度の最小情報を収集する", "prompt_required": true},
+        {"id": "R3-as-is-fidelity", "summary": "課題・問題・流れ・実行したいことを、ヒアリング担当側の解釈・一般化・改善提案を混入させず相手固有の具体性 (固有名詞/実例/頻度/関与者) で as-is フィールドへ忠実記録する。抽象的な回答には正規化せず追加質問で具体化を促し、to-be 提案・最適化は行わない (goal-spec C7/C8)", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": [
+        "validate-answer-abstraction.py (procedure 軸へ拡張)",
+        "validate-procedure-completeness.py (C02)",
+        "validate-interview-json.py (procedure ブロック検証を拡張)"
+      ],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "procedure.mode=detailed のとき steps[] 各要素が action/input/output/tool/frequency を非空で持ち、mode=overview_fallback のとき difficulty_flag=true かつ overview が非空であることを validate-procedure-completeness.py が検証し exit0 になる", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "同一のユーザー回答パターン (2 連続抽象判定/未回答 vs 具体的な手順回答) を与えたとき、常に同じ経路 (overview フォールバック or detailed 確定) が選択される決定論分岐であることを受入テストが確認する", "verify_by": "test"},
+          {"id": "IN2", "loop_scope": "inner", "text": "handoff 対象 as-is フィールド (procedure.* と five_axes.rows[name=\"真の課題\"].content) に to-be 語彙 (べきである/理想は/最適化/より良い方法/一般的には 等) の混入が無いことを validate-procedure-completeness.py 拡張の contamination check が検証し exit0 になる (goal-spec C7)", "verify_by": "script"},
+          {"id": "OUT2", "loop_scope": "outer", "text": "『解決したい課題・問題』『現状の流れ・仕組み』『実行したいこと』が固有名詞・実例・頻度・関与者などの相手固有の具体性を伴って記録され、一般論・平均的回答への置換が無いことを独立レビュー (content_review/elegant_review) が確認する (goal-spec C8)", "verify_by": "elegant-review"},
+          {"id": "OUT3", "loop_scope": "outer", "text": "決定論フォールバック (2 連続抽象判定/未回答) 発火時にヒアリングが停止せず overview フォールバック収集へ切り替わり最後まで継続することを、実会話 trial (P11 シナリオ 2/3) を含む受入テストが確認する (goal-spec C2)", "verify_by": "test"}
+        ]
+      },
+      "depends_on": [],
+      "build_target": "plugins/skill-intake/skills/run-intake-interview/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "validate-procedure-completeness.py",
+      "script_name": "validate-procedure-completeness.py",
+      "purpose": "interview.json の procedure ブロックが mode=detailed (steps[] 各要素の action/input/output/tool/frequency 非空) または mode=overview_fallback (difficulty_flag=true かつ overview 非空) のいずれかで完全かを決定論判定する共有ゲート。加えて handoff 対象 as-is フィールド (procedure.* と five_axes.rows[name=\"真の課題\"].content) に to-be 語彙 (べきである/理想は/最適化/より良い方法/一般的には 等、参照パターン集 to-be-vocabulary-patterns.md) が混入していないかを検出する contamination check を実行する (goal-spec C7)。raw 会話ログは検査対象外である。run-intake-interview の Phase4 完了チェックリストと、quality_gate.py (C04) 拡張による Phase9 ハンドオフゲートの双方から参照される (第二消費者あり=no-split threshold 充足)",
+      "inputs": "argv(--interview FILE)",
+      "outputs": "stdout(JSON {complete: bool, mode, missing: [...], contamination: {detected: bool, fields: [...], matched_terms: [...]}})/stderr(usage error)",
+      "exit_codes": "0=complete かつ contamination.detected=false / 1=incomplete または contamination.detected=true / 2=usage",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C01"],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/skill-intake/scripts/validate-procedure-completeness.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage+contamination-check"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-intake-finalize",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-intake-finalize",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "run-skill-intake から Phase 9 として呼ばれたとき",
+        "Phase1-8 成果物 (procedure 拡張済み interview.json を含む) が全て揃い intake.{md,json} を統合生成するとき"
+      ],
+      "goal": "procedure (現状実施手順) と true_purpose (本質的課題) の両方が intake.json に格納され、いずれか一方が欠落したまま Phase10 (Notion 公開)/Phase11 (next-action)、ひいては下流 run-skill-create / run-plugin-dev-plan へのハンドオフへ進めない状態",
+      "purpose_background": "現状 intake.json は true_purpose 相当 (five_axes.rows[name=\"真の課題\"].content / purpose.json) のみを下流へ渡し procedure が載らないため、ハーネス構築側が手順を推測し手戻りが発生している (goal-spec C3)。Phase9 は全成果物を統合する唯一の集約点であり、purpose+procedure 両方の存在を強制する自然なゲート位置である",
+      "checklist": [
+        "intake.json に sections.6_five_axes_summary.procedure と purpose セクションが両方非空で存在する",
+        "validate-procedure-completeness.py (C02) が exit0 でなければ Phase9 を FAIL とし Phase4 へ差し戻す (C02 の contamination check で to-be 語彙混入が検出された場合も同様に FAIL・差し戻し, goal-spec C7)",
+        "quality_gate.py 拡張 (C04) が purpose+procedure 両方非空を検査し FAIL なら Phase10/11 へ進めない"
+      ],
+      "output_contract": "sections.6_five_axes_summary.procedure + purpose 両方を含む intake.{md,json} + validation.procedure_completeness フィールド (C02 結果) + quality_gate/cross_check 結果",
+      "boundary": "Notion 公開 (Phase10)・次アクション判定 (Phase11) には踏み込まない。procedure/purpose 完全性の判定ロジック自体は C02/C04 に委ね、本 skill は集約と差し戻し制御のみを担う",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-dual-gate", "summary": "procedure と true_purpose の両方が intake.json へ格納されるまで下流ハンドオフを進めないゲートを Phase9 で実行し、欠落時は該当 Phase (Phase4 or Phase5/8) へ差し戻す", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": [],
+      "external_systems": [],
+      "deterministic_checks": [
+        "validate-procedure-completeness.py (C02)",
+        "quality_gate.py 拡張 (C04)",
+        "cross_check.py (intake.json/intake.md 整合確認。additive な procedure 節が検査対象に入るかを build 時に確認し、入る場合のみ許容リスト更新、それ以外は既存のまま)"
+      ],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "intake.json 生成前に validate-procedure-completeness.py と quality_gate.py 拡張の両方を実行し、procedure/purpose いずれかが欠落していれば exit0 にならず Phase9 が FAIL する", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "procedure または true_purpose を意図的に欠落させた入力を与えたとき、intake.json が生成されず下流ハンドオフ (run-skill-create/run-plugin-dev-plan) へ進めないことを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C01", "C02"],
+      "build_target": "plugins/skill-intake/skills/run-intake-finalize/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "quality_gate.py",
+      "script_name": "quality_gate.py",
+      "purpose": "intake.json の完了ゲートに『true_purpose (purpose-excavator または sections.6_five_axes_summary.axes[axis_id=\"real_problem\"].answer 由来) と sections.6_five_axes_summary.procedure の両方が非空』という新 invariant を追加し、いずれか一方欠落時は Phase10 (Notion 公開)/Phase11 (next-action) へ進めない決定論ゲートへ拡張する (既存 plugin-root 決定論ゲートの拡張・新設ではない)。加えて intake.json.validation.procedure_completeness の contamination check 結果 (handoff 対象 as-is フィールドへの to-be 語彙混入検出) を Phase9 集約時に読み込み、混入検出時も同様に Phase10/11 へ進めない (goal-spec C7、判定ロジック自体は C02 に一元化し重複実装しない)。contamination 分岐は C03 迂回・intake.json 直接改変への defense-in-depth であり通常フロー (C03 成功時のみ格納) では detected=false のみが格納される。validation.procedure_completeness 欠落時は missing_procedure_validation として exit 1 (fail-closed)",
+      "inputs": "argv(output/<hint>/intake.json), including sections.6_five_axes_summary.procedure and validation.procedure_completeness",
+      "outputs": "stdout(OK)/stderr(violation: missing_purpose | missing_procedure | missing_procedure_validation | to_be_contamination_detected)",
+      "exit_codes": "0=PASS / 1=violation / 2=usage",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C02", "C03"],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/skill-intake/scripts/quality_gate.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".claude-plugin/plugin.json",
+      "note": "version bump のみ (entry_points 変更なし。procedure 拡張は既存 skill 2 件の拡張 + plugin-root script 2 件の新設/拡張のため新規 entry_point 追加不要)"
+    },
+    "composition": {
+      "required": true,
+      "path": "plugin-composition.yaml",
+      "note": "既存 component 列挙を変更しない (新規 skill/agent/command/hook なし)。procedure 拡張は既存 run-intake-interview / run-intake-finalize エントリの配下"
+    },
+    "harness_eval": {
+      "required": true,
+      "path": "EVALS.json",
+      "note": "run-intake-interview (C01) / run-intake-finalize (C03) の既存 EVALS entry へ procedure 関連 criteria (feedback_contract IN1/OUT1) と as-is 忠実性関連 criteria (feedback_contract IN2/OUT2, goal-spec C7/C8) を追記する"
+    },
+    "references_config_assets": {
+      "required": true,
+      "note": "references/handoff-contract.md (root, 正本) へ procedure 抽出結果を build 時に参照する契約行を追加する (goal-spec C5)。skills/run-skill-intake/references/handoff-contract.md は pointer のまま変更不要 (複製禁止 invariant を維持)。加えて run-intake-interview 配下へ新規 references/to-be-vocabulary-patterns.md (既存 abstract-answer-patterns.md と対の contamination 判定語彙集) を追加する (goal-spec C7)"
+    },
+    "schemas": {
+      "required": true,
+      "note": "references/intake.schema.json (plugin-root の intake.json contract 正本, schema_version 2.0.0) の既存 sections.6_five_axes_summary へ procedure property を追加し、root に任意 validation.procedure_completeness を追加する。13 番目 section は新設しない。run-intake-finalize/schemas/output.schema.json は aggregator 参照のラッパーのみのため直接変更不要"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "procedure 抽出は既存 vendor (jinja2/markupsafe) の範囲内で完結し新規依存を追加しない"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "手順抽出はテキストヒアリングの範囲に留まり新規 MCP/app connector を追加しない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "Notion 公開・DB 契約は本改善のスコープ外 (goal-spec constraints)。procedure データは intake.json/Notion ページの既存レンダリング経路にそのまま乗る"
+    }
+  }
+}

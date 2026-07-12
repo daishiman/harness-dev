@@ -1,0 +1,216 @@
+{
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "mfk_actuals.py (MF実績抽出器)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "operation": "create",
+      "integration_targets": ["plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py", "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py", "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_actuals.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py",
+          "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
+          "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: 保持キー契約に actual_amount/reliable-issued を追記し curr/prev-verdicts JSON へ直列化する(R2-classify/C03 が読む・行欠落 curr=None は GAP-R1-COLLECT-CURR-PRESENT として tracked)"
+        ],
+        "completion_gate": "mfk_actuals.py creation is incomplete unless lib/mfk_reconcile.py propagates actual_amount/issued evidence for amount_mismatch/no_supply/inactive statuses and guard-mfk-no-reinvent.py sanctions the new actuals functions. canonical carrier は行 top-level の actual_amount 単一に固定し(evidence.amount/amount を carrier にしない)、find_mf_match の evidence:None は据え置いて build_sink_rows(reconcile_invoices.py:348)/run-mf-invoice-reconcile DB2 matched_amount を触らない。supply_state∈{inactive_canceled,inactive_pending} の行は issued=False・actual_amount=null を強制し、_is_issued/_amount_of の evidence.amount fallback は supply_state==active に限定する(取消前額を issued 化しない)。amount_mismatch の actual_amount 代表は find_mf_match の scoped_candidates と同一スコープから選定する(複数候補時は category 一致優先→最大 amount)"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_actuals.py",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "mfk_fetch_audit.py (新設)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C05"],
+      "operation": "create",
+      "integration_targets": ["plugins/mf-kessai-invoice-check/lib/mfk_api.py", "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py", "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md", "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_fetch_audit.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/lib/mfk_api.py",
+          "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md",
+          "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
+        ],
+        "completion_gate": "fetch audit is incomplete unless read-only fetch paths preserve pagination_trace(total/has_next/end/items_count/params/issue_date_range) and pass it to C06. かつ billings/transactions(per-billing)/lookback/customer-name の全 read-only fetch site が trace 変種を通すこと。C06 は trace 皆無(部分でなく完全不在)を fidelity violation として fail-closed 扱いにする(legacy iter_all の pagination.total 破棄残置を通さない)"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_fetch_audit.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "mfk_period_report.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C05", "C06"],
+      "operation": "modify",
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_period_report.py",
+        "canonical_fields": {
+          "amount": "actual_amount",
+          "prev_amount": "prev_actual_amount",
+          "legacy_aliases": ["evidence.amount", "amount", "prev_amount"],
+          "legacy_aliases_policy": "legacy_aliases(evidence.amount/amount/prev_amount)は READ 専用の後方互換で参照するのみで WRITE しない(evidence 不変・carrier は top-level actual_amount 単一)"
+        },
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py"
+        ],
+        "completion_gate": "C03 は --fidelity-report を必須入力にし、(1)STATE_NEW の裏付けなし(12ヶ月ルックバックに年契約一括なし/未実行)で gap_check を GAP_ACTION(☐要確認)へ flip・裏付けありのみ GAP_OK 維持(D1)、(2)当月 pagination/count NG(C06 exit1)で fail-closed 非emit、(3)lookback 部分欠損(C06 exit3)の per_customer_diff 該当行は要確認へ降格する。これらを実装しない限り未完了",
+        "merge_policy": "既存build_targetをread→差分merge・削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink/find_mf_match evidence:None 据え置き(build_sink_rows/DB2 matched_amount 不変)"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "notion_report_sink.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03"],
+      "operation": "modify",
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/notion_report_sink.py",
+        "schema_policy": "preserve existing 8 columns; write MF actual amounts into existing 今月の金額/先月の金額 and put amount_diff_flag/stale_reason into 先月と今月の比較/コメント instead of adding new physical columns",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py: (K4)reliable MF-issued(C05 issued=True の権威ある実額訂正)を _STRUCTURAL_NORMAL_MARKERS と同格の cross-run guard bypass 事由へ追加し前run要対応☐→今runMF-issued正常を☑へ訂正する; (K6)upsert_report_rows が query_month で対象月の既存行を列挙し今回 emit(incoming)キー集合に無い行を真の orphan として残置理由(先月/今月の比較・コメント)を PATCH する(行削除はせず注記のみ)"
+        ],
+        "completion_gate": "notion_report_sink.py modify は未完了 unless (K4)前run要対応☐→今runMF-issued正常の cross-run 訂正が既persist済み誤☐行へ伝播し、(K6)今月MFにも契約在籍にも無い真の orphan 行(旧バグrunのphantom/誤☑)へ残置理由が付与される",
+        "merge_policy": "既存build_targetをread→差分merge・削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink(冪等マージ自体は温存)。ただし reliable MF-issued の cross-run guard bypass 事由拡張は削除禁止域から除外する(bypass 事由のみ拡張・冪等マージは不変)"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-mf-invoice-report",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03", "C04", "C05", "C06"],
+      "operation": "modify",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-mf-invoice-report",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json",
+        "responsibility_updates": [
+          "prompts/R1-collect.md: collect items plus pagination_trace and pass trace to C06; 全 GET を trace 付きで実行し、mfk_actuals の actual_amount/reliable-issued を curr/prev-verdicts JSON へ直列化する(保持キー契約); STATE_NEW 候補>0 なら12ヶ月ルックバックを必須fetchし欠落時は該当行を要確認固定(fail-closedでなく降格)",
+          "prompts/R2-classify.md: consume actual_amount canonical fields",
+          "prompts/R3-verify.md: detect false positives, false negatives, and under-report(C05 issued=true のキーが C01 レポート行に欠落)",
+          "prompts/R4-render.md: document 8-column preserved schema with actual amounts in existing amount columns",
+          "prompts/R1-collect.md, prompts/R2-classify.md, prompts/R4-render.md, scripts/mfk_period_report.py ヘッダ: 旧 component-ID(C05=mfk_period_report/C06=notion_report_sink)を plan 新採番(C05=mfk_actuals/C06=mfk_fetch_audit/mfk_period_report=C03/notion_report_sink=C04)へ揃える(参照整合の最小差し替え・executor の参照先取り違え防止)"
+        ],
+        "merge_policy": "既存build_targetをread→差分merge・削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "sub-agent",
+      "name": "mfk-report-verifier",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C05", "C06"],
+      "operation": "modify",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "mfk-report-verifier",
+        "merge_policy": "既存build_targetをread→差分merge・削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/agents/mfk-report-verifier.md",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "run-mf-invoice-doctor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C06"],
+      "operation": "modify",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "run-mf-invoice-doctor",
+        "merge_policy": "既存build_targetをread→差分merge・削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/commands/run-mf-invoice-doctor.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/mf-kessai-invoice-check/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。GAP-ENVELOPE-001 として tracking し、script route 用 GAP-SCRIPT-BUILDER とは分離する。既存 manifest はすでに version 0.3.0 のため、本 plan は entry_points を温存し、必要なら description/last_audited のみを改善内容へ同期する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "配布更新(cachebuster)はユーザー承認後に実行する"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "medium",
+      "text": "plugin envelope executor is external to run-plugin-dev-plan"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。script route(C03/C04/C05/C06)は executor_hint=plugins/harness-creator/scripts/build-script-route.py が消費し、gap_ref は routing 語彙の明示参照として維持する。build-script-route.py が使えない環境では script routes は未実行扱いで、C01/C02/C07 だけを build して完了にしてはならない"
+    },
+    {
+      "id": "GAP-FEEDBACK-DEPLOY-PORTABILITY",
+      "severity": "low",
+      "text": "実 manifest の description は改善要望投入経路を「symlink 配備」と表記するが、distribution.distributable=true の場合 plugin_meta.feedback_deploy.portability は形式契約上 vendored のみが有効値のため、本 plan の index.md では vendored を宣言する。実際の配備方式(symlink/vendored)の実装確認は後段 build 側の責務とし、本 plan の宣言は形式契約優先とする"
+    },
+    {
+      "id": "GAP-R1-COLLECT-CURR-PRESENT",
+      "severity": "medium",
+      "text": "R1直列化契約(prompts/R1-collect.md 保持キー)と C05 は actual_amount/reliable-issued を既存 verdict 行へ注入するが、curr=None(取引先×商品の行そのものが今月内訳に無い)には行を生成しない(curr-present 未実装)。このため ⑤隔月/分割/単発 と D2 対象外月は curr-present 実装まで partial。tracked=true・blocking=false(安全側 over-report で真の月次漏れは隠さない=D1/C06 per_customer_diff と C02 過少報告カテゴリが安全網)。curr-present 行生成の根治は本 open_issue で分離追跡し、後段 build で GAP_ACTION 降格の実データ発火を確認する"
+    }
+  ]
+}

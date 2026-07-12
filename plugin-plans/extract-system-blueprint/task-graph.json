@@ -1,0 +1,2535 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "P01",
+      "title": "requirements",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01"
+    },
+    {
+      "id": "P01-x-01",
+      "title": "`goal-spec.json` が purpose を非空で保持し、受入観点 (checklist C1-C9) が purpose 語彙から導出されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-01"
+    },
+    {
+      "id": "P01-x-02",
+      "title": "C8として並列数1・cache・request/byte/page/interaction budget・Retry-After・有界backoff・停止条件が明文化され、再試行でbudgetをリセットしない。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-02"
+    },
+    {
+      "id": "P01-x-03",
+      "title": "target_plugin_slug が ASCII kebab (`extract-system-blueprint`) で確定し以降のフェーズがそれを参照できる。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-03"
+    },
+    {
+      "id": "P01-x-04",
+      "title": "「成果物は参考/学習目的限定」の制約が constraints へ明文化され、C11 doc-emit の利用目的限定注記へ紐づいている (スクリーンショットにも適用)。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-04"
+    },
+    {
+      "id": "P01-x-05",
+      "title": "C9として主要画面の有界screenshot(browser-render取得・不在時gap)+visual formation全カテゴリ、coverage manifest、field単位gap、local注釈assetが明文化され、既定budget非緩和が宣言されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-05"
+    },
+    {
+      "id": "P01-x-06",
+      "title": "C03-C06/C13のstructured expert_lenses/prompt_contract、実名見出し、cross-lens conflicts、neutral synthesis、非模倣/非推薦guard、evidence_refs+confidenceが明文化されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-06"
+    },
+    {
+      "id": "P01-x-07",
+      "title": "C1として機能アフォーダンスfact(feature_map素材)・security観測fact(cookie属性/認証UI/CSP全文)・CWV参考実測fact(単一訪問scope_note付き)・compliance表面fact(privacy/規約/特商法/CMP)・site URL台帳fact(discovered/in_scope/excluded+reason)が明文化されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-07"
+    },
+    {
+      "id": "P01-x-08",
+      "title": "サイト全域被覆(full_siteモード)がscope分類(system関連=in_scope、アフィリエイト/広告/外部SNS/トラッカー=excluded+reason)のfail-closed判定と、瞬間負荷レバー不変・per-run有界+multi-run resumeで要件化され、security観測は受動観測のみ(侵入テスト・脆弱性スキャン・認証突破を行わない)と明記されている。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-08"
+    },
+    {
+      "id": "P01-x-09",
+      "title": "`check-plugin-goal-spec.py` が exit0 (R1 goal-spec + plugin 固有アンカー充足)。",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01-x-09"
+    },
+    {
+      "id": "P02",
+      "title": "design",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02"
+    },
+    {
+      "id": "P02-x-01",
+      "title": "全 14 component が build_target 非空・builder/build_kind 整合・depends_on 非循環で inventory に載っている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-01"
+    },
+    {
+      "id": "P02-x-02",
+      "title": "considered_component_kinds が 5 種全列挙され、plugin_level_surfaces (manifest/composition/harness_eval/references_config_assets/schemas/vendor) の採否が明示されている (外部サービス連携surfaceなし=MCP/Notion非依存)。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-02"
+    },
+    {
+      "id": "P02-x-03",
+      "title": "`envelope-draft/plugin.json` に manifest draft (entry_points / hooks 配線 / distribution) が設計されている。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-03"
+    },
+    {
+      "id": "P02-x-04",
+      "title": "schemaがvisual formation全カテゴリ、coverage manifest、field単位gap、redacted/annotated asset refs(browser-render取得時・任意)を持ち、成果物がローカル完結の横断契約として確定している。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-04"
+    },
+    {
+      "id": "P02-x-05",
+      "title": "C03-C06/C13のstructured expert_lenses/prompt_contract、C13 content-intent契約(verbatim copy fact入力→価値提案/キーメッセージ/読者/トーン/CTA意図/JTBD仮説のinference出力)、C06 essence章契約、C11 completeness、C01 File Upload、C02 anti-overfit評価が確定し、topology 12→13の構造変更はユーザー承認済である。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-05"
+    },
+    {
+      "id": "P02-x-06",
+      "title": "tech_signals/nonfunctional_baseline(C03/C09のfact・追加network 0・observed_scope明示)とnamed stack同定(C04のinference・signal factへのevidence_refs+confidence必須)のレーン二層化、C14 apply契約(C02 PASS済blueprint+自社コンテキスト入力→採用/回避/差別化のinference出力・ローカルのみ・doc-emit.py --check-apply)が確定し、topology 13→14の構造変更はユーザー承認済である。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-06"
+    },
+    {
+      "id": "P02-x-07",
+      "title": "R5(被覆の深さ・広さ)契約が確定している: C03/C09=機能アフォーダンス/CWV/security観測/compliance表面fact、C05=user_journeys推測、C04=security_design(OWASPレンズ・受動観測のみ)/delivery_topology推測、C06=feature_map+user_journeys+security_design+delivery_topology章統合、C09=URL discovery、C12=scope分類(in_scope/excluded+reason)+crawl_profile(single|full_siteモード・瞬間負荷レバー不変・per-run有界+multi-run resume)、C11=site coverage manifest emit。全て既存component契約拡張でtopology 14不変。",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02-x-07"
+    },
+    {
+      "id": "P03",
+      "title": "design-review",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03"
+    },
+    {
+      "id": "P03-x-01",
+      "title": "elegant-review C1-C4 が全 PASS し、proposer と異なる approver が設計を承認している。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-01"
+    },
+    {
+      "id": "P03-x-02",
+      "title": "単一 skill への退化が無く、C09/C08がC12へdepends_onし、C03がC09/C08へdepends_onする安全DAGがhandoffと1:1一致する。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-02"
+    },
+    {
+      "id": "P03-x-03",
+      "title": "C12はURL文字列だけでallowを推測せず根拠付きAuthzEvidenceと低負荷budgetを発行し、unknown/期限切れ/予算超過をfail-closedにする。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-03"
+    },
+    {
+      "id": "P03-x-04",
+      "title": "C03はWebFetchをSPA browserとして扱わず、MCP非依存のbrowser-render(C15)でrendered観測を試み不在時は明示gapを出し、C07がC01 draft→C02 PASS(ローカル品質評価)を強制する。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-04"
+    },
+    {
+      "id": "P03-x-05",
+      "title": "delta設計を審査済み: (a)瞬間負荷レバー非緩和、computed style中心・主要element限定、(b)C08のfail-closed、(c)C11がvisual formation全カテゴリ/coverage/field gap/redaction/overlayを検査、(d)C03-C06/C13 promptに実名見出し+非模倣/非推薦+neutral synthesis、(d2)C13 content-intent契約(verbatimコピーfact入力→伝達意図/JTBD仮説のinference出力・C06 essence章統合・topology 12→13承認済)、(e)rendered観測はMCP非依存のbrowser-render(C15・ローカルheadless ChromeをBash経由起動)で取得を試み不在時はobservation_gap縮退、(f)tech_signals/nonfunctional_baseline=C03/C09のfact(追加network 0・observed_scope明示)・named stack同定=C04のinference(signal factへのevidence_refs+confidence必須)のレーン二層化、(g)C14(run-blueprint-apply)がC02 PASS済(draft_hash一致・ローカル品質評価)blueprintのみをfail-closedに消費しapply-recommendationsをローカルのみへ導出する(外部公開なし・対象origin非アクセス・blueprint本体非混入・doc-emit.py --check-apply決定論検査・topology 13→14承認済)、(h)R5被覆の深さ・広さ: C09のURL discovery→C12のscope分類(system関連=in_scope、アフィリエイト/広告/外部SNS/トラッカー=excluded+reason)がfail-closedで、crawl_profile full_siteモードでも瞬間負荷レバー(origin並列1・最小間隔2000ms・Retry-After・有界backoff)を一切緩めずper-run有界+cache/ledger/site coverage manifestでmulti-run resumeし、C03のfeature_map素材(fact)とC05のuser_journeys(inference)が明示区別され、C04のsecurity_design推測は受動観測のみ(侵入テスト・脆弱性スキャン・認証突破を行わない)である、が成立している。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-05"
+    },
+    {
+      "id": "P03-x-06",
+      "title": "差し戻しが解消され後続フェーズへ進める状態になっている。",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03-x-06"
+    },
+    {
+      "id": "P04",
+      "title": "test-design",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04"
+    },
+    {
+      "id": "P04-x-01",
+      "title": "C01 の criteria が purpose 由来で inner (IN1) + outer (OUT1/OUT2) を各 1 件以上持つ (汎用ゲート言い換えに退化していない)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-01"
+    },
+    {
+      "id": "P04-x-02",
+      "title": "C14 の criteria が purpose 由来で inner (IN1=doc-emit.py --check-apply exit0+C02 verdict事前検証+network 0) + outer (OUT1=自社コンテキスト接地・blueprint外の無根拠主張0・evidence_refs+confidenceで判断追跡可能) を持ち、apply-recommendationsがblueprintに無い事実を新規主張する敵対fixtureを--check-applyが拒否する設計になっている。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-02"
+    },
+    {
+      "id": "P04-x-03",
+      "title": "OUT1はvisual formationカテゴリ別fixture、field単位gap、verbatimコピーfact被覆とessence章明示、実名prompt guard、低負荷ledgerを逆テストする。OUT2はC02独立verdict(ローカル品質評価PASS/FAIL・proposer≠approver)がdraft_hashに束縛されローカル成果物の受入基準充足を検証する。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-03"
+    },
+    {
+      "id": "P04-x-04",
+      "title": "persona-non-contamination の敵対テストを criteria/fixture として設計: lens由来の意見を妥当なfactレコード形式へ偽装した敵対例を1件以上含み、schema/C02がそれをfactとして受理せずinferenceへ落とすかFAILする。lens由来inferenceのconfidence.level=highは複数の直接evidenceがある場合のみ通す(confidence校正)。評価はpersona名の出現でなくfact/inference分離と根拠品質で行う(anti-overfit)。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-04"
+    },
+    {
+      "id": "P04-x-05",
+      "title": "実装前は criteria が未達 (Red) であることが確認できる。",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04-x-05"
+    },
+    {
+      "id": "P05",
+      "title": "implementation",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P05"
+    },
+    {
+      "id": "P05-C01-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/skills/run-extract-blueprint/"
+    },
+    {
+      "id": "P05-C02-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/skills/assign-blueprint-fidelity-evaluator/"
+    },
+    {
+      "id": "P05-C03-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/agents/frontend-surface-analyzer.md"
+    },
+    {
+      "id": "P05-C04-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/agents/backend-inference-analyzer.md"
+    },
+    {
+      "id": "P05-C05-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/agents/uiux-rationale-analyzer.md"
+    },
+    {
+      "id": "P05-C06-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/agents/architecture-essence-synthesizer.md"
+    },
+    {
+      "id": "P05-C06-marker-contract",
+      "title": "C06/C11のMermaid 5図種マーキング規約(%% blueprint-diagram: <slug>)をinventory契約へ明文化",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugin-plans/extract-system-blueprint/component-inventory.json"
+    },
+    {
+      "id": "P05-C07-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/commands/extract-blueprint.md"
+    },
+    {
+      "id": "P05-C08-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py"
+    },
+    {
+      "id": "P05-C09-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C09",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/fetch-snapshot.py"
+    },
+    {
+      "id": "P05-C10-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/mermaid-validate.py"
+    },
+    {
+      "id": "P05-C11-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/doc-emit.py"
+    },
+    {
+      "id": "P05-C12-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/authz-classify.py"
+    },
+    {
+      "id": "P05-C13-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/agents/content-intent-analyzer.md"
+    },
+    {
+      "id": "P05-C14-01",
+      "title": "各 `entity_ref` component がinventory/handoffのdepends_on top-sort後に固有build_targetへ1回だけ生成され、当該componentのoutput contractとGreen条件を満たす。",
+      "phase_ref": "P05",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/skills/run-blueprint-apply/"
+    },
+    {
+      "id": "P06",
+      "title": "test-run",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06"
+    },
+    {
+      "id": "P06-check-screens-all-categories",
+      "title": "doc-emit.py --check-screens に visual formation 全カテゴリの field 単位 gap 決定論強制を追加 (+extraction JSON schema で field 強制)",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/doc-emit.py"
+    },
+    {
+      "id": "P06-coverage-test-suites",
+      "title": "全 script/hook (C08-C12) に pytest テストスイート+coverage>=80 計測を追加 (harness_coverage.min 実測ゲート充足)",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/tests/"
+    },
+    {
+      "id": "P06-impl-deterministic-png-shrink",
+      "title": "4MiB以下への決定論的PNG縮小実行器を実装",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/shrink-screenshot.py"
+    },
+    {
+      "id": "P06-impl-layout-template-dedup",
+      "title": "layout_template_hash dedup実行器を実装",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/layout-template-dedup.py"
+    },
+    {
+      "id": "P06-impl-browser-render",
+      "title": "MCP非依存 browser-render (C15: ローカルheadless ChromeをBash経由起動しJS後DOM+screenshot取得・不在時exit3 graceful縮退) をfixture駆動で実装",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/browser-render.py"
+    },
+    {
+      "id": "P06-llm-lane-fixtures-and-dedup",
+      "title": "P06 LLM推論レーンの formal fixture 整備 + layout_template_hash dedup 実装 (CWV/compliance/feature_map対journeys)",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/tests/"
+    },
+    {
+      "id": "P06-x-01",
+      "title": "全 component の harness_coverage.min≥80 が実測で満たされ、kind_pass の観点が緑になる。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-01"
+    },
+    {
+      "id": "P06-x-02",
+      "title": "現状値を計画に焼かず、閾値と観点のみを契約として保持している。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-02"
+    },
+    {
+      "id": "P06-x-03",
+      "title": "C12/C08/C09/C03のdeny|unknown/期限切れ/予算超過/429/403/Retry-After/cache hitを含むdeny・負荷matrixが緑で、origin並列数1とbudget非リセットを実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-03"
+    },
+    {
+      "id": "P06-x-04",
+      "title": "C03のstatic/SSR・browser-render有/無(browser-unavailable)・blockedの各fixtureでfactとobservation_gapが混同されず、WebFetchだけでSPA成功扱いしない。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-04"
+    },
+    {
+      "id": "P06-x-05",
+      "title": "C03がvisual formation全カテゴリをfixtureで取得し、色/gradient/border/radius/shadow/font/media/SVG/icon/filter/transform/pseudo/state/motion/responsive/a11y/tokenの欠測を無言欠落させずfield単位gapにする。画面→region→主要element coverageと注釈番号1:1を検査する。computed-style採取で追加network 0、state操作はmax_interactions内、再読込はledger計上、鍵画面gapはC9 FAILとする。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-05"
+    },
+    {
+      "id": "P06-x-06",
+      "title": "実名レンズ有効時もfactへ意見が混入せず、required prompt headings/非模倣/非推薦/cross-lens conflicts/neutral synthesisが存在する。名前だけのfixtureはFAIL、根拠付き推論はPASS、highは複数直接evidenceだけを許す。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-06"
+    },
+    {
+      "id": "P06-x-07",
+      "title": "content/essence fixtureで、verbatimコピーfact(見出し階層/CTA/microcopy/meta・OGP/構造化データ)の採取が追加network 0で行われ欠落が理由付きgapになること、C13推測が全てevidence_refs+confidenceで接地すること、C06 essence章(本質的問題JTBD/読者/価値提案/キーメッセージ/トーン/positioning)が明示されfactと区別されることを実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-07"
+    },
+    {
+      "id": "P06-x-08",
+      "title": "browser-render fixtureで認可fail-closed(C12 decide共有)、ブラウザ不在時のexit3 graceful縮退(browser-unavailable→observation_gap)、偽バイナリでのJS後DOM+screenshot取得、request ledger記録を実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-08"
+    },
+    {
+      "id": "P06-x-09",
+      "title": "tech/nonfunctional fixtureでtech_signals(header/generator/bundleパス/third-party domain/cookie名)とnonfunctional_baseline(転送byte/cache/圧縮/画像format/security headers)が追加network 0・observed_scope付きで採取され、named同定が全てsignal factへのevidence_refs+confidenceで接地することを実測する。apply fixtureでC02 verdict不在/hash不一致/FAILのfail-closed拒否、blueprint外の事実新規主張を--check-applyが拒否すること、出力がローカルのみ(network 0)であることを実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-09"
+    },
+    {
+      "id": "P06-x-10",
+      "title": "サイト全域被覆fixtureで、discovered URLのin_scope/excluded分類(アフィリエイト/広告/外部SNS/トラッカー=excluded+reason・判定不能はexcluded)がfail-closedになること、full_siteモードでも瞬間負荷レバー(origin並列1・最小間隔2000ms)が緩まずper-run有界予算+cache/ledgerでmulti-run resumeし全in_scope URLへ到達すること、layout template hashによる同型ページ重複排除でscreenshot枚数が減ること、site coverage manifestのpendingが完全被覆と偽装されないことを実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-10"
+    },
+    {
+      "id": "P06-x-11",
+      "title": "security観測fixtureで、cookie属性(Secure/HttpOnly/SameSite)・認証UI観測・CSP全文がfactとして採取され、security_design推測(OWASP観点)は受動観測のみを根拠とし侵入テスト/脆弱性スキャン/認証突破への言及・実行が0件であることを実測する。CWV fixtureでLCP/CLS/INP/TTFBが追加network 0・単一訪問scope_note付きで採取されること、compliance fixtureでprivacy/規約/特商法/cookieバナー・CMPの存在・URL・構成要約が採取されることを実測する。feature_map(C03 fact集約)とuser_journeys(C05 inference)が同一fixtureで混同されずevidence_refs+confidenceの有無で判別できることを実測する。",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06-x-11"
+    },
+    {
+      "id": "P07",
+      "title": "acceptance-criteria",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07"
+    },
+    {
+      "id": "P07-x-01",
+      "title": "C12/C08/C09/C03/C01: HTTP snapshotと低負荷browser観測からUI要素・限定画面遷移・実行後DOM・観測通信、tech_signals(header/generator/bundleパス/third-party domain/cookie名)とnonfunctional_baseline(転送byte/cache/圧縮/画像format/security headers・observed_scope明示)、機能アフォーダンスfact(feature_map素材)・security観測fact(cookie属性/認証UI/CSP全文)・CWV参考実測fact(単一訪問scope_note付き)・compliance表面fact(privacy/規約/特商法/CMP)・site URL台帳fact(site_inventory=discovered/in_scope/excluded+reason)がprovenance付きfactとして追加network 0で抽出され、欠測がinferenceへ昇格していない (C1)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-01"
+    },
+    {
+      "id": "P07-x-02",
+      "title": "C04/C05/C13/C14/C01: バックエンド機構・設計意図に加え、コピーの伝達意図(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図)と本質的問題(JTBD)仮説、tech_signals factを根拠とする技術スタックnamed同定(framework/hosting/CDN/analytics/SaaS)、主要タスクのuser_journeys推測、security_design推測(認証方式/セッション管理/CSRF・XSS対策/CSP評価/攻撃面をOWASP観点で・受動観測のみ)、delivery_topology推測(CDN/edge/origin構成・static|SSR|ISR判定・キャッシュ階層)、および自社コンテキスト提供時のapply-recommendationsが根拠+確度つき推測として事実と明示区別され json へ記録済みと判定できる。推測は著名エンジニア役割レンズで深めるがレンズ由来主張もevidence_refs+confidence必須でfactへ非混入(persona-non-contamination)と判定できる (goal-spec 要件 C2)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-02"
+    },
+    {
+      "id": "P07-x-03",
+      "title": "C06/C10: 対象システム接地の5種Mermaid図(①対象システム全体構成図/②事実↔推測区別レイヤ図/③画面遷移図(screen-flow)/④データフロー・リクエスト/レスポンスのシーケンス図/⑤主要エンティティのデータモデル図)が製品出力に含まれると判定できる。harness-meta図(as-is/Before-After/plugin責務分離)は本plan自身の可読図で製品出力契約外 (goal-spec 要件 C3)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-03"
+    },
+    {
+      "id": "P07-x-04",
+      "title": "C01/C02/C07/C11: local draft hashへC02独立verdict(ローカル品質評価PASS/FAIL)がdraft_hash束縛で発行され、proposer(C01)≠approver(C02)が保たれ、成果物がローカル完結する (C4)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-04"
+    },
+    {
+      "id": "P07-x-05",
+      "title": "C12/C08/C09/C03: deny|unknown/期限切れをfail-closedに遮断し、無断アクセス・認可外スクレイピング0をAuthzEvidence/deny ledgerで示す (C5)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-05"
+    },
+    {
+      "id": "P07-x-06",
+      "title": "C02: top-level schema必須項目・重要fact欠測0・未回答質問0・最小scaffold骨子導出に加え、essence章(本質的問題JTBD/想定読者/価値提案/キーメッセージ/トーン/positioning・差別化)の明示とverbatimコピーfactの被覆、feature_map(C03機能アフォーダンスfact集約)とuser_journeys(C05推測)の明示区別された被覆を同一draft hashへの独立verdictでPASSする=見た目だけの空の器を禁止 (C6)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-06"
+    },
+    {
+      "id": "P07-x-07",
+      "title": "C14: 自社コンテキストを与えたときC02 PASS済blueprintから採用/回避/差別化の3分類apply-recommendationsがローカルへ導出され、全項目がblueprint実在anchorへのevidence_refs+confidence付きinference・blueprint外の無根拠主張0件・doc-emit.py --check-apply exit0と判定できる(未提供時はblueprint単体で完結) (C6)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-07"
+    },
+    {
+      "id": "P07-x-08",
+      "title": "component-inventory.json: 取得・分析・生成・公開・自社適用の責務がcommand/skill/agentへ単一責務分解されていると判定できる (goal-spec 要件 C7)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-08"
+    },
+    {
+      "id": "P07-x-09",
+      "title": "C12/C08/C09/C03: origin並列数1・cache再利用・request/byte/page/interaction budget・最小間隔・Retry-After・有界backoff・停止条件がrequest ledgerで満たされ、予算超過0。crawl_profile full_siteモードでも瞬間負荷レバーが緩まず、per-run有界予算+cache/ledger/site coverage manifestによるmulti-run resumeで全in_scope URLへ到達すると判定できる (C8)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-09"
+    },
+    {
+      "id": "P07-x-10",
+      "title": "C03/C11/C02: visual formation全カテゴリ、coverage、field gap、redacted screenshot、layout.json、番号付きoverlayが揃い、AIが色合い・文字・box model・配置・asset・state・motion・responsive差分を再形成できる。合成design-tokens.json(カラーパレット+type/spacing/radius/shadow(elevation)/breakpoint/z-layer scale+theme別color set+document brand色)が観測色を漏れなく被覆(孤児0)しlight/dark両テーマが揃い色値が正準表現で保持され、AIが色合いを一貫再現できる。サイト全域被覆時は台帳の全in-scope画面がscreenshot対象(browser-render取得時)でlayout template hashによる同型ページ重複排除が働き、site coverage manifest(discovered/extracted/pending/excluded+reason)が無言欠落なく保持されpendingを完全被覆と偽装しない。annotated PNGはローカルrendered/配下で確認できる。取得不能(browser不在含む)は理由付きgap (C9)。",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07-x-10"
+    },
+    {
+      "id": "P08",
+      "title": "refactoring",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08"
+    },
+    {
+      "id": "P08-goalseek-boilerplate-dedup",
+      "title": "goal-seek boilerplate passage (2 SKILL.md間) を共有参照へ寄せ lint-ssot-duplication --strict の DUP-PASSAGE を解消",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/skills/"
+    },
+    {
+      "id": "P08-x-01",
+      "title": "lint-ssot-duplication が exit0 で、共有ロジック (C09/C10/C11/C12) が一本化されている。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-01"
+    },
+    {
+      "id": "P08-x-02",
+      "title": "C08 hook と C09 script が authz-classify.py (C12) の同一モジュールを import している (機械検査=『C08 と C09 が同一モジュールを import』・認可分類述語の二重実装0)。C15 browser-render も C12 発行の同一 AuthzEvidence/budget(decide())を import 共有し、認可・低負荷レバーの二重定義が0である(screenshot 専用 budget は発行しない)。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-02"
+    },
+    {
+      "id": "P08-x-03",
+      "title": "C12へのdepends_onはP02/P05で既に成立しており、本phaseは依存導入を先送りせず重複実装の除去だけを行う。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-03"
+    },
+    {
+      "id": "P08-x-04",
+      "title": "WebFetchをレンダリング済みブラウザとして扱う重複経路、欠測をinference化するfallback、外部サービス(MCP/Notion)へegressする経路が0件。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-04"
+    },
+    {
+      "id": "P08-x-05",
+      "title": "リファクタリングによってテストが赤に戻っていない (tdd-refactor 維持)。",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08-x-05"
+    },
+    {
+      "id": "P09",
+      "title": "quality-assurance",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09"
+    },
+    {
+      "id": "P09-deterministic-parity-nonvisual",
+      "title": "doc-emit に非visual blueprint categoryの決定論field-level parity強制を追加(tech_stack/nonfunctional/feature_map/journeys/security/topology/cwv/complianceのレーン強制+receipt検証+prompt_contract+章欠落拒否)",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/doc-emit.py"
+    },
+    {
+      "id": "P09-schema-emit-parity",
+      "title": "schema materialize時にdoc-emit emit shape↔system-blueprint.schema.jsonのparity検査を配線",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/schemas/"
+    },
+    {
+      "id": "P09-tighten-compliance-surface-schema",
+      "title": "compliance surface子schemaをfail-closed強制",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/schemas/system-blueprint.schema.json"
+    },
+    {
+      "id": "P09-x-01",
+      "title": "全 component で P0 lint が component_kind 別に exit0。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-01"
+    },
+    {
+      "id": "P09-x-02",
+      "title": "build-trace coverage が全 component で PASS し、schema parity (frontmatter↔schema required) が一致。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-02"
+    },
+    {
+      "id": "P09-x-03",
+      "title": "content-review verdict=PASS・sha_match=true を独立 SubAgent の現 SHA 再生成で得ている。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-03"
+    },
+    {
+      "id": "P09-x-04",
+      "title": "schema parityがvisual formation全カテゴリ、coverage、field単位gap、3 asset refs、注釈番号↔element_id、prompt_contract、design_tokens(palette/各scale/theme別color set)、document_brand、tech_stack(signals fact/identified inference)、nonfunctional_baseline(observed_scope付き)、apply-recommendations(3分類・evidence anchor)を強制し、無言欠落・根拠0 inference・未redactテキスト・screenshot欠落のlayout詐称(browser不在gapを除く)・観測色のpalette孤児を拒否する。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-04"
+    },
+    {
+      "id": "P09-x-05",
+      "title": "schema parityがfeature_map(C03機能アフォーダンスfact集約)/user_journeys(C05推測)/security_design(C04推測・OWASP観点)/delivery_topology(C04推測)/cwv_field_sample(C03 fact・scope_note付き)/compliance_surfaces(C03/C09 fact)/site_inventory(C09採取・C12分類のfact・discovered/in_scope/excluded+reason/coverage)を強制し、fact/inferenceレーン混同・pending無言欠落を拒否する。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-05"
+    },
+    {
+      "id": "P09-x-06",
+      "title": "AuthzEvidence/request ledger/verdict receiptのschemaと、C12→C09/C15/C08→C03、C01→C02→C07/C14のhandoff依存が一致する。",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09-x-06"
+    },
+    {
+      "id": "P10",
+      "title": "final-review",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10"
+    },
+    {
+      "id": "P10-x-01",
+      "title": "elegant-review C1-C4 が final スコープで全 PASS。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-01"
+    },
+    {
+      "id": "P10-x-02",
+      "title": "governance-check (runbook / CI 配線) が PASS。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-02"
+    },
+    {
+      "id": "P10-x-03",
+      "title": "detect-unassigned が orphan 0 件・13 フェーズ完全で、独立 approver が承認している。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-03"
+    },
+    {
+      "id": "P10-x-04",
+      "title": "handoff routes=inventory components=task-graph producesが14件1:1で、P02から実build_targetをproduceせず、P05のcomponent taskだけがproduceする。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-04"
+    },
+    {
+      "id": "P10-x-05",
+      "title": "C1-C9のE2E evidenceが揃い、重要fact欠測・無断アクセス・request budget超過が0件である。",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10-x-05"
+    },
+    {
+      "id": "P11",
+      "title": "evidence",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11"
+    },
+    {
+      "id": "P11-x-01",
+      "title": "evidence 5 要素が全て Markdown に記録されている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-01"
+    },
+    {
+      "id": "P11-x-02",
+      "title": "認可済みfixture URL、snapshot/draft hash、AuthzEvidence、deny matrix、request ledger、fact/inference/gap、5図、visual formation coverage/field gap、verbatimコピーfactとessence章(本質的問題JTBD/読者/価値提案/キーメッセージ/トーン/positioning)の記録、tech_signals/nonfunctional_baseline(observed_scope付き)とnamed同定のevidence接地、(自社コンテキスト提供時)apply-recommendationsのdoc-emit.py --check-apply exit0記録、asset hash(browser-render取得時)、prompt guard、C02 verdict(ローカル品質評価)が揃う。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-02"
+    },
+    {
+      "id": "P11-x-03",
+      "title": "site coverage manifest(discovered/extracted/pending/excluded+reason)がfull_siteモードの到達状況を無言欠落なく示し、security観測記録が受動観測のみ(侵入テスト/脆弱性スキャン非実行)であることを明記し、CWV参考値(scope_note付き)とcompliance表面記録(privacy/規約/特商法/CMPの存在・URL・構成要約)が揃う。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-03"
+    },
+    {
+      "id": "P11-x-04",
+      "title": "第三者が記録から受入充足 (C1-C9) を再現でき、secret/個人情報/対象側の機微な応答本文・スクリーンショット内の機微はredactされている。",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11-x-04"
+    },
+    {
+      "id": "P12",
+      "title": "documentation",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12"
+    },
+    {
+      "id": "P12-x-01",
+      "title": "6 タスク雛形が埋まり、install 手順 (marketplace/CLI/Desktop) が非空で存在する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-01"
+    },
+    {
+      "id": "P12-x-02",
+      "title": "概念 (Part1) と技術 (Part2、事実/推測確度スキーマの読み方を含む) の中学生説明が非空で存在する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-02"
+    },
+    {
+      "id": "P12-x-03",
+      "title": "lessons-learned / bundles.json / feedback_contract_ssot へ反映されている。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-03"
+    },
+    {
+      "id": "P12-x-04",
+      "title": "runbookにvisual formation field一覧/coverage/gap、content fact(verbatimコピー)とessence章の読み方・レンズ差替方法、静的HTTP+browser-render(C15)の低負荷取得、実名Lens見出しと非模倣/非推薦guard、browser-render起動例・exit3 graceful縮退、Retry-Afterを記載する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-04"
+    },
+    {
+      "id": "P12-x-05",
+      "title": "runbookにサイト全域被覆(full_site起動・scope分類の読み方・multi-run resume手順・瞬間負荷レバー不変)、feature_map/user_journeys章の読み方(fact集約とinferenceの区別)、security_design章の受動観測限界(侵入テスト/脆弱性スキャン非実施)、delivery_topology/CWV参考値(単一訪問scope_note)の読み方を記載する。",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12-x-05"
+    },
+    {
+      "id": "P13",
+      "title": "release",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13"
+    },
+    {
+      "id": "P13-x-01",
+      "title": "P01-P12 の完了チェックリストが全て満たされている。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-01"
+    },
+    {
+      "id": "P13-x-02",
+      "title": "リリースに向けた残タスク (build完了後の人手 feature→main) が soft note として整理されている (PR 自体はゲート化しない)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-02"
+    },
+    {
+      "id": "P13-x-03",
+      "title": "ドメイン外項目 (IPC/Cloudflare/PR作成 等) が写像対象外として DROP 記録され、逆に『対象システムのスクリーンショット/レイアウト』は製品成果物として in-scope (C9) と記録されている (自プラグイン自身の GUI 証跡スクショは引き続き不要=P11)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-03"
+    },
+    {
+      "id": "PLAN-responsibility-anchor-fix",
+      "title": "inventory responsibility_anchor(C03/C04/C05/C13/C06)をR2-analyze.mdへ是正+anchor∈owner responsibilities整合lint追加(planner)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/extract-system-blueprint/component-inventory.json"
+    },
+    {
+      "id": "PLAN-surfaces-as-build-nodes",
+      "title": "plugin_level_surfaces(required)をtask-graph build node化しbuilder割当+gate付与・provenance-chainへsurface実在assert組込(planner構造是正)",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/extract-system-blueprint/component-inventory.json"
+    }
+  ],
+  "edges": [
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-02",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-03",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-04",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-05",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-06",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-07",
+      "to": "P01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-01",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-02",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-03",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-04",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-05",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-06",
+      "to": "P02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-02",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-03",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-marker-contract",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C10-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C13-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C13-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-check-screens-all-categories",
+      "to": "P06-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-coverage-test-suites",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-impl-deterministic-png-shrink",
+      "to": "P06-llm-lane-fixtures-and-dedup"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-impl-layout-template-dedup",
+      "to": "P06-llm-lane-fixtures-and-dedup"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-impl-browser-render",
+      "to": "P06-llm-lane-fixtures-and-dedup"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-llm-lane-fixtures-and-dedup",
+      "to": "P06-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-01",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-02",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-03",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-04",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-05",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-06",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-07",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-08",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-09",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-10",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-11",
+      "to": "P05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-01",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-02",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-03",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-04",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-05",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-06",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-07",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-08",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-09",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-10",
+      "to": "P06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-goalseek-boilerplate-dedup",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-01",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-02",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-03",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-04",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-05",
+      "to": "P07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-deterministic-parity-nonvisual",
+      "to": "P09-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-schema-emit-parity",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-tighten-compliance-surface-schema",
+      "to": "P06-llm-lane-fixtures-and-dedup"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-01",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-02",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-03",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-04",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-05",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-06",
+      "to": "P08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-01",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-02",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-03",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-04",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-05",
+      "to": "P09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-01",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-02",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-03",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-04",
+      "to": "P10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-01",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-02",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-03",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-04",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-05",
+      "to": "P11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-01",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-02",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-03",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "PLAN-responsibility-anchor-fix",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "PLAN-surfaces-as-build-nodes",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C01-01",
+      "to": "plugins/extract-system-blueprint/skills/run-extract-blueprint/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C02-01",
+      "to": "plugins/extract-system-blueprint/skills/assign-blueprint-fidelity-evaluator/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C03-01",
+      "to": "plugins/extract-system-blueprint/agents/frontend-surface-analyzer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C04-01",
+      "to": "plugins/extract-system-blueprint/agents/backend-inference-analyzer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C05-01",
+      "to": "plugins/extract-system-blueprint/agents/uiux-rationale-analyzer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C06-01",
+      "to": "plugins/extract-system-blueprint/agents/architecture-essence-synthesizer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C07-01",
+      "to": "plugins/extract-system-blueprint/commands/extract-blueprint.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C08-01",
+      "to": "plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C09-01",
+      "to": "plugins/extract-system-blueprint/scripts/fetch-snapshot.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C10-01",
+      "to": "plugins/extract-system-blueprint/scripts/mermaid-validate.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C11-01",
+      "to": "plugins/extract-system-blueprint/scripts/doc-emit.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C12-01",
+      "to": "plugins/extract-system-blueprint/scripts/authz-classify.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C13-01",
+      "to": "plugins/extract-system-blueprint/agents/content-intent-analyzer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C14-01",
+      "to": "plugins/extract-system-blueprint/skills/run-blueprint-apply/"
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+ "plan_dir": "plugin-plans/ubm-goal-setting",
+ "evaluator": {
+  "name": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY",
+  "version": "2026-07-11",
+  "context": "fresh-reset+3-independent-lanes+independent-post-verify"
+ },
+ "verdict": "PASS",
+ "thought_methods": [
+  "批判的思考",
+  "演繹思考",
+  "帰納的思考",
+  "アブダクション",
+  "垂直思考",
+  "要素分解",
+  "MECE",
+  "2軸思考",
+  "プロセス思考",
+  "メタ思考",
+  "抽象化思考",
+  "ダブル・ループ思考",
+  "ブレインストーミング",
+  "水平思考",
+  "逆説思考",
+  "類推思考",
+  "if思考",
+  "素人思考",
+  "システム思考",
+  "因果関係分析",
+  "因果ループ",
+  "トレードオン思考",
+  "プラスサム思考",
+  "価値提案思考",
+  "戦略的思考",
+  "why思考",
+  "改善思考",
+  "仮説思考",
+  "論点思考",
+  "KJ法"
+ ],
+ "conditions": {
+  "C1": {
+   "id": "no_contradiction",
+   "status": "PASS",
+   "summary": "2-source intent、required-primary全量、scheduler無人sync、C07 plugin-root、surface owner matrixを全artifactで統一した。旧1-channel/manual-watch/denominator-exclusion/skill-scope文言は対象成果物から0件。",
+   "evidence": [
+    "goal-spec.json purpose/background/constraints/open_questions",
+    "component-inventory.json C02/C03/C05/C07/C08",
+    "phase-02-design.md and phase-05-implementation.md placement/count parity"
+   ]
+  },
+  "C2": {
+   "id": "no_missing",
+   "status": "PASS",
+   "summary": "source adapter契約、自動sync、厳格全量ledger、relation producer、graph validator、harness artifact index、consult、全component Red/AC、surface parity ownerを被覆した。",
+   "evidence": [
+    "8 components: C01-C08",
+    "P04/P07/P09 cover all 8 components",
+    "check-requirements-coverage.py exit0 and detect-unassigned.py orphan 0"
+   ]
+  },
+  "C3": {
+   "id": "consistent",
+   "status": "PASS",
+   "summary": "inventory 8件、handoff 8 routes、envelope新設entry point 4件、phase counts、progress iteration5、plan-findingsを同一構成へ同期した。",
+   "evidence": [
+    "check-spec-frontmatter.py/check-spec-gates.py/check-spec-matrix-coverage.py exit0",
+    "check-downstream-harness.py exit0",
+    "improvement-handoff-20260711.json provenance chain exit0"
+   ]
+  },
+  "C4": {
+   "id": "dependency_integrity",
+   "status": "PASS",
+   "summary": "component DAGはC08→C06、C01+C06→C02、C02→C03/C04、C06→C05、C05+C06→C07で非循環。route/inventory/build_target/placementは1:1でtask graph再射影済み。",
+   "evidence": [
+    "verify-index-topsort.py exit0",
+    "check-build-handoff.py exit0: 8 routes",
+    "validate-task-graph.py and check-runtime-portability.py exit0"
+   ]
+  }
+ },
+ "gate_results": [
+  {
+   "id": "G1",
+   "name": "check-plugin-goal-spec",
+   "exit_code": 0
+  },
+  {
+   "id": "G2",
+   "name": "check-provenance-chain",
+   "exit_code": 0
+  },
+  {
+   "id": "G3",
+   "name": "verify-index-topsort",
+   "exit_code": 0
+  },
+  {
+   "id": "G4",
+   "name": "detect-unassigned",
+   "exit_code": 0
+  },
+  {
+   "id": "G5",
+   "name": "check-spec-frontmatter",
+   "exit_code": 0
+  },
+  {
+   "id": "G6",
+   "name": "check-spec-gates",
+   "exit_code": 0
+  },
+  {
+   "id": "G7",
+   "name": "check-spec-matrix-coverage-self-test",
+   "exit_code": 0
+  },
+  {
+   "id": "G8",
+   "name": "check-spec-matrix-coverage-plan",
+   "exit_code": 0
+  },
+  {
+   "id": "G9",
+   "name": "check-surface-inventory",
+   "exit_code": 0
+  },
+  {
+   "id": "G10",
+   "name": "check-build-handoff",
+   "exit_code": 0
+  },
+  {
+   "id": "G11",
+   "name": "check-requirements-coverage",
+   "exit_code": 0
+  },
+  {
+   "id": "G12",
+   "name": "validate-task-graph",
+   "exit_code": 0
+  },
+  {
+   "id": "G13",
+   "name": "check-runtime-portability",
+   "exit_code": 0
+  },
+  {
+   "id": "G14",
+   "name": "check-generative-fidelity",
+   "exit_code": 0
+  },
+  {
+   "id": "G15",
+   "name": "check-downstream-harness",
+   "exit_code": 0
+  }
+ ],
+ "findings": [
+  {
+   "severity": "info",
+   "bucket": "30-method-coverage",
+   "observation": "30思考法を9/9/12の独立レーンで全件適用し、KJ法でscope provenance/automation/fullness/edge producer/artifact producer/surface parity/AC ownerへ統合した。",
+   "evidence": [
+    "improvement-handoff-20260711.json",
+    "thought_methods[30]"
+   ]
+  },
+  {
+   "severity": "low",
+   "bucket": "upstream-task-graph-projection",
+   "observation": "task-graph producerはplan checklist射影でruntime consumesを生成しない。UBM runtime artifact dataflowはC05 harness-artifact-graphへ分離し、本plan DAG/handoffの4条件を阻害しない。",
+   "suggested_fix": "upstream plugin-dev-plannerの別改善としてglobal checklist projection/consumes edgeを扱う。",
+   "evidence": [
+    "handoff open issue GAP-UPSTREAM-TASKGRAPH-PROJECTION",
+    "C05 acceptance_contract"
+   ]
+  },
+  {
+   "severity": "low",
+   "bucket": "late-binding",
+   "observation": "第2YouTube source identityと特定provider/scheduler製品は未提示。source registry pendingとprovider-neutral contractによりrequired-primary実行を停止しない。",
+   "evidence": [
+    "goal-spec.open_questions",
+    "C02 boundary"
+   ]
+  }
+ ],
+ "provenance_note": "本 verdict は C01-C08 の 8 component 時点 (pre-C09) の独立評価スナップショット。C09 (run-ubm-consult) は外ループ discovered-task (accepted 2026-07-11・resulting_graph_hash sha256:5026d0a5...) で追加され、C09 追加後の設計整合は eval-log/ubm-goal-setting/build/checklist-P03.json の独立 approver 再判定 (C1-C4 PASS) が正本"
+}

@@ -1,0 +1,134 @@
+{
+  "purpose": "システム構築(Web/モバイル/タブレット/デスクトップ横断)に必要な仕様情報を、ユーザーとのヒアリングを通じて漏れなく収集し1つの仕様書へまとめるハーネス plugin の開発計画を作る",
+  "background": "DB・ログイン(認証)などの細部から UI/UX・セキュリティ・インフラ・バックエンド・フロントエンド・保守運用管理まで、システム構築に必要な情報は範囲が広く、単発の列挙やヒアリングだけでは抜け漏れが生じやすい。加えてクリーンアーキテクチャ・デザインパターン・セキュアバイデザイン・DDD・クリーンコードといった設計知識の反映や、ツール/インフラの最新公式ドキュメント取得も要求されており、対話駆動かつ網羅性を機械/人手で検証できる仕組みへ一元化する必要がある。",
+  "goal": "system-spec-harness が、上位概念を起点に仕様を網羅収集し、未決定事項を最新かつ費用適合な選択肢で導き、深い拡張可能な設計知識から目的適合するベストプラクティスを構築でき、その契約を plan・build・証跡で決定論的に検証可能な状態になっており、加えて知識カタログの depends_on 射影が DAG として表現されて前提知識→依存知識の位相順で消費され、refines/conflicts_with は型固有の意味制約を持つ状態になっている。フロントエンド/バックエンド/セキュリティ/データベース/インフラ/モバイル/タブレット/ウェブ/デスクトップを含む各システム構築カテゴリは、設計 concern ごとの doctrine anchor (presentation/ui-ux=Apple Human Interface Guidelines、application-architecture/data-access=Robert C. Martin のクリーンアーキテクチャ、security/authentication/secrets/APIキー=OWASP、reliability/infrastructure/operations=Google SRE) へ写像され、1 concern 1正本で具体技術を直書きせず上流工程を導く。さらにドメインごとの必須情報カタログが、最低形状・被覆・不足時効果・依存順・完了条件を持ち、何が欠けると構築を停止するかを決定できる状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "system-spec-harness",
+  "plan_dir": "plugin-plans/system-spec-harness",
+  "out_dir": null,
+  "source_improvement": {
+    "ref": "improvement-handoff-20260712-knowledge-graph-doctrine.json",
+    "schema_version": "1.0.0"
+  },
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "生成される仕様書が、データベース/認証(ログイン)/UI-UX/セキュリティ/インフラ/バックエンド/フロントエンド/保守運用管理を含むシステム構成カテゴリの一覧を持ち、各カテゴリについて収集状態(未着手/収集中/確定/対象外+理由)を明示している",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C2",
+      "criterion": "canonical platform id (web/mobile/tablet/desktop-windows/desktop-linux/desktop-macos) の各対象プラットフォームについて、仕様収集項目が個別に存在するか『対象外』の判断根拠が明示されている",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C3",
+      "criterion": "ユーザーへ追加質問せず停止しない前提のうえで、ユーザーとの往復ヒアリング(質問→回答→仕様反映→未確定項目の再質問)を通じて要件を掘り起こすフローが component として定義されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C4",
+      "criterion": "クリーンアーキテクチャ/デザインパターン/API デザインパターン/セキュリティデザインパターン(secure by design)/DDD(リファクタリング文脈)/クリーンコードの各知識領域を仕様生成時に参照できる reference 資産が component-inventory に含まれている",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C5",
+      "criterion": "ツール/インフラ/フレームワーク等の最新公式ドキュメントを取得し、target_id全件対応・公式publisher/host・versionまたは更新日・取得/確認時刻・参照元を記録する。compile開始時または公式version signal検出時に再照合し、失敗/不一致はpending_evidenceとしてconfirmedを禁止する component が定義されている",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C6",
+      "criterion": "収集した仕様情報を単一の出力ドキュメント(または明確に定義された関連文書群)としてまとめる出力仕様(章立て/形式)が確定している",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C7",
+      "criterion": "システム構成カテゴリ×対象プラットフォームの収集マトリクスの全マスが『未収集/対象外/確定』のいずれかで埋まっていることを検証する網羅性検証の仕組みが component として定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C8",
+      "criterion": "plugin.json manifest / marketplace policy / cachebuster 等の plugin packaging 契約を満たす component-inventory + 13 phase ファイル + handoff が生成される",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C9",
+      "criterion": "技術マトリクス収集の前に、本質的目的・背景・ゴール・測定可能な目標・成功基準・ステークホルダー・スコープ・制約・具体的意図をユーザーから抽出し、値または明示N/A理由で全要素を確定して、各具体要件をgoalへトレースする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C10",
+      "criterion": "ユーザーが決めきれない事項をneeds_guidanceとして検出し、最新公式情報に基づく2〜3案（無料または低コスト案を必ず含む）をgoal fit・総費用・安全性・運用負荷・ロックインで比較し、AIが推奨理由・注意点・不確実性を示してユーザー確認へ導く。AI推奨だけでは確定しない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "設計知識の現行列挙を非網羅なseed exampleとして扱い、未知領域を発見・一次資料で適格化・深化できる。各referenceが目的・背景・解決問題・中核概念・適用/非適用条件・トレードオフ・失敗モード・goalへの寄与・出典・鮮度を持つ",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C12",
+      "criterion": "全responsibility promptがprompt-creator正本のC1-C4、L7→L1依存、l5-contract v2.0、客観的停止条件、深度・再現性の機械/独立評価を通過し、その証跡がbuild reportに記録される",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C13",
+      "criterion": "知識カタログが typed 辺を持つグラフとして表現され、depends_on は『A depends_on B = Bが前提でBをAより先に出力』する precedence DAG として循環/孤立/非root到達不能を検出する。refines は有向の精緻化関係、conflicts_with は対称な非順序制約として検証し、全辺で dangling 参照を検出する機械検証を持つ",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C14",
+      "criterion": "仕様の elicit/compile が知識グラフの位相順(上位概念→下位概念)で知識を消費する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C15",
+      "criterion": "システム構築カテゴリを設計 concern に分解し、各 concern に doctrine anchor が1正本で固定される (presentation/ui-ux=Apple Human Interface Guidelines、application-architecture/data-access=Robert C. Martin のクリーンアーキテクチャ、security/authentication/secrets/APIキー=OWASP ASVS+Secrets Management Cheat Sheet、reliability/infrastructure/operations=Google SRE)。各in-scopeカテゴリは必要なconcernへ全件写像され、具体技術を直書きせず上流工程を導く。未帰属は owner/reason/approval_state を持つ例外としてcompileを保留する (registry形状・concern一意性・カテゴリ写像全射は validate-knowledge-graph.py doctrine profile、意味反映はhuman/content-review)",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C16",
+      "criterion": "ドメインごと(API/フロントエンド/バックエンド/UI-UX等)にシステム構築へ不可欠な必須情報カタログが定義される。各itemは item_id/domain/concern/question/required_reason/evidence_required/depends_on/required_when/completion_rule/missing_effect/serves_goals を持ち、全in-scope domainに1件以上または承認済N/A理由があり、空catalog・未回答required item・goal/matrix trace欠落を拒否し、依存グラフから決定論的収集順序とcoverage certificateを導出できる",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "実プラグインは生成せず L3 plan (13 phase ファイル + index + component-inventory + handoff) までに留める (R1/本 plan skill は plan 生成のみを担当し build は L4 run-skill-create へ委譲)",
+    "対象プラットフォームはユーザー追記に基づき canonical platform id (web/mobile/tablet/desktop-windows/desktop-linux/desktop-macos) の横断を必須スコープとする",
+    "latest official の証拠契約は target_id 全件対応、official_publisher/official_host、version または last_updated、retrieved_at/latest_checked_at、source_url、freshness_policy(channel/revalidate_on) とし、C08 がcompile開始時またはversion signal時に公式サイトと再照合する。再照合失敗/不一致はpending_evidenceとしてconfirmedを禁止する",
+    "無料/低コストは候補生成の必須軸だが最安自動採用を意味しない。must-have、goal fit、TCO、安全性、運用負荷、ロックインを満たす案から推奨し、AI推奨はrecommended_pending_confirmationとしてユーザー確認を待つ",
+    "設計知識は固定一覧で閉じずopen-worldに扱う。curated referenceへの昇格は一次/公式資料・深度契約・鮮度・重複統合を満たす場合に限定する",
+    "構想文中に列挙されたカテゴリ(DB/ログイン/UI-UX/セキュリティ/インフラ/保守運用管理等)は『一例』と明言されているため例示として扱い、個別カテゴリの過不足でなくカテゴリ×プラットフォームの網羅マトリクス機構自体(C7)を本質要件とする",
+    "配布/packaging は Claude Code の .claude-plugin 規約 (plugin-creator-contract.md) に従う前提とする (構想内に別ツール向けマニフェスト等の明示指定なし)",
+    "ヒアリングは C3 のとおり往復フローを component 化する前提とし、本 R1 自体は追加質問をせず本構想文のみから goal-spec を確定した",
+    "doctrine anchor のうち presentation/ui-ux=Apple Human Interface Guidelines と application-architecture/data-access=Robert C. Martin のクリーンアーキテクチャはユーザー指定である。security/authentication/secrets/APIキー=OWASP (ASVS + Secrets Management Cheat Sheet) と reliability/infrastructure/operations=Google SRE はユーザーがAIへ委任したため確定した。正本単位はsystem categoryではなくdesign concernであり、各concernは1anchor、各categoryは必要なconcernへ全件写像する",
+    "知識辺の正本意味は depends_on=前提順序に参加する有向辺、refines=順序を直接変えない有向精緻化辺、conflicts_with=対称な非順序制約。A depends_on B はBをAより先に出力し、同順位はID昇順で決定する"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "最終成果物ドキュメントの出力形式(単一 Markdown / 複数ファイル分割 / 特定テンプレート)が未指定 → phase-02-design.md 設計判断2 で確定済 (章立て複数 Markdown + index)",
+    "既存 skill-intake plugin のヒアリング機構との関係(統合して再利用するか / 独立実装するか)が未指定 → phase-02-design.md 設計判断1 で確定済 (独立実装)",
+    "最新公式ドキュメント取得の具体手段(WebFetch / MCP / 特定 API 連携)が未指定 → phase-02-design.md 設計判断3 で確定済 (WebSearch/WebFetch 既定・MCP は GAP-MCP-DOCFETCH へ保留)",
+    "本 harness の利用単位が個人利用かチーム/複数プロジェクト共通の再利用資産かが未指定 → ユーザー承認により再利用資産として配布 (distributable:true) を確定済",
+    "marketplace 配布可否 (distributable true/false) の判断がユーザー承認待ち → 確定済 (distributable:true・commit 00cf8f7・xl-skills-full bundle + marketplace 登録)"
+  ]
+}

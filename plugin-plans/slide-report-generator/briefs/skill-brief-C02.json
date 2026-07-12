@@ -1,0 +1,56 @@
+{
+  "skill_name": "run-slide-report-modify",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "スライドを修正したい",
+    "レポートを部分修正したい",
+    "slide-report-modify"
+  ],
+  "output_contract": "修正レポート(修正箇所一覧 + 変更差分 + 再評価スコア)",
+  "boundary": "入力=既存成果物と修正指示/出力=局所修正済み HTML。新規生成は run-slide-report-generate、横断検証は run-cross-deck-review へ委譲する",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "node"
+  ],
+  "deterministic_checks": [
+    "validate-output-mode.py",
+    "verify-slides.js",
+    "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report部分修正時・--structure欠落はexit2)",
+    "report部分修正後のwide/narrow/print+hash navigation evidence再取得"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "修正対象と output_mode 特定",
+    "指定箇所のみ部分修正",
+    "修正後の再評価(視覚崩れ0)",
+    "report部分修正では1.3.0 structureとUI/UX evidence bundleを再検証"
+  ],
+  "goal": "既存の slide deck / report を output_mode を保ったまま指定箇所だけ部分修正し、意匠/技術コアと非対象箇所を壊さず修正後の生成後評価で視覚崩れ0の状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "既存 slide-modifier(P4)の修正ワークフローを独立起動 skill として移植し、生成し直さず既存成果物の局所修正を安全に行うため",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "修正対象の既存成果物と output_mode/修正指示をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-modify",
+      "summary": "slide-report-modifier を介し指定箇所のみを部分修正する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-reevaluate",
+      "summary": "修正後にmode別評価を再実行し、reportではC25 --structure必須検査とwide/narrow/print+hash navigation evidenceを更新して修正レポートを返す",
+      "prompt_required": true
+    }
+  ]
+}

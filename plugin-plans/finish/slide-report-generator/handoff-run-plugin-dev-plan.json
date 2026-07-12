@@ -1,0 +1,596 @@
+{
+  "plan_dir": "plugin-plans/slide-report-generator",
+  "target_plugin_slug": "slide-report-generator",
+  "mode": "create",
+  "routes_toposorted": true,
+  "consumer_steps": {
+    "pre_build": [
+      {
+        "route": "C01",
+        "produces": "briefs/skill-brief-C01.json",
+        "cwd": "repo-root",
+        "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-skill-brief.py --inventory plugin-plans/slide-report-generator/component-inventory.json --component C01 --out plugin-plans/slide-report-generator/briefs/skill-brief-C01.json"
+      },
+      {
+        "route": "C02",
+        "produces": "briefs/skill-brief-C02.json",
+        "cwd": "repo-root",
+        "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-skill-brief.py --inventory plugin-plans/slide-report-generator/component-inventory.json --component C02 --out plugin-plans/slide-report-generator/briefs/skill-brief-C02.json"
+      },
+      {
+        "route": "C03",
+        "produces": "briefs/skill-brief-C03.json",
+        "cwd": "repo-root",
+        "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-skill-brief.py --inventory plugin-plans/slide-report-generator/component-inventory.json --component C03 --out plugin-plans/slide-report-generator/briefs/skill-brief-C03.json"
+      }
+    ],
+    "note": "routes[].build_args.brief_path (plan_dir 相対) は dangling ではなく、当該 route の build 直前に render-skill-brief.py が component-inventory.json から決定論射影で生成する (同一 inventory → byte 同一 brief)"
+  },
+  "routes": [
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "hearing-facilitator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "hearing-facilitator"
+      },
+      "build_target": "plugins/slide-report-generator/agents/hearing-facilitator.md",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "structure-designer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "structure-designer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/structure-designer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "structure-validator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "structure-validator"
+      },
+      "build_target": "plugins/slide-report-generator/agents/structure-validator.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "d3-diagram-designer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "d3-diagram-designer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "data-visualizer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "data-visualizer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/data-visualizer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "sub-agent",
+      "name": "html-generator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "html-generator"
+      },
+      "build_target": "plugins/slide-report-generator/agents/html-generator.md",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "slide-renderer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "slide-renderer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/slide-renderer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "sub-agent",
+      "name": "layout-optimizer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "layout-optimizer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/layout-optimizer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C12",
+      "component_kind": "sub-agent",
+      "name": "ui-quality-reviewer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "ui-quality-reviewer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "deck-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "deck-evaluator"
+      },
+      "build_target": "plugins/slide-report-generator/agents/deck-evaluator.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C14",
+      "component_kind": "sub-agent",
+      "name": "ai-image-diagram-producer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "ai-image-diagram-producer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/ai-image-diagram-producer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "slide-report-modifier",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "slide-report-modifier"
+      },
+      "build_target": "plugins/slide-report-generator/agents/slide-report-modifier.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C16",
+      "component_kind": "sub-agent",
+      "name": "cross-deck-reviewer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "cross-deck-reviewer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C17",
+      "component_kind": "sub-agent",
+      "name": "report-structure-designer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "report-structure-designer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/report-structure-designer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C18",
+      "component_kind": "sub-agent",
+      "name": "visual-strategist",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "visual-strategist"
+      },
+      "build_target": "plugins/slide-report-generator/agents/visual-strategist.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C19",
+      "component_kind": "sub-agent",
+      "name": "report-composer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "report-composer"
+      },
+      "build_target": "plugins/slide-report-generator/agents/report-composer.md",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C23",
+      "component_kind": "script",
+      "name": "validate-output-mode.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "fallback_builder": "run-build-skill",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-output-mode.py"
+      },
+      "build_target": "plugins/slide-report-generator/scripts/validate-output-mode.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-slide-report-generate",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C17",
+        "C18",
+        "C19",
+        "C23"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-slide-report-generate",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-generate/",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-slide-report-modify",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C15",
+        "C23"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-slide-report-modify",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/slide-report-generator/skills/run-slide-report-modify/",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-cross-deck-review",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C16"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-cross-deck-review",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C03.json"
+      },
+      "build_target": "plugins/slide-report-generator/skills/run-cross-deck-review/",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C20",
+      "component_kind": "hook",
+      "name": "hook-postgen-eval",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C13"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "hook-postgen-eval"
+      },
+      "build_target": "plugins/slide-report-generator/hooks/hook-postgen-eval.py",
+      "status": "planned"
+    },
+    {
+      "id": "C21",
+      "component_kind": "slash-command",
+      "name": "slide-report-generate",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "slide-report-generate"
+      },
+      "build_target": "plugins/slide-report-generator/commands/slide-report-generate.md",
+      "status": "planned"
+    },
+    {
+      "id": "C22",
+      "component_kind": "slash-command",
+      "name": "slide-report-status",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "slide-report-status"
+      },
+      "build_target": "plugins/slide-report-generator/commands/slide-report-status.md",
+      "status": "planned"
+    }
+  ],
+  "surface_tasks_note": "plugin_level_surfaces の surface 実体 (vendor byte copy / schemas 新設 / references / composition / EVALS) の build route。routes[] は component-inventory.json の components[] と 1:1 (inventory 由来検証) のため surface を routes へ混ぜず、本配列で owner_builder/build_args/build_target/checks/実行順序を宣言する。routes[].requires_surfaces が component→surface の順序依存を宣言する (S-VENDOR は requires_surfaces 宣言 route より先に実行)",
+  "surface_tasks": [
+    {
+      "id": "S-VENDOR",
+      "surface": "vendor",
+      "order": 1,
+      "sequencing": "pre-routes (requires_surfaces:[\"S-VENDOR\"] を宣言する全 route より先に実行)",
+      "owner_builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_target": "plugins/slide-report-generator/vendor/",
+      "build_args": {
+        "copy_mode": "whole-tree",
+        "source_digest_manifest": "vendor-digest-manifest.json",
+        "subtrees": [
+          "scripts/ → vendor/scripts/",
+          "assets/ → vendor/assets/",
+          "schemas/ → vendor/schemas-fixtures/",
+          "package.json / package-lock.json → vendor/"
+        ],
+        "post_copy": [
+          "npm ci (package-lock.json pinned で node_modules を再install・node_modules は byte copy しない)",
+          "npx playwright install chromium (render/verify 系のヘッドレス実行前提)"
+        ]
+      },
+      "checks": [
+        "lint-vendor-parity.py (build 時に plugin scripts/ へ同梱・plan 段階では契約のみ) が copy 直後の vendor 実体を vendor-digest-manifest.json (sha256・195 files pinned・upstream presentation-slide-generator v8.4.2) と全件照合し exit 0",
+        "npm ci が exit 0 で node_modules を lock どおり再構成し、npx playwright install が完了する",
+        "additive (render-report.js/mermaid-render.js/package.json mermaid 依存追記) は照合の明示除外 (inventory vendor.parity_scope 準拠・別検査)"
+      ]
+    },
+    {
+      "id": "S-SCHEMAS",
+      "surface": "schemas",
+      "order": 2,
+      "sequencing": "post-S-VENDOR (byte copy 済 schemas-fixtures への additive 新設)",
+      "owner_builder": "run-build-skill",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "build_target": "plugins/slide-report-generator/vendor/schemas-fixtures/report-structure.schema.json",
+      "build_args": {
+        "new_files": [
+          "report-structure.schema.json (新設・4 reportType 骨格)"
+        ],
+        "record_in": "index.plugin_meta"
+      },
+      "checks": [
+        "移植 4 schema + example fixture 3 + README は S-VENDOR byte copy 済であること (二重作業・二重 SSOT 禁止)",
+        "report-structure.schema.json が JSON parse 可能で structure.schema.json と共通コア (nodes/edges/groups/theme/aiVisual) を共有する",
+        "index.plugin_meta の schema 記録が真 schema 5 本 (4 移植 + 1 新設) と一致する"
+      ]
+    },
+    {
+      "id": "S-REFERENCES",
+      "surface": "references_config_assets",
+      "order": 3,
+      "sequencing": "post-S-VENDOR (pointer_only 項目の byte 実体が vendor に在ることを前提)",
+      "owner_builder": "run-build-skill",
+      "requires_surfaces": [
+        "S-VENDOR"
+      ],
+      "build_target": "plugins/slide-report-generator/references/",
+      "build_args": {
+        "byte_copy": "既存 42 references (*.md・upstream presentation-slide-generator v8.4.2) を byte 維持で携行 (本 surface が byte 正本)",
+        "new_files": [
+          "report-types.md",
+          "report-writing-rules.md",
+          "report-visual-strategy.md",
+          "mermaid-integration.md"
+        ],
+        "pointer_only": "118 templates/pagination/print-styles.css/style-genome/d3-components/gas-deploy-guide.md の byte 実体は S-VENDOR が携行 (相互参照ポインタのみ・二重 SSOT 禁止)"
+      },
+      "checks": [
+        "既存 42 references が移植元と byte 一致する",
+        "report 新規 4 references が新設され既存 42 と重複しない",
+        "pointer_only 項目の byte 実体を references 側へ複製していない"
+      ]
+    },
+    {
+      "id": "S-COMPOSITION",
+      "surface": "composition",
+      "order": 4,
+      "sequencing": "post-routes (全 23 component route の build 完了後に合成配線)",
+      "owner_builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-ENVELOPE-001",
+      "build_target": "plugins/slide-report-generator/plugin-composition.yaml",
+      "build_args": {
+        "contents": "skills 3 / agents 16 / commands 2 / hook 1 / plugin-root script 1 の合成配線 (routes C01..C23 と 1:1)"
+      },
+      "checks": [
+        "列挙 component が routes の 23 実体と過不足なく一致する",
+        "hook 配線の正本は plugin manifest (envelope hooks ブロック) であり、composition からは settings.json 配線を宣言しない (inventory C20.settings_wiring=plugin-manifest と整合)"
+      ]
+    },
+    {
+      "id": "S-EVALS",
+      "surface": "harness_eval",
+      "order": 5,
+      "sequencing": "post-routes (受入配線は build 済み成果物実体を参照)",
+      "owner_builder": "run-build-skill",
+      "build_target": "plugins/slide-report-generator/EVALS.json",
+      "build_args": {
+        "modes": [
+          "slide",
+          "report"
+        ],
+        "kinds": [
+          "mechanical",
+          "llm_eval"
+        ]
+      },
+      "checks": [
+        "mechanical + llm_eval が slide/report 両モードの受入を配線する",
+        "EVALS.json が JSON parse 可能で harness coverage >=80 の受入基準を参照する"
+      ]
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/slide-report-generator/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。後段 plugin-scaffold (contract-only・GAP-SCRIPT-BUILDER 参照) または手動 scaffold が draft を消費し、vendor Node engine の byte 携行と node_modules 再 install も同 scaffold が担う"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "配布登録はユーザー承認後の別判断 (正本=index plugin_meta.distribution・現在 distributable:false・bundle 登録なし)"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "high",
+      "text": "plugin envelope executor (manifest/marketplace scaffold) is external to run-plugin-dev-plan",
+      "resolution_condition": "plugin-scaffold 実行実体 (または人手 scaffold 手順) が envelope-draft/plugin.json を plugins/slide-report-generator/.claude-plugin/plugin.json へ適用して validate_plugin 相当検査が exit 0、かつ surface_tasks S-VENDOR/S-COMPOSITION の checks が全 PASS した build trace が記録された時点で closed"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "high",
+      "text": "plugin-scaffold は contract-only builder 語彙で単独実行実体が未整備 (共有 script C23 の plugin-root hoist・当面は run-build-skill の build フロー内で代替生成)",
+      "resolution_condition": "specfm.BUILDER_STATUS の plugin-scaffold が executor-backed へ昇格 (専用 executor 整備) する、または routes[C23].fallback_builder=run-build-skill で C23 が生成され lint-script-frontmatter + tests_min>=80 PASS の build trace が記録された時点で closed"
+    }
+  ]
+}

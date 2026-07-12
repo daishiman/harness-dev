@@ -1,0 +1,296 @@
+{
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-matching-rootcause",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "mfk_collect_status.py (発行後status収集拡張)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "operation": "modify",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py",
+        "plugins/mf-kessai-invoice-check/scripts/mfk_fetch_audit.py"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/reconcile_invoices.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py: collect_mf(:275-279)の /billings/qualified 取得を status=invoice_issued 限定から発行後 status(account_transfer_notified 等)も含む収集へ拡張し、billing.status を line/carrier へ伝播する。stopped の扱い(真の停止=非発行)は status 別に区別する",
+          "plugins/mf-kessai-invoice-check/scripts/mfk_fetch_audit.py: collect した billing の status 別件数を fidelity report へ開示する(拡張後も取得完全性を可視化)"
+        ],
+        "completion_gate": "要因根治: [要因C1] scripts/reconcile_invoices.py:277 collect_mf の /billings/qualified 取得が status=invoice_issued 限定のため、発行後に進行する後続 status(account_transfer_notified/stopped 等)の請求を取得段で丸ごと落とし GAP→偽・発行漏れになる(実測: 2606 qualified 171件中 account_transfer_notified=1=PAWS有限会社・55000税込=実在)。名前非依存・再発性。是正: 発行後に進む status を『発行済み』として収集対象に含める判定を純関数 SSOT へ切り出す(ISSUED_BILLING_STATUSES ホワイトリスト or 除外リストの反転)。transaction.status=passed の月 … 既存SSOT(mfk_reconcile/mfk_actuals)を再発明せず消費し、MF実績第一級とfetch fidelity fail-closedを後退させない。self-test/回帰がexit0で検証できるまで未完了"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/reconcile_invoices.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "mfk_customer_id_resolve.py (MF顧客ID解決+backfill提案器)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "operation": "create",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py",
+        "plugins/mf-kessai-invoice-check/lib/notion_sheet_writeback.py",
+        "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_customer_id_resolve.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/lib/mfk_reconcile.py: _boundary_customers が契約の MF顧客ID を主キーに使う既存経路を保ち、ID が空のとき本 resolve の解決マップを参照する配線を追加する(会社名 fallback は温存)",
+          "plugins/mf-kessai-invoice-check/lib/notion_sheet_writeback.py: MF顧客ID 列の backfill 書込みを既存 writeback の片方向ミラー(空欄のみ補完)へ additive に足す(--apply 限定・既存 write surface 再利用)",
+          "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py: mfk_customer_id_resolve.py の sanctioned basename を登録する"
+        ],
+        "completion_gate": "要因根治: [要因C6] 請求確認シート665行全ての MF顧客ID が空(0%充足)で、lib/mfk_reconcile.py _boundary_customers (:567-581)の『MF顧客ID優先』経路が一度も発火せず全契約が normalize(会社名)一致に依存している(名前ドリフト時 false GAP)。ユーザー要望(MF側取引先idで判断)の恒久解として、mf_index(customer_id をキーに持つ)から 会社名→MF顧客ID の解決マップを GET 専用で構築し、一意確定できる契約へ MF顧客ID を backfill 提案する純関数 SSOT。解決核は write_scope=none(GET/純関数のみ)で、実シート書込みは既存 notion_sheet_writeback(既存の notion write 経路)を --apply 下で再利用し新規 writ … 既存SSOT(mfk_reconcile/mfk_actuals)を再発明せず消費し、MF実績第一級とfetch fidelity fail-closedを後退させない。self-test/回帰がexit0で検証できるまで未完了"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_customer_id_resolve.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "mfk_period_report.py (NEW/年契約/取消継続性/代理店突合是正)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "operation": "modify",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_period_report.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py: (C3) classify_period_transition の STATE_NEW 分岐へ curr.verdict==MATCH_ANNUAL の正常化 short-circuit を追加。(C4) compare_periods/_is_issued へ prev の『発行後取消』(REVIEW_CANCELED/inactive_canceled+canceled_at)を継続性上 prev_issued 相当に扱う分岐を追加(supply_state=none の真の未発行とは区別)。(C5) _needs_disambiguation/_match_key を endclient（○○様）/契約ID 粒度へ拡張し (取引先,商品) setdefault の幻遷移を止める"
+        ],
+        "merge_policy": "既存 build_target を read→差分 merge。削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink/PR#85で確立したMF実績第一級(_amount_of/_is_issued優先順位)",
+        "completion_gate": "要因根治: [要因C3+C4+C5(classify側)] scripts/mfk_period_report.py の分類3欠陥を是正する。(C3) STATE_NEW 分岐(classify_period_transition:763-779 / _new_backing_found:571-583)が curr.verdict=MATCH_ANNUAL(reconcile が年契約と判定済)を正常根拠に使わず 12ヶ月lookback未供給で全要対応化する(『100億ThinkTank利用料』等 約25件)。是正: STATE_NEW で curr.verdict∈{MATCH_ANNUAL} を dispositive な『年契約一括発行=正常』として lookback 無しでも正常化する(SUPPRESS_ANNUAL 同型)。(C4) compare_periods/_is_issued( … 既存SSOT(mfk_reconcile/mfk_actuals)を再発明せず消費し、MF実績第一級とfetch fidelity fail-closedを後退させない。self-test/回帰がexit0で検証できるまで未完了"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_period_report.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "notion_report_sink collapse 発行済み保全 (C5 sink側)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C04"
+      ],
+      "operation": "modify",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
+        "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/notion_report_sink.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py: _prefer_action(:290-303)/_merge_action_comments で、collapse 時に reliable_issued=true の発行済み実額(今月金額)を要対応・null 行が上書きしないよう保全し、要対応 severity と注記は両立させる(発行済み実額保全 ∧ 漏れ隠蔽なし)"
+        ],
+        "completion_gate": "要因根治: [要因C5 sink側] 代理店/複数エンドクライアントが1商品(例『チイキズカン業務委託費』)に複数契約(（○○様）異額)を持つとき、notion_report_sink の (対象月,取引先名,商品名) collapse(_prefer_action:290-303)が要対応 severity を優先して発行済み(reliable_issued=true)行の実額を要対応・今月金額=null 行で上書きし、発行済み金額を隠す(実レポート: HOSONO/マルブン/芦田/野嵩商会/サクラパックス が今月金額=null)。是正: collapse 時に reliable_issued の発行済み実額を保全し(K4 権威訂正の対称適用: 発行済み実額は要対応行の null で上書きされない)、要対応 severity は別途 comment/注記で保持して漏れ隠蔽(false-negativ … 既存SSOT(mfk_reconcile/mfk_actuals)を再発明せず消費し、MF実績第一級とfetch fidelity fail-closedを後退させない。self-test/回帰がexit0で検証できるまで未完了"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/notion_report_sink.py",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "mfk_verdict_export.py (R1-collect決定論producer・curr=None根治) [構造的主因C2]",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "operation": "create",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md",
+        "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "executor_hint": "plugins/harness-creator/scripts/build-script-route.py",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/mfk_verdict_export.py",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: LLM手動直列化の出力指示(:126-136相当)を本 producer 呼び出しへ置換し、保持キー契約へ carrier(actual_amount/reliable_issued/supply_state/canceled_at)を明記する。全 rec(SUPPRESS_* 含む)persist と 12ヶ月lookback fetch を機械化する(curr=None を出さない)",
+          "plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py: mfk_verdict_export.py の sanctioned basename を登録する(関数名は serialize_verdicts/export_curr_prev 等とし classify/compare/period_diff 語幹を避ける)"
+        ],
+        "completion_gate": "要因根治: [要因C2 構造的主因・第一級] curr-verdicts.json を吐く決定論スクリプトが存在せず、skills/run-mf-invoice-report/prompts/R1-collect.md の LLM手動直列化が発行済み社の当月行を落とす(実レポートDBで 2nd Community/HOSONO=今月金額 null・『今月行なし(curr=None)』だが忠実 reconcile では MATCH_MONTHLY 50000/210000/70000。今月金額=null かつ要対応13件中7件が忠実では発行済み=R1脱落)。PR#85 の C05/C03/reconcile 修正は全て R1 の下流ゆえ R1 が落とす限り直らない=『前回直したのに直らない』の真因。是正: lib/mfk_reconcile.reconcile()(C01 収集拡張・C04 分類是正が適 … 既存SSOT(mfk_reconcile/mfk_actuals)を再発明せず消費し、MF実績第一級とfetch fidelity fail-closedを後退させない。self-test/回帰がexit0で検証できるまで未完了"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/scripts/mfk_verdict_export.py",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "mfk-report-verifier (偽発行漏れ=curr脱落/collapse隠蔽 検出軸の追加)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C04",
+        "C05"
+      ],
+      "operation": "modify",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "mfk-report-verifier",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R3-verify.md: Layer2/Layer5/出力指示 へ検出軸(C2 偽発行漏れ=curr脱落の発行済み裏取り / C5 collapse隠蔽 / C3 MATCH_ANNUAL過剰要対応)を additive に追加する。既存軸は不変",
+          "plugins/mf-kessai-invoice-check/agents/mfk-report-verifier.md: description を新軸追加に合わせて更新する薄アダプタ差分"
+        ],
+        "merge_policy": "既存 build_target を read→差分 merge。既存3軸(契約完了/年契約/トライアル/対象外の正常化根拠検証+過少報告)は変更しない。既存 mfk-reconcile-verifier(別skill run-mf-invoice-reconcile所属)とは責務境界を分離し拡張しない"
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/agents/mfk-report-verifier.md",
+      "status": "planned",
+      "integration_targets": [
+        "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R3-verify.md"
+      ]
+    },
+    {
+      "id": "C07",
+      "component_kind": "skill",
+      "name": "run-mf-invoice-report",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03",
+        "C04",
+        "C05",
+        "C06"
+      ],
+      "operation": "modify",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-mf-invoice-report",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C07.json",
+        "responsibility_updates": [
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: C05 producer 呼び出し配線 + STATE_NEW該当社への --lookback-12mo 供給 + 保持キー契約 carrier 明記。seam test で C05出力→C03消費まで carrier 貫通を検証",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R2-classify.md: 参照先を C01/C04 適用済み出力へ揃える(参照整合)",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R4-render.md: sink collapse を C03 の発行済み実額保全へ更新(冪等upsert骨格は不変)"
+        ],
+        "merge_policy": "既存 build_target を read→差分 merge。削除禁止領域=既存verdict経路(SUPPRESS_ANNUAL/MATCH_ENDED_FINAL)/12ヶ月ルックバック/J1名寄せ境界/冪等sink/R4-render自体(不変・本改善スコープ外)",
+        "required_file_edits": [
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R1-collect.md: C05 producer 呼び出し配線 + STATE_NEW該当社への --lookback-12mo 供給 + 保持キー契約 carrier 明記。seam test で C05出力→C03消費まで carrier 貫通を検証",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R2-classify.md: 参照先を C01/C04 適用済み出力へ揃える(参照整合)",
+          "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/prompts/R4-render.md: sink collapse を C03 の発行済み実額保全へ更新(冪等upsert骨格は不変)"
+        ]
+      },
+      "build_target": "plugins/mf-kessai-invoice-check/skills/run-mf-invoice-report/",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "not_applicable",
+      "build_target": "plugins/mf-kessai-invoice-check/.claude-plugin/plugin.json",
+      "reason": "本 plan の buildable component は既存 entry_points(skills.run-mf-invoice-report / agents.mfk-report-verifier)の modify と、entry_points 対象外の plugin-root 共有 script(C01 収集是正=reconcile_invoices modify / C02 顧客ID解決 / C03 sink collapse保全 / C04 分類是正 / C05 R1決定論producer)のみで、新規 entry_point 登録を伴わない。version bump(0.4.0→提案0.5.0)は builder の付随作業とし handoff 必須ステップにしない。C06 name の descriptive suffix は GAP-INVENTORY-C06-NAME-SUFFIX 参照で manifest envelope を not_applicable とし突合失敗を避ける"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "not_applicable",
+      "build_target": ".claude-plugin/marketplace.json",
+      "reason": "distribution(distributable/bundles/marketplace)は既存構成を変更しない。照合層根治は配布ポリシーに影響しない"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。script route(C01-C05)は executor_hint=plugins/harness-creator/scripts/build-script-route.py が消費する。build-script-route.py が使えない環境では script routes は未実行扱いとし、C06/C07 だけを build して完了にしてはならない"
+    },
+    {
+      "id": "GAP-INVENTORY-C06-NAME-SUFFIX",
+      "severity": "low",
+      "text": "component-inventory.json の C06(sub-agent)name フィールドが descriptive suffix 付き('mfk-report-verifier (偽発行漏れ=curr脱落/collapse隠蔽 検出軸の追加)')で、manifest entry_points 突合の正準名('mfk-report-verifier')と異なる。本 handoff は manifest envelope を not_applicable として entry_points 突合を回避した(実際の agents.mfk-report-verifier は既存 entry_points に登録済みで変更不要)。次回 inventory 生成/修正時に name を正準名('mfk-report-verifier')へ揃えることを推奨する"
+    },
+    {
+      "id": "GAP-R1-COLLECT-CURR-PRESENT-CARRYOVER",
+      "severity": "medium",
+      "text": "plugin-plans/mf-kessai-invoice-check-fidelity/handoff-run-plugin-dev-plan.json の open_issue GAP-R1-COLLECT-CURR-PRESENT(curr=None行のcurr-present未実装)は、本plan C05(mfk_verdict_export.py・reconcile()全rows直列化)の副次効果でclassify全行網羅分は解消されるが、curr-present自体の新規実装はスコープ外(重複実装回避)。fidelity plan側で引き続きtracked=true・blocking=falseのまま残る"
+    },
+    {
+      "id": "GAP-ID-ALIAS-BACKFILL-PATH",
+      "severity": "medium",
+      "text": "名寄せ根治の運用closure: 純英字/桁表記揺れ社名(例 2nd Community/paws)はコードの機械変換では一意に寄らず、恒久根拠は MF顧客ID(C02主キー)への明示登録とする。個社会社名をコード(.py)へハードコードする対症療法は禁止(C14・RETRACT-1)。運用データ資産として alias JSON を使う場合はコードハードコードの代替でなく C02 未解決社の補助データに限定し、存在しなければ C02 が参照しない(幻の mfk_name_aliases.json を恒久根拠として要件化しない)。ただし『どの取引先が未登録で寄っていないか』を運用者へ actionable に返す責務は必須で、C02(顧客ID解決)/C03(sink collapse保全)が寄らない残余を隠さず『要マスタ登録』としてレポート可視化し、推奨MF顧客ID候補(境界外だが近接する候補社名)を併記することで closure する。将来 company-master(法人番号主キー)連携やMF顧客ID backfill skillを別planで昇格する余地を残す。C02/C03のfeedback_contract/受入で『未登録社が要マスタ登録として可視化+候補併記される』ことを検証すること。【2026-07-09 elegant round2 部分closure】逆方向 orphan (MF実績あり×シート契約なし=要マスタ登録) の可視化は解消済み: build_report が curr_doc['orphans'] を『要マスタ登録』行として surface する結線を追加 (mfk_period_report._orphan_rows / seam の A2-F1/A4-F01 断裂を根治・test_c5_orphan_surfaced_as_master_registration で凍結)。**未closure残余 (次plan tracked)**: (a) シート契約はあるが MF顧客ID が ambiguous/none の残余に対する『推奨MF顧客ID候補併記』= mfk_customer_id_resolve.unresolved_registry_candidates/nearby_candidates が本番経路(R1-R4/orchestrator)から未呼出 (unit緑・integration dead)。(b) 一意確定社への物理 backfill = notion_sheet_writeback.apply_customer_id_backfill/plan_customer_id_backfill_writeback が reconcile_invoices.run() から未配線 (--apply write-surface のため本 elegant round では意図的に据置・書込副作用は別 plan で受入確認付き配線)。"
+    },
+    {
+      "id": "GAP-SIBLING-SKILL-STATUS-FILTER",
+      "severity": "medium",
+      "text": "エレガント検証 (Agent4 F-SYS-1) 検出: 兄弟 skill run-mf-invoice-check の scripts/check_invoice_gaps.py::fetch_issued (:224) が独立実装で /billings/qualified を status=invoice_issued の API ハードフィルタで取得しており、C01 の収集拡張 (account_transfer_notified 等の発行後 status を発行済みとして収集) が及ばない。paws 型 (account_transfer_notified 除外) の偽 GAP が run-mf-invoice-check では再現し続けうる。本 plan のスコープは run-mf-invoice-report の発行漏れレポート根治に限定され、run-mf-invoice-check (差分ベースの gap-check・別 skill・別アルゴリズム) の挙動変更は cross-skill リスクを伴うため本 build では意図的にスコープ外とし追跡のみとする。将来 check_invoice_gaps.py を mfk_collect_status.is_issued_billing へ委譲する別 plan で解消する余地を残す (lib/mfk_invoice_diff.py:12 の customer-set diff も同様に status==invoice_issued 限定で同型)。"
+    },
+    {
+      "id": "GAP-PARTIAL-BUILD-RECONCILE",
+      "severity": "high",
+      "text": "working tree には旧・名寄せ主因説の時点で着手された部分build が残存する(build は greenfield でない)。build 着手前に reconcile 方針を確定すること: (1) lib/sheet_to_master.py の MF顧客ID導出(_mf_customer_id_for 等)は C02(mfk_customer_id_resolve.py)が正式 SSOT として吸収・置換する(二重実装/orphan化を防ぐ)。(2) lib/mfk_reconcile.py の _COMPANY_ALIAS_GROUPS(2nd Community/細野/paws の個社会社名ハードコード=RETRACT-1 の対症療法)と付随テスト(tests/test_mfk_fidelity_golden.py の3社限定 alias テスト)は C02 の一般解へ吸収し撤去する(C14・会社名リテラル0件)。(3) 主因 C05(mfk_verdict_export.py)は未着手ゆえ build の最優先で新規実装する。phase-02 の『既存部分build の reconcile 方針』節と対応。【2026-07-09 build+elegant で解消確認】C05 実装済み・_COMPANY_ALIAS_GROUPS 撤去済(test_mfk_reconcile が not hasattr を assert・照合エンジン会社名リテラル0件)・858緑cov94.87%。"
+    },
+    {
+      "id": "GAP-SINK-NORMAL-COLLAPSE-SUM",
+      "severity": "medium",
+      "text": "【2026-07-09 elegant round2 検出→解消】C03 sink collapse の正常×正常残穴 (F-TRADE-1 の severity 混在修正が救わないケース): notion_report_sink._prefer_action が同一(対象月,取引先,商品)の発行済み(正常)×発行済み(正常)を後着だけ残し先行の実額を注記もなく破棄していた (HOSONO 甲様210000+乙様70000 が 70000 のみ表示・contract_id=None 同士だと collapsed_multi にも計上されず観測不能)。C5 verify 目標『発行済み金額が隠れない(合算で正しく表示)』に反する実額喪失。解消: _merge_issued_amounts を新設し両発行済み実額を合算+内訳注記し左畳込で3件以上も順序非依存に総額保全 (test_c5_sink_collapse_sums_both_issued_amounts で凍結)。恒久策の 8列固定→9列目エンドクライアント名昇格は常態化トリガ (collapsed_multi 計上) 時に別 plan で検討する余地を残す。 【2026-07-10 capability-review(dry-run→fix) 追検出→解消】隣接 MECE 象限 (severity 混在 collapse) の同型残穴を三角測量(3 analyst 収束)で検出し根治: notion_report_sink._preserve_issued_amount が『要対応行が既に(先行 fold で畳み込んだ)発行済み実額を持つ』とき 2件目以降の reliable 正常実額を else 分岐で number 列へ加算せず脱落させ、要対応が畳込順の最後でない fold 順で過少報告していた (HOSONO 甲210000+乙70000+丙要対応 が210000 のみ)。解消: 内部標識 _ISSUED_CARRY_KEY で『自己金額(source 由来・据え置き)』と『畳み込んだ発行済み実額(Σ 加算)』を分離し _preserve_issued_amount/_merge_action_comments 双方で Σ 不変則を対称適用(fold 順非依存・4-way 経路の carry 伝播含む)。実 entry point (upsert_report_rows collapse loop→number 列) を通す統合テストtest_severity_mixed_collapse_sums_issued_amount_through_upsert + unit test_collapse_severity_mixed_sums_multiple_issued_amounts_order_independent で凍結(『_prefer_action 直接呼びを迂回する見せかけ緑』F-S03/F-L07 も同時 closure)。**未closure残余(tracked)**: 代理店の複数エンドクライアント(contract_id=None 同士)collapse は None==None ゆえ collapsed_multi 未計上=stdout 0 のままで 8列固定→9列昇格の常態化トリガが発火しない observability 穴(F-S04/F-L02)。実額 Σ は closure したが観測性回復は別 plan。"
+    },
+    {
+      "id": "GAP-WHITELIST-POSTISSUE-REEMERGENCE",
+      "severity": "medium",
+      "text": "エレガント検証 (Agent2 A2-F3 / Agent4 A4-F03) 検出: mfk_collect_status.ISSUED_BILLING_STATUSES は {invoice_issued, account_transfer_notified} のホワイトリストで、未知 status を保守的に非issued へ倒す。MF が将来 account_transfer_notified 同様の新たな発行後 status を追加すると is_issued_billing が False を返し paws 型偽GAP が同型再発する (『前回直したのに直らない』の再来)。現状は reconcile_invoices が excluded_status_count を stderr へ・mfk_fetch_audit が billing_status_summary を fidelity report へ開示するが、能動 gate/alert はない (fail-open 方向)。次段改善: 未知 status が issued transaction と co-occur する場合を fidelity report で『潜在的発行後 status・要確認』として能動 flag するか、excluded>0 かつ未知 status 時に fetch_audit を要確認降格 (exit3 同型) させる軽量ゲートを追加する。本 elegant round では開示済みを許容し tracked。"
+    },
+    {
+      "id": "GAP-PRODUCER-PROVENANCE-GATE",
+      "severity": "low",
+      "text": "エレガント検証 (Agent3 A3-F02) 検出: 構造的主因C2 の根治 (LLM手動直列化→決定論 producer C05 委譲) の強制力が R1-collect.md の散文指示のみで、機械 gate がない。guard-mfk-no-reinvent は `def classify/reconcile/compare/period_diff` の再実装を焼くが、LLM が reconcile 出力を読んで curr-verdicts.json を Write/heredoc で手書き直列化する経路 (def シグネチャを持たない) は捕捉しない。トークン圧下で R1 が mfk_verdict_export.py を呼ばず手書きへ退行すると curr=None が再発しうる。mfk_verdict_export は既に doc へ generated_by='mfk_verdict_export' を焼くため、消費側 (mfk_period_report.main の curr-verdicts 読込段) で generated_by 欠落/行数が MF顧客数を大きく下回る入力を fail-closed 拒否する軽量 provenance gate を足せば手書き退行を機械層で塞げる (mfk_fetch_audit の pagination floor と同型)。本 elegant round では散文強制を許容し tracked。"
+    },
+    {
+      "id": "GAP-VERDICT-EXPORT-PRIVATE-IMPORT",
+      "severity": "low",
+      "text": "エレガント検証 (Agent3 A3-F05) 検出: producer scripts/mfk_verdict_export.py:60 が下流 classify scripts/mfk_period_report.py の private 関数 `_prev_month_ym` (アンダースコア前置) を跨モジュール import している。producer→classify private への依存は軽い層逆転で、mfk_period_report が _prev_month_ym を refactor すると producer が暗黙破損する結合 smell。月計算 SSOT (resolve_target_months/_prev_month_ym) を lib/ の共有 module へ昇格 or public API 化して script→script private 結合を外す余地を残す。挙動バグではなく保守性 (別 plan tracked)。"
+    },
+    {
+      "id": "GAP-R1-FIDELITY-REPORT-WIRING",
+      "severity": "medium",
+      "text": "【2026-07-10 capability-review 検出→解消】run-mf-invoice-report 準拠経路の断裂: R2-classify(mfk_period_report.py:956)は --fidelity-report を required=True(欠くと argparse exit2=レポート皆無)で正しく宣言していたが、R1-collect.md の LLM 実行経路(『出力指示』=128行以下のみ実行)と Layer5.3 完了チェックリスト(『唯一の停止条件』)・2.4 出力契約・6.2 受領先が fetch fidelity report の生成/受け渡しを欠き、Layer2.2 散文(line45)のみに存在=散文と実行指示の乖離。準拠 LLM がチェックリスト通り fidelity を作らず R1 完了→R2 exit2 で全停止、または fail-closed ゲート入力を場当たり捏造。fidelity plan(PR#85)の R2/SKILL 修正が R1 チェックリストへ未伝播した残債。解消: R1-collect.md の 2.4/5.3/6.2/出力指示へ fetch_trace 捕捉(trace_sink)+ mfk_fetch_audit.py 監査 + fidelity report 生成 + R2 --fidelity-report 受け渡しを配線(SKILL.md フロー[2 fetch-audit]・R2-classify のrequired 宣言と整合)。3 analyst 中 2 者収束(F-S01≡F-L03)+自己 code 検証(required=True↔R1 欠落)で確定。"
+    },
+    {
+      "id": "GAP-ORPHAN-AMOUNT-PRODUCT-MISMATCH",
+      "severity": "low",
+      "text": "【2026-07-10 capability-review 追跡(未fix・別plan)】detect_orphans は amount=Σsvc.amount(全役務合算)だが rep=max(代表1件)で、_orphan_to_row→mfk_period_report._orphan_rows が『要マスタ登録』行を product=<代表1役務> なのに 今月金額=<全役務合算> で emit し金額と商品が非対応(F-S05)。多役務 orphan 社(A役務3万+B役務9万)が {product:B, amount:120000} となり担当者が B に12万発行と誤認しマスタ登録額を誤りうる。逆方向 orphan 可視化(GAP-ID-ALIAS-BACKFILL-PATH round2 closure)の残穴。修正案=orphan 行を役務単位に展開するか amount を代表役務額へ整合。write-surface でなく表示整合ゆえ別 plan で受入。"
+    },
+    {
+      "id": "GAP-RELIABLE-ISSUED-DUAL-DEF",
+      "severity": "low",
+      "text": "【2026-07-10 capability-review 追跡(未fix・pipeline masked)】『MF実績由来で当月 active 発行済みか』の同義判定が2実装で乖離: mfk_period_report._row_reliable_mf_issued = reliable_issued OR supply_state==active / notion_report_sink._is_reliable_mf_issued = severity==0 AND reliable_issued(supply_state 非参照)。両 docstring は同一セマンティクスを主張(F-L04・C1 矛盾)。パイプライン経由は _emit が supply_state を reliable_issued へ畳むため露見しないが、--rows 直接投入(supply_state=active∧reliable_issued=False)で cross-run guard K4 権威訂正が sink 側で発火せず前 run の要対応☐が残りうる。単一 helper への SSOT 化余地。"
+    }
+  ]
+}

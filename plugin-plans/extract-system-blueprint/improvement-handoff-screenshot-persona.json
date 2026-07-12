@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "verbal",
+    "ref": "conversation:/plugin-dev-plan --mode update extract-system-blueprint (screenshot + detailed-layout + expert-persona lenses, low-load preserved)",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (--mode update improvement intake, round2)"
+  },
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "mode": "update",
+  "improvements": [
+    {
+      "id": "IMP-001",
+      "dimension": "screenshot-capture",
+      "severity": "high",
+      "summary": "分析対象システムの主要画面を有界スクリーンショットで捕捉し、画面分析の一次資料にしたい。",
+      "decision": "C03(frontend-surface-analyzer)がC15 browser-render(MCP非依存のローカルheadless Chrome via Bash)経由で主要画面N枚(既定4-6)のviewportスクリーンショットを取得時のprovenance付きfactとして取得する。ブラウザ不在時(exit3=browser-unavailable)はobservation_status=blocked(browser-unavailable)へ縮退し静的観測で続行。認可/低負荷レバーはC12/C08と共有する。",
+      "reverses": "旧: goal-spec constraints[0]・index scope-out・P13 DROP で『スクリーンショット』を一律スコープ外にしていた点を、製品成果物(対象システムのスクショ)に限り in-scope へ反転。",
+      "target_ref": "component-inventory.json#C03 / #plugin_level_surfaces.schemas / goal-spec#C9"
+    },
+    {
+      "id": "IMP-002",
+      "dimension": "detailed-layout",
+      "severity": "high",
+      "summary": "細かな画面の配置(要素のレイアウト)をドキュメントに残し、AIが配置を再現できるようにしたい。",
+      "decision": "C03が主要要素のbounding-box・領域役割(header/nav/hero/CTA/footer)・reading orderをlayout factとして取得し(bounding-box等computed幾何はC15 browser-render取得時)、C11(doc-emit)がlayout.json + overlay.svg(+browser-render取得時のannotated screenshot)としてmd/json/ローカルへ出力。schemaにscreens[]/layoutを追加。新受入C9。",
+      "target_ref": "component-inventory.json#C03 / #C11 / #C06 / #plugin_level_surfaces.schemas / goal-spec#C9"
+    },
+    {
+      "id": "IMP-003",
+      "dimension": "low-load-preserved",
+      "severity": "high",
+      "summary": "スクショ/レイアウト取得でも対象システムへ負荷をかけすぎないこと(ユーザー明示強調)。",
+      "decision": "C8の既定(origin並列1・最小間隔・request/page/interaction上限)は一切緩めない。C15 browser-renderも専用budgetを持たずC12発行の共有authz/budgetと同一レバーを使い、bytesはledger計上、超過/blockで停止。既定緩和はユーザー承認対象。",
+      "target_ref": "component-inventory.json#C03.load_policy / #C12.load_policy / goal-spec#constraints / index#環境ポリシー"
+    },
+    {
+      "id": "IMP-004",
+      "dimension": "expert-persona-lenses",
+      "severity": "medium",
+      "summary": "フロント/バックエンド等の凄腕エンジニアの知見で分析→ドキュメント化したい。プロンプトに有名エンジニア名を付け、名前で役割を持たせたい。",
+      "decision": "C03/C04/C05/C06のresponsibility anchorへ著名エンジニアの役割レンズを焼く(既定: C03 Dan Abramov/Evan You, C04 Martin Kleppmann/Werner Vogels, C05 Josh Comeau/Sarah Drasner, C06 Martin Fowler/Kent Beck・原則レンズ・差替可)。ガード: レンズ由来の主張は全てinferenceレーンでevidence_refs+confidence必須、factレーンはペルソナ中立。新IDは作らずC2(推測品質)を拡張し、component id C10との文字列衝突を回避。",
+      "guard": "persona-non-contamination: fact/inference分離を壊さない(P06 fixtureで非混入を実測、P09 schema parityで強制)。",
+      "target_ref": "component-inventory.json#C03,C04,C05,C06 / goal-spec#C2 / goal-spec#constraints"
+    },
+    {
+      "id": "IMP-005",
+      "dimension": "expert-lens-prompt-contract",
+      "severity": "high",
+      "summary": "エンジニア名が説明文だけでなく、実際の分析プロンプトで明確な役割を持つようにしたい。",
+      "decision": "C03-C06へstructured expert_lenses/prompt_contractを追加し、各実名付きLens見出し・Observations・Cross-lens conflicts・Neutral synthesis・Confidence and gapsを実プロンプトの必須sectionにする。公開原則を分析レンズとして使うが、本人の口調模倣・レビュー/推薦の虚偽主張・名前だけでのPASSを禁止する。C03は観測誘導のみ、C04-C06はevidence_refs+confidence必須のinference laneとする。",
+      "target_ref": "component-inventory.json#C03,C04,C05,C06.expert_lenses+prompt_contract / references/expert-lens-roster.md"
+    },
+    {
+      "id": "IMP-006",
+      "dimension": "local-inline-screen-visualization",
+      "severity": "high",
+      "summary": "細かな画面配置を注釈overlayとlayout.jsonで見える化し、ローカルで直接確認したい(browser-render取得時はscreenshotも)。",
+      "decision": "C03が読み込み済みDOM/同一sessionから親子関係・px/正規化座標・CSS layout/typography/color・固定/重畳・state・responsive差分を採取し(computed幾何/screenshotはC15 browser-render取得時)、C11がlayout.json+layout-overlay.svg(+browser-render取得時のredacted screenshot/annotated.png)を決定論生成する。成果物はローカル完結で外部公開しない。asset hash冪等、対象システムへの再取得は増やさない。",
+      "target_ref": "component-inventory.json#C03,#C11,#C01,#C15 / goal-spec#C4,#C9 / references/runbook.md"
+    },
+    {
+      "id": "IMP-007",
+      "dimension": "visual-formation-completeness",
+      "severity": "high",
+      "summary": "色合いを含む画面再形成情報を無言欠落なく網羅したい。",
+      "decision": "visual formationをidentity/content、geometry/box model、layout、paint、typography、media、effects、pseudo-elements、state、motion、responsive、a11y、tokensの13カテゴリへ固定する。画面→region→主要elementのcoverage manifestを持ち、各fieldはobserved valueまたはnot_observed|blocked+reasonのどちらかにする。追加networkは行わず読み込み済み静的DOM/宣言CSS/accessibility treeを優先し(computed style/computed幾何はC15 browser-render取得時)、全DOM無制限走査を避けてclient CPU負荷も抑える。",
+      "target_ref": "component-inventory.json#C03.output_contract,#plugin_level_surfaces.schemas / goal-spec#C9 / phase-06-test-run.md"
+    }
+  ],
+  "invariants_preserved": [
+    "12-component topology 不変(新component追加なし=handoff 12 routes/12 produces 1:1維持)。",
+    "低負荷C8の瞬間負荷レバー(origin並列1/最小間隔/request・page・interaction上限)を一切緩めない。C15 browser-renderは専用budgetを持たずC12発行の共有authz/budget(SSOT)をimport共有しC08がfail-closed検査する。既定budgetの引き上げはユーザー承認対象。",
+    "事実/推測/欠測の明示区別(fact/inference/observation_gap oneOf)をペルソナ注入でもスクショでも壊さない。",
+    "local draft→C02 draft-hash PASS(ローカル品質verdict・外部公開なし)の順序。"
+  ],
+  "provenance": {
+    "prev_improvement": "plugin-plans/extract-system-blueprint/improvement-handoff-elegant-verify.json",
+    "prev_goal_spec": "plugin-plans/extract-system-blueprint/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation: スクショで画面分析 / 細かな画面配置のドキュメント化 / 低負荷維持 / 有名エンジニア役割レンズ"
+    }
+  }
+}

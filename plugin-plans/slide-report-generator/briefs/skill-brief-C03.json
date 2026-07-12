@@ -1,0 +1,53 @@
+{
+  "skill_name": "run-cross-deck-review",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "シリーズ横断で整合性を確認したい",
+    "複数 deck の用語ゆれを検出したい",
+    "cross-deck-review"
+  ],
+  "output_contract": "横断レポート(用語ゆれ一覧 + 意匠差一覧 + 構成不整合一覧 + 網羅率)",
+  "boundary": "入力=複数成果物/出力=横断整合レポート。個別成果物の修正は run-slide-report-modify へ委譲する",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "node"
+  ],
+  "deterministic_checks": [
+    "cross-deck-consistency.js",
+    "check-consistency.js"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "横断対象の deck/report 収集",
+    "3並列分析(用語/意匠/構成)実行",
+    "不整合の網羅検出と報告"
+  ],
+  "goal": "複数 deck/report のシリーズ横断で用語/意匠/構成の整合性を検証し、用語ゆれ・意匠差・構成不整合が網羅的に検出された状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "既存 cross-deck-reviewer(P5)のシリーズ横断検証を独立起動 skill として移植し、単一 deck では見えないシリーズ全体の整合崩れを検出するため",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "横断対象の deck/report 群と整合観点をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-analyze",
+      "summary": "cross-deck-reviewer を介し用語/意匠/構成の 3並列分析を実行する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-report",
+      "summary": "不整合の網羅検出結果を横断レポートとして返す",
+      "prompt_required": true
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし: deterministic gates passed",
+      "evidence": [
+        "check-build-handoff exit=0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし: deterministic gates passed",
+      "evidence": [
+        "detect-unassigned exit=0",
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-surface-inventory exit=0",
+        "check-requirements-coverage exit=0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり: deterministic gates passed",
+      "evidence": [
+        "check-spec-frontmatter exit=0",
+        "check-spec-gates exit=0",
+        "check-spec-matrix-coverage-self-test exit=0",
+        "check-spec-matrix-coverage-plan exit=0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合: deterministic gates passed",
+      "evidence": [
+        "verify-index-topsort exit=0",
+        "detect-unassigned exit=0",
+        "check-build-handoff exit=0",
+        "check-runtime-portability exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環",
+      "stderr": ""
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "--inventory",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance/component-inventory.json",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持",
+      "stderr": ""
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足",
+      "stderr": ""
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "--specs-dir",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)",
+      "stderr": ""
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み",
+      "stderr": ""
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance/component-inventory.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み",
+      "stderr": ""
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "stdout": "OK: build handoff が 9 routes と envelope 契約を満たす",
+      "stderr": ""
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み",
+      "stderr": ""
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260704-225216-wt-3/plugin-plans/harness-prompt-conformance"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結",
+      "stderr": ""
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "assign-plugin-plan-evaluator の evaluate-plan.py (plan-scoped 10 gate invocations) を直接実行し全 exit0 を確認。加えて評価器スコープ外の拡張2ゲート (check-plugin-goal-spec.py=input-gate / check-plugin-surface-audit.py=dogfood) も独立に手動実行し、両方とも exit0 (surface-audit は --expect-plan-ready plugin-dev-planner で 15 plugin 横断棚卸し OK) であることを確認した。core+extended は 11 script / 12 invocations として全 exit0 を再現。",
+      "evidence": [
+        "plugin-plans/harness-prompt-conformance/plan-findings.json (gate_results G1-G10)",
+        "check-plugin-goal-spec.py plugin-plans/harness-prompt-conformance/goal-spec.json exit=0",
+        "check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-planner exit=0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2",
+      "observation": "goal-spec C4 (『harness-creator の既存 skill 配下 prompts/*.md が l5-contract v2.0.0 に準拠していることが機械検証済み』) は C09 (run-build-skill 更新) 単独の担保ではなく、C02 (lint-agent-prompt-content.py) の『agents/*.md と skills/*/prompts/*.md』の全 skill 横断スコープが担う設計であることを component-inventory.json の C02.purpose 記述で確認した。実測でも harness-creator 配下 skills/*/prompts/*.md 全36本 (run-skill-create/run-elegant-review/run-skill-elicit 等 run-build-skill 以外の skill を含む。母数注記: 36=symlink 込 glob 計測、うち自前33本が C02 の symlink 除外走査対象、差分3本=contract-generator symlink bundling 分。measured_at 2026-07-05) が既に7つの Layer 見出しを備えており、C4 は『新規是正』でなく『既存適合の機械検証』で足りるという計画の前提が実態と整合している。C09 単独では不足するという懸念は、C09 の責務範囲 (生成フロー配線=C5) と C4 (内容準拠の検証=C02 の担当) を混同したものであり、design 上のギャップではない。",
+      "evidence": [
+        "plugin-plans/harness-prompt-conformance/component-inventory.json (C02.purpose: 'agents/*.md と skills/*/prompts/*.md の本文が...--mode agent|prompt で fail-closed 検証する')",
+        "plugins/harness-creator/skills/*/prompts/*.md 全36本の '^## Layer' 見出し数 (実測: 全て7、run-skill-elicit/prompts/R1-elicit.md 等でも確認。36=symlink 込/33=C02 symlink 除外走査、差分=contract-generator 3本。measured_at 2026-07-05)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C4",
+      "observation": "goal-spec C5 (『prompt-creator 非経由の単独生成を試みる受入例で抜け道が塞がれている』) は、C09 の output_contract / checklist / feedback_contract.criteria.OUT1 に build_trace/provenance (source_contract_ref と prompt_creator_invocation) を必須証跡として追加し、provenance 欠落または prompt_creator_invocation=false の生成物を exit1 で止めるバイパス不能性テストとして具体化済み。C5 の実質的な充足は build 段階での criteria 実装評価に依存するが、本 plan は下流 L1 run-skill-create へ渡す受入条件として、本文準拠だけでは prompt-creator 経由を証明できない穴を provenance で塞ぐ設計に更新された。",
+      "evidence": [
+        "plugin-plans/harness-prompt-conformance/component-inventory.json (C09.checklist[2] / C09.feedback_contract.criteria[1].text)",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md §10 '本文トラスト境界'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C4",
+      "observation": "goal-spec C8 (除外3 plan_dir が build_target に含まれない) を component-inventory.json の全9 component build_target、handoff の routes[].build_target、side_effect_targets で監査し、plugin-plans/plugin-dev-planner/・plugin-plans/skill-intake/・plugin-plans/harness-creator/ への参照が (境界宣言のための言及を除き) 一件も無いことを確認した。C7 (build_target の所有 plugin 別 routing) も、C01→plugins/prompt-creator/、C02-C09→plugins/harness-creator/ で正しく分離されている。CI workflow 更新は C09 の side_effect_targets として .github/workflows/ 配下に明示され、除外 plan_dir へ波及しない。",
+      "evidence": [
+        "grep 'plugin-plans/(plugin-dev-planner|skill-intake|harness-creator)' plugin-plans/harness-prompt-conformance/*.json *.md → 境界宣言の自己言及のみ (実際の build_target / side_effect_targets 汚染なし)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2",
+      "observation": "単一 skill への退化なし: component-inventory.json は skill×2 (C01/C09) / sub-agent×6 (C03-C08) / script×1 (C02) の実質的な分解を持ち、各 component は build_target・builder・depends_on が個別かつ実在パスで異なる (名目上の水増しでない)。是正対象の6 SubAgent (elegant-* 5体 + run-build-skill-subagent) を実測すると現状いずれも '## Layer' 見出しが0件であり、C03-C08 の是正スコープが実際の不備と一致することを確認した。design-review (P03) / final-review (P10) が『単一 skill への退化がないこと』を明示チェック項目として持つ。",
+      "evidence": [
+        "plugins/harness-creator/agents/elegant-*.md 及び run-build-skill-subagent.md の '^## Layer' 見出し数 = 0 (是正前の実測値)",
+        "plugin-plans/harness-prompt-conformance/phase-03-design-review.md 完了チェックリスト",
+        "plugin-plans/harness-prompt-conformance/phase-10-final-review.md 完了チェックリスト"
+      ]
+    }
+  ]
+}

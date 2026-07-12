@@ -1,0 +1,81 @@
+{
+  "skill_name": "run-plugin-dev-plan",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "plan 成果物へ task-graph (第3の射影) を追加するとき",
+    "既存 13 phase / component-inventory の 2 軸を保ったまま並列実行可能性を機械化するとき"
+  ],
+  "output_contract": "新規 schemas/task-graph.schema.json + schemas/discovered-task.schema.json + schemas/handoff-notes.schema.json + schemas/plan-ledger.schema.json + schemas/task-state.schema.json + schemas/task-execution-envelope.schema.json + 新規 scripts/derive-task-graph.py + scripts/validate-task-graph.py + scripts/compute-ready-set.py + scripts/accept-discovered-task.py + scripts/apply-handoff-notes.py + scripts/check-plan-ledger.py + scripts/migrate-plan-layout.py + scripts/check-shape-non-regression.py + scripts/render-task-graph-mermaid.py + scripts/check-task-state-schema.py + scripts/render-task-execution-envelope.py + scripts/project-task-status.py + scripts/check-cycle-knowledge.py + 既存 scripts/check-build-handoff.py の Edit 拡張 (task_graph_ref検証 + route_ref parity + handoff.cycle_id↔goal-spec parity) + 既存 scripts/verify-index-topsort.py の Edit 拡張 + 既存 scripts/specfm.py への定数拡張 + derive-task-graph.py の graph_hash()/--print-graph-hash + plan_output_dir() の cycle_id引数拡張 + 新規 references/task-graph-contract.md + 対応する新規/拡張pytest、全てexit0",
+  "boundary": "入力=既存 run-plugin-dev-plan skill の scripts/schemas/references/tests。出力=同 skill 内の新規ファイル + 既存ファイルへの Edit 差分。L4 実 build の並列 dispatch 実行 (/capability-build 系) は本 skill の責務外 (task-graph の schema/導出/検証/ready-set 計算/handoff 契約までが責務境界)。component-inventory.json の component 粒度 depends_on は再記述せず task-graph から包含参照するのみ (二重保持禁止)。producer/consumer 境界 (対 harness-creator): 本 component (producer=plugin-dev-planner) の所有範囲は task-graph の schema/導出/検証/ready-set 計算器のみであり、dispatch (SubAgent 並列投入)・state write-back・produces 成果物の consumes 注入・discovered-task の emit は consumer 側 (plugin-plans/harness-creator/ plan が component 化する L4 実行系) の所有である。task state ファイル (確定: eval-log/<slug>/build/task-state.json、route-build-report と同居。harness P02 の resolve_build_dir(target_plugin_slug, cycle_id) で解消済み) の単一 writer は consumer 側であり、本 component は初期 state (全 pending) の生成までを担う。境界の正本は `references/pipeline-boundary-contract.md` (harness-creator plan の checklist C7 で追記予定) で、語彙 (dispatch/state write-back/成果物注入/discovered-task emit) は harness-creator 側 goal-spec.json の constraints/checklist C7 と 1:1 で一致させている。C10⇔C14 相互参照 (平均回帰禁止): shape_marker が `task-graph-derived` を採用するのは check-shape-non-regression.py (C14 a,c) + C02 の A/B比較 genuine 判定 (C14 b) が共に PASS した場合のみを前提条件とし、いずれか劣化検出時は shape 解放を block し `fixed-13-phase` へ fallback する。harness 側実行時契約 (C10/C11/C12) との所有区分: harness-creator 側 goal-spec.json は C10 (冪等 resume(a)/孤児 running 回収(b)/build lease 排他(c)/graph_hash pin 不一致 fail-closed 検出(d))・C11 (task-events.jsonl の append-only イベントログ・単一 writer=親 dispatcher)・C12 (ready-set 空+未完了>0+running=0 の停滞検出) を consumer 側の実行責務として追加した。いずれも consumer が実行するが、C10(d) が参照する graph_hash の算出規約と task-state.json の schema (lease フィールド含む) の所有は producer (本 component, C16) のままであり、consumer は C16 の schema/graph_hash 算出ロジックを再実装せず producer 側 derive-task-graph.graph_hash() の算出値と照合するのみである",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "python3"
+  ],
+  "deterministic_checks": [
+    "derive-task-graph.py",
+    "validate-task-graph.py",
+    "compute-ready-set.py",
+    "accept-discovered-task.py",
+    "apply-handoff-notes.py",
+    "check-build-handoff.py",
+    "verify-index-topsort.py",
+    "check-plan-ledger.py",
+    "check-shape-non-regression.py",
+    "render-task-graph-mermaid.py",
+    "check-task-state-schema.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "task-graph JSON Schema (nodes: id/title/phase_ref/entity_ref/execution_kind/route_ref/task_spec_ref/write_scope/acceptance_criterion、canonical graph stateはseed=pending固定、edges: parent_of/depends_on/produces/consumes、blocksは独立宣言禁止の派生ビュー) の追加 (C1)",
+    "derive-task-graph.py: 13 phase共通policy + task-specs + component-inventory route → task-graph.json の決定論導出 + canonical serialization (単一 writer)。component依存はtask集合の直積でなくcompletion barrierまたはartifact joinへ1回写像する (C2, C11)",
+    "validate-task-graph.py: DAG非循環・orphan 0・producer一意・inventory depends_on矛盾0に加え、task直積展開0・推移冗長depends_on 0・同一phase/title/route複製0・edge density上限超過0を検証する (C2)",
+    "validate-task-graph.py: produces/consumes artifact 連結の fail-closed 検証 (consumes 参照先 producer 不在・パス不整合の検出) (C3)",
+    "compute-ready-set.py: task-state上のpending + depends_on完了 + consumes成果物実在 + write_scope非重複によるready-set決定論計算。衝突時はid昇順winner 1件とdeferredペアを明示する (C4)",
+    "discovered-task.schema.json + accept-discovered-task.py: provenance付き受理。additiveは安全な外ループ境界の次graph revisionへ自動採用し、構造変更級はユーザー承認後に次revisionへ採用する (C5)",
+    "check-build-handoff.py 拡張: task_graph_ref (path+schema_version) 携帯 + routes[]↔producer task 1:1以上対応検証 + handoff トップレベル cycle_id (str|None・additive) 携帯 + goal-spec↔handoff の cycle_id 整合 (parity) 検証 (C6, C13接続)",
+    "既存決定論ゲート・pytest 全件の後方互換 (task-graph 非保有 plan は従来直列解釈のまま exit0 維持) をテストで固定 (C7)",
+    "verify-index-topsort.py 拡張: shape_marker (fixed-13-phase/task-graph-derived) 判別 + fixed-13-phase 時の従来ロジック不変維持 (C10)",
+    "validate-task-graph.py: 非正準 (non-canonical) task-graph.json の fail-closed 拒否 + 同一入力からの byte 一致再現性テスト (C11)",
+    "handoff-notes.schema.json + apply-handoff-notes.py: went_well/friction_points/downstream_watchouts の件数上限(≤3)/文字数上限強制 + 直接依存先タスク限定の有界伝播 + advisory/actionable 切り分け (C12)",
+    "specfm.py 拡張 (plan_output_dir に cycle_id: str | None = None 引数追加、省略時は現行 flat 挙動を不変維持) + schemas/plan-ledger.schema.json + scripts/check-plan-ledger.py (cycle_id 形式/status enum/同時 active 重複の fail-closed 検出) + scripts/migrate-plan-layout.py (既存 flat 配置 plan → cycle-id 配置 + 台帳登録の移行) (C13)",
+    "scripts/check-shape-non-regression.py: (a)精度=タスクノードの二値受入基準携帯率 (1タスク=1検証可能成果物+受入基準) を旧shape §5項目粒度と比較計測、(c)再現性=同一構想再生成でのtask-graph byte一致 (C11接続) + 仕様書構成 (ファイル集合/ノード集合) 一致を計測し、劣化検出時は shape 解放を block し fixed-13-phase へ fallback するゲートロジック (C14 a,c)",
+    "scripts/render-task-graph-mermaid.py: canonical task-graph.json → mermaid 依存グラフ図 (node=state別色分け、edge=parent_of/depends_on/produces/consumes の4線種、depends_onのみを辿るクリティカルパスをlinkStyleで強調) の決定論導出。同一graphからの2回連続renderがbyte一致し、graphに無い要素を描画しない (C15)",
+    "execution_kind + task_spec_ref + 可変 task-specs/<task-id>.md + task-execution-envelope schema/renderer: component-buildだけが明示route_refを持ち、entity_refは分類専用とする。node identity/objective・該当phase policy・明示route・二値受入基準・write_scope・先行artifact・handoff notes・knowledge refs・verify方法をdispatch前に決定論合成し、title単独prompt・entity_ref暗黙route・1 nodeによる13 phase全文実行をfail-closed拒否する (C17)",
+    "task-graph.json(revision内構造不変・seed pending) / task-state.json(consumer単一writer) / task-graph-status.json+task-progress.md+task-execution-report.html(派生投影) の三層parityとtask-events.jsonl append-only記録を仕様化する。HTMLは同じstatus+route reports/build-summaryから自己完結・escape済み・決定論生成し、進捗/実行フロー/成果物証跡/外ループ/正本リンクを図解する。discovered-task採用時は旧revisionを上書きせず新graph revision/hashへrepinする (C18)",
+    "plan-ledger predecessor_cycle_id + task spec knowledge_refs/external_inputs: 完了cycleをimmutable provenanceとして保持し、過去nodeをactive DAGへ混在させずsource_ref付き蒸留knowledgeと明示artifactだけを有界再利用する (C19)",
+    "schemas/task-state.schema.json (新規) + scripts/check-task-state-schema.py: state遷移値域・schema_version・graph_hash・lease(running状態のstarted_at/期限)・blocked_reason(blocked状態の起点故障origin-failure/伝播propagatedを区別する第一級field・値域{origin-failure,propagated})の定義とrunning状態のlease必須違反検出・blocked状態のblocked_reason必須違反検出(running→leaseと同型の条件付き必須)、build開始時にpinしたgraph_hashと現task-graphの不一致をfail-closed検出 (discovered-task受理含む実行中graph変更は次周回のみ反映)。blocked_reasonはconsumer=harness-creatorがnotes.reasonへ暫定記録していた区別(F9)を正式schema fieldへ昇格しC12停滞診断の起点route特定を可能にする(GAP-FAILED-STATE-VOCAB解消・state enumへのfailed追加は破壊的ゆえ非採用・4値域不変)。schema/pin規約の所有はproducer(C01)、task-state.jsonへの実書込はconsumer(harness-creator)の単独writer (C12と同型の所有/書込分離) (C16)"
+  ],
+  "goal": "task-graphの生成/検証/ready-set/discovered-task/canonical/cycle契約に加え、13 phase共通policyと可変task specをtask_spec_refで結びTaskExecutionEnvelopeへ合成する契約、task-graph/task-state/status projectionの三層状態モデル、過去cycleのlineage/knowledge再利用契約がrun-plugin-dev-planへ組み込まれ、title単独prompt・graph直接state更新・過去nodeのactive DAG混入をfail-closedで拒否できる状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "既存task-graph実行系はready-set/state write-back/成果物注入/発見課題還流まで持つ一方、phase_ref・entity_ref・titleからSubAgentへ渡す完全な実行契約の合成が明示されず、13 phaseを全部実行するのかtitleをpromptにするのかが利用者に不透明である。またcanonical graphと可変state、完了specと蒸留knowledgeの棲み分けが説明不足である。本更新は既存2componentを維持し、producer側contractと独立evaluatorの意味判定を差分強化する",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "task-graph と task execution contract 改善要求からゴールとチェックリスト (C1-C19) を確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-decompose",
+      "summary": "task-graph 関連capabilityを5種のcomponent_kindへ写像し、単一skill収束の根拠込みでcomponent-inventory.jsonを分解・確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-emit-specs",
+      "summary": "13 phase ファイル + index + envelope-draft + handoff (task-graph 参照契約込み) を宣言型 section 床で生成する",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-verify-traceability",
+      "summary": "決定論ゲートと goal-spec 要件のトレーサビリティを検証する。task-graph 導出/DAG検証/ready-set/discovered-task/canonical化/shape marker/handoff-notes の各チェック結果も突合する",
+      "prompt_required": true
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.2.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "決定論ゲート(check-build-handoff/check-plugin-surface-audit)がexit0、かつR6監査(a)(f)(h)で検出した契約間の数値・文言の矛盾は0件。index.mdの可読ダイジェスト2箇所で検出した条件文/レンズ列挙の省略(medium finding 2件)は修正確認済み(resolved)。",
+      "evidence": [
+        "check-build-handoff.py plugin-plans/extract-system-blueprint/handoff-run-plugin-dev-plan.json => exit=0, stdout='OK: build handoff が 14 routes と envelope 契約を満たす'",
+        "check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-planner => exit=0（17plugin監査、envelope-draft/plugin.json含め矛盾0）",
+        "component-inventory.json#C08.matcher = 'Bash|WebFetch|mcp__browser-runtime.*|mcp__notion.*' と envelope-draft/plugin.json#hooks.PreToolUse[0].matcher = 'Bash|WebFetch|mcp__browser-runtime.*|mcp__notion.*' が文字列完全一致（直接Read確認）",
+        "component-inventory.json#C09/#C03/#C12のload_policy.mode_note/budget_mode_noteが3箇所ともverbatimで同一文言（'runtime_max_*とtotal_origin_bytes_ceiling(=runtime_max_bytes+runtime_max_screenshot_bytesの導出値)はcrawl_mode=single時の既定。full_site時はcrawl_profile.full_siteのper-run予算が置換しtotal_origin_bytes_ceilingは適用しない。瞬間負荷レバー...は両モード不変'）で矛盾なし",
+        "handoff-run-plugin-dev-plan.json内 GAP-BROWSER-RUNTIME(id) のtextが『未構成時の帰結はinventory plugin_level_surfaces.mcp_app_connectorの条件文を正本とする(...gap記録つきPASS可)』とinventory本体の条件文を正しく参照し矛盾なし",
+        "修正後再検証: index.md:91のMCP/app connector行が二分岐条件文へ更新され、index.md:74の完全形と非対称でなくなったことを直接Readで確認（旧C3 finding=resolved）"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "detect-unassigned/check-surface-inventory/check-requirements-coverage/check-plugin-goal-spec全exit0。orphan 0件、plugin_level_surfaces 6面の採否が明示済み、14 component全てにtask-graph produces edgeが張られている。",
+      "evidence": [
+        "detect-unassigned.py --inventory .../component-inventory.json --specs-dir . => exit=0, stdout='OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持'（修正後再実行でも同一結果）",
+        "check-surface-inventory.py .../component-inventory.json => exit=0, stdout='OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み'",
+        "check-requirements-coverage.py . => exit=0, stdout='OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み'（修正後再実行でも同一結果）",
+        "check-plugin-goal-spec.py .../goal-spec.json => exit=0, stdout='OK: plugin goal-spec schema + plugin anchors validated'",
+        "index.md:146『各componentが>=1 phaseのentities_coveredに出現する(orphan 0件)』チェックリスト項目を独立確認（同旨をdetect-unassignedが機械保証）",
+        "task-graph.json実測: nodes=103, edges=307(depends_on=203/parent_of=90/produces=14)。produces edgeがC01-C14の14 component全てに1件以上存在することをpython3集計で確認"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "check-spec-matrix-coverage(self-test/PLAN)双方exit0。R6監査(a)(c)(d)(e)は完全一致・drift0を確認。index.mdの可読ダイジェスト部で検出した2件の軽微な非対称（C04レンズ行のOWASP欠落、MCP/app connector行の条件文一分岐省略）はteam-leadにより修正され、実文面Readで反映を確認した（resolved、medium→info)。",
+      "evidence": [
+        "check-spec-matrix-coverage.py --self-test => exit=0, stdout='OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)'（修正後再実行でも同一結果）",
+        "check-spec-matrix-coverage.py plugin-plans/extract-system-blueprint => exit=0, stdout='matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)' + 'OK: 適用される全マトリクス行の焼き先が反映済み'（修正後再実行でも同一結果）",
+        "grep -rniE '8名|12名|名のLens|名の著名|8 lenses|12 lenses' plugin-plans/extract-system-blueprint/ => 現行ファイルに一致0件。inventory expert_lenses合計=C03(2)+C04(3)+C05(2)+C13(4)+C06(2)=13名で一致",
+        "grep -rln 'fetch-render' plugin-plans/extract-system-blueprint/ => 0件。fetch-snapshot.pyがgoal-spec/handoff/inventory/index/task-graph/phase-08/briefsで一貫参照",
+        "component-inventory.json#C11.description/quality_gatesにPNG生成/縮小記述なし。C03がredacted screenshot/annotated.png(≤4MiB)を撮影時点で確定させ、asset_key=C03出力byteである旨がnotion_config.databasesと一致。C11はmd/json/SVG/manifestのstdlib_onlyテキスト操作限定",
+        "修正後再検証(index.md:103): '| C04 | backend-inference-analyzer (sub-agent) | バックエンド機構+named stack同定+security_design(受動観測のみ)+delivery_topologyの根拠+確度つき推測(レンズ Kleppmann/Vogels/OWASP) | C03 |' — OWASPを含む3レンズを列挙し、index.md:69『C04=Kleppmann/Vogels/OWASP』と整合、他行との表記非対称は解消",
+        "修正後再検証(index.md:91): '| MCP/app connector | omitted | 新規connectorは作らず、設置先のbrowser-runtime(MCP server名固定・aliasで充足可)を外部依存として再利用 (未構成時: JS要観測が重要fact該当ならC02 FAIL・静的完結が実測で示せる場合はgap記録つきPASS可。正本=inventory `mcp_app_connector` 条件文) |' — 二分岐条件文を反映し、index.md:74の完全形と整合"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "verify-index-topsort/detect-unassigned/check-build-handoff/validate-task-graph/check-runtime-portability全exit0。build順top-sortとdepends_onが全component間で矛盾なく、resume両辺契約(C01/C12)も3点で完全一致。",
+      "evidence": [
+        "verify-index-topsort.py . => exit=0, stdout='OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環'（修正後再実行でも同一結果）",
+        "check-build-handoff.py .../handoff-run-plugin-dev-plan.json => exit=0",
+        "validate-task-graph.py . => exit=0（標準出力なし=違反0件、スクリプト仕様上サイレント成功が正常挙動）",
+        "check-runtime-portability.py . => exit=0, stdout='OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結'",
+        "index.md:112『build 順 (依存 top-sort): C10/C11/C12→C09,C08→C03→C04,C05,C13→C06→C01→C02→C07,C14』が全componentのdepends_on列と矛盾なし",
+        "component-inventory.json#C01.responsibilities[R1-fetch].summary『再開runは前runのsite coverage manifestを読み、pendingと未分類discoveredをC12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)』と #C12.load_policy.crawl_profile.full_site.resume_state『site coverage manifest(次runは--coverage-manifest-inで受領しpending∪未分類discoveredを分類対象へ再投入する)』および #C01.inputs argv『--coverage-manifest-in FILE』の3点が完全一致"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"
+    },
+    {
+      "id": "G2",
+      "name": "check-plugin-goal-spec",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py", "plugin-plans/extract-system-blueprint/goal-spec.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: plugin goal-spec schema + plugin anchors validated"
+    },
+    {
+      "id": "G3",
+      "name": "detect-unassigned",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py", "--inventory", "plugin-plans/extract-system-blueprint/component-inventory.json", "--specs-dir", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C2", "C4"],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-frontmatter",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py", "--specs-dir", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-gates",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py", "--specs-dir", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "--self-test"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)"
+    },
+    {
+      "id": "G7",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み"
+    },
+    {
+      "id": "G8",
+      "name": "check-surface-inventory",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py", "plugin-plans/extract-system-blueprint/component-inventory.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    },
+    {
+      "id": "G9",
+      "name": "check-build-handoff",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py", "plugin-plans/extract-system-blueprint/handoff-run-plugin-dev-plan.json"],
+      "exit_code": 0,
+      "conditions": ["C1", "C4"],
+      "stdout": "OK: build handoff が 14 routes と envelope 契約を満たす"
+    },
+    {
+      "id": "G10",
+      "name": "check-requirements-coverage",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"
+    },
+    {
+      "id": "G11",
+      "name": "check-runtime-portability",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"
+    },
+    {
+      "id": "G12",
+      "name": "validate-task-graph",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py", "plugin-plans/extract-system-blueprint"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": ""
+    },
+    {
+      "id": "G13",
+      "name": "check-plugin-surface-audit",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-surface-audit.py", "--plugins-dir", "plugins", "--strict-manifest", "--expect-plan-ready", "plugin-dev-planner"],
+      "exit_code": 0,
+      "conditions": ["C1", "C2"],
+      "stdout": "Audited 17 plugins under plugins（plugin-dev-planner含め全plugin surfaceが監査され違反0）"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "deterministic-gates-execution",
+      "observation": "specfm.GATE_SCRIPTS の core 6 呼び出し + extended 7 スクリプト、計13呼び出し（12スクリプト、うちcheck-spec-matrix-coverage.pyは--self-test/PLANの2回呼び出し）を repo-root cwd で全てフレッシュに再実行し、全exit=0を確認した。check-plugin-surface-audit.pyは--plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-plannerで実行し17plugin監査を通過した。medium finding修正後、関連5ゲート(topsort/unassigned/requirements-coverage/matrix-coverage×2)を再実行し、いずれも同一のexit=0結果を再確認した。",
+      "evidence": [
+        "13呼び出し全てexit=0（G1-G13、gate_results参照）",
+        "修正後再実行: verify-index-topsort/detect-unassigned/check-requirements-coverage/check-spec-matrix-coverage(--self-test/PLAN)の5呼び出しも全exit=0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "lens-roster-table-completeness",
+      "observation": "[resolved] index.md の component roster テーブルC04行が OWASP レンズ名を欠落していた問題（旧medium finding）は、team-leadによる修正後、index.md:103の実文面を直接Readで確認し解消を確認した。修正後の行は『バックエンド機構+named stack同定+security_design(受動観測のみ)+delivery_topologyの根拠+確度つき推測(レンズ Kleppmann/Vogels/OWASP)』となり、OWASPを含む3レンズを正しく列挙している。同ファイルline69・inventory本体(#C04.expert_lenses = Kleppmann/Vogels/OWASP)とも整合し、同テーブル内の他行(C03/C05/C13/C06)との表記粒度の非対称も解消した。関連ゲート(detect-unassigned/check-spec-frontmatter/check-spec-gates)は修正前後で変化なくexit=0。",
+      "evidence": [
+        "index.md:103(修正後) '| C04 | backend-inference-analyzer (sub-agent) | バックエンド機構+named stack同定+security_design(受動観測のみ)+delivery_topologyの根拠+確度つき推測(レンズ Kleppmann/Vogels/OWASP) | C03 |'",
+        "index.md:69 '...C04=Kleppmann/Vogels/OWASP (security design・ASVS/Top10・受動観測のみ)...'（変更なし、修正前から一致）",
+        "component-inventory.json#C04.expert_lenses = ['Martin Kleppmann','Werner Vogels','OWASP']（inventory本体は今回の修正で変更なし、正本として無傷）"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "mcp-app-connector-conditional-text",
+      "observation": "[resolved] index.md の Plugin-level surfaces テーブルMCP/app connector行が条件文の一分岐のみを記載していた問題（旧medium finding）は、team-leadによる修正後、index.md:91の実文面を直接Readで確認し解消を確認した。修正後の行は『(未構成時: JS要観測が重要fact該当ならC02 FAIL・静的完結が実測で示せる場合はgap記録つきPASS可。正本=inventory mcp_app_connector条件文)』という二分岐条件文と、MCP server名固定・aliasで充足可の命名契約を反映しており、index.md:74の完全形およびinventory本体の条件文と整合する。",
+      "evidence": [
+        "index.md:91(修正後) '| MCP/app connector | omitted | 新規connectorは作らず、設置先のbrowser-runtime(MCP server名固定・aliasで充足可)を外部依存として再利用 (未構成時: JS要観測が重要fact該当ならC02 FAIL・静的完結が実測で示せる場合はgap記録つきPASS可。正本=inventory `mcp_app_connector` 条件文) |'",
+        "index.md:74 '...未構成時の帰結は inventory `plugin_level_surfaces.mcp_app_connector` の条件文を正本とする: JS実行を要する観測が重要 fact に該当する場合は...C02 を FAIL、JS非依存で静的完結が実測で示せる場合は gap 記録つき PASS 可。'（変更なし、修正前から一致）",
+        "component-inventory.json#plugin_level_surfaces.mcp_app_connector.unconfigured_consequence（inventory本体は今回の修正で変更なし、正本として無傷）"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "budget-mode-consistency",
+      "observation": "R6監査(a): C12.load_policy(single既定)のtotal_origin_bytes_ceiling(18874368)がruntime_max_bytes(10485760)+runtime_max_screenshot_bytes(8388608)の導出値であること、full_siteモードではper-run予算(bytes_per_run=33554432等)がceilingを置換すること、瞬間負荷レバー(並列1/最小間隔2000ms/Retry-After/有界backoff/停止条件)が両モード不変であることを、C09/C03/C12のmode_note/budget_mode_note verbatim一致で確認した。C03/C09のmode_noteもC12と同一文言パターンで整合。",
+      "evidence": [
+        "component-inventory.json#C12.load_policy.budget_mode_note と #C09/#C03の対応noteがverbatim一致",
+        "component-inventory.json#C12.load_policy.crawl_profile.full_site.instant_load_levers_unchanged = true",
+        "component-inventory.json#C12.load_policy.crawl_profile.full_site.per_run_budget_note = 'per-run予算はsingle既定と同一のページ当たり密度からの導出値...'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "hook-dual-predicate-consistency",
+      "observation": "R6監査(b): C08のmatcher文字列がcomponent-inventory.jsonとenvelope-draft/plugin.jsonで完全一致することを直接Readで確認した。第2述語(publish-gate)はC02 verdict receipt(verdict=PASS+draft_hash一致)が確認できる場合はexit2遮断しない設計であり、C01のR4(正当なpublish)を阻害しない。index.md:76『Notion可視化』節の記述もこの第2述語の意味論と一致する。",
+      "evidence": [
+        "component-inventory.json#C08.matcher = 'Bash|WebFetch|mcp__browser-runtime.*|mcp__notion.*'",
+        "envelope-draft/plugin.json#hooks.PreToolUse[0].matcher = 'Bash|WebFetch|mcp__browser-runtime.*|mcp__notion.*'（直接Read確認、文字列完全一致）",
+        "component-inventory.json#C08.purpose 内 '第2述語(publish-gate): ...C02 verdict receipt(verdict=PASSかつ対象draft_hash一致)が確認できなければexit2で遮断する'（=一致すれば通過）",
+        "index.md:76 '『FAIL成果物は公開しない』はC08の第2述語(publish-gate: C02 verdict receipt=PASS+draft_hash一致の不在時にupload/attach系tool inputをexit2遮断)が機械層で担保する。'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "raster-responsibility-split",
+      "observation": "R6監査(c): redacted screenshot/annotated.pngがC03撮影時点(≤4MiB)に確定し、C11がmd/json/SVG/manifest等stdlib_onlyのtext操作に限定されることを、component-inventory.json#C03/#C11の記述及びnotion_config.databasesのasset記述で確認した。C11がPNGを生成・縮小するという旧来主張の残存は0件だった。",
+      "evidence": [
+        "grep -n 'C11.*画像|C11.*PNG|C11.*raster|C11.*screenshot.*生成|C11.*縮小' component-inventory.json index.md phase-*.md => 該当なし（C11はemit/check役割の記述のみ）",
+        "component-inventory.json#C11の記述はmd+json整形/completeness検査/Notion upload manifest導出に限定（PNG生成・縮小の記述なし）",
+        "component-inventory.json#plugin_level_surfaces.notion_config.databases[0]の記述でasset(redacted annotated PNG)はC03撮影時に決定論確定する旨を確認"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "lens-roster-drift",
+      "observation": "R6監査(d): ハードコードされた『8名』『12名』等のレンズ数の残存は現行ファイルに0件。inventory expert_lenses合計は C03(2)+C04(3)+C05(2)+C13(4)+C06(2)=13名で一貫し、phase-12受入例(line50)も『現13名/組織』と正しく記載している。",
+      "evidence": [
+        "grep -rniE '8名|12名|名のLens|名の著名|8 lenses|12 lenses' plugin-plans/extract-system-blueprint/*.md plugin-plans/extract-system-blueprint/*.json => 0件",
+        "phase-12-documentation.md:50 'README/runbookが13カテゴリ表、coverage/gapの読み方、inventory expert_lenses全件(現13名/組織)のLens見出し/guard...を説明する。'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "rename-completeness",
+      "observation": "R6監査(e): 'fetch-render'の残存は現行ファイルに0件。fetch-snapshot.pyがgoal-spec.json/handoff-run-plugin-dev-plan.json/component-inventory.json/index.md/task-graph.json/phase-08-refactoring.md/briefs/skill-brief-C01.jsonで一貫して参照されている。",
+      "evidence": [
+        "grep -rln 'fetch-render' plugin-plans/extract-system-blueprint/ => 0件",
+        "grep -rl 'fetch-snapshot' plugin-plans/extract-system-blueprint/ => goal-spec.json, handoff-run-plugin-dev-plan.json, component-inventory.json, index.md, task-graph.json, phase-08-refactoring.md, briefs/skill-brief-C01.json"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "resume-contract-consistency",
+      "observation": "R6監査(f): resume両辺契約(writer=C11由来のsite coverage manifestをC12がreaderとして--coverage-manifest-in argvで再取込)が、C01のR1-fetch責務記述・C12のargv定義・C12のresume_stateフィールドの3箇所でverbatim一致することを確認した。",
+      "evidence": [
+        "component-inventory.json#C01.responsibilities[id=R1-fetch].summary に '...C12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)' の記述",
+        "component-inventory.json#C01.inputs argv に '--coverage-manifest-in FILE' が明示",
+        "component-inventory.json#C12.load_policy.crawl_profile.full_site.resume_state = 'site coverage manifest(次runは--coverage-manifest-inで受領しpending∪未分類discoveredを分類対象へ再投入する) + request ledger + cache'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "prior-round-invariants",
+      "observation": "R6監査(h): topology-14不変(C01-C14で新規id追加なし)、fact/inferenceレーン規律、security受動観測限定(侵入テスト/脆弱性スキャン/認証突破への言及は全プラン域で否定形のみ・提案/実行経路0件)、excluded URL非クロール、pending非偽装の各不変条件がR6編集で破られていないことを確認した。",
+      "evidence": [
+        "grep -rniE '侵入テスト|脆弱性スキャン|認証突破|pentest|penetration' plugin-plans/extract-system-blueprint/*.md plugin-plans/extract-system-blueprint/*.json (plan-findings.json除く) => 全一致箇所が禁止・否定文脈（phase-01/03/06/11/12, goal-spec.json, component-inventory.json, task-graph.json, improvement-handoff-site-coverage-depth.jsonの計10ファイル、提案/実行経路への言及は0件）",
+        "component-inventory.json#components配列のid集合がC01-C14の14件で新規id追加なし（derivation記述もR2→R2.5→R3→R4→R5で既存component契約拡張のみと明記）",
+        "component-inventory.json#C12.excluded分類 'アフィリエイト/広告/外部SNS/トラッカー=excluded+reason(fail-closed・fact記録のみでクロールしない)'",
+        "component-inventory.json#C11のcompleteness検査に 'site coverage manifest(...)がpendingを無言欠落させず完全被覆と偽装しない' 旨の判定基準を確認"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "stale-evidence-recurrence-check",
+      "observation": "team-leadから指摘された旧plan-findings.json:287の不正確なevidence('phase-12受入例が8名のLens見出しにOWASPを含む')を、phase-12-documentation.mdの直接Readで再検証した。現行ファイルの受入例(line50)は『inventory expert_lenses全件(現13名/組織)』であり『8名』の記述は存在しない。旧findingsの誤evidenceは本ファイルに一切引き継いでいない。",
+      "evidence": [
+        "phase-12-documentation.md:50 'README/runbookが13カテゴリ表、coverage/gapの読み方、inventory expert_lenses全件(現13名/組織)のLens見出し/guard、低負荷取得、Notion create→send→attach再開を説明する。'（『8名』という記述は不存在）"
+      ]
+    }
+  ],
+  "staleness_rule": "本findingsは13ゲート呼び出し全exit0時点かつ本文中に引用した各evidence文字列がgrep/Readで実在確認された時点でのスナップショット。plan_dir配下ファイルへの以降の編集はこのverdictを失効させ、再評価が必要。medium finding 2件はteam-leadの修正後、修正版index.mdの実文面Read確認+関連5ゲート再実行exit0を根拠にresolved(medium→info)へ更新した。"
+}

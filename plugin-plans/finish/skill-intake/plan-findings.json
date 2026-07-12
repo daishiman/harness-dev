@@ -1,0 +1,191 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260703-124959-wt-7/plugin-plans/skill-intake",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "決定論ゲート (check-build-handoff) exit0。component_kind↔builder/build_kind の整合 (C01/C03=run-skill-create/skill, C02/C04=plugin-scaffold/script) を確認。意味判定でも quality_gates/plugin_meta/distribution 間の相反は検出されなかった。",
+      "evidence": [
+        "check-build-handoff.py exit=0 (4 routes: C01->C02->C03->C04, envelope gap reason 明記)",
+        "component-inventory.json の component_kind と handoff routes の builder が全件一致"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "detect-unassigned/check-spec-frontmatter/check-spec-gates/check-surface-inventory/check-requirements-coverage 全 exit0。5 component_kind の検討証跡と sub-agent/slash-command/hook 非新設の根拠 (非adversarial直接聴取ゆえ独立SubAgent化の動機なし等) が component-inventory.json.derivation に明記され、単一 skill 退化ではない (skill×2 + script×2 の 4 component)。goal-spec C1-C8 は全て index の完了チェックリスト/受入確認へトレース済み。",
+      "evidence": [
+        "detect-unassigned.py exit=0 (orphan 0 件・build_target 全件非空)",
+        "check-surface-inventory.py exit=0",
+        "check-requirements-coverage.py exit=0",
+        "component-inventory.json.derivation: sub-agent/slash-command/hook 非新設の個別根拠 (a)(b)(c) が明記"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "check-spec-matrix-coverage (--self-test / PLAN) と check-spec-frontmatter/check-spec-gates が全 exit0 で用語・値域は機械的に統一。前回評価で検出した phase-07 RTM (C4 行) の 'G1-G5' 旧参照ドリフトは orchestrator により修正済みを確認 (Read + grep 全数確認 + 関連ゲート再実行で exit0 を再検証)。詳細は findings[0] (resolved) を参照。",
+      "evidence": [
+        "check-spec-matrix-coverage.py --self-test exit=0",
+        "check-spec-matrix-coverage.py <PLAN_DIR> exit=0",
+        "check-spec-frontmatter.py exit=0",
+        "check-spec-gates.py exit=0",
+        "check-requirements-coverage.py exit=0 (再実行・修正後)",
+        "phase-07-acceptance-criteria.md:39 = 'P01 のギャップ一覧 (G1-G7) と改善要否記載' へ修正済み (Read で確認)",
+        "run-plugin-dev-plan-progress.json checklist_state[id=C4].note = '7 ギャップ (G1-G7、G6/G7 は C7/C8 由来)' へ修正済み (Read で確認)",
+        "grep -rn G1-G5 plugin-plans/skill-intake/*.md plugin-plans/skill-intake/*.json (plan-findings.json 自体の履歴記述以外に) 残存 0 件"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "verify-index-topsort/detect-unassigned/check-build-handoff/check-runtime-portability 全 exit0。inventory 依存 DAG (C01→C02→C03→C04) は非循環、index の phase 一覧は P01..P13 昇順、build_target は全件 plugins/skill-intake/ 配下で自己完結。",
+      "evidence": [
+        "verify-index-topsort.py exit=0",
+        "detect-unassigned.py exit=0",
+        "check-build-handoff.py exit=0",
+        "check-runtime-portability.py exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py", "--inventory", "plugin-plans/skill-intake/component-inventory.json", "--specs-dir", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C2", "C4"],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py", "--specs-dir", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足 (再実行・修正後)"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py", "--specs-dir", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "--self-test"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし) (再実行・修正後)"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46)\nOK: 適用される全マトリクス行の焼き先が反映済み (再実行・修正後)"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py", "plugin-plans/skill-intake/component-inventory.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py", "plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json"],
+      "exit_code": 0,
+      "conditions": ["C1", "C4"],
+      "stdout": "OK: build handoff が 4 routes と envelope 契約を満たす"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み (再実行・修正後)"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py", "plugin-plans/skill-intake"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"
+    },
+    {
+      "id": "G11",
+      "name": "check-plugin-goal-spec (R1 input-gate, 参考再実行)",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py", "plugin-plans/skill-intake/goal-spec.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: plugin goal-spec schema + plugin anchors validated"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C3-consistent-resolved",
+      "observation": "[RESOLVED] 当初検出 (旧 severity=medium): phase-07-acceptance-criteria.md の RTM 表 (C4 行) が goal-seek iteration1 時点の 'P01 のギャップ一覧 (G1-G5)' を参照したまま iteration2 で追加された G6/G7 (C7/C8 由来、本タスクのユーザー追加指示に直結するギャップ) を反映していなかった。progress.json の checklist_state[C4].note にも同様の '5 ギャップ (G1-G5)' 旧記述が残っていた。→ orchestrator が (1) phase-07-acceptance-criteria.md:39 を『P01 のギャップ一覧 (G1-G7) と改善要否記載』へ、(2) run-plugin-dev-plan-progress.json の checklist_state[id=C4].note を『7 ギャップ (G1-G7、G6/G7 は C7/C8 由来)』へ修正。R4 evaluator が両ファイルを Read で実確認し、plugin-plans/skill-intake/ 配下を grep -rn 'G1-G5' で全数走査した結果、本 plan-findings.json 自身の履歴記述を除き残存 0 件を確認した。関連ゲート (check-spec-frontmatter/check-spec-matrix-coverage --self-test/check-spec-matrix-coverage PLAN/check-requirements-coverage) を再実行し全 exit0 を再検証済み。severity を medium→info へ降格し resolved として履歴保持する (エントリ削除はしない)。",
+      "evidence": [
+        "plugin-plans/skill-intake/phase-07-acceptance-criteria.md:39 (修正後: 'P01 のギャップ一覧 (G1-G7) と改善要否記載')",
+        "plugin-plans/skill-intake/run-plugin-dev-plan-progress.json checklist_state[id=C4].note (修正後: '7 ギャップ (G1-G7、G6/G7 は C7/C8 由来)')",
+        "grep -rn 'G1-G5' plugin-plans/skill-intake/ → plan-findings.json の履歴記述のみ (plan 成果物側は 0 件)",
+        "check-spec-frontmatter.py exit=0 / check-spec-matrix-coverage.py --self-test exit=0 / check-spec-matrix-coverage.py <PLAN_DIR> exit=0 / check-requirements-coverage.py exit=0 (いずれも修正後の再実行)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2-C3-depth",
+      "observation": "ユーザー最終指示 (『一般的ヒアリング情報の抽出ではなく、クライアントが本当に解決したい課題・問題・流れ・実行したいことの詳細抽出が第一』) は表面的な文言追加に留まらず、質問設計・スキーマ・ゲートの実質へ操作化されている: (1) procedure.mode/steps[]/overview/difficulty_flag という具体スキーマ形状、(2) validate-answer-abstraction.py の axis=procedure 拡張による 2 連続抽象判定/未回答の決定論閾値、(3) to-be-vocabulary-patterns.md の具体語彙集 (べきである/理想は/最適化等) を用いた contamination check (C02 exit code 契約)、(4) C01 の R3-as-is-fidelity 責務・OUT2 criterion (verify_by=elegant-review) による固有名詞/実例/頻度/関与者の具体性記録指示。to-be 最適化は後段 build 責務として P01/P02/P05 で明示的にスコープ外化されており、ヒアリング段階の責務境界も一貫している。",
+      "evidence": [
+        "component-inventory.json C01.responsibilities[R3-as-is-fidelity] / feedback_contract.criteria[IN2,OUT2]",
+        "component-inventory.json C02.purpose (contamination check 定義)",
+        "phase-02-design.md ## ドメイン知識 (as-is 忠実性原則)",
+        "phase-05-implementation.md (to-be-vocabulary-patterns.md 新設仕様)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C4-fallback-determinism",
+      "observation": "手順を言語化できないユーザー向けフォールバック分岐は『procedure 軸で 2 連続抽象判定または未回答』という決定論条件が P02/P04/P06/P11 で一貫して明記され、既存の決定論スクリプト (validate-answer-abstraction.py, LLM の定性判断を排除する設計) への軸追加として再利用されている。C6 の境界値テストケース (抽象1回→具体的回答 vs 抽象2回連続) も P04 で明示され、フォールバック条件が実装可能な粒度まで具体化されている。",
+      "evidence": [
+        "plugins/skill-intake/skills/run-intake-interview/scripts/validate-answer-abstraction.py (--axis パラメータは既存で汎用対応済み)",
+        "phase-04-test-design.md C6 決定論境界値テストケース",
+        "phase-11-evidence.md trial シナリオ 2/3"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C2-scope",
+      "observation": "全 13 phase が『downstream builder 向け仕様』の原則を一貫して守り、実コード Edit/新規作成そのものは含まない (P05/P06/P08/P10/P13 で都度スコープ外を明示)。goal-spec constraints の実装スコープ外方針と矛盾しない。",
+      "evidence": [
+        "phase-05-implementation.md ## スコープ外",
+        "phase-13-release.md ## スコープ外",
+        "goal-spec.json.constraints[0]"
+      ]
+    }
+  ]
+}

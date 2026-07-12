@@ -1,0 +1,245 @@
+{
+  "plan_dir": "plugin-plans/ubm-goal-setting",
+  "target_plugin_slug": "ubm-goal-setting",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "sub-agent",
+      "name": "youtube-transcript-normalizer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "youtube-transcript-normalizer"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "knowledge-relation-extractor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "knowledge-relation-extractor"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/knowledge-relation-extractor.md",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "validate-knowledge-graph.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C08"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-knowledge-graph.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-ubm-youtube-ingest",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C06"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-ubm-youtube-ingest",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-youtube-backfill-completeness.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02"],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C02",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-ubm-youtube-ingest",
+        "script_path": "scripts/check-youtube-backfill-completeness.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "slash-command",
+      "name": "ubm-youtube-ingest",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "ubm-youtube-ingest"
+      },
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-youtube-ingest.md",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "index-harness-artifact-graph.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C06"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/index-harness-artifact-graph.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "consult-harness-artifact-graph.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C05", "C06"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/consult-harness-artifact-graph.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/scripts/consult-harness-artifact-graph.py",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "validate-consult-session.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/validate-consult-session.py"},
+      "build_target": "plugins/ubm-goal-setting/scripts/validate-consult-session.py",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "skill",
+      "name": "run-ubm-consult",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C07", "C11"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-ubm-consult",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C09.json"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-consult/",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "slash-command",
+      "name": "ubm-consult",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C09"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {"kind": "command", "name": "ubm-consult"},
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-consult.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "既存 plugin.json への additive entry_points 更新 (既存3skill/5agent/2command + 新設2skill(run-ubm-youtube-ingest/run-ubm-consult)/2agent/2command) は manifest scaffold executor の範囲。scriptsはreserved fieldへ独自objectを置かず実在pathとして管理する。draft version 0.2.0は提案値"
+    },
+    "marketplace": {
+      "status": "not_applicable",
+      "reason": "既存 plugin は distributable:false の個人利用向け plugin であり、本改善計画も既存の非配布方針を維持する (非後退)"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "medium",
+      "text": "plugin envelope executor (既存 plugin.json への entry_points 追記) is external to run-plugin-dev-plan"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold / parent-skill-build はcontract-only builder語彙。C03/C05/C06/C07/C11はbuild-script-route.py dry-run後にdomain implementation+route report+acceptance_contract検証を完了条件とし、scaffoldだけではdoneにしない"
+    },
+    {
+      "id": "GAP-TEMPLATE-ACCEPTANCE-SECTIONS",
+      "severity": "medium",
+      "text": "R4 evaluator (plan-findings.json) 指摘: 13 phase 全てで「### 受入例」「### 事前解決済み判断」サブ節が0件欠落。golden reference (skills/run-plugin-dev-plan/examples/sample-plan/) も同一 baseline のため本計画固有の劣化ではなく、上流テンプレート (R3-emit-specs.md の phase 本文生成規約) 側の仕様改善候補として起票のみ行い、本計画では対応しない"
+    },
+    {
+      "id": "GAP-TEMPLATE-SCRIPT-TDD",
+      "severity": "low",
+      "text": "P04 (test-design) テンプレートが skill loop の criteria Red 設計専用で、script component (C03/C06/C07) の pytest Red 設計 owner が不在 (golden reference も同一 baseline)。上流テンプレート側の仕様改善候補として起票のみ行い、本計画では対応しない"
+    },
+    {
+      "id": "GAP-UPSTREAM-TASKGRAPH-PROJECTION",
+      "severity": "low",
+      "text": "derive-task-graph.py の射影が plan 全域命題 (index 完了チェックリスト等) を component 直積へ複製するため task-graph node 上で意味が希釈される。上流 (plugin-dev-planner の射影仕様) の改善候補として起票のみ行い、本計画では対応しない"
+    },
+    {
+      "id": "GAP-REPIN-PROVENANCE",
+      "severity": "low",
+      "text": "30思考法 review (2026-07-11 第2周) CA2: 中間 repin (df3dbeb3) に対応する discovered-task provenance 記録が無く、repin↔accepted record の監査不変則が1回分弱い。graph_hash_repinned イベントへ provenance_ref 必須化は harness-creator (dispatcher/TG-C07) 側の改善候補として起票のみ"
+    },
+    {
+      "id": "GAP-ACCEPT-BEFORE-BUILD-GATE",
+      "severity": "low",
+      "text": "30思考法 review (2026-07-11 第2周) KZ3: C10/C11 成果物が discovered-task 受理前に build 済みで、ノード done が回顧的形式化になった。受理前実装着手を禁止する gate は harness-creator 外ループ側の改善候補として起票のみ"
+    },
+    {
+      "id": "GAP-MANIFEST-FIELD-PARITY",
+      "severity": "medium",
+      "text": "30思考法 review (2026-07-11 第2周) L15/why思考: workflow-manifest の input/output が自由文 string のため phase 間 interface parity が機械検証できず consult_type 型 drift の温床になった。本計画では特定フィールドの contract test を追加して封じたが、根治 (manifest fields[] 構造化+汎用 parity lint) は上流テンプレート改善候補として起票のみ"
+    },
+    {
+      "id": "GAP-PHASE-STATUS-UPDATER",
+      "severity": "low",
+      "text": "30思考法 review (2026-07-11 第2周) L7/帰納: 13 phase 文書 frontmatter の status が全て「未実施」のまま build 完了しており updater 不在の dead metadata。status field 廃止か checklist-P*.json からの射影 updater 配線を上流 (plugin-dev-planner) の改善候補として起票のみ"
+    }
+  ]
+}

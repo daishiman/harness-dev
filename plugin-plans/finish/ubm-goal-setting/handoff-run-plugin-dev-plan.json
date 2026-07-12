@@ -1,0 +1,366 @@
+{
+  "plan_dir": "plugin-plans/ubm-goal-setting",
+  "target_plugin_slug": "ubm-goal-setting",
+  "mode": "create",
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "validate-goal-output.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "skill",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-ubm-goal-setting",
+        "script_path": "scripts/validate-goal-output.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+      "status": "built",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C16"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "detect-knowledge-updates.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "skill",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-ubm-knowledge-sync",
+        "script_path": "scripts/detect-knowledge-updates.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+      "status": "built",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C17"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-knowledge-split.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "skill",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_args": {
+        "parent_skill": "run-ubm-knowledge-sync",
+        "script_path": "scripts/check-knowledge-split.py"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py",
+      "status": "built",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C17"
+    },
+    {
+      "id": "C04",
+      "component_kind": "hook",
+      "name": "ubm-write-path-guard",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "ubm-write-path-guard"
+      },
+      "build_target": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+      "status": "built"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "info-collector",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "info-collector"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/info-collector.md",
+      "status": "built"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "goal-reviewer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "goal-reviewer"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+      "status": "built"
+    },
+    {
+      "id": "C08",
+      "component_kind": "prompt",
+      "name": "step1-current-review",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "prompt",
+      "build_args": {
+        "kind": "prompt",
+        "name": "step1-current-review"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md",
+      "status": "built"
+    },
+    {
+      "id": "C09",
+      "component_kind": "prompt",
+      "name": "step2-gap-analysis",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "prompt",
+      "build_args": {
+        "kind": "prompt",
+        "name": "step2-gap-analysis"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md",
+      "status": "built"
+    },
+    {
+      "id": "C10",
+      "component_kind": "prompt",
+      "name": "step3-goal-setting",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "prompt",
+      "build_args": {
+        "kind": "prompt",
+        "name": "step3-goal-setting"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+      "status": "built"
+    },
+    {
+      "id": "C11",
+      "component_kind": "prompt",
+      "name": "step4-action-plan",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "prompt",
+      "build_args": {
+        "kind": "prompt",
+        "name": "step4-action-plan"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md",
+      "status": "built"
+    },
+    {
+      "id": "C12",
+      "component_kind": "prompt",
+      "name": "step5-final-check",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-build-skill",
+      "build_kind": "prompt",
+      "build_args": {
+        "kind": "prompt",
+        "name": "step5-final-check"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md",
+      "status": "built"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "output-formatter",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "output-formatter"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/output-formatter.md",
+      "status": "built"
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "knowledge-extractor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "knowledge-extractor"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/knowledge-extractor.md",
+      "status": "built"
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "phase3-coordinator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "phase3-coordinator"
+      },
+      "build_target": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+      "status": "built"
+    },
+    {
+      "id": "C16",
+      "component_kind": "skill",
+      "name": "run-ubm-goal-setting",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C05",
+        "C06",
+        "C07",
+        "C13",
+        "C01"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-ubm-goal-setting",
+        "kind": "run"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/",
+      "status": "built"
+    },
+    {
+      "id": "C17",
+      "component_kind": "skill",
+      "name": "run-ubm-knowledge-sync",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C15",
+        "C02"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-ubm-knowledge-sync",
+        "kind": "run"
+      },
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/",
+      "status": "built"
+    },
+    {
+      "id": "C18",
+      "component_kind": "slash-command",
+      "name": "ubm-goal-setting",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C16"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "ubm-goal-setting"
+      },
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+      "status": "built"
+    },
+    {
+      "id": "C19",
+      "component_kind": "slash-command",
+      "name": "ubm-knowledge-sync",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C17"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "ubm-knowledge-sync"
+      },
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md",
+      "status": "built"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部 (単独 executor 未整備=open_issues GAP-ENVELOPE-001 参照)。貼れる draft (draft_path=envelope-draft/plugin.json) を人手で plugins/ubm-goal-setting/.claude-plugin/plugin.json へ適用するか、将来整備される後段 scaffold executor が draft を消費して実体化する (実在しない skill 名を仮定しない)"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "not_applicable",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "個人利用前提のため distributable:false・marketplace 掲載を行わない (open_questions で確定済み)"
+    },
+    "plugin_composition": {
+      "owner": "run-build-skill",
+      "status": "planned",
+      "build_status": "built",
+      "built_note": "実体 plugins/ubm-goal-setting/plugin-composition.yaml の存在+sha256 を 2026-07-05 に確認 (eval-log/ubm-goal-setting/_plugin/build-evidence/20260705/build-trace.json)。check-build-handoff.py の ENVELOPE_STATUSES enum に built が無いため status は planned 据置 (build_status が実体化後のライフサイクル正)",
+      "build_target": "plugins/ubm-goal-setting/plugin-composition.yaml",
+      "phase_owner": "P02"
+    },
+    "harness_eval_spec": {
+      "owner": "run-build-skill",
+      "status": "planned",
+      "build_status": "built",
+      "built_note": "実体 plugins/ubm-goal-setting/EVALS.json の存在+sha256 を 2026-07-05 に確認 (eval-log/ubm-goal-setting/_plugin/build-evidence/20260705/build-trace.json)。check-build-handoff.py の ENVELOPE_STATUSES enum に built が無いため status は planned 据置 (build_status が実体化後のライフサイクル正)",
+      "build_target": "plugins/ubm-goal-setting/EVALS.json",
+      "phase_owner": "P06"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "medium",
+      "text": "plugin envelope executor (manifest 実体化) は run-plugin-dev-plan の外部。後段 scaffold/build skill が draft_path を消費する"
+    },
+    {
+      "id": "GAP-VAULT-002",
+      "severity": "low",
+      "text": "config.vault_root_env (UBM_VAULT_ROOT) はパス変数化として設計確定済み。実 vault との疎通確認は build 後の受入確認 (P07/P11) で行う (L2 raw vault sources のみ対象。L1 curated knowledge は vendor 同梱のため疎通不要)。L2 未接続時は capability B (run-ubm-knowledge-sync) が入力ゼロで検知0件レポートを正常終了として返す縮退挙動を許容する (異常ではない・個人利用で vault 未接続でも FAIL 扱いしない)。capability A (run-ubm-goal-setting) は L1 curated vendor のみで最低限機能する"
+    },
+    {
+      "id": "GAP-KNOWLEDGE-003",
+      "severity": "low",
+      "status": "resolved",
+      "text": "knowledge の data-tier 設計は確定済み (単一の vendor/非vendor判断でなく data-tier 3層: L1 curated=28 category JSON+router.jsonをplugin同梱シードとしてvendor / L2 raw vault sources=05_Project/UBM等の生ソースでUBM_VAULT_ROOTから外部解決 / L3 bookkeeping=registry.json(実台帳初期シード・処理済み67ファイル)+sync-log.jsonl(空の初期シード)+kitahara-principles-db.mdをvendor)。schema.jsonはplugin-root共有surfaceへhoistしC16/C17が対称参照する。P05 へ残置していた L3 書込先解決は build で確定: writeback 方式は『plugin 同梱 knowledge/ ディレクトリ (mutable asset は同梱 assets/ パス) への直書き』であり、writeback-config という別機構は不要と判明したため新設しない (実装正本=run-ubm-knowledge-sync SKILL.md + knowledge-extractor の同梱 dir 直書き。elegant-review 20260705-082331 で resolved 化)"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "parent-skill-build は contract-only builder 語彙で単独実行 executor が未整備 (capability-gap 起票済・当面は run-build-skill の build フロー内で二相 skill build により代替生成する)"
+    }
+  ]
+}

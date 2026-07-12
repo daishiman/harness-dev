@@ -1,0 +1,216 @@
+{
+  "plan_dir": "plugin-plans/with-task-graph-goalseek",
+  "target_plugin_slug": "harness-creator",
+  "cycle_id": "with-task-graph-goalseek",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "ready-set-from-checklist.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "templates/task-graph-engine/scripts/ready-set-from-checklist.py"
+      }
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "self-reflect-append.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "templates/task-graph-engine/scripts/self-reflect-append.py"
+      }
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "extract-capability-dependency-graph.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "templates/task-graph-engine/scripts/extract-capability-dependency-graph.py"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "record-capability-graph-knowledge.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C02",
+        "C06"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "templates/task-graph-engine/scripts/record-capability-graph-knowledge.py"
+      }
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "render-combinators.py (with-goal-seek engine:task-graph 変種拡張)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01",
+        "C02",
+        "C06",
+        "C07"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "scripts/render-combinators.py"
+      },
+      "side_effect_targets": [
+        "plugins/harness-creator/skills/run-build-skill/schemas/build-flags.schema.json",
+        "plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json"
+      ]
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "lint-goal-seek.py (task-graph 変種 self-test 拡張)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "scripts/lint-goal-seek.py"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "lint-capability-graph-knowledge.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03",
+        "C06",
+        "C07"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-graph-knowledge.py",
+      "status": "planned",
+      "placement_scope": "skill",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "requires_parent_scaffold": "C05",
+      "build_args": {
+        "parent_skill": "run-build-skill",
+        "script_path": "scripts/lint-capability-graph-knowledge.py"
+      }
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "name": "run-build-skill",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03",
+        "C04",
+        "C06",
+        "C07",
+        "C08"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/",
+      "status": "planned",
+      "build_args": {
+        "skill_name": "run-build-skill",
+        "mode": "update"
+      }
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/harness-creator/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "note": "envelope-draft/plugin.json は build handoff gate 用に inventory surface component(C05=run-build-skill)の entry_points.skills を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json は現状 entry_points.commands のみを持ち entry_points.skills キー自体を持たない(capability の正の registry は plugin-composition.yaml)ため、本 draft はその新設を C05 のみのスコープで宣言する。他の既存 skill/agent の entry_points backfill は本 plan の対象外であり、plugin-composition.yaml が引き続き既存 capability の正本であることに変わりはない(GAP-ENTRY-POINTS-SCOPE 参照)。description 以外の既存フィールド(hooks/requirements/author/version/entry_points.commands)は無改修"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "harness-creator は distributable:false(NEVER_DISTRIBUTE denylist・改名前の旧名由来)のため本 plan では marketplace 掲載を行わない(goal-spec constraints #4)"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。対象 route: C01-C04/C06-C08(parent-skill-build, placement_scope=skill, requires_parent_scaffold=C05)。実 build 時は親 skill C05(run-build-skill)の二相 build(scaffold→fill)のうち fill 相で C01-C04/C06-C08 の script 実体を templates/task-graph-engine/scripts/ および scripts/ 配下へ生成する。機械経路解消順: (1) C05 の skill scaffold を先に確立する、(2) scaffold 内へ C01-C02/C06-C07 のテンプレ script と C03/C04/C08 の run-build-skill scripts 差分を Phase05 実装設計から生成する、(3) C03 が C01/C02/C06/C07 の配置と各 surface の dependency graph knowledge consult 手順を実装し、C08 がその利用契約を検査する。恒久解消条件: run-build-skill が script kind を正式受理する、または planner の builder 語彙から contract-only 参照を廃止できる状態に正規化すること"
+    },
+    {
+      "id": "GAP-ENTRY-POINTS-SCOPE",
+      "severity": "advisory",
+      "text": "envelope-draft/plugin.json へ新設する entry_points.skills ブロックは本 plan が routing する C05(run-build-skill)のみをスコープとした部分宣言であり、harness-creator の既存 skill/agent/command 全量を entry_points へ backfill するものではない(それらの capability registry は引き続き plugin-composition.yaml が正本)。将来 harness-creator 全体を entry_points ベースの registry へ移行する場合は別途の独立した plan として扱う"
+    }
+  ]
+}

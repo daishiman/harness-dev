@@ -1,0 +1,82 @@
+{
+  "plan_dir": "/Users/dm/dev/dev/xlocal/xl-skills/.worktrees/task-20260705-210449-wt-3/plugin-plans/harness-creator",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし: 全決定論ゲートexit0。C07 depends_on:[C02](build時コード再利用)とC06の「build開始時に必ず最初にC07を先行呼出」(実行時呼出順)は別軸の依存であり、混同や矛盾は検出されない",
+      "evidence": ["check-build-handoff exit=0", "phase-05-implementation.md:44 「(0) build開始時に必ず最初にC07を呼ぶ」"]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし: goal-spec checklist C1-C13全13件がindex.md完了チェックリスト/受入確認表へ個別id付きでトレース済み",
+      "evidence": ["detect-unassigned exit=0", "check-spec-frontmatter exit=0", "check-spec-gates exit=0", "check-surface-inventory exit=0", "check-requirements-coverage exit=0"]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり: resolve_build_dirがbasename heuristicを完全排除しhandoff.cycle_id明示消費へ統一済み(planner index.md:71「パス解析禁止」と1:1)。C11イベントログwriterがC02(state writerと同一)に一致",
+      "evidence": ["check-spec-frontmatter exit=0", "check-spec-gates exit=0", "check-spec-matrix-coverage-self-test exit=0", "check-spec-matrix-coverage-plan exit=0", "component-inventory.json derivation: heuristic破棄の経緯記述"]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合: C01-C05独立→C07(depends_on:[C02])、C08(depends_on:[C02,C04,C05])→C06統合のDAGが非循環。resume(C10a)/孤児回収(C10b)/pin検証(C10d)はC07のmain()内で逐次実行され、完了前 discovered-task/knowledge gate はC08で一方向 writer 契約を保つ",
+      "evidence": ["verify-index-topsort exit=0", "detect-unassigned exit=0", "check-build-handoff exit=0", "check-runtime-portability exit=0"]
+    }
+  },
+  "gate_results": [
+    {"id": "G1", "name": "verify-index-topsort", "exit_code": 0, "conditions": ["C4"], "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"},
+    {"id": "G2", "name": "detect-unassigned", "exit_code": 0, "conditions": ["C2", "C4"], "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"},
+    {"id": "G3", "name": "check-spec-frontmatter", "exit_code": 0, "conditions": ["C2", "C3"], "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"},
+    {"id": "G4", "name": "check-spec-gates", "exit_code": 0, "conditions": ["C2", "C3"], "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"},
+    {"id": "G5", "name": "check-spec-matrix-coverage-self-test", "exit_code": 0, "conditions": ["C3"], "stdout": "OK: table と reflection.md が一致"},
+    {"id": "G6", "name": "check-spec-matrix-coverage-plan", "exit_code": 0, "conditions": ["C3"], "stdout": "OK: 適用される全マトリクス行の焼き先が反映済み"},
+    {"id": "G7", "name": "check-surface-inventory", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"},
+    {"id": "G8", "name": "check-build-handoff", "exit_code": 0, "conditions": ["C1", "C4"], "stdout": "OK: build handoff が 8 routes と envelope 契約を満たす"},
+    {"id": "G9", "name": "check-requirements-coverage", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: goal-spec checklist(C1-C13) の全要件 id が index の完了チェックリスト/受入確認へトレース済み"},
+    {"id": "G10", "name": "check-runtime-portability", "exit_code": 0, "conditions": ["C4"], "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"},
+    {"id": "G11", "name": "check-plugin-goal-spec", "exit_code": 0, "conditions": ["C2"], "stdout": "OK: plugin goal-spec schema + plugin anchors validated"},
+    {"id": "G12", "name": "check-generative-fidelity", "exit_code": 0, "conditions": ["layer-a"], "stdout": "OK: 曖昧語 violation 0 件 / 未カスタマイズ節 0 件"},
+    {"id": "G13", "name": "check-downstream-harness", "exit_code": 0, "conditions": ["layer-b"], "stdout": "OK: 全 phase の完了チェックリストが受入例/事前解決済み判断サブ節契約を満たす"}
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "c07-delta-depends-on-vs-runtime-order",
+      "observation": "[差分評価 C07] component-inventory.jsonのC07 depends_on:[C02]は「C07がC02のreap_expired_lease()をsubprocess経由で再利用する」build時コード再利用依存であり、build順序グラフ(verify-index-topsort.py管轄)の軸。実行時呼出順は別途C06実装設計(phase-05:44)に「(0) build開始時に必ず最初にmanage-build-lease.py(C07)を呼ぶ」と明記されており、lease取得がstate操作より確実に先行する。両者は異なる軸(build依存 vs 実行時順序)であり、producer側で既に確立された『component-inventory.json depends_on ≠ task-graph node depends_on』という前例パターンと同型。懸念(leaseはstateより先に取るべきでは)は実装レベルで正しく解消済みと判定するが、depends_onフィールドの意味が2軸で重複する命名は今後の読み手に混同余地を残すため低粒度で指摘",
+      "evidence": ["phase-02-design.md:40", "phase-05-implementation.md:44 「(0) build開始時に必ず最初に...C07...を呼ぶ」", "component-inventory.json derivation"]
+    },
+    {
+      "severity": "info",
+      "bucket": "c11-delta-event-log-writer-consistency",
+      "observation": "[差分評価 C11] append_event()はtransition()/reap_expired_lease()/pin_graph_hash()の呼び出し都度、同一関数内(C02=sync-task-state.py)から呼ばれる設計であり、C02が単一writerとして状態遷移とイベント記録を同一トランザクションで完結させる。C10のlease操作(reap_expired_lease経由)も同じC02内関数のため、C11のwriter規約とC10のlease単一writer規約は完全に一致し矛盾なし",
+      "evidence": ["phase-05-implementation.md:32 「reap_expired_lease/pin_graph_hash/append_event」呼び出し設計"]
+    },
+    {
+      "severity": "info",
+      "bucket": "c10-delta-resume-orphan-ordering",
+      "observation": "[差分評価 C10a⇔C10b順序] resume(C10a=merge_state()によるdoneノード除外)とorphan回収(C10b=find_expired_leases→C02実書込)は並行実行されず、C07のmain()内でstep(2)としてorphan回収が完全に完了してから、C06がstep(1)としてdispatch-ready-set.py(C01=resume相当)を呼ぶ厳密な逐次構造。回収済みpendingタスクがready-set計算に正しく反映される順序であり競合レースは存在しない",
+      "evidence": ["phase-05-implementation.md:36 C07 main()アルゴリズム(1)(2)(3)(4)の逐次記述", "phase-05-implementation.md:44 C06 (0)→(1)の呼出順"]
+    },
+    {
+      "severity": "info",
+      "bucket": "c02-delta-resolve-build-dir-fix",
+      "observation": "[差分評価 契約整合修正] resolve_build_dirがplan_dir末尾のbasename heuristicを完全破棄し、handoff top-levelのcycle_idフィールド値のみを消費するシグネチャ(target_plugin_slug, cycle_id)へ統一済み。planner側index.md:71の「plan_dirのパス解析は禁止」契約と1:1で一致し、grep残存(basename関連ロジック)も0件",
+      "evidence": ["component-inventory.json derivation 契約整合の最終形記述", "phase-05-implementation.md:34"]
+    },
+    {
+      "severity": "low",
+      "bucket": "component-inventory-traceability-pattern",
+      "observation": "[継続・backlog] component-inventory.jsonのcomponentsが個別checklistフィールドを持たずindex.md側にtraceability一本化されているパターン(plugin-dev-planner側inventoryとの配置不統一)は引き続きbacklog",
+      "evidence": ["component-inventory.json components[0-6] に checklist フィールド無し"]
+    }
+  ]
+}

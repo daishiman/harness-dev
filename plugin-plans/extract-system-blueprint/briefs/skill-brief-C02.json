@@ -1,0 +1,50 @@
+{
+  "skill_name": "assign-blueprint-fidelity-evaluator",
+  "prefix": "assign",
+  "kind": "assign",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "生成された抽出ドキュメントの忠実性を評価したいとき",
+    "事実/推測区別の妥当性を独立検証したいとき"
+  ],
+  "output_contract": "draft_hashに束縛した評価verdict(PASS/FAIL) + 指摘一覧(該当箇所+理由) + observation completeness + load-policy result。PASS以外は自社適用(C14)へ進めない",
+  "boundary": "入力=run-extract-blueprintの生成物一式/出力=verdict。生成物自体の修正は行わずC01への差し戻しに留める",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "mermaid-validate.py",
+    "doc-emit.py --check-screens"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "fact/inference/not_observed|blocked区別とprovenanceの妥当性判定",
+    "重要fact欠測0または明示FAIL判定",
+    "5種Mermaid網羅性判定(mermaid-validate.py併用)",
+    "主要画面のvisual formation全カテゴリ(identity/geometry/layout/paint(caret/accent/selection/scrollbar/text-decoration色・色値の正準表現含む)/typography(font provider/src含む)/media/effects/pseudo-elements/state(cursor含む)/motion/responsive/a11y/tokens)と画面→region→主要element coverage manifest、redacted screenshot、番号付き注釈overlayの網羅性を判定する。未取得fieldが無言欠落でなくnot_observed+reasonで、鍵画面gapはC9 FAIL。加えて合成design-tokens.json(カラーパレット+type/spacing/radius/shadow(elevation)/breakpoint/z-layer scale+theme別color set+document brand色)が要素で観測された色を漏れなく被覆(観測色のpalette孤児0)、light/dark両テーマ対応時は両color setが揃う、色値が正準表現(hex8+gamut)で保持される、ことを判定する",
+    "content/essence被覆判定: 主要画面のverbatimコピーfact(見出し/CTA/本文/meta・OGP)の欠落が無言でなく理由付きgapであること、C13のcontent-intent推測(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図/JTBD仮説)が全てevidence_refs+confidenceで接地していること、C06 essence章が本質的問題(JTBD)/読者/価値提案/キーメッセージ/トーン/positioning・差別化を明示しfactと区別していることを判定する",
+    "tech/nonfunctional被覆判定: tech_signals(header/generator/bundleパス/third-party domain/cookie名)とnonfunctional_baseline(転送byte/cache/圧縮/画像format/security headers)が既取得responseからのfactとしてobserved_scope付きで記録され、未観測が無言欠落でなく理由付きgapであること、tech_stack.identified[]のnamed同定(framework/hosting/CDN/analytics/SaaS)が全てsignal factへのevidence_refs+confidenceで接地しfactレーンへ混入していないことを判定する",
+    "被覆の深さ・広さ判定(R5): feature_map(機能アフォーダンスfact集約)とuser_journeys(推測)が明示区別されfeature/journey被覆があること、security_observations(cookie属性/認証UI/CSP)fact→security_design推測がOWASP観点でevidence接地し受動観測のみ(侵入テスト/脆弱性スキャン言及0)であること、delivery_topology推測がheader factに接地すること、cwv_field_sampleがscope_note付きfactであること、compliance_surfaces(privacy/規約/特商法/CMP)が記録されていること、site_inventoryのcoverage(discovered/extracted/pending/excluded+reason)が無言欠落なく、full_siteモードでpendingを残したまま完全被覆と偽装していない(部分被覆は明示)ことを判定する",
+    "C03-C06/C13の実プロンプトにinventory.prompt_contractの実名見出し・cross-lens conflicts・neutral synthesis・非模倣/非推薦guardが存在することを構造検査する。ただし評価は名前出現だけでPASSせず、レンズ由来推測のevidence_refs+confidence・fact非混入・highの複数直接根拠を判定する",
+    "AI入力粒度(追加ヒアリング不要)判定",
+    "再構築十分性の逆テスト: 生成blueprintから最小スカフォールド骨子を試導出し、top-level schema必須フィールド欠落0件かつ未回答質問0件を確認",
+    "request ledgerが低負荷policyを満たすことの判定",
+    "共有決定論ゲート(C10/C11)の出力のうち最低1不変量(例: 観測色のpalette孤児0)をC11実装と独立の手順(blueprint jsonからの再計数)で照合するcommon-mode破り検査",
+    "draft hashに束縛したverdict(PASS/FAIL)の発行"
+  ],
+  "goal": "run-extract-blueprint(C01)が生成した章別ドキュメント群が事実と根拠つき推測を明示区別し、AIへ渡した際に追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度(事実+根拠つき推測+確度+主要画面のスクリーンショット/細かなレイアウトが揃っている)であることを、proposerと異なる独立contextでverdict判定した状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "生成者(run-extract-blueprint)と同一contextで自己評価すると、事実/推測の混同や粒度不足を見落とすため、proposer≠approverの原則で独立に評価する。機械層のC10/C11共有は基準統一のためでcommon-mode誤りは排除しないため、非共有の再計数経路を最低1本持つ",
+  "responsibilities": [
+    {
+      "id": "R1-evaluate",
+      "summary": "生成物一式の事実/推測区別・5種Mermaid網羅・スクリーンショット/レイアウト網羅と画面配置の再現粒度・verbatimコピー/content-intent/essence章(本質的問題・JTBD)の被覆・ペルソナレンズ主張のevidence+confidence(fact非混入)・AI入力粒度・再構築十分性の逆テスト(最小スカフォールド骨子の試導出で必須フィールド欠落0とAI追加質問なし着手可を検証)をmermaid-validate.pyも併用しつつ独立contextで判定しverdictを返す",
+      "prompt_required": true
+    }
+  ]
+}
