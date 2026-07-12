@@ -31,7 +31,8 @@
         "対象外セルに具体的 reason、確定セルに qa_log/approval_log へ遡れる qa_ref がある",
         "category_aggregate が真理値表 (未着手/収集中/確定/対象外) と一致し宣言欠落が無い",
         "goal-spec 例示カテゴリを最低含むか excluded_categories の根拠がある",
-        "sub-input: C06 (hearing-auditor) の 4 軸 (聞き漏れ/誘導質問/早期停止/トレーサビリティ) が健全で、確定セルが誘導なく漏れなく Q&A に遡れる (ヒアリング品質を網羅性・トレースの補助根拠に併せる)"
+        "sub-input: C06 (hearing-auditor) の 4 軸 (聞き漏れ/誘導質問/早期停止/トレーサビリティ) が健全で、確定セルが誘導なく漏れなく Q&A に遡れる (ヒアリング品質を網羅性・トレースの補助根拠に併せる)",
+        "C16 必須情報被覆 (機械層): validate-knowledge-graph.py --profile required-info が exit0 (全 in-scope domain 被覆・item 最低形状・収集順序・coverage certificate)。missing_effect=block の item が未回答のまま確定 (confirmed) に進んだ確定セルは C01 R5 収集ゲート素通り (C14 は blocking_items を列挙するのみで runtime 施行はせず、決定論 writer 施行 = apply-spec-transition への block 検査組込は follow-up) として FAIL に寄せる"
       ]
     },
     "design_knowledge_reflection": {
@@ -44,7 +45,10 @@
       "pass_criteria": [
         "機械層: コンパイル済み各章が resource-map.yaml 由来の設計知識ポインタ節を持つ (compile の render_design_refs が注入)",
         "意味層: そのポインタが指す原則 (DDD/クリーンアーキテクチャ/セキュアバイデザイン/API デザイン/クリーンコード等) が当該カテゴリの確定セル要件へ具体的に適用されている",
-        "Goodhart 防止: ポインタの存在確認だけでは PASS にしない (compile が機械注入する存在を自己循環で肯定しない)。汎用ポインタ (resource-map 索引) のみで具体原則の適用が無い章は medium 以上で拾う"
+        "Goodhart 防止: ポインタの存在確認だけでは PASS にしない (compile が機械注入する存在を自己循環で肯定しない)。汎用ポインタ (resource-map 索引) のみで具体原則の適用が無い章は medium 以上で拾う",
+        "C13 知識グラフ (機械層): validate-knowledge-graph.py --profile knowledge が exit0 (knowledge-catalog が typed 辺グラフで循環/dangling/孤立/root到達不能 0、depends_on/refines/conflicts_with 型則充足)。この機械層が保証するのは well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上妥当か) は content-review/human の未閉塞責務",
+        "C14 位相順消費 (機械層+意味層): --profile knowledge --order が返す topo_order を C01 R5-decision-guide と C03 R2 が同一順 (上位概念→下位概念) で消費している。位相順を破って下位技術を先に確定した章は FAIL に寄せる",
+        "C15 doctrine anchor (機械層): validate-knowledge-graph.py --profile doctrine が exit0 (7 concern の concern_id 一意 + 各 authority 非空・全 category→concern 写像全射。authority は 4 種で concern 間共有可であり authority 一意性は検査対象外)。意味層: doctrine-anchor-registry の concern authority (Apple HIG/Clean Architecture/OWASP ASVS/Google SRE) が指す上流指針が生成章の確定セル要件へ具体反映されている (存在確認だけで PASS にしない = Goodhart 防止)"
       ]
     },
     "doc_freshness": {

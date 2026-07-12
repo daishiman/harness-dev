@@ -33,6 +33,12 @@
   トレーサビリティ) を網羅性・トレースの補助根拠として併せる。設計判断が誘導なく漏れなく引き出され、
   確定セルが Q&A に遡れることを確認する。ヒアリングが不健全なら網羅性の裏付けが崩れるため
   matrix_coverage を FAIL に寄せうる。
+- **C16 必須情報カタログ被覆 (追加次元)**: `validate-knowledge-graph.py --profile required-info` の
+  exit0 (全 in-scope domain 被覆・item 最低形状・収集順序・coverage certificate) を機械層根拠にする。
+  `missing_effect=block` の item が未回答のまま確定 (confirmed) へ進んだ確定セルは C01 R5 収集ゲート
+  素通り (機械層ゲート validate-knowledge-graph.py (component C14) は coverage certificate に blocking_items を列挙するのみで runtime 施行はせず、決定論 writer
+  施行 = apply-spec-transition への block 検査組込は follow-up。収集すべき必須情報の欠落) として
+  matrix_coverage を FAIL に寄せる。
 
 ### 2. 設計知識反映 (design_knowledge_reflection / C05 自前評価・独立 auditor なし)
 - 本観点は独立 auditor を立てず C05 R1-score が `system-spec/*.md` と `resource-map.yaml` を直接読んで評価する
@@ -44,6 +50,21 @@
 - **Goodhart 防止**: ポインタは compile が機械注入するため、その存在確認だけで PASS にしない
   (機械注入→存在確認の自己循環を禁じる)。具体原則の適用が無く汎用ポインタ (resource-map 索引) だけの章、
   反映が形骸化している章は medium 以上で拾う。
+- **C13 知識グラフ (追加次元)**: `validate-knowledge-graph.py --profile knowledge` の exit0 を機械層根拠に
+  する (knowledge-catalog が typed 辺グラフで循環/dangling/孤立/root到達不能 0、depends_on/refines/
+  conflicts_with の型則充足)。孤立 node が設計知識へ接地していなければ意味層で拾う。この機械層が保証するのは
+  well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上
+  正しいか) は content-review/human の未閉塞責務。
+- **C14 位相順消費 (追加次元)**: `--profile knowledge --order` が返す topo_order を C01 (R5-decision-guide)
+  と C03 (R2) が同一順 (上位概念→下位概念) で消費していることを確認する。位相順を破って下位技術を先に
+  確定した章を FAIL に寄せる。
+- **C15 doctrine anchor (追加次元)**: `validate-knowledge-graph.py --profile doctrine` の exit0
+  (7 concern の concern_id 一意 + 各 authority 非空・全 category→concern 写像全射。authority は 4 種で
+  concern 間共有可・authority 一意性は非検査) を機械層根拠にする。意味層は
+  `doctrine-anchor-registry.json` の concern authority (Apple HIG=presentation / Clean Architecture=
+  application-architecture・data-access / OWASP ASVS+Secrets Management=authentication・security /
+  Google SRE=reliability・operations) が指す上流指針が生成章の確定セル要件へ具体反映されているかを
+  照合する。設計知識反映と同じ Goodhart 防止で、registry の存在確認だけでは PASS にしない。
 
 ### 3. 最新ドキュメント出典 (doc_freshness / C08)
 - doc-freshness-auditor の二層 (形式=`validate-source-citation.py` / 内容鮮度=公式サイト再照合) を

@@ -1,7 +1,7 @@
 ---
 name: ref-system-design-knowledge
 description: システム設計知識の深いカード・一次資料・鮮度やシステム構成カテゴリのseed初期集合を参照したいとき、seed外の設計知識をopen-worldで発見・拡張したいときに使う。
-disable-model-invocation: false
+disable-model-invocation: true
 kind: ref
 prefix: ref
 effect: none
@@ -32,6 +32,12 @@ allowed-tools:
 
 各知識カードは `references/knowledge-card.schema.json` の必須概念に従い、目的・背景・解決する問題・中核概念・適用条件・非適用条件・トレードオフ/失敗モード・目的達成への寄与・一次資料・鮮度を保持する。浅い pointer-only 要約は正本カードとして受け入れない。
 
+### 知識依存グラフ (goal-spec C13/C14)
+`references/knowledge-catalog.json` は各 entry が typed 辺 (`depends_on` / `refines` / `conflicts_with`) を持つ**知識依存グラフ**である。`A depends_on B` は「B が前提で B を A より先に出す」precedence DAG で、循環/dangling/root到達性/孤立 node と辺型則 (`refines`=有向精緻化・非循環、`conflicts_with`=対称非順序) を `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge` が検証する。C01 (R5) / C03 (R2) はこの validator の位相順 (`--order`・上位概念→下位概念、同順位 knowledge_id 昇順) を**同一 JSON として消費**し、設計知識を上流から下流の順で章へ反映する。この validator が保証するのは well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上正しいか) は content-review/human の未閉塞責務である。
+
+### doctrine anchor 写像 (goal-spec C15)
+`references/doctrine-anchor-registry.json` は正本単位を system category でなく**design concern** とし、7 concern を 4 authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / security・authentication=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) へ **1 concern 1 authority** で固定する (authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる)。全 in-scope category は必要 concern へ全件写像され、C03 が各章生成時に category→concern→authority を**上流指針として反映**する (具体技術は直書きせず上流工程を導く)。registry 形状・concern_id 一意性 (authority 一意性ではない)・カテゴリ写像全射は `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` が、意味反映は content-review/human が検証する。未帰属 category は owner/reason/approval_state を持つ pending 例外として compile を保留する。
+
 ## 参照知識領域 (references/)
 
 | 領域 | ファイル | 要点 |
@@ -44,7 +50,8 @@ allowed-tools:
 | Clean Code | `references/clean-code.md` | 変更し続けられる可読性を保つ (意図の命名/単一責務/副作用局所化/テスト容易性) |
 | システム構成 taxonomy | `references/system-category-taxonomy.json` | カテゴリ×canonical platform id (C01 初期集合の正本) |
 | Open-world lifecycle | `references/open-world-knowledge-lifecycle.md` | discover→qualify→deepen→goal map→candidate→promotion→freshness audit |
-| Knowledge catalog | `references/knowledge-catalog.json` | seed/card metadata と深度・鮮度の機械可読索引 |
+| Knowledge catalog | `references/knowledge-catalog.json` | seed/card metadata と深度・鮮度 + typed 辺 (depends_on/refines/conflicts_with) の知識依存グラフ (goal-spec C13) |
+| Doctrine anchor registry | `references/doctrine-anchor-registry.json` | design concern→doctrine authority (Apple HIG/Clean Arch/OWASP/SRE) と全 category→concern 写像 (goal-spec C15) |
 | Card schema | `references/knowledge-card.schema.json` | 深い知識カード/project candidate の必須契約 |
 
 ## 使い方
@@ -52,6 +59,8 @@ allowed-tools:
 1. カテゴリ初期集合が必要なとき (C01 R1-init): `references/system-category-taxonomy.json` を Read し `categories` / `platforms` を取得する。
 2. 設計知識ポインタが必要なとき (C03 R2-render): 該当領域の `references/*.md` を Read し要点と一次資料 URL を章へ反映する。
 3. seed外の知識候補が必要なとき: `references/open-world-knowledge-lifecycle.md` を Read し、C01/C02 に発見・一次資料qualification・project candidate作成を委譲する。C04自身は検索や書込を行わない。
+4. 設計知識を位相順で消費するとき (C01 R5 / C03 R2): `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --input references/knowledge-catalog.json --order` の topo_order に従い上位概念→下位概念の順で反映する。
+5. 章の上流指針が必要なとき (C03 R2): `references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` を上流 doctrine として章へ反映する (`$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` で写像全射を事前検証)。
 
 ## 責務プロンプト
 

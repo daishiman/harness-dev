@@ -26,6 +26,8 @@
 - 必須比較軸はgoal fit、総保有コストTCO、security、lock-in、operations burdenであり、writer契約では`goal_fit`/`cost_model`/`free_tier_limits`/`pros`/`cons`/`risks`/`lock_in`/`ops_burden`へ記録する。
 - 無料または低コストの実用候補を必ず含める。ただし最安であることだけを採用理由にしない。
 - C04 の現在の知識は seed であり固定上限ではない。目的に必要な未知知識を追加探索候補として扱う。
+- **知識の位相順消費 (goal-spec C14)**: 設計知識を比較材料へ引くときは `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --input $CLAUDE_PLUGIN_ROOT/skills/ref-system-design-knowledge/references/knowledge-catalog.json --order` が返す topo_order (上位概念→下位概念・同順位 knowledge_id 昇順) に従い、前提知識 (depends_on 先) を先に踏まえてから下位概念を提示する (C03 R2 と同一 JSON 順を消費し、elicit と compile で知識反映順を一致させる)。
+- **必須情報カタログ駆動 (goal-spec C16)**: `references/required-info-catalog.json` は本スキル所有の必須情報 item カタログ。`$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json` の `collection_order` (依存位相順) で質問順序を導出し、`missing_effect=block` の item が未回答のまま `confirmed` へ遷移させない (coverage_certificate.blocking_items が未充足なら confirmed 禁止)。施行主体は本 R5 収集ゲート (elicit 時に block item 未回答なら confirmed へ進めない prose ゲート) + C05 事後監査であり、決定論 writer 施行 (apply-spec-transition への block 検査組込) は spec-state の required-info 回答スキーマ拡張を要する follow-up。
 - **未知知識 producer (要件 open-world)**: 比較検討中に既知 seed (C04 の 6 枚) に無い未知の設計領域・技術・パターン (新しい方式・製品・アーキテクチャ等) を検出したら、`set-knowledge-candidate` op で `status=discovered` として `spec-state` へ記録する (id は安定 kebab-case・`topic`・`problem`・実在 goal を指す `serves_goals` を付与)。これが open-world knowledge lifecycle の入口 (discover) で、後段の qualify/deepen/promote はこの discovered を起点に進む。
 - 候補数は比較可能性を保つ2〜3案とする。
 

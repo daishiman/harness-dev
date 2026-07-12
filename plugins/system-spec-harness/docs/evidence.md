@@ -13,7 +13,7 @@
 | 4 | Write/Edit 負例 (確定章上書き遮断) | `plugins/system-spec-harness/tests/test_guard_hook.py` (確定章 Write/Edit fixture) | `python3 -m pytest -q plugins/system-spec-harness/tests/test_guard_hook.py` | 確定章 Write/Edit → exit2 / 非対象・reopen → exit0 |
 | 5 | Bash 書換負例 (spec-state 動的書換遮断) | `tests/test_guard_hook.py` (sed -i/リダイレクト fixture) | 同上 | spec-state.json への `sed -i`/リダイレクト → exit2 / read-only → exit0 |
 
-## 受入 Evidence Matrix (goal-spec C1-C12 / P07 AC 1:1)
+## 受入 Evidence Matrix (goal-spec C1-C16 / P07 AC 1:1)
 
 | 要件 | 受入観点 | Evidence (fixture/artifact) | 検証コマンド | 状態 |
 |---|---|---|---|---|
@@ -24,15 +24,19 @@
 | C5 | 最新ドキュメント出典記録 | Evidence#2 + C13/C08 | `python3 -m pytest -q plugins/system-spec-harness/tests/test_validate_scripts.py -k c13` | PASS |
 | C6 | 章立て複数Markdown+index | C03 golden fixtures | `python3 -m pytest -q plugins/system-spec-harness/skills/run-system-spec-compile/tests` | PASS |
 | C7 | 網羅マトリクス検証 | C12正負例 | `python3 plugins/system-spec-harness/scripts/validate-coverage-matrix.py --matrix <s> --require-complete` | PASS |
-| C8 | packaging 契約充足 | `.claude-plugin/plugin.json` / `EVALS.json` / route-build-report×13 | `check-build-handoff.py` / `validate-route-build-reports.py --complete` | PASS |
+| C8 | packaging 契約充足 | `.claude-plugin/plugin.json` / `EVALS.json` / route-build-report×14 | `check-build-handoff.py` / `validate-route-build-reports.py --complete` | PASS |
 | C9 | 上位概念U1-U9とgoal trace | `requirements_foundation` fixture + `00-requirements-definition.md` | `python3 -m pytest -q plugins/system-spec-harness/tests/test_validate_foundation.py` | PASS |
 | C10 | 迷った時のAI案内とユーザー確認保留 | R5 prompt + decision transition正負例 | `python3 -m pytest -q plugins/system-spec-harness/skills/run-system-spec-elicit/tests -k decision` | PASS |
 | C11 | open-world deep knowledge | knowledge cards/catalog/lifecycle | `python3 plugins/system-spec-harness/skills/ref-system-design-knowledge/scripts/validate-knowledge-cards.py` | PASS |
 | C12 | prompt-creator意味契約 | 全18 prompt + `eval-log/system-spec-harness/build/prompt-design-findings.json` | `verify-completeness.py` + `validate-prompt.py` (18件) | PASS |
+| C13 | typed knowledge graph | `knowledge-catalog.json` + C14 validator正負例 | `python3 plugins/system-spec-harness/scripts/validate-knowledge-graph.py --profile knowledge --input plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json` | PASS |
+| C14 | 依存位相順の共有消費 | C01 R5 / C03 R2 + `topo_order` | `python3 plugins/system-spec-harness/scripts/validate-knowledge-graph.py --profile knowledge --input plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json --order` | PASS |
+| C15 | doctrine anchor 全射写像 | `doctrine-anchor-registry.json` | `python3 plugins/system-spec-harness/scripts/validate-knowledge-graph.py --profile doctrine --input plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json` | PASS |
+| C16 | 必須情報カタログ被覆 | `required-info-catalog.json` + coverage certificate | `python3 plugins/system-spec-harness/scripts/validate-knowledge-graph.py --profile required-info --input plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json` | PASS |
 
 ## 網羅性 (カテゴリ×プラットフォーム) の再現
 
 C01 が初期化するマトリクスは 8カテゴリ × 6プラットフォーム = 48セル。各セルが `未収集/対象外/確定` の3値で、確定は `qa_ref`・対象外は `reason` を持つことを C12 が機械検証する。fixture `skills/run-system-spec-elicit/fixtures/expected-final-spec-state.json` を `validate-coverage-matrix.py --require-complete` に通すと未収集0で exit0 になり、第三者がカテゴリ×プラットフォーム網羅を再現確認できる。
 
 ## 全体テスト証跡
-`python3 -m pytest -q plugins/system-spec-harness` → 293 passed。全18 promptは両validator PASS、独立意味評価は `prompt-design-findings.json` でC1-C4全PASS・high 0。
+`python3 -m pytest -q plugins/system-spec-harness` → 373 passed。knowledge / required-info / doctrine / cross の4 profile は全て `status: ok`。全18 promptは両validator PASS、独立意味評価は `prompt-design-findings.json` でC1-C4全PASS・high 0。

@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "知識依存グラフ (C13/C14)・必須情報カタログ (C16)・doctrine anchor 写像 (C15) の 4 profile (knowledge/required-info/doctrine/cross) 決定論ゲート。独立 context の code-review で 5 次元評価。soundness: _topo_order は Kahn+id 昇順 heap で決定論・precedence (A depends_on B なら topo_order で B が A より前) を保証、_detect_cycle は明示スタック反復 DFS で再帰上限非依存 (1500 段 scale test 実証)、dangling/self/孤立 node/refines 非循環/conflicts_with 対称/doctrine concern 一意性・authority 非空・category→concern 全射・orphan/pending・cross 語彙横断整合 いずれも宣言不変条件を保証。当初レビュー (score 86) で検出した medium 欠陥『validate_required_info の文字列必須フィールドが str 値のときだけ空検査し非 str 値 (concern=123 等) が最低形状検査を素通りする型検査漏れ』と item_id truthy-only 検査の型混在 TypeError 潜在余地を、両者を `not isinstance(val,str) or not val.strip()` へ対称強化して根治し regression test 2 件 (test_required_info_non_str_field_fails / test_required_info_non_str_item_id_fails) を追加。responsibility: well-formedness と順序決定論のみに限定し辺/カタログ内容の意味妥当性は content-review/human へ委譲 (docstring 明記・越境なし)。error-handling: file 欠落/JSON parse/非 dict root を exit2、violation を exit1、正常 0、profile 不正/引数不足を exit2 へ分離し frontmatter の exit 宣言と一致 (実測 argparse invalid choice→rc2)。side-effect-safety: Path.read_text と print のみ・network/subprocess/書込一切なしで network:false・write-scope:none を実際に遵守 (read-only)。frontmatter: name/version/purpose/inputs/outputs/exit/contexts[E,C]/network:false/write-scope:none/dependencies:[]/requires-python>=3.9 完備 (PEP723)。tests/test_validate_knowledge_graph.py 59 passed・行カバレッジ 91%。残存 low smell (循環検出後 DAG 前提の root/unreachable 防御 L197-212 が dead 気味・na_domains malformed の silent skip) は偽 green を生まず非 blocking として acknowledged。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

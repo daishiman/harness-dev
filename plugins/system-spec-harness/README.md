@@ -27,12 +27,12 @@
 
 ## Part 2 — 運用者向け技術詳細
 
-### アーキテクチャ (13 component)
+### アーキテクチャ (14 component)
 - **skill×5**: `run-system-spec-elicit` (C01・foundation/decision/matrix writer) / `run-system-spec-doc-fetch` (C02・最新公式情報/knowledge qualification) / `run-system-spec-compile` (C03・深い知識を含む仕様書生成) / `ref-system-design-knowledge` (C04・open-world deep knowledge seed) / `assign-system-spec-completeness-evaluator` (C05・全観点独立評価)。
 - **sub-agent×3**: `system-spec-hearing-auditor` (C06) / `system-spec-matrix-auditor` (C07) / `system-spec-doc-freshness-auditor` (C08) — C05 が独立 context で fork する監査。
 - **slash-command×2**: `/spec-hearing-start` (C09) / `/spec-compile` (C10)。
 - **hook×1**: `guard-confirmed-chapter-overwrite.py` (C11・確定章の誤上書きを PreToolUse で fail-closed 遮断)。
-- **script×2** (plugin-root 共有決定論ゲート): `validate-coverage-matrix.py` (C12・マトリクス網羅性) / `validate-source-citation.py` (C13・出典記録)。
+- **script×3** (plugin-root 共有決定論ゲート): `validate-coverage-matrix.py` (C12・マトリクス網羅性) / `validate-source-citation.py` (C13・出典記録) / `validate-knowledge-graph.py` (C14・知識依存グラフ、doctrine、必須情報の整合)。
 
 ### データフロー
 `spec-state.json` (C01 出力・単一 writer=`apply-spec-transition.py`) → C02/C03/C05/C07 が消費。`fetched-references.json` (C02 出力) → C03/C08 が消費。`system-spec/*.md`+`index.md` (C03 出力・章 frontmatter が C11 判定ソース) → C05/C11 が参照。
@@ -49,7 +49,7 @@
 - **CLI / Desktop**: marketplace 配布済みのため、marketplace を追加した CLI / Desktop から同一手順でインストールできる。
 
 ### 検証
-`python3 -m pytest -q plugins/system-spec-harness` (293 passed)。決定論ゲートは `plugins/system-spec-harness/scripts/validate-coverage-matrix.py` / `plugins/system-spec-harness/scripts/validate-source-citation.py` / deep knowledge validator / prompt-creator validators。詳細は `RUNBOOK.md` / `docs/evidence.md`。
+`python3 -m pytest -q plugins/system-spec-harness` (375 passed)。決定論ゲートは `plugins/system-spec-harness/scripts/validate-coverage-matrix.py` / `plugins/system-spec-harness/scripts/validate-source-citation.py` / `plugins/system-spec-harness/scripts/validate-knowledge-graph.py` / deep knowledge validator / prompt-creator validators。詳細は `RUNBOOK.md` / `docs/evidence.md`。
 
 ### 改善要望の受け皿
 `/run-skill-feedback system-spec-harness` で改善要望を投入できる (`plugin_meta.feedback_deploy` に配線・初回は Notion sink 設定が必要)。

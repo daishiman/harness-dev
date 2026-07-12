@@ -237,6 +237,25 @@ def test_coverage_gate_fail_on_incomplete_matrix(tmp_path):
     assert result["exit_code"] == 1
 
 
+# ---------- run_knowledge_graph_gate (validate-knowledge-graph.py 独立再実行) ----------
+
+def test_knowledge_graph_gate_pass_on_shipped_assets():
+    # 評価者が出荷 3 カタログを validate-knowledge-graph.py 4 profile で独立再実行 (F-SYS-01)
+    result = MOD.run_knowledge_graph_gate()
+    assert result["id"] == "G-knowledge-graph"
+    assert result["exit_code"] == 0, f"出荷資産が知識グラフゲートを通らない: {result['subgates']}"
+    profiles = {sg["profile"] for sg in result["subgates"]}
+    assert profiles == {"knowledge", "doctrine", "required-info", "cross"}
+    assert result["conditions"] == ["design_knowledge_reflection", "matrix_coverage"]
+
+
+def test_main_knowledge_graph_gate(capsys):
+    rc = MOD.main(["--knowledge-graph"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["id"] == "G-knowledge-graph"
+
+
 # ---------- schema ----------
 
 def test_schema_valid_json_and_covers_three_aspects():
