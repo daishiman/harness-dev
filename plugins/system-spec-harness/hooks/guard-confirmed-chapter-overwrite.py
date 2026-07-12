@@ -56,6 +56,15 @@ fail-closed 方針 (層別): 正本 spec-state を参照する危険な動的 Ba
 confirmed 章 Write/Edit のみ安全側で拒否する (計画 C11 exit_semantics=fail-closed-exit2)。それ以外の章判定は
 「明確に protected と判定できないなら通す」を基本にする (誤爆回避優先)。全書換経路の正本防御は
 C01/C03 の単一 writer/transition gate が担う。本 hook は補助 (二重化)。
+
+block ゲートとの相補関係 (C16/C14): required-info-catalog.json の missing_effect=block item が未充足の
+間は、そもそも当該セルの confirmed 遷移自体が上流の C01 R5 収集ゲート (elicit 時の prose ゲート) で
+禁止される (validate-knowledge-graph.py --profile required-info は coverage certificate に blocking_items を
+列挙するのみで runtime 施行はせず、C01 R5 がその certificate を消費して施行する。決定論 writer 施行 =
+apply-spec-transition への block 検査組込は required-info 回答スキーマ拡張を要する follow-up)。すなわち
+「未収集の必須情報を残したまま確定させない」のは上流の収集ゲート側の責務。本 hook はその結果 confirmed になった章の
+事後的な上書き/巻き戻しを防ぐ層であり、block ゲートとは前段 (確定させない) / 後段 (確定を保護) の
+相補的な二層をなす。本 hook 側で block 未充足を再判定・遮断することはしない (責務境界の明確化)。
 """
 from __future__ import annotations
 

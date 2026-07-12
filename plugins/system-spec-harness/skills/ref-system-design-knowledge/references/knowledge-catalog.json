@@ -1,15 +1,21 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "open_world": true,
   "catalog_semantics": "seed examples, not an exhaustive list",
   "lifecycle_ref": "open-world-knowledge-lifecycle.md",
   "card_schema_ref": "knowledge-card.schema.json",
+  "graph_semantics": {
+    "validated_by": "validate-knowledge-graph.py --profile knowledge",
+    "depends_on": "A depends_on B = B が前提。位相順で B を A より先に出す precedence DAG。同順位は knowledge_id 昇順。",
+    "refines": "有向の精緻化 (A refines B = A は B の詳細化)。非循環。位相には参加しない。",
+    "conflicts_with": "対称な非順序制約 (A conflicts_with B なら B 側も必須)。位相不参加。"
+  },
   "entries": [
-    {"knowledge_id": "clean-architecture", "file": "clean-architecture.md", "status": "seed-example", "freshness_class": "foundational-stable"},
-    {"knowledge_id": "design-patterns", "file": "design-patterns.md", "status": "seed-example", "freshness_class": "foundational-stable"},
-    {"knowledge_id": "api-design-patterns", "file": "api-design-patterns.md", "status": "seed-example", "freshness_class": "standard-tracked"},
-    {"knowledge_id": "secure-by-design", "file": "secure-by-design.md", "status": "seed-example", "freshness_class": "standard-tracked"},
-    {"knowledge_id": "ddd", "file": "ddd.md", "status": "seed-example", "freshness_class": "foundational-stable"},
-    {"knowledge_id": "clean-code", "file": "clean-code.md", "status": "seed-example", "freshness_class": "foundational-stable"}
+    {"knowledge_id": "clean-code", "file": "clean-code.md", "status": "seed-example", "freshness_class": "foundational-stable", "depends_on": [], "refines": [], "conflicts_with": []},
+    {"knowledge_id": "design-patterns", "file": "design-patterns.md", "status": "seed-example", "freshness_class": "foundational-stable", "depends_on": [], "refines": [], "conflicts_with": []},
+    {"knowledge_id": "ddd", "file": "ddd.md", "status": "seed-example", "freshness_class": "foundational-stable", "depends_on": ["clean-code"], "refines": [], "conflicts_with": []},
+    {"knowledge_id": "clean-architecture", "file": "clean-architecture.md", "status": "seed-example", "freshness_class": "foundational-stable", "depends_on": ["ddd", "design-patterns"], "refines": [], "conflicts_with": []},
+    {"knowledge_id": "api-design-patterns", "file": "api-design-patterns.md", "status": "seed-example", "freshness_class": "standard-tracked", "depends_on": ["clean-architecture"], "refines": ["design-patterns"], "conflicts_with": []},
+    {"knowledge_id": "secure-by-design", "file": "secure-by-design.md", "status": "seed-example", "freshness_class": "standard-tracked", "depends_on": ["clean-architecture"], "refines": [], "conflicts_with": []}
   ]
 }

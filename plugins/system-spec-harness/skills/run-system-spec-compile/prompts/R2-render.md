@@ -19,11 +19,13 @@
 ## Layer 2: ドメイン層
 - **用語**: `確定マーカー`=章 frontmatter の status/category/aggregate/spec_cells (C11 判定ソース) / `serves_goals`=章が資する上位概念ゴール id の集約 (要件 C9 anchor) / `収集状態表`=platform × 状態 × 根拠 / `出典表`=target × version × 公式発行元 × source_url × 取得/最新確認日時。
 - **不変則**: 確定マーカーの status は集約の終端性で決まる (確定/対象外=confirmed、未着手/収集中=draft)。出典は source_url・公式発行元・version|last_updated・latest_checked_at を必ず伴う (C13 検証)。対象外セルは理由 (または承認参照) を明示する (C12 検証)。各技術章 frontmatter の `serves_goals` はセル serves_goals の和集合で、要件定義書 (00-requirements-definition.md) の goals へトレースする (要件 C9)。
+- **知識の位相順消費 (goal-spec C14)**: 設計知識を章へ反映する順序は `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --input $CLAUDE_PLUGIN_ROOT/skills/ref-system-design-knowledge/references/knowledge-catalog.json --order` が返す topo_order (上位概念→下位概念・同順位 knowledge_id 昇順) に従う。C01 R5 と**同一 JSON 順**を消費し、elicit と compile で知識反映順を一致させる (例: clean-architecture を api-design-patterns より先に踏まえる)。
+- **doctrine anchor の上流反映 (goal-spec C15)**: 各カテゴリ章は `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` (Apple HIG / Clean Architecture / OWASP ASVS+Secrets Management / Google SRE) を**上流指針**として章へ反映する (具体技術は直書きせず上流工程を導く)。未帰属 category (pending 例外) がある場合は compile を保留する。写像全射は `validate-knowledge-graph.py --profile doctrine` が事前検証済み。
 
 ## Layer 3: インフラ層
-- **入力**: R1 章立て構成 / `spec-state.json` / `fetched-references.json` / `../ref-system-design-knowledge/references/*.md` (設計知識・C04)。
-- **決定論ヘルパ**: `scripts/compile-spec-doc.py` の `render_frontmatter` / `render_state_table` / `render_design_refs` / `render_citations` / `render_chapter`。
-- **設計知識対応**: カテゴリ→設計知識参照は `CATEGORY_DESIGN_REFS` (resource-map の read_when 対応を写像)。例: security→secure-by-design / backend→clean-architecture+api-design-patterns+ddd。
+- **入力**: R1 章立て構成 / `spec-state.json` / `fetched-references.json` / `../ref-system-design-knowledge/references/*.md` (設計知識・C04) / `../ref-system-design-knowledge/references/knowledge-catalog.json` (知識依存グラフ) / `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` (doctrine anchor 写像)。
+- **決定論ヘルパ**: `scripts/compile-spec-doc.py` の `render_frontmatter` / `render_state_table` / `render_design_refs` / `render_citations` / `render_chapter`。知識反映順は `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --order`、doctrine 上流は `--profile doctrine` の `category_concern_mapping` を参照。
+- **設計知識対応**: カテゴリ→設計知識参照は `CATEGORY_DESIGN_REFS` (resource-map の read_when 対応を写像) を知識グラフ topo_order で並べ替えて反映。例: security→secure-by-design / backend→clean-architecture+api-design-patterns+ddd (depends_on 先の clean-architecture を先に踏まえる)。カテゴリ→concern→authority は doctrine-anchor-registry を正本とする。
 
 ## Layer 4: 共通ポリシー層
 - 各章 frontmatter に確定マーカー (status/category/aggregate/spec_cells) と `serves_goals` (上位概念トレース) を付与する。
@@ -50,6 +52,8 @@
 - [ ] 各確定セルの qa_ref が章本文から追跡できる
 - [ ] 各対象外セルの除外根拠が章本文から追跡できる
 - [ ] 設計知識が解決問題と目的達成寄与を説明している
+- [ ] 設計知識が知識グラフ topo_order (上位概念→下位概念) の順で反映されている (C14)
+- [ ] 各カテゴリ章に doctrine anchor (concern authority) が上流指針として反映されている (C15)
 - [ ] 割当済み出典が公式 URL と版情報を保持している
 
 ### 5.4 実行方式

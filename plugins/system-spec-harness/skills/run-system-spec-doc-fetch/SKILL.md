@@ -61,6 +61,8 @@ feedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)
 意思決定候補の価格/無料枠/制約は変動するため、R5の推奨前に通常の鮮度契約（公式publisher/host、versionまたは更新日、retrieved/latest_checked_at）で再確認する。
 **完了条件**: 下記「完了チェックリスト」を全充足 (IN1 = `validate-source-citation.py` exit0)。
 
+**上流指針 (doctrine anchor)**: 取得対象の技術は `ref-system-design-knowledge/references/doctrine-anchor-registry.json` の concern authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / authentication・security=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) が示す上流指針に沿った公式一次資料を優先取得する。取得した参照は IN1 の official_host 検証 (C13 citation gate) と併せて、C14 knowledge graph の位相順 (上位概念→下位概念) で後続 (C01/C03) の参照へ供給する。registry は具体技術を直書きせず上流工程を導くのみで、本 skill の取得対象 (`target_id`) 自体は `spec-state.json` が正本。
+
 `fetched-references.json` の形状 (厳守):
 
 ```json

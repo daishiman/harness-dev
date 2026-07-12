@@ -22,12 +22,13 @@
 ## Verification
 - 収集マトリクス網羅性 (C7): `python3 scripts/validate-coverage-matrix.py --matrix spec-state.json [--require-complete]`。
 - 出典記録 (C5): `python3 scripts/validate-source-citation.py --targets <targets.json> --references fetched-references.json`。
+- 知識グラフ / doctrine / 必須情報 (C13-C16): `python3 scripts/validate-knowledge-graph.py --profile knowledge|required-info|doctrine|cross`。各 profile は循環・dangling・写像・domain 被覆を fail-closed 検証する。
 - 独立監査: `system-spec-hearing-auditor` (聞き漏れ/誘導/早期停止) / `system-spec-matrix-auditor` (マトリクス状態) / `system-spec-doc-freshness-auditor` (公式サイト再照合)。
 - 完成度評価: `assign-system-spec-completeness-evaluator` が3観点 (網羅性/設計知識反映/出典) で PASS/FAIL 判定。
 - テスト: `python3 -m pytest plugins/system-spec-harness/tests -q`。
 
 ## Acceptance Evidence
-- 受入観点 (C1-C12) の plugin 内正本は `docs/evidence.md` (C1-C12 受入 Matrix) と `EVALS.json`。計画側正本 `plugin-plans/system-spec-harness/phase-07-acceptance-criteria.md` は repo-only (配布物には含まれず単独 install 環境では非解決)。
+- 受入観点 (C1-C16) の plugin 内正本は `docs/evidence.md` (C1-C16 受入 Matrix) と `EVALS.json`。計画側正本 `plugin-plans/system-spec-harness/phase-07-acceptance-criteria.md` は repo-only (配布物には含まれず単独 install 環境では非解決)。
 - 6周超サンプル対話で5周目に状態保存+resume が働くこと (C3)。
 - 生成仕様書がカテゴリ別収集状態 (未着手/収集中/確定/対象外+理由) を各章に明示すること (C1)。
 
@@ -48,5 +49,5 @@ project-local な `knowledge_candidates[]` (C01 `spec-state.json`) を C04 の c
 ### 初回実運用後の EVALS 再評価 (baseline 更新)
 `EVALS.json` の各 `evaluations[]` は現在 `verdict:"baseline"` (build 直後の初期宣言・findings 空)。
 - **トリガ**: 初回の実 `/spec-compile` 実行 (実プロジェクトでの初回コンパイル+C05 完成度評価) 完了後。
-- **手順**: C05 が返した観点別スコアと総合判定を、対応する skill の `evaluations[]` エントリへ実測 verdict (`pass`/`fail`) と findings で追記し、`baseline` 行はそのまま履歴として残す (上書きしない)。`docs/evidence.md` の C1-C12 受入 Matrix の状態列と齟齬がないか照合する。
+- **手順**: C05 が返した観点別スコアと総合判定を、対応する skill の `evaluations[]` エントリへ実測 verdict (`pass`/`fail`) と findings で追記し、`baseline` 行はそのまま履歴として残す (上書きしない)。`docs/evidence.md` の C1-C16 受入 Matrix の状態列と齟齬がないか照合する。
 - **期限**: 初回実運用から 2 週間以内、遅くとも 2026-08-11 までに baseline を実測 verdict へ更新する。未実施の間は EVALS の合否は build 時点の baseline であり実運用の受入根拠にしない。

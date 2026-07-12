@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "description": "システム構築カテゴリを設計 concern に分解し、各 concern に doctrine anchor (上流指針の正本) を 1 concern 1 authority で固定する registry (goal-spec C15)。authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる (authority 一意ではない)。C03 (run-system-spec-compile) が各章生成時に category→concern→authority を上流判断として反映する。具体技術は直書きせず上流工程を導く。形状・concern_id 一意性・カテゴリ写像全射・orphan concern は validate-knowledge-graph.py --profile doctrine が、意味反映は content-review/human が検証する。",
+  "validated_by": "validate-knowledge-graph.py --profile doctrine",
+  "mapping_rule": "正本単位は system category でなく design concern。1 category は複数 concern を持てるが、各 concern の authority は 1 つだけ (authority 種類は 4・concern 間で共有されうる)。未帰属 category は owner/reason/approval_state 付き pending 例外として compile を保留する。",
+  "freshness_policy": {
+    "note": "doctrine authority (OWASP ASVS 版改訂・Apple HIG 改称・SRE 書籍更新等) は経年変化するため、knowledge-catalog と同様に鮮度監査対象とする。open-world-knowledge-lifecycle.md の freshness audit に doctrine registry も含める。",
+    "audit_trigger": "official-update",
+    "revalidate_cadence": "quarterly"
+  },
+  "concerns": [
+    {"concern_id": "presentation", "authority": "Apple Human Interface Guidelines", "source_ref": "https://developer.apple.com/design/human-interface-guidelines", "guides": "画面設計・操作フロー・情報階層・アクセシビリティの上流原則", "freshness_class": "standard-tracked", "last_checked_at": "2026-07-12", "revalidate_on": "Apple HIG の年次改訂/改称"},
+    {"concern_id": "application-architecture", "authority": "Robert C. Martin — Clean Architecture", "source_ref": "Clean Architecture (2017), the Dependency Rule", "guides": "レイヤ境界・依存方向 (内向き)・ユースケース中心設計", "freshness_class": "foundational-stable", "last_checked_at": "2026-07-12", "revalidate_on": "新版書籍/公式訂正"},
+    {"concern_id": "data-access", "authority": "Robert C. Martin — Clean Architecture", "source_ref": "Clean Architecture — gateways/repositories boundary", "guides": "永続化を境界の外側へ追い出し interface adapter で隔離する", "freshness_class": "foundational-stable", "last_checked_at": "2026-07-12", "revalidate_on": "新版書籍/公式訂正"},
+    {"concern_id": "authentication", "authority": "OWASP ASVS + Secrets Management Cheat Sheet", "source_ref": "https://owasp.org/www-project-application-security-verification-standard/", "guides": "認証方式・セッション・資格情報/シークレット/API キーの取扱いの上流指針", "freshness_class": "standard-tracked", "last_checked_at": "2026-07-12", "revalidate_on": "OWASP ASVS 版改訂"},
+    {"concern_id": "security", "authority": "OWASP ASVS + Secrets Management Cheat Sheet", "source_ref": "https://owasp.org/www-project-application-security-verification-standard/", "guides": "脅威モデル・入力検証・暗号化・監査ログの上流指針", "freshness_class": "standard-tracked", "last_checked_at": "2026-07-12", "revalidate_on": "OWASP ASVS 版改訂"},
+    {"concern_id": "reliability", "authority": "Google SRE", "source_ref": "https://sre.google/books/", "guides": "SLO/エラーバジェット・冗長性・スケーリング・監視の上流指針", "freshness_class": "standard-tracked", "last_checked_at": "2026-07-12", "revalidate_on": "SRE 書籍/公式ガイド更新"},
+    {"concern_id": "operations", "authority": "Google SRE", "source_ref": "https://sre.google/workbook/", "guides": "運用手順・障害対応・トイル削減・ポストモーテムの上流指針", "freshness_class": "standard-tracked", "last_checked_at": "2026-07-12", "revalidate_on": "SRE Workbook 更新"}
+  ],
+  "categories": ["database", "auth", "ui-ux", "security", "infrastructure", "backend", "frontend", "maintenance-ops"],
+  "category_concern_map": {
+    "database": ["data-access", "reliability"],
+    "auth": ["authentication", "security"],
+    "ui-ux": ["presentation"],
+    "security": ["security"],
+    "infrastructure": ["reliability", "operations"],
+    "backend": ["application-architecture", "data-access"],
+    "frontend": ["presentation", "application-architecture"],
+    "maintenance-ops": ["operations"]
+  },
+  "pending_exceptions": []
+}

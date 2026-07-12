@@ -213,23 +213,74 @@ def run_coverage_gate(matrix_path, require_complete: bool = False) -> dict:
     }
 
 
+def run_knowledge_graph_gate() -> dict:
+    """plugin-root の validate-knowledge-graph.py を 4 profile 実行し C13-C16 の機械層根拠を集約する。
+
+    C05 (評価者) は生成時ゲート (C01/C03) の緑を LLM 裁量で信頼せず、出荷済み 3 カタログを
+    validator へ独立再実行する (proposer≠approver・保証要件は機械層)。knowledge/doctrine/
+    required-info の各 profile と語彙横断 cross の 4 本が全て exit0 で PASS。design_knowledge_reflection
+    (C13/C14/C15) と matrix_coverage (C16) の機械層根拠となる。
+    """
+    root = _plugin_root()
+    gate = root / "scripts" / "validate-knowledge-graph.py"
+    ref = root / "skills" / "ref-system-design-knowledge" / "references"
+    elicit_ref = root / "skills" / "run-system-spec-elicit" / "references"
+    knowledge_catalog = ref / "knowledge-catalog.json"
+    doctrine = ref / "doctrine-anchor-registry.json"
+    taxonomy = ref / "system-category-taxonomy.json"
+    required_info = elicit_ref / "required-info-catalog.json"
+    py = sys.executable or "python3"
+    runs = (
+        ("knowledge", [py, str(gate), "--profile", "knowledge", "--input", str(knowledge_catalog)]),
+        ("doctrine", [py, str(gate), "--profile", "doctrine", "--input", str(doctrine)]),
+        ("required-info", [py, str(gate), "--profile", "required-info", "--input", str(required_info)]),
+        ("cross", [py, str(gate), "--profile", "cross", "--taxonomy", str(taxonomy),
+                   "--doctrine", str(doctrine), "--required-info", str(required_info)]),
+    )
+    subgates = []
+    worst = 0
+    for name, cmd in runs:
+        proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        subgates.append({
+            "profile": name,
+            "command": [str(x) for x in cmd],
+            "exit_code": int(proc.returncode),
+            "stderr": proc.stderr.strip(),
+        })
+        worst = max(worst, int(proc.returncode))
+    return {
+        "id": "G-knowledge-graph",
+        "name": "validate-knowledge-graph",
+        "conditions": ["design_knowledge_reflection", "matrix_coverage"],
+        "exit_code": worst,
+        "subgates": subgates,
+    }
+
+
 def main(argv: list | None = None) -> int:
     ap = argparse.ArgumentParser(
-        description="C05 完成度評価レポートの形状検証 / マトリクス網羅性ゲート実行"
+        description="C05 完成度評価レポートの形状検証 / マトリクス網羅性 + 知識グラフ機械ゲート実行"
     )
     ap.add_argument("--report", help="評価レポート JSON のパス (形状 + 総合判定整合を検証)")
     ap.add_argument("--matrix", help="spec-state.json のパス (マトリクス網羅性ゲートを実行)")
     ap.add_argument("--require-complete", action="store_true", help="ゲートを未収集 0 必須モードで実行")
+    ap.add_argument("--knowledge-graph", action="store_true",
+                    help="出荷 3 カタログを validate-knowledge-graph.py 4 profile で独立再実行 (C13-C16 機械層)")
     args = ap.parse_args(argv)
 
-    if not args.report and not args.matrix:
-        ap.error("--report か --matrix のいずれかが必要")
+    if not args.report and not args.matrix and not args.knowledge_graph:
+        ap.error("--report / --matrix / --knowledge-graph のいずれかが必要")
 
     rc = 0
     if args.matrix:
         result = run_coverage_gate(args.matrix, require_complete=args.require_complete)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         if result["exit_code"] != 0:
+            rc = 1
+    if args.knowledge_graph:
+        kg_result = run_knowledge_graph_gate()
+        print(json.dumps(kg_result, ensure_ascii=False, indent=2))
+        if kg_result["exit_code"] != 0:
             rc = 1
     if args.report:
         path = Path(args.report)
