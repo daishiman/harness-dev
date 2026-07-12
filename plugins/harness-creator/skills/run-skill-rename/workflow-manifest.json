@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-rename",
+  "skill": "run-skill-rename",
+  "description": "Skill を安全に改名し、参照整合を保つ。",
+  "phases": [
+    {
+      "id": "preflight",
+      "step": 1,
+      "title": "旧名/新名の検証と衝突確認",
+      "resourceIds": [],
+      "output_artifact": "eval-log/rename-preflight.json"
+    },
+    {
+      "id": "scan-refs",
+      "step": 2,
+      "title": "旧名参照の全文走査",
+      "dependsOn": ["preflight"],
+      "resourceIds": [],
+      "output_artifact": "eval-log/rename-refs.json"
+    },
+    {
+      "id": "apply",
+      "step": 3,
+      "title": "git mv とリンク差し替え",
+      "dependsOn": ["scan-refs"],
+      "resourceIds": ["ref-changelog-template"],
+      "output_artifact": null
+    },
+    {
+      "id": "verify",
+      "step": 4,
+      "title": "lint と参照整合の再検証",
+      "dependsOn": ["apply"],
+      "resourceIds": [],
+      "output_artifact": "eval-log/rename-verify.json"
+    },
+    {
+      "id": "changelog",
+      "step": 5,
+      "title": "CHANGELOG 追記",
+      "dependsOn": ["verify"],
+      "resourceIds": ["ref-changelog-template"],
+      "output_artifact": "CHANGELOG.md"
+    }
+  ],
+  "fatal_exit_codes": [2, 3]
+}

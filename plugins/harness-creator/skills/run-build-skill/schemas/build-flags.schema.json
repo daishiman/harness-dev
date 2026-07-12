@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/build-flags.schema.json",
+  "title": "Build Flags",
+  "description": "run-build-skill が受け取るフラグの入出力定義。kind は後方互換の skill subtype(run/ref/assign/delegate/wrap)。Capability 7 kind(skill/agent/hook/command/plugin-composition/prompt/workflow) は capability_kind で表す。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "kind", "mode"],
+  "properties": {
+    "skill_name": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "kind": {"type": "string", "enum": ["run", "ref", "assign", "delegate", "wrap"]},
+    "capability_kind": {
+      "type": "string",
+      "enum": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "default": "skill",
+      "description": "Capability 7 kind の分類。kind は skill 配下の subtype として維持する。"
+    },
+    "mode": {"type": "string", "enum": ["create", "update"], "default": "create"},
+    "model": {"type": "string", "enum": ["opus", "sonnet"], "default": "opus"},
+    "acceptance_tier": {
+      "type": "string",
+      "enum": ["static", "fork", "live"],
+      "description": "受入検証の最低段 (順序 static<fork<live)。宣言は任意 (後方互換) だが、frontmatter/plan の静的信号から validate-build-plan.py の derive_acceptance_tier() が決定論導出する値を下回る宣言 (緩め方向) は violation。hooks配線 or allowed-tools に Skill/Agent/AskUserQuestion → live、それ以外の loop 実行系 (run/wrap/delegate) → fork、非実行系 → static。"
+    },
+    "with_subagent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": false},
+        "enables_phase": {"type": "string", "const": "prompts-emit"},
+        "output_dir": {"type": "string", "default": ".claude/agents/"}
+      }
+    },
+    "with_prompts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": false},
+        "enables_phase": {"type": "string", "const": "prompts-emit"},
+        "loop_unit": {"type": "string", "const": "r_id"},
+        "max_retry": {"type": "integer", "default": 3}
+      }
+    },
+    "with_evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": false},
+        "enables_phase": {"type": "string", "const": "evaluator-emit"},
+        "pair_naming": {"type": "string", "const": "assign-<skill>-evaluator"}
+      }
+    },
+    "with_hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": false},
+        "enables_phase": {"type": "string", "const": "scripts"},
+        "auto_merge_settings_json": {"type": "boolean", "const": false}
+      }
+    },
+    "no_feedback_loop": {
+      "type": "boolean",
+      "default": false,
+      "description": "Step 11.6 feedback-deploy phase を skip する opt-out フラグ (default-ON のため明示指定時のみ false→true)。drift リスクを引き受ける場合に限り使用し、trace.layer_decisions に理由記録必須。harness-creator 自身は自動除外のため本フラグ不要。"
+    },
+    "skip_content_review": {
+      "type": "boolean",
+      "default": false,
+      "description": "Step 12 content-review phase を skip する opt-out フラグ。内容変更なし等の明確な理由がある場合のみ true にでき、trace.layer_decisions と feedback_contract.skip_reason に理由記録必須。"
+    },
+    "feedback_contract": {
+      "type": "object",
+      "description": "生成対象ごとの評価基準と内側/外側フィードバックループ契約。content-review / goal-seek / evaluator / hook が同じ契約を参照し、評価→改善→再評価を max_iterations 内で閉じる。",
+      "additionalProperties": false,
+      "properties": {
+        "inner_loop": {
+          "type": "object",
+          "description": "小さな機能・責務単位で現在ゴールを確実に満たすゴールシーク型ループ。",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean", "default": true},
+            "max_iterations": {"type": "integer", "minimum": 1, "default": 3},
+            "criteria_ref": {"type": "string", "description": "スキル固有 criteria の参照先。例: references/rubric.json#inner_loop"},
+            "negative_feedback": {"type": "string", "enum": ["required", "optional", "none"], "default": "required"},
+            "positive_feedback": {"type": "string", "enum": ["required", "optional", "none"], "default": "optional"}
+          }
+        },
+        "outer_loop": {
+          "type": "object",
+          "description": "ハーネス全体が目的に対して良く動くかを評価し、再利用可能パターンや基盤改善へ戻すループ。",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean", "default": true},
+            "max_iterations": {"type": "integer", "minimum": 1, "default": 3},
+            "criteria_ref": {"type": "string", "description": "外側ループ criteria の参照先。例: run-elegant-review/references/convergence-policy.json"},
+            "negative_feedback": {"type": "string", "enum": ["required", "optional", "none"], "default": "required"},
+            "positive_feedback": {"type": "string", "enum": ["required", "optional", "none"], "default": "required"}
+          }
+        },
+        "criteria": {
+          "type": "array",
+          "description": "対象スキル固有の評価基準。YES/NO または閾値で判定でき、各項目は内側/外側のどちらに属するかを明示する。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "loop_scope", "text", "verify_by"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^(IN|OUT|C)[0-9]+$"},
+              "loop_scope": {"type": "string", "enum": ["inner", "outer"]},
+              "text": {"type": "string"},
+              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"]},
+              "threshold": {"type": "string", "description": "score>=80 / high=0 / C1-C4=PASS 等の観測可能なしきい値。"},
+              "weight": {"type": "number", "minimum": 0, "default": 1},
+              "derived_from": {
+                "type": "array",
+                "items": {"type": "string", "pattern": "^CL-[0-9]+$"},
+                "description": "出所の完了チェックリスト項目アンカー (SKILL.md 本文の <!-- CL-n -->)。被覆と実在は lint-criteria-provenance.py が機械検査し (LS-05)、写像の意味的妥当性は content-review (LLM 層) が判定する。"
+              }
+            }
+          }
+        },
+        "hook_triggers": {
+          "type": "array",
+          "description": "評価を要求する hook 発火点。実行環境で LLM を直接起動できない場合も、queue + lint で未評価をブロックする。",
+          "items": {
+            "type": "string",
+            "enum": ["PostToolUse:Skill", "PostToolUse:Edit", "PostToolUse:Write", "SubagentStop", "Stop", "SessionEnd", "pre-push", "CI"]
+          },
+          "default": ["PostToolUse:Skill", "Stop", "pre-push"]
+        },
+        "skip_reason": {"type": "string"}
+      }
+    },
+    "with_knowledge": {
+      "type": "object",
+      "description": "生成スキルに knowledge/ 蓄積・3段階検索・§12フィードバックループを注入する横断 combinator。正本仕様は ref-knowledge-loop。",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": false},
+        "enables_phase": {"type": "string", "const": "references"},
+        "pattern": {
+          "type": "string",
+          "enum": ["index-search", "router-registry"],
+          "description": "index-search型=固定ナレッジ/ペルソナ。router-registry型=外部素材から継続同期・蓄積。選択フローは ref-knowledge-loop/references/knowledge-construction.md。"
+        },
+        "combinator": {"type": "string", "const": "with-knowledge.patch"},
+        "scaffold_dir": {
+          "type": "string",
+          "const": "templates/knowledge-skeleton/",
+          "description": "pattern に応じて index-search/ または router-registry/ サブツリーをコピーする雛形の場所。"
+        },
+        "lint": {"type": "string", "const": "lint-knowledge-loop.py"}
+      },
+      "required": ["enabled"]
+    },
+    "with_goal_seek": {
+      "type": "object",
+      "description": "loop 実行系 (run/wrap/delegate) にゴールシークの実行可能機構 (goal-spec ロード / 周回 progress JSON / 打ち切り規約 / 任意で run-goal-seek への fork 委譲) を配線する横断 combinator。default-ON で、--no-goal-seek 指定時のみ opt-out。ループ本体は inline (本 Skill 内 AI 推論) で自己完結し外部依存ゼロ (with-knowledge と対称)。正本仕様は references/goal-seek-paradigm.md。",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean", "default": true, "description": "loop 実行系では既定 true。assign/ref は対象外。"},
+        "applies_to": {"type": "array", "items": {"type": "string", "enum": ["run", "wrap", "delegate"]}, "default": ["run", "wrap", "delegate"]},
+        "combinator": {"type": "string", "const": "with-goal-seek.patch"},
+        "progress_schema": {"type": "string", "const": "schemas/goal-seek-loop.schema.json"},
+        "engine": {"type": "string", "enum": ["inline", "run-goal-seek", "task-graph"], "default": "task-graph", "description": "task-graph=既定 (loop kind で brief が engine を明示しない場合に defaulting)。inline=本 Skill 内 AI 推論で自己完結する opt-down (brief goal_seek.engine: inline 明示で選択/外部依存なし)。run-goal-seek=重い周回のみ任意で Skill に fork 委譲し親 context を汚さない最適化 (必須ではない)。task-graph=checklist の depends_on を依存充足順に消費し (ready 集合の最小 id を拘束的に選択) 実行中の新規タスクを self-reflect で checklist 末尾へ自己反映する engine 変種。生成先 scripts/ に task-graph-engine (ready-set-from-checklist.py / self-reflect-append.py / extract-capability-dependency-graph.py / record-capability-graph-knowledge.py) を同梱する。独立 combinator flag は新設せず with-goal-seek 内の engine 選択値として畳む。"},
+        "engine_profile": {"type": "string", "enum": ["goal-loop", "checklist-graph"], "description": "task-graph は checklist-graph 固定。planner の task-spec graph / parallel dispatch / envelope・projection / spec-improvement outer loop と同等ではない。build-plan.schema.json 側導出は非 task-graph を空文字 \"\" で表す (相互写像: goal-loop⇔\"\"・task-graph 時のみ両層 checklist-graph で一致し frontmatter-value parity 検査対象)。"},
+        "full_task_spec_graph": {"type": "boolean", "const": false, "description": "現 task-graph engine の fail-closed capability claim。full planner-equivalent graph を実装するまで true を許可しない。"},
+        "max_loops": {"type": "integer", "minimum": 1, "default": 5},
+        "lint": {"type": "string", "const": "lint-goal-seek.py"}
+      },
+      "required": ["enabled"]
+    }
+  }
+}

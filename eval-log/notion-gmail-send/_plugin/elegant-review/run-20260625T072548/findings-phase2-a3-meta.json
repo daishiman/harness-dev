@@ -1,0 +1,73 @@
+{
+  "agent": "elegant-meta-divergent-analyst",
+  "scope": "plugins/notion-gmail-send (plugin)",
+  "thought_method_coverage": {
+    "used": ["メタ","抽象化","ダブルループ","ブレスト","水平","逆説","類推","if","素人"],
+    "skipped_with_reason": []
+  },
+  "findings": [
+    {
+      "id": "A3-01",
+      "method": "ダブルループ",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md",
+      "title": "『dry-run全件承認→一括本送信』モデル自体の再検討余地",
+      "detail": "前提モデルが『一度の全件承認で全送信』。大量送信時に1件の異常で全体をabortするか部分送信するかの二択しかなく、canary(先頭N件を送り検証→残り)という第三の安全弁が設計から除外されている。見送り判断は妥当だが、母数が増えた時の再検討トリガが明文化されていない。",
+      "auto_fixable": false,
+      "suggested_fix": "SKILL.mdに『宛先N件超でcanary送信を検討』の閾値ガイドを注記(実装は将来)。"
+    },
+    {
+      "id": "A3-02",
+      "method": "逆説",
+      "severity": "omission",
+      "location": "plugins/notion-gmail-send/lib/idempotent_log.py + send_campaign.py",
+      "title": "『二重送信絶対防止』が正当な再送(失敗リカバリ)を妨げる逆説の解消が不完全",
+      "detail": "--allow-resend フラグの存在は確認できるが、その判定基準(どの状態のログ行なら再送を許すか)が unknown_needs_reconcile と結びついていない。逆説『安全機構が回復を阻害』を解くには、unknown行に限り message_id 突合で『未送信と確証できた行のみ再送可』とすべきだが、その条件分岐が見当たらない。",
+      "auto_fixable": false,
+      "suggested_fix": "--allow-resend を unknown_needs_reconcile 行限定にし、Gmail側Message-ID不在を確認した行のみ再送対象とする。"
+    },
+    {
+      "id": "A3-03",
+      "method": "素人",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/README.md",
+      "title": "初見運用者に専門用語(DWD/sendAs/impersonation)の前提知識を要求",
+      "detail": "READMEはDWD・sendAs alias・domain-wide delegationを既知前提で書かれており、初めてGoogle Workspace管理に触れる運用者には敷居が高い。素人視点では『どこで何を承認すればAuthが通るか』の最短手順(スクリーンショット級の粒度)が不足。",
+      "auto_fixable": false,
+      "suggested_fix": "README冒頭に『最短セットアップ5ステップ』を素人語で追加し、専門用語は脚注リンク化。ref-gmail-dwd-setupへの導線を明確化。"
+    },
+    {
+      "id": "A3-04",
+      "method": "if",
+      "severity": "omission",
+      "location": "plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md",
+      "title": "異常系シナリオ(送信途中クラッシュ/SA鍵失効/rate limit)の振る舞いが未記載",
+      "detail": "if思考で異常系を列挙: ①送信途中プロセスクラッシュ→どこまで送ったか(reserved/sentログで追えるが手順未記載) ②SA鍵失効→preflightで弾くが実行中失効は? ③Gmail/Notion rate limit→リトライ方針未記載。これらの『もし』への応答が文書化されていない。",
+      "auto_fixable": false,
+      "suggested_fix": "SKILL.mdにトラブルシュート節を追加し3シナリオの確認手順と再開方法を明記。"
+    },
+    {
+      "id": "A3-05",
+      "method": "類推",
+      "severity": "inconsistency",
+      "location": "plugins/notion-gmail-send (plugin全体)",
+      "title": "同repo他pluginの確立パターンとの不整合(doctor/BYO鍵の作法)",
+      "detail": "company-master/mf-kessai は preflight doctor・BYO鍵直結・冪等upsertを共通作法として持つ。notion-gmail-send は冪等upsertは踏襲するが、(1)doctorモード単体起動が無い (2)鍵の置き場所規約(Keychain名)がREADMEで他pluginと表記揺れ。横展開できる確立パターンの取りこぼし。",
+      "auto_fixable": false,
+      "suggested_fix": "preflight --doctor を他plugin同様に実装。Keychain鍵名規約を他pluginと統一表記。"
+    },
+    {
+      "id": "A3-06",
+      "method": "抽象化",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/skills",
+      "title": "skill責務分割の抽象度は概ね適切(過剰分割なし)",
+      "detail": "send/dry-run/sendlog-setup/source-audit の4分割は起動独立性で正当化でき、抽象度は適切。dry-runがsendの内部段階でなく独立skillな点だけ、利用者には『なぜ別skill?』が直感に反し得るが、再実行容易性のメリットが上回る。分割は妥当と判断。",
+      "auto_fixable": false,
+      "suggested_fix": "(改善不要。dry-run独立の理由をSKILL.mdに一文補足すれば親切)"
+    }
+  ],
+  "summary": {
+    "by_severity": {"contradiction": 0, "omission": 2, "inconsistency": 1, "dependency_break": 0, "smell": 3}
+  }
+}

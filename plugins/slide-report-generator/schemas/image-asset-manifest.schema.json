@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "image-asset-manifest.schema.json",
+  "title": "Image Asset Manifest",
+  "description": "GAS デプロイ用画像の SSoT(Single Source of Truth)。<slide-dir>/assets/generated/image-asset-manifest.json に置く。build-image-manifest.js が generated 配下の画像を走査して bytes/sha256 を機械生成し、ユーザーがホスティング後に publicUrl もしくは assetBaseUrl を記入する。build-deck-html.js --manifest がこの manifest を読み、index.html の src/srcset を相対パスから外部 URL へ差し替える。GAS は相対パス参照の画像を読めないため、自己完結 base64 が予算超過するデッキでは本 manifest による外部 URL 化が必須になる。URL 解決順: (1) files[relPath].publicUrl が非空ならそれ、(2) else assetBaseUrl(または --asset-base-url)が非空なら assetBaseUrl の末尾スラッシュを除去 + '/' + basename(relPath)、(3) else 相対パスのまま(外部モードでは未解決として警告/FAIL)。key は slide-dir 基準の相対パスで build-deck-html.js が index.html に書く src/srcset と同一表記(assets/generated/<name>.<ext>)。bytes は実バイト、sha256 は内容ハッシュ(変更検知用)。base64 換算は概ね実バイト x1.37、HTML 骨格 30KB、GAS HTML 上限 500KB。",
+  "type": "object",
+  "required": ["schemaVersion", "files"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "本契約のバージョン。1.0.0 固定"
+    },
+    "deck": {
+      "type": "string",
+      "description": "デッキの slug もしくはタイトル(任意・人間可読の識別子)"
+    },
+    "assetBaseUrl": {
+      "type": "string",
+      "description": "URL = base + '/' + basename(relPath) で導出できるホスティング(GitHub Pages / CDN 等)の基底 URL。空可。publicUrl が非空のファイルはそちらが優先される。"
+    },
+    "files": {
+      "type": "object",
+      "description": "key = slide-dir 基準の相対パス(assets/generated/<name>.<ext>)。value = 当該ファイルの実測値とホスティング情報。",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["bytes", "sha256", "publicUrl"],
+        "properties": {
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "ファイルの実バイト数。build-image-manifest.js が実測して記録する。"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "ファイル内容の SHA-256 16進ダイジェスト(変更検知用)。未計算は空文字。"
+          },
+          "publicUrl": {
+            "type": "string",
+            "description": "外部ホスティングの絶対 URL。空=未ホスト。非空なら assetBaseUrl より優先して採用される。"
+          }
+        }
+      }
+    }
+  }
+}

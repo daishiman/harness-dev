@@ -1,0 +1,816 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugin-plans/harness-creator",
+    "reviewed_at": "2026-07-04T20:15:08+09:00"
+  },
+  "loop_count": 1,
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "検出 3 件 (P11 内部矛盾 / C11 mtime 判定 vs fail_closed 主張 / index script×5 集計) を F2/F1/F3 で解消",
+        "決定論ゲート G1-G10 再実行 all exit0"
+      ],
+      "violation_count": 0
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "検出 7 件 (fixtures 生成責務 / C03 受入経路 / C09 trigger 契約 / C03 後方互換 / golden example kind 偏重 / 代替手順の主語 / C04 WARN-FAIL 境界) を F4/F5/F10/F7/F9/F3/F8 で解消",
+        "check-requirements-coverage 再実行 exit0"
+      ],
+      "violation_count": 0
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "検出 6 件 (goal ゲート列挙 8vs9 / progress 11 invocations 内訳 / background README 引用反転 / C07 allowed-tools / C10-C11 名前空間 / enforcement 非対称理由未記録) を F12/F13/F14/F11/F15/F16 で解消",
+        "original_goal_hash 再計算済 (sha256 一致検証 OK)",
+        "check-plugin-goal-spec exit0"
+      ],
+      "violation_count": 0
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "検出 1 件 (high: C11 pass marker producer 不在) を F1 で解消 — C04/C05 が exit0 時に <plan_dir>/.gate/*.pass.json (sha256 digest 焼込) を emit する契約へ両辺整合、C11 は digest 一致判定へ書換",
+        "verify-index-topsort 再実行 exit0"
+      ],
+      "violation_count": 0
+    }
+  },
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "E1/E2 断線の根拠を実体検証: R1-elicit-goal.md の intake_json 未配線・R1-elicit.md の brief_path 不在は真",
+        "plan-findings の C1 PASS evidence は決定論ゲート exit0 のみで意味的矛盾は評価証跡外"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "goal-spec background の README:59-63 引用が現行 README (brief_path 自動投入記述済み) と反転。断線の実体は R1-elicit.md 側に移っている",
+          "recommended_intervention": "F14 適用済: background を『README 記述済みだが R1-elicit.md §2.3 が未対応 (README↔実装 drift)』へ更新",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/goal-spec.json",
+            "line": 3
+          }
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "specfm.P0_LINT_BY_KIND と inventory 全 11 component の p0_lint は完全一致、PHASE_BODY_SECTIONS 8 節も 13 phase 充足",
+        "契約→個別適用の突合で C11 pass_markers の producer 側契約欠落を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "C11 hook が要求する pass marker (<plan_dir>/.gate/*.pass.json) を生成する主体が未定義 (C04/C05 は write_scope:none)。build すると --mode update が恒久 exit2 block され要件 C9 が充足不能。causal (因果 chain 断裂)・if (机上ドライラン) も独立に同一検出 = 3 票一致",
+          "recommended_intervention": "F1 適用済: C04/C05 outputs へ exit0 時の digest 焼込 marker 生成を追加・write_scope 更新・C11 を digest 一致判定へ書換・P07 C9 flow に marker step 明記",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 630
+          },
+          "root_cause": "plan が解消対象とする documented-but-unwired 病理が plan 内部で再生産された (消費者契約のみ定義され生産者契約が欠落)"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "11 component の quality_gates / harness_coverage は全件均一、routes[] 11 件も uniform。逸脱は kind 由来の意図的差分のみ",
+        "新設/更新の区分だけが文書間で pattern 逸脱"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "index『script×5 (新設)』は inventory derivation (C03=既存更新) と矛盾。systems 分析はこの誤分類が GAP-SCRIPT-BUILDER 手順経由で既存 script 上書き消失リスクへ波及することを検出",
+          "recommended_intervention": "F3 適用済: script×4 新設 + 1 更新へ訂正、代替生成手順へ update-in-place 分岐追記",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/harness-creator/index.md",
+            "line": 59
+          }
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "3 つの独立散文 drift (新設数・対応表 C03 欠落・ゲート起動数) の最尤原因は『散文 projection が機械 parity の検査対象外』と収束 (手修正説は棄却寄り)"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "散文集計・対応表が inventory/GATE_SCRIPTS から導出されず手書き projection のため、個別修正だけでは同型再発する",
+          "recommended_intervention": "F3/F5/F13 で個別解消済。build 後改善として index 集計行・P07 対応表の inventory 導出化 (正本参照の引用形) を review レポートへ記録",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/index.md",
+            "line": 59
+          },
+          "root_cause": "決定論ゲートは構造 (orphan/被覆/床) のみ検査し散文集計値を parity 対象にしない"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Why 5 連鎖の到達点: 保証の機械層化が E3 にのみ hook として適用され、E2 の preflight は prompt 遵守頼みで断線の根本原因と同型の再発余地が残る"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "fail-closed hook は E3 のみで E2 に等価物が無い。非対称自体は設計判断でありうるが理由が未記録だった (double-loop と同根)",
+          "recommended_intervention": "F16 適用済: enforcement_level 列+選定理由 (E3 update=破壊的再生成ゆえ fail-closed / E1・E2=非破壊ゆえ advisory) を必須記録化",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 607
+          }
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "envelope-draft は実 manifest と全行一致 (mirror 宣言は真)、C10/C11 の登録先は plugin-dev-planner 実 manifest と整合、二相 build 指示も明示処理済み"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "other",
+          "description": "C06 は builder==build_target の自己言及 build だが self-build リスク注記がどの phase にも無い (causal-loop も増幅リスクとして独立検出)",
+          "recommended_intervention": "F17 適用済: P05 へ self-build 注意 (開始前 git 退避・完了後 C8 golden example 再検証) を追加",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 409
+          }
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "checklist C1-C12 は index 完了チェックリストに全行存在、component C01-C11 は全て entities_covered に出現 (orphan 0)、重複被覆なし"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "P07 対応表と index 受入確認表に C03 が不在。provenance schema 定義という C03 の機能実体が要件 C6/C7 の前提なのに purpose 由来受入が漏れている",
+          "recommended_intervention": "F5 適用済: 対応表を C6→C01/C03/C09・C7→C03/C05 へ拡張、C9 flow へ provenance 検査 step 追加、index 受入確認表へ C03 行追加",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-07-acceptance-criteria.md",
+            "line": 31
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×緊急度の象限分けで contract-only 依存 5 route が build 順先頭を占めることを可視化 = 重要×緊急象限の gap"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "GAP-SCRIPT-BUILDER の severity:medium は影響範囲 (build 初手 5 route) に対して注意喚起シグナルが弱い",
+          "recommended_intervention": "F3 適用済: text へ影響範囲『build 順先頭 5 route (C09/C03/C08/C04/C05) が本 gap に依存』を明記 (代替手順実在により medium 据置)",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json",
+            "line": 205
+          }
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "P01→P13 の受け渡し成果物は概ね連続。fixture 生成と P11 再実行規定に step gap を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "P11 のスコープ外『再テストしない』と前提条件/チェックリスト『再実行』が同一 phase 内で矛盾",
+          "recommended_intervention": "F2 適用済: スコープ外を『C8/C9 golden example の再実行のみ許可・他は P06-P10 結果集約に徹する』へ再定義",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-11-evidence.md",
+            "line": 39
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "P07/P11 が正本参照する fixtures/c8-new-flow/・c9-update-flow/ の作成工程がどの phase の成果物にも未割当。fixture 不在のまま P07 到達で受入判定が着手不能",
+          "recommended_intervention": "F4 適用済: P04 成果物へ fixture 一式作成を追加 (analogy 検出の regenerate-exempt 規約と同時適用)",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-07-acceptance-criteria.md",
+            "line": 33
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "問題フレーミング『3 境界の契約欠落』の実体はパイプライン状態管理の不在で、状態が 5 系統 artifact に分散する設計。C05 の検証コストは artifact 種類数に比例して増える構造"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "『パイプライン状態の一元化 (ledger 化)』という問題再定義の検討痕跡が無い",
+          "recommended_intervention": "F16 適用済: 代替設計不採用理由の記録要件を pipeline-boundary-contract 仕様へ追加。ledger 案自体は amplified pattern として記録",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/index.md",
+            "line": 62
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "E1/E2/E3 は {producer, consumer, gate, provenance, enforcement} の同型 5 要素で汎化可能。specfm 定数→射影+parity 検査の前例がリポジトリに既存"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "pipeline-boundary-contract.md が手書き表として計画され、機械可読 descriptor 化と drift 検出 gate が無い",
+          "recommended_intervention": "F16 適用済 (enforcement_level 列の必須化で部分対応)。boundary-descriptor 6 タプル化は build 後改善として amplified pattern に記録",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 696
+          }
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "過去 review の改善 (plan_dir アンカー / routes[] SSOT / Goodhart 回避 / proposer≠approver) は全て反映済み",
+        "前提『実行分離維持』の帰結として enforcement 水準が境界間で混在"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "『保証要件は機械層で担保』原則の適用が境界間で非対称 (E3 のみ fail-closed hook) だが選定理由が未記録で原則との整合が検証不能",
+          "recommended_intervention": "F16 適用済: enforcement_level (fail-closed hook / advisory gate / prompt-only) と選定理由の必須記録化 + 実例焼込",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 623
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "E3 還流の代替案 6 件 (後付け正規化 / native emit / Notion read-back / ledger / 完走 nudge hook / git trailer) を列挙し採用案 (a) の妥当性を確認。ただし『いつ emit させるか』の欠落を発見"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "C09 の起動タイミング契約が不在。『emit されれば』回る契約だが『emit させる』契約が無く、改善成果物が人の記憶頼みで還流しない documented-but-unwired の変種が残存",
+          "recommended_intervention": "F10 適用済: goal-spec open_questions へ nudge (通知型 hook or verdict next_action) の要否を build 時設計判断として起票 (自動実行にしない = 実行分離の不変条件)",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 22
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "ソフトウェアサプライチェーン (in-toto/SLSA attestation) の digest 証跡方式を移植可能と特定"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "C11 の mtime 鮮度比較は git worktree/clone が mtime を保存しないため false-allow/false-block 双方が発生しうる。fail_closed:true の保証主張と判定機構が矛盾 (worktree 運用が常態の本リポジトリで顕在化確率が高い)",
+          "recommended_intervention": "F1 適用済: pass marker へ対象 artifact sha256 を焼き、C11 を digest 一致判定へ書換 (in-toto 型 pinning)",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 636
+          }
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『やらない場合』検討で C11/C10 の必要性は確認。envelope-draft のみ『複製しない方が価値が高い』と判定"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "envelope-draft (無変更 byte copy) が新たな drift 面になるが陳腐化検出 gate が無い",
+          "recommended_intervention": "F17 適用済: build preflight での draft↔実 manifest parity 検査 (陳腐化時 fail) を handoff へ追記",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json",
+            "line": 196
+          }
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "兄弟 plan (plugin-dev-planner / skill-intake) と比較し、本 plan 初出の 3 規約 (fixtures/・cross-plugin routing・.gate/) のうち routing のみ差分理由記載済みと特定"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "初出規約 fixtures/ と .gate/ の所有権と、--mode update 再生成時に消える/残るの規約が未定義 (process 検出の fixture 生成責務と同根・相補)",
+          "recommended_intervention": "F4 適用済: index 環境ポリシーへ regenerate-exempt (fixtures/ と .gate/ は再生成対象外) を規約化",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-07-acceptance-criteria.md",
+            "line": 33
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "C9 改善フロー一巡の机上ドライランで pass marker デッドロックを独立検出 (正本は deduction/F1)",
+        "N=110 破壊試験で contract-only 手動代替と prose 固定カウントが破綻点と特定"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "実体数 (計 11 / 7 件 / 4 件等) が prose に焼込まれ、ゲートは prose 数値を検査しないため component 増減時に黙って腐る",
+          "recommended_intervention": "F3/F13 で顕在drift解消済。カウントの inventory 導出化は build 後改善として記録 (abduction の散文 projection 根本原因と同根)",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/index.md",
+            "line": 59
+          }
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見で詰まる点 = 3 つの C 名前空間。C10/C11 は要件 id と component id が文字列完全一致でゼロ詰め判別が不成立",
+        "ゲート実行数を素朴に数えると progress と plan-findings が一致しない"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "phase-07 が裸の C10/C11 を要件の意と component の意の両方で使用し、index 宣言の併記回避が本文で未実施",
+          "recommended_intervention": "F15 適用済: 種別語併記 (要件 C10 / component C10 等) を機械追記。id 改名はゲートを割るため不変",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-07-acceptance-criteria.md",
+            "line": 51
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "index の script×5 誤分類が GAP-SCRIPT-BUILDER 手順経由で既存 script 上書き消失リスクへ波及することを検出 (正本は induction/F3)"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "C03 の provenance フィールド必須化は既存 goal-spec 群 (兄弟 plan + 本 plan 自身) がフィールドを持たないため後方非互換。制約4 が旧 plan 編集を禁止しており build 後に input-gate が全 FAIL する dogfooding パラドックス。マイグレーション方針が未定義",
+          "recommended_intervention": "F7 適用済: 『フィールド欠落=暗黙 null WARN 受理・存在+値不正のみ FAIL』の後方互換規則を C03 契約へ追記",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 69
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "因果 chain: marker producer 未定義 → C11 が全 --mode update を exit2 block → E3 恒常 BLOCKED → C9 受入 PASS 不能、を明示 (正本 issue は deduction/F1 に集約・3 票一致)"
+      ],
+      "issues": [],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "E3 改善ループの dampener 3 つ (C11/C05/C10) は健全設計。ただし marker 欠落時は dampener が全遮断 amplifier へ転化することを検出 (F1 で解消)",
+        "C06 self-build の増幅リスク (正本は decomposition/F17)"
+      ],
+      "issues": [],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『実行分離維持 vs 自動連鎖禁止』を stage-handoff 資産で止揚した設計は妥当な第三案と評価"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "C07 の allowed-tools が [Read, Bash(python3 *)] のみで Skill を欠き、同型 delegate の C02 [Read, Skill] と非対称。委譲経路が権限契約上成立しない",
+          "recommended_intervention": "F11 適用済: C07 allowed-tools へ Skill を追加し C02 と同型化",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 525
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "skill-intake 資産無変更・改善 skill 無改修の win-win 設計は成立を確認"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "検証の深さが境界間で非対称: E3 は機械+意味の二層、E1 は字面検出のみで paraphrase 誤 FAIL / 見せかけ反映誤 PASS の余地",
+          "recommended_intervention": "F16 適用済 (enforcement_level と理由の記録枠に統合)。E1 意味検証の要否は build 時設計判断として透明化",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 164
+          }
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "purpose→checklist→component→受入確認のトレースは強固と評価。goal 文のゲート列挙欠落は why/F12 正本で解消済"
+      ],
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "provenance/schema 系の設計 (specfm 参照・現状値非焼込) は将来変更に強く良好"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "GAP-SCRIPT-BUILDER に解消条件・再評価タイミングが無く、代替手順定着で contract-only 語彙が恒久化し spec↔実体乖離が緩慢再発するリスク",
+          "recommended_intervention": "F3 適用済: 解消条件 (executor 恒久実装 or builder 語彙正規化) + 次回 elegant-review 時再評価を open_issue へ追記",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json",
+            "line": 207
+          }
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "ゲート数の揺れの根本原因 = 呼称 3 系統 (script 11 本 / plan-scoped 起動 10 / goal 列挙 8) が併存し散文が都度換算するため。機械正本は specfm.GATE_SCRIPTS/GATE_SCOPE"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "goal 文『決定論ゲート全種』の 8 script 列挙から detect-unassigned が欠落し C12 (9 script) と不一致",
+          "recommended_intervention": "F12 適用済: detect-unassigned を追記し、original_goal_hash を sha256 再計算 (anchor 検証 snippet で一致確認済)",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/goal-spec.json",
+            "line": 4
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "eval-log",
+          "description": "progress『all exit0 (11 invocations)』と plan-findings gate_results 10 件の不一致 (11 本目 = input-gate の内訳注記なし)",
+          "recommended_intervention": "F13 適用済: 『plan-scoped 10 + input-gate 1 = 11』の内訳付き表記へ修正",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugin-plans/harness-creator/run-plugin-dev-plan-progress.json",
+            "line": 21
+          }
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "PDCA の Check 穴: 本 plan が解消対象とする documented-but-unwired が plan 内部に 2 箇所同型再発 (marker producer / contract-only builder)。前者は透明化すらされていなかった"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "eval-log",
+          "description": "R4 決定論ゲートが検出できない種類の断線 (契約の producer 側欠落) が plan-findings に既知課題として起票されていなかった",
+          "recommended_intervention": "F1 で当該断線は解消済。本 run の findings.json + review レポートが解消証跡として eval-log に残る (plan-findings はゲート証跡正本のため手編集せず)",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugin-plans/harness-creator/plan-findings.json",
+            "line": 214
+          }
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説『実行分離を維持したまま境界の機械契約+ゲート+provenance だけでパイプラインが回る』の検証装置が C8/C9 golden example と明文化"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dogfooding",
+          "description": "C8/C9 の題材が skill kind のみに固定され、E2 断線の最深部である script 系 route (C07 --route 経路 + 代替生成) が一度も一巡検証されない = 仮説検証が最弱エッジを外している",
+          "recommended_intervention": "F9 適用済: C8 golden flow へ script route 1 本の fixture 化と C07 --from-handoff --route → 代替生成 (update-in-place 分岐含む) → 検査の一巡 step を追加",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/phase-07-acceptance-criteria.md",
+            "line": 33
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "本質論点 = (a) pass marker の生成主体 (F1 解消)、(b) contract-only route の実行主体、の 2 点で残りが決まると同定"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "GAP-SCRIPT-BUILDER 代替手順が run-build-skill の挙動変更を暗黙前提とし、routes[] 読み取り能力の追加がどの build スコープにも計上されていない。責務未確定で script 5 route の build が実行者の解釈依存になる",
+          "recommended_intervention": "F3 適用済: 『C07 が route を解析し明示引数として run-build-skill へ渡す (本体無改修)』へ責務境界を一文固定",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json",
+            "line": 209
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "C04 の WARN/FAIL 判定境界が未定義 (exit_codes 0/1/2 のみ)。C11 marker 生成条件と C9 受入期待値に直結し、下流テスト設計が確定しない",
+          "recommended_intervention": "F8 適用済: 必須軸未反映=exit1 FAIL / 推奨・候補項目=exit0+WARN の判定規則を C04 契約へ追記",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/harness-creator/component-inventory.json",
+            "line": 166
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "findings を 4 島に構造化: 島A『未配線責務』(根本原因島・最優先) / 島B『記録・分類 drift』/ 島C『検証の非対称・偏り』/ 島D『権限契約』。島A の解消 (F1/F3) が島B・C の過半の再発防止に波及する構造を発見"
+      ],
+      "issues": [],
+      "score": 0.85
+    }
+  ],
+  "variable_abstraction": [
+    {
+      "concrete_value": "plugin-plans/harness-creator",
+      "variable_name": "{{PLAN_DIR}}",
+      "default_value": "plugin-plans/<plugin>",
+      "source_trace": "F1/F4: pass marker (.gate/) と fixtures/ の regenerate-exempt 規約は plan_dir 相対パスで全 plan へ汎化可能"
+    },
+    {
+      "concrete_value": ".gate/<script>.pass.json",
+      "variable_name": "{{GATE_MARKER_PATH}}",
+      "default_value": "<plan_dir>/.gate/<script>.pass.json",
+      "source_trace": "lateral (digest-pinned pass marker): fail-closed 判定証跡の置き場と命名の横展開単位"
+    },
+    {
+      "concrete_value": "sha256",
+      "variable_name": "{{DIGEST_ALGO}}",
+      "default_value": "sha256",
+      "source_trace": "in-toto 型 digest pinning の algo 差替点。content-review verdict の sha_match と同方式"
+    }
+  ],
+  "total_score": 0.695
+}

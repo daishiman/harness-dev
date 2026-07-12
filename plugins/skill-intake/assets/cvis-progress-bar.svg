@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: progress-bar
+  required_vars: [title, percent, current_label, target_label]
+  optional_vars: [message]
+  use_case: 達成度バー（0-100%）。percent は数値（例: 65）。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 32px; font-weight: 700; fill: #0d47a1; }
+    .bg { fill: #eceff1; stroke: #b0bec5; stroke-width: 2; }
+    .fill { fill: #2e7d32; }
+    .pct { font-size: 60px; font-weight: 800; fill: #1b5e20; }
+    .label { font-size: 22px; fill: #222; }
+    .tick { stroke: #b0bec5; stroke-width: 1; }
+    .tick-text { font-size: 14px; fill: #777; }
+    .legend { font-size: 14px; fill: #555; }
+  </style>
+
+  <text x="40" y="60" class="title">{{title}}</text>
+
+  <rect x="80" y="220" width="1040" height="80" rx="10" class="bg"/>
+  <rect x="80" y="220" width="{{percent}}0.4" height="80" rx="10" class="fill"/>
+
+  <text x="600" y="180" class="pct" text-anchor="middle">{{percent}} %</text>
+
+  <line x1="80" y1="300" x2="80" y2="320" class="tick"/>
+  <text x="80" y="345" class="tick-text" text-anchor="middle">0</text>
+  <line x1="340" y1="300" x2="340" y2="320" class="tick"/>
+  <text x="340" y="345" class="tick-text" text-anchor="middle">25</text>
+  <line x1="600" y1="300" x2="600" y2="320" class="tick"/>
+  <text x="600" y="345" class="tick-text" text-anchor="middle">50</text>
+  <line x1="860" y1="300" x2="860" y2="320" class="tick"/>
+  <text x="860" y="345" class="tick-text" text-anchor="middle">75</text>
+  <line x1="1120" y1="300" x2="1120" y2="320" class="tick"/>
+  <text x="1120" y="345" class="tick-text" text-anchor="middle">100</text>
+
+  <text x="80" y="420" class="label">現在: {{current_label}}</text>
+  <text x="80" y="460" class="label">目標: {{target_label}}</text>
+
+  <text x="40" y="540" class="legend">凡例: 緑=達成済み / 灰=未達成</text>
+  <text x="40" y="565" class="legend">言いたい一言: {{message}}</text>
+</svg>

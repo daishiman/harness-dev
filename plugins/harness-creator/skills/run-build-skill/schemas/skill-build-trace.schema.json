@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/skill-build-trace.schema.json",
+  "title": "Skill Build Trace",
+  "description": "skill-build-trace.json の章別 doc_coverage と pattern_decisions の必須形式。validate-build-trace.py が機械検証する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "skill_name",
+    "skill_kind",
+    "build_mode",
+    "source_docs",
+    "doc_coverage",
+    "build_flow_coverage",
+    "layer_decisions",
+    "pattern_decisions",
+    "reproducibility_gates"
+  ],
+  "properties": {
+    "skill_name": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "skill_kind": {"type": "string", "enum": ["run", "ref", "assign", "delegate", "wrap"]},
+    "build_mode": {"type": "string", "enum": ["create", "update"]},
+    "source_docs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "doc_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["doc", "status"],
+        "properties": {
+          "doc": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+          "reason": {"type": "string"},
+          "evidence": {"type": "string"}
+        }
+      }
+    },
+    "build_flow_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["step", "status"],
+        "properties": {
+          "step": {"type": "string"},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+          "artifact": {"type": "string"},
+          "evidence": {"type": "string"},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "layer_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["layer", "decision"],
+        "properties": {
+          "layer": {"type": "string", "enum": ["Skill", "Subagent", "Hook", "MCP", "CLI", "script"]},
+          "decision": {"type": "string", "enum": ["use", "skip"]},
+          "reason": {"type": "string"},
+          "placement_evidence": {"type": "string"},
+          "fallback": {"type": "string"},
+          "dependency_direction_ok": {"type": "boolean"},
+          "macos_stdlib_ok": {"type": "boolean"},
+          "deterministic": {"type": "boolean"}
+        }
+      }
+    },
+    "pattern_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision", "pattern_ref", "reason", "reuse_target"],
+        "properties": {
+          "decision": {"type": "string", "enum": ["use", "skip"]},
+          "pattern_ref": {"type": "string"},
+          "reason": {"type": "string"},
+          "reuse_target": {"type": "string"}
+        }
+      }
+    },
+    "reproducibility_gates": {
+      "type": "object",
+      "description": "run-build-skill の既存ゲート。4条件(C1-C4)は four_conditions に集約し、本キーは lint / evaluator / elegant_review / governance の通過状態を保持する。",
+      "additionalProperties": false,
+      "required": ["lint", "evaluator", "elegant_review", "governance"],
+      "properties": {
+        "lint": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "evaluator": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "elegant_review": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "governance": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]}
+      }
+    },
+    "four_conditions": {
+      "type": "object",
+      "description": "run-elegant-review の最終4条件。C1=矛盾なし、C2=漏れなし、C3=整合性あり、C4=依存関係整合。content-review / evaluator / trace の意味的最終判定をここへ集約する。",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "矛盾なし: 仕様書間・実装間で相反する記述がない。"},
+        "C2": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "漏れなし: 必須項目がすべて反映されている。"},
+        "C3": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "整合性あり: 用語・フォーマット・データ構造が統一されている。"},
+        "C4": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "依存関係整合: タスク間・モジュール間の依存が正しく定義されている。"}
+      }
+    },
+    "feedback_contract": {
+      "type": "object",
+      "description": "build-flags.schema.json#/properties/feedback_contract の criteria 制約 (id=^(IN|OUT|C)[0-9]+$ / verify_by enum / item additionalProperties:false) に準拠。対象 skill 固有の inner/outer 評価基準を AI が brief.goal/Checklist から文脈読解で都度導出し trace に固定する。loop 実行系(run/wrap/delegate)では criteria 必須。ref/assign は skip_reason で escape 可。生成必須化と pattern/enum 強制は validate-build-trace.py が kind-aware に行う(required トップ配列には足さず任意トレースを破壊しない)。",
+      "additionalProperties": false,
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "content-review の評価→改善→再評価の上限。数値正本は run-elegant-review/references/convergence-policy.json#loop_bounds。"
+        },
+        "skip_reason": {
+          "type": "string",
+          "description": "criteria を生成しない場合の N/A 根拠。ref/assign(read-only 評価器)等の非ループ系で使用。"
+        },
+        "criteria": {
+          "type": "array",
+          "description": "per-skill 評価基準。固定テンプレでなく brief.goal / 完了チェックリストから AI が文脈読解で test-first 導出し trace に固定する。inner(goal-seek)/outer(content-review)を最低各1件。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "loop_scope", "text", "verify_by"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^(IN|OUT|C)[0-9]+$"},
+              "loop_scope": {"type": "string", "enum": ["inner", "outer"]},
+              "text": {"type": "string", "minLength": 1},
+              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"]},
+              "threshold": {"type": "string"},
+              "weight": {"type": "number", "minimum": 0}
+            }
+          }
+        },
+        "hook_triggers": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "評価要求を発火する hook/CI 契機。例: PostToolUse:Skill / Stop / pre-push。"
+        }
+      }
+    },
+    "variable_contract": {
+      "type": "array",
+      "description": "本文・テンプレ・config の具体値直書き禁止に対する変数化記録",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "meaning", "default", "required", "not_applicable_when", "source_trace"],
+        "properties": {
+          "name": {"type": "string"},
+          "meaning": {"type": "string"},
+          "default": {"type": "string"},
+          "required": {"type": "boolean"},
+          "not_applicable_when": {"type": "string"},
+          "source_trace": {"type": "string"}
+        }
+      }
+    },
+    "prompt_provenance": {
+      "type": "object",
+      "description": "C09: agents/*.md・skills/*/prompts/*.md を生成/更新する build が prompt-creator (7層契約) を経由し C02 内容 lint (lint-agent-prompt-content.py) を通過したことの証跡。prompt_generation_model.policy_resolution.resolved_policy=required の build では validate-build-trace.py が必須化する。prompt_creator_invocation=false または本ブロック欠落 (policy=required 時) は fail-closed で exit1 (バイパス不能性)。",
+      "additionalProperties": false,
+      "required": ["prompt_creator_invocation", "source_contract_ref", "content_lint"],
+      "properties": {
+        "prompt_creator_invocation": {
+          "type": "boolean",
+          "description": "prompt-creator (run-prompt-creator-7layer 相当) を経由して本文7層を生成したか。false は単独生成=禁止。"
+        },
+        "source_contract_ref": {
+          "type": "string",
+          "description": "準拠した7層契約への参照 (subagent-hybrid-format.md=agent / seven-layer-format.md=prompt)。"
+        },
+        "content_lint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "status"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["agent", "prompt"]},
+            "status": {"type": "string", "enum": ["PASS", "FAIL", "N/A"], "description": "prompt_provenance ブロック存在時 (=resolved_policy required の build) は validator (_validate_prompt_provenance) が PASS のみ受理し FAIL/N-A は exit 1。FAIL/N-A は将来の optional 記録用の値空間。"},
+            "evidence": {"type": "string", "description": "実行コマンド・exit code 等の証跡。"}
+          }
+        }
+      }
+    },
+    "brief_path": {
+      "type": "string",
+      "description": "本 build が参照した skill-brief.json のパス (cwd または trace 隣接からの相対)。未指定時は source_docs 内の skill-brief*.json 項目から推定される。requirement_coverage の突合先。"
+    },
+    "requirement_coverage": {
+      "type": "array",
+      "description": "要求トレーサビリティ・マトリクス (RTM)。doc_coverage(参照知識の被覆)と対になる「ユーザー要望の被覆」証跡。brief の非空要求フィールド全てを mapped か not_applicable+reason で被覆する (最小粒度は brief フィールド単位。文分解の水増しはしない)。被覆完全性と requirement_id の brief 上の実在は validate-build-trace.py が機械検査し、写像の意味的正しさは content-review (LLM 層) が判定する (二層分離)。旧 trace / brief 非経由 build では省略可 (brief 参照があるのに省略時は WARN)。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requirement_id", "disposition"],
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\[[0-9]+\\])*(\\.[A-Za-z_][A-Za-z0-9_]*(\\[[0-9]+\\])*)*$",
+            "description": "brief フィールドパス (例: key_constraints[2] / boundary / knowledge_loop.pattern)"
+          },
+          "disposition": {"type": "string", "enum": ["mapped", "not_applicable"]},
+          "mapped_to": {"type": "string", "description": "disposition=mapped 時必須。反映先 (feedback_contract.criteria の id / SKILL.md 節 / 生成物パス等)"},
+          "reason": {"type": "string", "description": "disposition=not_applicable 時必須。対象外の根拠"}
+        }
+      }
+    }
+  },
+  "definitions": {
+    "chapterId": {
+      "type": "string",
+      "enum": ["01", "01a", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35"]
+    }
+  }
+}

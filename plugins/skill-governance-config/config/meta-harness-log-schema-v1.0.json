@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "{{PROJECT_ROOT}}/meta-harness/log-schema-v1.0",
+  "title": "Meta-Harness Session Log Schema v1.0",
+  "description": "35章 Phase 1 で確定したログスキーマ。スキーマ変更は P0_breaking (33章 § log-driven ref-* 改善)。",
+  "type": "object",
+  "required": ["schema_version", "ts", "session_id", "event"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "ts": {"type": "string", "format": "date-time"},
+    "session_id": {"type": "string"},
+    "event": {"enum": ["user_prompt", "tool_use", "stop"]},
+    "text": {"type": "string", "maxLength": 2000},
+    "tool_name": {"type": "string"},
+    "skill_invoked": {"type": "boolean"},
+    "skill": {"type": "string"},
+    "success": {"type": "boolean"},
+    "reason": {"type": "string"}
+  },
+  "additionalProperties": false,
+  "observable_mapping": {
+    "_note": "観測対象 failure mode (.claude/config/meta-harness-observables.json) との対応",
+    "FM-NOT-FIRED":         "user_prompt の text に発動語類義語 + 後続 tool_use に該当 skill 不在",
+    "FM-MIS-FIRED":         "tool_use で skill_invoked=true 直後の同一 session 内で skill 出力非参照 or 即別 skill 再 invoke",
+    "FM-INSUFFICIENT-OUTPUT": "tool_use 直後の同一 turn 内 user_prompt に follow-up シグナル (もっと/詳しく/具体的に/足りない)",
+    "FM-REPEATED-CORRECTION": "異なる session_id 間で同一 skill 出力への類似修正 (text 類似度 ≥ 0.8) が ≥3 回",
+    "FM-EXAMPLE-DRIFT":     "user_prompt の text に境界条件提示 (こういう場合は/逆のケース) + 既存 examples 不在"
+  }
+}

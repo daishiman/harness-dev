@@ -1,0 +1,27 @@
+{
+  "target": {"plugin":"skill-intake","skill":"run-intake-finalize","skill_md_sha256":"7741c813ff501a86653d7d1ffdae4d1ad2798e97aeb24cef430d632e2b05702e"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction":0,"omission":0,"inconsistency":0,"dependency_break":0,"smell":1},
+  "reviewer": "independent-procedure-review-subagent-finalize",
+  "reviewed_at": "2026-07-05T05:53:40Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1","IN2","OUT1","IN3","OUT2"],
+    "positive_feedback": [
+      "IN1(完全性/整合): intake.json は validation.render/quality_gate/cross_check の enum と FAIL 時 failures[].retry_phase を必須化し、convert_md_to_json.py が当該 validation ブロック(render/quality_gate/cross_check/failures)を実 emit、cross_check/quality_gate の exit 確認が完了チェックリスト・参考 script 例と対応。procedure 拡張フィールドは強制経路の references/intake.schema.json に $defs.procedure(sections.6 へ)・validation_block.procedure_completeness として第一級収載済みで publish 検証(validate_intake_schema.py)を破らないことを実スキーマで確認。",
+      "IN2(決定論/依存整合): LLM 非混入・render-intake-final.py→convert_md_to_json.py の bit-identical 再生成・欠落は推測補完せず FAIL 返却、が Key Rules 1・Gotchas 4・Why・完了チェックリストで一貫閉包。procedure gate 追加は Jinja2/script 決定論を維持し golden(build-intent 3回 sha 一致)基盤と矛盾しない。",
+      "OUT1(責務スコープ/直列・単一発火・atomic): render→quality_gate→cross_check の直列順序固定・単一発火点・atomic write が Key Rules 4・Gotchas 2/3 で維持され、procedure dual-gate は quality_gate の --require-procedure フラグと前段 validate-procedure-completeness としてのみ挿入され 2 段検証の順序・単発性・原子書込を崩さない。Notion 公開/next-action 生成へ越境しない Phase9 限定も本文で保持。",
+      "IN3(script): quality_gate.py check_procedure_gate(require_procedure=True) が missing_purpose/missing_procedure/missing_procedure_validation(fail-closed)/to_be_contamination_detected/complete=False を violations 化し gate status FAIL→main exit1 を返す実装を確認。validate-procedure-completeness.py は完全性+contamination で exit0/1 を返し、その stdout 形状 {complete,mode,missing,contamination{detected,fields,matched_terms}} が quality_gate が読む validation.procedure_completeness と厳密一致(判定を C02 に一元化し重複実装なし)。成功時のみ procedure を sections.6/stdout を validation へ格納する条件分岐が Key Rule 6・完了チェックリスト 10-11 と整合、Phase4 差し戻しと C2 escape(同一 axis 上限2回→warning 降格+人間確認1回で停止させない)も明文化。",
+      "OUT2(test): quality_gate.py --require-procedure が purpose/procedure 欠落で FAIL(main 戻り値1)し下流ハンドオフ(run-skill-create/run-plugin-dev-plan)を止める挙動を test_main_require_procedure_flag_fails_legacy・test_subprocess_require_procedure_fails_legacy・procedure-aware incomplete で gate status FAIL とする単体テストが実証し、受入テストで intake.json を確定させない主張を genuine に裏付け。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "procedure dual-gate(purpose+procedure 両立)追加後の再評価(SHA=7741c813…)。4条件(完全性/一貫性/整合性/依存関係整合)を genuine 充足し PASS。強制経路の references/intake.schema.json が procedure・procedure_completeness を第一級収載、quality_gate.py の --require-procedure 分岐と validate-procedure-completeness.py の完全性/汚染判定が本文・完了チェックリスト・実テストと矛盾なく閉じ、決定論(直列固定/単一発火/atomic write)を破っていないことを実装照合で確認。BLOCKER なし。非ブロッキング smell 1件: 本スキルが schema_refs/IN1/L60 で引く run-intake-finalize/schemas/output.schema.json は validation.additionalProperties:false で procedure_completeness を未収載だが、当該 schema は convert_md_to_json.py の raw 出力を追従する doc-only 契約(jsonschema 実施経路は非該当)で runtime 破綻はなし。L60「output.schema.json 準拠 + validation.procedure_completeness を含む」は非強制 doc schema と文面上のゆるい不整合を残すため後続で output.schema.json 追従が望ましい。加えて IN3/Key Rule 6 の『intake.json 生成前に quality_gate --require-procedure 実行』は実際には materialize 済み intake.json を検証して handoff を止める意で、bash 例と完了チェックリスト10-11 が正しい運用を示す(prose gloss、非ブロッキング)。"
+}

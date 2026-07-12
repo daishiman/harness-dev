@@ -1,0 +1,439 @@
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+index d72329e..32898dc 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "cd5528e79be44639ec724801aa9661c6cfd66560fa2d55eb973d6d3f6259e9fc"
++    "skill_md_sha256": "b128f3dfb6aa93ac3c2cd7eae1fee2bf2b6c1d02097e2e3067bb07bd0d3144e2"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+@@ -14,7 +14,7 @@
+     "smell": 0
+   },
+   "reviewer": "run-elegant-review-subagent-team",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewed_at": "2026-06-24T12:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+@@ -26,8 +26,8 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "Step12 を1段落要約+references/content-review-protocol.md への正本ポインタに圧縮し、本文再掲を排してSSOT原則を強化した",
+-      "圧縮で外した4箇条(elegant-review Phase1/2/3+evaluator起動と保存先 / feedback_contract inner-outer×正負 / hook queue化+Stop block+sha256一致検査 / --skip-content-review+max_iter=3 INCOMPLETE+human_review)の実体が全て reference 側に存在し情報欠落ゼロを確認した"
++      "render-combinators.py と legacy templates(run/wrap/delegate) の両経路で feedback_contract.criteria を量産先 SKILL.md frontmatter へ携帯化し、trace だけに閉じない評価基準 SSOT に揃えた",
++      "Step4 に lint-feedback-contract.py を追加し、loop実行系の criteria 欠落を fail-closed にした。R1/R4 prompt と workflow-manifest も frontmatter+trace の二重固定へ同期した"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -35,5 +35,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "read-only検証: SKILL.md Step12 圧縮後本文と content-review-protocol.md を逐一照合。4箇条の実体は reference 側(Agent起動例+verdict保存先+Phase reset→3並列→改善 / Inner-Outerループ表+正負フィードバック / queue化+Stop decision:block+sha256一致 / --skip-content-review+max_iter=3→INCOMPLETE+human_review)に全存在。圧縮は再掲削減によるelegance改善で、矛盾/欠落/不整合/依存断絶/smell いずれもゼロ。 [propagation] frontmatter feedback_contract(IN1/IN2/OUT1/OUT2)を携帯化し criteria_evaluated を同期。"
++  "notes": "30思考法を3系統SubAgentで分担し、思考リセット後に C1-C4 を再確認。主な欠落は『量産される側のSKILL.mdが評価基準を携帯する保証』だったため、default-ON feedback_contract 注入、legacy template 同期、lint-feedback-contract Step4 追加、renderer 変数具体化、回帰テスト追加で改善した。矛盾/漏れ/整合性/依存関係はいずれもPASS。"
+ }
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+index 1071f03..0179e7c 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -2,12 +2,12 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "cd5528e79be44639ec724801aa9661c6cfd66560fa2d55eb973d6d3f6259e9fc"
++    "skill_md_sha256": "b128f3dfb6aa93ac3c2cd7eae1fee2bf2b6c1d02097e2e3067bb07bd0d3144e2"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+   "reviewer": "assign-skill-design-evaluator-equivalent",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewed_at": "2026-06-24T12:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+@@ -19,9 +19,9 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "BD-003(本文300行上限)を実測で順守: frontmatterは81行目で終わり本文は82-300行=219行と上限内。Step12圧縮が行数余裕を回復させた",
+-      "Key Rule#17と同型のSSOTポインタ方式でStep12を1段落+references/content-review-protocol.md参照へ統合し『本文に再掲しない＝SSOT』を明記。本文から外した4詳細(run-elegant-review reset→3並列→改善 Phase / feedback_contract inner-outer正負FB / hook queue+skill_md_sha256検査 / max_iter=3→INCOMPLETE+human_review)はreference側に欠落なく全て現存",
+-      "FM/NM/BD系の高severityルール(name=run-build-skill一致, ## Purpose & Output Contract と ## Gotchas 存置, descriptionは〜とき発動条件のみ)を維持し圧縮で破損していない"
++      "feedback_contract の制約正本は scripts/feedback_contract_ssot.py のまま維持し、新規生成経路は render-combinators.py / render-frontmatter.py に限定して重複実装を増やしていない",
++      "生成テンプレート(run/wrap/delegate)と atomic combinator の両方で inner/outer criteria を持つため、旧経路と新経路の差分による欠落を防いでいる",
++      "tests/test_render_combinators_feedback_contract.py により、loop kind への注入、non-loop kind の非注入、brief 由来 criteria の具体化を機械検証した"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -29,5 +29,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "Step12のSSOTポインタ化編集をrubric観点でgenuine検証。実ファイルを読み、BD-003(本文219行)/BD-001/BD-002/FM-001..004/NM-001をPASS確認。reference側に移管詳細の欠落なし。high severity finding 0件。なお既存verdict(elegance/rubric)は旧SHA 2b4cb72...を保持しており本再生成で現行SHA 37211c3...へ更新する必要があった点が、lint-content-review.pyのsha256一致要件を満たす上で本verdict更新の根拠。被採点物への改変は一切行っていない(read-only)。 [propagation] frontmatter feedback_contract(IN1/IN2/OUT1/OUT2)を携帯化し criteria_evaluated を同期。"
++  "notes": "rubric観点で、評価分離(Goodhart対策)、SSOT、テンプレート変数化、fail-closed lint、回帰テストの各基準を確認。新規サブシステムを増やさず既存 feedback_contract_ssot / lint-feedback-contract / content-review 契約へ接続しており high severity finding 0件。"
+ }
+diff --git a/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json b/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
+index edd31f7..bcf49dc 100644
+--- a/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
++++ b/plugins/skill-creator/skills/ref-domain-rubric-template/references/rubric.json
+@@ -15,7 +15,7 @@
+   ],
+   "applies_to_kinds_default": ["skill"],
+   "upstream": [
+-    "plugins/skill-creator/skills/ref-skill-design-rubric/rubric.json"
++    "plugins/skill-creator/skills/ref-skill-design-rubric/references/rubric.json"
+   ],
+   "merge_strategy": "deep-merge",
+   "conflict_policy": "most-specific-wins",
+diff --git a/plugins/skill-creator/skills/run-build-skill/SKILL.md b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+index 3450200..6341009 100644
+--- a/plugins/skill-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+@@ -218,7 +218,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
+ 
+ ### Step 3.5: 再現性トレース生成 (phase: trace-write)
+ 
+-`eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を trace に固定する。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` が kind-aware に gating する。
++`eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を **生成 SKILL.md frontmatter と trace の両方** に固定する。frontmatter は量産先が携帯する評価基準の正本、trace は再現性証跡。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` と `lint-feedback-contract.py` が kind-aware に gating する。
+ 
+ ### Step 4: 命名・構造 Lint (phase: scripts)
+ 
+@@ -232,6 +232,7 @@ python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py "$OUT_BASE
+ python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py "$OUT_BASE/$SKILL_NAME"
+ python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py "$OUT_BASE/$SKILL_NAME"  # kind別必須サポート資産(prompts/references/schemas/scripts)を実在/共有正本参照/completeness_exempt理由付きのいずれかで充足。空欄(無宣言の欠落)は exit 1
+ python3 "$SKILL_DIR/scripts/lint-goal-seek.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
++python3 scripts/lint-feedback-contract.py --changed-only  # loop実行系(run/wrap/delegate)のSKILL.md frontmatterに feedback_contract.criteria(inner/outer) が無ければ fail
+ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$OUT_BASE")"  # SSOT 重複(正本曖昧/redirect 太り/required 二重定義/本文再掲)を検出。DUP-SCHEMA-ID は exit 1
+ python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..005 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
+ python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
+diff --git a/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md b/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
+index 7278ab6..9ca2a79 100644
+--- a/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
++++ b/plugins/skill-creator/skills/run-build-skill/prompts/R1-scaffold.md
+@@ -38,6 +38,7 @@
+ ### 2.2 ドメインルール
+ - SKILL.md は 170 行以下
+ - frontmatter に `responsibility_refs` と `manifest` を含める
++- loop 実行系 (run/wrap/delegate) の frontmatter には `feedback_contract.criteria` を inner/outer 各1件以上で含める
+ - kind→template 対応は `schemas/template-selection.schema.json#/selection_rules` を参照
+ 
+ ### 2.3 入力契約
+@@ -96,6 +97,7 @@
+ - [ ] SKILL.md が 170 行以下で frontmatter に responsibility_refs / manifest を含む
+ - [ ] kind→template 対応は schemas 参照 1 行のみで本文に表が無い
+ - [ ] 実行系 kind は `## ゴールシーク実行` を持ち固定 `### Step N:` を羅列していない (`ref-*` 除く)
++- [ ] loop 実行系 (run/wrap/delegate) は `feedback_contract.criteria` を frontmatter に携帯し、id/loop_scope/text/verify_by が埋まっている
+ - [ ] `{{goal}}` / `{{purpose_background}}` / `{{generated_checklist}}` が brief 由来で埋まりリテラル未残存
+ - [ ] 具体値は全て変数化され variable_contract.source_trace に brief フィールド由来が記録されている
+ - [ ] 依存方向 L7→L1 単方向 (逆参照 0)
+diff --git a/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md b/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
+index f727112..192190e 100644
+--- a/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
++++ b/plugins/skill-creator/skills/run-build-skill/prompts/R4-trace-write.md
+@@ -41,7 +41,7 @@
+ ### 2.2 ドメインルール
+ - `pattern_decisions / layer_decisions / reproducibility_gates (C1-C4)` を必ず記入
+ - `variable_contract` に変数化した具体値の source_trace を記録
+-- loop 実行系 (skill_kind=run/wrap/delegate) は `feedback_contract.criteria` を必ず記入。各 criterion は `id / loop_scope(inner|outer) / text / verify_by` を持ち、inner と outer を最低各1件。criteria は goal-seek checklist と**同源化**する (checklist=二値達成判定 / criteria=評価観点+verify_by の写像) ことで二重管理を回避する。ref/assign は `feedback_contract.skip_reason` で N/A escape。
++- loop 実行系 (skill_kind=run/wrap/delegate) は `feedback_contract.criteria` を trace と生成 SKILL.md frontmatter の両方に必ず記入。各 criterion は `id / loop_scope(inner|outer) / text / verify_by` を持ち、inner と outer を最低各1件。criteria は goal-seek checklist と**同源化**する (checklist=二値達成判定 / criteria=評価観点+verify_by の写像) ことで二重管理を回避する。ref/assign は `feedback_contract.skip_reason` で N/A escape。
+ - 最後に `validate-build-trace.py` で exit 0 を確認
+ 
+ ### 2.3 入力契約
+@@ -54,7 +54,7 @@
+ ### 2.4 出力契約
+ - schema: `schemas/skill-build-trace.schema.json`
+ - 必須: doc_coverage / pattern_decisions / layer_decisions / reproducibility_gates / variable_contract
+-- loop 実行系のみ追加必須: feedback_contract.criteria (inner/outer 各1件以上)
++- loop 実行系のみ追加必須: feedback_contract.criteria (SKILL.md frontmatter と trace の両方、inner/outer 各1件以上)
+ 
+ ## Layer 3: インフラ層 (外部依存)
+ 
+@@ -96,7 +96,7 @@
+ - [ ] doc_coverage の全章 ID (01/01a/02-35) を網羅、未読は status=na + reason 残存
+ - [ ] pattern_decisions / layer_decisions を記入
+ - [ ] variable_contract に変数化具体値の source_trace あり
+-- [ ] (loop 実行系のみ) feedback_contract.criteria に inner/outer 各1件以上 (id/loop_scope/text/verify_by 充足)、ref/assign は skip_reason
++- [ ] (loop 実行系のみ) SKILL.md frontmatter と trace の feedback_contract.criteria に inner/outer 各1件以上 (id/loop_scope/text/verify_by 充足)、ref/assign は skip_reason
+ - [ ] validate-build-trace.py exit 0
+ - [ ] 同 brief + 同 scaffold で trace JSON sha256 一致
+ 
+@@ -133,7 +133,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ
+ `eval-log/skill-build-trace.json` を `{{schema}}` に従って章別に記入し、
+ 未読章は `status=na + reason` を残す。`reproducibility_gates` の C1-C4 を必ず埋め、
+ `variable_contract` に source_trace を記録する。loop 実行系 (skill_kind=run/wrap/delegate)
+-は `feedback_contract.criteria` を goal-seek checklist と同源で導出し inner/outer 各1件以上
++は `feedback_contract.criteria` を goal-seek checklist と同源で導出し、生成 SKILL.md frontmatter と trace に inner/outer 各1件以上
+ (id/loop_scope/text/verify_by) を記入する (ref/assign は `feedback_contract.skip_reason`)。
+ 最後に `validate-build-trace.py` を実行し exit 0 を確認する。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+index a0df696..4d7c851 100644
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/render-combinators.py
+@@ -48,6 +48,37 @@ FLAG_PATCHES = {
+ GOAL_SEEK_KINDS = ("run", "wrap", "delegate")
+ 
+ 
++FEEDBACK_CONTRACT_KINDS = ("run", "wrap", "delegate")
++
++
++FEEDBACK_CONTRACT_FM_BLOCK = (
++    "# feedback_contract: 量産先 Skill が携帯する per-skill 評価基準。"
++    "criteria は brief.goal / Checklist から導出し、content-review の criteria_evaluated と突合する。\n"
++    "feedback_contract:\n"
++    "  max_iterations: {{feedback_contract_max_iterations | default(3)}}\n"
++    "  criteria:\n"
++    "    - id: IN1\n"
++    "      loop_scope: inner\n"
++    "      text: {{feedback_contract_inner_criteria_text}}\n"
++    "      verify_by: lint\n"
++    "    - id: OUT1\n"
++    "      loop_scope: outer\n"
++    "      text: {{feedback_contract_outer_criteria_text}}\n"
++    "      verify_by: elegant-review"
++)
++
++
++FEEDBACK_CONTRACT_SECTION = (
++    "## 評価・改善ループ契約\n"
++    "`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。"
++    "inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。"
++    "content-review / evaluator / hook は同じ criteria id を参照し、"
++    "`criteria_evaluated` が全 id を覆うまで PASS にしない。"
++    "未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、"
++    "超過時は `INCOMPLETE` として human_review に差し戻す。"
++)
++
++
+ # with-knowledge.patch の決定論的注入内容。配布スキルが自己完結するよう、
+ # skill-creator 内部 (ref-knowledge-loop / templates/ / Loop B / --dir) への参照を一切含めない。
+ KNOWLEDGE_FM_BLOCK = (
+@@ -236,6 +267,10 @@ def selected_patches(args: argparse.Namespace) -> list[str]:
+     # goal-seek 配線は loop 実行系で default-ON (--no-goal-seek で opt-out)。
+     if args.kind in GOAL_SEEK_KINDS and not args.no_goal_seek:
+         patches.append("with-goal-seek.patch")
++    # feedback_contract は loop 実行系で default-ON。中身は brief 由来で R1/R4 が具体化し、
++    # lint-feedback-contract.py / lint-content-review.py が欠落や未評価を fail-closed にする。
++    if args.kind in FEEDBACK_CONTRACT_KINDS:
++        patches.append("with-feedback-contract.patch")
+     return patches
+ 
+ 
+@@ -463,6 +498,9 @@ def apply_semantic_patch(text: str, patch_name: str) -> str:
+     if patch_name == "with-goal-seek.patch":
+         text = ensure_frontmatter_line(text, GOAL_SEEK_FM_BLOCK, "rubric_refs")
+         return add_section_after(text, GOAL_SEEK_LOOP_ANCHOR, GOAL_SEEK_WIRING_SECTION)
++    if patch_name == "with-feedback-contract.patch":
++        text = ensure_frontmatter_line(text, FEEDBACK_CONTRACT_FM_BLOCK, "rubric_refs")
++        return add_section_after(text, "## 主要ルール\n{{key_constraints}}", FEEDBACK_CONTRACT_SECTION)
+     raise ComposeError(f"unknown combinator: {patch_name}")
+ 
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py b/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
+index 4da174b..11034b9 100755
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py
+@@ -40,6 +40,45 @@ def _normalize_value(value: object) -> str:
+     return str(value)
+ 
+ 
++def _feedback_contract_mapping(data: dict[str, object]) -> dict[str, object]:
++    """Return flat template vars for generated per-skill feedback criteria.
++
++    The source of truth is brief.feedback_contract.criteria when present. When
++    a brief does not provide concrete criteria yet, keep the generated SKILL.md
++    fail-closed by deriving a minimal inner/outer pair from the goal/checklist
++    context instead of leaving placeholders unresolved.
++    """
++    skill_name = str(data.get("skill_name") or data.get("name") or "this-skill")
++    goal = str(data.get("goal") or data.get("output_contract") or skill_name).strip()
++    checks = data.get("deterministic_checks") or []
++    if isinstance(checks, list) and checks:
++        inner = " / ".join(str(item).strip() for item in checks if str(item).strip())
++    else:
++        inner = f"{skill_name} の完了チェックリストと決定論 lint が全て exit0 で通過する"
++    outer = f"{goal} がユーザー目的を満たし、run-elegant-review の4条件が全て PASS する"
++
++    max_iterations: object = 3
++    fc = data.get("feedback_contract")
++    if isinstance(fc, dict):
++        max_iterations = fc.get("max_iterations") or max_iterations
++        criteria = fc.get("criteria")
++        if isinstance(criteria, list):
++            for item in criteria:
++                if not isinstance(item, dict):
++                    continue
++                text = str(item.get("text", "")).strip()
++                scope = str(item.get("loop_scope", "")).strip().lower()
++                if scope == "inner" and text:
++                    inner = text
++                elif scope == "outer" and text:
++                    outer = text
++    return {
++        "feedback_contract_max_iterations": max_iterations,
++        "feedback_contract_inner_criteria_text": inner,
++        "feedback_contract_outer_criteria_text": outer,
++    }
++
++
+ def _parse_default(raw: str | None) -> str:
+     if raw is None:
+         return ""
+@@ -133,7 +172,7 @@ def brief_mapping(path: Path) -> dict[str, object]:
+     abstraction_variables = data.get("abstraction_variables") or []
+     template_inputs = data.get("template_inputs") or []
+     template_non_goals = data.get("template_non_goals") or []
+-    return {
++    mapping = {
+         "name": data.get("skill_name", ""),
+         "skill_name": data.get("skill_name", ""),
+         "kind": data.get("kind") or data.get("prefix", ""),
+@@ -197,6 +236,8 @@ def brief_mapping(path: Path) -> dict[str, object]:
+             template_non_goals,
+         ),
+     }
++    mapping.update(_feedback_contract_mapping(data))
++    return mapping
+ 
+ 
+ def _lines(items: list[object], empty: str) -> list[str]:
+@@ -371,6 +412,15 @@ def main() -> int:
+         "generated_gotchas": _generated_gotchas([], []),
+         "variable_contract": _variable_contract([], [], []),
+     }
++    mapping.update(
++        _feedback_contract_mapping(
++            {
++                "skill_name": args.name,
++                "output_contract": mapping["output_contract"],
++                "deterministic_checks": [],
++            }
++        )
++    )
+     if args.brief:
+         bpath = Path(args.brief)
+         if not bpath.exists():
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/delegate.md b/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
+index 2ded813..ff21b6f 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/delegate.md
+@@ -12,6 +12,17 @@ owner: {{owner}}
+ since: {{date}}
+ hierarchy_level: {{hierarchy_level | default("L2") }}  # delegate は通常 L2（外部実行委譲）
+ rubric_refs: {{rubric_refs | default([]) }}            # 委譲先の受け入れ判定 rubric
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -33,6 +44,9 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
+ 1. 入出力契約のみ定義、ロジックは subagent 側。
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/run.md b/plugins/skill-creator/skills/run-build-skill/templates/run.md
+index c2426b0..4a84fed 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/run.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/run.md
+@@ -10,6 +10,17 @@ since: {{date}}
+ role_suffix: {{role_suffix}}
+ hierarchy_level: {{hierarchy_level}}        # L0=単独参照 / L1=連携 / L2=オーケストレーション
+ rubric_refs: {{rubric_refs | default([])}}  # 評価で参照する rubric Skill 名（複数可）。pair=evaluator がある場合は必須
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -30,6 +41,9 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
+ ## 主要ルール
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ > ループを多周回す／重い試行錯誤を伴う場合は、親セッションを汚さないよう SubAgent（`Agent`）または Agent Team に fork して実行し、親へは最終成果物と要約のみ返す（同 references「コンテキスト分離」）。
+diff --git a/plugins/skill-creator/skills/run-build-skill/templates/wrap.md b/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
+index f1d74e0..095f764 100644
+--- a/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
++++ b/plugins/skill-creator/skills/run-build-skill/templates/wrap.md
+@@ -15,6 +15,17 @@ last-audited: {{last_audited_date}}
+ audit-trigger: {{audit_trigger | default("quarterly") }}
+ hierarchy_level: {{hierarchy_level | default("L1") }}   # wrap は通常 L1（外部 CLI 連携）
+ rubric_refs: {{rubric_refs | default([]) }}            # ref-pr-conventions 等のラップ対象規約
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
+ # PreToolUse hook: 文脈次第の危険検査を hook で追加（二段防御）。例: plugins/skill-governance-config/config/claude-settings-hooks.json.example 参照
+ ---
+@@ -31,6 +42,9 @@ rubric_refs: {{rubric_refs | default([]) }}            # ref-pr-conventions 等
+ 1. 外部CLIを直接許可せず、Python stdlib adapter (`scripts/*.py`) 経由で入力検証・dry-run・ログ記録を行う。
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。
++
+ ## ゴールシーク実行
+ > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+index 226a6ef..04f20c5 100644
+--- a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+@@ -38,7 +38,8 @@
+       "dependsOn": ["references"],
+       "kind_filter": ["run", "assign", "wrap", "delegate"],
+       "resourceIds": ["schema-skill-build-trace"],
+-      "output_artifact": "eval-log/skill-build-trace.json"
++      "output_artifact": "eval-log/skill-build-trace.json",
++      "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only"
+     },
+     {
+       "id": "templates",
+@@ -86,7 +87,7 @@
+       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+       "resourceIds": ["schema-skill-build-trace", "prompt-trace-write"],
+       "output_artifact": "eval-log/skill-build-trace.json",
+-      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。"
++      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。"
+     },
+     {
+       "id": "notion-register",

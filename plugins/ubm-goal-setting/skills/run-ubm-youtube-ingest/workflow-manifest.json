@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-ubm-youtube-ingest",
+  "skill": "run-ubm-youtube-ingest",
+  "description": "YouTube 2-source ingest: mode/source 確定 → pagination 完走 + caption→ASR fallback 取得/正規化 → 6カテゴリ抽出 + 根拠付き graph 更新 → 冪等 one-shot sync reconciliation.",
+  "max_iterations": 5,
+  "phases": [
+    {
+      "id": "r1-source-mode",
+      "title": "Source and mode resolution",
+      "dependsOn": [],
+      "parallel": false,
+      "actor": "run-ubm-youtube-ingest",
+      "input": "argument --url|--backfill|--sync, --source, youtube-registry.json",
+      "output": "resolved mode + source priority (required-primary active, 第2source pending-identification)",
+      "gate": "mode in [url, backfill, sync]; required-primary は第2source pending でも停止しない",
+      "resourceIds": ["prompts/R1-source-mode.md", "references/registry-ledger-schema.md"]
+    },
+    {
+      "id": "r2-fetch-normalize",
+      "title": "Fetch and normalize authoritative inventory",
+      "dependsOn": ["r1-source-mode"],
+      "parallel": false,
+      "actor": "youtube-transcript-normalizer",
+      "input": "provider adapter page (list_channel_videos cursor 完走), fetch_transcript (caption→承認済み ASR fallback)",
+      "output": "provenance 付き正規化ソース(.md・frontmatter は references/normalized-source-schema.md 準拠) と provenance_gaps 結果",
+      "gate": "pagination 完走; provenance 必須3要素(video_id/source_url/published_at)欠落0 (gaps 非空なら差し戻し・one-shot は temporary_failure 保留)",
+      "backfill_completeness_gate": {
+        "command": "python3 scripts/check-youtube-backfill-completeness.py --channels <handle> --video-list <snapshot> --registry ../../knowledge/youtube-registry.json",
+        "pass_when": "stdout JSON の full_backfill_pass==true (=IN1)。exit0 でも accountability_pass のみは IN1 未達",
+        "fatal_exit_codes": [2],
+        "note": "--backfill モードの inner ループ (IN1)。authoritative snapshot を分母に registry の ingest 状態を突合する。ingest 自体は r4 one-shot が行い、本 gate は post-ingest 完全性を判定して full_backfill_pass まで反復する"
+      },
+      "resourceIds": [
+        "prompts/R2-fetch-normalize.md",
+        "scripts/youtube_provider.py",
+        "scripts/check-youtube-backfill-completeness.py",
+        "references/provider-adapter-contract.md",
+        "references/normalized-source-schema.md",
+        "../../agents/youtube-transcript-normalizer.md"
+      ]
+    },
+    {
+      "id": "r3-extract-graph",
+      "title": "Extract knowledge and update evidence graph",
+      "dependsOn": ["r2-fetch-normalize"],
+      "parallel": false,
+      "actor": "knowledge-extractor",
+      "input": "正規化ソース(.md), knowledge/schema.json, knowledge/*.json",
+      "output": "6カテゴリ knowledge 更新 + (knowledge-relation-extractor が read-only で返した辺候補を materialize し validate-knowledge-graph.py --merge-relations が canonical key で冪等 merge=既存辺保持した) knowledge-relations.json + 検証 PASS 時のみ決定論再生成された knowledge-graph.json",
+      "gate": "validate-knowledge-graph.py が exit0 (参照整合・self-loop禁止・depends_on DAG非循環・evidence>=1); C08 は書込せず候補を返すのみで永続化 owner は --merge-relations",
+      "command": "python3 ../../scripts/validate-knowledge-graph.py --knowledge-dir ../../knowledge --merge-relations <c08-candidate>",
+      "fatal_exit_codes": [1, 2],
+      "resourceIds": [
+        "prompts/R3-extract-graph.md",
+        "../../agents/knowledge-extractor.md",
+        "../../agents/knowledge-relation-extractor.md",
+        "../../scripts/validate-knowledge-graph.py"
+      ]
+    },
+    {
+      "id": "r4-sync-reconcile",
+      "title": "Idempotent one-shot sync and reconciliation",
+      "dependsOn": ["r3-extract-graph"],
+      "parallel": false,
+      "actor": "run-youtube-sync-oneshot.py",
+      "input": "youtube-registry.json (run 記録=cursor watermark/lease/ledger), provider adapter",
+      "output": "更新済み ledger (video 状態) + 正規化ソース(.md) + sync report",
+      "gate": "新着を idempotency key=video_id で一度だけ ingest; 二回目0件; TemporaryFailure は次 run で回復; 稼働中 lease で二重起動を排他 (取得直後に永続化); --dry-run は書込0",
+      "command": "python3 scripts/run-youtube-sync-oneshot.py --registry ../../knowledge/youtube-registry.json --provider fixture --fixture <fixture> --channel <handle> --source-out <dir>",
+      "sync_mode_note": "--sync では取得が本 r4 内で起きる (dependsOn r3 は skill セッションの直列順序)。sync_report.ingested>0 のとき、skill セッション経由の実行は同一セッションで r3-extract-graph 相当 (knowledge-extractor→knowledge-relation-extractor→validate-knowledge-graph.py) を再実行して graph まで反映する (goal-seek 反復)。scheduler が skill 外で本 one-shot を直接起動する経路では正規化ソース+registry までで止まり、graph 反映は次回 skill 実行に持ち越す。",
+      "fatal_exit_codes": [1, 2],
+      "resourceIds": [
+        "prompts/R4-sync-reconcile.md",
+        "scripts/run-youtube-sync-oneshot.py",
+        "references/sync-report-format.md"
+      ]
+    }
+  ]
+}

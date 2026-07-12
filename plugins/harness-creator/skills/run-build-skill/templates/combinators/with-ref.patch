@@ -1,0 +1,26 @@
+--- a/_base.md
++++ b/_base.md
+@@ -4,6 +4,8 @@ name: {{skill_name}}
+ description: {{description}}
+ disable-model-invocation: true
+ user-invocable: false
++kind: ref
++effect: read-only
+ argument-hint: ""
+ allowed-tools: [Read, Grep]
+ owner: {{owner}}
+@@ -23,6 +25,15 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## 参照内容
++
++本Skillは {{ref_topic}} の正本情報を提供する Read-only スキル。
++
++- 主参照元: {{primary_source}}
++- 補助参照: {{secondary_sources | default("(なし)")}}
++- 更新頻度: {{update_frequency | default("公式仕様改訂時")}}
++- 鮮度ポリシー: `last-audited` を四半期ごとに更新（設計書15章）
++
+ ## Boundary
+ {{boundary}}

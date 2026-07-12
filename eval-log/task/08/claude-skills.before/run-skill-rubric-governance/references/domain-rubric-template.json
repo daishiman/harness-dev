@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "P2 Domain Rubric Template (設計書09章 評価ピラミッド P2層 + 29章 multi-project rubric composition)",
+  "description": "domain別の rubric を新規作成するときの骨格。L1/L2 hierarchy を持つ Skill に rubric_refs で注入される。P1 (ref-skill-design-rubric) と組み合わせて使用する。",
+  "type": "object",
+  "required": ["rubric_id", "rubric_version", "rubric_hash", "domain", "items"],
+  "properties": {
+    "rubric_id": {
+      "type": "string",
+      "description": "domain識別子 (kebab-case)。例: security-review-rubric / marketing-copy-rubric / api-contract-rubric"
+    },
+    "rubric_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "semver。改正は run-skill-rubric-governance 経由で bump する。"
+    },
+    "rubric_hash": {
+      "type": "string",
+      "description": "sha256:<hex>。evaluator JSON の rubric.rubric_hash と突合する (Goodhart 対策)。"
+    },
+    "domain": {
+      "type": "string",
+      "description": "対象ドメイン。例: security / legal / brand / api / db / ui"
+    },
+    "parent_rubric": {
+      "type": ["string", "null"],
+      "description": "上位 rubric (most-specific-wins merge 時の base)。null なら独立。"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "category", "weight", "criterion"],
+        "properties": {
+          "id": {"type": "string", "description": "ルールID (例: SEC-001)"},
+          "category": {"type": "string", "description": "MECEなカテゴリ"},
+          "weight": {"type": "number", "minimum": 0, "maximum": 100},
+          "criterion": {"type": "string", "description": "何を見るか"},
+          "deterministic_check": {
+            "type": ["string", "null"],
+            "description": "対応する P0 スクリプトパス (あれば LLM 判定を skip)。設計書09章 P0→P2 のescalation 構造。"
+          },
+          "examples": {"type": "object", "properties": {"good": {"type": "string"}, "bad": {"type": "string"}}}
+        }
+      }
+    },
+    "threshold": {"type": "number", "default": 80, "description": "passed判定のscore下限"}
+  }
+}

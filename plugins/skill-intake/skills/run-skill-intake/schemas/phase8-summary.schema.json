@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "skill-intake Phase 8 summary.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["five_axes", "approval_status"],
+  "properties": {
+    "five_axes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["output_target", "info_source", "share_target", "true_problem", "knowledge_assets"],
+      "properties": {
+        "output_target": {"type": "string", "minLength": 1},
+        "info_source": {"type": "string", "minLength": 1},
+        "share_target": {"type": "string", "minLength": 1},
+        "true_problem": {"type": "string", "minLength": 1},
+        "knowledge_assets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": ["approved", "revision_requested"]
+    },
+    "revision_notes": {"type": "string"},
+    "summary_md_path": {"type": "string"},
+    "summary_json_path": {"type": "string"},
+    "plugin_scale": {"type": "boolean", "description": "任意: ヒアリング中に plugin 規模構想 (hook/command 等複数コンポーネント) が明示されたとき true。run-intake-next-action の decide-mode.py が mode P 判定入力として読む。"},
+    "component_requests": {"type": "array", "items": {"type": "string"}, "description": "任意: ユーザーが要望したコンポーネント種別 (skill/hook/command/agent/mcp 等)。run-intake-next-action の decide-mode.py が mode P 判定入力として読む。"}
+  }
+}

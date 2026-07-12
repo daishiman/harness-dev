@@ -1,0 +1,11 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "skill": "ref-mf-kessai-api", "skill_md_sha256": "5cb54e3b702669d79ba918e2690ba0ef88a255933c5711a85aedadce6ea00b26"},
+  "review_kind": "elegance", "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent", "reviewed_at": "2026-06-30T00:00:00Z",
+  "iterations": 1, "human_review_required": false,
+  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["REF-ACCURACY","REF-COHERENCE","REF-SSOT"],
+    "positive_feedback": ["月帰属=transaction.date 基準への更新がアルゴリズム節・フィールド対応表(行67 date=月帰属軸)・Key Rule 3・Gotchas で完全に自己一貫し、issue_date 帰属の古い記述の残置がゼロ。issue_date は全箇所で『API フィルタ引数/over-fetch 取得窓/返却フィールド』としてのみ言及され、帰属軸とは明確に役割分離されている", "SKILL.md と references/mf-kessai-api.md が月帰属で一致(SKILL §発行漏れ判定=references §3 散文・§4 date 行/issue_date 行、over-fetch 例 2.2、取引日 2026-06-30 の 6月分例まで突合一致)し、要約(SKILL)と詳細(references)の二層が矛盾なく接続"],
+    "negative_feedback": [],
+    "iteration": 1, "iteration_limit": 3, "hook_trigger": "Stop", "next_action": "none"},
+  "notes": "現 SKILL.md(SHA 5cb54e3b...)を全文実読し references 正本と突合。発行漏れ判定 P/C 差集合が transaction.date 帰属である点が、エンドポイント表(/transactions が date を返す)・アルゴリズム散文・フィールド対応表・Key Rules・Gotchas の全層で整合。issue_date は over-fetch 窓([当月初..翌月末])の取得引数として限定され、帰属確定には使わない旨が複数箇所で明示。発行日基準の旧記述の残置・矛盾は検出されず。references も §4 で issue_date を『月帰属の判定軸ではない』と明記し SKILL.md と一致。4条件(矛盾なし/漏れなし/整合性/依存整合)すべて充足のため PASS。微小観察として references ヘッダの参照元列挙が run-mf-invoice-reconcile を省くが、API 仕様の正確性・自己一貫性には影響せず PASS を妨げない。"
+}

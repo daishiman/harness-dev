@@ -1,0 +1,1121 @@
+diff --git a/plugin-plans/finish/harness-creator/component-inventory.json b/plugin-plans/finish/harness-creator/component-inventory.json
+index 91062fa..f2b1e65 100644
+--- a/plugin-plans/finish/harness-creator/component-inventory.json
++++ b/plugin-plans/finish/harness-creator/component-inventory.json
+@@ -379,7 +379,7 @@
+       "builder": "run-build-skill",
+       "build_kind": "command",
+       "description": "構想または intake.json を受理して run-plugin-dev-plan を起動する command へ intake_json 引数を追加",
+-      "argument-hint": "[<構想文> | --intake-json <path>] [--mode create|update] [--improvement-handoff <path>]",
++      "argument-hint": "[<構想文> | --intake-json <path> --next-action-json <path>] [--mode create|update] [--improvement-handoff <path>]",
+       "allowed-tools": [
+         "Read",
+         "Skill"
+@@ -700,7 +700,7 @@
+         "plugins/harness-creator/.claude-plugin/plugin.json",
+         "plugins/plugin-dev-planner/.claude-plugin/plugin.json"
+       ],
+-      "note": "harness-creator の plugins/harness-creator/.claude-plugin/plugin.json は skills/commands/scripts を ディレクトリ規約で自動発見するため本 plan の新規/更新 component (C06/C07/C08/C09) は manifest 差分不要。plugin-dev-planner 側 (.claude-plugin/plugin.json) は entry_points.agents[] へ C10、hooks.PreToolUse へ C11 の登録が必要 (該当 component 自身の build スコープ内で処理し envelope surface としては現状維持)。envelope-draft/plugin.json は harness-creator 側を無変更で mirror する"
++      "note": "envelope-draft/plugin.json は build handoff gate 用に inventory surface component の entry_points.skills/commands/agents を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json への反映は envelope build 境界で扱い、plugin-dev-planner 側 (.claude-plugin/plugin.json) への C10/C11 登録は該当 component 自身の build スコープ内で処理する"
+     },
+     "composition": {
+       "required": false,
+@@ -715,7 +715,7 @@
+       "targets": [
+         "plugins/harness-creator/references/pipeline-boundary-contract.md"
+       ],
+-      "note": "cross-cutting 課題 (パイプライン全体像が harness-creator README:52-85 の人手手順のみで記述) に対し、新規リファレンス plugins/harness-creator/references/pipeline-boundary-contract.md を Phase02/Phase06 で整備し E1/E2/E3 の producer/consumer/gate/provenance 対応表を一元化する (C01/C05/C08/C09/C11 が参照)。対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 --mode update は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 の create/build は非破壊・再実行可能ゆえ advisory gate)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する"
++      "note": "cross-cutting 課題 (パイプライン全体像が harness-creator README:52-85 の人手手順のみで記述) に対し、新規リファレンス plugins/harness-creator/references/pipeline-boundary-contract.md を Phase02/Phase06 で整備し E1/E2/E3 の producer/consumer/gate/provenance 対応表を一元化する (C01/C05/C08/C09/C11 が参照)。対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 --mode update は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 は各 consumer 内の deterministic gate / route executor が明示入力を fail-closed 検証するため追加 hook は置かない)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する"
+     },
+     "schemas": {
+       "required": true,
+diff --git a/plugin-plans/finish/harness-creator/envelope-draft/plugin.json b/plugin-plans/finish/harness-creator/envelope-draft/plugin.json
+index 6e91fe6..4941bdf 100644
+--- a/plugin-plans/finish/harness-creator/envelope-draft/plugin.json
++++ b/plugin-plans/finish/harness-creator/envelope-draft/plugin.json
+@@ -15,6 +15,19 @@
+       }
+     ]
+   },
++  "entry_points": {
++    "skills": [
++      "run-plugin-dev-plan",
++      "run-skill-create"
++    ],
++    "commands": [
++      "plugin-dev-plan",
++      "capability-build"
++    ],
++    "agents": [
++      "plugin-dev-plan-improvement-reviewer"
++    ]
++  },
+   "hooks": {
+     "UserPromptSubmit": [
+       {
+diff --git a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/expected-script-route.json b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/expected-script-route.json
+index 13bfb69..61d0864 100644
+--- a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/expected-script-route.json
++++ b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/expected-script-route.json
+@@ -4,5 +4,5 @@
+   "builder": "parent-skill-build",
+   "builder_status": "contract-only",
+   "requires_parent_scaffold": "C01",
+-  "expected_handling": "Use GAP-SCRIPT-BUILDER alternate generation and record update-in-place when build_target already exists."
++  "expected_handling": "Delegate to build-script-route.py and record a route-build-report; leave build_target untouched when it already exists. If only a minimal scaffold is generated, report status=skipped so dependent routes cannot proceed."
+ }
+diff --git a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/next-action.json b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/next-action.json
+index ba68cae..1de589b 100644
+--- a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/next-action.json
++++ b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/next-action.json
+@@ -10,7 +10,7 @@
+     {
+       "id": "demo-boundary-check",
+       "component_kind": "script",
+-      "reason": "One companion script route (demo-boundary-check) to exercise contract-only script handling. id matches the emitted route/component name for split_candidate->component traceability."
++      "reason": "One companion script route (demo-boundary-check) to exercise build-script-route.py handling of planner contract-only script routes. id matches the emitted route/component name for split_candidate->component traceability."
+     }
+   ]
+ }
+diff --git a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/with-intake-command.txt b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/with-intake-command.txt
+index 7514acf..3e63222 100644
+--- a/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/with-intake-command.txt
++++ b/plugin-plans/finish/harness-creator/fixtures/c8-new-flow/with-intake-command.txt
+@@ -1,3 +1,3 @@
+-/plugin-dev-plan --intake-json plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json
++/plugin-dev-plan --intake-json plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json --next-action-json plugin-plans/harness-creator/fixtures/c8-new-flow/next-action.json
+ expected_source_intake=plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json
+ expected_behavior=reflect_section_0_and_section_3_into_goal_spec_without_re_asking
+diff --git a/plugin-plans/finish/harness-creator/goal-spec.json b/plugin-plans/finish/harness-creator/goal-spec.json
+index 9079e62..1a5e89f 100644
+--- a/plugin-plans/finish/harness-creator/goal-spec.json
++++ b/plugin-plans/finish/harness-creator/goal-spec.json
+@@ -1,6 +1,6 @@
+ {
+   "purpose": "skill-intake(ヒアリング)→plugin-dev-planner(タスク仕様書化)→harness-creator build(ハーネス構築)→改善(改善要望→再構築) という量産パイプラインの各段境界 (E1: intake→goal-spec、E2: plan→build、E3: 改善→plan) における producer/consumer 機械契約・検証ゲート・provenance の欠落を解消し、新規作成フローと改善フローの双方が依存関係を保って回るタスク仕様書を計画する",
+-  "background": "各段はユーザー方針により実行を別々に維持したまま連携する。実地調査で 3 つの境界断線を確認した。E1 (intake→goal-spec): producer 側 (skill-intake の output/<hint>/intake.json v2.0.0 + next-action.json の handoff_target=plugin-dev-planner + handoff-contract.md:88-98 の写像仕様) は完備するが、`/plugin-dev-plan` に intake.json を渡す引数が無く、R1 プロンプト (prompts/R1-elicit-goal.md §2.3・実行ブロック 133-137 行) は intake_json を任意入力と宣言するのみで実行ブロックが未参照 (documented-but-unwired)。plugin-goal-spec にも消費した intake.json の provenance フィールドと消費保証ゲートが無く、plugin-plans/skill-intake/goal-spec.json は R1 で止まった未完 plan として現存する (情報漏れの物証)。E2 (plan→build): producer 側 (handoff-run-plugin-dev-plan.json の routes[]・render-skill-brief.py・build 前 gate check-build-handoff.py・build 後 gate validate-plan-coverage.py) は完備するが、routes[] を消費する実行入口が run-skill-create (topic+mode のみ受理・prompts/R1-elicit.md:56-61) にも capability-build.md (<kind> <name> パースのみ) にも無く、harness-creator README は brief_path 経由の自動投入を記述済みだが、run-skill-create の prompts/R1-elicit.md §2.3 入力契約に brief_path が無く README↔実装が drift している (断線の実体は実装側)。builder 語彙 plugin-scaffold/parent-skill-build は executor 不在の contract-only。E3 (改善→plan): run-elegant-review/run-skill-iter-improve/run-skill-feedback のいずれの出力も plugin-plans/ や --mode update を参照せず (grep 完全空)、update mode に改善成果物を受ける構造化入力契約が無いため改善が仕様書へ還流しない。横断としてパイプライン全体像は harness-creator README:52-85 の人手接続 6 ステップのみで記述され、CONVENTIONS.md にはフロー記述が無い。",
++  "background": "各段はユーザー方針により実行を別々に維持したまま連携する。実地調査で 3 つの境界断線を確認した。E1 (intake→goal-spec): producer 側 (skill-intake の output/<hint>/intake.json v2.0.0 + next-action.json の handoff_target=plugin-dev-planner + handoff-contract.md:88-98 の写像仕様) は完備するが、`/plugin-dev-plan` に intake.json を渡す引数が無く、R1 プロンプト (prompts/R1-elicit-goal.md §2.3・実行ブロック 133-137 行) は intake_json を任意入力と宣言するのみで実行ブロックが未参照 (documented-but-unwired)。plugin-goal-spec にも消費した intake.json の provenance フィールドと消費保証ゲートが無く、plugin-plans/skill-intake/goal-spec.json は R1 で止まった未完 plan として現存する (情報漏れの物証)。E2 (plan→build): producer 側 (handoff-run-plugin-dev-plan.json の routes[]・render-skill-brief.py・build 前 gate check-build-handoff.py・build 後 gate validate-plan-coverage.py) は完備するが、routes[] を消費する実行入口が run-skill-create (topic+mode のみ受理・prompts/R1-elicit.md:56-61) にも capability-build.md (<kind> <name> パースのみ) にも無く、harness-creator README は brief_path 経由の自動投入を記述済みだが、run-skill-create の prompts/R1-elicit.md §2.3 入力契約に brief_path が無く README↔実装が drift している (断線の実体は実装側)。builder 語彙 plugin-scaffold/parent-skill-build は planner 上 contract-only だが、script route は harness-creator の `/capability-build` が専用 executor へ委譲する。E3 (改善→plan): run-elegant-review/run-skill-iter-improve/run-skill-feedback のいずれの出力も plugin-plans/ や --mode update を参照せず (grep 完全空)、update mode に改善成果物を受ける構造化入力契約が無いため改善が仕様書へ還流しない。横断としてパイプライン全体像は harness-creator README:52-85 の人手接続 6 ステップのみで記述され、CONVENTIONS.md にはフロー記述が無い。",
+   "goal": "plugin-plans/harness-creator/ にタスク仕様書一式 (13 phase + index) が存在し、E1 (intake.json 消費契約+情報漏れ検出ゲート)・E2 (routes[] 消費経路+無関係仕様書検出ゲート)・E3 (改善成果物の構造化入力契約+provenance)・E1-E3 を貫く provenance chain の検証契約・新規作成フローと改善フロー双方の一巡受入例が全て仕様として定義され、既存の決定論ゲート全種 (check-build-handoff/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage/check-surface-inventory/check-requirements-coverage/verify-index-topsort/detect-unassigned/check-runtime-portability) が exit0 で通過する状態",
+   "artifact_class": "existing-plugin-update",
+   "target_plugin_slug": "harness-creator",
+@@ -94,6 +94,6 @@
+   "handoff_targets": ["R2-decompose-components"],
+   "max_loops": 5,
+   "open_questions": [
+-    "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独 executor が未整備のため、build 実行時は handoff-run-plugin-dev-plan.json.open_issues.GAP-SCRIPT-BUILDER の代替生成手順を通す"
++    "plugin-scaffold / parent-skill-build は planner 上の contract-only builder 語彙だが、script route は build 実行時に /capability-build から build-script-route.py へ委譲し、route-build-report を残す"
+   ]
+ }
+diff --git a/plugin-plans/finish/harness-creator/handoff-run-plugin-dev-plan.json b/plugin-plans/finish/harness-creator/handoff-run-plugin-dev-plan.json
+index 9434c96..d248a82 100644
+--- a/plugin-plans/finish/harness-creator/handoff-run-plugin-dev-plan.json
++++ b/plugin-plans/finish/harness-creator/handoff-run-plugin-dev-plan.json
+@@ -205,7 +205,7 @@
+       "status": "planned",
+       "build_target": "plugins/harness-creator/.claude-plugin/plugin.json",
+       "draft_path": "envelope-draft/plugin.json",
+-      "note": "harness-creator はディレクトリ自動発見のため envelope-draft/plugin.json は現行値を無変更で mirror する (C06/C07/C08/C09 の追加/更新に manifest 差分は不要)。plugin-dev-planner 側 manifest (entry_points.agents[]/hooks.PreToolUse[]) への C10/C11 登録は本 envelope の対象外で、各 component (C10/C11) 自身の build スコープで処理する。build preflight で envelope-draft/plugin.json ↔ 実 manifest (plugins/harness-creator/.claude-plugin/plugin.json) の parity 検査を行い、陳腐化時は fail する"
++      "note": "envelope-draft/plugin.json は build handoff gate 用に inventory surface component の entry_points.skills/commands/agents を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json への反映は envelope build 境界で扱い、C10/C11 の plugin-dev-planner 側 manifest 登録は各 component 自身の build スコープで処理する。build preflight では envelope-draft/plugin.json の entry_points と inventory surface component の parity を検査する"
+     },
+     "marketplace": {
+       "owner": "plugin-scaffold",
+@@ -218,7 +218,7 @@
+     {
+       "id": "GAP-SCRIPT-BUILDER",
+       "severity": "medium",
+-      "text": "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独実行実体が未整備 (capability-gap 起票済・当面は run-build-skill の build フロー内で代替生成)。対象 route: C03,C04,C05 (parent-skill-build) / C08,C09 (plugin-scaffold)。代替生成手順: (1) run-build-skill が route.build_kind=script と build_args.script_path を読み、plugin-root script は build_target へ直接生成する、(2) requires_parent_scaffold を持つ skill 配下 script は親 skill C01 のディレクトリ実在を先に確認し、無ければ空 scaffold を作ってから script を配置する、(3) 生成後に check-build-handoff / check-runtime-portability / build_trace を再実行し、どの contract-only route をどの executor-backed 手順で展開したかを evidence に記録する、(4) build_target が既存ファイルの場合 (C03) は新規生成でなく update-in-place (既存挙動+既存テストを維持) で更新する。影響範囲: build 順先頭 5 route (C09/C03/C08/C04/C05) が本 gap に依存する。責務境界: C07 が route を解析し script_path/build_target を明示引数として run-build-skill へ渡す (run-build-skill 本体は無改修)。解消条件: plugin-scaffold executor の恒久実装 or builder 語彙の run-build-skill への正規化。次回 elegant-review 時に再評価する"
++      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。対象 route: C03,C04,C05 (parent-skill-build) / C08,C09 (plugin-scaffold)。/capability-build は build_kind=script を run-build-skill の正式 kind として直接実行せず、専用 executor plugins/harness-creator/scripts/build-script-route.py へ委譲して既存実体確認または最小 scaffold 生成を行い、route-build-report を残す。最小 scaffold 生成は route status=skipped として後続依存を進めない。gap_ref は既存 handoff 互換と routing 語彙の明示参照として維持する。解消条件: run-build-skill が script kind を正式受理する、または planner の builder 語彙から contract-only 参照を廃止できる状態に正規化すること"
+     }
+   ]
+ }
+diff --git a/plugin-plans/finish/harness-creator/index.md b/plugin-plans/finish/harness-creator/index.md
+index fbf6918..75e2a46 100644
+--- a/plugin-plans/finish/harness-creator/index.md
++++ b/plugin-plans/finish/harness-creator/index.md
+@@ -65,7 +65,7 @@ plugin_meta:
+ ## インフラ
+ - **実行環境**: スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・scripts 内 yaml import 禁止)。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。
+ - **同梱決定論ゲート (2 層命名・機械正本=`specfm.GATE_SCRIPTS`)**: core 5 scripts / 6 invocations = verify-index-topsort (§9 section 床+phase 完全性+DAG) / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage (--self-test + PLAN の 2 起動)。拡張ゲート = check-plugin-goal-spec / check-requirements-coverage / check-surface-inventory / check-build-handoff / check-runtime-portability / check-plugin-surface-audit (総数の人間可読正本=io-contract §11 表)。plan の C12 判定では `specfm.GATE_SCOPE=plan-scoped` のゲートを対象にし、`input-gate` (check-plugin-goal-spec) は R1 入力確定時の証跡、`dogfood` (check-plugin-surface-audit) は plugin-dev-planner 現物監査として分ける。
+-- **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes 配列を正本として消費する。skill 付随 script (C03/C04/C05) は `requires_parent_scaffold: C01` で親 skill scaffold 内へ二相 build する (`requires_parent_scaffold` は `depends_on` DAG 辺ではなく配置境界指示であり、topsort が表現しない親 scaffold→child script→本体上書きの順序は本節と GAP-SCRIPT-BUILDER の代替生成手順が正本)。plugin-root 共有 script (C08/C09) は `plugin-scaffold` (contract-only・`gap_ref: GAP-SCRIPT-BUILDER`) が実体化する (詳細手順と順序列挙は routes[] へ寄せ、本文へ重複保持しない)。
++- **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes 配列を正本として消費する。skill 付随 script (C03/C04/C05) は `requires_parent_scaffold: C01` で親 skill scaffold 内へ二相 build する (`requires_parent_scaffold` は `depends_on` DAG 辺ではなく配置境界指示であり、topsort が表現しない親 scaffold→child script→本体上書きの順序は `/capability-build --handoff ... --route-id ...` と `build-script-route.py` の route report が正本)。plugin-root 共有 script (C08/C09) は `plugin-scaffold` (contract-only・`gap_ref: GAP-SCRIPT-BUILDER`) の routing 語彙を維持しつつ、L4 実行では `build-script-route.py` が実体化する (詳細手順と順序列挙は routes[] へ寄せ、本文へ重複保持しない)。
+ - **mode 語彙の分離**: `handoff-run-plugin-dev-plan.json` top-level と C01/C06 の `build_args.mode:update` は builder の**既存ファイル更新ビルドモード** (artifact_class=existing-plugin-update) を指し、run-plugin-dev-plan 自身の `--mode update` (E3 改善フロー再生成・C11 hook が provenance pass marker を要求する破壊的再生成) とは別語彙である。前者に C11 の pass marker 要求は適用されない。本 plan 自身の goal-spec が `source_intake/source_improvement:null` なのは from-scratch 起票 (改善フロー由来でない) ゆえであり、handoff の `mode:update` (=既存 plugin 更新ビルド) と矛盾しない。
+ - **コンポーネント目録の所在**: buildable な実体 (skill×2 / sub-agent×1 / slash-command×2 / hook×1 / script×5 = 計 11) は `component-inventory.json` が唯一の SSOT。build_target・依存 DAG・quality_gates・harness_coverage・feedback_contract を目録側が保持する。
+ - **Plugin-level surfaces**:
+diff --git a/plugin-plans/finish/harness-creator/phase-02-design.md b/plugin-plans/finish/harness-creator/phase-02-design.md
+index 0d1d452..735c7dd 100644
+--- a/plugin-plans/finish/harness-creator/phase-02-design.md
++++ b/plugin-plans/finish/harness-creator/phase-02-design.md
+@@ -30,7 +30,7 @@ E1/E2/E3 の断線をそれぞれ producer/consumer/gate 実体へ 5 種の comp
+ - 正規化原則: build_target/depends_on は `component-inventory.json` のみが保持し、phase ファイルは `entities_covered` の id 参照だけで紐づく (二重保持は drift 源)。
+ - E1/E2/E3 → component 対応: E1 consumer=C01(skill 更新)+C02(command 更新)、E1 gate=C04(情報漏れ検出)、E2 consumer=C06(skill 更新)+C07(command 更新)、E2 gate=C08(routes↔inventory 突合)、E3 emit=C09(改善成果物正規化)、E3 provenance gate=C05、横断 fail-closed=C11(hook)、改善反映の意味的忠実性レビュー=C10(sub-agent)。schema 更新 (source_intake/source_improvement 追加) は C03 に折り込む。
+ - no-split threshold: C03/C04/C05 は `run-plugin-dev-plan` (C01) の付随物として親 skill 配下 (`placement_scope: skill`, `requires_parent_scaffold: C01`) に畳む。C08/C09 は複数 consumer (build 実行入口/改善出力元 3 skill) から共有されるため `placement_scope: plugin-root` へ昇格する。
+-- manifest 差分の非対称性: harness-creator 側 (C06/C07/C08/C09) はディレクトリ自動発見のため manifest 差分不要。plugin-dev-planner 側は entry_points.agents[] へ C10、hooks.PreToolUse へ C11 の登録が必要 (該当 component 自身の build スコープで処理)。envelope-draft/plugin.json は target_plugin_slug=harness-creator の現状値を無変更で mirror する。
++- manifest 差分の非対称性: envelope-draft/plugin.json は build handoff gate 用に inventory surface component の entry_points.skills/commands/agents を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json への反映は envelope build 境界で扱う。plugin-dev-planner 側は entry_points.agents[] へ C10、hooks.PreToolUse へ C11 の登録が必要 (該当 component 自身の build スコープで処理)。
+ 
+ ## 成果物
+ - `component-inventory.json` (build 軸の唯一 SSOT・全 11 component・plugin_level_surfaces 採否込み)。
+@@ -46,7 +46,7 @@ E1/E2/E3 の断線をそれぞれ producer/consumer/gate 実体へ 5 種の comp
+ - [ ] considered_component_kinds が 5 種全列挙され、plugin_level_surfaces (manifest/composition/harness_eval/references_config_assets/schemas/vendor/mcp_app_connector/notion_config) の採否が明示されている。
+ - [ ] 要件 C10: 全 build_target が `plugins/` 始まりで `..` を含まず、E1/E2/E3 各修正が所有 plugin 側へ正しく routing されている。
+ - [ ] 要件 C11: いずれの build_target にも `plugin-plans/plugin-dev-planner/` / `plugin-plans/skill-intake/` 配下が含まれない。
+-- [ ] `envelope-draft/plugin.json` が harness-creator 現行値を無変更で mirror し、その旨が明示されている。
++- [ ] `envelope-draft/plugin.json` が inventory surface component の entry_points.skills/commands/agents を明示し、その旨が handoff / inventory note と整合している。
+ 
+ ## 参照情報
+ - `references/component-domain.md` / `references/phase-lifecycle.md` / `references/plugin-creator-contract.md`。
+diff --git a/plugin-plans/finish/harness-creator/phase-05-implementation.md b/plugin-plans/finish/harness-creator/phase-05-implementation.md
+index 17e3f62..e49250d 100644
+--- a/plugin-plans/finish/harness-creator/phase-05-implementation.md
++++ b/plugin-plans/finish/harness-creator/phase-05-implementation.md
+@@ -24,30 +24,30 @@ build は phase 順ではなく依存 top-sort 順に走る (共有 script/gate
+ ## 前提条件
+ - P04 で C01/C06 の criteria が Red で確定している。
+ - `handoff-run-plugin-dev-plan.json` の routes が inventory 由来の依存 top-sort 順で用意されている (順序の正本は routes[] 配列そのもの)。
+-- executor-backed builder (run-skill-create / run-build-skill) が利用可能。contract-only builder (parent-skill-build / plugin-scaffold) は単独実行体ではなく routing 語彙として扱い、`handoff-run-plugin-dev-plan.json.open_issues.GAP-SCRIPT-BUILDER` の代替生成手順を通す。
++- executor-backed builder (run-skill-create / run-build-skill) が利用可能。contract-only builder (parent-skill-build / plugin-scaffold) は run-build-skill の kind ではなく planner 上の routing 語彙として扱い、script route は `/capability-build --handoff ... --route-id ...` から `plugins/harness-creator/scripts/build-script-route.py` へ委譲する。
+ - `requires_parent_scaffold` は DAG 依存ではなく配置境界を示す二相 build 指示である。C03/C04/C05 の script route を処理する executor は、親 skill C01 のディレクトリが未生成なら空 scaffold を先に作り、script 配置後に C01 本体 build で同じディレクトリを上書き統合する。
+ 
+ ## ドメイン知識
+ - build 順の不変条件: inventory DAG の top-sort 順 (依存先が常に先。phase 番号順ではない)。具体的な線形順序は routes[] 配列を正本とし、本文は依存辺の説明に留める。
+-- builder 4 種の実行実体差: `builder_status` が executor-backed (run-skill-create/run-build-skill=実行 skill 実在) / contract-only (parent-skill-build/plugin-scaffold=routing 語彙のみ・`gap_ref` が `open_issues` を参照) を区別する。contract-only route は build 不能ではなく、現時点では run-build-skill 側の代替生成またはユーザー承認済み手作業に展開される対象である。
+-- contract-only 代替生成の境界: plugin-root script (C08/C09) は `build_target` へ直接生成、skill 配下 script (C03/C04/C05) は `requires_parent_scaffold` が指す C01 の配下へ生成する。builder 自体の恒久実装は本 plan 外だが、代替生成の実行ログは build_trace の必須証跡に含める。
++- builder 4 種の実行実体差: `builder_status` が executor-backed (run-skill-create/run-build-skill=実行 skill 実在) / contract-only (parent-skill-build/plugin-scaffold=planner routing 語彙・`gap_ref` が `open_issues` を参照) を区別する。contract-only script route は build 不能ではなく、`build-script-route.py` が実体確認または最小 scaffold 生成を行う。
++- contract-only script route の実行境界: plugin-root script (C08/C09) は `build_target` へ直接生成、skill 配下 script (C03/C04/C05) は `requires_parent_scaffold` が指す C01 の配下へ生成する。生成結果は route-build-report の必須証跡に含める。
+ - Green 判定の主体は P04 で固定した criteria (実装が判定基準を都合よく再定義しない)。
+ - self-build 注意: C06 は builder==build_target の自己適用 build (run-skill-create が run-skill-create 自身を更新する)。build 中は旧仕様で走ることを前提に、開始前に現行版を git commit/stash で退避し、完了後に C8 golden example (P07) で再検証する。
+ 
+ ## 成果物
+ - 全 11 component の実体 (skill 更新 2 件/command 更新 2 件/script 5 件/sub-agent 1 件/hook 1 件) が build_target に生成された状態。
+ - `envelope-draft/plugin.json` (harness-creator 側は無変更、plugin-dev-planner 側は C10/C11 の build スコープ内で entry_points.agents[]/hooks.PreToolUse[] へ登録) を基にした実 manifest。
+-- contract-only route を代替生成した場合は、どの executor-backed 手順へ展開したかを build trace に残した状態。
++- contract-only script route を `build-script-route.py` で実行した場合は、実体確認/生成結果を route-build-report に残した状態。
+ 
+ ## スコープ外
+ - カバレッジ拡充・テスト網羅 (P06)。
+ - purpose 受入判定 (P07)・SSOT 重複整理 (P08)。
+-- builder 自体の改修 (harness-creator 側の責務・contract-only builder の gap は `open_issues` へ起票済みで本 plan の実装スコープ外)。
++- run-build-skill の kind 集合そのものへ `script` kind を追加する改修。
+ 
+ ## 完了チェックリスト
+ - [ ] 依存 top-sort 順に全 11 component が build され、C01/C06 の criteria が Green (受入テスト PASS) になる。
+ - [ ] build 実体パスが inventory の build_target と一致する (cross-plugin routing: plugin-dev-planner 側 7 件・harness-creator 側 4 件)。
+-- [ ] contract-only builder の route は `GAP-SCRIPT-BUILDER` を参照し、代替生成手順と生成結果が build trace に記録されている。
++- [ ] contract-only builder の script route は `GAP-SCRIPT-BUILDER` を参照し、`build-script-route.py` の実行結果が route-build-report に記録されている。
+ - [ ] 共有 script C08/C09 が `plugins/harness-creator/scripts/` (plugin-root) へ実体化されている (単一 skill 配下に退化していない)。
+ - [ ] plugin-dev-planner 側 manifest へ C10 (entry_points.agents[]) / C11 (hooks.PreToolUse[]) の登録が反映されている。
+ 
+diff --git a/plugin-plans/finish/harness-creator/phase-07-acceptance-criteria.md b/plugin-plans/finish/harness-creator/phase-07-acceptance-criteria.md
+index ed3ae86..7b5f944 100644
+--- a/plugin-plans/finish/harness-creator/phase-07-acceptance-criteria.md
++++ b/plugin-plans/finish/harness-creator/phase-07-acceptance-criteria.md
+@@ -31,7 +31,7 @@ applicability:
+ - checklist→component 対応: C1→C01/C02、C2→C04、C3→C06/C07、C4→C08、C5→C01、C6→C01/C03/C09、C7→C03/C05、C8/C9→複数 component を跨ぐ一巡実演 (下記)、要件 C10/C11→build_target routing (全 component 横断)、C12→plan-scoped ゲート exit0。
+ - build DAG と runtime 受入フローは別物として扱う。C08 は C06/C07 が build を始める前の preflight gate、component C11 (enforce-provenance-chain hook) は C01 の `--mode update` を呼ぶ前の PreToolUse fail-closed gate、C05/component C10 (merge-review sub-agent) は update 後の出力検証である。
+ - C7 (provenance chain 検証) の `verify_by` が `reasoning` である根拠: C7 の実体 C05 (check-provenance-chain.py) は単サイクル内で exit code を持つ機械ゲートだが、C7 が要求する intake→goal-spec→plan→handoff→improvement-handoff→次サイクル goal-spec の end-to-end chain は複数サイクル (session 跨ぎ) を要し単一 build 内の test では完走できないため reasoning とする。単サイクルで機械検証可能な部分 (C05 の exit0/exit1・pass marker digest 一致) は C12 (plan-scoped ゲート exit0) 側で test 済みであり、C4 (routes↔inventory 突合=単サイクル完結の機械ゲート・`verify_by:test`) との非対称はこの検査範囲差に由来する。
+-- C8 の golden example: 題材 component は `demo-boundary-skill` (component_kind=skill) に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json` と `next-action.json`、期待生成物は `fixtures/c8-new-flow/expected-goal-spec.json`・`expected-handoff-run-plugin-dev-plan.json`・`expected-route-component-parity.txt`。実行順は `C01` が intake_json を消費して goal-spec.source_intake を記録 → `C02` が command 経由で起動できることを確認 → `C07` が routes[] を選択 → `C08` が routes↔inventory を preflight PASS (期待 exit_code=0) → `C06` が brief_path を再ヒアリングなしで消費して build dispatch へ進む。適用例 (intake 提供) の起動コマンドは `with-intake-command.txt` で source_intake=intake.json を期待値にし、未提供 fallback は同 fixture の `without-intake-command.txt` で source_intake=null を期待値にする。skill kind 偏重を避けるため、`demo-boundary-skill` 付随の script route 1 本も `fixtures/c8-new-flow/expected-script-route.json` へ fixture 化し、`C07 --from-handoff fixtures/c8-new-flow/expected-handoff-run-plugin-dev-plan.json --route C02` (この `--route C02` は demo fixture のローカル route id=`demo-boundary-check` script を指し、本 plan の component C02=`plugin-dev-plan` command とは別名前空間) 経路 → contract-only builder の代替生成手順 (build_target が既存ファイルの場合の update-in-place 分岐を含む) → 検査までを一巡ログに含める。
++- C8 の golden example: 題材 component は `demo-boundary-skill` (component_kind=skill) に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c8-new-flow/intake.json` と `next-action.json`、期待生成物は `fixtures/c8-new-flow/expected-goal-spec.json`・`expected-handoff-run-plugin-dev-plan.json`・`expected-route-component-parity.txt`。実行順は `C01` が intake_json を消費して goal-spec.source_intake を記録 → `C02` が command 経由で起動できることを確認 → `C07` が routes[] を選択 → `C08` が routes↔inventory を preflight PASS (期待 exit_code=0) → `C06` が brief_path を再ヒアリングなしで消費して build dispatch へ進む。適用例 (intake 提供) の起動コマンドは `with-intake-command.txt` で source_intake=intake.json を期待値にし、未提供 fallback は同 fixture の `without-intake-command.txt` で source_intake=null を期待値にする。skill kind 偏重を避けるため、`demo-boundary-skill` 付随の script route 1 本も `fixtures/c8-new-flow/expected-script-route.json` へ fixture 化し、`C07 --from-handoff fixtures/c8-new-flow/expected-handoff-run-plugin-dev-plan.json --route C02` (この `--route C02` は demo fixture のローカル route id=`demo-boundary-check` script を指し、本 plan の component C02=`plugin-dev-plan` command とは別名前空間) 経路 → `build-script-route.py` による script route 実体確認/生成 (build_target が既存ファイルの場合の非破壊確認分岐を含む) → 検査までを一巡ログに含める。
+ - C9 の golden example: 題材 component は C8 と同じ `demo-boundary-skill` に固定する。入力 fixture は `plugin-plans/harness-creator/fixtures/c9-update-flow/improvement-handoff.json` と、C8 で得た `expected-goal-spec.json`。期待生成物は `expected-updated-goal-spec.json`・`expected-provenance-chain.txt`・`expected-improvement-review.txt`・`expected-hook-block.txt`。実行順は `C09` が improvement-handoff を emit → `C04`/`C05` を実行し exit0 時に `<plan_dir>/.gate/check-intake-consumption.pass.json`・`<plan_dir>/.gate/check-provenance-chain.pass.json` (検証対象 artifact の sha256 digest を焼いた pass marker) を生成 → component `C11` (enforce-provenance-chain hook) が `--mode update` 呼び出し前に C04/C05 の pass marker (marker 記載 sha256 == 現物 artifact sha256) を要求し、欠落/digest 不一致ケースでは exit2 block → pass marker 有効ケースで `C01` が source_improvement を記録 → `C03` (check-plugin-goal-spec.py) が再生成 goal-spec の source_intake/source_improvement provenance 検査を PASS → `C05` が provenance chain を検証 → component `C10` (merge-review sub-agent) が意味的忠実性を PASS → routes[] に戻して build 再実行へ進む。
+ 
+ ## 成果物
+diff --git a/plugin-plans/finish/harness-creator/phase-08-refactoring.md b/plugin-plans/finish/harness-creator/phase-08-refactoring.md
+index dd302e6..4804075 100644
+--- a/plugin-plans/finish/harness-creator/phase-08-refactoring.md
++++ b/plugin-plans/finish/harness-creator/phase-08-refactoring.md
+@@ -29,7 +29,7 @@ applicability:
+ ## ドメイン知識
+ - 上書き一本化: 重複を発見したら両方残さず一方を正本に確定し、他方は削除して import/参照へ置換する (共存縮退は禁止)。
+ - 第二消費者 = 正本を複製せず import/参照で共有する側 (C08/C09 は plugin-root 実体が正本。`pipeline-boundary-contract.md` は C01/C05/C08/C09/C11 が参照する側=inventory `plugin_level_surfaces.references_config_assets` の列挙と一致、`improvement-handoff.schema.json` は C09 emit 契約を正本に C01/C05/C10/C11 が参照する側)。
+-- `pipeline-boundary-contract.md` の対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 `--mode update` は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 の create/build は非破壊・再実行可能ゆえ advisory gate)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する。
++- `pipeline-boundary-contract.md` の対応表には境界契約ごとに enforcement_level 列 (fail-closed hook / advisory gate / prompt-only) と選定理由の記録を必須とする (実例: E3 `--mode update` は既存 plan の破壊的再生成ゆえ fail-closed hook (C11) 強制、E1/E2 は各 consumer 内の deterministic gate / route executor が明示入力を fail-closed 検証するため追加 hook は置かない)。状態 ledger 化・boundary-descriptor 化等の代替設計を不採用とする場合は理由を同リファレンスへ記録する。
+ - tdd-refactor の不変条件: リファクタリング中もテスト緑を維持する (赤に戻ったら即巻き戻し)。
+ 
+ ## 成果物
+diff --git a/plugins/harness-creator/commands/capability-build.md b/plugins/harness-creator/commands/capability-build.md
+index f18f575..d17cbb9 100644
+--- a/plugins/harness-creator/commands/capability-build.md
++++ b/plugins/harness-creator/commands/capability-build.md
+@@ -1,5 +1,5 @@
+ ---
+-description: Capability (Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow) を新規作成または更新する統一入口。run-build-skill Skill を起動し、kind に応じた scaffold とリソースを生成する。
++description: Capability (Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow) を新規作成または更新する統一入口。通常 kind は run-build-skill Skill、script route は build-script-route.py に委譲する。
+ argument-hint: "<kind> <name> [options] | --handoff <path> --route-id <Cxx>  例: skill run-foo / agent reviewer-bar / --handoff plugin-plans/x/handoff-run-plugin-dev-plan.json --route-id C09"
+ allowed-tools: Read, Skill, Bash(python3 *)
+ name: capability-build
+@@ -12,17 +12,17 @@ entrypoint: run-build-skill
+ 
+ # /capability-build
+ 
+-`$ARGUMENTS` を `<kind> <name> [options]` または E2 の `--handoff <path> --route-id <Cxx>` としてパースし、`run-build-skill` Skill に委譲する薄いラッパ。Capability 種別の正規化・route 解析・前提チェックのみを担当し、実体ロジックは Skill 側で実行する (run-build-skill 本体は無改修)。
++`$ARGUMENTS` を `<kind> <name> [options]` または E2 の `--handoff <path> --route-id <Cxx>` としてパースする薄いラッパ。Capability 種別の正規化・route 解析・前提チェックのみを担当し、7 capability kind は `run-build-skill` Skill、`build_kind=script` route は `build-script-route.py` に委譲する (run-build-skill 本体は無改修)。
+ 
+ ## 振る舞い
+ 
+ 1. **入力形態の判別**: `--handoff` / `--route-id` があれば **route モード** (E2・下記 1r)、無ければ従来の **明示モード** (`<kind> <name>`・下記 1e)。
+    - **1e (明示モード)**: `$ARGUMENTS` を空白区切りでパース。`kind` が `skill|agent|hook|command|plugin-composition|prompt|workflow` の 7 capability kind (この 7 種が正本) のいずれでなければ利用可能 kind を表示して停止。参照する `capability-manifest.schema.json#/definitions/commonCore.kind` はこの 7 種に加え skill sub-role prefix (`run/ref/assign/wrap/delegate`) も含む**上位集合**なので kind 受理判定にはそのまま使わず、本文の 7 種を厳密列挙として突合する (例: `run` は sub-role prefix であって capability kind ではない)。
+      - `kind=skill` は scaffold 止まり。単体スキルを評価・統治まで端から端で作るなら `/run-skill-create` を使う (標準フローの Step2 も skill component は run-skill-create へ回す)。本 command は主に非 skill kind (agent/hook/command/prompt/workflow/plugin-composition) の入口。
+-   - **1r (route モード / E2)**: `--handoff` の JSON を Read し `routes[]` から `--route-id` に一致する route を取り出す。まず `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py <handoff>)` で routes↔inventory 一致を preflight し (exit0 でなければ停止)、次に route の `build_kind` を `kind`、`build_args`(`name`/`script_path`)・`build_target` を明示引数として抽出する。`build_kind=script` の route は GAP-SCRIPT-BUILDER の代替生成手順に従い `script_path`/`build_target` を run-build-skill へ渡して直接生成する (parent-skill-build/plugin-scaffold は contract-only ゆえ run-build-skill 内代替)。
++   - **1r (route モード / E2)**: `--handoff` の JSON を Read し `routes[]` から `--route-id` に一致する route を取り出す。まず `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py <handoff>)` で routes↔inventory 一致を preflight し (exit0 でなければ停止)、次に route の `build_kind` を `kind`、`build_args`(`name`/`script_path`)・`build_target` を明示引数として抽出する。`build_kind=script` の route は run-build-skill の 7 capability kind 外なので、専用 executor `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/build-script-route.py --handoff <handoff> --route-id <Cxx>)` に委譲する。
+ 2. `name` の命名規約を `ref-skill-naming-convention` 準拠で軽く検証 (run-/ref-/assign- prefix など)。route モードでは route.name を用いる。
+-3. `run-build-skill` Skill を起動し、引数として `kind / name / options`(route モードでは加えて `script_path` / `build_target`) を渡す。
+-4. 生成後に `validate-build-trace.py` を実行し、PASS/FAIL を報告。route モードでは併せて `check-route-component-parity.py` の exit0 を build_trace evidence に記録する。
++3. `build_kind=script` は `build-script-route.py` が実行し、既存ファイルは非破壊で確認、新規ファイルは標準 Python scaffold を作成するが route status は `skipped` として後続依存を進めない。どちらの場合も `eval-log/<slug>/build/route-<id>.json` を書いて `validate-route-build-reports.py --route <id>` を通す。7 capability kind の route は `run-build-skill` Skill を起動し、引数として `kind / name / options`(route モードでは加えて `build_target`) を渡し、同じ route-build-report 契約に従って route 結果を記録する。
++4. 7 capability kind の生成後は `validate-build-trace.py` を実行し、PASS/FAIL を報告する。script route は route-build-report を書き、`validate-route-build-reports.py --route <id>` の exit0 を確認する。route モードでは `check-route-component-parity.py` の exit0 を実行証跡に含める。
+ 
+ ## 引数
+ 
+@@ -39,7 +39,8 @@ entrypoint: run-build-skill
+ - kind 不正: 受理 kind 一覧を表示
+ - name 規約違反: `ref-skill-naming-convention` の該当節を案内
+ - 既存と衝突: `--update` 未指定時は停止し、現状パスを表示
++- script route の依存未完了: `build-script-route.py` が依存 route report 欠落 / failure を検出して停止
+ 
+ ## 注意
+ 
+-- 本 command は scaffold のみ。設計品質は `/capability-review` で別途評価する。
++- 本 command は scaffold / route 消費のみ。設計品質は `/capability-review` で別途評価する。
+diff --git a/plugins/harness-creator/references/pipeline-boundary-contract.md b/plugins/harness-creator/references/pipeline-boundary-contract.md
+index 1a9b384..8da4947 100644
+--- a/plugins/harness-creator/references/pipeline-boundary-contract.md
++++ b/plugins/harness-creator/references/pipeline-boundary-contract.md
+@@ -3,13 +3,15 @@
+ > skill-intake → plugin-dev-planner → harness-creator build → 改善 という量産パイプラインの
+ > 3 つの段境界における producer/consumer の機械契約・検証ゲート・provenance を単一箇所に集約する
+ > 参照正本。各段の**実行は分離**したまま (自動連鎖 orchestrator は設けない)、境界の *契約* だけを固める。
++>
++> **各段を実際に起動するコマンド/スキルの表記・実態・用途は `pipeline-command-reference.md` を参照** (本ファイルは契約、あちらは操作手順)。
+ 
+ ## 用語
+ 
+ - **E1 (intake→goal-spec)**: skill-intake の `intake.json` を plugin-dev-planner が消費し goal-spec へ源泉反映する境界。
+ - **E2 (plan→build)**: plugin-dev-planner の `handoff-run-plugin-dev-plan.json` の `routes[]` を harness-creator の build 実行入口が消費する境界。
+ - **E3 (改善→plan)**: 改善成果物 (run-elegant-review 等) を `improvement-handoff.json` に正規化し、`run-plugin-dev-plan --mode update` が受理して plan へ還流する境界。
+-- **provenance chain**: `intake.json → goal-spec(source_intake) → plan → build handoff → 改善成果物(source_improvement) → 次サイクル goal-spec` の 5 ノード追跡可能性。
++- **provenance chain**: `intake.json → goal-spec(source_intake) → plan → build handoff → 改善成果物(source_improvement)` の 5 ノードと、それを読む次サイクル goal-spec の逆リンク追跡可能性。
+ 
+ ## 境界ごとの producer / consumer / gate
+ 
+@@ -21,13 +23,13 @@
+ 
+ ## 契約スキーマ
+ 
+-- `improvement-handoff.json`: `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json` (schema_version / source{kind,ref} / target_plugin_slug / plan_dir / findings[] / provenance)。
++- `improvement-handoff.json`: `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json` (schema_version / source{kind,ref} / target_plugin_slug / plan_dir / findings[] / provenance{source_intake, prev_goal_spec, origin_request{kind,ref}})。
+ - goal-spec provenance フィールド: `plugin-goal-spec.schema.json` の `source_intake` / `source_improvement` (任意・欠落は後方互換で WARN 受理)。
+ 
+ ## 新規作成フロー一巡 (E1→E2)
+ 
+-1. `intake.json` を用意し `/plugin-dev-plan "<構想>" --intake-json <intake.json>` を起動 (C02→C01)。
+-2. R1 が §0/§3/split_candidates を反映し `source_intake` を記録、`check-intake-consumption.py` で未反映 0 を確認 (C04)。
++1. `intake.json` と `next-action.json` を用意し `/plugin-dev-plan "<構想>" --intake-json <intake.json> --next-action-json <next-action.json>` を起動 (C02→C01)。
++2. R1 が §0/§3 と `split_candidates[]` を反映し `source_intake` を記録、`check-intake-consumption.py --next-action ... --strict` で未反映 0 を確認 (C04)。
+ 3. plan 生成後、`handoff-run-plugin-dev-plan.json` を得る。
+ 4. `/capability-build --handoff <handoff> --route-id <Cxx>` で route を消費 (C07)。build 前に `check-route-component-parity.py` を preflight (C08)。
+ 5. skill route は `run-skill-create` が `brief_path` 経由で再ヒアリングなしに build (C06)。
+@@ -36,10 +38,19 @@
+ 
+ 1. 改善成果物 (例 `run-elegant-review` の findings) を `emit-improvement-handoff.py` で `improvement-handoff.json` へ正規化 (C09)。
+ 2. 現 goal-spec に対し `check-intake-consumption.py` / `check-provenance-chain.py` を `--marker-dir <PLAN_DIR>` 付きで PASS させ、C04/C05 の pass marker (goal-spec digest pin) を作る。
+-3. `/plugin-dev-plan "<構想>" --mode update --improvement-handoff <handoff>` を起動 → `enforce-provenance-chain` hook (C11) が PreToolUse で marker の存在と digest 一致を確認 (欠落/stale なら exit2 block)。
++3. `/plugin-dev-plan "<構想>" --mode update --out-dir <PLAN_DIR> --improvement-handoff <handoff>` を起動 → `enforce-provenance-chain` hook (C11) が PreToolUse で marker の存在と digest 一致を確認 (欠落/stale なら exit2 block)。`--out-dir` が無くても hook は handoff の `plan_dir` を読んで検査する。
+ 4. C01 が `findings[]` を反映し `source_improvement` を記録、`check-provenance-chain.py` で断裂なしを確認 (C05)。
+ 5. `plugin-dev-plan-improvement-reviewer` (C10) が改善成果物と再生成 plan の意味的整合を独立レビューし verdict を返す。
+ 
++## 利用者フィードバックの人間ブリッジ (E3 の起点辺)
++
++`run-skill-feedback` が収集し Notion 改善要望 DB に溜めた利用者要望を E3 (改善→plan) の起点へ繋ぐ辺は、**機械の自動 read-back ではなく人間工程**として定義する。この辺を契約に明記することで、パイプラインの feedback 面を漏れなく (MECE) 被覆する。
++
++- **意図的分離の記録**: Notion 改善要望 DB は**人間可視の優先度台帳**であり provenance chain のノードではない (chain 5 ノードに Notion を含まない)。機械が改善要望 DB を直接 query して plan 再生成を自動発火する経路は、goal-spec 制約6 (Notion は BYO config 依存で fail-open になりやすい) と片方向依存原則により**意図的に採らない**。read-back 辺の不在は設計漏れではなく設計判断である。
++- **橋渡し手順 (正本)**: `feedback-to-improvement-runbook.md`。Stage 2 (トリアージ: rollup+優先度で人間が着手要望を選ぶ) → Stage 3 (`emit-improvement-handoff --source-kind manual --source-ref <notion url> --origin-request-ref <notion url>`) → Stage 4 (`/plugin-dev-plan --mode update --out-dir <PLAN_DIR> --improvement-handoff <handoff>`) → Stage 6 (対応ステータス→完了 を人手更新)。
++- **起点追跡**: improvement-handoff の `provenance.origin_request {kind, ref}` に起点 Notion 要望ページを記録し、要望→改善→クローズの帰路を追跡可能にする。
++- **in-place 改善との棲み分け**: `/skill-improve <capability-path>` は `run-elegant-review` を起動して対象を in-place パッチする**別系統**であり、Notion / rollup を読まず、`--mode update` の plan 再生成にも到達しない (plan-backed plugin では plan ドリフトに注意)。Notion 起点の改善は必ず本ブリッジ (source-kind=manual) を経ること。
++
+ ## 二層分離 (機械層 / 意味層)
+ 
+ - 機械層: C04 (反映 signal 重複)・C05 (provenance 構造連続性)・C08 (routes↔inventory parity)・C11 (marker digest pin) が exit code で fail-closed 判定する。
+diff --git a/plugins/harness-creator/references/resource-map.yaml b/plugins/harness-creator/references/resource-map.yaml
+index 81e7649..4920316 100644
+--- a/plugins/harness-creator/references/resource-map.yaml
++++ b/plugins/harness-creator/references/resource-map.yaml
+@@ -61,6 +61,33 @@ references:
+       - run-skill-create
+     relates_to: [orchestrate-gate-pattern]
+ 
++  - id: pipeline-boundary-contract
++    path: references/pipeline-boundary-contract.md
++    kind: reference
++    read_when:
++      - "skill-intake → plugin-dev-planner → harness-creator の E1/E2/E3 境界契約を確認する時"
++      - "intake.json / handoff-run-plugin-dev-plan.json / improvement-handoff.json の producer-consumer を検証する時"
++      - "Notion 改善要望 DB を改善計画へ戻す設計判断を確認する時"
++    produced_by: team-platform
++    consumed_by:
++      - run-build-skill
++      - run-elegant-review
++      - run-skill-feedback
++      - run-plugin-package-check
++    relates_to: [feedback-to-improvement-runbook, orchestrate-gate-pattern]
++
++  - id: feedback-to-improvement-runbook
++    path: references/feedback-to-improvement-runbook.md
++    kind: reference
++    read_when:
++      - "run-skill-feedback が Notion に収集した改善要望を plugin-dev-planner --mode update へ橋渡しする時"
++      - "Notion 改善要望 DB の rollup を機械 read-back せず人間工程で扱う理由を確認する時"
++    produced_by: team-platform
++    consumed_by:
++      - run-skill-feedback
++      - run-elegant-review
++    relates_to: [pipeline-boundary-contract]
++
+ read_policy:
+   default: "lazy (read_when 条件成立時のみ load)"
+   override: "orchestrator が明示的に require した場合は eager load 可"
+diff --git a/plugins/harness-creator/scripts/emit-improvement-handoff.py b/plugins/harness-creator/scripts/emit-improvement-handoff.py
+index 84e4037..b188238 100644
+--- a/plugins/harness-creator/scripts/emit-improvement-handoff.py
++++ b/plugins/harness-creator/scripts/emit-improvement-handoff.py
+@@ -3,7 +3,7 @@
+ # name: emit-improvement-handoff
+ # purpose: E3 境界の emitter。改善成果物 (run-elegant-review / content-review 等の findings) と routing 引数から improvement-handoff.json を正規化生成し、run-plugin-dev-plan --mode update (C01) が受理できる構造化入力を produce する。
+ # inputs:
+-#   - argv: --source-kind K --source-ref R --target-plugin-slug S --plan-dir D --findings F.json [--schema-version V] [--generated-by G] [--source-intake I] [--prev-goal-spec P] [-o OUT]
++#   - argv: --source-kind K --source-ref R --target-plugin-slug S --plan-dir D --findings F.json [--schema-version V] [--generated-by G] [--source-intake I] [--prev-goal-spec P] [--origin-request-kind OK] [--origin-request-ref OR] [-o OUT]
+ # outputs:
+ #   - stdout: OUT 省略時は生成 JSON / 指定時は OK summary
+ #   - stderr: validation error
+@@ -33,6 +33,7 @@ from pathlib import Path
+ SCHEMA_VERSION_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+ SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+ SOURCE_KINDS = ("elegant-review", "content-review", "evaluator", "manual")
++ORIGIN_REQUEST_KINDS = ("notion-improvement-request", "slack", "verbal", "other")
+ SEVERITIES = ("high", "medium", "low")
+ 
+ 
+@@ -68,11 +69,17 @@ def build_handoff(args, findings: list[dict]) -> dict:
+     }
+     if args.generated_by:
+         handoff["source"]["generated_by"] = args.generated_by
++    provenance: dict = {}
+     if args.source_intake is not None or args.prev_goal_spec is not None:
+-        handoff["provenance"] = {
+-            "source_intake": args.source_intake,
+-            "prev_goal_spec": args.prev_goal_spec,
++        provenance["source_intake"] = args.source_intake
++        provenance["prev_goal_spec"] = args.prev_goal_spec
++    if args.origin_request_ref is not None:
++        provenance["origin_request"] = {
++            "kind": args.origin_request_kind,
++            "ref": args.origin_request_ref,
+         }
++    if provenance:
++        handoff["provenance"] = provenance
+     return handoff
+ 
+ 
+@@ -105,6 +112,17 @@ def validate(handoff: dict) -> list[str]:
+                 errors.append(f"{prefix}.severity は {list(SEVERITIES)} のいずれか")
+             if not str(f.get("summary", "")).strip():
+                 errors.append(f"{prefix}.summary が空")
++    origin = (handoff.get("provenance") or {}).get("origin_request")
++    if isinstance(source, dict) and source.get("kind") == "manual" and origin is None:
++        errors.append("source.kind=manual では provenance.origin_request が必須")
++    if origin is not None:
++        if not isinstance(origin, dict):
++            errors.append("provenance.origin_request が object でない")
++        else:
++            if origin.get("kind") not in ORIGIN_REQUEST_KINDS:
++                errors.append(f"provenance.origin_request.kind は {list(ORIGIN_REQUEST_KINDS)} のいずれか")
++            if not str(origin.get("ref", "")).strip():
++                errors.append("provenance.origin_request.ref が非空 string でない")
+     return errors
+ 
+ 
+@@ -119,6 +137,11 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--generated-by", default=None)
+     ap.add_argument("--source-intake", default=None, help="起点 intake.json 参照 (provenance)")
+     ap.add_argument("--prev-goal-spec", default=None, help="改善前 goal-spec.json 参照 (provenance)")
++    ap.add_argument("--origin-request-kind", default="notion-improvement-request",
++                    choices=ORIGIN_REQUEST_KINDS,
++                    help="改善の発端種別 (provenance.origin_request.kind)。--origin-request-ref 指定時に有効")
++    ap.add_argument("--origin-request-ref", default=None,
++                    help="改善の発端への参照 (Notion 改善要望ページ URL 等)。人間ブリッジで起点要望を追跡する (provenance.origin_request.ref)")
+     ap.add_argument("-o", "--output", default=None, help="出力先 (省略時 stdout)")
+     args = ap.parse_args(argv)
+ 
+diff --git a/plugins/harness-creator/skills/run-build-skill/references/route-build-report.md b/plugins/harness-creator/skills/run-build-skill/references/route-build-report.md
+index a233564..229b65f 100644
+--- a/plugins/harness-creator/skills/run-build-skill/references/route-build-report.md
++++ b/plugins/harness-creator/skills/run-build-skill/references/route-build-report.md
+@@ -18,9 +18,9 @@ eval-log/<target_plugin_slug>/build/route-<route_id>.json
+ 
+ ## 書く時機・読む時機 (受け渡しプロトコル)
+ 
+-1. **着手前 (read)**: route R の `depends_on` 各 id について `route-<id>.json` を読み、`handover` / `deviations` を R の build 入力に反映する。読んだパスは R 自身のレポートの `inputs_consumed` に列挙する。依存レポートが欠落 or `status=failure` なら着手せず停止する (fail-closed)。
++1. **着手前 (read)**: route R の `depends_on` 各 id について `route-<id>.json` を読み、`handover` / `deviations` を R の build 入力に反映する。読んだパスは R 自身のレポートの `inputs_consumed` に列挙する。依存レポートが欠落、または依存 route の `status` が `success` 以外なら着手せず停止する (fail-closed)。
+ 2. **完了後 (write)**: `schemas/route-build-report.schema.json` 準拠でレポートを書き、`validate-route-build-reports.py --handoff <path> --route <id>` exit0 を確認してから次 route へ進む。
+-3. **全 route 終端**: `validate-route-build-reports.py --handoff <path> --complete` exit0 で「全 route にレポートがあり failure ゼロ・orphan ゼロ」を機械確認する。
++3. **全 route 終端**: `validate-route-build-reports.py --handoff <path> --complete` exit0 で「全 route にレポートがあり failure ゼロ・orphan ゼロ」を機械確認する。依存を持つ route は dependency validator により `success` 以外の依存を拒否する。
+ 
+ ```bash
+ python3 "$SKILL_DIR/scripts/validate-route-build-reports.py" \
+diff --git a/plugins/harness-creator/skills/run-build-skill/schemas/route-build-report.schema.json b/plugins/harness-creator/skills/run-build-skill/schemas/route-build-report.schema.json
+index 67d062c..ad0fab5 100644
+--- a/plugins/harness-creator/skills/run-build-skill/schemas/route-build-report.schema.json
++++ b/plugins/harness-creator/skills/run-build-skill/schemas/route-build-report.schema.json
+@@ -45,7 +45,7 @@
+     "status": {
+       "type": "string",
+       "enum": ["success", "failure", "skipped"],
+-      "description": "success=build 完了+当該 route のゲート緑 / failure=中断 (後続 route は着手不可) / skipped=意図的スキップ (skip_reason 必須)"
++      "description": "success=build 完了+当該 route のゲート緑 / failure=中断 (後続 route は着手不可) / skipped=意図的スキップまたは最小 scaffold のみ (skip_reason 必須、依存 route は着手不可)"
+     },
+     "skip_reason": {
+       "type": "string",
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py b/plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py
+index 83f5910..e49b62e 100644
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py
+@@ -108,7 +108,15 @@ def validate_report_shape(report: object) -> list[str]:
+     return findings
+ 
+ 
+-def validate_against_route(report: dict, route: dict, slug: str) -> list[str]:
++def _repo_root_from_handoff_path(path: Path) -> Path:
++    resolved = path.resolve()
++    if "plugin-plans" in resolved.parts:
++        idx = resolved.parts.index("plugin-plans")
++        return Path(*resolved.parts[:idx]) if idx else Path("/")
++    return Path.cwd()
++
++
++def validate_against_route(report: dict, route: dict, slug: str, repo_root: Path | None = None) -> list[str]:
+     """レポートと handoff route の同値性 (route が SSOT・レポートは写し)。"""
+     findings: list[str] = []
+     if report.get("plugin_slug") != slug:
+@@ -116,6 +124,10 @@ def validate_against_route(report: dict, route: dict, slug: str) -> list[str]:
+     for key in ("component_kind", "name", "builder", "build_target"):
+         if report.get(key) != route.get(key):
+             findings.append(f"{key}: handoff route と不一致 (report={report.get(key)!r} route={route.get(key)!r})")
++    if repo_root is not None and report.get("status") == "success":
++        target = repo_root / str(report.get("build_target", ""))
++        if not target.exists():
++            findings.append(f"build_target: success report だが現物が存在しない ({report.get('build_target')})")
+     return findings
+ 
+ 
+@@ -142,17 +154,17 @@ def validate_dependency_chain(report: dict, route: dict, reports_dir: Path, slug
+             findings.extend(f"依存 {e}" for e in errs)
+             continue
+         dep_status = dep_report.get("status")
+-        if dep_status == "failure":
+-            findings.append(f"依存 route {dep_id}: status=failure のまま後続を build している")
+-        elif dep_status not in STATUSES:
++        if dep_status not in STATUSES:
+             findings.append(f"依存 route {dep_id}: status 不正 ({dep_status!r})")
++        elif dep_status != "success":
++            findings.append(f"依存 route {dep_id}: status={dep_status} のまま後続を build している")
+         expected = report_path(slug, dep_id)
+         if expected not in consumed:
+             findings.append(f"inputs_consumed: 依存レポート {expected} の読取宣言が無い")
+     return findings
+ 
+ 
+-def validate_route(handoff: dict, reports_dir: Path, route_id: str) -> list[str]:
++def validate_route(handoff: dict, reports_dir: Path, route_id: str, repo_root: Path | None = None) -> list[str]:
+     slug = handoff.get("target_plugin_slug", "")
+     routes = {r.get("id"): r for r in handoff.get("routes", []) if isinstance(r, dict)}
+     route = routes.get(route_id)
+@@ -164,18 +176,18 @@ def validate_route(handoff: dict, reports_dir: Path, route_id: str) -> list[str]
+     findings = validate_report_shape(report)
+     if report.get("route_id") not in (None, route_id):
+         findings.append(f"route_id: ファイル名 route-{route_id}.json と不一致 ({report.get('route_id')!r})")
+-    findings.extend(validate_against_route(report, route, slug))
++    findings.extend(validate_against_route(report, route, slug, repo_root))
+     findings.extend(validate_dependency_chain(report, route, reports_dir, slug))
+     return findings
+ 
+ 
+-def validate_complete(handoff: dict, reports_dir: Path) -> list[str]:
++def validate_complete(handoff: dict, reports_dir: Path, repo_root: Path | None = None) -> list[str]:
+     slug = handoff.get("target_plugin_slug", "")
+     routes = [r for r in handoff.get("routes", []) if isinstance(r, dict)]
+     findings: list[str] = []
+     for route in routes:
+         rid = route.get("id", "?")
+-        route_findings = validate_route(handoff, reports_dir, rid)
++        route_findings = validate_route(handoff, reports_dir, rid, repo_root)
+         findings.extend(route_findings)
+         if not route_findings:
+             report, _ = _load_report(reports_dir, slug, rid)
+@@ -247,20 +259,23 @@ def _self_test() -> int:
+             return rep
+ 
+         r1, r2 = handoff["routes"]
++        (root / r1["build_target"]).parent.mkdir(parents=True, exist_ok=True)
++        (root / r1["build_target"]).write_text("# lint-a\n", encoding="utf-8")
++        (root / r2["build_target"]).mkdir(parents=True, exist_ok=True)
+         # (1) 依存レポート欠落: C2 は C1 レポートが無いと FAIL
+         (reports_dir / "route-C2.json").write_text(json.dumps(
+             base_report("C2", r2, inputs_consumed=[report_path(slug, "C1")])), encoding="utf-8")
+-        check("C1 欠落で C2 が FAIL", validate_route(handoff, reports_dir, "C2"))
++        check("C1 欠落で C2 が FAIL", validate_route(handoff, reports_dir, "C2", root))
+         # (2) チェーン充足で PASS
+         (reports_dir / "route-C1.json").write_text(json.dumps(
+             base_report("C1", r1, handover="run-b は lint-a の exit code 契約に依存")), encoding="utf-8")
+-        check("C1 単体 PASS", not validate_route(handoff, reports_dir, "C1"))
+-        check("チェーン充足で C2 PASS", not validate_route(handoff, reports_dir, "C2"))
++        check("C1 単体 PASS", not validate_route(handoff, reports_dir, "C1", root))
++        check("チェーン充足で C2 PASS", not validate_route(handoff, reports_dir, "C2", root))
+         # (3) inputs_consumed 未宣言は FAIL
+         (reports_dir / "route-C2.json").write_text(json.dumps(
+             base_report("C2", r2, inputs_consumed=[])), encoding="utf-8")
+         check("読取宣言なしで C2 FAIL",
+-              any("inputs_consumed" in f for f in validate_route(handoff, reports_dir, "C2")))
++              any("inputs_consumed" in f for f in validate_route(handoff, reports_dir, "C2", root)))
+         (reports_dir / "route-C2.json").write_text(json.dumps(
+             base_report("C2", r2, inputs_consumed=[report_path(slug, "C1")])), encoding="utf-8")
+         # (4) success なのに evidence 空は FAIL
+@@ -274,17 +289,26 @@ def _self_test() -> int:
+         # (6) handoff との不一致は FAIL
+         drift = base_report("C1", r1, build_target="plugins/other/x.py")
+         check("build_target drift FAIL", validate_against_route(drift, r1, slug))
+-        # (7) 依存 failure で後続 FAIL
++        missing_target = base_report("C1", r1)
++        (root / r1["build_target"]).unlink()
++        check("success target missing FAIL",
++              any("現物が存在しない" in f for f in validate_against_route(missing_target, r1, slug, root)))
++        (root / r1["build_target"]).write_text("# lint-a\n", encoding="utf-8")
++        # (7) 依存 failure / skipped で後続 FAIL
+         (reports_dir / "route-C1.json").write_text(json.dumps(
+             base_report("C1", r1, status="failure")), encoding="utf-8")
+         check("依存 failure で C2 FAIL",
+-              any("failure" in f for f in validate_route(handoff, reports_dir, "C2")))
++              any("failure" in f for f in validate_route(handoff, reports_dir, "C2", root)))
++        (reports_dir / "route-C1.json").write_text(json.dumps(
++            base_report("C1", r1, status="skipped", skip_reason="domain implementation pending", evidence=[])), encoding="utf-8")
++        check("依存 skipped で C2 FAIL",
++              any("status=skipped" in f for f in validate_route(handoff, reports_dir, "C2", root)))
+         (reports_dir / "route-C1.json").write_text(json.dumps(base_report("C1", r1)), encoding="utf-8")
+         # (8) complete: 全 route 緑で PASS / orphan で FAIL
+-        check("complete PASS", not validate_complete(handoff, reports_dir))
++        check("complete PASS", not validate_complete(handoff, reports_dir, root))
+         (reports_dir / "route-C9.json").write_text(json.dumps(base_report("C9", r1)), encoding="utf-8")
+         check("orphan で complete FAIL",
+-              any("orphan" in f for f in validate_complete(handoff, reports_dir)))
++              any("orphan" in f for f in validate_complete(handoff, reports_dir, root)))
+ 
+     return _emit(not findings, "self-test", findings)
+ 
+@@ -310,17 +334,19 @@ def main(argv: list[str]) -> int:
+             "usage: validate-route-build-reports.py --handoff <handoff.json> (--route <id> | --complete) [--reports-dir DIR]",
+         ]}, ensure_ascii=False))
+         return 2
+-    handoff, err = _load_handoff(Path(handoff_arg))
++    handoff_path = Path(handoff_arg)
++    handoff, err = _load_handoff(handoff_path)
+     if err:
+         print(json.dumps({"valid": False, "mode": "usage", "findings": [err]}, ensure_ascii=False))
+         return 2
+     reports_dir_arg = _opt("--reports-dir")
+     reports_dir = Path(reports_dir_arg) if reports_dir_arg else Path(
+         report_path(handoff["target_plugin_slug"], "C0")).parent
++    repo_root = _repo_root_from_handoff_path(handoff_path)
+     if route_id is not None:
+-        return _emit(not (findings := validate_route(handoff, reports_dir, route_id)),
++        return _emit(not (findings := validate_route(handoff, reports_dir, route_id, repo_root)),
+                      f"route:{route_id}", findings)
+-    return _emit(not (findings := validate_complete(handoff, reports_dir)), "complete", findings)
++    return _emit(not (findings := validate_complete(handoff, reports_dir, repo_root)), "complete", findings)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/plugins/harness-creator/skills/run-skill-feedback/SKILL.md b/plugins/harness-creator/skills/run-skill-feedback/SKILL.md
+index d3c5ae9..a72251b 100644
+--- a/plugins/harness-creator/skills/run-skill-feedback/SKILL.md
++++ b/plugins/harness-creator/skills/run-skill-feedback/SKILL.md
+@@ -76,6 +76,8 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ 利用者が既存スキルに対して「こう直してほしい」と感じた瞬間に発火し、構造化フィードバックを Notion 改善要望 DB へ N:1 relation 付きでプッシュする。スキル一覧の `未対応要望数` rollup が自動更新され、優先度判断シグナルになる。
+ 
++**責務境界**: 本 skill の責務は「要望の**収集**と優先度シグナル化」まで。収集した要望を実際の改善 (plugin-dev-planner の改善計画 → harness 再構築) へ繋ぐのは**人間ブリッジ** (`plugins/harness-creator/references/feedback-to-improvement-runbook.md` Stage 2-3)。本 skill も `未対応要望数` rollup も改善着手を自動発火しない (fail-open 回避のため Notion は機械 SSOT にしない設計)。
++
+ **前提**: 利用者はプラグイン名・スキル名を知らない。「何をしようとしていたか」という目的から逆算して対象を同定してから要望を収集する。
+ 
+ ## 発火条件 (SSOT)
+@@ -243,7 +245,7 @@ token / DB ID は `notion_config.require_or_skip()` 経由 (CLI > env > per-repo
+ ## Additional Resources
+ 
+ - 上流: 利用者の口頭・Slack・PR コメントなど任意の発火源
+-- 下流: スキル一覧 DB の `未対応要望数` rollup → `skill-improve` skill による着手判断
++- 下流 (人間ブリッジ): スキル一覧 DB の `未対応要望数` rollup は**人間の優先度判断シグナル**。着手要望を改善計画へ橋渡しする手順は `plugins/harness-creator/references/feedback-to-improvement-runbook.md` (E3 人間ブリッジ = Stage 2→3→6)。**本 skill / rollup は改善着手を自動発火せず、`/skill-improve` も Notion / rollup を読まない** (機械の自動 read-back は goal-spec 制約6 で意図的に回避)。
+ - スキーマ正本: `doc/notion-schema/improvement-request.schema.json`
+ - 物理スクリプト: `scripts/notion-submit-improvement.py`
+ - 設定ローダー: `plugins/harness-creator/scripts/notion_config.py`（token/DB ID 解決 SSOT）
+diff --git a/plugins/harness-creator/tests/conftest.py b/plugins/harness-creator/tests/conftest.py
+index 0365f29..fbf74b4 100644
+--- a/plugins/harness-creator/tests/conftest.py
++++ b/plugins/harness-creator/tests/conftest.py
+@@ -35,6 +35,11 @@ def emit() -> ModuleType:
+     return _load("emit-improvement-handoff")
+ 
+ 
++@pytest.fixture(scope="session")
++def script_route_builder() -> ModuleType:
++    return _load("build-script-route")
++
++
+ @pytest.fixture(scope="session")
+ def content_lint() -> ModuleType:
+     return _load("lint-agent-prompt-content")
+diff --git a/plugins/harness-creator/tests/test_emit_improvement_handoff.py b/plugins/harness-creator/tests/test_emit_improvement_handoff.py
+index 2bf989b..7c3d496 100644
+--- a/plugins/harness-creator/tests/test_emit_improvement_handoff.py
++++ b/plugins/harness-creator/tests/test_emit_improvement_handoff.py
+@@ -20,6 +20,8 @@ def _args(tmp_path, findings, **over):
+         generated_by=None,
+         source_intake=None,
+         prev_goal_spec=None,
++        origin_request_kind="notion-improvement-request",
++        origin_request_ref=None,
+     )
+     base.update(over)
+     ns = types.SimpleNamespace(**base)
+@@ -82,6 +84,36 @@ def test_build_handoff_includes_provenance_and_generated_by(emit, tmp_path):
+     assert h["provenance"]["prev_goal_spec"] == "prev/goal-spec.json"
+ 
+ 
++def test_build_handoff_records_origin_request(emit, tmp_path):
++    """人間ブリッジ (feedback-to-improvement-runbook Stage 3): 起点 Notion 要望を provenance に刻む。"""
++    ns = _args(tmp_path, _GOOD, source_kind="manual",
++               origin_request_ref="https://notion.so/req-abc")
++    h = emit.build_handoff(ns, emit.normalize_findings(_GOOD))
++    assert h["provenance"]["origin_request"] == {
++        "kind": "notion-improvement-request",
++        "ref": "https://notion.so/req-abc",
++    }
++    assert emit.validate(h) == []
++
++
++def test_build_handoff_omits_origin_request_when_absent(emit, tmp_path):
++    """origin_request 未指定なら provenance ごと省略され後方互換を保つ。"""
++    h = emit.build_handoff(_args(tmp_path, _GOOD), emit.normalize_findings(_GOOD))
++    assert "provenance" not in h
++
++
++def test_validate_manual_requires_origin_request(emit, tmp_path):
++    ns = _args(tmp_path, _GOOD, source_kind="manual")
++    h = emit.build_handoff(ns, emit.normalize_findings(_GOOD))
++    assert any("origin_request" in e for e in emit.validate(h))
++
++
++def test_validate_bad_origin_request_kind(emit, tmp_path):
++    ns = _args(tmp_path, _GOOD, origin_request_ref="r", origin_request_kind="bogus")
++    h = emit.build_handoff(ns, emit.normalize_findings(_GOOD))
++    assert any("origin_request.kind" in e for e in emit.validate(h))
++
++
+ # ─────────────────── validate ───────────────────
+ def test_validate_clean(emit, tmp_path):
+     h = emit.build_handoff(_args(tmp_path, _GOOD), emit.normalize_findings(_GOOD))
+diff --git a/plugins/plugin-dev-planner/commands/plugin-dev-plan.md b/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
+index ad00b97..8e514ca 100644
+--- a/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
++++ b/plugins/plugin-dev-planner/commands/plugin-dev-plan.md
+@@ -1,6 +1,6 @@
+ ---
+ description: プラグイン構想から index+13 フェーズファイル+component-inventory.json の plan を生成したいとき、skill/sub-agent/command/hook/script/harness/manifest を漏れなく分解したいときに使う。
+-argument-hint: "<plugin-concept> [--mode create|update] [--out-dir <path>] [--intake-json <path>] [--improvement-handoff <path>]"
++argument-hint: "<plugin-concept> [--mode create|update] [--out-dir <path>] [--intake-json <path>] [--next-action-json <path>] [--improvement-handoff <path>]"
+ allowed-tools: Read, Write, Edit, Bash(python3 *), Skill, Agent
+ entrypoint: run-plugin-dev-plan
+ name: plugin-dev-plan
+@@ -31,7 +31,8 @@ since: 2026-06-30
+ | `plugin-concept` | yes | — | プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望)。曖昧な場合も停止せず仮 slug + `open_questions` で進める |
+ | `--mode create\|update` | no | `create` | `update` は既存 plan への Edit 差分のみ (全書き換え禁止) |
+ | `--out-dir <path>` | no | `plugin-plans/<plugin-slug>/` | 計画成果物の出力先を明示上書きする (既定は可視・永続の tracked deliverable)。相対パスは repo root 基準。指定値も `goal-spec.plan_dir` に固定する |
+-| `--intake-json <path>` | no | — | skill-intake の `intake.json` を R1 (`intake_json`) へ渡し E1 消費させる (§0/§3/split_candidates を反映し `source_intake` を記録)。未指定なら構想文のみで生成 |
++| `--intake-json <path>` | no | — | skill-intake の `intake.json` を R1 (`intake_json`) へ渡し E1 消費させる (§0/§3 を反映し `source_intake` を記録)。未指定なら構想文のみで生成 |
++| `--next-action-json <path>` | no | — | skill-intake の `next-action.json` を R1 (`next_action_json`) へ渡し、mode P の `split_candidates[]` を初期分解候補として消費させる。`--intake-json` と併用時のみ有効 |
+ | `--improvement-handoff <path>` | no | — | E3 改善成果物 (`improvement-handoff.json`) を R1 (`improvement_handoff`) へ渡す。`--mode update` 時のみ有効で `source_improvement` を記録 |
+ 
+ > ライフサイクル軸は **13 フェーズ固定** (`phase-01-requirements.md` … `phase-13-release.md`)。buildable 実体数 N は `component-inventory.json` の `components[]` 件数として現れ 13 とは独立。ユーザーが具体的本数を求めた場合は `goal-spec.requested_count` に任意記録するが gate 強制しない。
+diff --git a/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py b/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py
+index 72b4b8e..9a24e1d 100644
+--- a/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py
++++ b/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py
+@@ -35,6 +35,7 @@ TRIGGER_TOKENS = ("run-plugin-dev-plan", "plugin-dev-plan")
+ REQUIRED_GATES = ("intake-consumption", "provenance-chain")
+ _UPDATE_RE = re.compile(r"--mode[=\s]+update|\"mode\"\s*:\s*\"update\"")
+ _OUT_DIR_RE = re.compile(r"--out-dir[=\s]+(\S+)")
++_IMPROVEMENT_HANDOFF_RE = re.compile(r"--improvement-handoff[=\s]+(\S+)")
+ _PLAN_DIR_RE = re.compile(r"(plugin-plans/[A-Za-z0-9._\-/]+)")
+ 
+ 
+@@ -54,10 +55,21 @@ def _is_update_invocation(text: str) -> bool:
+ 
+ 
+ def _resolve_plan_dir(text: str) -> Path | None:
+-    """command 文字列から plan_dir を特定する (--out-dir 優先、無ければ plugin-plans/ パス)。"""
++    """command 文字列から plan_dir を特定する (--out-dir 優先、次に handoff 内 plan_dir)。"""
+     m = _OUT_DIR_RE.search(text)
+     if m:
+         return Path(m.group(1).rstrip("/"))
++    m = _IMPROVEMENT_HANDOFF_RE.search(text)
++    if m:
++        handoff_path = Path(m.group(1).strip("'\""))
++        if handoff_path.is_file():
++            try:
++                handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
++            except (OSError, json.JSONDecodeError):
++                handoff = {}
++            plan_dir = handoff.get("plan_dir") if isinstance(handoff, dict) else None
++            if isinstance(plan_dir, str) and plan_dir.strip():
++                return Path(plan_dir.rstrip("/"))
+     m = _PLAN_DIR_RE.search(text)
+     if m:
+         # plugin-plans/<slug> の 2 セグメントまでに正規化 (末尾のファイル名等を落とす)。
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md
+index a17c439..efc131b 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md
+@@ -3,8 +3,8 @@ name: run-plugin-dev-plan
+ description: プラグイン構想から index+13 フェーズファイル+component-inventory.json を生成したいとき、後段のrun-skill-createへ渡す前段の開発計画を立てたいときに使う。
+ disable-model-invocation: false
+ user-invocable: true
+-argument-hint: "[plugin-concept?] [--mode create|update] [--out-dir <path>]"
+-arguments: [plugin_concept, mode, out_dir]
++argument-hint: "[plugin-concept?] [--mode create|update] [--out-dir <path>] [--intake-json <path>] [--next-action-json <path>] [--improvement-handoff <path>]"
++arguments: [plugin_concept, mode, out_dir, intake_json, next_action_json, improvement_handoff]
+ allowed-tools:
+   - Read
+   - Write
+@@ -41,6 +41,8 @@ script_refs:
+   - scripts/check-requirements-coverage.py
+   - scripts/check-runtime-portability.py
+   - scripts/check-plugin-surface-audit.py
++  - scripts/check-intake-consumption.py
++  - scripts/check-provenance-chain.py
+   - scripts/check-upstream-pins.py
+   - scripts/check-generative-fidelity.py
+   - scripts/check-downstream-harness.py
+@@ -55,6 +57,7 @@ reference_refs:
+   - references/plugin-creator-contract.md
+   - references/purpose-driven-requirements.md
+   - references/harness-creator-spec-reflection.md
++  - ../../../harness-creator/references/pipeline-boundary-contract.md
+   - ../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
+ agent_refs:
+   - ../../agents/plugin-dev-plan-elicitor.md
+@@ -70,6 +73,7 @@ harness_refs:
+ schema_refs:
+   - schemas/plugin-goal-spec.schema.json
+   - schemas/phase-spec.schema.json
++  - schemas/improvement-handoff.schema.json
+ completeness_exempt:
+   - "manifest: ゴールシークループで P1-P8 の手順を都度生成するため phase/gate 固定の workflow-manifest は適用外。フェーズ定義は references/phase-lifecycle.md を共有正本として参照する。"
+ goal_seek:
+@@ -109,7 +113,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
+ 
+ プラグイン構想 1 件を、目的ドリブンで **2 軸直交** (ライフサイクル軸=13 フェーズ / 成果物実体軸=N 個の buildable component) に分解し、`run-skill-create` が段階実行できる **index(main) + 13 フェーズファイル + component-inventory.json** に変換する前段の計画スキル。フェーズファイルは上から順に読める宣言型タスク仕様 (8 節・人間向け primary deliverable)、`component-inventory.json` は buildable 実体の build routing・依存 DAG・評価基準を保持する唯一の機械 SSOT、index は plugin-creator の manifest / marketplace / cachebuster / validation 契約を `plugin_meta` で携帯する。両軸は build_target/depends_on を二重に持たず (正規化)、component は `entities_covered: [C01, ...]` の id 参照だけでフェーズに紐づく。
+ 
+-- **入力**: プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望)、`--mode create|update`、任意 `--out-dir <path>`。
++- **入力**: プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望)、`--mode create|update`、任意 `--out-dir <path>`、任意 `--intake-json <path>` (E1)、任意 `--next-action-json <path>` (E1 の split_candidates)、任意 `--improvement-handoff <path>` (E3、`--mode update` 時のみ)。
+ - **出力**: **決定論的に解決される可視・永続の plan ディレクトリ** (既定 `plugin-plans/<plugin-slug>/`・`--out-dir` で上書き・正本 `references/io-contract.md` §9) へ (1) `goal-spec.json` (2) **13 フェーズファイル `phase-01-requirements.md` … `phase-13-release.md`** (フェーズ 1 段階=1 ファイル・§2 frontmatter + §5 本文) (3) `index.md`(main) = P01..P13 を phase_number 昇順で列挙した目次 + 全体完了条件 + 受入確認 (4) **`component-inventory.json`** (buildable 実体の唯一の SSOT・品質機構を component エントリへ焼く) (5) `handoff-run-plugin-dev-plan.json` / `plan-findings.json`。同一構想は常に同一出力先 (再現性)。deliverable は tracked、goal-seek transient (progress/intermediate) のみ gitignore。
+ - **完了条件**: 同梱 core 5 scripts / 6 invocations が全 exit0 (index が P01..P13 全列挙 + inventory DAG 非循環 / unassigned 0 件=各 component が ≥1 phase に出現 / 13 phase frontmatter+section 床 + inventory component の criteria・harness≥80% 携帯 / plugin_meta 値域 / 46 行反映 self-test + PLAN) に加え、拡張ゲート 6 本 — `check-plugin-goal-spec.py` (R1 goal-spec + plugin 固有アンカー)、`check-requirements-coverage.py` (SDD 要件トレーサビリティ=goal-spec checklist の各 id が index 完了チェックリスト/受入確認へ被覆)、`check-surface-inventory.py` (5種検討証跡 + plugin-level surface 採否)、`check-build-handoff.py` (`handoff-run-plugin-dev-plan.json` の build routing (inventory 由来) / `build_kind` / `build_args` / manifest draft)、`check-runtime-portability.py` (共有 script hoist + build_target 自己完結の install 携帯性)、`check-plugin-surface-audit.py` (`plugins/` 配下の現物 surface 棚卸し) — が exit0 検証する (呼称 2 層=core 5+拡張ゲート・総数と一覧の単一正本は `references/io-contract.md` §11 表)。harness-creator 仕様 46 行と plugin-creator 物理契約が反映され、elegant-review C1-C4 全 PASS の設計が記述されている。
+ 
+@@ -152,6 +156,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
+ 7. **schema parity**: skill component は `skill-brief.schema.json` 主要 14 フィールド相当へ無加工で写せる粒度にする (`references/io-contract.md`)。
+ 8. **配置非依存・変数化・install 携帯性**: 具体値は直書きせず `{{PROJECT_ROOT}}`/`$CLAUDE_PLUGIN_ROOT`/self-relative で表現する。Python 標準ライブラリ正本 (.sh/.js 新規禁止・scripts 内 yaml import 禁止)。共有 script は `placement_scope=plugin-root` で `plugins/<slug>/scripts/` へ hoist し (**≥2 skill consumer は plugin-root 必須**)、cross-plugin SSOT は vendoring/self-derive で携帯する (`check-runtime-portability.py` が強制・詳細は `references/io-contract.md`「配布・.claude 反映・install 携帯性」)。
+ 9. **update は差分のみ**: `--mode update` は Edit 差分。全書き換え禁止。
++10. **境界入力を契約として消費**: `--intake-json` は E1 (skill-intake→goal-spec) の producer artifact として `source_intake` に記録し、`--next-action-json` があれば `split_candidates[]` を初期分解候補として反映する。`--improvement-handoff` は E3 (改善→goal-spec) の producer artifact として `source_improvement` に記録する。境界の正本は `plugins/harness-creator/references/pipeline-boundary-contract.md`。
+ 
+ ## ゴールシーク実行
+ 
+@@ -170,6 +175,8 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
+ ### 完了チェックリスト (Checklist)
+ 
+ - [ ] R1: 構想から目的駆動の plugin-goal-spec (purpose/background/goal/二値 checklist + target_plugin_slug/plan_dir。`requested_count` は任意) を確定し `check-plugin-goal-spec.py` が exit0
++- [ ] E1: `--intake-json` 提供時は `source_intake` を goal-spec に記録し、`--next-action-json` 提供時は `split_candidates[]` も初期分解候補として反映し、`check-intake-consumption.py` が未反映 0 を報告した (未提供時は非適用)
++- [ ] E3: `--mode update --improvement-handoff` 提供時は `findings[]` を goal-spec/checklist/plan 再生成材料へ反映し、`source_improvement` を記録した
+ - [ ] R2: 各実体を 5 種の component_kind へ単一責務分解し `component-inventory.json` (N 実体・同一 kind 複数実体可) と依存 DAG (循環なし) + envelope(plugin.json)設計 (Phase02 owner) を導出した
+ - [ ] R3: 13 phase ファイル (`phase-01-requirements.md` … `phase-13-release.md`) + index(main) + `component-inventory.json` を生成した
+ - [ ] 各 inventory component が `component_kind` を宣言し kind 別構造契約を携帯している (skill 偏重なし)
+@@ -229,6 +236,16 @@ else:
+ PY
+ # plan 決定論ゲート (PLAN_DIR を計画出力先に設定して実行)
+ python3 "$SKILL_DIR/scripts/check-plugin-goal-spec.py" "$PLAN_DIR/goal-spec.json" # R1 goal-spec + plugin 固有アンカー
++if [ -n "${INTAKE_JSON:-}" ]; then
++  if [ -n "${NEXT_ACTION_JSON:-}" ]; then
++    python3 "$SKILL_DIR/scripts/check-intake-consumption.py" --intake "$INTAKE_JSON" --next-action "$NEXT_ACTION_JSON" --goal-spec "$PLAN_DIR/goal-spec.json" --strict --marker-dir "$PLAN_DIR"
++  else
++    python3 "$SKILL_DIR/scripts/check-intake-consumption.py" --intake "$INTAKE_JSON" --goal-spec "$PLAN_DIR/goal-spec.json" --marker-dir "$PLAN_DIR"
++  fi
++fi
++if [ -n "${IMPROVEMENT_HANDOFF:-}" ]; then
++  python3 "$SKILL_DIR/scripts/check-provenance-chain.py" --goal-spec "$PLAN_DIR/goal-spec.json" --plan-dir "$PLAN_DIR" --require-improvement --marker-dir "$PLAN_DIR"
++fi
+ python3 "$SKILL_DIR/scripts/verify-index-topsort.py" "$PLAN_DIR"
+ python3 "$SKILL_DIR/scripts/detect-unassigned.py" --inventory "$PLAN_DIR/component-inventory.json" --specs-dir "$PLAN_DIR"
+ python3 "$SKILL_DIR/scripts/check-spec-frontmatter.py" --specs-dir "$PLAN_DIR"   # component_kind 別構造 + core 規律
+@@ -268,7 +285,7 @@ routes[] は `component-inventory.json` の `components[]` から導出する (p
+ 
+ - **skill component** → `run-skill-create`(L1) へ 1 本ずつ投入し L4 実 build を委譲 (run-skill-create は skill 専用。投入 brief は `scripts/render-skill-brief.py` が inventory component から決定論射影し routes[].build_args の `brief_path` で渡す)。
+ - **sub-agent / slash-command / hook component** → `run-build-skill` の Capability kind dispatch で生成 (sub-agent→`kind=agent` または `--with-subagent` / slash-command→`kind=command` / hook→`kind=hook` または `--with-hooks`)。run-build-skill の 7 kind = skill/agent/hook/command/plugin-composition/prompt/workflow。単独 run-skill-create 投入はしない。本 plugin 自身にも `agents/`、`commands/`、`hooks/` の実体を持たせ、単一 skill だけの plan にならないことを dogfood する。
+-- **script component** → **run-build-skill に `script` kind は無い**。単一 skill 専用スクリプトは親 skill の build で `scripts/` + `tests/` として生成され (独立 Capability でなく skill 付随物)、計画上は依存元 skill に紐付ける。**ただし ≥2 skill が共有する script は `placement_scope=plugin-root` で `plugins/<slug>/scripts/` へ hoist する** (routing 上の builder 語彙=`plugin-scaffold`。単一 skill 配下固定は cross-skill/単独 install で dangling するため・`check-runtime-portability.py` が強制)。**`plugin-scaffold` / `parent-skill-build` は contract-only の builder 語彙で単独実行実体は未整備** (capability-gap 起票済・当面は `run-build-skill` の build フロー内で代替生成)。builder→実行手段の解決表は `references/io-contract.md` の build handoff 契約に 1 表固定。
++- **script component** → **run-build-skill に `script` kind は無い**。単一 skill 専用スクリプトは親 skill の build で `scripts/` + `tests/` として生成され (独立 Capability でなく skill 付随物)、計画上は依存元 skill に紐付ける。**ただし ≥2 skill が共有する script は `placement_scope=plugin-root` で `plugins/<slug>/scripts/` へ hoist する** (routing 上の builder 語彙=`plugin-scaffold`。単一 skill 配下固定は cross-skill/単独 install で dangling するため・`check-runtime-portability.py` が強制)。`plugin-scaffold` / `parent-skill-build` は planner 上の builder 語彙としては contract-only のまま扱うが、L4 実行時は `/capability-build --handoff ... --route-id ...` が `plugins/harness-creator/scripts/build-script-route.py` へ委譲して script route を実体化し、route-build-report を書く。builder→実行手段の解決表は `references/io-contract.md` の build handoff 契約に 1 表固定。
+ - **harness/eval 仕様** → `EVALS.json` と `plugin-composition.yaml` に集約し、mechanical と llm_eval の両方を持つ。個別 component_kind に無理に押し込まない。
+ - **plugin envelope (外殻) 仕様** → N 個の capability を 1 つの plugin に束ねる**外殻の生成 owner を明示する** (skill 偏重・component だけの plan にしないための要):
+   - `plugin-composition.yaml` → `run-build-skill kind=plugin-composition` または `/plugin-compose` が生成・更新する（clone 専用基盤ゆえ project-local unprefixed が正本。`<plugin>:` 形式の namespaced prefix は付けない）。
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json
+index ce0d3f6..32ecd5c 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json
+@@ -182,7 +182,7 @@
+       "status": "external_gap",
+       "build_target": "plugins/notion-task-sync/.claude-plugin/plugin.json",
+       "draft_path": "envelope-draft/plugin.json",
+-      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。後段 plugin-scaffold (contract-only・GAP-SCRIPT-BUILDER 参照) または手動 scaffold が draft を消費する"
++      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。GAP-ENVELOPE-001 として tracking し、script route 用 GAP-SCRIPT-BUILDER とは分離する"
+     },
+     "marketplace": {
+       "owner": "plugin-scaffold",
+@@ -200,7 +200,7 @@
+     {
+       "id": "GAP-SCRIPT-BUILDER",
+       "severity": "medium",
+-      "text": "plugin-scaffold / parent-skill-build は contract-only builder 語彙で単独実行実体が未整備 (capability-gap 起票済・当面は run-build-skill の build フロー内で代替生成)"
++      "text": "plugin-scaffold / parent-skill-build は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。script route は harness-creator の build-script-route.py が消費し、gap_ref は routing 語彙の明示参照として維持する"
+     }
+   ]
+ }
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
+index fd04222..101bde7 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md
+@@ -51,7 +51,8 @@
+ |---|---|---|---|
+ | plugin_concept | text | yes | プラグイン構想 1 件 (自然文 + 任意でコンポーネント希望) |
+ | mode | enum | no | create / update |
+-| intake_json | path | no | skill-intake の intake.json (schema_version 2.0.0)。§0 executive_summary / §3 purpose_excavator / next-action.json の split_candidates[] を plugin_concept の構造化材料として受理 (references/io-contract.md §9 正本)。**提供時は下の実行ブロックで必ず消費し** `source_intake` を記録する (documented-but-unwired を解消) |
++| intake_json | path | no | skill-intake の intake.json (schema_version 2.0.0)。§0 executive_summary / §3 purpose_excavator を plugin_concept の構造化材料として受理 (references/io-contract.md §9 正本)。**提供時は下の実行ブロックで必ず消費し** `source_intake` を記録する (documented-but-unwired を解消) |
++| next_action_json | path | no | skill-intake の next-action.json。mode P の `split_candidates[]` を R2 の初期分解候補として受理する。`intake_json` と併用された場合は `check-intake-consumption.py --next-action ... --strict` で反映漏れを FAIL にする |
+ | improvement_handoff | path | no | E3 改善成果物ハンドオフ (`schemas/improvement-handoff.schema.json` 準拠・harness-creator の `emit-improvement-handoff.py` が emit)。`mode=update` 時のみ受理し `findings[]` を再生成材料として消費、`source_improvement` を記録する |
+ 
+ ### 2.4 出力契約
+@@ -137,13 +138,16 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ
+ 
+ Layer 5.2 のゴール + 5.3 完了チェックリストを唯一の停止条件とし、5.4 ループで
+ 動的に手順を生成・実行・自己評価する。入力 `{{plugin_concept}}` (と任意 `{{mode}}` /
+-`{{intake_json}}` / `{{improvement_handoff}}`) を Read し、目的ドリブンで
++`{{intake_json}}` / `{{next_action_json}}` / `{{improvement_handoff}}`) を Read し、目的ドリブンで
+ `goal-spec.json` を生成する。E1/E3 の消費を必ず配線する:
+ 
+-- `{{intake_json}}` が与えられたら (E1): その §0 executive_summary / §3 purpose_excavator と
+-  隣接 next-action の split_candidates[] を purpose/background/goal/checklist へ源泉反映し、
++- `{{intake_json}}` が与えられたら (E1): その §0 executive_summary / §3 purpose_excavator を
++  purpose/background/goal/checklist へ源泉反映し、
+   `source_intake: {ref: <intake_json>, schema_version: <intake の schema_version>}` を記録する。
+-  生成後に `scripts/check-intake-consumption.py` を実行し fail-severity 未反映を 0 にする。
++  `{{next_action_json}}` も与えられた場合は mode P の split_candidates[] を R2 の初期分解候補として
++  goal-spec/checklist/constraints のいずれかに反映する。生成後に `scripts/check-intake-consumption.py`
++  を実行し fail-severity 未反映を 0 にする。next-action 併用時は `--next-action ... --strict` で
++  split_candidates の未反映も FAIL にする。
+   未提供なら従来通り `{{plugin_concept}}` のみで生成する (source_intake は記録しない)。
+ - `{{mode}}=update` かつ `{{improvement_handoff}}` が与えられたら (E3): schema 準拠を確認のうえ
+   `findings[]` を再生成材料として反映し、`source_improvement: {ref, schema_version}` を記録する。
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md
+index afb4e03..f85aa82 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md
+@@ -109,8 +109,8 @@ frontmatter は specfm が厳格に operationalize する一方、本文 (prose)
+ | `routes[].placement_scope` | (script のみ・任意/既定 `skill`) `skill` = 親 skill 配下に畳む / `plugin-root` = `plugins/<slug>/scripts/` へ hoist した共有 script。inventory component の `placement_scope` と一致させる |
+ | `routes[].build_args` | 後段 builder へ渡す最小引数。`run-build-skill` route では `kind == build_kind` を必須にする。`plugin-scaffold` route (plugin-root script) は `script_path` 非空必須 (親 skill 不要) |
+ | `routes[].build_args.brief_path` | (skill route のみ) `scripts/render-skill-brief.py --inventory <PLAN_DIR>/component-inventory.json --component <id>` が inventory から決定論射影する skill-brief JSON の PLAN_DIR 相対出力先。brief 実体は plan に置かない (render で生成される宣言) |
+-| `routes[].builder_status` | `executor-backed` (実行 skill が実在) / `contract-only` (routing 語彙のみ・単独実行実体が未整備)。SSOT は `specfm.BUILDER_STATUS`。contract-only route は `gap_ref` 必須 (`check-build-handoff.py` が fail-closed 強制) |
+-| `routes[].gap_ref` | contract-only route が参照する `open_issues[].id` (既知 capability-gap の構造化参照。executor gap の無音隠蔽を防ぐ) |
++| `routes[].builder_status` | `executor-backed` (実行 skill が実在) / `contract-only` (planner 上の routing 語彙で、run-build-skill の 7 kind ではない)。SSOT は `specfm.BUILDER_STATUS`。contract-only route は `gap_ref` 必須 (`check-build-handoff.py` が fail-closed 強制) |
++| `routes[].gap_ref` | contract-only route が参照する `open_issues[].id` (routing 語彙の構造化参照)。L4 では `/capability-build` が script route を `build-script-route.py` に委譲する |
+ | `routes[].requires_parent_scaffold` | (placement=skill script のみ) `build_target` が親 skill の `build_target` ディレクトリ配下にある script は、二相 build (scaffold→fill) の順序逆転を後段 consumer が routes 配列順でなく守れるよう、自身を内包する親 skill の id を機械可読に宣言する。`check-build-handoff.py` が `build_target` 包含から親を特定し一致を fail-closed 検査する (散文 `build_sequencing_notes` 依存の機械可読化・M2)。plugin-root へ hoist した共有 script は親 skill 配下でないため不要 |
+ | `envelope` | manifest/marketplace 等 plugin-level surface の owner/status/build_target。`external_gap` / `manual-user-gated` は gap/approval reason 必須。**`envelope.manifest.draft_path` = `<PLAN_DIR>/envelope-draft/plugin.json`** (Phase02=設計 が owner) |
+ | `envelope.manifest.draft_path` | `<PLAN_DIR>` 相対の manifest draft。存在・JSON parse・`name == target_plugin_slug`・未解決 placeholder 不在を検査する |
+@@ -121,8 +121,8 @@ frontmatter は specfm が厳格に operationalize する一方、本文 (prose)
+ |---|---|---|
+ | `run-skill-create` | executor-backed | skill component を 1 本ずつ L4 build (`build_args.brief_path` の skill-brief を投入) |
+ | `run-build-skill` | executor-backed | sub-agent/slash-command/hook を Capability kind dispatch で build |
+-| `parent-skill-build` | contract-only | 親 skill の build に随伴生成 (単独実行実体なし・`gap_ref` 必須) |
+-| `plugin-scaffold` | contract-only | plugin-root 共有 script hoist / envelope scaffold。単独実行実体は未整備 (`gap_ref` 必須・当面は `run-build-skill` の build フロー内で代替生成) |
++| `parent-skill-build` | contract-only | 親 skill 配下 script の routing 語彙。L4 では `/capability-build` が `build-script-route.py` に委譲し、親 skill ディレクトリ配下へ配置する (`gap_ref` 必須) |
++| `plugin-scaffold` | contract-only | plugin-root 共有 script hoist / envelope scaffold の routing 語彙。script route は L4 で `build-script-route.py` が `plugins/<slug>/scripts/` へ配置する (`gap_ref` 必須) |
+ 
+ `scripts/check-build-handoff.py` が spec (phase ファイル・任意) 実在、top-sort、builder/build_kind/build_args 整合、builder_status/gap_ref (contract-only の gap 起票)、二相 build 順序 (`requires_parent_scaffold`・placement=skill script の scaffold→fill)、routes↔inventory 件数/`build_target` 一致、manifest draft、envelope gap reason を検査する。これにより「inventory をもとにプラグインを構築できるか」の最低条件を、実 build 実行前に fail-closed で確認する。
+ 
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json
+index 808be2a..49a2fa5 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json
+@@ -70,8 +70,47 @@
+         "prev_goal_spec": {
+           "type": ["string", "null"],
+           "description": "改善前サイクルの goal-spec.json への参照 (無ければ null)。"
++        },
++        "origin_request": {
++          "type": ["object", "null"],
++          "description": "改善の発端 (利用者フィードバック等) への逆リンク。Notion 改善要望 DB からの人間ブリッジ (feedback-to-improvement-runbook.md Stage 3) 時に起点ページを記録し、要望→改善→要望クローズ (Stage 6) の帰路追跡を可能にする (無ければ null)。任意・後方互換。",
++          "additionalProperties": false,
++          "required": ["kind", "ref"],
++          "properties": {
++            "kind": {
++              "type": "string",
++              "enum": ["notion-improvement-request", "slack", "verbal", "other"],
++              "description": "発端の種別。"
++            },
++            "ref": {
++              "type": "string",
++              "description": "発端への参照 (Notion 改善要望ページ URL / id 等)。"
++            }
++          }
++        }
++      }
++    }
++  },
++  "allOf": [
++    {
++      "if": {
++        "properties": {
++          "source": {
++            "properties": {
++              "kind": { "const": "manual" }
++            },
++            "required": ["kind"]
++          }
++        }
++      },
++      "then": {
++        "required": ["provenance"],
++        "properties": {
++          "provenance": {
++            "required": ["origin_request"]
++          }
+         }
+       }
+     }
+-  }
++  ]
+ }
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py
+index b930139..18d567f 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py
+@@ -132,9 +132,9 @@ def _route_errors(route: dict, idx: int, ids: set[str], plan_dir: Path) -> list[
+ def _check_builder_status(routes: list[dict], open_issue_ids: set[str]) -> list[str]:
+     """builder の実行実体有無 (specfm.BUILDER_STATUS) を routes へ fail-closed 強制する。
+ 
+-    contract-only builder (専用 executor 未整備・当面 run-build-skill 内代替) の route は
++    contract-only builder (planner 上の routing 語彙で run-build-skill の 7 kind ではない) の route は
+     `builder_status: contract-only` の明示宣言 + open_issues 内の gap id への `gap_ref` を必須に
+-    する (executor gap の無音隠蔽を防ぐ)。executor-backed は builder_status 省略可 (宣言時は
++    する (routing 解決先の無音隠蔽を防ぐ)。executor-backed は builder_status 省略可 (宣言時は
+     一致必須)。manual-user-gated 等 写像外 builder は本検査の対象外。
+     """
+     errors: list[str] = []
+@@ -153,7 +153,7 @@ def _check_builder_status(routes: list[dict], open_issue_ids: set[str]) -> list[
+         if expected == "contract-only":
+             if declared != "contract-only":
+                 errors.append(
+-                    f"{prefix}: builder={builder} は executor 未整備 (contract-only)。"
++                    f"{prefix}: builder={builder} は contract-only routing 語彙。"
+                     "builder_status: contract-only を明示宣言すること"
+                 )
+             gap_ref = str(route.get("gap_ref", "")).strip()
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py
+index dd744f3..e368a45 100755
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py
+@@ -144,10 +144,10 @@ BUILD_KIND_BY_KIND = {
+     "script": "script",
+ }
+ # builder → 実行実体の有無 (io-contract §9 build handoff 契約「builder → 実行手段の解決表」の機械正本)。
+-# executor-backed = 実在 skill が build を実行できる / contract-only = 契約 (routing 語彙) のみで
+-# 専用 executor 未整備 (当面 run-build-skill 内代替)。contract-only の route は handoff の
+-# open_issues に capability-gap を起票し routes[].gap_ref で追跡することを check-build-handoff が
+-# fail-closed 強制する (executor gap の無音隠蔽を防ぐ)。
++# executor-backed = 実在 skill が build を実行できる / contract-only = planner 上の routing 語彙で
++# run-build-skill の 7 kind ではない。script route は L4 で harness-creator/scripts/build-script-route.py
++# が消費するが、contract-only の route は handoff の open_issues に routing gap を起票し
++# routes[].gap_ref で追跡することを check-build-handoff が fail-closed 強制する。
+ BUILDER_STATUSES = ("executor-backed", "contract-only")
+ BUILDER_STATUS = {
+     "run-skill-create": "executor-backed",
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_enforce_provenance_chain.py b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_enforce_provenance_chain.py
+index d5aea1c..370ccc6 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_enforce_provenance_chain.py
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_enforce_provenance_chain.py
+@@ -67,6 +67,12 @@ def test_resolve_plan_dir_from_plugin_plans_token(hook):
+     assert hook._resolve_plan_dir("... plugin-plans/sample/goal-spec.json ...") == Path("plugin-plans/sample")
+ 
+ 
++def test_resolve_plan_dir_from_improvement_handoff(tmp_path, hook):
++    handoff = tmp_path / "improvement-handoff.json"
++    handoff.write_text(json.dumps({"plan_dir": "plugin-plans/from-handoff"}), encoding="utf-8")
++    assert hook._resolve_plan_dir(f"... --improvement-handoff {handoff} ...") == Path("plugin-plans/from-handoff")
++
++
+ def test_resolve_plan_dir_none(hook):
+     assert hook._resolve_plan_dir("no path here") is None
+ 
+@@ -125,6 +131,14 @@ def test_main_clean_markers_allows(tmp_path, hook, monkeypatch):
+     assert _run(hook, monkeypatch, {"tool_input": {"command": cmd}}) == 0
+ 
+ 
++def test_main_improvement_handoff_plan_dir_blocks_without_markers(tmp_path, hook, monkeypatch):
++    plan = _plan_with_goal_spec(tmp_path)
++    handoff = tmp_path / "improvement-handoff.json"
++    handoff.write_text(json.dumps({"plan_dir": str(plan)}), encoding="utf-8")
++    cmd = f"run-plugin-dev-plan --mode update --improvement-handoff {handoff}"
++    assert _run(hook, monkeypatch, {"tool_input": {"command": cmd}}) == 2
++
++
+ def test_main_stale_markers_block(tmp_path, hook, monkeypatch):
+     plan = _plan_with_goal_spec(tmp_path)
+     _write_markers(plan, hook.REQUIRED_GATES)
+diff --git a/plugins/skill-intake/references/handoff-contract.md b/plugins/skill-intake/references/handoff-contract.md
+index 9592ee3..6082692 100644
+--- a/plugins/skill-intake/references/handoff-contract.md
++++ b/plugins/skill-intake/references/handoff-contract.md
+@@ -89,13 +89,13 @@ Step 1 が読むのは §1/§2/§3/§6/§8/§9。Step 2 は §4/§7。Step 3 は
+ 
+ ## plugin-dev-planner 分岐 (mode P)
+ 
+-`run-intake-next-action` が `mode=P` (plugin 規模構想) を確定した場合、引き渡し先は `run-skill-create` でなく **`plugins/plugin-dev-planner/skills/run-plugin-dev-plan` の R1 (elicit-goal)** になる (`next-action.json.handoff_target="plugin-dev-planner"`)。intake.json の以下の § を R1 の `plugin_concept` 材料として渡す:
++`run-intake-next-action` が `mode=P` (plugin 規模構想) を確定した場合、引き渡し先は `run-skill-create` でなく **`plugins/plugin-dev-planner/skills/run-plugin-dev-plan` の R1 (elicit-goal)** になる (`next-action.json.handoff_target="plugin-dev-planner"`)。利用者向けの次アクションは `/plugin-dev-plan "<構想要約>" --intake-json output/<hint>/intake.json --next-action-json output/<hint>/next-action.json` とし、intake.json と next-action.json の以下の § を R1 の材料として渡す:
+ 
+ | intake.json §x (v2 sections パス) | R1 (goal-spec) への写像 |
+ |---|---|
+ | `sections.0_executive_summary` (true_purpose_oneliner / pattern / handoff_mode) | `purpose` / `background` の推定材料 |
+ | `sections.3_purpose_excavator` (true_purpose / underlying_motivation / output_priority) | `goal` (観測可能な完了形 1 文) と `checklist` の導出材料 |
+-| `next-action.json.split_candidates[]` (mode P 判定時の複数コンポーネント/skill 候補) | コンポーネント分解 (R2) へ渡す初期候補 |
++| `next-action.json.split_candidates[]` (mode P 判定時の複数コンポーネント/skill 候補) | `--next-action-json` 経由でコンポーネント分解 (R2) へ渡す初期候補 |
+ 
+ 受け側契約の正本は `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md` §9 (intake.json は**任意の構造化入力**であり必須ではない)。harness-creator 分岐 (mode A-D) と同じく、intake 側は推奨を出して停止し `run-plugin-dev-plan` を起動しない。
+ 
+diff --git a/plugins/skill-intake/skills/run-intake-next-action/SKILL.md b/plugins/skill-intake/skills/run-intake-next-action/SKILL.md
+index 4334240..754e668 100644
+--- a/plugins/skill-intake/skills/run-intake-next-action/SKILL.md
++++ b/plugins/skill-intake/skills/run-intake-next-action/SKILL.md
+@@ -65,7 +65,7 @@ Phase 11 担当。`summary.json` / `purpose.json` / `options.json` / `kickoff.js
+ 
+ **完了条件**: `mode` 確定 + `reason` に判定根拠 (引いた mode / 判定条件) 含む + (`pattern` 不一致時) `confirmed_with_user=true` + schema 検証 exit 0。
+ 
+-**完了レポートの環境 degrade 文言 (出力契約)**: handoff 先 skill (`run-skill-create` / `run-plugin-dev-plan`) が実行環境に存在しない単独 install 時は、完了レポートに「Notion ページ共有までが完了形。推奨アクションは開発環境 (repo clone) 用」の 1 行を必ず含める (推奨が実行不能な環境で完了形を誤認させない)。
++**完了レポートの人間向け次アクション (出力契約)**: `next-action.json` は schema 互換のため mode / handoff_target / phase のみを持つ。人間向け完了レポートには、次に実行する 1 コマンドを必ず併記する。mode P は `/plugin-dev-plan "<構想要約>" --intake-json output/<hint>/intake.json --next-action-json output/<hint>/next-action.json`、mode A-E は `harness_creator_handoff_phase` に対応する `run-skill-create` / `run-build-skill` 起動案内を出す。handoff 先 skill (`run-skill-create` / `run-plugin-dev-plan`) が実行環境に存在しない単独 install 時は、完了レポートに「Notion ページ共有までが完了形。推奨アクションは開発環境 (repo clone) 用」の 1 行を必ず含める (推奨が実行不能な環境で完了形を誤認させない)。
+ 
+ **必須前提 (precondition gate)**: skill 生成 (`run-skill-create`) へ進む handoff を確定する前に、**Notion 公開完了が必須前提**である。`scripts/decide-mode.py` は `output/<hint>/notion-publish-result.json` が存在し `notion-log.json.status=="published"` (かつ `page_id` 有り) であることを assert し、不成立なら **exit 2** で停止して未公開のまま skill 生成へ横流れさせない (逸脱B封鎖)。CI / dry-run のみ `--allow-skip` で緩和可。
+ 
+@@ -101,6 +101,7 @@ Phase 11 担当。`summary.json` / `purpose.json` / `options.json` / `kickoff.js
+ - [ ] `mode=E` のとき `harness_creator_handoff_phase` が `P1-kickoff (re-intake)` になっている
+ - [ ] `handoff_target` が mode P で `plugin-dev-planner`、mode A-E で `harness-creator` になっている (schema の allOf 条件)
+ - [ ] handoff 先 skill が環境に存在しない単独 install 時、完了レポートに「Notion ページ共有までが完了形。推奨アクションは開発環境 (repo clone) 用」の 1 行を含めている
++- [ ] 完了レポートに人間がそのまま実行できる次アクションを 1 コマンドで併記している (mode P は `/plugin-dev-plan "<構想要約>" --intake-json output/<hint>/intake.json --next-action-json output/<hint>/next-action.json`)
+ - [ ] `split_candidates[*].responsibility` に個人名・社名・固有プロダクト名が転記されていない
+ - [ ] `output/<hint>/next-action.json` が `schemas/output.schema.json` で検証 exit 0 (manifest `P4-emit` の `validate-next-action` hook)
+ - [ ] 同一入力 4 ファイルで 2 回連続実行した `next-action.json` の `(mode, reason)` が完全一致 (determinism)

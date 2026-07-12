@@ -1,0 +1,25 @@
+{
+  "target": {"plugin": "extract-system-blueprint", "skill": "doc-emit.py", "skill_md_sha256": "cca241cc2ccea08ce4c72306bf89997a103584dc17a7bdec119debb9edde7d00"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-07-11T02:39:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["4conditions", "content_review", "elegant_review.C1-C4"],
+    "positive_feedback": [
+      "emit 系と検査系の 2 module 構成が契約どおりで、emit 時にも check_screens と同一ロジックを通し (run_emit 末尾)、さらに canonical schema validator (schemas/validate-system-blueprint.py・実在確認済) を別 process で必ず実行して shape drift を fail-closed にする二重ゲートが実装されている。",
+      "詐称検出が具体的: _check_coverage の『discovered != extracted+pending+excluded 算術不整合』『未取得 URL があるのに coverage.pending=0 (完全被覆偽装)』、check_screens の『観測色の palette 孤児 != 0』『annotated PNG 4MiB 超過』『redaction_applied 未証跡』は plan が名指しした欠陥クラス (pending 無言欠落・部分クロールの完全被覆偽装) を決定論で拒否する。",
+      "sink_receipts を入力の自己申告から採らず emit 対象の redacted annotated bytes から再生成する (run_emit の _pending_sink_receipts 呼出) 設計は、asset_key=最終 bytes 束縛契約 (C03/C08 と三者一致) の偽装耐性として優れる。--check-apply は実走で pass/fail 両経路を確認 (kind=fact 拒否・category 逸脱・own_context_ref 欠落・anchor 解決率 != 100% を全て検出)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "scripts/doc-emit.py 全 1494 行のうち、frontmatter/docstring・定数契約 (CHAPTERS 6 章 / MERMAID_KEYS 5 種 / NONVISUAL_REQUIRED_SECTIONS 11 節 / INFERENCE_SECTION_FIELDS の essence 6 項目=C06 契約と一致 / _REDACT_PATTERNS)・emit 系 (_render_chapters/_mermaid_block/_coverage_manifest/_file_upload_manifest/_pending_sink_receipts/_notion_payload/_validate_emitted_blueprint/run_emit)・検査系 (check_screens/_check_coverage/check_apply/_collect_anchors)・CLI (_parse_args/main) を実読、その他は構造 (関数一覧) で確認。inventory C11 と突合: argv 契約 (--extraction/--out-dir/--notion-payload-out/--notion-file-upload-manifest-out/--request-ledger/[--check-screens]/[--check-apply --blueprint]) 一致・exit 0/1/2 一致・network=false (subprocess は同 plugin 内 validator のみ)・stdlib only・write-scope は out-dir と指定出力のみ・mermaid_marker_contract の逐語保持 (C06 source を strip のみで埋込・marker 非加工) 一致・upsert_key=sha256(canonical_url+observation_snapshot_id+schema_version) 一致・draft_hash=章+blueprint+design-tokens+coverage の canonical 束縛・asset_key=redact 済み annotated PNG 最終 bytes の sha256 一致・NOTICE (参考/学習目的限定注記) を全正本へ焼込。--check-apply を fixture で実走し pass/fail 両経路の genuine 動作を確認。text redact-on-emit (email/token/JWT/長数字) と redaction_applied 記録、check-screens の当該検査も確認。依存参照先 (schemas/validate-system-blueprint.py・system-blueprint.schema.json) 実在。4 条件充足で PASS。"
+}

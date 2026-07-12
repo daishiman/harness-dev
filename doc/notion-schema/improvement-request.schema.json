@@ -1,0 +1,61 @@
+{
+  "config_key": "improvement-request",
+  "title": "Skill改善要望",
+  "title_property": "要望タイトル",
+  "managed_properties": {
+    "要望タイトル": {"type": "title"},
+    "対象プラグイン": {
+      "type": "relation",
+      "target_db": "skill-list",
+      "dual": true,
+      "synced_property_on_target": "改善要望",
+      "required": true
+    },
+    "対象スキル名": {"type": "rich_text"},
+    "起票者": {"type": "people"},
+    "担当者": {"type": "people"},
+    "要望種別": {
+      "type": "select",
+      "options": [
+        {"name": "バグ", "color": "red"},
+        {"name": "機能追加", "color": "blue"},
+        {"name": "プロンプト改善", "color": "purple"},
+        {"name": "ドキュメント", "color": "gray"},
+        {"name": "挙動変更", "color": "orange"}
+      ]
+    },
+    "やってほしいこと": {"type": "rich_text"},
+    "背景・困っていること": {"type": "rich_text"},
+    "優先度": {
+      "type": "select",
+      "options": [
+        {"name": "高", "color": "red"},
+        {"name": "中", "color": "yellow"},
+        {"name": "低", "color": "gray"}
+      ]
+    },
+    "重要度": {
+      "type": "select",
+      "options": [
+        {"name": "高", "color": "red"},
+        {"name": "中", "color": "yellow"},
+        {"name": "低", "color": "gray"}
+      ]
+    },
+    "対応ステータス": {
+      "type": "select",
+      "options": [
+        {"name": "未着手", "color": "gray"},
+        {"name": "計画中", "color": "blue"},
+        {"name": "対応中", "color": "yellow"},
+        {"name": "完了", "color": "green"},
+        {"name": "見送り", "color": "red"}
+      ]
+    },
+    "起票日": {"type": "created_time"},
+    "関連PR/コミット": {"type": "url"}
+  },
+  "relation_invariant": {
+    "対象プラグイン": "exactly 1 (=N:1 with skill-list)"
+  }
+}

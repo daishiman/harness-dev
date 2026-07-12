@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "run-system-spec-doc-fetch",
+    "skill_md_sha256": "6b59b8ee0d40ba9eca16801a3d72850965ad2cd0de2fb0e00666202a101619f2"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-content-review-doc-fetch",
+  "reviewed_at": "2026-07-11T16:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 3
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "完全性=3: 入出力契約・Key Rules・ゴールシーク/完了チェックリスト・局面カタログ・検証コマンド・Gotchas・R1/R2/R3 の7層 prompt・決定論 assembler・IN1 機械ゲート・seed外 knowledge candidate qualification 経路まで、責務 (最新公式ドキュメント出典記録の都度生成) 達成に必要な記述を欠落なく網羅。",
+      "検証可能性=3: IN1 は validate-source-citation.py exit0 の機械ゲートで定義され、assembler は exit 0/1/2 契約を持ち、29 pytest が build_record 各負例・assemble 重複/非配列・main CLI 分岐・fixture 正例/負例・IN1 end-to-end を網羅。verify_by=script/test が受入と一致。",
+      "深度=3: 形式(C13)と内容鮮度(C08)の二層監査、fail-visible、捏造禁止、host 正規化エッジ、採択済 decision あるのに targets 空の vacuous-green drift の warning surface、単一 writer 境界まで踏み込み、表層手順に留まらない。"
+    ],
+    "negative_feedback": [
+      "簡潔性=3 だが軽微な冗長: fetched-references の JSON 形状が SKILL.md と R3-record.md に重複し、完了チェックリストの一部が IN1 criteria と重複する (意図的 SSOT+要約であり PASS 非阻害の smell)。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
+    "next_action": "none"
+  },
+  "notes": "5次元スコア (0-3・閾値2): 完全性=3 / 一貫性=3 (prompt ヘッダの C01→C02 誤記修正後。component ID・allowed-tools と prompt ツール使用の union・契約形状が SKILL.md/prompts/scripts/inventory 間で整合) / 深度=3 / 検証可能性=3 / 簡潔性=3。全次元≥2 で PASS。修正=prompts/R1・R2・R3 ヘッダ C01→C02 (3ファイル)。SKILL.md 未編集で sha256 不変 (6b59b8ee...)。"
+}

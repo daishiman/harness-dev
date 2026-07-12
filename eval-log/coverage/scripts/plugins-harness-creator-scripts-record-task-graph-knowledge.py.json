@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "genuine code-review (30思考法 elegant review で handback 不備を検出→修正→再検証で resolved)。compile OK / # /// script frontmatter 完備。外ループ完了ゲート + knowledge owner。scan_pending_discovered は status∈{accepted,rejected,superseded} 以外を未処理とし、残存時 completion_gate:blocked + handback_command(--out-dir locator 携帯) + needs_approval(structural 残存) + next_steps[planner drain, capability-build 再実行] を出し exit1、0件で completion_gate:ok exit0。distill_events は依存詰まり/成果物欠落/blocked 伝播起点/再試行解消だけを蒸留し生ログ丸写ししない。build_knowledge_entry は必須6フィールド、source は path+id 参照のみ。write_knowledge は add_entry.py 経由で Loop A(target)+Loop B(harness-creator) 双方追記。task-graph/phase/inventory/handoff を一切書かない (graph 更新は planner 限定)。TESTS: test_record_task_graph_knowledge.py 26 PASS (needs_approval/next_steps/graph 非書込/Loop A+B 含む)。exit 0/1(blocked)/2。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

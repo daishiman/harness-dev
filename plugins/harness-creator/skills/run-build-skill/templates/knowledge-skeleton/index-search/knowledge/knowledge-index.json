@@ -1,0 +1,28 @@
+{
+  "_comment": "Index-Search型 カテゴリ索引ファイル。{{...}} は生成時に実際の値で置換する。",
+  "version": "1.0.0",
+  "consult_at": ["runtime"],
+  "categories": [
+    {
+      "id": "{{CATEGORY_ID}}",
+      "label": "{{CATEGORY_LABEL}}",
+      "file": "knowledge-{{CATEGORY_ID}}.json",
+      "keywords": ["{{KW1}}", "{{KW2}}"]
+    }
+  ],
+  "global_keywords": {
+    "{{KEYWORD}}": ["{{CATEGORY_ID}}"]
+  },
+  "synonyms": {
+    "{{TERM}}": ["{{SYNONYM1}}", "{{SYNONYM2}}"]
+  },
+  "scoring_weights": {
+    "title": 5,
+    "keywords": 3,
+    "quote": 2,
+    "voice": 2,
+    "fulltext": 1
+  },
+  "output_dir": "{{OUTPUT_DIR}}",
+  "output_naming": "output - YYYY-MM-DD - {種別} - {テーマ}.md"
+}

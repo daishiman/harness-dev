@@ -1,0 +1,45 @@
+--- a/_base.md
++++ b/_base.md
+@@ -3,6 +3,7 @@
+ name: {{skill_name}}
+ description: {{description}}
+ user-invocable: false
++context: fork                                # 評価専用Skillの必須属性（Goodhart対策、09/24章）
+ argument-hint: {{argument_hint | default("[target]")}}
+ allowed-tools: [Read, Grep, Bash(python3 *)]
+ kind: assign
+@@ -10,6 +11,7 @@ effect: conversation-output
+ role_suffix: evaluator
+ pair: {{pair_skill}}                          # 対応する generator skill 名（必須）
+ owner: {{owner}}
++agent: {{agent | default("general-purpose")}}
+ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
+ reference_refs: {{reference_refs | default([])}}
+@@ -23,6 +25,21 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## Evaluator Contract
++
++評価結果は STDOUT に JSON 1 オブジェクトで返す:
++
++```json
++{
++  "rubric_id": "{{rubric_id}}",
++  "rubric_version": "{{rubric_version}}",
++  "rubric_hash": "<sha256:rubric.json>",
++  "target": "<path>",
++  "score": 0,
++  "threshold": {{threshold | default(80)}},
++  "passed": false,
++  "findings": [{"id":"...","severity":"high|medium|low","message":"..."}],
++  "required_fixes": [],
++  "pending_human": []
++}
++```
++
++**禁則**: 被採点物の Write/Edit を持たない。rubric も改変しない。評価ログは `eval-log/skill-build-trace.jsonl` へ append（F1 規約）。
++
+ ## Boundary
+ {{boundary}}

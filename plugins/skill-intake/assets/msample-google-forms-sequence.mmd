@@ -1,0 +1,26 @@
+%%---
+%% sample: google-forms-generator / sequence-oauth-api
+%%---
+sequenceDiagram
+    autonumber
+    actor U as 依頼者
+    participant CLI as Claude CLI
+    participant Auth as Google OAuth
+    participant Forms as Forms API
+    participant Drive as Drive API
+
+    U->>CLI: フォーム作成依頼
+    CLI->>Auth: 認可要求
+    Auth-->>U: 同意画面
+    U-->>Auth: 同意
+    Auth-->>CLI: トークン発行
+    CLI->>Forms: forms.create
+    Forms-->>CLI: formId
+    CLI->>Forms: batchUpdate（項目追加）
+    Forms-->>CLI: 完了
+    CLI->>Drive: 指定フォルダへ移動
+    Drive-->>CLI: 配置完了
+    CLI-->>U: 共有URL返却
+
+%% 凡例: 実線=要求 / 破線=応答
+%% 言いたい一言: トークン取得は初回のみ。以降は再認可不要

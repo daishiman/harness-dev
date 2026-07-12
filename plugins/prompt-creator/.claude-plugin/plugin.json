@@ -1,0 +1,30 @@
+{
+  "name": "prompt-creator",
+  "distributable": false,
+  "version": "2.1.0",
+  "description": "7 層プロンプトアーキテクチャ (Role/Context/Principles/Workflow/Constraints/Output/Evaluation) で SubAgent 向けプロンプトを生成・更新する skill 群。harness-creator 仕様準拠の orchestrator (run-prompt-create) と elicit / evaluator / 7layer worker / 3 agents で構成。harness-creator (run-build-skill Step 7.5) からも呼び出される。改善要望は `/run-skill-feedback prompt-creator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-05-20",
+  "last_audited": "2026-05-24",
+  "source": "plugins/prompt-creator/ (旧 doc/prompt-creator/ は deprecated)",
+  "entry_points": {
+    "skills": [
+      "run-prompt-create",
+      "run-prompt-elicit",
+      "run-prompt-creator-7layer",
+      "assign-prompt-design-evaluator"
+    ],
+    "agents": [
+      "prompt-creator-interview-user",
+      "prompt-creator-generate-prompt",
+      "prompt-creator-review-prompt"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "skill-governance-lint"
+  ]
+}

@@ -1,0 +1,26 @@
+# .pre-commit-config.yaml
+# D-1: creator-kit/skills/ 変更を検知して .claude/skills/ へ自動 sync
+# CI --check gate と合わせた二重防護。
+repos:
+  - repo: local
+    hooks:
+      - id: tenant-isolation
+        name: tenant isolation
+        entry: python3 scripts/lint-tenant-isolation.py
+        language: system
+        pass_filenames: false
+  - repo: local
+    hooks:
+      - id: sync-skills-to-claude
+        name: sync creator-kit/skills to .claude/skills
+        language: script
+        entry: scripts/sync-skills-to-claude.sh
+        args: ["--apply"]
+        files: ^creator-kit/skills/
+        pass_filenames: false
+      - id: lint-skill-description
+        name: lint skill descriptions
+        language: python
+        entry: python3 scripts/lint-skill-description.py
+        files: ^(creator-kit/skills|\.claude/skills)/.*SKILL\.md$
+        pass_filenames: false

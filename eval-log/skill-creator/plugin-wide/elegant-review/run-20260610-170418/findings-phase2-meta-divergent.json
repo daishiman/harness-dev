@@ -1,0 +1,364 @@
+{
+ "agent": "meta-divergent",
+ "paradigm_findings": [
+  {
+   "paradigm": "メタ思考",
+   "findings": [
+    {
+     "id": "MD-001",
+     "severity": "contradiction",
+     "location": "plugins/skill-creator/plugin-composition.yaml:23",
+     "description": "invariant に「cross-plugin 参照は skill-intake 配下に限定(本リリースの一時許容)」と宣言されているが、実態は skill-intake 以外への参照が多数存在する。一次ソース: run-build-skill/SKILL.md:208-213 (plugins/skill-governance-lint/scripts/lint-*.py 5本)、run-build-skill/SKILL.md:120 と run-skill-create/SKILL.md:83 (plugins/prompt-creator/.../seven-layer-markdown-template.md 写経指示)、run-skill-rubric-governance/SKILL.md:84,91,107-113 (skill-governance-automation 6本)、run-skill-create/workflow-manifest.json:54,83-90。統治の枠組み(invariant)が現実を記述しておらず、invariant 検証が形骸化している。",
+     "proposed_fix": "invariant を「cross-plugin 参照は allowed_cross_plugins リスト(skill-intake/skill-governance-lint/skill-governance-automation/prompt-creator)に限定」へ再定義し、同リストを lint-forbidden-deps.py の入力 SSOT に昇格して機械検証する。",
+     "auto_fixable": false,
+     "reusable_abstraction": "宣言的 invariant は必ず機械検証 lint と同一 SSOT を共有させる。「宣言だけの invariant」は実装ドリフトを検出できず統治機能を失う。",
+     "template_variables": {
+      "invariant_field": "contract.invariant[4]",
+      "allowed_list_sink": "plugin-composition.yaml allowed_cross_plugins",
+      "enforcement_lint": "lint-forbidden-deps.py"
+     },
+     "reuse_surface": "governance-log",
+     "negative_cases": [
+      "eval-log/ 配下の過去レビュー証跡内のパス言及は実行参照でないため invariant 違反に数えない",
+      "「一時許容」コメント付き invariant は移行期の意図的乖離であり、期限付きなら矛盾でなく計画"
+     ],
+     "re_audit_trigger": "plugin-composition.yaml の contract.invariant 変更時、または新規 cross-plugin パスが grep で 1 件でも増えた時"
+    },
+    {
+     "id": "MD-002",
+     "severity": "omission",
+     "location": "plugins/skill-creator/plugin-composition.yaml:28-54",
+     "description": "skills/ 配下に SKILL.md 持ち skill が 28 個実在する(glob で確認)が、capabilities には 27 個のみ登録。skills/run-skill-feedback (SKILL.md + workflow-manifest.json 実在、effect: external-mutation) が未登録で、dependencies DAG にも不在。invariant「全 Capability は CapabilityManifest を持ち kind を宣言すること」(同 yaml:19) と実態が乖離。",
+     "proposed_fix": "capabilities に `- { kind: skill, ref: skills/run-skill-feedback, tier: extension }` を追記し、dependencies に Notion DB 連携の from/to を追加。さらに skills/* 実在数と capabilities 登録数の一致を lint-manifest-contents.py で機械検査する。",
+     "auto_fixable": true,
+     "reusable_abstraction": "ディレクトリ実在物と manifest 宣言の集合一致は人手同期に頼らず count/diff lint で常時検証する。",
+     "template_variables": {
+      "physical_set": "skills/*/SKILL.md glob",
+      "declared_set": "plugin-composition.yaml capabilities[kind=skill]",
+      "lint": "lint-manifest-contents.py"
+     },
+     "reuse_surface": "config",
+     "negative_cases": [
+      "意図的に非公開の WIP skill は exclusion 理由付きで除外可(ただし理由の明文化が必須)"
+     ],
+     "re_audit_trigger": "skills/ 直下にディレクトリが追加/削除された時 (PostToolUse Write hook で検知可)"
+    }
+   ]
+  },
+  {
+   "paradigm": "抽象化思考",
+   "findings": [
+    {
+     "id": "MD-003",
+     "severity": "dependency_break",
+     "location": "plugins/skill-creator/skills/run-skill-feedback/SKILL.md:28-34",
+     "description": "schema_refs が doc/notion-schema/skill-list.schema.json 等の repo-root 相対、script_refs が scripts/notion-submit-improvement.py / scripts/lint-feedback-protocol.py (repo-root scripts/ に実在確認済、skill ディレクトリ配下には SKILL.md と workflow-manifest.json のみ) を指す。plugin 単独配布時に確実に dangling。これは skill-intake standalone レビュー (eval-log/skill-intake/standalone/elegant-review/20260606T001612-standalone/findings.json) で検出した「repo レイアウト再仮定」と同型パターンの再発。",
+     "proposed_fix": "skill-intake で確立済みの vendoring + byte 一致 lint パターン (lint-intake-vendored-ssot.py) を汎化し、run-skill-feedback の依存 scripts/schemas を plugin 内に実体化、repo-root 側との byte 一致を lint で強制。",
+     "auto_fixable": false,
+     "reusable_abstraction": "「plugin 境界の外を指す ref は (a) vendoring+byte一致lint (b) bundles.json 同梱宣言 (c) 実行時存在チェック+graceful degrade のいずれかで担保する」を全 plugin 共通の packaging 不変則に昇格する。",
+     "template_variables": {
+      "out_of_plugin_refs": "schema_refs/script_refs/reference_refs のうち plugin 外パス",
+      "vendoring_lint": "lint-<plugin>-vendored-ssot.py",
+      "fallback": "bundles.json 同梱宣言"
+     },
+     "reuse_surface": "script-frontmatter",
+     "negative_cases": [
+      "repo 専用 (source-tier: internal、配布対象外) と明示宣言された skill は repo-root 参照を許容できる — ただし宣言が無い現状は不可"
+     ],
+     "re_audit_trigger": "SKILL.md frontmatter の *_refs に plugin ルート外パスが追加された時"
+    }
+   ]
+  },
+  {
+   "paradigm": "ダブル・ループ思考",
+   "findings": [
+    {
+     "id": "MD-004",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/eval-log/skill-intake/standalone/elegant-review/20260606T001612-standalone/findings.json:3 vs plugins/skill-creator/skills/run-build-skill/SKILL.md:208-213",
+     "description": "skill-creator 自身が 2026-06-06 に skill-intake へ実施した elegant-review (review_theme=「単独配布の自己完結性。symlink dangling / vendoring / lint 強制」) の学習が、skill-creator 自体には適用されていない。skill-creator は同じ穴 (cross-plugin lint 依存 8 本、repo-root scripts/doc 依存、references 二重コピー) を保持したまま。「学習の学習」ループ (前回 review の改善を自分にも反映) が片方向で止まっている。",
+     "proposed_fix": "run-elegant-review 完了時の amplified-patterns.json 蓄積に「検出パターンの自 plugin 適用チェック」step を追加し、レビュー実施側 plugin 自身を negative target として 1 周自己検査する規約を orchestration-flow.md に追記。",
+     "auto_fixable": false,
+     "reusable_abstraction": "レビューで他者に課した修正パターンは、レビュー実施主体自身への適用可否を必ず 1 回照合する (医者の不養生検査)。amplified-patterns.json は「適用先候補に自分自身を含める」を既定とする。",
+     "template_variables": {
+      "pattern_store": "run-elegant-review/references/amplified-patterns.json",
+      "self_target": "レビュー orchestrator の属する plugin",
+      "check_step": "Phase 3 後の self-application audit"
+     },
+     "reuse_surface": "reference",
+     "negative_cases": [
+      "メタ plugin (skill-creator) は意図的に repo 統合運用前提で配布しない方針なら自己適用不要 — ただしその方針は plugin-composition.yaml に明文化されていない"
+     ],
+     "re_audit_trigger": "eval-log/*/elegant-review/ に新規レビュー証跡が追加された時"
+    }
+   ]
+  },
+  {
+   "paradigm": "ブレインストーミング",
+   "findings": [
+    {
+     "id": "MD-005",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/references/quality-rubric.md:34-38 vs plugins/skill-creator/skills/run-build-skill/references/agent-template.md:103",
+     "description": "quality-rubric.md が skill-creator と skill-intake の両方に同内容で存在し (冒頭 40 行一致確認済)、かつ参照先が分裂: run-build-skill-subagent.md:68 / elegant-reset-observer.md:76 は plugins/skill-creator/references/ を指し、agent-template.md:103 / templates/agent-skeleton.md:73 は plugins/skill-intake/references/ を指す。さらに skill-creator 側コピーの判定基準が「intake.json の必須キー」「図解 1〜3 図」「1 以下は再ヒアリング」と skill-intake ドメイン固有のままで、skill-creator の agent (例: elegant-reset-observer) には適用不能な基準を自己採点根拠にしている。",
+     "proposed_fix": "(1) 5 次元の汎用部 (次元/重み/点数表) と ドメイン判定基準 (intake.json 等) を分離し、汎用部を skill-creator 正本化。(2) agent-template.md / agent-skeleton.md の参照先を plugin 内パスへ統一 (新規生成 agent が cross-plugin 参照を量産する経路を遮断)。(3) skill-intake 側は vendoring + byte 一致 lint。",
+     "auto_fixable": false,
+     "reusable_abstraction": "共有 rubric は「汎用層 (次元・重み) + ドメイン層 (判定基準)」の 2 層に分割し、汎用層のみ複数 plugin へ vendoring する。ドメイン基準を含んだまま複製するとドメイン不一致の自己採点が量産される。",
+     "template_variables": {
+      "generic_layer": "5 次元 + 重み + 0-3 点表",
+      "domain_layer": "判定基準 (intake.json 必須キー等)",
+      "template_emitters": "agent-template.md / agent-skeleton.md"
+     },
+     "reuse_surface": "rubric",
+     "negative_cases": [
+      "notion-per-repo-setup.md の両 plugin 重複は shape-vs-identity 分離の説明文書で両側に必要な可能性があり、byte 一致なら vendoring として許容 (byte 一致検証は本レビュー未実施、要機械検査)"
+     ],
+     "re_audit_trigger": "references/quality-rubric.md がどちらかの plugin で編集された時 (diff-rubric-impact hook の対象に追加)"
+    }
+   ]
+  },
+  {
+   "paradigm": "水平思考",
+   "findings": [
+    {
+     "id": "MD-006",
+     "severity": "contradiction",
+     "location": "plugins/skill-creator/skills/run-elegant-review/schemas/findings.schema.json:78 vs templates/findings.json:415 vs references/variable-template-contract.md:43",
+     "description": "reuse_surface の enum が 3 箇所で不一致。schema 正本 = [skill, template, script-frontmatter, hook, config, governance-log, adapter, rubric, reference, none] (10 種、agents/elegant-meta-divergent-analyst.md の契約とも一致)。一方 templates/findings.json:415 = 「template | rubric | lint | hook | reference | manifest | runbook | none」(8 種)、variable-template-contract.md:43 も同じ旧 8 種。template に従って finding を書いた agent が lint/manifest/runbook を出力すると schema 検証で FAIL する確定矛盾。",
+     "proposed_fix": "スキーマ駆動生成の解法を移植: findings.schema.json の enum を唯一の正本とし、templates/findings.json と variable-template-contract.md の該当行を schema から render script で自動生成 (または即時手動同期 + validate-paradigm-coverage.py に enum 一致検査を追加)。",
+     "auto_fixable": true,
+     "reusable_abstraction": "enum 値は JSON Schema を単一正本とし、テンプレート/人間向けドキュメント内の enum 列挙は schema からのレンダリング生成物にする。手書き複製 enum は必ずドリフトする。",
+     "template_variables": {
+      "canonical": "schemas/findings.schema.json#reuse_surface.enum",
+      "derived": [
+       "templates/findings.json:415",
+       "references/variable-template-contract.md:43"
+      ],
+      "sync_lint": "validate-paradigm-coverage.py への enum 照合追加"
+     },
+     "reuse_surface": "template",
+     "negative_cases": [
+      "templates/findings.json が意図的に旧版互換 (spec_version 1.x 向け) を残す場合は版注記があれば許容 — 現状は注記なしのため不可"
+     ],
+     "re_audit_trigger": "findings.schema.json の enum 定義が変更された時"
+    }
+   ]
+  },
+  {
+   "paradigm": "逆説思考",
+   "findings": [
+    {
+     "id": "MD-007",
+     "severity": "dependency_break",
+     "location": "plugins/skill-creator/skills/run-skill-create/SKILL.md:148",
+     "description": "「品質ゲート: Elegant Review Protocol」節が plugins/skill-intake/references/elegant-review-protocol.md を適用指示するが、skill-intake/references/ 全 38 ファイルを列挙確認した結果、当該ファイルは不在 (dangling)。逆説的検討「この節をやらない場合」: 同 SKILL.md の Step 5 (run-elegant-review, line 93,120) が既に C1-C4 全 PASS の品質ゲートを提供しており、本節は不在ファイルへの委譲という形で同一機能を二重宣言しているだけ。節の必要性自体が成立していない。",
+     "proposed_fix": "節ごと削除し Step 5 のチェックリスト項目 (line 120) に一本化する。プロトコル文書を残したい場合のみ参照先を skills/run-elegant-review/SKILL.md へ差し替え。",
+     "auto_fixable": false,
+     "reusable_abstraction": "dangling 参照を発見したら「参照先を作る」前に「参照元の節自体が冗長でないか」を逆から検討する。機能が既存 Step に包含されているなら削除が最小エントロピー解。加えて path-like 文字列の存在検査 lint を導入すれば、この種の dangling は機械検出できる。",
+     "template_variables": {
+      "dangling_ref": "plugins/skill-intake/references/elegant-review-protocol.md",
+      "subsuming_step": "Step 5 run-elegant-review (workflow-manifest.json phases)",
+      "detector": "lint-reference-exists (新設候補)"
+     },
+     "reuse_surface": "skill",
+     "negative_cases": [
+      "将来 protocol 文書を新設予定でコメントに TODO+期限がある場合は dangling でなく予約 — 現状は無条件適用指示のため不可"
+     ],
+     "re_audit_trigger": "run-skill-create/SKILL.md 編集時、および skill-intake/references/ のファイル増減時"
+    }
+   ]
+  },
+  {
+   "paradigm": "類推思考",
+   "findings": [
+    {
+     "id": "MD-008",
+     "severity": "inconsistency",
+     "location": "plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md:39 vs run-goal-elicit/SKILL.md:71 vs run-skill-create/SKILL.md:127",
+     "description": "同一正本 (goal-seek-paradigm.md) を参照する skill 間でループ規約の記述が分岐。正本は「下記 6 ステップ固定 (現状評価/手順生成/実行/検証/Anchor Step/反復)」(line 39、Anchor Step は必須と line 47 に明記)。run-goal-seek/SKILL.md:79 は正しく「6 ステップ」だが、run-goal-elicit/SKILL.md:71 は「5 ステップに従う」、run-skill-create/SKILL.md:127 は「5 ステップ (現状評価→手順生成→実行→検証→反復/差し戻し)」と Anchor Step を脱落させて列挙。100 人が run-skill-create の記述通り実行すると intermediate.jsonl 追記 (集約化ドリフト圧縮機構) を行わない実行者が出て、再現性が崩れる。",
+     "proposed_fix": "正本の 6 ステップ表記に統一し、Anchor Step を省略してよい条件 (単発 1 周完結 skill 等) があるなら正本側に適用除外規定として明文化。lint-goal-seek.py --self-test に参照 skill の文言検査 (「5 ステップ」+ paradigm 参照の共起を warn) を追加。",
+     "auto_fixable": false,
+     "reusable_abstraction": "共有正本の数量的事実 (ステップ数・条件数・enum 数) を参照側へ転記する場合、転記値は lint で正本と照合する。数値転記は最も気づかれにくい drift 源。",
+     "template_variables": {
+      "canonical_count": "goal-seek-paradigm.md の 6 ステップ",
+      "referrers": [
+       "run-goal-elicit/SKILL.md:71",
+       "run-skill-create/SKILL.md:127"
+      ],
+      "lint": "lint-goal-seek.py --self-test 拡張"
+     },
+     "reuse_surface": "reference",
+     "negative_cases": [
+      "run-goal-elicit は出力が goal-spec.json 1 点で周回ドリフトの余地が小さく、Anchor Step 省略が意図的設計の可能性がある — その場合でも「5 ステップ」でなく「6 ステップ中 Anchor Step は適用除外 (理由)」と書くべき",
+      "with-goal-seek combinator と run-goal-seek の検査ロジック並存は SKILL.md:94 で SSOT (lint-goal-seek --self-test) が明示されており重複一本化は不要と判定"
+     ],
+     "re_audit_trigger": "goal-seek-paradigm.md のステップ定義変更時"
+    }
+   ]
+  },
+  {
+   "paradigm": "if思考",
+   "findings": [
+    {
+     "id": "MD-009",
+     "severity": "dependency_break",
+     "location": "plugins/skill-creator/skills/run-build-skill/SKILL.md:208-213",
+     "description": "破壊試験 3 シナリオで検証。[worst: 単独配布] skill-creator のみ install すると P0 lint 8 本が plugins/skill-governance-lint/scripts/ 不在で全滅し、run-skill-create の Step 4a (workflow-manifest.json:83-90) が常時 fail → フロー全体が進行不能。[edge: 新人が repo 外で実行] source: doc/ClaudeCodeスキルの設計書/ (run-skill-create/SKILL.md:37) と references/notion-per-repo-setup.md:19 の scripts/build-notion-config.py (repo-root 実在確認済) が不在で参照全滅。[best: 本 repo 内] 全パス解決し正常動作 — つまり本 plugin は「repo 同梱時のみ動く」暗黙前提を持つが、その前提は plugin.json / plugin-composition.yaml のどこにも宣言されていない。",
+     "proposed_fix": "最小修正: plugin-composition.yaml に distribution: repo-bundled-only (単独配布非対応) を明示宣言し、bundles.json で skill-governance-lint/automation/prompt-creator との同梱必須を宣言。将来単独配布するなら skill-intake と同じ vendoring 戦略へ。",
+     "auto_fixable": false,
+     "reusable_abstraction": "全 plugin に「配布形態宣言 (standalone / repo-bundled / bundle-required)」フィールドを必須化し、宣言と外部参照の整合を CI で破壊試験 (plugin dir のみを tmp へ copy して全 ref 解決検査) する。skill-intake の vendor portability テストの汎化。",
+     "template_variables": {
+      "best": "repo 内 full checkout — 全 ref 解決",
+      "worst": "plugin 単独 install — P0 lint 8 本 dangling でフロー停止",
+      "edge": "設計書 doc/ 不在環境 — source 参照と notion-config init が dangling",
+      "ci_probe": "tmp copy + ref 解決検査"
+     },
+     "reuse_surface": "hook",
+     "negative_cases": [
+      "bundles.json (repo 側) で既に同梱グループが定義済みなら宣言追加のみで足り vendoring 不要"
+     ],
+     "re_audit_trigger": "marketplace.json / bundles.json の配布単位変更時、または cross-plugin 参照の増減時"
+    }
+   ]
+  },
+  {
+   "paradigm": "素人思考",
+   "findings": [
+    {
+     "id": "MD-010",
+     "severity": "smell",
+     "location": "plugins/skill-creator/skills/run-elegant-review/SKILL.md:21,23,71",
+     "description": "初見ユーザーが SKILL.md だけ読むと版表記が 3 系統併存して判別不能: frontmatter version: 0.1.0 (line 21)、spec_version: \"2.0\" (line 23)、本文タイトル「run-elegant-review (v2)」(line 71)、参照先 thought-methods.yaml も version: \"2.0\"。両者の区別は workflow-manifest.json:3 の _comment にのみ説明があり (「spec_version は skill 仕様のリリースタグ、SKILL.md と一致させる」)、SKILL.md 側には説明が無い。初見は「0.1.0 なのに v2?」で迷う。なお Reading Order ガイド (line 73) の存在は素人導線として良好。",
+     "proposed_fix": "SKILL.md frontmatter の version 行に注記コメント 1 行 (# version=配布 semver / spec_version=仕様世代タグ。定義は workflow-manifest.json _comment 参照) を追加。",
+     "auto_fixable": true,
+     "reusable_abstraction": "複数の版概念 (配布版/仕様世代/schema 版) を持つ artifact は、利用者が最初に読むファイル側に区別の 1 行説明を置く。説明が下流ファイルにしか無い用語は初見ユーザーには存在しないのと同じ。",
+     "template_variables": {
+      "version_kinds": [
+       "version (semver)",
+       "spec_version (仕様世代)",
+       "schemaVersion (manifest 形式)"
+      ],
+      "explanation_home": "SKILL.md frontmatter コメント",
+      "current_home": "workflow-manifest.json _comment"
+     },
+     "reuse_surface": "skill",
+     "negative_cases": [
+      "version と spec_version の二重化自体は意図的設計 (リリースと仕様世代の分離) であり統合すべきでない — 問題は説明の置き場所のみ"
+     ],
+     "re_audit_trigger": "version / spec_version いずれかの bump 時"
+    }
+   ]
+  }
+ ],
+ "thought_method_coverage": {
+  "used": [
+   "メタ思考",
+   "抽象化思考",
+   "ダブル・ループ思考",
+   "ブレインストーミング",
+   "水平思考",
+   "逆説思考",
+   "類推思考",
+   "if思考",
+   "素人思考"
+  ],
+  "skipped_with_reason": []
+ },
+ "four_conditions_matrix": {
+  "メタ思考": {
+   "C1": "FAIL (MD-001 invariant と実参照の矛盾)",
+   "C2": "FAIL (MD-002 run-skill-feedback 登録漏れ)",
+   "C3": "PASS",
+   "C4": "PASS"
+  },
+  "抽象化思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "PASS",
+   "C4": "FAIL (MD-003 repo-root 依存)"
+  },
+  "ダブル・ループ思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "FAIL (MD-004 前回学習の自己未適用)",
+   "C4": "PASS"
+  },
+  "ブレインストーミング": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "FAIL (MD-005 rubric 二重正本+参照分裂)",
+   "C4": "PASS"
+  },
+  "水平思考": {
+   "C1": "FAIL (MD-006 enum 三所不一致)",
+   "C2": "PASS",
+   "C3": "PASS",
+   "C4": "PASS"
+  },
+  "逆説思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "PASS",
+   "C4": "FAIL (MD-007 dangling protocol 参照)"
+  },
+  "類推思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "FAIL (MD-008 6/5 ステップ表記分岐)",
+   "C4": "PASS"
+  },
+  "if思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "PASS",
+   "C4": "FAIL (MD-009 単独配布で P0 lint 全滅)"
+  },
+  "素人思考": {
+   "C1": "PASS",
+   "C2": "PASS",
+   "C3": "PASS (smell のみ、PASS 妨げず)",
+   "C4": "PASS"
+  }
+ },
+ "alternative_approaches": [
+  "[invariant 機械化] composition invariant の cross-plugin 制約を自然言語でなく allowed_cross_plugins 配列に変え、lint-forbidden-deps.py と同一 SSOT 化して宣言=検証を一体化する",
+  "[共有 references の 2 層分割] quality-rubric.md を汎用層 (5 次元+重み) とドメイン層 (判定基準) に分割し、汎用層のみを lint-intake-vendored-ssot.py の汎化版 (lint-vendored-ssot --pairs) で byte 一致 vendoring する",
+  "[schema 駆動レンダリング] reuse_surface 等の enum を findings.schema.json 正本から templates/references へ自動レンダリングし、手書き enum 複製を物理的に排除する (MD-006 の恒久解)",
+  "[単独配布 CI 破壊試験] plugin dir のみを tmp へ copy して全 *_refs / path-like 文字列の解決を検査する portability テストを全 plugin 共通 CI に追加 (skill-intake vendor portability テストの汎化)",
+  "[dangling 参照 lint] SKILL.md / references 内の plugins/ で始まる path-like 文字列の実在検査 lint を新設し PostToolUse(Edit|Write) hook に配線 (MD-007 型の再発を機械遮断)",
+  "[レビュー自己適用ループ] run-elegant-review 完了時に amplified-patterns.json の各パターンをレビュー実施 plugin 自身へ照合する self-application audit を Phase 3 後に追加 (MD-004 の構造解)",
+  "[配布形態宣言の必須化] 全 plugin-composition.yaml に distribution フィールド (standalone / repo-bundled / bundle-required) を必須化し、外部参照の許容範囲を配布形態から導出する"
+ ],
+ "amplified_pattern_candidates": [
+  {
+   "pattern": "宣言 invariant と lint の SSOT 一体化",
+   "source": "MD-001",
+   "reuse_surface": "governance-log",
+   "re_audit_trigger": "invariant 変更時"
+  },
+  {
+   "pattern": "enum は schema 正本からレンダリング生成",
+   "source": "MD-006",
+   "reuse_surface": "template",
+   "re_audit_trigger": "schema enum 変更時"
+  },
+  {
+   "pattern": "共有 rubric の汎用層/ドメイン層 2 層分割 vendoring",
+   "source": "MD-005",
+   "reuse_surface": "rubric",
+   "re_audit_trigger": "rubric 編集時"
+  },
+  {
+   "pattern": "plugin 単独 copy による ref 解決破壊試験",
+   "source": "MD-009",
+   "reuse_surface": "hook",
+   "re_audit_trigger": "配布単位変更時"
+  },
+  {
+   "pattern": "数値転記 (ステップ数等) の正本照合 lint",
+   "source": "MD-008",
+   "reuse_surface": "reference",
+   "re_audit_trigger": "正本のステップ定義変更時"
+  }
+ ]
+}

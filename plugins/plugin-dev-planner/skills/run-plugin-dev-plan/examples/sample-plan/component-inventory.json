@@ -1,0 +1,361 @@
+{
+  "plugin_concept": "notion-task-sync — タスク台帳を Notion DB へ冪等同期するプラグイン",
+  "derivation": "capability を 5 種の buildable component_kind へ写像し、実体単位に分解する: 同期/照合/初期投入の 3 skill、各々の独立検証 sub-agent 3、手動起動 command 2、破壊防止 hook 1、複数 skill が共有する script 2 = 計 11 実体。同一 kind が複数実体を持つ (skill×3 / sub-agent×3 / slash-command×2) のが実プラグインの自然形で、各実体に 1 build_target を割り当てる。script は複数 skill から使われる共有 (第二消費者あり) のみ独立 component 化し、各 skill 専用 script は親 skill の build へ畳んで水増しを避ける。共有 script (C09/C10 は >=2 skill が依存=第二消費者あり) は単一 skill 配下に固定せず placement_scope=plugin-root で plugins/notion-task-sync/scripts/ へ hoist し (builder=plugin-scaffold)、symlink 共有/単独 install での dangling を防ぐ (install 携帯性)。この inventory は build 軸の唯一 SSOT で、人間可読なライフサイクルは phase-01..13.md が担う (2 軸直交)。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C09",
+      "component_kind": "script",
+      "name": "validate-sync-payload.py",
+      "script_name": "validate-sync-payload.py",
+      "purpose": "Notion へ送る同期ペイロードの schema/必須キーを送信前に検証する決定論ゲート",
+      "inputs": "argv(--payload FILE)",
+      "outputs": "stdout(OK)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/notion-task-sync/scripts/validate-sync-payload.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C10",
+      "component_kind": "script",
+      "name": "notion-idempotency-key.py",
+      "script_name": "notion-idempotency-key.py",
+      "purpose": "タスク1件から決定論的な冪等キー (task_id 正規化 + 内容ハッシュ) を生成し重複 upsert を防ぐ決定論ゲート",
+      "inputs": "argv(--task JSON | --stdin)",
+      "outputs": "stdout(idempotency-key)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/notion-task-sync/scripts/notion-idempotency-key.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C11",
+      "component_kind": "hook",
+      "name": "guard-destructive-sync",
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "exit_semantics": "fail-closed-exit2",
+      "settings_wiring": "settings.json",
+      "fail_closed": true,
+      "depends_on": [],
+      "build_target": "plugins/notion-task-sync/hooks/guard-destructive-sync.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-notion-task-sync",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-notion-task-sync",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["Notionにタスク同期", "タスク同期計画", "sync-tasks"],
+      "goal": "タスク台帳の差分を Notion DB へ冪等同期し二回目実行で差分0になった状態",
+      "purpose_background": "手動転記の漏れ/重複を排除し台帳を単一正本にするため",
+      "checklist": ["差分抽出", "冪等upsert", "同期検証"],
+      "output_contract": "同期レポート(追加/更新/skip 件数 + 失敗一覧)",
+      "boundary": "入力=タスク台帳/出力=Notion upsert。物理削除はしない",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "同期対象のタスク台帳と Notion DB 設定・差分抽出条件をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-plan", "summary": "台帳と Notion 実体の差分を抽出し冪等 upsert 計画 (追加/更新/skip) を組み立てる", "prompt_required": true},
+        {"id": "R3-sync", "summary": "差分を idempotency-key 付きで Notion へ冪等 upsert し同期レポートを返す", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": ["notion"],
+      "external_systems": ["Notion API"],
+      "deterministic_checks": ["validate-sync-payload.py", "notion-idempotency-key.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload と idempotency-key で同期ペイロードを送信前検証し差分抽出の必須キー欠落が 0 件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "同一台帳を二回同期し 2 回目の追加/更新が 0 件=冪等同期で差分0 になることを受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C09", "C10"],
+      "build_target": "plugins/notion-task-sync/skills/run-notion-task-sync/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-notion-task-backfill",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-notion-task-backfill",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["Notionに初期一括投入", "タスク台帳backfill", "過去分の移行"],
+      "goal": "Notion に未登録の全タスクを初期一括で完全投入し取りこぼし0で移行完了した状態",
+      "purpose_background": "運用開始時に既存台帳の過去分を一括で移すため差分同期と別経路が要る",
+      "checklist": ["全件抽出", "一括upsert", "投入網羅確認"],
+      "output_contract": "投入レポート(投入件数 + skip 件数 + 未投入一覧)",
+      "boundary": "入力=既存台帳全件/出力=Notion 一括 upsert。既存ページの上書きはしない",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "移行対象の既存台帳全件と初期投入の範囲・除外条件をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-plan", "summary": "全件抽出と Notion 未登録判定から一括投入計画を組み立てる", "prompt_required": true},
+        {"id": "R3-backfill", "summary": "未登録タスクを一括 upsert し取りこぼし 0 の投入レポートを返す", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": ["notion"],
+      "external_systems": ["Notion API"],
+      "deterministic_checks": ["validate-sync-payload.py", "notion-idempotency-key.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload で一括投入ペイロードの必須キーを送信前検証し全件抽出の欠落が 0 件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "初期一括投入後に台帳の全件が Notion に存在し取りこぼし 0 件=完全投入を受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C09", "C10"],
+      "build_target": "plugins/notion-task-sync/skills/run-notion-task-backfill/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-notion-task-reconcile",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-notion-task-reconcile",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": ["発行漏れチェック", "タスク照合", "reconcile-tasks"],
+      "goal": "発行済みタスクと台帳差分を照合し発行漏れ/重複が網羅的に検出された状態",
+      "purpose_background": "同期後に台帳と Notion 実体が乖離していないかを独立経路で突合するため",
+      "checklist": ["発行実績照合", "差分検出", "網羅性確認"],
+      "output_contract": "照合レポート(発行漏れ一覧 + 重複一覧 + 網羅率)",
+      "boundary": "入力=台帳と Notion 実体/出力=差分レポート。修復 upsert は sync 側へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": ["Skill"],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {"id": "R1-elicit", "summary": "照合対象の台帳範囲と発行実績の突合キー (金額/名前等) をヒアリングして確定する", "prompt_required": true},
+        {"id": "R2-plan", "summary": "台帳と Notion 実体の突合計画 (発行漏れ/重複の判定基準) を組み立てる", "prompt_required": true},
+        {"id": "R3-reconcile", "summary": "両者を照合し発行漏れ一覧・重複一覧・網羅率の照合レポートを返す", "prompt_required": true}
+      ],
+      "cli_tools": [],
+      "mcp_tools": ["notion"],
+      "external_systems": ["Notion API"],
+      "deterministic_checks": ["validate-sync-payload.py"],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": ["with-goal-seek", "with-feedback-contract"],
+      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "feedback_contract": {
+        "criteria": [
+          {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload で照合対象ペイロードを検証し発行実績照合の必須キー欠落が 0 件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "既知の発行漏れを注入した台帳で reconcile が全件検出し網羅性を受入テストが確認する", "verify_by": "test"}
+        ]
+      },
+      "depends_on": ["C09", "C01"],
+      "build_target": "plugins/notion-task-sync/skills/run-notion-task-reconcile/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-dependency-direction", "lint-skill-dep-step7", "lint-forbidden-deps", "lint-manifest-contents"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "loop=criteria-test+content-review-verdict"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "notion-sync-verifier",
+      "description": "同期計画を独立 context で再検査し冪等性違反/重複 upsert を検出したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-verify.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C01"],
+      "build_target": "plugins/notion-task-sync/agents/notion-sync-verifier.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "notion-reconcile-auditor",
+      "description": "reconcile の照合結果を独立 context で監査し発行漏れの見逃し/誤検出を検証したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-audit.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C02"],
+      "build_target": "plugins/notion-task-sync/agents/notion-reconcile-auditor.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "notion-backfill-auditor",
+      "description": "初期一括投入の網羅性を独立 context で監査し取りこぼし/二重投入を検証したいときに使う",
+      "tools": ["Read", "Bash"],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-audit.md",
+      "prompt_layer": "7layer",
+      "depends_on": ["C03"],
+      "build_target": "plugins/notion-task-sync/agents/notion-backfill-auditor.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-skill-description", "lint-agent-prompt-section"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+verdict"}
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "sync-tasks",
+      "description": "タスク台帳の Notion 同期を手動起動する",
+      "argument-hint": "[--dry-run]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C01"],
+      "build_target": "plugins/notion-task-sync/commands/sync-tasks.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    },
+    {
+      "id": "C08",
+      "component_kind": "slash-command",
+      "name": "reconcile-tasks",
+      "description": "台帳と Notion 実体の照合 (発行漏れチェック) を手動起動する",
+      "argument-hint": "[--month YYYY-MM]",
+      "allowed-tools": ["Read", "Bash", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C02"],
+      "build_target": "plugins/notion-task-sync/commands/reconcile-tasks.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {"required": true, "path": ".claude-plugin/plugin.json"},
+    "composition": {"required": true, "path": "plugin-composition.yaml"},
+    "harness_eval": {"required": true, "path": "EVALS.json"},
+    "references_config_assets": {"required": true, "record_in": "index.plugin_meta.ssot_dedup"},
+    "schemas": {"required": false, "omitted_reason": "同期ペイロードは共有 script (validate-sync-payload.py) 内で検証し独立 JSON schema を持たない"},
+    "vendor": {"required": false, "omitted_reason": "cross-plugin SSOT を持たず plugin-root 共有 script の hoist で携帯性を満たすため vendoring 不要"},
+    "mcp_app_connector": {"required": false, "omitted_reason": "Notion sync は既存 Skill/Bash 経路で扱い MCP/app connector を新設しない"},
+    "notion_config": {
+      "required": true,
+      "resolution": "notion_config",
+      "token": "keychain",
+      "databases": [
+        {"key": "task-ledger", "used_by": ["C01", "C02", "C03"], "direction": "write"}
+      ]
+    }
+  }
+}

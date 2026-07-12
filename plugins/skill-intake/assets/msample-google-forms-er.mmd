@@ -1,0 +1,23 @@
+%%---
+%% sample: google-forms-generator / er-io-contract
+%%---
+erDiagram
+    FormSpec ||--o{ FormItem : "含む"
+    FormSpec ||--|| GoogleForm : "生成する"
+
+    FormSpec {
+        string title
+        string description
+    }
+    FormItem {
+        string question
+        string type
+        bool required
+    }
+    GoogleForm {
+        string formId
+        string responderUri
+    }
+
+%% 凡例: ||--o{ は1対多 / ||--|| は1対1
+%% 言いたい一言: Markdown仕様→Form実体への変換契約

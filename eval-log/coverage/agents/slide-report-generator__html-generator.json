@@ -1,0 +1,8 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/html-generator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {"verdict": "PASS", "score": 89, "notes": "genuine実測: reference-existence=prompt_ref skills/run-slide-report-generate/prompts/R3-agent-html-generator.md(420行)実在。prompt本文が引く resource は全て解決: skill私有 references/html-generation-rules.md、plugin共有 references/(theme-style/design-quality-guide/svg-diagram-primitives/slide-types-*/chart-types 等 bare citation は $CLAUDE_PLUGIN_ROOT/references/ に実在=resource-map.md 共有層で網羅)、vendor/scripts/precheck-layout.js・layout-calculator.js・build-single-html.js(node --check OK)。dangling 0。schema-conformance=name/description(トリガ形『…したいときに使う。』)/kind=agent/version=0.1.0/owner/tools=Read,Write/isolation=fork 完備。tools は LLM 経路 HTML 生成(Write)に整合。owner-flow=SKILL.md L103 と workflow-manifest R3-generate-evaluate『slide LLM=html-generator』で phase 一致・prompt _role が『agents/html-generator.md は 9-section adapter』と明記。placement-invariant=正本 420行 prompt vs adapter 58行・ドメイン規約非複製を本文明言。single-responsibility=R3 slide LLM 生成に限定。減点: adapter は 6体共通 boilerplate ゆえ役割差分が frontmatter/1文 Purpose のみに凝縮(意図的な thin 設計だが差別化情報は薄い)。"},
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]
+}

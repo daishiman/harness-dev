@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "purpose": "run-elegant-review の収束判定ポリシー。正負フィードバック両輪 + 解像度3層 + 安全弁の3要素で構成する。",
+  "resolution_layers": {
+    "L1_condition_pass_fail": "C1-C4 の PASS/FAIL (4bit)",
+    "L2_paradigm_score": "各C条件 0.0-1.0 + 30思考法 0.0-1.0 (約30bit)",
+    "L3_delta_vector": "周回間のΔベクトル (正/負 両方向で約60bit)"
+  },
+  "negative_feedback": {
+    "description": "問題検出と修正で品質ラインに到達させる方向のループ",
+    "detector_outputs": [
+      "C1-C4 違反項目",
+      "30思考法での破綻箇所",
+      "rubric低スコア項目"
+    ],
+    "thresholds": {
+      "all_conditions_score_min": 0.85,
+      "delta_findings_count_max_ratio": 0.20,
+      "no_regression": true
+    }
+  },
+  "positive_feedback": {
+    "description": "良点抽出と横展開で設計DNAを蓄積する方向のループ。Phase A-J実装で欠落していた成分",
+    "amplifier_outputs": [
+      "優れた設計判断 (Phase 単位で抽出)",
+      "再利用可能パターン",
+      "横展開すべき思想 (例: 禁止リストをデータ宣言→lint強制)"
+    ],
+    "extract_granularity": "phase",
+    "store_path": "references/amplified-patterns.json",
+    "thresholds": {
+      "min_amplify_targets_per_iteration": 1,
+      "delta_new_patterns_max": 1,
+      "horizontal_transfer_required": true
+    }
+  },
+  "halt_conditions": {
+    "converged": {
+      "rule": "delta_neg < 0.10 AND delta_pos < 0.10",
+      "status": "complete",
+      "description": "もう減らす問題も、増やす良点もない状態"
+    },
+    "diverged": {
+      "rule": "delta_neg increases for 2 consecutive iterations",
+      "status": "incomplete",
+      "action": "human_escalate",
+      "description": "問題が減らず増えている。改善方針自体に欠陥"
+    },
+    "max_iterations_reached": {
+      "rule": "iteration_count >= 3",
+      "status": "incomplete",
+      "action": "human_review",
+      "require_human_decision": true,
+      "log_remaining_findings": true,
+      "description": "安全弁。到達時は失敗扱い (force_pass禁止)。Goodhart罠回避"
+    }
+  },
+  "parameters": {
+    "max_iterations": 3,
+    "delta_threshold": 0.10,
+    "rubric_min_score": 4
+  },
+  "anti_patterns": [
+    "max_iterations到達を成功扱いにする (Goodhart罠)",
+    "負フィードバックのみ運用 (防衛的になり加点を取りに行かない)",
+    "L1 (4bit) のみで収束判定 (勾配が見えず振動を検出できない)",
+    "正フィードバック抽出を細粒度 (パラダイム単位) にする (冗長で維持不能)"
+  ]
+}

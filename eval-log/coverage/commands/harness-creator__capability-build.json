@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/commands/capability-build.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 91,
+    "notes": "以前の FAIL 理由だった dangling reference と schema mismatch は解消済み。`capability-manifest.schema.json#/definitions/commonCore.kind` への誤参照を削除し、7 capability kind は本 command の明示受理リストとして記述した。frontmatter は command 契約を満たし、route mode は script route を build-script-route.py、task_graph_ref 経路を dispatch/state/knowledge scripts へ委譲する薄いラッパの責務に収まっている。外ループは C08 handback と graph_hash repin で planner update へ戻す設計を保持する。"
+  },
+  "reviewed_by": "workflow-fix-verified",
+  "checked": [
+    "reference-existence",
+    "schema-conformance",
+    "owner-flow",
+    "placement-invariant",
+    "outer-loop-handback"
+  ]
+}

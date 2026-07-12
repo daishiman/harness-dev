@@ -1,0 +1,343 @@
+{
+  "schema_version": "1.0",
+  "kit_name": "harness-creator-kit",
+  "kit_version": "1.0.1",
+  "description": "Claude Code のハーネス (Skill と評価・統治機構の総体) を構築する/評価する/承認する/出力先にルーティングするためのハーネス構成部品一式。プロジェクト非依存・portable。",
+  "skills": [
+    {
+      "name": "run-skill-create",
+      "role": "E2Eオーケストレーター (要望→スキル完成)",
+      "category": "orchestrator"
+    },
+    {
+      "name": "run-skill-elicit",
+      "role": "要求ヒアリングウィザード",
+      "category": "generator"
+    },
+    {
+      "name": "run-build-skill",
+      "role": "スキル骨格生成 (create/update両対応)",
+      "category": "generator"
+    },
+    {
+      "name": "run-skill-rename",
+      "role": "安全な改名",
+      "category": "generator"
+    },
+    {
+      "name": "assign-skill-design-evaluator",
+      "role": "設計品質評価 (rubric基準)",
+      "category": "evaluator"
+    },
+    {
+      "name": "run-elegant-review",
+      "role": "30パラダイム×4条件レビュー",
+      "category": "evaluator"
+    },
+    {
+      "name": "run-skill-rubric-governance",
+      "role": "rubric改正承認フロー",
+      "category": "governance"
+    },
+    {
+      "name": "delegate-codex-skill-review",
+      "role": "CodexへのSkillレビュー委譲",
+      "category": "delegate"
+    },
+    {
+      "name": "wrap-git-commit-safe",
+      "role": "安全なgit commitラッパ",
+      "category": "wrapper"
+    },
+    {
+      "name": "ref-skill-design-rubric",
+      "role": "設計品質rubric正本",
+      "category": "reference"
+    },
+    {
+      "name": "ref-claude-code-skill-spec",
+      "role": "Claude Code Skills公式仕様参照",
+      "category": "reference"
+    },
+    {
+      "name": "ref-skill-naming-convention",
+      "role": "命名規約条文 (第1〜16条)",
+      "category": "reference"
+    },
+    {
+      "name": "ref-skill-glossary",
+      "role": "用語集",
+      "category": "reference"
+    },
+    {
+      "name": "ref-yaml-spec-fetcher",
+      "role": "公式YAML仕様の最新同期",
+      "category": "reference"
+    },
+    {
+      "name": "ref-output-routing",
+      "role": "出力先routing解決 (Hexagonal Arch port)",
+      "category": "reference"
+    },
+    {
+      "name": "ref-task-context-map",
+      "role": "章番号索引 / Skill間タスクコンテキスト地図",
+      "category": "reference"
+    },
+    {
+      "name": "ref-cross-platform-runtime",
+      "role": "Mac/Linux/Windows OS判定とfallback契約 (doc/22)",
+      "category": "reference"
+    },
+    {
+      "name": "run-migrate-audit",
+      "role": "CLAUDE.md/prompt集→Skill群移行棚卸し (doc/20)",
+      "category": "generator"
+    },
+    {
+      "name": "ref-domain-rubric-template",
+      "role": "ドメイン固有rubricテンプレート正本",
+      "category": "reference"
+    },
+    {
+      "name": "ref-domain-task-spec-rubric",
+      "role": "タスク仕様書ドメイン用L1 rubric正本 (Phase 1-13/SRP/ユビキタス言語の評価基準)",
+      "category": "reference"
+    }
+  ],
+  "scripts": {
+    "adapters": [
+      "resolve_route.py",
+      "dispatch.py",
+      "sink_local.py",
+      "sink_http.py",
+      "sink_notion.py",
+      "sink_sheets.py",
+      "sink_slack.py"
+    ],
+    "secrets": [
+      "keychain_helper.py",
+      "audit_secret_leak.py",
+      "README.md"
+    ],
+    "cross_platform": [
+      "cross_platform_secret.py"
+    ],
+    "migrate": [
+      "audit.py",
+      "to-brief.py",
+      "backfill-source-tier.py"
+    ],
+    "lint": [
+      "lint-skill-name.py",
+      "lint-skill-description.py",
+      "lint-skill-tree.py",
+      "validate-frontmatter.py",
+      "lint-dependency-direction.py",
+      "lint-skill-dep-step7.py",
+      "lint-forbidden-deps.py",
+      "lint-manifest-contents.py",
+      "build-manifest-registration-plan.py",
+      "lint-path-canonical.py",
+      "lint-template-variables.py",
+      "lint-external-refs.py"
+    ],
+    "hooks": [
+      "hook-verify-evaluator-json.py",
+      "hook-post-compact.py",
+      "hook-guard-rubric.py",
+      "hook-handoff.py",
+      "hook-validate-skill-md.py",
+      "hook-check-file-ownership.py",
+      "notify-if-governance-trigger.py"
+    ],
+    "governance": [
+      "lint-rubric-violation.py",
+      "compute-rubric-hash.py",
+      "rollback-to-stable.py",
+      "doc-to-skill-adapter.py",
+      "lint-script-frontmatter.py",
+      "compose-rubrics.py",
+      "check-rubric-sync.py",
+      "lint-rubric-refs-exist.py",
+      "re-evaluate-on-rubric-bump.py",
+      "guard-change-category.py",
+      "extract-session-events.py"
+    ],
+    "lifecycle": [
+      "resolve-skill-dirs.sh",
+      "resolve-skill-dirs.ps1",
+      "write-eval-log.py"
+    ]
+  },
+  "agents": [
+    {
+      "name": "elegant-reset-observer",
+      "role": "思考リセット・俯瞰",
+      "source": "agents/elegant-reset-observer.md",
+      "path": ".claude/agents/elegant-reset-observer.md",
+      "mode": "symlink"
+    },
+    {
+      "name": "elegant-logical-structural-analyst",
+      "role": "論理・構造分析",
+      "source": "agents/elegant-logical-structural-analyst.md",
+      "path": ".claude/agents/elegant-logical-structural-analyst.md",
+      "mode": "symlink"
+    },
+    {
+      "name": "elegant-meta-divergent-analyst",
+      "role": "メタ・発想分析",
+      "source": "agents/elegant-meta-divergent-analyst.md",
+      "path": ".claude/agents/elegant-meta-divergent-analyst.md",
+      "mode": "symlink"
+    },
+    {
+      "name": "elegant-system-strategic-analyst",
+      "role": "システム・戦略分析",
+      "source": "agents/elegant-system-strategic-analyst.md",
+      "path": ".claude/agents/elegant-system-strategic-analyst.md",
+      "mode": "symlink"
+    },
+    {
+      "name": "elegant-improvement-executor",
+      "role": "改善実行",
+      "source": "agents/elegant-improvement-executor.md",
+      "path": ".claude/agents/elegant-improvement-executor.md",
+      "mode": "symlink"
+    },
+    {
+      "name": "run-build-skill-subagent",
+      "role": "run-build-skill派生subagent",
+      "source": "agents/run-build-skill-subagent.md",
+      "path": ".claude/agents/run-build-skill-subagent.md",
+      "mode": "symlink"
+    }
+  ],
+  "config": [
+    {
+      "source": "config/adapter-registry.json",
+      "target": ".claude/config/adapter-registry.json",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/output-routing.json.example",
+      "target": ".claude/config/output-routing.json.example",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/rubric-registry.json",
+      "target": ".claude/config/rubric-registry.json",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/template-variable-registry.json",
+      "target": ".claude/config/template-variable-registry.json",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/pattern-catalog.json",
+      "target": ".claude/config/pattern-catalog.json",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/claude-settings-hooks.json.example",
+      "target": ".claude/settings.harness-creator-kit-hooks.json.example",
+      "mode": "copy"
+    },
+    {
+      "source": "config/INSTALL_HOOKS.md",
+      "target": ".claude/config/INSTALL_HOOKS.md",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/governance-policy.json",
+      "target": ".claude/config/governance-policy.json",
+      "mode": "copy"
+    },
+    {
+      "source": "config/governance-params.json.example",
+      "target": "references/governance-params.json.example",
+      "mode": "symlink"
+    },
+    {
+      "source": "config/meta-harness-observables.json",
+      "target": ".claude/config/meta-harness-observables.json",
+      "mode": "copy"
+    },
+    {
+      "source": "config/meta-harness-log-schema-v1.0.json",
+      "target": ".claude/logs/schema-v1.0.json",
+      "mode": "copy"
+    },
+    {
+      "source": "config/meta-harness-hooks.json.example",
+      "target": ".claude/settings.meta-harness-hooks.json.example",
+      "mode": "copy"
+    }
+  ],
+  "requirements": {
+    "claude_code_version": ">=1.0",
+    "os": [
+      "macos",
+      "linux",
+      "windows"
+    ],
+    "python": ">=3.9 (stdlib only)",
+    "external_clis": {
+      "common": [
+        "git"
+      ],
+      "macos": [
+        "security"
+      ],
+      "linux": [],
+      "windows": []
+    },
+    "forbidden_dependencies": [
+      "PyYAML",
+      "requests",
+      "jq",
+      "yq"
+    ],
+    "cross_platform_contract": "doc/ClaudeCodeスキルの設計書/22-cross-platform-runtime.md"
+  },
+  "install": {
+    "default_mode": "symlink",
+    "conflict_policy": "prompt",
+    "required_directories": [
+      ".claude/skills",
+      ".claude/agents",
+      ".claude/config",
+      ".claude/logs",
+      "scripts/adapters",
+      "scripts/secrets",
+      "scripts"
+    ]
+  },
+  "bootstrap": [
+    {
+      "source": "_bootstrap/MANUAL.md",
+      "mode": "copy",
+      "role": "ブートストラップ手順書"
+    },
+    {
+      "source": "_bootstrap/test-self-regenerate.py",
+      "mode": "copy",
+      "role": "自己再生テスト（最後の砦）"
+    }
+  ],
+  "excluded_paths": [
+    "_bootstrap/",
+    "_drafts/",
+    "skills/ref-domain-task-spec-rubric/"
+  ],
+  "rubrics": [
+    {
+      "name": "domain-task-spec",
+      "source": "skills/ref-domain-task-spec-rubric/rubric.json",
+      "role": "ドメイン固有タスク仕様rubric (L1層、ref-skill-design-rubric を upstream に継承)",
+      "layer": "L1"
+    }
+  ]
+}

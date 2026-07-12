@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "_doc": "Skill量産時のパターン選択を属人化させないためのカタログ。brief.pattern_refs と trace.pattern_decisions の正本候補。",
+  "patterns": [
+    {
+      "id": "evaluator-pair",
+      "applies_when": ["生成物を独立評価する", "rubric_refs を持つ"],
+      "not_applicable_when": ["read-only reference のみ"],
+      "required_combinators": ["with-evaluator.patch"],
+      "required_rubrics": ["ref-skill-design-rubric"],
+      "paradigm_profile": "eslint-plugin型"
+    },
+    {
+      "id": "adapter-backed",
+      "applies_when": ["成果物を外部出力先へ送る", "task_kind を持つ"],
+      "not_applicable_when": ["会話内出力だけで完了する"],
+      "required_combinators": ["with-run.patch"],
+      "required_rubrics": [],
+      "paradigm_profile": "hexagonal-port型"
+    },
+    {
+      "id": "hook-integrated",
+      "applies_when": ["決定論的な lifecycle gate が必要"],
+      "not_applicable_when": ["任意実行の補助スキル"],
+      "required_combinators": ["with-hooks.patch"],
+      "required_rubrics": [],
+      "paradigm_profile": "pre-commit-hook型"
+    },
+    {
+      "id": "agent-team",
+      "applies_when": ["独立した観点を並列評価する"],
+      "not_applicable_when": ["単一ファイルの軽微な変換"],
+      "required_combinators": ["with-subagent.patch"],
+      "required_rubrics": [],
+      "paradigm_profile": "subprocess-worker型"
+    },
+    {
+      "id": "implementation-ledger",
+      "applies_when": ["creator-kit配布対象を追加する", "正本と派生の状態を追跡する"],
+      "not_applicable_when": ["プロジェクト固有の一時成果物"],
+      "required_combinators": [],
+      "required_rubrics": [],
+      "paradigm_profile": "implementation-ledger型"
+    },
+    {
+      "id": "change-governance",
+      "applies_when": ["P0-P3分類が必要", "承認・cooldown・blast radiusを扱う"],
+      "not_applicable_when": ["read-only監査のみ"],
+      "required_combinators": ["with-hooks.patch"],
+      "required_rubrics": [],
+      "paradigm_profile": "policy-as-code型"
+    },
+    {
+      "id": "plugin-boundary-migration",
+      "applies_when": ["plugin化", "plugin境界", "外部参照棚卸しを扱う"],
+      "not_applicable_when": ["creator-kit内の通常更新"],
+      "required_combinators": ["with-subagent.patch"],
+      "required_rubrics": [],
+      "paradigm_profile": "boundary-gate型"
+    },
+    {
+      "id": "meta-harness-feedback-loop",
+      "applies_when": ["セッションログからSkill改善を起票する", "ref-*のdescriptionやgotchasを観測根拠で改善する"],
+      "not_applicable_when": ["ログ収集を許可しない環境"],
+      "required_combinators": ["with-hooks.patch"],
+      "required_rubrics": ["ref-skill-design-rubric"],
+      "paradigm_profile": "closed-observability-loop型"
+    }
+  ]
+}

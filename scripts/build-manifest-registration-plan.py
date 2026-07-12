@@ -1,0 +1,1 @@
+../plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py

@@ -1,0 +1,36 @@
+{
+  "run_id": "20260626-confirm-url-name-merge",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 2},
+  "thought_method_coverage": {"used": 30, "skipped_with_reason": 0, "total": 30},
+  "proposer_ne_approver": true,
+  "approver": "independent general-purpose SubAgent (adversarial, git-diff grounded)",
+  "approver_decision": "APPROVE",
+  "tests": "112 passed (R1-R5 108 + 移行モード4)",
+  "two_stage_verification": "orchestrator が JAPANPOST_VERIFY_URL単一定義/zipcode残存0/schema除去/phone_search_urlエンコード/R5両ケース抑止/移行モードON/OFF/official空 を独立に再実行確認。SubAgent誤報告(編集遅延反映)を grep+pytest で検出し二重実装を調停(notion_upsert デッドコード除去→patch_empty_cells一本化)。",
+  "migration_mode": {
+    "added": true,
+    "flag": "--migrate-company-title (backfill, opt-in, 既定OFF)",
+    "behavior": "official_name(登記名)取得済み且つ title≠official の既存行のみ会社名titleを登記名へ上書き。住所/郵便/法人番号/電話の非空保護維持・alt_key通称ベース不変・冪等(一致行no-op)・dry-run併用可。",
+    "approver_decision": "APPROVE (独立SubAgent・7点全PASS)",
+    "execution_scope": "live実行はユーザー判断(コード対応のみ)"
+  },
+  "residual": [
+    {"severity": "resolved", "type": "operational",
+     "title": "既存行の会社名title移行 → opt-in移行モードで解決",
+     "detail": "--migrate-company-title フラグで既存行の会社名(通称)を登記名へ上書き移行可能(official_name取得済行のみ)。実行はユーザー判断。"},
+    {"severity": "low", "type": "ci_followup",
+     "title": "編集した2 SKILL.md の content-review verdict stale-sha",
+     "detail": "SKILL.md 実体編集により lint-content-review.py の記録SHAが現SHAと不一致。PR化時は独立SubAgentでverdict genuine再生成が必要(SHA書換は偽装・禁止)。"},
+    {"severity": "medium", "type": "accepted_smell",
+     "title": "R1/R2 検証性低下(逆説思考)",
+     "detail": "トップURL化・Google検索クエリ化は『URL単独で値を再確認できない』weak provenance。ユーザー明示指定のため受容。doc に trade-off明記済(PASSを妨げない)。"}
+  ],
+  "status": "complete",
+  "iteration_count": 1
+}

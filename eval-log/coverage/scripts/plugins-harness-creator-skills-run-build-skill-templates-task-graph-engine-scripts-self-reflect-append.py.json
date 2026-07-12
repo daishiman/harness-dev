@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine code-review + 30思考法検証。discovered task を checklist 末尾へ単一truth追記 (既存 item 不変・別状態ファイル新設せず H3)。追記前に id pattern/id重複/未知 depends_on/追記後サイクルを fail-closed 検査。cycle 検査は反復 3-color DFS へ変換済 (§17c: 深鎖 2000段でも RecursionError にならない)。TESTS: tests/scripts-plugins/test_harness_creator__self_reflect_append.py 18ケース PASS (append形状/id重複exit1/未知dep exit1/サイクルexit1/self-loop/深鎖no-recursion/菱形no-false-positive/CLI)。coverage 99%。"
+  },
+  "reviewed_by": "elegant-review-30methods-phase3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

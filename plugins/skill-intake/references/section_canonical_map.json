@@ -1,0 +1,320 @@
+{
+  "schema_version": "2.0.0",
+  "description": "ユーザー正本(info-collector-agent ヒアリング正本完全版 §0〜§11)を機械可読な単一 source of truth として宣言する正本マップ。SubAgent 出力 / render_notion_page.py / viz_slots 割当 / intake.schema.json definitions は全てここから派生する (旧 section-templates.json (v1) は 2026-05-22 廃止済み)。",
+  "user_canonical_source": "info-collector-agent ヒアリング正本（完全版）/ §0〜§11",
+  "policies": {
+    "role_emoji": "no_emoji_no_icon_japanese_label_only",
+    "dry_resolution": "§3 と旧 §7.5 の knowledge_asset 重複は §6_five_axes_summary 配下に $ref で fold し、旧 7_5_knowledge_asset を廃止",
+    "dogfooding_threshold": {"$ref": "runtime-config.json#/dogfooding", "note": "DRY: 閾値・キー集合の正本は runtime-config.json 側。ここはポインタ宣言のみ (F2 修正 2026-05-22)"},
+    "absence_behavior_default": "block",
+    "intent_contract_ssot": "入力/出力インテントの唯一正本は §6 intent_contract (references/intent-contract.schema.json 準拠) であり、§6 axes の output_to は intent_contract.output_spec.sink から、input_from は intent_contract.input_spec.sources からの派生である",
+    "viz_slots_engine": "fa-icon prefix 'fa:fa-*' は本文では用いず、Mermaid 識別子のみ正本化",
+    "diagram_uniqueness_enforcement": "asset_id must be unique across sections, except §5 figN siblings"
+  },
+  "sections": [
+    {
+      "user_canonical_section": "§0",
+      "section_key": "0_executive_summary",
+      "title": "0. エグゼクティブサマリ",
+      "responsible_subagent": ["skill-intake-summarizer", "skill-intake-handoff"],
+      "role_label": "正本の入口・先頭で全体像を90秒で読ませる",
+      "purpose_slots": {
+        "decides_what": "intake 全体の代表値 (真の目的 / 採択した設計選択 / 引き渡しモード / 自己評価スコア) を先頭1枚に凝縮する",
+        "ensures_what": "Notion ページを開いた瞬間に『これは何のスキルで、なぜ作るのか・次は何が起きるのか』が読める",
+        "prevents_what": "本文を読み終わるまで目的が掴めない・サマリと本文の値が食い違う"
+      },
+      "required_fields": [
+        {"key": "generated_at", "type": "string", "constraint": "ISO 8601 + JST (YYYY-MM-DDTHH:MM:SS+09:00)", "absence_behavior": "block"},
+        {"key": "pattern", "type": "enum", "constraint": "A(新規作成)|B(既存改修)|C(統廃合)|D(廃止)|E(分割)", "absence_behavior": "block"},
+        {"key": "workflow_pattern", "type": "string", "constraint": "主従表記 (例: 'B(自動収集配信を主)・A従')", "absence_behavior": "warn-fallback", "default": "A単体"},
+        {"key": "depth", "type": "enum", "constraint": "shallow(10分)|standard(25分)|detailed(40分相当)", "absence_behavior": "block"},
+        {"key": "vocabulary_tier", "type": "enum", "constraint": "novice|intermediate|expert", "absence_behavior": "block"},
+        {"key": "state", "type": "enum", "constraint": "drafting|gate_a_pending|gate_a_approved|handoff_ready", "absence_behavior": "block"},
+        {"key": "true_purpose_oneliner", "type": "string", "constraint": "verb+object 1-2行 (§3 true_purpose の凝縮)", "absence_behavior": "block"},
+        {"key": "design_decision_summary", "type": "string", "constraint": "採択ID列 (例: 'O1×T3×S3')。§7 の adoptions から派生", "absence_behavior": "warn-fallback", "default": ""},
+        {"key": "handoff_mode", "type": "enum", "constraint": "fast-track|standard|onboarding|draft-only", "absence_behavior": "block"},
+        {"key": "value_realized_score", "type": "integer", "constraint": "0-100 (§10 self-updater の self-evaluation)", "absence_behavior": "warn-fallback", "default": null}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "cvis-exec-summary-card", "mandatory": true, "kind": "structure"}
+      ],
+      "char_bounds": {"min": 300, "max": 1200},
+      "absence_behavior": "block",
+      "refs_to": ["1_assumption_challenger", "3_purpose_excavator", "4_option_presenter", "9_handoff_contract"]
+    },
+    {
+      "user_canonical_section": "§1",
+      "section_key": "1_assumption_challenger",
+      "title": "1. Phase: assumption-challenger（前提逆転）",
+      "responsible_subagent": ["skill-intake-assumption-challenger"],
+      "role_label": "表層リクエストと深層候補を分離し、採択した深層課題を1点に固定する",
+      "purpose_slots": {
+        "decides_what": "深層候補 3つ (D1/D2/D3) のうち採択した1つ (D*) と、その確定根拠",
+        "ensures_what": "表層要望のままスキル化する事故を防ぎ、time_freed_intent / blindspots を可視化する",
+        "prevents_what": "『便利にしたい』型・『他の人もやってる』型・『全部自動化』型のアンチパターン進入"
+      },
+      "required_fields": [
+        {"key": "surface_request", "type": "string", "constraint": "ユーザー一次発話そのまま", "absence_behavior": "block"},
+        {"key": "deep_candidates", "type": "array", "constraint": "[{id:D1..D3, label, adopted:bool}] (3件固定)", "absence_behavior": "block"},
+        {"key": "adopted_deep_problem", "type": "string", "constraint": "採択した深層課題 1文", "absence_behavior": "block"},
+        {"key": "time_freed_intent", "type": "string", "constraint": "浮いた時間の使い道", "absence_behavior": "warn-fallback", "default": "未指定"},
+        {"key": "blindspots", "type": "array", "constraint": "[{text}]", "absence_behavior": "warn-fallback", "default": []}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-mindmap-surface-vs-deep", "mandatory": true, "kind": "workflow"},
+        {"role": "secondary", "asset_id": "mermaid-quadrant-blindspot-map", "mandatory": false, "kind": "workflow"}
+      ],
+      "char_bounds": {"min": 250, "max": 1500},
+      "absence_behavior": "block",
+      "refs_to": ["3_purpose_excavator", "6_five_axes_summary"]
+    },
+    {
+      "user_canonical_section": "§2",
+      "section_key": "2_user_profile",
+      "title": "2. Phase: user-profiler（ユーザー像）",
+      "responsible_subagent": ["skill-intake-user-profiler"],
+      "role_label": "6次元プロファイルで vocabulary_tier と図解選択を決定する",
+      "purpose_slots": {
+        "decides_what": "expertise / role / context / constraints / motivation / sharing_intent の6軸と vocabulary_tier",
+        "ensures_what": "後続セクションの語彙難易度・図解種別が自動分岐し、模倣動機を排除する",
+        "prevents_what": "ユーザー文脈に合わない汎用テンプレ提示・語彙ミスマッチ"
+      },
+      "required_fields": [
+        {"key": "dimensions", "type": "array", "constraint": "[{dim, value, confidence:enum(low/mid/high), evidence}] (6件)", "absence_behavior": "block"},
+        {"key": "vocabulary_tier", "type": "enum", "constraint": "novice|intermediate|expert", "absence_behavior": "block"},
+        {"key": "implications_for_next_phase", "type": "array", "constraint": "後続フェーズへの含意 1-3件", "absence_behavior": "warn-fallback", "default": []}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-radar-6dim", "mandatory": true, "kind": "structure"},
+        {"role": "secondary", "asset_id": "cvis-persona-card", "mandatory": false, "kind": "structure"}
+      ],
+      "char_bounds": {"min": 250, "max": 1500},
+      "absence_behavior": "block",
+      "refs_to": ["3_purpose_excavator", "4_option_presenter"]
+    },
+    {
+      "user_canonical_section": "§3",
+      "section_key": "3_purpose_excavator",
+      "title": "3. Phase: purpose-excavator（真の目的の発掘）",
+      "responsible_subagent": ["skill-intake-purpose-excavator"],
+      "role_label": "5 Whys / JTBD / Reverse Brief / Magic Wand など8技法で真の目的を発掘する",
+      "purpose_slots": {
+        "decides_what": "true_purpose (verb + object) / underlying_motivation / differentiation / output_priority",
+        "ensures_what": "stated → excavated の差分が可視化され、ニュース要約等の表層類似スキルとの差別化が明文化される",
+        "prevents_what": "stated と excavated が同義反復になる『とりあえず』型"
+      },
+      "required_fields": [
+        {"key": "techniques_used", "type": "array", "constraint": "8技法から使用したもの", "absence_behavior": "block"},
+        {"key": "rounds", "type": "integer", "constraint": ">=1", "absence_behavior": "block"},
+        {"key": "agreement_loop_detected", "type": "boolean", "absence_behavior": "warn-fallback", "default": false},
+        {"key": "true_purpose", "type": "string", "constraint": "verb + object 1文", "absence_behavior": "block"},
+        {"key": "underlying_motivation", "type": "string", "absence_behavior": "block"},
+        {"key": "differentiation", "type": "string", "constraint": "類似スキルとの差別化 1文", "absence_behavior": "warn-fallback", "default": ""},
+        {"key": "output_priority", "type": "array", "constraint": "[{rank:int, output, mandatory:bool}]", "absence_behavior": "block"},
+        {"key": "tacit_locus", "type": "object", "constraint": "{where, extraction_strategy_hint}", "absence_behavior": "warn-fallback", "default": null}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-journey-5whys", "mandatory": true, "kind": "workflow"},
+        {"role": "secondary", "asset_id": "mermaid-mindmap-stated-to-excavated", "mandatory": false, "kind": "workflow"}
+      ],
+      "char_bounds": {"min": 300, "max": 1800},
+      "absence_behavior": "block",
+      "refs_to": ["4_option_presenter", "6_five_axes_summary"]
+    },
+    {
+      "user_canonical_section": "§4",
+      "section_key": "4_option_presenter",
+      "title": "4. Phase: option-presenter（選択肢提示と確定）",
+      "responsible_subagent": ["skill-intake-option-presenter"],
+      "role_label": "責務境界 / テーマ抽出 / 配信タイミング / コネクタ等の選択肢を提示し採択を確定する",
+      "purpose_slots": {
+        "decides_what": "各設計軸の選択肢表 (id/label/Pro/Con/Weight) と採択 (✅)",
+        "ensures_what": "代替案を Pro/Con 込みで比較し、採択理由を可監査化する",
+        "prevents_what": "暗黙の選択・採択理由の口承化・後段での再議論ループ"
+      },
+      "required_fields": [
+        {"key": "decision_tables", "type": "array", "constraint": "[{axis, options:[{id, label, pro, con, weight, adopted:bool}], adopted_id}] (2軸以上)", "absence_behavior": "block"},
+        {"key": "connectors", "type": "object", "constraint": "{input_sources[], knowledge_assets[], outputs[], scheduler}", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-flowchart-decision-tree", "mandatory": true, "kind": "workflow"},
+        {"role": "secondary", "asset_id": "mermaid-table-pro-con", "mandatory": false, "kind": "workflow"}
+      ],
+      "char_bounds": {"min": 400, "max": 2500},
+      "absence_behavior": "block",
+      "refs_to": ["5_visualizer", "7_design_decisions"]
+    },
+    {
+      "user_canonical_section": "§5",
+      "section_key": "5_visualizer",
+      "title": "5. Phase: visualizer（図解5枚）",
+      "responsible_subagent": ["skill-intake-visualizer"],
+      "role_label": "Mermaid 5枚 (全体アーキ / コア機構 / 日次パイプライン / Before-After / 責務境界) を出力する",
+      "purpose_slots": {
+        "decides_what": "5枚の図種と『言いたい一言』、ノード/凡例/色定義",
+        "ensures_what": "ノード数7±2・日本語10文字以内・色凡例つき・絵文字なしの規約 (visualization-mandatory-rules) を満たす",
+        "prevents_what": "図種の不統一・凡例欠落・絵文字混入・ノード数爆発による可読性崩壊"
+      },
+      "required_fields": [
+        {"key": "figures", "type": "array", "constraint": "[{index:1..5, title, kind:enum(flowchart/sequence/mindmap/quadrant/journey/comparison/architecture), mermaid_source, legend, one_liner}] (5枚固定)", "absence_behavior": "block"},
+        {"key": "rules_check", "type": "object", "constraint": "{nodes_7_plus_minus_2:bool, label_len_le_10:bool, color_legend:bool, no_emoji:bool, one_liner_present:bool}", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "fig1_architecture", "asset_id": "mtmpl-flowchart-lr", "mandatory": true, "kind": "mechanism"},
+        {"role": "fig2_core_mechanism", "asset_id": "mtmpl-flowchart-tb", "mandatory": true, "kind": "mechanism"},
+        {"role": "fig3_pipeline", "asset_id": "mtmpl-sequence", "mandatory": true, "kind": "mechanism"},
+        {"role": "fig4_before_after", "asset_id": "mtmpl-before-after-lr", "mandatory": true, "kind": "mechanism"},
+        {"role": "fig5_boundary", "asset_id": "mtmpl-boundary-tb", "mandatory": true, "kind": "mechanism"}
+      ],
+      "char_bounds": {"min": 500, "max": 3500},
+      "absence_behavior": "block",
+      "refs_to": ["4_option_presenter"]
+    },
+    {
+      "user_canonical_section": "§6",
+      "section_key": "6_five_axes_summary",
+      "title": "6. 5軸サマリ（最終確定版）",
+      "responsible_subagent": ["skill-intake-summarizer"],
+      "role_label": "出力先 / 情報源 / 共有相手 / 真の課題 / ナレッジ資産(MUST) の5軸を最終固定する",
+      "purpose_slots": {
+        "decides_what": "5軸それぞれの answer / depth(deep|standard|shallow) と、ナレッジ抽出パイプライン (ingest/analysis/storage/retrieval/update)",
+        "ensures_what": "DRY原則: knowledge_asset は本章でのみ宣言され、他章は $ref 参照する",
+        "prevents_what": "旧 §3+§7.5 の二重正本化・5軸の表層化・ナレッジ資産の決定漏れ"
+      },
+      "required_fields": [
+        {"key": "axes", "type": "array", "constraint": "[{axis_id:enum(output_to/input_from/share_target/real_problem/knowledge_asset), answer, depth, evidence}] (5件固定)", "absence_behavior": "block"},
+        {"key": "intent_contract", "type": "object", "constraint": "references/intent-contract.schema.json 準拠。input_spec/output_spec の全slot filled 必須。output_to/input_from はここから派生", "absence_behavior": "block"},
+        {"key": "knowledge_pipeline", "type": "object", "constraint": "{ingest:[], analysis:[], storage:[], retrieval:[], update:enum(daily/weekly/monthly/event)}", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-pie-5axes-weight", "mandatory": true, "kind": "mechanism"},
+        {"role": "secondary", "asset_id": "mermaid-flowchart-knowledge-pipeline", "mandatory": false, "kind": "mechanism"}
+      ],
+      "char_bounds": {"min": 400, "max": 2000},
+      "absence_behavior": "block",
+      "refs_to": ["3_purpose_excavator", "4_option_presenter", "7_design_decisions"],
+      "deprecates": ["7_5_knowledge_asset"],
+      "rationale": "旧 7_5_knowledge_asset は本章 axes[axis_id=knowledge_asset] と knowledge_pipeline に統合。$ref で参照のみ可。"
+    },
+    {
+      "user_canonical_section": "§7",
+      "section_key": "7_design_decisions",
+      "title": "7. 設計選択サマリ（option-presenter で確定）",
+      "responsible_subagent": ["skill-intake-option-presenter"],
+      "role_label": "§4 で議論した選択肢のうち採択(✅)のみを正本化し、採択理由を1行に圧縮する",
+      "purpose_slots": {
+        "decides_what": "各設計軸の adopted_option_id と理由 (1行)",
+        "ensures_what": "Notion ページ上で『最終的に何を選んだか』が議論プロセスと分離して読める",
+        "prevents_what": "§4 の議論を毎回追わないと採択結果が分からない"
+      },
+      "required_fields": [
+        {"key": "adoptions", "type": "array", "constraint": "[{axis, adopted_id, reason_one_liner}] (2件以上)", "absence_behavior": "block"},
+        {"key": "output_priority_finalized", "type": "array", "constraint": "[{rank, output, mandatory:bool}]", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-gantt-adoption-timeline", "mandatory": true, "kind": "mechanism"},
+        {"role": "secondary", "asset_id": "mermaid-c4-component-adoptions", "mandatory": false, "kind": "mechanism"}
+      ],
+      "char_bounds": {"min": 300, "max": 1500},
+      "absence_behavior": "block",
+      "refs_to": ["4_option_presenter"]
+    },
+    {
+      "user_canonical_section": "§8",
+      "section_key": "8_open_questions",
+      "title": "8. 未解決事項（harness-creator 引き継ぎ）",
+      "responsible_subagent": ["skill-intake-handoff"],
+      "role_label": "blocking と deferred を traffic-light で分離し、委譲先を明示する",
+      "purpose_slots": {
+        "decides_what": "[{q, blocking:bool, defer_to}] の表",
+        "ensures_what": "完璧主義を排し、いま決められないことを未来へ明示的に渡す",
+        "prevents_what": "blocking 残存のまま handoff が走ること"
+      },
+      "required_fields": [
+        {"key": "questions", "type": "array", "constraint": "[{q, blocking:bool, defer_to}]", "absence_behavior": "warn-fallback", "default": []},
+        {"key": "blocking_count", "type": "integer", "constraint": "0 必須（>0 なら handoff 停止）", "absence_behavior": "block"},
+        {"key": "deferred_count", "type": "integer", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "cvis-traffic-light", "mandatory": false, "kind": "structure"},
+        {"role": "secondary", "asset_id": "mermaid-quadrant-question-priority", "mandatory": false, "kind": "structure"}
+      ],
+      "char_bounds": {"min": 150, "max": 1000},
+      "absence_behavior": "block",
+      "refs_to": ["9_handoff_contract"]
+    },
+    {
+      "user_canonical_section": "§9",
+      "section_key": "9_handoff_contract",
+      "title": "9. harness-creator への申し送り（handoff-contract）",
+      "responsible_subagent": ["skill-intake-next-action-advisor", "skill-intake-handoff"],
+      "role_label": "recommended_next.mode / skip_to_phase / handoff 理由を1行で固定する",
+      "purpose_slots": {
+        "decides_what": "recommended_next.mode (fast-track|standard|onboarding) / skip_to_phase / 起点 intake.json パス",
+        "ensures_what": "harness-creator が intake.json を起点に最短経路で実装着手できる",
+        "prevents_what": "harness-creator が要件再ヒアリングからやり直すループ"
+      },
+      "required_fields": [
+        {"key": "recommended_next", "type": "object", "constraint": "{mode, skip_to_phase, reason}", "absence_behavior": "block"},
+        {"key": "intake_json_path", "type": "string", "absence_behavior": "block"},
+        {"key": "starting_command", "type": "string", "constraint": "コピペ実行可能", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-flowchart-next-action", "mandatory": false, "kind": "workflow"},
+        {"role": "secondary", "asset_id": "mermaid-state-handoff-modes", "mandatory": false, "kind": "workflow"}
+      ],
+      "char_bounds": {"min": 150, "max": 800},
+      "absence_behavior": "block",
+      "refs_to": ["11_artifact_index"]
+    },
+    {
+      "user_canonical_section": "§10",
+      "section_key": "10_self_updater",
+      "title": "10. Phase: self-updater（自己進化結果）",
+      "responsible_subagent": ["skill-intake-self-updater"],
+      "role_label": "value_realized_score / 控除点 / question-bank への追加質問 / セッション観察 を残す",
+      "purpose_slots": {
+        "decides_what": "value_realized_score_estimate (0-100) と控除根拠、question-bank 追加候補",
+        "ensures_what": "次回 intake の質問銀行を自動進化させ、同種の取りこぼしを再発させない",
+        "prevents_what": "セッションで得た学びが個人記憶に閉じる属人化"
+      },
+      "required_fields": [
+        {"key": "metrics", "type": "object", "constraint": "{candidates_detected, candidates_applied, skipped_duplicates, value_realized_score_estimate}", "absence_behavior": "block"},
+        {"key": "score_rationale", "type": "string", "absence_behavior": "block"},
+        {"key": "deductions", "type": "array", "constraint": "[{reason, points}]", "absence_behavior": "warn-fallback", "default": []},
+        {"key": "question_bank_additions", "type": "array", "constraint": "[{category, technique, question_text}]", "absence_behavior": "warn-fallback", "default": []},
+        {"key": "session_observations", "type": "array", "constraint": "気づき列", "absence_behavior": "warn-fallback", "default": []},
+        {"key": "skipped_next_phases", "type": "array", "constraint": "MCP切断等で次フェーズスキップした記録", "absence_behavior": "warn-fallback", "default": []}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "cvis-score-gauge", "mandatory": false, "kind": "structure"},
+        {"role": "secondary", "asset_id": "mermaid-bar-deductions", "mandatory": false, "kind": "structure"}
+      ],
+      "char_bounds": {"min": 200, "max": 1500},
+      "absence_behavior": "warn-fallback",
+      "refs_to": []
+    },
+    {
+      "user_canonical_section": "§11",
+      "section_key": "11_artifact_index",
+      "title": "11. 出力ファイル一覧",
+      "responsible_subagent": ["skill-intake-handoff"],
+      "role_label": "output/<hint>/ 配下に生成された全ファイルと役割を網羅一覧化する",
+      "purpose_slots": {
+        "decides_what": "[{path, role_one_liner, generator_subagent}] の表",
+        "ensures_what": "Notion ページ末尾で『この intake が何を物理的に残したか』が再開時に1秒で読める",
+        "prevents_what": "成果物の所在不明・再開時の探索コスト"
+      },
+      "required_fields": [
+        {"key": "artifacts", "type": "array", "constraint": "[{path:string(relative), role_one_liner, generator_subagent, optional:bool}]", "absence_behavior": "block"},
+        {"key": "base_path", "type": "string", "constraint": ".claude/skills/skill-intake-interviewer/output/<hint>/ または plugins/skill-intake/output/<hint>/", "absence_behavior": "block"}
+      ],
+      "viz_slots": [
+        {"role": "primary", "asset_id": "mermaid-tree-artifact-files", "mandatory": false, "kind": "structure"}
+      ],
+      "char_bounds": {"min": 200, "max": 1200},
+      "absence_behavior": "block",
+      "refs_to": ["9_handoff_contract"]
+    }
+  ]
+}

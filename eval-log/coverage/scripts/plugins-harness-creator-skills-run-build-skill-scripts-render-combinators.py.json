@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "--kind run実行OK/no-arg exit2。unified-diff applierはcontext/removal mismatchをComposeErrorで明示raiseし無音破壊なし。apply_feedback_loopのsymlink/mkdir副作用は明示flag --deploy-feedback-loop限定+冪等(link.exists check)+OSError捕捉済。frontmatter write-scope:output-arg-onlyだがdeploy経路はoutput-arg外へ書く=記述やや過小だがガードは妥当。構造良好 [elegant-review-30methods phase3-2] task-graph 消費検証器を強化: 自己申告 ready_set の内部整合のみ→(1)初期checklist非循環(iterative DFS) (2)selected非空周回はready非空 (3)選択itemのdepends_onが先行周回で選択済=選択列で依存順実証 (4)消費完全性=done全item選択済 (5)completed宣言はpending/blocked不残。degenerate trace(空ready_set/done未選択申告)での回避を封鎖し『助言→拘束』を機械保証(F4-01/F4-04/F3-03)。test_render_combinators_task_graph に強化5ケース追加・生成bash 59行 syntax OK。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

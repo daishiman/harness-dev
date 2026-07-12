@@ -1,0 +1,104 @@
+# CapabilityBundle 宣言 — plugins/slide-report-generator
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: presentation-slide-generator v8.4.2 の全機能を移植し、output_mode=slide/report の 2 モードで
+#       意匠/技術コアを単一 SSOT 共有するビジュアル生成 orchestrator プラグインの自己記述。
+
+name: slide-report-generator
+description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは vendor byte 携行。
+kind: plugin-composition
+version: 0.1.0
+owner: harness maintainers
+since: 2026-07-05
+last-audited: 2026-07-05
+
+contract:
+  intent: 1 プラグイン内で output_mode(slide|report) を分岐し、意匠/技術コア(Kanagawa/16:9/GSAP/SVG2/Codex Image2/決定論レンダラ)を共有したまま、slide=1スライド1メッセージ・report=読み物/1項目1ビジュアルの成果物を生成・修正・横断検証する統一抽象を提供する。
+  interface:
+    inputs: [user-request, output_mode, reportType, structure.json, report-structure.json]
+    outputs: [index.html, report.html, styles.css, scripts.js, evaluation-report.json, completion-report]
+  invariant:
+    - 意匠/技術層(配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ)は単一 SSOT で共有し slide/report で重複させないこと
+    - コンテンツ意図層のみ output_mode で分岐する (slide=1メッセージ/chip強制/長文禁止 BP11-13、report=読み物/セクション+段落/1項目1ビジュアル)
+    - Node 製レンダリング/画像/印刷/検証エンジンは vendor surface として byte 維持で携行し Python-stdlib へ書き換えないこと。skill/agent は Bash(node *) で起動する
+    - vendor byte-parity は vendor-digest-manifest.json (191 files sha256 pin) を比較基準に検証すること (真 schema 4本は plugin-root schemas/ live SSOT、移植元 live tree 非依存)
+    - report 新規 Node (render-report.js/mermaid-render.js) は vendor ツリーへの additive で、parity 対象外・品質は tests_min>=80 + lint で担保すること
+    - sub-agent/skill 本文は prompt-creator 7 層構造 (L1 基本定義 → L7 ユーザーインタラクション) で記述すること
+    - 成果物本文・ヒアリング・評価は日本語、パラメーター名・JSON キー・CLI 引数・output_mode/reportType の enum 値は英語のままとすること
+    - 生成後評価ゲート(deck-evaluator)は 30種思考法コアを共有しつつ mode 別 rubric 次元で区分評価する (単一 evaluator で mode-aware)
+    - 実行パスは全て $CLAUDE_PLUGIN_ROOT 起点 (repo-root ハードコード禁止)
+
+capabilities:
+  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/run-slide-report-generate, tier: core }
+  - { kind: skill, ref: skills/run-slide-report-modify,   tier: core }
+  - { kind: skill, ref: skills/run-cross-deck-review,     tier: core }
+
+  # === Agents (kind=agent) — plugin.json agents 配線と 1 対 1 対応 ===
+  - { kind: agent, ref: agents/hearing-facilitator,        tier: core }
+  - { kind: agent, ref: agents/structure-designer,         tier: core }
+  - { kind: agent, ref: agents/structure-validator,        tier: core }
+  - { kind: agent, ref: agents/d3-diagram-designer,        tier: core }
+  - { kind: agent, ref: agents/data-visualizer,            tier: core }
+  - { kind: agent, ref: agents/html-generator,             tier: core }
+  - { kind: agent, ref: agents/slide-renderer,             tier: core }
+  - { kind: agent, ref: agents/layout-optimizer,           tier: core }
+  - { kind: agent, ref: agents/ui-quality-reviewer,        tier: core }
+  - { kind: agent, ref: agents/deck-evaluator,             tier: core }
+  - { kind: agent, ref: agents/ai-image-diagram-producer,  tier: core }
+  - { kind: agent, ref: agents/slide-report-modifier,      tier: core }
+  - { kind: agent, ref: agents/cross-deck-reviewer,        tier: core }
+  - { kind: agent, ref: agents/report-structure-designer,  tier: core }
+  - { kind: agent, ref: agents/visual-strategist,          tier: core }
+  - { kind: agent, ref: agents/report-composer,            tier: core }
+  - { kind: agent, ref: agents/report-quality-reviewer,    tier: core }  # report 版品質補正 (slide の ui-quality-reviewer/layout-optimizer に対称)
+
+  # === Commands (kind=command) ===
+  - { kind: command, ref: commands/slide-report-generate, tier: core }
+  - { kind: command, ref: commands/slide-report-status,   tier: core }
+
+  # === Hooks (kind=hook) ===
+  - { kind: hook, ref: hooks/hook-postgen-eval.py, tier: core }
+
+  # === Scripts (kind=script) === scripts/ 実体 6 本と集合一致
+  - { kind: script, ref: scripts/validate-output-mode.py,          tier: core }
+  - { kind: script, ref: scripts/lint-vendor-parity.py,           tier: core }
+  - { kind: script, ref: scripts/validate-plugin-completeness.py,  tier: core }
+  # skill 私有 references/ の帰属完全性 (resource-map.yaml が orphan/dangling 0) を検査。
+  # thin-adapter 昇格 references の SSOT 帰属を機械保証する (lint-skill-tree 第13条を内容完全性へ拡張)。
+  - { kind: script, ref: scripts/lint-reference-attribution.py,    tier: core }
+  # report.html の決定論視覚ゲート (section 構造/1項目1ビジュアル/段落密度/placeholder/印刷)。
+  # slide の vendor verify-slides.js/validate-print.js に対称な report 用 Python-stdlib ゲート (C7 で vendor 不可侵ゆえ plugin-root 新設)。
+  - { kind: script, ref: scripts/validate-report-visual.py,        tier: core }
+  # report 経路 prose(references/prompts)↔code(render/validator/schema)の contract-drift ゲート。
+  # 散文の data-*属性名/閾値/render-fidelity class/placement field を実装と機械突合し「宣言>実装」ドリフトを封鎖 (30思考法review の amplified pattern)。
+  - { kind: script, ref: scripts/lint-contract-drift.py,           tier: core }
+
+dependencies:
+  # 本 DAG は skill→agent / command→skill / hook→agent の呼出構造を全被覆する (17 agent 全列挙・欠落エッジなし)。
+  # 循環検出は lint-dependency-direction.py が担う。plugin 自身の component/capability 正本は本 composition の capabilities[] と .claude-plugin/plugin.json entry_points (両者は validate-plugin-completeness.py が 1:1 照合)。
+  # 各 agent の粒度別依存 (前提/後続・R1→R2→R3 連鎖) の正本は該当 skill の workflow-manifest.json resources[]。build 計画の被覆正本は plugin-plans/slide-report-generator/component-inventory.json (validate-plan-coverage.py が sweep)。
+  # --- command → skill 構造エッジ (entry points) ---
+  - { from: commands/slide-report-generate, to: skills/run-slide-report-generate,   type: calls }
+  - { from: commands/slide-report-status,   to: skills/run-slide-report-generate,   type: reads }
+  # --- skill → agent 呼出 ---
+  - { from: skills/run-slide-report-generate, to: agents/hearing-facilitator,       type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/structure-designer,        type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/report-structure-designer, type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/structure-validator,       type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/d3-diagram-designer,        type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/data-visualizer,           type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/html-generator,            type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/slide-renderer,            type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/report-composer,           type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/visual-strategist,         type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/ai-image-diagram-producer, type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/layout-optimizer,          type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/ui-quality-reviewer,       type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/deck-evaluator,            type: calls }
+  - { from: skills/run-slide-report-generate, to: agents/report-quality-reviewer,   type: calls }
+  - { from: skills/run-slide-report-modify,   to: agents/slide-report-modifier,     type: calls }
+  - { from: skills/run-cross-deck-review,     to: agents/cross-deck-reviewer,       type: calls }
+  - { from: hooks/hook-postgen-eval.py,       to: agents/deck-evaluator,            type: triggers }
+
+eval_sinks:
+  - EVALS.json

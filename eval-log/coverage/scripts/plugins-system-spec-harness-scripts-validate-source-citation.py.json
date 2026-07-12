@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/system-spec-harness/scripts/validate-source-citation.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "stdlib-only の決定論的出典検証ゲート (C13)。単一責務が明確で、内容鮮度の意味判定は C08 (doc-freshness-auditor) へ境界委譲し形式・全件対応・host 一致のみを検査する。error-handling は _load が欠落ファイル/JSON parse 失敗を exit2 に分離し (violation の exit1 と混同しない)、exit 意味論 (0/1/2) を frontmatter と docstring で明示。side-effect-safety は network:false / write-scope:none の read-only で、_norm_host が lstrip('www.') の文字集合バグ (web.dev→eb.dev) を removeprefix で回避 (F6) している点が堅牢。orphan (targets 空∧refs 非空) と欠落 (targets 非空∧refs 欠落) を両方検出し、vacuous-green (両空→OK) の正当分岐も文書化。任意 --state で採択済み decision があるのに targets 空という drift を exit 不変のまま warning surface する設計も安全側。PEP723 frontmatter 完備。tests/test_validate_scripts.py に正例/負例が配備済み。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

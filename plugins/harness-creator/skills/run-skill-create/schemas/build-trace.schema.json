@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/build-trace.schema.json",
+  "title": "Skill Build Trace",
+  "description": "run-build-skill が eval-log/skill-build-trace.json に書く章別 coverage 証跡。Gate 2 の前提として 01/01a/02/03/04/05/06/07/08/09/10/11/13/14/15/16 章を網羅する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "timestamp", "chapter_coverage", "pattern_decisions"],
+  "properties": {
+    "skill_name": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "mode": {"type": "string", "enum": ["create", "update"]},
+    "brief_path": {"type": "string"},
+    "chapter_coverage": {
+      "type": "object",
+      "description": "設計書章ごとの doc_coverage。PASS / N/A / skip(理由付き)。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(01|01a|02|03|04|05|06|07|08|09|10|11|13|14|15|16)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": {
+            "status": {"type": "string", "enum": ["PASS", "N/A", "skip"]},
+            "reason": {"type": "string"},
+            "evidence": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "pattern_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pattern", "decision"],
+        "properties": {
+          "pattern": {"type": "string"},
+          "decision": {"type": "string", "enum": ["adopted", "rejected", "N/A"]},
+          "reason": {"type": "string"}
+        }
+      }
+    },
+    "prompt_generation_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_resolution": {"type": "string", "enum": ["required", "optional", "skip"]},
+        "per_responsibility": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^R[0-9]+$"},
+              "generated": {"type": "boolean"},
+              "layers": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "paradigm_analogy_model": {"type": "string"}
+  }
+}

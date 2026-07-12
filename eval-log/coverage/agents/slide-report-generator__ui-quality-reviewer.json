@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R3-agent-ui-quality-reviewer.md を実測(実在・373行/33KB・dangling なし)。owner SKILL.md が本 agent の私有 reference を references/ui-quality-checklist.md(owner=ui-quality-reviewer・S 系観点定義)と宣言し ls 実在確認。R3 で連携する決定論視覚ゲート vendor/scripts/verify-slides.js も vendor/scripts/ に実在。schema-conformance: name/description(『…検証(P3.5)したいときに使う。』トリガ形・句点付き・S1-S26 明示)/kind=agent/version=0.1.0/owner/tools=Read,Bash/isolation=fork/model=sonnet/owner_skill/prompt_ref/prompt_layer=7layer/since/last-audited を確認、adapter tools と prompt SSOT tools(Read,Bash)一致、Write 非保持(検出+修正指針返却は verify 系スクリプトと本文で完結)で read-only 検証者として適切。owner-flow: owner skill R3『生成と生成後評価』の品質補正(slide 分岐)が ui-quality-reviewer をテキスト切れ/改行/バランス検証に併用し verify-slides.js の決定論視覚ゲートと対にする設計と一致。Constraints の Phase=R3-generate-evaluate は manifest phase id と一致。placement-invariant: adapter は 8 節薄 redirect で S1-S26 チェックリスト実体を再掲せず正本は prompts/R3-*.md(SSOT ヘッダ明記)+references/ui-quality-checklist.md 側、逆転なし。single-responsibility: slide UI 品質(視覚崩れ)検証に単一凝集(report は report-quality-reviewer、生成後 30 種思考法は deck-evaluator と分離)。良好。mechanical:true は lint-agent-prompt-section.py exit0 前提で妥当。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

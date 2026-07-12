@@ -1,0 +1,32 @@
+{
+  "purpose": "タスク台帳を Notion DB へ冪等同期する plugin の開発計画を作る",
+  "background": "同期実行、独立検証、手動起動、破壊的操作防止、形式検査を単一 skill に押し込むと責務が混ざるため、plugin surface ごとに仕様書へ分解する。",
+  "goal": "notion-task-sync の 13 phase ファイル + index + component-inventory + handoff が決定論ゲートで検証可能な状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "notion-task-sync",
+  "plan_dir": "plugin-plans/notion-task-sync",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "component-inventory.json が 5 component_kind と plugin-level surfaces の採否を記録している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "handoff-run-plugin-dev-plan.json が builder/build_kind/build_args/build_target を持つ",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "実プラグインは生成せず L3 plan までに留める"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": []
+}

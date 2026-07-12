@@ -1,0 +1,24 @@
+{
+  "name": "company-master",
+  "version": "0.1.1",
+  "description": "会社名/住所/法人番号の断片から信頼できる企業マスタ行を同定・補完したいとき、Notion企業マスタDBの空欄を確度付きで一括補完したいときに使う (resolve→enrich→upsert→backfill)。改善要望は harness-creator 側の feedback 導線で扱う。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "bundles": [
+    "skills-full"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/hook-guard-secret.py"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+--- a/_base.md
++++ b/_base.md
+@@ -10,6 +10,7 @@ argument-hint: {{argument_hint | default("[target]")}}
+ allowed-tools: {{allowed_tools | default([Read, Bash(python3 *)])}}
+ kind: delegate
+ effect: {{effect | default("external-call")}}
++role_suffix: external-delegator
+ owner: {{owner}}
+ since: {{date}}
+ # permissions: 外部実行系（Codex/外部CLI/外部API）への委譲は明示宣言（設計書04章）
+@@ -23,6 +25,17 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## Delegation Target
++
++- **委譲先**: {{delegate_target}}（例: `codex`, 外部API, 別 Claude セッション）
++- **委譲理由**: {{delegation_reason}}（本セッションでは扱えない理由を明示）
++- **入力契約**: {{delegation_input}}
++- **出力契約**: {{delegation_output}}（呼び出し側が受け取るフォーマット）
++- **失敗時 fallback**: {{delegation_fallback | default("ユーザーに手動実行を要請")}}
++- **タイムアウト**: {{delegation_timeout | default("300秒")}}
++- **secrets**: 委譲先に渡す認証情報は環境変数経由のみ（直書き禁止、設計書31章）
++- **証跡**: 委譲リクエスト/レスポンスを `eval-log/delegate-trace.jsonl` に append
++
+ ## Boundary
+ {{boundary}}

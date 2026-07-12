@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "conditions": [
+    {
+      "id": "C1",
+      "name": "consistency",
+      "label_ja": "矛盾なし",
+      "definition": "内部の主張・ルール間に論理矛盾が存在しない",
+      "check_method": {
+        "type": "claim-graph",
+        "detector": "contradiction-edge",
+        "pass_when": "contradiction_edges == 0"
+      },
+      "severity_on_fail": "critical"
+    },
+    {
+      "id": "C2",
+      "name": "completeness",
+      "label_ja": "漏れなし",
+      "definition": "対象スコープに必要な要素がMECEに揃っている",
+      "check_method": {
+        "type": "checklist",
+        "source": "required-element-list",
+        "pass_when": "missing_elements == 0"
+      },
+      "severity_on_fail": "high"
+    },
+    {
+      "id": "C3",
+      "name": "coherence",
+      "label_ja": "整合性あり",
+      "definition": "上位仕様 (24章正本 / parent rubric) と整合している",
+      "check_method": {
+        "type": "rubric-diff",
+        "against": [
+          "ref-skill-design-rubric",
+          "24-chapter-canonical-spec"
+        ],
+        "pass_when": "violations == 0"
+      },
+      "severity_on_fail": "critical"
+    },
+    {
+      "id": "C4",
+      "name": "dependency",
+      "label_ja": "依存関係整合",
+      "definition": "参照・前提・順序が破綻していない",
+      "check_method": {
+        "type": "dag",
+        "operation": "topological-sort",
+        "pass_when": "cycles == 0 AND dangling_refs == 0"
+      },
+      "severity_on_fail": "high"
+    }
+  ],
+  "completion": {
+    "rule": "ALL conditions must PASS",
+    "loop_limit": 3,
+    "on_loop_exhausted": "escalate-to-human"
+  }
+}

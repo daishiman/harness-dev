@@ -1,0 +1,42 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-live-trial",
+    "skill_md_sha256": "a33d2e632eb16d8f233730f6c7e39bcfb3c615e2dfe1edf49c620b856ea76a1b"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-07-02T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "検証可能性=3: 完了チェックリスト 7 項目が二値判定可能 (denylist 外/READY 送信/poll 終端 exit/3 点回収/PASS|FAIL blocker/schema 自己検証/reap 残骸ゼロ)、self-test 3 本 + pytest 35 passed (test_status_four_states / test_poll_* 4 分岐 / test_poll_state_file_persists_counters / test_verdict_pass_and_schema_valid / test_schema_rejects_additional_properties / test_verdict_proof_model_gate 等) で機械裏付け、transcript-jsonl.md に実測 numbers (395 transcript / 23MB 0.105s / 178s 待ち) と再現手順。",
+      "深度=3: 表層 acceptance を超え anti-goodhart (goal proxy 化防止・点数出力禁止・fresh evaluator 別個体) / fork↔live 直交の決定論導出 / transcript 版依存境界の spec-drift 監視 / 再帰遮断 denylist / kill・crash 凍結を tmux 生存確認で fallback / Bash 600s 上限を state-file 呼び越し永続化で克服 / fork 内長時間実行の subagents bytes 合算で STALL 誤報回避、と既知失敗パターン (AG 版知見・BSD grep マルチバイト不安定) を参照・反映。"
+    ],
+    "negative_feedback": [
+      "簡潔性=2 (適切だが一部密): SKILL.md L154(boot) / L168(poll) は 1 パラグラフに複数指示 (Bash 600s 再 poll・state-file・HARD_CAP 80% WARN・STALL_LIMIT 前置) を詰め込み rubric 簡潔性の目安『section 当たり 200 字以内』を超過。情報密度優先の意図的圧縮で可読性は保たれ閾値 2 は満たすが 3 (必要十分) には届かない。非ブロッカー。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "共通 5 次元ルブリック (quality-rubric.md) で独立採点。完全性=3: frontmatter commonCore 充足、kind=run 相当の資産 (schemas1/references2+3外部/scripts6) 配置、completeness_exempt(prompts/manifest) を根拠付きで宣言、lint-skill-tree=ok・本文 178 行で行数上限内。一貫性=3: 判定ロジック表⇔derive_overall / poll exit 表⇔EXIT 定数 / denylist⇔DENY_TARGET_SKILLS / 数値 SSOT⇔convergence-policy が矛盾なし、manifest↔本文 drift は manifest 免除で N/A、用語 (Gate D/tier/DEGRADED/BLOCKED) 統一。深度=3。検証可能性=3。簡潔性=2 (L154/L168 密・目安 200 字超だが閾値内)。合計 14/15、全次元 >=2 で PASS。smell=1 は elegance と同源の loop_bounds.trial_acceptance path 表記が .params 階層省略 (機能影響なし)。"
+}

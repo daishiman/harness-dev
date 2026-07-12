@@ -1,0 +1,13 @@
+version: 1
+read_when:
+  - file: schemas/output.schema.json
+    when: revision-log.jsonl に追記する 1 行の構造を確認するとき
+  - file: prompts/R1-main.md
+    when: ヒアリング/PATCH 制御の責務プロンプトを確認するとき
+external_scripts:
+  - path: plugins/skill-intake/scripts/analyze_user_intent.py
+    when: P3-analyze で internal-analysis.json を再生成するとき
+  - path: plugins/skill-intake/scripts/render-intake-final.py
+    when: P6-patch で正本 intake.md / intake.json を再 render するとき
+  - path: plugins/skill-intake/scripts/intake_publish_pipeline.py
+    when: P6-patch で --revise --page-id 指定の PATCH 更新を実行するとき

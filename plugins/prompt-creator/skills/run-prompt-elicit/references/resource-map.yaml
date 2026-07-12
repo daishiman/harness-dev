@@ -1,0 +1,19 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-prompt-elicit (Step 1 worker) の Progressive Disclosure 索引。
+# 上位 (schemas, prompts) は機械可読 contract。references/* は人間向け補助資料。
+resources:
+  - file: ../schemas/hearing-result.schema.json
+    topic: 対話ヒアリングの中間生データスキーマ
+    read_when: brief_build で hearing-result を構築・検証するとき
+  - file: ../../run-prompt-create/schemas/prompt-brief.schema.json
+    topic: Step1→Step2 渡しの prompt-brief.json 正本スキーマ
+    read_when: brief_build で brief を構築・検証するとき (最初に読む)
+  - file: elicit-question-bank.md
+    topic: ヒアリング質問テンプレ集
+    read_when: interview で質問を設計するとき
+  - file: ../prompts/R1-interview.md
+    topic: R1 ヒアリング責務プロンプト
+    read_when: interview agent へ渡す context を組み立てるとき
+  - file: ../../../agents/prompt-creator-interview-user.md
+    topic: 対話ヒアリング委譲 agent (context:fork)
+    read_when: interview を Task で起動するとき

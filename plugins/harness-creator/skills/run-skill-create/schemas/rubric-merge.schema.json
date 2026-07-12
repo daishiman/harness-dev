@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/rubric-merge.schema.json",
+  "title": "Rubric Deep-Merge Result",
+  "description": "assign-* 系 evaluator が L0/L1/L2 rubric を deep-merge した結果を物質化する形式。同一キー衝突時の解決履歴を含む。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target_skill", "merged_at", "sources", "items"],
+  "properties": {
+    "target_skill": {"type": "string"},
+    "merged_at": {"type": "string", "format": "date-time"},
+    "sources": {
+      "type": "array",
+      "description": "merge 元 rubric 一覧 (L0 → L1 → L2 の順)。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rubric_id", "tier"],
+        "properties": {
+          "rubric_id": {"type": "string"},
+          "tier": {"type": "string", "enum": ["L0", "L1", "L2"]},
+          "version": {"type": "string"},
+          "hash": {"type": "string"}
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "value", "origin"],
+        "properties": {
+          "key": {"type": "string"},
+          "value": {},
+          "origin": {"type": "string", "description": "最終的に勝った rubric_id"},
+          "overrides": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["rubric_id", "previous_value"],
+              "properties": {
+                "rubric_id": {"type": "string"},
+                "previous_value": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "resolution"],
+        "properties": {
+          "key": {"type": "string"},
+          "resolution": {"type": "string", "enum": ["L2-wins", "L1-wins", "L0-wins", "manual"]},
+          "note": {"type": "string"}
+        }
+      }
+    }
+  }
+}

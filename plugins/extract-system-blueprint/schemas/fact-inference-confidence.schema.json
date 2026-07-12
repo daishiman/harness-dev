@@ -1,0 +1,135 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/extract-system-blueprint/fact-inference-confidence.schema.json",
+  "title": "fact-inference-confidence",
+  "description": "抽出レコードの横断契約。kind を discriminator に fact / inference / observation_gap を相互排他へ分離し、fact には再現可能な観測 provenance、inference には evidence_refs(≥1)+confidence、gap には not_observed|blocked+reason を必須化して inference への昇格を防ぐ (C2 構造担保)。apply_recommendation は C14(run-blueprint-apply)出力専用の inference 拡張 shape で、doc-emit.py --check-apply が fail-closed 検査する。scripts/doc-emit.py --check-screens の schema/provenance 検査がこの契約を機械執行する。",
+  "oneOf": [
+    { "$ref": "#/$defs/fact" },
+    { "$ref": "#/$defs/inference" },
+    { "$ref": "#/$defs/observation_gap" }
+  ],
+  "$defs": {
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "観測事実。source_url/locator/captured_at/method/snapshot_id の provenance を必須とし、原則レンズ由来の解釈を含めない。静的 HTTP 観測が対象で、layout/screenshot 等の任意 fact も同一 provenance を持つ (browser 不使用時は通常 observation_gap)。",
+      "required": ["kind", "source_url", "locator", "captured_at", "method", "snapshot_id"],
+      "anyOf": [
+        { "required": ["observation"] },
+        { "required": ["value"] }
+      ],
+      "properties": {
+        "kind": { "const": "fact" },
+        "observation": {
+          "description": "観測された事象・要素・レスポンス等。value と併用可、少なくとも一方が必須。"
+        },
+        "value": {
+          "description": "観測された値 (数値/文字列/構造)。observation と併用可、少なくとも一方が必須。"
+        },
+        "source_url": { "type": "string", "format": "uri", "description": "観測元の canonical URL。" },
+        "locator": { "type": "string", "description": "CSS/XPath/レスポンスキー等、観測対象の位置指定子。" },
+        "captured_at": { "type": "string", "format": "date-time", "description": "観測時刻 (ISO 8601)。" },
+        "method": {
+          "type": "string",
+          "description": "取得手段 (例: http-fetch / static-html / ssr-response / response-header / browser-render(MCP 非依存の headless Chrome を Bash 経由起動))。MCP(browser-runtime)経路は用いない。"
+        },
+        "snapshot_id": { "type": "string", "description": "再現可能な snapshot 識別子 (fetch-snapshot)。" },
+        "layout": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "任意: 要素の layout 詳細 fact (座標/box model/reading order 等)。provenance は本 fact に従う。"
+        },
+        "screenshot_ref": {
+          "type": "string",
+          "description": "任意: 対応する redacted screenshot のローカル参照。"
+        }
+      }
+    },
+    "inference": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "根拠つき推測。evidence_refs(≥1) と confidence を必須とし、source_observation で起点 fact を明示する。lens 付与は evidence_refs/confidence を免除しない。",
+      "required": ["kind", "claim", "evidence_refs", "confidence", "source_observation"],
+      "properties": {
+        "kind": { "const": "inference" },
+        "claim": { "type": "string", "description": "推測の主張。" },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "主張を支持する fact / 観測 anchor への参照。最低 1 件必須。high confidence は直接支持する複数 refs を要する。"
+        },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "source_observation": {
+          "type": "string",
+          "description": "推測の起点となった観測 (fact) の参照。"
+        },
+        "lens": {
+          "type": "string",
+          "description": "任意: 適用した役割レンズ名 (例: Martin Kleppmann / OWASP)。persona 主張も evidence_refs/confidence で接地必須。"
+        }
+      }
+    },
+    "observation_gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "欠測。observation_status は not_observed|blocked のみ。reason/attempted_method/budget_state を必須化し、inference として扱わない (無言欠落の禁止)。",
+      "required": ["kind", "observation_status", "reason", "attempted_method", "budget_state"],
+      "properties": {
+        "kind": { "const": "observation_gap" },
+        "observation_status": {
+          "type": "string",
+          "enum": ["not_observed", "blocked"],
+          "description": "not_observed=budget/手段不足で未取得 / blocked=認可・認証・robots 等で遮断。"
+        },
+        "reason": { "type": "string", "description": "欠測の理由。" },
+        "attempted_method": { "type": "string", "description": "試みた取得手段。" },
+        "budget_state": {
+          "description": "欠測時点の残予算状態 (request/byte/pages 残など)。object または要約文字列。",
+          "type": ["object", "string"]
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "確度。level(high|medium|low)+rationale を必須とする。",
+      "required": ["level", "rationale"],
+      "properties": {
+        "level": { "type": "string", "enum": ["high", "medium", "low"] },
+        "rationale": { "type": "string", "description": "この確度水準を選んだ根拠。" }
+      }
+    },
+    "apply_recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "C14(run-blueprint-apply)出力専用の inference 拡張 shape。kind=inference のまま category(adopt|avoid|differentiate)と own_context_ref を必須追加する。evidence_refs は blueprint 実在 anchor のみ許可し (blueprint 外の無根拠主張 0)、doc-emit.py --check-apply が schema 適合・anchor 解決率 100%・kind=fact 新規 0 を fail-closed 検査する。",
+      "required": ["kind", "claim", "evidence_refs", "confidence", "source_observation", "category", "own_context_ref"],
+      "properties": {
+        "kind": { "const": "inference" },
+        "claim": { "type": "string", "description": "自社適用の推奨主張。" },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "blueprint 実在 anchor への参照のみ。blueprint に無い事実を新規主張しない。"
+        },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "source_observation": {
+          "type": "string",
+          "description": "推奨の起点となった blueprint fact/inference の参照。"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["adopt", "avoid", "differentiate"],
+          "description": "採用 / 回避 / 差別化機会 の 3 分類。"
+        },
+        "own_context_ref": {
+          "type": "string",
+          "description": "自社コンテキスト (技術スタック/制約/既存資産/対象ユーザー) の該当箇所参照。"
+        },
+        "lens": { "type": "string", "description": "任意: 適用した役割レンズ名。" }
+      }
+    }
+  }
+}

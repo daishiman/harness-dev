@@ -1,0 +1,7 @@
+# dev 依存の SSOT (CI の全 pytest step と per-plugin step が本ファイル一枚を install する)。
+# 参照元: .github/workflows/harness-creator-kit-ci.yml / governance-check.yml
+# PyYAML / jsonschema はテストが frontmatter / schema を読むために必須
+# (pytest 単体だと ImportError で criteria / company-master / mf-kessai 等が落ちる)。
+pytest>=7.4
+PyYAML>=6.0
+jsonschema>=4.17

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/structure-validator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R2-agent-structure-validator.md を実測(実在・336行/26KB・dangling なし)。本 agent が Bash で叩く決定論スクリプト vendor/scripts/validate-structure.js・phase-gate.js・workflow-manager.js を plugin vendor/scripts/ で ls 実在確認(prompt SSOT の読み込み条件が workflow-manager.js --check を参照)。schema-conformance: name/description(『…承認可否を判定したいときに使う。』トリガ形・句点付き)/kind=agent/version=0.1.0/owner/tools=Read,Bash/isolation=fork/model=sonnet/owner_skill/prompt_ref/prompt_layer=7layer/since/last-audited を確認、adapter tools と prompt SSOT tools(Read,Bash)一致、Write 非保持(read-only 検証者=判定はスクリプト正本)で最小権限適切。owner-flow: owner skill R2 の『仕様確定ゲート』が Task で structure-validator を起動し node validate-structure.js(V-001〜V-043・spec-registry SR-ID 連動)で機械検証し PASS→R3/WARN→承認後 R3/FAIL→R2 差し戻しする設計と一致。prompt SSOT 冒頭も『薄い責務(validate-structure.js/phase-gate.js のラッパー)、判定はスクリプトが正本』と明記し責務境界が明確。Phase=R2-structure-gate も manifest と一致。placement-invariant: adapter は 8 節薄 redirect で V-ID/SR-ID 一覧を再掲せず正本は prompts 側、逆転なし。single-responsibility: 構成の仕様確定ゲート判定に単一凝集(設計は structure-designer、生成後評価は deck-evaluator と分離)。良好。mechanical:true は lint-agent-prompt-section.py exit0 前提で妥当。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

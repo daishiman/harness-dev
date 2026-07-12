@@ -1,0 +1,61 @@
+{
+  "fixes": [
+    {"fix_id": "FIX-1", "finding_ids": ["F-1002", "F-2004", "F-3019"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-13-release.md"], "summary": "P13 目的の builder 矛盾文を「handoff routes が唯一の builder 正本 (C01/C03=run-skill-create --mode update、C02/C04=GAP-SCRIPT-BUILDER fallback=run-build-skill フロー内生成)・run-plugin-dev-plan 再実行不要」へ差し替え、grep で旧文残存 0 件を確認した。"},
+    {"fix_id": "FIX-2", "finding_ids": ["F-1001", "F-2011", "F-3002", "F-1003"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md"], "summary": "index build の始め方へ (a) plugin-scaffold contract-only+GAP-SCRIPT-BUILDER fallback の括弧書きと (b) brief_path=render-skill-brief.py 決定論射影宣言 (briefs/ 不在は正常) を 1 回の編集で追記し兄弟 plan 同型へ整合させた。"},
+    {"fix_id": "FIX-3", "finding_ids": ["F-3007", "F-2006"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json"], "summary": "routes C01/C03 の build_args へ brief_generation キー (render-skill-brief.py が inventory 該当エントリから build 開始時に決定論射影・build 前不在が正) を追加した — check-build-handoff は追加キーを拒否せず inventory 側 build_args 不在で照合もスキップされることを事前にコード確認し、適用後 exit 0。"},
+    {"fix_id": "FIX-4", "finding_ids": ["F-2010", "F-2003", "F-3006"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-05-implementation.md", "plugin-plans/skill-intake/phase-12-documentation.md", "plugin-plans/skill-intake/phase-11-evidence.md"], "summary": "C7×C8 衝突の escape を仕様化: (a) P05 C02 へ三線防御 (第一線=C01 保存抑止/第二線=denylist 下界検出/第三線=OUT2) とユーザー業務語彙 false-positive の warn 記録+detected=false 文脈規則、C03 へ差し戻し上限 2 回+warning 降格+人間確認 1 回、(b) P12 語彙集仕様へ名詞的/提案的用法の判別基準、(c) P11 trial 5 へ denylist 語を業務語彙に含む as-is ペルソナ必須 1 件を追記した。"},
+    {"fix_id": "FIX-5", "finding_ids": ["F-3004", "F-1009"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-06-test-run.md", "plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json"], "summary": "C01 の IN1/IN2 (verify_by=script) を C02 build 完了後に遡及実行する 2-pass 受入を P06 実行順序節へ 1 文追加し、handoff route C01 へ同旨 acceptance_note を追加した (route 追加キーはゲート検査対象外を確認済み・exit 0)。"},
+    {"fix_id": "FIX-6", "finding_ids": ["F-1005", "F-2008", "F-3003"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-05-implementation.md", "plugin-plans/skill-intake/phase-06-test-run.md", "plugin-plans/skill-intake/component-inventory.json"], "summary": "C04 contamination 分岐を C03 迂回・intake.json 直接改変への defense-in-depth (通常フローは detected=false のみ格納) と位置づけ、validation.procedure_completeness 欠落時の missing_procedure_validation exit 1 (fail-closed) を新設、P06 テスト(4) を合成 intake.json 単体テストと注記した。散文↔SSOT 再 drift を防ぐため inventory C04.purpose/outputs も同期更新した。"},
+    {"fix_id": "FIX-7", "finding_ids": ["F-3017", "F-2007"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-02-design.md", "plugin-plans/skill-intake/phase-12-documentation.md"], "summary": "P02 ドメイン知識へ as-is フィールド正準表 (C01 保護語彙 3 行×interview.json/intake.json パス×C02 検査対象性) を追加し、rows[name=真の課題]↔axes[axis_id=real_problem] の変換は既存 render 経路が担い本改善で変更しない旨と P12 handoff-contract.md 更新仕様への同マッピング 1 行を追記した。"},
+    {"fix_id": "FIX-8", "finding_ids": ["F-1011", "F-2012", "F-3018"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-01-requirements.md", "plugin-plans/skill-intake/phase-08-refactoring.md"], "summary": "実在しない別名「interview.schema.json」2 箇所を「interview.json スキーマ (run-intake-interview/schemas/output.schema.json)」へ置換し、grep で plan 内残存 0 件を確認した。"},
+    {"fix_id": "FIX-9", "finding_ids": ["F-3009"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/component-inventory.json", "plugin-plans/skill-intake/phase-07-acceptance-criteria.md", "plugin-plans/skill-intake/phase-11-evidence.md"], "summary": "C01 feedback_contract へ OUT3 (loop_scope=outer, 決定論フォールバック発火時に停止せず継続, verify_by=test — goal-spec C2 の verify_by=test と整合) を追加し、P07 RTM C2 行と P11:30 live-trial 定義を OUT3 参照へ揃えた。事実補正: specfm.CRITERIA_VERIFY_BY には live-trial が enum 実在し F-3009 の「enum 外語彙」は不正確だが、C2 criterion 不在という核心は真で OUT3 追加が正。"},
+    {"fix_id": "FIX-10", "finding_ids": ["F-2009"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-13-release.md", "plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json"], "summary": "P13 完了チェックリストへ GAP-SCRIPT-BUILDER 解消確認 (C02/C04 build_target 実在) 1 項目を追加し、GAP テキスト側にも closure checkpoint=P13 の 1 文を追記して双方向配線した。"},
+    {"fix_id": "FIX-11", "finding_ids": ["F-3008"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/handoff-run-plugin-dev-plan.json"], "summary": "open_issues へ RESIDUAL-C5-DOWNSTREAM (C5 の下流強制は doc 契約まで・下流 plugin 側機械強制は将来課題、severity=medium は本 handoff 既存語彙) を residual risk 記録として追加した — check-build-handoff exit 0。"},
+    {"fix_id": "FIX-12", "finding_ids": ["F-1007"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-07-acceptance-criteria.md"], "summary": "RTM C7 行の担当 component 列へ C01 (skill) を追加し、検証方法列の C01 IN2 criterion 引用と行内帰属を整合させた。"},
+    {"fix_id": "FIX-13", "finding_ids": ["F-3001"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-05-implementation.md", "plugin-plans/skill-intake/component-inventory.json"], "summary": "P05 C03 仕様へ intake.md 側 render-intake-final.py 拡張要否の build 時判定と cross_check.py md↔json 検査対象確認+許容リスト更新条件を追記し、inventory C03 deterministic_checks の「既存のまま」に同条件の根拠句を付した (ゲート再実行緑)。"},
+    {"fix_id": "FIX-14", "finding_ids": ["F-1006", "F-2002", "F-3005"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md", "plugin-plans/skill-intake/run-plugin-dev-plan-progress.json"], "summary": "index インフラ節へ core 6 (生成時必須)+評価時 4 本の関係 1 行、完了チェックリストを計 10 ゲートへ拡張、progress.json verification_status へ check-requirements-coverage.py: PASS を追記した (plan-findings G9 の実行記録に基づき、本 Phase 3 でも再実行し exit 0 を実確認済み・捏造なし)。"},
+    {"fix_id": "FIX-15", "finding_ids": ["F-1010", "F-2005", "F-3014"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/elegant-review-20260704.md"], "summary": "時系列を事実確認の上で追記: plan-findings.json (mtime 18:32) より elegant-review の適用対象ファイル群 (mtime 19:11-19:17) が後、かつ Scope の「既存の PASS 判定を前提にせず」が R4 PASS を指すことから R4→elegant-review の順序を確定し、後発優先規則とともに Scope 直下へ記載した。"},
+    {"fix_id": "FIX-16", "finding_ids": ["F-2001", "F-1008", "F-3016"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md"], "summary": "保守案を採用し index 2 軸直交節へ entities_covered 記入規範 (実質仕様化する component のみ列挙・本 plan は横断設計ゆえ全列挙が意図) を 1 行追記した。P12/P13 frontmatter の絞り込みは detect-unassigned/matrix ゲートへの回帰リスクを避け実施せず (規範宣言で意図を透明化)。"},
+    {"fix_id": "FIX-17", "finding_ids": ["F-3010"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md", "plugin-plans/skill-intake/phase-12-documentation.md", "plugin-plans/skill-intake/phase-13-release.md"], "summary": "version 具体値の正本を P13 と明記し、index 基本定義:54 と P12 CHANGELOG 仕様を「現行 version の PATCH bump (正本=P13)」相対表現へ置換した (phase-13 以外の 0.1.3 焼き込み残存 0 件を grep 確認。plugin_meta 等の機械読取り箇所は不変更)。"},
+    {"fix_id": "FIX-18", "finding_ids": ["F-3011"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md"], "summary": "index インフラ節へ gate_type 名目性の注記 (build 後に有効化される specfm 予約語彙・P05 tdd-green の意味・P06 gate_type=none の誤読防止) を 1 行追加した。"},
+    {"fix_id": "FIX-19", "finding_ids": ["F-3012"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/component-inventory.json"], "summary": "C01.output_contract を phase-05:33(4) と同型の制御点方式 (question-plan.json/build-questions.py/build-sheet-json.py/check-five-axes-coverage.py 拡張→runtime 出力に procedure 節生成) へ更新し、ゲート再実行で緑を確認した。"},
+    {"fix_id": "FIX-20", "finding_ids": ["F-3013"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/index.md"], "summary": "index ドメイン知識へ「goal-spec constraints の『R2/P02 解決済み事項:』prefix 項目は制約でなく決定記録」規約 1 行を追記した (goal-spec 自体は不変更・不変条件 3 遵守)。"},
+    {"fix_id": "FIX-21", "finding_ids": ["F-3015"], "action": "applied", "files_changed": ["plugin-plans/skill-intake/phase-11-evidence.md"], "summary": "P11 へ手戻り指標ベースライン 1 行 (初回 dogfooding での手順推測/追加質問回数の証跡記録・実在確認済みの measure_value_realized.py への接続) を追加した。"}
+  ],
+  "gates": {
+    "before_known_fail": ["verify-plan-coverage C02 (build前期待値)"],
+    "after": [
+      {"gate": "check-plugin-goal-spec.py", "result": "PASS", "note": "exit 0"},
+      {"gate": "verify-index-topsort.py", "result": "PASS", "note": "§9 section 床+P01..P13 昇順+DAG 非循環"},
+      {"gate": "detect-unassigned.py", "result": "PASS", "note": "orphan 0 件"},
+      {"gate": "check-spec-frontmatter.py", "result": "PASS", "note": "OUT3 追加後の criteria 契約 (verify_by/loop_scope/id 形式) 含め充足"},
+      {"gate": "check-spec-gates.py", "result": "PASS", "note": "exit 0"},
+      {"gate": "check-spec-matrix-coverage.py --self-test", "result": "PASS", "note": "exit 0"},
+      {"gate": "check-spec-matrix-coverage.py (PLAN)", "result": "PASS", "note": "OP=10/conditional=19/N-A=17"},
+      {"gate": "check-surface-inventory.py", "result": "PASS", "note": "exit 0"},
+      {"gate": "check-build-handoff.py", "result": "PASS", "note": "brief_generation/acceptance_note/RESIDUAL-C5-DOWNSTREAM 追加後も exit 0"},
+      {"gate": "check-requirements-coverage.py", "result": "PASS", "note": "index 完了チェックリスト 10 ゲート化後も C1-C8 トレース維持"},
+      {"gate": "check-runtime-portability.py", "result": "PASS", "note": "exit 0"},
+      {"gate": "verify-plan-coverage.py", "result": "FAIL", "note": "C02 実体不在のみ = 編集前と同一の build 前期待値 (新規悪化なし)"},
+      {"gate": "python3 json.load (編集 3 JSON + goal-spec)", "result": "PASS", "note": "構文全 OK"}
+    ]
+  },
+  "four_conditions_after": {
+    "C1": {"verdict": "PASS", "evidence": ["builder 契約の二重正本を解消: phase-13:19 が handoff routes を唯一正本と宣言し旧矛盾文の grep 残存 0 件 (F-1002/F-2004/F-3019)", "C7 忠実記録×C8 contamination の衝突に false-positive escape+差し戻し上限 2 回+warning 降格を仕様化し恒久 FAIL ループを封鎖 (F-2010)", "C03『成功時のみ格納』と C04 contamination 分岐の両立を defense-in-depth+missing_procedure_validation fail-closed で明文化 (F-2008/F-3003)"]},
+    "C2": {"verdict": "PASS", "evidence": ["brief 生成責務 (render-skill-brief.py 決定論射影) を index+handoff build_args の両辺へ宣言し dangling brief_path を解消 (F-3007/F-2006)", "GAP-SCRIPT-BUILDER に closure checkpoint=P13 完了チェックを双方向配線 (F-2009)、C5 下流強制の residual risk を open_issues へ透明化 (F-3008)", "goal-spec C2 の受入を OUT3 criterion として feedback_contract へ被覆し、手戻り指標ベースラインで purpose 帰結の観測手段を追加 (F-3009/F-3015)"]},
+    "C3": {"verdict": "PASS", "evidence": ["interview.schema.json 別名の plan 内残存 0 件 (grep 実測、F-1011/F-2012/F-3018)", "version 具体値は P13 単一正本化・他 2 箇所は相対表現 (phase-13 以外の 0.1.3 残存 0 件、F-3010)", "core 6↔評価時 4 本の関係を index に明文化し完了チェックリストを 10 ゲートへ拡張、as-is フィールド正準表で rows[name]↔axes[axis_id] 対応を閉包、RTM C7 行の担当と検証手段の帰属を整合 (F-1006/F-3017/F-1007)"]},
+    "C4": {"verdict": "PASS", "evidence": ["build 順 (C01→C02) と受入依存 (C01 criteria が C02 実体を要求) の逆向きを 2-pass 受入 (pending→C02 完了時一括検証) として P06+handoff acceptance_note に明文化 (F-3004/F-1009)", "verify-index-topsort / check-build-handoff / check-runtime-portability 全 exit 0 (DAG 非循環・routes 整合・自己完結維持)", "評価証跡 2 件の時系列 (R4→elegant-review・後発優先) を mtime+内容突合で確定し記録 (F-1010/F-2005/F-3014)"]}
+  },
+  "remaining_smells": [
+    "entities_covered は P02-P13 全列挙のまま (index へ記入規範+全列挙が意図と宣言する保守案。差分被覆への転換は detect-unassigned/matrix ゲート回帰リスクがあり planner テンプレ側課題)",
+    "gate_type 語彙と §5 section 床の正本が plan 外 (specfm) にある構造自体は注記による緩和のみで残存",
+    "C03『成功時のみ格納』仕様そのものは R2 決定尊重で不変更のため、C04 contamination 分岐は defense-in-depth (合成入力単体テストのみ到達) として残る",
+    "ギャップ id G1-G7 と gate id G1-G11 の同一略号 G は同一文書内併記が無く実害低として未対処"
+  ],
+  "backlog": [
+    "F-1004: phase 散文中の SSOT 由来語 (builder 名/スキーマファイル名/ゲート集合/route 消費手順) を inventory/handoff と grep 突合する lint (planner 側将来課題)",
+    "check-build-handoff.py へ『brief_path は実在するか生成責務宣言 (brief_generation) を持つ』検査の追加 (planner 側)",
+    "goal-spec schema へ resolved_decisions[] フィールド追加 (constraints との意味論分離・prefix 散文規約の機械化)",
+    "entities_covered 全列挙を WARN する lint (detect-unassigned 拡張・component 数 ≥3 の plan 対象)"
+  ]
+}

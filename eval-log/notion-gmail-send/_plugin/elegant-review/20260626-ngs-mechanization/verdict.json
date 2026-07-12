@@ -1,0 +1,39 @@
+{
+  "run_id": "20260626-ngs-mechanization",
+  "target": {"plugin": "notion-gmail-send", "scope_mode": "plugin+generator(skill-creator)"},
+  "question": "(1) marketplace 表示修正は正しいか (2) skill-creator 量産でも登録漏れが二度と起きない仕組みか",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "thought_method_coverage": {"used": 30, "skipped_with_reason": 0, "total": 30},
+  "status": "complete",
+  "iteration_count": 1,
+  "max_iterations": 3,
+  "safety_valve_fired": false,
+  "phase1_reset_passed": true,
+  "proposer_ne_approver": true,
+  "approver": "independent SubAgent (general-purpose) — APPROVE。byte単位append-only実証/fail-closed 2ケース/冪等/pytest 36 passed を独立再現。blocking 0・non-blocking smell 3(うちbundles非対称はdocstring精緻化で解消済)",
+  "verification": {
+    "central_pytest": "5720 passed, 4 skipped (0 failed)",
+    "validate_completeness_check": "exit 0 (14 plugins)",
+    "validate_completeness_fix_noop": "exit 0 (no-op when all registered)",
+    "regression_demo": "ngs除去→検出exit1(MK-001/BD-001)→--fix→検出exit0",
+    "lint_plugin_lint_coverage": "exit 0 (7 plugins, ngs配線済)"
+  },
+  "resolved_findings": ["F-CORE", "F-PKG(部分)", "F-MK003", "F-COVERAGE", "F-BUNDLE-DUP(deferred)", "F-SSOT-ROOT(deferred)", "stale-tests", "lint-coverage-wiring"],
+  "deferred": [
+    "F-SSOT-ROOT (ALT-D): marketplace/bundles を実体+plugin.json から全自動生成し SSOT 一本化。大規模移行のため将来課題",
+    "F-BUNDLE-DUP: plugin.json の bundle_targets/bundles 二重宣言の正規化 (low・実害なし)",
+    "PKG harness への登録検査 PKG ID 新設 (PKG-016 は governance 未確定のため ID 化は避け、SKILL.md チェックリスト + Makefile/CI で担保)"
+  ]
+}

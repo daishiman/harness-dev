@@ -1,0 +1,39 @@
+{
+  "target": {
+    "plugin": "contract-generator",
+    "skill": "run-template-sync",
+    "skill_md_sha256": "931308c553056d081c50100d042bbe8ca07ac7a2f2063e2f660961a81a0d65c9"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "run-elegant-review-independent-group-a",
+  "reviewed_at": "2026-07-12T00:16:37Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "IN1はscan_templateの整合exit0/drift exit5とMISSING/UNMAPPED分類、IN2はsync.pyの--apply時だけledger差し戻し、診断時は書込なしの境界を実装と照合した。contract-generator 6段チェックは全通過。",
+      "OUT1はdescriptionを『ひな形の変更・更新』の明示意図に限定し、契約書作成意図はrun-contract-generateへ分離するため誤発火を抑止する。",
+      "初回評価で検証節の『sync.py=薄いshim』と追加リソース節の『集約診断+台帳書込entrypoint』が矛盾していたため、前者を実装実態へ修正した。再評価で4条件すべて0。"
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "30思考法を全件使用（skip 0）。初回の用語不整合とFM-005 smellを内容修正し2回目でPASS。単なるSHA更新ではなくscripts/sync.pyとlib/scan_template.py/ledger.pyを再照合した。"
+}

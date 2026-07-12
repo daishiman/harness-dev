@@ -1,0 +1,107 @@
+{
+  "_doc": "差込マッピング SSOT。ひな形変更に追従するため、差込位置は固定座標でなく anchor(安定テキスト正規表現)+placeholder(置換対象正規表現)で表す。scan_template.py がひな形の黄色run/プレースホルダ実体とこの定義を突合しドリフト(未対応/消失)を検知する。値が変わるのは plugins 外の Drive 上ひな形なので、ここを更新すれば再ビルド不要。",
+  "_version": "1.1.0",
+  "_last_synced_template": {
+    "individual": "XL業務委託契約書②【個人に委託】 _251001更新.docx",
+    "corporate": "XL業務委託契約書①【法人に委託】 _240401更新.docx"
+  },
+  "_verified": {
+    "individual": "2026-05-29 python-docxで黄色run実体を機械抽出し裏取り完了。●/●●/[する／別紙1]/［金XXXX円／別紙2］/XXXXXXX(口座)/銀行名：/XX年/Xか月/２０XX が全てYELLOWハイライトで存在しアンカー一致(78黄色run)。【…記入指示注記…】も黄色のため instruction_note_pattern で除去。",
+    "corporate": "read_file_contentで全文・アンカー位置を確認(同一作成者・同一記法)。初回実行時の scan_template.py で黄色run実体を最終自動確認すること。"
+  },
+  "common": {
+    "_party_a_ssot": "甲固定値は lib/config_auth.load_party_a() (= lib/ledger.get_party_a()) を SSOT とする。本ファイルにハードコードしない。フォールバック優先順位の正本は references/party_a-readme.md(複製しない)。",
+    "fixed_values": {
+      "甲名称": "{{party_a.name}}",
+      "甲住所": "{{party_a.address}}",
+      "甲代表者役職": "{{party_a.title}}",
+      "甲代表者氏名": "{{party_a.rep_name}}",
+      "準拠法": "日本法",
+      "管轄": "東京地方裁判所"
+    },
+    "_party_a_representative_note": "甲代表者は役職(title)と氏名(rep_name)を別 run に分けて差込む設計(ひな形がそうなっている)。合成形 {{party_a.representative}} は差込に使わないため fixed_values には置かない(load_party_a() は representative も返すが本マッピングでは未使用=SSOT に死にエントリを残さない)。",
+    "_party_a_fields_doc": "甲列 (甲名称/甲住所/甲代表者役職/甲代表者氏名) は individual/corporate 両 fields[] に anchor_strategy=placeholder で登録し、docx_fill が fixed_values 経由で row に merge した値を {{party_a.*}} リテラル位置へ差込む(ひな形に当該リテラルが無ければ drift 検知)。",
+    "unfilled_markers": ["●", "XXXX", "XXXXXXX", "２０XX", "XX年", "Xか月", "X年間", "X営業日", "{{party_a.name}}", "{{party_a.address}}", "{{party_a.title}}", "{{party_a.rep_name}}"],
+    "instruction_note_pattern": "【[^】]*】"
+  },
+  "individual": {
+    "template_name_pattern": "個人に委託",
+    "sheet": "個人",
+    "output_folder_key": "individual_folder_id",
+    "fields": [
+      {"column": "甲名称", "anchor_strategy": "placeholder", "placeholder": "{{party_a.name}}", "required": true},
+      {"column": "甲住所", "anchor_strategy": "placeholder", "placeholder": "{{party_a.address}}", "required": true},
+      {"column": "甲代表者役職", "anchor_strategy": "placeholder", "placeholder": "{{party_a.title}}", "required": true},
+      {"column": "甲代表者氏名", "anchor_strategy": "placeholder", "placeholder": "{{party_a.rep_name}}", "required": true},
+      {"column": "乙氏名・名称", "anchor": "（以下「乙」", "placeholder": "●", "required": true, "occurrences": "first"},
+      {"column": "乙氏名・名称", "anchor": "^乙：", "placeholder": "$", "mode": "append_signature_name", "required": true},
+      {"column": "乙住所・連絡先", "anchor": "^乙：", "placeholder": "$", "mode": "append_signature_address", "required": true},
+      {"column": "第1条_目的", "anchor": "を目的として", "placeholder": "●", "required": true},
+      {"column": "業務内容①", "anchor": "^（１）", "placeholder": "●●", "required": true},
+      {"column": "業務内容②（任意）", "anchor": "^（２）", "placeholder": "●●", "required": false, "empty_action": "該当なし"},
+      {"column": "遂行場所", "anchor": "業務遂行場所又は乙が成果物を納品する場所は", "placeholder": "●●", "required": false},
+      {"column": "納品期限", "anchor": "成果物が存在する場合、乙は、", "placeholder": "●年●月●日", "required": false, "condition": "成果物有無==あり"},
+      {"column": "成果物番号", "anchor": "本条第１項（", "placeholder": "（●）", "value_template": "（{v}）", "required": false, "condition": "成果物有無==あり"},
+      {"column": "検収期間", "anchor": "成果物を受領後", "placeholder": "●営業日", "value_template": "{v}営業日", "required": false, "condition": "成果物有無==あり"},
+      {"column": "金額", "anchor": "本業務委託料」という）として", "placeholder": "金XXXX円", "format": "currency_yen", "required": false, "condition": "料金方式==固定金額"},
+      {"column": "振込先_銀行名", "anchor": "^銀行名：", "placeholder": "$", "mode": "fill_after_colon", "required": true},
+      {"column": "振込先_支店名", "anchor": "^支店名：", "placeholder": "$", "mode": "fill_after_colon", "required": true},
+      {"column": "振込先_口座種類", "anchor": "^口座種類：", "placeholder": "$", "mode": "fill_after_colon", "default": "普通", "required": false},
+      {"column": "振込先_口座番号", "anchor": "^口座番号：", "placeholder": "$", "mode": "fill_after_colon", "validate": "account_number", "required": true},
+      {"column": "振込先_口座名義（フリガナ）", "anchor": "^口座名義：", "placeholder": "$", "mode": "fill_after_colon", "validate": "kana", "required": true},
+      {"column": "契約開始日", "anchor": "本契約の有効期間は", "placeholder": "XX年XX月XX日から", "format": "date_ja_from", "required": true},
+      {"column": "契約終了日", "anchor": "本契約の有効期間は", "placeholder": "XX年XX月XX日までの", "format": "date_ja_to", "required": true},
+      {"column": "契約期間_年数", "anchor": "までのX年間とする", "placeholder": "X年間", "value_template": "{v}年間", "required": true},
+      {"column": "更新拒絶通知_月数", "anchor": "期間満了のXか月前までに", "placeholder": "Xか月", "value_template": "{v}か月", "required": true},
+      {"column": "中途解約通知_月数", "anchor": "有効期間中いつでも、Xか月前までに", "placeholder": "Xか月", "value_template": "{v}か月", "required": true},
+      {"column": "締結日", "anchor": "２０XX年", "mode": "date_signature", "format": "date_ja_full", "required": false}
+    ],
+    "conditionals": [
+      {"column": "業務内容方式", "when": "別紙1に定める", "anchor": "本業務の内容及び範囲は、以下のとおりと", "keep": "別紙"},
+      {"column": "業務内容方式", "when": "する", "anchor": "本業務の内容及び範囲は、以下のとおりと", "keep": "本文"},
+      {"column": "成果物有無", "when": "なし", "remove_paragraph_anchors": ["成果物が存在する場合、乙は、", "成果物を受領後"]},
+      {"column": "料金方式", "when": "別紙2参照", "anchor": "本業務委託料」という）として", "keep": "別紙"},
+      {"column": "料金方式", "when": "固定金額", "anchor": "本業務委託料」という）として", "keep": "本文"},
+      {"column": "個人情報処分方法", "when": "別紙3に定める", "anchor": "甲から預託された個人情報", "keep": "別紙"},
+      {"column": "個人情報処分方法", "when": "別途定める", "anchor": "甲から預託された個人情報", "keep": "本文"}
+    ]
+  },
+  "corporate": {
+    "template_name_pattern": "法人に委託",
+    "sheet": "法人",
+    "output_folder_key": "corporate_folder_id",
+    "fields": [
+      {"column": "甲名称", "anchor_strategy": "placeholder", "placeholder": "{{party_a.name}}", "required": true},
+      {"column": "甲住所", "anchor_strategy": "placeholder", "placeholder": "{{party_a.address}}", "required": true},
+      {"column": "甲代表者役職", "anchor_strategy": "placeholder", "placeholder": "{{party_a.title}}", "required": true},
+      {"column": "甲代表者氏名", "anchor_strategy": "placeholder", "placeholder": "{{party_a.rep_name}}", "required": true},
+      {"column": "乙法人名・名称", "anchor": "（以下「乙」", "placeholder": "●", "required": true, "occurrences": "first"},
+      {"column": "乙法人名・名称", "anchor": "^乙：", "placeholder": "$", "mode": "append_signature_name", "required": true},
+      {"column": "乙代表者役職・氏名", "anchor": "^乙：", "placeholder": "$", "mode": "append_signature_representative", "required": true},
+      {"column": "乙本店所在地・連絡先", "anchor": "^乙：", "placeholder": "$", "mode": "append_signature_address", "required": true},
+      {"column": "第1条_目的", "anchor": "を目的として", "placeholder": "●", "required": true},
+      {"column": "業務内容①", "anchor": "^（１）", "placeholder": "●●", "required": true},
+      {"column": "業務内容②（任意）", "anchor": "^（２）", "placeholder": "●●", "required": false, "empty_action": "該当なし"},
+      {"column": "金額", "anchor": "本業務委託料」という）として", "placeholder": "金XXXX円", "format": "currency_yen", "required": false, "condition": "料金方式==固定金額"},
+      {"column": "振込先_銀行名", "anchor": "^銀行名：", "placeholder": "$", "mode": "fill_after_colon", "required": true},
+      {"column": "振込先_支店名", "anchor": "^支店名：", "placeholder": "$", "mode": "fill_after_colon", "required": true},
+      {"column": "振込先_口座種類", "anchor": "^口座種類：", "placeholder": "$", "mode": "fill_after_colon", "default": "普通", "required": false},
+      {"column": "振込先_口座番号", "anchor": "^口座番号：", "placeholder": "$", "mode": "fill_after_colon", "validate": "account_number", "required": true},
+      {"column": "振込先_口座名義（フリガナ）", "anchor": "^口座名義：", "placeholder": "$", "mode": "fill_after_colon", "validate": "kana", "required": true},
+      {"column": "契約開始日", "anchor": "本契約の有効期間は", "placeholder": "XX年XX月XX日から", "format": "date_ja_from", "required": true},
+      {"column": "契約終了日", "anchor": "本契約の有効期間は", "placeholder": "XX年XX月XX日までの", "format": "date_ja_to", "required": true},
+      {"column": "契約期間_年数", "anchor": "までのX年間とする", "placeholder": "X年間", "value_template": "{v}年間", "required": true},
+      {"column": "更新拒絶通知_月数", "anchor": "期間満了のXか月前までに", "placeholder": "Xか月", "value_template": "{v}か月", "required": true},
+      {"column": "中途解約通知_月数", "anchor": "有効期間中いつでも、Xか月前までに", "placeholder": "Xか月", "value_template": "{v}か月", "required": true},
+      {"column": "締結日", "anchor": "２０XX年", "mode": "date_signature", "format": "date_ja_full", "required": false}
+    ],
+    "conditionals": [
+      {"column": "業務内容方式", "when": "別紙1に定める", "anchor": "本業務の内容及び範囲は、以下のとおりと", "keep": "別紙"},
+      {"column": "業務内容方式", "when": "する", "anchor": "本業務の内容及び範囲は、以下のとおりと", "keep": "本文"},
+      {"column": "料金方式", "when": "別紙2参照", "anchor": "本業務委託料」という）として", "keep": "別紙"},
+      {"column": "料金方式", "when": "固定金額", "anchor": "本業務委託料」という）として", "keep": "本文"},
+      {"column": "個人情報処分方法", "when": "別紙3に定める", "anchor": "甲から預託された個人情報", "keep": "別紙"},
+      {"column": "個人情報処分方法", "when": "別途定める", "anchor": "甲から預託された個人情報", "keep": "本文"}
+    ]
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "agent": "elegant-meta-divergent-analyst",
+  "run_id": "20260702T065933",
+  "paradigm_findings": [
+    {
+      "method": "メタ思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-01",
+          "summary": "生成物に課す goal-seek invariant (L5 固定手順禁止) を、生成器自身の prompts/*.md が全件違反している (5.2 推論手順のステップ列挙)。verify-completeness.py の固定手順検出も『思考プロセス+ステップN』の共起のみ検出するため『推論手順+番号リスト』は素通りし、自己違反が機械検出されない。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1-main.md:5.2 (同型: run-prompt-create/prompts/R1-R3, assign-prompt-design-evaluator/prompts/R1-evaluate.md) + scripts/verify-completeness.py:92",
+          "condition_signal": "contradiction",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "5 prompts の L5 を seven-layer-markdown-template.md 形 (5.2 ゴール定義/5.3 完了チェックリスト/5.4 実行方式) へ skill-creator 機構経由で再生成し、verify-completeness.py の検出 regex を『推論手順』『手順 (番号列挙)』も含む形へ拡張して自己適用ゲート化する。"
+        }
+      ],
+      "reusable_abstraction": "自己適用ゲート (self-dogfooding gate): メタスキルが成果物へ課す invariant は、同一 lint を生成器自身の prompts/SKILL.md にも照射して初めて閉じる。"
+    },
+    {
+      "method": "抽象化思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-02",
+          "summary": "L5 サブ構造の正本が 3 分裂 (seven-layer-format.md YAML=宣言型、seven-layer-markdown-template.md=宣言型、rubric C3-004/C4-001 と実 prompts=命令型)。生成器がテンプレに従うと評価器の期待と構造不一致になり、ゲートを通すため生成が命令型へ収束する引力構造になっている。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md:L5 節 vs assign-prompt-design-evaluator/references/prompt-rubric.json:C3-004,C4-001 vs prompts/R1-main.md:5.2-5.3",
+          "condition_signal": "inconsistency",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "L5 サブ構造契約を seven-layer-markdown-template.md に一本化し、rubric/実 prompts/検証 script の期待構造を全てそこへ従属させる (single abstract contract)。評価器側を先に正す。"
+        }
+      ],
+      "reusable_abstraction": "単一 L5 契約 (one-L5-contract): テンプレ・rubric・lint・実 prompt の 4 者が参照する Layer 5 サブ見出し構造を 1 ファイルの正本に固定し、他 3 者は見出し名を再宣言せず参照のみとする。"
+    },
+    {
+      "method": "ダブル・ループ思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-03",
+          "summary": "rubric C3-004『5.2 推論手順が 3-7 ステップで具体的』と C4-001『checklist 5-8 項目』+ c1-c4-criteria.md の failing シグナル『適宜判断・状況に応じて等の曖昧語』が、goal-seek 原則 (固定手順禁止・質ベース判定・数量カウント禁止) と正面矛盾し、宣言型で書いた prompt を FAIL させて命令型へ引き戻す。改善が評価層へ伝播していないダブルループ断絶。7 層構造自体は依存方向タクソノミとして妥当で維持可、命令型負債は L5 と SKILL.md Steps 散文に局在。",
+          "location": "plugins/prompt-creator/skills/assign-prompt-design-evaluator/references/prompt-rubric.json:C3-004,C4-001 + references/c1-c4-criteria.md:C3/C4 節",
+          "condition_signal": "contradiction",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "転換の第一手として rubric を書き換える (C3: 推論手順の具体性 → 完了チェックリストの検証可能性+script/schema アンカー存在、C4: 5-8 項目 → 全項目が YES/NO 判定可能)。本体 prompts の変換は rubric 更新後に行う。"
+        },
+        {
+          "id": "A3-04",
+          "summary": "verify-completeness.py は 7 層全て非空を無条件 FAIL 条件とするが、run-prompt-elicit は layers_required を『L1-L7 のサブセット』として収集し、run-prompt-create Step 2 は build-trace の Layer coverage に N/A/skip を許容する。サブセット brief を忠実に生成すると p0-lint (fatal_exit_codes:[1]) で必ず落ちる。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py:71-77 vs run-prompt-elicit/SKILL.md:Step 5 vs run-prompt-create/SKILL.md:Step 2",
+          "condition_signal": "contradiction",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "verify-completeness.py に --layers (brief.layers_required) を渡し、宣言された層のみ必須・他は N/A 理由付き skip を PASS とする。フル 7 層強制は過剰解釈として撤廃。"
+        }
+      ],
+      "reusable_abstraction": "支配変数優先修正 (governing-variable-first): パラダイム転換は生成器でなく評価器 (rubric/gate) から着手する。評価器が旧パラダイムを保持する限り、生成側をいくら直してもゲート通過圧で旧型へ回帰する。"
+    },
+    {
+      "method": "ブレインストーミング",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-05",
+          "summary": "評価・統治機構が skill-creator 側 (run-elegant-review/run-skill-rubric-governance/feedback_contract) と prompt-creator 独自 (assign-prompt-design-evaluator/governance-params/handoff 連鎖) の二重系で並走しており、パラダイム更新を 2 系統に伝播させ続ける維持コストが転換の主リスク。",
+          "location": "plugins/prompt-creator/plugin-composition.yaml:dependencies + skills/run-prompt-create/workflow-manifest.json:phases",
+          "condition_signal": "smell",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "prompt 固有検査 (C1/C2 Layer 構造) のみ独自 evaluator に残し、再現性・checklist 品質 (C3/C4 相当) は skill-creator の lint-goal-seek.py / convergence-policy SSOT へ委譲して一重化する。"
+        }
+      ],
+      "reusable_abstraction": "REUSE-first 発散: 代替案列挙時は『新規機構案』の前に『既存機構の再利用案』を必ず同数以上並べる。二重機構はパラダイム更新の伝播先を増やす負債として数える。"
+    },
+    {
+      "method": "水平思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-06",
+          "summary": "run-prompt-create SKILL.md の Steps 節と End-to-End Flow 図は workflow-manifest.json phases の手書きミラーであり (Gotcha 6 自身が二重管理を警告)、manifest=機械正本・散文=宣言核という二層分離を自ら崩している。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/SKILL.md:Steps (圧縮形) 節 vs workflow-manifest.json:phases",
+          "condition_signal": "smell",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "Steps 節を『各 phase のゴール+完了条件 (auto_approve_conditions 参照) + manifest 参照 1 行』へ縮約し、手順記述の正本を workflow-manifest.json に一本化する。"
+        }
+      ],
+      "reusable_abstraction": "desired-state/reconciler 分離: 手順が必要な箇所は機械可読 manifest にのみ書き、散文層は到達状態と受入条件だけを宣言する。散文に手順が現れたら『manifest へ降ろせるか』を先に問う。"
+    },
+    {
+      "method": "逆説思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {"ref": "A3-03"},
+        {
+          "id": "A3-07",
+          "summary": "逆命題『手順を消すと再現性が下がる』の成立条件が実在: 宣言型化の前提となるドリフト対策が未配線で、Phase 4-C の自律改善ループと生成物 L5/L6 のゴールシークループに、goal-seek-paradigm.md が必須とする中間成果物アンカー (original_goal / delta_from_original / merged_directive_for_next / drift_signal) が存在しない。手順を消した後の再現性の実質的な代替機構が欠落。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md:Phase 4-C + references/seven-layer-format.md:実行方式/ゴールシークループ節",
+          "condition_signal": "omission",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "skill-creator の intermediate.jsonl 契約 (goal-seek-loop.schema.json) を Phase 4-C と生成物テンプレのループ節へ移植し、アンカー配線を宣言型転換の前提条件 (ゲート) にする。"
+        }
+      ],
+      "reusable_abstraction": "測定器先行差し替え則 (measure-swap-before-removal): 旧メトリクス (手順の具体性) を新メトリクス (チェックリスト検証可能性 + script/schema アンカー) に差し替えてから手順記述を削除する。削除が先行すると再現性は測定不能と実ドリフトの両面で劣化する。"
+    },
+    {
+      "method": "類推思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-08",
+          "summary": "seven-layer-format.md の『実行方式.ループ』(5 ステップ) と Layer 6 ゴールシークループは goal-seek-paradigm.md 正本 (6 ステップ、Step 5 Anchor 必須) の stale fork。また反復上限 3/5 が SKILL.md・Layer 4・feedback_contract に分散ハードコードされ convergence-policy.json の loop_bounds SSOT と断線している。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-format.md:ゴールシーク原則/実行方式 vs plugins/skill-creator/skills/run-build-skill/references/goal-seek-paradigm.md:ゴールシークループ",
+          "condition_signal": "inconsistency",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "seven-layer-format.md のループ定義を goal-seek-paradigm.md への参照 + prompt 固有差分のみに書き換え (再宣言禁止)、上限値は loop_bounds SSOT を参照。lint-goal-seek.py を生成物 prompt にも走らせる配線を追加。"
+        }
+      ],
+      "reusable_abstraction": "paradigm fork の鮮度契約: 他 plugin のパラダイム文書を fork して再宣言する場合は、正本参照 + ローカル差分のみを書き、正本の版を明記して drift を機械検出可能にする。生成物プロンプトは配布先で単独動作するため自己完結記述が必要 (fork 禁止はメタ層資産にのみ適用)。"
+    },
+    {
+      "method": "if思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-09",
+          "summary": "量産 10 倍時、主経路 (run-build-skill Step 7.5 → 7layer worker 直呼び) では C1-C4 設計評価と elegant-review が一切走らず、設計欠陥 prompt が機械 lint のみで量産蓄積される。orchestrator 経由 (Gate 1 ユーザー対話必須) は量産に不向きで、品質ゲートとスループットが逆相関の配線になっている。",
+          "location": "plugins/prompt-creator/plugin-composition.yaml:dependencies (called-by note) + skills/run-prompt-creator-7layer/SKILL.md:完了条件",
+          "condition_signal": "omission",
+          "severity": "high",
+          "auto_fixable": false,
+          "recommendation": "C1-C4 評価を 7layer worker の完了条件へ内蔵 (batch/fork 起動、findings 出力のみ) し呼出元非依存の品質保証にする。あわせて run-prompt-create に --batch (brief 全指定時 Gate 1 skip) を追加し量産経路を orchestrator へ寄せる。"
+        },
+        {
+          "id": "A3-10",
+          "summary": "fast mode の required_evidence が new_prompt==false を含むため、数行の新規宣言型 prompt にも常にフルパイプラインが強制され、量産時の周回コストが線形に膨らむ。",
+          "location": "plugins/prompt-creator/skills/run-prompt-create/workflow-manifest.json:fast_mode.required_evidence",
+          "condition_signal": "smell",
+          "severity": "low",
+          "auto_fixable": false,
+          "recommendation": "new_prompt でも行数・layers_required サブセット・テンプレ完全準拠 (sha 照合) を条件に軽量経路を許可する fast-new 条件を manifest に追加検討。"
+        }
+      ],
+      "reusable_abstraction": "経路非依存ゲート (path-invariant gating): 品質ゲートは orchestrator でなく worker の完了条件に内蔵し、どの呼出経路でも同一の保証が成立するようにする。ゲートを orchestrator に置く設計は、バイパス経路の出現と同時に無効化される。"
+    },
+    {
+      "method": "素人思考",
+      "applied": true,
+      "skip_reason": null,
+      "issues": [
+        {
+          "id": "A3-11",
+          "summary": "skill 非紐付けの汎用プロンプトが欲しい初見ユーザーの経路が未定義: elicit は target_skill 突合を前提、agents-legacy fallback は限定条件付きで、どの skill にも属さない要望は入口で行き場を失う。入口 2 本 (run-prompt-create / run-prompt-creator-7layer) の使い分けも description からは判別不能。",
+          "location": "plugins/prompt-creator/skills/run-prompt-elicit/SKILL.md:Step 2 + README.md:5. 使い方",
+          "condition_signal": "omission",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "standalone モード (target_skill なし → 出力先をユーザー指定パスへ) を elicit/brief schema に公認し、README に『迷ったら run-prompt-create、単体生成のみ 7layer』の 1 行判別表を追加。"
+        },
+        {
+          "id": "A3-12",
+          "summary": "評価優先度の選択肢語彙が経路で分裂: workflow-guide.md Round 2.5 は日本語 5 択・最大 2 つ、interview-user agent Round 3 は accuracy/completeness/conciseness/safety の英語 4 択・2-3 個。quality-criteria §7.2 のマッピングは日本語 5 択のみを知るため、agent 経路で収集した値は Pass 0 動的基準生成で無言で落ちる。",
+          "location": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/workflow-guide.md:Round 2.5 vs agents/prompt-creator-interview-user.md:Round 3 vs references/quality-criteria.md:7.2",
+          "condition_signal": "dependency_break",
+          "severity": "medium",
+          "auto_fixable": false,
+          "recommendation": "evaluation_priorities の enum を hearing-result.schema.json に単一定義 (SSOT) し、質問テンプレ・§7.2 マッピング・agent の 3 者をそこへ従属させる。未知値は open_questions へ fail-visible に落とす。"
+        }
+      ],
+      "reusable_abstraction": "初見 1 分判別表: user-invocable エントリが複数ある plugin は、README/description 冒頭に『あなたの要望 → 使う skill』の 1 行判別表を置く。ユーザー選択肢 enum は schema を SSOT にし、表示文言と機械マッピングを分離する。"
+    }
+  ],
+  "alternative_approaches": [
+    {
+      "name": "rubric-first 転換",
+      "sketch": "本体 prompts を触る前に prompt-rubric.json C3-004/C4-001 と c1-c4-criteria.md を宣言型基準 (checklist 検証可能性 + 機械アンカー存在) へ書き換え、命令型への引き戻し引力を先に断つ。生成側の変換はその後 skill-creator 機構経由で実施。",
+      "adopt_signal": "転換を段階実施する場合は常に第一手として採用 (A3-03 が open のまま生成側を変換すると回帰する)。"
+    },
+    {
+      "name": "with-goal-seek combinator 移植",
+      "sketch": "skill-creator の with-goal-seek.patch / lint-goal-seek.py / goal-seek-loop.schema.json / intermediate anchor を prompt-creator の生成テンプレと Phase 4-C へ移植し、独自ゴールシーク記述の再宣言を正本参照に置換する。",
+      "adopt_signal": "seven-layer-format.md の stale fork (A3-08) を解消するタイミングで採用。独自機構維持コスト > 移植コストが成立している現状では即時有効。"
+    },
+    {
+      "name": "二層分離 (manifest=手順正本・散文=宣言核)",
+      "sketch": "workflow-manifest.json を手順の唯一の機械正本とし、SKILL.md Steps / prompts の 5.2 を『ゴール+完了チェックリスト+manifest 参照』へ縮約する。再現性は manifest+gates が担い、散文は宣言のみ。",
+      "adopt_signal": "manifest が全 phase を機械可読化済みの skill (run-prompt-create は充足) から順に適用。manifest なし skill には manifest 新設とセットの場合のみ。"
+    },
+    {
+      "name": "Layer folding (サブセット 7 層)",
+      "sketch": "7 層タクソノミは維持しつつ、brief.layers_required に応じて N/A 層を理由付き skip できるよう verify-completeness.py と build-trace 契約を整合させる。小型宣言型 prompt の boilerplate を削減。",
+      "adopt_signal": "A3-04 の矛盾解消時、または量産開始で小型 prompt が支配的になった時点。"
+    },
+    {
+      "name": "worker 内蔵ゲート (経路非依存品質保証)",
+      "sketch": "C1-C4 評価 (fork・findings only) を run-prompt-creator-7layer の完了条件に内蔵し、run-build-skill Step 7.5 直呼びでも orchestrator 経由と同一の設計保証が成立するようにする。",
+      "adopt_signal": "Step 7.5 経由が量産の主経路である限り採用 (A3-09)。呼出元が同等ゲートを機械証跡で保証できる場合のみ免除。"
+    },
+    {
+      "name": "desired-state 化 (IaC アナロジー)",
+      "sketch": "プロンプトを『望ましい状態宣言 + 受入テスト』として定義し、検証 scripts 群を reconciler と再定義する。mode=update は plan/apply 型 diff 提示に統一し、冪等更新ポリシーと自然統合する。",
+      "adopt_signal": "更新系 (mode=update) 運用が主となり、diff 駆動の変更承認 UX を強化したいとき。"
+    }
+  ]
+}

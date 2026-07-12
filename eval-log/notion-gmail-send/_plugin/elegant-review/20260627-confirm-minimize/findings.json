@@ -1,0 +1,136 @@
+{
+  "run_id": "20260627-confirm-minimize",
+  "target": { "plugin": "notion-gmail-send", "scope_mode": "plugin" },
+  "goal": "確認事項を最大限省略化(最悪0)し承認を端末APPROVE→Notion『送信対象=✅』へ移す確認0 auto-send 再設計のエレガンス×正しさを検証。安全は機械層で担保したまま人手確認のみ削減。",
+  "thought_method_coverage": { "used": 30, "skipped_with_reason": 0, "total": 30 },
+  "phase2_agents": ["logical-structural-A2", "meta-divergent-A3", "system-strategic-A4"],
+  "seed_concern_resolution": {
+    "seed1_auto_classA_tautology": "CONFIRMED (A2演繹で恒真を立証/A3 if/A4仮説)",
+    "seed2_high_gate_全停止非対称": "CONFIRMED (A2 MECE/A4 因果ループ)",
+    "seed3_秘書CC不正で本人不達": "CONFIRMED (A2 MECE)",
+    "seed4_proposer==approver_in_auto": "CONFIRMED (A2垂直/A3抽象化)",
+    "seed5_hook_best_effort": "CONFIRMED but影響限定",
+    "seed7_C1毎回全件query": "REFUTED (A2帰納: ループ外1回・per-unit辞書lookup)",
+    "seedC4_plan_logic二重化": "REFUTED (A4: plan_compose単一SSOT)"
+  },
+  "consolidated_findings": [
+    {
+      "id": "F1", "title": "README §195 の literal 誤記=source-audit緩和 が実装と矛盾",
+      "condition_signal": "contradiction", "severity": "critical",
+      "location": "plugins/notion-gmail-send/README.md:195 ↔ lib/mail_db_audit.py:59-98",
+      "detail": "トークン非使用のベタ書き誤本文を検出する規則は audit に無い。§195は偽の安心を与える。",
+      "fix": "§195を『literal誤記はcanaryで緩和。source-auditはtoken層(unknown/unresolved/空差し込み)のみ』へ訂正。",
+      "auto_fixable": true, "agents": ["A2", "A3"]
+    },
+    {
+      "id": "F2", "title": "doc過大表現: Class A(plan改竄検出)が auto で同語反復なのに『常時オン』と断言",
+      "condition_signal": "inconsistency", "severity": "high",
+      "location": "README.md:190-200 / SKILL.md:121-122 / send-campaign.py:166-220",
+      "detail": "auto は承認tupleを同一プロセス内planからself-deriveするため plan_hash/件数/content_hash 照合は恒真。auto実効層=source-audit/fresh rebuild/C-1/from検証/content dedup。plan改竄照合は対話モード(plan.json=非信頼アーティファクト)限定の保護。",
+      "fix": "doc を A-effective(auto実効)/A-defensive(対話・恒真)に分離記述。auto の plan改竄耐性は『照合』でなく『非信頼plan.jsonを消費しないfresh rebuild構造』が担う旨へ言換え。feedback_contract IN1も同区分。",
+      "auto_fixable": false, "agents": ["A2", "A3", "A4"]
+    },
+    {
+      "id": "F3", "title": "確認0既定経路に意味検証層が皆無 / canary が opt-in (安全側既定の反転)",
+      "condition_signal": "omission", "severity": "critical",
+      "location": "send-campaign.py:110-112 / README.md:28 / SKILL.md:56",
+      "detail": "source-audit=構文のみ。意味的正しさ(誤アドレス/literal本文/誤From/CC漏れ)を唯一捕捉できる canary実メール検品が opt-in。既定の全件一括が最も危険。",
+      "fix": "canary 既定ON へ反転（既定で先頭N件→残りは再実行 or --full-send/--all）。content dedup既存ゆえ再実行の二重送信なし。[要ユーザー判断]",
+      "auto_fixable": false, "agents": ["A3", "A4"]
+    },
+    {
+      "id": "F4", "title": "送信規模の機械上限が皆無(誤った大量✅→即時不可逆送信)",
+      "condition_signal": "omission", "severity": "high",
+      "location": "send-campaign.py:139-176",
+      "detail": "確認0既定なのに count 上限ガードが無い。系の最弱リンクが『誤バルク✅→即全送信』へ移った。MEMORY『保証要件は機械層で担保』に整合する穴。",
+      "fix": "規模ソフト上限: count>閾値(例200)なら fail-closed し --canary か明示 ack を要求。[要ユーザー判断: 停止=人手1回 vs 警告のみ]",
+      "auto_fixable": false, "agents": ["A4"]
+    },
+    {
+      "id": "F5", "title": "source-audit high の全停止が row-isolatable 問題でも発火(過剰結合・逆効果ループ)",
+      "condition_signal": "inconsistency", "severity": "medium",
+      "location": "send-campaign.py:80-96 vs :300-349 / mail_db_audit.py:158-169",
+      "detail": "empty_substitution/invalid_to/invalid_cc は送信時に per-unit でも skip 済=冗長。全停止は『1行不備→全停止→雑な✅運用』の正のループを生む。auto/対話で blast radius 非対称。",
+      "fix": "gate 階層化: campaign致命(本文0/全From不正/schema破損)→全停止維持 / row-isolatable high→警告+per-unit skip。",
+      "auto_fixable": false, "agents": ["A2", "A3", "A4"]
+    },
+    {
+      "id": "F6", "title": "membership(送信対象✅)とexecute(送信)を単一フラグにcollapse / stale✅",
+      "condition_signal": "inconsistency", "severity": "high",
+      "location": "SKILL.md:121 / spec-detail.md:159 / lib/plan_compose.py:17-22",
+      "detail": "✅が『資格あり』と『今すぐ送れ』を兼ねる。stale✅がそのまま実行命令化。fresh rebuildはplan.json鮮度向けでNotion data staleness/誤✅には無効=保護の取り違え。",
+      "fix": "二段フラグ分離(membership/execute・execute送信後自動OFF) か canary既定 か diff検知。[要ユーザー判断: Notion操作増は確認削減に逆行]",
+      "auto_fixable": false, "agents": ["A3"]
+    },
+    {
+      "id": "F7", "title": "素人の心的モデルのズレ(✅=下書きと誤解→大量誤送信)",
+      "condition_signal": "smell", "severity": "high",
+      "location": "README.md:26-28,120 / SKILL.md:66",
+      "detail": "非エンジニアが『✅=候補マーク/下書き』と誤解する余地。TL;DRに『✅+実行=即送信(下書きでない)』の警告が無い。",
+      "fix": "TL;DR step3に太字警告併記+初回canary推奨。canary既定ONで構造吸収。",
+      "auto_fixable": true, "agents": ["A3"]
+    },
+    {
+      "id": "F8", "title": "C-1送信時suppress再検証が recipient_db未解決時に fail-open",
+      "condition_signal": "dependency_break", "severity": "medium",
+      "location": "send-campaign.py:285",
+      "detail": "suppress_state=None で silently skip し送信継続。auto は source常設で安全だが潜在fail-open。",
+      "fix": "fail-closed化: suppress_state is None なら『送信時suppress再検証不能』で中断。",
+      "auto_fixable": false, "agents": ["A2"]
+    },
+    {
+      "id": "F9", "title": "秘書CC不正でunit全体skip→プロ人材本人にも静かに不達",
+      "condition_signal": "omission", "severity": "medium",
+      "location": "lib/mail_db_audit.py:123-127 / plan_compose.py:57-59",
+      "detail": "invalid_cc は medium で gate通過するが compose が unit全体skip。プロ人材本人へ静かに不達となる境界が利用者に見えない。",
+      "fix": "レポート内訳/トラブルシュートに『秘書CC不正→本人も skip』を明記。",
+      "auto_fixable": true, "agents": ["A2"]
+    },
+    {
+      "id": "F10", "title": "[効率] db2 を audit/compose/C-1 で3重query (deferred)",
+      "condition_signal": "smell", "severity": "low",
+      "location": "lib/plan_compose.py:132-140 / notion_client.py:341-356",
+      "detail": "audit↔compose は同一fetch共有可。C-1のみ fresh必須。large規模でNotionレートに緊張。",
+      "fix": "compose に取得済み bodies/resolution を注入する経路。C-1のfresh再取得は維持。[deferred]",
+      "auto_fixable": false, "agents": ["A4"]
+    }
+  ],
+  "over_engineering_to_cut": [
+    "auto での『plan改竄検出』doc主張(同語反復)→doc正直化(コード自体はcompseバグ検出ゆえ撤去不要)",
+    "対話モード+nonce+presend-verifier+R2 二重保守→『例外運用/escape hatch』位置付けをdoc明示(撤去は後方互換ゆえ保留)",
+    "_write_auto_plan の本文全文ローカル書出し(PII)→要否再評価(deferred)"
+  ],
+  "verdict_pre_fix": {
+    "矛盾なし": "FAIL (F1 README§195 contradiction)",
+    "漏れなし": "FAIL (F3意味検証層欠落/F4規模上限欠落/F9不達境界未明示)",
+    "整合性あり": "FAIL (F2 Class A過大表現/F5 gate全停止非対称/F6 membership-execute collapse)",
+    "依存関係整合": "PASS (auto DAG健全/plan_compose単一SSOT。F8 C-1 fail-open は smell→要hardening)"
+  },
+  "fail_counts_pre_fix": { "contradiction": 1, "omission": 3, "inconsistency": 3, "dependency_break": 0, "smell": 3 },
+  "user_decisions": {
+    "Q1_大量送信ガード": "件数に関わらず常に1回確認 (既定を最小確認1回へ)",
+    "Q2_初回検品canary": "canary は opt-in 据置 (1コマンドで全件送信を維持)"
+  },
+  "resolution": {
+    "default_mode": "確認0既定 → 最小確認1回既定 (preview exit10 + CONFIRM_TOKEN + 単一確認 + --confirm-token で plan_hash 束縛・不一致 exit11)",
+    "modes": "preview(既定) / confirm-send(--confirm-token) / 無人確認0(--auto-approve|--yes・cron) / 厳格対話(--plan+APPROVE 後方互換)",
+    "F1": "resolved (README§195 訂正・literal誤記は機構検出不能=canary吸収)",
+    "F2": "resolved (plan改竄照合は非対話で恒真=defense-in-depth と全doc/コードで正直化・未限定『Class A常時オン』残存0)",
+    "F3": "by-design (canary opt-in 据置・preview要約に本文先頭表示+doc強推奨で部分代替)",
+    "F4": "by-design (常に1回確認=preview で件数を見て人間が止められる・cron は明示的に確認0)",
+    "F5": "resolved (gate階層化=人間がループに居る既定preview は警告/無人cronは fail-closed の原則的非対称)",
+    "F6": "deferred (membership/execute 二段フラグはユーザー判断で不採用・送信対象✅単一フラグ維持)",
+    "F7": "resolved (README TL;DR に✅=即送信・下書きでない 太字警告)",
+    "F8": "resolved (C-1 を非対話モード限定で fail-closed 化+test)",
+    "F9": "resolved (秘書CC不正→本人不達 をトラブルシュートに明示)",
+    "F10": "deferred (db2 3重query 効率改善・別コミット)"
+  },
+  "verdict_post_fix": {
+    "矛盾なし": "PASS", "漏れなし": "PASS", "整合性あり": "PASS", "依存関係整合": "PASS"
+  },
+  "fail_counts_post_fix": { "contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 3 },
+  "independent_approver": "elegant-logical-structural-analyst (proposer≠approver): APPROVE・4条件全PASS・blocking空・low nit 3件(canary再実行hint/モード排他/preview PII)はうち2件をコード反映済・1件deferred",
+  "verification": { "pytest": "198 passed", "feedback_contract_lint": "OK", "skill_md_lines": 162 },
+  "thought_method_coverage_final": { "used": 30, "skipped_with_reason": 0, "total": 30 },
+  "status": "complete"
+}

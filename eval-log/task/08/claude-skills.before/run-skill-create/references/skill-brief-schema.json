@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skill-brief-schema.json",
+  "title": "Skill Brief (run-skill-elicit → run-build-skill handoff)",
+  "description": "run-skill-elicit が生成し eval-log/skill-brief.json に固定パスで書き出す JSON。run-build-skill / run-skill-create が消費する。01a Step3 (5 prefix CE要件) と 01 設計思想 (5要素モデル: Intent/Contract/Boundary/Execution/Feedback) を満たす。",
+  "type": "object",
+  "required": [
+    "skill_name",
+    "prefix",
+    "hierarchy_level",
+    "trigger_conditions",
+    "output_contract",
+    "boundary",
+    "deterministic_checks",
+    "external_systems",
+    "needs_independent_context",
+    "needs_lifecycle_enforcement",
+    "cli_tools",
+    "mcp_tools",
+    "placement_candidates"
+  ],
+  "properties": {
+    "skill_name": {
+      "type": "string",
+      "description": "kebab-case の Skill 名。prefix を含む完全名。最大60文字 (緩め: lintで警告、スキーマでは制限のみ)。",
+      "pattern": "^(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 60
+    },
+    "prefix": {
+      "type": "string",
+      "enum": [
+        "ref",
+        "run",
+        "wrap",
+        "assign",
+        "delegate"
+      ],
+      "description": "01a Step3 の Trigger 軸 5 prefix"
+    },
+    "role_suffix": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        null,
+        "generator",
+        "evaluator",
+        "contributor",
+        "delegate"
+      ],
+      "description": "06章 第5条の Role 軸。assign-* の末尾 segment は evaluator/generator/contributor/delegate のいずれか。run-* は通常 null。"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "ref",
+        "run",
+        "wrap",
+        "assign",
+        "delegate"
+      ],
+      "description": "frontmatter kind フィールドの値。原則 prefix と一致。"
+    },
+    "hierarchy_level": {
+      "type": "string",
+      "enum": [
+        "L0",
+        "L1",
+        "L2"
+      ],
+      "description": "01a Step4b: L0=共通基準 / L1=技術・ドメイン特化 / L2=案件固有。一方向依存 L0 ← L1 ← L2。"
+    },
+    "trigger_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 80
+      },
+      "minItems": 2,
+      "maxItems": 3,
+      "description": "description の Use when 句候補。各要素 80文字以内 (緩め)。lint-skill-description.py R1 と rubric FM-003 の合意上限。"
+    },
+    "output_contract": {
+      "type": "string",
+      "description": "成果物の形・完了条件 (01 設計思想 Contract 要素)。"
+    },
+    "key_constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "制約事項 (権限・パフォーマンス・依存方向 等)。"
+    },
+    "boundary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "01 設計思想 Boundary 要素: このSkillが『やらないこと』を1文で明示 (200文字以内、緩め)。SRP / Bounded Context。"
+    },
+    "deterministic_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "05章: LLM手順ではなく script/hook/CI に寄せる決定論的検査。該当なしなら空配列。"
+    },
+    "external_systems": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "05章: MCP/API/CLI 候補になる外部システム。該当なしなら空配列。"
+    },
+    "needs_independent_context": {
+      "type": "boolean",
+      "description": "05章: Subagent/Agent Team が必要な独立コンテキストを要するか。"
+    },
+    "needs_lifecycle_enforcement": {
+      "type": "boolean",
+      "description": "05章: Hook で lifecycle event 強制が必要か。"
+    },
+    "cli_tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "05章: 利用予定の CLI。macOS 標準/既存導入済みを優先。該当なしなら空配列。"
+    },
+    "mcp_tools": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "05章: 利用予定の MCP tool/resource。該当なしなら空配列。"
+    },
+    "placement_candidates": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Skill",
+          "Subagent",
+          "Agent Team",
+          "Hook",
+          "MCP",
+          "CLI",
+          "API",
+          "script"
+        ]
+      },
+      "minItems": 1,
+      "description": "05章: Skill/Subagent/Hook/MCP/CLI/API/script の配置候補。"
+    },
+    "base_skill": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "prefix=wrap の場合、被せる base Skill 名 (必須)。それ以外は null。"
+    },
+    "delegate_agent": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "prefix=delegate の場合、委譲先 external agent / LLM ID (必須、1文字以上の自由文字列)。それ以外は null。"
+    },
+    "rubric_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "L2 案件固有Skillが参照する L0/L1 の rubric Skill 名。L2なら必須 (空配列禁止)。"
+    },
+    "source_url_or_path": {
+      "type": "string",
+      "default": "internal",
+      "description": "doc/21 出典追跡: SKILL.md frontmatter の source に展開する正本パスまたは公式URL。未指定時は internal として扱い、具体パスは source_trace に残す。"
+    },
+    "source_tier": {
+      "type": "string",
+      "enum": [
+        "article-text",
+        "image-derived",
+        "code-unavailable",
+        "code-verified",
+        "internal",
+        "external-spec"
+      ],
+      "default": "internal",
+      "description": "doc/21 source-tier。作成時点で正しい tier を選び、backfill 依存を避ける。"
+    },
+    "last_audited_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "doc/21 最終監査日。YYYY-MM-DD。未指定時は render-frontmatter.py が実行日を補う。"
+    },
+    "audit_trigger": {
+      "type": "string",
+      "enum": [
+        "rubric-bump",
+        "source-update",
+        "quarterly",
+        "official-update",
+        "source-acquired",
+        "runtime-failure",
+        "template-change"
+      ],
+      "default": "quarterly",
+      "description": "doc/21 再監査トリガー。出典更新・公式更新・runtime failure などを量産時に再現できるよう固定する。"
+    },
+    "pattern_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "orchestrator",
+          "hook-integrated",
+          "agent-team",
+          "adapter-backed",
+          "evaluator-pair",
+          "delegate-external",
+          "wrap-safe"
+        ]
+      },
+      "description": "設計書09章 rubric_refs と対称な generator 側依存注入。run-build-skill が templates/<pattern>.md を読み込んで body 生成に注入する。複数指定可 (orchestrator + hook-integrated など組合せ可)。"
+    },
+    "pattern_intent": {
+      "type": "string",
+      "description": "pattern_refs を採用する理由。未採用の場合は 'none: <reason>' と書く。量産時に同じ判断を再現するための短文。"
+    },
+    "variant_axes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "kind",
+          "role_suffix",
+          "evaluator",
+          "hook",
+          "agent_team",
+          "domain_rubric",
+          "output_route"
+        ]
+      },
+      "description": "量産時に展開する差分軸。例: evaluator有無、hook有無、Agent Team有無。"
+    },
+    "reuse_targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "template",
+          "rubric",
+          "lint",
+          "hook",
+          "reference",
+          "none"
+        ]
+      },
+      "description": "このbriefから横展開する場合の反映先候補。governance承認前は提案のみ。"
+    },
+    "output_language": {
+      "type": "string",
+      "enum": ["ja"],
+      "default": "ja",
+      "description": "生成成果物の説明文・手順・レビュー本文の言語。creator-kit標準は日本語。frontmatterキー、JSONキー、CLI引数などのパラメーター名は英語のままでよい。"
+    },
+    "parameter_language_exception": {
+      "type": "boolean",
+      "default": true,
+      "description": "パラメーター名・変数名・frontmatterキー・JSONキーのみ英語を許可する例外。falseにしない。"
+    },
+    "abstraction_variables": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "固有名詞・固定パス・固定URL・固定ownerなど、再利用成果物ではテンプレート変数へ戻す対象。"
+    },
+    "template_inputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "テンプレート展開時に入力として必要な変数。未設定時はrendererが日本語の未設定説明を入れる。"
+    },
+    "template_non_goals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "テンプレート化しないもの。証跡・引用・プロジェクト固有ログなど、横展開対象外を明示する。"
+    },
+    "mass_production_profile": {
+      "type": "string",
+      "enum": ["minimal", "standard", "strict"],
+      "default": "standard",
+      "description": "量産時の厳格度。minimal=軽量ref/wrap、standard=通常、strict=hook/evaluator/agent-teamを含む高リスク。"
+    },
+    "paradigm_profile": {
+      "type": "string",
+      "enum": [
+        "eslint-plugin型",
+        "pytest-fixture型",
+        "lsp-diagnostics型",
+        "terraform-module型",
+        "unix-pipeline型",
+        "hexagonal-port型",
+        "pre-commit-hook型",
+        "subprocess-worker型"
+      ],
+      "description": "設計書30に基づく主要類推。テンプレート選択・rubric選択・trace.paradigm_analogy_model に反映する。"
+    },
+    "hook_events": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "PreToolUse",
+          "PostToolUse",
+          "SubagentStop",
+          "TaskCreated",
+          "TaskCompleted",
+          "TeammateIdle",
+          "FileChanged",
+          "PreCompact",
+          "PostCompact",
+          "UserPromptExpansion"
+        ]
+      },
+      "description": "Hook 統合スキルが配線する公式 hook event 一覧。指定された event ごとに scripts/hook-<name>-<event>.py のスケルトンと settings.json マージ案を生成する (10章§設計判断5)。"
+    },
+    "file_ownership": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Agent Team 統合スキルで teammate が編集対象とする path/glob (10章§6)。TaskCreated hook (hook-check-file-ownership.py) が他 task との衝突を検出する。"
+    },
+    "generate_pair_evaluator": {
+      "type": "boolean",
+      "description": "role_suffix=generator のとき、対称な assign-<name>-evaluator を同時生成するか (09章 pair 設計、孤児 evaluator 防止)。"
+    },
+    "cross_platform": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mac / Windows 両対応の Skill かどうか。true の場合、run-build-skill は 11章 cross-platform run-* 雛形を採用し、14章 OS プリアンブル契約 (!`uname -s 2>/dev/null || ver`) を本文先頭に挿入する。false (既定) は macOS 専用 Skill として扱う。グループB (build-scripts) がこのフィールドを参照してテンプレート分岐を決定する。"
+    },
+    "os_preamble_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "14章 OS プリアンブル (!`uname -s 2>/dev/null || ver`) の挿入を強制するかどうか。cross_platform=true のとき自動的に true 推奨。cross_platform=false でも OS 分岐が必要な場合は明示的に true にする。false (既定) はプリアンブルなし。グループBはこのフィールドで frontmatter shell 行と本文プリアンブルの自動生成を制御する。"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 10,
+      "description": "TODO(human) として未確定事項をユーザーに返す (最大10件、緩め: 超過時は再ヒアリング推奨だが強制しない)。"
+    },
+    "additional_resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "when_to_read"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "補助ファイルの相対パス (例: references/foo.md, scripts/bar.py)。"
+          },
+          "when_to_read": {
+            "type": "string",
+            "description": "どんなときに参照すべきかを示す案内文 (設計書02章: 補助ファイル案内必須)。"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "SKILL.md `## Additional Resources` に展開される補助ファイル一覧と案内 (設計書02章必須要件)。"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "prefix": {
+            "const": "wrap"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "base_skill"
+        ],
+        "properties": {
+          "base_skill": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "prefix": {
+            "const": "delegate"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "delegate_agent"
+        ],
+        "properties": {
+          "delegate_agent": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "hierarchy_level": {
+            "const": "L2"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "rubric_refs"
+        ],
+        "properties": {
+          "rubric_refs": {
+            "type": "array",
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "x-validation-policy": {
+    "comment": "緩め方針: 構造的必須 (prefix/wrap/delegate/L2分岐) のみ allOf で強制。文字数・個数は上限のみ設定し、超過時はスキーマ違反だが、ソフト推奨 (role_suffix=evaluator → pair 推奨など) は lint レイヤーで警告に留める。",
+    "policy_decisions": {
+      "skill_name_max": "60 (緩め)",
+      "trigger_item_max_chars": "80 (緩め)",
+      "boundary_max_chars": "200 (緩め)",
+      "role_suffix_required_when": "assign-* は lint レイヤーで evaluator/generator/contributor/delegate のいずれかを必須化。schema では null 許容を残すが、語彙は06章に同期。",
+      "open_questions_max": "10 (緩め、超過は警告のみ)",
+      "L0_rubric_refs": "空配列許容 (L0 は被参照のみで上位を持たない、29章原則)",
+      "delegate_agent_format": "自由文字列 (1文字以上)",
+      "evaluator_pair_required": "lint 警告に留め、スキーマでは強制しない"
+    }
+  }
+}

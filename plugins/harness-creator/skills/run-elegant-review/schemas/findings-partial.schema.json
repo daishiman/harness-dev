@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "run-elegant-review/findings-partial.schema.json",
+  "title": "Elegant Review Findings (per-agent partial)",
+  "description": "Phase2 per-agent 部分出力 (findings-phase2-*.json) 用。paradigm_findings の minItems/maxItems=30 制約を外し、required を per-agent 本体 (paradigm_findings) のみに縮約 (SS-005)。four_conditions/variable_abstraction は集約後に判定・統合するため partial では任意。集約後 findings.json には 30 固定・全 required の findings.schema.json を適用する。",
+  "type": "object",
+  "required": ["paradigm_findings"],
+  "properties": {
+    "version": {"type": "integer", "const": 1},
+    "target": {
+      "type": "object",
+      "required": ["type", "path", "reviewed_at"],
+      "properties": {
+        "type": {"type": "string", "enum": ["skill", "rubric", "proposal", "kit-component", "script", "config", "agent", "custom"]},
+        "path": {"type": "string"},
+        "reviewed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "loop_count": {"type": "integer", "minimum": 0, "maximum": 3},
+    "paradigm_findings": {
+      "type": "array",
+      "items": {"$ref": "./findings.schema.json#/definitions/paradigm_finding"}
+    },
+    "four_conditions": {
+      "type": "object",
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"$ref": "./findings.schema.json#/definitions/condition_verdict"},
+        "C2": {"$ref": "./findings.schema.json#/definitions/condition_verdict"},
+        "C3": {"$ref": "./findings.schema.json#/definitions/condition_verdict"},
+        "C4": {"$ref": "./findings.schema.json#/definitions/condition_verdict"}
+      }
+    },
+    "variable_abstraction": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["concrete_value", "variable_name", "source_trace"],
+        "properties": {
+          "concrete_value": {"type": "string"},
+          "variable_name": {"type": "string", "pattern": "^\\{\\{[A-Za-z_][A-Za-z0-9_]*\\}\\}$"},
+          "default_value": {"type": "string"},
+          "source_trace": {"type": "string"}
+        }
+      }
+    },
+    "total_score": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+  }
+}

@@ -1,0 +1,1 @@
+../../plugins/slide-report-generator/agents/ai-image-diagram-producer.md

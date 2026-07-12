@@ -1,0 +1,38 @@
+{
+  "target": {
+    "plugin": "notion-gmail-send",
+    "skill": "run-notion-gmail-send",
+    "skill_md_sha256": "34cb439a87c0fb2ec36f562eb5c34ded8df7d7b5c0854484241f25bc03fba984"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-06-27",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1"],
+    "positive_feedback": [
+      "IN1 PASS: 厳格対話モードの plan 改竄/件数偽装/未置換/From/nonce 実効検出と、非対話3モードの恒真照合(=defense-in-depth)の役割分担が実装と一致。enforce_nonce=True 時のみ nonce_for_guard=expected_nonce を guard へ渡し(send-campaign.py L329/L468)、send_guard.check L60 が actual_nonce 非空時のみ approved_nonce と照合する。test_send_campaign.test_count_injection_is_blocked / test_missing_nonce_is_blocked が NotionClient を stub にして『precheck を抜けて送信経路へ到達しない(1通も送らず return 1)』を実証。confirm 段の token 束縛は非恒真で、test_auto_send.test_confirm_token_matching_sends(rc0==10→token付与で送信) / test_confirm_token_mismatch_blocks(rc==11・0送信) が固定。auto の nonce 撤去(enforce_nonce=False)は test_auto_mode_does_not_require_nonce が固定。",
+      "IN2 PASS: 冪等キー dedup_key={本文page_id}:{宛先page_id}:{content_hash}(campaign_id 非依存・plan_compose L107) で別実行/再実行の二重送信を機構防止。reserve の SENT->skip / SENDING->unknown relabel / quota_stopped->reserved 再開 / unknown->手動 / 2件以上->duplicate_log_key fail-closed 全分岐を test_idempotent_log(test_reserve_existing_* 群・test_reserve_two_or_more_rows_fail_closed_duplicate) が網羅。送信成功後ログ失敗は append_journal+mark_unknown で自動再送せず(send-campaign.py L508-518)、test_mark_unknown_uses_send_success_log_failed_reason が固定。status/reason_code enum 網羅は test_status_enum_values_are_distinct / test_reason_codes_cover_double_send_guard_paths / test_no_resend_and_reservable_sets_are_disjoint で機械検証。",
+      "IN3 PASS: 最小確認1回への転回が実コードと実テストへ完全配線。(a)引数なし preview は exit 10・送信せず CONFIRM_TOKEN を出力=test_no_arg_defaults_to_preview_not_send(rc==10/gmail.sent==[]/_parse_token 非空)。(b)--confirm-token 一致時のみ送信・不一致 exit 11=test_confirm_token_matching_sends / test_confirm_token_mismatch_blocks(rc==11)。send-campaign.py L278 が新鮮 plan の plan_hash!=args.confirm_token で return 11。(c)source-audit 階層化=既定 preview は high を ⚠️警告へ整形し全停止せず(test_preview_does_not_block_on_high_warns_instead rc==10) vs 無人 cron は run_full_audit high で fail-closed 0送信(test_auto_source_audit_gate_blocks_on_high gmail.sent==[]・_auto_source_audit_gate が compose 前で return 1)。(d-g)--auto-approve 確認0送信/canary opt-in/content dedup=test_auto_approve_sends_all_without_approval_string / test_auto_canary_then_full_run_dedups_already_sent(全3宛先ちょうど1回)/決定論一致 test_assemble_plan_matches_build_plan_output。(h)recipient_db 未解決で C-1 不能 fail-closed(exit 2)=test_c1_fail_closed_when_recipient_db_unresolved。preview/canary の rerun-flags 自己記述も test_preview_with_canary_echoes_rerun_flags が固定。",
+      "OUT1 PASS: 確認既定1回(コンパクト要約[件数/先頭To/本文先頭/抑制·skip/⚠️警告]+CONFIRM_TOKEN 束縛・最悪0=無人cron)で承認の所在を Notion データ層(送信対象=✅)へ移し、重い APPROVE/nonce 読解強制を厳格対話へ温存、plan 改竄照合の過大表現を spec §2 安全三本柱表 L29 と B3 で『非対話は self-derive ゆえ恒真=defense-in-depth・実効独立検証は source-audit/fresh rebuild/C-1/From/content dedup』へ正直に再配置、source-audit gate を『人間がループに居る既定=警告/無人=fail-closed』の原則的非対称へ階層化。ユーザー目的(送信の手間最小化・最小確認1回)を過不足なく反映し本 elegant-review 4条件を genuine に充足。"
+    ],
+    "negative_feedback": [
+      "smell(low): 送信レポート(send-campaign.py L532-533)が『失敗 (error)』に error+duplicate_log_key を、『要照合』に unknown_needs_reconcile+needs_reconcile を合算し異質カテゴリを1行へ畳む。details で個別表示されるため誤報告ではなく軽微な可読性 smell。PASS を妨げない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "独立 approver(proposer!=approver)が『確認0 auto-send 既定(2026-06-26)→最小確認1回 既定(2026-06-27 §16 B1-B6)』への転回後の現状実体を一から genuine 採点。旧 verdict は確認0設計を称賛したまま stale(旧 skill_md_sha256=371478f… が現 SHA と不一致)であったため全 positive_feedback を実コード/実テストへ接地し直した。pytest: プラグイン全体 198 passed(0.48s)、IN対応5ファイル(test_auto_send/test_send_campaign/test_preflight/test_idempotent_log/test_plan_compose)で 71 passed。C1 矛盾=0 PASS: preview→exit10 / confirm 不一致→exit11 / モード排他→exit2 が send-campaign.py(L271-284/L216-221)・SKILL.md(L40/56/70-75/111/122)・R1-orchestrate.md(L40)・spec §16 B1 で一貫。『非対話では plan_hash 照合は恒真=defense-in-depth』の正直化が send_guard.check と一致(非対話は approved_plan_hash=plan['plan_hash'] を self-derive(L292)・plan_hash 引数=recomputed_ph で det-check 通過後は両者恒等ゆえ L54 比較は恒真、対して L278 の confirm-token 比較=新鮮 plan_hash vs 利用者提示 token は非恒真の実効束縛)。過大表現なし。C2 漏れ=0 PASS: R1 orchestrate / R2 presend-verify(厳格対話限定) / send-campaign 決定論本体 / preflight(G1/G2/G3) / idempotent-log の責務が MECE、3モードが完了チェックリストに揃い、suppress/content_hash_mismatch/invalid_addr/duplicate/quota/unknown/log-fail の失敗経路と status/reason_code enum が網羅、B5 の非対話 C-1 fail-closed も配線。C3 整合性=0 PASS: frontmatter IN1/IN2/IN3/OUT1 が verify_by=test/test/test/elegant-review で実装テストと1対1対応、IN3 の exit10/11・CONFIRM_TOKEN・source-audit 階層化が test_auto_send の各テストへ機械対応、R1 reproducible(同一 Notion→同一 plan→同一送信集合)が compose_plan の決定論(test_plan_compose)と整合。C4 依存破綻=0 PASS: responsibility_refs(R1/R2)・schema_refs(send-verdict.schema.json)・scripts(send-campaign.py/verify-plan.py)・agents/gmail-send-presend-verifier.md が全て実在、lib/* は send-campaign.py 冒頭 import が 198 passed で解決済=dangling なし、plan_compose の try(相対)/except ImportError(直接) fallback も present。smell=1(report 行の集約表示・low)。description を R5 文末規約(「使う。」終わり)準拠へ並べ替え(情報同一・設計変更なし)した改訂版を再確認: 新 description は『最小確認1回=preview→単一確認』を既定宣言し『無人cron --auto-approve で確認0も可』を明記しており send-campaign.py の preview→exit10→--confirm-token / true_zero 挙動と一致=C3 に description 変更起因の新たな矛盾なし。SKILL.md SHA は worktree root から read_bytes 再計算で frontmatter 対象=34cb439a… と一致確認済(旧 2f2cafd5… から description 行のみ差替・本文不変)。本物の blocker は検出されず不可逆送信の安全機構は fail-closed として成立。"
+}

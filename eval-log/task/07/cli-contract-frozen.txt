@@ -1,0 +1,54 @@
+### Step 7.1 — CLI 契約案
+
+```
+usage: build-claude-settings.py [-h]
+                                [--plugins-dir PLUGINS_DIR]
+                                [--target TARGET]
+                                [--dry-run]
+                                [--check]
+                                [--print-user-section-hash]
+                                [--json]
+                                [--verbose]
+```
+
+| フラグ | 既定値 | 役割 |
+|---|---|---|
+| `--plugins-dir` | `plugins` | plugin.json/hooks/*.json 走査ルート |
+| `--target` | `.claude/settings.json` | 書き換え対象 |
+| `--dry-run` | false | マージ計画を stdout に出力、書き換えなし |
+| `--check` | false | 生成 hook / permission と管理メタデータを現状と比較、差分あれば exit 1 |
+| `--print-user-section-hash` | false | 34a の抽出規則に従い user 管理値の正規化 JSON SHA256 を stdout に出す |
+| `--json` | false | レポートを JSON で stdout に出力 |
+| `--verbose` | false | INV-N 違反箇所をログに残す |
+
+終了コード: 0=success, 1=drift (check モード), 2=invariant violation / namespace conflict, 3=invalid input / invalid plugin layout。
+
+### Step 7.2 — plan JSON スキーマ
+
+```json
+{
+  "target": ".claude/settings.json",
+  "plugins": ["skill-creator", ...],
+  "management_format": "_build_claude_settings.managed_hooks",
+  "namespace": {
+    "plugins": [{"name": "skill-creator", "path": "plugins/skill-creator"}],
+    "skills": [{"name": "run-build-skill", "from_plugin": "skill-creator", "verdict": "ok"}],
+    "agents": [],
+    "commands": [],
+    "conflicts": []
+  },
+  "conflicts": [],
+  "settings": {
+    "hooks": [
+      {"event": "PreToolUse", "matcher": "Write|Edit", "command": "...", "from_plugin": "skill-creator", "verdict": "add|keep|conflict"}
+    ],
+    "permissions": [
+      {"scope": "deny", "rule": "Bash(rm -rf*)", "from_plugin": "skill-creator", "verdict": "add|dedupe|conflict"}
+    ]
+  },
+  "user_values_preserved": true,
+  "invariants_checked": ["INV-1","INV-2","INV-3","INV-4","INV-5","INV-6","INV-7","INV-8","INV-9","INV-10","INV-11","INV-12"],
+  "summary": {"add": N, "keep": N, "dedupe": N, "conflict": N}
+}
+```
+

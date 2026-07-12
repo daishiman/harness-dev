@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "purpose": "run-plugin-dev-plan が引用する plugin 境界外の契約級 upstream の鮮度台帳 (SSOT)。引用=path/ID 参照の原則を保ったまま、引用先の変質 (silent drift) を sha256 pin で機械検知する。pin 対象は「契約級・低頻度変更・plugin 境界を跨ぐ引用」のみに限定する (高頻度ファイルの pin は常時赤=オオカミ少年化するため登録禁止)。同 plugin 内の self-relative 参照は pin 対象外 (既存 parity test の責務)。検証器: scripts/check-upstream-pins.py (in-repo=hash 再計算 fail-closed / standalone=verified_at 開示)。matrix_rows は references/harness-creator-spec-reflection.md の行 ID で、pin drift 時に再監査すべき行を指す。pin bump (sha256/verified_at 更新) は該当行の再監査と同一変更で行うこと。",
+  "pins": [
+    {
+      "path": "plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json",
+      "sha256": "e0fda47105d37fb17e6f690921d893ec1251a10ee013a233454aab5549275b0c",
+      "verified_at": "2026-07-11",
+      "matrix_rows": [
+        "E1"
+      ]
+    },
+    {
+      "path": "plugins/harness-creator/scripts/feedback_contract_ssot.py",
+      "sha256": "829cc32a3f66ffb41ea22eb6c6f7aecce505c6eef52046aa0a49e2baf29158ea",
+      "verified_at": "2026-07-02",
+      "matrix_rows": [
+        "B1"
+      ]
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-elegant-review/references/4-conditions.json",
+      "sha256": "6580020709637a4437ca5a9d05c6c171662b6b97b663f7c4ba42c9d8b66e4b03",
+      "verified_at": "2026-07-02",
+      "matrix_rows": [
+        "A1"
+      ]
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-elegant-review/references/convergence-policy.json",
+      "sha256": "a8c5ab9ca0cae9d6b8a4cf90e65161ab3b0cb5bc5b6dfba7cafe7eb1522eda46",
+      "verified_at": "2026-07-02",
+      "matrix_rows": [
+        "A4"
+      ]
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+      "sha256": "43d790fa213581582d3214280a80814b2f0e51e01c5649d2be6333267ff523e3",
+      "verified_at": "2026-07-11",
+      "matrix_rows": [
+        "D1"
+      ]
+    },
+    {
+      "path": "doc/harness-coverage-spec.md",
+      "sha256": "dc64271a230e0a50d918f2687de6ef459374f7d887a6339ed1b437ec05487e0b",
+      "verified_at": "2026-07-02",
+      "matrix_rows": [
+        "C1",
+        "G6"
+      ]
+    },
+    {
+      "path": "plugins/harness-creator/scripts/notion_config.py",
+      "sha256": "29faf0723e91651ec45800ee4310a352baa86a3a0b6802872f92c52338074d6b",
+      "verified_at": "2026-07-04",
+      "matrix_rows": [
+        "B4"
+      ]
+    },
+    {
+      "path": "doc/notion-schema/improvement-request.schema.json",
+      "sha256": "d9a0384b55c59d83e3f8ccbe9e127a723a0bda1ff5d3c71f62172363a9f9c35d",
+      "verified_at": "2026-07-02",
+      "matrix_rows": [
+        "B5"
+      ]
+    }
+  ]
+}

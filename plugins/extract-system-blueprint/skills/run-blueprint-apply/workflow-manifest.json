@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-blueprint-apply",
+  "skill": "run-blueprint-apply",
+  "description": "C02 PASS済 (draft_hash一致) blueprintのfail-closed受理、自社コンテキスト突合による3分類導出、共有決定論ゲート自己検証つきローカルemitを順に接続する実行manifest。network 0・出力はローカルapply-recommendationsのみ。",
+  "phases": [
+    {
+      "id": "R1-ground",
+      "step": 1,
+      "title": "C02 verdict=PASSかつdraft_hash一致のfail-closed受理検証と自社コンテキスト4面構造化",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r1", "schema-blueprint"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "R2-recommend",
+      "step": 2,
+      "title": "blueprint fact/inference×自社コンテキストの突合による採用/回避/差別化の3分類導出 (Task fork)",
+      "gate": "OUT1",
+      "dependsOn": ["R1-ground"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r2"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "R3-emit",
+      "step": 3,
+      "title": "apply-recommendations emitとdoc-emit.py --check-applyによる決定論自己検証",
+      "gate": "IN1",
+      "dependsOn": ["R2-recommend"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["prompt-r3", "script-doc", "schema-blueprint"],
+      "fatal_exit_codes": [1, 2]
+    }
+  ],
+  "resources": [
+    {"id": "prompt-r1", "kind": "prompt", "path": "./prompts/R1-ground.md", "phaseIds": ["R1-ground"]},
+    {"id": "prompt-r2", "kind": "prompt", "path": "./prompts/R2-recommend.md", "phaseIds": ["R2-recommend"]},
+    {"id": "prompt-r3", "kind": "prompt", "path": "./prompts/R3-emit.md", "phaseIds": ["R3-emit"]},
+    {"id": "script-doc", "kind": "script", "path": "../../scripts/doc-emit.py", "phaseIds": ["R3-emit"]},
+    {"id": "schema-blueprint", "kind": "schema", "path": "../../schemas/system-blueprint.schema.json", "phaseIds": ["R1-ground", "R3-emit"]}
+  ]
+}

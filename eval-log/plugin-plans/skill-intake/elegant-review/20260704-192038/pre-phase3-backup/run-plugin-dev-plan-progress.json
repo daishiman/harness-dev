@@ -1,0 +1,31 @@
+{
+  "plan_dir": "plugin-plans/skill-intake",
+  "target_plugin_slug": "skill-intake",
+  "iteration": 2,
+  "original_goal_hash": "9158a61a7f4f35ec22846a762cbb0a182e1c8aee7167db6d41dba2edcf61708c",
+  "state_semantics": "covered=true は計画仕様が goal-spec checklist を被覆したことを示す。build 後の受入完了は goal-spec.checklist[].done=true で別途管理する。",
+  "checklist_state": [
+    { "id": "C1", "covered": true, "note": "phase-04 test-design + phase-05 implementation で procedure schema validate 要件を操作化" },
+    { "id": "C2", "covered": true, "note": "phase-02/phase-05 で overview_fallback 経路 (2連続抽象/未回答で切替) を仕様化" },
+    { "id": "C3", "covered": true, "note": "phase-07 RTM + component-inventory.json feedback_contract で purpose/procedure 両欠落防止契約を操作化" },
+    { "id": "C4", "covered": true, "note": "phase-01 で既存目的抽出機構の 7 ギャップ (G1-G7、G6/G7 は C7/C8 由来) を洗い出し改善要否を記録" },
+    { "id": "C5", "covered": true, "note": "phase-12 documentation で references/handoff-contract.md 追加契約を仕様化" },
+    { "id": "C6", "covered": true, "note": "phase-02/phase-04 で決定論分岐条件 (閾値2回) を仕様化・test-design でテストケース化" },
+    { "id": "C7", "covered": true, "note": "component-inventory.json C01 (checklist/boundary/responsibilities R3-as-is-fidelity/feedback_contract IN2) + C02 (contamination check purpose/outputs/exit_codes/harness_coverage) + phase-02/04/05/06/07/08/09/10/11/12/13 + index.md へ as-is/to-be 分離+混入検証ゲートを操作化" },
+    { "id": "C8", "covered": true, "note": "component-inventory.json C01 (responsibilities R3-as-is-fidelity/feedback_contract OUT2 verify_by=elegant-review) + phase-01/02/04/05/06/07/09/10/11/12/13 + index.md へ相手固有の具体性記録・一般論置換防止指示を操作化" }
+  ],
+  "verification_status": {
+    "check-plugin-goal-spec.py": "PASS",
+    "verify-index-topsort.py": "PASS",
+    "detect-unassigned.py": "PASS",
+    "check-spec-frontmatter.py": "PASS",
+    "check-spec-gates.py": "PASS",
+    "check-spec-matrix-coverage.py --self-test": "PASS",
+    "check-spec-matrix-coverage.py (PLAN_DIR)": "PASS",
+    "check-surface-inventory.py": "PASS",
+    "check-build-handoff.py": "PASS",
+    "check-runtime-portability.py": "PASS"
+  },
+  "status": "planned-ready",
+  "handoff_targets": ["R4-evaluate (plugin-dev-plan-evaluator / assign-plugin-plan-evaluator)"]
+}

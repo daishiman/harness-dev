@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/route-build-report.schema.json",
+  "title": "Route Build Report",
+  "description": "plugin 一括 build (handoff-run-plugin-dev-plan.json の routes 消費) における route 1 本の実行レポート。eval-log/<target_plugin_slug>/build/route-<route_id>.json に置き、後続 route が build 着手前に読む (L4 復路の受け渡し契約)。validate-route-build-reports.py が handoff との整合・依存チェーンを機械検証する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plugin_slug",
+    "route_id",
+    "component_kind",
+    "name",
+    "builder",
+    "build_target",
+    "status",
+    "summary",
+    "deviations",
+    "evidence",
+    "inputs_consumed",
+    "handover"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "plugin_slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "handoff の target_plugin_slug と一致させる"
+    },
+    "route_id": {
+      "type": "string",
+      "pattern": "^C[0-9]+$",
+      "description": "handoff routes[].id と一致させる"
+    },
+    "component_kind": {
+      "type": "string",
+      "enum": ["skill", "sub-agent", "slash-command", "hook", "script"]
+    },
+    "name": {"type": "string", "minLength": 1},
+    "builder": {
+      "type": "string",
+      "enum": ["run-skill-create", "run-build-skill", "plugin-scaffold", "parent-skill-build"]
+    },
+    "build_target": {"type": "string", "minLength": 1},
+    "status": {
+      "type": "string",
+      "enum": ["success", "failure", "skipped"],
+      "description": "success=build 完了+当該 route のゲート緑 / failure=中断 (後続 route は着手不可) / skipped=意図的スキップまたは最小 scaffold のみ (skip_reason 必須、依存 route は着手不可)"
+    },
+    "skip_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "status=skipped のときのみ必須 (validate-route-build-reports.py が cross-field 強制)"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "何を build し何を確認したかの日本語 1-3 文"
+    },
+    "deviations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "計画 (phase spec / route) からの逸脱・代替生成の記録。無ければ空配列"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "受入証跡 (lint exit0 / trace パス / pytest 結果など)。status=success は 1 件以上必須 (validator が強制)"
+    },
+    "inputs_consumed": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "着手前に読んだ依存 route レポートの repo-root 相対パス。depends_on 全件のレポートパスを含むこと (validator が強制)"
+    },
+    "handover": {
+      "type": ["string", "null"],
+      "description": "後続 route への申し送り (次タスクが読む前提の自然文)。無ければ null"
+    },
+    "covered_task_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "task-graph route モードの束ね done 用 (optional)。この report が done を賄う task-graph node id 群。sync-task-state.py (TG-C02) が done 遷移時に task_id ∈ covered_task_ids を照合する。不在時は単一 task 後方互換 (PR#70 契約)"
+    },
+    "discovered": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "(optional additive) emit-discovered-task.py で起票済み discovered-task form の repo-root 相対パス列。deviations 本文が discovered 報告へ言及する場合は本フィールドで form パスを実証する (validator が突合し、言及があるのに空/不在なら fail。corrections で訂正済みは除外)"
+    },
+    "corrections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "correction", "corrected_by"],
+        "properties": {
+          "target": {"type": "string", "minLength": 1, "description": "訂正対象の report 内 JSON パス (例 deviations[2])"},
+          "correction": {"type": "string", "minLength": 1, "description": "訂正内容 (原文の誤り文言は上書きせず additive に訂正を記録する)"},
+          "corrected_by": {"type": "string", "minLength": 1, "description": "訂正主体 (例 elegant-review Phase3)"}
+        }
+      },
+      "description": "(optional additive) 既存 report 本文の誤り文言への追記型訂正。evidence 改竄禁止の下で原文を保持したまま訂正を監査可能に残す"
+    }
+  }
+}

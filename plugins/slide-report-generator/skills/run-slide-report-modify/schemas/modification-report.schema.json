@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/slide-report-generator/run-slide-report-modify/modification-report.schema.json",
+  "title": "Slide/Report Modification Report",
+  "type": "object",
+  "required": ["output_mode", "status", "target", "changes", "checks"],
+  "additionalProperties": false,
+  "properties": {
+    "output_mode": { "type": "string", "enum": ["slide", "report"] },
+    "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+    "target": {
+      "type": "object",
+      "required": ["path", "unit_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "unit_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "summary"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["content", "role-or-type", "structure", "visual", "ai-image", "style", "global"]
+          },
+          "summary": { "type": "string", "minLength": 1 },
+          "approved": { "type": "boolean" }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL", "SKIP"] },
+          "evidence": { "type": "string" }
+        }
+      }
+    }
+  }
+}

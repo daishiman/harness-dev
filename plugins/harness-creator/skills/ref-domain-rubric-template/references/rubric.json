@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "rubric_id": "domain-{{domain_name}}",
+  "rubric_version": "0.2.0",
+  "layer": "L1",
+  "_doc": "設計書29 §3 3層階層モデルの L1 (Domain) 雛形。{{domain_name}} を実ドメイン名に置換し、plugins/skill-governance-config/config/rubric-registry.json の rubrics[].rubric が指すパスへ配置する。L0 を upstream に固定し、L2 (プロジェクト固有 evaluator references/rubric.json) からは upstream として参照される中間層となる。0.2.0: L0 rubric 1.2.0 の target_type 7種対応 (applies_to_kinds) を継承。ドメイン rule にも必要に応じ applies_to_kinds を宣言する。未指定時は ['skill'] とみなす。",
+  "supported_kinds_inherited_from_l0": [
+    "skill",
+    "agent",
+    "hook",
+    "command",
+    "plugin-composition",
+    "prompt",
+    "workflow"
+  ],
+  "applies_to_kinds_default": ["skill"],
+  "upstream": [
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "domain": "{{domain_name}}",
+  "threshold_override": null,
+  "severity_weights_override": null,
+  "rules": [
+    {
+      "id": "DM-001",
+      "area": "domain",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "TODO(human): {{domain_name}} ドメイン固有チェック条件 (machine | llm | human のいずれか)",
+      "rationale": "TODO(human): なぜこのルールが {{domain_name}} ドメインで必須か"
+    }
+  ]
+}

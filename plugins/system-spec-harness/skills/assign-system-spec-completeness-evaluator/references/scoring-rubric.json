@@ -1,0 +1,94 @@
+{
+  "rubric_id": "system-spec-completeness",
+  "version": "0.1.0",
+  "description": "生成された仕様書を上位概念・意思決定・網羅性・deep knowledge・鮮度・prompt品質で採点するfail-closed機械判定ルール。",
+  "aspects": {
+    "foundation_trace": {
+      "label": "上位概念トレーサビリティ",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "primary_input": "spec-state.json / 00-requirements-definition.md",
+      "deterministic_gate": "validate-coverage-matrix.py --require-foundation",
+      "pass_criteria": ["U1-U9が値または明示N/A理由で確定", "goal-objective-intent-cell-chapter traceにdanglingなし"]
+    },
+    "decision_guidance": {
+      "label": "意思決定支援",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "primary_input": "spec-state.json decisions[] / 00-requirements-definition.md",
+      "deterministic_gate": "validate-coverage-matrix.py --require-foundation",
+      "pass_criteria": ["needs_guidanceは2〜3案と無料/低コスト案を持つ", "最新公式証拠・goal fit・TCO・security・operations・lock-in・推奨理由・注意点がある", "AI推奨のみでconfirmedにしない"]
+    },
+    "matrix_coverage": {
+      "label": "マトリクス網羅性",
+      "auditor": "system-spec-matrix-auditor",
+      "component": "C07",
+      "sub_input_auditor": "system-spec-hearing-auditor (C06)",
+      "primary_input": "spec-state.json",
+      "deterministic_gate": "validate-coverage-matrix.py (--require-complete)",
+      "pass_criteria": [
+        "全カテゴリ×6 canonical platform セルが 未収集/対象外/確定 のいずれかで埋まり未収集 0",
+        "対象外セルに具体的 reason、確定セルに qa_log/approval_log へ遡れる qa_ref がある",
+        "category_aggregate が真理値表 (未着手/収集中/確定/対象外) と一致し宣言欠落が無い",
+        "goal-spec 例示カテゴリを最低含むか excluded_categories の根拠がある",
+        "sub-input: C06 (hearing-auditor) の 4 軸 (聞き漏れ/誘導質問/早期停止/トレーサビリティ) が健全で、確定セルが誘導なく漏れなく Q&A に遡れる (ヒアリング品質を網羅性・トレースの補助根拠に併せる)"
+      ]
+    },
+    "design_knowledge_reflection": {
+      "label": "設計知識反映",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "self_evaluated": "C05 R1-score が自前評価する (独立 auditor なし)。C06 は設計知識 (system-spec/*.md) を読まないため design_knowledge に束縛しない (虚偽対応の撤去)",
+      "primary_input": "system-spec/*.md / ref-system-design-knowledge/references/resource-map.yaml",
+      "deterministic_gate": null,
+      "pass_criteria": [
+        "機械層: コンパイル済み各章が resource-map.yaml 由来の設計知識ポインタ節を持つ (compile の render_design_refs が注入)",
+        "意味層: そのポインタが指す原則 (DDD/クリーンアーキテクチャ/セキュアバイデザイン/API デザイン/クリーンコード等) が当該カテゴリの確定セル要件へ具体的に適用されている",
+        "Goodhart 防止: ポインタの存在確認だけでは PASS にしない (compile が機械注入する存在を自己循環で肯定しない)。汎用ポインタ (resource-map 索引) のみで具体原則の適用が無い章は medium 以上で拾う"
+      ]
+    },
+    "doc_freshness": {
+      "label": "最新ドキュメント出典",
+      "auditor": "system-spec-doc-freshness-auditor",
+      "component": "C08",
+      "primary_input": "fetched-references.json",
+      "deterministic_gate": "validate-source-citation.py (C08 が実行)",
+      "pass_criteria": [
+        "対象 target を漏れなく参照し、必須フィールドと source_url host 一致を満たす",
+        "official_host が publisher の公式ドキュメントホストであり非公式ミラーでない",
+        "記録 version/last_updated が公式現行版から世代落ちしていない",
+        "latest_checked_at/source_url が実効性を持って記録されている"
+      ]
+    },
+    "prompt_quality": {
+      "label": "prompt-creator準拠",
+      "auditor": "assign-system-spec-completeness-evaluator",
+      "component": "C05",
+      "primary_input": "plugins/system-spec-harness/**/prompts/*.md",
+      "deterministic_gate": "verify-completeness.py + validate-prompt.py",
+      "deterministic_gate_dependency": "外部 plugin prompt-creator が verify-completeness.py / validate-prompt.py を提供する。依存 prompt-creator が解決できない単独 install 環境ではこの機械ゲートのみを skip し、INDETERMINATE を FAIL に倒さない (意味層 pass_criteria と独立 design findings は引き続き必須評価)。repo/CI 環境では両 validator を必須実行する",
+      "pass_criteria": ["C1-C4/L7→L1/l5-contract v2.0を満たす", "客観的停止条件と実質深度を持つ", "独立design findingsにhighなし"]
+    }
+  },
+  "aggregation": {
+    "policy": "fail-closed",
+    "overall_pass_requires": "全観点PASSかつhigh severity findingが0件",
+    "high_max": 0,
+    "notes": [
+      "1 観点でも FAIL/INDETERMINATE なら総合 FAIL",
+      "例外: prompt_quality の外部 prompt-creator 機械ゲート (verify-completeness.py/validate-prompt.py) が依存 plugin 不在で解決不能な単独 install 環境では、当該機械ゲートのみ skip し INDETERMINATE を FAIL に倒さない (deterministic_gate_dependency 参照)。意味層 pass_criteria が FAIL なら従来どおり総合 FAIL",
+      "全観点を過不足なく網羅していなければ総合FAIL (監査観点の取りこぼし防止)",
+      "総合判定は aggregate-completeness.aggregate_verdict で再導出でき、レポートの verdict と一致すること (Goodhart 防止)"
+    ]
+  },
+  "aspect_to_auditor": {
+    "foundation_trace": "assign-system-spec-completeness-evaluator",
+    "decision_guidance": "assign-system-spec-completeness-evaluator",
+    "matrix_coverage": "system-spec-matrix-auditor",
+    "design_knowledge_reflection": "assign-system-spec-completeness-evaluator",
+    "doc_freshness": "system-spec-doc-freshness-auditor",
+    "prompt_quality": "assign-system-spec-completeness-evaluator"
+  },
+  "matrix_coverage_sub_input": "system-spec-hearing-auditor",
+  "design_knowledge_self_evaluated": true
+}

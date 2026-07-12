@@ -1,0 +1,623 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "interview-questions.json",
+  "title": "取引基本契約書 ヒアリング質問定義",
+  "description": "ユーザーから契約情報を収集するための質問項目",
+  "type": "object",
+  "properties": {
+    "phases": {
+      "type": "array",
+      "description": "ヒアリングフェーズ一覧",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "questions"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "questions": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/question" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "question": {
+      "type": "object",
+      "required": ["id", "text", "type", "target"],
+      "properties": {
+        "id": { "type": "string", "description": "質問ID" },
+        "text": { "type": "string", "description": "質問文" },
+        "type": {
+          "type": "string",
+          "enum": ["text", "choice", "multi-choice", "number", "date", "boolean"],
+          "description": "回答タイプ"
+        },
+        "target": { "type": "string", "description": "contract-input.jsonのパス" },
+        "required": { "type": "boolean", "default": true },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 },
+        "options": {
+          "type": "array",
+          "description": "選択肢（choice/multi-choice用）",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "default": { "description": "デフォルト値" },
+        "validation": { "type": "string", "description": "バリデーションルール" },
+        "helpText": { "type": "string", "description": "補足説明" },
+        "followUp": {
+          "type": "array",
+          "description": "条件付きフォローアップ質問",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": { "type": "string", "description": "表示条件" },
+              "question": { "$ref": "#/$defs/question" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "content": {
+    "phases": [
+      {
+        "id": "phase-0",
+        "name": "契約種別",
+        "description": "契約の種類とメタ情報を設定",
+        "weight": 1.0,
+        "questions": [
+          {
+            "id": "contract-level",
+            "text": "作成する契約書の種類を選択してください",
+            "type": "choice",
+            "target": "contractMeta.contractLevel",
+            "required": true,
+            "weight": 1.0,
+            "options": [
+              { "value": "master", "label": "取引基本契約書", "description": "継続的な取引全般を規定する基本契約" },
+              { "value": "individual", "label": "個別契約書", "description": "特定の業務・プロジェクト用の契約" }
+            ],
+            "default": "master",
+            "helpText": "取引基本契約は包括的な条件を定め、個別契約は具体的な業務を定めます",
+            "followUp": [
+              {
+                "condition": "value === 'individual'",
+                "question": {
+                  "id": "master-contract-ref",
+                  "text": "関連する取引基本契約がありますか？（契約番号等）",
+                  "type": "text",
+                  "target": "contractMeta.masterContractRef",
+                  "required": false,
+                  "weight": 0.5,
+                  "helpText": "既存の取引基本契約に基づく場合は参照を入力"
+                }
+              }
+            ]
+          },
+          {
+            "id": "contract-number",
+            "text": "契約番号を入力してください（任意）",
+            "type": "text",
+            "target": "contractMeta.contractNumber",
+            "required": false,
+            "weight": 0.6,
+            "helpText": "社内管理用の契約番号がある場合"
+          }
+        ]
+      },
+      {
+        "id": "phase-1",
+        "name": "当事者情報",
+        "description": "甲（発注者）・乙（受注者）の基本情報を収集",
+        "weight": 1.0,
+        "questions": [
+          {
+            "id": "orderer-entity-type",
+            "text": "発注者（甲）は法人ですか、個人ですか？",
+            "type": "choice",
+            "target": "parties.orderer.entityType",
+            "required": true,
+            "weight": 1.0,
+            "options": [
+              { "value": "corporation", "label": "法人", "description": "株式会社、合同会社など" },
+              { "value": "individual", "label": "個人", "description": "個人事業主、フリーランス" }
+            ],
+            "followUp": [
+              {
+                "condition": "value === 'corporation'",
+                "question": {
+                  "id": "orderer-representative",
+                  "text": "代表者名を入力してください",
+                  "type": "text",
+                  "target": "parties.orderer.representative",
+                  "required": true,
+                  "weight": 0.8
+                }
+              },
+              {
+                "condition": "value === 'corporation'",
+                "question": {
+                  "id": "orderer-representative-title",
+                  "text": "代表者の肩書を選択してください",
+                  "type": "choice",
+                  "target": "parties.orderer.representativeTitle",
+                  "required": false,
+                  "weight": 0.5,
+                  "default": "代表取締役",
+                  "options": [
+                    { "value": "代表取締役", "label": "代表取締役" },
+                    { "value": "代表取締役社長", "label": "代表取締役社長" },
+                    { "value": "代表社員", "label": "代表社員", "description": "合同会社の場合" }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "id": "orderer-name",
+            "text": "発注者（甲）の名称を入力してください",
+            "type": "text",
+            "target": "parties.orderer.name",
+            "required": true,
+            "weight": 1.0,
+            "helpText": "法人の場合は正式な会社名、個人の場合は氏名"
+          },
+          {
+            "id": "orderer-address",
+            "text": "発注者（甲）の住所を入力してください",
+            "type": "text",
+            "target": "parties.orderer.address",
+            "required": true,
+            "weight": 1.0,
+            "helpText": "都道府県から番地まで正確に"
+          },
+          {
+            "id": "contractor-entity-type",
+            "text": "受注者（乙）は法人ですか、個人ですか？",
+            "type": "choice",
+            "target": "parties.contractor.entityType",
+            "required": true,
+            "weight": 1.0,
+            "options": [
+              { "value": "corporation", "label": "法人", "description": "株式会社、合同会社など" },
+              { "value": "individual", "label": "個人", "description": "個人事業主、フリーランス" }
+            ],
+            "followUp": [
+              {
+                "condition": "value === 'corporation'",
+                "question": {
+                  "id": "contractor-representative",
+                  "text": "代表者名を入力してください",
+                  "type": "text",
+                  "target": "parties.contractor.representative",
+                  "required": true,
+                  "weight": 0.8
+                }
+              }
+            ]
+          },
+          {
+            "id": "contractor-name",
+            "text": "受注者（乙）の名称を入力してください",
+            "type": "text",
+            "target": "parties.contractor.name",
+            "required": true,
+            "weight": 1.0
+          },
+          {
+            "id": "contractor-address",
+            "text": "受注者（乙）の住所を入力してください",
+            "type": "text",
+            "target": "parties.contractor.address",
+            "required": true,
+            "weight": 1.0
+          }
+        ]
+      },
+      {
+        "id": "phase-2",
+        "name": "業務内容",
+        "description": "委託する業務の種類・内容を定義",
+        "weight": 1.0,
+        "questions": [
+          {
+            "id": "business-type",
+            "text": "業務の種類を選択してください",
+            "type": "choice",
+            "target": "business.type",
+            "required": true,
+            "weight": 1.0,
+            "options": [
+              { "value": "ai-consulting", "label": "AIコンサルティング", "description": "AI導入支援、戦略立案" },
+              { "value": "it-development", "label": "IT開発", "description": "システム開発、アプリ開発" },
+              { "value": "design", "label": "デザイン", "description": "UI/UX、グラフィック" },
+              { "value": "consulting", "label": "一般コンサルティング", "description": "経営、業務改善" },
+              { "value": "other", "label": "その他", "description": "上記以外の業務" }
+            ]
+          },
+          {
+            "id": "services",
+            "text": "提供するサービスを入力してください（複数可）",
+            "type": "multi-choice",
+            "target": "business.services",
+            "required": true,
+            "weight": 1.0,
+            "helpText": "各サービスの名称、内容、契約タイプ（準委任/請負）を記載。準委任は過程に対する報酬、請負は結果に対する報酬です。",
+            "followUp": [
+              {
+                "condition": "true",
+                "question": {
+                  "id": "service-contract-type-note",
+                  "text": "各サービスの契約タイプを確認してください。納品物がある場合は請負契約、コンサルティングや研修は準委任契約が一般的です。",
+                  "type": "text",
+                  "target": "business.services[].contractType",
+                  "required": false,
+                  "weight": 0.9,
+                  "helpText": "準委任契約（quasi-mandate）: 善管注意義務、過程に対する報酬。請負契約（contract-for-work）: 完成義務、結果に対する報酬。"
+                }
+              }
+            ]
+          },
+          {
+            "id": "use-ai",
+            "text": "業務にAIを使用しますか？",
+            "type": "boolean",
+            "target": "business.useAI",
+            "required": true,
+            "weight": 0.9,
+            "default": true,
+            "followUp": [
+              {
+                "condition": "value === true",
+                "question": {
+                  "id": "ai-services",
+                  "text": "使用するAIサービスを選択してください",
+                  "type": "multi-choice",
+                  "target": "business.aiServices",
+                  "required": false,
+                  "weight": 0.7,
+                  "options": [
+                    { "value": "ChatGPT", "label": "ChatGPT (OpenAI)" },
+                    { "value": "Claude", "label": "Claude (Anthropic)" },
+                    { "value": "Gemini", "label": "Gemini (Google)" },
+                    { "value": "Copilot", "label": "Copilot (Microsoft)" },
+                    { "value": "Other", "label": "その他" }
+                  ],
+                  "default": ["ChatGPT", "Claude", "Gemini"]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "phase-3",
+        "name": "報酬・支払条件",
+        "description": "報酬額と支払方法を設定",
+        "weight": 1.0,
+        "questions": [
+          {
+            "id": "payment-type",
+            "text": "報酬の計算方法を選択してください",
+            "type": "choice",
+            "target": "payment.amount.type",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "fixed", "label": "固定金額", "description": "プロジェクト単位の固定報酬" },
+              { "value": "hourly", "label": "時給制", "description": "時間単位での報酬" },
+              { "value": "monthly", "label": "月額制", "description": "月単位の固定報酬" },
+              { "value": "individual", "label": "個別契約で定める", "description": "案件ごとに決定" }
+            ],
+            "default": "individual",
+            "followUp": [
+              {
+                "condition": "value !== 'individual'",
+                "question": {
+                  "id": "payment-value",
+                  "text": "報酬額を入力してください（円）",
+                  "type": "number",
+                  "target": "payment.amount.value",
+                  "required": true,
+                  "weight": 0.8,
+                  "validation": "value > 0"
+                }
+              },
+              {
+                "condition": "value !== 'individual'",
+                "question": {
+                  "id": "tax-included",
+                  "text": "上記金額は税込みですか？",
+                  "type": "boolean",
+                  "target": "payment.amount.taxIncluded",
+                  "required": true,
+                  "weight": 0.6,
+                  "default": false
+                }
+              }
+            ]
+          },
+          {
+            "id": "payment-method",
+            "text": "支払方法を選択してください",
+            "type": "choice",
+            "target": "payment.method",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "bank-transfer", "label": "銀行振込", "description": "最も一般的な方法" },
+              { "value": "other", "label": "その他", "description": "別途協議" }
+            ],
+            "default": "bank-transfer"
+          },
+          {
+            "id": "closing-day",
+            "text": "締め日を選択してください",
+            "type": "choice",
+            "target": "payment.cycle.closingDay",
+            "required": true,
+            "weight": 0.8,
+            "options": [
+              { "value": "月末", "label": "月末" },
+              { "value": "15日", "label": "15日" },
+              { "value": "20日", "label": "20日" }
+            ],
+            "default": "月末"
+          },
+          {
+            "id": "payment-day",
+            "text": "支払日を選択してください",
+            "type": "choice",
+            "target": "payment.cycle.paymentDay",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "翌月末", "label": "翌月末", "description": "フリーランス新法準拠" },
+              { "value": "翌月15日", "label": "翌月15日" },
+              { "value": "翌々月末", "label": "翌々月末", "description": "60日以内要確認" }
+            ],
+            "default": "翌月末",
+            "helpText": "フリーランス新法により、役務提供完了から60日以内の支払いが義務付けられています"
+          },
+          {
+            "id": "invoice-deadline",
+            "text": "請求書発行期限を選択してください",
+            "type": "choice",
+            "target": "payment.cycle.invoiceDeadline",
+            "required": true,
+            "weight": 0.7,
+            "options": [
+              { "value": "翌月5日", "label": "翌月5日" },
+              { "value": "翌月10日", "label": "翌月10日", "description": "一般的" },
+              { "value": "翌月15日", "label": "翌月15日" }
+            ],
+            "default": "翌月10日",
+            "helpText": "締め日後、請求書を発行するまでの期限"
+          },
+          {
+            "id": "transfer-fee",
+            "text": "振込手数料はどちらが負担しますか？",
+            "type": "choice",
+            "target": "payment.transferFee",
+            "required": true,
+            "weight": 0.7,
+            "options": [
+              { "value": "orderer", "label": "甲（発注者）負担", "description": "一般的" },
+              { "value": "contractor", "label": "乙（受注者）負担" }
+            ],
+            "default": "orderer"
+          }
+        ]
+      },
+      {
+        "id": "phase-4",
+        "name": "契約期間",
+        "description": "契約の有効期間と更新条件",
+        "weight": 0.9,
+        "questions": [
+          {
+            "id": "duration",
+            "text": "契約期間を選択してください",
+            "type": "choice",
+            "target": "term.duration",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "6ヶ月", "label": "6ヶ月" },
+              { "value": "1年間", "label": "1年間", "description": "最も一般的" },
+              { "value": "2年間", "label": "2年間" }
+            ],
+            "default": "1年間"
+          },
+          {
+            "id": "auto-renewal",
+            "text": "自動更新を設定しますか？",
+            "type": "boolean",
+            "target": "term.autoRenewal",
+            "required": true,
+            "weight": 0.8,
+            "default": true,
+            "followUp": [
+              {
+                "condition": "value === true",
+                "question": {
+                  "id": "renewal-notice-period",
+                  "text": "更新拒絶の通知期間を選択してください",
+                  "type": "choice",
+                  "target": "term.renewalNoticePeriod",
+                  "required": true,
+                  "weight": 0.7,
+                  "options": [
+                    { "value": "1ヶ月前", "label": "1ヶ月前", "description": "一般的" },
+                    { "value": "2ヶ月前", "label": "2ヶ月前" },
+                    { "value": "3ヶ月前", "label": "3ヶ月前" }
+                  ],
+                  "default": "1ヶ月前"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "phase-5",
+        "name": "知的財産権",
+        "description": "著作権・ノウハウの帰属を設定",
+        "weight": 0.9,
+        "questions": [
+          {
+            "id": "copyright-transfer",
+            "text": "著作権の移転タイミングを選択してください",
+            "type": "choice",
+            "target": "intellectualProperty.copyrightTransfer",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "payment-completion", "label": "報酬支払完了時", "description": "乙を保護" },
+              { "value": "delivery", "label": "納品時" },
+              { "value": "individual", "label": "個別契約で定める" }
+            ],
+            "default": "payment-completion"
+          },
+          {
+            "id": "existing-works-retained",
+            "text": "乙の既存著作物は乙に留保しますか？",
+            "type": "boolean",
+            "target": "intellectualProperty.existingWorksRetained",
+            "required": true,
+            "weight": 0.8,
+            "default": true,
+            "helpText": "本契約以前に乙が保有していた著作物の権利"
+          },
+          {
+            "id": "knowhow-retained",
+            "text": "ノウハウ・汎用的知見は乙に帰属しますか？",
+            "type": "boolean",
+            "target": "intellectualProperty.knowhowRetained",
+            "required": true,
+            "weight": 0.8,
+            "default": true,
+            "helpText": "業務遂行過程で得られた汎用的な知見"
+          }
+        ]
+      },
+      {
+        "id": "phase-6",
+        "name": "秘密保持・責任",
+        "description": "秘密保持と損害賠償の条件",
+        "weight": 0.8,
+        "questions": [
+          {
+            "id": "confidentiality-survival",
+            "text": "秘密保持義務の存続期間を選択してください",
+            "type": "choice",
+            "target": "confidentiality.survivalPeriod",
+            "required": true,
+            "weight": 0.8,
+            "options": [
+              { "value": "1年間", "label": "1年間" },
+              { "value": "3年間", "label": "3年間", "description": "一般的" },
+              { "value": "5年間", "label": "5年間" }
+            ],
+            "default": "3年間"
+          },
+          {
+            "id": "ai-learning-prohibited",
+            "text": "秘密情報のAI学習データ利用を禁止しますか？",
+            "type": "boolean",
+            "target": "confidentiality.aiLearningProhibited",
+            "required": true,
+            "weight": 0.7,
+            "default": true,
+            "helpText": "機密情報をAIの学習データとして使用することの禁止"
+          },
+          {
+            "id": "warranty-notice-period",
+            "text": "契約不適合の通知期限を選択してください",
+            "type": "choice",
+            "target": "liability.warrantyNoticePeriod",
+            "required": true,
+            "weight": 0.7,
+            "options": [
+              { "value": "検収完了後30日", "label": "検収完了後30日", "description": "一般的" },
+              { "value": "検収完了後60日", "label": "検収完了後60日" },
+              { "value": "検収完了後90日", "label": "検収完了後90日" }
+            ],
+            "default": "検収完了後30日"
+          },
+          {
+            "id": "damages-cap",
+            "text": "損害賠償の上限を選択してください",
+            "type": "choice",
+            "target": "liability.damagesCap",
+            "required": true,
+            "weight": 0.8,
+            "options": [
+              { "value": "contract-amount", "label": "当該個別契約の報酬額", "description": "乙を保護" },
+              { "value": "fixed", "label": "固定金額を設定" },
+              { "value": "unlimited", "label": "上限なし", "description": "注意が必要" }
+            ],
+            "default": "contract-amount"
+          }
+        ]
+      },
+      {
+        "id": "phase-7",
+        "name": "管轄・その他",
+        "description": "管轄裁判所と別紙情報",
+        "weight": 0.8,
+        "questions": [
+          {
+            "id": "jurisdiction-court",
+            "text": "合意管轄裁判所を選択してください",
+            "type": "choice",
+            "target": "jurisdiction.court",
+            "required": true,
+            "weight": 0.9,
+            "options": [
+              { "value": "東京地方裁判所", "label": "東京地方裁判所" },
+              { "value": "大阪地方裁判所", "label": "大阪地方裁判所" },
+              { "value": "神戸地方裁判所", "label": "神戸地方裁判所" },
+              { "value": "名古屋地方裁判所", "label": "名古屋地方裁判所" }
+            ],
+            "default": "東京地方裁判所",
+            "helpText": "一般的には乙の所在地の裁判所を選択"
+          },
+          {
+            "id": "inspection-period",
+            "text": "検査完了期間を選択してください",
+            "type": "choice",
+            "target": "appendix.inspectionPeriod",
+            "required": true,
+            "weight": 0.7,
+            "options": [
+              { "value": "5営業日以内", "label": "5営業日以内" },
+              { "value": "10営業日以内", "label": "10営業日以内", "description": "一般的" },
+              { "value": "14営業日以内", "label": "14営業日以内" }
+            ],
+            "default": "10営業日以内"
+          },
+          {
+            "id": "contract-date",
+            "text": "契約締結日を入力してください",
+            "type": "date",
+            "target": "contractDate",
+            "required": false,
+            "weight": 0.7,
+            "helpText": "空欄の場合は署名時に記入"
+          }
+        ]
+      }
+    ]
+  }
+}

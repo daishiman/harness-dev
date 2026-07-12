@@ -1,0 +1,1 @@
+../../plugins/skill-governance-secrets/scripts/secrets/audit_secret_leak.py

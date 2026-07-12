@@ -1,0 +1,17 @@
+%%---
+%% template: state-approval
+%% required_vars: [initial_state, review_state, approved_state, rejected_state]
+%% optional_vars: [revision_state]
+%% score_formula: "state_count * 0.4 + transition_clarity * 0.6"
+%% non_tech_friendliness: ★★
+%% use_case: 承認状態遷移、ステータスの変化を示す
+%%---
+stateDiagram-v2
+    [*] --> {{initial_state}}
+    {{initial_state}} --> {{review_state}}: 提出
+    {{review_state}} --> {{approved_state}}: 承認
+    {{review_state}} --> {{rejected_state}}: 差戻し
+    {{rejected_state}} --> {{initial_state}}: 修正
+    {{approved_state}} --> [*]
+
+%% 言いたい一言: {{message}}

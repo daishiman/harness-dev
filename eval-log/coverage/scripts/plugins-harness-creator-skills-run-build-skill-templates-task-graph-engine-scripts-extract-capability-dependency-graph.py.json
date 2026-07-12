@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review + 30思考法検証。生成 harness の skill/command/agent/hook/script surface 横断依存グラフを決定論抽出 (nodes/edges/gaps・id昇順正準化)。未知参照/循環/空graphを fail-closed (exit1)・JSON は失敗時も stdout。builtin agent allowlist で gap 誤検出回避。find_cycle は反復 DFS (§17c: 深鎖2000 surfaceでも RecursionError なし・path再構成付き)。TESTS: tests/scripts-plugins/test_harness_creator__extract_capability_dependency_graph.py 17ケース PASS (surface発見/edge5型/builtin除外/gap/dedup/cycle3型/deep-chain/diamond)。coverage 94%。"
+  },
+  "reviewed_by": "elegant-review-30methods-phase3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

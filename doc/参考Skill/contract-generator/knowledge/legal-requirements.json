@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "legal-requirements.json",
+  "title": "法的要件ナレッジベース",
+  "description": "契約書作成時に遵守すべき法的要件",
+  "version": "1.0.0",
+  "laws": {
+    "freelance-protection-act": {
+      "id": "freelance-protection-act",
+      "name": "フリーランス保護新法",
+      "officialName": "特定受託事業者に係る取引の適正化等に関する法律",
+      "effectiveDate": "2024-11-01",
+      "weight": 1.0,
+      "searchKeywords": ["フリーランス", "新法", "取引適正化", "特定受託事業者", "60日", "30日"],
+      "requirements": [
+        {
+          "id": "payment-deadline",
+          "name": "支払期日の制限",
+          "description": "役務提供完了日から60日以内に報酬を支払わなければならない",
+          "article": "第4条",
+          "critical": true,
+          "weight": 1.0,
+          "validation": {
+            "condition": "paymentDays <= 60",
+            "errorMessage": "支払期日が60日を超えています"
+          },
+          "defaultValue": "翌月末",
+          "helpText": "月末締め翌月末払いであれば最大60日以内に収まる"
+        },
+        {
+          "id": "termination-notice",
+          "name": "解約予告期間",
+          "description": "6か月以上継続する契約を解除する場合、原則30日前までに予告が必要",
+          "article": "第5条",
+          "critical": true,
+          "weight": 0.95,
+          "validation": {
+            "condition": "terminationNoticeDays >= 30 || contractDurationMonths < 6",
+            "errorMessage": "解約予告期間が30日未満です"
+          },
+          "defaultValue": "30日前",
+          "helpText": "6か月未満の契約には適用されない"
+        },
+        {
+          "id": "conditions-disclosure",
+          "name": "取引条件の明示",
+          "description": "業務内容、報酬額、支払期日を書面で明示しなければならない",
+          "article": "第3条",
+          "critical": true,
+          "weight": 1.0,
+          "requiredItems": [
+            "業務内容",
+            "報酬額",
+            "支払期日",
+            "発注事業者の名称",
+            "特定受託事業者の名称"
+          ],
+          "helpText": "別紙「取引条件明示書」で対応"
+        },
+        {
+          "id": "prohibited-acts",
+          "name": "禁止行為",
+          "description": "報酬の減額、返品、買いたたき等の禁止",
+          "article": "第5条",
+          "critical": true,
+          "weight": 0.9,
+          "prohibitedItems": [
+            "正当な理由のない報酬の減額",
+            "正当な理由のない返品",
+            "買いたたき",
+            "購入・利用強制",
+            "不当な経済上の利益提供要請",
+            "不当な給付内容変更・やり直し"
+          ]
+        }
+      ],
+      "applicability": {
+        "orderer": "業として委託を行う事業者",
+        "contractor": "個人事業主またはフリーランス（従業員を使用しない法人代表者を含む）"
+      }
+    },
+    "civil-code-2020": {
+      "id": "civil-code-2020",
+      "name": "民法改正（2020年施行）",
+      "effectiveDate": "2020-04-01",
+      "weight": 0.95,
+      "searchKeywords": ["民法", "契約不適合", "瑕疵担保", "定型約款"],
+      "requirements": [
+        {
+          "id": "contract-nonconformity",
+          "name": "契約不適合責任",
+          "description": "瑕疵担保責任から契約不適合責任へ変更",
+          "critical": true,
+          "weight": 1.0,
+          "changes": [
+            "「瑕疵」から「契約不適合」へ用語変更",
+            "追完請求権の明確化",
+            "代金減額請求権の新設",
+            "損害賠償・解除は債務不履行の一般規定による"
+          ]
+        },
+        {
+          "id": "limitation-period",
+          "name": "権利行使期間",
+          "description": "不適合を知った時から1年以内に通知",
+          "article": "第566条",
+          "critical": true,
+          "weight": 0.9,
+          "defaultValue": "検収完了後30日"
+        }
+      ]
+    },
+    "copyright-act": {
+      "id": "copyright-act",
+      "name": "著作権法",
+      "weight": 0.9,
+      "searchKeywords": ["著作権", "著作者人格権", "27条", "28条", "翻案権"],
+      "requirements": [
+        {
+          "id": "copyright-transfer",
+          "name": "著作権の譲渡",
+          "description": "著作権の譲渡には27条・28条の権利を含む旨の明記が必要",
+          "article": "第61条第2項",
+          "critical": true,
+          "weight": 1.0,
+          "templateText": "著作権（著作権法第27条及び第28条の権利を含む）は、報酬の支払完了時に乙から甲に移転する"
+        },
+        {
+          "id": "moral-rights",
+          "name": "著作者人格権",
+          "description": "著作者人格権は譲渡不可、不行使特約が必要",
+          "article": "第59条",
+          "critical": true,
+          "weight": 0.95,
+          "templateText": "乙は、甲に対し、著作者人格権を行使しないものとする"
+        }
+      ]
+    },
+    "ai-copyright-guidelines": {
+      "id": "ai-copyright-guidelines",
+      "name": "AIと著作権に関する考え方について",
+      "publisher": "文化庁",
+      "publishDate": "2024-03-01",
+      "weight": 0.85,
+      "searchKeywords": ["AI", "著作権", "生成AI", "学習", "出力"],
+      "guidelines": [
+        {
+          "id": "ai-output-copyright",
+          "name": "AI生成物の著作権",
+          "description": "AIが自律的に生成した成果物は著作物に該当しない可能性がある",
+          "weight": 0.9,
+          "recommendation": "人間の創作的寄与の程度を明確化する条項を設ける"
+        },
+        {
+          "id": "ai-learning-data",
+          "name": "AI学習とデータ利用",
+          "description": "AI開発のための学習利用と、AI利用者による利用を区別",
+          "weight": 0.85,
+          "recommendation": "秘密情報のAI学習データ利用禁止条項を設ける"
+        }
+      ]
+    }
+  },
+  "clauses": {
+    "required": [
+      {
+        "id": "purpose",
+        "name": "目的",
+        "weight": 1.0,
+        "article": "第1条"
+      },
+      {
+        "id": "definitions",
+        "name": "定義",
+        "weight": 0.9,
+        "article": "第2条"
+      },
+      {
+        "id": "individual-contract",
+        "name": "個別契約",
+        "weight": 1.0,
+        "article": "第3条"
+      },
+      {
+        "id": "delivery-acceptance",
+        "name": "納入・検収",
+        "weight": 1.0,
+        "article": "第6-7条"
+      },
+      {
+        "id": "payment",
+        "name": "報酬・支払",
+        "weight": 1.0,
+        "article": "第8-9条"
+      },
+      {
+        "id": "intellectual-property",
+        "name": "知的財産権",
+        "weight": 1.0,
+        "article": "第10-13条"
+      },
+      {
+        "id": "warranty",
+        "name": "契約不適合責任",
+        "weight": 1.0,
+        "article": "第14条"
+      },
+      {
+        "id": "damages",
+        "name": "損害賠償",
+        "weight": 1.0,
+        "article": "第15条"
+      },
+      {
+        "id": "confidentiality",
+        "name": "秘密保持",
+        "weight": 1.0,
+        "article": "第16-17条"
+      },
+      {
+        "id": "term-termination",
+        "name": "契約期間・解除",
+        "weight": 1.0,
+        "article": "第18-21条"
+      },
+      {
+        "id": "anti-social-forces",
+        "name": "反社会的勢力排除",
+        "weight": 1.0,
+        "article": "第22条"
+      },
+      {
+        "id": "assignment-prohibition",
+        "name": "権利義務の譲渡禁止",
+        "weight": 0.95,
+        "article": "第23条"
+      },
+      {
+        "id": "survival",
+        "name": "存続条項",
+        "weight": 0.85,
+        "article": "第24条"
+      },
+      {
+        "id": "consultation",
+        "name": "協議",
+        "weight": 0.8,
+        "article": "第25条"
+      },
+      {
+        "id": "severability",
+        "name": "分離独立",
+        "weight": 0.8,
+        "article": "第26条"
+      },
+      {
+        "id": "governing-law-jurisdiction",
+        "name": "準拠法・合意管轄",
+        "weight": 1.0,
+        "article": "第27条"
+      }
+    ],
+    "recommended": [
+      {
+        "id": "ai-disclaimer",
+        "name": "AI利用に関する説明・免責",
+        "weight": 0.9,
+        "condition": "business.useAI === true"
+      },
+      {
+        "id": "appendix-conditions",
+        "name": "取引条件明示書",
+        "weight": 1.0,
+        "condition": "freelance === true"
+      }
+    ]
+  }
+}

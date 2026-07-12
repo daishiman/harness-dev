@@ -1,0 +1,143 @@
+# thought-methods: 30 思考法カタログ × 適用テンプレ
+# v2 D2 新設。SKILL.md からの参照正本。配分は B1 反映後 (A2=10 / A3=9 / A4=11)。
+version: "2.0"
+last_updated: "2026-05-23"
+total: 30
+
+# A2: elegant-logical-structural-analyst (10)
+logical_structural:
+  agent: elegant-logical-structural-analyst
+  count: 10
+  methods:
+    - id: critical
+      name: 批判的思考
+      template: "前提を疑え。'なぜそう言えるか' を根拠まで遡る"
+      detects: [contradiction, smell]
+    - id: deduction
+      name: 演繹思考
+      template: "一般則 → 個別事例。rubric → 当該 skill への当てはめ齟齬を検出"
+      detects: [inconsistency]
+    - id: induction
+      name: 帰納的思考
+      template: "複数事例 → 一般化。類似 skill から共通 pattern 逸脱を検出"
+      detects: [inconsistency, omission]
+    - id: abduction
+      name: アブダクション
+      template: "観測結果 → 最尤仮説。findings の根本原因を 1 つに収束させる"
+      detects: [contradiction]
+    - id: vertical
+      name: 垂直思考
+      template: "一直線深掘り。Why を 5 回繰り返し本質に到達"
+      detects: [omission]
+    - id: decomposition
+      name: 要素分解
+      template: "対象を構成要素に分解し各要素を独立検査"
+      detects: [omission, dependency_break]
+    - id: mece
+      name: MECE
+      template: "漏れなく重複なく。required-element checklist を MECE で構成"
+      detects: [omission, contradiction]
+    - id: two-axis
+      name: 2 軸思考
+      template: "重要度×緊急度等で象限分け。優先度誤りを検出"
+      detects: [smell]
+    - id: process
+      name: プロセス思考
+      template: "工程 step を時系列分解し step 間 gap を検出"
+      detects: [dependency_break]
+    - id: why
+      name: why 思考
+      template: "B1 で A4 から A2 へ移管。根本原因連鎖追跡"
+      detects: [omission, contradiction]
+
+# A3: elegant-meta-divergent-analyst (9)
+meta_divergent:
+  agent: elegant-meta-divergent-analyst
+  count: 9
+  methods:
+    - id: meta
+      name: メタ思考
+      template: "思考の枠組み自体を疑う。skill 設計の前提を再定義"
+      detects: [smell, inconsistency]
+    - id: abstraction
+      name: 抽象化思考
+      template: "具体 → 抽象。skill 固有実装を pattern に汎化できるか"
+      detects: [smell]
+    - id: double-loop
+      name: ダブル・ループ思考
+      template: "学習の学習。前回 review の改善が当該 skill に反映されているか"
+      detects: [inconsistency]
+    - id: brainstorming
+      name: ブレインストーミング
+      template: "発散優先。代替案を 5 件以上列挙してから収束"
+      detects: [smell]
+    - id: lateral
+      name: 水平思考
+      template: "斜めから攻める。一見無関係な分野の解法を移植"
+      detects: [smell]
+    - id: paradox
+      name: 逆説思考
+      template: "逆を考える。'やらない場合' を検討して必要性を再評価"
+      detects: [smell, omission]
+    - id: analogy
+      name: 類推思考
+      template: "他 plugin / 他言語の類似実装と比較し差分理由を問う"
+      detects: [inconsistency]
+    - id: if
+      name: if 思考
+      template: "もし X が 10 倍なら？極端ケースで設計を破壊試験"
+      detects: [omission]
+    - id: naive
+      name: 素人思考
+      template: "初見ユーザーの目線。専門前提抜きで理解できるか"
+      detects: [omission, smell]
+
+# A4: elegant-system-strategic-analyst (11)
+system_strategic:
+  agent: elegant-system-strategic-analyst
+  count: 11
+  methods:
+    - id: systems
+      name: システム思考
+      template: "全体最適。局所改善が他 skill / plugin に悪影響しないか"
+      detects: [dependency_break, inconsistency]
+    - id: causal
+      name: 因果関係分析
+      template: "原因 → 結果。findings 間の因果 chain を明示"
+      detects: [dependency_break]
+    - id: causal-loop
+      name: 因果ループ
+      template: "正/負のループ検出。amplifier / dampener の同定"
+      detects: [dependency_break]
+    - id: trade-on
+      name: トレードオン思考
+      template: "両立解探索。トレードオフを止揚できる第三案"
+      detects: [smell]
+    - id: plus-sum
+      name: プラスサム思考
+      template: "win-win。upstream / downstream skill 双方が得する設計"
+      detects: [smell]
+    - id: value-proposition
+      name: 価値提案思考
+      template: "誰の何を解決するか。Purpose & Output Contract 整合"
+      detects: [omission, inconsistency]
+    - id: strategic
+      name: 戦略的思考
+      template: "中長期視点。3 ヶ月後の codebase で陳腐化しないか"
+      detects: [smell]
+    - id: kaizen
+      name: 改善思考
+      template: "PDCA。前回 findings の re-occurrence を検出"
+      detects: [inconsistency]
+    - id: hypothesis
+      name: 仮説思考
+      template: "結論先行 → 検証。skill 設計の中心仮説を明文化させる"
+      detects: [omission]
+    - id: issue
+      name: 論点思考
+      template: "本質論点の同定。'何が決まれば残りが決まるか'"
+      detects: [omission]
+    - id: kj
+      name: KJ 法
+      template: "ボトムアップ集約。findings を島 group 化して構造発見"
+      detects: [smell]

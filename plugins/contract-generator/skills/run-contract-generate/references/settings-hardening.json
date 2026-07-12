@@ -1,0 +1,12 @@
+{
+  "_doc": "二段防御の静的層。これを repo の .claude/settings.json または settings.local.json にマージすると、contract-generate の機密(SA鍵=service-account-json / Slack Bot Token=bot-token の両方)・外部書込に対する permissions.deny が効く。動的層 hooks/hook-guard-secret.py(PreToolUse)の GUARD_ACCOUNTS と対称。--print-unsafe ルールは account 非依存で両機密の平文出力をブロックする。",
+  "permissions": {
+    "deny": [
+      "Bash(security delete-generic-password*contract-generate/service-account-json*)",
+      "Bash(*keychain_get_secret.py*--print-unsafe*)",
+      "Bash(*find-generic-password*contract-generate/service-account-json*-w*)",
+      "Bash(security delete-generic-password*contract-generate/bot-token*)",
+      "Bash(*find-generic-password*contract-generate/bot-token*-w*)"
+    ]
+  }
+}

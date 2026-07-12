@@ -1,0 +1,132 @@
+{
+  "schema": "findings.schema.json#v2",
+  "run_id": "run-20260525-notion",
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "notion-per-repo-config",
+    "scope_mode": "feature"
+  },
+  "status": "complete",
+  "iteration_count": 1,
+  "safety_valve_fired": false,
+  "thought_method_coverage": {
+    "used": [
+      "critical", "deductive", "inductive", "abductive", "vertical",
+      "elemental-decomposition", "mece", "2axis", "process",
+      "why",
+      "meta", "abstraction", "double-loop",
+      "brainstorm", "horizontal", "paradox", "analogy", "if", "amateur",
+      "systems", "causal", "causal-loop",
+      "tradeon", "plus-sum", "value-proposition", "strategic",
+      "improvement", "hypothesis", "issue", "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "kj_clusters": {
+    "KJ-1": "Keychain global-namespace collision (legacy 裸 service 名)",
+    "KJ-2": "notion_http が notion_config を bypass する重複 token 解決",
+    "KJ-3": "init / lint の機械的強制不在 → 規約が紙の上だけ",
+    "KJ-4": "find_repo_root の境界 (submodule や非 xl-skills repo への誤ヒット)"
+  },
+  "paradigm_findings": [
+    {
+      "id": "F-KJ1-01",
+      "paradigm": "critical",
+      "severity": "contradiction",
+      "title": "keychain_service=notion-api-key 裸名は『repo ごと隔離』の前提と矛盾",
+      "location": ".notion-config.example.json:3",
+      "auto_fixable": true,
+      "resolution": "example を `notion-api-key.<REPLACE_WITH_REPO_SLUG>` に変更、xl-skills 実 config も `notion-api-key.xl-skills` に migrate",
+      "applied": true
+    },
+    {
+      "id": "F-KJ1-02",
+      "paradigm": "systems",
+      "severity": "dependency_break",
+      "title": "Keychain の (service,account) は macOS グローバル単一名前空間",
+      "location": "plugins/skill-intake/scripts/keychain_get_secret.py",
+      "auto_fixable": true,
+      "resolution": "module-level constants → 毎呼び出し env 再評価へ。INTAKE_KEYCHAIN_SERVICE/ACCOUNT で同一 process 内 repo 切替可能",
+      "applied": true
+    },
+    {
+      "id": "F-KJ2-01",
+      "paradigm": "mece",
+      "severity": "inconsistency",
+      "title": "token 解決経路が二重 (notion_http 直接 get_secret vs notion_config.get_token)",
+      "location": "plugins/skill-intake/scripts/notion_http.py:_resolve_token",
+      "auto_fixable": true,
+      "resolution": "notion_http._resolve_token を新設し env > notion_config > legacy の単一順序に統合",
+      "applied": true
+    },
+    {
+      "id": "F-KJ2-02",
+      "paradigm": "abstraction",
+      "severity": "smell",
+      "title": "DB ID 解決も SSOT に集約すべき",
+      "location": "plugins/skill-creator/scripts/notion_config.py:get_db_id",
+      "auto_fixable": true,
+      "resolution": "DB_ENV_NAMES dict と get_db_id() を導入、env-first → config の統一解決",
+      "applied": true
+    },
+    {
+      "id": "F-KJ3-01",
+      "paradigm": "if",
+      "severity": "omission",
+      "title": "新規 repo で setup を『手で 3 ファイル書く』ことが reproducibility を壊す",
+      "location": "scripts/",
+      "auto_fixable": true,
+      "resolution": "scripts/init-notion-config.py 新設: git remote basename から slug 自動推定、namespaced config + Keychain 登録コマンドを 1 発で生成",
+      "applied": true
+    },
+    {
+      "id": "F-KJ3-02",
+      "paradigm": "hypothesis",
+      "severity": "omission",
+      "title": "規約 (slug namespacing / placeholder 残置禁止) を機械検証する手段不在",
+      "location": "scripts/",
+      "auto_fixable": true,
+      "resolution": "scripts/lint-notion-config.py 新設 (L1-L5): legacy 裸名 / placeholder / git remote slug 不一致 / Keychain 未登録を ERR 化",
+      "applied": true
+    },
+    {
+      "id": "F-KJ4-01",
+      "paradigm": "causal",
+      "severity": "dependency_break",
+      "title": "find_repo_root が .git だけで上向き探索すると、submodule や別 repo 内で xl-skills 用 config を誤読する",
+      "location": "plugins/skill-creator/scripts/notion_config.py:find_repo_root",
+      "auto_fixable": true,
+      "resolution": "REPO_MARKERS (.notion-config.{json,example.json} / marketplace.json) を AND 条件で要求",
+      "applied": true
+    },
+    {
+      "id": "F-KJ4-02",
+      "paradigm": "amateur",
+      "severity": "smell",
+      "title": "新規 repo に migrate する人が『何が起きているか』を見る手段がない (cfg path / 解決順)",
+      "location": "plugins/skill-creator/scripts/notion_config.py:__main__",
+      "auto_fixable": false,
+      "resolution": "__main__ で loaded path 表示済 (既存)。今後 --explain フラグで full resolution trace を出す案を残置",
+      "applied": false
+    }
+  ],
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "verification_evidence": {
+    "lint_pass": "scripts/lint-notion-config.py exit 0 (service=notion-api-key.xl-skills account=xl-skills dbs=3)",
+    "e2e_api": "notion_http.get_me() returned bot=xl-ClaudeCode-Skill-Interview via new resolver chain",
+    "token_resolution": "notion_config.get_token() → Keychain (notion-api-key.xl-skills, xl-skills) → 50-char token (ntn_...)",
+    "db_id_resolution": "notion_config.get_db_id('skill-list') → 36b07a0c-d18c-8073-b106-e70552e13308",
+    "isolation_proof": "find_repo_root() now requires .git AND xl-skills marker, blocking cross-repo config leakage"
+  },
+  "amplified_patterns": [
+    "shape-vs-identity-split: schema(共有) と config(repo固有) の責務分離",
+    "init+lint twin pattern: init-script で正しい初期状態を作り、lint-script で drift を機械検出 (CIで PR block)",
+    "SSOT loader symlinked: plugins/skill-creator/scripts/notion_config.py を skill-intake から symlink。複数 plugin が同じ解決ロジックを参照"
+  ]
+}

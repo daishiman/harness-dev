@@ -1,0 +1,73 @@
+{
+  "schema_version": "phase2-03.migration-order.v1",
+  "generated_at": "2026-05-20T14:45:00+09:00",
+  "source_partition_plan": "eval-log/task/phase2-02/partition-plan.json",
+  "criteria": [
+    "depended-first",
+    "dependencies-before-dependents",
+    "responsibility-class",
+    "alphabetical"
+  ],
+  "notes": [
+    "depends_on entries from partition-plan.json are treated as hard topological constraints.",
+    "Independent plugins are ordered deterministically by responsibility/name so every intermediate state is reproducible.",
+    "skill-governance-config is placed after skill-governance-hooks and skill-governance-lint because it references both.",
+    "skill-governance-automation is placed last because it depends on skill-governance-config."
+  ],
+  "order": [
+    {
+      "rank": 1,
+      "plugin": "skill-governance-adapters",
+      "depends_on": [],
+      "dependency_depth": 0,
+      "responsibility_class": "adapter"
+    },
+    {
+      "rank": 2,
+      "plugin": "skill-governance-hooks",
+      "depends_on": [],
+      "dependency_depth": 0,
+      "responsibility_class": "hook"
+    },
+    {
+      "rank": 3,
+      "plugin": "skill-governance-lint",
+      "depends_on": [],
+      "dependency_depth": 0,
+      "responsibility_class": "lint"
+    },
+    {
+      "rank": 4,
+      "plugin": "skill-governance-migration",
+      "depends_on": [],
+      "dependency_depth": 0,
+      "responsibility_class": "migration"
+    },
+    {
+      "rank": 5,
+      "plugin": "skill-governance-secrets",
+      "depends_on": [],
+      "dependency_depth": 0,
+      "responsibility_class": "secrets"
+    },
+    {
+      "rank": 6,
+      "plugin": "skill-governance-config",
+      "depends_on": [
+        "skill-governance-hooks",
+        "skill-governance-lint"
+      ],
+      "dependency_depth": 1,
+      "responsibility_class": "config"
+    },
+    {
+      "rank": 7,
+      "plugin": "skill-governance-automation",
+      "depends_on": [
+        "skill-governance-config"
+      ],
+      "dependency_depth": 2,
+      "responsibility_class": "automation"
+    }
+  ]
+}

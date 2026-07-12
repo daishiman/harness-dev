@@ -1,0 +1,119 @@
+{
+  "agent": "elegant-meta-divergent-analyst",
+  "paradigm_findings": [
+    {"method_id": "meta", "method_name": "メタ思考", "applied": true,
+     "issues": [
+       {"id": "A3-01", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json:20 (routes[].status) / phase-01..13 frontmatter status",
+        "description": "実 build 18 実体が全て存在するのに handoff routes は全件 status:\"planned\"・13 phase は status:\"未実施\" のままで、計画側の状態 SSOT が build 完了に追従していない (index.md:53 の spec-first 原則と乖離)。「どこまで反映済みか」を計画から機械判定できない。",
+        "evidence": "handoff routes 全 18 件 \"status\": \"planned\" / phase-05-implementation.md:8 \"status: 未実施\" ⇔ plugins/ubm-goal-setting/ に全 build_target 実在。validate-plan-coverage.py:61 は build 時 build_status 更新を期待",
+        "recommendation": "build 完了時に routes[].status / inventory build_status を realized へ機械更新する契約を handoff 消費側に追加する。",
+        "auto_fixable": true},
+       {"id": "A3-02", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml (計画外) / EVALS.json:40",
+        "description": "計画の references_config_assets.files に無い resource-map.yaml が build に存在し EVALS が enforcement 正本として参照する一方、run-ubm-knowledge-sync 側には無い非対称。plan→disk の片方向照合では検出できない「逆方向 unplanned artifact」。",
+        "evidence": "EVALS.json:40 ⇔ 計画 files 列挙に resource-map.yaml なし・C17 references/ に resource-map.yaml 不在",
+        "recommendation": "resource-map.yaml を計画へ追記 (owner=run-skill-create と明記) し、C17 側にも対称生成するか非対称の根拠を焼く。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "abstraction", "method_name": "抽象化思考", "applied": true,
+     "issues": [
+       {"id": "A3-03", "severity": "medium", "condition_signal": "smell",
+        "location": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1068",
+        "description": "本計画の matcher \"Write|Edit\" は planner テンプレ既定値 specfm.py:1068 および skill-governance-config example と同値で、mf-kessai で得た「MultiEdit 脱落を契約で捕捉する」教訓がテンプレ SSOT へ還流していない。今後 planner が生成する全 plugin 計画へ同型再発する。",
+        "evidence": "specfm.py:1068 '\"matcher\": \"Write|Edit\"' / claude-settings-hooks.json.example:21 同値 ⇔ mf-kessai plugin.json:78 \"Write|Edit|MultiEdit\" + test_plugin_contract.py:137",
+        "recommendation": "specfm の hook matcher 既定値と example を Write|Edit|MultiEdit へ更新し、planner に「hook script のガード対象 tool 集合 ⊆ matcher」検査を追加する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "double-loop", "method_name": "ダブル・ループ思考", "applied": true,
+     "issues": [
+       {"id": "A3-04", "severity": "high", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py:56",
+        "description": "計画は C04 に exit_semantics:\"fail-closed-exit2\"/fail_closed:true を宣言するが、実装は解釈不能 stdin→exit0 (:56)・file_path 欠落→exit0 (:65) の fail-open 分岐を持ち、過去 review 教訓 (hook fail-open 穴封鎖・保証要件は機械層) が反映されていない。test_unparseable_input_passes がこの fail-open を仕様として固定化している。",
+        "evidence": "ubm-write-path-guard.py:56 \"return 0  # 解釈不能な入力は素通し (可用性優先)\" ⇔ 計画 \"exit_semantics\": \"fail-closed-exit2\", \"fail_closed\": true",
+        "recommendation": "spec-first で二択を確定: 実装を parse 失敗時 deny へ是正するか、計画宣言を先に更新してから build へ戻す。",
+        "auto_fixable": false},
+       {"id": "A3-05", "severity": "medium", "condition_signal": "omission",
+        "location": "plugin-plans/ubm-goal-setting/component-inventory.json:119 (responsibility_anchor)",
+        "description": "計画は全 10 sub-agent に responsibility_anchor: prompts/R-*.md を宣言するが、build に prompts/ は存在せず、agents/*.md 自身が「運用プロンプトの正本は本ファイル」と宣言する。「prompts/=7層 SSOT 正本・agents/=薄いアダプタ」規律とも逆転。",
+        "evidence": "C05 \"responsibility_anchor\": \"prompts/R-collect.md\" ⇔ Glob plugins/ubm-goal-setting/**/prompts/** → No files found / info-collector.md:420",
+        "recommendation": "prompts/R-*.md を正本生成し agents/ をアダプタ化するか、agent 独立 component では agents/*.md を正本とする例外を計画側 anchor 定義に先に焼く。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "brainstorming", "method_name": "ブレインストーミング", "applied": true,
+     "issues": [
+       {"id": "A3-06", "severity": "medium", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/EVALS.json:5-13",
+        "description": "計画の C16/C17 quality_gates.p0_lint 8 本のうち 6 本が EVALS.mechanical に未配線なのに、surfaces_enforced_by.skills (:35) は 8 本全てを enforcement として主張しており、宣言と配線が同一ファイル内で乖離。代替案5件検討の結果: 短期は mechanical へ直接追記、恒久は quality_gates→EVALS の決定論射影器 + parity gate。",
+        "evidence": "EVALS.json mechanical[] 7 行のみ ⇔ surfaces_enforced_by.skills に lint-skill-name〜lint-manifest-contents を列挙",
+        "recommendation": "欠落 6 lint を mechanical へ追記し、恒久策として決定論射影器 + parity check を導入する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "lateral", "method_name": "水平思考", "applied": true,
+     "issues": [
+       {"id": "A3-07", "severity": "high", "condition_signal": "omission",
+        "location": "plugins/ubm-goal-setting/EVALS.json:20",
+        "description": "EVALS は golden-master equivalence を宣言 (:20,:39) するが、build のテストは同梱 golden-sample-weekly.md の変異テストのみで新旧出力の比較コーパス・equivalence 実行証跡が存在しない。index.md:88/phase-05:62 の不変条件に対応する fixture も plugin 内に無い。",
+        "evidence": "tests/test_validate_goal_output.py:3-4 — 旧 .sh 実行・出力比較は一切なし",
+        "recommendation": "shadow-run 手法で旧 .sh の同一コーパス出力 snapshot を tests/fixtures へ固定して等価テスト化する。不能なら EVALS の equivalence 宣言を「変異テストのみ」へ降格 (正直化) する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "paradox", "method_name": "逆説思考", "applied": true,
+     "issues": [
+       {"id": "A3-08", "severity": "low", "condition_signal": "smell",
+        "location": "plugins/ubm-goal-setting/knowledge/principles.json:4",
+        "description": "vendor 指定 28 本のうち 7 本 (principles/consultation/mindset/phase-advice/case-studies/action-guides/principles-business) は entries:[] の廃止移行スタブであり、router.categories.files が参照する live は 21 本のみ。registry の dead path 6 件は build 時除去した一方、廃止スタブは faithful-transfer しており「反映しない方が正しい」判断が非対称。",
+        "evidence": "principles.json:4 \"_message\": \"このファイルは廃止されました。...\" / router.json は 21 subcategory ファイルのみ参照",
+        "recommendation": "廃止スタブ 7 本を vendor から除外するか、温存理由 (旧ファイル名直 Read の後方互換) を計画の L1 記述へ焼いて 28=21 live+7 stub の内訳を明示する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "analogy", "method_name": "類推思考", "applied": true,
+     "issues": [
+       {"id": "A3-09", "severity": "high", "condition_signal": "dependency_break",
+        "location": "plugins/ubm-goal-setting/.claude-plugin/plugin.json:36",
+        "description": "manifest の matcher は \"Write|Edit\" だが hook 実装 GUARDED_TOOLS は MultiEdit を含み、RUNBOOK.md:19,45・SKILL.md:90 は MultiEdit 遮断を受入条件として約束する — MultiEdit は hook へ dispatch されず vault 破壊書込が素通り。類似 plugin mf-kessai は matcher \"Write|Edit|MultiEdit\" + 契約テストで同脱落を捕捉済みで、差分に設計理由がない。",
+        "evidence": "plugin.json:36 ⇔ hook:34 ⇔ mf-kessai test_plugin_contract.py:139 'assert set(matchers) == {\"Bash\", \"Write|Edit|MultiEdit\"}'",
+        "recommendation": "matcher を \"Write|Edit|MultiEdit\" へ修正 (envelope-draft 側も同時)、mf-kessai の test_plugin_contract パターンを移植して matcher↔GUARDED_TOOLS↔docs の 3 点一致を契約テスト化する。",
+        "auto_fixable": true}
+     ]},
+    {"method_id": "if", "method_name": "if思考", "applied": true,
+     "issues": [
+       {"id": "A3-10", "severity": "medium", "condition_signal": "contradiction",
+        "location": "plugins/ubm-goal-setting/knowledge/router.json:4",
+        "description": "knowledge エントリ数が 4 値で不一致: total_entries=155、entry_count 合計=157、subcategory_counts 合計=154、ディスク実体=154。計画自身も「計155エントリ」と breakdown(=157) を同一文に併記。極端成長時は drift 検知器不在のまま乖離が無制限拡大する。",
+        "evidence": "router.json:4 ⇔ entry_count 43/35/9/18/25/27 (計157) ⇔ subcategory_counts 計154 ⇔ 実測 154",
+        "recommendation": "実エントリを機械集計して全数値と計画記述を 154 基準へ再同期し、整合検査を deterministic_checks へ追加する。",
+        "auto_fixable": true},
+       {"id": "A3-11", "severity": "low", "condition_signal": "omission",
+        "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md:55 (Phase2-extract)",
+        "description": "Phase2-extract の 20 ファイルバッチ処理が途中失敗した場合の中間状態 (registry 部分更新・sync-log 未追記・router 数値未同期) の回復契約が計画にも build にも無く、途中失敗で A3-10 型の数値 drift が構造的に生成される。",
+        "evidence": "SKILL.md Key Rules/Gotchas・inventory C17 responsibilities に部分失敗時のロールバック/再開手順の記述なし",
+        "recommendation": "バッチ単位で registry 更新+sync-log 追記+router 数値更新を 1 トランザクション扱いにする再開手順を SKILL.md へ追記する。",
+        "auto_fixable": false}
+     ]},
+    {"method_id": "naive", "method_name": "素人思考", "applied": true,
+     "issues": [
+       {"id": "A3-12", "severity": "medium", "condition_signal": "omission",
+        "location": "plugins/ubm-goal-setting/ (README.md 不在)",
+        "description": "P12 が成果物として要求する README (install 手順・UBM_VAULT_ROOT 設定手順・Part1/Part2 中学生説明, phase-12:35,44) が build に存在しない。RUNBOOK は運用者向けで、初見ユーザーは install/env 設定へ到達できない。EVALS/RUNBOOK/CHANGELOG は生成済みで README のみ選択的に欠落。",
+        "evidence": "phase-12-documentation.md:44 ⇔ plugins/ubm-goal-setting/ 直下は RUNBOOK.md/CHANGELOG.md/EVALS.json のみ",
+        "recommendation": "P12 契約どおり README.md (install/env 設定/Part1 概念/Part2 技術) を生成するか、P12 未着手を計画 status で明示する。",
+        "auto_fixable": false},
+       {"id": "A3-13", "severity": "low", "condition_signal": "inconsistency",
+        "location": "plugins/ubm-goal-setting/knowledge/router.json:408",
+        "description": "vendor 済み router.json の growth_rules.action が旧名 \"check-knowledge-split.sh\" を参照しており、.py へ契約移植済みの build 内では存在しないファイルを探させる。",
+        "evidence": "router.json:408 ⇔ 実体は skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py",
+        "recommendation": "check-knowledge-split.py へ表記修正する (L1 vendor データ内の旧 .sh 参照を全走査)。",
+        "auto_fixable": true}
+     ]}
+  ],
+  "alternative_approaches": [
+    "validate-plan-coverage を二方向化: plan→disk 実在に加え、disk→plan の unplanned artifact 検出と build 完了時の status 逆流 (realized 更新) を同一 gate に統合する",
+    "EVALS.mechanical を inventory quality_gates.p0_lint から決定論射影する generator + parity gate を harness-creator に新設し、手書き二重管理を根絶する",
+    "mf-kessai の test_plugin_contract (matcher↔GUARDED_TOOLS↔docs 3 点一致) を共通テストユーティリティへ昇格し、hook を持つ全 plugin へ横展開する",
+    "check-knowledge-consistency (router 4 値整合+registry 照合) を deterministic_checks へ追加し EVALS.mechanical にも配線する",
+    "旧 .sh の同一コーパス出力 snapshot を tests/fixtures に固定した shadow-run 等価テストを追加し、不能なら EVALS の golden-master 宣言を降格して正直化する",
+    "specfm.py の hook matcher 既定値を Write|Edit|MultiEdit へ更新し、planner 生成時に guard 対象 tool 集合⊆matcher の検査を焼き込む"
+  ],
+  "summary": "18 component の物理反映は完全だが、「意図の実現」層で C04 保護が二重に破綻している (MultiEdit が matcher 未配線で素通り・fail_closed 宣言に反する fail-open 分岐)。検証宣言と実態の乖離 (golden-master 証跡不在・EVALS lint 部分配線)、数値 SSOT の 4 値不一致 (155/157/154)、状態 SSOT の未更新 (routes=planned のまま)、README/prompts 正本の未反映が機械ゲートの死角に残る。最優先は C04 の matcher+fail-closed 是正と、EVALS/数値/状態を宣言から決定論射影する機構化である。"
+}

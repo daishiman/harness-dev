@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "system_spec_harness_version": "0.1.0",
+  "llm_eval": {
+    "required": true,
+    "wiring": "C05が/spec-compile完了後に自動連鎖し、上位概念trace/意思決定支援/matrix/deep knowledge/最新出典/prompt品質を独立contextでfail-closed評価する。criteria-testは受入C1-C12を検証する。",
+    "acceptance_criteria_ref": "docs/evidence.md",
+    "acceptance_criteria_ref_repo_only": "plugin-plans/system-spec-harness/phase-07-acceptance-criteria.md (計画正本・repo 内でのみ解決可。配布物には含まれないため plugin 内正本は docs/evidence.md の C1-C12 受入 Matrix)"
+  },
+  "mechanical_eval": {
+    "required": true,
+    "gates": [
+      "scripts/validate-coverage-matrix.py (C7: 収集マトリクス網羅性・未収集0)",
+      "scripts/validate-source-citation.py (C5: 出典記録の全件対応・公式host一致)"
+      ,"skills/ref-system-design-knowledge/scripts/validate-knowledge-cards.py (C11: deep knowledge card/open-world catalog)"
+      ,"prompt-creator verify-completeness.py + validate-prompt.py (C12: 全responsibility prompt)"
+    ]
+  },
+  "evaluations": [
+    {"date": "2026-07-11", "skill": "run-system-spec-elicit", "kind": "run", "verdict": "baseline", "findings": []},
+    {"date": "2026-07-11", "skill": "run-system-spec-doc-fetch", "kind": "run", "verdict": "baseline", "findings": []},
+    {"date": "2026-07-11", "skill": "run-system-spec-compile", "kind": "run", "verdict": "baseline", "findings": []},
+    {"date": "2026-07-11", "skill": "ref-system-design-knowledge", "kind": "ref", "verdict": "baseline", "findings": []},
+    {"date": "2026-07-11", "skill": "assign-system-spec-completeness-evaluator", "kind": "assign-evaluator", "verdict": "baseline", "findings": []}
+  ]
+}

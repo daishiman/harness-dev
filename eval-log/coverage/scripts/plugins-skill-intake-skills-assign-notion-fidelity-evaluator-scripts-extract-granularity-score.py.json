@@ -1,0 +1,18 @@
+{
+ "artifact": "plugins/skill-intake/skills/assign-notion-fidelity-evaluator/scripts/extract-granularity-score.py",
+ "type": "scripts",
+ "mechanical": true,
+ "llm_eval": {
+  "verdict": "PASS",
+  "score": 85,
+  "notes": "Narrow single-purpose metric CLI; reuses evaluate() via importlib instead of duplicating logic; runs end-to-end (missing-file -> prints 0.0 exit 0 per doc); read-only, no network/secret/destructive ops. Deductions: no PEP-723 # /// script /// frontmatter; unused 'import sys'; json.loads unguarded (acceptable fail-loud)."
+ },
+ "reviewed_by": "workflow-code-review",
+ "checked": [
+  "soundness",
+  "responsibility",
+  "error-handling",
+  "side-effect-safety",
+  "frontmatter"
+ ]
+}

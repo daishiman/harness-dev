@@ -1,0 +1,82 @@
+{
+  "_template_note": "{{KIT_ROOT}} は install 時に creator-kit の絶対パスへ置換する。Hook command は cwd に依存させない。",
+  "_context_map": {
+    "PreToolUse": "C",
+    "FileChanged": "C",
+    "SubagentStop": "D",
+    "PreCompact": "D",
+    "PostCompact": "D",
+    "TaskCreated": "C"
+  },
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)",
+      "Bash(/deploy:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-guard-rubric.py"
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": "SKILL.md",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-validate-skill-md.py"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-verify-evaluator-json.py"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-handoff.py"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-post-compact.py"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 {{KIT_ROOT}}/scripts/hook-check-file-ownership.py"
+          }
+        ]
+      }
+    ]
+  }
+}

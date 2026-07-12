@@ -1,0 +1,29 @@
+--- a/_base.md
++++ b/_base.md
+@@ -10,6 +10,7 @@ argument-hint: {{argument_hint | default("")}}
+ allowed-tools: {{allowed_tools | default([Read, Write, Edit, Bash(python3 *)])}}
+ kind: run
+ effect: {{effect | default("local-artifact")}}
++role_suffix: {{role_suffix | default("workflow")}}
+ owner: {{owner}}
+ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
+@@ -23,6 +24,18 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## Steps
++
++### Step 1: 入力確認
++{{step1_input_check}}
++
++### Step 2: 主処理
++{{step2_main_process}}
++
++### Step 3: 検証
++{{step3_validation}}
++
++各 Step は副作用と返り値を明示し、失敗時の retry / rollback 条件を `## Gotchas` に記載する。
++
+ ## Boundary
+ {{boundary}}

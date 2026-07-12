@@ -1,0 +1,20 @@
+{
+  "task_id": "01",
+  "status": "superseded",
+  "original_reason": "cli-contract-mismatch",
+  "original_details": {
+    "step": "7.3",
+    "actual_contract_file": "eval-log/task/01/cli-contract-actual.txt",
+    "diff": "4a5\n>   -h, --help",
+    "observed_issue": "v1 of the spec filtered actual options with grep -E \"^\\s+--\", which excluded the argparse help row \"  -h, --help\" even though the expected option list included it.",
+    "impact_at_time": "Step 7.3 could not produce CONTRACT MATCH as written."
+  },
+  "resolution": {
+    "resolved_at": "2026-05-20",
+    "resolved_by": "spec v2 (2026-05-19) replacing the grep pattern with ^\\s+(-h, --help|--)",
+    "reverify_command": "diff <(grep -E \"^\\s+(-h, --help|--)\" eval-log/task/01/cli-contract-actual.txt | sed -E 's/[[:space:]]{2,}show this help message and exit$//' | sort) <(printf '  --allowed-prefix ALLOWED_PREFIX\\n  --fail-on-external\\n  --json\\n  --skills-dir SKILLS_DIR\\n  -h, --help\\n' | sort)",
+    "reverify_result": "CONTRACT MATCH",
+    "note": "Abort condition is no longer in effect. Task 01 executed to completion and all 8 DoD items PASS. This file is retained as a historical record of the v1->v2 specification fix and is NOT part of Section 10 deliverables."
+  },
+  "generated_at": "2026-05-19T23:49:24+09:00"
+}

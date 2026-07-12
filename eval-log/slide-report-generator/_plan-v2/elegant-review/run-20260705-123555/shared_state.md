@@ -1,0 +1,1 @@
+対象: plugin-plans/slide-report-generator-v2/ (v1責務再均衡のv2計画・proposal)。目的: 正しさと反映漏れの確認。21ファイル観察済・反映元v1実装/計画の存在確認済。第一印象: progress.jsonのslugがv2と不一致、findings内v1/v2パス記述の混在、references件数の複数勘定系、C24等builderがcontract-only (fallback/waiver前提)。

@@ -1,0 +1,363 @@
+{
+  "version": 1,
+  "rubric_id": "skill-design",
+  "rubric_version": "1.3.0",
+  "layer": "L0",
+  "threshold": 80,
+  "max_skill_md_lines": 300,
+  "trigger_count_min": 2,
+  "trigger_count_max": 3,
+  "description_no_action_detail": true,
+  "supported_kinds": [
+    "skill",
+    "agent",
+    "hook",
+    "command",
+    "plugin-composition",
+    "prompt",
+    "workflow"
+  ],
+  "_kind_dispatch_doc": "各 rule は applies_to_kinds でどの target_type に適用するかを宣言する。'*' は全 kind 共通核。kind 固有 rule は当該 kind の評価時のみ採点対象。1.2.0 で kind=skill 以外 6 種の最小 rule (3-5 個ずつ) を追加。1.3.0 で横断 capability『knowledge-loop』の KL-* rule (5 個) を追加。KL-* は applies_to_kinds='*' だが check 文の冒頭で knowledge/ ディレクトリまたは frontmatter.knowledge_loop の存在ゲートを持ち、knowledge-loop を組み込まないスキルは無条件 PASS (誤減点防止)。正本仕様は ref-knowledge-loop/references/。",
+  "severity_weights": {
+    "high": -20,
+    "medium": -10,
+    "low": -3
+  },
+  "upstream": [
+    "ref-skill-design-rubric/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "rules": [
+    {
+      "id": "FM-001",
+      "area": "frontmatter",
+      "severity": "high",
+      "applies_to_kinds": ["skill"],
+      "check": "name matches ^(run|ref|assign|wrap|delegate)-[a-z0-9][a-z0-9-]*$ and len<=60",
+      "rationale": "第1〜5,7条: kebab-case + prefix強制で発動可能性とレイヤを保証"
+    },
+    {
+      "id": "FM-002",
+      "area": "frontmatter",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "description contains a trigger phrase (Japanese: 〜とき/〜場合/〜際/〜時 or English: Use when/Read when) and ends with period or 。",
+      "rationale": "trigger文の統一形式が読み取り精度を上げる。1.1.0より日本語推奨。"
+    },
+    {
+      "id": "FM-003",
+      "area": "frontmatter",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "trigger phrase count in description is 2..3 (Japanese 〜とき/〜場合/〜際/〜時 or English when-clauses). 2〜3個（hard rule）",
+      "rationale": "08章の本文設計と lint R1 に合わせ、2〜3個を誤発動と取りこぼしのスイートスポットとする"
+    },
+    {
+      "id": "FM-004",
+      "area": "frontmatter",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "description does NOT contain action verbs implying internals ('採点する','JSONで返す','sha256','exit code')",
+      "rationale": "動作詳細は本文化、descriptionはtoken節約のため発動条件のみ"
+    },
+    {
+      "id": "FM-005",
+      "area": "frontmatter",
+      "severity": "low",
+      "applies_to_kinds": ["skill"],
+      "check": "description begins with a verb-like token (English verb in {Build, Score, Read, Wrap, Delegate, Generate, Rubric, Naming, Claude} OR a Japanese verb/noun phrase ending in する/行う/実行/生成/採点/評価/構築/参照/読み取り/レビュー/管理)",
+      "rationale": "動詞ベース = 何をするかが冒頭で判る。1.1.0で日本語動詞も許容。"
+    },
+    {
+      "id": "BD-001",
+      "area": "body",
+      "severity": "high",
+      "applies_to_kinds": ["skill"],
+      "check": "body contains heading '## Purpose & Output Contract'",
+      "rationale": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提。BD-001は『## Purpose & Output Contract』の厳格一致を要求し、PD-002は『## Purpose』または『## Output Contract』の冒頭30行内出現を許容する緩い条件である（BD-001 ⊂ PD-002 関係）。BD-001 PASS は PD-002 を自動充足するが、heading を分離した場合は BD-001 FAIL / PD-002 PASS の非対称が発生しうる。設計意図は『契約節の存在 (BD-001) と冒頭集約 (PD-002) を直交評価する』こと。"
+    },
+    {
+      "id": "BD-002",
+      "area": "body",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "body contains heading '## Gotchas'",
+      "rationale": "反パターン提示が読み手の事故を防ぐ(08章)"
+    },
+    {
+      "id": "BD-003",
+      "area": "body",
+      "severity": "high",
+      "applies_to_kinds": ["*"],
+      "check": "body line count (excluding frontmatter) <= 300",
+      "rationale": "300行制約=Less is More、token効率(24章正本)。全 target_type に適用される共通核 (Less is More 原則)。"
+    },
+    {
+      "id": "BD-004",
+      "area": "body",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "frontmatter.description の 'Use when ...' で示された 2〜3個の発動条件すべてが、body の Steps / Procedure 節に対応する手順として現れている (LLM judge: 各 trigger phrase → body 内の対応箇所を 1:1 で抽出できるか)",
+      "rationale": "description は Claude が『いつ呼ぶか』を判断する契約 (08章)。body が trigger を満たさないと、Skill は呼ばれても約束を履行できず、Goodhart 罠 (描いただけで採点を通す) に陥る。BD-001..003 が『節の存在』を見るのに対し BD-004 は『description ↔ body の整合』を見るため直交する。"
+    },
+    {
+      "id": "NM-001",
+      "area": "naming",
+      "severity": "high",
+      "applies_to_kinds": ["skill"],
+      "check": "basename of skill directory == frontmatter.name",
+      "rationale": "第7条: ディレクトリ名と name の不一致はSkill loaderが解決不能"
+    },
+    {
+      "id": "NM-002",
+      "area": "naming",
+      "severity": "medium",
+      "applies_to_kinds": ["skill"],
+      "check": "name passes lint-skill-name.py (第1〜5,7条)",
+      "rationale": "命名規約条文の機械検証"
+    },
+    {
+      "id": "NM-003",
+      "area": "naming",
+      "severity": "low",
+      "applies_to_kinds": ["skill"],
+      "check": "tree passes lint-skill-tree.py (第8〜13条)",
+      "rationale": "templates/ references/ scripts/ examples/ のファイル命名"
+    },
+    {
+      "id": "PD-001",
+      "area": "progressive-disclosure",
+      "severity": "low",
+      "applies_to_kinds": ["*"],
+      "check": "body lines <= 100 OR references/ directory exists with at least 1 file",
+      "rationale": "07章: 100行超は分割、長文はreferences配下へ。全 target_type 共通の Progressive Disclosure 原則。"
+    },
+    {
+      "id": "PD-002",
+      "area": "progressive-disclosure",
+      "severity": "medium",
+      "weight": 0.6,
+      "classification": "C3",
+      "applies_to_kinds": ["skill"],
+      "check": "body lines 1-30 (excluding frontmatter) contain heading '## Purpose' or '## Output Contract' AND at least one Key Rule / 禁則 (e.g. 'MUST', 'NEVER', '禁止', '必ず')",
+      "rationale": "02章 §設計判断4『SKILL.md の冒頭30行に目的・出力契約・禁則を集約する』(compaction lifecycle 対策) の機械強制。BD-001 との関係: BD-001 が『## Purpose & Output Contract』厳格一致 (heading 完全一致) を要求するのに対し、PD-002 は冒頭30行内に『## Purpose』『## Output Contract』のいずれか + Key Rule を要求する補強ルール。BD-001 PASS なら PD-002 も自動 PASS する包含関係 (BD-001 ⊂ PD-002)。"
+    },
+    {
+      "id": "RG-001",
+      "area": "governance",
+      "severity": "low",
+      "applies_to_kinds": ["*"],
+      "check": "output JSON includes rubric_hash (sha256 of this file)",
+      "rationale": "27章: 採点結果の再現性を保証。全 target_type で dogfooding 検証可能性のため共通。"
+    },
+    {
+      "id": "AG-001",
+      "area": "agent-frontmatter",
+      "severity": "high",
+      "applies_to_kinds": ["agent"],
+      "check": "frontmatter contains 'tools:' field with explicit allowlist (array of tool names). Wildcard '*' or missing field is FAIL",
+      "rationale": "SubAgent は親と分離コンテキストで動くが、tools 未指定だと全 tool を継承し権限境界が消える。明示 allowlist で最小権限を担保 (23章)。"
+    },
+    {
+      "id": "AG-002",
+      "area": "agent-body",
+      "severity": "high",
+      "applies_to_kinds": ["agent"],
+      "check": "body contains heading '## Isolation' or '## Context Boundary' documenting what state/files the agent does NOT touch",
+      "rationale": "SubAgent isolation の明示化。何を触らないかを宣言することで親 agent が安全に delegate できる。"
+    },
+    {
+      "id": "AG-003",
+      "area": "agent-body",
+      "severity": "medium",
+      "applies_to_kinds": ["agent"],
+      "check": "if multi-phase agent, each phase has unique id (e.g. 'Phase 1: Analyze', 'Phase 2: Synthesize') with no duplicate numbers",
+      "rationale": "Phase id 衝突は orchestrator のディスパッチを破綻させる (23章 meta-skill architecture)。"
+    },
+    {
+      "id": "AG-004",
+      "area": "agent-body",
+      "severity": "medium",
+      "applies_to_kinds": ["agent"],
+      "check": "body contains '## Handoff' or '## Output Contract' specifying what the agent returns to caller",
+      "rationale": "SubAgent の出力契約が無いと親 agent の集約処理が成立しない。"
+    },
+    {
+      "id": "HK-001",
+      "area": "hook-frontmatter",
+      "severity": "high",
+      "applies_to_kinds": ["hook"],
+      "check": "frontmatter 'event:' field is one of {PreToolUse, PostToolUse, UserPromptSubmit, Stop, SubagentStop, Notification, SessionStart, SessionEnd, PreCompact}",
+      "rationale": "未対応 event 名は Claude Code 側で no-op となり、hook が永久に発火しない。"
+    },
+    {
+      "id": "HK-002",
+      "area": "hook-frontmatter",
+      "severity": "high",
+      "applies_to_kinds": ["hook"],
+      "check": "'matcher:' field is specific (tool name regex or exact match). Wildcard '.*' without scope is FAIL for high-severity events (PreToolUse/PostToolUse)",
+      "rationale": "全 tool match は noise を増やし、hook 経済性を損なう。matcher は最小スコープで宣言。"
+    },
+    {
+      "id": "HK-003",
+      "area": "hook-body",
+      "severity": "medium",
+      "applies_to_kinds": ["hook"],
+      "check": "command has bounded timeout (timeout 設定 or script 側 timeout)。デフォルト無限待ちは FAIL",
+      "rationale": "hook が hang すると Claude Code セッション全体が止まる。"
+    },
+    {
+      "id": "HK-004",
+      "area": "hook-body",
+      "severity": "medium",
+      "applies_to_kinds": ["hook"],
+      "check": "body documents side effects (files written / network calls / env mutations) in '## Side Effects' section",
+      "rationale": "hook は宣言外副作用を持ちやすく、debug 困難。明示宣言で監査可能にする。"
+    },
+    {
+      "id": "CM-001",
+      "area": "command-frontmatter",
+      "severity": "medium",
+      "applies_to_kinds": ["command"],
+      "check": "frontmatter contains 'argument-hint:' field describing expected arguments (e.g. '<file-path>' or '[--flag]')",
+      "rationale": "slash command の引数ヒントは UX 必須。欠落すると user が想起できない。"
+    },
+    {
+      "id": "CM-002",
+      "area": "command-frontmatter",
+      "severity": "high",
+      "applies_to_kinds": ["command"],
+      "check": "'allowed-tools:' is explicit minimal allowlist (not wildcard, not missing)",
+      "rationale": "command 経由の tool 呼び出しは最小権限。wildcard は権限拡張の温床。"
+    },
+    {
+      "id": "CM-003",
+      "area": "command-body",
+      "severity": "high",
+      "applies_to_kinds": ["command"],
+      "check": "command body references an entrypoint skill (by name) that exists in the same plugin or in upstream plugins",
+      "rationale": "command は thin wrapper 設計 (24章)。skill が存在しないと dead command。"
+    },
+    {
+      "id": "PC-001",
+      "area": "plugin-composition",
+      "severity": "high",
+      "applies_to_kinds": ["plugin-composition"],
+      "check": "plugin.json or composition manifest lists capabilities[] (skills/agents/hooks/commands enumeration)",
+      "rationale": "composition の能力一覧は依存解決と監査の起点 (29章)。"
+    },
+    {
+      "id": "PC-002",
+      "area": "plugin-composition",
+      "severity": "high",
+      "applies_to_kinds": ["plugin-composition"],
+      "check": "dependencies between sub-components form a DAG (no cycles among skill→skill, skill→agent references)",
+      "rationale": "循環依存は loader を破綻させる。"
+    },
+    {
+      "id": "PC-003",
+      "area": "plugin-composition",
+      "severity": "medium",
+      "applies_to_kinds": ["plugin-composition"],
+      "check": "all rubric references (rubric: <path>) in sub-components resolve to existing files under plugins/*/skills/*/references/",
+      "rationale": "rubric リンク切れは採点時に runtime error を起こす。"
+    },
+    {
+      "id": "PC-004",
+      "area": "plugin-composition",
+      "severity": "medium",
+      "applies_to_kinds": ["plugin-composition"],
+      "check": "hooks declared in composition are wired to existing events and matchers; orphan hook declarations FAIL",
+      "rationale": "宣言だけで配線されていない hook は技術的負債。"
+    },
+    {
+      "id": "PR-001",
+      "area": "prompt-structure",
+      "severity": "high",
+      "applies_to_kinds": ["prompt"],
+      "check": "prompt body contains exactly 7 layered sections (Role / Context / Task / Constraints / Examples / Output Format / Self-Evaluation 等の 7-layer 構成)",
+      "rationale": "7-layer prompt 設計 (run-prompt-creator-7layer) の正本構造。層数逸脱は構造的逸脱。"
+    },
+    {
+      "id": "PR-002",
+      "area": "prompt-structure",
+      "severity": "medium",
+      "applies_to_kinds": ["prompt"],
+      "check": "prompt contains '## Self-Evaluation' or '## 自己採点' section with explicit rubric/criteria",
+      "rationale": "自己採点層は prompt の品質保証契約 (24章)。"
+    },
+    {
+      "id": "PR-003",
+      "area": "prompt-structure",
+      "severity": "high",
+      "applies_to_kinds": ["prompt"],
+      "check": "prompt has explicit '## Output Format' or '## Output Contract' defining return schema (JSON/YAML/markdown structure)",
+      "rationale": "出力契約なしの prompt は再現性が無い。"
+    },
+    {
+      "id": "WF-001",
+      "area": "workflow-structure",
+      "severity": "high",
+      "applies_to_kinds": ["workflow"],
+      "check": "workflow phases are ordered (numbered Phase 1..N) and each phase has a single declared transition target",
+      "rationale": "workflow の phase 順序が曖昧だと orchestrator の状態機械が定義不能。"
+    },
+    {
+      "id": "WF-002",
+      "area": "workflow-structure",
+      "severity": "high",
+      "applies_to_kinds": ["workflow"],
+      "check": "each phase transition has an explicit gate condition (PASS/FAIL criteria, threshold, or LLM judge prompt)",
+      "rationale": "gate 無き遷移は無限ループ / 早期終了の原因。"
+    },
+    {
+      "id": "WF-003",
+      "area": "workflow-structure",
+      "severity": "medium",
+      "applies_to_kinds": ["workflow"],
+      "check": "workflow declares 'max_iterations:' (or equivalent safety valve) for any phase containing a loop / re-entry",
+      "rationale": "発散制御の安全弁。convergence-policy (run-elegant-review) と整合する。"
+    },
+    {
+      "id": "KL-001",
+      "area": "knowledge-loop",
+      "severity": "high",
+      "applies_to_kinds": ["*"],
+      "check": "if (frontmatter.knowledge_loop present OR knowledge/ directory exists): knowledge/ contains knowledge-index.json (Index-Search型) OR router.json (Router-Registry型) AND at least one category file with >=3 entries. otherwise PASS (skip)",
+      "rationale": "ref-knowledge-loop §パターン選択: 索引(index/router)とデータ分離が知識ループの基盤。空ストアは運用不能。存在ゲートで非knowledgeスキルを誤減点しない。"
+    },
+    {
+      "id": "KL-002",
+      "area": "knowledge-loop",
+      "severity": "medium",
+      "applies_to_kinds": ["*"],
+      "check": "if knowledge/ present: every entry has the 6 required fields (id, title|content, intent|purpose, background, keywords|tags, source) each at quality rubric level>=2 per ref-knowledge-loop/references/knowledge-construction.md §4.3. otherwise PASS (skip)",
+      "rationale": "100人が同品質で書ける再現性の要。必須フィールド欠落 or レベル1は検索精度とAI意味解釈を破綻させる。"
+    },
+    {
+      "id": "KL-003",
+      "area": "knowledge-loop",
+      "severity": "medium",
+      "applies_to_kinds": ["*"],
+      "check": "if knowledge/ present: search separates a deterministic script stage (search_knowledge.py: Stage1 カテゴリ絞り込み + Stage2 フィールド重み付きスコアリング) from an AI semantic stage (Stage3). full-text-only search without field weighting is FAIL. otherwise PASS (skip)",
+      "rationale": "ref-knowledge-loop §3段階検索: 決定論段(再現可能)とAI段(意味解釈)の分離が精度の前提。全文検索のみは出現頻度ノイズで精度劣化。"
+    },
+    {
+      "id": "KL-004",
+      "area": "knowledge-loop",
+      "severity": "medium",
+      "applies_to_kinds": ["*"],
+      "check": "if knowledge/ present: §12 feedback loop is wired (record_usage.py + usage-log.jsonl path) recording matched_ids/used_ids/satisfaction, enabling the 4 quality-improvement patterns. otherwise PASS (skip)",
+      "rationale": "『使うほど良くなる』ループの実体。活用ログが無いと品質改善サイクルが回らず蓄積が陳腐化する。"
+    },
+    {
+      "id": "KL-005",
+      "area": "knowledge-loop",
+      "severity": "low",
+      "applies_to_kinds": ["*"],
+      "check": "if knowledge/ present: file split thresholds (500行 / 25エントリ) are documented AND lifecycle tracking exists (registry.json status 遷移 or version field with deprecated 廃棄ルール). otherwise PASS (skip)",
+      "rationale": "ref-knowledge-loop §分割/§更新ログ: 無制限肥大と陳腐エントリ滞留を防ぐ運用規律。"
+    }
+  ]
+}

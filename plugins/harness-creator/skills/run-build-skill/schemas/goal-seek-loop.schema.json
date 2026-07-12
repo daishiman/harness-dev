@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/goal-seek-loop.schema.json",
+  "title": "goal-seek-loop-progress",
+  "description": "with-goal-seek 配線を持つ生成スキルが、ゴールシークループの各周回で eval-log/<skill>-progress.json に記録する実行時状態の契約。これにより配布先のどの環境でも『ゴールへ向けて自動ループを回す』挙動が観測可能・再現可能になる。",
+  "x-scope-note": "ランタイムの進捗状態 (出力)。入力ゴール定義は run-goal-elicit/schemas/goal-spec.schema.json (構造化 checklist)。混用しない: 本スキーマは周回ごとに更新される状態ログ、goal-spec は不変の達成目標。",
+  "type": "object",
+  "required": ["skill", "goal", "iteration", "checklist", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "skill": {
+      "type": "string",
+      "description": "ループを回している生成スキル名 (frontmatter.name)。"
+    },
+    "goal": {
+      "type": "string",
+      "description": "達成すべき最終状態を1文・観測可能な完了形で。goal-spec があればその goal を写す。"
+    },
+    "spec_ref": {
+      "type": "string",
+      "description": "ロードした goal-spec のパス。AI が文脈から推定生成した場合は 'inferred'。"
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "現在の周回番号 (0始まり)。max_loops 到達で打ち切り。"
+    },
+    "max_loops": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 5,
+      "description": "ゴールシークループの最大周回数。frontmatter goal_seek.max_loops と一致させる。engine==task-graph では 1 周回 1 item 消費×消費完全性の拘束下で done 化 item 数 ≤ max_loops となるため、checklist item 数＋self-reflect 追記余裕以上 (目安: item 数×1.5) に設定する — 不足は completed を構造的に不能にする (bound 連動規則)。"
+    },
+    "engine": {
+      "type": "string",
+      "enum": ["inline", "run-goal-seek", "task-graph"],
+      "default": "task-graph",
+      "description": "この周回状態を回している goal-seek engine (frontmatter goal_seek.engine と一致)。additive/後方互換 (既定 task-graph・build-flags schema の engine 既定と一致)。engine==task-graph の周回状態は intermediate.jsonl へ ready_set/selected_item トレースを必須で追記し、機械検査 (task-graph 変種) が『トレース不在=拘束違反 (exit1)』として絶対検査する — 沈黙による依存順消費の回避を封鎖する (absence-as-violation)。"
+    },
+    "fork_context": {
+      "type": "string",
+      "enum": ["inline", "subagent", "agent-team"],
+      "default": "subagent",
+      "description": "ループ本体の実行コンテキスト。多周回/重い試行は親 context を汚さないよう subagent/agent-team に fork する。"
+    },
+    "checklist": {
+      "type": "array",
+      "minItems": 1,
+      "description": "完了チェックリストの周回状態。各項目は二値判定可能な受入基準。",
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^C[0-9]+$" },
+          "text": { "type": "string", "description": "検証可能な達成条件 (二値判定)。曖昧語禁止。" },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "done", "blocked"],
+            "description": "pending=[ ] / done=[x] / blocked=この周回では達成不能。"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^C[0-9]+$" },
+            "default": [],
+            "description": "engine:task-graph 変種の additive フィールド。依存先 checklist item の id 群。全ての depends_on 先が status==done になって初めて当該 item は ready 集合 (ready-set-from-checklist.py) に入る。engine:inline では無視され後方互換 (default [])。逐次単一 self-writer ゆえ write_scope/tie-break は持たない (H1)。"
+          },
+          "verify_by": {
+            "type": "string",
+            "enum": ["reasoning", "script", "lint", "test", "human"],
+            "description": "判定手段。決定論的に検査できるものは script/lint/test に寄せる。"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["in_progress", "completed", "handed_off"],
+      "description": "in_progress=未達項目あり / completed=全 done / handed_off=max_loops 到達で open_issues を上位へ差し戻し。"
+    },
+    "open_issues": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "max_loops 到達でも未達/blocked の項目と理由。人間 or 上位 orchestrator への差し戻し対象。"
+    },
+    "original_goal_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "intermediate_artifacts[0].original_goal の SHA-256 (hex 64桁)。全周回不変性の機械保証用 — 各 intermediate_artifacts[i].original_goal はこのハッシュと照合する。F-MD-012(W4) 対策。"
+    },
+    "last_consumed_intermediate_iteration": {
+      "type": "integer",
+      "minimum": -1,
+      "description": "次周回 Step2 が直前 intermediate を消費した最終 iteration (未消費は -1)。Step2 envelope の必須入力読込を観測可能にし、crash recovery にも使う (F-MD-006 / F-MD-011)。"
+    },
+    "intermediate_artifacts": {
+      "type": "array",
+      "description": "各周回末に追記する中間成果物アンカー。original_goal は不変、current_goal_snapshot/delta/merged_directive_for_next を周回ごとに更新し、次周回 Step2 (手順生成) の必須入力にする。集約化ドリフト圧縮機構 (references/goal-seek-paradigm.md「中間成果物」)。",
+      "items": {
+        "type": "object",
+        "required": ["iteration", "original_goal", "current_goal_snapshot", "delta_from_original", "merged_directive_for_next", "drift_signal"],
+        "additionalProperties": true,
+        "x-extensions-note": "items は前方互換のため additionalProperties:true。将来 evidence_paths / semantic_diff / token_diff / consumed_by_next_step 等を任意追加可能 (elegant-review F-LS-006/F-SS-009/F-MD-007)。",
+        "properties": {
+          "iteration": { "type": "integer", "minimum": 0, "description": "周回番号 (progress.iteration と対応)。" },
+          "original_goal": { "type": "string", "description": "初期確定 (or 推定) のユーザーゴール。**全周回で不変** — 周回をまたいで書き換えない。不変性は progress.json トップの original_goal_hash (SHA-256) で機械保証する。" },
+          "current_goal_snapshot": { "type": "string", "description": "今周回で AI が向かっている到達点を 1 文で明示。" },
+          "delta_from_original": { "type": "string", "description": "original_goal と current_goal_snapshot の差分 (抽象化しすぎ / 論点ズレ / 粒度ズレを言語化)。差分なしなら空文字。" },
+          "merged_directive_for_next": { "type": "string", "description": "差分を埋めるため次周回 Step2 へ渡す指示。「original_goal の具体性を保ったまま delta を圧縮せよ」型。" },
+          "drift_signal": {
+            "type": "string",
+            "enum": ["initial", "aligned", "compressing", "stagnant", "widening", "oscillating"],
+            "description": "前周回との比較。initial=iteration0で前周回無し / aligned=差分ゼロ / compressing=縮んでいる / stagnant=2周連続で変化なし (要アプローチ転換) / widening=広がっている (差し戻し検討) / oscillating=2周連続で正負反転 (打ち切り検討)。判定主体: ループ実行SubAgent (fork内自己評価)、判定タイミング: Step4検証後・Step5反復判定前。"
+          }
+        }
+      }
+    },
+    "handoff": {
+      "type": "string",
+      "description": "達成後に出力した handoff-*.json のパス (任意)。後続 Capability への受け渡し。"
+    }
+  }
+}

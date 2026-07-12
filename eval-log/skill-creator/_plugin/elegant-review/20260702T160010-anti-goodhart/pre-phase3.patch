@@ -1,0 +1,3483 @@
+diff --git a/.github/workflows/governance-check.yml b/.github/workflows/governance-check.yml
+index af87536..60ccbfc 100644
+--- a/.github/workflows/governance-check.yml
++++ b/.github/workflows/governance-check.yml
+@@ -93,6 +93,45 @@ jobs:
+       - name: validate frontmatter (commonCore必須 + SemVer version 再発防止)
+         run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/skill-creator/skills
+         continue-on-error: false
++      - name: lint skill name (28章 §4)
++        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/skill-creator/skills
++        continue-on-error: false
++      - name: lint plugin composition self-test (fixture drift 検出)
++        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py --self-test
++        continue-on-error: false
++      - name: lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
++        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/skill-creator/plugin-composition.yaml
++        continue-on-error: false
++      - name: lint declaration coverage self-test (ratchet 分岐検査)
++        run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py --self-test
++        continue-on-error: false
++      - name: lint declaration coverage (enforcement manual 残存数 ratchet, LS-10)
++        run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py plugins/skill-creator/plugin-composition.yaml
++        continue-on-error: false
++      - name: lint matrix sync self-test (突合分岐検査)
++        run: python3 plugins/skill-governance-lint/scripts/lint-matrix-sync.py --self-test
++        continue-on-error: false
++      - name: lint matrix sync (lint 集合3消費面の突合, LS-02/LS-07)
++        run: python3 plugins/skill-governance-lint/scripts/lint-matrix-sync.py plugins/skill-creator/references/lint-matrix.json
++        continue-on-error: false
++      - name: lint criteria provenance self-test (写像分岐検査)
++        run: python3 plugins/skill-governance-lint/scripts/lint-criteria-provenance.py --self-test
++        continue-on-error: false
++      - name: lint criteria provenance (Checklist と criteria の写像被覆, LS-05)
++        run: python3 plugins/skill-governance-lint/scripts/lint-criteria-provenance.py --skills-dir plugins/skill-creator/skills
++        continue-on-error: false
++      - name: validate build trace (再現性証跡 + RTM 段階導入 WARN)
++        run: python3 plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py eval-log/skill-build-trace.json
++        continue-on-error: false
++      - name: validate elegant-review phase order (Phase1→2→3 順序, composition invariant 対向)
++        run: python3 plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order eval-log
++        continue-on-error: false
++      - name: criteria roster parity (量産追随の fail-closed。新 loop-kind skill は roster 再生成が必要)
++        run: python3 tests/criteria/build_criteria_roster.py
++        continue-on-error: false
++      - name: validate llm coverage (criteria 被覆 ≥80% fail-closed。検証実体は tests/criteria の parametrized genuine 実行)
++        run: python3 scripts/validate-llm-coverage.py --all --threshold 80 --gate-new --since 2026-01-01
++        continue-on-error: false
+       # ── prompt-creator conformance (skill-creator 仕様準拠) ──
+       # NOTE: skill-creator / prompt-creator は distributable:false (marketplace 非配布 = 層 A-internal) だが、
+       #   リポジトリ実体として lint / CI 対象であり続ける。配布除外と品質検査は独立した関心事であり
+diff --git a/eval-log/llm-coverage.json b/eval-log/llm-coverage.json
+index a56f6a7..ed018d3 100644
+--- a/eval-log/llm-coverage.json
++++ b/eval-log/llm-coverage.json
+@@ -1,9 +1,43 @@
+ {
+   "threshold": 80.0,
+-  "skills_measured": 32,
+-  "below_threshold": 10,
+-  "average_coverage_pct": 91.5,
++  "skills_measured": 40,
++  "below_threshold": 0,
++  "average_coverage_pct": 100.0,
+   "reports": [
++    {
++      "plugin": "company-master",
++      "skill": "run-company-master-backfill",
++      "criteria_total": 4,
++      "criteria_covered": 4,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "IN3",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 11,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-18"
++    },
++    {
++      "plugin": "company-master",
++      "skill": "run-company-master-build",
++      "criteria_total": 4,
++      "criteria_covered": 4,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "OUT1",
++        "OUT2"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 14,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-09"
++    },
+     {
+       "plugin": "contract-generator",
+       "skill": "run-contract-finalize",
+@@ -52,6 +86,22 @@
+       "coverage_pct": 100.0,
+       "since": "2026-05-30"
+     },
++    {
++      "plugin": "mf-kessai-invoice-check",
++      "skill": "run-mf-initial-month-enrich",
++      "criteria_total": 3,
++      "criteria_covered": 3,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 0,
++      "under_derived": false,
++      "coverage_pct": 100.0,
++      "since": "2026-06-24"
++    },
+     {
+       "plugin": "mf-kessai-invoice-check",
+       "skill": "run-mf-invoice-check",
+@@ -79,11 +129,107 @@
+         "OUT1"
+       ],
+       "uncovered_ids": [],
+-      "checklist_items": 5,
++      "checklist_items": 6,
+       "under_derived": true,
+       "coverage_pct": 100.0,
+       "since": "2026-06-19"
+     },
++    {
++      "plugin": "mf-kessai-invoice-check",
++      "skill": "run-mf-invoice-reconcile",
++      "criteria_total": 3,
++      "criteria_covered": 3,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 9,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-26"
++    },
++    {
++      "plugin": "notion-gmail-send",
++      "skill": "run-notion-gmail-dry-run",
++      "criteria_total": 3,
++      "criteria_covered": 3,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 10,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-24"
++    },
++    {
++      "plugin": "notion-gmail-send",
++      "skill": "run-notion-gmail-send",
++      "criteria_total": 4,
++      "criteria_covered": 4,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "IN3",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 9,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-24"
++    },
++    {
++      "plugin": "notion-gmail-send",
++      "skill": "run-notion-gmail-sendlog-setup",
++      "criteria_total": 2,
++      "criteria_covered": 2,
++      "covered_ids": [
++        "IN1",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 8,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-24"
++    },
++    {
++      "plugin": "notion-gmail-send",
++      "skill": "run-notion-gmail-source-audit",
++      "criteria_total": 2,
++      "criteria_covered": 2,
++      "covered_ids": [
++        "IN1",
++        "OUT1"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 8,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-24"
++    },
++    {
++      "plugin": "plugin-dev-planner",
++      "skill": "run-plugin-dev-plan",
++      "criteria_total": 4,
++      "criteria_covered": 4,
++      "covered_ids": [
++        "IN1",
++        "IN2",
++        "OUT1",
++        "OUT2"
++      ],
++      "uncovered_ids": [],
++      "checklist_items": 15,
++      "under_derived": true,
++      "coverage_pct": 100.0,
++      "since": "2026-06-29"
++    },
+     {
+       "plugin": "prompt-creator",
+       "skill": "run-prompt-create",
+@@ -136,107 +282,101 @@
+       "plugin": "skill-creator",
+       "skill": "delegate-codex-skill-review",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 4,
+       "under_derived": false,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-18"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-build-skill",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
+-      "checklist_items": 10,
++      "uncovered_ids": [],
++      "checklist_items": 11,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-17"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-elegant-review",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 9,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-18"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-goal-elicit",
+       "criteria_total": 3,
+-      "criteria_covered": 2,
++      "criteria_covered": 3,
+       "covered_ids": [
+         "IN1",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 5,
+       "under_derived": true,
+-      "coverage_pct": 66.7,
++      "coverage_pct": 100.0,
+       "since": "2026-05-24"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-goal-seek",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 3,
+       "under_derived": false,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-24"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-migrate-audit",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 11,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-19"
+     },
+     {
+@@ -259,18 +399,17 @@
+       "plugin": "skill-creator",
+       "skill": "run-skill-create",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
+-      "checklist_items": 12,
++      "uncovered_ids": [],
++      "checklist_items": 13,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-18"
+     },
+     {
+@@ -293,19 +432,18 @@
+       "plugin": "skill-creator",
+       "skill": "run-skill-feedback",
+       "criteria_total": 5,
+-      "criteria_covered": 3,
++      "criteria_covered": 5,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
+         "IN3",
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 8,
+       "under_derived": true,
+-      "coverage_pct": 60.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-25"
+     },
+     {
+@@ -328,36 +466,34 @@
+       "plugin": "skill-creator",
+       "skill": "run-skill-rubric-governance",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [
++        "OUT1",
+         "OUT2"
+       ],
++      "uncovered_ids": [],
+       "checklist_items": 12,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-17"
+     },
+     {
+       "plugin": "skill-creator",
+       "skill": "run-skill-update-notifier",
+       "criteria_total": 4,
+-      "criteria_covered": 3,
++      "criteria_covered": 4,
+       "covered_ids": [
+         "IN1",
+         "IN2",
++        "IN3",
+         "OUT1"
+       ],
+-      "uncovered_ids": [
+-        "IN3"
+-      ],
++      "uncovered_ids": [],
+       "checklist_items": 10,
+       "under_derived": true,
+-      "coverage_pct": 75.0,
++      "coverage_pct": 100.0,
+       "since": "2026-05-21"
+     },
+     {
+@@ -403,7 +539,7 @@
+         "OUT1"
+       ],
+       "uncovered_ids": [],
+-      "checklist_items": 13,
++      "checklist_items": 18,
+       "under_derived": true,
+       "coverage_pct": 100.0,
+       "since": "2026-05-22"
+@@ -488,22 +624,6 @@
+       "coverage_pct": 100.0,
+       "since": "2026-05-22"
+     },
+-    {
+-      "plugin": "skill-intake",
+-      "skill": "assign-notion-fidelity-evaluator",
+-      "criteria_total": 3,
+-      "criteria_covered": 3,
+-      "covered_ids": [
+-        "IN1",
+-        "IN2",
+-        "OUT1"
+-      ],
+-      "uncovered_ids": [],
+-      "checklist_items": 11,
+-      "under_derived": true,
+-      "coverage_pct": 100.0,
+-      "since": "2026-05-22"
+-    },
+     {
+       "plugin": "skill-intake",
+       "skill": "run-notion-intake-publish",
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+index 5890071..1c35239 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "71fced17cbd2c924815363142020c8b6351ce39b33b9da6a916d8ee028e802ac"
++    "skill_md_sha256": "b01d950382166a121f0c35697b589a1231e4a1ea31ff57cc35c5619a2d17d35e"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+@@ -14,21 +14,25 @@
+     "smell": 0
+   },
+   "reviewer": "run-elegant-review-subagent",
+-  "reviewed_at": "2026-07-01T00:00:00Z",
+-  "iterations": 1,
++  "reviewed_at": "2026-07-02T00:00:00Z",
++  "iterations": 4,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "変更2 (Step4 gov-lint パスの install 位置非依存化): repo 相対リテラル `python3 plugins/skill-governance-lint/scripts/...` を、Step1 で resolve-skill-dirs.py が確定する `$PLUGIN_ROOT` (本文205行) から導く `GOV_LINT_DIR=\"$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint\"` (本文224行) へ置換した設計判断が良い。skill-governance-lint は skill-creator とは別プラグインで `$SKILL_DIR` (skill-creator 内資産アンカー=本文231/233/234行) では到達不能なため、兄弟プラグインへの正しいアンカーは PLUGIN_ROOT 派生であり、この置換は Key Rule 6『marketplace install 配置非依存』(本文123行) に整合する。dev レイアウトでは `plugins/skill-governance-lint` (相対) に、marketplace install (CLAUDE_PLUGIN_ROOT 設定時) では絶対パスに解決されるため、header note (本文104行) の repo-root cwd 前提を破らずポータビリティを加算的に改善している (IN1 の Step4 lint 連鎖を強化)。",
+-      "変更1 (完了チェックリスト追加項目=本文176行): 層2 ポータビリティ要件を本文に再掲せず正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 への SSOT ポインタとして表現し、本 Skill 一貫の『本文に再掲しない=SSOT』規律 (本文141/146/194/300行) と同型を保った点が良い。かつ Step4 に追加した lint `python3 scripts/lint-readme-plugin-root-portability.py` (本文236行) で機械強制されており、チェックリスト項目↔Step4 強制の対応が成立している (漏れなし)。当該 lint の書式は兄弟 repo 相対 lint `python3 scripts/lint-feedback-contract.py --changed-only` (本文232行) と一致し書式整合も取れている。"
++      "iteration 3 REJECT の --emit 不整合が完全解消: build-plan 導出コマンドが CL-9 (行178) / Step 1 (行224) / workflow-manifest.json init-pre note の 3 箇所すべてで `validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json` に統一され、同一操作の引数不一致 (前周 contradiction) が消えた。validate-build-plan.py も docstring (行20-34) / frontmatter (行4-16) / FAIL メッセージ (行513『--check なし実行で stdout に一覧』) / schemas/build-plan.schema.json description から `--emit` を除去し、行27 で『--emit フラグは存在しない (導出はオプションなしの既定動作)』と否定明示することで将来の誤用も構造的に予防 (前周 inconsistency 解消)。修正後の docstring 記述『--check なし = plan を stdout へ出力、--out 併用でファイル保存、--check --skill-dir = 充足検査』は実装 main (行458-514: check='--check' in args で分岐、out で書込、brief 不在 return 0) と完全一致。",
++      "build-plan 決定論導出機構そのものの設計妥当性は前周同様に良好: Step 3 の投入系 Sink Contract 段落 (行237) が derive_plan の notes 生成 (external_systems 非空時) と実装整合し、ref-output-routing skill も実在。feedback_contract.criteria の derived_from (IN1←CL-1/2/3/4/7/9/10/11 等) と CL-1..CL-11 の id 付与が provenance を機械追跡可能にし lint-criteria-provenance.py 実走 exit0 で被覆整合を確認。"
+     ],
+-    "negative_feedback": [],
+-    "iteration": 1,
++    "negative_feedback": [
++      "[解消済/iteration3→4 履歴] iteration 3 REJECT: CL-9 (行178) と workflow-manifest.json init-pre note の `validate-build-plan.py --emit` が実装非対応 no-op フラグで、Step1 の `--out` と同一操作の引数不一致 + `--emit` 単独では build-plan.json 未生成だった。team-lead が (1) CL-9 (2) manifest note (3) script docstring/frontmatter/FAIL メッセージ (4) schema description の 4 箇所を `--out` 統一 / `--emit` 除去で修正。本 iteration で 4 箇所すべてを実測再確認し解消 (grep で --emit 残存は script 行27 の否定明示 1 件のみ)。",
++      "[解消済/iteration1→2 履歴] 前周 REJECT F1/F2 (capability_kind_map dangling / template-selection description 正面矛盾) は実在 3 正本参照へ書き換え済みを retention 確認。",
++      "[低リスク観察・非ブロッカー・SKILL.md 対象外] テスト関数名 tests/scripts-plugins/test_skill_creator__validate_build_plan.py::test_cli_emit_writes_plan に旧 `emit` の名残 (中身は subprocess で --out を渡しファイル書込を検証しており機能は実装整合)。成果物 SKILL.md の content-review 対象外だが、用語統一の観点で次回 test_cli_out_writes_plan 等へ rename を推奨 (deferred)。"
++    ],
++    "iteration": 4,
+     "iteration_limit": 3,
+     "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "現 SKILL.md (sha256=71fced17...、実測一致) を実読し、今回の2変更を30思考法×4条件で genuine 再評価。参照実在確認: (a) `scripts/lint-readme-plugin-root-portability.py` は repo-root `./scripts/` に実在 (git ls-files 追跡済) で、本文232行の兄弟 repo 相対 lint `scripts/lint-feedback-contract.py` と同一書式=書式整合 OK。(b) 正本 `plugins/skill-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md` は実在し『層2: README ドキュメント層』節 (10/78行) と fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<name>}` (109行)・番号付きリスト字下げフェンス走査記述 (129行) を持ち、追加チェックリスト項目 (176行) の記述と忠実に一致。(c) `$PLUGIN_ROOT` は Step1 の resolve-skill-dirs.py (205行) で確定され Step4 (224行) で使用=定義先行 OK。`$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint` は dev レイアウトで `plugins/skill-governance-lint` に解決され、当該プラグインの lint-skill-name.py 等は実在=依存断なし。①矛盾0: 追加項目は Rule6 (123行) と整合し header note (104行) とも非矛盾 (gov-lint は dev で依然 plugins/skill-governance-lint 相対に解決され repo-root cwd 前提は他の repo 相対コマンドで維持=note の結論は成立、変更は加算的ポータビリティ)。②漏れ0: チェックリスト↔Step4 lint (236行) 対応成立、goal-seek パラダイム上 doctor 生成に固定 Step は不要。③不整合0: scripts/ 前置 repo 相対 lint 書式・$PLUGIN_ROOT/$SKILL_DIR/$OUT_BASE の使い分けとも整合。④依存断0: 参照3件 (lint script/runtime-portability.md 層2/$PLUGIN_ROOT 定義元) 全て実在確認。⑤smell0: 正本 SSOT ポインタ化で本文非肥大 (本文≈219行<300行 P0-2)。findings 全0 につき PASS。"
++  "notes": "現 SKILL.md (sha256=b01d950382166a121f0c35697b589a1231e4a1ea31ff57cc35c5619a2d17d35e、python3 hashlib 実測) を 30 思考法×4条件で genuine 再評価 (iteration 4: iteration3 REJECT の --emit 修正を重点検証)。team-lead 修正 4 点を二段確認: (1) CL-9 行178 = `validate-build-plan.py --brief ... --out eval-log/build-plan.json` へ統一 (Step1 行224 と同語)、(2) workflow-manifest init-pre note = `--brief eval-log/skill-brief.json --out eval-log/build-plan.json` へ統一、(3) validate-build-plan.py = frontmatter argv (行10) / stdout 説明 (行12) / write-scope (行16) / docstring CLI モード (行26-28) / FAIL メッセージ (行513) から --emit 除去し実装一致、行27 で --emit 非存在を否定明示、(4) schemas/build-plan.schema.json description = `(--check なし実行、--out でファイル保存)` へ修正 --emit 除去。対象 4 ファイルの grep で --emit 残存は script 行27 の否定明示のみ (--emit-queue は knowledge-skeleton の別実在フラグで無関係)。実走した機械ゲート: validate-build-plan.py --self-test → exit0 (4 groups)、lint-matrix-sync.py → exit0、lint-criteria-provenance.py → exit0 (31 skill)、lint-skill-tree.py run-build-skill → ok (本文 242 行 <=300)、pytest tests/scripts-plugins/test_skill_creator__validate_build_plan.py → 19 passed (test_cli_emit_writes_plan は --out でファイル書込を検証=実装整合を実確認)。iteration カウントの整合: iteration 3 REJECT で human_review エスカレーション → team-lead が実装修正 (SHA 8785c46f→b01d9503) → human 介入後の再評価で PASS 到達。iteration=4 は human 修正後の確認回であり、feedback_contract.max_iterations=3 は単一バージョンの自動反復上限 (protocol の human_review 経由解決はそのカウント外) のため next_action=none / human_review_required=false。①矛盾0 ②漏れ0 ③不整合0 ④依存断0 ⑤smell0 につき PASS。"
+ }
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+index ca01d7a..240da01 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "71fced17cbd2c924815363142020c8b6351ce39b33b9da6a916d8ee028e802ac"
++    "skill_md_sha256": "b01d950382166a121f0c35697b589a1231e4a1ea31ff57cc35c5619a2d17d35e"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+@@ -14,26 +14,25 @@
+     "smell": 0
+   },
+   "reviewer": "assign-skill-design-evaluator-subagent",
+-  "reviewed_at": "2026-07-01T00:00:00Z",
+-  "iterations": 1,
++  "reviewed_at": "2026-07-02T00:00:00Z",
++  "iterations": 4,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+-    "criteria_evaluated": [
+-      "IN1",
+-      "IN2",
+-      "OUT1",
+-      "OUT2"
+-    ],
++    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "今回追加の 2 変更 (kind=plugin ポータビリティ完了項目 + Step4 lint の install 位置非依存化) が Key Rule #6『marketplace install 配置非依存』を本文と完了チェックリストの両輪で強化する良い設計判断。GOV_LINT_DIR を $PLUGIN_ROOT 相対で導出し、正本は ref-cross-platform-runtime/references/runtime-portability.md 層2 を SSOT ポインタ参照 (本文へ再掲しない) するため、rubric が嫌う重複定義・正本曖昧化を新規に生んでいない (PD/SSOT 観点)。",
+-      "BD-003 (本文 <=300 行) を今回変更後も維持 (本文実測 218 行)。FM-002/003 (description が発動条件のみ・〜とき trigger 2 個・内部動作語なし)、BD-001『## Purpose & Output Contract』/ BD-002『## Gotchas』heading も存続しており、契約節と冒頭集約 (PD-002) の直交要件を満たす。"
++      "[一貫性 1→3 回復] iteration3 REJECT の用語ゆれ (build-plan 導出を CL-9/manifest=--emit・Step1=--out と別表記) が、3 箇所すべて `--out eval-log/build-plan.json` へ統一され解消。validate-build-plan.py docstring/frontmatter/FAIL メッセージ/schema description からも --emit を除去し、行27 で非存在を明示。rubric 一貫性の判定基準『用語統一』『workflow-manifest.json と SKILL.md 本文の一致 (二重管理 drift なし)』を完全充足。",
++      "[検証可能性 2→3 回復] CL-9 の再現コマンドが `--out eval-log/build-plan.json` となり、記述通り実行して期待成果物 build-plan.json が生成されることが実装・テスト (test_cli_emit_writes_plan 19 passed) で裏付けられた。CL-1..CL-11 は lint exit0/score>=80/high=0 の二値判定を維持。"
++    ],
++    "negative_feedback": [
++      "[解消済/iteration3→4 履歴] iteration 3 REJECT (一貫性次元: --emit 実装非対応 + --out との用語ゆれ) は team-lead が SKILL.md CL-9 / workflow-manifest init note / validate-build-plan.py (docstring/frontmatter/FAIL) / build-plan.schema.json description の 4 箇所を --out 統一・--emit 除去で修正し解消。本 iteration で実測再確認。",
++      "[解消済/iteration1→2 履歴] 前周 REJECT (F1 dangling capability_kind_map / F2 template-selection description 正面矛盾) は retention 確認済み。",
++      "[低リスク観察・非ブロッカー] テスト関数名 test_cli_emit_writes_plan に emit 名残 (中身は --out 検証で機能正)。成果物 SKILL.md 対象外、次回 rename 推奨 (deferred)。"
+     ],
+-    "negative_feedback": [],
+-    "iteration": 1,
++    "iteration": 4,
+     "iteration_limit": 3,
+     "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "ref-skill-design-rubric/references/rubric.json (v1.3.0) で kind=skill の FM/BD/NM/PD/KL 系を現 SKILL.md (sha256=71fced17..., 実測一致) に対し genuine 再採点。本文実測=218 行 (frontmatter は 1-100 行、body=101-318 行)。FM-001(name=run-build-skill/run- prefix/kebab/len15)・FM-002(description が『〜とき…に使う』で trigger 形式・句点終端)・FM-003(〜とき=2 個で 2-3 範囲内)・FM-004(採点する/sha256/exit code 等の内部動作語なし)・FM-005(『新規作成・更新するとき』動詞起点) 全 PASS。BD-001(『## Purpose & Output Contract』厳格一致 heading=106 行)・BD-002(『## Gotchas』=311 行)・BD-003(本文 218<=300, P0-2 順守)・BD-004(description の 2 発動条件=Capability 作成/更新・Manifest/composition 整備 が Step0/Step3.5 等の本文手順に 1:1 対応) 全 PASS。NM-001(dir名==name)・NM-002・NM-003 PASS。PD-001(references/ 実在)・PD-002(冒頭 30 行内に『## Purpose & Output Contract』+ Key Rule『禁止』=120/122/123 行) PASS。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop が不在のため存在ゲートで無条件 PASS (skip, 誤減点なし)。今回 diff の依存確認: 追加参照 scripts/lint-readme-plugin-root-portability.py は repo-root ./scripts/ に実在 (既存 scripts/lint-feedback-contract.py と同一 base=repo-root cwd 前提、行 104 注記と整合)、GOV_LINT_DIR=$(dirname $PLUGIN_ROOT)/skill-governance-lint は plugins/skill-governance-lint/scripts/ の実在スクリプトへ解決し dangling 無し、正本 doc も実在。dependency_break/contradiction/inconsistency/omission/smell いずれも 0、high severity 0 件で総合合格。PASS 維持。"
++  "notes": "quality-rubric.md (skill-creator 正本) 5 次元で現 SKILL.md (sha256=b01d950382166a121f0c35697b589a1231e4a1ea31ff57cc35c5619a2d17d35e、python3 hashlib 実測) を genuine 再採点 (iteration 4)。本文実測: total 346 行、本文=242 行 <=300 (lint-skill-tree ok)。[完全性 3/3] commonCore 必須 5 キー一致、build-plan.schema.json + manifest schema-build-plan resource + ref-output-routing skill 実在で索引欠落 0。[一貫性 3/3] ★前周ブロッカー解消: build-plan 導出コマンドが CL-9 (行178) / Step1 (行224) / workflow-manifest init-pre note の 3 箇所で `--brief ... --out eval-log/build-plan.json` に統一され、validate-build-plan.py docstring (行26-28) / frontmatter (行10-16) / FAIL メッセージ (行513) / schema description からも --emit 除去 (行27 で非存在明示)。用語ゆれ・manifest↔本文 drift ともに消滅 (grep で --emit 残存は行27 否定明示 1 件のみ)。[深度 3/3] フラグ要否のモデル判断排除を build-plan 決定論導出で機構化、Sink Contract を ref-output-routing 参照へ寄せた trade-off 明確。[検証可能性 3/3] lint-criteria-provenance.py / lint-matrix-sync.py / lint-skill-tree.py / validate-build-plan.py --self-test 全 exit0、pytest test_skill_creator__validate_build_plan.py 19 passed (CL-9 の --out 再現コマンドが build-plan.json 生成を test_cli_emit_writes_plan で検証)。[簡潔性 2/3] 新規段落追加後も 242/300 行、同義反復なし、詳細 references 委譲。合計 14/15、全次元 >=2 につき PASS。iteration=4 は iteration3 REJECT→human_review→team-lead 実装修正 (SHA 更新)→再評価 PASS の human 介入後確認回で、max_iterations=3 の自動反復上限カウント外 (next_action=none / human_review_required=false)。"
+ }
+diff --git a/eval-log/skill-creator/run-elegant-review/content-review/elegance-verdict.json b/eval-log/skill-creator/run-elegant-review/content-review/elegance-verdict.json
+index 8b37867..e7923a7 100644
+--- a/eval-log/skill-creator/run-elegant-review/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-elegant-review/content-review/elegance-verdict.json
+@@ -2,14 +2,21 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-elegant-review",
+-    "skill_md_sha256": "043cde11ef0715aa6489cfed48893968c043ea743d0c2a14ca6ac11d54f4abe0"
++    "skill_md_sha256": "18e0eb9c1e6f328f794869320716d770d06b18d4064295b5f5249618391f9cc1"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+-  "reviewer": "run-elegant-review-subagent-team",
+-  "reviewed_at": "2026-06-25",
++  "reviewer": "run-elegant-review-subagent",
++  "reviewed_at": "2026-07-02T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
++  "findings_summary": {
++    "contradiction": 0,
++    "omission": 0,
++    "inconsistency": 0,
++    "dependency_break": 0,
++    "smell": 0
++  },
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": [
+@@ -19,8 +26,8 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "severity の二軸分離(issues[].severity=low/medium/high/critical の優先度ラベル / condition_signal=contradiction/omission/inconsistency/dependency_break/smell の機械観測 signal)が frontmatter IN2(L78)・schema_refs 注記 G2(L36)・完了条件節(L167)・検証4条件テーブル列見出し(L196-199)・Phase3 優先順位 critical>high>medium>low(L233)の5箇所で一貫適用され矛盾ゼロ。max_iterations=3 も Checklist(L116)・Phase3 失敗時アクション(L237)・停止条件3(L289)で同一値に収束",
+-      "本文の二軸主張が参照 schema の実 enum と一致: findings.schema.json#/definitions/paradigm_finding/issues[].severity enum=[low,medium,high,critical](L90)・同 condition_signal enum=[contradiction,omission,inconsistency,dependency_break,smell](L94)、finding.schema.json は priority(L30-33)と condition_signal(L26-29)を別フィールドで分離保持。本文の依存断絶なし"
++      "完了チェックリストの CL-1..CL-9 アンカー化と criteria.derived_from の写像が機械検査可能な provenance を成立させた。derived_from 和集合 = {CL-2(IN1), CL-7(IN2), CL-3/4/5/6/9(OUT1), CL-8(OUT2)} で CL-2..CL-9 を重複・欠落なく全被覆し、lint-criteria-provenance.py が exit 0 で裏付け",
++      "CL-1 exempt の根拠が実装実在で裏付く: validate-paradigm-coverage.py main() が --phase-order モードを実装 (L311-319) し、check_phase_order が Phase1 成果物 shared_state.md の存在 + Phase2 findings→Phase3 成果物の mtime 順序を検査。eval-log 実木で実走し exit 0 (4 run 検査 / 25 旧 run tolerant skip)。docstring に tolerant 契約 (遡及 fail させない) と Phase1 living-document 理由の設計判断が明文化されている"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -28,5 +35,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "dev(main)同期merge後の現SKILL.md(sha256=043cde11)に対し read-only 二段確認で genuine 再評価。本文と frontmatter feedback_contract を逐一照合し参照 schema の実 enum も機械検証。C1矛盾なし=severity 二軸分離(issues[].severity 優先度 / condition_signal 機械観測 signal)が L36/L78/L167/L196-199/L233 で一貫、max_iter=3 も L116/L237/L289 で一致し矛盾ゼロ。C2漏れなし=Phase1〜3 が各々『入力/出力/完了判定signal/失敗時アクション』4項目を明示(L207, L209-238)し Checklist 全項目が本文へ対応。C3整合性=二軸主張が findings.schema.json/finding.schema.json の実 enum と裏付き一致、検証4条件テーブル(C1〜C4 ↔ contradiction/omission/inconsistency/dependency_break, L194-199)が condition_signal と整合。C4依存整合=Phase 1→2→3 が DAG を成し rubric_refs/schema_refs/reference_refs/script_refs が全て解決。IN1=used+skipped_with_reason==30 は Checklist(L110)・Gotchas1(L295)・Phase2 完了判定(L226)と一致、IN2=issues[].severity 優先度列挙・condition_signal が4条件 signal 列挙に収まる主張は両 schema の実 enum と一致、OUT1=4条件全PASS+force_pass禁止human_review差戻しは検証4条件テーブルと停止条件3(L289)と一致、OUT2=proposer≠approver 自己承認禁止は C4 節(L253-258)と一致。fail_counts.contradiction/omission/inconsistency/dependency_break いずれも 0、smell も検出なし。今回 merge 差分は本文構成・反映であり 4 条件のいずれも悪化なし。PASS 維持。"
++  "notes": "本日更新 (CL-1..CL-9 アンカー + CL-1 exempt + criteria derived_from 追加) 後の現 SKILL.md (sha256=18e0eb9c) を read-only で genuine 再評価。(a) CL-1 exempt 根拠: scripts/validate-paradigm-coverage.py に --phase-order モードが実在 (usage/main 分岐/check_phase_order_tree)、`--phase-order eval-log` 実走で exit 0。exempt コメントの主張範囲は『工程順序』であり実装 (Phase1 存在 + Phase2→3 mtime 順序) と一致。CL-1 括弧書きの 200 字制限は --phase-order の検査対象外だが exempt はそれを機械検査対象と主張しておらず Gotchas 8 が LLM 規律として保持 (乖離なし)。(b) 被覆整合: derived_from が CL-2..CL-9 を全被覆・存在しない CL 参照なし、lint-criteria-provenance.py exit 0。(c) OUT1 対応: fail_counts 4 条件項目 CL-3(contradiction)/CL-4(omission)/CL-5(inconsistency)/CL-6(dependency_break) が OUT1 text『4条件が全 PASS』に、CL-9 が『force_pass せず human_review へ差し戻す』に対応し derived_from [CL-3,CL-4,CL-5,CL-6,CL-9] と一致。(d) 本文矛盾なし (C1): max_iterations=3 が frontmatter/CL-9/Phase3 失敗時/停止条件3/convergence-policy.json halt_conditions.max_iterations_reached (iteration_count>=3, force_pass 禁止) で同値。停止条件 Δneg<0.10 AND Δpos<0.10→complete / Δneg 2周連続増加→human_escalate が halt_conditions.converged/diverged と一致。C2 漏れなし: Phase1-3 各 4 項目 (入力/出力/完了判定 signal/失敗時アクション) 明示、CL 全 9 項目が本文へ対応。C3 整合性: severity 二軸分離が findings.schema.json 実 enum (issues[].severity=[low,medium,high,critical] / condition_signal=[contradiction,omission,inconsistency,dependency_break,smell])・finding.schema.json (priority/condition_signal 分離) と一致。30 思考法配分 A2=10/A3=9/A4=11 が thought-methods.yaml (10/9/11, id 総数 30) と validate-paradigm-coverage.py EXPECTED_META の agent 割当と三者一致。observable trigger は workflow-manifest.json 'any of (verdict.*=FAIL) OR safety_valve_fired=true' と論理同一で step6 emit 一本化も manifest 実在。C4 依存整合: frontmatter 参照資産 (schemas 4/references 10/scripts 3/prompts 3/examples 1/workflow-manifest) 全 25 件実在、subagent_refs 5 agent 全実在、delegate-codex-skill-review・goal-seek-paradigm.md・orchestrate-gate-pattern.md 実在。fail_counts 全 0、smell 0。PASS。"
+ }
+diff --git a/eval-log/skill-creator/run-elegant-review/content-review/rubric-verdict.json b/eval-log/skill-creator/run-elegant-review/content-review/rubric-verdict.json
+index 158ef2f..ab13874 100644
+--- a/eval-log/skill-creator/run-elegant-review/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-elegant-review/content-review/rubric-verdict.json
+@@ -2,14 +2,21 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-elegant-review",
+-    "skill_md_sha256": "043cde11ef0715aa6489cfed48893968c043ea743d0c2a14ca6ac11d54f4abe0"
++    "skill_md_sha256": "18e0eb9c1e6f328f794869320716d770d06b18d4064295b5f5249618391f9cc1"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+   "reviewer": "assign-skill-design-evaluator-subagent",
+-  "reviewed_at": "2026-06-25",
++  "reviewed_at": "2026-07-02T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
++  "findings_summary": {
++    "contradiction": 0,
++    "omission": 0,
++    "inconsistency": 0,
++    "dependency_break": 0,
++    "smell": 0
++  },
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": [
+@@ -19,8 +26,8 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "本 skill が rubric_refs に ref-skill-design-rubric と references/4-conditions.json を持ち規範採点(Step6)と責務直交している設計が frontmatter(L39-41)と本文の役割直交テーブル(Step5 契約=run-plugin-package-check / 5.5 elegance=本skill / 6 rubric=assign-skill-design-evaluator, L130-134)で明示され rubric 適合度が高い",
+-      "携帯した feedback_contract(L69-87)が verify_by に script/lint/elegant-review/evaluator を割り当て inner(IN1/IN2=機械検証)と outer(OUT1/OUT2=設計品質)を loop_scope で分離しており二層分離原則に沿う"
++      "完了チェックリスト全 9 項目が二値判定可能 (fail_counts.<signal>==0 / coverage==30 / schema 通過 / status:incomplete) で、検証可能性次元の『チェックリストが lint exit 0・件数一致等で二値判定可能』基準を満たす。今回追加の derived_from により criteria→Checklist の突合が lint-criteria-provenance.py で機械化され、機械層担保 (二層分離原則) が強化された",
++      "CL-1 を exempt 化する際に根拠 (validate-paradigm-coverage.py --phase-order が機械検査) をコメントとして本文アンカーに残した点は、exempt 判断の provenance を人間可読 + lint 可読の両面で保持する再利用可能パターン"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+@@ -28,5 +35,5 @@
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "dev(main)同期merge後の現SKILL.md(sha256=043cde11)を assign-skill-design-evaluator 観点で genuine 採点。ref-skill-design-rubric/references/rubric.json(v1.3.0, threshold 80, max_skill_md_lines 300)の skill 系 rule で照合。FM-001=name 'run-elegant-review' は ^(run|ref|assign|wrap|delegate)-... に合致し len<=60 PASS。FM-002/003=description が日本語 trigger『〜とき』を2〜3個含み 。終端(L3)PASS。FM-004=description に内部動作詳細語(採点する/sha256/exit code 等)なし PASS。FM-005=description 冒頭が動詞ベース PASS。BD-001=heading '## Purpose & Output Contract' 存在(L124)PASS、これにより PD-002(冒頭節+禁則, force_pass 禁止/スキップ不可 等の禁則語あり)も包含充足。BD-002='## Gotchas' 存在(L293)PASS。BD-003=本文行数(frontmatter L1-88 除外, 全312行→本文約224行)<=300 PASS。NM-001=ディレクトリ名 run-elegant-review == frontmatter.name PASS。KL-001〜005=knowledge/ 不在・frontmatter.knowledge_loop 不在につき存在ゲートで無条件 skip(PASS)。今回 merge 差分(severity 二軸分離 issues[].severity↔condition_signal、Checklist の fail_counts.<signal>==0 化、検証4条件テーブル列の condition_signal 改称、Phase3 優先順位の issues[].severity 化)は語彙の責務分割を明確化し規範観点で改善。frontmatter の4基準ID(IN1/IN2/OUT1/OUT2)は criteria_evaluated と完全一致し突合可能。high severity 違反は検出されず PASS 維持。"
++  "notes": "現 SKILL.md (sha256=18e0eb9c) を plugins/skill-creator/references/quality-rubric.md の 5 次元で genuine 採点。[完全性 3/3] commonCore 必須キー (name/description/kind/prefix/effect/owner/since/version) 完備、Phase1-3 が各 4 項目 (入力/出力/完了判定 signal/失敗時アクション) を明示、Checklist CL-1..CL-9 全項目が本文節へ対応、references/scripts/schemas/prompts/examples 全 25 参照が実在。[一貫性 3/3] max_iterations=3 が frontmatter/CL-9/Phase3/停止条件3/convergence-policy.json で同値、severity 二軸 (issues[].severity 優先度 / condition_signal 機械観測) が schema 実 enum と一致、30 思考法配分 A2=10/A3=9/A4=11 が thought-methods.yaml 実計数と一致、workflow-manifest observable trigger と本文 L266 が論理同一で二重管理 drift なし。[深度 3/3] 目的・背景節が Step5.5 の存在理由 (契約適合/規範採点と直交、固定手順の脆さ) まで掘れ、Gotchas 10 項目が既知失敗パターン (Goodhart 罠/context 再汚染/auto_fixable 安易フラグ) を参照、B1-B8/C1-C4/G 系の設計判断 ID で trade-off 根拠が追跡可能。[検証可能性 3/3] 数値 3 個以上 (30 思考法/200 字/max_iter=3/Δ<0.10/変更行数>50/unique file>3)、検証コマンド実在 (validate-paradigm-coverage.py: 通常モード + --phase-order を実走で exit 0 確認)、CL-1 exempt の根拠スクリプトが実装済 (--phase-order 分岐 L311-319, check_phase_order_tree)。[簡潔性 3/3] 本文行数実測 223 行 (全 315 行 − frontmatter 92 行) で上限 300 以内、30 思考法テンプレは thought-methods.yaml へ、dedup matrix は orchestrate-gate-pattern.md へ、資産索引は resource-map.yaml へ外出しし本文再掲なし。合計 15/15 全次元 >=2 で PASS。frontmatter 4 criteria (IN1/IN2/OUT1/OUT2) は criteria_evaluated と完全一致し、derived_from が CL-2..CL-9 を全被覆 (lint-criteria-provenance.py exit 0)。name 'run-elegant-review' は run- prefix 命名規約に合致しディレクトリ名と一致、description は日本語 trigger『〜とき』を 2 個含み内部動作詳細語なし。high severity 違反なし。"
+ }
+diff --git a/eval-log/skill-creator/run-skill-create/content-review/elegance-verdict.json b/eval-log/skill-creator/run-skill-create/content-review/elegance-verdict.json
+index bd6fed5..b9e6e4d 100644
+--- a/eval-log/skill-creator/run-skill-create/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-skill-create/content-review/elegance-verdict.json
+@@ -2,12 +2,12 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "run-skill-create",
+-    "skill_md_sha256": "d44b07b23684cfd09cdf221b480e2b8484b75e81386a18235f0d9dc72d5a3837"
++    "skill_md_sha256": "4fcc0bc1b1326c29bc8ece5a0442718ad4b2670b266c3411b19b324061a5de13"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+   "reviewer": "run-elegant-review-subagent (independent content-review)",
+-  "reviewed_at": "2026-06-26",
++  "reviewed_at": "2026-07-02T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "findings_summary": {
+@@ -15,7 +15,7 @@
+     "omission": 0,
+     "inconsistency": 0,
+     "dependency_break": 0,
+-    "smell": 0
++    "smell": 1
+   },
+   "feedback_loop": {
+     "loop_scope": "both",
+@@ -26,14 +26,17 @@
+       "OUT2"
+     ],
+     "positive_feedback": [
+-      "Key Rule #6 を legacy manifest.json 経路 (build-manifest-registration-plan.py の propose→Gate2.5→--apply) と新形式 plugin.json plugin のルート2SSOT登録経路 (validate-plugin-completeness.py --fix) に責務分離し、後者を append-only・冪等・書込後自己再検証ゆえ生成フロー内で自動実行可と明示したのは、検出層(fail-closed)/予防層(--fix)の二層防御を本文側でも反映した良設計。3つの実装ファイル(workflow-manifest step3/3.5・build-manifest-registration-plan.py の legacy専用コメント・validate-plugin-completeness.py docstring)と責務境界が一致しドリフトが無い",
+-      "完了チェックリストを『新規 plugin の --fix 実行+検出モード exit0』『bundles.json は --fix が bundle_targets を読み自動 append』『legacy manifest.json のみ Gate2.5承認後 --apply』の3項目へ再構成し、横展開可否ではなく plugin 形式(legacy/新形式)と新規/既存の軸で分岐させたことで、build-steps Phase G の実手順および validate-plugin-completeness.py register_missing() の bundle_targets 読取り実装と完全整合している"
++      "Gate 順序の正本を workflow-manifest.json の gate_order 配列 (G1→G2.5→G2→G3→G4, gate_order_comment で導出規則=phases[].gate 非 null 値の実工程順を明文化) へ一本化し、SKILL.md 側は『gate_order 順に未承認とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)』と参照記述化したことで、Gate 2.5 が Gate 2 より先に来る非単調順序の二重管理ドリフトを構造的に封鎖した良設計。End-to-End Flow 図の Gate 出現順 (Gate1→Gate2.5→Gate2→Gate3→Gate4) も manifest 実順序と一致",
++      "P0 lint の本数直書きを廃し IN1/CL-7 双方を『workflow-manifest の p0-lint.commands 全件 (manifest-contents 含む)』参照へ揃えたことで、lint 追加時に SKILL.md が自動追従する。manifest 実体 (phases[id=p0-lint].commands 8 件、末尾 lint-manifest-contents.py) と『含む』表現が一致し本数矛盾が消滅",
++      "完了チェックリスト 13 項目に CL-1..CL-13 の安定アンカーを付与し、frontmatter criteria の derived_from (IN1→CL-7 / IN2→CL-3,CL-12 / OUT1→CL-1,CL-2,CL-8,CL-11 / OUT2→CL-9,CL-10) と exempt 4 件 (CL-4/5/6/13、各理由付き) で全 13 項目を被覆する写像を機械検査可能にした (lint-criteria-provenance.py exit 0)。評価 criteria の由来が checklist へトレース可能になり Goodhart 罠を抑止"
++    ],
++    "negative_feedback": [
++      "low smell (非ブロッキング・今回差分外の既存記述): 本文末尾 Additional Resources の『設計書: 05/06/07/11/13/23/25 章』に 11 章 (templates) が含まれ、frontmatter context-budget コメント (L35) と Gotchas #5 (L169) の『05/06/07/13/23/25 章のみ参照』と章集合が不一致。11 章はスキル内の他箇所 (prompts/manifest/resource-map) で一切参照されず孤立しており、L190 を『05/06/07/13/23/25 章』へ揃えるか 11 章参照の根拠を context budget へ追記する軽微修正を推奨。機能影響・依存断絶なし (全章ファイル実在) のため PASS を妨げない"
+     ],
+-    "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "現 SKILL.md (sha256 d44b07b... を python hashlib で独立再計算し一致確認) を frontmatter から Additional Resources まで全文 genuine 実読し、git diff origin/main...HEAD の2点差分を関連4ファイルへ照合した。(1) Key Rule #6 の書換: legacy=build-manifest-registration-plan.py / 新形式ルート marketplace.json・bundles.json=validate-plugin-completeness.py --fix(append-only・冪等・書込後自己再検証・人間PR diff最終承認)。これは workflow-manifest.json の step3 manifest-register(gate2.5・build-manifest-registration-plan.py)+step3.5 bundle-register(command=python3 scripts/validate-plugin-completeness.py --fix・comment『新規plugin...append-only自動登録し書込後自己再検証...最終承認は人間がPR diffで』)と一致。build-manifest-registration-plan.py L152-166 は『legacy manifest.json 専用・ルート2SSOT登録は責務外で validate-plugin-completeness.py --fix が担う』と明記し責務境界が同一。validate-plugin-completeness.py docstring L16-23 は既定=検出fail-closed/--fix=予防append-only自己再検証exit0冪等・人間PR承認で一致。(2) 完了チェックリストの3項目再構成: build-steps.md Phase G(L82-94)の新規plugin登録手順=validate-plugin-completeness.py --fix で marketplace.json plugins[]+bundles.json(bundle_targets)へ append-only・自己再検証 exit0・no-op冪等・検出層が最後の砦、と一致。bundles 項目の『--fix が bundle_targets を読み自動 append』は register_missing() L234-248 の manifest.get('bundle_targets') 読取り実装と一致。repo-root相対パス scripts/validate-plugin-completeness.py は冒頭注記(script起動はrepo-root cwd前提)と整合。frontmatter feedback_contract.criteria 4件は本変更で不変: IN1=Checklist L140+Key Rule#3, IN2=Key Rule#5+L136/L145, OUT1=禁則行+Key Rules#1/#4+Gotchas#1/#2, OUT2=L142/L143 で全て本文と整合。4条件(矛盾/漏れ/不整合/依存断絶)すべて0件で PASS。被採点物 SKILL.md への改変は一切なし(read-only検証)。既存verdictの SHA b337e23... は本変更前の stale であり現SHA d44b07b... で genuine 再生成した。"
++  "notes": "現 SKILL.md (sha256 4fcc0bc1b1326c29bc8ece5a0442718ad4b2670b266c3411b19b324061a5de13 を python3 hashlib で独立計算) を frontmatter から Additional Resources まで全文 genuine 実読し、本日差分の 6 検証点を workflow-manifest.json / prompts / schemas / scripts 実体へ照合した。(a) gate_order 実在: manifest L7 に [G1,G2.5,G2,G3,G4] + gate_order_comment が実在し、ゴールシークループの『gate_order 順…順序正本は manifest』参照記述と整合。(b) 本文 Gate 順序: End-to-End Flow 図の Gate 出現順 = Gate1(step1)→Gate2.5(step3)→Gate2(step4a)→Gate3(step5)→Gate4(step6) で manifest 実順序 (phases の非 null gate を step 順に並べた G1→G2.5→G2→G3→G4) と矛盾なし。gate_order 配列自体も phases 定義から再導出して一致確認。(c) CL アンカー: regex 走査で CL-1..CL-13 全 13 件・重複 0・exempt 4 件 (CL-4/5=登録の運用操作項目で validate-plugin-completeness.py が機械検査、CL-6=legacy 経路の条件付き運用項目、CL-13=レポート提示の運用項目で契約は本文規定済み)。いずれも機械層担保または条件付き運用項目で LLM 評価 criteria の対象外とする理由は妥当。(d) derived_from: IN1=[CL-7], IN2=[CL-3,CL-12], OUT1=[CL-1,CL-2,CL-8,CL-11], OUT2=[CL-9,CL-10] の参照先アンカー全実在、derived_from∪exempt=CL-1..13 全被覆、lint-criteria-provenance.py exit 0 (OK: Checklist↔criteria 写像整合)。(e) 本数参照化: IN1/CL-7 とも『p0-lint.commands 全件 (manifest-contents 含む)』で本数リテラル残存 0 (regex 検査)。manifest 実体は 8 commands で末尾 lint-manifest-contents.py、『含む』と一致し本数矛盾解消。(f) criteria↔本文意味整合: IN1↔CL-7 (exit0+TODO/未展開{{}}/英語仮文なし) 同義、IN2↔CL-3 (build-trace schema+章 coverage)+CL-12 (handoff schema)、OUT1↔CL-1/2/8/11+禁則行+Key Rules#1/#4+Gotchas#1/#2 (承認前自動前進禁止+fork 起動)、OUT2↔CL-9/10 (evaluator FAIL 残存なし+C1-C4 全 PASS)。SSOT 検証: feedback_contract_ssot.validate_criteria(require_both_scopes=True) errors=NONE。依存断絶走査: 本文参照 29 ファイル (prompts R1/R2/R3、schemas 5 種、references 3 種、scripts 2 種、../run-elegant-review/schemas/findings.schema.json、../run-build-skill/references/goal-seek-paradigm.md、repo-root scripts/validate-plugin-completeness.py、build-manifest-registration-plan.py、references/governance-params.json.example、seven-layer-markdown-template.md、子スキル 7 体) 全実在。fast_mode.skip_phases=[design-evaluate,elegant-review]↔『Step 4b/5 skip』、governance auto_approve_conditions 4 件↔CL-11 の 4 条件も一致。4 条件は矛盾 0/漏れ 0/不整合 0/依存断絶 0。smell 1 件 (negative_feedback 記載の設計書章リスト表記ドリフト、今回差分外・low・機能影響なし) は先例キャリブレーション (low smell は透明記録の上 PASS 可) に従い非ブロッキング。被採点物 SKILL.md への改変は一切なし (read-only 検証)。既存 verdict の SHA d44b07b2... は本日変更前の stale であり現 SHA 4fcc0bc1... で genuine 再生成した。"
+ }
+diff --git a/eval-log/skill-creator/run-skill-create/content-review/rubric-verdict.json b/eval-log/skill-creator/run-skill-create/content-review/rubric-verdict.json
+index 898ccfc..2aa17d1 100644
+--- a/eval-log/skill-creator/run-skill-create/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-skill-create/content-review/rubric-verdict.json
+@@ -1,21 +1,21 @@
+ {
+-  "target": {"plugin": "skill-creator", "skill": "run-skill-create", "skill_md_sha256": "d44b07b23684cfd09cdf221b480e2b8484b75e81386a18235f0d9dc72d5a3837"},
++  "target": {"plugin": "skill-creator", "skill": "run-skill-create", "skill_md_sha256": "4fcc0bc1b1326c29bc8ece5a0442718ad4b2670b266c3411b19b324061a5de13"},
+   "review_kind": "rubric",
+   "verdict": "PASS",
+-  "reviewer": "assign-skill-design-evaluator (independent content-review)",
+-  "reviewed_at": "2026-06-26",
++  "reviewer": "assign-skill-design-evaluator-subagent (independent content-review)",
++  "reviewed_at": "2026-07-02T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+-    "positive_feedback": ["IN1/IN2/OUT1/OUT2 を SSOT(feedback_contract_ssot.validate_criteria, require_both_scopes=True)で実検証し errors=NONE。id は ^(IN|OUT|C)[0-9]+$ 準拠、verify_by は機械層(IN1=lint, IN2=script)と判断層(OUT1=elegant-review, OUT2=evaluator)に二層分離されall enum 内、loop_scope は inner/outer 両在で本スキルの E2E orchestrator 目的(P0 lint→handoff/build-trace→fork評価→FAIL残存0)から導出されており固定テンプレ非流用", "今回変更の Key Rule #6 と完了チェックリスト登録3項目が legacy(build-manifest-registration-plan.py + Gate2.5 + --apply)と新形式(validate-plugin-completeness.py --fix append-only)を矛盾なく分離。両参照スクリプトは repo-root scripts/ 配下に実在(dependency_break 0)、--fix の append-only/冪等/書込後自己再検証も scripts/validate-plugin-completeness.py の実装と一致し description↔implementation drift も無し"],
++    "positive_feedback": ["IN1/IN2/OUT1/OUT2 を SSOT (feedback_contract_ssot.validate_criteria, require_both_scopes=True) で実検証し errors=NONE。id は ^(IN|OUT|C)[0-9]+$ 準拠、verify_by は機械層 (IN1=lint, IN2=script) と判断層 (OUT1=elegant-review, OUT2=evaluator) の二層分離で全 enum 内、loop_scope は inner/outer 両在。本日追加の derived_from が全 criteria に付与され、参照先 CL-1..CL-13 アンカーは本文チェックリストに重複なく実在、derived_from∪exempt(CL-4/5/6/13 理由付き) が 13 項目を完全被覆し lint-criteria-provenance.py exit 0。評価基準がチェックリスト由来である provenance が機械検査可能になり固定テンプレ流用でないことを構造的に証明", "Gate 順序と P0 lint 本数という二重管理されやすい可変値を workflow-manifest.json (gate_order 配列 / phases[id=p0-lint].commands 全件) への参照記述へ昇格し、SKILL.md 側の直書きを排除。manifest 実体 (gate_order=[G1,G2.5,G2,G3,G4]、commands 8 件末尾 lint-manifest-contents.py) と本文記述が一致し description↔implementation drift なし"],
+     "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "ref-skill-design-rubric/references/rubric.json (rubric_version=1.3.0, rubric_id=skill-design, threshold=80, max_skill_md_lines=300) を読み、現 SKILL.md (sha256 d44b07b2...) を kind=skill として genuine 実読・採点。本文行数実測=126行(frontmatter lines1-60 を awk で除外、body lines 61-186)で BD-003(high,*)/PD-001 PASS。high severity rule 結果(finding 0): FM-001(name run-skill-create が ^(run|ref|assign|wrap|delegate)- 一致, len16<=60) PASS / BD-001(## Purpose & Output Contract 厳格一致 line66) PASS / BD-003(126<=300) PASS / NM-001(dir basename==name) PASS。medium 全 PASS: FM-002(〜とき×2 末尾。) / FM-003(trigger=2 で 2..3) / FM-004(内部動作動詞なし) / BD-002(## Gotchas line159) / BD-004(description の2発動条件 新規Skill端から端まで作る・品質保証付きフロー起動 が End-to-End Flow/Steps に1:1対応) / PD-002(冒頭30行内に ## Purpose + 禁則)。low 全 PASS: FM-005(冒頭『実行して』動詞) / NM-002(lint-skill-name.py exit0) / NM-003(lint-skill-tree.py exit0) / PD-001(references/ 実在)。RG-001 は本 verdict 出力側ルール。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop いずれも不在のため存在ゲートで全 skip(PASS)。agent/hook/command/plugin-composition/prompt/workflow 固有ルールは applies_to_kinds 不一致で非適用。feedback_contract.criteria は IN1=lint/IN2=script(inner), OUT1=elegant-review/OUT2=evaluator(outer)の全4件で SSOT validate_criteria errors=NONE。dependency_break 走査(今回変更で参照): build-manifest-registration-plan.py / validate-plugin-completeness.py / validate-intake-publish-ready.py / evaluate-create-gates.py すべて実在。high finding 0件で threshold 80 充足のため PASS。被採点物は read-only(未改変)。"
++  "notes": "ref-skill-design-rubric/references/rubric.json (rubric_version=1.3.0, rubric_id=skill-design, threshold=80, max_skill_md_lines=300, rubric_hash=sha256 6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d) を読み、現 SKILL.md (sha256 4fcc0bc1... を python3 hashlib で独立計算) を kind=skill として genuine 実読・採点。本文行数実測=126 行 (frontmatter lines 1-64 を除外、body lines 65-190) で BD-003(high,*) PASS。high severity rule (finding 0): FM-001 (name run-skill-create が ^(run|ref|assign|wrap|delegate)- 一致, len 16<=60) PASS / BD-001 (## Purpose & Output Contract 厳格一致 line 70) PASS / BD-003 (126<=300) PASS / NM-001 (dir basename==name) PASS。medium 全 PASS: FM-002 (〜とき×2・末尾。) / FM-003 (trigger=2 で 2..3 内) / FM-004 (description に内部動作動詞なし) / BD-002 (## Gotchas line 163) / BD-004 (description の 2 発動条件『新規 Skill を端から端まで作る』『複数 Gate 品質保証フロー起動』が Purpose の端から端まで orchestrator + End-to-End Flow の 4 Gates に 1:1 対応) / PD-002 (body 冒頭 30 行内に ## Purpose & Output Contract line 70 + 禁則 line 85)。low 全 PASS: FM-005 (冒頭『実行して』動詞) / NM-002 (lint-skill-name.py exit 0 実行確認) / NM-003 (lint-skill-tree.py exit 0 実行確認) / PD-001 (references/ 実在・resource-map.yaml 等)。RG-001 は本 verdict 出力側ルール (rubric_hash を本 notes に記録)。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop いずれも不在を実確認し存在ゲートで全 skip (PASS)。agent/hook/command/plugin-composition/prompt/workflow 固有ルールは applies_to_kinds 不一致で非適用。dependency_break 走査 (本日変更が参照する経路): workflow-manifest.json の gate_order/phases[id=p0-lint].commands 実在・validate-intake-publish-ready.py / evaluate-create-gates.py / validate-plugin-completeness.py / build-manifest-registration-plan.py / governance-params.json.example / prompts R1-R3 / schemas 5 種 / 子スキル 7 体すべて実在。lint-criteria-provenance.py exit 0 / lint-skill-description.py OK=31 VIOLATION=0。high finding 0 件で threshold 80 充足のため PASS。被採点物は read-only (未改変)。既存 verdict の SHA d44b07b2... は本日変更前の stale であり現 SHA で genuine 再生成した。"
+ }
+diff --git a/plugins/skill-creator/EVALS.json b/plugins/skill-creator/EVALS.json
+index ee753bf..d48ba56 100644
+--- a/plugins/skill-creator/EVALS.json
++++ b/plugins/skill-creator/EVALS.json
+@@ -1,6 +1,7 @@
+ {
+   "$schema": "https://json-schema.org/draft-07/schema#",
+-  "skill_creator_version": "0.1.0",
++  "skill_creator_version": "1.1.0",
++  "evaluations_deprecated_note": "DEPRECATED: evaluations[] は旧経路 (2026-05-22 手動 baseline のみ・自動 writer なし)。実評価レコードの正本は eval-log/**/*-score.jsonl (write-eval-log) と eval-log/**/content-review/*-verdict.json であり、aggregate-evals.py は 3 ソースを合流して読む (本配列の読取互換は維持)。本配列へ新規追記しない。",
+   "evaluations": [
+     {
+       "date": "2026-05-22",
+diff --git a/plugins/skill-creator/ROADMAP.md b/plugins/skill-creator/ROADMAP.md
+index de2d2c4..5b3aa9f 100644
+--- a/plugins/skill-creator/ROADMAP.md
++++ b/plugins/skill-creator/ROADMAP.md
+@@ -6,6 +6,14 @@
+ 
+ **目標**: governance/feedback hook を 7 種 target_type へ配線完了し、改善ループを自走させる基盤を確立する。**成果物**: 7 種 hook 配線済み plugin、lessons-learned 自動記録パイプライン、本 CHANGELOG.md の運用開始 (各 PR で Unreleased セクションを更新する運用ルール)。**KPI**: hook 配線カバレッジ 100% (7/7 種)、lessons 自動記録の取りこぼし率 < 5%、CHANGELOG 更新率 100% (governance ラベル付き PR 基準)。
+ 
++### 意図的 deferred (2026-07-02 elegant-review `20260702-declarative-skillcreator`)
++
++宣言型化レビューで理由付き残置とした項目 (正本: `eval-log/skill-creator/_plugin/elegant-review/20260702-declarative-skillcreator/verdict.json` の `deferred[]`)。(1) verdict 鮮度の tree-hash 化 (references のみ変更の PR merge が re-audit trigger)、(2) canonical-registry.json (正本誤読の観測時に採用)、(3) exemptions.json 完全版 (escape 追加時に段階導入)、(4) compute-dogfooding-metrics.py の SessionEnd 配線 (書込先を state 領域へ変更してから)、(5) knowledge/usage-log.jsonl 生成 (consult 実運用の定着後)、(6) handoff-`<step>`.json 存在検証 lint (次回 gate 変更時に同時配線)、(7) script-frontmatter の CI 配線 (既存違反の棚卸し後、`lint-matrix.json` の `ci_exclusion_reason` に記録)。
++
++### 意図的 deferred (2026-07-02 まんべんなく生成レビュー)
++
++build-plan 決定論導出 (`validate-build-plan.py`)・criteria roster 動的探索・llm-coverage CI fail-closed 化の追補で理由付き残置とした項目。(8) 投入系 Sink Contract の combinator/テンプレ化 (`with-sink.patch`): 現状は build-plan notes + Step 3 の必須参照指示 (prompt 層)。投入系 skill の次回生成時に patch 化して機械層へ昇格、(9) per-skill EVALS.json の生成・検査: 現状 plugin 単位のみ。friction anomaly (aggregate-evals) の運用実績を見て skill 単位へ展開、(10) build-plan の CI 静的面: brief が build 時 (eval-log/) にのみ存在するため CI 一括適用は不可 (`lint-matrix.json` の `ci_exclusion_reason` に記録)。committed brief の保存規約を導入すれば静的化可能。
++
+ ## 中期 (3-6 ヶ月)
+ 
+ **目標**: composition manifest の plugin 横断採用と review→executor の自動チェインにより、改善サイクルを人手介入最小で回す。**成果物**: 全 plugin での `plugin-composition.yaml` 採用、review エージェントから executor エージェントへの自動 handoff 機構、EVALS 結果から rubric 改訂 PR を生成する feedback パイプライン。**KPI**: composition manifest 採用率 100% (全 plugin)、review→executor 自動チェインの収束率 (max 3 周回内) >= 80%、EVALS→rubric PR の月次マージ数 >= 2 本。
+diff --git a/plugins/skill-creator/lessons-learned/2026-06-24-posttooluse-bash-x.md b/plugins/skill-creator/lessons-learned/2026-06-24-posttooluse-bash-x.md
+deleted file mode 100644
+index f724d66..0000000
+--- a/plugins/skill-creator/lessons-learned/2026-06-24-posttooluse-bash-x.md
++++ /dev/null
+@@ -1,20 +0,0 @@
+----
+-date: 2026-06-24
+-trigger_event: PostToolUse
+-tool: Bash
+-severity: medium
+-capability: shell
+----
+-
+-## observation
+-
+-ERROR boom
+-
+-## hypothesis
+-
+-(自動記録: 失敗パターンを検出。根本原因は要 human triage)
+-
+-## proposed_action
+-
+-- 当該 capability に対する rubric 強化 / validator 追加を検討
+-- 再現条件を別 issue に起票
+diff --git a/plugins/skill-creator/plugin-composition.yaml b/plugins/skill-creator/plugin-composition.yaml
+index 5d80007..08b9df7 100644
+--- a/plugins/skill-creator/plugin-composition.yaml
++++ b/plugins/skill-creator/plugin-composition.yaml
+@@ -20,13 +20,14 @@ contract:
+   invariant:
+     # enforcement 注記: 機械執行(lint/hook)がある項目はその名前を、無い項目は manual を併記する。
+     - "全 Capability は CapabilityManifest を持ち kind を宣言すること (enforcement: hook:PostToolUse-EditWrite/lint-capability-manifest)"
+-    - "rubric_refs は L0→L1→L2 deep-merge 順を保つこと (enforcement: manual。skill-governance-lint/scripts/lint-rubric-refs-exist.py は存在のみ検証し順序は未検証)"
+-    - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: manual)"
+-    - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual)"
++    - "rubric_refs は L0→L1→L2 deep-merge 順を保つこと (enforcement: manual。skill-governance-lint/scripts/lint-rubric-refs-exist.py は存在のみ検証し順序は未検証。manual 維持の理由: rubric.json 側に layer 宣言フィールドが無く順序の機械突合はスキーマ拡張コスト過大、意図的残置)"
++    - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order。run dir の Phase1-3 成果物の存在+mtime 順序を機械検査)"
++    - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual。manual 維持の理由: script ヘッダ規約 write-scope は存在するが宣言との自動突合は費用対効果で見送り、意図的残置)"
+     - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。skill-creator / prompt-creator は marketplace / bundle 配布対象ではない (allowed_cross_plugins: skill-intake, skill-governance-lint, skill-governance-automation, skill-governance-config, skill-governance-migration, prompt-creator) (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
+     - "knowledge-loop は単一機構(ref-knowledge-loop 正本)を生成物(Loop A)と skill-creator 自身(Loop B)で自己適用し、並行ストアを作らないこと(SSOT) (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py)"
+     - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(必須共有モジュールは plugin 内へ vendoring し byte 一致 lint で正本と同期/ローダは fail-soft で raise しない)。単独 install でも全フックが exit 0 を維持する。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層1 (enforcement: scripts/lint-runtime-portability.py + scripts/lint-vendored-ssot.py)"
+     - "配布 plugin (kind=plugin) を生成し外部依存(API/DB/秘密)の疎通確認手順が要るなら、install 位置を __file__ 相対で自己解決する doctor スクリプトを同梱し README の疎通確認はチャット委譲(/<name>-doctor or 自然文)を一次導線とすること。README bash/sh フェンスに一次手順の裸 $CLAUDE_PLUGIN_ROOT/... / repo 相対 python3 plugins/<name>/... / os.environ 添字を書かず、生パスは開発者補足へ降格し fallback 形 ${CLAUDE_PLUGIN_ROOT:-plugins/<name>} で書く(導入者の生ターミナル空展開事故を防ぐ)。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層2 (enforcement: scripts/lint-readme-plugin-root-portability.py)"
++    - "全宣言面(lint 集合/完了条件/ゲート/評価 sink)は機械可読正本と対向突合 lint を持つこと。新しい宣言面を追加する際は突合 lint を同時に配線し、突合を持たない manual 宣言は理由注記付きの意図的残置のみ許容する。manual 宣言の残存数は ratchet 監視され増加は CI FAIL (enforcement: skill-governance-lint/scripts/lint-declaration-coverage.py)"
+ 
+ capabilities:
+   # === Skills (kind=skill) ===
+@@ -40,7 +41,6 @@ capabilities:
+   - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
+   - { kind: skill, ref: skills/run-skill-feedback,          tier: core }
+   - { kind: skill, ref: skills/run-skill-rename,            tier: extension }
+-  - { kind: skill, ref: skills/run-skill-feedback,          tier: core }
+   - { kind: skill, ref: skills/run-skill-update-notifier,   tier: extension }
+   - { kind: skill, ref: skills/run-migrate-audit,           tier: extension }
+   # contract-generator 由来の symlink skill は marketplace 単独 install で dangling するため
+diff --git a/plugins/skill-creator/references/quality-rubric.md b/plugins/skill-creator/references/quality-rubric.md
+index 07c7183..73bffff 100644
+--- a/plugins/skill-creator/references/quality-rubric.md
++++ b/plugins/skill-creator/references/quality-rubric.md
+@@ -6,9 +6,9 @@ type: reference
+ 
+ # 共通 5 次元ルブリック
+ 
+-> **正本注記**: 本ファイルが skill-creator 系 (生成 agent 含む) の正本。判定基準のうち `intake.json` 等 skill-intake ドメイン固有の例は対象ドメインの成果物に読み替え可。
++> **正本注記**: 本ファイルが skill-creator 系 (生成 agent 含む) の正本。判定基準の例は skill-creator ドメインの成果物 (SKILL.md / workflow-manifest / build-trace / findings) で書く。派生 plugin は自ドメインへ読み替えた独自コピー (例: `plugins/skill-intake/references/quality-rubric.md`) を持つ。
+ 
+-各 SubAgent は出力前に必ずこのルブリックで自己採点する。`scripts/quality_gate.py` も同基準で機械検証する。
++各 SubAgent は出力前に必ずこのルブリックで自己採点する。機械検証可能な項目は既存 lint 群 (`plugins/skill-governance-lint/scripts/validate-frontmatter.py` / `lint-skill-completeness.py` / `lint-manifest-contents.py`、`scripts/lint-content-review.py`) が担い、採点そのものは SubAgent の自己採点と独立 approver (context:fork) が行う。
+ 
+ ## 5 次元
+ 
+@@ -41,11 +41,11 @@ type: reference
+ 
+ **判定基準**
+ 
+-- intake.json の必須キーが揃っているか
+-- 5 軸が全 verified か（knowledge_assets 含む）
+-- 図解 1〜3 図が各セクションに配置されているか
++- SKILL.md frontmatter の commonCore 必須キーが揃っているか（`validate-frontmatter.py`）
++- kind 別必須サポート資産（references/ scripts/ 等）が配置されているか（`lint-skill-completeness.py`）
++- build-trace の章 coverage が空欄なく PASS/N/A/skip 理由付きで埋まっているか（`validate-build-trace.py`）
+ 
+-**閾値**: 2 以上で PASS。1 以下は再ヒアリング。
++**閾値**: 2 以上で PASS。1 以下は不足項目の再収集。
+ 
+ ## 2. 一貫性（Consistency）
+ 
+@@ -58,11 +58,11 @@ type: reference
+ 
+ **判定基準**
+ 
+-- フィールド間の整合（jtbd と purpose.excavated）
+-- 用語統一（例: 「フォーム」と「申込書」の混在）
+-- 図解と本文の一致
++- フィールド間の整合（brief.goal と SKILL.md ゴールシークの Goal）
++- 用語統一（`ref-skill-glossary` 準拠。例: 「ゲート」と「Gate」の混在なし）
++- workflow-manifest.json と SKILL.md 本文の一致（二重管理 drift なし）
+ 
+-**閾値**: 2 以上 PASS。`scripts/cross_check.py` が SubAgent 間整合を検証。
++**閾値**: 2 以上 PASS。manifest↔本文の整合は `lint-manifest-contents.py`、SubAgent 間整合は独立 approver（context:fork、proposer≠approver）が検証。
+ 
+ ## 3. 深度（Depth）
+ 
+@@ -71,13 +71,13 @@ type: reference
+ | 0 | 表層要望のまま |
+ | 1 | 1 段下まで掘った |
+ | 2 | 5 Whys 3 段以上 |
+-| 3 | 5 Whys 完走 + Magic Wand + Pain Story |
++| 3 | 5 Whys 完走 + 代替案の trade-off 比較 + 既知失敗パターン参照 |
+ 
+ **判定基準**
+ 
+-- purpose.excavated が stated と十分異なる
+-- five_axes.true_problem.depth = "deep"
+-- pain_stories が 1 件以上で時刻・感情含む
++- brief.purpose_background が表層要望の言い換えに留まらず真の課題まで掘れている
++- kind 選定・placement 判断に判断表（01a Step2）由来の根拠が伴う
++- lessons-learned の既知の失敗パターンを参照・反映している
+ 
+ **閾値**: 2 以上 PASS。
+ 
+@@ -92,9 +92,9 @@ type: reference
+ 
+ **判定基準**
+ 
+-- 価値 KPI に数値が含まれる（時間／件数／率）
+-- pain_stories に具体時刻・場所
+-- jtbd.when が具体的契機
++- 完了チェックリストが二値判定可能（lint exit 0／件数一致 等の数値・コマンド）
++- findings に file:line 等の具体位置と再現コマンドが含まれる
++- trigger_conditions が観測可能な具体的契機になっている
+ 
+ **閾値**: 2 以上 PASS。
+ 
+@@ -111,7 +111,7 @@ type: reference
+ 
+ - 同義語反復が 3 回以下
+ - セクション当たりの説明文が 200 字以内
+-- 図解のラベルが 10 字以内
++- SKILL.md 本文が行数上限（lint-skill-tree P0-2）に収まり詳細は references/ へ委譲
+ 
+ **閾値**: 2 以上 PASS。
+ 
+@@ -128,26 +128,26 @@ type: reference
+    - 3 回後も未達 → エスカレーション
+ ```
+ 
+-## サンプル: interviewer の自己採点（google-forms-generator 中盤）
++## サンプル: run-build-skill-subagent の自己採点（新規 skill 生成中盤）
+ 
+ | 次元 | 点 | 根拠 |
+ |------|----|------|
+-| 完全性 | 2 | 5 軸 3/5 充足、share_target 未確定 |
+-| 一貫性 | 3 | 矛盾なし |
+-| 深度 | 2 | 5 Whys 3 段達成 |
+-| 検証可能性 | 3 | 90 分／月 4 回の数値あり |
++| 完全性 | 2 | 章 coverage 14/16 充足、2 章が skip 理由未記入 |
++| 一貫性 | 3 | manifest↔本文の矛盾なし |
++| 深度 | 2 | kind 選定に判断表根拠あり、代替案比較は未記録 |
++| 検証可能性 | 3 | lint exit 0、findings 5 件に file:line あり |
+ | 簡潔性 | 2 | 適切 |
+ 
+-合計 12/15 → 完全性のみ閾値ギリギリ → share_target を 1 問だけ追加質問。
++合計 12/15 → 完全性のみ閾値ギリギリ → skip 理由 2 件を build-trace に追記。
+ 
+ ## 自己修正手順
+ 
+ | 不足次元 | 修正手順 |
+ |----------|----------|
+-| 完全性 | 不足キーを特定 → question-bank から 1 問抽出 |
+-| 一貫性 | 矛盾箇所を特定 → Reverse Brief で確認 |
++| 完全性 | 不足項目を特定 → 正本 schema／設計書該当章を再読して補完 |
++| 一貫性 | 矛盾箇所を特定 → 正本（workflow-manifest／schema）と突合し従属側を修正 |
+ | 深度 | 5 Whys 1 サイクル追加 |
+-| 検証可能性 | Pain Story / Current Workaround で数値要求 |
++| 検証可能性 | 検証コマンド・file:line・数値根拠を追記 |
+ | 簡潔性 | 重複文を統合・削除 |
+ 
+ ## エスカレーション
+diff --git a/plugins/skill-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md b/plugins/skill-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md
+index ea7edd7..204fd6c 100644
+--- a/plugins/skill-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md
++++ b/plugins/skill-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md
+@@ -58,8 +58,8 @@ plugin 外 (repo-root `scripts/` 等) は存在しない。トップレベルで
+ | `scripts/lint-runtime-portability.py` | hook script が import-time に自 plugin 外を fail-closed 依存 (raise) しないことを AST 静的検査。 |
+ 
+ 両 lint は Makefile (`make lint` / `make test`) と CI (`creator-kit-ci.yml`) に配線済み。
+-回帰 pytest (`tests/scripts2/test_root__lint_runtime_portability.py` /
+-`tests/scripts2/test_root__lint_vendored_ssot.py`) が修正前パターンの FAIL / 修正後の PASS を固定する。
++回帰 pytest (`tests/scripts-root/test_root__lint_runtime_portability.py` /
++`tests/scripts-root/test_root__lint_vendored_ssot.py`) が修正前パターンの FAIL / 修正後の PASS を固定する。
+ 
+ ### 検証手順 (単独 install 再現)
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/SKILL.md b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+index 8fed39e..3192937 100644
+--- a/plugins/skill-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/skill-creator/skills/run-build-skill/SKILL.md
+@@ -80,18 +80,22 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+       loop_scope: inner
+       text: 生成 Capability が命名/構造/frontmatter/goal-seek/completeness/ssot lint と validate-build-trace を全て exit0 で通過する
+       verify_by: lint
++      derived_from: [CL-1, CL-2, CL-3, CL-4, CL-7, CL-9, CL-10, CL-11]
+     - id: IN2
+       loop_scope: inner
+       text: skill-build-trace.json が source_docs/doc_coverage/layer_decisions/reproducibility_gates を空欄なく記録している
+       verify_by: script
++      derived_from: [CL-6]
+     - id: OUT1
+       loop_scope: outer
+       text: fork した assign-skill-design-evaluator の score>=80 かつ high severity 0 件
+       verify_by: evaluator
++      derived_from: [CL-5]
+     - id: OUT2
+       loop_scope: outer
+       text: 生成物がユーザ brief の goal を最適反映し 30 思考法 elegance と 4 条件を満たす
+       verify_by: elegant-review
++      derived_from: [CL-8]
+ # context-budget (CD-005): 章一括ロード禁止 / max-reference-chapters: 3
+ source: doc/ClaudeCodeスキルの設計書/
+ source-tier: internal
+@@ -132,7 +136,7 @@ audit-trigger: quarterly
+ 
+ ### lint 系 (lint)
+ 
+-12. P0 lint 4 種 + script-frontmatter + goal-seek + **ssot-duplication** + validate-build-trace を **manual-preflight** として実行 (28章: A/B 強制 gate と呼称分離)。`lint-ssot-duplication.py` は編集前に対象プラグイン全体を重複解析する事前ゲート (両方残し禁止・上書き一本化の判断材料)。検出は **DUP-SCHEMA-ID** (同一 `$id`=正本曖昧, **exit1 で fail**) / **REDIRECT-FAT-BODY** / **DUP-REQUIRED-SET** / **DUP-PASSAGE** (後 3 者は smell、build 時は warn・CI の `--strict` で fail 化) の 4 種。build Step4 は早期警告、強制は `governance-check.yml` の `--strict` 実行が担う。
++12. **manual-preflight の lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json`** (context=build-preflight。Step 4 の bash ブロックはその射影で、乖離は `lint-matrix-sync.py` が CI で fail。28章: A/B 強制 gate と呼称分離)。`lint-ssot-duplication.py` は編集前に対象プラグイン全体を重複解析する事前ゲート (両方残し禁止・上書き一本化の判断材料)。検出は **DUP-SCHEMA-ID** (同一 `$id`=正本曖昧, **exit1 で fail**) / **REDIRECT-FAT-BODY** / **DUP-REQUIRED-SET** / **DUP-PASSAGE** (後 3 者は smell、build 時は warn・CI の `--strict` で fail 化) の 4 種。build Step4 は早期警告、強制は `governance-check.yml` の `--strict` 実行が担う。
+ 13. `validate-build-trace.py` が `source_docs` / `build_flow_coverage` / `doc_coverage` / `layer_decisions` / `reproducibility_gates` の空欄・未読・N/A 理由なしを拒否。
+ 14. context 予算 (CD-005): 同時 Read は 3 章まで。`references/resource-map.yaml` で task category → 章選択。
+ 15. ch15/ch16 公式参照確認は必須 (Step 1 冒頭)。
+@@ -159,21 +163,21 @@ audit-trigger: quarterly
+ 
+ ### 完了チェックリスト (Checklist)
+ 
+-- [ ] kind を 7 種から確定し、commonCore frontmatter (必須集合の正本 = `references/capability-manifest.schema.json#/definitions/commonCore.required`: `name`/`description`/`kind`/`version`/`owner`) を生成した
+-- [ ] 本文 300 行以下・description は発動条件のみ・trigger 2-3 個 (08章)
+-- [ ] kind 別必須サポート資産 (prompts/references/schemas/scripts) を実在・共有正本参照・`completeness_exempt` 理由付き宣言のいずれかで満たした (`lint-skill-completeness.py` exit0)
+-- [ ] P0 lint 群 + `lint-goal-seek.py` + `lint-skill-completeness.py` + `lint-ssot-duplication.py` + `validate-build-trace.py` が exit 0
+-- [ ] fork した `assign-skill-design-evaluator` の score>=80 かつ high=0
+-- [ ] `eval-log/skill-build-trace.json` に `source_docs`/`doc_coverage`/`layer_decisions`/`reproducibility_gates` を空欄なく記録 (未使用は N/A 理由付き)
+-- [ ] (loop 実行系 run/wrap/delegate のみ) `feedback_contract.criteria` を `brief.goal`/完了チェックリストから導出し inner/outer 各1件以上を trace に記録 (ref/assign は `feedback_contract.skip_reason` で N/A)
+-- [ ] **ハーネス・カバレッジ仕様 (`doc/harness-coverage-spec.md`) を kind 別に満たす** (毎回必達):
++- [ ] kind を 7 種から確定し、commonCore frontmatter (必須集合の正本 = `references/capability-manifest.schema.json#/definitions/commonCore.required`: `name`/`description`/`kind`/`version`/`owner`) を生成した <!-- CL-1 -->
++- [ ] 本文 300 行以下・description は発動条件のみ・trigger 2-3 個 (08章) <!-- CL-2 -->
++- [ ] kind 別必須サポート資産 (prompts/references/schemas/scripts) を実在・共有正本参照・`completeness_exempt` 理由付き宣言のいずれかで満たした (`lint-skill-completeness.py` exit0) <!-- CL-3 -->
++- [ ] P0 lint 群 + `lint-goal-seek.py` + `lint-skill-completeness.py` + `lint-ssot-duplication.py` + `validate-build-trace.py` が exit 0 <!-- CL-4 -->
++- [ ] fork した `assign-skill-design-evaluator` の score>=80 かつ high=0 <!-- CL-5 -->
++- [ ] `eval-log/skill-build-trace.json` に `source_docs`/`doc_coverage`/`layer_decisions`/`reproducibility_gates` を空欄なく記録 (未使用は N/A 理由付き)。brief 経由 build は `requirement_coverage` (RTM) で brief 非空フィールドの被覆を宣言 <!-- CL-6 -->
++- [ ] (loop 実行系 run/wrap/delegate のみ) `feedback_contract.criteria` を `brief.goal`/完了チェックリストから導出し inner/outer 各1件以上を trace に記録 (ref/assign は `feedback_contract.skip_reason` で N/A)。各 criterion は `derived_from: [CL-n]` で出所チェックリスト項目を宣言 (`lint-criteria-provenance.py` が被覆を検査) <!-- CL-7 -->
++- [ ] **ハーネス・カバレッジ仕様 (`doc/harness-coverage-spec.md`) を kind 別に満たす** (毎回必達): <!-- CL-8 -->
+   - 同梱 `scripts/` があれば `tests/` に機能テストを追加し当該スクリプト行カバレッジ ≥80% (network/secret 系は monkeypatch で副作用遮断し純関数・分岐・エラー経路を genuine に網羅)
+   - loop 実行系: criteria 検証テスト (inner=lint exit0 / outer=verdict PASS) で全 criterion を被覆 (`validate-llm-coverage.py --gate-new --since <today>` を ≥80% で通す)
+   - **ref (辞書型/参照型): source-traceability を検証する** — `source`/`source-tier`/`last-audited`/`audit-trigger` が埋まり、参照内容が `source` と整合することを `eval-log/coverage/skills/<plugin>__<skill>.json` の ref-review verdict (verdict=PASS) で記録。ref は behavioral criteria を持たない代わりにこの source 検証が必須カバレッジ (除外でなく ref 専用パス)
+   - assign: evaluator verdict、その他 kind: content-review verdict を `eval-log/coverage/` に記録
+-- [ ] (`--with-*` 指定時のみ) subagent/prompt/evaluator/hook 生成と整合 lint を完了
+-- [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) knowledge/ 雛形展開 + 4スクリプト同梱 + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`) + `lint-knowledge-loop.py` exit0 (KL-001..007)
+-- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生 `$CLAUDE_PLUGIN_ROOT` 非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash に裸変数/repo相対を書かず fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<name>}` へ降格。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2
++- [ ] `eval-log/build-plan.json` (`validate-build-plan.py --brief ... --out eval-log/build-plan.json` で brief から決定論導出) の `flags` が true の subagent/prompt/evaluator/hook/knowledge を全て生成し、`--check` が exit 0 (フラグの要否をモデル判断で省略しない) <!-- CL-9 -->
++- [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) knowledge/ 雛形展開 + 4スクリプト同梱 + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`) + `lint-knowledge-loop.py` exit0 (KL-001..007) <!-- CL-10 -->
++- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生 `$CLAUDE_PLUGIN_ROOT` 非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash に裸変数/repo相対を書かず fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<name>}` へ降格。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
+ 
+ ### ゴールシークループ
+ 
+@@ -192,17 +196,35 @@ audit-trigger: quarterly
+ 本 Skill は **Capability 7 kind** (skill / agent / hook / command / plugin-composition / prompt / workflow) を統一抽象として扱う。以下 4 段で分岐する。
+ 
+ 1. **kind 確認**: 引数 `kind` または `brief.kind` を確定。既定は `skill`。未指定なら Step 1 のヒアリングで決める。7 kind 以外は exit 1。
+-2. **対応 skeleton 選択**: kind → skeleton/出力先の対応は `schemas/template-selection.schema.json#/selection_rules` の `capability_kind_map` を正本とする (本文に再掲しない=SSOT)。人間可読の対応表+検証コマンドは `references/build-steps.md` §I.1。
++2. **対応 skeleton 選択**: kind 語彙の正本は `schemas/build-flags.schema.json#/properties/capability_kind` (7値 enum)、kind → skeleton/出力先/kind別lint の対応表の正本は `references/build-steps.md` §I.1 (本文に再掲しない=SSOT)。kind=skill 配下のサブ種別 5 値の template 選択は `schemas/template-selection.schema.json#/selection_rules` に従う。
+ 3. **Manifest 検証**: 全 kind で `CapabilityManifest commonCore` を `references/capability-manifest.schema.json` で検証。kind 別追加フィールド (`definitions/kindSkill`, `definitions/kindAgent` …) も同 schema で検証する。
+-4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py`、hook→`lint-script-frontmatter.py`、command→`lint-command-md.py`、plugin-composition→`lint-plugin-composition.py`、prompt→`lint-prompt-md.py`、workflow→`lint-workflow-md.py`)。未整備 lint は warn 出力に留め、Hook/CI で再実行する。
++4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py`、hook→`lint-script-frontmatter.py`、command→`lint-command-md.py`、plugin-composition→`lint-plugin-composition.py`、prompt→`lint-prompt-md.py`、workflow→`lint-workflow-md.py`)。未整備 lint (command/prompt/workflow) は warn 出力に留め、Hook/CI で再実行する (`lint-plugin-composition.py` は整備済・CI 配線済)。
+ 
+-> 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。
++> 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。適用範囲の宣言: `workflow-manifest.json` の phase `init-pre` (本 Step) のみ Capability 7 kind 全てに適用され、`init` 以降の phase の `kind_filter` はこのサブ種別 5 値 (= kind=skill の場合) を指す。非 skill kind は init-pre で skeleton / kind 別 lint を確定し、scaffold 相当の生成 + Step 4 の kind 別 lint で完結する。
+ 
+ ### Step 1: 要求ヒアリング (phase: init)
+ 
+ > **[MANDATORY]** 冒頭で `Skill(ref-yaml-spec-fetcher)` を呼び `yaml-spec-cache.md` を Read。`validate-build-trace.py` が 15/16 章未実施を exit 1 で拒否する。
+ 
+-`resolve-skill-dirs.py` で `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を確定する。`$SKILL_DIR` は skill-creator plugin 内資産、`$OUT_BASE` は生成先であり、両者を同一パスと仮定しない。続けて `references/resource-map.yaml` で task category 選択 → 01章 5 要素 + 01a Step2 実行レイヤー判断表を埋める。詳細は `references/build-steps.md`。loop 実行系 (run/wrap/delegate) はこの時点で `brief.goal` と完了チェックリストから per-skill 評価基準 (`feedback_contract.criteria`) を test-first で導出し、Step 3.5 で trace に固定する (criteria は goal-seek checklist と同源)。
++`resolve-skill-dirs.py` で `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を確定する。`$SKILL_DIR` は skill-creator plugin 内資産、`$OUT_BASE` は生成先であり、両者を同一パスと仮定しない。続けて `references/resource-map.yaml` で task category 選択 → 01章 5 要素 + 01a Step2 実行レイヤー判断表を埋める。詳細は `references/build-steps.md`。
++
++**蓄積知見の参照 (Loop B / build-time)**: `brief.consult_build_knowledge` が true (既定) のとき、skill-creator 自身の蓄積知見を検索し、過去の設計判断・落とし穴回避を初期設計に反映する (`knowledge/knowledge-index.json` の consult 宣言と対。`run-skill-elicit` の同名節と同形):
++
++```bash
++# パスはプロジェクトルート基準 (eval-log/ 出力と同じ規約)
++python3 plugins/skill-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py \
++  --dir plugins/skill-creator/knowledge/ --query "<brief.goal と kind の要約>" --limit 5
++```
++
++検索 0 件・スクリプト不在でも build を止めない。採否は trace の `layer_decisions` に記録する。loop 実行系 (run/wrap/delegate) はこの時点で `brief.goal` と完了チェックリストから per-skill 評価基準 (`feedback_contract.criteria`) を test-first で導出し、Step 3.5 で trace に固定する (criteria は goal-seek checklist と同源)。
++
++**build-plan の決定論導出 (フラグはモデルが決めない)**: brief 確定直後に必須成果物集合を機械導出し、以降はこの plan を作業リストの正本とする。`--with-*` の要否・必須セクション・必須資産は brief の非空フィールドとテンプレート見出しから純関数で決まる (モデルの記憶・判断に依存しない):
++
++```bash
++python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --out eval-log/build-plan.json
++```
++
++充足検査は Step 4 の `--check` が行う (欠落は exit 1)。brief 無しのフラグ明示 build は NOTE 付き skip。
+ 
+ ### Step 2: テンプレ展開 / 既存読込 (phase: scaffold)
+ 
+@@ -212,13 +234,17 @@ kind → template 選択は `prompts/R3-template-select.md` (R3) と `schemas/te
+ 
+ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/articles-full.md`、assign 系は `references/rubric.json` / `scripts/render-findings-score.py`。本文 100 行超は `references/` へ追い出す。
+ 
++**投入系 (外部システムへ書込む skill) の必須参照**: `brief.external_systems` に書込み先 (Notion/DB/API 等) がある場合、`Skill(ref-output-routing)` の Sink Contract (schema SSOT / 冪等 upsert / fail-closed) を Read し、その不変条件を `feedback_contract.criteria` と `deterministic_checks` へ反映する (build-plan の notes が要求。モデル知識での再発明は過去に品質ばらつきを生んだ既知の穴)。
++
+ ### Step 3.5: 再現性トレース生成 (phase: trace-write)
+ 
+ `eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を **生成 SKILL.md frontmatter と trace の両方** に固定する。frontmatter は量産先が携帯する評価基準の正本、trace は再現性証跡。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` と `lint-feedback-contract.py` が kind-aware に gating する。
+ 
++**要望カバレッジ (RTM)**: brief 経由 build は `requirement_coverage[]` を trace に記録する。brief の非空要求フィールド (例 `key_constraints[2]` / `boundary`) ごとに `disposition: mapped` (+`mapped_to`=反映先 criteria id/生成物) か `not_applicable` (+`reason`) を宣言する。被覆完全性と requirement_id 実在は `validate-build-trace.py` が機械検査し (段階導入: coverage 無しは WARN)、写像の意味的妥当性は Step 12 content-review (LLM 層) が判定する。
++
+ ### Step 4: 命名・構造 Lint (phase: scripts)
+ 
+-> `workflow-manifest.json` は**宣言的リソース** (schema/prompt/reference) の正本。**命令的 lint コマンド**は SKILL.md Step4 + CI が正本管理する (責務分離)。lint を manifest に resource 登録はしない。
++> lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
+ 
+ ```bash
+ GOV_LINT_DIR="$(dirname "$PLUGIN_ROOT")/skill-governance-lint"
+@@ -233,6 +259,7 @@ python3 scripts/lint-feedback-contract.py --changed-only  # loop実行系(run/wr
+ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$OUT_BASE")"  # SSOT 重複(正本曖昧/redirect 太り/required 二重定義/本文再掲)を検出。DUP-SCHEMA-ID は exit 1
+ python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..007 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
+ python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
++python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
+ python3 scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸 $CLAUDE_PLUGIN_ROOT・repo相対直書き・os.environ添字を検出
+ ```
+ 
+@@ -242,9 +269,9 @@ python3 scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 
+ 
+ `Skill(assign-skill-design-evaluator) target=$OUT_BASE/$SKILL_NAME` を fork 呼び、`{"score":N,"findings":[...]}` を受領。`skill-build-trace.json` も評価対象に含め、01/01a / 26-28 章漏れを C2、rubric 自己編集を C1/C4 失敗として扱う。
+ 
+-### Step 6: ゲート判定
++### Step 6: ゲート判定 (phase: trace-write)
+ 
+-score >= 80 かつ high=0 で完了。それ以外は findings を本文に反映し Step 4 へ戻る (最大 3 周)。
++score >= 80 かつ high=0 で完了。それ以外は findings を本文に反映し Step 4 へ戻る (最大 3 周)。判定結果と差し戻し履歴は trace (`reproducibility_gates`) に記録する。
+ 
+ ### Step 7: subagent 派生 (phase: prompts-emit, `--with-subagent`)
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/build-steps.md b/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
+index 0a85e43..972e7d6 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
+@@ -497,7 +497,7 @@ TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公
+ | hook | `templates/hook-skeleton.md` | `plugins/<plugin>/hooks/<name>.{py,md}` | `lint-script-frontmatter.py` / `validate-frontmatter.py` |
+ | hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
+ | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未整備時は warn) / `validate-frontmatter.py` |
+-| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` (未整備時は warn) |
++| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` (整備済・CI 配線済) |
+ | prompt | `templates/prompt-skeleton.md` | `plugins/<plugin>/prompts/<name>.md` | `lint-prompt-md.py` (未整備時は warn) |
+ | workflow | `templates/workflow-skeleton.md` | `plugins/<plugin>/workflows/<name>.md` | `lint-workflow-md.py` (未整備時は warn) / `validate-frontmatter.py` |
+ 
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md b/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
+index 43f4c73..14661b9 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/content-review-protocol.md
+@@ -106,13 +106,13 @@ Agent({
+ 
+ ## hook 発火と queue
+ 
+-Claude Code hook はレスポンス時間と副作用境界を守るため、**重い LLM 評価を直接実行しない**。hook は評価要求を queue 化し、ローカル build / pre-push が queue を消化して verdict を更新する。ただし `Stop` hook は「LLM を実行する」のではなく `{"decision":"block","reason":...}` を返して **Claude 本体に評価を実行させる**(トリガのみ・実行は本体)ことで、起動の確実性を hook 層でも担保する。この block は無限ループ防止のため `stop_hook_active` 継続中は発火せず、`skill-creator` 自身の変更は対象外、env `SKILL_CREATOR_NO_REVIEW_BLOCK=1` で opt-out できる。
++Claude Code hook はレスポンス時間と副作用境界を守るため、**重い LLM 評価を直接実行しない**。hook は評価要求を `eval-log/review-queue.jsonl` へ queue 化するが、この queue は**診断ログ** (いつ・何が評価要求されたかの追跡証跡) であり、自動 consumer は存在しない (build / pre-push が queue を読んで消化する機構は無い)。評価の強制は queue ではなく次の 2 層が担う: (1) `Stop` hook が `{"decision":"block","reason":...}` を返して **Claude 本体に評価を実行させる** (トリガのみ・実行は本体)、(2) pre-push / CI の `lint-content-review.py` が verdict の存在・PASS・SHA 一致を機械検査する (最終強制層)。Stop block は無限ループ防止のため `stop_hook_active` 継続中は発火せず、`skill-creator` 自身の変更は対象外 (代わりに stdout 通知のみ出す)、env `SKILL_CREATOR_NO_REVIEW_BLOCK=1` で opt-out できる。
+ 
+ | Hook | 役割 |
+ |----|----|
+ | `PostToolUse:Skill` | `run-build-skill` / `delegate-codex-skill-review` 等の完了後、`check-review-trigger.py` を queue-only で起動し、対象 artifact と hook_trigger を評価要求として記録 |
+ | `PostToolUse:Edit|Write` | SKILL.md / rubric / workflow-manifest 変更時に `check-review-trigger.py` を queue-only で起動し、stale verdict 再評価要求を記録 |
+-| `Stop` | `check-review-trigger.py`。評価要求を `eval-log/review-queue.jsonl` へ queue 化し、他プラグインに未評価 or stale な変更 skill が残れば `decision:block` で `run-elegant-review` + `assign-skill-design-evaluator` の実行を Claude 本体へ差し戻す(確実起動)。`skill-creator` 自身は作業不能化を避けるため Stop block 対象外だが、CI/pre-push では self-review verdict を必須にする。変更20件以上なら推奨も stdout 出力 |
++| `Stop` | `check-review-trigger.py`。評価要求を `eval-log/review-queue.jsonl` へ queue 化 (診断ログ) し、他プラグインに未評価 or stale な変更 skill が残れば `decision:block` で `run-elegant-review` + `assign-skill-design-evaluator` の実行を Claude 本体へ差し戻す(確実起動)。`skill-creator` 自身は作業不能化を避けるため Stop block 対象外だが、pending が残る場合は stdout 通知 (block しない) を出し、CI/pre-push では self-review verdict を必須にする。変更20件以上なら推奨も stdout 出力 |
+ | `pre-push` / CI | `lint-content-review.py` で verdict の存在・PASS・SHA一致を強制 (最終強制層) |
+ 
+ Codex 委譲の完了も新しい自動実行層を増やさない。`delegate-codex-skill-review` はレスポンス JSON / patch / handoff を artifact として保存し、その artifact を既存の content-review verdict 契約に正規化して評価する。
+diff --git a/plugins/skill-creator/skills/run-build-skill/schemas/build-flags.schema.json b/plugins/skill-creator/skills/run-build-skill/schemas/build-flags.schema.json
+index 18e9635..e37718b 100644
+--- a/plugins/skill-creator/skills/run-build-skill/schemas/build-flags.schema.json
++++ b/plugins/skill-creator/skills/run-build-skill/schemas/build-flags.schema.json
+@@ -106,7 +106,12 @@
+               "text": {"type": "string"},
+               "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "human"]},
+               "threshold": {"type": "string", "description": "score>=80 / high=0 / C1-C4=PASS 等の観測可能なしきい値。"},
+-              "weight": {"type": "number", "minimum": 0, "default": 1}
++              "weight": {"type": "number", "minimum": 0, "default": 1},
++              "derived_from": {
++                "type": "array",
++                "items": {"type": "string", "pattern": "^CL-[0-9]+$"},
++                "description": "出所の完了チェックリスト項目アンカー (SKILL.md 本文の <!-- CL-n -->)。被覆と実在は lint-criteria-provenance.py が機械検査し (LS-05)、写像の意味的妥当性は content-review (LLM 層) が判定する。"
++              }
+             }
+           }
+         },
+diff --git a/plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json b/plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
+index 78bec05..0af964c 100644
+--- a/plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
++++ b/plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json
+@@ -166,6 +166,29 @@
+           "source_trace": {"type": "string"}
+         }
+       }
++    },
++    "brief_path": {
++      "type": "string",
++      "description": "本 build が参照した skill-brief.json のパス (cwd または trace 隣接からの相対)。未指定時は source_docs 内の skill-brief*.json 項目から推定される。requirement_coverage の突合先。"
++    },
++    "requirement_coverage": {
++      "type": "array",
++      "description": "要求トレーサビリティ・マトリクス (RTM)。doc_coverage(参照知識の被覆)と対になる「ユーザー要望の被覆」証跡。brief の非空要求フィールド全てを mapped か not_applicable+reason で被覆する (最小粒度は brief フィールド単位。文分解の水増しはしない)。被覆完全性と requirement_id の brief 上の実在は validate-build-trace.py が機械検査し、写像の意味的正しさは content-review (LLM 層) が判定する (二層分離)。旧 trace / brief 非経由 build では省略可 (brief 参照があるのに省略時は WARN)。",
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["requirement_id", "disposition"],
++        "properties": {
++          "requirement_id": {
++            "type": "string",
++            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\[[0-9]+\\])*(\\.[A-Za-z_][A-Za-z0-9_]*(\\[[0-9]+\\])*)*$",
++            "description": "brief フィールドパス (例: key_constraints[2] / boundary / knowledge_loop.pattern)"
++          },
++          "disposition": {"type": "string", "enum": ["mapped", "not_applicable"]},
++          "mapped_to": {"type": "string", "description": "disposition=mapped 時必須。反映先 (feedback_contract.criteria の id / SKILL.md 節 / 生成物パス等)"},
++          "reason": {"type": "string", "description": "disposition=not_applicable 時必須。対象外の根拠"}
++        }
++      }
+     }
+   },
+   "definitions": {
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/auto-record-lesson.py b/plugins/skill-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+index c9c4da0..b3603c3 100755
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/auto-record-lesson.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+@@ -4,9 +4,16 @@
+ 
+ Claude Code Hook input (JSON via stdin) を解釈し、失敗パターンが検出された場合に
+ plugins/skill-creator/lessons-learned/ 配下へ構造化 lesson を追記する。
++新規 lesson の追記と同時に knowledge/knowledge-lessons-index.json へ最小索引
++エントリを append する (Loop B: 索引の description 宣言と実装の真実合わせ)。
++
++記録条件 (genuine 文脈最少条件):
++    tool 名 + 対象ヒント (command / file_path / path / skill) + tool_response 内の
++    失敗シグネチャが揃った入力のみ記録する。無関係キーに失敗語が紛れただけの
++    断片 (テスト副産物・引用の混入) は記録しない。
+ 
+ 副作用境界:
+-    - lessons-learned ディレクトリへの書き込みのみ。
++    - lessons-learned ディレクトリと、その sibling knowledge/ 索引への書き込みのみ。
+     - git・他ディレクトリには触れない。
+ 
+ exit_code 仕様 (Claude Code Hooks 準拠):
+@@ -135,6 +142,29 @@ def _detect_failure(text: str) -> bool:
+     return any(p.search(text) for p in _FAILURE_PATTERNS)
+ 
+ 
++def _has_genuine_context(hook: Any) -> bool:
++    """genuine 文脈最少条件: 何がどう失敗したか追跡できる入力のみ記録を許可する。
++
++    条件 = tool 名 + 対象ヒント (command / file_path / path / skill) +
++    tool_response 内の失敗シグネチャ。失敗語が tool_response 以外の無関係キーに
++    紛れただけの断片 ("ERROR boom" 型ノイズ) は human triage 不能なため封鎖する。
++    """
++    if not isinstance(hook, dict):
++        return False
++    tool = hook.get("tool_name") or hook.get("tool")
++    if not isinstance(tool, str) or not tool.strip():
++        return False
++    ti = hook.get("tool_input")
++    if not isinstance(ti, dict):
++        return False
++    if not any(
++        isinstance(ti.get(k), str) and ti.get(k).strip()
++        for k in ("file_path", "path", "skill", "command")
++    ):
++        return False
++    return _detect_failure(_flatten_text(hook.get("tool_response")))
++
++
+ def _estimate_severity(text: str) -> str:
+     return "high" if _HIGH_SEVERITY_HINTS.search(text) else "medium"
+ 
+@@ -229,6 +259,87 @@ def _upsert_lesson(path: Path, entry: dict[str, str]) -> None:
+         f.write("\n".join(appended))
+ 
+ 
++_INDEX_ID_RE = re.compile(r"lessons-index_(\d+)$")
++
++
++def _lessons_index_path(lessons_dir: Path) -> Path:
++    """lessons 書込先の sibling knowledge/ 配下の索引パス。
++
++    既定 (lessons_dir = plugin-root/lessons-learned) では
++    plugin-root/knowledge/knowledge-lessons-index.json (正本) を指す。
++    fallback/override 時は同じ相対関係で書込先ローカルの索引になる。
++    """
++    return lessons_dir.parent / "knowledge" / "knowledge-lessons-index.json"
++
++
++def _index_source_file(lesson_path: Path) -> str:
++    """索引 source.file は repo 相対 (既存エントリと同形)。相対化不能なら絶対のまま。"""
++    try:
++        repo_root = _plugin_root().parent.parent
++        return lesson_path.resolve().relative_to(repo_root.resolve()).as_posix()
++    except (ValueError, OSError):
++        return lesson_path.as_posix()
++
++
++def _append_index_entry(index_path: Path, lesson_path: Path, entry: dict[str, str]) -> bool:
++    """lesson md 追記と同時に索引へ最小エントリを決定論 append する (冪等)。
++
++    knowledge-lessons-index.json:description の宣言「auto-record-lesson.py が
++    新規 lesson を追記したら本索引にもエントリを追加する」の実装。
++    同一 source.file は再登録しない (md 側は observation 追記で対応済)。
++    索引書込失敗は lesson 記録を巻き込まない (best-effort, False で握る)。
++    """
++    source_file = _index_source_file(lesson_path)
++    try:
++        if index_path.exists():
++            data = json.loads(index_path.read_text(encoding="utf-8"))
++            if not isinstance(data, dict):
++                return False
++        else:
++            data = {
++                "category": "lessons-index",
++                "label": "lessons-learned 索引 (失敗ログへのポインタ)",
++                "source_note": "本文は lessons-learned/*.md が正本。本索引は検索ヒット用の最小要約のみ持つ。",
++                "items": [],
++            }
++        items = data.setdefault("items", [])
++        if not isinstance(items, list):
++            return False
++        max_seq = 0
++        for item in items:
++            if not isinstance(item, dict):
++                continue
++            if (item.get("source") or {}).get("file") == source_file:
++                return False
++            m = _INDEX_ID_RE.match(str(item.get("id", "")))
++            if m:
++                max_seq = max(max_seq, int(m.group(1)))
++        items.append(
++            {
++                "id": f"lessons-index_{max_seq + 1:03d}",
++                "title": (
++                    f"[auto] {entry['trigger_event']}:{entry['tool']} 失敗 — "
++                    f"{entry['observation'][:80]}"
++                ),
++                "keywords": [
++                    entry["trigger_event"],
++                    entry["tool"],
++                    entry["capability"],
++                    entry["severity"],
++                ],
++                "message": "自動記録。根本原因の human triage 後に title/message を書き直す。",
++                "source": {"file": source_file, "type": "lesson", "date": entry["date"]},
++            }
++        )
++        index_path.parent.mkdir(parents=True, exist_ok=True)
++        index_path.write_text(
++            json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
++        )
++        return True
++    except Exception:
++        return False
++
++
+ def _candidate_dirs() -> list[Path]:
+     """書込先候補を優先順で返す (3 段 fallback)。
+ 
+@@ -247,6 +358,9 @@ def main() -> int:
+     if not text or not _detect_failure(text):
+         # サイレント正常終了。
+         return 0
++    if not _has_genuine_context(hook):
++        # 文脈不足の断片ノイズは記録しない (genuine 文脈最少条件)。
++        return 0
+     severity = _estimate_severity(text)
+     slug = _extract_slug(hook, text)
+     today = _dt.date.today().isoformat()
+@@ -261,6 +375,9 @@ def main() -> int:
+         try:
+             _upsert_lesson(base / filename, entry)
+             sys.stderr.write(f"[auto-record-lesson] recorded -> {base / filename}\n")
++            index_path = _lessons_index_path(base)
++            if _append_index_entry(index_path, base / filename, entry):
++                sys.stderr.write(f"[auto-record-lesson] indexed -> {index_path}\n")
+             return 0
+         except OSError as exc:
+             last_exc = exc
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py b/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
+index 8eaf317..9ed3cb5 100644
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/lint-goal-seek.py
+@@ -19,7 +19,7 @@
+   - 実行系 kind (run / wrap / delegate / assign / orchestrator / agent / hook) は
+     `## ゴールシーク実行` 見出しを持つこと。
+   - 固定手順の連番羅列 (`## 手順` セクション直下の番号付き / `### Step N:` の 2 連以上が
+-    「局面カタログ」表記外で出現) は violation。
++    局面カタログ「見出しセクション」外で出現) は violation。本文引用のラベルは効力なし。
+   - ref-* (read-only) は対象外 (skip)。
+ 
+ Exit 0 = ok, 1 = violation, 2 = usage error。
+@@ -39,7 +39,16 @@ EXECUTION_PREFIXES = ("run", "wrap", "delegate", "assign")
+ # loop 実行系 (達成までループを回す)。assign は一発採点でループしないため除外。
+ LOOP_PREFIXES = ("run", "wrap", "delegate")
+ # 局面カタログ配下の `### Step` は許容 (順序非固定の例示)。
++# ラベルは「見出し (##/###) として宣言されたカタログセクション」内でのみ効力を持つ。
++# 本文引用・コメント中のラベル出現では Step 連番を免除しない (catalog label escape 封鎖:
++# LS-01b/PF-META。従来の body 全域 substring 判定は引用 1 箇所で全 Step を素通しした)。
+ CATALOG_MARKERS = ("局面カタログ", "順序は都度判断", "順序非固定")
++# WIRING_SECTION_RE と同型の見出しスコープ: カタログ見出し行から次の ## 見出し (または EOF) まで。
++CATALOG_SECTION_RE = re.compile(
++    r"^#{2,3}(?!#)[^\n]*(?:" + "|".join(re.escape(m) for m in CATALOG_MARKERS) + r")[^\n]*\n"
++    r".*?(?=^##\s|\Z)",
++    re.MULTILINE | re.DOTALL,
++)
+ STEP_RE = re.compile(r"^### Step\s*\d+\s*[:：]", re.MULTILINE)
+ FIXED_PROCEDURE_HEADING_RE = re.compile(r"^## 手順\s*$", re.MULTILINE)
+ # 完了チェックリスト領域と二値項目。
+@@ -140,13 +149,19 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
+             "(ゴールシークへ移行すること)"
+         )
+ 
+-    # 3. 局面カタログ外での `### Step N:` 連番羅列 (2 連以上)
+-    has_catalog = any(m in body for m in CATALOG_MARKERS)
+-    step_count = len(STEP_RE.findall(body))
+-    if step_count >= 2 and not has_catalog:
++    # 3. 局面カタログ見出しセクション外での `### Step N:` 連番羅列 (2 連以上)。
++    # 許容はカタログ見出しセクション配下のみ (本文引用のラベルでは免除しない)。
++    catalog_spans = [m.span() for m in CATALOG_SECTION_RE.finditer(body)]
++    outside_steps = [
++        m
++        for m in STEP_RE.finditer(body)
++        if not any(s <= m.start() < e for s, e in catalog_spans)
++    ]
++    if len(outside_steps) >= 2:
+         findings.append(
+-            f"{path}: 固定手順の連番 (### Step N:) が {step_count} 件検出された。"
+-            "順序固定の手順は書かず、必要なら '局面カタログ (順序は都度判断)' として記述すること"
++            f"{path}: 局面カタログ見出しセクション外で固定手順の連番 (### Step N:) が "
++            f"{len(outside_steps)} 件検出された。順序固定の手順は書かず、"
++            "'## 局面カタログ (順序は都度判断)' 見出しセクション配下として記述すること"
+         )
+ 
+     # 4. loop 実行系 (run/wrap/delegate): チェックリスト二値性 + 曖昧語 + 配線
+diff --git a/plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py b/plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py
+index c3e6d0c..1ef478e 100755
+--- a/plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py
++++ b/plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py
+@@ -115,6 +115,23 @@ REQUIRED_GATES = {"lint", "evaluator", "elegant_review", "governance"}
+ REQUIRED_SCRIPT_CONTEXTS = {"A", "B", "C", "D", "E"}
+ REQUIRED_GOVERNANCE_ROLES = {"proposer", "reviewer", "approver", "tooling"}
+ 
++# RTM (requirement_coverage): brief の非空フィールドのうち被覆宣言を要求しないもの。
++# 識別・分類・build フラグ配管系は他ゲート (lint-skill-name / brief schema enum /
++# variant_support クロスチェック / resolve-brief-to-category) が既に担保している。
++NON_REQUIREMENT_BRIEF_FIELDS = {
++    "skill_name", "prefix", "kind", "role_suffix", "hierarchy_level",
++    "output_language", "parameter_language_exception",
++    "source_url_or_path", "source_tier", "last_audited_date", "audit_trigger",
++    "mass_production_profile", "paradigm_profile",
++    "consult_build_knowledge", "with_subagent_hint", "with_hooks",
++}
++REQUIREMENT_DISPOSITIONS = {"mapped", "not_applicable"}
++# brief フィールドパス: 例 key_constraints[2] / boundary / knowledge_loop.pattern
++REQUIREMENT_ID_PATH_RE = re.compile(
++    r"^[A-Za-z_][A-Za-z0-9_]*(\[[0-9]+\])*(\.[A-Za-z_][A-Za-z0-9_]*(\[[0-9]+\])*)*$"
++)
++_BRIEF_BASENAME_RE = re.compile(r"skill-brief[^/]*\.json$")
++
+ 
+ def _as_set(value: object) -> set[str]:
+     if not isinstance(value, list):
+@@ -371,8 +388,9 @@ def _validate_feedback_contract(data: dict) -> list[str]:
+ 
+     loop 実行系(run/wrap/delegate)では criteria を1件以上、各 criterion に
+     id/loop_scope/text/verify_by を要求し、inner と outer を最低各1件課す。
+-    ref/assign(read-only 評価器)等は feedback_contract.skip_reason か
+-    kind による N/A escape を許容(既存 optional_models の N/A パターンに倣う)。
++    skip_reason での N/A escape は FEEDBACK_SKIP_KINDS(ref/assign)限定で、
++    loop 実行系は skip_reason では免除されない(lint-feedback-contract.py と対称。
++    trace 側だけ緩いと lint が封鎖した escape 穴が build-time に復活する)。
+     required トップ配列には足さないため、kind 不明の旧トレースは検査しない
+     (任意トレース破壊回避)。
+     """
+@@ -389,23 +407,27 @@ def _validate_feedback_contract(data: dict) -> list[str]:
+                 errs.append("feedback_contract.criteria must be array")
+         return errs
+ 
+-    # ここから loop 実行系: criteria 必須(skip_reason で N/A escape 可)。
++    # ここから loop 実行系: criteria 必須(skip_reason では免除不可)。
+     if not isinstance(fc, dict):
+         errs.append(
+             f"feedback_contract is required when skill_kind={kind!r} "
+             "(loop 実行系 run/wrap/delegate)。criteria を brief.goal/Checklist から "
+-            "導出するか skip_reason を記載してください。"
++            f"導出してください (skip_reason escape は kind={sorted(FEEDBACK_SKIP_KINDS)} のみ)。"
+         )
+         return errs
+ 
+     skip_reason = str(fc.get("skip_reason", "")).strip()
+     criteria = fc.get("criteria")
+     if not isinstance(criteria, list) or not criteria:
+-        if skip_reason:
+-            return errs  # N/A escape: 明示根拠あり
++        # skip_reason の N/A escape は SSOT の FEEDBACK_SKIP_KINDS(ref/assign)限定。
++        # ここへ到達する kind は FEEDBACK_LOOP_KINDS のみのため、loop 実行系の
++        # skip_reason は criteria 必須の免除にならない (lint-feedback-contract と対称)。
++        if skip_reason and kind in FEEDBACK_SKIP_KINDS:
++            return errs  # N/A escape: 明示根拠あり (ref/assign)
+         errs.append(
+             f"feedback_contract.criteria must list >=1 criterion when "
+-            f"skill_kind={kind!r} (or set feedback_contract.skip_reason for N/A)"
++            f"skill_kind={kind!r} (skip_reason escape は "
++            f"kind={sorted(FEEDBACK_SKIP_KINDS)} 限定。criteria を整備すること)"
+         )
+         return errs
+ 
+@@ -424,6 +446,162 @@ def _validate_feedback_contract(data: dict) -> list[str]:
+     return errs
+ 
+ 
++# =============================================================
++# requirement_coverage (RTM: 要求トレーサビリティ) 検証
++# =============================================================
++
++def _find_brief_ref(data: dict) -> str | None:
++    """trace が参照する brief のパス文字列を返す (brief_path 優先、無ければ source_docs)。"""
++    bp = str(data.get("brief_path", "") or "").strip()
++    if bp:
++        return bp
++    docs = data.get("source_docs")
++    if isinstance(docs, list):
++        for doc in docs:
++            if isinstance(doc, str) and _BRIEF_BASENAME_RE.search(doc.replace("\\", "/")):
++                return doc
++    return None
++
++
++def _load_brief(brief_ref: str, trace_path: Path) -> dict | None:
++    """brief_ref を cwd 相対 → trace 隣接の順で解決し JSON dict を返す (失敗時 None)。"""
++    for cand in (Path(brief_ref), trace_path.parent / brief_ref):
++        try:
++            if cand.is_file():
++                loaded = json.loads(cand.read_text(encoding="utf-8"))
++                return loaded if isinstance(loaded, dict) else None
++        except (OSError, json.JSONDecodeError):
++            return None
++    return None
++
++
++def _resolve_brief_field(brief: dict, path: str) -> bool:
++    """requirement_id のフィールドパスが brief 上に実在するかを判定する。"""
++    cur: object = brief
++    for seg in path.split("."):
++        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)((?:\[[0-9]+\])*)$", seg)
++        if m is None or not isinstance(cur, dict) or m.group(1) not in cur:
++            return False
++        cur = cur[m.group(1)]
++        for idx in re.findall(r"\[([0-9]+)\]", m.group(2)):
++            if not isinstance(cur, list) or int(idx) >= len(cur):
++                return False
++            cur = cur[int(idx)]
++    return True
++
++
++def _requirement_bearing(value: object) -> bool:
++    """brief フィールドが被覆すべき要求を含むか (空文字/空配列/False/None は対象外)。"""
++    if isinstance(value, str):
++        return bool(value.strip())
++    return bool(value)
++
++
++def _validate_requirement_coverage(data: dict, trace_path: Path) -> list[str]:
++    """requirement_coverage (RTM) を brief と突合して機械検査する。
++
++    doc_coverage(参照知識の被覆)と対になる「ユーザー要望の被覆」検査。
++    - requirement_coverage あり: 構造検査 + brief の非空要求フィールドの被覆完全性を
++      exit 1 検査 (requirement_id の brief 上の実在も検査)
++    - requirement_coverage なし: 旧 trace / brief 非経由 build は skip。ただし trace が
++      brief を参照している場合は WARN (段階導入。exit code は変えない)
++    - 被覆の意味的正しさ (mapped_to が本当に要求を満たすか) は content-review = LLM 層
++      の責務で、ここでは検査しない (二層分離)。最小粒度は brief フィールド単位に固定し
++      文分解の水増し検査はしない。
++    """
++    errs: list[str] = []
++    rc = data.get("requirement_coverage")
++    brief_ref = _find_brief_ref(data)
++
++    if rc is None:
++        if brief_ref:
++            print(
++                f"WARN: trace は brief ({brief_ref}) を参照していますが requirement_coverage "
++                "がありません。brief の要求→生成物の写像証跡 (RTM) を記録してください "
++                "(段階導入につき FAIL にはしません)。",
++                file=sys.stderr,
++            )
++        return errs
++
++    if not isinstance(rc, list):
++        errs.append("requirement_coverage must be array")
++        return errs
++
++    # 構造検査 (brief 非解決時も常に実施)
++    seen_ids: set[str] = set()
++    valid_ids: list[tuple[int, str]] = []
++    for idx, item in enumerate(rc):
++        if not isinstance(item, dict):
++            errs.append(f"requirement_coverage[{idx}] must be object")
++            continue
++        rid = str(item.get("requirement_id", "")).strip()
++        if not REQUIREMENT_ID_PATH_RE.match(rid):
++            errs.append(
++                f"requirement_coverage[{idx}].requirement_id={rid!r} must be a brief "
++                "field path (例: key_constraints[2] / boundary / knowledge_loop.pattern)"
++            )
++        else:
++            if rid in seen_ids:
++                errs.append(
++                    f"requirement_coverage[{idx}].requirement_id={rid!r} duplicated"
++                )
++            seen_ids.add(rid)
++            valid_ids.append((idx, rid))
++        disposition = str(item.get("disposition", "")).strip()
++        if disposition not in REQUIREMENT_DISPOSITIONS:
++            errs.append(
++                f"requirement_coverage[{idx}].disposition={disposition!r} must be "
++                f"one of {sorted(REQUIREMENT_DISPOSITIONS)}"
++            )
++        if disposition == "mapped" and not _non_empty_string(item.get("mapped_to")):
++            errs.append(
++                f"requirement_coverage[{idx}].mapped_to is required when "
++                "disposition=mapped (反映先: feedback_contract.criteria の id / "
++                "SKILL.md 節 / 生成物パス等)"
++            )
++        if disposition == "not_applicable" and not _non_empty_string(item.get("reason")):
++            errs.append(
++                f"requirement_coverage[{idx}].reason is required when "
++                "disposition=not_applicable"
++            )
++
++    brief = _load_brief(brief_ref, trace_path) if brief_ref else None
++    if brief is None:
++        print(
++            "WARN: requirement_coverage はありますが brief を解決できないため "
++            f"(brief_ref={brief_ref!r}) requirement_id 実在と被覆完全性の検査を "
++            "skip しました (構造検査のみ実施)。",
++            file=sys.stderr,
++        )
++        return errs
++
++    # requirement_id の brief 上の実在検査 + 被覆フィールド集合の構築
++    covered_fields: set[str] = set()
++    for idx, rid in valid_ids:
++        if not _resolve_brief_field(brief, rid):
++            errs.append(
++                f"requirement_coverage[{idx}].requirement_id={rid!r} not found in "
++                f"brief ({brief_ref})"
++            )
++        else:
++            covered_fields.add(rid.split(".", 1)[0].split("[", 1)[0])
++
++    # 被覆完全性: brief の非空要求フィールド全てが mapped or not_applicable+reason で
++    # 被覆されていること (doc_coverage の required 差分検査と同型)
++    required_fields = {
++        k for k, v in brief.items()
++        if k not in NON_REQUIREMENT_BRIEF_FIELDS and _requirement_bearing(v)
++    }
++    missing = sorted(required_fields - covered_fields)
++    if missing:
++        errs.append(
++            "requirement_coverage does not cover all brief requirement fields: "
++            f"missing={missing} (各フィールドを disposition=mapped か "
++            "not_applicable+reason で被覆すること)"
++        )
++    return errs
++
++
+ # =============================================================
+ # CapabilityManifest 検証 (kind 別 dispatch)
+ # =============================================================
+@@ -1206,6 +1384,8 @@ def main() -> int:
+                 if key not in item or item.get(key) in ("", None):
+                     errs.append(f"variable_contract[{idx}].{key} is empty")
+ 
++    errs.extend(_validate_requirement_coverage(data, path))
++
+     if errs:
+         for err in errs:
+             print(err, file=sys.stderr)
+diff --git a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+index fadb2ce..51e35c3 100644
+--- a/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-build-skill/workflow-manifest.json
+@@ -3,15 +3,26 @@
+   "schemaVersion": 1,
+   "workflowId": "run-build-skill",
+   "skill": "run-build-skill",
+-  "description": "新規/更新 Skill 構築のフェーズ定義。各 phase は SKILL.md 本文の Step に対応し、kind_filter で適用対象 kind を限定する。",
++  "description": "新規/更新 Capability 構築のフェーズ定義。各 phase は SKILL.md 本文の Step に対応し、kind_filter で適用対象 kind を限定する。kind_filter の語彙は二層: init-pre のみ Capability 7 kind (skill/agent/hook/command/plugin-composition/prompt/workflow)、init 以降は kind=skill のサブ種別 (run/ref/assign/delegate/wrap) を指す。",
+   "phases": [
++    {
++      "id": "init-pre",
++      "step": 0,
++      "title": "kind 分岐ナビゲーション (Capability 7 kind → 適用フロー確定)",
++      "kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
++      "resourceIds": ["schema-template-selection"],
++      "output_artifact": "(kind / skeleton / kind別lint 選択の決定のみ。ファイル成果物なし)",
++      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skill の場合のみ init 以降のフェーズ (kind_filter = サブ種別 5 値) へ進む。非 skill kind は kind 語彙 (schemas/build-flags.schema.json#/properties/capability_kind) と対応表 (references/build-steps.md §I.1) で skeleton/出力先/lint を確定し、scaffold 相当の生成と Step 4 の kind 別 lint で完結する。"
++    },
+     {
+       "id": "init",
+       "step": 1,
+       "title": "要求ヒアリングと L0/L1 解決",
++      "dependsOn": ["init-pre"],
+       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+-      "resourceIds": ["ref-resource-map", "ref-build-steps", "schema-build-flags"],
+-      "output_artifact": "eval-log/skill-brief.json"
++      "resourceIds": ["ref-resource-map", "ref-build-steps", "schema-build-flags", "schema-build-plan"],
++      "output_artifact": "eval-log/skill-brief.json + eval-log/build-plan.json",
++      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。"
+     },
+     {
+       "id": "scaffold",
+@@ -66,6 +77,7 @@
+       "dependsOn": ["scaffold"],
+       "kind_filter": ["run", "assign", "delegate"],
+       "flag_required": "--with-prompts",
++      "flag_source": "eval-log/build-plan.json#/flags/with_prompts (brief.responsibilities から決定論導出)",
+       "resourceIds": ["schema-responsibility-slot", "prompt-responsibility-emit"],
+       "output_artifact": "prompts/<R-id>.md"
+     },
+@@ -76,6 +88,7 @@
+       "dependsOn": ["scaffold"],
+       "kind_filter": ["assign"],
+       "flag_required": "--with-evaluator",
++      "flag_source": "eval-log/build-plan.json#/flags/with_evaluator (brief.generate_pair_evaluator から決定論導出)",
+       "resourceIds": ["schema-build-flags"],
+       "output_artifact": "plugins/<plugin>/skills/<pair>/"
+     },
+@@ -131,10 +144,11 @@
+   "resources": [
+     {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["init"]},
+     {"id": "ref-build-steps", "kind": "reference", "path": "./references/build-steps.md", "phaseIds": ["init", "references"]},
+-    {"id": "schema-template-selection", "kind": "schema", "path": "./schemas/template-selection.schema.json", "phaseIds": ["scaffold", "templates"]},
++    {"id": "schema-template-selection", "kind": "schema", "path": "./schemas/template-selection.schema.json", "phaseIds": ["init-pre", "scaffold", "templates"]},
+     {"id": "schema-skill-build-trace", "kind": "schema", "path": "./schemas/skill-build-trace.schema.json", "phaseIds": ["scripts", "trace-write"]},
+     {"id": "schema-responsibility-slot", "kind": "schema", "path": "./schemas/responsibility-slot.schema.json", "phaseIds": ["prompts-emit"]},
+     {"id": "schema-build-flags", "kind": "schema", "path": "./schemas/build-flags.schema.json", "phaseIds": ["init", "evaluator-emit"]},
++    {"id": "schema-build-plan", "kind": "schema", "path": "./schemas/build-plan.schema.json", "phaseIds": ["init", "scripts"]},
+     {"id": "schema-content-review-verdict", "kind": "schema", "path": "./schemas/content-review-verdict.schema.json", "phaseIds": ["content-review"]},
+     {"id": "ref-content-review-protocol", "kind": "reference", "path": "./references/content-review-protocol.md", "phaseIds": ["content-review"]},
+     {"id": "prompt-scaffold", "kind": "prompt", "path": "./prompts/R1-scaffold.md", "phaseIds": ["scaffold"]},
+diff --git a/plugins/skill-creator/skills/run-elegant-review/SKILL.md b/plugins/skill-creator/skills/run-elegant-review/SKILL.md
+index 277648c..b111ac3 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/SKILL.md
++++ b/plugins/skill-creator/skills/run-elegant-review/SKILL.md
+@@ -73,18 +73,22 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+       loop_scope: inner
+       text: 1周回内で30思考法が全種 finding を出すか skip_reason を残し used 足す skipped_with_reason が30に到達する
+       verify_by: script
++      derived_from: [CL-2]
+     - id: IN2
+       loop_scope: inner
+       text: 各 SubAgent が出力する findings.json が集約スキーマを通過し issues[].severity が優先度列挙、condition_signal が4条件 signal 列挙に収まる
+       verify_by: lint
++      derived_from: [CL-7]
+     - id: OUT1
+       loop_scope: outer
+       text: 矛盾なし 漏れなし 整合性あり 依存関係整合の4条件が全 PASS かつ未達時は force_pass せず human_review へ差し戻す
+       verify_by: elegant-review
++      derived_from: [CL-3, CL-4, CL-5, CL-6, CL-9]
+     - id: OUT2
+       loop_scope: outer
+       text: 改善案の承認を同一 context が行わず別 SubAgent または人間が独立採点する proposer 非イコール approver を満たす
+       verify_by: evaluator
++      derived_from: [CL-8]
+ ---
+ 
+ # run-elegant-review (v2)
+@@ -105,15 +109,15 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ ### 完了チェックリスト (Checklist)
+ 
+-- [ ] Phase 1 思考リセットを経由し `shared_state.md`（200字以内）を生成した
+-- [ ] `thought_method_coverage.used + skipped_with_reason == 30`（30 思考法全て使用 or skip_reason 付き）
+-- [ ] `fail_counts.contradiction == 0`（矛盾なし）
+-- [ ] `fail_counts.omission == 0`（漏れなし）
+-- [ ] `fail_counts.inconsistency == 0`（整合性あり）
+-- [ ] `fail_counts.dependency_break == 0`（依存関係整合）
+-- [ ] `findings.json` が `schemas/findings.schema.json` を通過する
+-- [ ] proposer ≠ approver を満たす（自己承認禁止、別 SubAgent or 人間が承認）
+-- [ ] max_iter 未達のまま終了時は `status: incomplete` + force_pass 禁止で human_review へ差し戻した
++- [ ] Phase 1 思考リセットを経由し `shared_state.md`（200字以内）を生成した <!-- CL-1 exempt: 工程順序項目。validate-paradigm-coverage.py --phase-order が機械検査 -->
++- [ ] `thought_method_coverage.used + skipped_with_reason == 30`（30 思考法全て使用 or skip_reason 付き） <!-- CL-2 -->
++- [ ] `fail_counts.contradiction == 0`（矛盾なし） <!-- CL-3 -->
++- [ ] `fail_counts.omission == 0`（漏れなし） <!-- CL-4 -->
++- [ ] `fail_counts.inconsistency == 0`（整合性あり） <!-- CL-5 -->
++- [ ] `fail_counts.dependency_break == 0`（依存関係整合） <!-- CL-6 -->
++- [ ] `findings.json` が `schemas/findings.schema.json` を通過する <!-- CL-7 -->
++- [ ] proposer ≠ approver を満たす（自己承認禁止、別 SubAgent or 人間が承認） <!-- CL-8 -->
++- [ ] max_iter 未達のまま終了時は `status: incomplete` + force_pass 禁止で human_review へ差し戻した <!-- CL-9 -->
+ 
+ ### ゴールシークループ
+ 
+diff --git a/plugins/skill-creator/skills/run-elegant-review/scripts/check-review-trigger.py b/plugins/skill-creator/skills/run-elegant-review/scripts/check-review-trigger.py
+index 1bf01fa..f9a03ee 100755
+--- a/plugins/skill-creator/skills/run-elegant-review/scripts/check-review-trigger.py
++++ b/plugins/skill-creator/skills/run-elegant-review/scripts/check-review-trigger.py
+@@ -4,10 +4,13 @@
+ #            (Stop の継続/停止判断は stdout の {"decision":"block"} JSON で行い exit code では行わない)。
+ # 想定 input: {"session_id": ..., "stop_hook_active": bool, ...} 形式 JSON(stdin 空でも落ちない)。
+ # 出力1 (推奨): 変更ファイル合計が 20 件以上なら run-elegant-review 起動を stdout 推奨。
+-# 出力2 (queue): 評価要求を eval-log/review-queue.jsonl へ 1 行 append (content-review-protocol.md:88 の queue を実体化)。
++# 出力2 (queue): 評価要求を eval-log/review-queue.jsonl へ 1 行 append
++#         (content-review-protocol.md「hook 発火と queue」の queue を実体化。診断ログであり自動 consumer は無い)。
+ # 出力3 (確実起動 / decision:block): 他プラグインに未評価 or stale な変更 skill が残る場合、
+ #         Stop を block し Claude 本体へ「run-elegant-review + assign-skill-design-evaluator を実行せよ」と差し戻す。
+ #         フック自身は重い LLM を実行しない(=protocol の原則を維持)。トリガのみ行い、実行は Claude 本体。
++# 出力4 (self 通知): 自プラグイン (dogfooding) の pending は block 除外のため完全無音だった。
++#         Stop 時に stdout 通知のみ出す (block はしない)。強制は CI/pre-push の lint-content-review.py。
+ #
+ # 三層防御 (確実性の担保):
+ #   1) 通知層: 変更件数に応じ run-elegant-review を stdout 推奨 (情報提供)。
+@@ -268,16 +271,20 @@ def _verdict_recorded_sha(root: str, plugin: str, skill: str, fname: str) -> tup
+         return None, False
+ 
+ 
+-def _unevaluated_or_stale(root: str, semantic_paths: list[str]) -> list[str]:
++def _pending_review_targets(root: str, semantic_paths: list[str], exempt: bool) -> list[str]:
+     """変更 SKILL.md のうち、verdict が欠落 or SHA 不一致 (stale) の skill を返す。
+-    生成器自身は Stop block では除外 (自己ブロック回避)。CI/pre-push では対象。
++
++    exempt=False: Stop block 対象 (自プラグイン dogfooding は除外済)。
++    exempt=True: 自プラグインのみ (block はせず stdout 通知にのみ使う)。
+     """
+     pending: list[str] = []
+     for path in semantic_paths:
+         if not _is_skill_md(path):
+             continue
+         plugin, skill = _parse_plugin_skill(path)
+-        if not plugin or not skill or _FC.is_stop_block_exempt(plugin):
++        if not plugin or not skill:
++            continue
++        if bool(_FC.is_stop_block_exempt(plugin)) != exempt:
+             continue
+         current = _sha256_file(os.path.join(root, path))
+         for fname in REQUIRED_VERDICTS:
+@@ -288,6 +295,13 @@ def _unevaluated_or_stale(root: str, semantic_paths: list[str]) -> list[str]:
+     return sorted(set(pending))
+ 
+ 
++def _unevaluated_or_stale(root: str, semantic_paths: list[str]) -> list[str]:
++    """Stop block 対象の pending (自プラグインは除外)。既存契約を維持する薄い wrapper。
++    生成器自身は Stop block では除外 (自己ブロック回避)。CI/pre-push では対象。
++    """
++    return _pending_review_targets(root, semantic_paths, exempt=False)
++
++
+ def main() -> int:
+     try:
+         inp = _read_stdin_json()
+@@ -351,6 +365,32 @@ def main() -> int:
+                 )
+                 return 0
+ 
++        # --- 出力4: self-plugin 通知 (block はしない・1 分岐) ---
++        # 自プラグイン (dogfooding) の pending は Stop block から除外され (自己ブロック回避)、
++        # 従来はセッション内で完全無音のまま pre-push/CI で一括顕在化していた。
++        # block 分岐が return した後にのみ到達するため decision JSON と混ざらない。
++        if root and is_stop_event:
++            self_pending = _pending_review_targets(root, semantic, exempt=True)
++            if self_pending:
++                shown = ", ".join(self_pending[:8]) + (" …" if len(self_pending) > 8 else "")
++                sys.stdout.write(
++                    json.dumps(
++                        {
++                            "hook": "check-review-trigger",
++                            "notice": "self-plugin content-review pending",
++                            "pending_skills": self_pending,
++                            "reason": (
++                                f"{_FC.SELF_DOGFOODING_PLUGIN} 自身の変更 skill が未評価 or stale です"
++                                f" ({len(self_pending)} 件): {shown}。Stop は妨げませんが、push 前に"
++                                " content-review verdict を再生成してください"
++                                " (pre-push/CI の lint-content-review.py が強制します)。"
++                            ),
++                        },
++                        ensure_ascii=False,
++                    )
++                    + "\n"
++                )
++
+         # --- 出力1: stdout 推奨 (block しない場合のみ・既存挙動を維持) ---
+         if count >= THRESHOLD:
+             sys.stdout.write(
+diff --git a/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py b/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+index ce4397c..588498f 100644
+--- a/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
++++ b/plugins/skill-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py
+@@ -1,13 +1,13 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: validate-paradigm-coverage
+-# purpose: Validate that elegant-review outputs cover all 30 paradigms with structured findings.
++# purpose: Validate that elegant-review outputs cover all 30 paradigms with structured findings, and that run dirs follow Phase1->2->3 order.
+ # inputs:
+-#   - argv: review.md or findings.json
++#   - argv: review.md or findings.json, or --phase-order <run-dir-or-tree>
+ # outputs:
+ #   - stdout: OK message
+-#   - stderr: missing paradigm or schema errors
+-#   - exit: 0=OK / 1=coverage failure / 2=usage error
++#   - stderr: missing paradigm / schema / phase-order errors
++#   - exit: 0=OK / 1=coverage or phase-order failure / 2=usage error
+ # contexts: [A, B, C, E]
+ # network: false
+ # write-scope: none
+@@ -17,10 +17,18 @@
+ 
+ Usage:
+   validate-paradigm-coverage.py <review.md | findings.json>
++  validate-paradigm-coverage.py --phase-order <run-dir | tree-root>
++
++--phase-order は elegant-review run ディレクトリ
++(eval-log/**/elegant-review/<run-id>/) の Phase1→2→3 成果物の存在+順序を検査する
++(enforcement 名: run-elegant-review/scripts/validate-paradigm-coverage.py (phase order check))。
++tolerant 契約: 3 phase の成果物 (shared_state.md / findings-phase2-*.json /
++findings.json 等) が全て揃う run のみ順序検査し、どれかを欠く旧 run は skip する
++(遡及 fail させない)。順序は mtime 比較で同時刻を許容する (fresh checkout 耐性)。
+ 
+ Exit codes:
+-  0 -> all 30 covered with structured findings or markdown mentions
+-  1 -> missing paradigms detected
++  0 -> all 30 covered with structured findings or markdown mentions / phase order OK
++  1 -> missing paradigms or phase-order violation detected
+   2 -> usage error
+ """
+ from __future__ import annotations
+@@ -223,10 +231,92 @@ def extract_text(path: Path) -> str:
+     return path.read_text(encoding="utf-8").lower()
+ 
+ 
++# --- Phase 順序検査 (enforcement: phase order check) ---
++
++_PHASE1_NAME = "shared_state.md"
++_PHASE2_GLOB = "findings-phase2-*.json"
++# Phase3 成果物は findings.json (集約) または phase3-*.json (batch 実行結果)。
++_PHASE3_NAME = "findings.json"
++_PHASE3_GLOB = "phase3-*.json"
++
++
++def check_phase_order(run_dir: Path) -> tuple[str, list[str]]:
++    """1 つの run dir の Phase1→2→3 成果物の存在+順序を検査する。
++
++    returns (status, errors)  status: "ok" | "skipped" | "violation"
++    3 phase の成果物が全て揃う run のみ順序検査する (揃わない旧 run は skipped)。
++    順序は mtime で判定し、同時刻 (checkout で mtime が揃う) は許容する。
++
++    Phase1 (shared_state.md) は存在のみ検査する: shared_state.md は Phase3 以降も
++    申し送りとして更新される living document であり、mtime は run 終端を指すのが
++    正常のため順序判定に使えない (実 run 4 件で実測)。mtime 順序が機械的に意味を
++    持つのは「Phase2 findings → Phase3 成果物」の一辺のみ。
++    """
++    phase1 = run_dir / _PHASE1_NAME
++    phase2 = sorted(run_dir.glob(_PHASE2_GLOB))
++    phase3 = [p for p in [run_dir / _PHASE3_NAME] if p.is_file()]
++    phase3 += sorted(run_dir.glob(_PHASE3_GLOB))
++    if not (phase1.is_file() and phase2 and phase3):
++        return "skipped", []
++    try:
++        t2_max = max(p.stat().st_mtime for p in phase2)
++        t3 = max(p.stat().st_mtime for p in phase3)
++    except OSError as exc:
++        return "skipped", [f"{run_dir}: stat failed, skipped: {exc}"]
++    errors: list[str] = []
++    if t2_max > t3:
++        errors.append(
++            f"{run_dir}: phase order violation: {_PHASE2_GLOB} (Phase2) is newer "
++            "than Phase3 artifacts (findings.json / phase3-*.json)"
++        )
++    return ("violation", errors) if errors else ("ok", [])
++
++
++def iter_run_dirs(base: Path):
++    """base が run dir ならそれ自身、tree なら **/elegant-review/<run-id>/ を列挙する。"""
++    if (base / _PHASE1_NAME).is_file() or any(base.glob(_PHASE2_GLOB)):
++        yield base
++        return
++    for child in sorted(base.glob("**/elegant-review/*")):
++        if child.is_dir():
++            yield child
++
++
++def check_phase_order_tree(base: Path) -> int:
++    ok = skipped = 0
++    all_errors: list[str] = []
++    for run_dir in iter_run_dirs(base):
++        status, errors = check_phase_order(run_dir)
++        if status == "skipped":
++            skipped += 1
++        elif status == "ok":
++            ok += 1
++        else:
++            all_errors.extend(errors)
++    if all_errors:
++        for err in all_errors:
++            print(err, file=sys.stderr)
++        return 1
++    print(f"OK: phase order verified for {ok} run(s), skipped {skipped} incomplete run(s)")
++    return 0
++
++
+ def main(argv: list[str]) -> int:
+     if len(argv) < 2:
+-        print("usage: validate-paradigm-coverage.py <file>", file=sys.stderr)
++        print(
++            "usage: validate-paradigm-coverage.py <file> | --phase-order <dir>",
++            file=sys.stderr,
++        )
+         return 2
++    if argv[1] == "--phase-order":
++        if len(argv) < 3:
++            print("usage: validate-paradigm-coverage.py --phase-order <dir>", file=sys.stderr)
++            return 2
++        base = Path(argv[2])
++        if not base.is_dir():
++            print(f"not a directory: {base}", file=sys.stderr)
++            return 2
++        return check_phase_order_tree(base)
+     path = Path(argv[1])
+     if path.suffix == ".json":
+         ok, errors = validate_structured_json(path)
+diff --git a/plugins/skill-creator/skills/run-skill-create/SKILL.md b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+index f1c5b79..20965f2 100644
+--- a/plugins/skill-creator/skills/run-skill-create/SKILL.md
++++ b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+@@ -38,20 +38,24 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+   criteria:
+     - id: IN1
+       loop_scope: inner
+-      text: P0 lint 8本と manifest-contents が全て exit0 で通り TODO や未展開プレースホルダや英語仮文の残存が無い(パラメーター名を除く)
++      text: workflow-manifest の p0-lint.commands 全件 (manifest-contents 含む) が exit0 で通り TODO や未展開プレースホルダや英語仮文の残存が無い(パラメーター名を除く)
+       verify_by: lint
++      derived_from: [CL-7]
+     - id: IN2
+       loop_scope: inner
+       text: 各ゲート通過時の handoff JSON と build-trace JSON が schemas 配下の正本スキーマに準拠し章 coverage を空欄なく記録している
+       verify_by: script
++      derived_from: [CL-3, CL-12]
+     - id: OUT1
+       loop_scope: outer
+       text: 全ゲートでユーザー承認前に自動前進せず evaluator と governance reviewer を必ず context fork で起動している
+       verify_by: elegant-review
++      derived_from: [CL-1, CL-2, CL-8, CL-11]
+     - id: OUT2
+       loop_scope: outer
+       text: fork した assign-skill-design-evaluator の findings に FAIL 残存が無く新規や30行超変更時は elegant-review の C1-C4 が全 PASS
+       verify_by: evaluator
++      derived_from: [CL-9, CL-10]
+ # auto-backfilled by backfill-source-tier.py (doc/21)
+ source: doc/ClaudeCodeスキルの設計書/
+ source-tier: internal
+@@ -131,25 +135,25 @@ audit-trigger: quarterly
+ 
+ ### 完了チェックリスト (Checklist)
+ 
+-- [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み
+-- [ ] Notion 指定ありの場合、`python3 plugins/skill-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない
+-- [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き
+-- [ ] **新規 plugin の場合** `python3 scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている
+-- [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` (`xl-skills-full`/`-minimal`/`-intake`) 登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反)
+-- [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`)
+-- [ ] P0 lint 8 本 + manifest-contents が全 exit 0 (`workflow-manifest.json phases[id=p0-lint].commands`)。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く)
+-- [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み
+-- [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし
+-- [ ] 新規 or >30 行変更時、`run-elegant-review` (context:fork) で C1-C4 全 PASS。PASS 時 `eval-log/pattern-feedback.json` に pattern_ref_candidates/new_patterns/mass_production_risk を提案保存
+-- [ ] governance 承認済み: 4 条件 (solo=true/安定版凍結/newly_failing=0/LLM-reviewer pass) を `workflow-manifest.json` の `phases[id=governance].auto_approve_conditions` で機械評価し、全充足で自動承認。条件値の正本は repo-root `references/governance-params.json` (27章§11 パラメータ正本、gitignore。未配備なら `references/governance-params.json.example` から provision。不在時は graceful degrade=手動承認フロー)。不充足なら `run-skill-rubric-governance` 経由 (`prompts/R3-governance-decide.md` R3)。Gate 4 承認済み
+-- [ ] 各ゲート通過時に `eval-log/handoff-<step>.json` が `schemas/handoff.schema.json` 準拠で保存されている
+-- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/evaluator_result/elegant_review/governance/open_questions) が日本語本文で提示されている (パラメーター名のみ英語)
++- [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み <!-- CL-1 -->
++- [ ] Notion 指定ありの場合、`python3 plugins/skill-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
++- [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き <!-- CL-3 -->
++- [ ] **新規 plugin の場合** `python3 scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている <!-- CL-4 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
++- [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` (`xl-skills-full`/`-minimal`/`-intake`) 登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反) <!-- CL-5 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
++- [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`) <!-- CL-6 exempt: legacy 経路の条件付き運用項目 -->
++- [ ] `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
++- [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み <!-- CL-8 -->
++- [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし <!-- CL-9 -->
++- [ ] 新規 or >30 行変更時、`run-elegant-review` (context:fork) で C1-C4 全 PASS。PASS 時 `eval-log/pattern-feedback.json` に pattern_ref_candidates/new_patterns/mass_production_risk を提案保存 <!-- CL-10 -->
++- [ ] governance 承認済み: 4 条件 (solo=true/安定版凍結/newly_failing=0/LLM-reviewer pass) を `workflow-manifest.json` の `phases[id=governance].auto_approve_conditions` で機械評価し、全充足で自動承認。条件値の正本は repo-root `references/governance-params.json` (27章§11 パラメータ正本、gitignore。未配備なら `references/governance-params.json.example` から provision。不在時は graceful degrade=手動承認フロー)。不充足なら `run-skill-rubric-governance` 経由 (`prompts/R3-governance-decide.md` R3)。Gate 4 承認済み <!-- CL-11 -->
++- [ ] 各ゲート通過時に `eval-log/handoff-<step>.json` が `schemas/handoff.schema.json` 準拠で保存されている <!-- CL-12 -->
++- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/evaluator_result/elegant_review/governance/open_questions) が日本語本文で提示されている (パラメーター名のみ英語) <!-- CL-13 exempt: レポート提示の運用項目。完了レポート契約は本文で規定済み -->
+ 
+ ### ゴールシークループ
+ 
+ 正本 `../run-build-skill/references/goal-seek-paradigm.md` の 6 ステップ (現状評価/手順生成/実行/検証/Anchor Step/反復) に従う。本スキル固有の差分:
+ 
+-- **未達評価の単位はゲート**: Gate 1→2→2.5→3→4 を順に「未承認」とみなして都度埋める。ゲート前で必ず止まりユーザー承認を取る (自動推測禁止、AskUserQuestion 経由 `prompts/R2-gate-review.md`)。
++- **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。ゲート前で必ず止まりユーザー承認を取る (自動推測禁止、AskUserQuestion 経由 `prompts/R2-gate-review.md`)。
+ - **委譲先 (子 Skill)**: `run-skill-elicit` / `run-build-skill` / `assign-skill-design-evaluator` / `run-elegant-review` / `run-skill-rubric-governance`。Notion 指定ありの非技術者 intake は `skill-intake` 完了証跡を先に検証する。本スキルは制御のみ、各子が自設計書を参照。
+ - **context:fork 必須**: evaluator / elegant-review / governance reviewer は必ず fork で起動 (Sycophancy 防止)。
+ - **差し戻し**: P0 lint fail または evaluator/elegant FAIL なら `run-build-skill` 再実行へ戻す (最大 3 周)。`--fast` 判定・elegant 起動判定は `scripts/evaluate-create-gates.py` で機械決定 (条件不一致は黙って通常フロー)。
+diff --git a/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json b/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
+index 9aacb38..d98aa26 100644
+--- a/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
++++ b/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
+@@ -30,9 +30,9 @@
+     "trigger_conditions": {"type": "array", "items": {"type": "string", "maxLength": 80}, "minItems": 2, "maxItems": 3},
+     "output_contract": {"type": "string"},
+     "key_constraints": {"type": "array", "items": {"type": "string"}},
+-    "goal": {"type": "string", "description": "ゴールシーク用。達成すべき最終状態を観測可能な完了形1文で。実行系kindで推奨。未指定時はoutput_contractの完了条件から導出。"},
+-    "purpose_background": {"type": "string", "description": "ゴールシーク用。なぜこのゴールか (目的・背景)。手順生成時の優先順位の根拠。"},
+-    "checklist": {"type": "array", "items": {"type": "string"}, "description": "ゴールシーク用。ゴール達成の受入基準 (二値判定可能)。実行系kindで推奨。未指定時はoutput_contract/key_constraintsから導出。"},
++    "goal": {"type": "string", "description": "ゴールシーク用。達成すべき最終状態を観測可能な完了形1文で。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。output_contract の完了条件と同源に保つ。"},
++    "purpose_background": {"type": "string", "description": "ゴールシーク用。なぜこのゴールか (目的・背景)。手順生成時の優先順位の根拠。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。"},
++    "checklist": {"type": "array", "items": {"type": "string"}, "description": "ゴールシーク用。ゴール達成の受入基準 (二値判定可能)。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (minItems 1、ref のみ任意)。output_contract / key_constraints と同源に保つ。"},
+     "boundary": {"type": "string", "minLength": 1, "maxLength": 200},
+     "deterministic_checks": {"type": "array", "items": {"type": "string"}},
+     "external_systems": {"type": "array", "items": {"type": "string"}},
+diff --git a/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json b/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
+index 47c0095..927f8bf 100644
+--- a/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
+@@ -4,6 +4,8 @@
+   "workflowId": "run-skill-create",
+   "skill": "run-skill-create",
+   "description": "run-skill-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。",
++  "gate_order": ["G1", "G2.5", "G2", "G3", "G4"],
++  "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a→5→6 に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
+   "phases": [
+     {
+       "id": "elicit",
+@@ -89,7 +91,8 @@
+         "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
+         "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir ${SKILLS_DIR}",
+         "python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py --skills-dir ${SKILLS_DIR}",
+-        "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py"
++        "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
++        "python3 plugins/skill-creator/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
+       ],
+       "max_retry": 3,
+       "fatal_exit_codes": [1],
+diff --git a/plugins/skill-creator/skills/run-skill-rubric-governance/scripts/aggregate-evals.py b/plugins/skill-creator/skills/run-skill-rubric-governance/scripts/aggregate-evals.py
+index b5c3336..bd6d427 100755
+--- a/plugins/skill-creator/skills/run-skill-rubric-governance/scripts/aggregate-evals.py
++++ b/plugins/skill-creator/skills/run-skill-rubric-governance/scripts/aggregate-evals.py
+@@ -17,6 +17,8 @@ exit_code 仕様 (Claude Code Hooks 準拠):
+ 閾値:
+     - 同一 rubric_id (skill) で直近 3 連続 verdict=FAIL
+     - 同一 rubric_id の平均スコアが直近窓で 0.1 以上低下
++    - 同一 rubric_id で直近窓 (6件) 中 2 レコード以上が苦戦シグナルを示す
++      (iterations>=2 / negative_feedback>=2件 / findings>=3件 のいずれか)
+ """
+ 
+ from __future__ import annotations
+@@ -34,6 +36,19 @@ _CONSECUTIVE_FAIL_THRESHOLD = 3
+ _SCORE_DROP_THRESHOLD = 0.1
+ _RECENT_WINDOW = 5  # 直近窓
+ 
++# 苦戦密度 (friction_density) 閾値。
++# CI は PASS verdict のみ commit を許すため、FAIL 系列に依存する上記 2 条件は
++# 入力が構造的に空集合となり発火し得ない。committed PASS verdict に既に埋まる
++# 摩擦データ (再評価 iterations / negative_feedback / findings 件数) を第 3 の
++# 発火条件にする。単独レビューアの軽微な摩擦 (iterations=1 かつ negative 1 件)
++# では発火せず、同一 skill の直近窓で複数レコードの摩擦が裏付け合う場合のみ
++# 発火する (オオカミ少年回避を最優先した保守設計)。
++_FRICTION_ITERATIONS_MIN = 2  # 再評価ループが必要だった (上限は max_iterations=3)
++_FRICTION_NEGATIVE_MIN = 2  # 1 レコードの negative_feedback が 2 件以上
++_FRICTION_FINDINGS_MIN = 3  # 1 レコードの findings が 3 件以上 (score.jsonl 系)
++_FRICTION_MIN_RECORDS = 2  # 直近窓内で摩擦レコード 2 件以上 (相互裏付け)
++_FRICTION_RECENT_WINDOW = 6  # 苦戦密度の直近窓
++
+ 
+ def _plugin_root() -> Path:
+     # 本ファイル: plugins/skill-creator/skills/run-skill-rubric-governance/scripts/
+@@ -150,7 +165,11 @@ def _normalize_verdict_record(rec: dict[str, Any]) -> dict[str, Any] | None:
+     """content-review verdict.json を共通形へ。
+ 
+     verdict schema: target{plugin,skill} / verdict(PASS|FAIL|INCOMPLETE) / reviewed_at
+-    -> {skill, date, verdict, score, findings}
++                    / iterations / feedback_loop{negative_feedback[]}
++    -> {skill, date, verdict, score, findings, iterations, negative_feedback_count}
++
++    iterations / negative_feedback は PASS verdict にも残る摩擦シグナルで、
++    friction_density 検出の入力になる (PASS-only commit 制約下の唯一の負情報)。
+     """
+     if not isinstance(rec, dict):
+         return None
+@@ -158,12 +177,16 @@ def _normalize_verdict_record(rec: dict[str, Any]) -> dict[str, Any] | None:
+     skill = target.get("skill")
+     if not skill:
+         return None
++    feedback = rec.get("feedback_loop") if isinstance(rec.get("feedback_loop"), dict) else {}
++    negative = feedback.get("negative_feedback")
+     return {
+         "skill": skill,
+         "date": _date_of(rec.get("reviewed_at")),
+         "verdict": str(rec.get("verdict", "")),
+         "score": None,  # verdict は数値スコアを持たない
+         "findings": [],
++        "iterations": rec.get("iterations"),
++        "negative_feedback_count": len(negative) if isinstance(negative, list) else 0,
+     }
+ 
+ 
+@@ -269,6 +292,18 @@ def _score_of(ev: dict[str, Any]) -> float | None:
+     return None
+ 
+ 
++def _is_friction(ev: dict[str, Any]) -> bool:
++    """1 レコードが苦戦シグナルを含むか (EVALS.json 旧形式はフィールド欠落 = 非該当)。"""
++    iterations = ev.get("iterations")
++    if isinstance(iterations, int) and iterations >= _FRICTION_ITERATIONS_MIN:
++        return True
++    negative = ev.get("negative_feedback_count")
++    if isinstance(negative, int) and negative >= _FRICTION_NEGATIVE_MIN:
++        return True
++    findings = ev.get("findings")
++    return isinstance(findings, list) and len(findings) >= _FRICTION_FINDINGS_MIN
++
++
+ def _detect_anomalies(evals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+     """rubric_id (= skill) 単位で異常を検出。"""
+     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+@@ -313,6 +348,27 @@ def _detect_anomalies(evals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+                             "prior_mean": round(sum(prior) / len(prior), 3),
+                         }
+                     )
++        # 3) 苦戦密度 (PASS verdict 内の摩擦シグナル。FAIL 非依存の第 3 条件)。
++        recent_records = items_sorted[-_FRICTION_RECENT_WINDOW:]
++        friction_records = [x for x in recent_records if _is_friction(x)]
++        if len(friction_records) >= _FRICTION_MIN_RECORDS:
++            anomalies.append(
++                {
++                    "rubric_id": rubric_id,
++                    "kind": "friction_density",
++                    "friction_records": len(friction_records),
++                    "window": len(recent_records),
++                    "evidence": [
++                        {
++                            "date": x.get("date"),
++                            "iterations": x.get("iterations"),
++                            "negative_feedback_count": x.get("negative_feedback_count"),
++                            "findings_count": len(x.get("findings") or []),
++                        }
++                        for x in friction_records
++                    ],
++                }
++            )
+     return anomalies
+ 
+ 
+diff --git a/plugins/skill-governance-lint/scripts/lint-skill-tree.py b/plugins/skill-governance-lint/scripts/lint-skill-tree.py
+index 77d14fb..7ba885c 100755
+--- a/plugins/skill-governance-lint/scripts/lint-skill-tree.py
++++ b/plugins/skill-governance-lint/scripts/lint-skill-tree.py
+@@ -212,6 +212,11 @@ def lint_one(root: Path) -> list[str]:
+             continue
+         if p.is_dir():
+             if len(rel.parts) > 1:
++                # examples/ 配下は生成出力の見本 (完成例) であり、複数ファイル出力を持つ
++                # skill では出力ツリー構造の再現が本質。templates/ skip と同一の論拠で
++                # 構造検査対象外 (ファイル拡張子検査 第8-11条 は維持)
++                if rel.parts[0] == "examples":
++                    continue
+                 if tuple(rel.parts) not in ALLOWED_NESTED_DIRS:
+                     errs.append(f"第13条違反: nested dir '{rel}'")
+             elif rel.parts[0] not in ALLOWED_DIRS and rel.parts[0] != ".":
+diff --git a/scripts/lint-feedback-contract.py b/scripts/lint-feedback-contract.py
+index 1dfbf82..cd9fbd5 100644
+--- a/scripts/lint-feedback-contract.py
++++ b/scripts/lint-feedback-contract.py
+@@ -20,7 +20,9 @@
+ 仕組みの fail-closed ゲート。criteria の中身は各スキル固有のため AI が brief から
+ 導出するが(内容判断の自由度)、欠落・不正は本 lint が CI/pre-push で必ず落とす(機構保証)。
+ 
+-ref/assign/agent 等の非ループ系は対象外。skip_reason があれば loop-kind でも N/A escape。
++ref/assign/agent 等の非ループ系は対象外。skip_reason での N/A escape は SSOT の
++FEEDBACK_SKIP_KINDS (ref/assign) 限定で、loop-kind は skip_reason では免除されない
++(criteria を実際に整備させる。任意 kind の skip_reason 素通し穴 PF-ABST の封鎖)。
+ 
+ criteria 制約の正本: repo-root scripts/feedback_contract_ssot.py。
+ 
+@@ -116,12 +118,22 @@ def _check_skill(plugin: str, skill: str) -> list[str]:
+         return [
+             f"{plugin}/{skill}: frontmatter に feedback_contract がありません "
+             f"(kind={kind} は loop 実行系。brief.goal/Checklist から criteria を導出し "
+-            "frontmatter へ焼き込むこと。N/A の場合は feedback_contract.skip_reason を記載)"
++            "frontmatter へ焼き込むこと。skip_reason での N/A escape は "
++            f"kind={sorted(FC.FEEDBACK_SKIP_KINDS)} のみ)"
+         ]
+     skip_reason = str(fc.get("skip_reason", "")).strip()
+     criteria = fc.get("criteria")
+     if (not isinstance(criteria, list) or not criteria) and skip_reason:
+-        return []  # 明示的 N/A escape
++        # skip_reason の N/A escape は SSOT の FEEDBACK_SKIP_KINDS (ref/assign) 限定。
++        # ここへ到達する kind は LOOP_KINDS のみのため、loop 実行系の skip_reason は
++        # criteria 必須の免除にならず violation (任意 kind の素通し穴を封鎖)。
++        if kind in FC.FEEDBACK_SKIP_KINDS:
++            return []  # 明示的 N/A escape (ref/assign)
++        return [
++            f"{plugin}/{skill}: kind={kind} は loop 実行系のため feedback_contract."
++            "skip_reason では criteria 必須を免除できません (escape は "
++            f"kind={sorted(FC.FEEDBACK_SKIP_KINDS)} 限定。inner/outer criteria を整備すること)"
++        ]
+     errs = FC.validate_criteria(
+         criteria, require_both_scopes=True, prefix=f"{plugin}/{skill}: feedback_contract.criteria"
+     )
+diff --git a/scripts/validate-llm-coverage.py b/scripts/validate-llm-coverage.py
+index 6d0a9c5..97e929b 100644
+--- a/scripts/validate-llm-coverage.py
++++ b/scripts/validate-llm-coverage.py
+@@ -139,8 +139,9 @@ def measure_skill(plugin: str, skill: str, repo_tests: str) -> dict | None:
+     fc = FC.extract_frontmatter_feedback_contract(text)
+     if not isinstance(fc, dict):
+         return None
+-    if str(fc.get("skip_reason", "")).strip():
+-        return None  # N/A escape
++    # skip_reason は計測 skip の根拠にしない (N/A escape は FEEDBACK_SKIP_KINDS=ref/assign
++    # 限定で、それらは上の LOOP_KINDS 判定で除外済み。lint-feedback-contract と対称)。
++    # criteria 未整備の loop-kind は下の ids 空判定で計測対象外になる。
+     ids = sorted(FC.criteria_ids(fc.get("criteria")))
+     if not ids:
+         return None
+diff --git a/tests/criteria/test_all_skills_criteria.py b/tests/criteria/test_all_skills_criteria.py
+index e6e8a47..7d79a6d 100644
+--- a/tests/criteria/test_all_skills_criteria.py
++++ b/tests/criteria/test_all_skills_criteria.py
+@@ -1,32 +1,28 @@
+-"""全 loop-kind skill の feedback_contract.criteria を genuine 検証する単一 parametrized テスト。
++"""feedback_contract.criteria を持つ全実体 skill を genuine 検証する単一 parametrized テスト。
+ 
+ 各 criterion (id/loop_scope/verify_by) を実際に検証することで、ハーネス仕様
+ (doc/harness-coverage-spec.md) の skills mechanical 軸 (criteria 被覆) を genuine に満たす。
+ 
+-被覆認識: validate-llm-coverage.py は tests/**/*.py が「skill 名 + criterion id」を共に
+-参照すると covered と計測する。本テストは pytest param id に "<plugin>/<skill>::<cid>" を
+-埋め込み、かつ docstring/コメントで全 skill 名と id を列挙するため全 criterion が被覆される。
++被覆対象は **build_criteria_roster.discover() が動的探索する** (ハードコード表を持たない)。
++旧版のハードコード32本は量産された新 skill (company-master / notion-gmail-send /
++plugin-dev-planner / mf enrich・reconcile の計9本) を検証の死角に落としていた。
++動的探索により新規 loop-kind skill は生成された時点で自動的に本テストの対象になる。
++
++被覆認識: validate-llm-coverage.py は tests/**/*.py に「skill 名 + criterion id」が
++静的出現すると covered と計測する。動的探索では skill 名が本文に現れないため、
++機械生成名簿 criteria_roster.py (生成器: build_criteria_roster.py --write) が
++静的テキストを担う。discovery と名簿の乖離は test_roster_matches_discovery が
++fail-closed に検出する (新 skill 追加 → roster 未再生成なら CI が落ちる)。
+ 
+ 検証方針 (genuine, ダミー禁止):
+   - inner (verify_by: lint/test/script): 当該 skill の SKILL.md/ディレクトリに対し決定論 lint
+     (validate-frontmatter / lint-skill-tree / lint-feedback-contract) を subprocess 実行し exit 0。
+   - outer (verify_by: elegant-review/evaluator): content-review/elegance-verdict.json が
+     存在し verdict==PASS。criteria_evaluated に当該 id があれば追加で包含も assert。
+-
+-被覆対象 skill (32, plugin/skill):
+-  contract-generator: run-contract-finalize / run-contract-generate / run-template-sync
+-  mf-kessai-invoice-check: run-mf-invoice-check / run-mf-invoice-db-setup
+-  prompt-creator: run-prompt-create / run-prompt-creator-7layer / run-prompt-elicit
+-  skill-creator: delegate-codex-skill-review / run-build-skill / run-elegant-review /
+-    run-goal-elicit / run-goal-seek / run-migrate-audit / run-plugin-package-check /
+-    run-skill-create / run-skill-elicit / run-skill-feedback / run-skill-rename /
+-    run-skill-rubric-governance / run-skill-update-notifier / wrap-git-commit-safe
+-  skill-intake: run-intake-finalize / run-intake-interview / run-intake-kickoff /
+-    run-intake-next-action / run-intake-option-catalog / run-intake-revise /
+-    run-intake-visualize / assign-notion-fidelity-evaluator / run-notion-intake-publish / run-skill-intake
+ """
+ from __future__ import annotations
+ 
++import importlib.util
+ import json
+ import subprocess
+ import sys
+@@ -42,41 +38,22 @@ EVAL_LOG = ROOT / "eval-log"
+ sys.path.insert(0, str(SCRIPTS))
+ import feedback_contract_ssot as FC  # noqa: E402
+ 
+-# (plugin, skill) — symlink でない実体 loop-kind skill。
+-SKILLS = [
+-    ("contract-generator", "run-contract-finalize"),
+-    ("contract-generator", "run-contract-generate"),
+-    ("contract-generator", "run-template-sync"),
+-    ("mf-kessai-invoice-check", "run-mf-invoice-check"),
+-    ("mf-kessai-invoice-check", "run-mf-invoice-db-setup"),
+-    ("prompt-creator", "run-prompt-create"),
+-    ("prompt-creator", "run-prompt-creator-7layer"),
+-    ("prompt-creator", "run-prompt-elicit"),
+-    ("skill-creator", "delegate-codex-skill-review"),
+-    ("skill-creator", "run-build-skill"),
+-    ("skill-creator", "run-elegant-review"),
+-    ("skill-creator", "run-goal-elicit"),
+-    ("skill-creator", "run-goal-seek"),
+-    ("skill-creator", "run-migrate-audit"),
+-    ("skill-creator", "run-plugin-package-check"),
+-    ("skill-creator", "run-skill-create"),
+-    ("skill-creator", "run-skill-elicit"),
+-    ("skill-creator", "run-skill-feedback"),
+-    ("skill-creator", "run-skill-rename"),
+-    ("skill-creator", "run-skill-rubric-governance"),
+-    ("skill-creator", "run-skill-update-notifier"),
+-    ("skill-creator", "wrap-git-commit-safe"),
+-    ("skill-intake", "run-intake-finalize"),
+-    ("skill-intake", "run-intake-interview"),
+-    ("skill-intake", "run-intake-kickoff"),
+-    ("skill-intake", "run-intake-next-action"),
+-    ("skill-intake", "run-intake-option-catalog"),
+-    ("skill-intake", "run-intake-revise"),
+-    ("skill-intake", "run-intake-visualize"),
+-    ("skill-intake", "assign-notion-fidelity-evaluator"),
+-    ("skill-intake", "run-notion-intake-publish"),
+-    ("skill-intake", "run-skill-intake"),
+-]
++
++def _load(name: str, path: Path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    mod = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(mod)
++    return mod
++
++
++_HERE = Path(__file__).resolve().parent
++ROSTER_MOD = _load("criteria_roster", _HERE / "criteria_roster.py")
++BUILDER = _load("build_criteria_roster", _HERE / "build_criteria_roster.py")
++
++# 探索正本は discover() (要素 = (plugin, skill, criterion ids))。
++# roster は llm-coverage 静的走査用の派生物。
++DISCOVERY: list[tuple[str, str, tuple[str, ...]]] = BUILDER.discover()
++SKILLS: list[tuple[str, str]] = [(p, s) for p, s, _ in DISCOVERY]
+ 
+ 
+ def _criteria(plugin: str, skill: str) -> dict[str, dict]:
+@@ -151,6 +128,29 @@ def test_criterion_is_genuinely_verified(plugin, skill, cid, crit):
+             assert cid in evaluated  # 明示包含も genuine 確認
+ 
+ 
+-def test_all_32_skills_covered():
+-    """被覆対象が 32 skill であることを固定 (網羅性の回帰防止)。"""
+-    assert len(SKILLS) == 32
++def test_roster_matches_discovery():
++    """機械生成名簿 == 動的探索 (量産追随の fail-closed ゲート)。
++
++    新 skill を生成して roster 未再生成なら本テストが落ち、llm-coverage の
++    静的被覆計測から漏れることを防ぐ。再生成:
++    python3 tests/criteria/build_criteria_roster.py --write
++    """
++    assert sorted(ROSTER_MOD.ROSTER) == sorted(DISCOVERY), (
++        "criteria_roster.py が discovery と乖離しています。"
++        "python3 tests/criteria/build_criteria_roster.py --write で再生成してください。"
++    )
++
++
++def test_discovery_includes_previously_escaped_skills():
++    """探索ロジック退行の番犬: 旧ハードコード表の死角だった skill 群を必ず含む。"""
++    got = set(SKILLS)
++    sentinels = {
++        ("company-master", "run-company-master-build"),
++        ("notion-gmail-send", "run-notion-gmail-send"),
++        ("plugin-dev-planner", "run-plugin-dev-plan"),
++        ("mf-kessai-invoice-check", "run-mf-invoice-reconcile"),
++        ("skill-creator", "run-build-skill"),
++        ("skill-intake", "assign-notion-fidelity-evaluator"),
++    }
++    missing = sentinels - got
++    assert not missing, f"discovery が既知対象を見失った: {sorted(missing)}"
+diff --git a/tests/scripts-plugins/test_skill_creator__auto_record_lesson.py b/tests/scripts-plugins/test_skill_creator__auto_record_lesson.py
+index 901435c..69da05f 100644
+--- a/tests/scripts-plugins/test_skill_creator__auto_record_lesson.py
++++ b/tests/scripts-plugins/test_skill_creator__auto_record_lesson.py
+@@ -379,7 +379,11 @@ def test_main_oserror_degrades_to_noop_exit0(monkeypatch, capsys):
+     read-only install を模す。旧仕様の exit 1 は廃し、PostToolUse hook を絶対に
+     クラッシュさせない (no writable sink → silent no-op)。
+     """
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "x": "ERROR boom"}))
++    _set_stdin(monkeypatch, json.dumps({
++        "tool_name": "Edit",
++        "tool_input": {"file_path": "/x/rubric.json"},
++        "tool_response": {"stderr": "ERROR boom exit code 1"},
++    }))
+     monkeypatch.setattr(ARL, "_dir_is_writable", lambda d: False)
+     assert ARL.main() == 0
+     err = capsys.readouterr().err
+@@ -389,7 +393,11 @@ def test_main_oserror_degrades_to_noop_exit0(monkeypatch, capsys):
+ 
+ def test_main_oserror_on_primary_falls_back_exit0(monkeypatch, tmp_path, capsys):
+     """primary の upsert が OSError でも fallback 候補へ退避し exit 0。"""
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "x": "ERROR boom"}))
++    _set_stdin(monkeypatch, json.dumps({
++        "tool_name": "Edit",
++        "tool_input": {"file_path": "/x/rubric.json"},
++        "tool_response": {"stderr": "ERROR boom exit code 1"},
++    }))
+     primary = tmp_path / "primary"
+     fallback = tmp_path / "fallback"
+     monkeypatch.setattr(ARL, "_candidate_dirs", lambda: [primary, fallback])
+diff --git a/tests/scripts-plugins/test_skill_creator__auto_record_lesson_r4.py b/tests/scripts-plugins/test_skill_creator__auto_record_lesson_r4.py
+index 10e328f..7e9ce98 100644
+--- a/tests/scripts-plugins/test_skill_creator__auto_record_lesson_r4.py
++++ b/tests/scripts-plugins/test_skill_creator__auto_record_lesson_r4.py
+@@ -358,6 +358,123 @@ def test_upsert_lesson_appends_on_existing(tmp_path):
+     assert body.count("## observation") >= 2
+ 
+ 
++# ===================== _has_genuine_context (断片ノイズ封鎖) =====================
++
++
++def test_genuine_context_requires_tool_hint_and_response_failure():
++    hook = {
++        "tool_name": "Bash",
++        "tool_input": {"command": "pytest"},
++        "tool_response": {"stderr": "ERROR exit code 1"},
++    }
++    assert ARL._has_genuine_context(hook) is True
++
++
++@pytest.mark.parametrize(
++    "hook",
++    [
++        {"tool_name": "Edit", "x": "ERROR boom"},  # tool_input なし ("ERROR boom" 型)
++        {"tool_input": {"command": "x"}, "tool_response": {"e": "ERROR"}},  # tool 名なし
++        {"tool_name": "Bash", "tool_input": {}, "tool_response": {"e": "ERROR"}},  # ヒントなし
++        {"tool_name": "Bash", "tool_input": {"command": ""}, "tool_response": {"e": "ERROR"}},
++        # 失敗語が tool_response 外の無関係キーのみ (引用・テスト副産物の混入形)
++        {"tool_name": "Bash", "tool_input": {"command": "x"}, "note": "ERROR boom"},
++        {"tool_name": "Bash", "tool_input": {"command": "x"}, "tool_response": {"out": "ok"}},
++        "not a dict",
++        {},
++    ],
++)
++def test_genuine_context_rejects_fragments(hook):
++    assert ARL._has_genuine_context(hook) is False
++
++
++def test_main_skips_fragment_noise(monkeypatch, tmp_path):
++    # 失敗語はあるが文脈不足 → 記録しない (2026-06-24 "ERROR boom" 再発防止)。
++    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "x": "ERROR boom"}))
++    lessons = tmp_path / "lessons"
++    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
++    assert ARL.main() == 0
++    assert not lessons.exists()
++
++
++# ===================== 索引 append (Loop B 断線修理) =====================
++
++
++def _entry_fixture(observation="validator FAIL: rule X"):
++    return {
++        "date": "2026-07-02", "trigger_event": "PostToolUse", "tool": "Bash",
++        "severity": "high", "capability": "shell", "observation": observation,
++    }
++
++
++def test_lessons_index_path_is_sibling_knowledge(tmp_path):
++    d = tmp_path / "lessons-learned"
++    assert ARL._lessons_index_path(d) == tmp_path / "knowledge" / "knowledge-lessons-index.json"
++
++
++def test_append_index_entry_creates_index_when_absent(tmp_path):
++    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
++    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
++    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
++    data = json.loads(index.read_text(encoding="utf-8"))
++    assert data["category"] == "lessons-index"
++    assert len(data["items"]) == 1
++    item = data["items"][0]
++    assert item["id"] == "lessons-index_001"
++    assert "validator FAIL: rule X" in item["title"]
++    assert item["source"]["type"] == "lesson"
++    assert item["source"]["date"] == "2026-07-02"
++
++
++def test_append_index_entry_is_idempotent_per_source_file(tmp_path):
++    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
++    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
++    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
++    # 同一 lesson (同日 slug への observation 追記) は再登録しない。
++    assert ARL._append_index_entry(index, lesson, _entry_fixture("second ERROR")) is False
++    assert len(json.loads(index.read_text(encoding="utf-8"))["items"]) == 1
++
++
++def test_append_index_entry_sequences_id_from_existing_max(tmp_path):
++    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
++    index.parent.mkdir(parents=True)
++    index.write_text(json.dumps({
++        "category": "lessons-index",
++        "items": [{"id": "lessons-index_002", "source": {"file": "other.md"}}],
++    }), encoding="utf-8")
++    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
++    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
++    ids = [i["id"] for i in json.loads(index.read_text(encoding="utf-8"))["items"]]
++    assert "lessons-index_003" in ids
++
++
++def test_append_index_entry_swallows_broken_index(tmp_path):
++    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
++    index.parent.mkdir(parents=True)
++    index.write_text("{broken", encoding="utf-8")
++    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
++    # 壊れた索引でも例外にせず False (lesson 記録は巻き込まない)。
++    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is False
++
++
++def test_main_appends_index_alongside_lesson(monkeypatch, tmp_path):
++    payload = {
++        "hook_event_name": "PostToolUse",
++        "tool_name": "Bash",
++        "tool_input": {"command": "pytest"},
++        "tool_response": {"stderr": "Traceback (most recent call last):\nERROR boom"},
++    }
++    _set_stdin(monkeypatch, json.dumps(payload))
++    lessons = tmp_path / "lessons-learned"
++    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
++    assert ARL.main() == 0
++    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
++    assert index.exists()
++    items = json.loads(index.read_text(encoding="utf-8"))["items"]
++    assert len(items) == 1
++    assert items[0]["source"]["file"].endswith(".md")
++
++
+ # ===================== main() in-process =====================
+ 
+ 
+@@ -421,7 +538,11 @@ def test_main_oserror_degrades_to_noop_exit0(monkeypatch, capsys):
+     read-only install を模す。旧仕様の exit 1 は廃し hook を絶対に
+     クラッシュさせない (no writable sink → silent no-op)。
+     """
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "x": "ERROR boom"}))
++    _set_stdin(monkeypatch, json.dumps({
++        "tool_name": "Edit",
++        "tool_input": {"file_path": "/x/rubric.json"},
++        "tool_response": {"stderr": "ERROR boom exit code 1"},
++    }))
+     monkeypatch.setattr(ARL, "_dir_is_writable", lambda d: False)
+     assert ARL.main() == 0
+     err = capsys.readouterr().err
+diff --git a/tests/scripts-plugins/test_skill_creator__lint_goal_seek.py b/tests/scripts-plugins/test_skill_creator__lint_goal_seek.py
+index 653daee..d597045 100644
+--- a/tests/scripts-plugins/test_skill_creator__lint_goal_seek.py
++++ b/tests/scripts-plugins/test_skill_creator__lint_goal_seek.py
+@@ -215,9 +215,68 @@ def test_lint_file_step_enumeration_violation(MOD, tmp_path):
+     assert any("固定手順の連番 (### Step N:)" in f and "2 件" in f for f in findings)
+ 
+ 
+-def test_lint_file_step_allowed_under_catalog(MOD, tmp_path):
+-    # 局面カタログ表記があれば ### Step 連番は許容 (violation にならない)
+-    body = CLEAN_RUN + "\n局面カタログ (順序は都度判断)\n### Step 1: A\n### Step 2: B\n"
++def test_lint_file_step_allowed_under_catalog_heading(MOD, tmp_path):
++    # 局面カタログ「見出し」セクション配下の ### Step 連番は許容 (violation にならない)
++    body = CLEAN_RUN + "\n## 局面カタログ (順序は都度判断)\n### Step 1: A\n### Step 2: B\n"
++    p = _write(tmp_path, body)
++    findings, _ = MOD.lint_file(p)
++    assert not any("固定手順の連番" in f for f in findings)
++
++
++def test_lint_file_step_violation_when_marker_only_quoted_in_body(MOD, tmp_path):
++    # 本文引用 (見出しでない行) のラベル出現では免除しない -> violation (escape 封鎖)
++    body = (
++        CLEAN_RUN
++        + "\n備考: 「局面カタログ (順序は都度判断)」として書くべきという引用。\n"
++        + "### Step 1: A\n### Step 2: B\n"
++    )
++    p = _write(tmp_path, body)
++    findings, _ = MOD.lint_file(p)
++    assert any("固定手順の連番 (### Step N:)" in f and "2 件" in f for f in findings)
++
++
++def test_lint_file_step_outside_catalog_section_violation(MOD, tmp_path):
++    # カタログ見出しセクションは次の ## 見出しで終端。以降の Step 連番は violation
++    body = (
++        CLEAN_RUN
++        + "\n## 局面カタログ (順序は都度判断)\n### Step 1: 中は許容\n"
++        + "## 別セクション\n### Step 2: 外A\n### Step 3: 外B\n"
++    )
++    p = _write(tmp_path, body)
++    findings, _ = MOD.lint_file(p)
++    assert any("固定手順の連番 (### Step N:)" in f and "2 件" in f for f in findings)
++
++
++def test_lint_file_catalog_marker_embedded_in_heading_text(MOD, tmp_path):
++    # 見出しテキスト内包型 (### 採点フロー（局面カタログ・順序は都度判断）) も有効
++    body = (
++        CLEAN_RUN
++        + "\n### 採点フロー（局面カタログ・順序は都度判断）\n"
++        + "### Step 1: A\n### Step 2: B\n"
++    )
++    p = _write(tmp_path, body)
++    findings, _ = MOD.lint_file(p)
++    assert not any("固定手順の連番" in f for f in findings)
++
++
++def test_lint_file_level4_heading_marker_not_a_catalog_declaration(MOD, tmp_path):
++    # カタログ宣言は ##/### 見出しのみ。#### レベルのラベル出現では免除しない
++    body = (
++        CLEAN_RUN
++        + "\n#### 局面カタログ (順序は都度判断)\n### Step 1: A\n### Step 2: B\n"
++    )
++    p = _write(tmp_path, body)
++    findings, _ = MOD.lint_file(p)
++    assert any("固定手順の連番" in f for f in findings)
++
++
++def test_lint_file_single_step_outside_catalog_below_threshold(MOD, tmp_path):
++    # カタログ内 1 件 + 外 1 件 -> 外は 1 件のみで閾値 (2 連) 未満 -> 許容
++    body = (
++        CLEAN_RUN
++        + "\n## 局面カタログ (順序は都度判断)\n### Step 1: 中\n"
++        + "## 別セクション\n### Step 2: 外の単発\n"
++    )
+     p = _write(tmp_path, body)
+     findings, _ = MOD.lint_file(p)
+     assert not any("固定手順の連番" in f for f in findings)
+diff --git a/tests/scripts-plugins/test_skill_creator__render_frontmatter_main_r4.py b/tests/scripts-plugins/test_skill_creator__render_frontmatter_main_r4.py
+index 946b58a..8a47ef5 100644
+--- a/tests/scripts-plugins/test_skill_creator__render_frontmatter_main_r4.py
++++ b/tests/scripts-plugins/test_skill_creator__render_frontmatter_main_r4.py
+@@ -1,7 +1,7 @@
+ """Genuine functional tests (scripts4) for
+ plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py.
+ 
+-既存の tests/scripts/test_skill_creator__render_frontmatter.py は純関数中心で
++既存の tests/scripts-plugins/test_skill_creator__render_frontmatter.py は純関数中心で
+ main() (344-458) が丸ごと未到達 (71%)。本ファイルは main() の各分岐を sys.argv 駆動で
+ in-process カバーし、加えて純関数の未到達枝 (outer criteria 上書き / _parse_default の
+ quote 剥がし / apply_dynamic_context_contract の closing 無し) を埋める。
+diff --git a/tests/scripts-plugins/test_skill_creator__validate_build_trace_r3.py b/tests/scripts-plugins/test_skill_creator__validate_build_trace_r3.py
+index f6539fd..f393b4b 100644
+--- a/tests/scripts-plugins/test_skill_creator__validate_build_trace_r3.py
++++ b/tests/scripts-plugins/test_skill_creator__validate_build_trace_r3.py
+@@ -1296,10 +1296,12 @@ def test_fc_run_missing_contract():
+     assert any("feedback_contract is required" in e for e in errs)
+ 
+ 
+-def test_fc_run_skip_reason_escapes():
++def test_fc_run_skip_reason_does_not_escape():
++    # loop 実行系の skip_reason escape は FEEDBACK_SKIP_KINDS (ref/assign) 限定
++    # (lint-feedback-contract.py と対称)。run の skip_reason は criteria 必須のまま。
+     data = {"skill_kind": "run", "feedback_contract": {"skip_reason": "外部評価器に委譲"}}
+     errs = M._validate_feedback_contract(data)
+-    assert errs == []
++    assert errs and any("skip_reason escape は" in e for e in errs)
+ 
+ 
+ def test_fc_run_criteria_missing_inner():
+diff --git a/tests/scripts-plugins/test_skill_creator__validate_paradigm_coverage_r4.py b/tests/scripts-plugins/test_skill_creator__validate_paradigm_coverage_r4.py
+index f369989..6c2076a 100644
+--- a/tests/scripts-plugins/test_skill_creator__validate_paradigm_coverage_r4.py
++++ b/tests/scripts-plugins/test_skill_creator__validate_paradigm_coverage_r4.py
+@@ -19,6 +19,7 @@ importlib.util.spec_from_file_location で実ファイルパスから直接ロ
+ """
+ import importlib.util
+ import json
++import os
+ from pathlib import Path
+ 
+ import pytest
+@@ -389,3 +390,108 @@ def test_extract_text_lowercases(tmp_path):
+ def test_paradigm_tables_cover_1_to_30():
+     assert set(MOD.PARADIGMS) == set(range(1, 31))
+     assert set(MOD.EXPECTED_META) == set(range(1, 31))
++
++
++# --------------------------------------------------------------------------
++# --phase-order (Phase1→2→3 の存在+順序検査。tolerant: 揃わない旧 run は skip)
++# --------------------------------------------------------------------------
++
++def _make_run(run_dir, t1=None, t2=None, t3=None):
++    """run dir を作る。t1/t2/t3 が None のファイルは作らない。値は mtime (epoch 秒)。"""
++    run_dir.mkdir(parents=True, exist_ok=True)
++    files = {
++        "shared_state.md": t1,
++        "findings-phase2-logical-structural.json": t2,
++        "findings.json": t3,
++    }
++    for name, t in files.items():
++        if t is None:
++            continue
++        p = run_dir / name
++        p.write_text("{}", encoding="utf-8")
++        os.utime(p, (t, t))
++    return run_dir
++
++
++def test_phase_order_ok_when_strictly_increasing(tmp_path, capsys):
++    run = _make_run(tmp_path / "eval-log" / "p" / "s" / "elegant-review" / "r1",
++                    t1=1000, t2=2000, t3=3000)
++    rc = MOD.main(["prog", "--phase-order", str(run)])
++    assert rc == 0
++    assert "phase order verified for 1 run(s)" in capsys.readouterr().out
++
++
++def test_phase_order_equal_mtimes_tolerated(tmp_path):
++    # fresh checkout では全ファイル mtime が揃う。<= 判定で遡及 fail させない。
++    run = _make_run(tmp_path / "elegant-review" / "r1", t1=5000, t2=5000, t3=5000)
++    assert MOD.main(["prog", "--phase-order", str(run)]) == 0
++
++
++def test_phase_order_phase1_newer_is_tolerated(tmp_path):
++    # shared_state.md は Phase3 以降も更新される living document (申し送り正本)。
++    # mtime が Phase2/3 より新しいのは正常であり violation にしない (実 run 実測)。
++    run = _make_run(tmp_path / "elegant-review" / "r1", t1=9000, t2=2000, t3=2500)
++    assert MOD.main(["prog", "--phase-order", str(run)]) == 0
++
++
++def test_phase_order_requires_phase1_presence(tmp_path, capsys):
++    # shared_state.md 不在の run は順序検査対象外 (skip)。存在検査は presence のみ。
++    _make_run(tmp_path / "eval-log" / "p" / "s" / "elegant-review" / "r1",
++              t1=None, t2=2000, t3=3000)
++    rc = MOD.main(["prog", "--phase-order", str(tmp_path)])
++    assert rc == 0
++    assert "skipped 1 incomplete run(s)" in capsys.readouterr().out
++
++
++def test_phase_order_violation_phase2_newer_than_phase3(tmp_path, capsys):
++    run = _make_run(tmp_path / "elegant-review" / "r1", t1=1000, t2=9000, t3=2000)
++    rc = MOD.main(["prog", "--phase-order", str(run)])
++    assert rc == 1
++    assert "Phase2" in capsys.readouterr().err
++
++
++def test_phase_order_incomplete_run_is_skipped(tmp_path, capsys):
++    # findings-phase2-*.json を欠く旧 run は順序検査対象外 (遡及 fail させない)。
++    _make_run(tmp_path / "eval-log" / "p" / "s" / "elegant-review" / "old-run",
++              t1=1000, t2=None, t3=500)
++    rc = MOD.main(["prog", "--phase-order", str(tmp_path)])
++    assert rc == 0
++    assert "skipped 1 incomplete run(s)" in capsys.readouterr().out
++
++
++def test_phase_order_tree_scans_multiple_runs(tmp_path, capsys):
++    base = tmp_path / "eval-log"
++    _make_run(base / "p" / "s" / "elegant-review" / "r1", t1=1000, t2=2000, t3=3000)
++    _make_run(base / "p2" / "_plugin" / "elegant-review" / "r2", t1=100, t2=200, t3=300)
++    _make_run(base / "p3" / "s" / "elegant-review" / "old", t1=100, t2=None, t3=None)
++    rc = MOD.main(["prog", "--phase-order", str(base)])
++    assert rc == 0
++    out = capsys.readouterr().out
++    assert "verified for 2 run(s)" in out and "skipped 1" in out
++
++
++def test_phase_order_accepts_phase3_batch_files_as_phase3(tmp_path):
++    # findings.json が無くても phase3-*.json があれば Phase3 成果物とみなす。
++    run = tmp_path / "elegant-review" / "r1"
++    run.mkdir(parents=True)
++    for name, t in (
++        ("shared_state.md", 1000),
++        ("findings-phase2-meta-divergent.json", 2000),
++        ("phase3-batch-A-result.json", 3000),
++    ):
++        p = run / name
++        p.write_text("{}", encoding="utf-8")
++        os.utime(p, (t, t))
++    assert MOD.main(["prog", "--phase-order", str(run)]) == 0
++
++
++def test_phase_order_usage_error_without_dir(capsys):
++    rc = MOD.main(["prog", "--phase-order"])
++    assert rc == 2
++    assert "usage" in capsys.readouterr().err
++
++
++def test_phase_order_nonexistent_dir_is_usage_error(tmp_path, capsys):
++    rc = MOD.main(["prog", "--phase-order", str(tmp_path / "missing")])
++    assert rc == 2
++    assert "not a directory" in capsys.readouterr().err
+diff --git a/tests/scripts-plugins/test_skill_governance_automation__build_manifest_registration_plan_s2.py b/tests/scripts-plugins/test_skill_governance_automation__build_manifest_registration_plan_s2.py
+index c0b52ce..458949a 100644
+--- a/tests/scripts-plugins/test_skill_governance_automation__build_manifest_registration_plan_s2.py
++++ b/tests/scripts-plugins/test_skill_governance_automation__build_manifest_registration_plan_s2.py
+@@ -15,7 +15,7 @@
+     実 plugin (plugin.json 経路) と --help を検証。
+   - エッジ: 空 manifest / 欠落 dir / 不正 plugin.json frontmatter。
+ 
+-tests/scripts/ の同名テストとは別 module 名で読み込むため衝突しない。
++tests/scripts-root/ 及び tests/scripts-plugins/ の同名テストとは別 module 名で読み込むため衝突しない。
+ """
+ from __future__ import annotations
+ 
+@@ -38,7 +38,7 @@ SCRIPT = (
+ 
+ 
+ def _load_module():
+-    # tests/scripts/ 側と衝突しないよう scripts2 専用の module 名で読み込む
++    # tests/scripts-root/ 及び tests/scripts-plugins/ 側と衝突しないよう scripts2 専用の module 名で読み込む
+     spec = importlib.util.spec_from_file_location("bmrp_scripts2_under_test", SCRIPT)
+     assert spec and spec.loader
+     mod = importlib.util.module_from_spec(spec)
+diff --git a/tests/scripts-plugins/test_skill_governance_lint__lint_dependency_direction_branches.py b/tests/scripts-plugins/test_skill_governance_lint__lint_dependency_direction_branches.py
+index cd5d9ec..e9480fb 100644
+--- a/tests/scripts-plugins/test_skill_governance_lint__lint_dependency_direction_branches.py
++++ b/tests/scripts-plugins/test_skill_governance_lint__lint_dependency_direction_branches.py
+@@ -1,6 +1,6 @@
+ """lint-dependency-direction.py の DAG 循環 / 依存方向検出を実入力で網羅検証する。
+ 
+-tests/scripts/ 側の既存テストと別ディレクトリ・別観点で、本ファイル単独でも対象
++tests/scripts-root/ 及び tests/scripts-plugins/ 側の既存テストと別ディレクトリ・別観点で、本ファイル単独でも対象
+ script の主要分岐を覆う。純関数 (skill_prefix / parse_invocation_dependencies /
+ build_graph / detect_cycles / detect_direction_violations) を実入力で呼び、main を
+ 直接 import 呼び出し + subprocess の双方で OK / 方向違反 / 循環 / dir 欠落 /
+diff --git a/tests/scripts-plugins/test_skill_governance_lint__lint_manifest_contents_s2.py b/tests/scripts-plugins/test_skill_governance_lint__lint_manifest_contents_s2.py
+index 4528534..2fb3b54 100644
+--- a/tests/scripts-plugins/test_skill_governance_lint__lint_manifest_contents_s2.py
++++ b/tests/scripts-plugins/test_skill_governance_lint__lint_manifest_contents_s2.py
+@@ -1,6 +1,6 @@
+ """genuine 機能テスト (scripts2): skill-governance-lint/scripts/lint-manifest-contents.py
+ 
+-tests/scripts/ の既存テストとは別ディレクトリ・別観点で、行カバレッジ 80%+ を狙う。
++tests/scripts-root/ 及び tests/scripts-plugins/ の既存テストとは別ディレクトリ・別観点で、行カバレッジ 80%+ を狙う。
+ 
+ このスクリプトは module import 時に KIT_DIR 等を __file__ から解決し、main() が
+ それらの module-level 定数を読む。テストでは module の KIT_DIR / MANIFEST /
+diff --git a/tests/scripts-plugins/test_skill_governance_lint__lint_skill_name_s2.py b/tests/scripts-plugins/test_skill_governance_lint__lint_skill_name_s2.py
+index 4b68bc6..7e0165b 100644
+--- a/tests/scripts-plugins/test_skill_governance_lint__lint_skill_name_s2.py
++++ b/tests/scripts-plugins/test_skill_governance_lint__lint_skill_name_s2.py
+@@ -1,6 +1,6 @@
+ """genuine 機能テスト (scripts2): skill-governance-lint/scripts/lint-skill-name.py
+ 
+-tests/scripts/ の既存テストとは別ディレクトリ・別観点で、行カバレッジ 80%+ を狙う。
++tests/scripts-root/ 及び tests/scripts-plugins/ の既存テストとは別ディレクトリ・別観点で、行カバレッジ 80%+ を狙う。
+ 
+ 方針:
+ - 純関数 parse_frontmatter / lint_file は import して実入力で assert。
+diff --git a/tests/scripts-plugins/test_skill_governance_lint__lint_skill_tree_s2.py b/tests/scripts-plugins/test_skill_governance_lint__lint_skill_tree_s2.py
+index a613884..294f391 100644
+--- a/tests/scripts-plugins/test_skill_governance_lint__lint_skill_tree_s2.py
++++ b/tests/scripts-plugins/test_skill_governance_lint__lint_skill_tree_s2.py
+@@ -1,6 +1,6 @@
+ """網羅補完テスト: plugins/skill-governance-lint/scripts/lint-skill-tree.py
+ 
+-tests/scripts/ の既存テストが触れていない分岐を埋めて 80% 以上へ。
++tests/scripts-root/ 及び tests/scripts-plugins/ の既存テストが触れていない分岐を埋めて 80% 以上へ。
+ 特に main() を in-process で呼び (subprocess はカバレッジ計測外)、
+ _parse_fm_simple / check_prompts_listed の欠落 frontmatter・suffix skip・
+ 非ファイル skip、lint_one の __pycache__ skip / extra top-level dir(pass) /
+@@ -170,6 +170,27 @@ def test_lint_one_allowed_nested_combinators_dir_ok(tmp_path):
+     assert not any("第13条違反" in e for e in errs)
+ 
+ 
++def test_lint_one_examples_nested_dir_ok(tmp_path):
++    # examples/ 配下の nested dir は生成出力見本 (完成例) のため構造検査 skip
++    # (plugin-dev-planner examples/sample-plan/ の実例。2026-07-02)
++    d = _make_skill(tmp_path)
++    nested = d / "examples" / "sample-plan" / "envelope-draft"
++    nested.mkdir(parents=True)
++    (nested / "plugin.json").write_text("{}", encoding="utf-8")
++    errs = LST.lint_one(d)
++    assert not any("第13条違反" in e for e in errs)
++
++
++def test_lint_one_examples_nested_bad_extension_still_flagged(tmp_path):
++    # 構造は skip してもファイル拡張子検査 (第8-11条) は examples/ 配下で維持
++    d = _make_skill(tmp_path)
++    nested = d / "examples" / "sample-plan"
++    nested.mkdir(parents=True)
++    (nested / "binary.bin").write_text("x", encoding="utf-8")
++    errs = LST.lint_one(d)
++    assert any("第8〜11条違反" in e for e in errs)
++
++
+ def test_lint_one_assign_skill_bad_rubric_placement(tmp_path):
+     d = _make_skill(tmp_path, name="assign-thing")
+     (d / "rubric.json").write_text("{}", encoding="utf-8")
+diff --git a/tests/scripts-plugins/test_skill_governance_lint__validate_frontmatter_s2.py b/tests/scripts-plugins/test_skill_governance_lint__validate_frontmatter_s2.py
+index d51ec6b..1950f30 100644
+--- a/tests/scripts-plugins/test_skill_governance_lint__validate_frontmatter_s2.py
++++ b/tests/scripts-plugins/test_skill_governance_lint__validate_frontmatter_s2.py
+@@ -1,6 +1,6 @@
+ """網羅補完テスト: plugins/skill-governance-lint/scripts/validate-frontmatter.py
+ 
+-tests/scripts/ の既存テストが触れていない分岐を埋めて 80% 以上へ。
++tests/scripts-root/ 及び tests/scripts-plugins/ の既存テストが触れていない分岐を埋めて 80% 以上へ。
+ main() を in-process で呼び (subprocess はカバレッジ計測外)、schema fallback、
+ parse_fm block-list の append、check_refs_exist の comma-scalar/empty/path-miss、
+ _check_source_tier_demotion の code-verified URL 経路、validate_capability の
+diff --git a/tests/scripts-root/test_root__lint_content_review_s2.py b/tests/scripts-root/test_root__lint_content_review_s2.py
+index 84cb6a4..ae272cc 100644
+--- a/tests/scripts-root/test_root__lint_content_review_s2.py
++++ b/tests/scripts-root/test_root__lint_content_review_s2.py
+@@ -1,7 +1,7 @@
+ """scripts/lint-content-review.py の main() / _git_changed_skills / 未網羅分岐の
+ genuine な機能テスト (network 不要)。
+ 
+-tests/scripts/test_root__lint_content_review.py が純関数 (_check_verdict 等) を
++tests/scripts-root/test_root__lint_content_review.py が純関数 (_check_verdict 等) を
+ 網羅しているのに対し、本ファイルは未到達だった main() の全 exit path
+ (no target / OK / FAIL)、フィルタ (EXEMPT_KINDS=ref 除外 / 削除 SKILL.md 除外)、
+ _git_changed_skills の git diff パースと CalledProcessError フォールバック、
+diff --git a/tests/scripts-root/test_root__lint_skill_description_s2.py b/tests/scripts-root/test_root__lint_skill_description_s2.py
+index dc0f40b..f35c0fb 100644
+--- a/tests/scripts-root/test_root__lint_skill_description_s2.py
++++ b/tests/scripts-root/test_root__lint_skill_description_s2.py
+@@ -1,6 +1,6 @@
+ """scripts/lint-skill-description.py の main() を in-process で網羅する補完テスト。
+ 
+-既存 tests/scripts/test_root__lint-skill-description.py は check() /
++既存 tests/scripts-root/test_root__lint_skill_description.py は check() /
+ parse_frontmatter() / _parse_skills_dir() を in-process で、main() を subprocess
+ で検証している。subprocess 経由の main() は --cov=scripts に計上されないため、
+ 本ファイルは main(argv) を **直接呼び** stdout/stderr/exit code を assert し、
+diff --git a/tests/scripts-root/test_root__render_frontmatter_s2.py b/tests/scripts-root/test_root__render_frontmatter_s2.py
+index 700e8ab..44d4605 100644
+--- a/tests/scripts-root/test_root__render_frontmatter_s2.py
++++ b/tests/scripts-root/test_root__render_frontmatter_s2.py
+@@ -1,6 +1,6 @@
+ """scripts/render-frontmatter.py の main() を in-process で網羅する補完テスト。
+ 
+-既存 tests/scripts/test_root__render_frontmatter.py は render() /
++既存 tests/scripts-root/test_root__render_frontmatter.py は render() /
+ needs_os_preamble() を in-process で、main() を subprocess で検証している。
+ subprocess 経由の main() は --cov=scripts に計上されないため、本ファイルは
+ sys.argv を monkeypatch して main() を **直接呼び**、各 CLI 分岐
+diff --git a/tests/scripts-root/test_root__validate_build_trace_doc_coverage.py b/tests/scripts-root/test_root__validate_build_trace_doc_coverage.py
+index 3e533c8..a1ff867 100644
+--- a/tests/scripts-root/test_root__validate_build_trace_doc_coverage.py
++++ b/tests/scripts-root/test_root__validate_build_trace_doc_coverage.py
+@@ -3,7 +3,7 @@
+ 注意: 同名スクリプトが
+   plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py
+ にも存在し (manifest 検証版)、そちらは tests/test_validate_build_trace.py /
+-tests/scripts/test_skill_creator__validate_build_trace.py が担保する。
++tests/scripts-plugins/test_skill_creator__validate_build_trace.py が担保する。
+ 本ファイルは別物である **リポジトリ root の scripts/validate-build-trace.py**
+ (build-trace JSON の doc_coverage 必須キー検証) を対象とし、重複しない。
+ 
+diff --git a/tests/scripts-root/test_scripts__lint_feedback_contract.py b/tests/scripts-root/test_scripts__lint_feedback_contract.py
+index 02c6a75..83b3f2b 100644
+--- a/tests/scripts-root/test_scripts__lint_feedback_contract.py
++++ b/tests/scripts-root/test_scripts__lint_feedback_contract.py
+@@ -128,13 +128,35 @@ def test_check_skill_valid_criteria_passes(tmp_path, monkeypatch):
+     assert MOD._check_skill("p", "run-ok") == []
+ 
+ 
+-def test_check_skill_skip_reason_is_na_escape(tmp_path, monkeypatch):
++@pytest.mark.parametrize("kind", sorted(MOD.LOOP_KINDS))
++def test_check_skill_loop_kind_skip_reason_is_violation(tmp_path, monkeypatch, kind):
++    # loop 実行系の skip_reason escape は封鎖 (FEEDBACK_SKIP_KINDS 限定)。
+     pdir = tmp_path / "plugins"
+     fc = "feedback_contract:\n  skip_reason: このスキルは評価不要\n"
+-    _write_skill(pdir, "p", "run-skip", _skill_md("run", fc))
++    _write_skill(pdir, "p", f"{kind}-skip", _skill_md(kind, fc))
+     monkeypatch.setattr(MOD, "PLUGINS_DIR", pdir)
+-    # criteria 空 + skip_reason => 明示 N/A escape で違反なし。
+-    assert MOD._check_skill("p", "run-skip") == []
++    errs = MOD._check_skill("p", f"{kind}-skip")
++    assert len(errs) == 1
++    assert "skip_reason では criteria 必須を免除できません" in errs[0]
++
++
++@pytest.mark.parametrize("kind", sorted(MOD.FC.FEEDBACK_SKIP_KINDS))
++def test_check_skill_skip_kind_skip_reason_allowed(tmp_path, monkeypatch, kind):
++    # ref/assign (FEEDBACK_SKIP_KINDS) は criteria 不要 => skip_reason 有無に関わらず違反なし。
++    pdir = tmp_path / "plugins"
++    fc = "feedback_contract:\n  skip_reason: read-only 評価器のため N/A\n"
++    _write_skill(pdir, "p", f"{kind}-skip", _skill_md(kind, fc))
++    monkeypatch.setattr(MOD, "PLUGINS_DIR", pdir)
++    assert MOD._check_skill("p", f"{kind}-skip") == []
++
++
++def test_check_skill_loop_kind_valid_criteria_with_skip_reason_passes(tmp_path, monkeypatch):
++    # criteria が整備済みなら skip_reason が残存していても criteria 検査へ進み PASS。
++    pdir = tmp_path / "plugins"
++    fc = _VALID_FC + "  skip_reason: 残存フィールド\n"
++    _write_skill(pdir, "p", "run-both", _skill_md("run", fc))
++    monkeypatch.setattr(MOD, "PLUGINS_DIR", pdir)
++    assert MOD._check_skill("p", "run-both") == []
+ 
+ 
+ def test_check_skill_invalid_criteria_reports_errors(tmp_path, monkeypatch):
+diff --git a/tests/scripts-root/test_scripts__notion_upsert_plugin_r4.py b/tests/scripts-root/test_scripts__notion_upsert_plugin_r4.py
+index e0ff55a..93c6dcd 100644
+--- a/tests/scripts-root/test_scripts__notion_upsert_plugin_r4.py
++++ b/tests/scripts-root/test_scripts__notion_upsert_plugin_r4.py
+@@ -1,7 +1,7 @@
+ """Genuine functional tests (scripts4) for scripts/notion-upsert-plugin.py.
+ 
+ このスクリプトは Notion スキル一覧 DB へプラグインを冪等 upsert する。既存の
+-tests/scripts/test_scripts__notion_upsert_plugin.py は純関数 + dry-run/引数異常のみを
++tests/scripts-root/test_scripts__notion_upsert_plugin.py は純関数 + dry-run/引数異常のみを
+ カバーし、network/keychain 経路 (curl / find_existing / replace_page_children /
+ main の create/update publish 分岐) が未到達 (74%)。本ファイルはその穴を埋める。
+ 
+@@ -12,7 +12,7 @@ network / keychain は一切叩かない:
+     解決を擬似する。
+   - すべての I/O は monkeypatch.chdir(tmp_path) + tmp_path 配下に限定し repo を汚さない。
+ 
+-他ディレクトリ (tests/scripts/...) と同名にならないよう _r4 サフィックスを付す。
++他ディレクトリ (tests/scripts-root/ 及び tests/scripts-plugins/...) と同名にならないよう _r4 サフィックスを付す。
+ """
+ import importlib.util
+ import json
+diff --git a/tests/test_aggregate_evals.py b/tests/test_aggregate_evals.py
+index 8c94acd..fbde183 100644
+--- a/tests/test_aggregate_evals.py
++++ b/tests/test_aggregate_evals.py
+@@ -92,6 +92,99 @@ def test_detect_score_drop():
+     assert any(a["kind"] == "score_drop" and a["rubric_id"] == "run-y" for a in anomalies)
+ 
+ 
++# --- 苦戦密度 (friction_density): PASS-only commit 制約下の第 3 発火条件 ---
++
++def _pass_record(skill: str, date: str, iterations=1, negative=0, findings=None):
++    return {
++        "skill": skill,
++        "date": date,
++        "verdict": "PASS",
++        "findings": findings or [],
++        "iterations": iterations,
++        "negative_feedback_count": negative,
++    }
++
++
++def test_normalize_verdict_record_carries_friction_fields():
++    rec = {
++        "target": {"plugin": "p", "skill": "run-z"},
++        "verdict": "PASS",
++        "reviewed_at": "2026-06-11T09:00:00+0900",
++        "iterations": 3,
++        "feedback_loop": {"negative_feedback": ["a", "b"]},
++    }
++    n = MOD._normalize_verdict_record(rec)
++    assert n["iterations"] == 3
++    assert n["negative_feedback_count"] == 2
++
++
++def test_friction_density_fires_on_corroborated_iterations():
++    # elegance + rubric の両 verdict が再評価ループ (iterations>=2) を要した skill。
++    evals = [
++        _pass_record("run-x", "2026-06-01", iterations=3),
++        _pass_record("run-x", "2026-06-01", iterations=3),
++    ]
++    anomalies = MOD._detect_anomalies(evals)
++    hit = [a for a in anomalies if a["kind"] == "friction_density"]
++    assert hit and hit[0]["rubric_id"] == "run-x"
++    assert hit[0]["friction_records"] == 2
++
++
++def test_friction_density_fires_on_repeated_negative_feedback():
++    evals = [
++        _pass_record("run-y", "2026-06-01", negative=2),
++        _pass_record("run-y", "2026-06-02", negative=2),
++    ]
++    assert any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
++
++
++def test_friction_density_counts_findings_volume():
++    evals = [
++        _pass_record("run-w", "2026-06-01", findings=["f1", "f2", "f3"]),
++        _pass_record("run-w", "2026-06-02", iterations=2),
++    ]
++    assert any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
++
++
++def test_single_friction_record_does_not_fire():
++    # 単独レビューアの摩擦のみでは発火しない (相互裏付け _FRICTION_MIN_RECORDS=2)。
++    evals = [
++        _pass_record("run-x", "2026-06-01", iterations=3),
++        _pass_record("run-x", "2026-06-01"),
++    ]
++    assert not any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
++
++
++def test_light_negative_feedback_does_not_fire():
++    # negative_feedback 1 件 (iterations=1) は正常な指摘量であり摩擦扱いしない。
++    evals = [
++        _pass_record("run-x", "2026-06-01", negative=1),
++        _pass_record("run-x", "2026-06-01", negative=1),
++    ]
++    assert not any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
++
++
++def test_legacy_evals_records_without_friction_fields_do_not_fire():
++    # EVALS.json 旧形式 (iterations/negative_feedback_count 欠落) は非該当。
++    evals = [
++        {"skill": "run-x", "date": "2026-05-22", "verdict": "baseline", "findings": []},
++        {"skill": "run-x", "date": "2026-05-23", "verdict": "baseline", "findings": []},
++    ]
++    assert not any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
++
++
++def test_friction_outside_recent_window_does_not_fire():
++    # 古い摩擦 2 件が直近窓 (6件) の外へ押し出されれば発火しない。
++    old = [
++        _pass_record("run-x", "2026-05-01", iterations=3),
++        _pass_record("run-x", "2026-05-02", iterations=3),
++    ]
++    clean = [_pass_record("run-x", f"2026-06-{i:02d}") for i in range(1, 7)]
++    assert not any(
++        a["kind"] == "friction_density" for a in MOD._detect_anomalies(old + clean)
++    )
++
++
+ # --- 3 ソース合流 (sink 断線解消) ---
+ 
+ def test_load_evals_merges_score_jsonl_and_verdict(monkeypatch, tmp_path):
+diff --git a/tests/test_check_review_trigger.py b/tests/test_check_review_trigger.py
+index 3a36506..122dd19 100644
+--- a/tests/test_check_review_trigger.py
++++ b/tests/test_check_review_trigger.py
+@@ -119,6 +119,21 @@ def test_skill_creator_self_is_excluded(tmp_path):
+     assert MOD._unevaluated_or_stale(str(tmp_path), [rel]) == []
+ 
+ 
++def test_pending_review_targets_exempt_true_returns_self_only(tmp_path):
++    self_rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill")
++    other_rel = _make_skill(tmp_path, "demo", "run-x")
++    got = MOD._pending_review_targets(str(tmp_path), [self_rel, other_rel], exempt=True)
++    assert got == [f"{MOD.SELF_EXCLUDED_PLUGIN}/run-build-skill"]
++
++
++def test_pending_review_targets_exempt_true_empty_when_verdict_fresh(tmp_path):
++    body = "# fresh\n"
++    self_rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill", body=body)
++    sha = hashlib.sha256(body.encode()).hexdigest()
++    _write_verdicts(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill", sha)
++    assert MOD._pending_review_targets(str(tmp_path), [self_rel], exempt=True) == []
++
++
+ # --- main(): decision:block と安全弁 ---
+ 
+ def _run_main(monkeypatch, root: Path, changed_rel: list[str], stdin_obj: dict):
+@@ -158,3 +173,38 @@ def test_main_opt_out_env_disables_block(monkeypatch, tmp_path):
+     rc, out = _run_main(monkeypatch, tmp_path, [rel], {"hook_event_name": "Stop"})
+     assert rc == 0
+     assert "block" not in out
++
++
++# --- self-plugin 通知 (block しない・完全無音の解消) ---
++
++def test_main_notifies_self_pending_without_block(monkeypatch, tmp_path):
++    rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill")
++    monkeypatch.delenv("SKILL_CREATOR_NO_REVIEW_BLOCK", raising=False)
++    rc, out = _run_main(monkeypatch, tmp_path, [rel], {"hook_event_name": "Stop"})
++    assert rc == 0
++    payload = json.loads(out)
++    assert "decision" not in payload  # block はしない
++    assert payload["notice"] == "self-plugin content-review pending"
++    assert f"{MOD.SELF_EXCLUDED_PLUGIN}/run-build-skill" in payload["pending_skills"]
++    assert "lint-content-review" in payload["reason"]
++
++
++def test_main_block_takes_precedence_over_self_notice(monkeypatch, tmp_path):
++    # 他プラグイン pending が残る場合は decision:block を単独 JSON で出す
++    # (self 通知が混ざると decision JSON の parse を壊すため、block が先に return)。
++    self_rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill")
++    other_rel = _make_skill(tmp_path, "demo", "run-x")
++    monkeypatch.delenv("SKILL_CREATOR_NO_REVIEW_BLOCK", raising=False)
++    rc, out = _run_main(monkeypatch, tmp_path, [self_rel, other_rel], {"hook_event_name": "Stop"})
++    assert rc == 0
++    payload = json.loads(out)  # 単独で parse 可能な decision JSON
++    assert payload["decision"] == "block"
++    assert "notice" not in payload
++
++
++def test_main_self_notice_not_emitted_on_non_stop_event(monkeypatch, tmp_path):
++    rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill")
++    monkeypatch.delenv("SKILL_CREATOR_NO_REVIEW_BLOCK", raising=False)
++    rc, out = _run_main(monkeypatch, tmp_path, [rel], {"hook_event_name": "PostToolUse"})
++    assert rc == 0
++    assert "notice" not in out
+diff --git a/tests/test_validate_build_trace.py b/tests/test_validate_build_trace.py
+index d8b638a..5fef04b 100644
+--- a/tests/test_validate_build_trace.py
++++ b/tests/test_validate_build_trace.py
+@@ -61,11 +61,23 @@ def test_ref_kind_without_contract_is_na_escape():
+     assert MOD._validate_feedback_contract({"skill_kind": "ref"}) == []
+ 
+ 
+-def test_run_kind_skip_reason_escapes_empty_criteria():
++def test_loop_kind_skip_reason_does_not_escape_empty_criteria():
++    # loop 実行系の skip_reason escape は封鎖 (FEEDBACK_SKIP_KINDS=ref/assign 限定。
++    # lint-feedback-contract.py と対称)。
+     data = {
+         "skill_kind": "wrap",
+         "feedback_contract": {"skip_reason": "委譲先で評価するため本体は N/A", "criteria": []},
+     }
++    errs = MOD._validate_feedback_contract(data)
++    assert errs and any("skip_reason escape は" in e for e in errs)
++
++
++def test_assign_kind_skip_reason_with_empty_criteria_is_na_escape():
++    # ref/assign は kind 自体が escape 対象: skip_reason + 空 criteria でもエラーなし。
++    data = {
++        "skill_kind": "assign",
++        "feedback_contract": {"skip_reason": "read-only 評価器のため N/A", "criteria": []},
++    }
+     assert MOD._validate_feedback_contract(data) == []
+ 
+ 
+@@ -118,6 +130,166 @@ def test_ref_kind_non_list_criteria_is_error():
+     assert any("must be array" in e for e in errs)
+ 
+ 
++# --- requirement_coverage (RTM): 要望被覆の機械検査 ---
++#
++# doc_coverage(参照知識)と対になる「ユーザー要望の被覆」。brief の非空要求フィールド
++# 全てが mapped / not_applicable+reason で被覆されることを exit 1 検査する。
++# 旧 trace は skip、brief 参照があるのに coverage 無しは WARN (段階導入)。
++
++import json
++
++
++def _brief_dict():
++    """最小・現実的な brief。被覆対象は trigger_conditions / output_contract /
++    key_constraints / goal / boundary の5フィールド (識別系は除外セット)。"""
++    return {
++        "skill_name": "run-x",
++        "prefix": "run",
++        "kind": "run",
++        "hierarchy_level": "L1",
++        "trigger_conditions": ["契約書を作りたいとき", "台帳から量産したいとき"],
++        "output_contract": "生成物が黄色二系統で出力される",
++        "key_constraints": ["トークンは Keychain のみ", "誤値より空欄優先"],
++        "goal": "G を達成する",
++        "boundary": "同定と補完のみ。与信判断は対象外",
++    }
++
++
++def _full_coverage():
++    return [
++        {"requirement_id": "trigger_conditions", "disposition": "mapped",
++         "mapped_to": "SKILL.md description trigger句"},
++        {"requirement_id": "output_contract", "disposition": "mapped",
++         "mapped_to": "OUT1"},
++        {"requirement_id": "key_constraints[0]", "disposition": "mapped",
++         "mapped_to": "IN1"},
++        {"requirement_id": "key_constraints[1]", "disposition": "not_applicable",
++         "reason": "本 build では Notion 書込を行わないため対象外"},
++        {"requirement_id": "goal", "disposition": "mapped",
++         "mapped_to": "SKILL.md ゴールシーク実行節"},
++        {"requirement_id": "boundary", "disposition": "mapped",
++         "mapped_to": "SKILL.md 境界節"},
++    ]
++
++
++def _rtm_trace(tmp_path, coverage):
++    """brief を tmp に書き、それを参照する trace dict と trace_path を返す。"""
++    brief_p = tmp_path / "skill-brief.json"
++    brief_p.write_text(json.dumps(_brief_dict()), encoding="utf-8")
++    trace = {"brief_path": "skill-brief.json"}
++    if coverage is not None:
++        trace["requirement_coverage"] = coverage
++    return trace, tmp_path / "skill-build-trace.json"
++
++
++def test_requirement_coverage_full_passes(tmp_path):
++    trace, tp = _rtm_trace(tmp_path, _full_coverage())
++    assert MOD._validate_requirement_coverage(trace, tp) == []
++
++
++def test_requirement_coverage_missing_field_fails(tmp_path):
++    # boundary の被覆を落とす → 欠落フィールドとして検出すべき。
++    cov = [c for c in _full_coverage() if c["requirement_id"] != "boundary"]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert errs and any("missing=['boundary']" in e for e in errs)
++
++
++def test_requirement_coverage_absent_old_trace_skips(tmp_path, capsys):
++    # brief 参照も coverage も無い旧 trace: 検査せず WARN も出さない。
++    errs = MOD._validate_requirement_coverage({}, tmp_path / "t.json")
++    assert errs == []
++    assert "WARN" not in capsys.readouterr().err
++
++
++def test_requirement_coverage_absent_with_brief_ref_warns(tmp_path, capsys):
++    # brief 情報 (source_docs) があるのに coverage 無し → WARN のみ (FAIL しない)。
++    trace = {"source_docs": ["eval-log/skill-brief.json"]}
++    errs = MOD._validate_requirement_coverage(trace, tmp_path / "t.json")
++    assert errs == []
++    assert "requirement_coverage" in capsys.readouterr().err
++
++
++def test_requirement_coverage_unknown_field_fails(tmp_path):
++    cov = _full_coverage() + [
++        {"requirement_id": "nonexistent_field", "disposition": "mapped",
++         "mapped_to": "x"}
++    ]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("not found in brief" in e and "nonexistent_field" in e for e in errs)
++
++
++def test_requirement_coverage_index_out_of_range_fails(tmp_path):
++    cov = _full_coverage() + [
++        {"requirement_id": "key_constraints[9]", "disposition": "mapped",
++         "mapped_to": "x"}
++    ]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("key_constraints[9]" in e and "not found" in e for e in errs)
++
++
++def test_requirement_coverage_mapped_requires_mapped_to(tmp_path):
++    cov = _full_coverage()
++    del cov[1]["mapped_to"]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("mapped_to is required" in e for e in errs)
++
++
++def test_requirement_coverage_na_requires_reason(tmp_path):
++    cov = _full_coverage()
++    del cov[3]["reason"]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("reason is required" in e for e in errs)
++
++
++def test_requirement_coverage_bad_disposition_fails(tmp_path):
++    cov = _full_coverage()
++    cov[0]["disposition"] = "deferred"
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("disposition='deferred'" in e for e in errs)
++
++
++def test_requirement_coverage_duplicate_id_fails(tmp_path):
++    cov = _full_coverage() + [_full_coverage()[0]]
++    trace, tp = _rtm_trace(tmp_path, cov)
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert any("duplicated" in e for e in errs)
++
++
++def test_requirement_coverage_unresolvable_brief_warns_structural_only(tmp_path, capsys):
++    # brief ファイルが無い場合は構造検査のみ (WARN)。cwd 依存で trace 資産を壊さない。
++    trace = {
++        "brief_path": "no-such-brief.json",
++        "requirement_coverage": _full_coverage(),
++    }
++    errs = MOD._validate_requirement_coverage(trace, tmp_path / "t.json")
++    assert errs == []
++    assert "brief を解決できない" in capsys.readouterr().err
++
++
++def test_requirement_coverage_brief_detected_from_source_docs(tmp_path):
++    # brief_path 無しでも source_docs の skill-brief*.json から突合先を推定する。
++    brief_p = tmp_path / "skill-brief.json"
++    brief_p.write_text(json.dumps(_brief_dict()), encoding="utf-8")
++    trace = {
++        "source_docs": ["skill-brief.json"],
++        "requirement_coverage": _full_coverage(),
++    }
++    assert MOD._validate_requirement_coverage(trace, tmp_path / "t.json") == []
++
++
++def test_requirement_coverage_non_array_fails(tmp_path):
++    trace, tp = _rtm_trace(tmp_path, None)
++    trace["requirement_coverage"] = {"oops": True}
++    errs = MOD._validate_requirement_coverage(trace, tp)
++    assert errs == ["requirement_coverage must be array"]
++
++
+ # --- manifest 検証経路 (--self-test) が緑であること ---
+ 
+ def test_self_test_exits_zero():
+diff --git a/tests/test_validate_llm_coverage.py b/tests/test_validate_llm_coverage.py
+index 607cc3f..c92d40c 100644
+--- a/tests/test_validate_llm_coverage.py
++++ b/tests/test_validate_llm_coverage.py
+@@ -93,10 +93,29 @@ def test_non_loop_and_skip_reason_return_none(tmp_path):
+     m.PLUGINS_DIR = tmp_path / "plugins"
+     _make_skill(m.PLUGINS_DIR, "p", "ref-a", kind="ref")
+     assert m.measure_skill("p", "ref-a", repo_tests="") is None
++    # loop-kind + skip_reason のみ (criteria 未整備) は ids 空により計測対象外。
++    # skip_reason 自体は計測 skip の根拠にしない (lint-feedback-contract と対称)。
+     _make_skill(m.PLUGINS_DIR, "p", "run-skip", skip_reason="N/A")
+     assert m.measure_skill("p", "run-skip", repo_tests="") is None
+ 
+ 
++def test_loop_kind_skip_reason_with_criteria_is_measured(tmp_path):
++    # criteria 整備済みなら skip_reason 残存でも計測される (skip_reason escape 封鎖)。
++    m = _load()
++    m.PLUGINS_DIR = tmp_path / "plugins"
++    d = _make_skill(m.PLUGINS_DIR, "p", "run-sr", criteria=("IN1", "OUT1"))
++    md = d / "SKILL.md"
++    md.write_text(
++        md.read_text(encoding="utf-8").replace(
++            "feedback_contract:\n", "feedback_contract:\n  skip_reason: 残存フィールド\n", 1
++        ),
++        encoding="utf-8",
++    )
++    r = m.measure_skill("p", "run-sr", repo_tests="")
++    assert r is not None
++    assert r["criteria_total"] == 2
++
++
+ def test_main_warn_mode(tmp_path, monkeypatch, capsys):
+     m = _load()
+     m.PLUGINS_DIR = tmp_path / "plugins"

@@ -1,0 +1,1758 @@
+diff --git a/eval-log/skill-creator/assign-skill-design-evaluator/content-review/elegance-verdict.json b/eval-log/skill-creator/assign-skill-design-evaluator/content-review/elegance-verdict.json
+index 0de043e..a2ed5c0 100644
+--- a/eval-log/skill-creator/assign-skill-design-evaluator/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/assign-skill-design-evaluator/content-review/elegance-verdict.json
+@@ -2,7 +2,7 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "assign-skill-design-evaluator",
+-    "skill_md_sha256": "729d6ec43b55a370133668a0ccbfb1e50f723ef9f1eb424bf6f847d13f5425f0"
++    "skill_md_sha256": "9402d1bb535a83e8d9bff92ec996ef9f4afb9858fcc470dcf24b4da23090c259"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+@@ -13,21 +13,22 @@
+     "dependency_break": 0,
+     "smell": 0
+   },
+-  "reviewer": "run-elegant-review-subagent-team",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewer": "run-elegant-review-subagent",
++  "reviewed_at": "2026-06-24T07:24:10Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "OUT1", "C1", "C2", "C3", "C4"],
+     "positive_feedback": [
+-      "評価器は read-only 単発採点に限定し、評価改善ループは content-review 側に置くことで Goodhart リスクを避けた"
++      "評価器を fork コンテキストの read-only 単発採点に固定し『ループは回さず採点網羅性は完了チェックリストで担保』と明示することで、採点者が被採点物を改変する Goodhart 罠を構造的に封じている (再利用可能な評価系設計パターン)。",
++      "rubric を L0(共通)→L1(ドメイン)→L2(固有override) の append-only 3層合成に分離し、合成ロジックを compose-rubrics.py へ委譲・別ドメインは rubric-registry.json への L1 登録のみで本体不変とする設計が、拡張時の編集衝突を排除している。"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+-    "hook_trigger": "manual",
++    "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "Scope: evaluator responsibility boundary. The evaluator remains read-only and does not own the improvement loop."
++  "notes": "Genuine elegance review (4-conditions C1-C4 + contradiction/omission/inconsistency/dependency_break/smell) of SKILL.md sha256:9402d1bb. C1 contradiction=0: severity weights (high -20/medium -10/low -3, 初期100, 負値0クランプ) は L0 rubric.severity_weights および render-findings-score.py SEVERITY_WEIGHTS と完全一致し、『ループは回さず Goal/Checklist は網羅性担保のみ』という主張も Key Rules/Gotchas/採点フロー全体で一貫。C2 omission=0: Purpose & Output Contract / Key Rules / Gotchas / Additional Resources / eval-log 永続化経路 (write-eval-log.py 必須・直接 echo>>jsonl 禁止) が MECE に揃い、出力 JSON は schemas/evaluator-output.schema.json の required 13 フィールドを満たす。C3 inconsistency=0: rubric_version は L2 で upstream_version_pin=1.3.0 と同値ピン、L0 も 1.3.0、threshold=80 で一致。L2 は delta-only (PG/BND/REG のみ宣言、L0 rule は再掲しない) で parent rubric と整合。C4 dependency_break=0: 参照する compose-rubrics.py / write-eval-log.py / ref-skill-design-rubric L0 rubric / schemas / prompts/R1-evaluate.md / frontmatter script_refs の相対パスは全て resolve 済み (実ファイル確認)。検証: render-findings-score.py を L0+L2 合成で本 SKILL.md に対し実行し score=100 / passed=true / findings=[] を確認 (dogfood)。smell として低位の観察1件: 本文 L126 が集計を『aggregate-evals.py (SessionEnd)』と generic に呼ぶが実体は run-skill-rubric-governance/scripts/aggregate-evals.py に存在し skill-governance-automation/scripts 配下ではない (パス未明記のため dangling ではなく位置曖昧、severity 非該当・PASS を覆さない)。高 severity 未解決欠陥なし → PASS。"
+ }
+diff --git a/eval-log/skill-creator/assign-skill-design-evaluator/content-review/rubric-verdict.json b/eval-log/skill-creator/assign-skill-design-evaluator/content-review/rubric-verdict.json
+index 897b45f..b5c6ab2 100644
+--- a/eval-log/skill-creator/assign-skill-design-evaluator/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/assign-skill-design-evaluator/content-review/rubric-verdict.json
+@@ -2,25 +2,32 @@
+   "target": {
+     "plugin": "skill-creator",
+     "skill": "assign-skill-design-evaluator",
+-    "skill_md_sha256": "729d6ec43b55a370133668a0ccbfb1e50f723ef9f1eb424bf6f847d13f5425f0"
++    "skill_md_sha256": "9402d1bb535a83e8d9bff92ec996ef9f4afb9858fcc470dcf24b4da23090c259"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+-  "reviewer": "assign-skill-design-evaluator-equivalent",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "findings_summary": {
++    "contradiction": 0,
++    "omission": 0,
++    "inconsistency": 0,
++    "dependency_break": 0,
++    "smell": 0
++  },
++  "reviewer": "assign-skill-design-evaluator-subagent",
++  "reviewed_at": "2026-06-24T07:24:10Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "OUT1", "C1", "C2", "C3", "C4"],
+     "positive_feedback": [
+-      "採点専用 skill に Goal/Checklist は残しつつ runtime loop は配線しない設計が維持されている"
++      "本文 100 行超でありながら references/ (rubric.json + evaluator-contract.md + resource-map.yaml) を保持し PD-001 Progressive Disclosure を満たす。出力 JSON 契約が evaluator-contract.md と evaluator-output.schema.json と render-findings-score.py の実出力の三者で一致しており SSOT 整合が取れている (再利用可能な契約-スキーマ-実装の同期パターン)。"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+-    "hook_trigger": "manual",
++    "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "Static rubric-equivalent review for the self-improvement diff; no write-capable evaluator path was introduced."
++  "notes": "Genuine rubric review (ref-skill-design-rubric L0 1.3.0 + 本 evaluator L2 1.3.0) of SKILL.md sha256:9402d1bb。命名: NM-001 dirname 'assign-skill-design-evaluator' == frontmatter.name 一致、NM-002 prefix 'assign-' 充足、FM-001 名前は ^(assign)-[a-z0-9-]*$ 適合・長さ29<=60。frontmatter: FM-002 trigger phrase 'とき' 存在、FM-003 trigger count=2 (『評価したいとき』『確認したいとき』) で 2..3 範囲内、FM-004 description に動作詳細語 (採点する/JSONで返す/sha256/exit code) 不含、FM-005 冒頭 '生成' で動詞語尾を含む文頭。本文行数: BD-003 本文 <=300 行 (frontmatter 除外で十分下回る)。Purpose 契約: BD-001 '## Purpose & Output Contract' heading 厳格一致で存在 (L42)、入力(target)/出力(JSON 1 object)/禁則(Write・Edit 不所持, pair=run-build-skill が修正担当) を明記。Gotchas: BD-002 '## Gotchas' 存在 (L136、TODO(human) 非減点・/tmp 非永続・stdlib のみ・most-specific-wins の 4 反パターン)。RG-001 rubric_hash 出力契約あり。出力契約は schema の required 13 フィールド (rubric_id..pending_human) を網羅し additionalProperties=false にも適合。検証: render-findings-score.py を L0+L2 合成で本 SKILL.md に実行し score=100 / threshold=80 / passed=true / findings=[] / pending_human=[] を取得 (機械採点でも全 rubric rule PASS を確認、dogfood)。高 severity 未解決欠陥なし → PASS。"
+ }
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+index bced46b..9c98454 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -1,24 +1,24 @@
+ {
+-  "target": {"plugin": "skill-creator", "skill": "run-build-skill", "skill_md_sha256": "37211c306db6d063b94e3b7354db4aa6f8d4ea14fe2a78fd032929e7ae335628"},
++  "target": {"plugin": "skill-creator", "skill": "run-build-skill", "skill_md_sha256": "ebe3e2aaab8ae7454bd5583c83d8ee049507f9c865b4c446765ba5ae72167133"},
+   "review_kind": "elegance",
+   "verdict": "PASS",
+   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
+-  "reviewer": "run-elegant-review-subagent-team",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "reviewer": "run-elegant-review-subagent",
++  "reviewed_at": "2026-06-24T07:17:44Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "OUT1", "C1", "C2", "C3", "C4"],
+     "positive_feedback": [
+-      "Step12 を1段落要約+references/content-review-protocol.md への正本ポインタに圧縮し、本文再掲を排してSSOT原則を強化した",
+-      "圧縮で外した4箇条(elegant-review Phase1/2/3+evaluator起動と保存先 / feedback_contract inner-outer×正負 / hook queue化+Stop block+sha256一致検査 / --skip-content-review+max_iter=3 INCOMPLETE+human_review)の実体が全て reference 側に存在し情報欠落ゼロを確認した"
++      "C1(矛盾なし)が高度に満たされている: goal-seek の手順反復上限(inner=5)と content-review の評価→再評価上限(inner=3)という同名 'inner' の数値衝突を、Key Rule#18/ゴールシークループ節と references/content-review-protocol.md・goal-seek-paradigm.md の両方で『別ループ・convergence-policy.json が数値正本・重複宣言しない』と明示注記し、典型的な不整合を設計で予防している。この『同名概念の衝突を SSOT 注記+正本一本化で解消する』パターンは他の多ループ skill へ再利用可能",
++      "SSOT 圧縮の徹底: Step12/Key Rule#17/#18 が詳細実体を本文に再掲せず references/content-review-protocol.md・capability-manifest.schema.json#/definitions/commonCore.required・schemas/template-selection.schema.json へポインタ化。本文を208行(BD-003上限300行に対し余裕92行)に保ちつつ情報欠落ゼロ。圧縮で外した4詳細(elegant-review reset→3並列→改善 Phase / feedback_contract inner-outer×正負FB / hook queue+Stop decision:block+sha256一致 / max_iter=3→INCOMPLETE+human_review)が全て reference 側に実体として現存することを逐一照合で確認"
+     ],
+     "negative_feedback": [],
+     "iteration": 1,
+     "iteration_limit": 3,
+-    "hook_trigger": "manual",
++    "hook_trigger": "pre-push",
+     "next_action": "none"
+   },
+-  "notes": "read-only検証: SKILL.md Step12 圧縮後本文と content-review-protocol.md を逐一照合。4箇条の実体は reference 側(Agent起動例+verdict保存先+Phase reset→3並列→改善 / Inner-Outerループ表+正負フィードバック / queue化+Stop decision:block+sha256一致 / --skip-content-review+max_iter=3→INCOMPLETE+human_review)に全存在。圧縮は再掲削減によるelegance改善で、矛盾/欠落/不整合/依存断絶/smell いずれもゼロ。"
++  "notes": "read-only で SKILL.md 全文(208行)と参照先 references/schemas/prompts/templates を genuine 照合。C1(consistency): Key Rule 群・ゴールシーク節・配置先表に論理矛盾なし。inner=5/inner=3 衝突は別ループ注記で解消、'本文に再掲しない=SSOT' 主張と実装(再掲なし)が一致。C2(completeness): Capability 7 kind 統一・P0 lint群+goal-seek+ssot-duplication+knowledge-loop+validate-build-trace・fork評価分離・feedback-loop配備(Step11.5)・content-review(Step12)が MECE に揃い、content-review-protocol.md にループ分類/役割境界/hook queue/skip 規約まで網羅。C3(coherence): rubric(BD-003=300行,trigger2-3,description発動条件のみ)と整合、本文208行で上限内。C4(dependency): 本文が参照する schemas/references/prompts/templates/scripts/workflow-manifest 計27件の実在を機械確認し dangling_refs=0、循環なし。smell: SSOTポインタ化で本文再掲ゼロ・REDIRECT-FAT-BODY なし。5観測 signal すべて0でPASS。被採点物(SKILL.md)は一切編集していない。"
+ }
+diff --git a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+index 5441950..796f5c4 100644
+--- a/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/skill-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -1,11 +1,25 @@
+ {
+-  "target": {"plugin": "skill-creator", "skill": "run-build-skill", "skill_md_sha256": "37211c306db6d063b94e3b7354db4aa6f8d4ea14fe2a78fd032929e7ae335628"},
++  "target": {"plugin": "skill-creator", "skill": "run-build-skill", "skill_md_sha256": "ebe3e2aaab8ae7454bd5583c83d8ee049507f9c865b4c446765ba5ae72167133"},
+   "review_kind": "rubric",
+   "verdict": "PASS",
+-  "reviewer": "assign-skill-design-evaluator-equivalent",
+-  "reviewed_at": "2026-06-24T00:00:00Z",
++  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
++  "reviewer": "assign-skill-design-evaluator-subagent",
++  "reviewed_at": "2026-06-24T07:17:44Z",
+   "iterations": 1,
+   "human_review_required": false,
+-  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1", "C1", "C2", "C3", "C4"], "positive_feedback": ["BD-003(本文300行上限)を実測で順守: frontmatterは81行目で終わり本文は82-300行=219行と上限内。Step12圧縮が行数余裕を回復させた", "Key Rule#17と同型のSSOTポインタ方式でStep12を1段落+references/content-review-protocol.md参照へ統合し『本文に再掲しない＝SSOT』を明記。本文から外した4詳細(run-elegant-review reset→3並列→改善 Phase / feedback_contract inner-outer正負FB / hook queue+skill_md_sha256検査 / max_iter=3→INCOMPLETE+human_review)はreference側に欠落なく全て現存", "FM/NM/BD系の高severityルール(name=run-build-skill一致, ## Purpose & Output Contract と ## Gotchas 存置, descriptionは〜とき発動条件のみ)を維持し圧縮で破損していない"], "negative_feedback": [], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual", "next_action": "none"},
+-  "notes": "Step12のSSOTポインタ化編集をrubric観点でgenuine検証。実ファイルを読み、BD-003(本文219行)/BD-001/BD-002/FM-001..004/NM-001をPASS確認。reference側に移管詳細の欠落なし。high severity finding 0件。なお既存verdict(elegance/rubric)は旧SHA 2b4cb72...を保持しており本再生成で現行SHA 37211c3...へ更新する必要があった点が、lint-content-review.pyのsha256一致要件を満たす上で本verdict更新の根拠。被採点物への改変は一切行っていない(read-only)。"
++  "feedback_loop": {
++    "loop_scope": "both",
++    "criteria_evaluated": ["IN1", "OUT1", "C1", "C2", "C3", "C4"],
++    "positive_feedback": [
++      "BD-003(本文300行上限)を実測で順守: frontmatter は81行目で終わり本文は82-290行のうち空行を除く実コンテンツ208行で上限300に対し余裕がある。kind=skill 共通核の Less is More 原則を満たす",
++      "frontmatter 規範(FM-001..005)が高品質: name=run-build-skill が ^(run|ref|assign|wrap|delegate)-[a-z0-9-]+$ かつ len<=60 を満たし(FM-001 high PASS)、description は『〜とき』発動条件3トリガで終止し(FM-002/003 PASS)、動作詳細語(採点する/sha256/exit code 等)を含まず(FM-004 PASS)発動条件のみに純化。argument-hint/allowed-tools/pair/kind 等のサポートフィールドも整備済み",
++      "BD-001(## Purpose & Output Contract)・BD-002(## Gotchas)を厳格一致で存置し、入力/出力/完了条件の出力契約を冒頭30行近傍に集約(PD-002 補強も満たす)。NM-001(ディレクトリ名 run-build-skill == frontmatter.name)一致。これら高severity核ルールが SSOTポインタ化の圧縮で破損していないことを確認"
++    ],
++    "negative_feedback": [],
++    "iteration": 1,
++    "iteration_limit": 3,
++    "hook_trigger": "pre-push",
++    "next_action": "none"
++  },
++  "notes": "ref-skill-design-rubric/rubric.json(rubric_version 1.3.0, threshold 80, max_skill_md_lines 300)で kind=skill 適用ルールを genuine 採点。FM-001(name正規表現+len high)/FM-002(trigger文〜とき)/FM-003(trigger数3=2..3内)/FM-004(動作詳細語なし medium)/FM-005(動詞ベース low)すべてPASS。BD-001(## Purpose & Output Contract 厳格一致 high)/BD-002(## Gotchas medium)/BD-003(本文208行<=300 high)/BD-004(description 3トリガ↔本文ゴールシーク実行・局面カタログの対応 medium)PASS。NM-001(basename==name high)/NM-002/NM-003 PASS。PD-001(references/ 実在12ファイル)/PD-002(冒頭に出力契約+禁止語)PASS。KL-001..005 は本 skill に knowledge/ ディレクトリ無し・frontmatter.knowledge_loop 無しのため存在ゲートで無条件PASS(誤減点なし)。high severity finding 0件・推定score>=80。被採点物(SKILL.md)は read-only で一切改変していない。既存verdictは旧SHA 37211c3... を保持し stale だったため現行SHA ebe3e2a... へ更新。"
+ }
+diff --git a/plugins/company-master/README.md b/plugins/company-master/README.md
+index 47694f3..2a0c643 100644
+--- a/plugins/company-master/README.md
++++ b/plugins/company-master/README.md
+@@ -93,10 +93,10 @@
+ 
+ ## 5. ステップA: 事前準備(すべて Code タブで実行)
+ 
+-> **チームで配布する場合**: 「どの鍵を Keychain に入れるか」をロール別(チームメンバー / 中央プロキシ運用者)に
+-> まとめた配布用の正本が [`references/keychain-setup.md`](references/keychain-setup.md) にあります。
+-> 多拠点・フルリモートのチームは**中央プロキシが既定**で、メンバーは日本郵便の鍵を持たず `proxy_url`/`proxy_token` だけ登録します。
+-> Mac で自分の送信元(グローバル)IP を調べる方法も同書に記載。以下 5-1〜5-2.5 は単独/少数拠点(BYO)向けの個別手順です。
++> **チームで配布する場合**: 「どの鍵を Keychain に入れるか」をロール別にまとめた配布用の正本が
++> [`references/keychain-setup.md`](references/keychain-setup.md) にあります。
++> 当チームの郵便番号取得は **BYO 直結が既定**で、**各メンバーが自分の for Biz アカウント・`client_id`/`secret_key`・送信元IP を持ち、日本郵便 API を直接叩きます**(以下 5-2.5 の手順)。固定IP回線のメンバーは `egress_ip` を pin すると確実。送信元IPを固定できない/頻繁に変わるメンバーだけ、例外的に中央プロキシ(`proxy_url`/`proxy_token` のみ登録)を使います。
++> Mac で自分の送信元(グローバル)IP を調べる方法も同書に記載。
+ 
+ ### 5-1. Notion のトークンを登録
+ 
+@@ -129,27 +129,62 @@ gBizINFO のトークンを Keychain に登録して。サービス名は gbizin
+ 
+ ### 5-2.5. 日本郵便 郵便番号API のキーを登録(郵便番号を自動取得する場合)
+ 
+-住所→郵便番号の自動取得には日本郵便「郵便番号・デジタルアドレスAPI」の鍵が要ります。取得〜登録の詳しい手順は [`references/japanpost-api-setup.md`](references/japanpost-api-setup.md) を参照してください。要点だけ:
++住所から郵便番号を自動で取得するには、日本郵便「郵便番号・デジタルアドレスAPI」の **2つの鍵** が要ります。**当チームの既定はこの BYO 直結**(各メンバーが自分の鍵で直接取得する方式)。鍵の取り方〜送信元IP登録までの詳しい背景は [`references/japanpost-api-setup.md`](references/japanpost-api-setup.md) にあります。ここでは **何を・どこに登録するか** だけ案内します。
+ 
+-1. `client_id` と `secret_key` を取得(**secret_key は初回のみ表示**)。
+-2. Keychain に登録(env ファイルは使わず Keychain に保存。secret_key は `-w` を空にして対話入力 → 履歴に残さない):
++#### 登録する鍵は2つ(どちらも日本郵便 for Biz の「システム情報」画面で取得)
++
++| 鍵 | 日本語名 | これは何か | 注意 |
++|---|---|---|---|
++| `client_id` | クライアントID | あなたのシステムを識別するID | 公開寄り(秘密度は低め) |
++| `secret_key` | クライアントシークレット | 認証に使う**秘密の鍵** | **初回登録時にしか表示されません**。取り逃すと再発行が必要 |
++
++> どちらも **macOS の Keychain(キーチェーン)** に保存します(ファイルや env には平文で残しません)。
++> 保存先の決まり(全員これで統一):
++> - **サービス名**: `japanpost-da-api.xl-skills`(Notion 用 `notion-api-key.xl-skills` / gBizINFO 用 `gbizinfo-api-token.xl-skills` と同じ `.xl-skills` 名前空間)
++> - **アカウント名**: `client_id` と `secret_key`(=鍵の名前そのもの)
++
++#### 登録方法(おすすめ: チャットで頼む)
++
++5-1・5-2 と同じ要領で、Code タブのチャット欄に **鍵を書かずに** 頼みます(Enter)。まず client_id:
+ 
+ ```
+-! security add-generic-password -U -s japanpost-da-api -a client_id -w '<あなたのclient_id>'
+-! security add-generic-password -U -s japanpost-da-api -a secret_key -w
++日本郵便のクライアントIDを Keychain に登録して。サービス名は japanpost-da-api.xl-skills、アカウントは client_id
++```
++
++Claude が「IDを教えてください」と聞いてきたら、そのとき client_id を貼り付けて渡します。続けて secret_key も同じように:
++
+ ```
++日本郵便のクライアントシークレットを Keychain に登録して。サービス名は japanpost-da-api.xl-skills、アカウントは secret_key
++```
++
++聞かれたら、for Biz で取得した secret_key(初回のみ表示された値)を貼り付けて渡してください。
++
++> こうすると、指示メッセージに鍵の平文を含めずに登録できます。エラーなく「登録しました」と返れば成功です。
++>
++> **(代替・上級者向け)** 自分でコマンドを打つ場合(secret_key は `-w` を**空**にすると対話入力になり、履歴に平文が残りません):
++> ```
++> ! security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id  -w '<あなたのclient_id>'
++> ! security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
++> ```
++> (行頭の `!` は「このコマンドをそのまま実行して」の意味。2行目は実行後に出るプロンプトに secret_key を貼り付け)
++
++#### 送信元IP を日本郵便 for Biz に登録する(BYO で必須)
++
++鍵を登録したら、`! python3 plugins/company-master/scripts/company_master.py doctor` を実行 → 「送信元IP」行に**あなたの送信元IP**が表示されます。その IP を日本郵便 for Biz の「システム情報」で**送信元IP**として登録してください(最大10件)。
+ 
+-3. `! python3 plugins/company-master/scripts/company_master.py doctor` を実行 → 「送信元IP」行に**自分の送信元IP**が表示される。その IP を日本郵便 for Biz のシステム登録で**送信元IP**として登録(最大10件)。
+-   - 送信元IPは**自動検出**されるので env も保存も基本不要。プロキシ等で固定したいときだけ Keychain に pin: `! security add-generic-password -U -s japanpost-da-api -a egress_ip -w '<IP>'`
++- **固定IP回線なら**、for Biz に登録したのと同じIPを `egress_ip` として pin しておくと、毎回そのIPで送られて確実です(自動検出の揺れに左右されない):
++  `! security add-generic-password -U -s japanpost-da-api.xl-skills -a egress_ip -w '<for Biz に登録した固定IP>'`
++- 動的IP(自宅/オフィスの一般回線)なら pin 不要(既定の自動検出に任せる)。IPが変わったら for Biz で再登録します(`doctor --probe` がズレを検知)。送信元IPをどうしても固定できない環境だけ、例外的に中央プロキシ([`references/postal-proxy-deploy.md`](references/postal-proxy-deploy.md))を使います。
+ 
+-> 鍵が未設定でも他の機能は動きます。その場合は郵便番号だけ空欄+備考になります。`! ... doctor --probe` で実疎通(登録IPとのズレ)を確認できます。
++> 鍵が未設定でも他の機能は動きます。その場合は郵便番号だけ空欄+備考になります。`! python3 plugins/company-master/scripts/company_master.py doctor --probe` で実際に郵便番号を引けるか(本番接続・登録IPとのズレ)を確認できます。
++> `[OK] 接続先: 本番 ...` かつ `[OK] 日本郵便 API 実疎通: テスト検索 OK ...`(stub 注記なし)が出れば本番で取得できる状態です。
+ 
+ ### 5-3. 登録できたか確認(トークンの中身は表示しません)
+ 
+ Code タブのチャット欄に次を貼り付けて Enter:
+ 
+ ```
+-! security find-generic-password -s notion-api-key.xl-skills -a xl-skills >/dev/null 2>&1 && echo "Notion: 登録OK" || echo "Notion: 未登録"; security find-generic-password -s gbizinfo-api-token.xl-skills -a xl-skills >/dev/null 2>&1 && echo "gBizINFO: 登録OK" || echo "gBizINFO: 未登録"; security find-generic-password -s japanpost-da-api -a client_id >/dev/null 2>&1 && echo "日本郵便: 登録OK" || echo "日本郵便: 未登録(郵便番号は空欄になります)"
++! security find-generic-password -s notion-api-key.xl-skills -a xl-skills >/dev/null 2>&1 && echo "Notion: 登録OK" || echo "Notion: 未登録"; security find-generic-password -s gbizinfo-api-token.xl-skills -a xl-skills >/dev/null 2>&1 && echo "gBizINFO: 登録OK" || echo "gBizINFO: 未登録"; security find-generic-password -s japanpost-da-api.xl-skills -a client_id >/dev/null 2>&1 && echo "日本郵便: 登録OK" || echo "日本郵便: 未登録(郵便番号は空欄になります)"
+ ```
+ 
+ > **すべて「登録OK」** と出れば成功です(日本郵便は郵便番号取得を使う場合のみ必須)。
+@@ -284,9 +319,9 @@ company-master の doctor(セットアップ診断)を実行して
+ | `BLOCKED: ... find-generic-password -w` と出る | 安全装置が「トークンの中身の表示」を止めた正常動作です。中身を画面に出す必要はありません |
+ | 実行中に Mac の許可ポップアップが出る | キーチェーンへのアクセス確認です。「常に許可」を選ぶと次回から出ません |
+ | 同名の会社が多すぎる/住所だけで絞れない | 仕様どおりです。候補から選ぶか、保留(未確定)のまま後で確認してください |
+-| 郵便番号がいつも空欄で、備考に「日本郵便APIの認証に失敗」と出る | 日本郵便 addresszip API の鍵未登録か、送信元IPが for Biz 登録値とズレています。[`references/japanpost-api-setup.md`](references/japanpost-api-setup.md) の手順で client_id/secret_key を Keychain `japanpost-da-api` に登録し、`! ... doctor` が表示する送信元IPを日本郵便 for Biz に登録してください(IPは自動検出。固定したいときだけ Keychain `egress_ip` に pin)。`! python3 plugins/company-master/scripts/company_master.py doctor --probe` で実疎通と登録IPとのズレを確認できます |
++| 郵便番号がいつも空欄で、備考に「日本郵便APIの認証に失敗」と出る | 日本郵便 addresszip API の鍵未登録か、送信元IPが for Biz 登録値とズレています。[`references/japanpost-api-setup.md`](references/japanpost-api-setup.md) の手順で client_id/secret_key を Keychain `japanpost-da-api.xl-skills` に登録し、`! ... doctor` が表示する送信元IPを日本郵便 for Biz に登録してください(IPは自動検出。固定したいときだけ Keychain `egress_ip` に pin)。`! python3 plugins/company-master/scripts/company_master.py doctor --probe` で実疎通と登録IPとのズレを確認できます |
+ | 郵便番号が空欄で、備考に「日本郵便APIへの通信に失敗」と出る | ネットワーク不達か日本郵便側の一時障害です。時間をおいて再実行してください。誤った郵便番号は入れず空欄+備考で保留する設計です |
+-| 送信元IPがバラつく / 多拠点(社内チーム・フルリモート)で使う | 日本郵便のIP許可リストは1鍵最大10件のため、各自が直接叩く方式は成立しません。**鍵と固定IPを1台に集約する中央プロキシ**を立て、各クライアントは `proxy_url` だけ設定します(既定の本番配布モデル)。手順: [`references/postal-proxy-deploy.md`](references/postal-proxy-deploy.md) |
++| 送信元IPを固定できない / 頻繁に変わる | 当チームの既定は **BYO 直結**(各メンバーが自分の for Biz 鍵+送信元IP)。固定IP回線なら `egress_ip` を pin すれば安定します。**どうしても送信元IPを固定できないメンバーだけ**、例外的に**鍵と固定IPを1台に集約する中央プロキシ**を立て、そのメンバーは `proxy_url`/`proxy_token` だけ設定します。手順: [`references/postal-proxy-deploy.md`](references/postal-proxy-deploy.md) |
+ 
+ ---
+ 
+diff --git a/plugins/company-master/hooks/hook-guard-secret.py b/plugins/company-master/hooks/hook-guard-secret.py
+index 70822e5..63ae67d 100644
+--- a/plugins/company-master/hooks/hook-guard-secret.py
++++ b/plugins/company-master/hooks/hook-guard-secret.py
+@@ -35,7 +35,7 @@ import sys
+ GUARD_ACCOUNTS = [
+     "notion-api-key.xl-skills",       # Notion API token (共有 Keychain service)
+     "gbizinfo-api-token.xl-skills",   # gBizINFO API token
+-    "japanpost-da-api",               # 日本郵政 DA API (service 名: secret_key / proxy_token / client_id を内包)
++    "japanpost-da-api.xl-skills",               # 日本郵政 DA API (service 名: secret_key / proxy_token / client_id を内包)
+ ]
+ BLOCK_PATTERNS = ["--print-unsafe", "delete-generic-password"]
+ # `-w` / `-g` はトークン平文出力につながる。account/service 文字列と同時出現時のみブロック。
+diff --git a/plugins/company-master/plugin-composition.yaml b/plugins/company-master/plugin-composition.yaml
+index 3d68dc0..63d179c 100644
+--- a/plugins/company-master/plugin-composition.yaml
++++ b/plugins/company-master/plugin-composition.yaml
+@@ -58,7 +58,7 @@ dependencies:
+     - service: gbizinfo-api-token.xl-skills
+       account: xl-skills
+       storage: macOS Keychain
+-    - service: japanpost-da-api
++    - service: japanpost-da-api.xl-skills
+       account: client_id / secret_key (+ 任意 egress_ip / proxy_url / proxy_token)
+       storage: "macOS Keychain (BYO setup: references/japanpost-api-setup.md / 中央プロキシ setup: references/postal-proxy-deploy.md)"
+       note: "egress_ip は送信元IP固定時のみ(既定は自動検出)。proxy_url/proxy_token は多拠点配布(中央プロキシ既定)時にクライアントが設定し、鍵と固定IPはプロキシ側へ集約する。"
+diff --git a/plugins/company-master/references/README-setup.md b/plugins/company-master/references/README-setup.md
+index fafb0be..b096068 100644
+--- a/plugins/company-master/references/README-setup.md
++++ b/plugins/company-master/references/README-setup.md
+@@ -6,6 +6,8 @@
+ > Keychain 命名規約 (本 plugin):
+ > - Notion API token: **service = `notion-api-key.xl-skills`**, **account = `xl-skills`**
+ > - gBizINFO API token: **service = `gbizinfo-api-token.xl-skills`**, **account = `xl-skills`**
++> - 日本郵便 郵便番号API (郵便番号取得を使う場合): **service = `japanpost-da-api.xl-skills`** の1サービスに複数 account をぶら下げる方式 — **account = `client_id` / `secret_key`**(必須)、**`egress_ip`**(固定IP回線なら推奨で pin)。テスト stub は `base_url`、例外のプロキシ運用時のみ `proxy_url` / `proxy_token`。詳細・取得手順は [`japanpost-api-setup.md`](japanpost-api-setup.md)、ロール別の登録は [`keychain-setup.md`](keychain-setup.md)。
++>   - 当チームの郵便番号取得は **BYO 直結が既定**(各メンバーが自分の for Biz 鍵+送信元IPを持つ)。送信元IPを固定できないメンバーだけ例外的に中央プロキシ。
+ 
+ ---
+ 
+diff --git a/plugins/company-master/references/data-sources.md b/plugins/company-master/references/data-sources.md
+index a1354f8..1e4797a 100644
+--- a/plugins/company-master/references/data-sources.md
++++ b/plugins/company-master/references/data-sources.md
+@@ -7,7 +7,7 @@
+ | 取得元 | 取得項目 | 認証 | 既定確度 |
+ |---|---|---|---|
+ | gBizINFO (経済産業省 法人情報API) | 正式名称 / 所在地 / 13桁法人番号 | リクエストヘッダ `X-hojinInfo-api-token` (Keychain `gbizinfo-api-token.xl-skills`) | 公的データで確認済み |
+-| 日本郵便 addresszip API (郵便番号・デジタルアドレスAPI V2) | 郵便番号 (住所→NNN-NNNN 逆引き) | OAuth2 client_credentials (Keychain `japanpost-da-api` の client_id/secret_key) + 送信元IP認証 (`x-forwarded-for`。既定は自動検出、固定時のみ Keychain `egress_ip`)。**多拠点配布は鍵を集約する中央プロキシ (既定・`references/postal-proxy-deploy.md`)、単独/少数拠点は BYO (各自鍵・`references/japanpost-api-setup.md`)**。 | 公的データ取得 |
++| 日本郵便 addresszip API (郵便番号・デジタルアドレスAPI V2) | 郵便番号 (住所→NNN-NNNN 逆引き) | OAuth2 client_credentials (Keychain `japanpost-da-api.xl-skills` の client_id/secret_key) + 送信元IP認証 (`x-forwarded-for`。既定は自動検出、固定時のみ Keychain `egress_ip`)。**多拠点配布は鍵を集約する中央プロキシ (既定・`references/postal-proxy-deploy.md`)、単独/少数拠点は BYO (各自鍵・`references/japanpost-api-setup.md`)**。 | 公的データ取得 |
+ | Web検索 | 電話番号 / 住所のみ入力時の会社名候補 | 不要 | ネット検索(要確認) |
+ | Notion REST API | 企業マスタ DB への upsert/backfill | Bearer token (`notion_config.get_token`, Keychain `notion-api-key.xl-skills`) | — (出力先) |
+ 
+diff --git a/plugins/company-master/references/japanpost-api-setup.md b/plugins/company-master/references/japanpost-api-setup.md
+index ec7fe3e..969fc64 100644
+--- a/plugins/company-master/references/japanpost-api-setup.md
++++ b/plugins/company-master/references/japanpost-api-setup.md
+@@ -4,22 +4,22 @@
+ > 本ファイルが API キー取得〜送信元IP登録〜Keychain 保存の唯一の正本 (SSOT)。`run-company-master-build` /
+ > `run-company-master-backfill` のセットアップ節からここへリンクする。`company_master.py doctor` が未設定を診断する。
+ >
+-> **配布モデルの選択 (意思決定木)**: 日本郵便の送信元IP許可リストは 1鍵あたり最大10件のため、配布形態で正本を分岐する。
+-> - **多拠点 / 送信元IPがバラつく (>10)** → **中央プロキシが既定 (本番配布モデル)**。鍵と固定送信元IPをプロキシ1台に集約し、各クライアントは `proxy_url` (+任意 `proxy_token`) だけ設定する。正本手順は `references/postal-proxy-deploy.md`。社内チーム・フルリモート運用はこちら。
+-> - **単独 / 少数拠点・固定IP** → **BYO (Bring Your Own credentials)**。各ユーザが**それぞれ自分の** for Biz アカウント・client_id/secret_key・送信元IP を用意する (鍵は共有しない)。**本手順 (本書) は BYO のセットアップを案内する**。
++> **配布モデルの選択 (意思決定木)**: 当チームの既定は **BYO 直結**。日本郵便の送信元IP許可リストは 1鍵あたり最大10件だが、BYO では各メンバーが自分の鍵を持つため10件制約に当たらない。
++> - **BYO (Bring Your Own credentials) — 既定** → 各メンバーが**それぞれ自分の** for Biz アカウント・client_id/secret_key・送信元IP を用意し (鍵は共有しない)、日本郵便 API を直接叩く。**本手順 (本書) はこの BYO のセットアップを案内する**。固定IP回線なら `egress_ip` を pin して送信元IPを確定させると堅牢。
++> - **中央プロキシ — 例外** → **送信元IPを固定できない / 頻繁に変わるメンバーだけ**の代替。鍵と固定送信元IPをプロキシ1台に集約し、そのメンバーは `proxy_url` (+任意 `proxy_token`) だけ設定する。正本手順は `references/postal-proxy-deploy.md`。
+ >
+-> 以下の手順は **BYO (単独 / 少数拠点向け)** を対象とする。各ユーザが自分の環境で一度だけ実施する。送信元IP は既定で自動検出されるため、`doctor` が
++> 以下の手順は **BYO (既定)** を対象とする。各メンバーが自分の環境で一度だけ実施する。送信元IP は既定で自動検出されるため、`doctor` が
+ > 表示する IP をそのまま for Biz に登録すればよい (「自分のグローバルIPが分からない」を解消)。秘密情報・設定は
+-> env ファイルではなく Keychain に置く方針 (鍵=`japanpost-da-api`/`client_id`,`secret_key`、固定IP=`/egress_ip`)。多拠点配布は本書でなく `references/postal-proxy-deploy.md` を正本とする。
++> env ファイルではなく Keychain に置く方針 (鍵=`japanpost-da-api.xl-skills`/`client_id`,`secret_key`、固定IP=`/egress_ip` に pin)。送信元IPを固定できない例外運用のみ `references/postal-proxy-deploy.md` を正本とする。
+ 
+ ## 必要な情報 (3 つ + ホストは固定)
+ 
+ | 情報 | 使う場面 | 保存先 |
+ |---|---|---|
+ | ホスト `https://api.da.pf.japanpost.jp` | token / addresszip 両方 | コードに固定 (`scripts/postal_api.py`)。入力不要 |
+-| `client_id` | token 発行 | Keychain `japanpost-da-api` / account `client_id` |
+-| `secret_key` | token 発行 | Keychain `japanpost-da-api` / account `secret_key` (**初回のみ表示**) |
+-| 送信元IP (`x-forwarded-for`) | token 発行ヘッダ (必須) | **既定は自動検出**。固定時のみ Keychain `japanpost-da-api`/`egress_ip` |
++| `client_id` | token 発行 | Keychain `japanpost-da-api.xl-skills` / account `client_id` |
++| `secret_key` | token 発行 | Keychain `japanpost-da-api.xl-skills` / account `secret_key` (**初回のみ表示**) |
++| 送信元IP (`x-forwarded-for`) | token 発行ヘッダ (必須) | **既定は自動検出**。固定時のみ Keychain `japanpost-da-api.xl-skills`/`egress_ip` |
+ 
+ 呼び出しフロー (実装は `postal_api.py`):
+ 
+@@ -46,15 +46,15 @@
+ 
+ ```bash
+ # client_id (公開寄り。値を直接渡してよい)
+-security add-generic-password -U -s japanpost-da-api -a client_id -w 'あなたのclient_id'
++security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id -w 'あなたのclient_id'
+ 
+ # secret_key (-w を空にすると対話入力 → コマンド履歴/ログに平文が残らない)
+-security add-generic-password -U -s japanpost-da-api -a secret_key -w
++security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
+ #   ↑ 実行後にプロンプトが出るので secret_key を貼り付けて Enter
+ 
+ # 確認 (存在確認のみ・中身は出さない)
+-security find-generic-password -s japanpost-da-api -a client_id >/dev/null 2>&1 && echo "client_id: set"
+-security find-generic-password -s japanpost-da-api -a secret_key >/dev/null 2>&1 && echo "secret_key: set"
++security find-generic-password -s japanpost-da-api.xl-skills -a client_id >/dev/null 2>&1 && echo "client_id: set"
++security find-generic-password -s japanpost-da-api.xl-skills -a secret_key >/dev/null 2>&1 && echo "secret_key: set"
+ ```
+ 
+ > 注意: 鍵をブラウザ等から貼り付ける際、不可視のハイフン (U+2011 等) や前後空白が混入すると認証に失敗する。ASCII ハイフン `-` と余分な空白なしを確認すること。
+@@ -66,10 +66,10 @@ security find-generic-password -s japanpost-da-api -a secret_key >/dev/null 2>&1
+ IP を固定したいとき (プロキシ/複数NIC で自動検出値が実際の送信元と異なる等) のみ、**env ファイルではなく Keychain に pin** する (鍵と同じ場所で一元管理):
+ 
+ ```bash
+-security add-generic-password -U -s japanpost-da-api -a egress_ip -w '203.0.113.10'   # (任意) 固定IP
++security add-generic-password -U -s japanpost-da-api.xl-skills -a egress_ip -w '203.0.113.10'   # (任意) 固定IP
+ ```
+ 
+-解決順は `postal_api.resolve_egress_ip()` = Keychain `japanpost-da-api`/`egress_ip` → env `COMPANY_MASTER_EGRESS_IP` (CI 用の低優先フォールバック) → 自動検出。バックグラウンド/cron 実行でも自動検出は働く。検出先を変えるときのみ env `COMPANY_MASTER_EGRESS_IP_DETECT_URL`。
++解決順は `postal_api.resolve_egress_ip()` = Keychain `japanpost-da-api.xl-skills`/`egress_ip` → env `COMPANY_MASTER_EGRESS_IP` (CI 用の低優先フォールバック) → 自動検出。バックグラウンド/cron 実行でも自動検出は働く。検出先を変えるときのみ env `COMPANY_MASTER_EGRESS_IP_DETECT_URL`。
+ 
+ ## (任意) テスト環境(stub)で配線を先に検証する
+ 
+@@ -78,24 +78,36 @@ security add-generic-password -U -s japanpost-da-api -a egress_ip -w '203.0.113.
+ 
+ 1. テスト用 client_id/secret_key を Keychain へ(本番と同じ account 名):
+    ```bash
+-   security add-generic-password -U -s japanpost-da-api -a client_id  -w '<テスト client_id>'
+-   security add-generic-password -U -s japanpost-da-api -a secret_key -w
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id  -w '<テスト client_id>'
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
+    ```
+ 2. 接続先をテストホストへ上書き(Keychain。env でなく Keychain):
+    ```bash
+-   security add-generic-password -U -s japanpost-da-api -a base_url -w 'https://stub-xxxxx.da.pf.japanpost.jp'
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a base_url -w 'https://stub-xxxxx.da.pf.japanpost.jp'
+    ```
+ 3. **テストデータにある住所**で確認(霞が関はテスト対象外。`飯田橋`/`一番町`/`岩本町`/`内幸町`/`大手町` が対象):
+    ```bash
+    python3 plugins/company-master/scripts/postal_api.py 東京都千代田区飯田橋   # → 102-0072
+    python3 plugins/company-master/scripts/company_master.py doctor --probe       # 配線の総合確認
+    ```
+-4. 本番移行時は base_url 上書きを削除(本番既定 `api.da.pf.japanpost.jp` に戻る):
++4. 本番移行 (stub → 本番。**この2つを必ず両方**行う):
++   1. **本番システムの client_id/secret_key を上書き登録**(テスト用のままだと本番ホストで 401 になる):
++      ```bash
++      security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id  -w '<本番 client_id>'
++      security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
++      ```
++   2. **接続先を本番ホストへ戻す**。`base_url` を本番ホストで上書きする(`_base_url()` は `get_japanpost_base_url() or 本番既定` なので、本番ホストを入れれば本番に戻る):
++      ```bash
++      security add-generic-password -U -s japanpost-da-api.xl-skills -a base_url -w 'https://api.da.pf.japanpost.jp'
++      ```
++      > **注意**: `security delete-generic-password -s japanpost-da-api.xl-skills ...` は `hooks/hook-guard-secret.py` が**誤削除防止でブロック**するため使えない。stub 上書きの「解除」は上記のように**本番ホストで上書き**するか、Keychain Access.app から手動削除する。
++5. 本番で疎通確認(stub のテスト住所でなく実在の住所で。送信元IPが for Biz 登録値と一致している必要がある):
+    ```bash
+-   security delete-generic-password -s japanpost-da-api -a base_url
++   python3 plugins/company-master/scripts/company_master.py doctor --probe
+    ```
++   `doctor` の「接続先」が本番 `api.da.pf.japanpost.jp` になり、実疎通が OK なら本番移行完了。401/403 が出たら client_id/secret_key がテスト用のまま、または送信元IPが未登録/ズレ。
+ 
+-> テストAPIは検証専用。実在企業を全国規模で引く本番運用には**本番システム登録**(と送信元IP登録、または中央プロキシ)が必須。
++> テストAPIは検証専用 (stub は送信元IPを厳格に見ないため「stub で通った=本番でも通る」ではない)。実在企業を全国規模で引く本番運用には**本番システム登録**(と送信元IP登録、または中央プロキシ)が必須。
+ 
+ ## ⑥ 動作確認
+ 
+diff --git a/plugins/company-master/references/keychain-setup.md b/plugins/company-master/references/keychain-setup.md
+index 8b21822..86ca790 100644
+--- a/plugins/company-master/references/keychain-setup.md
++++ b/plugins/company-master/references/keychain-setup.md
+@@ -2,23 +2,30 @@
+ 
+ > このプラグインが使う秘密情報・設定は **env ファイルではなく macOS Keychain** に置く。本書は「自分の
+ > マシンでどの鍵を登録すればよいか」を**ロール別**にまとめた、チーム配布用の手順正本。背景や API キーの
+-> 取得方法は `japanpost-api-setup.md` (BYO / 日本郵便鍵取得) と `postal-proxy-deploy.md` (中央プロキシ) を参照。
++> 取得方法は `japanpost-api-setup.md` (BYO / 日本郵便鍵取得)、送信元IPを固定できない例外運用は
++> `postal-proxy-deploy.md` (中央プロキシ) を参照。
++
++## 配布モデル: BYO 直結が既定
++
++> 当チームの既定は **BYO 直結 (Bring Your Own credentials)**。
++> **各メンバーが自分の for Biz アカウント・`client_id`/`secret_key`・送信元IP を用意し、日本郵便 API を直接叩く**。
++> 日本郵便のIP許可リストは「1鍵あたり最大10件」だが、BYO では**各メンバーが自分の鍵を持つ**ため、この10件制約は各自の鍵の中で完結し問題にならない。
++>
++> 送信元IPは既定で**自動検出**される (`doctor` が登録すべき IP を表示する)。**固定IP回線のメンバーは `egress_ip` に pin して `x-forwarded-for` を確定**させるのが堅牢 (下記 A-5)。
++> どうしても送信元IPを固定できない／頻繁に変わる環境のメンバーだけ、**例外的に**中央プロキシ (`postal-proxy-deploy.md`) を使う。
+ 
+ ## まず自分のロールを確認する
+ 
+ | ロール | 何をする人か | 実施する節 |
+ |---|---|---|
+-| **チームメンバー** | 各自のローカル Claude Code でこのプラグインを使う人 | **A** だけ |
+-| **プロキシ運用者 (管理者)** | 固定IPサーバで中央プロキシ (`postal_proxy.py`) を立て鍵を集約する人 | **B**（+ デプロイは `postal-proxy-deploy.md`） |
+-
+-> 当チームの配布モデルは **中央プロキシが既定**（フルリモート・送信元IPがバラつくため）。
+-> そのため **チームメンバーは日本郵便の `client_id`/`secret_key` も送信元IP登録も不要**（プロキシが肩代わり）。
++| **チームメンバー (BYO直結・既定)** | 各自のローカル Claude Code でこのプラグインを使う人 | **A** |
++| **(例外) プロキシ運用者** | 送信元IPを固定できないメンバー向けに、固定IPサーバで中央プロキシ (`postal_proxy.py`) を立て鍵を集約する人 | **C**（+ デプロイは `postal-proxy-deploy.md`） |
+ 
+ ---
+ 
+-## A. チームメンバーが自分の Keychain に登録する鍵 (4つ)
++## A. チームメンバーが自分の Keychain に登録する鍵 (BYO直結)
+ 
+-郵便番号は**中央プロキシ経由**で取得するので、各メンバーは次の4つだけ登録する。`-w` を**値なし**で実行すると
++郵便番号は**自分の for Biz 鍵で直接取得**する。各メンバーは次を登録する。`-w` を**値なし**で実行すると
+ 対話入力になり、トークンがコマンド履歴/ログに残らない（secret は必ずこの方式で貼り付ける）。
+ 
+ ```bash
+@@ -29,37 +36,72 @@ security add-generic-password -U -s notion-api-key.xl-skills -a xl-skills -w
+ # 2. gBizINFO トークン (会社名/法人番号 → 正式名称・住所の取得用)
+ security add-generic-password -U -s gbizinfo-api-token.xl-skills -a xl-skills -w
+ 
+-# 3. 中央プロキシ URL (管理者から共有される。秘密でないので値を直接書いてよい)
+-security add-generic-password -U -s japanpost-da-api -a proxy_url -w 'https://<チームのプロキシ>/addresszip'
++# 3. 日本郵便 client_id (公開寄り。値を直接渡してよい)
++security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id -w '<あなたのclient_id>'
+ 
+-# 4. プロキシ通行トークン (管理者から共有される)
+-security add-generic-password -U -s japanpost-da-api -a proxy_token -w
++# 4. 日本郵便 secret_key (初回のみ表示。対話入力で履歴に残さない)
++security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
++#    ↑ 実行後プロンプトに secret_key を貼り付けて Enter
+ ```
+ 
++> Keychain 命名規約: 日本郵便だけ**1サービス `japanpost-da-api.xl-skills` に複数アカウント** (`client_id` / `secret_key` / `egress_ip` …) をぶら下げる方式 (Notion/gBizINFO の `<service>.xl-skills` + account `xl-skills` 方式とは異なる)。この綴りは `scripts/notion_config.py` とフックに固定されているため**変更不可**。
++
++### A-5. (固定IPなら推奨) 送信元IP を pin する
++
++固定IP回線のメンバーは、**for Biz に登録したのと同じIP**を `egress_ip` に pin しておくと、自動検出の揺れに依存せず
++`x-forwarded-for` が常にそのIPで送られる (バックグラウンド/cron 実行でも確実)。
++
++```bash
++security add-generic-password -U -s japanpost-da-api.xl-skills -a egress_ip -w '<for Biz に登録した固定IP>'
++```
++
++> 動的IPのメンバーは pin 不要 (既定の自動検出に任せる)。ただしIPが変わったら for Biz で再登録が要る (`doctor --probe` が不一致を検知)。固定できない環境はC節の中央プロキシを検討。
++
++### 送信元IP を for Biz に登録する (BYO 必須)
++
++各メンバーは**自分の送信元グローバルIP**を、自分の for Biz システムに登録する (最大10件)。登録すべきIPは:
++
++```bash
++python3 plugins/company-master/scripts/company_master.py doctor   # 「送信元IP」行に自動検出値が出る
++```
++
++の値をそのまま for Biz に登録するのが確実 (固定IPなら A-5 で pin した値と一致する)。
++
+ ### 登録できたか確認 (中身は表示しない)
+ 
+ ```bash
+-security find-generic-password -s notion-api-key.xl-skills   -a xl-skills  >/dev/null 2>&1 && echo "Notion: OK"      || echo "Notion: 未登録"
+-security find-generic-password -s gbizinfo-api-token.xl-skills -a xl-skills >/dev/null 2>&1 && echo "gBizINFO: OK"    || echo "gBizINFO: 未登録"
+-security find-generic-password -s japanpost-da-api -a proxy_url             >/dev/null 2>&1 && echo "proxy_url: OK"   || echo "proxy_url: 未登録"
+-security find-generic-password -s japanpost-da-api -a proxy_token           >/dev/null 2>&1 && echo "proxy_token: OK" || echo "proxy_token: 未登録"
++security find-generic-password -s notion-api-key.xl-skills    -a xl-skills   >/dev/null 2>&1 && echo "Notion: OK"      || echo "Notion: 未登録"
++security find-generic-password -s gbizinfo-api-token.xl-skills -a xl-skills   >/dev/null 2>&1 && echo "gBizINFO: OK"    || echo "gBizINFO: 未登録"
++security find-generic-password -s japanpost-da-api.xl-skills            -a client_id    >/dev/null 2>&1 && echo "client_id: OK"   || echo "client_id: 未登録"
++security find-generic-password -s japanpost-da-api.xl-skills            -a secret_key   >/dev/null 2>&1 && echo "secret_key: OK"  || echo "secret_key: 未登録"
+ ```
+ 
+ 登録後、Claude Code のチャットで「**doctor を実行して**」と言えば総合診断が走る（`company_master.py doctor`）。
+-「**郵便番号取得モード: 中央プロキシ経由**」と表示され FAIL が無ければ完了。あとは「〇〇社の郵便番号を取得して」で使える。
++「**郵便番号取得モード: BYO 直結**」と表示され FAIL が無ければ完了。`doctor --probe` で実 API 疎通 (登録IPとのズレ) まで確認できる。
++あとは「〇〇社の郵便番号を取得して」で使える。
+ 
+ ---
+ 
+-## B. プロキシ運用者がプロキシサーバ側に登録する鍵
++## C. (例外) プロキシ運用者がプロキシサーバ側に登録する鍵
+ 
+-固定IPサーバ上で実施（デプロイ全体は `postal-proxy-deploy.md` が正本）。**日本郵便の本物の鍵はここだけに置く**。
++> 送信元IPを固定できないメンバーがいる場合の**例外運用**。固定IPサーバで中央プロキシを立て、そのメンバーは
++> `proxy_url`/`proxy_token` だけ登録する (日本郵便の鍵を持たない)。デプロイ全体は `postal-proxy-deploy.md` が正本。
++
++固定IPサーバ上で実施。**日本郵便の本物の鍵はここだけに置く**。
+ 
+ ```bash
+ # 日本郵便 for Biz で取得した本番システムの鍵
+-security add-generic-password -U -s japanpost-da-api -a client_id  -w 'for Biz の client_id'
+-security add-generic-password -U -s japanpost-da-api -a secret_key -w          # 対話入力 (初回のみ表示)
+-# チームに配る通行トークン (同じ値を各メンバーの A-4 proxy_token に入れてもらう)
+-security add-generic-password -U -s japanpost-da-api -a proxy_token -w
++security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id  -w 'for Biz の client_id'
++security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w          # 対話入力 (初回のみ表示)
++# プロキシ利用メンバーに配る通行トークン (各メンバーの proxy_token に同じ値を入れてもらう)
++security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_token -w
++```
++
++プロキシ利用メンバー側 (BYO の代わりに):
++
++```bash
++security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_url   -w 'https://<チームのプロキシ>/addresszip'
++security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_token -w          # 管理者から共有された値
+ ```
+ 
+ - このサーバの**固定送信元IP**を for Biz に登録する（`doctor` の「送信元IP」行に表示される IP）。
+@@ -68,20 +110,12 @@ security add-generic-password -U -s japanpost-da-api -a proxy_token -w
+ 
+ ---
+ 
+-## (参考) 単独 / 少数拠点で BYO 直叩きする場合
+-
+-中央プロキシを立てず1台で完結させるなら、A の `proxy_url`/`proxy_token` の代わりに、自分の Keychain へ
+-日本郵便の `client_id`/`secret_key` を入れ、送信元IPを for Biz に登録する（手順は `japanpost-api-setup.md`）。
+-送信元IPは既定で自動検出され、`doctor` が「登録すべき IP」を表示する。固定したいときのみ `egress_ip` を pin。
+-
+----
+-
+ ## (補助) Mac で自分の送信元(グローバル)IP を調べる
+ 
+-for Biz に登録する／プロキシに設定するのは「**外から見える出口(グローバル)IP**」。Mac での調べ方:
++for Biz に登録する／`egress_ip` に pin するのは「**外から見える出口(グローバル)IP**」。Mac での調べ方:
+ 
+ ```bash
+-# ① 送信元グローバルIP (for Biz 登録・proxy 用はこれ)
++# ① 送信元グローバルIP (for Biz 登録・egress_ip pin 用はこれ)
+ curl -s https://api.ipify.org; echo
+ #   別サービスでも可:  curl -s https://ifconfig.me; echo  /  curl -s https://checkip.amazonaws.com
+ 
+@@ -90,12 +124,12 @@ python3 plugins/company-master/scripts/company_master.py doctor
+ ```
+ 
+ 注意:
+-- **LAN内の私的IP は使えない**。`ipconfig getifaddr en0`(Wi-Fi) / `ipconfig getifaddr en1` や「システム設定 > ネットワーク」に出る `192.168.x.x` / `10.x.x.x` は**ルータ内部の私的IP**で、日本郵便ゲートウェイには届かない。登録すべきは上記①の**グローバルIP**。
+-- **家庭/オフィス回線は動的のことが多い**（ISP が定期的に変える）。① を時間をおいて2回実行して変われば動的。変動したら for Biz で再登録するか、固定IP環境／中央プロキシ（出口IPを1つに固定）を使う。
+-- プラグインは既定で①を**自動検出**して `x-forwarded-for` に使うので、BYO でも「自分のIPを毎回調べて env に入れる」必要はない（doctor が表示した IP を for Biz に登録するだけ）。
++- **LAN内の私的IP は使えない**。`ipconfig getifaddr en0`(Wi-Fi) や「システム設定 > ネットワーク」に出る `192.168.x.x` / `10.x.x.x` は**ルータ内部の私的IP**で、日本郵便ゲートウェイには届かない。登録すべきは上記①の**グローバルIP**。
++- **家庭/オフィス回線は動的のことが多い**（ISP が定期的に変える）。① を時間をおいて2回実行して変われば動的。動的なら IP 変動のたび for Biz 再登録が要る (固定できない環境はC節の中央プロキシ)。
++- プラグインは既定で①を**自動検出**して `x-forwarded-for` に使うので、BYO でも「自分のIPを毎回調べて env に入れる」必要はない（固定IPなら A-5 で pin するとさらに確実）。
+ 
+ ## セキュリティ (重要)
+ 
+-- **日本郵便の `secret_key` はチームに配らない**（プロキシ運用者の1台のみ）。`proxy_token` は身内チーム内で共有可（漏れたら作り直す）。
+-- これらの鍵の**平文出力**（`security find-generic-password ... -w`）・**削除**（`delete-generic-password`）は、`hooks/hook-guard-secret.py`（動的層）と `references/settings-hardening.json`（静的層）の二段防御が `notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` / `japanpost-da-api` の3サービスについて機械的に block する。**登録 (`add`) は許容**。
++- **日本郵便の `secret_key` は他人に配らない**（各メンバーが自分の鍵を持つ。プロキシ運用時はプロキシ1台のみ）。`proxy_token` は身内チーム内で共有可（漏れたら作り直す）。
++- これらの鍵の**平文出力**（`security find-generic-password ... -w`）・**削除**（`delete-generic-password`）は、`hooks/hook-guard-secret.py`（動的層）と `references/settings-hardening.json`（静的層）の二段防御が `notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` / `japanpost-da-api.xl-skills` の3サービスについて機械的に block する。**登録 (`add`) は許容**。
+ - 値をコマンド引数に直書きすると履歴に残るため、secret は `-w` を空にした**対話入力**を使う。
+diff --git a/plugins/company-master/references/postal-proxy-deploy.md b/plugins/company-master/references/postal-proxy-deploy.md
+index ba282bb..e9c6177 100644
+--- a/plugins/company-master/references/postal-proxy-deploy.md
++++ b/plugins/company-master/references/postal-proxy-deploy.md
+@@ -8,11 +8,11 @@
+ 
+ ```
+ [多拠点の各クライアント (鍵なし・IP登録なし)]
+-   plugin: Keychain japanpost-da-api/proxy_url(+proxy_token) のみ
++   plugin: Keychain japanpost-da-api.xl-skills/proxy_url(+proxy_token) のみ
+         │  POST {pref_name/city_name/town_name または freeword}  (+ Bearer proxy_token)
+         ▼
+ [あなたのプロキシ 1台 (固定グローバルIP)]
+-   postal_proxy.py: Keychain japanpost-da-api/client_id,secret_key を保持
++   postal_proxy.py: Keychain japanpost-da-api.xl-skills/client_id,secret_key を保持
+    日本郵便に登録する送信元IP = このサーバの出口IP 1件
+         │  token 発行 (x-forwarded-for=自IP) → addresszip 代行
+         ▼
+@@ -28,8 +28,8 @@
+ 3. **鍵をサーバ側 Keychain (または env) に保存**:
+    ```bash
+    # macOS のサーバなら Keychain
+-   security add-generic-password -U -s japanpost-da-api -a client_id  -w '<client_id>'
+-   security add-generic-password -U -s japanpost-da-api -a secret_key -w
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a client_id  -w '<client_id>'
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a secret_key -w
+    # Linux コンテナ等 Keychain が無い環境は env (秘密管理機構経由を推奨)。
+    # 下記 2 変数は notion_config.get_japanpost_credentials が Keychain 不在時に読む正式フォールバック。
+    export COMPANY_MASTER_JAPANPOST_CLIENT_ID='<client_id>'
+@@ -38,7 +38,7 @@
+    > Linux/コンテナで Keychain が無い場合、`notion_config._keychain_password` は None を返し、`get_japanpost_credentials` は env `COMPANY_MASTER_JAPANPOST_CLIENT_ID` / `COMPANY_MASTER_JAPANPOST_SECRET_KEY` を正式フォールバックとして読む(本参照実装は macOS Keychain を優先するが、これらの env を Keychain 不在時の解決経路として明示サポートする)。シークレットマネージャ等から env / マウントで供給する運用に合わせること。
+ 4. **通行トークンを設定 (公開環境では必須)**: 無認証だと誰でも叩ける踏み台になる。
+    ```bash
+-   security add-generic-password -U -s japanpost-da-api -a proxy_token -w '<長いランダム文字列>'
++   security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_token -w '<長いランダム文字列>'
+    # または env: export COMPANY_MASTER_POSTAL_PROXY_TOKEN='<...>'
+    ```
+ 5. **レート制限 (任意)**: `POSTAL_PROXY_RATE_PER_MIN`(既定60/分/IP)。本格運用は前段に WAF / API Gateway を置く。
+@@ -53,8 +53,8 @@
+ 各ユーザは**日本郵便の鍵もIP登録も不要**。プロキシの URL(+トークン)を Keychain に入れるだけ:
+ 
+ ```bash
+-security add-generic-password -U -s japanpost-da-api -a proxy_url   -w 'https://your-proxy.example.com/addresszip'
+-security add-generic-password -U -s japanpost-da-api -a proxy_token -w '<サーバと同じトークン>'   # プロキシが認証する場合
++security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_url   -w 'https://your-proxy.example.com/addresszip'
++security add-generic-password -U -s japanpost-da-api.xl-skills -a proxy_token -w '<サーバと同じトークン>'   # プロキシが認証する場合
+ ```
+ 
+ `proxy_url` が設定されていれば `postal_api.lookup_postal` は自動でプロキシ経由になる(`company_master.py doctor` が「郵便番号取得モード: 中央プロキシ経由」と表示)。`doctor --probe` でプロキシ経由の実疎通を確認できる。
+diff --git a/plugins/company-master/references/settings-hardening.json b/plugins/company-master/references/settings-hardening.json
+index 9b03912..a92c77f 100644
+--- a/plugins/company-master/references/settings-hardening.json
++++ b/plugins/company-master/references/settings-hardening.json
+@@ -1,16 +1,16 @@
+ {
+-  "_doc": "company-master 二段防御の静的層。本ファイルを repo の .claude/settings.json (または settings.local.json) の permissions.deny へマージすると、Notion API token (notion-api-key.xl-skills) と gBizINFO API token (gbizinfo-api-token.xl-skills、どちらも account=xl-skills)、および日本郵政 DA API 機密 (service=japanpost-da-api、account=secret_key/proxy_token/client_id) の 3 鍵の平文流出・誤削除に対する deny が効く。japanpost-da-api の deny は service 名で照合し account を問わず全 account をカバーする。plugin は repo の settings.json を直接配布・上書きできないため、利用者が手動マージする (マージ手順は同階層 references/README-setup.md 参照)。動的層 hooks/hook-guard-secret.py(PreToolUse) の GUARD_ACCOUNTS および -w/-g 検査と対称。--print-unsafe ルールは account 非依存で全機密(security CLI 経由の平文出力)をブロックする。マージ方法: 既存 .claude/settings.json の permissions.deny 配列へ下記 10 エントリを追記 (重複は除く)。settings.json が無ければ {\"permissions\":{\"deny\":[...]}} を新規作成する。",
++  "_doc": "company-master 二段防御の静的層。本ファイルを repo の .claude/settings.json (または settings.local.json) の permissions.deny へマージすると、Notion API token (notion-api-key.xl-skills) と gBizINFO API token (gbizinfo-api-token.xl-skills、どちらも account=xl-skills)、および日本郵政 DA API 機密 (service=japanpost-da-api.xl-skills、account=secret_key/proxy_token/client_id) の 3 鍵の平文流出・誤削除に対する deny が効く。japanpost-da-api.xl-skills の deny は service 名で照合し account を問わず全 account をカバーする。plugin は repo の settings.json を直接配布・上書きできないため、利用者が手動マージする (マージ手順は同階層 references/README-setup.md 参照)。動的層 hooks/hook-guard-secret.py(PreToolUse) の GUARD_ACCOUNTS および -w/-g 検査と対称。--print-unsafe ルールは account 非依存で全機密(security CLI 経由の平文出力)をブロックする。マージ方法: 既存 .claude/settings.json の permissions.deny 配列へ下記 10 エントリを追記 (重複は除く)。settings.json が無ければ {\"permissions\":{\"deny\":[...]}} を新規作成する。",
+   "permissions": {
+     "deny": [
+       "Bash(*find-generic-password*notion-api-key.xl-skills*-w*)",
+       "Bash(*find-generic-password*gbizinfo-api-token.xl-skills*-w*)",
+-      "Bash(*find-generic-password*japanpost-da-api*-w*)",
++      "Bash(*find-generic-password*japanpost-da-api.xl-skills*-w*)",
+       "Bash(*find-generic-password*notion-api-key.xl-skills*-g*)",
+       "Bash(*find-generic-password*gbizinfo-api-token.xl-skills*-g*)",
+-      "Bash(*find-generic-password*japanpost-da-api*-g*)",
++      "Bash(*find-generic-password*japanpost-da-api.xl-skills*-g*)",
+       "Bash(security delete-generic-password*notion-api-key.xl-skills*)",
+       "Bash(security delete-generic-password*gbizinfo-api-token.xl-skills*)",
+-      "Bash(security delete-generic-password*japanpost-da-api*)",
++      "Bash(security delete-generic-password*japanpost-da-api.xl-skills*)",
+       "Bash(*--print-unsafe*)"
+     ]
+   }
+diff --git a/plugins/company-master/scripts/backfill.py b/plugins/company-master/scripts/backfill.py
+index d2a9197..548e897 100644
+--- a/plugins/company-master/scripts/backfill.py
++++ b/plugins/company-master/scripts/backfill.py
+@@ -89,7 +89,7 @@ def precondition_gate() -> tuple[dict, str]:
+     if not notion_config.get_postal_proxy_url() and not notion_config.has_japanpost_credentials():
+         sys.stderr.write(
+             "[backfill] FATAL: 日本郵便 client_id/secret_key 不在 (Keychain "
+-            "japanpost-da-api。プロキシ経由なら proxy_url 設定で代替)。"
++            "japanpost-da-api.xl-skills。プロキシ経由なら proxy_url 設定で代替)。"
+             "precondition gate fail-closed。\n"
+         )
+         sys.exit(2)
+diff --git a/plugins/company-master/scripts/company_master.py b/plugins/company-master/scripts/company_master.py
+index 9667e3b..eba9a05 100755
+--- a/plugins/company-master/scripts/company_master.py
++++ b/plugins/company-master/scripts/company_master.py
+@@ -69,7 +69,7 @@ def _preflight_gate(require_upsert: bool) -> None:
+     # 中央プロキシ経由なら日本郵便鍵はプロキシ側にあるためローカル必須にしない。
+     if not notion_config.get_postal_proxy_url() and not notion_config.has_japanpost_credentials():
+         missing.append(
+-            "日本郵便 client_id/secret_key (Keychain japanpost-da-api) — 郵便番号取得に必須 "
++            "日本郵便 client_id/secret_key (Keychain japanpost-da-api.xl-skills) — 郵便番号取得に必須 "
+             "(直叩き時。プロキシ経由なら proxy_url 設定で代替。references/japanpost-api-setup.md)")
+     if require_upsert:
+         if not notion_config.get_token(cfg):
+@@ -258,9 +258,9 @@ def _doctor_check_settings_hardening() -> list[dict]:
+ 
+ _JAPANPOST_SETUP_ACTION = (
+     "references/japanpost-api-setup.md の手順で client_id/secret_key を Keychain "
+-    "(service=japanpost-da-api, account=client_id / secret_key) に登録する。"
++    "(service=japanpost-da-api.xl-skills, account=client_id / secret_key) に登録する。"
+     "送信元IPは既定で自動検出。固定が必要な場合のみ Keychain "
+-    "(service=japanpost-da-api, account=egress_ip) に pin する (env ファイルは使わない)"
++    "(service=japanpost-da-api.xl-skills, account=egress_ip) に pin する (env ファイルは使わない)"
+ )
+ 
+ 
+@@ -291,9 +291,10 @@ def _japanpost_probe_item(postal_api) -> dict:
+                 "WARN", "日本郵便 API 実疎通",
+                 f"認証OKだが確定せず ({query}→候補確定せず)",
+                 "認証・通信は成功。検索語が API のデータ対象外の可能性 (郵便番号付与には影響なし)")
++        env_note = " ※stub/テスト環境 (本番データではない)" if is_stub else ""
+         return _doctor_item(
+             "OK", "日本郵便 API 実疎通",
+-            f"テスト検索 OK ({query}→{value})")
++            f"テスト検索 OK ({query}→{value}){env_note}")
+     except Exception as e:  # noqa: BLE001  probe の予期せぬ失敗も FAIL + 手順案内へ倒す
+         return _doctor_item(
+             "FAIL", "日本郵便 API 実疎通", f"予期せぬ失敗 ({type(e).__name__}: {e})",
+@@ -303,7 +304,7 @@ def _japanpost_probe_item(postal_api) -> dict:
+ def _doctor_check_japanpost(probe: bool = False) -> list[dict]:
+     """(e) 日本郵便 addresszip API の認証情報診断 (郵便番号逆引きの可用性)。
+ 
+-    client_id/secret_key (Keychain japanpost-da-api) の有無と、送信元IP
++    client_id/secret_key (Keychain japanpost-da-api.xl-skills) の有無と、送信元IP
+     (Keychain pin 優先 → env (低優先) → 自動検出) を表示する。
+     BYO: 表示された送信元IP を各ユーザが日本郵便 for Biz に登録する必要がある
+     (登録要否自体は --probe で確定)。郵便番号は空欄+備考へ縮退するだけなので未設定は WARN 止まり
+@@ -324,6 +325,23 @@ def _doctor_check_japanpost(probe: bool = False) -> list[dict]:
+             items.append(_doctor_item(
+                 "SKIP", "日本郵便 API 実疎通", "--probe 指定時にプロキシ経由で疎通確認"))
+         return items
++    # proxy_url 未設定 = BYO 直結 (各メンバーが自分の client_id/secret_key + 送信元IP で日本郵便を
++    # 直接叩く・チーム既定)。プロキシ分岐と対称に「郵便番号取得モード」を明示する。
++    items.append(_doctor_item(
++        "OK", "郵便番号取得モード",
++        "BYO 直結 (自分の client_id/secret_key + 送信元IP で日本郵便 API を直接呼ぶ。チーム既定)"))
++    # 接続先ホスト: base_url 上書きが stub/テスト環境を指していると「stub で通った=本番OK」と誤読されるため、
++    # plain doctor (probe なし) でも本番/stub を明示する。stub の上書きは WARN で本番移行を促す。
++    base_override = notion_config.get_japanpost_base_url()
++    if not base_override or base_override.rstrip("/") == postal_api.BASE_URL.rstrip("/"):
++        items.append(_doctor_item(
++            "OK", "接続先", f"本番 {postal_api.BASE_URL}"))
++    else:
++        items.append(_doctor_item(
++            "WARN", "接続先",
++            f"stub/テスト環境に接続中: {base_override} (本番の実在企業データは引けない)",
++            "本番へ戻す: security add-generic-password -U -s japanpost-da-api.xl-skills -a base_url -w "
++            f"'{postal_api.BASE_URL}' (delete はフックが禁止のため上書きで戻す)"))
+     has_creds = notion_config.has_japanpost_credentials()
+     if has_creds:
+         items.append(_doctor_item(
+@@ -337,7 +355,7 @@ def _doctor_check_japanpost(probe: bool = False) -> list[dict]:
+     # 送信元IP: Keychain pin 優先 → env (低優先) → 自動検出の「実際に外へ出ていくIP」を提示する。
+     # BYO ではこの IP を日本郵便 for Biz に登録する (要否は --probe で確定)。
+     _EGRESS_PIN_ACTION = ("固定したい場合のみ Keychain に pin: "
+-                          "security add-generic-password -U -s japanpost-da-api -a egress_ip -w '<IP>'")
++                          "security add-generic-password -U -s japanpost-da-api.xl-skills -a egress_ip -w '<IP>'")
+     pinned_ip = notion_config.get_japanpost_egress_ip()  # Keychain pin → env (低優先)
+     detected_ip = postal_api.detect_egress_ip()
+     eff_ip = pinned_ip or detected_ip
+diff --git a/plugins/company-master/scripts/notion_config.py b/plugins/company-master/scripts/notion_config.py
+index 8e82ee8..fc048fe 100755
+--- a/plugins/company-master/scripts/notion_config.py
++++ b/plugins/company-master/scripts/notion_config.py
+@@ -5,7 +5,7 @@
+ # inputs:
+ #   - env: NOTION_CONFIG_PATH / NOTION_TOKEN(INTAKE_ALLOW_ENV_TOKEN=1 時) / *_DB_ID / COMPANY_MASTER_EGRESS_IP
+ #   - files: .notion-config.json / notion-config.fixed.json
+-#   - keychain: notion-api-key.xl-skills / gbizinfo-api-token.xl-skills / japanpost-da-api
++#   - keychain: notion-api-key.xl-skills / gbizinfo-api-token.xl-skills / japanpost-da-api.xl-skills
+ # outputs:
+ #   - stdout: loaded config(__main__ 実行時)
+ #   - api: get_db_id / get_token / get_parent_page_id / get_japanpost_credentials / get_japanpost_egress_ip
+@@ -240,7 +240,7 @@ def get_gbizinfo_token(cfg: Optional[dict] = None) -> Optional[str]:
+ 
+ 
+ # ── 日本郵便 addresszip API 認証 (postal_api の SSOT) ─────────────────────────
+-JAPANPOST_KEYCHAIN_SERVICE = "japanpost-da-api"
++JAPANPOST_KEYCHAIN_SERVICE = "japanpost-da-api.xl-skills"
+ JAPANPOST_CLIENT_ID_ACCOUNT = "client_id"
+ JAPANPOST_SECRET_KEY_ACCOUNT = "secret_key"
+ JAPANPOST_EGRESS_IP_ACCOUNT = "egress_ip"
+@@ -268,7 +268,7 @@ def _keychain_password(service: str, account: str) -> Optional[str]:
+ def get_japanpost_credentials() -> tuple[str, str]:
+     """日本郵便 addresszip API の client_id / secret_key を解決する。
+ 
+-    解決順: Keychain service `japanpost-da-api`、account `client_id` / `secret_key` (優先) →
++    解決順: Keychain service `japanpost-da-api.xl-skills`、account `client_id` / `secret_key` (優先) →
+     env `COMPANY_MASTER_JAPANPOST_CLIENT_ID` / `COMPANY_MASTER_JAPANPOST_SECRET_KEY` (低優先)。
+     Keychain を優先するが、Keychain 不在環境 (Linux/コンテナのプロキシ運用: 中央 postal_proxy が
+     固定IPで鍵を保持し addresszip を代行する) 向けに env フォールバックを許容する。
+@@ -289,7 +289,7 @@ def has_japanpost_credentials() -> bool:
+ def get_japanpost_egress_ip() -> Optional[str]:
+     """日本郵便にシステム登録した送信元IP (x-forwarded-for 用) の明示 pin を返す。
+ 
+-    解決順: Keychain `japanpost-da-api`/`egress_ip` (推奨・env ファイル不使用) →
++    解決順: Keychain `japanpost-da-api.xl-skills`/`egress_ip` (推奨・env ファイル不使用) →
+     env `COMPANY_MASTER_EGRESS_IP` (CI/後方互換の低優先フォールバック)。
+     どちらも無ければ None を返し、呼び出し側 (postal_api.resolve_egress_ip) が自動検出へフォールバックする。
+     IP 認証のため、pin する場合は API ゲートウェイに登録済みの IP と一致している必要がある。
+@@ -305,7 +305,7 @@ def has_egress_ip() -> bool:
+ 
+ 
+ def get_postal_proxy_url() -> Optional[str]:
+-    """郵便番号取得を中継する中央プロキシの URL。Keychain `japanpost-da-api`/`proxy_url` → env。
++    """郵便番号取得を中継する中央プロキシの URL。Keychain `japanpost-da-api.xl-skills`/`proxy_url` → env。
+ 
+     設定されていれば postal_api はこの URL 経由で検索し、ローカルに日本郵便鍵/送信元IP は不要になる
+     (不特定多数・多拠点配布向け: 鍵と IP 登録はプロキシ側=固定IP 1件に集約する)。未設定なら従来の直叩き。
+@@ -321,7 +321,7 @@ def get_postal_proxy_token() -> Optional[str]:
+ 
+ 
+ def get_japanpost_base_url() -> Optional[str]:
+-    """日本郵便 API の接続先ホスト上書き (テスト/stub 環境用)。Keychain `japanpost-da-api`/`base_url` → env。
++    """日本郵便 API の接続先ホスト上書き (テスト/stub 環境用)。Keychain `japanpost-da-api.xl-skills`/`base_url` → env。
+ 
+     未設定なら postal_api の本番既定 (https://api.da.pf.japanpost.jp) を使う。テスト用 API は別ホスト
+     (例 https://stub-...da.pf.japanpost.jp) かつ東京都千代田区のみのため、配線検証時のみ上書きする。
+diff --git a/plugins/company-master/scripts/postal_api.py b/plugins/company-master/scripts/postal_api.py
+index 5eae7eb..27186d6 100644
+--- a/plugins/company-master/scripts/postal_api.py
++++ b/plugins/company-master/scripts/postal_api.py
+@@ -5,8 +5,8 @@
+ # inputs:
+ #   - net: POST https://api.da.pf.japanpost.jp/api/v2/j/token (client_credentials + x-forwarded-for)
+ #   - net: POST https://api.da.pf.japanpost.jp/api/v2/addresszip (Bearer token)
+-#   - keychain: japanpost-da-api (client_id / secret_key / egress_ip) ※notion_config 経由
+-#   - egress IP 解決順: Keychain `japanpost-da-api`/`egress_ip` (pin・優先) → env COMPANY_MASTER_EGRESS_IP (低優先フォールバック) → 自動検出 / COMPANY_MASTER_EGRESS_IP_DETECT_URL
++#   - keychain: japanpost-da-api.xl-skills (client_id / secret_key / egress_ip) ※notion_config 経由
++#   - egress IP 解決順: Keychain `japanpost-da-api.xl-skills`/`egress_ip` (pin・優先) → env COMPANY_MASTER_EGRESS_IP (低優先フォールバック) → 自動検出 / COMPANY_MASTER_EGRESS_IP_DETECT_URL
+ #   - net: 送信元IP自動検出の公開エコー (既定 https://api.ipify.org。env 未設定時のみ)
+ #   - keychain/env: proxy_url / proxy_token (中央プロキシ経由時。設定時は鍵/IP 不要)
+ # outputs:
+@@ -27,8 +27,8 @@
+ 種別で remark を選ぶため、reject_reason は失敗種別語 (auth: / network:) を先頭に含める。
+ 
+ 認証 (notion_config が SSOT):
+-  client_id / secret_key … Keychain `japanpost-da-api`。
+-  送信元IP (x-forwarded-for) … Keychain `japanpost-da-api`/`egress_ip` の pin を優先、無ければ
++  client_id / secret_key … Keychain `japanpost-da-api.xl-skills`。
++  送信元IP (x-forwarded-for) … Keychain `japanpost-da-api.xl-skills`/`egress_ip` の pin を優先、無ければ
+   env `COMPANY_MASTER_EGRESS_IP` (低優先フォールバック)、どちらも無ければ `detect_egress_ip()` で
+   実際の送信元グローバルIPを自動検出する (BYO: ユーザが自分のIPを調べる手間を省く)。日本郵便に
+   システム登録した IP と一致している必要がある (IP 認証)。ズレると 401/403 → reject_reason `auth:`。
+@@ -183,11 +183,11 @@ def get_token(now: float | None = None, _post_fn=None) -> str:
+     creds = notion_config.get_japanpost_credentials()
+     egress_ip = resolve_egress_ip()
+     if not creds or not creds[0] or not creds[1]:
+-        raise JapanPostError("auth", "japanpost 認証情報 (Keychain japanpost-da-api) 不在")
++        raise JapanPostError("auth", "japanpost 認証情報 (Keychain japanpost-da-api.xl-skills) 不在")
+     if not egress_ip:
+         raise JapanPostError(
+             "network",
+-            "送信元IP を解決できない (Keychain japanpost-da-api/egress_ip pin も env COMPANY_MASTER_EGRESS_IP も未設定かつ自動検出失敗=ネット不達の可能性)")
++            "送信元IP を解決できない (Keychain japanpost-da-api.xl-skills/egress_ip pin も env COMPANY_MASTER_EGRESS_IP も未設定かつ自動検出失敗=ネット不達の可能性)")
+     client_id, secret_key = creds
+     post = _post_fn or _post_json
+     data = post(
+diff --git a/plugins/company-master/scripts/postal_proxy.py b/plugins/company-master/scripts/postal_proxy.py
+index a84e7d8..266ea48 100644
+--- a/plugins/company-master/scripts/postal_proxy.py
++++ b/plugins/company-master/scripts/postal_proxy.py
+@@ -3,7 +3,7 @@
+ # name: postal_proxy
+ # purpose: 日本郵便 addresszip を中継する最小プロキシ。鍵と固定送信元IPをこのサーバ1台に集約し、不特定多数・多拠点のクライアントが鍵/IP登録なしで郵便番号を引けるようにする(IP許可リスト10件上限の回避)。
+ # inputs:
+-#   - keychain/env(サーバ側): japanpost-da-api (client_id/secret_key)、proxy_token (通行認証, 任意)
++#   - keychain/env(サーバ側): japanpost-da-api.xl-skills (client_id/secret_key)、proxy_token (通行認証, 任意)
+ #   - http: POST /addresszip (addresszip と同じ body) / GET /healthz
+ # outputs:
+ #   - http: 日本郵便 addresszip レスポンス {addresses, level, ...} をそのまま返す
+@@ -59,7 +59,7 @@ _RATE_LOCK = threading.Lock()
+ 
+ 
+ def _client_token() -> str | None:
+-    """通行認証トークン (Keychain japanpost-da-api/proxy_token → env)。未設定なら認証なし。"""
++    """通行認証トークン (Keychain japanpost-da-api.xl-skills/proxy_token → env)。未設定なら認証なし。"""
+     return notion_config.get_postal_proxy_token()
+ 
+ 
+@@ -147,7 +147,7 @@ def main() -> int:
+     if not (cid and sec):
+         sys.stderr.write(
+             "[postal-proxy] FATAL: サーバ側に日本郵便 client_id/secret_key がありません "
+-            "(Keychain japanpost-da-api)。references/postal-proxy-deploy.md を参照。\n")
++            "(Keychain japanpost-da-api.xl-skills)。references/postal-proxy-deploy.md を参照。\n")
+         return 2
+     # fail-closed: 非ループバック bind かつ proxy_token 未設定なら、無認証の踏み台化を機械層で拒否する。
+     # ループバック bind 時のみ無認証を許容 (ローカル開発用)。proxy_token 設定時は Bearer 認証で防御。
+diff --git a/plugins/company-master/skills/run-company-master-backfill/SKILL.md b/plugins/company-master/skills/run-company-master-backfill/SKILL.md
+index 1232631..d03d176 100644
+--- a/plugins/company-master/skills/run-company-master-backfill/SKILL.md
++++ b/plugins/company-master/skills/run-company-master-backfill/SKILL.md
+@@ -155,7 +155,7 @@ build と同一の `../../scripts/validate_company_master.py <records.json>` が
+ 
+ ## セキュリティと権限
+ 
+-本 Skill は `effect: external-mutation` (Notion 書き込み + 外部 API 照会)。二段防御は build と共有する。静的層 deny ルールは `../../references/settings-hardening.json` (利用者が `.claude/settings.json` へマージ)、動的層は `../../hooks/hook-guard-secret.py` (plugin.json 配線) が 3鍵 (`notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` / `japanpost-da-api` (secret_key・proxy_token 等)) の平文出力・誤削除を fail-closed で遮断する。トークンは Keychain のみで扱い生値を端末に出さない。
++本 Skill は `effect: external-mutation` (Notion 書き込み + 外部 API 照会)。二段防御は build と共有する。静的層 deny ルールは `../../references/settings-hardening.json` (利用者が `.claude/settings.json` へマージ)、動的層は `../../hooks/hook-guard-secret.py` (plugin.json 配線) が 3鍵 (`notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` / `japanpost-da-api.xl-skills` (secret_key・proxy_token 等)) の平文出力・誤削除を fail-closed で遮断する。トークンは Keychain のみで扱い生値を端末に出さない。
+ 
+ ## open_issues
+ 
+diff --git a/plugins/company-master/skills/run-company-master-build/SKILL.md b/plugins/company-master/skills/run-company-master-build/SKILL.md
+index d067d96..593ca34 100644
+--- a/plugins/company-master/skills/run-company-master-build/SKILL.md
++++ b/plugins/company-master/skills/run-company-master-build/SKILL.md
+@@ -66,7 +66,7 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ - **フォーマット規約**: 郵便番号は〒なし・ハイフン込み 8文字 `NNN-NNNN`。電話番号はハイフン区切り。住所は都道府県起点に正規化。
+ - **確度4ラベル固定**: `公的データで確認済み | 公的データ取得 | ネット検索(要確認) | 未確定(要確認)`。英語コード値は使わない。
+ - **信頼キー (SSOT)**: upsert 一意キーは gBizINFO が確定返却した 13桁法人番号のみ。法人番号を持たない/取得不能な行は代替キー(正規化会社名+住所ハッシュ)で仮同定し『未確定(要確認)』として**新規追記のみ**。
+-- **認証**: 出力先 DB は `notion_config.get_db_id('company-master')`、token は `notion_config.get_token` で解決 (独自実装しない)。gBizINFO トークンは Keychain `gbizinfo-api-token.xl-skills` に保管しリクエストヘッダ `X-hojinInfo-api-token` で送信。郵便番号取得は日本郵便 addresszip API (Keychain `japanpost-da-api` の client_id/secret_key + 送信元IP の OAuth2/IP認証。送信元IPは既定で自動検出し、固定時のみ Keychain `japanpost-da-api`/`egress_ip`)。セットアップ手順は `references/japanpost-api-setup.md`。
++- **認証**: 出力先 DB は `notion_config.get_db_id('company-master')`、token は `notion_config.get_token` で解決 (独自実装しない)。gBizINFO トークンは Keychain `gbizinfo-api-token.xl-skills` に保管しリクエストヘッダ `X-hojinInfo-api-token` で送信。郵便番号取得は日本郵便 addresszip API (Keychain `japanpost-da-api.xl-skills` の client_id/secret_key + 送信元IP の OAuth2/IP認証。送信元IPは既定で自動検出し、固定時のみ Keychain `japanpost-da-api.xl-skills`/`egress_ip`)。セットアップ手順は `references/japanpost-api-setup.md`。
+ - **precondition gate**: Notion token / gBizINFO トークン / 日本郵便 client_id・secret_key の未登録は fail-closed (exit 2。`company_master.py` の run-one/backfill 実行前に検査。**プロキシ経由なら `proxy_url` で代替**され client_id/secret_key はクライアントに不要)。**送信元IPは自動検出で解決するため gate に含めず**、登録IPとのズレは実行時に 401 で顕在化し `postal_api_unauthorized` 備考で surface する (gate ではなく実行時縮退で扱う)。障害時は取れた項目だけ書き、中間結果を JSONL 退避して次回リプレイ可能にする (縮退)。
+ - **live スキーマ preflight**: upsert / backfill は書き込み前に Notion API GET database の live スキーマを `references/notion-db-schema.json` (生成元正本: `company-master-columns.md` の8列定義) と照合し、必須8列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・API 不達は**書き込まず fail-closed** (構造化エラー)。プロセス内キャッシュで多重照会を回避する。
+ - **レート制限/リトライ**: Notion API の 429/5xx は `Retry-After` 尊重の指数バックオフで最大5回まで自動リトライし、上限超過は構造化エラー (`NotionAPIRetryExhausted`) で fail-closed。backfill は行単位縮退のため、レート超過・中断時も処理済み行は確定済み・失敗行は replay JSONL へ退避済みで、次回実行で再開できる。
+@@ -200,7 +200,7 @@ PY
+ 
+ - `../../references/` — 8列定義 + 確認用URL本文 / 確認用URLテンプレート / データソース・確度 / 備考テンプレート (plugin-root 集約・両 skill 共有)
+ - `../../references/confirm-url-template.md` — 確認用URL ページ本文の固定テンプレート正本 (`../../scripts/confirm_url.py` が展開)
+-- `../../references/README-setup.md` — Keychain 3鍵登録 (notion-api-key.xl-skills / gbizinfo-api-token.xl-skills / japanpost-da-api)・settings-hardening マージ・`--upsert` 挙動のセットアップ手順
++- `../../references/README-setup.md` — Keychain 3鍵登録 (notion-api-key.xl-skills / gbizinfo-api-token.xl-skills / japanpost-da-api.xl-skills)・settings-hardening マージ・`--upsert` 挙動のセットアップ手順
+ - `../../references/settings-hardening.json` — 二段防御の静的層 deny ルール (利用者が `.claude/settings.json` へマージ)
+ - `../../prompts/R1-resolve-identity.md` — resolve 同定判断の7層 prompt 正本 (build・backfill 共有)
+ - `../../scripts/notion_config.py` — DB ID・token・gBizINFO トークン解決の vendored SSOT
+@@ -214,8 +214,8 @@ PY
+ 
+ 本 Skill は `effect: external-mutation` (Notion 書き込み + 外部 API 照会)。設計書04章の二段防御に従う。
+ 
+-- **静的層**: plugin は repo の `.claude/settings.json` を直接配布・上書きできないため、deny ルールは `references/settings-hardening.json` として同梱配布し、**利用者が repo の `.claude/settings.json` (または `settings.local.json`) の `permissions.deny` へマージ**して有効化する (マージ手順は `references/settings-hardening.json` の `_doc` および `references/README-setup.md`)。3鍵 (`notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` (account=`xl-skills`) / `japanpost-da-api` (account=`secret_key` / `proxy_token` 等)) の平文出力 (`find-generic-password ... -w` / `--print-unsafe`) と誤削除 (`delete-generic-password`) を静的に deny する。
+-- **動的層**: `PreToolUse` hook (`hooks/hook-guard-secret.py`, plugin.json 配線) が同 3鍵 (japanpost-da-api の `secret_key` / `proxy_token` を含む) を含む Bash コマンドの平文出力 (`-w`/`-g`/`--print-unsafe`、連結フラグも正規表現で検出) と誤削除 (`delete-generic-password`) を文脈依存で動的ブロックする (`GUARD_ACCOUNTS` が静的層と対称)。hook JSON を解釈できない入力は **fail-closed (exit 2)** で遮断する。
++- **静的層**: plugin は repo の `.claude/settings.json` を直接配布・上書きできないため、deny ルールは `references/settings-hardening.json` として同梱配布し、**利用者が repo の `.claude/settings.json` (または `settings.local.json`) の `permissions.deny` へマージ**して有効化する (マージ手順は `references/settings-hardening.json` の `_doc` および `references/README-setup.md`)。3鍵 (`notion-api-key.xl-skills` / `gbizinfo-api-token.xl-skills` (account=`xl-skills`) / `japanpost-da-api.xl-skills` (account=`secret_key` / `proxy_token` 等)) の平文出力 (`find-generic-password ... -w` / `--print-unsafe`) と誤削除 (`delete-generic-password`) を静的に deny する。
++- **動的層**: `PreToolUse` hook (`hooks/hook-guard-secret.py`, plugin.json 配線) が同 3鍵 (japanpost-da-api.xl-skills の `secret_key` / `proxy_token` を含む) を含む Bash コマンドの平文出力 (`-w`/`-g`/`--print-unsafe`、連結フラグも正規表現で検出) と誤削除 (`delete-generic-password`) を文脈依存で動的ブロックする (`GUARD_ACCOUNTS` が静的層と対称)。hook JSON を解釈できない入力は **fail-closed (exit 2)** で遮断する。
+ 
+ トークンは Keychain のみで扱い生値を端末に出さない。防御の成立条件は**動的層が fail-closed で単独完結**することであり、静的層 (マージ任意・先回り防御) は深層防御 (defense in depth) の追加層と位置づける。
+ 
+@@ -227,7 +227,7 @@ PY
+ 2. **backfill が validate_row を迂回 (VERT-01)** — **解消済み (2026-06-10)**: `validate_row` は純 offline 決定論で API 疎通不要と判明したため本 PR で対処した。`backfill.py` は PATCH 前に `validate_enriched` (= `validate_company_master.validate_row`) を実行し、違反行は PATCH せず deferred + replay 退避へ回す (単発 upsert と対称の検証ゲート)。offline 回帰テストを `tests/test_company_master.py` に追加済み。
+ 3. **gBizINFO 実装 V1 固定 vs data-sources.md の V2 優先記述の矛盾 (DEDUCT-01)** — **完全解消 (2026-06-10 実トークン疎通で実証)**: `references/data-sources.md` を実装 (V1 採用・正本 `resolve_company.py` の `GBIZINFO_BASE`) に一本化したうえ、実トークンで V1=HTTP 200 / V2=HTTP 404 を確認した。`https://info.gbiz.go.jp/hojin/v2/` は存在せず「V2 優先」の旧記述自体が誤りだったため、移行判断は不要 (V1 が唯一の動作エンドポイント)。
+ 4. **derive_overall_certainty の保守的設計の意図明記 (A4-VALUE-01)** — **解消済み (2026-06-10)**: 『情報の確かさ』値域節 (`references/company-master-columns.md`) に「最も弱い属性に合わせる保守的設計=非対称コスト原則の意図的反映であり、確度を高く見せる方向の変更は禁止」を明記した。
+-5. **日本郵便 addresszip API への移行 — 完了 (2026-06-18)**: 旧方式の郵便番号一括 zip 直 DL (全国版 + 大口事業所個別番号版) はプログラムから HTTP 404 で遮断されていた (bot 対策/配信障害)。これを根本解消するため郵便番号取得を日本郵便公式 API (V2 逆引き) へ全面移行した。認証は OAuth2 client_credentials (Keychain `japanpost-da-api`) + 送信元IP認証 (`x-forwarded-for`。既定は自動検出、固定時のみ Keychain `egress_ip`)。失敗時の縮退: 認証失敗 (401/403) → 空欄 + 備考 `postal_api_unauthorized` / 通信失敗 → `postal_api_unavailable` / 一意確定不能 → `postal_code`。`doctor --probe` が token 発行 + テスト検索で登録IPとのズレを検知する。セットアップ手順は `references/japanpost-api-setup.md`。残課題は実 API キー登録後の疎通確認のみ。
++5. **日本郵便 addresszip API への移行 — 完了 (2026-06-18)**: 旧方式の郵便番号一括 zip 直 DL (全国版 + 大口事業所個別番号版) はプログラムから HTTP 404 で遮断されていた (bot 対策/配信障害)。これを根本解消するため郵便番号取得を日本郵便公式 API (V2 逆引き) へ全面移行した。認証は OAuth2 client_credentials (Keychain `japanpost-da-api.xl-skills`) + 送信元IP認証 (`x-forwarded-for`。既定は自動検出、固定時のみ Keychain `egress_ip`)。失敗時の縮退: 認証失敗 (401/403) → 空欄 + 備考 `postal_api_unauthorized` / 通信失敗 → `postal_api_unavailable` / 一意確定不能 → `postal_code`。`doctor --probe` が token 発行 + テスト検索で登録IPとのズレを検知する。セットアップ手順は `references/japanpost-api-setup.md`。残課題は実 API キー登録後の疎通確認のみ。
+ 
+ 6. **配布モデルの確定 (プロキシ既定)** — **戦略決定済み (2026-06-18)**: 日本郵便の送信元IP許可リストは 1鍵最大10件のため、社内チーム・フルリモート (送信元IP>10) では各自が自IPを登録する BYO は IP 件数上限で不可と結論した。**正本 = 多拠点は中央プロキシ (鍵と固定IPをサーバ集約・`scripts/postal_proxy.py` / 正本手順 `references/postal-proxy-deploy.md`) が既定の本番配布モデル、単独/少数拠点・固定IP は BYO (`references/japanpost-api-setup.md`) のオプトイン**。配線は `notion_config.get_postal_proxy_url/get_postal_proxy_token` + `plugin-composition.yaml` の `postal_proxy` capability 宣言で完了済み。残課題はプロキシ実 deploy 後の疎通確認のみ (別 PR)。
+ 
+diff --git a/plugins/skill-creator/skills/delegate-codex-skill-review/SKILL.md b/plugins/skill-creator/skills/delegate-codex-skill-review/SKILL.md
+index a92a141..ed45848 100644
+--- a/plugins/skill-creator/skills/delegate-codex-skill-review/SKILL.md
++++ b/plugins/skill-creator/skills/delegate-codex-skill-review/SKILL.md
+@@ -94,13 +94,16 @@ codex CLI を標準フローの必須依存にしないまま、任意実行用
+   ```
+   exit 2 が返ったら BLOCK。標準フローではなく任意拡張であることを案内して停止。
+ - **target 検証**: `target_skill_path` が存在し SKILL.md であることを確認。
+-- **任意実行コマンドの提示**:
++- **任意実行コマンドの提示** (正本 `references/codex-connection.md`):
+ 
+   ```bash
+-  codex review --input "$TARGET_PATH" --rubric plugins/skill-creator/skills/ref-skill-design-rubric/rubric.json \
+-    > eval-log/delegate-codex-review.json
++  codex --prompt "$(cat plugins/skill-creator/skills/delegate-codex-skill-review/prompts/R2-codex-review.md)" \
++        --context-file eval-log/delegate-codex-request.json \
++        --output-format text \
++        --approval-mode yolo \
++        > eval-log/delegate-codex-response.json
+   ```
+-  このコマンドは自動実行しない。codex CLI を導入済みのユーザーが任意で実行する。
++  codex に subcommand は無く `--prompt` 直接指定。rubric (`ref-skill-design-rubric/references/rubric.json` の critical axis) は R2 プロンプト本文へ焼き込み、別フラグでは渡さない。このコマンドは自動実行しない。codex CLI を導入済みのユーザーが任意で実行する。
+ - **結果提示**: 書き出した JSON のサマリをユーザーに返す。修正判断は委ねる。
+ 
+ ## Gotchas
+diff --git a/plugins/skill-creator/skills/delegate-codex-skill-review/prompts/R2-codex-review.md b/plugins/skill-creator/skills/delegate-codex-skill-review/prompts/R2-codex-review.md
+index 4871c96..746817a 100644
+--- a/plugins/skill-creator/skills/delegate-codex-skill-review/prompts/R2-codex-review.md
++++ b/plugins/skill-creator/skills/delegate-codex-skill-review/prompts/R2-codex-review.md
+@@ -69,7 +69,7 @@
+ |---|---|---|
+ | schema | `schemas/io-contract.schema.json` | output validation |
+ | request | `eval-log/delegate-codex-request.json` | metadata 突合 |
+-| rubric | `../ref-skill-design-rubric/rubric.json` | critical axis 一覧 |
++| rubric | `../ref-skill-design-rubric/references/rubric.json` | critical axis 一覧 |
+ 
+ ### 3.2 外部ツール / API
+ 
+diff --git a/plugins/skill-creator/skills/run-migrate-audit/prompts/R1-audit.md b/plugins/skill-creator/skills/run-migrate-audit/prompts/R1-audit.md
+index 24994bf..b753d48 100644
+--- a/plugins/skill-creator/skills/run-migrate-audit/prompts/R1-audit.md
++++ b/plugins/skill-creator/skills/run-migrate-audit/prompts/R1-audit.md
+@@ -11,17 +11,17 @@
+ | responsibility | R1 |
+ | layers_covered | [L2, L4, L5, L6] |
+ | inputs | target_paths (array) |
+-| outputs | eval-log/migrate-audit-report.json (schemas/output.schema.json) |
++| outputs | .claude/handoff/migrate-audit-&lt;session&gt;.json (schemas/output.schema.json: input_file/origin/sections/summary) |
+ | notes | rubric 接続は次イテレーション |
+ 
+ ## Layer 1: 基本定義層
+ 
+-- 最上位目的: 既存資産を 8 区分に分類し、抽象化欠落 (具体値直書き) を検出する。
++- 最上位目的: 既存資産を 8 区分 (always-on/ref/run/wrap/assign/delegate/hook/docs) に分類し、抽象化欠落 (具体値直書き) を検出する。
+ - 背景: 移行前資産には固有名詞 / 固定パス / マジック値が直書きされやすい。
+-- 期待成果: `schemas/output.schema.json` 準拠の `migrate-audit-report.json` (分類 + findings)。
+-- 成功基準: 対象 path のうち非バイナリ prompt/markdown/yaml を全件分類し、抽象化違反を漏れなく検出。
++- 期待成果: `schemas/output.schema.json` 準拠の `.claude/handoff/migrate-audit-<session>.json` (input_file / origin / sections[] / summary)。
++- 成功基準: 対象 path の見出し (section) を全件 8 区分へ分類し、各 section に分類根拠 (rationale) と suggested_skill_name を付与。
+ - スコープ
+-  - 含む: ファイル列挙 / 8 区分分類 / 抽象化欠落検出 / JSON 出力
++  - 含む: ファイル列挙 / 8 区分分類 / 分類根拠付与 / suggested_skill_name 提案 / JSON 出力
+   - 含まない: 既存ファイル書換 / rubric 採点
+ 
+ ## Layer 2: ドメイン層
+@@ -29,15 +29,15 @@
+ ### 2.1 用語
+ | 用語 | 定義 |
+ |---|---|
+-| 8 区分 | `references/classification-rules.md` で定義される分類カテゴリ群 |
++| 8 区分 | `references/classification-rules.md` で定義される分類カテゴリ群 (always-on/ref/run/wrap/assign/delegate/hook/docs) |
+ | 抽象化欠落 | 変数化すべき具体値 (path / 固有名詞 / 数値) が直書きされている状態 |
+-| findings | 違反証跡 (file / line / snippet / カテゴリ) 配列 |
++| rationale | 各 section の分類根拠 (1 行以内。後段 evaluator が judge 可能) |
+ 
+ ### 2.2 ビジネスルール
+ - CONST_001: 既存ファイルは Read のみ (書換禁止)。
+ - CONST_002: schema 違反は `fatal_exit_code=2` で停止。
+ - CONST_003: 除外 `[.git/, node_modules/, eval-log/]`。
+-- OUTPUT_CONST: `eval-log/migrate-audit-report.json` を `schemas/output.schema.json` 準拠で書く。
++- OUTPUT_CONST: `.claude/handoff/migrate-audit-<session>.json` を `schemas/output.schema.json` 準拠 (input_file/origin/sections/summary) で書く。
+ 
+ ## Layer 3: インフラ層
+ 
+@@ -68,14 +68,14 @@
+ ### 5.3 ゴール定義
+ - 目的: 既存資産を 8 区分に分類し抽象化欠落を網羅検出。
+ - 背景: 移行前資産は具体値直書きが多い。機械的監査で後続 Skill 化を安全化。
+-- 達成ゴール: schema 準拠 report + coverage 100% + findings に file/line/snippet。
++- 達成ゴール: schema 準拠出力 + section coverage 100% + 各 section に rationale。
+ 
+ ### 5.4 完了チェックリスト
+-- [ ] 未分類ファイルゼロ (`category != null` を全ファイル)
++- [ ] 未分類 section ゼロ (全 section が 8 区分のいずれかに `classification`)
+ - [ ] schema_conformance (output.schema.json validator PASS)
+-- [ ] findings に証跡保持 (file / line / snippet を全件)
+-- [ ] 必須出力フィールド存在 (`files / classifications / findings`)
+-- [ ] 曖昧分類は `unknown + reason` (推測を事実として述べない)
++- [ ] 各 section に分類根拠 (`rationale`) を全件付与
++- [ ] 必須出力フィールド存在 (`input_file / origin / sections / summary`)
++- [ ] 曖昧分類は rationale に限定詞 (推測 / 可能性 / unknown) を付与し事実として述べない
+ 
+ ### 5.5 実行方式 (動的生成ループ)
+ 1. 未充足項目を特定 (列挙 / 分類 / 抽象化チェック / 出力 観点)
+@@ -91,8 +91,8 @@
+ 
+ ### 5.7 インターフェース
+ - 入力: `target_paths` (配列、各要素が既存 path。非配列 / 不存在は拒否。欠損で fatal_exit_code=2)
+-- 出力: `migrate-audit-report.json` → `assign-skill-design-evaluator / run-build-skill`
+-  - 形式: `{ "files", "classifications", "findings" }`
++- 出力: `.claude/handoff/migrate-audit-<session>.json` → `assign-skill-design-evaluator / run-build-skill`
++  - 形式: `{ "input_file", "origin", "sections", "summary" }` (schemas/output.schema.json 準拠)
+ 
+ ### 5.8 依存関係
+ - 前提: なし
+@@ -101,7 +101,7 @@
+ ## Layer 6: オーケストレーション層
+ 
+ - 実行原則: 完了チェックリストを唯一の停止条件。target は Read 専用。
+-- ハンドオフ直列: `file_list → classifications → findings → migrate-audit-report.json`
++- ハンドオフ直列: `file_list → sections 分類 → rationale 付与 → .claude/handoff/migrate-audit-<session>.json`
+ - ゴールシークループ上限: 最大反復回数 2
+ - 完了判定: 全項目充足 + Layer 1 成功基準合致。未達は classify を再実行。
+ 
+@@ -118,4 +118,4 @@
+ 
+ ## 出力指示
+ 
+-Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。最終出力は `eval-log/migrate-audit-report.json` のみ。前置き・後書き禁止。
++Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。最終出力は `.claude/handoff/migrate-audit-<session>.json` (schemas/output.schema.json 準拠) のみ。前置き・後書き禁止。
+diff --git a/plugins/skill-creator/skills/run-migrate-audit/schemas/output.schema.json b/plugins/skill-creator/skills/run-migrate-audit/schemas/output.schema.json
+index 024560d..72fa008 100644
+--- a/plugins/skill-creator/skills/run-migrate-audit/schemas/output.schema.json
++++ b/plugins/skill-creator/skills/run-migrate-audit/schemas/output.schema.json
+@@ -2,28 +2,63 @@
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "$id": "https://xl-skills/run-migrate-audit/output.schema.json",
+   "title": "run-migrate-audit output",
++  "description": "scripts/migrate/audit.py が .claude/handoff/migrate-audit-<session>.json に書き出す分類結果の契約。8 区分 (always-on/ref/run/wrap/assign/delegate/hook/docs) に分類した section と集計を持つ。",
+   "type": "object",
+-  "required": ["audit_id", "classified", "abstraction_findings"],
++  "required": ["input_file", "sections", "summary"],
+   "additionalProperties": false,
+   "properties": {
+-    "audit_id": {"type": "string"},
+-    "generated_at": {"type": "string", "format": "date-time"},
+-    "classified": {
++    "input_file": {
++      "type": "string",
++      "description": "監査対象の CLAUDE.md / prompt ファイルパス"
++    },
++    "origin": {
++      "type": "string",
++      "enum": ["article", "internal-doc", "external-spec", "unknown"],
++      "description": "入力パスから派生した由来 (doc/21 source-tier 自動派生用)。audit.py detect_origin の返値"
++    },
++    "sections": {
+       "type": "array",
++      "description": "見出し単位で 8 区分へ分類した結果",
+       "items": {
+         "type": "object",
+-        "required": ["source_path", "category"],
++        "required": ["heading", "classification", "rationale", "suggested_skill_name"],
+         "additionalProperties": false,
+         "properties": {
+-          "source_path": {"type": "string"},
+-          "category": {"type": "string", "enum": ["skill", "reference", "template", "schema", "script", "doc", "archive", "discard"]},
+-          "rationale": {"type": "string"}
++          "heading": {
++            "type": "string",
++            "description": "section の見出しテキスト"
++          },
++          "classification": {
++            "type": "string",
++            "enum": ["always-on", "ref", "run", "wrap", "assign", "delegate", "hook", "docs"],
++            "description": "doc/20 Step 1 の 8 区分。classification-rules.md 準拠"
++          },
++          "rationale": {
++            "type": "string",
++            "description": "分類根拠 (1 行以内。後段 evaluator が judge 可能)"
++          },
++          "suggested_skill_name": {
++            "type": ["string", "null"],
++            "description": "移行先 Skill 名候補 (ref-*/run-*/wrap-*/assign-*/delegate-*)。always-on / docs は null"
++          }
+         }
+       }
+     },
+-    "abstraction_findings": {
+-      "type": "array",
+-      "items": {"type": "object"}
++    "summary": {
++      "type": "object",
++      "required": ["ref_candidates", "run_candidates", "hook_candidates", "kept_in_claude_md", "total_sections"],
++      "additionalProperties": false,
++      "properties": {
++        "ref_candidates": {"type": "integer", "minimum": 0},
++        "run_candidates": {"type": "integer", "minimum": 0},
++        "hook_candidates": {"type": "integer", "minimum": 0},
++        "kept_in_claude_md": {
++          "type": "integer",
++          "minimum": 0,
++          "description": "always-on 分類数。CLAUDE.md に残す section 数 (0 だと警告)"
++        },
++        "total_sections": {"type": "integer", "minimum": 0}
++      }
+     }
+   }
+ }
+diff --git a/plugins/skill-creator/skills/run-migrate-audit/workflow-manifest.json b/plugins/skill-creator/skills/run-migrate-audit/workflow-manifest.json
+index 8800c00..ce980cc 100644
+--- a/plugins/skill-creator/skills/run-migrate-audit/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-migrate-audit/workflow-manifest.json
+@@ -36,7 +36,7 @@
+       "title": "audit report 生成",
+       "dependsOn": ["abstract"],
+       "resourceIds": [],
+-      "output_artifact": "eval-log/migrate-audit-report.json"
++      "output_artifact": ".claude/handoff/migrate-audit-<session>.json"
+     }
+   ],
+   "fatal_exit_codes": [2, 3]
+diff --git a/plugins/skill-creator/skills/run-plugin-package-check/SKILL.md b/plugins/skill-creator/skills/run-plugin-package-check/SKILL.md
+index 2d323d5..a3944b2 100644
+--- a/plugins/skill-creator/skills/run-plugin-package-check/SKILL.md
++++ b/plugins/skill-creator/skills/run-plugin-package-check/SKILL.md
+@@ -123,7 +123,7 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
+    │     Skill(assign-plugin-package-evaluator, target_plugin=<name>, context=fork)
+    ▼
+ [Step 3] PKG-009 外部参照ゼロ
+-   │     ../../scripts/lint-external-refs.py --plugin <name>
++   │     ../../../skill-governance-lint/scripts/lint-external-refs.py --skills-dir plugins/<name>/skills --fail-on-external
+    ▼ (phase >= 1)
+ [Step 4] PKG-010 install smoke
+    │     scripts/smoke-plugin-install.sh
+@@ -138,7 +138,7 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
+    │     assign-plugin-package-evaluator (delegated, --check pkg-014)
+    ▼
+ [Step 8] PKG-015 rubric 違反率
+-   │     ../../scripts/lint-rubric-violation.py --plugin <name>
++   │     ../../../skill-governance-lint/scripts/lint-rubric-violation.py --log-dir eval-log/<name> --out eval-log/<name>/pkg-015/rubric-violation.json
+    ▼
+ [Step 9] findings 集約 + observable 配線
+    │     scripts/aggregate-pkg-findings.py
+diff --git a/plugins/skill-creator/skills/run-plugin-package-check/prompts/R1-orchestrate.md b/plugins/skill-creator/skills/run-plugin-package-check/prompts/R1-orchestrate.md
+index 868b466..101833f 100644
+--- a/plugins/skill-creator/skills/run-plugin-package-check/prompts/R1-orchestrate.md
++++ b/plugins/skill-creator/skills/run-plugin-package-check/prompts/R1-orchestrate.md
+@@ -84,7 +84,7 @@
+ - `scripts/smoke-plugin-install.sh` (PKG-010)、`smoke-plugin-uninstall.sh` (PKG-011)、`smoke-plugin-upgrade.sh` (PKG-012)
+ - `scripts/validate-plugin-permissions.py` (PKG-013a〜d)
+ - `scripts/aggregate-pkg-findings.py` (Step 9 集約 + observable emit)
+-- 外部 lint: `../../scripts/lint-external-refs.py` (PKG-009)、`../../scripts/lint-rubric-violation.py` (PKG-015)
++- 外部 lint: `../../../skill-governance-lint/scripts/lint-external-refs.py` (PKG-009)、`../../../skill-governance-lint/scripts/lint-rubric-violation.py` (PKG-015)
+ - delegate: `Skill(assign-plugin-package-evaluator, context=fork)` (PKG-002〜008/014)
+ 
+ ## Layer 4: 共通ポリシー層
+diff --git a/plugins/skill-creator/skills/run-plugin-package-check/references/resource-map.yaml b/plugins/skill-creator/skills/run-plugin-package-check/references/resource-map.yaml
+index 72e7069..cbbb38f 100644
+--- a/plugins/skill-creator/skills/run-plugin-package-check/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/run-plugin-package-check/references/resource-map.yaml
+@@ -26,8 +26,8 @@ delegate_skills:
+   pkg_014: assign-plugin-package-evaluator
+ 
+ external_scripts:
+-  pkg_009: ../../scripts/lint-external-refs.py
+-  pkg_015: ../../scripts/lint-rubric-violation.py
++  pkg_009: ../../../skill-governance-lint/scripts/lint-external-refs.py
++  pkg_015: ../../../skill-governance-lint/scripts/lint-rubric-violation.py
+ 
+ reference_skills:
+   - ref-pkg-contract
+diff --git a/plugins/skill-creator/skills/run-plugin-package-check/workflow-manifest.json b/plugins/skill-creator/skills/run-plugin-package-check/workflow-manifest.json
+index 448f3d3..0987dfb 100644
+--- a/plugins/skill-creator/skills/run-plugin-package-check/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-plugin-package-check/workflow-manifest.json
+@@ -40,8 +40,8 @@
+       "id": "pkg-009",
+       "step": 3,
+       "phase_gate": 0,
+-      "command": "../../scripts/lint-external-refs.py",
+-      "args": ["--plugin", "${plugin}"],
++      "command": "../../../skill-governance-lint/scripts/lint-external-refs.py",
++      "args": ["--skills-dir", "plugins/${plugin}/skills", "--fail-on-external", "--json"],
+       "output": "eval-log/${plugin}/pkg-009/${date}-${run}.json",
+       "failure_action": "record_and_continue"
+     },
+@@ -99,8 +99,8 @@
+       "id": "pkg-015",
+       "step": 8,
+       "phase_gate": 2,
+-      "command": "../../scripts/lint-rubric-violation.py",
+-      "args": ["--plugin", "${plugin}"],
++      "command": "../../../skill-governance-lint/scripts/lint-rubric-violation.py",
++      "args": ["--log-dir", "eval-log/${plugin}", "--out", "eval-log/${plugin}/pkg-015/${date}-${run}.json"],
+       "output": "eval-log/${plugin}/pkg-015/${date}-${run}.json",
+       "failure_action": "record_and_continue"
+     },
+diff --git a/plugins/skill-creator/skills/run-skill-create/SKILL.md b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+index bc548e7..9fc0ec8 100644
+--- a/plugins/skill-creator/skills/run-skill-create/SKILL.md
++++ b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+@@ -59,6 +59,8 @@ audit-trigger: quarterly
+ 
+ **完了条件**: P0 lint pass + evaluator JSON pass (`--fast` 低リスク ref/wrap は `evaluator: N/A` 理由必須) + (solo_operator_mode 下) LLM-reviewer pass。
+ 
++**禁則**: ゲート前で必ず止まりユーザー承認なしに次フェーズへ進まない。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。evaluator/governance reviewer は同一 context 評価禁止 (必ず context:fork)。詳細は `## Key Rules`。
++
+ ### 起動モード
+ 
+ - **引数なし**: Step 1 (run-skill-elicit) が起動、対話で topic を確定。フィールド意味は `schemas/skill-brief.schema.json` (詳細は `references/skill-brief-schema.json`)。
+@@ -119,7 +121,7 @@ audit-trigger: quarterly
+ - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み
+ - [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし
+ - [ ] 新規 or >30 行変更時、`run-elegant-review` (context:fork) で C1-C4 全 PASS。PASS 時 `eval-log/pattern-feedback.json` に pattern_ref_candidates/new_patterns/mass_production_risk を提案保存
+-- [ ] governance 承認済み: `references/governance-params.json` の 4 条件 (solo=true/安定版凍結/newly_failing=0/LLM-reviewer pass) 全充足で自動、不充足なら `run-skill-rubric-governance` 経由 (`prompts/R3-governance-decide.md` R3)。Gate 4 承認済み
++- [ ] governance 承認済み: 4 条件 (solo=true/安定版凍結/newly_failing=0/LLM-reviewer pass) を `workflow-manifest.json` の `phases[id=governance].auto_approve_conditions` で機械評価し、全充足で自動承認。条件値の正本は repo-root `references/governance-params.json` (27章§11 パラメータ正本、gitignore。未配備なら `references/governance-params.json.example` から provision。不在時は graceful degrade=手動承認フロー)。不充足なら `run-skill-rubric-governance` 経由 (`prompts/R3-governance-decide.md` R3)。Gate 4 承認済み
+ - [ ] 各ゲート通過時に `eval-log/handoff-<step>.json` が `schemas/handoff.schema.json` 準拠で保存されている
+ - [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/evaluator_result/elegant_review/governance/open_questions) が日本語本文で提示されている (パラメーター名のみ英語)
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-create/prompts/R3-governance-decide.md b/plugins/skill-creator/skills/run-skill-create/prompts/R3-governance-decide.md
+index 0e4ae17..da393f8 100644
+--- a/plugins/skill-creator/skills/run-skill-create/prompts/R3-governance-decide.md
++++ b/plugins/skill-creator/skills/run-skill-create/prompts/R3-governance-decide.md
+@@ -57,7 +57,7 @@
+ |---|---|---|---|
+ | phase | string | yes | governance |
+ | manifest | path | yes | workflow-manifest.json |
+-| governance_params | path | yes | references/governance-params.json |
++| governance_params | path | yes | repo-root `references/governance-params.json` (27章§11 正本, gitignore; 未配備時は `references/governance-params.json.example` から provision) |
+ | findings | path | yes | eval-log/findings.json |
+ | evaluator_result | path | yes | eval-log/docs/<NN>-<timestamp>.json |
+ 
+@@ -73,7 +73,7 @@
+ 
+ | id | path | when_to_read |
+ |---|---|---|
+-| params | references/governance-params.json | solo_operator_mode 確認時 |
++| params | repo-root `references/governance-params.json` (27章§11 正本, gitignore; `.json.example` から provision; 不在時 graceful degrade=手動承認) | solo_operator_mode 確認時 |
+ | findings | eval-log/findings.json | verdicts 確認時 |
+ | evaluator | eval-log/docs/<NN>-<timestamp>.json | newly_failing 確認時 |
+ 
+@@ -86,7 +86,7 @@
+ ### 4.1 失敗時挙動
+ 
+ - 条件評価が判定不能 → 手動承認に回す (safe-fail)
+-- governance_params 不在 → exit 3 (structural error)
++- governance_params 不在 (gitignore で未 provision) → graceful degrade=手動承認フロー (safe-fail)。`references/governance-params.json.example` から provision 可能
+ 
+ ### 4.2 観測 / ロギング
+ 
+@@ -125,7 +125,7 @@
+ 2. 解消手順を立案 (params Read / 4 条件評価 / Skill(run-skill-rubric-governance) 起動 / handoff Write のいずれか)
+ 3. 実行し handoff JSON を更新
+ 4. schema 検証で自己評価、全項目充足まで反復
+-5. 評価不能は手動承認 (safe-fail)、governance_params 不在は exit 3
++5. 評価不能は手動承認 (safe-fail)、governance_params 不在も graceful degrade=手動承認 (safe-fail)
+ 
+ ## Layer 6: オーケストレーション層
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json b/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
+index 42f7a48..9aacb38 100644
+--- a/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
++++ b/plugins/skill-creator/skills/run-skill-create/schemas/skill-brief.schema.json
+@@ -81,6 +81,14 @@
+     "consult_build_knowledge": {
+       "type": "boolean",
+       "description": "Loop B: 本スキル作成時に skill-creator 自身の蓄積知見 (plugins/skill-creator/knowledge/ + lessons-learned 索引) を検索して活用するか。既定 true。"
++    },
++    "with_subagent_hint": {
++      "type": "boolean",
++      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Subagent / Agent Team を含むとき true。resolve-brief-to-category.py が agent-teams category を強制し、run-build-skill に --with-subagent を推奨する。needs_independent_context と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_subagent とは別物 (こちらは brief 用 boolean)。"
++    },
++    "with_hooks": {
++      "type": "boolean",
++      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Hook を含むとき true。resolve-brief-to-category.py が subagent-hook-integration category を強制し、run-build-skill に --with-hooks を推奨する。needs_lifecycle_enforcement と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_hooks とは別物 (こちらは brief 用 boolean)。"
+     }
+   },
+   "allOf": [
+diff --git a/plugins/skill-creator/skills/run-skill-elicit/SKILL.md b/plugins/skill-creator/skills/run-skill-elicit/SKILL.md
+index ccc0628..9426ef7 100644
+--- a/plugins/skill-creator/skills/run-skill-elicit/SKILL.md
++++ b/plugins/skill-creator/skills/run-skill-elicit/SKILL.md
+@@ -94,7 +94,7 @@ build へ渡る brief の品質が後工程全体の質を決める。曖昧さ
+ - [ ] prefix は 5 分岐 (ref/run/wrap/assign/delegate) を全網羅した決定木で確定 (wrap/delegate の聞き忘れなし)。`prefix=wrap`→base_skill、`prefix=delegate`→delegate_agent、`hierarchy_level=L2`→rubric_refs (空は禁止) も埋まっている
+ - [ ] trigger_conditions が動詞ベース 2〜3 個に整理されている (4 個以上は不可)
+ - [ ] 実行系 (prefix≠ref) の場合 goal / purpose_background / checklist が brief に埋め込まれている (判定不能表現・手順そのものは項目化しない)。ref は skip
+-- [ ] placement_candidates と決定論的 hint (Subagent→needs_independent_context/with_subagent_hint、Agent Team→agent_team_required、Hook→with_hooks/needs_lifecycle_enforcement) が設定されている
++- [ ] placement_candidates と決定論的 hint (Subagent/Agent Team→needs_independent_context/with_subagent_hint、Hook→needs_lifecycle_enforcement/with_hooks。いずれも正本スキーマ定義済み boolean) が設定されている
+ - [ ] cross_platform / os_preamble_required が確認済み
+ - [ ] ナレッジループ要否を判定済み (ref-knowledge-loop の5条件に1つ以上該当→`knowledge_loop.pattern` 設定、非該当→null)。`consult_build_knowledge` (既定true) の場合は蓄積知見を参照し設計へ反映している
+ - [ ] 対話は 5 問以内に収め、超過・判断分岐する細部は open_questions (OPEN_QUESTION(escalate) ラベル) に記録されている
+@@ -221,11 +221,13 @@ prefix=run の場合は原則 `role_suffix=null` とし、生成者・評価者
+ 
+ | `placement_candidates` に含まれる値 | brief に追加するフィールド | build 側へ渡る効果 |
+ |---|---|---|
+-| `Subagent` | `needs_independent_context: true`, `with_subagent_hint: true` | run-build-skill に `--with-subagent` フラグを推奨 |
+-| `Agent Team` | `needs_independent_context: true`, `with_subagent_hint: true`, `agent_team_required: true` | run-build-skill が 17 章 (Agent Teams) を必ず読む。`TaskCompleted` hook 配線も build skeleton に含める |
+-| `Hook` | `with_hooks: true`, `needs_lifecycle_enforcement: true` | run-build-skill に `--with-hooks` フラグを推奨。10 章を category=subagent-hook-integration で必ず読む |
++| `Subagent` | `needs_independent_context: true`, `with_subagent_hint: true` | run-build-skill に `--with-subagent` フラグを推奨。`agent-teams` category を必ず読む |
++| `Agent Team` | `needs_independent_context: true`, `with_subagent_hint: true` | 上記に加え `placement_candidates` に `Agent Team` を残す。run-build-skill が 17 章 (Agent Teams) を必ず読み、`TaskCompleted` hook 配線も build skeleton に含める |
++| `Hook` | `needs_lifecycle_enforcement: true`, `with_hooks: true` | run-build-skill に `--with-hooks` フラグを推奨。10 章を category=subagent-hook-integration で必ず読む |
+ 
+-これにより `scripts/resolve-brief-to-category.py` が決定論的に 17 章 / 10 章を読むべき category として返し、LLM 主観依存を排除する。
++これら 3 フィールド (`needs_independent_context` / `needs_lifecycle_enforcement` / `with_subagent_hint` / `with_hooks`) は全て正本スキーマ `../run-skill-create/schemas/skill-brief.schema.json` に boolean として定義済みであり、`additionalProperties:false` 下でも valid。`scripts/resolve-brief-to-category.py` の `CONDITIONAL_CATEGORIES` がこれらを読んで決定論的に 17 章 / 10 章を読むべき category として返し、LLM 主観依存を排除する。
++
++> **注**: brief の `with_subagent_hint` / `with_hooks` は boolean の **build フラグ推奨シグナル** であり、`run-build-skill/schemas/build-flags.schema.json` の同名 object 型フラグ (`{enabled, ...}`) とは別レイヤーの別物。Agent Team は専用 boolean を設けず `placement_candidates: ["Agent Team", ...]` で表現する (resolve は Subagent/Agent Team いずれも `agent-teams` category へ同一に解決するため、片肺の死にフィールドを作らない)。
+ 
+ #### クロスプラットフォーム確認 (11章 / 14章)
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-elicit/prompts/R1-elicit.md b/plugins/skill-creator/skills/run-skill-elicit/prompts/R1-elicit.md
+index 65923e4..7091ce3 100644
+--- a/plugins/skill-creator/skills/run-skill-elicit/prompts/R1-elicit.md
++++ b/plugins/skill-creator/skills/run-skill-elicit/prompts/R1-elicit.md
+@@ -1,8 +1,8 @@
+ # Prompt: R1-elicit
+ 
+ > 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の seven-layer-format.md を正本とする。
+-> 出力フィールドの正本は `../run-skill-create/schemas/skill-brief.schema.json` (13 必須フィールド)。
+-> 聞き取りフロー (5 prefix / hierarchy / boundary / goal-checklist 抽出) の正本は SKILL.md ## Steps。
++> 出力フィールドの正本は `../run-skill-create/schemas/skill-brief.schema.json` (13 必須フィールド + ゴールシーク用 goal/purpose_background/checklist 等)。
++> 聞き取りフロー (5 prefix / hierarchy / boundary / goal-checklist 抽出) の正本は SKILL.md `## ゴールシーク実行` の局面カタログ。
+ > 本プロンプトは Wiegers 流要件抽出の推論リファレンスであり契約 (schema) を再定義しない。
+ 
+ ## メタ
+@@ -22,12 +22,12 @@
+ - 曖昧な skill 要望を `run-build-skill` が受理できる brief.json に最小対話で構造化する。
+ 
+ ### 1.2 背景 / 期待成果 / 成功基準
+-- 背景: 自然言語要望は曖昧。5 項目テンプレに沿って最小対話で構造化する必要がある。
++- 背景: 自然言語要望は曖昧。schema 正本フィールドを最小対話で構造化する必要がある。
+ - 期待成果: 正本スキーマ準拠の `skill-brief.json` (フィールド集合は schema 正本に従う)。
+-- 成功基準: 対話 5 ターン以内で schema PASS + `trigger_phrases >= 2 件`。
++- 成功基準: 対話 5 ターン以内で schema PASS + `trigger_conditions 2〜3 件`。
+ 
+ ### 1.3 スコープ
+-- 含む: 対話で 5 項目を埋める / schema 検証 / diff 提示
++- 含む: 対話で必須フィールドを埋める / schema 検証 / diff 提示
+ - 含まない: Skill 本体生成 / 既存 brief の破壊的上書き
+ 
+ ## Layer 2: ドメイン層
+@@ -35,14 +35,14 @@
+ ### 2.1 用語
+ | 用語 | 定義 |
+ |---|---|
+-| brief | Skill 化の最小設計書 (5 項目 JSON) |
+-| trigger_phrases | Skill 発動を意図するユーザ発話例 (最低 2 件) |
+-| 5 項目 | purpose / trigger / inputs / outputs / constraints |
++| brief | Skill 化の最小設計書 (schema 正本フィールド準拠の JSON) |
++| trigger_conditions | Skill 発動を意図する動詞ベース条件 (2〜3 件) |
++| 必須フィールド | skill_name / prefix / hierarchy_level / trigger_conditions / output_contract / boundary ほか schema required |
+ 
+ ### 2.2 ビジネスルール
+ - CONST_001: 対話は最小回数 (目安 5 ターン以内)。
+ - CONST_002: 既存 brief があれば上書きせず diff を提示。
+-- CONST_003: `trigger_phrases` は最低 2 件。
++- CONST_003: `trigger_conditions` は 2〜3 件。
+ - OUTPUT_CONST: `eval-log/skill-brief.json` を正本スキーマ準拠で書く。
+ 
+ ## Layer 3: インフラ層
+@@ -67,18 +67,18 @@
+ - Karl E. Wiegers (要件抽出の体系化, 最小対話での要件構造化に強み)
+ 
+ ### 5.2 知識ベース
+-- Software Requirements (Wiegers & Beatty): 要件抽出テンプレを 5 項目にマップ
++- Software Requirements (Wiegers & Beatty): 要件抽出テンプレを schema 正本フィールドへマップ
+ - Exploring Requirements (Gause & Weinberg): 曖昧質問の絞り込み
+-- User Story Mapping (Patton): trigger_phrases を利用者シナリオから抽出
++- User Story Mapping (Patton): trigger_conditions を利用者シナリオから抽出
+ 
+ ### 5.3 ゴール定義
+ - 目的: 曖昧な skill 要望を schema 準拠 brief.json に最小対話で構造化。
+ - 背景: run-build-skill が受理可能な構造化が要る。
+-- 達成ゴール: 正本スキーマ準拠 + `trigger_phrases >= 2` + 全必須項目に有意値の brief。
++- 達成ゴール: 正本スキーマ準拠 + `trigger_conditions 2〜3` + 全必須項目に有意値の brief。
+ 
+ ### 5.4 完了チェックリスト (停止条件)
+ - [ ] 正本スキーマ PASS (skill-brief.schema.json validator exit 0)
+-- [ ] `trigger_phrases >= 2` 件
++- [ ] `trigger_conditions 2〜3` 件
+ - [ ] 対話 5 ターン以内
+ - [ ] 既存 brief 衝突時は diff 提示と user 確認の記録あり
+ - [ ] 推測を事実として述べていない (inferred 値に `source=inferred` 明記)
+diff --git a/plugins/skill-creator/skills/run-skill-elicit/references/brief-template.md b/plugins/skill-creator/skills/run-skill-elicit/references/brief-template.md
+index 7566664..d5549d6 100644
+--- a/plugins/skill-creator/skills/run-skill-elicit/references/brief-template.md
++++ b/plugins/skill-creator/skills/run-skill-elicit/references/brief-template.md
+@@ -6,10 +6,10 @@ run-skill-elicit の出力 `eval-log/skill-brief.json` の**正本スキーマ**
+ 
+ > **SSOT**: フィールド名・型・必須条件・説明はすべて上記スキーマの `properties[].description` を正本とする。本ファイルにフィールド定義を再掲しない（旧 5 項目テンプレート `topic/purpose/trigger_phrases/io_contract` は廃止。13 フィールド版へ一本化済み）。
+ >
+-> 出力例・各 Step の聞き取り順は SKILL.md の `## Steps`（Step 1〜5）が正本。
++> 聞き取り順・出力例は SKILL.md の `## ゴールシーク実行`（ゴール / 完了チェックリスト / 局面カタログ）が正本。固定の Step 番号はなく、未達フィールドに応じて局面カタログを都度選択する。
+ 
+ ## 使い方
+ 
+ 1. `run-skill-elicit` を呼ぶ（`topic` 任意）。
+-2. SKILL.md `## Steps` に沿って対話し、`eval-log/skill-brief.json` を生成する。
++2. SKILL.md `## ゴールシーク実行` の局面カタログに沿って対話し、`eval-log/skill-brief.json` を生成する。
+ 3. `run-build-skill` / `run-skill-create` に渡す。
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/SKILL.md b/plugins/skill-creator/skills/run-skill-update-notifier/SKILL.md
+index bf3be1f..d6c71a3 100644
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/SKILL.md
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/SKILL.md
+@@ -48,8 +48,8 @@ manifest: workflow-manifest.json
+ 
+ | Hook Event | Script | 役割 | exit |
+ |---|---|---|---|
+-| UserPromptExpansion | `scripts/hook-cache-refresh.py` | 24h TTL で cache 再 scan (バックグラウンド準同期) | 0固定 |
+-| PostToolUse | `scripts/hook-notify-skill-end.py` | `tool_name == "Skill"` のとき末尾 1 行付記 | 0固定 |
++| UserPromptSubmit (matcher=`.*`) | `scripts/hook-cache-refresh.py` | 24h TTL で cache 再 scan (バックグラウンド準同期) | 0固定 |
++| PostToolUse (matcher=`Skill`) | `scripts/hook-notify-skill-end.py` | `tool_name == "Skill"` のとき末尾 1 行付記 | 0固定 |
+ 
+ settings.json マージ案は `references/hook-wiring.md` 参照。自動 merge はしない (人間承認)。
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/prompts/R1-notify.md b/plugins/skill-creator/skills/run-skill-update-notifier/prompts/R1-notify.md
+index 99e11b2..b5a0142 100644
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/prompts/R1-notify.md
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/prompts/R1-notify.md
+@@ -1,6 +1,6 @@
+ # Prompt: R1-notify
+ 
+-> 7 層プロンプトの Markdown 表現。Skill 実行末尾に installed と latest を比較し差分があれば stderr に 1 行のみ通知する。
++> 7 層プロンプトの Markdown 表現。Skill 実行末尾に installed と latest を比較し差分があれば stdout に 1 行のみ通知する (会話末尾付記)。
+ 
+ ## メタ
+ 
+@@ -11,13 +11,13 @@
+ | responsibility | R1 |
+ | layers_covered | [L2, L4, L5, L6] |
+ | inputs | mode (enum: auto\|check-only\|refresh, default: auto) |
+-| outputs | stderr 1 行 or 空 (schemas/output.schema.json) |
++| outputs | stdout 1 行 or 空 (schemas/output.schema.json) |
+ 
+ ## Layer 1: 基本定義層
+ 
+-- 最上位目的: installed と latest を比較し差分があれば stderr に 1 行のみ通知。
++- 最上位目的: installed と latest を比較し差分があれば stdout に 1 行のみ通知 (会話末尾付記)。
+ - 背景: 頻繁な通知は UX を損なう。差分時のみ静かに 1 行で知らせる契約。
+-- 期待成果: 差分時のみ stderr 1 行 + cache 更新 (必要時)。
++- 期待成果: 差分時のみ stdout 1 行 + cache 更新 (必要時)。
+ - 成功基準: `up-to-date / offline / unknown` は無出力、差分時のみ 1 行で再現可能。
+ - スコープ
+   - 含む: cache 読込 / version 比較 / 1 行通知 / cache refresh
+@@ -37,7 +37,7 @@
+ - CONST_001: `plugin.json / marketplace.json / bundles.json` は読取専用。
+ - CONST_002: 通知は 1 行のみ。二重出力禁止。
+ - CONST_003: `up-to-date / offline / unknown` は無出力。
+-- OUTPUT_CONST: stdout ではなく stderr に 1 行のみ。`schemas/output.schema.json` 準拠。
++- OUTPUT_CONST: stderr ではなく stdout に 1 行のみ (会話末尾付記 = effect: conversation-output)。`schemas/output.schema.json` 準拠。
+ 
+ ## Layer 3: インフラ層
+ 
+@@ -49,7 +49,7 @@
+ ## Layer 4: 共通ポリシー層
+ 
+ - 信頼度閾値: 0.7 / 最大リトライ: 1 / 最大改善回数: 2
+-- 許可: Read (cache, plugin.json) / stderr 出力
++- 許可: Read (cache, plugin.json) / stdout 出力 (通知 1 行) / stderr 出力 (診断ログのみ)
+ - 禁止: `plugin.json / marketplace.json / bundles.json` 書換 / 二重通知
+ - 入力検証拒否: 不正 mode 値
+ - 事実確認: installed/latest の差分根拠を内部保持。unknown 時は通知しない。semver パースで検証。
+@@ -68,7 +68,7 @@
+ ### 5.3 ゴール定義
+ - 目的: 差分時のみ 1 行で通知し UX ノイズを抑える。
+ - 背景: 頻繁通知は alert fatigue を招く。silent-on-success を徹底。
+-- 達成ゴール: status 確定 + 差分時のみ stderr 1 行 + 必要時のみ cache 更新済み。
++- 達成ゴール: status 確定 + 差分時のみ stdout 1 行 (会話末尾付記) + 必要時のみ cache 更新済み。
+ 
+ ### 5.4 完了チェックリスト
+ - [ ] 出力は 0 行 or 1 行
+@@ -91,7 +91,7 @@
+ 
+ ### 5.7 インターフェース
+ - 入力: `mode` (auto|check-only|refresh のいずれか。範囲外拒否。欠損時 auto)
+-- 出力: `stderr_line` → user shell。形式: `"{{plugin}} {{installed}} -> {{latest}} (run: xl-skills update)"`。差分時のみ 1 行、silent モードは無出力。
++- 出力: `stdout_line` → 会話末尾付記。形式: `"(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"` (references/output-format.md 正本)。差分時のみ 1 行、silent モードは無出力。
+ 
+ ### 5.8 依存関係
+ - 前提: なし (hook として呼ばれる末尾実行)
+@@ -114,4 +114,4 @@
+ 
+ ## 出力指示
+ 
+-Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。出力は stderr 1 行 (差分時) または無出力 (それ以外)。前置き・後書き禁止。
++Layer 5 ゴール+完了チェックリストを唯一の停止条件とし、5.5 ループで動的に手順生成・実行・自己評価する。出力は stdout 1 行 (差分時・会話末尾付記) または無出力 (それ以外)。前置き・後書き禁止。
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/references/hook-wiring.md b/plugins/skill-creator/skills/run-skill-update-notifier/references/hook-wiring.md
+index 8874c04..67b3503 100644
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/references/hook-wiring.md
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/references/hook-wiring.md
+@@ -7,7 +7,7 @@
+ ```json
+ {
+   "hooks": {
+-    "UserPromptExpansion": [
++    "UserPromptSubmit": [
+       {
+         "matcher": ".*",
+         "hooks": [
+@@ -36,7 +36,7 @@
+ 
+ ## 設計判断
+ 
+-- `UserPromptExpansion` は **ブロッキングしない** (cache 鮮度確認のみ、24h TTL 以内なら即 return)
++- `UserPromptSubmit` は **ブロッキングしない** (cache 鮮度確認のみ、24h TTL 以内なら即 return)
+ - `PostToolUse` matcher は `"Skill"` 限定 (Bash/Read/Edit 等の末尾には通知しない)
+ - 既存 `hooks.PostToolUse` が他にある場合は配列に追記する (上書き禁止)
+ - 抑制したいユーザーは shell rc で `export XL_SKILLS_NOTIFY=off` を設定する
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/references/resource-map.yaml b/plugins/skill-creator/skills/run-skill-update-notifier/references/resource-map.yaml
+index da88e4c..760411b 100644
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/references/resource-map.yaml
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/references/resource-map.yaml
+@@ -1,5 +1,5 @@
+ resources:
+   - file: hook-wiring.md
+-    read_when: "Stop hook からの呼び出し配線を確認するとき"
++    read_when: "PostToolUse(Skill) / UserPromptSubmit hook からの呼び出し配線を確認するとき"
+   - file: output-format.md
+     read_when: "通知 1 行の書式を確認するとき"
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py
+index 1b65681..809382a 100755
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""UserPromptExpansion hook: stale 時のみ cache refresh。常に exit 0。"""
++"""UserPromptSubmit hook: stale 時のみ cache refresh。常に exit 0。"""
+ from __future__ import annotations
+ 
+ import subprocess
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
+index 0fcbfd9..1dfdb71 100755
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/scripts/notifier-check.py
+@@ -2,6 +2,7 @@
+ """Skill update notifier: changelog/version cache check.
+ 
+ 非破壊原則: plugin manifest / marketplace.json / bundles.json は読み取りのみ。
++出力チャネル: 通知本体は stdout 1 行 (会話末尾付記)。診断ログのみ stderr。
+ graceful degradation: 例外は握りつぶし stderr に短文を出すのみ。exit は常に 0。
+ """
+ from __future__ import annotations
+@@ -104,16 +105,30 @@ def cmd_refresh(args) -> int:
+     return 0
+ 
+ 
++def _vprefix(version: str) -> str:
++    """先頭 `v` を正規化 (既に付いていれば二重化しない)。"""
++    v = version.strip()
++    return v if v.lower().startswith("v") else f"v{v}"
++
++
+ def _format_line(installed: str | None, latest: str | None) -> str:
+-    # TODO(human): R2 notification-formatting
+-    # 仕様:
+-    #   - installed と latest が両方あり、かつ異なるときのみ通知文字列を返す
+-    #   - それ以外 (片方欠落 / 一致) は空文字列を返す
+-    #   - フォーマット規約は references/output-format.md 参照:
+-    #     "(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"
+-    #   - 先頭の `v` 接頭辞が installed/latest どちらかに既に付いている場合は二重 v 化しない
+-    #   - locale 切替や ANSI カラーは出さない (純テキスト)
+-    raise NotImplementedError("R2 notification-formatting is TODO(human)")
++    """R2 notification-formatting: 差分時のみ 1 行通知文字列を返す純関数。
++
++    仕様 (references/output-format.md 準拠):
++      - installed と latest が両方あり、かつ異なるときのみ通知文字列を返す
++      - それ以外 (片方欠落 / 一致) は空文字列を返す
++      - 書式: "(installed: vX.Y.Z / latest: vA.B.C — /skill-update で更新)"
++      - `v` 接頭辞が既に付いている場合は二重 v 化しない
++      - locale 切替や ANSI カラーは出さない (純テキスト・日本語固定)
++    """
++    if not installed or not latest:
++        return ""
++    if installed.strip() == latest.strip():
++        return ""
++    return (
++        f"(installed: {_vprefix(installed)} / "
++        f"latest: {_vprefix(latest)} — /skill-update で更新)"
++    )
+ 
+ 
+ def cmd_notify(args) -> int:
+@@ -127,13 +142,12 @@ def cmd_notify(args) -> int:
+         return 0
+     try:
+         line = _format_line(entry.get("installed"), entry.get("latest"))
+-    except NotImplementedError:
+-        # R2 未実装時は no-op (Skill 全体を壊さない)
+-        return 0
+     except Exception as exc:
++        # R3 graceful-degradation: 整形失敗時も Skill 全体を壊さない
+         print(f"[notifier] format skipped: {exc}", file=sys.stderr)
+         return 0
+     if line:
++        # 出力チャネル = stdout (会話末尾付記。PostToolUse hook が拾う)
+         print(line)
+     return 0
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-update-notifier/workflow-manifest.json b/plugins/skill-creator/skills/run-skill-update-notifier/workflow-manifest.json
+index 2b04cc9..65e2f23 100644
+--- a/plugins/skill-creator/skills/run-skill-update-notifier/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-skill-update-notifier/workflow-manifest.json
+@@ -3,7 +3,7 @@
+   "schemaVersion": 1,
+   "workflowId": "run-skill-update-notifier",
+   "skill": "run-skill-update-notifier",
+-  "description": "Skill 実行末尾に最新版有無を 1 行通知する。Stop hook 経由で起動される副作用最小ワークフロー。",
++  "description": "Skill 実行末尾に最新版有無を 1 行通知する。PostToolUse(matcher=Skill) hook 経由で起動され、cache 鮮度確認は UserPromptSubmit hook が担う副作用最小ワークフロー。",
+   "phases": [
+     {
+       "id": "load-cache",
+diff --git a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+index 0b4394b..8510da5 100644
+--- a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
++++ b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+@@ -5,5 +5,5 @@
+   "page_id": "",
+   "url": "",
+   "mode": "",
+-  "logged_at": "2026-06-19T17:15:31+0900"
++  "logged_at": "2026-06-24T17:13:50+0900"
+ }
+diff --git a/tests/test_company_master.py b/tests/test_company_master.py
+index 91cb853..7bb0edd 100644
+--- a/tests/test_company_master.py
++++ b/tests/test_company_master.py
+@@ -1249,6 +1249,7 @@ def _patch_postal_cache_offline(monkeypatch, tmp_path):
+     monkeypatch.setattr(company_master.notion_config, "get_postal_proxy_url", lambda: None)
+     monkeypatch.setattr(company_master.notion_config, "has_japanpost_credentials", lambda: True)
+     monkeypatch.setattr(company_master.notion_config, "get_japanpost_egress_ip", lambda *a, **k: "203.0.113.10")
++    monkeypatch.setattr(company_master.notion_config, "get_japanpost_base_url", lambda *a, **k: None)
+     monkeypatch.setattr(postal_api, "detect_egress_ip", lambda *a, **k: "203.0.113.10")
+ 
+ 
+@@ -1389,18 +1390,18 @@ def test_hook_guard_allows_unrelated_and_safe_commands():
+ 
+ 
+ def test_hook_guard_blocks_japanpost_secret_and_proxy_token_w_flag():
+-    """japanpost-da-api の secret_key / proxy_token の平文出力 (-w) は block (exit 2)。"""
++    """japanpost-da-api.xl-skills の secret_key / proxy_token の平文出力 (-w) は block (exit 2)。"""
+     for account in ("secret_key", "proxy_token"):
+         res = _run_hook(_hook_payload(
+-            f"security find-generic-password -s japanpost-da-api -a {account} -w"
++            f"security find-generic-password -s japanpost-da-api.xl-skills -a {account} -w"
+         ))
+         assert res.returncode == 2, f"japanpost {account} -w がバイパスされた\n{res.stderr}"
+ 
+ 
+ def test_hook_guard_allows_japanpost_add_generic_password():
+-    """japanpost-da-api への add-generic-password (登録) はセットアップ用途で許容 (exit 0)。"""
++    """japanpost-da-api.xl-skills への add-generic-password (登録) はセットアップ用途で許容 (exit 0)。"""
+     res = _run_hook(_hook_payload(
+-        "security add-generic-password -s japanpost-da-api -a secret_key -w 'SECRETVALUE'"
++        "security add-generic-password -s japanpost-da-api.xl-skills -a secret_key -w 'SECRETVALUE'"
+     ))
+     assert res.returncode == 0, f"鍵登録が誤遮断された\n{res.stderr}"
+ 
+@@ -1679,6 +1680,7 @@ def test_doctor_japanpost_warns_when_credentials_missing(monkeypatch):
+     monkeypatch.setattr(company_master.notion_config, "get_postal_proxy_url", lambda: None)
+     monkeypatch.setattr(company_master.notion_config, "has_japanpost_credentials", lambda: False)
+     monkeypatch.setattr(company_master.notion_config, "get_japanpost_egress_ip", lambda *a, **k: None)
++    monkeypatch.setattr(company_master.notion_config, "get_japanpost_base_url", lambda *a, **k: None)
+     monkeypatch.setattr(postal_api, "detect_egress_ip", lambda *a, **k: None)
+     items = company_master._doctor_check_japanpost(probe=False)
+     statuses = [it["status"] for it in items]
+@@ -1688,25 +1690,47 @@ def test_doctor_japanpost_warns_when_credentials_missing(monkeypatch):
+ 
+ 
+ def test_doctor_japanpost_ok_when_credentials_present(monkeypatch):
+-    """鍵設定済み + 送信元IP解決可 (env or 自動検出) + probe 無し → OK 2件 + 実疎通は SKIP。"""
++    """鍵設定済み + 送信元IP解決可 (env or 自動検出) + 本番接続 + probe 無し →
++    OK 4件 (モード/接続先/Keychain/送信元IP) + 実疎通は SKIP。"""
+     monkeypatch.setattr(company_master.notion_config, "get_postal_proxy_url", lambda: None)
+     monkeypatch.setattr(company_master.notion_config, "has_japanpost_credentials", lambda: True)
+     monkeypatch.setattr(company_master.notion_config, "get_japanpost_egress_ip", lambda *a, **k: None)
++    monkeypatch.setattr(company_master.notion_config, "get_japanpost_base_url", lambda *a, **k: None)
+     monkeypatch.setattr(postal_api, "detect_egress_ip", lambda *a, **k: "203.0.113.10")
+     items = company_master._doctor_check_japanpost(probe=False)
+     statuses = [it["status"] for it in items]
+-    assert statuses.count("OK") == 2
++    assert statuses.count("OK") == 4
++    # proxy_url 未設定なので「郵便番号取得モード: BYO 直結」をプロキシ分岐と対称に明示する。
++    assert any(it["label"] == "郵便番号取得モード" and "BYO 直結" in it["detail"] for it in items)
++    # base_url 上書き無し → 接続先は本番ホストを明示する。
++    assert any(it["label"] == "接続先" and "api.da.pf.japanpost.jp" in it["detail"] for it in items)
+     # 送信元IP 行は「登録してください」案内に検出IPを載せる (BYO ガイド)。
+     assert any(it["label"] == "送信元IP" and "203.0.113.10" in it["detail"] for it in items)
+     assert any(it["status"] == "SKIP" and "実疎通" in it["label"] for it in items)
+     assert "FAIL" not in statuses and "WARN" not in statuses
+ 
+ 
++def test_doctor_japanpost_warns_on_stub_base_url(monkeypatch):
++    """base_url が stub/テストホストを指す → 接続先 WARN (本番移行を促す。誤って本番扱いしない)。"""
++    monkeypatch.setattr(company_master.notion_config, "get_postal_proxy_url", lambda: None)
++    monkeypatch.setattr(company_master.notion_config, "has_japanpost_credentials", lambda: True)
++    monkeypatch.setattr(company_master.notion_config, "get_japanpost_egress_ip", lambda *a, **k: "203.0.113.10")
++    monkeypatch.setattr(
++        company_master.notion_config, "get_japanpost_base_url",
++        lambda *a, **k: "https://stub-qz73x.da.pf.japanpost.jp")
++    monkeypatch.setattr(postal_api, "detect_egress_ip", lambda *a, **k: "203.0.113.10")
++    items = company_master._doctor_check_japanpost(probe=False)
++    conn = next((it for it in items if it["label"] == "接続先"), None)
++    assert conn is not None and conn["status"] == "WARN"
++    assert "stub-qz73x" in conn["detail"] and "api.da.pf.japanpost.jp" in (conn["next_action"] or "")
++
++
+ def test_doctor_japanpost_warns_on_egress_drift(monkeypatch):
+     """pin のIPと実際の送信元IPがズレ → WARN (認証失敗の予兆として明示)。"""
+     monkeypatch.setattr(company_master.notion_config, "get_postal_proxy_url", lambda: None)
+     monkeypatch.setattr(company_master.notion_config, "has_japanpost_credentials", lambda: True)
+     monkeypatch.setattr(company_master.notion_config, "get_japanpost_egress_ip", lambda *a, **k: "198.51.100.1")
++    monkeypatch.setattr(company_master.notion_config, "get_japanpost_base_url", lambda *a, **k: None)
+     monkeypatch.setattr(postal_api, "detect_egress_ip", lambda *a, **k: "203.0.113.10")
+     items = company_master._doctor_check_japanpost(probe=False)
+     drift = next((it for it in items if it["label"] == "送信元IP"), None)

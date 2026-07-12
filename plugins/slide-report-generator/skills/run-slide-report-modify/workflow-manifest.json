@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-slide-report-modify",
+  "skill": "run-slide-report-modify",
+  "description": "既存成果物 (slide deck / report) の output_mode を保ったまま指定箇所だけを局所修正する。R1 で修正対象と output_mode を特定し validate-output-mode.py で値域整合を検証、R2 で slide-report-modifier を name 起動し mode 分岐で規範 (slide=modification-rules.md / report=report-modification-rules.md) に従い局所差分修正 (report は render-report.js で report.html を再レンダ)、R3 で mode 別に再評価する (slide=verify-slides.js ＋意匠/印刷影響時 evaluate-deck.js / validate-print.js で視覚崩れ 0、report=render-report.js 再レンダ整合 ＋ validate-report-visual.py ＋ mode-aware deck-evaluator)。",
+  "phases": [
+    {
+      "id": "R1-identify-target",
+      "step": 1,
+      "title": "修正対象成果物のパスと output_mode を特定し修正指示を mode 別 6 区分に分類、validate-output-mode.py で mode/reportType の値域整合を送信前検証",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "validate-output-mode",
+      "resourceIds": [
+        "ref-modification-rules",
+        "ref-report-modification-rules",
+        "schema-structure",
+        "schema-report-structure",
+        "script-validate-output-mode"
+      ],
+      "fatal_exit_codes": [
+        2
+      ]
+    },
+    {
+      "id": "R2-local-modify",
+      "step": 2,
+      "title": "slide-report-modifier を name 起動 (isolation: fork) し mode 分岐で規範に従い指定箇所のみを局所差分修正。slide=modification-rules.md CONST_001-012 で index.html⇔structure.* 同期、report=report-modification-rules.md RCONST_001-012 で report-structure.json を正に編集し render-report.js で report.html を再レンダ・sidecar 履歴追記",
+      "gate": "C2",
+      "dependsOn": [
+        "R1-identify-target"
+      ],
+      "entryHook": null,
+      "exitHook": "sync-checklist",
+      "resourceIds": [
+        "ref-modification-rules",
+        "ref-report-modification-rules",
+        "schema-structure",
+        "schema-report-structure",
+        "script-render-report"
+      ],
+      "fatal_exit_codes": [
+        2
+      ]
+    },
+    {
+      "id": "R3-re-evaluate",
+      "step": 3,
+      "title": "mode 別に修正後を再評価し修正レポートを生成、未達なら R2 へ差し戻し。slide=verify-slides.js系、report=render-report.js 再レンダ整合＋verify-report-runtime.js実描画bundle＋validate-report-visual.py --structure --require-structure＋mode-aware deck-evaluator",
+      "gate": "C3",
+      "dependsOn": [
+        "R2-local-modify"
+      ],
+      "entryHook": "verify-slides|render-report",
+      "exitHook": "slide:verify-slides+evaluate-deck+validate-print | report:render-report+verify-report-runtime+validate-report-visual+deck-evaluator",
+      "resourceIds": [
+        "script-verify-slides",
+        "script-evaluate-deck",
+        "script-validate-print",
+        "script-render-report",
+        "script-verify-report-runtime",
+        "script-validate-report-visual",
+        "script-validate-output-mode"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "ref-modification-rules",
+      "kind": "reference",
+      "path": "./references/modification-rules.md",
+      "phaseIds": [
+        "R1-identify-target",
+        "R2-local-modify"
+      ]
+    },
+    {
+      "id": "ref-report-modification-rules",
+      "kind": "reference",
+      "path": "./references/report-modification-rules.md",
+      "phaseIds": [
+        "R1-identify-target",
+        "R2-local-modify"
+      ]
+    },
+    {
+      "id": "schema-structure",
+      "kind": "schema",
+      "path": "../../schemas/structure.schema.json",
+      "phaseIds": [
+        "R1-identify-target",
+        "R2-local-modify"
+      ]
+    },
+    {
+      "id": "schema-report-structure",
+      "kind": "schema",
+      "path": "../../schemas/report-structure.schema.json",
+      "phaseIds": [
+        "R1-identify-target",
+        "R2-local-modify"
+      ]
+    },
+    {
+      "id": "schema-modification-report",
+      "kind": "schema",
+      "path": "./schemas/modification-report.schema.json",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-validate-output-mode",
+      "kind": "script",
+      "path": "../../scripts/validate-output-mode.py",
+      "phaseIds": [
+        "R1-identify-target",
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-verify-slides",
+      "kind": "script",
+      "path": "../../vendor/scripts/verify-slides.js",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-evaluate-deck",
+      "kind": "script",
+      "path": "../../vendor/scripts/evaluate-deck.js",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-validate-print",
+      "kind": "script",
+      "path": "../../vendor/scripts/validate-print.js",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-render-report",
+      "kind": "script",
+      "path": "../../vendor/scripts/render-report.js",
+      "phaseIds": [
+        "R2-local-modify",
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-verify-report-runtime",
+      "kind": "script",
+      "path": "../../vendor/scripts/verify-report-runtime.js",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-validate-report-visual",
+      "kind": "script",
+      "path": "../../scripts/validate-report-visual.py",
+      "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "prompt-R2-agent-slide-report-modifier",
+      "kind": "prompt",
+      "path": "./prompts/R2-agent-slide-report-modifier.md",
+      "phaseIds": [
+        "R2-local-modify"
+      ],
+      "_role": "Detailed 7-layer prompt SSOT for Task agent slide-report-modifier; agents/slide-report-modifier.md is the 9-section adapter."
+    }
+  ]
+}

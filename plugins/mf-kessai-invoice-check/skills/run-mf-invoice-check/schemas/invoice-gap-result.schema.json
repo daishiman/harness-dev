@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Invoice Gap Candidates",
+  "description": "check_invoice_gaps.py --collect が出力し --finalize/--sink が消費する月次チェック行の契約。出力されるのは全チェック対象顧客（発行漏れ候補、継続発行全件、今月新規）で、候補0件月でも各顧客ページ本文の月次履歴 table に確認済み証跡を残す。",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["customer_id", "period_ym", "company_name", "verdict", "product_name", "prev_amount", "curr_amount"],
+    "properties": {
+      "customer_id": {"type": "string"},
+      "period_ym": {"type": "string", "pattern": "^\\d{4}-\\d{2}$"},
+      "company_name": {"type": "string"},
+      "verdict": {"type": "string", "enum": ["発行漏れ候補", "継続発行", "今月新規"], "description": "collect が実際に出力する分類。継続発行は金額変動の有無に関わらず出力し、今月新規も確認済み証跡として出力する。"},
+      "product_name": {"type": "string"},
+      "prev_amount": {"type": ["integer", "null"]},
+      "curr_amount": {"type": ["integer", "null"]},
+      "issue_date": {"type": ["string", "null"]},
+      "updated_at": {"type": ["string", "null"]}
+    },
+    "allOf": [
+      {
+        "if": {"properties": {"verdict": {"const": "発行漏れ候補"}}, "required": ["verdict"]},
+        "then": {
+          "properties": {
+            "prev_amount": {"type": "integer"},
+            "curr_amount": {"type": "null"}
+          }
+        }
+      },
+      {
+        "if": {"properties": {"verdict": {"const": "継続発行"}}, "required": ["verdict"]},
+        "then": {
+          "properties": {
+            "prev_amount": {"type": "integer"},
+            "curr_amount": {"type": "integer"}
+          }
+        }
+      },
+      {
+        "if": {"properties": {"verdict": {"const": "今月新規"}}, "required": ["verdict"]},
+        "then": {
+          "properties": {
+            "prev_amount": {"type": "null"},
+            "curr_amount": {"type": "integer"}
+          }
+        }
+      }
+    ]
+  }
+}

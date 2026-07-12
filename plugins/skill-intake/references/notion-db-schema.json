@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Intake Reports — Notion Database Schema (JP, v2)",
+  "description": "skill-intake plugin が公開する Notion DB のプロパティ定義（v2: 実 Notion ページ 35195d6503b781788e31f59b4e05e705 の構造を正本とする16プロパティ。2026-05-22 に実行環境を追加）。値の正本は intake-final-schema.json#/properties/notion_db_properties。verify_notion_schema.py が現状 DB と突き合わせ、過不足を eval-log/notion-conflicts.json に記録する。",
+  "schema_version": "2.0.0",
+  "supersedes": "1.0",
+  "canonical_source_for_values": "intake-final-schema.json#/properties/notion_db_properties",
+  "database_id_default": null,
+  "database_id_env": "INTAKE_NOTION_DATABASE_ID",
+  "database_id_config_key": "hearing-sheet",
+  "database_id_config_path": "<repo-root>/.notion-config.json",
+  "database_id_setup_doc": "plugins/skill-intake/references/notion-per-repo-setup.md",
+  "properties": {
+    "名前": {
+      "type": "title",
+      "required": true,
+      "description": "スキルの日本語タイトル (例: 商談文字起こし→契約書自動生成→Slack配信)。30 字以内、記号 → で工程を示す。英語スラッグ (skill_name_hint) はフォールバックのみ。",
+      "source": "notion_db_properties.名前"
+    },
+    "ステータス": {
+      "type": "select",
+      "required": true,
+      "options": ["下書き", "レビュー中", "Gate A承認済み", "引き渡し済み", "構築済み", "アーカイブ"],
+      "default": "下書き",
+      "source": "notion_db_properties.ステータス"
+    },
+    "パターン": {
+      "type": "select",
+      "required": true,
+      "options": ["A", "B", "C", "D", "E"],
+      "description": "ライフサイクル軸。A=新規 / B=改修 / C=統廃合 / D=廃止 / E=分割。この A-E は mode 軸 (スキル生成方針) およびワークフロー軸 (種別) とは独立した分類である。",
+      "source": "notion_db_properties.パターン"
+    },
+    "ワークフロー": {
+      "type": "select",
+      "required": true,
+      "options": ["A 単体", "B 自動収集配信", "C ナレッジ集約", "D レビュー", "E その他"],
+      "description": "スキル種別軸。これらの値ラベルが正本 (canonical) であり、handoff-contract.md の workflow_pattern enum 説明はここを参照する。この A-E は mode 軸 (スキル生成方針) およびパターン軸 (ライフサイクル) とは独立した分類である。",
+      "source": "notion_db_properties.ワークフロー"
+    },
+    "深度": {
+      "type": "select",
+      "required": true,
+      "options": ["light", "standard", "detailed"],
+      "source": "notion_db_properties.深度"
+    },
+    "熟練度": {
+      "type": "select",
+      "required": true,
+      "options": ["初級", "中級", "上級"],
+      "source": "notion_db_properties.熟練度"
+    },
+    "テーマ抽出": {
+      "type": "select",
+      "required": false,
+      "options": ["T1 静的シード", "T2 動的抽出", "T3 ハイブリッド"],
+      "source": "notion_db_properties.テーマ抽出"
+    },
+    "責務境界": {
+      "type": "select",
+      "required": false,
+      "options": ["O1 オーケストレータ", "O2 ハイブリッド", "O3 独立"],
+      "source": "notion_db_properties.責務境界"
+    },
+    "配信タイミング": {
+      "type": "select",
+      "required": false,
+      "options": ["S1 定刻", "S2 オンデマンド", "S3 両対応"],
+      "source": "notion_db_properties.配信タイミング"
+    },
+    "出力先": {
+      "type": "multi_select",
+      "required": true,
+      "options": ["Obsidian", "Discord", "Slack", "Notion", "X", "Email", "その他"],
+      "source": "notion_db_properties.出力先"
+    },
+    "共有相手": {
+      "type": "multi_select",
+      "required": true,
+      "options": ["自分", "Xフォロワー", "クライアント", "受講生", "チーム", "その他"],
+      "source": "notion_db_properties.共有相手"
+    },
+    "引き渡しモード": {
+      "type": "select",
+      "required": true,
+      "options": ["fast-track", "standard", "human-review", "draft-only"],
+      "source": "notion_db_properties.引き渡しモード"
+    },
+    "真の課題": {
+      "type": "rich_text",
+      "required": true,
+      "max_length": 200,
+      "source": "notion_db_properties.真の課題"
+    },
+    "ナレッジ資産タグ": {
+      "type": "multi_select",
+      "required": false,
+      "options": ["思考プロセス", "暗黙知", "判断基準", "テンプレ", "チェックリスト", "ハイブリッド抽出", "その他"],
+      "source": "notion_db_properties.ナレッジ資産タグ"
+    },
+    "実行環境": {
+      "type": "select",
+      "required": true,
+      "options": ["Claude Code", "Cowork", "両方"],
+      "description": "スキル実行サーフェスの正本。判定木は references/execution-surface-rubric.md (ローカル R/W or Bash/git → Claude Code / MCP-only + 対話 → Cowork / 両条件満たし MCP-only → 両方)",
+      "source": "notion_db_properties.実行環境"
+    },
+    "作成日": {
+      "type": "created_time",
+      "required": true,
+      "description": "Notion 自動付与",
+      "source": "notion_db_properties.作成日"
+    }
+  },
+  "body_sections": {
+    "description": "DB プロパティから外し、ページ本文 children として送る項目。intake-final-template.md.tmpl の §0〜§11 をそのまま children 化する。",
+    "rendered_from": "intake-final-template.md.tmpl"
+  },
+  "conflict_resolution": {
+    "default_mode": "skip-warn",
+    "modes": {
+      "skip-warn": "型違い・同名プロパティは触らず eval-log/notion-conflicts.json に記録",
+      "overwrite": "スキーマ通りに PATCH 上書き (DB バックアップ必須)",
+      "fail-stop": "1 つでも不一致なら verify_notion_schema.py を exit 1"
+    }
+  }
+}

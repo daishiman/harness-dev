@@ -1,0 +1,50 @@
+{
+  "run_id": "run-20260624",
+  "target": {"plugin": "notion-gmail-mailer(仮)", "skill": "run-notion-gmail-send", "scope_mode": "skill", "artifact": "eval-log/skill-brief.json"},
+  "status": "incomplete",
+  "status_reason": "Phase2 の A4(system-strategic, 11思考法) が session limit 到達で未完了。30思考法カバレッジ未達(used=19/30)。proposer≠approver の独立承認も未実施。force_pass 禁止、human_review 必須。",
+  "thought_method_coverage": {
+    "used": ["批判的思考","演繹思考","帰納的思考","アブダクション","垂直思考","要素分解","MECE","2軸思考","プロセス思考","why思考","メタ思考","抽象化思考","ダブル・ループ思考","ブレインストーミング","水平思考","逆説思考","類推思考","if思考","素人思考"],
+    "skipped_with_reason": [],
+    "not_run": ["システム思考","因果関係分析","因果ループ","トレードオン思考","プラスサム思考","価値提案思考","戦略的思考","改善思考","仮説思考","論点思考","KJ法"],
+    "total": 30,
+    "completed": 19
+  },
+  "verdict_provisional": {
+    "矛盾なし": "FAIL",
+    "漏れなし": "FAIL",
+    "整合性あり": "FAIL",
+    "依存関係整合": "FAIL",
+    "note": "改善反映後の再検証は A4 補完後に実施。暫定で全条件 FAIL(未解消 finding 残存)。"
+  },
+  "aggregated_findings": [
+    {"theme": "本文true件数の定義不一致(本文未記入2件 vs 本文空除外)", "severity": "contradiction", "axis": "C1", "from": ["LS-04","MD-02"], "fix": "本文true=メッセージ対象true かつ 本文非空 に確定。deterministic件数式を補正。open_questions[3]を解消しスキップ計上へ。", "applied_in_brief": true},
+    {"theme": "shonai.inc DWD承認が未確定なのに承認済み前提で送信契約", "severity": "dependency_break", "axis": "C4", "from": ["LS-01","MD-06"], "fix": "preflight gate で DWD/scope を fail-closed 検証。未承認なら送信フェーズへ進まない。goal/key_constraints を承認検証強制へ書換。", "applied_in_brief": true},
+    {"theme": "Keychain SA鍵 svce/acct 未確定のまま鍵参照前提", "severity": "dependency_break", "axis": "C4", "from": ["LS-05"], "fix": "命名規約を確定しpreflightで security 列挙必須化。", "applied_in_brief": true},
+    {"theme": "送信ログDB ID 未確定なのに冪等記録契約が成立(契約と前提充足のトレーサビリティ欠如)", "severity": "dependency_break", "axis": "C4/C2", "from": ["LS-10","MD-05"], "fix": "DB IDをconfig焼き込み+preflight gate。契約条項→依存実体→確定状態を明示連結し未確定はbuild前gateでfail-closed。", "applied_in_brief": true},
+    {"theme": "placement に Hook を含むが hook_events 欠落", "severity": "omission", "axis": "準拠", "from": ["LS-02","LS-08","MD-12"], "fix": "hook_events=[PreToolUse]を定義し送信前ドメイン/冪等ゲートを機械保証。", "applied_in_brief": true},
+    {"theme": "送信結果 status 分類が MECE でない(冪等skipとvalidation除外が混在/dry-run未分類)", "severity": "omission", "axis": "C2", "from": ["LS-07"], "fix": "status enum={sent,skipped_idempotent,skipped_validation,error,dryrun_planned}を定義。", "applied_in_brief": true},
+    {"theme": "CC/To/From 列マッピング・カンマ分割・MIME組立の責務が空白", "severity": "omission", "axis": "C2", "from": ["LS-06"], "fix": "responsibilities に message-assemble を追記(From=本文DB送り主/To=宛先DBメール/CC=本文DB CC)。", "applied_in_brief": true},
+    {"theme": "GCP設定は範囲外 vs 未設定なら先行 の揺れ", "severity": "inconsistency", "axis": "C3", "from": ["LS-03"], "fix": "未設定は除外でなく fail-closed 中断+報告 に一本化。", "applied_in_brief": true},
+    {"theme": "dry-run件数式が冪等照合(=送信ログDB読取)を要するがDB ID未確定", "severity": "inconsistency", "axis": "C3", "from": ["LS-09"], "fix": "件数式を2段(計画送信単位/正味送信予定)に分離。後者はDB ID確定を前提。", "applied_in_brief": true},
+    {"theme": "skill必須性への疑義(決定論本体はscript/cronで足る・二層分離)", "severity": "smell", "axis": "C3", "from": ["MD-01"], "fix": "skill必須理由をbriefに明示(承認/dry-run確認/例外介入のラッパ)。送信本体はscript。", "applied_in_brief": true},
+    {"theme": "冪等は再実行の安全であり初回送信の不可逆性を緩和しない(安全装置充実が誤送信を誘発)", "severity": "smell", "axis": "C2", "from": ["MD-08"], "fix": "初回本送信前のdry-run全件プレビューへの人間承認を必須化(自動本送信禁止)。canary段階送信を検討。", "applied_in_brief": true},
+    {"theme": "不可逆送信なのにmf-kessai型の二段確認層が無い", "severity": "omission", "axis": "C2", "from": ["MD-05"], "fix": "gmail-send前にcontext:fork二段確認subagent(宛先/件数/未置換トークン残存)を必須化しfail-closed。", "applied_in_brief": true},
+    {"theme": "バウンス/到達非保証/送信後の世界が空白", "severity": "omission", "axis": "C2", "from": ["MD-09"], "fix": "boundaryに送信後(到達確認/バウンス/返信/訂正追送)を範囲外明示。sent=API受理であり到達保証でない旨をoutput_contractに。", "applied_in_brief": true},
+    {"theme": "バリデーション不足(メール形式/置換空値/サニタイズ/quota)", "severity": "omission", "axis": "C2", "from": ["MD-07","MD-10"], "fix": "メール形式検証・置換値空検出・差し込みサニタイズ・送信レート/quota安全停止・同一宛先複数page重複検知を追加。", "applied_in_brief": true},
+    {"theme": "minimal宣言 vs 横展開価値(任意2DB cross-product mail merge)", "severity": "inconsistency", "axis": "準拠", "from": ["MD-04"], "fix": "minimal維持の理由を明示し固有値はconfig退避。横展開余地はabstraction_variablesにメモ。", "applied_in_brief": true},
+    {"theme": "audit_trigger欠落(再監査条件不明)", "severity": "smell", "axis": "準拠", "from": ["MD-03","LS"], "fix": "audit_trigger=runtime-failure を付与。", "applied_in_brief": true},
+    {"theme": "非エンジニア運用者視点の欠落(dry-runプレビュー/エラー次アクション)", "severity": "smell", "axis": "C2", "from": ["MD-11"], "fix": "dry-runに先頭数件の差し込み後フルプレビュー、エラーに次アクションを含める。", "applied_in_brief": true}
+  ],
+  "alternative_approaches": [
+    "二層分離(最有力): 送信本体を冪等script/cron、run-skillは初回DWD承認/dry-run全件プレビュー人間承認/例外介入のラッパに縮退",
+    "mf-kessaiパターン横展開: context:fork二段確認+fail-closed sink、DB IDconfig焼き込み+preflight、冪等キーをupsert_keyとしてschema化、PreToolUse hookで送信前ゲート機械保証",
+    "Gmail下書きモード(--draft-only): 全件下書き生成→人間が目視後に手動送信で不可逆性を人間ゲートで吸収",
+    "canary段階送信: 最初の1-2通を先行送信し内容確認後に残りを送る"
+  ],
+  "next_actions": [
+    "session reset(5pm Asia/Tokyo)後に A4(system-strategic 11思考法)を補完し30思考法カバレッジを充足",
+    "proposer≠approver: 改善後 brief を別context(assign-skill-design-evaluator 等)で独立承認",
+    "外部実体の確定(DWD承認状況/SA鍵svce-acct/送信ログDB ID)を preflight で検証"
+  ]
+}

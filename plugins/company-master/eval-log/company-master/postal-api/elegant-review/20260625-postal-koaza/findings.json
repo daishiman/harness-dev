@@ -1,0 +1,38 @@
+{
+  "target": {"plugin": "company-master", "skill": "postal-api", "scope_mode": "skill"},
+  "run_id": "20260625-postal-koaza",
+  "problem": "小字(字○○)/大字を含む住所で日本郵便 addresszip が404→空欄。町域まで削れば origin=japanpost で正規取得できるフォールバックを自動化する。",
+  "thought_method_coverage": {
+    "total": 30,
+    "used": [
+      "批判的思考", "演繹思考", "帰納的思考", "アブダクション", "垂直思考",
+      "要素分解", "MECE", "2軸思考", "プロセス思考", "why思考",
+      "メタ思考", "抽象化思考", "ダブル・ループ思考",
+      "ブレインストーミング", "水平思考", "逆説思考", "類推思考", "if思考", "素人思考",
+      "システム思考", "因果関係分析", "因果ループ",
+      "トレードオン思考", "プラスサム思考", "価値提案思考", "戦略的思考",
+      "改善思考", "仮説思考", "論点思考", "KJ法"
+    ],
+    "skipped_with_reason": []
+  },
+  "paradigm_findings": [
+    {"id": "LS-01", "method": "アブダクション/why思考", "severity": "contradiction", "location": "postal_api.py:_split_address/_strip_banchi+pick_best", "claim": "_strip_banchi は数字でしか切らず小字「字○○」が town_name に残存→404→空欄。真因はクエリ生成側。", "resolution": "fixed", "how": "_town_variants で小字/大字を段階剥離した町域バリアントを queries に追加"},
+    {"id": "Q-01", "method": "論点思考", "severity": "contradiction", "location": "postal_api.py:lookup_postal", "claim": "真に解くべきは『町域DBにヒットするまで町域末尾を段階剥離する』こと。404リトライ制御単独では剥離候補が無く空回り。", "resolution": "fixed", "how": "形態素マーカー(字/大字)での段階剥離バリアント生成で実装。pick_best が確定したら early-return"},
+    {"id": "F1/S-01/C-01", "method": "ダブルループ/システム/因果", "severity": "omission", "location": "postal_api.py:queries生成", "claim": "小字削り処理が両クエリに不在。大字(大字菱池)も同型の盲点。", "resolution": "fixed", "how": "_town_variants が小字削り+大字prefix削りの両方を生成。大字は (?<!大)字 で保護"},
+    {"id": "LS-04/F8", "method": "MECE/if思考", "severity": "omission", "location": "tests/test_company_master.py", "claim": "小字分解・大字保護・404後フォールバック・誤値非混入(zip割れ)・無駄照会なしの回帰テストが皆無。", "resolution": "fixed", "how": "town_variants単体+koaza統合hit+zip割れ空欄+字なし無駄照会なし+大字統合hit の5テスト追加(計100 passed)"},
+    {"id": "ST-01", "method": "戦略的思考", "severity": "inconsistency", "location": "references/data-sources.md:tier2", "claim": "tier2記述『構造化→freewordの2段』が実装に追従せずstale化する(実装真実源ドリフト)。", "resolution": "fixed", "how": "tier2記述を町域バリアント段反映へ更新。origin=japanpost制約は不変で確度ラベル昇格なし"},
+    {"id": "L-01/V-01/T-01/F5", "method": "因果ループ/価値提案/トレードオン/素人", "severity": "smell", "location": "enrich_company.py下流/attempts", "claim": "町域代表値を番地固有と誤認するリスク。透明性が必要との指摘。", "resolution": "addressed_by_argument", "how": "(1)日本郵便の郵便番号は町域粒度で確定値は番地含め正しい (2)zip割れは pick_best が空欄化 (3)attempts.pattern=structured_town_trimmed でフォールバック段を可視化。新remark_keyは不要と論証"},
+    {"id": "F4b", "method": "逆説思考", "severity": "smell", "location": "postal_api.py:_strip_banchi", "claim": "『北海道札幌市北区北24条西2丁目』→town_name=『北』誤切り(数字を含む町域名)。", "resolution": "fixed_by_prefix_fallback", "how": "第2段(ユーザー追加要望)の市区町村前方一致フォールバックが、正式町域一覧の『北24条西』を生住所への最長前方一致で拾い救済。_strip_banchi自体は不変(回帰リスク回避)"},
+    {"id": "GEN-01", "method": "抽象化/ダブルループ/論点(ユーザー追加要望)", "severity": "omission", "location": "postal_api.py:lookup_postal/pick_best_prefix", "claim": "字マーカー(字/大字)が付かない文字列末尾(北京田下鳥ノ巣・イロハ枝番・カナ・数字含み町域)は _town_variants では拾えない。一般の『末尾文字列→miss』に対応が必要。", "resolution": "fixed", "how": "第3段フォールバック追加: {pref/city}で町域一覧→入力住所への最長前方一致(pick_best_prefix)。fail-safe(一覧不返/不一致は空欄縮退・誤値も回帰もなし)。誤値非混入はprefix制約+zip収束。+4テスト/独立approver APPROVE。残smell=実API一覧返却は未実証(再現率のみ影響・doctor --probe推奨)"},
+    {"id": "F6", "method": "ブレインストーミング", "severity": "smell", "location": "lookup_postal/gBizINFO", "claim": "gBizINFOがpostalCodeを返すなら逆引き自体が不要(最もエレガント)。company_name併用段も未活用。", "resolution": "deferred", "how": "再現率拡張の別タスク。本パッチは住所→郵便番号 逆引きの再現率補強にスコープを限定"},
+    {"id": "F7/C(案C)", "method": "水平思考", "severity": "smell", "location": "normalize.py", "claim": "ヶ/ケ/が・大字/字のcanonical化をnormalizeに置けばalt_key/prefix_matchへ横展開できる。", "resolution": "deferred", "how": "alt_key決定性への波及管理が必要なため別タスク。本パッチはpostal_apiに責務を閉じる"}
+  ],
+  "verdict": {"矛盾なし": "PASS", "漏れなし": "PASS", "整合性あり": "PASS", "依存関係整合": "PASS"},
+  "approval": {"approver": "independent SubAgent (claude, proposer≠approver)", "result": "APPROVE", "tests": {"passed": 104, "failed": 0}, "phases": ["小字/大字フォールバック", "市区町村前方一致フォールバック(一般化)"]},
+  "convergence_status": "complete",
+  "deferred_followups": [
+    "第3段フォールバックの実API一覧返却挙動の実機確認(doctor --probe) — fail-safeゆえ誤値なし・再現率効果のみ未実証",
+    "gBizINFO レスポンスの郵便番号一次採用(origin=gbizinfo) — 逆引き不要化",
+    "normalize での町域表記canonical化(ヶ/ケ/が統一) — alt_key決定性の波及管理を伴う"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "run_id": "20260626T134045",
+  "target": {"plugin": "notion-gmail-send", "scope_mode": "plugin"},
+  "thought_method_coverage": {"used": 30, "skipped_with_reason": 0, "total": 30},
+  "fail_counts": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0},
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "proposer_ne_approver": {
+    "proposer": "orchestrator (main context)",
+    "approver": "independent general-purpose subagent",
+    "approver_overall": "APPROVE"
+  },
+  "user_decision": "案A: placeholder + 自動生成 scaffold (実値全廃・impersonate は config/Keychain 必須維持)",
+  "clusters_resolved": [
+    {"cluster": 1, "name": "環境固有実値の git 拡散", "resolved": true},
+    {"cluster": 2, "name": "安全な着地点の不在(scaffold 欠落)", "resolved": true},
+    {"cluster": 3, "name": "config 配置/DB名称/到達手段の文書間不整合", "resolved": true},
+    {"cluster": 4, "name": ".gitignore negation 不発", "resolved": true},
+    {"cluster": 5, "name": "文書衛生越境(description 肥大/運用 snapshot 混在)", "resolved": true}
+  ],
+  "tests": "138 passed (新規 test_config_scaffold.py 9 件含む)",
+  "lints": {
+    "validate-plugin-packages": "notion-gmail-send OK (advisory only)",
+    "validate-plugin-completeness": "exit 0",
+    "lint-skill-description": "OK=109 VIOLATION=0",
+    "lint-content-review --changed-only": "no target skill (OK)"
+  },
+  "regressions": [],
+  "residual_smells_deferred": [
+    {
+      "smell": "@shonai.inc が spec-detail.md:38,115 / ref SKILL.md:161 の説明文に残存",
+      "decision": "deferred (意図的に修正しない)",
+      "rationale": "実装 SSOT doc/run-notion-gmail-send-仕様と検証メモ.md が同ドメインを一貫使用し :319 で abstraction_variable と明示。plugin 側 spec だけ抽象化すると SSOT doc とドリフト(新 C3 違反)を生む。DB ID/impersonate 認証情報の leak は廃止済みで、ワークスペースドメイン記述は組織固有の deployment 文脈として SSOT と整合維持が正しい。"
+    },
+    {
+      "smell": "secrets.py の Notion service/account ハードコード(SA鍵は config 駆動・非対称)",
+      "decision": "deferred",
+      "rationale": "severity=low の smell。config 化は preflight/notion_client へ波及しテストが揺れ、ユーザー方針『最小・クリーン』に反する。4条件を 0 にするのに不要。"
+    }
+  ],
+  "status": "complete"
+}

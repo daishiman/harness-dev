@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "presentation-slide-generator/evaluation-report",
+  "title": "生成後評価レポート",
+  "description": "evaluate-deck.js が出力する機械評価レポートの契約。deck-evaluator(30種思考法LLM評価)はこのレポートを入力に多角評価を行う。",
+  "type": "object",
+  "required": ["schema", "deck", "verdict", "conditions", "summary", "byDimension", "findings"],
+  "properties": {
+    "schema": { "const": "presentation-slide-generator/evaluation-report@1" },
+    "generatedFor": { "type": "string", "description": "評価対象デッキディレクトリ" },
+    "deck": {
+      "type": "object",
+      "required": ["dir", "index"],
+      "properties": {
+        "dir": { "type": "string" },
+        "index": { "type": "string" },
+        "hasCss": { "type": "boolean" },
+        "hasJs": { "type": "boolean" },
+        "hasStructure": { "type": "boolean" }
+      }
+    },
+    "dynamic": {
+      "type": "object",
+      "description": "動的(playwright)検証の状態。chromium非導入時は skipped(no-chromium)",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["ran", "skipped", "skipped(static-only)", "skipped(no-chromium)", "error"]
+        },
+        "totalSlides": { "type": "integer" }
+      }
+    },
+    "verdict": { "type": "string", "enum": ["PASS", "FAIL"] },
+    "conditions": {
+      "type": "object",
+      "description": "機械判定の条件（生成デッキに対する）。operable は v3 で追加（後方互換）",
+      "required": ["contradiction_free", "completeness", "consistency", "dependency_integrity"],
+      "properties": {
+        "contradiction_free": { "type": "boolean", "description": "矛盾なし: 型崩れ・同期不一致・仕様違反 error が無い" },
+        "completeness": { "type": "boolean", "description": "漏れなし: 必須ナビ(左右送り)が揃う＋デッキが動作可能(Dx error 無し)" },
+        "consistency": { "type": "boolean", "description": "整合性: 同期/仕様の error が無い" },
+        "dependency_integrity": { "type": "boolean", "description": "依存関係整合: 参照画像/structure/CSS/JS 依存が解決" },
+        "operable": { "type": "boolean", "description": "動作可能性: CSS/JS実在・スライド表示切替・ページ送り制御が揃い、index.html を開いてスライドが動く(Dx error が無い)" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["error", "warn", "info"],
+      "properties": {
+        "error": { "type": "integer", "minimum": 0 },
+        "warn": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "byDimension": {
+      "type": "object",
+      "description": "評価次元Dx(動作可能性)・D1〜D5別の集計",
+      "patternProperties": {
+        "^(Dx|D[1-5])$": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "error": { "type": "integer" },
+            "warn": { "type": "integer" },
+            "info": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "dimension", "severity", "title", "detail"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^F[0-9]{3,}$" },
+          "dimension": { "type": "string", "enum": ["Dx", "D1", "D2", "D3", "D4", "D5"] },
+          "severity": { "type": "string", "enum": ["error", "warn", "info"] },
+          "title": { "type": "string" },
+          "detail": { "type": "string" },
+          "slide": { "type": "integer", "description": "該当スライド番号(1始まり)。任意" },
+          "check": { "type": "string", "description": "チェックID（例 operability.css / operability.pagingJs / nav.prevNext / visual.brokenImg / font.svgMinPx / spec.sync）" },
+          "source": { "type": "string", "description": "由来スクリプト（sync-checker / validate-structure 等）" },
+          "missing": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

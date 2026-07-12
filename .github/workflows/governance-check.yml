@@ -1,0 +1,311 @@
+name: governance-check
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  change-category-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: guard change category (P0/P1 proposal gate)
+        run: python3 scripts/guard-change-category.py --base origin/main --bypass-cooldown
+      - name: lint script naming (28章 §4)
+        run: python3 scripts/lint-script-naming.py
+      - name: lint skill description (03章 R1-R5)
+        run: python3 scripts/lint-skill-description.py
+      - name: lint dependency direction
+        run: python3 scripts/lint-dependency-direction.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: lint feedback_protocol SSOT (schema/SKILL.md/upsert 整合 - offline)
+        run: python3 scripts/lint-feedback-protocol.py --strict
+        continue-on-error: false
+      - name: "lint legacy plugin name (改名済み旧 plugin 固有名の能動層再流入遮断)"
+        run: python3 scripts/lint-legacy-plugin-name.py
+        continue-on-error: false
+      - name: "lint content-review verdict 成果物存在 (全skill: 存在/PASS/sha一致/criteria突合)"
+        run: python3 scripts/lint-content-review.py --all
+        continue-on-error: false
+      - name: "lint live-trial verdict 突合 (存在するverdictのschema/sha/PASS検査・不在はD13パイロット中record-only)"
+        run: python3 scripts/lint-live-trial-verdict.py --all
+        continue-on-error: false
+      - name: lint feedback_contract 携帯化 (量産先 loop-kind が frontmatter に評価基準を持つ)
+        run: python3 scripts/lint-feedback-contract.py --all
+        continue-on-error: false
+      - name: "lint prompt contract drift (7層プロンプトの参照パス/allowed-tools が実装と整合・Tier1 fail-closed)"
+        run: python3 scripts/lint-prompt-contract-drift.py --all
+        continue-on-error: false
+      - name: notion schema drift check (3DB SSOT vs Notion)
+        if: ${{ env.NOTION_TOKEN != '' }}
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python3 scripts/sync-notion-schema.py --check
+      - name: notion relation invariants (1:1 hearing↔plugin / N:1 request→plugin / TITLE 重複なし)
+        if: ${{ env.NOTION_TOKEN != '' }}
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: python3 scripts/lint-notion-relations.py
+      - name: check plugin external refs
+        run: >
+          python3 scripts/lint-external-refs.py
+          --skills-dir plugins/harness-creator/skills
+          --allowed-prefix .claude/
+          --allowed-prefix eval-log/
+          --allowed-prefix references/
+          --allowed-prefix plugins/
+          --allowed-prefix scripts/
+          --allowed-prefix doc/
+          --fail-on-external
+        continue-on-error: false
+      - name: check script drift
+        run: bash scripts/check-scripts-drift.sh
+        continue-on-error: false
+      - name: check skill drift
+        run: python3 scripts/build-claude-symlinks.py --check
+        continue-on-error: false
+      - name: validate plugin manifests and marketplace
+        run: |
+          jq -e '.plugins | length >= 1' .claude-plugin/marketplace.json
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            jq -e '.name and .version and .description' "$manifest" >/dev/null
+          done
+        continue-on-error: false
+      # marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査。
+      # 実体ディレクトリ起点で全 plugin の marketplace + bundles 登録を強制し、登録漏れ
+      # (notion-gmail-send 未表示) が自己強化ループで永久に見逃される事故を機械遮断する。
+      - name: validate plugin completeness (marketplace + bundles registration)
+        run: python3 scripts/validate-plugin-completeness.py
+        continue-on-error: false
+      - name: validate-plan-coverage self-test (計画↔実体 completeness 照合器の分岐検査)
+        run: python3 plugins/harness-creator/scripts/validate-plan-coverage.py --self-test
+        continue-on-error: false
+      - name: validate-plan-coverage --all (実体化済み plan の計画↔実体 completeness を fail-closed で強制)
+        # 「漏れなくを測る唯一の gate」を実 plan に対して機械強制する常設ガード。README が唯一の
+        # completeness gate と呼ぶ照合を CI 自身に配線し (従来は --self-test のみ = 実 plan 未検査)、
+        # build 済み plugin で計画 component が 1 個でも欠けたら exit 1。未 build 計画は自動 skip。
+        run: python3 plugins/harness-creator/scripts/validate-plan-coverage.py --all --repo-root .
+        continue-on-error: false
+      # system-spec-harness (および全 plugin) の同梱テスト (plugins/**/test_*.py = tests/ +
+      # skills/*/tests + scripts/tests + hooks/tests) は harness-creator-kit-ci.yml の
+      # "Run plugin behavior tests (pytest, per-plugin)" step が requirements-dev.txt を
+      # install した上で per-plugin cwd で実行する。本 governance-check ジョブは lint 専用で
+      # pytest を install しないため、ここで pytest を呼ぶと "No module named pytest" で常時
+      # fail する (kit-ci と二重化)。plugin pytest は kit-ci に一元化する。
+      - name: lint-script-frontmatter (harness-creator 自 scripts の PEP723 frontmatter 自己適用)
+        # 他者 (新規生成 skill) に build-preflight で課す # /// script frontmatter を、メタプラグイン
+        # 自身の scripts にも CI で強制し「他人には課すが自分は免除」の dogfooding 破れを封鎖する。
+        run: python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/harness-creator/scripts
+        continue-on-error: false
+      - name: harness-coverage ratchet self-test (回帰ガードの floor 比較分岐検査)
+        run: python3 scripts/validate-harness-coverage.py --self-test
+        continue-on-error: false
+      - name: lint SSOT duplication (harness-creator 一本化強制)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/harness-creator --strict
+        continue-on-error: false
+      - name: lint goal-seek SSOT drift (engine/fork/max_loops 既定の分散コピー一致)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --self-test
+        continue-on-error: false
+      - name: lint goal-seek conformance (実行系の固定手順禁止)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: validate frontmatter SSOT self-test (commonCore必須集合のdrift検出)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --self-test
+        continue-on-error: false
+      - name: validate frontmatter (commonCore必須 + SemVer version 再発防止)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: lint plugin composition self-test (fixture drift 検出)
+        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py --self-test
+        continue-on-error: false
+      - name: lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
+        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml
+        continue-on-error: false
+      - name: lint declaration coverage self-test (ratchet 分岐検査)
+        run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py --self-test
+        continue-on-error: false
+      - name: lint declaration coverage (enforcement manual 残存数 ratchet, LS-10)
+        run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py plugins/harness-creator/plugin-composition.yaml
+        continue-on-error: false
+      - name: lint matrix sync self-test (突合分岐検査)
+        run: python3 plugins/skill-governance-lint/scripts/lint-matrix-sync.py --self-test
+        continue-on-error: false
+      - name: lint matrix sync (lint 集合3消費面の突合, LS-02/LS-07)
+        run: python3 plugins/skill-governance-lint/scripts/lint-matrix-sync.py plugins/harness-creator/references/lint-matrix.json
+        continue-on-error: false
+      - name: lint criteria provenance self-test (写像分岐検査)
+        run: python3 plugins/skill-governance-lint/scripts/lint-criteria-provenance.py --self-test
+        continue-on-error: false
+      - name: lint criteria provenance (Checklist と criteria の写像被覆, LS-05)
+        run: python3 plugins/skill-governance-lint/scripts/lint-criteria-provenance.py --skills-dir plugins/harness-creator/skills
+        continue-on-error: false
+      - name: validate build trace (再現性証跡 + RTM 段階導入 WARN)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py eval-log/skill-build-trace.json
+        continue-on-error: false
+      - name: validate elegant-review phase order (Phase1→2→3 順序, composition invariant 対向)
+        run: python3 plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order eval-log
+        continue-on-error: false
+      - name: criteria roster parity (量産追随の fail-closed。新 loop-kind skill は roster 再生成が必要)
+        run: python3 tests/criteria/build_criteria_roster.py
+        continue-on-error: false
+      # llm-coverage.json は毎回 write される派生レポートで roster のような git-stale
+      # 検出が無く、skill 変更/改名時の台帳更新漏れが CI を素通りしていた (2026-07-02)。
+      # --check (書かない parity) を被覆 gate の「前」に置き、コミット済み台帳が生成
+      # 結果と一致することを fail-closed に検査する (gate step が書き換える前に判定)。
+      - name: llm-coverage parity (eval-log/llm-coverage.json が最新か。skill 変更/改名時は再生成が必要)
+        run: python3 scripts/validate-llm-coverage.py --all --check
+        continue-on-error: false
+      - name: validate llm coverage (criteria 被覆 ≥80% fail-closed。検証実体は tests/criteria の parametrized genuine 実行)
+        run: python3 scripts/validate-llm-coverage.py --all --threshold 80 --gate-new --since 2026-01-01
+        continue-on-error: false
+      # ── prompt-creator conformance (harness-creator 仕様準拠) ──
+      # NOTE: harness-creator / prompt-creator は distributable:false (marketplace 非配布 = 層 A-internal) だが、
+      #   リポジトリ実体として lint / CI 対象であり続ける。配布除外と品質検査は独立した関心事であり
+      #   ("配布 ≠ リポジトリ存在")、以下の conformance step を残すことに矛盾はない。
+      - name: prompt-creator validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/prompt-creator/skills
+        continue-on-error: false
+      - name: prompt-creator lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/prompt-creator/skills
+        continue-on-error: false
+      - name: prompt-creator lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/prompt-creator/skills
+        continue-on-error: false
+      - name: prompt-creator lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/prompt-creator/skills
+        continue-on-error: false
+      # ── company-master conformance (harness-creator 仕様準拠) ──
+      - name: company-master validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/company-master/skills
+        continue-on-error: false
+      - name: company-master lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/company-master/skills
+        continue-on-error: false
+      - name: company-master lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/company-master/skills
+        continue-on-error: false
+      - name: company-master lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/company-master/skills
+        continue-on-error: false
+      # ── contract-generator conformance (harness-creator 仕様準拠) ──
+      - name: contract-generator validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/contract-generator/skills
+        continue-on-error: false
+      - name: contract-generator lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/contract-generator/skills
+        continue-on-error: false
+      - name: contract-generator lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/contract-generator/skills
+        continue-on-error: false
+      - name: contract-generator lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/contract-generator/skills
+        continue-on-error: false
+      # ── skill-intake conformance (harness-creator 仕様準拠) ──
+      # validate-frontmatter は run-intake-revise の effect enum 違反で FAIL するため未配線。
+      # lint-plugin-lint-coverage.py の ALLOWLIST に理由付きで宣言済み (後日是正)。
+      - name: skill-intake lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/skill-intake/skills
+        continue-on-error: false
+      - name: skill-intake lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/skill-intake/skills
+        continue-on-error: false
+      - name: skill-intake lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/skill-intake/skills
+        continue-on-error: false
+      # ── plugin-dev-planner conformance (harness-creator 仕様準拠・dogfooding) ──
+      # NOTE: plugin-dev-planner は distributable:false (marketplace 非配布 = 層 A-internal) で
+      #   lint-plugin-lint-coverage.py の required 集合 (marketplace 起点) には入らないが、
+      #   自分が生成 plan へ課す harness-creator 規律を自分自身へも適用する dogfooding として
+      #   conformance lint を明示配線する (配布除外と品質検査は独立した関心事)。
+      - name: plugin-dev-planner validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/plugin-dev-planner/skills
+        continue-on-error: false
+      - name: plugin-dev-planner lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/plugin-dev-planner/skills
+        continue-on-error: false
+      - name: plugin-dev-planner lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/plugin-dev-planner/skills
+        continue-on-error: false
+      - name: plugin-dev-planner lint skill completeness (kind別必須サポート資産)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/plugin-dev-planner/skills
+        continue-on-error: false
+      - name: plugin-dev-planner live surface audit (skills/agents/commands/hooks/scripts/tests)
+        run: python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-planner
+        continue-on-error: false
+      - name: plugin-dev-planner harness-coverage self-apply (12軸自己適用 dogfooding)
+        run: python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-harness-coverage-selfcheck.py
+        continue-on-error: false
+      # ── ubm-goal-setting conformance (harness-creator 仕様準拠) ──
+      # NOTE: ubm-goal-setting は distributable:false (marketplace 非配布 = 層 A-internal) で
+      #   lint-plugin-lint-coverage.py の required 集合 (marketplace 起点) には入らないが、
+      #   計画 (plugin-plans/ubm-goal-setting) が ci.workflow=governance-check を宣言するため
+      #   conformance lint を明示配線する (配布除外と品質検査は独立した関心事)。
+      # lint-skill-completeness は run skill 2 本の prompts/・workflow-manifest.json 不在で
+      # 現状 FAIL するため未配線 (後日是正。baseline を緩めた偽緑化はしない)。
+      - name: ubm-goal-setting validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/ubm-goal-setting/skills
+        continue-on-error: false
+      - name: ubm-goal-setting lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/ubm-goal-setting/skills
+        continue-on-error: false
+      - name: ubm-goal-setting lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/ubm-goal-setting/skills
+        continue-on-error: false
+      - name: ubm-goal-setting lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
+        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml
+        continue-on-error: false
+      # ── extract-system-blueprint conformance (harness-creator 仕様準拠) ──
+      # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) だが
+      #   marketplace 登録は manual-user-gated のため lint-plugin-lint-coverage.py の
+      #   required 集合 (marketplace 起点) にはまだ入らない。配布除外と品質検査は
+      #   独立した関心事なので conformance lint をここで明示配線する。
+      # per-plugin pytest (plugins/extract-system-blueprint/tests) は
+      #   harness-creator-kit-ci.yml の「Run plugin behavior tests (pytest, per-plugin)」
+      #   walk が plugins/**/test_*.py を全被覆するため本 workflow では重複させない。
+      - name: extract-system-blueprint validate frontmatter (commonCore + SemVer)
+        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/extract-system-blueprint/skills
+        continue-on-error: false
+      - name: extract-system-blueprint lint skill name (28章 §4)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/extract-system-blueprint/skills
+        continue-on-error: false
+      - name: extract-system-blueprint lint skill description (03章 R1-R5)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/extract-system-blueprint/skills
+        continue-on-error: false
+      - name: extract-system-blueprint lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
+        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/extract-system-blueprint/plugin-composition.yaml
+        continue-on-error: false
+      # ── plugin lint 被覆メタ検査 (新 plugin 追加時の配線忘れを fail-closed 検出) ──
+      - name: lint plugin lint coverage (marketplace 全 plugin の lint 被覆保証)
+        run: python3 scripts/lint-plugin-lint-coverage.py
+        continue-on-error: false
+      - name: lint dependency direction (全プラグイン, prompt-creator cross-plugin 参照解決)
+        run: python3 scripts/lint-dependency-direction.py --skills-dir plugins
+        continue-on-error: false
+      - name: lint-knowledge-loop self-test
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py --self-test
+        continue-on-error: false
+      - name: knowledge-skeleton scripts self-test
+        run: |
+          python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py --self-test
+          python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/build_index.py --self-test
+          python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/record_usage.py --self-test
+          python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py --self-test
+        continue-on-error: false
+      - name: lint-knowledge-loop Loop B store (--store-only --strict)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py plugins/harness-creator --store-only --strict
+        continue-on-error: false
+      # prompt-placement(正本の向き: prompts=7層SSOT / agents=骨格。逆転禁止)は
+      # harness-creator-kit-ci.yml が canonical lint で全PR・全プラグインを走査するため本workflowでは重複させない。

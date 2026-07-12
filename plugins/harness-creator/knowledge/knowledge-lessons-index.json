@@ -1,0 +1,47 @@
+{
+  "category": "lessons-index",
+  "label": "lessons-learned 索引 (失敗ログへのポインタ)",
+  "version": "1.0.0",
+  "created_at": "2026-05-24",
+  "description": "lessons-learned/*.md (失敗・落とし穴ログ) への検索用ポインタ。本文はコピーせず source.file で参照する (SSOT: lessons-learned が正本)。auto-record-lesson.py が新規 lesson を追記したら本索引にもエントリを追加する。",
+  "keywords_global": ["失敗", "落とし穴", "lessons-learned"],
+  "source_note": "本文は lessons-learned/*.md が正本。本索引は検索ヒット用の最小要約のみ持つ。",
+  "items": [
+    {
+      "id": "lessons-index_001",
+      "title": "prefix は内部ディレクトリ構造規約の鍵。ref-*の機械可読リソースは references/ 配下に置く",
+      "intent": "ref-* で rubric.json 等を直下に置く流派と references/ 置きの流派の混在を防ぐこと",
+      "background": "Skill 名 prefix は外部識別子として機能していたが、内部構造が Skill ごとにバラついていた。ref-* で rubric.json の配置が直下/references 配下で混在していた。",
+      "keywords": ["prefix", "内部構造", "references配下", "ref-skill", "rubric配置", "lint一貫性"],
+      "message": "ref-* の機械可読リソースは最初から references/ 配下に置く。直下は単発1ファイル時のみ正当化される。",
+      "source": {"file": "plugins/harness-creator/lessons-learned/2026-05-22-prefix-driven-internal-structure.md", "type": "lesson", "date": "2026-05-22"}
+    },
+    {
+      "id": "lessons-index_002",
+      "title": "PostToolUse:Bash で validator FAIL が出たら rubric強化/validator追加を検討する",
+      "intent": "shell capability の失敗パターンを検出し再発防止に繋げること",
+      "background": "auto-record-lesson.py が PostToolUse:Bash の validator FAIL (rule X, severity high) を自動記録した。根本原因は human triage 待ち。",
+      "keywords": ["PostToolUse", "Bash", "validator FAIL", "shell", "rubric強化", "自動記録"],
+      "message": "失敗検出時は当該 capability の rubric 強化 / validator 追加を検討し、再現条件を issue 化する。",
+      "source": {"file": "plugins/harness-creator/lessons-learned/2026-05-22-posttooluse-bash.md", "type": "lesson", "date": "2026-05-22"}
+    },
+    {
+      "id": "lessons-index_003",
+      "title": "required plugin_level_surfaces に builder 未割当だと構造的に build/gate されない",
+      "intent": "inventory の成果物2クラス (components[] / plugin_level_surfaces) の非対称による manifest/schema 欠落の再発を防ぐこと",
+      "background": "extract-system-blueprint build (2026-07-11) で plugin_level_surfaces (schemas/manifest/composition/EVALS/CI) が required:true でも builder 未割当ゆえ task-graph 射影対象外となり、route parity 14/14 緑のまま manifest/schema が構造的に欠落した。30思考法エレガント検証の3独立分析が HIGH 収束して初めて露見。",
+      "keywords": ["plugin_level_surfaces", "builder未割当", "task-graph射影", "SURFACE node", "provenance-chain", "build vs ship completeness", "surface_build_projection"],
+      "message": "required surface は task-graph build node (builder 割当+gate) へ昇格し、provenance-chain.pass 発火条件へ required surface 実在 assert を組込む。build 完了と ship 完了は別の完全性として検証する。",
+      "source": {"file": "plugins/harness-creator/lessons-learned/2026-07-11-surfaces-must-be-builder-assigned.md", "type": "lesson", "date": "2026-07-11"}
+    },
+    {
+      "id": "lessons-index_004",
+      "title": "deploy-sync (.claude symlink 展開) は宣言契約だけでは task-graph モードで skip される",
+      "intent": "build 完了契約「build/更新後に sync 必須」が route 分散 build で owner 不在のまま不履行になる再発を防ぐこと",
+      "background": "extract-system-blueprint build (2026-07-11) が全ゲート緑で completed 宣言されたが .claude symlink 未展開で Claude Code が新規 plugin を認識せず、ユーザー指摘で発覚。sync 契約は run-build-skill SKILL.md に宣言済みだったが、task-graph モードでは repo-root 横断の仕上げ手順を担う owner がどのノードにもなかった (lessons-index_003 と同型の owner 不在 skip)。",
+      "keywords": ["deploy-sync", ".claude symlink", "build-claude-symlinks", "sync-skills-to-claude", "TG-C08 完了ゲート第3段", "owner不在", "宣言層のみ", "機械層担保"],
+      "message": "repo-root 横断の「build 後に必ず X」契約は完了ゲートの機械検査へ組込む (TG-C08 第3段: task-state パス上方探索で repo root 解決→生成器 --check・drift=blocked+fix_command・生成器不在は fail-soft skip)。dispatcher は TG-C08 前に sync --apply を先回り実行する。",
+      "source": {"file": "plugins/harness-creator/lessons-learned/2026-07-11-deploy-sync-needs-mechanical-gate.md", "type": "lesson", "date": "2026-07-11"}
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "plugin": "ubm-goal-setting",
+  "version": "0.2.0",
+  "harness": {
+    "mechanical": [
+      "cd plugins/ubm-goal-setting && python3 -m pytest tests/ -q",
+      "python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/ubm-goal-setting/scripts",
+      "python3 plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/ubm-goal-setting/hooks",
+      "python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills",
+      "python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py",
+      "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
+      "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py --agents-dir plugins/ubm-goal-setting/agents",
+      "python3 plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin-dir plugins/ubm-goal-setting --check all",
+      "python3 plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py --dir plugins/ubm-goal-setting/knowledge"
+    ],
+    "llm_eval": [
+      "run-ubm-goal-setting feedback_contract OUT1 (criteria-test, verify_by:test): 週報/月報/期報を実際に生成し validate-goal-output.py が PASS することを受入テストで確認する",
+      "run-ubm-knowledge-sync feedback_contract OUT1 (criteria-test, verify_by:test): 既知の更新済みソースを投入し knowledge-extractor が6カテゴリへ分類し router.json/registry.json が同期完了することを受入テストで確認する",
+      "run-ubm-youtube-ingest feedback_contract OUT1 (criteria-test, verify_by:test): ユーザー操作なしの scheduler fixture で新着1件が一度だけ正規化ソース+registry へ反映され二回目0件・失敗後 retry で回復する (skill セッション経由の --sync は ingested>0 時に R3 相当を再実行し knowledge/graph まで反映)。IN1: required-primary の authoritative inventory 全 ID について check-youtube-backfill-completeness.py の stdout JSON full_backfill_pass==true (content_coverage=100%・temporary_failure=0・unapproved_unavailable=0。exit0=ACCOUNTABILITY_PASS は waiver 込みのため IN1 判定に使わない) を確認する",
+      "run-ubm-consult OUT1: validate-consult-session.py が outcome分岐・保存同意・role=user provenance・action/reflection closure・ownership・evidence modeを検証する。IN1: 単一解を押し付けず、ユーザーが選んだ collaboration_mode に沿って考え方を提示する",
+      "run-elegant-review C1-C4 all PASS before promotion (proposer≠approver・design-gate/final-gate は独立 context で承認)"
+    ],
+    "threshold": 80,
+    "threshold_note": "threshold:80 は各 buildable component が携帯する harness_coverage{min:80} を指す宣言値。script/hook の行カバレッジ床は plugins/ubm-goal-setting/tests/ の pytest が担い、validate-goal-output.py は同梱 golden-sample-weekly.md との回帰テスト (正本 PASS + 変異 FAIL 検証) で契約を固定する (移植元 shell 実装との出力突合は repo 内で実行不能のため契約根拠として宣言しない)。",
+    "llm_eval_note": "llm_eval の各行は『どの受入観点をどの評価系へ配線するか』の宣言であり採点器ではない。目標設定出力の統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上の合否は validate-goal-output.py (決定論) が確定し、purpose 充足は build 後の criteria-test が確定する。"
+  },
+  "surfaces": [
+    "skills",
+    "agents",
+    "commands",
+    "hooks",
+    "scripts",
+    "references",
+    "assets",
+    "knowledge",
+    "plugin-manifest"
+  ],
+  "surfaces_enforced_by": {
+    "skills": "validate-frontmatter/lint-skill-name/lint-skill-description/lint-skill-tree/lint-dependency-direction/lint-skill-dep-step7/lint-forbidden-deps/lint-manifest-contents (5 skills: run-ubm-goal-setting/run-ubm-knowledge-sync/run-ubm-youtube-ingest/run-ubm-consult + run-skill-feedback symlink)",
+    "agents": "validate-frontmatter + lint-skill-description + lint-agent-prompt-section (7本: info-collector/output-formatter/goal-reviewer/phase3-coordinator/knowledge-extractor + youtube-transcript-normalizer/knowledge-relation-extractor)。Phase3 対話 Step1-5 は agents ではなく skills/run-ubm-goal-setting/prompts/R1-R5 の責務単位 7 層プロンプト (verify-completeness.py + lint-prompt-placement.py で検証)",
+    "commands": "validate-frontmatter (ubm-goal-setting / ubm-knowledge-sync / ubm-youtube-ingest / ubm-consult の4本)。plugin.json entry_points.commands と1対1(実体4本・dangling 0)。references/package-contract.json entry_points.commands も同4本で parity 済み(2026-07-11 lead 適用・validate-plugin-package 7/7 pass)",
+    "hooks": "lint-script-frontmatter + plugin.json PreToolUse(Write|Edit|MultiEdit) 配線 + references/package-contract.json entry_points.hooks + tests/test_write_path_guard.py (fail-closed 挙動)",
+    "scripts": "lint-script-frontmatter (skills 配下 + plugin-root scripts/) + tests/ 機能テスト (validate-goal-output は同梱 golden-sample-weekly.md との回帰テスト: 正本 PASS + 変異 FAIL)。plugin-root scripts/ (validate-knowledge-graph/index-harness-artifact-graph/consult-harness-artifact-graph) は tests/test_validate_knowledge_graph.py・test_index_harness_artifact_graph.py・test_consult_harness_artifact_graph.py が契約を固定し、PKG-007 が shebang+実行ビットを検査する",
+    "references": "references/resource-map.yaml (run-ubm-goal-setting) が Progressive Disclosure 索引を保持",
+    "assets": "plugin_level_surfaces.references_config_assets の source→build_target で移送元と1対1",
+    "knowledge": "vendor L1 curated 28JSON+router+schema+registry(実台帳67) / sync-log(空初期シード) / check-knowledge-split.py が500行閾値を機械検査",
+    "plugin-manifest": ".claude-plugin/plugin.json (name↔folder 一致 / 公式 CLI validate 対応 / hooks 配線 / version 0.2.0 / entry_points 5 skills·7 agents·4 commands) + references/package-contract.json (package_mode=bundle / distributable:false / entry_points 台帳=所有4 skills·7 agents·4 commands·1 hook で実体と full parity 済み〔2026-07-11 lead 適用・validate-plugin-package 7/7 pass〕。plugin.json は foreign symlink run-skill-feedback を含む5 skills、package-contract は所有のみ4 skills で、1件差は所有台帳の意味論による意図的非対称)"
+  }
+}

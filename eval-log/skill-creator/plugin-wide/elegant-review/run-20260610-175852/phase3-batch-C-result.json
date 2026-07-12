@@ -1,0 +1,10 @@
+{"batch":"C","fixes":[
+{"finding_ids":["LS-203"],"file":"plugins/skill-governance-lint/scripts/lint-skill-tree.py","summary":"extra top-level dirのpass-onlyを[Warn]出力へ修正","applied":true},
+{"finding_ids":["SS-203"],"file":"plugins/skill-governance-lint/scripts/lint-skill-tree.py","summary":"WARN_SKILL_LINES=280追加(280-300行でwarn)","applied":true},
+{"finding_ids":["MD-208"],"file":"plugins/skill-governance-lint/scripts/lint-skill-completeness.py","summary":"*_refs fail-open修復(3段解決+不存在はexit 1)。YAML行内コメント偽陽性をパーサ修正で解消","applied":true},
+{"finding_ids":["LS-211"],"file":"plugins/skill-governance-lint/scripts/lint-skill-completeness.py","summary":"run kindにmanifestカテゴリ追加(既定warn/STRICT env=1でerror の段階導入)","applied":true},
+{"finding_ids":["LS-215"],"file":"plugins/skill-governance-lint/scripts/lint-path-canonical.py","summary":"check_stale_root_refs追加(scripts内creator-kit参照をfail-closed検出)","applied":true},
+{"finding_ids":["SS-201"],"file":"scripts/run-ci-checks.sh","summary":"構成系lintを全pluginへ拡張(新規分はrun_soft段階導入、STRICT_ALL_PLUGINS=1でerror化)","applied":true},
+{"finding_ids":["MD-208","LS-211","LS-215"],"file":"plugins/skill-governance-lint/tests/test_lint_regressions.py","summary":"回帰テスト6件新規追加(全pass)","applied":true}
+],"dry_run_results":{"pytest新規":"6 passed","pytest既存":"63 passed","run-ci-checks":"PASS 62/WARN 1/FAIL 3(全て既存違反・本バッチ非起因)"},"syntax_check":"pass",
+"residual_risks":["lint-external-refs.py/lint-skill-dep-step7.pyのcreator-kit残存4箇所(親が後続対応)","manifest欠落7skillはwarning棚卸し待ち"]}

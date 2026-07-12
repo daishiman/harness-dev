@@ -1,0 +1,24 @@
+--- a/_base.md
++++ b/_base.md
+@@ -16,6 +16,10 @@ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
++context: fork                               # Subagent は独立 context で起動
++agent: {{subagent_type}}                    # general-purpose / Explore / Plan など
++needs_independent_context: true
++with_subagent_hint: true
+ # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
+ # PreToolUse hook: 文脈依存の危険検査を hook で追加（二段防御）。
+ ---
+@@ -32,6 +36,12 @@ TODO
+ ## Gotchas
+ - TODO
+
++## Subagent / Agent Team 連携（17章）
++- spawn prompt は **lead history を継承しない** ため、必要な context（対象 path、評価観点、severity format）を明示する。
++- `placement_candidates` に `Agent Team` を含めた場合、teammate artifact は `TaskCompleted`、evaluator JSON は `SubagentStop` hook で検証すること。
++- file ownership を分け、同一 file を複数 teammate に触らせない（17章 best practices）。
++- cleanup は必ず lead 経由（teammate cleanup は resource inconsistency を起こす）。
++
+ ## Additional Resources
+ - `references/`
+ {{additional_resources}}

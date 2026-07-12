@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "rubric_id": "skill-design",
+  "rubric_version": "1.1.0",
+  "layer": "L0",
+  "threshold": 80,
+  "max_skill_md_lines": 300,
+  "trigger_count_min": 2,
+  "trigger_count_max": 3,
+  "description_no_action_detail": true,
+  "severity_weights": {
+    "high": -20,
+    "medium": -10,
+    "low": -3
+  },
+  "upstream": [
+    "ref-skill-design-rubric/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "rules": [
+    {
+      "id": "FM-001",
+      "area": "frontmatter",
+      "severity": "high",
+      "check": "name matches ^(run|ref|assign|wrap|delegate)-[a-z0-9][a-z0-9-]*$ and len<=60",
+      "rationale": "第1〜5,7条: kebab-case + prefix強制で発動可能性とレイヤを保証"
+    },
+    {
+      "id": "FM-002",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "description contains a trigger phrase (Japanese: 〜とき/〜場合/〜際/〜時 or English: Use when/Read when) and ends with period or 。",
+      "rationale": "trigger文の統一形式が読み取り精度を上げる。1.1.0より日本語推奨。"
+    },
+    {
+      "id": "FM-003",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "trigger phrase count in description is 2..3 (Japanese 〜とき/〜場合/〜際/〜時 or English when-clauses). 2〜3個（hard rule）",
+      "rationale": "08章の本文設計と lint R1 に合わせ、2〜3個を誤発動と取りこぼしのスイートスポットとする"
+    },
+    {
+      "id": "FM-004",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "description does NOT contain action verbs implying internals ('採点する','JSONで返す','sha256','exit code')",
+      "rationale": "動作詳細は本文化、descriptionはtoken節約のため発動条件のみ"
+    },
+    {
+      "id": "FM-005",
+      "area": "frontmatter",
+      "severity": "low",
+      "check": "description begins with a verb-like token (English verb in {Build, Score, Read, Wrap, Delegate, Generate, Rubric, Naming, Claude} OR a Japanese verb/noun phrase ending in する/行う/実行/生成/採点/評価/構築/参照/読み取り/レビュー/管理)",
+      "rationale": "動詞ベース = 何をするかが冒頭で判る。1.1.0で日本語動詞も許容。"
+    },
+    {
+      "id": "BD-001",
+      "area": "body",
+      "severity": "high",
+      "check": "body contains heading '## Purpose & Output Contract'",
+      "rationale": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提。BD-001は『## Purpose & Output Contract』の厳格一致を要求し、PD-002は『## Purpose』または『## Output Contract』の冒頭30行内出現を許容する緩い条件である（BD-001 ⊂ PD-002 関係）。BD-001 PASS は PD-002 を自動充足するが、heading を分離した場合は BD-001 FAIL / PD-002 PASS の非対称が発生しうる。設計意図は『契約節の存在 (BD-001) と冒頭集約 (PD-002) を直交評価する』こと。"
+    },
+    {
+      "id": "BD-002",
+      "area": "body",
+      "severity": "medium",
+      "check": "body contains heading '## Gotchas'",
+      "rationale": "反パターン提示が読み手の事故を防ぐ(08章)"
+    },
+    {
+      "id": "BD-003",
+      "area": "body",
+      "severity": "high",
+      "check": "body line count (excluding frontmatter) <= 300",
+      "rationale": "300行制約=Less is More、token効率(24章正本)"
+    },
+    {
+      "id": "BD-004",
+      "area": "body",
+      "severity": "medium",
+      "check": "frontmatter.description の 'Use when ...' で示された 2〜3個の発動条件すべてが、body の Steps / Procedure 節に対応する手順として現れている (LLM judge: 各 trigger phrase → body 内の対応箇所を 1:1 で抽出できるか)",
+      "rationale": "description は Claude が『いつ呼ぶか』を判断する契約 (08章)。body が trigger を満たさないと、Skill は呼ばれても約束を履行できず、Goodhart 罠 (描いただけで採点を通す) に陥る。BD-001..003 が『節の存在』を見るのに対し BD-004 は『description ↔ body の整合』を見るため直交する。"
+    },
+    {
+      "id": "NM-001",
+      "area": "naming",
+      "severity": "high",
+      "check": "basename of skill directory == frontmatter.name",
+      "rationale": "第7条: ディレクトリ名と name の不一致はSkill loaderが解決不能"
+    },
+    {
+      "id": "NM-002",
+      "area": "naming",
+      "severity": "medium",
+      "check": "name passes lint-skill-name.py (第1〜5,7条)",
+      "rationale": "命名規約条文の機械検証"
+    },
+    {
+      "id": "NM-003",
+      "area": "naming",
+      "severity": "low",
+      "check": "tree passes lint-skill-tree.py (第8〜13条)",
+      "rationale": "templates/ references/ scripts/ examples/ のファイル命名"
+    },
+    {
+      "id": "PD-001",
+      "area": "progressive-disclosure",
+      "severity": "low",
+      "check": "body lines <= 100 OR references/ directory exists with at least 1 file",
+      "rationale": "07章: 100行超は分割、長文はreferences配下へ"
+    },
+    {
+      "id": "PD-002",
+      "area": "progressive-disclosure",
+      "severity": "medium",
+      "weight": 0.6,
+      "classification": "C3",
+      "check": "body lines 1-30 (excluding frontmatter) contain heading '## Purpose' or '## Output Contract' AND at least one Key Rule / 禁則 (e.g. 'MUST', 'NEVER', '禁止', '必ず')",
+      "rationale": "02章 §設計判断4『SKILL.md の冒頭30行に目的・出力契約・禁則を集約する』(compaction lifecycle 対策) の機械強制。BD-001 との関係: BD-001 が『## Purpose & Output Contract』厳格一致 (heading 完全一致) を要求するのに対し、PD-002 は冒頭30行内に『## Purpose』『## Output Contract』のいずれか + Key Rule を要求する補強ルール。BD-001 PASS なら PD-002 も自動 PASS する包含関係 (BD-001 ⊂ PD-002)。"
+    },
+    {
+      "id": "RG-001",
+      "area": "governance",
+      "severity": "low",
+      "check": "output JSON includes rubric_hash (sha256 of this file)",
+      "rationale": "27章: 採点結果の再現性を保証"
+    }
+  ]
+}

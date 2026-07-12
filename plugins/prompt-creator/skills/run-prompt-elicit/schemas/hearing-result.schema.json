@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/prompt-creator/run-prompt-elicit/schemas/hearing-result.schema.json",
+  "title": "Prompt Hearing Result",
+  "description": "対話ヒアリング局面の中間生データ。brief 構築局面で prompt-brief.json に正規化される前のユーザー回答原文を保持。evaluation_priorities の enum 語彙と maxItems 2 は本 schema が正本 (SSOT)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["session_id", "timestamp", "answers", "goals", "checklist", "evaluation_priorities"],
+  "properties": {
+    "session_id": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "topic": {"type": "string"},
+    "target_skill_input": {"type": "string", "description": "対象 skill (任意)。未指定 = standalone モード (skill 非紐付けの汎用プロンプト、出力先はユーザー指定)"},
+    "responsibility_id_input": {"type": "string"},
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "answer"],
+        "properties": {
+          "question": {"type": "string"},
+          "answer": {"type": "string"},
+          "ai_derived": {"type": "boolean", "default": false, "description": "AI 推定値か否か (導出確認の対象判定)"},
+          "user_confirmed": {"type": "boolean", "default": false}
+        }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "description": "達成ゴール (成果状態文。「何が出来上がれば到達か」)。Layer 5 ゴール定義の材料として brief.goals[] へ正規化される。ユーザー回答が無い場合は AI 最尤補完し answers[].ai_derived=true で仮定を記録する"
+    },
+    "checklist": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "minItems": 1,
+      "description": "完了チェックリスト (第三者が YES/NO で判定できる停止条件文)。Layer 5 完了チェックリストの材料として brief.checklist[] へ正規化される。ユーザー回答が無い場合は AI 最尤補完し answers[].ai_derived=true で仮定を記録する"
+    },
+    "evaluation_priorities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["正確性・精度", "創造性・柔軟性", "ユーザー親和性", "ドメイン専門性", "実行速度・効率"]
+      },
+      "maxItems": 2,
+      "uniqueItems": true,
+      "description": "Pass 0 (動的評価基準) で重みを増す観点。enum 5 値と maxItems 2 の正本 (SSOT) は本 schema。優先度→Pass 強化マッピングは run-prompt-creator-7layer/references/quality-criteria.md §7.2 と相互参照。質問テンプレ (references/elicit-question-bank.md / prompts/R1-interview.md) と interview-user agent は本 enum に従属する。enum 外の回答は本配列に入れず open_questions へ fail-visible に記録する"
+    },
+    "open_questions": {"type": "array", "items": {"type": "string"}}
+  }
+}

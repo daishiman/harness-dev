@@ -1,0 +1,50 @@
+{
+  "plugin": "plugin-dev-planner",
+  "version": "0.1.0",
+  "harness": {
+    "mechanical": [
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/goal-spec.json",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py --inventory plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/component-inventory.json --specs-dir plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py --specs-dir plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py --specs-dir plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py --self-test",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/component-inventory.json",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+      "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-planner"
+    ],
+    "llm_eval": [
+      "assign-plugin-plan-evaluator (kind=assign, context:fork) checks 4 conditions via plugin-dev-plan-evaluator agent",
+      "run-elegant-review C1-C4 all PASS before promotion"
+    ],
+    "threshold": 80,
+    "threshold_note": "threshold:80 は生成 plan の各 buildable component (component-inventory.json) が携帯する harness_coverage{min:80} (= check-spec-gates.py が機械検証する component scope の床) を指す宣言値。plugin 自身の行カバレッジ閾値は CI の per-plugin pytest が担い、本 harness 内に 80 と比較する plugin-local スコアラは持たない。",
+    "llm_eval_note": "llm_eval の各行は『どの独立 skill がどの観点を fork で評価するか』の配線宣言であり、採点器ではない。数値判定は assign-plugin-plan-evaluator の global_thresholds (high==0, medium<=2, all_gates_exit0) で確定する。"
+  },
+  "surfaces": [
+    "skills",
+    "agents",
+    "commands",
+    "hooks",
+    "scripts",
+    "references",
+    "examples",
+    "harness-evals",
+    "plugin-manifest"
+  ],
+  "surfaces_enforced_by": {
+    "skills": "governance-check.yml plugin-dev-planner conformance block (validate-frontmatter/name/description/completeness) + harness-creator-kit-ci.yml per-plugin pytest",
+    "agents": "tests/test_plugin_surfaces.py (owner_skill/responsibility_id/isolation を機械固定)",
+    "commands": "tests/test_plugin_surfaces.py (存在 + frontmatter 契約)",
+    "hooks": "plugin.json PostToolUse 配線 + tests/test_plugin_surfaces.py",
+    "scripts": "tests/ 機能テスト (行カバレッジ≥80) + check-spec-matrix-coverage --self-test",
+    "references": "references/resource-map.yaml + tests/test_matrix_doc_integrity.py が正本参照の実在性と drift を検査",
+    "examples": "tests/test_examples_golden.py が sample-plan を core gates + surface inventory + handoff で検査",
+    "harness-evals": "declarative (本 EVALS.json 自体が harness ゆえ自己 gate せず・mechanical[] の全 invocation が一次。個数は test_gate_parity.py が _gate_defs と機械照合し drift 封止)",
+    "plugin-manifest": "scripts/validate-plugin-completeness.py (manifest name↔folder 一致 / distributable 整合 / TODO placeholder 禁止) + check-plugin-surface-audit.py が plugins/ 配下の現物 surface を横断棚卸し"
+  }
+}

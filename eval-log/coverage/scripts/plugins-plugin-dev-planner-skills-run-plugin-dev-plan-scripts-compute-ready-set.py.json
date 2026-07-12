@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/compute-ready-set.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。depends_on 完了 + consumes 成果物実在 (os.path.exists で producer state==done の代理述語にせず独立検査) + write_scope 非重複の ready-set を決定論計算。衝突ペアは fail-closed 除外 (非決定的タイブレーク禁止)。consumer=harness が subprocess 消費する固定パス起動・stdout schema (FC-5)。TESTS: test_compute_ready_set.py 13 PASS。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

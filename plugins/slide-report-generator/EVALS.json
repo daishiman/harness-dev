@@ -1,0 +1,52 @@
+{
+  "plugin": "slide-report-generator",
+  "version": "0.1.0",
+  "harness": {
+    "mechanical": [
+      "cd plugins/slide-report-generator && python3 -m pytest tests/ -q",
+      "python3 plugins/slide-report-generator/scripts/validate-output-mode.py --mode slide",
+      "python3 plugins/slide-report-generator/scripts/validate-output-mode.py --mode report --report-type internal-analysis",
+      "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "python3 plugins/slide-report-generator/scripts/lint-reference-attribution.py plugins/slide-report-generator",
+      "python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/slide-report-generator",
+      "python3 plugins/slide-report-generator/scripts/lint-vendor-parity.py",
+      "node plugins/slide-report-generator/vendor/tests/test-render-report.js",
+      "node plugins/slide-report-generator/vendor/tests/test-mermaid-render.js",
+      "node plugins/slide-report-generator/vendor/tests/test-cross-deck-consistency.js",
+      "node plugins/slide-report-generator/vendor/scripts/verify-report-runtime.js --self-test"
+    ],
+    "llm_eval": [
+      "deck-evaluator (kind=agent, context:fork) が slide モード成果物(index.html)を 30種思考法・slide rubric(視覚崩れ/1メッセージ/chip/16:9)で区分評価する",
+      "deck-evaluator (kind=agent, context:fork) が report モード成果物(report.html)を 30種思考法・report rubric(可読性/図解適合/情報密度/セクション論理)で区分評価する",
+      "run-slide-report-generate の feedback_contract IN1(inner: output_mode/reportType 値域と一貫伝播) / OUT1(outer: slide=1メッセージ・report=1項目1ビジュアルで視覚崩れ0) を criteria-test として実行する",
+      "run-elegant-review C1-C4 all PASS を各 buildable component の昇格前ゲートとする"
+    ],
+    "threshold": 80,
+    "threshold_note": "threshold:80 は各 buildable component (build 計画正本 plugin-plans/slide-report-generator/component-inventory.json) が携帯する harness_coverage{min:80} の宣言値。plugin 自身の行カバレッジは CI の per-plugin pytest (tests/) が担う。",
+    "llm_eval_note": "llm_eval の各行は『どの独立 agent/契約がどの観点を fork で評価するか』の配線宣言であり採点器ではない。slide/report 両モードの受入が評価系に配線されていることを宣言する (goal-spec C2/C4)。"
+  },
+  "surfaces": [
+    "skills",
+    "agents",
+    "commands",
+    "hooks",
+    "scripts",
+    "schemas",
+    "references",
+    "vendor",
+    "plugin-manifest",
+    "harness-evals"
+  ],
+  "surfaces_enforced_by": {
+    "skills": "governance-check + per-plugin pytest。frontmatter(name/description/kind/allowed-tools) + 7 層本文",
+    "agents": "frontmatter(name/description/kind:agent/tools/owner_skill/prompt_ref/prompt_layer) を機械固定。17 thin adapters が plugin.json entry_points.agents と 1 対 1",
+    "commands": "frontmatter(name/description/argument-hint/allowed-tools/disable-model-invocation) 契約",
+    "hooks": "plugin.json PostToolUse 配線 + hook-postgen-eval.py の fail-soft 挙動",
+    "scripts": "tests/test_validate_output_mode.py / test_validate_report_visual.py + validate-output-mode.py / validate-report-visual.py の exit code 規約",
+    "schemas": "plugin-root schemas/ が runtime SSOT。vendor/schemas-fixtures の重複 schema は持たず、lint-vendor-parity.py が root schemas を upstream digest と照合",
+    "references": "42 upstream + report 新規 5 (report-types/report-writing-rules/report-visual-strategy/mermaid-integration/report-narrative-logic)",
+    "vendor": "lint-vendor-parity.py が189 pinned fileをsha256照合し、package.json/package-lock.jsonのMermaid依存・実test配線2件をsemantic検証（合計191）。additive renderer群はvendor/testsで品質担保",
+    "plugin-manifest": "scripts/validate-plugin-completeness.py (name↔folder 一致 / distributable:false 整合 / placeholder 禁止 / declared hooks 実在)",
+    "harness-evals": "declarative (本 EVALS.json 自体が harness。mechanical[] の全 invocation が一次)"
+  }
+}

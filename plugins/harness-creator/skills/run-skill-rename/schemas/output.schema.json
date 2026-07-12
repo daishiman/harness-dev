@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-skill-rename/output.schema.json",
+  "title": "run-skill-rename output",
+  "type": "object",
+  "required": ["old_name", "new_name", "moved_paths", "updated_refs"],
+  "additionalProperties": false,
+  "properties": {
+    "old_name": {"type": "string"},
+    "new_name": {"type": "string"},
+    "moved_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": {"type": "string"},
+          "to": {"type": "string"}
+        }
+      }
+    },
+    "updated_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "occurrences"],
+        "properties": {
+          "file": {"type": "string"},
+          "occurrences": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "residual_refs": {"type": "array", "items": {"type": "string"}}
+  }
+}

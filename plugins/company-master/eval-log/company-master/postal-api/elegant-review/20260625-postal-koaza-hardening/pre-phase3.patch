@@ -1,0 +1,290 @@
+diff --git a/plugins/company-master/agents/company-master-enrich-attributes.md b/plugins/company-master/agents/company-master-enrich-attributes.md
+index a0e1567..f1a12b8 100644
+--- a/plugins/company-master/agents/company-master-enrich-attributes.md
++++ b/plugins/company-master/agents/company-master-enrich-attributes.md
+@@ -66,7 +66,7 @@ resolve 済みの確定/候補企業に対し、6属性 (会社名・正式名
+ ### 完了チェックリスト (Checklist)
+ 
+ - [ ] 入力エンティティ (`Inputs`) を検証した
+-- [ ] 住所→郵便番号を日本郵便 addresszip API (構造化検索→freeword の2段・一意確定のみ採用) で `NNN-NNNN` (8文字)・『公的データ取得』で出力した
++- [ ] 住所→郵便番号を日本郵便 addresszip API (`data-sources.md` tier2 の3段フォールバック・一意確定のみ採用) で `NNN-NNNN` (8文字)・『公的データ取得』で出力した
+ - [ ] 電話番号は Web 検索で候補+URL を取得し `enrich_company.py --web-findings` へ渡して市外局番×都道府県を検証した
+ - [ ] **gap-driven 試行**: `missing_fields` の各属性について、`attempts` に**無い** `(source, pattern)` のみ Web 検索した (同一パターンの再試行なし・属性あたり最大3手段で打ち切り)
+ - [ ] Web 検索は許可段ホワイトリスト (`data-sources.md` fallback tier 表) 内のみで行った (**郵便番号は Web 検索しない**)
+diff --git a/plugins/company-master/references/data-sources.md b/plugins/company-master/references/data-sources.md
+index 853efe6..35fc9e1 100644
+--- a/plugins/company-master/references/data-sources.md
++++ b/plugins/company-master/references/data-sources.md
+@@ -27,12 +27,12 @@ REST API は **V1 を採用する** (実装の正本: `scripts/resolve_company.p
+ 
+ ## フォールバック多段化 (fallback tier 表・正本)
+ 
+-per-field の取得は下表の tier 順で試行し、**確度ラベルは各 tier の上限を超えて付与しない** (確度昇格禁止 = フォールバックで上位ラベルを付けない。Goodhart 遮断)。定義済み全段 (下記ホワイトリスト内) を試行し尽くしてから空欄保留する。停止条件: 有限1巡・同一 `(source, pattern)` 再試行の機械スキップ・`MAX_ATTEMPTS_PER_FIELD=3` (実装正本: `enrich_company.note_attempt`)。
++per-field の取得は下表の tier 順で試行し、**確度ラベルは各 tier の上限を超えて付与しない** (確度昇格禁止 = フォールバックで上位ラベルを付けない。Goodhart 遮断)。定義済み全段 (下記ホワイトリスト内) を試行し尽くしてから空欄保留する。停止条件: 有限1巡・同一 `(source, pattern)` 再試行の機械スキップ・`MAX_ATTEMPTS_PER_FIELD=3` (Web/agent 等の外部試行上限。日本郵便 `postal_api` 内部 sub-attempts は監査ログとして全件保持。実装正本: `enrich_company.note_attempt`)。
+ 
+ | tier | 手段 | 確度ラベル上限 | 備考 |
+ |---|---|---|---|
+ | tier1 | gBizINFO (検索パターン複数化: 原文 → 正規化名 → 法人格除去名。正本 `resolve_company.name_query_patterns` / `normalize.strip_legal_form`) | 公的データで確認済み | 自動確定条件 (法人番号一致 or 会社名+住所2要素一致) は不変 |
+-| tier2 | 日本郵便 addresszip API (V2 逆引き。構造化検索（`pref_name`/`city_name`/`town_name`。`town_name` は素の町域→小字「字○○」/大字を段階剥離した複数バリアントで照会）→ `freeword`(番地除去) → `{pref/city}` 町域一覧の最長前方一致(`pick_best_prefix`。字マーカー無しの小字・枝番・カナ末尾や数字を含む町域名も拾う) の3段。実装正本 `postal_api.lookup_postal`) | 公的データ取得 | `pick_best`/`pick_best_prefix` がマッチングレベル(1=都道府県/2=市区町村/3=町域)と候補 zip 収束(前方一致段は最長一致+zip収束)で一意確定したもののみ採用 (誤値を入れない非対称コスト原則。前方一致段は一覧不返/不一致なら空欄に縮退するのみで誤値・回帰なし)。検証 URL は日本郵便 郵便番号検索の固定 URL を共用 (weak)。認証/通信失敗時は空欄+備考へ縮退 (auth→`postal_api_unauthorized` / network→`postal_api_unavailable`) |
++| tier2 | 日本郵便 addresszip API (V2 逆引き。構造化検索（`pref_name`/`city_name`/`town_name`。`town_name` は素の町域→小字「字○○」/大字を段階剥離した複数バリアントで照会）→ `freeword`(番地除去) → `{pref/city}` 町域一覧の最長前方一致(`pick_best_prefix`。字マーカー無しの小字・枝番・カナ末尾や数字を含む町域名を拾える設計) の3段。実装正本 `postal_api.lookup_postal`) | 公的データ取得 | `pick_best`/`pick_best_prefix` がマッチングレベル(1=都道府県/2=市区町村/3=町域)と候補 zip 収束(前方一致段は最長一致+zip収束)で一意確定したもののみ採用 (誤値を入れない非対称コスト原則。前方一致段は一覧不返/不一致なら空欄に縮退するのみで誤値・回帰なし。`{pref/city}` 照会で実 API が町域一覧を返すかは再現率の実機確認対象であり、未実証でも精度には影響しない)。検証 URL は日本郵便 郵便番号検索の固定 URL を共用 (weak)。認証/通信失敗時は空欄+備考へ縮退 (auth→`postal_api_unauthorized` / network→`postal_api_unavailable`) |
+ | tier3 | WebSearch (Claude が実施・Python は検証のみ) | ネット検索(要確認) | **根拠 URL 必須** (origin=web で url 空は validate FAIL → 書き込みゲート reject) |
+ | tier4 | 全段不成立 | 未確定(要確認) | 空欄 + 『備考』へ定型文言 (`remarks-templates.md` の `all_tiers_exhausted` 等・試行手段を列挙) で人間へ引き継ぎ |
+ 
+diff --git a/plugins/company-master/scripts/enrich_company.py b/plugins/company-master/scripts/enrich_company.py
+index 9dbdb21..77edee4 100644
+--- a/plugins/company-master/scripts/enrich_company.py
++++ b/plugins/company-master/scripts/enrich_company.py
+@@ -38,8 +38,9 @@ Notion ページ本文へ展開する (確認用URL は DB プロパティ列で
+   - 出力 top-level に missing_fields[] (空欄のままの属性) と attempts[]
+     ({field, source, pattern, result, reject_reason}) を持つ。agent は attempts に無い
+     (source, pattern) のみ次試行する (gap-driven 単調前進)。
+-  - 同一 (field, source, pattern) の再試行は機械的にスキップし、field あたり
+-    MAX_ATTEMPTS_PER_FIELD=3 で打ち切る (有限1巡・無限探索の禁止)。
++  - 同一 (field, source, pattern) の再試行は機械的にスキップし、japanpost 以外は field あたり
++    MAX_ATTEMPTS_PER_FIELD=3 で打ち切る (有限1巡・無限探索の禁止)。japanpost は postal_api の
++    決定論 sub-attempts を監査ログとして全件保持する。
+   - entity.attempts (前パスの試行履歴) は引き継いで重複試行を遮断する (2 パス運用)。
+   - 確度昇格禁止: フォールバックで上位確度ラベルを付けない (validate (g) が機械照合)。
+ 
+@@ -93,7 +94,8 @@ ORIGIN_USER_INPUT = "user_input"
+ ORIGIN_NONE = "none"
+ 
+ # フォールバック多段化の停止条件 (data-sources.md fallback tier 表 正本): field あたりの
+-# 試行記録上限。同一 (source, pattern) の再試行とあわせて機械的にスキップする。
++# 外部/agent 試行記録上限。同一 (source, pattern) の再試行とあわせて機械的にスキップする。
++# japanpost は postal_api 内部の決定論 sub-attempts を監査ログとして全件保持するため上限対象外。
+ MAX_ATTEMPTS_PER_FIELD = 3
+ 
+ 
+@@ -102,12 +104,13 @@ def note_attempt(attempts: list[dict], field: str, source: str, pattern: str,
+     """試行履歴へ 1 件追記する (gap-driven 単調前進の機械強制)。
+ 
+     同一 (field, source, pattern) が既にあれば追記しない (再試行の機械スキップ)。
+-    field あたり MAX_ATTEMPTS_PER_FIELD 件で打ち切る (有限停止)。追記したら True。
++    japanpost 以外は field あたり MAX_ATTEMPTS_PER_FIELD 件で打ち切る (有限停止)。
++    追記したら True。
+     """
+     for a in attempts:
+         if (a.get("field"), a.get("source"), a.get("pattern")) == (field, source, pattern):
+             return False
+-    if sum(1 for a in attempts if a.get("field") == field) >= MAX_ATTEMPTS_PER_FIELD:
++    if source != ORIGIN_JAPANPOST and sum(1 for a in attempts if a.get("field") == field) >= MAX_ATTEMPTS_PER_FIELD:
+         return False
+     attempts.append({"field": field, "source": source, "pattern": pattern,
+                      "result": result, "reject_reason": reject_reason})
+@@ -142,9 +145,10 @@ def normalize_address(addr: str) -> str:
+ def postal_from_address(address: str, company_name: str = "") -> dict:
+     """住所→郵便番号を 日本郵便 addresszip API で逆引きする (公式 API 完結)。
+ 
+-    実体は postal_api.lookup_postal。構造化検索 (pref/city/town) → freeword の 2 段で逆引きし、
+-    pick_best で一意確定したもののみ NNN-NNNN を CERTAINTY_PUBLIC_FETCHED で返す。一意でない/
+-    未一致/取得失敗 (認証/通信) は空欄 + 未確定 + remark_key='postal_code' (誤値を入れない)。
++    実体は postal_api.lookup_postal。構造化検索 (pref/city/town。小字/大字の段階剥離を含む)
++    → freeword → 市区町村一覧の最長前方一致の3段で逆引きし、pick_best / pick_best_prefix で
++    一意確定したもののみ NNN-NNNN を CERTAINTY_PUBLIC_FETCHED で返す。一意でない/未一致/
++    取得失敗 (認証/通信) は空欄 + 未確定 + remark_key='postal_code' (誤値を入れない)。
+     試行履歴は attempts ([{source:'japanpost', pattern, result, reject_reason}]) キーで返る。
+     """
+     return postal_api.lookup_postal(address, company_name=company_name)
+diff --git a/plugins/company-master/scripts/validate_company_master.py b/plugins/company-master/scripts/validate_company_master.py
+index fdc771d..3ee4acd 100644
+--- a/plugins/company-master/scripts/validate_company_master.py
++++ b/plugins/company-master/scripts/validate_company_master.py
+@@ -36,8 +36,10 @@ columns.md の整合ルール (a)-(h) を実判定する。SKILL.md『検証』
+           (例: origin=web なのに『公的データで確認済み』) を FAIL (Goodhart 遮断)
+         * 属性×許可段ホワイトリスト (FIELD_ALLOWED_ORIGINS)。例: postal_code の
+           origin=web (郵便番号の Web 取得) を FAIL
+-      - 旧形式 (source_by_field 無し): 現行検査へ縮退 —『ネット検索(要確認)』行は
+-        source_urls 非空 (Notion行形式は source_urls キーがある場合のみ適用)
++        * 非空 postal_code は origin=japanpost / 確度『公的データ取得』/ 日本郵便検証URLを必須化
++      - 旧形式 (source_by_field 無し): record 形式の非空 postal_code は出典不明として FAIL。
++        それ以外は現行検査へ縮退 —『ネット検索(要確認)』行は source_urls 非空
++        (Notion行形式は source_urls キーがある場合のみ適用)
+   (h) 8列構成・空/未確定法人番号でキー衝突なし (行集合全体で検査)
+ """
+ from __future__ import annotations
+@@ -89,15 +91,16 @@ ORIGIN_CERTAINTY_CAP = {
+     "web": CERTAINTY_WEB,
+     "none": CERTAINTY_UNRESOLVED,
+ }
+-# 属性 × 許可 origin ホワイトリスト (許可段)。postal_code は Web 取得不可 (日本郵便 API のみ)。
++# 属性 × 許可 origin ホワイトリスト (許可段)。postal_code は Web/ユーザー入力不可 (日本郵便 API のみ)。
+ FIELD_ALLOWED_ORIGINS = {
+     "company_name": {"user_input", "web", "none"},
+     "official_name": {"gbizinfo", "web", "user_input", "none"},
+     "address": {"gbizinfo", "web", "user_input", "none"},
+-    "postal_code": {"japanpost", "user_input", "none"},
++    "postal_code": {"japanpost", "none"},
+     "hojin_bango": {"gbizinfo", "web", "user_input", "none"},
+     "phone_number": {"web", "user_input", "none"},
+ }
++JAPANPOST_VERIFY_URL = "https://www.post.japanpost.jp/zipcode/"
+ 
+ ATTRIBUTE_FIELDS = (
+     "company_name", "official_name", "address",
+@@ -255,6 +258,22 @@ def validate_row(rec: dict, idx: int, remark_phrases: set[str]) -> list[str]:
+                     f"{prefix} (g) source_by_field['{field}'] は origin=web だが url が空"
+                     " (ネット検索値は根拠URL必須)"
+                 )
++            if field == "postal_code" and postal:
++                field_certainty = n["certainty_by_field"].get(field)
++                url = (spec.get("url") or "").strip()
++                if origin != "japanpost":
++                    errs.append(
++                        f"{prefix} (g) 非空 postal_code の origin は japanpost 必須"
++                        " (郵便番号は日本郵便 addresszip API のみ採用)"
++                    )
++                if field_certainty != CERTAINTY_PUBLIC_FETCHED:
++                    errs.append(
++                        f"{prefix} (g) 非空 postal_code の属性別確度は『{CERTAINTY_PUBLIC_FETCHED}』必須"
++                    )
++                if url != JAPANPOST_VERIFY_URL:
++                    errs.append(
++                        f"{prefix} (g) 非空 postal_code の検証URLは日本郵便固定URL必須"
++                    )
+             # fallback tier 機械照合 (data-sources.md fallback tier 表 正本)。
+             # (g-1) 属性×許可段ホワイトリスト: 許可されない手段で取得した値を遮断。
+             if origin not in FIELD_ALLOWED_ORIGINS[field]:
+@@ -274,10 +293,16 @@ def validate_row(rec: dict, idx: int, remark_phrases: set[str]) -> list[str]:
+                     f"{prefix} (g) {field} の確度 '{field_certainty}' が origin={origin} の"
+                     f" 上限 '{cap}' を超過 (確度昇格禁止)"
+                 )
+-    elif certainty == CERTAINTY_WEB and (
+-        n["source_format"] == "record" or n["has_source_urls"]
+-    ) and not n["confirm_url"].strip():
+-        errs.append(f"{prefix} (g) 『ネット検索(要確認)』だが根拠URL(source_urls)が空")
++    else:
++        if n["source_format"] == "record" and postal:
++            errs.append(
++                f"{prefix} (g) 非空 postal_code だが source_by_field が無く出典不明"
++                " (郵便番号は origin=japanpost の新形式 record 必須)"
++            )
++        if certainty == CERTAINTY_WEB and (
++            n["source_format"] == "record" or n["has_source_urls"]
++        ) and not n["confirm_url"].strip():
++            errs.append(f"{prefix} (g) 『ネット検索(要確認)』だが根拠URL(source_urls)が空")
+ 
+     expected_cols = (
+         set(ATTRIBUTE_FIELDS) | {"情報の確かさ", "備考"}
+diff --git a/plugins/company-master/skills/run-company-master-build/SKILL.md b/plugins/company-master/skills/run-company-master-build/SKILL.md
+index e4b8a29..e545c1e 100644
+--- a/plugins/company-master/skills/run-company-master-build/SKILL.md
++++ b/plugins/company-master/skills/run-company-master-build/SKILL.md
+@@ -70,9 +70,9 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ - **precondition gate**: gBizINFO トークン未登録は fail-closed (exit 2。企業同定の必須入力)。`--upsert` / backfill 本実行では Notion token / DB ID も fail-closed。日本郵便 client_id・secret_key は郵便番号取得用の任意追加設定であり、未登録時は郵便番号だけ空欄 + 備考へ縮退して他項目の処理を継続する (**プロキシ経由なら `proxy_url` で代替**され client_id/secret_key はクライアントに不要)。**送信元IPは自動検出で解決するため gate に含めず**、登録IPとのズレは実行時に 401 で顕在化し `postal_api_unauthorized` 備考で surface する。障害時は取れた項目だけ書き、中間結果を JSONL 退避して次回リプレイ可能にする (縮退)。
+ - **live スキーマ preflight**: upsert / backfill は書き込み前に Notion API GET database の live スキーマを `references/notion-db-schema.json` (生成元正本: `company-master-columns.md` の8列定義) と照合し、必須8列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・API 不達は**書き込まず fail-closed** (構造化エラー)。プロセス内キャッシュで多重照会を回避する。
+ - **レート制限/リトライ**: Notion API の 429/5xx は `Retry-After` 尊重の指数バックオフで最大5回まで自動リトライし、上限超過は構造化エラー (`NotionAPIRetryExhausted`) で fail-closed。backfill は行単位縮退のため、レート超過・中断時も処理済み行は確定済み・失敗行は replay JSONL へ退避済みで、次回実行で再開できる。
+-- **郵便番号**: 日本郵便 addresszip API (V2 逆引き) で取得する。`scripts/postal_api.py` が構造化検索 (pref/city/town) → freeword の2段で照会し、`pick_best` がマッチングレベルと候補 zip 収束で一意確定したもののみ採用する (誤値を入れない)。一括 DL データは廃止。
++- **郵便番号**: 日本郵便 addresszip API (V2 逆引き) で取得する。`scripts/postal_api.py` が構造化検索 (pref/city/town。town は素の町域→小字/大字を段階剥離した複数バリアント) → freeword → 市区町村一覧の最長前方一致の3段で照会し、`pick_best` / `pick_best_prefix` がマッチングレベル・最長一致・候補 zip 収束で一意確定したもののみ採用する (誤値を入れない)。一括 DL データは廃止。詳細な fallback tier 正本は `references/data-sources.md`。
+ - **責務分離 (Web検索)**: 電話番号・住所のみ入力時の会社名候補の Web 検索は **Claude が goal-seek ループで実施**し、結果 (値+URL) を `enrich_company.py --web-findings <json>` へ渡す。**Python は検索せず検証・整形のみ** (電話は `verify_phone` が市外局番×都道府県を軽量クロスチェック)。
+-- **フォールバック多段化 (fallback tier 正本 = `references/data-sources.md`)**: 一次手段で取得できない属性は tier 順 (tier1 gBizINFO 検索パターン複数化 → tier2 日本郵便 addresszip API → tier3 WebSearch → tier4 空欄+引き継ぎ) に**属性×許可段ホワイトリスト内**で試行する。**確度昇格禁止** (origin → 確度上限は validate (g) が機械照合)。enrich/resolve は `missing_fields[]` + `attempts[]` (`{field, source, pattern, result, reject_reason}`) を出力し、同一 `(source, pattern)` の再試行は機械スキップ・`MAX_ATTEMPTS_PER_FIELD=3` で有限停止する。
++- **フォールバック多段化 (fallback tier 正本 = `references/data-sources.md`)**: 一次手段で取得できない属性は tier 順 (tier1 gBizINFO 検索パターン複数化 → tier2 日本郵便 addresszip API → tier3 WebSearch → tier4 空欄+引き継ぎ) に**属性×許可段ホワイトリスト内**で試行する。**確度昇格禁止** (origin → 確度上限は validate (g) が機械照合)。enrich/resolve は `missing_fields[]` + `attempts[]` (`{field, source, pattern, result, reject_reason}`) を出力し、同一 `(source, pattern)` の再試行は機械スキップ・`MAX_ATTEMPTS_PER_FIELD=3` で有限停止する (日本郵便 `postal_api` 内部 sub-attempts は監査ログとして全件保持)。
+ - **信頼キー不変条項**: Web 検索由来の住所での再 resolve (`--address-provenance web`) は 2 要素一致でも**自動確定しない** (候補列挙へ降格・確度上限『ネット検索(要確認)』)。**再 resolve は最大 1 回**とし、再 resolve で得た法人番号が初回確定値と不一致なら自動確定禁止 (候補列挙 + 人間裁定へ)。
+ - **配布同梱依存**: 実行コードは標準ライブラリ優先。外部 Python ライブラリが必要な場合は plugin-root `vendor/` に同梱し、`scripts/bootstrap_plugin.py` で `sys.path` に追加する。ユーザーの手動 `pip install` を前提にしない。現状の Python 実装に外部依存はない。
+ - **プラグイン構成**: build/backfill の 2 Skill に加え、`commands/` (起動導線), `agents/` (SubAgent 分担), `hooks/` (機密ガード), plugin-root 集約の共有 `scripts/`・`references/`・`prompts/` (実装と SSOT・両 skill 共有), `vendor/` (同梱依存) を含む配布単位として扱う。manifest は `.claude-plugin/plugin.json`。
+@@ -98,7 +98,7 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ - [ ] 自動確定は法人番号一致 or 会社名+住所2要素一致時のみとし、一意確定不能は『未確定(要確認)』で空欄保留し備考に原因を定型記録した
+ - [ ] 取得できない属性は `data-sources.md` の fallback tier 表の**定義済み全段 (許可段ホワイトリスト内) を試行し尽くしてから**空欄保留し、`missing_fields[]` / `attempts[]` を記録した (確度昇格なし・同一 `(source,pattern)` 再試行なし)
+ - [ ] Web 由来住所での再 resolve は最大1回・自動確定なし (法人番号が初回と不一致なら候補列挙へ降格) を守った
+-- [ ] 住所→郵便番号を日本郵便 addresszip API (構造化検索→freeword の2段・一意確定のみ採用) で `NNN-NNNN`・『公的データ取得』で出力した
++- [ ] 住所→郵便番号を日本郵便 addresszip API (`data-sources.md` tier2 の3段フォールバック・一意確定のみ採用) で `NNN-NNNN`・『公的データ取得』で出力した
+ - [ ] 電話番号は Claude が Web 検索し結果を `--web-findings` で渡し、Python(`verify_phone`)が市外局番×都道府県をクロスチェック、不整合・未取得は空欄+要確認にし備考へ定型記録した
+ - [ ] 住所を都道府県起点に正規化し、会社名(通称)と正式名称(登記名)を別属性で保持した
+ - [ ] 取得失敗項目は『備考』へ `remarks-templates.md` の定型文言で記録し、複数失敗は改行区切りで列挙した
+@@ -223,7 +223,7 @@ PY
+ 
+ 以下は品質バグ / 設計矛盾として特定済みのもの。**実データ・API トークン無しでは検証困難なものは別 PR に分離**する (offline で検証可能と判明したものはその時点で対処し解消済みを明記する)。
+ 
+-1. **郵便番号逆引きの一意確定律速 (A4-SYSTEM-01)** — **日本郵便 addresszip API へ移行済み (2026-06-18)**: 旧方式 (郵便番号データの一括 DL + 大口事業所個別番号の第二索引) を廃し、日本郵便公式 API (V2) の逆引きへ一本化した (`scripts/postal_api.py`)。構造化検索 (pref/city/town) → freeword の2段で照会し、`pick_best` がマッチングレベルと候補 zip 収束で一意確定したもののみ採用する (誤値を入れない非対称コスト原則は `pick_best` 単独で担保)。残課題は実 API キー登録後の一意確定率実測のみ (`doctor --probe` + dry-run で実測蓄積後に別 PR)。
++1. **郵便番号逆引きの一意確定律速 (A4-SYSTEM-01)** — **日本郵便 addresszip API へ移行済み (2026-06-18)**: 旧方式 (郵便番号データの一括 DL + 大口事業所個別番号の第二索引) を廃し、日本郵便公式 API (V2) の逆引きへ一本化した (`scripts/postal_api.py`)。現行は構造化検索 (pref/city/town。小字/大字の段階剥離を含む) → freeword → 市区町村一覧の最長前方一致の3段で照会し、`pick_best` / `pick_best_prefix` が一意確定したもののみ採用する (誤値を入れない非対称コスト原則)。残課題は実 API キー登録後の一意確定率実測のみ (`doctor --probe` + dry-run で実測蓄積後に別 PR)。
+ 2. **backfill が validate_row を迂回 (VERT-01)** — **解消済み (2026-06-10)**: `validate_row` は純 offline 決定論で API 疎通不要と判明したため本 PR で対処した。`backfill.py` は PATCH 前に `validate_enriched` (= `validate_company_master.validate_row`) を実行し、違反行は PATCH せず deferred + replay 退避へ回す (単発 upsert と対称の検証ゲート)。offline 回帰テストを `tests/test_company_master.py` に追加済み。
+ 3. **gBizINFO 実装 V1 固定 vs data-sources.md の V2 優先記述の矛盾 (DEDUCT-01)** — **完全解消 (2026-06-10 実トークン疎通で実証)**: `references/data-sources.md` を実装 (V1 採用・正本 `resolve_company.py` の `GBIZINFO_BASE`) に一本化したうえ、実トークンで V1=HTTP 200 / V2=HTTP 404 を確認した。`https://info.gbiz.go.jp/hojin/v2/` は存在せず「V2 優先」の旧記述自体が誤りだったため、移行判断は不要 (V1 が唯一の動作エンドポイント)。
+ 4. **derive_overall_certainty の保守的設計の意図明記 (A4-VALUE-01)** — **解消済み (2026-06-10)**: 『情報の確かさ』値域節 (`references/company-master-columns.md`) に「最も弱い属性に合わせる保守的設計=非対称コスト原則の意図的反映であり、確度を高く見せる方向の変更は禁止」を明記した。
+diff --git a/tests/test_company_master.py b/tests/test_company_master.py
+index eaf9c20..e5bf831 100644
+--- a/tests/test_company_master.py
++++ b/tests/test_company_master.py
+@@ -524,7 +524,7 @@ def test_postal_api_town_variants():
+     assert postal_api._town_variants("北京田字下鳥ノ巣") == ["北京田字下鳥ノ巣", "北京田"]
+     # 先頭「大字」を削る (小字は無いので2件)。
+     assert postal_api._town_variants("大字菱池") == ["大字菱池", "菱池"]
+-    # 大字+小字の両方: 4 段 (素 → 大字付き小字削り → 大字削り → 大字+小字削り)。
++    # 大字+小字の両方: 4バリアント (素 → 大字付き小字削り → 大字削り → 大字+小字削り)。
+     assert postal_api._town_variants("大字北京田字下鳥ノ巣") == [
+         "大字北京田字下鳥ノ巣", "大字北京田", "北京田字下鳥ノ巣", "北京田"]
+     # 字も大字も無い町域は元の1件のみ。
+@@ -849,13 +849,13 @@ def test_validate_per_field_origin_required_and_web_needs_url():
+     assert any("(g)" in e and "phone_number" in e for e in errs), errs
+ 
+ 
+-def test_validate_legacy_record_without_source_by_field_uses_old_gate():
+-    """旧形式 (source_by_field 無し) は現行検査へ縮退する (後方互換 gating)。"""
++def test_validate_legacy_record_without_source_by_field_rejects_nonempty_postal():
++    """旧形式 record の非空郵便番号は出典不明として reject する (書き込みゲート)。"""
+     remark_phrases = set(remarks.load_templates().values())
+     rec = _canonical_record()
+     del rec["source_by_field"]
+-    # 旧形式: web 確度 + source_urls 非空 → PASS (per-field 検査は適用されない)。
+-    assert vcm.validate_row(rec, 0, remark_phrases) == []
++    errs = vcm.validate_row(rec, 0, remark_phrases)
++    assert any("非空 postal_code" in e and "source_by_field" in e for e in errs), errs
+ 
+ 
+ # --- 本文同期: URL 非減少マージ + pagination (B: URL喪失バグ修復) ----------------
+@@ -1645,6 +1645,37 @@ def test_enrich_outputs_missing_fields_and_attempts():
+                                "reject_reason": ""}]
+ 
+ 
++def test_enrich_preserves_all_japanpost_sub_attempts(monkeypatch):
++    """postal_api の内部 attempts は3件を超えても欠落させない (prefix hit の観測性)。"""
++    monkeypatch.setattr(
++        enrich_company, "postal_from_address",
++        lambda address, company_name="": {
++            "value": "997-0053",
++            "certainty": enrich_company.CERTAINTY_PUBLIC_FETCHED,
++            "remark_key": "",
++            "source_url": postal_api.JAPANPOST_VERIFY_URL,
++            "attempts": [
++                {"source": "japanpost", "pattern": "structured_pref_city_town",
++                 "result": "miss", "reject_reason": "該当する住所なし (HTTP 404)"},
++                {"source": "japanpost", "pattern": "structured_town_trimmed",
++                 "result": "miss", "reject_reason": "該当する住所なし (HTTP 404)"},
++                {"source": "japanpost", "pattern": "freeword_no_banchi",
++                 "result": "miss", "reject_reason": "該当する住所なし (HTTP 404)"},
++                {"source": "japanpost", "pattern": "structured_city_prefix_match",
++                 "result": "hit", "reject_reason": ""},
++            ],
++        },
++    )
++    rec = enrich_company.enrich(SAMPLE_ENTITY, SAMPLE_WEB_FINDINGS)
++    postal_attempts = [a for a in rec["attempts"] if a["field"] == "postal_code"]
++    assert [a["pattern"] for a in postal_attempts] == [
++        "structured_pref_city_town",
++        "structured_town_trimmed",
++        "freeword_no_banchi",
++        "structured_city_prefix_match",
++    ]
++
++
+ def test_enrich_attempts_dedupe_and_max(monkeypatch):
+     """同一 (field, source, pattern) の再試行はスキップ、field あたり MAX=3 で打ち切り。"""
+     attempts: list = []
+@@ -1682,6 +1713,18 @@ def test_validate_certainty_cap_and_origin_whitelist():
+         "origin": "web", "url": "https://example.co.jp/zip"}
+     errs = vcm.validate_row(web_postal, 0, remark_phrases)
+     assert any("許可段外" in e and "postal_code" in e for e in errs), errs
++    # 許可 enum 内でも、非空郵便番号の origin は japanpost のみ。
++    user_postal = _canonical_record()
++    user_postal["source_by_field"]["postal_code"] = {"origin": "user_input", "url": ""}
++    errs = vcm.validate_row(user_postal, 0, remark_phrases)
++    assert any("非空 postal_code" in e and "japanpost" in e for e in errs), errs
++    # 確度・検証 URL も japanpost 由来契約と一致している必要がある。
++    bad_postal_meta = _canonical_record()
++    bad_postal_meta["certainty_by_field"]["postal_code"] = "未確定(要確認)"
++    bad_postal_meta["source_by_field"]["postal_code"]["url"] = "https://example.co.jp/zip"
++    errs = vcm.validate_row(bad_postal_meta, 0, remark_phrases)
++    assert any("属性別確度" in e and "postal_code" in e for e in errs), errs
++    assert any("検証URL" in e and "postal_code" in e for e in errs), errs
+     # 上限以内 (origin=gbizinfo の『公的データ取得』等) は FAIL しない (正準 record)。
+     assert vcm.validate_row(_canonical_record(), 0, remark_phrases) == []
+ 

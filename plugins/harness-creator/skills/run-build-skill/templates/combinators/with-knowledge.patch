@@ -1,0 +1,42 @@
+--- a/_base.md
++++ b/_base.md
+@@ -23,6 +23,11 @@ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
++# knowledge-loop: 蓄積/検索/§12フィードバックを組み込む。検索・追加・記録・整合性検証は本 Skill 同梱の scripts/ で完結する (外部ツール不要)。
++knowledge_loop:
++  pattern: {{knowledge_loop.pattern}}       # index-search | router-registry
++  index: knowledge/knowledge-index.json     # router-registry 型は knowledge/router.json
++  usage_log: knowledge/usage-log.jsonl
++  consult_at: {{knowledge_loop.consult_at | default(["runtime"])}}
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -40,6 +45,28 @@ TODO
+ ## 主要ルール
+ {{key_constraints}}
+
++## ナレッジループ
++本 Skill は `knowledge/` に蓄積した知見を実行時に検索し、活用結果を記録して品質を自己改善する。検索・追加・記録・整合性検証はすべて本 Skill 同梱の `scripts/` だけで完結し、外部ツールやメタリポジトリへの依存はない。
++
++### 構造（pattern: {{knowledge_loop.pattern}}）
++- `knowledge/knowledge-index.json`（index-search 型）/ `knowledge/router.json` + `registry.json`（router-registry 型）。いずれも `consult_at: ["runtime"]` を宣言する。
++- 各エントリは必須6フィールド `id / title|content / intent|purpose / background / keywords|tags / source` を満たす。整合性 (ID重複・必須欠落) は `scripts/build_index.py --stats` で検証する。
++
++### 検索（決定論段 → AI段）
++1. `scripts/search_knowledge.py --query "<query>" --limit 5`（Stage1 カテゴリ絞り込み + Stage2 重み付きスコアリング・決定論・100%再現）。
++2. 上位 N 件を文脈に照らして取捨選択する（AI判断）。
++
++### 知見の追加（日々の更新）
++- `scripts/add_entry.py --category <id> --id <eid> --title "..." --intent "..." --background "..." --keywords "k1,k2,..." --source "<出典>"` で追加する。必須6フィールドを検証して追記するため JSON の手編集は不要。誤ったストアへの追加はストアの `consult_at` 不一致として拒否される。
++
++### §12 フィードバックループ（使うほど良くする）
++- 検索→活用のたびに `scripts/record_usage.py --record --query ... --matched-ids ... --used-ids ... --satisfaction helpful|neutral|unhelpful` で `knowledge/usage-log.jsonl` に追記。
++- 定期的に `scripts/record_usage.py --analyze --emit-queue brushup-queue.jsonl` で「マッチするが使われない」「unhelpful 多発」等を検出してキュー化し、`--mark-needs-update` で該当エントリに status を付与、title/keywords/background を改善する。
++
++### ライフサイクル
++- 1ファイル 500行 または 25エントリ超でサブトピック分割（`scripts/build_index.py --stats` で監視）。
++- router-registry 型は `registry.json` の status（pending / processed / needs-update / deprecated）で素材の再同期を追跡。
++
++> このナレッジループは本 Skill 単体で完結する。配布先のどの環境でも、追加・更新・検索・記録が同梱 `scripts/` だけで同じ手順で行える。
++
+ ## ゴールシーク実行

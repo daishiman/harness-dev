@@ -1,0 +1,25 @@
+{
+  "target": {"plugin": "ubm-goal-setting", "skill": "run-ubm-goal-setting", "skill_md_sha256": "d92cf048445de27f88ed90272134e7d10ffecb4f2f8866586c8edc2a2e782429"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
+  "reviewer": "review-group-c-independent-elegance",
+  "reviewed_at": "2026-07-12T00:22:24Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "IN1: output-formats/data-contract define the 21-item hybrid structure once and validate-goal-output.py checks the structure, banned vague wording, numeric/action constraints and at least three do-not-do items before save.",
+      "OUT1: weekly/monthly/bimonthly variants, project-task rules and output formatter are covered by test_validate_goal_output; UBM plugin 199 tests PASS.",
+      "OUT2/C1-C4: the behavioral gate is now explicitly routed in the body from AskUserQuestion through Phase3 dialogue, Phase5 validation and Phase6 scoped Daily.md embed update. Agent/prompt/schema/hook dependencies exist and knowledge mutation delegates to run-ubm-knowledge-sync."
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 5,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "Iteration 1 found OUT2 visible only in frontmatter; iteration 2 added the behavioral acceptance pointer without conflating static design review and live execution evidence."
+}

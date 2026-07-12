@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: traffic-light
+  required_vars: [title, red_label, yellow_label, green_label]
+  optional_vars: [message]
+  use_case: 3色信号で状態を示す（赤=危険/黄=注意/緑=安全）。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0d47a1; }
+    .body { fill: #263238; }
+    .red { fill: #c62828; }
+    .yellow { fill: #f9a825; }
+    .green { fill: #2e7d32; }
+    .label { font-size: 22px; fill: #222; }
+    .legend { font-size: 14px; fill: #555; }
+  </style>
+
+  <text x="40" y="50" class="title">{{title}}</text>
+
+  <rect x="500" y="90" width="200" height="420" rx="20" class="body"/>
+
+  <circle cx="600" cy="170" r="55" class="red"/>
+  <circle cx="600" cy="300" r="55" class="yellow"/>
+  <circle cx="600" cy="430" r="55" class="green"/>
+
+  <text x="730" y="180" class="label">{{red_label}}</text>
+  <text x="730" y="310" class="label">{{yellow_label}}</text>
+  <text x="730" y="440" class="label">{{green_label}}</text>
+
+  <text x="40" y="555" class="legend">凡例: 赤=危険・停止 / 黄=注意 / 緑=安全・進行</text>
+  <text x="40" y="580" class="legend">言いたい一言: {{message}}</text>
+</svg>

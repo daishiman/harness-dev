@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness.local/plugins/skill-intake/intent-contract.schema.json",
+  "title": "skill-intake intent-contract",
+  "description": "再現性の SSOT。5軸(§6)と section_canonical_map はここから派生する。input_spec/output_spec の全 slot が filled になるまで intake は完了しない。本質軸は『入力→出力インテント抽出』であり、input_spec(何を入力するか)と output_spec(何をどう出力して欲しいか)を第一級概念として固定する。§6 five_axes_summary の output_to/input_from は本契約からの派生である。",
+  "x-derives": {
+    "note": "section_canonical_map.json §6_five_axes_summary axes への派生対応表。output_to/input_from は本契約から機械的に導出され、それ以外は従来通り §6 で確定する。",
+    "output_to": "output_spec.sink",
+    "input_from": "input_spec.sources",
+    "real_problem": "§6 axes[axis_id=real_problem] (従来通り、本契約非派生)",
+    "share_target": "§6 axes[axis_id=share_target] (従来通り、本契約非派生)",
+    "knowledge_asset": "§6 axes[axis_id=knowledge_asset] (従来通り、本契約非派生)"
+  },
+  "type": "object",
+  "required": ["intent_contract"],
+  "properties": {
+    "intent_contract": {
+      "type": "object",
+      "description": "入力→出力インテント抽出の第一級契約。input_spec/output_spec/slot_status の3要素で構成し、全 slot filled で完了する。",
+      "required": ["input_spec", "output_spec", "slot_status"],
+      "additionalProperties": false,
+      "properties": {
+        "input_spec": {
+          "type": "object",
+          "description": "何を入力するか。情報源・トリガ・頻度・素材を第一級化する。",
+          "required": ["sources", "trigger", "frequency", "raw_materials"],
+          "additionalProperties": false,
+          "properties": {
+            "sources": {
+              "type": "array",
+              "description": "情報源 (どこから取るか)。§6 input_from はここから派生する。",
+              "minItems": 1,
+              "items": {"type": "string"}
+            },
+            "trigger": {
+              "type": "string",
+              "minLength": 1,
+              "description": "いつ / 何をきっかけに入力が発生するか。"
+            },
+            "frequency": {
+              "type": "string",
+              "description": "入力の発生頻度。",
+              "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]
+            },
+            "raw_materials": {
+              "type": "array",
+              "description": "入力される生の素材 (ファイル種別・データ形式等)。",
+              "minItems": 1,
+              "items": {"type": "string"}
+            }
+          }
+        },
+        "output_spec": {
+          "type": "object",
+          "description": "何をどう出力して欲しいか。出力先・形式・粒度・対象・周期を第一級化する。",
+          "required": ["sink", "format", "granularity", "audience", "cadence"],
+          "additionalProperties": false,
+          "properties": {
+            "sink": {
+              "type": "string",
+              "minLength": 1,
+              "description": "出力先 (どこに出すか)。§6 output_to はここから派生する。"
+            },
+            "format": {
+              "type": "string",
+              "description": "出力形式。",
+              "enum": ["bullet", "table", "prose", "document", "message", "dashboard", "other"]
+            },
+            "granularity": {
+              "type": "string",
+              "minLength": 1,
+              "description": "出力の粒度 (どこまで細かく / 粗く)。"
+            },
+            "audience": {
+              "type": "string",
+              "minLength": 1,
+              "description": "誰向けの出力か。"
+            },
+            "cadence": {
+              "type": "string",
+              "description": "出力の周期。",
+              "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]
+            }
+          }
+        },
+        "slot_status": {
+          "type": "object",
+          "description": "各 slot の provenance。言語化できないユーザーから probe で引き出した痕跡を決定論的に残す。input_spec/output_spec の全 slot について filled=true になるまで intake は完了しない。",
+          "required": [
+            "input_spec.sources",
+            "input_spec.trigger",
+            "input_spec.frequency",
+            "input_spec.raw_materials",
+            "output_spec.sink",
+            "output_spec.format",
+            "output_spec.granularity",
+            "output_spec.audience",
+            "output_spec.cadence"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "input_spec.sources": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "input_spec.trigger": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "input_spec.frequency": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "input_spec.raw_materials": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "output_spec.sink": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "output_spec.format": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "output_spec.granularity": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "output_spec.audience": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            },
+            "output_spec.cadence": {
+              "$ref": "#/properties/intent_contract/properties/slot_status/$defs/status"
+            }
+          },
+          "$defs": {
+            "status": {
+            "type": "object",
+            "required": ["filled", "source"],
+            "additionalProperties": false,
+            "properties": {
+              "filled": {
+                "type": "boolean",
+                "description": "当該 slot が充足済か。"
+              },
+              "source": {
+                "type": "string",
+                "description": "充足の由来。direct_answer=ユーザー直答, probe=追加質問で引出, inferred=文脈推論。",
+                "enum": ["direct_answer", "probe", "inferred"]
+              },
+              "probe_ids": {
+                "type": "array",
+                "description": "source=probe の場合に引き出しに用いた question-bank の probe 識別子列。",
+                "items": {"type": "string"}
+              }
+            }
+            }
+          }
+        }
+      }
+    }
+  }
+}

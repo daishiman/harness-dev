@@ -1,0 +1,8 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/slide-renderer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {"verdict": "PASS", "score": 91, "notes": "genuine実測: reference-existence=prompt_ref prompts/R3-agent-slide-renderer.md(339行)実在。prompt が引く vendor/scripts/render-slide.cjs(687行)・style-builder.cjs・svg-builder.cjs・template-engine.cjs 全て node --check OK の実 engine、schemas/structure.schema.json($CLAUDE_PLUGIN_ROOT/schemas/ に実在・68KB、CONST_001 でスキーマ準拠必須と契約化)、plugin共有 references/slide-type-decision-tree.md・spec-registry.md・unit-system.md・v8-spec-fields.md 全て実在。dangling 0。schema-conformance=name/description(トリガ形・決定論経路/vendor Node engine 明示)/kind=agent/version/owner/tools=Read,Bash/isolation=fork 完備。決定論 render は engine が出力書込ゆえ Write 無し・Bash(node *) 起動=責務に厳密整合。owner-flow=SKILL.md L104『slide 決定論経路(推奨・再現性 100%): slide-renderer→render-slide.cjs』・workflow-manifest R3-generate-evaluate・prompt _role adapter/SSOT 明記。placement-invariant=prompt 339行 SSOT vs adapter 58行。single-responsibility=決定論 slide HTML 生成単一・入力契約検証→出力5ファイル同期確認まで一貫。減点: 共通 boilerplate 型で adapter 固有情報密度が低い(意図的 thin)。"},
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]
+}

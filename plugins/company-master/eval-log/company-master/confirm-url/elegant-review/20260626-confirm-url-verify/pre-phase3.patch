@@ -1,0 +1,1713 @@
+diff --git a/plugins/company-master/README.md b/plugins/company-master/README.md
+index 646e4f0..61239c7 100644
+--- a/plugins/company-master/README.md
++++ b/plugins/company-master/README.md
+@@ -11,12 +11,12 @@
+ > **どこに書き込まれるか(対象読者)**
+ >
+ > 記録先は **tenant 社内の共有 Notion 一覧表(設定済み)** です。社内で使う方は、このまま読み進めれば設定不要でその表に書き込まれます。
+-> **自分の別の Notion で使いたい方**は、同じ8列の一覧表を自分で用意し(列の作り方: [`company-master-columns.md`](references/company-master-columns.md))、書き込み先を切り替えられます(Claude に「出力先の Notion データベースを ○○ に変えて」と頼むか、設定値 `COMPANY_MASTER_NOTION_DATABASE_ID` / `.notion-config.json` で指定。詳細: [`README-setup.md`](references/README-setup.md))。
++> **自分の別の Notion で使いたい方**は、同じ7列の一覧表を自分で用意し(列の作り方: [`company-master-columns.md`](references/company-master-columns.md))、書き込み先を切り替えられます(Claude に「出力先の Notion データベースを ○○ に変えて」と頼むか、設定値 `COMPANY_MASTER_NOTION_DATABASE_ID` / `.notion-config.json` で指定。詳細: [`README-setup.md`](references/README-setup.md))。
+ >
+ > | 使い方 | Notion DB ID | Notion 側で必要なこと |
+ > |---|---|---|
+ > | 社内共有DBを使う | 入力不要(同梱既定値) | 自分の Integration を共有DBの Connections に追加できる権限を持つ人に依頼、または自分で追加 |
+-> | 自分のDBを使う | `COMPANY_MASTER_NOTION_DATABASE_ID` か `.notion-config.json` で指定 | 同じ8列を作り、自分の Integration をそのDBに接続 |
++> | 自分のDBを使う | `COMPANY_MASTER_NOTION_DATABASE_ID` か `.notion-config.json` で指定 | 同じ7列を作り、自分の Integration をそのDBに接続 |
+ >
+ > 401/403 が出る場合は、トークン登録だけでなく **Notion DB 側の Connections に Integration が追加されているか** を確認してください。
+ 
+@@ -50,8 +50,7 @@
+ 
+ | Notion の列 | 内容 | どこから取るか |
+ |---|---|---|
+-| 会社名 | あなたが入力した通称 | 入力そのまま |
+-| 正式名称 | 登記上の正式な社名 | gBizINFO(経済産業省) |
++| 会社名 | 登記上の正式な社名(取れたとき)。取れなければあなたが入力した通称 | gBizINFO(経済産業省) / 入力 |
+ | 住所 | 都道府県から始まる住所 | gBizINFO |
+ | 郵便番号 | `123-4567` の8文字 | 日本郵便データ |
+ | 法人番号 | 13桁の番号 | gBizINFO |
+@@ -59,7 +58,7 @@
+ | 情報の確かさ | その行がどれくらい信頼できるか(下記4種) | 自動判定 |
+ | 備考 | 取れなかった項目の理由(定型文) | 自動記録 |
+ 
+-(上記の8列に加えて、ネット検索した値の**根拠ページURL**は各企業の **Notion ページ本文**に「確認用URL（手動検証用）」として固定の見出し付きで自動記録されます。DB の列は8列のままに保ちます。)
++(「会社名」列は、登記上の正式名称が取れたときはそれを表示し、取れなかったときだけあなたの入力した通称を表示します=**正式名称は会社名列にまとめ、独立した「正式名称」列は作りません**。上記の7列に加えて、ネット検索した値の**根拠ページURL**は各企業の **Notion ページ本文**に「確認用URL（手動検証用）」として固定の見出し付きで自動記録されます。DB の列は7列のままに保ちます。)
+ 
+ 「情報の確かさ」は次の4つのいずれかが入ります(専門用語は使いません):
+ 
+diff --git a/plugins/company-master/agents/company-master-enrich-attributes.md b/plugins/company-master/agents/company-master-enrich-attributes.md
+index f1a12b8..9088e03 100644
+--- a/plugins/company-master/agents/company-master-enrich-attributes.md
++++ b/plugins/company-master/agents/company-master-enrich-attributes.md
+@@ -20,7 +20,7 @@ resolve 済みの確定/候補企業に対し、6属性 (会社名・正式名
+ - 上流 (`company-master-resolve-identity`) からの確定エンティティ JSON: `entity` (hojin_bango / official_name / address / source_url) または `candidates[]`
+ - gap-driven 再試行入力 (任意・2パス運用): 前回 enrich / backfill 出力の `missing_fields[]` と `attempts[]` (`{field, source, pattern, result, reject_reason}`)。backfill 1パス目の `needs_web_search` がこの形で渡る
+ - 実行スクリプト: `../scripts/enrich_company.py` (`--web-findings <json>` で Web 検索結果を受領し検証・整形)、`../scripts/notion_config.py` (トークン解決)
+-- 参照: `../references/company-master-columns.md` (8列定義+確認用URL本文・確度4ラベル)、`../references/data-sources.md` (日本郵便API・gBizINFO)、`../references/japanpost-api-setup.md` (郵便番号 API のキー/IP セットアップ正本)、`../references/remarks-templates.md` (備考定型文言の正本)、`../references/confirm-url-template.md` (確認用URL本文テンプレートの正本)
++- 参照: `../references/company-master-columns.md` (7列定義+確認用URL本文・確度4ラベル)、`../references/data-sources.md` (日本郵便API・gBizINFO)、`../references/japanpost-api-setup.md` (郵便番号 API のキー/IP セットアップ正本)、`../references/remarks-templates.md` (備考定型文言の正本)、`../references/confirm-url-template.md` (確認用URL本文テンプレートの正本)
+ 
+ ## Outputs
+ 
+@@ -42,11 +42,11 @@ resolve 済みの確定/候補企業に対し、6属性 (会社名・正式名
+     "company_name": {"origin": "user_input", "url": ""},
+     "official_name": {"origin": "gbizinfo", "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+     "address": {"origin": "gbizinfo", "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+-    "postal_code": {"origin": "japanpost", "url": "https://www.post.japanpost.jp/zipcode/"},
++    "postal_code": {"origin": "japanpost", "url": "https://www.post.japanpost.jp/"},
+     "hojin_bango": {"origin": "gbizinfo", "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+-    "phone_number": {"origin": "web", "url": "https://..."}
++    "phone_number": {"origin": "web", "url": "https://www.google.com/search?q=%2203-1234-5678%22"}
+   },
+-  "source_urls": [{"attribute": "電話番号", "origin": "web", "url": "https://..."}],
++  "source_urls": [{"attribute": "電話番号", "origin": "web", "url": "https://www.google.com/search?q=%2203-1234-5678%22"}],
+   "missing_fields": [],
+   "attempts": [
+     {"field": "postal_code", "source": "japanpost", "pattern": "addresszip", "result": "hit", "reject_reason": ""},
+diff --git a/plugins/company-master/agents/company-master-notion-upsert.md b/plugins/company-master/agents/company-master-notion-upsert.md
+index 5919bf1..3bbcd6f 100644
+--- a/plugins/company-master/agents/company-master-notion-upsert.md
++++ b/plugins/company-master/agents/company-master-notion-upsert.md
+@@ -17,9 +17,9 @@ enrich 済みレコードを固定 Notion 企業マスタ DB へ安全に反映
+ 
+ ## Inputs
+ 
+-- 上流 (`company-master-enrich-attributes`) からの補完結果 JSON: `fields` / `certainty_by_field` / `overall_certainty` / `remarks_text` / `source_urls`
+-- 実行スクリプト: `../scripts/notion_upsert.py` (DB ID 解決・キー突合・8列upsert・確認用URL本文同期)、`../scripts/confirm_url.py` (確認用URL本文テンプレート展開)、`../scripts/notion_config.py` (DB ID/token 解決の vendored SSOT)、`../scripts/backfill.py` (空欄列補完経路)
+-- 参照: `../references/company-master-columns.md` (8列定義+確認用URL本文)、`../references/confirm-url-template.md` (確認用URL本文テンプレートの正本)、`../references/README-setup.md` (Notion/gBizINFO 必須鍵、日本郵便任意鍵、upsert 挙動)
++- 上流 (`company-master-enrich-attributes`) からの補完結果 JSON: `fields` / `certainty_by_field` / `overall_certainty` / `remarks_text` / `source_by_field`。`source_urls` は `source_by_field` から導出される legacy/派生値で、正入力として扱わない。
++- 実行スクリプト: `../scripts/notion_upsert.py` (DB ID 解決・キー突合・7列upsert(会社名title=正式名称優先)・確認用URL本文同期)、`../scripts/confirm_url.py` (確認用URL本文テンプレート展開)、`../scripts/notion_config.py` (DB ID/token 解決の vendored SSOT)、`../scripts/backfill.py` (空欄列補完経路)
++- 参照: `../references/company-master-columns.md` (7列定義+確認用URL本文)、`../references/confirm-url-template.md` (確認用URL本文テンプレートの正本)、`../references/README-setup.md` (Notion/gBizINFO 必須鍵、日本郵便任意鍵、upsert 挙動)
+ 
+ ## Outputs
+ 
+@@ -29,14 +29,14 @@ enrich 済みレコードを固定 Notion 企業マスタ DB へ安全に反映
+ 
+ ```json
+ {
+-  "action": "upsert",
++  "action": "created",
+   "page_id": "abcd1234-...",
+   "key": "1234567890123",
+   "next_agent": null
+ }
+ ```
+ 
+-`action` は `upsert | create | skip` のいずれか。
++`action` は実装 (`notion_upsert.py`) の戻り値に合わせて `created | updated | skipped | rejected` のいずれか。
+ 
+ ## ゴールシーク実行
+ <!-- 固定手順を書かない。Goal+Checklist を宣言し、手順は実行時に都度生成する。詳細: run-build-skill references/goal-seek-paradigm.md -->
+@@ -81,7 +81,7 @@ enrich 済みレコードを固定 Notion 企業マスタ DB へ安全に反映
+ | 次元 | 本 agent での重点 |
+ |---|---|
+ | 完全性 | upsert/create/skip の全分岐 (法人番号確定×既存行有無の組合せ) を漏れなく処理しているか |
+-| 一貫性 | 信頼キー (gBizINFO 13桁法人番号) の SSOT 定義と突合キーが矛盾なく、8列定義 + 確認用URLページ本文に整合しているか |
++| 一貫性 | 信頼キー (gBizINFO 13桁法人番号) の SSOT 定義と突合キーが矛盾なく、7列定義 (正式名称は会社名 title 統合) + 確認用URLページ本文に整合しているか |
+ | 深度 | 既存非空セル保護・法人番号未確定行の誤更新回避という安全側ガードを十分に効かせているか |
+ | 検証可能性 | DB ID/token が notion_config 経由で解決され、precondition gate (exit 2) が機械的に発火する形か |
+ | 簡潔性 | 決定論判定に LLM 推論を挟まず、親へは action/page_id/key の最小要約のみ返しているか |
+diff --git a/plugins/company-master/commands/company-master-backfill.md b/plugins/company-master/commands/company-master-backfill.md
+index 1d69dee..b21a7a5 100644
+--- a/plugins/company-master/commands/company-master-backfill.md
++++ b/plugins/company-master/commands/company-master-backfill.md
+@@ -1,7 +1,7 @@
+ ---
+ name: company-master-backfill
+ description: 固定 Notion 企業マスタ DB の空欄列・要確認行だけを再取得対象にして backfill する。
+-argument-hint: "[--dry-run]"
++argument-hint: "[--dry-run] [--web-findings <json>] [--migrate-company-title]"
+ allowed-tools: Read, Bash, Skill
+ entrypoint: run-company-master-backfill
+ ---
+diff --git a/plugins/company-master/references/company-master-columns.md b/plugins/company-master/references/company-master-columns.md
+index 1498090..dcf830d 100644
+--- a/plugins/company-master/references/company-master-columns.md
++++ b/plugins/company-master/references/company-master-columns.md
+@@ -1,16 +1,16 @@
+-# Notion 企業マスタ 8列定義 + ページ本文 (正本)
++# Notion 企業マスタ 7列定義 + ページ本文 (正本)
+ 
+-> 企業マスタ DB は **計8列のみ**で構成する: 6属性 + 『情報の確かさ』+ 『備考』。
++> 企業マスタ DB は **計7列のみ**で構成する: 5属性 + 『情報の確かさ』+ 『備考』。
++> **正式名称は独立列を廃止し会社名(title)へ統合する**: 会社名タイトルは gBizINFO 登記名(official_name)を優先表示し、無ければ入力通称(company_name)を表示する。company_name(通称)・official_name(登記名)はともに record の `source_by_field` (出所層) に provenance として保持するが、DB 列は会社名(title)1つに統合する (表示層と出所層の分離・別属性を別 DB 列で持つ不変条件は撤回)。
+ > 確認用URL は DB プロパティ列ではなく**ページ本文**へ固定テンプレートで出力する (`confirm-url-template.md` 正本)。
+-> `source` 列・`last_verified` 列・`確認用URL` 列は追加禁止 (出所区別は『情報の確かさ』列が兼ねる)。
++> `source` 列・`last_verified` 列・`確認用URL` 列・`正式名称` 列は追加禁止 (出所区別は『情報の確かさ』列が兼ね、正式名称は会社名へ統合)。
+ > DB ID はリテラル直書きせず `notion_config.get_db_id('company-master')` で解決する。
+ 
+ ## 列定義
+ 
+ | 列名 | Notion型 | 内容 | フォーマット規約 |
+ |---|---|---|---|
+-| 会社名 | title | 入力通称をそのまま保持 | — |
+-| 正式名称 | rich_text | gBizINFO 登記名 | — |
++| 会社名 | title | gBizINFO 登記名(正式名称)を優先表示・無ければ入力通称。通称は alt_key/同定用に `source_by_field` で保持するが独立列は持たない | — |
+ | 住所 | rich_text | 所在地 | 都道府県起点に正規化 |
+ | 郵便番号 | rich_text | 郵便番号 | 〒なし・ハイフン込み 8文字 `NNN-NNNN` |
+ | 法人番号 | rich_text | gBizINFO 確定 13桁 | 13桁数字 (信頼キー) |
+@@ -22,19 +22,20 @@
+ 
+ 確認用URL は DB プロパティ列ではなく**ページ本文**へ固定テンプレートで出力する (DB 冗長化回避・100% 同一テンプレ SSOT)。テンプレートの唯一の正本は `references/confirm-url-template.md`、展開は `scripts/confirm_url.py` (`render_blocks` / `render_text`) が担う。
+ 
+-**全項目化**: 本文には**全6属性**について「その値をどこで検証できるか」(取得由来 + 検証用URL) を記述する (AI 取得情報の人間検証可能性)。出典の正本は record の `source_by_field` (= `{field: {origin, url}}`)。`source_urls` はそこから**列順**で導出される派生値 (後方互換)。各 field 値は dict で拡張可能 (フォールバック多段化が `attempts` 等を併設できる)。
++**全項目化**: 本文には各属性について「その値をどこで検証できるか」(取得由来 + 検証用URL) を記述する (AI 取得情報の人間検証可能性)。出典の正本は record の `source_by_field` (= `{field: {origin, url}}`, 6 属性 = company_name/official_name/address/postal_code/hojin_bango/phone_number)。**会社名 bullet は official_name(登記名) の出典を統合して 1 本にまとめ、正式名称の独立 bullet は持たない**。`source_urls` は `source_by_field` から**列順**で導出される派生値 (後方互換)。各 field 値は dict で拡張可能 (フォールバック多段化が `attempts` 等を併設できる)。
+ 
+ - **origin enum (5値固定)** と表示語彙 (機関名+一般名。byte 確定値は `confirm-url-template.md` 正本):
+ 
+   | origin | 表示由来 | 検証用URL |
+   |---|---|---|
+   | `gbizinfo` | 経済産業省 gBizINFO | 法人詳細ページ URL (per-value・strong) |
+-  | `japanpost` | 日本郵便 郵便番号データ | 郵便番号検索の固定 URL `https://www.post.japanpost.jp/zipcode/` (weak) |
+-  | `web` | ネット検索 | 根拠ページ URL (per-value・strong)。**URL 必須** |
++  | `japanpost` | 日本郵便 郵便番号データ | 日本郵便トップ (郵便番号検索の入口) の固定 URL `https://www.post.japanpost.jp/` (weak。URL 単独で値を再確認できないことは受容済み trade-off) |
++  | `web` | ネット検索 | per-value 根拠ページ URL または固定検索手段 URL (電話番号は番号埋め込み Google 検索 URL)。**URL 必須** |
+   | `user_input` | ユーザー入力 | URL なし (由来ラベルのみ) |
+   | `none` | 未確定 | URL なし |
+ 
+-- 本文の属性名・順序は本ファイルの列定義 (会社名 → 正式名称 → 住所 → 郵便番号 → 法人番号 → 電話番号) と一致させる。bullet は `- 属性名（表示由来）: URL` / URL 無し由来は `- 属性名: 表示由来（URLなし）` の 2 形式 (断定文言「公的データ由来のためURL不要」は使わない)。
++- 本文 bullet の属性名・順序は会社名 → 住所 → 郵便番号 → 法人番号 → 電話番号 と一致させる (会社名 bullet は official_name の検証 URL を統合する。正式名称の独立 bullet は廃止)。bullet は `- 属性名（表示由来）: URL` / URL 無し由来は `- 属性名: 表示由来（URLなし）` の 2 形式 (断定文言「公的データ由来のためURL不要」は使わない)。
++- **会社名 bullet の R5 抑止**: official_name(登記名) の検証 URL が無く、会社名が `user_input` かつ URL なしのときは会社名 bullet を本文に出さない (『会社名: ユーザー入力（URLなし）』は出力しない)。official_name に gBizINFO 検証 URL があれば会社名 bullet として統合表示する (出所を失わない)。
+ - 全属性が `none` で記録すべき由来が無い未確定行は、定型の未確定文言 1 行を出す (正本: `confirm-url-template.md` の `body_no_fields`)。
+ - create 時はページ本文へ append、update/backfill 時は既存『確認用URL（手動検証用）』セクションを**パースして URL 非減少マージ**のうえ置換する: 今回取得した出典のみ差し替え、既存本文にあって今回 URL を提示できない属性の出典は保持する (既存非空セル保護と対称。出典 URL を本文同期で喪失させない)。同一入力での再同期は byte 一致 (冪等)。
+ - 取得日時・検索クエリは本文に書かない (冪等 byte 安定のため機械層 replay JSONL へ記録する)。
+diff --git a/plugins/company-master/references/confirm-url-template.md b/plugins/company-master/references/confirm-url-template.md
+index 5ea07d8..798c363 100644
+--- a/plugins/company-master/references/confirm-url-template.md
++++ b/plugins/company-master/references/confirm-url-template.md
+@@ -1,7 +1,7 @@
+ # 確認用URL ページ本文 定型テンプレート (正本)
+ 
+ > 確認用URL は Notion DB のプロパティ列ではなく**ページ本文**に固定テンプレートで出力する (DB 冗長化回避・100% 同一テンプレ SSOT)。
+-> 本文は自由記述禁止。**全6属性**の取得由来 (`source_by_field`) と検証用URLを下表の要素から決定論的にレンダリングする。
++> 本文は自由記述禁止。各属性の取得由来 (`source_by_field`) と検証用URLを下表の要素から決定論的にレンダリングする。**会社名 bullet は official_name(登記名) の出典を統合し、正式名称の独立 bullet は持たない** (会社名/住所/郵便番号/法人番号/電話番号 の最大 5 bullet)。
+ > 本ファイルが唯一の正本 (SSOT)。`scripts/confirm_url.py` がパースして展開する。コードに文言を二重定義しない。
+ > 取得日時・検索クエリは本文に書かない (冪等 byte 安定のため機械層 replay JSONL へ記録する)。
+ 
+@@ -30,20 +30,19 @@
+ ## レンダリング規約
+ 
+ - 属性の bullet は 2 形式: URL有り = `bullet_with_url`、URL無し由来 (ユーザー入力 / 未確定など) = `bullet_no_url`。「公的データ由来のためURL不要」のような断定文言は使わない。
+-- 本文の属性名・順序は `company-master-columns.md` の列定義 (会社名 → 正式名称 → 住所 → 郵便番号 → 法人番号 → 電話番号) と一致させる。
+-- `source_by_field` がある行のページ本文 (heading_2 → intro → bullet×6):
++- 本文 bullet の属性名・順序は会社名 → 住所 → 郵便番号 → 法人番号 → 電話番号 と一致させる。**会社名 bullet は official_name(登記名) の出典 (gBizINFO 検証 URL) を統合する**。正式名称の独立 bullet は廃止。official_name の出典が無く会社名が `user_input`(URLなし) のときは会社名 bullet を出さない (R5: 『会社名: ユーザー入力（URLなし）』は出力しない)。
++- `source_by_field` がある行のページ本文 (heading_2 → intro → bullet×5。official_name 由来で会社名を統合した例):
+ 
+   ```
+   ## 確認用URL（手動検証用）
+ 
+   各属性の値の取得由来と検証用URLの一覧です。値の正確性を手動で確認する際に参照してください。
+ 
+-  - 会社名: ユーザー入力（URLなし）
+-  - 正式名称（経済産業省 gBizINFO）: https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123
++  - 会社名（経済産業省 gBizINFO）: https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123
+   - 住所（経済産業省 gBizINFO）: https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123
+-  - 郵便番号（日本郵便 郵便番号データ）: https://www.post.japanpost.jp/zipcode/
++  - 郵便番号（日本郵便 郵便番号データ）: https://www.post.japanpost.jp/
+   - 法人番号（経済産業省 gBizINFO）: https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123
+-  - 電話番号（ネット検索）: https://example.co.jp/company/contact
++  - 電話番号（ネット検索）: https://www.google.com/search?q=%2203-1234-5678%22
+   ```
+ 
+ - 記録すべき由来が 1 件も無い行 (全属性が `none` で URL も無い未確定行) のページ本文 (heading_2 → body_no_fields):
+@@ -57,5 +56,5 @@
+ ## 運用ルール
+ 
+ - 入力の正本は `source_by_field` (= `{field: {origin, url}}`)。`source_urls` は `source_by_field` から列順に導出される派生値で、現行形式は `{attribute, origin, url}` (3キー)。旧2キー形式 (`{attribute, url}`) も後方互換で受理する (origin 欠落時は由来不明の URL を `web` 扱い)。
+-- 2階建て provenance: per-value 取得元 URL (gBizINFO 法人詳細ページ / Web ヒット URL) を strong、固定検証手段 URL (日本郵便 郵便番号検索 https://www.post.japanpost.jp/zipcode/) を weak とし、URL 無し由来は表示由来ラベルのみ記す。
++- 2階建て provenance: per-value 取得元 URL (gBizINFO 法人詳細ページ) を strong、固定検証手段 URL (日本郵便トップ https://www.post.japanpost.jp/ / 番号埋め込み Google 検索) を weak とし、URL 無し由来は表示由来ラベルのみ記す。
+ - create 時はページ本文へ append、update/backfill 時は既存『確認用URL（手動検証用）』セクションを**パースして URL 非減少マージ**のうえ置換する: 今回取得した出典のみ差し替え、既存本文にあって今回 URL を提示できない属性の出典は保持する (既存非空セル保護と対称。出典 URL を本文同期で喪失させない)。
+diff --git a/plugins/company-master/references/data-sources.md b/plugins/company-master/references/data-sources.md
+index 0817992..f0f0b91 100644
+--- a/plugins/company-master/references/data-sources.md
++++ b/plugins/company-master/references/data-sources.md
+@@ -22,7 +22,7 @@ REST API は **V1 を採用する** (実装の正本: `scripts/resolve_company.p
+ |---|---|
+ | 公的データで確認済み | gBizINFO で 13桁法人番号により一意確定した正式名称・所在地・法人番号 |
+ | 公的データ取得 | 日本郵便API等の公的データで一意確定した値 (例: 住所→郵便番号) |
+-| ネット検索(要確認) | Web検索由来の推定値 (電話番号 / 会社名推定)。根拠 URL をページ本文の確認用URLセクション (`confirm-url-template.md` 正本) へ必須記録 |
++| ネット検索(要確認) | Web検索由来の推定値 (電話番号 / 会社名推定)。検証用 URL (per-value 根拠ページ URL **または** 固定検索手段 URL=電話番号は番号埋め込み Google 検索) をページ本文の確認用URLセクション (`confirm-url-template.md` 正本) へ必須記録 |
+ | 未確定(要確認) | 一意確定不能で空欄保留した項目。『備考』へ remarks-templates の定型文言を記録 |
+ 
+ ## フォールバック多段化 (fallback tier 表・正本)
+@@ -32,8 +32,8 @@ per-field の取得は下表の tier 順で試行し、**確度ラベルは各 t
+ | tier | 手段 | 確度ラベル上限 | 備考 |
+ |---|---|---|---|
+ | tier1 | gBizINFO (検索パターン複数化: 原文 → 正規化名 → 法人格除去名。正本 `resolve_company.name_query_patterns` / `normalize.strip_legal_form`) | 公的データで確認済み | 自動確定条件 (法人番号一致 or 会社名+住所2要素一致) は不変 |
+-| tier2 | 日本郵便 addresszip API (V2 逆引き。構造化検索（`pref_name`/`city_name`/`town_name`。`town_name` は素の町域→小字「字○○」/大字を段階剥離した複数バリアントで照会）→ `freeword`(番地除去) → `{pref/city}` 町域一覧の最長前方一致(`pick_best_prefix`。字マーカー無しの小字・枝番・カナ末尾や数字を含む町域名を拾える設計) の3段。実装正本 `postal_api.lookup_postal`) | 公的データ取得 | `pick_best`/`pick_best_prefix` がマッチングレベル(1=都道府県/2=市区町村/3=町域)と候補 zip 収束(前方一致段は最長一致+zip収束)で一意確定したもののみ採用 (誤値を入れない非対称コスト原則。前方一致段は一覧不返/不一致なら空欄に縮退するのみで誤値・回帰なし。`{pref/city}` 照会で実 API が町域一覧を返すかは再現率の実機確認対象であり、未実証でも精度には影響しない)。検証 URL は日本郵便 郵便番号検索の固定 URL を共用 (weak)。認証/通信失敗時は空欄+備考へ縮退 (auth→`postal_api_unauthorized` / network→`postal_api_unavailable`) |
+-| tier3 | WebSearch (Claude が実施・Python は検証のみ) | ネット検索(要確認) | **根拠 URL 必須** (origin=web で url 空は validate FAIL → 書き込みゲート reject) |
++| tier2 | 日本郵便 addresszip API (V2 逆引き。構造化検索（`pref_name`/`city_name`/`town_name`。`town_name` は素の町域→小字「字○○」/大字を段階剥離した複数バリアントで照会）→ `freeword`(番地除去) → `{pref/city}` 町域一覧の最長前方一致(`pick_best_prefix`。字マーカー無しの小字・枝番・カナ末尾や数字を含む町域名を拾える設計) の3段。実装正本 `postal_api.lookup_postal`) | 公的データ取得 | `pick_best`/`pick_best_prefix` がマッチングレベル(1=都道府県/2=市区町村/3=町域)と候補 zip 収束(前方一致段は最長一致+zip収束)で一意確定したもののみ採用 (誤値を入れない非対称コスト原則。前方一致段は一覧不返/不一致なら空欄に縮退するのみで誤値・回帰なし。`{pref/city}` 照会で実 API が町域一覧を返すかは再現率の実機確認対象であり、未実証でも精度には影響しない)。検証 URL は日本郵便トップ (郵便番号検索の入口) の固定 URL `https://www.post.japanpost.jp/` を共用 (weak。URL 単独では値を再確認できない=受容済み trade-off)。認証/通信失敗時は空欄+備考へ縮退 (auth→`postal_api_unauthorized` / network→`postal_api_unavailable`) |
++| tier3 | WebSearch (Claude が実施・Python は検証のみ) | ネット検索(要確認) | **検証用 URL 必須** (origin=web で url 空は validate FAIL → 書き込みゲート reject)。電話番号は per-value 根拠ページの代わりに番号埋め込み Google 検索 URL (`enrich_company.phone_search_url`) を固定手段として持つ (weak。doc の web 定義=per-value 根拠URL または固定検索URL) |
+ | tier4 | 全段不成立 | 未確定(要確認) | 空欄 + 『備考』へ定型文言 (`remarks-templates.md` の `all_tiers_exhausted` 等・試行手段を列挙) で人間へ引き継ぎ |
+ 
+ ### 属性 × 許可 tier ホワイトリスト
+diff --git a/plugins/company-master/references/notion-db-schema.json b/plugins/company-master/references/notion-db-schema.json
+index 491ba31..5f0bf43 100644
+--- a/plugins/company-master/references/notion-db-schema.json
++++ b/plugins/company-master/references/notion-db-schema.json
+@@ -1,9 +1,8 @@
+ {
+-  "_doc": "Notion 企業マスタ DB の機械可読スキーマ (live preflight 照合用)。生成元正本は references/company-master-columns.md の8列定義 + 確度4ラベル値域。列の追加・改名・select オプション変更は columns.md を先に更新し、本ファイルを追従させること。scripts/notion_upsert.py の preflight_schema が upsert/backfill の書き込み前に Notion API GET database の live スキーマと照合し、必須8列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・禁止列の存在・API 不達を fail-closed (書き込まず構造化エラー) で遮断する。",
++  "_doc": "Notion 企業マスタ DB の機械可読スキーマ (live preflight 照合用)。生成元正本は references/company-master-columns.md の7列定義 + 確度4ラベル値域。正式名称は独立列を廃止し会社名(title)へ統合 (official_name は source_by_field の provenance として保持・DB 列でない)。live に旧『正式名称』列が残っている場合も7列構成違反として preflight で fail-closed する。列の追加・改名・select オプション変更は columns.md を先に更新し、本ファイルを追従させること。scripts/notion_upsert.py の preflight_schema が upsert/backfill の書き込み前に Notion API GET database の live スキーマと照合し、必須7列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・禁止列/余剰列の存在・API 不達を fail-closed (書き込まず構造化エラー) で遮断する。",
+   "source_of_truth": "references/company-master-columns.md",
+   "properties": {
+     "会社名": {"type": "title"},
+-    "正式名称": {"type": "rich_text"},
+     "住所": {"type": "rich_text"},
+     "郵便番号": {"type": "rich_text"},
+     "法人番号": {"type": "rich_text"},
+@@ -19,5 +18,5 @@
+     },
+     "備考": {"type": "rich_text"}
+   },
+-  "forbidden_properties": ["source", "last_verified", "確認用URL"]
++  "forbidden_properties": ["source", "last_verified", "確認用URL", "正式名称"]
+ }
+diff --git a/plugins/company-master/scripts/backfill.py b/plugins/company-master/scripts/backfill.py
+index 5b5c162..337aa1c 100644
+--- a/plugins/company-master/scripts/backfill.py
++++ b/plugins/company-master/scripts/backfill.py
+@@ -105,13 +105,28 @@ def append_replay(record: dict) -> None:
+         f.write(json.dumps(record, ensure_ascii=False) + "\n")
+ 
+ 
+-def select_backfill_targets(rows: list[dict]) -> list[dict]:
+-    """空欄列を持つ or 要確認の行のみを対象に絞る。"""
++def select_backfill_targets(rows: list[dict], migrate_company_title: bool = False) -> list[dict]:
++    """空欄列を持つ or 要確認の行のみを対象に絞る。
++
++    company_name(通称) は会社名 title へ official_name を統合した後 (R3/R4) は独立 DB 列として
++    永続化されず enrich の補完対象でもないため、空欄判定から除外する (恒久的に空欄扱いされ全行が
++    無限 backfill 対象化するのを防ぐ・F6)。official_name も列を持たないが row_from_page で title
++    から導出されるため非空 (空欄判定に影響しない)。
++
++    移行モード (migrate_company_title=True): official_name(登記名) が非空で会社名 title (company_name)
++    と異なる行も対象に含める。空欄なし・確定済みの既存登録行でも会社名 title を登記名へ移行できる
++    (移行期は row_from_page が旧『正式名称』列を official_name として読むため title との差で判定できる)。
++    """
+     targets = []
+     for row in rows:
+-        empty_cols = [k for k, v in row.get("fields", {}).items() if not v]
++        f = row.get("fields", {})
++        empty_cols = [k for k, v in f.items() if not v and k != "company_name"]
+         needs_reverify = row.get("certainty") in REQUIRE_REVERIFY_CERTAINTIES
+-        if empty_cols or needs_reverify:
++        needs_title_migration = bool(
++            migrate_company_title and f.get("official_name")
++            and f.get("official_name") != f.get("company_name")
++        )
++        if empty_cols or needs_reverify or needs_title_migration:
+             targets.append({"row": row, "empty_cols": empty_cols})
+     return targets
+ 
+@@ -129,11 +144,18 @@ def _plain_select(prop: dict) -> str:
+ 
+ 
+ def row_from_page(page: dict) -> dict:
+-    """Notion page を backfill 対象判定用の共通 row へ変換する。"""
++    """Notion page を backfill 対象判定用の共通 row へ変換する (7 列構成・移行対応)。
++
++    正式名称列は会社名(title)へ統合 (R4) したため、company_name は title 文字列を読む。
++    official_name は移行期 best-effort で旧『正式名称』列があればそれ、無ければ title へフォールバック
++    する (旧行の登記名を resolve/title 移行で保全する・D6)。
++    """
+     props = page.get("properties", {})
++    title_text = _plain_title(props.get(notion_upsert.COL_COMPANY_NAME, {}))
++    legacy_official = _plain_rich_text(props.get(notion_upsert.COL_OFFICIAL_NAME, {}))
+     fields = {
+-        "company_name": _plain_title(props.get(notion_upsert.COL_COMPANY_NAME, {})),
+-        "official_name": _plain_rich_text(props.get(notion_upsert.COL_OFFICIAL_NAME, {})),
++        "company_name": title_text,
++        "official_name": legacy_official or title_text,
+         "address": _plain_rich_text(props.get(notion_upsert.COL_ADDRESS, {})),
+         "postal_code": _plain_rich_text(props.get(notion_upsert.COL_POSTAL, {})),
+         "hojin_bango": _plain_rich_text(props.get(notion_upsert.COL_HOJIN_BANGO, {})),
+@@ -148,7 +170,7 @@ def row_from_page(page: dict) -> dict:
+ 
+ 
+ def query_rows(db_id: str, token: str) -> list[dict]:
+-    """Notion DB を全件 query し、8列共通 row に変換する (確認用URLはページ本文へ移行)。"""
++    """Notion DB を全件 query し、7列共通 row に変換する (確認用URLはページ本文へ移行)。"""
+     rows: list[dict] = []
+     cursor = None
+     while True:
+@@ -193,6 +215,9 @@ def merge_entity_defaults(row: dict, resolved: dict) -> dict | None:
+     # 既存住所があり、resolve 側住所が空なら既存値を使う。resolve 側がある場合は公的値を優先する。
+     if not entity.get("address") and f.get("address"):
+         entity["address"] = f["address"]
++    for field in ("postal_code", "phone_number"):
++        if f.get(field):
++            entity[field] = f[field]
+     # per-field provenance 伝搬: gBizINFO 法人詳細ページ URL を enrich (source_by_field) へ渡す。
+     # 旧 replay の resolved/entity に source_url が無くても .get 既定で後方互換。
+     entity.setdefault("source_url", resolved.get("source_url", ""))
+@@ -209,13 +234,19 @@ def validate_enriched(enriched: dict) -> list[str]:
+     return validate_company_master.validate_row(enriched, 0, remark_phrases)
+ 
+ 
+-def patch_empty_cells(page_id: str, token: str, row: dict, enriched: dict, dry_run: bool) -> dict:
++def patch_empty_cells(page_id: str, token: str, row: dict, enriched: dict, dry_run: bool,
++                      migrate_company_title: bool = False) -> dict:
+     """既存空欄セルだけ PATCH し、確認用URLはページ本文へ URL 非減少マージで冪等同期する。
+ 
+     本文同期の入力正本は enriched.source_by_field ({field:{origin,url}})。旧形式 record は
+     source_urls へフォールバック (後方互換)。今回 URL を提示できない属性の既存出典は
+     sync_confirm_url_body のマージが保持する (出典 URL を本文同期で喪失させない)。
+     dry-run 時は副作用を抑止し PATCH 内容だけ返す (本文同期も抑止)。
++
++    移行モード (migrate_company_title=True): official_name(登記名) 取得済み行に限り、会社名 title を
++    登記名で上書きする (title に限り既存非空セル保護を解除)。official_name 空行は触らず、住所/郵便/
++    法人番号/電話の非空保護は維持し、alt_key の素材 (company_name 通称) も不変。既に title が登記名
++    なら no-op (冪等)。
+     """
+     existing = dict(row.get("fields", {}))
+     existing.update({
+@@ -223,6 +254,12 @@ def patch_empty_cells(page_id: str, token: str, row: dict, enriched: dict, dry_r
+         "remarks_text": row.get("remarks_text", ""),
+     })
+     props = notion_upsert.build_fill_empty_properties(enriched, existing)
++    if migrate_company_title:
++        official = (enriched.get("fields", {}) or {}).get("official_name", "")
++        if official and existing.get("company_name") != official:
++            # title は build_properties の SSOT (official_name 優先) で組み、会社名列のみ上書き対象に追加。
++            props[notion_upsert.COL_COMPANY_NAME] = (
++                notion_upsert.build_properties(enriched)[notion_upsert.COL_COMPANY_NAME])
+     body = None
+     if not dry_run:
+         if props:
+@@ -249,6 +286,12 @@ def main() -> int:
+         help="page_id キーの属性別候補マップ JSON (2パス運用の再投入口。"
+              "例 {\"<page_id>\": {\"phone\": {\"value\": \"03-...\", \"source_url\": \"https://...\"}}})",
+     )
++    ap.add_argument(
++        "--migrate-company-title", action="store_true",
++        help="移行モード: official_name(登記名) 取得済み行の会社名 title を登記名へ上書きする "
++             "(title に限り既存非空セル保護を解除。住所/郵便/法人番号/電話の保護と alt_key は不変)。"
++             "--dry-run と併用で書き込まず対象だけ確認できる。",
++    )
+     args = ap.parse_args()
+     try:
+         web_findings_map = json.loads(args.web_findings) if args.web_findings else {}
+@@ -274,7 +317,7 @@ def main() -> int:
+         return 2
+ 
+     rows = query_rows(db_id, token)
+-    targets = select_backfill_targets(rows)
++    targets = select_backfill_targets(rows, migrate_company_title=args.migrate_company_title)
+     results = []
+     deferred = 0
+     backfilled = 0
+@@ -315,7 +358,8 @@ def main() -> int:
+                 append_replay(item)
+                 results.append(item)
+                 continue
+-            patched = patch_empty_cells(row["page_id"], token, row, enriched, args.dry_run)
++            patched = patch_empty_cells(row["page_id"], token, row, enriched, args.dry_run,
++                                        migrate_company_title=args.migrate_company_title)
+             if patched["action"] in {"updated", "dry-run"} and patched["patched_properties"]:
+                 backfilled += 1
+             item = {"page_id": row.get("page_id"), "resolved": resolved, "patch": patched,
+diff --git a/plugins/company-master/scripts/company_master.py b/plugins/company-master/scripts/company_master.py
+index e5dc6c4..c6fbc0c 100755
+--- a/plugins/company-master/scripts/company_master.py
++++ b/plugins/company-master/scripts/company_master.py
+@@ -136,6 +136,9 @@ def run_backfill(args: argparse.Namespace) -> int:
+     argv = ["backfill.py"]
+     if args.dry_run:
+         argv.append("--dry-run")
++    # 移行モード: official_name(登記名) 取得済み行の会社名 title を登記名へ上書きする (opt-in)。
++    if getattr(args, "migrate_company_title", False):
++        argv.append("--migrate-company-title")
+     # 2 パス運用の再投入口: 1 パス目の needs_web_search を agent が Web 検索した結果を伝搬。
+     if getattr(args, "web_findings", None):
+         argv += ["--web-findings", args.web_findings]
+@@ -213,12 +216,12 @@ def _doctor_check_notion_reach(db_id: str, notion_token: str | None) -> list[dic
+         notion_upsert.preflight_schema(db_id, notion_token)
+         return [_doctor_item(
+             "OK", "Notion 到達 + schema preflight",
+-            "DB アクセス可・live スキーマは 8列定義 (notion-db-schema.json) と一致",
++            "DB アクセス可・live スキーマは 7列定義 (notion-db-schema.json) と一致",
+         )]
+     except notion_upsert.SchemaPreflightError as e:
+         return [_doctor_item(
+             "FAIL", "Notion 到達 + schema preflight", "; ".join(e.violations),
+-            "README 5-4 の Integration 接続と、references/company-master-columns.md の8列定義に DB を合わせる",
++            "README 5-4 の Integration 接続と、references/company-master-columns.md の7列定義に DB を合わせる",
+         )]
+ 
+ 
+@@ -431,6 +434,10 @@ def main() -> int:
+     sub = parser.add_subparsers(dest="command")
+     backfill_parser = sub.add_parser("backfill", help="Notion 企業マスタの空欄を backfill")
+     backfill_parser.add_argument("--dry-run", action="store_true")
++    backfill_parser.add_argument(
++        "--migrate-company-title", action="store_true",
++        help="移行モード: official_name(登記名) 取得済み行の会社名 title を登記名へ上書き "
++             "(title のみ非空保護解除・alt_key 不変。--dry-run 併用で確認のみ)")
+     # SUPPRESS: 未指定時に top-level --web-findings の値 (run_one 用) を上書きしない。
+     backfill_parser.add_argument("--web-findings", dest="web_findings",
+                                  default=argparse.SUPPRESS,
+diff --git a/plugins/company-master/scripts/confirm_url.py b/plugins/company-master/scripts/confirm_url.py
+index ac32606..41d0f09 100644
+--- a/plugins/company-master/scripts/confirm_url.py
++++ b/plugins/company-master/scripts/confirm_url.py
+@@ -49,11 +49,15 @@ TEMPLATE_KEYS = ("heading", "intro", "bullet_with_url", "bullet_no_url", "body_n
+ # origin enum 5値 (source_by_field[field].origin の値域。columns.md per-field 出典規則と一致)。
+ ORIGIN_KEYS = ("gbizinfo", "japanpost", "web", "user_input", "none")
+ 
+-# 6 属性の表示名と本文順序 (columns.md 列定義と一致。列順 = 本文 bullet 順)。
++# 本文 bullet の属性と順序 (columns.md 列定義と一致。列順 = 本文 bullet 順)。正式名称は独立
++# bullet を廃し会社名へ統合 (R5/D2) したため本文属性は 5 つ。会社名 bullet は official_name(登記名)
++# の検証 URL を統合し、official_name が無く会社名が user_input(URLなし) のときのみ抑止する (R5)。
+ ATTRIBUTE_FIELDS = (
+-    "company_name", "official_name", "address",
++    "company_name", "address",
+     "postal_code", "hojin_bango", "phone_number",
+ )
++# 属性表示名。official_name は本文では会社名へ統合され独立 bullet を持たないが、enrich の
++# 派生 source_urls (列順導出) が正式名称ラベルを参照するため定義は残す (provenance ラベル)。
+ FIELD_LABELS = {
+     "company_name": "会社名",
+     "official_name": "正式名称",
+@@ -146,6 +150,8 @@ def _normalize_source_urls(source_urls: list | None) -> list[dict]:
+         if isinstance(entry, dict):
+             url = (entry.get("url") or "").strip()
+             attribute = (entry.get("attribute") or "").strip()
++            if attribute == FIELD_LABELS["official_name"]:
++                attribute = FIELD_LABELS["company_name"]
+             origin = (entry.get("origin") or "web").strip()
+             if url:
+                 items.append({"attribute": attribute, "origin": origin, "url": url})
+@@ -156,17 +162,43 @@ def _normalize_source_urls(source_urls: list | None) -> list[dict]:
+     return items
+ 
+ 
++def _merged_company_entry(source: dict, labels: dict) -> dict | None:
++    """会社名 bullet を official_name(登記名) 優先で 1 エントリに統合する (R5/D2)。
++
++    official_name に検証 URL か非自明 origin (gbizinfo 等) があれば、その出典を会社名ラベルで
++    出す (登記名の gBizINFO 検証 URL を会社名 bullet へ統合し失わない)。無ければ会社名(通称) へ
++    フォールバックするが、origin=user_input かつ URL なし / origin=none かつ URL なしの会社名
++    bullet は本文に出さない (R5: 『会社名: ユーザー入力（URLなし）』を二度と出さない → None)。
++    """
++    official = source.get("official_name") if isinstance(source.get("official_name"), dict) else {}
++    company = source.get("company_name") if isinstance(source.get("company_name"), dict) else {}
++    for spec in (official, company):
++        origin = (spec.get("origin") or "none").strip()
++        url = (spec.get("url") or "").strip()
++        if url or origin not in ("none", "user_input"):
++            o = origin if origin in labels else "none"
++            return {"attribute": FIELD_LABELS["company_name"], "origin": o,
++                    "origin_label": labels.get(o, labels["none"]), "url": url}
++    return None
++
++
+ def build_entries(source, md_path: Path | None = None) -> list[dict]:
+     """source_by_field(dict) / source_urls(list) を本文 entries へ正規化する。
+ 
+     entries の各要素は {attribute, origin, origin_label, url}。
+-      - dict 入力 (source_by_field): 全 6 属性を columns.md 列順で出力する (欠落 field は none)。
++      - dict 入力 (source_by_field): 会社名(official_name 統合)+住所/郵便番号/法人番号/電話番号 を
++        columns.md 列順で出力する (会社名は R5 で抑止され得るため最大 5・最小 4 件)。
+       - list 入力 (旧 source_urls / マージ済み entries): 要素順を保持する。
+     """
+     labels = load_origin_labels(md_path)
+     entries: list[dict] = []
+     if isinstance(source, dict):
++        company_entry = _merged_company_entry(source, labels)
++        if company_entry is not None:
++            entries.append(company_entry)
+         for field in ATTRIBUTE_FIELDS:
++            if field == "company_name":
++                continue  # 会社名は official_name 統合済み (_merged_company_entry で処理)
+             spec = source.get(field) or {}
+             origin = (spec.get("origin") or "none").strip() if isinstance(spec, dict) else "none"
+             url = (spec.get("url") or "").strip() if isinstance(spec, dict) else ""
+@@ -177,10 +209,14 @@ def build_entries(source, md_path: Path | None = None) -> list[dict]:
+                 "url": url,
+             })
+         return entries
++    legacy_entries: list[dict] = []
+     for item in source or []:
+         if isinstance(item, dict) and "origin_label" in item:
+-            entries.append({
+-                "attribute": (item.get("attribute") or "").strip(),
++            attribute = (item.get("attribute") or "").strip()
++            if attribute == FIELD_LABELS["official_name"]:
++                attribute = FIELD_LABELS["company_name"]
++            legacy_entries.append({
++                "attribute": attribute,
+                 "origin": (item.get("origin") or ("web" if item.get("url") else "none")).strip(),
+                 "origin_label": item["origin_label"],
+                 "url": (item.get("url") or "").strip(),
+@@ -188,13 +224,13 @@ def build_entries(source, md_path: Path | None = None) -> list[dict]:
+             continue
+         for norm in _normalize_source_urls([item]):
+             origin = norm["origin"] if norm["origin"] in labels else "web"
+-            entries.append({
++            legacy_entries.append({
+                 "attribute": norm["attribute"],
+                 "origin": origin,
+                 "origin_label": labels[origin],
+                 "url": norm["url"],
+             })
+-    return entries
++    return merge_entries(legacy_entries, [])
+ 
+ 
+ def parse_bullet(text: str, md_path: Path | None = None) -> dict | None:
+@@ -283,7 +319,7 @@ def _rich_text(content: str) -> list[dict]:
+ def render_blocks(source, md_path: Path | None = None) -> list[dict]:
+     """source_by_field/source_urls/マージ済み entries から Notion children ブロック配列を決定論生成する。
+ 
+-    由来あり: heading_2 + paragraph(intro) + bulleted_list_item×N (全6属性 or エントリ数)。
++    由来あり: heading_2 + paragraph(intro) + bulleted_list_item×N (会社名統合後の属性 or エントリ数)。
+     全未確定: heading_2 + paragraph(body_no_fields)。
+     """
+     tpl = load_template(md_path)
+@@ -332,10 +368,10 @@ def main() -> int:
+                           "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+         "address": {"origin": "gbizinfo",
+                     "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+-        "postal_code": {"origin": "japanpost", "url": "https://www.post.japanpost.jp/zipcode/"},
++        "postal_code": {"origin": "japanpost", "url": "https://www.post.japanpost.jp/"},
+         "hojin_bango": {"origin": "gbizinfo",
+                         "url": "https://info.gbiz.go.jp/hojin/ichiran?hojinBango=1234567890123"},
+-        "phone_number": {"origin": "web", "url": "https://example.co.jp/company/contact"},
++        "phone_number": {"origin": "web", "url": "https://www.google.com/search?q=%2203-1234-5678%22"},
+     }
+     print("=== source_by_field ===")
+     print(render_text(sample))
+diff --git a/plugins/company-master/scripts/enrich_company.py b/plugins/company-master/scripts/enrich_company.py
+index a00e5b5..5780cc0 100644
+--- a/plugins/company-master/scripts/enrich_company.py
++++ b/plugins/company-master/scripts/enrich_company.py
+@@ -24,7 +24,7 @@ references/remarks-templates.md の定型テンプレート文言で原因を記
+ per-field provenance (出典スキーマの正本): 全 6 属性の取得由来を `source_by_field`
+ (= {field: {origin, url}}, origin enum = {gbizinfo, japanpost, web, user_input, none}) として
+ 必ず付与する (company_name=user_input 含む)。gBizINFO 由来 3 属性は法人詳細ページ URL
+-(strong)、郵便番号は日本郵便 郵便番号検索の固定 URL (weak)、電話番号は Web ヒット URL を持つ。
++(strong)、郵便番号は日本郵便トップの固定 URL (weak)、電話番号は番号埋め込み Google 検索の固定 URL (weak) を持つ。
+ 各 field 値 dict は拡張可能 (後続のフォールバック多段化が attempts 等を併設できる)。
+ `source_urls` は source_by_field から ATTRIBUTE_FIELDS 固定順 (columns.md 列順) で導出する
+ 派生値 (後方互換)。後段(notion_upsert)が confirm-url-template.md の定型テンプレートで
+@@ -54,6 +54,7 @@ import argparse
+ import json
+ import re
+ import sys
++import urllib.parse
+ from pathlib import Path
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parent))
+@@ -61,6 +62,7 @@ import remarks as remarks_module  # noqa: E402  (備考定型文言の正本 rem
+ import normalize as normalize_module  # noqa: E402  (会社名/住所正規化の共有正本)
+ import postal_api  # noqa: E402  (日本郵便 addresszip API による住所→郵便番号逆引き)
+ import confirm_url as confirm_url_module  # noqa: E402  (属性表示名/列順の共有定義: FIELD_LABELS)
++import resolve_company  # noqa: E402  (gBizINFO 法人詳細ページ URL の共有正本)
+ 
+ POSTAL_RE = re.compile(r"^\d{3}-\d{4}$")
+ PHONE_RE = re.compile(r"^\d{1,4}(-\d{1,4}){1,3}$")
+@@ -96,6 +98,22 @@ ORIGIN_NONE = "none"
+ # 試行記録上限。同一 (source, pattern) の再試行とあわせて機械的にスキップする。
+ MAX_ATTEMPTS_PER_FIELD = 3
+ 
++# 電話番号の確認用 URL を生成する固定検索手段の SSOT (R2)。Google で `"<電話番号>"`
++# (ダブルクォート完全一致検索) を引くクエリを唯一の定義として持ち、他所で literal 再定義しない。
++PHONE_SEARCH_BASE = "https://www.google.com/search?q="
++
++
++def phone_search_url(phone: str) -> str:
++    """電話番号の確認用 URL を Google 検索クエリで決定論生成する (固定手段・weak provenance)。
++
++    `"<電話番号>"` を urllib.parse.quote で %22+番号へエンコードし、同一番号→同一 URL の
++    byte 安定を保つ (R2)。番号内のハイフンは unreserved のため非エンコードで残る。空番号は空文字。
++    """
++    p = (phone or "").strip()
++    if not p:
++        return ""
++    return PHONE_SEARCH_BASE + urllib.parse.quote(f'"{p}"')
++
+ 
+ def note_attempt(attempts: list[dict], field: str, source: str, pattern: str,
+                  result: str, reject_reason: str = "") -> bool:
+@@ -247,14 +265,16 @@ def enrich(entity: dict, web_findings: dict | None = None) -> dict:
+     official_name = entity.get("official_name", "")
+     address = normalize_address(entity.get("address", ""))
+     gbiz_url = (entity.get("source_url") or "").strip()  # resolve 由来 (旧 replay は .get 既定)
++    if not gbiz_url and entity.get("hojin_bango"):
++        gbiz_url = resolve_company.detail_page_url(str(entity.get("hojin_bango", "")))
+ 
+     fields: dict[str, str] = {
+         "company_name": entity.get("company_name", ""),       # 入力通称を保持
+         "official_name": official_name,                        # gBizINFO 登記名
+         "address": address,
+-        "postal_code": "",
++        "postal_code": entity.get("postal_code", ""),
+         "hojin_bango": entity.get("hojin_bango", ""),
+-        "phone_number": "",
++        "phone_number": entity.get("phone_number", ""),
+     }
+     certainty: dict[str, str] = {}
+     remarks: list[str] = []
+@@ -280,6 +300,18 @@ def enrich(entity: dict, web_findings: dict | None = None) -> dict:
+     if fields["address"]:
+         certainty["address"] = CERTAINTY_PUBLIC_FETCHED
+         source_by_field["address"] = {"origin": ORIGIN_GBIZINFO, "url": gbiz_url}
++    if fields["postal_code"]:
++        certainty["postal_code"] = CERTAINTY_PUBLIC_FETCHED
++        source_by_field["postal_code"] = {
++            "origin": ORIGIN_JAPANPOST,
++            "url": (entity.get("postal_code_source_url") or postal_api.JAPANPOST_VERIFY_URL),
++        }
++    if fields["phone_number"]:
++        certainty["phone_number"] = CERTAINTY_WEB
++        source_by_field["phone_number"] = {
++            "origin": ORIGIN_WEB,
++            "url": phone_search_url(fields["phone_number"]),
++        }
+ 
+     # 郵便番号 (日本郵便 addresszip API 逆引き)。検証 URL は日本郵便 郵便番号検索の固定 URL (weak)。
+     if not fields["postal_code"] and fields["address"]:
+@@ -314,7 +346,8 @@ def enrich(entity: dict, web_findings: dict | None = None) -> dict:
+             else:
+                 remarks.append(p["remark_key"] or "postal_code")
+ 
+-    # 電話番号 (Claude の Web 検索結果を Python が検証・整形)。検証 URL は Web ヒット URL。
++    # 電話番号 (Claude の Web 検索結果を Python が検証・整形)。検証 URL は番号埋め込み Google
++    # 検索の固定 URL (R2・weak。per-value 根拠ページでなく『その番号を検索する手段』を提示)。
+     if not fields["phone_number"]:
+         phone_candidate = web_findings.get("phone")
+         if phone_candidate:
+@@ -332,7 +365,10 @@ def enrich(entity: dict, web_findings: dict | None = None) -> dict:
+         if ph["value"] and PHONE_RE.match(ph["value"]):
+             fields["phone_number"] = ph["value"]
+             certainty["phone_number"] = ph["certainty"]
+-            source_by_field["phone_number"] = {"origin": ORIGIN_WEB, "url": ph["source_url"]}
++            # origin=web 維持・url は固定の Google 検索 URL (R2)。Web ヒット URL でなく
++            # 『番号を再検索する手段』を weak provenance として持つ (doc の web 定義に整合)。
++            source_by_field["phone_number"] = {
++                "origin": ORIGIN_WEB, "url": phone_search_url(fields["phone_number"])}
+         else:
+             certainty["phone_number"] = CERTAINTY_UNRESOLVED
+             remarks.append(ph["remark_key"] or "phone_number")
+diff --git a/plugins/company-master/scripts/notion_upsert.py b/plugins/company-master/scripts/notion_upsert.py
+index 1270c30..13dbb4c 100644
+--- a/plugins/company-master/scripts/notion_upsert.py
++++ b/plugins/company-master/scripts/notion_upsert.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: notion_upsert
+-# purpose: notion_config.get_db_id('company-master')/get_token で解決した企業マスタDBへ確定法人番号キーで8列をupsertし、確認用URLはページ本文へ固定テンプレートで同期する(代替キー時は新規追記のみ)。
++# purpose: notion_config.get_db_id('company-master')/get_token で解決した企業マスタDBへ確定法人番号キーで7列をupsertし(会社名title=正式名称優先・正式名称列は統合廃止)、確認用URLはページ本文へ固定テンプレートで同期する(代替キー時は新規追記のみ)。
+ # inputs:
+ #   - argv: --record <json> (enrich_company の出力 + certainty/remarks/urls)
+ #   - config: notion_config.get_db_id("company-master") 経由 (解決順 env COMPANY_MASTER_NOTION_DATABASE_ID -> .notion-config.json -> notion-config.fixed.json)
+@@ -19,8 +19,9 @@
+ DB は notion_config.get_db_id('company-master') で解決 (リテラル直書き禁止)。
+ token は notion_config.get_token で取得 (共有 Keychain service)。
+ 
+-8 列構成 (key_constraints[A] 正本): 会社名 / 正式名称 / 住所 / 郵便番号 / 法人番号 /
+-電話番号 の 6 属性 + 『情報の確かさ』+ 『備考』。source/last_verified 列は追加禁止。
++7 列構成 (key_constraints[A] 正本): 会社名(title=正式名称優先・通称フォールバック) / 住所 /
++郵便番号 / 法人番号 / 電話番号 の 5 属性 + 『情報の確かさ』+ 『備考』。正式名称は独立列を廃止し
++会社名タイトルへ統合 (official_name は source_by_field で provenance 保持)。source/last_verified 列は追加禁止。
+ 確認用URL は DB プロパティ列ではなく**ページ本文**へ固定テンプレートで出力する
+ (confirm-url-template.md 正本・confirm_url.py が展開。DB 冗長化回避・100% 同一テンプレ SSOT)。
+ 
+@@ -54,8 +55,10 @@ import validate_company_master  # noqa: E402  (deterministic_checks a-h: 書き
+ NOTION_API = "https://api.notion.com/v1"
+ NOTION_VERSION = "2022-06-28"
+ 
+-# Notion プロパティ名 (8 列。日本語列名は Notion DB スキーマと一致させる)。
++# Notion プロパティ名 (7 列。日本語列名は Notion DB スキーマと一致させる)。
+ # 確認用URL はプロパティ列でなくページ本文へ移行 (confirm_url.render_blocks)。
++# COL_OFFICIAL_NAME は DB 列を廃止 (会社名 title へ統合・R4)。旧行/旧 page payload に含まれる
++# 『正式名称』を best-effort で読むため定数だけ残す (extract_existing_fields / backfill.row_from_page)。
+ COL_COMPANY_NAME = "会社名"
+ COL_OFFICIAL_NAME = "正式名称"
+ COL_ADDRESS = "住所"
+@@ -139,7 +142,7 @@ def _api(method: str, path: str, token: str, body: dict | None = None) -> dict:
+ 
+ # --- Notion live スキーマ preflight (fail-closed) -------------------------------
+ # 期待スキーマの機械可読正本は references/notion-db-schema.json (生成元は
+-# company-master-columns.md の8列定義)。書き込み前に live DB と照合し、列欠落・
++# company-master-columns.md の7列定義)。書き込み前に live DB と照合し、列欠落・
+ # 型不一致・『情報の確かさ』select 4オプション不一致・禁止列・API 不達を遮断する。
+ 
+ SCHEMA_JSON = Path(__file__).resolve().parent.parent / "references" / "notion-db-schema.json"
+@@ -175,8 +178,9 @@ def preflight_schema(db_id: str, token: str) -> None:
+     """Notion API GET database の live スキーマを期待スキーマと照合する。
+ 
+     違反/API 不達は SchemaPreflightError を送出 (呼び出し元は書き込まない)。
+-    照合内容: 必須8列の存在・型一致、『情報の確かさ』select 4オプションの完全一致
+-    (欠落も余剰改名も不一致)、禁止列 (source/last_verified/確認用URL) の不在。
++    照合内容: 必須7列の存在・型一致、『情報の確かさ』select 4オプションの完全一致
++    (欠落も余剰改名も不一致)、禁止列 (source/last_verified/確認用URL/正式名称) と
++    任意の余剰列の不在。
+     """
+     expected = load_expected_schema()
+     try:
+@@ -210,9 +214,14 @@ def preflight_schema(db_id: str, token: str) -> None:
+                     f"列 '{name}' の select オプション不一致: "
+                     f"missing={missing} extra={extra} (4ラベル完全一致が必須)"
+                 )
+-    for name in expected.get("forbidden_properties", []):
++    expected_names = set(expected["properties"])
++    forbidden_names = set(expected.get("forbidden_properties", []))
++    for name in sorted(forbidden_names):
+         if name in live_props:
+-            violations.append(f"禁止列 '{name}' が live DB に存在 (8列構成違反)")
++            violations.append(f"禁止列 '{name}' が live DB に存在 (7列構成違反)")
++    extra = sorted(set(live_props) - expected_names - forbidden_names)
++    for name in extra:
++        violations.append(f"余剰列 '{name}' が live DB に存在 (7列構成違反)")
+     if violations:
+         raise SchemaPreflightError(violations)
+ 
+@@ -247,14 +256,19 @@ def _plain_select(prop: dict) -> str:
+ 
+ 
+ def extract_existing_fields(page: dict) -> dict:
+-    """Notion page から8列の既存値を取り出す。既存非空セル保護に使う。
++    """Notion page から7列の既存値を取り出す。既存非空セル保護に使う。
+ 
+     確認用URL はプロパティ列から廃止されページ本文へ移行したため本関数は扱わない。
++    正式名称は独立列を廃止し会社名(title)へ統合 (R4): company_name は title 文字列を読む。
++    official_name は移行期 best-effort で旧『正式名称』列があればそれ、無ければ title へフォールバック
++    する (旧行の登記名を移行 backfill で保全する・D6)。
+     """
+     props = page.get("properties", {})
++    title_text = _plain_title(props.get(COL_COMPANY_NAME, {}))
++    legacy_official = _plain_rich_text(props.get(COL_OFFICIAL_NAME, {}))
+     return {
+-        "company_name": _plain_title(props.get(COL_COMPANY_NAME, {})),
+-        "official_name": _plain_rich_text(props.get(COL_OFFICIAL_NAME, {})),
++        "company_name": title_text,
++        "official_name": legacy_official or title_text,
+         "address": _plain_rich_text(props.get(COL_ADDRESS, {})),
+         "postal_code": _plain_rich_text(props.get(COL_POSTAL, {})),
+         "hojin_bango": _plain_rich_text(props.get(COL_HOJIN_BANGO, {})),
+@@ -269,8 +283,9 @@ def get_page(page_id: str, token: str) -> dict:
+ 
+ 
+ def build_properties(record: dict) -> dict:
+-    """8 列の Notion properties を組み立てる (空欄は出さず既存非空を保護)。
++    """7 列の Notion properties を組み立てる (空欄は出さず既存非空を保護)。
+ 
++    会社名(title)は official_name(登記名) 優先・通称フォールバック (R3)。正式名称は独立列を廃止。
+     record は enrich_company.enrich() の出力契約に従う:
+       fields / certainty_by_field / overall_certainty / remark_keys / remarks_text / source_urls。
+     overall_certainty は enrich が derive_overall_certainty で導出済み、remarks_text は
+@@ -285,9 +300,11 @@ def build_properties(record: dict) -> dict:
+     def rich(v: str) -> dict:
+         return {"rich_text": [{"text": {"content": v}}]} if v else {"rich_text": []}
+ 
++    # 会社名(title)は official_name(登記名) を優先表示し、無ければ company_name(通称) へフォールバック
++    # する (R3)。正式名称は独立列を廃止し本タイトルへ統合 (R4。official_name は source_by_field で保持)。
++    title_value = f.get("official_name") or f.get("company_name", "")
+     props: dict = {
+-        COL_COMPANY_NAME: {"title": [{"text": {"content": f.get("company_name", "")}}]},
+-        COL_OFFICIAL_NAME: rich(f.get("official_name", "")),
++        COL_COMPANY_NAME: {"title": [{"text": {"content": title_value}}]},
+         COL_ADDRESS: rich(f.get("address", "")),
+         COL_POSTAL: rich(f.get("postal_code", "")),
+         COL_HOJIN_BANGO: rich(f.get("hojin_bango", "")),
+@@ -304,12 +321,15 @@ def build_fill_empty_properties(record: dict, existing: dict) -> dict:
+     title(会社名) は既存が空のときのみ出す。確度/備考は、空欄属性がある場合の未確定理由を
+     保持するため、既存が空なら出す。既存非空は触らない。確認用URL はプロパティ列から廃止
+     (ページ本文へ移行) のため本関数は扱わず、本文同期は sync_confirm_url_body が担う。
++
++    会社名 title を既存非空でも登記名へ上書きする移行モードは backfill.patch_empty_cells が
++    オーケストレーション層で担う (本関数は『空欄補完』の意味に閉じ、非空上書きを混ぜない)。
+     """
+     props = build_properties(record)
+     f = record.get("fields", {})
+     mapping = {
+-        COL_COMPANY_NAME: ("company_name", f.get("company_name", "")),
+-        COL_OFFICIAL_NAME: ("official_name", f.get("official_name", "")),
++        # 会社名(title)の補完値は official_name 優先 (build_properties と同一・R3)。
++        COL_COMPANY_NAME: ("company_name", f.get("official_name") or f.get("company_name", "")),
+         COL_ADDRESS: ("address", f.get("address", "")),
+         COL_POSTAL: ("postal_code", f.get("postal_code", "")),
+         COL_HOJIN_BANGO: ("hojin_bango", f.get("hojin_bango", "")),
+@@ -365,8 +385,8 @@ def sync_confirm_url_body(page_id: str, token: str, source) -> dict:
+     手順: GET children (pagination 全件) → heading『確認用URL（手動検証用）』とそれに続く
+     本セクション (次の heading_2 まで or 末尾) の既存 bullet をパース →
+     confirm_url.merge_entries で **URL 非減少マージ** (今回取得した出典のみ差し替え・既存の
+-    出典 URL は保持。列の既存非空セル保護と対称) → 旧セクション DELETE → マージ済み
+-    ブロックを PATCH children で append。同一入力での再実行は byte 一致 (冪等)。
++    出典 URL は保持。列の既存非空セル保護と対称) → マージ済みブロックを PATCH children で
++    append 成功後、旧セクション DELETE。同一入力での再実行は byte 一致 (冪等)。
+ 
+     source は record の source_by_field (dict, 正本) または旧 source_urls (list, 後方互換)。
+     失敗時は本体 (プロパティ書き込み) を落とさず {"confirm_url_body": "failed"} を返すが、
+@@ -394,14 +414,15 @@ def sync_confirm_url_body(page_id: str, token: str, source) -> dict:
+                     parsed = confirm_url.parse_bullet(_block_plain(blk))
+                     if parsed:
+                         existing_entries.append(parsed)
+-            for blk in children[start:end]:
+-                bid = blk.get("id")
+-                if bid:
+-                    _api("DELETE", f"/blocks/{bid}", token)
+         merged = confirm_url.merge_entries(
+             confirm_url.build_entries(source), existing_entries)
+         blocks = confirm_url.render_blocks(merged)
+         _api("PATCH", f"/blocks/{page_id}/children", token, {"children": blocks})
++        if start is not None:
++            for blk in children[start:end]:
++                bid = blk.get("id")
++                if bid:
++                    _api("DELETE", f"/blocks/{bid}", token)
+         return {"confirm_url_body": "synced", "replaced_existing": start is not None,
+                 "kept_existing_urls": sum(
+                     1 for e in existing_entries
+diff --git a/plugins/company-master/scripts/postal_api.py b/plugins/company-master/scripts/postal_api.py
+index 49aa015..244d545 100644
+--- a/plugins/company-master/scripts/postal_api.py
++++ b/plugins/company-master/scripts/postal_api.py
+@@ -68,8 +68,9 @@ BASE_URL = "https://api.da.pf.japanpost.jp"
+ TOKEN_PATH = "/api/v2/j/token"
+ ADDRESSZIP_PATH = "/api/v2/addresszip"
+ # 確定郵便番号の固定検証手段 URL (weak provenance)。API 逆引きは per-value の取得元ページが
+-# 存在しないため、人間が再検証できる日本郵便 郵便番号検索の固定 URL を返す。
+-JAPANPOST_VERIFY_URL = "https://www.post.japanpost.jp/zipcode/"
++# 存在しないため、人間が再検証できる日本郵便 (郵便番号検索の入口) トップ URL を返す。
++# 本値はプラグイン全体の唯一の正本 (SSOT)。他スクリプトは literal 再定義せず本定数を import する。
++JAPANPOST_VERIFY_URL = "https://www.post.japanpost.jp/"
+ 
+ CERTAINTY_PUBLIC_FETCHED = "公的データ取得"
+ CERTAINTY_UNRESOLVED = "未確定(要確認)"
+diff --git a/plugins/company-master/scripts/validate_company_master.py b/plugins/company-master/scripts/validate_company_master.py
+index 3ee4acd..66aaa25 100644
+--- a/plugins/company-master/scripts/validate_company_master.py
++++ b/plugins/company-master/scripts/validate_company_master.py
+@@ -1,10 +1,10 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: validate_company_master
+-# purpose: SKILL.md『検証』とcolumns.mdの8列整合ルール(deterministic_checks a-h)をレコード/Notion行JSONに対し実判定する。確認用URLはページ本文へ移行し検査対象は source_by_field(新形式・per-field出典)/source_urls(旧形式)。
++# purpose: SKILL.md『検証』とcolumns.mdの7列整合ルール(deterministic_checks a-h)をレコード/Notion行JSONに対し実判定する。確認用URLはページ本文へ移行し検査対象は source_by_field(新形式・per-field出典)/source_urls(旧形式)。正式名称列は会社名(title)へ統合済みで列を持たない(official_nameはprovenanceのみ)。
+ # inputs:
+ #   - argv: <records.json> | -  (stdin)。records は record list または単一 record
+-#   - format: enrich/upsert の record {fields, overall_certainty, remarks_text, source_by_field, source_urls} か Notion行相当の8列dict
++#   - format: enrich/upsert の record {fields, overall_certainty, remarks_text, source_by_field, source_urls} か Notion行相当の7列dict
+ # outputs:
+ #   - stdout: 検査サマリ
+ #   - stderr: 違反理由 (行番号付き)
+@@ -18,7 +18,7 @@
+ """企業マスタ deterministic_checks 検証器。
+ 
+ columns.md の整合ルール (a)-(h) を実判定する。SKILL.md『検証』節と build-trace の
+-検証主張に対応する実体。レコード(enrich/upsert の record)または Notion 行相当の 8列 dict
++検証主張に対応する実体。レコード(enrich/upsert の record)または Notion 行相当の 7列 dict
+ を入力に取り、違反を非0終了 + 理由出力で報告する。
+ 
+ 判定項目:
+@@ -40,7 +40,7 @@ columns.md の整合ルール (a)-(h) を実判定する。SKILL.md『検証』
+       - 旧形式 (source_by_field 無し): record 形式の非空 postal_code は出典不明として FAIL。
+         それ以外は現行検査へ縮退 —『ネット検索(要確認)』行は source_urls 非空
+         (Notion行形式は source_urls キーがある場合のみ適用)
+-  (h) 8列構成・空/未確定法人番号でキー衝突なし (行集合全体で検査)
++  (h) 7列構成 (正式名称列は会社名へ統合)・空/未確定法人番号でキー衝突なし (行集合全体で検査)
+ """
+ from __future__ import annotations
+ 
+@@ -51,6 +51,7 @@ from pathlib import Path
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parent))
+ import remarks as remarks_module  # noqa: E402
++from postal_api import JAPANPOST_VERIFY_URL  # noqa: E402  (郵便番号検証URLの唯一の正本を参照・literal再定義しない)
+ 
+ POSTAL_RE = re.compile(r"^\d{3}-\d{4}$")
+ PHONE_RE = re.compile(r"^[\d-]*\d[\d-]*$")  # 数字を含みハイフン許容
+@@ -92,26 +93,34 @@ ORIGIN_CERTAINTY_CAP = {
+     "none": CERTAINTY_UNRESOLVED,
+ }
+ # 属性 × 許可 origin ホワイトリスト (許可段)。postal_code は Web/ユーザー入力不可 (日本郵便 API のみ)。
++# company_name は会社名タイトルへ official_name(登記名) を統合できるため gbizinfo も許可する
++# (cap=『公的データで確認済み』と整合。R3 で title=official_name or company_name)。
+ FIELD_ALLOWED_ORIGINS = {
+-    "company_name": {"user_input", "web", "none"},
++    "company_name": {"user_input", "web", "gbizinfo", "none"},
+     "official_name": {"gbizinfo", "web", "user_input", "none"},
+     "address": {"gbizinfo", "web", "user_input", "none"},
+     "postal_code": {"japanpost", "none"},
+     "hojin_bango": {"gbizinfo", "web", "user_input", "none"},
+     "phone_number": {"web", "user_input", "none"},
+ }
+-JAPANPOST_VERIFY_URL = "https://www.post.japanpost.jp/zipcode/"
++# JAPANPOST_VERIFY_URL は postal_api を唯一の正本として import 済み (literal 再定義しない)。
+ 
++# source_by_field provenance の検査対象 6 属性。official_name は DB 列を廃し会社名タイトルへ
++# 統合 (R3/R4) したが、出所層の provenance としては残す (表示層と出所層の分離・D1)。
+ ATTRIBUTE_FIELDS = (
+     "company_name", "official_name", "address",
+     "postal_code", "hojin_bango", "phone_number",
+ )
+-# Notion 行相当 (日本語列名) からの取り込みマッピング (h: 8列構成検査用)。
++# Notion 行相当 (日本語列名) からの取り込みマッピング (h: 列構成検査用)。
++# 正式名称列は廃止し会社名(title)へ official_name を統合したため 7 列構成 (会社名/住所/郵便番号/
++# 法人番号/電話番号 + 情報の確かさ/備考)。official_name は DB 列ではなく source_by_field で保持する。
+ JP_COL_MAP = {
+-    "会社名": "company_name", "正式名称": "official_name", "住所": "address",
++    "会社名": "company_name", "住所": "address",
+     "郵便番号": "postal_code", "法人番号": "hojin_bango", "電話番号": "phone_number",
+ }
+ REQUIRED_JP_COLS = set(JP_COL_MAP) | {"情報の確かさ", "備考"}
++# Notion 行 (列) として空欄判定する属性 = JP_COL_MAP の値 (official_name は列でないため除外)。
++NOTION_COLUMN_FIELDS = tuple(JP_COL_MAP.values())
+ 
+ 
+ def _source_urls_text(value) -> str:
+@@ -139,6 +148,7 @@ def normalize_record(rec: dict) -> dict:
+ 
+     確認用URL はページ本文へ移行したため検査対象は source_urls (record 形式)。
+     Notion 行形式は確認用URL列を持たないが、source_urls キーがあれば取り込む (後方互換)。
++    正式名称列は廃止し会社名(title)へ official_name を統合したため Notion 行は 7 列構成。
+     """
+     source_by_field = rec.get("source_by_field")
+     if not isinstance(source_by_field, dict):
+@@ -152,7 +162,7 @@ def normalize_record(rec: dict) -> dict:
+         remarks_text = rec.get("remarks_text", "")
+         confirm_url = _source_urls_text(rec.get("source_urls"))
+         has_source_urls = "source_urls" in rec
+-        present_cols = set(ATTRIBUTE_FIELDS) | {"情報の確かさ", "備考"}
++        present_cols = set(fields) | {"情報の確かさ", "備考"}
+         source_format = "record"
+     else:
+         # Notion 行相当 (日本語列名)。確認用URL列は廃止 (本文へ移行)。
+@@ -222,7 +232,12 @@ def validate_row(rec: dict, idx: int, remark_phrases: set[str]) -> list[str]:
+     elif ENGLISH_ENUM_RE.match(certainty):
+         errs.append(f"{prefix} (e) 情報の確かさ '{certainty}' は英語enum値 (日本語ラベル必須)")
+ 
+-    has_empty = any(not f.get(k) for k in ATTRIBUTE_FIELDS)
++    # 空欄判定の対象: record 形式は provenance 6 属性 (official_name 含む)、Notion 行形式は
++    # 実在 7 列の属性 (official_name は列でないため除外)。列を持たない属性で空欄誤検知しない。
++    empty_check_fields = (
++        ATTRIBUTE_FIELDS if n["source_format"] == "record" else NOTION_COLUMN_FIELDS
++    )
++    has_empty = any(not f.get(k) for k in empty_check_fields)
+     if has_empty:
+         if certainty != CERTAINTY_UNRESOLVED:
+             errs.append(f"{prefix} (f) 空欄属性ありだが確度が『未確定(要確認)』でない: '{certainty}'")
+@@ -258,6 +273,11 @@ def validate_row(rec: dict, idx: int, remark_phrases: set[str]) -> list[str]:
+                     f"{prefix} (g) source_by_field['{field}'] は origin=web だが url が空"
+                     " (ネット検索値は根拠URL必須)"
+                 )
++            if origin == "gbizinfo" and f.get(field) and not (spec.get("url") or "").strip():
++                errs.append(
++                    f"{prefix} (g) source_by_field['{field}'] は origin=gbizinfo だが url が空"
++                    " (gBizINFO値は法人詳細ページURL必須)"
++                )
+             if field == "postal_code" and postal:
+                 field_certainty = n["certainty_by_field"].get(field)
+                 url = (spec.get("url") or "").strip()
+@@ -316,7 +336,7 @@ def validate_row(rec: dict, idx: int, remark_phrases: set[str]) -> list[str]:
+         missing = expected_cols - present
+         extra = present - expected_cols
+         if missing:
+-            errs.append(f"{prefix} (h) 必須8列が不足: {', '.join(sorted(missing))}")
++            errs.append(f"{prefix} (h) 必須列が不足: {', '.join(sorted(missing))}")
+         if extra:
+             errs.append(f"{prefix} (h) 禁止/余剰列あり: {', '.join(sorted(extra))}")
+ 
+diff --git a/plugins/company-master/skills/run-company-master-backfill/SKILL.md b/plugins/company-master/skills/run-company-master-backfill/SKILL.md
+index fc27336..7411fa6 100644
+--- a/plugins/company-master/skills/run-company-master-backfill/SKILL.md
++++ b/plugins/company-master/skills/run-company-master-backfill/SKILL.md
+@@ -50,7 +50,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+       verify_by: test
+     - id: IN2
+       loop_scope: inner
+-      text: PATCH 前に validate_enriched (= validate_company_master.validate_row) を実行し、8列構成・郵便番号8文字・電話ハイフン・住所都道府県起点・確度4ラベル enum・origin→確度上限・信頼キーに違反する行は PATCH せず deferred + replay JSONL へ退避すること(validate_company_master.py が実判定)。
++      text: PATCH 前に validate_enriched (= validate_company_master.validate_row) を実行し、7列構成(正式名称は会社名 title へ統合)・郵便番号8文字・電話ハイフン・住所都道府県起点・確度4ラベル enum・origin→確度上限・信頼キーに違反する行は PATCH せず deferred + replay JSONL へ退避すること(validate_company_master.py が実判定)。
+       verify_by: script
+     - id: IN3
+       loop_scope: inner
+@@ -64,13 +64,13 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ # run-company-master-backfill
+ 
+-> 本 skill は `run-company-master-build` と **同一プラグイン (company-master) の共有 SSOT** (plugin-root の `scripts/` `references/` `prompts/`) を `../../` で参照する。8列定義・確度4ラベル・信頼キー・検証 (`validate_company_master`) は build と完全共有し、本 skill 固有は「既存 Notion 行を起点にした空欄補完の制御」に限る。新規企業の断片入力からの同定構築は build skill の責務 (本 skill では扱わない)。
++> 本 skill は `run-company-master-build` と **同一プラグイン (company-master) の共有 SSOT** (plugin-root の `scripts/` `references/` `prompts/`) を `../../` で参照する。7列定義(正式名称は会社名 title 統合)・確度4ラベル・信頼キー・検証 (`validate_company_master`) は build と完全共有し、本 skill 固有は「既存 Notion 行を起点にした空欄補完の制御」に限る。新規企業の断片入力からの同定構築は build skill の責務 (本 skill では扱わない)。
+ 
+ ## 目的と出力契約
+ 
+ **既に存在する** Notion 企業マスタ DB の行を起点に、空欄列または『ネット検索(要確認)』/『未確定(要確認)』の行**だけ**を補完対象にして、企業マスタを確度付きで底上げする。新規行の作成 (断片入力 → resolve → 構築) は対象外であり、それは `run-company-master-build` が担う。
+ 
+-出力先 DB ID は build と同じく `notion_config.get_db_id('company-master')` で解決する (env `COMPANY_MASTER_NOTION_DATABASE_ID` → repo/plugin-root `.notion-config.json` → 同梱 `notion-config.fixed.json` の順)。Notion 列 (計8列) / 確度4ラベル / 信頼キー (gBizINFO 13桁法人番号) / 確認用URL本文テンプレートは `../../references/company-master-columns.md` ほか共有 references を正本とする (build と単一 SSOT・二重定義しない)。
++出力先 DB ID は build と同じく `notion_config.get_db_id('company-master')` で解決する (env `COMPANY_MASTER_NOTION_DATABASE_ID` → repo/plugin-root `.notion-config.json` → 同梱 `notion-config.fixed.json` の順)。Notion 列 (計7列・正式名称は会社名 title 統合) / 確度4ラベル / 信頼キー (gBizINFO 13桁法人番号) / 確認用URL本文テンプレートは `../../references/company-master-columns.md` ほか共有 references を正本とする (build と単一 SSOT・二重定義しない)。
+ 
+ **既存非空セルは上書きしない。** 補完するのは空欄列と要確認行のみ。取得不能な項目は誤値を入れず空欄 + 『未確定(要確認)』を維持し、原因を『備考』へ `../../references/remarks-templates.md` の定型文言で記録する。ネット検索由来値の根拠 URL は**ページ本文の確認用URLセクション**へ固定テンプレートで記録し、既存セクションは **URL 非減少マージ** (今回取得分のみ差し替え・既存出典 URL を喪失させない) で同期する。
+ 
+@@ -87,7 +87,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ - **フォーマット規約**: 郵便番号 `NNN-NNNN` 8文字 / 電話番号ハイフン区切り / 住所都道府県起点 (`../../references/company-master-columns.md`)。
+ - **確度4ラベル固定**: `公的データで確認済み | 公的データ取得 | ネット検索(要確認) | 未確定(要確認)` (英語コード値禁止)。
+ - **信頼キー (SSOT)**: upsert 一意キーは gBizINFO 確定 13桁法人番号のみ。未確定行は代替キー (正規化会社名+住所ハッシュ) で**既存行を誤更新せず**扱う。
+-- **live スキーマ preflight**: 書き込み前に Notion live スキーマを `../../references/notion-db-schema.json` と照合し、必須8列の欠落・型不一致・select 4オプション不一致・API 不達は**書き込まず fail-closed**。
++- **live スキーマ preflight**: 書き込み前に Notion live スキーマを `../../references/notion-db-schema.json` と照合し、必須7列の欠落・型不一致・select 4オプション不一致・禁止列/余剰列 (旧『正式名称』列を含む)・API 不達は**書き込まず fail-closed**。
+ - **precondition gate / 認証**: Notion token・gBizINFO トークン未登録は fail-closed (exit 2)。日本郵便鍵 (client_id・secret_key) は郵便番号取得用の任意追加設定であり、未設定時は郵便番号だけ空欄 + 備考へ縮退して他項目の補完を継続する。**プロキシ経由は `proxy_url` 代替**でローカル鍵を不要にする (`backfill.precondition_gate` が単発 upsert と対称化済)。送信元IPは自動検出で解決するため gate に含めない。token は `notion_config` で解決 (独自実装しない・Keychain のみ・平文出力禁止)。
+ - **フォールバック多段化 / 確度昇格禁止 / 信頼キー不変条項**: `../../references/data-sources.md` の fallback tier 表に従い、属性×許可段ホワイトリスト内のみ試行する。origin → 確度上限は `validate_company_master` (g) が機械照合する。
+ 
+@@ -98,6 +98,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ - **2 パス運用 (Web 検索が必要な行)**: backfill は決定論で埋められる列 (法人番号→gBizINFO 属性・住所→日本郵便API 郵便番号) を **1 パス目**で自走補完し、Web 検索が要る列 (電話番号等) は出力 `needs_web_search` (page_id + `missing_fields` + `attempts`) に列挙する。Claude が許可段ホワイトリスト内で Web 検索し、`attempts` に**無い** `(source, pattern)` のみ試行のうえ `backfill --web-findings '{"<page_id>": {"phone": {...}}}'` で **2 パス目**を投入する。
+ - **行単位縮退 + リプレイ**: backfill は行単位で確定/退避する。Notion API の 429/5xx は `Retry-After` 尊重の指数バックオフで最大5回リトライし、上限超過・中断時も処理済み行は確定済み・失敗行は replay JSONL へ退避済みで次回再開できる。`validate_enriched` (= `validate_company_master.validate_row`) を PATCH 前に実行し、違反行は PATCH せず deferred + replay 退避へ回す (単発 upsert と対称の検証ゲート)。
+ - **`--dry-run`**: 副作用を抑えて対象行の選定だけ確認する。
++- **`--migrate-company-title` (移行モード・opt-in)**: official_name(登記名) 取得済み行に限り、会社名 title を登記名へ上書きする (title のみ既存非空保護を解除。住所/郵便/法人番号/電話の保護と alt_key は不変)。official_name 空行は通称のまま触らない。`--dry-run` 併用で対象を確認でき、**live への実行はユーザー判断** (既定 OFF・通称 title を保持)。
+ 
+ ## ゴールシーク実行
+ 
+@@ -138,7 +139,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ ## 検証 (deterministic checks)
+ 
+-build と同一の `../../scripts/validate_company_master.py <records.json>` が実判定する (8列構成・郵便番号8文字・電話ハイフン・住所都道府県起点・確度4ラベル enum・空欄行は『未確定(要確認)』+ 備考定型文言・per-field 出典 origin enum・確度昇格 FAIL・信頼キー)。backfill 固有の不変条件は「既存非空セルが PATCH 前後で不変」であり、`backfill.py` が既存値を読み取り空欄列のみを PATCH 対象にすることで担保する (テストは `tests/test_company_master.py` の backfill ケース)。
++build と同一の `../../scripts/validate_company_master.py <records.json>` が実判定する (7列構成(正式名称は会社名 title 統合)・郵便番号8文字・電話ハイフン・住所都道府県起点・確度4ラベル enum・空欄行は『未確定(要確認)』+ 備考定型文言・per-field 出典 origin enum・確度昇格 FAIL・信頼キー)。backfill 固有の不変条件は「既存非空セルが PATCH 前後で不変」であり、`backfill.py` が既存値を読み取り空欄列のみを PATCH 対象にすることで担保する (テストは `tests/test_company_master.py` の backfill ケース)。
+ 
+ ## 責務マッピング
+ 
+@@ -157,14 +158,14 @@ build と同一の `../../scripts/validate_company_master.py <records.json>` が
+ ## 設計判断ログ
+ 
+ 1. **なぜ build と別 skill か (起動独立性)**: 入力起点が「既存 Notion 行」(build は「ユーザーが渡す断片」)、実行タイミングが「運用中メンテ」(build は「新規登録時」) と独立し、2 パス Web 検索という固有 goal-seek を持つため、起動の独立性に従って分割した。詳細は build SKILL.md「設計判断ログ #1」と対。
+-2. **なぜ実装を共有するか (二重実装回避)**: backfill は resolve/enrich/upsert を 100% 再利用し、独自実装は「空欄列選定 + 2 パス制御 + 行単位縮退」(= `backfill.py`) のみ。共有実装 (scripts) と SSOT (references / prompts) は plugin-root に集約し `../../` で参照する。これにより build と backfill が確度・8列・信頼キー・検証で乖離しない (単一 SSOT)。
++2. **なぜ実装を共有するか (二重実装回避)**: backfill は resolve/enrich/upsert を 100% 再利用し、独自実装は「空欄列選定 + 2 パス制御 + 行単位縮退」(= `backfill.py`) のみ。共有実装 (scripts) と SSOT (references / prompts) は plugin-root に集約し `../../` で参照する。これにより build と backfill が確度・7列・信頼キー・検証で乖離しない (単一 SSOT)。
+ 3. **なぜ既存非空セルを不可侵にするか**: backfill は「人が確認済みの値」を含む運用中 DB を対象にするため、自動処理で既存値を上書きすると人手の確定を破壊しうる。空欄列のみ補完 + 要確認行のみ再取得とし、誤値 >> 空欄の非対称コスト原則を運用面でも徹底する。
+ 
+ ## 追加リソース
+ 
+ > 共有 SSOT (scripts / references / prompts) は plugin-root に集約され、build skill と共有する。本 skill 固有は `references/resource-map.yaml` のみ。
+ 
+-- `../../references/` — 8列定義 / 確認用URLテンプレート / データソース・確度 / 備考テンプレート (build と共有)
++- `../../references/` — 7列定義 / 確認用URLテンプレート / データソース・確度 / 備考テンプレート (build と共有)
+ - `../../prompts/R1-resolve-identity.md` — resolve 同定判断の7層 prompt 正本 (build と共有)
+ - `../../scripts/backfill.py` — 本 skill の中核実装 (空欄列選定・2パス制御・replay)
+ - `../../scripts/notion_config.py` — DB ID・token・gBizINFO トークン解決の vendored SSOT
+diff --git a/plugins/company-master/skills/run-company-master-backfill/references/resource-map.yaml b/plugins/company-master/skills/run-company-master-backfill/references/resource-map.yaml
+index 6c077c4..e0d2643 100644
+--- a/plugins/company-master/skills/run-company-master-backfill/references/resource-map.yaml
++++ b/plugins/company-master/skills/run-company-master-backfill/references/resource-map.yaml
+@@ -20,7 +20,7 @@ resources:
+     topic: "SubAgent 分担: 法人番号未確定行を同定する"
+     read_when: 会社名/住所のみで法人番号未確定の行を同定したいとき
+   - file: ../../../references/company-master-columns.md
+-    topic: Notion 8列定義 + 確度4ラベル・整合ルール (build と共有正本)
++    topic: Notion 7列定義 (正式名称は会社名 title 統合) + 確度4ラベル・整合ルール (build と共有正本)
+     read_when: 列構成・フォーマット規約・deterministic_checks を確認したいとき
+   - file: ../../../references/data-sources.md
+     topic: gBizINFO/日本郵便API/Web検索の取得方針・fallback tier・確度マッピング・信頼キー
+@@ -35,7 +35,7 @@ resources:
+     topic: 中央プロキシのデプロイ/設定 (送信元IPを固定できない/拠点数>10 の例外オプトイン。鍵と固定IPを1台に集約。既定は BYO 直結)
+     read_when: 社内チーム/フルリモート/送信元IP>10 で郵便番号取得を中央集約したいとき
+   - file: ../../../references/notion-db-schema.json
+-    topic: live スキーマ preflight 用の機械可読8列スキーマ
++    topic: live スキーマ preflight 用の機械可読7列スキーマ
+     read_when: preflight 照合内容を確認したいとき
+   - file: ../../../references/remarks-templates.md
+     topic: 取得失敗時の『備考』定型テンプレート文言 (自由記述禁止の正本)
+diff --git a/plugins/company-master/skills/run-company-master-build/SKILL.md b/plugins/company-master/skills/run-company-master-build/SKILL.md
+index b4693cb..ea131fa 100644
+--- a/plugins/company-master/skills/run-company-master-build/SKILL.md
++++ b/plugins/company-master/skills/run-company-master-build/SKILL.md
+@@ -46,7 +46,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+   criteria:
+     - id: IN1
+       loop_scope: inner
+-      text: "全行が計8列(6属性+『情報の確かさ』+『備考』)構成で、空欄属性を持つ行は確度=『未確定(要確認)』かつ『備考』に remarks-templates.md 準拠の定型文言が入り、非空の郵便番号 `^\\d{3}-\\d{4}$`/電話ハイフン/住所都道府県起点/法人番号13桁の形式検証を満たすこと(scripts/validate_company_master.py が exit0 で機械判定)。"
++      text: "全行が計7列(会社名title+住所/郵便番号/法人番号/電話番号+『情報の確かさ』+『備考』。正式名称は会社名へ統合)構成で、空欄属性を持つ行は確度=『未確定(要確認)』かつ『備考』に remarks-templates.md 準拠の定型文言が入り、非空の郵便番号 `^\\d{3}-\\d{4}$`/電話ハイフン/住所都道府県起点/法人番号13桁の形式検証を満たすこと(scripts/validate_company_master.py が exit0 で機械判定)。"
+       verify_by: script
+     - id: IN2
+       loop_scope: inner
+@@ -58,7 +58,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+       verify_by: elegant-review
+     - id: OUT2
+       loop_scope: outer
+-      text: "断片入力からの新規構築(build)と既存行底上げ(backfill)の責務分離・確認用URLのページ本文出力(8列維持)・precondition gate の fail-closed が、起動独立性と SSOT plugin-root 集約の観点で過不足なく境界設定されていること。"
++      text: "断片入力からの新規構築(build)と既存行底上げ(backfill)の責務分離・確認用URLのページ本文出力(7列維持)・precondition gate の fail-closed が、起動独立性と SSOT plugin-root 集約の観点で過不足なく境界設定されていること。"
+       verify_by: elegant-review
+ ---
+ 
+@@ -70,7 +70,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ > `notion-config.fixed.json` の `db_id` は **単独 install 自己完結のための意図的な既定値** (公開可・token 非含)。上位に `.notion-config.json` (per-repo・gitignore 原則で git 管理外) があればそれで上書きされる最下位フォールバックである。per-repo gitignore 原則との意図的差分として、本ファイルは単独配布で動かすための公開既定値として敢えて plugin に同梱コミットする (CRIT-01)。
+ 
+-Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称(gBizINFO登記名) / 住所 / 郵便番号 / 法人番号 / 電話番号 の 6属性 + 『情報の確かさ』+ 『備考』。`source`/`last_verified`/`確認用URL` 列は追加しない。**確認用URL はページ本文に固定テンプレートで出力する** (`references/confirm-url-template.md` 正本・`scripts/confirm_url.py` が展開)。詳細は `references/company-master-columns.md` を正本とする。
++Notion 列は **計7列のみ**: 会社名(title=gBizINFO登記名/正式名称を優先表示・無ければ入力通称) / 住所 / 郵便番号 / 法人番号 / 電話番号 の 5属性 + 『情報の確かさ』+ 『備考』。**正式名称は独立列を廃止し会社名タイトルへ統合する** (company_name 通称・official_name 登記名はともに record の `source_by_field` に provenance として保持するが DB 列は会社名 1 つ=表示層と出所層の分離)。`source`/`last_verified`/`確認用URL`/`正式名称` 列は追加しない。**確認用URL はページ本文に固定テンプレートで出力する** (`references/confirm-url-template.md` 正本・`scripts/confirm_url.py` が展開)。詳細は `references/company-master-columns.md` を正本とする。
+ 
+ 高確度ソース (gBizINFO API / 日本郵便) で一意確定した値のみ自動確定し、一意確定できない項目は誤値を入れず空欄 + 『未確定(要確認)』で保留する (誤値混入回避の非対称コスト原則: 誤値 >> 空欄)。取得失敗項目は『備考』へ `references/remarks-templates.md` の定型テンプレート文言で原因を記録する (自由記述禁止・複数失敗は改行区切り)。
+ 
+@@ -87,7 +87,7 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ - **信頼キー (SSOT)**: upsert 一意キーは gBizINFO が確定返却した 13桁法人番号のみ。法人番号を持たない/取得不能な行は代替キー(正規化会社名+住所ハッシュ)で仮同定し『未確定(要確認)』として**新規追記のみ**。
+ - **認証**: 出力先 DB は `notion_config.get_db_id('company-master')`、token は `notion_config.get_token` で解決 (独自実装しない)。gBizINFO トークンは Keychain `gbizinfo-api-token.<keychain-prefix>` に保管しリクエストヘッダ `X-hojinInfo-api-token` で送信。郵便番号取得は日本郵便 addresszip API (Keychain `japanpost-da-api.<keychain-prefix>` の client_id/secret_key + 送信元IP の OAuth2/IP認証。送信元IPは既定で自動検出し、固定時のみ Keychain `japanpost-da-api.<keychain-prefix>`/`egress_ip`)。セットアップ手順は `references/japanpost-api-setup.md`。
+ - **precondition gate**: gBizINFO トークン未登録は fail-closed (exit 2。企業同定の必須入力)。`--upsert` / backfill 本実行では Notion token / DB ID も fail-closed。日本郵便 client_id・secret_key は郵便番号取得用の任意追加設定であり、未登録時は郵便番号だけ空欄 + 備考へ縮退して他項目の処理を継続する (**プロキシ経由なら `proxy_url` で代替**され client_id/secret_key はクライアントに不要)。**送信元IPは自動検出で解決するため gate に含めず**、登録IPとのズレは実行時に 401 で顕在化し `postal_api_unauthorized` 備考で surface する。障害時は取れた項目だけ書き、中間結果を JSONL 退避して次回リプレイ可能にする (縮退)。
+-- **live スキーマ preflight**: upsert / backfill は書き込み前に Notion API GET database の live スキーマを `references/notion-db-schema.json` (生成元正本: `company-master-columns.md` の8列定義) と照合し、必須8列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・API 不達は**書き込まず fail-closed** (構造化エラー)。プロセス内キャッシュで多重照会を回避する。
++- **live スキーマ preflight**: upsert / backfill は書き込み前に Notion API GET database の live スキーマを `references/notion-db-schema.json` (生成元正本: `company-master-columns.md` の7列定義) と照合し、必須7列の欠落・型不一致・『情報の確かさ』select 4オプション不一致・禁止列/余剰列 (旧『正式名称』列を含む)・API 不達は**書き込まず fail-closed** (構造化エラー)。プロセス内キャッシュで多重照会を回避する。
+ - **レート制限/リトライ**: Notion API の 429/5xx は `Retry-After` 尊重の指数バックオフで最大5回まで自動リトライし、上限超過は構造化エラー (`NotionAPIRetryExhausted`) で fail-closed。backfill は行単位縮退のため、レート超過・中断時も処理済み行は確定済み・失敗行は replay JSONL へ退避済みで、次回実行で再開できる。
+ - **郵便番号**: 日本郵便 addresszip API (V2 逆引き) で取得する。`scripts/postal_api.py` が構造化検索 (pref/city/town。town は素の町域→小字/大字を段階剥離した複数バリアント) → freeword → 市区町村一覧の最長前方一致の3段で照会し、`pick_best` / `pick_best_prefix` がマッチングレベル・最長一致・候補 zip 収束で一意確定したもののみ採用する (誤値を入れない)。一括 DL データは廃止。詳細な fallback tier 正本は `references/data-sources.md`。
+ - **責務分離 (Web検索)**: 電話番号・住所のみ入力時の会社名候補の Web 検索は **Claude が goal-seek ループで実施**し、結果 (値+URL) を `enrich_company.py --web-findings <json>` へ渡す。**Python は検索せず検証・整形のみ** (電話は `verify_phone` が市外局番×都道府県を軽量クロスチェック)。
+@@ -103,7 +103,7 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ 
+ ### ゴール (Goal)
+ 
+-業務横断で参照される信頼できる企業マスタが構築・維持された状態。各行は gBizINFO 確定の 13桁法人番号で一意同定され (取得不能時は代替キーで仮同定し『未確定(要確認)』)、6属性が『情報の確かさ』付きで保持され、フォーマット要件 (郵便番号8文字 / 電話ハイフン / 住所都道府県起点) を満たし、一意確定できない値は空欄 + 『未確定(要確認)』で保留され取得失敗原因が『備考』へ定型記録され、ネット検索由来値の根拠 URL が**ページ本文の確認用URLセクション**へ固定テンプレートで記録されている。計8列 + 確認用URLはページ本文。
++業務横断で参照される信頼できる企業マスタが構築・維持された状態。各行は gBizINFO 確定の 13桁法人番号で一意同定され (取得不能時は代替キーで仮同定し『未確定(要確認)』)、6属性が『情報の確かさ』付きで保持され、フォーマット要件 (郵便番号8文字 / 電話ハイフン / 住所都道府県起点) を満たし、一意確定できない値は空欄 + 『未確定(要確認)』で保留され取得失敗原因が『備考』へ定型記録され、ネット検索由来値の根拠 URL が**ページ本文の確認用URLセクション**へ固定テンプレートで記録されている。計7列 (正式名称は会社名 title へ統合) + 確認用URLはページ本文。
+ 
+ ### 目的・背景 (Why)
+ 
+@@ -119,7 +119,7 @@ Notion 列は **計8列のみ**: 会社名(入力通称を保持) / 正式名称
+ - [ ] Web 由来住所での再 resolve は最大1回・自動確定なし (法人番号が初回と不一致なら候補列挙へ降格) を守った
+ - [ ] 住所→郵便番号を日本郵便 addresszip API (`data-sources.md` tier2 の3段フォールバック・一意確定のみ採用) で `NNN-NNNN`・『公的データ取得』で出力した
+ - [ ] 電話番号は Claude が Web 検索し結果を `--web-findings` で渡し、Python(`verify_phone`)が市外局番×都道府県をクロスチェック、不整合・未取得は空欄+要確認にし備考へ定型記録した
+-- [ ] 住所を都道府県起点に正規化し、会社名(通称)と正式名称(登記名)を別属性で保持した
++- [ ] 住所を都道府県起点に正規化し、会社名(通称)と正式名称(登記名)を `source_by_field` provenance で保持した(DB 列は会社名 title へ統合=正式名称(official_name)を優先表示。別 DB 列で保持する不変条件は撤回)
+ - [ ] 取得失敗項目は『備考』へ `remarks-templates.md` の定型文言で記録し、複数失敗は改行区切りで列挙した
+ - [ ] 全6属性の取得由来 (`source_by_field`: origin enum 5値) を**ページ本文の確認用URLセクション**へ固定テンプレートで記録した (`web` 由来は根拠 URL 必須・既存出典は URL 非減少マージで保持)
+ - [ ] `notion_config.get_db_id('company-master')` で解決した DB へ信頼キーで upsert、キー欠落時は代替キーで新規追記のみにした
+@@ -168,7 +168,7 @@ PY
+ - 非空の住所は都道府県名で始まる。非空の法人番号は 13桁数字。
+ - 全行に『情報の確かさ』列があり値が 4ラベルのいずれか (英語enum値は0件)。
+ - いずれかの属性が空欄の行は『未確定(要確認)』かつ『備考』に `remarks-templates.md` 準拠の定型文言が入っている。
+-- per-field 出典 (後方互換 gating): `source_by_field` がある新形式 record は全6属性に origin (enum 5値) があり `origin=web` は url 非空。さらに fallback tier 機械照合 (正本 `data-sources.md`): origin → 確度ラベル上限 (確度昇格は FAIL) と属性×許可段ホワイトリスト (例: postal_code の origin=web は FAIL)。旧形式は『ネット検索(要確認)』行の `source_urls` 非空検査へ縮退。計8列構成である。
++- per-field 出典 (後方互換 gating): `source_by_field` がある新形式 record は全6属性に origin (enum 5値) があり `origin=web` は url 非空。さらに fallback tier 機械照合 (正本 `data-sources.md`): origin → 確度ラベル上限 (確度昇格は FAIL) と属性×許可段ホワイトリスト (例: postal_code の origin=web は FAIL)。旧形式は『ネット検索(要確認)』行の `source_urls` 非空検査へ縮退。計7列構成である (正式名称は会社名 title へ統合・official_name は provenance のみ)。
+ - upsert 一意キーは gBizINFO 確定 13桁法人番号に従う (空/未確定法人番号でのキー衝突なし)。
+ 
+ 上記 (a)-(h) は `scripts/validate_company_master.py <records.json>` が実判定する (違反は非0終了 + 理由出力)。備考の定型文言検査は `references/remarks-templates.md` を正本に照合する。
+@@ -205,19 +205,19 @@ PY
+ 
+ なぜ現在の構成 (build/backfill の 2 skill + 共有 SSOT を plugin-root 集約・実体 prompt は R1 のみ・空 vendor・二段防御を references 配布) かの記録。
+ 
+-1. **なぜ build と backfill の 2 skill か (起動独立性で分割)**: resolve / enrich / upsert は単一ゴール『信頼マスタ行を1回で構築』への直列従属で、単一 SSOT (法人番号キー / 8列 + 確認用URL本文 / 確度4ラベル) を共有するため **1 skill (本 run-company-master-build) に束ねる**。enrich と upsert は resolve 出力に強結合し独立起動の意味を持たない。一方 backfill は「断片入力からの新規構築」ではなく「**既存 Notion マスタの空欄を起点に底上げする**」別用途で、入力起点 (Notion DB ⇄ 断片情報) も実行タイミングも独立し、2 パス Web 検索という固有の goal-seek を持つため **run-company-master-backfill として独立 skill に切り出す** (contract-generator の draft/finalize が独立起動ゆえ別 skill なのと同型)。resolve/enrich/upsert を skill 分割しないのは上記の直列従属ゆえで、「分割のための分割」を避ける判断。**2026-06-10 reject を覆す差分論証**: 当時は「command/agent 層で物理分離済みゆえ新規 skill 分割は不要」と判断したが、`disable-model-invocation: false` 下では LLM 自動起動の分岐点は command でなく **skill description** であり、command 分離だけでは「新規構築」と「既存底上げ」の起動意図を Claude が自律選択できない。起動意図の分離には skill 昇格が必要、という差分が 2026-06-18 の backfill 昇格を正当化する (前提として build description から backfill 責務文言を除去し新規構築へ純化済み)。**分割の真の判定軸 = 「起動独立性 × LLM 自律 dispatch 要否」の合成**: backfill は Claude が文脈から自律起動すべき責務 (skill) だが、doctor は決定論保守で人間の明示実行で足りる (LLM 判断ループ無し → `company_master.py` のサブコマンド止まり) という非対称をこの軸が一貫説明する。
+-2. **なぜ共有実装を plugin-root に集約したか (dangling 根絶)**: backfill skill は resolve/enrich/upsert の実装 (scripts)・8列定義/確度/備考テンプレート (references)・R1 同定 prompt を build skill と 100% 共有する。これらを build skill 配下に残したまま backfill skill から参照すると skill 間相対参照の dangling リスクが残るため、**共有 scripts / references / prompts を plugin-root に集約**し、両 skill が `../../`・agents が `../` で参照する単一 SSOT とした。skill 配下に残すのは skill 固有の `references/resource-map.yaml` のみ。flat import (`import notion_config` 等) のため集約後も script 内部の import は不変 (移設の影響は参照層のみ)。なお `company_master.py` は build/backfill 両 skill の**共有 wrapper** で backfill サブコマンド (`run_backfill`) も提供するため、build の `script_refs` にも `backfill.py` を**推移的依存**として宣言する (物理依存は実在するため宣言する一方、論理責務としての backfill 制御の正本は backfill skill 側であり責務マッピングには非掲載とする二層表現)。
++1. **なぜ build と backfill の 2 skill か (起動独立性で分割)**: resolve / enrich / upsert は単一ゴール『信頼マスタ行を1回で構築』への直列従属で、単一 SSOT (法人番号キー / 7列 + 確認用URL本文 / 確度4ラベル) を共有するため **1 skill (本 run-company-master-build) に束ねる**。enrich と upsert は resolve 出力に強結合し独立起動の意味を持たない。一方 backfill は「断片入力からの新規構築」ではなく「**既存 Notion マスタの空欄を起点に底上げする**」別用途で、入力起点 (Notion DB ⇄ 断片情報) も実行タイミングも独立し、2 パス Web 検索という固有の goal-seek を持つため **run-company-master-backfill として独立 skill に切り出す** (contract-generator の draft/finalize が独立起動ゆえ別 skill なのと同型)。resolve/enrich/upsert を skill 分割しないのは上記の直列従属ゆえで、「分割のための分割」を避ける判断。**2026-06-10 reject を覆す差分論証**: 当時は「command/agent 層で物理分離済みゆえ新規 skill 分割は不要」と判断したが、`disable-model-invocation: false` 下では LLM 自動起動の分岐点は command でなく **skill description** であり、command 分離だけでは「新規構築」と「既存底上げ」の起動意図を Claude が自律選択できない。起動意図の分離には skill 昇格が必要、という差分が 2026-06-18 の backfill 昇格を正当化する (前提として build description から backfill 責務文言を除去し新規構築へ純化済み)。**分割の真の判定軸 = 「起動独立性 × LLM 自律 dispatch 要否」の合成**: backfill は Claude が文脈から自律起動すべき責務 (skill) だが、doctor は決定論保守で人間の明示実行で足りる (LLM 判断ループ無し → `company_master.py` のサブコマンド止まり) という非対称をこの軸が一貫説明する。
++2. **なぜ共有実装を plugin-root に集約したか (dangling 根絶)**: backfill skill は resolve/enrich/upsert の実装 (scripts)・7列定義/確度/備考テンプレート (references)・R1 同定 prompt を build skill と 100% 共有する。これらを build skill 配下に残したまま backfill skill から参照すると skill 間相対参照の dangling リスクが残るため、**共有 scripts / references / prompts を plugin-root に集約**し、両 skill が `../../`・agents が `../` で参照する単一 SSOT とした。skill 配下に残すのは skill 固有の `references/resource-map.yaml` のみ。flat import (`import notion_config` 等) のため集約後も script 内部の import は不変 (移設の影響は参照層のみ)。なお `company_master.py` は build/backfill 両 skill の**共有 wrapper** で backfill サブコマンド (`run_backfill`) も提供するため、build の `script_refs` にも `backfill.py` を**推移的依存**として宣言する (物理依存は実在するため宣言する一方、論理責務としての backfill 制御の正本は backfill skill 側であり責務マッピングには非掲載とする二層表現)。
+ 3. **なぜ vendor 空が正常か**: 全 script が標準ライブラリのみで動作し外部依存ゼロのため、`vendor/` は将来用の空の受け皿で空が正常 (B1 lint が空の正当性を機械強制)。
+ 4. **なぜ prompt 実体が R1 のみか**: resolve は会社名/住所の曖昧候補突合という LLM 判断ループを持つため 7 層 prompt (R1) が要る。enrich / upsert は決定論 (日本郵便API 逆引き・形式検証・キー突合) + Web 検索結果入力で LLM 判断ループを持たないため 7 層 prompt 不要。
+ 5. **なぜ二段防御を references 配布か**: plugin は repo の `.claude/settings.json` を直接配布・上書きできないため、静的層 deny ルールは `references/settings-hardening.json` として配布し利用者がマージする (詳細は「セキュリティと権限」節)。動的層 hook は plugin.json で常時配線される。
+-6. **なぜ確認用URLを DB プロパティ列でなくページ本文へ出すか**: 確認用URLは手動検証専用で行の検索・突合キーにならないため、DB 列にすると 9 列目の冗長化を招く。本文へ固定テンプレート (`confirm-url-template.md` 正本・`confirm_url.py` 展開) で出すことで DB を 8 列に保ち、create/update/backfill 全経路で 100% 同一テンプレートを冪等保証する (remarks-templates.md と同型の SSOT パターン)。当初要求『9列』からのこの差分 (8列+ページ本文URL) は**ユーザー承認済み (2026-06-10)**。
++6. **なぜ確認用URLを DB プロパティ列でなくページ本文へ出すか**: 確認用URLは手動検証専用で行の検索・突合キーにならないため、DB 列にすると冗長な追加列を招く。本文へ固定テンプレート (`confirm-url-template.md` 正本・`confirm_url.py` 展開) で出すことで DB を 7 列に保ち、create/update/backfill 全経路で 100% 同一テンプレートを冪等保証する (remarks-templates.md と同型の SSOT パターン)。当初要求『9列』からの差分 (確認用URLをページ本文化、さらに 2026-06-26 に正式名称を会社名 title へ統合し 7列化) は**ユーザー承認済み**。
+ 7. **なぜ中央プロキシ (postal_proxy.py) を optional-server として用意したか (配布モデル正本の確定)**: 日本郵便の送信元IP許可リストは 1鍵あたり最大10件のため、送信元IPを固定できない/拠点数>10 の環境では各クライアントが自IPを登録する BYO が IP 件数上限に達しうる。この例外ケース向けに**鍵 (client_id/secret_key) と固定送信元IPをサーバ1台に集約**する中央プロキシ (`scripts/postal_proxy.py`、標準ライブラリのみ・`postal_api` の token 発行/IP 認証/addresszip 呼び出しを再利用し直叩きと挙動一致) を `optional-postal-proxy-server` として用意し、該当クライアントだけ `proxy_url` (+任意 `proxy_token`) を設定する。**配布モデルの正本 = BYO 直結が既定 (各自が自分の `client_id`/`secret_key` + 送信元IP で日本郵便 API を直接叩く)、中央プロキシは送信元IPを固定できない/拠点数>10 で IP 上限に達する場合の例外オプトイン** (2026-06-18 にプロキシ既定で決定後、**2026-06-24 にチーム判断で BYO 直結既定へ反転**。実装 `company_master.py` が BYO 既定で動作する側を正とする)。プロキシのデプロイ/設定の正本手順は `references/postal-proxy-deploy.md`、BYO の正本は `references/japanpost-api-setup.md`。`get_postal_proxy_url` が設定されていれば `postal_api.lookup_postal` は自動でプロキシ経由になる (鍵/IP はクライアントに不要)。
+ 
+ ## 追加リソース
+ 
+ > 共有 SSOT (scripts / references / prompts) は **plugin-root に集約**し、build・backfill 両 skill が `../../` で参照する。skill 固有は `references/resource-map.yaml` のみ。詳細は設計判断ログ #1・#2。
+ 
+-- `../../references/` — 8列定義 + 確認用URL本文 / 確認用URLテンプレート / データソース・確度 / 備考テンプレート (plugin-root 集約・両 skill 共有)
++- `../../references/` — 7列定義 + 確認用URL本文 / 確認用URLテンプレート / データソース・確度 / 備考テンプレート (plugin-root 集約・両 skill 共有)
+ - `../../references/confirm-url-template.md` — 確認用URL ページ本文の固定テンプレート正本 (`../../scripts/confirm_url.py` が展開)
+ - `../../references/README-setup.md` — Keychain 3鍵登録 (notion-api-key.<keychain-prefix> / gbizinfo-api-token.<keychain-prefix> / japanpost-da-api.<keychain-prefix>)・settings-hardening マージ・`--upsert` 挙動のセットアップ手順
+ - `../../references/settings-hardening.json` — 二段防御の静的層 deny ルール (利用者が `.claude/settings.json` へマージ)
+@@ -250,4 +250,4 @@ PY
+ 
+ 6. **配布モデルの確定 (BYO 直結既定)** — **戦略決定済み (2026-06-18 → 2026-06-24 反転)**: 当初 (2026-06-18) は送信元IP許可リスト上限 (1鍵最大10件) を理由に中央プロキシ既定で決定したが、**2026-06-24 にチーム判断で BYO 直結既定へ反転**した。**正本 = BYO 直結 (各自が `client_id`/`secret_key` + 送信元IP を登録し直接叩く・`references/japanpost-api-setup.md`) が既定、中央プロキシ (鍵と固定IPをサーバ集約・`scripts/postal_proxy.py` / 手順 `references/postal-proxy-deploy.md`) は送信元IPを固定できない/拠点数>10 で IP 上限に達する場合の例外オプトイン**。実装 (`company_master.py` の郵便番号取得モード表示・`notion_config.get_postal_proxy_url`) が BYO 既定側で一致。配線は `notion_config.get_postal_proxy_url/get_postal_proxy_token` + `plugin-composition.yaml` の `postal_proxy` capability 宣言で完了済み。残課題はプロキシ実 deploy 後の疎通確認のみ (別 PR)。
+ 
+-未解消は 1・5 の実 API キー登録後の疎通確認・一意確定率実測、および 6 のプロキシ実 deploy 後の疎通確認のみ (`doctor --probe` + dry-run で蓄積後に別 PR)。なお 2026-06-10 に実トークンで E2E を実証済み: doctor 全 OK → live DB を 8列正本へ整備 (rename+型変更+2列追加) → 法人番号入力で resolve(公的データで確認済み)→enrich→validate PASS→upsert created (8列+本文確認用URL節を確認) → テスト行 archive (郵便番号の addresszip 移行は 2026-06-18)。
++未解消は 1・5 の実 API キー登録後の疎通確認・一意確定率実測、および 6 のプロキシ実 deploy 後の疎通確認のみ (`doctor --probe` + dry-run で蓄積後に別 PR)。なお 2026-06-10 に実トークンで E2E を実証済み (当時は8列構成): doctor 全 OK → live DB を当時の正本へ整備 → 法人番号入力で resolve(公的データで確認済み)→enrich→validate PASS→upsert created (本文確認用URL節を確認) → テスト行 archive (郵便番号の addresszip 移行は 2026-06-18)。2026-06-26 に正式名称列を会社名 title へ統合し 7列化 (live 列の物理削除はユーザー実施)。
+diff --git a/plugins/company-master/skills/run-company-master-build/references/resource-map.yaml b/plugins/company-master/skills/run-company-master-build/references/resource-map.yaml
+index 758f408..d7c096c 100644
+--- a/plugins/company-master/skills/run-company-master-build/references/resource-map.yaml
++++ b/plugins/company-master/skills/run-company-master-build/references/resource-map.yaml
+@@ -23,13 +23,13 @@ resources:
+     topic: 外部 Python ライブラリをプラグイン配下に同梱する運用ルール
+     read_when: 標準ライブラリ以外の依存を追加する必要が出たとき
+   - file: ../../../references/company-master-columns.md
+-    topic: Notion 8列定義 (6属性+情報の確かさ+備考) + 確認用URLはページ本文 と確度4ラベル・整合ルール
++    topic: Notion 7列定義 (会社名title=正式名称優先+住所/郵便番号/法人番号/電話番号+情報の確かさ+備考) + 確認用URLはページ本文 と確度4ラベル・整合ルール
+     read_when: 列構成・フォーマット規約・deterministic_checks を確認したいとき (正本)
+   - file: ../../../references/confirm-url-template.md
+     topic: 確認用URL ページ本文の固定テンプレート (heading/intro/bullet_with_url/bullet_no_url/body_no_fields の5要素正本)
+     read_when: 確認用URL本文のレンダリング文言を確認したいとき (confirm_url.py が展開する正本)
+   - file: ../../../references/notion-db-schema.json
+-    topic: Notion live スキーマ preflight 用の機械可読8列スキーマ (生成元正本は company-master-columns.md)
++    topic: Notion live スキーマ preflight 用の機械可読7列スキーマ (生成元正本は company-master-columns.md)
+     read_when: 列改名・型変更・確度 select オプション変更時に preflight 照合内容を更新するとき
+   - file: ../../../references/data-sources.md
+     topic: gBizINFO/日本郵便API/Web検索の取得方針・認証・確度マッピング・信頼キー定義
+diff --git a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+index bdb5011..e120c3c 100644
+--- a/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
++++ b/plugins/skill-intake/fixtures/intake-final-smoke/notion-log.json
+@@ -5,5 +5,5 @@
+   "page_id": "",
+   "url": "",
+   "mode": "",
+-  "logged_at": "2026-06-25T14:24:50+0900"
++  "logged_at": "2026-06-26T09:46:52+0900"
+ }
+diff --git a/tests/test_company_master.py b/tests/test_company_master.py
+index 3f34985..0bde874 100644
+--- a/tests/test_company_master.py
++++ b/tests/test_company_master.py
+@@ -5,7 +5,7 @@ company-master プラグインの「再現性」を pytest で機械保証する
+ 
+ 検証する不変条件:
+   - enrich の決定論性 (同入力 → 同出力)
+-  - notion_upsert.build_properties の 8 列ちょうど (確認用URL 列は持たない)
++  - notion_upsert.build_properties の 7 列ちょうど (確認用URL 列・正式名称列は持たない)
+   - confirm_url の md 単一正本 (SSOT) byte 一致 + render byte 安定 (fail-closed)
+   - remarks の md 正本パース
+   - validate_company_master の deterministic_checks (a-h) 判定
+@@ -57,8 +57,9 @@ SAMPLE_WEB_FINDINGS = {
+     "phone": {"value": "03-1234-5678", "source_url": "https://example.co.jp/contact"},
+ }
+ 
+-EXPECTED_8_COLS = {
+-    "会社名", "正式名称", "住所", "郵便番号",
++# 正式名称列は廃止し会社名(title)へ統合 (R4) したため 7 列構成。
++EXPECTED_7_COLS = {
++    "会社名", "住所", "郵便番号",
+     "法人番号", "電話番号", "情報の確かさ", "備考",
+ }
+ 
+@@ -85,7 +86,7 @@ def _enrich_offline(entity: dict, web_findings: dict | None) -> dict:
+ 
+ 
+ def _canonical_record() -> dict:
+-    """validate を通る正準 8 列 record (record 形式・offline)。"""
++    """validate を通る正準 record (record 形式・offline。7列+official_name provenance)。"""
+     return _enrich_offline(SAMPLE_ENTITY, SAMPLE_WEB_FINDINGS)
+ 
+ 
+@@ -100,13 +101,20 @@ def test_enrich_deterministic():
+     )
+ 
+ 
+-def test_build_properties_exactly_8_columns():
+-    """build_properties が 8 キーちょうど・期待 8 列名集合一致・『確認用URL』を含まない。"""
++def test_build_properties_exactly_7_columns():
++    """build_properties が 7 キーちょうど・期待 7 列名集合一致・『確認用URL』『正式名称』を含まない。
++
++    正式名称は独立列を廃止し会社名(title)へ統合 (R4)。会社名 title は official_name 優先 (R3)。
++    """
+     rec = _canonical_record()
+     props = notion_upsert.build_properties(rec)
+-    assert set(props.keys()) == EXPECTED_8_COLS
+-    assert len(props) == 8
++    assert set(props.keys()) == EXPECTED_7_COLS
++    assert len(props) == 7
+     assert "確認用URL" not in props
++    assert "正式名称" not in props
++    # 会社名(title) は official_name(登記名) を優先表示する (R3)。
++    title_text = props["会社名"]["title"][0]["text"]["content"]
++    assert title_text == rec["fields"]["official_name"] == "テスト商事株式会社"
+ 
+ 
+ def test_backfill_does_not_overwrite_existing_nonempty_cells():
+@@ -173,27 +181,28 @@ SAMPLE_SOURCE_BY_FIELD = {
+     "company_name": {"origin": "user_input", "url": ""},
+     "official_name": {"origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
+     "address": {"origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
+-    "postal_code": {"origin": "japanpost", "url": "https://www.post.japanpost.jp/zipcode/"},
++    "postal_code": {"origin": "japanpost", "url": postal_api.JAPANPOST_VERIFY_URL},
+     "hojin_bango": {"origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
+-    "phone_number": {"origin": "web", "url": "https://example.co.jp/company/contact"},
++    "phone_number": {"origin": "web", "url": "https://www.google.com/search?q=%2203-1234-5678%22"},
+ }
+ 
+ 
+ def _expected_body_text(source_by_field: dict) -> str:
+-    """テンプレ md (SSOT) から期待本文を導出する (期待値をコードへ二重定義しない)。"""
++    """テンプレ md (SSOT) + build_entries (会社名統合の正本) から期待本文を導出する。
++
++    会社名 bullet は official_name(登記名) 統合・正式名称の独立 bullet は廃止 (R5/D2) のため、
++    期待値の属性順・由来は build_entries で正規化したうえでテンプレ文言を当てる (二重定義しない)。
++    """
+     tpl = confirm_url.load_template()
+-    labels = confirm_url.load_origin_labels()
++    entries = confirm_url.build_entries(source_by_field)
+     lines = [f"## {tpl['heading']}", "", tpl["intro"], ""]
+-    for field in confirm_url.ATTRIBUTE_FIELDS:
+-        spec = source_by_field[field]
+-        attr = confirm_url.FIELD_LABELS[field]
+-        label = labels[spec["origin"]]
+-        if spec["url"]:
++    for e in entries:
++        if e["url"]:
+             lines.append("- " + tpl["bullet_with_url"].format(
+-                attribute=attr, origin_label=label, url=spec["url"]))
++                attribute=e["attribute"], origin_label=e["origin_label"], url=e["url"]))
+         else:
+             lines.append("- " + tpl["bullet_no_url"].format(
+-                attribute=attr, origin_label=label))
++                attribute=e["attribute"], origin_label=e["origin_label"]))
+     return "\n".join(lines)
+ 
+ 
+@@ -212,15 +221,54 @@ def test_confirm_url_render_byte_stable():
+     assert confirm_url.render_text(all_none) == no_fields
+ 
+ 
+-def test_confirm_url_renders_all_six_attributes_in_column_order():
+-    """source_by_field 入力で全6属性が columns.md 列順で bullet 化される (全項目化)。"""
++def test_confirm_url_renders_merged_company_and_attributes_in_column_order():
++    """source_by_field 入力で 会社名(official_name 統合)+住所/郵便番号/法人番号/電話番号 が列順で bullet 化 (R5/D2)。"""
+     rendered = confirm_url.render_text(SAMPLE_SOURCE_BY_FIELD)
+     bullets = [l for l in rendered.splitlines() if l.startswith("- ")]
+-    assert len(bullets) == 6
++    # 正式名称の独立 bullet は廃し会社名へ統合したため 5 bullet。
++    assert len(bullets) == 5
+     expected_order = [confirm_url.FIELD_LABELS[f] for f in confirm_url.ATTRIBUTE_FIELDS]
++    assert expected_order == ["会社名", "住所", "郵便番号", "法人番号", "電話番号"]
+     assert [b[2:].split("（")[0].split(":")[0] for b in bullets] == expected_order
+-    # URL 無し由来 (user_input) は（URLなし）形式。
+-    assert any("会社名: ユーザー入力（URLなし）" in b for b in bullets)
++    # R5/R3: 会社名 bullet は official_name(gBizINFO) の検証URLを統合し、ユーザー入力（URLなし）でない。
++    company_bullet = next(b for b in bullets if b.startswith("- 会社名"))
++    assert "ユーザー入力（URLなし）" not in company_bullet
++    assert "経済産業省 gBizINFO" in company_bullet
++    assert GBIZ_DETAIL_URL in company_bullet
++    # R5 厳守: 『会社名: ユーザー入力（URLなし）』は本文に二度と出ない。
++    assert "会社名: ユーザー入力（URLなし）" not in rendered
++    # 正式名称の独立 bullet が出ていないこと。
++    assert not any(b.startswith("- 正式名称") for b in bullets)
++
++
++def test_confirm_url_suppresses_user_input_company_bullet():
++    """R5: official_name が無く会社名が user_input(URLなし) のとき会社名 bullet を本文に出さない。"""
++    src = {
++        "company_name": {"origin": "user_input", "url": ""},
++        "official_name": {"origin": "none", "url": ""},
++        "address": {"origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
++        "postal_code": {"origin": "none", "url": ""},
++        "hojin_bango": {"origin": "none", "url": ""},
++        "phone_number": {"origin": "none", "url": ""},
++    }
++    rendered = confirm_url.render_text(src)
++    bullets = [l for l in rendered.splitlines() if l.startswith("- ")]
++    assert not any(b.startswith("- 会社名") for b in bullets), bullets
++    assert "会社名: ユーザー入力（URLなし）" not in rendered
++    # 会社名抑止で 住所/郵便番号/法人番号/電話番号 の 4 bullet。
++    assert [b[2:].split("（")[0].split(":")[0] for b in bullets] == [
++        "住所", "郵便番号", "法人番号", "電話番号"]
++
++
++def test_confirm_url_legacy_source_urls_merges_official_name_into_company():
++    """旧 source_urls 入力でも『正式名称』bullet を復活させず会社名 bullet へ統合する。"""
++    rendered = confirm_url.render_text([
++        {"attribute": "正式名称", "origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
++        {"attribute": "住所", "origin": "gbizinfo", "url": GBIZ_DETAIL_URL},
++    ])
++    bullets = [l for l in rendered.splitlines() if l.startswith("- ")]
++    assert bullets[0].startswith("- 会社名（経済産業省 gBizINFO）")
++    assert not any(b.startswith("- 正式名称") for b in bullets)
+ 
+ 
+ def test_confirm_url_bullet_round_trip():
+@@ -239,7 +287,11 @@ def test_confirm_url_bullet_round_trip():
+ 
+ 
+ def test_confirm_url_merge_entries_url_nondecreasing():
+-    """merge: 今回 URL 無しの属性は既存出典 URL を保持し、今回 URL 有りは差し替える。"""
++    """merge: 今回 URL 無しの属性は既存出典 URL を保持し、今回 URL 有りは差し替える。
++
++    official_name(登記名) の出典は会社名 bullet へ統合される (R5/D2) ため、今回 official_name に
++    gBizINFO 検証URLがあれば会社名 bullet が今回の出典へ差し替わる。
++    """
+     labels = confirm_url.load_origin_labels()
+     new = confirm_url.build_entries({
+         **{f: {"origin": "none", "url": ""} for f in confirm_url.ATTRIBUTE_FIELDS},
+@@ -249,16 +301,14 @@ def test_confirm_url_merge_entries_url_nondecreasing():
+     existing = [
+         {"attribute": "電話番号", "origin": "web", "origin_label": labels["web"],
+          "url": "https://old.example.co.jp/contact"},
+-        {"attribute": "正式名称", "origin": "web", "origin_label": labels["web"],
+-         "url": "https://stale.example.co.jp/about"},
+     ]
+     merged = confirm_url.merge_entries(new, existing)
+     by_attr = {e["attribute"]: e for e in merged}
+     # 今回 none の電話番号 → 既存 URL を保持 (URL 非減少)。
+     assert by_attr["電話番号"]["url"] == "https://old.example.co.jp/contact"
+-    # 今回 URL 有りの正式名称 → 今回の出典で差し替え。
+-    assert by_attr["正式名称"]["url"] == GBIZ_DETAIL_URL
+-    assert by_attr["正式名称"]["origin"] == "gbizinfo"
++    # official_name の gBizINFO 検証URLは会社名 bullet へ統合される (出所を失わない・R5)。
++    assert by_attr["会社名"]["url"] == GBIZ_DETAIL_URL
++    assert by_attr["会社名"]["origin"] == "gbizinfo"
+ 
+ 
+ def test_remarks_ssot_parses():
+@@ -273,7 +323,7 @@ def test_remarks_ssot_parses():
+ 
+ 
+ def test_validate_passes_canonical():
+-    """正準 8 列 record で validate_row が空エラー。"""
++    """正準 record で validate_row が空エラー (7列+official_name provenance)。"""
+     rec = _canonical_record()
+     remark_phrases = set(remarks.load_templates().values())
+     errs = vcm.validate_row(rec, 0, remark_phrases)
+@@ -281,11 +331,11 @@ def test_validate_passes_canonical():
+ 
+ 
+ def test_validate_catches_stale_url_column():
+-    """notion-row dict に余剰『確認用URL』列があると (h) で検出。"""
++    """notion-row dict に廃止済み『確認用URL』『正式名称』列があると (h) で余剰列検出 (7列化)。"""
+     remark_phrases = set(remarks.load_templates().values())
+     notion_row = {
+-        "会社名": "テスト商事",
+-        "正式名称": "テスト商事株式会社",
++        "会社名": "テスト商事株式会社",
++        "正式名称": "テスト商事株式会社",  # 廃止された余剰列 (会社名 title へ統合)
+         "住所": "東京都千代田区丸の内1-1-1",
+         "郵便番号": "100-0005",
+         "法人番号": "1234567890123",
+@@ -296,6 +346,9 @@ def test_validate_catches_stale_url_column():
+     }
+     errs = vcm.validate_row(notion_row, 0, remark_phrases)
+     assert any("(h)" in e and "確認用URL" in e for e in errs), errs
++    assert any("(h)" in e and "正式名称" in e for e in errs), errs
++    # 7列(会社名/住所/郵便番号/法人番号/電話番号+情報の確かさ/備考)は全て埋まり (f) 空欄誤検知が出ない。
++    assert not any("(f)" in e for e in errs), errs
+ 
+ 
+ def test_validate_catches_web_row_without_url():
+@@ -318,13 +371,31 @@ def test_validate_catches_web_row_without_url():
+     assert any("(g)" in e for e in errs), errs
+ 
+ 
++def test_validate_catches_record_extra_field_key():
++    """record形式でも fields 内の余剰キーを (h) で検出する。"""
++    remark_phrases = set(remarks.load_templates().values())
++    rec = _canonical_record()
++    rec["fields"]["正式名称"] = "テスト商事株式会社"
++    errs = vcm.validate_row(rec, 0, remark_phrases)
++    assert any("(h)" in e and "正式名称" in e for e in errs), errs
++
++
++def test_validate_requires_gbizinfo_url_for_nonempty_gbiz_fields():
++    """gBizINFO由来の非空値は法人詳細ページURLを必須にする。"""
++    remark_phrases = set(remarks.load_templates().values())
++    rec = _canonical_record()
++    rec["source_by_field"]["official_name"]["url"] = ""
++    errs = vcm.validate_row(rec, 0, remark_phrases)
++    assert any("(g)" in e and "official_name" in e and "gbizinfo" in e for e in errs), errs
++
++
+ # --- per-field 出典スキーマ (source_by_field) 回帰 -------------------------------
+ 
+ def test_enrich_builds_source_by_field_for_all_six_attributes():
+     """enrich が全6属性に origin を必ず付与し、URL を per-field で配線する。
+ 
+-    gBizINFO 3属性 = 法人詳細ページ URL (strong) / 郵便番号 = 日本郵便固定 URL (weak) /
+-    電話番号 = Web ヒット URL / 会社名 = user_input (URL なし)。
++    gBizINFO 3属性 = 法人詳細ページ URL (strong) / 郵便番号 = 日本郵便トップ固定 URL (weak) /
++    電話番号 = 番号埋め込み Google 検索 URL (固定手段・weak。R2) / 会社名 = user_input (URL なし)。
+     """
+     rec = _canonical_record()
+     sbf = rec["source_by_field"]
+@@ -333,8 +404,11 @@ def test_enrich_builds_source_by_field_for_all_six_attributes():
+     for field in ("official_name", "hojin_bango", "address"):
+         assert sbf[field] == {"origin": "gbizinfo", "url": GBIZ_DETAIL_URL}, field
+     assert sbf["postal_code"] == {"origin": "japanpost", "url": postal_api.JAPANPOST_VERIFY_URL}
++    # R2: 電話番号の検証URLは Web ヒット URL でなく番号埋め込み Google 検索の固定 URL。
+     assert sbf["phone_number"] == {
+-        "origin": "web", "url": SAMPLE_WEB_FINDINGS["phone"]["source_url"]}
++        "origin": "web",
++        "url": enrich_company.phone_search_url(SAMPLE_WEB_FINDINGS["phone"]["value"])}
++    assert sbf["phone_number"]["url"] == "https://www.google.com/search?q=%2203-1234-5678%22"
+ 
+ 
+ def test_enrich_source_urls_derived_in_column_order():
+@@ -353,6 +427,26 @@ def test_enrich_unresolved_fields_get_origin_none():
+     assert rec["source_by_field"]["phone_number"] == {"origin": "none", "url": ""}
+ 
+ 
++def test_enrich_preserves_existing_postal_and_phone_without_refetch(monkeypatch):
++    """backfill由来の既存郵便番号/電話番号は再取得せず provenance だけ補う。"""
++    def fail_postal(*args, **kwargs):
++        raise AssertionError("既存郵便番号があるのに postal API が呼ばれた")
++
++    monkeypatch.setattr(enrich_company, "postal_from_address", fail_postal)
++    rec = enrich_company.enrich({
++        **SAMPLE_ENTITY,
++        "postal_code": "100-0005",
++        "phone_number": "03-1234-5678",
++    }, web_findings=None)
++    assert rec["fields"]["postal_code"] == "100-0005"
++    assert rec["fields"]["phone_number"] == "03-1234-5678"
++    assert rec["source_by_field"]["postal_code"] == {
++        "origin": "japanpost", "url": postal_api.JAPANPOST_VERIFY_URL}
++    assert rec["source_by_field"]["phone_number"] == {
++        "origin": "web", "url": "https://www.google.com/search?q=%2203-1234-5678%22"}
++    assert "phone_number" not in rec["missing_fields"]
++
++
+ def test_postal_api_lookup_returns_japanpost_verify_url():
+     """日本郵便 API 一意確定時の source_url は郵便番号検索の固定 URL (weak provenance)。
+ 
+@@ -364,7 +458,8 @@ def test_postal_api_lookup_returns_japanpost_verify_url():
+ 
+     hit = postal_api.lookup_postal("東京都千代田区丸の内1-1-1", _search_fn=hit_search)
+     assert hit["value"] == "100-0005"
+-    assert hit["source_url"] == postal_api.JAPANPOST_VERIFY_URL == "https://www.post.japanpost.jp/zipcode/"
++    # R1: 検証URLは日本郵便トップ (郵便番号検索の入口) の固定 URL。
++    assert hit["source_url"] == postal_api.JAPANPOST_VERIFY_URL == "https://www.post.japanpost.jp/"
+     assert hit["certainty"] == enrich_company.CERTAINTY_PUBLIC_FETCHED
+     # 候補ゼロ (未一致) → 誤値を入れず空欄。
+     miss = postal_api.lookup_postal("東京都千代田区丸の内1-1-1", _search_fn=lambda q: ([], None))
+@@ -946,7 +1041,7 @@ def test_sync_confirm_url_body_idempotent_rerender(monkeypatch):
+     notion_upsert.sync_confirm_url_body("page-y", "tok", SAMPLE_SOURCE_BY_FIELD)
+     second = body_texts()
+     assert first == second
+-    assert len(first) == 8  # heading + intro + bullet×6
++    assert len(first) == 7  # heading + intro + bullet×5 (会社名は official_name 統合・正式名称独立 bullet 廃止)
+ 
+ 
+ # --- confirm_url fail-closed (GAP-2 回帰) --------------------------------------
+@@ -1093,7 +1188,7 @@ def test_backfill_valid_enriched_row_is_patched(monkeypatch):
+     monkeypatch.setattr(
+         backfill, "patch_empty_cells",
+         lambda *a, **k: patch_calls.append(a) or {"action": "dry-run", "page_id": "page-2",
+-                                                  "patched_properties": ["正式名称"]},
++                                                  "patched_properties": ["郵便番号"]},
+     )
+     monkeypatch.setattr(backfill, "append_replay", lambda rec: pytest.fail(f"退避不要: {rec}"))
+     monkeypatch.setattr(sys, "argv", ["backfill.py", "--dry-run"])
+@@ -1103,6 +1198,113 @@ def test_backfill_valid_enriched_row_is_patched(monkeypatch):
+     assert len(patch_calls) == 1
+ 
+ 
++def test_backfill_merge_entity_defaults_carries_existing_postal_and_phone():
++    """既存非空の郵便番号/電話番号を enrich 入力へ渡し、空欄列だけ補完対象にする。"""
++    row = {
++        "fields": {
++            "company_name": "テスト商事",
++            "official_name": "テスト商事株式会社",
++            "address": "東京都千代田区丸の内1-1-1",
++            "postal_code": "100-0005",
++            "hojin_bango": "1234567890123",
++            "phone_number": "03-1234-5678",
++        }
++    }
++    resolved = {"entity": {
++        "company_name": "テスト商事",
++        "official_name": "テスト商事株式会社",
++        "address": "東京都千代田区丸の内1-1-1",
++        "hojin_bango": "1234567890123",
++        "source_url": GBIZ_DETAIL_URL,
++    }}
++    entity = backfill.merge_entity_defaults(row, resolved)
++    assert entity["postal_code"] == "100-0005"
++    assert entity["phone_number"] == "03-1234-5678"
++
++
++# --- backfill 会社名 title 移行モード (--migrate-company-title) 回帰 -----------------
++
++def _migration_row(company_title: str, official_name: str) -> dict:
++    """会社名 title=company_title・official_name 既知の確定済み (空欄なし) 行を作る。"""
++    return {
++        "page_id": "p-mig",
++        "fields": {
++            "company_name": company_title,  # 既存 title (通称 or 既登記名)
++            "official_name": official_name,
++            "address": "東京都千代田区丸の内1-1-1",
++            "postal_code": "100-0005",
++            "hojin_bango": "1234567890123",
++            "phone_number": "03-1234-5678",
++        },
++        "certainty": "公的データで確認済み",
++        "remarks_text": "",
++    }
++
++
++def test_backfill_migrate_mode_overwrites_title_with_official_name(monkeypatch):
++    """(a) 移行モード ON: 既存通称 title が official_name(登記名) へ上書きされる。"""
++    row = _migration_row("テスト商事", "テスト商事株式会社")
++    enriched = _canonical_record()  # official_name=テスト商事株式会社 / company_name=テスト商事(通称)
++    bodies: list = []
++
++    def fake_api(method, path, token, body=None):
++        bodies.append((method, path, body))
++        return {}
++
++    monkeypatch.setattr(backfill.notion_upsert, "_api", fake_api)
++    monkeypatch.setattr(backfill.notion_upsert, "sync_confirm_url_body",
++                        lambda *a, **k: {"confirm_url_body": "synced"})
++    out = backfill.patch_empty_cells("p-mig", "tok", row, enriched, dry_run=False,
++                                     migrate_company_title=True)
++    assert backfill.notion_upsert.COL_COMPANY_NAME in out["patched_properties"]
++    patch_calls = [b for (m, p, b) in bodies if m == "PATCH" and "/pages/" in p]
++    assert patch_calls, bodies
++    title = (patch_calls[0]["properties"][backfill.notion_upsert.COL_COMPANY_NAME]
++             ["title"][0]["text"]["content"])
++    assert title == "テスト商事株式会社"  # 通称→登記名へ上書き
++    # 住所/郵便/法人番号/電話の既存非空は PATCH 対象外 (title に限った保護解除)。
++    assert backfill.notion_upsert.COL_ADDRESS not in out["patched_properties"]
++    # alt_key 素材 (company_name 通称) は record 側で不変。
++    assert enriched["fields"]["company_name"] == "テスト商事"
++
++
++def test_backfill_migrate_mode_skips_when_official_name_empty():
++    """(b) 移行モード ON でも official_name 空行は title を触らない (通称のまま)。"""
++    row = _migration_row("テスト商事", "")
++    enriched = json.loads(json.dumps(_canonical_record()))
++    enriched["fields"]["official_name"] = ""  # 登記名未取得
++    out = backfill.patch_empty_cells("p2", "tok", row, enriched, dry_run=True,
++                                     migrate_company_title=True)
++    assert backfill.notion_upsert.COL_COMPANY_NAME not in out["patched_properties"]
++
++
++def test_backfill_migrate_off_preserves_nonempty_title():
++    """(c) 移行モード OFF: official_name 既知でも既存非空 title は上書きしない (非空保護維持)。"""
++    row = _migration_row("テスト商事", "テスト商事株式会社")
++    enriched = _canonical_record()
++    out = backfill.patch_empty_cells("p3", "tok", row, enriched, dry_run=True)
++    assert backfill.notion_upsert.COL_COMPANY_NAME not in out["patched_properties"]
++
++
++def test_select_backfill_targets_migrate_picks_confirmed_title_mismatch():
++    """移行モードのみ、空欄なし確定行でも official_name != title の行を対象に拾う (冪等: 一致行は除外)。"""
++    rows = [
++        {"page_id": "a", "certainty": "公的データで確認済み",
++         "fields": {"company_name": "テスト商事", "official_name": "テスト商事株式会社",
++                    "address": "東京都千代田区丸の内1-1-1", "postal_code": "100-0005",
++                    "hojin_bango": "1234567890123", "phone_number": "03-1234-5678"}},
++        {"page_id": "b", "certainty": "公的データで確認済み",
++         "fields": {"company_name": "既登記株式会社", "official_name": "既登記株式会社",
++                    "address": "東京都千代田区丸の内1-1-1", "postal_code": "100-0005",
++                    "hojin_bango": "1234567890124", "phone_number": "03-1234-5678"}},
++    ]
++    # 通常モード: 空欄なし・確定のため両方とも対象外。
++    assert backfill.select_backfill_targets(rows) == []
++    # 移行モード: title≠official の a のみ対象 (b は title==official で冪等に除外)。
++    migrated = backfill.select_backfill_targets(rows, migrate_company_title=True)
++    assert [t["row"]["page_id"] for t in migrated] == ["a"]
++
++
+ def test_backfill_replay_log_is_root_anchored():
+     """REPLAY_LOG が cwd 相対でなく repo-root (or plugin-root) 起点の絶対パス。"""
+     assert backfill.REPLAY_LOG.is_absolute()
+@@ -1200,10 +1402,12 @@ def _live_schema_from_expected() -> dict:
+     return {"properties": props}
+ 
+ 
+-def test_schema_json_matches_columns_md_8_cols():
+-    """機械可読 schema JSON の列集合が columns.md 由来の8列・確度4ラベルと一致する。"""
++def test_schema_json_matches_columns_md_7_cols():
++    """機械可読 schema JSON の列集合が columns.md 由来の7列・確度4ラベルと一致する (正式名称は廃止)。"""
+     expected = notion_upsert.load_expected_schema()
+-    assert set(expected["properties"].keys()) == EXPECTED_8_COLS
++    assert set(expected["properties"].keys()) == EXPECTED_7_COLS
++    assert "正式名称" not in expected["properties"]
++    assert "正式名称" in expected.get("forbidden_properties", [])
+     certainty = expected["properties"]["情報の確かさ"]
+     assert certainty["type"] == "select"
+     assert certainty["select_options"] == [
+@@ -1228,6 +1432,18 @@ def test_preflight_rejects_missing_column(monkeypatch):
+     assert any("備考" in v for v in exc.value.violations)
+ 
+ 
++def test_preflight_rejects_forbidden_and_extra_columns(monkeypatch):
++    """旧『正式名称』列や任意の余剰列が live DB に残っていれば7列構成違反として reject。"""
++    live = _live_schema_from_expected()
++    live["properties"]["正式名称"] = {"type": "rich_text"}
++    live["properties"]["任意メモ"] = {"type": "rich_text"}
++    monkeypatch.setattr(notion_upsert, "_api", lambda m, p, t, b=None: live)
++    with pytest.raises(notion_upsert.SchemaPreflightError) as exc:
++        notion_upsert.preflight_schema("db-id", "tok")
++    assert any("禁止列 '正式名称'" in v for v in exc.value.violations)
++    assert any("余剰列 '任意メモ'" in v for v in exc.value.violations)
++
++
+ def test_preflight_rejects_renamed_select_option(monkeypatch):
+     """確度 select のオプション改名 → 4ラベル完全一致違反で reject。"""
+     live = _live_schema_from_expected()

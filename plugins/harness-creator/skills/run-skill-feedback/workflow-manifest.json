@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-feedback",
+  "skill": "run-skill-feedback",
+  "description": "利用者発端の改善要望を Notion 改善要望 DB へ N:1 relation 付きで投入する。",
+  "phases": [
+    {
+      "id": "identify-target",
+      "step": 1,
+      "title": "目的ヒアリングによる対象スキル同定 (ユーザーはスキル名・プラグイン名を知らない前提)",
+      "kind_filter": ["run"],
+      "output_artifact": "(in-memory: resolved plugin + skill_name)"
+    },
+    {
+      "id": "read-current-spec",
+      "step": 2,
+      "title": "確定スキルの SKILL.md を Read し現状仕様をユーザーに提示・文脈確認",
+      "dependsOn": ["identify-target"],
+      "kind_filter": ["run"],
+      "output_artifact": "(in-memory: current spec summary)"
+    },
+    {
+      "id": "collect",
+      "step": 3,
+      "title": "要望の対話収集 (タイトル/種別/内容/背景/優先度/重要度)",
+      "dependsOn": ["read-current-spec"],
+      "kind_filter": ["run"],
+      "output_artifact": "(in-memory feedback record)"
+    },
+    {
+      "id": "verify-plugin",
+      "step": 4,
+      "title": "対象プラグインがスキル一覧 DB に存在することを確認",
+      "dependsOn": ["collect"],
+      "kind_filter": ["run"],
+      "output_artifact": "(stdout: plugin page id)"
+    },
+    {
+      "id": "submit",
+      "step": 5,
+      "title": "scripts/notion-submit-improvement.py で 改善要望 DB に POST",
+      "dependsOn": ["verify-plugin"],
+      "kind_filter": ["run"],
+      "output_artifact": "Notion page URL"
+    },
+    {
+      "id": "notify",
+      "step": 6,
+      "title": "完了通知 (Notion URL + 人手追加項目案内)",
+      "dependsOn": ["submit"],
+      "kind_filter": ["run"],
+      "output_artifact": "(stdout: completion message with Notion page URL)"
+    }
+  ],
+  "resources": [
+    {"type": "script",    "path": "scripts/notion-submit-improvement.py"},
+    {"type": "script",    "path": "plugins/harness-creator/scripts/notion_config.py"},
+    {"type": "script",    "path": "scripts/lint-feedback-protocol.py"},
+    {"type": "schema",    "path": "doc/notion-schema/improvement-request.schema.json"},
+    {"type": "schema",    "path": "doc/notion-schema/skill-list.schema.json"},
+    {"type": "reference", "path": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md"}
+  ]
+}

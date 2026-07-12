@@ -1,0 +1,1 @@
+対象=harness-prompt-conformance計画(C01-C09)のbuild反映完全性検証。主実体(契約SSOT/内容lint/vendor/6agent7層化/provenance/CI配線)は存在確認済。注視点:①content-review verdict sha stale疑い(07-02sha vs 07-05変更)②build段階quality_gates証跡不在③handoff routes=planned据置④prompts母数36vs33差。

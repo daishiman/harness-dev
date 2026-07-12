@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/skill-intake/findings.schema.json",
+  "title": "skill-intake findings (rubric/lint 共通)",
+  "description": "rubric.json / lint-subagent-seven-layer.py / assumption-challenger / notion-fidelity-guard 等が共通して返す findings 形式。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["produced_by", "target", "verdict", "items", "timestamp"],
+  "properties": {
+    "produced_by": { "type": "string", "description": "発行元 (例: lint-subagent-seven-layer.py, R2-assumption-challenger)" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["subagent", "skill", "phase-output", "intake-md"] },
+        "path": { "type": "string" }
+      }
+    },
+    "verdict": { "type": "string", "enum": ["pass", "warn", "fail"] },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "severity", "message"],
+        "properties": {
+          "rule_id": { "type": "string", "description": "rubric/lint のルール識別子 (例: SE-L5-rubric-min5)" },
+          "severity": { "type": "string", "enum": ["info", "warn", "error"] },
+          "message": { "type": "string" },
+          "location": { "type": "string", "description": "file:line 形式可" },
+          "suggestion": { "type": "string" }
+        }
+      }
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "target": {"plugin": "extract-system-blueprint", "skill": "fetch-snapshot.py", "skill_md_sha256": "23d6adcea7977a1f14523f05ab66282c2f2a535c5f21c52683cc6daf119d82f0"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
+  "reviewer": "independent-elegance-reviewer",
+  "reviewed_at": "2026-07-11T03:04:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["4conditions", "content_review", "elegant_review.C1-C4"],
+    "positive_feedback": [
+      "前回 high (same_origin_redirects_only 施行不在) の修正が redirect 発生層そのもの (urllib redirect 層) に置かれている: `_SameOriginRedirectHandler.redirect_request` が追従前に `_check_redirect_origin` (scheme+host+port 厳密一致・origin 解決不能も fail-closed 拒否) を通し、RealFetcher は build_opener で既定 HTTPRedirectHandler をこの施行版へ置換する。応答受領後の事後検査でなく追従前遮断のため、別 origin への request 自体が発生しない。",
+      "FixtureFetcher にも同一の `_check_redirect_origin` を通す redirect 追従ループ (_MAX_REDIRECTS=10 で urllib 既定と同値) を実装し、cross-origin 拒否/same-origin 追従の両分岐を network 無しで決定論テスト可能にした — self-test case(10)(11) と pytest 3 テスト (fixture 経路 2 本 + real urllib handler 層の単体 1 本) が実在し、handler 層施行が fixture テストの届かない死角になる穴を塞いでいる。",
+      "拒否時の意味論が plugin の fact/inference/observation_gap 三分法と整合: CrossOriginRedirect → observation_gap (reason=cross-origin-redirect-blocked・redirect_target/redirect_origin 記録・body_saved=false・bytes/pages 非消費で requests のみ計上)、primary が拒否された場合は本文の無い取得として exit 1 (fail-closed)。frontmatter purpose/docstring 責務 2 にもレバーが明文化され、契約と実装の drift が無い。"
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "iteration 2 (前回 FAIL からの再評価)。scripts/fetch-snapshot.py 全 1380 行を現 SHA で実読し、`--self-test` を実走して 16/16 緑 (前回 14 ケース + cross-origin redirect 拒否/same-origin redirect 追従の 2 ケース追加) を確認。plugin pytest 全 37 passed も実走確認 (tests/test_authz_and_fetch.py の redirect 3 テスト: cross_origin_redirect_blocked=www サブドメイン拒否+observation_gap+bodies/ 非生成、same_origin_redirect_followed=final_url 追従、redirect_handler_enforces_same_origin=RealFetcher が組み込む handler 単体で 301 拒否/302 same-origin 追従)。inventory C09.load_policy.same_origin_redirects_only=true と施行実装の突合一致。stop_on 5 種は不変で、redirect 拒否は stop でなく observation_gap として扱う設計は inventory の stop_on 定義 (redirect 系 reason 非掲載) と整合。付随論点だった C12 INSTANT_LOAD_LEVERS に同レバーのキーが無い点は残るが、C09 側の施行が budget/levers 設定から独立の無条件ハードコード (どの入力でも緩和不能) になったため fail-open 経路は存在せず、ミラー数値 (5MiB/2000ms/max_retries=1/ttl86400/bounded backoff) の一致も前回同様確認。CrossOriginRedirect が Fetcher.fetch の _TransientError 捕捉・RealFetcher の URLError/OSError/ValueError 捕捉のいずれにも飲まれず Run.fetch まで素通しになる例外経路、finally での _last_monotonic 更新 (拒否時も最小間隔維持) も実読で確認。4 条件全充足で PASS。評価のみで改善は行っていない。"
+}

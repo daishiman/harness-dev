@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "run-prompt-elicit",
+    "skill_md_sha256": "0d67889ba7838a5a4828abbc4b0a76c7915e3f00d7508e52c3a397306d1bc47b"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "完全性 3/3・一貫性 3/3: description が発動条件 2 経路 (target_skill/responsibility_id 確定・standalone 汎用要望) を具体的に記述し、単一責務 (ヒアリングのみ、build/evaluate 非担当) を維持。Key Rules 1-9・ゴールシーク実行・局面カタログ・Gotchas を漏れなく備え、改名後の harness-creator 参照 (L97 goal-seek-paradigm.md 正本) が用語規約に適合し矛盾なし。standalone/skill 紐付けの 2 モードが Key Rule 5・invariant・完了チェックリストで一貫。",
+      "検証可能性 3/3: 完了チェックリスト 8 項目が schema validation 通過 / enum 内・最大2 / responsibilities[] 実在突合 / 未確認推定 0 件 / 再質問 0 件 / batch 時 AskUserQuestion 0 回など二値判定可能な停止条件文で書かれ、feedback_contract criteria の inner/outer 分離+verify_by 写像 (IN1=lint/IN2=test/OUT1=elegant-review) とともに携帯され lint-content-review の突合と整合。",
+      "深度 2/3・簡潔性 3/3: 網羅ヒアリングのユーザー負担と AI 無断推定の brief 信頼毀損という課題を Why 節で掘り下げ、ゴール+停止条件固定で手順を都度導出する設計根拠を提示。144 行と簡潔で詳細は references/ へ委譲。"
+    ],
+    "negative_feedback": [
+      "[low/smell] (改名非依存・HEAD 継承) IN2 は verify_by:test を宣言するが batch モード必須引数欠落 fail を検証する実テストが tests/ 配下に未収載。引数欠落 fail 側は fixture 化可能なため実テスト追加か verify_by 見直しを推奨 (PASS 阻害なし)。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。改名 (skill-creator→harness-creator) 後の記述品質を確認: goal-seek-paradigm.md 正本参照 (L97) の harness-creator 側実在・意味論境界の用語規約適合・旧固有名残存 0・全ローカル参照実在。導出 criteria IN1/IN2/OUT1 は本スキル固有目的 (schema 妥当+R-id 1:1/standalone 代替・batch 非対話・導出確認一貫) から導出され frontmatter feedback_contract と一致。残 negative 1 件は改名非依存の HEAD 継承 low smell で設計欠陥に非ず。"
+}

@@ -1,0 +1,1894 @@
+diff --git a/plugins/notion-gmail-send/.claude-plugin/plugin.json b/plugins/notion-gmail-send/.claude-plugin/plugin.json
+index be9c39d..69aeb63 100644
+--- a/plugins/notion-gmail-send/.claude-plugin/plugin.json
++++ b/plugins/notion-gmail-send/.claude-plugin/plugin.json
+@@ -2,7 +2,7 @@
+   "name": "notion-gmail-send",
+   "version": "0.1.0",
+   "package_mode": "bundle",
+-  "description": "Notion 2DB(メール本文_DB/メール送信先_DB)を入力に、メッセージ対象✅かつ本文非空の本文を 送信対象✅かつメールを送らない☐かつプロ人材メール非空 の宛先へ {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。メールを送らない最優先抑制・プロ人材重複は最新1件のみ・送信は送信者のSentに残る。承認済みplan + 人間承認ゲート + 事前予約つき冪等ログの三本柱で不可逆送信を安全化 (ref-notion-gmail-send-spec/ref-gmail-dwd-setup + run-notion-gmail-sendlog-setup/run-notion-gmail-source-audit/run-notion-gmail-dry-run/run-notion-gmail-send の6スキル + context:fork二段確認subagent + 補助防御hook)。改善要望は `/run-skill-feedback notion-gmail-send` で投入可能 (SSOT: skill-creator/skills/run-skill-feedback、symlink 配備)。",
++  "description": "Notion 2DB(メール本文_DB/メール送信先_DB)から本文×宛先を {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。既定はNotionの送信対象チェックを承認とみなす確認0 auto-sendで、fresh rebuild + source-audit + send_guard + 事前予約つき冪等ログにより不可逆送信を安全化。対話モードではdry-run承認と二段確認subagentも利用可。改善要望は `/run-skill-feedback notion-gmail-send`。",
+   "author": {
+     "name": "xl-skills maintainers"
+   },
+@@ -46,7 +46,7 @@
+     ],
+     "secrets": [
+       "macos-keychain:notion-api-key.xl-skills/xl-skills",
+-      "macos-keychain:gmail-sa.xl-skills/xl-skills"
++      "macos-keychain:google-sa.xl-skills/xl-skills"
+     ]
+   },
+   "hooks": {
+diff --git a/plugins/notion-gmail-send/.notion-config.example.json b/plugins/notion-gmail-send/.notion-config.example.json
+new file mode 100644
+index 0000000..c54c2c1
+--- /dev/null
++++ b/plugins/notion-gmail-send/.notion-config.example.json
+@@ -0,0 +1,24 @@
++{
++  "_comment": "作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone 開発者は repo-root)に .notion-config.json として置き、<...> を実値で埋める (.notion-config.json は gitignore 対象)。db_id は Notion ページURL末尾の32桁。雛形を自動生成するには doctor --init を実行。",
++  "databases": {
++    "gmail-send-log": {
++      "db_id": "<送信ログDBのid>",
++      "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える"
++    }
++  },
++  "notion_gmail_send": {
++    "source": {
++      "body_db": "<メール本文DBのid>",
++      "recipient_db": "<メール送信先_DBのid>",
++      "_note": "body_db=メール本文_DB / recipient_db=メール送信先_DB"
++    },
++    "sender": {
++      "impersonate": "<送信元アドレス @your-domain>",
++      "sa_keychain": {
++        "service": "google-sa.xl-skills",
++        "account": "xl-skills"
++      },
++      "_note": "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。実値は git に載せず config にのみ置く。sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
++    }
++  }
++}
+diff --git a/plugins/notion-gmail-send/.notion-config.json.example b/plugins/notion-gmail-send/.notion-config.json.example
+deleted file mode 100644
+index 2dc71a1..0000000
+--- a/plugins/notion-gmail-send/.notion-config.json.example
++++ /dev/null
+@@ -1,24 +0,0 @@
+-{
+-  "_comment": "このファイルを repo-root に .notion-config.json としてコピーし、実値を埋める (.notion-config.json は gitignore 対象)。db_id は Notion ページURL末尾の32桁、または共有設定済みDBの database_id。",
+-  "databases": {
+-    "gmail-send-log": {
+-      "db_id": "38907a0cd18c804dba05e05934ca2dbf",
+-      "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える"
+-    }
+-  },
+-  "notion_gmail_send": {
+-    "source": {
+-      "body_db": "38807a0cd18c80f1ae82f01a90ff5aa2",
+-      "recipient_db": "38807a0cd18c80e9b47cd9ceb81463db",
+-      "_note": "body_db=メール本文_DB / recipient_db=メール送信対象者DB"
+-    },
+-    "sender": {
+-      "impersonate": "no-reply@shonai.inc",
+-      "sa_keychain": {
+-        "service": "gmail-sa.xl-skills",
+-        "account": "xl-skills"
+-      },
+-      "_note": "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
+-    }
+-  }
+-}
+diff --git a/plugins/notion-gmail-send/README.md b/plugins/notion-gmail-send/README.md
+index 1cc8787..df7335d 100644
+--- a/plugins/notion-gmail-send/README.md
++++ b/plugins/notion-gmail-send/README.md
+@@ -2,7 +2,7 @@
+ 
+ Notion の2つのDB（メール本文_DB / メール送信先_DB）を入力に、`メッセージ対象=✅ かつ 本文非空` の本文を `送信対象=✅ かつ メールを送らない☐ かつ プロ人材メール非空` の宛先へ `{{}}` 差し込み置換して **Gmail で一斉個別送信**する plugin。宛先は **プロ人材（To）と秘書（CC）の両方**へ送る。
+ 
+-不可逆なメール送信を **承認済み plan + 人間承認ゲート + 事前予約つき冪等ログ** の三本柱で安全化する（実装 SSOT: `doc/run-notion-gmail-send-仕様と検証メモ.md`）。
++不可逆なメール送信を **Notionチェック承認 + fresh rebuild + source-audit + send_guard + 事前予約つき冪等ログ** で安全化する。既定は確認0の auto-sendで、対話モードでは dry-run 承認も使える（実装 SSOT: `doc/run-notion-gmail-send-仕様と検証メモ.md`）。
+ 
+ ### 宛先DB（メール送信先_DB）の主なルール
+ - `メール（プロ人材）` → **To**、`メール（cc秘書）` → **CC**（本文DBの CC と結合）。両方へ送る。
+@@ -17,17 +17,18 @@ Notion の2つのDB（メール本文_DB / メール送信先_DB）を入力に
+ 
+ ---
+ 
+-## TL;DR: 5ステップで送信（非エンジニア向け）
++## TL;DR: 送信までの最短手順（非エンジニア向け）
+ 
+-0→送信までの最短手順。各ステップの詳細は本 README 内の該当節（**太字**の見出し）を参照。
++各ステップの詳細は本 README 内の該当節（**太字**の見出し）を参照。**既定は確認0の自動送信**で、Notion のチェックがそのまま承認になる（端末での `APPROVE` 入力は不要）。
+ 
+-1. **Notion を3つのDBで用意し ID を登録** — メール本文_DB（本文テンプレ）・メール送信先_DB（送信先）・送信ログDB の3つを作り、それぞれの id を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json` に記入する。（→ **セットアップ** の「2. 設定ファイル」「4. 送信ログDB の構築」）
+-2. **認証鍵を macOS Keychain に設定** — Notion API token（`notion-api-key.xl-skills`）と Google サービスアカウント鍵（`gmail-sa.xl-skills`）を登録し、Gmail 側の DWD / gmail.send scope / sendAs を設定する。**秘密値はチャットや issue に貼らない**。設定できたら Claude に「**doctor で確認して**」と頼めば、本送信せずに認証/設定の成否を一括点検でき、live-send まで進む前に不備を見つけられる。（→ **セットアップ** の「3. 認証鍵」/ `ref-gmail-dwd-setup`）
+-3. **dry-run で件数と plan_hash を確認** — `/run-notion-gmail-dry-run` を実行すると、送信件数・`plan_hash`・全件プレビュー・`APPROVE` 文字列・`<確認語>` が出力される。少数検品は `--canary N`。**この段階では1通も送信しない**。（→ **使い方（推奨フロー）**）
+-4. **全件プレビューを目視** — 誰に・どの本文が送られるかを必ず目視する。送信元データの品質点検は `/run-notion-gmail-source-audit`。（→ **使い方（推奨フロー）**）
+-5. **承認して本送信** — `/run-notion-gmail-send` に `APPROVE <plan_hash> <count> <first_to> <確認語>` を**完全一致**で入力する。二段確認 → preflight（認証/送信ログDB/整合）の自動検証 → Gmail 送信 → 送信ログ記録 → 日本語レポート、の順に進む。（→ **使い方（推奨フロー）** / **安全設計（三本柱）**）
++1. **Notion を3つのDBで用意し ID を登録** — メール本文_DB（本文テンプレ）・メール送信先_DB（送信先）・送信ログDB の3つを作り、それぞれの id を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json` に記入する。空の雛形は Claude に「**doctor で初期化して**」と頼む（`doctor --init`）と自動生成され、`<…>` を実値で埋めるだけにできる。（→ **セットアップ** の「2. 設定ファイル」「4. 送信ログDB の構築」）
++2. **認証鍵を macOS Keychain に設定** — Notion API token（`notion-api-key.xl-skills`）と Google サービスアカウント鍵（`google-sa.xl-skills`）を登録し、Gmail 側の DWD / gmail.send scope / sendAs を設定する。**秘密値はチャットや issue に貼らない**。設定できたら Claude に「**doctor で確認して**」と頼めば、本送信せずに認証/設定の成否を一括点検できる。（→ **セットアップ** の「3. 認証鍵」/ `ref-gmail-dwd-setup`）
++3. **Notion でチェックを付ける（＝承認）** — 送りたい宛先に `送信対象=✅`、送る本文に `メッセージ対象=✅` かつ `{{}}` 入り本文を用意する。**この Notion のチェックがそのまま承認**になる。
++4. **送信** — `/run-notion-gmail-send` を実行するだけ（端末での確認入力なし）。内部で 品質監査(source-audit) → **最新 Notion から送信計画を再構築** → Gmail 送信 → 送信ログ記録 → 日本語レポート、の順に進む。（→ **使い方**）
++   - 初回や大量送信は少数だけ試す `--canary 3` を任意で使える。残りは同じコマンドの再実行で送信（既送は自動 skip）。
++   - 端末で内容を目視してから慎重に送りたいときは**対話モード**も使える（→ **使い方** の「対話モード」）。
+ 
+-> 初回や大量に送る前に、**想定送信規模と大量送信（canary 運用）** 節も必ず確認してください。
++> 機械的な誤送信防止（plan 改竄検出・Notionページ単位の二重送信防止・未置換 skip・From 検証・送信時 suppress 再検証・source-audit ゲート）は確認回数と無関係に常時オン。確認0で残るリスクは「正しい本文を・正しい宛先リストに」整える Notion 側の運用で、初回 canary（少数の実メール検品）で吸収する（→ **安全設計（三本柱）** の正直な明示）。初回や大量に送る前に **想定送信規模と大量送信（canary 運用）** 節も確認してください。
+ 
+ ---
+ 
+@@ -40,7 +41,7 @@ Notion の2つのDB（メール本文_DB / メール送信先_DB）を入力に
+ | run skill | `run-notion-gmail-sendlog-setup` | 送信ログDB のプロパティを §9 schema に冪等構築 |
+ | run skill | `run-notion-gmail-source-audit` | 送信元2DB のデータ品質を送信前に監査（空本文/未知トークン/不正アドレス/未置換リスク） |
+ | run skill | `run-notion-gmail-dry-run` | 送信計画を生成・全件プレビュー（**送信しない**） |
+-| run skill | `run-notion-gmail-send` | 承認済み plan を live-send（preflight→reserve→send_guard→Gmail→log→report） |
++| run skill | `run-notion-gmail-send` | 既定=確認0 auto-send（Notion `送信対象=✅` を承認・最新から新鮮 plan・source-audit ゲート）／対話モードも可。preflight→reserve→send_guard→Gmail→log→report |
+ | agent | `gmail-send-presend-verifier` | context:fork で送信前二段確認（Sycophancy 防止） |
+ | hook | `guard-gmail-send` | PreToolUse 補助防御（承認迂回の Gmail 直接送信を遮断） |
+ | lib | `lib/*.py` | 決定論モジュール（notion/gmail クライアント・置換・組立・plan・send_guard・冪等ログ・preflight） |
+@@ -62,7 +63,16 @@ claude plugin install ./plugins/notion-gmail-send
+ 
+ ### 2. 設定ファイル `.notion-config.json`
+ 
+-下記のテンプレを**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下に `.notion-config.json` として作成し、実値を埋める（gitignore 対象・git に載らない。clone 済みなら `plugins/notion-gmail-send/.notion-config.json.example` を雛形に使える）。設定ファイルの探索順は `env(NOTION_GMAIL_CONFIG) > $CLAUDE_PROJECT_DIR > 上位ディレクトリ走査 > カレント`（`lib/notion_config.py`）。
++DB ID と送信元を**作業フォルダ**（Claude を開いているフォルダ＝`$CLAUDE_PROJECT_DIR`。clone 開発者は repo-root）直下の `.notion-config.json`（gitignore 対象・git に載らない）に置く。**何を・どこに・どの値で**置くかは本節が唯一の正本。作り方は次の3通り（どれでも同じファイルができる）:
++
++- **A. 自動生成（推奨・install 形態を問わない）** — チャットで Claude に「**doctor で初期化して**」と頼む。plugin 同梱の `setup_doctor.py --init` を `$CLAUDE_PLUGIN_ROOT` 経由で解決し、placeholder 入りの `.notion-config.json` を作業フォルダへ生成する（ユーザーがパスを手で打つ必要はない）。生成後に `<…>` を実値で埋める。
++- **B. clone 開発者が自分のターミナルで生成** — `python3 plugins/notion-gmail-send/lib/setup_doctor.py --init`（repo を clone した場合のみ有効な相対パス）。
++- **C. 手書き** — 下記テンプレを `.notion-config.json` として保存し実値を埋める。clone 済みなら `plugins/notion-gmail-send/.notion-config.example.json` を雛形に使える。
++
++> どの方法でも生成直後は `<…>` の placeholder で、**実値を埋めるまで dry-run も送信もできない**（fail-closed）。`/run-notion-gmail-dry-run` を config 不在のまま実行しても、貼り付け用の雛形と保存先を案内して安全に停止する（1通も送らない）。
++> 例外として、計画生成だけを先に確認したい場合は `/run-notion-gmail-dry-run --db1 <メール本文DB id> --db2 <メール送信先_DB id>` のように DB ID を両方明示すれば、`.notion-config.json` 不在でも read-only dry-run は実行できる。本送信には引き続き config / 送信ログDB / Gmail 認証の preflight が必要。
++
++設定ファイルの探索順は `--config 明示 > env(NOTION_GMAIL_CONFIG) > $CLAUDE_PROJECT_DIR > 上位ディレクトリ走査 > カレント`（`lib/notion_config.py`）。clone 不要で任意の場所に置く上級者は `NOTION_GMAIL_CONFIG=<path>` で明示できる。
+ 
+ ```json
+ {
+@@ -71,7 +81,7 @@ claude plugin install ./plugins/notion-gmail-send
+     "source": { "body_db": "<メール本文DBのid>", "recipient_db": "<メール送信先_DBのid>" },
+     "sender": {
+       "impersonate": "<送信元アドレス @your-domain>",
+-      "sa_keychain": { "service": "gmail-sa.xl-skills", "account": "xl-skills" }
++      "sa_keychain": { "service": "google-sa.xl-skills", "account": "xl-skills" }
+     }
+   }
+ }
+@@ -82,18 +92,23 @@ claude plugin install ./plugins/notion-gmail-send
+ | 用途 | service | account | 取得方法 |
+ |---|---|---|---|
+ | Notion API | `notion-api-key.xl-skills` | `xl-skills` | Notion integration の internal token |
+-| Google SA鍵 | `gmail-sa.xl-skills`（config と一致） | `xl-skills` | GCP サービスアカウント鍵JSON。ローカル端末で下の対話式登録を使う |
++| Google SA鍵 | `google-sa.xl-skills`（config と一致） | `xl-skills` | GCP サービスアカウント鍵JSON。ローカル端末で下の対話式登録を使う |
++
++> **命名規則**: service 名は `<用途>.xl-skills`（既存 `notion-api-key.xl-skills` 等と統一）。SA鍵は Gmail 専用ではなく Sheets/Drive 等でも使う**汎用鍵**なので、Gmail 限定名（`gmail-sa.*`）を避け `google-sa.xl-skills` とする ── 1つの鍵 = 1つの Keychain 項目を全用途で共有する。account は全鍵共通の `xl-skills`。
+ 
+ 秘密値を shell history や AI 会話に残さないため、SA JSON はファイルパスだけを入力し、内容はローカル端末内で Keychain へ渡す。
+ 
++> ⚠️ **SA鍵は必ず `json.dumps` で1行化してから格納する。** 整形済み JSON（インデントの実改行入り）をそのまま `-w` に渡すと、`security` が値を **hex 文字列化**して保存し、取り出し時に `get_google_sa_key` が「SA鍵が JSON ではない」で失敗する（`json.loads` が hex 先頭の数字を拾って Extra data エラーになる）。下のスクリプトは `json.load` → `json.dumps` で実改行を除去済み。private_key 内の `\n` は JSON エスケープ文字なので影響しない。`-U` は既存項目の上書き（`already exists` 回避）。
++
+ ```bash
+ python3 - <<'PY'
+-import pathlib, subprocess
++import json, pathlib, subprocess
+ path = pathlib.Path(input("SA JSON file path: ").strip()).expanduser()
++one_line = json.dumps(json.load(open(path, encoding="utf-8")))  # 実改行を除去（hex化を防ぐ）
+ subprocess.run([
+     "security", "add-generic-password", "-U",
+-    "-s", "gmail-sa.xl-skills", "-a", "xl-skills",
+-    "-w", path.read_text(encoding="utf-8"),
++    "-s", "google-sa.xl-skills", "-a", "xl-skills",
++    "-w", one_line,
+ ], check=True)
+ PY
+ ```
+@@ -123,28 +138,47 @@ python3 plugins/notion-gmail-send/lib/setup_doctor.py --config .notion-config.js
+ 
+ ---
+ 
+-## 使い方（推奨フロー）
++## 使い方
++
++### 既定: 確認0の自動送信（推奨）
++
++```
++[0 整備] Notion で 送信対象=✅(宛先) / メッセージ対象=✅ かつ {{}}入り本文(本文) を用意
++[1 送信] /run-notion-gmail-send            # 1コマンド・端末確認なし
++# 少数検品: /run-notion-gmail-send --canary 3   (残りは再実行で送信)
++```
++
++既定の確認0モードは内部で次を実行します（端末での `APPROVE` 入力は不要・承認は Notion の `送信対象=✅` が担う。`--auto-approve` は後方互換の明示フラグです）:
++1. **source-audit ゲート** — 空本文/To/From不正/未知トークン等の high 問題が残れば **1通も送らず停止**（秘書CC不正など medium は該当 unit の skip 対象。`/run-notion-gmail-source-audit` で内訳確認）。
++2. **最新 Notion から送信計画を再構築** — 古い計画を使い回さないので、承認後にアドレスを直しても最新が反映される（旧アドレス送信を封じる）。
++3. **承認情報を計画から自己導出** → 各送信単位を `send_guard`(Class A 機械層) に通す（plan 改竄=content_hash 再計算 / 未置換 skip / From 検証 / 二重送信 dedup / **送信時 suppress 再検証**＝送信直前に `メールを送らない=✅`/`送信対象=☐` へ変えた宛先を除外）。
++4. Gmail 送信 → 送信ログへ冪等記録 → 日本語レポート。
++
++> これらの機械的安全層は確認回数と独立に常時オンです。`--canary N` は安定順の先頭 N 件だけを送り、残りは同じコマンドの再実行で送信されます（content dedup が既送を自動 skip するので二重送信になりません）。
++
++### 対話モード（慎重運用・後方互換）
++
++端末で内容を目視し、読解強制つきで慎重に送りたいとき:
+ 
+ ```
+-[0 整備] /run-notion-gmail-source-audit         # 送信元2DB の品質を点検し、空本文/不正アドレス/未置換リスクを直す
+-[1 計画] /run-notion-gmail-dry-run         # plan.json + APPROVE文字列 + 全件プレビュー (送信しない)
+-# 少数検品: /run-notion-gmail-dry-run --canary 3
+-[2 目視] 全件プレビューを確認              # 誰に・どんな本文が送られるか目視
+-[3 送信] /run-notion-gmail-send            # APPROVE <plan_hash> <count> <first_to> <確認語> を入力 → 二段確認 → 送信
++[0 整備] /run-notion-gmail-source-audit                   # 送信元2DB の品質を点検
++[1 計画] /run-notion-gmail-dry-run                        # plan.json + APPROVE文字列 + 全件プレビュー (送信しない)
++[2 目視] 全件プレビューを確認                              # 誰に・どんな本文が送られるか目視
++[3 送信] /run-notion-gmail-send --plan <plan.json> --approved-nonce <確認語>   # APPROVE を入力 → 二段確認 → 送信
+ ```
+ 
+-送信は dry-run が出した `APPROVE <plan_hash> <count> <first_to> <確認語>` を**完全一致**で入力しないと進みません。`<確認語>` は dry-run が特定の送信単位のプレビュー行末にのみ表示する短コードで、その単位を目視で探さないと得られません（blind approve 防止の読解強制）。承認後も context:fork のエージェントが plan を独立再検査し、`send_campaign` が **units から plan_hash/件数/content_hash を再計算して fail-closed 照合**（fork や人間の自己申告に依存しない）した上で、preflight（認証/送信ログDB/整合）を通過した送信単位だけが送られます。
++対話モードは dry-run が出した `APPROVE <plan_hash> <count> <first_to> <確認語>` を**完全一致**で入力しないと進みません。`<確認語>` は dry-run が特定の送信単位のプレビュー行末にのみ表示する短コードで、その単位を目視で探さないと得られません（blind approve 防止の読解強制）。承認後も context:fork のエージェントが plan を独立再検査し、`send_campaign` が **units から plan_hash/件数/content_hash を再計算して fail-closed 照合**した上で、preflight（認証/送信ログDB/整合）を通過した送信単位だけが送られます。
+ 
+ ---
+ 
+ ## 想定送信規模と大量送信（canary 運用）
+ 
+ - **想定規模**: 本 plugin は個別差し込みの一斉送信を **〜数百件** 程度まで安全に扱う設計。dry-run が `本文true × 宛先true` の直積を全件 plan 化し、`send-campaign.py` が承認済み plan の全単位を1通ずつ順に送る。
+-- **これを超える規模では分割（canary）送信を推奨**: まず少数だけ送って検品し、問題なければ残りを送る。`/run-notion-gmail-dry-run --canary 3`（または `--limit 3`）は送信可能 unit の安定順先頭だけを plan 化し、その限定後の件数・`plan_hash`・確認語に承認を束縛する。より厳密に対象者を選ぶ場合は **送信元DBの ✅ フラグで対象を絞る**:
++- **これを超える規模では分割（canary）送信も可能**: まず少数だけ送って**実メールを検品**し、問題なければ残りを送る。確認0モードは `/run-notion-gmail-send --canary 3` が送信可能 unit の安定順先頭3件だけを送り、残りは同じコマンドの再実行で送信する（content dedup が既送を skip）。対話モードは `/run-notion-gmail-dry-run --canary 3`（または `--limit 3`）で限定後の件数・`plan_hash`・確認語に承認を束縛する。より厳密に対象者を選ぶ場合は **送信元DBの ✅ フラグで対象を絞る**:
+   1. メール送信先_DBで、まず少数の宛先だけ `送信対象=✅` にする。
+-  2. `/run-notion-gmail-dry-run --canary 3` → 全件プレビュー目視 → `/run-notion-gmail-send` で承認・送信し、到達・本文・From・CC を検品する。
+-  3. 問題なければ残りの宛先を `送信対象=✅` にして、再度 dry-run → 承認 → 送信する。
+-  - 冪等ログは **content ベース dedup（`{本文page_id}:{宛先page_id}:{content_hash}`・campaign_id 非依存）** なので、2回目以降に対象を広げて再実行しても**既に送った単位は機構で skip** され二重送信にならない（同一内容を意図して再送する場合のみ `--allow-resend`）。
++  2. `/run-notion-gmail-send --canary 3`（または対話モードで dry-run → 全件プレビュー目視 → 承認）で送信し、到達・本文・From・CC を**実メールで**検品する。
++  3. 問題なければ残りの宛先も `送信対象=✅` にして、同じコマンドを再実行（既送は dedup で skip）。
++  - 冪等ログは **Notionページ単位の content ベース dedup（`{本文page_id}:{宛先page_id}:{content_hash}`・campaign_id 非依存）** なので、2回目以降に対象を広げて再実行しても**既に送った同一本文ページ×同一宛先ページの単位は機構で skip** され二重送信にならない（同一内容を意図して再送する場合のみ `--allow-resend`）。
+ - **Gmail API の日次送信 quota に注意**: 大量送信は1ユーザー/日あたりの送信上限に達することがある。`send-campaign.py` は quota 到達を検知すると **安全停止（exit 3）し、未送信の単位を `reserved` に戻して次回実行で自動再開**する。上限に達しないよう、上記の ✅ フラグ分割で **日をまたいで小分け**に送るのが安全。
+ 
+ ---
+@@ -153,12 +187,14 @@ python3 plugins/notion-gmail-send/lib/setup_doctor.py --config .notion-config.js
+ 
+ | 安全装置 | 守る対象 | 守らないもの（正直な明示） |
+ |---|---|---|
+-| **承認済み plan**（plan_hash・units から決定論再計算で束縛） | dry-run と live-send の内容ずれ・plan.json 改竄／件数偽装 | — |
+-| **人間承認ゲート**（APPROVE 完全一致 + 確認語 + 二段確認） | 誤った本文・宛先の**送信を止める停止点**。確認語で blind approve のコストを上げる | 人間が内容を理解したことの保証（機構では強制不能。最終的な内容妥当性は承認者の目視に依存） |
+-| **事前予約つき冪等ログ**（content ベース dedup・reserved→sent/unknown） | 再実行・**別実行（別 campaign）**の二重送信、送信成功後ログ失敗 | 意図的再送（`--allow-resend` で明示） |
+-
+-- 安全の正本は `lib/send_guard.py`（`lib/gmail_client.py` が内部で必ず呼ぶ）＋ `send_campaign` の決定論セルフチェック（units→plan_hash/件数/content_hash を再計算照合）。PreToolUse hook は補助防御。
+-- 冪等キーは `{本文page_id}:{宛先page_id}:{content_hash}` で **campaign_id を含めない**ため、別実行でも同一内容の再送は既 sent 行にヒットして機構で止まる。意図的再送は `--allow-resend`。
++| **plan 整合**（plan_hash・units から決定論再計算で束縛。auto は送信直前に最新 Notion から **fresh rebuild**） | plan.json 改竄／件数偽装、古い plan.json 使い回し | Notion 読取後から送信直前までの意味的なデータ変更 |
++| **承認（データ層）**（Notion `送信対象=✅` ＝ 承認。対話モードは加えて APPROVE 完全一致 + 確認語 + 二段確認） | 誰に送るかの人間の意思を**耐久・帰属・時刻つき**で記録（揮発的な端末文字列より監査に強い） | 「内容が正しい本文か」の保証（機構では強制不能。最終的な内容妥当性は Notion 整備＋下記 source-audit ＋実メール検品に依存） |
++| **source-audit ゲート（auto モード）** | 空本文/未知トークン/To/From不正/空差し込み値を送信前に行レベルで fail-closed | 構文は正しいが意味的に誤った本文、medium 扱いの秘書CC不正（該当 unit skip） |
++| **事前予約つき冪等ログ**（Notionページ単位の content ベース dedup・reserved→sent/unknown） | 再実行・**別実行（別 campaign）**での同一本文ページ×同一宛先ページ×同一内容の二重送信、送信成功後ログ失敗 | 宛先を別Notionページとして作り直した同一メールアドレスへの重複、意図的再送（`--allow-resend` で明示） |
++
++- **確認0モードの正直な明示**: 端末での目視・確認語（読解強制）を撤去する代わりに、「Notion の `送信対象=✅` という熟慮的操作 ＋ Class A 機械層 ＋ source-audit ゲート ＋（推奨）少数 canary の実メール検品」で誤送信の停止点を**データ層へ移して**いる。残るリスクは『古い/誤った宛先リストのまま ✅』と『`{{}}` を使わない literal 誤記の本文』で、前者は canary（実メール検品）、後者は source-audit で緩和する。`送信対象=✅` は永続・帰属・時刻つきのため、揮発的な端末 APPROVE 文字列より監査性はむしろ高い。読解強制つきで慎重に送りたいときは対話モードを使う。
++- 安全の正本は `lib/send_guard.py`（`lib/gmail_client.py` が内部で必ず呼ぶ）＋ `send_campaign` の決定論セルフチェック（units→plan_hash/件数/content_hash を再計算照合）。auto モードでも承認 tuple を新鮮 plan から self-derive した上で per-unit guard loop を必ず通す（人間入力のみ bypass・機械検証は不変）。PreToolUse hook は補助防御。
++- 冪等キーは `{本文page_id}:{宛先page_id}:{content_hash}` で **campaign_id を含めない**ため、別実行でも同一Notionページ単位の同一内容再送は既 sent 行にヒットして機構で止まる。意図的再送は `--allow-resend`。
+ - 送信成否が不明な失敗（接続/timeout、2xx 受理後の解析失敗）は **自動再送せず** `unknown_needs_reconcile` とし手動照合へ回す（at-least-once を避ける）。
+ - `status=sent` は Gmail API が受理したことを意味し、**受信者への到達を保証しない**。
+ - 本文全文を含む `plan.json` はローカル作業領域のみ（git・Notion ログに残さない）。
+@@ -170,11 +206,15 @@ python3 plugins/notion-gmail-send/lib/setup_doctor.py --config .notion-config.js
+ | 症状 | 原因 / 対処 |
+ |---|---|
+ | G1 で停止（認証） | SA鍵/DWD/sendAs 未設定。`ref-gmail-dwd-setup` と `doc/GCP-Gmail送信設定手順.md` 参照。`pip install google-auth` |
++| 「SA鍵が JSON ではない」/ `json.loads` の `Extra data`（位置1） | 整形JSONをそのまま `security -w` に渡すと値が **hex 文字列化**される。`json.dumps` で1行化して `-U` で入れ直す（「3. 認証鍵」のスクリプト）。同一 service に複数 account 項目が混在しても誤読する → `while security delete-generic-password -s google-sa.xl-skills; do :; done` で全削除してから1項目だけ追加 |
++| Keychain 登録で `already exists` | `-U`（上書き）フラグを付ける。付けない `add` は既存項目があると失敗する |
+ | G2 で停止（送信ログDB） | `run-notion-gmail-sendlog-setup` で構築。config `databases.gmail-send-log.db_id` を確認 |
+ | 本文0通 | メッセージ対象=✅ かつ `{{}}` 入り本文をDB1に記入 |
+ | 宛先0（抑制/重複で残らない） | dry-run の「送信抑制 / 重複除外」内訳を確認。`メールを送らない=✅` や プロ人材重複で全滅していないか点検 |
+ | 送るはずの人に届かない | `メールを送らない=✅` になっていないか、同一プロ人材メールの**より新しい行**が抑制されていないかを確認 |
+ | skip が多い | `run-notion-gmail-source-audit` で未置換/不正アドレス/未知・廃止トークン（`{{部署名}}`）を事前に直す |
++| auto で「source-audit: high severity」停止 | 空本文/未知トークン/To/From不正等が残存。`/run-notion-gmail-source-audit` で内訳を確認し Notion で直してから `/run-notion-gmail-send` を再実行（1通も送られていない） |
++| auto で送信0通 | `送信対象=✅` の宛先と、本文DBの `メッセージ対象=✅` かつ `{{}}` 入り本文を確認 |
+ | quota 停止（exit 3） | 再実行で reserved 残件を継続（停止単位は reserved へ戻り自動再開対象）。dedup は content ベースなので campaign_id 維持は不要 |
+ | 同一内容を意図的に再送したい | 既定はクロス実行の二重送信を機構で防止。再送は `run-notion-gmail-send --allow-resend` |
+ 
+diff --git a/plugins/notion-gmail-send/agents/gmail-send-presend-verifier.md b/plugins/notion-gmail-send/agents/gmail-send-presend-verifier.md
+index e355df3..ca4efa9 100644
+--- a/plugins/notion-gmail-send/agents/gmail-send-presend-verifier.md
++++ b/plugins/notion-gmail-send/agents/gmail-send-presend-verifier.md
+@@ -1,6 +1,6 @@
+ ---
+ name: gmail-send-presend-verifier
+-description: 送信直前にplan.jsonを独立contextで再検査し誤送信を防ぎたいときに使う。
++description: 対話モード専用。送信直前にplan.jsonを独立contextで再検査し誤送信を防ぎたいときに使う。
+ kind: agent
+ tools: Read, Bash(python3 *)
+ model: sonnet
+@@ -24,7 +24,7 @@ responsibility_id: presend-verify
+ |---|---|
+ | name | gmail-send-presend-verifier |
+ | skill | run-notion-gmail-send |
+-| responsibility | presend-verify 送信前二段確認 |
++| responsibility | presend-verify 送信前二段確認（対話モード専用） |
+ | ssot | ../skills/run-notion-gmail-send/prompts/R2-presend-verify.md |
+ | output_schema | ../skills/run-notion-gmail-send/schemas/send-verdict.schema.json |
+ | isolation | fork (親 context の自己肯定バイアスを持ち込まない) |
+@@ -34,7 +34,7 @@ responsibility_id: presend-verify
+ <!-- responsibility: presend-verify -->
+ 
+ まず SSOT `../skills/run-notion-gmail-send/prompts/R2-presend-verify.md` を Read し、その Layer 1〜7 を
+-本タスクの契約とする。承認対象の plan.json と人間が入力した承認文字列 (`APPROVE <plan_hash> <count> <first_to> <確認語>`)
++本タスクの契約とする。本 agent は対話モード専用であり、既定の確認0 auto-send では起動しない。承認対象の plan.json と人間が入力した承認文字列 (`APPROVE <plan_hash> <count> <first_to> <確認語>`)
+ を受け取り、
+ `python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/verify-plan.py" --plan <plan.json>
+ --approved-plan-hash <h> --approved-count <n> --approved-first-to <to> --approved-nonce <確認語>` を実行して verdict JSON を解釈する。
+diff --git a/plugins/notion-gmail-send/hooks/guard-gmail-send.py b/plugins/notion-gmail-send/hooks/guard-gmail-send.py
+index 4cd4e88..ac778a9 100644
+--- a/plugins/notion-gmail-send/hooks/guard-gmail-send.py
++++ b/plugins/notion-gmail-send/hooks/guard-gmail-send.py
+@@ -55,7 +55,8 @@ def main():
+     if any(re.search(p, lowered) for p in _SEND_PATTERNS):
+         sys.stderr.write(
+             "[guard-gmail-send] 承認フローを迂回した Gmail 直接送信は禁止です。"
+-            "送信は run-notion-gmail-dry-run で plan を作り、人間承認 (APPROVE <plan_hash> <count> <first_to>) の後に "
++            "確認0で送る場合は run-notion-gmail-send、慎重運用では "
++            "run-notion-gmail-dry-run で plan を作って APPROVE 後に "
+             "run-notion-gmail-send (send-campaign.py / send_guard 内蔵) 経由で行ってください。\n"
+         )
+         return 2
+diff --git a/plugins/notion-gmail-send/lib/mail_db_audit.py b/plugins/notion-gmail-send/lib/mail_db_audit.py
+index 340d5c0..cd8fd49 100644
+--- a/plugins/notion-gmail-send/lib/mail_db_audit.py
++++ b/plugins/notion-gmail-send/lib/mail_db_audit.py
+@@ -137,6 +137,24 @@ def audit_recipient_db(client, db2_id: str) -> dict:
+             "suppressed": suppressed, "duplicate_dropped": duplicate_dropped, "issues": issues}
+ 
+ 
++def run_full_audit(client, db1_id: str, db2_id: str) -> dict:
++    """本文DB/宛先DB/schema/cross の全監査を集約し、issues と high severity を返す (集約 SSOT)。
++
++    `run-notion-gmail-source-audit`(CLI) と確認0 auto-send の事前ゲートが**同一の判定**を使うための
++    単一関数。high severity issue が1件でもあれば auto-send は送信前に fail-closed する根拠になる。
++
++    Returns {all_issues, high, body_rep, recip_rep, recip_schema, cross}
++    """
++    body_rep = audit_body_db(client, db1_id)
++    recip_rep = audit_recipient_db(client, db2_id)
++    recip_schema = audit_recipient_db_schema(client, db2_id)
++    cross = cross_audit(body_rep["used_tokens"], recip_rep["recipients"])
++    all_issues = body_rep["issues"] + recip_rep["issues"] + recip_schema["issues"] + cross
++    high = [i for i in all_issues if i.get("severity") == "high"]
++    return {"all_issues": all_issues, "high": high, "body_rep": body_rep,
++            "recip_rep": recip_rep, "recip_schema": recip_schema, "cross": cross}
++
++
+ def cross_audit(used_tokens: list[str], recipients: list[dict]) -> list[dict]:
+     """本文が使うトークンに対し、宛先の対応値が空な組を未置換リスクとして洗い出す。"""
+     issues: list[dict] = []
+diff --git a/plugins/notion-gmail-send/lib/notion_client.py b/plugins/notion-gmail-send/lib/notion_client.py
+index deea201..1e68056 100644
+--- a/plugins/notion-gmail-send/lib/notion_client.py
++++ b/plugins/notion-gmail-send/lib/notion_client.py
+@@ -21,6 +21,7 @@ fail-closed (body_fetch_failed) させる。本文テンプレートは最初の
+ from __future__ import annotations
+ 
+ import json
++import time
+ import unicodedata
+ import urllib.error
+ import urllib.request
+@@ -28,6 +29,15 @@ import urllib.request
+ API_BASE = "https://api.notion.com/v1"
+ NOTION_VERSION = "2022-06-28"
+ 
++# レート制御 (Notion API は公称 平均3 req/sec。超過すると 429 で受理されない)。
++# 送信ログDBへの reserve→mark_sending→mark_sent は1単位で複数回書き込むため、
++# 件数が増えると密になり 429 を招く。予防的に最小呼び出し間隔を空けてプッシュする
++# (一定間隔。過度には空けない＝公称制限を守る最小限)。バーストで弾かれた時のための
++# 429 リトライ (Retry-After 尊重) は予防スロットルを補完する保険。
++DEFAULT_MIN_INTERVAL_SEC = 0.34   # ≈ 2.94 req/sec。公称 3 req/sec の安全側。
++DEFAULT_MAX_RETRIES = 5           # 429 を受けたときの最大再試行回数。
++RETRY_BACKOFF_CAP_SEC = 10.0      # Retry-After / 指数バックオフの上限 (際限なく待たない)。
++
+ # DB1「メール本文_DB」プロパティ名 (本 plugin 専用の固定列。任意2DBへの汎用化・config上書きは未実装＝非目的)
+ P_SUBJECT = "件名"
+ P_FROM = "メールの送り主"
+@@ -47,10 +57,35 @@ class NotionError(Exception):
+ 
+ 
+ class NotionClient:
+-    def __init__(self, api_key: str, version: str = NOTION_VERSION, timeout: int = 30):
++    def __init__(self, api_key: str, version: str = NOTION_VERSION, timeout: int = 30,
++                 min_interval_sec: float = DEFAULT_MIN_INTERVAL_SEC,
++                 max_retries: int = DEFAULT_MAX_RETRIES):
+         self._api_key = api_key
+         self._version = version
+         self._timeout = timeout
++        # レート制御。min_interval_sec=0 で無効化できる (テスト/単発呼び出し用)。
++        self._min_interval = max(0.0, min_interval_sec)
++        self._max_retries = max(0, max_retries)
++        self._last_request_ts = 0.0  # time.monotonic() 基準の最終送信時刻 (初期0で初回は待たない)
++
++    def _throttle(self) -> None:
++        """前回送信から _min_interval 秒に満たなければ不足分だけ sleep し、一定間隔でプッシュする。"""
++        if self._min_interval > 0:
++            wait = self._min_interval - (time.monotonic() - self._last_request_ts)
++            if wait > 0:
++                time.sleep(wait)
++        self._last_request_ts = time.monotonic()
++
++    def _retry_after_sec(self, http_error: urllib.error.HTTPError, attempt: int) -> float:
++        """429 の Retry-After ヘッダ(秒)を尊重する。無ければ指数バックオフ (上限 cap)。"""
++        ra = http_error.headers.get("Retry-After") if http_error.headers else None
++        if ra:
++            try:
++                return min(float(ra), RETRY_BACKOFF_CAP_SEC)
++            except (TypeError, ValueError):
++                pass
++        base = self._min_interval if self._min_interval > 0 else 1.0
++        return min(base * (2 ** attempt), RETRY_BACKOFF_CAP_SEC)
+ 
+     def _request(self, method: str, path: str, body: dict | None = None) -> dict:
+         url = f"{API_BASE}{path}"
+@@ -59,18 +94,26 @@ class NotionClient:
+         req.add_header("Authorization", f"Bearer {self._api_key}")
+         req.add_header("Notion-Version", self._version)
+         req.add_header("Content-Type", "application/json")
+-        try:
+-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+-                return json.loads(resp.read().decode("utf-8"))
+-        except urllib.error.HTTPError as e:
+-            detail = ""
++        attempt = 0
++        while True:
++            self._throttle()  # 各試行の直前に最小間隔を確保 (リトライ時も間隔を守る)
+             try:
+-                detail = e.read().decode("utf-8")[:300]
+-            except Exception:
+-                pass
+-            raise NotionError(f"{method} {path} -> HTTP {e.code}: {detail}") from None
+-        except (urllib.error.URLError, TimeoutError) as e:
+-            raise NotionError(f"{method} {path} 接続失敗: {e}") from None
++                with urllib.request.urlopen(req, timeout=self._timeout) as resp:
++                    return json.loads(resp.read().decode("utf-8"))
++            except urllib.error.HTTPError as e:
++                # 429 (レート超過) は受理されていない=安全に再試行できる。Retry-After を尊重。
++                if e.code == 429 and attempt < self._max_retries:
++                    time.sleep(self._retry_after_sec(e, attempt))
++                    attempt += 1
++                    continue
++                detail = ""
++                try:
++                    detail = e.read().decode("utf-8")[:300]
++                except Exception:
++                    pass
++                raise NotionError(f"{method} {path} -> HTTP {e.code}: {detail}") from None
++            except (urllib.error.URLError, TimeoutError) as e:
++                raise NotionError(f"{method} {path} 接続失敗: {e}") from None
+ 
+     # ---- 低レベル ----
+     def retrieve_database(self, db_id: str) -> dict:
+diff --git a/plugins/notion-gmail-send/lib/notion_config.py b/plugins/notion-gmail-send/lib/notion_config.py
+index 668fa2d..e6cd656 100644
+--- a/plugins/notion-gmail-send/lib/notion_config.py
++++ b/plugins/notion-gmail-send/lib/notion_config.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: notion_config
+-# purpose: repo-root の .notion-config.json (gitignore 対象) を SSOT として解決し、Notion DB ID / 送信元設定を返す。symlink 共有プラグインでも install パス非依存で動く。
++# purpose: 作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone は repo-root) の .notion-config.json (gitignore 対象) を SSOT として解決し、Notion DB ID / 送信元設定を返す。不在時は placeholder 雛形を生成する scaffold も提供。symlink 共有プラグインでも install パス非依存で動く。
+ # inputs:
+ #   - env: NOTION_GMAIL_CONFIG (任意) / CLAUDE_PROJECT_DIR (任意)
+ #   - file: .notion-config.json
+@@ -15,18 +15,58 @@
+ # ///
+ """Notion 設定ローダー (per-repo config SSOT)。
+ 
+-DB ID や送信元ドメインなど環境依存の固有値は repo-root の .notion-config.json に分離し、
+-コードには直書きしない (仕様書 §3 取得時の確定事項・abstraction_variables)。探索順は
+-env(明示) > CLAUDE_PROJECT_DIR > __file__ から上位ディレクトリ走査 > CWD。
++DB ID や送信元ドメインなど環境依存の固有値は作業フォルダ($CLAUDE_PROJECT_DIR 直下。
++clone 開発者は repo-root)の .notion-config.json に分離し、コードには直書きしない
++(仕様書 §3 取得時の確定事項・abstraction_variables)。探索順は
++明示パス(--config) > env(NOTION_GMAIL_CONFIG) > CLAUDE_PROJECT_DIR > __file__ から上位ディレクトリ走査 > CWD。
++
++config 不在の初回は ConfigError で fail-closed する。前進手段として placeholder 雛形を
++$CLAUDE_PROJECT_DIR 直下へ書き出す scaffold (write_skeleton / skeleton_json) を提供する。
++placeholder 値 (<...>) は解決不能なので、生成直後でも実値を埋めるまで送信できない (fail-closed 維持)。
+ """
+ from __future__ import annotations
+ 
++import copy
+ import json
+ import os
+ from pathlib import Path
+ 
+ CONFIG_FILENAME = ".notion-config.json"
+ 
++# placeholder config の唯一の真実源 (SSOT)。
++# (1) .notion-config.example.json / (2) write_skeleton が生成する雛形 /
++# (3) ConfigError が印字する貼り付け用 JSON は、すべてこの定数から導く。
++# 実 DB ID・実送信元は決してここに置かない (git 追跡ファイルへの実値拡散を機構的に防ぐ)。
++CONFIG_SKELETON: dict = {
++    "_comment": (
++        "作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone 開発者は repo-root)に "
++        ".notion-config.json として置き、<...> を実値で埋める (.notion-config.json は gitignore 対象)。"
++        "db_id は Notion ページURL末尾の32桁。雛形を自動生成するには doctor --init を実行。"
++    ),
++    "databases": {
++        "gmail-send-log": {
++            "db_id": "<送信ログDBのid>",
++            "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える",
++        }
++    },
++    "notion_gmail_send": {
++        "source": {
++            "body_db": "<メール本文DBのid>",
++            "recipient_db": "<メール送信先_DBのid>",
++            "_note": "body_db=メール本文_DB / recipient_db=メール送信先_DB",
++        },
++        "sender": {
++            "impersonate": "<送信元アドレス @your-domain>",
++            "sa_keychain": {"service": "google-sa.xl-skills", "account": "xl-skills"},
++            "_note": (
++                "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。"
++                "実値は git に載せず config にのみ置く。"
++                "sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
++            ),
++        },
++    },
++}
++
+ 
+ class ConfigError(Exception):
+     """設定不在 / キー欠落 (G2 で fail-closed させる)。"""
+@@ -71,8 +111,9 @@ def load_config(path: str | os.PathLike[str] | None = None) -> dict:
+     if resolved is None:
+         target = f"指定パス {path}" if path else CONFIG_FILENAME
+         raise ConfigError(
+-            f"{target} が見つかりません。repo-root に作成してください "
+-            f"(notion-gmail-send の例は .notion-config.json.example を参照)。"
++            f"{target} が見つかりません。作業フォルダ($CLAUDE_PROJECT_DIR 直下。"
++            f"clone 開発者は repo-root)に作成してください。雛形を自動生成するには "
++            f"doctor --init を実行できます (例は .notion-config.example.json)。"
+         )
+     try:
+         return json.loads(resolved.read_text(encoding="utf-8"))
+@@ -86,15 +127,99 @@ def get_db_id(name: str, config: dict | None = None) -> str:
+     databases = cfg.get("databases") or {}
+     if not isinstance(databases, dict):
+         raise ConfigError("databases は {name: {db_id: ...}} 形式の dict である必要があります "
+-                          "(.notion-config.json.example 参照)。")
++                          "(.notion-config.example.json 参照)。")
+     db = databases.get(name) or {}
+     db_id = db.get("db_id") if isinstance(db, dict) else None
+-    if not db_id:
+-        raise ConfigError(f"databases.{name}.db_id が .notion-config.json に未設定です。")
+-    return db_id
++    return require_resolved_value(db_id, f"databases.{name}.db_id")
++
++
++def is_placeholder_value(value: object) -> bool:
++    """`<...>` 形式の scaffold placeholder なら True。"""
++    return isinstance(value, str) and value.strip().startswith("<") and value.strip().endswith(">")
++
++
++def require_resolved_value(value: object, path: str) -> str:
++    """必須 config 値を実値として返す。未設定/placeholder は ConfigError。"""
++    if not isinstance(value, str) or not value.strip():
++        raise ConfigError(f"{path} が .notion-config.json に未設定です。")
++    if is_placeholder_value(value):
++        raise ConfigError(f"{path} が placeholder ({value}) のままです。実値に置き換えてください。")
++    return value.strip()
++
++
++def get_source_db_ids(config: dict | None = None) -> tuple[str, str]:
++    """notion_gmail_send.source の body_db / recipient_db を実値として返す。"""
++    cfg = config if config is not None else load_config()
++    source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
++    body_db = require_resolved_value(source.get("body_db"), "notion_gmail_send.source.body_db")
++    recipient_db = require_resolved_value(source.get("recipient_db"), "notion_gmail_send.source.recipient_db")
++    return body_db, recipient_db
+ 
+ 
+ def get_sender(config: dict | None = None) -> dict:
+     """送信元設定 (notion_gmail_send.sender)。from_domain / impersonate などの固有値。"""
+     cfg = config if config is not None else load_config()
+     return (cfg.get("notion_gmail_send") or {}).get("sender") or {}
++
++
++# ---- scaffold (config 不在時の前進手段。fail-closed を弱めない) ----
++
++def skeleton_json() -> str:
++    """貼り付け用の placeholder config JSON 文字列 (CONFIG_SKELETON の整形出力)。"""
++    return json.dumps(CONFIG_SKELETON, ensure_ascii=False, indent=2)
++
++
++# init 時に実値で埋めてよい非機密キー → config 上の設定先 (path)。
++# DB ID は Notion ページURLの一部、impersonate はメールアドレスでいずれも非機密。
++# API鍵 / SA鍵JSON は Keychain にのみ置き config には決して書かない (ここに含めない)。
++FILLABLE_KEYS = ("body_db", "recipient_db", "log_db", "impersonate")
++
++
++def build_config(values: dict | None = None) -> dict:
++    """CONFIG_SKELETON を基に、与えられた実値(非機密)だけを上書きした config dict を返す。
++
++    SSOT である CONFIG_SKELETON は決して変更しない(deepcopy)。example/skeleton(git 追跡) にも
++    一切書かない。values で与えなかったキーは placeholder のまま残るため、部分指定でも未指定分は
++    fail-closed を維持する(実値を埋めるまで解決不能)。受け付けるキー: FILLABLE_KEYS。
++    書き出し先は呼び出し側(write_skeleton)が gitignored .notion-config.json に限定する。
++    """
++    cfg = copy.deepcopy(CONFIG_SKELETON)
++    if not values:
++        return cfg
++    if values.get("log_db"):
++        cfg["databases"]["gmail-send-log"]["db_id"] = values["log_db"]
++    source = cfg["notion_gmail_send"]["source"]
++    if values.get("body_db"):
++        source["body_db"] = values["body_db"]
++    if values.get("recipient_db"):
++        source["recipient_db"] = values["recipient_db"]
++    if values.get("impersonate"):
++        cfg["notion_gmail_send"]["sender"]["impersonate"] = values["impersonate"]
++    return cfg
++
++
++def scaffold_target_path(explicit_path: str | os.PathLike[str] | None = None) -> Path:
++    """init で書き出す config の宛先。明示パス > CLAUDE_PROJECT_DIR 直下 > CWD 直下。"""
++    if explicit_path:
++        return Path(explicit_path)
++    proj = os.environ.get("CLAUDE_PROJECT_DIR")
++    base = Path(proj) if proj else Path.cwd()
++    return base / CONFIG_FILENAME
++
++
++def write_skeleton(explicit_path: str | os.PathLike[str] | None = None, *, overwrite: bool = False,
++                   values: dict | None = None) -> Path:
++    """config を宛先(gitignored .notion-config.json)へ書き出し Path を返す。
++
++    values=None なら全 placeholder。values(FILLABLE_KEYS の非機密実値)を渡すと該当キーだけを
++    実値で埋め、残りは placeholder のまま(未指定分は fail-closed 維持)。実値は gitignored の
++    宛先にのみ書き、example/skeleton(git 追跡) には決して書かない(build_config が deepcopy で SSOT を守る)。
++    既存ファイルがあり overwrite=False なら ConfigError (実値を誤って潰さない)。
++    """
++    dest = scaffold_target_path(explicit_path)
++    if dest.exists() and not overwrite:
++        raise ConfigError(f"{dest} は既に存在します (上書きしません)。中身を編集してください。")
++    dest.parent.mkdir(parents=True, exist_ok=True)
++    cfg = build_config(values)
++    dest.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
++    return dest
+diff --git a/plugins/notion-gmail-send/lib/send_guard.py b/plugins/notion-gmail-send/lib/send_guard.py
+index 5acb6d1..d9ba835 100644
+--- a/plugins/notion-gmail-send/lib/send_guard.py
++++ b/plugins/notion-gmail-send/lib/send_guard.py
+@@ -50,7 +50,7 @@ def check(
+     `approved_nonce` と一致しない限り送信させない (S-F1: blind approve 防止の読解強制)。
+     """
+     if not approved_plan_hash:
+-        raise SendGuardError("no_approval", "承認 plan_hash が空。人間承認ゲート未通過。")
++        raise SendGuardError("no_approval", "承認 plan_hash が空。承認ゲート未通過。")
+     if approved_plan_hash != plan_hash:
+         raise SendGuardError("plan_hash_mismatch", "承認 plan_hash と現在の plan_hash が不一致。")
+     if int(approved_count) != int(actual_count):
+diff --git a/plugins/notion-gmail-send/lib/setup_doctor.py b/plugins/notion-gmail-send/lib/setup_doctor.py
+index 19aeb3c..408f127 100644
+--- a/plugins/notion-gmail-send/lib/setup_doctor.py
++++ b/plugins/notion-gmail-send/lib/setup_doctor.py
+@@ -34,6 +34,64 @@ def _result(gate: str, passed: bool, reason: str = "", action: str = "", detail:
+     return {"gate": gate, "passed": passed, "reason": reason, "action": action, "detail": detail}
+ 
+ 
++def _unresolved_keys(cfg: dict) -> list[tuple[str, str]]:
++    """まだ placeholder/空のままの必須キーを (path, 現在値) の一覧で返す。"""
++    nc = notion_config
++    src = ((cfg.get("notion_gmail_send") or {}).get("source")) or {}
++    sender = ((cfg.get("notion_gmail_send") or {}).get("sender")) or {}
++    checks = [
++        ("databases.gmail-send-log.db_id", ((cfg.get("databases") or {}).get("gmail-send-log") or {}).get("db_id")),
++        ("notion_gmail_send.source.body_db", src.get("body_db")),
++        ("notion_gmail_send.source.recipient_db", src.get("recipient_db")),
++        ("notion_gmail_send.sender.impersonate", sender.get("impersonate")),
++    ]
++    out: list[tuple[str, str]] = []
++    for path, val in checks:
++        if not isinstance(val, str) or not val.strip() or nc.is_placeholder_value(val):
++            out.append((path, val if isinstance(val, str) else ""))
++    return out
++
++
++def _do_init(config_path: str | None, values: dict | None = None, force: bool = False) -> int:
++    """config 不在時の前進手段。雛形を作業フォルダへ生成する (送信はしない)。
++
++    values(非機密の DB ID / 送信元アドレス)を渡すと該当キーを実値で埋めた config を一発生成する
++    (既知値からの 1 ステップ立ち上げ)。未指定キーは placeholder のまま=実値を埋めるまで dry-run も
++    送信もできない (fail-closed を弱めない)。実値は gitignored .notion-config.json にのみ書き、
++    example/skeleton(git 追跡) には書かない。既存 config は --force 指定時のみ上書きする。
++    """
++    try:
++        dest = notion_config.write_skeleton(config_path, overwrite=force, values=values)
++    except notion_config.ConfigError as e:
++        print(f"[skip] {e}")
++        existing = notion_config.find_config_path(config_path)
++        if existing:
++            print(f"既存 config: {existing}")
++            print("既存を実値で入れ直すには --force を付ける: "
++                  "doctor --init --force --body-db <id> --recipient-db <id> --log-db <id> --impersonate <addr>")
++        return 0
++
++    cfg = notion_config.load_config(str(dest))
++    remaining = _unresolved_keys(cfg)
++    if values:
++        print(f"config を生成しました (指定値を反映): {dest}")
++    else:
++        print(f"placeholder config を生成しました: {dest}")
++    if remaining:
++        print("まだ実値が必要な項目 (placeholder のまま):")
++        for path, val in remaining:
++            print(f"  - {path} = {val or '(空)'}")
++        print("実値を埋めるには直接編集するか、値を渡して入れ直す:")
++        print("  doctor --init --force --body-db <id> --recipient-db <id> --log-db <id> --impersonate <addr>")
++        print("  ※ db_id は Notion ページURL末尾の32桁。API鍵/SA鍵は config でなく Keychain に登録する。")
++        print("  ※ placeholder が残る間は1通も送信できません (実値を埋めるまで fail-closed)。")
++    else:
++        print("必須項目が揃いました。次の手順:")
++        print("  1) 認証鍵を Keychain に登録 (README『セットアップ 3. 認証鍵』)")
++        print("  2) doctor で点検 → /run-notion-gmail-dry-run で送信計画を生成")
++    return 0
++
++
+ def _print_text(results: list[dict]) -> None:
+     print("notion-gmail-send setup-doctor")
+     for r in results:
+@@ -54,8 +112,22 @@ def main() -> int:
+     ap.add_argument("--from", dest="from_addr", default="", help="sendAs 検証する From。未指定時は sender.impersonate")
+     ap.add_argument("--probe", action="store_true", help="Gmail 実APIで DWD/sendAs まで検証する")
+     ap.add_argument("--json", action="store_true", help="結果を JSON で出力する")
++    ap.add_argument("--init", action="store_true",
++                    help="config 雛形を作業フォルダへ生成する (送信はしない)。値フラグ併用で実値を一発で埋める")
++    ap.add_argument("--body-db", dest="body_db", help="(init) メール本文DB の id を実値で埋める")
++    ap.add_argument("--recipient-db", dest="recipient_db", help="(init) メール送信先_DB の id")
++    ap.add_argument("--log-db", dest="log_db", help="(init) 送信ログDB の id")
++    ap.add_argument("--impersonate", dest="impersonate", help="(init) 送信元アドレス(DWD成りすまし/sendAs)")
++    ap.add_argument("--force", action="store_true", help="(init) 既存 config を上書きする")
+     args = ap.parse_args()
+ 
++    if args.init:
++        values = {k: v for k, v in {
++            "body_db": args.body_db, "recipient_db": args.recipient_db,
++            "log_db": args.log_db, "impersonate": args.impersonate,
++        }.items() if v}
++        return _do_init(args.config, values=values or None, force=args.force)
++
+     results: list[dict] = []
+     if args.config and not Path(args.config).is_file():
+         results.append(_result("G0.config", False, "config_missing", "create_config",
+@@ -64,6 +136,7 @@ def main() -> int:
+             print(json.dumps({"passed": False, "results": results}, ensure_ascii=False, indent=2))
+         else:
+             _print_text(results)
++            print("\nconfig がありません。placeholder 雛形を生成するには: doctor --init")
+         return 2
+     try:
+         cfg = notion_config.load_config(args.config)
+@@ -75,6 +148,7 @@ def main() -> int:
+             print(json.dumps({"passed": False, "results": results}, ensure_ascii=False, indent=2))
+         else:
+             _print_text(results)
++            print("\nconfig がありません。placeholder 雛形を生成するには: doctor --init")
+         return 2
+ 
+     try:
+diff --git a/plugins/notion-gmail-send/skills/ref-gmail-dwd-setup/references/setup-guide.md b/plugins/notion-gmail-send/skills/ref-gmail-dwd-setup/references/setup-guide.md
+index fc8ebed..6869309 100644
+--- a/plugins/notion-gmail-send/skills/ref-gmail-dwd-setup/references/setup-guide.md
++++ b/plugins/notion-gmail-send/skills/ref-gmail-dwd-setup/references/setup-guide.md
+@@ -64,7 +64,7 @@ SA 鍵 JSON をファイルとして残さず、Keychain の generic-password 
+ ```bash
+ # SA 鍵 JSON の中身をそのまま Keychain に格納（service/account は任意の識別名）
+ security add-generic-password \
+-  -s "gmail-sa.xl-skills" \
++  -s "google-sa.xl-skills" \
+   -a "xl-skills" \
+   -w "$(cat /path/to/sa-key.json)"
+ 
+@@ -75,7 +75,7 @@ rm -P /path/to/sa-key.json
+ 登録確認（秘密値の private_key は表示せず、type と client_email だけ確認する）:
+ 
+ ```bash
+-security find-generic-password -s "gmail-sa.xl-skills" -a "xl-skills" -w \
++security find-generic-password -s "google-sa.xl-skills" -a "xl-skills" -w \
+   | python3 -c 'import sys,json; d=json.load(sys.stdin); print(d["type"], d["client_email"])'
+ # => service_account automation@your-domain.co.jp
+ ```
+@@ -95,7 +95,7 @@ security find-generic-password -s "gmail-sa.xl-skills" -a "xl-skills" -w \
+   },
+   "notion_gmail_send": {
+     "sender": {
+-      "sa_keychain": { "service": "gmail-sa.xl-skills", "account": "xl-skills" },
++      "sa_keychain": { "service": "google-sa.xl-skills", "account": "xl-skills" },
+       "impersonate": "automation@your-domain.co.jp"
+     }
+   }
+diff --git a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/SKILL.md b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/SKILL.md
+index 13d4d1b..e566268 100644
+--- a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/SKILL.md
++++ b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/SKILL.md
+@@ -93,7 +93,7 @@ REST API（Keychain `notion-api-key.xl-skills`）で取得。Notion MCP は 404
+ 
+ ## 送信ログDB schema と冪等（§9）
+ 
+-- **冪等キー**（title）: `{本文page_id}:{宛先page_id}:{content_hash}`。検索キーとして使う。`campaign_id` は含めず、別実行でも同一本文×同一宛先×同一内容の二重送信を止める。意図的再送時だけ `--allow-resend` が campaign suffix を付ける。
++- **冪等キー**（title）: `{本文page_id}:{宛先page_id}:{content_hash}`。検索キーとして使う。`campaign_id` は含めず、別実行でも同一本文ページ×同一宛先ページ×同一内容の二重送信を止める。宛先を別Notionページとして作り直した場合は別単位。意図的再送時だけ `--allow-resend` が campaign suffix を付ける。
+ - 解決元: `.notion-config.json` の `databases.gmail-send-log.db_id`。
+ - Notion は一意制約を持たないため、送信前に検索 → 0件なら create reserved / 1件なら状態判定 / 2件以上は `duplicate_log_key` で fail-closed。
+ 
+@@ -169,10 +169,10 @@ dry-run preflight と live-send preflight を分離する。dry-run は送信ロ
+ | 安全装置 | 守る対象 | 効く局面 | 効かない局面（正直な明示） |
+ |---|---|---|---|
+ | 承認済み plan（plan_hash・units から決定論再計算で束縛） | dry-run と live-send の内容ずれ・plan.json 改竄・件数偽装・raw 改変 | 承認後の全送信（`send_campaign` が送信前に units→plan_hash/件数/content_hash を再計算照合し raw も都度再生成） | — |
+-| 人間承認ゲート（dry-run 全件目視 → 明示承認 + 確認語） | 誤本文・誤宛先の**送信を止める停止点**。確認語で blind approve のコストを上げる | 全送信（初回含む） | **人間が内容を実際に読み理解したことの保証**（機構では強制不能。確認語は該当単位の目視を促すのみ） |
+-| 事前予約つき冪等ログ（content ベース dedup・reserved→sending→sent/unknown） | 再実行・**別実行（別 campaign）**の二重送信、送信成功後ログ失敗 | 2回目以降・別実行・障害復旧 | 意図的再送（`--allow-resend` で明示）。初回の内容妥当性 |
++| 承認（既定 auto=Notion `送信対象=✅` / 対話=dry-run 全件目視 → 明示承認 + 確認語） | 誰に送るかの意思をデータ層または APPROVE 文字列で固定する。対話モードの確認語は blind approve のコストを上げる | 全送信（初回含む） | **内容が意味的に正しいことの保証**（機構では強制不能。auto は Notion 整備＋source-audit＋canary で緩和、対話は目視で緩和） |
++| 事前予約つき冪等ログ（Notionページ単位の content ベース dedup・reserved→sending→sent/unknown） | 再実行・**別実行（別 campaign）**での同一本文ページ×同一宛先ページ×同一内容の二重送信、送信成功後ログ失敗 | 2回目以降・別実行・障害復旧 | 別Notionページとして作り直した同一メールアドレスへの重複、意図的再送（`--allow-resend` で明示）。初回の内容妥当性 |
+ 
+-> ⚠️ 因果ループ警告: 「冪等があるから安全」は**初回送信の内容妥当性には成立しない**。初回内容は人間承認ゲート（目視）、承認後の内容固定は `plan_hash`＋送信前の決定論再計算、再実行・別実行の二重送信防止は content ベース冪等ログが担保する。
++> ⚠️ 因果ループ警告: 「冪等があるから安全」は**初回送信の内容妥当性には成立しない**。初回内容は auto では Notion のチェック整備と source-audit/canary、対話では目視承認で緩和する。承認後の内容固定は `plan_hash`＋送信前の決定論再計算、再実行・別実行の二重送信防止は content ベース冪等ログが担保する。
+ >
+ > 正直な限界: 承認文字列の機械照合は「plan が承認時から改竄されていない」ことを保証するが、「人間が本文を読み理解した」ことは保証できない（机上で強制不能）。確認語（dry-run が特定単位のプレビュー行末にのみ表示）はその単位を目視で探させ blind approve のコストを上げる緩和策であり、comprehension の証明ではない。最終的な内容妥当性は承認者の全件プレビュー目視に依存する。
+ 
+diff --git a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
+index 601d686..c9ff515 100644
+--- a/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
++++ b/plugins/notion-gmail-send/skills/ref-notion-gmail-send-spec/references/spec-detail.md
+@@ -6,7 +6,7 @@
+ 
+ ## 1. Notion 2DB 列マッピング（全表・§3）
+ 
+-### DB1「メール本文_DB」(`38807a0cd18c80f1ae82f01a90ff5aa2`)
++### DB1「メール本文_DB」（DB id は config `notion_gmail_send.source.body_db`）
+ 
+ | プロパティ | 型 | 役割 | メール組立での写像 |
+ |---|---|---|---|
+@@ -16,7 +16,7 @@
+ | メッセージ対象 | checkbox | ✅ かつ本文非空の行だけ送信 | 送信フィルタ |
+ | （ページ本文） | コードブロック | メール本文テンプレ（`{{}}` 置換対象） | Body |
+ 
+-### DB2「メール送信先_DB」(`38807a0cd18c80e9b47cd9ceb81463db`)
++### DB2「メール送信先_DB」（DB id は config `notion_gmail_send.source.recipient_db`）
+ 
+ | プロパティ(厳密名) | 型 | 役割 | メール組立での写像 |
+ |---|---|---|---|
+@@ -36,7 +36,7 @@
+ ### 取得時の確定事項
+ 
+ - From は `@shonai.inc`（Workspace ドメイン）。固有値は config へ退避し、承認状況は実行時に動的検証する（G1）。
+-- 現状 `メッセージ対象=✅` の2件は本文コードブロックが未記入（空）。空本文は送信対象外。送信には `{{}}` トークン入り本文の記入が必要（preflight で0通なら送信せず案内）。
++- `メッセージ対象=✅` でも本文コードブロックが空なら送信対象外（空本文は送信しない）。送信には `{{}}` トークン入り本文の記入が必要（preflight で0通なら送信せず案内）。
+ 
+ ---
+ 
+@@ -64,7 +64,7 @@
+ - `campaign_id`: 実行ごとの識別子（例: `YYYYMMDD-HHMMSS-<shortuuid>`）。同一キャンペーン内の全送信単位に付与。
+ - `content_hash`: 置換後の Subject / Body / From / To / CC / 本文page_id / 宛先page_id を正規化し SHA-256。「recipient list」は独立フィールドではなく To(sorted)/CC(sorted)/宛先page_id の総称（実装 `lib/plan_build._normalize` の固定7キー。観測メタは hash 非対象）。
+ - `plan_hash`: dry-run で生成した全送信単位（順序安定・正規化済み）の SHA-256。live-send は `--approved-plan-hash` が dry-run の `plan_hash` と一致しない限り Gmail API を呼ばない。
+-- 冪等キー: `{本文page_id}:{宛先page_id}:{content_hash}`。`campaign_id` は含めないため、別実行でも同一内容の二重送信を止める。宛先行のメール列に複数アドレスがあっても、その宛先行に対する1送信単位として扱う。意図的再送時だけ `--allow-resend` が campaign suffix を付ける。
++- 冪等キー: `{本文page_id}:{宛先page_id}:{content_hash}`。`campaign_id` は含めないため、別実行でも同一本文ページ×同一宛先ページ×同一内容の二重送信を止める。宛先行のメール列に複数アドレスがあっても、その宛先行に対する1送信単位として扱う。宛先を別Notionページとして作り直した場合は別単位。意図的再送時だけ `--allow-resend` が campaign suffix を付ける。
+ - `plan.json` は本文全文を含むがローカル作業領域のみ（git 管理外推奨）。Notion ログには本文全文を保存せず `content_hash` と件名を保存する。
+ 
+ ### 件数式
+@@ -113,13 +113,13 @@ dry-run は送信ログDB が未確定でも第1段まで提示する。第2段
+ | 事前予約（§9,§11） | reserved ログ行ID | Gmail API 呼び出し前に Notion create/search | G3: reserved なしなら送信中断 |
+ | impersonate 送信（§6 From） | Keychain SA鍵 svce/acct | preflight で `security` 列挙確認 | G1: 取得不可なら中断 |
+ | Gmail 送信（§8-9） | shonai.inc の DWD + gmail.send 承認 + From sendAs alias | 実 API で動的検証 | G1: 未承認なら GCP 手順へ誘導 |
+-| 送信単位生成（§4） | 本文 true ≥ 1（✅2件の本文記入） | 本文コードブロック記入 | G2: 0通なら記入を促し終了 |
++| 送信単位生成（§4） | 本文 true ≥ 1（✅対象の本文記入） | 本文コードブロック記入 | G2: 0通なら記入を促し終了 |
+ 
+ ---
+ 
+ ## 6. 責務一覧（§7・二層分離）
+ 
+-決定論的に確定できる処理は script、LLM 判断・人間承認・例外介入は run-skill が担う。
++決定論的に確定できる処理は script、LLM 判断・例外介入は run-skill が担う。**承認は Notion のチェック（`送信対象=✅`）= データ層**が担い、既定の確認0 auto-send（`send-campaign.py` 引数なし、`--auto-approve` は後方互換）は端末入力なしで送信する。auto は送信直前に最新 Notion から `lib/plan_compose.compose_plan` で新鮮 plan を構築（dry-run と同一ロジック）し、`lib/mail_db_audit.run_full_audit` の source-audit ゲート（high 残存→0送信 fail-closed）を経て、承認 tuple を plan から self-derive のうえ **per-unit guard loop（Class A 機械層）を必ず通す**。対話モード（`--plan`+`--approved-*`）は後方互換で温存し、人間承認・読解強制（nonce）・fork 二段確認はこのモード限定。
+ 
+ | id | 担当層 | prompt_required |
+ |---|---|---|
+@@ -136,7 +136,8 @@ dry-run は送信ログDB が未確定でも第1段まで提示する。第2段
+ 
+ ## 7. 耐障害・セキュリティ（§11,§12）
+ 
+-- **quota/レート**: 1通ごと最低1秒待機。429/403 rateLimit/quota は指数バックオフ（最大3回、初期2秒、上限60秒）。3回失敗または quota 枯渇判定で安全停止し、残件は `reserved` のまま次回再開対象。
++- **Gmail quota/レート**: 1通ごと最低1秒待機。429/403 rateLimit/quota は指数バックオフ（最大3回、初期2秒、上限60秒）。3回失敗または quota 枯渇判定で安全停止し、残件は `reserved` のまま次回再開対象。
++- **Notion 書き込みレート**: 送信ログDBへの reserve→sending→sent は1単位で複数回書き込むため、`lib/notion_client.py` が最小呼び出し間隔（既定 `DEFAULT_MIN_INTERVAL_SEC`=0.34s ≈ 公称 3 req/sec の安全側）で**一定間隔プッシュ**し、429 は `Retry-After` を尊重して再試行する（無ければ指数バックオフ・上限 `RETRY_BACKOFF_CAP_SEC`、`DEFAULT_MAX_RETRIES` 回）。大量件数を一度に投げて弾かれるのを予防する（間隔は公称制限を守る最小限に留め、過度には空けない）。`min_interval_sec=0` で無効化可（テスト/単発呼び出し）。
+ - **重複検知**: 同一プロ人材メールアドレスが複数 page に存在する場合は最新 `created_time` の1件だけを送信対象に残し、他は `duplicate_dropped` として報告する（会社名違いでも同一人物への重複送信を防ぐ）。
+ - **認証**: macOS Keychain の Google SA鍵のみ。鍵の平文化・ログ出力を禁止。DWD は任意ユーザー impersonate 可能なため対象を運用で固定。
+ - **PII**: dry-run preview は本文全文・アドレスを表示してよい。永続ログ（Notion 送信ログ / eval-log / journal）には本文全文を保存しない。エラーログでは secret/key を必ず redaction する。
+@@ -155,12 +156,12 @@ dry-run は送信ログDB が未確定でも第1段まで提示する。第2段
+ | 「上位ID＝新しいもの」 | dedup 一次キー=`created_time` 降順 | 作成時刻であり page_id の大小ではない（F4） |
+ | 同じ人を1回だけ | プロ人材メールで dedup（最新1件） | tie-break のみ `page_id` 降順 |
+ | 送らない | `メールを送らない=✅` → `suppressed` | `送信対象` より最優先 |
+-| この人には送る | `送信対象=✅` → 宛先 true | false は dry-run 母集団外（無記録・F8） |
++| この人には送る（＝承認） | `送信対象=✅` → 宛先 true | **確認0 auto-send の承認シグナル**。false は dry-run 母集団外（無記録・F8） |
+ | 重複で消えたCC | `cc_suppressed_due_to_to_overlap` | 秘書==To で CC 除外された可視化警告（F1） |
+ | 送った/送信済み | `status=sent`（Gmail API 受理） | 到達保証ではない |
+ | 内容のハッシュ | `content_hash`（固定7キー） | 「recipient list」は To/CC/宛先page_id の総称（F2） |
+ | 計画 | `plan` / `plan_hash` | dry-run 出力。承認の照合キー |
+-| 確認語 | `nonce`（`approval_nonce`） | プレビュー目視強制の短コード |
++| 確認語 | `nonce`（`approval_nonce`） | プレビュー目視強制の短コード。**対話モード限定**（確認0 auto-send では撤去） |
+ 
+ ---
+ 
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/SKILL.md b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/SKILL.md
+index e20b217..466617b 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/SKILL.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/SKILL.md
+@@ -38,9 +38,9 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ ## Purpose & Output Contract
+ 
+-Notion 2DB（メール本文DB / メール送信先_DB）を入力に、`本文true × 宛先(解決後)` の直積で送信単位を生成し、`{{}}` トークンを差し込み置換のうえ MIME 組立して `plan.json` と全件プレビューを出力する **dry-run 専用スキル**。**Gmail API は呼ばず1通も送信しない**。送信前に「何が・誰に・どんな本文で」送られるかを安全に何度でも確認する独立価値を持つ（仕様書 §2 人間承認ゲートの前提となる目視材料を作る）。
++Notion 2DB（メール本文DB / メール送信先_DB）を入力に、`本文true × 宛先(解決後)` の直積で送信単位を生成し、`{{}}` トークンを差し込み置換のうえ MIME 組立して `plan.json` と全件プレビューを出力する **dry-run 専用スキル**。**Gmail API は呼ばず1通も送信しない**。送信前に「何が・誰に・どんな本文で」送られるかを安全に何度でも確認する独立価値を持つ。既定の確認0 auto-send では必須ではなく、慎重運用や canary 前の目視材料として使う。
+ 
+-**入力**: なし（既定）。任意で `--db1 <id>` / `--db2 <id>`（config の DB を override）、`--out <path>`（plan.json 出力先）、`--canary <N>` / `--limit <N>`（少数検品用に送信可能 unit を安定順の先頭 N 件へ限定）。
++**入力**: なし（既定）。任意で `--db1 <id>` / `--db2 <id>`（config の DB を override。両方指定時は `.notion-config.json` 不在でも dry-run 可）、`--out <path>`（plan.json 出力先）、`--canary <N>` / `--limit <N>`（少数検品用に送信可能 unit を安定順の先頭 N 件へ限定）。
+ **出力**:
+ - `plan.json`（本文全文を含むためローカル作業領域 `eval-log/notion-gmail-send/` のみ・git 管理外。Notion ログには保存しない。§12 PII）
+ - 標準出力に承認文字列 `APPROVE <plan_hash> <count> <first_to> <確認語>` ＋ 第1段件数 ＋ 全件プレビュー（差し込み後の件名/本文抜粋/To/CC・`multi_to_visible` 警告・`skipped_validation` 内訳・プロ人材重複除外）
+@@ -79,7 +79,7 @@ Notion APIキーは Keychain `notion-api-key.xl-skills`（**GET のみ**。Gmail
+ 本文true×宛先true の全送信単位が差し込み置換・MIME組立まで完了し、`content_hash`/`plan_hash` 付きの `plan.json` と全件プレビューと `APPROVE <plan_hash> <count> <first_to> <確認語>` 文字列が提示され、運用者が送信前に内容を目視確認できる状態。**送信は一切行わない。**
+ 
+ ### 目的・背景 (Why)
+-不可逆な外部副作用（メール送信）の前に、誤った本文・誤った宛先を構造的に検出して止める安全材料を作る（§2 三本柱のうち「人間承認ゲートが目視する対象」を生成する工程）。送信ログDBが未確定でも第1段件数（本文true×宛先true）は常に算出でき（G0）、本文が0通でも「記入すべきもの」を運用者へ示せる。安全装置の充実が警戒を下げる逆説を避けるため、承認は機械照合可能な `APPROVE` 文字列を必須にする。
++不可逆な外部副作用（メール送信）の前に、誤った本文・誤った宛先を構造的に検出して止める安全材料を作る。送信ログDBが未確定でも第1段件数（本文true×宛先true）は常に算出でき（G0）、本文が0通でも「記入すべきもの」を運用者へ示せる。対話モードでは、承認を機械照合可能な `APPROVE` 文字列に束縛する。
+ 
+ ### 完了チェックリスト (Checklist)
+ - [ ] DB1/DB2 を取得し、本文true（メッセージ対象✅ かつ 本文非空）/ 宛先（送信対象✅ かつ 送らない☐ かつ プロ人材メール非空・重複は最新 `created_time` 1件、同時刻は `page_id` 降順）を抽出した
+@@ -96,7 +96,7 @@ Notion APIキーは Keychain `notion-api-key.xl-skills`（**GET のみ**。Gmail
+ ### ゴールシークループ
+ 1. `build-plan.py` を実行し、第1段件数・`plan.json`・全件プレビュー・`APPROVE` 文字列を得る。
+ 2. プレビューを目視し、未充足のチェックリスト項目があれば原因を特定する。
+-   - `exit 2`（config/接続/Keychain エラー）→ `.notion-config.json` の `notion_gmail_send.source` または `--db1/--db2`、Keychain `notion-api-key.xl-skills` を確認して再実行。
++   - `exit 2`（config/接続/Keychain エラー）→ `.notion-config.json` の `notion_gmail_send.source`、または config をまだ作らずに計画だけ見たい場合は `--db1/--db2` の両方、Keychain `notion-api-key.xl-skills` を確認して再実行。
+    - 送信可能 0通 → DB1 のメッセージ対象✅ ページに `{{}}` 入り本文を記入して再実行（チェックリスト最終項目）。
+    - `skipped_validation` 多数 → reason_code（`unresolved_token`/`unsafe_header`/`invalid_to`/`invalid_cc`）別に Notion 元データを修正して再実行。
+    - `⚠️ プロ人材重複` → 同一人物への重複送信防止のため宛先DBの重複ページを点検する。
+@@ -140,7 +140,7 @@ PY
+ 
+ ## Gotchas
+ 
+-1. `--db1/--db2` 未指定時は config `notion_gmail_send.source.{body_db,recipient_db}` から DB を解決する。両方未解決なら `exit 2`。
++1. `--db1/--db2` を両方指定したときは config を読まずに DB を解決する（read-only dry-run のため）。片方でも未指定なら config `notion_gmail_send.source.{body_db,recipient_db}` で不足分を補い、両方未解決なら `exit 2`。
+ 2. `--out` 未指定時の plan.json 既定は `<config親>/eval-log/notion-gmail-send/plan-<campaign_id>.json`。
+ 3. To が複数アドレスの単位は `multi_to_visible=true`（受信者が互いのアドレスを見られる）。プレビューで `⚠️` 警告し承認 echo 対象に含める（§6）。
+ 4. 本文コードブロックは最初の非空 `code` block のみ採用。複数非空なら `multiple_body_code_blocks` として本文除外（暗黙連結しない。§3）。
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
+index 0252a52..9932fd7 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-dry-run/scripts/build-plan.py
+@@ -22,7 +22,6 @@ plan.json は本文全文を含むためローカル作業領域のみに書き
+ from __future__ import annotations
+ 
+ import argparse
+-import datetime
+ import json
+ import sys
+ from pathlib import Path
+@@ -30,59 +29,29 @@ from pathlib import Path
+ PLUGIN_ROOT = Path(__file__).resolve().parents[3]
+ sys.path.insert(0, str(PLUGIN_ROOT))
+ from lib import (  # noqa: E402
+-    notion_client, notion_config, secrets,
+-    render_substitute as rs, message_assemble as ma, plan_build as pb,
++    notion_client, notion_config, secrets, plan_build as pb, plan_compose as pc,
+ )
+ 
+ 
+-def _combine_cc(body_cc_raw: str, hisho_email: str) -> str:
+-    """本文CC + 秘書CC を結合した cc_raw 文字列にする (重複/To除外は assemble が正規化)。
++def _print_config_missing_help(config_path: str | None) -> None:
++    """config 不在で停止したとき、前進手段 (scaffold / 貼り付け雛形) を案内する。
+ 
+-    結合は dry-run でここ1回だけ確定し plan.json の cc_list に焼く。live-send は再結合しない
+-    (content_hash の決定論を二重ロジックで壊さないため。仕様書 §6)。
++    停止 (exit 2) は維持しつつ、デッドエンドにせず次の一歩を示す。placeholder は解決不能なので
++    案内に従って生成しても、実値を埋めるまで1通も送信されない (fail-closed 維持)。
+     """
+-    return ",".join(p for p in (body_cc_raw or "", hisho_email or "") if p.strip())
+-
+-
+-def _classify_unit(body: dict, recip: dict) -> tuple[dict | None, str | None]:
+-    """1組(本文×宛先)を送信単位に変換する。skip 時は (None, reason_code)。
+-
+-    To=プロ人材メール、CC=本文CC + 秘書(cc秘書)メール (仕様書 §6)。
+-    """
+-    values = notion_client.values_for_recipient(recip)
+-    if rs.unsafe_value_keys(values):
+-        return None, "unsafe_header"
+-    subject_out, un_s = rs.substitute(body["subject"], values)
+-    body_out, un_b = rs.substitute(body["body"], values)
+-    unresolved = list(dict.fromkeys(un_s + un_b))
+-    if unresolved:
+-        return None, "unresolved_token"
+-    cc_raw = _combine_cc(body["cc_raw"], recip.get("hisho_email", ""))
+-    asm = ma.assemble(subject_out, body_out, body["from_addr"], recip["pro_email"], cc_raw)
+-    if asm["invalid_addrs"]:
+-        reason = "invalid_cc" if all(a.startswith("cc:") for a in asm["invalid_addrs"]) else "invalid_to"
+-        return None, reason
+-    # To と重複して CC から除外されたアドレス (秘書addr==プロ人材To 等) を可視化する。
+-    # 除外自体は normalize_cc の安全側挙動 (同一人物2通回避) で変えない。プレビュー警告のみ。
+-    cc_suppressed = ma.cc_suppressed_by_to(ma.parse_comma_addrs(cc_raw), asm["to_list"])
+-    unit = {
+-        "subject": subject_out,
+-        "body": body_out,
+-        "from_addr": body["from_addr"],
+-        "to_list": asm["to_list"],
+-        "cc_list": asm["cc_list"],
+-        "raw": asm["raw"],
+-        "multi_to_visible": asm["multi_to_visible"],
+-        "cc_suppressed_due_to_to_overlap": cc_suppressed,
+-        "body_page_id": body["page_id"],
+-        "recipient_page_id": recip["page_id"],
+-    }
+-    unit["content_hash"] = pb.content_hash(unit)
+-    return unit, None
+-
+-
+-def _stable_units(units: list[dict]) -> list[dict]:
+-    return sorted(units, key=lambda u: (u["content_hash"], u.get("body_page_id", ""), u.get("recipient_page_id", "")))
++    target = notion_config.scaffold_target_path(config_path)
++    print("\n設定ファイル (.notion-config.json) がまだありません。次のいずれかで設定してください:", file=sys.stderr)
++    print(f"  1) 値が分かっていれば一発生成: doctor --init --body-db <id> --recipient-db <id> "
++          f"--log-db <id> --impersonate <addr>  → {target} に実値入り config を作成", file=sys.stderr)
++    print(f"  2) まず雛形だけ: doctor --init  → {target} に placeholder を書き出し、後で <...> を実値で埋める",
++          file=sys.stderr)
++    print("  3) config を作らず計画だけ先に見る: --db1 <本文DB id> --db2 <送信先DB id> を両方指定して再実行 "
++          "(read-only・送信しない)", file=sys.stderr)
++    print(f"  4) 手書きする場合は下記を {target} に保存し <...> を実値で埋める:", file=sys.stderr)
++    print(notion_config.skeleton_json(), file=sys.stderr)
++    print("※ db_id は Notion ページURL末尾の32桁。API鍵/SA鍵は config でなく Keychain に登録する。",
++          file=sys.stderr)
++    print("詳しい手順は README『セットアップ 2. 設定ファイル』を参照。", file=sys.stderr)
+ 
+ 
+ def main() -> int:
+@@ -99,17 +68,27 @@ def main() -> int:
+         return 2
+ 
+     try:
+-        cfg = notion_config.load_config(args.config)
+-        source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
+-        db1 = args.db1 or source.get("body_db")
+-        db2 = args.db2 or source.get("recipient_db")
++        db1 = args.db1
++        db2 = args.db2
++        if not (db1 and db2):
++            cfg = notion_config.load_config(args.config)
++            source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
++            db1 = db1 or source.get("body_db")
++            db2 = db2 or source.get("recipient_db")
+         if not db1 or not db2:
+             print("[ERROR] body_db / recipient_db が未解決 (config notion_gmail_send.source または --db1/--db2)", file=sys.stderr)
+             return 2
++        db1 = notion_config.require_resolved_value(db1, "body_db")
++        db2 = notion_config.require_resolved_value(db2, "recipient_db")
+         client = notion_client.NotionClient(secrets.get_notion_api_key())
+         bodies, body_skipped = notion_client.fetch_bodies_true(client, db1)
+         resolution = notion_client.fetch_recipients_true(client, db2)
+-    except (notion_config.ConfigError, secrets.KeychainError, notion_client.NotionError) as e:
++    except notion_config.ConfigError as e:
++        print(f"[ERROR] dry-run preflight 失敗: {e}", file=sys.stderr)
++        if notion_config.find_config_path(args.config) is None:
++            _print_config_missing_help(args.config)
++        return 2
++    except (secrets.KeychainError, notion_client.NotionError) as e:
+         print(f"[ERROR] dry-run preflight 失敗: {e}", file=sys.stderr)
+         return 2
+ 
+@@ -117,41 +96,13 @@ def main() -> int:
+     recip_skipped = resolution["skipped"]        # プロ人材メール空
+     suppressed = resolution["suppressed"]        # メールを送らない=✅ (送信対象より優先)
+     duplicate_dropped = resolution["duplicate_dropped"]  # プロ人材重複で除外された古い行
+-
+     first_stage = len(bodies) * len(recips)
+-    campaign_id = pb.generate_campaign_id()
+-    units: list[dict] = []
+-    skipped: list[dict] = []
+-    for body in bodies:
+-        for recip in recips:
+-            unit, reason = _classify_unit(body, recip)
+-            if reason:
+-                skipped.append({"body_page_id": body["page_id"], "recipient_page_id": recip["page_id"],
+-                                "subject": body["subject"], "to": recip["pro_email"], "reason_code": reason})
+-                continue
+-            # dedup キーは content ベース (campaign_id 非依存) で別実行の二重送信も機構で防ぐ。
+-            unit["idempotency_key"] = pb.dedup_key(unit["body_page_id"], unit["recipient_page_id"], unit["content_hash"])
+-            units.append(unit)
+ 
+-    available_units = len(units)
+-    if args.canary is not None and args.canary < available_units:
+-        units = _stable_units(units)[:args.canary]
+-    plan = pb.finalize_plan(campaign_id, units)
+-    plan.update({
+-        "generated_at": datetime.datetime.now().astimezone().isoformat(),
+-        "first_stage_count": first_stage,
+-        "body_true_count": len(bodies),       # 本文 true(メッセージ対象✅かつ非空) 行数。G2.body の正しい母数
+-        "recipient_true_count": len(recips),  # 宛先(送信対象✅かつ送らない☐かつプロ人材非空・dedup後) 行数
+-        "available_unit_count": available_units,
+-        "canary_limit": args.canary,
+-        "canary_applied": args.canary is not None and args.canary < available_units,
+-        "source": {"body_db": db1, "recipient_db": db2},
+-        "skipped": skipped,
+-        "suppressed": suppressed,                # メールを送らない=✅ で抑制した宛先
+-        "duplicate_dropped": duplicate_dropped,  # プロ人材重複で除外した古い行
+-        "body_skipped": body_skipped,
+-        "recipient_skipped": recip_skipped,
+-    })
++    # plan 構築は plan_compose に委譲 (dry-run と確認0 auto-send が同一ロジックで新鮮 plan を作る SSOT)。
++    plan = pc.assemble_plan(bodies, body_skipped, resolution, db1=db1, db2=db2, canary=args.canary)
++    campaign_id = plan["campaign_id"]
++    skipped = plan["skipped"]
++    available_units = plan["available_unit_count"]
+ 
+     config_path = notion_config.find_config_path(args.config)
+     out = args.out or str(Path(config_path.parent if config_path else ".")
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md b/plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md
+index 0449c96..6e39233 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md
+@@ -1,9 +1,9 @@
+ ---
+ name: run-notion-gmail-send
+-description: Notionメール本文DBの内容を対象者DBへGmailで一斉個別送信したいとき、差し込み置換して送りたいときに使う。
++description: Notionメール本文DBの内容を送信先DBへGmailで一斉個別送信したいとき、差し込み置換して送りたいときに使う。既定はNotionのチェックを承認とみなす確認0の自動送信。
+ disable-model-invocation: true
+ user-invocable: true
+-argument-hint: "[--plan <plan.json>] [--config <path>] [--approved-nonce <確認語>] [--allow-resend]"
++argument-hint: "[--canary <N>] [--db1 <id>] [--db2 <id>] [--config <path>] [--allow-resend]  |  (対話モード) --plan <plan.json> --approved-nonce <確認語>"
+ arguments: [plan]
+ allowed-tools:
+   - Read
+@@ -30,15 +30,19 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+   criteria:
+     - id: IN1
+       loop_scope: inner
+-      text: live-send が --approved-plan-hash と dry-run の plan_hash 不一致時に Gmail API を呼ばず fail-closed で停止し、send_guard が件数偽装・未置換トークン・From 不整合・確認語 nonce 不一致を全て検出することを test_send_campaign / test_preflight で機械検証できる。
++      text: live-send が plan_hash 不一致時に Gmail API を呼ばず fail-closed で停止し、対話モードでは send_guard が件数偽装・未置換トークン・From 不整合・確認語 nonce 不一致を検出すること、および --auto-approve(確認0)モードが送信直前に最新 Notion から新鮮 plan を構築し承認 tuple を self-derive しても per-unit guard loop の Class A(plan改竄=content_hash 再計算/未置換 skip/From 検証/content dedup/C-1 送信時 suppress 再検証 subtract-only)が確認回数と独立に常時有効で、nonce 照合は対話モード限定・送信件数が新鮮 plan を超えないことを test_send_campaign / test_auto_send / test_preflight で機械検証できる。
+       verify_by: test
+     - id: IN2
+       loop_scope: inner
+       text: 冪等ログが「本文page_id:宛先page_id:content_hash」(campaign 非依存)キーで reserved→sent/unknown 遷移し、再実行・別実行の二重送信を防ぎ、送信成功後のログ失敗を unknown_needs_reconcile として自動再送しないことを test_idempotent_log で機械検証できる。
+       verify_by: test
++    - id: IN3
++      loop_scope: inner
++      text: --auto-approve(確認0)モードが (a)送信前に source-audit 集約ゲート(run_full_audit)を実行し high severity の品質問題が残存すれば1通も送らず fail-closed、(b)既定で 送信対象=✅ の全宛先へ APPROVE 文字列/nonce 入力なしに送信、(c)opt-in --canary N 指定時は先頭 N 件のみ送信し再実行で content dedup により既送を skip して残りを送信、(d)dry-run と同一の plan_compose ロジックで決定論的に同じ plan を生成することを test_auto_send / test_plan_compose で機械検証できる。
++      verify_by: test
+     - id: OUT1
+       loop_scope: outer
+-      text: 不可逆なメール送信を「承認済み plan・人間承認ゲート・事前予約つき冪等ログ」の三本柱で安全化する設計がユーザー目的を最適に反映し、preflight→reserve→guard→send→log→report の責務分割と送信時 suppress 再検証(承認件数を超えない)が過不足ないことを run-elegant-review の4条件で確認する。
++      text: 確認既定0回(最悪1回)で承認の所在を Notion データ層(送信対象=✅)へ移し、機械的安全層(Class A)+source-audit auto-gate+fresh rebuild を確認回数と独立に常時オンにすることで対話確認0の誤送信リスクを許容範囲へ吸収する設計がユーザー目的(送信の手間を最小化・既定で確認0)を最適に反映し、APPROVE 文字列/nonce 読解強制の撤去と source-audit gate・content dedup への再配置が過不足ないことを run-elegant-review の4条件で確認する。
+       verify_by: elegant-review
+ ---
+ 
+@@ -46,81 +50,95 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+ 
+ ## Purpose & Output Contract
+ 
+-dry-run で生成・承認された `plan.json` の各送信単位を、live-send preflight (G1/G2/G3) と `send_guard` を通して Gmail API で1通ずつ送信し、各結果を Notion 送信ログDBへ事前予約つきで冪等記録する不可逆送信の制御層。
++メール送信先_DB の `送信対象=✅` を承認シグナルとして、本文 × 宛先の各送信単位を live-send preflight (G1/G2/G3) と `send_guard` を通して Gmail API で1通ずつ送信し、各結果を Notion 送信ログDBへ事前予約つきで冪等記録する不可逆送信の制御層。**既定は確認0の auto-send**（端末での APPROVE 文字列入力なし）。承認は Notion のチェック（データ層）が担い、誤送信防止は対話確認とは独立した機械的安全層(Class A)が担う。
++
++**2つのモード**:
++- **既定 auto（確認0）**: 引数なし（または後方互換の `--auto-approve`）で、送信直前に最新 Notion から新鮮 plan を構築（fresh rebuild）→ source-audit ゲート（high 残存で 0 送信）→ 承認 tuple を plan から self-derive → 全 ✅ 宛先へ送信。端末入力ゼロ。`--canary N` で先頭 N 件のみ送信（残りは再実行で content dedup が既送を skip）。
++- **対話 `--plan ... --approved-*`（後方互換）**: dry-run プレビュー目視 → `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致入力 → 送信。読解強制で慎重に送りたいとき用。
+ 
+-**入力**: `plan`（任意。未指定なら最新の `plan.json`。無ければ dry-run へ誘導）+ 人間承認文字列 `APPROVE <plan_hash> <count> <first_to> <確認語>`
+ **出力**: Gmail 送信 + 送信ログDB の reserved→sent/unknown 記録 + 日本語送信レポート（送信/スキップ/失敗/要照合の件数・内訳・次アクション）
+-**完了条件**: 承認済み plan の全送信単位が「送信(sent) / 冪等スキップ / 検証スキップ / 要照合」のいずれかに確定し、ログDBへ反映された状態。外部実体未確定・plan不一致・reserved不在では **1通も送らず** fail-closed 中断・誘導。
++**完了条件**: 送信単位が「送信(sent) / 冪等スキップ / 検証スキップ / 要照合」のいずれかに確定し、ログDBへ反映された状態。外部実体未確定・plan改竄・件数偽装・reserved不在・source-audit high 残存では **1通も送らず** fail-closed 中断・誘導。
+ 
+ ## End-to-End Flow
+ 
++**既定: 確認0 auto-send（推奨・端末入力ゼロ）**
++```
++[1 整備]     Notion で 送信対象=✅(宛先) / メッセージ対象=✅ かつ {{}}入り本文(本文) を用意
++[2 送信]     /run-notion-gmail-send   (1コマンド・確認なし。--auto-approve は後方互換)
++              └ send-campaign.py が実行:
++                 source-audit ゲート(high 残存→1通も送らず停止) → 最新 Notion から新鮮 plan 構築
++                 → 承認 tuple を plan から self-derive → 各単位を reserved 予約
++                 → send_guard 通過(Class A 機械層) → Gmail 送信 → sent/unknown 更新
++[3 レポート]  日本語送信レポート (sent/skip/error/要照合)
++              ↑ Gmail 直接送信は hook(guard-gmail-send.py)が補助遮断、正本は send_guard
++```
++
++**対話モード（後方互換・慎重運用）**
+ ```
+ [1 dry-run]   Skill(run-notion-gmail-dry-run) → plan.json + APPROVE文字列 + 全件プレビュー
+ [2 承認]      人間が差し込み後フル本文を目視 → APPROVE <plan_hash> <count> <first_to> <確認語> を入力
+ [3 二段確認]  Task(gmail-send-presend-verifier, context:fork) が plan を独立再計算で検査
+-[4 preflight] send-campaign.py が G1認証/G2依存実体/G3整合を fail-closed 検証
+-[5 予約+送信] 各単位を Notion へ reserved 事前予約 → send_guard 通過 → Gmail 送信 → sent/unknown 更新
+-[6 レポート]  日本語送信レポート (sent/skip/error/要照合)
+-              ↑ Gmail 直接送信は hook(guard-gmail-send.py)が補助遮断、正本は send_guard
++[4-6]         preflight(G1/G2/G3) → reserved 予約 → send_guard → Gmail → ログ → レポート
+ ```
+ 
+-責務は `prompts/R1-orchestrate.md`(統括) / `prompts/R2-presend-verify.md`(二段確認 SSOT)。
++責務は `prompts/R1-orchestrate.md`(統括) / `prompts/R2-presend-verify.md`(二段確認 SSOT・対話モード)。両モードとも安全の正本は `lib/send_guard.py`(Class A 機械層)。
+ 
+ ## ゴールシーク実行
+ 
+ ### ゴール (Goal)
+-承認済み plan の各送信単位が、決定論セルフチェック（units→plan_hash/件数/content_hash を再計算照合）・preflight 全通過・reserved 事前予約・`send_guard` 通過を経て Gmail 送信され、結果が Notion 送信ログDBへ content ベース冪等キー `{本文page_id}:{宛先page_id}:{content_hash}`（campaign_id 非依存）で記録され、日本語レポートが提示された状態。外部実体未確定・plan_hash 不一致・件数偽装・確認語不一致・reserved 不在では1通も送らず中断・誘導した状態。
++**既定の確認0モード**では、送信直前に最新 Notion から構築した新鮮 plan（fresh rebuild）の各送信単位が、source-audit ゲート通過・決定論セルフチェック（units→plan_hash/件数/content_hash 再計算照合）・preflight 全通過・reserved 事前予約・`send_guard`(Class A) 通過を経て Gmail 送信され、結果が Notionページ単位の content ベース冪等キー `{本文page_id}:{宛先page_id}:{content_hash}`（campaign_id 非依存）で記録され、日本語レポートが提示された状態。承認は Notion の `送信対象=✅`（対話モードでは加えて APPROVE 文字列）が担う。source-audit high 残存・plan 改竄・件数偽装・reserved 不在・外部実体未確定では1通も送らず中断・誘導した状態。
+ 
+ ### 目的・背景 (Why)
+-不可逆な外部副作用 (メール送信) を三本柱で安全化する制御層。(1) 承認済み plan（送信前に units から plan_hash/件数/content_hash を**決定論再計算で束縛**し plan.json 改竄・件数偽装を機構で弾く）、(2) 人間承認ゲートは誤本文・誤宛先の**送信を止める停止点**で、確認語により blind approve のコストを上げる（ただし「人間が読み理解した」ことは機構で強制できず最終的な内容妥当性は目視に依存）、(3) content ベース冪等ログが再実行・別実行の二重送信と送信成功後ログ失敗を防ぐ。三者は役割が異なり混同しない (因果ループ警告 §2)。固定手順では入力 (plan有無/承認文字列/外部依存状態/quota) に脆いため、未達ゲートを都度埋める。
++不可逆な外部副作用 (メール送信) を、**確認回数と独立に効く機械的安全層**で安全化する制御層。(1) plan 整合（送信前に units から plan_hash/件数/content_hash を**決定論再計算で束縛**し plan.json 改竄・件数偽装を弾く。auto モードは送信直前に最新 Notion から fresh rebuild する）、(2) 承認の所在は Notion のチェック（`送信対象=✅`）= データ層。既定は確認0で送り、対話モードでは加えて APPROVE 文字列の確認語が blind approve のコストを上げる（ただし「人間が読み理解した」ことは機構で強制できない）、(3) Notionページ単位の content ベース冪等ログが再実行・別実行の二重送信と送信成功後ログ失敗を防ぐ。さらに auto モードは source-audit ゲートで空本文/To/From不正等を送信前に fail-closed する。固定手順では入力 (モード/外部依存状態/quota) に脆いため、未達ゲートを都度埋める。
+ 
+ ### 責務サマリと完了条件の正本
+ 各責務の停止条件詳細は `prompts/Rn` を正本 (SSOT) とし、本節は俯瞰のみ示す (片側更新ドリフト回避)。
+-- **R1 orchestrate** (`prompts/R1-orchestrate.md`): preflight 統括・dry-run 委譲・`APPROVE <plan_hash> <count> <first_to> <確認語>` 形式の人間承認受領・送信可否判断・最終レポート生成。
+-- **R2 presend-verify** (`prompts/R2-presend-verify.md` / agent `gmail-send-presend-verifier`): context:fork で plan を独立再検査 (plan_hash/件数/先頭To/未置換トークン/宛先形式)。
+-- 決定論本体: `scripts/send-campaign.py`(reserve→send_guard→Gmail→log) / `scripts/verify-plan.py`(二段確認の計算) / `../../lib/`。
++- **R1 orchestrate** (`prompts/R1-orchestrate.md`): モード判定（既定 auto / 対話）・auto は `send-campaign.py` 引数なし起動・対話は dry-run 委譲＋`APPROVE <plan_hash> <count> <first_to> <確認語>` 受領＋二段確認・送信可否判断・最終レポート生成。
++- **R2 presend-verify** (`prompts/R2-presend-verify.md` / agent `gmail-send-presend-verifier`): **対話モード限定**で context:fork で plan を独立再検査 (plan_hash/件数/先頭To/未置換トークン/宛先形式)。auto モードは決定論セルフチェックが代替。
++- 決定論本体: `scripts/send-campaign.py`(auto は compose→audit gate→self-derive→reserve→send_guard→Gmail→log) / `lib/plan_compose.py`(新鮮 plan) / `lib/mail_db_audit.py run_full_audit`(ゲート) / `scripts/verify-plan.py`(対話二段確認) / `../../lib/`。
+ 
+ ### 完了チェックリスト (Checklist)
+-- [ ] `run-notion-gmail-dry-run` で plan.json と APPROVE文字列・全件プレビューを得た
+-- [ ] 人間が差し込み後フル本文を目視し `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致で入力した
+-- [ ] `Task(gmail-send-presend-verifier)` (context:fork) の verdict が pass (plan_hash/件数/先頭To/未置換/宛先 整合)
+-- [ ] `send-campaign.py` の preflight G1(認証)/G2(送信ログDB・本文true≥1)/G3(承認整合) が全 PASS
++- [ ] モードを判定した（既定 auto＝確認0 / 対話＝APPROVE）
++- [ ] (auto) `送信対象=✅` を整備し `send-campaign.py` を引数なし（または `--auto-approve`）で起動した（source-audit ゲート通過・最新 Notion から新鮮 plan を self-derive で送信）
++- [ ] (対話) 人間が差し込み後フル本文を目視し `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致で入力し、`Task(gmail-send-presend-verifier)` の verdict が pass
++- [ ] `send-campaign.py` の preflight G1(認証)/G2(送信ログDB・本文true≥1)/G3(整合) が全 PASS
+ - [ ] 各送信単位を送信ログDBへ reserved 事前予約し、既存 sent/reserved/unknown は自動再送しなかった
+-- [ ] `send_guard` 通過後のみ Gmail 送信し、sent / unknown_needs_reconcile を記録した
++- [ ] `send_guard`(Class A) 通過後のみ Gmail 送信し、sent / unknown_needs_reconcile を記録した
+ - [ ] quota 安全停止時は残件を reserved のまま次回再開対象にした
+ - [ ] 日本語送信レポート (sent/skip/error/要照合の件数・内訳・次アクション) を提示した
+ 
+ ### ゴールシークループ
+ 正本 `../run-notion-gmail-dry-run/SKILL.md` 同様、未達チェックリスト項目を埋める手順を都度生成する。
+-1. plan.json が無ければ `run-notion-gmail-dry-run` を起動し plan と APPROVE文字列を得る。
+-2. 人間に全件プレビューを目視させ、`APPROVE <plan_hash> <count> <first_to> <確認語>` を受領する。承認なしに次へ進まない。
+-3. `Task(gmail-send-presend-verifier)` を context:fork で起動し plan を独立再検査。fail なら送信せず差し戻す。
+-4. `python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py" --plan <plan.json> --approved-plan-hash <h> --approved-count <n> --approved-first-to <to> --approved-nonce <確認語>` を実行（意図的再送のみ `--allow-resend`）。決定論セルフチェック・preflight 未充足なら誘導 (GCP手順/db-setup/本文記入) し中断。
+-5. 全 checklist 充足で完了。quota 停止 (exit 3) なら再実行で残件継続。
++1. **既定（確認0）**: `python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py"`（少数検品は `--canary N`・意図的再送のみ `--allow-resend`。`--auto-approve` は後方互換）。内部で source-audit ゲート→最新 Notion から新鮮 plan 構築→self-derive→guard→送信。source-audit high 残存/preflight 未充足なら誘導 (source-audit/GCP手順/db-setup/本文記入) し1通も送らず中断。
++2. **対話（慎重運用）**: plan.json が無ければ `run-notion-gmail-dry-run` を起動し plan と APPROVE文字列を得る → 人間に全件プレビューを目視させ `APPROVE <plan_hash> <count> <first_to> <確認語>` を受領 → `Task(gmail-send-presend-verifier)` を context:fork で独立再検査(fail なら差し戻し) → `send-campaign.py --plan <plan.json> --approved-plan-hash <h> --approved-count <n> --approved-first-to <to> --approved-nonce <確認語>` を実行。
++3. 全 checklist 充足で完了。quota 停止 (exit 3) なら再実行で残件継続。
+ 
+ ### ゴールシーク配線
+ quota 安全停止後の再開や verify FAIL 後の再試行で多周回する場合の周回状態。周回末に `eval-log/notion-gmail-send/run-notion-gmail-send-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変 (SHA-256 を `eval-log/notion-gmail-send/run-notion-gmail-send-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回の手順生成は直前の `merged_directive_for_next` と `original_goal` を必須入力とする (AI 単独再導出禁止)。単発キャンペーンでは1周で完了し本配線は no-op。冪等ログが部分再開の物理的な起点となる。冪等キーは content ベース (campaign_id 非依存) なので、再開時に campaign_id を維持する必要はなく、別実行で同一 plan.json を使い直しても既 sent 単位は機構で skip される。
+ 
+ ## Key Rules
+ 
+-1. **承認なしに本送信しない**: dry-run 全件プレビュー目視 → `APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致を必須化。自動本送信禁止。
+-2. **send_guard が正本防御**: `lib/gmail_client.py` が `lib/send_guard.py` を内部で必ず呼び、approved_plan_hash/件数/先頭To/reservedログ行/未置換トークン/From検証が揃わない限り Gmail API へ到達しない。PreToolUse hook (`guard-gmail-send.py`) は補助。
+-3. **reserved 事前予約なしに送信しない**: 送信前に Notion ログへ reserved を作り、同一冪等キーが sent/reserved/unknown なら自動再送しない。2行以上は `duplicate_log_key` で fail-closed。
+-4. **送信成功後ログ失敗は unknown_needs_reconcile**: ローカル journal に退避し自動再送しない。
+-5. **context:fork で二段確認**: Sycophancy 防止のため verify は必ず独立 context (`gmail-send-presend-verifier`)。
+-6. **sent は到達保証でない**: status=sent は Gmail API 受理を意味し受信者到達を保証しない。
+-7. **外部実体未確定は fail-closed**: SA鍵/DWD/sendAs/送信ログDB ID/本文記入が未充足なら送信せず誘導する。
++1. **承認は Notion のチェック（データ層）が担う**: 既定の引数なし auto は `送信対象=✅` を承認シグナルとし、端末での APPROVE 文字列入力なしで送信する。読解強制で慎重に送りたいときは対話モード（`--plan` + `APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致）を使う。どちらのモードでも下記の機械的安全層は確認回数と独立に常時オン。
++2. **send_guard が正本防御（Class A・確認非依存）**: `lib/gmail_client.py` が `lib/send_guard.py` を内部で必ず呼び、plan_hash/件数/先頭To/reservedログ行/未置換トークン/From検証が揃わない限り Gmail API へ到達しない。auto モードでも承認 tuple を新鮮 plan から self-derive した上でこの per-unit guard loop を必ず通す（人間入力のみ bypass・機械検証は不変）。PreToolUse hook (`guard-gmail-send.py`) は補助。
++3. **auto モードは fresh rebuild + source-audit ゲート**: 古い plan.json を使い回さず、送信直前に最新 Notion から `plan_compose` で新鮮 plan を構築する。送信前に `run_full_audit` を実行し high severity の品質問題が残れば1通も送らず fail-closed。
++4. **reserved 事前予約なしに送信しない**: 送信前に Notion ログへ reserved を作り、同一冪等キー（content ベース・campaign 非依存）が sent/reserved/unknown なら自動再送しない。2行以上は `duplicate_log_key` で fail-closed。`--canary N` の段階送信も既送は dedup で skip。
++5. **送信成功後ログ失敗は unknown_needs_reconcile**: ローカル journal に退避し自動再送しない。
++6. **送信時 suppress 再検証 (C-1)**: auto/対話とも、plan 構築後に `メールを送らない=✅`/`送信対象=☐` へ変えた宛先は送信直前に再取得して送らない（subtract-only・承認件数を超えない）。
++7. **context:fork 二段確認は対話モード限定**: `gmail-send-presend-verifier` は人間入力の APPROVE 文字列を独立再検査する装置。auto モードでは入力が無く proposer==approver になるため使わず、決定論セルフチェック（units→plan_hash/件数/content_hash 再計算）が独立検証を担う。
++8. **sent は到達保証でない**: status=sent は Gmail API 受理を意味し受信者到達を保証しない。
++9. **外部実体未確定は fail-closed**: SA鍵/DWD/sendAs/送信ログDB ID/本文記入が未充足なら送信せず誘導する。
+ 
+ ## Gotchas
+ 
+ 1. SA鍵/DWD/sendAs 未設定なら G1 で停止 → `../ref-gmail-dwd-setup/` と `doc/GCP-Gmail送信設定手順.md`。
+ 2. 送信ログDB 未構築/未設定なら G2 で停止 → `../run-notion-gmail-sendlog-setup/`。
+-3. plan.json はソース変更後に dry-run を再生成して使う。ソースが変わったのに古い plan を使うと、新 dry-run の plan_hash/承認文字列が変わり古い承認は通らない。なお**同一の古い plan.json をその承認文字列ごと再利用**した場合は内部整合するため guard では止まらないが、既に送った単位は content ベース冪等ログが skip するため二重送信にはならない。
+-4. quota 停止 (exit 3) 後は再実行で残件を継続（停止単位は reserved へ戻り自動再開対象）。dedup は content ベースなので campaign_id 維持は不要。
++3. **auto モードは毎回最新 Notion から新鮮 plan を構築する**ため古い plan の使い回しは起きず、承認後にアドレスを編集しても次回実行では最新が反映される。対話モードの plan.json はソース変更後に dry-run を再生成して使う（古い plan を使うと plan_hash/承認文字列が変わり古い承認は通らない。仮に古い plan.json を承認文字列ごと再利用しても、既に送った単位は content ベース冪等ログが skip するため二重送信にはならない）。
++4. quota 停止 (exit 3) 後は再実行で残件を継続（停止単位は reserved へ戻り自動再開対象）。dedup は content ベースなので campaign_id 維持は不要。auto モードの再実行も新鮮 plan を作り直すが、既送は dedup で skip される。
+ 5. 同一内容を**意図的に**再送する場合のみ `--allow-resend`（既定はクロス実行の二重送信を機構で防止）。
+-6. 承認には dry-run がプレビュー該当単位の行末にのみ表示する `<確認語>` が必要。`APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致で入力する（blind approve 防止）。
+-7. `multi_to_visible` の送信単位は To 受信者が互いのアドレスを見られる。承認 echo で必ず確認する。
+-8. 送信前に `run-notion-gmail-source-audit` でソース2DB の品質を整えると skip を減らせる。
++6. (対話モードのみ) 承認には dry-run がプレビュー該当単位の行末にのみ表示する `<確認語>` が必要（`APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致・blind approve 防止）。auto モードは確認語不要で、読解強制は Notion のチェック整備＋source-audit ゲートで代替する。
++7. `multi_to_visible` の送信単位は To 受信者が互いのアドレスを見られる。対話モードは承認 echo で確認、auto モードは dry-run/plan.json のプレビューで事前に点検する。
++8. **auto モードは source-audit high 残存で1通も送らず停止する**（空本文/未知トークン/不正アドレス/空差し込み値）。`/run-notion-gmail-source-audit` で内訳を確認し Notion 上で直す。送信前にソース2DB の品質を整えると skip を減らせる。送信可能 0 通なら送信せず `送信対象=✅`/本文記入を案内して終了する。
++9. 送信ログDBへの書き込み（1単位ごと reserve→sending→sent の複数回）は `lib/notion_client.py` が**一定間隔でプッシュ**する（公称 3 req/sec を守る最小呼び出し間隔スロットル＋429 は `Retry-After` 尊重で自動再試行）。大量件数を一度に投げて Notion に弾かれるのを予防する。間隔/再試行回数の正本は `DEFAULT_MIN_INTERVAL_SEC`/`DEFAULT_MAX_RETRIES`（コード側 SSOT）。
+ 
+ ## Additional Resources
+ 
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R1-orchestrate.md b/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R1-orchestrate.md
+index e29ede6..799eef6 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R1-orchestrate.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R1-orchestrate.md
+@@ -13,14 +13,14 @@
+ | responsibility | orchestrate 送信統括 (1 prompt = 1 責務) |
+ | prompt_type | orchestrator |
+ | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
+-| reproducible | true (同一 plan・同一承認・同一外部状態に対し同一送信集合) |
++| reproducible | true (auto=同一 Notion 状態→同一 plan→同一送信集合 / 対話=同一 plan・同一承認に対し同一送信集合) |
+ 
+ ## Layer 1: 基本定義層 (不変原則)
+ 
+ ### 1.1 不変ルール
+-- 人間承認 (`APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致) なしに本送信フェーズへ進まない。
+-- 安全の正本は `lib/send_guard.py` (gmail_client 内蔵)。本責務は guard を迂回する送信経路を作らない。
+-- 送信前に context:fork の `gmail-send-presend-verifier` で二段確認する (Sycophancy 防止)。
++- 承認の所在は Notion のチェック (`送信対象=✅`) = データ層。既定の確認0モード（引数なし。`--auto-approve` は後方互換）は端末での APPROVE 文字列入力なしで送信する。慎重運用の対話モードでは加えて `APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致を受領する。
++- どちらのモードでも安全の正本は `lib/send_guard.py` (gmail_client 内蔵) の機械的安全層 (Class A)。本責務は guard を迂回する送信経路を作らない。auto モードでも承認 tuple を新鮮 plan から self-derive した上で per-unit guard loop を必ず通す (人間入力のみ bypass)。
++- auto モードは送信直前に最新 Notion から新鮮 plan を構築し、送信前に source-audit ゲート (high 残存→1通も送らない) を通す。対話モードは送信前に context:fork の `gmail-send-presend-verifier` で二段確認する (Sycophancy 防止)。
+ - 外部実体 (認証/送信ログDB/本文記入) 未充足は send-campaign.py の preflight が fail-closed で止める。本責務はその結果を尊重し、1通も送らず誘導する。
+ 
+ ### 1.2 倫理ガード
+@@ -30,19 +30,20 @@
+ ## Layer 2: ドメイン層 (本質ロジック)
+ 
+ ### 2.1 責務 (Single Responsibility)
+-- 担当: preflight 統括・dry-run 委譲・`APPROVE` 形式の人間承認受領とパース・二段確認 agent 起動・送信可否判断・例外介入・最終レポート生成。
++- 担当: preflight 統括・既定 auto 送信の起動・対話モード時の dry-run 委譲・`APPROVE` 形式の人間承認受領とパース・二段確認 agent 起動・送信可否判断・例外介入・最終レポート生成。
+ - 非担当: 実送信 (`send-campaign.py`)・置換/組立 (`lib`)・認証検証/予約/ログ (`preflight`/`idempotent_log`)。
+ 
+ ### 2.2 ドメインルール
+-- 承認文字列は `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致でパースする。1 トークンでも欠ければ承認不成立。
+-- 二段確認 verdict が fail なら送信せず差し戻す。
+-- send-campaign.py の exit code を解釈する: 0=完了 / 1=preflight中断 / 2=設定エラー / 3=quota安全停止(部分送信・再開可)。
++- 既定は auto モード: `send-campaign.py` を引数なしで起動する (`--auto-approve` は後方互換。APPROVE パース不要。承認は Notion の `送信対象=✅`)。少数検品は `--canary N`。
++- 対話モードでは承認文字列 `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致でパースする (1 トークンでも欠ければ承認不成立)。二段確認 verdict が fail なら送信せず差し戻す。
++- send-campaign.py の exit code を解釈する: 0=完了 / 1=preflight中断・source-audit high・決定論セルフチェック不一致 / 2=設定エラー / 3=quota安全停止(部分送信・再開可)。
+ 
+ ### 2.3 入力契約
+ | field | type | required | 説明 |
+ |---|---|---|---|
+-| plan | path | no | plan.json。無ければ dry-run を起動して生成 |
+-| approval | str | yes | 人間が入力する `APPROVE <plan_hash> <count> <first_to> <確認語>` |
++| mode | enum | no | `auto`(既定・確認0) / `interactive`(対話・慎重運用) |
++| plan | path | no | (対話) plan.json。無ければ dry-run を起動して生成。auto は内部で新鮮構築 |
++| approval | str | 対話のみ | (対話) 人間が入力する `APPROVE <plan_hash> <count> <first_to> <確認語>` |
+ 
+ ### 2.4 出力契約
+ - 日本語送信レポート (sent/skipped_idempotent/skipped_validation/error/unknown_needs_reconcile の件数・内訳・次アクション)。
+@@ -82,13 +83,14 @@
+ 
+ ### 5.2 ゴール定義
+ - 目的: 承認済み plan を安全に送信し結果を冪等記録する。
+-- 背景: 不可逆送信を三本柱 (承認済みplan/人間承認ゲート/事前予約つき冪等ログ) で安全化する (§2)。
++- 背景: 不可逆送信を、承認の所在 (既定 auto=Notion チェック / 対話=APPROVE)、送信前の機械的安全層、事前予約つき冪等ログで安全化する (§2)。
+ - 達成ゴール: 全送信単位が確定 (sent/skip/error/要照合) しログDBへ反映され、日本語レポートが出た状態。
+ 
+ ### 5.3 完了チェックリスト (ゴール到達の停止条件)
+-- [ ] plan.json と APPROVE文字列を得た (無ければ dry-run へ誘導)
+-- [ ] 承認文字列を完全一致でパースし plan_hash/count/first_to を抽出した
+-- [ ] 二段確認 agent の verdict が pass
++- [ ] モードを判定した (既定 auto / 対話)
++- [ ] auto では `send-campaign.py` を引数なし（または `--auto-approve`）で起動し、Notion `送信対象=✅` を承認として扱った
++- [ ] 対話では plan.json と APPROVE文字列を得て、承認文字列を完全一致でパースし plan_hash/count/first_to/確認語を抽出した
++- [ ] 対話では二段確認 agent の verdict が pass
+ - [ ] send-campaign.py を実行し exit code を解釈した
+ - [ ] preflight 未充足/エラー時は送信せず誘導した
+ - [ ] 日本語送信レポートを提示した
+@@ -97,8 +99,8 @@
+ - 固定手順を持たない。未充足項目を特定し、dry-run/承認/二段確認/send の局面を都度選んで埋め、完了チェックリストで自己評価する。
+ 
+ ### 5.5 Self-Evaluation (停止ゲート)
+-- [ ] 承認なし送信をしていない
+-- [ ] 二段確認 verdict が pass である
++- [ ] 承認の所在が明確である (auto=Notion `送信対象=✅` / 対話=APPROVE)
++- [ ] auto では source-audit gate と決定論セルフチェック、対話では二段確認 verdict を尊重した
+ - [ ] preflight 結果を尊重した (未充足で送信していない)
+ - [ ] レポートに到達保証でない旨を付記した
+ 
+@@ -110,13 +112,14 @@
+ - 後続: 送信レポート。quota 停止時は再実行で残件継続。
+ 
+ ### 6.2 ハンドオフ / 並列性
+-- 直列: dry-run→承認→二段確認(fork)→send。送信は1通ずつ直列 (レート制御)。
+-- 差し戻し: verdict fail / preflight 未充足は送信せず誘導して差し戻す。
++- auto(既定): `send-campaign.py` が内部で source-audit→新鮮 plan→self-derive→send を直列実行。
++- 対話: dry-run→承認→二段確認(fork)→send。送信は1通ずつ直列 (レート制御)。
++- 差し戻し: source-audit high / verdict fail / preflight 未充足は送信せず誘導して差し戻す。
+ 
+ ## Layer 7: UI / 提示層
+ 
+ ### 7.1 ユーザー提示形式
+-- dry-run 全件プレビュー (差し込み後フル本文・宛先・multi_to_visible 警告) を承認前に提示。
++- auto では Notion のチェックを承認として使い、端末確認を求めず送信レポートを提示する。慎重運用の対話モードでは dry-run 全件プレビュー (差し込み後フル本文・宛先・multi_to_visible 警告) を承認前に提示する。
+ - 送信後は件数集計レポート (sent/skip/error/要照合) + 次アクション。
+ 
+ ### 7.2 言語
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R2-presend-verify.md b/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R2-presend-verify.md
+index d1ec83c..9bc0b08 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R2-presend-verify.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-send/prompts/R2-presend-verify.md
+@@ -11,7 +11,7 @@
+ |---|---|
+ | name | R2-presend-verify |
+ | skill | run-notion-gmail-send |
+-| responsibility | presend-verify 送信前二段確認 (1 prompt = 1 責務 = 1 agent) |
++| responsibility | presend-verify 送信前二段確認 (対話モード専用 / 1 prompt = 1 責務 = 1 agent) |
+ | prompt_type | sub-agent |
+ | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
+ | output_schema | ../schemas/send-verdict.schema.json |
+@@ -112,7 +112,7 @@
+ ## Layer 6: オーケストレーション層 (ゴールシーク制御)
+ 
+ ### 6.1 上位 skill との接続
+-- 呼び出し元: `run-notion-gmail-send` の送信前 (人間承認ゲート通過後、live-send G3 直前)。
++- 呼び出し元: `run-notion-gmail-send` の対話モード送信前 (人間承認ゲート通過後、live-send G3 直前)。既定の確認0 auto-send では起動しない。
+ - 前段: `run-notion-gmail-dry-run` が plan.json を生成し、人間が `APPROVE <plan_hash> <count> <first_to> <確認語>` を入力。
+ - 後続: pass なら send-campaign.py が live-send へ。fail なら送信せず差し戻す。
+ 
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/send-campaign.py b/plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/send-campaign.py
+index b4c9e43..d4d5441 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/send-campaign.py
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-send/scripts/send-campaign.py
+@@ -16,9 +16,11 @@
+ # ///
+ """live-send オーケストレーション (仕様書 §8 step5-11/§10/§11)。
+ 
+-人間承認 (APPROVE <plan_hash> <count> <first_to>) を orchestrator(LLM) が受領し、本 script に
+---approved-* として渡す。preflight 全充足まで送信フェーズへ進まない。send_guard は gmail_client
+-内部で必ず呼ばれるため、本 script が guard を呼び忘れても送信に到達しない。
++既定の auto モードでは Notion の `送信対象=✅` を承認とみなし、送信直前に新鮮 plan から
++承認 tuple を自己導出する。対話モードでは orchestrator(LLM) が受領した
++APPROVE <plan_hash> <count> <first_to> <確認語> を --approved-* として渡す。preflight 全充足まで
++送信フェーズへ進まない。send_guard は gmail_client 内部で必ず呼ばれるため、本 script が guard を
++呼び忘れても送信に到達しない。
+ """
+ from __future__ import annotations
+ 
+@@ -34,7 +36,7 @@ from lib import (  # noqa: E402
+     notion_client, notion_config, secrets, preflight,
+     idempotent_log as ilog, gmail_client,
+     render_substitute as rs, plan_build as pb, message_assemble as ma,
+-    send_guard as sg,
++    send_guard as sg, plan_compose as pc, mail_db_audit as audit,
+ )
+ 
+ 
+@@ -52,45 +54,169 @@ def _abort(results: list[dict]) -> int:
+     return 1
+ 
+ 
++def _resolve_source_dbs(cfg: dict, db1: str | None, db2: str | None) -> tuple[str, str]:
++    """auto-send 用に本文DB/送信先DB を config(または override)から解決する。"""
++    if not (db1 and db2):
++        source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
++        db1 = db1 or source.get("body_db")
++        db2 = db2 or source.get("recipient_db")
++    if not db1 or not db2:
++        raise notion_config.ConfigError(
++            "body_db / recipient_db が未解決 (config notion_gmail_send.source または --db1/--db2)")
++    return (notion_config.require_resolved_value(db1, "body_db"),
++            notion_config.require_resolved_value(db2, "recipient_db"))
++
++
++def _write_auto_plan(config_path_arg: str | None, plan: dict) -> Path:
++    """auto-send が構築した新鮮 plan を監査証跡としてローカルへ書く (本文全文含むため git 外・§12)。"""
++    cfgp = notion_config.find_config_path(config_path_arg)
++    out = (Path(cfgp.parent if cfgp else ".") / "eval-log" / "notion-gmail-send"
++           / f"plan-{plan['campaign_id']}.json")
++    out.parent.mkdir(parents=True, exist_ok=True)
++    out.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
++    return out
++
++
++def _auto_source_audit_gate(client, db1: str, db2: str) -> int | None:
++    """確認0送信の入口ゲート。high severity の品質問題が残っていれば 1 を返す (1通も送らない)。
++
++    None を返したら通過 (送信続行可)。人間の目視がない確認0モードでは、空本文/未知トークン/
++    To/From 不正・空差し込み値を行レベルで機械検出するこのゲートが誤本文流出の主要な入口防御になる。
++    """
++    audit_res = audit.run_full_audit(client, db1, db2)
++    if not audit_res["high"]:
++        return None
++    print("\n❌ source-audit: high severity の問題が残っています。確認0送信を中止し1通も送信していません:",
++          file=sys.stderr)
++    for i in audit_res["high"]:
++        loc = i.get("subject") or i.get("name") or i.get("page_id") or ""
++        print(f"  [{i['code']}] {i['db']}: {loc} → {i['detail']}", file=sys.stderr)
++    print("\nNotion 上で修正してから再実行してください "
++          "(/run-notion-gmail-source-audit で全件確認できます)。", file=sys.stderr)
++    return 1
++
++
+ def main() -> int:
+     ap = argparse.ArgumentParser()
+-    ap.add_argument("--plan", required=True, help="dry-run が生成した plan.json")
+-    ap.add_argument("--approved-plan-hash", required=True)
+-    ap.add_argument("--approved-count", required=True, type=int)
+-    ap.add_argument("--approved-first-to", required=True)
+-    ap.add_argument("--approved-nonce", default="", help="承認確認語 (プレビュー該当単位で目視確認した値)")
++    ap.add_argument("--plan", help="dry-run が生成した plan.json (対話モード必須)。auto モードでは内部生成のため不要")
++    ap.add_argument("--approved-plan-hash", default="")
++    ap.add_argument("--approved-count", type=int, default=None)
++    ap.add_argument("--approved-first-to", default="")
++    ap.add_argument("--approved-nonce", default="", help="承認確認語 (対話モードでプレビュー該当単位を目視確認した値)")
++    ap.add_argument("--auto-approve", action="store_true",
++                    help="確認0の非対話送信を明示する後方互換フラグ。--plan 無しなら既定でこのモード。"
++                         "Notion のチェック(送信対象=✅)を承認とみなし、送信直前に最新 Notion から"
++                         "新鮮 plan を構築して送る (APPROVE文字列/nonce 不要)")
++    ap.add_argument("--canary", "--limit", dest="canary", type=int,
++                    help="(auto) 送信可能 unit を安定順先頭 N 件に限定して送る。残りは再実行で送信 "
++                         "(content dedup が既送を自動 skip)")
++    ap.add_argument("--db1", help="(auto) メール本文DB id (config override)")
++    ap.add_argument("--db2", help="(auto) メール送信先_DB id (config override)")
+     ap.add_argument("--allow-resend", action="store_true",
+                     help="同一内容の既送信を意図的に再送する (既定はクロス実行の二重送信を機構で防止)")
+     ap.add_argument("--config")
+     args = ap.parse_args()
+ 
++    if args.canary is not None and args.canary < 1:
++        print("[ERROR] --canary/--limit は 1 以上を指定してください", file=sys.stderr)
++        return 2
++
+     try:
+-        plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+         cfg = notion_config.load_config(args.config)
+-    except (OSError, json.JSONDecodeError, notion_config.ConfigError) as e:
+-        print(f"[ERROR] plan/config 読み込み失敗: {e}", file=sys.stderr)
++    except notion_config.ConfigError as e:
++        print(f"[ERROR] config 読み込み失敗: {e}", file=sys.stderr)
++        return 2
++
++    if args.plan and args.auto_approve:
++        print("[ERROR] --auto-approve と --plan は同時指定できません", file=sys.stderr)
+         return 2
++    if not args.plan and (
++        args.approved_plan_hash or args.approved_count is not None or args.approved_first_to or args.approved_nonce
++    ):
++        print("[ERROR] 対話モードの承認引数を使う場合は --plan を指定してください", file=sys.stderr)
++        return 2
++
++    auto = args.auto_approve or not args.plan
++    if auto:
++        # ---- 確認0 auto-send: source-audit ゲート → 新鮮 plan を構築 → 承認 tuple を self-derive ----
++        # 承認の所在を「端末の APPROVE 文字列」から「Notion のチェック(データ層)」へ移す。送信直前に
++        # 最新 Notion から plan を作る (古い plan.json を使い回さない=承認後のアドレス編集による旧アドレス
++        # 送信を封じる fresh rebuild)。機械的安全層(Class A)は確認回数と独立に下のループで全て効く。
++        try:
++            db1, db2 = _resolve_source_dbs(cfg, args.db1, args.db2)
++            client = notion_client.NotionClient(secrets.get_notion_api_key())
++        except (notion_config.ConfigError, secrets.KeychainError) as e:
++            print(f"[ERROR] auto-send 初期化失敗: {e}", file=sys.stderr)
++            return 2
++        try:
++            gate = _auto_source_audit_gate(client, db1, db2)
++            if gate is not None:
++                return gate
++            plan = pc.compose_plan(client, db1, db2, canary=args.canary)
++        except notion_client.NotionError as e:
++            print(f"[ERROR] auto-send 事前処理失敗 (source-audit/plan 構築): {e}", file=sys.stderr)
++            return 2
++        out_plan = _write_auto_plan(args.config, plan)
++        if plan["count"] == 0:
++            print("\n送信可能 0 通でした。送信対象=✅ の宛先と、メッセージ対象=✅ かつ {{}}入り本文 を確認してください。")
++            print(f"  抑制 {len(plan['suppressed'])} / 重複除外 {len(plan['duplicate_dropped'])} / "
++                  f"メール空 {len(plan['recipient_skipped'])} 件")
++            print(f"plan.json: {out_plan}")
++            return 0
++        # 承認 tuple を新鮮 plan から self-derive (人間 APPROVE 入力の代替。Notion チェック=承認)。
++        approved_plan_hash = plan["plan_hash"]
++        approved_count = plan["count"]
++        approved_first_to = plan["first_to"]
++        approved_nonce_in = ""        # nonce(読解強制) は確認0モードで撤去 → guard で照合しない
++        enforce_nonce = False
++        print(f"[auto-approve] 確認0送信: campaign={plan['campaign_id']} plan_hash={plan['plan_hash']} "
++              f"送信予定 {plan['count']} 通 (Notion 送信対象=✅ を承認とみなす)")
++        if plan["canary_applied"]:
++            print(f"[auto-approve] canary: 送信可能 {plan['available_unit_count']} 通のうち先頭 {plan['count']} 通のみ送信。"
++                  f"残りは再実行で送信 (dedup が既送を skip)。")
++    else:
++        # ---- 対話モード (従来): plan.json + APPROVE <plan_hash> <count> <first_to> <確認語> ----
++        if not args.plan:
++            print("[ERROR] 対話モードは --plan が必要です (確認0送信は引数なし、または --auto-approve)", file=sys.stderr)
++            return 2
++        if not args.approved_plan_hash or args.approved_count is None or not args.approved_first_to:
++            print("[ERROR] 対話モードは --approved-plan-hash/--approved-count/--approved-first-to が必要です",
++                  file=sys.stderr)
++            return 2
++        try:
++            plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
++        except (OSError, json.JSONDecodeError) as e:
++            print(f"[ERROR] plan 読み込み失敗: {e}", file=sys.stderr)
++            return 2
++        approved_plan_hash = args.approved_plan_hash
++        approved_count = args.approved_count
++        approved_first_to = args.approved_first_to
++        approved_nonce_in = args.approved_nonce
++        enforce_nonce = True
+ 
+     units = plan.get("units", [])
+ 
+     # ---- 決定論セルフチェック (F2: guard を fork/人間に依存させない正本検証) ----
+     # plan.json の自己申告スカラ (count/first_to/plan_hash) を信じず、units から再計算して
+-    # 承認文字列・plan 宣言値の三者一致を fail-closed で確認する。1つでも崩れたら1通も送らない。
++    # 承認値・plan 宣言値の三者一致を fail-closed で確認する。1つでも崩れたら1通も送らない。
++    # auto モードでは承認値が新鮮 plan からの self-derive ゆえ三者は一致するが、plan 整合
++    # (recomputed_ph==plan_hash) と下の per-unit content_hash 再計算は確認回数と独立に効く (Class A)。
+     det_errors: list[str] = []
+     recomputed_ph = pb.plan_hash(units) if units else ""
+     recomputed_first_to = units[0]["to_list"][0] if units and units[0].get("to_list") else ""
+     expected_nonce_idx, expected_nonce = pb.approval_nonce(plan.get("plan_hash", ""), units)
++    nonce_for_guard = expected_nonce if enforce_nonce else ""   # 確認0モードは nonce 照合を無効化
+     if recomputed_ph != plan.get("plan_hash"):
+         det_errors.append("units から再計算した plan_hash が plan.json の値と不一致 (plan 改竄/破損)")
+-    if plan.get("plan_hash") != args.approved_plan_hash:
++    if plan.get("plan_hash") != approved_plan_hash:
+         det_errors.append("plan.json の plan_hash が承認 plan_hash と不一致")
+     if len(units) != plan.get("count"):
+         det_errors.append(f"units 実数({len(units)}) が plan.count({plan.get('count')}) と不一致")
+-    if len(units) != args.approved_count:
+-        det_errors.append(f"units 実数({len(units)}) が承認件数({args.approved_count}) と不一致")
+-    if recomputed_first_to != (args.approved_first_to or ""):
++    if len(units) != approved_count:
++        det_errors.append(f"units 実数({len(units)}) が承認件数({approved_count}) と不一致")
++    if recomputed_first_to != (approved_first_to or ""):
+         det_errors.append("units 先頭 To が承認先頭 To と不一致")
+-    if expected_nonce and args.approved_nonce != expected_nonce:
++    if enforce_nonce and expected_nonce and approved_nonce_in != expected_nonce:
+         det_errors.append("承認確認語(nonce)が plan から計算した値と不一致 (プレビュー未確認の疑い)")
+     if det_errors:
+         print("\n❌ 決定論セルフチェック失敗。1通も送信していません:")
+@@ -109,9 +235,9 @@ def main() -> int:
+     g1 = preflight.gate_g1_auth(cfg, from_addr0, probe_api=True, verify_from_addrs=distinct_from)
+     # ---- G3 キャンペーン整合 (self-report でなく units 実体から) ----
+     g3 = preflight.gate_g3_presend(
+-        approved_plan_hash=args.approved_plan_hash, plan_hash=recomputed_ph,
+-        approved_count=args.approved_count, actual_count=len(units),
+-        approved_first_to=args.approved_first_to, actual_first_to=recomputed_first_to,
++        approved_plan_hash=approved_plan_hash, plan_hash=recomputed_ph,
++        approved_count=approved_count, actual_count=len(units),
++        approved_first_to=approved_first_to, actual_first_to=recomputed_first_to,
+     )
+     all_results = g1 + g2 + [g3]
+     if not preflight.all_passed(all_results):
+@@ -128,7 +254,11 @@ def main() -> int:
+         # 送信時 suppress 再検証 (C-1): dry-run 承認後に Notion で「メールを送らない=✅」や
+         # 「送信対象=☐」に変えられた宛先へ追い越し送信しないよう、plan の宛先 page を再取得して
+         # 現在の送信可否を引く。subtract-only (承認件数を超えて送ることは決してない)。
+-        recipient_db = ((cfg.get("notion_gmail_send") or {}).get("source") or {}).get("recipient_db")
++        # C-1 再検証は plan 構築元の宛先DBに束縛する。--db2 override や対話planで config と
++        # 異なるDBを使った場合に、別DBのチェック状態で送信可否を判断しないため。
++        recipient_db = (plan.get("source") or {}).get("recipient_db")
++        if not recipient_db:
++            recipient_db = ((cfg.get("notion_gmail_send") or {}).get("source") or {}).get("recipient_db")
+         suppress_state = notion_client.fetch_recipient_send_state(client, recipient_db) if recipient_db else None
+     except (notion_config.ConfigError, secrets.KeychainError, gmail_client.GmailUnavailable, notion_client.NotionError) as e:
+         print(f"[ERROR] live-send 初期化失敗: {e}", file=sys.stderr)
+@@ -202,12 +332,12 @@ def main() -> int:
+         if fa not in verified_from:
+             verified_from[fa] = gclient.verify_sendas(fa)
+         guard_kwargs = dict(
+-            approved_plan_hash=args.approved_plan_hash, plan_hash=recomputed_ph,
+-            approved_count=args.approved_count, actual_count=len(units),
+-            approved_first_to=args.approved_first_to, actual_first_to=recomputed_first_to,
++            approved_plan_hash=approved_plan_hash, plan_hash=recomputed_ph,
++            approved_count=approved_count, actual_count=len(units),
++            approved_first_to=approved_first_to, actual_first_to=recomputed_first_to,
+             reserved_log_id=reserved_id, unresolved_tokens=unresolved,
+             from_verified=verified_from[fa],
+-            approved_nonce=args.approved_nonce, actual_nonce=expected_nonce,
++            approved_nonce=approved_nonce_in, actual_nonce=nonce_for_guard,
+         )
+         # F13: guard を mark_sending の前に明示実行し、guard 違反では SENDING を作らない。
+         try:
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md b/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
+index b843cb8..417f001 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-sendlog-setup/SKILL.md
+@@ -60,7 +60,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
+      --db-id <送信ログDBのid> --apply   # 省略時は config databases.gmail-send-log.db_id から解決
+    ```
+ 
+-3. **config 焼き込み案内** — `--write-config` で `databases.gmail-send-log.db_id` の設定スニペットを提示する。`.notion-config.json` は repo-root・gitignore 対象のため手動で追記する。
++3. **config 焼き込み案内** — `--write-config` で `databases.gmail-send-log.db_id` の設定スニペットを提示する。`.notion-config.json` は作業フォルダ（`$CLAUDE_PROJECT_DIR` 直下・clone は repo-root）・gitignore 対象のため手動で追記する。
+ 
+ 4. **再 dry-run** — 適用後に手順1を再実行し、差分0 (`✅ schema は期待と整合済み`) を確認する。
+ 
+@@ -126,7 +126,7 @@ PY
+ ## Gotchas
+ 
+ 1. **Notion integration 未接続**: 対象DBに integration が共有されていないと `404 object_not_found`。Notion MCP は未共有のため REST 直叩き (`notion-api-key.xl-skills`) を使う。
+-2. **`.notion-config.json` は gitignore 対象**: `--write-config` はスニペット提示のみで自動書き込みしない。repo-root に手動追記する (秘匿値を git に乗せない)。
++2. **`.notion-config.json` は gitignore 対象**: `--write-config` はスニペット提示のみで自動書き込みしない。作業フォルダ（`$CLAUDE_PROJECT_DIR` 直下・clone は repo-root）に手動追記する (秘匿値を git に乗せない)。
+ 3. **select 選択肢は既存温存**: status/reason_code は既存選択肢に不足分を**マージ**追加する。既存の独自選択肢は消さない。
+ 4. **dry-run の exit code**: 差分ありは exit 1 (整合済みは 0)。CI で「差分0」をゲートにする場合はこの戻り値を使う。
+ 5. **このDBは送信フローの前提**: ここが整わないと `run-notion-gmail-send` の preflight G2 が fail-closed で送信を止める。送信前に本スキルで差分0にしておく。
+diff --git a/plugins/notion-gmail-send/skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py b/plugins/notion-gmail-send/skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py
+index cfb0a37..5f98676 100644
+--- a/plugins/notion-gmail-send/skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py
++++ b/plugins/notion-gmail-send/skills/run-notion-gmail-source-audit/scripts/audit_mail_dbs.py
+@@ -40,24 +40,27 @@ def main() -> int:
+     args = ap.parse_args()
+ 
+     try:
+-        cfg = notion_config.load_config(args.config)
+-        source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
+-        db1 = args.db1 or source.get("body_db")
+-        db2 = args.db2 or source.get("recipient_db")
++        db1 = args.db1
++        db2 = args.db2
++        if not (db1 and db2):
++            cfg = notion_config.load_config(args.config)
++            source = (cfg.get("notion_gmail_send") or {}).get("source") or {}
++            db1 = db1 or source.get("body_db")
++            db2 = db2 or source.get("recipient_db")
+         if not db1 or not db2:
+             print("[ERROR] body_db / recipient_db 未解決 (config notion_gmail_send.source または --db1/--db2)", file=sys.stderr)
+             return 2
++        db1 = notion_config.require_resolved_value(db1, "body_db")
++        db2 = notion_config.require_resolved_value(db2, "recipient_db")
+         client = notion_client.NotionClient(secrets.get_notion_api_key())
+-        body_rep = audit.audit_body_db(client, db1)
+-        recip_rep = audit.audit_recipient_db(client, db2)
+-        recip_schema = audit.audit_recipient_db_schema(client, db2)  # DB2 schema 層 (廃止列残存・要件1(d))
+-        cross = audit.cross_audit(body_rep["used_tokens"], recip_rep["recipients"])
++        full = audit.run_full_audit(client, db1, db2)  # CLI と auto-send 事前ゲートで同一判定を共有
+     except (notion_config.ConfigError, secrets.KeychainError, notion_client.NotionError) as e:
+         print(f"[ERROR] 監査失敗: {e}", file=sys.stderr)
+         return 2
+ 
+-    all_issues = body_rep["issues"] + recip_rep["issues"] + recip_schema["issues"] + cross
+-    high = [i for i in all_issues if i.get("severity") == "high"]
++    body_rep, recip_rep, recip_schema, cross = full["body_rep"], full["recip_rep"], full["recip_schema"], full["cross"]
++    all_issues = full["all_issues"]
++    high = full["high"]
+ 
+     if args.json:
+         print(json.dumps({
+diff --git a/plugins/notion-gmail-send/tests/test_build_plan.py b/plugins/notion-gmail-send/tests/test_build_plan.py
+index f3e5402..22645c3 100644
+--- a/plugins/notion-gmail-send/tests/test_build_plan.py
++++ b/plugins/notion-gmail-send/tests/test_build_plan.py
+@@ -91,3 +91,49 @@ def test_canary_limits_units_bound_to_plan_hash(monkeypatch, tmp_path):
+     assert plan["available_unit_count"] == 3
+     assert plan["canary_limit"] == 1
+     assert plan["canary_applied"] is True
++
++
++def test_db_overrides_do_not_require_config(monkeypatch, tmp_path):
++    bp = _load_build_plan()
++    def _load_config(path=None):
++        raise AssertionError("both --db1 and --db2 were provided; config must not be loaded")
++    monkeypatch.setattr(notion_config, "load_config", _load_config)
++    monkeypatch.setattr(notion_config, "find_config_path", lambda path=None: None)
++    monkeypatch.setattr(secrets, "get_notion_api_key", lambda: "key")
++    monkeypatch.setattr(notion_client, "NotionClient", lambda key: object())
++    bodies = [{"page_id": "b1", "subject": "件名", "body": "本文", "from_addr": "f@x.com", "cc_raw": ""}]
++    recips = [{"page_id": "r1", "name": "A", "company": "X", "pro_email": "a@x.com",
++               "hisho_email": "", "created_time": "2026-06-23T09:03:00.000Z"}]
++    seen = {}
++    def _fetch_bodies(client, db):
++        seen["db1"] = db
++        return bodies, []
++    def _fetch_recipients(client, db):
++        seen["db2"] = db
++        return {"recipients": recips, "skipped": [], "suppressed": [], "duplicate_dropped": []}
++    monkeypatch.setattr(notion_client, "fetch_bodies_true", _fetch_bodies)
++    monkeypatch.setattr(notion_client, "fetch_recipients_true", _fetch_recipients)
++
++    out = tmp_path / "plan.json"
++    monkeypatch.setattr("sys.argv", ["build_plan", "--db1", "body-db", "--db2", "recipient-db", "--out", str(out)])
++    assert bp.main() == 0
++
++    plan = json.loads(out.read_text(encoding="utf-8"))
++    assert seen == {"db1": "body-db", "db2": "recipient-db"}
++    assert plan["source"] == {"body_db": "body-db", "recipient_db": "recipient-db"}
++    assert plan["count"] == 1
++
++
++def test_placeholder_config_stops_before_notion_fetch(monkeypatch, tmp_path):
++    bp = _load_build_plan()
++    monkeypatch.setattr(notion_config, "load_config", lambda path=None: notion_config.CONFIG_SKELETON)
++    monkeypatch.setattr(notion_config, "find_config_path", lambda path=None: tmp_path / ".notion-config.json")
++    monkeypatch.setattr(secrets, "get_notion_api_key",
++                        lambda: (_ for _ in ()).throw(AssertionError("Notion key must not be read")))
++    monkeypatch.setattr(notion_client, "NotionClient",
++                        lambda key: (_ for _ in ()).throw(AssertionError("Notion client must not be created")))
++
++    out = tmp_path / "plan.json"
++    monkeypatch.setattr("sys.argv", ["build_plan", "--out", str(out)])
++    assert bp.main() == 2
++    assert not out.exists()
+diff --git a/plugins/notion-gmail-send/tests/test_config_scaffold.py b/plugins/notion-gmail-send/tests/test_config_scaffold.py
+new file mode 100644
+index 0000000..1f2051f
+--- /dev/null
++++ b/plugins/notion-gmail-send/tests/test_config_scaffold.py
+@@ -0,0 +1,104 @@
++# /// script
++# name: test_config_scaffold
++# purpose: config の placeholder SSOT (CONFIG_SKELETON) と scaffold (write_skeleton/--init 相当) を検証する。実 DB ID/送信元の git 追跡ファイルへの再混入(再leak)を機構的に遮断する。
++# inputs: []
++# outputs: []
++# contexts: [C]
++# network: false
++# write-scope: none
++# dependencies: ["pytest"]
++# requires-python: ">=3.9"
++# ///
++"""config scaffold / placeholder SSOT のテスト。
++
++example ファイル・write_skeleton・ConfigError 文言がすべて単一 SSOT (CONFIG_SKELETON) から
++導かれ、実値が git 追跡ファイルへ混入しないことを固定する。config 不在のオンボーディング破綻と
++実値漏洩の回帰を防ぐ。"""
++import json
++from pathlib import Path
++
++import pytest
++
++from lib import notion_config as nc
++
++PLUGIN_ROOT = Path(__file__).resolve().parents[1]
++EXAMPLE = PLUGIN_ROOT / ".notion-config.example.json"
++LEGACY_EXAMPLE = PLUGIN_ROOT / ".notion-config.json.example"
++
++# 過去に example へ焼き込まれていた実値の痕跡。git 追跡ファイルに二度と現れてはならない。
++REAL_VALUE_MARKERS = ["38807a0c", "38907a0c", "shonai.inc"]
++
++
++def test_example_follows_repo_naming_convention():
++    # repo 規約は <name>.example.json (skill-intake / mf-kessai と一致し .gitignore negation が効く)。
++    assert EXAMPLE.is_file(), ".notion-config.example.json が存在しません"
++    assert not LEGACY_EXAMPLE.exists(), "旧命名 .notion-config.json.example が残っています"
++
++
++def test_example_matches_skeleton_ssot():
++    data = json.loads(EXAMPLE.read_text(encoding="utf-8"))
++    assert data == nc.CONFIG_SKELETON, "example が CONFIG_SKELETON (SSOT) と一致しません"
++
++
++def test_no_real_values_in_skeleton_or_example():
++    blobs = {
++        "CONFIG_SKELETON": json.dumps(nc.CONFIG_SKELETON, ensure_ascii=False),
++        "example file": EXAMPLE.read_text(encoding="utf-8"),
++    }
++    for where, blob in blobs.items():
++        for marker in REAL_VALUE_MARKERS:
++            assert marker not in blob, f"{where} に実値 {marker} が混入しています (git に実値を載せない)"
++
++
++def test_skeleton_values_are_placeholders():
++    src = nc.CONFIG_SKELETON["notion_gmail_send"]["source"]
++    sender = nc.CONFIG_SKELETON["notion_gmail_send"]["sender"]
++    assert src["body_db"].startswith("<") and src["body_db"].endswith(">")
++    assert src["recipient_db"].startswith("<") and src["recipient_db"].endswith(">")
++    assert sender["impersonate"].startswith("<"), "送信元は placeholder でなければならない (git に実値を載せない)"
++    assert nc.CONFIG_SKELETON["databases"]["gmail-send-log"]["db_id"].startswith("<")
++
++
++def test_placeholder_values_are_rejected_as_unresolved_config():
++    with pytest.raises(nc.ConfigError, match="placeholder"):
++        nc.require_resolved_value("<メール本文DBのid>", "notion_gmail_send.source.body_db")
++    with pytest.raises(nc.ConfigError, match="placeholder"):
++        nc.get_db_id("gmail-send-log", nc.CONFIG_SKELETON)
++    with pytest.raises(nc.ConfigError, match="placeholder"):
++        nc.get_source_db_ids(nc.CONFIG_SKELETON)
++
++
++def test_skeleton_uses_canonical_db_name():
++    note = nc.CONFIG_SKELETON["notion_gmail_send"]["source"]["_note"]
++    assert "メール送信先_DB" in note
++    assert "メール送信対象者DB" not in note, "宛先DB名称のドリフトが再発しています"
++
++
++def test_write_skeleton_creates_placeholder_config(tmp_path):
++    dest = tmp_path / "sub" / ".notion-config.json"
++    written = nc.write_skeleton(dest)
++    assert written == dest and dest.is_file()
++    assert json.loads(dest.read_text(encoding="utf-8")) == nc.CONFIG_SKELETON
++
++
++def test_write_skeleton_refuses_overwrite_then_allows_with_flag(tmp_path):
++    dest = tmp_path / ".notion-config.json"
++    nc.write_skeleton(dest)
++    with pytest.raises(nc.ConfigError):
++        nc.write_skeleton(dest)            # 既存を黙って潰さない
++    nc.write_skeleton(dest, overwrite=True)  # 明示時のみ許可
++
++
++def test_scaffold_target_prefers_claude_project_dir(monkeypatch, tmp_path):
++    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
++    assert nc.scaffold_target_path() == tmp_path / nc.CONFIG_FILENAME
++
++
++def test_config_missing_error_points_to_init_not_dead_end(monkeypatch):
++    # config 不在のエラーは scaffold (doctor --init) と placeholder 例を指し、デッドエンドにしない。
++    monkeypatch.setattr(nc, "find_config_path", lambda path=None: None)
++    with pytest.raises(nc.ConfigError) as ei:
++        nc.load_config()
++    msg = str(ei.value)
++    assert "doctor --init" in msg
++    assert ".notion-config.example.json" in msg

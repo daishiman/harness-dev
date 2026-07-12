@@ -1,0 +1,27 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-rename",
+    "skill_md_sha256": "5a260cbe9cdefccba995ed6fe93d526cea570feb740469a5335d22f6b8343f40"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-d",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "検証可能性が高い: 完了チェックリストが lint-skill-name.py/lint-skill-tree.py/validate-frontmatter.py の exit0・git 履歴保持・grep -r 参照元走査という二値判定可能な決定論コマンドで構成されている。",
+      "簡潔性: 本文 114 行で goal-seek-paradigm.md へ手順を委譲し、詳細を references/ 側へ寄せる SSOT 分離が保たれている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "共通 5 次元ルブリック(references/quality-rubric.md)で採点。完全性3: frontmatter commonCore(name/kind/prefix/version/effect 等)充足、responsibility_refs/schema_refs/manifest 配置あり。一貫性3: Key Rules↔完了チェックリスト↔ゴールシークループ差分の用語・手順が一致、改名の不可分セットが全層で統一。深度2: Why が部分更新による参照不整合(第8条)という真因まで掘り下げ、固定手順でなくゴール状態充足パラダイムを採用する根拠を明示。検証可能性3: lint exit0・git mv・grep -r と数値/コマンドが 3 個以上。簡潔性3: 114 行、goal-seek 手順の重複転記なし。全次元>=2=PASS。"
+}

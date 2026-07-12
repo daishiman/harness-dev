@@ -1,0 +1,838 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/skill-creator (anti-goodhart 統合: run-skill-live-trial + run-skill-iter-improve + Gate D 配線)",
+    "reviewed_at": "2026-07-02T16:40:00Z"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "INVARIANT8×content-review核の正面衝突を独立検証: orchestrate-gate-pattern.md L39/content-review-protocol.md L6/iter-improve INVARIANT8 L148 が主張型直交(design vs behavioral)で一貫。INV7矛盾は feedback_contract_ssot.py の ENGINE_SKILLS+requires_subject_copy で解消済み。矛盾残存なし。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "content-review『ハーネスの核』(静的LLM verdict全面依存)とINVARIANT8『静的レビュー収束寄与ゼロ』が正面衝突",
+          "recommended_intervention": "Gate D新設で判定対象を主張型直交化: 静的=design adequacyゲート維持・live-trial=behavioral acceptanceの唯一判定者",
+          "condition_signal": "contradiction"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "INVARIANT7(エンジン/被験体コピー分離)と既存直接編集dogfoodingモデルが自己適用時に矛盾",
+          "recommended_intervention": "feedback_contract_ssot.pyへENGINE_SKILLS+requires_subject_copy述語追加、閉包交差時のみコピー強制の非対称ルール",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "forbidden-clis衝突を独立検証: live-trial scripts 6本すべて .py(Python stdlib)、jq不使用、tmuxは plugin.json requirements.external_clis に登録済(不在BLOCKED)。commonCore/criteria/ゴールシーク形も両SKILL.mdで充足し3 lint機械fail解消。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "other",
+          "description": "live-trialの.sh4本+jqがforbidden-clis規約違反、tmuxは外部CLI未登録",
+          "recommended_intervention": "boot/send/poll/statusをPython stdlibへ移植・jq→json.loads、tmuxのみplugin.json requirements.external_clis登録+不在BLOCKED",
+          "condition_signal": "contradiction"
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "AG両SKILL.mdが固定Phase連番・commonCore欠落・feedback_contract欠落で3 lint機械fail",
+          "recommended_intervention": "ゴールシーク形へ再構成、8 INVARIANTSをChecklist/絶対ルールへ写像、commonCore+inner/outer criteriaをfrontmatterへ",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "6点セット同型化を独立検証: live-trial-verdict.schema.json+lint-live-trial-verdict.py(self-test 8 case PASS)+workflow-manifest live-acceptance phase+plugin-composition登録が全て実在。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "AGの合否宣言面がschema+対向lintを持たず既存6点セットパターンから逸脱",
+          "recommended_intervention": "live-trial-verdict.schema.json+lint-live-trial-verdict.py新設、workflow-manifest phase+composition登録",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "sink破断を独立検証: SKILL.md workdir=eval-log/<plugin>/<skill>/live-trial/<run-id>/ に正規化、$HOME/.mso fallback残存なし。lint --all で sink 検査 exit0。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "$HOME/playground fallback・.mso固定workdir・project-skill前提が統合時に全破断",
+          "recommended_intervention": "資産解決を$CLAUDE_PLUGIN_ROOT/self-relativeへ、出力先をeval-log/<plugin>/<skill>/live-trial/<run-id>/へ正規化",
+          "condition_signal": "dependency_break"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "runtime-evidence契約を独立検証: verdict schema が behavioral claim の唯一収束根拠として required 15キーを固定、lint が producer実装を importlib 再利用(生成/検査の実装乖離排除)。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "根本欠落はtmuxでなくruntime-evidence artifact契約の不在。契約化しない限りINVARIANT8の単一障害点温存",
+          "recommended_intervention": "実装順固定: verdict schema契約定義→live-trial=producer/lint=consumerでCI接続→tmuxは交換可能transport隔離",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "再帰遮断+移植忠実性を独立検証: DENY_TARGET_SKILLS(live-trial/iter-improve自身)を boot/verdict が機械拒否、隔離workdir固定。合成fixture pytest(test_live_trial_harness.py 4分岐)PASS。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "dependency-loop",
+          "description": "skip-permissions+trust前提の常設自動起動がホストrepo無制限書込経路+再帰増殖ガード無し",
+          "recommended_intervention": "trial cwd=隔離workdir固定、被験skill denylist(live-trial/iter-improve自身)で再帰遮断、tmux呼出をbackend単一境界に閉込め",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "実走事故由来の決定論修正3点(subagents合算/空マッチ非例外/ASCII busy正規表現)をPython移植で落とすと事故再発",
+          "recommended_intervention": "移植忠実性checklist 3項目明記+合成transcript fixtureのpytestで各分岐(DONE/STALL/GATE/HARD_CAP)固定",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "goal正本一本化+loop_bounds拡張を独立検証: goal-spec単一正本+二重宣言禁止、convergence-policy loop_bounds が『5つの別ループ』で trial_acceptance/iter_improve を consumed_by 付き登録。位相語未使用。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "goal正本の二重化。既存original_goal(SHA-256照合)とAG --goal 1文宣言が独立ドリフトし矛盾源に",
+          "recommended_intervention": "--goalはgoal-spec.json.goal/original_goalを単一正本として読む配線に統一、緩め禁止一般形はconvergence-policy anti_patternsへ一本化",
+          "condition_signal": "contradiction"
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "loop_bounds『3つの別ループ』がiter_improve(5)/nudge(2)/STALL・HARD_CAP追加でstale化+同名inner衝突",
+          "recommended_intervention": "loop_boundsへtrial_acceptance/iter_improve追加+『3つ』→『5つ』同時更新、位相語inner/outer禁止で機能語命名",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "acceptance_tier決定論導出を独立検証: validate-build-plan.py derive_acceptance_tier() が純関数で live/fork/static を導出、宣言<導出でviolation。テストPASS。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "live/fork適用判定が散文のモデル裁量。常設は全件重走(コスト破綻)か恣意skip(受け入れ穴)へ縮退",
+          "recommended_intervention": "validate-build-plan.pyへderive_acceptance_tier純関数導出(hooks配線/Skill・Agent・AskUserQuestion→live)、宣言<導出でFAIL",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "常設フロー断線3点を独立検証: workflow-manifest phase13 live-acceptance 追加、lint-live-trial-verdict を CI/pre-push 強制層に配線、iter-improve は context:main runbook 明記。executor境界も相互参照済。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "常設フロー3断線: Step12後phase未定義/iter-improveはSkill→Agent不可でStop hook起動不可/is_stop_block_exempt(skill-creator)=True",
+          "recommended_intervention": "workflow-manifest新phase live-acceptance+CI/pre-push lint-live-trial-verdictを最終強制層、iter-improveはmain直下runbook明記",
+          "condition_signal": "dependency_break"
+        },
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "executor合格条件=high全件消化 vs INVARIANT5=1iter1-2件厳守。編集エンジン共有すると直接矛盾",
+          "recommended_intervention": "elegant-review Phase3(静的findings一括消化)とiter-improve(eval駆動1-2件/iter)は入力も収束判定も別系と明文化",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "エンジン閉包を独立検証: feedback_contract_ssot.py ENGINE_SKILLS frozenset(3 skill)を機械宣言、requires_subject_copy が閉包交差時のみ True。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "エンジン閉包(iter-improve+run-elegant-review+convergence-policy+content-review経路+feedback_contract_ssot.py)未定義で自壊構造",
+          "recommended_intervention": "エンジン閉包をENGINE_SKILLSとして機械可読宣言、target交差時のみscratch worktree被験体コピー強制",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "claim型直交+tier契約を独立検証: content-review-protocol.md/orchestrate-gate-pattern.md/iter-improve が design/behavioral の主張型で一貫、build-flags.schema.json に acceptance_tier 契約化。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "静的寄与ゼロ vs 静的verdict正本構造。逐語輸入=既存基盤PASS詐欺認定・骨抜き輸入=INV8死文化",
+          "recommended_intervention": "証拠をdesign claim(静的verdict正本維持)/behavioral claim(実走証拠のみ)で型付け、INV8はbehaviorスコープ限定輸入",
+          "condition_signal": "contradiction"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "live/fork選択則が散文でdrift必至",
+          "recommended_intervention": "acceptance_tier: static|fork|liveをbuild-flags/frontmatter契約化、lintが静的信号から導出し宣言<導出でFAIL",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "起動経路+配置を独立検証: iter-improve は main 直下 runbook(Skill→Agent制約明記)、skill-creator核=契約のみ常設・runner2本は交換可能な葉(tier: extension)。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "iter-improve context:main必須 vs Skill()委譲設計。Skill→Agent不可でStep A fan-outが構造的に死ぬ",
+          "recommended_intervention": "Stop hook decision:block差戻し(main context実行)を正規起動経路に、manifestはqueue+verdict検査stepを配線",
+          "condition_signal": "dependency_break"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "配置4案(内蔵/別plugin/拡張/doc-only)比較未検討で『内蔵ありき』",
+          "recommended_intervention": "skill-creator核はtrial-verdict契約(schema+SHA+lint+workflow step)のみ常設、runnerは交換可能な葉",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "SSOT吸収判断を独立検証: 新設は harness/fan-out/審問ログに限定し数値は convergence-policy へ一元化、goal は goal-spec 単一SSOT。過剰新設は回避されている。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "dependency-loop",
+          "description": "第4・5ループ新設方向に流れている。最小衝突は既存面への吸収",
+          "recommended_intervention": "既存面吸収(content-review第3 review_kind/review-queue相乗り)を検討し、新設は実走fan-out残渣のみに絞る",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "AG iter0とgoal-seek-paradigm.mdでgoalアンカー二重化",
+          "recommended_intervention": "goal-spec.json.goal/original_goal_hash単一SSOT、--goalは正規化書込エイリアス、緩め禁止はgoal-spec.constraintsへ",
+          "condition_signal": "inconsistency"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "AG固有数値(max_iter=5/N=3/threshold=90/nudge2/STALL/CAP)がSSOT未登録のまま移植で4本目の数値正本",
+          "recommended_intervention": "convergence-policy.jsonへtrial_acceptance/iter_improveブロック追加、文書側は参照のみ",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "scenario_origin を独立検証: verdict schema に scenario_origin(synthetic|replay)必須。replayコーパス自動採取hookは ROADMAP deferred(14)として明示。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "実走シナリオを毎回作文→本番分布乖離のproxy退行",
+          "recommended_intervention": "実起動引数をtrial-scenariosコーパス化しリプレイ、0件時のみ合成、verdictにscenario_origin: synthetic|replay必須",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "常設定義を独立検証: SKILL.md『常設=常時発火可能+条件必須』、workflow-manifest default_on:false+trigger三積、proof trial のみ unconditional。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "『毎回実行』字義 vs 数時間級実走。build必須stepにすると実用不能でadmission_control思想に逆行",
+          "recommended_intervention": "『常設=常時発火可能+条件必須』と定義、default_on:false+発火三積(trait×挙動面SHA差分×予算)、proof trialのみ無条件",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Python移植+偽装耐性を独立検証: 6 scripts が stdlib、verdict に transcript_sha256/actual_model/nudge_count/gate_response_count の偽装耐性フィールド。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "AG .sh+jq+bats vs forbidden-clis。逐語移植は即lint FAIL",
+          "recommended_intervention": "Python stdlib移植(tmuxのみsubprocess+requirements.external_clis)、trial-verdictに偽装耐性フィールド(transcript_sha256/actual_model/nudge_count)必須",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "degrade宣言を独立検証: verdict environment ブロック+tier/downgrade_reason 必須、lint が tier!=live/downgrade_reason有りを PASS 扱い拒否(human_review)。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "JSONL schema変更/tmux不在/skip-permissions不許容のdegrade未宣言(版依存が散文頼み)",
+          "recommended_intervention": "verdict schemaにenvironment{claude_version,tmux,transcript_layer,permissions_mode}+tier/downgrade_reason必須、降格verdictはhuman_review",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "命名規約を独立検証: convergence-policy/両SKILL.md で位相語(inner/outer)を避け trial_acceptance/iter_improve の機能語命名で統一。判別可能。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "『同名inner注意』注記3文書反復 vs AG内側/外側語彙。位相語輸入で5系統になり判別不能",
+          "recommended_intervention": "位相語(inner/outer)禁止、機能語(trial_acceptance/iter_improve)命名、improveループは受け入れFAILハンドオフでのみ露出",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "8宣言面の突合lint配線を独立検証: SSOT→宣言→強制→sink の各面が lint を持ち、governance-check.yml/run-ci-checks.sh に配線。lint-declaration-coverage が manual残存を ratchet 監視。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "統合が触る宣言/強制面は最低8面(loop_bounds/build-flags/CRITERIA_VERIFY_BY/manifest新phase/Gate D/composition/lint+CI/eval-log sink)で突合lint無し追加はratchet FAIL",
+          "recommended_intervention": "SSOT層→宣言層→強制層→sinkの4段順パッチ、段跨ぎ混在禁止",
+          "condition_signal": "dependency_break"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "『正本=plugin.json requirements.external_clis』が指す実体キー不存在(dangling)。tmux例外承認の登録先が宙吊り",
+          "recommended_intervention": "plugin.jsonにrequirements.external_clis新設しtmuxのみ登録、forbidden-clis.md許可リスト同期",
+          "condition_signal": "dependency_break"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "2層パターン複製を独立検証: content-review 同型(ローカル実行→verdict→CI存在検査)を lint-live-trial-verdict が踏襲。新制約の発明なし。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "実走評価ゼロの根本原因は技術制約でなく設計時の過剰一般化(静的限定が受け入れ評価全体へ波及)",
+          "recommended_intervention": "新制約を発明せずcontent-reviewの2層パターン(ローカル実行→verdict→CI存在検査)を実走層へ複製",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Goodhart未防御辺3本を独立検証: interrogation-log.schema.json が score_delta+independent_check(|Δ|>10 と評価経路接触で allOf 機械強制)、審問ログを必須artifact昇格、Gate D で評価方法置換辺を封鎖。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "critical",
+          "bucket": "dependency-loop",
+          "description": "Goodhartループ未防御辺3本: evaluator緩和辺(改善偽装検知なし)/評価方法置換辺(INV8)/審問ログ辺(緩め操作の事後監査不能)",
+          "recommended_intervention": "verdict/審問ログにscore_delta必須+|Δ|>10ptでindependent_check必須、緩め禁止リスト+毎iter自己審問をartifact昇格、Gate D新設",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "trade-on止揚を独立検証: verify_by ratchet は ROADMAP deferred(13,新規のみ)、live-acceptance は trait×SHA差分×予算の三積発火、適用層境界は両SKILL相互参照。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "schema",
+          "description": "criteria空洞化辺はWARN止まり。loop実行系outer criteriaは実走検証なしだと同語反復に退化",
+          "recommended_intervention": "P2でlint-feedback-contractに『loop実行系はOUT criteria最低1件がverify_by∈{live-trial,evaluator}』段階的ratchet(新規のみ)",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "hook-ci",
+          "description": "重さvs確度は三点で止揚: 条件発火+SHA入口ゲート+自己適用は軽量1-fold+対照群",
+          "recommended_intervention": "manifest新phaseはkind_filter=run/wrap/delegateかつbehavioral trait true時のみ必須、admission_controlにlive_trial_sha節",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "INVARIANT5(1iter1-2件)vs全件消化。AG側は88→72実証あり単純併合不可",
+          "recommended_intervention": "両SKILL.mdに適用層境界を相互参照明記: eval帰属反復=1-2件/iter、レビュー一括改善=DAG全件消化(eval非帰属)",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "eval-log一本化を独立検証: iter-improve 出力は *-score.jsonl 合流規約(独自sink新設禁止)、live-trial は eval-log/live-trial/<run-id>/、aggregate-evals 合流テストPASS。"
+      ],
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": ".mso等の自前sinkはeval-log正本と並行ストア=composition invariant違反",
+          "recommended_intervention": "live-trial出力をeval-log/<plugin>/<skill>/live-trial/<ts>/へ、iter-improve評点は*-score.jsonlへ写像しaggregate-evals合流、.mso全廃",
+          "condition_signal": "dependency_break"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "本体価値の2分類を独立検証: [新設]harness/N並列/審問ログ/proof gate、[参照統合]INV2/6/判定者独立は1行相互参照(再実装禁止 L130)。DUP自作なし。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "本体価値=『静的ゲート通過⇏実走挙動』の検証不能地帯を実走証拠で閉じる。INV2/6/判定者独立は既存重複で再実装はDUP自作",
+          "recommended_intervention": "統合方針2分類固定: [新設]harness/N並列eval/審問ログ/急変独立判定/proof gate、[参照統合]INV2/6/判定者独立は1行相互参照のみ",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "版依存隔離を独立検証: transcript-jsonl.md にロジック隔離、spec-drift監視対象と注記。配布境界は composition invariant にローカル限定+deferred明記。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "transcript JSONL/TUI文字列はClaude Code版密結合",
+          "recommended_intervention": "版依存ロジックをstatus分類script1本+transcript-jsonl.mdに隔離、spec-drift tracker登録(record-only発火)",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "dogfooding",
+          "description": "skip-permissions+trust+tmuxはrepo-bundled境界内のみ許容。量産先配備は配布境界違反",
+          "recommended_intervention": "composition invariantに『live-trialはローカル開発環境限定・feedback-deploy配備対象外』追記、量産先展開はdeferred",
+          "condition_signal": "smell"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "verify_by語彙を独立検証: feedback_contract_ssot.CRITERIA_VERIFY_BY に live-trial 追加済(SSOT1点)、両新skillの outer criteria が verify_by: live-trial を宣言。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "CRITERIA_VERIFY_BYにlive-trial相当値が無く実走受け入れをcriteria化できない語彙欠落",
+          "recommended_intervention": "CRITERIA_VERIFY_BYへ\"live-trial\"追加(SSOT 1点変更で3 lintへ自動伝播)、acceptance_tier=liveはverify_by: live-trial最低1件",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "既知失敗3種再発防止を独立検証: plugin-root自己解決/skill_dir_tree_sha 必須キー(stale-sha lint)/既存lint初回適用で $HOME・.sh+jq・SHA無 の再発を封鎖。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "既知失敗パターン3種再発: $HOME fallbackハードコード(空展開同型)/.sh+jq+bats(forbidden-clis違反)/report.mdにSHA binding無し(stale verdict再演)",
+          "recommended_intervention": "Python移植+plugin-root自己解決、verdict JSON化しskill_dir_tree_sha必須キー化、既存lint3種を初回から適用",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説の段階検証を独立確認: ROADMAP(11)(12) に P1 パイロット判定表・P3 go/no-go(乖離率)を deferred 記録。過剰設計回避のため常設は record-only 起点。"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "中心仮説『静的PASS⇏実走PASS乖離が実在』は未計測。検証なき常設化は過剰設計",
+          "recommended_intervention": "P0=決断層/P1=Python移植+sink+lint(完了条件=パイロット2-3件判定表)/P2=iter-improve統合/P3=常設発火(go/no-goはP1乖離率)",
+          "condition_signal": "omission"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "最上流論点(INV8スコープ)+自己適用モデルを独立検証: Gate D 優先 A>B>C>D で loop 実行系限定、過剰設計4件は D14 で却下、requires_subject_copy 第4述語で層差宣言。"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "最上流論点=INV8適用強度スコープ。全強度適用=content-review全面否定のC1大規模矛盾、ref/assign kindには実走定義不能",
+          "recommended_intervention": "Gate D(実行acceptance)追加・優先A>B>C>D・『Dはloop実行系のみ』、過剰設計4件却下(全kind常設/CI実走/別機構/selection混入)",
+          "condition_signal": "contradiction"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "自己適用モデル相違: elegant-review self=read-only+patch1周で直接編集可、iter-improve×自身/親類の反復実走ループのみINV7コピー必須",
+          "recommended_intervention": "第4述語requires_subject_copy(plugin, loop_kind)追加、feedback-loop-deployment.md dogfooding境界表へ行追加",
+          "condition_signal": "contradiction"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "島DAG+goal保持/達成判定を独立検証: goal-spec 唯一正本+GOAL VERIFICATION(点数禁止)を goal-seek-paradigm.md L135 追記、二重宣言禁止を両文書。島跨ぎ混在は本worktreeで declarative-skillcreator と共存する点を要PR分離(観察)。"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "全論点5島(実行規約移植性→SSOT拡張→ゲート再定義→sink強制層→自己適用常設化)。島跨ぎ混在コミット禁止",
+          "recommended_intervention": "Phase3は島DAG順・島内severity降順で着手",
+          "condition_signal": "smell"
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "goalアンカー二重化。保持=goal-seek側が強(SHA固定+drift 6enum)、達成判定=AG側が強(PASS|FAIL+blocker契約)",
+          "recommended_intervention": "goal-spec.json.goal/original_goal唯一正本、GOAL VERIFICATION(点数出力禁止)をgoal-seek-paradigm.mdへ追記、二重宣言禁止1行を両文書へ",
+          "condition_signal": "inconsistency"
+        }
+      ],
+      "score": 0.95
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "最大矛盾2件(INV8×content-review核 / forbidden-clis×live-trial)を独立検証: 前者は Gate D + 主張型直交(orchestrate-gate-pattern.md L39 / content-review-protocol.md L6 / iter-improve INV8 L148)で両立、後者は Python stdlib 6本移植+tmux external_clis 登録で解消。",
+        "goal正本二重化を独立検証: goal-spec.json.goal/original_goal 単一正本+--goalエイリアス、二重宣言禁止を goal-seek-paradigm.md L140 と iter-improve INV3 の両方に明記。",
+        "INV5×executor全件消化 / INV7×直接編集dogfooding の矛盾は適用層境界(elegant-improvement-executor.md L19)+requires_subject_copy 述語で層分離。位相語 inner/outer は機能語へ統一済。残存矛盾を検出せず。"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "D決定14件の実装網羅を独立検証: D2 external_clis / D3 goal SSOT+forbidden_loosening / D4 loop_bounds / D6-D7 述語+CRITERIA_VERIFY_BY / D8 derive_acceptance_tier / D9 live-acceptance phase / D10 verdict 15キー / D11 interrogation-log / D13 ROADMAP deferred すべて実在。",
+        "runtime-evidence契約(D10)の必須キーを verdict schema で確認: actual_model/nudge_count/gate_response_count/skill_dir_tree_sha/transcript_sha256/scenario_origin/environment/tier/downgrade_reason/timeline を required 固定。",
+        "Goodhart未防御辺3本(A4-004)を interrogation-log allOf(score_delta|Δ|>10+評価経路接触→independent_check必須)+審問ログ必須artifact+Gate D で封鎖。漏れを検出せず。"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "数値二重宣言を独立検証: 反復上限/nudge/STALL/HARD_CAP/max_iter 等の生値は convergence-policy loop_bounds のみに存在し、両SKILL本文は参照のみ(二重宣言禁止)。criteria/parity テスト 274 passed。",
+        "schema/実装一致を独立検証: lint-live-trial-verdict が harness の validate_schema/skill_dir_tree_sha を importlib 再利用し生成/検査の乖離を排除、self-test 8 case PASS。",
+        "用語整合を独立検証: 位相語 inner/outer を機能語(trial_acceptance/iter_improve)へ統一、Gate D/design claim/behavioral claim の語が全文書で一貫。lint-content-review 47 skill OK。"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "参照実在を独立検証: 両新skillの reference_refs/schema_refs/script_refs すべて存在(dangling 0)、composition dependencies DAG に live-trial/iter-improve 追加。",
+        "lint/CI配線を独立検証: run-ci-checks.sh L52 + governance-check.yml L34 に lint-live-trial-verdict --all、lint-script-naming に live-trial-* 6本登録、run-ci-checks PASS 85/FAIL 0。",
+        "強制層合流を独立検証: workflow-manifest live-acceptance verifier + plugin-composition invariant(behavioral claim 収束根拠を live-trial verdict のみに限定)+ aggregate-evals 合流。ただし本worktreeに別run(declarative-skillcreator)由来ファイルが共存し、PR時の島分離が要る(依存破断ではなく hygiene 観察)。"
+      ]
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "静的レビュー=design claim(設計adequacy) / 実走証拠=behavioral claim(実行挙動)を別Gateで判定し収束根拠を混ぜない",
+      "variable_name": "{{EVIDENCE_CLAIM_TYPE}}",
+      "default_value": "design-claim=static-verdict / behavioral-claim=live-evidence",
+      "source_trace": "orchestrate-gate-pattern.md Gate D + content-review-protocol.md L6 (INV8のスコープ限定輸入)"
+    },
+    {
+      "concrete_value": "エンジン閉包(ENGINE_SKILLS)と交差する被験体のみ隔離コピー強制、通常skillは直接編集を維持する非対称ルール",
+      "variable_name": "{{ENGINE_CLOSURE_SUBJECT_COPY}}",
+      "default_value": "requires_subject_copy(plugin, target_skill) = plugin==self and target in ENGINE_SKILLS",
+      "source_trace": "feedback_contract_ssot.py requires_subject_copy / feedback-loop-deployment.md 境界表"
+    },
+    {
+      "concrete_value": "常設=常時発火可能+条件必須。発火は(behavioral trait)×(挙動面SHA差分)×(予算内)の三積、proof のみ無条件",
+      "variable_name": "{{STANDING_FIRE_TRIAD}}",
+      "default_value": "trigger = acceptance_tier==live AND behavioral_sha_changed AND budget_within",
+      "source_trace": "workflow-manifest live-acceptance phase trigger / run-skill-live-trial SKILL.md D9"
+    },
+    {
+      "concrete_value": "有界反復の数値正本を単一JSONに集約し全文書は参照のみ・生値本文記載禁止(位相語でなく機能語命名)",
+      "variable_name": "{{LOOP_BOUNDS_SSOT}}",
+      "default_value": "convergence-policy.json#/loop_bounds.<functional-name>.{params, consumed_by}",
+      "source_trace": "convergence-policy.json loop_bounds(trial_acceptance/iter_improve)"
+    },
+    {
+      "concrete_value": "新機構の証拠は不在=record-only WARN(パイロット中)だが存在する証拠の偽装/陳腐化(stale-sha/downgrade)は hard fail、--enforce で昇格",
+      "variable_name": "{{PILOT_RECORD_ONLY_GATE}}",
+      "default_value": "missing -> WARN (until --enforce) / present-but-tainted -> exit 1",
+      "source_trace": "lint-live-trial-verdict.py D13 パイロットゲート"
+    }
+  ],
+  "total_score": 0.96
+}

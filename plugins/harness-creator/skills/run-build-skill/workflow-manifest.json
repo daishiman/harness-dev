@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-build-skill",
+  "skill": "run-build-skill",
+  "description": "新規/更新 Capability 構築のフェーズ定義。各 phase は SKILL.md 本文の Step に対応し、kind_filter で適用対象 kind を限定する。kind_filter の語彙は二層: init-pre のみ Capability 7 kind (skill/agent/hook/command/plugin-composition/prompt/workflow)、init 以降は kind=skill のサブ種別 (run/ref/assign/delegate/wrap) を指す。",
+  "phases": [
+    {
+      "id": "init-pre",
+      "step": 0,
+      "title": "kind 分岐ナビゲーション (Capability 7 kind → 適用フロー確定)",
+      "kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "resourceIds": ["schema-template-selection"],
+      "output_artifact": "(kind / skeleton / kind別lint 選択の決定のみ。ファイル成果物なし)",
+      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skill の場合のみ init 以降のフェーズ (kind_filter = サブ種別 5 値) へ進む。非 skill kind は kind 語彙 (schemas/build-flags.schema.json#/properties/capability_kind) と対応表 (references/build-steps.md §I.1) で skeleton/出力先/lint を確定し、scaffold 相当の生成と Step 4 の kind 別 lint で完結する。"
+    },
+    {
+      "id": "init",
+      "step": 1,
+      "title": "要求ヒアリングと L0/L1 解決",
+      "dependsOn": ["init-pre"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "resourceIds": ["ref-resource-map", "ref-build-steps", "schema-build-flags", "schema-build-plan"],
+      "output_artifact": "eval-log/skill-brief.json + eval-log/build-plan.json",
+      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。"
+    },
+    {
+      "id": "scaffold",
+      "step": 2,
+      "title": "kind→template 展開 / update 差分読込",
+      "dependsOn": ["init"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "resourceIds": ["schema-template-selection", "prompt-template-select", "prompt-scaffold"],
+      "output_artifact": "plugins/<plugin>/skills/<skill>/SKILL.md"
+    },
+    {
+      "id": "references",
+      "step": 3,
+      "title": "補助 references/ 生成",
+      "dependsOn": ["scaffold"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "resourceIds": ["ref-build-steps"],
+      "output_artifact": "plugins/<plugin>/skills/<skill>/references/"
+    },
+    {
+      "id": "scripts",
+      "step": 4,
+      "title": "決定論 scripts と lint 実行",
+      "dependsOn": ["references"],
+      "kind_filter": ["run", "assign", "wrap", "delegate"],
+      "resourceIds": ["schema-skill-build-trace"],
+      "output_artifact": "eval-log/skill-build-trace.json",
+      "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only"
+    },
+    {
+      "id": "templates",
+      "step": 5,
+      "title": "templates/_base + combinator 解決",
+      "dependsOn": ["scaffold"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "resourceIds": ["schema-template-selection"],
+      "output_artifact": "templates/"
+    },
+    {
+      "id": "assets",
+      "step": 6,
+      "title": "examples/ assets/ 生成",
+      "dependsOn": ["references"],
+      "kind_filter": ["run", "ref", "assign", "wrap"],
+      "resourceIds": [],
+      "output_artifact": "examples/"
+    },
+    {
+      "id": "prompts-emit",
+      "step": 7,
+      "title": "responsibility-slot ベースの prompt YAML 生成",
+      "dependsOn": ["scaffold"],
+      "kind_filter": ["run", "assign", "delegate"],
+      "flag_required": "--with-prompts",
+      "flag_source": "eval-log/build-plan.json#/flags/with_prompts (brief.responsibilities から決定論導出)",
+      "resourceIds": ["schema-responsibility-slot", "prompt-responsibility-emit"],
+      "output_artifact": "prompts/<R-id>.md"
+    },
+    {
+      "id": "evaluator-emit",
+      "step": 8,
+      "title": "pair evaluator 同時生成",
+      "dependsOn": ["scaffold"],
+      "kind_filter": ["assign"],
+      "flag_required": "--with-evaluator",
+      "flag_source": "eval-log/build-plan.json#/flags/with_evaluator (brief.generate_pair_evaluator から決定論導出)",
+      "resourceIds": ["schema-build-flags"],
+      "output_artifact": "plugins/<plugin>/skills/<pair>/"
+    },
+    {
+      "id": "trace-write",
+      "step": 9,
+      "title": "skill-build-trace.json 章別記入と検証",
+      "dependsOn": ["scripts"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "resourceIds": ["schema-skill-build-trace", "prompt-trace-write"],
+      "output_artifact": "eval-log/skill-build-trace.json",
+      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。"
+    },
+    {
+      "id": "notion-register",
+      "step": 10,
+      "title": "Notion スキル一覧 DB へプラグイン情報を upsert (1:1 でヒアリングシート紐付け)",
+      "dependsOn": ["trace-write"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "flag_required": "--notion-register",
+      "resourceIds": [],
+      "output_artifact": "scripts/notion-upsert-plugin.py --plugin <plugin> [--hearing-sheet-id <id>]",
+      "note": "実体は top-level scripts/notion-upsert-plugin.py。冪等。token は .notion-config.json の keychain_service/keychain_account から取得し、CI では INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ $NOTION_TOKEN を許可。"
+    },
+    {
+      "id": "feedback-deploy",
+      "step": 11,
+      "title": "量産先プラグインに run-skill-feedback を実体コピー配備 (default-ON, deployment action)",
+      "dependsOn": ["trace-write"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "default_on": true,
+      "opt_out_flag": "--no-feedback-loop",
+      "resourceIds": [],
+      "output_artifact": "<target-plugin>/skills/run-skill-feedback (self-contained copy)",
+      "verifier": "scripts/lint-feedback-protocol.py --strict (R7)",
+      "note": "build 完了時に必ず実行。harness-creator 自身は対象外。冪等 (既存実体は再コピーしない、既存 symlink は実体へ置換)。これは SKILL.md patch combinator ではなく、scripts/render-combinators.py apply_feedback_loop() の副作用付き deployment action。"
+    },
+    {
+      "id": "content-review",
+      "step": 12,
+      "title": "内容 adequacy LLM 評価 (elegance + rubric) default-ON",
+      "dependsOn": ["trace-write", "feedback-deploy"],
+      "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
+      "default_on": true,
+      "opt_out_flag": "--skip-content-review",
+      "resourceIds": ["schema-content-review-verdict", "ref-content-review-protocol"],
+      "output_artifact": "eval-log/<plugin>/<skill>/content-review/{elegance-verdict.json, rubric-verdict.json}",
+      "verifier": "scripts/lint-content-review.py --changed-only --base origin/main",
+      "execution": "local-llm-only",
+      "note": "ローカル Claude Code で run-elegant-review + assign-skill-design-evaluator を SubAgent 起動し verdict json を保存する。PostToolUse/Stop hook は重い LLM を直接起動せず評価要求を queue 化し、pre-push/CI は成果物の存在・PASS・skill_md_sha256 一致を機械検査する。skip 時は trace.layer_decisions と feedback_contract.skip_reason に理由必須。実装手順は references/content-review-protocol.md。"
+    },
+    {
+      "id": "live-acceptance",
+      "step": 13,
+      "title": "実走 acceptance (live-trial, Gate D) — behavioral trait 該当 skill のみ条件発火",
+      "dependsOn": ["content-review"],
+      "kind_filter": ["run", "assign", "delegate", "wrap"],
+      "default_on": false,
+      "execution": "local-only",
+      "trigger": {
+        "acceptance_tier": "live",
+        "behavioral_sha_changed": true,
+        "budget_within": true
+      },
+      "unconditional": ["proof"],
+      "resourceIds": [],
+      "output_artifact": "eval-log/<plugin>/<skill>/live-trial/<run-id>/{verdict.json, transcript.jsonl}",
+      "verifier": "scripts/lint-live-trial-verdict.py --plugin <plugin> (D13 record-only WARN。P3 常設化 go/no-go で --enforce へ昇格)",
+      "note": "常設=常時発火可能+条件必須 (D9)。発火は三積 (validate-build-plan.py derive_acceptance_tier が live) × (被験 skill の挙動面 skill_dir_tree_sha 差分あり) × (予算内) が全て真のときのみ。proof trial (model 実走証明) のみ無条件。非発火時は eval-log/review-queue.jsonl へ deferred 記録 (requested_at/reason/changed_skills/trigger — check-review-trigger.py の queue record と同一キー)。起動経路は main 会話直下から run-skill-live-trial (Skill→Agent 制約により SubAgent 再入不可)。リモート CI での実走は D14 で却下 — CI/pre-push は verifier の成果物機械検査のみ。反復上限は convergence-policy.json loop_bounds.trial_acceptance が正本。本 skill 自身と run-skill-live-trial / run-skill-iter-improve は被験 denylist (再帰遮断)。"
+    }
+  ],
+  "resources": [
+    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["init"]},
+    {"id": "ref-build-steps", "kind": "reference", "path": "./references/build-steps.md", "phaseIds": ["init", "references"]},
+    {"id": "schema-template-selection", "kind": "schema", "path": "./schemas/template-selection.schema.json", "phaseIds": ["init-pre", "scaffold", "templates"]},
+    {"id": "schema-skill-build-trace", "kind": "schema", "path": "./schemas/skill-build-trace.schema.json", "phaseIds": ["scripts", "trace-write"]},
+    {"id": "schema-responsibility-slot", "kind": "schema", "path": "./schemas/responsibility-slot.schema.json", "phaseIds": ["prompts-emit"]},
+    {"id": "schema-build-flags", "kind": "schema", "path": "./schemas/build-flags.schema.json", "phaseIds": ["init", "evaluator-emit"]},
+    {"id": "schema-build-plan", "kind": "schema", "path": "./schemas/build-plan.schema.json", "phaseIds": ["init", "scripts"]},
+    {"id": "schema-content-review-verdict", "kind": "schema", "path": "./schemas/content-review-verdict.schema.json", "phaseIds": ["content-review"]},
+    {"id": "schema-route-build-report", "kind": "schema", "path": "./schemas/route-build-report.schema.json", "phaseIds": ["trace-write"]},
+    {"id": "ref-route-build-report", "kind": "reference", "path": "./references/route-build-report.md", "phaseIds": ["trace-write"]},
+    {"id": "ref-content-review-protocol", "kind": "reference", "path": "./references/content-review-protocol.md", "phaseIds": ["content-review"]},
+    {"id": "prompt-scaffold", "kind": "prompt", "path": "./prompts/R1-scaffold.md", "phaseIds": ["scaffold"]},
+    {"id": "prompt-template-select", "kind": "prompt", "path": "./prompts/R3-template-select.md", "phaseIds": ["scaffold"]},
+    {"id": "prompt-responsibility-emit", "kind": "prompt", "path": "./prompts/R2-responsibility-emit.md", "phaseIds": ["prompts-emit"]},
+    {"id": "prompt-trace-write", "kind": "prompt", "path": "./prompts/R4-trace-write.md", "phaseIds": ["trace-write"]}
+  ]
+}

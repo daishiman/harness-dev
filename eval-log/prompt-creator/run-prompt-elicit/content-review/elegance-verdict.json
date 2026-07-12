@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "prompt-creator",
+    "skill": "run-prompt-elicit",
+    "skill_md_sha256": "0d67889ba7838a5a4828abbc4b0a76c7915e3f00d7508e52c3a397306d1bc47b"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-f",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "改名 (skill-creator→harness-creator) の参照追従が正確: ゴールシーク実行節 L97 の正本参照『harness-creator run-build-skill/references/goal-seek-paradigm.md』が harness-creator 側実体へ解決 (実在確認済)。意味論境界も正確 — plugin 総体を指す語は harness-creator、単体スキル操作 (run-build-skill) は skill 表現を維持。旧固有名 (skill-creator/skill_creator/スキルクリエイター) の残存は本 SKILL.md 全文 grep で 0 件。",
+      "IN1 の standalone 分岐が構造的に到達可能: prompt-brief.schema.json の if/then/else により standalone brief (target_skill/responsibility_id 省略+output_path 必須) が schema 妥当になり得る。SKILL.md Key Rule 5 に standalone brief 契約 (キーごと省く/output_path 必須/owner_agent_or_skill='standalone'/共通必須 8 フィールド) が明文化され『機械正本=brief schema の if/then/else』と正本の所在を宣言、局面カタログ brief 構築にも伝播して IN1 の standalone 代替条項と 1:1 化。",
+      "OUT1 (ヒアリング中核原則の全層一貫) 健全: 導出確認 (AI 推定を承認なしに confirm 化しない)・質問 3-5 問+評価優先度集約が SKILL.md Key Rules 1-2・完了チェックリスト・invariant・prompts/R1-interview.md・interview-user agent へ一貫伝播。frontmatter の reference_refs (elicit-question-bank.md)・schema_refs (hearing-result.schema.json・../run-prompt-create/schemas/prompt-brief.schema.json)・responsibility_refs (R1-interview.md)・delegate agent (prompt-creator-interview-user) が全て実在。evaluation_priorities enum SSOT (hearing-result.schema.json 正本) の従属連鎖も健全。"
+    ],
+    "negative_feedback": [
+      "[low/smell] (改名非依存・HEAD 継承) brief schema の if/then/else 分岐に対する repo 常設 regression test が未収載で、batch モード必須引数欠落 fail (IN2 verify_by:test) の実テストも tests/ 配下に不在。将来の schema 編集で分岐が壊れても pytest 層で検知されないため正負例の固定化を推奨 (PASS 阻害なし)。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator 改名後の genuine 再評価。改名は本 skill では goal-seek-paradigm.md 正本参照 1 箇所 (L97) に影響し、harness-creator 側実体への解決を実測確認。意味論境界 (plugin 総体=harness-creator / 単体 skill 操作=skill) が用語規約に適合、旧固有名残存 0。ローカル参照 (prompts/R1-interview.md・references/elicit-question-bank.md・schemas 2・interview-user agent) も実在。4 条件 (矛盾なし/漏れなし/整合性/依存整合) のうち改名由来の defect なし。IN1 (schema 妥当+R-id 1:1/standalone は output_path 代替)・IN2 (batch 全指定必須+AskUserQuestion 不使用)・OUT1 (導出確認/3-5問集約の SKILL.md→R1 SSOT→agent 横断一貫) の 3 基準 adequate。残 negative 1 件は改名非依存の HEAD 継承 low smell (schema regression test/batch test 断線) で未解決 high なし、PASS。"
+}

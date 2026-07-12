@@ -1,0 +1,37 @@
+name: contract-generator
+
+on:
+  pull_request:
+    paths:
+      - "plugins/contract-generator/**"
+      - ".github/workflows/contract-generator.yml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/contract-generator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: lint plugin manifest
+        run: python3 scripts/lint-plugin-manifest.py --plugin-root .
+      - name: lint prompt placement canonical (prompts=7層SSOT / agents=骨格。逆転禁止)
+        run: python3 ../harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py
+      - name: lint agent prompt sections (Prompt Templates / Self-Evaluation 必須)
+        run: python3 ../skill-governance-lint/scripts/lint-agent-prompt-section.py --agents-dir agents
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/contract-generator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: run plugin self-tests
+        run: bash scripts/run-tests.sh

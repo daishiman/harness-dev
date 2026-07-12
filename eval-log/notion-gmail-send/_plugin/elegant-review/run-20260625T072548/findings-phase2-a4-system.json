@@ -1,0 +1,81 @@
+{
+  "agent": "elegant-system-strategic-analyst",
+  "scope": "plugins/notion-gmail-send (plugin)",
+  "thought_method_coverage": {
+    "used": ["システム","因果関係","因果ループ","トレードオン","プラスサム","価値提案","戦略的","改善","仮説","論点","KJ法"],
+    "skipped_with_reason": []
+  },
+  "pytest": {"result": "passed", "summary": "65 passed in 3.2s (plugins/notion-gmail-send/tests)"},
+  "findings": [
+    {
+      "id": "A4-01",
+      "method": "因果ループ",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/lib/idempotent_log.py",
+      "title": "reserved→sent遷移のTOCTOU窓: 冪等キー検索と予約の間に並行プロセスが割り込む余地",
+      "detail": "idempotent_log は冪等キー検索→無ければreserved行作成という read-then-write。Notion APIに一意制約が無いため、同一campaignを2プロセスが同時起動すると双方が『既存なし』を観測しreserved二重作成し得る。現状は単一オペレータ前提(並行実行を想定しない)で緩和されるが、その前提がSKILL/READMEに明文化されていない。",
+      "auto_fixable": false,
+      "suggested_fix": "SKILL.mdに『単一オペレータ・並行実行禁止』前提を明記し、preflightで実行ロック(lockfile)取得を推奨。"
+    },
+    {
+      "id": "A4-02",
+      "method": "システム",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/hooks/guard-gmail-send.py",
+      "title": "多層防御の層間: hook(外周)はBash経由を遮断するがpython直実行経路の網羅は denylist 依存",
+      "detail": "hookはPreToolUseでGmail送信を含むBashコマンドを遮断する設計だが、send_campaign.py 正規経路と素のpython送信を区別する denylist/allowlist の境界が、新たな送信手段(別ライブラリ・base64難読化)に対し原理的に後追いになる。内周send_guardが最終防衛線として機能する点で全体の安全は保たれるが、hook単体の網羅性に依存しない設計意図の明文化が薄い。",
+      "auto_fixable": false,
+      "suggested_fix": "guard-gmail-send.py 冒頭に『hookは多層防御の一層であり最終保証はsend_guard』とコメント明記。READMEのセキュリティ節にも層責務を記載。"
+    },
+    {
+      "id": "A4-03",
+      "method": "論点",
+      "severity": "omission",
+      "location": "plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md",
+      "title": "unknown_needs_reconcile 状態の収束手順(リカバリrunbook)が未定義",
+      "detail": "Gmail send成功後にNotionログ更新が失敗するとreserved行はunknown_needs_reconcileに落ちる設計だが、この状態を運用者がどう収束させるか(再実行で重複送信を避けつつsentに確定する手順)が skill 横断で定義されていない。真の論点は『失敗後に安全に再開できるか』であり、そのrunbookの欠落は中核価値(誤送信ゼロ)に直結する。",
+      "auto_fixable": false,
+      "suggested_fix": "run-notion-gmail-send SKILL.mdに『reconcile手順』節を追加: unknown行をGmail送信済みログ(Message-ID)と突合し手動でsent/未送信を判定する手順を明記。理想はreconcileサブコマンド。"
+    },
+    {
+      "id": "A4-04",
+      "method": "トレードオン",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/lib/send_guard.py",
+      "title": "fail-closedの強度と運用回復性のトレードオフ: 一度詰まると人手介入必須",
+      "detail": "send_guardはplan_hash不一致・reserved行欠落で fail-closed する(安全側)。これは誤送信防止には最適だが、正当な状況(dry-run後に1宛先だけ追加したい等)でも全面ブロックとなり、運用者はplan再生成・再承認の全工程をやり直す。安全性と回復性のトレードオフが安全側に振り切れており、部分再開の余地がない。",
+      "auto_fixable": false,
+      "suggested_fix": "将来オプションとして『追記分のみの差分plan』承認フローを検討(現状は仕様判断として全再承認を許容、smellに留める)。"
+    },
+    {
+      "id": "A4-05",
+      "method": "価値提案",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/README.md",
+      "title": "中核価値に対する複雑性は概ね妥当だが、初回導入コスト(外部実体5種)が価値実現の障壁",
+      "detail": "DWD承認/sendAs alias/SA鍵/送信ログDB ID/本文記入の5外部実体を揃えないと1通も送れない。誤送信ゼロという価値には必要なコストだが、初回ユーザーの完了率を下げる。preflight doctorのようなワンショット健診があると価値実現が早まる。",
+      "auto_fixable": false,
+      "suggested_fix": "preflight を `--doctor` モードで単体起動でき、5実体の充足状況をチェックリスト表示する案内をREADME冒頭に追加。"
+    },
+    {
+      "id": "A4-06",
+      "method": "改善",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/tests",
+      "title": "テスト65本は中核を覆うが、TOCTOU/並行・reconcile異常系の網羅が手薄",
+      "detail": "pytest 65 passed。preflight/send_guard/idempotent_log/build_planの正常系と主要fail-closedは覆われているが、unknown_needs_reconcile からの回復・並行起動時の二重予約・Notion rate limit 時のリトライ挙動のテストが見当たらない。中核安全機構の異常系カバレッジに改善余地。",
+      "auto_fixable": false,
+      "suggested_fix": "test_idempotent_log に reconcile/並行予約のケースを追加。rate limit は notion_client のリトライをmockで検証。"
+    }
+  ],
+  "summary": {
+    "by_severity": {"contradiction": 0, "omission": 1, "inconsistency": 0, "dependency_break": 0, "smell": 5},
+    "top_root_causes": [
+      "unknown_needs_reconcile の収束runbook欠落(omission, A4-03) — 失敗後の安全な再開が未定義で中核価値に直結",
+      "TOCTOU/並行実行前提が未明文化(smell, A4-01) — 単一オペレータ前提が暗黙",
+      "hook網羅性が後追い構造(smell, A4-02) — 最終保証がsend_guardである設計意図の明文化不足",
+      "fail-closedが安全側に振り切り部分再開不可(smell, A4-04) — 運用回復性とのトレードオフ",
+      "異常系テストの手薄(smell, A4-06) — reconcile/並行/rate limitの網羅余地"
+    ]
+  }
+}

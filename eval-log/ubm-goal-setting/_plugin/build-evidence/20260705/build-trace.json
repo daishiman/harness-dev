@@ -1,0 +1,196 @@
+{
+  "run_at": "2026-07-05",
+  "source": "plugin-plans/ubm-goal-setting/handoff-run-plugin-dev-plan.json routes[]",
+  "components_total": 18,
+  "components_existing": 18,
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "validate-goal-output.py",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+      "exists": true,
+      "sha256": "82fe55d65ec7713c4e67558006e807a10c8b9ac28c6f79aa90bcded7980d7d37",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "detect-knowledge-updates.py",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py",
+      "exists": true,
+      "sha256": "fe16360b68aa201f44a454878520eb8cea485bf6c09351861d21b6d242e97051",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-knowledge-split.py",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py",
+      "exists": true,
+      "sha256": "5043eb0364a377fd514bc712f7616a46134af533538ea46a3abdcabd82281627",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C04",
+      "component_kind": "hook",
+      "name": "ubm-write-path-guard",
+      "build_target": "plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+      "exists": true,
+      "sha256": "21b43f3a782923bb2151b9d8c9b2ae52f72ae1ae057e2970d00c178f7f83b1b6",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "info-collector",
+      "build_target": "plugins/ubm-goal-setting/agents/info-collector.md",
+      "exists": true,
+      "sha256": "10b4d342283f42d7e824b768f9ed7f2770f338c62d2713adda8d519eaa3867f5",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "goal-reviewer",
+      "build_target": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+      "exists": true,
+      "sha256": "738e512e688a96bcb8888aabeab00a6d569adfbad0020fbe81c594cee666aad7",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "step1-current-review",
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step1-current-review.md",
+      "exists": true,
+      "sha256": "f3ff9b023b18c2e339d0bb70febcc46be71ca639c8125204baeb5b21bea27f48",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C09",
+      "component_kind": "sub-agent",
+      "name": "step2-gap-analysis",
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step2-gap-analysis.md",
+      "exists": true,
+      "sha256": "a2e0c1cda3616ae6a391f8706f6418f4548d3cafa1724f57131c7fbac0be0530",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C10",
+      "component_kind": "sub-agent",
+      "name": "step3-goal-setting",
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step3-goal-setting.md",
+      "exists": true,
+      "sha256": "f3984ec97e55544c66dd6d9cc91c4005781dda178d86c44d89df66c62887b982",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C11",
+      "component_kind": "sub-agent",
+      "name": "step4-action-plan",
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step4-action-plan.md",
+      "exists": true,
+      "sha256": "f9dd7b08f713a010235bec2c0ec680e1082d686594f23c6467c3c72af4220554",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C12",
+      "component_kind": "sub-agent",
+      "name": "step5-final-check",
+      "build_target": "plugins/ubm-goal-setting/agents/steps/step5-final-check.md",
+      "exists": true,
+      "sha256": "2f9f4b1610a425630b244659581f61de9bd0e33393fae37fb96bcb8c01b59380",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "output-formatter",
+      "build_target": "plugins/ubm-goal-setting/agents/output-formatter.md",
+      "exists": true,
+      "sha256": "5a5b0b206bae81af159a17cb4a11d2f640023496d2cbe97e7f524d9c44ba0f6c",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C15",
+      "component_kind": "sub-agent",
+      "name": "knowledge-extractor",
+      "build_target": "plugins/ubm-goal-setting/agents/knowledge-extractor.md",
+      "exists": true,
+      "sha256": "57f15959ed3f3e6a2fc35c8c88870987d6d33a984ad440cca3c58e9a5f940912",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C13",
+      "component_kind": "sub-agent",
+      "name": "phase3-coordinator",
+      "build_target": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+      "exists": true,
+      "sha256": "aecc0da009d09047de6dadc6d3f766a042aa00b44aee611dc16cfa928a5f6a31",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C16",
+      "component_kind": "skill",
+      "name": "run-ubm-goal-setting",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/",
+      "exists": true,
+      "sha256": "3354770f8a6229ec58609715608f4bb9570a0b4af3d5aca442c22e7040fa396f",
+      "sha256_scheme": "tree(13 files: sorted relpath:sha256 join sha256)"
+    },
+    {
+      "id": "C17",
+      "component_kind": "skill",
+      "name": "run-ubm-knowledge-sync",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/",
+      "exists": true,
+      "sha256": "ccc253a51a2528b56243a6c7b296c41ca6e9a0f43e7af21b9fdb385908b2289f",
+      "sha256_scheme": "tree(6 files: sorted relpath:sha256 join sha256)"
+    },
+    {
+      "id": "C18",
+      "component_kind": "slash-command",
+      "name": "ubm-goal-setting",
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-goal-setting.md",
+      "exists": true,
+      "sha256": "1cf262e746acd7c19519df413d67d456e361fd80de4b9cc4236af3b56ad9755d",
+      "sha256_scheme": "file"
+    },
+    {
+      "id": "C19",
+      "component_kind": "slash-command",
+      "name": "ubm-knowledge-sync",
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md",
+      "exists": true,
+      "sha256": "8d67042ca8a4c9f932bd2389dd12a703e7427ca95031129bbb6e404b5d8788ac",
+      "sha256_scheme": "file"
+    }
+  ],
+  "plugin_level_surfaces": [
+    {
+      "surface": "plugin_manifest",
+      "path": "plugins/ubm-goal-setting/.claude-plugin/plugin.json",
+      "exists": true,
+      "sha256": "30dc9570f55437f7167ace8bcaaadf79768c8e57ba2ee4e0ce060c34595bee6e"
+    },
+    {
+      "surface": "plugin_composition",
+      "path": "plugins/ubm-goal-setting/plugin-composition.yaml",
+      "exists": true,
+      "sha256": "2e7c4e36d99437fbc4f0358c18a4d7ae9222a493ad24abbb9589b3ab442c79b8"
+    },
+    {
+      "surface": "harness_eval_spec",
+      "path": "plugins/ubm-goal-setting/EVALS.json",
+      "exists": true,
+      "sha256": "98768a288a8036cd23e8adc0b9d77e53d9a611587a9e423a1c43f89cedb9e3d4"
+    },
+    {
+      "surface": "shared_knowledge_schema",
+      "path": "plugins/ubm-goal-setting/knowledge/schema.json",
+      "exists": true,
+      "sha256": "a663ed1bec9d4629370bf0cac8171ae715e81f436656f94be34f0b8b5e26d585"
+    }
+  ]
+}

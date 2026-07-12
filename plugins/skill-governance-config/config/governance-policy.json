@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "purpose": "Skill/script/config の変更ガバナンス。27章の rubric governance ワークフロー (proposal→review→apply) を一般化し、何でもかんでも改善できない仕組みをデータで宣言する。",
+  "change_categories": {
+    "P0_breaking": {
+      "description": "破壊的変更 (公開API/Skill name/contract変更)",
+      "examples": ["Skill name変更", "frontmatter required field削除", "Sink Contract変更"],
+      "workflow": "proposal_required + human_approval + cooldown_7d",
+      "approver": "team-skills + solo_operator (両方)"
+    },
+    "P1_structural": {
+      "description": "構造変更 (新Skill追加、依存方向変更、命名規則変更)",
+      "examples": ["新Skill追加", "rubric改正", "28章動詞リスト変更", "manifest.json forbidden_dependencies追加"],
+      "workflow": "proposal_required + human_approval + cooldown_3d",
+      "approver": "solo_operator"
+    },
+    "P2_content": {
+      "description": "内容更新 (rubric内容、テンプレ、ドキュメント)",
+      "examples": ["rubric項目追加", "examples更新", "README修正"],
+      "workflow": "auto_apply + post_review",
+      "approver": "auto"
+    },
+    "P3_cosmetic": {
+      "description": "整形・typo修正",
+      "examples": ["typo", "indent", "comment修正"],
+      "workflow": "auto_apply",
+      "approver": "auto"
+    }
+  },
+  "cooldown_rules": {
+    "description": "同一ファイルへの連続変更を制限し、振動的改善を防ぐ",
+    "P0_breaking": "7日",
+    "P1_structural": "3日",
+    "P2_content": "なし",
+    "P3_cosmetic": "なし",
+    "override_condition": "incident_fix=true の場合のみ無視可"
+  },
+  "change_log": {
+    "store_path": ".claude/changelog/governance-log.jsonl",
+    "required_fields": ["timestamp", "category", "target_path", "approver", "rationale", "rollback_plan", "rubric_hash", "template_hash", "impact_report", "grace_period"],
+    "retention": "indefinite"
+  },
+  "blast_radius_lint": {
+    "description": "変更前に影響範囲を自動算出する。これにより『何でもかんでも改善』を防ぐ",
+    "checks": [
+      "script_refs / reference_refs / rubric_refs を辿り依存Skillを列挙",
+      "manifest.json で kit対象なら version bump 必須",
+      "31章 Sink Contract対象なら adapter全数を検査"
+    ]
+  },
+  "anti_patterns": [
+    "P0/P1変更を後追いで P2 扱いに格下げ (バイパス)",
+    "cooldown を override_condition=true で形骸化",
+    "approver=auto を P0/P1 に適用 (自己採点罠の再生産)",
+    "blast_radius_lint をスキップして局所修正のみ commit (依存先破壊リスク)"
+  ],
+  "machine_enforcement": {
+    "pre_commit_hook": "scripts/guard-change-category.py",
+    "ci_workflow": ".github/workflows/governance-check.yml",
+    "linked_lints": [
+      "scripts/lint-skill-name.py",
+      "scripts/lint-forbidden-deps.py",
+      "scripts/lint-manifest-contents.py",
+      "scripts/lint-dependency-direction.py",
+      "scripts/lint-skill-description.py",
+      "scripts/lint-external-refs.py",
+      "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+      "plugins/skill-governance-lint/scripts/lint-rubric-violation.py"
+    ]
+  },
+  "bootstrap_phase": {
+    "description": "creator-kit を新規プロジェクトに導入した直後の初期蓄積期間。eval-log が governance ループを回せる規模に達するまでの暫定運用ルール。",
+    "trigger": "eval-log/*.jsonl の合計レコード数 < governance-params.json.bootstrap_mode.min_eval_log_records (既定 20)",
+    "rules": {
+      "violation_rate_detection": "pending（lint-rubric-violation.py が exit 3 を返し breached を空配列で出力）",
+      "freeze_judgment": "pending（過去 N release のデータ不足のため判定不能）",
+      "self_approval": "minor/patch の自己承認を許容（solo_operator_mode.enabled=true 一時切替）。major bump は禁止",
+      "rubric_changes": "P3_cosmetic / P2_content のみ auto_apply。P1_structural / P0_breaking は proposal を起票したうえで bootstrap 完了まで保留",
+      "evidence_required": "governance log に bootstrap: true と現時点の eval-log 件数を必ず記録する"
+    },
+    "exit_condition": "min_eval_log_records 到達後、lint-rubric-violation.py が自動的に bootstrap:false で動作し通常 governance に移行する",
+    "first_lap_guide": "最初の1周は (1) /run-skill-create で 1 Skill を E2E 生成 → (2) assign-skill-design-evaluator で採点 → (3) write-eval-log.py で eval-log/*-score.jsonl に追記、を 20 回繰り返す。bootstrap 完了で初めて governance ループが起動する"
+  }
+}

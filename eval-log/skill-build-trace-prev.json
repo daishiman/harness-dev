@@ -1,0 +1,193 @@
+{
+  "skill_name": "run-build-skill",
+  "mode": "update",
+  "skill_path": "plugins/skill-creator/skills/run-build-skill",
+  "source_docs": [
+    "doc/ClaudeCodeスキルの設計書/02-skill-structure.md",
+    "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+    "doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md",
+    "doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md",
+    "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+    "doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md",
+    "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+    "doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md",
+    "doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md",
+    "doc/ClaudeCodeスキルの設計書/11-templates.md",
+    "doc/ClaudeCodeスキルの設計書/13-checklists.md",
+    "doc/ClaudeCodeスキルの設計書/14-dynamic-context-injection.md",
+    "doc/ClaudeCodeスキルの設計書/15-official-source-notes.md",
+    "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md",
+    "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+    "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+    "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+    "doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md",
+    "doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md",
+    "doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md",
+    "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+    "doc/ClaudeCodeスキルの設計書/33-change-governance.md",
+    "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+    "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md"
+  ],
+  "context_map_decision": {
+    "map": "plugins/skill-creator/skills/run-build-skill/references/resource-map.yaml",
+    "category": "skill-factory-reproducibility",
+    "task_category": "skill-factory-reproducibility",
+    "selected_docs": [
+      "doc/ClaudeCodeスキルの設計書/02-skill-structure.md",
+      "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+      "doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md",
+      "doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md",
+      "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+      "doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md",
+      "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+      "doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md",
+      "doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md",
+      "doc/ClaudeCodeスキルの設計書/11-templates.md",
+      "doc/ClaudeCodeスキルの設計書/13-checklists.md",
+      "doc/ClaudeCodeスキルの設計書/14-dynamic-context-injection.md",
+      "doc/ClaudeCodeスキルの設計書/15-official-source-notes.md",
+      "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md",
+      "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+      "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+      "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+      "doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md",
+      "doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md",
+      "doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md",
+      "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+      "doc/ClaudeCodeスキルの設計書/33-change-governance.md",
+      "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+      "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md"
+    ],
+    "reason": "Skill Creator量産基盤の現状検証と修正のため、生成・評価・再現性・plugin境界・routingまでを対象にした。"
+  },
+  "design_model": {
+    "intent": "Skill作成を単発プロンプトではなく、テンプレート、trace、lint、評価、governanceで反復可能にする。",
+    "contract": "入力briefとkindからplugins/skill-creator/skills/<name>を生成または更新し、skill-build-trace.jsonと検証結果を残す。",
+    "boundary": ["外部marketplace公開の人間承認", "Phase 3の長期評価", "案件固有secretの管理"],
+    "execution": ["Skill", "script", "Hook", "CLI"],
+    "feedback": ["lint", "evaluator", "elegant_review", "governance", "fixture"]
+  },
+  "build_flow_coverage": [
+    {"step": "problem-definition", "status": "PASS", "evidence": "plugins/skill-creator/skills/run-build-skill/SKILL.md#Purpose & Output Contract"},
+    {"step": "execution-layer", "status": "PASS", "evidence": "eval-log/skill-build-trace.json#layer_decisions"},
+    {"step": "classification", "status": "PASS", "evidence": "plugins/skill-creator/skills/run-build-skill/SKILL.md frontmatter kind: run"},
+    {"step": "naming", "status": "PASS", "evidence": "plugins/skill-creator/skills/run-build-skill/SKILL.md frontmatter name: run-build-skill"},
+    {"step": "frontmatter", "status": "PASS", "evidence": "validate-frontmatter.py run-build-skill PASS"},
+    {"step": "body", "status": "PASS", "evidence": "run-build-skill Steps section updated for plugin paths"},
+    {"step": "support-files", "status": "PASS", "evidence": "templates/, references/, scripts/ exist under run-build-skill"},
+    {"step": "permissions-hooks", "status": "PASS", "evidence": "allowed-tools and plugin governance hook proposal paths are explicit"},
+    {"step": "validation", "status": "PASS", "evidence": "validate-build-trace.py eval-log/skill-build-trace.json"},
+    {"step": "operation-improvement", "status": "PASS", "evidence": "Phase 3 backlog retains full automation items separately"}
+  ],
+  "doc_coverage": [
+    {"doc": "02-skill-structure", "status": "PASS", "evidence": "plugin skill directory layout and Additional Resources are explicit"},
+    {"doc": "03-frontmatter", "status": "PASS", "evidence": "frontmatter includes name, description, kind, effect, refs, and tool scope"},
+    {"doc": "04-invocation-permissions", "status": "PASS", "evidence": "allowed-tools and Bash(python3 *) constraints documented"},
+    {"doc": "05-layering", "status": "PASS", "evidence": "layer_decisions separates Skill, script, Hook, CLI, MCP"},
+    {"doc": "06-classification-naming", "status": "PASS", "evidence": "variant_support prefix=run and name run-build-skill"},
+    {"doc": "07-progressive-disclosure", "status": "PASS", "evidence": "resource-map.yaml and references/ split long context"},
+    {"doc": "08-skill-writing-guidelines", "status": "PASS", "evidence": "description is trigger-oriented and body holds operational detail"},
+    {"doc": "09-evaluation-orchestration", "status": "PASS", "evidence": "assign-skill-design-evaluator and fork evaluation are required"},
+    {"doc": "10-subagents-hooks-integration", "status": "PASS", "evidence": "subagent/hook layer decisions and optional flags are recorded"},
+    {"doc": "11-templates", "status": "PASS", "evidence": "templates/run.md, ref.md, assign*.md, wrap.md, delegate.md and combinators exist"},
+    {"doc": "13-checklists", "status": "PASS", "evidence": "Step 4 lint and gate checks are enumerated"},
+    {"doc": "14-dynamic-context-injection", "status": "PASS", "evidence": "OS-specific command blocks and resolve-skill-dirs helpers"},
+    {"doc": "15-official-source-notes", "status": "PASS", "evidence": "ref-yaml-spec-fetcher is mandatory at Step 1"},
+    {"doc": "16-official-skills-reference", "status": "PASS", "evidence": "validate-frontmatter and local metadata separation"},
+    {"doc": "26-meta-skill-dogfooding", "status": "PASS", "evidence": "dogfooding_model and fixture runner cover skill-creator itself"},
+    {"doc": "27-rubric-governance-runbook", "status": "PASS", "evidence": "governance_model records roles, impact assessment, rubric hash"},
+    {"doc": "28-script-execution-model", "status": "PASS", "evidence": "script_execution_model contexts A-E and script frontmatter lint"},
+    {"doc": "29-multi-project-rubric-composition", "status": "PASS", "evidence": "rubric_composition_model uses ordered L0/L1/L2 refs"},
+    {"doc": "30-paradigm-analogy-map", "status": "PASS", "evidence": "paradigm_analogy_model maps Skill Creator to compiler pipeline"},
+    {"doc": "31-output-routing-adapter-architecture", "status": "PASS", "evidence": "output_routing_model references adapter registry and route fallback"},
+    {"doc": "32-creator-kit-implementation-ledger", "status": "PASS", "evidence": "Phase 2 closure and plugin manifest evidence"},
+    {"doc": "33-change-governance", "status": "PASS", "evidence": "change governance scripts and P0/P1 classification are in place"},
+    {"doc": "34-plugin-governance-roadmap", "status": "PASS", "evidence": "plugin_boundary_model and Phase 2 closure"},
+    {"doc": "35-meta-harness-feedback-loop", "status": "PASS", "evidence": "meta harness evidence via eval-log and fixture runner"}
+  ],
+  "layer_decisions": [
+    {"layer": "Skill", "decision": "use", "deterministic": false, "reason": "human-facing orchestration and judgment gates belong in Skill text", "placement_evidence": "run-skill-create and run-build-skill", "fallback": "manual step execution from SKILL.md", "dependency_direction_ok": true, "macos_stdlib_ok": true},
+    {"layer": "Subagent", "decision": "use", "deterministic": false, "reason": "optional forked evaluation and agent-team patterns are needed for high-risk changes", "placement_evidence": "with-subagent flag and assign evaluator flow", "fallback": "single-agent review plus explicit user gate", "dependency_direction_ok": true, "macos_stdlib_ok": true},
+    {"layer": "Hook", "decision": "use", "deterministic": true, "reason": "file lifecycle checks can be enforced outside the generator", "placement_evidence": "skill-governance-hooks and settings examples", "fallback": "manual lint commands", "dependency_direction_ok": true, "macos_stdlib_ok": true},
+    {"layer": "MCP", "decision": "skip", "deterministic": true, "reason": "current factory uses local files and scripts only", "placement_evidence": "no MCP tool required in run-build-skill", "fallback": "local plugin scripts", "dependency_direction_ok": true, "macos_stdlib_ok": true},
+    {"layer": "CLI", "decision": "use", "deterministic": true, "reason": "Claude/plugin commands and python lint commands are external entrypoints", "placement_evidence": "README marketplace and Step 4 lint", "fallback": "direct script invocation", "dependency_direction_ok": true, "macos_stdlib_ok": true},
+    {"layer": "script", "decision": "use", "deterministic": true, "reason": "template rendering, naming, trace validation, and linting are deterministic", "placement_evidence": "run-build-skill/scripts", "fallback": "manual checklist with the same rules", "dependency_direction_ok": true, "macos_stdlib_ok": true}
+  ],
+  "variant_support": {
+    "prefix": "run",
+    "role_suffix": "orchestrator",
+    "subagent": "optional",
+    "hook": "optional"
+  },
+  "pattern_decisions": [
+    {"pattern_ref": "orchestrator", "decision": "use", "reason": "run-build-skill coordinates generation, lint, trace, and evaluation", "source_docs": ["doc/ClaudeCodeスキルの設計書/11-templates.md"], "reuse_target": "template", "negative_cases": ["single reference-only skill"]},
+    {"pattern_ref": "hook-integrated", "decision": "skip", "reason": "hook enforcement is packaged in governance hooks, not directly generated every time", "source_docs": ["doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md"], "reuse_target": "hook", "negative_cases": ["project without Claude hooks enabled"]}
+  ],
+  "script_execution_model": {
+    "contexts": ["A", "B", "C", "D", "E"],
+    "responsibility_matrix": "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md#responsibility-matrix",
+    "priority_order": "E > C > D > B > A",
+    "permission_boundary": "generation scripts are local stdlib; hooks and CI are deterministic; network is not required",
+    "scripts": [
+      {"path": "plugins/skill-creator/skills/run-build-skill/scripts/render-frontmatter.py", "type": "render", "allowed_contexts": ["B", "C", "E"], "frontmatter_status": "PASS"},
+      {"path": "plugins/skill-creator/skills/run-build-skill/scripts/validate-build-trace.py", "type": "validate", "allowed_contexts": ["C", "E"], "frontmatter_status": "PASS"},
+      {"path": "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py", "type": "lint", "allowed_contexts": ["C", "E"], "frontmatter_status": "PASS"}
+    ]
+  },
+  "governance_model": {
+    "rubric_version": "1.0.0",
+    "rubric_hash": "sha256:tracked-by-rubric-registry",
+    "proposal_required": "yes-for-P0/P1-no-for-P2-content",
+    "impact_assessment": "eval-log/skill-build-trace.json plus evaluator report",
+    "newly_failing_count": 0,
+    "grace_period": "min 1 release / 30 days when newly_failing_count > 0",
+    "roles": {
+      "proposer": "skill author",
+      "reviewer": "assign-skill-design-evaluator",
+      "approver": "solo_operator",
+      "tooling": "skill-governance-lint"
+    }
+  },
+  "dogfooding_model": {
+    "artifact_type": "skill",
+    "adapter": "doc-to-skill-adapter.py",
+    "forked_evaluator": "assign-skill-design-evaluator",
+    "eval_log_path": "eval-log/skill-build-trace.json",
+    "recursive_checks": ["DRY", "Less is More", "Why-driven", "4conditions", "Gotchas", "Progressive Disclosure"]
+  },
+  "reproducibility_gates": {
+    "lint": "PASS",
+    "evaluator": "N/A",
+    "elegant_review": "N/A",
+    "governance": "PASS"
+  },
+  "rubric_composition_model": {
+    "status": "PASS",
+    "ordered_refs": ["ref-skill-design-rubric", "{{DOMAIN_RUBRIC_REFS}}", "references/rubric.json"],
+    "merge_strategy": "deep-merge",
+    "conflict_policy": "most-specific-wins",
+    "composition_hash_evidence": "plugins/skill-governance-config/config/rubric-registry.json",
+    "reason": "L0 plus optional L1/L2 composition is supported"
+  },
+  "paradigm_analogy_model": {
+    "status": "PASS",
+    "primary_analogy": "compiler pipeline",
+    "matched_skill_concept": "skill factory",
+    "limits": ["human approval gates cannot be compiled away", "domain judgment still needs evaluator review"],
+    "placement_decision": "Skill orchestrates, scripts enforce deterministic checks"
+  },
+  "output_routing_model": {
+    "status": "PASS",
+    "task_kind": "skill-generation",
+    "payload_schema_version": "1.0",
+    "route_ref": ".claude/config/output-routing.json.example",
+    "adapter_registry_ref": ".claude/config/adapter-registry.json",
+    "fallback": "local eval-log artifact",
+    "secret_boundary": "no secret required for local generation"
+  },
+  "variable_contract": [
+    {"name": "{{PROJECT_ROOT}}", "meaning": "repository root", "default": ".", "required": true, "not_applicable_when": "never", "source_trace": "run-build-skill command examples"},
+    {"name": "{{SKILL_NAME}}", "meaning": "target skill directory and frontmatter name", "default": "brief.skill_name", "required": true, "not_applicable_when": "update mode with explicit path", "source_trace": "skill-brief-schema.json"},
+    {"name": "{{DOMAIN_RUBRIC_REFS}}", "meaning": "optional L1 rubric references", "default": "empty", "required": false, "not_applicable_when": "domain not specified", "source_trace": "rubric-registry.json"}
+  ]
+}

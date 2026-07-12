@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-mf-invoice-check",
+  "skill": "run-mf-invoice-check",
+  "description": "月次発行漏れチェックのフロー定義。collect(決定論)→diff(支払サイクル=年間払い + 初回契約月で年間契約期間中の候補を抑制)→verify(subagent)→finalize(確定リスト昇格)→sink(決定論, 確定リスト不在なら fail-closed)。",
+  "phases": [
+    {
+      "id": "collect",
+      "step": 1,
+      "title": "請求データ取得",
+      "responsibility": "prompts/R1-collect.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-mf-invoice-check/scripts/check_invoice_gaps.py --collect",
+      "context": "main",
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "diff",
+      "step": 2,
+      "title": "差集合判定 + 年間契約抑制",
+      "responsibility": "prompts/R2-diff.md",
+      "lib": "lib/mfk_invoice_diff.py",
+      "dependsOn": ["collect"],
+      "note": "発行漏れ候補/継続発行/今月新規を差集合分類し金額変動を検出。さらに『支払サイクル=年間払い、かつ初回契約月から12ヶ月以内』の発行漏れ候補を Notion 管理列から抑制する (suppress_annual_period_gaps)。月払い/支払サイクル空欄/初回契約月空欄の顧客は fail-safe で候補に残す。"
+    },
+    {
+      "id": "verify",
+      "step": 3,
+      "title": "二段確認 (subagent)",
+      "responsibility": "prompts/R3-verify.md",
+      "delegateAgent": "mfk-gap-verifier",
+      "context": "fork",
+      "dependsOn": ["diff"],
+      "produces": "exclude_ids + verification_summary"
+    },
+    {
+      "id": "finalize",
+      "step": 4,
+      "title": "確定リスト昇格 (誤検出除外)",
+      "responsibility": "prompts/R3-verify.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-mf-invoice-check/scripts/check_invoice_gaps.py --finalize [--exclude-ids <cid,...>]",
+      "dependsOn": ["verify"],
+      "produces": "eval-log/mfk-gap-verified.json",
+      "fatal_exit_codes": [2],
+      "note": "verify が確定した誤検出 customer_id を除外し確定リストを物質化。この成果物の存在が sink の前提 (二段確認の物理境界)。"
+    },
+    {
+      "id": "sink",
+      "step": 5,
+      "title": "Notion投入 (冪等upsert)",
+      "responsibility": "prompts/R4-sink.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-mf-invoice-check/scripts/check_invoice_gaps.py --sink",
+      "consumes": "eval-log/mfk-gap-verified.json",
+      "dependsOn": ["finalize"],
+      "fatal_exit_codes": [2],
+      "note": "確定リスト不在なら exit 2 で fail-closed (二段確認スキップ投入は --force-unverified 明示時のみ)。"
+    }
+  ],
+  "guards": [
+    {
+      "event": "PreToolUse",
+      "hook": "hooks/guard-mfk-readonly.py",
+      "purpose": "Bash経路のMF API変更系を遮断し、同梱GET専用クライアントと合わせて参照専用を抑止"
+    }
+  ]
+}

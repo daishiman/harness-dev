@@ -1,0 +1,1 @@
+../../plugins/harness-creator/agents/elegant-reset-observer.md

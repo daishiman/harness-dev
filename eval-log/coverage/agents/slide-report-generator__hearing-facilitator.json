@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/hearing-facilitator.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md を test -f 相当で実在確認(OK・31KB)。CLAUDE_PLUGIN_ROOT 読替後の本文参照先も同一実体で dangling なし。schema-conformance: name/kind=agent/version=0.1.0/owner/tools(Read,Write)/isolation=inherit(他5 agent の fork と異なりヒアリング用に親 context 継承=設計意図として妥当)、description は『…確定したいときに使う。』トリガ形で CONST_006/reportType 等の確定要件を明示。owner-flow: run-slide-report-generate/workflow-manifest.json に hearing-facilitator を Task 委譲対象として登録(Phase=R1-hearing-mode)。adapter/SSOT tools(Read,Write)・isolation(inherit)一致。placement-invariant: 9節薄 adapter で domain detail 非再掲、詳細正本は prompts/R1-*.md(SSOT ヘッダ明記)側で逆転なし。single-responsibility: output_mode 確定・全面画像化ゲート・report固有要件確定というヒアリング一責務に凝集。lint-agent-prompt-section.py Tier1 exit0 実測で mechanical:true 妥当。減点(-5): 責務はヒアリング(対話)であるが Prompt Templates 節の lint 充足マーカーが '(対話なし: 自動実行 agent)' 固定文言で、tools に AskUserQuestion を持たず isolation=inherit で親 context 側に実対話を委ねる構造(自動起動 worker)との整合を注記表現がやや弱く示す。実害はなく設計上は親 orchestrator 経由対話で成立するが、他 fork agent と同一マーカー流用ゆえ hearing の対話性がテンプレ文面上見えにくい点を正直に減点。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

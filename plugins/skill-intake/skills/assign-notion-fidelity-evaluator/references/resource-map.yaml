@@ -1,0 +1,49 @@
+# Progressive Disclosure map for assign-notion-fidelity-evaluator
+# SKILL.md からのみ最初にロードされる。各エントリは when_to_read で誘導する。
+
+skill: assign-notion-fidelity-evaluator
+entry: SKILL.md
+
+resources:
+  - path: references/canonical-page-snapshot.json
+    when_to_read: |
+      fidelity 比較の正本構造を参照するとき (section ごとの required_fields /
+      char_bounds / viz_slots を取得する目的)。
+    size_hint: large
+
+  - path: references/granularity-rubric.md
+    when_to_read: |
+      0-100 score の重み付け (char 30% / fields 40% / viz 30%) と
+      section_text_length() の規約を確認するとき。
+    size_hint: small
+
+  - path: references/fidelity-check-rules.md
+    when_to_read: |
+      verdict pass/warn/fail の閾値 (0.85 / 0.70) と
+      エスカレーション規約を確認するとき。
+    size_hint: small
+
+  - path: references/abstraction-contract.md
+    when_to_read: |
+      他ドメインへの量産流用時にテンプレ変数 (canonical_page_id /
+      thresholds) を差し替えるとき。
+    size_hint: small
+
+scripts:
+  - path: scripts/extract-canonical-snapshot.py
+    invoked_by: R1 (canonical-snapshot-extraction)
+  - path: scripts/validate-notion-fidelity.py
+    invoked_by: R2 (fidelity-check)
+  - path: scripts/extract-granularity-score.py
+    invoked_by: R3 (delta-report, optional metrics)
+
+prompts:
+  - path: prompts/R1.md
+    responsibility: canonical-snapshot-extraction
+    layers: [L1, L2, L3, L4, L5, L6, L7]
+  - path: prompts/R2.md
+    responsibility: fidelity-check
+    layers: [L1, L2, L3, L4, L5, L6, L7]
+  - path: prompts/R3.md
+    responsibility: delta-report
+    layers: [L1, L2, L3, L4, L5, L6, L7]

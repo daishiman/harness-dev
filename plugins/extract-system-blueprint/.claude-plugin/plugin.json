@@ -1,0 +1,53 @@
+{
+  "name": "extract-system-blueprint",
+  "version": "0.2.0",
+  "description": "参考システムの公開URLを認可・低負荷budget内で調査し、静的HTTP(WebFetch/stdlib静的DOM観測)+browser-render(MCP非依存のローカルheadless Chrome via Bash)の観測fact、根拠つきinference、欠測(observation_gap)を明示区別したmd+json+Mermaidのローカル章別ブループリントを生成するplugin。外部サービス連携(MCP/Notion)なしで自己完結する。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-extract-blueprint",
+      "assign-blueprint-fidelity-evaluator",
+      "run-blueprint-apply"
+    ],
+    "agents": [
+      "frontend-surface-analyzer",
+      "backend-inference-analyzer",
+      "uiux-rationale-analyzer",
+      "content-intent-analyzer",
+      "architecture-essence-synthesizer"
+    ],
+    "commands": [
+      "extract-blueprint"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/pre-fetch-authz-guard.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**"
+    ]
+  },
+  "distributable": true,
+  "bundle_targets": [],
+  "category": "Productivity",
+  "tags": [
+    "extraction",
+    "blueprint",
+    "mermaid",
+    "documentation"
+  ]
+}

@@ -1,0 +1,1 @@
+company-master plugin（思考リセット俯瞰）。断片入力(法人番号>会社名>住所)→resolve→enrich→upsert / 既存空欄→backfill で企業マスタ補完。構成=skill2(build/backfill)・cmd2・agent3・hook1・script13・ref9・prompt1。出力契約=固定Notion DB 8列(6属性+情報の確かさ+備考)、確認用URLはページ本文、確度4日本語ラベル固定。信頼キー=gBizINFO13桁法人番号。取得元=gBizINFO/日本郵便addresszip API/Web検索。誤値より空欄を全層で優先。共有SSOTはplugin-root集約(両skillが../../参照)。郵便番号はBYO直結が既定・例外的に中央proxy。

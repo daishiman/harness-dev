@@ -1,0 +1,22 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-system-spec-elicit (C01) の Progressive Disclosure 索引。
+# 上位 (spec-state-contract, taxonomy) は機械可読/契約。question-bank は人間向け補助資料。
+resources:
+  - file: spec-state-contract.md
+    topic: spec-state.json の形状・cell 3値・集約真理値表・requirements_foundation・単一 writer 契約の正本
+    read_when: マトリクス状態や上位概念 (requirements_foundation) を読み書き/検証するとき (最初に読む)
+  - file: ../../../docs/requirements-foundation-framework.md
+    topic: 上位概念フレームワーク (U1-U9・アンカリング機構・要件 C9) の正本
+    read_when: R0-foundation で上位概念 (本質的目的/背景/ゴール…) を深掘り抽出するとき
+  - file: ../../ref-system-design-knowledge/references/system-category-taxonomy.json
+    topic: カテゴリ×canonical platform id の初期集合 (C04 が保持する正本)
+    read_when: R1-init でマトリクスを初期化するとき (カテゴリ/platform を Read で取得)
+  - file: elicit-question-bank.md
+    topic: カテゴリ×platform ごとのヒアリング質問テンプレ集
+    read_when: R2-interview / R3-reask で質問を設計するとき
+  - file: ../scripts/apply-spec-transition.py
+    topic: spec-state.json の単一 transition writer (init/apply/chunk/aggregate)
+    read_when: セル遷移を適用/resume 保存するとき
+  - file: ../../../scripts/validate-coverage-matrix.py
+    topic: 網羅性の決定論ゲート (IN1 loop / OUT1 --require-complete)
+    read_when: 各周回と最終で spec-state.json を検証するとき

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "compile OK; --self-test/usage/lint 全経路実行確認(self-test exit0,no-args exit2); 完全な # /// script frontmatter; read-only(write-scope:none); 適切なexit code 0/1/2; OSErrorはfinding化し握り潰さない; findings/warnings二系統分離・SSOT drift自己検査が網羅的; 高凝集だが大関数check_default_driftはやや長い(機能上妥当) [elegant-review-30methods phase3-2] check_default_drift の整合fixtureテスト(test_drift_fixtures_all_consistent_no_findings)を task-graph トークン携帯へ同期しRED解消(F0): _GOOD_BUILD_FLAGS に engine.enum(task-graph)、_GOOD_LOOP_SCHEMA に checklist.items.depends_on(array/default[])、_GOOD_RENDER に consumption/knowledge 9トークン追加。--self-test 実repo緑。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

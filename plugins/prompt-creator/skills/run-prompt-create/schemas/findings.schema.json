@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/prompt-creator/run-prompt-create/schemas/findings.schema.json",
+  "title": "Prompt Evaluator / Elegant Review Findings",
+  "description": "assign-prompt-design-evaluator および run-elegant-review が返す findings.json の共通形式。C1-C4 verdict と severity-bucket-observations を持つ。run-skill-create と互換。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["prompt_name", "evaluator", "verdicts", "findings"],
+  "properties": {
+    "prompt_name": {"type": "string"},
+    "responsibility_id": {"type": "string", "pattern": "^R[0-9]+$"},
+    "evaluator": {
+      "type": "string",
+      "enum": ["assign-prompt-design-evaluator", "run-elegant-review", "rubric-aggregate"]
+    },
+    "timestamp": {"type": "string", "format": "date-time"},
+    "verdicts": {
+      "type": "object",
+      "description": "C1-C4 ゲート別 PASS/FAIL/N-A 判定。C1: Layer 整合 / C2: 依存方向 / C3: 再現性 / C4: Self-Evaluation 充足。",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C2": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C3": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]},
+        "C4": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]}
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "bucket", "observations"],
+        "properties": {
+          "id": {"type": "string"},
+          "severity": {"type": "string", "enum": ["high", "medium", "low", "info"]},
+          "bucket": {
+            "type": "string",
+            "description": "C1-C4 のいずれか、または rubric カテゴリ (PR-001 等)。"
+          },
+          "observations": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+          "evidence_paths": {"type": "array", "items": {"type": "string"}},
+          "suggested_fix": {"type": "string"}
+        }
+      }
+    },
+    "pattern_ref_candidates": {"type": "array", "items": {"type": "string"}},
+    "new_patterns": {"type": "array", "items": {"type": "string"}},
+    "mass_production_risk": {"type": "string", "enum": ["low", "medium", "high"]}
+  }
+}

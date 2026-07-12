@@ -1,0 +1,1 @@
+../../plugins/contract-generator/agents/template-sync-agent.md

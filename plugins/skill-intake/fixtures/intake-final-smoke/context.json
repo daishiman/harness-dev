@@ -1,0 +1,542 @@
+{
+  "meta": {
+    "skill_name_hint": "info-collector-agent",
+    "generated_at": "2026-04-29T14:25:00+09:00",
+    "pattern_code": "A",
+    "pattern_label": "新規作成",
+    "workflow_pattern_code": "B",
+    "workflow_pattern_label": "自動収集配信を主・A従",
+    "depth": "detailed",
+    "depth_minutes": 40,
+    "vocabulary_tier": "expert",
+    "status": "Gate A 承認済み・harness-creator 引き渡し可能",
+    "value_realized_score": 88
+  },
+  "executive_summary": {
+    "true_purpose": "複数情報源を自分の関心テーマで縦切りキュレーションし、毎朝『本日の思考メモ』を Obsidian に出現させる",
+    "purpose_narrative": "そのメモをタネに、今日の企画・戦略を書き始める**思考のスタートポイント**にする。",
+    "design_choices": "O1 オーケストレータ × T3 ハイブリッドテーマ抽出 × S3 定刻＋オンデマンド両対応",
+    "handoff_mode": "fast-track",
+    "handoff_note": "harness-creator は Phase 2 から実装着手可能"
+  },
+  "assumption": {
+    "surface_request": "情報収集が毎日しんどい・代行してほしい",
+    "candidates": [
+      {
+        "id": "D1",
+        "label": "収集よりも『選別・キュレーション』が本丸",
+        "adopted": false
+      },
+      {
+        "id": "D2",
+        "label": "収集→要約→アウトプット化まで一気通貫が本丸",
+        "adopted": true
+      },
+      {
+        "id": "D3",
+        "label": "自分の思考スタイルを学習させた『代理人』が本丸",
+        "adopted": false
+      }
+    ],
+    "deep_problem": "情報の収集だけでなく、要約と最終アウトプット形態までを一気通貫で代行させることが本丸。",
+    "time_freed_intent": "思考・企画・戦略設計に時間を再配分する。",
+    "blind_spots": [
+      "アウトプット化の部分もしんどいと本人が確認済み",
+      "アウトプット形態が複数で優先順位が未確定",
+      "『自分の思考スタイルの注入』も部分的に必要な可能性"
+    ]
+  },
+  "profile": {
+    "dimensions": [
+      {
+        "name": "expertise",
+        "value": "high",
+        "confidence": "high",
+        "evidence": "多数のスキルを設計・運用"
+      },
+      {
+        "name": "role",
+        "value": "AIコンサルタント兼コンテンツ事業者",
+        "confidence": "high",
+        "evidence": "ボールト構成"
+      },
+      {
+        "name": "context",
+        "value": "個人事業主・1人運営",
+        "confidence": "high",
+        "evidence": "01_Notes の並列構造"
+      },
+      {
+        "name": "constraints",
+        "value": "時間／品質ブレ削減",
+        "confidence": "high",
+        "evidence": "4領域すべて毎日"
+      },
+      {
+        "name": "motivation",
+        "value": "思考・戦略設計に時間とエネルギーを再配分",
+        "confidence": "high",
+        "evidence": "assumption D2 採択"
+      },
+      {
+        "name": "sharing_intent",
+        "value": "4方向マルチアウトプット",
+        "confidence": "high",
+        "evidence": "確認質問で全選択"
+      }
+    ],
+    "vocabulary_tier": "expert",
+    "implications": [
+      "技術用語はそのまま使ってよい",
+      "アウトプット形態が4方向あるため interviewer で優先順位を引き出す",
+      "既存スキル群との責務境界を option-presenter で明示する必要あり"
+    ]
+  },
+  "purpose": {
+    "techniques_used_str": "reverse_brief → 5whys → tacit_extraction → magic_wand",
+    "rounds": 4,
+    "agreement_loop_detected": false,
+    "true_purpose": "複数情報源を自分の関心テーマで縦切りキュレーションし、毎朝『本日の思考メモ』を Obsidian に出現させる",
+    "underlying_motivation": "思考の延長としてのセカンドブレインを持ち、企画・戦略のスタートポイントにする。",
+    "differentiation_title": "ニュース要約との差別化",
+    "differentiation_text": "複数ソースを『自分の関心テーマ』で縦方向に下ろすキュレーション（横並び要約ではない）。",
+    "magic_wand_text": "毎朝、思考メモをタネに『今日の企画・戦略』を執筆する。",
+    "output_priority": [
+      {
+        "text": "Obsidian『本日の思考メモ』（最高優先・必須）",
+        "is_top": true
+      },
+      {
+        "text": "Discord/Slack 通知（思考メモのサマリ＋ピン留めシグナル）",
+        "is_top": false
+      },
+      {
+        "text": "（副次）X長文/スライド/提案資料への派生はユーザー手動 or 別スキル委譲",
+        "is_top": false
+      }
+    ],
+    "tacit_where": "過去の X 投稿・講座資料・クライアント会話に現れているが、テーマとして言語化されていない",
+    "tacit_strategy": "過去アウトプットを解析して関心テーマ集合を逆推定し、定期的に再学習する仕組み",
+    "handoff_questions": [
+      "関心テーマ抽出のサイクル（毎日／週次／月次）",
+      "既存類似スキルとの責務境界",
+      "情報源の絞り込み（X TL のカバー範囲）",
+      "配信タイミング（毎朝定刻／オンデマンド）"
+    ]
+  },
+  "options": {
+    "groups": [
+      {
+        "title": "責務境界",
+        "options": [
+          {
+            "id": "O1",
+            "label": "オーケストレータ",
+            "pro": "重複実装なし・既存資産活用",
+            "con": "既存スキルAPI契約に依存",
+            "weight": "軽",
+            "adopted": true
+          },
+          {
+            "id": "O2",
+            "label": "ハイブリッド",
+            "pro": "緩やか結合",
+            "con": "ファイル形式調整が必要",
+            "weight": "中",
+            "adopted": false
+          },
+          {
+            "id": "O3",
+            "label": "独立",
+            "pro": "依存ゼロ",
+            "con": "重複実装・保守コスト大",
+            "weight": "重",
+            "adopted": false
+          }
+        ]
+      },
+      {
+        "title": "テーマ抽出",
+        "options": [
+          {
+            "id": "T1",
+            "label": "静的シード",
+            "pro": "シンプル",
+            "con": "更新追随しない",
+            "weight": "軽",
+            "adopted": false
+          },
+          {
+            "id": "T2",
+            "label": "動的抽出",
+            "pro": "暗黙知逆推定",
+            "con": "計算コスト・精度ブレ",
+            "weight": "重",
+            "adopted": false
+          },
+          {
+            "id": "T3",
+            "label": "ハイブリッド",
+            "pro": "バランス・進化",
+            "con": "実装やや複雑",
+            "weight": "中",
+            "adopted": true
+          }
+        ]
+      },
+      {
+        "title": "配信タイミング",
+        "options": [
+          {
+            "id": "S1",
+            "label": "毎朝定刻 cron",
+            "pro": "ルーチン化",
+            "con": "緊急情報を逃す",
+            "weight": "軽",
+            "adopted": false
+          },
+          {
+            "id": "S2",
+            "label": "オンデマンドのみ",
+            "pro": "柔軟",
+            "con": "習慣化しにくい",
+            "weight": "軽",
+            "adopted": false
+          },
+          {
+            "id": "S3",
+            "label": "両対応",
+            "pro": "ベース＋必要時対応",
+            "con": "起動経路2系統の整合",
+            "weight": "中",
+            "adopted": true
+          }
+        ]
+      }
+    ],
+    "connectors": {
+      "input_sources": "arxiv-paper-reporter / x-post-reporter / ai-release-reporter + 会話URL貼り付け",
+      "knowledge_assets": "Obsidian Vault読込 / 過去X投稿アーカイブ / 講座資料",
+      "outputs": "Obsidian Markdown / Discord Webhook",
+      "scheduler": "cron 定刻 / スラッシュコマンドでオンデマンド起動"
+    }
+  },
+  "figures": {
+    "entries": [
+      {
+        "title": "全体アーキテクチャ",
+        "one_liner": "既存3スキルの出力を関心テーマで縦切りにして思考メモに変える。",
+        "mermaid": "flowchart LR\n    A[X投稿] --> H[縦切り]\n    H --> I[思考メモ]\n    I --> J[Obsidian]",
+        "legend": "青=情報源 / 黄=コア / 緑=出力先"
+      },
+      {
+        "title": "テーマ抽出ハイブリッド",
+        "one_liner": "手動シードを動的補強し週次でチューニング。",
+        "mermaid": "flowchart TB\n    S[シード] --> M[統合]\n    M --> T[テーマ集合]",
+        "legend": "青=静的 / 黄=動的 / 緑=統合"
+      },
+      {
+        "title": "日次パイプライン",
+        "one_liner": "定刻またはオンデマンドで起動。",
+        "mermaid": "sequenceDiagram\n    C->>O: 起動\n    O->>R: 取得",
+        "legend": "起動経路2系統、出力2方向"
+      },
+      {
+        "title": "Before/After",
+        "one_liner": "情報漁りから思考メモへ。",
+        "mermaid": "flowchart LR\n    B[情報漁り] --> A[思考メモ]",
+        "legend": "赤=現状 / 緑=理想"
+      },
+      {
+        "title": "責務境界",
+        "one_liner": "既存=収集の専門家、新規=思考メモ編集者。",
+        "mermaid": "flowchart TB\n    E[既存] --> N[新規]",
+        "legend": "青=既存 / 黄=新規"
+      }
+    ],
+    "mandatory_rules_check": [
+      {
+        "text": "ノード数 7±2 を全図遵守",
+        "passed": true
+      },
+      {
+        "text": "日本語ラベル10文字以内",
+        "passed": true
+      },
+      {
+        "text": "色凡例つき",
+        "passed": true
+      },
+      {
+        "text": "Font Awesome アイコン使用",
+        "passed": true
+      },
+      {
+        "text": "各図に『言いたい一言』付記",
+        "passed": true
+      },
+      {
+        "text": "専門用語は最小化",
+        "passed": true
+      }
+    ]
+  },
+  "five_axes": {
+    "rows": [
+      {
+        "name": "出力先",
+        "content": "Obsidian Vault + Discord/Slack",
+        "depth": "deep"
+      },
+      {
+        "name": "情報源",
+        "content": "既存3スキル + 会話URL貼り付け",
+        "depth": "deep"
+      },
+      {
+        "name": "共有相手",
+        "content": "自分／X／クライアント／チーム",
+        "depth": "standard"
+      },
+      {
+        "name": "真の課題",
+        "content": "収集→要約→アウトプットを一気通貫で代行",
+        "depth": "deep"
+      },
+      {
+        "name": "ナレッジ資産",
+        "content": "Obsidian + 過去X投稿 + 講座資料、暗黙知抽出ハイブリッド、週次更新",
+        "depth": "deep",
+        "must": true
+      }
+    ],
+    "pipeline": {
+      "ingest": "Markdown / X投稿 / URL / PDF",
+      "analysis": "LLM要約 + Embeddings によるテーマクラスタリング + 静的シードとの統合",
+      "storage": "Obsidian + JSON テーマ集合ファイル",
+      "retrieval": "テーマキーワード検索 + RAG",
+      "update": "weekly"
+    },
+    "intent_contract": {
+      "input_spec": {
+        "sources": [
+          "既存3スキル + 会話URL貼り付け"
+        ],
+        "trigger": "毎朝の定刻、または必要になった時",
+        "frequency": "daily",
+        "raw_materials": [
+          "Markdown",
+          "X投稿",
+          "URL",
+          "PDF"
+        ]
+      },
+      "output_spec": {
+        "sink": "Obsidian Vault + Discord/Slack",
+        "format": "document",
+        "granularity": "本日の思考メモとして使える要点と根拠",
+        "audience": "自分／X／クライアント／チーム",
+        "cadence": "daily"
+      },
+      "slot_status": {
+        "input_spec.sources": {"filled": true, "source": "direct_answer", "probe_ids": []},
+        "input_spec.trigger": {"filled": true, "source": "probe", "probe_ids": ["PB-IN-TRIGGER"]},
+        "input_spec.frequency": {"filled": true, "source": "probe", "probe_ids": ["PB-IN-FREQ"]},
+        "input_spec.raw_materials": {"filled": true, "source": "direct_answer", "probe_ids": []},
+        "output_spec.sink": {"filled": true, "source": "direct_answer", "probe_ids": []},
+        "output_spec.format": {"filled": true, "source": "probe", "probe_ids": ["PB-OUT-FORMAT"]},
+        "output_spec.granularity": {"filled": true, "source": "probe", "probe_ids": ["PB-OUT-GRANULARITY"]},
+        "output_spec.audience": {"filled": true, "source": "direct_answer", "probe_ids": []},
+        "output_spec.cadence": {"filled": true, "source": "probe", "probe_ids": ["PB-OUT-CADENCE"]}
+      }
+    }
+  },
+  "design_decisions": {
+    "rows": [
+      {
+        "axis": "責務境界",
+        "adopted": "O1 オーケストレータ",
+        "reason": "既存スキルの再利用・重複実装回避"
+      },
+      {
+        "axis": "テーマ抽出",
+        "adopted": "T3 ハイブリッド",
+        "reason": "静的シード+動的抽出+週次チューニング"
+      },
+      {
+        "axis": "配信タイミング",
+        "adopted": "S3 両対応",
+        "reason": "定刻でルーチン化、オンデマンドで柔軟性"
+      }
+    ],
+    "output_priority": [
+      "Obsidian『本日の思考メモ』（最高優先・必須）",
+      "Discord/Slack 通知（サマリ＋ピン留めシグナル）",
+      "（副次）派生は別スキルへ委譲"
+    ]
+  },
+  "open_questions": [
+    {
+      "question": "クライアント実名・契約金額の除外範囲",
+      "blocking": false,
+      "defer_to": "harness-creator"
+    },
+    {
+      "question": "情報源の絞り込み（X TLアカウント数・arXivカテゴリ範囲）",
+      "blocking": false,
+      "defer_to": "harness-creator"
+    },
+    {
+      "question": "Discord/Slack のどちらをメイン通知先にするか",
+      "blocking": false,
+      "defer_to": "harness-creator"
+    },
+    {
+      "question": "テーマ集合ファイルのスキーマと更新ジョブ実装",
+      "blocking": true,
+      "defer_to": "harness-creator"
+    }
+  ],
+  "handoff": {
+    "recommended_mode": "fast-track",
+    "skip_to_phase": "Phase 2",
+    "reason": "5軸全 verified、設計選択も確定済み、要件定義フェーズはスキップ可能",
+    "starting_note": "intake.json を起点に Phase 2 から実装着手してよい"
+  },
+  "self_update": {
+    "candidates_detected": 3,
+    "candidates_applied": 3,
+    "skipped_duplicates": 0,
+    "value_realized_score": 88,
+    "score_rationale": "5軸全 verified、purpose 動詞+目的語に分解済、設計選択も確定。",
+    "deductions": [
+      {
+        "reason": "アウトプット形態の優先順位確定が purpose-excavator まで持ち越された",
+        "points": 7
+      },
+      {
+        "reason": "テーマ集合スキーマが harness-creator 委譲で残った",
+        "points": 5
+      }
+    ],
+    "question_bank_additions": [
+      {
+        "category": "真の課題",
+        "technique": "Reverse Brief",
+        "question": "完成して1週間使った朝、最初に開いたときに一番見たいアウトプットは？"
+      },
+      {
+        "category": "ナレッジ資産",
+        "technique": "Tacit Extraction",
+        "question": "あなたの『関心テーマ』は (a)言語化済 (b)部分的 (c)暗黙知のみ (d)可変 のどれ？"
+      },
+      {
+        "category": "責務境界",
+        "technique": "Option Pivot",
+        "question": "このスキルは(1)オーケストレータ (2)ハイブリッド (3)独立 のどれ？"
+      }
+    ],
+    "session_observations": [
+      "expert ユーザーには interviewer 段階で責務境界を確定するほうが効率的",
+      "ナレッジ資産軸を multiSelect で聞くと『全部選択』になりやすい",
+      "Reverse Brief 質問が決定打になった"
+    ],
+    "skipped_phases": [
+      {
+        "name": "notion-publisher",
+        "reason": "MCP切断 → 手動復旧後に共有完了"
+      },
+      {
+        "name": "slack-notifier",
+        "reason": "MCP切断"
+      }
+    ]
+  },
+  "artifacts": {
+    "base_path": ".claude/skills/skill-intake-interviewer/output/info-collector-agent/",
+    "files": [
+      {
+        "path": "kickoff.json",
+        "description": "パターンA／detailed／4領域すべて選択"
+      },
+      {
+        "path": "assumption.json",
+        "description": "D2 採択"
+      },
+      {
+        "path": "profile.json",
+        "description": "expertise=high／expert 語彙"
+      },
+      {
+        "path": "sheet.md / sheet-progress.json",
+        "description": "5軸 filled"
+      },
+      {
+        "path": "purpose.json",
+        "description": "true_purpose 確定、4 rounds"
+      },
+      {
+        "path": "options.json",
+        "description": "O1 / T3 / S3 採択"
+      },
+      {
+        "path": "figures.md",
+        "description": "Mermaid 図解5枚"
+      },
+      {
+        "path": "intake.md / intake.json",
+        "description": "Gate A 通過版"
+      },
+      {
+        "path": "notion-payload.md",
+        "description": "Notion 投稿用本体"
+      },
+      {
+        "path": "qb-candidates.json",
+        "description": "質問銀行追加候補3件"
+      },
+      {
+        "path": "self-update.json",
+        "description": "value_realized_score=88"
+      }
+    ]
+  },
+  "section_diagrams": {},
+  "notion_target": {
+    "mode": "create-explicit",
+    "source": "explicit_create",
+    "require_update": false,
+    "allow_create": true
+  },
+  "notion_db_properties": {
+    "名前": "info-collector-agent",
+    "ステータス": "Gate A承認済み",
+    "パターン": "A",
+    "ワークフロー": "自動収集配信を主・A従",
+    "深度": "detailed",
+    "熟練度": "上級",
+    "テーマ抽出": "T3 ハイブリッド",
+    "責務境界": "O1 オーケストレータ",
+    "配信タイミング": "S3 両対応",
+    "出力先": [
+      "Obsidian",
+      "Discord",
+      "Slack"
+    ],
+    "共有相手": [
+      "自分",
+      "Xフォロワー",
+      "クライアント",
+      "チーム"
+    ],
+    "引き渡しモード": "fast-track",
+    "真の課題": "収集→要約→アウトプット化を一気通貫で代行し、思考に時間を再配分",
+    "ナレッジ資産タグ": [
+      "暗黙知",
+      "ハイブリッド抽出",
+      "テンプレ"
+    ],
+    "実行環境": "Claude Code",
+    "作成日": "2026-04-29T14:25:00+09:00"
+  }
+}

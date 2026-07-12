@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review。compile OK / 完全な # /// script frontmatter(write-scope:none read-only, exit 0/1/2, stdlib_only)。C02 内容 lint: agents/*.md(frontmatter=plugin YAML+本文7層)と skills/*/prompts/*.md(純粋7層)を --mode agent|prompt で verify-completeness(vendored byte一致)により fail-closed 検証、--check-vendor-parity で drift 検出。symlink 除外(iterdir+is_symlink)で bundling 他plugin誤検出を回避。TESTS: test_lint_agent_prompt_content.py 29件 PASS(coverage 92%・split_frontmatter/check_agent_frontmatter/lint_file/collect_targets/check_vendor_parity/main の各分岐+CLI exit code)。CLI契約=--mode agent|prompt / --check-vendor-parity / --self-test。設計良: vendored subprocess 再利用でロジック二重実装回避。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

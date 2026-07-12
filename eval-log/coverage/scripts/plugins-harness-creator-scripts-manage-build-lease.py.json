@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/manage-build-lease.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review (30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。build 開始前安全性ゲート。.build.lock は {started_at,pid,host}、acquire_lock は O_CREAT|O_EXCL 排他、孤児 steal は ttl 超過 or pid 非生存 (F2・恒久 lockout 回避)。find_expired_leases は純関数。孤児 lease 回収は sync-task-state.py へ subprocess 委譲し C07 は task-state を直接書かない (単一 writer 維持)。graph_hash: 未設定=derive で初回 pin / 設定済=check-task-state-schema で照合、不一致時は accepted discovered-task の resulting_graph_hash を認可集合として現 graph hash 一致なら --repin-graph-hash 委譲で repinned (provenance-gated 外ループ再入・crux)、未認可は mismatch fail-closed で lock 解放。TESTS: test_manage_build_lease.py 31 PASS (re-pin repinned/未認可 mismatch/孤児 steal/実 producer subprocess 含む)。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

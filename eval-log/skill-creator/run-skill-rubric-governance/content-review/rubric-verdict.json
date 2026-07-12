@@ -1,0 +1,35 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-rubric-governance",
+    "skill_md_sha256": "2db32c0a108df543bd160a7d01bca2e72edc0f5d25f4e2712afb974dac4fc815"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator-subagent",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "FM系: name=run-skill-rubric-governance は ^(run|ref|assign|wrap|delegate)-... に適合(FM-001 high PASS)、description『rubric変更を提案するとき、rubric改正を施行するときに使う。』は trigger『〜とき』2個で句点終端(FM-002/003 PASS)、動作詳細(採点する/sha256等)を含まず動詞起点(FM-004/005 PASS)。NM-001 basename==name も一致",
+      "BD系: 本文に '## Purpose & Output Contract'(line48,BD-001 high PASS)と '## Gotchas'(line116,BD-002 PASS)が存在。frontmatter除く本文行数は300以下(BD-003 high PASS)。merge差分は本文行数を増やしておらず 300 行制約を維持",
+      "PD-002 high相当の冒頭契約: line48-54 の冒頭30行内に '## Purpose & Output Contract' + Key Rule(『直接編集禁止』『禁止』)が存在し PASS。feedback_contract は kind=run loop 系として inner各1以上(IN1=script/IN2=lint)・outer各1以上(OUT1=evaluator/OUT2=elegant-review)、verify_by が inner∈{lint,test,script}・outer∈{evaluator,elegant-review,lint} 制約に適合。criteria text は rubric governance 固有命題(rubric_hash drift/合否変動率閾値/承認ボード独立性/log closed)で汎用テンプレ流用なし"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現SKILL.md(SHA 2db32c0…)を ref-skill-design-rubric/references/rubric.json(rubric_version 1.3.0)の FM/BD/NM/PD/KL 系で実読採点。FM-001(name prefix)/FM-002,003(trigger『〜とき』×2句点終端)/FM-004,005(動作詳細なし・動詞起点)/NM-001(basename一致)/BD-001(## Purpose & Output Contract)/BD-002(## Gotchas)/BD-003(本文≤300行)/PD-001(references/有=ref-domain-rubric-template)/PD-002(冒頭30行 Purpose+禁則) すべて適合。KL-001..005 は本スキルに knowledge/ ディレクトリも frontmatter.knowledge_loop も無く存在ゲートで無条件 PASS(skip)。merge差分(rubric.json パス /references/ 訂正 4箇所・goal-seek 6ステップ更新)は rubric 採点対象の節構造・行数・命名を変えず high severity 違反を導入しない。feedback_contract も id ^(IN|OUT|C)[0-9]+$ 適合・重複なし・inner/outer双方≥1・verify_by enum内。high severity 0 で rubric adequate、PASS。"
+}

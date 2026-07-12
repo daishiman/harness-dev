@@ -1,0 +1,25 @@
+{
+  "_note": "FAIL フィクスチャ — 明らかにオーバーフローする構成（>95% or カード単独 overflow）",
+  "slides": [
+    {
+      "id": "F1",
+      "type": "grid",
+      "title": "極端に詰め込みすぎた 4 カラム × 3 行",
+      "layout": { "columns": 4, "rowGapVh": 2 },
+      "cards": [
+        { "heading": "極端に長い見出しのテストケース番号1", "body": "ここに非常に長い本文を詰め込みます。実装の詳細、設計判断の根拠、運用上の注意点、将来の拡張余地、関連する仕様書への参照、過去事例との比較、対応する SR-ID 一覧、そして付随する FAQ までを 1 枚のカードに押し込もうとした極端な失敗例です。当然オーバーフローします。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "極端に長い見出しのテストケース番号2", "body": "同様に長文の本文。読み手の認知負荷を完全に超過しており、視認性も損なわれます。スライドの目的は要点伝達であり、こうした文章はノートやハンドアウトに回すべきです。にもかかわらずカードに無理やり収めようとすると、必要高さが利用可能高さを大きく上回ります。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "極端に長い見出しのテストケース番号3", "body": "三枚目の長文カード。フォントサイズを下げる、行数を減らす、要素数を絞る、いずれかの是正が必要です。precheck-layout はこれを FAIL として検出し、structure-designer に差し戻します。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "極端に長い見出しのテストケース番号4", "body": "四枚目の長文カード。4 カラムは情報密度の上限ギリギリであり、本文を入れる場合は body は 30 文字程度までに抑える必要があります。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "5", "body": "二行目開始。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "6", "body": "更に追加の本文を増やしていきます。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "7", "body": "限界を超えています。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "8", "body": "明らかな失敗例。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "9", "body": "三行目です。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "10", "body": "更に追加。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "11", "body": "オーバーフロー。", "headingFs": "subheading", "bodyFs": "body" },
+        { "heading": "12", "body": "FAIL 確実。", "headingFs": "subheading", "bodyFs": "body" }
+      ]
+    }
+  ]
+}

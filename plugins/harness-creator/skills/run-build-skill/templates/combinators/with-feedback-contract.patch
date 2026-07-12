@@ -1,0 +1,31 @@
+# NOTE: この patch は人間レビュー用の diff スナップショット。
+# 実機構は scripts/render-combinators.py の FEEDBACK_CONTRACT_FM_BLOCK /
+# FEEDBACK_CONTRACT_SECTION 定数。本文を変える場合は render-combinators.py 側を編集し、
+# tests/test_render_combinators_feedback_contract.py を通すこと。
+--- a/_base.md
++++ b/_base.md
+@@ -23,6 +23,15 @@ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
++# feedback_contract: 量産先 Skill が携帯する per-skill 評価基準。criteria は brief.goal / Checklist から導出し、content-review の criteria_evaluated と突合する。
++feedback_contract:
++  max_iterations: {{feedback_contract_max_iterations | default(3)}}
++  criteria:
++    - id: IN1
++      loop_scope: inner
++      text: {{feedback_contract_inner_criteria_text}}
++      verify_by: lint
++    - id: OUT1
++      loop_scope: outer
++      text: {{feedback_contract_outer_criteria_text}}
++      verify_by: elegant-review
+ # doc/21 source-traceability
+ source: {{source_url_or_path}}
+ source-tier: {{source_tier | default("internal")}}
+@@ -40,6 +49,9 @@ TODO
+ ## 主要ルール
+ {{key_constraints}}
+ 
++## 評価・改善ループ契約
++`feedback_contract.criteria` は本 Skill 固有の完了チェックリストから導出した評価基準である。inner は現在ゴールを満たす小さな検証、outer はユーザー目的と 4 条件を満たす全体検証を担う。content-review / evaluator / hook は同じ criteria id を参照し、`criteria_evaluated` が全 id を覆うまで PASS にしない。未達時は最大 `feedback_contract.max_iterations` 周まで改善→再評価し、超過時は `INCOMPLETE` として human_review に差し戻す。
++
+ ## ゴールシーク実行

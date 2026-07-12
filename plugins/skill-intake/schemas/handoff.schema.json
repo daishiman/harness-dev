@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/skill-intake/handoff.schema.json",
+  "title": "skill-intake SubAgent handoff",
+  "description": "各 phase 通過時に eval-log/handoff-<phase>.json として append-only で記録する共通形式。自動復元機構は無い (compaction 後に必要なら orchestrator が該当ファイルを Read して文脈を再構築する)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["phase", "responsibility_id", "status", "input_refs", "output_refs", "timestamp"],
+  "properties": {
+    "phase": {
+      "type": "string",
+      "description": "workflow-manifest.json の phase 識別子 (P1-kickoff .. P11-next-action。例: P5-excavation)"
+    },
+    "responsibility_id": {
+      "type": "string",
+      "pattern": "^R[0-9]+-[a-z0-9-]+$",
+      "description": "SubAgent の R-id (例: R5-purpose-excavate)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pass", "fail", "halt", "skip"],
+      "description": "pass: 次 phase へ / fail: 修正後再試行 / halt: orchestrator 停止 / skip: 条件未充足でスキップ"
+    },
+    "halt_reason": {
+      "type": "string",
+      "enum": [
+        "halted_score_decline",
+        "halted_capacity",
+        "halted_agreement_loop",
+        "halted_schema_violation",
+        "halted_user_abort",
+        "halted_secret_leak_suspected"
+      ],
+      "description": "status=halt のとき必須"
+    },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "本 phase が読んだファイルパス一覧 (相対パス)"
+    },
+    "output_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "本 phase が書き出したファイルパス一覧"
+    },
+    "self_eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Layer 5.3 self-eval rubric の自己採点結果",
+      "required": ["completeness", "reproducibility", "responsibility", "language", "phase_specific"],
+      "properties": {
+        "completeness": { "type": "integer", "enum": [0, 1] },
+        "reproducibility": { "type": "integer", "enum": [0, 1] },
+        "responsibility": { "type": "integer", "enum": [0, 1] },
+        "language": { "type": "integer", "enum": [0, 1] },
+        "phase_specific": { "type": "integer", "enum": [0, 1] },
+        "phase_specific_label": { "type": "string" }
+      }
+    },
+    "value_realized_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "本 phase 時点での価値実現スコア (連続低下で halted_score_decline)"
+    },
+    "next_phase": {
+      "type": ["string", "null"],
+      "description": "後続 phase 識別子。null で orchestrator 終了"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string",
+      "description": "自由記述 (debug 用、PII/secret 禁止)"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "halt" } } },
+      "then": { "required": ["halt_reason"] }
+    }
+  ]
+}

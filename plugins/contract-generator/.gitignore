@@ -1,0 +1,23 @@
+# Python キャッシュ(成果物に含めない)
+__pycache__/
+*.pyc
+
+# macOS / IDE 一時ファイル
+.DS_Store
+
+# 環境依存ID(機密)。正本は ~/.config/contract-generator/google-config.json(ホーム配下=git管理外)。
+# サンプルは skills/run-contract-generate/references/google-config.sample.json。
+# 下記はリポジトリ内へ誤配置した場合の機密漏洩ガード(ドット有/無・後方互換含む)。
+/google-config.json
+google-config.json
+/.google-config.json
+.google-config.json
+
+# Service Account 鍵の一時平文(手順3で即削除すべきもの。誤コミット防止)
+/tmp/xl-contract-sa.json
+xl-contract-sa.json
+
+# ゴールシーク周回記録 / フィードバック / 中間状態 (全 skill 対応)
+# WHY: 旧定義は run-contract-generate-* のみで finalize/sync のログが漏れていた。
+eval-log/*.json
+eval-log/*.jsonl

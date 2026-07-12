@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-interview",
+  "skill": "run-intake-interview",
+  "description": "入力→出力 intent_contract を先に充足し、ヒアリングシート sheet.md の 5 軸空欄を AskUserQuestion で順次充足し sheet.json と interview.json を生成する。",
+  "phases": [
+    {
+      "id": "P1-load-sheet",
+      "step": 1,
+      "title": "profile.json と sheet.md 読込、空欄抽出",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-five-axes"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-normalize-intent",
+      "step": 2,
+      "title": "build-intent.py で入力→出力 intent slot を正規化し pending_probes を固定 probe で充足",
+      "gate": "C2",
+      "dependsOn": ["P1-load-sheet"],
+      "entryHook": "build-intent",
+      "exitHook": "pending_probes-empty",
+      "resourceIds": ["ref-intent-contract", "ref-probe-pattern-table", "script-normalize-intent"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-fill-by-axis",
+      "step": 3,
+      "title": "build-questions.py で出す質問列を Q-ID で決定論的に確定し AskUserQuestion で 1 問ずつ充足",
+      "gate": "C3",
+      "dependsOn": ["P2-normalize-intent"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-question-plan", "ref-question-bank", "script-build-questions", "ref-abstract-answer"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P4-flag-abstract",
+      "step": 4,
+      "title": "validate-answer-abstraction.py で抽象判定し needs_excavation を決定論的に立てる (深掘りは P5 責務)",
+      "gate": "C4",
+      "dependsOn": ["P3-fill-by-axis"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-abstract-answer", "script-check-abstraction"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P5-emit",
+      "step": 5,
+      "title": "sheet.json / interview.json 生成と intent_contract + validate-interview-json.py + check-five-axes-coverage.py 実行",
+      "gate": "C5",
+      "dependsOn": ["P4-flag-abstract"],
+      "entryHook": null,
+      "exitHook": "validate-interview-json+check-five-axes-coverage",
+      "resourceIds": ["schema-interview", "ref-intent-contract", "script-build-sheet-json", "script-normalize-intent", "script-validate-interview", "script-check-five-axes"],
+      "fatal_exit_codes": [1, 2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-five-axes", "kind": "reference", "path": "./references/five-axes-priority.md", "phaseIds": ["P1-load-sheet", "P3-fill-by-axis"]},
+    {"id": "ref-intent-contract", "kind": "schema", "path": "../../references/intent-contract.schema.json", "phaseIds": ["P2-normalize-intent", "P5-emit"]},
+    {"id": "ref-probe-pattern-table", "kind": "reference", "path": "../../references/probe-pattern-table.json", "phaseIds": ["P2-normalize-intent"]},
+    {"id": "script-normalize-intent", "kind": "script", "path": "../../scripts/build-intent.py", "phaseIds": ["P2-normalize-intent", "P5-emit"]},
+    {"id": "ref-question-plan", "kind": "reference", "path": "./references/question-plan.json", "phaseIds": ["P3-fill-by-axis"]},
+    {"id": "ref-question-bank", "kind": "reference", "path": "./references/question-bank-pointer.md", "phaseIds": ["P3-fill-by-axis"]},
+    {"id": "script-build-questions", "kind": "script", "path": "./scripts/build-questions.py", "phaseIds": ["P3-fill-by-axis"]},
+    {"id": "script-check-abstraction", "kind": "script", "path": "./scripts/validate-answer-abstraction.py", "phaseIds": ["P4-flag-abstract"]},
+    {"id": "ref-abstract-answer", "kind": "reference", "path": "./references/abstract-answer-patterns.md", "phaseIds": ["P3-fill-by-axis", "P4-flag-abstract"]},
+    {"id": "script-build-sheet-json", "kind": "script", "path": "./scripts/build-sheet-json.py", "phaseIds": ["P5-emit"]},
+    {"id": "script-validate-interview", "kind": "script", "path": "./scripts/validate-interview-json.py", "phaseIds": ["P5-emit"]},
+    {"id": "script-check-five-axes", "kind": "script", "path": "./scripts/check-five-axes-coverage.py", "phaseIds": ["P5-emit"]},
+    {"id": "schema-interview", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P5-emit"]}
+  ]
+}

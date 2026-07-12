@@ -1,0 +1,109 @@
+# resource-map.yaml — run-build-skill progressive disclosure map
+resources:
+  - category: baseline-skill-build
+    keywords: ["create", "update", "frontmatter", "permissions", "skill"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/01a-build-flow.md
+      - doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md
+      - doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md
+    cover_concerns: ["02-skill-structure", "03-frontmatter", "04-invocation-permissions"]
+  - category: layering-placement
+    keywords: ["subagent", "hook", "mcp", "cli", "script", "deterministic", "layer"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+      - doc/ClaudeCodeスキルの設計書/28-script-execution-model.md
+    cover_concerns: ["05-layering"]
+  - category: naming-classification
+    keywords: ["name", "prefix", "assign", "delegate", "wrap", "role_suffix"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md
+      - doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md
+    cover_concerns: ["06-classification-naming"]
+  - category: progressive-disclosure
+    keywords: ["references", "resource-map", "context", "compaction", "handoff"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md
+      - doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md
+    cover_concerns: ["07-progressive-disclosure"]
+  - category: reproducible-skill-writing
+    keywords: ["description", "body", "gotchas", "writing", "trigger"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md
+    cover_concerns: ["08-skill-writing-guidelines"]
+  - category: evaluator-orchestration
+    keywords: ["evaluator", "rubric_refs", "rubric", "score", "fork", "Goodhart", "fast", "L0", "L1", "L2", "merge"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
+      - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
+    cover_concerns: ["09-evaluation-orchestration"]
+  - category: skill-factory-reproducibility
+    keywords: ["skill creator", "factory", "量産", "再現性", "rubric_refs", "adapter", "routing", "analogy", "template variable", "横展開"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
+      - doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md
+      - doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md
+    local_reference:
+      - creator-kit/skills/run-build-skill/references/skill-factory-reproducibility.md
+    cover_concerns: ["29-multi-project-rubric-composition", "30-paradigm-analogy-map", "31-output-routing-adapter-architecture"]
+  - category: meta-reproducibility-loop
+    keywords: ["meta-skill", "dogfooding", "rubric", "governance", "script", "hook", "subagent", "reproducibility", "eval-log", "impact"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md
+      - doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md
+      - doc/ClaudeCodeスキルの設計書/28-script-execution-model.md
+    cover_concerns: ["26-meta-skill-dogfooding", "27-rubric-governance-runbook", "28-script-execution-model"]
+  - category: template-rendering
+    keywords: ["template", "templates", "render", "run", "ref", "assign", "wrap", "delegate"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/11-templates.md
+      - doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md
+    cover_concerns: ["11-templates"]
+  - category: checklist-gates
+    keywords: ["checklist", "lint", "P0", "P1", "P2", "gate", "validation"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/13-checklists.md
+    cover_concerns: ["13-checklists"]
+  - category: source-traceability
+    keywords: ["source", "image", "extraction", "traceability", "article", "元記事", "画像"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/12-image-extraction-map.md
+      - doc/ClaudeCodeスキルの設計書/21-source-traceability.md
+    cover_concerns: ["source-traceability"]
+  - category: subagent-hook-integration
+    keywords: ["subagent", "agent-team", "hook", "permissions.deny", "FileChanged", "SubagentStop"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+      - doc/ClaudeCodeスキルの設計書/17-agent-teams-reference.md
+    cover_concerns: ["10-subagents-hooks-integration"]
+  - category: agent-teams
+    keywords: ["agent-team", "teammate", "task-list", "TaskCompleted", "TeammateIdle", "with-subagent", "parallel-review", "competing-hypothesis"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/17-agent-teams-reference.md
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+    cover_concerns: ["17-agent-teams"]
+  - category: complete-examples
+    keywords: ["complete-example", "directory-example", "wrap", "delegate", "ref", "run", "完成例", "テンプレ展開"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/18-complete-examples.md
+    cover_concerns: ["18-complete-examples"]
+  - category: troubleshooting
+    keywords: ["error", "failure", "loop", "loop_exceeded", "fast-mode", "handoff", "破損", "誤発動", "誤判定", "factory-failure"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/19-troubleshooting.md
+    cover_concerns: ["19-troubleshooting"]

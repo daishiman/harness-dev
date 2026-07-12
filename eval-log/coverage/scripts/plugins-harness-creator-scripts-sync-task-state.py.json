@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/sync-task-state.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review (30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。task-state.json の単一 writer。ALLOWED_TRANSITIONS 状態機械 (done 終端・不正遷移 ValueError)、done は route_report 実在+covered_task_ids 照合 (F6)、blocked は第一級 field blocked_reason 必須 (origin-failure|propagated・F9)。reap_expired_lease/renew_lease (F1) は running 限定の別経路で ALLOWED_TRANSITIONS を緩めない。pin_graph_hash は異値再pin一律拒否 (F10 安全)、repin_graph_hash は authorized (accepted form の resulting_graph_hash) 一致時のみ再pin (provenance-gated・外ループ再入の crux・安全と活性の止揚)。propagate_blocked/reactivate_cascade は BFS 下流閉包。canonical serialization は producer 規約踏襲 (独自シリアライザ非発明)。append_event で現在値と履歴を二層分離。TESTS: test_sync_task_state.py 40 PASS。exit 0/1(violation)/2(IO)。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

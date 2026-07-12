@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-update-notifier",
+    "skill_md_sha256": "6f1ac6546d3c69284bed26935b740db0d0ac6ea50798dc42c94846e8baffdfaa"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1"],
+    "positive_feedback": [
+      "dev 同期 merge により Hook Integration Map の event 名が `UserPromptExpansion`→`UserPromptSubmit (matcher=`.*`)`・`PostToolUse`→`PostToolUse (matcher=`Skill`)` へ是正され、無効 event の潜在欠陥が解消されると同時に PostToolUse の scoped matcher 明記が Key Rules 5『PostToolUse filter: hook は tool_name == \"Skill\" のときだけ通知発火』および criteria IN2 と完全整合し、矛盾が増えるどころか既存の不整合が縮退した。",
+      "graceful degradation を『指示』ではなく到達状態(CHANGELOG 不在・オフライン・cache 不在・権限不足・XL_SKILLS_NOTIFY=off の全分岐で空文字列 no-op + exit 0 固定)としてゴールに据え、Key Rules 2・Constraints・Checklist・Gotchas が一貫して Skill 実行を妨げない構造を保証している(IN1 充足)。",
+      "書込先を `~/.cache/xl-skills/version-snapshot.json` のみに限定し既存 manifest(plugin.json/marketplace.json/bundles.json/skill-intake-self-updater)を read-only とする非破壊原則を Boundary・Key Rules 1・Constraints・Checklist で重複なく言明、stdlib のみ 24h TTL の外部依存ゼロ設計が cache 鮮度判定・通知整形・graceful 保護層の責務分割(OUT1)に過不足なく対応する。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "dev 同期 merge 差分(git diff 67425a0 HEAD)は2点のみ: (1) Hook Integration Map の event 名是正(`UserPromptExpansion`→`UserPromptSubmit (matcher=`.*`)`, `PostToolUse`→`PostToolUse (matcher=`Skill`)`), (2) ゴールシークループ正本参照を『5 ステップ』→『6 ステップ』へ更新。両差分とも本文を実読して検証した。(1) は HK 系で無効だった `UserPromptExpansion` を有効 event へ修正しつつ matcher を明示したもので、Key Rules 5『tool_name == \"Skill\" のとき末尾 1 行付記』・Gotchas『PostToolUse 全 tool 発火事故…matcher 必須』・criteria IN2 と矛盾なく整合(矛盾0・不整合0)。(2) は正本 `../run-build-skill/references/goal-seek-paradigm.md の 6 ステップに従う` で参照先のステップ数と一致(依存破壊0)。criteria IN1=全失敗分岐の no-op+exit0 graceful degradation / IN2=tool_name==Skill filter と last_notified_at 重複抑止 / IN3=書込先 version-snapshot.json 限定の非破壊 read-only と stdlib のみ / OUT1=cache 鮮度判定・通知整形・graceful 保護層の責務分割を導出し adequacy を確認。Purpose & Output Contract・Boundary・Key Rules 1-6・Hook Integration Map・Responsibilities R1-R3・ゴールシーク Checklist 10項目・Gotchas が相互に矛盾なく『意識せず最新版に気づける非破壊な気づき提供』という中核目的が SKILL/hook/script で一貫している(漏れ0)。4条件(contradiction/omission/inconsistency/dependency_break)すべて 0 で PASS と判定した。"
+}

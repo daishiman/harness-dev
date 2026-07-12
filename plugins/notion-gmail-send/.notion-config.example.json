@@ -1,0 +1,24 @@
+{
+  "_comment": "作業フォルダ($CLAUDE_PROJECT_DIR 直下。clone 開発者は repo-root)に .notion-config.json として置き、<...> を実値で埋める (.notion-config.json は gitignore 対象)。db_id は Notion ページURL末尾の32桁。雛形を自動生成するには doctor --init を実行。",
+  "databases": {
+    "gmail-send-log": {
+      "db_id": "<送信ログDBのid>",
+      "_note": "送信ログDB。run-notion-gmail-sendlog-setup でプロパティを §9 schema に整える"
+    }
+  },
+  "notion_gmail_send": {
+    "source": {
+      "body_db": "<メール本文DBのid>",
+      "recipient_db": "<メール送信先_DBのid>",
+      "_note": "body_db=メール本文_DB / recipient_db=メール送信先_DB"
+    },
+    "sender": {
+      "impersonate": "<送信元アドレス @your-domain>",
+      "sa_keychain": {
+        "service": "google-sa.<keychain-prefix>",
+        "account": "<keychain-prefix>"
+      },
+      "_note": "impersonate=DWDで成りすます送信元(本文DB『メールの送り主』と一致 or sendAs alias)。実値は git に載せず config にのみ置く。sa_keychain=Google SA鍵JSONを格納した Keychain の service/account"
+    }
+  }
+}

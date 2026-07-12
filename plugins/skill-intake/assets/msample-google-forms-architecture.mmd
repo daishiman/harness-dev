@@ -1,0 +1,21 @@
+%%---
+%% sample: google-forms-generator / architecture-system
+%%---
+flowchart LR
+    User([依頼者]):::user
+    CLI[Claude CLI]:::fe
+    Skill[forms生成スキル]:::be
+    Forms[(Forms API)]:::db
+    Drive[/Drive API/]:::ext
+
+    User --> CLI --> Skill --> Forms
+    Skill --> Drive
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef fe fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef be fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef db fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef ext fill:#fff8e1,stroke:#f9a825,color:#e65100
+
+%% 凡例: 青=自社（CLI/スキル） / 紫=Forms / 黄=Drive
+%% 言いたい一言: スキルは Forms と Drive の2つにだけ依存

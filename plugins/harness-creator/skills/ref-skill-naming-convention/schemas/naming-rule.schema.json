@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ref-skill-naming-convention/schemas/naming-rule.schema.json",
+  "title": "SkillNamingRule",
+  "type": "object",
+  "required": ["pattern", "allowed_prefixes"],
+  "properties": {
+    "pattern": {
+      "type": "string",
+      "description": "Skill 名の正規表現 (例 ^(run|ref|wrap|assign|delegate)-[a-z0-9][a-z0-9-]*$)"
+    },
+    "allowed_prefixes": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["run", "ref", "wrap", "assign", "delegate"] },
+      "minItems": 1,
+      "description": "命名規約で承認済みの prefix リスト"
+    },
+    "forbidden_chars": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "使用禁止文字 (大文字 / アンダースコア / 記号 等)"
+    },
+    "role_suffix_vocabulary": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "承認済 role-suffix 語彙 (例 -evaluator, -generator, -linter)"
+    },
+    "max_length": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Skill 名の最大文字数"
+    }
+  }
+}

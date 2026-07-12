@@ -1,0 +1,27 @@
+# resource-map.yaml — run-contract-generate の Progressive Disclosure 索引
+# 必要時のみ open する。最初にこのファイルを読み、該当資料だけ参照する。
+resources:
+  - file: README-setup.md
+    topic: GCP API有効化・Service Account作成・Keychain登録コマンド・フォルダ共有・google-config.json 作成
+    read_when: 初回セットアップ時 / 認証・権限エラー時
+  - file: concept.md
+    topic: 概念設計(参考スキル継承/転換マトリクス・アーキテクチャ図・データフロー図)
+    read_when: 全体像や設計意図を把握したいとき
+  - file: injection-mapping.md
+    topic: 台帳列⇄ひな形プレースホルダの差込対応(人間向け要約)
+    read_when: どの列がどこに入るか確認したいとき
+  - file: template-mapping.json
+    topic: 差込マッピングの機械可読 SSOT(anchor/placeholder/条件分岐/固定値)
+    read_when: 差込実装・ひな形変更対応・ドリフト解消時(正本)
+  - file: template-change-runbook.md
+    topic: ひな形変更時の診断(scan_template.py)とマッピング/台帳更新手順
+    read_when: ひな形が更新された / drift を検出したとき
+  - file: legal-knowledge-index.md
+    topic: 法令ナレッジ(参考スキル references/00-11)の索引
+    read_when: 差込内容の法的妥当性やひな形改定の妥当性を確認したいとき
+  - file: google-config.sample.json
+    topic: google-config.json のひな形(環境依存IDのSSOT)
+    read_when: config を新規作成するとき
+  - file: settings-hardening.json
+    topic: 二段防御の静的層(permissions.deny)。鍵流出系コマンドを拒否
+    read_when: セキュリティを強化したいとき(.claude/settings.json へマージ)

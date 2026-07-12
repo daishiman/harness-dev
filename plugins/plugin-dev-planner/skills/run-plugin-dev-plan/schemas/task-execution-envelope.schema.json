@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task-execution-envelope.schema.json",
+  "title": "task-execution-envelope",
+  "description": "dispatch 前に task node + 可変 task spec + phase policy から決定論合成する SubAgent 実行契約 (C17)。consumer=harness-creator はこの envelope を SubAgent prompt の唯一の入力 packet として扱う。title 単独 prompt・entity_ref からの暗黙 route 推測・P01..P13 全文注入を防ぐため、単一 phase policy 参照 (phase_policy_ref) と明示 route (component_route) と非空の objective/acceptance/verify を必須化する。render-task-execution-envelope.py が唯一の writer で、component-build の route 欠落や phase-gate の dispatch を fail-closed 拒否する。",
+  "type": "object",
+  "required": [
+    "task_id", "execution_kind", "objective", "phase_policy_ref", "component_route",
+    "acceptance_criteria", "write_scope", "injected_inputs", "injected_notes", "knowledge_refs", "verify"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1, "description": "dispatch 対象 task node の id"},
+    "execution_kind": {
+      "type": "string",
+      "enum": ["direct-task", "component-build"],
+      "description": "dispatch 対象の実行分類のみ (phase-gate は非 dispatch 集約点ゆえ envelope 化されない)"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "description": "task spec (task-specs/<id>.md) 由来の目的。title 単独 prompt を拒否するため非空必須"
+    },
+    "phase_policy_ref": {
+      "type": "string",
+      "pattern": "^P(0[1-9]|1[0-3])$",
+      "description": "単一 phase policy への参照 (P01..P13 のいずれか 1 つ)。全 13 phase 全文の連結注入を構造的に拒否する"
+    },
+    "component_route": {
+      "type": ["string", "null"],
+      "description": "execution_kind==component-build のとき非 null の明示 route id (entity_ref 暗黙 route ではない)。direct-task では null"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "二値受入基準 (1 件以上)。node.acceptance_criterion + task spec の acceptance_criteria を統合"
+    },
+    "write_scope": {"type": "string", "minLength": 1, "description": "node の排他書込パス (並列衝突判定キー)"},
+    "injected_inputs": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "先行 artifact (graph の consumes エッジ) の id 群。全文 spec でなく参照 id のみ"
+    },
+    "injected_notes": {
+      "$ref": "handoff-notes.schema.json",
+      "description": "直接先行タスクからの有界 handoff notes (C12・maxItems 3/maxLength 200 は handoff-notes.schema.json が正本)"
+    },
+    "knowledge_refs": {
+      "type": "array",
+      "items": {"$ref": "knowledge-ref.schema.json"},
+      "description": "過去 cycle の蒸留 knowledge 参照 (C19)。形状の正本は knowledge-ref.schema.json"
+    },
+    "verify": {"type": "string", "minLength": 1, "description": "task spec 由来の検証方法 (どう done を確認するか)"}
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "_comment": "MED-2: safety_valve_fired=true 時の verdict.json sample。emit-observable.py --dry-run の入力に渡すと failed_conditions=[] でも 'emitted: true' (実 run 時) になることを期待する。schemas/verdict.schema.json 準拠。",
+  "_expected_emit_dry_run_output": {
+    "emitted": false,
+    "dry_run": true,
+    "event": {
+      "event": "elegant_review_4condition_failed",
+      "schema_version": "1.0",
+      "ts": "<ISO8601 now>",
+      "plugin": "harness-creator",
+      "skill": "run-skill-rename",
+      "scope_mode": "skill",
+      "run_id": "elegant-review-2026-05-23T12-00-00Z-sample",
+      "failed_conditions": [],
+      "fail_counts": {
+        "contradiction": 0,
+        "omission": 0,
+        "inconsistency": 0,
+        "dependency_break": 0
+      },
+      "iteration_count": 3,
+      "status": "incomplete",
+      "safety_valve_fired": true
+    }
+  },
+  "plugin": "harness-creator",
+  "skill": "run-skill-rename",
+  "scope_mode": "skill",
+  "run_id": "elegant-review-2026-05-23T12-00-00Z-sample",
+  "aggregated_at": "2026-05-23T12:00:00Z",
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "fail_counts": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "thought_method_coverage": {
+    "used": [
+      "critical", "deduction", "induction", "abduction", "vertical",
+      "decomposition", "mece", "two-axis", "process", "why",
+      "meta", "abstraction", "double-loop",
+      "brainstorming", "lateral", "paradox", "analogy", "if", "naive",
+      "systems", "causal", "causal-loop",
+      "trade-on", "plus-sum", "value-proposition", "strategic",
+      "kaizen", "hypothesis", "issue", "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "iteration_count": 3,
+  "status": "incomplete",
+  "safety_valve_fired": true,
+  "observable_emitted": true
+}

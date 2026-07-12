@@ -1,0 +1,41 @@
+{
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "ubm-youtube-ingest-command",
+    "skill_md_sha256": "48cd01a929d21fdfb48c3516a730c04517fa930bf52853ef578ab1c350ca6cea"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "independent-content-reviewer-p09",
+  "reviewed_at": "2026-07-11T02:46:18Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "inner",
+    "criteria_evaluated": [
+      "C04-mode-args-mutually-exclusive",
+      "C04-dry-run-zero-write",
+      "C04-manual-sync-same-idempotency-key-cursor-as-scheduler"
+    ],
+    "positive_feedback": [
+      "手動 sync と scheduler 自動 one-shot が同一 idempotency key=video_id・同一 cursor・同一スクリプト (run-youtube-sync-oneshot.py) を共有するという不変則が、実スクリプト (idempotency_key=vid・dry_run 時 lease 非取得・書込0) と一致しており、別状態系を作らない単一 SSOT 設計が担保されている",
+      "引数排他 (--url/--backfill/--sync) を具体的なエラーメッセージ例付きで規定し、モード無指定時は --sync を既定候補として提示しつつ確認してから起動する fail-safe な曖昧解消がある",
+      "dry-run 書込0 の対象 (registry / 正規化ソース出力 / knowledge のいずれにも書かない) を明示し、コマンドは薄いアダプタに徹して冪等性・cursor・retry をスキル/one-shot 側機構へ透過する責務境界が明快"
+    ],
+    "negative_feedback": [
+      "軽微な smell: 排他違反の失敗例は具体的だが、dry-run の『書込0』を示す入出力例 (何が書かれず何が提示されるか) は文章記述に留まり具体例が無い。behavior は曖昧でないため FAIL ではないが、dry-run 実行時の『0 書込・次に取り込まれる候補提示』の最小サンプルを1つ添えると C01/C08 の fixture 具体度と揃う"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "acceptance_contract (引数排他・dry-run書込0・手動sync=scheduler one-shot と同一 idempotency key/cursor) を全充足。idempotency key=video_id・dry-run 書込0・同一 one-shot 主張を run-youtube-sync-oneshot.py と実照合し一致を確認。指摘は dry-run の具体例欠如という illustration の smell のみで PASS。"
+}

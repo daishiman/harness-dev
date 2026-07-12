@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/handoff.schema.json",
+  "title": "Gate Handoff Record",
+  "description": "各 Gate 通過時に eval-log/handoff-<step>.json として書き出される共通スキーマ。PostCompact hook が復元キーとして利用する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["step", "timestamp", "gate_id", "approver", "artifacts", "next_phase"],
+  "properties": {
+    "step": {
+      "type": "string",
+      "description": "phase id (workflow-manifest.json phases[].id) または after_<phase>。"
+    },
+    "timestamp": {"type": "string", "format": "date-time"},
+    "gate_id": {
+      "type": ["integer", "number", "null"],
+      "description": "通過した Gate 番号 (1, 2, 2.5, 3, 4)。Step 通過のみで Gate 無しなら null。"
+    },
+    "approver": {
+      "type": "string",
+      "enum": ["user", "solo_operator_auto", "system_auto"],
+      "description": "誰が承認したか。"
+    },
+    "artifacts": {
+      "type": "array",
+      "description": "このフェーズで生成・参照された成果物パス。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "kind"],
+        "properties": {
+          "path": {"type": "string"},
+          "kind": {"type": "string", "enum": ["brief", "skill", "build-trace", "lint-log", "evaluator-result", "elegant-findings", "governance-decision", "report", "other"]},
+          "checksum": {"type": "string"}
+        }
+      }
+    },
+    "next_phase": {
+      "type": ["string", "null"],
+      "description": "次に進む phase id。完了時は null。"
+    },
+    "skill_name": {"type": "string"},
+    "mode": {"type": "string", "enum": ["create", "update"]},
+    "required_fixes": {"type": "array", "items": {"type": "string"}},
+    "resume_command": {"type": "string"}
+  }
+}

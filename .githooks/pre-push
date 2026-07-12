@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# pre-push: CI 等価チェックをローカル先行実行。fail なら push を停止。
+# 有効化: git config core.hooksPath .githooks  (または bash scripts/install-git-hooks.sh)
+# bypass: PUSH_SKIP_CI=1 git push  (緊急時のみ、CI 側で再検査される)
+set -u
+
+if [[ "${PUSH_SKIP_CI:-0}" == "1" ]]; then
+  echo "[pre-push] PUSH_SKIP_CI=1 によりスキップ (CI で再検査されます)"
+  exit 0
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+echo "[pre-push] CI 等価チェック実行中…"
+if bash "$ROOT/scripts/run-ci-checks.sh"; then
+  echo "[pre-push] OK — push 続行"
+  exit 0
+fi
+echo
+echo "[pre-push] FAIL — push を中止しました。"
+echo "  - 上記の失敗を修正後 git push を再実行してください (loop until pass)"
+echo "  - 緊急回避: PUSH_SKIP_CI=1 git push (CI で再検査されます)"
+exit 1

@@ -1,0 +1,8 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/layout-optimizer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {"verdict": "PASS", "score": 89, "notes": "genuine実測: reference-existence=prompt_ref prompts/R3-agent-layout-optimizer.md(318行)実在。prompt が引く skill私有 references/layout-optimization-rules.md 実在、参照する vendor/scripts/precheck-layout.js・layout-calculator.js は node --check OK(precheck 109行/calc 537行=stub でない実 engine)。plugin共有 references/layout-visual.md・print-layout.md・slide-components.md も $CLAUDE_PLUGIN_ROOT/references/ に実在。dangling 0。schema-conformance=name/description(トリガ形)/kind=agent/version/owner/tools=Read,Write,Bash/isolation=fork 完備。Bash は precheck-layout/layout-calculator 起動に必要で整合。owner-flow=SKILL.md L108『slide: layout-optimizer(レイアウト最適化)』・workflow-manifest R3-generate-evaluate 記載・prompt _role で adapter/SSOT 分担明記。placement-invariant=prompt 318行 SSOT vs adapter 58行。single-responsibility=レイアウト最適化(precheck×calculator 連携)単一。減点: 共通 boilerplate 型で adapter 自体の固有情報密度が低い(thin 設計の必然)。"},
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence","schema-conformance","owner-flow","placement-invariant","single-responsibility"]
+}

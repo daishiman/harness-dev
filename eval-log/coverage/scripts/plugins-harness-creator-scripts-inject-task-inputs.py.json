@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/inject-task-inputs.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "genuine code-review (30思考法 elegant review で inert を検出→修正→再検証で resolved)。compile OK / # /// script frontmatter 完備。resolve_inputs() は純関数 read-only。producer 未 done は最初の未完了で打ち切り fail-closed。成果物は実 producer=derive-task-graph の形状に整合し node.write_scope を主経路で解決 (produces エッジは forward-compat 副経路)、os.path.exists で実在検査し done state と成果物存在の乖離を捕捉 (F5)。notes は C02 が実際に書く handoff_notes (dict) を固定順平坦化 (flat notes 併読)、上限は producer handoff-notes.schema.json 由来 (F8・consumer 再定義せず)。improvement-handoff 非参照。TESTS: test_inject_task_inputs.py 33 PASS (実 derive 出力に対し injected_inputs/injected_notes 非空を固定する統合ケース含む)。exit 0/1(rejected)/2(IO)。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

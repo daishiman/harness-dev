@@ -1,0 +1,42 @@
+{
+  "_meta": {
+    "purpose": "Meta-Harness Phase 1 ログ収集 (35章) を opt-in で有効化する設定例",
+    "usage": "本ファイルの内容を .claude/settings.json の hooks にマージするか、settings.json として copy する。",
+    "schema": ".claude/logs/schema-v1.0.json",
+    "output": ".claude/logs/<YYYY-MM-DD>.jsonl (.gitignore 対象)",
+    "spec": "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/extract-session-events.py user_prompt"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/extract-session-events.py tool_use"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 scripts/extract-session-events.py stop"
+          }
+        ]
+      }
+    ]
+  }
+}

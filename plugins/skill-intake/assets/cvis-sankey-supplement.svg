@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: sankey-supplement
+  required_vars: [title, src_label, mid_label, dst_label, src_color, mid_color, dst_color, note1, note2]
+  optional_vars: [message]
+  use_case: Mermaid sankey の補助。色凡例と注釈を別図で示す（sankey単体では凡例が出にくいため）。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0d47a1; }
+    .label { font-size: 22px; fill: #222; }
+    .note { font-size: 18px; fill: #555; }
+    .legend { font-size: 14px; fill: #555; }
+    .arrow { stroke-width: 30; fill: none; opacity: 0.6; }
+  </style>
+
+  <text x="40" y="50" class="title">{{title}}（凡例＋注釈）</text>
+
+  <!-- 流れの凡例 -->
+  <rect x="80" y="120" width="180" height="80" fill="{{src_color}}" rx="10"/>
+  <text x="170" y="170" class="label" text-anchor="middle" fill="#fff">{{src_label}}</text>
+
+  <line x1="270" y1="160" x2="490" y2="160" class="arrow" stroke="{{mid_color}}"/>
+
+  <rect x="500" y="120" width="180" height="80" fill="{{mid_color}}" rx="10"/>
+  <text x="590" y="170" class="label" text-anchor="middle" fill="#fff">{{mid_label}}</text>
+
+  <line x1="690" y1="160" x2="910" y2="160" class="arrow" stroke="{{dst_color}}"/>
+
+  <rect x="920" y="120" width="180" height="80" fill="{{dst_color}}" rx="10"/>
+  <text x="1010" y="170" class="label" text-anchor="middle" fill="#fff">{{dst_label}}</text>
+
+  <!-- 注釈 -->
+  <text x="80" y="320" class="label">注釈</text>
+  <line x1="80" y1="335" x2="1120" y2="335" stroke="#b0bec5"/>
+  <text x="80" y="380" class="note">- {{note1}}</text>
+  <text x="80" y="420" class="note">- {{note2}}</text>
+
+  <text x="40" y="540" class="legend">凡例: 帯の太さ=量 / 色=情報の種類</text>
+  <text x="40" y="565" class="legend">言いたい一言: {{message}}</text>
+</svg>

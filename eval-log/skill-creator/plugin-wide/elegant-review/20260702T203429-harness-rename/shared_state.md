@@ -1,0 +1,1 @@
+提案=plugins/skill-creator→harness-creator改名。旧名は744ファイル5704箇所+下線変形80箇所。NEVER_DISTRIBUTE/SELF_DOGFOODING_PLUGIN/vendored lint/upstream-pins/CI固定パスに機械連動。同名別物doc/参考Skill併存、harness語は別概念156箇所既存、新名0件、履歴・テスト名にも埋込。

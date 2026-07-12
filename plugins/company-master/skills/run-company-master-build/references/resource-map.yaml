@@ -1,0 +1,51 @@
+# resource-map.yaml — run-company-master-build の Progressive Disclosure 索引
+# 必要時のみ open する。最初にこのファイルを読み、該当資料だけ参照する。
+resources:
+  - file: ../../../commands/company-master.md
+    topic: チャット/スラッシュコマンドから単発企業補完を起動する導線
+    read_when: ユーザーが会社名・住所・法人番号をチャットで渡して補完したいとき
+  - file: ../../../commands/company-master-backfill.md
+    topic: Notion 企業マスタ DB の空欄・要確認行を backfill する導線
+    read_when: 既存 Notion DB を起点に空欄補完したいとき
+  - file: ../../../agents/company-master-resolve-identity.md
+    topic: "SubAgent 分担: 法人番号/会社名/住所から企業を同定する"
+    read_when: 同名複数・住所のみ入力・法人番号優先順位を判断したいとき
+  - file: ../../../agents/company-master-enrich-attributes.md
+    topic: "SubAgent 分担: 全6属性を補完し取得由来を source_by_field に持つ (確認用URLはページ本文へ・source_urls はその派生)"
+    read_when: Web 検索結果や 日本郵便API から属性補完したいとき
+  - file: ../../../agents/company-master-notion-upsert.md
+    topic: "SubAgent 分担: 固定 Notion DB へ upsert/backfill する"
+    read_when: Notion 書き込み・既存非空セル保護・信頼キーを確認したいとき
+  - file: ../../../scripts/company_master.py
+    topic: プラグイン同梱の実行ラッパ (resolve→enrich→validate→任意upsert / backfill)
+    read_when: Skill ではなく決定論コードを直接実行したいとき
+  - file: ../../../vendor/README.md
+    topic: 外部 Python ライブラリをプラグイン配下に同梱する運用ルール
+    read_when: 標準ライブラリ以外の依存を追加する必要が出たとき
+  - file: ../../../references/company-master-columns.md
+    topic: Notion 7列定義 (会社名title=正式名称優先+住所/郵便番号/法人番号/電話番号+情報の確かさ+備考) + 確認用URLはページ本文 と確度4ラベル・整合ルール
+    read_when: 列構成・フォーマット規約・deterministic_checks を確認したいとき (正本)
+  - file: ../../../references/confirm-url-template.md
+    topic: 確認用URL ページ本文の固定テンプレート (heading/intro/bullet_with_url/bullet_no_url/body_no_fields の5要素正本)
+    read_when: 確認用URL本文のレンダリング文言を確認したいとき (confirm_url.py が展開する正本)
+  - file: ../../../references/notion-db-schema.json
+    topic: Notion live スキーマ preflight 用の機械可読7列スキーマ (生成元正本は company-master-columns.md)
+    read_when: 列改名・型変更・確度 select オプション変更時に preflight 照合内容を更新するとき
+  - file: ../../../references/data-sources.md
+    topic: gBizINFO/日本郵便API/Web検索の取得方針・認証・確度マッピング・信頼キー定義
+    read_when: どの取得元でどの項目をどの確度で埋めるか判断したいとき
+  - file: ../../../references/keychain-setup.md
+    topic: Keychain 鍵セットアップのチームオンボーディング正本 (ロール別=メンバー/プロキシ運用者・Mac での送信元IP確認)
+    read_when: チームメンバーへ鍵設定を配布する/各自が自分の Keychain に鍵を登録するとき
+  - file: ../../../references/japanpost-api-setup.md
+    topic: 日本郵便 addresszip API のキー取得〜送信元IP登録〜Keychain 保存手順 (BYO・単独/少数拠点向けの正本)
+    read_when: 郵便番号取得の API キー/IP セットアップや doctor --probe の失敗を解消したいとき
+  - file: ../../../references/postal-proxy-deploy.md
+    topic: 中央プロキシのデプロイ/設定 (送信元IPを固定できない/拠点数>10 の例外オプトイン。鍵と固定IPを1台に集約。既定は BYO 直結)
+    read_when: 社内チーム/フルリモート/送信元IP>10 で郵便番号取得を中央集約したいとき
+  - file: ../../../references/remarks-templates.md
+    topic: 取得失敗時の『備考』定型テンプレート文言 (自由記述禁止の正本)
+    read_when: 空欄保留した項目の備考を記録するとき
+  - file: ../../../prompts/R1-resolve-identity.md
+    topic: resolve 同定判断の7層 prompt 正本 (build・backfill 共有)
+    read_when: 会社名/住所の曖昧候補突合・自動確定条件・誤同定回避ルールを確認したいとき

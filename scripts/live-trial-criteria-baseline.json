@@ -1,0 +1,33 @@
+{
+  "_comment": [
+    "lint-feedback-contract.py の live-trial ratchet baseline (D7 P2, 2026-07-02 生成)。",
+    "列挙 skill は acceptance_tier=live 導出 (derive_acceptance_tier 正本) だが",
+    "feedback_contract の OUT criteria に verify_by: live-trial を未携帯の既存 skill。",
+    "baseline 内は WARN 免除、baseline 外 (=新規 build) の同違反は FAIL。",
+    "**追記禁止**: 新規 skill をここへ足して FAIL を回避することは ratchet の規律違反。",
+    "変更は縮小方向のみ許可 (対象 skill の OUT criteria へ verify_by: live-trial を",
+    "追記したら該当行を削除する)。一括 backfill は live-trial パイロット実績後 (ROADMAP D7)。"
+  ],
+  "exempt": [
+    "company-master/run-company-master-backfill",
+    "company-master/run-company-master-build",
+    "contract-generator/run-contract-generate",
+    "plugin-dev-planner/run-plugin-dev-plan",
+    "prompt-creator/run-prompt-create",
+    "prompt-creator/run-prompt-creator-7layer",
+    "prompt-creator/run-prompt-elicit",
+    "harness-creator/run-build-skill",
+    "harness-creator/run-elegant-review",
+    "harness-creator/run-goal-seek",
+    "harness-creator/run-migrate-audit",
+    "harness-creator/run-plugin-package-check",
+    "harness-creator/run-skill-create",
+    "harness-creator/run-skill-feedback",
+    "harness-creator/run-skill-update-notifier",
+    "skill-intake/run-intake-interview",
+    "skill-intake/run-intake-kickoff",
+    "skill-intake/run-intake-next-action",
+    "skill-intake/run-intake-revise",
+    "skill-intake/run-skill-intake"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "slide-report-generator",
+  "version": "0.1.0",
+  "description": "presentation-slide-generator の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa/16:9/GSAP/Codex Image2/決定論レンダラ) を単一 SSOT 共有し、コンテンツ意図層のみ mode 別に分岐する。Node 製レンダリング/画像/印刷/検証エンジンは vendor として byte 携行し Bash(node) で起動する (本 v2 では無変更)。本 v2 は既存 build 済み plugin (v1) に対する responsibility rebalance (16 sub-agent 過重の解消・3 skill への progressive disclosure 導入・references 帰属機構の構造化) の後継設計であり、entry_points/hooks/vendor/schemas は機能的に不変のまま維持する。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/slide-report-generator/.claude-plugin/plugin.json へ差分適用する。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-slide-report-generate",
+      "run-slide-report-modify",
+      "run-cross-deck-review"
+    ],
+    "agents": [
+      "hearing-facilitator",
+      "structure-designer",
+      "structure-validator",
+      "d3-diagram-designer",
+      "data-visualizer",
+      "html-generator",
+      "slide-renderer",
+      "layout-optimizer",
+      "ui-quality-reviewer",
+      "deck-evaluator",
+      "ai-image-diagram-producer",
+      "slide-report-modifier",
+      "cross-deck-reviewer",
+      "report-structure-designer",
+      "visual-strategist",
+      "report-composer"
+    ],
+    "commands": [
+      "slide-report-generate",
+      "slide-report-status"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/hook-postgen-eval.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "Productivity",
+  "tags": [
+    "slides",
+    "report",
+    "visual",
+    "presentation",
+    "codex-image",
+    "responsibility-rebalance"
+  ]
+}

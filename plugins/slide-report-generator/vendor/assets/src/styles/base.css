@@ -1,0 +1,323 @@
+/* =================================================================
+   ユーティリティクラス
+   ================================================================= */
+.text-note {
+  font-size: calc(1.38vw * var(--font-scale));
+  color: var(--fg-dim);
+}
+
+.text-emphasis {
+  font-size: calc(1.63vw * var(--font-scale));
+}
+
+.text-caption {
+  font-size: calc(1.50vw * var(--font-scale));
+}
+
+.highlight {
+  color: var(--autumn-yellow);
+  font-weight: 700;
+}
+
+.highlight-pink {
+  color: var(--sakura-pink);
+}
+
+.highlight-aqua {
+  color: var(--wave-aqua);
+}
+
+/* =================================================================
+   共通スタイル
+   ================================================================= */
+*, *:after, *:before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--bg-dark);
+  color: var(--fg);
+  overflow: hidden;
+}
+
+/* =================================================================
+   スライダー基本 - 16:9アスペクト比を厳守
+   ================================================================= */
+
+/* スライダー全体: ビューポート中央に16:9で配置 */
+.slider {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+
+/* スライドエリア: 16:9を強制（レターボックス/ピラーボックス対応） */
+.slide-area {
+  width: var(--slide-max-width);
+  height: var(--slide-max-height);
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-dark);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+/* スライドコンテナ: 横スクロール用 */
+.slider__container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  transition: none;
+}
+
+/* 各スライド: 16:9エリア全体を使用 */
+.slider__item {
+  min-width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3%;
+  aspect-ratio: 16 / 9;
+}
+
+/* スライドコンテンツ: 16:9内に収まるよう制約 */
+.slider__content {
+  width: 100%;
+  max-width: 94%;
+  max-height: 94%;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+/* =================================================================
+   アイコンスタイル
+   ================================================================= */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--bg-dim);
+  margin-bottom: 1.25vw;
+}
+
+.icon-wrapper i {
+  font-size: 3.13vw;
+  color: var(--wave-blue);
+}
+
+.icon-wrapper.accent-pink i { color: var(--sakura-pink); }
+.icon-wrapper.accent-aqua i { color: var(--wave-aqua); }
+.icon-wrapper.accent-yellow i { color: var(--autumn-yellow); }
+.icon-wrapper.accent-violet i { color: var(--spring-violet); }
+
+/* =================================================================
+   進捗バー
+   ================================================================= */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--sumi-ink);
+  z-index: 100;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--wave-blue), var(--sakura-pink));
+  transition: width 0.5s ease;
+}
+
+/* =================================================================
+   ナビゲーション（ライトテーマ対応）
+   ================================================================= */
+.slider-navigation {
+  position: fixed;
+  bottom: 2.50vw;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.63vw;
+  padding: 0.63vw 1.25vw;
+  background: rgba(126, 156, 216, 0.15);
+  border: 1px solid rgba(126, 156, 216, 0.3);
+  border-radius: 20px;
+  z-index: 100;
+}
+
+.slider-navigation li {
+  list-style: none;
+}
+
+.slider-navigation a {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background: var(--fuji-gray);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.slider-navigation a:hover {
+  background: var(--wave-blue);
+  transform: scale(1.3);
+}
+
+.slider-navigation a.is-active {
+  background: var(--wave-blue);
+  transform: scale(1.3);
+}
+
+/* 5個ごとのマーカー（5, 15, 25...）- 大きく、アクア色 */
+.slider-navigation a.nav-mark-5 {
+  width: 14px;
+  height: 14px;
+  background: var(--wave-aqua);
+  border: 2px solid rgba(89, 123, 117, 0.4);
+}
+
+.slider-navigation a.nav-mark-5:hover {
+  background: var(--wave-aqua);
+  transform: scale(1.3);
+  box-shadow: 0 0 6px rgba(89, 123, 117, 0.5);
+}
+
+.slider-navigation a.nav-mark-5.is-active {
+  background: var(--wave-aqua);
+  transform: scale(1.4);
+  box-shadow: 0 0 10px rgba(89, 123, 117, 0.7);
+  border-color: var(--wave-aqua);
+}
+
+/* 10個ごとのマーカー（10, 20, 30...）- さらに大きく、オレンジ色 */
+.slider-navigation a.nav-mark-10 {
+  width: 18px;
+  height: 18px;
+  background: var(--autumn-yellow);
+  border: 2px solid rgba(222, 152, 0, 0.4);
+}
+
+.slider-navigation a.nav-mark-10:hover {
+  background: var(--autumn-yellow);
+  transform: scale(1.3);
+  box-shadow: 0 0 8px rgba(222, 152, 0, 0.5);
+}
+
+.slider-navigation a.nav-mark-10.is-active {
+  background: var(--autumn-yellow);
+  transform: scale(1.4);
+  box-shadow: 0 0 12px rgba(222, 152, 0, 0.7);
+  border-color: var(--autumn-yellow);
+}
+
+/* =================================================================
+   スライド番号（ライトテーマ対応）
+   ================================================================= */
+.slide-number {
+  position: fixed;
+  bottom: 1.88vw;
+  right: 2.50vw;
+  font-size: calc(var(--fs-small, 1.75vw) * 1.1);
+  color: #444;
+  background: rgba(126, 156, 216, 0.15);
+  border: 1px solid rgba(126, 156, 216, 0.3);
+  padding: 0.63vw 1.25vw;
+  border-radius: 20px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 600;
+  z-index: 100;
+}
+
+/* =================================================================
+   コントロール（ライトテーマ対応）
+   ================================================================= */
+.slider-controls {
+  position: fixed;
+  top: 50%;
+  width: 100%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2.50vw;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.slider-controls button {
+  width: 50px;
+  height: 50px;
+  background: rgba(126, 156, 216, 0.2);
+  border: 2px solid var(--wave-blue);
+  border-radius: 50%;
+  color: var(--wave-blue);
+  font-size: 1.50vw;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.slider-controls button:hover {
+  background: var(--wave-blue);
+  border-color: var(--wave-blue);
+  color: white;
+  transform: scale(1.1);
+}
+
+.slider-controls button:active {
+  transform: scale(0.95);
+}
+
+/* =================================================================
+   アクセシビリティ（WCAG 2.1 AA）
+   ================================================================= */
+
+/* focus-visible */
+:focus-visible {
+  outline: 3px solid var(--accent-blue-vivid, #3B7DD8);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--accent-blue-vivid, #3B7DD8);
+  outline-offset: 2px;
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* スクリーンリーダー専用 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

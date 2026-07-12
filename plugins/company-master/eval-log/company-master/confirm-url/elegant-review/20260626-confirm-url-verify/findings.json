@@ -1,0 +1,41 @@
+{
+  "run_id": "20260626-confirm-url-verify",
+  "target": {"plugin": "company-master", "skill": "confirm-url/name-merge", "scope_mode": "plugin"},
+  "purpose": "他AI実装(20260626-confirm-url-name-merge)の R1-R5 改善が矛盾なく完了したかを思考リセット後30思考法で二段検証し、残バグを改善する",
+  "thought_method_coverage": {
+    "used": [
+      "批判的", "演繹", "帰納", "アブダクション", "垂直", "要素分解", "MECE", "2軸", "プロセス", "why思考",
+      "メタ", "抽象化", "ダブルループ", "ブレインストーミング", "水平", "逆説", "類推", "if", "素人",
+      "システム", "因果関係", "因果ループ", "トレードオン", "プラスサム", "価値提案", "戦略的", "改善", "仮説", "論点", "KJ法"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "live_db_verification": {
+    "method": "orchestrator が notion_config + notion_upsert.preflight_schema で live DB を read-only GET",
+    "正式名称_column_exists": false,
+    "会社名_column": "title",
+    "preflight_schema": "PASS (7列構成・禁止列不在・select4ラベル一致)",
+    "conclusion": "R4(正式名称列削除) は live で完了済み・コード(forbidden登録)と整合・矛盾なし"
+  },
+  "requirements_verification": {
+    "R1_postal_fixed_url": {"status": "PASS", "evidence": "postal_api.py:73 JAPANPOST_VERIFY_URL='https://www.post.japanpost.jp/' 単一定義・validate:295 固定URL必須・enrich:307 参照"},
+    "R2_phone_free_search": {"status": "PASS", "evidence": "enrich_company.py:103 PHONE_SEARCH_BASE='https://www.google.com/search?q='・phone_search_url() で完全一致検索・有料DB生成経路0件"},
+    "R3_title_official_name": {"status": "PASS", "evidence": "notion_upsert.py:305 title=official_name優先・build_fill_empty/patch_empty_cells も official優先"},
+    "R4_drop_official_column": {"status": "PASS", "evidence": "schema 列除去+forbidden登録・live実測で列不在・preflight PASS"},
+    "R5_no_extra_body_text": {"status": "PASS(修正後)", "evidence": "_merged_company_entry + _company_bullet_suppressed で forward/backward 両辺抑止。正式名称bullet/会社名:ユーザー入力 とも再同期で復活しない"}
+  },
+  "paradigm_findings": [
+    {"cluster": "C2-resync-official-bullet", "thought_methods": ["システム", "因果ループ"], "condition_signal": "inconsistency", "severity": "high", "location": "confirm_url.py parse_bullet/build_entries", "title": "既存『正式名称: URL』bullet が再同期で復活・会社名へ重複", "detail": "parse_bullet が正式名称→会社名リマップを欠き、merge_entries が独立正式名称bulletを保持。official_name URLが会社名/正式名称2 bulletへ重複", "two_stage_verified": true, "resolution": "parse_bullet に _canon_attribute(正式名称→会社名) 追加。merge が会社名へ dedup", "auto_fixable": true, "status": "FIXED"},
+    {"cluster": "R5-resync-userinput-company-bullet", "thought_methods": ["逆説", "素人", "MECE"], "condition_signal": "omission", "severity": "high", "location": "confirm_url.py build_entries(list経路)", "title": "既存『会社名: ユーザー入力（URLなし）』が再同期で復活(R5違反・backward辺)", "detail": "会社名抑止が build_entries dict経路のみ。merge が stale会社名no-url entryを保持→list経路再描画で復活。独立approverが本番render_blocks経路で再現", "two_stage_verified": true, "resolution": "_company_bullet_suppressed をSSOT化し forward/backward 両経路へ適用。回帰テスト2件追加", "auto_fixable": true, "status": "FIXED"},
+    {"cluster": "C4-migrate-no-op", "thought_methods": ["因果関係", "プロセス", "仮説", "論点", "改善", "価値提案", "トレードオン", "if"], "condition_signal": "dependency_break", "severity": "high", "location": "backfill.py select_backfill_targets:125", "title": "正式名称列削除後 --migrate-company-title が確定行を0件選定(no-op)・SKILL.md記述と乖離", "detail": "row_from_page の official_name が title へフォールバックし company_name と一致→旧トリガ official!=company が常時False。列削除がD6移行トリガ信号を消滅。テストもfields直接構築で false-green", "two_stage_verified": true, "resolution": "移行選定を hojin_bango(13桁)保有でトリガ→再resolveで登記名取得、冪等判定は patch_empty_cells(official≠title)に委譲。row_from_page docstring/SKILL.md 正直化。false-greenテストを row_from_page経由へ是正", "auto_fixable": false, "status": "FIXED"},
+    {"cluster": "C3-template-wording", "thought_methods": ["MECE", "抽象化"], "condition_signal": "smell", "severity": "low", "location": "confirm-url-template.md:33", "title": "R5抑止条件の文言がコードより狭い(user_inputのみ記述・noneに言及なし)", "detail": "コードは none も抑止対象だが doc は user_input 限定記述", "two_stage_verified": true, "resolution": "『user_input または none(URLなし)』へ精密化・backward辺抑止も明記", "auto_fixable": true, "status": "FIXED"},
+    {"cluster": "C1-governance-stale", "thought_methods": ["批判的", "アブダクション", "メタ", "ダブルループ", "戦略的", "KJ法"], "condition_signal": "smell", "severity": "medium", "location": "eval-log/20260626-confirm-url-name-merge/implementation-spec.md:10,56", "title": "前run archive の D4『forbidden未追加』/不変条件56 が現schema(forbidden追加)と表面上ねじれ", "detail": "前run が設計判断を途中変更しspecを更新せず。ただしarchive成果物のみで code/test/columns.md は forbidden追加で整合・live削除済で runtime矛盾なし", "two_stage_verified": true, "resolution": "archiveは履歴ゆえ非改変。本run findings/verdict が現状(forbidden追加+live削除済=整合)を記録しsupersede。PR化時はSKILL.md content-review verdictを現SHA独立再生成(stale-sha)", "auto_fixable": false, "status": "DOCUMENTED"},
+    {"cluster": "SSOT-single-def", "thought_methods": ["演繹", "帰納", "プラスサム", "類推"], "condition_signal": "none", "severity": "low", "location": "postal_api.py:73 / enrich_company.py:103", "title": "URL定数SSOT単一定義性は健全(PASS finding)", "detail": "JAPANPOST_VERIFY_URL/PHONE_SEARCH_BASE 各1定義・validate は import 参照・confirm_url main()のliteralはCLI自己検査sampleのみ", "two_stage_verified": true, "status": "PASS"}
+  ],
+  "tests": "tests/test_company_master.py 123 passed (118 baseline + 新規5: parse_bullet正規化/正式名称非復活/会社名:ユーザー入力非復活/会社名url保持/row_from_page fallback + 移行選定是正)",
+  "proposer_ne_approver": true,
+  "approver": "independent general-purpose SubAgent (adversarial, repro+pytest grounded)",
+  "approver_round1": "REJECT (R5 backward辺の会社名:ユーザー入力 復活を検出=見落とし捕捉)",
+  "iteration_count": 2
+}

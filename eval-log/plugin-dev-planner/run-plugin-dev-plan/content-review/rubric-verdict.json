@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "plugin-dev-planner",
+    "skill": "run-plugin-dev-plan",
+    "skill_md_sha256": "62ff263535ca42c7258c1fcf577da92d28a86c26d61bdfb35524ca5a1fc0a3fa"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "capability-build R2 independent rubric projection (+ PR-flow description 書式修正 独立再確認 2026-07-11)",
+  "reviewed_at": "2026-07-11T06:41:52+00:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "C17-C19 target/runtime contract gates and route evidence are current",
+      "target shape remains backward compatible with fixed-13-phase"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "capability-build",
+    "next_action": "none"
+  },
+  "notes": "Evidence: 864 passed, 1 skipped; route reports complete; review artifact R2。[PR-flow re-pin 2026-07-11] frontmatter description を lint-skill-description の R1(トリガー≤2)/R5(末尾『使う。』) 準拠へ書式修正 (task-graph 第3射影の情報は保持・意味不変) したため sha が 6c586fb… → 62ff263… へ更新。独立 SubAgent が current SKILL.md を再確認し description 変更は cosmetic・新規 finding 0・既存 PASS 維持を genuine 判定 (呼出元も二段確認済み)。"
+}

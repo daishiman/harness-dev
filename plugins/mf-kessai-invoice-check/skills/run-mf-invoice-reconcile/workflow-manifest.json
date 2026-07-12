@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-mf-invoice-reconcile",
+  "skill": "run-mf-invoice-reconcile",
+  "description": "請求確認シート基準の月次双方向照合フロー定義。collect(MF実績GET・決定論)→sync-master(シート→契約マスタDB1冪等upsert)→reconcile(順方向=当月/逆方向orphan=全月で照合・判定)→verify(subagent二段確認)→sink(DB2月次チェック非破壊upsert + 請求確認シートへ判定5値書き戻し・--apply時のみ)。既定はdry-run(集計のみ)。DB1/DB2初期構築は build_reconcile_dbs.py(冪等find-or-create)。",
+  "phases": [
+    {
+      "id": "collect",
+      "step": 1,
+      "title": "MF掛け払い実績取得 (参照専用GET)",
+      "responsibility": "prompts/R1-collect.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/reconcile_invoices.py --target <YYMM> --steps collect",
+      "context": "main",
+      "fatal_exit_codes": [2],
+      "note": "対象月の /billings/qualified + /transactions を全ページGETし build_mf_index を作る。MF変更系は hook で遮断。"
+    },
+    {
+      "id": "sync-master",
+      "step": 2,
+      "title": "請求確認シート → 契約マスタDB1 同期",
+      "responsibility": "prompts/R2-reconcile.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/reconcile_invoices.py --target <YYMM> --steps collect,sync-master [--apply]",
+      "lib": "lib/sheet_to_master.py",
+      "dependsOn": ["collect"],
+      "note": "請求確認シート(当月)をquery→build_contracts(支払サイクル自動推定)→(--apply)DB1へ契約IDキーで冪等upsert。個別失敗は failed に記録し全体を止めない(stderrに詳細)。"
+    },
+    {
+      "id": "reconcile",
+      "step": 3,
+      "title": "双方向照合・判定",
+      "responsibility": "prompts/R2-reconcile.md",
+      "lib": "lib/mfk_reconcile.py",
+      "dependsOn": ["sync-master"],
+      "note": "順方向=当月シート由来の期待契約×MF実績で発行漏れGAP/金額一致/金額差/対象外を判定。逆方向=全月契約での名寄せにより MF実績のみの orphan(要マスタ登録)を検出。presence-based・年間前払い抑制。判定verdict→日本語ラベルは verdict-mapping.json SSOT。"
+    },
+    {
+      "id": "verify",
+      "step": 4,
+      "title": "二段確認 (subagent)",
+      "responsibility": "prompts/R3-verify.md",
+      "delegateAgent": "mfk-reconcile-verifier",
+      "context": "fork",
+      "dependsOn": ["reconcile"],
+      "produces": "exclude_ids + verification_summary",
+      "note": "dry-run の判定内訳を独立contextでレビューし、発行漏れ/orphan/金額差の誤検出を排除。契約終了・請求要否など API で判別できない例外判断には踏み込まない。"
+    },
+    {
+      "id": "sink",
+      "step": 5,
+      "title": "月次チェックDB2 非破壊upsert + シート判定書き戻し",
+      "responsibility": "prompts/R4-sink.md",
+      "command": "python3 $CLAUDE_PLUGIN_ROOT/scripts/reconcile_invoices.py --target <YYMM> --apply --verified",
+      "lib": "lib/notion_reconcile_sink.py + lib/notion_sheet_writeback.py",
+      "dependsOn": ["verify"],
+      "fatal_exit_codes": [2],
+      "note": "各rowにcontract_page_id(DB1 relation)を解決しDB2へ方向別キーで非破壊upsert。当月(対象年月)のみ更新・過去月は構造的に不可侵・人間対応済み=trueは凍結。続けて判定SoR=DB2(forward rows)から請求確認シート各行へ『判定』5値+『AI確認』+『確認ポイント』を片方向ミラー書き戻し(人間列『チェック済み』『確認内容』『取引先』『商品』と『契約終了月』不可侵・空欄の『契約開始日』のみ派生補完・ORPHAN(逆方向・シート行なし)のみ投影せず、保留契約は REVIEW_PENDING として『要確認』に投影し理由を確認ポイントに記述する)。sinkを含むapplyは--verified必須。Notion書込は MFK_NOTION_WRITE_GAP のレート間隔付き。DB1/DB2は毎回upsert更新で作り直さない(id config固定)。"
+    }
+  ],
+  "guards": [
+    {
+      "event": "PreToolUse",
+      "hook": "hooks/guard-mfk-readonly.py",
+      "purpose": "Bash経路のMF API変更系を遮断し、同梱GET専用クライアントと合わせて参照専用を抑止"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+../../plugins/mf-kessai-invoice-check/commands/run-mf-invoice-doctor.md

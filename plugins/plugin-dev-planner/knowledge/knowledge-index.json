@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "pattern": "index-search",
+  "description": "plugin-dev-planner の蓄積知見ストア (Loop A)。task-graph 駆動 build の外ループ完了ゲート (harness-creator TG-C08 record-task-graph-knowledge.py) が build 実行の教訓を蒸留追記し、次回 run-plugin-dev-plan 実行時 (planner runtime) に検索して計画判断へ再利用する。",
+  "categories": [
+    {
+      "id": "build-patterns",
+      "label": "ビルド実行知見 (task-graph runtime lessons)",
+      "file": "knowledge-build-patterns.json",
+      "keywords": ["task-graph", "runtime", "build-execution", "knowledge-loop", "discovered-task", "blocked", "依存詰まり", "成果物欠落"]
+    }
+  ],
+  "global_keywords": {
+    "task-graph": ["build-patterns"],
+    "discovered-task": ["build-patterns"],
+    "knowledge-loop": ["build-patterns"],
+    "blocked": ["build-patterns"],
+    "依存詰まり": ["build-patterns"]
+  },
+  "synonyms": {
+    "依存グラフ": ["task-graph", "依存DAG", "dependency graph"],
+    "発見タスク": ["discovered-task", "proposal", "inbox"],
+    "停滞": ["stall", "依存詰まり", "spec-gap"]
+  },
+  "scoring_weights": {"title": 5, "keywords": 3, "quote": 2, "voice": 2, "fulltext": 1},
+  "lifecycle": {"split_threshold_lines": 500, "split_threshold_entries": 25},
+  "usage_log": "usage-log.jsonl",
+  "_comment": "usage_log (usage-log.jsonl) は初回 record_usage.py 実行時に lazy 生成される。ファイル不在は未使用の正常状態。",
+  "consult_at": ["runtime"],
+  "consult_note": "run-plugin-dev-plan (--mode update 含む) が次 cycle の計画時に search_knowledge.py --dir plugins/plugin-dev-planner/knowledge/ で検索し、task spec の knowledge_refs (C19: source_ref/freshness/decision 付き有界再利用) の蒸留元として使う。書込は harness-creator TG-C08 が add_entry.py 経由で行う (planner 自身は追記しない)。"
+}

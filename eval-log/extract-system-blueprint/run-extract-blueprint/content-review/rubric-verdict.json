@@ -1,0 +1,38 @@
+{
+  "target": {
+    "plugin": "extract-system-blueprint",
+    "skill": "run-extract-blueprint",
+    "skill_md_sha256": "8cbd0f7a33a8a4c8d8304f2a766385341a74a0b84bc2347734851e433996cb5e"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator-independent-extract-contract",
+  "reviewed_at": "2026-07-12T01:02:38Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "skill-design 1.3.0 を L0→L2 deep-merge で再採点し100/100、threshold=80、required_fixes=0。FM/BD/NM/PD/RG と適用対象の PG/BND/REG を独立確認した。",
+      "description の2発動条件は、URLからのローカル blueprint 生成と C02 独立忠実性 verdict にそれぞれ本文内で対応する。Purpose & Output Contract、Gotchas、300行以内、references/resource-map、prompt/manifest/schema 参照も充足する。",
+      "R1-fetch Layer 3.2 が明示する WebFetch は現在の allowed-tools に含まれ、strict prompt/tool contract lint でも許可ツール集合の部分集合条件を満たす。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "rubric_id=skill-design、rubric_version=1.3.0、rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9。score=100/100、threshold=80。被採点物は修正せず read-only で評価した。"
+}

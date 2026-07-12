@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: before-after-split
+  required_vars: [before_title, before_item1, before_item2, before_item3, after_title, after_item1, after_item2, after_item3]
+  optional_vars: [message]
+  use_case: 横並びビフォー/アフター。導入前後の対比。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .before-bg { fill: #ffebee; stroke: #c62828; stroke-width: 2; }
+    .after-bg { fill: #e8f5e9; stroke: #2e7d32; stroke-width: 2; }
+    .title-before { font-size: 30px; font-weight: 700; fill: #b71c1c; }
+    .title-after { font-size: 30px; font-weight: 700; fill: #1b5e20; }
+    .item { font-size: 20px; fill: #222; }
+    .arrow { fill: #1976d2; }
+    .legend { font-size: 14px; fill: #555; }
+    .icon { font-size: 24px; font-weight: 700; }
+    .icon-bad { fill: #c62828; }
+    .icon-good { fill: #2e7d32; }
+  </style>
+
+  <rect x="40" y="80" width="500" height="420" rx="20" class="before-bg"/>
+  <text x="290" y="130" class="title-before" text-anchor="middle">{{before_title}}</text>
+  <text x="80" y="200" class="icon icon-bad">&#x00d7;</text>
+  <text x="120" y="220" class="item">{{before_item1}}</text>
+  <text x="80" y="280" class="icon icon-bad">&#x00d7;</text>
+  <text x="120" y="300" class="item">{{before_item2}}</text>
+  <text x="80" y="360" class="icon icon-bad">&#x00d7;</text>
+  <text x="120" y="380" class="item">{{before_item3}}</text>
+
+  <polygon points="570,260 630,290 570,320" class="arrow"/>
+  <line x1="540" y1="290" x2="580" y2="290" stroke="#1976d2" stroke-width="6"/>
+
+  <rect x="660" y="80" width="500" height="420" rx="20" class="after-bg"/>
+  <text x="910" y="130" class="title-after" text-anchor="middle">{{after_title}}</text>
+  <text x="700" y="200" class="icon icon-good">&#x2713;</text>
+  <text x="740" y="220" class="item">{{after_item1}}</text>
+  <text x="700" y="280" class="icon icon-good">&#x2713;</text>
+  <text x="740" y="300" class="item">{{after_item2}}</text>
+  <text x="700" y="360" class="icon icon-good">&#x2713;</text>
+  <text x="740" y="380" class="item">{{after_item3}}</text>
+
+  <text x="40" y="555" class="legend">凡例: 赤=現状の問題 / 緑=導入後の状態 / 青矢印=変化</text>
+  <text x="40" y="580" class="legend">言いたい一言: {{message}}</text>
+</svg>

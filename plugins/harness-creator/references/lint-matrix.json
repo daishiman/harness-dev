@@ -1,0 +1,180 @@
+{
+  "$comment": "lint 集合の単一正本 (LS-02/LS-07)。build-preflight = run-build-skill SKILL.md Step4 bash ブロック / p0-gate = run-skill-create workflow-manifest.json p0-lint.commands / ci = CI workflow の実効集合。各消費面との突合は plugins/skill-governance-lint/scripts/lint-matrix-sync.py が機械検査する。lint の追加・削除は本ファイルを先に更新し、消費面 (SKILL.md / manifest / CI) を追従させること。ci を持たない lint は ci_exclusion_reason 必須。PostToolUse hook 配線 lint (lint-capability-manifest.py) は本 matrix の 3 context (build-preflight/p0-gate/ci) のスコープ外 — hook 層で常時発火し、配線正本は .claude-plugin/plugin.json の hooks。",
+  "version": 1,
+  "consumers": {
+    "build-preflight": "plugins/harness-creator/skills/run-build-skill/SKILL.md#Step 4 の bash ブロック",
+    "p0-gate": "plugins/harness-creator/skills/run-skill-create/workflow-manifest.json#phases[id=p0-lint].commands",
+    "ci": [
+      ".github/workflows/governance-check.yml",
+      ".github/workflows/harness-creator-kit-ci.yml"
+    ]
+  },
+  "lints": [
+    {
+      "id": "skill-name",
+      "script": "lint-skill-name.py",
+      "contexts": [
+        "build-preflight",
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "skill-description",
+      "script": "lint-skill-description.py",
+      "contexts": [
+        "build-preflight",
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "skill-tree",
+      "script": "lint-skill-tree.py",
+      "contexts": [
+        "build-preflight",
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "frontmatter",
+      "script": "validate-frontmatter.py",
+      "contexts": [
+        "build-preflight",
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "script-frontmatter",
+      "script": "lint-script-frontmatter.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ],
+      "ci_scope": "governance-check.yml で plugins/harness-creator/scripts (plugin-root 直下 scripts) を CI 配線し、メタプラグイン自身の flow-level scripts の frontmatter 自己免除を解消 (dogfooding 破れの中核=compute-dogfooding-metrics.py/notion_config.py を封鎖)。plugins/harness-creator/skills/*/scripts と full plugins/ tree は既存 backlog (PENDING_FILES + hook scripts 等 16 本) で未配線=段階棚卸し後に拡張する。build-preflight は従来どおり新規生成物を強制。"
+    },
+    {
+      "id": "skill-completeness",
+      "script": "lint-skill-completeness.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "goal-seek",
+      "script": "lint-goal-seek.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "feedback-contract",
+      "script": "lint-feedback-contract.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "ssot-duplication",
+      "script": "lint-ssot-duplication.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "knowledge-loop",
+      "script": "lint-knowledge-loop.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "build-trace",
+      "script": "validate-build-trace.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "readme-portability",
+      "script": "lint-readme-plugin-root-portability.py",
+      "contexts": [
+        "build-preflight",
+        "ci"
+      ]
+    },
+    {
+      "id": "dependency-direction",
+      "script": "lint-dependency-direction.py",
+      "contexts": [
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "dep-step7",
+      "script": "lint-skill-dep-step7.py",
+      "contexts": [
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "forbidden-deps",
+      "script": "lint-forbidden-deps.py",
+      "contexts": [
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "manifest-contents",
+      "script": "lint-manifest-contents.py",
+      "contexts": [
+        "p0-gate",
+        "ci"
+      ]
+    },
+    {
+      "id": "build-plan",
+      "script": "validate-build-plan.py",
+      "contexts": [
+        "build-preflight",
+        "p0-gate"
+      ],
+      "ci_exclusion_reason": "入力の skill-brief.json が build 実行時 (eval-log/) にのみ存在するため CI 一括適用は不可。量産経路では build-preflight と p0-gate の2面で強制され、brief 不在の単発 build は NOTE 付き skip (fail-open は量産経路外に限定)"
+    },
+    {
+      "id": "capability-graph-knowledge",
+      "script": "lint-capability-graph-knowledge.py",
+      "contexts": [
+        "build-preflight"
+      ],
+      "ci_exclusion_reason": "engine:task-graph を concrete 宣言した生成 harness のみに適用され (非 task-graph は not-applicable exit0)、固定の governance 対象を持たない。入力が build 実行時の生成物 (eval-log/ 配下の生成 SKILL.md) であり CI 一括適用の固定対象が無いため build-preflight でのみ強制する (ENG-C06/ENG-C07 同梱・各 surface consult token・knowledge entry source_ref 検査・ENG-C08)"
+    },
+    {
+      "id": "prompt-placement",
+      "script": "lint-prompt-placement.py",
+      "contexts": [
+        "ci"
+      ],
+      "ci_scope": "harness-creator-kit-ci.yml で `python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py` (引数なし・repo-root cwd)。加えて contract-generator.yml でも `python3 ../harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py` (working-directory: plugins/contract-generator) で消費。prompts/=7層SSOT・agents/=薄アダプタの配置逆転を検査。repo 全走査型で生成物単体 gate ではないため build-preflight/p0-gate は対象外。"
+    },
+    {
+      "id": "agent-prompt-content",
+      "script": "lint-agent-prompt-content.py",
+      "contexts": [
+        "ci"
+      ],
+      "ci_scope": "harness-creator-kit-ci.yml で 3 呼出: `python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --check-vendor-parity` / `--mode agent` / `--mode prompt` (いずれも repo-root cwd)。agents/*.md と skills/*/prompts/*.md の本文 7 層 (l5-contract v2.0.0) 準拠を repo 走査で検査 (scanned=0 は floor guard で exit1)。生成直後の fail-closed ゲートは trace の prompt_provenance.content_lint (route C09) が担うため build-preflight/p0-gate は対象外。"
+    }
+  ]
+}

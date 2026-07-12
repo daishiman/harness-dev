@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/knowledge-skeleton/router-registry/entry.schema.json",
+  "title": "KnowledgeEntry",
+  "description": "Router-Registry型 ナレッジエントリの JSON Schema。必須6フィールドを定義する。",
+  "type": "object",
+  "required": ["id", "background", "keywords", "source"],
+  "oneOf": [
+    {"required": ["title"]},
+    {"required": ["content"]}
+  ],
+  "dependencies": {
+    "title": {
+      "oneOf": [
+        {"required": ["intent"]},
+        {"required": ["purpose"]}
+      ]
+    },
+    "content": {
+      "oneOf": [
+        {"required": ["intent"]},
+        {"required": ["purpose"]}
+      ]
+    }
+  },
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "一意識別子。{category}_{3桁連番} または {PREFIX}-{3桁連番} 形式。",
+      "pattern": "^[a-z][a-z0-9_-]*_[0-9]{3}$|^[A-Z][A-Z0-9-]*-[0-9]{3}$"
+    },
+    "title": {
+      "type": "string",
+      "description": "知識の核心。主語+動詞+目的語の1文。",
+      "minLength": 5
+    },
+    "content": {
+      "type": "string",
+      "description": "知識の核心 (title の代替)。",
+      "minLength": 5
+    },
+    "intent": {
+      "type": "string",
+      "description": "この知識の目的。「〜すること」「〜を防ぐこと」の形。",
+      "minLength": 5
+    },
+    "purpose": {
+      "type": "string",
+      "description": "この知識の目的 (intent の代替)。",
+      "minLength": 5
+    },
+    "background": {
+      "type": "string",
+      "description": "この知識が生まれた背景・状況。業種・規模・数値を含む2〜5文。",
+      "minLength": 10
+    },
+    "keywords": {
+      "type": "array",
+      "description": "検索タグ。悩みワード+同義語+上位語で5〜8語推奨。",
+      "items": {"type": "string"},
+      "minItems": 3
+    },
+    "tags": {
+      "type": "array",
+      "description": "検索タグ (keywords の代替)。",
+      "items": {"type": "string"},
+      "minItems": 3
+    },
+    "source": {
+      "description": "出典情報。",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "required": ["file", "type"],
+          "properties": {
+            "file": {"type": "string"},
+            "type": {"type": "string"},
+            "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+            "section": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "message": {"type": "string"},
+    "root_cause": {"type": "string"},
+    "expected_outcome": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+    "achievable": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+    "how_to_use": {"type": "string"},
+    "applications": {"type": "string"},
+    "future": {"type": "string"},
+    "related_items": {"type": "array", "items": {"type": "string"}},
+    "related": {"type": "array", "items": {"type": "string"}},
+    "output_types": {"type": "array", "items": {"type": "string"}},
+    "action_items": {"type": "array", "items": {"type": "string"}},
+    "status": {
+      "type": "string",
+      "enum": ["pending", "processed", "needs-update", "deprecated"]
+    },
+    "deprecated_reason": {"type": "string"},
+    "deprecated_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "quote": {"type": "array", "items": {"type": "string"}},
+    "expressions": {"type": "array", "items": {"type": "string"}},
+    "voice": {"type": "string"}
+  },
+  "additionalProperties": true
+}

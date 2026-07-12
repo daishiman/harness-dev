@@ -1,0 +1,37 @@
+{
+  "run_id": "20260624T050851Z",
+  "target": {"plugin": "skill-creator", "skill": "run-build-skill", "scope_mode": "plugin"},
+  "subject": "メタスキルが量産先 loop-kind スキルへ評価基準(feedback_contract)+評価/改善ループを毎回・自動で焼き込む機構の elegance/正しさ検証",
+  "thought_method_coverage": {
+    "total": 30,
+    "used": [
+      "批判的思考","演繹思考","帰納的思考","アブダクション","垂直思考","要素分解","MECE","2軸思考","プロセス思考","why思考",
+      "メタ思考","抽象化思考","ダブル・ループ思考","ブレインストーミング","水平思考","逆説思考","類推思考","if思考","素人思考",
+      "システム思考","因果関係分析","因果ループ","トレードオン思考","プラスサム思考","価値提案思考","戦略的思考","改善思考","仮説思考","論点思考","KJ法"
+    ],
+    "skipped_with_reason": []
+  },
+  "paradigm_findings": [
+    {"id": "SS2/LS1", "thought_method": "依存関係分析", "severity": "dependency_break", "location": "templates/{run,wrap,delegate}.md vs scripts/render-combinators.py:FEEDBACK_CONTRACT_SECTION", "claim": "評価・改善ループ契約節が template 直書き(template モード)と combinator 定数(atomic モード)の2経路に並存し、template 側が末尾2文(未達時/超過時)を欠く実ドリフト。両経路は各 COMPOSER_MODE で load-bearing。", "auto_fixable": true, "resolution": "fixed", "fix": "templates 3種の節を combinator 定数と一致させ、tests/test_feedback_contract_parity.py で文面一致を fail-closed 化"},
+    {"id": "LS4/SS-kind", "thought_method": "アブダクション", "severity": "inconsistency", "location": "scripts/lint-feedback-contract.py:82 vs scripts/lint-content-review.py:80", "claim": "kind 抽出正規表現が2 lint で乖離(片方のみ末尾コメント許容)。kind: run # ... が一方で None 誤判定し criteria 突合が崩れる潜在バグ。", "auto_fixable": true, "resolution": "fixed", "fix": "feedback_contract_ssot.read_kind に単一実装を集約し両 lint が委譲。広い正規表現(ハイフン+末尾コメント許容)に統一"},
+    {"id": "LS5", "thought_method": "垂直思考", "severity": "contradiction", "location": "references/content-review-protocol.md:87 vs lint-content-review._expected_criteria_ids / SKILL.md:221", "claim": "protocol.md は criteria 正本=trace と記すが、コードと SKILL.md は frontmatter 正本。doc が旧仕様で矛盾。", "auto_fixable": true, "resolution": "fixed", "fix": "protocol.md:87 を frontmatter 正本(trace=後方互換 fallback)へ修正"},
+    {"id": "MD2/SS4/LS10/SS10", "thought_method": "抽象化思考", "severity": "smell", "location": "scripts/render-frontmatter.py:_feedback_contract_mapping fallback", "claim": "brief 非導出時の fallback criteria が全 skill で skill名/goal を差し替えただけの同語反復に堕し、per-skill 評価基準の主張と乖離(Goodhart)。lint は存在のみ検査し内容の per-skill 性を非検査。", "auto_fixable": true, "resolution": "fixed", "fix": "fallback 文面正本を feedback_contract_ssot に集約(is_fallback_text)。lint-feedback-contract が fallback 残存を WARN 可視化。実測で 32 backfill 済は全て非 fallback を確認"},
+    {"id": "MD1/MD3/SS1/SS8", "thought_method": "因果ループ", "severity": "smell", "location": "lint-content-review._check_verdict / check-review-trigger Stop hook", "claim": "焼き込み→criteria_evaluated 突合→改善→再評価の閉ループは実在し開ループでない(PASS finding)。価値は届いている。", "auto_fixable": false, "resolution": "confirmed_pass", "fix": "現状維持(裏取り済)"},
+    {"id": "SS7", "thought_method": "プラスサム思考", "severity": "smell", "location": "scripts/validate-build-trace.py:_validate_feedback_contract", "claim": "FC を import しつつ criteria 検査の一部を独自再実装(完全委譲でない)。3者ミラー単一SSOT化の残課題。", "auto_fixable": false, "resolution": "followup", "fix": "validate-build-trace を FC.validate_criteria への薄いアダプタへ統合(follow-up)"},
+    {"id": "SS3", "thought_method": "システム思考", "severity": "smell", "location": "render-combinators.py:497,503 (共有アンカー)", "claim": "with-knowledge と with-feedback-contract が同一アンカー'## 主要ルール'を共有。冪等ガードで決定論だが脆い。", "auto_fixable": false, "resolution": "followup", "fix": "専用アンカー化(follow-up)。現状は決定論で実害なし"},
+    {"id": "SS6/LS2/LS8", "thought_method": "トレードオン思考", "severity": "smell", "location": "render-combinators.py:FEEDBACK_CONTRACT_KINDS / --no-goal-seek 非対称", "claim": "feedback_contract は --no-feedback-contract opt-out を持たず goal-seek と非対称。命名 feedback_contract と feedback-loop が近く混同しやすい。", "auto_fixable": false, "resolution": "followup", "fix": "opt-out 追加と命名整理(follow-up)。default-ON 強制は機構保証の便益が上回り現状妥当"},
+    {"id": "MD8", "thought_method": "ブレインストーミング", "severity": "smell", "location": "content-review-protocol.md:26 / amplified-patterns.json", "claim": "正フィードバック(positive_feedback→amplified-patterns)横展開が宣言のみで配線実体なし。", "auto_fixable": false, "resolution": "followup", "fix": "verdict.positive_feedback を amplified-patterns へ冪等 upsert する script を追加(follow-up)"},
+    {"id": "LS6", "thought_method": "要素分解", "severity": "smell", "location": "templates id/verify_by 固定", "claim": "criteria の id/verify_by はテンプレ固定リテラルで brief から override 不可(text のみ反映)。", "auto_fixable": false, "resolution": "followup", "fix": "id/verify_by の flat var 化、または固定契約の明文化(follow-up)"},
+    {"id": "MD6/MD7", "thought_method": "類推思考", "severity": "smell", "location": "FEEDBACK_CONTRACT_SECTION の依存範囲記述", "claim": "knowledge/goal-seek の self-contained 表明と異なり、評価主体(harness)依存範囲と利用者の次アクション導線が節に未記載。", "auto_fixable": false, "resolution": "followup", "fix": "節に依存範囲(評価主体=導入元 harness)と最小次アクションを追記(follow-up)"},
+    {"id": "SS11", "thought_method": "仮説思考", "severity": "smell", "location": "feedback_contract_ssot._parse_feedback_contract_block", "claim": "yaml 非搭載時の最小パーサが ':' 含有 text で値を途中切断しうる。実害は後方互換 fallback で限定的。", "auto_fixable": false, "resolution": "followup", "fix": "CI に pyyaml 同梱を明文化、または最小パーサのクォート対応(follow-up)"}
+  ],
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "status": "complete",
+  "approver": "independent-subagent (general-purpose) APPROVE — grep+実行裏取り: pytest 20/109 passed, lint-feedback-contract/-content-review OK, make test EXIT=0, dogfood sha256 一致",
+  "notes": "fixed: SS2/LS1, LS4, LS5, MD2系(fallback検出). PASS確認: 閉ループ実在. followup(smell, PASS非阻害): SS7/SS3/SS6/MD8/LS6/MD6/MD7/SS11. proposer=改善実装context, approver=独立SubAgentで別途検証."
+}

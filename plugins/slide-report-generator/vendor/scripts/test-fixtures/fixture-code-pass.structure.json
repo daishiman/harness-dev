@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "title": "コード非画像化 PASS フィクスチャ",
+    "audience": "開発者向け技術説明",
+    "durationMinutes": 10,
+    "keyMessage": "コード系スライドは実HTMLコードブロックで描画する",
+    "schemaVersion": "8.0.0"
+  },
+  "theme": {
+    "name": "kanagawa-lotus",
+    "accentColors": ["wave-blue", "wave-aqua"]
+  },
+  "slides": [
+    {
+      "id": "slide-001",
+      "slideType": "slide-code",
+      "purpose": "P-CON",
+      "structure": "S-COD",
+      "content": {
+        "title": "純HTMLコードページ",
+        "lang": "python",
+        "code": "def add(a, b):\n    return a + b"
+      }
+    },
+    {
+      "id": "slide-002",
+      "slideType": "slide-code",
+      "purpose": "P-CON",
+      "structure": "S-COD",
+      "content": {
+        "title": "世界観背景つきコードページ",
+        "lang": "javascript",
+        "code": "const sum = (a, b) => a + b;"
+      },
+      "aiVisual": {
+        "pattern": "html-composite",
+        "textPolicy": "overlay-only",
+        "backgroundSource": "svg",
+        "styleGenome": "assets/generated/style-genome.json",
+        "overlayText": ["コードは実HTMLで描画"]
+      }
+    },
+    {
+      "id": "slide-003",
+      "slideType": "slide-code-compare",
+      "purpose": "P-CMP",
+      "structure": "S-COD",
+      "content": {
+        "title": "Before / After 比較",
+        "before": { "label": "Before", "lang": "python", "code": "x = x + 1" },
+        "after":  { "label": "After",  "lang": "python", "code": "x += 1" }
+      }
+    }
+  ]
+}

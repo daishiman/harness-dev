@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-update-notifier",
+  "skill": "run-skill-update-notifier",
+  "description": "Skill 実行末尾に最新版有無を 1 行通知する。PostToolUse(matcher=Skill) hook 経由で起動され、cache 鮮度確認は UserPromptSubmit hook が担う副作用最小ワークフロー。",
+  "phases": [
+    {
+      "id": "load-cache",
+      "step": 1,
+      "title": "version snapshot cache 読込",
+      "resourceIds": ["references/hook-wiring.md"],
+      "output_artifact": null
+    },
+    {
+      "id": "check",
+      "step": 2,
+      "title": "installed vs latest 比較",
+      "dependsOn": ["load-cache"],
+      "resourceIds": ["scripts/notifier-check.py"],
+      "output_artifact": null
+    },
+    {
+      "id": "emit",
+      "step": 3,
+      "title": "1 行通知 or no-op",
+      "dependsOn": ["check"],
+      "resourceIds": ["references/output-format.md"],
+      "output_artifact": null
+    },
+    {
+      "id": "refresh-cache",
+      "step": 4,
+      "title": "cache 更新",
+      "dependsOn": ["emit"],
+      "resourceIds": ["scripts/hook-cache-refresh.py"],
+      "output_artifact": "~/.cache/harness/version-snapshot.json"
+    }
+  ],
+  "fatal_exit_codes": []
+}

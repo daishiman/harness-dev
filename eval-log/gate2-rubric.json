@@ -1,0 +1,53 @@
+{
+  "rubric_id": "skill-intake-gate2",
+  "rubric_version": "1.0.0",
+  "description": "skill-intake v2 改修の Gate 2 合格基準を定量化。M2 切替前に本 rubric の全項目 PASS を要求する。F3 (2026-05-22) 起源。",
+  "applies_to": "plugins/skill-intake/ cross-skill-package update",
+  "pass_criteria": {
+    "evaluator_score_min": 80,
+    "evaluator_high_severity_max": 0,
+    "dogfooding_semantic_similarity_min": 0.85,
+    "dogfooding_semantic_keys_required": [
+      "purpose_slots",
+      "axes.answer",
+      "figures.one_liner",
+      "true_purpose",
+      "underlying_motivation"
+    ],
+    "schema_validation_errors_max": 0,
+    "lint_exit_codes": {
+      "lint_skill_name": 0,
+      "lint_skill_description": 0,
+      "lint_skill_tree": 0,
+      "validate_frontmatter": 0
+    },
+    "hook_self_test": "exit==0 for valid intake.json / exit==2 for invalid",
+    "newly_failing_count_max": 0
+  },
+  "regression_tolerance": {
+    "dogfooding_consecutive_fail_max": 2,
+    "rollback_trigger": "consecutive_fail >= 3 → migration-plan-v2.md §6 ロールバック発動"
+  },
+  "measurement_commands": {
+    "evaluator": "Skill(assign-skill-design-evaluator, context=fork, target=plugins/skill-intake/)",
+    "dogfooding": "python3 plugins/skill-intake/scripts/dogfooding_regression.py <generated-intake.json>",
+    "schema_validation": "python3 plugins/skill-intake/scripts/validate_intake_schema.py <intake.json>",
+    "lint": "python3 plugins/skill-governance-lint/scripts/<lint-name>.py --skills-dir plugins/skill-intake/skills/"
+  },
+  "current_status": {
+    "evaluated_at": "2026-05-22",
+    "evaluator_score": 91,
+    "high_severity_count": 0,
+    "dogfooding_pass": true,
+    "schema_validation_pass": true,
+    "hook_self_test_pass": true,
+    "verdict": "PASS"
+  },
+  "auto_retest_policy": {
+    "enabled": true,
+    "retest_command": "python3 plugins/skill-intake/scripts/ci_dogfooding_retest.py",
+    "trigger": "dogfooding_regression.py exit==1",
+    "max_retries": 1,
+    "escalation_on_retry_fail": "Gate2 BLOCK → migration_plan §6 rollback"
+  }
+}

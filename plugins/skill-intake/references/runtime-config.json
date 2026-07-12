@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0.0",
+  "description": "skill-intake パッケージの実行時固定値を1ファイルに集約。SKILL.md / scripts / SubAgent は本ファイルを変数参照する。値の散在(SKILL.md L121 / notion-db-schema.json / render_notion_page.py 等) を解消するための単一正本。",
+  "notion": {
+    "api_version": "2022-06-28",
+    "database_id_default": null,
+    "database_id_env": "SKILL_INTAKE_NOTION_DB_ID",
+    "owner": "team-platform",
+    "keychain_service": "notion-mcp-token",
+    "rate_limit_rps": 3,
+    "page_size_default": 50
+  },
+  "audience_defaults": {
+    "audience_tier_default": "novice",
+    "vocabulary_tier_default": "novice"
+  },
+  "viz": {
+    "engine": "mermaid",
+    "no_emoji": true,
+    "no_font_awesome": true,
+    "nodes_target": 7,
+    "nodes_tolerance": 2,
+    "label_max_chars_ja": 10
+  },
+  "mermaid_assignments": {
+    "0_executive_summary": [
+      "cvis-exec-summary-card"
+    ],
+    "1_assumption_challenger": [
+      "mtmpl-mindmap-surface-vs-deep"
+    ],
+    "2_user_profile": [
+      "cvis-persona-card"
+    ],
+    "3_purpose_excavator": [
+      "mtmpl-mindmap-stated-to-excavated"
+    ],
+    "4_option_presenter": [
+      "mtmpl-comparison-table"
+    ],
+    "5_visualizer": [
+      "mtmpl-flowchart-lr",
+      "mtmpl-flowchart-tb",
+      "mtmpl-sequence",
+      "mtmpl-before-after-lr",
+      "mtmpl-boundary-tb"
+    ],
+    "6_five_axes_summary": [
+      "mtmpl-comparison-table-5axes"
+    ],
+    "7_design_decisions": [
+      "mtmpl-comparison-table-adoptions"
+    ],
+    "8_open_questions": [
+      "cvis-traffic-light"
+    ],
+    "9_handoff_contract": [
+      "mtmpl-flowchart-next-action"
+    ],
+    "10_self_updater": [
+      "cvis-score-gauge"
+    ],
+    "11_artifact_index": [
+      "mtmpl-comparison-table-artifacts"
+    ]
+  },
+  "dogfooding": {
+    "baseline_intake_paths": [
+      "plugins/skill-intake/fixtures/info-collector-agent/intake.json",
+      "plugins/skill-intake/fixtures/example-data-quality-survey/intake.json",
+      "plugins/skill-intake/fixtures/example-team-onboarding/intake.json"
+    ],
+    "baseline_intake_paths_role": "T1 (LS-04 対応): N>1 fixture は schema robustness 検査用 (dogfooding_regression.py --schema-robustness)。semantic 比較は同一 fixture でしか意味を持たないため別軸。",
+    "baseline_intake_path": "plugins/skill-intake/fixtures/info-collector-agent/intake.json",
+    "baseline_intake_path_role": "info-collector-agent skill の semantic 回帰用 baseline (dogfooding_regression.py <generated.json>)",
+    "baseline_notion_payload_path": "plugins/skill-intake/fixtures/info-collector-agent/notion-payload.md",
+    "threshold_mode": "semantic_equivalence",
+    "similarity_min": 0.85,
+    "similarity_implementation": "sequence_matcher_ratio",
+    "similarity_naming_note": "T5 (F1 対応): 旧キー embedding_cosine_min は実装が SequenceMatcher.ratio() のため文字列類似度の閾値である。embedding 経由は将来 (T5 完全解消時) で導入予定。閾値値域は両実装で [0,1] と互換だが、語彙的差異への感度が異なる点を運用者は理解すること。",
+    "embedding_cosine_min": 0.85,
+    "lexical_match_keys": [
+      "section_key",
+      "required_fields",
+      "axes.axis_id",
+      "figures.kind",
+      "figures.index"
+    ],
+    "ignore_keys": [
+      "generated_at",
+      "value_realized_score"
+    ]
+  },
+  "validation": {
+    "schema_path": "plugins/skill-intake/references/intake.schema.json",
+    "canonical_map_path": "plugins/skill-intake/references/section_canonical_map.json",
+    "validator_cli": "python3 -c \"import json,jsonschema,sys; jsonschema.validate(json.load(open(sys.argv[1])), json.load(open(sys.argv[2])))\""
+  },
+  "render_path_resolution": {
+    "policy": "v2-strict",
+    "description": "v1 (section-templates.json + 6ブロック格子) は 2026-05-22 削除済み。正本は intake-final-template.md.tmpl + intake-final-schema.json + section_canonical_map.json。",
+    "primary_source": "plugins/skill-intake/references/intake-final-template.md.tmpl",
+    "schema_source": "plugins/skill-intake/references/intake-final-schema.json",
+    "canonical_map_source": "plugins/skill-intake/references/section_canonical_map.json",
+    "enforced_by": [
+      "scripts/render-intake-final.py",
+      "scripts/render_notion_page.py"
+    ]
+  },
+  "migration": {
+    "deprecated_section_keys": [
+      "7_5_knowledge_asset",
+      "0_cover_meta",
+      "9_next_action"
+    ],
+    "rename_map": {
+      "0_cover_meta": "0_executive_summary (拡張: メタ→サマリ統合)",
+      "1_purpose": "3_purpose_excavator (移設: §1→§3)",
+      "3_five_axes": "6_five_axes_summary (knowledge_asset 統合化)",
+      "7_5_knowledge_asset": "6_five_axes_summary.axes[axis_id=knowledge_asset] (廃止→$ref)",
+      "4_external_integration": "4_option_presenter.connectors (統合)",
+      "5_expected_flow": "4_option_presenter.scheduler + 5_visualizer.fig3_pipeline (分割移譲)",
+      "6_value_kpi": "0_executive_summary.value_realized_score + 10_self_updater (分割移譲)",
+      "7_similar_skills": "4_option_presenter.decision_tables[axis=責務境界] (統合)",
+      "8_open_questions": "8_open_questions (継続)",
+      "9_next_action": "9_handoff_contract (改名・契約強化)",
+      "10_appendix_vocabulary": "2_user_profile.vocabulary_tier + section_canonical_map.policies (分割移譲)"
+    },
+    "new_sections": [
+      "0_executive_summary",
+      "1_assumption_challenger",
+      "5_visualizer (図5枚固定)",
+      "7_design_decisions",
+      "9_handoff_contract",
+      "10_self_updater",
+      "11_artifact_index"
+    ],
+    "source_of_truth_shift": "section-templates.json (v1) → section_canonical_map.json (v2) + intake.schema.json. v1 は派生扱い、render_notion_page.py は v2 を直接参照する。"
+  }
+}

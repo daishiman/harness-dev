@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  template: numbered-steps
+  required_vars: [title, step1, step2, step3]
+  optional_vars: [step4, step5, step6, step7, message]
+  use_case: IKEA説明書風の番号付き手順。最大7ステップ。
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, 'Hiragino Sans', sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0d47a1; }
+    .num { font-size: 36px; font-weight: 800; fill: #fff; }
+    .label { font-size: 18px; fill: #0d47a1; }
+    .legend { font-size: 14px; fill: #555; }
+    .step-circle { fill: #1976d2; stroke: #0d47a1; stroke-width: 2; }
+    .arrow { stroke: #1976d2; stroke-width: 3; fill: none; marker-end: url(#arr); }
+  </style>
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1976d2"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="50" class="title">{{title}}</text>
+
+  <g transform="translate(60,150)">
+    <circle cx="60" cy="60" r="50" class="step-circle"/>
+    <text x="60" y="74" class="num" text-anchor="middle">1</text>
+    <text x="60" y="160" class="label" text-anchor="middle">{{step1}}</text>
+  </g>
+  <line x1="180" y1="210" x2="280" y2="210" class="arrow"/>
+
+  <g transform="translate(280,150)">
+    <circle cx="60" cy="60" r="50" class="step-circle"/>
+    <text x="60" y="74" class="num" text-anchor="middle">2</text>
+    <text x="60" y="160" class="label" text-anchor="middle">{{step2}}</text>
+  </g>
+  <line x1="400" y1="210" x2="500" y2="210" class="arrow"/>
+
+  <g transform="translate(500,150)">
+    <circle cx="60" cy="60" r="50" class="step-circle"/>
+    <text x="60" y="74" class="num" text-anchor="middle">3</text>
+    <text x="60" y="160" class="label" text-anchor="middle">{{step3}}</text>
+  </g>
+  <line x1="620" y1="210" x2="720" y2="210" class="arrow"/>
+
+  <g transform="translate(720,150)">
+    <circle cx="60" cy="60" r="50" class="step-circle"/>
+    <text x="60" y="74" class="num" text-anchor="middle">4</text>
+    <text x="60" y="160" class="label" text-anchor="middle">{{step4}}</text>
+  </g>
+  <line x1="840" y1="210" x2="940" y2="210" class="arrow"/>
+
+  <g transform="translate(940,150)">
+    <circle cx="60" cy="60" r="50" class="step-circle"/>
+    <text x="60" y="74" class="num" text-anchor="middle">5</text>
+    <text x="60" y="160" class="label" text-anchor="middle">{{step5}}</text>
+  </g>
+
+  <text x="40" y="500" class="legend">凡例: 青=進行中の手順 / 矢印=次へ</text>
+  <text x="40" y="530" class="legend">言いたい一言: {{message}}</text>
+</svg>

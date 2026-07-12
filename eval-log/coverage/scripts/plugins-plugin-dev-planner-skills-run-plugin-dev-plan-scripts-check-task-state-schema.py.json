@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-task-state-schema.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。task-state.json の C16 schema 整合 + graph_hash pin 整合を手書き検査。条件付き必須 (running→lease / blocked→blocked_reason) + 永続 state 4値 (computed-only の ready を fail-closed 拒否) + graph_hash pin 再計算照合。consumer C07 が pin 検証 subprocess として消費。TESTS: test_check_task_state_schema.py 22 PASS。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

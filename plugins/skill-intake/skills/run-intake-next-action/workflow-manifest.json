@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-intake-next-action",
+  "skill": "run-intake-next-action",
+  "description": "summary/purpose/options/kickoff から引き渡しモード A-E (harness-creator) / P (plugin-dev-planner) を決定論的に確定し next-action.json を出力する。",
+  "phases": [
+    {
+      "id": "P1-load",
+      "step": 1,
+      "title": "summary/purpose/options/kickoff 4 JSON を読込",
+      "gate": "C1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-mode-catalog"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P2-mode-decide",
+      "step": 2,
+      "title": "mode-catalog.md の判定表でモード確定 (決定論)",
+      "gate": "C2",
+      "dependsOn": ["P1-load"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["ref-mode-catalog", "ref-pattern-rules"],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P3-confirm-if-diff",
+      "step": 3,
+      "title": "Phase 1 暫定 pattern と異なる場合のみ AskUserQuestion で確認",
+      "gate": "C3",
+      "dependsOn": ["P2-mode-decide"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [2]
+    },
+    {
+      "id": "P4-emit",
+      "step": 4,
+      "title": "next-action.json 生成と schema 検証",
+      "gate": "C4",
+      "dependsOn": ["P3-confirm-if-diff"],
+      "entryHook": null,
+      "exitHook": "validate-next-action",
+      "resourceIds": ["schema-next-action"],
+      "fatal_exit_codes": [2, 3]
+    }
+  ],
+  "resources": [
+    {"id": "ref-mode-catalog", "kind": "reference", "path": "./references/mode-catalog.md", "phaseIds": ["P1-load", "P2-mode-decide"]},
+    {"id": "ref-pattern-rules", "kind": "reference", "path": "./references/pattern-recognition-rules-pointer.md", "phaseIds": ["P2-mode-decide"]},
+    {"id": "schema-next-action", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P4-emit"]}
+  ]
+}

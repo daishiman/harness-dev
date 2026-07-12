@@ -1,0 +1,309 @@
+name: Plugin Governance CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - dev
+      - feature/**
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # macos-latest の system python3 は PEP 668 で externally-managed のため
+      # 素の `pip install` が exit 1 で落ちる (CI が pytest install 段階で腐る)。
+      # setup-python で分離された解釈系を用意し pip install を健全化する。
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile migrated Python scripts
+        run: |
+          find scripts plugins -type f -name '*.py' -print0 | xargs -0 python3 -m py_compile
+
+      # 機械保証 (hook-guard-skillgen 等) の振る舞いを回帰検証する。
+      # これが無いと tests/ のテストは一度も実行されず保証が無言で腐る (F-HYP-01)。
+      # 依存は requirements-dev.txt 一枚を SSOT に install する (per-plugin step と同一)。
+      # `pip install pytest` 単体だと PyYAML / jsonschema 不在で frontmatter / schema を
+      # 読むテストが ImportError 相当で落ちる (criteria / company-master / mf-kessai 等)。
+      # repo-root の tests/ は全 plugin を単一プロセスで回すため、同名 bare-import モジュール
+      # (notion_config 等) の sys.modules 衝突を tests/conftest.py の pytest_collectstart で
+      # 退避して順序非依存にしてある (本番は各 plugin 単独実行なので無害な harness 限定の分離)。
+      - name: Run behavior tests (pytest)
+        run: |
+          python3 -m pip install --quiet -r requirements-dev.txt
+          # plugins/skill-governance-lint/tests/ は lint fail-open 修復 (MD-208/LS-211/LS-215) の
+          # 回帰保証。repo-root tests/ のみだと governance-lint の保証が無言で腐る。
+          python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q
+
+      # rubric 正本(L0)-派生(L2) の版ずれ検出。2026-05-24 に「チェックリスト化のみで
+      # 実体未配線」のまま腐り drift (1.3.0 vs 1.2.0) が素通りした前例の再発防止 (SS-205/SS-213)。
+      - name: Check rubric L0/L2 sync (check-rubric-sync)
+        run: python3 plugins/skill-governance-lint/scripts/check-rubric-sync.py
+
+      # LS-215: governance lint scripts 自身の削除済み root (creator-kit) 残存参照を fail-closed 検出
+      - name: Lint stale root refs in governance scripts
+        run: python3 plugins/skill-governance-lint/scripts/lint-path-canonical.py --scripts-dir plugins/skill-governance-lint/scripts
+
+      # plugin 配下のテストを CI で実行する。repo-root の `pytest tests/` は plugin
+      # 配下を収集しないため、これが無いと plugin の回帰テスト (例: mf-kessai-invoice-check
+      # の 41 件) が一度も走らず無言で腐る。収集対象は固定 glob ではなく
+      # `plugins/**/test_*.py` / `plugins/**/*_test.py` の全ファイル:
+      #   - plugins/<plugin>/tests
+      #   - plugins/<plugin>/skills/<skill>/tests
+      #   - plugins/<plugin>/scripts/tests
+      #   - plugins/<plugin>/hooks/tests
+      #   - plugins/<plugin>/scripts/test_*.py
+      #   - plugins/<plugin>/hooks/*_test.py
+      #   - その他、plugin 配下に co-locate されたテストファイル
+      # tests/ 配下のファイルは tests/ の親ディレクトリへ cd して `pytest tests/...`。
+      # tests/ 外に co-locate されたファイルはそのファイルの親ディレクトリへ cd して
+      # `pytest <file>`。これにより plugin/skill/script/hook それぞれの pytest.ini /
+      # conftest / 相対 import を拾える。dev 依存は requirements-dev.txt 一枚を SSOT に install。
+      - name: Run plugin behavior tests (pytest, per-plugin)
+        run: |
+          python3 -m pip install --quiet -r requirements-dev.txt
+          set -euo pipefail
+          python3 - <<'PY'
+          from __future__ import annotations
+
+          import fnmatch
+          import os
+          import subprocess
+          import sys
+          from collections import defaultdict
+          from pathlib import Path
+
+          root = Path("plugins")
+          groups: dict[Path, list[str]] = defaultdict(list)
+          skip_dirs = {".pytest_cache", "__pycache__", ".git"}
+
+          for dirpath, dirnames, filenames in os.walk(root):
+              dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+              base = Path(dirpath)
+              for filename in filenames:
+                  if not (fnmatch.fnmatch(filename, "test_*.py") or fnmatch.fnmatch(filename, "*_test.py")):
+                      continue
+                  path = base / filename
+                  parts = path.parts
+                  if "tests" in parts:
+                      idx = parts.index("tests")
+                      test_root = Path(*parts[:idx])
+                      test_arg = Path(*parts[idx:]).as_posix()
+                  else:
+                      test_root = path.parent
+                      test_arg = path.name
+                  groups[test_root].append(test_arg)
+
+          if not groups:
+              print("ERROR: no plugin test files discovered under plugins/**/{test_*.py,*_test.py}", file=sys.stderr)
+              raise SystemExit(1)
+
+          for test_root in sorted(groups):
+              args = sorted(set(groups[test_root]))
+              print(f"::group::pytest {test_root}")
+              result = subprocess.run([sys.executable, "-m", "pytest", *args, "-q"], cwd=test_root)
+              print("::endgroup::")
+              if result.returncode != 0:
+                  raise SystemExit(result.returncode)
+          PY
+
+      # elegant-review 2026-06-30 (LS-F1 / SS-02 / SS-05 が独立収束): repo 全域の全
+      # test_*.py / *_test.py が CI のテスト実行 (上の機構A `pytest tests/` + 機構B plugins/ walk)
+      # で 1 回以上到達することを fail-closed 検証する。tests/・plugins/ 以外 (scripts/・doc/・
+      # repo-root 直下・新規 top-level dir) に置かれた test の *無言未実行* を封鎖する。
+      # 探索ロジックは scripts/discover_repo_tests.py を SSOT とし、判定は到達集合への
+      # set membership (test ファイル数や coverage% とは混ぜない = Goodhart 回避)。
+      # これが無いと「新しい場所に置いた test が一度も走らず保証が無言で腐る」を検知できない。
+      - name: Verify test discovery coverage (every test reachable by CI)
+        run: python3 scripts/lint-test-discovery-coverage.py
+
+      # elegant-review 2026-06-30 (SS-01): harness-coverage spec / Makefile が約束する coverage gate を
+      # CI で実起動する。従来どの workflow も coverage-gate / validate-harness を呼ばず、spec の
+      # 「gate 配線済」記述は虚偽だった (gate が一度も走らない)。現状 7 本の新規 loop-kind skill が
+      # <80% (既存債務) のため即 blocking 化は CI を赤化させる。よって今は WARN (可視化・非ブロック) で
+      # 配線し gate を毎回走らせる。80% 絶対 gate は WARN (漸進を許す) のままだが、
+      # 現状値 floor からの回帰 (verdict/test 未添付の新規 artifact 追加による率低下) は
+      # 次 step の harness-ratchet で blocking する。これで「80% を最低条件と成文化しながら
+      # 自 CI では non-blocking」という spec↔enforcement 乖離を、赤化させずに解消する。
+      - name: Coverage gate + harness coverage (WARN; ratchet baseline)
+        run: |
+          python3 -m pip install --quiet -r requirements-dev.txt
+          make coverage-gate || echo "[WARN] coverage-gate: 新規 loop-kind に未達 skill あり (ratchet, non-blocking)"
+          make harness-coverage || echo "[WARN] harness-coverage: spec_met=false (ratchet, non-blocking)"
+      - name: Harness coverage ratchet-floor (blocking; 現状値からの回帰を止める)
+        run: make harness-ratchet
+
+      # skill-intake コアフローの契約・SSOT・パッケージ整合を CI で保証する。
+      # references/assets/schemas を plugin 直下へ移設した後の参照整合 (enum SSOT /
+      # vendored byte 一致 / PKG 契約) が無言で腐るのを防ぐ (ローカル make test と整合)。
+      - name: Verify skill-intake contracts (enum SSOT / vendored SSOT / plugin packages)
+        run: |
+          python3 scripts/contract-intake-enum-ssot.py
+          python3 scripts/lint-vendored-ssot.py
+          python3 scripts/validate-plugin-packages.py
+
+      # 単独 install ポータビリティ不変条件: runtime hook script が import-time に自 plugin
+      # 外を fail-closed 依存 (失敗時 raise) しないことを静的検査する。plugin だけを
+      # marketplace から install しても全フックが exit 0 を維持する保証を CI でガードする。
+      - name: Verify runtime hook portability (no import-time fail-closed cross-plugin dep)
+        run: python3 scripts/lint-runtime-portability.py
+
+      # 文書層ポータビリティ不変条件: marketplace 配布 plugin の README の bash/sh コード
+      # フェンス (導入者が素のターミナルへコピペしうるコマンド) に、install 位置依存で壊れる
+      # 記法 (裸 $CLAUDE_PLUGIN_ROOT の一次手順 / repo 相対 python3 plugins/<name>/... /
+      # os.environ["CLAUDE_PLUGIN_ROOT"] 添字) が無いことを静的検査する。生ターミナル空展開
+      # 事故 (mf-kessai で発生) の恒久再発防止 + company-master deferred (文書層 repo 相対
+      # コマンド検出 lint) の回収。ローカル make lint (readme-portability) と整合。
+      - name: Verify README plugin-root portability (no raw-terminal empty-expansion)
+        run: python3 scripts/lint-readme-plugin-root-portability.py
+
+      # company-master の scripts が外部依存ゼロ (空 vendor が正常) であることを機械検証する。
+      # ローカル make lint (company-master-vendored) と整合。CI 未配線だと保証が無言で腐る。
+      - name: Verify company-master vendored deps (zero external deps)
+        run: python3 scripts/lint-company-master-vendored-deps.py
+
+      # knowledge/ (JSON/JSONL 蒸留ストア) と lessons-learned/ (散文失敗ログ) の SSOT 役割分担を
+      # fail-closed 検査する。散文レッスンを knowledge/ 直下へ .md で直接置いた混在事故
+      # (2026-07-11) の恒久再発防止。lessons-index の source.file dangling・lesson 形式
+      # (命名/date frontmatter/種別別必須セクション/30 行) も同時に機械強制する。
+      - name: Verify knowledge/lessons-learned layout (SSOT role separation)
+        run: python3 scripts/lint-knowledge-layout.py
+
+      # marketplace install ポータビリティ不変条件: 任意の install 先 (cwd 非依存) で
+      # vendor/python の jinja2 等が __file__ 相対で import 解決でき、plugin が
+      # 純ソース配布 (.pyc/.so 非同梱) であることを検証する。不特定多数のユーザーが
+      # install しても手動 pip 無しで動く保証を CI でガードする。
+      - name: Verify plugin vendor portability (cwd-independent import + pure-source)
+        run: python3 plugins/skill-intake/scripts/validate-plugin-vendor.py
+
+      - name: Verify manifest inventory
+        run: |
+          python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py
+          python3 plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py
+
+      # G-A3 gate: plugins/*/{skills,agents,commands}/ と .claude/ の drift をゼロに保証する
+      - name: Verify plugin symlink sync
+        run: bash scripts/sync-skills-to-claude.sh --check
+
+      # G-A4 gate: Phase 2 後の script 参照整合を保証する
+      - name: Verify script references
+        run: bash scripts/check-scripts-drift.sh
+
+      - name: Verify forbidden dependencies
+        run: python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py
+
+      - name: Audit committed secrets
+        run: python3 plugins/skill-governance-secrets/scripts/secrets/audit_secret_leak.py
+
+      # P0-2: 300行 cap + resource-map.yaml チェック (全 Skill 一括)
+      - name: Lint Skill tree (300-line cap + resource-map check)
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir plugins/harness-creator/skills
+
+      # P0-3 / P1-1: frontmatter フィールド検証 (effect フィールド含む)
+      - name: Validate frontmatter
+        run: |
+          for skill_dir in plugins/harness-creator/skills/*/; do
+            python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py "${skill_dir}SKILL.md"
+          done
+
+      # P0-3: description lint (統一版)
+      - name: Lint Skill descriptions
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py \
+               --skills-dir plugins/harness-creator/skills
+
+      # plugin lint 被覆メタ検査: marketplace 登録 plugin (実体 skill 所有) が
+      # name/description/frontmatter lint の --skills-dir 対象に配線済みかを検査。
+      # per-plugin 手書き配線の追加忘れ (新 plugin 追加時の被覆漏れ) をここで fail させる。
+      - name: Lint plugin lint coverage (meta-check for new plugin wiring)
+        run: python3 scripts/lint-plugin-lint-coverage.py
+
+      - name: Lint doc/20 dependency contract
+        run: python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/harness-creator/skills
+
+      # prompt-placement-convention.md 準拠を機械検証 (SSOT: validate-build-trace.py LAYER_YAML_PATH_PATTERNS)
+      - name: Lint prompt placement (skill-local-v1 regex)
+        run: python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py
+
+      # C02 (harness-prompt-conformance): agents/*.md (frontmatter=plugin YAML + 本文7層) と
+      # skills/*/prompts/*.md (純粋7層) の本文が l5-contract v2.0.0 準拠かを検証する内容 lint。
+      # 配置 lint (上の lint-prompt-placement.py) とは直交する。C09 が生成直後 fail-closed ゲートとして
+      # 配線するのに加え、CI で harness-creator 配下走査 (agents 6本 + 自前 prompts 全数。symlink は
+      # 除外し所有元 plugin が各自 lint する) しバイパス不能性を担保する。scanned=0 は floor guard で exit1。
+      - name: Lint agent prompt content vendor parity (C02 vendored verify-completeness byte 一致)
+        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --check-vendor-parity
+      - name: Lint agent prompt content --mode agent (SubAgent 本文7層準拠)
+        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode agent
+      - name: Lint agent prompt content --mode prompt (skill prompts 本文7層準拠)
+        run: python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode prompt
+
+      # G-D1: 既存skill群の回帰smoke test (現状 warn-only、ベースライン整備後に blocking 化)
+      - name: Skill fixture runner (regression smoke)
+        run: python3 scripts/skill-fixture-runner.py || true
+
+
+      # C-3: golden fixture frontmatter diff 検証 (LLM非決定性を避けるため frontmatter のみ比較)
+      - name: Golden fixture frontmatter diff (run-skill-create, assign-skill-design-evaluator)
+        run: |
+          python3 - << 'INNEREOF'
+          import json, sys
+          from pathlib import Path
+
+          ROOT = Path(".")
+          FIXTURE_DIR = ROOT / "eval-log" / "fixtures"
+          SKILLS_DIR = ROOT / "plugins" / "harness-creator" / "skills"
+          GOLDEN_SKILLS = ["run-skill-create", "assign-skill-design-evaluator"]
+          errors = []
+
+          def extract_frontmatter(skill_md):
+              text = skill_md.read_text(encoding="utf-8")
+              if not text.startswith("---"):
+                  return {}
+              end = text.index("---", 3)
+              fm_text = text[3:end].strip()
+              fields = {}
+              for line in fm_text.splitlines():
+                  if ":" in line and not line.startswith(" ") and not line.startswith("-"):
+                      key, _, val = line.partition(":")
+                      fields[key.strip()] = val.strip()
+              return fields
+
+          for skill in GOLDEN_SKILLS:
+              golden_path = FIXTURE_DIR / f"{skill}.golden.json"
+              skill_md = SKILLS_DIR / skill / "SKILL.md"
+              if not golden_path.exists():
+                  print(f"SKIP {skill}: no golden fixture")
+                  continue
+              if not skill_md.exists():
+                  errors.append(f"MISSING {skill}: SKILL.md not found")
+                  continue
+              golden = json.loads(golden_path.read_text())
+              expected = golden.get("frontmatter", {})
+              actual = extract_frontmatter(skill_md)
+              # 比較: expected の各フィールドが actual に存在するか
+              missing = {k: v for k, v in expected.items() if k not in actual}
+              changed = {k: (expected[k], actual[k]) for k in expected if k in actual and expected[k] != actual[k]}
+              if missing:
+                  errors.append(f"{skill}: missing frontmatter keys: {list(missing.keys())}")
+              if changed:
+                  for k, (exp, act) in changed.items():
+                      print(f"  DIFF {skill}.{k}: expected={exp!r} actual={act!r}")
+              if not missing and not changed:
+                  print(f"OK {skill}: frontmatter matches golden fixture")
+
+          if errors:
+              for e in errors:
+                  print(f"ERROR: {e}", file=__import__("sys").stderr)
+              sys.exit(1)
+          INNEREOF
+      # P1-4: rubric bump 再評価 (notification 用途、exit 0 固定)
+      - name: Re-evaluate on rubric bump (notification only)
+        run: |
+          python3 plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py \
+            --skills-dir plugins/harness-creator/skills 2>&1 || true
+          echo "re-evaluate-on-rubric-bump completed (non-blocking)"

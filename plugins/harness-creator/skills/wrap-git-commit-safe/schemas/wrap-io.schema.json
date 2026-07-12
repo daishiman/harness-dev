@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/wrap-git-commit-safe/wrap-io.schema.json",
+  "title": "wrap-git-commit-safe I/O",
+  "type": "object",
+  "required": ["input", "output"],
+  "additionalProperties": false,
+  "properties": {
+    "input": {
+      "type": "object",
+      "required": ["staged_files", "commit_message"],
+      "additionalProperties": false,
+      "properties": {
+        "staged_files": {"type": "array", "items": {"type": "string"}},
+        "commit_message": {"type": "string"},
+        "allow_no_verify": {"type": "boolean", "default": false}
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {"type": "string", "enum": ["committed", "aborted-secret", "aborted-hook-bypass", "skipped"]},
+        "commit_sha": {"type": ["string", "null"]},
+        "scan_findings": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  }
+}

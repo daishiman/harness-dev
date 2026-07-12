@@ -1,0 +1,1089 @@
+{
+ "version": 1,
+ "target": {
+  "type": "custom",
+  "path": "plugin-plans/harness-prompt-conformance/ -> plugins/harness-creator/ (+prompt-creator) build 反映完全性検証",
+  "reviewed_at": "2026-07-05T12:00:00+09:00"
+ },
+ "loop_count": 1,
+ "paradigm_findings": [
+  {
+   "paradigm_id": 1,
+   "paradigm_name": "critical",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json:5 と eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json:5 は skill_md_sha256=2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7 を記録し、reviewed_at はいずれも 2026-07-02T22:00:00+09:00 (rubric-verdict.json:17)。reviewer は改名レビュー時の subagent で、verdict 本文に C02/prompt_provenance への言及が皆無 (旧本文の採点)。",
+    "plugins/harness-creator/skills/run-build-skill/SKILL.md:201 (C02 内容 lint 配線) と SKILL.md:245 (prompt_provenance 節) は本 build (07-05) 新設の記述であり、契約正本 plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md:3 の追従日も 2026-07-05。git status でも当該 SKILL.md は M (未コミット変更)。よって 07-02 記録 sha が現本文 sha と一致する可能性は事実上ない。",
+    "scripts/lint-content-review.py:130-131 は recorded_sha != current_sha を stale-sha として fail-closed 検出し、.github/workflows/governance-check.yml:35 が --all で毎回実行する。",
+    "C01 側 (prompt-creator/run-prompt-creator-7layer) は Grep で subagent-hybrid-format 参照が references/resource-map.yaml:15 のみで SKILL.md 非変更の見込みのため、同 skill の verdict sha は有効と推定 (最終確認は shasum 実測を推奨)。"
+   ],
+   "issues": [
+    {
+     "condition": "C1",
+     "condition_signal": "contradiction",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "component-inventory.json:297 は C09 に content_review {verdict:PASS, sha_match:true} を宣言するが、run-build-skill の両 verdict は 07-02 の旧本文 sha のまま再生成されておらず sha_match は現時点で false。push すると governance-check の lint-content-review --all が stale-sha で FAIL する。plugin-plans/harness-prompt-conformance/build-evidence.md:49-68 のゲート表にも lint-content-review が含まれず、この宣言ゲートは未実施のまま完了主張されている。",
+     "recommended_intervention": "run-build-skill (更新後 SKILL.md) に対し content-review (elegance+rubric) を再実行して新 sha で verdict を再生成し、build-evidence.md のゲート表に lint-content-review --all の結果を追記する。",
+     "location": {
+      "file": "eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json",
+      "line": 5
+     },
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.9,
+   "paradigm_name_ja": "批判的思考"
+  },
+  {
+   "paradigm_id": 2,
+   "paradigm_name": "deduction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "C02 宣言→実装の演繹照合: exit_codes 宣言 (component-inventory.json:82 の 0/1/2) は plugins/harness-creator/scripts/lint-agent-prompt-content.py:203-211,261 と一致。network:false / write_scope:none / stdlib_only (component-inventory.json:83-85) も import 構成 (argparse/re/subprocess/sys/pathlib のみ、lint-agent-prompt-content.py:36-40) と書込ゼロで成立。",
+    "inputs 宣言 (component-inventory.json:80) は \"[--plugins-dir plugins]\" と repo 親ディレクトリ指定を示唆するが、実装既定は plugins/harness-creator 単一 plugin root (lint-agent-prompt-content.py:242-246) で、collect_targets (lint-agent-prompt-content.py:136-156) は <dir>/agents・<dir>/skills を見る。宣言どおり plugins を渡すと scanned=0 の空振り OK (vacuous pass) になる。",
+    "component-inventory.json:315 (harness_eval note) と .github/workflows/harness-creator-kit-ci.yml:229 は『repo 全体走査』と表現するが、実 CI step (harness-creator-kit-ci.yml:233,235) は既定値=harness-creator のみを走査する。",
+    "--self-test (lint-agent-prompt-content.py:248) は inventory inputs 未宣言のスーパーセット (無害)。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "inconsistency",
+     "severity": "low",
+     "bucket": "schema",
+     "description": "C02 の --plugins-dir 引数意味論 (単一 plugin root) と inventory の使用例 (plugins 親ディレクトリ) が齟齬し、宣言どおりに実行すると scanned=0 の空振り合格が起こり得る。『repo 全体走査』という note/CI コメント表現も実走査範囲 (所有 plugin のみ) より過大。",
+     "recommended_intervention": "component-inventory.json:80 の使用例を [--plugins-dir <plugin-root>] へ是正し、『repo 全体走査』表現を『所有プラグイン全走査』へ修正する。scanned=0 を exit1 とする fail-closed 化は挙動変更を伴うため別途判断。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 80
+     },
+     "auto_fixable": true
+    }
+   ],
+   "score": 0.6,
+   "paradigm_name_ja": "演繹思考"
+  },
+  {
+   "paradigm_id": 3,
+   "paradigm_name": "induction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "過去 build 群の共通 pattern: run-build-skill 経由 build は skill-build-trace.json を eval-log に残す (規約の実例 eval-log/skill-build-trace.json:2 = 旧 run-company-master-build の trace)。Glob eval-log/**/skill-build-trace.json の実測は旧遺物 1 件のみで、本 build (C01-C09, 07-05) の trace は eval-log/harness-creator/ 配下含めゼロ件。",
+    "全 9 component が quality_gates.build_trace=\"required\" を宣言 (C01 は component-inventory.json:66、C09 は component-inventory.json:295)。C09 output_contract (component-inventory.json:242) も『build_trace/provenance に source_contract_ref と prompt_creator_invocation が残った状態』を要求。",
+    "機構自体は実在: plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json:170 (prompt_provenance)・plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py:317,1440 (_validate_prompt_provenance 配線)・tests/test_validate_build_trace.py (prompt_provenance/test_e2e_bypass 系 18 箇所)。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "build_trace=required の宣言 9 件に対し、本 build 自身の skill-build-trace.json (prompt_provenance 付き) が 1 件も残っていない。C09 のバイパス不能性機構は built だが、その機構を本 build 自身に適用した再現性証跡が欠落しており、C03-C08 の是正が prompt-creator 経由で行われたことを trace で立証できない。",
+     "recommended_intervention": "C03-C08 是正 build を代表する skill-build-trace.json (prompt_provenance: prompt_creator_invocation=true / source_contract_ref=subagent-hybrid-format.md / content_lint=PASS) を eval-log へ記録し validate-build-trace.py を実行、その exit0 を build-evidence.md のゲート表へ追記する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 295
+     },
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.85,
+   "paradigm_name_ja": "帰納的思考"
+  },
+  {
+   "paradigm_id": 4,
+   "paradigm_name": "abduction",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "観測群: plugin-plans/harness-prompt-conformance/index.md:69-81 は全 13 フェーズ『未実施』、index.md:86-94 の完了チェックリストは全て未チェック、goal-spec.json:14 以降 checklist done=false×8、handoff-run-plugin-dev-plan.json:20 ほか routes[].status=\"planned\"×9、phase-11-evidence.md:8 は status: 未実施 — 一方 build-evidence.md:87 は『plan の全 component を本サイクルで実体化・緑化した』と完了宣言。",
+    "最尤仮説 (単一収束): build は capability-build メタプロンプト経路で実行され (build-evidence.md:8-11 の docs-only ラベル上書き判断)、書戻し契約が build-evidence.md 1 枚に単線化されており、plan 側 status 群 (index/goal-spec/handoff/phase frontmatter) への遷移を強制する機械層が存在しない。plugins/harness-creator/scripts/validate-plan-coverage.py:215-222 は inventory 直下 build_status の有無しか見ず (本 plan は同キー自体不在)、他の status 欄は無検査。"
+   ],
+   "issues": [
+    {
+     "condition": "C1",
+     "condition_signal": "contradiction",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "同一 plan_dir 内で完了主張 (build-evidence.md) と未実施表示 (index.md フェーズ一覧・完了チェックリスト・phase frontmatter) が併存し、読者・後続 orchestrator が build 状態を誤認する。",
+     "recommended_intervention": "index.md のフェーズ一覧/完了チェックリスト・phase-*.md の status を実施済へ一括更新し、component-inventory.json 直下に build_status=realized を第一級宣言して validate-plan-coverage のライフサイクル gate に乗せる。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/index.md",
+      "line": 69
+     },
+     "root_cause": "plan→build の書戻し契約が build-evidence.md 一枚に単線化され、status 遷移を強制する機械層が無い",
+     "auto_fixable": true
+    }
+   ],
+   "score": 0.8,
+   "paradigm_name_ja": "アブダクション"
+  },
+  {
+   "paradigm_id": 5,
+   "paradigm_name": "vertical",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "全 component の quality_gates は elegant_review (C1-C4 all_pass, component-inventory.json:67) と evaluator (threshold 80 / high_max 0, component-inventory.json:69) を宣言する。",
+    "build-evidence.md:49-68 のゲート表は決定論ゲート (lint/pytest/plan G1-G10) のみで、evaluator スコア・elegant_review verdict への参照が 1 行も無い。eval-log にも本 build 対応の evaluator/elegant-review 記録は確認できない (content-review verdict は 07-02 の旧世代のみ)。",
+    "Why 連鎖: 証跡が無い → build 時に LLM 層ゲートが未実施 → plan の quality_gates 宣言を build 完了時に照合する機構が無い → validate-plan-coverage.py は実体存在照合のみ・lint-content-review.py:48 は skills/*/SKILL.md 単位のみ → 『宣言ゲート=実施ゲート』を保証する層の欠落が本質 (注視点②の根本原因)。本 elegant-review が事後充足に相当するが、evaluator threshold>=80 の証跡は依然不在。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "medium",
+     "bucket": "eval-log",
+     "description": "宣言済み LLM 層 quality_gates (elegant_review all_pass / evaluator threshold 80・high_max 0) の build 段階実施証跡が全 9 component で不在。決定論ゲートのみ緑化して完了宣言しており、宣言と実施のゲート集合が非対称。",
+     "recommended_intervention": "skill 更新分 (C01/C09) に assign-skill-design-evaluator を実行して score>=80 を記録し、本 elegant-review の verdict と併せて build-evidence.md へ LLM 層ゲート行を追加する。恒久対策として quality_gates 宣言↔実施証跡の照合を build 完了条件へ機械配線する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/build-evidence.md",
+      "line": 49
+     },
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "垂直思考"
+  },
+  {
+   "paradigm_id": 6,
+   "paradigm_name": "decomposition",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "C01-C09 を実体単位に分解し独立検査: C01=plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md:1-87 実在 (差分表 15-28 行・frontmatter 契約 30-48 行・l5-contract v2.0.0 従属 82-86 行) + references/resource-map.yaml:15 登録。C02=scripts/lint-agent-prompt-content.py + vendor/prompt-creator/verify-completeness.py + tests/test_lint_agent_prompt_content.py 実在。C03-C08=agents 6 本全てに '## Layer 1:' マーカー (Grep 6/6 ファイル)。C09=SKILL.md:201 (Step0.4 の C02 配線)・SKILL.md:245 (Step3.5 provenance)・schemas/skill-build-trace.schema.json:170・validate-build-trace.py:317,1440・harness-creator-kit-ci.yml:230-235 (3 step) 全て実在。",
+    "分解検査で検出した乖離: C09 の side_effect_targets (component-inventory.json:287) は .github/workflows/governance-check.yml を宣言するが、governance-check.yml 内に lint-agent-prompt-content への参照は 0 件 (Grep 実測)。C09 checklist (component-inventory.json:258) は『いずれかで CI 配線』のため要件自体は kit-ci 側で充足。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "smell",
+     "severity": "low",
+     "bucket": "hook-ci",
+     "description": "side_effect_targets が実際には変更されなかった governance-check.yml を含み、宣言変更集合と実変更集合が乖離 (過大宣言)。build 監査で『宣言されたのに触られていないファイル』として偽シグナルになる。",
+     "recommended_intervention": "component-inventory.json / handoff の side_effect_targets から governance-check.yml を除くか、build-evidence.md に『kit-ci 側配線で checklist 充足につき governance-check.yml は変更不要と判断』を明記する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 287
+     },
+     "auto_fixable": true
+    }
+   ],
+   "score": 0.65,
+   "paradigm_name_ja": "要素分解"
+  },
+  {
+   "paradigm_id": 7,
+   "paradigm_name": "mece",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "C01-C09 × {build_target 実在 / CI 配線 / build_trace / content_review / elegant_review / evaluator} のマトリクスで漏れ検査。実体列は 9/9 充足、CI 列は C02/C09 充足 (harness-creator-kit-ci.yml:230-235)。",
+    "prompts 母数 (注視点④): Glob 実測 33 本 (plugins/harness-creator/skills/*/prompts/*.md、symlink skill は非追跡) で C02 の scanned=33 (build-evidence.md:41) と一致。Phase1 の 36 は symlink bundle 込み計数と推定され、symlink 除外は設計意図 (build-evidence.md:76-78、lint-agent-prompt-content.py:138-141) と整合 — 母数差自体は問題でない。",
+    "マトリクスの構造穴: C03-C08 (sub-agent) の content_review {verdict:PASS, sha_match:true} 宣言 (component-inventory.json:116 ほか同型 6 件) を検証する機構が存在しない。scripts/lint-content-review.py:48 の対象は plugins/*/skills/*/SKILL.md パターンのみで、agents/*.md 用の verdict 置場・sha 突合機構は未定義。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "medium",
+     "bucket": "schema",
+     "description": "sub-agent 6 component への content_review gate 宣言が『宣言はあるが検証手段が無い』状態で残置され、宣言×検証手段マトリクスに 6 セルの空白がある (検証不能ゲートは充足も違反も判定できず gate として機能しない)。",
+     "recommended_intervention": "agent 単位 content-review の verdict 置場と lint 拡張を定義するか、C03-C08 の quality_gates.content_review を owner skill (run-elegant-review / run-build-skill) 側 verdict への委譲として明示的に再定義する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 116
+     },
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.8,
+   "paradigm_name_ja": "MECE"
+  },
+  {
+   "paradigm_id": 8,
+   "paradigm_name": "two-axis",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "重要度×緊急度で残作業を象限化: 高重要×高緊急=verdict 再生成 (push で governance-check 即赤、eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json:5)。高重要×低緊急=build trace 記録・agent content-review 機構定義。低重要=side_effect 過大宣言・引数表記是正。",
+    "build-evidence.md:85-87 は『スコープ外/先送り: なし』と宣言し、残タスクとして可視なのは handoff-run-plugin-dev-plan.json:165-168 の GAP-SCRIPT-BUILDER (medium・次回 elegant-review 時再評価 = 本レビューが該当) のみ。push ブロッカーである verdict 再生成が backlog にすら現れず、優先度台帳が逆転している。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "smell",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "『先送りなし』宣言により、最高緊急度の残作業 (stale verdict 再生成・trace 記録) が優先度管理から漏れ、低緊急の GAP-SCRIPT-BUILDER だけが open_issue 化されている優先順位の誤り。",
+     "recommended_intervention": "build-evidence.md の『スコープ外/先送り』節を実態に合わせ、push 前必須 (verdict 再生成) / 恒久対策 (trace・agent content-review 機構) の優先度付き backlog として更新する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/build-evidence.md",
+      "line": 87
+     },
+     "auto_fixable": true
+    }
+   ],
+   "score": 0.55,
+   "paradigm_name_ja": "2 軸思考"
+  },
+  {
+   "paradigm_id": 9,
+   "paradigm_name": "process",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "工程を時系列分解: plan 完成 (07-04) → 実 build (07-05, build-evidence.md) → [gap] → handoff status 遷移・GAP 消化記録・commit/PR。gap 区間の未消化を実測: handoff-run-plugin-dev-plan.json:20,40,60,75,90,105,120,135,150 の routes[].status が 9 本とも \"planned\" 据置。",
+    "handoff-run-plugin-dev-plan.json:167 の GAP-SCRIPT-BUILDER 代替生成手順 (3) は『生成後に check-build-handoff / check-runtime-portability / build_trace を再実行し、contract-only route をどの executor-backed 手順で展開したかを evidence に記録する』を要求するが、build-evidence.md:49-68 のゲート表に check-build-handoff が無く、C02 route の展開記録は learning note 1 (build-evidence.md:72-75) の vendoring 説明に部分的に留まる (build_trace の実 trace 適用も帰納的思考所見のとおり不在)。"
+   ],
+   "issues": [
+    {
+     "condition": "C4",
+     "condition_signal": "dependency_break",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "build 完了→handoff 状態遷移の工程が断絶し、routes[].status=planned を信頼する後続 executor が『未 build』と誤認して二重 build し得る。open_issue が課した check-build-handoff 再実行と展開手順の evidence 記録義務も未消化で、GAP-SCRIPT-BUILDER の解消判定に必要な入力が欠けている。",
+     "recommended_intervention": "check-build-handoff を再実行して結果を build-evidence.md へ追記し、routes[].status を built (実装済) へ遷移させる。GAP-SCRIPT-BUILDER には本レビューでの再評価結果 (契約どおり代替生成で展開済・記録不足のみ) を追記する。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json",
+      "line": 20
+     },
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "プロセス思考"
+  },
+  {
+   "paradigm_id": 10,
+   "paradigm_name": "meta",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "「反映完全性=ファイル存在+決定論ゲート exit0」という検証枠組み自体が、inventory が各 component に宣言する quality_gates の LLM 層 (content_review/elegant_review/evaluator) を検査対象から落としている。build-evidence.md:49-68 のゲート表は決定論 lint/pytest のみで、9 component の evaluator score・elegant_review 4条件・content_review verdict の build 時再取得記録が一件も無い",
+    "agent kind (C03-C08) の content_review ゲートは、実行機構 scripts/lint-content-review.py が plugins/*/skills/*/SKILL.md のみ走査する (lint-content-review.py:56-72) ため、agents/*.md には検証経路も verdict 格納規約も存在せず宣言が機械的に到達不能",
+    "6 agent の是正は手動編集であり、C09 が新設した prompt_provenance 生成経路は pytest fixture (test_e2e_bypass_trace_exits_1) でのみ演習され実 build では一度も通っていない"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "eval-log",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 116
+     },
+     "description": "C03-C08 (agent kind) に content_review.verdict=PASS + sha_match=true が宣言されているが、検証機構 lint-content-review.py は skill SKILL.md 専用で agent 向けの verdict 格納規約 (eval-log/<plugin>/<agent>/content-review/ 相当) も lint も不在。build-evidence.md にも 9 component の LLM 層ゲート (evaluator/elegant_review/content_review) 実行証跡が無く、宣言ゲートの半分が到達不能なまま build 完了が宣言されている",
+     "recommended_intervention": "agent kind の verdict 格納規約と lint-content-review の agent 拡張を新設するか、inventory 側の agent quality_gates を kind-aware な到達可能ゲートへ置換する。build-evidence に LLM 層ゲートの実行記録欄を必須化する",
+     "auto_fixable": false,
+     "root_cause": "skill 用 quality_gates テンプレートを agent kind へ無修正で複写した"
+    }
+   ],
+   "score": 0.6,
+   "reusable_abstraction": "ゲート宣言は到達可能な検証経路 (実行機構+証跡格納規約) とペアでのみ宣言できるとする「gate reachability 検査」。inventory の quality_gates を走査し、対応する verifier script と verdict 格納パス規約が実在しないゲート宣言を fail させる",
+   "template_variables": [
+    "{{gate_name}}",
+    "{{artifact_kind}}",
+    "{{verdict_storage_path}}",
+    "{{verifier_script}}"
+   ],
+   "reuse_surface": "governance-log",
+   "negative_cases": [
+    "決定論ゲート (exit0 自体が証跡) には格納規約不要で適用外",
+    "build 前の plan 段階では未実行が正常であり reachability のみを検査する"
+   ],
+   "re_audit_trigger": "component-inventory に skill 以外の kind へ content_review/evaluator ゲートが宣言されたとき",
+   "paradigm_name_ja": "メタ思考"
+  },
+  {
+   "paradigm_id": 11,
+   "paradigm_name": "abstraction",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "build 状態が5つの並行台帳 (goal-spec.checklist[].done / index.md フェーズ一覧 / index.md 完了チェックリスト / handoff routes[].status / build-evidence.md) に分散し同期機構が無い。実測: 前4者は未実施/planned/false、build-evidence のみ完了宣言",
+    "validate-plan-coverage.py:54-58 の build_status ライフサイクルは inventory 直下 1 キーのみを第一級化しており、他4台帳へは射影されない (本 inventory は build_status キー自体を持たず「built 既定」で偶然整合)"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "condition_signal": "smell",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json",
+      "line": 20
+     },
+     "description": "build 状態台帳の多重化 (5面) が今回の drift 群 (未実施表示/planned 据置/done:false) の構造的根本原因。個別修正しても次の plan で再発する",
+     "recommended_intervention": "build_status (inventory) を単一正本とし、goal-spec.done / index チェックボックス / routes[].status を導出・射影または突合 lint で機械同期する",
+     "auto_fixable": false,
+     "root_cause": "plan 生成器と build 実行器が別 skill で、完了状態の書き戻し責務がどちらにも割当てられていない"
+    }
+   ],
+   "score": 0.65,
+   "reusable_abstraction": "「単一 build-state SSOT + 台帳射影」パターン。plan 配下の全状態表示 (done/status/checkbox/フェーズ表) を build_status から決定論導出し、直接編集を突合 lint で禁止する",
+   "template_variables": [
+    "{{build_state_ssot_field}}",
+    "{{projected_ledgers}}",
+    "{{sync_lint_script}}"
+   ],
+   "reuse_surface": "config",
+   "negative_cases": [
+    "build-evidence.md のような自由記述証跡は射影対象外 (人間向け説明が正)",
+    "単一 component の軽量 plan では台帳が2面以下となり射影機構は過剰"
+   ],
+   "re_audit_trigger": "plugin-dev-planner が新 plan を生成し build へ handoff されるたび",
+   "paradigm_name_ja": "抽象化思考"
+  },
+  {
+   "paradigm_id": 12,
+   "paradigm_name": "double-loop",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "同時期の plugin-plans/harness-creator build で導入された route 実行レポート契約 (eval-log/<slug>/build/route-<id>.json + fail-closed validator) が本 plan の build には適用されていない: eval-log 全域に route-*.json は 0 件 (Glob 実測)、eval-log/harness-prompt-conformance/ ディレクトリ自体が不在",
+    "validate-plan-coverage の build_status ライフサイクル (直前サイクルの学習、validate-plan-coverage.py:54-58) も本 inventory は未使用。前サイクルの改善2件がいずれも本 build に伝播していない",
+    "check-build-handoff (G8) は routes 構造のみ検証し status の実体整合は見ないため、planned 据置でも決定論ゲートは緑のまま"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json",
+      "line": 20
+     },
+     "description": "build 完了後も全 9 routes が status=planned 据置 (line 20/40/60/75/90/105/120/135/150) で per-route 実行証跡ゼロ。handoff は下流 L1 builder への能動契約であり、これを読む後続実行が C01-C09 を未 build と誤認して再 build・上書きし得る",
+     "recommended_intervention": "routes[].status を built へ事実同期し、route 単位の実行記録 (少なくとも build-evidence.md 該当行への参照) を残す。恒久策は前サイクルの route report 契約を本 plan 系にも適用",
+     "auto_fixable": true,
+     "root_cause": "build 実行が plan 生成物 (handoff) を read-only 入力として扱い、書き戻し工程が手順化されていない"
+    }
+   ],
+   "score": 0.6,
+   "reusable_abstraction": "改善機構の「適用範囲宣言」: 新設した検証機構 (route report 等) は導入元 plan 限定でなく以後の全 build に適用される旨を機構側 (validator の走査規約) に焼き込み、後続 build が自動的に対象へ入るようにする",
+   "template_variables": [
+    "{{new_mechanism}}",
+    "{{applicable_scope_glob}}",
+    "{{enforcement_point}}"
+   ],
+   "reuse_surface": "governance-log",
+   "negative_cases": [
+    "並行 worktree で未マージの機構は本 worktree の build に物理的に適用不能であり、その場合は伝播漏れでなくマージ順序の問題",
+    "過去 plan への遡及適用は不要 (新規 build のみ対象)"
+   ],
+   "re_audit_trigger": "次回 L4 一括 build 実行時 (route report の有無を確認)",
+   "paradigm_name_ja": "ダブル・ループ思考"
+  },
+  {
+   "paradigm_id": 13,
+   "paradigm_name": "brainstorming",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "「確実に7層準拠」の担保代替案を7件列挙し現行採用を照合: (1)CI repo 走査=採用 (harness-creator-kit-ci.yml:230-235)、(2)生成直後 fail-closed lint=採用 (SKILL.md:201)、(3)trace provenance 必須化=採用 (validate-build-trace.py:317)、(4)PreToolUse hook による編集時遮断=未採用、(5)pre-push ローカルゲート=未採用、(6)skeleton template の構造的準拠強制=部分採用 (SKILL.md:144 写経指示)、(7)conformance registry による他 plugin opt-in 展開=未採用",
+    "採用3経路は生成時+CI に集中し編集時レイヤーが空白 (詳細は lateral finding へ委譲)。生成経路と検証経路が独立しており多層防御の設計自体は健全"
+   ],
+   "issues": [],
+   "score": 0.85,
+   "reusable_abstraction": "保証要件の担保設計を「編集時 hook / 生成時 gate / CI 走査」の3強制ポイントで棚卸しするチェック観点。plan の design-review phase で3ポイント各々の採否と理由を明示させる",
+   "template_variables": [
+    "{{guarantee_requirement}}",
+    "{{edit_time_control}}",
+    "{{generation_time_control}}",
+    "{{ci_time_control}}"
+   ],
+   "reuse_surface": "reference",
+   "negative_cases": [
+    "read-only 資産 (references 等) には編集時 hook は過剰",
+    "開発初期の実験 plugin は CI 走査のみで足りる"
+   ],
+   "re_audit_trigger": "goal-spec に「確実に/必ず/100%」語彙の保証要件が現れた plan の design-review 時",
+   "paradigm_name_ja": "ブレインストーミング"
+  },
+  {
+   "paradigm_id": 14,
+   "paradigm_name": "lateral",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "セキュリティ分野のシフトレフトを移植して検査位置を分析: 現行の違反検出は CI (最右) と生成フロー (中央) に偏り、編集時 (最左) が空白。agents/*.md を Edit/Write で直接改変すると prompt_provenance 経路を通らず、違反は CI 到達まで滞留する",
+    "repo には PreToolUse hook exit2 による編集時遮断の先行事例 (hook-guard-skillgen) と「保証要件は hook で機械層担保」の確立方針があり移植コストは低い"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "hook-ci",
+     "condition_signal": "smell",
+     "location": {
+      "file": ".github/workflows/harness-creator-kit-ci.yml",
+      "line": 230
+     },
+     "description": "agents/*.md の手動直接編集に対する編集時ゲートが無く、C5 の「単独生成の抜け道封鎖」は生成フロー経由の場合のみ完全。手動編集経路は fail-closed ではあるが検出位置が CI のみで遅延する",
+     "recommended_intervention": "PreToolUse hook で plugins/harness-creator/agents/*.md への Edit/Write 直後に C02 --mode agent を単発実行する編集時ゲートの追加を検討 (hook-guard-skillgen と同型)",
+     "auto_fixable": false,
+     "root_cause": "plan の C5 が「生成経路」の抜け道封鎖に焦点し「編集経路」を明示スコープ化しなかった"
+    }
+   ],
+   "score": 0.75,
+   "reusable_abstraction": "lint の実行位置を CI から編集時へ前倒しする「単発ファイル lint の hook アダプタ」: 既存 lint script を PreToolUse から対象1ファイル引数で呼ぶ薄い包装を共通化する",
+   "template_variables": [
+    "{{lint_script}}",
+    "{{target_glob}}",
+    "{{hook_event}}"
+   ],
+   "reuse_surface": "hook",
+   "negative_cases": [
+    "repo 全走査型 lint (母数検証を含むもの) は単発ファイル実行に不向きで hook 化しない",
+    "対話的な試行編集を阻害するため WARN 段階導入が先"
+   ],
+   "re_audit_trigger": "agents/*.md への手動編集起因の C02 CI FAIL が初めて観測されたとき",
+   "paradigm_name_ja": "水平思考"
+  },
+  {
+   "paradigm_id": 15,
+   "paradigm_name": "paradox",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "「反映漏れ」の逆=「反映しすぎ (plan に無い拡張)」を検査: 実装 lint-agent-prompt-content.py には --self-test (line 6/248) が存在し build-evidence.md:18 にも記載されるが、plan 正本 component-inventory.json C02.inputs (line 80) には無い",
+    "--plugins-dir の意味論も逆方向 drift: plan 表記 [--plugins-dir plugins] は repo の plugins/ ディレクトリを示唆するが、実装既定は plugins/harness-creator で「単一 plugin root」を要求する (lint-agent-prompt-content.py:242-246)。plan どおり --plugins-dir plugins を渡すと走査0件で exit0 になる (if 思考の fail-open と結合する誤用経路)",
+    "vendor parity・symlink 除外など他の拡張は plan の記述範囲内で、過剰実装は上記2点に限られる"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 80
+     },
+     "description": "C02.inputs が実装 surface と双方向に drift: --self-test 欠落 (実装>plan) かつ --plugins-dir の意味論齟齬 (plugins dir 表記 vs plugin root 実装)。plan を正として C02 を再検証する第三者が誤った引数で走らせ scanned=0 の偽緑を得る",
+     "recommended_intervention": "inventory C02.inputs を script frontmatter (正本) 準拠に backfill する (--self-test 追記・--plugins-dir を「plugin root (既定 plugins/harness-creator)」へ訂正)",
+     "auto_fixable": true,
+     "root_cause": "build 完了時に実装 surface を plan へ書き戻す工程が無い (abstraction finding の台帳非同期と同根)"
+    }
+   ],
+   "score": 0.75,
+   "reusable_abstraction": "script frontmatter の inputs 宣言を正本として plan inventory の inputs 記述と突合する双方向 surface 差分検査。build 終了ゲートで plan 側への backfill を強制する",
+   "template_variables": [
+    "{{script_frontmatter_inputs}}",
+    "{{inventory_inputs_field}}",
+    "{{backfill_gate}}"
+   ],
+   "reuse_surface": "script-frontmatter",
+   "negative_cases": [
+    "script 内部専用の private helper は突合対象外",
+    "意図的に undocumented な実験フラグは EXCEPTION 台帳側で管理する"
+   ],
+   "re_audit_trigger": "C02 に新フラグが追加された commit を含む PR 作成時",
+   "paradigm_name_ja": "逆説思考"
+  },
+  {
+   "paradigm_id": 16,
+   "paradigm_name": "analogy",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "vendoring を先行事例 skill-intake (_vendor.py + validate-plugin-vendor.py) と比較: 本件は subprocess 丸ごと実行 + --check-vendor-parity + lint-vendored-ssot (scripts/lint-vendored-ssot.py:40-46 にペア登録実在) の二層で、単一ファイル・stdlib のみという条件差に対する合理的差分。差分理由も build-evidence.md:72-75 に明記され健全",
+    "一方、契約 SSOT subagent-hybrid-format.md:11 は対象を「plugins/*/agents/*.md」(全 plugin) と宣言するが機械強制は harness-creator のみ。先行実装と明記された plugin-dev-planner の agents は実測4本 (architect/elicitor/evaluator/improvement-reviewer) 存在し、SSOT 本文の「3 agent」(line 13) は既に実数 drift。その4本と prompt-creator 自身の prompts 6本 (Glob 実測) はどの CI でも C02 走査対象外"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "dogfooding",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md",
+      "line": 13
+     },
+     "description": "新設 SSOT が「先行実装: 3 agent」と記すが plugin-dev-planner/agents は4本。かつ対象宣言 (plugins/*/agents/*.md 全体) と強制範囲 (harness-creator のみ) の乖離が SSOT 内で明示されておらず、読者が他 plugin agents も機械検証済みと誤認し得る。契約所有者 prompt-creator 自身の prompts も未走査 (医者の不養生)",
+     "recommended_intervention": "「3 agent」を実数非依存表現へ訂正し、対象スコープ節に「機械強制は当面 harness-creator のみ (他 plugin は opt-in 展開予定)」の実態を1行明記する",
+     "auto_fixable": true,
+     "root_cause": "契約文書が実装スコープ確定 (C02 の所有 plugin 限定) より先に汎用形で書かれ build 後に追従していない"
+    }
+   ],
+   "score": 0.7,
+   "reusable_abstraction": "契約 SSOT に「対象宣言」と「強制状況 (enforced/opt-in/unenforced の plugin 別リスト)」を分離記載する conformance registry。CI は registry を読んで enforced plugin を走査する",
+   "template_variables": [
+    "{{contract_ssot}}",
+    "{{enforced_plugins}}",
+    "{{optin_plugins}}",
+    "{{ci_loop_step}}"
+   ],
+   "reuse_surface": "config",
+   "negative_cases": [
+    "他 plugin への lint 適用自体は goal-spec C8 のスコープ外であり、未適用を omission と断定してはならない (scope 宣言の問題に留まる)",
+    "契約の対象宣言を harness-creator 限定へ狭める修正は将来の横展開を阻害するため不可"
+   ],
+   "re_audit_trigger": "plugin-dev-planner または prompt-creator の agents/prompts へ C02 相当 lint を適用する提案が出たとき",
+   "paradigm_name_ja": "類推思考"
+  },
+  {
+   "paradigm_id": 17,
+   "paradigm_name": "if",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "もし今 commit/push すると: governance-check.yml:35 の lint-content-review.py --all が harness-creator/run-build-skill で stale-sha FAIL する蓋然性が高い。verdict 記録 sha=2515ed74… (elegance/rubric 両 verdict line 5、reviewed_at 2026-07-02T22:00) に対し SKILL.md は本 build (C09: kind-dispatch C02 配線 + Step3.5 prompt_provenance 追記) で変更済み (git status M 実測)。sha 照合は lint-content-review.py:126-131 が fail-closed で行う",
+    "inventory C09 の quality_gates.content_review.sha_match=true (component-inventory.json:297) は現時点で未充足のまま build 完了が宣言されている。build-evidence.md:49-68 のゲート表に lint-content-review が含まれず、この一点だけ検査から漏れた。prompt-creator/run-prompt-creator-7layer 側 verdict (sha 9984ebe…、同 07-02) は SKILL.md 変更有無の再計測が必要 (C01 の主変更は references/resource-map で SKILL.md 非変更の可能性あり)",
+    "極端ケース破壊試験: --plugins-dir に agents/skills を持たない dir (plan 表記どおりの plugins を含む) を渡すと collect_targets が空を返し _run_mode が scanned=0 のまま OK exit0 (lint-agent-prompt-content.py:209)。ディレクトリ改名や CI step の typo で保証が無言で腐る"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "eval-log",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json",
+      "line": 5
+     },
+     "description": "run-build-skill の content-review verdict (elegance/rubric とも) が 07-02 時点の SKILL.md sha を記録したまま、本 build で SKILL.md が変更され stale 化。commit/push すると governance-check の lint-content-review --all が FAIL し CI 赤化。C09 の宣言ゲート content_review.sha_match=true も未充足",
+     "recommended_intervention": "commit 前に run-build-skill (および要再計測の run-prompt-creator-7layer) の content-review を genuine 再実行し、現 SKILL.md sha で elegance/rubric verdict を再発行する。build-evidence.md のゲート表へ lint-content-review --all を追加する",
+     "auto_fixable": false,
+     "root_cause": "build のゲート表が lint-content-review を含まず、SKILL.md 変更→verdict 再発行の連動が機械化されていない"
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "hook-ci",
+     "condition_signal": "omission",
+     "location": {
+      "file": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "line": 209
+     },
+     "description": "scanned=0 を成功扱いする fail-open。plan は fail-closed 検証を要求 (C02.purpose) しており、走査対象消失 (dir 改名・typo・symlink 化) 時に CI が恒久緑のまま保証が無言で腐る",
+     "recommended_intervention": "scanned==0 (または期待最小本数未満) を exit1 とする floor guard を _run_mode に追加する。宣言済みの fail-closed 意図への整合であり意味変更ではない",
+     "auto_fixable": true,
+     "root_cause": "空集合成功という lint 一般の既定挙動を fail-closed 要件に対して上書きしなかった"
+    }
+   ],
+   "score": 0.5,
+   "reusable_abstraction": "push 前に governance-check 相当の verdict sha 照合を前倒しする pre-push ゲート。SKILL.md 変更 commit を検知し対応 content-review verdict の stale-sha を手元で fail させる",
+   "template_variables": [
+    "{{best_case}}: commit 前に verdict 再発行済みで lint-content-review --all が緑のまま push 完了",
+    "{{worst_case}}: push 後に governance-check 赤化、genuine 再評価と再 push の往復で main 反映が停滞し並行 worktree の同 SKILL.md 編集と衝突",
+    "{{edge_case}}: --plugins-dir の typo や agents/ ディレクトリ改名で scanned=0 のまま CI が恒久緑 (7層保証の無言腐敗)"
+   ],
+   "reuse_surface": "hook",
+   "negative_cases": [
+    "verdict 再発行は genuine LLM 評価が必須で sha 書き換えだけの機械修正は禁止 (Goodhart)",
+    "ref kind skill は lint-content-review 対象外なので前倒しゲートも除外する"
+   ],
+   "re_audit_trigger": "SKILL.md 変更を含む PR の作成時 (lint-content-review --all のローカル実行結果を evidence に添付)",
+   "paradigm_name_ja": "if 思考"
+  },
+  {
+   "paradigm_id": 18,
+   "paradigm_name": "naive",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "初見読者が plan_dir を開くと index.md:69-81 で13フェーズ全て「未実施」、完了チェックリスト (index.md:86-94) 全て未チェック、goal-spec.json checklist 全8件 done:false であり build 済みと判断できない。build-evidence.md:87 まで読んで初めて全 component 実体化済みと分かる",
+    "plan-findings.json:228-231 は prompts 母数を「全36本」と記すが C02/build-evidence の実測は 33本。差3本は contract-generator の symlink bundling prompts (Glob 実測でちょうど3本) を含めたか否かの基準差で、注記が無いため受入確認 C4 を再現する初見者は数が合わず混乱する。同 evidence 文中の skill 名「run-goal-elicit」も実在しない (実在は run-skill-elicit)"
+   ],
+   "issues": [
+    {
+     "condition": "C1",
+     "severity": "medium",
+     "bucket": "doc",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/index.md",
+      "line": 69
+     },
+     "description": "index.md のフェーズ一覧 (全13「未実施」)・完了チェックリスト (全 [ ])・goal-spec.json (全 done:false) が build-evidence.md の build 完了宣言と正面矛盾。人間の初見判断も done フラグを読む自動化も build 状態を誤判定する",
+     "recommended_intervention": "フェーズ一覧を実施済へ、goal-spec checklist done を true へ、index 完了チェックリストを [x] へ事実同期する (根本策は abstraction finding の単一 SSOT 射影)",
+     "auto_fixable": true,
+     "root_cause": "build 実行が plan 文書群への完了状態書き戻しを工程に持たない"
+    },
+    {
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/plan-findings.json",
+      "line": 231
+     },
+     "description": "prompts 母数「全36本」(symlink 込) と C02 実測 scanned=33 (自前のみ) が基準注記なしに併存し、実在しない skill 名 run-goal-elicit を evidence に引用している",
+     "recommended_intervention": "evidence へ「36 = 自前33 + contract-generator symlink 3 (C02 は symlink 除外)」の注記を追記し skill 名を run-skill-elicit へ訂正する",
+     "auto_fixable": true,
+     "root_cause": "plan 時の実測が symlink 透過 glob で行われ、C02 実装が採った所有権境界 (symlink 除外) と基準が揃っていない"
+    }
+   ],
+   "score": 0.6,
+   "reusable_abstraction": "plan index frontmatter に build_status バッジ行を持つ表示テンプレート。初見読者が index 冒頭1行で planned/built を判別でき、値は inventory build_status からの射影とする",
+   "template_variables": [
+    "{{build_status_badge}}",
+    "{{evidence_link}}",
+    "{{as_of_date}}"
+   ],
+   "reuse_surface": "template",
+   "negative_cases": [
+    "build を伴わない doc-only plan (plugin-dev-planner 既定境界内) では unbuilt 表示が恒久正でありバッジ更新は不要",
+    "母数注記は実測日時 (measured_at) 付きでないと並行編集で再度陳腐化する"
+   ],
+   "re_audit_trigger": "plan_dir に build-evidence.md が追加された (=build 完了した) とき",
+   "paradigm_name_ja": "素人思考"
+  },
+  {
+   "paradigm_id": 19,
+   "paradigm_name": "systems",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "C02 lint-agent-prompt-content.py は symlink 除外 (:152-155)・default --plugins-dir=plugins/harness-creator (:244) で局所最適に閉じており、repo 全体への悪影響はない。",
+    "一方 CI コメント『repo 全体走査』(harness-creator-kit-ci.yml:228-229) は実スコープ (harness-creator のみ) と不一致。",
+    "cross-plugin 契約正本 subagent-hybrid-format.md への参照は相対パス (SKILL.md:201) で、verifier は vendoring 済なのに契約 doc は非 vendor という非対称がある。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "inconsistency",
+     "severity": "low",
+     "bucket": "hook-ci",
+     "description": "CI step コメント『repo 全体走査』が C02 の実走査スコープ (harness-creator のみ、symlink 除外) と不一致。将来の保守者が走査範囲を誤認するリスク。",
+     "recommended_intervention": "harness-creator-kit-ci.yml:229 のコメントを『harness-creator 配下走査 (symlink 除外・所有元 plugin が各自 lint)』へ修正。",
+     "location": {
+      "file": ".github/workflows/harness-creator-kit-ci.yml",
+      "line": 229
+     },
+     "root_cause": "なぜ不一致か→C02 の default scope 決定 (harness-creator のみ) が後から確定した→なぜ追従しないか→CI コメントは lint 対象外の散文で機械照合が無い→なぜ機械照合が無いか→コメントとスクリプト default の整合を検査する層が存在しない→plugins/harness-creator/scripts/lint-agent-prompt-content.py:244",
+     "auto_fixable": true
+    },
+    {
+     "condition": "C4",
+     "condition_signal": "smell",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "契約正本 subagent-hybrid-format.md への参照が cross-plugin 相対パス (../../../prompt-creator/...) のまま。verify-completeness.py は vendoring+byte-parity 済なのに契約 doc は非 vendor で、harness-creator 単独 install 時に dangling する非対称。",
+     "recommended_intervention": "契約 doc も vendor/prompt-creator/ へ vendoring し lint-vendored-ssot.py の VENDORED_PAIRS へ追加するか、fail-soft 参照であることを SKILL.md に明記。",
+     "location": {
+      "file": "plugins/harness-creator/skills/run-build-skill/SKILL.md",
+      "line": 201
+     },
+     "root_cause": "なぜ dangling リスクか→契約 doc が相対パス参照のみ→なぜ vendoring されないか→C02 build 時の vendoring 判断が subprocess 実行対象 (script) に限定された→なぜ限定されたか→inventory の vendor surface (:328) が script のみ列挙し doc を含めなかった→plugin-plans/harness-prompt-conformance/component-inventory.json:328",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.85,
+   "paradigm_name_ja": "システム思考"
+  },
+  {
+   "paradigm_id": 20,
+   "paradigm_name": "causal",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "全9 component が quality_gates に build_trace:required / evaluator(threshold:80, high_max:0) / elegant_review all_pass を宣言する。",
+    "しかし eval-log/skill-build-trace.json は旧 company-master build のもの (:2) で、本 C01-C09 サイクルの build trace・evaluator verdict は eval-log 配下に不在 (run-build-skill 配下は content-review verdict 2件のみ)。",
+    "validate-plan-coverage.py は build_target の存在のみ照合し quality_gates 充足を検査しない (:215-222) ため、宣言→証跡の因果 chain が機械層で断線している。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "inventory が全 component に宣言する build_trace:required / evaluator ゲートの証跡が本 build サイクルに一切存在しない。build-evidence.md の実績は決定論 lint/pytest のみで、quality_gates 宣言は未充足のまま『build 完了』を主張している (C2 漏れ)。",
+     "recommended_intervention": "本サイクルの skill-build-trace 生成 (validate-build-trace.py で検証) + evaluator 実行 verdict を eval-log 配下に記録。恒久策として validate-plan-coverage.py に quality_gates 充足照合 (証跡ファイル存在+PASS 判定) を追加。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 295
+     },
+     "root_cause": "なぜ証跡不在か→build 実行が決定論ゲート緑のみを完了条件とし quality_gates 成果物を生成しなかった→なぜ生成漏れが通過したか→validate-plan-coverage.py が build_target 存在のみ検査し gates 充足を照合しない→なぜ照合しないか→coverage 検証の責務が『実体存在』止まりで『証跡完全性』へ拡張されていない→plugins/harness-creator/scripts/validate-plan-coverage.py:222",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.5,
+   "paradigm_name_ja": "因果関係分析"
+  },
+  {
+   "paradigm_id": 21,
+   "paradigm_name": "causal-loop",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "sha_match には負のループがある: SKILL.md 変更→verdict の skill_md_sha256 が stale 化→lint-content-review.py:130-131 が stale-sha で fail→governance-check.yml:35 (fail-closed) が commit をブロック。",
+    "この dampener (検出) は機能するが、回復経路 (content-review 再実行の自動起票) が未配線のため、検出後は人手介入頼みでループが閉じない。"
+   ],
+   "issues": [
+    {
+     "condition": "C4",
+     "condition_signal": "dependency_break",
+     "severity": "medium",
+     "bucket": "dependency-loop",
+     "description": "stale-sha 検出 (負ループの dampener) に対する再評価トリガが未配線。SKILL.md を変更する build は必ず stale を生むが、build フローに content-review 再実行ステップが組み込まれておらず、検出→回復の依存 chain が断線している。",
+     "recommended_intervention": "run-build-skill の build 終端に『対象 SKILL.md の sha 変化検出時は content-review 再実行を必須化』するステップを追加し、lint-content-review の検出と再評価を機構連結する。",
+     "location": {
+      "file": "scripts/lint-content-review.py",
+      "line": 130
+     },
+     "root_cause": "なぜループが閉じないか→lint は stale 検出専用で再評価を起票しない→なぜ起票しないか→検出 (governance) と再評価 (build フロー) の owner が分離し連結機構が無い→なぜ無いか→C09 配線が生成時 provenance に集中し、変更時 re-review トリガを scope 外にした→scripts/lint-content-review.py:130",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "因果ループ"
+  },
+  {
+   "paradigm_id": 22,
+   "paradigm_name": "trade-on",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "C02 の vendoring+subprocess 再利用設計は『SSOT 単一性 vs 単独 install 可搬性』のトレードオフを止揚する第三案として成立している: 正本は prompt-creator 側に置き、vendored copy を lint-vendored-ssot.py VENDORED_PAIRS (:43-47) の byte-parity fail-closed で同期強制、install 単独時は SKIP_NO_CANONICAL (:176-179) で fail-soft。",
+    "重複実装 drift を機械層で封鎖しており、問題なし。"
+   ],
+   "issues": [],
+   "score": 0.95,
+   "paradigm_name_ja": "トレードオン思考"
+  },
+  {
+   "paradigm_id": 23,
+   "paradigm_name": "plus-sum",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "C02 の symlink 除外は『所有元プラグインが lint する』前提 (lint-agent-prompt-content.py:140-141) に立つが、除外された contract-generator の 3 prompts (母数 36−33 の差分) には現状どこにも内容 lint が存在しない。",
+    "C02 を他 plugin へ横展開すれば upstream/downstream 双方が得する win-win だが、その issue が未起票。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "smell",
+     "severity": "low",
+     "bucket": "hook-ci",
+     "description": "『所有元が lint する』前提が contract-generator 側で未実装のため、symlink 除外された 3 prompts が lint カバレッジの空白地帯になっている。横展開 (C02 の --plugins-dir 指定で他 plugin 走査) の backlog 起票が漏れている。",
+     "recommended_intervention": "contract-generator 等の prompts 保有 plugin へ C02 適用を backlog 起票 (即時修正は不要、空白地帯の透明化が目的)。",
+     "location": {
+      "file": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "line": 244
+     },
+     "root_cause": "なぜ空白地帯か→symlink 除外の代償を所有元 lint に委ねた→なぜ所有元に無いか→C02 scope が harness-creator 内是正に限定された→なぜ後続手当が無いか→横展開 issue の起票が plan の完了条件に含まれない→plugins/harness-creator/scripts/lint-agent-prompt-content.py:141",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.85,
+   "paradigm_name_ja": "プラスサム思考"
+  },
+  {
+   "paradigm_id": 24,
+   "paradigm_name": "value-proposition",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "C09 の価値提案は『prompt 生成の provenance を fail-closed で強制』だが、実装は条件付き: _validate_prompt_provenance (:332-340) は resolved_policy==required の時のみ error を出す。",
+    "PROMPT_REQUIRED_KINDS={run,assign} (:68) のため、agent kind の build は prefix 解決で policy が required に解決されず、provenance 省略が素通りする (条件付き fail-open)。C03-C08 の主対象こそ 6 SubAgent (agent kind) であり、Output Contract と実装の整合が崩れている。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "medium",
+     "bucket": "hook-ci",
+     "description": "provenance fail-closed の enforcement が kind={run,assign} に限定され、agent kind build が対象外。C09 が守るべき主資産 (6 SubAgent 本文) の再生成時に provenance 省略が検出されない条件付き fail-open。",
+     "recommended_intervention": "PROMPT_REQUIRED_KINDS へ agent 系 kind を追加するか、policy_resolution で agent kind も required に解決される導出規則を拡張。既存 optional/skip 後方互換 (reproducibility-trace-schema.md:100) は維持。",
+     "location": {
+      "file": "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py",
+      "line": 68
+     },
+     "root_cause": "なぜ fail-open か→検証が resolved_policy==required 条件付き→なぜ agent kind で required にならないか→PROMPT_REQUIRED_KINDS={run,assign} に agent 系が不在で prefix 解決が None を返す→なぜ不在か→C09 設計が prompts/*.md 生成を主対象とし agent 本文再生成を政策対象に含めなかった→plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py:68",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.65,
+   "paradigm_name_ja": "価値提案思考"
+  },
+  {
+   "paradigm_id": 25,
+   "paradigm_name": "strategic",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "3ヶ月後視点で陳腐化するのは plan 側の状態表示: handoff routes 全9件 status='planned' (:20 等)、index.md 13 phase 全て『未実施』(:69-81)、完了チェックリスト C1-C8 全て未チェック (:86-94)、phase-11-evidence.md status:未実施 (:8)。",
+    "check-build-handoff.py は builder_status/envelope のみ消費し (:128-153, :301-311) routes[].status を読まないため、この drift は機械検出されず silent に堆積する。route-report 契約 (eval-log/<slug>/build/route-<id>.json) は隣接 plan (plugin-plans/harness-creator) にのみ存在し本 plan へ未適用。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "inconsistency",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "build 完了主張 (build-evidence.md) と plan 側状態 (routes=planned / 13 phase 未実施 / checklist 未チェック) が全面矛盾。machine consumer 不在のため放置され、後続の plan 参照者が『未 build』と誤認する戦略的リスク。",
+     "recommended_intervention": "build 完了時の plan 状態 write-back (routes status / index フェーズ表 / checklist) を実施し、恒久策として route-report 契約を本 plan にも適用して機械照合可能にする。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json",
+      "line": 20
+     },
+     "root_cause": "なぜ drift か→routes[].status を消費する機械層が無い→なぜ無いか→handoff 契約が計画→build の順方向のみで build 完了→計画の逆方向 write-back を未定義→なぜ未定義か→route-report 契約が隣接 plan で新設されたばかりで本 plan へ未伝播→plugin-plans/harness-prompt-conformance/handoff-run-plugin-dev-plan.json:20",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "戦略的思考"
+  },
+  {
+   "paradigm_id": 26,
+   "paradigm_name": "why",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "goal-spec.json:61 constraints[0] は『実装・実 build はスコープ外』を宣言する一方、build-evidence.md:8-11 は指示優先で実 build 実施を記録 (CONST_006 ラベル上書き)。判断自体は透明化済で矛盾は文書化されている。",
+    "Why 連鎖: goal-spec.json:14 以降の checklist done=false×8 が build 後も据置 → なぜ: build 側の書戻し対象に goal-spec が含まれない → なぜ: 要件充足 trace は build-evidence.md:36-45 の受入確認節に別台帳として二重管理される → なぜ: 要件 (C1-C8) と実施証跡を結ぶ機械照合が無い → なぜ: plan→build 境界の書戻し契約が evidence 文書 1 枚に単線化 (アブダクション所見と同根で、status 陳腐化 5 系統すべての共通原因)。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "medium",
+     "bucket": "other",
+     "description": "verify_by 付き要件正本 (goal-spec checklist C1-C8) が build 後も全 done=false のまま残り、充足主張は build-evidence 受入確認節との二重台帳になっている。C1-C8 の充足を機械照合できず、要件正本が dead document 化する。",
+     "recommended_intervention": "build 完了時に goal-spec.checklist[].done を証跡参照 (build-evidence の該当行/ゲート名) 付きで true 化する運用を今回分に適用し、恒久的には done 更新を validate-plan-coverage 系のライフサイクル gate (build_status=realized 遷移時の必須項目) へ組み込む。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/goal-spec.json",
+      "line": 14
+     },
+     "root_cause": "plan→build 境界の書戻し契約が build-evidence.md 一枚に単線化され、要件正本への status 反映が仕組み化されていない",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.75,
+   "paradigm_name_ja": "why 思考"
+  },
+  {
+   "paradigm_id": 27,
+   "paradigm_name": "kaizen",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "前回 harness-creator plan の elegant-review (07-05) で high 指摘された『source-verdict.json 欠落=C9 再現不能』と同型の証跡欠落が本 build でも再発している (build trace / evaluator verdict 不在)。",
+    "PDCA の C (check) が個別 artifact 補充で完結し、再発防止の機械層 (quality_gates 充足照合) が導入されなかったことが re-occurrence の構造要因。"
+   ],
+   "issues": [
+    {
+     "condition": "C3",
+     "condition_signal": "inconsistency",
+     "severity": "medium",
+     "bucket": "eval-log",
+     "description": "証跡欠落の再発 (前回 review の同型 high と一貫性のない再発)。是正が対症療法 (個別ファイル補充) に留まり、宣言 quality_gates と証跡生成を機械連結する再発防止策が未導入。",
+     "recommended_intervention": "paradigm 21 の恒久策 (validate-plan-coverage への gates 充足照合追加) と同一パッチで解消し、re-occurrence 検出を kaizen ループに組み込む。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/component-inventory.json",
+      "line": 290
+     },
+     "root_cause": "なぜ再発か→前回是正が欠落 artifact の個別補充のみ→なぜ個別補充止まりか→quality_gates 充足を検査する機械層が導入されなかった→なぜ導入されなかったか→証跡生成が人手運用のままで build 終端に強制ゲートが無い→plugin-plans/harness-prompt-conformance/component-inventory.json:290",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "改善思考"
+  },
+  {
+   "paradigm_id": 28,
+   "paradigm_name": "hypothesis",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "仮説『母数 36 vs 33 は計測条件差』を検証: plan-findings.json:231 の 36 は symlink 込み plan 時計測、build-evidence.md:41 の scanned=33 は C02 の symlink 除外走査。glob 実測で harness-creator prompts=33本、contract-generator prompts=ちょうど3本 (36−33) — 仮説は成立し実数矛盾ではない。",
+    "ただし両文書に計測条件の注記が無く、読者が矛盾と誤認する。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "36 (symlink 込み) と 33 (symlink 除外) の測定条件注記が両文書に欠落しており、母数矛盾に見える。実体は contract-generator の symlink 3本差で整合。",
+     "recommended_intervention": "plan-findings.json:231 か build-evidence.md:41 のいずれかに『36=symlink 込み/33=C02 symlink 除外走査 (差分=contract-generator 3本)』の注記を追加。母数は commit 前に再計測。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/plan-findings.json",
+      "line": 231
+     },
+     "root_cause": "なぜ矛盾に見えるか→計測条件が文書化されていない→なぜ文書化漏れか→plan 時計測と build 時走査が別ツール別条件で行われた→なぜ条件差が明示されないか→母数の SSOT (単一計測手順) が定義されていない→plugin-plans/harness-prompt-conformance/plan-findings.json:231",
+     "auto_fixable": true
+    }
+   ],
+   "score": 0.9,
+   "paradigm_name_ja": "仮説思考"
+  },
+  {
+   "paradigm_id": 29,
+   "paradigm_name": "issue",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "本レビューの本質論点は『ファイル実体の存在』ではなく『commit 可能な緑状態+証跡完全性』。これが決まれば残りが決まる。",
+    "その観点で最大の blocker: eval-log/harness-creator/run-build-skill/content-review/ の elegance/rubric 両 verdict が sha=2515ed74… (reviewed_at=2026-07-02) を固定する一方、本 build (07-05) は run-build-skill/SKILL.md を変更 (git status M、Step0.4/Step3.5 追加)。notes も pre-C09 構造のみ記述しており stale が濃厚。",
+    "scripts/lint-content-review.py:130-131 は stale-sha を fail させ、governance-check.yml:35 が --all で fail-closed 実行 (harness-creator は dogfooding 除外対象外)。従って現状のまま commit すると CI が赤になる。"
+   ],
+   "issues": [
+    {
+     "condition": "C1",
+     "condition_signal": "contradiction",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "run-build-skill の content-review verdict (elegance/rubric 両方) が 07-02 sha のまま stale で、07-05 の SKILL.md 変更と矛盾。governance-check の lint-content-review --all (fail-closed) により commit blocker。quality_gates の sha_match:true 宣言も現状 false 相当。",
+     "recommended_intervention": "run-build-skill SKILL.md の現 sha を shasum 再計測のうえ content-review (elegance+rubric) を再実行し verdict を再生成。併せて prompt-creator/run-prompt-creator-7layer 側 SKILL.md の変更有無も shasum 実測し、変更ありなら同様に再生成 (C01 build は resource-map.yaml のみ変更のため現 verdict 有効の可能性が高いが要実測)。",
+     "location": {
+      "file": "eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json",
+      "line": 5
+     },
+     "root_cause": "なぜ commit 不能か→governance-check.yml:35 が lint-content-review --all を fail-closed 実行→なぜ fail するか→verdict の skill_md_sha256=2515ed74… (07-02) が 07-05 の SKILL.md 変更と不一致→なぜ stale のままか→build フローに『対象 SKILL.md 変更時の content-review 再実行』トリガが無い→scripts/lint-content-review.py:130",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.45,
+   "paradigm_name_ja": "論点思考"
+  },
+  {
+   "paradigm_id": 30,
+   "paradigm_name": "kj",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "検出 issue をボトムアップ集約すると単一の島に収束する: stale verdict (paradigm 29)・build trace/evaluator 証跡不在 (21)・再評価トリガ未配線 (22)・plan 状態 drift (26)・証跡欠落再発 (27) は全て『build 終端の write-back プロトコル (verdict 再生成・trace/evaluator 記録・plan 状態更新) の欠如』に還元される。",
+    "build-evidence.md のゲート表 (:49-68, 18本) に lint-content-review / build-trace 検証 / evaluator が不在であることがその物証。個別修正ではなくプロトコル1本の追加が構造解。"
+   ],
+   "issues": [
+    {
+     "condition": "C2",
+     "condition_signal": "omission",
+     "severity": "medium",
+     "bucket": "other",
+     "description": "build 終端 write-back プロトコルが未定義のため、証跡系 issue が独立事象として散発する。HIGH 2件+MEDIUM 3件の共通根であり、Phase 3 では個別パッチ前にこのプロトコル定義を先行させるのが最小介入。",
+     "recommended_intervention": "run-build-skill の build 完了条件に『(1) content-review verdict 再生成 (2) build trace + evaluator verdict 記録 (3) plan 側状態 write-back』の 3 点を終端ステップとして成文化し、build-evidence のゲート表必須行に追加。",
+     "location": {
+      "file": "plugin-plans/harness-prompt-conformance/build-evidence.md",
+      "line": 47
+     },
+     "root_cause": "なぜ散発するか→証跡系成果物の生成責務が build 完了条件に含まれない→なぜ含まれないか→build-evidence のゲート表が決定論 lint/pytest のみで構成され証跡ゲート3種を欠く→なぜ欠くか→『build 完了』の定義が『決定論ゲート緑』で止まり『証跡完全性』を包含していない→plugin-plans/harness-prompt-conformance/build-evidence.md:47",
+     "auto_fixable": false
+    }
+   ],
+   "score": 0.7,
+   "paradigm_name_ja": "KJ 法"
+  }
+ ],
+ "thought_method_coverage": {
+  "used": [
+   "critical",
+   "deduction",
+   "induction",
+   "abduction",
+   "vertical",
+   "decomposition",
+   "mece",
+   "two-axis",
+   "process",
+   "meta",
+   "abstraction",
+   "double-loop",
+   "brainstorming",
+   "lateral",
+   "paradox",
+   "analogy",
+   "if",
+   "naive",
+   "systems",
+   "causal",
+   "causal-loop",
+   "trade-on",
+   "plus-sum",
+   "value-proposition",
+   "strategic",
+   "why",
+   "kaizen",
+   "hypothesis",
+   "issue",
+   "kj"
+  ],
+  "skipped_with_reason": [],
+  "total": 30
+ },
+ "four_conditions": {
+  "C1": {
+   "verdict": "PASS",
+   "evidence": [
+    "stale content-review verdict (high×3レーン独立検出) を genuine 再評価で解消: run-build-skill elegance/rubric 両 verdict を現 sha=4a2f571c で再発行し lint-content-review --all 47 skills exit0 実測 (prompt-creator 側は sha 一致で有効を実測確認)",
+    "build 完了主張 vs 未実施表示の5台帳矛盾を write-back で解消: index.md フェーズ一覧/チェックリスト・goal-spec done×8・handoff routes×9 built 化・phase-01..13 frontmatter 完了化・inventory build_status=realized。plan 決定論ゲート9本+validate-plan-coverage --all exit0 実測",
+    "母数 36 vs 33 は計測条件差 (symlink 込/除外) と実測特定し measured_at 付き注記で整合化"
+   ],
+   "violation_count": 0
+  },
+  "C2": {
+   "verdict": "PASS",
+   "evidence": [
+    "LLM 層 quality_gates 証跡欠落 (high) を genuine 事後充足: evaluator=assign-skill-design-evaluator score 84>=80 high 0 / content_review=PASS sha_match true / elegant_review=本 run 30手法+4条件。証跡は eval-log run dir に保存",
+    "scanned=0 fail-open (C02 の fail-closed 契約違反) を floor guard 実装+4テストで封鎖 (33 passed 実測)",
+    "build trace 未記録は事後捏造せず透明化: build-evidence backlog #8 に理由 (メタプロンプト経由 build で run-build-skill フロー外) と代替実証 (C02 両 mode 現時点 PASS 実測) を記録。次回 build から C09 機構が強制",
+    "PROMPT_REQUIRED_KINDS への agent 追加 (S25) は brief 語彙に agent が不在で dead code になることを実測し、gate reachability 原則により backlog #4 へ統合 (C09-1 optional downgrade 経路と同根)"
+   ],
+   "violation_count": 0
+  },
+  "C3": {
+   "verdict": "PASS",
+   "evidence": [
+    "C02 宣言 surface drift を実装 frontmatter 正本で backfill (--plugins-dir 意味論+--self-test)。「repo 全体走査」過大表現3箇所 (CI コメント/inventory note) を実走査範囲へ統一",
+    "SSOT subagent-hybrid-format.md の「3 agent」実数 drift を実数非依存表現へ訂正+機械強制範囲 (当面 harness-creator のみ) を明記",
+    "run-goal-elicit 誤記→run-skill-elicit 訂正・evaluator 検出の doc drift 2件 (trace-schema rule5 regex / content_lint.status enum 注記) を validator 正本で是正しテスト 33 passed 再実測"
+   ],
+   "violation_count": 0
+  },
+  "C4": {
+   "verdict": "PASS",
+   "evidence": [
+    "handoff routes[].status 9件 planned 据置による後続 executor の二重 build 誤認経路を built 化+build_evidence 参照で遮断。check-build-handoff/check-route-component-parity exit0 実測",
+    "GAP-SCRIPT-BUILDER (次回 elegant-review 時再評価と宣言) に本 run の再評価結果を追記し依存契約を消化",
+    "build_status=realized で validate-plan-coverage ライフサイクル gate に正式接続 (--all exit0 で gate 対象昇格を実測)。stale-sha→再評価の機構連結は backlog #3 (今回分は手動完遂済)"
+   ],
+   "violation_count": 0
+  }
+ },
+ "variable_abstraction": [
+  {
+   "concrete_value": "2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7",
+   "variable_name": "{{stale_skill_md_sha256}}",
+   "source_trace": "eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json:5 (07-02 記録・現 SKILL.md と不一致見込み)"
+  },
+  {
+   "concrete_value": "33",
+   "variable_name": "{{own_prompt_count}}",
+   "default_value": "33",
+   "source_trace": "Glob plugins/harness-creator/skills/*/prompts/*.md 実測 33 件 = build-evidence.md:41 scanned=33 (Phase1 の 36 は symlink bundle 込み計数と推定)"
+  },
+  {
+   "concrete_value": "plugin-plans/harness-prompt-conformance",
+   "variable_name": "{{plan_dir}}",
+   "source_trace": "goal-spec.json:7"
+  },
+  {
+   "concrete_value": "eval-log/harness-creator/run-build-skill/content-review/",
+   "variable_name": "{{content_review_dir}}",
+   "source_trace": "eval-log 配下 verdict 実測 (elegance/rubric 2件のみ存在を glob 確認)"
+  },
+  {
+   "concrete_value": "2515ed74f419ac5252c831d1c4e2ecc3460888f6384da8dbff3ad8c8582225c7",
+   "variable_name": "{{stale_verdict_sha}}",
+   "source_trace": "elegance-verdict.json:5 / rubric-verdict.json 同値 (07-02 記録。commit 前に shasum 再計測要)"
+  },
+  {
+   "concrete_value": "33",
+   "variable_name": "{{prompts_scanned_count}}",
+   "source_trace": "build-evidence.md:41 scanned=33 / glob 実測 33本 (plan-findings.json:231 の 36 は symlink 込み計測、差分=contract-generator 3本)"
+  }
+ ],
+ "total_score": 0.71
+}

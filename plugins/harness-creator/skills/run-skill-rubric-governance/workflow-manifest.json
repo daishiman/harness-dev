@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-rubric-governance",
+  "skill": "run-skill-rubric-governance",
+  "description": "rubric 改正 Runbook。提案 -> 影響評価 -> 猶予 -> 発効 を 1 本のワークフローで管理する。",
+  "phases": [
+    {
+      "id": "proposal",
+      "step": 1,
+      "title": "改正提案の受領",
+      "resourceIds": ["templates/proposal.json", "references/governance-board.md"],
+      "output_artifact": "log/proposal.jsonl"
+    },
+    {
+      "id": "impact",
+      "step": 2,
+      "title": "影響評価 (diff-rubric-impact)",
+      "dependsOn": ["proposal"],
+      "resourceIds": ["scripts/diff-rubric-impact.py"],
+      "output_artifact": "log/impact.jsonl"
+    },
+    {
+      "id": "review",
+      "step": 3,
+      "title": "ボード承認",
+      "dependsOn": ["impact"],
+      "resourceIds": ["references/governance-board.md", "references/version-rules.md"],
+      "output_artifact": "log/review.jsonl"
+    },
+    {
+      "id": "grace",
+      "step": 4,
+      "title": "猶予期間 (lint-rubric-violation)",
+      "dependsOn": ["review"],
+      "resourceIds": ["scripts/lint-rubric-violation.py"],
+      "output_artifact": "log/grace.jsonl"
+    },
+    {
+      "id": "enact",
+      "step": 5,
+      "title": "発効と version bump",
+      "dependsOn": ["grace"],
+      "resourceIds": ["references/version-rules.md"],
+      "output_artifact": "log/enact.jsonl"
+    }
+  ],
+  "fatal_exit_codes": [2, 3]
+}

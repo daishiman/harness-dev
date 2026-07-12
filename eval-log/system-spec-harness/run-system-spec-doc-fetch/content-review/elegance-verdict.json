@@ -1,0 +1,39 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "run-system-spec-doc-fetch",
+    "skill_md_sha256": "6b59b8ee0d40ba9eca16801a3d72850965ad2cd0de2fb0e00666202a101619f2"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-content-review-doc-fetch",
+  "reviewed_at": "2026-07-11T16:00:00+09:00",
+  "iterations": 2,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 3
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "二層分離設計が秀逸: 層1=C13 (validate-source-citation.py) が形式・全件・自己申告 official_host 文字列一致のみを決定論検査し、層2=C08 が WebSearch/WebFetch で公式サイト現行版を再照合する。C13 が通す『自己申告一致』の穴を層2の非公式host判定で塞ぐ補完関係を R-audit-doc-freshness.md L20/L30 で明示し、責務境界が曖昧化していない。",
+      "決定論 assembler (build-fetched-references.py) と検証ゲート (validate-source-citation.py) を分離し『手書きJSONで緑化しない』不変則を機械層で担保。host正規化に lstrip ではなく removeprefix('www.') を採用し web.dev→eb.dev の誤潰しを回避する等エッジまで丁寧。時刻を壁時計上書きせず R2 実取得値を貫通させる再現性設計と fail-visible (未取得を取得済みと偽らない) が全層で一貫している。",
+      "knowledge candidate qualification を単一 writer (C01 set-knowledge-candidate) 経由に限定し、C02 は素材 source_refs 生成までで qualified 遷移を代行しない境界を R1/R2/R3 と SKILL.md KeyRule9 で四点固定している。"
+    ],
+    "negative_feedback": [
+      "[fixed] prompts/R1・R2・R3 のヘッダ注記が本 skill を 'C01' と誤記していた (canonical=C02、C01=run-system-spec-elicit)。R1 内では C01 が spec-state の producer=入力元として正しく使われており、同一 skill を C01=入力元かつ C01=本体とする自己矛盾だったため C02 へ修正 (3箇所)。",
+      "[smell] R-audit-doc-freshness.md の起動アダプタ参照 '../../agents/...' は skill-root 相対解決なら有効だが、references/resource-map.yaml はファイル相対を採用しており相対パス基準が混在。将来の誤解余地あり (PASS非阻害)。",
+      "[smell] fetched-references の JSON 形状が SKILL.md と R3-record.md に重複記載 (意図的 SSOT+要約だが drift 余地)。goal-seek-paradigm.md はベア名参照 (実体は harness-creator plugin) だが 6ステップをインライン列挙済で自己完結。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
+    "next_action": "none"
+  },
+  "notes": "施した修正=prompts/R1-identify.md・R2-fetch.md・R3-record.md のヘッダ C01→C02 (3箇所)。SKILL.md は未編集のため sha256 不変 (6b59b8ee...)。dependency_break 実測: responsibility_refs 3件・plugin-root scripts/validate-source-citation.py・build-fetched-references.py・agents/system-spec-doc-freshness-auditor.md・resource-map.yaml の全参照を test -e で実在確認済。canonical component ID は plugin-plans/system-spec-harness/component-inventory.json (C02=run-system-spec-doc-fetch, C01=run-system-spec-elicit, C08=freshness-auditor, C13=validate-source-citation) と突合。29 pytest green。修正後は残存 HIGH なし・smell のみで genuine PASS。"
+}

@@ -1,0 +1,185 @@
+# resource-map.yaml — run-build-skill progressive disclosure map
+#
+# Plugin 単位対応 (2026-05-22):
+#   - `bundles:` で plugin-composition.yaml をエイリアス参照
+#   - 各 resource entry に `bundle:` を付与し所属 CapabilityBundle を明示
+#   - `edges:` で plugin-composition.yaml の dependencies[] を参照 (DRY — 値の再宣言はしない)
+#   - 依存図は scripts/render-dependency-graph.py で Mermaid に変換 (--self-test で本ファイル下記 bundles をループ)
+
+bundles:
+  - name: harness-creator
+    path: ../../../plugin-composition.yaml
+    role: meta-plugin
+  - name: skill-intake
+    path: ../../../../skill-intake/plugin-composition.yaml
+    role: intake-pipeline
+  - name: prompt-creator
+    path: ../../../../prompt-creator/plugin-composition.yaml
+    role: prompt-factory
+  - name: skill-governance-adapters
+    path: ../../../../skill-governance-adapters/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-automation
+    path: ../../../../skill-governance-automation/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-config
+    path: ../../../../skill-governance-config/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-hooks
+    path: ../../../../skill-governance-hooks/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-lint
+    path: ../../../../skill-governance-lint/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-migration
+    path: ../../../../skill-governance-migration/plugin-composition.yaml
+    role: governance
+  - name: skill-governance-secrets
+    path: ../../../../skill-governance-secrets/plugin-composition.yaml
+    role: governance
+
+# edges: plugin-composition.yaml.dependencies[] を集約参照 (値は本ファイルに複写しない)
+edges:
+  source: bundles[*].path
+  field: dependencies
+  schema:
+    from: string
+    to: string
+    type: "enum:calls|reads|extends|evaluates|emits|writes|delegates"
+
+local_artifacts:
+  manifest: ../workflow-manifest.json
+  schemas:
+    - ../schemas/skill-build-trace.schema.json
+    - ../schemas/template-selection.schema.json
+    - ../schemas/responsibility-slot.schema.json
+    - ../schemas/build-flags.schema.json
+    - ../schemas/goal-seek-loop.schema.json   # loop実行系の周回progress契約 (with-goal-seek配線)
+  prompts:
+    - ../prompts/R1-scaffold.md
+    - ../prompts/R2-responsibility-emit.md
+    - ../prompts/R3-template-select.md
+    - ../prompts/R4-trace-write.md
+# resources[].bundle が未指定なら default_bundle を継承 (本 skill は harness-creator 所属)
+default_bundle: harness-creator
+
+resources:
+  - category: baseline-skill-build
+    bundle: harness-creator
+    keywords: ["create", "update", "frontmatter", "permissions", "skill"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/01a-build-flow.md
+      - doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md
+      - doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md
+    cover_concerns: ["02-skill-structure", "03-frontmatter", "04-invocation-permissions"]
+  - category: layering-placement
+    keywords: ["subagent", "hook", "mcp", "cli", "script", "deterministic", "layer"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+      - doc/ClaudeCodeスキルの設計書/28-script-execution-model.md
+    cover_concerns: ["05-layering"]
+  - category: naming-classification
+    keywords: ["name", "prefix", "assign", "delegate", "wrap", "role_suffix"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md
+      - doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md
+    cover_concerns: ["06-classification-naming"]
+  - category: progressive-disclosure
+    keywords: ["references", "resource-map", "context", "compaction", "handoff"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md
+      - doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md
+    cover_concerns: ["07-progressive-disclosure"]
+  - category: reproducible-skill-writing
+    keywords: ["description", "body", "gotchas", "writing", "trigger"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md
+    cover_concerns: ["08-skill-writing-guidelines"]
+  - category: evaluator-orchestration
+    keywords: ["evaluator", "rubric_refs", "rubric", "score", "fork", "Goodhart", "fast", "L0", "L1", "L2", "merge"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
+      - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
+    cover_concerns: ["09-evaluation-orchestration"]
+  - category: skill-factory-reproducibility
+    keywords: ["harness creator", "factory", "量産", "再現性", "rubric_refs", "adapter", "routing", "analogy", "template variable", "横展開"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
+      - doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md
+      - doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md
+    local_reference:
+      - plugins/harness-creator/skills/run-build-skill/references/skill-factory-reproducibility.md
+    cover_concerns: ["29-multi-project-rubric-composition", "30-paradigm-analogy-map", "31-output-routing-adapter-architecture"]
+  - category: meta-reproducibility-loop
+    keywords: ["meta-skill", "dogfooding", "rubric", "governance", "script", "hook", "subagent", "reproducibility", "eval-log", "impact"]
+    max_docs: 3
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md
+      - doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md
+      - doc/ClaudeCodeスキルの設計書/28-script-execution-model.md
+    cover_concerns: ["26-meta-skill-dogfooding", "27-rubric-governance-runbook", "28-script-execution-model"]
+  - category: template-rendering
+    keywords: ["template", "templates", "render", "run", "ref", "assign", "wrap", "delegate"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/11-templates.md
+      - doc/ClaudeCodeスキルの設計書/24-meta-skill-templates.md
+    cover_concerns: ["11-templates"]
+  - category: checklist-gates
+    keywords: ["checklist", "lint", "P0", "P1", "P2", "gate", "validation"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/13-checklists.md
+    cover_concerns: ["13-checklists"]
+  - category: source-traceability
+    keywords: ["source", "image", "extraction", "traceability", "article", "元記事", "画像"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/12-image-extraction-map.md
+      - doc/ClaudeCodeスキルの設計書/21-source-traceability.md
+    cover_concerns: ["source-traceability"]
+  - category: subagent-hook-integration
+    keywords: ["subagent", "agent-team", "hook", "permissions.deny", "FileChanged", "SubagentStop"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+      - doc/ClaudeCodeスキルの設計書/17-agent-teams-reference.md
+    cover_concerns: ["10-subagents-hooks-integration"]
+  - category: agent-teams
+    keywords: ["agent-team", "teammate", "task-list", "TaskCompleted", "TeammateIdle", "with-subagent", "parallel-review", "competing-hypothesis"]
+    max_docs: 2
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/17-agent-teams-reference.md
+      - doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md
+    cover_concerns: ["17-agent-teams"]
+  - category: complete-examples
+    keywords: ["complete-example", "directory-example", "wrap", "delegate", "ref", "run", "完成例", "テンプレ展開"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/18-complete-examples.md
+    cover_concerns: ["18-complete-examples"]
+  - category: troubleshooting
+    keywords: ["error", "failure", "loop", "loop_exceeded", "fast-mode", "handoff", "破損", "誤発動", "誤判定", "factory-failure"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/19-troubleshooting.md
+    cover_concerns: ["19-troubleshooting"]
+  - category: distribution-portability
+    bundle: harness-creator
+    keywords: ["plugin", "distribution", "marketplace", "install", "portability", "doctor", "readme", "CLAUDE_PLUGIN_ROOT", "unset", "empty expansion", "absolute path", "repo-relative", "plugin-composition", "resource map", "plugin.json hooks", "hook command", "setup", "疎通確認", "api", "db", "secret", "external-dependency"]
+    max_docs: 1
+    read_first:
+      - doc/ClaudeCodeスキルの設計書/22-cross-platform-runtime.md
+    local_reference:
+      # 二層 (層1 runtime hook import / 層2 README doc コピペ耐性) の正本 SSOT。
+      # 配布 plugin (kind=plugin) で外部依存の疎通確認手順が要るとき必読。
+      - plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md
+    cover_concerns: ["22-cross-platform-runtime", "readme-doc-portability", "doctor-delegation"]

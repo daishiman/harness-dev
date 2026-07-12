@@ -1,0 +1,66 @@
+# assign-plugin-plan-evaluator の参照リソース索引 (read_when 付き)
+# 正本ポインタ集約。本文に再掲せず、必要時に該当エントリを参照する。
+
+schemas:
+  - id: plan_findings
+    path: schemas/plan-findings.schema.json
+    read_when: findings 出力の構造を確認する時
+
+scripts:
+  # 決定論ゲートの実体は run-plugin-dev-plan 配下 (評価器自身は scripts を持たない)
+  - id: topsort
+    path: ../run-plugin-dev-plan/scripts/verify-index-topsort.py
+    read_when: C4 依存関係整合を判定する時
+  - id: unassigned
+    path: ../run-plugin-dev-plan/scripts/detect-unassigned.py
+    read_when: C2 component orphan / C4 13 phase 完全性 + section 床を判定する時
+  - id: frontmatter
+    path: ../run-plugin-dev-plan/scripts/check-spec-frontmatter.py
+    read_when: C2 phase frontmatter (PHASE_REQUIRED) + component_kind 別構造を判定する時
+  - id: gates
+    path: ../run-plugin-dev-plan/scripts/check-spec-gates.py
+    read_when: C2 quality_gates + harness を判定する時
+  - id: matrix
+    path: ../run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py
+    read_when: C3 整合性 (マトリクス全行被覆) を判定する時
+  - id: surfaces
+    path: ../run-plugin-dev-plan/scripts/check-surface-inventory.py
+    read_when: C2 plugin-level surface 採否と 5 種検討証跡を判定する時
+  - id: handoff
+    path: ../run-plugin-dev-plan/scripts/check-build-handoff.py
+    read_when: C1/C4 L3→L4 routing と envelope gap を判定する時
+  - id: requirements
+    path: ../run-plugin-dev-plan/scripts/check-requirements-coverage.py
+    read_when: C2 要件被覆 (goal-spec checklist の各 id が index へ被覆) を判定する時
+  - id: runtime_portability
+    path: ../run-plugin-dev-plan/scripts/check-runtime-portability.py
+    read_when: C4 install 携帯性 (共有 script hoist + build_target 自己完結) を判定する時
+  - id: runner
+    path: scripts/evaluate-plan.py
+    read_when: 4条件 + 全 gate を一括で plan-findings.json に集約する時
+
+references:
+  - id: rubric
+    path: references/plan-rubric.json
+    read_when: 4条件機械判定ルールを取得する時
+  - id: criteria
+    path: references/four-condition-criteria.md
+    read_when: 意味判定の詳細基準が要る時
+
+related_skills:
+  - id: caller
+    path: ../run-plugin-dev-plan/SKILL.md
+    read_when: 呼び出し元 (R4) の文脈を確認する時
+  - id: l0_rubric
+    path: ../../../harness-creator/skills/ref-skill-design-rubric/references/rubric.json
+    read_when: 共通設計 rubric (L0 正本) と突合する時
+
+agents:
+  - id: fork_executor
+    path: ../../agents/plugin-dev-plan-evaluator.md
+    read_when: context:fork 実行の起動契約を確認する時
+
+source_docs:
+  - id: r4_origin
+    path: ../run-plugin-dev-plan/prompts/R4-verify-traceability.md
+    read_when: R4 (旧 orchestrator 内蔵) の責務正本を確認する時

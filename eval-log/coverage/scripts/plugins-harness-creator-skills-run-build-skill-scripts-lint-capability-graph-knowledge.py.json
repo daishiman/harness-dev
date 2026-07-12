@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-graph-knowledge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review + 30思考法検証。engine:task-graph 生成 harness の C01/C02/C06/C07 同梱・各 skill surface の consult token・knowledge entry の source_ref を fail-closed 検査。素人思考 (Agent3 §18) 反映: BUNDLED_SCRIPTS を C06/C07 の2本から生成 SKILL.md が参照する4本全てへ拡張 (gate-coverage parity)。concrete engine 宣言のみ検出する行頭 YAML 正規表現で散文誤発火を排除。engine:task-graph skill 不在は not-applicable exit0。TESTS: tests/scripts-plugins/test_harness_creator__lint_capability_graph_knowledge.py 19ケース PASS (regex/collect/bundling4本+byte-parity/consult/source_ref/store不在warn/not-applicable/単一ファイル/--self-test parity)。coverage 90%。 [elegant-review-30methods phase3-2] SKILL.md Step4 bash に配線済だが references/lint-matrix.json 未登録→lint-matrix-sync.py CI赤(F2-01)を解消: build-preflight context + ci_exclusion_reason 付き entry を登録。lint-matrix-sync exit0。"
+  },
+  "reviewed_by": "elegant-review-30methods-phase3",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

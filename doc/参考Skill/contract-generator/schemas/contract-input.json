@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contract-input.json",
+  "title": "取引基本契約書 入力スキーマ",
+  "description": "契約書生成に必要な全入力項目を定義。取引基本契約・個別契約の両方に対応。",
+  "type": "object",
+  "required": ["parties", "business", "payment"],
+  "properties": {
+    "contractMeta": {
+      "type": "object",
+      "description": "契約メタ情報",
+      "weight": 0.9,
+      "properties": {
+        "contractLevel": {
+          "type": "string",
+          "enum": ["master", "individual"],
+          "description": "契約レベル（master: 取引基本契約, individual: 個別契約）",
+          "weight": 1.0,
+          "default": "master"
+        },
+        "contractNumber": {
+          "type": "string",
+          "description": "契約番号（任意）",
+          "weight": 0.6
+        },
+        "masterContractRef": {
+          "type": "string",
+          "description": "親となる取引基本契約の参照（個別契約の場合）",
+          "weight": 0.5
+        },
+        "businessDayDefinition": {
+          "type": "string",
+          "description": "営業日の定義",
+          "weight": 0.5,
+          "default": "土曜日、日曜日及び国民の祝日を除く日",
+          "examples": ["土曜日、日曜日及び国民の祝日を除く日", "甲の営業日"]
+        }
+      }
+    },
+    "parties": {
+      "type": "object",
+      "description": "当事者情報",
+      "weight": 1.0,
+      "required": ["orderer", "contractor"],
+      "properties": {
+        "orderer": {
+          "type": "object",
+          "description": "甲（発注者）情報",
+          "weight": 1.0,
+          "required": ["name", "address", "entityType"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "名称（会社名または個人名）",
+              "weight": 1.0,
+              "examples": ["日工株式会社", "株式会社ABC"]
+            },
+            "address": {
+              "type": "string",
+              "description": "住所",
+              "weight": 1.0,
+              "examples": ["兵庫県明石市大久保町江井島1013番地の1"]
+            },
+            "entityType": {
+              "type": "string",
+              "enum": ["corporation", "individual"],
+              "description": "法人/個人の区別",
+              "weight": 0.9,
+              "default": "corporation"
+            },
+            "representative": {
+              "type": "string",
+              "description": "代表者名（法人の場合）",
+              "weight": 0.8
+            },
+            "representativeTitle": {
+              "type": "string",
+              "description": "代表者肩書",
+              "weight": 0.5,
+              "default": "代表取締役",
+              "examples": ["代表取締役", "代表取締役社長", "代表社員"]
+            }
+          }
+        },
+        "contractor": {
+          "type": "object",
+          "description": "乙（受注者）情報",
+          "weight": 1.0,
+          "required": ["name", "address", "entityType"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "名称（会社名または個人名）",
+              "weight": 1.0,
+              "examples": ["万壽本大嗣", "株式会社XYZ"]
+            },
+            "address": {
+              "type": "string",
+              "description": "住所",
+              "weight": 1.0
+            },
+            "entityType": {
+              "type": "string",
+              "enum": ["corporation", "individual"],
+              "description": "法人/個人の区別",
+              "weight": 0.9
+            },
+            "representative": {
+              "type": "string",
+              "description": "代表者名（法人の場合）",
+              "weight": 0.8
+            }
+          }
+        }
+      }
+    },
+    "business": {
+      "type": "object",
+      "description": "業務内容",
+      "weight": 1.0,
+      "required": ["type", "services"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ai-consulting", "it-development", "design", "consulting", "other"],
+          "description": "業務タイプ",
+          "weight": 1.0,
+          "searchKeywords": ["AI", "IT", "開発", "デザイン", "コンサル"]
+        },
+        "services": {
+          "type": "array",
+          "description": "提供サービス一覧",
+          "weight": 1.0,
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "contractType"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "業務名称",
+                "weight": 1.0,
+                "examples": ["AIコンサルティング業務", "AI研修業務", "プロンプト制作業務"]
+              },
+              "description": {
+                "type": "string",
+                "description": "業務内容詳細",
+                "weight": 1.0
+              },
+              "contractType": {
+                "type": "string",
+                "enum": ["quasi-mandate", "contract-for-work"],
+                "description": "契約タイプ（quasi-mandate: 準委任, contract-for-work: 請負）",
+                "weight": 1.0
+              },
+              "deliverables": {
+                "type": "string",
+                "description": "納品物（請負契約の場合）",
+                "weight": 0.8
+              },
+              "details": {
+                "type": "array",
+                "description": "業務の詳細内容（月次定例会議、随時相談対応など）",
+                "weight": 0.7,
+                "items": {
+                  "type": "string"
+                },
+                "examples": [["月次定例会議", "随時相談対応"], ["研修資料の作成", "講師派遣"]]
+              },
+              "frequency": {
+                "type": "string",
+                "description": "業務頻度（月次、随時など）",
+                "weight": 0.6,
+                "examples": ["月次", "随時", "プロジェクト単位"]
+              }
+            }
+          }
+        },
+        "useAI": {
+          "type": "boolean",
+          "description": "AI利用の有無",
+          "weight": 0.9,
+          "default": true
+        },
+        "aiServices": {
+          "type": "array",
+          "description": "使用するAIサービス",
+          "weight": 0.7,
+          "items": {
+            "type": "string",
+            "enum": ["ChatGPT", "Claude", "Gemini", "Copilot", "Other"]
+          },
+          "default": ["ChatGPT", "Claude", "Gemini"]
+        }
+      }
+    },
+    "payment": {
+      "type": "object",
+      "description": "報酬・支払条件",
+      "weight": 1.0,
+      "required": ["method"],
+      "properties": {
+        "amount": {
+          "type": "object",
+          "description": "報酬額",
+          "weight": 0.8,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["fixed", "hourly", "monthly", "individual"],
+              "description": "報酬タイプ",
+              "default": "individual"
+            },
+            "value": {
+              "type": "number",
+              "description": "金額（円）"
+            },
+            "taxIncluded": {
+              "type": "boolean",
+              "description": "税込みかどうか",
+              "default": false
+            }
+          }
+        },
+        "method": {
+          "type": "string",
+          "enum": ["bank-transfer", "other"],
+          "description": "支払方法",
+          "weight": 0.9,
+          "default": "bank-transfer"
+        },
+        "cycle": {
+          "type": "object",
+          "description": "支払サイクル",
+          "weight": 0.9,
+          "properties": {
+            "closingDay": {
+              "type": "string",
+              "description": "締め日",
+              "default": "月末",
+              "examples": ["月末", "15日", "20日"]
+            },
+            "paymentDay": {
+              "type": "string",
+              "description": "支払日",
+              "default": "翌月末",
+              "examples": ["翌月末", "翌月15日", "翌々月末"]
+            },
+            "invoiceDeadline": {
+              "type": "string",
+              "description": "請求書発行期限",
+              "default": "翌月10日"
+            }
+          }
+        },
+        "transferFee": {
+          "type": "string",
+          "enum": ["orderer", "contractor"],
+          "description": "振込手数料負担",
+          "weight": 0.7,
+          "default": "orderer"
+        }
+      }
+    },
+    "term": {
+      "type": "object",
+      "description": "契約期間",
+      "weight": 0.9,
+      "properties": {
+        "duration": {
+          "type": "string",
+          "description": "契約期間",
+          "default": "1年間",
+          "examples": ["1年間", "6ヶ月", "2年間"]
+        },
+        "autoRenewal": {
+          "type": "boolean",
+          "description": "自動更新の有無",
+          "default": true
+        },
+        "renewalNoticePeriod": {
+          "type": "string",
+          "description": "更新拒絶通知期間",
+          "default": "1ヶ月前"
+        }
+      }
+    },
+    "intellectualProperty": {
+      "type": "object",
+      "description": "知的財産権",
+      "weight": 0.9,
+      "properties": {
+        "copyrightTransfer": {
+          "type": "string",
+          "enum": ["payment-completion", "delivery", "individual"],
+          "description": "著作権移転タイミング",
+          "default": "payment-completion"
+        },
+        "existingWorksRetained": {
+          "type": "boolean",
+          "description": "既存著作物は乙に留保",
+          "default": true
+        },
+        "knowhowRetained": {
+          "type": "boolean",
+          "description": "ノウハウは乙に帰属",
+          "default": true
+        }
+      }
+    },
+    "confidentiality": {
+      "type": "object",
+      "description": "秘密保持",
+      "weight": 0.8,
+      "properties": {
+        "survivalPeriod": {
+          "type": "string",
+          "description": "契約終了後の存続期間",
+          "default": "3年間",
+          "examples": ["1年間", "3年間", "5年間"]
+        },
+        "aiLearningProhibited": {
+          "type": "boolean",
+          "description": "AI学習データ利用禁止",
+          "default": true
+        }
+      }
+    },
+    "liability": {
+      "type": "object",
+      "description": "責任",
+      "weight": 0.8,
+      "properties": {
+        "warrantyNoticePeriod": {
+          "type": "string",
+          "description": "契約不適合通知期限",
+          "default": "検収完了後30日"
+        },
+        "damagesCap": {
+          "type": "string",
+          "enum": ["contract-amount", "fixed", "unlimited"],
+          "description": "損害賠償上限",
+          "default": "contract-amount"
+        }
+      }
+    },
+    "jurisdiction": {
+      "type": "object",
+      "description": "管轄",
+      "weight": 0.9,
+      "properties": {
+        "court": {
+          "type": "string",
+          "description": "合意管轄裁判所",
+          "default": "東京地方裁判所",
+          "examples": ["東京地方裁判所", "大阪地方裁判所", "神戸地方裁判所", "名古屋地方裁判所"]
+        }
+      }
+    },
+    "appendix": {
+      "type": "object",
+      "description": "別紙取引条件明示書",
+      "weight": 0.8,
+      "properties": {
+        "inspectionPeriod": {
+          "type": "string",
+          "description": "検査完了期間",
+          "default": "10営業日以内"
+        },
+        "businessSummary": {
+          "type": "string",
+          "description": "業務内容要約（別紙用）"
+        }
+      }
+    },
+    "contractDate": {
+      "type": "string",
+      "format": "date",
+      "description": "契約締結日",
+      "weight": 0.7
+    }
+  }
+}

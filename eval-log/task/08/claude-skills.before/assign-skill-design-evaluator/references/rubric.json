@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "rubric_id": "skill-design",
+  "rubric_version": "1.1.0",
+  "layer": "L0",
+  "threshold": 80,
+  "max_skill_md_lines": 300,
+  "trigger_count_min": 2,
+  "trigger_count_max": 3,
+  "description_no_action_detail": true,
+  "severity_weights": {
+    "high": -20,
+    "medium": -10,
+    "low": -3
+  },
+  "upstream": [
+    "ref-skill-design-rubric/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "rules": [
+    {
+      "id": "FM-001",
+      "area": "frontmatter",
+      "severity": "high",
+      "check": "name matches ^(run|ref|assign|wrap|delegate)-[a-z0-9][a-z0-9-]*$ and len<=60",
+      "rationale": "第1〜5,7条: kebab-case + prefix強制で発動可能性とレイヤを保証"
+    },
+    {
+      "id": "FM-002",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "description contains a trigger phrase (Japanese: 〜とき/〜場合/〜際/〜時 or English: Use when/Read when) and ends with period or 。",
+      "rationale": "trigger文の統一形式が読み取り精度を上げる。1.1.0より日本語推奨。"
+    },
+    {
+      "id": "FM-003",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "trigger phrase count in description between 2 and 3 inclusive (Japanese 〜とき/〜場合/〜際/〜時 or English when-clauses)",
+      "rationale": "trigger 2-3個は誤発動と取りこぼしのスイートスポット"
+    },
+    {
+      "id": "FM-004",
+      "area": "frontmatter",
+      "severity": "medium",
+      "check": "description does NOT contain action verbs implying internals ('採点する','JSONで返す','sha256','exit code')",
+      "rationale": "動作詳細は本文化、descriptionはtoken節約のため発動条件のみ"
+    },
+    {
+      "id": "FM-005",
+      "area": "frontmatter",
+      "severity": "low",
+      "check": "description begins with a verb-like token (English verb in {Build, Score, Read, Wrap, Delegate, Generate, Rubric, Naming, Claude} OR a Japanese verb/noun phrase ending in する/行う/実行/生成/採点/評価/構築/参照/読み取り/レビュー/管理)",
+      "rationale": "動詞ベース = 何をするかが冒頭で判る。1.1.0で日本語動詞も許容。"
+    },
+    {
+      "id": "BD-001",
+      "area": "body",
+      "severity": "high",
+      "check": "body contains heading '## Purpose & Output Contract'",
+      "rationale": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提"
+    },
+    {
+      "id": "BD-002",
+      "area": "body",
+      "severity": "medium",
+      "check": "body contains heading '## Gotchas'",
+      "rationale": "反パターン提示が読み手の事故を防ぐ(08章)"
+    },
+    {
+      "id": "BD-003",
+      "area": "body",
+      "severity": "high",
+      "check": "body line count (excluding frontmatter) <= 300",
+      "rationale": "300行制約=Less is More、token効率(24章正本)"
+    },
+    {
+      "id": "BD-004",
+      "area": "body",
+      "severity": "medium",
+      "inherits_from": "ref-skill-design-rubric/rubric.json#BD-004"
+    },
+    {
+      "id": "NM-001",
+      "area": "naming",
+      "severity": "high",
+      "check": "basename of skill directory == frontmatter.name",
+      "rationale": "第7条: ディレクトリ名と name の不一致はSkill loaderが解決不能"
+    },
+    {
+      "id": "NM-002",
+      "area": "naming",
+      "severity": "medium",
+      "check": "name passes lint-skill-name.py (第1〜5,7条)",
+      "rationale": "命名規約条文の機械検証"
+    },
+    {
+      "id": "NM-003",
+      "area": "naming",
+      "severity": "low",
+      "check": "tree passes lint-skill-tree.py (第8〜13条)",
+      "rationale": "templates/ references/ scripts/ examples/ のファイル命名"
+    },
+    {
+      "id": "PD-001",
+      "area": "progressive-disclosure",
+      "severity": "low",
+      "check": "body lines <= 100 OR references/ directory exists with at least 1 file",
+      "rationale": "07章: 100行超は分割、長文はreferences配下へ"
+    },
+    {
+      "id": "RG-001",
+      "area": "governance",
+      "severity": "low",
+      "check": "output JSON includes rubric_hash (sha256 of this file)",
+      "rationale": "27章: 採点結果の再現性を保証"
+    }
+  ],
+  "_sync_note": "upstream ref-skill-design-rubric/rubric.json 1.1.0 と同期 (governance PROP-2026-05-18-002)。差分は inherits_from で表現し、check 直書きは upstream に揃える。"
+}

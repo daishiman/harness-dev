@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://harness.local/system-spec-harness/completeness-findings.schema.json",
+  "title": "system-spec completeness evaluation report (C05)",
+  "description": "生成された仕様書ドキュメントセットの完成度評価レポート。上位概念・意思決定・網羅性・deep knowledge・鮮度・prompt品質の観点 + 総合判定をfail-closedに再導出する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evaluator", "verdict", "aspects", "findings", "gaps"],
+  "properties": {
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "context"],
+      "properties": {
+        "name": {"const": "assign-system-spec-completeness-evaluator"},
+        "version": {"type": "string", "minLength": 1},
+        "context": {"const": "fork"}
+      }
+    },
+    "spec_dir": {"type": "string"},
+    "verdict": {"type": "string", "enum": ["PASS", "FAIL"]},
+    "aspects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["foundation_trace", "decision_guidance", "matrix_coverage", "design_knowledge_reflection", "doc_freshness", "prompt_quality"],
+      "properties": {
+        "foundation_trace": {"$ref": "#/definitions/aspect"},
+        "decision_guidance": {"$ref": "#/definitions/aspect"},
+        "matrix_coverage": {"$ref": "#/definitions/aspect"},
+        "design_knowledge_reflection": {"$ref": "#/definitions/aspect"},
+        "doc_freshness": {"$ref": "#/definitions/aspect"},
+        "prompt_quality": {"$ref": "#/definitions/aspect"}
+      }
+    },
+    "gate_results": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/gate_result"}
+    },
+    "findings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/finding"}
+    },
+    "gaps": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "description": "不足事項一覧。verdict=FAIL のとき非空 (elicit/doc-fetch/compile への差し戻し材料)。"
+    }
+  },
+  "definitions": {
+    "aspect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "auditor", "component", "summary"],
+      "properties": {
+        "verdict": {"type": "string", "enum": ["PASS", "FAIL", "INDETERMINATE"]},
+        "score": {"type": "number", "minimum": 0, "maximum": 100},
+        "auditor": {"type": "string", "minLength": 1},
+        "component": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "gate_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "exit_code"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1},
+        "conditions": {"type": "array", "items": {"type": "string"}},
+        "command": {"type": "array", "items": {"type": "string"}},
+        "exit_code": {"type": "integer"},
+        "stdout": {"type": "string"},
+        "stderr": {"type": "string"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "bucket", "observation"],
+      "properties": {
+        "severity": {"type": "string", "enum": ["high", "medium", "low", "info"]},
+        "bucket": {"type": "string", "minLength": 1},
+        "observation": {"type": "string", "minLength": 1},
+        "suggested_fix": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

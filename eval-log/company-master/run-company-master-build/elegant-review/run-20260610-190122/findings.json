@@ -1,0 +1,459 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/company-master",
+    "reviewed_at": "2026-06-10T19:01:22+09:00"
+  },
+  "loop_count": 3,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "要求記録『Notion9列』vs 実装『DB8列+確認用URLはページ本文』の差分に合意記録が無いことを検出 (SKILL.md:49)。確度4日本語ラベル・備考テンプレ・確認用URL・gBizINFO 採用の他要求は充足を確認",
+        "解消: 2026-06-10 ユーザーへ提示し『8列+本文URL』承認を取得。設計判断ログ#6 に承認記録を追記"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "不変ルール『自動確定は法人番号一致 or 会社名+住所2要素一致のみ』に対し、resolve_by_name が address=None でも単一ヒットで『公的データで確認済み』に自動確定する実装矛盾を検出 (resolve_company.py:114)",
+        "解消: address is not None and _address_match 必須へ修正、会社名のみは candidates 返却。回帰テスト追加 (pytest PASS)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "vendored notion_config.py が skill-intake 確立の byte一致 lint パターンから逸脱し、残骸 docstring (ヒアリングシートDB文言・dangling SETUP_DOC_REL) を持つ宙吊り fork であることを検出",
+        "解消: docstring/SETUP_DOC_REL を company-master 文脈・実在パス (references/README-setup.md) へ修正",
+        "解消 (3周目): lint-company-master-vendored-deps.py に関数単位 AST 比較の drift チェックを統合 (共通9関数=正本一致必須・拡張2関数=ホワイトリスト宣言・双方向検査)。vendored 側の整形不要で意味変更ゼロ。Makefile/CI 配線済みターゲット経由で機械検出が稼働"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "SKILL.md:67 の『.codex-plugin/plugin.json』言及に対し実体が repo 全 plugin に不在。テンプレ流用時の適応漏れが最尤原因と推論",
+        "解消: SKILL.md の当該言及を削除 (.claude-plugin のみ宣言)。コード側の防御的探索 (plugin_root) は無害のため最小パッチ原則で維持"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "hook-guard-secret の保証が3段で空洞化 (JSON解釈不能→exit 0 fail-open / set(split) 完全一致のため連結フラグ -wa 等で素通り / pytest 0件) を深掘りで検出",
+        "解消: fail-closed (exit 2) 化、フラグ検出を正規表現へ強化、settings-hardening.json に -g 系 deny 追加 (計7件)、hook pytest 追加 (block/allow/bypass 系)"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "hook-ci",
+          "description": "Bash 変数間接 (F=-w; security ... $F) は静的文字列検査の原理的限界で素通り得る (GUARD_ACCOUNTS 含有前提は維持)。静的層 deny が深層防御として補完",
+          "recommended_intervention": "原理的限界として SKILL.md セキュリティ節に明記済みの best-effort 受容方針を維持。実害事例が出たら shell parser 導入を検討"
+        }
+      ],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugin を要素分解し、SKILL.md/agents/commands の frontmatter が Makefile lint (skill-creator 固定) の被覆ゼロであること、__pycache__ 13件滞留を検出",
+        "解消: Makefile に company-master 向け lint 3種 (name/description/frontmatter) を追記し make lint PASS。__pycache__ 3ディレクトリ削除"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "実行経路×入力種別カバレッジ表 (SKILL.md:157) に『会社名のみ』行が欠落しており、これが paradigm 2 の矛盾をレビューですり抜けさせた構造的原因と特定",
+        "解消: カバレッジ表へ『会社名のみ』行を追加 (自動確定不可・候補列挙のみを明記)、実装修正と同一変更で整合"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×機械担保の2軸で、二段防御の成立条件が『任意・手動マージ』の静的層に依存する高重要×非機械担保象限を検出",
+        "解消: hook fail-closed 化により動的層単独完結へ再定義 (SKILL.md/README-setup.md 更新)、自 repo へは deny 7件を機械マージ"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "工程分解で REPLAY_LOG / intermediate JSONL の cwd 相対パスによるリプレイ工程断線リスク、および backfill の validate_row 迂回 (VERT-01) を検出",
+        "解消: REPLAY_LOG を repo_root/plugin_root 起点解決へ統一、backfill に validate ゲート追加 (offline 修正可能と判明したため別PR送りを撤回し本改善で対処)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『仕様準拠している』という設計判断ログの自己宣言を検証する手段が宣言自体しかない自己宣言自己検証問題と、宣言層 lint 完全非被覆を検出",
+        "解消: ユーザー承認証跡の追記 (列構成) + Makefile/CI への lint 配線で宣言層を機械被覆化"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "vendoring+byte一致lint パターンの汎化漏れ (company-master copy が3系統目の独自進化) と実害 (残骸 docstring・dangling 参照) を検出",
+        "解消: 残骸文言は全修正。allowed-patch 方式 lint への汎化は paradigm 3 の issue として次PR提案"
+      ],
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "skill-intake hook 堅牢化 (2026-06-06 fail-open 封鎖+pytest 配線) の学習が新規 hook に反映されない PDCA 断絶 (旧世代パターンの複製) を検出",
+        "解消: hook-guard-secret を fail-closed 化し pytest を tests/test_company_master.py へ追加 (skill-intake と同型の機械担保)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "settings-hardening 適用手段の代替案 (マージスクリプト/doctor 検査/必須化/起動時警告/install 案内) が未比較のまま『任意・推奨』で確定していたことを検出",
+        "解消: repo 内は managed_permissions 経由の機械マージを実施。配布先向け doctor 検査は paradigm 16 の提案へ集約"
+      ],
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Notion live スキーマの drift 検証 (列名変更・select 4値改名の検出) が無く、同 repo 確立済みの notion-schema SSOT+sync/lint 解法が未移植であることを検出",
+        "解消 (3周目): columns.md から references/notion-db-schema.json を導出し、notion_upsert.py の preflight (8列存在・型一致・select 4オプション完全一致・禁止列遮断・API不達も fail-closed) を upsert/backfill 両経路の書き込み前に配線。モックテスト5件で回帰固定",
+        "実機実証 (2026-06-10): preflight が live DB の実 drift (3列不在+電話番号型不一致) を fail-closed で検出→live DB を正本8列へ整備 (rename+型変更+2列追加、非破壊)→preflight PASS を実トークンで確認"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "逆視点で2件検出: (1) 既定インストール状態 (静的層未マージ) では二段防御が不成立なのに成立前提の記述 (2) 『平文を残さない』と謳う README の既定手順がトークン平文をチャット欄に貼らせる",
+        "解消: (1) hook fail-closed 化+SKILL.md 記述再定義 (2) README 既定手順を『聞かれてから渡す』方式へ昇格、直貼りは上級者向けへ降格"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "contract-generator 前例との類推で setup_doctor / plugin-local lint 相当の欠落 (単独配布時の自己完結検証が dangling) を検出。.codex-plugin 幻影参照も類推で確認 (paradigm 4 で解消)",
+        "解消 (3周目): company_master.py に doctor サブコマンドを追加 (Keychain 2鍵 / DB ID 解決経路 / Notion 到達+schema preflight / settings-hardening deny の4診断、FAIL=exit 1、日本語の次アクション表示)。README へ案内追記、モックテストで回帰固定",
+        "実機実証 (2026-06-10): doctor 実走で live DB 未整備を正しく FAIL 検出→整備後に全 OK を確認 (診断機能の実効性を実証)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "破壊シナリオ試験で、書き込み検証ゲートが wrapper 経路にしか無く agent 直実行経路が prompt 指示のみであることを検出",
+        "解消 (2周目): notion_upsert.py 内部に validate_row ゲートを内蔵し、呼び出し元 (wrapper/agent/backfill) によらず検証 PASS を機械強制。回帰テスト追加",
+        "解消 (3周目): Notion API 呼び出しに 429/5xx 指数バックオフ (最大5試行・Retry-After 尊重・上限超過は fail-closed) を実装。backfill は行単位 try/except が retry 枯渇も replay 退避することを確認しコメント+SKILL.md で方針固定。モックテスト3件で回帰固定"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "素人視点で、既定 db_id が配布者の固定 DB であり別 workspace の初見利用者向け導入経路 (自分の DB への切替) が README に無いことを検出",
+        "解消 (2周目): README 冒頭に対象読者 (社内固定 DB 前提) と、別 workspace 利用時の出力先差し替え手順 (env / .notion-config.json) を明記"
+      ],
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "lint/CI 配線の全体系を追跡し、company-master 専用 lint が make lint のみで CI 未配線、frontmatter lint 群が skill-creator/prompt-creator 固定であることを検出",
+        "解消: creator-kit-ci.yml に vendored-deps lint step、governance-check.yml に company-master conformance 4 step (prompt-creator 前例と同型) を追加。ローカル実行で全 PASS"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "因果連鎖追跡で dogfooding 断絶 (自 repo の settings.json に deny 未マージ+plugin 未 enable → 二段防御が作者環境で0層稼働) を検出",
+        "解消: ユーザー承認のうえ deny 7件をマージし enabledPlugins へ company-master@xl-skills を追加 (生成器 user 区画 INV-1 で保全、無矛盾を確認)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "backfill 検証迂回→不正値 PATCH→『非空セル保護』原則がその値を保護→誤値恒久固着、という自己強化ループを特定。『別PR送り』根拠 (API 必要) が validate_row の純 offline 性により不成立であることも特定",
+        "解消: PATCH 前 validate ゲート+違反行の deferred/replay 退避で増幅ループを遮断。offline 回帰テストで固定"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『settings 配布不可 vs 静的層必須』のトレードオフが手動マージで放置されていたが、既存の managed_permissions 機構による機械マージという第三案 (止揚) が存在することを特定",
+        "解消: repo 内は機械マージ実施。配布先は hook fail-closed 化により動的層単独で保証が完結する再設計で依存自体を解消"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "notion_config.py の gBizINFO 拡張を正本へ還流すれば全 plugin が共有できる正和機会 (現状は company-master だけが正本改善の便益を失う fork) を検出。本PRでは文言整合まで実施、構造分離は paradigm 3 の issue に集約"
+      ],
+      "issues": [],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中核価値『誤値>>空欄の非対称コスト原則』への直接違反 (会社名のみ自動確定) を出力契約違反として検出 (paradigm 2 と独立に同一箇所へ収束)",
+        "解消: resolve_company.py 修正+回帰テストで価値原則と実装を一致させた"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "agents 3ファイルの汎用名 (plugin プレフィクス無し) が .claude/agents flat 名前空間で将来衝突する構造リスクと、.codex-plugin 幻影宣言の陳腐化リスクを検出",
+        "解消: ユーザー承認のうえ company-master-*.md へリネームし参照 (composition/resource-map/SKILL.md) を更新、build-claude-symlinks --prune で再生成 (check PASS・旧名 grep 0件)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "なぜ被覆漏れが起きたかを遡行: 新 plugin 追加時に lint/test 対象へ自動編入する仕組みが無く『気づいた検査だけ個別配線』する運用が根本原因。skill-intake vendored-ssot・PKG-003 と同型の再発",
+        "company-master 個別の被覆は本改善で解消",
+        "解消 (3周目): scripts/lint-plugin-lint-coverage.py を新設 — marketplace.json を SSOT に、実体 skill 所有 plugin の 3種 lint 配線を fail-closed 検査 (allowlist は理由必須・stale 検出付き)。同時に contract-generator を全被覆へ編入、skill-intake は frontmatter enum 違反 (run-intake-revise の effect: notion-mutation) を allowlist 追跡。Makefile+CI 2系統に配線、pytest 14件で回帰固定。symlink 共有のみの plugin は PKG-003 原則 (実体のみ所有カウント) を踏襲し自動 exempt"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "hook-ci",
+          "description": "skill-intake の run-intake-revise frontmatter (effect: notion-mutation が enum 外) は他 plugin 実体のため本スコープで未修正 (メタ検査の allowlist で理由+検出日付きで追跡され、修正後の掃除は stale 検査が強制する)",
+          "recommended_intervention": "skill-intake 側の PR で effect を external-mutation へ修正し、allowlist エントリを削除して frontmatter lint 被覆へ編入する"
+        }
+      ],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "hook fail-open の再発 (過去に封鎖した穴と同型の再導入) を改善対象として特定",
+        "解消: fail-closed 反転+正規表現強化+pytest 追加 (paradigm 5/12 と同一修正に収束)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説『100人中100人同一結果』を崩す環境依存2点 (cwd 相対パスによる退避散逸 / KEN_ALL キャッシュ版未記録による再現検証不能) を特定",
+        "解消: REPLAY_LOG を root 起点解決へ (1周目)、replay JSONL へ ken_all_cache_mtime 記録を追加 (2周目)"
+      ],
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "真に解くべき論点を『plugin 横断の機械担保被覆を個別手書き配線でなく構造で決めること』と特定。plugin-composition.yaml の enforcement 宣言が CI から読まれず dead data 化している点を物証として提示",
+        "company-master 個別配線は完了。構造化は paradigm 26 の issue に集約 (重複起票しない)"
+      ],
+      "issues": [],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全 findings を4島 (A機械担保被覆差/B原則貫徹の経路非対称/C記述と実体の乖離/D dogfooding 断絶) へ集約し、単一根本構造『宣言が hook/lint/CI/生成器に配線されないまま出荷された』に収束。島B追加物証 (confirm-url 経路非対称) と島C追加物証 (script_refs に 3 script 不記載) も検出",
+        "解消: confirm-url を _safe_confirm_url_children へ統一、script_refs へ ken_all/normalize/notion_config 追記。4島とも対応する修正が完了"
+      ],
+      "issues": [],
+      "score": 1.0
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "検出された矛盾5件 (9列vs8列+本文 / 会社名のみ自動確定 vs 2要素一致規則 / .codex-plugin 宣言vs実体不在 / 二段防御宣言vs既定状態 / dogfooding 断絶) を全て解消",
+        "9列差分はユーザー承認 (2026-06-10) を取得し設計判断ログ#6 へ証跡追記、自動確定は実装修正+回帰テスト、.codex-plugin は言及削除、二段防御は fail-closed 化+記述再定義、dogfooding は deny マージ+plugin enable"
+      ]
+    },
+    "C2": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "ユーザー必須要求 (Notion列構成[8列+本文URLで承認済み]/確度4日本語ラベル/備考テンプレ/確認用URL/gBizINFO採用) の充足を確認",
+        "検出された必須欠落 (frontmatter lint 被覆ゼロ/hook pytest ゼロ/script_refs 3件不記載/カバレッジ表の会社名のみ行/upsert validate ゲート/KEN_ALL 版記録/README 対象読者) を全て解消",
+        "3周目 (ユーザー指示による残課題全実装): live schema preflight / setup doctor / レート制限リトライ / vendored drift lint / plugin 横断 lint 被覆メタ検査をすべて実装し、pytest 計52件+make lint で機械固定",
+        "実機実証 (2026-06-10, 実トークン): doctor 全 OK / live DB を正本8列へ整備 / gBizINFO V1=200・V2=404 (V1 が正と実証、DEDUCT-01 完全解消) / E2E (resolve→enrich→validate→upsert created→8列+本文確認用URL確認→テスト行 archive) 成功",
+        "残存 low 1件 (skill-intake の frontmatter enum 違反) は他 plugin 実体の課題で、メタ検査 allowlist が理由付きで追跡・stale 検査が掃除を強制する構造に封じ込め済み"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "skill-intake 残骸 docstring・dangling SETUP_DOC_REL を company-master 文脈へ統一、confirm-url の経路非対称 (fail-open/fail-closed 混在) を _safe_confirm_url_children へ統一",
+        "agents ファイル名を frontmatter name と一致する company-master-* へ統一 (他 plugin の命名慣行と整合)、hook を repo 確立済みの fail-closed パターンへ統一",
+        "make lint (name/description/frontmatter) が company-master を対象に PASS"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "violation_count": 0,
+      "evidence": [
+        "CI 配線断線を解消 (creator-kit-ci.yml + governance-check.yml へ company-master step 追加、ローカル実行 PASS)",
+        "REPLAY_LOG の cwd 相対断線を root 起点解決へ修正、backfill→validate→upsert の検証 DAG を全経路 (wrapper/agent/backfill) で対称化",
+        "build-claude-symlinks.py --check exit 0 (conflict=0)、旧 agent 名参照 grep 0件、pytest 全 PASS"
+      ]
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "37a07a0c-d18c-8091-b8a7-c7eb85872fb5",
+      "variable_name": "{{COMPANY_MASTER_NOTION_DB_ID}}",
+      "default_value": "37a07a0c-d18c-8091-b8a7-c7eb85872fb5",
+      "source_trace": "plugins/company-master/notion-config.fixed.json:8 (固定既定値・env COMPANY_MASTER_NOTION_DATABASE_ID / .notion-config.json で上書き可)"
+    },
+    {
+      "concrete_value": "https://info.gbiz.go.jp/hojin/v1/hojin",
+      "variable_name": "{{GBIZINFO_API_BASE}}",
+      "source_trace": "plugins/company-master/skills/run-company-master-build/scripts/resolve_company.py:42 (V2 移行は open_issues DEDUCT-01)"
+    },
+    {
+      "concrete_value": "https://www.post.japanpost.jp/zipcode/dl/kogaki/zip/ken_all.zip",
+      "variable_name": "{{KEN_ALL_ZIP_URL}}",
+      "source_trace": "plugins/company-master/skills/run-company-master-build/scripts/ken_all.py:39"
+    },
+    {
+      "concrete_value": "notion-api-key.xl-skills / xl-skills",
+      "variable_name": "{{NOTION_KEYCHAIN_SERVICE}}",
+      "source_trace": "notion-config.fixed.json:4-5 (Keychain service/account)"
+    },
+    {
+      "concrete_value": "gbizinfo-api-token.xl-skills",
+      "variable_name": "{{GBIZINFO_KEYCHAIN_SERVICE}}",
+      "source_trace": "hooks/hook-guard-secret.py GUARD_ACCOUNTS"
+    }
+  ],
+  "total_score": 0.98
+}

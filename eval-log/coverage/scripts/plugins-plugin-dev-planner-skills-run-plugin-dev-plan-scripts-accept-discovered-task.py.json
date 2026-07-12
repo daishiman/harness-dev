@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/accept-discovered-task.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine code-review (task-graph producer build + 30思考法検証文脈)。compile OK / # /// script frontmatter 完備。discovered-task 受理器 + 外ループ帰路。additive は即時反映 (canonicalize) し新ノードへ depends_on(新→discovering) 自動配線で孤立回避 (MD-2)、structural は --approved 二段受理。--inbox 一括ドレインは filename 昇順で走査し accepted form へ最終 graph_hash 統一焼戻し (status/resulting_graph_hash・MD-8) + drain 末尾に validate-task-graph fail-closed ゲート (不正 graph は非コミット)。TESTS: test_accept_discovered_task.py 30 PASS。exit 0/1/2。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

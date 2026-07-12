@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "wrap-git-commit-safe",
+    "skill_md_sha256": "16e650cacac3a77ca4873a7c77e07719c7ed449be772faa6adcfae4213d029cc"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-rename-review-subagent-d",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "force-push 防止を exit2 のスキャンではなく allowed-tools を git status/diff/add/commit に限定し push を非搭載とする構造保証で担保しており、決定論検査(pre-commit-secret-scan.py の機密検出・bypass flag 検出)と二系統で危険 commit/push を封じる設計が崩れていない。",
+      "base(run-build-skill)の commit 手順を上書きせず前後フックとして被せる wrap 責務と L1→L0 依存関係が Key Rules・Gotchas・ゴールシークループで一貫し、検査不合格を即 BLOCK し再試行で握り潰さない方針が明文化されている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "plugin skill-creator→harness-creator 改名後の現 SKILL.md(sha256=16e650ca…)を全文 read し 4 条件で genuine 精査。(a) 旧固有名残存: 本スキル配下 grep 0 件、残存なし。(b) 改名追従漏れ: L96 plugins/harness-creator/skills/wrap-git-commit-safe/scripts/pre-commit-secret-scan.py、script_refs 2 件(pre-commit-secret-scan.py/preflight-git-commit.py)、schema_refs schemas/wrap-io.schema.json、templates/commit-template.md、base run-build-skill いずれも実在で参照切れなし。(c) 意味論境界: 単体スキルの commit ステップを wrap する操作=skill 表現維持が正当、plugin path のみ harness-creator へ更新済みで境界違反なし。C1 矛盾0/C2 漏れ0(機密検出→bypass 検出→base commit→不合格時 BLOCK 理由提示の責務鎖が入力/出力/完了条件とともに明示)/C3 整合0(決定論検査を script へ寄せる方針が Key Rules・ゴールシークループ・局面カタログで統一、force-push は allowed-tools 非搭載で構造封止し Key Rule 4/IN2 と矛盾せず)。C4 依存: reference_refs references/resource-map.yaml はスキル直下に実体を持たないが、base run-build-skill の集約 resource-map(plugins/harness-creator/skills/run-build-skill/references/resource-map.yaml, 9398B, 実在)への base 継承ポインタ慣行であり、frontmatter base:run-build-skill 宣言と整合する設計上の指し先で dependency_break と判定しない(独立検証: sibling で pointer 慣行を採るのは base 継承 wrap の本スキルのみ・base 集約ファイルは実在。旧 verdict の calibration とも一致)。重大問題なし=PASS。"
+}

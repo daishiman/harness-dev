@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "delegate-codex-skill-review",
+    "skill_md_sha256": "8a8d87fd8316172687f2c0e90be77cd953d7f912fd1cc4648c4e6cf16181b6c3"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-rename-review-subagent-a",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "命名・契約が rubric 準拠: name=delegate-codex-skill-review が prefix delegate- とディレクトリ basename に一致し、description は発動条件 2 個 (『外部LLMに委譲したいとき』『Sycophancy を避けたいとき』) のみで内部動作詞を含まず、## Purpose & Output Contract と ## Gotchas を存置。",
+      "criteria 追跡可能性が高い: IN1=check-codex-installed.py が script_refs に、IN2=io-contract.schema.json が schema_refs に、OUT1(非採点境界)/OUT2(L1 opt-in 依存)が本文設計と hierarchy_level=L1 注記に追跡可能で、feedback_contract の verify_by (script/elegant-review/evaluator) と本文の検証手段が整合している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator quality-rubric.md 5 次元で現 SKILL.md (sha256=8a8d87fd8316172687f2c0e90be77cd953d7f912fd1cc4648c4e6cf16181b6c3 実測) を独立採点。[完全性 3] commonCore + delegate 系必須 (delegate_agent/hierarchy_level/feedback_contract criteria) 完備、入力(target_skill_path)/出力(delegate-codex-request.json)/完了条件を明示。[一貫性 3] 委譲境界『自セッション非採点』が Key Rule 2/Gotchas/ゴールシークループで同値、改名でコマンド例パスを harness-creator へ統一 (旧固有名残存なし)。[深度 3] 内製 vs 委譲の PARA-001 trade-off 表 (Sycophancy/再現性/依存/適用シーン) で opt-in cross-check の位置づけを掘り下げ。[検証可能性 3] check-codex-installed.py exit code・io-contract schema・codex 実行コマンド例が具体化。[簡潔性 3] 本文簡潔で references/ (codex-connection.md/resource-map.yaml) へ委譲。全次元 >=2、合計 15/15、参照先 harness-creator 配下で全実在につき rubric PASS。"
+}

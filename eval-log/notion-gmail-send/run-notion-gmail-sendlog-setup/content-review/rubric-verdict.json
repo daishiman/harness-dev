@@ -1,0 +1,25 @@
+{
+  "target": {"plugin": "notion-gmail-send", "skill": "run-notion-gmail-sendlog-setup", "skill_md_sha256": "106e448f0c70caad5b06e0dfee63445beeee2edf004c344ae212b50e572a1997"},
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 2},
+  "reviewer": "review-group-c-independent-rubric",
+  "reviewed_at": "2026-07-12T00:22:24Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "rubric 1.3.0 deterministic evaluator score=94/threshold=80。Purpose/Output、Gotchas、命名、300行上限、明示tool allowlist、external-mutation境界を充足。",
+      "単一責務は送信ログDB schemaのadditive reconciliationに限定し、live送信や型変換を行わない。dry-run→明示apply→再dry-runのgateは具体的exit codeで検証可能。",
+      "criteria IN1/OUT1はEXPECTED/idempotent_log、test_contract_sync、elegant-reviewへ直接写像し、復元SSOTを含む全199 tests PASSで依存完全性を確認。"
+    ],
+    "negative_feedback": ["FM-005 low: description冒頭がrubricの動詞heuristic外。", "PD-001 low: body>100 linesかつskill-local references/なし。いずれもscore 94の非blocking finding。"],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d; composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9。"
+}

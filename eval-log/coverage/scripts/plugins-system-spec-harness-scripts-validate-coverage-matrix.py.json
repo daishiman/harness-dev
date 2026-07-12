@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "カテゴリ×platform 収集マトリクスの決定論網羅性ゲート (C7) と opt-in の上位概念トレース (C9)。soundness: _derive_aggregate が 4 値集約状態を真理値表で導出し宣言値と照合、cell state/必須 platform/qa_ref・reason・approval_ref・category 軸床を網羅検査。validate_decisions は options 2-3件・cost_model の free/low-cost 候補必須・needs_guidance 以外の recommendation 必須・confirmed 時のみ user_decision 許容と意思決定支援契約を厳密化。validate_foundation は U1-U9 (U1-U3 は N/A 不可)・confirmed の approval_ref 実在・確定セルの serves_goals トレースと drift 候補 surface を検査。responsibility: 決定論検査に限定し意味判定を委譲、C9 は opt-in で validate() を変えず後方互換。error-handling: file 欠落/JSON parse を exit2、violation を exit1 に分離し frontmatter と一致。side-effect-safety: network:false/write-scope:none の read-only、_is_https_url が scheme=https+hostname+username なしを要求し (認証情報埋込 URL を弾く)、RFC3339 検証も厳密。frontmatter: PEP723 完備。tests/test_validate_scripts.py + skill tests に正例/負例配備。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-skill-intake",
+    "skill_md_sha256": "b08fdc5849642d80f8cad7e1bb5bde3a0dcbef25ce687409a7a428088464c024"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-g",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "改名の意味論境界が正しく適用されている (C1/C3) — Phase 11 の引き渡し先呼称は harness-creator へ更新 (L119 『harness-creator 引き渡しモード判定済み』・Gotcha 8 L152 『harness-creator 引き渡し』) される一方、単一 skill 生成を指す run-skill-create / run-build-skill / capability-build は skill 表現を維持。ハーネス総体への引き渡し=harness、単一 skill 生成=skill の二分が一貫し、旧名 skill-creator/skill_creator/スキルクリエイター の残存 0 件を実測。",
+      "IN1 (manifest SSOT) — Key Rule 1/2・Gotcha 2/7・ゴールシークループが workflow-manifest.json phases[] を唯一の SSOT とし固定 Steps を本文へ複製しない設計を全文で一貫維持。改名は handoff 先の語のみに閉じ、この二重管理 drift 回避構造に影響を与えていない。",
+      "IN2 (hook 機械強制) / OUT1 (薄い orchestrator) — Key Rule 9 と Gotcha 8 がスキル生成 hard stop を『プロンプト層=意図説明 / hook-guard-skillgen.py (PreToolUse: exit 2)=機械強制』の二層に明確分離し保証主体を hook 層へ委ねる。業務ロジック非保持の委譲制御に限定する薄い orchestrator 設計が改名後も維持され、委譲先 7 Skill + 4 SubAgent が全実在 (dependency break 0)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator 改名 (skill-creator → harness-creator) に伴う SKILL.md 変更への独立 genuine 再評価。現 sha256=b08fdc5 を shasum -a 256 で実測 (旧 verdict sha=b2365dc は改名前で stale)。4条件検証: C1 矛盾0 (Key Rule 9 スキル生成禁止 / Gotcha 8 next-action は推奨 / チェックリスト末尾 生成非起動 が相互整合・引き渡し先=harness-creator と単一 skill 生成=run-skill-create の語の割当てが意味論境界に適合)。C2 漏れ0 (Purpose & Output Contract・Key Rules 9件・ゴールシーク・Gotchas 8件・Additional Resources 揃う)。C3 整合0 (harness-creator 呼称が L119/L152 で統一・旧名 grep 0・run-skill-create 等の単一 skill 概念は skill 維持)。C4 依存0 (委譲先 7 Skill+4 SubAgent・responsibility_refs/schema_refs 5件/references/workflow-manifest.json 全実在)。criteria IN1/IN2/OUT1 充足。重大問題なし PASS。"
+}

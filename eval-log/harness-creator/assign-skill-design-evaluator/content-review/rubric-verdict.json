@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "assign-skill-design-evaluator",
+    "skill_md_sha256": "267bfbf75325d5d62d343433aa315f2dfe60a4e92a394a1db69a61ba4d401225"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-rename-review-subagent-a",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "契約-スキーマ-実装の三者同期が保たれている: 出力 JSON 契約が evaluator-contract.md と evaluator-output.schema.json と render-findings-score.py の実出力で一致し、rubric_hash 必須・severity weights 固定という再現性規約が Key Rules と Gotchas で重複なく明示されている。",
+      "簡潔性が Progressive Disclosure で担保: 本文 100 行超を references/ (rubric.json + evaluator-contract.md) へ委譲し PD-001 を満たし、L2 は delta-only override に限定して upstream L0 rule を再掲しない SSOT 設計が改名後も維持されている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-creator quality-rubric.md 5 次元で現 SKILL.md (sha256=267bfbf75325d5d62d343433aa315f2dfe60a4e92a394a1db69a61ba4d401225 実測) を独立採点。[完全性 3] commonCore + assign 系必須 (context:fork/pair=run-build-skill/rubric_refs/schema_refs) 完備、出力 JSON が evaluator-output.schema.json の required フィールドを網羅。[一貫性 3] severity weights・threshold=80・rubric 合成順序が全所で同値、改名で SKILL_DIR 探索候補・upstream 参照を harness-creator へ統一 (旧総体ラベル残存なし)。[深度 3] Goodhart/Sycophancy を fork read-only 単発採点で構造的に封じる設計判断、L0/L1/L2 append-only 合成の拡張衝突回避。[検証可能性 3] severity 数値・threshold・sha256 埋め込み・dogfood 採点コマンド具体化。[簡潔性 3] references/ 委譲と L2 delta-only で本文再掲なし。全次元 >=2、合計 15/15、参照先 (render-findings-score.py/compose-rubrics.py/ref-skill-design-rubric/evaluator-*.schema.json) が harness-creator および skill-governance-automation 配下で全実在につき rubric PASS。"
+}

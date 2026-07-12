@@ -1,0 +1,1 @@
+../../plugins/harness-creator/commands/capability-review.md

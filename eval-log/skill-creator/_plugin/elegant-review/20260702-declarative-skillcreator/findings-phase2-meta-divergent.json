@@ -1,0 +1,17 @@
+{
+  "agent": "elegant-meta-divergent-analyst",
+  "run_id": "20260702-declarative-skillcreator",
+  "methods_used": ["meta", "abstraction", "double-loop", "brainstorming", "lateral", "paradox", "analogy", "if", "naive"],
+  "findings": [
+    {"finding_id": "PF-META", "method": "meta", "summary": "「宣言型」の操作的定義が不在。判定基準がラベル字面で改名により書き換え可能。真の宣言型 = 本文要素が機械可読正本へ写像検証可能な状態", "conditions": ["C1", "C3"], "severity": "critical"},
+    {"finding_id": "PF-ABST", "method": "abstraction", "summary": "「機械ゲート+自由文 escape hatch」が5系統 (catalog label/skip_reason/completeness_exempt/--skip-content-review/fallback WARN)。escape の全量一覧と監査経路なし。skip_reason は loop-kind でも素通し", "conditions": ["C2", "C4"], "severity": "high"},
+    {"finding_id": "PF-DLOOP", "method": "double-loop", "summary": "完了条件5系統のうち Checklist→criteria 変換だけが LLM 層に浮いており抜け漏れの真の穴。skill-brief.schema.json 内で goal/checklist が任意(description)と必須(allOf)の二重宣言", "conditions": ["C4", "C1"], "severity": "high"},
+    {"finding_id": "PF-BRAIN", "method": "brainstorming", "summary": "manifest step 番号と SKILL.md Step 番号が対応破綻。Step0 の phase:init-pre dangling、Step6 に phase なし、7 kind 宣言 vs kind_filter 5値の不整合", "conditions": ["C4", "C3"], "severity": "medium"},
+    {"finding_id": "PF-LATERAL", "method": "lateral", "summary": "doc_coverage (知識被覆) は機械化済なのに requirement coverage (要望被覆) は未機械化の非対称。brief 要素の写像証跡が無く欠落しても全ゲート PASS しうる — RTM で lint 可能な命題に変換可能", "conditions": ["C2"], "severity": "medium"},
+    {"finding_id": "PF-PARADOX", "method": "paradox", "summary": "宣言化自体が正本管理コストを生む。再現性の実体は宣言形式でなく単一正本+機械照合。投資対象は二重管理が事故を生む3点 (lint集合/Step↔phase/完了条件) に限定すべき", "conditions": ["C4", "C1"], "severity": "medium"},
+    {"finding_id": "PF-ANALOGY", "method": "analogy", "summary": "check_default_drift() の --self-test drift 検査パターンが実証済みなのに写像系 (Step↔phase, Checklist↔criteria) とバージョン系へ未横展開", "conditions": ["C3"], "severity": "medium"},
+    {"finding_id": "PF-IF", "method": "if", "summary": "verdict 鮮度が SKILL.md 単体 sha に固定。本文300行制限が内容を references へ押し出すほど sha 突合の被覆率が下がる自己弱体化ループ。tree-hash 化が解", "conditions": ["C2"], "severity": "high"},
+    {"finding_id": "PF-NAIVE", "method": "naive", "summary": "「正本」注記が131箇所超に散在し正本の所在こそ未宣言。初見到達 6 ホップ。canonical-registry (2ホップ上限) が解候補", "conditions": ["C2", "C4"], "severity": "medium"}
+  ],
+  "rejected_overengineering": ["SKILL.md 全面 DSL 化 (LLM 層破壊)", "criteria↔checklist の意味的同値の機械検証 (Goodhart 化)", "全 references 個別 sha 列挙 (保守不能)", "version 全ファイル統一 semver (実害なし)"]
+}

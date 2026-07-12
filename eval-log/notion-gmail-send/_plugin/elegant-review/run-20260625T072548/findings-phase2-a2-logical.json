@@ -1,0 +1,73 @@
+{
+  "agent": "elegant-logical-structural-analyst",
+  "scope": "plugins/notion-gmail-send (plugin)",
+  "thought_method_coverage": {
+    "used": ["批判的","演繹","帰納","アブダクション","垂直","要素分解","MECE","2軸","プロセス","why"],
+    "skipped_with_reason": []
+  },
+  "findings": [
+    {
+      "id": "A2-01",
+      "method": "批判的",
+      "severity": "inconsistency",
+      "location": "plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md vs lib/plan_build.py",
+      "title": "plan_hash の算出対象がSKILL記述と実装で食い違う",
+      "detail": "SKILL.md は plan_hash を『宛先+本文+campaign_id』のハッシュと説明するが、plan_build.py の compute_plan_hash() は宛先リストと本文テンプレ展開後の body は含むものの campaign_id を入力に含めていない。承認した plan と送信 plan の同一性照合に campaign_id が効かず、別campaignの同一宛先・同一本文が同一hashになり得る(承認の使い回し窓)。",
+      "auto_fixable": false,
+      "suggested_fix": "compute_plan_hash の入力に campaign_id を含めるか、SKILL.md の記述を実装に合わせて『宛先+本文』に正す。安全側は前者(実装修正)。"
+    },
+    {
+      "id": "A2-02",
+      "method": "演繹",
+      "severity": "dependency_break",
+      "location": "plugins/notion-gmail-send/skills/run-notion-gmail-send/SKILL.md",
+      "title": "source-audit / sendlog-setup の前提順序が send skill から参照されていない",
+      "detail": "大前提『送信ログDBが存在しauditが通っていること』→小前提『run-notion-gmail-send はそれらに依存』→結論『send SKILL は前提skillの完了を要求すべき』。だが send SKILL.md は sendlog-setup / source-audit を前提条件として明示参照しておらず、依存DAGが文書上途切れている。preflightが実値を見るので実害は防がれるが、依存関係の文書整合が壊れている。",
+      "auto_fixable": false,
+      "suggested_fix": "send SKILL.md の前提条件節に『run-notion-gmail-sendlog-setup 完了済み・run-notion-gmail-source-audit でwarning解消済み』を依存として明記。"
+    },
+    {
+      "id": "A2-03",
+      "method": "MECE",
+      "severity": "omission",
+      "location": "plugins/notion-gmail-send/lib/idempotent_log.py",
+      "title": "送信ログの状態遷移が MECE でない(unknown からの出口が欠落)",
+      "detail": "状態集合 {reserved, sent, unknown_needs_reconcile} のうち、reserved→sent / reserved→unknown は定義されるが、unknown→(sent|aborted) の遷移関数が実装に存在しない。状態機械として吸収状態 unknown が出口なしになり、MECEの『漏れなく』に反する。A4視点のreconcile欠落と同根。",
+      "auto_fixable": false,
+      "suggested_fix": "idempotent_log に reconcile(message_id突合)→sent確定 or aborted の遷移を実装し、状態機械を閉じる。"
+    },
+    {
+      "id": "A2-04",
+      "method": "プロセス",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/lib/send_guard.py",
+      "title": "plan_hash 照合と reserved 予約の順序がプロセス図と逆の可能性",
+      "detail": "あるべき順序は『plan_hash承認照合 → reserved予約 → send』。send_guard と idempotent_log の呼び出し順を辿ると、reserved予約後にhash再照合する分岐があり、予約だけ進んでhash不一致でabortした場合のreserved行クリーンアップがbest-effort。プロセスの巻き戻しが弱い。",
+      "auto_fixable": false,
+      "suggested_fix": "hash照合をreserved予約より前に確定させ、予約後abort時はreserved→abortedで明示クローズ。"
+    },
+    {
+      "id": "A2-05",
+      "method": "垂直",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/lib/render_substitute.py",
+      "title": "テンプレ変数未解決時の挙動が深掘り未定義(空文字置換 vs fail)",
+      "detail": "本文テンプレの {{name}} 等が宛先行に対応値を持たない場合、render_substitute が空文字で黙って置換するか例外を上げるかが一段深掘りすると曖昧。空置換だと『様』だけの本文が送られる事故になり得る。preflightで検出されるか要確認だが、根本は置換器の契約未定義。",
+      "auto_fixable": false,
+      "suggested_fix": "未解決変数は fail-closed(例外)をデフォルトにし、意図的な空許容は明示フラグ。preflightで全変数解決を事前検証。"
+    },
+    {
+      "id": "A2-06",
+      "method": "帰納",
+      "severity": "smell",
+      "location": "plugins/notion-gmail-send/skills/*/SKILL.md",
+      "title": "skill間でフロントマター/用語の表記揺れ(reserved vs 予約, plan_hash vs planハッシュ)",
+      "detail": "複数SKILL.mdを横断すると同一概念の表記が揺れる(reserved/予約済み、dry-run/ドライラン、reason_code/理由コード)。個別には軽微だが帰納的に集めると用語SSOTの不在を示す。",
+      "auto_fixable": true,
+      "suggested_fix": "用語集をref-notion-gmail-send-specに一元化し、各SKILLはそれを参照。表記を統一。"
+    }
+  ],
+  "summary": {
+    "by_severity": {"contradiction": 0, "omission": 1, "inconsistency": 1, "dependency_break": 1, "smell": 3}
+  }
+}

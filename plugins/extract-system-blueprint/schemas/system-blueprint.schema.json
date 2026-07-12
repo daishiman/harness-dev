@@ -1,0 +1,462 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/extract-system-blueprint/system-blueprint.schema.json",
+  "title": "system-blueprint",
+  "description": "抽出 blueprint の top-level shape 契約。AI が追加ヒアリングなしに画面配置まで再現して自社スカフォールドへ着手できる粒度を保証する。fact 集約 (content/tech_stack.signals/nonfunctional_baseline/feature_map/cwv_field_sample/compliance_surfaces/site_inventory) と inference (tech_stack.identified/user_journeys/security_design/delivery_topology/essence) を明示区別し、design_tokens の観測色 palette 孤児 0・screens[] の 3 asset ローカル実在は scripts/doc-emit.py --check-screens が機械執行する。個々の fact/inference レコード shape は fact-inference-confidence.schema.json を参照する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metadata",
+    "source",
+    "snapshot",
+    "design_tokens",
+    "content",
+    "tech_stack",
+    "nonfunctional_baseline",
+    "feature_map",
+    "user_journeys",
+    "security_design",
+    "delivery_topology",
+    "cwv_field_sample",
+    "compliance_surfaces",
+    "site_inventory",
+    "essence",
+    "mermaid_refs",
+    "request_ledger"
+  ],
+  "properties": {
+    "notice": {
+      "type": "string",
+      "description": "参考・学習目的限定の利用注記。doc-emit.py が全正本へ焼き込む。"
+    },
+    "redaction_applied": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text_hits", "emitter", "targets"],
+      "properties": {
+        "text_hits": { "type": "integer", "minimum": 0 },
+        "emitter": { "const": "doc-emit.py" },
+        "targets": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "text_verbatim": {
+      "description": "互換入力のverbatim text。doc-emit時にredact済み値だけを保持する。"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "blueprint schema バージョン。upsert_key=sha256(canonical_url + observation_snapshot_id + schema_version) の構成要素。"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "生成メタ情報。document_brand を含む。",
+      "required": ["document_brand", "prompt_contract"],
+      "properties": {
+        "document_brand": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "文書ブランド色 fact。",
+          "properties": {
+            "theme_color_meta": { "description": "meta theme-color 値。" },
+            "favicon_dominant_colors": { "description": "favicon の主要色。" },
+            "root_background": { "description": ":root/body の背景色。" },
+            "color_scheme_support": { "description": "light/dark 等の color-scheme 対応。" }
+          }
+        },
+        "prompt_contract": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "C03-C06/C13 analyzerに適用した実名lens見出し、lane、cross-lens conflict、neutral synthesis、非模倣/非推薦guardの展開済み契約。"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "対象 URL / canonical_url / 認可根拠等の source 情報。"
+    },
+    "snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "観測 snapshot 情報 (observation_snapshot_id 等)。upsert_key の構成要素。"
+    },
+    "pages": { "type": "array", "description": "観測ページ一覧 (任意)。", "items": { "type": "object", "additionalProperties": true } },
+    "routes": { "type": "array", "description": "route 一覧 (任意)。", "items": {} },
+    "states": { "type": "array", "description": "観測状態一覧 (任意)。", "items": {} },
+    "interactions": { "type": "array", "description": "観測 interaction 一覧 (任意)。", "items": {} },
+    "observed_requests": { "type": "array", "description": "観測 network request 一覧 (任意)。", "items": {} },
+    "inferred_services": { "type": "array", "description": "推測 backend service 一覧 (任意・inference)。", "items": {} },
+    "data_model": { "type": "object", "additionalProperties": true, "description": "主要エンティティのデータモデル推測 (任意・inference)。" },
+    "auth": { "type": "object", "additionalProperties": true, "description": "認証方式の観測/推測 (任意)。" },
+    "ui_tokens": { "type": "object", "additionalProperties": true, "description": "CSS custom properties 等の生 token (任意)。合成は design_tokens が担う。" },
+    "design_tokens": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C06 が要素単位 visual formation を重複排除して合成する design-token。観測色を漏れなく palette 化する (孤児 0 が --check-screens の検査対象)。",
+      "required": ["palette", "type_scale", "spacing_scale", "radius_scale", "shadow_elevation_scale", "breakpoints", "z_layers", "theme_variants"],
+      "properties": {
+        "palette": {
+          "type": "array",
+          "description": "全カラーパレット (CSS 変数未宣言の hard-coded 色も含む)。役割ラベル + 正準表現 + 使用回数。",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["role", "value", "canonical_hex8", "gamut", "usage_count"],
+            "properties": {
+              "role": { "type": "string", "description": "brand/primary/accent/bg/text/border/state 等の役割ラベル。" },
+              "value": { "type": "string", "description": "元表記の色値。" },
+              "canonical_hex8": { "type": "string", "pattern": "^#[0-9a-fA-F]{8}$", "description": "正準 8 桁 hex (RRGGBBAA)。" },
+              "gamut": { "type": "string", "enum": ["srgb", "display-p3", "oklch"], "description": "色域。" },
+              "usage_count": { "type": "integer", "minimum": 0, "description": "観測要素での使用回数 (palette 孤児検査の算術)。" }
+            }
+          }
+        },
+        "type_scale": { "description": "typography scale。" },
+        "spacing_scale": { "description": "spacing scale。" },
+        "radius_scale": { "description": "border-radius scale。" },
+        "shadow_elevation_scale": { "description": "box-shadow / elevation scale。" },
+        "breakpoints": { "description": "responsive breakpoints。" },
+        "z_layers": { "description": "z-index / stacking layer scale。" },
+        "theme_variants": { "description": "theme 別 color set (light/dark 両対応時は両方)。" }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C03 採取の content fact (verbatim コピー/見出し/CTA/meta・OGP/構造化データ/locale)。",
+      "required": ["per_screen_verbatim_copy", "headings_outline", "cta_inventory", "meta_seo_og", "structured_data", "locales"],
+      "properties": {
+        "per_screen_verbatim_copy": { "description": "画面別 verbatim テキスト (本文/CTA/microcopy/placeholder/alt/aria-label)。" },
+        "headings_outline": { "description": "見出し階層 (h1-h6)。" },
+        "cta_inventory": { "description": "CTA 一覧 (label/位置/link 先/種別)。" },
+        "meta_seo_og": { "description": "meta SEO + OGP。" },
+        "structured_data": { "description": "構造化データ (JSON-LD 種別)。" },
+        "locales": { "description": "i18n locale 一覧。" }
+      }
+    },
+    "tech_stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "signals=C03/C09 採取の生シグナル fact / identified=C04 の named 同定 inference。シグナル事実と命名推測のレーン二層化。",
+      "required": ["signals", "identified"],
+      "properties": {
+        "signals": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "生シグナル fact。named 同定は identified へ委譲する。",
+          "required": ["meta_generator", "response_headers", "bundle_script_src_paths", "third_party_request_domains", "cookie_names"],
+          "properties": {
+            "meta_generator": { "description": "meta generator 値。" },
+            "response_headers": { "description": "server/x-powered-by 等の response header。" },
+            "bundle_script_src_paths": { "description": "bundle/script src パス。" },
+            "third_party_request_domains": { "description": "third-party request domain。" },
+            "cookie_names": { "description": "cookie 名一覧。" }
+          }
+        },
+        "identified": {
+          "type": "array",
+          "description": "framework/hosting/CDN/analytics/SaaS の named 同定 inference。全項目 signal fact への evidence_refs+confidence 必須 (fact レーン非混入)。",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "category", "evidence_refs", "confidence"],
+            "properties": {
+              "name": { "type": "string", "description": "同定した技術名 (例: Next.js / Vercel)。" },
+              "category": { "type": "string", "enum": ["framework", "hosting", "cdn", "analytics", "saas"] },
+              "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "支持する signal fact への参照 (≥1)。" },
+              "confidence": { "$ref": "fact-inference-confidence.schema.json#/$defs/confidence" }
+            }
+          }
+        }
+      }
+    },
+    "nonfunctional_baseline": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C03/C09 採取の非機能 baseline fact。budget 内訪問ページ範囲を observed_scope で明示する。",
+      "required": ["transfer_bytes_by_type", "request_count", "cache_policy", "compression", "image_formats", "security_headers", "observed_scope"],
+      "properties": {
+        "transfer_bytes_by_type": { "description": "resource type 別転送 byte。" },
+        "request_count": { "description": "request 数。" },
+        "cache_policy": { "description": "Cache-Control/ETag 等。" },
+        "compression": { "description": "content-encoding 圧縮。" },
+        "image_formats": { "description": "画像 format (avif/webp 等)。" },
+        "security_headers": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "security header fact。",
+          "properties": {
+            "csp": { "description": "Content-Security-Policy 全文。" },
+            "hsts": { "description": "Strict-Transport-Security。" },
+            "x_frame_options": { "description": "X-Frame-Options。" },
+            "referrer_policy": { "description": "Referrer-Policy。" },
+            "permissions_policy": { "description": "Permissions-Policy。" }
+          }
+        },
+        "observed_scope": { "description": "baseline が示す観測範囲 (budget 内訪問ページ範囲) の明示。" }
+      }
+    },
+    "feature_map": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C03 機能アフォーダンス fact の観測集約 (各画面で何ができるか)。journey 解釈は user_journeys が担う。",
+      "required": ["per_screen_affordances"],
+      "properties": {
+        "per_screen_affordances": {
+          "description": "画面別アフォーダンス (forms/cta/operation_types)。",
+          "type": ["array", "object"]
+        }
+      }
+    },
+    "user_journeys": {
+      "type": "array",
+      "description": "C05 の inference。主要タスクの開始→完了フロー。各項目 evidence_refs+confidence 必須。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task", "steps", "evidence_refs", "confidence"],
+        "properties": {
+          "task": { "type": "string", "description": "タスク名 (登録/購入/問合せ 等)。" },
+          "steps": {
+            "type": "array",
+            "description": "遷移ステップ。各 step は screen_ref + action。",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": ["screen_ref", "action"],
+              "properties": {
+                "screen_ref": { "type": "string", "description": "対応する screen への参照。" },
+                "action": { "type": "string", "description": "操作内容。" }
+              }
+            }
+          },
+          "evidence_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "confidence": { "$ref": "fact-inference-confidence.schema.json#/$defs/confidence" }
+        }
+      }
+    },
+    "security_design": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C04 の inference (OWASP 観点・受動観測のみ)。認証方式/セッション管理/CSRF・XSS/CSP 評価/攻撃面/採用回避プラクティス。",
+      "required": ["auth_method", "session_mgmt", "csrf_xss", "csp_eval", "attack_surface", "adopt_avoid_practices"],
+      "properties": {
+        "auth_method": { "description": "認証方式の推測。" },
+        "session_mgmt": { "description": "セッション管理の推測。" },
+        "csrf_xss": { "description": "CSRF/XSS 対策の推測。" },
+        "csp_eval": { "description": "CSP 評価。" },
+        "attack_surface": { "description": "攻撃面の推測。" },
+        "adopt_avoid_practices": { "description": "自社が真似すべき/避けるべきプラクティス。" }
+      }
+    },
+    "delivery_topology": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C04 の inference。CDN/edge/origin 構成・rendering(static|ssr|isr)・cache 階層。header fact へ接地する。",
+      "required": ["cdn_edge_origin", "rendering", "cache_tiers"],
+      "properties": {
+        "cdn_edge_origin": { "description": "CDN/edge/origin 構成の推測。" },
+        "rendering": { "type": "string", "enum": ["static", "ssr", "isr"], "description": "レンダリング方式判定。" },
+        "cache_tiers": { "description": "キャッシュ階層の推測。" }
+      }
+    },
+    "cwv_field_sample": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C03 の fact。単一訪問・単一環境の参考実測 (scope_note 必須)。",
+      "required": ["lcp", "cls", "inp", "ttfb", "scope_note"],
+      "properties": {
+        "lcp": { "description": "Largest Contentful Paint。" },
+        "cls": { "description": "Cumulative Layout Shift。" },
+        "inp": { "description": "Interaction to Next Paint。" },
+        "ttfb": { "description": "Time To First Byte。" },
+        "scope_note": { "type": "string", "description": "単一訪問参考値である旨の注記。" }
+      }
+    },
+    "compliance_surfaces": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C03/C09 の fact。privacy policy/利用規約/特商法/CMP の存在と URL。",
+      "required": ["privacy_policy", "terms", "tokushoho", "cookie_banner_cmp"],
+      "properties": {
+        "privacy_policy": { "$ref": "#/$defs/compliance_surface" },
+        "terms": { "$ref": "#/$defs/compliance_surface" },
+        "tokushoho": { "$ref": "#/$defs/compliance_surface" },
+        "cookie_banner_cmp": {
+          "allOf": [{ "$ref": "#/$defs/compliance_surface" }],
+          "description": "Cookie バナー/CMP。"
+        }
+      }
+    },
+    "site_inventory": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "C09 採取・C12 分類の fact。pending 無言欠落禁止 (部分被覆は明示)。",
+      "required": ["discovered_urls", "in_scope", "excluded", "coverage", "crawl_mode", "layout_template_dedup"],
+      "properties": {
+        "discovered_urls": { "type": "array", "description": "発見 URL 一覧。", "items": {} },
+        "in_scope": { "type": "array", "description": "system 関連 (in_scope) URL 一覧。", "items": {} },
+        "excluded": {
+          "type": "array",
+          "description": "除外 URL (reason 付き)。",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["url", "reason"],
+            "properties": {
+              "url": { "type": "string" },
+              "reason": { "type": "string", "description": "除外理由 (affiliate/ad/tracker/外部 SNS/判定不能 等)。" }
+            }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "被覆台帳。pending を残したまま完全被覆と偽装しない。",
+          "required": ["discovered", "extracted", "pending", "excluded"],
+          "properties": {
+            "discovered": { "description": "発見数。" },
+            "extracted": { "description": "抽出済数。" },
+            "pending": { "description": "未抽出 (multi-run resume 対象) 数。" },
+            "excluded": { "description": "除外数。" }
+          }
+        },
+        "crawl_mode": { "type": "string", "enum": ["single", "full_site"], "description": "クロールモード。" },
+        "layout_template_dedup": { "description": "layout template hash による同型ページ重複排除の記録。" }
+      }
+    },
+    "essence": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "C13 推測→C06 統合。本質的問題(JTBD)/読者/価値提案/キーメッセージ/トーン/positioning を明示する。全項目 evidence_refs+confidence 付き inference で fact と区別する。",
+      "required": ["core_problem_jtbd", "target_audience", "value_proposition", "key_messages", "tone_voice", "positioning_differentiation"],
+      "properties": {
+        "core_problem_jtbd": { "description": "対象が解こうとする本質的問題 (JTBD) の推測。" },
+        "target_audience": { "description": "想定読者の推測。" },
+        "value_proposition": { "description": "価値提案の推測。" },
+        "key_messages": { "description": "キーメッセージの推測。" },
+        "tone_voice": { "description": "トーン&ボイスの推測。" },
+        "positioning_differentiation": { "description": "positioning/差別化の推測。" }
+      }
+    },
+    "screens": {
+      "type": "array",
+      "description": "画面別の観測 (任意)。browser-render(C15: ローカル headless Chrome via Bash)が取得できた鍵画面のみ screenshot/computed layout を持つ screen として供給し、ブラウザ不在時は本配列は空 (該当観測は observation_gap)。screen を供給した場合のみ各 screen の layout/raster 参照整合を doc-emit.py --check-screens が検査する。",
+      "items": { "$ref": "#/$defs/screen" }
+    },
+    "mermaid_refs": {
+      "description": "5 種必須 Mermaid 図 (全体構成/事実↔推測レイヤ/画面遷移/データフロー sequence/データモデル) への参照。mermaid-validate.py が存在+構文を検査する。",
+      "type": ["array", "object"]
+    },
+    "unknowns": { "type": "array", "description": "未解決事項 (任意)。", "items": {} },
+    "default_assumptions": { "type": "array", "description": "既定仮定 (任意)。", "items": {} },
+    "request_ledger": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "request/byte/pages budget 消費台帳。低負荷 policy 充足の証跡。"
+    }
+  },
+  "$defs": {
+    "compliance_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["present", "url", "structure_summary"],
+      "properties": {
+        "present": { "type": "boolean" },
+        "url": { "type": "string", "format": "uri" },
+        "structure_summary": { "type": "string", "minLength": 1 }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "画面別観測 fact。screenshot/annotated/overlay の 3 asset はローカル実在必須、注釈番号と element_id は 1:1、観測済み鍵画面は gap 不可。",
+      "required": [
+        "screen_id",
+        "screenshot_ref",
+        "annotated_screenshot_ref",
+        "layout_overlay_ref",
+        "viewport",
+        "captured_at",
+        "coverage",
+        "visual_formation_tree"
+      ],
+      "properties": {
+        "screen_id": { "type": "string", "description": "画面識別子。" },
+        "screenshot_ref": { "type": "string", "description": "redacted original screenshot のローカル参照。" },
+        "annotated_screenshot_ref": { "type": "string", "description": "注釈焼込 annotated PNG のローカル参照。" },
+        "layout_overlay_ref": { "type": "string", "description": "番号付き注釈 overlay SVG のローカル参照。" },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "撮影 viewport。",
+          "required": ["width", "height", "dpr", "scroll_x", "scroll_y", "color_scheme", "reduced_motion", "locale"],
+          "properties": {
+            "width": { "type": "number" },
+            "height": { "type": "number" },
+            "dpr": { "type": "number" },
+            "scroll_x": { "type": "number" },
+            "scroll_y": { "type": "number" },
+            "color_scheme": { "description": "light/dark 等。" },
+            "reduced_motion": { "description": "prefers-reduced-motion 状態。" },
+            "locale": { "description": "観測 locale。" }
+          }
+        },
+        "captured_at": { "type": "string", "format": "date-time", "description": "撮影時刻。" },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "画面→region→主要 element の被覆計数。",
+          "required": ["screen_regions_total", "regions_extracted", "elements_targeted", "elements_extracted", "fields_not_observed"],
+          "properties": {
+            "screen_regions_total": { "type": "integer", "minimum": 0 },
+            "regions_extracted": { "type": "integer", "minimum": 0 },
+            "elements_targeted": { "type": "integer", "minimum": 0 },
+            "elements_extracted": { "type": "integer", "minimum": 0 },
+            "fields_not_observed": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "visual_formation_tree": {
+          "$ref": "#/$defs/visual_formation_node",
+          "description": "visual formation の階層。各 node は identity/geometry/layout/paint/typography/media/effects/pseudo_elements/state/motion/responsive/a11y/tokens/reading_order/layout_status を持ち、各 field は observed value か {observation_status,reason}。canvas/WebGL/closed shadow DOM は無言欠落させない。"
+        }
+      }
+    },
+    "visual_formation_node": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "visual formation node。observation 詳細カテゴリは開いた観測データとして保持し、深い完全性 (孤児色 0・鍵画面 gap 不可等) は doc-emit.py --check-screens が機械執行する。子ノードは children[] に持つ。",
+      "required": ["identity"],
+      "properties": {
+        "identity": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "要素同定 (element_id/parent_id/locator/tag/role/accessible_name 等)。",
+          "required": ["element_id"],
+          "properties": {
+            "element_id": { "type": "string" }
+          }
+        },
+        "geometry": { "description": "座標/box model。observed value か gap。" },
+        "layout": { "description": "display/position/z_index/flex/grid 等。observed value か gap。" },
+        "paint": { "description": "色/背景/border/shadow/opacity 等。observed value か gap。" },
+        "typography": { "description": "font/size/weight/line-height 等。observed value か gap。" },
+        "media": { "description": "画像/SVG/icon。observed value か gap。" },
+        "effects": { "description": "transform/clip/mask 等。observed value か gap。" },
+        "pseudo_elements": { "description": "before/after/marker/placeholder/selection。observed value か gap。" },
+        "state": { "description": "hover/focus/active/disabled/cursor 等。observed value か gap。" },
+        "motion": { "description": "transition/animation。observed value か gap。" },
+        "responsive": { "description": "viewport 別差分。observed value か gap。" },
+        "a11y": { "description": "semantic role/contrast/focus order 等。observed value か gap。" },
+        "tokens": { "description": "CSS custom properties/resolved design tokens。observed value か gap。" },
+        "reading_order": { "description": "読み順。observed value か gap。" },
+        "layout_status": { "description": "layout の観測状態。observed value か gap。" },
+        "children": {
+          "type": "array",
+          "description": "子 visual formation node。",
+          "items": { "$ref": "#/$defs/visual_formation_node" }
+        }
+      }
+    }
+  }
+}

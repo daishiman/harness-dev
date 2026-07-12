@@ -1,0 +1,19 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/consult-harness-artifact-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "knowledge/harness デュアルグラフの read-only consult (C07)。soundness: zero-hit(exit0)と壊れた index(スキーマ不正/dangling=exit2)を例外型で厳密分離、local=無方向BFS(depth 1..5)/global=カテゴリ・state クラスタ要約/relationship=決定論最短path(ソート走査)。incident_relations が visited 内で両端の閉じた辺のみ返し dangling を出力に載せない。responsibility: 探索専任で書込ゼロ、C05 不在時は AbsentHarnessGraph で knowledge 単独 consult に縮退し sources.status=absent を明示。error-handling: UsageError/BrokenIndexError→exit2、argparse enum/depth 検査、graph-edges-empty は warnings[] で表面化しつつ exit0。side-effect-safety: network:false/write-scope:none、'..' traversal 拒否、出力全 str 葉の secret redaction(C05 と regex byte一致確認済)、edge evidence は件数のみで逐語本文非返却。frontmatter: PEP723 様式完備・exit 契約が実装と一致。軽微: make_matcher が searchable 断片を区切りなし連結するため断片境界跨ぎの偽陽性 match が理論上あり得る(過剰 hit 側で無害)、run_local/run_global の返り値注釈 dict が実際は tuple(実害なし)。tests/test_consult_harness_artifact_graph.py 28件+test_e2e_graph_chain.py で正例/負例/決定論/redaction 網羅・全緑。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

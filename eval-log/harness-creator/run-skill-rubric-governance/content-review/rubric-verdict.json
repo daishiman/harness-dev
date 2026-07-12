@@ -1,0 +1,27 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-rubric-governance",
+    "skill_md_sha256": "268a240dbb51590e619af93e7e1d29bd1e80037013d3c115e52772f44e4231e0"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "independent-rename-review-subagent-d",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "検証可能性が高い: 違反率閾値 0.20・連続 3 release・合否変動率 30%・bootstrap 最小 20 件・猶予 major14/minor7/patch0 日と数値根拠が豊富で、各チェックが lint-rubric-violation.py/diff-rubric-impact.py/check-rubric-sync.py exit0 の二値判定に結び付いている。",
+      "深度: Why が『rubric は全 Skill 採点の SSOT であり直接編集や手順抜けは採点基盤を破壊する』という真因と、固定手順が分岐に脆い trade-off まで掘り下げている。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "共通 5 次元ルブリックで採点。完全性3: frontmatter commonCore 充足、reference_refs/responsibility_refs/schema_refs/manifest 配置あり、Additional Resources に正本スクリプト群と設計書章(26/27/28)を網羅。一貫性3: KeyRules↔チェックリスト↔ゴールシークループ↔局面カタログの閾値・semver 規約・承認ボード 4 ロールが一致。深度3: SSOT 破壊リスクの真因掘り下げ+ゴール状態パラダイム採用の根拠+bootstrap/緊急パッチの既知失敗パターン反映。検証可能性3: 数値 3 個以上・コマンド例(局面カタログ bash)・decision 論的判定。簡潔性2: 139 行で goal-seek 手順を委譲し重複なし、局面カタログはやや厚いが行数上限内で情報密度は適切。全次元>=2=PASS。"
+}

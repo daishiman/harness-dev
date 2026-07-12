@@ -1,0 +1,499 @@
+{
+  "schema_version": "2.0.0",
+  "generated_at": "2026-05-22T10:06:46+09:00",
+  "canonical_page_id": "35195d6503b781788e31f59b4e05e705",
+  "derived_from": {
+    "path": "plugins/skill-intake/references/section_canonical_map.json",
+    "sha256": "49382285eccf142e4c6ec8d308ffad23ce2097621c3d1d9da8615c4f6c807a0b"
+  },
+  "sections": [
+    {
+      "section_key": "0_executive_summary",
+      "user_canonical_section": "§0",
+      "title": "0. エグゼクティブサマリ",
+      "required_fields": [
+        {
+          "key": "generated_at",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "pattern",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "workflow_pattern",
+          "type": "string",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "depth",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "vocabulary_tier",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "state",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "true_purpose_oneliner",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "design_decision_summary",
+          "type": "string",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "handoff_mode",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "value_realized_score",
+          "type": "integer",
+          "absence_behavior": "warn-fallback"
+        }
+      ],
+      "char_bounds": {
+        "min": 300,
+        "max": 1200
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "cvis-exec-summary-card",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "1_assumption_challenger",
+      "user_canonical_section": "§1",
+      "title": "1. Phase: assumption-challenger（前提逆転）",
+      "required_fields": [
+        {
+          "key": "surface_request",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "deep_candidates",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "adopted_deep_problem",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "time_freed_intent",
+          "type": "string",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "blindspots",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        }
+      ],
+      "char_bounds": {
+        "min": 250,
+        "max": 1500
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-mindmap-surface-vs-deep",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "2_user_profile",
+      "user_canonical_section": "§2",
+      "title": "2. Phase: user-profiler（ユーザー像）",
+      "required_fields": [
+        {
+          "key": "dimensions",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "vocabulary_tier",
+          "type": "enum",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "implications_for_next_phase",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        }
+      ],
+      "char_bounds": {
+        "min": 250,
+        "max": 1500
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "cvis-persona-card",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "3_purpose_excavator",
+      "user_canonical_section": "§3",
+      "title": "3. Phase: purpose-excavator（真の目的の発掘）",
+      "required_fields": [
+        {
+          "key": "techniques_used",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "rounds",
+          "type": "integer",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "agreement_loop_detected",
+          "type": "boolean",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "true_purpose",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "underlying_motivation",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "differentiation",
+          "type": "string",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "output_priority",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "tacit_locus",
+          "type": "object",
+          "absence_behavior": "warn-fallback"
+        }
+      ],
+      "char_bounds": {
+        "min": 300,
+        "max": 1800
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-mindmap-stated-to-excavated",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "4_option_presenter",
+      "user_canonical_section": "§4",
+      "title": "4. Phase: option-presenter（選択肢提示と確定）",
+      "required_fields": [
+        {
+          "key": "decision_tables",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "connectors",
+          "type": "object",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 400,
+        "max": 2500
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-comparison-table",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "5_visualizer",
+      "user_canonical_section": "§5",
+      "title": "5. Phase: visualizer（図解5枚）",
+      "required_fields": [
+        {
+          "key": "figures",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "rules_check",
+          "type": "object",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 500,
+        "max": 3500
+      },
+      "viz_slots": [
+        {
+          "role": "fig1_architecture",
+          "asset_id": "mtmpl-flowchart-lr",
+          "mandatory": true
+        },
+        {
+          "role": "fig2_core_mechanism",
+          "asset_id": "mtmpl-flowchart-tb",
+          "mandatory": true
+        },
+        {
+          "role": "fig3_pipeline",
+          "asset_id": "mtmpl-sequence",
+          "mandatory": true
+        },
+        {
+          "role": "fig4_before_after",
+          "asset_id": "mtmpl-before-after-lr",
+          "mandatory": true
+        },
+        {
+          "role": "fig5_boundary",
+          "asset_id": "mtmpl-boundary-tb",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "6_five_axes_summary",
+      "user_canonical_section": "§6",
+      "title": "6. 5軸サマリ（最終確定版）",
+      "required_fields": [
+        {
+          "key": "axes",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "knowledge_pipeline",
+          "type": "object",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 400,
+        "max": 2000
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-comparison-table-5axes",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "7_design_decisions",
+      "user_canonical_section": "§7",
+      "title": "7. 設計選択サマリ（option-presenter で確定）",
+      "required_fields": [
+        {
+          "key": "adoptions",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "output_priority_finalized",
+          "type": "array",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 300,
+        "max": 1500
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-comparison-table-adoptions",
+          "mandatory": true
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "8_open_questions",
+      "user_canonical_section": "§8",
+      "title": "8. 未解決事項（harness-creator 引き継ぎ）",
+      "required_fields": [
+        {
+          "key": "questions",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "blocking_count",
+          "type": "integer",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "deferred_count",
+          "type": "integer",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 150,
+        "max": 1000
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "cvis-traffic-light",
+          "mandatory": false
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "9_handoff_contract",
+      "user_canonical_section": "§9",
+      "title": "9. harness-creator への申し送り（handoff-contract）",
+      "required_fields": [
+        {
+          "key": "recommended_next",
+          "type": "object",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "intake_json_path",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "starting_command",
+          "type": "string",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 150,
+        "max": 800
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-flowchart-next-action",
+          "mandatory": false
+        }
+      ],
+      "absence_behavior": "block"
+    },
+    {
+      "section_key": "10_self_updater",
+      "user_canonical_section": "§10",
+      "title": "10. Phase: self-updater（自己進化結果）",
+      "required_fields": [
+        {
+          "key": "metrics",
+          "type": "object",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "score_rationale",
+          "type": "string",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "deductions",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "question_bank_additions",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "session_observations",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        },
+        {
+          "key": "skipped_next_phases",
+          "type": "array",
+          "absence_behavior": "warn-fallback"
+        }
+      ],
+      "char_bounds": {
+        "min": 200,
+        "max": 1500
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "cvis-score-gauge",
+          "mandatory": false
+        }
+      ],
+      "absence_behavior": "warn-fallback"
+    },
+    {
+      "section_key": "11_artifact_index",
+      "user_canonical_section": "§11",
+      "title": "11. 出力ファイル一覧",
+      "required_fields": [
+        {
+          "key": "artifacts",
+          "type": "array",
+          "absence_behavior": "block"
+        },
+        {
+          "key": "base_path",
+          "type": "string",
+          "absence_behavior": "block"
+        }
+      ],
+      "char_bounds": {
+        "min": 200,
+        "max": 1200
+      },
+      "viz_slots": [
+        {
+          "role": "primary",
+          "asset_id": "mtmpl-comparison-table-artifacts",
+          "mandatory": false
+        }
+      ],
+      "absence_behavior": "block"
+    }
+  ]
+}

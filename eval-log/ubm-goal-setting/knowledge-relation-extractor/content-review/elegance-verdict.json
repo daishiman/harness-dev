@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "knowledge-relation-extractor",
+    "skill_md_sha256": "a4f373f1c77c6a82d88ab230889494a9eb9c662165995f26069155eb6ab309d2"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "independent-content-reviewer-p09",
+  "reviewed_at": "2026-07-11T02:46:18Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "inner",
+    "criteria_evaluated": [
+      "C08-source-target-exist",
+      "C08-self-loop-forbidden",
+      "C08-evidence-verbatim-at-least-one",
+      "C08-confidence-0to1",
+      "C08-review-status-pending",
+      "C08-non-zero-edge-on-fixture",
+      "C08-related-is-hint-not-evidence"
+    ],
+    "positive_feedback": [
+      "fixture の逐語 evidence 2件が実 entry と完全一致 (CP-033.advice『施策を考える前に…ビジョンを落とす』/ PR-043.content『人がついてくる人間かどうか…語れる人間になれ』) で、幻覚引用禁止規範が実データで実効化されている",
+      "CP-033.related=[PR-042,MS-025,CP-007] が実データと一致し PR-043 を含まないことを利用して『related に無くても本文根拠で辺を立てる/related を辺の根拠にしない』原則を実 fixture で実証しており、表層共起に頼らない深度が高い",
+      "self-loop禁止・evidence≥1逐語・confidence 0..1・review_status=pending_review・non-zero edge・depends_on の DAG非循環 (両方向禁止) を L2.4 出力契約 / 完了チェックリスト / Self-Evaluation で三重に網羅し、source_ref が実ファイルパスと一致して検証可能"
+    ],
+    "negative_feedback": [
+      "軽微な smell: acceptance_contract は『各 depends_on edge は…』と depends_on を代表に挙げるが、本文の代表 fixture は derived_from 辺である。制約 (実在/self-loop禁止/evidence/confidence/review_status) は全 relation_type に適用され depends_on の非循環も別途明記されているため被覆漏れではないが、depends_on の前提・非循環を示す最小 fixture も1件併記すると acceptance_contract の文言と例が完全対応する"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "acceptance_contract (source/target実在・self-loop禁止・evidence≥1・confidence 0..1・review_status・non-zero edge) を全充足。fixture の逐語 evidence と related 主張を実 knowledge JSON と照合し完全一致を確認。指摘は代表 fixture の relation_type 選択に関する smell のみで内容 adequacy を損なわず PASS。"
+}

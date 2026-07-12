@@ -1,0 +1,26 @@
+%%---
+%% sample: google-forms-generator / flowchart-with-gates
+%% rendered_for: skill-intake-interviewer assets サンプル
+%%---
+flowchart TD
+    Start([依頼受信]):::startNode
+    S1[要件ヒアリング]:::process
+    S2[項目案作成]:::process
+    Gate{ユーザー承認}:::gate
+    S3[Forms API 実行]:::process
+    S4[Drive 配置]:::process
+    Done([フォーム完成]):::endNode
+    NG[修正依頼]:::ng
+
+    Start --> S1 --> S2 --> Gate
+    Gate -->|OK| S3 --> S4 --> Done
+    Gate -->|NG| NG --> S2
+
+    classDef startNode fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef endNode fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef process fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef gate fill:#fff8e1,stroke:#f9a825,color:#e65100
+    classDef ng fill:#ffcdd2,stroke:#c62828,color:#b71c1c
+
+%% 凡例: 青=進行 / 黄=判定 / 緑=完了 / 赤=注意
+%% 言いたい一言: 承認ゲートで「作り直し」を防ぎ、API実行は1回で済ませる

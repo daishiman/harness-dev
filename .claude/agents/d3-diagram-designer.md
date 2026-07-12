@@ -1,0 +1,1 @@
+../../plugins/slide-report-generator/agents/d3-diagram-designer.md

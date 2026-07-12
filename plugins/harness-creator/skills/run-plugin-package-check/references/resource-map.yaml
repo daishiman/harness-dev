@@ -1,0 +1,40 @@
+# resource-map: run-plugin-package-check
+# Progressive Disclosure 起点。必要なファイルだけを順次 open する。
+version: "1.0"
+last_updated: "2026-05-23"
+
+machine_readable:
+  workflow_manifest: workflow-manifest.json
+  run_report_schema: schemas/run-report.schema.json
+  pkg_contract_schema: ../ref-pkg-contract/schemas/package-contract.schema.json
+  pkg_catalog: ../ref-pkg-contract/references/pkg-id-catalog.yaml
+
+human_readable:
+  orchestration: prompts/orchestrate.md
+  gate_decide: prompts/gate-decide.md
+
+scripts:
+  pkg_001: scripts/run-plugin-validate-strict.sh
+  pkg_010: scripts/smoke-plugin-install.sh
+  pkg_011: scripts/smoke-plugin-uninstall.sh
+  pkg_012: scripts/smoke-plugin-upgrade.sh
+  pkg_013: scripts/validate-plugin-permissions.py
+  aggregate: scripts/aggregate-pkg-findings.py
+
+delegate_skills:
+  pkg_002_008: assign-plugin-package-evaluator
+  pkg_014: assign-plugin-package-evaluator
+
+external_scripts:
+  pkg_009: ../../../skill-governance-lint/scripts/lint-external-refs.py
+  pkg_015: ../../../skill-governance-lint/scripts/lint-rubric-violation.py
+
+reference_skills:
+  - ref-pkg-contract
+
+design_chapters:
+  - "36"
+  - "27 §3.1, §4.1"
+  - "34 Phase 0/1/2"
+  - "34a §4"
+  - "35 §observables"

@@ -1,0 +1,97 @@
+{
+  "name": "skill-governance-lint",
+  "description": "Skill governance lint and validation scripts",
+  "responsibility": "lint / validate / check 系 gate scripts を所有する",
+  "naming_rationale": "06章第17条: kebab-case plugin directory name; existing plugins/* と非衝突; domain=skill-governance + bounded responsibility suffix",
+  "keywords": [
+    "skill-governance",
+    "lint",
+    "validate",
+    "gate"
+  ],
+  "files": [
+    {
+      "rel": "creator-kit/scripts/check-rubric-sync.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-dependency-direction.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-external-refs.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-forbidden-deps.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-manifest-contents.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-path-canonical.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-rubric-refs-exist.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-rubric-violation.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-script-frontmatter.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-skill-dep-step7.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-skill-description.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-skill-name.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-skill-tree.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/lint-template-variables.py",
+      "kind": "scripts"
+    },
+    {
+      "rel": "creator-kit/scripts/validate-frontmatter.py",
+      "kind": "scripts"
+    }
+  ],
+  "depends_on": [],
+  "skills": [],
+  "agents": [],
+  "commands": [],
+  "hooks": [],
+  "external_ref_exceptions": [
+    {
+      "source_rel": "scripts/lint-path-canonical.py",
+      "match": "creator-kit/scripts/...",
+      "target_rel": null,
+      "target_plugin": null,
+      "classification": "unresolved_prose_or_prefix_candidate",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    },
+    {
+      "source_rel": "scripts/lint-skill-description.py",
+      "match": "creator-kit/scripts/validate-frontmatter.py",
+      "target_rel": "scripts/validate-frontmatter.py",
+      "target_plugin": "skill-governance-lint",
+      "classification": "legacy_intra_partition_path_rewrite_required",
+      "reason": "Legacy creator-kit/plugins path reference captured during phase2-02 planning; phase2-03/06 must either rewrite to plugin-local path or keep an explicit migration exception before physical deploy."
+    }
+  ]
+}

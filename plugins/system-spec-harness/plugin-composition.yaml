@@ -1,0 +1,50 @@
+# CapabilityBundle 宣言 — plugins/system-spec-harness
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: システム構築仕様を往復ヒアリングで網羅収集し章立て仕様書へまとめるハーネスの自己記述。
+
+name: system-spec-harness
+description: システム構築 (Web/モバイル/タブレット/デスクトップ横断) の仕様情報を往復ヒアリングでカテゴリ×プラットフォーム網羅マトリクスとして収集し、設計知識参照と最新公式ドキュメント出典を添えて章立て複数 Markdown + index の仕様書ドキュメントセットへまとめるハーネス plugin。
+kind: plugin-composition
+version: 0.1.0
+owner: team-platform
+since: 2026-07-11
+last-audited: 2026-07-11
+
+contract:
+  intent: 単発列挙では抜け漏れるシステム構築仕様を、質問→回答→反映→再質問の往復ヒアリングでカテゴリ×canonical platform id の網羅マトリクスへ収束させ、決定論ゲート+独立評価で網羅性を保証した仕様書ドキュメントセットを生成する。
+  interface:
+    inputs: [user-hearing, system-category-taxonomy.json]
+    outputs: [spec-state.json, fetched-references.json, system-spec/*.md, index.md, 評価レポート]
+  invariant:
+    - 収集マトリクスの全セルは 未収集/対象外/確定 の3値で、対象外は理由付き・確定は qa_ref 付き
+    - canonical platform id (web/mobile/tablet/desktop-windows/desktop-linux/desktop-macos) の6行が全存在すること
+    - ヒアリングは1 invocation 5 loop 到達時に状態保存+resume で継続し未収集セルを完了扱いしないこと
+    - spec-state.json の確定状態は C01/C03 単一 writer 経由でのみ変更、直接巻き戻しは C11 hook が fail-closed 遮断
+    - カテゴリ初期集合の正本は ref-system-design-knowledge の references/system-category-taxonomy.json (prompt へ直書き禁止)
+    - 最新公式ドキュメントは target_id 全件・公式host・version または更新日・取得/確認時刻・参照元を記録し C08 が現行版を再照合
+    - 決定論的処理は python3 標準ライブラリ script、LLM は意味判断のみ (Script First)
+    - 成果物本文・レビュー・レポートは日本語、JSON キー・CLI 引数は英語
+
+capabilities:
+  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/run-system-spec-elicit,                    tier: core }
+  - { kind: skill, ref: skills/run-system-spec-doc-fetch,                 tier: core }
+  - { kind: skill, ref: skills/run-system-spec-compile,                   tier: core }
+  - { kind: skill, ref: skills/ref-system-design-knowledge,              tier: core }
+  - { kind: skill, ref: skills/assign-system-spec-completeness-evaluator, tier: core }
+
+  # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
+  - { kind: agent, ref: agents/system-spec-hearing-auditor,       tier: core }
+  - { kind: agent, ref: agents/system-spec-matrix-auditor,        tier: core }
+  - { kind: agent, ref: agents/system-spec-doc-freshness-auditor, tier: core }
+
+  # === Commands (kind=slash-command) ===
+  - { kind: command, ref: commands/spec-hearing-start, tier: core }
+  - { kind: command, ref: commands/spec-compile,       tier: core }
+
+  # === Hooks (kind=hook) ===
+  - { kind: hook, ref: hooks/guard-confirmed-chapter-overwrite.py, tier: core }
+
+  # === Scripts (kind=script・plugin-root 共有決定論ゲート) ===
+  - { kind: script, ref: scripts/validate-coverage-matrix.py,  tier: core }
+  - { kind: script, ref: scripts/validate-source-citation.py,  tier: core }

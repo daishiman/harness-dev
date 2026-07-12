@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/elegant-review-finding.json",
+  "title": "Elegant Review Single Finding",
+  "type": "object",
+  "required": ["id", "thought_method", "condition_signal", "priority", "condition", "location", "evidence"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F-[0-9]{4}$",
+      "description": "F-NNNN 連番"
+    },
+    "thought_method": {
+      "type": "string",
+      "description": "30 思考法カタログのいずれか。B2 で必須化。references/thought-methods.yaml の id と一致",
+      "enum": [
+        "critical", "deduction", "induction", "abduction", "vertical",
+        "decomposition", "mece", "two-axis", "process",
+        "meta", "abstraction", "double-loop",
+        "brainstorming", "lateral", "paradox", "analogy", "if", "naive",
+        "systems", "causal", "causal-loop",
+        "trade-on", "plus-sum", "value-proposition", "strategic",
+        "why", "kaizen", "hypothesis", "issue", "kj"
+      ]
+    },
+    "condition_signal": {
+      "enum": ["contradiction", "omission", "inconsistency", "dependency_break", "smell"],
+      "description": "4 条件 PASS 判定の機械観測 signal。smell は警告枠"
+    },
+    "priority": {
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Phase 3 の処理順を決める優先度。condition_signal とは分離する"
+    },
+    "condition": {
+      "enum": ["C1", "C2", "C3", "C4", "warning"],
+      "description": "C1=矛盾なし, C2=漏れなし, C3=整合性あり, C4=依存関係整合, warning=smell"
+    },
+    "location": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 1},
+        "section": {"type": "string"}
+      }
+    },
+    "evidence": {
+      "type": "string",
+      "description": "発見の根拠。引用 or rule 違反箇所"
+    },
+    "suggested_fix": {
+      "type": "string",
+      "description": "改善提案。auto_fixable=true なら自動適用可能な diff"
+    },
+    "auto_fixable": {
+      "type": "boolean",
+      "default": false,
+      "description": "true: path 修正・chmod 等単純機械修正。意味変更は false"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^F-[0-9]{4}$"},
+      "description": "Phase 3 DAG 構築用。先行依存 finding id"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-elicit",
+  "skill": "run-skill-elicit",
+  "description": "対話形式で skill 要望を聞き取り、brief.json に固める。",
+  "phases": [
+    {
+      "id": "intro",
+      "step": 1,
+      "title": "目的とスコープ確認",
+      "resourceIds": ["ref-brief-template"],
+      "output_artifact": null
+    },
+    {
+      "id": "elicit",
+      "step": 2,
+      "title": "要望ヒアリング",
+      "dependsOn": ["intro"],
+      "resourceIds": ["ref-brief-template"],
+      "output_artifact": null
+    },
+    {
+      "id": "structure",
+      "step": 3,
+      "title": "brief 構造化",
+      "dependsOn": ["elicit"],
+      "resourceIds": ["ref-brief-template"],
+      "output_artifact": "eval-log/skill-brief.json"
+    },
+    {
+      "id": "validate",
+      "step": 4,
+      "title": "schema 検証",
+      "dependsOn": ["structure"],
+      "resourceIds": [],
+      "output_artifact": "eval-log/skill-brief.json"
+    }
+  ],
+  "fatal_exit_codes": [2]
+}

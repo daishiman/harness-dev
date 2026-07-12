@@ -1,0 +1,183 @@
+{
+  "run_id": "2026-06-24-plugin-scope",
+  "target": { "plugin": "company-master", "skill": null, "scope_mode": "plugin" },
+  "context": "skill-creator 仕様準拠の改善 + README 導入/APIキー/シークレット設定整備 (不特定多数が Claude Desktop + マーケットプレイス install で設定完了できること)",
+  "thought_method_coverage": {
+    "total": 30,
+    "used": [
+      "批判的", "演繹", "帰納", "アブダクション", "垂直",
+      "要素分解", "MECE", "2軸", "プロセス", "why思考",
+      "メタ", "抽象化", "ダブル・ループ", "ブレインストーミング", "水平",
+      "逆説", "類推", "if", "素人",
+      "システム", "因果関係", "因果ループ", "トレードオン", "プラスサム",
+      "価値提案", "戦略的", "改善", "仮説", "論点", "KJ法"
+    ],
+    "skipped_with_reason": []
+  },
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "approver": {
+    "proposer_neq_approver": true,
+    "approver_context": "elegant-logical-structural-analyst (独立 context・read-only 再検証)",
+    "decision": "APPROVE",
+    "note": "配布モデル正本7+2箇所・enrich 出力契約(雛形 vs 実装 return dict)・deny 件数(README-setup vs settings-hardening)・confirm-url TEMPLATE_KEYS・skill-creator 依存明記 を独立に実ファイル照合し C1-C4 全 PASS・新規矛盾なしを確認。"
+  },
+  "paradigm_findings": [
+    {
+      "id": "LS-01",
+      "thought_method": ["2軸", "帰納", "MECE", "ダブル・ループ"],
+      "severity": "contradiction",
+      "condition": "C1",
+      "location": "skills/run-company-master-build/SKILL.md:195,232 / plugin-composition.yaml:64 / references/data-sources.md:10 / skills/*/references/resource-map.yaml",
+      "claim": "日本郵便 郵便番号取得の配布モデル『既定』が文書間で正反対。README/keychain系=BYO既定 ⇔ SKILL.md/composition/data-sources/resource-map=中央プロキシ既定。実装 company_master.py は BYO 既定側。",
+      "resolution": "2026-06-24 のチーム判断(プロキシ既定→BYO直結既定へ反転)+実装に合わせ、stale 6箇所を BYO 直結既定/プロキシは例外オプトインへ一斉是正。履歴記述として反転経緯を残す。",
+      "auto_fixable": false,
+      "status": "fixed"
+    },
+    {
+      "id": "SS-01/MD-01/MD-08",
+      "thought_method": ["価値提案", "システム", "素人", "類推"],
+      "severity": "dependency_break",
+      "condition": "C4",
+      "location": "README.md:335 (/run-skill-feedback), README.md:241 (/skill-creator:install-bundle)",
+      "claim": "README が案内するスラッシュコマンドは skill-creator plugin 依存で、company-master 単独 install では dangling。plugin.json description『feedback は skill-creator 側で扱う』と README の自己完結トーンが齟齬。symlink skills/run-skill-feedback は skill-creator へのリンクで単独 install では標的不在。",
+      "resolution": "README を是正: /run-skill-feedback・install-bundle が skill-creator 依存である旨を明記、単独 install では自然言語フィードバック導線が常時有効と明示。symlink 自体はチーム判断(Option C)で維持・依存明記方針。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "LS-04",
+      "thought_method": ["批判的", "要素分解"],
+      "severity": "omission",
+      "condition": "C2",
+      "location": "agents/company-master-enrich-attributes.md Outputs雛形 + Handoff",
+      "claim": "enrich agent の Outputs JSON 雛形に per-field 出典の正本キー source_by_field が欠落 (派生値 source_urls のみ)。prose(Goal/Checklist/Constraints)は source_by_field を必須と宣言し実装も両キー出力。",
+      "resolution": "Outputs 雛形に source_by_field({field:{origin,url}}・英字6フィールド・origin enum=gbizinfo/japanpost/web/user_input/none) を追加し実装出力と一致。Handoff にも追記。",
+      "auto_fixable": false,
+      "status": "fixed"
+    },
+    {
+      "id": "MD-06",
+      "thought_method": ["if", "素人"],
+      "severity": "omission",
+      "condition": "C2",
+      "location": "README.md:6,57,71,§3",
+      "claim": "README が Mac 専用前提(security コマンド)を§3で明示せず Windows/Linux 利用者の脱出口がない。gBizINFO トークン発行待ち(数時間〜即日)が§2の『約10分』見積もりに含まれない。郵便番号の任意性が弱い。",
+      "resolution": "§3 に Mac 専用注記、§2 に gBizINFO 発行待ち注記、§3 に『郵便番号は任意の追加機能・2トークンで始められる』を追記。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "LS-02",
+      "thought_method": ["要素分解", "演繹"],
+      "severity": "inconsistency",
+      "condition": "C3",
+      "location": "references/README-setup.md:48,53",
+      "claim": "README-setup が deny を『7 エントリ』と書くが settings-hardening.json の実 deny は 10 件(自己 _doc も 10)。『2鍵』記述も japanpost 追加で 3鍵が正。",
+      "resolution": "7→10 エントリ、2鍵→3鍵(notion/gbizinfo/japanpost) に是正。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "LS-03",
+      "thought_method": ["垂直", "プロセス"],
+      "severity": "inconsistency",
+      "condition": "C3",
+      "location": "skills/run-company-master-build/references/resource-map.yaml:29",
+      "claim": "build resource-map が confirm-url-template を heading/intro/bullet/footer/no-urls の5要素と説明するが、実 TEMPLATE_KEYS は heading/intro/bullet_with_url/bullet_no_url/body_no_fields で footer は存在しない。",
+      "resolution": "実 TEMPLATE_KEYS の5キー名へ是正。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "MD-02",
+      "thought_method": ["逆説"],
+      "severity": "inconsistency",
+      "condition": "C3",
+      "location": "README.md:6",
+      "claim": "『コマンド不要・GUI完結』を謳う一方 `!` シェルコマンドを多用し認知的不協和。",
+      "resolution": "冒頭表現を『操作は Code タブ内で完結。一部は貼り付けるだけの定型コマンドを使う』へ後退させ過剰約束を解消。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "SS-02",
+      "thought_method": ["システム", "因果関係"],
+      "severity": "inconsistency",
+      "condition": "C3",
+      "location": "plugin-composition.yaml:37-44",
+      "claim": "composition の scripts capability は 2 個のみ宣言、SKILL.md script_refs は 13 個全列挙。粒度規約が暗黙。",
+      "resolution": "composition に粒度規約コメント追記(capability=公開エントリ+独立server / 物理依存DAG正本=SKILL.md script_refs)。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "INC-EXTRA",
+      "thought_method": ["MECE"],
+      "severity": "inconsistency",
+      "condition": "C3",
+      "location": "references/settings-hardening.json:_doc",
+      "claim": "_doc 内のみ『日本郵政』表記(他全ファイルは『日本郵便』)。",
+      "resolution": "日本郵政→日本郵便 に統一(approver 指摘)。",
+      "auto_fixable": true,
+      "status": "fixed"
+    },
+    {
+      "id": "SS-03",
+      "thought_method": ["因果ループ", "改善"],
+      "severity": "smell",
+      "condition": "warn",
+      "location": "skills/*/SKILL.md script_refs: postal_proxy.py",
+      "claim": "postal_proxy.py は運用者が別途立てるサーバ配布物で skill 実行時に import されないが script_refs に列挙(build/backfill 両方=非対称は反証)。dangling ではないため smell。",
+      "resolution": "本レビューでは未編集(PASS阻害せず)。composition で optional-postal-proxy-server として既に分類済み。将来 script_refs に種別注記を検討。",
+      "auto_fixable": true,
+      "status": "deferred"
+    },
+    {
+      "id": "LS-05",
+      "thought_method": ["プロセス", "批判的"],
+      "severity": "smell",
+      "condition": "warn",
+      "location": "scripts/company_master.py:271-297 (doctor --probe)",
+      "claim": "doctor --probe の本番検索クエリ『東京都千代田区霞が関』が一意確定しない場合 WARN に落ち README:180 の OK 指標に届かない可能性。実 API 挙動確認が必要。",
+      "resolution": "別 PR 候補(実 API キー登録後の疎通確認を要する)。",
+      "auto_fixable": false,
+      "status": "deferred"
+    },
+    {
+      "id": "SS-04",
+      "thought_method": ["仮説", "改善"],
+      "severity": "smell",
+      "condition": "warn",
+      "location": ".github/workflows/governance-check.yml",
+      "claim": "README 内コマンド参照の dangling を検査する CI ゲートが無く、SS-01 型の断線が人手レビュー頼み。",
+      "resolution": "提案(別 PR): README 内 /<plugin>:<cmd> 参照の解決性を検査する lint を新設し governance-check へ配線(横展開で全 plugin の単独 install 到達不能コマンドを予防)。",
+      "auto_fixable": false,
+      "status": "proposed"
+    },
+    {
+      "id": "MD-03/MD-05/MD-07/MD-09",
+      "thought_method": ["抽象化", "メタ", "水平", "ブレインストーミング"],
+      "severity": "smell",
+      "condition": "warn",
+      "location": "README/notion-config.fixed.json/確度ラベル",
+      "claim": "(MD-03)郵便番号 IP 登録が素人の崖 / (MD-05)社内DB ID コミット=配布物の自己定義割れ / (MD-07)marketplace add . の複雑さ / (MD-09)確度ラベル語尾衝突。",
+      "resolution": "MD-03 は README で郵便番号を任意機能へ明確化済(部分対処)。MD-05/07/09 は配布ポリシー/インフラ/SSOT enum 変更を伴うため提案に留め deferred。",
+      "auto_fixable": false,
+      "status": "deferred"
+    }
+  ],
+  "validation": {
+    "C1_grep_residual_stale_proxy_default": 0,
+    "SKILL_md_body_lines_build": 234,
+    "SKILL_md_body_lines_backfill": 162,
+    "lint_company_master_vendored_deps": "OK",
+    "lint_skill_name_description_frontmatter": "OK=3 VIOLATION=0",
+    "pytest_company_master": "95 passed",
+    "settings_hardening_deny_entries": 10
+  }
+}

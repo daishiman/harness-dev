@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/content-review-verdict.schema.json",
+  "title": "Content Review Verdict",
+  "description": "ローカル LLM 評価 (elegance / rubric) の verdict 成果物。CI/pre-push は本 schema 準拠ファイルの存在と verdict=PASS を機械検査する。feedback_loop は内側/外側ループ、正/負フィードバック、hook 発火元を観測可能にする。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["target", "review_kind", "verdict", "reviewer", "reviewed_at", "iterations", "feedback_loop"],
+  "properties": {
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plugin", "skill", "skill_md_sha256"],
+      "properties": {
+        "plugin": {"type": "string"},
+        "skill": {"type": "string"},
+        "skill_md_sha256": {"type": "string", "description": "評価時の SKILL.md ハッシュ。SKILL.md 変更後の verdict 期限切れ判定に使う。"}
+      }
+    },
+    "review_kind": {
+      "type": "string",
+      "enum": ["elegance", "rubric"],
+      "description": "elegance=run-elegant-review 30思考法×4条件 / rubric=assign-skill-design-evaluator 規範採点"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "INCOMPLETE"],
+      "description": "PASS=内容 adequacy 担保 / FAIL=改善必要 / INCOMPLETE=max_iter 到達で human_review"
+    },
+    "findings_summary": {
+      "type": "object",
+      "properties": {
+        "contradiction": {"type": "integer", "minimum": 0},
+        "omission": {"type": "integer", "minimum": 0},
+        "inconsistency": {"type": "integer", "minimum": 0},
+        "dependency_break": {"type": "integer", "minimum": 0},
+        "smell": {"type": "integer", "minimum": 0}
+      }
+    },
+    "reviewer": {
+      "type": "string",
+      "description": "実行 SubAgent 名 (例: elegant-improvement-executor / assign-skill-design-evaluator)"
+    },
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "iterations": {"type": "integer", "minimum": 1},
+    "human_review_required": {"type": "boolean", "default": false},
+    "feedback_loop": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "評価→改善→再評価ループの実行証跡。run-build-skill feedback_contract と対応する。",
+      "required": ["loop_scope", "criteria_evaluated", "positive_feedback", "negative_feedback", "iteration", "iteration_limit", "hook_trigger", "next_action"],
+      "properties": {
+        "loop_scope": {
+          "type": "string",
+          "enum": ["inner", "outer", "both"],
+          "description": "inner=機能/責務単位のゴールシーク、outer=ハーネス全体の目的適合、both=両方を評価。"
+        },
+        "criteria_evaluated": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "評価した criteria id。未評価があれば verdict は PASS にしない。"
+        },
+        "positive_feedback": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "横展開すべき良い設計判断・再利用可能パターン。outer loop では少なくとも検討する。"
+        },
+        "negative_feedback": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "修正すべき欠陥・不足・退行。未解決 high は PASS 不可。"
+        },
+        "iteration": {"type": "integer", "minimum": 1},
+        "iteration_limit": {"type": "integer", "minimum": 1, "default": 3},
+        "hook_trigger": {
+          "type": "string",
+          "description": "評価要求を発火した契機。例: PostToolUse:Skill / Stop / pre-push / manual。"
+        },
+        "next_action": {
+          "type": "string",
+          "enum": ["none", "improve", "re_evaluate", "human_review"],
+          "description": "PASS 以外では improve / re_evaluate / human_review のいずれかを明示する。"
+        }
+      }
+    },
+    "notes": {"type": "string", "description": "FAIL/INCOMPLETE 時の要約 (任意)"},
+    "retargeted_from": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eval_log_path", "retargeted_at"],
+      "description": "path 改名時の pointer-only retarget 監査キー (content-review-protocol §retarget 規約)。SKILL.md 内容 sha 不変の改名でのみ使用可。評価値/criteria/sha の書換を伴う使用は偽装。",
+      "properties": {
+        "eval_log_path": {"type": "string", "description": "旧 eval-log パス (例: eval-log/<old-plugin>/<skill>/content-review/)"},
+        "retargeted_at": {"type": "string", "format": "date", "description": "retarget 実施日"}
+      }
+    }
+  }
+}

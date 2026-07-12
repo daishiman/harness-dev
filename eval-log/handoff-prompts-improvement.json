@@ -1,0 +1,114 @@
+{
+  "task": "prompts-improvement-by-skill-creator-7layer",
+  "date": "2026-05-23",
+  "scope": {
+    "targets": ["plugins/skill-creator/skills/*/prompts/*.md", "plugins/skill-intake/skills/*/prompts/*.md"],
+    "out_of_scope": ["agents/*", "commands/*"]
+  },
+  "guiding_rules": [
+    "出力は全て日本語",
+    "SubAgent/Skill プロンプトは情報密度を上げて圧縮",
+    "判断を人間に委ねず AI が文脈から最適解を選定して実装 (no TODO(human))"
+  ],
+  "improvement_categories": {
+    "todo_human_removed": {
+      "count": 11,
+      "pattern": "TODO(human) ブロック → 正規化方針 (auto-applied) セクション (NFKC + lowercase + alias 表ベースの決定論ルール)",
+      "files": [
+        "plugins/skill-creator/skills/ref-output-routing/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-claude-code-skill-spec/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-cross-platform-runtime/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-domain-rubric-template/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-domain-task-spec-rubric/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-skill-design-rubric/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-skill-glossary/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-skill-naming-convention/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-task-context-map/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/ref-yaml-spec-fetcher/prompts/search-summarize.md",
+        "plugins/skill-creator/skills/run-skill-create/prompts/elicit.md"
+      ]
+    },
+    "determinism_added": {
+      "count": 12,
+      "pattern": "5.3 self-evaluation checklist に determinism 項目 (sha256 / bit-identical / 順序一致) を追加",
+      "files": [
+        "plugins/skill-creator/skills/run-build-skill/prompts/scaffold.md",
+        "plugins/skill-creator/skills/run-build-skill/prompts/template-select.md",
+        "plugins/skill-creator/skills/run-build-skill/prompts/responsibility-emit.md",
+        "plugins/skill-creator/skills/run-build-skill/prompts/trace-write.md",
+        "plugins/skill-creator/skills/run-elegant-review/prompts/phase1-reset.md",
+        "plugins/skill-creator/skills/run-elegant-review/prompts/phase2-parallel.md",
+        "plugins/skill-creator/skills/run-elegant-review/prompts/phase3-execute.md",
+        "plugins/skill-intake/skills/run-intake-kickoff/prompts/main.md",
+        "plugins/skill-intake/skills/run-intake-interview/prompts/main.md",
+        "plugins/skill-intake/skills/run-intake-next-action/prompts/main.md",
+        "plugins/skill-intake/skills/run-intake-visualize/prompts/main.md",
+        "plugins/skill-intake/skills/run-intake-finalize/prompts/main.md"
+      ]
+    },
+    "dependency_direction_added": {
+      "count": 2,
+      "pattern": "5.3 に L7→L1 単方向参照チェック追加",
+      "files": [
+        "plugins/skill-creator/skills/run-build-skill/prompts/scaffold.md",
+        "plugins/skill-creator/skills/run-build-skill/prompts/responsibility-emit.md"
+      ]
+    },
+    "structured_open_questions": {
+      "count": 1,
+      "pattern": "open_questions を {question, default_decision, rationale} 構造化 + AI auto-decide",
+      "files": ["plugins/skill-creator/skills/run-skill-create/prompts/elicit.md"]
+    },
+    "aggregator_orchestration_determinism": {
+      "count": 2,
+      "pattern": "orchestrator phase 順序と入出力パスの再実行一致を 5.3 で要求",
+      "files": [
+        "plugins/skill-intake/skills/run-skill-intake-aggregator/prompts/main.md",
+        "plugins/skill-intake/skills/ref-intake-option-catalog/prompts/search-summarize.md"
+      ]
+    }
+  },
+  "files_left_untouched_with_reason": [
+    {
+      "file": "plugins/skill-intake/skills/run-notion-fidelity-guard/prompts/R1.md",
+      "reason": "E5 で snapshot bit-identical を既に要求 (最高水準)"
+    },
+    {
+      "file": "plugins/skill-intake/skills/run-notion-fidelity-guard/prompts/R2.md",
+      "reason": "E5 で diff bit-identical を既に要求"
+    },
+    {
+      "file": "plugins/skill-intake/skills/run-notion-fidelity-guard/prompts/R3.md",
+      "reason": "E4 で MD bit-identical を既に要求"
+    },
+    {
+      "file": "plugins/skill-intake/skills/run-skill-intake-aggregator/prompts/R1.md",
+      "reason": "E1-E6 が schema/PII/source_trace を網羅"
+    },
+    {
+      "file": "plugins/skill-intake/skills/run-skill-intake/prompts/main.md",
+      "reason": "orchestrator entry で handoff 検証に委譲済"
+    }
+  ],
+  "p0_lint": {
+    "todo_human_residue_check": {
+      "command": "grep -rn 'TODO(human)' plugins/{skill-creator,skill-intake}/skills/*/prompts/",
+      "result": "PASS — 残存 2 件はいずれも『TODO(human) 化禁止』ルール記述自体 (deferral ではない)"
+    },
+    "frontmatter_validator": "N/A — validate-frontmatter.py は SKILL.md 対象 (prompts/*.md 非対応)",
+    "agent_prompt_section_lint": "N/A — lint-agent-prompt-section.py は SKILL.md の Agent Prompt 節対象",
+    "validate_prompt_js": "N/A — JSON trace schema 用、Markdown prompt は対象外"
+  },
+  "totals": {
+    "files_edited": 25,
+    "improvement_axes_per_file_avg": 1.04,
+    "no_new_files_created": true
+  },
+  "quality_outcomes": [
+    "C3 再現性: 全 run-*/prompts に sha256/bit-identical/順序一致のいずれかが checklist 入りし、同入力→同出力を機械的に検証可能",
+    "C1 Layer 整合: 7 層 Markdown 構造を維持 (本セッションは構造改変なし、品質強化のみ)",
+    "C2 依存方向: 主要 build prompt に L7→L1 単方向参照チェックを明示",
+    "C4 Self-Evaluation: 12 ファイルで自己検証 checklist を強化、auto-select 規範を体現"
+  ],
+  "next_step_hint": "本 handoff を Step 4b (assign-skill-design-evaluator) または Step 5 (run-elegant-review) に渡し、各 prompts に対する C1-C4 PASS を機械検証することを推奨"
+}

@@ -1,0 +1,1 @@
+../../plugins/plugin-dev-planner/agents/plugin-dev-plan-architect.md

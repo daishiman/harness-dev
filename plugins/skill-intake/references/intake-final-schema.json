@@ -1,0 +1,511 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "intake-final-schema.json",
+  "title": "intake-final-template.md.tmpl variable schema",
+  "description": "Jinja2 テンプレ intake-final-template.md.tmpl に渡す context オブジェクトの正本スキーマ。各フィールドの由来 JSON は x-source で示す。レンダラー render-intake-final.py が読み込んで検証する。",
+  "type": "object",
+  "required": [
+    "meta",
+    "executive_summary",
+    "assumption",
+    "profile",
+    "purpose",
+    "options",
+    "figures",
+    "five_axes",
+    "design_decisions",
+    "open_questions",
+    "handoff",
+    "self_update",
+    "artifacts",
+    "section_diagrams",
+    "notion_target",
+    "notion_db_properties"
+  ],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "x-source": "kickoff.json + sheet.json",
+      "required": ["skill_name_hint", "generated_at", "pattern_code", "depth", "vocabulary_tier", "status", "value_realized_score"],
+      "properties": {
+        "skill_name_hint": {"type": "string", "pattern": "^[a-z][a-z0-9-]{3,31}$"},
+        "skill_title_ja": {"type": "string", "maxLength": 30, "description": "Notion DB 名前列に投入する日本語タイトル。例: '商談文字起こし→契約書自動生成→Slack配信'。30 字以内、記号 → で工程を示す。未指定なら publisher が purpose.verb_object から自動生成し、それも空なら skill_name_hint へフォールバック。"},
+        "generated_at": {"type": "string", "format": "date-time"},
+        "pattern_code": {"type": "string", "enum": ["A", "B", "C"]},
+        "pattern_label": {"type": "string"},
+        "workflow_pattern_code": {"type": "string"},
+        "workflow_pattern_label": {"type": "string"},
+        "depth": {"type": "string", "enum": ["light", "standard", "detailed"]},
+        "depth_minutes": {"type": "integer", "minimum": 10, "maximum": 90},
+        "vocabulary_tier": {"type": "string", "enum": ["novice", "intermediate", "expert"]},
+        "status": {"type": "string"},
+        "value_realized_score": {"type": "integer", "minimum": 0, "maximum": 100}
+      }
+    },
+
+    "executive_summary": {
+      "type": "object",
+      "x-source": "summary.json",
+      "required": ["true_purpose", "design_choices", "handoff_mode"],
+      "properties": {
+        "true_purpose": {"type": "string", "minLength": 20},
+        "purpose_narrative": {"type": "string"},
+        "design_choices": {"type": "string", "description": "例: O1 × T3 × S3 のように設計決定の短縮表記"},
+        "handoff_mode": {"type": "string", "enum": ["fast-track", "human-review", "draft-only"]},
+        "handoff_note": {"type": "string"}
+      }
+    },
+
+    "assumption": {
+      "type": "object",
+      "x-source": "assumption.json",
+      "required": ["surface_request", "candidates", "deep_problem"],
+      "properties": {
+        "surface_request": {"type": "string"},
+        "candidates": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "adopted"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^D[0-9]+$"},
+              "label": {"type": "string"},
+              "adopted": {"type": "boolean"}
+            }
+          }
+        },
+        "deep_problem": {"type": "string"},
+        "time_freed_intent": {"type": "string"},
+        "blind_spots": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "profile": {
+      "type": "object",
+      "x-source": "profile.json",
+      "required": ["dimensions", "vocabulary_tier"],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value", "confidence", "evidence"],
+            "properties": {
+              "name": {"type": "string", "enum": ["expertise", "role", "context", "constraints", "motivation", "sharing_intent"]},
+              "value": {"type": "string"},
+              "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+              "evidence": {"type": "string"}
+            }
+          }
+        },
+        "vocabulary_tier": {"type": "string"},
+        "implications": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "purpose": {
+      "type": "object",
+      "x-source": "purpose.json",
+      "required": ["true_purpose", "rounds", "techniques_used_str"],
+      "properties": {
+        "techniques_used_str": {"type": "string", "description": "例: 'reverse_brief → 5whys → tacit_extraction → magic_wand'"},
+        "rounds": {"type": "integer", "minimum": 1},
+        "agreement_loop_detected": {"type": "boolean"},
+        "true_purpose": {"type": "string"},
+        "underlying_motivation": {"type": "string"},
+        "differentiation_title": {"type": "string", "description": "例: 'ニュース要約との差別化'"},
+        "differentiation_text": {"type": "string"},
+        "magic_wand_text": {"type": "string"},
+        "output_priority": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "is_top"],
+            "properties": {
+              "text": {"type": "string"},
+              "is_top": {"type": "boolean"}
+            }
+          }
+        },
+        "tacit_where": {"type": "string"},
+        "tacit_strategy": {"type": "string"},
+        "handoff_questions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "options": {
+      "type": "object",
+      "x-source": "options.json",
+      "required": ["groups", "connectors"],
+      "properties": {
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["title", "options"],
+            "properties": {
+              "title": {"type": "string", "description": "例: '責務境界', 'テーマ抽出', '配信タイミング'"},
+              "options": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 5,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "label", "pro", "con", "weight", "adopted"],
+                  "description": "選択肢1件。1グループ内で adopted:true は必ず1件のみ（JSON Schema 単独では表現困難なため後段 validator で検証）。",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[A-Z][0-9]+$",
+                      "description": "接頭辞1文字 + 数字。グループごとに接頭辞を統一する運用（例: 責務境界=O, テーマ抽出=T, 配信タイミング=S）。"
+                    },
+                    "label": {"type": "string", "minLength": 2},
+                    "pro": {"type": "string"},
+                    "con": {"type": "string"},
+                    "weight": {"type": "string", "enum": ["軽", "中", "重"]},
+                    "adopted": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "connectors": {
+          "type": "object",
+          "required": ["input_sources", "knowledge_assets", "outputs", "scheduler"],
+          "properties": {
+            "input_sources": {"type": "string"},
+            "knowledge_assets": {"type": "string"},
+            "outputs": {"type": "string"},
+            "scheduler": {"type": "string"}
+          }
+        }
+      }
+    },
+
+    "figures": {
+      "type": "object",
+      "x-source": "figures.json",
+      "required": ["entries", "mandatory_rules_check"],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "description": "図解5枚: 全体アーキ / テーマ抽出 / 日次パイプライン / Before-After / 責務境界",
+          "items": {
+            "type": "object",
+            "required": ["title", "one_liner", "mermaid", "legend"],
+            "properties": {
+              "title": {"type": "string"},
+              "one_liner": {"type": "string", "maxLength": 120},
+              "mermaid": {"type": "string", "description": "Mermaid コード本体（```mermaid フェンスは含まない）"},
+              "legend": {"type": "string"}
+            }
+          }
+        },
+        "mandatory_rules_check": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "passed"],
+            "properties": {
+              "text": {"type": "string"},
+              "passed": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+
+    "five_axes": {
+      "type": "object",
+      "x-source": "sheet.json + intake.json",
+      "required": ["rows", "pipeline", "intent_contract"],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["name", "content", "depth"],
+            "properties": {
+              "name": {"type": "string", "enum": ["出力先", "情報源", "共有相手", "真の課題", "ナレッジ資産"]},
+              "content": {"type": "string"},
+              "depth": {"type": "string", "enum": ["shallow", "standard", "deep"]},
+              "must": {"type": "boolean", "default": false}
+            }
+          }
+        },
+        "pipeline": {
+          "type": "object",
+          "required": ["ingest", "analysis", "storage", "retrieval", "update"],
+          "properties": {
+            "ingest": {"type": "string"},
+            "analysis": {"type": "string"},
+            "storage": {"type": "string"},
+            "retrieval": {"type": "string"},
+            "update": {"type": "string", "enum": ["daily", "weekly", "monthly", "on-demand"]}
+          }
+        },
+        "intent_contract": {
+          "type": "object",
+          "description": "入力→出力インテントの正本。rows[name=出力先] は output_spec.sink、rows[name=情報源] は input_spec.sources から派生する。",
+          "required": ["input_spec", "output_spec", "slot_status"],
+          "properties": {
+            "input_spec": {
+              "type": "object",
+              "required": ["sources", "trigger", "frequency", "raw_materials"],
+              "properties": {
+                "sources": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+                "trigger": {"type": "string", "minLength": 1},
+                "frequency": {"type": "string", "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]},
+                "raw_materials": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+              }
+            },
+            "output_spec": {
+              "type": "object",
+              "required": ["sink", "format", "granularity", "audience", "cadence"],
+              "properties": {
+                "sink": {"type": "string", "minLength": 1},
+                "format": {"type": "string", "enum": ["bullet", "table", "prose", "document", "message", "dashboard", "other"]},
+                "granularity": {"type": "string", "minLength": 1},
+                "audience": {"type": "string", "minLength": 1},
+                "cadence": {"type": "string", "enum": ["realtime", "daily", "weekly", "monthly", "event", "ondemand"]}
+              }
+            },
+            "slot_status": {
+              "type": "object",
+              "required": [
+                "input_spec.sources",
+                "input_spec.trigger",
+                "input_spec.frequency",
+                "input_spec.raw_materials",
+                "output_spec.sink",
+                "output_spec.format",
+                "output_spec.granularity",
+                "output_spec.audience",
+                "output_spec.cadence"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "design_decisions": {
+      "type": "object",
+      "required": ["rows", "output_priority"],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["axis", "adopted", "reason"],
+            "properties": {
+              "axis": {"type": "string"},
+              "adopted": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        },
+        "output_priority": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "open_questions": {
+      "type": "array",
+      "x-source": "intake.json open_questions",
+      "items": {
+        "type": "object",
+        "required": ["question", "blocking", "defer_to"],
+        "properties": {
+          "question": {"type": "string"},
+          "blocking": {"type": "boolean"},
+          "defer_to": {"type": "string"}
+        }
+      }
+    },
+
+    "handoff": {
+      "type": "object",
+      "x-source": "next-action.json",
+      "required": ["recommended_mode", "skip_to_phase", "reason"],
+      "properties": {
+        "recommended_mode": {"type": "string", "enum": ["fast-track", "standard", "human-review", "draft-only"]},
+        "skip_to_phase": {"type": "string"},
+        "reason": {"type": "string"},
+        "starting_note": {"type": "string"}
+      }
+    },
+
+    "self_update": {
+      "type": "object",
+      "x-source": "self-update.json",
+      "required": ["candidates_detected", "candidates_applied", "skipped_duplicates", "value_realized_score"],
+      "properties": {
+        "candidates_detected": {"type": "integer", "minimum": 0},
+        "candidates_applied": {"type": "integer", "minimum": 0},
+        "skipped_duplicates": {"type": "integer", "minimum": 0},
+        "value_realized_score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "score_rationale": {"type": "string"},
+        "deductions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["reason", "points"],
+            "properties": {
+              "reason": {"type": "string"},
+              "points": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        "question_bank_additions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["category", "technique", "question"],
+            "properties": {
+              "category": {"type": "string"},
+              "technique": {"type": "string"},
+              "question": {"type": "string"}
+            }
+          }
+        },
+        "session_observations": {"type": "array", "items": {"type": "string"}},
+        "skipped_phases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": {"type": "string"},
+              "reason": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "notion_target": {
+      "type": "object",
+      "x-source": "runtime input + publish result",
+      "description": "Notion 出力先の正本。ユーザーが --page-url / --page-id を指定した場合、この object を Phase 10 publish まで保持し、指定 page 以外への出力を禁止する。",
+      "required": ["mode"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["update", "create-explicit"]},
+        "page_id": {"type": "string", "pattern": "^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"},
+        "page_url": {"type": "string"},
+        "database_id": {"type": "string"},
+        "source": {"type": "string", "enum": ["arg", "url", "result_file", "explicit_create"]},
+        "require_update": {"type": "boolean", "default": true},
+        "allow_create": {"type": "boolean", "default": false}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "update"}}},
+          "then": {"required": ["page_id"]}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "create-explicit"}}},
+          "then": {"properties": {"allow_create": {"const": true}}}
+        }
+      ]
+    },
+
+    "notion_db_properties": {
+      "type": "object",
+      "x-source": "派生（intake-final-context 各部から projector が生成）",
+      "description": "Notion DB (database_id_env=INTAKE_NOTION_DATABASE_ID) へ送る16プロパティの正本。本ブロックの値は render_notion_page.py が DB 投稿時に使う。実 Notion ページ 35195d6503b781788e31f59b4e05e705 のプロパティ集合と同型。実行環境 (Claude Code / Cowork / 両方) をプロパティとして追加 (2026-05-22)。",
+      "required": ["名前", "ステータス", "パターン", "ワークフロー", "深度", "熟練度", "テーマ抽出", "責務境界", "配信タイミング", "出力先", "共有相手", "引き渡しモード", "真の課題", "実行環境", "作成日"],
+      "properties": {
+        "名前": {"type": "string", "maxLength": 30, "x-derive": "meta.skill_title_ja (優先) → notion_db_properties.名前 (日本語) → top-level skill_title_ja → purpose.verb_object 自動整形 → meta.skill_name_hint (英語フォールバック)。日本語タイトルで一目で内容が分かる形式 (例: '商談文字起こし→契約書自動生成→Slack配信')"},
+        "ステータス": {"type": "string", "enum": ["下書き", "レビュー中", "Gate A承認済み", "引き渡し済み", "構築済み", "アーカイブ"], "x-derive": "meta.status"},
+        "パターン": {"type": "string", "enum": ["A", "B", "C", "D", "E"], "x-derive": "meta.pattern_code"},
+        "ワークフロー": {"type": "string", "x-derive": "meta.workflow_pattern_label", "description": "例: 'B 自動収集配信'"},
+        "深度": {"type": "string", "enum": ["light", "standard", "detailed"], "x-derive": "meta.depth"},
+        "熟練度": {"type": "string", "enum": ["初級", "中級", "上級"], "x-derive": "profile.vocabulary_tier 経由 (novice→初級 / intermediate→中級 / expert→上級)"},
+        "テーマ抽出": {"type": "string", "x-derive": "options.groups[title='テーマ抽出'].options[adopted=true].id+label"},
+        "責務境界": {"type": "string", "x-derive": "options.groups[title='責務境界'].options[adopted=true].id+label"},
+        "配信タイミング": {"type": "string", "x-derive": "options.groups[title='配信タイミング'].options[adopted=true].id+label"},
+        "出力先": {"type": "array", "items": {"type": "string"}, "x-derive": "five_axes.rows[name='出力先'].content から配列化"},
+        "共有相手": {"type": "array", "items": {"type": "string"}, "x-derive": "five_axes.rows[name='共有相手'].content から配列化"},
+        "引き渡しモード": {"type": "string", "enum": ["fast-track", "standard", "human-review", "draft-only"], "x-derive": "handoff.recommended_mode"},
+        "真の課題": {"type": "string", "maxLength": 200, "x-derive": "five_axes.rows[name='真の課題'].content"},
+        "ナレッジ資産タグ": {"type": "array", "items": {"type": "string"}, "x-derive": "five_axes.rows[name='ナレッジ資産'].content からタグ抽出"},
+        "実行環境": {
+          "type": "string",
+          "enum": ["Claude Code", "Cowork", "両方"],
+          "x-derive": "execution_surface.primary（判定ルール: references/execution-surface-rubric.md）",
+          "description": "スキルをどこで実行するかの正本。判定木: ローカルファイル R/W or Bash/Python subprocess or git ops が必要 → 'Claude Code'。MCP-only かつ対話/Artifacts 中心 → 'Cowork'。両条件を満たし MCP-only スキル → '両方'。"
+        },
+        "作成日": {"type": "string", "format": "date-time", "x-derive": "meta.generated_at"}
+      }
+    },
+
+    "artifacts": {
+      "type": "object",
+      "required": ["base_path", "files"],
+      "properties": {
+        "base_path": {"type": "string", "description": "例: '.claude/skills/skill-intake-interviewer/output/info-collector-agent/'"},
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "description"],
+            "properties": {
+              "path": {"type": "string"},
+              "description": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+
+    "section_diagrams": {
+      "type": "object",
+      "x-source": "visualizer SubAgent が各章用 mermaid を組み立てて出力",
+      "description": "章別の section_diagrams マップ。key は section_canonical_map.json の section_key (§5 除く §1-§4, §6-§10)、value は diagram object の配列。§5 (visualizer) は既存 figures フィールドが正本のためここには含めない。",
+      "additionalProperties": false,
+      "properties": {
+        "1_assumption_challenger":  {"$ref": "#/$defs/section_diagram_array"},
+        "2_user_profile":           {"$ref": "#/$defs/section_diagram_array"},
+        "3_purpose_excavator":      {"$ref": "#/$defs/section_diagram_array"},
+        "4_option_presenter":       {"$ref": "#/$defs/section_diagram_array"},
+        "6_five_axes_summary":      {"$ref": "#/$defs/section_diagram_array"},
+        "7_design_decisions":       {"$ref": "#/$defs/section_diagram_array"},
+        "8_open_questions":         {"$ref": "#/$defs/section_diagram_array"},
+        "9_handoff_contract":       {"$ref": "#/$defs/section_diagram_array"},
+        "10_self_updater":          {"$ref": "#/$defs/section_diagram_array"},
+        "11_artifact_index":        {"$ref": "#/$defs/section_diagram_array"}
+      }
+    }
+  },
+
+  "$defs": {
+    "section_diagram_array": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["role", "asset_id", "kind", "title", "one_liner", "mermaid_source"],
+        "additionalProperties": false,
+        "properties": {
+          "role": {"type": "string", "enum": ["primary", "secondary", "tertiary"]},
+          "asset_id": {"type": "string", "description": "section_canonical_map.json の viz_slots.asset_id と一致"},
+          "kind": {"type": "string", "enum": ["workflow", "structure", "mechanism"]},
+          "title": {"type": "string", "minLength": 2, "maxLength": 60},
+          "one_liner": {"type": "string", "maxLength": 80, "description": "言いたい一言、Notion 上で図の直前に表示"},
+          "mermaid_source": {"type": "string", "description": "mermaid コード本体。cvis-* は image_url で代替可"},
+          "image_url": {"type": "string", "format": "uri", "description": "cvis-* (独自 SVG/PNG) を使う場合の Notion 添付 URL"},
+          "legend": {"type": "string", "description": "色凡例等、省略可"}
+        }
+      }
+    }
+  }
+}

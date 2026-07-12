@@ -1,0 +1,24 @@
+{
+  "name": "contract-generator",
+  "version": "0.1.1",
+  "description": "tenant業務委託契約書を台帳×Driveひな形から黄色維持で半自動量産 (draft/finalize/sync の3 skill構成)。改善要望は `/run-skill-feedback contract-generator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "bundles": [
+    "skills-full"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/hook-guard-secret.py"
+          }
+        ]
+      }
+    ]
+  }
+}

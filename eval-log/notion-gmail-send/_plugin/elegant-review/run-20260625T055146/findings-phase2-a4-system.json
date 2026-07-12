@@ -1,0 +1,23 @@
+{
+  "agent": "a4-system",
+  "thought_method_coverage": {
+    "used": ["システム","因果関係","因果ループ","トレードオン","プラスサム","価値提案","戦略的","改善","仮説","論点","KJ法"],
+    "skipped_with_reason": [],
+    "total_assigned": 11
+  },
+  "paradigm_findings": [
+    {"method":"論点","severity":"inconsistency","location":"README.md:95-96","claim":"『まだ完了していない部分』の正体は焦点①(doctor 作法統一)。README の doctor 呼び出しが repo相対手打ちのままで $CLAUDE_PLUGIN_ROOT 作法と非対称。marketplace install では不動作。","evidence":"README:95-96 / ref SKILL.md:85 / setup-guide.md:126-127 が repo相対。skills/agents/hooks/plugin.json は $CLAUDE_PLUGIN_ROOT。親裏取り済。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"システム","severity":"smell","location":"lib/setup_doctor.py:27 / lib/notion_config.py:42-49","claim":"doctor は gate_g1_auth へ委譲する薄いアダプタで config 探索も install パス非依存。残る非整合はドキュメント層のみでシステム境界(コード=portable/doc=clone前提)が割れる。","evidence":"setup_doctor:30 委譲、notion_config:42 CLAUDE_PROJECT_DIR 優先。親裏取り済。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"因果関係","severity":"smell","location":"skills/run-notion-gmail-dry-run/scripts/build_plan.py:115-117","claim":"canary は実装済。dry-run --canary N→限定 units から plan_hash/first_to/nonce 再計算→承認をその限定 plan_hash に束縛で因果が閉じる。全件 plan への摩り替えは send_campaign の決定論セルフチェックで fail-closed。十分。","evidence":"build_plan:115 slice, :117 finalize 再ハッシュ。send_campaign:83 改竄検出。test_build_plan が count=1/canary_applied 検証。親裏取り済。","auto_fixable":false,"verified_by_parent":true},
+    {"method":"因果ループ","severity":"smell","location":"send_campaign.py:215-221 / lib/idempotent_log.py","claim":"quota安全停止(exit3)→reserved戻し→次回自動再開のループは閉じる。QuotaStopped 時 mark_reserved で SENDING を作らず次回 reserve が再開判定。SENDING残置退行を機構で回避。","evidence":"send_campaign:215-221、README:132/160 と整合。","auto_fixable":false,"verified_by_parent":true},
+    {"method":"戦略的","severity":"smell","location":"README.md:124-132","claim":"大量送信戦略(〜数百件/✅フラグ分割/quota日跨ぎ)が exit3+reserved自動再開と一貫。content ベース dedup で分割再実行の二重送信を機構で防止。戦略とコードが揃う。","evidence":"README:126-132、dedup_key campaign_id 非依存。","auto_fixable":false},
+    {"method":"改善","severity":"smell","location":"setup-guide.md:126-127","claim":"改善余地は ref skill(setup-guide/SKILL.md)にも README と同じ repo相対 doctor 手打ちが残る点。README だけ直すと ref が clone前提のまま残り参照経由で同じ不動作へ誘導。3箇所同時修正が必要(部分修正は新たな非対称)。","evidence":"setup-guide:126-127 と SKILL.md:85 が同文。company-master は全参照文書へ伝播済。","auto_fixable":true,"verified_by_parent":true},
+    {"method":"仮説","severity":"smell","location":"README.md:113-117 / dry-run SKILL.md:4-5","claim":"仮説『/run-notion-gmail-* はコマンド不在で不整合』は反証。SKILL frontmatter user-invocable:true ゆえ /skill名 起動は正当で commands 不在は欠陥でない。焦点③も TL;DR 5ステップで補強済。","evidence":"dry-run SKILL.md:5 user-invocable:true、plugin.json entry_points.skills 6件。","auto_fixable":false},
+    {"method":"トレードオン","severity":"smell","location":"lib/gmail_client.py","claim":"速度と安全のトレードオフを安全側に倒す設計が一貫。rateLimit/quotaのみ安全停止、接続/timeout/2xx後解析失敗は SendOutcomeUnknown で自動再送禁止。at-least-once を避け手動照合へ。","evidence":"gmail_client が is_rate のみ QuotaStopped、他は SendOutcomeUnknown。README:146 と整合。","auto_fixable":false},
+    {"method":"価値提案","severity":"smell","location":"README.md:136-148 / lib/send_guard.py","claim":"三本柱価値提案が『守らないもの(正直な明示)』表で誇大を排し send_guard 実条件と1:1。blind approve のコスト上げも限界を正直に明示。価値と実装が誇張なく一致。","evidence":"send_guard が plan_hash/count/first_to/nonce/reserved/unresolved/from_verified を順に check。README:141 限界明示。","auto_fixable":false},
+    {"method":"プラスサム","severity":"smell","location":"lib/preflight.py:33-82 / lib/setup_doctor.py:88-93","claim":"gate_g1_auth を doctor と live-send が共有。doctor で通れば本送信でも同条件で通る保証を1実装で両立。重複実装ゼロ。","evidence":"preflight:33 gate_g1_auth、setup_doctor:88 と send_campaign:109 が同関数。","auto_fixable":false},
+    {"method":"KJ法","severity":"inconsistency","location":"README.md:95-96 / ref SKILL.md:85 / setup-guide.md:126-127","claim":"全 finding を集約すると未完了の根は単一『ドキュメント層が clone前提 doctor 手打ちで marketplace 配布作法から取り残し』に収束(焦点①)。散在3箇所は同一原因の同一修正で一括解消可。","evidence":"repo相対手打ちの全出現が3箇所のみ、他は $CLAUDE_PLUGIN_ROOT。親裏取り済。","auto_fixable":true,"verified_by_parent":true}
+  ],
+  "verdict_provisional": {"矛盾なし":"PARTIAL(doc作法非対称)","漏れなし":"PASS","整合性あり":"PASS","依存関係整合":"PASS"},
+  "root_cause": "焦点①一点に収束: doctor/preflight 起動の他plugin作法統一がドキュメント層だけ未完(コードは install パス非依存)。company-master 同型 deferred の未伝播。焦点②canary・③README補強は実装/補強済。"
+}

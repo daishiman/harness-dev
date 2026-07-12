@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/build-plan.schema.json",
+  "title": "Build Plan",
+  "description": "validate-build-plan.py (--check なし実行、--out でファイル保存) が skill-brief から決定論導出する必須成果物集合。フラグ・必須セクション・必須資産の要否をモデル判断から機械層へ移すための作業リスト正本。セクション集合の導出元は templates/<kind>.md と combinators/*.patch の見出し (別正本を持たない)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill_name", "kind", "flags", "required_sections", "required_deliverables", "goal_seek_engine", "engine_profile", "full_task_spec_graph", "capability_gaps"],
+  "properties": {
+    "schema": { "type": "string" },
+    "skill_name": { "type": "string" },
+    "kind": { "type": "string", "enum": ["run", "ref", "wrap", "assign", "delegate", ""] },
+    "role_suffix": { "type": "string" },
+    "template": { "type": "string", "description": "セクション導出に使った templates/ 配下のファイル名" },
+    "goal_seek_engine": { "type": "string", "enum": ["", "inline", "run-goal-seek", "task-graph"] },
+    "engine_profile": { "type": "string", "enum": ["", "checklist-graph"], "description": "task-graph 指定時の実装 profile。checklist-graph は planner の full task-spec graph と非同等。非 task-graph は空文字 \"\" — SKILL.md frontmatter 側語彙では goal-loop に対応する (相互写像: \"\"⇔goal-loop。frontmatter 側正本 = build-flags.schema.json with_goal_seek.engine_profile)。" },
+    "full_task_spec_graph": { "type": ["boolean", "null"], "description": "task-graph 指定時は常に false。未実装の planner 同等機構を成功扱いしない fail-closed claim。" },
+    "capability_gaps": { "type": "array", "items": { "type": "string" }, "description": "engine_profile が未提供の full task-spec graph capability 一覧。" },
+    "materializer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "command", "idempotent"],
+      "properties": {
+        "tool": { "type": "string" },
+        "command": { "type": "string" },
+        "idempotent": { "type": "boolean" }
+      }
+    },
+    "acceptance_tier": {
+      "type": "string",
+      "enum": ["static", "fork", "live"],
+      "description": "受入検証の最低段 (順序 static<fork<live)。derive_acceptance_tier() が静的信号 (hooks配線 / allowed-tools の Skill・Agent・AskUserQuestion / kind) から決定論導出する。SKILL.md frontmatter の宣言値 < 導出値 (緩め方向) は --check violation。required にはしない (旧 plan 後方互換)。"
+    },
+    "flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "with_prompts", "with_evaluator", "with_hooks", "with_subagent",
+        "with_knowledge", "with_goal_seek", "feedback_contract_required",
+        "feedback_loop_deploy", "content_review"
+      ],
+      "properties": {
+        "with_prompts": { "type": "boolean", "description": "brief.responsibilities 非空 かつ prompt_creator_policy != skip" },
+        "with_evaluator": { "type": "boolean", "description": "brief.generate_pair_evaluator == true" },
+        "with_hooks": { "type": "boolean", "description": "brief.hook_events 非空 または brief.with_hooks == true" },
+        "with_subagent": { "type": "boolean", "description": "brief.with_subagent_hint == true" },
+        "with_knowledge": { "type": "boolean", "description": "brief.knowledge_loop 非空" },
+        "with_goal_seek": { "type": "boolean", "description": "kind ∈ {run,wrap,delegate} (opt-out は CLI --flags のみ)" },
+        "feedback_contract_required": { "type": "boolean", "description": "kind ∈ {run,wrap,delegate}" },
+        "feedback_loop_deploy": { "type": "boolean", "description": "default-ON (Step 11.5)" },
+        "content_review": { "type": "boolean", "description": "default-ON (Step 12)" }
+      }
+    },
+    "required_sections": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "生成 SKILL.md に必須の ## 見出し (正規化済み)。テンプレート正本からのパース結果"
+    },
+    "required_deliverables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "path", "source"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["file", "dir", "glob", "frontmatter-key", "frontmatter-value", "template-copy", "pair-skill", "agent-file"] },
+          "path": { "type": "string" },
+          "must_contain": { "type": "string" },
+          "expected": { "type": "string" },
+          "template": { "type": "string", "description": "template-copy の SKILL_ROOT 相対原本。--check は生成先との byte parity を検査する。" },
+          "source": { "type": "string", "description": "この成果物を要求した brief フィールド" },
+          "verified_by": { "type": "string", "description": "内容規則を担う既存 lint (presence 以上の検査の委譲先)" }
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "機械強制まではしないが trace への理由記録を要する注意 (needs_independent_context / external_systems 等)"
+    }
+  }
+}

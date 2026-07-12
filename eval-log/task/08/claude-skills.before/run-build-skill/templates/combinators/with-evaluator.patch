@@ -1,0 +1,18 @@
+--- a/_base.md
++++ b/_base.md
+@@ -15,6 +15,7 @@ owner: {{owner}}
+ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
++pair: {{pair_skill}}                        # generator/evaluator のペア相方（generator側のみ）
+ # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
+ # PreToolUse hook: 文脈依存の危険検査を hook で追加（二段防御）。
+ ---
+@@ -23,6 +24,9 @@ since: {{date}}
+ ## Purpose & Output Contract
+ {{output_contract}}
+
++## Evaluator 連携
++本Skill (generator) は完了後 `Skill({{pair_skill}}) target=<artifact>` を fork で呼び、JSON評価結果を受け取る。`{{pair_skill}}` 側が `context: fork` を持つ（generator自身は持たない）。
++
+ ## Boundary
+ {{boundary}}

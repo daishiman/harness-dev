@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/skill-brief.schema.json",
+  "title": "Skill Brief (machine-readable)",
+  "description": "run-skill-elicit → run-build-skill / run-skill-create に渡される skill-brief.json の**単一正本スキーマ** (機械可読・workflow-manifest.json の resourceId)。プロパティ・条件付き必須ルール (allOf)・検証ポリシーを全てここに集約する。references/skill-brief-schema.json は本ファイルへの薄いリダイレクト (再掲しない)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "skill_name",
+    "prefix",
+    "kind",
+    "hierarchy_level",
+    "trigger_conditions",
+    "output_contract",
+    "boundary",
+    "deterministic_checks",
+    "external_systems",
+    "needs_independent_context",
+    "needs_lifecycle_enforcement",
+    "cli_tools",
+    "mcp_tools",
+    "placement_candidates"
+  ],
+  "properties": {
+    "skill_name": {"type": "string", "pattern": "^(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 60},
+    "prefix": {"type": "string", "enum": ["ref", "run", "wrap", "assign", "delegate"]},
+    "role_suffix": {"type": ["string", "null"], "enum": [null, "generator", "evaluator", "contributor", "delegate"]},
+    "kind": {"type": "string", "enum": ["ref", "run", "wrap", "assign", "delegate"]},
+    "hierarchy_level": {"type": "string", "enum": ["L0", "L1", "L2"]},
+    "trigger_conditions": {"type": "array", "items": {"type": "string", "maxLength": 80}, "minItems": 2, "maxItems": 3},
+    "output_contract": {"type": "string"},
+    "key_constraints": {"type": "array", "items": {"type": "string"}},
+    "goal": {"type": "string", "description": "ゴールシーク用。達成すべき最終状態を観測可能な完了形1文で。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。output_contract の完了条件と同源に保つ。"},
+    "purpose_background": {"type": "string", "description": "ゴールシーク用。なぜこのゴールか (目的・背景)。手順生成時の優先順位の根拠。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。"},
+    "checklist": {"type": "array", "items": {"type": "string"}, "description": "ゴールシーク用。ゴール達成の受入基準 (二値判定可能)。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (minItems 1、ref のみ任意)。output_contract / key_constraints と同源に保つ。"},
+    "boundary": {"type": "string", "minLength": 1, "maxLength": 200},
+    "deterministic_checks": {"type": "array", "items": {"type": "string"}},
+    "external_systems": {"type": "array", "items": {"type": "string"}},
+    "needs_independent_context": {"type": "boolean"},
+    "needs_lifecycle_enforcement": {"type": "boolean"},
+    "cli_tools": {"type": "array", "items": {"type": "string"}},
+    "mcp_tools": {"type": "array", "items": {"type": "string"}},
+    "placement_candidates": {"type": "array", "items": {"type": "string", "enum": ["Skill", "Subagent", "Agent Team", "Hook", "MCP", "CLI", "API", "script"]}, "minItems": 1},
+    "base_skill": {"type": ["string", "null"]},
+    "delegate_agent": {"type": ["string", "null"]},
+    "rubric_refs": {"type": "array", "items": {"type": "string"}},
+    "source_url_or_path": {"type": "string"},
+    "source_tier": {"type": "string", "enum": ["article-text", "image-derived", "code-unavailable", "code-verified", "internal", "external-spec"]},
+    "last_audited_date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+    "audit_trigger": {"type": "string", "enum": ["rubric-bump", "source-update", "quarterly", "official-update", "source-acquired", "runtime-failure", "template-change"]},
+    "pattern_refs": {"type": "array", "items": {"type": "string", "enum": ["orchestrator", "hook-integrated", "agent-team", "adapter-backed", "evaluator-pair", "delegate-external", "wrap-safe"]}},
+    "pattern_intent": {"type": "string"},
+    "variant_axes": {"type": "array", "items": {"type": "string"}},
+    "reuse_targets": {"type": "array", "items": {"type": "string"}},
+    "output_language": {"type": "string", "enum": ["ja"]},
+    "parameter_language_exception": {"type": "boolean"},
+    "abstraction_variables": {"type": "array", "items": {"type": "string"}},
+    "template_inputs": {"type": "array", "items": {"type": "string"}},
+    "template_non_goals": {"type": "array", "items": {"type": "string"}},
+    "mass_production_profile": {"type": "string", "enum": ["minimal", "standard", "strict"]},
+    "paradigm_profile": {"type": "string"},
+    "hook_events": {"type": "array", "items": {"type": "string"}},
+    "file_ownership": {"type": "array", "items": {"type": "string"}},
+    "generate_pair_evaluator": {"type": "boolean"},
+    "cross_platform": {"type": "boolean"},
+    "os_preamble_required": {"type": "boolean"},
+    "open_questions": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
+    "responsibilities": {"type": "array", "items": {"type": "object"}},
+    "prompt_creator_policy": {"type": "string", "enum": ["required", "optional", "skip", "auto"]},
+    "additional_resources": {"type": "array", "items": {"type": "object"}},
+    "knowledge_loop": {
+      "type": ["object", "null"],
+      "description": "Loop A: 生成スキルにナレッジ蓄積・3段階検索・§12フィードバックループを組み込むか。null/未指定なら組み込まない。正本仕様は ref-knowledge-loop。with-knowledge combinator が消費する。",
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {"type": "string", "enum": ["index-search", "router-registry"], "description": "index-search型=固定/ペルソナ。router-registry型=外部素材から継続同期・蓄積。"},
+        "categories": {"type": "array", "items": {"type": "string"}, "description": "初期カテゴリ案 (kebab-case)。"},
+        "source_kind": {"type": "string", "description": "蓄積元素材の種別 (例: 議事録/動画/教材)。router-registry型で使用。"}
+      }
+    },
+    "consult_build_knowledge": {
+      "type": "boolean",
+      "description": "Loop B: 本スキル作成時に harness-creator 自身の蓄積知見 (plugins/harness-creator/knowledge/ + lessons-learned 索引) を検索して活用するか。既定 true。"
+    },
+    "with_subagent_hint": {
+      "type": "boolean",
+      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Subagent / Agent Team を含むとき true。resolve-brief-to-category.py が agent-teams category を強制し、run-build-skill に --with-subagent を推奨する。needs_independent_context と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_subagent とは別物 (こちらは brief 用 boolean)。"
+    },
+    "goal_seek": {"type": "object", "additionalProperties": false, "description": "goal-seek 配線の engine 選択 (省略推奨)。省略時は loop kind (run/wrap/delegate) に対し engine=task-graph (依存順駆動+self-reflect・checklist-graph profile) が既定で焼き込まれる (validate-build-plan.derive_plan / render-combinators._brief_requests_task_graph の同一 defaulting 規則)。inline / run-goal-seek の明示指定が opt-out。", "properties": {"engine": {"type": "string", "enum": ["inline", "run-goal-seek", "task-graph"], "description": "省略時は loop kind で task-graph に default。inline=自己完結 opt-down / run-goal-seek=重量オーケストレータ (同梱時のみ)"}, "max_loops": {"type": "integer", "minimum": 1}, "fork": {"type": "string", "enum": ["subagent", "agent-team", "inline"]}}},
+    "with_hooks": {
+      "type": "boolean",
+      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Hook を含むとき true。resolve-brief-to-category.py が subagent-hook-integration category を強制し、run-build-skill に --with-hooks を推奨する。needs_lifecycle_enforcement と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_hooks とは別物 (こちらは brief 用 boolean)。"
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"prefix": {"const": "wrap"}}},
+      "then": {"required": ["base_skill"], "properties": {"base_skill": {"type": "string", "minLength": 1}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "delegate"}}},
+      "then": {"required": ["delegate_agent"], "properties": {"delegate_agent": {"type": "string", "minLength": 1}}}
+    },
+    {
+      "if": {"properties": {"hierarchy_level": {"const": "L2"}}},
+      "then": {"required": ["rubric_refs"], "properties": {"rubric_refs": {"type": "array", "minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"enum": ["run", "wrap", "assign", "delegate"]}}, "required": ["prefix"]},
+      "then": {
+        "required": ["goal", "purpose_background", "checklist"],
+        "properties": {"checklist": {"type": "array", "minItems": 1}}
+      }
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "ref"}}, "required": ["prefix"]},
+      "then": {"properties": {"kind": {"const": "ref"}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "run"}}, "required": ["prefix"]},
+      "then": {"properties": {"kind": {"const": "run"}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "wrap"}}, "required": ["prefix"]},
+      "then": {"properties": {"kind": {"const": "wrap"}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "assign"}}, "required": ["prefix"]},
+      "then": {"properties": {"kind": {"const": "assign"}}}
+    },
+    {
+      "if": {"properties": {"prefix": {"const": "delegate"}}, "required": ["prefix"]},
+      "then": {"properties": {"kind": {"const": "delegate"}}}
+    },
+    {
+      "if": {"properties": {"kind": {"enum": ["run", "assign"]}}, "required": ["kind"]},
+      "then": {
+        "required": ["responsibilities"],
+        "properties": {
+          "responsibilities": {
+            "type": "array",
+            "minItems": 1,
+            "contains": {"type": "object", "properties": {"prompt_required": {"const": true}}, "required": ["prompt_required"]}
+          }
+        }
+      }
+    }
+  ],
+  "x-validation-policy": {
+    "comment": "緩め方針: 構造的必須 (prefix/wrap/delegate/L2分岐・kind→responsibilities) のみ allOf で強制。文字数・個数は上限のみ。ソフト推奨 (role_suffix=evaluator → pair 推奨等) は lint レイヤーで警告に留める。詳細根拠は doc/06・01a・29 章。",
+    "policy_decisions": {
+      "skill_name_max": "60 (緩め)",
+      "trigger_item_max_chars": "80 (緩め)",
+      "boundary_max_chars": "200 (緩め)",
+      "open_questions_max": "10 (緩め、超過は警告のみ)",
+      "L0_rubric_refs": "空配列許容 (L0 は被参照のみ、29章原則)",
+      "responsibilities_required_when": "kind ∈ {run, assign} で minItems=1 + prompt_required=true を含む (contains)。ref/wrap/delegate は空配列許容。",
+      "prompt_creator_policy_resolution": "auto → kind 別 default (run/assign=required, ref/wrap=optional, delegate=skip)。validate-build-trace.py が trace と突合。"
+    }
+  }
+}

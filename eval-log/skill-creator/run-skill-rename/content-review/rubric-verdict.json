@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "run-skill-rename",
+    "skill_md_sha256": "3a3071e3ad76819c90412852df26e7e81306c09171a26a5e880abb51f8f4dbd9"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator-subagent",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "description『Skill名を変更するとき、改名後の参照整合を確認するときに使う。』が発動条件2個(改名時/参照整合確認時)を日本語トリガで明示し句点で終わり(FM-002/FM-003)、動作詳細を含まず(FM-004)、改名ワークフローという単一責務に絞られている。",
+      "name=run-skill-rename が run- prefix の kebab-case で FM-001/NM-001(basename==frontmatter.name)/NM-002 を満たし、本文に '## Purpose & Output Contract'(BD-001)・'## Gotchas'(BD-002) が存在、本文行数 113行で BD-003(<=300)・PD-001(references あり)を満たす。",
+      "完了条件が lint-skill-name.py / lint-skill-tree.py / validate-frontmatter.py の exit0 と機械検証可能で IN1 と整合、ゴールシーク不可分セットが IN2 の script 検証を構造で支え、grep -r 旧名 全走査が OUT1 の参照切れ防止を裏打ちしており、knowledge/ 不在ゆえ KL-001..005 は存在ゲートで PASS(誤減点なし)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "dev同期merge後の現 SKILL.md (sha256=3a3071e3...) を rubric (ref-skill-design-rubric/references/rubric.json v1.3.0, kind=skill) で genuine 突合。merge 差分はゴールシークループ参照の『5→6 ステップ (Anchor Step 追記)』1行のみで rubric 採点に影響する frontmatter/heading/行数を変えない。FM-001(name=run-skill-rename: ^(run|ref|assign|wrap|delegate)- kebab-case len<=60)PASS / FM-002(description 日本語トリガ『〜とき』2個+句点)PASS / FM-003(trigger 2..3個)PASS / FM-004(動作詳細・sha256・exit code 等を description に非含有)PASS / FM-005(動詞句『使う』終止)PASS。BD-001(## Purpose & Output Contract 厳格一致)PASS / BD-002(## Gotchas)PASS / BD-003(本文113行<=300)PASS / BD-004(description トリガ↔本文手順の1:1: 改名→ゴールシーク手順、参照整合確認→grep 全走査+lint)PASS。NM-001(dir basename run-skill-rename == frontmatter.name)PASS / NM-002 PASS / NM-003 PASS。PD-001(references/ 存在)PASS / PD-002(冒頭30行内 ## Purpose & Output Contract + 禁則/MUST 相当: 完了条件・第8条同時更新)PASS。KL-001..005 は knowledge/ ディレクトリも frontmatter.knowledge_loop も不在のため存在ゲートで無条件 PASS。high severity FAIL=0。IN1/IN2/OUT1 の3基準とも rubric 上 adequate で責務肥大・契約曖昧・検証不能なし。high severity 0 で PASS。"
+}

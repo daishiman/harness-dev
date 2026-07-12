@@ -1,0 +1,27 @@
+{
+  "skills_scanned": 20,
+  "dependency_tracking": "Skill() invocations only (pair: excluded as ownership declaration)",
+  "invocation_graph": {
+    "run-build-skill": [
+      "ref-yaml-spec-fetcher",
+      "assign-skill-design-evaluator"
+    ],
+    "run-elegant-review": [
+      "assign-skill-design-evaluator"
+    ],
+    "run-skill-create": [
+      "run-elegant-review",
+      "run-build-skill",
+      "run-skill-elicit",
+      "assign-skill-design-evaluator"
+    ],
+    "run-migrate-audit": [
+      "assign-skill-design-evaluator"
+    ]
+  },
+  "cycles": [],
+  "direction_violations": [],
+  "cycles_count": 0,
+  "violations_count": 0
+}
+OK: no cycles, no direction violations (20 skills scanned)

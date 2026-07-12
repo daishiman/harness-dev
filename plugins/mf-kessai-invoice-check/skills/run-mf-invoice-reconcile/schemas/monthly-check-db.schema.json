@@ -1,0 +1,127 @@
+{
+  "title": "月次発行チェック（MF発行整合チェック DB2）",
+  "description": "双方向照合の蓄積先。1行=1(契約 × 対象年月=取引月) + 逆方向orphan行。月次照合の月帰属は transaction.date 基準。判定はDB1から展開した期待とMF実績の突合結果(verdict→judge_label は verdict-mapping.json SSOTで導出)。期待金額は判定時にスナップショット凍結し、マスタ後編集で過去月が変わらない=履歴不変の主担保。人間対応済み=true の行は同月再実行で凍結(L1)。config キー reconcile_db2_id に database_id を記録する。",
+  "properties": {
+    "契約×年月": {
+      "type": "title",
+      "description": "表示用upsert可読キー。順方向='{契約ID}_{対象年月}'、逆方向='ORPHAN_{MF顧客ID}_{対象年月}'(D1)。"
+    },
+    "契約": {
+      "type": "relation",
+      "relation_database": "reconcile_db1_id",
+      "relation_target_schema": "contract-master-db.schema.json",
+      "description": "→DB1(契約ID)。順方向行は必須、orphan行は空。relation先 database_id は config の reconcile_db1_id を build 時に解決。"
+    },
+    "対象年月": {
+      "type": "select",
+      "options": [],
+      "option_format": "YYMM",
+      "description": "YYMM(=取引月)。upsertキーの一部。月ごとに動的追加(Notionが書込時に未存在optionを自動生成)のため固定列挙しない。"
+    },
+    "方向": {
+      "type": "select",
+      "options": ["順方向", "逆方向orphan"],
+      "description": "順方向=baseline−実績(発行漏れ等)、逆方向orphan=実績−baseline(MF実績ありマスタ未登録=要マスタ登録)。upsertキー分岐の軸(D1)。"
+    },
+    "判定": {
+      "type": "select",
+      "options": [
+        "発行確認OK",
+        "発行確認OK(最終請求)",
+        "対象外(年間前払い)",
+        "対象外(契約終了)",
+        "対象外(単発)",
+        "対象外(非請求月)",
+        "発行漏れ",
+        "要マスタ登録",
+        "要確認(過剰請求)",
+        "要確認(終了根拠なし)",
+        "要確認(金額差)",
+        "要確認(数量差)",
+        "要確認(年間一括未確認)",
+        "要確認(金額未記載)",
+        "要確認(従量)",
+        "要確認(データ不備)",
+        "要確認(保留)",
+        "要確認(取消)",
+        "要確認(取引未確定)"
+      ],
+      "options_source": "verdict-mapping.json の judge_label distinct(SSOT)。drift防止に parity test で突合する。",
+      "description": "internal_verdict→judge_label のSSOTマッピングで生成。AI確認可否は別列『AI確認済み』に機械可読で残す。"
+    },
+    "期待金額": {
+      "type": "number",
+      "description": "判定時expectedをスナップショット凍結(税抜・明細単価)。マスタ後編集で過去不変=履歴不変の主担保。"
+    },
+    "突合金額": {
+      "type": "number",
+      "description": "MF実績(税抜・明細単価)。束ね請求(サービス月複数)は月数×単価で検算。"
+    },
+    "期待件数": {
+      "type": "number",
+      "description": "presence-based数量差WARN用(契約ID境界の期待明細数=Σ DB1.期待明細数)。"
+    },
+    "MF供給件数": {
+      "type": "number",
+      "description": "数量差WARN用(dedup後のMF供給明細数)。期待件数>これ で 要確認(数量差)。"
+    },
+    "AI確認済み": {
+      "type": "checkbox",
+      "description": "AI管理列。verdict-mapping.json の ai_check=true の判定(MATCH_* / SUPPRESS_*)だけ true。発行漏れ・要確認・orphan は false。人間の最終確認は『人間対応済み』で別管理する。"
+    },
+    "MF顧客ID": {
+      "type": "rich_text",
+      "description": "証跡。逆方向orphan行のupsert補助キー(D1: 逆方向キー=(MF顧客ID,対象年月,方向))。"
+    },
+    "MF請求ID": {
+      "type": "rich_text",
+      "description": "証跡(billing_id)。"
+    },
+    "発行日": {
+      "type": "date",
+      "description": "MF請求発行日(証跡)。"
+    },
+    "警告": {
+      "type": "rich_text",
+      "description": "分類済み警告(自由記述): 数量差(想定漏れ=差×単価)/金額差/typo/終了後請求(過剰請求)/取消(取消日時・取消前金額・0円取消状態)/取引未確定(status・金額)/鮮度/従量/データ不備。"
+    },
+    "人間対応済み": {
+      "type": "checkbox",
+      "description": "旧『チェック済み』。人間専用・AI不可触(managed列規律)。true の行は同月再実行で全列凍結(L1)。"
+    },
+    "実行日時": {
+      "type": "date",
+      "description": "バッチ実行時刻。"
+    }
+  },
+  "upsert_key": {
+    "順方向": ["契約", "対象年月", "方向"],
+    "逆方向orphan": ["MF顧客ID", "対象年月", "方向"],
+    "note": "D1: orphanは契約relation空のため同月複数orphanが(空,対象年月)で衝突する。方向で分岐し逆方向はMF顧客IDをキーにする。title『契約×年月』もこのキーから一意生成。"
+  },
+  "fact_columns": [
+    "契約×年月",
+    "契約",
+    "対象年月",
+    "方向",
+    "判定",
+    "期待金額",
+    "突合金額",
+    "期待件数",
+    "MF供給件数",
+    "AI確認済み",
+    "MF顧客ID",
+    "MF請求ID",
+    "発行日",
+    "警告",
+    "実行日時"
+  ],
+  "managed_columns": ["AI確認済み", "人間対応済み"],
+  "frozen_columns": ["期待金額"],
+  "freeze_rule": {
+    "scope": "row",
+    "when": "人間対応済み=true",
+    "always": "過去月(対象年月<当月)は常に凍結",
+    "note": "L1: (契約,対象年月) は 人間対応済み=false かつ 当月のみ上書き、true または過去月は凍結。期待金額は判定時にスナップショット凍結し再計算しない。"
+  }
+}

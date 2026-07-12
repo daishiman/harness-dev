@@ -1,0 +1,22 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-system-spec-doc-fetch の Progressive Disclosure 索引。
+# prompts/* が責務 SSOT、scripts/* が決定論組み立て、references/* は取得判断の補助資料。
+resources:
+  - file: ../prompts/R1-identify.md
+    topic: spec-state.json から取得対象 (target_id) を特定する R1 責務
+    read_when: 取得対象一覧を組み立てるとき (最初に読む)
+  - file: ../prompts/R2-fetch.md
+    topic: WebSearch/WebFetch で公式ドキュメントを引く R2 責務
+    read_when: 公式 host を特定し本文を取得するとき
+  - file: ../prompts/R3-record.md
+    topic: fetched-references.json へ正規化記録する R3 責務
+    read_when: 取得素材を記録し IN1 検証にかけるとき
+  - file: ../scripts/build-fetched-references.py
+    topic: record 素材を契約形状へ正規化・全件突合する決定論 assembler
+    read_when: R3 で fetched-references.json を組み立てるとき
+  - file: official-source-catalog.md
+    topic: 公式 host 判定の指針と代表例 (公式/非公式の切り分け)
+    read_when: R2 で対象の公式 publisher/host を見極めるとき
+  - file: ../../../scripts/validate-source-citation.py
+    topic: 対象一覧と fetched-references.json の全件対応/host 一致を検証する IN1 ゲート (plugin-root 共有)
+    read_when: R3 の記録を機械検証するとき

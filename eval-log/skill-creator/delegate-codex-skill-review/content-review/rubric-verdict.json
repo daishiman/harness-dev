@@ -1,0 +1,40 @@
+{
+  "target": {
+    "plugin": "skill-creator",
+    "skill": "delegate-codex-skill-review",
+    "skill_md_sha256": "aa032977844472c6fdccf868b027bba972da83a7fc6a6f5ac008ee08f1f8918f"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator-subagent",
+  "reviewed_at": "2026-06-25",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "FM系 PASS: name=delegate-codex-skill-review が prefix delegate- に合致しディレクトリ basename と一致(FM-001/NM-001), description は『外部LLMに委譲したいとき』『Sycophancy を避けたいとき』の発動条件 2 個+句点のみで内部動作詞を含まない(FM-002/003/004)",
+      "BD系 PASS: 『## Purpose & Output Contract』(L57) と『## Gotchas』(L128) を存置(BD-001/002), 本文 84 行で 300 行上限内(BD-003), references/(codex-connection.md, resource-map.yaml)存在で PD-001/PD-002 充足",
+      "criteria 追跡可能性 PASS: IN1=check-codex-installed.py が script_refs に, IN2=io-contract.schema.json が schema_refs に, OUT1(非採点境界)/OUT2(L1 opt-in 依存)が本文設計と hierarchy_level=L1 注記(L132)に追跡可能で adequacy あり"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "dev同期merge後の現SKILL.md(sha256=aa032977…918f, 旧b42f40f3…は stale)を実読し rubric.json(rubric_version 1.3.0)で kind=delegate を採点。delegate は supported_kinds 外のため delegate 固有 rule は無く, skill 共通の FM-001..004/BD-001..002/NM-001/PD-001..002 と全 kind 共通核 BD-003/RG-001/KL-001..005 を適用。FM-001(prefix delegate-/len<=60), FM-002/003(トリガ 2 個+句点), FM-004(発動条件のみ), BD-001(## Purpose & Output Contract L57), BD-002(## Gotchas L128), BD-003(本文 84 行 ≤300), NM-001(dir basename=name), PD-001(references/ 2 ファイル), PD-002(冒頭 30 行に契約節+禁則『しない/標準依存にしない』) すべて PASS。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop 不在で存在ゲートにより skip PASS(誤減点なし)。merge で更新された局面カタログ L125(--prompt 直接指定/rubric を R2 本文へ焼き込み)は frontmatter responsibility_refs(R2-codex-review.md)と整合。high severity finding 0 件。被採点物への改変なし(read-only)。"
+}

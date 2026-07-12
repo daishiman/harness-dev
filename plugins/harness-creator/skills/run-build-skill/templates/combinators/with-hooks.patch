@@ -1,0 +1,19 @@
+--- a/_base.md
++++ b/_base.md
+@@ -16,6 +16,9 @@ since: {{date}}
+ rubric_refs: {{rubric_refs | default([])}}
++with_hooks: true                            # PreToolUse / PostToolUse hook 配線あり
++needs_lifecycle_enforcement: true
+ # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
+ # PreToolUse hook: 文脈依存の危険検査を hook で追加（二段防御）。
+ ---
+@@ -42,4 +45,11 @@ TODO
+
+ ## Security & Permissions
+ 本Skillは副作用を伴う可能性がある。設計書04章の二段防御原則に従い、(1) `settings.json` の `permissions.deny` に禁止コマンド・パスを静的に列挙し、(2) `PreToolUse` hook で文脈依存の危険検査（破壊的引数・対象パス・分岐条件）を動的に行うこと。
++
++## Hook Wiring（10章 / 17章）
++- `PreToolUse`: 破壊的引数の検査。block は exit 2 または `hookSpecificOutput.permissionDecision: "deny"` で行う（top-level decision は deprecated）。
++- `PostToolUse`: 監査ログ + 後処理。failure 系は `PostToolUseFailure` を別途配線。
++- `SubagentStop`: Subagent ありの場合、完了 hook で evaluator JSON 検証を強制。`TaskCompleted` は Agent Team の teammate artifact 完了確認に限定する。
++- `FileChanged`: 設計書 17/18/19 章の更新を検知し、本 Skill の再 lint を提案する自動追従ループに使う。

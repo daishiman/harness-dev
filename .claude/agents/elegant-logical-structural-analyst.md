@@ -1,0 +1,1 @@
+../../plugins/harness-creator/agents/elegant-logical-structural-analyst.md

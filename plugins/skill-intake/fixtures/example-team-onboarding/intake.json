@@ -1,0 +1,534 @@
+{
+  "schema_version": "2.0.0",
+  "source_of_truth": "plugins/skill-intake/references/section_canonical_map.json",
+  "skill_name_hint": "info-collector-agent",
+  "_baseline_note": "dogfooding_regression.py の baseline fixture。ユーザー提示『info-collector-agent ヒアリング正本完全版』から intake.json 2.0.0 形式へ転記した最小骨格。lexical fingerprint(section_keys / axes_ids / figures.kind+index) と semantic(true_purpose) の回帰検証に使用。本文全文の再現は範囲外で、Notion ペイロード生成と一致させる責務は render_notion_page.py。",
+  "sections": {
+    "0_executive_summary": {
+      "generated_at": "2026-05-22",
+      "pattern": "C",
+      "workflow_pattern": "O2-T2-S1",
+      "depth": "detailed",
+      "vocabulary_tier": "expert",
+      "state": "handoff_ready",
+      "true_purpose_oneliner": "新メンバーオンボーディングを 5 営業日内に運用知識のキャッチアップまで完結させる",
+      "design_decision_summary": "段階ロールプレイ + シニアレビュー + 質問ログ Notion 集約の3点セットでオンボードを構造化する",
+      "handoff_mode": "onboarding",
+      "value_realized_score": 82
+    },
+    "1_assumption_challenger": {
+      "surface_request": "情報収集が毎日しんどい・代行してほしい",
+      "deep_candidates": [
+        {
+          "id": "D1",
+          "label": "収集よりも『選別・キュレーション』が本丸",
+          "adopted": false
+        },
+        {
+          "id": "D2",
+          "label": "収集→要約→アウトプット化まで一気通貫が本丸",
+          "adopted": true
+        },
+        {
+          "id": "D3",
+          "label": "自分の思考スタイル・関心軸を学習させた『代理人』が本丸",
+          "adopted": false
+        }
+      ],
+      "adopted_deep_problem": "情報の収集だけでなく、要約と最終アウトプット形態までを一気通貫で代行させることが本丸",
+      "time_freed_intent": "思考・企画・戦略設計に時間を再配分する",
+      "blindspots": [
+        "アウトプット化部分もしんどいと本人確認済み",
+        "アウトプット形態が複数で優先未確定",
+        "自分の思考スタイル注入(D3要素)も部分的に必要な可能性"
+      ]
+    },
+    "2_user_profile": {
+      "dimensions": [
+        {
+          "dim": "expertise",
+          "value": "high",
+          "confidence": "high",
+          "evidence": "skill-intake-interviewer / prompt-creator / x-longpost-creator など多数のスキルを設計運用"
+        },
+        {
+          "dim": "role",
+          "value": "AIコンサルタント兼コンテンツ事業者(1人事業)",
+          "confidence": "high",
+          "evidence": "日本語のAIコンサルティングビジネスボールト"
+        },
+        {
+          "dim": "context",
+          "value": "個人事業主・1人運営",
+          "confidence": "high",
+          "evidence": "01_Notes に DM・user・minutes・goals が並列で存在"
+        },
+        {
+          "dim": "constraints",
+          "value": "時間/品質ブレ低減",
+          "confidence": "high",
+          "evidence": "4領域すべて毎日"
+        },
+        {
+          "dim": "motivation",
+          "value": "一気通貫代行で思考・戦略設計に時間とエネルギーを再配分",
+          "confidence": "high",
+          "evidence": "assumption D2 採択"
+        },
+        {
+          "dim": "sharing_intent",
+          "value": "4方向マルチアウトプット",
+          "confidence": "high",
+          "evidence": "user-profiler 確認質問で4選択肢すべて選択"
+        }
+      ],
+      "vocabulary_tier": "expert",
+      "implications_for_next_phase": [
+        "技術用語(API/MCP/JSON/Webhook)はそのまま使ってよい",
+        "アウトプット形態が4方向あるため最優先と頻度を引き出す",
+        "既存スキルとの責務境界をoption-presenterで明示する必要あり"
+      ]
+    },
+    "3_purpose_excavator": {
+      "techniques_used": [
+        "reverse_brief",
+        "5whys",
+        "tacit_extraction",
+        "magic_wand"
+      ],
+      "rounds": 4,
+      "agreement_loop_detected": false,
+      "true_purpose": "5 営業日でオンコール参加できる水準まで知識を整える",
+      "underlying_motivation": "採用ラッシュで毎回属人的にオンボーディングしており、シニアの工数が圧迫されている",
+      "differentiation": "複数ソースを『自分の関心テーマ』で縦方向に下ろすキュレーション(横並び要約ではない)",
+      "output_priority": [
+        {
+          "rank": 1,
+          "output": "Obsidian『本日の思考メモ』",
+          "mandatory": true
+        },
+        {
+          "rank": 2,
+          "output": "Discord/Slack 通知(サマリ+ピン留めシグナル)",
+          "mandatory": false
+        },
+        {
+          "rank": 3,
+          "output": "X長文/スライド/提案資料への派生(別スキル委譲)",
+          "mandatory": false
+        }
+      ],
+      "tacit_locus": {
+        "where": "過去のX投稿・講座資料・クライアント会話",
+        "extraction_strategy_hint": "過去アウトプットを解析して関心テーマ集合を逆推定し、定期的に再学習する"
+      },
+      "stated_request": "新メンバーオンボーディングを定型化したい"
+    },
+    "4_option_presenter": {
+      "decision_tables": [
+        {
+          "axis": "責務境界",
+          "options": [
+            {
+              "id": "O1",
+              "label": "オーケストレータ",
+              "pro": "重複実装なし・既存資産活用",
+              "con": "既存スキルAPI契約に依存",
+              "weight": "軽",
+              "adopted": true
+            },
+            {
+              "id": "O2",
+              "label": "ハイブリッド(出力ファイルベース統合)",
+              "pro": "緊やか結合",
+              "con": "ファイル形式調整必要",
+              "weight": "中",
+              "adopted": false
+            },
+            {
+              "id": "O3",
+              "label": "独立(自前で全取得)",
+              "pro": "依存ゼロ",
+              "con": "重複実装・保守コスト大",
+              "weight": "重",
+              "adopted": false
+            }
+          ],
+          "adopted_id": "O1"
+        },
+        {
+          "axis": "テーマ抽出",
+          "options": [
+            {
+              "id": "T1",
+              "label": "静的シード(手動)",
+              "pro": "シンプル",
+              "con": "更新追随しない",
+              "weight": "軽",
+              "adopted": false
+            },
+            {
+              "id": "T2",
+              "label": "動的抽出(Embeddings/LLM)",
+              "pro": "暗黙知逆推定",
+              "con": "計算コスト・精度ブレ",
+              "weight": "重",
+              "adopted": false
+            },
+            {
+              "id": "T3",
+              "label": "ハイブリッド(シード+動的+週次)",
+              "pro": "バランス・進化",
+              "con": "実装やや複雑",
+              "weight": "中",
+              "adopted": true
+            }
+          ],
+          "adopted_id": "T3"
+        },
+        {
+          "axis": "配信タイミング",
+          "options": [
+            {
+              "id": "S1",
+              "label": "毎朝定刻cron",
+              "pro": "ルーチン化",
+              "con": "緊急情報を逃す",
+              "weight": "軽",
+              "adopted": false
+            },
+            {
+              "id": "S2",
+              "label": "オンデマンドのみ",
+              "pro": "柔軟",
+              "con": "習慣化しにくい",
+              "weight": "軽",
+              "adopted": false
+            },
+            {
+              "id": "S3",
+              "label": "両対応(定刻+オンデマンド)",
+              "pro": "ベース+必要時対応",
+              "con": "起動経路2系統の整合",
+              "weight": "中",
+              "adopted": true
+            }
+          ],
+          "adopted_id": "S3"
+        }
+      ],
+      "connectors": {
+        "input_sources": [
+          "arxiv-paper-reporter",
+          "x-post-reporter",
+          "ai-release-reporter",
+          "Slack/Discord/会話URL貼り付け"
+        ],
+        "knowledge_assets": [
+          "Obsidian Vault (01_Notes/03_Sources)",
+          "過去X投稿アーカイブ",
+          "講座資料・クライアント会話ログ"
+        ],
+        "outputs": [
+          "Obsidian Markdown (01_Notes/daily - YYYY-MM-DD.md)",
+          "Discord Webhook"
+        ],
+        "scheduler": "cron 定刻 + Claude Code スラッシュコマンド/Discord Botでオンデマンド"
+      }
+    },
+    "5_visualizer": {
+      "figures": [
+        {
+          "index": 1,
+          "title": "全体アーキテクチャ(オーケストレータ構造)",
+          "kind": "flowchart",
+          "mermaid_source": "flowchart LR\n  A[X投稿]-->H[テーマ縦切り]\n  B[arXiv]-->H\n  C[公式発表]-->H\n  D[会話URL]-->H\n  H-->I[思考メモ生成]\n  I-->J[Obsidian]\n  I-->K[Discord通知]",
+          "legend": "青=情報源/黄=コア/緑=出力先",
+          "one_liner": "team-onboarding 図 1: 段階ロールプレイ進行フロー"
+        },
+        {
+          "index": 2,
+          "title": "テーマ抽出ハイブリッド構造(T3)",
+          "kind": "flowchart",
+          "mermaid_source": "flowchart TB\n  S[手動シード]-->M[統合]\n  O[Obsidian過去]-->E[動的抽出]\n  X[過去X投稿]-->E\n  E-->M\n  M-->T[テーマ集合]\n  T-->W[週次再学習]",
+          "legend": "青=静的入力/黄=動的抽出/緑=統合",
+          "one_liner": "team-onboarding 図 2: 段階ロールプレイ進行フロー"
+        },
+        {
+          "index": 3,
+          "title": "日次パイプライン",
+          "kind": "sequence",
+          "mermaid_source": "sequenceDiagram\n  participant C as cron/手動\n  participant O as オーケストレータ\n  participant R as 既存3スキル\n  participant T as テーマフィルタ\n  participant G as 思考メモ生成\n  participant U as ユーザー\n  C->>O: 起動\n  O->>R: 出力取得\n  R-->>O: 収集データ\n  O->>T: 縦切り\n  T->>G: テーマ別\n  G-->>U: Obsidian+Discord",
+          "legend": "起動2系統・出力2方向",
+          "one_liner": "team-onboarding 図 3: 段階ロールプレイ進行フロー"
+        },
+        {
+          "index": 4,
+          "title": "Before/After",
+          "kind": "comparison",
+          "mermaid_source": "flowchart LR\n  subgraph Before\n    B1[情報漁り]-->B2[整理]-->B3[企画遅延]\n  end\n  subgraph After\n    A1[朝の思考メモ]-->A2[企画着手]-->A3[アウトプット]\n  end",
+          "legend": "赤=現状摩擦/緑=理想",
+          "one_liner": "team-onboarding 図 4: 段階ロールプレイ進行フロー"
+        },
+        {
+          "index": 5,
+          "title": "責務境界(既存スキル群との関係)",
+          "kind": "architecture",
+          "mermaid_source": "flowchart TB\n  subgraph 既存\n    E1[arxiv-paper-reporter]\n    E2[x-post-reporter]\n    E3[ai-release-reporter]\n  end\n  subgraph 新規\n    N1[テーマ縦切り]\n    N2[思考メモ生成]\n  end\n  E1-->N1\n  E2-->N1\n  E3-->N1\n  N1-->N2",
+          "legend": "青=既存資産/黄=新規責務",
+          "one_liner": "team-onboarding 図 5: 段階ロールプレイ進行フロー"
+        }
+      ],
+      "rules_check": {
+        "nodes_7_plus_minus_2": true,
+        "label_len_le_10": true,
+        "color_legend": true,
+        "no_emoji": true,
+        "one_liner_present": true
+      }
+    },
+    "6_five_axes_summary": {
+      "axes": [
+        {
+          "axis_id": "output_to",
+          "answer": "(output_to) team-onboarding 文脈での回答",
+          "depth": "deep",
+          "evidence": "purpose §3 output_priority と整合"
+        },
+        {
+          "axis_id": "input_from",
+          "answer": "(input_from) team-onboarding 文脈での回答",
+          "depth": "deep",
+          "evidence": "option-presenter connectors と整合"
+        },
+        {
+          "axis_id": "share_target",
+          "answer": "(share_target) team-onboarding 文脈での回答",
+          "depth": "standard",
+          "evidence": "user-profiler sharing_intent"
+        },
+        {
+          "axis_id": "real_problem",
+          "answer": "(real_problem) team-onboarding 文脈での回答",
+          "depth": "deep",
+          "evidence": "assumption D2"
+        },
+        {
+          "axis_id": "knowledge_asset",
+          "answer": "(knowledge_asset) team-onboarding 文脈での回答",
+          "depth": "deep",
+          "evidence": "tacit_locus + T3 採択"
+        }
+      ],
+      "knowledge_pipeline": {
+        "ingest": [
+          "Markdown",
+          "X投稿",
+          "URL",
+          "PDF"
+        ],
+        "analysis": [
+          "LLM要約",
+          "Embeddings テーマクラスタリング",
+          "静的シード統合"
+        ],
+        "storage": [
+          "Obsidian(人間用)",
+          "JSON テーマ集合ファイル(スキル内部)"
+        ],
+        "retrieval": [
+          "テーマキーワード検索",
+          "RAG"
+        ],
+        "update": "weekly"
+      }
+    },
+    "7_design_decisions": {
+      "adoptions": [
+        {
+          "axis": "責務境界",
+          "adopted_id": "O1",
+          "reason_one_liner": "既存スキルの再利用・重複実装回避"
+        },
+        {
+          "axis": "テーマ抽出",
+          "adopted_id": "T3",
+          "reason_one_liner": "静的シードで安定・動的で暗黙知追随・週次で進化"
+        },
+        {
+          "axis": "配信タイミング",
+          "adopted_id": "S3",
+          "reason_one_liner": "定刻でルーチン化・オンデマンドで柔軟性"
+        }
+      ],
+      "output_priority_finalized": [
+        {
+          "rank": 1,
+          "output": "Obsidian『本日の思考メモ』",
+          "mandatory": true
+        },
+        {
+          "rank": 2,
+          "output": "Discord/Slack 通知",
+          "mandatory": false
+        },
+        {
+          "rank": 3,
+          "output": "派生(別スキル委譲)",
+          "mandatory": false
+        }
+      ]
+    },
+    "8_open_questions": {
+      "questions": [
+        {
+          "q": "クライアント実名・契約金額の除外範囲・粒度",
+          "blocking": false,
+          "defer_to": "harness-creator"
+        },
+        {
+          "q": "情報源の絞り込み(X TLアカウント数・arXivカテゴリ範囲)",
+          "blocking": false,
+          "defer_to": "harness-creator"
+        },
+        {
+          "q": "Discord/Slack のどちらをメイン通知先にするか",
+          "blocking": false,
+          "defer_to": "harness-creator"
+        },
+        {
+          "q": "テーマ集合ファイルのスキーマと更新ジョブ実装",
+          "blocking": false,
+          "defer_to": "harness-creator"
+        }
+      ],
+      "blocking_count": 0,
+      "deferred_count": 4
+    },
+    "9_handoff_contract": {
+      "recommended_next": {
+        "mode": "onboarding",
+        "skip_to_phase": "Phase 2",
+        "reason": "5軸全 verified・設計選択(O1/T3/S3)確定済み・要件定義スキップ可"
+      },
+      "intake_json_path": ".claude/skills/skill-intake-interviewer/output/info-collector-agent/intake.json",
+      "starting_command": "/run-skill-create --from .claude/skills/skill-intake-interviewer/output/info-collector-agent/intake.json --skip-to-phase 2"
+    },
+    "10_self_updater": {
+      "metrics": {
+        "candidates_detected": 3,
+        "candidates_applied": 3,
+        "skipped_duplicates": 0,
+        "value_realized_score_estimate": 88
+      },
+      "score_rationale": "5軸全 verified、purpose 動詞+目的語に分解済、設計選択(O1/T3/S3)確定",
+      "deductions": [
+        {
+          "reason": "アウトプット形態の優先順位確定が purpose-excavator まで持ち越し",
+          "points": -7
+        },
+        {
+          "reason": "テーマ集合スキーマが harness-creator 委譲で残った",
+          "points": -5
+        }
+      ],
+      "question_bank_additions": [
+        {
+          "category": "真の課題",
+          "technique": "Reverse Brief",
+          "question_text": "完成して1週間使った朝、最初に開いたときに『一番見たいアウトプット』は何ですか？"
+        },
+        {
+          "category": "ナレッジ資産",
+          "technique": "Tacit Extraction",
+          "question_text": "あなたの『関心テーマ』は(a)言語化済(b)部分的(c)暗黙知のみ(d)可変 のどれに近いですか？"
+        },
+        {
+          "category": "責務境界",
+          "technique": "Option Pivot",
+          "question_text": "このスキルは(1)オーケストレータ(2)ハイブリッド(3)独立 のどれにしますか？"
+        }
+      ],
+      "session_observations": [
+        "expert ユーザーには interviewer 段階で責務境界を確定するほうが効率的",
+        "ナレッジ資産軸を multiSelect で聞くと『全部選択』になりやすい→直後に優先順位を1問追加",
+        "Reverse Brief 質問が決定打になった。5軸ヒアリングの早い段階で組み込む価値あり"
+      ],
+      "skipped_next_phases": [
+        "notion-publisher(MCP切断→手動復旧後に共有完了)",
+        "slack-notifier(MCP切断)"
+      ]
+    },
+    "11_artifact_index": {
+      "base_path": "plugins/skill-intake/output/example-team-onboarding/",
+      "artifacts": [
+        {
+          "path": "kickoff.json",
+          "role_one_liner": "パターンA/detailed/4領域/頻度=毎日",
+          "generator_subagent": "skill-intake-kickoff"
+        },
+        {
+          "path": "assumption.json",
+          "role_one_liner": "D2採択(一気通貫)",
+          "generator_subagent": "skill-intake-assumption-challenger"
+        },
+        {
+          "path": "profile.json",
+          "role_one_liner": "expert/4方向sharing",
+          "generator_subagent": "skill-intake-user-profiler"
+        },
+        {
+          "path": "sheet.md",
+          "role_one_liner": "5軸 filled / ratio 0.7",
+          "generator_subagent": "skill-intake-summarizer"
+        },
+        {
+          "path": "sheet-progress.json",
+          "role_one_liner": "進捗トラッキング",
+          "generator_subagent": "skill-intake-summarizer",
+          "optional": true
+        },
+        {
+          "path": "purpose.json",
+          "role_one_liner": "true_purpose確定/4 rounds",
+          "generator_subagent": "skill-intake-purpose-excavator"
+        },
+        {
+          "path": "options.json",
+          "role_one_liner": "O1/T3/S3採択",
+          "generator_subagent": "skill-intake-option-presenter"
+        },
+        {
+          "path": "figures.md",
+          "role_one_liner": "Mermaid 図解5枚",
+          "generator_subagent": "skill-intake-visualizer"
+        },
+        {
+          "path": "intake.md",
+          "role_one_liner": "Gate A 通過版(人間可読)",
+          "generator_subagent": "skill-intake-handoff"
+        },
+        {
+          "path": "intake.json",
+          "role_one_liner": "Gate A 通過版(機械可読/schema検証PASS)",
+          "generator_subagent": "skill-intake-handoff"
+        },
+        {
+          "path": "notion-payload.md",
+          "role_one_liner": "Notion投稿用本体",
+          "generator_subagent": "skill-intake-notion-publisher"
+        },
+        {
+          "path": "qb-candidates.json",
+          "role_one_liner": "質問銀行追加候補3件",
+          "generator_subagent": "skill-intake-self-updater"
+        },
+        {
+          "path": "self-update.json",
+          "role_one_liner": "value_realized_score=88",
+          "generator_subagent": "skill-intake-self-updater"
+        }
+      ]
+    }
+  }
+}

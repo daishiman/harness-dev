@@ -1,0 +1,226 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "interrogation-log",
+  "description": "run-skill-iter-improve の毎 iter PASS 詐欺自己審問ログ (design-decisions D11)。1 iter = 1 object を eval-log/<plugin>/<skill>/iter-improve/<run-id>/interrogation-log.jsonl へ append-only で保存する必須 artifact。緩め禁止リストの target 固有正本は goal-spec.json.forbidden_loosening、一般形は run-elegant-review/references/convergence-policy.json の anti_patterns。独立判定の発火条件 (score 急変 / 評価経路接触) は本 schema の allOf が機械正本。",
+  "type": "object",
+  "required": [
+    "iter",
+    "proposed_changes",
+    "self_interrogation",
+    "forbidden_loosening_check",
+    "score_delta",
+    "independent_check",
+    "discarded"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "iter": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "周回番号。GOAL DECLARATION (iter 0) は goal-spec 側に記録するため本ログは 1 始まり。"
+    },
+    "proposed_changes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "この iter で投入予定の改善案 (edit 実行前に記録)。件数上限は convergence-policy loop_bounds.iter_improve.batch_per_iter_max (INVARIANT 5)。",
+      "items": {
+        "type": "object",
+        "required": ["path", "summary", "touches_evaluation_path"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "description": "編集対象ファイル (repo 相対パス)。"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "description": "改善内容の 1 行要約。"
+          },
+          "touches_evaluation_path": {
+            "type": "boolean",
+            "description": "評価経路 (evaluator / rubric / 採点 mode / 閾値 / 採点対象 / 評価手順 / 収束条件 / 集計ロジック) に触れる変更か。true なら自己申告の有無に関わらず independent_check.required=true (客観条件、下記 allOf で機械強制)。"
+          }
+        }
+      }
+    },
+    "self_interrogation": {
+      "type": "object",
+      "required": ["is_generator_improvement", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "is_generator_improvement": {
+          "type": "boolean",
+          "description": "generator (成果物を作る側) を良くする改善か (INVARIANT 1 自己審問)。false = evaluator 緩和系であり破棄対象。"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Yes/No の 1 行根拠。"
+        }
+      }
+    },
+    "forbidden_loosening_check": {
+      "type": "object",
+      "required": ["violated", "matched_rule"],
+      "additionalProperties": false,
+      "properties": {
+        "violated": {
+          "type": "boolean",
+          "description": "iter 0 で宣言した緩め禁止リスト (goal-spec.forbidden_loosening + convergence-policy anti_patterns) に抵触するか。"
+        },
+        "matched_rule": {
+          "type": ["string", "null"],
+          "description": "抵触時に一致した規則文。非抵触なら null。"
+        }
+      }
+    },
+    "score_delta": {
+      "type": "number",
+      "description": "前 iter との avg overall score 差分 (iter 1 は baseline 比)。急変時は independent_check.required=true (allOf で機械強制)。"
+    },
+    "independent_check": {
+      "type": "object",
+      "required": ["required", "verdict", "agent_independent"],
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "別個体 fresh agent の独立判定が必要か。score 急変 / 評価経路接触で true 必須。"
+        },
+        "verdict": {
+          "enum": ["generator", "loosening", null],
+          "description": "独立判定の結論。generator=真の generator 改善 / loosening=評価を緩める操作 (破棄必須)。未実施 (required=false) は null。required=true なら非 null 必須 (allOf)。"
+        },
+        "agent_independent": {
+          "type": "boolean",
+          "description": "判定 agent が GOAL VERIFICATION agent と別個体・履歴非共有か (D11 判定者独立性)。verdict 非 null なら true 必須 (allOf)。"
+        }
+      }
+    },
+    "discarded": {
+      "type": "boolean",
+      "description": "この iter の改善案を破棄したか。緩め禁止抵触 / 独立判定 loosening なら true 必須 (allOf)。"
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "score 急上昇 (+10pt 超) は独立判定必須 (convergence-policy anti_patterns / D11)",
+      "if": {
+        "properties": { "score_delta": { "exclusiveMinimum": 10 } },
+        "required": ["score_delta"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "required": { "const": true } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "score 急降下 (-10pt 超) も同様 (|score_delta|>10 で対称)",
+      "if": {
+        "properties": { "score_delta": { "exclusiveMaximum": -10 } },
+        "required": ["score_delta"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "required": { "const": true } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "評価経路接触は score 急変の有無・自己申告の有無に関わらず独立判定必須 (客観条件を最後の砦にする)",
+      "if": {
+        "properties": {
+          "proposed_changes": {
+            "contains": {
+              "properties": { "touches_evaluation_path": { "const": true } },
+              "required": ["touches_evaluation_path"]
+            }
+          }
+        },
+        "required": ["proposed_changes"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "required": { "const": true } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "required=true の iter は verdict 非 null (独立判定実施済) が必須",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "required": { "const": true } },
+            "required": ["required"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "type": "string" } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "verdict を出した独立判定は別個体性 (agent_independent=true) が必須",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "type": "string" } },
+            "required": ["verdict"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "agent_independent": { "const": true } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "緩め禁止抵触は破棄必須 (INVARIANT 1)",
+      "if": {
+        "properties": {
+          "forbidden_loosening_check": {
+            "properties": { "violated": { "const": true } },
+            "required": ["violated"]
+          }
+        },
+        "required": ["forbidden_loosening_check"]
+      },
+      "then": {
+        "properties": { "discarded": { "const": true } }
+      }
+    },
+    {
+      "$comment": "独立判定 loosening は自己審問より外部判定を優先し破棄必須 (INVARIANT 8)",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "const": "loosening" } },
+            "required": ["verdict"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": { "discarded": { "const": true } }
+      }
+    }
+  ]
+}

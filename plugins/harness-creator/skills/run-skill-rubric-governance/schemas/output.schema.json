@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-skill-rubric-governance/output.schema.json",
+  "title": "run-skill-rubric-governance output",
+  "type": "object",
+  "required": ["proposal_id", "phase", "rubric_version", "decision"],
+  "additionalProperties": false,
+  "properties": {
+    "proposal_id": {"type": "string"},
+    "phase": {"type": "string", "enum": ["proposal", "impact", "review", "grace", "enact"]},
+    "rubric_version": {
+      "type": "object",
+      "required": ["from", "to", "bump"],
+      "properties": {
+        "from": {"type": "string"},
+        "to": {"type": "string"},
+        "bump": {"type": "string", "enum": ["major", "minor", "patch"]}
+      }
+    },
+    "decision": {"type": "string", "enum": ["approved", "rejected", "pending"]},
+    "impact_summary": {"type": "object"},
+    "violations": {"type": "array", "items": {"type": "object"}}
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "scope_mode": "plugin"},
+  "run_id": "run-2026-06-20",
+  "trigger": "ユーザー改善要望: 毎月のNotion上書きで過去月の完了/未完了が失われる懸念。履歴を残す仕組み(ページ本文 or プロパティ)を検討。矛盾・認識不足の確認も。",
+  "phase2_agents": ["elegant-logical-structural-analyst", "elegant-meta-divergent-analyst", "elegant-system-strategic-analyst"],
+  "thought_method_coverage": {
+    "used": [
+      "批判的","演繹","帰納","アブダクション","垂直","要素分解","MECE","2軸","プロセス","why思考",
+      "メタ","抽象化","ダブル・ループ","ブレインストーミング","水平","逆説","類推","if","素人",
+      "システム","因果関係","因果ループ","トレードオン","プラスサム","価値提案","戦略的","改善","仮説","論点","KJ法"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "user_concern_verdict": {
+    "claim": "毎月Notion上書きで過去月の完了/未完了が失われる",
+    "result": "不成立(誤認識)",
+    "evidence": "upsertキー=customer_id×対象年月で月別に別行(notion_invoice_sink.py:52-64) / 候補0件月も月次サマリ行で確認済み記録(:139-156) / ページ本文へ実行履歴追記し過去証跡を消さない(_append_audit:104-132) / 管理列(請求要否/対応状況/チェック済/備考)は機械不可侵。プロパティ(最新スナップショット)とページ本文(累積履歴)の両方が役割分担で実装済(README:198)。",
+    "note": "3 analyst が独立に同一結論へ収束。真の課題は『実装欠落』でなく『実装済が運用者に伝わっていない+一覧での見せ方』という文書/可視化の omission。"
+  },
+  "consolidated_findings": [
+    {
+      "id": "G1",
+      "severity": "omission",
+      "confirmed_by": ["MD-1","MD-3","MD-8","MD-9","SS-1","SS-6","SS-8","LS-10","parent"],
+      "title": "過去月の確認状況をNotionでどう見るかの運用ガイド + Claude Codeへの頼み方(自然言語プロンプト例)が文書に不在",
+      "location": "README.md / skills/run-mf-invoice-check/SKILL.md",
+      "evidence": "履歴は3層で実装済だが、運用者(経理)が過去月をどう確認するか(対象年月ソート/レコード種別フィルタ/要対応ビュー)の導線がREADMEに無い。__monthly_summary__等の内部語彙が説明なくDBに並び誤操作リスク。さらにユーザーがスラッシュコマンド/引数を覚えられず入力方法が不明。",
+      "fix": "README に『過去月の状態を確認する(運用者向け)』Q&A節 + 『Claude Codeへの頼み方(かんたん実行)』自然言語→コマンド対応表を新設。SKILL完了チェックリストに運用観測軸、Gotchasに見方参照を追加。",
+      "auto_fixable": false,
+      "resolution": "RESOLVED — README 2新節追加(:23 頼み方 / :201 過去月の見方) + SKILL観測軸(:83)/Gotchas(:134)。"
+    },
+    {
+      "id": "G2",
+      "severity": "omission",
+      "confirmed_by": ["LS-3","LS-6","LS-8","MD-2","SS-2","SS-10","parent"],
+      "title": "月次サマリ行の件数(gap_count/changed_count/total_count)が_props未マッピングでテーブル列に出ず本文限定",
+      "location": "lib/notion_invoice_sink.py:67-93(_props) vs 139-156(_summary_row) / schemas/notion-db-schema.json",
+      "evidence": "_summary_row は3件数を生成するが _props にマッピングが無くDB schemaにも数値列が無い。テーブルビューで月次の発行漏れ件数推移が見られず、ページ本文を開く必要があった。ユーザー要望(b)『テーブルに直近の完了月と状況』の部分未充足。",
+      "fix": "schema properties に number 列『発行漏れ件数/金額変動件数/チェック件数合計』追加+fact_columnsに追加(管理列でないのでCONST非抵触)。_props にマッピング(明細行はNone)。R4-sink.md/db-setup SKILL/test 追従。build/verifyはschema駆動で自動追従。",
+      "auto_fixable": true,
+      "resolution": "RESOLVED — schema 3列(:17-19,:25) + _props(:94-96) + test(:71-76) + R4/db-setup SKILL。テーブルで月次推移が一覧可能に。"
+    },
+    {
+      "id": "G3",
+      "severity": "dependency_break",
+      "confirmed_by": ["LS-9","SS-7","parent"],
+      "title": "『継続発行』件数が collect画面(全継続N) と 月次サマリ(金額変動のみM) で別定義・同ラベルで N≠M の誤認源",
+      "location": "scripts/check_invoice_gaps.py(_print_summary) / lib/notion_invoice_sink.py:104-128(_audit_children)",
+      "evidence": "collectは継続発行を全件数えて画面表示、_summary_row.changed_countは金額変動した継続のみ。両者が同じ『継続発行』ラベルで異なる数を提示し運用者を誤認させうる。",
+      "fix": "_audit_children のラベルを『金額変動(継続発行のうち金額が変わった件数)』と明示。collect画面を『継続発行(全件): N件 (うち金額変動: M件)』と定義差が分かる表現に。",
+      "auto_fixable": false,
+      "resolution": "RESOLVED — sink ラベル明示 + collect 画面で全件/変動を分離表示。承認者が changed_count母集団=金額変動分のみ(check_invoice_gaps.py:161-163)を裏取りし M一致を確認。"
+    },
+    {
+      "id": "G4",
+      "severity": "smell",
+      "confirmed_by": ["LS-5","MD-6","SS-3","parent"],
+      "title": "ページ本文への実行履歴が同一period_ym再実行で単調増加(run_id重複追記の歯止め無し)",
+      "location": "lib/notion_invoice_sink.py:131-132(_append_audit)",
+      "evidence": "upsertはプロパティを冪等更新する一方、本文は無条件append。backfill/リトライで同月ページ本文が線形肥大し最新が埋もれる。『冪等upsert』看板と本文非冪等の非対称。",
+      "fix": "_has_run_id_block で既存本文を走査し同一run_idの履歴があれば追記スキップ(真の冪等化)。既存履歴ブロックは非破壊(過去証跡保持)。件数プロパティ化(G2)と相補で『最新は本文を開かず確認』も実現。",
+      "auto_fixable": true,
+      "resolution": "RESOLVED — _has_run_id_block(:135-143) + _append_audit冪等スキップ(:146-150) + test_append_audit_idempotent_skips_existing_run_id。既存履歴preserved を test で検証。"
+    },
+    {
+      "id": "G5",
+      "severity": "contradiction",
+      "confirmed_by": ["approver(general-purpose独立context)"],
+      "title": "README の verify_db_schema.py 実行例コメントが旧プロパティ数『全16』のまま(件数3列追加で19へ追従漏れ)",
+      "location": "README.md:194",
+      "evidence": "B改善でDBプロパティ16→19。verify_db_schema.pyはlen(expected)=19を動的出力するが、READMEサンプルが16のまま。並列worker(core=schema / doc=README)の境界で跨ぎ整合を取りこぼし。proposer≠approverの独立検証で発見。",
+      "fix": "README:194 を『全 19 プロパティ』へ修正。",
+      "auto_fixable": true,
+      "resolution": "RESOLVED — 16→19 修正。grep で『16 プロパティ』残存0件確認。"
+    }
+  ],
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "verdict_note": "Phase3改善後の最終判定。独立承認者(proposer≠approver)がREQUEST_CHANGES(G5)を指摘→修正→4条件全PASS。pytest 32 passed(冪等/件数テスト含む) / 全py compile / 全json妥当 / 件数列名7ファイル一致 / プロパティ数19整合。ユーザー懸念は実装済で不成立、認識ギャップ(G1)を文書で解消。",
+  "convergence": {
+    "independent_convergence": "3 analyst が独立contextで『認識ギャップ(実装済が伝わらない)』『件数プロパティ欠落』へ収束=二段確認成立。",
+    "max_iterations": 3,
+    "iterations_used": 1,
+    "status": "complete"
+  },
+  "side_effects": {
+    "phase1_phase2": "read-only(対象非編集)",
+    "phase3_files_changed": [
+      "skills/run-mf-invoice-db-setup/schemas/notion-db-schema.json",
+      "lib/notion_invoice_sink.py",
+      "skills/run-mf-invoice-check/scripts/check_invoice_gaps.py",
+      "tests/test_notion_invoice_sink.py",
+      "skills/run-mf-invoice-db-setup/SKILL.md",
+      "skills/run-mf-invoice-check/prompts/R4-sink.md",
+      "README.md",
+      "skills/run-mf-invoice-check/SKILL.md"
+    ],
+    "deploy": ".claude/ へ make sync で4件symlink反映(run-mf-invoice-check/db-setup/ref-mf-kessai-api + mfk-gap-verifier)。sync-check drift 0。",
+    "rollback": "pre-phase3-backup.tgz(55287 bytes) 退避済"
+  },
+  "approver": "general-purpose 独立context (proposer≠approver充足)。G5修正後 APPROVE。"
+}

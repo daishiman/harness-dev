@@ -1,0 +1,26 @@
+%%---
+%% template: architecture-system
+%% required_vars: [user_label, frontend_label, backend_label, db_label, external_label]
+%% optional_vars: [cache_label]
+%% score_formula: "component_count * 0.3 + connection_clarity * 0.7"
+%% non_tech_friendliness: ★★
+%% use_case: システム全体構成図、コンポーネント間の依存
+%%---
+flowchart LR
+    User([{{user_label}}]):::user
+    FE[{{frontend_label}}]:::fe
+    BE[{{backend_label}}]:::be
+    DB[({{db_label}})]:::db
+    Ext[/{{external_label}}/]:::ext
+
+    User --> FE --> BE --> DB
+    BE --> Ext
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,color:#0d47a1
+    classDef fe fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef be fill:#fff,stroke:#1976d2,color:#0d47a1
+    classDef db fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef ext fill:#fff8e1,stroke:#f9a825,color:#e65100
+
+%% 凡例: 青=自社 / 紫=データ / 黄=外部
+%% 言いたい一言: {{message}}

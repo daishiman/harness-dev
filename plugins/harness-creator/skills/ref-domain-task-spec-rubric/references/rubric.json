@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "rubric_id": "domain-task-spec",
+  "rubric_version": "0.2.0",
+  "layer": "L1",
+  "_doc": "設計書29 §3 L1: タスク仕様書ドメイン (Phase 1-13, SRP, ユビキタス言語) 固有 rubric。L0 (ref-skill-design-rubric) を upstream に継承し、L0 にないドメイン特有ルールのみを追加する。L2 (各 evaluator references/rubric.json) からは upstream として参照される中間層。0.2.0: L0 1.2.0 の target_type 7種拡張を継承。task-spec 固有 rule は現状 kind=skill (タスク仕様書 SKILL.md) を主対象とするため applies_to_kinds: ['skill'] を明示。",
+  "supported_kinds_inherited_from_l0": [
+    "skill",
+    "agent",
+    "hook",
+    "command",
+    "plugin-composition",
+    "prompt",
+    "workflow"
+  ],
+  "applies_to_kinds_default": [
+    "skill"
+  ],
+  "upstream": [
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+  ],
+  "merge_strategy": "deep-merge",
+  "conflict_policy": "most-specific-wins",
+  "domain": "task-spec",
+  "threshold_override": null,
+  "severity_weights_override": null,
+  "rules": [
+    {
+      "id": "TS-001",
+      "area": "domain",
+      "severity": "high",
+      "check": "machine: body に '## Phase 1' から '## Phase 13' までの全 13 phase 見出しが順序通り出現する (正規表現 ^## Phase ([1-9]|1[0-3])[^0-9] を Phase 番号順に grep し、欠落・順序逆転を検出)",
+      "rationale": "Phase 1-13 はタスク仕様書 → Issue 化 → 実装 → CI/CD パイプラインの順序契約。欠落 Phase は後続フェーズの入力資産を失わせ、Continuous Delivery のフェーズゲートが成立しなくなる。順序逆転は依存関係グラフを破綻させる。machine 検査で決定論的に落とす。",
+      "applies_to_kinds": [
+        "skill"
+      ]
+    },
+    {
+      "id": "TS-002",
+      "area": "domain",
+      "severity": "medium",
+      "check": "llm: 各 Phase 節が単一の責務 (定義 / 設計 / 実装 / 検証 / リリース のいずれか 1 つ) のみを扱っているか LLM judge で評価。1 Phase 内で 2 種類以上の責務 (例: '実装と検証') を混在させていれば FAIL",
+      "rationale": "Clean Code SRP の Phase 粒度版。1 Phase が複数責務を持つと、後続の Issue 分解で粒度が定まらず、ガントチャート上の依存関係も不明確になる。Phase の責務を 1 つに絞ることでタスク量産時に安定した分解粒度が保たれる。LLM judge は責務の意味判定が必要なため llm 評価とする。",
+      "applies_to_kinds": [
+        "skill"
+      ]
+    },
+    {
+      "id": "TS-003",
+      "area": "domain",
+      "severity": "medium",
+      "check": "llm: 同一概念に対する用語が全 Phase で一貫しているか LLM judge で評価。例: Phase 3 で 'モジュール' と書いた概念を Phase 7 で 'コンポーネント' に置換していれば FAIL。frontmatter または冒頭の Glossary 節で定義された用語の表記が body 全体で揺れていないか検査",
+      "rationale": "DDD ユビキタス言語の Phase 間整合性。用語ドリフトは Phase 3 の決定が Phase 7 の実装で別物として実装される事故を引き起こす。タスク仕様書は人間と LLM の両方が読むため、表記揺れは LLM の意味解釈精度も下げる。意味的同一性判定は文脈依存のため llm 評価とする。",
+      "applies_to_kinds": [
+        "skill"
+      ]
+    },
+    {
+      "id": "TS-004",
+      "area": "domain",
+      "severity": "high",
+      "check": "machine: Phase 12 ('中学生レベル概念説明') の本文が、専門用語密度 (frontmatter glossary に登録された用語以外のカタカナ語 / 英略語の出現回数 / body 行数) が 0.1 以下であること。閾値超過は専門用語多用と判定し FAIL",
+      "rationale": "Phase 12 は非専門家ステークホルダー (経営層 / 営業 / QA) への共有資産。中学生レベルの平易さは『専門用語密度を機械的に低く保つ』ことで担保できる。閾値 0.1 は経験的に『1 段落に 1 つまで専門用語』水準。decode コストの上昇を防ぎ、タスク仕様書の横断利用性を保つ。",
+      "applies_to_kinds": [
+        "skill"
+      ]
+    },
+    {
+      "id": "TS-005",
+      "area": "domain",
+      "severity": "high",
+      "check": "machine: Phase 間依存関係グラフが DAG (有向非循環) であること。各 Phase 節内の 'depends_on:' フィールド (frontmatter または節冒頭メタ) を抽出し、トポロジカルソートが成立しない場合 (循環検出) は FAIL",
+      "rationale": "Phase 依存に循環があるとガントチャート / GitHub Issue の blocked_by 関係が解決不能になり、Issue 自動生成 (github-issue-manager) でデッドロックが発生する。循環は決定論で検出可能なため machine 検査で fail-fast。",
+      "applies_to_kinds": [
+        "skill"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "artifact": "plugins/system-spec-harness/skills/run-system-spec-compile/scripts/compile-spec-doc.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "soundness=derive_aggregate の真理値表とrender_*純関数群で決定論的に章別Markdown+index.mdを組み立て。設計知識ポインタはresource-map.yamlをstdlib最小パーサでキャッシュ導出しハードコード写像を排除、正準カテゴリに閉じず任意カテゴリへ開く。responsibility=spec-stateを一切書換えず(単一writerはelicit側)入力を章へ組み立てる純関数群、書込はwrite_docsetのみで責務明確。error-handling=CompileErrorで入力契約違反(categories非配列/matrix欠落/references非配列/設計知識card深度欠落)を捕捉、main で OSError/JSONDecodeError→1・CompileError→1・argparse required subparserで usage→2。side-effect-safety=network:false、書込はout_dir内のmkdir+write_textのみ、設計知識(taxonomy/resource-map/card)はplugin内referencesをread-only参照。render_indexのcitations split(chr10,2)[2]もunassigned非空パス内でtable生成済みのため健全。frontmatter=PEP723完全(name/version/purpose/inputs/outputs/contexts/network/write-scope/dependencies/requires-python)。近傍tests/test_compile_spec_doc.pyに39テストありロジックを実際に確認。",
+    "score_scale": "0-100"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/visual-strategist.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md を実測(実在・336行/29KB・dangling なし)。CLAUDE_PLUGIN_ROOT=plugins/slide-report-generator 読替で本文が波及する schemas(../../schemas/structure.schema.json・report-structure.schema.json)・vendor/scripts(mermaid-render.js・svg-builder.cjs 等)は plugin schemas//vendor/scripts/ に実在。schema-conformance: name/description(『…配置(grid/zones/readingOrder/focalPoint)を決めたいときに使う。』トリガ形・句点付き)/kind=agent/version=0.1.0/owner/tools=Read,Write,Bash/isolation=fork/model=sonnet/owner_skill/prompt_ref/prompt_layer=7layer/since/last-audited を確認、adapter tools と prompt SSOT tools(Read,Write,Bash)一致。owner-flow: owner skill R2 の report 分岐が『各 section のビジュアルは visual-strategist が1項目1ビジュアルの三択(svg/mermaid/codex-image/none)を決定』と明示し、slide 側 structure 確定後の配置最適化にも波及する設計と一致(固定比率なし・両モード波及は本文位置づけと SKILL 記述で二重整合)。Phase=R2-structure-gate は manifest と一致。placement-invariant: adapter は 8 節薄 redirect で三択判定基準/配置ルール実体を再掲せず正本は prompts/R2-*.md(SSOT ヘッダ明記・Layer1-7)側、逆転なし。single-responsibility: ビジュアル種別三択最適化+面内配置決定に単一凝集(実描画は d3-diagram-designer/data-visualizer/ai-image-diagram-producer、構成分解は structure-designer と分離)。減点: adapter description が固定比率否定+三択+4 配置属性を1文に密に詰め情報密度が高くやや長い(トリガ形は満たすが可読性は境界的)。内容妥当性・整合性に問題なし。mechanical:true は lint-agent-prompt-section.py exit0 前提で妥当。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

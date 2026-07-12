@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/package-contract.json",
+  "title": "Plugin Package Harness Contract",
+  "description": "36章 Plugin Package Harness Contract の正本 schema。各 plugin の references/package-contract.json はこの schema に準拠する。",
+  "type": "object",
+  "required": ["package_mode", "pkg_checks"],
+  "properties": {
+    "package_mode": {
+      "description": "配布形態の閉列挙。新規 plugin は bundle 必須。skill-only は legacy/dev-only/migration の 3 例外限定。",
+      "enum": ["bundle", "skill-only"]
+    },
+    "package_mode_exception": {
+      "description": "package_mode=skill-only の場合のみ必須。例外種別を明示。",
+      "enum": ["legacy", "dev-only", "migration"]
+    },
+    "plugin_name": {
+      "description": "plugin 名（kebab-case）。配置パス plugins/<plugin_name>/ と一致すること。",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$"
+    },
+    "entry_points": {
+      "description": "公式 plugin manifest に混在させない harness 用 entrypoint 台帳。",
+      "type": "object",
+      "properties": {
+        "skills": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "agents": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "commands": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "hooks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "distribution": {
+      "description": "harness 用の配布・分類メタデータ。公式 plugin manifest には混在させない。",
+      "type": "object",
+      "properties": {
+        "distributable": { "type": "boolean" },
+        "bundle_targets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "category": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "vault_root_env": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "pkg_checks": {
+      "description": "PKG ID 別の実行結果。閉列挙の PKG ID のみ受理。",
+      "type": "object",
+      "patternProperties": {
+        "^PKG-(00[1-9]|01[0-2]|013[a-d]|01[4-5]|01[6-7])$": {
+          "type": "object",
+          "required": ["status", "last_run_at"],
+          "properties": {
+            "status": {
+              "enum": ["pass", "fail", "skip", "not_applicable"]
+            },
+            "last_run_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "eval_log_path": {
+              "description": "27章 §3.1 規約。eval-log/<plugin>/pkg-<id>/<YYYY-MM-DD>-<run>.{json,log}",
+              "type": "string"
+            },
+            "skip_reason": {
+              "description": "status=skip または status=not_applicable のとき必須。",
+              "type": "string"
+            },
+            "findings_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "enum": ["skip", "not_applicable"]
+                  }
+                }
+              },
+              "then": {
+                "required": ["skip_reason"]
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "package_mode": {
+            "const": "skill-only"
+          }
+        }
+      },
+      "then": {
+        "required": ["package_mode_exception"]
+      }
+    }
+  ]
+}

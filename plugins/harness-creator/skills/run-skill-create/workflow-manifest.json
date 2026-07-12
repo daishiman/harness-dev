@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-skill-create",
+  "skill": "run-skill-create",
+  "description": "run-skill-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。",
+  "gate_order": ["G1", "G2.5", "G2", "G3", "G4"],
+  "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a→5→6 に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
+  "phases": [
+    {
+      "id": "elicit",
+      "step": 1,
+      "gate": 1,
+      "title": "要求ヒアリング",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "validate-brief-or-intake-publish-ready",
+      "resourceIds": [
+        "schemas/skill-brief.schema.json",
+        "prompts/R1-elicit.md",
+        "prompts/R2-gate-review.md",
+        "scripts/validate-intake-publish-ready.py"
+      ],
+      "delegateSkill": "run-skill-elicit",
+      "fatal_exit_codes": [2],
+      "handoff": "eval-log/handoff-after_elicit.json"
+    },
+    {
+      "id": "build",
+      "step": 2,
+      "gate": null,
+      "title": "スキル生成",
+      "dependsOn": ["elicit"],
+      "entryHook": "load-brief",
+      "exitHook": "emit-build-trace",
+      "resourceIds": [
+        "schemas/skill-brief.schema.json",
+        "schemas/build-trace.schema.json"
+      ],
+      "delegateSkill": "run-build-skill",
+      "fatal_exit_codes": [1, 2],
+      "handoff": "eval-log/handoff-after_build.json"
+    },
+    {
+      "id": "manifest-register",
+      "step": 3,
+      "gate": 2.5,
+      "title": "plugin/marketplace 登録判定",
+      "dependsOn": ["build"],
+      "entryHook": null,
+      "exitHook": "lint-manifest-contents",
+      "resourceIds": [
+        "prompts/R2-gate-review.md"
+      ],
+      "delegateSkill": null,
+      "command": "python3 plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py",
+      "fatal_exit_codes": [1]
+    },
+    {
+      "id": "bundle-register",
+      "step": 3.5,
+      "gate": null,
+      "title": "marketplace + bundle 登録判定",
+      "dependsOn": ["manifest-register"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "delegateSkill": null,
+      "command": "python3 scripts/validate-plugin-completeness.py --fix",
+      "artifact": [".claude-plugin/marketplace.json", ".claude-plugin/bundles.json"],
+      "comment": "新規 plugin を実体ディレクトリ起点で marketplace.json + bundles.json へ append-only 自動登録し書込後自己再検証。既登録は no-op。最終承認は人間が PR diff で。検出層 (validate-plugin-completeness.py 引数なし) が CI/pre-push の最後の砦。",
+      "fatal_exit_codes": [1]
+    },
+    {
+      "id": "p0-lint",
+      "step": "4a",
+      "gate": 2,
+      "title": "P0 lint (自動)",
+      "dependsOn": ["bundle-register"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "schemas/findings.schema.json"
+      ],
+      "delegateSkill": null,
+      "commands": [
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
+        "python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
+      ],
+      "max_retry": 3,
+      "fatal_exit_codes": [1],
+      "handoff": "eval-log/handoff-after_lint.json"
+    },
+    {
+      "id": "pkg-check",
+      "step": "4a.5",
+      "gate": null,
+      "title": "PKG completeness check (PKG-001〜015)",
+      "dependsOn": ["p0-lint"],
+      "entryHook": null,
+      "exitHook": null,
+      "condition": "kind == plugin-composition OR new_plugin_rollout",
+      "resourceIds": [],
+      "delegateSkill": "run-plugin-package-check",
+      "fatal_exit_codes": [1],
+      "handoff": "eval-log/handoff-after_pkg_check.json"
+    },
+    {
+      "id": "design-evaluate",
+      "step": "4b",
+      "gate": null,
+      "title": "設計評価 (rubric)",
+      "dependsOn": ["pkg-check"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "schemas/findings.schema.json",
+        "schemas/rubric-merge.schema.json"
+      ],
+      "delegateSkill": "assign-skill-design-evaluator",
+      "context": "fork",
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-after_evaluator.json"
+    },
+    {
+      "id": "elegant-review",
+      "step": 5,
+      "gate": 3,
+      "title": "パラダイム評価 (C1-C4)",
+      "dependsOn": ["design-evaluate"],
+      "entryHook": "evaluate-create-gates",
+      "exitHook": null,
+      "condition": "new_skill OR diff_lines > 30",
+      "resourceIds": [
+        "../run-elegant-review/schemas/findings.schema.json",
+        "prompts/R2-gate-review.md"
+      ],
+      "delegateSkill": "run-elegant-review",
+      "context": "fork",
+      "decision_command": "python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json",
+      "fatal_exit_codes": [1],
+      "handoff": "eval-log/handoff-after_elegant.json"
+    },
+    {
+      "id": "governance",
+      "step": 6,
+      "gate": 4,
+      "title": "governance 承認",
+      "dependsOn": ["elegant-review"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "prompts/R3-governance-decide.md",
+        "prompts/R2-gate-review.md",
+        "schemas/handoff.schema.json"
+      ],
+      "delegateSkill": "run-skill-rubric-governance",
+      "auto_approve_conditions": [
+        "solo_operator_mode == true",
+        "stable_frozen == true",
+        "newly_failing == 0",
+        "llm_reviewer == PASS"
+      ],
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-after_governance.json"
+    },
+    {
+      "id": "report",
+      "step": 7,
+      "gate": null,
+      "title": "完了レポート",
+      "dependsOn": ["governance"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "schemas/handoff.schema.json"
+      ],
+      "delegateSkill": null,
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-done.json"
+    }
+  ],
+  "fast_mode": {
+    "description": "低リスク変更 (1ファイル, <=30行, kind ∈ {ref,wrap}, evaluator pair 不要) のみ。Step 4b/5 を skip。",
+    "skip_phases": ["design-evaluate", "elegant-review"],
+    "decision_command": "python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json --fast"
+  }
+}

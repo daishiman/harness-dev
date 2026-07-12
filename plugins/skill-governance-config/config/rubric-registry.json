@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "_doc": "設計書29: rubric multi-project composition の L1 (Domain) 層レジストリ。adapter-registry.json と同形のスキーマで domain → rubric path のマッピングを管理する。L0 は plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json で唯一固定。L2 は各 evaluator 配下の references/rubric.json で表現する。本ファイルは L1 (ドメイン特化 rubric) の所在を一元管理する。rubric の正規パスは <skill>/references/rubric.json (lint-skill-tree が直下配置を禁止)。",
+  "defaults": {
+    "merge_strategy": "deep-merge",
+    "conflict_policy": "most-specific-wins"
+  },
+  "rubrics": [
+    {
+      "domain": "task-spec",
+      "layer": "L1",
+      "rubric": "plugins/harness-creator/skills/ref-domain-task-spec-rubric/references/rubric.json",
+      "description": "タスク仕様書 (Phase 1-13, SRP, ユビキタス言語) ドメイン固有 rubric",
+      "upstream": ["plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"],
+      "merge_strategy": "deep-merge",
+      "conflict_policy": "most-specific-wins"
+    }
+  ]
+}

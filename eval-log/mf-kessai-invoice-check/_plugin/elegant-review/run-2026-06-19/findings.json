@@ -1,0 +1,159 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "scope_mode": "plugin"},
+  "run_id": "run-2026-06-19",
+  "phase2_agents": ["elegant-logical-structural-analyst", "elegant-meta-divergent-analyst", "elegant-system-strategic-analyst"],
+  "thought_method_coverage": {
+    "used": [
+      "批判的","演繹","帰納","アブダクション","垂直","要素分解","MECE","2軸","プロセス","why思考",
+      "メタ","抽象化","ダブル・ループ","ブレインストーミング","水平","逆説","類推","if","素人",
+      "システム","因果関係","因果ループ","トレードオン","プラスサム","価値提案","戦略的","改善","仮説","論点","KJ法"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "consolidated_findings": [
+    {
+      "id": "F1",
+      "severity": "dependency_break",
+      "confirmed_by": ["LS-1","LS-9","MD-4","SS-1","SS-4","parent"],
+      "title": "verify(R3)→sink(R4) の二段確認が機構上バイパス可能",
+      "location": "agents/mfk-gap-verifier.md:5 (Write無) / skills/run-mf-invoice-check/scripts/check_invoice_gaps.py:135,140,156 / schemas/invoice-gap-result.schema.json",
+      "evidence": "verifier は tools: Read, Bash(python3 *) のみで確定リストを永続化できない。--sink 既定入力 DEFAULT_CANDIDATES は collect が書いた未検証ファイルそのもの。--input は任意。README/SKILL 標準手順も --sink を引数なしで案内。結果 collect→そのまま sink で verifier を一度も通さず Notion 投入できる(fail-open)。",
+      "impact": "『二段確認必須』(SKILL Key Rule 4)が指示のみで機構未強制。hook で参照専用を機械保証した思想と非対称。",
+      "fix": "確定 JSON 専用パス(eval-log/mfk-gap-verified.json)を契約化。collect は --out(未検証), verify は確定ファイルへ書く(check_invoice_gaps.py に --finalize 追加: 未検証JSON+確定IDリストを受けて verified を生成、verifier に Write 付与は最小権限違反のため不採用)。--sink 既定入力を verified に変更し不在なら exit 2 (fail-closed)。schema 分離(verification_status)。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F2",
+      "severity": "dependency_break",
+      "confirmed_by": ["LS-4","LS-8","MD-1","MD-2","MD-3","MD-9","SS-2","SS-7","parent"],
+      "title": "_REPO_ROOT 派生による出力先解決で任意 install パスでは破綻 (ポータビリティ本丸)",
+      "location": "skills/run-mf-invoice-check/scripts/check_invoice_gaps.py:18-19,25 / prompts R1/R3 (裸の相対 eval-log/) / README (repo相対 plugins/...)",
+      "evidence": "_REPO_ROOT = plugin_root/../.. は plugin が <repo>/plugins/<name>/ 配下である前提。marketplace install では2階層上が ~/.claude/plugins/ 等で eval-log が意図しない/read-only 場所を指す。prompt は裸相対(CWD依存)、README は repo相対、script は repo_root 絶対の三者三様。base_url は env>config>DEFAULT で移植性高いのに出力先だけ単一絶対が異物。",
+      "impact": "marketplace 任意 install パスで collect 出力先と verify 参照先が乖離し動作不能。初見ユーザーが README 通りに動かせない。",
+      "fix": "出力先 base を _resolve_eval_log() = env MFK_OUTPUT_DIR > CLAUDE_PROJECT_DIR > os.getcwd() の優先チェーン + /eval-log/ に統一(base_url の env-first 思想を横展開)。_REPO_ROOT 撤廃。prompts/README/manifest の参照基準も同変数経由に揃える。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F3",
+      "severity": "inconsistency",
+      "confirmed_by": ["LS-5","MD-5","SS-3","parent"],
+      "title": "config の keychain_service/keychain_account がコード未消費のデッドキー",
+      "location": ".mf-kessai-config(.example).json:4-5 / lib/mfk_keychain.py:39-44",
+      "evidence": "_service()/_account() は env MFK_KEYCHAIN_* と DEFAULT定数のみ参照し config を読まない。README も env 上書きのみ案内。config キーは無効。",
+      "impact": "ユーザーが config で service/account を変えても無視され誤 entry を沈黙参照。設定 SSOT が config/env/定数に割れる。",
+      "fix": "get_api_key(cfg) を追加し env > config(keychain_service/account) > DEFAULT の優先順で解決(contract-generator config_auth.py 規範に整合)。load_config 値を mfk_api 経由で渡す。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F4",
+      "severity": "omission",
+      "confirmed_by": ["LS-10","SS-4","parent"],
+      "title": "sink が入力 JSON を schema 検証せず投入 (period_ym 欠落/空で冪等キー破綻リスク)",
+      "location": "lib/notion_invoice_sink.py:87-104 / scripts/check_invoice_gaps.py:139-148",
+      "evidence": "schema_refs が宣言されているのに sink は json.load するだけで invoice-gap-result.schema.json を強制しない。--input 外部 JSON で period_ym 空文字なら customer_id だけで衝突し別月誤更新 or 重複 raise。",
+      "fix": "sink 入口で最小 inline 検証(period_ym pattern ^\\d{4}-\\d{2}$ + customer_id 非空 + verdict enum)を実施し違反行は fail-closed。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F5",
+      "severity": "inconsistency",
+      "confirmed_by": ["MD-6","SS-5","SS-6","SS-7","LS-8","parent"],
+      "title": "README が repo相対パスのハードコード + 段階公開の名残(『次フェーズで追加』)で marketplace ユーザーが動かせない",
+      "location": "README.md:5,9,60,73,82,98,162-180 / .mf-kessai-config.example.json:9",
+      "evidence": "README は cd plugins/... + python3 plugins/mf-kessai-invoice-check/... と xl-skills monorepo 構造前提。冒頭は『発行漏れ判定とNotion出力は次フェーズで追加します』だが実装は完了済。起動動線が生 python 中心で verify(fork)を挟まない誘発。",
+      "fix": "起動を /run-mf-invoice-check, /run-mf-invoice-db-setup (skill経由)主・生python副に。パスを $CLAUDE_PLUGIN_ROOT 基準へ。『次フェーズ』表現を実装完了状態に更新。example.json の next-phase comment 除去。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F6",
+      "severity": "omission",
+      "confirmed_by": ["LS-7","parent"],
+      "title": "verdict enum 『今月新規』が実出力に決して現れない (schema/Notion select と実装の非対称)",
+      "location": "lib/mfk_invoice_diff.py:51 / scripts/check_invoice_gaps.py:98-117 / schemas/invoice-gap-result.schema.json:14 / schemas/notion-db-schema.json",
+      "evidence": "collect は gap_candidates 全件 + continuing(changed のみ)を rows に積むが new_this_month は積まない。schema enum と Notion 判定 select には『今月新規』が居続けるデッド enum。",
+      "fix": "意図(発行漏れ検知主眼で新規は通知不要)を明示。schema enum と Notion select は監査用途で残す場合 prompts/schema に『今月新規/継続(無変動)は collect 出力に含めない』と注記し契約と実装の網羅範囲を一致させる。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F7",
+      "severity": "omission",
+      "confirmed_by": ["LS-2"],
+      "verification": "lint-goal-seek.py 実行で run-mf-invoice-check/db-setup ともに 3 warning(exit 0=非ブロック『既存スキル grace』)。frontmatter goal_seek: 必須説は誤り(全 skill 不所持)。配線サブセクションは推奨で contract-generate 等が保有。",
+      "title": "run kind 両スキルに goal-seek 配線(### ゴールシーク配線 + intermediate.jsonl アンカー + 検証 bash)が不在 (warning)",
+      "location": "skills/run-mf-invoice-check/SKILL.md / skills/run-mf-invoice-db-setup/SKILL.md",
+      "fix": "with-goal-seek 規範(contract-generate)に倣い両 SKILL に ### ゴールシーク配線 サブセクション(eval-log/<skill>-intermediate.jsonl 6キー + original_goal_hash 不変照合 + check_intermediate.py 呼出 bash)を注入し warning を解消。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F8",
+      "severity": "inconsistency",
+      "confirmed_by": ["LS-3"],
+      "title": "ゴールシーク節の見出し構造が2スキル間で不統一 (check に ### 完了チェックリスト 見出し無で lint 二値検査が空振り)",
+      "location": "skills/run-mf-invoice-db-setup/SKILL.md:47 vs skills/run-mf-invoice-check/SKILL.md:55-78",
+      "fix": "check 側にも ### 完了チェックリスト 見出し + 俯瞰二値リスト(詳細は prompts/Rn L5.3 を正本と明記)を置き構造統一。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F9",
+      "severity": "smell",
+      "confirmed_by": ["LS-6","parent"],
+      "title": "更新日の命名鎖 created_at→updated_at→更新日 が暗黙 (ref は updated_at 無しと明言)",
+      "location": "skills/ref-mf-kessai-api/SKILL.md:67 / scripts/check_invoice_gaps.py:85,105,116 / lib/notion_invoice_sink.py:82-83 / schemas",
+      "fix": "check_invoice_gaps.py と schema description に『更新日=transactions.created_at の代替』を明記し ref へ SSOT 化。",
+      "auto_fixable": true
+    },
+    {
+      "id": "F10",
+      "severity": "contradiction",
+      "confirmed_by": ["SS-8"],
+      "verification": "hook は Bash command 文字列 or tool_input JSON に host 含む変更系正規表現のみ検出。lib の MF 呼出は urllib(method=GET)で Python 内のため Bash 経路 hook の射程外。lib に POST 関数は存在しない。",
+      "title": "hook の参照専用『機械保証』の射程が Bash 経由素コマンドに限定で、全称的記述と乖離",
+      "location": "hooks/guard-mfk-readonly.py / SKILL.md:82 / README.md:167",
+      "fix": "保証範囲を正直に記述(Bash経由の素HTTPコマンドを遮断)。二層防御として lib/mfk_api.py を GET 専用と明示(method 引数を持たず POST 関数不在を CONST 化)。誇張表現を緩和。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F11",
+      "severity": "smell",
+      "confirmed_by": ["MD-7"],
+      "title": "Notion sink に fallback(ローカル退避)が無く ref-output-routing の抽象(fallback必須)未活用",
+      "location": "lib/notion_invoice_sink.py",
+      "fix": "(任意/中期) Notion 障害時に確定リストを eval-log へ退避する fallback を足す。adapter 化は将来。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F12",
+      "severity": "smell",
+      "confirmed_by": ["MD-8"],
+      "verification": "ref-mf-kessai-api/references/mf-kessai-api.md = 100行 + SKILL ~94行。API仕様+判定アルゴリズムの実体ある参照正本で2 run skill が共有参照。no-split threshold 上、分離は正当。",
+      "title": "3スキル分割(ref/db-setup/check)の正当性 — 検証の結果 妥当(非採用)",
+      "location": "skills/",
+      "fix": "現状維持(ref は実体ある共有参照正本、過剰分解でない)。",
+      "auto_fixable": false
+    }
+  ],
+  "verdict": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  },
+  "verdict_note": "Phase3 改善後の最終判定。独立承認者(proposer≠approver)が実コードで F1〜F10 全て RESOLVED を裏取り、4条件 全PASS。pytest 19 passed / lint-goal-seek 両SKILL 0 warning / 全py compile / 全json妥当。smell(F9解消/F11将来/F12妥当)は枠外。",
+  "phase3_resolution": {
+    "F1": "RESOLVED — --finalize 追加・sink 既定=verified・不在で exit2 fail-closed・--force-unverified escape hatch。verifier/manifest/R3/R4 配線。",
+    "F2": "RESOLVED — _REPO_ROOT 撤廃・eval_log_dir()=env>project>cwd。test_no_repo_root_assumption で機械強制。",
+    "F3": "RESOLVED — get_api_key(cfg) で env>config>DEFAULT。mfk_api.get が cfg 伝播。並行追加の2層configと整合し config キーが live 化。",
+    "F4": "RESOLVED — validate_rows(period_ym/customer_id/verdict) を finalize/sink 入口で fail-closed。test 4本。",
+    "F5": "RESOLVED — finalize手順反映・ポータビリティ注記・slash/$CLAUDE_PLUGIN_ROOT 動線・段階公開名残除去・cd plugins残骸も解消。",
+    "F6": "RESOLVED — schema description/verdict に『今月新規は出力しない』注記。",
+    "F7": "RESOLVED — 両run SKILLに ### ゴールシーク配線(intermediate.jsonl/original_goal_hash/hashlib.sha256)。lint 0 warning。",
+    "F8": "RESOLVED — run-mf-invoice-check に ### 完了チェックリスト 見出し追加し db-setup と構造統一。",
+    "F9": "RESOLVED — detail_of/schema に updated_at=created_at代替を SSOT 注記。",
+    "F10": "RESOLVED — hook docstring 射程の正直化+二層防御明記。Key Rule1 整合。",
+    "F11": "未対応(将来任意) — sink fallback。smell。",
+    "F12": "非採用(妥当) — ref 100行+判定アルゴリズムの共有正本で3分割は no-split threshold 上正当。"
+  },
+  "concurrent_edits_reconciled": "タスク進行中にユーザーが config を2層化(mf-kessai-config.default.json + ローカル override + deep_merge)し db-setup を既存DB適用/新規作成の2モードへ拡張。上書きせず取り込み、F3 配線と整合させた。",
+  "approver": "general-purpose 独立 context (proposer≠approver 充足)。APPROVE。"
+}

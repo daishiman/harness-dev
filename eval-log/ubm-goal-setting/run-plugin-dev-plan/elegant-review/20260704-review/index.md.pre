@@ -1,0 +1,147 @@
+---
+id: IDX0
+title: ubm-goal-setting 開発計画 index (main)
+plugin_meta:
+  manifest:
+    required: true
+    path: .claude-plugin/plugin.json
+    name_matches_folder: true
+    no_todo_placeholders: true
+    validate_plugin: true
+  marketplace:
+    default_personal: true
+    policy:
+      installation: AVAILABLE
+      authentication: ON_INSTALL
+      category: Productivity
+    cachebuster_for_update: true
+  distribution:
+    distributable: false
+    bundles: []
+    marketplace: false
+  pkg_contract:
+    pkg: 002-008
+  governance:
+    runbook: required
+  ci:
+    workflow: governance-check
+  ssot_dedup:
+    lint: ssot-duplication
+    references_config_assets: tracked
+  feedback_deploy:
+    deploy: run-skill-feedback
+    enabled: true
+    notion_sink:
+      config_key: improvement-request
+      schema_ref: doc/notion-schema/improvement-request.schema.json
+      resolution: notion_config
+    portability: repo-bundled
+  harness_eval:
+    evals_json: EVALS.json
+    mechanical: required
+    llm_eval: required
+---
+
+# ubm-goal-setting 開発計画 index (main)
+
+> プラグイン構想「北原さん式ゴールセッティングの目標設定・振り返り対話とナレッジ差分同期を1 pluginへ移植する」を、人間可読な 13 フェーズのライフサイクル (本 index + phase-01..13.md) と、機械可読な buildable component 目録 (`component-inventory.json`) の 2 軸直交で計画したもの。
+> ライフサイクル軸 (フェーズ) は上から順に読める実行可能タスク仕様で primary deliverable。成果物実体軸 (component) は build routing・依存 DAG・品質機構を保持する唯一の SSOT。フェーズは component id を `entities_covered` で参照するだけで build_target を再記述しない (正規化)。
+
+## 基本定義
+- **プラグイン slug**: `ubm-goal-setting` (plan_dir=`plugin-plans/ubm-goal-setting/`・同一構想は常に同一出力先=再現性アンカー)。
+- **最上位目的 (purpose)**: 北原さん式ゴールセッティングの目標設定・振り返り対話機能とナレッジ差分同期機能一式を、新 harness-creator の量産規律を継承した 1 plugin へ漏れなく移植する。
+- **仕様駆動 (大前提)**: 本計画は harness-creator 仕様を基に作成される (規律の焼き先=`harness-creator-spec-reflection.md` マトリクスの引用・独自流儀の発明禁止)。要件の正本は `goal-spec.json` の checklist (C1-C7)、仕様書 (本 index + 13 phase) はその被覆であり、実装との乖離が出たら**仕様を先に更新**してから build へ戻す (spec-first)。
+- **スコープ (含む)**: index + 13 フェーズ計画 + `component-inventory.json` の生成 (計画=L3 契約)。移植元 (`~/dev/dev/ObsidianMemo/.claude/` 配下) の読み取り専用参照。
+- **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、PR/配布登録 (distributable:false のため個人利用に留める)。移植元のフォーク・複製。
+
+## ドメイン知識
+- **2 軸直交**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (N=18 component・機械 SSOT) を二重に持たない。
+- **component_kind (5 種)**: skill / sub-agent / slash-command / hook / script。同一 kind の複数実体はそれぞれ独立 component (本 plan は skill×2 / sub-agent×10 / slash-command×2 / hook×1 / script×3)。
+- **件数の軸区別と C14 欠番**: 移植元 sub-agent は原資産 **11 本** (旧 phase3-interviewer 含む)、うち 1 本 DROP で生成する active component は **10 本** (C05-C13, C15)。以降「11 本」=原資産棚卸し値・「10 本」=生成 component 数として使い分ける。id **C14** は当初 phase3-interviewer へ割当てていたが DROP 統合につき欠番とし、既存参照 (C15-C19) を壊さぬよう再採番せず id 安定性のため意図的に空けたまま保持する (機械ゲートは id 連続性を要求しない)。
+- **phase ≠ component**: 13 はフェーズ数の固定値、N=18 は buildable 実体数で独立に決まる。phase は `entities_covered: [C01, ...]` の id 参照のみで component に紐づく。
+- **移植 (port) ≠ greenfield**: 本 plan は既存資産 (`~/dev/dev/ObsidianMemo/.claude/` 配下) の faithful-transfer+adapt であり、13 phase 構造自体は保持しつつ P01=要件棚卸し・P02=再設計でなく写像設計という性格を持つ。
+- **data-tier 3 層**: knowledge は単一の vendor/非vendor 判断でなく L1 curated (28 category JSON+router.jsonをplugin同梱シード) / L2 raw vault sources (`UBM_VAULT_ROOT`で外部解決) / L3 bookkeeping (registry.json/sync-log.jsonl/kitahara-principles-db.mdを空seed+writeback-config) で扱う。
+- **二相 skill build**: C01-C03 (script) は toposort 上 C16/C17 (親 skill) より先に build されるが build_target は親 skill 配下パスであるため、「run-skill-create が空 scaffold 先行生成→parent-skill-build が scripts/ を充填」の二相で調停する。
+
+## インフラ
+- **実行環境**: スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・scripts 内 yaml import 禁止)。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。旧 3 本の shell script (validate-goal-output.sh/detect-knowledge-updates.sh/check-knowledge-split.sh) は stdlib Python (C01/C02/C03) へ書き換える。
+- **同梱決定論ゲート (2 層命名・機械正本=`specfm.GATE_SCRIPTS`)**: core 5 scripts / 6 invocations = verify-index-topsort (§9 section 床+phase 完全性+DAG) / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage (--self-test + PLAN の 2 起動)。拡張ゲート = check-plugin-goal-spec / check-requirements-coverage / check-surface-inventory / check-build-handoff / check-runtime-portability / check-plugin-surface-audit (総数の人間可読正本=io-contract §11 表)。
+- **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes を top-sort 順に消費する。skill route は routes[].build_args の `brief_path` (render-skill-brief.py) で inventory から skill-brief JSON を決定論射影して `run-skill-create` へ渡す (詳細手順は焼かない)。
+- **コンポーネント目録の所在**: buildable な実体 (skill×2 / sub-agent×10 / slash-command×2 / hook×1 / script×3 = 計 18) は `component-inventory.json` が唯一の SSOT。各 component は Phase02 (設計) と Phase05 (実装) の `entities_covered` で参照され、うち loop skill (C16/C17) と書換 script (C01-C03) のみ Phase04 (テスト設計) でも参照される。build_target・依存 DAG・quality_gates・harness_coverage・feedback_contract を目録側が保持する。フェーズファイルは build_target を再記述せず component id 参照のみで紐づく。
+- **Plugin-level surfaces**:
+
+  | surface | 判定 | 記録先 |
+  |---|---|---|
+  | manifest | required | `plugin_meta.manifest` |
+  | composition | required | `plugin-composition.yaml` (owner: P02・builder: plugin-scaffold・`handoff.envelope.plugin_composition`) |
+  | harness_eval | required | `EVALS.json` (owner: P06) + `plugin_meta.harness_eval` |
+  | references_config_assets | required | reference 8本+asset 5本の per-file build_target を `component-inventory.json` の `plugin_level_surfaces.references_config_assets.files` に列挙、`plugin_meta.ssot_dedup` に記録 |
+  | schemas | required | `plugins/ubm-goal-setting/knowledge/schema.json` (C16/C17 が対称参照する plugin-root 共有 surface) |
+  | vendor | required | component inventory の `plugin_level_surfaces.vendor.tiers` (L1 curated=北原知見本体28JSON+router.jsonをvendor同梱シード / L2 raw vault sources=`UBM_VAULT_ROOT`で外部解決 / L3 bookkeeping=registry.json+sync-log.jsonl+kitahara-principles-db.mdを空seed+writeback-config) |
+  | notion_config | omitted | component inventory の `plugin_level_surfaces.notion_config.omitted_reason` (機能上 Notion 非使用。harness-creator メタ改善ループの feedback 受け皿は `plugin_meta.feedback_deploy.notion_sink` で別途宣言) |
+  | mcp_app_connector | omitted | component inventory の `plugin_level_surfaces.mcp_app_connector.omitted_reason` |
+
+## 環境ポリシー
+- **品質基準**: 全 buildable component が quality_gates (p0_lint(kind別)/build_trace/elegant_review C1-C4/content_review verdict/evaluator≥80,high0) + harness_coverage(min≥80/kind_pass) を携帯する。
+- **proposer≠approver**: 設計/最終レビューは提案者と別 context の approver が承認する (design-gate/final-gate)。
+- **現状値非焼込**: 「≥80% を満たす設計」を要件化し、harness 現状未達数値は component エントリへ焼かない (Goodhart 回避)。
+- **移植の不変条件**: 移植元 (`~/dev/dev/ObsidianMemo/.claude/` 配下) は読み取り専用ソースでありフォーク・複製禁止 (抽出/参照のみ)。旧 .sh の削除は golden-master equivalence 確認後に行う。
+- **エスカレーション**: ゲート未達は最大 5 周 (`goal-spec.max_loops`) で findings を反映し再実行、超過時は `open_issues` に残し差し戻す。
+
+## フェーズ一覧
+
+1. P01 — requirements (要件定義) / 未実施
+2. P02 — design (設計) / 未実施
+3. P03 — design-review (設計レビューゲート) / 未実施
+4. P04 — test-design (テスト設計) / 未実施
+5. P05 — implementation (実装) / 未実施
+6. P06 — test-run (テスト実行) / 未実施
+7. P07 — acceptance-criteria (受入基準判定) / 未実施
+8. P08 — refactoring (リファクタリング) / 未実施
+9. P09 — quality-assurance (品質保証) / 未実施
+10. P10 — final-review (最終レビューゲート) / 未実施
+11. P11 — evidence (手動テスト検証) / 未実施
+12. P12 — documentation (ドキュメント) / 未実施
+13. P13 — release (完了/PR・リリース) / 未実施
+
+## 完了チェックリスト
+- [ ] 基本定義 (plugin slug / purpose / スコープ) が宣言されている。
+- [ ] ドメイン知識 (2 軸直交 / component_kind 5 種 / data-tier 3 層 / 二相 skill build) が宣言されている。
+- [ ] インフラ (実行環境 / core scripts / 目録所在 / surface 採否) が宣言されている。
+- [ ] 環境ポリシー (品質基準 / proposer≠approver / 現状値非焼込 / 移植の不変条件) が宣言されている。
+- [ ] 13 フェーズ (P01..P13) が phase_number 昇順で全存在し、各 phase 本文が §5 section 床 (`specfm.PHASE_BODY_SECTIONS` の宣言型 8 節) を満たす。
+- [ ] 要件 C1: 2 slash-command (ubm-goal-setting=C18 / ubm-knowledge-sync=C19) が slash-command component として漏れなく列挙されている。
+- [ ] 要件 C2: 中核 skill (Phase0-5 統一ハイブリッド構造ワークフロー) が run-ubm-goal-setting (C16) として移植され、goal/checklist が原文の責務を反映している。
+- [ ] 要件 C3: sub-agent 10 本 (info-collector/output-formatter/knowledge-extractor/goal-reviewer/phase3-coordinator + steps1-5、C05-C13/C15) が漏れなく sub-agent component として inventory に列挙されている。
+- [ ] 要件 C4: 3 本の既存 shell script (validate-goal-output.sh/detect-knowledge-updates.sh/check-knowledge-split.sh) が C01/C02/C03 として Python 標準ライブラリのみの script component へ書き換え登録されている。
+- [ ] 要件 C5: knowledge JSON 群 + references 8本 + assets 5本 が `plugin_level_surfaces` (vendor/references_config_assets) に required:true で明示され、L1 curated (vendor同梱シード) と L2 raw vault sources (外部env解決) が区別されている。
+- [ ] 要件 C6: capability A (目標設定対話) と capability B (ナレッジ同期) が `knowledge/*.json` を plugin-root 共有 SSOT (schema契約 + P08 dedup) として整合し、実行時 depends_on でなく共有データ層としての整合であることが component-inventory の記述に明示されている。
+- [ ] 要件 C7: `component-inventory.json` が 5 component_kind の検討証跡と plugin-level surfaces の採否を記録し、全 18 component が build_target 非空・builder/build_kind 整合・依存 DAG 非循環で core 規律 (quality_gates + harness_coverage + skill loop の feedback_contract) を携帯する。
+- [ ] 各 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。
+- [ ] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0 (goal-spec 要件の被覆は check-requirements-coverage が機械検査)。
+- [ ] `handoff-run-plugin-dev-plan.json` の routes が inventory 由来で builder/build_kind/build_args/build_target を持ち、各 component を後段 builder (skill→run-skill-create / 非 skill→run-build-skill or parent-skill-build) へルーティングする。
+
+## 受入確認 (build 後の見方)
+
+> 計画 (上記) が満たすのは「各 component が評価基準を携帯し決定論ゲートを通る」こと。**組み上がった実プラグインが当初 purpose を満たすか**は build 後に下記で確認する。plan は受入基準を**契約として焼く**だけで、実行は後段 build (run-skill-create の harness criteria-test)。purpose の正本 = `goal-spec.purpose`「UBM(北原さん式ゴールセッティング)の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、新 harness-creator の量産規律を継承した 1 plugin へ漏れなく移植する」。なお本表・C16 goal・C16 criteria(IN1)・C01 purpose に反復出現する「統一ハイブリッド構造 21 項目」の定義正本は、移送される reference `references/output-formats.md` + `references/data-contract.md`(`plugin_level_surfaces.references_config_assets.files` に列挙)であり、validate-goal-output.py はこの正本に基づき 21 項目を検査する(数値が宙に浮かないよう定義元をここに pin する)。
+
+| 受入観点 (purpose 由来) | 確認の見方 (build 後) | 焼き先 |
+|---|---|---|
+| 目標設定・振り返り対話が統一ハイブリッド構造を満たす | 週報/月報/期報を実際に生成し validate-goal-output.py が全21項目でPASSする | run-ubm-goal-setting (C16) の OUT criterion + harness criteria-test |
+| 出力前バリデーションが機能する | validate-goal-output.py がNG表現/やらないこと3項目未満等を出力前に検知しFAILさせる | run-ubm-goal-setting (C16) の inner criterion |
+| ナレッジ差分が漏れなく検知・分類される | 既知の更新済みソースを投入し detect-knowledge-updates.py が全件検知、knowledge-extractor が6カテゴリへ正しく分類 | run-ubm-knowledge-sync (C17) の inner/outer criterion |
+| vault固有パスが変数化され移植先非依存 | `UBM_VAULT_ROOT` 環境変数を差し替えても同一挙動になる (L2 raw vault sources のみ。L1 curated knowledge は vendor 同梱のため差し替え不要) | envelope-draft/plugin.json の config.vault_root_env |
+| fresh-install 直後から知識ベースが機能する | install 直後 (vault 未接続でも) info-collector が vendor 同梱の L1 curated knowledge (router.json→knowledge/*.json) を読めることを確認する | plugin-root `knowledge/` の vendor tiers (L1_curated_seed) |
+| 破壊的書き込みで元資産が消えない | ubm-write-path-guard hook が vault 外/禁止パスへの書き込みを fail-closed で阻む | guard hook (C04) |
+
+build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たすプラグインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。
+
+## build 実行者向け手引き (最短経路)
+
+> 二相 build・envelope 手動適用・hook 有効化は本 index/phase/handoff/inventory に分散するため、着手の最短経路をここに集約する (各項の正本は括弧内)。
+
+1. **build 順**: `handoff-run-plugin-dev-plan.json` の `routes` を inventory 依存 top-sort 順に消費する。ただし `requires_parent_scaffold` を持つ script route (C01-C03) は、親 skill (C16/C17) の scaffold 生成後に充填する (正本=`component-inventory.json` の `build_sequencing_notes`・二相 skill build)。
+2. **各 component の実体化**: skill→`run-skill-create` / sub-agent・slash-command・hook→`run-build-skill` / script→親 skill build の scripts/ 充填 (正本=`handoff` routes の `builder`/`build_kind`)。
+3. **envelope 手動適用 (最後)**: `envelope-draft/plugin.json` を `plugins/ubm-goal-setting/.claude-plugin/plugin.json` へ人手適用する (scaffold executor 未整備=`open_issues` GAP-ENVELOPE-001)。
+4. **hook 有効化**: guard hook (C04) の有効化は plugin manifest の `hooks` ブロックが正本 (`envelope-draft/plugin.json` に記載済)。inventory の `settings_wiring: settings.json` は install 時展開の記述であり二重管理ではない。
+5. **vault 接続**: L1 curated knowledge は vendor 同梱で fresh-install 直後から機能する。L2 raw vault は `UBM_VAULT_ROOT` を設定して接続する (未接続でも capability B は検知0件で正常終了・GAP-VAULT-002)。

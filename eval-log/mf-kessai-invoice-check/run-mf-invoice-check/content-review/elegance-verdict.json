@@ -1,0 +1,23 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "skill": "run-mf-invoice-check", "skill_md_sha256": "b207b067e934c27bc584e3b0e235007f14a030a0d090d4c9ee02c774eba7959e"},
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent",
+  "reviewed_at": "2026-06-30T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1","IN2","OUT1"],
+    "positive_feedback": [
+      "月帰属を transaction.date(取引日・月末締め)単一軸に固定し、issue_date を「対象月初〜翌月末を over-fetch する取得窓」として明示分離した点が一貫しており、frontmatter IN1・Purpose・Gotchas#4 が同一語彙で整合している(発行日基準の旧記述は残存しない)。",
+      "二段確認を物理境界(collect=未検証/finalize=確定 mfk-gap-verified.json/sink=fail-closed exit2)で機構化し、IN2 と End-to-End Flow[5]・Key Rule#5 が矛盾なく対応している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "none"
+  },
+  "notes": "SKILL.md 全文と参照先(prompts/R1-R4・schemas・workflow-manifest・lib・hooks・agents・tests/test_check_invoice_gaps.py)の実在を実読確認。取引日帰属は frontmatter IN1(transaction.date 帰属の前月−今月差集合)・Purpose(月帰属=transaction.date 基準で発行日が翌月でも対象月扱い)・Gotchas#4(判定軸は必ず transaction.date、issue_date は over-fetch 窓)で自己一貫し、月またぎ発行(6月取引→7月発行)の誤判定回避が一貫記述。矛盾なし/漏れなし/整合性/依存関係整合の4条件を満たすため PASS。"
+}

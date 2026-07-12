@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "pattern": "index-search",
+  "description": "harness-creator 自身の蓄積知見ストア (Loop B)。Capability 作成時に build-time で検索し、過去の設計判断・パラダイム・落とし穴を再利用する。生成スキルに配るのと同一機構 (ref-knowledge-loop) を自己適用する dogfooding。",
+  "categories": [
+    {
+      "id": "build-patterns",
+      "label": "ビルド設計パターン・パラダイム",
+      "file": "knowledge-build-patterns.json",
+      "keywords": ["パラダイム", "設計判断", "再現性", "SSOT", "二層分離", "ゴールシーク", "task-graph", "discovered-task", "knowledge-loop"]
+    },
+    {
+      "id": "lessons-index",
+      "label": "lessons-learned 索引 (失敗ログへのポインタ)",
+      "file": "knowledge-lessons-index.json",
+      "keywords": ["失敗", "落とし穴", "ハマりどころ", "lessons-learned"]
+    }
+  ],
+  "global_keywords": {
+    "再現性": ["build-patterns"],
+    "重複": ["build-patterns"],
+    "ゴールシーク": ["build-patterns"],
+    "失敗": ["lessons-index"],
+    "落とし穴": ["lessons-index", "build-patterns"],
+    "task-graph": ["build-patterns"],
+    "discovered-task": ["build-patterns"],
+    "knowledge-loop": ["build-patterns"]
+  },
+  "synonyms": {
+    "再現性": ["再現可能", "reproducibility", "決定論"],
+    "重複": ["二重定義", "dedup", "DRY"],
+    "ナレッジ": ["知識", "knowledge", "蓄積"],
+    "依存グラフ": ["task-graph", "依存DAG", "dependency graph"],
+    "発見タスク": ["discovered-task", "proposal", "inbox"]
+  },
+  "scoring_weights": {"title": 5, "keywords": 3, "quote": 2, "voice": 2, "fulltext": 1},
+  "lifecycle": {"split_threshold_lines": 500, "split_threshold_entries": 25},
+  "usage_log": "usage-log.jsonl",
+  "_comment": "usage_log (usage-log.jsonl) は初回 record_usage.py 実行時に lazy 生成される。ファイル不在は未使用の正常状態 (ROADMAP 短期節 意図的 deferred (5) 参照)。",
+  "consult_at": ["build-time"],
+  "consult_note": "run-skill-elicit / run-build-skill が Step 1 で search_knowledge.py --dir plugins/harness-creator/knowledge/ を実行し、brief.consult_build_knowledge=true のとき上位N件を設計判断の参考に提示する。"
+}

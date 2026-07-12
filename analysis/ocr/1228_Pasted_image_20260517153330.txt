@@ -1,0 +1,8 @@
+段階 仕組み                                                                                                                                                  重さ                         検出タイミング
+
+1      Gotchas に書く (SKILL.md / CLAUDE.md)                                                                    LLM 注意力依存       推論時、運に左右される
+2         軽い決定論: schema validation / frontmatter lint / Hook / 公式設定 (allowed-tools, permissions.deny 等) 設定ファイルレベル コミット時/起動時
+
+3      重い決定論: SA script (validate.sh —all, check-pair.sh 等) を CI に組み込む                            コードレベル          CI 通過必須
+
+4     ツール化: チェック対象を CLI アプリや lint plugin に切り出し、他リポジトリでも再利用可能にする              製品レベル          開発フロー全体

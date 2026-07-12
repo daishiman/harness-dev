@@ -1,0 +1,114 @@
+{
+  "config_key": "skill-list",
+  "title": "Skill一覧",
+  "title_property": "プラグイン名",
+  "row_unit": "plugin",
+  "managed_properties": {
+    "プラグイン名": {"type": "title"},
+    "バージョン": {"type": "rich_text"},
+    "公開ステータス": {
+      "type": "select",
+      "options": [
+        {"name": "開発中", "color": "yellow"},
+        {"name": "公開中", "color": "green"},
+        {"name": "非推奨", "color": "orange"},
+        {"name": "廃止", "color": "red"}
+      ]
+    },
+    "カテゴリ": {
+      "type": "multi_select",
+      "options": [
+        {"name": "生成", "color": "blue"},
+        {"name": "改善", "color": "purple"},
+        {"name": "評価", "color": "pink"},
+        {"name": "連携", "color": "green"},
+        {"name": "運用", "color": "gray"}
+      ]
+    },
+    "担当者": {"type": "people"},
+    "概要": {"type": "rich_text"},
+    "インストールコマンド": {"type": "rich_text"},
+    "リポジトリパス": {"type": "url"},
+    "最終更新日": {"type": "last_edited_time"},
+    "紐づくヒアリングシート": {
+      "type": "relation",
+      "target_db": "hearing-sheet",
+      "dual": true,
+      "synced_property_on_target": "紐づくプラグイン"
+    },
+    "改善要望": {
+      "type": "relation",
+      "target_db": "improvement-request",
+      "dual": true,
+      "synced_property_on_target": "対象プラグイン"
+    },
+    "未対応要望数": {
+      "type": "rollup",
+      "relation_property_name": "改善要望",
+      "rollup_property_name": "対応ステータス",
+      "function": "count",
+      "view_filter_hint": "Notion View 側で 対応ステータス ∈ {未着手,計画中,対応中} に絞る"
+    }
+  },
+  "page_body_sections": [
+    {"id": "overview",     "required": true,  "title": "📘 概要 (callout)"},
+    {"id": "capabilities", "required": true,  "title": "🎯 このプラグインで何ができる？"},
+    {"id": "when_to_use",  "required": true,  "title": "💡 こんなときに使う (発火条件 = 各スキル triggers の集約)"},
+    {"id": "install",      "required": true,  "title": "🚀 インストール方法"},
+    {"id": "skills",       "required": true,  "title": "📦 含まれるスキル一覧 (toggle)"},
+    {"id": "flow",         "required": true,  "title": "📖 使い方の流れ"},
+    {"id": "feedback",     "required": true,  "title": "🔁 改善要望の出し方", "renderer_ref": "feedback_protocol"},
+    {"id": "help",         "required": true,  "title": "❓ 困ったときは"}
+  ],
+  "feedback_protocol": {
+    "__doc__": "改善要望ループの SSOT。triggers/SKILL.md/upsert/lint がここを唯一の正本として参照する。",
+    "command": "/run-skill-feedback",
+    "firing_conditions": [
+      "プラグインを使って『ここが分かりにくい』と感じた",
+      "『こう直してほしい』『この挙動はバグでは』と思った",
+      "プロンプトの出力品質に不満がある / ドキュメントの誤記を見つけた",
+      "新機能や挙動変更の要望が浮かんだ"
+    ],
+    "identification_step": {
+      "__doc__": "ユーザーはプラグイン名・スキル名を知らない前提。collect フェーズより前に必ず実行し、目的逆算で対象を同定する。",
+      "trigger_condition": "常に実行（plugin 引数が渡された場合も存在確認のために必ず通す）",
+      "steps": [
+        {
+          "step": 1,
+          "action": "open_question",
+          "prompt": "どんな作業をしているときに、どんなことを感じましたか？（例: 契約書を作ろうとしたら止まった / スキルを作ろうとしたら出力がおかしかった）"
+        },
+        {
+          "step": 2,
+          "action": "scan_skills",
+          "how": "find plugins -name SKILL.md を実行し、全スキルの name と description フィールドを抽出してリストを構築する"
+        },
+        {
+          "step": 3,
+          "action": "match_and_confirm",
+          "how": "ユーザーの回答とスキル descriptions をキーワードマッチングして上位候補を絞り込み、『○○（〜するためのスキル）のことでしょうか？』と確認する。複数候補ある場合は番号付き一覧を提示して選択させる"
+        },
+        {
+          "step": 4,
+          "action": "read_spec",
+          "how": "確定したスキルの SKILL.md を Read し、Purpose & Output Contract を把握。『現在の仕様: 〜〜です。この仕様についての要望ですか？』とユーザーに提示して文脈を共有する"
+        }
+      ],
+      "fallback": "4ステップで候補が絞れない場合は全スキル一覧を要約して選択してもらう。それでも不明なら plugin='不明' として投入し、担当者が人手でトリアージする"
+    },
+    "intake_fields": [
+      {"name": "対象スキル名",           "required": false, "hint": "identification_step で自動設定。ユーザーが直接知っている場合は引数で渡してもよい"},
+      {"name": "要望タイトル",           "required": true,  "hint": "30字程度で『何を直したいか』を一行"},
+      {"name": "要望種別",               "required": true,  "hint": "バグ / 機能追加 / プロンプト改善 / ドキュメント / 挙動変更"},
+      {"name": "やってほしいこと",       "required": true,  "hint": "具体的にどう直してほしいか一段落"},
+      {"name": "背景・困っていること",   "required": false, "hint": "なぜそれが必要か"},
+      {"name": "優先度",                 "required": false, "hint": "高 / 中 / 低 (default 中)"},
+      {"name": "重要度",                 "required": false, "hint": "高 / 中 / 低 (default 中)"},
+      {"name": "関連 PR/コミット URL",   "required": false, "hint": "既知の関連 PR / コミットがあれば URL を記入"}
+    ],
+    "status_lifecycle": ["未着手", "計画中", "対応中", "完了", "見送り"],
+    "open_statuses": ["未着手", "計画中", "対応中"],
+    "promise_to_reporter": "投入された要望は『改善要望 DB』に N:1 で紐付き、本プラグインの『未対応要望数』に自動カウントされる。対応ステータスは Notion 側で随時更新され、完了時には『関連PR/コミット』に PR URL が記入される。",
+    "callout_summary": "このツールを使っていて『ここが分かりにくい』『こう直してほしい』と感じたら、/run-skill-feedback と入力するだけで OK です。何を使っていたかを聞きながら対象スキルを特定するので、スキル名・プラグイン名は知らなくて大丈夫です。"
+  }
+}

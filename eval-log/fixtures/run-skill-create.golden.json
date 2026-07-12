@@ -1,0 +1,24 @@
+{
+  "skill": "run-skill-create",
+  "golden": true,
+  "description": "高品質スキルの frontmatter golden fixture (CI diff 検証用)",
+  "frontmatter": {
+    "name": "run-skill-create",
+    "description": "新規Skillを端から端まで作りたいとき、複数Gateを通した品質保証付きフローを起動したいときに使う。",
+    "disable-model-invocation": "false",
+    "user-invocable": "true",
+    "argument-hint": "\"[topic?] [--mode create|update] [--fast]\"",
+    "arguments": "[topic, mode, fast]",
+    "allowed-tools": "",
+    "model": "opus",
+    "kind": "run",
+    "effect": "local-artifact",
+    "owner": "team-skills",
+    "since": "2026-05-18",
+    "pair": "assign-skill-design-evaluator",
+    "rubric_refs": "",
+    "# context-budget": "orchestrationのみ。各子スキルがそれぞれの設計書を参照する。本スキルは05/06/07/13/23/25章のみ参照。"
+  },
+  "max_lines": 300,
+  "note": "LLM非決定性を避けるため frontmatter フィールドのみを比較対象とする"
+}

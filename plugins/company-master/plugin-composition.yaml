@@ -1,0 +1,71 @@
+plugin: company-master
+version: 0.1.0
+summary: 会社名・住所・法人番号の断片から企業マスタを補完し、固定 Notion DB へ反映する。
+capabilities:
+  - kind: skill
+    name: run-company-master-build
+    path: skills/run-company-master-build/SKILL.md
+    role: orchestration
+  - kind: skill
+    name: run-company-master-backfill
+    path: skills/run-company-master-backfill/SKILL.md
+    role: orchestration
+  - kind: command
+    name: company-master
+    path: commands/company-master.md
+    role: interactive-entrypoint
+  - kind: command
+    name: company-master-backfill
+    path: commands/company-master-backfill.md
+    role: notion-backfill-entrypoint
+  - kind: agent
+    name: company-master-resolve-identity
+    path: agents/company-master-resolve-identity.md
+    role: subagent
+  - kind: agent
+    name: company-master-enrich-attributes
+    path: agents/company-master-enrich-attributes.md
+    role: subagent
+  - kind: agent
+    name: company-master-notion-upsert
+    path: agents/company-master-notion-upsert.md
+    role: subagent
+  - kind: hook
+    name: hook-guard-secret
+    path: hooks/hook-guard-secret.py
+    role: secret-guard
+  # scripts capability は公開エントリポイント(wrapper)と独立起動 server のみ宣言する。
+  # 内部実装 script (resolve/enrich/notion_upsert/postal_api/validate 等) の物理依存 DAG の正本は各 SKILL.md の script_refs。
+  - kind: script
+    name: company_master
+    path: scripts/company_master.py
+    role: executable-wrapper
+  - kind: script
+    name: postal_proxy
+    path: scripts/postal_proxy.py
+    role: optional-postal-proxy-server
+  - kind: vendor
+    name: bundled-python-libs
+    path: vendor/
+    role: dependency-bundle
+dependencies:
+  external_services:
+    - Notion API
+    - gBizINFO API
+    - Japan Post addresszip API (郵便番号・デジタルアドレスAPI V2)
+  credentials:
+    - service: notion-api-key.<keychain-prefix>
+      account: <keychain-prefix>
+      storage: macOS Keychain
+    - service: gbizinfo-api-token.<keychain-prefix>
+      account: <keychain-prefix>
+      storage: macOS Keychain
+    - service: japanpost-da-api.<keychain-prefix>
+      account: client_id / secret_key (+ 任意 egress_ip / proxy_url / proxy_token)
+      storage: "macOS Keychain (BYO setup: references/japanpost-api-setup.md / 中央プロキシ setup: references/postal-proxy-deploy.md)"
+      note: "egress_ip は送信元IP固定時のみ(既定は自動検出)。既定は BYO 直結(各自の client_id/secret_key + 送信元IP)。proxy_url/proxy_token は送信元IPを固定できない/拠点数>10 の例外時のみクライアントが設定し中央プロキシ経由とする(鍵と固定IPはプロキシ側へ集約)。"
+distribution:
+  python_dependencies:
+    policy: "標準ライブラリ優先。外部ライブラリが必要な場合は plugin-root/vendor/ に同梱し、ユーザー手動 pip install を前提にしない。"
+    status: "現状は外部依存ゼロ = pip install 不要を達成済み。vendor/ は将来用の空の受け皿で、空が正常。"
+    enforcement: "repo-level CI の scripts/lint-company-master-vendored-deps.py が空 vendor の正当性 (未同梱の外部 import ゼロ) を機械強制する。単独 install 実行時は同梱済み標準ライブラリ実装のみで動くことを vendor/README.md に明記する。"

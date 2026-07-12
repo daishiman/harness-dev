@@ -1,0 +1,931 @@
+diff --git a/.claude-plugin/bundles.json b/.claude-plugin/bundles.json
+index b331703..4659e21 100644
+--- a/.claude-plugin/bundles.json
++++ b/.claude-plugin/bundles.json
+@@ -12,6 +12,7 @@
+         "contract-generator",
+         "company-master",
+         "mf-kessai-invoice-check",
++        "notion-gmail-send",
+         "skill-governance-config",
+         "skill-governance-lint",
+         "skill-governance-hooks",
+diff --git a/.claude-plugin/marketplace.json b/.claude-plugin/marketplace.json
+index 09ab734..681d028 100644
+--- a/.claude-plugin/marketplace.json
++++ b/.claude-plugin/marketplace.json
+@@ -113,6 +113,14 @@
+       "version": "0.1.0",
+       "category": "productivity",
+       "tags": ["money-forward", "invoice", "notion", "billing", "automation"]
++    },
++    {
++      "name": "notion-gmail-send",
++      "source": "./plugins/notion-gmail-send",
++      "description": "Notion 2DB（メール本文_DB／メール送信先_DB）を入力に、抑制条件を満たした宛先へ {{}} 差し込みで Gmail 一斉個別送信。承認済み plan＋人間承認ゲート＋冪等送信ログの三本柱で不可逆送信を安全化。",
++      "version": "0.1.0",
++      "category": "productivity",
++      "tags": ["notion", "gmail", "email", "send", "automation"]
+     }
+   ]
+ }
+diff --git a/.github/workflows/governance-check.yml b/.github/workflows/governance-check.yml
+index 20afa69..7f79365 100644
+--- a/.github/workflows/governance-check.yml
++++ b/.github/workflows/governance-check.yml
+@@ -69,6 +69,12 @@ jobs:
+             jq -e '.name and .version and .description' "$manifest" >/dev/null
+           done
+         continue-on-error: false
++      # marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査。
++      # 実体ディレクトリ起点で全 plugin の marketplace + bundles 登録を強制し、登録漏れ
++      # (notion-gmail-send 未表示) が自己強化ループで永久に見逃される事故を機械遮断する。
++      - name: validate plugin completeness (marketplace + bundles registration)
++        run: python3 scripts/validate-plugin-completeness.py
++        continue-on-error: false
+       - name: lint SSOT duplication (skill-creator 一本化強制)
+         run: python3 plugins/skill-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/skill-creator --strict
+         continue-on-error: false
+diff --git a/Makefile b/Makefile
+index 8c7b0af..8426fc1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -35,7 +35,12 @@ lint: contract-intake vendored-ssot runtime-portability company-master-vendored
+ 	python3 scripts/lint-skill-name.py --skills-dir plugins/mf-kessai-invoice-check/skills
+ 	python3 scripts/lint-skill-description.py --skills-dir plugins/mf-kessai-invoice-check/skills
+ 	python3 scripts/validate-frontmatter.py --skills-dir plugins/mf-kessai-invoice-check/skills
++	python3 scripts/lint-skill-name.py --skills-dir plugins/notion-gmail-send/skills
++	python3 scripts/lint-skill-description.py --skills-dir plugins/notion-gmail-send/skills
++	python3 scripts/validate-frontmatter.py --skills-dir plugins/notion-gmail-send/skills
+ 	python3 scripts/lint-plugin-lint-coverage.py
++	# marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査
++	python3 scripts/validate-plugin-completeness.py
+ 
+ ## vendored-ssot: plugin 同梱 SSOT (notion_config.py / feedback_contract_ssot.py) が正本と byte 一致か検証
+ vendored-ssot:
+diff --git a/plugins/skill-creator/skills/run-build-skill/references/build-steps.md b/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
+index bfb80e3..8b11441 100644
+--- a/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
++++ b/plugins/skill-creator/skills/run-build-skill/references/build-steps.md
+@@ -79,6 +79,19 @@ score >= 80 かつ high=0 で完了。
+ 
+ - alias 不要なら commit
+ - 改名/移動なら `aliases:` を追加
++- **新規 plugin の場合**（plugins/<name>/ を新設したとき）はルート2 SSOTへの登録が必須。
++  これを怠ると `/plugin marketplace add` の一覧に出ず install もできない（表示漏れの直接原因）。
++  手順:
++  1. `python3 scripts/validate-plugin-completeness.py --fix` を実行。実体ディレクトリ起点で
++     未登録 plugin を `.claude-plugin/marketplace.json` plugins[] と
++     `.claude-plugin/bundles.json`（plugin.json の `bundle_targets`）へ **append-only** で自動登録し、
++     書込後に自己再検証して exit 0 を保証する（既登録なら no-op・冪等）。
++  2. 自動生成エントリの `category` / `tags` / `description` は plugin.json 由来またはデフォルト。
++     `[category/tags はデフォルト値。PR で要確認]` の警告が出たら plugin.json に
++     `category` / `tags` を追記するか marketplace エントリを PR diff で磨き込む。
++  3. 人間が PR diff で最終承認する（機械は登録漏れを必ず塞ぎ、表示文言の磨き込みは人間が担う二層分離）。
++  - 検出層: CI/pre-push の `validate-plugin-completeness.py`（MK-001/002/003・BD-001）が
++    登録漏れを fail-closed で止める最後の砦。`--fix` を忘れても CI で必ず検出される。
+ 
+ ## Goodhart 罠回避
+ 
+diff --git a/plugins/skill-creator/skills/run-skill-create/SKILL.md b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+index 7d5fa56..f1c5b79 100644
+--- a/plugins/skill-creator/skills/run-skill-create/SKILL.md
++++ b/plugins/skill-creator/skills/run-skill-create/SKILL.md
+@@ -98,7 +98,7 @@ audit-trigger: quarterly
+ 3. **失敗時の停止**: P0 lint fail または evaluator FAIL なら停止し findings 提示。
+ 4. **context:fork**: evaluator/governance reviewer は必ず context:fork で起動 (Sycophancy 防止)。
+ 5. **handoff 保存**: 各ゲート通過時に `eval-log/handoff-<step>.json` を `schemas/handoff.schema.json` 準拠で残す。PostCompact hook で復元。
+-6. **plugin/marketplace 登録は確認後**: 自動更新禁止。`build-manifest-registration-plan.py` の提案 → Gate 2.5 承認 → `--apply` の順。
++6. **plugin/marketplace 登録は確認後**: legacy manifest.json は `build-manifest-registration-plan.py` の提案 → Gate 2.5 承認 → `--apply` の順。新形式 plugin.json plugin のルート `marketplace.json` / `bundles.json` 登録は `scripts/validate-plugin-completeness.py --fix`（append-only・冪等・書込後自己再検証）が担い、人間が PR diff で最終承認する（破壊的変更を含まない append-only ゆえ生成フロー内で自動実行可）。
+ 7. **resource-map 先読み**: `references/resource-map.yaml` を最初に読み、必要ファイルのみ open。
+ 8. **日本語成果物ゲート**: brief の `output_language=ja` と `parameter_language_exception=true` を既定とし、本文・レビュー・完了レポートを日本語に保つ (パラメーター名・JSON キー・CLI 引数は英語)。
+ 9. **prompt 形式**: 新規 prompt は **Markdown (`.md`) 既定**。`prompts/<R-id>-<slug>.md` で `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` を写経して生成。YAML は legacy のみ許容 (新規禁止、P0 lint で warn)。
+@@ -134,8 +134,9 @@ audit-trigger: quarterly
+ - [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み
+ - [ ] Notion 指定ありの場合、`python3 plugins/skill-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない
+ - [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き
+-- [ ] 横展開対象なら plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`)。プロジェクト固有は未登録理由がレポートに記録されている
+-- [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` (`xl-skills-full`/`-minimal`/`-intake`) 登録済み。不要なら理由がレポートにある (理由なき未登録は rubric 違反)
++- [ ] **新規 plugin の場合** `python3 scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている
++- [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` (`xl-skills-full`/`-minimal`/`-intake`) 登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反)
++- [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`)
+ - [ ] P0 lint 8 本 + manifest-contents が全 exit 0 (`workflow-manifest.json phases[id=p0-lint].commands`)。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く)
+ - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み
+ - [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし
+diff --git a/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json b/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
+index aebe85d..47c0095 100644
+--- a/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
++++ b/plugins/skill-creator/skills/run-skill-create/workflow-manifest.json
+@@ -58,14 +58,16 @@
+       "id": "bundle-register",
+       "step": 3.5,
+       "gate": null,
+-      "title": "bundle 登録判定",
++      "title": "marketplace + bundle 登録判定",
+       "dependsOn": ["manifest-register"],
+       "entryHook": null,
+       "exitHook": null,
+       "resourceIds": [],
+       "delegateSkill": null,
+-      "artifact": ".claude-plugin/bundles.json",
+-      "fatal_exit_codes": []
++      "command": "python3 scripts/validate-plugin-completeness.py --fix",
++      "artifact": [".claude-plugin/marketplace.json", ".claude-plugin/bundles.json"],
++      "comment": "新規 plugin を実体ディレクトリ起点で marketplace.json + bundles.json へ append-only 自動登録し書込後自己再検証。既登録は no-op。最終承認は人間が PR diff で。検出層 (validate-plugin-completeness.py 引数なし) が CI/pre-push の最後の砦。",
++      "fatal_exit_codes": [1]
+     },
+     {
+       "id": "p0-lint",
+diff --git a/plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py b/plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py
+index eaaaae0..8c65527 100644
+--- a/plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py
++++ b/plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py
+@@ -150,6 +150,12 @@ def main() -> int:
+     args = ap.parse_args()
+ 
+     if not MANIFEST.exists() and PLUGIN_MANIFEST.exists():
++        # 本スクリプトは legacy manifest.json (skill-creator plugin 内) 専用。
++        # 新形式 plugin.json plugin のルート marketplace.json / bundles.json への
++        # 登録は責務外であり、`scripts/validate-plugin-completeness.py --fix`
++        # (append-only・冪等・書込後自己再検証) が担う (run-skill-create workflow-manifest
++        # step3.5 bundle-register に配線済)。ここでは plugin.json の必須キーのみ検査して
++        # proposals 空で返す (ルート2 SSOT は触らない)。
+         plugin = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
+         required = ("name", "version", "description")
+         missing = [key for key in required if not plugin.get(key)]
+diff --git a/scripts/lint-plugin-lint-coverage.py b/scripts/lint-plugin-lint-coverage.py
+index 8097665..a82af1c 100755
+--- a/scripts/lint-plugin-lint-coverage.py
++++ b/scripts/lint-plugin-lint-coverage.py
+@@ -24,6 +24,14 @@ validate-frontmatter) の対象 plugin が Makefile / CI yml に per-plugin 手
+ skill を所有する全 plugin が 3 種 lint の `--skills-dir` 対象に含まれることを
+ fail-closed で強制する (新 plugin 追加忘れをここで fail させる)。
+ 
++起点バイアスの依存関係 (elegant-review 20260626-ngs-mechanization):
++  本スクリプトは marketplace.json 起点で巡回するため、marketplace 未登録の
++  新 plugin は被覆判定の母集合に入らず素通りする (「漏れが漏れを隠す」自己強化
++  ループの構造要素)。この盲点は `scripts/validate-plugin-completeness.py` の
++  MK-001 (実体ディレクトリ起点で marketplace 未登録を fail-closed 検出) が
++  上流ゲートとして塞ぐ前提。両者は必ずセットで CI 配線すること
++  (validate-plugin-completeness を外す/弱めると本 lint の盲点が復活する)。
++
+ 被覆判定の定義:
+   - 対象 plugin: marketplace.json 登録済み かつ skills/ 配下に実体 (非 symlink)
+     の skill ディレクトリ (SKILL.md 持ち) を 1 つ以上所有するもの。
+diff --git a/scripts/run-ci-checks.sh b/scripts/run-ci-checks.sh
+index 27e6089..e937d57 100755
+--- a/scripts/run-ci-checks.sh
++++ b/scripts/run-ci-checks.sh
+@@ -113,6 +113,12 @@ else
+   echo "[WARN] jq 未インストールにつき manifest 検証 skip"
+ fi
+ 
++# ── marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) ──
++# 実体ディレクトリ起点で「全 plugin が marketplace.json + bundles.json 両方に登録」を
++# fail-closed 検査する。配線漏れで腐ると登録漏れ (notion-gmail-send 未表示) を永久に
++# 見逃す自己強化ループに陥るため hard 配線で再発を機械遮断する (F4/F5)。
++run "validate-plugin-completeness (MK/BD)" python3 scripts/validate-plugin-completeness.py
++
+ # ── サマリ ──
+ echo
+ echo "========================================"
+diff --git a/scripts/validate-plugin-completeness.py b/scripts/validate-plugin-completeness.py
+index 844c231..cbea4b3 100755
+--- a/scripts/validate-plugin-completeness.py
++++ b/scripts/validate-plugin-completeness.py
+@@ -7,15 +7,35 @@ skills/ agents/ commands/ hooks/ をまとめて配布する。本スクリプ
+   1. plugin ディレクトリに含まれる SKILL.md / agents/*.md / commands/*.md /
+      hooks 定義 を列挙
+   2. .claude-plugin/plugin.json の hooks 宣言と実体ファイルの整合
+-  3. README / .claude/ symlink との照合 (任意)
++  3. ルート .claude-plugin/marketplace.json plugins[] への登録 (MK-001..003) と
++     .claude-plugin/bundles.json への登録 (BD-001) を「実体ディレクトリ起点」で検査
+ 
+-を行い、配布時に欠落するアセットがないことを保証する。
++を行い、配布時に欠落するアセットがないこと・マーケットプレイス/バンドル登録漏れが
++ないことを保証する。
++
++二層防御:
++  - 既定 (引数なし): 検出のみ。未登録があれば exit 1 で fail-closed (CI の最後の砦)。
++  - ``--fix``: 予防。未登録 plugin を marketplace.json / bundles.json へ
++    **append-only** (既存エントリの値を一切書き換えず追記のみ) で自動登録し、書込後に
++    自分の検出を再実行して exit 0 を保証する。skill-creator の生成フロー
++    (build-steps Phase G / workflow-manifest step3.5) から呼ばれ、「作るたびに必ず
++    登録される」を機械保証する。既登録なら no-op (冪等)。最終的な登録是非は人間が
++    PR diff で承認する。
++    なお append の実装は2ファイルで非対称: marketplace.json は tags インライン整形を
++    保つため**バイト単位のテキスト挿入** (既存バイトを 1 byte も触らない)、bundles.json は
++    元から標準 2-space 整形なので ``json.dumps(indent=2)`` で round-trip 再シリアライズ
++    する (既存 plugin 名の集合は不変=値レベル append-only、整形は再正規化されうる)。
++
++検出 (validate) と予防 (--fix) を同一ファイルに同居させ、両者が単一 SSOT として
++drift しないようにしている。
+ """
+ 
+ from __future__ import annotations
+ 
++import argparse
+ import json
+ import pathlib
++import re
+ import shlex
+ import sys
+ 
+@@ -23,6 +43,7 @@ import sys
+ ROOT = pathlib.Path(__file__).resolve().parents[1]
+ PLUGINS_DIR = ROOT / "plugins"
+ BUNDLES_JSON = ROOT / ".claude-plugin" / "bundles.json"
++MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
+ 
+ 
+ def load_bundle_members() -> set[str]:
+@@ -36,6 +57,24 @@ def load_bundle_members() -> set[str]:
+     return members
+ 
+ 
++def load_marketplace_entries() -> dict[str, str]:
++    """marketplace.json plugins[] を {name: source} の dict で返す。
++
++    bundles loader と対称的に、ルート .claude-plugin/marketplace.json を
++    SSOT として読む。name -> source のマップを返すことで、登録漏れ (MK-001) /
++    source 実在 (MK-002) / source basename 一致 (MK-003) の各検査に供する。
++    """
++    if not MARKETPLACE_JSON.exists():
++        return {}
++    data = json.loads(MARKETPLACE_JSON.read_text())
++    entries: dict[str, str] = {}
++    for p in data.get("plugins", []):
++        name = p.get("name")
++        if name is not None:
++            entries[name] = p.get("source", "")
++    return entries
++
++
+ def collect(plugin_dir: pathlib.Path) -> dict:
+     out = {
+         "skills": sorted(p.parent.name for p in plugin_dir.glob("skills/*/SKILL.md")),
+@@ -50,7 +89,12 @@ def collect(plugin_dir: pathlib.Path) -> dict:
+     return out
+ 
+ 
+-def validate(plugin_name: str, data: dict, bundle_members: set[str]) -> list[str]:
++def validate(
++    plugin_name: str,
++    data: dict,
++    bundle_members: set[str],
++    marketplace_entries: dict[str, str],
++) -> list[str]:
+     errs: list[str] = []
+     m = data["manifest"]
+     if m is None:
+@@ -88,29 +132,184 @@ def validate(plugin_name: str, data: dict, bundle_members: set[str]) -> list[str
+     if plugin_name not in bundle_members:
+         errs.append(f"{plugin_name}: not registered in any .claude-plugin/bundles.json bundle (BD-001/BND-001)")
+ 
++    # MK-001: 実体ディレクトリがあるのに marketplace.json plugins[].name に未登録 →
++    # /plugin install のマーケットプレイス一覧に出ない (表示漏れの直接原因)。
++    if plugin_name not in marketplace_entries:
++        errs.append(f"{plugin_name}: not registered in .claude-plugin/marketplace.json plugins[] (MK-001)")
++    else:
++        source = marketplace_entries[plugin_name]
++        # MK-002: marketplace エントリの source が実ディレクトリとして存在するか。
++        source_dir = (ROOT / source).resolve() if source else None
++        if not source or source_dir is None or not source_dir.is_dir():
++            errs.append(f"{plugin_name}: marketplace.json source '{source}' is not an existing directory (MK-002)")
++        # MK-003: source パスの basename が directory 名と一致するか (独立検査)。
++        # name フィールド == directory 名 は上の汎用検査 (manifest.name != directory)
++        # と marketplace_entries の引き方で既に担保されるため、ここは source が
++        # 別ディレクトリを指す取り違えを捕捉する。
++        src_base = pathlib.PurePosixPath(source.rstrip("/")).name if source else ""
++        if src_base != plugin_name:
++            errs.append(
++                f"{plugin_name}: marketplace.json source basename '{src_base}' != directory name (MK-003)"
++            )
++
+     return errs
+ 
+ 
+-def main() -> int:
+-    if not PLUGINS_DIR.exists():
+-        print(f"ERROR: {PLUGINS_DIR} not found", file=sys.stderr)
+-        return 2
++# --- 予防層: --fix (append-only 自動登録) ------------------------------------
++
++def _marketplace_entry_block(name: str, manifest: dict) -> str:
++    """marketplace.json plugins[] へ挿入する 1 エントリを既存スタイル
++    (indent 4 / tags インライン) のテキストで生成する。値は json.dumps で
++    エスケープし、ensure_ascii=False で日本語をそのまま残す。
++    """
++    desc = manifest.get("description", "")
++    ver = manifest.get("version", "0.0.0")
++    cat = manifest.get("category", "productivity")
++    tags = manifest.get("tags") or manifest.get("keywords") or []
++    j = lambda v: json.dumps(v, ensure_ascii=False)
++    return "\n".join([
++        "    {",
++        f'      "name": {j(name)},',
++        f'      "source": {j(f"./plugins/{name}")},',
++        f'      "description": {j(desc)},',
++        f'      "version": {j(ver)},',
++        f'      "category": {j(cat)},',
++        f'      "tags": {j(tags)}',
++        "    }",
++    ])
++
++
++def _insert_marketplace_entry(text: str, block: str) -> tuple[str, bool]:
++    """plugins[] の閉じ括弧 (``\\n  ]``) の直前に block を append する。
++    既存バイトを一切書き換えない真の append-only。marker 不在なら (text, False)。
+ 
++    非空 plugins[] (多行整形) は閉じ ``\\n  ]`` の直前へ挿入する。空 plugins[]
++    (``"plugins": []``、新規 marketplace.json 等) は配列を展開して最初の要素にする。
++    """
++    marker = "\n  ]"
++    idx = text.rfind(marker)
++    if idx != -1:
++        return text[:idx] + ",\n" + block + text[idx:], True
++    m = re.search(r'"plugins"\s*:\s*\[\s*\]', text)
++    if m:
++        return text[:m.start()] + '"plugins": [\n' + block + "\n  ]" + text[m.end():], True
++    return text, False
++
++
++def register_missing() -> tuple[list[str], bool]:
++    """実体ディレクトリ起点で未登録 plugin を marketplace.json / bundles.json へ
++    append-only 登録する。戻り値 (actions, changed)。
++    既存エントリは不変更・既登録は no-op (冪等)。
++    """
++    actions: list[str] = []
++    mk_entries = load_marketplace_entries()
++    mk_text = MARKETPLACE_JSON.read_text() if MARKETPLACE_JSON.exists() else None
++    bundles_data = json.loads(BUNDLES_JSON.read_text()) if BUNDLES_JSON.exists() else {"bundles": []}
++    changed_mk = False
++    changed_bd = False
++
++    for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
++        if not plugin_dir.is_dir() or plugin_dir.name.startswith("."):
++            continue
++        name = plugin_dir.name
++        manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
++        if not manifest_path.exists():
++            continue
++        manifest = json.loads(manifest_path.read_text())
++
++        # marketplace.json (テキスト挿入で append-only)
++        if mk_text is not None and name not in mk_entries:
++            block = _marketplace_entry_block(name, manifest)
++            mk_text, ok = _insert_marketplace_entry(mk_text, block)
++            if ok:
++                mk_entries[name] = f"./plugins/{name}"
++                changed_mk = True
++                default_note = (
++                    "" if (manifest.get("category") and manifest.get("tags"))
++                    else "  [category/tags はデフォルト値。PR で要確認]"
++                )
++                actions.append(f"marketplace.json: + {name}{default_note}")
++
++        # bundles.json (bundle_targets を真実源として該当 bundle へ append)
++        targets = manifest.get("bundle_targets") or manifest.get("bundles") or []
++        for bundle_name in targets:
++            bundle = next(
++                (b for b in bundles_data.get("bundles", []) if b.get("name") == bundle_name),
++                None,
++            )
++            if bundle is None:
++                actions.append(
++                    f"bundles.json: ! bundle '{bundle_name}' が存在せず {name} を登録不可 (手動で bundle 作成要)"
++                )
++                continue
++            if name not in bundle.get("plugins", []):
++                bundle.setdefault("plugins", []).append(name)
++                changed_bd = True
++                actions.append(f"bundles.json[{bundle_name}]: + {name}")
++
++    if changed_mk and mk_text is not None:
++        MARKETPLACE_JSON.write_text(mk_text)
++    if changed_bd:
++        BUNDLES_JSON.write_text(json.dumps(bundles_data, ensure_ascii=False, indent=2) + "\n")
++    return actions, (changed_mk or changed_bd)
++
++
++def run_check() -> tuple[list[str], list[str]]:
++    """全 plugin を走査し (summary_lines, all_errs) を返す。検出のみ・副作用なし。"""
+     bundle_members = load_bundle_members()
++    marketplace_entries = load_marketplace_entries()
+     all_errs: list[str] = []
+-    summary = []
++    summary: list[str] = []
+     for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
+         if not plugin_dir.is_dir() or plugin_dir.name.startswith("."):
+             continue
+         data = collect(plugin_dir)
+-        errs = validate(plugin_dir.name, data, bundle_members)
+-        all_errs.extend(errs)
++        all_errs.extend(validate(plugin_dir.name, data, bundle_members, marketplace_entries))
+         summary.append(
+             f"{plugin_dir.name}: skills={len(data['skills'])} "
+             f"agents={len(data['agents'])} commands={len(data['commands'])} "
+             f"hooks={len(data['hooks'])} scripts={len(data['scripts'])} config={len(data['config'])}"
+         )
++    return summary, all_errs
++
++
++def main(argv: list[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument(
++        "--fix",
++        action="store_true",
++        help="未登録 plugin を marketplace.json / bundles.json へ append-only 自動登録し、書込後に再検証する (予防層)。",
++    )
++    args = parser.parse_args(argv)
++
++    if not PLUGINS_DIR.exists():
++        print(f"ERROR: {PLUGINS_DIR} not found", file=sys.stderr)
++        return 2
++
++    if args.fix:
++        actions, changed = register_missing()
++        if actions:
++            print("--fix actions (append-only):")
++            for a in actions:
++                print(f"  {a}")
++        else:
++            print("--fix: 登録漏れなし (no-op)")
++        # 書込後に必ず自己再検証して exit 0 を保証する。残違反があれば surface。
++        summary, all_errs = run_check()
++        if all_errs:
++            for e in all_errs:
++                print(f"VIOLATION {e}", file=sys.stderr)
++            print(
++                f"--fix 後も残違反あり (VIOLATION={len(all_errs)})。"
++                "登録不可 (bundle 不在等) を手動解決すること。",
++                file=sys.stderr,
++            )
++            return 1
++        print(f"--fix OK: {len(summary)} plugin(s) complete"
++              + (" (変更あり)" if changed else " (変更なし)"))
++        return 0
+ 
++    summary, all_errs = run_check()
+     for line in summary:
+         print(line)
+     print("---")
+diff --git a/tests/scripts/test_root__validate-plugin-completeness.py b/tests/scripts/test_root__validate-plugin-completeness.py
+index 4819bd6..0258cc8 100644
+--- a/tests/scripts/test_root__validate-plugin-completeness.py
++++ b/tests/scripts/test_root__validate-plugin-completeness.py
+@@ -1,9 +1,10 @@
+ """scripts/validate-plugin-completeness.py の genuine 機能テスト。
+ 
+-純関数 (load_bundle_members / collect / validate) を tmp_path 上に構築した
+-擬似 plugin ツリーで実入力により呼び、実出力を assert する。main() は
+-PLUGINS_DIR / BUNDLES_JSON を monkeypatch で tmp_path へ向け in-process 駆動し、
+-OK / VIOLATION / PLUGINS_DIR 不在 の returncode を検証する。
++純関数 (load_bundle_members / load_marketplace_entries / collect / validate /
++register_missing / run_check) を tmp_path 上に構築した擬似 plugin ツリーで実入力に
++より呼び、実出力を assert する。main() は PLUGINS_DIR / BUNDLES_JSON /
++MARKETPLACE_JSON / ROOT を monkeypatch で tmp_path へ向け in-process 駆動し、
++OK / VIOLATION / PLUGINS_DIR 不在 / --fix(予防層) の returncode を検証する。
+ network/keychain/Notion 等の外部 I/O は一切なし (純粋なファイル検査スクリプト)。
+ subprocess 経路は実 repo に対し returncode (0 or 1) を許容範囲で検証する。
+ """
+@@ -57,6 +58,11 @@ def _make_plugin(base: Path, name: str, manifest: dict | None = None,
+     return d
+ 
+ 
++def _mk(*names) -> dict[str, str]:
++    """marketplace_entries dict {name: ./plugins/name} を作る簡易ヘルパ。"""
++    return {n: f"./plugins/{n}" for n in names}
++
++
+ # --- load_bundle_members -----------------------------------------------------
+ 
+ def test_load_bundle_members_missing_file_returns_empty(tmp_path, monkeypatch):
+@@ -83,6 +89,23 @@ def test_load_bundle_members_empty_bundles_key(tmp_path, monkeypatch):
+     assert MOD.load_bundle_members() == set()
+ 
+ 
++# --- load_marketplace_entries ------------------------------------------------
++
++def test_load_marketplace_entries_missing_file_returns_empty(tmp_path, monkeypatch):
++    monkeypatch.setattr(MOD, "MARKETPLACE_JSON", tmp_path / "absent.json")
++    assert MOD.load_marketplace_entries() == {}
++
++
++def test_load_marketplace_entries_maps_name_to_source(tmp_path, monkeypatch):
++    mj = tmp_path / "marketplace.json"
++    mj.write_text(json.dumps({"plugins": [
++        {"name": "a", "source": "./plugins/a"},
++        {"name": "b", "source": "./plugins/b"},
++    ]}), encoding="utf-8")
++    monkeypatch.setattr(MOD, "MARKETPLACE_JSON", mj)
++    assert MOD.load_marketplace_entries() == {"a": "./plugins/a", "b": "./plugins/b"}
++
++
+ # --- collect -----------------------------------------------------------------
+ 
+ def test_collect_enumerates_all_asset_kinds(tmp_path):
+@@ -130,24 +153,27 @@ def _data(manifest, **assets):
+     return base
+ 
+ 
+-def test_validate_happy_path_no_errors():
++def test_validate_happy_path_no_errors(tmp_path, monkeypatch):
++    # MK-002 は ROOT/source の実在を見るため、ROOT を tmp に向け実体を用意する。
++    monkeypatch.setattr(MOD, "ROOT", tmp_path)
++    (tmp_path / "plugins" / "p").mkdir(parents=True)
+     data = _data(
+         {"name": "p", "version": "1.0", "description": "d"},
+         skills=["run-a"],
+     )
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert errs == []
+ 
+ 
+ def test_validate_missing_manifest():
+     data = _data(None, skills=["run-a"])
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert errs == ["p: .claude-plugin/plugin.json missing"]
+ 
+ 
+ def test_validate_missing_required_fields():
+     data = _data({"name": "p"}, skills=["run-a"])  # version/description 欠如
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert any("missing 'version'" in e for e in errs)
+     assert any("missing 'description'" in e for e in errs)
+ 
+@@ -157,7 +183,7 @@ def test_validate_name_mismatch():
+         {"name": "wrong", "version": "1", "description": "d"},
+         skills=["run-a"],
+     )
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert any("!= directory name" in e for e in errs)
+ 
+ 
+@@ -171,11 +197,13 @@ def test_validate_declared_hook_not_on_disk():
+         },
+     }
+     data = _data(manifest, skills=["run-a"], hooks=[])  # guard.py がディスクに無い
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert any("declares hooks not on disk" in e and "guard.py" in e for e in errs)
+ 
+ 
+-def test_validate_declared_hook_present_on_disk_ok():
++def test_validate_declared_hook_present_on_disk_ok(tmp_path, monkeypatch):
++    monkeypatch.setattr(MOD, "ROOT", tmp_path)
++    (tmp_path / "plugins" / "p").mkdir(parents=True)
+     manifest = {
+         "name": "p", "version": "1", "description": "d",
+         "hooks": {
+@@ -185,13 +213,13 @@ def test_validate_declared_hook_present_on_disk_ok():
+         },
+     }
+     data = _data(manifest, skills=["run-a"], hooks=["stop.sh"])
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert errs == []
+ 
+ 
+ def test_validate_empty_distribution():
+     data = _data({"name": "p", "version": "1", "description": "d"})  # 全 asset 空
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     assert any("no assets" in e for e in errs)
+ 
+ 
+@@ -200,7 +228,7 @@ def test_validate_not_in_bundle():
+         {"name": "p", "version": "1", "description": "d"},
+         skills=["run-a"],
+     )
+-    errs = MOD.validate("p", data, set())  # bundle メンバーでない
++    errs = MOD.validate("p", data, set(), _mk("p"))  # bundle メンバーでない
+     assert any("not registered in any" in e for e in errs)
+ 
+ 
+@@ -215,32 +243,206 @@ def test_validate_malformed_hook_command_falls_back_to_split():
+         },
+     }
+     data = _data(manifest, skills=["run-a"], hooks=[])
+-    errs = MOD.validate("p", data, {"p"})
++    errs = MOD.validate("p", data, {"p"}, _mk("p"))
+     # fallback split でも h.py が抽出され missing として検出される
+     assert any("h.py" in e for e in errs)
+ 
+ 
+-# --- main(): in-process 駆動 (PLUGINS_DIR / BUNDLES_JSON を tmp に向ける) ----
++# --- validate: marketplace 検査 (MK-001/002/003) -----------------------------
++
++def test_validate_mk001_not_in_marketplace():
++    data = _data(
++        {"name": "p", "version": "1", "description": "d"},
++        skills=["run-a"],
++    )
++    errs = MOD.validate("p", data, {"p"}, {})  # marketplace 未登録
++    assert any("(MK-001)" in e for e in errs)
++
++
++def test_validate_mk002_source_not_existing_dir():
++    data = _data(
++        {"name": "p", "version": "1", "description": "d"},
++        skills=["run-a"],
++    )
++    # name は登録されているが source が実在しない (実 ROOT 下に ./plugins/p なし)
++    errs = MOD.validate("p", data, {"p"}, {"p": "./plugins/p"})
++    assert any("(MK-002)" in e for e in errs)
++
++
++def test_validate_mk003_source_basename_mismatch(tmp_path, monkeypatch):
++    monkeypatch.setattr(MOD, "ROOT", tmp_path)
++    # source が別ディレクトリを指す取り違え。basename 'other' != 'p'。
++    (tmp_path / "plugins" / "other").mkdir(parents=True)
++    data = _data(
++        {"name": "p", "version": "1", "description": "d"},
++        skills=["run-a"],
++    )
++    errs = MOD.validate("p", data, {"p"}, {"p": "./plugins/other"})
++    assert any("(MK-003)" in e for e in errs)
++    # basename 取り違えは独立検査であり、name フィールド一致とは別物
++    assert not any("(MK-002)" in e for e in errs)  # other は実在するので MK-002 は出ない
++
++
++# --- register_missing: 予防層 (--fix のコア) ---------------------------------
++
++def _setup_repo(tmp_path, monkeypatch, *, plugins, marketplace, bundles):
++    """tmp に plugins/ marketplace.json bundles.json を構築し globals を向ける。"""
++    pdir = tmp_path / "plugins"
++    pdir.mkdir(exist_ok=True)
++    for name, manifest in plugins.items():
++        _make_plugin(pdir, name, manifest=manifest, skills=["run-a"])
++    mj = tmp_path / ".claude-plugin" / "marketplace.json"
++    mj.parent.mkdir(parents=True, exist_ok=True)
++    mj.write_text(json.dumps(marketplace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
++    bj = tmp_path / ".claude-plugin" / "bundles.json"
++    bj.write_text(json.dumps(bundles, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
++    monkeypatch.setattr(MOD, "ROOT", tmp_path)
++    monkeypatch.setattr(MOD, "PLUGINS_DIR", pdir)
++    monkeypatch.setattr(MOD, "MARKETPLACE_JSON", mj)
++    monkeypatch.setattr(MOD, "BUNDLES_JSON", bj)
++    return mj, bj
++
++
++def test_register_missing_appends_marketplace_and_bundle(tmp_path, monkeypatch):
++    mj, bj = _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["full"]}},
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    actions, changed = MOD.register_missing()
++    assert changed is True
++    assert any("marketplace.json: + new" in a for a in actions)
++    assert any("bundles.json[full]: + new" in a for a in actions)
++    # 書込後の検査で new に MK/BD 違反が無いこと
++    _, errs = MOD.run_check()
++    assert not any("new:" in e for e in errs)
++    mk = json.loads(mj.read_text())
++    assert any(p["name"] == "new" and p["source"] == "./plugins/new" for p in mk["plugins"])
++    bd = json.loads(bj.read_text())
++    assert "new" in bd["bundles"][0]["plugins"]
++
++
++def test_register_missing_idempotent(tmp_path, monkeypatch):
++    mj, bj = _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["full"]}},
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    MOD.register_missing()
++    actions2, changed2 = MOD.register_missing()  # 2 回目は no-op
++    assert changed2 is False
++    assert actions2 == []
++
++
++def test_register_missing_appendonly_preserves_existing_bytes(tmp_path, monkeypatch):
++    # 既存エントリ (tags インライン・日本語 description) のバイトが不変であること。
++    existing = {
++        "plugins": [
++            {"name": "old", "source": "./plugins/old",
++             "description": "既存の日本語説明", "version": "1.0.0",
++             "category": "productivity", "tags": ["a", "b"]},
++        ]
++    }
++    mj, bj = _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={
++            "old": {"name": "old", "version": "1.0.0", "description": "既存の日本語説明",
++                     "bundle_targets": ["full"]},
++            "new": {"name": "new", "version": "0.1.0", "description": "新規",
++                     "bundle_targets": ["full"]},
++        },
++        marketplace=existing,
++        bundles={"bundles": [{"name": "full", "plugins": ["old"]}]},
++    )
++    before = mj.read_text()
++    MOD.register_missing()
++    after = mj.read_text()
++    # append-only: plugins[] 閉じ括弧より前の既存バイトは after の接頭辞として温存
++    cut = before.rfind("\n  ]")
++    assert cut != -1
++    assert after.startswith(before[:cut])
++    assert '"name": "new"' in after
++    # 'old' は二重登録されない
++    names = [p["name"] for p in json.loads(after)["plugins"]]
++    assert names.count("old") == 1
++
++
++def test_register_missing_unknown_bundle_reports_and_residual_fail(tmp_path, monkeypatch):
++    # bundle_targets が存在しない bundle を指す → 自動作成せず警告。BD-001 が残違反。
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["nonexistent"]}},
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    actions, _ = MOD.register_missing()
++    assert any("bundle 'nonexistent'" in a and "登録不可" in a for a in actions)
++    _, errs = MOD.run_check()
++    assert any("(BD-001" in e for e in errs)  # bundle 登録は残違反
++
++
++def test_register_missing_default_note_when_no_category_tags(tmp_path, monkeypatch):
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["full"]}},  # category/tags なし
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    actions, _ = MOD.register_missing()
++    assert any("PR で要確認" in a for a in actions)
++
++
++# --- _marketplace_entry_block / _insert_marketplace_entry (unit) -------------
++
++def test_marketplace_entry_block_inline_tags_and_japanese():
++    block = MOD._marketplace_entry_block(
++        "ng", {"description": "日本語の説明", "version": "0.1.0",
++               "category": "productivity", "tags": ["x", "y"]})
++    assert '"tags": ["x", "y"]' in block       # インライン
++    assert "日本語の説明" in block               # ensure_ascii=False
++    assert '"source": "./plugins/ng"' in block
++    assert block.startswith("    {")            # indent 4
++
++
++def test_insert_marketplace_entry_is_append_only():
++    text = '{\n  "plugins": [\n    {\n      "name": "a"\n    }\n  ]\n}\n'
++    block = '    {\n      "name": "b"\n    }'
++    out, ok = MOD._insert_marketplace_entry(text, block)
++    assert ok is True
++    # 既存 'a' エントリまでのバイトは不変
++    idx = text.index('"name": "a"')
++    assert out[:idx] == text[:idx]
++    assert '"name": "b"' in out
++    assert json.loads(out)["plugins"] == [{"name": "a"}, {"name": "b"}]
++
++
++def test_insert_marketplace_entry_marker_absent_returns_false():
++    out, ok = MOD._insert_marketplace_entry("not json with marker", "blk")
++    assert ok is False
++
++
++# --- main(): in-process 駆動 -------------------------------------------------
+ 
+ def test_main_plugins_dir_missing_returns_2(tmp_path, monkeypatch, capsys):
+     monkeypatch.setattr(MOD, "PLUGINS_DIR", tmp_path / "absent")
+-    assert MOD.main() == 2
++    assert MOD.main([]) == 2
+     assert "not found" in capsys.readouterr().err
+ 
+ 
+ def test_main_all_complete_returns_0(tmp_path, monkeypatch, capsys):
+-    plugins = tmp_path / "plugins"
+-    plugins.mkdir()
+-    _make_plugin(
+-        plugins, "good",
+-        manifest={"name": "good", "version": "1", "description": "d"},
+-        skills=["run-a"],
++    mj, bj = _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"good": {"name": "good", "version": "1", "description": "d"}},
++        marketplace={"plugins": [{"name": "good", "source": "./plugins/good"}]},
++        bundles={"bundles": [{"plugins": ["good"]}]},
+     )
+-    bj = tmp_path / "bundles.json"
+-    bj.write_text(json.dumps({"bundles": [{"plugins": ["good"]}]}), encoding="utf-8")
+-    monkeypatch.setattr(MOD, "PLUGINS_DIR", plugins)
+-    monkeypatch.setattr(MOD, "BUNDLES_JSON", bj)
+-    rc = MOD.main()
++    rc = MOD.main([])
+     out = capsys.readouterr().out
+     assert rc == 0
+     assert "OK: 1 plugin(s) complete" in out
+@@ -248,15 +450,14 @@ def test_main_all_complete_returns_0(tmp_path, monkeypatch, capsys):
+ 
+ 
+ def test_main_violation_returns_1(tmp_path, monkeypatch, capsys):
+-    plugins = tmp_path / "plugins"
+-    plugins.mkdir()
+-    # bundle 未登録 + version/description 欠如 -> VIOLATION
+-    _make_plugin(plugins, "bad", manifest={"name": "bad"}, skills=["run-a"])
+-    bj = tmp_path / "bundles.json"
+-    bj.write_text(json.dumps({"bundles": []}), encoding="utf-8")
+-    monkeypatch.setattr(MOD, "PLUGINS_DIR", plugins)
+-    monkeypatch.setattr(MOD, "BUNDLES_JSON", bj)
+-    rc = MOD.main()
++    # bundle 未登録 + marketplace 未登録 + version/description 欠如 -> VIOLATION
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"bad": {"name": "bad"}},
++        marketplace={"plugins": []},
++        bundles={"bundles": []},
++    )
++    rc = MOD.main([])
+     captured = capsys.readouterr()
+     assert rc == 1
+     assert "VIOLATION" in captured.err
+@@ -264,25 +465,64 @@ def test_main_violation_returns_1(tmp_path, monkeypatch, capsys):
+ 
+ 
+ def test_main_skips_dotdir_entries(tmp_path, monkeypatch, capsys):
+-    plugins = tmp_path / "plugins"
+-    plugins.mkdir()
+-    (plugins / ".hidden").mkdir()  # dot-dir は無視
+-    _make_plugin(
+-        plugins, "good",
+-        manifest={"name": "good", "version": "1", "description": "d"},
+-        skills=["run-a"],
++    mj, bj = _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"good": {"name": "good", "version": "1", "description": "d"}},
++        marketplace={"plugins": [{"name": "good", "source": "./plugins/good"}]},
++        bundles={"bundles": [{"plugins": ["good"]}]},
+     )
+-    bj = tmp_path / "bundles.json"
+-    bj.write_text(json.dumps({"bundles": [{"plugins": ["good"]}]}), encoding="utf-8")
+-    monkeypatch.setattr(MOD, "PLUGINS_DIR", plugins)
+-    monkeypatch.setattr(MOD, "BUNDLES_JSON", bj)
+-    rc = MOD.main()
++    (MOD.PLUGINS_DIR / ".hidden").mkdir()  # dot-dir は無視
++    rc = MOD.main([])
+     out = capsys.readouterr().out
+     assert rc == 0
+     assert ".hidden" not in out
+     assert "OK: 1 plugin(s)" in out
+ 
+ 
++def test_main_fix_registers_and_self_revalidates_exit0(tmp_path, monkeypatch, capsys):
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["full"]}},
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    rc = MOD.main(["--fix"])
++    out = capsys.readouterr().out
++    assert rc == 0                       # 書込後の自己再検証で exit 0
++    assert "--fix OK" in out
++    assert "+ new" in out
++
++
++def test_main_fix_residual_violation_returns_1(tmp_path, monkeypatch, capsys):
++    # bundle_targets が存在しない bundle → --fix 後も BD-001 残違反で exit 1
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"new": {"name": "new", "version": "0.1.0", "description": "d",
++                          "bundle_targets": ["nonexistent"]}},
++        marketplace={"plugins": []},
++        bundles={"bundles": [{"name": "full", "plugins": []}]},
++    )
++    rc = MOD.main(["--fix"])
++    err = capsys.readouterr().err
++    assert rc == 1
++    assert "残違反あり" in err
++
++
++def test_main_fix_noop_when_all_registered(tmp_path, monkeypatch, capsys):
++    _setup_repo(
++        tmp_path, monkeypatch,
++        plugins={"good": {"name": "good", "version": "1", "description": "d",
++                           "bundle_targets": ["full"]}},
++        marketplace={"plugins": [{"name": "good", "source": "./plugins/good"}]},
++        bundles={"bundles": [{"name": "full", "plugins": ["good"]}]},
++    )
++    rc = MOD.main(["--fix"])
++    out = capsys.readouterr().out
++    assert rc == 0
++    assert "no-op" in out
++
++
+ # --- subprocess: 実 repo に対して実行 (returncode は 0 or 1 を許容) ----------
+ 
+ def test_subprocess_runs_on_real_repo():

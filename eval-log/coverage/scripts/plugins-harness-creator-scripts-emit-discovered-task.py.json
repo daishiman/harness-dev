@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/harness-creator/scripts/emit-discovered-task.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review (30思考法 elegant review + 独立再検証)。compile OK / # /// script frontmatter 完備。外ループ (spec-improvement loop) の consumer 側 emit 口。build_discovered_task() は --discovering-task-id を task-graph の node id 集合に対し実在検証 (不在 exit1)。producer discovered-task.schema.json 準拠 form を構築 (必須キー+proposed_node 6キー充足・status 非書込=pending)、--change-level additive|structural (stall spec-gap 由来は structural)。既定出力は resolve_build_dir() (C02 SSOT import) 由来 inbox。E4 境界担保: improvement-handoff を一切 import/参照せず plan 本体書込なし (emit のみ)。TESTS: test_emit_discovered_task.py 23 PASS (schema required 照合・E3非参照 grep 含む)。exit 0/1(discovering不在)/2(IO)。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

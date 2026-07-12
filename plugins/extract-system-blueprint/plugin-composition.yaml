@@ -1,0 +1,129 @@
+# CapabilityBundle 宣言 — plugins/extract-system-blueprint
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: extract-system-blueprint の公開 Capability・依存 DAG・統治を宣言する SSOT。
+#       .claude-plugin/plugin.json の entry_points / hooks 配線と 1 対 1 対応する。
+#       build 軸の唯一 SSOT は plugin-plans/extract-system-blueprint/component-inventory.json (15 component)。
+
+name: extract-system-blueprint
+description: 参考システムの公開 URL を認可・低負荷 budget 内で調査し、静的 HTTP(WebFetch/stdlib 静的 DOM 観測)と browser-render(MCP 非依存のローカル headless Chrome via Bash)の観測 fact・根拠つき inference・欠測(observation_gap。JS 実行後 DOM/画面遷移/screenshot は browser-render 取得時のみ fact・ブラウザ不在時は gap)を明示区別した md+json+Mermaid の章別ブループリントをローカルへ生成するハーネス。外部サービス連携(MCP/Notion)なしで自己完結し、fact/inference/確度分離で C2 を構造担保する。
+kind: plugin-composition
+version: 0.2.0
+owner: harness maintainers
+since: 2026-07-10
+last-audited: 2026-07-11
+# 単独配布対応: 配布登録は manual-user-gated で保留中 (登録時に marketplace bundle harness-full へ追加予定・ROADMAP 参照)。共有 script (C09-C12) を plugin-root へ hoist し携帯性を満たすため vendoring は不要 (inventory plugin_level_surfaces.vendor omitted_reason)。
+distribution: marketplace-bundle
+
+contract:
+  intent: 参考システムの URL 1 件から、フロント表層の事実(content/tech_signals/security/compliance/site_inventory 等の静的 HTTP 観測)と、バックエンド機構・UIUX 設計意図・コンテンツ伝達意図・本質(JTBD)の根拠つき推測を明示区別し、5 種の Mermaid 図を含む章別ドキュメント群をローカルへ生成する。取得(fetch)→分析(fact/backend/uiux/content/essence の 5 方向)→文書化→独立 verdict による品質評価→自社適用 を単一責務 component へ分離した薄い orchestrator を核に、認可外 fetch を機械層で fail-closed 遮断する。外部サービス連携(MCP/Notion)は持たない。
+  interface:
+    inputs: [target-url, operator-policy, crawl-mode, schemas/fact-inference-confidence.schema.json, schemas/system-blueprint.schema.json, references/expert-lens-roster.md]
+    outputs: [blueprint.md, blueprint.json, mermaid/, rendered/, verdict.json, apply-recommendations.json]
+  invariant:
+    # enforcement 注記: 機械執行(hook/lint/script)がある項目はその名前を、無い項目は manual を併記する。
+    - "抽出結果は fact / inference / observation_gap を相互排他の discriminator で分離し、inference には evidence_refs(minItems=1)+confidence を、gap には not_observed/blocked+reason を必須化して fact へ混入させないこと(C2 構造担保) (enforcement: schemas/fact-inference-confidence.schema.json + scripts/doc-emit.py --check-screens の schema/provenance 検査)"
+    - "認可外・予算外の対象 URL フェッチ(Bash/WebFetch 経由)を PreToolUse で捕捉し、C12 の AuthzEvidence と残予算(request/byte/pages)を検査して deny|unknown・期限切れ・予算超過なら exit2 で遮断すること (enforcement: hooks/pre-fetch-authz-guard.py fetch-authz exit2 + scripts/authz-classify.py AuthzEvidence/budget SSOT)"
+    - "生成物はローカルで完結し、外部サービス(MCP/Notion 等)へ egress・公開しないこと。C02 の独立 verdict(verdict=PASS/FAIL・draft_hash 束縛)は proposer(C01)≠approver(C02) のローカル品質ゲートであり、公開判定には用いない (enforcement: plugin.json に network 権限なし + manual)"
+    - "瞬間負荷レバー(origin 並列 1・最小間隔 2000ms・Retry-After 尊重・有界 backoff・stop 条件)は crawl_mode=single/full_site の両モードで一切緩めず、full_site も per-run 有界予算 + multi-run resume で全 URL へ到達すること。既定引上げはユーザー承認対象 (enforcement: scripts/authz-classify.py load_policy/crawl_profile SSOT を C08/C09 が消費)"
+    - "共有決定論 script(C09-C12)は plugin-root scripts/ へ hoist し、複数 builder 境界(C01 自己検証と C02 独立評価)が同一ロジックで判定して基準乖離を防ぐこと(SSOT)。doc-emit.py --check-screens / --check-apply と mermaid-validate.py は生成側と承認側の共有 entrypoint (enforcement: manual + scripts/doc-emit.py・scripts/mermaid-validate.py の共有起動)"
+    - "各 analyzer(C03-C06/C13)の実プロンプトへ著名エンジニア名付き原則レンズ見出し・cross-lens conflicts・neutral synthesis を展開し、本人/組織の口調模倣・レビュー/承認/推薦主張をせず、レンズ由来主張も evidence_refs+confidence 必須で fact へ混入させないこと (enforcement: manual + references/expert-lens-roster.md ↔ inventory expert_lenses/prompt_contract 展開 + lint-agent-prompt-section)"
+    - "C03 の観測源は 静的 HTTP(WebFetch/C09 snapshot)+ MCP 非依存の browser-render(C15: ローカル headless Chrome を Bash 経由 subprocess 起動。MCP サーバー接続ではない)。browser-render で JS 実行後 DOM・viewport screenshot を取得し、ブラウザバイナリが解決できない環境では該当観測のみ observation_gap(blocked, reason=browser-unavailable)へ縮退して静的観測で続行すること(fact/gap 分離を保つ) (enforcement: scripts/browser-render.py の C12 import fail-closed + schemas/fact-inference-confidence.schema.json の gap 分離 + manual)"
+    - "sub-agent/skill 本文は prompt-creator 7 層構造(L1 基本定義 → L7 ユーザーインタラクション)で記述し、実行パスは全て $CLAUDE_PLUGIN_ROOT 起点とすること (enforcement: validate-frontmatter + lint-agent-prompt-section + manual)"
+
+capabilities:
+  # === Skills (kind=skill) — .claude-plugin/plugin.json entry_points.skills と一致 ===
+  - { kind: skill, ref: skills/run-extract-blueprint,             tier: core }       # C01 抽出本体 orchestrator
+  - { kind: skill, ref: skills/assign-blueprint-fidelity-evaluator, tier: core }     # C02 proposer≠approver 独立忠実性評価
+  - { kind: skill, ref: skills/run-blueprint-apply,              tier: core }        # C14 自社適用 recommendations 導出 (下流 run)
+
+  # === Agents (kind=agent) — context:fork の SubAgent・plugin.json agents 配線と 1 対 1 ===
+  - { kind: agent, ref: agents/frontend-surface-analyzer,        tier: core }        # C03 fact (visual/content/tech/CWV/security/compliance/site)
+  - { kind: agent, ref: agents/backend-inference-analyzer,       tier: core }        # C04 backend/named 同定/security_design/delivery_topology 推測
+  - { kind: agent, ref: agents/uiux-rationale-analyzer,          tier: core }        # C05 UIUX 根拠 + user_journeys 推測
+  - { kind: agent, ref: agents/content-intent-analyzer,          tier: core }        # C13 コンテンツ/伝達意図 (JTBD) 推測
+  - { kind: agent, ref: agents/architecture-essence-synthesizer, tier: core }        # C06 本質統合 + 5 種 Mermaid + 合成 design-token
+
+  # === Commands (kind=command) ===
+  - { kind: command, ref: commands/extract-blueprint,            tier: core }        # C07
+
+  # === Hooks (kind=hook) — plugin.json PreToolUse 配線と 1 対 1 対応 ===
+  # 単一 hook が単一述語 (fetch-authz) を担い、matcher=Bash|WebFetch で取得経路を被覆する。
+  - { kind: hook, ref: "hook:PreToolUse/pre-fetch-authz-guard",  tier: core }        # C08 fail-closed-exit2
+
+  # === Scripts (kind=script) — plugin-root scripts/ 実体 7 本と集合一致 (共有決定論 C09-C12 の 4 本 + MCP 非依存 browser 取得 1 本 + layout dedup 1 本 + goal-seek 共有 validator 1 本) ===
+  - { kind: script, ref: scripts/authz-classify.py,             tier: core }         # C12 AuthzEvidence + budget/crawl_profile SSOT
+  - { kind: script, ref: scripts/fetch-snapshot.py,             tier: core }         # C09 HTTP snapshot + URL discovery + security/compliance + stdlib 静的 DOM 観測 (static-observation.json)
+  - { kind: script, ref: scripts/browser-render.py,             tier: core }         # C15 MCP 非依存 headless Chrome (Bash) で JS 後 DOM + screenshot 取得・不在時 graceful 縮退
+  - { kind: script, ref: scripts/mermaid-validate.py,           tier: core }         # C10 5 種必須図の存在+構文ゲート
+  - { kind: script, ref: scripts/doc-emit.py,                   tier: core }         # C11 md/json/SVG/manifest ライター + --check-screens/--check-apply
+  - { kind: script, ref: scripts/layout-template-dedup.py,      tier: core }         # C03 layout_template_hash 同一群の代表 layout 決定論選択
+  - { kind: script, ref: scripts/validate-goal-seek-anchor.py,  tier: core }         # C01/C14 共有の goal-seek anchor 改竄検出 validator
+
+dependencies:
+  # 主要 DAG(循環なし)。build 軸の被覆正本は component-inventory.json、人間可読ライフサイクルは plugin-plans/extract-system-blueprint/phase-01..13.md。
+  # --- command → skill 構造エッジ (entry points) ---
+  - { from: commands/extract-blueprint, to: skills/run-extract-blueprint,             type: calls }   # C07→C01
+  - { from: commands/extract-blueprint, to: skills/assign-blueprint-fidelity-evaluator, type: reads }  # C07→C02 verdict 参照
+  # --- skill(C01) → analyzer 委譲 (R2-analyze の順連鎖) ---
+  - { from: skills/run-extract-blueprint, to: agents/frontend-surface-analyzer,        type: calls }   # C01→C03
+  - { from: skills/run-extract-blueprint, to: agents/backend-inference-analyzer,       type: calls }   # C01→C04
+  - { from: skills/run-extract-blueprint, to: agents/uiux-rationale-analyzer,          type: calls }   # C01→C05
+  - { from: skills/run-extract-blueprint, to: agents/content-intent-analyzer,          type: calls }   # C01→C13
+  - { from: skills/run-extract-blueprint, to: agents/architecture-essence-synthesizer, type: calls }   # C01→C06
+  # --- analyzer 間 fact→inference DAG ---
+  - { from: agents/frontend-surface-analyzer,        to: scripts/fetch-snapshot.py,    type: reads }   # C03→C09 snapshot 消費
+  - { from: agents/backend-inference-analyzer,       to: agents/frontend-surface-analyzer, type: reads } # C04→C03 fact 起点
+  - { from: agents/uiux-rationale-analyzer,          to: agents/frontend-surface-analyzer, type: reads } # C05→C03 fact 起点
+  - { from: agents/content-intent-analyzer,          to: agents/frontend-surface-analyzer, type: reads } # C13→C03 fact 起点
+  - { from: agents/architecture-essence-synthesizer, to: agents/backend-inference-analyzer, type: reads } # C06 統合
+  - { from: agents/architecture-essence-synthesizer, to: agents/uiux-rationale-analyzer,    type: reads } # C06 統合
+  - { from: agents/architecture-essence-synthesizer, to: agents/content-intent-analyzer,    type: reads } # C06 統合
+  - { from: agents/architecture-essence-synthesizer, to: scripts/mermaid-validate.py,       type: calls } # C06→C10 図検証
+  - { from: agents/architecture-essence-synthesizer, to: scripts/doc-emit.py,               type: calls } # C06→C11 design-token emit
+  # --- fetch/authz 決定論チェーン ---
+  - { from: scripts/fetch-snapshot.py,  to: scripts/authz-classify.py,                 type: reads }   # C09→C12 AuthzEvidence/budget 消費
+  - { from: scripts/browser-render.py,  to: scripts/authz-classify.py,                 type: reads }   # C15→C12 evidence/budget を import 共有し fail-closed
+  - { from: agents/frontend-surface-analyzer, to: scripts/browser-render.py,           type: calls }   # C03→C15 Bash 経由で headless Chrome 起動 (MCP 非接続)
+  - { from: "hook:PreToolUse/pre-fetch-authz-guard", to: scripts/authz-classify.py,    type: reads }   # C08→C12 evidence/残予算検査
+  # --- 文書化・自己検証 (C01 R3) ---
+  - { from: skills/run-extract-blueprint, to: scripts/doc-emit.py,                      type: calls }   # C01→C11 章別 draft emit
+  - { from: skills/run-extract-blueprint, to: scripts/mermaid-validate.py,              type: calls }   # C01→C10 5 種図自己検証
+  # --- 独立評価 (C02) は生成側と同一決定論 entrypoint を共有 ---
+  - { from: skills/assign-blueprint-fidelity-evaluator, to: skills/run-extract-blueprint, type: reads } # C02→C01 成果物を独立評価
+  - { from: skills/assign-blueprint-fidelity-evaluator, to: scripts/mermaid-validate.py, type: calls }  # C02→C10 同一図検証
+  - { from: skills/assign-blueprint-fidelity-evaluator, to: scripts/doc-emit.py,         type: calls }  # C02→C11 --check-screens 独立評価
+  # --- 自社適用 (C14) は C01 blueprint + C02 PASS を前提に inference-only recommendations を導出 ---
+  - { from: skills/run-blueprint-apply, to: skills/run-extract-blueprint,               type: reads }   # C14→C01 blueprint 参照
+  - { from: skills/run-blueprint-apply, to: skills/assign-blueprint-fidelity-evaluator, type: reads }   # C14→C02 PASS 前提
+  - { from: skills/run-blueprint-apply, to: scripts/doc-emit.py,                         type: calls }   # C14→C11 --check-apply fail-closed 検査
+  # --- 非共有 recount (C02 専用: skill 内 scripts/ に置き C11 と独立経路の common-mode 破りを担う。plugin-root scripts/ とは非共有) ---
+  - { from: skills/assign-blueprint-fidelity-evaluator, to: skills/assign-blueprint-fidelity-evaluator/scripts/recount-palette-orphans.py, type: calls } # C02→非共有 palette 孤児再計数
+  # --- goal-seek anchor 検証 (C01/C14 が周回末に共有 validator を起動) ---
+  - { from: skills/run-extract-blueprint, to: scripts/validate-goal-seek-anchor.py,      type: calls }   # C01 周回末 anchor 改竄検出
+  - { from: skills/run-blueprint-apply,   to: scripts/validate-goal-seek-anchor.py,      type: calls }   # C14 周回末 anchor 改竄検出
+  # --- reference / schema 参照 ---
+  - { from: skills/run-extract-blueprint, to: schemas/system-blueprint.schema.json,      type: reads }
+  - { from: skills/run-extract-blueprint, to: schemas/fact-inference-confidence.schema.json, type: reads }
+  - { from: agents/frontend-surface-analyzer, to: references/expert-lens-roster.md,       type: reads }
+
+eval_sinks:
+  - EVALS.json
+  - eval-log/   # 実体は repo-root eval-log/extract-system-blueprint/ (揮発・gitignore。plugin 配下には置かない)
+
+governance:
+  rubric_refs:
+    - skills/assign-blueprint-fidelity-evaluator/references/evaluation-rubric.md
+  changelog: CHANGELOG.md
+  roadmap: ROADMAP.md
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+
+observability:
+  hooks:
+    - PreToolUse/pre-fetch-authz-guard
+  # metrics は宣言のみ。素材は各 run の request ledger(fetch-snapshot.py 出力)と C02 verdict receipt。
+  metrics:
+    - fetch_budget_utilization_per_origin
+    - fact_inference_gap_ratio
+    - verdict_pass_rate
+  lessons_path: eval-log/   # 実体は repo-root eval-log/extract-system-blueprint/ (揮発・gitignore)

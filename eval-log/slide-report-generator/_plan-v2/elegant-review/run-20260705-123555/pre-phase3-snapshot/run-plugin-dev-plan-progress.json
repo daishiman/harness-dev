@@ -1,0 +1,60 @@
+{
+  "target_plugin_slug": "slide-report-generator",
+  "plan_dir": "plugin-plans/slide-report-generator-v2",
+  "iteration": 2,
+  "original_goal_hash": "6bb0150952e4b028fb82283f07dff52f3dcbee48c121a1c30b1d01f10073eb1d",
+  "responsibility": "R2-R3 (plugin-dev-plan-architect)。iteration0=初回生成 (全11ゲート exit0)。iteration1=R4 medium findings 2件 (references『55』誤記/16 sub-agent 行数陳腐化) の差分修正 (2026-07-05・component-inventory.json no_split_threshold.measured_at=09:31 JST snapshot へ全数値統一・diffのみ・全書換なし)。",
+  "checklist_status": [
+    {
+      "id": "C1",
+      "addressed_by": "component-inventory.json components[C04..C19].rebalance_disposition/rebalance_rationale",
+      "note": "16 sub-agent 全件に maintain/thin-adapter 区分と実測行数根拠を明示 (thin-adapterのみ delegation_target/extracted_reference も付与)。iteration1で行数を measured_at=2026-07-05 09:31 JST snapshot へ更新"
+    },
+    {
+      "id": "C2",
+      "addressed_by": "component-inventory.json components[C01..C03].progressive_disclosure",
+      "note": "3 skill 全件に skill_md_scope/references_new[]/scripts_new/no_split_reason を明示"
+    },
+    {
+      "id": "C3",
+      "addressed_by": "component-inventory.json no_split_threshold ブロック + 各 thin-adapter component の rebalance_rationale",
+      "note": "分離コスト<分離便益の判定根拠 (baseline cluster 328-342行=maintain / overage 410-990行=thin-adapter・measured_at=2026-07-05 09:31 JST) を明示・無条件分割にしていない"
+    },
+    {
+      "id": "C4",
+      "addressed_by": "component-inventory.json 全24 components の placement_scope フィールド",
+      "note": "skill配下=skill(C04-C22)・plugin-root共有=plugin-root(C23,C24)を明示"
+    },
+    {
+      "id": "C5",
+      "addressed_by": "component-inventory.json + phase-01..13 + index.md",
+      "note": "core 5 scripts で決定論検証 (本ファイル末尾の実行ログ参照)"
+    },
+    {
+      "id": "C6",
+      "addressed_by": "handoff-run-plugin-dev-plan.json routes[] (24件)",
+      "note": "全route が builder/build_kind/build_args/build_target を保持・C24新設route追加・C01-C03のdepends_onにC24反映"
+    },
+    {
+      "id": "C7",
+      "addressed_by": "index.md 基本定義#スコープ含まない + phase-01/02/08 のスコープ外節 + component-inventory.json plugin_level_surfaces.vendor/schemas",
+      "note": "vendor Node engine と意匠/技術コアSSOTは無変更・再設計対象はagent⇔skill間の情報配置境界のみと明示"
+    }
+  ],
+  "gate_runs": [
+    {
+      "round": 1,
+      "at": "2026-07-05 ~09:50 JST",
+      "gates": 12,
+      "result": "all exit0 (orchestrator + R4 独立実行)",
+      "verdict": "PASS (medium 2件: 数値乖離)"
+    },
+    {
+      "round": 2,
+      "at": "2026-07-05 ~10:40 JST",
+      "gates": 12,
+      "result": "all exit0 (orchestrator + R4b 独立実行)",
+      "verdict": "PASS (medium 0件・round-1 medium 2件は解消をR4bが独立再確認)"
+    }
+  ]
+}

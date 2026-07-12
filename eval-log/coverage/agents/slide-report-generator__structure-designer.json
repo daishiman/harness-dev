@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/slide-report-generator/agents/structure-designer.md",
+  "type": "agents",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "reference-existence: prompt_ref=skills/run-slide-report-generate/prompts/R2-agent-structure-designer.md を CLAUDE_PLUGIN_ROOT=plugins/slide-report-generator 読替で実測(実在・461行/33KB・dangling なし)。owner SKILL.md が本 agent の私有 reference を references/structure-design-rules.md(owner=structure-designer)と宣言、ls で実在確認。設計出力の schema=../../schemas/structure.schema.json も plugin-root schemas/ に実在。schema-conformance: name/description(『…structure.json を設計したいときに使う。』トリガ形・句点付き)/kind=agent/version=0.1.0/owner/tools=Read,Write/isolation=fork/model=sonnet/owner_skill=run-slide-report-generate/prompt_ref/prompt_layer=7layer/since/last-audited を確認、adapter tools と prompt SSOT frontmatter tools(Read,Write)一致。tools が Read,Write のみ(設計=Bash 不要)で最小権限適切。owner-flow: owner skill R2『構成設計と仕様確定ゲート』の slide 分岐が Task で structure-designer を起動し structure.json(structure.schema.json 準拠)を設計する設計と一致。Constraints の Phase=R2-structure-gate は manifest phase id(R2-structure-gate)と一致。placement-invariant: 本文は 8 節薄 adapter で slideType 判定/1メッセージ分解規範を再掲せず、詳細正本は prompts/R2-*.md(SSOT ヘッダ明記・Layer1-7 の 7 層本文)側に集約、逆転なし。single-responsibility: slide 構成の 1スライド1メッセージ分解 + 共通仕様セクション付き structure.json 設計に単一凝集(図解は d3-diagram-designer/data-visualizer へ委譲、検証は structure-validator へ分離)。減点材料乏しく良好。mechanical:true は lint-agent-prompt-section.py exit0 前提で妥当。"
+  },
+  "reviewed_by": "harness-ratchet-recovery-agent-eval",
+  "checked": ["reference-existence", "schema-conformance", "owner-flow", "placement-invariant", "single-responsibility"]
+}

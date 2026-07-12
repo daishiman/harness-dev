@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/extract-system-blueprint/verdict.schema.json",
+  "title": "blueprint-fidelity-verdict",
+  "description": "assign-blueprint-fidelity-evaluator (C02) が ESB_VERDICT_DIR へ発行する draft_hash 束縛 verdict receipt。C01 (run-extract-blueprint) が周回内の品質ゲート/差し戻し判定で verdict と draft_hash を読む。additionalProperties:false で余剰キーを禁止する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "verdict",
+    "draft_hash",
+    "evaluated_at",
+    "evaluator",
+    "findings",
+    "observation_completeness",
+    "load_policy_result",
+    "gate_results",
+    "recount",
+    "reconstruction"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "1.0.0"},
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL"],
+      "description": "PASS のときだけ C01 が同一 draft_hash の draft を周回内で受理し次段へ進める。"
+    },
+    "draft_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "評価対象の draft_hash (C01 sink-status.json の値と一致)。verdict はこの hash に束縛される。"
+    },
+    "evaluated_at": {"type": "string", "description": "ISO 8601 + JST offset。"},
+    "evaluator": {"type": "string", "const": "assign-blueprint-fidelity-evaluator"},
+    "findings": {
+      "type": "array",
+      "description": "指摘一覧。該当箇所 (loc) と理由 (reason) と severity を必ず持つ。high が 1 件でもあれば verdict=FAIL。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "loc", "reason", "criterion"],
+        "properties": {
+          "id": {"type": "string"},
+          "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+          "loc": {"type": "string", "description": "blueprint.json のパス / 章別 md / prompt ファイルなど該当箇所。"},
+          "reason": {"type": "string"},
+          "criterion": {
+            "type": "string",
+            "description": "対応する完了チェックリスト id (CL-1..CL-10)。",
+            "pattern": "^CL-[0-9]+$"
+          }
+        }
+      }
+    },
+    "observation_completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["silent_gaps", "key_screen_gaps", "reasoned_gaps"],
+      "properties": {
+        "silent_gaps": {"type": "integer", "minimum": 0, "description": "reason なしの未取得 field / 無言欠落の件数。0 でなければ FAIL 寄与。"},
+        "key_screen_gaps": {"type": "integer", "minimum": 0, "description": "観測捕捉されていない鍵画面の件数。"},
+        "reasoned_gaps": {"type": "integer", "minimum": 0, "description": "not_observed|blocked+reason で明示された gap の件数 (許容)。"}
+      }
+    },
+    "load_policy_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["within_budget", "concurrency_ok", "notes"],
+      "properties": {
+        "within_budget": {"type": "boolean", "description": "request/byte budget を全周で満たしたか。"},
+        "concurrency_ok": {"type": "boolean", "description": "対象 origin 並列 1 を守ったか。"},
+        "screenshot_budget_ok": {"type": "boolean", "description": "C15 browser-render 実行時に screenshot budget を満たしたか (未実行時は省略可、値がある場合のみ評価)。"},
+        "notes": {"type": "string"}
+      }
+    },
+    "gate_results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mermaid_validate", "doc_emit_check_screens"],
+      "properties": {
+        "mermaid_validate": {"$ref": "#/definitions/gate"},
+        "doc_emit_check_screens": {"$ref": "#/definitions/gate"}
+      }
+    },
+    "recount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["orphan_count", "agrees_with_gate", "observed_count", "palette_count"],
+      "properties": {
+        "orphan_count": {"type": "integer", "minimum": 0, "description": "非共有経路で再計数した観測色 palette 孤児数。"},
+        "agrees_with_gate": {"type": "boolean", "description": "C11 の palette 孤児判定と一致したか (common-mode 破り)。"},
+        "observed_count": {"type": "integer", "minimum": 0},
+        "palette_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "reconstruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_level_missing", "open_questions", "scaffold_derivable"],
+      "properties": {
+        "top_level_missing": {"type": "integer", "minimum": 0, "description": "最小スカフォールド逆テストで欠落した top-level 必須フィールド数。"},
+        "open_questions": {"type": "integer", "minimum": 0, "description": "スカフォールド着手に AI が追加ヒアリングを要する未回答質問数。"},
+        "scaffold_derivable": {"type": "boolean", "description": "生成 blueprint から最小スカフォールド骨子を追加ヒアリングなしで導出できたか。"}
+      }
+    }
+  },
+  "definitions": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "exit_code"],
+      "properties": {
+        "status": {"type": "string", "enum": ["pass", "fail"]},
+        "exit_code": {"type": "integer"},
+        "violations": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

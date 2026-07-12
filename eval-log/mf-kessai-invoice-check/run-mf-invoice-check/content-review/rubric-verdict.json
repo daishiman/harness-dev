@@ -1,0 +1,23 @@
+{
+  "target": {"plugin": "mf-kessai-invoice-check", "skill": "run-mf-invoice-check", "skill_md_sha256": "b207b067e934c27bc584e3b0e235007f14a030a0d090d4c9ee02c774eba7959e"},
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-06-30T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1","IN2","OUT1"],
+    "positive_feedback": [
+      "境界明確: 本スキルは MF API の前月−今月差集合による発行漏れチェック(主キー=顧客ID単独)に責務を限定し、シート×MF照合の run-mf-invoice-reconcile(主キー=金額+名前)へは越境していない。collect→verify→finalize→sink の単一責務系列が cohesive。",
+      "SSOT規律: 各責務の完了条件詳細は prompts/Rn の L5.3 を正本とし SKILL 側で再定義しないと明記、Checklist を俯瞰用二値に限定して二重定義/片側ドリフトを構造的に回避。IN1/IN2 は verify_by:test(pytest 機械検証)で検証可能性も担保。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "none"
+  },
+  "notes": "目的適合(発行漏れ早期発見)・境界明確(reconcile との責務分離が漏れなし)・検証可能(IN1/IN2=pytest, OUT1=elegant-review)・SSOT規律(完了条件は prompts/schema へ委譲・本文は俯瞰サマリのみ)・責務単一の各規範を SKILL.md 実読で確認。frontmatter feedback_contract の criteria(IN1/IN2/OUT1)が本文・Key Rules・Gotchas に過不足なく反映され、二重定義や境界逸脱は検出されないため PASS。"
+}

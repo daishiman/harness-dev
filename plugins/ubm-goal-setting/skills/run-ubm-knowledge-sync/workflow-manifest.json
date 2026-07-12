@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-ubm-knowledge-sync",
+  "skill": "run-ubm-knowledge-sync",
+  "description": "UBM knowledge source change detection, extraction, split check, and report flow.",
+  "max_iterations": 5,
+  "phases": [
+    {
+      "id": "phase1-detect",
+      "title": "Source diff detection",
+      "dependsOn": [],
+      "parallel": false,
+      "actor": "detect-knowledge-updates.py",
+      "input": "UBM_VAULT_ROOT/05_Project/UBM and knowledge/registry.json",
+      "output": "NEW/MODIFIED source list excluding goal-setting records",
+      "gate": "registry hash comparison completes; missing vault produces a zero-change report",
+      "command": "python3 scripts/detect-knowledge-updates.py --registry ../../knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM",
+      "fatal_exit_codes": [2],
+      "resourceIds": ["scripts/detect-knowledge-updates.py", "../../knowledge/registry.json"]
+    },
+    {
+      "id": "phase2-extract",
+      "title": "Knowledge extraction",
+      "dependsOn": ["phase1-detect"],
+      "parallel": false,
+      "actor": "run-ubm-knowledge-sync (batch control) + knowledge-extractor",
+      "condition": "dry_run == false and NEW/MODIFIED source count > 0",
+      "input": "NEW/MODIFIED source list, knowledge/schema.json, knowledge/router.json",
+      "output": "updated knowledge JSON, router.json, registry.json, and sync-log.jsonl",
+      "gate": "each processed source has extracted_entry_ids and sync-log entry; batches are limited to 20 files",
+      "resourceIds": ["../../agents/knowledge-extractor.md", "../../knowledge/schema.json", "../../knowledge/router.json"]
+    },
+    {
+      "id": "phase3-split-check",
+      "title": "Knowledge split check",
+      "dependsOn": ["phase2-extract"],
+      "parallel": false,
+      "actor": "check-knowledge-split.py",
+      "condition": "dry_run == false",
+      "input": "knowledge/*.json",
+      "output": "split threshold report",
+      "gate": "no knowledge JSON exceeds the 500-line hard guard",
+      "command": "python3 scripts/check-knowledge-split.py --dir ../../knowledge",
+      "fatal_exit_codes": [1, 2],
+      "resourceIds": ["scripts/check-knowledge-split.py", "references/knowledge-design-principles.md"]
+    },
+    {
+      "id": "phase4-report",
+      "title": "Sync report",
+      "dependsOn": ["phase3-split-check"],
+      "parallel": false,
+      "actor": "run-ubm-knowledge-sync",
+      "input": "detect, extraction, and split-check results",
+      "output": "NEW/MODIFIED counts, destinations, split actions, dry-run status, and residual risks",
+      "gate": "report includes counts, changed paths, skipped paths, dry-run status, and next action when any gate failed",
+      "resourceIds": ["SKILL.md"]
+    },
+    {
+      "id": "phase5-graph-sync",
+      "title": "Knowledge relation extraction and dependency graph validation",
+      "dependsOn": ["phase2-extract"],
+      "parallel": false,
+      "actor": "knowledge-relation-extractor",
+      "condition": "dry_run == false",
+      "input": "updated knowledge/*.json entries",
+      "output": "knowledge-relation-extractor (read-only) returns candidate directed edges as JSON; the caller materializes them to eval-log and validate-knowledge-graph.py --merge-relations idempotently merges them into knowledge/knowledge-relations.json by canonical key (source_id,target_id,relation_type), preserving existing edges (first-write-wins), then writes both knowledge/knowledge-relations.json and the regenerated knowledge/knowledge-graph.json only on validation PASS (atomic)",
+      "gate": "validate-knowledge-graph.py exits 0: edge source_id/target_id reference existing entries, no self-loop, depends_on graph is acyclic, each edge has evidence>=1, confidence in 0..1, and review_status; related associations are undirected and cycle-exempt",
+      "command": "python3 ../../scripts/validate-knowledge-graph.py --knowledge-dir ../../knowledge --merge-relations <c08-candidate> --graph-out ../../knowledge/knowledge-graph.json",
+      "fatal_exit_codes": [1, 2],
+      "note": "knowledge-relations.json / knowledge-graph.json は本 phase の produced output であり事前存在しない (resourceIds には載せない): C08 は書込せず候補を返すのみ・永続化 owner は validate-knowledge-graph.py --merge-relations",
+      "resourceIds": ["../../agents/knowledge-relation-extractor.md", "../../scripts/validate-knowledge-graph.py"]
+    }
+  ]
+}

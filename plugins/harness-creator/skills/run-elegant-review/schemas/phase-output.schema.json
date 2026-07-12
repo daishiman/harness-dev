@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "run-elegant-review/phase-output.schema.json",
+  "title": "Elegant Review Phase Handoff",
+  "description": "Phase1/2/3 各フェーズ間の input/output 共通スキーマ。",
+  "type": "object",
+  "definitions": {
+    "phase1_input": {
+      "type": "object",
+      "required": ["target_type", "target_path"],
+      "properties": {
+        "target_type": {"type": "string", "enum": ["skill", "rubric", "proposal", "kit-component", "script", "config", "agent", "custom"]},
+        "target_path": {"type": "string"},
+        "review_workspace": {"type": "string"}
+      }
+    },
+    "phase1_output": {
+      "type": "object",
+      "required": ["purpose", "scope", "stakeholders", "first_impressions", "facts_vs_assumptions", "concrete_values_to_abstract"],
+      "properties": {
+        "purpose": {"type": "string"},
+        "scope": {"type": "object", "required": ["in_scope", "out_of_scope"], "properties": {"in_scope": {"type": "array", "items": {"type": "string"}}, "out_of_scope": {"type": "array", "items": {"type": "string"}}}},
+        "stakeholders": {"type": "array", "items": {"type": "string"}},
+        "first_impressions": {"type": "array", "items": {"type": "string"}},
+        "facts_vs_assumptions": {"type": "object", "properties": {"facts": {"type": "array", "items": {"type": "string"}}, "assumptions": {"type": "array", "items": {"type": "string"}}}},
+        "concrete_values_to_abstract": {"type": "array", "items": {"type": "object", "required": ["value", "kind"], "properties": {"value": {"type": "string"}, "kind": {"type": "string", "enum": ["proper-noun", "fixed-path", "fixed-url", "fixed-owner", "other"]}}}}
+      }
+    },
+    "phase2_input": {
+      "allOf": [
+        {"$ref": "#/definitions/phase1_output"},
+        {"type": "object", "required": ["target_type", "target_path"], "properties": {"target_type": {"type": "string"}, "target_path": {"type": "string"}}}
+      ]
+    },
+    "phase2_output": {
+      "type": "object",
+      "required": ["paradigm_findings", "four_conditions", "variable_abstraction", "thought_method_coverage"],
+      "properties": {
+        "paradigm_findings": {"type": "array", "minItems": 0, "maxItems": 30},
+        "four_conditions": {"type": "object"},
+        "variable_abstraction": {"type": "array"},
+        "thought_method_coverage": {"type": "object"},
+        "agent_outputs": {"type": "object", "properties": {"elegant-logical-structural-analyst": {"type": "object"}, "elegant-meta-divergent-analyst": {"type": "object"}, "elegant-system-strategic-analyst": {"type": "object"}}}
+      }
+    },
+    "phase3_input": {
+      "allOf": [
+        {"$ref": "#/definitions/phase2_output"},
+        {"type": "object", "properties": {"iteration_count": {"type": "integer", "minimum": 0, "maximum": 3}}}
+      ]
+    },
+    "phase3_output": {
+      "type": "object",
+      "required": ["changed_paths", "validation_commands", "residual_risks", "convergence_status"],
+      "properties": {
+        "changed_paths": {"type": "array", "items": {"type": "string"}},
+        "validation_commands": {"type": "array", "items": {"type": "string"}},
+        "residual_risks": {"type": "array", "items": {"type": "string"}},
+        "convergence_status": {"type": "string", "enum": ["complete", "in_progress", "diverging", "human_escalate", "incomplete"]},
+        "iteration_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "four_conditions": {"type": "object", "properties": {"C1": {"type": "string"}, "C2": {"type": "string"}, "C3": {"type": "string"}, "C4": {"type": "string"}}}
+      }
+    }
+  }
+}

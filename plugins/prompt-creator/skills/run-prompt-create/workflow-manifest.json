@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "workflowId": "run-prompt-create",
+  "skill": "run-prompt-create",
+  "description": "run-prompt-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。run-skill-create と対称構造。",
+  "phases": [
+    {
+      "id": "elicit",
+      "step": 1,
+      "gate": 1,
+      "title": "プロンプト要求ヒアリング",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": "validate-prompt-brief",
+      "resourceIds": [
+        "schemas/prompt-brief.schema.json",
+        "prompts/R1-elicit.md",
+        "prompts/R2-gate-review.md"
+      ],
+      "delegateSkill": "run-prompt-elicit",
+      "fatal_exit_codes": [2],
+      "handoff": "eval-log/handoff-after_prompt_elicit.json"
+    },
+    {
+      "id": "build",
+      "step": 2,
+      "gate": null,
+      "title": "7 層プロンプト生成",
+      "dependsOn": ["elicit"],
+      "entryHook": "load-prompt-brief",
+      "exitHook": "emit-prompt-build-trace",
+      "resourceIds": [
+        "schemas/prompt-brief.schema.json",
+        "schemas/build-trace.schema.json"
+      ],
+      "delegateSkill": "run-prompt-creator-7layer",
+      "fatal_exit_codes": [1, 2],
+      "handoff": "eval-log/handoff-after_prompt_build.json"
+    },
+    {
+      "id": "p0-lint",
+      "step": "3a",
+      "gate": 2,
+      "title": "P0 lint (自動)",
+      "dependsOn": ["build"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schemas/findings.schema.json"],
+      "delegateSkill": null,
+      "commands": [
+        "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py ${TARGET_AGENT_OR_SKILL}",
+        "python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py --input ${PROMPT_OUTPUT}",
+        "python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py --input ${PROMPT_OUTPUT} --phase prompt",
+        "python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py --input eval-log/prompt-build-trace.json --phase trace --schema plugins/prompt-creator/skills/run-prompt-create/schemas/build-trace.schema.json",
+        "python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
+        "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py"
+      ],
+      "max_retry": 3,
+      "fatal_exit_codes": [1],
+      "handoff": "eval-log/handoff-after_prompt_lint.json"
+    },
+    {
+      "id": "design-evaluate",
+      "step": "3b",
+      "gate": null,
+      "title": "設計評価 (C1-C4)",
+      "dependsOn": ["p0-lint"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schemas/findings.schema.json"],
+      "delegateSkill": "assign-prompt-design-evaluator",
+      "context": "fork",
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-after_prompt_evaluator.json"
+    },
+    {
+      "id": "elegant-review",
+      "step": 4,
+      "gate": 3,
+      "title": "パラダイム評価 (C1-C4)",
+      "dependsOn": ["design-evaluate"],
+      "entryHook": "evaluate-create-gates",
+      "exitHook": null,
+      "condition": "new_prompt OR diff_lines > 30",
+      "resourceIds": [
+        "schemas/findings.schema.json",
+        "prompts/R2-gate-review.md"
+      ],
+      "delegateSkill": "run-elegant-review",
+      "context": "fork",
+      "decision_command": "python3 plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py --prompt-name ${PROMPT_NAME} --brief eval-log/prompt-brief.json",
+      "fatal_exit_codes": [1],
+      "handoff": "eval-log/handoff-after_prompt_elegant.json"
+    },
+    {
+      "id": "governance",
+      "step": 5,
+      "gate": 4,
+      "title": "governance 承認",
+      "dependsOn": ["elegant-review"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "prompts/R3-governance-decide.md",
+        "prompts/R2-gate-review.md",
+        "schemas/handoff.schema.json"
+      ],
+      "delegateSkill": "run-skill-rubric-governance",
+      "preconditions": {
+        "$comment": "環境前提 (静的な運用構成値)。成果物の品質条件ではないため auto_approve_conditions から分離 (恒真の静的条件を合否条件に混ぜない)。値の正本は references/governance-params.json。いずれかが false の環境では auto_approve 評価に入らず run-skill-rubric-governance の手動承認フローへ。",
+        "solo_operator_mode": "references/governance-params.json#/solo_operator_mode",
+        "stable_frozen": "references/governance-params.json#/stable_frozen"
+      },
+      "auto_approve_conditions": [
+        {
+          "condition": "newly_failing == 0",
+          "evidence": "判定手続き: p0-lint (step 3a) commands の実行結果を eval-log/handoff-after_prompt_lint.json に記録し、HEAD 時点に存在しなかった新規 FAIL が 0 件であることを突合する"
+        },
+        {
+          "condition": "llm_reviewer == PASS",
+          "evidence": "artifact: eval-log/docs/<NN>-<timestamp>.json (schemas/findings.schema.json 準拠、assign-prompt-design-evaluator 出力) の verdicts C1-C4 に FAIL がない"
+        },
+        {
+          "condition": "layer_dependency_violations == 0",
+          "evidence": "artifact: 同 findings.json の bucket=C2 に severity high/medium の findings が 0 件 (c1-c4-criteria.md C2 基準)"
+        },
+        {
+          "condition": "completion_checklist_verifiable == true",
+          "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py --input ${PROMPT_OUTPUT} exit 0 (5.3 完了チェックリスト非空) かつ findings.json の bucket=C4 に severity high の findings 0 件 (全項目 YES/NO 判定可能 = prompt-rubric C4-001/C4-002、l5-contract v2.0.0。旧 self_evaluation_checklist_present は旧構成の報酬化のため廃止)"
+        },
+        {
+          "condition": "markdown_format_default_kept == true",
+          "evidence": "判定手続き: eval-log/prompt-brief.json の format が md (未指定は md 扱い。yaml/json/xml は legacy 経路のみ)"
+        },
+        {
+          "condition": "lint_agent_prompt_section == PASS",
+          "evidence": "script: plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py ${TARGET_AGENT_OR_SKILL} exit 0 (p0-lint 内で実行済み)"
+        },
+        {
+          "condition": "verify_completeness == PASS",
+          "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py --input ${PROMPT_OUTPUT} exit 0 (7 層網羅 + L5 ゴールシーク必須要素 + 固定手順不在。旧 verify_completeness_score >= 0.95 は score を算出する主体が実在しない名目条件だったため exit code 判定へ正準化)"
+        },
+        {
+          "condition": "responsibility_id_matches_owner_skill == true",
+          "evidence": "判定手続き: eval-log/prompt-brief.json の responsibility_id が target_skill の SKILL.md frontmatter responsibilities[].id に実在し、生成 prompt メタ表の responsibility と一致することを Read 突合する"
+        },
+        {
+          "condition": "atomic_field_violations == 0",
+          "evidence": "artifact: findings.json に要素原子性 (1 フィールド=1 概念、50 字目安) 違反を指摘する severity high/medium の findings が 0 件 (evaluator Pass 3)"
+        },
+        {
+          "condition": "translated_placeholder_residue == 0",
+          "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py --input ${PROMPT_OUTPUT} --phase prompt exit 0 (未展開 {{...}} / TODO 残存検出) + prompt-rubric C4-003 regex_absent"
+        }
+      ],
+      "user_question_budget": 1,
+      "user_question_budget_scope": "Gate 1 (brief 確定) のみ。Gate 2-4 は自動承認既定。",
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-after_prompt_governance.json"
+    },
+    {
+      "id": "report",
+      "step": 6,
+      "gate": null,
+      "title": "完了レポート",
+      "dependsOn": ["governance"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schemas/handoff.schema.json"],
+      "delegateSkill": null,
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-prompt_done.json"
+    }
+  ],
+  "fast_mode": {
+    "description": "軽微更新 (1 prompt, <=30 行, inject_sections のみ) は design-evaluate / elegant-review を skip し、p0-lint から governance へ進む。",
+    "skip_phases": ["design-evaluate", "elegant-review"],
+    "dependency_override": {
+      "governance.dependsOn": ["p0-lint"]
+    },
+    "required_evidence": [
+      "p0-lint PASS",
+      "prompt-build-trace schema PASS",
+      "diff_lines <= 30",
+      "new_prompt == false"
+    ],
+    "decision_command": "python3 plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py --prompt-name ${PROMPT_NAME} --brief eval-log/prompt-brief.json --fast"
+  }
+}

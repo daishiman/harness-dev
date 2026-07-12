@@ -1,0 +1,236 @@
+{
+  "agent": "elegant-meta-divergent-analyst",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『harness を正本にする』という枠組み自体を再検証。移管計画.md §4.5 の実態診断(git HEAD=旧 meta-skill-creator 構造、作業ツリー=xl-skills の古い部分コピー)と README §5 の再利用マップを突き合わせ、Glob/Grep で config-version-lock.json・scripts/lint-config-version-sync.py・scripts/lint-legacy-plugin-name.py が現 harness に不在であることを実測確認した",
+        "『現時点では手順整理のみで実行しない』という段階設定は §4.5 の半移行状態の診断と整合しており、枠組みとして妥当"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "README.md:§5 — 「既に repo に存在する 7 つの素地を第一級に昇格させるだけ」と提示する資産のうち config-version-lock.json と scripts/lint-config-version-sync.py は現 harness に存在しない(実測で不在)。移管計画.md §4.5 自身が「scripts/lint-config-version-sync.py / scripts/lint-legacy-plugin-name.py が未取込」と認めており、README §5 の『既に repo に存在する』と矛盾する。初見の読者は harness を確認して欺かれる",
+          "recommended_intervention": "README §5 の各行に所在を注記する(「xl-skills 由来・Phase 1 取込後に harness に成立」等)。現 harness に実在する資産と Phase 1 で到来する資産を区別する列を追加"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "README.md:§3 — 正本に harness を選んだ判断の理由(中立な新規 repo を切る案、xl-skills を直接 genericize して master 化する案との比較)が記録されていない。移管計画 §3 は docs 出力を「手順・契約・判断記録」と定義するのに、最重要の正本選定だけ決定のみで根拠が残らない",
+          "recommended_intervention": "README §3 に「なぜ harness か(棄却した代替 2 案と理由)」を 3 行程度で追記"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "credentials purpose map(null → <purpose>.<keychain_prefix> 導出)、keychain_prefix 名前空間、overlay 契約という抽象は、重複検出と tenant-doctor による機械検証を可能にしており抽象度は適切と確認",
+        "plugin.json(実体は plugins/*/.claude-plugin/plugin.json)や bundles.json(実体は .claude-plugin/bundles.json)のパス省略表記は許容範囲の表記ゆれとして issue 化しない"
+      ],
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§2/§4-3 — §2 JSONC 注記は「env PARTY_A_JSON_PATH。旧 XL_PARTY_A_JSON_PATH は期限付 alias」と正準名を新設するが、§4-3 の解決順表と tenant-build 仕様は「XL_PARTY_A_JSON_PATH としてエクスポートする」と旧名のみで記述(現実装 plugins/contract-generator/lib/config_auth.py:119 も旧名のみ)。正準 env 名がどちらか文書内で判定不能で、「期限付 alias」の期限・撤去条件も未規定",
+          "recommended_intervention": "§4-3 を「PARTY_A_JSON_PATH(正準)/ XL_PARTY_A_JSON_PATH(alias、撤去期限とその lint 検査を明記)」の二段記述に統一し、genericize(Phase 2-3)の退避対象に env 名改名を明示追加"
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『tenant 分離 = tenants/<company>/ ディレクトリ overlay』という前提自体を疑った。単一マシン・単一操作者・逐次切替という運用実態には、マルチテナント SaaS 的な行レベル分離やランタイム分離より適合しており、前提は妥当と判断",
+        "『config のみで多社対応』の前提は、業務ロジック差を ref-company-rules(evaluator への基準注入)で吸収できる範囲に依存する。品質・セキュリティ基準の差は吸収できるが、業務フロー自体の差(契約書構造・Notion スキーマ列の差)が出た時の判断基準は未定義"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:Phase 6-2 / README.md:冒頭 — Phase 6-2 の受け入れ基準 4 項は Keychain 非衝突・DB 非混入・fail-closed・core クリーンの「分離」のみで、README が掲げる「2 社目以降を config 差し替えだけで導入できる」(=業務が実際に回る)ことを検証する項目が無い。ダミー DB ID の demo-corp では分離しか証明されず、config-only 成立の結論には飛躍がある",
+          "recommended_intervention": "Phase 6-2 に「2 社目で最低 1 plugin の e2e 実行(ダミー Notion DB への実書き込みと doctor 緑)」を任意ゲートとして追記するか、README の主張を「分離が成立する」に限定する"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "代替案を発散列挙(7 件): (1) 企業別 fork、(2) テンプレートリポジトリ + scaffold(GitHub template)、(3) branch-per-tenant、(4) tenants/ を企業別 private repo(submodule または別 repo)に分離、(5) tenants ディレクトリ無しの env-only 注入(12-factor 純化)、(6) 中立な新規 repo を master に新設、(7) chezmoi/kustomize 型の汎用 overlay エンジン導入",
+        "収束評価: 単一操作者・秘密は Keychain・plugin コード同一という制約下では採用案(モノレポ + tenants overlay)が最小コスト。(1)(3) は同期コスト、(5) は再現性・宣言性、(6)(7) は導入コストで劣後。(4) のみ「gitignore された実値の永続化」という採用案に無い利点があり、paradigm 18 issue2 の解候補として注記"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "構築手順.md:Phase 5 — 「企業別 bundle を bundles.json に追加(or tenant.json.enabled_bundles から生成する仕組みに)」と二案併記のまま収束していない。案 1(core の bundles.json へ企業別 bundle を追加)は README §4 分離線の原則「企業固有値は core に一切置かない」と正面から矛盾し、lint-tenant-isolation の検査対象(core の *.json)に企業名を書き込むことになる",
+          "recommended_intervention": "生成方式(案 2: tenant.json.enabled_bundles から tenant-build が導出)に一本化し、案 1 は棄却理由つきで削除する"
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "他分野の解法と照合: kustomize(base+overlay)、i18n message catalog(placeholder + locale ファイル)、dotfiles 管理(stow/chezmoi)、12-factor config。installers/install.sh + manifest.json を overlay 配備エンジンの型とする README §5 の対応は実在確認済みで妥当",
+        "kustomize が merge 意味論と schema 版を明文化するのに対し、本契約の overlay は「既存 example と同形の全置換ファイル」であり merge 意味論の曖昧さが無い点は良い設計"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§5/§2 — tenant.json には schema_version があるが、notion-config.json / party_a.json / gmail-config.json の overlay 実値ファイルには版が無い。core 側で databases.<role> や必須キーが増えた際、「example は更新されたが各 tenant の gitignore された実値ファイルは旧形のまま」という drift を tenant-doctor が検出する規定が無い(i18n カタログの key 欠落検査や kustomize の schema 版管理に相当する仕組みの欠落)。テナントが増えるほど無音で腐る",
+          "recommended_intervention": "overlay 各ファイルに schema_version を追加するか、tenant-doctor に「example の必須キー集合 ⊆ 実値ファイルのキー集合」検査を契約として追加する"
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『やらない場合』: Keychain エントリ衝突・別社 DB 混入(README §2)により一社専用のままでは 2 社目導入が物理的に不可能で、計画の必要性根拠自体は具体的",
+        "『逆順(tenant 層を先に作り genericize を後に)』: 実値の退避先を先に用意する利点は、Phase 2/3 を同一 PR にして往復欠落を差分担保する現行原則(構築手順・進め方の原則)で概ね吸収済みと判断",
+        "『lint が緑でも企業色が残る逆ケース』を構成して検査し、パターンの隙間を検出した"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "構築手順.md:Phase 2-4/Phase 0-4 — lint-tenant-isolation の検査パターンは「XLOCAL / xlocal(大小)/ .xl-skills / 実ドメイン / 実 DB ID(UUID 形)」で、Phase 0-4 の中立命名方針が掲げる bare な「xl-」を含まない。テナント仕様 §2 例示の bundle 名 \"xl-skills-full\"(core の bundles.json に置かれる名前)や XL_PARTY_A_JSON_PATH は全パターンをすり抜け、「lint 緑 = core クリーン」が成立しない。Phase 2 完了確認の目視 grep も -e 'XLOCAL' -e '\\.xl-skills' のみで小文字 xlocal と bare xl- を見ない",
+          "recommended_intervention": "検査パターンに「\\bxl-」と「XL_」を追加し、正当な例外は allowlist file で期限つき管理する。Phase 2 完了確認の grep も同パターンに揃える"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "README.md:§2 — 2 社目の具体的な導入予定・候補への言及がどの文書にも無く、本計画が投機的一般化(YAGNI 違反)である可能性の自己評価が無い",
+          "recommended_intervention": "README §2 に「2 社目の見込み、または見込みが無くても汎用化自体を目的とする旨」を 1 行明記し、投資判断の根拠を残す"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "類似実装と比較: fork 運用との差分理由は README §3(config-only・fork しない)に明記、テンプレートリポジトリ方式との差分(scaffold 後の同期コスト)も tenants/_template 方式の説明から追跡可能で、差分理由の説明は概ね健全",
+        "installers/manifest.json(実在確認済み)を overlay 配備エンジンの型とする類推は、配備先が ~/.claude(ユーザ環境)と tenants/(repo 内)で異なるため、再利用できるのは衝突ポリシと OS 分岐の設計に限定される点を確認(negative case)"
+      ],
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "構築手順.md:Phase 2-1 / README.md:§5 — 「4 箇所に vendored された notion_config.py(plugins/company-master/scripts/ / plugins/harness-creator/scripts/ ほか)」は Phase 1 取込完了後の姿だが現在形で記述されている。実測では現 harness に 2 箇所(plugins/skill-creator/scripts/ と plugins/skill-intake/scripts/)しか無く、company-master / harness-creator は未取込。移管計画 §4.5 の「7 本欠落・未改名」と読み合わせないと誤読する",
+          "recommended_intervention": "Phase 2-1 と README §5 の該当箇所に「Phase 1 取込後の xl-skills 由来構成を指す」旨を注記する"
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best case(demo-corp 全項目設定済み)では Phase 6-2 の 4 基準は成立する。10 社ケース: tenants/ の水平増加自体は破綻しないが、有効化がマシングローバル(repo-root symlink)のため同一マシンでの並行 2 社セッションは構造的に不可能であることを確認",
+        "worst case(テナント破損・マシン紛失): Keychain 秘密は再登録可能でも、gitignore された実値 config の復元経路が文書に無いことを確認",
+        "edge case(Phase 2-5 を字面どおり実行): make config-version-lock のターゲットが現 harness の Makefile に無いことを実測で確認し、到達経路の欠落を検出"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§6 — 有効化 2 手段(repo-root symlink と HARNESS_TENANT env)が異なるテナントを指した場合の優先順位と矛盾検知の規定が契約に無い。「env は demo-corp、symlink は xlocal」の状態で tenant スクリプト経由か直接実行かにより書き込み先が不定になり、Phase 6-2 受け入れ基準 2(DB 非混入)を運用で破りうる",
+          "recommended_intervention": "§6 に優先順位(例: HARNESS_TENANT > symlink)を 1 行で規定し、tenant-doctor に「両者が不一致なら FAIL」の検査を追加する"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§7 / 構築手順.md:Phase 3 — notion-config.json / party_a.json 等の実値ファイルは gitignore され、バックアップ・復元手順(マシン移行や誤削除時に何を出所として再構築するか)がどの文書にも無い。復旧時は README が排したはずの「散在した手動手順」に逆戻りする",
+          "recommended_intervention": "tenant.json に実値の出所(Notion URL・社内資料等)を記録する notes 規定を追加するか、tenants 実値の private repo / vault 保管を採用する(paradigm 14 代替案 4)"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "移管計画.md:§6 Step 2 / 構築手順.md:Phase 2-5 — Phase 2-5 は「make config-version-lock」と scripts/lint-config-version-sync.py に依存するが、git archive の対象 path 一覧(plugins scripts tests installers .claude-plugin .claude/commands .claude/agents .github references)にリポジトリ直下の Makefile が含まれず、現 harness の Makefile に config-version-lock ターゲットは存在しない(実測)。scripts は archive で到来するが Makefile の到達経路が欠けており、Phase 2-5 は字面どおりでは実行不能",
+          "recommended_intervention": "移管計画 §6 Step 2 の path 一覧に Makefile(および依存する root ファイル)を明示追加し、構築手順 Phase 2-5 側にも前提資産を注記する"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§2 — keychain_prefix のテナント横断の一意性検査が未規定。2 テナントが同じ prefix を宣言すると「二社の秘密情報の物理衝突を防ぐ核」が無音で破れる",
+          "recommended_intervention": "tenant-init に prefix 重複拒否、tenant-doctor に全 tenants/*/tenant.json 横断の一意性検査を追加する"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "4 文書だけを渡された新任者を想定して通読。読み順の指定(README → 移管計画 → 構築手順)、用語表、再現コマンドが揃っており全体構造は初見でも追える",
+        "ただし契約の中心文書に未記入 TODO が残置され、内部番号参照が初見では解決できない"
+      ],
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§5 — gmail-config.json の必須キー契約が「<!-- TODO(human): gmail-config.json の必須キー契約をここに 2-10 行で定義してください。 -->」のまま未定義。さらに §2 フィールド定義表に overlays.gmail_config の行が無く(JSONC 例には登場する)、§7 Git 管理方針表にも gmail-config.json / gmail-config.example.json の行が無く、構築手順 Phase 3 の commit する/しないリストにも現れない。impersonate アドレス・委任ドメイン(= lint-tenant-isolation が検査する「実ドメイン」)を含むファイルの git 方針が未定義のため、初見者は gmail overlay を作成できず、Phase 0 完了確認「tenant.json のフィールド一覧がテナント仕様.md と一致する」も判定不能",
+          "recommended_intervention": "TODO を解消して必須キー契約(impersonate の単一/複数、秘密を置かない責務分界、example のみ commit、旧ドメインへ fallback しない fail-closed)を確定し、§2 表・§7 表・構築手順 Phase 3 のリストへ gmail-config の行を追記する"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "テナント仕様.md:§7 / README.md:§1 — tenants/<company>/tenant.json(display_name = \"株式会社XLOCAL\" 等の実企業名)と ref-company-rules/(企業ごとのセキュリティ・品質基準)を「Git 管理する」と定めるが、この方針は remote(daishiman/meta-skill-creator)が private であることに暗黙依存しており、repo 可視性の前提がどの文書にも明記されていない。public であれば企業名と企業内部基準の公開になる",
+          "recommended_intervention": "README §1 の決定表に「本 repo が private であること」を前提条件として明記し、public 化する場合は tenants/ を別 private repo へ分離する方針(paradigm 14 代替案 4)を併記する"
+        },
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "README.md:§5 / テナント仕様.md:§5 — 「doc 29/03/23 の ref-company-*-rules」という内部番号参照にリンクが無く、初見者は実体(doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md / 23-meta-skill-architecture.md / 03-yaml-frontmatter-reference.md — 実在は確認済み)へ到達できない",
+          "recommended_intervention": "番号表記を相対リンク(doc/ClaudeCodeスキルの設計書/29-... 等)に置換する"
+        }
+      ],
+      "score": 0.55
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-elicit",
+    "skill_md_sha256": "134ff25f1d97c38f82f0c3339b5575473cd13fc06c4c248b460506bead9257ad"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent-rename-review-subagent-c",
+  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "positive_feedback": [
+      "prefix 判定を Decision tree(Q2/Q3 の組合せから裏側で推定)と prefix 判定ウィザード(01a Step3 の 5 分岐を明示確定)の二段に分離し、複数候補該当時は open_questions を経由してウィザードで確定する導線が明示されているため、5 分岐全網羅(CE 要件)を満たしつつ設計用語をユーザーへ直接開示しない OUT1 の制約と矛盾なく両立している。",
+      "Subagent / Agent Team / Hook の placement hint を needs_independent_context / needs_lifecycle_enforcement / with_subagent_hint / with_hooks の boolean として正本スキーマ(additionalProperties:false)へ焼き込み、resolve-brief-to-category.py の CONDITIONAL_CATEGORIES が決定論的に読む設計で LLM 主観依存を排除している(19 章 factory 障害 #6 対応)。build フラグの object 型同名フラグとは別レイヤーである旨も注で明示されドリフトを防いでいる。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "skill-creator→harness-creator 改名後の SKILL.md(実測 sha256 134ff25f…)を全文実読し 4 条件で検証。(1) 旧名残存: skill-creator / skill_creator / スキルクリエイター の grep 0 件。knowledge ストア参照は『harness-creator 自身の plugins/harness-creator/knowledge/』へ統一され harness 表現(ハーネス総体の蓄積知見)として正しく、スキル名 run-skill-elicit は単体 skill 要件定義の elicit のため skill 表現維持で意味論境界に適合。(2) 改名追従: frontmatter schema_refs(../run-skill-create/schemas/skill-brief.schema.json)/ responsibility_refs(prompts/R1-elicit.md)/ references/resource-map.yaml / knowledge-skeleton scripts(search_knowledge.py・record_usage.py)/ ../run-build-skill/references/goal-seek-paradigm.md / ../ref-knowledge-loop を実在確認し断線 0。(3) C1 矛盾: 質問上限 5 問が Key Rules 1・Checklist・Gotchas で一貫、出力先 eval-log/skill-brief.json 固定で一貫、Decision tree(推定)と判定ウィザード(確定)の役割分担が明示され矛盾なし。(4) C2 漏れ: 必須フィールドと条件付き必須(wrap→base_skill / delegate→delegate_agent / L2→rubric_refs)・cross_platform・knowledge_loop・placement hint を全網羅。criteria IN1(固定パス+schema 準拠+必須確定)/ IN2(5 分岐決定木+条件付き必須+trigger 2〜3 個)/ OUT1(再質問せず設計用語直接質問せず 5 問以内+open_questions 退避+代理決定しない)を導出し adequacy を確認。4 条件すべて 0 で PASS。"
+}

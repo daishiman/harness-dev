@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+
+  <!-- D3.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ========================================
+       Kanagawa Theme - CSS Variables
+       ======================================== */
+    :root {
+      /* Light Theme */
+      --bg-light: #FFFFFF;
+      --fg-light: #2D2D2D;
+      --accent1-light: #7E9CD8;
+      --accent2-light: #E46876;
+      --accent3-light: #98BB6C;
+      --accent4-light: #DCA561;
+      --accent5-light: #7AA89F;
+      --accent6-light: #957FB8;
+      --muted-light: #717C7C;
+      --surface-light: #F2F2F2;
+      --border-light: #C8C093;
+
+      /* Dark Theme */
+      --bg-dark: #1F1F28;
+      --fg-dark: #DCD7BA;
+      --accent1-dark: #7E9CD8;
+      --accent2-dark: #E46876;
+      --accent3-dark: #98BB6C;
+      --accent4-dark: #DCA561;
+      --accent5-dark: #7AA89F;
+      --accent6-dark: #957FB8;
+      --muted-dark: #727169;
+      --surface-dark: #2A2A37;
+      --border-dark: #54546D;
+    }
+
+    [data-theme="light"] {
+      --bg: var(--bg-light);
+      --fg: var(--fg-light);
+      --accent1: var(--accent1-light);
+      --accent2: var(--accent2-light);
+      --accent3: var(--accent3-light);
+      --accent4: var(--accent4-light);
+      --accent5: var(--accent5-light);
+      --accent6: var(--accent6-light);
+      --muted: var(--muted-light);
+      --surface: var(--surface-light);
+      --border: var(--border-light);
+    }
+
+    [data-theme="dark"] {
+      --bg: var(--bg-dark);
+      --fg: var(--fg-dark);
+      --accent1: var(--accent1-dark);
+      --accent2: var(--accent2-dark);
+      --accent3: var(--accent3-dark);
+      --accent4: var(--accent4-dark);
+      --accent5: var(--accent5-dark);
+      --accent6: var(--accent6-dark);
+      --muted: var(--muted-dark);
+      --surface: var(--surface-dark);
+      --border: var(--border-dark);
+    }
+
+    /* ========================================
+       Base Styles
+       ======================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      overflow: hidden;
+    }
+
+    /* ========================================
+       Presentation Container
+       ======================================== */
+    .presentation {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .slide {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: none;
+      padding: 60px;
+      background: var(--bg);
+    }
+
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ========================================
+       Slide Layouts
+       ======================================== */
+    .slide-title {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .slide-title h1 {
+      font-size: 5.00vw;
+      font-weight: 700;
+      margin-bottom: 1.25vw;
+      color: var(--fg);
+    }
+
+    .slide-title h2 {
+      font-size: 2.50vw;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .slide-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slide-content h2 {
+      font-size: 3.13vw;
+      font-weight: 700;
+      margin-bottom: 2.50vw;
+      color: var(--fg);
+      border-bottom: 3px solid var(--accent1);
+      padding-bottom: 0.63vw;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ========================================
+       D3 Diagram Container
+       ======================================== */
+    .d3-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .d3-container svg {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Two Column Layout */
+    .two-column {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      height: 100%;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .column h3 {
+      font-size: 1.88vw;
+      margin-bottom: 1.25vw;
+      color: var(--accent1);
+    }
+
+    .column ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .column li {
+      font-size: 1.56vw;
+      margin-bottom: 0.94vw;
+      padding-left: 1.88vw;
+      position: relative;
+    }
+
+    .column li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.5em;
+      width: 8px;
+      height: 8px;
+      background: var(--accent1);
+      border-radius: 50%;
+    }
+
+    /* ========================================
+       D3 Chart Styles
+       ======================================== */
+    .d3-tooltip {
+      position: absolute;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--fg);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .d3-tooltip.visible {
+      opacity: 1;
+    }
+
+    .chart-title {
+      font-size: 1.56vw;
+      font-weight: 600;
+      fill: var(--fg);
+    }
+
+    .axis text {
+      font-size: 12px;
+      fill: var(--muted);
+    }
+
+    .axis line,
+    .axis path {
+      stroke: var(--border);
+    }
+
+    .grid line {
+      stroke: var(--border);
+      stroke-opacity: 0.3;
+    }
+
+    .legend-item text {
+      font-size: 12px;
+      fill: var(--fg);
+    }
+
+    /* ========================================
+       Navigation & Controls
+       ======================================== */
+    .nav-controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: var(--surface);
+      color: var(--fg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--accent1);
+      color: var(--bg);
+    }
+
+    .slide-counter {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 14px;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+
+    /* ========================================
+       Agenda Indicator
+       ======================================== */
+    .agenda-indicator {
+      position: fixed;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .agenda-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .agenda-dot.active {
+      background: var(--accent1);
+      transform: scale(1.3);
+    }
+
+    .agenda-dot:hover {
+      background: var(--accent1);
+    }
+
+    /* ========================================
+       Print Styles
+       ======================================== */
+    @media print {
+      .slide {
+        page-break-after: always;
+        display: block !important;
+        position: relative;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .nav-controls,
+      .slide-counter,
+      .theme-toggle,
+      .agenda-indicator {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="presentation">
+    {{SLIDES}}
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="nav-controls">
+    <button class="nav-btn" onclick="prevSlide()">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="nav-btn" onclick="nextSlide()">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+
+  <!-- Slide Counter -->
+  <div class="slide-counter">
+    <span id="currentSlide">1</span> / <span id="totalSlides">1</span>
+  </div>
+
+  <!-- Theme Toggle -->
+  <div class="theme-toggle">
+    <button class="nav-btn" onclick="toggleTheme()">
+      <i class="fas fa-adjust"></i>
+    </button>
+  </div>
+
+  <!-- Agenda Indicator -->
+  <div class="agenda-indicator" id="agendaIndicator"></div>
+
+  <script>
+    // ========================================
+    // D3 Base Components
+    // ========================================
+    const KanagawaColors = {
+      light: {
+        bg: '#FFFFFF',
+        fg: '#2D2D2D',
+        accent1: '#7E9CD8',
+        accent2: '#E46876',
+        accent3: '#98BB6C',
+        accent4: '#DCA561',
+        accent5: '#7AA89F',
+        accent6: '#957FB8',
+        muted: '#717C7C',
+        surface: '#F2F2F2',
+        border: '#C8C093'
+      },
+      dark: {
+        bg: '#1F1F28',
+        fg: '#DCD7BA',
+        accent1: '#7E9CD8',
+        accent2: '#E46876',
+        accent3: '#98BB6C',
+        accent4: '#DCA561',
+        accent5: '#7AA89F',
+        accent6: '#957FB8',
+        muted: '#727169',
+        surface: '#2A2A37',
+        border: '#54546D'
+      }
+    };
+
+    const accentPalette = [
+      '#7E9CD8', '#E46876', '#98BB6C', '#DCA561',
+      '#7AA89F', '#957FB8', '#FF9E3B', '#C34043',
+      '#76946A', '#938AA9', '#7FB4CA', '#E82424'
+    ];
+
+    const D3Base = {
+      getTheme() {
+        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+        return KanagawaColors[theme];
+      },
+
+      createSVG(container, width, height, margin = { top: 40, right: 40, bottom: 40, left: 40 }) {
+        const svg = d3.select(container)
+          .append('svg')
+          .attr('viewBox', `0 0 ${width} ${height}`)
+          .attr('preserveAspectRatio', 'xMidYMid meet')
+          .style('width', '100%')
+          .style('height', '100%');
+
+        const g = svg.append('g')
+          .attr('transform', `translate(${margin.left},${margin.top})`);
+
+        return {
+          svg,
+          g,
+          innerWidth: width - margin.left - margin.right,
+          innerHeight: height - margin.top - margin.bottom
+        };
+      },
+
+      createTooltip(container) {
+        let tooltip = d3.select(container).select('.d3-tooltip');
+        if (tooltip.empty()) {
+          tooltip = d3.select(container)
+            .append('div')
+            .attr('class', 'd3-tooltip');
+        }
+        return tooltip;
+      },
+
+      defaultTransition() {
+        return d3.transition().duration(800).ease(d3.easeCubicOut);
+      },
+
+      animateEntry(selection, type = 'fade') {
+        switch (type) {
+          case 'fade':
+            selection.style('opacity', 0)
+              .transition()
+              .duration(600)
+              .style('opacity', 1);
+            break;
+          case 'scale':
+            selection.attr('transform', 'scale(0)')
+              .transition()
+              .duration(600)
+              .ease(d3.easeBackOut)
+              .attr('transform', 'scale(1)');
+            break;
+          case 'slideUp':
+            selection.attr('transform', 'translateY(20)')
+              .style('opacity', 0)
+              .transition()
+              .duration(600)
+              .attr('transform', 'translateY(0)')
+              .style('opacity', 1);
+            break;
+        }
+      },
+
+      addHoverEffect(selection, scaleFactor = 1.05) {
+        selection
+          .style('cursor', 'pointer')
+          .on('mouseenter', function() {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr('transform', `scale(${scaleFactor})`);
+          })
+          .on('mouseleave', function() {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr('transform', 'scale(1)');
+          });
+      },
+
+      formatNumber(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
+      },
+
+      formatPercent(num) {
+        return (num * 100).toFixed(1) + '%';
+      }
+    };
+
+    // ========================================
+    // D3 Cycle Components
+    // ========================================
+    const D3Cycle = {
+      createCycle(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 500,
+          innerRadius = 80,
+          outerRadius = 150,
+          showArrows = true
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height);
+        const tooltip = D3Base.createTooltip(container);
+
+        const centerG = g.append('g')
+          .attr('transform', `translate(${innerWidth/2},${innerHeight/2})`);
+
+        const n = data.length;
+        const angleStep = (2 * Math.PI) / n;
+
+        // Draw segments
+        const arc = d3.arc()
+          .innerRadius(innerRadius)
+          .outerRadius(outerRadius)
+          .padAngle(0.05);
+
+        const segments = centerG.selectAll('.segment')
+          .data(data)
+          .enter()
+          .append('g')
+          .attr('class', 'segment');
+
+        segments.append('path')
+          .attr('d', (d, i) => arc({
+            startAngle: i * angleStep - Math.PI/2,
+            endAngle: (i + 1) * angleStep - Math.PI/2
+          }))
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 100)
+          .duration(500)
+          .style('opacity', 1);
+
+        // Labels
+        segments.append('text')
+          .attr('transform', (d, i) => {
+            const angle = i * angleStep;
+            const r = (innerRadius + outerRadius) / 2 + 60;
+            const x = Math.sin(angle) * r;
+            const y = -Math.cos(angle) * r;
+            return `translate(${x},${y})`;
+          })
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('fill', theme.fg)
+          .style('font-size', '14px')
+          .style('font-weight', '600')
+          .text(d => d.label);
+
+        // Arrows
+        if (showArrows) {
+          const arrowRadius = outerRadius + 20;
+          segments.append('path')
+            .attr('d', (d, i) => {
+              const startAngle = i * angleStep + angleStep * 0.3;
+              const endAngle = i * angleStep + angleStep * 0.7;
+              const x1 = Math.sin(startAngle) * arrowRadius;
+              const y1 = -Math.cos(startAngle) * arrowRadius;
+              const x2 = Math.sin(endAngle) * arrowRadius;
+              const y2 = -Math.cos(endAngle) * arrowRadius;
+              return `M${x1},${y1} A${arrowRadius},${arrowRadius} 0 0,1 ${x2},${y2}`;
+            })
+            .attr('fill', 'none')
+            .attr('stroke', theme.accent1)
+            .attr('stroke-width', 2)
+            .attr('marker-end', 'url(#arrowhead)');
+        }
+
+        // Arrow marker
+        svg.append('defs').append('marker')
+          .attr('id', 'arrowhead')
+          .attr('viewBox', '0 -5 10 10')
+          .attr('refX', 8)
+          .attr('refY', 0)
+          .attr('markerWidth', 6)
+          .attr('markerHeight', 6)
+          .attr('orient', 'auto')
+          .append('path')
+          .attr('d', 'M0,-5L10,0L0,5')
+          .attr('fill', theme.accent1);
+
+        return { svg, update: () => {} };
+      },
+
+      createPDCA(container, data, options = {}) {
+        const defaultData = [
+          { label: 'Plan', desc: '計画' },
+          { label: 'Do', desc: '実行' },
+          { label: 'Check', desc: '評価' },
+          { label: 'Act', desc: '改善' }
+        ];
+
+        return this.createCycle(container, data || defaultData, {
+          ...options,
+          innerRadius: 60,
+          outerRadius: 120
+        });
+      }
+    };
+
+    // ========================================
+    // D3 Hierarchy Components
+    // ========================================
+    const D3Hierarchy = {
+      createTree(container, data, options = {}) {
+        const {
+          width = 800,
+          height = 500,
+          nodeRadius = 25,
+          horizontal = true
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 120, bottom: 40, left: 120 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const root = d3.hierarchy(data);
+
+        const treeLayout = horizontal
+          ? d3.tree().size([innerHeight, innerWidth])
+          : d3.tree().size([innerWidth, innerHeight]);
+
+        treeLayout(root);
+
+        // Links
+        const linkGenerator = horizontal
+          ? d3.linkHorizontal().x(d => d.y).y(d => d.x)
+          : d3.linkVertical().x(d => d.x).y(d => d.y);
+
+        g.selectAll('.link')
+          .data(root.links())
+          .enter()
+          .append('path')
+          .attr('class', 'link')
+          .attr('d', linkGenerator)
+          .attr('fill', 'none')
+          .attr('stroke', theme.border)
+          .attr('stroke-width', 2)
+          .style('opacity', 0)
+          .transition()
+          .duration(600)
+          .style('opacity', 1);
+
+        // Nodes
+        const nodes = g.selectAll('.node')
+          .data(root.descendants())
+          .enter()
+          .append('g')
+          .attr('class', 'node')
+          .attr('transform', d => horizontal
+            ? `translate(${d.y},${d.x})`
+            : `translate(${d.x},${d.y})`);
+
+        nodes.append('circle')
+          .attr('r', nodeRadius)
+          .attr('fill', (d, i) => accentPalette[d.depth % accentPalette.length])
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 50)
+          .duration(400)
+          .style('opacity', 1);
+
+        nodes.append('text')
+          .attr('dy', '0.35em')
+          .attr('text-anchor', 'middle')
+          .attr('fill', '#fff')
+          .style('font-size', '12px')
+          .style('font-weight', '600')
+          .text(d => d.data.name);
+
+        return { svg };
+      },
+
+      createPyramid(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 500
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const n = data.length;
+        const layerHeight = innerHeight / n;
+        const maxWidth = innerWidth * 0.8;
+
+        const layers = g.selectAll('.layer')
+          .data(data)
+          .enter()
+          .append('g')
+          .attr('class', 'layer');
+
+        layers.append('path')
+          .attr('d', (d, i) => {
+            const topWidth = maxWidth * (n - i) / n;
+            const bottomWidth = maxWidth * (n - i - 1) / n;
+            const y = i * layerHeight;
+            const centerX = innerWidth / 2;
+
+            if (i === n - 1) {
+              return `M${centerX - topWidth/2},${y} L${centerX + topWidth/2},${y} L${centerX},${y + layerHeight} Z`;
+            }
+
+            return `M${centerX - topWidth/2},${y} L${centerX + topWidth/2},${y} L${centerX + bottomWidth/2},${y + layerHeight} L${centerX - bottomWidth/2},${y + layerHeight} Z`;
+          })
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .attr('stroke', theme.bg)
+          .attr('stroke-width', 2)
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 100)
+          .duration(500)
+          .style('opacity', 1);
+
+        layers.append('text')
+          .attr('x', innerWidth / 2)
+          .attr('y', (d, i) => i * layerHeight + layerHeight / 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('fill', '#fff')
+          .style('font-size', '14px')
+          .style('font-weight', '600')
+          .text(d => d.label);
+
+        return { svg };
+      }
+    };
+
+    // ========================================
+    // D3 Flow Components
+    // ========================================
+    const D3Flow = {
+      createChevron(container, data, options = {}) {
+        const {
+          width = 800,
+          height = 200
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const n = data.length;
+        const itemWidth = innerWidth / n;
+        const arrowDepth = 30;
+
+        const chevrons = g.selectAll('.chevron')
+          .data(data)
+          .enter()
+          .append('g')
+          .attr('class', 'chevron')
+          .attr('transform', (d, i) => `translate(${i * itemWidth},0)`);
+
+        chevrons.append('path')
+          .attr('d', (d, i) => {
+            const w = itemWidth - 5;
+            const h = innerHeight;
+            if (i === 0) {
+              return `M0,0 L${w - arrowDepth},0 L${w},${h/2} L${w - arrowDepth},${h} L0,${h} Z`;
+            }
+            return `M0,0 L${w - arrowDepth},0 L${w},${h/2} L${w - arrowDepth},${h} L0,${h} L${arrowDepth},${h/2} Z`;
+          })
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 100)
+          .duration(400)
+          .style('opacity', 1);
+
+        chevrons.append('text')
+          .attr('x', itemWidth / 2)
+          .attr('y', innerHeight / 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('fill', '#fff')
+          .style('font-size', '14px')
+          .style('font-weight', '600')
+          .text(d => d.label);
+
+        return { svg };
+      },
+
+      createFunnel(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 400
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 100, bottom: 40, left: 100 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const n = data.length;
+        const layerHeight = innerHeight / n;
+
+        const layers = g.selectAll('.funnel-layer')
+          .data(data)
+          .enter()
+          .append('g')
+          .attr('class', 'funnel-layer');
+
+        layers.append('path')
+          .attr('d', (d, i) => {
+            const topWidth = innerWidth * (1 - i * 0.15);
+            const bottomWidth = innerWidth * (1 - (i + 1) * 0.15);
+            const y = i * layerHeight;
+            const centerX = innerWidth / 2;
+
+            return `M${centerX - topWidth/2},${y} L${centerX + topWidth/2},${y} L${centerX + bottomWidth/2},${y + layerHeight} L${centerX - bottomWidth/2},${y + layerHeight} Z`;
+          })
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .attr('stroke', theme.bg)
+          .attr('stroke-width', 2)
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 100)
+          .duration(500)
+          .style('opacity', 1);
+
+        layers.append('text')
+          .attr('x', innerWidth / 2)
+          .attr('y', (d, i) => i * layerHeight + layerHeight / 2)
+          .attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle')
+          .attr('fill', '#fff')
+          .style('font-size', '14px')
+          .style('font-weight', '600')
+          .text(d => `${d.label} (${d.value})`);
+
+        return { svg };
+      }
+    };
+
+    // ========================================
+    // D3 Charts Components
+    // ========================================
+    const D3Charts = {
+      createBarChart(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 400,
+          horizontal = false
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 60, left: 60 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const x = horizontal
+          ? d3.scaleLinear().domain([0, d3.max(data, d => d.value)]).range([0, innerWidth])
+          : d3.scaleBand().domain(data.map(d => d.label)).range([0, innerWidth]).padding(0.2);
+
+        const y = horizontal
+          ? d3.scaleBand().domain(data.map(d => d.label)).range([0, innerHeight]).padding(0.2)
+          : d3.scaleLinear().domain([0, d3.max(data, d => d.value)]).range([innerHeight, 0]);
+
+        // Axes
+        g.append('g')
+          .attr('transform', `translate(0,${innerHeight})`)
+          .call(horizontal ? d3.axisBottom(x) : d3.axisBottom(x))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        g.append('g')
+          .call(horizontal ? d3.axisLeft(y) : d3.axisLeft(y))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        // Bars
+        const bars = g.selectAll('.bar')
+          .data(data)
+          .enter()
+          .append('rect')
+          .attr('class', 'bar')
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length]);
+
+        if (horizontal) {
+          bars
+            .attr('x', 0)
+            .attr('y', d => y(d.label))
+            .attr('width', 0)
+            .attr('height', y.bandwidth())
+            .transition()
+            .delay((d, i) => i * 50)
+            .duration(600)
+            .attr('width', d => x(d.value));
+        } else {
+          bars
+            .attr('x', d => x(d.label))
+            .attr('y', innerHeight)
+            .attr('width', x.bandwidth())
+            .attr('height', 0)
+            .transition()
+            .delay((d, i) => i * 50)
+            .duration(600)
+            .attr('y', d => y(d.value))
+            .attr('height', d => innerHeight - y(d.value));
+        }
+
+        // Hover
+        bars.on('mouseenter', function(event, d) {
+          tooltip
+            .html(`<strong>${d.label}</strong><br/>値: ${D3Base.formatNumber(d.value)}`)
+            .style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY - 10) + 'px')
+            .classed('visible', true);
+        })
+        .on('mouseleave', function() {
+          tooltip.classed('visible', false);
+        });
+
+        return { svg };
+      },
+
+      createPieChart(container, data, options = {}) {
+        const {
+          width = 500,
+          height = 400,
+          innerRadius = 0,
+          showLabels = true
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const radius = Math.min(innerWidth, innerHeight) / 2;
+        const centerG = g.append('g')
+          .attr('transform', `translate(${innerWidth/2},${innerHeight/2})`);
+
+        const pie = d3.pie().value(d => d.value).sort(null);
+        const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
+        const labelArc = d3.arc().innerRadius(radius * 0.7).outerRadius(radius * 0.7);
+
+        const slices = centerG.selectAll('.slice')
+          .data(pie(data))
+          .enter()
+          .append('g')
+          .attr('class', 'slice');
+
+        slices.append('path')
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .attr('stroke', theme.bg)
+          .attr('stroke-width', 2)
+          .transition()
+          .duration(800)
+          .attrTween('d', function(d) {
+            const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+            return t => arc(interpolate(t));
+          });
+
+        if (showLabels) {
+          slices.append('text')
+            .attr('transform', d => `translate(${labelArc.centroid(d)})`)
+            .attr('text-anchor', 'middle')
+            .attr('fill', '#fff')
+            .style('font-size', '12px')
+            .style('font-weight', '600')
+            .style('opacity', 0)
+            .transition()
+            .delay(800)
+            .duration(300)
+            .style('opacity', 1)
+            .text(d => d.data.label);
+        }
+
+        return { svg };
+      },
+
+      createLineChart(container, data, options = {}) {
+        const {
+          width = 700,
+          height = 400,
+          showDots = true,
+          showArea = false
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 60, left: 60 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const x = d3.scalePoint()
+          .domain(data.map(d => d.label))
+          .range([0, innerWidth]);
+
+        const y = d3.scaleLinear()
+          .domain([0, d3.max(data, d => d.value) * 1.1])
+          .range([innerHeight, 0]);
+
+        // Axes
+        g.append('g')
+          .attr('transform', `translate(0,${innerHeight})`)
+          .call(d3.axisBottom(x))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        g.append('g')
+          .call(d3.axisLeft(y))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        // Line
+        const line = d3.line()
+          .x(d => x(d.label))
+          .y(d => y(d.value))
+          .curve(d3.curveMonotoneX);
+
+        const path = g.append('path')
+          .datum(data)
+          .attr('fill', 'none')
+          .attr('stroke', theme.accent1)
+          .attr('stroke-width', 3)
+          .attr('d', line);
+
+        // Animate line
+        const totalLength = path.node().getTotalLength();
+        path
+          .attr('stroke-dasharray', `${totalLength} ${totalLength}`)
+          .attr('stroke-dashoffset', totalLength)
+          .transition()
+          .duration(1500)
+          .attr('stroke-dashoffset', 0);
+
+        // Dots
+        if (showDots) {
+          g.selectAll('.dot')
+            .data(data)
+            .enter()
+            .append('circle')
+            .attr('class', 'dot')
+            .attr('cx', d => x(d.label))
+            .attr('cy', d => y(d.value))
+            .attr('r', 0)
+            .attr('fill', theme.accent1)
+            .transition()
+            .delay(1500)
+            .duration(300)
+            .attr('r', 6);
+        }
+
+        return { svg };
+      },
+
+      createRadarChart(container, data, options = {}) {
+        const {
+          width = 500,
+          height = 500,
+          levels = 5
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 60, right: 60, bottom: 60, left: 60 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const radius = Math.min(innerWidth, innerHeight) / 2;
+        const centerG = g.append('g')
+          .attr('transform', `translate(${innerWidth/2},${innerHeight/2})`);
+
+        const n = data.length;
+        const angleSlice = (2 * Math.PI) / n;
+        const maxValue = d3.max(data, d => d.value);
+
+        const rScale = d3.scaleLinear()
+          .domain([0, maxValue])
+          .range([0, radius]);
+
+        // Grid circles
+        for (let level = 1; level <= levels; level++) {
+          centerG.append('circle')
+            .attr('r', (radius / levels) * level)
+            .attr('fill', 'none')
+            .attr('stroke', theme.border)
+            .attr('stroke-opacity', 0.3);
+        }
+
+        // Axis lines
+        data.forEach((d, i) => {
+          const angle = angleSlice * i - Math.PI / 2;
+          centerG.append('line')
+            .attr('x1', 0)
+            .attr('y1', 0)
+            .attr('x2', Math.cos(angle) * radius)
+            .attr('y2', Math.sin(angle) * radius)
+            .attr('stroke', theme.border)
+            .attr('stroke-opacity', 0.3);
+
+          // Labels
+          centerG.append('text')
+            .attr('x', Math.cos(angle) * (radius + 20))
+            .attr('y', Math.sin(angle) * (radius + 20))
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('fill', theme.fg)
+            .style('font-size', '12px')
+            .text(d.label);
+        });
+
+        // Radar area
+        const radarLine = d3.lineRadial()
+          .radius(d => rScale(d.value))
+          .angle((d, i) => i * angleSlice)
+          .curve(d3.curveLinearClosed);
+
+        centerG.append('path')
+          .datum(data)
+          .attr('d', radarLine)
+          .attr('fill', theme.accent1)
+          .attr('fill-opacity', 0.3)
+          .attr('stroke', theme.accent1)
+          .attr('stroke-width', 2)
+          .style('opacity', 0)
+          .transition()
+          .duration(800)
+          .style('opacity', 1);
+
+        // Dots
+        data.forEach((d, i) => {
+          const angle = angleSlice * i - Math.PI / 2;
+          centerG.append('circle')
+            .attr('cx', Math.cos(angle) * rScale(d.value))
+            .attr('cy', Math.sin(angle) * rScale(d.value))
+            .attr('r', 5)
+            .attr('fill', theme.accent1);
+        });
+
+        return { svg };
+      },
+
+      createGaugeChart(container, value, options = {}) {
+        const {
+          width = 400,
+          height = 300,
+          min = 0,
+          max = 100,
+          label = ''
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 20, right: 20, bottom: 40, left: 20 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const radius = Math.min(innerWidth, innerHeight * 2) / 2;
+        const centerG = g.append('g')
+          .attr('transform', `translate(${innerWidth/2},${innerHeight})`);
+
+        const scale = d3.scaleLinear()
+          .domain([min, max])
+          .range([-Math.PI / 2, Math.PI / 2]);
+
+        // Background arc
+        const bgArc = d3.arc()
+          .innerRadius(radius * 0.7)
+          .outerRadius(radius)
+          .startAngle(-Math.PI / 2)
+          .endAngle(Math.PI / 2);
+
+        centerG.append('path')
+          .attr('d', bgArc)
+          .attr('fill', theme.surface);
+
+        // Value arc
+        const valueArc = d3.arc()
+          .innerRadius(radius * 0.7)
+          .outerRadius(radius)
+          .startAngle(-Math.PI / 2);
+
+        centerG.append('path')
+          .attr('fill', theme.accent1)
+          .transition()
+          .duration(1000)
+          .attrTween('d', function() {
+            const interpolate = d3.interpolate(-Math.PI / 2, scale(value));
+            return t => valueArc.endAngle(interpolate(t))();
+          });
+
+        // Value text
+        centerG.append('text')
+          .attr('y', -20)
+          .attr('text-anchor', 'middle')
+          .attr('fill', theme.fg)
+          .style('font-size', '36px')
+          .style('font-weight', '700')
+          .text(value);
+
+        if (label) {
+          centerG.append('text')
+            .attr('y', 20)
+            .attr('text-anchor', 'middle')
+            .attr('fill', theme.muted)
+            .style('font-size', '14px')
+            .text(label);
+        }
+
+        return { svg };
+      }
+    };
+
+    // ========================================
+    // D3 Advanced Components
+    // ========================================
+    const D3Advanced = {
+      createForceGraph(container, data, options = {}) {
+        const {
+          width = 700,
+          height = 500,
+          nodeRadius = 20
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height);
+        const tooltip = D3Base.createTooltip(container);
+
+        const simulation = d3.forceSimulation(data.nodes)
+          .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
+          .force('charge', d3.forceManyBody().strength(-300))
+          .force('center', d3.forceCenter(innerWidth / 2, innerHeight / 2));
+
+        // Links
+        const links = g.selectAll('.link')
+          .data(data.links)
+          .enter()
+          .append('line')
+          .attr('class', 'link')
+          .attr('stroke', theme.border)
+          .attr('stroke-width', 2);
+
+        // Nodes
+        const nodes = g.selectAll('.node')
+          .data(data.nodes)
+          .enter()
+          .append('g')
+          .attr('class', 'node')
+          .call(d3.drag()
+            .on('start', dragstarted)
+            .on('drag', dragged)
+            .on('end', dragended));
+
+        nodes.append('circle')
+          .attr('r', nodeRadius)
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length]);
+
+        nodes.append('text')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '0.35em')
+          .attr('fill', '#fff')
+          .style('font-size', '11px')
+          .style('font-weight', '600')
+          .text(d => d.name);
+
+        simulation.on('tick', () => {
+          links
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+          nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+
+        function dragstarted(event, d) {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          d.fx = d.x;
+          d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+          d.fx = event.x;
+          d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+          if (!event.active) simulation.alphaTarget(0);
+          d.fx = null;
+          d.fy = null;
+        }
+
+        return { svg, simulation };
+      },
+
+      createHeatmap(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 400,
+          xLabels = [],
+          yLabels = []
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const margin = { top: 60, right: 40, bottom: 40, left: 80 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const xScale = d3.scaleBand()
+          .domain(xLabels)
+          .range([0, innerWidth])
+          .padding(0.05);
+
+        const yScale = d3.scaleBand()
+          .domain(yLabels)
+          .range([0, innerHeight])
+          .padding(0.05);
+
+        const colorScale = d3.scaleSequential()
+          .domain([0, d3.max(data, d => d.value)])
+          .interpolator(d3.interpolateBlues);
+
+        // Cells
+        g.selectAll('.cell')
+          .data(data)
+          .enter()
+          .append('rect')
+          .attr('class', 'cell')
+          .attr('x', d => xScale(d.x))
+          .attr('y', d => yScale(d.y))
+          .attr('width', xScale.bandwidth())
+          .attr('height', yScale.bandwidth())
+          .attr('fill', d => colorScale(d.value))
+          .style('opacity', 0)
+          .transition()
+          .delay((d, i) => i * 20)
+          .duration(300)
+          .style('opacity', 1);
+
+        // Axes
+        g.append('g')
+          .call(d3.axisTop(xScale))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        g.append('g')
+          .call(d3.axisLeft(yScale))
+          .selectAll('text')
+          .attr('fill', theme.muted);
+
+        return { svg };
+      },
+
+      createWordCloud(container, data, options = {}) {
+        const {
+          width = 600,
+          height = 400
+        } = options;
+
+        const theme = D3Base.getTheme();
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height);
+
+        const maxValue = d3.max(data, d => d.value);
+        const fontScale = d3.scaleLinear()
+          .domain([0, maxValue])
+          .range([12, 48]);
+
+        // Simple spiral layout
+        const words = data.map((d, i) => ({
+          ...d,
+          fontSize: fontScale(d.value),
+          angle: (Math.random() - 0.5) * 60
+        }));
+
+        const centerG = g.append('g')
+          .attr('transform', `translate(${innerWidth/2},${innerHeight/2})`);
+
+        const phi = (1 + Math.sqrt(5)) / 2;
+
+        words.forEach((word, i) => {
+          const angle = i * phi * Math.PI * 2;
+          const radius = Math.sqrt(i) * 30;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+
+          centerG.append('text')
+            .attr('x', x)
+            .attr('y', y)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('fill', accentPalette[i % accentPalette.length])
+            .attr('transform', `rotate(${word.angle}, ${x}, ${y})`)
+            .style('font-size', `${word.fontSize}px`)
+            .style('font-weight', '600')
+            .style('opacity', 0)
+            .transition()
+            .delay(i * 50)
+            .duration(400)
+            .style('opacity', 1)
+            .text(word.text);
+        });
+
+        return { svg };
+      }
+    };
+
+    // ========================================
+    // D3 Extended Components - 拡張図解
+    // ========================================
+    const D3Extended = {
+      // ウォーターフォールチャート
+      createWaterfall(container, data, options = {}) {
+        const { width = 700, height = 400 } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 60, left: 80 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        let cumulative = 0;
+        const processedData = data.map(d => {
+          const start = d.type === 'total' ? 0 : cumulative;
+          const end = d.type === 'total' ? d.value : cumulative + d.value;
+          cumulative = end;
+          return { ...d, start, end };
+        });
+
+        const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerWidth]).padding(0.3);
+        const maxVal = d3.max(processedData, d => Math.max(d.start, d.end));
+        const minVal = d3.min(processedData, d => Math.min(d.start, d.end));
+        const y = d3.scaleLinear().domain([Math.min(0, minVal), maxVal * 1.1]).range([innerHeight, 0]);
+
+        g.append('g').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x))
+          .selectAll('text').attr('fill', theme.muted).attr('transform', 'rotate(-45)').style('text-anchor', 'end');
+        g.append('g').call(d3.axisLeft(y)).selectAll('text').attr('fill', theme.muted);
+        g.append('line').attr('x1', 0).attr('x2', innerWidth).attr('y1', y(0)).attr('y2', y(0))
+          .attr('stroke', theme.border).attr('stroke-dasharray', '4,4');
+
+        const bars = g.selectAll('.bar').data(processedData).enter().append('rect')
+          .attr('x', d => x(d.label)).attr('width', x.bandwidth())
+          .attr('y', d => y(Math.max(d.start, d.end))).attr('height', 0)
+          .attr('fill', d => d.type === 'total' ? theme.accent1 : (d.value >= 0 ? theme.accent3 : theme.accent2));
+        bars.transition().delay((d, i) => i * 80).duration(500)
+          .attr('height', d => Math.abs(y(d.start) - y(d.end)));
+
+        bars.on('mouseenter', function(event, d) {
+          const sign = d.value >= 0 ? '+' : '';
+          tooltip.html(`<strong>${d.label}</strong><br/>値: ${sign}${D3Base.formatNumber(d.value)}<br/>累計: ${D3Base.formatNumber(d.end)}`)
+            .style('left', (event.pageX + 10) + 'px').style('top', (event.pageY - 10) + 'px').classed('visible', true);
+        }).on('mouseleave', () => tooltip.classed('visible', false));
+        return { svg };
+      },
+
+      // ドーナツチャート
+      createDonutChart(container, data, options = {}) {
+        const { width = 500, height = 400, innerRadiusRatio = 0.6, centerLabel = '', centerValue = '' } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const radius = Math.min(innerWidth, innerHeight) / 2;
+        const innerRadius = radius * innerRadiusRatio;
+        const centerG = g.append('g').attr('transform', `translate(${innerWidth/2},${innerHeight/2})`);
+
+        const pie = d3.pie().value(d => d.value).sort(null);
+        const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
+
+        const slices = centerG.selectAll('.slice').data(pie(data)).enter().append('path')
+          .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+          .attr('stroke', theme.bg).attr('stroke-width', 2);
+        slices.transition().duration(800).attrTween('d', function(d) {
+          const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+          return t => arc(interpolate(t));
+        });
+
+        if (centerValue) centerG.append('text').attr('y', -10).attr('text-anchor', 'middle')
+          .attr('fill', theme.fg).style('font-size', '32px').style('font-weight', '700').text(centerValue);
+        if (centerLabel) centerG.append('text').attr('y', 20).attr('text-anchor', 'middle')
+          .attr('fill', theme.muted).style('font-size', '14px').text(centerLabel);
+
+        const total = d3.sum(data, d => d.value);
+        slices.on('mouseenter', function(event, d) {
+          const percent = ((d.data.value / total) * 100).toFixed(1);
+          tooltip.html(`<strong>${d.data.label}</strong><br/>値: ${D3Base.formatNumber(d.data.value)}<br/>割合: ${percent}%`)
+            .style('left', (event.pageX + 10) + 'px').style('top', (event.pageY - 10) + 'px').classed('visible', true);
+        }).on('mouseleave', () => tooltip.classed('visible', false));
+        return { svg };
+      },
+
+      // ブレットチャート
+      createBulletChart(container, data, options = {}) {
+        const { width = 600, height = 50 * data.length + 60 } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 30, right: 40, bottom: 30, left: 120 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const rowHeight = innerHeight / data.length;
+
+        data.forEach((d, i) => {
+          const rowG = g.append('g').attr('transform', `translate(0,${i * rowHeight})`);
+          const maxVal = Math.max(d.target, d.value, ...d.ranges);
+          const x = d3.scaleLinear().domain([0, maxVal]).range([0, innerWidth]);
+          const rangeColors = [theme.surface, theme.border, theme.muted];
+
+          d.ranges.forEach((range, ri) => {
+            rowG.append('rect').attr('x', 0).attr('y', rowHeight * 0.15)
+              .attr('width', x(range)).attr('height', rowHeight * 0.7)
+              .attr('fill', rangeColors[ri] || theme.surface).attr('opacity', 0.5);
+          });
+
+          rowG.append('rect').attr('x', 0).attr('y', rowHeight * 0.35).attr('width', 0)
+            .attr('height', rowHeight * 0.3).attr('fill', d.value >= d.target ? theme.accent3 : theme.accent1)
+            .transition().duration(600).delay(i * 100).attr('width', x(d.value));
+
+          rowG.append('line').attr('x1', x(d.target)).attr('x2', x(d.target))
+            .attr('y1', rowHeight * 0.2).attr('y2', rowHeight * 0.8)
+            .attr('stroke', theme.accent2).attr('stroke-width', 3);
+
+          rowG.append('text').attr('x', -10).attr('y', rowHeight / 2)
+            .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+            .attr('fill', theme.fg).style('font-size', '12px').text(d.label);
+        });
+        return { svg };
+      },
+
+      // スロープチャート
+      createSlopeChart(container, data, options = {}) {
+        const { width = 500, height = 400, startLabel = '開始', endLabel = '終了' } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 50, right: 100, bottom: 40, left: 100 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const allValues = data.flatMap(d => [d.start, d.end]);
+        const y = d3.scaleLinear().domain([d3.min(allValues) * 0.9, d3.max(allValues) * 1.1]).range([innerHeight, 0]);
+
+        g.append('text').attr('x', 0).attr('y', -20).attr('text-anchor', 'middle')
+          .attr('fill', theme.fg).style('font-size', '14px').style('font-weight', '600').text(startLabel);
+        g.append('text').attr('x', innerWidth).attr('y', -20).attr('text-anchor', 'middle')
+          .attr('fill', theme.fg).style('font-size', '14px').style('font-weight', '600').text(endLabel);
+
+        data.forEach((d, i) => {
+          const color = accentPalette[i % accentPalette.length];
+          const line = g.append('line').attr('x1', 0).attr('y1', y(d.start)).attr('x2', 0).attr('y2', y(d.start))
+            .attr('stroke', color).attr('stroke-width', 2);
+          line.transition().duration(800).delay(i * 100).attr('x2', innerWidth).attr('y2', y(d.end));
+
+          g.append('circle').attr('cx', 0).attr('cy', y(d.start)).attr('r', 6).attr('fill', color);
+          g.append('circle').attr('cx', innerWidth).attr('cy', y(d.end)).attr('r', 6).attr('fill', color);
+          g.append('text').attr('x', -10).attr('y', y(d.start)).attr('text-anchor', 'end')
+            .attr('dominant-baseline', 'middle').attr('fill', theme.fg).style('font-size', '11px').text(`${d.label}: ${d.start}`);
+          g.append('text').attr('x', innerWidth + 10).attr('y', y(d.end)).attr('dominant-baseline', 'middle')
+            .attr('fill', theme.fg).style('font-size', '11px').text(`${d.end} ${d.end > d.start ? '↑' : '↓'}`);
+        });
+        return { svg };
+      },
+
+      // バタフライチャート
+      createButterflyChart(container, data, options = {}) {
+        const { width = 600, height = 400, leftLabel = '左', rightLabel = '右' } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 50, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const midPoint = innerWidth / 2;
+        const maxVal = d3.max(data, d => Math.max(d.left, d.right));
+        const xLeft = d3.scaleLinear().domain([0, maxVal]).range([midPoint - 20, 0]);
+        const xRight = d3.scaleLinear().domain([0, maxVal]).range([midPoint + 20, innerWidth]);
+        const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerHeight]).padding(0.2);
+
+        g.append('text').attr('x', midPoint / 2).attr('y', -20).attr('text-anchor', 'middle')
+          .attr('fill', theme.accent1).style('font-size', '14px').style('font-weight', '600').text(leftLabel);
+        g.append('text').attr('x', midPoint + (innerWidth - midPoint) / 2).attr('y', -20).attr('text-anchor', 'middle')
+          .attr('fill', theme.accent2).style('font-size', '14px').style('font-weight', '600').text(rightLabel);
+
+        g.selectAll('.center-label').data(data).enter().append('text').attr('x', midPoint)
+          .attr('y', d => y(d.label) + y.bandwidth() / 2).attr('text-anchor', 'middle')
+          .attr('dominant-baseline', 'middle').attr('fill', theme.fg).style('font-size', '11px').text(d => d.label);
+
+        g.selectAll('.bar-left').data(data).enter().append('rect')
+          .attr('x', d => xLeft(d.left)).attr('y', d => y(d.label)).attr('width', 0)
+          .attr('height', y.bandwidth()).attr('fill', theme.accent1)
+          .transition().delay((d, i) => i * 50).duration(500).attr('width', d => midPoint - 20 - xLeft(d.left));
+
+        g.selectAll('.bar-right').data(data).enter().append('rect')
+          .attr('x', midPoint + 20).attr('y', d => y(d.label)).attr('width', 0)
+          .attr('height', y.bandwidth()).attr('fill', theme.accent2)
+          .transition().delay((d, i) => i * 50).duration(500).attr('width', d => xRight(d.right) - midPoint - 20);
+        return { svg };
+      },
+
+      // ロリポップチャート
+      createLollipopChart(container, data, options = {}) {
+        const { width = 600, height = 400, horizontal = true } = options;
+        const theme = D3Base.getTheme();
+        const margin = horizontal ? { top: 40, right: 40, bottom: 40, left: 120 } : { top: 40, right: 40, bottom: 80, left: 60 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        if (horizontal) {
+          const x = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1]).range([0, innerWidth]);
+          const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerHeight]).padding(0.5);
+          g.append('g').call(d3.axisLeft(y)).selectAll('text').attr('fill', theme.muted);
+
+          g.selectAll('.line').data(data).enter().append('line')
+            .attr('x1', 0).attr('x2', 0).attr('y1', d => y(d.label) + y.bandwidth() / 2).attr('y2', d => y(d.label) + y.bandwidth() / 2)
+            .attr('stroke', theme.border).attr('stroke-width', 2)
+            .transition().delay((d, i) => i * 50).duration(500).attr('x2', d => x(d.value));
+
+          g.selectAll('.dot').data(data).enter().append('circle')
+            .attr('cx', 0).attr('cy', d => y(d.label) + y.bandwidth() / 2).attr('r', 8)
+            .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+            .transition().delay((d, i) => i * 50).duration(500).attr('cx', d => x(d.value));
+        } else {
+          const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerWidth]).padding(0.5);
+          const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1]).range([innerHeight, 0]);
+
+          g.append('g').attr('transform', `translate(0,${innerHeight})`).call(d3.axisBottom(x))
+            .selectAll('text').attr('fill', theme.muted).attr('transform', 'rotate(-45)').style('text-anchor', 'end');
+          g.append('g').call(d3.axisLeft(y)).selectAll('text').attr('fill', theme.muted);
+
+          g.selectAll('.line').data(data).enter().append('line')
+            .attr('x1', d => x(d.label) + x.bandwidth() / 2).attr('x2', d => x(d.label) + x.bandwidth() / 2)
+            .attr('y1', innerHeight).attr('y2', innerHeight).attr('stroke', theme.border).attr('stroke-width', 2)
+            .transition().delay((d, i) => i * 50).duration(500).attr('y2', d => y(d.value));
+
+          g.selectAll('.dot').data(data).enter().append('circle')
+            .attr('cx', d => x(d.label) + x.bandwidth() / 2).attr('cy', innerHeight).attr('r', 8)
+            .attr('fill', (d, i) => accentPalette[i % accentPalette.length])
+            .transition().delay((d, i) => i * 50).duration(500).attr('cy', d => y(d.value));
+        }
+        return { svg };
+      },
+
+      // カレンダーヒートマップ
+      createCalendarHeatmap(container, data, options = {}) {
+        const { width = 900, height = 200, cellSize = 15 } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 20, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const parseDate = d3.timeParse('%Y-%m-%d');
+        const formatDate = d3.timeFormat('%Y-%m-%d');
+        const formatMonth = d3.timeFormat('%b');
+
+        const dates = data.map(d => parseDate(d.date));
+        const minDate = d3.min(dates);
+        const maxDate = d3.max(dates);
+        const dataMap = new Map(data.map(d => [d.date, d.value]));
+        const maxVal = d3.max(data, d => d.value);
+        const colorScale = d3.scaleSequential().domain([0, maxVal]).interpolator(d3.interpolateGreens);
+        const weekday = ['日', '月', '火', '水', '木', '金', '土'];
+
+        weekday.forEach((day, i) => {
+          g.append('text').attr('x', -5).attr('y', i * cellSize + cellSize / 2 + 20)
+            .attr('text-anchor', 'end').attr('dominant-baseline', 'middle')
+            .attr('fill', theme.muted).style('font-size', '10px').text(day);
+        });
+
+        let currentMonth = -1;
+        const allDays = d3.timeDays(minDate, d3.timeDay.offset(maxDate, 1));
+
+        allDays.forEach((date, i) => {
+          const week = d3.timeMonday.count(minDate, date);
+          const day = date.getDay();
+          const dateStr = formatDate(date);
+          const value = dataMap.get(dateStr) || 0;
+
+          if (date.getMonth() !== currentMonth) {
+            currentMonth = date.getMonth();
+            g.append('text').attr('x', week * cellSize + cellSize / 2).attr('y', 10)
+              .attr('text-anchor', 'middle').attr('fill', theme.muted).style('font-size', '10px').text(formatMonth(date));
+          }
+
+          const cell = g.append('rect').attr('x', week * cellSize).attr('y', day * cellSize + 20)
+            .attr('width', cellSize - 2).attr('height', cellSize - 2).attr('rx', 2)
+            .attr('fill', value > 0 ? colorScale(value) : theme.surface)
+            .attr('stroke', theme.border).attr('stroke-width', 0.5).style('opacity', 0);
+          cell.transition().delay(i * 5).duration(200).style('opacity', 1);
+
+          cell.on('mouseenter', function(event) {
+            tooltip.html(`<strong>${dateStr}</strong><br/>値: ${value}`)
+              .style('left', (event.pageX + 10) + 'px').style('top', (event.pageY - 10) + 'px').classed('visible', true);
+          }).on('mouseleave', () => tooltip.classed('visible', false));
+        });
+        return { svg };
+      },
+
+      // パラレルコーディネート
+      createParallelCoordinates(container, data, options = {}) {
+        const { width = 700, height = 400, axes = Object.keys(data[0].values) } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 50, right: 40, bottom: 40, left: 40 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const tooltip = D3Base.createTooltip(container);
+
+        const x = d3.scalePoint().domain(axes).range([0, innerWidth]);
+        const yScales = {};
+        axes.forEach(axis => {
+          const extent = d3.extent(data, d => d.values[axis]);
+          yScales[axis] = d3.scaleLinear().domain(extent).range([innerHeight, 0]);
+        });
+
+        axes.forEach(axis => {
+          const axisG = g.append('g').attr('transform', `translate(${x(axis)},0)`);
+          axisG.call(d3.axisLeft(yScales[axis]).ticks(5)).selectAll('text').attr('fill', theme.muted).style('font-size', '10px');
+          axisG.append('text').attr('y', -20).attr('text-anchor', 'middle')
+            .attr('fill', theme.fg).style('font-size', '12px').style('font-weight', '600').text(axis);
+        });
+
+        const line = d3.line().defined(d => !isNaN(d[1])).x(d => d[0]).y(d => d[1]);
+
+        data.forEach((d, i) => {
+          const points = axes.map(axis => [x(axis), yScales[axis](d.values[axis])]);
+          const color = accentPalette[i % accentPalette.length];
+
+          const path = g.append('path').datum(points).attr('fill', 'none')
+            .attr('stroke', color).attr('stroke-width', 2).attr('stroke-opacity', 0.7).attr('d', line);
+
+          const totalLength = path.node().getTotalLength();
+          path.attr('stroke-dasharray', `${totalLength} ${totalLength}`).attr('stroke-dashoffset', totalLength)
+            .transition().delay(i * 100).duration(800).attr('stroke-dashoffset', 0);
+
+          path.on('mouseenter', function(event) {
+            d3.select(this).attr('stroke-width', 4).attr('stroke-opacity', 1);
+            tooltip.html(`<strong>${d.name}</strong>`)
+              .style('left', (event.pageX + 10) + 'px').style('top', (event.pageY - 10) + 'px').classed('visible', true);
+          }).on('mouseleave', function() {
+            d3.select(this).attr('stroke-width', 2).attr('stroke-opacity', 0.7);
+            tooltip.classed('visible', false);
+          });
+        });
+        return { svg };
+      },
+
+      // デンドログラム
+      createDendrogram(container, data, options = {}) {
+        const { width = 600, height = 400, horizontal = true } = options;
+        const theme = D3Base.getTheme();
+        const margin = horizontal ? { top: 20, right: 120, bottom: 20, left: 40 } : { top: 40, right: 20, bottom: 80, left: 20 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+
+        const root = d3.hierarchy(data);
+        const cluster = horizontal ? d3.cluster().size([innerHeight, innerWidth]) : d3.cluster().size([innerWidth, innerHeight]);
+        cluster(root);
+
+        const linkGenerator = horizontal
+          ? d3.linkHorizontal().x(d => d.y).y(d => d.x)
+          : d3.linkVertical().x(d => d.x).y(d => d.y);
+
+        g.selectAll('.link').data(root.links()).enter().append('path')
+          .attr('fill', 'none').attr('stroke', theme.border).attr('stroke-width', 1.5).attr('d', linkGenerator)
+          .style('opacity', 0).transition().duration(600).style('opacity', 1);
+
+        const nodes = g.selectAll('.node').data(root.descendants()).enter().append('g')
+          .attr('transform', d => horizontal ? `translate(${d.y},${d.x})` : `translate(${d.x},${d.y})`);
+
+        nodes.append('circle').attr('r', d => d.children ? 4 : 6)
+          .attr('fill', d => d.children ? theme.muted : accentPalette[d.depth % accentPalette.length])
+          .style('opacity', 0).transition().delay((d, i) => i * 30).duration(300).style('opacity', 1);
+
+        nodes.filter(d => !d.children).append('text')
+          .attr('x', horizontal ? 10 : 0).attr('y', horizontal ? 0 : 15)
+          .attr('text-anchor', horizontal ? 'start' : 'middle').attr('dominant-baseline', 'middle')
+          .attr('fill', theme.fg).style('font-size', '11px').text(d => d.data.name);
+        return { svg };
+      },
+
+      // アイソタイプ
+      createIsotype(container, data, options = {}) {
+        const { width = 600, height = 400, unitValue = 1, maxPerRow = 10, iconSize = 24 } = options;
+        const theme = D3Base.getTheme();
+        const margin = { top: 40, right: 40, bottom: 40, left: 120 };
+        const { svg, g, innerWidth, innerHeight } = D3Base.createSVG(container, width, height, margin);
+        const rowHeight = Math.min(60, innerHeight / data.length);
+
+        data.forEach((d, i) => {
+          const rowG = g.append('g').attr('transform', `translate(0,${i * rowHeight})`);
+          rowG.append('text').attr('x', -10).attr('y', rowHeight / 2).attr('text-anchor', 'end')
+            .attr('dominant-baseline', 'middle').attr('fill', theme.fg).style('font-size', '12px').text(d.label);
+
+          const iconCount = Math.ceil(d.value / unitValue);
+          const color = accentPalette[i % accentPalette.length];
+
+          for (let j = 0; j < iconCount; j++) {
+            const x = (j % maxPerRow) * (iconSize + 4);
+            const y = Math.floor(j / maxPerRow) * (iconSize + 4);
+
+            rowG.append('rect').attr('x', x).attr('y', y + (rowHeight - iconSize) / 2)
+              .attr('width', iconSize - 4).attr('height', iconSize - 4).attr('rx', 4).attr('fill', color)
+              .style('opacity', 0).transition().delay(j * 30 + i * 100).duration(200).style('opacity', 1);
+          }
+
+          const totalWidth = Math.min(iconCount, maxPerRow) * (iconSize + 4);
+          rowG.append('text').attr('x', totalWidth + 10).attr('y', rowHeight / 2)
+            .attr('dominant-baseline', 'middle').attr('fill', theme.muted).style('font-size', '11px').text(d.value);
+        });
+        return { svg };
+      }
+    };
+
+    // ========================================
+    // Slide Navigation
+    // ========================================
+    let currentSlideIndex = 0;
+    let slides = [];
+
+    function initPresentation() {
+      slides = document.querySelectorAll('.slide');
+      if (slides.length === 0) return;
+
+      document.getElementById('totalSlides').textContent = slides.length;
+
+      // Create agenda dots
+      const indicator = document.getElementById('agendaIndicator');
+      slides.forEach((slide, i) => {
+        const dot = document.createElement('div');
+        dot.className = 'agenda-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToSlide(i);
+        indicator.appendChild(dot);
+      });
+
+      showSlide(0);
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          nextSlide();
+        } else if (e.key === 'ArrowLeft') {
+          prevSlide();
+        }
+      });
+    }
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+
+      document.querySelectorAll('.agenda-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+
+      document.getElementById('currentSlide').textContent = index + 1;
+      currentSlideIndex = index;
+
+      // Trigger D3 animations for active slide
+      const activeSlide = slides[index];
+      const d3Container = activeSlide.querySelector('.d3-container');
+      if (d3Container && d3Container.dataset.chart) {
+        initD3Chart(d3Container);
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlideIndex < slides.length - 1) {
+        showSlide(currentSlideIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        showSlide(currentSlideIndex - 1);
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < slides.length) {
+        showSlide(index);
+      }
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+
+      // Re-render D3 charts with new theme
+      const activeSlide = slides[currentSlideIndex];
+      const d3Container = activeSlide.querySelector('.d3-container');
+      if (d3Container && d3Container.dataset.chart) {
+        d3Container.innerHTML = '';
+        initD3Chart(d3Container);
+      }
+    }
+
+    // D3 Chart initialization based on data attributes
+    function initD3Chart(container) {
+      const chartType = container.dataset.chart;
+      const chartData = JSON.parse(container.dataset.chartData || '[]');
+      const chartOptions = JSON.parse(container.dataset.chartOptions || '{}');
+
+      container.innerHTML = '';
+
+      switch (chartType) {
+        // Cycle
+        case 'cycle':
+          D3Cycle.createCycle(container, chartData, chartOptions);
+          break;
+        case 'pdca':
+          D3Cycle.createPDCA(container, chartData, chartOptions);
+          break;
+        // Hierarchy
+        case 'tree':
+          D3Hierarchy.createTree(container, chartData, chartOptions);
+          break;
+        case 'pyramid':
+          D3Hierarchy.createPyramid(container, chartData, chartOptions);
+          break;
+        // Flow
+        case 'chevron':
+          D3Flow.createChevron(container, chartData, chartOptions);
+          break;
+        case 'funnel':
+          D3Flow.createFunnel(container, chartData, chartOptions);
+          break;
+        // Charts
+        case 'bar':
+          D3Charts.createBarChart(container, chartData, chartOptions);
+          break;
+        case 'pie':
+          D3Charts.createPieChart(container, chartData, chartOptions);
+          break;
+        case 'line':
+          D3Charts.createLineChart(container, chartData, chartOptions);
+          break;
+        case 'radar':
+          D3Charts.createRadarChart(container, chartData, chartOptions);
+          break;
+        case 'gauge':
+          D3Charts.createGaugeChart(container, chartData.value, chartOptions);
+          break;
+        // Advanced
+        case 'force':
+          D3Advanced.createForceGraph(container, chartData, chartOptions);
+          break;
+        case 'heatmap':
+          D3Advanced.createHeatmap(container, chartData, chartOptions);
+          break;
+        case 'wordcloud':
+          D3Advanced.createWordCloud(container, chartData, chartOptions);
+          break;
+        // Extended
+        case 'waterfall':
+          D3Extended.createWaterfall(container, chartData, chartOptions);
+          break;
+        case 'donut':
+          D3Extended.createDonutChart(container, chartData, chartOptions);
+          break;
+        case 'bullet':
+          D3Extended.createBulletChart(container, chartData, chartOptions);
+          break;
+        case 'slope':
+          D3Extended.createSlopeChart(container, chartData, chartOptions);
+          break;
+        case 'butterfly':
+          D3Extended.createButterflyChart(container, chartData, chartOptions);
+          break;
+        case 'lollipop':
+          D3Extended.createLollipopChart(container, chartData, chartOptions);
+          break;
+        case 'calendar':
+          D3Extended.createCalendarHeatmap(container, chartData, chartOptions);
+          break;
+        case 'parallel':
+          D3Extended.createParallelCoordinates(container, chartData, chartOptions);
+          break;
+        case 'dendrogram':
+          D3Extended.createDendrogram(container, chartData, chartOptions);
+          break;
+        case 'isotype':
+          D3Extended.createIsotype(container, chartData, chartOptions);
+          break;
+      }
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', initPresentation);
+  </script>
+</body>
+</html>

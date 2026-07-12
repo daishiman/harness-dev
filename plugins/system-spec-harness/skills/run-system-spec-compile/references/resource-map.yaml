@@ -1,0 +1,19 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-system-spec-compile の Progressive Disclosure 索引。
+# コンパイルの決定論本体は scripts/compile-spec-doc.py、章構造は chapter-template.md。
+resources:
+  - file: chapter-template.md
+    topic: 章別 Markdown の構造テンプレート (frontmatter 確定マーカー + 収集状態表 + 設計知識参照 + 出典表)
+    read_when: R2-render で章本文の構造を確認するとき
+  - file: ../../scripts/validate-coverage-matrix.py
+    topic: 収集マトリクス網羅性の決定論ゲート (C12 / IN1)
+    read_when: 生成直前に spec-state.json の網羅性を検証するとき
+  - file: ../../scripts/validate-source-citation.py
+    topic: 出典記録の決定論ゲート (C13 / IN1)
+    read_when: 生成直前に fetched-references.json の出典記録を検証するとき
+  - file: ../../scripts/compile-spec-doc.py
+    topic: 章別 Markdown + index.md の決定論コンパイラ本体
+    read_when: 章立て組み立て・frontmatter 生成・index 相互参照を実行するとき
+  - file: ../ref-system-design-knowledge/references/resource-map.yaml
+    topic: 設計知識参照 (C04) の索引。カテゴリ→設計知識ポインタの read_when 対応
+    read_when: R2-render で章へ設計知識ポインタを反映するとき

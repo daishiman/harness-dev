@@ -1,0 +1,1 @@
+対象=plugin-plans/ubm-goal-setting(13phase計画+inventory 18component)とplugins/ubm-goal-setting(実build)。検証テーマ=計画の実plugin反映(漏れ・矛盾・依存破綻)。18実体/refs8/assets5/知識28JSON/registry67件は存在一致。懸念=計画外resource-map、MultiEditのmatcher不整合、155対157の数値矛盾、prompts正本不在、golden-master証跡不在、EVALSのlint部分配線。
