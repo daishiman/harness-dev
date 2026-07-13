@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "plugin-plans/system-spec-harness/improvement-handoff-20260712-knowledge-graph-doctrine.json",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY"
+  },
+  "target_plugin_slug": "system-spec-harness",
+  "plan_dir": "plugin-plans/system-spec-harness",
+  "findings": [
+    {
+      "id": "USR-20260712-01",
+      "severity": "high",
+      "summary": "Knowledge information must be modeled as a typed dependency graph and consumed in dependency order.",
+      "recommendation": "Define edge semantics, deterministic ordering, cycle/dangling checks, and shared consumption by elicitation and compilation.",
+      "target_ref": "goal-spec.json/C13-C14"
+    },
+    {
+      "id": "USR-20260712-02",
+      "severity": "high",
+      "summary": "System domains need upstream doctrine anchors without prematurely fixing concrete technologies.",
+      "recommendation": "Use Apple HIG, Clean Architecture, OWASP, and Google SRE as one authority per design concern and map every in-scope category to the applicable concerns.",
+      "target_ref": "goal-spec.json/C15"
+    },
+    {
+      "id": "USR-20260712-03",
+      "severity": "high",
+      "summary": "The plan must state what information is required and what missing information blocks construction.",
+      "recommendation": "Give required-info items a minimum schema, domain coverage floor, dependency order, completion rule, and explicit missing-effect state.",
+      "target_ref": "goal-spec.json/C16"
+    }
+  ],
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": "goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "user-message:2026-07-12"
+    }
+  }
+}

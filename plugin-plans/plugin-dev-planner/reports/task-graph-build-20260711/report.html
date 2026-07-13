@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="slide-report-generator/render-report">
+<meta name="report-type" content="internal-analysis">
+<meta name="theme-name" content="kanagawa-lotus">
+<title>plugin-dev-planner task-graph route build 実行記録</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* §2 Kanagawa Lotus パレット (style-builder SPEC を流用 = 共有意匠 SSOT) */
+  --bg-dark: #fafafa;
+  --fg: #43436c;
+  --fg-dim: #727169;
+  --fg-muted: #54546d;
+  --wave-blue: #7E9CD8;
+  --spring-violet: #957FB8;
+  --sakura-pink: #D27E99;
+  --wave-aqua: #7FB4CA;
+  --autumn-yellow: #DCA561;
+  --fuji-gray: #727169;
+  --accent-blue-vivid: #3B7DD8;
+  --accent-pink-vivid: #D94B6E;
+  --accent-aqua-vivid: #2EA88F;
+  --accent-violet-vivid: #7B4FBA;
+  --accent-yellow-vivid: #F5A623;
+  --shadow-subtle: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-medium: 0 3px 10px rgba(0,0,0,0.10);
+  /* §3 フォント (SPEC 流用) */
+  --font-scale: 1.3;
+  --font-base: 'Noto Sans JP', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+  /* report タイポは slide の --font-scale(1.3)から分離し、本文 16-18px の読み物レンジへ固定
+     (title/body 比 <=2.2)。過大な見出しと窮屈感を根治する。 */
+  --fs-title: 2.05rem;      /* ~33px */
+  --fs-heading: 1.5rem;     /* ~24px */
+  --fs-subheading: 1.2rem;  /* ~19px */
+  --fs-body: 1.0625rem;     /* ~17px (16-18px 読書レンジ) */
+  --fs-small: 0.92rem;      /* ~14.7px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  /* report ページ幅 (A4 縦・print 層の正本) */
+  --report-width: 190mm;
+  /* screen 読書レイアウト。パワポ的に横空間を使い切る (空白>本文 の逆転を根治) */
+  --report-measure: 78ch;      /* プレーン段落のみの可読幅。グラフィカル block は全幅で横を使う */
+  --report-sidebar-w: 15rem;   /* sticky sidebar TOC 幅 */
+  --report-page-max: 1360px;   /* sidebar + 本文の実効利用幅を拡張 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg-dark);
+  color: var(--fg);
+  font-family: var(--font-base);
+  font-size: var(--fs-body);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+html { scroll-behavior: smooth; }
+
+/* ===== 読み物レイアウト (screen: sidebar+可読幅 2 カラム / print: A4 縦 190mm 温存) ===== */
+.report-layout {
+  display: grid;
+  grid-template-columns: var(--report-sidebar-w) minmax(0, 1fr);
+  gap: var(--space-7, 3rem);
+  max-width: var(--report-page-max);
+  margin: 0 auto;
+  padding: 0 var(--space-6, 2rem);
+}
+.report-layout--no-toc { grid-template-columns: 1fr; }
+.report-layout--no-toc .report { margin: 0 auto; }
+.report-sidebar { min-width: 0; }
+.report {
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-7, 3rem) 0 var(--space-8, 4rem);
+}
+/* プレーン段落・リストのみ可読幅に制限。グラフィカル block (narrative/stats/visual/table/keypoint 等) は
+   全幅でパワポ的に横空間を使う (窮屈=右側の空白過多を根治)。 */
+.report-section > p,
+.report-section > ul,
+.report-section > ol { max-width: var(--report-measure); }
+.report-section[id] { scroll-margin-top: var(--space-5, 1.5rem); }
+.report-header { margin-bottom: var(--space-7, 3rem); border-bottom: 3px solid var(--report-accent, var(--accent-blue-vivid)); padding-bottom: var(--space-4, 1rem); }
+.report-title { font-size: var(--fs-title); font-weight: 800; line-height: 1.25; color: var(--fg); }
+.report-subtitle { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-subheading); color: var(--fg-dim); font-weight: 500; }
+.report-keymessage { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-body); color: var(--fg); font-weight: 500; border-left: 0.3rem solid var(--report-accent, var(--accent-blue-vivid)); padding-left: var(--space-3, 0.75rem); }
+.report-meta { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-dim); display: flex; flex-wrap: wrap; gap: var(--space-4, 1rem); align-items: center; }
+.report-meta .report-type-badge {
+  display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px;
+  background: var(--report-accent, var(--accent-blue-vivid)); color: #fff; font-weight: 700;
+}
+
+/* ===== section ===== */
+.report-section { margin-bottom: var(--space-8, 4rem); }
+.report-section > h2 {
+  font-size: var(--fs-heading); font-weight: 700; line-height: 1.35;
+  color: var(--fg);
+  padding-left: var(--space-3, 0.75rem);
+  border-left: 0.35rem solid var(--section-accent, var(--accent-blue-vivid));
+  margin-bottom: var(--space-4, 1rem);
+}
+.report-section p { font-size: var(--fs-body); margin-bottom: var(--space-4, 1rem); }
+.report-section strong { color: var(--section-accent, var(--accent-blue-vivid)); font-weight: 700; }
+.report-section code { font-family: var(--font-mono); font-size: 0.92em; background: rgba(59,125,216,0.10); padding: 0.1em 0.35em; border-radius: 0.25rem; }
+.report-section a { color: var(--accent-blue-vivid); }
+.report-section ul { margin: 0 0 var(--space-4, 1rem) var(--space-5, 1.5rem); }
+.report-section li { font-size: var(--fs-body); margin-bottom: var(--space-2, 0.5rem); }
+
+/* ===== callouts (注記/警告/ヒント) ===== */
+/* 吹き出し(左バー+ベタ塗り)を廃し、余白リッチのフラットカードへ。トーンは上端の細アクセント線で示す。 */
+.report-callout { display: block; margin: var(--space-5, 1.5rem) 0; padding: var(--space-4, 1rem) var(--space-5, 1.5rem); border-radius: 0.85rem; font-size: var(--fs-small); background: #fff; border: 1px solid rgba(67,67,108,0.12); border-top: 3px solid var(--accent-blue-vivid); box-shadow: var(--shadow-subtle); }
+.report-callout--warning, .report-callout--caution { border-top-color: var(--accent-pink-vivid); }
+.report-callout--tip { border-top-color: var(--accent-yellow-vivid); }
+
+/* ===== 本質図解 (essence diagram) — 各実質節の論理構造を一目化する主役ブロック ===== */
+/* 1.3.0: 「小さく中央浮遊の装飾」→「本文幅いっぱいの枠付き figure (読解の主役)」へ。
+   screen は本文可読幅を満たし、print は @media print 側で A4 幅 (--report-width) にキャップ。 */
+.report-visual {
+  margin: var(--space-7, 3rem) 0;
+  padding: var(--space-6, 2rem);
+  text-align: center;
+  background: #fff;
+  border: 1px solid rgba(67,67,108,0.10);
+  border-radius: 0.9rem;
+  box-shadow: var(--shadow-subtle);
+}
+.report-visual svg { width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto; }
+.report-visual img { max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: var(--shadow-medium); object-position: var(--focal, 50% 50%); }
+.report-visual figcaption { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-dim); text-align: center; }
+.report-visual--mermaid pre.mermaid {
+  display: block; text-align: left; font-family: var(--font-mono); font-size: var(--fs-small);
+  background: rgba(59,125,216,0.06); border: 1px solid rgba(67,67,108,0.14);
+  border-radius: 0.5rem; padding: var(--space-3, 0.75rem); overflow-x: auto; white-space: pre;
+}
+.report-visual--image .composite-overlay { list-style: none; margin: var(--space-2, 0.5rem) 0 0; padding: 0; font-size: var(--fs-small); color: var(--fg-dim); }
+
+.report-footer { margin-top: var(--space-8, 4rem); padding-top: var(--space-3, 0.75rem); border-top: 1px solid rgba(67,67,108,0.15); font-size: var(--fs-small); color: var(--fg-dim); text-align: center; }
+
+/* ===== 印刷 (A4 縦・読み物・screen 二層の print 側 = 従来 190mm 契約温存) ===== */
+@page { size: A4 portrait; margin: 18mm; }
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: #fff; }
+  /* sidebar grid を解除し従来の一段組へ (sticky TOC 非適用・.report は A4 幅) */
+  .report-layout { display: block; max-width: none; padding: 0; }
+  .report-sidebar { min-width: auto; }
+  .report-toc--sidebar { position: static; max-height: none; overflow: visible; margin: 0 0 var(--space-6, 2rem); }
+  .report-toc--sidebar ol { columns: 2; }
+  .report-toc a.is-active { color: inherit; font-weight: inherit; } /* scrollspy ハイライト無効 (print) */
+  .report { max-width: 100%; margin: 0 auto; padding: 0; }
+  .report-section { break-inside: avoid-page; }
+  .report-visual { break-inside: avoid; }
+}
+/* ===== 狭画面 (max-width: 900px・タブレット縦含む): sidebar を解除しインライン TOC へ graceful degrade ===== */
+@media (max-width: 900px) {
+  .report-layout { display: block; max-width: 46rem; padding: 0 var(--space-4, 1rem); }
+  .report-toc--sidebar { position: static; max-height: none; overflow: visible; margin: 0 0 var(--space-6, 2rem); }
+  .report-toc--sidebar ol { columns: 2; }
+  .report { max-width: none; margin: 0 auto; padding-top: var(--space-6, 2rem); }
+}
+/* ===== 1.1.0: 構造化本文ブロック ===== */
+/* section 番号 (01, 02 …) — h2 の data-secnum を CSS ::before で前置 (h2 テキスト本体は見出しのみに保つ) */
+.report-section > h2[data-secnum]::before {
+  content: attr(data-secnum); display: inline-block; min-width: 2.2em; margin-right: 0.6rem;
+  color: var(--section-accent, var(--accent-blue-vivid)); font-weight: 800;
+  font-variant-numeric: tabular-nums; opacity: 0.85;
+}
+/* 節内論理展開リード帯 (本質課題→解決→活用) */
+/* 節の論理アーク(本質課題→解決→活用): 外枠の吹き出しを廃し、余白の大きい独立 3 カードのパワポ図解へ。
+   各カードは白地・上端アクセント・大きめ padding で「文字敷き詰め」から「余白のある図解」へ転換。 */
+.report-narrative {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-5, 1.5rem); margin: var(--space-5,1.5rem) 0 var(--space-6, 2rem);
+  padding: 0; background: none; border: 0;
+}
+.report-narrative__cell {
+  display: flex; flex-direction: column; gap: 0.6rem;
+  background: #fff; border: 1px solid rgba(67,67,108,0.12); border-radius: 0.85rem;
+  border-top: 3px solid var(--section-accent, var(--accent-blue-vivid));
+  padding: var(--space-5,1.5rem); box-shadow: var(--shadow-subtle);
+}
+.report-narrative__label {
+  font-size: var(--fs-small); font-weight: 800; letter-spacing: 0.03em;
+  color: var(--section-accent, var(--accent-blue-vivid));
+}
+.report-narrative__cell--approach .report-narrative__label { color: var(--accent-aqua-vivid); }
+.report-narrative__cell--leverage .report-narrative__label { color: var(--accent-violet-vivid); }
+.report-narrative__text { font-size: var(--fs-small); line-height: 1.7; color: var(--fg); }
+/* 節内小見出し */
+.report-subheading { font-size: var(--fs-subheading); font-weight: 700; margin: var(--space-5,1.5rem) 0 var(--space-3,0.75rem); color: var(--fg); }
+h4.report-subheading { font-size: calc(1.12rem * var(--font-scale)); }
+/* 番号/箇条書きリスト */
+.report-list { margin: 0 0 var(--space-4,1rem) var(--space-5,1.5rem); }
+.report-list--ol { list-style: decimal; }
+.report-list--ul { list-style: disc; }
+.report-list li { font-size: var(--fs-body); margin-bottom: var(--space-2,0.5rem); }
+/* 要点の色付きハイライト (inline ==...==) — 1.2.0: 色に依存しない第2チャネル (font-weight + underline) を必須併存し色覚非依存 */
+mark.report-hl {
+  background: color-mix(in srgb, var(--accent-yellow-vivid) 34%, transparent);
+  color: var(--fg); padding: 0.05em 0.28em; border-radius: 0.25rem; font-weight: 700;
+  text-decoration: underline; text-decoration-thickness: 0.11em; text-underline-offset: 0.18em;
+  text-decoration-color: var(--accent-yellow-vivid);
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+/* markdown 表 (<br> で潰さない) */
+.report-table-wrap { margin: var(--space-5,1.5rem) 0; overflow-x: auto; }
+.report-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); background: rgba(255,255,255,0.5); border-radius: 0.5rem; overflow: hidden; box-shadow: var(--shadow-subtle); }
+.report-table th, .report-table td { padding: 0.55rem 0.8rem; text-align: left; border-bottom: 1px solid rgba(67,67,108,0.14); vertical-align: top; }
+.report-table thead th { background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 14%, transparent); color: var(--fg); font-weight: 700; }
+.report-table tbody tr:nth-child(even) { background: rgba(67,67,108,0.035); }
+.report-table-wrap figcaption, .report-code-wrap figcaption { margin-top: 0.4rem; font-size: var(--fs-small); color: var(--fg-dim); font-weight: 500; }
+/* コードブロック (ダーク・ターミナル風) */
+.report-code-wrap { position: relative; margin: var(--space-5,1.5rem) 0; }
+.report-code__lang { position: absolute; top: 0.5rem; right: 0.7rem; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: #c8c093; font-family: var(--font-mono); z-index: 1; }
+pre.report-code { background: #1f1f28; color: #dcd7ba; font-family: var(--font-mono); font-size: 0.86rem; line-height: 1.6; padding: var(--space-4,1rem); border-radius: 0.55rem; overflow-x: auto; box-shadow: var(--shadow-medium); }
+pre.report-code code { background: none; padding: 0; color: inherit; font-size: inherit; white-space: pre; }
+/* キーポイント強調ボックス (色付き・トーン別) */
+/* キーポイント: 吹き出しをやめ、余白の大きい白カード + 上端アクセント + タイトル前の色ドット。 */
+.report-keypoint { margin: var(--space-5,1.5rem) 0; padding: var(--space-5,1.5rem); border-radius: 0.85rem; background: #fff; border: 1px solid rgba(67,67,108,0.12); border-top: 3px solid var(--accent-pink-vivid); box-shadow: var(--shadow-subtle); --kp-accent: var(--accent-pink-vivid); }
+.report-keypoint--accent   { border-top-color: var(--accent-blue-vivid);   --kp-accent: var(--accent-blue-vivid); }
+.report-keypoint--positive { border-top-color: var(--accent-aqua-vivid);   --kp-accent: var(--accent-aqua-vivid); }
+.report-keypoint--caution  { border-top-color: var(--accent-yellow-vivid); --kp-accent: var(--accent-yellow-vivid); }
+.report-keypoint--neutral  { border-top-color: var(--fuji-gray);           --kp-accent: var(--fuji-gray); }
+.report-keypoint__title { font-weight: 800; margin-bottom: 0.5rem; color: var(--fg); display: flex; align-items: center; gap: 0.5rem; }
+.report-keypoint__title::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 0.2rem; background: var(--kp-accent, var(--accent-pink-vivid)); flex: none; }
+.report-keypoint__body { font-size: var(--fs-body); line-height: 1.75; }
+/* 統計タイル */
+.report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: var(--space-3,0.75rem); margin: var(--space-5,1.5rem) 0; }
+.report-stat { display: flex; flex-direction: column; gap: 0.2rem; padding: var(--space-3,0.75rem) var(--space-4,1rem); border-radius: 0.5rem; background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 7%, transparent); border: 1px solid color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 18%, transparent); }
+.report-stat__label { font-size: var(--fs-small); color: var(--fg-dim); font-weight: 600; }
+.report-stat__value { font-size: calc(1.9rem * var(--font-scale)); font-weight: 800; line-height: 1.1; color: var(--section-accent, var(--accent-blue-vivid)); font-variant-numeric: tabular-nums; }
+.report-stat__note { font-size: 0.78rem; color: var(--fg-dim); }
+.report-stat__trend { font-size: 0.9rem; margin-left: 0.2rem; }
+.report-stat__trend--up { color: var(--accent-aqua-vivid); }
+.report-stat__trend--down { color: var(--accent-pink-vivid); }
+.report-stat__trend--flat { color: var(--fuji-gray); }
+/* 引用ブロック */
+.report-quote { margin: var(--space-4,1rem) 0; padding: var(--space-3,0.75rem) var(--space-5,1.5rem); border-left: 0.3rem solid var(--fuji-gray); color: var(--fg-dim); font-style: italic; background: rgba(103,103,108,0.05); border-radius: 0 0.4rem 0.4rem 0; }
+/* callout に title を許容 */
+.report-callout__title { color: var(--fg); }
+/* 意味的配置: 本文と図の 2 カラム分割 */
+.report-grid--2col { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-5,1.5rem); align-items: start; }
+.report-grid__visual .report-visual { margin: 0; }
+@media (max-width: 720px) { .report-grid--2col { grid-template-columns: 1fr; } }
+/* section 強調度 (placement.emphasis) */
+.report-section[data-emphasis="highlight"] { padding: var(--space-4,1rem) var(--space-4,1rem); border-radius: 0.6rem; background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 5%, transparent); }
+.report-section[data-emphasis="muted"] { opacity: 0.82; }
+/* 目次 (TOC) */
+.report-toc { margin: 0 0 var(--space-7,3rem); padding: var(--space-4,1rem) var(--space-5,1.5rem); border-radius: 0.6rem; background: rgba(67,67,108,0.045); border: 1px solid rgba(67,67,108,0.12); }
+.report-toc__title { font-weight: 800; font-size: var(--fs-small); letter-spacing: 0.08em; color: var(--fg-dim); margin-bottom: 0.5rem; }
+.report-toc ol { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: var(--space-6,2rem); }
+.report-toc li { margin-bottom: 0.35rem; break-inside: avoid; }
+.report-toc a { color: var(--fg); text-decoration: none; font-size: var(--fs-small); }
+.report-toc a:hover { color: var(--report-accent, var(--accent-blue-vivid)); }
+.report-toc__num { display: inline-block; min-width: 1.9em; color: var(--report-accent, var(--accent-blue-vivid)); font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 1.3.0: sticky sidebar TOC (スクロール追従・scrollspy 現在位置ハイライト) */
+.report-toc--sidebar {
+  position: sticky; top: var(--space-5, 1.5rem);
+  max-height: calc(100vh - var(--space-6, 2rem) * 1.5);
+  overflow-y: auto; margin: var(--space-7, 3rem) 0 0;
+}
+.report-toc--sidebar ol { columns: 1; }
+.report-toc--sidebar li { margin-bottom: 0.45rem; }
+.report-toc a.is-active { color: var(--report-accent, var(--accent-blue-vivid)); font-weight: 700; }
+@media print { pre.report-code { box-shadow: none; } .report-toc ol { columns: 2; } }
+
+/* ===== 1.2.0: 文書アーク / 節間接続 / 文書メタ / 新 block 型 ===== */
+/* 文書全体の通し筋 (throughLine) — 導入部のアーク帯 */
+.report-throughline {
+  margin: var(--space-5,1.5rem) 0 var(--space-7, 3rem); padding: var(--space-5, 1.5rem) var(--space-6, 2rem);
+  border-radius: 0.85rem; font-size: var(--fs-body); line-height: 1.8; color: var(--fg);
+  background: #fff; border: 1px solid rgba(67,67,108,0.12);
+  border-top: 3px solid var(--report-accent, var(--accent-blue-vivid));
+  box-shadow: var(--shadow-subtle);
+  display: flex; gap: var(--space-4,1rem); align-items: baseline; flex-wrap: wrap;
+}
+.report-throughline__label { font-size: var(--fs-small); font-weight: 800; letter-spacing: 0.05em; color: var(--report-accent, var(--accent-blue-vivid)); white-space: nowrap; }
+/* part 単位 sub-arc (大規模文書の道標) */
+.report-throughline-parts { list-style: none; margin: 0 0 var(--space-6, 2rem); padding: 0; display: grid; gap: 0.4rem; counter-reset: tlpart; }
+.report-throughline__part { display: flex; gap: 0.7rem; align-items: baseline; padding: 0.4rem 0.7rem; border-left: 0.2rem solid color-mix(in srgb, var(--report-accent, var(--accent-blue-vivid)) 35%, transparent); background: color-mix(in srgb, var(--report-accent, var(--accent-blue-vivid)) 4%, transparent); border-radius: 0 0.4rem 0.4rem 0; }
+.report-throughline__part-title { font-size: var(--fs-small); font-weight: 800; color: var(--report-accent, var(--accent-blue-vivid)); white-space: nowrap; }
+.report-throughline__part-arc { font-size: var(--fs-small); line-height: 1.6; color: var(--fg); }
+/* 文書メタ (version/updatedDate/readingTime) は report-meta の span を流用 */
+/* 節末の次節への橋渡し (transition) */
+.report-transition {
+  margin: var(--space-4, 1rem) 0 0; padding: 0.5rem 0 0 var(--space-4, 1rem);
+  font-size: var(--fs-small); color: var(--fg-dim); font-style: italic;
+  border-left: 0.2rem solid color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 40%, transparent);
+}
+.report-transition::before { content: "→ "; font-weight: 700; font-style: normal; color: var(--section-accent, var(--accent-blue-vivid)); }
+/* 定義リスト (term ↔ definition) */
+.report-deflist { margin: var(--space-4,1rem) 0; display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr; gap: 0.4rem var(--space-4,1rem); }
+.report-deflist dt { font-weight: 800; color: var(--section-accent, var(--accent-blue-vivid)); }
+.report-deflist dd { margin: 0; font-size: var(--fs-body); line-height: 1.75; }
+@media (max-width: 720px) { .report-deflist { grid-template-columns: 1fr; } .report-deflist dd { margin-bottom: 0.5rem; } }
+/* 脚注引用 (footnote + citation)。marker が採番を担うため ol の decimal は出さない (二重採番回避) */
+.report-footnotes { margin: var(--space-5,1.5rem) 0 0; padding-top: var(--space-3,0.75rem); border-top: 1px solid rgba(67,67,108,0.18); font-size: var(--fs-small); color: var(--fg-dim); }
+.report-footnotes ol { list-style: none; margin: 0; padding: 0; }
+.report-footnotes li { margin-bottom: 0.35rem; line-height: 1.6; }
+.report-footnotes li:target { background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 10%, transparent); border-radius: 0.3rem; }
+.report-footnotes__marker { font-weight: 700; color: var(--section-accent, var(--accent-blue-vivid)); font-variant-numeric: tabular-nums; }
+.report-footnotes__back { margin-left: 0.4rem; text-decoration: none; color: var(--section-accent, var(--accent-blue-vivid)); }
+.report-footnotes cite { display: block; font-style: normal; font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.1rem; }
+/* 本文中の脚注参照 (上付き番号リンク) */
+sup.report-fnref { font-size: 0.7em; line-height: 0; }
+sup.report-fnref a { text-decoration: none; color: var(--section-accent, var(--accent-blue-vivid)); font-weight: 700; }
+sup.report-fnref a:hover { text-decoration: underline; }
+/* タスクリスト (次アクション・チェックボックス) */
+.report-tasklist { list-style: none; margin: var(--space-4,1rem) 0; padding: 0; }
+.report-tasklist li { display: flex; gap: 0.55rem; align-items: baseline; font-size: var(--fs-body); margin-bottom: 0.5rem; }
+.report-tasklist__box { font-family: var(--font-mono); font-weight: 800; color: var(--section-accent, var(--accent-blue-vivid)); white-space: nowrap; }
+.report-tasklist__box--done { color: var(--accent-aqua-vivid); }
+.report-tasklist li.is-done .report-tasklist__text { color: var(--fg-dim); text-decoration: line-through; }
+.report-tasklist__owner { font-size: var(--fs-small); color: var(--fg-muted); margin-left: 0.3rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body style="--report-accent: var(--accent-blue-vivid);">
+<div class="report-layout">
+  <aside class="report-sidebar">
+  <nav class="report-toc report-toc--sidebar" aria-label="目次">
+    <div class="report-toc__title">目次</div>
+    <ol>
+      <li><a href="#section-summary"><span class="report-toc__num">01</span>エグゼクティブサマリ</a></li>
+      <li><a href="#section-mechanism"><span class="report-toc__num">02</span>実行フローの構造 — 内ループと外ループ</a></li>
+      <li><a href="#section-outer-rounds"><span class="report-toc__num">03</span>外ループ 3 周の詳細</a></li>
+      <li><a href="#section-route-build"><span class="report-toc__num">04</span>route build 結果 (C01 / C02)</a></li>
+      <li><a href="#section-depgraph"><span class="report-toc__num">05</span>依存グラフの構造 (13 phase DAG)</a></li>
+      <li><a href="#section-elegant-review"><span class="report-toc__num">06</span>エレガント検証 (30 思考法) の所見</a></li>
+      <li><a href="#section-unproven"><span class="report-toc__num">07</span>未実証だった 3 点の決着</a></li>
+      <li><a href="#section-next-action"><span class="report-toc__num">08</span>残課題と次アクション</a></li>
+    </ol>
+  </nav>
+  </aside>
+  <main class="report">
+  <header class="report-header">
+    <h1 class="report-title">plugin-dev-planner task-graph route build 実行記録</h1>
+    <p class="report-subtitle">58 node 全 graph 実走 — 内/外ループ協調・エレガント検証 4 条件 PASS (2026-07-10〜11)</p>
+    <p class="report-keymessage">task-graph route モード初の全 graph 実走。58/58 done・外ループ 3 周で FAIL を還流し、エレガント検証が high 3 件を検出→根治して 4 条件全 PASS に到達した。</p>
+    <div class="report-meta">
+      <span class="report-type-badge">社内報告分析</span>
+      <span>読者: harness-creator / plugin-dev-planner ハーネス群の運用者</span>
+      <span>著者: capability-build (task-graph route)</span>
+      <span>分量: 精読</span>
+      <span class="report-meta__doc">版: 1.0.0</span>
+      <span class="report-meta__doc">更新: 2026-07-11</span>
+      <span class="report-meta__doc">読了目安: 約10分</span>
+    </div>
+  </header>
+  <div class="report-throughline" role="note"><span class="report-throughline__label">通し筋</span><span class="report-throughline__text">本質課題=改善サイクルの実行状態を人手台帳でなく機構で駆動できるか。解決=canonical graph を不変に保ち task-state 投影と ready-set 算出で内ループを、FAIL→discovered-task→planner drain→repin で外ループを回す。活用=58 node 全走・エレガント検証 4 条件 PASS により route モードの再現性を実証した。</span></div>
+<section class="report-section" id="section-summary" data-role="summary" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="01">エグゼクティブサマリ</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">これまで capability-build の実行状態は 13 phase を直列に進める暗黙管理で、部分進捗も FAIL 還流も台帳外だった。今回は task-graph route モードを graph 全域で実走し、状態を機構が駆動できるかを問うた。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">canonical graph (58 node) を不変に保ち、task-state 投影で進捗を、compute-ready-set で次に着手可能な node 集合を機械算出する内ループと、検証 FAIL を discovered-task として planner へ還流し repin する外ループを協調させた。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--leverage"><span class="report-narrative__label">どう活かすか</span><span class="report-narrative__text">58/58 done・completion_gate ok・外ループ 3 周・エレガント検証 4 条件 PASS。route モードは『固定 13 phase 直列』を超えて依存グラフ駆動の再現可能な実行形態として実証された。</span></div>
+  </div>
+  <div class="report-keypoint report-keypoint--accent"><div class="report-keypoint__title">結論</div><div class="report-keypoint__body">task-graph route モードの<strong>初の全 graph 実走</strong>が完走した。58 node すべてが done、completion_gate は ok、外ループ 3 周で FAIL を吸収し、思考リセット後の 30 思考法エレガント検証が <strong>4 条件全 PASS</strong> に収束した。</div></div>
+  <div class="report-stats">
+    <div class="report-stat"><span class="report-stat__label">node 完了率</span><span class="report-stat__value">58/58 <span class="report-stat__trend report-stat__trend--up">▲</span></span><span class="report-stat__note">done=58 / blocked=0</span></div>
+    <div class="report-stat"><span class="report-stat__label">外ループ</span><span class="report-stat__value">3 周 </span><span class="report-stat__note">FAIL→drain→repin</span></div>
+    <div class="report-stat"><span class="report-stat__label">エレガント検証</span><span class="report-stat__value">4/4 PASS <span class="report-stat__trend report-stat__trend--up">▲</span></span><span class="report-stat__note">30 思考法・skip 0</span></div>
+    <div class="report-stat"><span class="report-stat__label">pytest (C02 時点)</span><span class="report-stat__value">821 passed <span class="report-stat__trend report-stat__trend--up">▲</span></span><span class="report-stat__note">回帰 0</span></div>
+    <div class="report-stat"><span class="report-stat__label">high 所見</span><span class="report-stat__value">3 件根治 </span><span class="report-stat__note">全て周回 1 で修復</span></div>
+    <div class="report-stat"><span class="report-stat__label">graph_hash</span><span class="report-stat__value">単一 pin </span><span class="report-stat__note">c636b6aa…</span></div>
+  </div>
+  <p>route は 2 本 (C01=run-plugin-dev-plan・C02=assign-plugin-plan-evaluator) で、いずれも <code>--mode update</code> の additive 差分として成立した。差分の中心は <strong>C17-C19</strong> (実行契約 envelope・三層状態 parity・cross-cycle knowledge) で、既存 C1-C16 と後方互換を保った。以降の節で内/外ループの構造、外ループ 3 周の内訳、route build 結果、依存グラフ、エレガント検証の所見、未実証点の決着、残課題の順に述べる。</p>
+  
+  <p class="report-transition">まず、この完走を支えた実行フローの構造 — 内ループと外ループ — から見ていく。</p>
+</section>
+<section class="report-section" id="section-mechanism" data-role="background" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="02">実行フローの構造 — 内ループと外ループ</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">route モードの肝は、状態の正本を canonical graph から切り離すこと。graph を実行中に書き換えると graph_hash pin が毎遷移で壊れるため、構造 SSOT (task-graph.json)・可変状態 SSOT (task-state.json)・観測ビュー (task-progress.md) を三層に分離する。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">内ループは ready-set を機械算出して並列に検証し、結果を状態へ書き戻して再投影する定常回転。外ループは検証 FAIL を discovered-task として planner へ還流し、新 revision へ repin してから内ループへ再入する。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--leverage"><span class="report-narrative__label">どう活かすか</span><span class="report-narrative__text">この二重ループにより、部分進捗の可視化と『FAIL しても graph を汚さず改善を織り込む』還流が両立する。dispatch/write-back/discovered-emit の所有区分は harness-creator との producer/consumer 境界で固定されている。</span></div>
+  </div>
+  <p>実行は 2 つのループが入れ子で回る。内ループは 1 周ごとに『着手可能な node 集合』を確定して並列検証する定常回転、外ループは検証 FAIL を吸収して graph 自体を進化させる還流である。</p>
+  <h3 class="report-subheading">内ループ (ready-set 駆動の定常回転)</h3>
+  <ol class="report-list report-list--ol">
+    <li><code>compute-ready-set.py</code> が依存を満たし未完了の node 集合 (ready-set) を算出する。</li>
+    <li>各 node を独立 context の SubAgent へ dispatch し、二値受入基準で並列検証する。</li>
+    <li>検証結果を <code>task-state.json</code> へ done として書き戻す (canonical graph は不変)。</li>
+    <li><code>project-task-status.py</code> が状態を投影し <code>task-graph-status.json</code> / <code>task-progress.md</code> を再生成 → 次の ready-set 算出へ戻る。</li>
+  </ol>
+  <h3 class="report-subheading">外ループ (FAIL 還流による graph 進化)</h3>
+  <ol class="report-list report-list--ol">
+    <li>内ループの検証が FAIL すると、その内容を <strong>discovered-task</strong> として planner の inbox へ emit する。</li>
+    <li>planner drain が discovered-task を回収し、form (additive な追記) として plan へ反映する。</li>
+    <li>graph を新 revision へ再導出し、graph_hash を更新して <strong>repin</strong> する。</li>
+    <li>repin 済み graph で内ループへ再入する (pin 済み graph は直接更新しない=不変則)。</li>
+  </ol>
+  <aside class="report-callout report-callout--note"><strong class="report-callout__title">不変則</strong> canonical graph を状態台帳として直接編集しない。status 更新は consumer 単一 writer による task-state 更新と投影で満たす。discovered-task は pin 済み graph を書き換えず、外ループで新 hash へ反映する。</aside>
+  <figure class="report-visual report-visual--svg" role="img" aria-label="内ループの 4 段階を循環で示した図">
+  <svg viewBox="0 0 1200 600" class="cycle-svg" role="img" aria-label="サイクル図" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-blue, #7E9CD8)"/></marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--sakura-pink, #D27E99)"/></marker>
+    <marker id="arrow-aqua" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--autumn-yellow, #DCA561)"/></marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--spring-violet, #957FB8)"/></marker>
+  </defs>
+  
+  <path d="M909.7,167.3 A 220 220 0 0 1 1012.7,270.3" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M1012.7,329.7 A 220 220 0 0 1 909.7,432.7" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M850.3,432.7 A 220 220 0 0 1 747.3,329.7" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M747.3,270.3 A 220 220 0 0 1 850.3,167.3" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <circle cx="880.0" cy="80.0" r="78" fill="var(--wave-blue, #7E9CD8)" opacity="0.92"/>
+      <text x="880" y="85" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="880" dy="0">ready-</tspan><tspan x="880" dy="27">set 算出</tspan></text>
+  <circle cx="1100.0" cy="300.0" r="78" fill="var(--wave-aqua, #7FB4CA)" opacity="0.92"/>
+      <text x="1100" y="305" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="1100" dy="0">並列 Sub</tspan><tspan x="1100" dy="27">Agent </tspan><tspan x="1100" dy="27">検証</tspan></text>
+  <circle cx="880.0" cy="520.0" r="78" fill="var(--sakura-pink, #D27E99)" opacity="0.92"/>
+      <text x="880" y="525" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="880" dy="0">done 書</tspan><tspan x="880" dy="27">き戻し</tspan></text>
+  <circle cx="660.0" cy="300.0" r="78" fill="var(--autumn-yellow, #DCA561)" opacity="0.92"/>
+      <text x="660" y="305" text-anchor="middle" fill="#fff" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="660" dy="0">状態投影</tspan></text>
+</svg>
+  <figcaption>図1. 内ループ: ready-set 算出 → 並列検証 → 書き戻し → 投影 の定常回転 (canonical graph は不変)</figcaption>
+</figure>
+  <p class="report-transition">この外ループが実際に何周回り、各周で何を還流したかを次に見る。</p>
+</section>
+<section class="report-section" id="section-outer-rounds" data-role="analysis" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="03">外ループ 3 周の詳細</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">外ループが実際に回った 3 周は、いずれも『内容の齟齬を検証 node が捕捉 → planner が additive に修復 → repin』という同一パターンで、graph 構造は 2 周目以降 不変を保った。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">各周の起点 FAIL・還流 form・drain 結果・graph 変化を突き合わせ、還流が graph_hash の安定性を壊さずに内容だけを進化させたことを確認する。</span></div>
+  </div>
+  <p>3 周のうち graph 構造 (node 数) が変わったのは Round 1 のみ (57→58)。Round 2/3 は phase 文書の内容修正に閉じ、graph は不変だった。すなわち外ループは『必要なときだけ構造を増やし、多くは内容を additive に締める』還流として働いた。</p>
+  <figure class="report-table-wrap">
+    <table class="report-table">
+    <thead><tr><th>周</th><th>起点 FAIL</th><th>還流 form</th><th>drain 結果</th><th>graph 変化</th></tr></thead>
+    <tbody><tr><td>Round 1</td><td>P01-x-01 FAIL (goal-spec background が旧前提と矛盾)</td><td>990fc57f (P01-x-08 additive)</td><td>accepted・goal-spec background 改訂</td><td>57 → 58 node・repin</td></tr><tr><td>Round 2</td><td>P04-x-05 / P04-x-08 FAIL (C14(b) 例ペア欠落・C17-C19 exit 不記載)</td><td>17f6d54b + 96b690f7 (冪等 additive)</td><td>accepted・phase-04 内容修正</td><td>不変</td></tr><tr><td>Round 3</td><td>P06-x-03 FAIL (C1/C6/C8/C9/C10 被覆紐付け不在)</td><td>305dd311 (冪等 additive)</td><td>accepted・被覆担体対応表 (C1-C19×担体) 確立</td><td>不変</td></tr></tbody>
+    </table>
+    <figcaption>表1. 外ループ 3 周の内訳</figcaption>
+  </figure>
+  <div class="report-keypoint report-keypoint--positive"><div class="report-keypoint__title">graph_hash の安定性</div><div class="report-keypoint__body">3 周を経ても最終 graph_hash は <code>sha256:c636b6aa…</code> の<strong>単一 pin</strong> に収束。Round 1 の node 追加は repin で新 hash へ移行し、以降の内容修正は hash を動かさなかった。pin の一致は依存関係整合の機械証跡になっている。</div></div>
+  <figure class="report-visual report-visual--svg" role="img" aria-label="外ループ 3 周を縦タイムラインで示した図">
+  <svg viewBox="0 0 540 360" role="img" aria-label="縦タイムライン" xmlns="http://www.w3.org/2000/svg">
+  <line x1="100" y1="20" x2="100" y2="340" stroke="var(--wave-blue, #7E9CD8)" stroke-width="3"/>
+  <circle cx="100" cy="40" r="14" fill="var(--wave-blue, #7E9CD8)"/>
+      <text x="130" y="45" text-anchor="start" fill="var(--fg, #43436c)" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="130" dy="0">P01-x-01 FAIL → background 改訂 (57→58 node)  Round 1</tspan></text>
+  <circle cx="100" cy="120" r="14" fill="var(--wave-aqua, #7FB4CA)"/>
+      <text x="130" y="125" text-anchor="start" fill="var(--fg, #43436c)" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="130" dy="0">P04-x-05/08 FAIL → phase-04 修正 (graph 不変)  Round 2</tspan></text>
+  <circle cx="100" cy="200" r="14" fill="var(--sakura-pink, #D27E99)"/>
+      <text x="130" y="205" text-anchor="start" fill="var(--fg, #43436c)" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="130" dy="0">P06-x-03 FAIL → 被覆対応表確立 (graph 不変)  Round 3</tspan></text>
+</svg>
+  <figcaption>図2. 外ループ 3 周のタイムライン: FAIL の起点と還流結果の推移</figcaption>
+</figure>
+  <p class="report-transition">還流の到達点である 2 本の route build 結果へ進む。</p>
+</section>
+<section class="report-section" id="section-route-build" data-role="analysis" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="04">route build 結果 (C01 / C02)</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">2 route はいずれも新規 component 追加ではなく、既存 skill への <code>--mode update</code> additive 差分。差分の実体は C17-C19 の実行契約強化で、既存の 13-phase task-graph.json を byte 不変に保つ後方互換設計が要だった。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">C01 (producer) が実行契約 envelope とゲートを追加し、C02 (consumer=evaluator) がその契約を genuine 判定する semantic_check を追加する producer→consumer の順序で build した。</span></div>
+  </div>
+  <p>route は依存順 (C02 depends_on C01) で実行された。C01 が producer 側の実行契約と schema/renderer を確立し、C02 がそれを評価軸へ配線する。両者とも status=success で完走した。</p>
+  <figure class="report-table-wrap">
+    <table class="report-table">
+    <thead><tr><th>観点</th><th>C01: run-plugin-dev-plan</th><th>C02: assign-plugin-plan-evaluator</th></tr></thead>
+    <tbody><tr><td>役割</td><td>producer (実行契約・ゲートの生成)</td><td>consumer / evaluator (契約の genuine 判定)</td></tr><tr><td>差分の中心</td><td>C17-C19 additive (envelope schema/renderer・三層 parity・plan-ledger lineage)</td><td>C17/C19 を評価軸へ: S8=execution-envelope・S9=cycle-knowledge</td></tr><tr><td>pytest</td><td>804 passed (baseline 759 から +45)</td><td>821 passed・回帰 0 (新規 parity 4 + C01 分含む)</td></tr><tr><td>evaluator version</td><td>—</td><td>0.2.0 へ更新 (S8/S9 は llm-only advisory)</td></tr><tr><td>covered task</td><td>P05-C01-01</td><td>P09-C02-01</td></tr></tbody>
+    </table>
+    <figcaption>表2. route C01 / C02 の対比</figcaption>
+  </figure>
+  <h3 class="report-subheading">C01 が追加した実行契約 (C17-C19)</h3>
+  <ul class="report-list report-list--ul">
+    <li><strong>C17 TaskExecutionEnvelope</strong>: node が title 単独でなく task_spec_ref / phase_policy_ref / component_route / acceptance / inputs / knowledge / verify を実質携帯し、追加質問なしに着手できる実行契約を optional additive で schema へ追加。</li>
+    <li><strong>C18 三層状態 parity</strong>: <code>project-task-status.py</code> が構造 (graph)・状態 (task-state)・観測ビューの三層 parity を検査。単一 writer=consumer TG-C09 に確定 (elegant で二重 writer を根治)。</li>
+    <li><strong>C19 cross-cycle knowledge</strong>: plan-ledger の predecessor_cycle_id と <code>check-cycle-knowledge.py</code> で、過去 cycle 知識を source_ref / freshness_checked_at / decision / reason 付きで有界注入。</li>
+  </ul>
+  <h3 class="report-subheading">C02 が追加した評価軸 (S8 / S9)</h3>
+  <ul class="report-list report-list--ul">
+    <li><strong>S8 execution-envelope</strong>: envelope が下流着手に十分な情報を実質携帯しているかを genuine 判定 (C17 の意味検査)。</li>
+    <li><strong>S9 cycle-knowledge</strong>: 過去 cycle 知識が関連知見だけを有界注入しているかを genuine 判定 (C19 の意味検査)。</li>
+    <li>S8/S9 は S5-S7 と同一 shape の <strong>llm-only advisory</strong> (conditions=[]) で、C1-C4 の機械 verdict accounting (G1-G11) には非混入。</li>
+  </ul>
+  <aside class="report-callout report-callout--warning"><strong class="report-callout__title">build 中の 2 つの逸脱 (開示済)</strong> (1) C19 の新規 <code>plan-ledger.schema.json</code> が repo-root <code>.gitignore</code> の広域ルール <code>**/plan-*.json</code> に名前衝突し未追跡化 (ローカル緑/CI 赤の gitignored source leak)。同一 plugin の先例に倣い negation 1 行で rescue。(2) C02 build の fork design-evaluate が session 上限で中断 → 機械検証で代替し、残差は elegant-review の 3 analyst 独立レビューで補完した。</aside>
+  
+  <p class="report-transition">これらの route が乗る 58 node の依存構造を次に俯瞰する。</p>
+</section>
+<section class="report-section" id="section-depgraph" data-role="analysis" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="05">依存グラフの構造 (13 phase DAG)</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">58 node の canonical graph は、13 phase の spine に各 phase の検証タスク (x-node) がぶら下がり、build 対象の 2 phase (P05/P09) が component route (C01/C02) へ写像される三種構成。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">全 58 node を羅列するのではなく、13 phase の骨格と node の 3 種別を示して構造の読み筋を与える。route への写像はダッシュエッジで表す。</span></div>
+  </div>
+  <p>graph の背骨は P01 requirements から P13 release までの 13 phase。各 phase は複数の検証 node (<code>P0N-x-NN</code>) を fan-out し、それらが phase 本体へ収束する。実装/QA を担う P05・P09 だけが component route へ写像される。下図は 13 phase を <strong>8 つの論理ステージ群</strong> に束ねた骨格で、P05→C01・P09→C02 の写像を該当ステージに注記した (1 図の node 上限に合わせた集約表現・全 phase を被覆)。</p>
+  <dl class="report-deflist">
+    <dt>phase node (P01–P13)</dt>
+    <dd>13 phase の共通ライフサイクル契約。各 node は phase_ref で 1 つの phase policy を参照する。</dd>
+    <dt>検証 node (P0N-x-NN)</dt>
+    <dd>1 検証可能成果物の実行単位。phase 本体から fan-out し、二値受入基準で done 判定される (全 58 node の大半)。</dd>
+    <dt>route 写像 node</dt>
+    <dd>P05-C01-01 → run-plugin-dev-plan、P09-C02-01 → assign-plugin-plan-evaluator。build 対象 component への写像を持つ唯一の node 種別。</dd>
+  </dl>
+  <div class="report-keypoint report-keypoint--neutral"><div class="report-keypoint__title">構造の要点</div><div class="report-keypoint__body">13 phase の直列 spine は不変のガードレール、可変なのは各 phase の検証 node 群。この分離により『固定 phase policy × 可変 task spec』が両立し、graph 全体は非循環 (DAG) を保つ。</div></div>
+  <figure class="report-visual report-visual--svg" role="img" aria-label="13 phase を 8 つの論理ステージ群にまとめた実行骨格図">
+  <svg viewBox="0 0 960 360" role="img" aria-label="スネークフロー図" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-blue, #7E9CD8)"/></marker>
+    <marker id="arrow-pink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--sakura-pink, #D27E99)"/></marker>
+    <marker id="arrow-aqua" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--autumn-yellow, #DCA561)"/></marker>
+    <marker id="arrow-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--spring-violet, #957FB8)"/></marker>
+  </defs>
+  <rect x="45" y="30" width="195" height="140" rx="10" fill="var(--wave-blue, #7E9CD8)" opacity="0.9"/>
+      <text x="142.5" y="105" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="142.5" dy="0">P01–P02 要件・設計</tspan></text>
+  <rect x="270" y="30" width="195" height="140" rx="10" fill="var(--wave-aqua, #7FB4CA)" opacity="0.9"/>
+      <text x="367.5" y="105" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="367.5" dy="0">P03 設計レビュー</tspan></text>
+  <rect x="495" y="30" width="195" height="140" rx="10" fill="var(--sakura-pink, #D27E99)" opacity="0.9"/>
+      <text x="592.5" y="105" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="592.5" dy="0">P04 テスト設計</tspan></text>
+  <rect x="720" y="30" width="195" height="140" rx="10" fill="var(--autumn-yellow, #DCA561)" opacity="0.9"/>
+      <text x="817.5" y="105" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="817.5" dy="0">P05 実装 → C01</tspan></text>
+  <rect x="720" y="190" width="195" height="140" rx="10" fill="var(--spring-violet, #957FB8)" opacity="0.9"/>
+      <text x="817.5" y="265" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="817.5" dy="0">P06–P08 実行・受入・整理</tspan></text>
+  <rect x="495" y="190" width="195" height="140" rx="10" fill="var(--wave-blue, #7E9CD8)" opacity="0.9"/>
+      <text x="592.5" y="265" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="592.5" dy="0">P09 QA → C02</tspan></text>
+  <rect x="270" y="190" width="195" height="140" rx="10" fill="var(--wave-aqua, #7FB4CA)" opacity="0.9"/>
+      <text x="367.5" y="265" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="367.5" dy="0">P10–P11 レビュー・証跡</tspan></text>
+  <rect x="45" y="190" width="195" height="140" rx="10" fill="var(--sakura-pink, #D27E99)" opacity="0.9"/>
+      <text x="142.5" y="265" text-anchor="middle" fill="#fff" font-size="16" font-weight="700" font-family="'Noto Sans JP', sans-serif"><tspan x="142.5" dy="0">P12–P13 文書・リリース</tspan></text>
+</svg>
+  <figcaption>図3. 13 phase を 8 ステージ群に束ねた実行骨格。P05→C01・P09→C02 が component route へ写像される</figcaption>
+</figure>
+  <p class="report-transition">構造が健全でも監査経路の欠陥は残りうる。次に思考リセット後のエレガント検証の所見を見る。</p>
+</section>
+<section class="report-section" id="section-elegant-review" data-role="finding" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="06">エレガント検証 (30 思考法) の所見</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">build 完走後の思考リセットが、機械ゲート緑では見えない high 3 件を捕捉した。いずれも『成果は出ているが記録・主張・所有が実体とズレている』という監査系の欠陥で、Goodhart 的な見かけの緑を剥がした。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">Phase1 リセット俯瞰 → Phase2 3 並列独立分析 (論理構造 10 + メタ発想 9 + システム戦略 11 = 30 思考法・skip 0) → Phase3 改善実行。周回 1 で 4 条件全 PASS に到達した。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--leverage"><span class="report-narrative__label">どう活かすか</span><span class="report-narrative__text">検出された high 3 件はいずれも恒久ガード (schema/validator/assert) 込みで根治し、次サイクルの再発を機械層で封じた。</span></div>
+  </div>
+  <p>30 思考法を 3 analyst へ並列配分し、思考リセット後の先入観なし俯瞰から重大度順に統合した。high 3 件はいずれも『build は success だが監査経路が断絶している』型で、機械テストの緑だけでは捕捉できなかった。</p>
+  <figure class="report-table-wrap">
+    <table class="report-table">
+    <thead><tr><th>所見</th><th>内容</th><th>根治</th></tr></thead>
+    <tbody><tr><td>knowledge 記録全損</td><td>Loop A store 物理不在 + record ループの例外隔離不在で Loop B まで巻き添え entries_recorded=0。C19 導入 cycle 自身の教訓が 0 件だった</td><td>per-store/per-entry try 隔離 + store 初期化。再実行で entries_recorded=3 / status ok・tests 45 passed</td></tr><tr><td>discovered 主張の不一致</td><td>route report の『discovered[] へ構造化報告済』主張が実在 form と不一致 (claim-vs-artifact ドリフト再発)</td><td>route-C01/C02 へ corrections を additive 追記 + schema へ discovered/corrections + validate の deviations×discovered 突合ゲート</td></tr><tr><td>projection 二重 writer</td><td>project-task-status.py が producer/consumer 両側に実在し契約正本が 2 つ矛盾 (pipeline-boundary L81 vs task-graph-contract C18)</td><td>producer projection を parity 検査専用へ縮退 (書込コード削除)。単一 writer=consumer TG-C09 へ確定・恒久 assert 追加</td></tr></tbody>
+    </table>
+    <figcaption>表3. high 所見 3 件と根治</figcaption>
+  </figure>
+  <div class="report-keypoint report-keypoint--caution"><div class="report-keypoint__title">見かけの緑を剥がす</div><div class="report-keypoint__body">3 件はいずれも pytest 緑・completion_gate ok の状態で潜んでいた。特に knowledge 全損は『C19 (cross-cycle knowledge) を導入した当の cycle が自らの教訓を 1 件も残せていない』という自己矛盾で、思考リセットなしには見落とされていた。</div></div>
+  <h3 class="report-subheading">最終 4 条件 (dispatcher 独立再検証済)</h3>
+  <figure class="report-table-wrap">
+    <table class="report-table">
+    <thead><tr><th>条件</th><th>判定</th><th>機械証跡</th></tr></thead>
+    <tbody><tr><td>矛盾なし</td><td>PASS</td><td>契約 2 正本の writer 記述一致・producer projection 書込コード 0</td></tr><tr><td>漏れなし</td><td>PASS</td><td>entries_recorded=3・S5-S9 の rubric→prompt→agent 伝播 parity test 緑</td></tr><tr><td>整合性あり</td><td>PASS</td><td>corrections 訂正 + validate 突合 exit0・用語対応表確立</td></tr><tr><td>依存関係整合</td><td>PASS</td><td>validate-task-graph exit0・route parity 2:1:1・graph_hash pin 一致 (c636b6aa…)</td></tr></tbody>
+    </table>
+    <figcaption>表4. 4 条件の判定と機械証跡</figcaption>
+  </figure>
+  <p>回帰確認は dispatcher 実走で独立に取り、plugin-dev-planner 824 passed / harness-creator 361 passed を確認した。medium 以下の所見 (form 冪等 skip の内容差分・fork agent 未伝播・安定 CLI 節の renderer 未掲載等) は Phase3 で B1-B6 として全解消済み。</p>
+  
+  <p class="report-transition">検出した欠陥の根治に加え、前サイクルからの未実証点も本サイクルで決着した。</p>
+</section>
+<section class="report-section" id="section-unproven" data-role="finding" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="07">未実証だった 3 点の決着</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">本サイクル前の plan review で runtime 実証が保留だった 3 点 (plan 再現性・テスト網羅・移行 gate) について、今回の build がどこまで決着させ、何を次サイクルへ送ったかを整理する。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">3 点それぞれに『本サイクルでの決着』と『証跡』を対応づけ、実証済みと deferred を明示的に切り分ける。</span></div>
+  </div>
+  <figure class="report-table-wrap">
+    <table class="report-table">
+    <thead><tr><th>未実証だった点</th><th>本サイクルでの決着</th><th>証跡</th></tr></thead>
+    <tbody><tr><td>層① plan 再現性 (自 plan の graph 再導出)</td><td>実証済。build 後に自 plan へ derive-task-graph→compute-ready-set を適用し、task 粒度の部分進捗を dogfooding 実証した</td><td>P11-x-03 evidence (dogfooding 受入例)</td></tr><tr><td>層② テスト網羅 (追加テスト + E2E route 実走)</td><td>実証済。route build で新規テストを追加 (C01 +45 / C02 +4 parity) し、plugin suite 821→824 緑・E2E で 2 route を実走完走した</td><td>route-C01/C02 evidence・elegant 824/361 passed</td></tr><tr><td>SS-5 bootstrap→target 移行 gate</td><td>deferred。本サイクルでは未実装とし、Loop B knowledge へ next-cycle-candidates として起票した</td><td>elegant deferred_next_cycle (SS-5)</td></tr></tbody>
+    </table>
+    <figcaption>表5. 未実証 3 点の本サイクルでの決着</figcaption>
+  </figure>
+  <aside class="report-callout report-callout--tip"><strong class="report-callout__title">切り分けの意味</strong> 層①②は本サイクルで runtime 実証まで到達し、route モードの再現性の裏付けになった。SS-5 のみ意図的に次サイクルへ送ることで、スコープを膨らませず改善サイクルの循環に委ねた。</aside>
+  
+  <p class="report-transition">最後に、本サイクルのスコープ外に残る課題と次アクションを整理する。</p>
+</section>
+<section class="report-section" id="section-next-action" data-role="next-action" style="--section-accent: var(--accent-blue-vivid);">
+  <h2 data-secnum="08">残課題と次アクション</h2>
+  <div class="report-narrative" role="note">
+    <div class="report-narrative__cell report-narrative__cell--essence"><span class="report-narrative__label">本質課題</span><span class="report-narrative__text">本 build のスコープ外に、baseline から持ち越しの検査赤と、次案件へ送る実生成例・軽量経路が残る。いずれも本サイクルの成果を毀損しない周辺項目である。</span></div>
+    <div class="report-narrative__cell report-narrative__cell--approach"><span class="report-narrative__label">解決アプローチ</span><span class="report-narrative__text">残課題を『別 PR で解消する既存赤』と『次サイクル/次案件へ送る拡張』に分け、担当と状態を task として明示する。</span></div>
+  </div>
+  <ul class="report-tasklist" role="list">
+    <li class=""><span class="visually-hidden"> 未完了</span><span class="report-tasklist__box" aria-hidden="true">[ ]</span><span class="report-tasklist__text">legacy plan 2 件の既存検査赤 (lint-goal-seek / lint-script-frontmatter) を解消する。baseline HEAD で同一再現する pre-existing 条件で本 build boundary 外。別 PR で対応。</span><span class="report-tasklist__owner">(次 PR)</span></li>
+    <li class=""><span class="visually-hidden"> 未完了</span><span class="report-tasklist__box" aria-hidden="true">[ ]</span><span class="report-tasklist__text">engine:task-graph の実生成例 (新規 plugin を task-graph route で 0 から生成) を次案件として実施する。</span><span class="report-tasklist__owner">(次案件)</span></li>
+    <li class=""><span class="visually-hidden"> 未完了</span><span class="report-tasklist__box" aria-hidden="true">[ ]</span><span class="report-tasklist__text">MD-1 checklist-verify 軽量経路 / MD-8 plan-time renderability 一括検査 + knowledge_refs 必須キー / SS-5 bootstrap→target 移行 gate を実装する (Loop B knowledge へ起票済)。</span><span class="report-tasklist__owner">(次サイクル)</span></li>
+    <li class="is-done"><span class="visually-hidden"> 完了</span><span class="report-tasklist__box report-tasklist__box--done" aria-hidden="true">[x]</span><span class="report-tasklist__text">C02 fork design-evaluate の session 上限中断分は elegant-review 3 analyst の独立レビューで代替済 (残差なし)。</span><span class="report-tasklist__owner">(elegant-review)</span></li>
+  </ul>
+  <aside class="report-callout report-callout--note"><strong class="report-callout__title">本サイクルのスコープ確定</strong> 残課題はいずれも周辺項目で、58/58 done・4 条件 PASS の成果を毀損しない。既存赤は別 PR、拡張は次サイクル/次案件へ委譲することでスコープを閉じた。</aside>
+  
+</section>
+  <footer class="report-footer">slide-report-generator · report mode · theme: kanagawa-lotus</footer>
+  </main>
+</div>
+<script>
+(function () {
+  'use strict';
+  if (window.matchMedia && window.matchMedia('print').matches) return; /* print ガード */
+  var nav = document.querySelector('.report-toc--sidebar');
+  if (!nav || typeof IntersectionObserver === 'undefined') return;
+  var links = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
+  var map = {};
+  var targets = [];
+  links.forEach(function (a) {
+    var id = decodeURIComponent(a.getAttribute('href').slice(1));
+    var el = document.getElementById(id);
+    if (el) { map[id] = a; targets.push(el); }
+  });
+  if (!targets.length) return;
+  var current = null;
+  function activate(id) {
+    if (current === id || !map[id]) return;
+    current = id;
+    links.forEach(function (a) { a.classList.remove('is-active'); a.removeAttribute('aria-current'); });
+    map[id].classList.add('is-active');
+    map[id].setAttribute('aria-current', 'location'); /* 現在位置を支援技術へ同期 (色非依存の第2チャネル) */
+  }
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) activate(e.target.id); });
+  }, { rootMargin: '0px 0px -72% 0px', threshold: 0 });
+  function observeAll() { targets.forEach(function (t) { observer.observe(t); }); }
+  observeAll();
+  window.addEventListener('beforeprint', function () { observer.disconnect(); });
+  window.addEventListener('afterprint', function () { current = null; observeAll(); }); /* 印刷後に scrollspy を復帰 */
+})();
+</script>
+</body>
+</html>

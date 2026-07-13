@@ -182,6 +182,15 @@ PENDING_RENAME_PATHS = {
     "scripts/notion-submit-improvement.py",
     "scripts/notion-upsert-plugin.py",
     "scripts/sync-notion-schema.py",
+    # harness-creator native-surface projection (C01/C02)。sync-/check- は native surface の
+    # 同期 (C01) / parity 検証 (C02) を表す domain 動詞で ALLOWED_VERBS 外。Makefile/CI
+    # (governance-check.yml)/reference doc/test が exact name を参照し、sync-native-surfaces.py
+    # が sibling として exact name で呼び出すため、許可動詞化 (build/validate 系リネーム or
+    # allowed-list 拡張) は参照を原子的に更新する後続 Change Governance PR まで PENDING
+    # (sync-notion-schema.py と同種の「sync-/check- verb pending」扱い)。
+    "plugins/harness-creator/scripts/sync-native-surfaces.py",
+    "plugins/harness-creator/scripts/sync-codex-project-settings.py",
+    "plugins/harness-creator/scripts/check-native-surface-parity.py",
     # PR #16: build-trace SSOT shim (Python import がハイフン不可のため underscore 許容、§4.3 例外)
     "plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py",
     # feedback_contract criteria の単一 SSOT モジュール。validate-build-trace.py /

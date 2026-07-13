@@ -23,9 +23,11 @@ lease 回収・build lock 排他・graph_hash pin 検証の 3 検査を
 「build 開始時に一度だけ実行される安全性検査」という共通タイミングで単一 script へ統合し、
 dispatcher 側の呼び出し漏れ (lock だけ取得し pin 検証を呼び忘れる等) を防ぐ。
 
-lock 中身は `{started_at, pid, host}` JSON で、os.O_CREAT|os.O_EXCL の排他生成で取得する。
+lock 中身は `{started_at, pid, host, owner_token}` JSON で、os.O_CREAT|os.O_EXCL の排他生成で取得する。
 既存 lock が heartbeat 途絶 (ttl 超過) または同一ホストで pid 非生存の場合のみ孤児と判定して
 steal し、dispatcher クラッシュ後の残留 lock による恒久 lockout (resume 時の自己締め出し) を防ぐ。
+owner_token 導入前の legacy lock は、生存中なら自動移行せず already-held を返す。TTL 超過/死 pid
+なら通常の stale steal で owner-token 形式へ移行し、緊急時だけ人間が `force-release --admin` を使う。
 
 実書込 (task-state.json への lease 回収 / graph_hash pin) は TG-C02 sync-task-state.py へ subprocess
 委譲し、TG-C07 自身は task-state を直接書かない (単一 writer 規約の維持)。resolve_build_dir は
@@ -34,9 +36,11 @@ TG-C02 を SSOT として import 再利用する (周回衝突排除ロジック
 from __future__ import annotations
 
 import argparse
+import fcntl
 import importlib.util
 import json
 import os
+import secrets
 import socket
 import subprocess
 import sys
@@ -91,7 +95,14 @@ def pid_alive(pid: int) -> bool:
 
 # ── lock 中身の直列化 ─────────────────────────────────────────────────────────
 def _lock_content(now: datetime) -> dict:
-    return {"started_at": _iso(now), "pid": os.getpid(), "host": socket.gethostname()}
+    return _lock_content_for_owner(now, secrets.token_hex(16))
+
+
+def _lock_content_for_owner(now: datetime, owner_token: str) -> dict:
+    return {
+        "started_at": _iso(now), "pid": os.getpid(), "host": socket.gethostname(),
+        "owner_token": owner_token,
+    }
 
 
 def _write_lock(lock_path: Path, content: dict) -> None:
@@ -107,11 +118,95 @@ def _write_lock(lock_path: Path, content: dict) -> None:
 
 
 def _read_lock(lock_path: Path) -> dict | None:
+    return _decode_lock(_read_lock_bytes(lock_path))
+
+
+def _read_lock_bytes(lock_path: Path) -> bytes | None:
     try:
-        data = json.loads(lock_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+        return Path(lock_path).read_bytes()
+    except OSError:
+        return None
+
+
+def _decode_lock(raw: bytes | None) -> dict | None:
+    try:
+        data = json.loads(raw.decode("utf-8")) if raw is not None else None
+    except (UnicodeDecodeError, json.JSONDecodeError):
         return None
     return data if isinstance(data, dict) else None
+
+
+def _lock_format(existing: object) -> str:
+    """診断用 lock format。legacy 生存 lock の安全な移行導線を CLI へ出す。"""
+    if not isinstance(existing, dict):
+        return "invalid"
+    token = existing.get("owner_token")
+    return "owner-token" if isinstance(token, str) and token else "legacy"
+
+
+class LockLease:
+    """取得結果と renew/release に必須の推測不能 owner token。"""
+
+    def __init__(self, state: str, owner_token: str):
+        self.state = state
+        self.owner_token = owner_token
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, str):
+            return self.state == other
+        if isinstance(other, LockLease):
+            return (self.state, self.owner_token) == (other.state, other.owner_token)
+        return False
+
+
+def _compare_delete(lock_path: Path, expected: bytes) -> bool:
+    """判定時に読んだ inode と内容が同一の場合だけ unlink する。"""
+    fd: int | None = None
+    try:
+        fd = os.open(str(lock_path), os.O_RDONLY)
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        opened = os.fstat(fd)
+        current = os.stat(lock_path)
+        if (opened.st_dev, opened.st_ino) != (current.st_dev, current.st_ino):
+            return False
+        os.lseek(fd, 0, os.SEEK_SET)
+        if os.read(fd, max(len(expected) + 1, 1)) != expected:
+            return False
+        Path(lock_path).unlink()
+        return True
+    except (FileNotFoundError, OSError):
+        return False
+    finally:
+        if fd is not None:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            finally:
+                os.close(fd)
+
+
+def _compare_replace(lock_path: Path, expected: bytes, content: dict) -> bool:
+    """判定時の inode/content が変わっていない場合だけ heartbeat を原子的更新する。"""
+    fd: int | None = None
+    try:
+        fd = os.open(str(lock_path), os.O_RDONLY)
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        opened = os.fstat(fd)
+        current = os.stat(lock_path)
+        if (opened.st_dev, opened.st_ino) != (current.st_dev, current.st_ino):
+            return False
+        os.lseek(fd, 0, os.SEEK_SET)
+        if os.read(fd, max(len(expected) + 1, 1)) != expected:
+            return False
+        _write_lock(lock_path, content)
+        return True
+    except (FileNotFoundError, OSError):
+        return False
+    finally:
+        if fd is not None:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            finally:
+                os.close(fd)
 
 
 def _is_stale(existing: dict | None, now: datetime, lock_ttl_seconds: int) -> bool:
@@ -136,30 +231,54 @@ def _is_stale(existing: dict | None, now: datetime, lock_ttl_seconds: int) -> bo
 
 
 # ── 公開 API: lock 取得/更新/解放 ─────────────────────────────────────────────
-def acquire_lock(lock_path: Path, now: datetime, lock_ttl_seconds: int) -> str:
+def acquire_lock(lock_path: Path, now: datetime, lock_ttl_seconds: int) -> LockLease | str:
     """.build.lock を O_CREAT|O_EXCL で排他生成する。
 
-    - 新規生成成功 → 中身 {started_at,pid,host} を書いて "acquired"。
+    - 新規生成成功 → 中身 {started_at,pid,host,owner_token} を書いて "acquired"。
     - FileExistsError → 既存 lock を読み is_stale を評価。
         stale → 自分の中身で上書き再取得して "stolen"。
         生存 → "already-held" (取得失敗)。
     """
     lock_path = Path(lock_path)
-    content = _lock_content(now)
-    try:
-        fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
-    except FileExistsError:
-        existing = _read_lock(lock_path)
-        if _is_stale(existing, now, lock_ttl_seconds):
-            _write_lock(lock_path, content)
-            return "stolen"
-        return "already-held"
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        fh.write(json.dumps(content, ensure_ascii=False) + "\n")
-    return "acquired"
+    owner_token = secrets.token_hex(16)
+    acquired_state = "acquired"
+    # stale compare-delete 後は必ず O_EXCL に戻る。複数 contender が stale と判定しても
+    # 最終的に 1 者だけが新 inode を発行する。race が続く場合は fail-closed。
+    for _attempt in range(16):
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            snapshot = _read_lock_bytes(lock_path)
+            existing = _decode_lock(snapshot)
+            if _is_stale(existing, now, lock_ttl_seconds):
+                if snapshot is not None and _compare_delete(lock_path, snapshot):
+                    acquired_state = "stolen"
+                continue
+            return "already-held"
+        try:
+            # 新規 inode の空内容を他 contender が破損 stale と誤判定しないよう、
+            # 公開まで inode lock を保持する。
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            opened = os.fstat(fd)
+            current = os.stat(lock_path)
+            if (opened.st_dev, opened.st_ino) != (current.st_dev, current.st_ino):
+                os.close(fd)
+                continue
+            content = _lock_content_for_owner(now, owner_token)
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                fh.write(json.dumps(content, ensure_ascii=False) + "\n")
+                fh.flush()
+            return LockLease(acquired_state, owner_token)
+        except BaseException:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+            raise
+    return "already-held"
 
 
-def renew_lock(lock_path: Path, now: datetime) -> str:
+def renew_lock(lock_path: Path, now: datetime, owner_token: str | None) -> str:
     """保持中 lock の started_at のみ now へ更新する (heartbeat・pid/host は保持)。
 
     lock 不在 (parse 不能含む) は "lost"、別ホストまたは同一ホストで生存中の他プロセスが
@@ -168,23 +287,35 @@ def renew_lock(lock_path: Path, now: datetime) -> str:
     (非生存) が正常のため、同一ホストの死 pid は自己継続とみなし更新して "renewed"。
     """
     lock_path = Path(lock_path)
-    existing = _read_lock(lock_path)
-    if existing is None:
+    snapshot = _read_lock_bytes(lock_path)
+    existing = _decode_lock(snapshot)
+    if existing is None or snapshot is None:
         return "lost"
-    if existing.get("host") != socket.gethostname():
+    if not owner_token or existing.get("owner_token") != owner_token:
         return "foreign"
-    pid = existing.get("pid")
-    if pid != os.getpid() and pid_alive(pid):
-        return "foreign"  # 同一ホストでも生きた他 dispatcher の lock は触らない
     content = dict(existing)
     content["started_at"] = _iso(now)
-    _write_lock(lock_path, content)
-    return "renewed"
+    return "renewed" if _compare_replace(lock_path, snapshot, content) else "lost"
 
 
-def release_lock(lock_path: Path) -> None:
-    """lock を解放する (存在しなくてもエラーにしない)。"""
-    Path(lock_path).unlink(missing_ok=True)
+def release_lock(lock_path: Path, owner_token: str | LockLease | None) -> str:
+    """owner token が一致する、読取後未変更の lock だけを解放する。"""
+    token = owner_token.owner_token if isinstance(owner_token, LockLease) else owner_token
+    snapshot = _read_lock_bytes(lock_path)
+    existing = _decode_lock(snapshot)
+    if snapshot is None:
+        return "lost"
+    if not isinstance(existing, dict) or not token or existing.get("owner_token") != token:
+        return "foreign"
+    return "released" if _compare_delete(lock_path, snapshot) else "lost"
+
+
+def force_release_lock(lock_path: Path) -> str:
+    """admin 導線専用。読み取った inode/content だけを強制解放する。"""
+    snapshot = _read_lock_bytes(lock_path)
+    if snapshot is None:
+        return "lost"
+    return "released" if _compare_delete(lock_path, snapshot) else "lost"
 
 
 # ── 孤児 lease 検出 (純関数・実書込みを持たない) ──────────────────────────────
@@ -217,6 +348,18 @@ def _reap_lease(sync_script: Path, state_path: Path, events_path: Path, task_id:
         [sys.executable, str(sync_script), "--task-state", str(state_path),
          "--events", str(events_path), "--task-id", task_id,
          "--to-state", "pending", "--reap-lease"],
+        capture_output=True, text=True,
+    )
+    return proc.returncode
+
+
+def _initialize_state(sync_script: Path, state_path: Path, events_path: Path,
+                      task_graph_path: str) -> int:
+    """TG-C02 単一 writer へ graph node set の pending materialize を委譲する。"""
+    proc = subprocess.run(
+        [sys.executable, str(sync_script), "--task-state", str(state_path),
+         "--events", str(events_path), "--task-graph", str(task_graph_path),
+         "--initialize-from-graph"],
         capture_output=True, text=True,
     )
     return proc.returncode
@@ -314,6 +457,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--task-graph", default=None,
                    help="acquire 時の graph_hash pin/検証 + accepted repin の done dirty-closure 再開用")
     p.add_argument("--lock-path", default=None, help="省略時 resolve_build_dir(...)/.build.lock")
+    p.add_argument("--owner-token", default=None,
+                   help="acquire 出力の owner_token (renew/release で必須)")
+    p.add_argument("--admin", action="store_true",
+                   help="force-release を許可する明示 admin gate")
     p.add_argument("--lease-seconds", type=int, default=DEFAULT_LEASE_SECONDS,
                    help="task lease 秒数 (既定は C02 DEFAULT_LEASE_SECONDS を共有)")
     p.add_argument("--lock-ttl-seconds", type=int, default=None,
@@ -364,12 +511,34 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
 
     # (1) build lock を排他取得。already-held なら fail-closed (exit1)。
     lock_path.parent.mkdir(parents=True, exist_ok=True)
-    result = acquire_lock(lock_path, now, args.lock_ttl_seconds)
+    lease = acquire_lock(lock_path, now, args.lock_ttl_seconds)
+    result = lease.state if isinstance(lease, LockLease) else lease
     if result == "already-held":
-        print(json.dumps({"lock": "already-held"}, ensure_ascii=False))
+        existing = _read_lock(lock_path)
+        lock_format = _lock_format(existing)
+        payload = {"lock": "already-held", "lock_format": lock_format}
+        if lock_format == "legacy":
+            payload["remediation"] = (
+                "legacy lock は生存中のため自動移行しない。owner の終了または TTL 失効を待つ。"
+                "緊急時のみ人間が --lock-action force-release --admin を実行する"
+            )
+        print(json.dumps(payload, ensure_ascii=False))
         return 1
 
-    # (2) 孤児 lease を検出し TG-C02 へ回収委譲 (TG-C07 自身は task-state を書かない)。
+    if not args.task_graph:
+        release_lock(lock_path, lease)
+        print("acquire には --task-graph が必須 (state 初期化 + graph_hash pin/検証)", file=sys.stderr)
+        return 2
+
+    # (2) graph の全 node を TG-C02 単一 writer で materialize。既存状態は保持し、
+    # 不足 node だけ pending で追加してから lease 回収/pin parity へ進む。
+    if _initialize_state(sync_script, state_path, events_path, args.task_graph) != 0:
+        release_lock(lock_path, lease)
+        print("task-state graph 初期化委譲失敗 (sync-task-state.py --initialize-from-graph)",
+              file=sys.stderr)
+        return 1
+
+    # (3) 孤児 lease を検出し TG-C02 へ回収委譲 (TG-C07 自身は task-state を書かない)。
     state = _read_state(state_path)
     reaped: list[str] = []
     for tid in find_expired_leases(state, now):
@@ -378,21 +547,16 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
         else:
             print(f"warning: lease 回収委譲失敗 (task_id={tid})", file=sys.stderr)
 
-    # (3) graph_hash pin: 未設定なら初回 pin・設定済みなら再照合 (不一致は fail-closed)。
-    if not args.task_graph:
-        release_lock(lock_path)
-        print("acquire には --task-graph が必須 (graph_hash pin/検証)", file=sys.stderr)
-        return 2
-
+    # (4) graph_hash pin: 未設定なら初回 pin・設定済みなら node-set 含め再照合。
     pinned = state.get("graph_hash")
     if pinned in (None, ""):
         graph_hash = _derive_graph_hash(derive_script, args.task_graph)
         if graph_hash is None:
-            release_lock(lock_path)
+            release_lock(lock_path, lease)
             print("graph_hash 算出失敗 (derive-task-graph.py)", file=sys.stderr)
             return 1
         if _pin_graph_hash(sync_script, state_path, events_path, graph_hash) != 0:
-            release_lock(lock_path)
+            release_lock(lock_path, lease)
             print("graph_hash 初回 pin 委譲失敗 (sync-task-state.py --pin-graph-hash)", file=sys.stderr)
             return 1
         graph_hash_pin = "pinned"
@@ -409,18 +573,19 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
                 if _repin_graph_hash(
                     sync_script, state_path, events_path, args.task_graph, new_hash, authorized
                 ) != 0:
-                    release_lock(lock_path)
+                    release_lock(lock_path, lease)
                     print("graph_hash 再 pin 委譲失敗 (sync-task-state.py --repin-graph-hash)", file=sys.stderr)
                     return 1
                 graph_hash_pin = "repinned"  # 外ループ再入: 改善済み graph を新 pin で再消費
             else:
-                release_lock(lock_path)
+                release_lock(lock_path, lease)
                 print(json.dumps({"graph_hash_pin": "mismatch"}, ensure_ascii=False))
                 return 1
 
-    # (4) 全成功。lock は build 完了まで維持し dispatcher の明示 release まで解放しない。
+    # (5) 全成功。lock は build 完了まで維持し dispatcher の明示 release まで解放しない。
     print(json.dumps(
-        {"lock": result, "reaped_task_ids": reaped, "graph_hash_pin": graph_hash_pin},
+        {"lock": result, "owner_token": lease.owner_token,
+         "reaped_task_ids": reaped, "graph_hash_pin": graph_hash_pin},
         ensure_ascii=False,
     ))
     return 0
@@ -446,15 +611,18 @@ def main(argv: list[str] | None = None) -> int:
 
     action = args.lock_action
     if action == "release":
-        release_lock(lock_path)
-        print(json.dumps({"lock": "released"}, ensure_ascii=False))
-        return 0
+        status = release_lock(lock_path, args.owner_token)
+        print(json.dumps({"lock": status}, ensure_ascii=False))
+        return 0 if status in ("released", "lost") else 1
     if action == "force-release":
-        release_lock(lock_path)
-        print(json.dumps({"lock": "released"}, ensure_ascii=False))
-        return 0
+        if not args.admin:
+            print("force-release は --admin 明示時のみ許可", file=sys.stderr)
+            return 2
+        status = force_release_lock(lock_path)
+        print(json.dumps({"lock": status}, ensure_ascii=False))
+        return 0 if status in ("released", "lost") else 1
     if action == "renew":
-        status = renew_lock(lock_path, _utc_now())
+        status = renew_lock(lock_path, _utc_now(), args.owner_token)
         print(json.dumps({"lock": status}, ensure_ascii=False))
         return 0 if status == "renewed" else 1
     # action == "acquire"

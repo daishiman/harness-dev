@@ -1,0 +1,108 @@
+{
+  "plan_dir": "plugin-plans/skill-intake",
+  "target_plugin_slug": "skill-intake",
+  "mode": "update",
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-intake-interview",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-intake-interview",
+        "kind": "run",
+        "build_mode": "update",
+        "brief_path": "briefs/skill-brief-C01.json",
+        "brief_generation": "brief_path は render-skill-brief.py が component-inventory.json の C01 エントリから build 開始時に決定論射影する出力先宣言 (briefs/ は build 前不在が正)"
+      },
+      "build_target": "plugins/skill-intake/skills/run-intake-interview/",
+      "acceptance_note": "IN1/IN2 (verify_by=script) の criteria-test は C02 (validate-procedure-completeness.py) build 完了後に遡及実行する (C01 build 直後は pending とし、C02 完了時点で C01-C02 を一括検証する 2-pass 受入)",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "validate-procedure-completeness.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-procedure-completeness.py",
+        "fallback_builder": "run-build-skill build flow 内の plugin-root script 生成手順",
+        "manual_contract": "phase-05-implementation.md の C02 実装仕様をそのまま scripts/validate-procedure-completeness.py として生成し、C01/C03/C04 から参照する"
+      },
+      "build_target": "plugins/skill-intake/scripts/validate-procedure-completeness.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-intake-finalize",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-intake-finalize",
+        "kind": "run",
+        "build_mode": "update",
+        "brief_path": "briefs/skill-brief-C03.json",
+        "brief_generation": "brief_path は render-skill-brief.py が component-inventory.json の C03 エントリから build 開始時に決定論射影する出力先宣言 (briefs/ は build 前不在が正)"
+      },
+      "build_target": "plugins/skill-intake/skills/run-intake-finalize/",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "quality_gate.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02", "C03"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/quality_gate.py",
+        "fallback_builder": "run-build-skill build flow 内の既存 plugin-root script Edit 手順",
+        "manual_contract": "phase-05-implementation.md の C04 実装仕様に従い既存 scripts/quality_gate.py へ invariant を追加する"
+      },
+      "build_target": "plugins/skill-intake/scripts/quality_gate.py",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "n/a",
+      "status": "not_applicable",
+      "build_target": "plugins/skill-intake/.claude-plugin/plugin.json",
+      "reason": "artifact_class=existing-plugin-update のため envelope-draft は生成しない (envelope-draft は artifact_class=plugin-plan 限定・R3-emit-specs.md)。既存 plugin.json への変更は version bump のみで P13-release.md に仕様化済み"
+    },
+    "marketplace": {
+      "owner": "n/a",
+      "status": "not_applicable",
+      "build_target": ".claude-plugin/marketplace.json",
+      "reason": "skill-intake は既に marketplace 登録済み (bundles: xl-skills-full/xl-skills-intake) であり、本改善は既存登録を変更しない"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold (placement_scope=plugin-root の共有 script builder) は contract-only builder 語彙で単独実行実体が未整備。C02/C04 routes の build_args.fallback_builder/manual_contract を正本として、当面は run-build-skill の build フロー内で代替生成・編集する。解消確認は P13 完了チェックリスト (C02/C04 build_target の実在確認) が担う"
+    },
+    {
+      "id": "RESIDUAL-C5-DOWNSTREAM",
+      "severity": "medium",
+      "text": "residual risk (記録): C5 (手順情報を無視したまま build へ進める経路を残さない) の下流強制は本計画では doc 契約 (references/handoff-contract.md への契約行追加, P12) まで。下流 plugin (run-skill-create/run-plugin-dev-plan) 側での procedure 消費の機械強制 (intake 消費 checklist/lint) は将来課題として残る"
+    }
+  ]
+}

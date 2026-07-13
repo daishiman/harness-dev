@@ -1,7 +1,7 @@
 ---
 name: ref-pkg-contract
 description: 36章 PKG-001〜017 と package-contract.json schema を参照するとき、PKG ID の意味・適用 package_mode・eval-log 保存先を判断するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref

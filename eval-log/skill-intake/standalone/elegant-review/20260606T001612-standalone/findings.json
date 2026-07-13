@@ -1,0 +1,109 @@
+{
+  "target": { "plugin": "skill-intake", "skill": "standalone", "scope_mode": "plugin" },
+  "review_theme": "単独配布(plugins/skill-intake/ のみ install)の自己完結性。symlink dangling / vendoring / lint 強制が4条件で整合するか。",
+  "thought_method_coverage": {
+    "used": [
+      "批判的","演繹","帰納","アブダクション","垂直","要素分解","MECE","2軸","プロセス","why",
+      "メタ","抽象化","ダブルループ","ブレインストーミング","水平","逆説","類推","if","素人",
+      "システム","因果関係","因果ループ","トレードオン","プラスサム","価値提案","戦略的","改善","仮説","論点","KJ法"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "two_stage_verification": "core findings(SA-01 parents[3] / notion_config marker / setup.md L114 symlink / resource-map ../../scripts)を実コードで裏取り済。SA-01はコアフロー破綻として確定。config探索はenv fallback(NOTION_CONFIG_PATH/INTAKE_NOTION_DATABASE_ID)既存のため自動探索のみ破綻と補正。",
+  "findings": [
+    {
+      "id": "F1", "severity": "contradiction", "condition": "C1",
+      "location": "plugins/skill-intake/references/notion-per-repo-setup.md:113-114",
+      "thought_methods": ["演繹(A2-01)","ダブルループ(M3)","因果ループ(SA-03)"],
+      "description": "所在表が notion_config.py を 'Loader SSOT(実体)' と 'Loader symlink → YES(symlink)' の2行で二重記載。実体は vendored(symlink ゼロ, lint が symlink 回帰を exit1 で禁止)。doc が dangling 回帰を誘発する死角(doc は vendored-ssot lint 対象外)。",
+      "auto_fixable": true,
+      "fix": "L114 symlink行を削除し vendored実体に一本化。L3他の symlink前提文も vendoring表現へ更新。"
+    },
+    {
+      "id": "F2", "severity": "dependency_break", "condition": "C4",
+      "location": "plugins/skill-intake/scripts/notion_config.py:40-52, docstring:7-11",
+      "thought_methods": ["批判的/アブダクション/why(A2-02/07/08)","メタ/抽象化(M1/M2)","システム(SA核心)"],
+      "description": "find_repo_root が .git AND repo-root marker(.notion-config.*/marketplace.json)必須。単独 install で marker 不在 → 自動探索失敗。env fallback(NOTION_CONFIG_PATH/INTAKE_NOTION_DATABASE_ID)は既存で回避可だが README は env必須を案内せず。docstring(.git のみ停止条件と記載)が実装と不一致。本質: コード実体は vendoring したが『設定探索アンカー(repo-root)』を vendoring し忘れ。",
+      "auto_fixable": false,
+      "fix": "find_config_path に $CLAUDE_PLUGIN_ROOT 起点 / plugin-root直下 .notion-config.json 探索を repo-root探索の前に追加し repo-root非依存化。docstring を実装に一致させる。既存env経路は保持。"
+    },
+    {
+      "id": "F3", "severity": "dependency_break", "condition": "C4",
+      "location": "plugins/skill-intake/scripts/validate_intake_schema.py:21-22 (hook pre-publish-schema-validate.py 経由)",
+      "thought_methods": ["因果関係(SA-01)"],
+      "description": "validator が PROJECT_ROOT=parents[3] から plugins/skill-intake/skills/.../intake.schema.json を二重再構成。hook は CLAUDE_PLUGIN_ROOT で正しく解決するのに委譲先だけ repo レイアウト再仮定。単独 install で plugin が <root>/plugins/skill-intake/ 以外配置なら schema不在→exit3→publish が hook で誤ブロック。コアフロー runtime を実際に壊す唯一経路。実コードで裏取り済。",
+      "auto_fixable": true,
+      "fix": "SCHEMA_PATH を CLAUDE_PLUGIN_ROOT env→fallback parents[1](plugin root)起点 'skills/run-skill-intake-aggregator/references/intake.schema.json' に固定。hook と同じ解決規約に統一。"
+    },
+    {
+      "id": "F4", "severity": "inconsistency", "condition": "C3",
+      "location": "plugins/skill-intake/skills/run-notion-intake-publish/references/resource-map.yaml:35-41",
+      "thought_methods": ["要素分解(A2-03)"],
+      "description": "references/ 配下起点で ../../scripts/ は skills/scripts/(不在)を指す。実体は plugin直下 scripts/ で ../../../scripts/ が正。コメントL34に実体パス明記済のため runtime破綻ではなく doc参照path の1段不足。",
+      "auto_fixable": true,
+      "fix": "L35/37/39/41 を ../../../scripts/ に修正。"
+    },
+    {
+      "id": "F5", "severity": "omission", "condition": "C2",
+      "location": "plugins/skill-intake/references/notion-per-repo-setup.md:18-19,60-64",
+      "thought_methods": ["プロセス(A2-05)","素人(M9)","価値提案(SA-09)"],
+      "description": "setup手順が python3 scripts/build-notion-config.py / sync-notion-schema.py を必須案内。両 script は repo-root scripts/ のみ存在で単独 install 未同梱→FileNotFound。コアフローは .notion-config.json 手動作成 or env で代替可能なのに doc が未同梱 maintainer script を前提手順に置く。",
+      "auto_fixable": true,
+      "fix": "setup-doc に『単独 install 既定経路: .notion-config.json を雛形から手動コピー or env 明示』を主経路へ昇格。build/sync script は repo共有運用時のみの maintainer-only と明示。"
+    },
+    {
+      "id": "F6", "severity": "omission", "condition": "C2",
+      "location": "scripts/lint-intake-vendored-ssot.py, scripts/sync-intake-vendored.sh (repo-root), plugin.json:4",
+      "thought_methods": ["MECE(A2-06)","逆説/if(M6/M8)","システム/トレードオフ/プラスサム/戦略的(SA-02/06/07/08)"],
+      "description": "drift防止 lint/sync が repo-root scripts/ で plugin 未同梱。canonical=skill-creator版は単独 install スコープ外。配布物単体では byte一致検証も再同期も不能(比較相手不在)。配布スコープ(runtime自己完結 vs drift検証まで)が plugin.json/README で未宣言。lint を plugin 内複製すると二次drift(SA-06トレードオフ)。",
+      "auto_fixable": false,
+      "fix": "設計判断。案: lint/sync は monorepo専用(maintainer-only)と明示し配布スコープ外と宣言(runtime自己完結を要件化)。代替案SA-07: canonical を skill-intake側へ正本反転し lint+self-checkを plugin内同梱。配布物には正本SHAスタンプで自己検証。"
+    },
+    {
+      "id": "F7", "severity": "smell", "condition": "C3",
+      "location": "plugins/skill-intake/scripts/lint_subagent_seven_layer.py:14 ほか parents[3]利用 maintainer scripts",
+      "thought_methods": ["垂直(A2-09)","類推(M7)","因果関係(SA-05)"],
+      "description": "lint_subagent_seven_layer.py / ci_dogfooding_retest.py 等が REPO=parents[3] を repo-root前提算出。単独 install の別深度配置で path破綻。ただし maintainer/CI 用途でコアフロー非依存のため smell。同一 scripts/ に runtime(parents[1])と maintainer(parents[3])が混在。",
+      "auto_fixable": false,
+      "fix": "maintainer-only と doc明示し配布スコープ外宣言(runtime優先)。または CLAUDE_PLUGIN_ROOT env fallback 導入。"
+    },
+    {
+      "id": "F8", "severity": "omission", "condition": "C2",
+      "location": ".github/workflows/governance-check.yml, Makefile:16-23",
+      "thought_methods": ["仮説(SA-10)"],
+      "description": "Makefile lint: は vendored-ssot を呼ぶが .github/workflows/ に make lint/vendored の配線ゼロ。drift検出が CI強制されず main流入し得る。maintainer価値。",
+      "auto_fixable": true,
+      "fix": "governance-check.yml に lint-intake-vendored-ssot.py step 追加(F6の方針確定後の正本パスで)。"
+    },
+    {
+      "id": "F9", "severity": "smell", "condition": "C2",
+      "location": "verify_standalone.sh (dogfooding harness)",
+      "thought_methods": ["改善(SA-11)"],
+      "description": "standalone 検証が import+publish dry-run 止まりで、F3のhook schema経路 / flat-layout(parents[3]破綻) / CI配線を未カバー。最も壊れやすい経路を踏まないため回帰捕捉不能。",
+      "auto_fixable": true,
+      "fix": "verify_standalone.sh に hook起動(CLAUDE_PLUGIN_ROOT=隔離path)・flat-layout試行を追加し CI配線。"
+    }
+  ],
+  "verdict_before": {
+    "矛盾なし": "FAIL", "漏れなし": "FAIL", "整合性あり": "FAIL", "依存関係整合": "FAIL"
+  },
+  "verdict_after": {
+    "矛盾なし": "PASS", "漏れなし": "PASS", "整合性あり": "PASS", "依存関係整合": "PASS",
+    "scope": "runtime自己完結(選択A)。maintainer資産(F6-F9)はdoc配布スコープ宣言で明示しスコープ外"
+  },
+  "phase1_correction": "Phase1俯瞰の『aggregator SKILL.md L32 越境参照 path不整合』は誤検知。aggregator は skill直下のため ../../scripts/ が plugin直下 scripts/ を正しく指す(A2-04/SA-04)。実際の path不整合は run-notion-intake-publish の resource-map.yaml(F4)に局在。",
+  "status": "complete",
+  "scope_decision": "A: runtime自己完結のみ。skill-creator非干渉(共有SSOT notion_config.pyの同一改善のみbyte一致維持のため両vendored copyへ反映)",
+  "resolution": {
+    "applied": ["F1 doc symlink矛盾解消", "F2 notion_config plugin-root fallback(canonical+vendored両方,byte一致lint PASS)", "F3 validate_intake_schema parents[3]→plugin-root,hook規約統一", "F5 setup-doc単独install経路主経路化+SA-08配布スコープ宣言", "README解決順+単独install節更新"],
+    "withdrawn": ["F4 resource-map ../../scripts: skill-root起点で正しく誤検知,撤回"],
+    "out_of_scope_documented": ["F6 drift lint plugin外", "F7 maintainer parents[3]群", "F8 CI配線", "F9 dogfooding拡充 — 全てmaintainer-only,docで単独install不要と明示"],
+    "verification": {
+      "byte_lint": "PASS (vendored 1件 byte一致)",
+      "syntax": "py_compile OK (notion_config×2, validate_intake_schema)",
+      "F2_runtime": "隔離環境(marker不在)でfind_config_path→plugin-root config解決,get_db_id=TEST-DBID-123",
+      "F3_runtime": "隔離環境でSCHEMA_PATH env有無両方exists:True(parents[3]非依存化実証)"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "elegant-review",
+    "ref": "plugin-plans/plugin-dev-planner/elegant-review-20260711-capability-build-r2.md",
+    "generated_by": "capability-build post-build elegant review R3 (2026-07-11)"
+  },
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/with-task-graph-goalseek",
+  "findings": [
+    {
+      "id": "F-FULLGRAPH-001",
+      "severity": "high",
+      "summary": "生成ハーネス自身への full task-spec graph 同梱 (planner 相当の task-specs→graph→envelope→state/projection→discovered-task 外ループ) は未実装で、量産 engine は engine_profile=checklist-graph・full_task_spec_graph=false の fail-closed capability claim により成功扱いを禁止している。未提供 capability は build-plan capability_gaps の 4 項と 1:1: task-spec-artifact-graph / parallel-ready-set-dispatch-with-write-scope / execution-envelope-state-projection / discovered-task-spec-improvement-outer-loop。実装には本 plan (with-task-graph-goalseek) が正本宣言する『単一 truth (progress.json checklist + intermediate.jsonl のみ)・別状態ファイル (task-graph.json 相当) を新設しない・write_scope 並列衝突機構を持ち込まない』という設計境界の変更が必要 (structural)。",
+      "recommendation": "人間承認の二択を第一級化する: (a) 承認時 = 本 plan を --mode update で改訂し、capability_gaps 4 項を buildable component 群 (producer 資産の vendoring: envelope renderer / ready-set dispatch / projection / discovered-task 受理) として分解、profile 昇格条件 (4 gap の harness 側消費が全部実装されたときのみ enum へ full-task-spec-graph を追加) を build-plan schema へ焼く。(b) 非承認時 = checklist-graph を恒久 profile として goal-spec constraints へ『full graph は planner 側にのみ存在する』旨を恒久宣言し、本 handoff を rejected で閉じる。いずれの場合も elegant-review R2/R3 の verdict 2 層構造 (宣言契約 PASS / 拡張要件 pending-approval) を解消すること。",
+      "target_ref": "plugin-plans/with-task-graph-goalseek/goal-spec.json"
+    }
+  ]
+}

@@ -1,0 +1,693 @@
+{
+  "plugin_concept": "ubm-goal-setting 改善計画 — 2-source対応YouTube全量/自動取込、根拠付きknowledge依存グラフ、harness実成果物グラフ、既存goal-settingへの自動consultを非後退で追加する",
+  "derivation": "30思考法KJ統合により8実体へ最小分解する。C02はURL/backfill/syncの単一orchestratorとし、単一consumerのprovider adapter・scheduler向けone-shotはskill内へ畳む。C01はuntrusted transcriptの正規化、C03は厳格全量reconciliation、C04はmanual control surface。全knowledgeの意味的依存辺producerは独立contextを要するC08、決定論graph build/validateは共有C06へ分離する。plan task graphを実成果物と誤同定しないため、task-graph/handoff/task-state/route-report/build-trace/composition/EVALS/実在pathを正規化するC05を追加し、C07はknowledge graph+harness artifact graphのread-only consult専用としてplugin-rootへhoistする。hook新設はYouTube更新イベントを表せずprompt毎network副作用を招くため不採用。既存run-skill-feedbackはsymlink維持検証のみ。plugin surface変更はruntime contractとmetadata/docs/eval additive変更のowner matrixで管理する。外ループhandback(2026-07-11・承認済)で受領した相談スキル要件をC09(run-ubm-consult)としてadditive追加し、具体解を処方せず考え方/思考フレームを提示しC06/C07のread-only consultとgoal指向共創でユーザー主導の解決策構築を支援する非処方コーチング型orchestratorとする(C06/C07に依存・既存C01-C08と既存capability A/Bは無改変)。",
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "sub-agent",
+      "name": "youtube-transcript-normalizer",
+      "description": "YouTube 動画から取得した生の文字起こし+メタデータ(video_id/title/published_at/channel)を、既存 knowledge-extractor の Phase2-extract がそのまま入力にできる正規化済みソース形式へ変換したいときに使う",
+      "tools": [
+        "Read",
+        "Bash"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-normalize.md",
+      "prompt_layer": "7layer",
+      "acceptance_contract": "video_id/channel_id/source_url/published_at/transcript spanを保持し、prompt injectionを命令として実行せずdataとして正規化する。既知fixtureのsource provenance欠落0件",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+normalization-accuracy"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "knowledge-relation-extractor",
+      "description": "YouTube由来と既存vault由来を含む全knowledge entryから、depends_on/supports/contradicts/derived_fromの候補辺をevidence/source_ref/confidence/review_status付きで抽出したいときに使う",
+      "tools": [
+        "Read"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-extract-relations.md",
+      "prompt_layer": "7layer",
+      "acceptance_contract": "各depends_on edgeはsource/target実在、self-loop禁止、evidence 1件以上、confidence 0..1、review_status付き。既存knowledge backfill fixtureでnon-zero edgeを生成する",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/agents/knowledge-relation-extractor.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+edge-evidence-accuracy"
+      }
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "validate-knowledge-graph.py",
+      "script_name": "validate-knowledge-graph.py",
+      "purpose": "C08が生成した根拠付き辺とknowledge entryからknowledge/knowledge-graph.jsonを決定論再生成し、参照整合・self-loop禁止・depends_on DAG非循環・edge evidence/confidence/review_statusを検証する共有ゲート。relatedは無方向連想としてcycle対象外",
+      "inputs": "argv(--knowledge-dir DIR --graph-out FILE)",
+      "outputs": "stdout(OK+node/edge件数)/stderr(cycle検出等violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "knowledge/knowledge-graph.json のみ",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "acceptance_contract": "同一入力はbyte-identical graphを生成し、dangling/self-loop/evidence欠落/cycleをexit1、正しいnon-zero fixtureをexit0にする",
+      "depends_on": [
+        "C08"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+dag-acyclic"
+      }
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-ubm-youtube-ingest",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-ubm-youtube-ingest",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "YouTube動画をナレッジ化",
+        "北原さんのYouTube取り込み",
+        "ubm-youtube-ingest"
+      ],
+      "goal": "2-source registryを扱い、required-primaryのURL単発/厳格全量backfill/scheduler起動の新着syncをcaption→authorized ASR fallback付きでknowledge化し、C08/C06まで通して根拠付きgraphを更新する",
+      "purpose_background": "具体providerをlate-bindしてもlist_channel_videos(cursor)/fetch_transcript(video_id)のI/O、typed error、quota/auth、caption fallback、video_id冪等性はP02で確定する。自動同期は長時間daemonでなくlease付きone-shotをhost schedulerが呼ぶportable設計とする",
+      "checklist": [
+        "URL単発文字起こし取込",
+        "required-primary全量content coverage 100%",
+        "scheduler無人差分同期",
+        "relation graph更新"
+      ],
+      "output_contract": "source registry(priority/status/channel identity)+authoritative video snapshot+reconciliation ledger+knowledge/*.json+youtube-registry.json+sync report。discovered videoはingested/temporary_failure/terminal_unavailable/waivedの状態を持ち、waiverはユーザー承認参照必須",
+      "boundary": "provider-neutral adapterとscheduler helperは単一consumerのため本skill内scriptsへ畳む。全モード--dry-run。transcriptはuntrusted dataとして扱う。具体provider/scheduler製品だけlate-bindし、取得契約・自動性・fallbackは未確定にしない",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "mass_production_profile": "strict",
+      "responsibilities": [
+        {
+          "id": "R1-source-mode",
+          "summary": "URL/backfill/syncとsource priorityを確定し、第2source pendingでもrequired-primaryを停止しない",
+          "prompt_required": true
+        },
+        {
+          "id": "R2-fetch-normalize",
+          "summary": "authoritative inventoryをpagination完走しcaption→authorized ASR fallbackで取得、C01へ渡す",
+          "prompt_required": true
+        },
+        {
+          "id": "R3-extract-graph",
+          "summary": "既存knowledge-extractorで6カテゴリ化しC08→C06で根拠付きgraphを更新する",
+          "prompt_required": true
+        },
+        {
+          "id": "R4-sync-reconcile",
+          "summary": "cursor/lease/retry/alertを持つ冪等one-shotをschedulerから実行しledgerとreportを更新する",
+          "prompt_required": true
+        }
+      ],
+      "cli_tools": [],
+      "mcp_tools": [],
+      "external_systems": [
+        "YouTube provider adapter (late-bound)",
+        "host scheduler (late-bound, idempotent one-shot contract fixed)"
+      ],
+      "deterministic_checks": [
+        "check-youtube-backfill-completeness.py",
+        "validate-knowledge-graph.py"
+      ],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": [
+        "with-goal-seek",
+        "with-feedback-contract"
+      ],
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "required-primaryのauthoritative inventory全IDについてcontent_coverage=100%、temporary_failure=0、unapproved_unavailable=0をC03が確認する",
+            "verify_by": "script"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "ユーザー操作なしのscheduler fixtureで新着1件が一度だけknowledge/graphへ反映され、二回目0件、失敗後retryで回復する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "depends_on": [
+        "C01",
+        "C06"
+      ],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "check-youtube-backfill-completeness.py",
+      "script_name": "check-youtube-backfill-completeness.py",
+      "purpose": "required-primaryを含むsource snapshot全IDをledger分母に保持しcontent_coverage/accountability_coverageを分離する。FULL_BACKFILL_PASSはingested=discovered_total、temporary_failure=0、unapproved_unavailable=0のみ。waiverはユーザー承認参照付きに限る",
+      "inputs": "argv(--channels HANDLE... (複数指定可) --video-list FILE --registry knowledge/youtube-registry.json)",
+      "outputs": "stdout(coverage JSON)/stderr(pending/temporary_failure/unapproved unavailable video IDs)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C02"
+      ],
+      "placement_scope": "skill",
+      "requires_parent_scaffold": "C02",
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py",
+      "builder": "parent-skill-build",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "acceptance_contract": "除外による分母縮小を拒否し、pagination欠落/重複ID/一時障害/waiver参照欠落をexit1にする",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C04",
+      "component_kind": "slash-command",
+      "name": "ubm-youtube-ingest",
+      "description": "YouTube取込のURL/backfill/syncを手動起動・再実行・dry-runする運用面。自動同期は同じC02 one-shotをhost schedulerが呼び、本commandは自動性の代替ではない",
+      "argument-hint": "[--url URL | --backfill | --sync] [--source SOURCE] [--dry-run]",
+      "allowed-tools": [
+        "Read",
+        "Bash",
+        "Skill"
+      ],
+      "disable-model-invocation": false,
+      "depends_on": [
+        "C02"
+      ],
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-youtube-ingest.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "acceptance_contract": "引数排他、dry-run書込0、手動syncがscheduler one-shotと同じidempotency key/cursorを使う",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+test"
+      }
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "index-harness-artifact-graph.py",
+      "script_name": "index-harness-artifact-graph.py",
+      "purpose": "task-graph/handoff/task-state/route-build-report/build-trace/plugin-composition/EVALS/実在build_targetをread-only突合し、planned/built/verified/stale状態とprovenance/freshnessを持つknowledge/harness-artifact-graph.jsonを決定論生成する",
+      "inputs": "argv(--plan-glob PLAN_GLOB --plugin-root DIR --out knowledge/harness-artifact-graph.json)",
+      "outputs": "artifact graph JSON + stdout(node/edge/stale/redacted counts)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "knowledge/harness-artifact-graph.json のみ",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "acceptance_contract": "task graphのproduces/consumes、route build_target、task-state graph_hash、route report/build trace実在を突合し、secret/PII本文を保存せず、既知fixtureでreal artifactを1件以上dereferenceする",
+      "depends_on": [
+        "C06"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+artifact-provenance+redaction"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "consult-harness-artifact-graph.py",
+      "script_name": "consult-harness-artifact-graph.py",
+      "purpose": "run-ubm-goal-setting Phase1-2-collectからknowledge graphとC05 harness artifact graphをread-only探索し、local/global/relationship query、depth上限、source provenance付きで関連knowledge/成果物を返す",
+      "inputs": "argv(--topic TEXT --knowledge-graph FILE --harness-artifact-graph FILE --query-type local|global|relationship --depth 1..5)",
+      "outputs": "stdout(JSON hits with source refs/path/graph hash); zero-hitは正常だが既知fixture non-zeroを受入必須",
+      "exit_codes": "0/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "acceptance_contract": "既知knowledge edgeと実在harness artifactを各1件以上返し、壊れたindexと正しいzero-hitを区別し、path traversal/secret本文を返さない",
+      "depends_on": [
+        "C05",
+        "C06"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/ubm-goal-setting/scripts/consult-harness-artifact-graph.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "build_notes": "plugin-rootへhoistし既存parent route不在によるexecutor failureを解消。run-ubm-goal-settingとverification flowが共有する",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+known-hit+zero-hit+redaction"
+      }
+    },
+    {
+      "id": "C09",
+      "component_kind": "skill",
+      "name": "run-ubm-consult",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-ubm-consult",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "相談したい",
+        "壁打ち",
+        "考え方を教えて",
+        "ubm-consult"
+      ],
+      "goal": "月間目標・目標設定以外も含む相談に対し、具体解の処方でなく考え方を提示し、引き出しとゴール指向の共創でユーザー主導の解決策構築を支援する",
+      "purpose_background": "既存 capability A(run-ubm-goal-setting)の Phase3 対話原則(愛情ある厳しさ・引き出し型)と knowledge 基盤(原則/事例/マインドセット)、C07 consult(knowledge graph + harness artifact graph の read-only 探索)を再利用するコーチング型相談 orchestrator。AI は具体解を処方せず、考え方/思考フレームの提示・文脈の外在化・解決策の構造化と検証を担い、解決策の言語化はユーザー主導とする。目標設定以外の相談にもゴール指向(現状→ゴール→ギャップ→次の一歩)を適用する。",
+      "checklist": [
+        "相談受理・論点特定",
+        "考え方/思考フレーム提示(具体解の処方ゼロ)",
+        "引き出しでユーザー自身の言葉で解決策を言語化",
+        "ゴール指向の次の一歩へ帰結・記録"
+      ],
+      "output_contract": "分岐別 outcome と協働契約。一般相談はユーザー発話 provenance を持つ user_solution、選択式 closure(action|reflection)、保存同意時のみ session-id 別 record。単一解を押し付けない",
+      "boundary": "危機/高 stakes は安全分岐、目標設定は run-ubm-goal-setting へ誘導。knowledge graph / harness artifact graph は C07 経由の read-only consult。C06 を直接実行しない。保存は明示同意制で vault 非書込。既存 capability は非破壊 additive 更新のみ",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "mass_production_profile": "standard",
+      "cli_tools": [],
+      "mcp_tools": [],
+      "deterministic_checks": [
+        "consult-harness-artifact-graph.py",
+        "validate-consult-session.py"
+      ],
+      "external_systems": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "responsibilities": [
+        {
+          "id": "R1-intake-issue",
+          "summary": "相談を受理し論点を特定する(相談種別判定・本質課題の言語化支援。具体解を出さない)",
+          "prompt_required": true
+        },
+        {
+          "id": "R2-elicit",
+          "summary": "引き出し(ユーザーの文脈・制約・価値観・既試行を質問で外在化する)",
+          "prompt_required": true
+        },
+        {
+          "id": "R3-frame-consult",
+          "summary": "思考フレームを選定・提示する(consult-harness-artifact-graph.py + knowledge-graph.json + 既存 knowledge の原則/マインドセット/事例から考え方を提示。処方でなく選択肢+適用視点)",
+          "prompt_required": true
+        },
+        {
+          "id": "R4-cocreate-converge",
+          "summary": "共創・収束(ユーザー自身の言葉で解決策を言語化させ、ゴール指向=現状→ゴール→ギャップ→次の一歩の行動計画へ落とし記録する)",
+          "prompt_required": true
+        }
+      ],
+      "combinators": [
+        "with-goal-seek",
+        "with-feedback-contract"
+      ],
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "inline",
+        "max_loops": 5
+      },
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "相談 fixture で具体解を処方せず考え方/思考フレームを 1 件以上提示し、非処方スタンス不変条件(具体解押し付けゼロ)を自己検証する",
+            "verify_by": "test"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "相談セッション transcript で考え方提示・引き出し質問・ユーザー自身の言葉での解決策言語化・ゴール指向の次の一歩の 4 要素を検出する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "depends_on": [
+        "C07",
+        "C11"
+      ],
+      "build_target": "plugins/ubm-goal-setting/skills/run-ubm-consult/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C10",
+      "component_kind": "slash-command",
+      "name": "ubm-consult",
+      "description": "run-ubm-consult を明示起動する唯一のユーザー入口。相談内容を透過し、支援モード/安全分岐/保存同意の判断は skill に委譲する薄い adapter",
+      "argument-hint": "[相談内容]",
+      "allowed-tools": ["Read", "Skill"],
+      "disable-model-invocation": false,
+      "depends_on": ["C09"],
+      "build_target": "plugins/ubm-goal-setting/commands/ubm-consult.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "acceptance_contract": "command が run-ubm-consult へ topic を透過し、独自の相談判断を持たず、plugin manifest/composition/package-contract に一度だけ登録される",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+entrypoint-test"}
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "validate-consult-session.py",
+      "script_path": "scripts/validate-consult-session.py",
+      "purpose": "分岐別 record、保存同意、role=user provenance、action/reflection closure、evidence mode を R4 完了前に決定論検証する",
+      "inputs": ["--record JSON", "--transcript role付きJSON"],
+      "outputs": ["stdout JSON verdict", "exit0 valid / exit1 invalid / exit2 usage"],
+      "exit_codes": "0/1/2",
+      "depends_on": [],
+      "build_target": "plugins/ubm-goal-setting/scripts/validate-consult-session.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "acceptance_contract": "AI文字列による user role なりすまし、同意なし保存、分岐混同、closure欠落、secret未redactを fail-closed で拒否する",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "route-report",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "positive+negative+branch+role-provenance fixtures"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".claude-plugin/plugin.json"
+    },
+    "composition": {
+      "required": true,
+      "path": "plugin-composition.yaml"
+    },
+    "harness_eval": {
+      "required": true,
+      "path": "EVALS.json"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup"
+    },
+    "schemas": {
+      "required": false,
+      "omitted_reason": "youtube registry/knowledge graph/harness artifact graphはC03/C05/C06が構造検証を所有し、既存knowledge/schema.jsonの既存fieldは非破壊で維持する"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "run-skill-feedback は commit 591e5ac (2026-07-05) で harness-creator SSOT への symlink として既配備済み (distributable:false のため feedback-loop-deployment.md 禁止節の symlink 許容例外に正規該当・R4 finding で確認済み)。本計画は新規 vendor(実体コピー)を行わず、既配備 symlink の維持確認のみを phase-09 の検証専用ステップで実施する"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "YouTube 取得は既存 Bash/Skill 経路で扱い、技術手段(API/CLI)未確定のため本計画では MCP/app connector を新設しない (open_questions 参照)"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "improvement-request DB は既配備 run-skill-feedback (symlink 先 harness-creator SSOT、本 inventory 外) が使用する。本計画の新規 buildable component はいずれも Notion DB を使用しないため対象外。既配備分の解決設定は harness-creator SSOT 側の notion_config 宣言を継承し本計画では再宣言しない"
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/runtime-evidence-ledger.schema.json",
+  "title": "Runtime Evidence Ledger",
+  "description": "TG-C08 が user-owned runtime gate だけを保留するための fail-closed ledger。path は ledger 所在 build dir からの相対パス。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "graph_hash",
+    "generated_at",
+    "artifacts",
+    "gates",
+    "boundary"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "2.0.0"},
+    "graph_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/definitions/artifact"}
+    },
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["install", "enable", "trust", "new_session", "uninstall", "pr"],
+      "properties": {
+        "install": {"$ref": "#/definitions/gate"},
+        "enable": {"$ref": "#/definitions/gate"},
+        "trust": {"$ref": "#/definitions/gate"},
+        "new_session": {"$ref": "#/definitions/gate"},
+        "uninstall": {"$ref": "#/definitions/gate"},
+        "pr": {"$ref": "#/definitions/gate"}
+      }
+    },
+    "boundary": {"type": "string", "minLength": 1}
+  },
+  "definitions": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "path", "sha256"],
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "enum": ["local_build", "native_parity", "rollback"]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "task_ids", "artifact_refs", "reason"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["pending_user_gate", "verified", "not_applicable"]
+        },
+        "task_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "artifact_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["local_build", "native_parity", "rollback"]
+          }
+        },
+        "reason": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

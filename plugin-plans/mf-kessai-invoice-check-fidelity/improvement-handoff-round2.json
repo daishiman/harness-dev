@@ -1,0 +1,184 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "user-request:2026-07-08-mf-kessai-invoice-check-fidelity-round2",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (independent adversarial round2)"
+  },
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "round": 2,
+  "note": "round1 (improvement-handoff.json) applied F1-F5 and reached 4条件PASS. This round2 dispatched 3 independent analysts (論理構造/メタ発想逆説/システム戦略) from a reset context. All HIGH claims were二段確認'd against actual code before recording. Findings are KJ-clustered (17 raw findings A1-A5/B1-B7/C1a-C1e → 11 clusters). Scope = plan artifacts only (--mode update Edit diffs). No component split/merge (no structural change), so no user approval gate triggered.",
+  "verified_against_code": {
+    "_is_issued": "scripts/mfk_period_report.py:214-220 — returns True on any positive evidence.amount regardless of verdict (取消前額でissued化: B1 CONFIRMED)",
+    "build_sink_rows": "scripts/reconcile_invoices.py:348 — matched_amount=_ev(evidence,'amount'); changing find_mf_match evidence mutates run-mf-invoice-reconcile DB2 (温存制約違反: C1b CONFIRMED)",
+    "cross_run_guard": "scripts/notion_report_sink.py:262-274 — bypass only for _STRUCTURAL_NORMAL_MARKERS(年契約周期/契約完了/トライアル完了/対象外); amount-gate訂正は保持側 (B5 CONFIRMED)",
+    "curr_present_gap": "R1-collect.md:41 documents GAP-R1-COLLECT-CURR-PRESENT as a known unimplemented limitation, but plan handoff.open_issues (GAP-ENVELOPE-001/GAP-SCRIPT-BUILDER/GAP-FEEDBACK-DEPLOY-PORTABILITY) does not carry it (B6 CONFIRMED)",
+    "no_completion_gate": "handoff C03/C04 routes have no completion_gate; only C05/C06 do (A2/C1c CONFIRMED)"
+  },
+  "clusters": [
+    {
+      "id": "K1",
+      "severity": "high",
+      "title": "R1直列化契約に actual_amount/issued/curr-present 運搬が欠落 + GAP open_issue 未載",
+      "raw_findings": ["A1", "C1a", "B6"],
+      "conditions": ["C2", "C1"],
+      "symptoms": ["1", "5", "6", "7"],
+      "root_cause": "C05はactual_amountを既存verdict行へ注入するが、curr=None(行そのものが無い)には行を生成しない。R1直列化契約(prompts/R1-collect.md:39保持キー)がactual_amount/issuedを明示運搬しない。GAP-R1-COLLECT-CURR-PRESENTがplanのopen_issueに載っておらず⑤/D2がclosed提示されている。",
+      "edits": [
+        "handoff-run-plugin-dev-plan.json: open_issues[] へ GAP-R1-COLLECT-CURR-PRESENT を追加(id/summary/tracked=true/blocking=false/impact='⑤隔月/単発とD2対象外月はcurr-present実装までpartial・安全側over-report')",
+        "goal-spec.json: constraints.open_questions[] へ GAP-R1-COLLECT-CURR-PRESENT を1件追加(⑤対象外月partialの明示)",
+        "index.md: 症状表の⑤とD2の行へ『対象外月(隔月/分割/単発)は curr-present 実装まで partial: 安全側 over-report(要確認☐)。真の月次漏れは隠さない』を注記",
+        "component-inventory.json C01 responsibility_updates(R1-collect): actual_amount/reliable-issued を curr/prev-verdicts JSON へ直列化する責務を明記。R1-collect.md 保持キー契約に actual_amount/issued を追記する required_file_edit を C05 route へ追加"
+      ]
+    },
+    {
+      "id": "K2",
+      "severity": "high",
+      "title": "actual_amount carrier 一意化(新規top-level)・evidence不変で別skill DB2温存",
+      "raw_findings": ["C1b"],
+      "conditions": ["C1"],
+      "symptoms": ["6"],
+      "root_cause": "phase-05:24が『全statusへactual_amountを焼く(新フィールド)』と『evidence=Noneが主因ゆえmfk_reconcile変更(evidence修復)』を併記しcarrierを一意化していない。evidence修復を採るとbuild_sink_rows:348経由でrun-mf-invoice-reconcileのDB2 matched_amountがREVIEW_AMOUNT_MISMATCH行で変化=温存制約違反。",
+      "edits": [
+        "handoff C05 route completion_gate: canonical carrier=行 top-level actual_amount と単一指定。find_mf_match の evidence:None は据え置き(build_sink_rows/DB2 を触らない)を明記",
+        "handoff C03 route canonical_fields: legacy_aliases(evidence.amount/amount)は READ 専用の後方互換で WRITE しない旨を注記(evidence 不変)",
+        "handoff C03/C04 route merge_policy 削除禁止領域: 『find_mf_match evidence:None 据え置き(build_sink_rows/DB2 matched_amount 不変)』を追加",
+        "phase-05-implementation.md: carrier一意化(top-level actual_amount・evidence不変)へ本文修正",
+        "phase-04-test-design.md OUT2 characterization: REVIEW_AMOUNT_MISMATCH/no_supply 行の evidence と run-mf-invoice-reconcile DB2 matched_amount が改修前後 byte 不変の fixture を1件追加"
+      ]
+    },
+    {
+      "id": "K3",
+      "severity": "high",
+      "title": "取消明細(inactive)の偽陰性再生産隔離(active限定fallback)",
+      "raw_findings": ["B1", "B4"],
+      "conditions": ["C2", "C3"],
+      "symptoms": ["逆説"],
+      "root_cause": "_inactive_result/_set_inactive_verdictがevidenceに取消前額(正)を載せ、_is_issued:220が evidence.amount>0で issued=True を返す。D3反転後 _amount_of は actual_amount=null(active限定)時 legacy evidence.amount へ fail-soft して取消前額を金額列に出す。amount_mismatch の実額代表選択スコープ(scoped_candidates)も未固定。",
+      "edits": [
+        "handoff C05 route completion_gate: supply_state∈{inactive_canceled,inactive_pending} の行は issued=False・actual_amount=null を強制し、_is_issued/_amount_of の evidence.amount fallback を supply_state==active に限定する旨を追記",
+        "handoff C05 route completion_gate: amount_mismatch の actual_amount 代表は find_mf_match の scoped_candidates と同一スコープから選定(複数候補時 category一致優先→最大amount)を追記",
+        "phase-04-test-design.md OUT2: 取消前額を持つ REVIEW_CANCELED 行が☑にも金額表示にもならない fixture を追加"
+      ]
+    },
+    {
+      "id": "K4",
+      "severity": "high",
+      "title": "cross-run guard bypass に reliable MF-issued 権威訂正を追加(既存誤☐行への訂正伝播)",
+      "raw_findings": ["B5"],
+      "conditions": ["C2"],
+      "symptoms": ["1", "3", "5", "7"],
+      "root_cause": "notion_report_sink cross-run safe guard:741-750 は _is_structural_normal(年契約周期/契約完了/トライアル完了/対象外)のみ前run要対応☐→正常上書きを許可。amount-gate訂正(継続発行/新規/年→月切替)はmarker非該当で☐保持。既persist済み誤☐行に訂正が届かない。merge_policyの冪等sink削除禁止域がこのguardを保護。",
+      "edits": [
+        "handoff C04 route build_args へ required_file_edit: 『reliable MF-issued(C05 issued=True の権威ある実額訂正)を _STRUCTURAL_NORMAL_MARKERS と同格の cross-run guard bypass 事由へ追加し、前run要対応☐→今runMF-issued正常を☑へ訂正する』を追加",
+        "handoff C04 route merge_policy: 削除禁止領域の『冪等sink』から本 guard bypass 拡張を除外する旨を明記(冪等マージ自体は温存・bypass事由のみ拡張)",
+        "phase-04-test-design.md C04 fixture: 前run要対応☐→今runMF-issued正常で☑へ訂正される cross-run ケースを追加"
+      ]
+    },
+    {
+      "id": "K5",
+      "severity": "medium",
+      "title": "C03/C04 route の completion_gate 追加 + fidelity二段ゲート/ D1 flip 機械固定",
+      "raw_findings": ["A2", "C1c", "A3"],
+      "conditions": ["C4", "C2", "C1"],
+      "symptoms": ["4", "2"],
+      "root_cause": "C03/C04 routeにcompletion_gateが無く、D1(STATE_NEW gap_check flip)とfidelity二段ゲート(当月違反=fail-closed停止/lookback部分欠損=要確認降格)がrouteレベルで機械固定されていない。C06 exit_codesが0/1/2の二値でlookback部分欠損の降格を表現できずIN1と矛盾。",
+      "edits": [
+        "handoff C03 route build_args へ completion_gate: 『C03は --fidelity-report を必須入力にし、(1)STATE_NEWの裏付けなし(12ヶ月ルックバックに年契約一括なし/未実行)で gap_check を GAP_ACTION(☐要確認)へ flip・裏付けありのみ GAP_OK 維持、(2)当月 pagination/count NG で fail-closed 非emit、(3)lookback 部分欠損行は要確認降格。これらを実装しない限り未完了』を追加。required_file_edits に scripts/mfk_period_report.py(build_target)を明記",
+        "handoff C04 route build_args へ completion_gate: stale/orphan 行へ残置理由を付与しない限り未完了(K6と統合)",
+        "component-inventory.json C06 exit_codes: 0=OK / 1=当月fidelity違反(fail-closed) / 3=lookback部分欠損(降格・続行) / 2=用法エラー の三値へ拡張。IN1(C01 feedback_contract)の文言を『当月fidelity NG(exit1)のみ停止、lookback部分欠損(exit3)はper_customer_diffをC03が読み該当行を要確認へ降格』へ当月スコープ限定",
+        "phase-05-implementation.md 完了チェックリスト: STATE_NEW 裏付けなし→gap_check GAP_ACTION flip(D1)項目を1行追加"
+      ]
+    },
+    {
+      "id": "K6",
+      "severity": "medium",
+      "title": "既存Notion汚染行(真のorphan)の是正責務を C04 へ追加",
+      "raw_findings": ["A4", "B2"],
+      "conditions": ["C2"],
+      "symptoms": ["2"],
+      "root_cause": "notion_report_sink upsert:688 は非破壊マージ(deleted常時0)で、今月MFにも契約在籍にも無い真のorphan行(旧バグrunの誤emit/phantom)を残置理由なく放置。C04 merge_policy がこの write-only 挙動を削除禁止域として温存し orphan 突合の required_file_edit を持たない。取得側修正だけでは既存汚染は消えない。",
+      "edits": [
+        "handoff C04 route build_args へ required_file_edit: 『upsert_report_rows が query_month で対象月の既存行を列挙し、今回 emit(incoming)キー集合に無い行を orphan として残置理由(先月/今月の比較・コメント)を PATCH する(行削除はせず注記のみ)』を追加",
+        "phase-04-test-design.md: 旧run の phantom/誤☑行が新run で残置理由付きに是正される fixture を追加"
+      ]
+    },
+    {
+      "id": "K7",
+      "severity": "medium",
+      "title": "全fetch site の trace 網羅 + trace 不在=fail-closed(iter_all 残置対策)",
+      "raw_findings": ["C1d"],
+      "conditions": ["C2"],
+      "symptoms": ["2", "5"],
+      "root_cause": "legacy iter_all(pagination.total破棄)が残置。collect_mf は iter_all を二段(/billings/qualified・per-billing /transactions)で回し _resolve_customer_names は get 直呼び。trace変種の網羅と『trace不在=fail-closed』が機械保証されず fidelity 監査が fail-open しうる。",
+      "edits": [
+        "handoff C06 route completion_gate: 『billings/transactions/lookback/customer-name の全 read-only fetch site が trace 変種を通し、C06 は trace 皆無(部分でなく)を fidelity violation として fail-closed 扱いにする』を追記",
+        "component-inventory.json C06 fetch_trace 仕様: /transactions 階層の total 突合と『全 fetch site が trace を通す』を inputs へ明記",
+        "component-inventory.json C01 responsibility_updates(R1-collect)完了チェック: 『全 GET を trace 付きで実行』を追加"
+      ]
+    },
+    {
+      "id": "K8",
+      "severity": "medium",
+      "title": "12ヶ月ルックバックの runtime 必須fetch保証(D1裏取り発火)",
+      "raw_findings": ["B3"],
+      "conditions": ["C2"],
+      "symptoms": ["4"],
+      "root_cause": "--lookback-12mo が optional で、未指定/空なら全 STATE_NEW が『⚠️未実行→未確認』に留まる。C01 R1-collect 責務に『STATE_NEW候補があれば12ヶ月ルックバックを必須fetch』が無く、C06 は trace が渡されて初めて監査するため fetch しなければ監査対象が無い。④が恒常的に未達。",
+      "edits": [
+        "component-inventory.json C01 responsibility_updates(R1-collect) へ completion_gate: 『STATE_NEW候補>0なら12ヶ月ルックバックを必須fetchし、欠落時は該当行を要確認固定(fail-closedでなく降格)』を追加。C06 の lookback_window_completeness 監査が実データで発火する条件にする"
+      ]
+    },
+    {
+      "id": "K9",
+      "severity": "medium",
+      "title": "C02(独立検証者)へ過少報告(under-report)第3カテゴリを追加",
+      "raw_findings": ["A5"],
+      "conditions": ["C3"],
+      "symptoms": ["5"],
+      "root_cause": "C02のタクソノミが偽陽性/偽陰性の2セルのみで、第3セル『MF発行済(C05 issued=true)なのにC01レポート行が欠落=過少報告』を構造的に検出できず K1 の curr=None 行欠落を安全網も拾えない。",
+      "edits": [
+        "component-inventory.json C02 description + C01 R3-verify responsibility: 検出観点『C05(mfk_actuals)が issued=true を返すキーが C01 レポート行集合に存在すること(行欠落=過少報告)を independent に突合する』を第3カテゴリとして追加"
+      ]
+    },
+    {
+      "id": "K10",
+      "severity": "low",
+      "title": "component-ID 語彙衝突の解消(既存プロンプトの旧採番→新採番)",
+      "raw_findings": ["C1e"],
+      "conditions": ["C3"],
+      "symptoms": [],
+      "root_cause": "既存プロンプト R2-classify.md:20(mfk_period_report=C05)・R4-render.md:20(notion_report_sink=C06)・R1-collect.md:32(C05=mfk_period_report)・mfk_period_report.py:27 ヘッダ(C05)が、plan の新採番(C05=mfk_actuals・C06=mfk_fetch_audit・mfk_period_report=C03・notion_report_sink=C04)と衝突。executor が参照先を取り違えるリスク。",
+      "edits": [
+        "component-inventory.json C01 responsibility_updates: 『R1/R2/R4/mfk_period_report ヘッダの旧 component-ID(C05/C06)を plan の新採番へ揃える』を required_file_edit として明記(本質は参照整合ゆえ最小差し替え)"
+      ]
+    },
+    {
+      "id": "K11",
+      "severity": "low",
+      "title": "index の『格下げ』表現に D2 行母集合必須保持を併記",
+      "raw_findings": ["B7"],
+      "conditions": ["C3"],
+      "symptoms": ["2"],
+      "root_cause": "index.md:46『契約突合はオーバーレイへ格下げ』が初見開発者にシートの行母集合脱落まで読ませ、D2の契約在籍保持(行母集合=MF実績issued ∪ 契約在籍)が index 本文で弱い。builder がシートを row-source から落とすと今月MF無しの契約在籍行が emit されず症状②が『行が出ない』形で逆に消える。",
+      "edits": [
+        "index.md: 格下げ記述に『判定駆動源からは降格するが D2 行母集合(row-source)としては契約在籍を必須保持(goal-spec constraint)』を1行併記"
+      ]
+    }
+  ],
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": "plugin-plans/mf-kessai-invoice-check-fidelity/goal-spec.json",
+    "prev_improvement": "plugin-plans/mf-kessai-invoice-check-fidelity/improvement-handoff.json",
+    "origin_request": {
+      "kind": "other",
+      "ref": "notion-report-url + 7-symptom production observation + D1/D2/D3 flowchart"
+    },
+    "analysts": [
+      "elegant-logical-structural-analyst (A1-A5)",
+      "elegant-meta-divergent-analyst (B1-B7)",
+      "elegant-system-strategic-analyst (C1a-C1e)"
+    ]
+  }
+}

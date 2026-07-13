@@ -1,0 +1,49 @@
+{
+  "skill_name": "assign-plugin-plan-evaluator",
+  "prefix": "assign",
+  "kind": "assign",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "task-graph を含む plan の意味的妥当性を fork 評価するとき",
+    "C8 の genuine 判定を実施するとき",
+    "C14(b) の新旧shape A/B比較 genuine 判定を実施するとき",
+    "C17のtask execution envelopeが追加質問なしで実行可能か判定するとき",
+    "C19の過去知識再利用が関連性とprovenanceを保つか判定するとき"
+  ],
+  "output_contract": "prompts/R1-evaluate.mdへのC8 task/edge意味判定 + C14(b) A/B比較 + C17 TaskExecutionEnvelope実行可能性 + C19 knowledge関連性判定を追加し、references/plan-rubric.json semantic_checksとplan-findings.json buckets (task-graph-semantics, shape-ab-comparison, execution-envelope, cycle-knowledge)へ記録する。deterministic_gates/conditions C1-C4は不変で、既存test_evaluate_plan.py/test_gate_parity.pyを破壊しない",
+  "boundary": "conditions (C1-C4) の追加・変更は行わない。findings[] の新規 bucket 追加と semantic_checks の追加に留める。fork 実行契約 (plan 書き換え禁止・findings only 出力) は変更しない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "python3"
+  ],
+  "deterministic_checks": [
+    "evaluate-plan.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "checklist": [
+    "C8: task 粒度の実行着手可能性 (1 タスク=1 検証可能成果物) を genuine に判定するプロンプト手順の追加",
+    "C8: エッジ4型の意味論誤用 (parent_of の依存流用等) を genuine に判定するプロンプト手順の追加",
+    "C14(b): 同一構想の新旧shape生成物 (fixed-13-phase vs task-graph-derived) を A/B比較し、受入例・事前解決済み判断の内包度が新shapeで旧shapeを下回っていないかを genuine に判定するプロンプト手順の追加",
+    "harness consumer plan (target_plugin_slug=harness-creator の L4 実行系) を評価する際、producer task-graph を消費する consumer 側の dispatch/state write-back/成果物注入/discovered-task emit が producer 契約 (安定 CLI 契約・graph_hash 照合・所有/書込分離) を逸脱していないかを genuine に判定するプロンプト手順の追加 (harness C8 対向)",
+    "C17: task execution envelopeがtitleだけでなく該当task spec/phase policy/component route/acceptance/inputs/knowledgeを持ち、追加質問なしで着手できるかgenuine判定する",
+    "C19: 過去cycle知識がsource_ref・freshness・採用理由を持ち、全文履歴やstale情報を無条件注入していないかgenuine判定する",
+    "判定結果を plan-findings.json の findings[] へ新規 bucket (task-graph-semantics, shape-ab-comparison, task-graph-consumer) で記録",
+    "既存 conditions (C1-C4・additionalProperties:false・required 固定) 構造を変更しない"
+  ],
+  "goal": "task-graph のタスク細分化粒度が実行着手可能 (1 タスク=1 検証可能成果物) であり、エッジ4型 (parent_of/depends_on/produces/consumes) の意味論が誤用 (parent_of を依存として使う等) されていないこと (C8)、および同一構想の新旧shape生成物比較で新shapeが下流ハーネス実効性 (受入例・事前解決済み判断の内包) において旧shapeに劣化していないこと (C14 b) を genuine に判定し、判定結果が plan-findings.json に記録されている状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "既存の 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) は plan の構造的完全性のみを判定し、task-graph という新射影が導入する『タスク粒度の実行着手可能性』『エッジ型意味論の正しい使い分け』(C8)、および shape 解放が導入する『新旧shapeの下流ハーネス実効性の同等性』(C14 b) は機械ゲートでは検出しきれない意味判断であるため、evaluator の判定範囲をこれらの軸へ拡張する",
+  "responsibilities": [
+    {
+      "id": "R1-evaluate",
+      "summary": "plan の4条件に加え、C8のtask粒度、C14(b)のshape非劣化、C17の実行packet完全性、C19の履歴知識関連性をgenuine判定しplan-findings.jsonへ記録する",
+      "prompt_required": true
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "user-request:2026-07-08-mf-kessai-invoice-check-fidelity",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY"
+  },
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "summary": "MF実額を取得できず金額列が空白/誤分類になる。lib/mfk_reconcile.py の amount_mismatch/no_supply/inactive 系が evidence を落とし、mfk_period_report.py が期待額を優先している。",
+      "recommendation": "C05(mfk_actuals.py)を作るだけでなく、lib/mfk_reconcile.py と mfk_period_report.py を required_file_edits にして actual_amount/issued evidence を全 status へ伝播する。",
+      "target_ref": "C05/C03"
+    },
+    {
+      "id": "F2",
+      "severity": "high",
+      "summary": "fetch fidelity 監査の材料がない。既存 mfk_api.iter_all は items のみを返し pagination metadata を捨てる。",
+      "recommendation": "lib/mfk_api.py/R1 collect に fetch_trace 生成を追加し、C06(mfk_fetch_audit.py)のブロッキング入力にする。",
+      "target_ref": "C06/C01"
+    },
+    {
+      "id": "F3",
+      "severity": "medium",
+      "summary": "Notion schema 契約が新列追加と既存8列維持の間で曖昧。",
+      "recommendation": "本改善では既存8列を維持し、先月/今月金額をMF実額として扱い、金額差フラグ/残置理由は比較/コメント欄に格納する。",
+      "target_ref": "C04"
+    },
+    {
+      "id": "F4",
+      "severity": "medium",
+      "summary": "既存 report skill の R1 collect/R2 classify/R3 verify/R4 render 構造と C01 responsibilities がずれている。",
+      "recommendation": "C01 responsibilities を R1-R4 に戻し、R1 fetch_trace、R3 false-positive/false-negative、R4 8列互換を明示する。",
+      "target_ref": "C01/C02"
+    },
+    {
+      "id": "F5",
+      "severity": "medium",
+      "summary": "script route が contract-only 語彙のままで、後段が C03-C06 を実行しないまま完了するリスクがある。",
+      "recommendation": "script routes に executor_hint=plugins/harness-creator/scripts/build-script-route.py と required_file_edits/completion_gate を付与する。",
+      "target_ref": "handoff-run-plugin-dev-plan.json"
+    }
+  ],
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": "plugin-plans/mf-kessai-invoice-check-fidelity/goal-spec.json",
+    "origin_request": {
+      "kind": "other",
+      "ref": "notion-report-url-provided-in-user-message"
+    }
+  }
+}

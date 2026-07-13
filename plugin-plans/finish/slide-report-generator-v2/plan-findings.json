@@ -1,0 +1,324 @@
+{
+  "plan_dir": "plugin-plans/slide-report-generator-v2",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.1.0",
+    "context": "fork",
+    "regenerated_by": "run-elegant-review run-20260705-140535 (Phase3 executor・契約断裂修正のため相対パス正規化+G11+鮮度アンカーを v1 パリティで再生成。意味論 verdict の再認証は独立 approver に委譲)"
+  },
+  "verdict": "PASS",
+  "staleness_rule": "本 findings は evaluated_inputs に記録した sha256 を鮮度アンカーとする。被評価ファイルの現 sha256 が evaluated_inputs の値と一致しない場合、本 verdict は stale として扱い再評価が必要 (SHA 手書換や無断更新後の使い回しは無効)。handoff-run-plugin-dev-plan.json build_readiness の staleness 依存ステップはこのアンカーを参照する。",
+  "evaluated_inputs": [
+    {
+      "path": "index.md",
+      "sha256": "7469048f7046cfb181463e0aa7ad69cdc1a7b255a7648b6a6b8eb83ef773d219"
+    },
+    {
+      "path": "goal-spec.json",
+      "sha256": "5460900411d5133a130ef97675b56a1ef492a182f5b026fbf606cde1b3f0ea54"
+    },
+    {
+      "path": "source-inventory.md",
+      "sha256": "ee3f3a8096b46ef1ef204154a2c702d35e18987d059d215f3be79ff38f5e0c37"
+    },
+    {
+      "path": "component-inventory.json",
+      "sha256": "9adf4abe9ddbca36254b7b23c4d704630b08809fb402b75678001dec07942518"
+    },
+    {
+      "path": "handoff-run-plugin-dev-plan.json",
+      "sha256": "6b40143b48643ce0d58e31fe36b53a3d94ec9377710968f619b0c2d9e0755052"
+    },
+    {
+      "path": "envelope-draft/plugin.json",
+      "sha256": "d45012def41686f43258d1f7b0cab0fe717c32f99de34d7a59f11ea0e0b94d00"
+    },
+    {
+      "path": "phase-01-requirements.md",
+      "sha256": "b5ff12a147a10b4ba241c1e83fd39fdfa60d63ea105adc9944d1a07409087dae"
+    },
+    {
+      "path": "phase-02-design.md",
+      "sha256": "ca11e7247e9360b2879b42e35d164c2a787082f55adcaa532e7e65df51f47772"
+    },
+    {
+      "path": "phase-03-design-review.md",
+      "sha256": "5f4ad4bb44d3d9920d7b31ffbc824b52bdb82e97f245b1682feb7f5262302201"
+    },
+    {
+      "path": "phase-04-test-design.md",
+      "sha256": "2583ffe62da7407e9623b5bceec04eba158b54af2d4ce3770751da084699c8ac"
+    },
+    {
+      "path": "phase-05-implementation.md",
+      "sha256": "6ea19671ee1d0848e579767a85d73a127aa1d8113ef8c05a2b38814493d4b287"
+    },
+    {
+      "path": "phase-06-test-run.md",
+      "sha256": "e58a82f32039312bc02e447a7b82e912fdb22577589c645a501e28c0afd5e4ba"
+    },
+    {
+      "path": "phase-07-acceptance-criteria.md",
+      "sha256": "d146a1b65bac013533b701d0494d82215e9a5c8464490b5081fbba8b83fb62bb"
+    },
+    {
+      "path": "phase-08-refactoring.md",
+      "sha256": "c81a0674ba0205fdc509a0eef3bb619560ff25d9025703d23af69dc9593d7312"
+    },
+    {
+      "path": "phase-09-quality-assurance.md",
+      "sha256": "e9d5cedd766a09319a6acace6b23a34340e0a641326d6e517ff54ae7d51aee05"
+    },
+    {
+      "path": "phase-10-final-review.md",
+      "sha256": "31104a32dc01df079f7aab60a0239bea37bf14740a6ddd74e118bedbb0e06b9a"
+    },
+    {
+      "path": "phase-11-evidence.md",
+      "sha256": "ca84ffa736a0e280ac0c948ae4e51b187829256943eb4de184e355d069356f68"
+    },
+    {
+      "path": "phase-12-documentation.md",
+      "sha256": "d263da2f47dc65dcb78ad71b819d121c919bf5f228c29432f55298591855ae99"
+    },
+    {
+      "path": "phase-13-release.md",
+      "sha256": "16042105da1f16ce709e35bfc73f8ef3fad522976a1b6d4e7a6a490ae1a7f665"
+    }
+  ],
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし。elegant-review run-20260705-140535 が検出した marketplace surface の矛盾 (component-inventory の『v1 から不変』宣言 vs index installation の AVAILABLE→NOT_AVAILABLE 反転) を是正: installation は distributable:false との整合のための policy 値のみの変更であり配布方針は不変、と inventory note を明記し宣言と実値を一致させた。check-build-handoff exit=0。",
+      "evidence": [
+        "component-inventory.json plugin_level_surfaces.marketplace.note を installation 是正明記へ更新",
+        "check-build-handoff.py exit=0"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし。elegant-review が最重要 omission として検出した『非回帰被覆台帳の不在』(v1 source-inventory.md §5 相当が v2 に無く、v1 全 23 component/61 references/30 script/118 template の v2 写像が網羅照合できない) を解消: source-inventory.md を新設し §5 被覆チェックリストで v1 全資産→v2 disposition+非回帰検査法を 1:1 写像 (orphan 0 保証)。index 要件正本・スコープ・完了チェックリストにも登録。references 算術 (直下45=既存41+report4) も是正。決定論ゲート全 exit0。",
+      "evidence": [
+        "source-inventory.md §5 被覆チェックリスト新設 (v1 全資産→v2 disposition 1:1)",
+        "index.md 仕様駆動/スコープ/完了チェックリストへ source-inventory.md §5 を登録",
+        "component-inventory.json references 算術『既存42→41』是正 (41+4=45)",
+        "detect-unassigned exit=0 / check-surface-inventory exit=0 / check-requirements-coverage exit=0 / check-plugin-goal-spec(G11) exit=0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり。references 勘定の内訳算術 (直下45 と『既存42+report4=46』の不一致) を『既存41+report4=45』へ是正し v1/v2 換算を単一基準 (resource-map を content 外別勘定) で一致。inventory の dangling な source_digest_manifest 裸参照を handoff と同じ plugin-plans/slide-report-generator/vendor-digest-manifest.json へ修飾。plan-findings 自身の絶対パス固定を相対パス+python3 へ正規化し他環境での再現性を回復。frontmatter/gates/matrix 全 exit0。",
+      "evidence": [
+        "component-inventory.json 直下 content 算術是正 + source_digest_manifest を v1 plan_dir 修飾で dangling 除去",
+        "本 plan-findings を相対パス+python3 へ正規化 (絶対 worktree パス/miniconda 固定を除去)",
+        "check-spec-frontmatter exit=0 / check-spec-gates exit=0 / check-spec-matrix-coverage --self-test+PLAN exit=0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "依存関係整合。elegant-review が 4 エージェント独立検出した最大の dependency_break『handoff build_readiness が参照する plan-findings.staleness_rule/evaluated_inputs の不在 (契約断裂)』を、本 findings に staleness_rule + evaluated_inputs (19 被評価ファイルの sha256) を v1 パリティで追加して参照を実在化。加えて build_readiness へ pilot-gate (C09 先行薄化を残10の DAG 前提)・maintain-agent 非回帰 (byte-identical/golden)・regression-floor (OUT1/OUT2 同時 waiver 時も決定論 byte diff 非回帰を非 waiver 床) を追記し依存/受入の空洞化を封鎖。topsort/runtime-portability/build-handoff 全 exit0。",
+      "evidence": [
+        "本 findings に staleness_rule + evaluated_inputs 追加 → handoff build_readiness の staleness 依存ステップが実在フィールドへ解決",
+        "handoff build_readiness.must_run_before_routes へ pilot-gate/maintain-agent非回帰/regression-floor を追記",
+        "verify-index-topsort exit=0 / check-runtime-portability exit=0 / check-build-handoff exit=0"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py",
+        "--inventory",
+        "plugin-plans/slide-report-generator-v2/component-inventory.json",
+        "--specs-dir",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C4"
+      ],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py",
+        "--specs-dir",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "--specs-dir",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2",
+        "C3"
+      ],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "--self-test"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C3"
+      ],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46) / OK: 適用される全マトリクス行の焼き先が反映済み"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py",
+        "plugin-plans/slide-report-generator-v2/component-inventory.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py",
+        "plugin-plans/slide-report-generator-v2/handoff-run-plugin-dev-plan.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C1",
+        "C4"
+      ],
+      "stdout": "OK: build handoff が 24 routes と envelope 契約を満たす"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py",
+        "plugin-plans/slide-report-generator-v2"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C4"
+      ],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"
+    },
+    {
+      "id": "G11",
+      "name": "check-plugin-goal-spec",
+      "command": [
+        "python3",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py",
+        "plugin-plans/slide-report-generator-v2/goal-spec.json"
+      ],
+      "exit_code": 0,
+      "conditions": [
+        "C2"
+      ],
+      "stdout": "OK: plugin goal-spec schema + plugin anchors validated (拡張ゲート・v1 パリティ回復のため本 run で追加実行)"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "elegant_review_fixes",
+      "observation": "run-elegant-review run-20260705-140535 (思考リセット + 30 思考法 × 3 SubAgent 並列) が検出した 4 条件関連 gap を本 run で反映修正した。修正: (1)契約断裂=plan-findings に staleness_rule/evaluated_inputs 追加, (2)非回帰被覆台帳=source-inventory.md 新設, (3)references 算術=既存41 是正, (4)dangling source_digest_manifest 修飾, (5)marketplace 矛盾是正, (6)絶対パス→相対正規化, (7)G11 追加実行, (8)handoff へ pilot-gate/maintain非回帰/regression-floor 追記, (9)goal-spec の v1『未コミット』→commit 7afede4 是正, (10)progress.json の dangling findings 参照是正。",
+      "evidence": [
+        "eval-log/slide-report-generator/elegant-review/run-20260705-140535/findings-aggregated.json"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "schema_conformance",
+      "observation": "本 findings の evaluated_inputs / staleness_rule フィールドは plan-findings.schema.json (commit 4ffa172) が既に第一級プロパティとして批准済 (evaluated_inputs=array of {path, sha256}・staleness_rule=string・additionalProperties:false 下で許容)。したがって本追加は out-of-schema 拡張ではなく schema 準拠であり、handoff build_readiness の staleness 依存も実在フィールドへ解決する。注記: v1 plan-findings.json findings[schema_extension] は schema 更新前 (4ffa172 以前) の『未収載・要批准』note を残しており、その記述は現 schema 状態に対し stale。v1 は golden 源 read-only のため本 review では改変せず backlog として記録する。",
+      "evidence": [
+        "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/schemas/plan-findings.schema.json properties に evaluated_inputs/staleness_rule が存在 (commit 4ffa172)",
+        "独立 approver (run-20260705-140535) が v1 stale note を検出・schema 実状態を確認"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "open_question",
+      "observation": "elegant-review が auto_fixable=false (設計判断) として human_review へ回した backlog: (a)consumers>=2 の自己成就ループに機械 backstop (外部 consumer>=2 or 重複段落0 の C24 実閾値), (b)prose cross-reference lint (記録系 stale 同期契約の build-gate 機械化), (c)v1 資産→v2 件数パリティの機械照合, (d)C24 contract-only の存在→実効 2 段 gate 明示, (e)v2 独立 plugin 化 vs in-place refactor の実害定量化。source-inventory.md §7 に (a)(b)(c) を記録済。",
+      "evidence": [
+        "source-inventory.md §7 backlog",
+        "component-inventory.json no_split_threshold.rule (consumers>=2 自己成就の自認)"
+      ]
+    }
+  ]
+}

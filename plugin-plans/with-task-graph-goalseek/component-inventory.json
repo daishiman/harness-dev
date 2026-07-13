@@ -1,0 +1,535 @@
+{
+  "plugin_concept": "harness-creator run-build-skill — with-goal-seek へ engine:task-graph 変種(依存順序駆動+self-reflect自己反映)を追加する既存プラグイン更新",
+  "derivation": "goal-spec の A2 制約(独立 combinator flag `with_task_graph` を新設しない・単一truth・既存build-pipeline task-graph 無改変)に従い、capability を 5 buildable component_kind のうち script×7 + skill×1(mode:update)の計 8 実体へ分解する。C01-C05 は checklist 依存順実行 + self-reflect 追記の engine 変種本体、C06-C08 は承認済み追加範囲として生成 harness 内の skill / slash-command / sub-agent / script 横断 dependency graph を抽出・knowledge 化・利用検査する。新規 component_kind(sub-agent/slash-command/hook)は本更新の性質上不要と判断し considered_component_kinds に検討証跡のみ残す。DAG: C01→∅、C02→C01、C06→C01/C02、C07→C02/C06、C03→C01/C02/C06/C07、C04→C03、C08→C03/C06/C07、C05→C03/C04/C06/C07/C08。",
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "ready-set-from-checklist.py",
+      "script_name": "ready-set-from-checklist.py",
+      "purpose": "with-goal-seek の checklist(progress.json)へ additive 付与された depends_on から、依存充足順の ready 集合をステートレスに算出する決定論ゲート。逐次単一 self-writer 実行を前提とし write_scope 衝突/tie-break 機構は持たない(H1 解消の実装物)",
+      "inputs": "argv(<progress_json_path>) — schemas/goal-seek-loop.schema.json 準拠 checklist(各item: id/status/depends_on[additive,default[]])",
+      "outputs": "stdout: {\"ready\":[id,...]} JSON (ready は id 昇順 sorted 決定論・status==pending かつ全 depends_on 先が status==done の item のみ)",
+      "exit_codes": "0=OK(ready 空でも正常)/1=schema 不整合(checklist データ不整合)/2=usage error または読込・parse 不能",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: 依存グラフからの ready 集合算出は純粋な決定論計算でありヒアリング/対話要素を持たないため script が最小実体。no-split判断: 既存 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/compute-ready-set.py と統合/再利用しない — 同ファイルは node.write_scope の重複を id 昇順 tie-break で直列化し勝者以外を deferred/conflicts へ回す機構(L90-109、docstring L16-27)を持ち、これは『複数 candidate が同時に ready になり得る並列 dispatch』を前提にした意図的設計であって『バグ』ではない(H2 解消)。本機構は生成ハーネス内の単一 self-writer が checklist を逐次一つずつ処理するのみで、同時に複数 writer が同一 write_scope を奪い合う状況が構造的に発生しないため、tie-break/conflicts の複製は死機構の持ち込みになる(H1 解消)。ゆえに write_scope フィールド自体を持たない最小スクリプトとして新設する。第二消費者なし・plugin-root hoist 不要のため placement_scope=skill。"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "self-reflect-append.py",
+      "script_name": "self-reflect-append.py",
+      "purpose": "self-reflect で実行中に発見した新規タスクを、別状態ファイル(task-graph.json 相当)を新設せず checklist(progress.json)の末尾へ新しい item として追記する決定論ゲート。追記のみ(既存 item の depends_on は改変しない)により追記ノードは append 時点で常に DAG 上の新規シンクとなり構造的にサイクルを生まないが、id 重複・未知 depends_on 参照・念のための全体サイクル検査を fail-closed で行う(単一truth設計=H3/H6 解消の実装物)",
+      "inputs": "argv(<progress_json_path> --id <新規id> --text <達成条件文> --depends-on <id[,id...]> [--verify-by reasoning|script|lint|test|human])",
+      "outputs": "stdout: 追記後の progress.json 全体(checklist へ status=pending の新 item 追記済み) / stderr: violation 理由",
+      "exit_codes": "0=追記成功/1=検証失敗(id重複・存在しない depends_on 参照・追記後サイクル検出)/2=usage error",
+      "network": false,
+      "write_scope": "eval-log/{{skill_name}}-progress.json",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C01"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: 追記+検証も純粋決定論処理のため script。no-split判断: C01(ready 算出)と責務・呼び出し契機が異なる(ready 算出は毎周回・self-reflect 追記は新規タスク発見時のみ)ため分離するが、id/depends_on/checklist 形状の語彙は C01 と共有するため依存辺を張る。第二消費者なし・plugin-root hoist 不要のため placement_scope=skill。単一truth原則(C6): 本スクリプトが書き込む先は既存 with-goal-seek の progress.json のみであり、新規 state file を一切生成しない。"
+    },
+    {
+      "id": "C06",
+      "component_kind": "script",
+      "name": "extract-capability-dependency-graph.py",
+      "script_name": "extract-capability-dependency-graph.py",
+      "purpose": "生成された harness 内の skill / slash-command / sub-agent / hook / script surface を走査し、frontmatter refs・command/agent/hook/script の明示参照から(surface 実ディレクトリ走査ベース。plugin-composition.yaml は登録簿であり依存辺の源でないため走査しない) capability 依存グラフを決定論的に抽出する。checklist item depends_on だけでなく cross-surface の『どの capability がどの capability/asset を使うか』を knowledge 化できる入力にする(C8 拡張・横断依存 graph の抽出物)",
+      "inputs": "argv(<plugin_root_or_generated_harness_dir>) — 生成先 harness の skills/ commands/ agents/ hooks/ scripts/ plugin-composition.yaml(存在時)を read-only 走査する",
+      "outputs": "stdout: {nodes:[{id,kind,path}], edges:[{from,to,type,source_ref}], gaps:[...]} JSON。node/edge は id 昇順で正準化し、未知参照は gaps に分離する",
+      "exit_codes": "0=OK(依存0件でも正常)/1=参照先 dangling または schema 不整合/2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C01",
+        "C02"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: cross-surface dependency graph 抽出はファイル走査と JSON 正準化だけの決定論処理であり script が最小実体。no-split判断: ready-set(C01)は checklist item の実行順、C06 は生成 harness の capability surface 依存 graph を扱うため責務が異なる。C01/C02 の id/depends_on 語彙を取り込むため依存辺を張るが、C06 は state を書かず read-only。第二消費者は C07(knowledge 記録)と C08(lint)であり、テンプレート script として生成先 skill に同梱する。"
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "record-capability-graph-knowledge.py",
+      "script_name": "record-capability-graph-knowledge.py",
+      "purpose": "C06 の capability 依存グラフと self-reflect で発見された未網羅タスクを、生成 harness 側 knowledge(Loop A) と harness-creator 側 knowledge(Loop B)へ source_ref 付き要約として記録する。生ログ全文や task-graph.json 相当の別状態を複製せず、依存詰まり・dangling 参照・再利用すべき順序判断だけを knowledge entry 化する",
+      "inputs": "argv(<dependency_graph_json> --target-knowledge-dir <knowledge/> [--harness-knowledge-dir <plugins/harness-creator/knowledge>] [--dry-run])",
+      "outputs": "stdout: {entries:[...], loop_a_status, loop_b_status} JSON。各 entry は id/title/intent/background/keywords/source を持つ knowledge-loop schema 準拠",
+      "exit_codes": "0=OK/1=knowledge entry schema 不整合または add_entry 失敗/2=usage error",
+      "network": false,
+      "write_scope": "generated-harness knowledge/ + plugins/harness-creator/knowledge/ (挙動契約: append/merge のみ・既存 entry 不変・knowledge-index category 登録を stdlib 内蔵。テンプレ自己完結のため add_entry.py 非依存で同型効果を実装)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C02",
+        "C06"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: dependency graph から knowledge entry を作る処理は決定論的な distillation と add_entry.py 委譲であり script が最小実体。no-split判断: C06 は抽出、C07 は知識化と書込委譲で write_scope が異なるため分離する。C02 に依存するのは self-reflect 追記で発見されたタスクを graph knowledge と同じ完了 gate へ載せるため。Loop A/Loop B は既存 record-task-graph-knowledge.py の設計を生成 harness 側へ縮小適用する。"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "render-combinators.py (with-goal-seek engine:task-graph 変種拡張)",
+      "script_name": "render-combinators.py",
+      "purpose": "既存 with-goal-seek 配線 (GOAL_SEEK_FM_BLOCK / GOAL_SEEK_WIRING_SECTION 定数) へ、engine:task-graph 変種の配線サブセクションを静的テキストとして追加する。新規 combinator flag は追加しない — with-goal-seek は loop kind(run/wrap/delegate)で既に default-ON であり、brief.goal_seek.engine の値(inline/run-goal-seek/task-graph)により生成される配線内容の一部が変わるだけの『engine 選択』として畳む(H5/C10 解消の実装物)。副作用として schemas/build-flags.schema.json の with_goal_seek.engine enum へ 'task-graph' を additive 追加し、schemas/goal-seek-loop.schema.json の checklist item へ depends_on(additive・array<string>・pattern ^C[0-9]+$・default [])を追加する 承認済み追加範囲として C06/C07 の dependency graph knowledge 抽出・記録スクリプトを生成先 harness へ同梱し、各 surface の実行前 knowledge consult 手順を SKILL.md 配線節へ注入する。",
+      "inputs": "既存 scripts/render-combinators.py 本体(GOAL_SEEK_FM_BLOCK L185-195 / GOAL_SEEK_WIRING_SECTION L203-263)+ schemas/build-flags.schema.json(L166 with_goal_seek.engine enum)+ schemas/goal-seek-loop.schema.json(checklist item properties)",
+      "outputs": "更新済み render-combinators.py(GOAL_SEEK_WIRING_SECTION に『### ゴールシーク配線(task-graph 変種)』『### ゴールシーク検証(task-graph 変種・機械検査)』『### dependency graph knowledge consult』の 3 サブセクションを追加)。『### ゴールシーク配線(task-graph 変種)』は engine==task-graph 分岐に限り base ループの Step1『未達[ ]を任意選択』を『C01 実行→ready 集合の最小 id item を選択・実行』へ上書き置換する拘束的駆動 prose を含み、かつ毎周回 intermediate.jsonl へ ready_set/selected_item を additive 追記させる(依存順消費の唯一の証跡・別状態ファイル新設せず)。『### ゴールシーク検証(task-graph 変種・機械検査)』はその intermediate.jsonl トレースを読む consumption verifier トークンを含む。+ 更新済み 2 schema(additive のみ) + C06/C07 同梱手順と skill/command/agent/script 各 surface の dependency graph knowledge consult 手順",
+      "exit_codes": "0=lint-goal-seek.py --self-test 通過/1=SSOT不一致(engine enum/depends_on schema/配線テキストのいずれかが drift)",
+      "network": false,
+      "write_scope": "scripts/render-combinators.py, schemas/build-flags.schema.json, schemas/goal-seek-loop.schema.json",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C01",
+        "C02",
+        "C06",
+        "C07"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+      "side_effect_targets": [
+        "plugins/harness-creator/skills/run-build-skill/schemas/build-flags.schema.json",
+        "plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json"
+      ],
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: 既存 Python script の編集は script。no-split判断: 新規 combinator flag(--with-task-graph 等)を argparse へ追加する設計は採らない — with-goal-seek は既に default-ON かつ engine は brief 由来のテンプレート変数であり、CLI flag 分岐を増やさず配線テキストを engine 値で条件分岐する散文として実装できるため、独立 flag 新設という A2 で禁じられた構造を回避できる(C1/H5 解消)。H1/H2 の file:line 引用は本 component の purpose/derivation および phase-02 に集約する(責務の唯一の書き場所)。schemas/template-selection.schema.json は編集しない: with-goal-seek は kind別テンプレ選択の対象ではなく flag/engine 駆動の combinator であるため selection_rules の対象外(with-knowledge/with-evaluator と同型)。結合の意図明示: engine:task-graph 指定時に C06/C07(cross-surface dependency graph knowledge)を無条件同梱・consult 注入する結合は意図的である — ユーザー要件が『依存順駆動の自己完結実行』と『横断 dependency graph の knowledge 化・各 surface 利用』の両立を一体で求めるため(goal-spec C1/C5/C8)、A2(独立 flag 新設禁止)下で両能力を engine 値 task-graph に束ねる。順序駆動のみを knowledge なしで得る分離オプションは本 plan の scope 外(必要時は将来 engine 値の細分で対応)。"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "lint-goal-seek.py (task-graph 変種 self-test 拡張)",
+      "script_name": "lint-goal-seek.py",
+      "purpose": "既存 lint-goal-seek.py の check_default_drift() 型 SSOT drift 検査へ、engine:task-graph 変種の整合検査を追加する: (a) build-flags.schema.json の engine enum に 'task-graph' が存在し render-combinators.py の配線コメントと一致、(b) goal-seek-loop.schema.json の checklist item に depends_on additive フィールドが存在、(c) 生成 SKILL.md に consumption verifier(intermediate.jsonl の ready_set/selected_item トレースを読み『毎周回 selected_item が ready 集合の最小 id と一致=依存順消費』を検査するトークン + self-reflect 追記 item が status==done まで完了判定を gate する検査トークン)が存在すること(H4/C8 解消の実装物) C08 が cross-surface knowledge 利用検査を担うため、C04 は goal-seek schema/consumption verifier の SSOT drift に責務を限定する。",
+      "inputs": "生成 SKILL.md(--skills-dir 走査 または単体パス)+ schemas/build-flags.schema.json + schemas/goal-seek-loop.schema.json + scripts/render-combinators.py(--self-test 時)",
+      "outputs": "stdout: OK / stderr: violation 一覧(既存 check_default_drift() の findings 配列へ追加)",
+      "exit_codes": "0=OK/1=violation 1件以上/2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C03"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: 既存 lint script の機械検査拡張は script。no-split判断: 独立の lint-task-graph-loop.py を新設せず既存 lint-goal-seek.py を拡張する(旧A1設計からの是正) — task-graph 変種は with-goal-seek の一部(engine 選択)であり独立 combinator ではないため、独立 lint script を持つと『独立機構』という誤ったメンタルモデルを固定化し H5 の default/opt-in 軸混乱を再導入する。既存ファイルの self-test 拡張として畳むことで A2 の『engine 変種として畳む』原則を lint 層でも一貫させる。"
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "lint-capability-graph-knowledge.py",
+      "script_name": "lint-capability-graph-knowledge.py",
+      "purpose": "brief.goal_seek.engine=task-graph 指定で生成された harness が、C06 による cross-surface dependency graph 抽出、C07 による Loop A/Loop B knowledge 記録、各 surface の実行前 knowledge consult 指示携帯を3段設計で検査する(skill=fail-closed hard gate / slash-command・sub-agent=warning(トークン強要の Goodhart 化回避) / script=同梱実在+テンプレ byte-parity で代替)。checklist 順序実行だけで終わらず、依存グラフ由来 knowledge を各 surface が使うことの機械ゲートにする",
+      "inputs": "argv(<generated_harness_dir_or_skill_md>) — SKILL.md 配線節、commands/agents/scripts 参照、knowledge consult token、C06/C07 同梱有無を検査する",
+      "outputs": "stdout: OK / stderr: missing token・dangling dependency・knowledge consult 未配線 violation 一覧",
+      "exit_codes": "0=OK/1=violation 1件以上/2=usage error",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C03",
+        "C06",
+        "C07"
+      ],
+      "placement_scope": "skill",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-graph-knowledge.py",
+      "builder": "parent-skill-build",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      },
+      "derivation": "kind選定: graph knowledge の利用契約を検査する独立 lint は決定論 script。no-split判断: 既存 C04(lint-goal-seek.py)は engine enum/depends_on/self-reflect consumption verifier の SSOT drift を見る。C08 は generated harness の skill/command/agent/script surface が dependency knowledge を consult するかを横断検査するため、C04 に畳むと goal-seek schema lint と knowledge-use lint が混在する。C03 が注入した配線、C06/C07 の実体、knowledge consult token を同時に見るため depends_on=[C03,C06,C07] とする。"
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "name": "run-build-skill",
+      "skill_name": "run-build-skill",
+      "kind": "run",
+      "skill_kind": "run",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "skill作成/agent作成/hook配線/slashcommand作成/plugin-composition編集/prompt生成/workflow定義の要求時",
+        "生成harnessへ『依存順序駆動+実行中の新規タスク自己反映(self-reflect)』を持つ goal-seek engine 変種を標準装備の with-goal-seek の一部として持たせたい要求時 (brief.goal_seek.engine=task-graph)"
+      ],
+      "output_contract": "指定 capability を 7 kind(skill/agent/hook/command/plugin-composition/prompt/workflow)で決定論生成する。loop kind(run/wrap/delegate)は with-goal-seek を既定装備し、brief.goal_seek.engine=task-graph 指定時のみ C01/C02(templates/task-graph-engine/scripts/ 配下の ready-set-from-checklist.py・self-reflect-append.py)を生成先 skill の scripts/ へ条件付きコピーし、SKILL.md の『### ゴールシーク配線』節へ task-graph 変種サブセクション(depends_on 消費手順 + self-reflect 追記手順 + consumption verifier 機械検査)を追加注入する さらに engine=task-graph 生成物では、生成先 harness の skill / slash-command / sub-agent / script surface から capability dependency graph を抽出し、Loop A/Loop B knowledge へ記録し、各 surface が実行前に依存 graph knowledge を consult する配線を注入する。",
+      "boundary": "capability の生成手順と combinator 配線を実装する。生成先harnessが実際にゴールへ到達したかの意味的評価は content-review/evaluator/elegant-review へ委ねる。既存 build-pipeline task-graph(plugin-plans/harness-creator が実装した producer/consumer型・capability-build 消費側機構、および plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/{compute-ready-set,specfm}.py が保持する task-graph.json/plan-ledger.json 語彙)の改変は本 component のスコープ外(C9 解消)",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "lint-goal-seek.py"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": true,
+      "goal": "brief.goal_seek.engine=task-graph 指定の生成物が、単一truth(既存 progress.json checklist + intermediate.jsonl)のみを状態源として depends_on 依存充足順を消費し、self-reflect による checklist 追記が完了判定を gate する挙動を備え、lint-goal-seek.py の拡張 self-test が exit0 になる状態に到達している 加えて、生成 harness が cross-surface dependency graph を knowledge 化し、各 skill/command/sub-agent/script の実行前判断に利用できる状態に到達している。",
+      "purpose_background": "現行 with-goal-seek は Goal+二値checklist の逐次反復のみで、タスク間の依存順序も実行中の新タスク発見(self-reflect)も持たない。この能力を、別状態ファイルを新設せず既存 with-goal-seek の状態(checklist+intermediate.jsonl)を唯一の真実源とする engine 変種として追加する(独立 combinator flag は新設しない)",
+      "checklist": [
+        "schemas/build-flags.schema.json の with_goal_seek.engine enum へ 'task-graph' が additive 追加されている",
+        "schemas/goal-seek-loop.schema.json の checklist item へ depends_on(additive)が追加されている",
+        "brief.goal_seek.engine=task-graph 指定時、生成 SKILL.md に ready-set-from-checklist.py/self-reflect-append.py の同梱コピー手順と『task-graph 変種』配線節が注入される",
+        "consumption verifier(depends_on 消費 + self-reflect 完了gateの機械検査)が intermediate.jsonl アンカー検査と同型で埋め込まれ、lint-goal-seek.py 拡張 self-test が exit0 になる",
+        "生成 harness の skill / slash-command / sub-agent / script surface から capability dependency graph を抽出し Loop A/Loop B knowledge へ記録する C06/C07 が同梱されている",
+        "各 surface が dependency graph knowledge を consult する配線を持ち、lint-capability-graph-knowledge.py が exit0 になる"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-core",
+          "summary": "with-goal-seek の engine:task-graph 変種を render-combinators.py 経由で SKILL.md へ配線し、brief.goal_seek.engine=task-graph 指定の生成harnessへ依存順序駆動+self-reflect自己反映のゴールシークを標準装備の一部として持たせる",
+          "prompt_required": true
+        }
+      ],
+      "prompt_layer": "7layer",
+      "combinators": [
+        "with-goal-seek"
+      ],
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "brief.goal_seek.engine=task-graph 指定時に engine enum の additive 拡張・depends_on schema 拡張・task-graph 変種配線節の注入が決定論的に行われ、lint-goal-seek.py 拡張 self-test が exit0 になる",
+            "verify_by": "lint"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "生成harnessが自身の checklist の depends_on 依存充足順を実際に消費して逐次実行し、実行中に発見した新規タスクを self-reflect で checklist item として追記して完了判定を gate することが、intermediate.jsonl アンカー検査と同型の consumption verifier および elegant-review C1-C4 PASS で確認される",
+            "verify_by": "elegant-review"
+          },
+          {
+            "id": "OUT2",
+            "loop_scope": "outer",
+            "text": "生成 harness が skill / slash-command / sub-agent / script 横断の capability dependency graph を抽出・knowledge 化し、各 surface の実行前判断で consult できることが lint-capability-graph-knowledge.py と content/elegant review で確認される",
+            "verify_by": "elegant-review"
+          }
+        ]
+      },
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "depends_on": [
+        "C03",
+        "C04",
+        "C06",
+        "C07",
+        "C08"
+      ],
+      "build_target": "plugins/harness-creator/skills/run-build-skill/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      },
+      "derivation": "kind選定: run-build-skill は既存の実在 skill(kind=run)であり component_kind は skill を維持する(新規作成でなく UPDATE だが BUILDER_BY_KIND の固定写像に従い builder=run-skill-create は不変・mode:update は handoff route の build_args で表現する=plugin-plans/harness-creator C06 capability-build UPDATE と同型パターン)。no-split判断: 対象外(既存単一skillの更新であり分割対象という概念が無い)。C01-C04/C06-C08 で確定した機構(ready算出/自己反映/配線/lint/dependency graph knowledge 抽出・記録・利用検査)を SKILL.md の prose Step へ統合しつつ、生成harnessへの実体コピーは新規 CLI flag でなく既存 build 手順内の条件分岐 prose として記述する(with-feedback-loop の apply_feedback_loop()=CLI flag 駆動の shutil.copytree とは意図的に異なる方式を選ぶ。理由: 新規 flag を追加しない A2 制約を最も直接に満たすため)。 承認済み構造変更: C06-C08 を追加し、単一 checklist の依存順実行だけでなく生成 harness の cross-surface dependency graph knowledge 化と consult gate まで C05 の output_contract に含める。なお C05 自身の goal_seek.engine は inline を維持する: builder skill(run-build-skill)の更新タスクは C01→C02→…→C05 の依存が自明で並列 dispatch も self-reflect 発見も要さないため、engine:task-graph を自己適用する利得が無く inline が最小妥当である(dogfooding 非適用は意図的判断・将来自己適用は open)。"
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "target": "plugins/harness-creator/.claude-plugin/plugin.json",
+      "note": "entry_points.skills へ 'run-build-skill' を新設宣言する(現行 plugin.json は entry_points.commands のみ保持)。本宣言は C05(run-build-skill)のみをスコープとした部分宣言であり、harness-creator の既存 skill/agent 全量を entry_points.skills へ backfill するものではない(GAP-ENTRY-POINTS-SCOPE 参照)。description は『with-goal-seek の engine:task-graph 変種』表現に更新する(旧『with-task-graph combinator』表現は使わない=H5/C10 一貫性)。description 以外の既存フィールド(hooks/requirements/author/version/entry_points.commands)は無改修"
+    },
+    "composition": {
+      "required": false,
+      "omitted_reason": "run-build-skill は既に plugin-composition.yaml へ登録済みであり、本 plan は同 skill 内部の engine 変種追加のみで composition registry 上の capability 一覧・依存関係の変更を伴わない"
+    },
+    "harness_eval": {
+      "required": true,
+      "target": [
+        "eval-log/harness-coverage.json",
+        "eval-log/coverage/scripts/plugins-harness-creator-skills-run-build-skill-templates-task-graph-engine-scripts-ready-set-from-checklist.py.json",
+        "eval-log/coverage/scripts/plugins-harness-creator-skills-run-build-skill-templates-task-graph-engine-scripts-self-reflect-append.py.json",
+        "eval-log/coverage/scripts/plugins-harness-creator-skills-run-build-skill-templates-task-graph-engine-scripts-extract-capability-dependency-graph.py.json",
+        "eval-log/coverage/scripts/plugins-harness-creator-skills-run-build-skill-templates-task-graph-engine-scripts-record-capability-graph-knowledge.py.json",
+        "eval-log/coverage/scripts/plugins-harness-creator-skills-run-build-skill-scripts-lint-capability-graph-knowledge.py.json"
+      ],
+      "note": "C01/C02/C06/C07/C08 は task-graph engine / dependency knowledge 用 script であり、xl-skills の harness-ratchet 規約(per-script coverage record 添付)に従い build 時に eval-log/coverage/scripts/ 配下へ各スクリプトの coverage record を追加し eval-log/harness-coverage.json の floor を下げないことを要する。C03/C04 は既存 script の Edit、C08 は新規 lint script として coverage record を持つ。"
+    },
+    "references_config_assets": {
+      "required": true,
+      "target": [
+        "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md"
+      ],
+      "note": "新規リファレンスファイルは作成しない。既存 references/goal-seek-paradigm.md の末尾に『engine:task-graph 変種』節を追記する(単一truth設計・depends_on/self-reflect append・H2 の compute-ready-set.py 正しい再framing を file:line 引用付きで記載)。C05 の SKILL.md 新設 Step からこの節を参照する"
+    },
+    "schemas": {
+      "required": true,
+      "target": [
+        "plugins/harness-creator/skills/run-build-skill/schemas/build-flags.schema.json",
+        "plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json"
+      ],
+      "note": "build-flags.schema.json: with_goal_seek.engine の enum へ 'task-graph' を additive 追加(既定値 'inline' は不変)。goal-seek-loop.schema.json: checklist item properties へ depends_on(array<string>, pattern ^C[0-9]+$, default [])を additive 追加。schemas/template-selection.schema.json は編集不要(C03.derivation 参照): with-goal-seek は kind別テンプレ選択の対象でなく engine 駆動の combinator であるため selection_rules の対象外"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "外部ライブラリの vendoring は不要(C01-C04/C06-C08 は全て Python stdlib のみで実装する)。C05 が行う C01/C02/C06/C07 テンプレートスクリプトの生成先 skill scripts/ への条件付きコピーは harness-creator 内部の build 手順内 prose Step であり、cross-plugin vendoring や apply_feedback_loop() の shutil.copytree(CLI flag駆動)とは別概念(意図的に新規 flag を追加しない方式を選んだため。C05.derivation 参照)"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "MCP app connector との接続を要する機能を持たない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "Notion 連携を要する機能を持たない"
+    }
+  }
+}

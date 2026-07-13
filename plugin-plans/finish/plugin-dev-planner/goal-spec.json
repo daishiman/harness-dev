@@ -1,0 +1,97 @@
+{
+  "purpose": "plugin-dev-planner が harness-creator 仕様に漏れなく準拠する状態を保ちつつ、既知の機械検証残債 (check-runtime-portability.py の plugin 束縛欠如 / check-build-handoff.py の entry_points 未突合 / harness-coverage 12 軸の自 plugin 未適用) を解消し、加えて機械ゲート全緑だけでは担保できない『生成される 13 タスク仕様書の内容自体が下流 AI 実行者にとって曖昧でなく課題解決に資する具体度を持つか』(層A: 生成時精度) を検出・評価する機構と、『生成された各タスク仕様書自体が、下流 builder が対象タスク/実体を構築する際のハーネスとして機能するか』(層B: 仕様書=下流ハーネス。受入例・事前解決済み曖昧判断・実効性の genuine 評価) を run-plugin-dev-plan 自身の生成フローに組み込む",
+  "background": "過去 3 回の elegant-review (2026-06-30/07-02/07-04) で plugin-dev-planner は 4 条件 PASS 済みであり、harness-creator-spec-reflection.md の 46 行マトリクスも反映済/含意済/意図的除外で完全性証明済み (未分類の漏れ 0)。一方で直近の再現性レビューが 3 つの未解消 residual を明示した: (1) check-runtime-portability.py の build_target 検証が target_plugin_slug に束縛されず別 plugin slug 混在が exit0 で素通りする、(2) check-build-handoff.py が envelope-draft/plugin.json の entry_points と component-inventory.json の component 集合を突合していない、(3) plugin-dev-planner 自身の harness-coverage (6 種別×mechanical/llm_eval=12 軸) 適用状態が governance-check.yml / scripts/validate-harness-coverage.py いずれにも明示配線されていない (grep で実証済み・不在確認)。ユーザーの「harness-creator 仕様通りにもれなく改善」は、46 行マトリクスがゼロベース再構築を要求しない以上、この 3 残債の機械ゲート化を指すと推定する。加えてユーザーから二段階の外側ループ追加指示があった。第一段は『機械的な仕組みだけでなく、AI が実行して曖昧な部分を具体化し課題解決できる成果物品質を上げる仕組みが大事』(層A)。現状確認 (specfm.py L1161-1173 の `_PHASE_SECTION_HINT`/`render_minimal_phase`、four-condition-criteria.md、plan-rubric.json を直接 Read) により、phase 本文の §5 床は非空判定のみで内容の具体性は評価対象外であり、`_PHASE_SECTION_HINT` 自体が「意味の正否は下流トラスト/evaluator の意味判定に委ねる (Goodhart 回避)」と明記しているにもかかわらず、assign-plugin-plan-evaluator の 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) は plan の構造的完全性のみを判定し、生成された phase 本文が下流 builder AI にとって追加質問なく実行着手できる具体度を持つか (purpose 解決可能性) を判定する軸を一切持たないことを裏取りした。第二段は『このハーネスはタスク仕様書を作成するハーネスであり、その作成したタスク仕様書自体が、別のタスクを構築する際のハーネスとして機能するよう成果物の LLM 精度を上げてほしい』(層B)。io-contract.md §5 の表 (「床を超える本文の精度は下流トラストと evaluator の意味判定に委ねる」) と golden example `examples/sample-plan/phase-05-implementation.md` の `## 完了チェックリスト` を直接確認したところ、二値項目の列挙のみで下流実行者向けの具体的な受入例 (満たす例/満たさない例) や、判断に迷う曖昧分岐点の事前解決が存在しないことを確認した。既存の 46 行マトリクス伝播は各 inventory component への quality_gates/harness_coverage/feedback_contract という『ゲート伝播』止まりで、生成された仕様書自体が下流構築時のハーネスとして機能するための機構 (受入例内在化・曖昧判断の事前解決・実効性の genuine 評価) は未機構化であることが構造的に確認できた。つまり機械ゲートが全緑でも本文が汎用テンプレ埋めのまま残り (層A)、かつ仕様書自体が下流構築者にとって実質的なハーネスとして機能しない (層B) 余地が二重に存在する (『緑のパラドクス』)。",
+  "goal": "check-runtime-portability.py の target_plugin_slug 束縛・check-build-handoff.py の entry_points/inventory 突合・plugin-dev-planner 自身の harness-coverage 12 軸適用の 3 項目 (C1-C3) に加え、(層A) phase 本文の曖昧語彙・未カスタマイズのフォールバック文言を機械検出する仕組みと下流実行可能性を genuine に判定する意味評価軸 (C6-C8)、(層B) 各 phase ファイルが下流 builder 向けの受入例・事前解決済み曖昧判断を機械検出可能な形で持ち、それが仕様書=下流ハーネスとして実効性を持つかを fork evaluator が genuine に判定する仕組み (C10-C12) が、run-plugin-dev-plan の生成フロー (R3-emit-specs / R4-verify-traceability・assign-plugin-plan-evaluator) に組み込まれ、全て exit0/PASS で検証可能になり、既存 388+ 件のテストと 46 行マトリクスの自己整合テストが退行なく green を維持している状態",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "plugin-dev-planner",
+  "plan_dir": "plugin-plans/plugin-dev-planner",
+  "out_dir": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "check-runtime-portability.py が target_plugin_slug と異なる plugin 配下の build_target を含む handoff を検査したとき、exit1 でその不整合を検出結果に含める (MEDIUM-3 解消)",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "check-build-handoff.py が envelope-draft/plugin.json の entry_points と component-inventory.json の component 集合を突合したとき、inventory に存在し envelope に未網羅の component を検出結果に含める (MEDIUM-4 解消)",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "plugin-dev-planner の 6 surface × mechanical/llm_eval 12 軸カバレッジ状態を governance-check.yml か per-plugin CI のいずれかが明示的に検証したとき、EVALS.json の threshold_note と矛盾しない自己適用が確認できる (dogfooding F1 解消)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests と assign-plugin-plan-evaluator/tests の pytest 全件を実行したとき、既存件数から退行なく exit0 で green のままである",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "test_matrix_doc_integrity.py と check-spec-matrix-coverage.py --self-test を実行したとき、46 行マトリクスの skill 列挙/ID/引用整合が exit0 のままである",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "phase 本文の宣言型 8 節・inventory component の goal/checklist/criterion 文字列に対して曖昧語彙 (判定不能語: 「適切に」「しっかり」「うまく」「品質を高める」等) を機械検出する仕組みを実行したとき、該当語を検出した箇所を構造化結果 (WARN/FAIL) として報告する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "生成された phase 本文の宣言型 8 節が `_PHASE_SECTION_HINT` の汎用フォールバック文言と完全一致 (= 未カスタマイズ) のまま残っているケースを機械検出したとき、その箇所を検出結果に含める",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "assign-plugin-plan-evaluator (R4) が、生成された phase 本文について下流 builder AI が追加質問なしで実行着手できる具体度 (purpose 解決可能性) を genuine に判定する意味評価軸を持ち、その判定結果と曖昧箇所の具体的指摘が plan-findings.json に記録される",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "C6-C8 追加後も既存の4条件決定論ゲート (check-build-handoff/detect-unassigned/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage/check-surface-inventory/check-requirements-coverage/verify-index-topsort/check-runtime-portability) と pytest 全件が退行なく exit0/green のままである",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C10",
+      "criterion": "各 phase ファイルの本文が、下流実行者 (builder AI) がその phase 単体を読むだけで『満たす例』と『満たさない例』を判別できる受入例を最低 1 組、機械検出可能な構造 (新設節または `## 完了チェックリスト` 直下のサブ項目) として持つ",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "各 phase ファイルが、当該 phase で実行者が判断に迷いやすい曖昧分岐点について『この場合はこう判断する』という判断基準を機械検出可能な形で事前解決済みとして明示し、下流実行者が都度追加確認を要さない状態を宣言する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C12",
+      "criterion": "assign-plugin-plan-evaluator (R4) が、C10/C11 で埋め込まれた受入例・事前解決済み判断について『タスク仕様書自体が下流タスク構築のハーネスとして機能するか (下流実行者が追加質問なく構築に着手し自己評価しながら完了できるか)』を genuine に判定する意味軸を持ち、判定結果が plan-findings.json に記録される",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "C2 系の harness-creator 側残債 (envelope 生成器の executor 化・薄い orchestrator /harness-build) は新規機能であり本 goal のスコープ外。plugin-dev-planner 側は plugin-scaffold builder が contract-only + gap_ref で既に機構登録済み (check-build-handoff が gap reason を fail-closed 検査) であり、この goal-spec の C2 (entry_points/inventory 突合) とは別問題",
+    "MEDIUM-3/MEDIUM-4 の具体的な束縛・突合ロジックの実装方式は R2 (architect) / build 段階の設計判断に委ねる (本 goal-spec は観測可能な完了条件のみを固定する)",
+    "空 component の plugin 計画が決定論ゲート全緑を通す既知の設計境界 (退化防止は evaluator 層のみで担保) は、既に開示済みの二層分離判断であり本 goal では変更対象としない",
+    "harness-creator 側の改名 churn 残置ファイル (CONVENTIONS.md/README.md/capability-build.md 等) は別タスク由来であり、target_plugin_slug=plugin-dev-planner のスコープ外",
+    "曖昧語彙検出 (C6/C7) は機械層 (存在/形状/denylist 一致・フォールバック文言との完全一致検出) に留め、意味の正否 (具体性が真に課題解決に資するか) の最終判定は fork evaluator (C8) の意味評価に委ねる (二層分離・数値の焼込みで Goodhart 化しない・既存 anti-goodhart INVARIANTS を維持する)。denylist 定義そのもの・コード/定数名・満たさない例の否定例本文は ignored_context として別集計し、自己説明を violation にしない",
+    "層B (C10/C11 の受入例・事前解決済み曖昧判断) の埋め込み形式は既存 `## 完了チェックリスト` 直下のサブ見出し拡張に固定する。P03/P07/P09/P10 は判定行為中心の gate 系 phase として縮小要件、残り 9 phase はフル要件とする。同様に機械層 (C10/C11=存在検出) と意味層 (C12=実効性の genuine 判定) の二層分離を維持し、受入例の『数』や『語数』を Goodhart 指標化しない",
+    ".github/workflows/governance-check.yml 追記は component route 外の repo-level 編集だが、C3 の受入に必須の blocking release issue として P13 完了条件で解消確認する"
+  ],
+  "handoff_targets": ["R2-decompose-components"],
+  "max_loops": 5,
+  "open_questions": [
+    "空 plugin 退化防止の機械ゲート追加 (現状は evaluator 層のみ) は既に開示済みの二層分離境界であり、今回は対象外とする"
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "plan_dir": "plugin-plans/harness-prompt-conformance",
+  "target_plugin_slug": "harness-creator",
+  "mode": "update",
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-prompt-creator-7layer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-prompt-creator-7layer",
+        "kind": "run",
+        "mode": "update"
+      },
+      "build_target": "plugins/prompt-creator/skills/run-prompt-creator-7layer/",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "lint-agent-prompt-content",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/lint-agent-prompt-content.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "side_effect_targets": [
+        "plugins/harness-creator/vendor/prompt-creator/verify-completeness.py"
+      ],
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C09",
+      "component_kind": "skill",
+      "name": "run-build-skill",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-build-skill",
+        "kind": "run",
+        "mode": "update"
+      },
+      "build_target": "plugins/harness-creator/skills/run-build-skill/",
+      "side_effect_targets": [
+        ".github/workflows/harness-creator-kit-ci.yml"
+      ],
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C03",
+      "component_kind": "sub-agent",
+      "name": "elegant-improvement-executor",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "elegant-improvement-executor"
+      },
+      "build_target": "plugins/harness-creator/agents/elegant-improvement-executor.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C04",
+      "component_kind": "sub-agent",
+      "name": "elegant-logical-structural-analyst",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "elegant-logical-structural-analyst"
+      },
+      "build_target": "plugins/harness-creator/agents/elegant-logical-structural-analyst.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "elegant-meta-divergent-analyst",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "elegant-meta-divergent-analyst"
+      },
+      "build_target": "plugins/harness-creator/agents/elegant-meta-divergent-analyst.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "elegant-reset-observer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "elegant-reset-observer"
+      },
+      "build_target": "plugins/harness-creator/agents/elegant-reset-observer.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "elegant-system-strategic-analyst",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "elegant-system-strategic-analyst"
+      },
+      "build_target": "plugins/harness-creator/agents/elegant-system-strategic-analyst.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "run-build-skill-subagent",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C09"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "run-build-skill-subagent"
+      },
+      "build_target": "plugins/harness-creator/agents/run-build-skill-subagent.md",
+      "status": "built",
+      "build_evidence": "plugin-plans/harness-prompt-conformance/build-evidence.md"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "status": "not_applicable",
+      "note": "prompt-creator/harness-creator いずれの plugin.json も skills/agents/scripts をディレクトリ規約で自動発見するため、C01-C09 の新設/更新は plugin.json の entry point 定義変更を要さない"
+    },
+    "marketplace": {
+      "status": "not_applicable",
+      "note": "harness-creator は distributable:false (NEVER_DISTRIBUTE denylist 対象外だが非配布運用) のため、本 plan は marketplace 掲載判断を伴わない"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold は contract-only builder 語彙で単独実行実体が未整備 (capability-gap 起票済・当面は run-build-skill の build フロー内で代替生成)。対象 route: C02 (plugin-scaffold)。代替生成手順: (1) run-build-skill が route.build_kind=script と build_args.script_path を読み、plugin-root script は build_target (plugins/harness-creator/scripts/lint-agent-prompt-content.py) へ直接生成する、(2) 生成と同時に plugin_level_surfaces.vendor が要求する vendor コピー (plugins/harness-creator/vendor/prompt-creator/verify-completeness.py) を prompt-creator 側の実体から byte 一致で複製する、(3) 生成後に check-build-handoff / check-runtime-portability / build_trace を再実行し、contract-only route をどの executor-backed 手順で展開したかを evidence に記録する。解消条件: plugin-scaffold executor の恒久実装 or builder 語彙の run-build-skill への正規化。次回 elegant-review 時に再評価する。[再評価 2026-07-05 elegant-review run-20260705-113702] C02 実体は契約どおり代替生成で展開済 (build_target + vendor byte 一致複製、build-evidence.md learning note 1)。未消化は手順(3)の記録義務のみ: check-build-handoff 再実行結果は本レビューで build-evidence.md ゲート表へ事後追記、build_trace は run-build-skill フロー外 build (メタプロンプト経由) のため本 build 分は不在 (事後捏造せず backlog #8 で透明化)。gap 自体 (plugin-scaffold executor 不在) は未解消のため open 継続"
+    }
+  ]
+}

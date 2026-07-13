@@ -1,0 +1,65 @@
+{
+  "skill_name": "run-slide-report-generate",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "スライドを作りたい",
+    "レポートを作りたい",
+    "slide-report-generate"
+  ],
+  "output_contract": "生成レポート(output_mode/生成経路/評価スコア + 生成物パス(index.html/report.html) + 未達指摘一覧)",
+  "boundary": "入力=構想と output_mode/出力=HTML 成果物。既存成果物の修正は run-slide-report-modify、横断検証は run-cross-deck-review へ委譲する",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "node",
+    "codex"
+  ],
+  "deterministic_checks": [
+    "validate-output-mode.py",
+    "validate-output-mode.py --preflight (環境 preflight: node/npm/node_modules/codex CLI 検出)",
+    "validate-structure.js",
+    "verify-slides.js",
+    "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report gate canonical invocation・--structure欠落はexit2)",
+    "Playwright UI matrix: 899/900/901/1024/1366/1600px + print; computed typography/card幅/hash-active/afterprint復帰",
+    "evaluate-deck.js",
+    "validate-ai-image-assets.js",
+    "validate-print.js"
+  ],
+  "external_systems": [
+    "Codex Image2 (codex exec)"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "output_mode と reportType 確定",
+    "構成設計と仕様確定ゲート通過",
+    "生成(HTML/決定論/Codex画像)実行",
+    "生成後評価(30種思考法・mode-aware)PASS",
+    "report UI/UX bundle(report-structure.json + wide/narrow/print render + computed metrics + navigation log)がC24/C25をPASS"
+  ],
+  "goal": "output_mode(slide/report)を確定し意匠/技術コアを共有したまま構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/Codex 画像)→生成後評価(30種思考法)まで駆動し、slide は1スライド1メッセージ/report は読み物・1項目1ビジュアルで視覚崩れ0の成果物が出力された状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "既存 presentation-slide-generator の 7フェーズ総体ワークフローを 1 skill に集約し、意匠/技術は単一 SSOT 共有・コンテンツ意図のみ output_mode 分岐で 2 モードを 1 経路に統合するため",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "hearing-facilitator を介し output_mode(slide/report)・reportType・読者・全面画像化ゲート・ビジュアル方針をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-structure",
+      "summary": "確定 mode に応じて structure/report-structure を設計し仕様確定ゲート(structure-validator)を通す",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-generate-evaluate",
+      "summary": "HTML/決定論/Codex画像を生成し、report時はC25 canonical invocation→Playwright UI matrix→C24 structure+render bundle評価の順でfail-closedに受入して成果物を返す",
+      "prompt_required": true
+    }
+  ]
+}

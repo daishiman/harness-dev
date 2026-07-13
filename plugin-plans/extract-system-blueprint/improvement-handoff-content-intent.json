@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "verbal",
+    "ref": "conversation:/plugin-dev-plan --mode update extract-system-blueprint (copy/content-intent/essential-problem layer, topology 12→13 user-approved)",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (--mode update improvement intake round3)"
+  },
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "mode": "update",
+  "improvements": [
+    {
+      "id": "IMP-005",
+      "dimension": "verbatim-copy-fact",
+      "severity": "high",
+      "summary": "文字(コピー)を形成する部分を抽出できるようにしたい。従来identityはtext_or_content_hash(ハッシュ=変更検知用)のみで意味が復元不可だった。",
+      "decision": "C03がverbatimなcontent fact(見出し階層h1-h6/本文/CTA/microcopy/placeholder/alt/aria-label/meta・OGP/構造化データJSON-LD/言語locale)を読み込み済みDOMから追加networkなしで採取。意味づけ/意図の解釈はC13へ委譲しC03はfactに留める。C1拡張。",
+      "target_ref": "component-inventory.json#C03.output_contract(content) / goal-spec#C1 / schemas#blueprint.content"
+    },
+    {
+      "id": "IMP-006",
+      "dimension": "content-intent-lens",
+      "severity": "high",
+      "summary": "コピーの意図・意味・伝えたいこと(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図)を推測レンズとして抽出したい。既存3レンズ(backend/uiux/architecture)にコンテンツ戦略の直交レンズが欠けていた。",
+      "decision": "ユーザー承認の構造変更として sub-agent C13(content-intent-analyzer)を新設し topology 12→13 へ拡張。レンズ既定= Kinneret Yifrah(microcopy)/Nielsen Norman Group(content usability)/Marty Cagan(product value)/Teresa Torres(JTBD discovery)・原則レンズ・差替可。全主張はinferenceレーンでevidence_refs+confidence必須(persona-non-contamination/確度校正/anti-overfitは既存ガードを継承)。C2拡張。",
+      "structural_change": "component 12→13 (sub-agent×4→×5)。handoff 13 routes/13 produces 1:1。ユーザーがAskUserQuestionで『新規C13新設』を明示選択(Layer4承認取得済)。",
+      "target_ref": "component-inventory.json#C13 / goal-spec#C2 / goal-spec#constraints(roster)"
+    },
+    {
+      "id": "IMP-007",
+      "dimension": "essence-jtbd-first-class",
+      "severity": "high",
+      "summary": "対象が解こうとする本質的問題を第一級出力にしたい。C06は『本質/目的』を謳うがJTBD/読者/価値提案/positioningの明示出力契約が無く、見た目+アーキだけ再現する『空の器』リスクがあった。",
+      "decision": "C06のessence章を第一級blueprint成果物として契約化: core_problem_jtbd/target_audience/value_proposition/key_messages/tone_voice/positioning_differentiation。全項目evidence_refs+confidence付きinferenceでfactと区別。C6拡張(『何を・誰に・なぜ伝えるか』まで含む再構成可能性)。",
+      "target_ref": "component-inventory.json#C06 / schemas#blueprint.essence / goal-spec#C6"
+    }
+  ],
+  "id_policy": "新受入IDは追加しない(『C10』は component C10=mermaid-validate.py と文字列衝突するため回避=前ラウンドのペルソナC2拡張と同じ判断)。コピーfact=C1拡張・伝達意図=C2拡張・本質的問題/JTBD=C6拡張として既存受入IDへ第一級で焼く。",
+  "invariants_preserved": [
+    "事実/推測/欠測の明示区別: コピーはfact・伝達意図/JTBDはinference(evidence_refs+confidence必須)。",
+    "persona-non-contamination/確度校正/anti-overfit ガードをC13にも同一適用。",
+    "低負荷C8: content factは読み込み済みDOMから追加networkなしで採取(budget増なし)。",
+    "local draft→C02 draft-hash PASS(ローカル品質verdict・外部公開なし)の順序。",
+    "C13はC04/C05と同格の直交推測レンズで、突合・統合はC06のみが行う(DAG深化なし)。"
+  ],
+  "provenance": {
+    "prev_improvement": "plugin-plans/extract-system-blueprint/improvement-handoff-screenshot-persona.json",
+    "prev_goal_spec": "plugin-plans/extract-system-blueprint/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation: 文字などの形成する部分や、その意図・意味伝えたいことなどは抽出できる？本質的な問題とか"
+    }
+  }
+}

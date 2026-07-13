@@ -1,0 +1,91 @@
+{
+  "name": "mf-kessai-invoice-check",
+  "version": "0.5.0",
+  "package_mode": "bundle",
+  "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理する。本体スキルに前月↔今月比較レポート (run-mf-invoice-report) を追加: 2営業日目以降に何度でも冪等再実行し、年契約/年→月切替/トライアル完了/契約終了のイレギュラーをコメント説明した漏れレポートを月次レポートDBへ上書き生成する。0.4.0でMF実績を第一級の真実に切替 (amount-gate 根治): 契約期待額でなくMF実発行額 (mfk_actuals) を金額列・漏れ判定の駆動源にし、fetch fidelity 監査 (mfk_fetch_audit・pagination/件数/issue_date/stale を fail-closed 検証) と D1 (新規は12ヶ月ルックバック裏取り) を追加。0.5.0で発行漏れレポートを実データ確定6要因から根治: 発行済み社(2nd Community/細野/paws等)の当月請求が『今月なし/金額null/偽・発行漏れ』になる症状を、(C1)収集billing-statusを発行後status(account_transfer_notified等)まで拡張・(C2構造的主因)R1-collectを決定論verdict producer(mfk_verdict_export.py)化し発行済み社の当月行脱落(curr=None)を根治・(C3)STATE_NEWのMATCH_ANNUAL正常化+lookback配線・(C4)prev取消の継続性・(C5)代理店collapseの発行済み実額保全・(C6)MF顧客ID結合で名前ドリフト耐性、の各段で同時に修正した。参照専用hook・二段確認subagent(偽発行漏れ=curr脱落/collapse隠蔽/MATCH_ANNUAL過剰要対応の検出軸を追加)・冪等Notion upsert付き。改善要望は `/run-skill-feedback mf-kessai-invoice-check` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-06-19",
+  "last_audited": "2026-07-08",
+  "source": "plugins/mf-kessai-invoice-check",
+  "bundle_targets": [
+    "xl-skills-full"
+  ],
+  "bundles": [
+    "xl-skills-full"
+  ],
+  "entry_points": {
+    "skills": [
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "ref-mf-kessai-api",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-report"
+    ],
+    "agents": [
+      "mfk-gap-verifier",
+      "mfk-reconcile-verifier",
+      "mfk-report-verifier"
+    ],
+    "hooks": [
+      "guard-mfk-readonly",
+      "guard-mfk-no-reinvent"
+    ],
+    "commands": [
+      "run-mf-invoice-reconcile",
+      "run-mf-invoice-check",
+      "run-mf-invoice-db-setup",
+      "run-mf-initial-month-enrich",
+      "run-mf-invoice-report",
+      "run-mf-invoice-doctor"
+    ]
+  },
+  "permissions": {
+    "network": [
+      "https://api.mfkessai.co.jp",
+      "https://sandbox-api.mfkessai.co.jp",
+      "https://api.notion.com",
+      "https://invoice.moneyforward.com",
+      "https://api.biz.moneyforward.com"
+    ],
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**",
+      "$CLAUDE_PROJECT_DIR/eval-log/**",
+      "$MFK_OUTPUT_DIR/eval-log/**"
+    ],
+    "secrets": [
+      "macos-keychain:mfkessai-api-key.xl-skills/xl-skills",
+      "macos-keychain:notion-api-key.xl-skills/xl-skills",
+      "macos-keychain:mf-invoice-oauth.xl-skills/xl-skills"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-readonly.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-mfk-no-reinvent.py"
+          }
+        ]
+      }
+    ]
+  }
+}

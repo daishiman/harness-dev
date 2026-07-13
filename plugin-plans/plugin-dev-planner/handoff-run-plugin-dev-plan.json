@@ -1,0 +1,81 @@
+{
+  "plan_dir": "plugin-plans/plugin-dev-planner",
+  "target_plugin_slug": "plugin-dev-planner",
+  "mode": "update",
+  "cycle_id": null,
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-plugin-dev-plan",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-plugin-dev-plan",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "brief_source": "briefs/skill-brief-C01.json は component-inventory.json の C01 エントリから render-skill-brief.py で決定論射影済み。build preflightで同じ入力から再生成し内容parityを確認できる。",
+      "build_target": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "assign-plugin-plan-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-plugin-plan-evaluator",
+        "kind": "assign",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "brief_source": "briefs/skill-brief-C02.json は component-inventory.json の C02 エントリから render-skill-brief.py で決定論射影済み。build preflightで同じ入力から再生成し内容parityを確認できる。",
+      "build_target": "plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/plugin-dev-planner/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "note": "既存 manifest は entry_points/hooks 変更なしで現状維持。description のみ task-graph (第3の射影) 追加を反映して更新する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "not_applicable",
+      "build_target": ".claude-plugin/marketplace.json",
+      "reason": "plugin-dev-planner は distributable:false かつ NEVER_DISTRIBUTE denylist (F3) 対象のため marketplace 登録は恒久的に非該当"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-TASK-GRAPH-CAPABILITY-BUILD-001",
+      "severity": "advisory",
+      "text": "task-graph 導入後の並列 dispatch 実行本体・state write-back・produces 成果物の consumes 注入・discovered-task の emit は consumer 側 plan (plugin-plans/harness-creator/, target_plugin_slug=harness-creator) が component 化する責務であり、本 plan (producer 側) は schema/導出/検証/ready-set 計算/handoff 契約 (task_graph_ref) までを提供する。task state ファイルは確定で eval-log/<slug>/build/task-state.json (route-build-report と同居・harness P02 の resolve_build_dir で解消済み) とし単一 writer は consumer 側。境界の正本は references/pipeline-boundary-contract.md (harness-creator plan の checklist C7 で追記予定) であり、語彙は同 plan の goal-spec.json constraints と 1:1 で揃えてある。harness-creator 側が追加した C10 (冪等resume(a)/孤児running回収(b)/build lease排他(c)/graph_hash pin不一致fail-closed検出(d))・C11 (task-events.jsonl append-only イベントログ)・C12 (停滞検出) はいずれも consumer 側の実行責務だが、C10(d) が参照する graph_hash 算出規約と task-state.json の schema (lease フィールド含む) の所有は本 plan の C16 (producer) のままであり、consumer は再実装せず producer 側 derive-task-graph.graph_hash() の値と照合するのみである",
+      "aligned_with": "plugin-plans/harness-creator/goal-spec.json#checklist.C7,C10,C11,C12"
+    },
+    {
+      "id": "GAP-BOOTSTRAP-TARGET-SHAPE-001",
+      "severity": "advisory",
+      "text": "本handoffのtask-graphはC17-C19を実装するためのfixed-shape bootstrap revisionであり、target shapeのexecution_kind/route_ref/task_spec_ref/TaskExecutionEnvelopeはまだ実装前である。誤routeを避けるためlegacy entity_refはP05=C01、P09=C02の各1 nodeだけに限定し、design/test/review nodeはnullにした。C01 build完了後の新規planから明示route_ref parityを必須化し、legacy joinはshape markerでのみ後方互換許可する。",
+      "aligned_with": "goal-spec.json#checklist.C17,C18,C19"
+    },
+    {
+      "id": "GAP-PLANNER-ITERATIONS-OVERRUN-001",
+      "severity": "advisory",
+      "text": "過去runのiterations_run=6が当時のmax_loops=5を1周超過した記録。今回のupdateはC1-C19を正本とし、30思考法レビューを独立実施して最大3反復で再検証する。履歴値を現行完了判定へ流用せず、現行plan-findingsとgate evidenceだけで判定する。",
+      "aligned_with": "run-plugin-dev-plan-progress.json#iterations_run,max_loops"
+    }
+  ]
+}

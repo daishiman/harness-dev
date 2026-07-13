@@ -1,0 +1,201 @@
+{
+  "plan_dir": "plugin-plans/harness-creator",
+  "target_plugin_slug": "harness-creator",
+  "mode": "update",
+  "cycle_id": null,
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "dispatch-ready-set",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/dispatch-ready-set.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/dispatch-ready-set.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "sync-task-state",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/sync-task-state.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/sync-task-state.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "inject-task-inputs",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/inject-task-inputs.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/inject-task-inputs.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "emit-discovered-task",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/emit-discovered-task.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/emit-discovered-task.py",
+      "side_effect_targets": [
+        "plugins/harness-creator/references/pipeline-boundary-contract.md"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "summarize-task-progress",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/summarize-task-progress.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/summarize-task-progress.py",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "manage-build-lease",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/manage-build-lease.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/manage-build-lease.py",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "record-task-graph-knowledge",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02", "C04", "C05"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/record-task-graph-knowledge.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+      "side_effect_targets": [
+        "plugins/harness-creator/knowledge/knowledge-build-patterns.json",
+        "plugins/harness-creator/knowledge/knowledge-index.json"
+      ],
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02", "C03", "C04", "C05", "C07", "C08"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "capability-build",
+        "mode": "update"
+      },
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/harness-creator/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "note": "envelope-draft/plugin.json は build handoff gate 用に inventory surface component (C06=capability-build) の entry_points.commands を明示する。実 plugins/harness-creator/.claude-plugin/plugin.json は現状 entry_points フィールド自体を持たない (capability の正の registry は plugin-composition.yaml) ため、本 draft はその新設を C06 のみのスコープで宣言する。他の既存 skill/agent/command の entry_points backfill は本 plan の対象外であり、plugin-composition.yaml が引き続き既存 capability の正本であることに変わりはない (GAP-ENTRY-POINTS-SCOPE 参照)。description 以外の既存フィールド (hooks/requirements/author/version) は無改修"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "harness-creator は distributable:false (NEVER_DISTRIBUTE denylist・改名前の旧名由来) のため本 plan では marketplace 掲載を行わない"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "text": "plugin-scaffold は run-build-skill の 7 capability kind ではなく planner 上の contract-only builder 語彙。対象 route: C01-C05, C07, C08 (plugin-scaffold)。/capability-build は build_kind=script を run-build-skill の正式 kind として直接実行せず、専用 executor plugins/harness-creator/scripts/build-script-route.py へ委譲して既存実体確認または最小 scaffold 生成を行い、route-build-report を残す。最小 scaffold 生成は route status=skipped として後続依存を進めない。機械経路解消順 (ユーザー承認済・build-script-route.py 委譲=PR#70 同型): (1) executor が P05 実装設計 (関数シグネチャ・アルゴリズム確定済) から C01-C05, C07, C08 の script 実体を先に生成する、(2) 各 route は build-script-route.py の実体確認経路で green 化し (route-build-report を残し skipped にしない)、(3) 7 script done 後に依存充足した C06 (capability-build UPDATE) へ進む。この順序により contract-only builder のまま C06 到達性を確保する。恒久解消条件: run-build-skill が script kind を正式受理する、または planner の builder 語彙から contract-only 参照を廃止できる状態に正規化すること"
+    },
+    {
+      "id": "GAP-ENTRY-POINTS-SCOPE",
+      "severity": "advisory",
+      "text": "envelope-draft/plugin.json へ新設する entry_points ブロックは本 plan が routing する C06 (capability-build) のみをスコープとした部分宣言であり、harness-creator の既存 skill/agent/command 全量を entry_points へ backfill するものではない (それらの capability registry は引き続き plugin-composition.yaml が正本)。将来 harness-creator 全体を entry_points ベースの registry へ移行する場合は別途の独立した plan として扱う"
+    },
+    {
+      "id": "GAP-PARALLELISM-DEGREE",
+      "severity": "advisory",
+      "text": "並列 dispatch (C01) の同時実行数上限は実行環境依存のため本 plan では既定値を定めず、L4 実行時パラメータ (capability-build 呼び出し時の環境設定) とした。契約へ既定値を焼くべきかは build 後の運用観測を踏まえて判断する"
+    },
+    {
+      "id": "GAP-RETRY-CONVENTION",
+      "severity": "advisory",
+      "text": "失敗タスクの blocked 下流伝播後のリトライ規約 (自動 N 回リトライ vs 人間判断) は、本 plan では人間判断を仮定した (C02 の sync-task-state.py は blocked への遷移のみを扱い、blocked からの再試行判断は dispatcher 呼び出し元の人間/上位ハーネスに委ねる)。自動リトライ規約の要否は運用実績を踏まえた別途判断とする"
+    },
+    {
+      "id": "GAP-FAILED-STATE-VOCAB",
+      "severity": "resolved-advisory",
+      "text": "解決済み記録: 起点故障タスク (route 自体の失敗) と伝播 blocked (上流 blocked による下流の連鎖 blocked) は state enum へ failed を追加せず、producer C16 の task-state.schema.json が定義する第一級 field blocked_reason={origin-failure,propagated} で区別する。consumer C02 (sync-task-state.py) は blocked 遷移時に notes.reason ではなく blocked_reason を必須書込し、C05 detect_stall() はこの field で起点 route を特定する。state 永続値は pending/running/done/blocked の4値のまま維持し、ready は compute-ready-set の一時値として扱う。"
+    },
+    {
+      "id": "GAP-CYCLE-SCOPE-PENDING",
+      "severity": "advisory",
+      "text": "C02 (sync-task-state.py) / C05 (summarize-task-progress.py) の resolve_build_dir(target_plugin_slug, cycle_id) は planner 側 goal-spec C13 (plugin-plans/<slug>/<cycle-id>/ 周回サブディレクトリ・plan-ledger.json・specfm.plan_output_dir() 拡張) が新設する handoff top-level の cycle_id フィールド (additive・null=flat) を前提とした build 成果物 (eval-log/<slug>/build/ 配下) の周回衝突排除を先行設計したものである。C13 自体は本 handoff 作成時点で planner 側 goal-spec 上 done:false (未実装) であり、C13 実装完了までは全 handoff が cycle_id フィールド不在または null のままのため、resolve_build_dir() は後方互換パス (eval-log/<slug>/build/ 直下・cycle-id 無し) のみが発動し続ける (plan_dir のパス文字列を解析することは一切行わないため、それによる偽陽性も生じない)。C13 実装後、実際に cycle_id フィールド付き handoff が渡された際の実地挙動確認 (eval-log/<slug>/build/<cycle-id>/ 配下への正しい書き分け) は C13 完了後の別途検証事項とする"
+    }
+  ]
+}

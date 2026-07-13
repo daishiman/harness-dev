@@ -1,0 +1,80 @@
+{
+  "purpose": "presentation-slide-generator の全機能を xl-skills plugin へ抜け漏れなく移植しつつ、共通の意匠・技術コアを単一SSOTで共有する output_mode=slide/report の2モード・ビジュアル生成ハーネスの開発計画を作る",
+  "background": "既存 presentation-slide-generator (v8.4.2) は 13 sub-agent / 42 references / 30 Node スクリプト / 118 HTMLテンプレート / schemas 7本(真 schema 4 + example fixture 3) / Codex Image2 全面画像生成チェーン / 30種思考法の生成後評価ゲート / A4印刷・GASデプロイ を持つ単一 SKILL の総体ハーネス。これを (1) 既存を抜け漏れなく移植し (2) output_mode=slide/report を分岐する共通コア＋2モード構成へ再編し (3) レポート出力(HTMLレポート・4 reportType・1項目1ビジュアル最適化・Mermaid新規統合)を追加する。意匠/技術層(Kanagawa配色/16:9/フォント/GSAP/印刷CSS/Codex Image2/style genome/決定論レンダラ)は単一SSOTで共有し、コンテンツ意図層(slide=1スライド1メッセージ vs report=読み物・文章多め)のみ output_mode で分岐する。Node 製レンダリング/画像/印刷エンジンは vendored runtime asset として byte 維持で携行し Python-stdlib へ書き換えない(既存資産の毀損回避)。",
+  "goal": "slide-report-generator の 13 phase ファイル + index + component-inventory(実確定 23 の単一責務 component: 3 skill / 16 sub-agent / 2 slash-command / 1 hook / 1 script + vendored Node engine/schemas/references/assets surface + report新規 component。当初見込み 24〜28・sub-agent ~18 からの縮約は責務統合による) + handoff が決定論ゲート(core 5 / 拡張ゲート)で検証可能な状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "slide-report-generator",
+  "plan_dir": "plugin-plans/slide-report-generator",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "既存 presentation-slide-generator の 13 sub-agent (hearing-facilitator/structure-designer/structure-validator/d3-diagram-designer/data-visualizer/html-generator/slide-renderer/layout-optimizer/ui-quality-reviewer/deck-evaluator/ai-image-diagram-producer/slide-modifier/cross-deck-reviewer) 全てが新 plugin の component へ漏れなく写像されている",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C2",
+      "criterion": "output_mode=slide/report 分岐が主オーケストレータ skill と hearing-facilitator に焼かれ、意匠/技術層は単一SSOT共有・コンテンツ意図層のみモード別 (slide=1メッセージ/chip強制、report=読み物/セクション+段落/1項目1ビジュアル) になっている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C3",
+      "criterion": "report モードが 4 reportType(社内報告分析/顧客提案WP/技術ドキュメント仕様手順/学習解説) 骨格を持つ report-structure schema・visual-strategist(SVG図解/Mermaid/Codex生成画像 三択最適化)・Mermaid統合・HTMLレポート決定論レンダラ を component として持つ",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C4",
+      "criterion": "Codex Image2 全面画像チェーン(build-image-prompts→generate-images-codex→build-deck-html→validate-ai-image-assets・PNG署名回収)と 30種思考法の生成後評価ゲート(deck-evaluator)が両モードで機能する形で移植されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "Node 製レンダリング/画像/印刷エンジン(render-slide.cjs/template-engine/style-builder/svg-builder/画像チェーン/print/118テンプレート/d3-components)が vendored asset surface として携行され、Python-stdlib 書換なしで install 携帯性を満たす (skill から Bash(node *) 起動)",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C6",
+      "criterion": "component-inventory.json が 5 component_kind の検討証跡と plugin-level surfaces(manifest/composition/harness_eval/schemas/references_config_assets/vendor/mcp_app_connector/notion_config) の採否・不要理由を記録している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C7",
+      "criterion": "各 buildable component が core 規律 quality_gates(p0_lint/build_trace/elegant_review C1-C4/content_review/evaluator) + harness_coverage(min>=80/kind_pass) を携帯している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C8",
+      "criterion": "index が P01..P13 を phase_number 昇順で全列挙し plugin_meta(manifest/marketplace/ci/feedback_deploy) と受入確認章を携帯している",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "既存 presentation-slide-generator の全資産(13 agents / 42 references / 30 Node scripts / 118 templates / schemas 7本(真 schema 4 + example fixture 3。移植先は report-structure 新設で真 schema 計5) / Codex Image2チェーン / 30種思考法評価ゲート / A4印刷 / GASデプロイ)を抜け漏れなく移植する。機能削減・平均回帰・オミットを禁止する",
+    "意匠/技術層(Kanagawa配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome kanagawa-comic-diagram/決定論レンダラ)は単一SSOTで共有し slide/report で重複させない",
+    "コンテンツ意図層のみ output_mode で分岐する: slide=1スライド1メッセージ/chip強制/長文禁止(BP11-13)、report=読み物(文章多め可)/セクション+段落/1項目1ビジュアル。BP緩和はモード別 rubric で行う",
+    "Node 製エンジン(render-slide.cjs/template-engine.cjs/style-builder.cjs/svg-builder.cjs/画像チェーン/print/118 tpl/d3-components/package.json)は vendor(vendored runtime asset) surface として byte 維持で携行し stdlib script component へ書き換えない。skill/agent から Bash(node *) で起動する",
+    "report は HTML 出力(html/css/js/svg/markdown/mermaid をローカルで表現)。4 reportType(社内報告分析/顧客提案WP/技術ドキュメント仕様手順/学習解説)の骨格を持つ report-structure schema を新設し slide の structure.schema.json と共通コアを共有する",
+    "visual-strategist が各セクションで SVG図解/Mermaid/Codex生成画像 を三択で自動最適化・配置する(固定比率なし)。Mermaid を新規 capability として統合し両モードで利用可能にする",
+    "生成後評価ゲート deck-evaluator は 30種思考法コアを共有しつつ mode 別 rubric 次元(slide=視覚崩れ/1メッセージ、report=可読性/図解適合/情報密度)で区分評価する(DRYに単一 evaluator で mode-aware)",
+    "実プラグイン/実コードは生成せず L3 plan (index + 13 phase + component-inventory + handoff + envelope-draft) までに留める。各 component は run-skill-create / run-build-skill へ委譲する",
+    "配布先=xl-skills plugin。index.plugin_meta に manifest/marketplace/ci/feedback_deploy を焼く。Notion/MCP は不要(omitted_reason)"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect",
+    "plugin-dev-plan-evaluator"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "plugin slug は暫定 slide-report-generator (既存 presentation-slide-generator との併存・区別のため)。確定後 rename 可。rename 時は plan_dir / handoff routes / build_target / envelope name の一括置換が必要 (影響範囲)",
+    "vendored Node engine の携行方式(byte コピー vs adapter 薄層) は Phase02 設計で確定する → resolved: whole-tree byte copy で確定済 (確定先=inventory plugin_level_surfaces.vendor.copy_mode・byte 比較基準=vendor-digest-manifest.json)"
+  ]
+}

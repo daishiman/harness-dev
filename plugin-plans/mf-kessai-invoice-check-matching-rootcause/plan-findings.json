@@ -1,0 +1,161 @@
+{
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-matching-rootcause",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "evaluator": "run-plugin-dev-plan R4 (independent re-evaluation post-pivot-cleanup, proposer≠approver)",
+  "review_date": "2026-07-09",
+  "gates": [
+    {
+      "name": "verify-index-topsort",
+      "exit": 0
+    },
+    {
+      "name": "check-plugin-goal-spec",
+      "exit": 0
+    },
+    {
+      "name": "detect-unassigned",
+      "exit": 0
+    },
+    {
+      "name": "check-spec-frontmatter",
+      "exit": 0
+    },
+    {
+      "name": "check-spec-gates",
+      "exit": 0
+    },
+    {
+      "name": "check-spec-matrix-coverage --self-test",
+      "exit": 0
+    },
+    {
+      "name": "check-spec-matrix-coverage PLAN",
+      "exit": 0
+    },
+    {
+      "name": "check-surface-inventory",
+      "exit": 0
+    },
+    {
+      "name": "check-build-handoff",
+      "exit": 0
+    },
+    {
+      "name": "validate-task-graph",
+      "exit": 0
+    },
+    {
+      "name": "check-runtime-portability",
+      "exit": 0
+    },
+    {
+      "name": "check-requirements-coverage",
+      "exit": 0
+    }
+  ],
+  "four_conditions": {
+    "no_contradiction": {
+      "status": "PASS",
+      "evidence": [
+        "依存DAG (C01[]/C02[]/C03[C04]/C04[]/C05[C01]/C06[C04,C05]/C07[C03,C04,C05,C06]) が component-inventory.json depends_on / handoff-run-plugin-dev-plan.json routes[].depends_on / task-graph.json (validate-task-graph exit0, 259 nodes/6491 edges) の3箇所で完全一致し矛盾がない",
+        "build順は index.md インフラ節/phase-02 目的節ともに『C01→C02→C04→C03→C05→C06→C07』で統一され揺れがない",
+        "旧語彙残存チェック: 現行成果物(goal-spec.json/component-inventory.json/index.md/phase-01..13.md/handoff-run-plugin-dev-plan.json/task-graph.json/envelope-draft/plugin.json)を grep した結果、撤回済み語彙(mfk_name_match.py/mfk_boundary_resolve.py/mfk_orphan_relink.py/クロス名寄せ/orphan再リンク/旧DAG C02[C01] 等)は0件。撤回記録(improvement-handoff.json の demote 註記・run-plugin-dev-plan-intermediate.jsonl iteration1→2 の drift_signal=intentional-replan)にのみ履歴として残り、現行成果物へのピボット取り残しはない",
+        "姉妹plan mf-kessai-invoice-check-fidelity(表示・判定層根治済み)との責務境界がgoal-spec.constraints/index.md『スコープ(含まない)』/cross-plan注記で明示合意され、GAP-R1-COLLECT-CURR-PRESENT の二重実装がfidelity plan側tracked=true・blocking=falseで回避されている"
+      ]
+    },
+    "no_omission": {
+      "status": "PASS",
+      "evidence": [
+        "check-requirements-coverage.py exit0: goal-spec checklist C1-C14全項目がindex.md完了チェックリスト/受入確認テーブルへトレース済み",
+        "index.md 受入確認テーブルがC1-C14各々を対応component(C01-C07)へ明示的に写像(C1→C01, C2→C05, C3→C05/C07, C4→C04, C5→C04, C6→C04/C03, C7→C02, C8→guard-mfk-readonly, C9→C04/C05, C10→C07 OUT2, C11→C01/C07, C12→C07 feedback_contract, C13→index+handoff, C14→C02/C12/C06)",
+        "確定6要因すべてにbuildable componentが対応 (C1収集=C01, C2 R1決定論[構造的主因]=C05, C3 NEW/年契約=C04, C4取消継続=C04, C5代理店collapse=C04+C03, C6顧客ID=C02, 検証=C06, 配線=C07)",
+        "対症療法禁止ガード(C14)がgoal-spec.checklist[13]/goal-spec.constraints/index.md完了チェックリスト/受入確認テーブル/C02purpose/phase-02の5箇所全てに存在し、`_COMPANY_ALIAS_GROUPS`吸収撤去をC02の責務として明記(存在確認: 欠落なし)",
+        "component_kind内訳 = script×5(C01-C05)/sub-agent×1(C06)/skill×1(C07)。単一skillへの退化なし",
+        "working tree の部分build残存リスク(GAP-PARTIAL-BUILD-RECONCILE)を handoff open_issues が self-report severity=high で明示し、phase-02『既存部分build の reconcile 方針』節が具体的な吸収・撤去先(C02がlib/sheet_to_master.py._mf_customer_id_forとlib/mfk_reconcile.py._COMPANY_ALIAS_GROUPSを吸収、C05が最優先未着手実装)を欠落なく特定しており、build前提の見落としがない"
+      ]
+    },
+    "consistency": {
+      "status": "PASS",
+      "evidence": [
+        "check-spec-frontmatter.py / check-spec-gates.py 共にexit0: 13 phase frontmatterとinventory componentのkind別quality_gates/harness_coverage契約が統一済み",
+        "script命名がmfk_*.py で統一(mfk_collect_status/mfk_customer_id_resolve/mfk_period_report/mfk_verdict_export)かつ notion_report_sink.py(既存modify)。全て現行component idと1:1対応し撤回済み名(mfk_name_match等)の混在がない",
+        "受入写像の正本がindex.md『受入確認』テーブル1箇所に一本化されており(index.md L54『C番号の3系統』註記が要因C/checklist C/component C の3系統を明示的に読み分けている)、他ファイルに競合する写像表がない",
+        "carrier契約(actual_amount/reliable_issued/supply_state/canceled_at)がC01→C05→C04→C03→C07を通じて用語・フィールド名が一貫して貫通する(index.mdドメイン知識節・C05 outputs・C07 R1-collect required_file_editsで同一語彙)"
+      ]
+    },
+    "dependency_integrity": {
+      "status": "PASS",
+      "evidence": [
+        "check-build-handoff.py exit0: 7 routesとenvelope契約充足。handoff routes[].depends_onがcomponent-inventory.json depends_onと1:1一致(C01[],C02[],C03[C04],C04[],C05[C01],C06[C04,C05],C07[C03,C04,C05,C06]) — 現行DAGの記載と完全一致(旧DAG C02[C01]/C03[C01,C02]/C05[C02,C03]は存在しない)",
+        "handoff.task_graph_ref経由でvalidate-task-graph.py exit0(259 nodes/6491 edges・非循環、GAP-SCRIPT-BUILDER等5件のopen_issuesは全てseverity付きで自己申告済み)",
+        "各routeがbuild_kind/builder/build_target/build_argsを保持(script routes C01-C05=builder:plugin-scaffold+executor_hint=plugins/harness-creator/scripts/build-script-route.py、C06=run-build-skill、C07=run-skill-create)。executor_hintの実ファイル存在を確認済み(18124 bytes)",
+        "check-runtime-portability.py exit0: 共有script(C01-C05)がplugin-root hoist済で単一skill配下への閉じ込めなし。route↔inventory 7:7 1:1"
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "single_skill_degeneration": {
+    "value": false,
+    "evidence": "component-inventory.json considered_component_kinds=[skill,sub-agent,slash-command,hook,script]のうち3種を実採用(script×5/sub-agent×1/skill×1=計7)。index.mdドメイン知識節が採用種別を明記し、hookは既存guard(guard-mfk-readonly/guard-mfk-no-reinvent)を再利用(新規化せず)、slash-commandは対象外と理由付きで宣言。単一skillへ全ロジックを詰め込む設計になっていない"
+  },
+  "root_cause_fix_confirmation": {
+    "confirmed": true,
+    "summary": "C05=mfk_verdict_export.py(R1-collect決定論producer・新規)が構造的主因C2(curr-verdicts.jsonを吐く決定論スクリプト不在によりLLM手組みR1-collectが発行済み社の当月行をcurr=Noneで脱落させる)を、lib/mfk_reconcile.reconcile()の全rec(GAP/SUPPRESS含む)+orphansをcarrier(actual_amount/reliable_issued/supply_state/canceled_at)込みで無損失直列化することで根治する設計になっている(component-inventory.json C05 purpose/handoff route C05のrequired_file_edits/index.md carrier+決定論ブリッジ節で三重に確認)。C14(対症療法禁止ガード)はC02(mfk_customer_id_resolve.py)がMF顧客ID一般解として稼働することで、working treeに混入済みのlib/mfk_reconcile.py `_COMPANY_ALIAS_GROUPS`(2nd Community/細野/pawsの個社会社名ハードコード=RETRACT-1の対症療法)を吸収・撤去する設計を持ち、golden fixtureに非ハードコードのname-drift社を追加してハードコード除去状態での回帰を強制する(goal-spec checklist C14/constraints/phase-02『既存部分buildのreconcile方針』/C02 purposeの4箇所で整合)。C01(収集billing-status拡張)・C03(collapse発行済み保全)・C04(NEW/年契約/取消継続/代理店突合)・C06(偽発行漏れ検出軸追加)・C07(配線+回帰)は各々独立要因を担当し、C05への責務集中や単一componentへの過度な依存はない。"
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "info",
+      "thinking_method": "演繹思考+差分監査",
+      "where": "全成果物(goal-spec.json/component-inventory.json/index.md/13 phase files/handoff-run-plugin-dev-plan.json/task-graph.json/envelope-draft/plugin.json)",
+      "issue": "現行アーキ(C01-C07・確定6要因・C05=構造的主因C2・C14対症療法禁止ガード)が全成果物に一貫して反映されており、撤回済みの旧アーキ(mfk_name_match.py/mfk_boundary_resolve.py/mfk_orphan_relink.py/クロス名寄せ/orphan再リンク/旧DAG)は grep 0件だった。旧語彙は improvement-handoff.json の demote 註記と run-plugin-dev-plan-intermediate.jsonl の iteration履歴(drift_signal=intentional-replan)にのみ、ピボットの経緯を示す履歴ログとして残存しており、これは正当(現行成果物への取り残しではない)。",
+      "fix_hint": "対応不要(確認結果の記録)。"
+    },
+    {
+      "id": "F2",
+      "severity": "medium",
+      "bucket": "layer-b-downstream-harness",
+      "thinking_method": "機械検出(check-downstream-harness.py)+システム思考",
+      "where": "phase-01〜phase-13 (P08除くapplicable 12 phase の『## 完了チェックリスト』)",
+      "issue": "check-downstream-harness.py --self-test はexit0だがPLAN_DIRに対する実行は exit1: 全applicable phaseの完了チェックリストに『### 受入例』『### 事前解決済み判断』サブ節が1件も存在しない。この2サブ節は下流builder AIの追加質問を構造的に防ぐ契約だが、現状 specfm.GATE_SCOPE(plan-scoped gate集合)には未配線のため今回の12ゲート判定・verdictを直接ブロックしない。ただし各phase本文(特にphase-02の『既存部分buildのreconcile方針』節・phase-05相当)には実ファイルパス・関数名・行番号レベルの具体内容が既にプローズで存在し、形骸化はしていない(genuine判定=サブ節構造の欠如であり内容の空虚さではない)。",
+      "fix_hint": "後続plan更新時に各phaseの完了チェックリストへ『### 受入例』『### 事前解決済み判断』見出しを追加し既存プローズを配下へ再配置することを推奨する。本plan単体のverdictは現行gate配線上PASSのまま。"
+    },
+    {
+      "id": "F3",
+      "severity": "info",
+      "bucket": "layer-a-generative-fidelity",
+      "thinking_method": "機械検出(check-generative-fidelity.py)+意味的具体度判定",
+      "where": "phase-01〜phase-13 本文",
+      "issue": "check-generative-fidelity.py は曖昧語denylist違反0件・skeleton未カスタマイズ0件でexit0。加えて意味的genuine判定でも、C01-C05の各purposeが実ファイルパス+行番号+関数名(例: reconcile_invoices.py:277 collect_mf、mfk_period_report.py:763-779 classify_period_transition、notion_report_sink.py:290-303 _prefer_action)を伴い、下流builder AIが追加質問なしに着手できる具体度を満たしている。曖昧箇所は検出されなかった。",
+      "fix_hint": "対応不要(確認結果の記録)。"
+    },
+    {
+      "id": "F4",
+      "severity": "info",
+      "where": "handoff-run-plugin-dev-plan.json open_issues[GAP-PARTIAL-BUILD-RECONCILE] (自己申告severity=high)",
+      "issue": "handoffが working tree の部分build残存(旧・名寄せ主因説時点の着手物)を severity=high で自己申告しているが、これは『plan成果物自体の欠陥』ではなく『build前に踏むべき環境reconcile手順』の明示化であり、phase-02の専用節『既存部分build の reconcile 方針』が (1) lib/sheet_to_master.py._mf_customer_id_for をC02が正式SSOTとして吸収置換、(2) lib/mfk_reconcile.py._COMPANY_ALIAS_GROUPS(RETRACT-1対症療法)をC02一般解へ吸収撤去(C14)、(3) C05は未着手ゆえbuild最優先、の3点を具体的に指定し欠落なく解消している。よってこの自己申告 high は『放置されたplanの欠陥』ではなく『plan自身が適切に検出・文書化した既知リスクへの明示的対処』であり、4条件(no_contradiction/no_omission/consistency/dependency_integrity)いずれのFAILにも該当しない。",
+      "fix_hint": "対応不要(build実行時にphase-02の当該節に従うことを推奨する記録)。偽装PASSではなく、根拠を明示した上での正当なPASS判定であることに注意。"
+    },
+    {
+      "id": "F5",
+      "severity": "low",
+      "where": "component-inventory.json C06.name / handoff open_issues[GAP-INVENTORY-C06-NAME-SUFFIX]",
+      "issue": "C06(sub-agent)のnameフィールドがdescriptive suffix付き('mfk-report-verifier (偽発行漏れ=curr脱落/collapse隠蔽 検出軸の追加)')でmanifest entry_points正準名('mfk-report-verifier')と異なる。plan自身がhandoff.open_issuesで自己申告し、manifest envelopeをnot_applicableにして不要な突合失敗を回避済み(実害なし)。",
+      "fix_hint": "次回inventory生成/修正時にnameを正準名へ揃えることを推奨(追加対応不要)。"
+    },
+    {
+      "id": "F6",
+      "severity": "info",
+      "where": "handoff open_issues[GAP-SCRIPT-BUILDER] / plugins/harness-creator/scripts/build-script-route.py",
+      "issue": "script route(C01-C05)のexecutor_hint=plugins/harness-creator/scripts/build-script-route.pyが実在することをファイルシステムで再確認した(18124 bytes、前回評価時と同一)。GAP-SCRIPT-BUILDERはplan自身が『build-script-route.pyが使えない環境ではC06/C07だけをbuildして完了させてはならない』と明示注意済みで実害なし。",
+      "fix_hint": "対応不要(確認結果の記録)。"
+    },
+    {
+      "id": "F7",
+      "severity": "info",
+      "where": "handoff open_issues[GAP-ID-ALIAS-BACKFILL-PATH, GAP-R1-COLLECT-CURR-PRESENT-CARRYOVER]",
+      "issue": "両issueとも closure条件が具体的(前者=C02/C03のfeedback_contractで『未登録社が要マスタ登録として可視化+候補併記される』ことを検証・後者=fidelity plan側でtracked=true・blocking=falseのまま残し二重実装回避、index.md cross-plan注記と一致)であり、plan完成度を損なう未解決の欠落ではない。",
+      "fix_hint": "対応不要(確認結果の記録)。"
+    }
+  ]
+}

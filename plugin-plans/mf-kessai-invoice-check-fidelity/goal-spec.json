@@ -1,0 +1,44 @@
+{
+  "purpose": "前月・今月のマネーフォワード(MF)実績金額を第一級の真実(source of truth)として取得・表示・突合し、発行漏れ確認レポートの『漏れチェック☑』/『金額』列をMF実績由来で正しく駆動する状態にする。契約(請求確認シート)突合は判定の駆動源から降ろし、『なぜMF実績が無い/減ったのか』を説明するオーバーレイへ格下げする。",
+  "background": "既存 run-mf-invoice-report の前月↔今月比較レポートは、突合が契約(シート)起点・期待額駆動という単一の設計偏りを持つ。lib/mfk_reconcile.py:678 find_mf_match(mode=\"monthly\") は MF明細金額が契約の期待額(現行単価/_expected_amounts)と一致した時だけ status=match+evidence(実金額)を返し、金額不一致は status=amount_mismatch/evidence=None(:776-778)、名寄せ供給ゼロは status=no_supply/evidence=None(:791)になる。下流 scripts/mfk_period_report.py の _amount_of(:173) は現行実装では期待単価(現行単価/amount/expected_amount等)を優先し evidence.amount へ fail-soft する順であるため、期待額キーが欠けた行では evidence 欠落がそのまま金額列の空白に直結し、_is_issued(:207) も evidence.amount 依存で継続発行が STATE_STOPPED/NONE に誤分類されて gap_check=要対応(☐)へ転ぶ。amount-gate根治(D3=MF実績常時表示)には _amount_of の金額源優先順位を MF実績(mfk_actuals/evidence)優先・期待額はオーバーレイ表示へ反転することが必須であり、evidence を埋めるだけでは不十分。主因は amount-gate(症状①③⑥⑦)。症状②はライフサイクル残置(D2)の欠落、症状④は新規ルール(D1・バグでなく判断分岐の欠落)、症状⑤はfetch完全性(C06)を併せた多層原因であり、単一原因への過度な一般化はしない。build_mf_index(:408) は既に active/inactive を実額で保持しているため、実額を落とさず下流へ渡す配線を追加すれば根治できる。本改善は既存 SSOT(lib/mfk_reconcile.py の正規化・分類エンジン、lib/mfk_api.py の参照専用取得、既存 verdict SUPPRESS_ANNUAL/SUPPRESS_ENDED 等)を土台に、判定の権威をシート期待額からMF実績へ移す増分であり、ゼロから作り直す変更ではない。",
+  "goal": "MF実績起点のissued状態/実額を前月↔今月比較flowchart(取引先×商品を前月集合と今月集合で突合する既存構造は不変)の判定入力にし、D1(前月なし今月ありの新規は12ヶ月MF実績ルックバックで年契約→月切替を裏取りし、裏付けあり=正常☑/なし=新規・要確認☐でgap_checkをgateする)、D2(今月MF供給が無い契約行は年契約周期/契約終了(終了根拠あり)/トライアル完了/対象外月に該当すれば正常事情☑として行を残し理由コメント表示、非該当は発行漏れ候補・要対応☐とする)、D3(当月/先月の金額列はMF実績の実発行額を常時表示し、シート期待額と異なる場合は実額表示のうえ金額差をコメント/フラグで開示する)を満たした状態。fetch fidelity gate(pagination完全性・total件数突合・当月issue_date範囲・stale/欠落検出をfail-closedで機械検証)・ゴールデンfixture回帰(症状①〜⑦を各1件以上再現)・独立contextの二段確認(偽陽性/偽陰性検出)・冪等Notion sink(重複行なし・stale行を残置理由付きで整理)により再現性・精度・品質が担保され、MF APIの参照専用維持と突合ロジック再発明禁止が機械的に強制され続ける。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "mf-kessai-invoice-check",
+  "plan_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "out_dir": "plugin-plans/mf-kessai-invoice-check-fidelity",
+  "requested_count": null,
+  "checklist": [
+    {"id": "C1", "criterion": "lib/mfk_reconcile.py find_mf_match の全 status(match/typo/mismatch/no_supply/inactive)で MF実績 evidence(実額)を必ず添付し、verdict 行に MF実績由来の reliable issued フラグ + actual_amount を焼く(amount-gate 根治・契約突合は説明オーバーレイへ格下げ)", "done": false, "verify_by": "test"},
+    {"id": "C2", "criterion": "新設 fetch fidelity 監査(C06)が pagination 完全性(has_next/end整合)・total件数突合・当月 issue_date 範囲・stale/欠落検出を機械検証し、NG なら fail-closed で漏れ確認処理を実行しない", "done": false, "verify_by": "test"},
+    {"id": "C3", "criterion": "前月↔今月比較 flowchart の『今月に請求あり/なし』『前月に請求あり/なし』の判定入力を、契約突合ゲート経由でなく MF実績の発行状態に置換する(flowchart 自体の構造・分類は既存のまま不変)", "done": false, "verify_by": "test"},
+    {"id": "C4", "criterion": "D1: 前月なし今月ありの STATE_NEW について、gap_check を MF実績12ヶ月ルックバックによる年契約→月切替の裏取り結果でgateする(裏付けあり=正常☑・裏付けなし=新規・要確認☐)", "done": false, "verify_by": "test"},
+    {"id": "C5", "criterion": "D2: 今月MF供給が無い契約行は、年契約周期内/契約終了(終了根拠あり)/トライアル完了/対象外月(隔月・分割・単発)のいずれかに該当すれば正常事情として☑で行を残しコメントに理由を表示し、非該当は発行漏れ候補として要対応☐に残す(行を消さず監査証跡を保全)", "done": false, "verify_by": "test"},
+    {"id": "C6", "criterion": "D3: 当月/先月の金額列に MF実績の実発行額を常時表示し、シート期待額と異なる場合は実額を表示したうえで『金額差(期待◯◯→実績◯◯)』をコメント/フラグとして開示する(漏れ扱いにしない情報開示)", "done": false, "verify_by": "test"},
+    {"id": "C7", "criterion": "症状①今月金額空白・②今月MF無し情報のDB残存・③金額一致なのに未☑・④先月空白今月金額ありの新規扱い判断・⑤請求ありなのに今月金額空白・⑥今月金額相違を追えない・⑦会社名だけ取得を各1件以上再現する MF実績ゴールデン fixture + 期待レポート行を tests/ に凍結し pytest 回帰化する", "done": false, "verify_by": "test"},
+    {"id": "C8", "criterion": "独立 context の sub-agent(C02 mfk-report-verifier 更新)が MF実績ベースで『両月発行済なのに漏れ扱い(偽陽性)』『今月未発行なのに正常☑(偽陰性=漏れ隠蔽)』を検出する", "done": false, "verify_by": "reasoning"},
+    {"id": "C9", "criterion": "Notion sink(C04)が既存8列スキーマを保ったまま『先月の金額』『今月の金額』を MF実額として埋め、金額差フラグ/期待額差分/旧行残置理由は『先月と今月の比較』『コメント』に明示し、MF実績由来 gap_check の漏れチェック☑を2営業日目以降に何度再実行しても同月内で重複行を生まず冪等更新する", "done": false, "verify_by": "test"},
+    {"id": "C10", "criterion": "fetch fidelity 診断を runnable な slash-command(C07)として提供し、ユーザーが pagination/件数/issue_date/stale の観点で『最新を取れているか』を単独検証できる", "done": false, "verify_by": "human"},
+    {"id": "C11", "criterion": "MF 掛け払い API は GET 参照専用を維持し(lib/mfk_api.py は POST/PATCH/DELETE 非実装)、hooks/guard-mfk-readonly.py が書込み系呼び出しを機械的に遮断し続ける", "done": false, "verify_by": "script"},
+    {"id": "C12", "criterion": "hooks/guard-mfk-no-reinvent.py の SANCTIONED allowlist へ C05/C06 の新規関数シグネチャを登録し、比較・分類ロジックの自作再実装(自作 compare/classify 相当)を PreToolUse で機械的に遮断する(既存 SSOT mfk_reconcile.normalize/extract_names 等を再利用)", "done": false, "verify_by": "script"},
+    {"id": "C13", "criterion": "本タスクは計画(index + 13 phase files + component-inventory.json + handoff + task-graph)のみを生成し、実コード/実プラグインの build は行わない(実 build は run-skill-create/run-build-skill へ委譲)", "done": false, "verify_by": "human"}
+  ],
+  "constraints": [
+    "MF 掛け払い API は GET 参照専用を維持する(lib/mfk_api.py に POST/PATCH/DELETE を実装しない・既存 hooks/guard-mfk-readonly.py の二層を保つ)",
+    "突合ロジックの再発明禁止。既存 SSOT lib/mfk_reconcile.py(find_mf_match/classify/normalize/extract_names/has_end_basis/_classify_stopped 等)と build_mf_index を再利用し、ゼロから作り直さない",
+    "Python 標準ライブラリのみを使用する(新規外部依存を追加しない)",
+    "共有 script(fetch fidelity 監査 C06 等)は skill 配下でなく plugin-root(plugins/mf-kessai-invoice-check/scripts/ 直下)へ hoist する",
+    "本 plan は計画成果物(index/13 phase/component-inventory.json/handoff/task-graph)のみを生成し、実コード・実プラグインは生成しない(実装は後段の /capability-build 等へ委譲)",
+    "既存の請求確認シートベースの単月照合(run-mf-invoice-reconcile)・年間前払い抑制・契約終了最終請求判定ロジックは温存し、本改善は前月↔今月比較レポート(run-mf-invoice-report)の判定入力をMF実績へ切替える増分に限定する",
+    "秘匿情報(API キー/トークン)や Notion DB の具体 ID は plan 成果物に書かず、Keychain/.notion-config.json/.mf-kessai-config.json 等の実行時 config が供給する論理キー参照のみ宣言する",
+    "契約(請求確認シート)は amount/issued の判定駆動源からは降格するが、行母集合(row-source)としては保持する(D2で今月MF無し契約行を残すため契約在籍情報は引き続き必要)"
+  ],
+  "handoff_targets": ["run-skill-create", "run-build-skill", "harness-creator/scripts/build-script-route.py"],
+  "max_loops": 5,
+  "open_questions": [
+    "GAP-R1-COLLECT-CURR-PRESENT: R1直列化契約とC05はactual_amount/reliable-issuedを既存verdict行へ注入するが、curr=None(取引先×商品の行そのものが今月内訳に無い)には行を生成しない(curr-present未実装)。⑤隔月/分割/単発とD2対象外月はcurr-present実装までpartial=安全側over-report(真の月次漏れは隠さない・D1/C06 per_customer_diff/C02過少報告カテゴリが安全網)。tracked=true・blocking=falseとしてhandoff.open_issuesで分離追跡する"
+  ],
+  "source_improvement": {
+    "ref": "plugin-plans/mf-kessai-invoice-check-fidelity/improvement-handoff.json",
+    "schema_version": "1.0.0"
+  }
+}

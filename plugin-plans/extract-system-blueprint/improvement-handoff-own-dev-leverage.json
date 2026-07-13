@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "verbal",
+    "ref": "conversation:/plugin-dev-plan --mode update extract-system-blueprint (own-dev leverage: tech-stack signals / nonfunctional baseline / apply layer, topology 13→14 user-approved)",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY (--mode update improvement intake round4)"
+  },
+  "target_plugin_slug": "extract-system-blueprint",
+  "plan_dir": "plugin-plans/extract-system-blueprint",
+  "mode": "update",
+  "improvements": [
+    {
+      "id": "IMP-008",
+      "dimension": "tech-stack-signals",
+      "severity": "high",
+      "summary": "自社の技術選定判断に使うため『何のフレームワーク/CDN/外部SaaS/計測タグで作られているか』を抽出したい。従来はC04が機構を推測するのみで、スタック同定の一次シグナルが第一級factになっていなかった。",
+      "decision": "レーン分離で二層化する。(a)生シグナル=fact: C03/C09が既取得のresponse header(server/x-powered-by等)・meta generator・bundle/script srcパス・third-party request domain・cookie名・既知SaaSエンドポイントをtech_signalsとして追加networkなしで採取。(b)命名同定=inference: C04がsignal factsを根拠に framework/hosting/CDN/analytics/SaaS のnamed identification(例: Next.js/Vercel/Stripe)をevidence_refs+confidence付きで導出。C1(signal fact)+C2(named同定inference)拡張。",
+      "target_ref": "component-inventory.json#C03.output_contract(tech_signals) / component-inventory.json#C04 / goal-spec#C1 #C2 / schemas#blueprint.tech_stack"
+    },
+    {
+      "id": "IMP-009",
+      "dimension": "nonfunctional-baseline",
+      "severity": "medium",
+      "summary": "真似すべき品質水準のベンチマークとして非機能の観測値(転送量/キャッシュ戦略/画像最適化/圧縮/セキュリティヘッダ)を残したい。a11yはC9で既収載だが他の非機能観測が欠けていた。",
+      "decision": "C03/C09の既取得response・network traceからnonfunctional_baseline factを採取する: resource type別転送byte・request数・cache policy(Cache-Control/ETag)・content-encoding圧縮・画像format(avif/webp)・security headers(CSP/HSTS/X-Frame-Options/Referrer-Policy/Permissions-Policy)。追加network 0・低負荷budget不変。観測はbudget内で訪問したページ範囲に限定されるため『観測範囲内のbaseline』とスコープ明示し、未観測はgapとして無言欠落させない。C1拡張。",
+      "target_ref": "component-inventory.json#C03.output_contract(nonfunctional_baseline) / goal-spec#C1 / schemas#blueprint.nonfunctional_baseline"
+    },
+    {
+      "id": "IMP-010",
+      "dimension": "own-context-apply-layer",
+      "severity": "high",
+      "summary": "blueprintは対象の記述で完結し『自社ならどれを採用/回避すべきか・どこが差別化機会か』が出ない。自社開発へ活かす最後の一歩(適用判断)が構造的に欠けていた。",
+      "decision": "ユーザー承認の構造変更として skill C14(run-blueprint-apply)を新設し topology 13→14 へ拡張。入力=C02 PASS済blueprint一式+自社コンテキスト(自社製品/技術制約の文書または自然文)。出力=apply-recommendations.md+json(採用adopt/回避avoid/差別化機会differentiateの3分類・全項目がblueprint anchorへのevidence_refs+confidence付きinference)。blueprint本体は対象の忠実記述のまま汚染せず(recommendations非混入)、出力はローカルのみ(v1・外部公開なし)。C2(推測レーン規律の適用)+C6(自社コンテキスト提供時の適用推奨導出)拡張。",
+      "structural_change": "component 13→14 (skill×2→×3)。handoff 14 routes/14 produces 1:1。ユーザーがAskUserQuestionで『自社適用レイヤ』を明示選択(Layer4承認取得済・選択肢説明に『新component or 別skill化の設計判断が必要』を明記の上での選択)。設計判断=同plugin内の下流skill(kind=run)とし、独立assign evaluatorは追加しない(recommendationsは助言的inference文書で、機械の床は共有決定論チェックdoc-emit.py --check-applyが担保: schema適合/evidence anchor実在/fact新規主張0)。",
+      "target_ref": "component-inventory.json#C14 / handoff#C14 route / envelope#entry_points.skills / goal-spec#C2 #C6"
+    }
+  ],
+  "id_policy": "新受入IDは追加しない(『C10』以降は component id C10-C14 と文字列衝突するため回避=R2ペルソナ/R3コンテンツと同じ判断)。tech signal/nonfunctional=C1拡張・named同定/apply推奨のinference規律=C2拡張・自社適用推奨の導出可能性=C6拡張として既存受入IDへ焼く。",
+  "invariants_preserved": [
+    "事実/推測/欠測の明示区別: 生シグナル/非機能観測値=fact・named stack同定/apply推奨=inference(evidence_refs+confidence必須)。",
+    "低負荷C8: tech_signals/nonfunctional_baselineは既取得response/network traceから追加network 0で採取(budget増なし)。C14は対象originへ一切アクセスしない(入力はローカルblueprintのみ)。",
+    "local draft→C02 draft-hash PASS(ローカル品質verdict・外部公開なし)の順序(C14はPASS済blueprintのみ消費し、この順序に介入しない)。",
+    "blueprint本体の忠実性: apply-recommendationsは別成果物でblueprintへ混入しない(対象の記述と自社への適用判断を分離)。",
+    "persona-non-contamination: C14へ新規実名ロスターは追加しない(ユーザー要望が明示されていないため。既存レンズ由来のblueprint推測をevidence経由で参照するのみ)。"
+  ],
+  "provenance": {
+    "prev_improvement": "plugin-plans/extract-system-blueprint/improvement-handoff-content-intent.json",
+    "prev_goal_spec": "plugin-plans/extract-system-blueprint/goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "conversation: これらだけで分析して、自社の開発に活かせる？もっと情報があったほうが良い → AskUserQuestion 3件全選択(技術スタック指紋/非機能の水準値/自社適用レイヤ)"
+    }
+  }
+}

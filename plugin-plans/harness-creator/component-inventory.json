@@ -1,0 +1,291 @@
+{
+  "plugin_concept": "harness-creator (既存プラグインの自己拡張) — plugin-dev-planner 側が producer として提供する task-graph (schema/導出器/validator/ready-set 計算器/task-state schema) を consumer として消費し、/capability-build (E2 route モード) に SubAgent 並列 dispatch・task state 単一 writer write-back・produces/consumes 成果物注入・discovered-task (build 中発見) emit・進捗集計・冪等再開/実行排他・実行イベントログ・実行時停滞検出・task-graph 実行知見の knowledge 化の責務を追加する",
+  "derivation": "5 種 component_kind を全て検討した。skill は不要 (dispatch/state write-back/inject/discover/summarize/lease管理/knowledge記録 はいずれも capability-build という既存起動導線の内部で呼ばれる決定論スクリプトの責務であり、新規のユーザー起動可能な独立能力面を追加しない。いずれも『ゴールと完了チェックリストを持ち LLM が自律的に手順生成する』性質を持たず、単一の決定論アルゴリズム (マージ/直列化/検証/正規化/集計/lock管理/蒸留済みknowledge追記) に閉じるため run/wrap/assign/delegate/ref いずれの skill kind にも該当しない)。sub-agent は不要 (C1 の並列 dispatch は実行時に複数の独立 teammate SubAgent が並列実行される点で SubAgent アーキテクチャを伴うが、どのタスクを並列投入するかを判断する側は決定論であり新規の独立文脈判断面を持つ sub-agent 実体を必要としない。実際に並列実行される SubAgent は既存 run-build-skill/run-skill-create の実行系テンプレートが既に提供しており複製しない)。hook は不要 (task-state.json への書き込みを PreToolUse hook で機械的に禁止する代替案を比較したが、task-state.json は plan/skill ソースツリー外の eval-log/ 配下の runtime 生成物であり既存 hook-guard 群の管轄と責務が異なる。単一 writer は『C02 (sync-task-state.py) 以外のどの経路からも書かない』という設計規約で足り、追加の hook 強制は over-engineering と判断し不採用。将来 dogfooding で正規外書き込みが実際に観測されたら hook 昇格を検討する [backlog])。pipeline-boundary-contract.md への C7 追記は独立 component 化せず plugin_level_surfaces.references_config_assets として扱う (前例踏襲・5 種 component_kind に Markdown 参照ファイルという種別は存在しないため)。script の独立 component 昇格は各新規スクリプトごとに個別判定した: dispatch-ready-set.py/sync-task-state.py/inject-task-inputs.py/emit-discovered-task.py/summarize-task-progress.py はいずれも (a) capability-build 以外からも将来 route-build-report 系ハーネスから独立呼出しされうる決定論検証面を持つ (第二消費者見込み)、(b) 各々が checklist の個別受入基準 (test-first fixture、phase-04 に内包) を持ち独立検証可能、という no-split threshold の『独立検証』基準を満たすため個別 component として昇格する (単一 script への統合は dispatch 判断/state 書込/注入/発見/集計という異なる不変条件を 1 ファイルに畳み込み SRP 違反を招くため不採用)。capability-build (slash-command) は既存実体の UPDATE であり新規 component_kind の追加ではなく、allowed-tools への Task tool 追加と E2 route モード本文への分岐追記を depends_on として計上する。plugin-composition.yaml の commands/capability-build エントリは既に登録済みのため新規追加は無く Edit 差分のみ。追加検討 (team-lead 差分指示 1 周目): planner 側 goal-spec C13 (plan_dir の cycle-id サブディレクトリ化) の consumer 側含意である build 成果物の周回衝突排除 (`resolve_build_dir()`) は、独立 7 個目の component 昇格を検討したが no-split threshold の「独立検証」基準をいずれも満たさない (数行の純粋関数であり C02 の単一 writer 責務・C05 の読取責務のいずれとも不可分) ため、C02 内部関数として畳み込み C05 が import する設計とした (SSOT を 1 箇所に集約)。**設計修正 (team-lead 差分指示 2 周目・契約整合)**: 当初 plan_dir のパス末尾文字列を target_plugin_slug と比較する heuristic で cycle-id を推測する設計としたが、(a) producer 側が新設する『handoff top-level の cycle_id: str|null フィールドを consumer は直接読み plan_dir のパス解析は禁止』という対向契約と正面衝突する、(b) `--out-dir` 上書き plan (任意のパス末尾) ではこの文字列比較が誤判定し build dir が黙って変わる脆弱性を持つ、の 2 点から破棄した。**契約整合の最終形 (team-lead 再送指示・シグネチャ確定)**: `resolve_build_dir(target_plugin_slug: str, cycle_id: str | None) -> str` を C02 内に定義する。`f\"eval-log/{target_plugin_slug}/build\"` を内部で組み立て、`cycle_id` が非 null ならその配下へスコープ化、null なら既存 flat のまま返す。入力は handoff.cycle_id フィールドの値と handoff.target_plugin_slug の値のみで、plan_dir のパス文字列を解析することは一切行わない。**追加差分指示 (C10-C12・ユーザー承認の必須追加要素)**: planner 側 C16 (task-state.schema.json 新設・graph_hash/lease フィールドの schema SSOT・所有=producer/書込=consumer の分離) を前提に、harness-creator 側で (C10) 冪等再開・実行排他・graph_hash pin 検証、(C11) 実行イベントログ、(C12) 実行時停滞検出、を仕様化する。component 化の判断: C10 の (a) 冪等 resume は C01 の既存 merge_state() (done ノードは producer 側 compute-ready-set.py のアルゴリズムにより ready-set 計算から自然に除外される) が既に前提を満たすため追加 component は不要 (受入例のみ P04 へ追加)。C10 の (b) lease 回収判断・(c) build lock 排他・(d) graph_hash pin 検証の 3 者は、いずれも『build 開始前に一度だけ実行される安全性検査』という共通の実行タイミング・共通の不変条件 (build 単位の排他制御) を持ち、(a) capability-build 起動のたびに独立呼出しされる決定論検証面を持つ (第二消費者見込み: 将来の build 監視ツールからの独立呼出し)、(b) 3 者それぞれが machine-verifiable な独立受入基準を持つ、という no-split threshold を満たすため新規 7 個目の component (C07=manage-build-lease.py) として独立させる (3 者をさらに分割すると『build 開始前ゲート』という単一の呼び出しタイミングが 3 箇所の呼び出しに散逸し dispatcher 側の呼び出し漏れリスクを招くため 1 script へ統合)。C07 は実書込みを持たず (単一 writer 規約は C02 のまま)、孤児 running の回収は C02 の `reap_expired_lease()` を subprocess 経由で呼ぶことで実現する (depends_on=[\"C02\"])。C11 (実行イベントログ) は独立 component 化せず C02 (sync-task-state.py) の拡張とする: task-events.jsonl の writer は『state と同じ単一 writer (親 dispatcher)』という goal-spec 文言が、既に単一 writer である C02 と同一責務・同一呼び出しタイミング (状態遷移の都度) であることを明示しており、別 script に分離すると『state 更新とイベント記録が同一トランザクションで完結しない』という整合性リスクを生むため C02 内部関数 `append_event()` として畳み込む。C12 (実行時停滞検出) は独立 component 化せず C05 (summarize-task-progress.py) の拡張とする: 停滞判定 (ready-set=∅ ∧ 未完了>0 ∧ running=0) は進捗集計 (by_state 導出) の直後に同一データから導出可能な追加ビューであり、独立の副作用や独立の書込みスコープを持たないため no-split threshold の『独立検証』基準を満たさない。**追加差分指示 (C13・task-graph 実行知見の knowledge 化)**: `record-task-graph-knowledge.py` は discovered-task inbox の未処理検出、task-events/stall/discovered-task/handoff_notes からの蒸留済み knowledge entry 生成、生成対象 harness の knowledge/ (Loop A) と harness-creator 自身の knowledge/ (Loop B) への add_entry.py 経由書込を担う。これは C02 の state writer でも C05 の集計でも C04 の emit でもなく、『完了判定と次回利用可能な知見化』という独立検証可能な責務を持ち、未処理 discovered-task が残る場合に capability-build の completed 化を fail-closed で止める受入基準を持つため、C08 として独立 component 化する。C08 は task-graph 本体を直接編集せず proposal/event/knowledge のみを書き、planner が次の --mode update で graph を更新する一方向 writer 契約を守る。結果、buildable 実体は script 7 件 (C01-C05, C07, C08) + slash-command (update) 1 件 (C06) の計 8 件に収束する。",
+  "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
+  "components": [
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "dispatch-ready-set",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/dispatch-ready-set.py",
+      "side_effect_targets": [],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "dispatch-ready-set.py",
+      "purpose": "capability-build (E2 route モード) が handoff の task_graph_ref を検出したとき、task-graph.json (宣言的構造・producer=plugin-dev-planner 側 derive-task-graph.py が正本) と task-state.json (runtime state・consumer=harness-creator 側単一 writer) をマージし、plugin-dev-planner 側 compute-ready-set.py を cross-plugin subprocess として呼び出して ready_set/conflicts を取得、SubAgent 並列 dispatch すべき batch (相互独立タスク集合) を決定論的に確定する。task-graph の schema/導出/ready-set 計算ロジック自体は再実装しない (goal-spec constraints #1 の SSOT 遵守)。write_scope 衝突ペアは batch から除外し呼び出し元 (capability-build) へ直列化指示を返す (フェイルクローズ・非決定的タイブレーク禁止)。**冪等 resume (C10-a)**: 中断/クラッシュ後の再開時も、task-state.json 上 state=done のノードは merge_state() が graph へそのまま反映し、producer 側 compute-ready-set.py のアルゴリズムが done ノードを ready-set 計算対象から自然に除外するため、本 script 側での追加の resume 分岐は不要 (受入例のみ P04 に追加する)。**実行中の graph 変更混入拒否 (C10-d の周回再検証)**: build 開始時の C07 pin 検証は 1 回きりであり dispatch ループの再周回では素通りするため、本 script が呼ばれる各周回で task-state.json に pin 済みの graph_hash と現 task-graph.json の再計算 hash (producer 側 derive-task-graph.py --print-graph-hash <path> を呼出し・stdout の sha256:<hex>) を照合し、不一致なら exit1 で dispatcher を停止させる (read-only の照合のみ・実行中の graph 変更混入を周回単位で拒否し goal-spec C10-d 『実行中の混入拒否』の検証点を build 開始時 1 回から dispatch 周回ごとへ強化する)。",
+      "inputs": "argv: --task-graph <task-graph.json path> --task-state <task-state.json path> [--planner-root plugins/plugin-dev-planner] [--repo-root <path>]",
+      "outputs": "stdout: {ready_batch: [task_id...], conflicts: [[task_id, task_id]...], blocked: [task_id...], graph_hash_pin: \"verified\"|\"mismatch\"|null, source: \"compute-ready-set.py\"} の JSON (subprocess 結果を薄く射影するのみ・独自の ready-set 判定ロジックは追加しない・graph_hash_pin は周回再検証結果で pin 未設定時は null)",
+      "exit_codes": "0=ready_batch が非空または空 (現時点で投入可能タスク無し・いずれも正常終了) / 1=cross-plugin subprocess 呼び出し失敗・pin 済み graph_hash と現 task-graph の周回再検証 mismatch (fail-closed) のいずれか / 2=usage error・task-graph/task-state 読み込み/parse 不能",
+      "network": false,
+      "write_scope": "none (読み取り専用・stdout のみ)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (直列チェーン/ダイヤモンド依存/write_scope衝突/冪等resume/周回graph_hash再検証 mismatch拒否 の固定 test が green。checklist C1/C10-a/C10-d の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "sync-task-state",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/sync-task-state.py",
+      "side_effect_targets": [],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "sync-task-state.py",
+      "purpose": "route build 完了時 (route-build-report 生成直後) に、task-state.json (schema 所有=producer 側 C16 task-state.schema.json・書込=本 script が単一 writer) の該当 task node の state を pending→running→done/blocked へ更新し write-back する。単一 writer 規約 (goal-spec constraints #2) を本 script が体現する唯一の実体とし、SubAgent 並列 dispatch 時も親 (dispatcher=capability-build) がこの script を直列呼び出しすることで書き込み競合を防ぐ。canonical serialization は planner 側 canonicalizer を subprocess 経由で呼び出し、本 script では独自シリアライザを実装しない (constraints #3 の SSOT 遵守)。**周回衝突排除 (契約整合済み)**: `--task-state` 省略時は `resolve_build_dir(target_plugin_slug, cycle_id)` (本 script 内定義) が handoff top-level の `cycle_id: str | null` フィールド (producer 側追加・additive) の値のみに応じて build 出力先を導出する。cycle_id は producer 側が確定した値をそのまま消費するのみで、plan_dir のパス文字列を解析して推測することは一切行わない。**冪等再開/lease 回収 (C10-b, C10-d) の書込担体**: C07 (manage-build-lease.py) が判断した『lease 期限超過の孤児 running task_id』を受け取り、本 script の `reap_expired_lease()` (通常の ALLOWED_TRANSITIONS とは別経路の running→pending 専用遷移・回収理由 lease_expired は node.notes ではなく append_event(type=lease_reaped) でイベントログへ記録) が実書込みする。graph_hash の build 開始時 pin (`pin_graph_hash()`) も本 script が単一 writer として担う (判断ロジックは C07/producer 側 check-task-state-schema.py)。**実行イベントログ (C11)**: state 遷移・reap・graph_hash pin の都度、task-events.jsonl (append-only・writer=本 script のみ) へ 1 行 JSON を追記する `append_event()` を持つ。dispatcher が C01 由来の ready-set スナップショット・write_scope 直列化判断を `--event-extra` 経由で渡した場合もそのまま追記する (本 script は判断内容を解釈せず記録するのみ)。**lease heartbeat (renewal・偽孤児回収の防止)**: `--renew-lease` は running task の `lease_expires_at` を `now + lease_seconds` へ延長するのみ (state 不変・`lease_renewed` イベント追記)。dispatcher (C06) が in-flight batch の実行中に本経路を定期呼出しすることで、1 時間超の正当な長時間 build が偽孤児として C07 に回収されるのを防ぐ (回収は heartbeat が途絶した genuinely stale な lease のみに発火する)。**blocked 伝播の書込担体 (下流連鎖・失敗理由の区別)**: `--to-state blocked` は `--reason origin-failure|propagated` を必須とし node の第一級 field `blocked_reason` (∈ {origin-failure, propagated}・producer C16 task-state.schema.json の条件付き必須 field) へ書く (旧 notes 記録方式は廃止・GAP-FAILED-STATE-VOCAB は producer C16 で解消済み)。`--propagate-blocked` 指定時は `--task-graph` の depends_on/consumes を逆引きして起点 task の下流閉包を算出し、各下流 task を `blocked (blocked_reason=propagated)` へ遷移させる (各遷移も append_event・単一 writer を維持)。**un-block 回復 (`--reactivate-cascade`)**: propagate_blocked の逆操作として blocked_reason=propagated の下流閉包を pending へ一括復帰させる (origin-failure ノード自身は誤再開防止のため `--include-origin` 明示時のみ・各復帰も append_event)。**route:task=1:N の done 遷移**: 1 route が複数 task を賄う場合、route-build-report の additive フィールド `covered_task_ids[]` を照合し、`--to-state done` の対象 `--task-id` がそこに含まれることを検査してから done 遷移する (含まれなければ exit1)。",
+      "inputs": "argv: --task-state <path 省略可> --target-plugin-slug <handoff 由来> --cycle-id <handoff.cycle_id の値・省略時 null> --task-id <id> --to-state pending|running|done|blocked --route-report <path> [--reap-lease] [--renew-lease] [--lease-seconds <既定 3600>] [--propagate-blocked] [--task-graph <path・propagate-blocked の下流閉包導出 / done 遷移時の route-report covered_task_ids 照合に使用>] [--reason origin-failure|propagated (blocked 遷移時の必須理由コード・第一級 blocked_reason field へ書込)] [--reactivate-cascade <origin task id>] [--pin-graph-hash <graph_hash>] [--repin-graph-hash <graph_hash> --authorized-hash <resulting_graph_hash 複数可・provenance-gated 再 pin>] [--require-covered (done 遷移で covered_task_ids 不在を violation 化・task-graph route モードでは dispatcher が常時付与)] [--event-extra <JSON文字列>] [--events <path 省略可・既定 build_dir 直下 task-events.jsonl>]",
+      "outputs": "更新後 task-state.json (producer 側 C16 schema 準拠・{schema_version, graph_hash, nodes:[{id, state, started_at, lease_expires_at, blocked_reason(state==blocked 時・producer 必須), route_report, handoff_notes}]} 形状。route_report/handoff_notes は consumer 運用フィールドとして additive 拡張・blocked_reason は producer C16 所有の第一級 field・旧 notes 平坦 list は廃止) + task-events.jsonl への追記 1 行 + stdout: {task_id, from_state, to_state, written_at, build_dir}",
+      "exit_codes": "0=OK / 1=不正な状態遷移 (例: done→pending 等の後退・reap-lease 指定なしでの running→pending)・blocked 遷移で --reason 未指定・route-report 未検出・done 遷移で --task-id が route-report の covered_task_ids に不在・graph_hash pin 不一致=拒否 (再 pin は明示 --pin-graph-hash 操作のみ) のいずれか / 2=usage error",
+      "network": false,
+      "write_scope": "resolve_build_dir(target_plugin_slug, cycle_id) 配下の task-state.json + task-events.jsonl のみ (単一 writer・他 script は本 script 経由以外で書かない。C07 は本 script を subprocess 呼出しするのみで直接書かない)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (不正遷移拒否/canonicalizer 委譲・task-state byte一致再シリアライズ再現性/単一writer違反検出/reap_expired_lease で lease_reaped イベント記録/renew_lease で lease_expires_at 延長/graph_hash pin/イベントログ追記/handoff.cycle_id有無2ケース/--out-dir上書きplan負例/blocked遷移の blocked_reason 第一級書込/propagate-blocked下流連鎖/--reactivate-cascade で propagated 閉包 pending 復帰/covered_task_ids照合 の test が green。checklist C2/C10/C11 の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "inject-task-inputs",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/inject-task-inputs.py",
+      "side_effect_targets": [],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "inject-task-inputs.py",
+      "purpose": "produces 成果物 (先行 task の build_target 配下ファイル) を dependent task の build 入力へ有界に注入する。producer task が未完了 (task-state.json 上 state != done) の場合は fail-closed で拒否し dependent の dispatch をブロックする。**成果物実在検査 (state==done の代理述語だけに依存しない)**: producer が done でも各 injected_inputs の artifact_path を `os.path.exists` で実在検査し、欠落があれば fail-closed 拒否する (done state ≠ 成果物存在の乖離を防ぐ)。**notes 有界性の上限は SSOT から読む**: handoff-notes.schema.json (producer 所有) の maxItems/maxLength を上限の単一正本とし、consumer 側で数値を再定義しない (--max-notes/--max-note-chars は schema 値の上書き用の任意フラグであり既定は schema 由来)。",
+      "inputs": "argv: --task-graph <path> --task-state <path> --task-id <対象 dependent task id> [--notes-schema <path・既定 producer 側 handoff-notes.schema.json>] [--max-notes <既定=schema maxItems>] [--max-note-chars <既定=schema maxLength>]",
+      "outputs": "stdout: {task_id, injected_inputs: [{producer_task_id, artifact_path}], injected_notes: [...]} または拒否時 {rejected: true, reason, blocking_producer_task_id, missing_artifact?}",
+      "exit_codes": "0=注入成功 / 1=producer 未完了・producer 成果物 (artifact_path) 実在せず・notes 有界性違反 (schema 由来上限超過) のいずれかによる fail-closed 拒否 / 2=usage error",
+      "network": false,
+      "write_scope": "none (読み取り専用・stdout のみ)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (producer未完了拒否/producer成果物欠落拒否 (done だが artifact_path 不在)/notes有界性違反 (schema由来上限)/正常注入の test が green。checklist C3 の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C04",
+      "component_kind": "script",
+      "name": "emit-discovered-task",
+      "depends_on": [],
+      "build_target": "plugins/harness-creator/scripts/emit-discovered-task.py",
+      "side_effect_targets": ["plugins/harness-creator/references/pipeline-boundary-contract.md"],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "emit-discovered-task.py",
+      "purpose": "build 中 (in-flight) に route 実行者が発見した追加タスク (discovered-task) を、provenance (発見元 route id・発見理由・発見時点の成果物参照) 付きで discovered-task.schema.json (planner 側 SSOT) 準拠の JSON へ正規化し emit する。E3 (emit-improvement-handoff.py) とは別境界 E4 として新設する: E3 は build 完了後の全体的な改善還流、discovered-task (E4) は build 進行中の単一 route から生じる plan 未網羅タスクの発見であり、時間軸・スキーマ・受理機構のいずれも異なるため相乗りは SRP 違反と判断し独立境界とする。本 script は emit のみを担い、plan への直接編集は行わない (constraints #5 の遵守)。**FC-3 往復整合**: emit 出力は producer accept-discovered-task.py が受理する discovered-task.schema.json の必須 field (discovering_task_id/reason/discovered_at_artifact(top-level)/proposed_node/change_level) を過不足なく満たす (旧 source_task_id/title 平坦形は廃止)。change_level は発見内容から additive (追加ノードのみ・既定)/structural (既存エッジ張替え・component 追加) を判定付与し、proposed_node は発見した build コンテキストから node 実体を構築する。**FC-6 帰路 (非同期還流)**: 既定出力は inbox 定位置 resolve_build_dir(...)/discovered-tasks/<uuid>.json へ書き、次の planner --mode update サイクル R1 が inbox を走査して accept-discovered-task.py で取込む (emit→inbox→次周回 accept の一方向・キュー越し非同期)。",
+      "inputs": "argv: --discovering-task-id <発見元 task id> --reason <発見理由> --produces-ref <発見時点の成果物 path=discovered_at_artifact> --route-id <呼び出し元 route id> --node-id <追加ノード id> --node-title <人間可読 title> --node-phase-ref <phase 参照> --node-write-scope <排他書込パス> --change-level additive|structural (既定 additive) [--node-entity-ref <component id・省略時 null>] [--node-state <既定 pending>] [--node-acceptance-criterion <受入基準>] [--task-graph <path・省略時 <plan-dir>/task-graph.json>] [--plan-dir <path・--task-graph 省略時の探索元>] [--target-plugin-slug <slug>] [--cycle-id <cid>] [--output <出力先 省略時 inbox 定位置>]",
+      "outputs": "inbox 定位置 resolve_build_dir(...)/discovered-tasks/<uuid>.json (既定) or <output>: discovered-task.json {schema_version, discovering_task_id, reason, discovered_at_artifact, proposed_node: {node相当}, change_level: additive|structural, provenance: {route_id}} (producer discovered-task.schema.json 正準準拠・FC-3)",
+      "exit_codes": "0=OK / 1=必須フィールド欠落 (discovering_task_id/proposed_node/change_level 含む) または discovering_task_id が task-graph 上に不在 / 2=usage error",
+      "network": false,
+      "write_scope": "inbox 定位置 resolve_build_dir(...)/discovered-tasks/<uuid>.json または指定 --output のみ (それ以外へ書かない・plan 本体への直接編集は行わない)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (E4境界固定/producer discovered-task.schema.json positive検証/discovering_task_id不在拒否/change_level=structural付与/inbox定位置出力 の test が green。checklist C4 の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C05",
+      "component_kind": "script",
+      "name": "summarize-task-progress",
+      "depends_on": ["C02"],
+      "build_target": "plugins/harness-creator/scripts/summarize-task-progress.py",
+      "side_effect_targets": [],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "summarize-task-progress.py",
+      "purpose": "task-state.json と route-build-report 群 (eval-log/<slug>/build/[<cycle-id>/]route-*.json) から進捗サマリ (state 別 task 件数・完了率・blocked 一覧) を決定論的に導出する。集計は既存 route-build-report 契約 (PR#70) を破壊せず読み取るのみ (constraints #7 の additive 遵守。フィールド追加はあっても既存フィールドは変更しない)。**周回衝突排除 (契約整合済み)**: `--build-dir` 省略時は C02 (sync-task-state.py) の `resolve_build_dir(target_plugin_slug, cycle_id)` を import して同一ロジックで導出する (SSOT を C02 に一本化・本 script は再実装しない・cycle_id は handoff.cycle_id フィールドの値をそのまま消費しパス解析はしない)。**実行時停滞検出 (C12)**: by_state 集計の直後、`ready_batch` (`--ready-batch` 引数経由でdispatcher が C01 出力をそのまま渡す) が空 かつ (pending+running+blocked)>0 かつ by_state.running==0 の場合を停滞と判定し、`--task-graph` から各 blocked/pending task の depends_on/consumes を辿って不足成果物・起点 route を人間可読で診断する `detect_stall()` を持つ。",
+      "inputs": "argv: --task-state <path 省略可> --build-dir <path 省略可> --target-plugin-slug <handoff 由来> --cycle-id <handoff.cycle_id の値・省略時 null> [--task-graph <path・停滞診断に使用>] [--ready-batch <JSON文字列・dispatcher が C01 出力を転送>]",
+      "outputs": "stdout: {total, by_state: {pending, running, done, blocked}, completion_rate, blocked_tasks: [...], stall: null または {stalled: true, diagnosis: [...]}}",
+      "exit_codes": "0=OK / 2=usage error・task-state.json 等入力の読み込み/parse 不能 (exit1 は用いない)",
+      "network": false,
+      "write_scope": "none (読み取り専用・stdout のみ)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (完了率算出/blocked一覧抽出/route-build-report additive読取/停滞検出+原因診断/handoff.cycle_id有無2ケース の test が green。checklist C5/C12 の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C06",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "depends_on": ["C01", "C02", "C03", "C04", "C05", "C07", "C08"],
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "side_effect_targets": [],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "placement_scope": "skill",
+      "name_field": "capability-build",
+      "description": "task_graph_ref 検出時に ready-set 単位で SubAgent 並列 dispatch する経路を、既存 1e (明示モード) / 1r (route モード=E2) に追加した capability-build の UPDATE。build 開始時に C07 (manage-build-lease.py) で lock 取得・孤児 lease 回収・graph_hash pin 検証を行い、write_scope 衝突は直列化、単一 writer は C02 (sync-task-state.py) 経由に限定する。build 完了前に C08 (record-task-graph-knowledge.py) を呼び、未処理 discovered-task が残る場合は completed 化せず planner の --mode update 周回へ差し戻す。",
+      "argument-hint": "[route-id] または [plan-dir]",
+      "allowed-tools": ["Read", "Skill", "Bash(python3 *)", "Task"],
+      "disable-model-invocation": false,
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + coverage>=80 (task_graph_ref 有無の分岐/並列dispatch受入例3ケース/task_graph_ref無し後方互換/build開始時C07呼出/build完了前C08呼出と未処理discovered-task時のcompleted拒否 の test が green。checklist C1/C6/C13 の受入例=phase-04・phase-07 に内包)"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "script",
+      "name": "manage-build-lease",
+      "depends_on": ["C02"],
+      "build_target": "plugins/harness-creator/scripts/manage-build-lease.py",
+      "side_effect_targets": [],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "manage-build-lease.py",
+      "purpose": "capability-build (dispatcher) が build 開始時に必ず最初に呼び出す『build 開始前安全性ゲート』。3 責務を単一 script へ統合する (no-split threshold: 3 者とも build 開始前に一度だけ実行される共通タイミング・build 単位排他という共通不変条件を持つため分割すると呼び出し漏れリスクを招く): (C10-c) 同一 plan/cycle への並行 capability-build 二重起動防止 (`resolve_build_dir(target_plugin_slug, cycle_id)` [C02 import] 配下の `.build.lock` を exclusive create する build lock)、(C10-b) lease 期限超過の孤児 running task_id の判定 (実書込みは持たず C02 の `reap_expired_lease()` へ subprocess 委譲・単一 writer 規約を維持)、(C10-d) build 開始時に pin された graph_hash と現 task-graph の再計算 hash の不一致検出 (producer 側 `check-task-state-schema.py` の `check_graph_hash_pin()` を subprocess 呼び出し・再実装しない。初回 pin 未設定時は producer 側 `derive-task-graph.graph_hash()` を呼び算出した値を C02 の `--pin-graph-hash` 経由で書き込ませる)。lock 取得成功かつ孤児回収完了かつ graph_hash pin 検証 OK の場合のみ exit0 (build 続行可)。**lock 孤児化の恒久 lockout 防止 (steal 規約)**: `.build.lock` は空ファイルではなく `{started_at, pid, host}` JSON を書き込む。acquire で既存 lock を検出したら中身を読み、`now - started_at > lock_ttl_seconds` (heartbeat 途絶) または (同一 host かつ pid 非生存 [`os.kill(pid, 0)`]) の場合のみ孤児 lock として安全に steal (再取得・`{lock: \"stolen\"}`) する。生存 lock (ttl 未超過かつ pid 生存) は `already-held` で exit1。dispatcher クラッシュ後の残留 lock で恒久 lockout する事故 (C10-a resume が自分の残した lock に締め出される問題) を防ぐ。`--lock-action force-release` は人間の手動解放用に無条件 unlink する救済手順。**lock/lease heartbeat (F1 偽孤児回収の防止)**: `--lock-action renew` は保持中 lock の `started_at` を `now` へ更新する。dispatcher (C06) が in-flight 実行中に本経路と C02 `--renew-lease` を定期呼出しすることで、正当な長時間 build (>1 時間) の lock steal・lease 回収を防ぐ (回収/steal は heartbeat が途絶した stale 状態のみに発火)。孤児 lease 回収の判定 (find_expired_leases) は heartbeat 更新後の `lease_expires_at` を基準にするため、renew されている限り回収対象にならない。",
+      "inputs": "argv: --task-state <path 省略可> --task-graph <path> --target-plugin-slug <handoff 由来> --cycle-id <handoff.cycle_id の値・省略時 null> --lock-action acquire|release|renew|force-release [--lease-seconds <既定 3600>] [--lock-ttl-seconds <既定 lease-seconds の 2 倍・lock 孤児判定の期限>] [--planner-root plugins/plugin-dev-planner]",
+      "outputs": "stdout: {lock: \"acquired\"|\"released\"|\"already-held\"|\"stolen\"|\"renewed\", reaped_task_ids: [...], graph_hash_pin: \"pinned\"|\"verified\"|\"mismatch\"}。.build.lock の中身は {started_at, pid, host} JSON (空ファイルにしない・steal 判定と heartbeat 更新に使用)",
+      "exit_codes": "0=OK (build 続行可・lock 解放完了・renew 成功・force-release 完了) / 1=生存 lock を他プロセスが保持中 (started_at が lock-ttl 未超過かつ pid 生存=並行二重起動検出) または graph_hash pin 不一致 (実行中の graph 変更混入・fail-closed) / 2=usage error",
+      "network": false,
+      "write_scope": "resolve_build_dir(target_plugin_slug, cycle_id) 配下の .build.lock のみ (acquire/steal/renew/force-release いずれも .build.lock への書込/削除に閉じる。task-state.json への実書込みは持たず C02 へ subprocess 委譲するのみ)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (lock取得成功/生存lock二重起動検出拒否/孤児lock steal (started_at期限超過→再取得)/force-release手動解放/renew heartbeat/長時間running+renewで孤児回収されない負例/孤児lease回収判断+C02委譲/graph_hash pin一致検証/pin不一致fail-closed拒否 の test が green。checklist C10 の受入例=phase-04 に内包)"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "script",
+      "name": "record-task-graph-knowledge",
+      "depends_on": ["C02", "C04", "C05"],
+      "build_target": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+      "side_effect_targets": [
+        "plugins/harness-creator/knowledge/knowledge-build-patterns.json",
+        "plugins/harness-creator/knowledge/knowledge-index.json"
+      ],
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "placement_scope": "plugin-root",
+      "script_name": "record-task-graph-knowledge.py",
+      "purpose": "task-graph 駆動 build の周回末に、discovered-task inbox・task-events.jsonl・summarize-task-progress.py の stall 出力・route-build-report の handoff_notes から、次回 build で再利用すべき蒸留済み知見を knowledge entry として記録する。未処理 discovered-task (status が accepted/rejected/superseded 以外) が inbox に残っている場合は build を completed にせず exit1 で planner --mode update 周回へ差し戻す。依存方向は一方向 writer 契約に固定する: planner は task-graph/plan の writer、harness-creator は task-state/task-events/discovered-task inbox/knowledge の writer であり、本 script は task-graph.json や phase-*.md を直接編集しない。knowledge 書込は既存 knowledge-loop の add_entry.py を subprocess 経由で使い、生成対象 harness の knowledge/ (Loop A) と harness-creator 自身の knowledge/ (Loop B) の両方に同じ schema で記録できるようにする。",
+      "inputs": "argv: --target-plugin-slug <handoff 由来> --cycle-id <handoff.cycle_id|null> [--discovered-inbox <build_dir>/discovered-tasks] [--plan-dir <handoff.plan_dir・handback locator 用>] [--target-knowledge-dir <plugins/<target>/knowledge>] [--harness-knowledge-dir plugins/harness-creator/knowledge] [--task-events <build_dir>/task-events.jsonl] [--task-state <build_dir>/task-state.json] [--summary-json <summarize-task-progress stdout json>] [--handoff <path・next_steps 再入コマンドを実パスで構成>] [--add-entry-path <add_entry.py 既定差替え>] [--max-entries 3] [--dry-run]。build_dir は --target-plugin-slug/--cycle-id から resolve_build_dir() で導出",
+      "outputs": "stdout(blocked): {completion_gate: \"blocked\", pending_discovered_tasks: [{path, change_level, status}], needs_approval: bool(structural 残存), handback_command, next_steps: [planner drain 完全形, capability-build 再実行完全形]}。stdout(ok): {completion_gate: \"ok\", entries_recorded: <int>}。knowledge へ記録する entry は id/title/intent/background/keywords/source の必須6フィールドを満たし、source は task-events.jsonl/discovered-task/route-build-report/stall summary の path+task_id 参照のみを持つ (生ログ全文は複製しない)。",
+      "exit_codes": "0=未処理 discovered-task なし (knowledge 記録成功または記録対象なし。add_entry.py 失敗・Loop A 未配線は完了を巻き込まず WARN 継続 exit0・knowledge_record_status=record_failed|loop_a_skipped で報告) / 1=未処理 discovered-task が残る (completion_gate:blocked) / 2=usage error・--summary-json/--task-state 読込/parse 不能",
+      "network": false,
+      "write_scope": "target knowledge/ (Loop A) と plugins/harness-creator/knowledge/ (Loop B) の add_entry.py 経由追記のみ。task-graph.json/phase-*.md/component-inventory.json/handoff は書かない",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict PASS + tests_min>=80 (未処理 discovered-task がある場合 completed 拒否+handback_command 出力/accepted・rejected・superseded のみなら completion_gate=ok/knowledge entry 必須6フィールド/add_entry.py 経由の Loop A・Loop B 書込/巨大 event log を丸写ししない source_ref 要約 の test が green。checklist C13 の受入例=phase-04 に内包)"
+      }
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": "plugins/harness-creator/.claude-plugin/plugin.json",
+      "note": "description を task-graph consumer 化 (SubAgent 並列 dispatch/state write-back/discovered-task emit/lease管理) を反映して更新する。既存 manifest は entry_points フィールド自体を持たない (capability の正本は plugin-composition.yaml) ため、check-build-handoff.py の entry_points 突合ゲートを満たす目的で C06 (capability-build) のみをスコープとした entry_points.commands=[\"capability-build\"] を新設する (他の既存 skill/agent/command への backfill は対象外・GAP-ENTRY-POINTS-SCOPE 参照)。hooks/requirements/author/version は無改修 (新規 hook を追加しないため)"
+    },
+    "composition": {
+      "required": false,
+      "omitted_reason": "plugin-composition.yaml の commands/capability-build エントリ (tier: core) は既に登録済み (line 81)。今回は既存 command の本文/allowed-tools への Edit 差分のみで新規 capability を追加しないため composition.yaml の更新は不要"
+    },
+    "harness_eval": {
+      "required": true,
+      "path": "plugins/harness-creator/EVALS.json",
+      "note": "C01-C08 の harness coverage 実測値 (kind=script 7件 + kind=command 1件) は build 完了後に EVALS.json へ追記する。plan 段では対象追加を宣言するのみで現状未達数値は焼かない (goal-spec constraints #8 の Goodhart 回避)"
+    },
+    "references_config_assets": {
+      "required": true,
+      "target": "plugins/harness-creator/references/pipeline-boundary-contract.md",
+      "note": "checklist C7/C13: task-graph 境界 (producer=plugin-dev-planner/consumer=harness-creator・task-state.json 単一 writer 規約・discovered-task の新設 E4 境界・冪等再開/実行排他/graph_hash pin の所有区分[schema=producer/実行=consumer]・task-graph 実行知見の knowledge 化と未処理 discovered-task 完了ブロック) を追記する。追記実行は C04/C08 の build 完了条件に含める (追記内容の具体案は phase-05 に内包)"
+    },
+    "schemas": {
+      "required": false,
+      "omitted_reason": "task-graph.schema.json/discovered-task.schema.json/handoff-notes.schema.json/task-state.schema.json (C16) の 4 schema はいずれも producer 側 (plugin-plans/plugin-dev-planner 側 component) が所有する SSOT であり本 plan 側で複製しない (goal-spec constraints #1)。task-state.json の shape 検証は producer 側 `check-task-state-schema.py` (C07/C02 が subprocess 呼び出しで再利用) に委譲し、本 plan 側で新規 schemas/ ファイルは持たない"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "新規 vendored asset を持たない (全 component は plugin 内スクリプト追加および既存 command への Edit のみ)"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "本構想は MCP/app connector を新設しない (task-graph 駆動 build 拡張は CLI/スクリプト経路のみで完結する)"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "本構想は Notion 等の外部 DB 連携を伴わない (dispatch/state write-back/discovered-task emit/lease管理 はいずれも repo 内ファイル I/O のみ)"
+    }
+  }
+}

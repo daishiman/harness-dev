@@ -1,0 +1,397 @@
+{
+  "meta": {
+    "title": "plugin-dev-planner task-graph route build 実行記録",
+    "subtitle": "58 node 全 graph 実走 — 内/外ループ協調・エレガント検証 4 条件 PASS (2026-07-10〜11)",
+    "reportType": "internal-analysis",
+    "audience": "harness-creator / plugin-dev-planner ハーネス群の運用者",
+    "keyMessage": "task-graph route モード初の全 graph 実走。58/58 done・外ループ 3 周で FAIL を還流し、エレガント検証が high 3 件を検出→根治して 4 条件全 PASS に到達した。",
+    "length": "deep",
+    "language": "ja",
+    "author": "capability-build (task-graph route)",
+    "version": "1.0.0",
+    "schemaVersion": "1.2.0",
+    "toc": true,
+    "throughLine": "本質課題=改善サイクルの実行状態を人手台帳でなく機構で駆動できるか。解決=canonical graph を不変に保ち task-state 投影と ready-set 算出で内ループを、FAIL→discovered-task→planner drain→repin で外ループを回す。活用=58 node 全走・エレガント検証 4 条件 PASS により route モードの再現性を実証した。",
+    "updatedDate": "2026-07-11",
+    "readingTime": "約10分",
+    "visualPolicy": "svg-first"
+  },
+  "theme": {
+    "name": "kanagawa-lotus",
+    "mode": "light",
+    "accentColors": ["accent-blue-vivid", "accent-aqua-vivid", "green", "accent-violet-vivid", "autumn-yellow", "accent-pink-vivid"],
+    "fontScale": 1.3,
+    "pagination": { "style": "section-dots", "showSectionHighlight": true },
+    "header": { "show": true, "showSection": true, "logoIcon": "fa-diagram-project" },
+    "footer": { "show": true, "left": "plugin-dev-planner", "center": "task-graph route build", "right": "{page}/{total}" }
+  },
+  "sections": [
+    {
+      "id": "section-summary",
+      "heading": "エグゼクティブサマリ",
+      "role": "summary",
+      "transition": "まず、この完走を支えた実行フローの構造 — 内ループと外ループ — から見ていく。",
+      "narrative": {
+        "essence": "これまで capability-build の実行状態は 13 phase を直列に進める暗黙管理で、部分進捗も FAIL 還流も台帳外だった。今回は task-graph route モードを graph 全域で実走し、状態を機構が駆動できるかを問うた。",
+        "approach": "canonical graph (58 node) を不変に保ち、task-state 投影で進捗を、compute-ready-set で次に着手可能な node 集合を機械算出する内ループと、検証 FAIL を discovered-task として planner へ還流し repin する外ループを協調させた。",
+        "leverage": "58/58 done・completion_gate ok・外ループ 3 周・エレガント検証 4 条件 PASS。route モードは『固定 13 phase 直列』を超えて依存グラフ駆動の再現可能な実行形態として実証された。"
+      },
+      "body": [
+        {
+          "type": "key-point",
+          "title": "結論",
+          "tone": "accent",
+          "text": "task-graph route モードの**初の全 graph 実走**が完走した。58 node すべてが done、completion_gate は ok、外ループ 3 周で FAIL を吸収し、思考リセット後の 30 思考法エレガント検証が **4 条件全 PASS** に収束した。"
+        },
+        {
+          "type": "stat-tile",
+          "stats": [
+            { "label": "node 完了率", "value": "58/58", "trend": "up", "note": "done=58 / blocked=0" },
+            { "label": "外ループ", "value": "3 周", "note": "FAIL→drain→repin" },
+            { "label": "エレガント検証", "value": "4/4 PASS", "trend": "up", "note": "30 思考法・skip 0" },
+            { "label": "pytest (C02 時点)", "value": "821 passed", "trend": "up", "note": "回帰 0" },
+            { "label": "high 所見", "value": "3 件根治", "note": "全て周回 1 で修復" },
+            { "label": "graph_hash", "value": "単一 pin", "note": "c636b6aa…" }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "route は 2 本 (C01=run-plugin-dev-plan・C02=assign-plugin-plan-evaluator) で、いずれも `--mode update` の additive 差分として成立した。差分の中心は **C17-C19** (実行契約 envelope・三層状態 parity・cross-cycle knowledge) で、既存 C1-C16 と後方互換を保った。以降の節で内/外ループの構造、外ループ 3 周の内訳、route build 結果、依存グラフ、エレガント検証の所見、未実証点の決着、残課題の順に述べる。"
+        }
+      ],
+      "visual": { "kind": "none" }
+    },
+    {
+      "id": "section-mechanism",
+      "heading": "実行フローの構造 — 内ループと外ループ",
+      "role": "background",
+      "transition": "この外ループが実際に何周回り、各周で何を還流したかを次に見る。",
+      "narrative": {
+        "essence": "route モードの肝は、状態の正本を canonical graph から切り離すこと。graph を実行中に書き換えると graph_hash pin が毎遷移で壊れるため、構造 SSOT (task-graph.json)・可変状態 SSOT (task-state.json)・観測ビュー (task-progress.md) を三層に分離する。",
+        "approach": "内ループは ready-set を機械算出して並列に検証し、結果を状態へ書き戻して再投影する定常回転。外ループは検証 FAIL を discovered-task として planner へ還流し、新 revision へ repin してから内ループへ再入する。",
+        "leverage": "この二重ループにより、部分進捗の可視化と『FAIL しても graph を汚さず改善を織り込む』還流が両立する。dispatch/write-back/discovered-emit の所有区分は harness-creator との producer/consumer 境界で固定されている。"
+      },
+      "body": [
+        {
+          "type": "paragraph",
+          "text": "実行は 2 つのループが入れ子で回る。内ループは 1 周ごとに『着手可能な node 集合』を確定して並列検証する定常回転、外ループは検証 FAIL を吸収して graph 自体を進化させる還流である。"
+        },
+        {
+          "type": "subheading",
+          "level": 3,
+          "text": "内ループ (ready-set 駆動の定常回転)"
+        },
+        {
+          "type": "ordered-list",
+          "items": [
+            "`compute-ready-set.py` が依存を満たし未完了の node 集合 (ready-set) を算出する。",
+            "各 node を独立 context の SubAgent へ dispatch し、二値受入基準で並列検証する。",
+            "検証結果を `task-state.json` へ done として書き戻す (canonical graph は不変)。",
+            "`project-task-status.py` が状態を投影し `task-graph-status.json` / `task-progress.md` を再生成 → 次の ready-set 算出へ戻る。"
+          ]
+        },
+        {
+          "type": "subheading",
+          "level": 3,
+          "text": "外ループ (FAIL 還流による graph 進化)"
+        },
+        {
+          "type": "ordered-list",
+          "items": [
+            "内ループの検証が FAIL すると、その内容を **discovered-task** として planner の inbox へ emit する。",
+            "planner drain が discovered-task を回収し、form (additive な追記) として plan へ反映する。",
+            "graph を新 revision へ再導出し、graph_hash を更新して **repin** する。",
+            "repin 済み graph で内ループへ再入する (pin 済み graph は直接更新しない=不変則)。"
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "不変則",
+          "text": "canonical graph を状態台帳として直接編集しない。status 更新は consumer 単一 writer による task-state 更新と投影で満たす。discovered-task は pin 済み graph を書き換えず、外ループで新 hash へ反映する。"
+        }
+      ],
+      "visual": {
+        "kind": "svg",
+        "spec": {
+          "variant": "cycle",
+          "nodes": [
+            { "id": "n-readyset", "label": "ready-set 算出", "subtext": "compute-ready-set.py" },
+            { "id": "n-dispatch", "label": "並列 SubAgent 検証", "subtext": "各 node を独立 context で" },
+            { "id": "n-writeback", "label": "done 書き戻し", "subtext": "task-state.json 更新" },
+            { "id": "n-project", "label": "状態投影", "subtext": "project-task-status.py" }
+          ]
+        },
+        "caption": "内ループ: ready-set 算出 → 並列検証 → 書き戻し → 投影 の定常回転 (canonical graph は不変)",
+        "alt": "内ループの 4 段階を循環で示した図",
+        "rationale": "定常回転する 4 段階の閉路を最も直截に表す cycle variant を選択"
+      }
+    },
+    {
+      "id": "section-outer-rounds",
+      "heading": "外ループ 3 周の詳細",
+      "role": "analysis",
+      "transition": "還流の到達点である 2 本の route build 結果へ進む。",
+      "narrative": {
+        "essence": "外ループが実際に回った 3 周は、いずれも『内容の齟齬を検証 node が捕捉 → planner が additive に修復 → repin』という同一パターンで、graph 構造は 2 周目以降 不変を保った。",
+        "approach": "各周の起点 FAIL・還流 form・drain 結果・graph 変化を突き合わせ、還流が graph_hash の安定性を壊さずに内容だけを進化させたことを確認する。"
+      },
+      "body": [
+        {
+          "type": "paragraph",
+          "text": "3 周のうち graph 構造 (node 数) が変わったのは Round 1 のみ (57→58)。Round 2/3 は phase 文書の内容修正に閉じ、graph は不変だった。すなわち外ループは『必要なときだけ構造を増やし、多くは内容を additive に締める』還流として働いた。"
+        },
+        {
+          "type": "table",
+          "caption": "外ループ 3 周の内訳",
+          "headers": ["周", "起点 FAIL", "還流 form", "drain 結果", "graph 変化"],
+          "rows": [
+            ["Round 1", "P01-x-01 FAIL (goal-spec background が旧前提と矛盾)", "990fc57f (P01-x-08 additive)", "accepted・goal-spec background 改訂", "57 → 58 node・repin"],
+            ["Round 2", "P04-x-05 / P04-x-08 FAIL (C14(b) 例ペア欠落・C17-C19 exit 不記載)", "17f6d54b + 96b690f7 (冪等 additive)", "accepted・phase-04 内容修正", "不変"],
+            ["Round 3", "P06-x-03 FAIL (C1/C6/C8/C9/C10 被覆紐付け不在)", "305dd311 (冪等 additive)", "accepted・被覆担体対応表 (C1-C19×担体) 確立", "不変"]
+          ]
+        },
+        {
+          "type": "key-point",
+          "title": "graph_hash の安定性",
+          "tone": "positive",
+          "text": "3 周を経ても最終 graph_hash は `sha256:c636b6aa…` の**単一 pin** に収束。Round 1 の node 追加は repin で新 hash へ移行し、以降の内容修正は hash を動かさなかった。pin の一致は依存関係整合の機械証跡になっている。"
+        }
+      ],
+      "visual": {
+        "kind": "svg",
+        "spec": {
+          "variant": "roadmap",
+          "nodes": [
+            { "id": "n-round1", "label": "Round 1", "subtext": "P01-x-01 FAIL → background 改訂 (57→58 node)" },
+            { "id": "n-round2", "label": "Round 2", "subtext": "P04-x-05/08 FAIL → phase-04 修正 (graph 不変)" },
+            { "id": "n-round3", "label": "Round 3", "subtext": "P06-x-03 FAIL → 被覆対応表確立 (graph 不変)" }
+          ]
+        },
+        "caption": "外ループ 3 周のタイムライン: FAIL の起点と還流結果の推移",
+        "alt": "外ループ 3 周を縦タイムラインで示した図",
+        "rationale": "時系列で進行する 3 周の推移を示すため縦タイムライン (roadmap) を選択"
+      }
+    },
+    {
+      "id": "section-route-build",
+      "heading": "route build 結果 (C01 / C02)",
+      "role": "analysis",
+      "transition": "これらの route が乗る 58 node の依存構造を次に俯瞰する。",
+      "narrative": {
+        "essence": "2 route はいずれも新規 component 追加ではなく、既存 skill への `--mode update` additive 差分。差分の実体は C17-C19 の実行契約強化で、既存の 13-phase task-graph.json を byte 不変に保つ後方互換設計が要だった。",
+        "approach": "C01 (producer) が実行契約 envelope とゲートを追加し、C02 (consumer=evaluator) がその契約を genuine 判定する semantic_check を追加する producer→consumer の順序で build した。"
+      },
+      "body": [
+        {
+          "type": "paragraph",
+          "text": "route は依存順 (C02 depends_on C01) で実行された。C01 が producer 側の実行契約と schema/renderer を確立し、C02 がそれを評価軸へ配線する。両者とも status=success で完走した。"
+        },
+        {
+          "type": "table",
+          "caption": "route C01 / C02 の対比",
+          "headers": ["観点", "C01: run-plugin-dev-plan", "C02: assign-plugin-plan-evaluator"],
+          "rows": [
+            ["役割", "producer (実行契約・ゲートの生成)", "consumer / evaluator (契約の genuine 判定)"],
+            ["差分の中心", "C17-C19 additive (envelope schema/renderer・三層 parity・plan-ledger lineage)", "C17/C19 を評価軸へ: S8=execution-envelope・S9=cycle-knowledge"],
+            ["pytest", "804 passed (baseline 759 から +45)", "821 passed・回帰 0 (新規 parity 4 + C01 分含む)"],
+            ["evaluator version", "—", "0.2.0 へ更新 (S8/S9 は llm-only advisory)"],
+            ["covered task", "P05-C01-01", "P09-C02-01"]
+          ]
+        },
+        {
+          "type": "subheading",
+          "level": 3,
+          "text": "C01 が追加した実行契約 (C17-C19)"
+        },
+        {
+          "type": "bullet-list",
+          "items": [
+            "**C17 TaskExecutionEnvelope**: node が title 単独でなく task_spec_ref / phase_policy_ref / component_route / acceptance / inputs / knowledge / verify を実質携帯し、追加質問なしに着手できる実行契約を optional additive で schema へ追加。",
+            "**C18 三層状態 parity**: `project-task-status.py` が構造 (graph)・状態 (task-state)・観測ビューの三層 parity を検査。単一 writer=consumer TG-C09 に確定 (elegant で二重 writer を根治)。",
+            "**C19 cross-cycle knowledge**: plan-ledger の predecessor_cycle_id と `check-cycle-knowledge.py` で、過去 cycle 知識を source_ref / freshness_checked_at / decision / reason 付きで有界注入。"
+          ]
+        },
+        {
+          "type": "subheading",
+          "level": 3,
+          "text": "C02 が追加した評価軸 (S8 / S9)"
+        },
+        {
+          "type": "bullet-list",
+          "items": [
+            "**S8 execution-envelope**: envelope が下流着手に十分な情報を実質携帯しているかを genuine 判定 (C17 の意味検査)。",
+            "**S9 cycle-knowledge**: 過去 cycle 知識が関連知見だけを有界注入しているかを genuine 判定 (C19 の意味検査)。",
+            "S8/S9 は S5-S7 と同一 shape の **llm-only advisory** (conditions=[]) で、C1-C4 の機械 verdict accounting (G1-G11) には非混入。"
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "warning",
+          "title": "build 中の 2 つの逸脱 (開示済)",
+          "text": "(1) C19 の新規 `plan-ledger.schema.json` が repo-root `.gitignore` の広域ルール `**/plan-*.json` に名前衝突し未追跡化 (ローカル緑/CI 赤の gitignored source leak)。同一 plugin の先例に倣い negation 1 行で rescue。(2) C02 build の fork design-evaluate が session 上限で中断 → 機械検証で代替し、残差は elegant-review の 3 analyst 独立レビューで補完した。"
+        }
+      ],
+      "visual": { "kind": "none" }
+    },
+    {
+      "id": "section-depgraph",
+      "heading": "依存グラフの構造 (13 phase DAG)",
+      "role": "analysis",
+      "transition": "構造が健全でも監査経路の欠陥は残りうる。次に思考リセット後のエレガント検証の所見を見る。",
+      "narrative": {
+        "essence": "58 node の canonical graph は、13 phase の spine に各 phase の検証タスク (x-node) がぶら下がり、build 対象の 2 phase (P05/P09) が component route (C01/C02) へ写像される三種構成。",
+        "approach": "全 58 node を羅列するのではなく、13 phase の骨格と node の 3 種別を示して構造の読み筋を与える。route への写像はダッシュエッジで表す。"
+      },
+      "body": [
+        {
+          "type": "paragraph",
+          "text": "graph の背骨は P01 requirements から P13 release までの 13 phase。各 phase は複数の検証 node (`P0N-x-NN`) を fan-out し、それらが phase 本体へ収束する。実装/QA を担う P05・P09 だけが component route へ写像される。下図は 13 phase を **8 つの論理ステージ群** に束ねた骨格で、P05→C01・P09→C02 の写像を該当ステージに注記した (1 図の node 上限に合わせた集約表現・全 phase を被覆)。"
+        },
+        {
+          "type": "definition-list",
+          "terms": [
+            { "term": "phase node (P01–P13)", "definition": "13 phase の共通ライフサイクル契約。各 node は phase_ref で 1 つの phase policy を参照する。" },
+            { "term": "検証 node (P0N-x-NN)", "definition": "1 検証可能成果物の実行単位。phase 本体から fan-out し、二値受入基準で done 判定される (全 58 node の大半)。" },
+            { "term": "route 写像 node", "definition": "P05-C01-01 → run-plugin-dev-plan、P09-C02-01 → assign-plugin-plan-evaluator。build 対象 component への写像を持つ唯一の node 種別。" }
+          ]
+        },
+        {
+          "type": "key-point",
+          "title": "構造の要点",
+          "tone": "neutral",
+          "text": "13 phase の直列 spine は不変のガードレール、可変なのは各 phase の検証 node 群。この分離により『固定 phase policy × 可変 task spec』が両立し、graph 全体は非循環 (DAG) を保つ。"
+        }
+      ],
+      "visual": {
+        "kind": "svg",
+        "spec": {
+          "variant": "snake",
+          "nodes": [
+            { "id": "n-g1", "label": "P01–P02 要件・設計", "subtext": "19 検証 node" },
+            { "id": "n-g2", "label": "P03 設計レビュー", "subtext": "C1-C4 PASS" },
+            { "id": "n-g3", "label": "P04 テスト設計", "subtext": "8 検証 node" },
+            { "id": "n-g4", "label": "P05 実装 → C01", "subtext": "run-plugin-dev-plan" },
+            { "id": "n-g5", "label": "P06–P08 実行・受入・整理", "subtext": "被覆/確認/重複検査" },
+            { "id": "n-g6", "label": "P09 QA → C02", "subtext": "assign-plugin-plan-evaluator" },
+            { "id": "n-g7", "label": "P10–P11 レビュー・証跡", "subtext": "governance / evidence" },
+            { "id": "n-g8", "label": "P12–P13 文書・リリース", "subtext": "documentation / release" }
+          ]
+        },
+        "caption": "13 phase を 8 ステージ群に束ねた実行骨格。P05→C01・P09→C02 が component route へ写像される",
+        "alt": "13 phase を 8 つの論理ステージ群にまとめた実行骨格図",
+        "rationale": "13 phase は 1 図の node 上限 (8) を超えるため論理ステージ群 8 個へ集約し、全 phase を落とさず一望させる"
+      }
+    },
+    {
+      "id": "section-elegant-review",
+      "heading": "エレガント検証 (30 思考法) の所見",
+      "role": "finding",
+      "transition": "検出した欠陥の根治に加え、前サイクルからの未実証点も本サイクルで決着した。",
+      "narrative": {
+        "essence": "build 完走後の思考リセットが、機械ゲート緑では見えない high 3 件を捕捉した。いずれも『成果は出ているが記録・主張・所有が実体とズレている』という監査系の欠陥で、Goodhart 的な見かけの緑を剥がした。",
+        "approach": "Phase1 リセット俯瞰 → Phase2 3 並列独立分析 (論理構造 10 + メタ発想 9 + システム戦略 11 = 30 思考法・skip 0) → Phase3 改善実行。周回 1 で 4 条件全 PASS に到達した。",
+        "leverage": "検出された high 3 件はいずれも恒久ガード (schema/validator/assert) 込みで根治し、次サイクルの再発を機械層で封じた。"
+      },
+      "body": [
+        {
+          "type": "paragraph",
+          "text": "30 思考法を 3 analyst へ並列配分し、思考リセット後の先入観なし俯瞰から重大度順に統合した。high 3 件はいずれも『build は success だが監査経路が断絶している』型で、機械テストの緑だけでは捕捉できなかった。"
+        },
+        {
+          "type": "table",
+          "caption": "high 所見 3 件と根治",
+          "headers": ["所見", "内容", "根治"],
+          "rows": [
+            ["knowledge 記録全損", "Loop A store 物理不在 + record ループの例外隔離不在で Loop B まで巻き添え entries_recorded=0。C19 導入 cycle 自身の教訓が 0 件だった", "per-store/per-entry try 隔離 + store 初期化。再実行で entries_recorded=3 / status ok・tests 45 passed"],
+            ["discovered 主張の不一致", "route report の『discovered[] へ構造化報告済』主張が実在 form と不一致 (claim-vs-artifact ドリフト再発)", "route-C01/C02 へ corrections を additive 追記 + schema へ discovered/corrections + validate の deviations×discovered 突合ゲート"],
+            ["projection 二重 writer", "project-task-status.py が producer/consumer 両側に実在し契約正本が 2 つ矛盾 (pipeline-boundary L81 vs task-graph-contract C18)", "producer projection を parity 検査専用へ縮退 (書込コード削除)。単一 writer=consumer TG-C09 へ確定・恒久 assert 追加"]
+          ]
+        },
+        {
+          "type": "key-point",
+          "title": "見かけの緑を剥がす",
+          "tone": "caution",
+          "text": "3 件はいずれも pytest 緑・completion_gate ok の状態で潜んでいた。特に knowledge 全損は『C19 (cross-cycle knowledge) を導入した当の cycle が自らの教訓を 1 件も残せていない』という自己矛盾で、思考リセットなしには見落とされていた。"
+        },
+        {
+          "type": "subheading",
+          "level": 3,
+          "text": "最終 4 条件 (dispatcher 独立再検証済)"
+        },
+        {
+          "type": "table",
+          "caption": "4 条件の判定と機械証跡",
+          "headers": ["条件", "判定", "機械証跡"],
+          "rows": [
+            ["矛盾なし", "PASS", "契約 2 正本の writer 記述一致・producer projection 書込コード 0"],
+            ["漏れなし", "PASS", "entries_recorded=3・S5-S9 の rubric→prompt→agent 伝播 parity test 緑"],
+            ["整合性あり", "PASS", "corrections 訂正 + validate 突合 exit0・用語対応表確立"],
+            ["依存関係整合", "PASS", "validate-task-graph exit0・route parity 2:1:1・graph_hash pin 一致 (c636b6aa…)"]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "回帰確認は dispatcher 実走で独立に取り、plugin-dev-planner 824 passed / harness-creator 361 passed を確認した。medium 以下の所見 (form 冪等 skip の内容差分・fork agent 未伝播・安定 CLI 節の renderer 未掲載等) は Phase3 で B1-B6 として全解消済み。"
+        }
+      ],
+      "visual": { "kind": "none" }
+    },
+    {
+      "id": "section-unproven",
+      "heading": "未実証だった 3 点の決着",
+      "role": "finding",
+      "transition": "最後に、本サイクルのスコープ外に残る課題と次アクションを整理する。",
+      "narrative": {
+        "essence": "本サイクル前の plan review で runtime 実証が保留だった 3 点 (plan 再現性・テスト網羅・移行 gate) について、今回の build がどこまで決着させ、何を次サイクルへ送ったかを整理する。",
+        "approach": "3 点それぞれに『本サイクルでの決着』と『証跡』を対応づけ、実証済みと deferred を明示的に切り分ける。"
+      },
+      "body": [
+        {
+          "type": "table",
+          "caption": "未実証 3 点の本サイクルでの決着",
+          "headers": ["未実証だった点", "本サイクルでの決着", "証跡"],
+          "rows": [
+            ["層① plan 再現性 (自 plan の graph 再導出)", "実証済。build 後に自 plan へ derive-task-graph→compute-ready-set を適用し、task 粒度の部分進捗を dogfooding 実証した", "P11-x-03 evidence (dogfooding 受入例)"],
+            ["層② テスト網羅 (追加テスト + E2E route 実走)", "実証済。route build で新規テストを追加 (C01 +45 / C02 +4 parity) し、plugin suite 821→824 緑・E2E で 2 route を実走完走した", "route-C01/C02 evidence・elegant 824/361 passed"],
+            ["SS-5 bootstrap→target 移行 gate", "deferred。本サイクルでは未実装とし、Loop B knowledge へ next-cycle-candidates として起票した", "elegant deferred_next_cycle (SS-5)"]
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "tip",
+          "title": "切り分けの意味",
+          "text": "層①②は本サイクルで runtime 実証まで到達し、route モードの再現性の裏付けになった。SS-5 のみ意図的に次サイクルへ送ることで、スコープを膨らませず改善サイクルの循環に委ねた。"
+        }
+      ],
+      "visual": { "kind": "none" }
+    },
+    {
+      "id": "section-next-action",
+      "heading": "残課題と次アクション",
+      "role": "next-action",
+      "narrative": {
+        "essence": "本 build のスコープ外に、baseline から持ち越しの検査赤と、次案件へ送る実生成例・軽量経路が残る。いずれも本サイクルの成果を毀損しない周辺項目である。",
+        "approach": "残課題を『別 PR で解消する既存赤』と『次サイクル/次案件へ送る拡張』に分け、担当と状態を task として明示する。"
+      },
+      "body": [
+        {
+          "type": "task-list",
+          "tasks": [
+            { "text": "legacy plan 2 件の既存検査赤 (lint-goal-seek / lint-script-frontmatter) を解消する。baseline HEAD で同一再現する pre-existing 条件で本 build boundary 外。別 PR で対応。", "done": false, "owner": "次 PR" },
+            { "text": "engine:task-graph の実生成例 (新規 plugin を task-graph route で 0 から生成) を次案件として実施する。", "done": false, "owner": "次案件" },
+            { "text": "MD-1 checklist-verify 軽量経路 / MD-8 plan-time renderability 一括検査 + knowledge_refs 必須キー / SS-5 bootstrap→target 移行 gate を実装する (Loop B knowledge へ起票済)。", "done": false, "owner": "次サイクル" },
+            { "text": "C02 fork design-evaluate の session 上限中断分は elegant-review 3 analyst の独立レビューで代替済 (残差なし)。", "done": true, "owner": "elegant-review" }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "note",
+          "title": "本サイクルのスコープ確定",
+          "text": "残課題はいずれも周辺項目で、58/58 done・4 条件 PASS の成果を毀損しない。既存赤は別 PR、拡張は次サイクル/次案件へ委譲することでスコープを閉じた。"
+        }
+      ],
+      "visual": { "kind": "none" }
+    }
+  ]
+}

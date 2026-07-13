@@ -1,1 +1,0 @@
-../../plugins/prompt-creator/agents/prompt-creator-generate-prompt.md

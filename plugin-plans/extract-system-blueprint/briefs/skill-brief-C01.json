@@ -1,0 +1,60 @@
+{
+  "skill_name": "run-extract-blueprint",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "対象URLの構造抽出を依頼されたとき",
+    "システムブループリント抽出",
+    "extract-blueprint"
+  ],
+  "output_contract": "事実/推測区別ドキュメント一式(md+json+Mermaid5種)。ローカルのみ",
+  "boundary": "入力=対象URL1件/出力=ローカルファイル一式。認証必須領域への到達・実侵入・認可外スクレイピングは行わない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "fetch-snapshot.py",
+    "mermaid-validate.py",
+    "doc-emit.py"
+  ],
+  "external_systems": [
+    "対象システムの公開URL (HTTP fetch)"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "フロント表層の事実抽出(UI要素・限定画面遷移・実行後DOM・観測通信)と欠測の別状態化",
+    "静的に観測できる範囲でfactを取得し(visual formation=色/typography/影/角丸/間隔等のcomputed-style由来項目・viewport screenshot・実行後DOMはブラウザ実行を要するためobservation_gap)、画面→region→主要elementのcoverage manifest、観測できたlayout.jsonとしてdocsへ埋込。未取得fieldはnot_observed+reason",
+    "根拠+確度つき推測としてバックエンド機構・設計意図を事実と明示区別して記録",
+    "文字(コピー)のverbatim content fact(見出し階層/本文/CTA/microcopy/meta・OGP/構造化データ/locale)を採取し、C13で伝えたいこと(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図)と本質的問題(JTBD)仮説を根拠+確度つき推測として導出し、C06のessence章(本質的問題/読者/価値提案/キーメッセージ/トーン/positioning・差別化)へ統合する",
+    "各analyzerの実プロンプトに著名エンジニア名付き原則レンズ見出し・cross-lens conflicts・neutral synthesisを明示し、本人の模倣/承認主張をせず、レンズ由来主張もevidence_refs+confidence必須でfactへ混入させない",
+    "5種Mermaid図の生成",
+    "ローカルdraft→独立verdict(ローカル品質評価)PASSの順序保証",
+    "認証必須領域への無断アクセスをしない",
+    "並列1・cache・request budget・Retry-After・停止条件で対象負荷を制限する"
+  ],
+  "goal": "対象システムのURL1件について、フロント表層の事実とバックエンド/設計意図の根拠つき推測を明示区別した章別ドキュメント群(md+json+Mermaid、事実推測区別図を含む5種のMermaid図解込み、加えて観測できたlayout.json・verbatimコピーのcontent fact・essence章=本質的問題(JTBD)/想定読者/価値提案/キーメッセージ/トーン/positioning)をローカルへ生成し、C02の独立品質評価がPASSした状態(screenshot/JS実行後DOMはobservation_gap)",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "URLをブラウザ目視+F12確認する手作業3ステップ(週2.5回×平均90分)を排し、URL解析結果から自社実装の雛形・設計ドキュメントを即生成して自社構築の着手を速くするため",
+  "responsibilities": [
+    {
+      "id": "R1-fetch",
+      "summary": "C12のAuthzEvidence/request budgetとcrawl_profile(single|full_site)を確定し、C09のURL discovery(sitemap/robots/リンクグラフ)→C12のscope分類(in_scope/excluded+reason)でsystem関連URL台帳を作り、C08のfail-closed境界内でC09のHTTP snapshotとC03の静的HTTP観測を全in-scope画面へ取得する。full_siteでも瞬間負荷レバーは緩めずper-run有界+cache/ledgerによるmulti-run resumeで全URLへ到達する。再開runは前runのsite coverage manifestを読み、pendingと未分類discoveredをC12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-analyze",
+      "summary": "frontend-surface-analyzer(視覚/content/機能アフォーダンス/tech_signals/CWV/security/compliance/site_inventory fact)→backend-inference-analyzer(バックエンド/named同定/security_design(OWASP)/delivery_topology)/uiux-rationale-analyzer(UIUX/user_journeys)/content-intent-analyzer(C03出力起点の直交3レンズ)→architecture-essence-synthesizer(essence+feature_map+user_journeys+security/topology統合)へ順に委譲し、事実と根拠つき推測を明示区別して収集する。各analyzerの実プロンプトへinventory.expert_lensesの実名見出しとguard rulesを展開し、per-lens review→cross-lens conflicts→neutral synthesisを必須化する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-document",
+      "summary": "doc-emit.pyで章別ローカルdraft(md+json)と5種Mermaid図を確定しmermaid-validate.pyで自己検証する。観測できたlayout factからlayout.jsonとlayout-overlay.svg(テキスト演算)を生成し(screenshotはobservation_gap)、doc-emitのcompleteness検査(--check-screens)を通す",
+      "prompt_required": true
+    }
+  ]
+}

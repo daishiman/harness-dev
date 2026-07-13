@@ -1,0 +1,50 @@
+{
+  "name": "system-spec-harness",
+  "version": "0.1.0",
+  "description": "システム構築(Web/モバイル/タブレット/デスクトップ横断)の仕様情報を、ユーザーとの往復ヒアリングで漏れなく収集し、章立て複数 Markdown ファイル + index の仕様書ドキュメントセットへまとめるハーネス plugin の manifest draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/system-spec-harness/.claude-plugin/plugin.json へ適用する。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-system-spec-elicit",
+      "run-system-spec-doc-fetch",
+      "run-system-spec-compile",
+      "ref-system-design-knowledge",
+      "assign-system-spec-completeness-evaluator"
+    ],
+    "agents": [
+      "system-spec-hearing-auditor",
+      "system-spec-matrix-auditor",
+      "system-spec-doc-freshness-auditor"
+    ],
+    "commands": [
+      "spec-hearing-start",
+      "spec-compile"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-confirmed-chapter-overwrite.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": true,
+  "bundle_targets": [
+    "xl-skills-full"
+  ],
+  "category": "productivity",
+  "tags": [
+    "spec",
+    "hearing",
+    "system-design"
+  ]
+}

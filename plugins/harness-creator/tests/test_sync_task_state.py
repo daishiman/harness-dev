@@ -298,6 +298,78 @@ def test_main_transition_known_task_with_graph_exit0(tmp_path):
     assert json.loads(state_path.read_text(encoding="utf-8"))["nodes"][0]["state"] == "running"
 
 
+# ────────── initialize_from_graph (sparse state → complete node set) ──────────
+def test_initialize_from_graph_adds_missing_pending_and_preserves_existing():
+    state = _state(
+        _node("T1", "done", route_report="route-T1.json"),
+        _node("T2", "running", started_at="2026-07-06T10:00:00Z",
+              lease_expires_at="2026-07-06T11:00:00Z"),
+    )
+    graph = {"nodes": [{"id": "T1"}, {"id": "T2"}, {"id": "T3"}], "edges": []}
+    out = sts.initialize_from_graph(state, graph)
+    by_id = {node["id"]: node for node in out["nodes"]}
+    assert by_id["T1"] == state["nodes"][0]
+    assert by_id["T2"] == state["nodes"][1]
+    assert by_id["T3"] == _node("T3")
+    assert len(state["nodes"]) == 2  # 入力不変
+
+
+@pytest.mark.parametrize("owner", ["task-state", "task-graph"])
+def test_initialize_from_graph_rejects_duplicate_ids(owner):
+    state = _state(_node("T1"))
+    graph = {"nodes": [{"id": "T1"}], "edges": []}
+    if owner == "task-state":
+        state["nodes"].append(_node("T1"))
+    else:
+        graph["nodes"].append({"id": "T1"})
+    with pytest.raises(ValueError, match=rf"{owner} node id 重複"):
+        sts.initialize_from_graph(state, graph)
+
+
+def test_initialize_from_graph_rejects_unknown_state_node():
+    with pytest.raises(ValueError, match="未知 node"):
+        sts.initialize_from_graph(
+            _state(_node("T1"), _node("GHOST")),
+            {"nodes": [{"id": "T1"}], "edges": []},
+        )
+
+
+def test_cli_initialize_from_graph_materializes_all_nodes(tmp_path):
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_text(json.dumps({
+        "nodes": [{"id": f"T{i}"} for i in range(135)], "edges": [],
+    }), encoding="utf-8")
+    state_path = tmp_path / "task-state.json"
+    existing = [_node(f"T{i}", "done", route_report=f"route-{i}.json") for i in range(110)]
+    state_path.write_text(json.dumps(_state(*existing)), encoding="utf-8")
+    events_path = tmp_path / "task-events.jsonl"
+    rc = sts.main([
+        "--task-state", str(state_path), "--events", str(events_path),
+        "--task-graph", str(graph_path), "--initialize-from-graph",
+    ])
+    assert rc == 0
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert len(state["nodes"]) == 135
+    assert sum(node["state"] == "done" for node in state["nodes"]) == 110
+    assert sum(node["state"] == "pending" for node in state["nodes"]) == 25
+    event = json.loads(events_path.read_text(encoding="utf-8"))
+    assert event["type"] == "task_state_initialized" and event["added_count"] == 25
+
+
+def test_cli_initialize_rejection_does_not_write(tmp_path):
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_text(json.dumps({"nodes": [{"id": "T1"}]}), encoding="utf-8")
+    state_path = tmp_path / "task-state.json"
+    original = _state(_node("T1"), _node("GHOST"))
+    state_path.write_text(json.dumps(original), encoding="utf-8")
+    rc = sts.main([
+        "--task-state", str(state_path), "--task-graph", str(graph_path),
+        "--initialize-from-graph",
+    ])
+    assert rc == 1
+    assert json.loads(state_path.read_text(encoding="utf-8")) == original
+
+
 # ─────────────────────────── transition: blocked ───────────────────────────
 def test_transition_blocked_requires_reason():
     with pytest.raises(ValueError):

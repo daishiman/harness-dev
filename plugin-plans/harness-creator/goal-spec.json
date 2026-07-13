@@ -1,0 +1,113 @@
+{
+  "purpose": "plugin-dev-planner が plan へ追加する型付き task-graph (タスク粒度依存グラフ) は、L4 実 build を担う harness-creator 側が消費しなければ無意味である。/capability-build 系の一括 build を task-graph 駆動へ拡張し、依存充足タスクのみの正順/並列 dispatch・route-build-report を介した進捗 (state) write-back・produces 成果物の依存先タスク入力への注入・build 中に発見した新タスクの discovered-task 還流を機械保証して、plan→build パイプライン全体の品質精度を上げる。",
+  "background": "現行の L4 一括 build は handoff-run-plugin-dev-plan.json の routes[] を component 粒度 depends_on の top-sort 直列で消化し、route-build-report (eval-log/<slug>/build/route-<id>.json) は事後記録に留まる。planner 側 plan (plugin-plans/plugin-dev-planner/) が新設する task-graph (エッジ4型: parent_of/depends_on/produces/consumes、blocks は逆向き導出) を harness-creator が読まない限り、(1) タスク粒度の並列機会が使われず、(2) build 成果物が graph の produces として登録されず consumes 解決が断裂し、(3) build 中の発見タスクが plan へ還流しない。producer (planner)/consumer (harness-creator) の境界契約は pipeline-boundary-contract.md が正本であり、そこへ task-graph 境界を追記して両 plugin を同時に整合させる必要がある。",
+  "goal": "plugin-plans/harness-creator/ に、task-graph 消費側の buildable component (task-graph 駆動 dispatch 拡張・route-build-report→task state write-back 契約・consumes 成果物注入・discovered-task emit・進捗集計・後方互換ガード・pipeline-boundary-contract 追記・task-graph 実行知見の knowledge 化) を component 化した 13 phase + component-inventory + index + handoff の plan 一式が生成され、同梱決定論ゲート (core 5 + 拡張 5) が全 exit0 で通過している。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/harness-creator",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "/capability-build 系の L4 一括 build が handoff の task-graph 参照 (パス + schema_version) を検出したとき、planner 同梱の ready-set 計算器を呼び出して依存充足 (全 depends_on done + 全 consumes 成果物実在) のタスクのみを dispatch 候補にし、ready-set 内の相互独立タスク (write_scope 非重複) を SubAgent 並列 (Agent tool fan-out) で同時 dispatch・write_scope 衝突タスクは直列化または worktree isolation で分離する並列駆動仕様が component 化され、直列チェーン/ダイヤモンド依存 (中間 2 タスクが並列実行される)/write_scope 衝突 (直列化される) の 3 ケースで dispatch 順序・並列度が期待値と一致する受入例が定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "route build 完了時に route-build-report (eval-log/<slug>/build/route-<id>.json) の結果から該当タスクの state 遷移 (running→done / 失敗時→blocked と下流伝播) と handoff notes (できた点/引っかかりポイント/下流への注意・planner 側 C12 schema 準拠の件数/文字数上限内) を task-graph 側 state ファイルへ write-back する進捗契約が component 化され、report 欠落・state 不整合・notes 上限超過を fail-closed で検出する検査が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "produces 成果物パス (build_target / route-build-report) と直接依存 (depends_on/consumes) 先行タスクの handoff notes を依存先タスクの build 入力 (build_args への注入または入力実在前提条件) として機械解決する consumes 注入契約が仕様化され、producer 未完了・成果物不在での dispatch の fail-closed 拒否と、notes 注入の有界性 (直接先行分のみ・推移的全履歴を注入しない) を検証する検査が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "L4 build 実行中に発見された新タスク (不足 script・未計画依存・仕様欠落) を planner 側 discovered-task フォーム schema 準拠で emit する機構が component 化され、emit された discovered-task が provenance (発見元 route id・理由・発見時成果物) を携帯し planner の --mode update 還流入力として受理可能な形式であることを schema 検証で確認できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "task-graph の state 集計 (done/ready/running/blocked/pending 件数 + クリティカルパス上の未完了タスク) を build 進捗サマリとして route-build-report 群から決定論導出する進捗可視化が仕様化され、集計値が state ファイルと一致する検査が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "task-graph 参照を持たない既存 handoff は従来の component 粒度 top-sort 直列実行のまま全既存ゲート (validate-build-trace / route-build-report validator 含む) が exit0 を維持する後方互換が仕様化され、破壊的変更 0 がテストで固定されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "pipeline-boundary-contract.md に task-graph 境界 (producer=plugin-dev-planner: schema/導出/検証/ready-set 計算器の所有、consumer=harness-creator: dispatch/state write-back/成果物注入/discovered-task emit の所有、state ファイルの単一 writer 規約) が追記され、planner 側 plan の handoff 契約と語彙・パス・schema_version が 1:1 で一致している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C8",
+      "criterion": "fork した evaluator が「consumer 側 component が planner 側 task-graph 契約を過不足なく消費し、blocks 独立宣言禁止・parent_of 非依存扱いのエッジ意味論を dispatch 判定で誤用していない」ことを plan-findings.json で genuine 判定している",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C9",
+      "criterion": "plan 一式が elegant-review 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を全 PASS する設計記述を持ち、同梱決定論ゲート core 5 scripts / 6 invocations + 拡張ゲート 5 本 (check-plugin-goal-spec/check-requirements-coverage/check-surface-inventory/check-build-handoff/check-runtime-portability・計 11 invocations) が全 exit0 で通過している。planner 側 SSOT specfm.GATE_SCRIPTS.extended の 6 本目 check-plugin-surface-audit は planner ツール自体を監査する dogfood ゲート (PLAN 非スコープ) のため本 plan の per-plan ゲート台帳からは除外する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C10",
+      "criterion": "冪等再開と実行排他の契約が component 化されている: (a) 中断/クラッシュ後の build 再開で done タスクを再実行せず未完了のみ続行する冪等 resume、(b) lease 期限超過の孤児 running タスク (dispatch 先 SubAgent 消滅) を pending へ機械回収、(c) 同一 plan/cycle への並行 capability-build 二重起動を build lease (lock) で排他し二重 state 書込を構造的に阻止、(d) build 開始時に pin した graph_hash (planner 側 C16 規約) と現 task-graph の不一致を fail-closed 検出し実行中の graph 変更混入を拒否 — の 4 点が仕様化され、再開/回収/排他/pin 不一致の各ケースに期待挙動のテスト受入例が定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "append-only の実行イベントログ (task-events.jsonl 相当: 全 state 遷移・dispatch 判断時の ready-set スナップショット・write_scope 衝突による直列化判断を時系列追記) が component 化され、writer は state と同じ単一 writer (親 dispatcher) に限定、イベントログから終端 state を再構成すると task-state.json と一致する整合検査が定義されている (現在値と履歴の二層分離・監査/再現可能性)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C12",
+      "criterion": "実行時停滞 (deadlock/starvation) の機械検出が component 化されている: ready-set が空 かつ 未完了タスク > 0 かつ running = 0 の停滞状態を検出し、原因診断 (どのタスクのどの consumes 成果物/depends_on が不在か・blocked 伝播の起点 route) を人間可読で出力する。graph 妥当 (DAG 非循環) でも実行時に停滞しうるケース (producer 失敗による下流全 blocked 等) の受入例が定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C13",
+      "criterion": "task-graph 実行中に発見された課題を完了条件と knowledge 管理へ接続する契約が component 化されている: (a) dispatcher は discovered-task inbox に未処理 (accepted/rejected/superseded 以外) の発見タスクが残る限り build を completed にしない、(b) harness-creator は task-graph 本体を直接編集せず discovered-task proposal と task-events/knowledge だけを書き、planner が accept-discovered-task.py で graph を更新する一方向 writer 契約を守る、(c) 解決済み/停滞/再試行/依存判断の蒸留済み知見を生成対象 harness の knowledge/ (Loop A) と harness-creator 自身の knowledge/ (Loop B) へ schema 準拠で記録し、次回 dispatch/設計時に検索利用できる。情報量は件数上限・要約・source ref により有界化され、task-events.jsonl 全量を knowledge へ丸写ししない",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "task-graph の schema/導出器/validator/ready-set 計算器の所有は planner 側 (plugin-plans/plugin-dev-planner/ plan の component)。harness-creator 側は消費のみで再実装・複製しない (SSOT。cross-plugin 参照は repo-bundled 前提で pipeline-boundary-contract.md に境界を明記)",
+    "task state ファイルの writer は harness-creator 側 L4 実行系のみ (単一 writer 規約)。planner は初期 state (全 pending) の生成まで。SubAgent 並列 dispatch 時も state write-back は親 (dispatcher) が直列化して行い、並列 SubAgent に state ファイルを直接書かせない (並列書込み競合の構造的封鎖)",
+    "task-graph / state ファイルの正準構造 (canonical serialization: 安定 key 順・決定論的ソート・schema_version 携帯) は planner 側 canonicalizer を SSOT とし、harness-creator 側で serializer を再実装しない。state 更新も canonical 形式を維持し read-modify-write で非正準化させない (ユーザー要求: 依存グラフ情報を毎回同一構造で管理可能に保つ)",
+    "仕様書構成の 13 ファイル固定解除 (planner 側 C10) 後も、consumer 側は task-graph を構成の正本として読む (ファイル本数・配置に依存した dispatch 判定を書かない)",
+    "discovered-task の emit は追補提案であり、受理判断は planner 側の二段受理 (追補ノード自動/構造変更級はユーザー承認) に従う。emit 側で plan を直接編集しない",
+    "スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・yaml import 禁止)、--mode update は Edit 差分のみ",
+    "既存 route-build-report 契約 (PR#70・validator fail-closed) は破壊せず拡張フィールド追加のみ (additive)",
+    "依存方向は周回型だが writer は一方向に分ける: planner は task-graph/plan の writer、harness-creator は task-state/task-events/discovered-task inbox/knowledge の writer。harness は graph を直接 mutate せず、次の planner --mode update 周回へ proposal を渡すだけにする",
+    "knowledge へ入れるのは蒸留済み知見のみ。生の task-events 全履歴、巨大な route-build-report、推移的な全 notes は入れず、source ref と短い要約で再現性・検索性・情報量のバランスを取る",
+    "harness 現状未達数値は component へ焼かない (Goodhart 回避)"
+  ],
+  "handoff_targets": [
+    "run-skill-create",
+    "run-build-skill",
+    "capability-build"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "並列 dispatch の同時実行数上限は実行環境依存のため plan では既定値を定めず L4 実行時パラメータとした。既定値を契約へ焼くべきか",
+    "失敗タスクの blocked 下流伝播後のリトライ規約 (自動 N 回 vs 人間判断) は人間判断を仮定した",
+    "state ファイルの配置は eval-log/<slug>/build/task-state.json を仮置きした (route-build-report と同居)。planner 側 plan の handoff 契約確定後に 1:1 突合で最終化する"
+  ]
+}

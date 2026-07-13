@@ -1,0 +1,264 @@
+{
+  "plan_dir": "plugin-plans/system-spec-harness",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.2.0",
+    "context": "fork"
+  },
+  "verdict": "FAIL",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "矛盾なし。round3で知識辺のDAG射影、doctrineのdomain/concern混同、C11 fail-closed範囲、C01/C03 writer所有、C01-C02 evidence handshakeを単一契約へ統一した。",
+      "evidence": [
+        "check-build-handoff exit=0 (14 routes と envelope 契約充足)",
+        "grep distributable: index.md L19 true / envelope-draft/plugin.json L34 true / handoff L253,L324 true確定文言 / plugins/system-spec-harness/.claude-plugin/plugin.json distributable=True / .claude-plugin/marketplace.json に system-spec-harness 登録済み",
+        "goal-spec C13/C15、index、inventory C04/C14、P02/P04/P07がprecedence DAG・1 concern 1 authority・category全射で一致",
+        "inventory C01=single writer、C03/C11=read-only委譲、C11のWrite/EditとBashの判定表が一致"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "漏れなし。required-info最低形状/domain被覆/非空/missing_effect/coverage certificate、C14 3 profileの型則、compile直前freshness再照合、evidence request/resume handshakeを追加し、C1-C16の要件トレースと14component orphan 0を維持した。",
+      "evidence": [
+        "detect-unassigned exit=0 / check-requirements-coverage exit=0",
+        "P04にknowledge/required-info/doctrine profile別の退化負例、handshake/pending禁止負例を明記",
+        "P07に3 profile、category全射、coverage certificate、block 0の二値ACを明記",
+        "check-provenance-chain --require-improvement --resolve exit0"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "整合性あり。C14は相互排他的knowledge/required-info/doctrine profileとJSON出力を持ち、C12はspec-state+--require-foundationへ契約拡張、doctrineはcategoryとconcernを別語彙に正規化した。",
+      "evidence": [
+        "check-spec-frontmatter exit=0 / check-spec-gates exit=0 / check-spec-matrix-coverage(--self-test) exit=0 / check-spec-matrix-coverage(PLAN) exit=0",
+        "C14 inputs/outputsにprofile排他、tie-break、profile別JSON schema、exit semanticsを明記",
+        "goal/index/inventory/P02/P04/P07がcategory→concern→anchor語彙で一致",
+        "check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage全exit0"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "FAIL",
+      "summary": "component inventory DAG・handoff 14/14・route top-sort・orphanはPASS。ただしtask-graph derivationがphase checklistとentities_coveredを直積展開し、phase-wide作業を無関係component write_scopeへ接地する構造歪みはplan内Editでは解消不能。最大3回反復到達のため構造変更承認待ち。",
+      "evidence": [
+        "verify-index-topsort exit=0 / detect-unassigned exit=0 / check-build-handoff exit=0 / check-runtime-portability exit=0 / validate-task-graph exit=0",
+        "inventory C11.depends_on=['C01','C03'] とhandoff routeが一致しC03後へtop-sort",
+        "task-graph 567 nodes/31081 edges。例P07-C14にC01 resume/C02 freshness等の別owner ACがC14 write_scopeで複製される"
+      ]
+    }
+  },
+  "gate_results": [
+    {
+      "id": "G1",
+      "name": "verify-index-topsort",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: index が §9 section 床を満たし P01..P13 を昇順全列挙し component 依存 DAG が非循環"
+    },
+    {
+      "id": "G2",
+      "name": "detect-unassigned",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py", "--inventory", "plugin-plans/system-spec-harness/component-inventory.json", "--specs-dir", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C2", "C4"],
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "id": "G3",
+      "name": "check-spec-frontmatter",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py", "--specs-dir", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: 13 phase frontmatter + inventory component 契約を充足"
+    },
+    {
+      "id": "G4",
+      "name": "check-spec-gates",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py", "--specs-dir", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C2", "C3"],
+      "stdout": "OK: inventory component gates/harness + index.plugin_meta 規律を機械強制で満たす"
+    },
+    {
+      "id": "G5",
+      "name": "check-spec-matrix-coverage-self-test",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "--self-test"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "OK: 46行 table と reflection.md が一致 (id 集合/分類/焼き先層 drift なし)"
+    },
+    {
+      "id": "G6",
+      "name": "check-spec-matrix-coverage-plan",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C3"],
+      "stdout": "matrix 分類: OP=10 / conditional=19 / N-A=17 (計 46) / OK: 適用される全マトリクス行の焼き先が反映済み"
+    },
+    {
+      "id": "G7",
+      "name": "check-surface-inventory",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py", "plugin-plans/system-spec-harness/component-inventory.json"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    },
+    {
+      "id": "G8",
+      "name": "check-build-handoff",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py", "plugin-plans/system-spec-harness/handoff-run-plugin-dev-plan.json"],
+      "exit_code": 0,
+      "conditions": ["C1", "C4"],
+      "stdout": "OK: build handoff が 14 routes と envelope 契約を満たす"
+    },
+    {
+      "id": "G9",
+      "name": "check-requirements-coverage",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C2"],
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"
+    },
+    {
+      "id": "G10",
+      "name": "check-runtime-portability",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": "OK: 共有 script は plugin-root へ hoist 済・全 build_target が plugin 内自己完結"
+    },
+    {
+      "id": "G11",
+      "name": "validate-task-graph",
+      "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py", "plugin-plans/system-spec-harness"],
+      "exit_code": 0,
+      "conditions": ["C4"],
+      "stdout": ""
+    }
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "gate_results 母集合注記 (前回指摘 A2-08 の解消): 本 gate_results 配列は plan-rubric.json の deterministic_gates (G1-G11・全て PLAN_DIR/inventory/handoff の3引数のみを取り本 plan ディレクトリの内容だけを対象とする plan-scoped 母集合) に限定している。io-contract §11 の残り2本 (check-plugin-goal-spec.py=R1入力ゲートでgoal-spec.jsonのみ対象・plan-scoped だが rubric の C1-C4 出力ゲート集合には非属) と check-plugin-surface-audit.py (--plugins-dir plugins を取り実 build 済み plugins/ 配下を横断監査する dogfood 母集合・PLAN_DIR を取らず本 plan の内容とは独立) は schema の gate_result.conditions が C1-C4 enum のみを許すため gate_results 配列へ混在させず、実行結果は本 finding の evidence へ分離記録する。check-generative-fidelity.py/check-downstream-harness.py/check-shape-non-regression.py/check-cycle-knowledge.py は PLAN_DIR を取る plan-scoped だが S3/S4/S6/S9 の advisory 母集合 (C1-C4 非直結) のため該当 bucket の finding へ記録する。check-harness-coverage-selfcheck.py --self-test は本 plan と無関係な自己検査 (plan_dir 引数なし) のため evidence にのみ残す。",
+      "evidence": [
+        "plan-scoped C1-C4 母集合 (gate_results): G1-G11 全 exit0",
+        "plan-scoped だが C1-C4 rubric 外 (R1 input gate): check-plugin-goal-spec.py plugin-plans/system-spec-harness/goal-spec.json exit=0 (WARN 2件 source_intake/source_improvement 不在は後方互換WARNでblockingでない)",
+        "dogfood 母集合 (plugins/ 配下横断・plan_dir 非依存): check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready system-spec-harness exit=0 (19 plugins 監査中 system-spec-harness 行が harness_eval/plugin_composition/plugin_manifest=1 で存在)",
+        "self-test 母集合 (plan 非依存): check-harness-coverage-selfcheck.py --self-test exit=0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "C1-C4",
+      "observation": "5検査点の初見再評価結果 (前回 PASS を引きずらず独立に再確認): (1) distributable 全 artifact 横断一致=解消確認 (index/envelope-draft/handoff/goal-spec/phase-12/phase-13/実 build plugin.json/marketplace.json の7箇所で true 統一)。(2) handoff mode=create 残置=解消確認 (mode=update + update_delta が intermediate.jsonl iteration1 と対応)。(3) derivation の consumer 主張 vs 機械配線=一致確認 (C01/C03/C04 の deterministic_checks 全てに validate-knowledge-graph.py、depends_on も C14 を含み散文と構造の乖離なし)。(4) doctrine anchor 写像の全域性=全域写像を確認 (goal文9ドメイン全てが4 anchor いずれかまたは doctrine_anchor: none+理由の縮退規則で帰属先が定まる。C04.boundary の全射化規則が根拠)。(5) P04 tdd-red の C13-C16 負例 fixture=4要件全てに負例設計を確認 (C14循環/dangling、C01非位相順+収集順序、C03 doctrine anchor欠落+非位相順配置)。5点全て high finding 化の要因なし。",
+      "evidence": [
+        "component-inventory.json C04.boundary の全射化の帰属規則テキスト (認証→OWASP/frontend・mobile・tablet・web・desktop実装面→Clean Architecture/プレゼンテーション面→Apple HIG/いずれも帰属不能→doctrine_anchor: none+理由)",
+        "phase-04-test-design.md 完了チェックリスト・受入例セクションの C14/C01/C03 負例3行",
+        "handoff-run-plugin-dev-plan.json mode=update + update_delta (new_components=[C14], respec_components=[C01,C03,C04,C05,C06], rebuild_required=true)",
+        "run-plugin-dev-plan-intermediate.jsonl iteration=1 の delta_from_original が update_delta.source と対応"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "layer-a-generative-fidelity",
+      "observation": "機械 denylist 0 件に加え genuine 判定でも C13-C16 の phase 本文 (phase-04 負例3行、phase-07 checklist 54-57、phase-02 設計判断8/9/10、component-inventory C04.boundary の全射化規則) は script名/ファイル名/固有名詞込みの具体記述で、下流 builder AI が追加質問なしに着手できる具体度。特に doctrine anchor の帰属規則は『4 anchor のいずれにも帰属不能』という曖昧になりがちな境界条件まで具体的な帰属先 (Clean Architecture/Apple HIG) と縮退規則 (none+理由) で埋められており、曖昧語 denylist が検出しない意味的曖昧さも実質ゼロ。",
+      "evidence": [
+        "check-generative-fidelity.py plugin-plans/system-spec-harness exit=0 (denylist_violations=0, uncustomized_sections=0)",
+        "component-inventory.json C04.boundary: 認証/frontend/mobile/tablet/web/desktop の帰属先を個別に明記(曖昧な『適宜判断』を残さない)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "layer-b-downstream-harness",
+      "observation": "P04 (tdd-red) の『受入例』サブ節は新設 C14/C01/C03 負例3件を機械検出サブ節存在だけでなく genuine に具体的な fixture 設計 (循環注入/dangling注入/非位相順/収集順序違反/doctrine anchor欠落章) として持ち、形骸化していない。P02 の『事前解決済み判断』は設計判断8/9/10 (知識依存グラフ/doctrine anchor/必須情報カタログ) を転記対象外としているが、これら3件はいずれも代替案を比較する分岐点ではなく単一拡張決定 (設計判断9は『新規componentは追加せず』と否定形で自己完結) のため非転記は欠落ではない。",
+      "evidence": [
+        "check-downstream-harness.py plugin-plans/system-spec-harness exit=0 (全 phase が受入例/事前解決済み判断サブ節契約を充足)",
+        "phase-04-test-design.md 受入例: 'C14 は循環注入/dangling 注入 fixture を FAIL にし、C03 は doctrine_anchor 欠落章・非位相順配置の負例を Red に持つ'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "task-graph-semantics",
+      "observation": "task-graph.json (再生成後567ノード) 中、C01-C14 全14 entity について『entity先頭ノード(P02-C0N-01)からのproduces辺1件・write_scope接地』を確認。新設 C14 の7ノードは write_scope が build_target実パス (plugins/system-spec-harness/scripts/validate-knowledge-graph.py) へ統一接地。edge型 (depends_on 30513 / parent_of 554 / produces 14) の誤用なし。",
+      "evidence": [
+        "task-graph.json produces edges: P02-C01-01..P02-C14-01 各1件 (計14件、entity数と一致)",
+        "P02-C14-01 -> plugins/system-spec-harness/scripts/validate-knowledge-graph.py、C14配下7ノード全てが同一write_scope"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "shape-ab-comparison",
+      "observation": "本 plan は index.md frontmatter に shape_marker 不在のため既定 fixed-13-phase。check-shape-non-regression.py は 'not-applicable: fixed-13-phase (C14 adoption gate は task-graph-derived のみ)' を exit0 で返し、新旧 shape 比較ゲート自体が非適用と機械宣言している。genuine PASS (非適用によるPASS)。",
+      "evidence": [
+        "check-shape-non-regression.py plugin-plans/system-spec-harness exit=0, stdout='not-applicable: fixed-13-phase (C14 adoption gate は task-graph-derived のみ)'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "task-graph-consumer",
+      "observation": "本 plan は L3 (plan) 段階に留まり task-state.json / discovered-task フォームが未生成 (goal-spec constraints: 'L3 planまでに留めbuildはL4へ委譲')。consumer (harness-creator L4) 起動実績が無いため producer 契約逸脱を実地検出する対象artifactが存在しない。producer側契約 (single writer=derive-task-graph.py、graph構造の正当性) はvalidate-task-graph.py exit0で確認済み。genuine PASS (consumer未起動によるN/A相当のPASS)。",
+      "evidence": [
+        "plugin-plans/system-spec-harness 配下に task-state.json/discovered-task* 不在を確認",
+        "validate-task-graph.py (G11) exit=0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "execution-envelope",
+      "observation": "render-task-execution-envelope.py --task-id <id> は fixed-13-phase shape のため execution_kind 欠落で exit1 を返すが、これは check-shape-non-regression.py が明示する通り S8/C17 envelope 契約が task-graph-derived shape 限定のためで、本 plan では非適用。dispatch対象leafの実質携帯確認は本shapeでは不要。",
+      "evidence": [
+        "check-shape-non-regression.py exit=0, 'not-applicable: fixed-13-phase (C14 adoption gate は task-graph-derived のみ)'",
+        "render-task-execution-envelope.py plugin-plans/system-spec-harness --task-id P02-C14-01 は execution_kind 欠落で exit1 (shape非適用のため期待される挙動、欠陥ではない)"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "cycle-knowledge",
+      "observation": "check-cycle-knowledge.py exit0。本 plan は L4 build サイクルをまだ経ておらず (routes[].status=planned・rebuild_required=true)、cross-cycle knowledge_refs による履歴再利用は現時点で存在しない (pre-build段階の vacuous PASS)。有界注入/無条件注入の懸念事象は現時点で存在しない。",
+      "evidence": [
+        "check-cycle-knowledge.py plugin-plans/system-spec-harness exit=0, stdout='OK: cycle knowledge/lineage 妥当 (source_ref 付き蒸留 + 明示 artifact のみ・過去 node 混入 0)'"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "30-method-coverage",
+      "observation": "Phase2は3独立contextで30/30思考法を省略なく適用した。論理・構造9/9、メタ・発想9/9、システム・戦略・問題解決12/12。KJ統合では『graph意味契約』『required-info completeness』『doctrine concern正規化』『runtime handshake/writer』『task projection ownership』の5群へ収束した。",
+      "evidence": [
+        "論理・構造: 批判的/演繹/帰納/アブダクション/垂直/要素分解/MECE/二軸/プロセス = 9/9",
+        "メタ・発想: メタ/抽象化/ダブルループ/ブレインストーミング/水平/逆説/類推/if/素人 = 9/9",
+        "システム・戦略・問題解決: システム/因果関係/因果ループ/トレードオン/プラスサム/価値提案/戦略/why/改善/仮説/論点/KJ = 12/12"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "round3-resolved",
+      "observation": "既存14 componentを維持した最小Editで、知識辺方向/型則、C14 profile I/O、required-info最低形状・被覆・block停止、doctrine category/concern混同、C12 foundation検証、C01-C02 handshake、C01単一writer、C11→C03意味依存、freshness再照合、C14 script preflightを解消した。",
+      "evidence": [
+        "goal-spec.json C5/C13-C16 + source_improvement",
+        "component-inventory.json C01/C02/C03/C04/C05/C11/C12/C14",
+        "index.md + P01/P02/P04/P05/P07/P08 + handoff update_delta iteration3",
+        "provenance chain resolve exit0"
+      ]
+    },
+    {
+      "severity": "high",
+      "bucket": "C4-task-graph-projection",
+      "status": "acknowledged-deferred",
+      "user_decision": "ユーザー承認 (2026-07-12): 改善要望 (知識依存グラフ C13/C14・doctrine anchor C15・必須情報カタログ C16) の反映は C1-C3 全 PASS + 決定論ゲート12本 exit0 で漏れなく完了と確認済み。本 finding は planner (run-plugin-dev-plan) 共通の task-graph 射影構造欠陥であり本 plan 内容と直交するため、planner 出力形状の構造変更は別案件として据え置き、本 plan は open_issue (GAP-TASKGRAPH-P02-PROJECTION) 明記で確定する。verdict/C4 は機械評価として FAIL のまま保持し、承認による据え置きであって修正済みではないことを明示する。",
+      "observation": "task-graph.jsonはphase checklistをentities_covered全件へ直積射影し、phase-wideまたは他component固有の項目を無関係componentのwrite_scopeへ割り当てる。形式DAGはvalidでも実行ownershipが不正で、4条件の依存関係整合をPASSにできない。",
+      "suggested_fix": "run-plugin-dev-planのphase itemへscope=phase|componentとowner_entitiesを導入し、global itemは一度だけ、component itemはownerだけへ射影してderive-task-graph.pyで再生成する。これはplanner出力形状の構造変更なのでユーザー承認後に実施する。",
+      "evidence": [
+        "task-graph.json: 567 nodes / 31081 edges / unique checklist title 83",
+        "P07-C14へC01 resume、C02/C13/C08 freshness、C11 overwrite等の別owner ACがC14 write_scopeで複製",
+        "3独立Agentすべてが同一根本原因をhighで検出",
+        "G1-G11はexit0だが意味ownershipは現行validatorの検査範囲外"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "purpose": "harness-creator の各 SubAgent (agents/*.md) およびスキル配下 prompts/*.md が、プロンプトクリエイターの7層仕様 (l5-contract v2.0.0) に基づいて確実に作成・検証される状態を機械層で担保し、既存の不整合を是正する計画を立てる。",
+  "background": "harness-creator の run-build-skill は prompt-placement-convention.md + lint-prompt-placement.py + templates/prompt-skeleton.md による『配置』規律は持つが、生成される prompts/*.md / agents/*.md の本文が7層構造に準拠しているかを検証する機構が無い。harness-creator 自身が持つ6つの SubAgent (elegant-improvement-executor / elegant-logical-structural-analyst / elegant-meta-divergent-analyst / elegant-reset-observer / elegant-system-strategic-analyst / run-build-skill-subagent) も本文が l5-contract v2.0.0 (5.1-5.4 節構成・固定手順禁止) を満たしていない。ユーザーは SubAgent の frontmatter はプラグイン YAML 形式 (name/description/tools/model/isolation 等のメタ情報) を維持しつつ本文のみ7層構造に従うハイブリッド形式を確定しており (plugin-dev-planner 配下の3 agent が既にこの形式の先行実装で、本 R1 自身もその一例)、skill 配下 prompts/*.md は純粋な7層 Markdown とする。『確実に』の担保は本 repo の確立済み方針どおりプロンプト任せでなく機械層 (lint/CI/build ゲート) で行う。",
+  "goal": "plugin-plans/harness-prompt-conformance/ に、harness-creator の SubAgent/prompts が生成時に必ず prompt-creator 経由・7層仕様準拠になることを機械ゲートで強制する契約と、既存6 SubAgent + 既存 skill prompts/*.md の遡及是正を含む13 phase ファイル + index + component-inventory.json が生成され、同梱の決定論ゲート全種が exit0 で通過している状態。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/harness-prompt-conformance",
+  "out_dir": "plugin-plans/harness-prompt-conformance",
+  "requested_count": 13,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "plugins/prompt-creator/ 配下に、SubAgent 向け『plugin YAML frontmatter + 7層本文』ハイブリッド形式の新規契約ドキュメント (SSOT) が存在し、既存の純粋7層形式 (skill prompts/*.md 向け) との違いが明記されている",
+      "done": true,
+      "verify_by": "lint"
+    },
+    {
+      "id": "C2",
+      "criterion": "harness-creator 側に、生成/更新される agents/*.md と skills/*/prompts/*.md の本文を7層契約 (verify-completeness.py 相当のロジック) で fail-closed 検証する機械ゲートが存在し、run-build-skill の agent/prompt 生成フローに配線されている (配置 lint だけでなく本文内容 lint)",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "harness-creator の既存6 SubAgent (elegant-* 5体 + run-build-skill-subagent) が全て C1 のハイブリッド契約 (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0・固定手順列挙なし) に是正されている",
+      "done": true,
+      "verify_by": "lint"
+    },
+    {
+      "id": "C4",
+      "criterion": "harness-creator が所有する既存 skill 配下 prompts/*.md (symlink で束ねた他 plugin 所有 skill は除外し所有元で検証) が、seven-layer-format.md の l5-contract v2.0.0 (5.1-5.4節・固定手順禁止) に準拠していることが機械検証済みである",
+      "done": true,
+      "verify_by": "lint"
+    },
+    {
+      "id": "C5",
+      "criterion": "run-build-skill が agent/prompt を生成する経路が prompt-creator (run-prompt-creator-7layer 相当) を必ず経由するよう配線され、経由しない単独生成の抜け道が塞がれていることが受入例で示されている",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "plugin-plans/harness-prompt-conformance/ に13 phase ファイル (phase-01..phase-13) + index.md + component-inventory.json が生成され、同梱の決定論ゲート (core 5 scripts/6 invocations + 拡張ゲート6本) が全 exit0 で通過する",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C7",
+      "criterion": "component-inventory.json の各 component の build_target が所有 plugin 別に正しく routing されている (新規 SSOT 契約ドキュメント等の prompt-creator 所有物→plugins/prompt-creator/ 配下、既存6 SubAgent 是正・build ゲート配線等の harness-creator 所有物→plugins/harness-creator/ 配下)",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "生成される plan のいずれの phase / component-inventory の build_target にも plugin-plans/plugin-dev-planner/・plugin-plans/skill-intake/・plugin-plans/harness-creator/ (既存 E1/E2/E3 パイプライン境界契約 plan) 配下の既存ファイルが変更対象として含まれない",
+      "done": true,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "初期成果物はタスク仕様書 (13 phase plan) のみであり、plugin-dev-planner 全般の既定境界では実装・実 build はスコープ外。ただし本 plan は 2026-07-05 の capability-build 指示で実体化済み (component-inventory.build_status=realized / handoff routes[].status=built) であり、以後の検証は plan↔実体 completeness も対象にする",
+    "SubAgent の frontmatter はプラグイン YAML 形式 (name/description/tools/model/isolation 等) を維持し、本文のみ7層構造に従うハイブリッド形式にする (ユーザー確定事項)。skill 配下 prompts/*.md は純粋な7層 Markdown",
+    "既存6 SubAgent (elegant-* 5体 + run-build-skill-subagent) の本文是正は、将来の生成物への機械的強制だけでなく本計画のスコープに含める (ユーザーの『各それぞれのサブエージェント内の仕組み、プロンプトの本文の部分がしっかりと満たせていない』という遡及是正要求を反映)",
+    "『確実に』プロンプトクリエイター経由にする担保は機械層 (lint/CI/build ゲート) で行い、プロンプト任せの運用ルールに留めない (保証要件は機械層で担保の既存方針を踏襲)",
+    "既存 plugin-plans/harness-creator/ は本計画と異なる別件 (E1/E2/E3 パイプライン境界契約) の完成 plan であり、上書き・編集禁止。target_plugin_slug は実際に build_target が向く実 plugin (harness-creator) を指す一方、plan_dir は out_dir 明示指定で plugin-plans/harness-prompt-conformance/ へ分離し衝突を回避する",
+    "既存 plugin-plans/plugin-dev-planner/ (別件完成 plan) と plugin-plans/skill-intake/ (別件未完 plan) には触れない",
+    "requested_count=13 はユーザー発言『13個のタスク仕様書』を任意記録するのみで、13フェーズ固定はそもそも本スキルの既定仕様であり出力本数の gate 強制はしない"
+  ],
+  "handoff_targets": ["R2-decompose-components"],
+  "max_loops": 5,
+  "open_questions": [
+    "『plugins/prompt-creator/ 新しくドキュメントは作成してください』は多義的で、(a) prompt-creator側にハイブリッド形式の新規SSOT契約ドキュメントを作る、(b) plugin-plans配下に新規計画ドキュメント群を作る、の両読みがある。本 goal-spec は両方を採用 (最尤解釈) したが、R2/R3 で component 分解時に (a) の具体的な配置先 (新規 reference ファイル名・既存 seven-layer-format.md への追記か独立ファイルか) を確定する必要がある",
+    "新規 plan_dir slug『harness-prompt-conformance』はチームリードの例示命名を踏襲した最尤選定であり、ユーザー本人による最終承認は未取得",
+    "既存6 SubAgent の是正を『1 component にまとめて是正』とするか『6 component (agent 単位) に分けて是正』とするかは R2 のコンポーネント分解時の判断に委ねる (同一 kind 複数実体の原則に従えば後者が自然だが確定していない)"
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "purpose": "run-plugin-dev-plan が生成する plan の実行が 13 phase 仕様書の直列消化に律速され、タスク間の待ち無駄と『仕様書↔成果物が別ディレクトリで依存関係を持たない』断絶が build 品質を下げている。13 phase を共通ライフサイクル契約、task-graph node を1検証可能成果物の実行単位、component route をbuildable実体への写像として分離し、各nodeの完全なtask仕様をTaskExecutionEnvelopeとして合成する。依存関係駆動の正順/並列実行・成果物→次タスク入力・実行状態の単一writer更新・実行中発見タスクの構造化追補・過去cycle知識の有界再利用を機械保証して、plan実行の品質精度を上げる。",
+  "background": "現行 plan は 2 軸 (ライフサイクル軸=13 phase ファイル / 実体軸=component-inventory.json の component 粒度 depends_on DAG) を持ち、既にタスク単位の依存 graph・state writer・ready-set 計算・discovered-task 追補・status projection・過去 cycle knowledge 記録が実装として存在する。しかし (1) SubAgent へ渡す完全な task 実行契約が単一 schema (TaskExecutionEnvelope) として閉じておらず、title/phase_ref/entity_ref から暗黙に prompt や builder を推測する余地が残る、(2) 利用者が canonical graph の state を直接更新すると誤認しやすく、構造 SSOT=task-graph.json / 可変状態 SSOT=task-state.json / 観測ビュー=status projection の三層分離が plan 上で弱い、(3) 完了 spec・過去 graph・蒸留 knowledge の棲み分けと、同一 plugin の次改善 cycle への有界再利用契約が明示されていない。本 cycle は既存機構を置換せず、実行契約 (TaskExecutionEnvelope)・状態三層分離・cycle lineage/knowledge 再利用を精緻化して plan 実行の品質精度を上げる改善 cycle である。ユーザーは親子関係・depends/blocks・成果物エッジの型を厳密に整えた依存グラフと、タスクディスカバード形式での計画進化を、既存機構の精緻化として要求している。",
+  "goal": "plugin-plans/plugin-dev-planner/ に、型付きtask-graphのschema・決定論導出器・DAG/成果物連結validator・ready-set計算器・discovered-task追補・canonical serializationに加え、共通13 phase policyと可変task specsをnode.task_spec_refで結ぶTaskExecutionEnvelope契約、task-graph/task-state/status projectionの三層状態モデル、cycle lineageと根拠付きknowledge再利用契約をbuildable componentへ焼いたplan一式が生成され、同梱決定論ゲートと独立evaluatorが全PASSしている。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "plugin-dev-planner",
+  "plan_dir": "plugin-plans/plugin-dev-planner",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "task-graph の JSON Schema (schemas/task-graph.schema.json 相当) が plan の component として定義され、ノード (id/title/phase_ref/entity_ref/execution_kind/route_ref/task_spec_ref/write_scope/acceptance_criterion) とエッジ 4 型 (parent_of=階層 / depends_on=順序・blocks はその逆向き導出で独立宣言禁止 / produces=タスク→成果物 / consumes=成果物→タスク) の型制約・必須キー・値域が機械検証可能な形で仕様化されている。canonical graphに残すstateは後方互換用seed=pending固定でruntime更新せず、pending/running/done/blockedはtask-state.jsonだけが所有し、readyはcomputed-onlyで永続化しない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "13 phase 仕様書を共通policy、task-specsを実行単位、component-inventory.jsonをroute正本として task-graph.json を決定論導出する導出器 component が仕様化され、導出結果が DAG 非循環・orphan ノード 0・同一成果物の producer 一意・inventory depends_on との矛盾 0 を validator で exit0 検証できる受入例を phase 仕様書に内包している。component依存を配下task集合の直積へ展開せず、component completion barrierまたはproduces/consumes artifact joinへ1回だけ写像し、推移冗長depends_on 0・同一phase/title/routeの無意味な複製0・edge density上限超過0を機械検査する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "produces/consumes エッジが「タスク完了成果物のパス (build_target / eval-log route-build-report) → 依存先タスクの入力」として機械解決される artifact 連結契約が仕様化され、spec ディレクトリと出力ディレクトリ間の断裂 (consumes が指す producer 不在・パス不整合) を fail-closed で検出する検査が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "task-state.json のruntime状態とcanonical task-graphから並列投入可能な ready-set (pendingかつ全 depends_on 完了かつ全 consumes 成果物実在) を決定論計算する計算器 component が仕様化され、ready-set 内タスクの相互独立性 (書込みスコープ write_scope 非重複) を並列安全性として保証・重複時はid昇順のwinner 1件とdeferred衝突ペアを明示し、直列チェーン/ダイヤモンド依存/blocked 伝播/write_scope 衝突の 4 ケースで期待 ready-set と一致するテスト受入例が定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "実行中に発見された新タスクを provenance (発見元タスク id・発見理由・発見時成果物) 付きで登録する discovered-task フォーム schema と受理機構が仕様化され、受理結果は --mode update の Edit 差分としてtask specへ還流し、安全な外ループ境界で新しいgraph revision/hashを再導出する。pin済み実行revisionは不変、additiveは次revisionへ自動採用、既存エッジ張替え/component追加等の構造変更級はユーザー承認後に次revisionへ採用する二段受理になっている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "handoff-run-plugin-dev-plan.json が task-graph への参照 (パス + schema_version) を携帯し、routes[] と task-graph の producer タスクが 1:1 以上で対応する整合検査が check-build-handoff 拡張として仕様化されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C7",
+      "criterion": "task-graph を持たない既存 plan (plugin-plans/finish/ 配下含む) は従来直列解釈のまま全既存決定論ゲートが exit0 を維持する後方互換が仕様化され、既存ゲートへの破壊的変更 0 がテストで固定されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "fork した evaluator が「タスク細分化粒度が実行着手可能 (1 タスク=1 検証可能成果物) で、エッジ 4 型の意味論が誤用 (parent_of を依存として使う等) されていない」ことを plan-findings.json で genuine 判定している",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C9",
+      "criterion": "plan 一式が elegant-review 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を全 PASS する設計記述を持ち、同梱決定論ゲート core 5 scripts / 6 invocations + 拡張ゲート 6 本が全 exit0 で通過している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C10",
+      "criterion": "タスク仕様書のファイル構成が 13 ファイル固定から解放され、task-graph から導出される可変構成 (タスク/コンポーネント粒度の仕様ファイル群 + graph を構成の正本とする) を planner が生成できる shape 解放仕様が component 化され、既存 13 phase 形式の plan は後方互換で従来ゲート exit0 を維持し、新旧 shape の判別が機械検出可能 (shape marker) である",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C11",
+      "criterion": "task-graph.json の正準化 (canonical serialization: 安定 key 順・ノード/エッジ id の決定論的ソート・schema_version 必須携帯・配置規約 <PLAN_DIR>/task-graph.json 単一固定) を強制する canonicalizer + lint が component 化され、同一入力からの再生成が byte 一致する再現性テストと、非正準 graph を fail-closed で弾く検査が定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C12",
+      "criterion": "タスク完了時の引き継ぎ知見契約 (handoff notes: went_well=できた点 / friction_points=引っかかりポイント / downstream_watchouts=下流への注意) が schema 化され、カテゴリ別件数上限 (各 ≤3 件) と 1 件あたり文字数上限が schema で機械強制 (超過 fail-closed)、伝播規則が有界 (直接依存 depends_on/consumes の先行タスク分のみを下流タスク入力へ注入・推移的全履歴の注入禁止) で、advisory (notes に留める) と actionable (discovered-task として起票する) の切り分け規準が仕様化されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C13",
+      "criterion": "plan 出力ディレクトリ規約が同一 plugin の複数改善周回の衝突を構造的に排除する: plugin-plans/<slug>/<cycle-id>/ の周回サブディレクトリ (cycle-id = R1 が goal-spec に固定する決定論 id・形式 YYYYMMDD-<concept-slug>) と plugin-plans/<slug>/plan-ledger.json (周回台帳: cycle_id / status ∈ {active, finished, superseded} / plan_dir / summary。単一 writer = planner・同時 active 重複を fail-closed 検出) が specfm.plan_output_dir() の拡張として仕様化され、完了 plan の finish/ 移動 (パス破壊・provenance stale 化の原因) は台帳の status 遷移で代替、既存 flat 配置 plan (plugin-plans/<slug>/ 直下・finish/ 配下) は暗黙単一 cycle として後方互換で全既存ゲート exit0 を維持し、既存 plan の新レイアウトへの移行 script が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C14",
+      "criterion": "新 shape (task-graph 駆動の可変構成) で生成されるタスク仕様書が、現行 13 phase 仕様書に対し 3 軸で同等以上であることを保証する非劣化ゲートが仕様化されている: (a) 精度 = タスクノードの二値受入基準携帯率 (1 タスク=1 検証可能成果物 + 受入基準) が機械計測され旧 shape の §5 項目粒度を下回らない、(b) 品質 = 下流ハーネス実効性 (受入例・事前解決済み判断の内包) を fork evaluator が新旧比較で genuine 判定する、(c) 再現性 = 同一構想からの再生成で task-graph が byte 一致し仕様書構成 (ファイル集合・ノード集合) が一致する。劣化検出時は shape 解放を block し旧 shape へ fallback する (平均回帰禁止)",
+      "done": false,
+      "verify_by": "human"
+    },
+    {
+      "id": "C15",
+      "criterion": "canonical な task-graph.json から人間向け可視化ビュー (mermaid 形式の依存グラフ図: ノード=タスク+state 色分け・エッジ 4 型の線種区別・クリティカルパス強調) を決定論導出する renderer が component 化され、同一 graph からの再 render が byte 一致し、graph に無い要素を描かない (描画側での独自解釈禁止) ことがテストで固定されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C16",
+      "criterion": "実行時契約フィールドの schema SSOT が planner 側で仕様化されている: (a) task-state schema (task-state.schema.json 相当) を planner が所有し (writer は consumer 側のまま・所有と書込の分離)、state 遷移値域 (永続値域は pending/running/done/blocked の 4 値・ready は computed-only で永続化せず永続 ready を validator が fail-closed 拒否)・schema_version・graph_hash (C11 canonicalizer の canonical hash を build 開始時に pin する field)・lease (running タスクの started_at / lease 期限で孤児 running を機械判別可能にする field・時刻は format:date-time (ISO8601/UTC) を schema 制約)・blocked_reason (blocked タスクの起点故障 origin-failure と下流伝播 propagated を区別する第一級 field・値域 {origin-failure, propagated}・state==blocked のとき必須で running→lease と同型の条件付き必須検査・C12 停滞診断が伝播閉包を辿り起点 route を特定可能にする。consumer=harness-creator 側が notes.reason へ暫定記録していた区別を正式 schema field へ昇格し cross_plan_request GAP-FAILED-STATE-VOCAB を解消する。state enum への failed 追加 (代替案 a) は ALLOWED_TRANSITIONS・両 plan の 4 値域宣言・既存受入例へ波及し破壊的なため非採用) を定義し、consumer の additive 運用フィールド (route_report/handoff_notes/covered_task_ids) は node additionalProperties:true で許容 (producer 必須キー id/state/started_at/lease_expires_at + state==blocked 時 blocked_reason のみ strict 検査・handoff_notes 上限は C12 schema を $ref 参照し二重定義しない)、(b) graph version pin 規約 = build 開始時に graph_hash を state へ固定し、実行中の task-graph 変更 (discovered-task 受理等) は hash 不一致として fail-closed 検出・反映は次周回に限る、が仕様化され schema 検査で検証可能である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C17",
+      "criterion": "各実行可能leaf nodeがtitleだけでdispatchされず、execution_kind∈{direct-task,component-build}とtask_spec_refを必須にし、component-buildだけが明示route_refでhandoff routeを解決する。entity_refは分類・traceability専用でbuilder選択に使わず、phase rootはexecution_kind=phase-gateの非dispatch集約点とする。task spec 1件、phase_refが指す共通policy 1件、route、二値受入基準、write_scope、先行artifact、handoff notes、knowledge refs、検証方法をTaskExecutionEnvelopeへ決定論合成し、title単独、entity_ref暗黙route、task_spec_ref欠落、1 nodeへの13 phase全文注入をfail-closedで拒否する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C18",
+      "criterion": "状態管理が構造SSOT=task-graph.json(revision内不変・seed state=pending固定)、可変状態SSOT=task-state.json(consumer単一writer)、観測ビュー=task-graph-status.json/task-progress.md/task-execution-report.html(派生・再生成可能)の三層に分離され、node完了/未完了/blocked更新はtask-stateとappend-only task-eventsへ記録する。HTMLはMarkdownと併存し、同じstatus投影+route reports/build-summaryから自己完結・escape済み・決定論的に生成され、進捗/実行フロー/成果物/証跡/外ループ/正本リンクを構造化表示する。discovered-task採用は安全な外ループ境界でtask specsをEditし新graph revision/hashを作り、旧revisionのcanonical bytesを直接書換えないことをschema・graph_hash pin・revision lineage・projection parityで機械検証する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C19",
+      "criterion": "同一pluginの過去cycle再利用が、完了spec/graph/evidenceをcycle配下のimmutable provenanceとして保存しplan-ledgerのpredecessor_cycle_idでlineageを結ぶ一方、次cycleのactive DAGへ過去nodeを混在させない契約になっている。次taskへ注入できるのはsource_ref付きで蒸留されたknowledge_refsと明示的external artifact inputに限定され、全文履歴・推移的全notes・stale knowledgeの無条件注入をfail-closedで禁止し、MF決済インボイスチェック等の同一plugin改善で過去知見を検索・採用/不採用記録できる",
+      "done": false,
+      "verify_by": "test"
+    }
+  ],
+  "constraints": [
+    "task-graph は第 3 の射影であり既存 2 軸の意味論を置換しない: component-inventory.json の component 粒度 depends_on は再記述せず包含参照する (build_target/depends_on の二重保持禁止=正規化維持)。C10 の shape 解放後も graph⇄inventory の正規化は不変",
+    "メタ循環の分離: 13 ファイル固定の解除 (C10) は build 対象の機能要件。本 plan 自体は現行 skill・現行ゲートで生成/検証するため現行 shape (13 phase ファイル) で記述する (ユーザー指示 2026-07-05: 新機構は 13 ファイルに縛られなくてよい)",
+    "task-graph の正準構造は canonicalizer が唯一の serializer (単一 writer)。手書き編集・複数 serializer の並立を lint で禁止し、依存グラフ情報の散逸/不整合を構造的に封鎖する (ユーザー要求: 毎回同一の最適化構造が plan へ再現性高く構築されること)",
+    "13 phase は全nodeが順番に全文実行するprompt群ではなく共通ライフサイクル契約である。実行単位はtask_spec_refで一意に解決されるnode task specで、phase_refは当該nodeへ適用するpolicyを1件指す",
+    "過去cycleとの接続は実行依存edgeではなくlineage/knowledge参照で表す。過去nodeを現active DAGへ混在させず、staleな完了状態や巨大履歴がready-setとpromptを汚染しない",
+    "C13 のレイアウト変更後も再現性アンカー (同一構想=同一 PLAN_DIR・goal-spec.plan_dir 全周回不変) は維持する: cycle-id は R1 が一度だけ確定し以降不変。本 plan 自身は現行 flat 配置 (plugin-plans/plugin-dev-planner/) のまま生成し、新レイアウトへの移行は build 後の移行 script が担う (メタ循環の分離と同型)",
+    "blocks エッジは depends_on の逆向き導出ビューであり独立宣言を禁止する (二重定義が矛盾源になるため)",
+    "L4 実 build の実行 (並列 dispatch 本体) は /capability-build 系の責務。本 plan の責務は task-graph の schema/導出/検証/ready-set 計算/handoff 契約までで、planner が build を実行しない境界を維持する",
+    "スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・yaml import 禁止)、--mode update は Edit 差分のみ",
+    "discovered-task の自動追補は追加ノードのみ。既存エッジ張替え・component 追加の構造変更級はユーザー承認を経る (エスカレーション規約と整合)",
+    "harness 現状未達数値は component へ焼かない (Goodhart 回避)。『≥80% を満たす設計』の要件化に留める"
+  ],
+  "handoff_targets": [
+    "run-skill-create",
+    "run-build-skill",
+    "capability-build"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "ready-set 計算は都度計算 (stateless・graph と成果物実在から毎回導出) を仮定した。常駐スケジューラは L4 責務外の想定でよいか",
+    "discovered-task の受理者は plan owner (人間) を仮定した。全自動受理へ緩める場合は追補ノード限定の現行制約を維持するか",
+    "task 粒度の下限 (1 タスク=1 検証可能成果物) はゲート強制でなく evaluator 意味判定に置いた。機械下限 (例: 1 phase あたり最小タスク数) は Goodhart リスクがあり未設定"
+  ],
+  "source_improvement": {
+    "ref": "improvement-handoff-20260710-execution-contract.json",
+    "schema_version": "1.0.0"
+  }
+}

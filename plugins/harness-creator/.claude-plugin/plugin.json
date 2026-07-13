@@ -1,6 +1,6 @@
 {
   "name": "harness-creator",
-  "version": "1.2.0",
+  "version": "1.3.0+codex.20260713-1",
   "description": "Claude Code のハーネス — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と評価・統治機構の総体 — を構築・評価・統治するメタプラグイン。単体スキル生成は部品単位の能力として内包する。run-build-skill は with-goal-seek の engine:task-graph 変種 (brief.goal_seek.engine=task-graph 指定時に checklist の depends_on 依存充足順で実行し self-reflect で発見タスクを単一 truth の checklist へ追記する) を、既定装備の with-goal-seek 内部の opt-in engine 選択として焼き込む",
   "author": {
     "name": "harness maintainers"
@@ -51,6 +51,18 @@
         "matcher": ".*",
         "hooks": [
           { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\"",
+            "timeout": 60
+          }
         ]
       }
     ],
