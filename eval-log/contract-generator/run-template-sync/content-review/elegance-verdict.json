@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "96a7adc2bd13cb7eef570445377e768b2e15b57231f82e0c589928140faeb91c"
+    "skill_md_sha256": "931308c553056d081c50100d042bbe8ca07ac7a2f2063e2f660961a81a0d65c9"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "run-elegant-review-independent",
-  "reviewed_at": "2026-07-13T05:16:23Z",
-  "iterations": 1,
+  "reviewer": "run-elegant-review-independent-group-a",
+  "reviewed_at": "2026-07-12T00:16:37Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,15 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "disable-model-invocation:false は本文の自然言語発火設計(『または自然言語で「契約書のひな形が変わりました」と伝える』)と OUT1(誤発火防止は description 純化で担保)と整合し、姉妹 skill run-contract-generate/finalize と同一。frontmatter 仕様上 false=モデル自動発火可であり、本文の発火契約に一致するため矛盾/不整合なし。",
-      "external-mutation の書込安全は model-invocable と独立に成立: sync.py は --apply 節でのみ台帳書込、_flag_regen は not dry_run 時のみ writeback、対象は completed 行のみ(draft/approved 非巻戻し)。SA 鍵は Keychain/hook-guard で保護。自動起動化で安全ゲートは迂回されない。",
-      "参照実装(scripts/sync.py, lib/scan_template.py, lib/ledger.py, prompts/R1-diagnose-and-resync.md, agents/template-sync-agent.md)を実読し、exit 0/5・MISSING/UNMAPPED 判定・再生成フラグ付与の記述が実装と一致。dependency_break/smell なし。"
+      "IN1はscan_templateの整合exit0/drift exit5とMISSING/UNMAPPED分類、IN2はsync.pyの--apply時だけledger差し戻し、診断時は書込なしの境界を実装と照合した。contract-generator 6段チェックは全通過。",
+      "OUT1はdescriptionを『ひな形の変更・更新』の明示意図に限定し、契約書作成意図はrun-contract-generateへ分離するため誤発火を抑止する。",
+      "初回評価で検証節の『sync.py=薄いshim』と追加リソース節の『集約診断+台帳書込entrypoint』が矛盾していたため、前者を実装実態へ修正した。再評価で4条件すべて0。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "sha 更新ではなく sync.py/scan_template.py/ledger.py と R1 プロンプト・agent を独立再読して 5 条件を再評価。disable-model-invocation:true→false は本文の自然言語発火契約と description 純化(OUT1)に整合し、潜在的不整合を解消する方向の変更で、矛盾/欠落/不整合/依存破壊/smell を新たに生じない。"
+  "notes": "30思考法を全件使用（skip 0）。初回の用語不整合とFM-005 smellを内容修正し2回目でPASS。単なるSHA更新ではなくscripts/sync.pyとlib/scan_template.py/ledger.pyを再照合した。"
 }

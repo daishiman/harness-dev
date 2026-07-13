@@ -1,19 +1,19 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "60e7abaea21a29bb06336dbfde11758f04960ffab363186bc7593c32f9489d8c"},
+  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "721008d629e05a56023638586339c46e63a4a978f032d6d07458fbbf58fcbe0e"},
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "run-elegant-review-independent",
-  "reviewed_at": "2026-07-13T05:16:23Z",
+  "reviewer": "independent-content-review-subagent",
+  "reviewed_at": "2026-07-05T09:51:42Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "今回 delta の disable-model-invocation:true→false は本文と矛盾しない。むしろ frontmatter の triggers(L4-6『要望や不満があるとき』) と SSOT の callout_summary(skill-list.schema.json:112『感じたら /run-skill-feedback と入力するだけで OK』) を機能させる整合化であり、旧値では triggers/callout が model 自動起動されず潜在的不整合だった。OUT2 の『摩擦最小で起動』(L122) を直接強化し smell 化しない",
-      "『改善着手を自動発火しない』(L79/L248) と『model-invocable 化』は別レイヤで両立。前者は下流の改善計画/harness 再構築(Stage 4-5)の自動発火を否定する主張であり、goal-spec.json:91 制約6『改善還流は Notion 改善要望 DB への直接 read-back を避ける』と runbook L44/L111『/skill-improve は Notion / rollup を読まない』を実読で確認。skill 収集自体の起動可否とは無関係で contradiction=0",
-      "external-mutation の model 自動起動でも fail-open 面は増えない。書込は 6 フェーズ対話(identify→collect→verify-plugin dry-run→submit)を必ず貫通し、notion-submit-improvement.py は find_plugin_page 不在で sys.exit(2)(孤児防止=IN3)・notion_config.require_or_skip が unresolvable で return 0(fail-safe skip=IN2)。同 repo 先例 run-mf-invoice-reconcile/report(external-mutation でも disable-model-invocation:false、test_plugin_contract.py で契約テスト済) と同型で dependency_break=0"
+      "L77『rollup が自動更新され優先度判断シグナルになる』と新設L79/L248『rollup も改善着手を自動発火しない』は矛盾せず両立(Notion側件数集計の自動更新と、改善着手の自動発火は別レイヤ)。責務境界節がこの区別を genuine に明示している",
+      "新設責務境界(L79)と下流節(L248)の主張が一次証跡と整合: goal-spec.json:91『Notion への直接 read-back を避ける(制約6)』・runbook L111『/skill-improve は Notion / rollup を読まない』・runbook L4『Stage 2→3→6 の人間工程』を実読で確認し dependency_break=0",
+      "参照先 feedback-to-improvement-runbook.md は実在し、L79『Stage 2-3(繋ぐ工程)』とL248『Stage 2→3→6(全人間工程)』の差異は runbook L23『人間工程(2/3/6)』に照らし文脈依存で正当(smell化せず)"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -21,5 +21,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現SHA(60e7abae...)を実読した独立 genuine 再評価。今回 delta は frontmatter disable-model-invocation:true→false の1行のみ。本文の実行契約(6フェーズ・SSOT派生・fail-safe token解決)、トリガ記述(triggers/callout)、利用者発端フィードバックループ設計のいずれとも矛盾せず、むしろ triggers/callout を機能させ『摩擦最小起動』を強化する整合化。『改善着手を自動発火しない』は下流改善のレイヤで別物(goal-spec制約6/runbookで一次証跡確認)。lint-feedback-protocol [OK]。4条件すべて0件で PASS。"
+  "notes": "現SHA(721008d6...)を実読したgenuine再評価。今回deltaの責務境界節(L79)と下流節更新(L248)は、本文発火条件/出力契約/Notion push と矛盾せず、goal-spec制約6(read-back回避)・runbook(Stage2→3→6・/skill-improve非read)とも一次証跡で整合。『自動発火しない』は rollup自動更新(件数集計)と別レイヤで矛盾なし。二段検証で参照先 runbook 実在と主張の逐条整合を確認。4条件すべて0件でPASS。"
 }

@@ -1,7 +1,7 @@
 ---
 name: run-template-sync
 description: 契約書ひな形の変更・更新を同期管理するとき、影響行を作り直し対象にしたいときに使う。
-disable-model-invocation: false
+disable-model-invocation: true
 user-invocable: true
 allowed-tools: [Read, Edit, Bash(python3 *)]
 kind: run
