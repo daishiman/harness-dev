@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "536193fded4d18440c7f2d525a2ce3a0ef00565933d559075150f28ba9c8fbc8"
+    "skill_md_sha256": "26f9d08712c6e34cfb1fa6ebdfe023ec793b9618a0777615c85937e7feb4a90f"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "run-elegant-review-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
+  "reviewer": "run-elegant-review-independent",
+  "reviewed_at": "2026-07-13T05:16:23Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,9 +25,9 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1/OUT1 は ledger._PHASE_STATUS_FILTER(finalize={draft,approved}) と engine._handle_finalize を確認し、Claude Codeで明示実行した行だけをpull型でcompleted化し、Slack反応は任意pollであって発火条件ではない契約がSKILL/prompt/agent/scriptで一致する。",
-      "IN2 は clean docxからPDF生成、PDF_URL+completed書戻し、completed行の再選択防止をengine/ledgerで確認した。contract-generator 6段チェックは全通過し、外部設定不在時のtemplate scan skipは明示された環境依存で設計欠陥ではない。",
-      "owner一般化は実行契約を変えず、Slack/Drive資格情報は関連promptとtenant_runtime経由のtenant別service解決に統一されている。4条件に未解決findingはない。"
+      "IN1/OUT1: pull型ゲートが機構化されている。ledger._PHASE_STATUS_FILTER の finalize={draft,approved} と select_target_rows(作成指示◯ かつ status∈filter)、engine._handle_finalize が一致し、ユーザーが Claude Code で実行した draft 行だけ completed 化、未実行/対象外行は draft のまま保持。completed は再選択集合から除外され冪等(二重書き込みなし)。SKILL/prompt R1/agent が Slack ✅/OK は任意poll・発火条件でないと一貫記述。",
+      "IN2: finalize は render.store_pdf に out_clean(黄色除去)を渡し、draft の upload_as_gdoc(out_yellow)と分離。条文は docx_fill の差込のみで非改変、黄色除去のみが提出用PDFに反映される。--dry-run が Drive/Sheets/Slack 副作用を抑止でき単発実行で機械検証可能。",
+      "disable-model-invocation:false 化は本文/prompt L6.1 が明記する自然言語トリガ(『確定して/PDF発行して』で発火)を機能させる整合変更で、本文が守る安全性質(Slack push/webhook で自動発火しない・常駐不要)は不変。誤確定防止は invocation flag ではなく draft限定フィルタ+冪等+--dry-run で担保されるため、実行契約・安全設計・トリガ記述との矛盾/不整合/smell は生じていない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -35,5 +35,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "既存結論を参照せずSKILL、R1 prompt、agent、finalize.py、engine.py、ledger.pyを再読し、30思考法を全件使用（skip 0）。一般化差分を含む現SHAで独立評価した。"
+  "notes": "既存結論を参照せず SKILL.md(現行)/prompts/R1-approve-and-finalize.md/agents/contract-finalize-agent.md/scripts/finalize.py/lib(engine.py, ledger.py, render.py, slack_poll.py)を再読し独立評価した。disable-model-invocation:true→false は本文の pull型トリガ記述を実現するのに必要な整合で、Slack push を導入せず誤確定防止も機構側で担保されるため 4条件いずれにも新規 finding なし(PASS)。"
 }
