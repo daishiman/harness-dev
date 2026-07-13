@@ -80,7 +80,7 @@
       "entity_ref": "C07",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
-      "acceptance_criterion": "plugin hooks/hooks.jsonから配線され、repository_id/run_id/session_owner一致かつTTL内のstaging lockだけを対象に未ready/境界不正をexit2拒否する。heartbeat停止/crash後の期限切れlockは監査付きcleanupされ、lock不在・別repo/sessionはexit0 pass-throughする",
+      "acceptance_criterion": "plugin hooks/hooks.jsonから配線され、repo-local canonical lockがactiveな間は呼出sessionに依存せずreadinessを強制する。lock不在はexit0、malformed・canonical repository identity不一致・cleanup競合はexit2、期限切れlockはC13 public cleanup境界で監査付きcleanupする",
       "execution_kind": "component-build",
       "route_ref": "C07",
       "task_spec_ref": "task-specs/B-C07.md"
@@ -128,7 +128,7 @@
       "entity_ref": "C11",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/scripts/promote-system-plan.py",
-      "acceptance_criterion": "readiness/gates/evaluator digest/repo identity一致時だけatomic promotionする",
+      "acceptance_criterion": "readiness/gates/evaluator digest/repo identityとC13 active lockのrepository/run/session/feature/digest/TTLが全一致する時だけatomic promotion/recoveryし、lock不在・owner不一致・期限切れはwrite前にexit2拒否する",
       "execution_kind": "component-build",
       "route_ref": "C11",
       "task_spec_ref": "task-specs/B-C11.md"
@@ -140,10 +140,34 @@
       "entity_ref": "C12",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/scripts/validate-system-plan.py",
-      "acceptance_criterion": "feature-package + P01..P13 exact 13 task specs + 13-entry inventory + 13-node DAGを検証し、12/14件・phase重複・mixed parent/package・cross-feature edgeをexit2で拒否する",
+      "acceptance_criterion": "feature-package + P01..P13 exact 13 task specs + 13-entry inventory + 13-node DAG + C14 system-build-handoffを検証し、12/14件・phase重複・mixed parent/package・cross-feature edge・source digest/manifest不一致をexit2で拒否する",
       "execution_kind": "component-build",
       "route_ref": "C12",
       "task_spec_ref": "task-specs/B-C12.md"
+    },
+    {
+      "id": "D-C13",
+      "title": "system plan lock lifecycle managerをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+      "acceptance_criterion": "repository_id/run_id/session_owner/feature identityを束縛したrepo-local lockをatomic acquire・heartbeat renew・owner限定releaseし、expired lockを監査付きcleanupする。matching lockの競合、owner不一致、path escape、同一repo lock directory内のmalformed lockはfail-closedで拒否する",
+      "execution_kind": "component-build",
+      "route_ref": "C13",
+      "task_spec_ref": "task-specs/D-C13.md"
+    },
+    {
+      "id": "D-C14",
+      "title": "system build handoffとregistration receipt境界をbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/build-system-handoff.py; plugins/system-dev-planner/schemas/system-build-handoff.schema.json",
+      "acceptance_criterion": "versioned schemaに準拠するsystem-build-handoffをvalidated staging inputsから決定論生成し、その実体hashをstaging manifestのcanonical digestへ含める。registration requestはsystem-dev-planner、all-or-none applyとregistration receiptはdev-graphが所有し、promotion/receipt未成立のhandoffを実装authorizationとして扱わない",
+      "execution_kind": "component-build",
+      "route_ref": "C14",
+      "task_spec_ref": "task-specs/D-C14.md"
     },
     {
       "id": "P01",
@@ -307,7 +331,7 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "plugin-plans/system-dev-planner/evidence/S02.json",
-      "acceptance_criterion": "9 workstreams、12 components、root containment、atomic promotion、GitHub/worktree対応dev-graph登録契約が矛盾なく定義される",
+      "acceptance_criterion": "9 workstreams、14 components、root containment、lock lifecycle、versioned handoff、atomic promotion、GitHub/worktree対応dev-graph登録契約が矛盾なく定義される",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/S02.md"
@@ -338,7 +362,7 @@
     },
     {
       "id": "S05",
-      "title": "12 componentのL4 build完了を集約する",
+      "title": "14 componentのL4 build完了を集約する",
       "phase_ref": "P05",
       "entity_ref": null,
       "state": "pending",
@@ -488,6 +512,16 @@
     },
     {
       "type": "depends_on",
+      "from": "B-C01",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
       "from": "B-C02",
       "to": "B-C05"
     },
@@ -500,6 +534,11 @@
       "type": "depends_on",
       "from": "B-C02",
       "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C02",
+      "to": "D-C14"
     },
     {
       "type": "depends_on",
@@ -553,6 +592,11 @@
     },
     {
       "type": "depends_on",
+      "from": "B-C07",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
       "from": "B-C08",
       "to": "B-C09"
     },
@@ -593,13 +637,38 @@
     },
     {
       "type": "depends_on",
+      "from": "B-C11",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
       "from": "B-C12",
       "to": "B-C09"
     },
     {
       "type": "depends_on",
       "from": "B-C12",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C12",
       "to": "S04"
+    },
+    {
+      "type": "depends_on",
+      "from": "D-C13",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "D-C14",
+      "to": "B-C09"
     },
     {
       "type": "depends_on",
@@ -680,6 +749,16 @@
       "type": "depends_on",
       "from": "P05",
       "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "D-C14"
     },
     {
       "type": "depends_on",
@@ -800,6 +879,16 @@
       "type": "depends_on",
       "from": "S05",
       "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "D-C14"
     },
     {
       "type": "depends_on",
@@ -924,6 +1013,16 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "D-C13"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "D-C14"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "S05"
     },
     {
@@ -1025,6 +1124,21 @@
       "type": "produces",
       "from": "B-C12",
       "to": "plugins/system-dev-planner/scripts/validate-system-plan.py"
+    },
+    {
+      "type": "produces",
+      "from": "D-C13",
+      "to": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py"
+    },
+    {
+      "type": "produces",
+      "from": "D-C14",
+      "to": "plugins/system-dev-planner/schemas/system-build-handoff.schema.json"
+    },
+    {
+      "type": "produces",
+      "from": "D-C14",
+      "to": "plugins/system-dev-planner/scripts/build-system-handoff.py"
     },
     {
       "type": "produces",

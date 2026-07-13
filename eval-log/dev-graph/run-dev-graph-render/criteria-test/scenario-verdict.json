@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-render",
+    "component_id": "C05",
+    "skill_md_sha256": "5dd7cd400fd201a4d9cd76e57e6df95db183c7690072b4c2c79df3e2eabb42c7"
+  },
+  "verdict": "PASS",
+  "reviewer": "elegant-logical-structural-analyst-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_render_and_schedule",
+        "independent: render-graph-html.py temporary 3-node graph + external script/link scan"
+      ],
+      "observed": "The renderer returned ok=true with nodes=3 and edges=1; the emitted single HTML contained inline SVG and application/json script data, had no http(s) script/link reference, and displayed feature progress 1/2."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "evidence_kind": "independent-scenario-review",
+      "test_refs": [
+        "independent: macOS Quick Look WebKit render of generated /tmp/devgraph-agent2.poywJE/index.html"
+      ],
+      "observed": "A fresh Quick Look WebKit render produced a 1400px PNG showing all three graph nodes, the dependency edge, status pills, and `active · feature · 1/2` without installing or loading a runtime dependency."
+    }
+  }
+}

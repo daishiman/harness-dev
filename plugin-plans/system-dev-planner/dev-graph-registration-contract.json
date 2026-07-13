@@ -79,9 +79,9 @@
     "preconditions": ["expected_count_equals_13", "phase_refs_exactly_P01_through_P13", "single_parent_feature", "single_feature_package_id", "binding_intents_keys_exactly_equal_node_ids", "all_graph_node_ids_unique", "all_dependencies_resolve_within_same_feature_package", "all_tracker_bindings_resolve", "all_paths_contained", "parent_feature_resolves_to_existing_feature_node"],
     "receipt": {
       "path": "dev-graph-registration-receipt.json",
-      "required_fields": ["status", "source_digest", "expected_count", "applied_count", "graph_revision", "registered_node_ids", "committed_at"],
-      "success_condition": "status=registered and expected_count=applied_count=13 and registered_node_ids exact-set equals P01..P13 manifest task ids and one parent_feature/package identity",
-      "failure_condition": "status=aborted and applied_count=0; partial success is forbidden"
+      "required_fields": ["schema_version", "status", "registered_at", "feature_package_id", "parent_feature", "source_digest", "expected_count", "applied_count", "phase_refs", "node_ids", "graph_revision_before", "graph_revision_after", "graph_digest_after", "output_path"],
+      "success_condition": "status=registered and expected_count=applied_count=13 and node_ids/phase_refs exact-set equals P01..P13 manifest tasks with one parent_feature/package identity",
+      "failure_condition": "validation or transaction failure commits zero nodes and emits no success receipt; partial success is forbidden"
     }
   },
   "path_policy": "file_path is relative to caller repository root and must resolve inside configured tasks root",

@@ -1,0 +1,60 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "dev-graph",
+  "entry_points": {
+    "skills": [
+      "run-dev-graph-init",
+      "run-dev-graph-node",
+      "run-dev-graph-sync",
+      "run-dev-graph-requirements",
+      "run-dev-graph-render",
+      "run-dev-graph-decompose",
+      "run-dev-graph-schedule",
+      "run-dev-graph-status",
+      "run-dev-graph-system-spec"
+    ],
+    "agents": [
+      "dev-graph-integrity-auditor",
+      "dev-graph-sync-conflict-verifier",
+      "dev-graph-requirements-verifier",
+      "dev-graph-parallel-safety-verifier"
+    ],
+    "commands": [
+      "dev-graph"
+    ],
+    "hooks": [
+      "guard-graph-schema",
+      "reconcile-task-lifecycle"
+    ]
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "development-planning",
+    "tags": [
+      "task-graph",
+      "feature-orchestration",
+      "worktree"
+    ]
+  },
+  "depends_on": [
+    "system-spec-harness",
+    "system-dev-planner"
+  ],
+  "skill_dependencies": {
+    "run-dev-graph-decompose": [
+      "system-dev-planner"
+    ],
+    "run-dev-graph-node": [
+      "system-dev-planner"
+    ],
+    "run-dev-graph-requirements": [
+      "system-dev-planner"
+    ],
+    "run-dev-graph-system-spec": [
+      "system-spec-harness"
+    ]
+  },
+  "pkg_checks": {}
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "feature-execution-package.schema.json",
+  "title": "One feature to exact 13 executable task package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "feature_package_id", "parent_feature", "source_feature_digest", "task_count", "phase_refs", "task_spec_paths", "task_node_ids"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+    "parent_feature": {"type": "string", "minLength": 1},
+    "source_feature_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "task_count": {"const": 13},
+    "phase_refs": {"const": ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08", "P09", "P10", "P11", "P12", "P13"]},
+    "task_spec_paths": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "prefixItems": [
+        {"const": "task-specs/phase-01-requirements.md"},
+        {"const": "task-specs/phase-02-architecture.md"},
+        {"const": "task-specs/phase-03-design-review.md"},
+        {"const": "task-specs/phase-04-test-design.md"},
+        {"const": "task-specs/phase-05-implementation.md"},
+        {"const": "task-specs/phase-06-test-run.md"},
+        {"const": "task-specs/phase-07-acceptance.md"},
+        {"const": "task-specs/phase-08-refactoring-migration.md"},
+        {"const": "task-specs/phase-09-quality-assurance.md"},
+        {"const": "task-specs/phase-10-final-review.md"},
+        {"const": "task-specs/phase-11-evidence.md"},
+        {"const": "task-specs/phase-12-documentation-operations.md"},
+        {"const": "task-specs/phase-13-release-deploy.md"}
+      ],
+      "items": false
+    },
+    "task_node_ids": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}

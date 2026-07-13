@@ -7,7 +7,7 @@ prev_phase: 4
 next_phase: 6
 status: 未実施
 gate_type: tdd-green
-entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28]
+entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28, C29]
 applicability:
   applicable: true
   reason: ""
@@ -34,7 +34,7 @@ L3 planとして、全buildable componentを後段L4 builderへ委譲できるro
 - route固有criteriaはhandoffへ複製せず、`route.id`と同じinventory component idの`quality_gates/harness_coverage/feedback_contract.criteria`を参照する。1:1 parityが参照解決を保証する。
 
 ## 成果物
-- 全24 componentのtop-sort可能なroutesと、後段build時の停止条件。
+- 全25 componentのtop-sort可能なroutesと、後段build時の停止条件。
 - `envelope-draft/plugin.json` とschema draftのmanual-apply契約。
 
 ## スコープ外
@@ -52,7 +52,7 @@ L3 planとして、全buildable componentを後段L4 builderへ委譲できるro
 - [ ] 実体化・Green実測は後段L4 build reportで確認することが明記され、本L3 planのPASS条件と混同されていない。
 
 ### 受入例
-- 満たす例: handoffの24 routeがinventoryと1:1で、後段がC24→C28→C27→C11/C12→C26→C25→C01/C02の依存順を計算できる。
+- 満たす例: handoffの25 routeがinventoryと1:1で、C29を含む依存DAGのtop-sort順を後段が計算できる。
 - 満たす例: C02の分類previewとC18のread-only条件がcriteriaとしてroute先へ搬送される。
 - 満たさない例: C09 (command) が依存先 C18 より先に build される → top-sort 違反として `check-build-handoff.py` が exit1 で検出する。
 
@@ -63,5 +63,5 @@ L3 planとして、全buildable componentを後段L4 builderへ委譲できるro
 
 ## 参照情報
 - `handoff-run-plugin-dev-plan.json` (build routing) / `component-inventory.json` (依存 DAG)。
-- 対象 component C01-C19・C24-C28 (計24)。
+- 対象 component C01-C19・C24-C29 (計25)。
 - 後続 P06 (test-run)。

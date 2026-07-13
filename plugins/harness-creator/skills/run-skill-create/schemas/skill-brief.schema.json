@@ -65,7 +65,24 @@
     "cross_platform": {"type": "boolean"},
     "os_preamble_required": {"type": "boolean"},
     "open_questions": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
-    "responsibilities": {"type": "array", "items": {"type": "object"}},
+    "responsibilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^R[0-9]+[a-z]?(-[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "Responsibility ID. R1 / R1-elicit / R2b-readiness forms are accepted."
+          },
+          "prompt_required": {
+            "type": "boolean",
+            "description": "Omitted means true for prompt generation; explicit false excludes this responsibility."
+          }
+        }
+      }
+    },
     "prompt_creator_policy": {"type": "string", "enum": ["required", "optional", "skip", "auto"]},
     "additional_resources": {"type": "array", "items": {"type": "object"}},
     "knowledge_loop": {

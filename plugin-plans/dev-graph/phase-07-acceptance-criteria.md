@@ -7,7 +7,7 @@ prev_phase: 6
 next_phase: 8
 status: 未実施
 gate_type: none
-entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28]
+entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28, C29]
 applicability:
   applicable: true
   reason: ""
@@ -71,5 +71,5 @@ applicability:
 
 ## 参照情報
 - `goal-spec.purpose` / index「受入確認 (build 後の見方)」章。
-- 対象 component C01-C19・C24-C28 (計24)。
+- 対象 component C01-C19・C24-C29 (計25)。
 - 後続 P08 (refactoring)。

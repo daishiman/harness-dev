@@ -1,6 +1,6 @@
 {
   "plugin_concept": "dev-graph — ローカルtask graph/Markdownを正本に仕様成果物を一元管理し、BeadsまたはGitHubへbinding別投影しながら要件定義・実装handoff・複数worktree実行・PR完了収束を担う管理ハーネス",
-  "derivation": "capabilityを5種へ分解する。9 skill、4 sub-agent、1 slash-command、2 hook、8 plugin-root scriptの計24実体。既存20実体に対し、Claude Code lifecycle自動化はC25 hook、GitHub完了収束はC26 script、複数worktree lease/identityはC27 script、beads (bd) bridgeはC28 scriptとして独立責務を追加する。GitHub Projects publicationはC14、API bridgeはC12、Issue/Project双方向同期はC03、beads bridgeはC28が担い、system development planはexternal system-dev-plannerを引用する。component依存とverb対応はinventoryをSSOTとする。",
+  "derivation": "capabilityを5種へ分解する。9 skill、4 sub-agent、1 slash-command、2 hook、9 plugin-root scriptの計25実体。既存20実体に対し、Claude Code lifecycle自動化はC25 hook、GitHub完了収束はC26 script、複数worktree lease/identityはC27 script、beads (bd) bridgeはC28 scriptとして独立責務を追加する。外ループreconcileで、C02 exact-13 all-or-none登録engineとしてmaterializeされたregister-package.pyをC29 scriptとして第一級化し検証網へ組込む。GitHub Projects publicationはC14、API bridgeはC12、Issue/Project双方向同期はC03、beads bridgeはC28が担い、system development planはexternal system-dev-plannerを引用する。component依存とverb対応はinventoryをSSOTとする。",
   "considered_component_kinds": ["skill", "sub-agent", "slash-command", "hook", "script"],
   "components": [
     {
@@ -23,7 +23,7 @@
       "mass_production_profile": "strict",
       "responsibilities": [
         {"id": "R1-elicit", "summary": "C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない", "prompt_required": true},
-        {"id": "R2-plan", "summary": "5 root、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない", "prompt_required": true},
+        {"id": "R2-plan", "summary": "6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない", "prompt_required": true},
         {"id": "R3-init", "summary": "resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない", "prompt_required": true},
         {"id": "R4-template", "summary": "共通/5kind/architecture 5 subtype/API/system phase/system task overlay/template contractを`.dev-graph/templates/`へ冪等scaffoldし、利用者編集済み版は上書きしない", "prompt_required": true}
         ,{"id": "R5-hooks", "summary": "C25のplugin hookを共有既定とする。project fallbackはplain-symlink導入時だけ許可し、effective plugin hookが見えれば拒否する。C24で検証した`.claude/dev-graph-plugin`からC10/C25全eventを既存settingsへpreview付きdeep-mergeし、override/二重登録を診断してrollback manifestを残す", "prompt_required": true}
@@ -40,7 +40,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-graph-schema.py で初期グラフストアを送信前検証しスキーマの必須キー欠落が 0 件", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "初期化後にissues/tasks/specs/architecture/features/docsの6 rootとrouting policyとグラフストアが揃い、二回目initで構造が変化しないことを受入テストが確認する", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "初期化後にissues/tasks/specs/architecture/features/docsの6 rootとrouting policyとグラフストアが揃い、二回目initで構造が変化しないことを受入テストが確認する", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "初期化後に `.dev-graph/templates/` へ全kind templateがscaffoldされ、二回目initでも利用者編集を上書きしない", "verify_by": "test"},
           {"id": "OUT3", "loop_scope": "outer", "text": "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はhost launcher preflightが起動前検出する", "verify_by": "test"},
           {"id": "OUT4", "loop_scope": "outer", "text": "GitHub設定雛形がenabled=falseで冪等生成され、owner/project number/field mappingを保持する一方、token/project/item/field node IDを正本configへ保存しない", "verify_by": "test"},
@@ -97,12 +97,12 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-graph-schema.py でノード書込み前検証しスキーマの必須キー欠落が 0 件", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "通常5 artifact混在入力は自動routingされ、featureはC14 macro contractだけからfeatures/へ入り、連続更新後もfrontmatter/path整合性が維持される", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "通常5 artifact混在入力は自動routingされ、featureはC14 macro contractだけからfeatures/へ入り、連続更新後もfrontmatter/path整合性が維持される", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "新規ノード作成時にartifact_kind (architectureは選択したsubtype全て、specificationはAPI変更有無に応じたapi-contract合成) に対応する本文必須セクション見出しが欠落0件で適用されることを受入テストが確認する (要件C18/C19)", "verify_by": "test"},
           {"id": "OUT3", "loop_scope": "outer", "text": "12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる", "verify_by": "test"}
         ]
       },
-      "depends_on": ["C01", "C11", "C24"],
+      "depends_on": ["C11", "C24", "C29"],
       "build_target": "plugins/dev-graph/skills/run-dev-graph-node/",
       "builder": "run-skill-create",
       "build_kind": "skill",
@@ -155,7 +155,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/反映の必須キー欠落が 0 件", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件になることを受入テストが確認する", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件になることを受入テストが確認する", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "id+updated_at が同時競合するケースを注入した際、規定のタイブレーク規則 (更新が新しい方を採用・同時刻はGitHub優先+ローカル手動確認フラグ) どおりに競合解決されることを受入テストが確認する", "verify_by": "test"},
           {"id": "OUT3", "loop_scope": "outer", "text": "GitHub Issue が close/delete された場合、次回同期でローカルノードが物理削除されず tombstone/status 遷移 (open→closed 等) として双方向伝播されることを受入テストが確認する", "verify_by": "test"},
           {"id": "OUT4", "loop_scope": "outer", "text": "--dry-run 指定時に GitHub 側への書込みが 0 件のまま反映予定差分のみがプレビューされることを受入テストが確認する (暴発防止)", "verify_by": "test"},
@@ -215,8 +215,8 @@
       "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
-          {"id": "IN1", "loop_scope": "inner", "text": "gh-bridge.py で取得した issue コンテキストとグラフノードの要件抽出に必要な必須キー欠落が 0 件", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "導出した要件定義書が capability-build/task-graph build へ handoff され、本 skill 自身が実装コードを生成しないことを受入テストが確認する", "verify_by": "test"},
+          {"id": "IN1", "loop_scope": "inner", "text": "C11のreadiness validation digestとC02保存済みimplementation_readiness/evaluation_status/source_digestが一致し、system-dev-plannerのvalidate-system-plan.pyがP01..P13 exact 13・共通parent_feature/feature_package_id・機能内前方dependencyを検証して必須キー欠落とstale digestが0件", "verify_by": "script"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "導出した要件定義書が capability-build/task-graph build へ handoff され、本 skill 自身が実装コードを生成しないことを受入テストが確認する", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "implementation_readiness=incompleteの参照ノードが混在するとき、missing_sectionsが漏れなくレポートへsurfaceされ、当該ノードのhandoffが保留されることを受入テストが確認する (要件C20)", "verify_by": "test"}
         ]
       },
@@ -269,7 +269,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "render-graph-html.py の出力HTMLに外部script/link参照が0件でゼロ依存であることをスクリプト検証する", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフ可視化が表示されることを受入テストが確認する", "verify_by": "test"}
+          {"id": "OUT1", "loop_scope": "outer", "text": "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する", "verify_by": "live-trial"}
         ]
       },
       "depends_on": ["C02", "C11", "C13", "C24"],
@@ -355,8 +355,8 @@
       "id": "C09",
       "component_kind": "slash-command",
       "name": "dev-graph",
-      "description": "dev-graph の init/node/status/sync/spec/plan/requirements/render/decompose/next/worktree をディスパッチする主要導線。worktree verbはC27のclaim/heartbeat/park/release/statusを呼ぶ。specはsystem-spec-harness、planはexternal system-dev-plannerを引用する。verb→component対応は本inventoryを正本とする",
-      "argument-hint": "<init|node|status|sync|spec|plan|requirements|render|decompose|next|worktree> [claim|heartbeat|park|release|status] [--dry-run]",
+      "description": "dev-graph の init/node/status/sync/spec/plan/requirements/render/decompose/next/worktree をディスパッチする主要導線。worktree verbはC27のclaim/heartbeat/park/release/listを呼ぶ。specはsystem-spec-harness、planはexternal system-dev-plannerを引用する。verb→component対応は本inventoryを正本とする",
+      "argument-hint": "<init|node|status|sync|spec|plan|requirements|render|decompose|next|worktree> [claim|heartbeat|park|release|list] [--dry-run]",
       "allowed-tools": ["Read", "Bash", "Skill"],
       "disable-model-invocation": false,
       "depends_on": ["C01", "C02", "C03", "C04", "C05", "C14", "C15", "C18", "C19", "C27"],
@@ -515,7 +515,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-graph-schema.py で分解生成ノードを送信前検証しスキーマの必須キー欠落が 0 件", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "マクロ分解結果 (feature+architecture+機能間depends_on) のDAGが循環なし・粒度閾値内で、評価前draftはIssue起票0件、confirmed/pass/readiness completeへの昇格後だけ起票対象になる", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "マクロ分解結果 (feature+architecture+機能間depends_on) のDAGが循環なし・粒度閾値内で、評価前draftはIssue起票0件、confirmed/pass/readiness completeへの昇格後だけ起票対象になる", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "同一入力を二回実行してもbinding=beadsはbd issue/blocks edge、binding=githubはIssue/Project item、binding=noneはlocal nodeだけを各1組維持する", "verify_by": "test"},
           {"id": "OUT3", "loop_scope": "outer", "text": "--dry-run時にlocal graph/Beads/GitHub/Projects writeが0件のままbinding解決と投影差分だけがpreviewされる", "verify_by": "test"},
           {"id": "OUT4", "loop_scope": "outer", "text": "mode=both+auto、github+local_only、beads+Issue publicationを各fixtureでfail-closedし、外部write 0件となる", "verify_by": "test"},
@@ -572,7 +572,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "schedule-graph.py のready-setがblocked/draft/unconfirmed/evaluation非pass/readiness非completeを0件で含む", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "推薦タスクが全依存 (depends_on) 充足済み (ready) であることを受入テストが確認する", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "推薦タスクが全依存 (depends_on) 充足済み (ready) であることを受入テストが確認する", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "提示した並列バッチ内で resource_scope (touches) が重複するノードペアが 0 件 (conflict-free) であることを受入テストが確認する", "verify_by": "test"},
           {"id": "OUT3", "loop_scope": "outer", "text": "ready taskごとに一意なsuggested_branchとC09 worktree claim commandが返り、同一graph_node_idの二重claimはC27が0件に抑える", "verify_by": "test"}
         ]
@@ -674,7 +674,7 @@
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-graph-schema.py で読み取ったグラフストアの検索結果に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する", "verify_by": "script"},
-          {"id": "OUT1", "loop_scope": "outer", "text": "検索/状態表示の結果がグラフストアの実際の状態 (status/closed_at/依存関係) と一致することを受入テストが確認する", "verify_by": "test"},
+          {"id": "OUT1", "loop_scope": "outer", "text": "検索/状態表示の結果がグラフストアの実際の状態 (status/closed_at/依存関係) と一致することを受入テストが確認する", "verify_by": "live-trial"},
           {"id": "OUT2", "loop_scope": "outer", "text": "本 skill 実行後もグラフストアと GitHub Issue 側に一切の変更が生じない (read-only で副作用なし) ことを受入テストが確認する", "verify_by": "test"}
         ]
       },
@@ -726,7 +726,7 @@
       "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
       "feedback_contract": {"criteria": [
         {"id": "IN1", "loop_scope": "inner", "text": "system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる", "verify_by": "script"},
-        {"id": "OUT1", "loop_scope": "outer", "text": "仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する", "verify_by": "test"}
+        {"id": "OUT1", "loop_scope": "outer", "text": "仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する", "verify_by": "live-trial"}
       ]},
       "depends_on": ["C02", "C11", "C24"],
       "build_target": "plugins/dev-graph/skills/run-dev-graph-system-spec/",
@@ -786,7 +786,7 @@
       "write_scope": "restricted lifecycle projection and common-dir pending event ledger",
       "stdlib_only": true,
       "tests_min": 80,
-      "depends_on": ["C11", "C12", "C24", "C27", "C28"],
+      "depends_on": ["C02", "C11", "C12", "C24", "C27", "C28"],
       "placement_scope": "plugin-root",
       "build_target": "plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
       "builder": "plugin-scaffold",
@@ -809,7 +809,7 @@
       "write_scope": "validated git-common-dir/dev-graph ephemeral coordination only",
       "stdlib_only": true,
       "tests_min": 80,
-      "depends_on": ["C24", "C28"],
+      "depends_on": ["C24", "C28", "C29"],
       "placement_scope": "plugin-root",
       "build_target": "plugins/dev-graph/scripts/manage-worktree-lease.py",
       "builder": "plugin-scaffold",
@@ -841,6 +841,33 @@
       "build_kind": "script",
       "quality_gates": {"p0_lint": ["lint-script-frontmatter"], "build_trace": "required", "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true}, "content_review": {"verdict": "PASS", "sha_match": true}, "evaluator": {"threshold": 80, "high_max": 0}},
       "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+version-window-fixtures"}
+    },
+    {
+      "id": "C29",
+      "component_kind": "script",
+      "name": "register-package.py",
+      "script_name": "register-package.py",
+      "purpose": "system-dev-planner由来のpromoted exact-13 packageを1機能単位でdev-graphへ検証付きatomic登録するC02実装engine。P01..P13 exact 13 node・共通parent_feature/feature_package_id・機能内前方dependencyをall-or-none検査し部分適用(applied_count<13)を0件に保つ。登録結果はstatus/source_digest/expected_count=applied_count=13/phase_refs/node_ids/graph_revision_before/afterを持つimmutable receiptとして書き出し、同一source_digestの再実行を冪等確定する。C02 run-dev-graph-nodeのbatch登録契約(exact-13 all-or-none receipt)を実装するためC02とcoupleし、cross-plugin preflightも担う",
+      "inputs": "argv(register --package FILE --graph FILE --output FILE --receipt FILE | preflight)",
+      "outputs": "stdout(JSON: registration preview/immutable receipt/cross-plugin preflight report)/stderr(violation)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "argv --output/--receipt で明示選択したdev-graph成果物とimmutable receiptのみ",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/dev-graph/scripts/register-package.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
     }
   ],
   "plugin_level_surfaces": {
@@ -850,7 +877,7 @@
     "references_config_assets": {"required": true, "record_in": "index.plugin_meta.ssot_dedup", "paths": ["templates/template-contract.json", "templates/system-plan-contract.json", "templates/claude-settings.example.json", "templates/*.md", "references/claude-code-hooks-contract.md", "references/git-worktree-contract.md", "references/github-lifecycle-contract.md", "references/execution-tracker-contract.md"], "external_contract_refs": ["plugins/system-spec-harness/.claude-plugin/plugin.json", "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md", "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md", "plugin-plans/system-dev-planner/handoff-run-plugin-dev-plan.json", "plugin-plans/system-dev-planner/references/feature-execution-package-contract.md"]},
     "schemas": {"required": true, "path": "schemas/graph-node.schema.json", "draft_path": "schemas-draft/graph-node.schema.json", "additional_drafts": ["schemas-draft/repo-config.schema.json"], "draft_fields": ["graph_node_id", "artifact_kind", "artifact_subtypes", "project_id", "domain", "tags", "title", "owners", "created_at", "updated_at", "status", "priority", "start_date", "target_date", "iteration", "closed_at", "depends_on", "related_nodes", "resource_scope", "purpose", "goal", "scope_in", "scope_out", "acceptance", "architecture_refs", "parent_feature", "feature_package_id", "phase_ref", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "classification_confidence", "classification_reason", "classification_candidates", "github_publication", "issue_linkage", "tracker_binding", "beads_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"]},
     "templates": {"required": true, "path": "plugins/dev-graph/templates/", "draft_path": "templates/template-contract.json", "draft_dir": "templates/", "scaffold_target": ".dev-graph/templates/ (C01 が導入先リポジトリへ冪等コピーする編集可能複製。plugin 内 templates/ が正本でscaffold元)", "contract_fields": ["common_frontmatter.required", "artifacts.<kind>.required_sections", "artifacts.architecture.subtype_templates", "artifacts.specification.conditional_templates", "readiness.fail_closed_on", "system-plan-contract.phases", "system-plan-contract.workstream_kinds"], "consumers": "C01(scaffold)/C02(適用)/C11(必須セクション欠落のfail-closed検証)/C04(readiness handoff)/C19(system-spec import)/external system-dev-planner(system task plan引用)。テンプレート正本はcomponentでなく静的資産"},
-    "vendor": {"required": false, "omitted_reason": "外部harnessは引用しvendoringしない。8 plugin-root scripts (validate-graph-schema/gh-bridge/render/schedule/resolve-repo-context/reconcile-github-lifecycle/manage-worktree-lease/bd-bridge) はsymlink配布されるdev-graph code内へhoistし、contentは導入repo内に分離する。validate-system-plan.pyはexternal plugin system-dev-plannerが所有し複製しない"},
+    "vendor": {"required": false, "omitted_reason": "外部harnessは引用しvendoringしない。9 plugin-root scripts (validate-graph-schema/gh-bridge/render/schedule/resolve-repo-context/reconcile-github-lifecycle/manage-worktree-lease/bd-bridge/register-package) はsymlink配布されるdev-graph code内へhoistし、contentは導入repo内に分離する。validate-system-plan.pyはexternal plugin system-dev-plannerが所有し複製しない"},
     "mcp_app_connector": {"required": false, "omitted_reason": "GitHub 連携は gh CLI ベースの Bash 経由で行い MCP/app connector を新設しない (goal-spec constraint)"},
     "notion_config": {"required": false, "omitted_reason": "dev-graph はタスクグラフを GitHub と同期する構想であり Notion ドメイン DB を読み書きしない。feedback 受け皿は plugin_meta.feedback_deploy.notion_sink 側で別途宣言する。notion_sink.resolution=\"notion_config\" は run-skill-feedback 共通の解決器名参照の固定 literal 値であり (check-spec-gates.py が厳密一致検査)、本 surface の required/omitted 判定とは独立 (他の omitted 事例と同型・自己矛盾ではない)"}
   }

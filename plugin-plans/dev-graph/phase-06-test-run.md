@@ -7,7 +7,7 @@ prev_phase: 5
 next_phase: 7
 status: 未実施
 gate_type: none
-entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28]
+entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28, C29]
 applicability:
   applicable: true
   reason: ""
@@ -55,5 +55,5 @@ harness coverage は品質の最低ラインを機械保証する仕組み。計
 
 ## 参照情報
 - harness-coverage-spec (6 種別 × 二軸・kind 別パス)。
-- 対象 component C01-C19・C24-C28 (計24)。
+- 対象 component C01-C19・C24-C29 (計25)。
 - 後続 P07 (acceptance-criteria)。

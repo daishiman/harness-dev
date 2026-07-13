@@ -1,23 +1,61 @@
 {
   "schema_version": "1.0.0",
-  "evaluated_at": "2026-07-12T23:17:02+09:00",
+  "evaluated_at": "2026-07-13T15:35:00+09:00",
   "plan_validation": {
     "status": "PASS",
-    "plan_digest": "sha256:299932b4eb00a87db1ace3060db55adfdd2da01596409154aa268d377856a1c7",
-    "digest_definition": "sha256 of sorted relative-path per-file sha256 lines under plugin-plans/dev-graph, excluding .gate/, .claude/, plan-findings.json, elegant-verification-30.json, verification-state.json",
-    "graph_hash": "sha256:d14c3019a21192e1e9300177f1f69c7d0098e642736b88ccf483bcc0e60ba913",
-    "component_inventory_hash": "sha256:1aa3b101a360fa50029530ec0b9ff66a410e1f0e2a48bd476472697e7c49431b",
-    "handoff_hash": "sha256:d4567b7a21bd7ef9542ee186f31e1175a4b96d7dc92f145c7d0fff447a84eb20",
-    "template_contract_hash": "sha256:b2bc494253a1912857530af2f1594f35c1780f36a50d675e5c317675ef28e3b3",
+    "plan_digest": "sha256:65c5e00212b6d1d95981bb1ddd324864c99af182e7ec7ccf07ea325a59540914",
+    "digest_definition": "sha256 of '<relative-path>\\t<file-sha256>\\n' records sorted by relative path for regular files under plugin-plans/dev-graph, excluding .gate/, .claude/, plan-findings.json, elegant-verification-30.json, verification-state.json",
+    "graph_hash": "sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d",
+    "component_inventory_hash": "sha256:02718018d928499654072204ca76e8960731519847fbafabed1e2a3c116507d0",
+    "handoff_hash": "sha256:a8277bfead488d6e8c6bcbc9c0220408355be283f26837e57aeb6484af232b72",
+    "template_contract_hash": "sha256:27babed5b0bbdafa68f494a42ce2a01bba1f51e912add324f1bab0a46efd1cb4",
     "graph_schema_hash": "sha256:f30b9d5d1327c94649a0489eaba203b6c937f345f75b3ca94d05e9667ab20b26",
-    "repo_config_schema_hash": "sha256:254611f8e83992853c405bca6db482c0c0bac2c26cd00b5d2b7b469f49dd35e5",
-    "counts": {"requirements": 56, "components": 24, "routes": 24, "task_nodes": 49, "task_edges": 239, "thinking_methods": 30},
-    "conditions": {"no_contradiction": "PASS", "no_missing": "PASS", "consistent": "PASS", "dependency_integrity": "PASS"},
+    "repo_config_schema_hash": "sha256:48ceb4ba84394e5f07530149a4fbcb5f0ce38283df34c3548f27d2804fa053f2",
+    "counts": {
+      "requirements": 56,
+      "components": 25,
+      "routes": 25,
+      "task_nodes": 50,
+      "task_edges": 245,
+      "thinking_methods": 30
+    },
+    "conditions": {
+      "no_contradiction": "PASS",
+      "no_missing": "PASS",
+      "consistent": "PASS",
+      "dependency_integrity": "PASS"
+    },
     "deterministic_gate_invocations": 12,
     "schema_fixture_suite": "PASS",
-    "independent_review": "PASS"
+    "independent_plan_review": "PASS"
   },
-  "lifecycle_execution": {"status": "pending", "meaning": "P01-P13 and task nodes are not executed by this L3 plan validation"},
-  "build_execution": {"status": "blocked", "blockers": ["GAP-SCRIPT-BUILDER", "GAP-ENVELOPE-001"], "meaning": "L4 build cannot start until contract-only executors are resolved"},
-  "freshness_policy": "Any change to a digest input makes this receipt stale and requires derive-task-graph, deterministic gates, evaluator, schema fixtures, and 30-method review to run again."
+  "lifecycle_execution": {
+    "status": "structural_complete",
+    "meaning": "50/50 task nodes are recorded done and 25 route reports exist. This state proves dispatch/materialization, not semantic contract fulfillment."
+  },
+  "semantic_validation": {
+    "status": "FAIL_ESCALATED",
+    "iterations": 3,
+    "iteration_limit": 3,
+    "score": 52,
+    "threshold": 80,
+    "review": "eval-log/dev-graph/elegant-review/final-harness-contract-audit-20260713.json",
+    "conditions": {
+      "no_contradiction": "FAIL",
+      "no_missing": "FAIL",
+      "consistent": "FAIL",
+      "dependency_integrity": "FAIL"
+    }
+  },
+  "build_execution": {
+    "status": "blocked_escalated",
+    "blockers": [
+      "C09/C10/C11/C12/C15/C16/C24/C25/C26/C27/C28 runtime semantic contract gaps",
+      "C01-C05/C14/C18/C19 criteria-test evidence gaps",
+      "pending structural discovered task requires explicit approval"
+    ],
+    "pending_discovered_task": "eval-log/dev-graph/build/discovered-tasks/semantic-contract-gaps.json",
+    "meaning": "The completion gate is blocked despite full structural progress because the third semantic review did not satisfy all four required conditions."
+  },
+  "freshness_policy": "Any change to a digest input makes the plan receipt stale. Any semantic fix requires a new task-graph route-mode build and another independent content review; this failed third-cycle receipt must not be rewritten as PASS without new evidence."
 }

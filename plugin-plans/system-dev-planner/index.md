@@ -71,8 +71,8 @@ plugin_meta:
 - **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、system-spec-harness が担う仕様書内容構築、task-graph build/capability-build が担う実装コード生成、PR/配布登録、feature ノード自体の生成および program 全体の goal/scope の保持 (dev-graph マクロ層の責務)。
 
 ## ドメイン知識
-- **メタ/実行の分離**: 本pluginをbuildするL3計画は13 phase + 12 components。build後のruntimeは1 featureにつきexact 13 executable tasks。runtimeではphase slotとtaskを1:1にして別phase文書を作らない。
-- **component_kind (5 種、全検討済み)**: skill / sub-agent / slash-command / hook / script。skill×2 / sub-agent×3 / slash-command×1 / hook×1 / script×5 = 12 実体へ収束した。
+- **メタ/実行の分離**: 本pluginをbuildするL3計画は13 phase + 14 components。build後のruntimeは1 featureにつきexact 13 executable tasks。runtimeではphase slotとtaskを1:1にして別phase文書を作らない。
+- **component_kind (5 種、全検討済み)**: skill / sub-agent / slash-command / hook / script。skill×2 / sub-agent×3 / slash-command×1 / hook×1 / script×7 = 14 実体へ収束した。
 - **workstream_kind / build_target_kind 二重フィールド**: system-dev-planner が生成する `workstream-inventory.json` は、生成対象タスクの分類軸 `workstream_kind` (9 値: frontend/backend/api/data/infrastructure/security/quality/documentation/operations) と、ビルド対象語彙を保持する `build_target_kind` (6 値: `application-code` + component_kind 5 値) の 2 フィールドを持つ。`build_target_kind` ∈ {skill,sub-agent,slash-command,hook,script} のとき plugin-dev-planner 同様の builder routing へ、`application-code` のとき task-graph build/capability-build への汎用 handoff へ分岐する (goal-spec C2 の充足)。
 - **implementation-readiness**: system-spec-harness 側の完成度評価 (前提条件/設計知識/成果物/依存/完了チェックリスト等の充足度)。`complete` 未達では実装 handoff を fail-closed で停止する (goal-spec C4/constraints)。判定は C08 (`check-implementation-readiness.py`) が単一 SSOT として担い、C01 (emit 時) と C07 (tool-call 時) の 2 箇所から呼ばれる (第二消費者あり=plugin-root hoist の根拠)。
 - **dev-graph 登録契約**: P01..P13 exact 13 taskをall-or-none登録し、共通`parent_feature`/`feature_package_id`、expected/applied=13、phase/node exact-set、graph revision一致後だけhandoffする。詳細は`feature-execution-package-contract.md`と`dev-graph-registration-contract.json`。
@@ -88,7 +88,7 @@ plugin_meta:
 - **同梱決定論ゲート (2 層命名・機械正本=`specfm.GATE_SCRIPTS`)**: core 5 scripts / 6 invocations = verify-index-topsort (§9 section 床+phase 完全性+DAG) / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage (--self-test + PLAN の 2 起動)。拡張ゲート = check-plugin-goal-spec / check-requirements-coverage / check-surface-inventory / check-build-handoff / validate-task-graph (デフォルト成果物 task-graph.json の 10 検査) / check-runtime-portability (総数の人間可読正本=io-contract §11 表)。
 - **build の始め方 (L4 consumer 契約)**: 後段 builder は handoff routesのDAGを消費する。`C09 → {C12,C08,C10,C03} → {C05,C04,C07} → C02 → C11 → C01 → C06`の依存順でbuildする。これによりC01のruntime sequence `resolve → elicit → decompose/emit → independent evaluate → promote`の全producerが起動前に揃う。L3ではroute契約だけを確定し実buildしない。
 - **producer/consumer 境界**: 本 plan (producer=system-dev-planner) の所有範囲は task-spec/workstream-inventory/task-graph の schema・導出・implementation-readiness 判定のみ。仕様書・アーキテクチャの内容構築は system-spec-harness、実装コード生成は task-graph build/capability-build、dev-graph tasks/ ノードへの実登録・Issue 起票・並列実行の起動は dev-graph 側の所有であり、本 plan の component として計上しない。
-- **コンポーネント目録の所在**: buildableな12実体は `component-inventory.json` が唯一のSSOT。生成されるsystem workstreamの9分類は別の `workstream-inventory.json` 契約であり混同しない。
+- **コンポーネント目録の所在**: buildableな14実体は `component-inventory.json` が唯一のSSOT。生成されるsystem workstreamの9分類は別の `workstream-inventory.json` 契約であり混同しない。
 - **Plugin-level surfaces**:
 
   | surface | 判定 | 記録先 |
@@ -146,7 +146,7 @@ plugin_meta:
 - [ ] 要件 C14: system-dev-planner がミクロ層として、自動起動時は dev-graph の feature ノード (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) を構造化入力として受理し goal-spec へ写像する経路を持ち、手動起動時 (`/system-dev-plan`) は自然文構想を受理する経路を持つ。
 - [ ] 要件 C15: 生成する typed task specification と dev-graph registration payload が `parent_feature` を持ち、1 run が生む全 promoted task が同一 `parent_feature` を共有して feature 配下へ atomic 登録される。
 - [ ] 要件 C16: runtime outputは別の13 lifecycle文書+可変N taskではなくP01..P13 exact 13 executable task specs/13-node DAGで、欠落・重複・14件目・層越え依存をfail-closedする。
-- [ ] `task-specs/*.md` が13 phase policyと12 component buildをdispatch可能な単一責務taskへ分解し、`shape_marker=task-graph-derived` のDAGを導出できる。
+- [ ] `task-specs/*.md` が13 phase policyと14 component buildをdispatch可能な単一責務taskへ分解し、`shape_marker=task-graph-derived` のDAGを導出できる。
 - [ ] 各 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。
 - [ ] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0 (goal-spec 要件の被覆は check-requirements-coverage が機械検査)。
 - [ ] `handoff-run-plugin-dev-plan.json` の routes が inventory 由来で builder/build_kind/build_args/build_target を持ち、各 component を後段 builder へルーティングし、`task_graph_ref` を携帯する。

@@ -167,6 +167,62 @@
         }
       }
     },
+    "prompt_generation_model": {
+      "type": "object",
+      "description": "responsibility.id 単位の prompt-creator 再現性trace。idは R1 / R1-elicit / R2b-readiness 形式を受理し、skill-local-v1 では layer_yaml_path のファイルstemと完全一致させる。brief_path がある場合、validator が prompt_required=true/省略(true) の brief responsibility ID 集合と完全一致させる (false は除外)。",
+      "additionalProperties": false,
+      "required": ["policy_resolution", "per_responsibility"],
+      "properties": {
+        "policy_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["resolved_policy", "resolved_via"],
+          "properties": {
+            "brief_policy": {"type": "string"},
+            "resolved_policy": {"type": "string", "enum": ["required", "optional", "skip"]},
+            "resolved_via": {"type": "string", "minLength": 1}
+          }
+        },
+        "per_responsibility": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "path_convention", "layer_yaml_path", "lint_status"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^R[0-9]+[a-z]?(-[a-z0-9]+(-[a-z0-9]+)*)?$"},
+              "name": {"type": "string"},
+              "owner_agent": {"type": ["string", "null"]},
+              "layer_yaml_path": {"type": "string"},
+              "path_convention": {"type": "string", "enum": ["skill-local-v1", "agents-legacy"]},
+              "layers_generated": {"type": "array", "items": {"type": "string"}},
+              "sha256": {"type": "string"},
+              "lint_status": {"type": "string", "enum": ["PASS", "FAIL"]},
+              "iteration_count": {"type": "integer", "minimum": 1},
+              "escalation": {"type": "string", "enum": ["none", "retry", "reframe_brief", "abort"]}
+            }
+          }
+        },
+        "cross_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "skill_build_id": {"type": "string"},
+            "prompt_creator_trace_path": {"type": ["string", "null"]},
+            "join_key": {"const": "responsibility.id"}
+          }
+        },
+        "anchor_coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "agent_files_checked": {"type": "array", "items": {"type": "string"}},
+            "missing_anchors": {"type": "array", "items": {"type": "string"}},
+            "extra_anchors": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
     "prompt_provenance": {
       "type": "object",
       "description": "C09: agents/*.md・skills/*/prompts/*.md を生成/更新する build が prompt-creator (7層契約) を経由し C02 内容 lint (lint-agent-prompt-content.py) を通過したことの証跡。prompt_generation_model.policy_resolution.resolved_policy=required の build では validate-build-trace.py が必須化する。prompt_creator_invocation=false または本ブロック欠落 (policy=required 時) は fail-closed で exit1 (バイパス不能性)。",
@@ -195,7 +251,7 @@
     },
     "brief_path": {
       "type": "string",
-      "description": "本 build が参照した skill-brief.json のパス (cwd または trace 隣接からの相対)。未指定時は source_docs 内の skill-brief*.json 項目から推定される。requirement_coverage の突合先。"
+      "description": "本 build が参照した skill-brief.json のパス (cwd または trace 隣接からの相対)。requirement_coverage の突合先に加え、prompt_generation_model.per_responsibility と prompt_required 対象の ID 集合を完全一致検証する正本。requirement_coverage に限り未指定時は source_docs 内の skill-brief*.json 項目から推定する。"
     },
     "requirement_coverage": {
       "type": "array",

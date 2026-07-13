@@ -8,9 +8,9 @@
   },
   "build_readiness": {
     "status": "blocked",
-    "reason": "L3 routing contractは検証済みだが、8 script routeとmanifest/schema/composition/EVALS envelope executorがcontract-only",
+    "reason": "L3 routing contract は検証済みだが、9 script route と manifest/schema/composition/EVALS envelope executor は planner 境界では contract-only。後段の materialization 実行状態は task-state.json と route-build-report が正本であり、この handoff の plan-time 状態とは分離する。",
     "blockers": ["GAP-SCRIPT-BUILDER", "GAP-ENVELOPE-001"],
-    "unblock_when": "executor command/owner/versionがpreflight可能な契約として解決される"
+    "unblock_when": "executor command/owner/version が preflight 可能な契約として planner 側で解決される"
   },
   "routes": [
     {
@@ -46,12 +46,28 @@
       "status": "planned"
     },
     {
+      "id": "C29",
+      "component_kind": "script",
+      "name": "register-package.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C29",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/register-package.py"},
+      "build_target": "plugins/dev-graph/scripts/register-package.py",
+      "status": "planned"
+    },
+    {
       "id": "C27",
       "component_kind": "script",
       "name": "manage-worktree-lease.py",
       "spec": "phase-05-implementation.md",
       "criteria_ref": "component-inventory.json#component=C27",
-      "depends_on": ["C24", "C28"],
+      "depends_on": ["C24", "C28", "C29"],
       "placement_scope": "plugin-root",
       "builder": "plugin-scaffold",
       "builder_status": "contract-only",
@@ -98,12 +114,29 @@
       "status": "planned"
     },
     {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-dev-graph-node",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C02",
+      "depends_on": ["C11", "C24", "C29"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-node",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-node/",
+      "status": "planned"
+    },
+    {
       "id": "C26",
       "component_kind": "script",
       "name": "reconcile-github-lifecycle.py",
       "spec": "phase-05-implementation.md",
       "criteria_ref": "component-inventory.json#component=C26",
-      "depends_on": ["C11", "C12", "C24", "C27", "C28"],
+      "depends_on": ["C02", "C11", "C12", "C24", "C27", "C28"],
       "placement_scope": "plugin-root",
       "builder": "plugin-scaffold",
       "builder_status": "contract-only",
@@ -193,23 +226,6 @@
         "brief_path": "briefs/skill-brief-C01.json"
       },
       "build_target": "plugins/dev-graph/skills/run-dev-graph-init/",
-      "status": "planned"
-    },
-    {
-      "id": "C02",
-      "component_kind": "skill",
-      "name": "run-dev-graph-node",
-      "spec": "phase-05-implementation.md",
-      "criteria_ref": "component-inventory.json#component=C02",
-      "depends_on": ["C01", "C11", "C24"],
-      "builder": "run-skill-create",
-      "build_kind": "skill",
-      "build_args": {
-        "skill_name": "run-dev-graph-node",
-        "kind": "run",
-        "brief_path": "briefs/skill-brief-C02.json"
-      },
-      "build_target": "plugins/dev-graph/skills/run-dev-graph-node/",
       "status": "planned"
     },
     {
@@ -453,7 +469,7 @@
     {
       "id": "GAP-SCRIPT-BUILDER",
       "severity": "high",
-      "text": "plugin-scaffoldはcontract-only builder語彙。8 script (validate-graph-schema/gh-bridge/render/schedule/resolve-repo-context/reconcile-github-lifecycle/manage-worktree-lease/bd-bridge) が本gapに依存する (validate-system-plan.pyはexternal plugin system-dev-plannerが所有)"
+      "text": "plugin-scaffold は contract-only builder 語彙。9 script (validate-graph-schema/gh-bridge/render/schedule/resolve-repo-context/reconcile-github-lifecycle/manage-worktree-lease/bd-bridge/register-package) が本 gap に依存する (validate-system-plan.py は external plugin system-dev-planner が所有)"
     }
   ]
 }

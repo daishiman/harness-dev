@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-07-13T14:45:00+09:00",
+  "source": "plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json routes[]",
+  "graph_hash": "sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d",
+  "components_total": 25,
+  "components_existing": 25,
+  "components": [
+    {"id":"C24","kind":"script","target":"plugins/dev-graph/scripts/resolve-repo-context.py","sha256":"f5d70c78642035c03267548c156248b3de69952223cef32c7a6e04240630745b","scheme":"file"},
+    {"id":"C28","kind":"script","target":"plugins/dev-graph/scripts/bd-bridge.py","sha256":"0241d5f5bbe5560e4d6e20c6c6c14e439f41cea09f19a255386bbfa10c9dfa92","scheme":"file"},
+    {"id":"C27","kind":"script","target":"plugins/dev-graph/scripts/manage-worktree-lease.py","sha256":"587bbd0cd98d225fe2ce60ba4c668cba491942f89e2948bdc9b3f568f72e5c59","scheme":"file"},
+    {"id":"C11","kind":"script","target":"plugins/dev-graph/scripts/validate-graph-schema.py","sha256":"0c6e90336e75b5e7cbfc17928cb4a276c1f396dd4d3faa81a2660a71858f8be8","scheme":"file"},
+    {"id":"C12","kind":"script","target":"plugins/dev-graph/scripts/gh-bridge.py","sha256":"34a44c47d06856875bcb4716973bc5679ed2963d1e8bb751c166e0d0df7733ac","scheme":"file"},
+    {"id":"C26","kind":"script","target":"plugins/dev-graph/scripts/reconcile-github-lifecycle.py","sha256":"756de15ba6c09485afd8555d345a1ce37193659dc95b4668d9a9f04023611f98","scheme":"file"},
+    {"id":"C25","kind":"hook","target":"plugins/dev-graph/hooks/reconcile-task-lifecycle.py","sha256":"35ac7950c77e59cf1debe8744d3bbe32172b0cbdddd7ad96d84c0b722c2e6b20","scheme":"file"},
+    {"id":"C13","kind":"script","target":"plugins/dev-graph/scripts/render-graph-html.py","sha256":"e00ac06ff8764ef245c0580347463e3f1687b041b27b3566619a36447e16bd3b","scheme":"file"},
+    {"id":"C16","kind":"script","target":"plugins/dev-graph/scripts/schedule-graph.py","sha256":"bb769784b57bc53fc5f9a95600580bc3f0af98e7b947b345f5e152f6ea65c66f","scheme":"file"},
+    {"id":"C10","kind":"hook","target":"plugins/dev-graph/hooks/guard-graph-schema.py","sha256":"117e04b629f172b4c34735928bb6b21a8c59781d8781db090eb24b382f80c30e","scheme":"file"},
+    {"id":"C01","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-init/","sha256":"3c13fec272e08daef49a4d3d4156b9669591f22fe899d175d0407fdf60259164","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C02","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-node/","sha256":"b89e50eaf2c17d2e45733a7207dc8a217ed92a28e820abee09f687d693e6e967","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C19","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-system-spec/","sha256":"e938482af03fcb32fcec871848595a4c8cadb5daa35c2eafd93bb1a74089cffc","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C03","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-sync/","sha256":"ff5cb060e533d7a75015c9e2ab1a67ffee520426ab880fede0a848090060c3f9","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C04","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-requirements/","sha256":"f5472928e4fdb0904b4ab8e9052a4cef659273288559ccf72c3d871c77f9bf0f","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C05","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-render/","sha256":"7a3e933fdd8e01d70c324fc433fcb1abb60d95010fc5c478ffc31cc77f937173","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C14","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-decompose/","sha256":"a28c48b6586347320735dec2cd7652aeaf37eb87d84bbb4cd8698f69c755f39b","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C15","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-schedule/","sha256":"cc4761d288193359a931371f8920bae13ada7d0123ac2e55fe1f990c04c1775d","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C06","kind":"sub-agent","target":"plugins/dev-graph/agents/dev-graph-integrity-auditor.md","sha256":"a9f9eb4077b07ddd43041d0bae014b007ca821e372b3f4055150ddda7d5984cd","scheme":"file"},
+    {"id":"C07","kind":"sub-agent","target":"plugins/dev-graph/agents/dev-graph-sync-conflict-verifier.md","sha256":"f5c47789edf244b77467f39fc15961c6fb8665b09ba4b3c1e3e78a18e65184de","scheme":"file"},
+    {"id":"C08","kind":"sub-agent","target":"plugins/dev-graph/agents/dev-graph-requirements-verifier.md","sha256":"0b47f4bb2aa7b4611e572d3d30b75464d47fd24a11deb0b5563b41e4ec02b558","scheme":"file"},
+    {"id":"C17","kind":"sub-agent","target":"plugins/dev-graph/agents/dev-graph-parallel-safety-verifier.md","sha256":"e45e79f3710cc9814075f38b3034a92e8129f8ded39adff271b2924d5444b371","scheme":"file"},
+    {"id":"C18","kind":"skill","target":"plugins/dev-graph/skills/run-dev-graph-status/","sha256":"b229f3134675b2de9491f3dc6a986803236499945a0c960ed0243729786ae3d9","scheme":"tree(sorted relative-path:file-sha256, 1 file)"},
+    {"id":"C09","kind":"slash-command","target":"plugins/dev-graph/commands/dev-graph.md","sha256":"e2e626c5d40965a641ffd97ff587e2fc5ac47cc01acb4500c626e887faa14c35","scheme":"file"},
+    {"id":"C29","kind":"script","target":"plugins/dev-graph/scripts/register-package.py","sha256":"a8b0638a9f5a7742aa6799d6055091eae92226bfb05883d733a1c3fca4b2f4a6","scheme":"file"}
+  ],
+  "plugin_level_surfaces": [
+    {"surface":"manifest","path":"plugins/dev-graph/.claude-plugin/plugin.json","sha256":"8204b297f8ada3413b6e9bb1ae07d8dda010b7c6c3e38b6cfe2c99f15651b059"},
+    {"surface":"composition","path":"plugins/dev-graph/plugin-composition.yaml","sha256":"0301a35764713145e16db556ed212d4758086f5066795c62593a57d1c6438329"},
+    {"surface":"harness_eval","path":"plugins/dev-graph/EVALS.json","sha256":"356c8673dfa30993629362f262e7bbe8a011fad2adb35ed4e3a4fa1a5447c2a7"},
+    {"surface":"graph_schema","path":"plugins/dev-graph/schemas/graph-node.schema.json","sha256":"1c6348bbe6fcca6c39e30f227a99b4605f5ebc22ea11732c52d8b189439b5848"},
+    {"surface":"repo_config_schema","path":"plugins/dev-graph/schemas/repo-config.schema.json","sha256":"4f8a8707cb3536251d9dab0541303bd9e107a6bca5bee51636738befd2246bdb"},
+    {"surface":"registration_receipt_schema","path":"plugins/dev-graph/schemas/package-registration-receipt.schema.json","sha256":"0c04ffbabd2eadb4ed955092dddfbd54110e3bf8d8d682a7d34c32587bf41a0b"}
+  ],
+  "verification": {
+    "bundle_validator": "PASS",
+    "route_inventory_parity": "25/25 PASS",
+    "missing": []
+  }
+}

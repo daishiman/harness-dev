@@ -1,0 +1,42 @@
+{
+  "_note": "task-execution-report.html / task-progress.md の価値セクション curated override。project-task-status.py が read-only 参照し、非空キーを決定論導出へ上書き合成する。人手 curation 用 (dual audience + 構造化)。",
+  "plain_intro": "開発の『やりたいこと』から個々の作業までを 1 枚のタスク地図 (グラフ) で一元管理し、『次に何をやるべきか』『どれを同時に進められるか』『どこまで終わったか』を自動で示してくれる開発の司令塔ツールです。手元のメモ (Markdown) を正本にしつつ、Beads や GitHub とも重複なくつながります。",
+  "essential_problem_plain": "複数の管理場所 (手元のメモ・Beads・GitHub) を全部『正しい』としてやり取りすると、同じ課題が二重に登録されたり、『終わった/終わってない』が食い違ったりします。dev-graph は『手元の地図だけを正本』と決め、他はそこから一方向に写すだけにすることで、この食い違いを起きなくします。",
+  "capabilities_plain": [
+    "「やりたいこと」を機能のまとまりに分け、依存関係つきで見える化できる",
+    "「次にやるべき作業」を自動でおすすめしてくれる",
+    "同時に進めても衝突しない作業を見つけて、並行作業を後押ししてくれる",
+    "作業の完了を『PR がマージされた事実』だけで自動判定するので、完了の付け忘れが減る",
+    "進み具合を、追加インストール不要でブラウザで開けるレポートとして見られる"
+  ],
+  "essential_problem": "複数の実行トラッカー (ローカル Markdown・Beads・GitHub Issues/Projects) を同時に正本扱いすると、二重起票・完了 authority の競合・並列作業の衝突が構造的に不可避になる。dev-graph はこれを『ローカル graph を唯一の正本／トラッカーは node 単位の一方向 projection／default branch へ merge された linked PR だけを完了事実 authority』とする非対称な権威設計で解く。さらに計画粒度を macro (feature 間依存のオーケストレーション) と micro (1 feature = P01..P13 の exact 13 タスク) の二層に分離し、粒度違いの計画と実行の混線を防ぐ。結果として『同期対象を増やすほど品質が下がる』多重 authority のアンチパターンを構造的に封じている。",
+  "capabilities": [
+    "自然文の構想を feature graph へ macro 分解し、機能間 depends_on つきで一元管理できる",
+    "各 feature を system-dev-planner で exact-13 タスク仕様書へ細分解し、feature 配下へ all-or-none 登録できる",
+    "依存 × 完了状態から ready-set (次に着手すべきタスク) を決定論的に算出・提示できる",
+    "リソーススコープ (touches) 重複を避けた並列バッチを識別し、複数 worktree の lease で作業衝突なく並行実行できる",
+    "node ごとに Beads か GitHub を単一 publication authority として重複なく投影できる",
+    "remote ancestor 確認済み PR merge を完了トリガーに、hook/scheduled reconciliation で eventual に完了収束できる",
+    "追加ランタイム依存ゼロの静的 HTML (SVG + inline JS) でタスクグラフを可視化できる",
+    "issue/task/spec/architecture/doc を人間可読 Markdown のディレクトリ配置 + 差分更新 + schema 検証つきで安全に直接編集できる"
+  ],
+  "boundaries": [
+    "実装コードは生成せず、管理 + 要件定義までを担い、実装は capability-build / task-graph build へ委譲する",
+    "1 feature の exact-13 タスク仕様書生成は system-dev-planner (ミクロ層) へ委譲し、dev-graph はマクロ層に徹する",
+    "仕様書・アーキテクチャの内容生成は system-spec-harness を引用し複製しない",
+    "task node ごとに Beads または GitHub を単一 authority とし双方向同期しない (Projects Status は local_to_project 一方向)",
+    "完了 authority は PR merge のみとし、GitHub Projects の Done automation や Claude hook は fast path であって唯一の正本にしない"
+  ],
+  "purpose": [
+    "構想・イシュー・仕様・アーキテクチャ・機能を 1 つのタスクグラフで第一級に一元管理する",
+    "機能を macro 分解し、1 機能 = 13 タスクの細分解は system-dev-planner (ミクロ層) へ委譲する",
+    "各タスクを Beads または GitHub の単一トラッカーへ重複なく投影する",
+    "要件定義 → 実装 handoff → 次タスク推薦 → 複数 worktree 並列実行 → PR merge 後の完了収束までを担う"
+  ],
+  "background": [
+    "ローカル仕様・Beads・GitHub を無条件に双方向同期すると、二重起票と完了 authority 競合が生じる",
+    "そこで Markdown/graph をローカル正本、Beads か GitHub を node 単位の一方向 projection、GitHub Projects を人間向け表示に役割分担する",
+    "完了事実は default branch へ merge された linked PR だけを authority とする",
+    "実装コード生成は既存の capability-build / task-graph build へ委譲する"
+  ]
+}

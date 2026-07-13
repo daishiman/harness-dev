@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "dev-graph",
+  "route_id": "C09",
+  "component_kind": "slash-command",
+  "name": "dev-graph",
+  "builder": "run-build-skill",
+  "build_target": "plugins/dev-graph/commands/dev-graph.md",
+  "status": "success",
+  "summary": "dev-graph を component inventory と task specification に従って具体実装し、依存 entry point・fail-closed 境界・入出力契約を配線した。",
+  "deviations": [],
+  "evidence": [
+    "validate-frontmatter.py: assigned dev-graph skill/agent/command exit 0",
+    "lint-skill-name.py + lint-skill-description.py + lint-skill-tree.py: assigned skills exit 0",
+    "python3 -m py_compile plugins/dev-graph/hooks/*.py plugins/dev-graph/scripts/*.py: exit 0",
+    "jq empty plugin envelope/schemas/templates: exit 0"
+  ],
+  "inputs_consumed": [
+    "eval-log/dev-graph/build/route-C01.json",
+    "eval-log/dev-graph/build/route-C02.json",
+    "eval-log/dev-graph/build/route-C03.json",
+    "eval-log/dev-graph/build/route-C04.json",
+    "eval-log/dev-graph/build/route-C05.json",
+    "eval-log/dev-graph/build/route-C14.json",
+    "eval-log/dev-graph/build/route-C15.json",
+    "eval-log/dev-graph/build/route-C18.json",
+    "eval-log/dev-graph/build/route-C19.json",
+    "eval-log/dev-graph/build/route-C27.json"
+  ],
+  "handover": "後続 route は caller-repository containment、C02 single-writer、binding別 projection authority、C14 macro/C19 import/system-dev-planner exact-13 の責務境界を保持する。",
+  "covered_task_ids": [
+    "B-C09"
+  ],
+  "corrections": [
+    {"target":"evidence","correction":"C09固有: build-trace component sha256=e2e626c5d40965a641ffd97ff587e2fc5ac47cc01acb4500c626e887faa14c35。command commonCore/frontmatter validation exit 0。command専用lint未実装というharness正本の境界を保持。","corrected_by":"elegant-improvement-executor iteration 2"}
+  ]
+}

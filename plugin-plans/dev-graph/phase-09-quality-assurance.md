@@ -7,7 +7,7 @@ prev_phase: 8
 next_phase: 10
 status: 未実施
 gate_type: qa
-entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28]
+entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14, C15, C16, C17, C18, C19, C24, C25, C26, C27, C28, C29]
 applicability:
   applicable: true
   reason: ""
@@ -56,5 +56,5 @@ purpose 受入 (P07) と AC を壊さない改善 (P08) を経ても、機械可
 ## 参照情報
 - `component-inventory.json` (各 component の quality_gates)。
 - io-contract §7 (kind 別 discipline 表)。
-- 対象 component C01-C19・C24-C28 (計24)。
+- 対象 component C01-C19・C24-C29 (計25)。
 - 後続 P10 (final-review)。

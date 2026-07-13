@@ -1,10 +1,11 @@
 {
   "schema_version": "2.0.0",
-  "project_id": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY",
+  "project_id": "SYSTEM-DEV-PLAN-ELEGANT-VERIFY",
   "plan_dir": "plugin-plans/system-dev-planner",
   "plan_digest": "sha256:62301d80fcab134db9f031b458ff892209a41385e987485ca0176d24c6a64389",
   "graph_hash": "sha256:b42b58f65312b94b66a37845e4769485416d1650debb9b3adaf5e678c97b93ce",
   "reviewed_shape": {"requirements": 16, "components": 12, "routes": 12, "nodes": 38, "edges": 129},
+  "superseded_by": {"record": "eval-log/system-dev-planner/build/elegant-verification-30-build.json", "authoritative_shape": {"components": 14, "routes": 14, "nodes": 40}, "note": "本record は iteration1 の 12-component 世代の plan 側レビュー。build で D-C13/D-C14 を追加し 14-component/40-node へ再導出済み。権威ある形状と graph_hash は build record を参照する (本 plan record を 12→14 再検討の基準にしない)。"},
   "orchestration": {"phase1": "fresh-context read-only observation", "phase2": "three independent reviews totaling 30 methods", "phase3": "KJ consolidation, minimal edits, graph derivation, schema and deterministic revalidation", "iterations": 1},
   "methods": [
     {"id": 1, "name": "批判的思考", "status": "applied", "result": "system plannerがtracker mutationを所有する必要性を否定しintent-only境界を維持"},
@@ -25,7 +26,7 @@
     {"id": 16, "name": "類推思考", "status": "applied", "result": "database batch commitからall-or-none receiptを類推"},
     {"id": 17, "name": "if思考", "status": "applied", "result": "1 node不正、peer不互換、mode=both+auto、hook crashを反証fixture化"},
     {"id": 18, "name": "素人思考", "status": "applied", "result": "indexのplugin/system選定とtracker handoffを明示"},
-    {"id": 19, "name": "システム思考", "status": "applied", "result": "12 route networkと外部dev-graph consumerを閉鎖"},
+    {"id": 19, "name": "システム思考", "status": "applied", "result": "14 route networkと外部dev-graph consumerを閉鎖"},
     {"id": 20, "name": "因果関係分析", "status": "applied", "result": "promotion receiptだけではL4 readyにならずregistration receiptを必須化"},
     {"id": 21, "name": "因果ループ", "status": "applied", "result": "replayをper-node digestとbatch digestで冪等化"},
     {"id": 22, "name": "トレードオン思考", "status": "applied", "result": "planner独立性とdev-graph統合をcontract preflightで両立"},

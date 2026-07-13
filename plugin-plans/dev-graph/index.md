@@ -58,10 +58,10 @@ plugin_meta:
 - **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、実タスクの実装コード生成 (既存 capability-build / task-graph build へ handoff)、PR/配布登録。
 
 ## ドメイン知識
-- **2 軸直交**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (N=24 component・機械 SSOT) を二重に持たない。
+- **2 軸直交**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (N=25 component・機械 SSOT) を二重に持たない。
 - **二層モデル (マクロ/ミクロ棲み分け)**: dev-graph=マクロ層。1つのプロダクト/プロジェクトを複数の「機能 (feature)」へ分け、各featureへpurpose(なぜ)/goal(到達状態)/scope_in/scope_out/acceptance(確実に実行したい二値)/architecture_refs/機能間depends_onを第一級に保持し機能単位の実行をオーケストレーションする。system-dev-planner=ミクロ層。1つのfeatureノードを入力文脈に受け、その機能を達成する13 lifecycleタスク仕様書+機能内依存DAGを生成するper-featureファクトリ。呼び分けは `want → C14 (マクロ分解: feature+architecture+機能間depends_on生成) → ready featureごとにsystem-dev-plannerを自動起動 (人間による手動`/system-dev-plan`もフォールバック) → promoted taskをparent_feature付きでC02へ登録` の一方向。system-dev-plannerはfeatureを生成せず消費するだけで、program全体のgoal/scopeは扱わない (dev-graph goal-specの責務のまま)。正本は`references/execution-tracker-contract.md` §8 (二層モデル・feature 完了カスケード)。既存のプランナー選定軸 (§0: plugin構築=plugin-dev-planner / システム構築=本ハーネス経路) とは直交する軸として併記する。feature.statusは配下task (parent_feature参照) が全てdoneになったときdoneへロールアップする機械導出projectionで (writerはC26導出→C02単一writer、rollupはC26が§3完了transaction内で評価)、手動done昇格とactive子taskを残したままのfeature closeはfail-closed、feature→task方向の逆流close (featureをcloseしたら配下taskを一括close) はしない (§8.2)。
 - **component_kind (5 種)**: skill / sub-agent / slash-command / hook / script。同一 kind の複数実体はそれぞれ独立 component (現行 skill×9)。
-- **phase ≠ component**: 13 はフェーズ数の固定値、N=24 は buildable 実体数で独立に決まる。C24がcaller/worktree context、C25がClaude hook、C26がGitHub lifecycle収束、C27がworktree lease、C28がbeads (bd) bridgeを担う。system development task planハーネスはexternal plugin system-dev-plannerへ一本化し、dev-graph内にbuildable componentを持たない。
+- **phase ≠ component**: 13 はフェーズ数の固定値、N=25 は buildable 実体数で独立に決まる。C24がcaller/worktree context、C25がClaude hook、C26がGitHub lifecycle収束、C27がworktree lease、C28がbeads (bd) bridge、C29がexact-13 packageのatomic登録engineを担う。system development task planハーネスはexternal plugin system-dev-plannerへ一本化し、dev-graph内にbuildable componentを持たない。
 - **表記規約**: 要件 id は「要件C43」「goal-spec C44」のように接頭辞付きで表記し、component id (C09/C28 等の 0 埋め 2 桁) と区別する (両者は別名前空間で同形トークンが併存する)。
 - **consumer/verb/hoist 記述の SSOT**: どの component が誰に消費されるか (consumer 一覧)・verb→component 対応・plugin-root hoist 対象の列挙は `component-inventory.json` の `depends_on`/`derivation` を唯一の SSOT とし、index/phase の散文では重複記述せず参照のみに留める (drift 防止)。
 - **handoff criteria解決**: handoff routeの`id`はinventory component idと1:1であり、`route.id → component-inventory.components[id].quality_gates / harness_coverage / feedback_contract.criteria`をcriteria参照規則とする。criteria本文をhandoffへ複製しない。
@@ -74,7 +74,7 @@ plugin_meta:
 - **capability-build への handoff 境界 (要件 C6)**: 本ハーネスの責務は管理 (グラフ保持・同期・可視化) と要件定義導出までであり、実タスクの実装コード生成は行わない。`run-dev-graph-requirements` (C04) が要件定義書を確定した時点で既存の capability-build / task-graph build へ handoff し、本ハーネス側のスキルはそれ以降の実装コード生成を担わない (責務境界は `component-inventory.json` C04 の `boundary` フィールドと `output_contract` に明記)。
 - **id+updated_at 競合の同時競合 (open_question 2 の解決)**: 上記タイブレーク規則 (「GitHub 双方向同期と競合解決」節) が正本。C03 の `feedback_contract.criteria` OUT2 が受入テストとして固定する。
 - **自然文/task specificationからIssue・Project publication (要件 C7/C27)**: C14は自然文の want をfeature+architecture+機能間depends_onへマクロ分解し (13タスク仕様書への細分解はsystem-dev-planner委譲・C50)、system-dev-planner/`/system-dev-plan`が返すpromoted typed task specsをparent_feature付きでC02 local commit→Issue起票→Project item-add→initial field editの順に実行する。`issue_linkage`と`github_project_linkages`を冪等キーとして再実行時の重複を防ぎ、外部部分失敗はpending retryへ送る。`--dry-run`ではIssue/Project外部write 0件で全publication previewを返す。
-- **ready-set 算出と並列実行支援 (要件 C8/C9/C41)**: C15/C16はdepends_onと完了状態に加え、C27のactive worktree leaseを入力にする。resource_scopeまたはleaseが重なるtaskを除外し、独立taskへ`suggested_branch=devgraph/<graph_node_id>`とclaim commandを返す。C09の`worktree claim|heartbeat|park|release|status`がC27を呼び、誰がleaseを更新するかを一意にする。
+- **ready-set 算出と並列実行支援 (要件 C8/C9/C41)**: C15/C16はdepends_onと完了状態に加え、C27のactive worktree leaseを入力にする。resource_scopeまたはleaseが重なるtaskを除外し、独立taskへ`suggested_branch=devgraph/<graph_node_id>`とclaim commandを返す。C09の`worktree claim|heartbeat|park|release|list`がC27を呼び、誰がleaseを更新するかを一意にする。
 - **作業コンフリクト最小化 (要件 C10)**: 各タスクノードは `resource_scope` (touches: 触るファイル/ディレクトリ配列) をグラフに保持する (`validate-graph-schema.py` (C11) がスキーマ検証)。`resource_scope` の粒度 (ファイル単位/ディレクトリ単位) と粒度不一致時のフォールバック規則 (open_question 4 の解決) は、ディレクトリ単位を既定としつつノードがファイル単位を明示した場合はファイル単位を優先し、双方混在時は広い方 (ディレクトリ単位) を採用してフォールバックする規則を C11/C16 の設計で固定する。`schedule-graph.py` (C16) は `resource_scope` が重複するノードを同一並列バッチへ入れず conflict-aware にバッチングすることで、同期コンフリクト (id+updated_at) とは別レイヤの「作業」コンフリクトを最小化する。並列バッチの安全性は独立 sub-agent `dev-graph-parallel-safety-verifier` (C17) が proposer≠approver で再検証する。
 - **hybrid directory policy (要件 C15)**: 管理ルート直下は `issues/` / `tasks/` / `specs/` / `architecture/` / `features/` / `docs/` の6独立ディレクトリを固定する。物理rootは `artifact_kind`、横断分類は `project_id` / `domain` / `status` / `tags` / `graph_node_id` のfrontmatter metadataが担う。なお feature root はマクロ層 (C14) が want のマクロ分解から生成する機能ノード専用で、C02 のコンテンツ自動分類対象 (issue/task/specification/architecture/document の 5 kind) には含めない (free content からは feature へ分類しない・A3-06 の誤分類回避)。この 5 (自動分類) と 6 (物理root/artifact_kind) の差は意図的で、component_kind の 5 種とも別軸。
 - **自動分類routing (要件 C16)**: ユーザーへ保存先を質問しない。C02が内容と任意hintから `artifact_kind/domain/project_id` を推定し、候補path・`classification_confidence`・`classification_reason` を常時previewする。confidence>=0.80かつ第2候補との差>=0.15なら自動確定し、それ未満だけ確認する。
@@ -112,8 +112,8 @@ plugin_meta:
 - **実行環境**: スクリプトは Python 標準ライブラリのみ (.sh/.js 新規禁止・scripts 内 yaml import 禁止)。GitHub 連携は追加トークン管理をせず gh CLI の既存認証のみを利用する。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。
 - **同梱決定論ゲート (2 層命名・機械正本=`specfm.GATE_SCRIPTS`)**: core 5 scripts / 6 invocations = verify-index-topsort (§9 section 床+phase 完全性+DAG) / detect-unassigned / check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage (--self-test + PLAN の 2 起動)。拡張ゲート = check-plugin-goal-spec / check-requirements-coverage / check-surface-inventory / check-build-handoff / validate-task-graph (デフォルト成果物 task-graph.json の 10 検査) / check-runtime-portability / check-plugin-surface-audit (総数の人間可読正本=io-contract §11 表)。
 - **build の始め方 (consumer 手順・宣言のみ)**: 後段 builder は `handoff-run-plugin-dev-plan.json` の routes を top-sort 順に消費する。skill route は routes[].build_args の `brief_path` (render-skill-brief.py) で inventory から skill-brief JSON を決定論射影して `run-skill-create` へ渡す (詳細手順は焼かない)。
-- **コンポーネント目録の所在**: buildable な実体 (skill×9 / sub-agent×4 / slash-command×1 / hook×2 / script×8 = 計 24) は `component-inventory.json` が唯一の SSOT。
-- **コンポーネント役割ロスター** (全 24 component。詳細は `component-inventory.json` を正本としこの表は概観のみ):
+- **コンポーネント目録の所在**: buildable な実体 (skill×9 / sub-agent×4 / slash-command×1 / hook×2 / script×9 = 計 25) は `component-inventory.json` が唯一の SSOT。
+- **コンポーネント役割ロスター** (全 25 component。詳細は `component-inventory.json` を正本としこの表は概観のみ):
 
   | id | kind | 一行役割 | 対応要件 |
   |---|---|---|---|
@@ -141,6 +141,7 @@ plugin_meta:
   | C26 | script | linked PR/Issue/Projectとworktree pending eventをdefault branchのtask状態へ収束 | C31-C34, C42 |
   | C27 | script | 複数worktreeのidentity、task lease、heartbeat、TTL reclaim、event ledgerを原子的管理 | C39-C42 |
   | C28 | script | bd (beads) CLI決定論bridge。create/update/dep add/close/ready --jsonを冪等ラップし、external_ref=graph_node_id冪等キーでtracker_binding=beadsノードのbeads_linkage/状態還流を仲介、bd version受容window preflight | C43-C47 |
+  | C29 | script | promoted exact-13 packageを検証し、C02へall-or-none登録してimmutable receiptを残す | C22-C23, C27, C52, C56 |
 
   要件 C22/C23 (system development task plan) はexternal plugin system-dev-plannerのrun-system-dev-planをSkill呼出しで引用して充足する (external_contract_ref: `plugin-plans/system-dev-planner/handoff-run-plugin-dev-plan.json`。ドメイン知識「system development task plan (要件 C22/C23・外部依存)」節が正本)。
 - **Plugin-level surfaces**:
@@ -188,7 +189,7 @@ plugin_meta:
 - [ ] インフラ (実行環境 / core scripts / 目録所在 / surface 採否) が宣言されている。
 - [ ] 環境ポリシー (品質基準 / proposer≠approver / 現状値非焼込 / 単一skill退化防止) が宣言されている。
 - [ ] 13 フェーズ (P01..P13) が phase_number 昇順で全存在し、各 phase 本文が §5 section 床 (`specfm.PHASE_BODY_SECTIONS` の宣言型 8 節) を満たす。
-- [ ] 要件 C1: `component-inventory.json` がtask graph、directory/routing、Beads/GitHub binding別投影、UI、system-spec引用、multi-repo/worktree contextを記録し、全24 componentがcore規律を携帯する。
+- [ ] 要件 C1: `component-inventory.json` がtask graph、directory/routing、Beads/GitHub binding別投影、UI、system-spec引用、multi-repo/worktree contextを記録し、全25 componentがcore規律を携帯する。
 - [ ] 各 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。
 - [ ] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0 (goal-spec 要件の被覆は check-requirements-coverage が機械検査)。
 - [ ] 要件 C2: `handoff-run-plugin-dev-plan.json` の routes が inventory 由来で builder/build_kind/build_args/build_target を持ち、各 component を後段 builder へルーティングする。

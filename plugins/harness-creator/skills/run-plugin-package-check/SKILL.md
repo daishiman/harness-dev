@@ -40,7 +40,9 @@ script_refs:
   - scripts/smoke-plugin-install.sh
   - scripts/smoke-plugin-uninstall.sh
   - scripts/smoke-plugin-upgrade.sh
+  - scripts/sandbox-plugin-lifecycle.py
   - scripts/validate-plugin-permissions.py
+  - scripts/run-pkg-015.py
   - scripts/aggregate-pkg-findings.py
 subagent_refs:
   - assign-plugin-package-evaluator
@@ -91,8 +93,8 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
 ## Key Rules
 
 1. **PKG ID 定義は ref-pkg-contract 経由**: 本 skill で再定義しない
-2. **PKG-002〜008 は assign-plugin-package-evaluator に委譲**: Skill tool 経由で `context: fork`
-3. **PKG-001/009/010〜015 は本 skill が直接実装**: 各 scripts を sub-process で実行
+2. **PKG-002〜008 / PKG-014 は assign-plugin-package-evaluator に委譲**: Skill tool 経由で `context: fork`
+3. **PKG-001/009/010〜013/015 は本 skill が直接実装**: 各 scripts を sub-process で実行
 4. **`package_mode: skill-only` plugin に対する適用範囲**: PKG-002/004 のみ実行、それ以外は `not_applicable`
 5. **eval-log パス独自定義禁止**: 27章 §3.1 規約厳守
 6. **35章 observable 配線**: `verdict.fail > 0` のとき `pkg_check_failed` を `.claude/logs/` に 1 行 append（schema は 35章 §observables）
@@ -153,7 +155,8 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
    │     assign-plugin-package-evaluator (delegated, --check pkg-014)
    ▼
 [Step 8] PKG-015 rubric 違反率
-   │     ../../../skill-governance-lint/scripts/lint-rubric-violation.py --log-dir eval-log/<name> --out eval-log/<name>/pkg-015/rubric-violation.json
+│     scripts/run-pkg-015.py --plugin <name> --log-dir eval-log/<name> --out eval-log/<name>/pkg-015/rubric-violation.json
+│     (履歴 bootstrap 中は明示 not_applicable、開each 時は fail、それ以外は pass へ正規化)
    ▼
 [Step 9] findings 集約 + observable 配線
    │     scripts/aggregate-pkg-findings.py
@@ -192,7 +195,9 @@ Phase 別の実行 Step は `workflow-manifest.json phases[].id` 参照。
 - `scripts/smoke-plugin-install.sh` — PKG-010 install smoke
 - `scripts/smoke-plugin-uninstall.sh` — PKG-011
 - `scripts/smoke-plugin-upgrade.sh` — PKG-012
+- `scripts/sandbox-plugin-lifecycle.py` — PKG-010〜012 を一時 Claude home で実行する決定論 lifecycle harness
 - `scripts/validate-plugin-permissions.py` — PKG-013a〜d
+- `scripts/run-pkg-015.py` — rubric lint の bootstrap/breach を PKG status へ正規化
 - `scripts/aggregate-pkg-findings.py` — Step 9 集約
 - 子 skill: `assign-plugin-package-evaluator` (PKG-002〜008, PKG-014)
 - 参照 skill: `ref-pkg-contract`

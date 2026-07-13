@@ -27,11 +27,49 @@
       "task_spec_ref": "task-specs/B-C09.md"
     },
     {
+      "id": "C13",
+      "component_kind": "script",
+      "name": "manage-system-plan-lock.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C09"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/manage-system-plan-lock.py"
+      },
+      "build_target": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+      "status": "planned",
+      "criteria_ref": "component-inventory.json#component=C13",
+      "task_spec_ref": "task-specs/D-C13.md"
+    },
+    {
+      "id": "C14",
+      "component_kind": "script",
+      "name": "build-system-handoff.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C09"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/build-system-handoff.py"
+      },
+      "build_target": "plugins/system-dev-planner/scripts/build-system-handoff.py",
+      "status": "planned",
+      "criteria_ref": "component-inventory.json#component=C14",
+      "task_spec_ref": "task-specs/D-C14.md"
+    },
+    {
       "id": "C12",
       "component_kind": "script",
       "name": "validate-system-plan.py",
       "spec": "phase-05-implementation.md",
-      "depends_on": ["C09"],
+      "depends_on": ["C09", "C14"],
       "placement_scope": "plugin-root",
       "builder": "plugin-scaffold",
       "builder_status": "contract-only",
@@ -133,7 +171,8 @@
       "spec": "phase-05-implementation.md",
       "depends_on": [
         "C08",
-        "C09"
+        "C09",
+        "C13"
       ],
       "builder": "run-build-skill",
       "build_kind": "hook",
@@ -175,7 +214,8 @@
       "depends_on": [
         "C05",
         "C08",
-        "C09"
+        "C09",
+        "C14"
       ],
       "builder": "run-skill-create",
       "build_kind": "skill",
@@ -197,8 +237,10 @@
       "depends_on": [
         "C02",
         "C08",
-        "C09",
-        "C12"
+      "C09",
+      "C12",
+      "C13",
+      "C14"
       ],
       "placement_scope": "plugin-root",
       "builder": "plugin-scaffold",
@@ -226,7 +268,9 @@
         "C09",
         "C10",
         "C11",
-        "C12"
+        "C12",
+        "C13",
+        "C14"
       ],
       "builder": "run-skill-create",
       "build_kind": "skill",

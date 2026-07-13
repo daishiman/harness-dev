@@ -1,0 +1,75 @@
+name: system-dev-planner
+description: 明示された1 featureをexact-13 execution packageへ変換するときに使うmicro-planning plugin bundle。
+kind: plugin-composition
+version: 0.1.0
+owner: team-platform
+
+contract:
+  intent: confirmed feature contextをP01..P13 exact 13 task specs、inventory、intra-feature DAG、atomic promotionへ変換する。
+  interface:
+    inputs: [feature-id, repo-relative-feature-context, confirmed-system-spec]
+    outputs: [feature-package, exact-13-task-specs, workstream-inventory, task-graph, handoff, promotion-receipt]
+  invariant:
+    - 1 runは1 parent_featureだけを扱う
+    - P01..P13を各1件生成し14件目と別phase文書を生成しない
+    - featureを新設または分割せずfeature間dependencyを所有しない
+    - deterministic validationとfork evaluatorが同一digestをPASSするまでpromotionしない
+    - lock lifecycleはC13だけが所有しmalformed same-repository lockをfail-closed拒否する
+    - C14 handoffはmanifest digestに含まれ、promotion receiptはC11、registration receiptはdev-graph C02が所有する
+    - caller repository外pathと別repository contentを拒否する
+
+capabilities:
+  - {kind: skill, ref: skills/run-system-dev-plan, tier: core}
+  - {kind: skill, ref: skills/assign-system-dev-plan-evaluator, tier: core}
+  - {kind: agent, ref: agents/system-dev-plan-elicitor.md, tier: core}
+  - {kind: agent, ref: agents/system-dev-plan-architect.md, tier: core}
+  - {kind: agent, ref: agents/system-dev-plan-evaluator.md, tier: core}
+  - {kind: command, ref: commands/system-dev-plan.md, tier: core}
+  - {kind: hook, ref: "hook:PreToolUse/guard-implementation-readiness", tier: core}
+  - {kind: script, ref: scripts/resolve-project-context.py, tier: core}
+  - {kind: script, ref: scripts/check-implementation-readiness.py, tier: core}
+  - {kind: script, ref: scripts/init-project-layout.py, tier: core}
+  - {kind: script, ref: scripts/validate-system-plan.py, tier: core}
+  - {kind: script, ref: scripts/promote-system-plan.py, tier: core}
+  - {kind: script, ref: scripts/manage-system-plan-lock.py, tier: core}
+  - {kind: script, ref: scripts/build-system-handoff.py, tier: core}
+
+dependencies:
+  - {from: commands/system-dev-plan.md, to: skills/run-system-dev-plan, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/resolve-project-context.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/check-implementation-readiness.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/init-project-layout.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: agents/system-dev-plan-elicitor.md, type: calls}
+  - {from: skills/run-system-dev-plan, to: agents/system-dev-plan-architect.md, type: calls}
+  - {from: skills/run-system-dev-plan, to: skills/assign-system-dev-plan-evaluator, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/validate-system-plan.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/promote-system-plan.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/manage-system-plan-lock.py, type: calls}
+  - {from: skills/run-system-dev-plan, to: scripts/build-system-handoff.py, type: calls}
+  - {from: skills/assign-system-dev-plan-evaluator, to: agents/system-dev-plan-evaluator.md, type: calls}
+  - {from: "hook:PreToolUse/guard-implementation-readiness", to: scripts/check-implementation-readiness.py, type: calls}
+  - {from: "hook:PreToolUse/guard-implementation-readiness", to: scripts/manage-system-plan-lock.py, type: calls}
+  - {from: scripts/validate-system-plan.py, to: scripts/build-system-handoff.py, type: reads}
+  - {from: scripts/promote-system-plan.py, to: scripts/validate-system-plan.py, type: calls}
+  - {from: scripts/promote-system-plan.py, to: scripts/manage-system-plan-lock.py, type: calls}
+
+external_dependencies:
+  system-spec-harness:
+    version: "0.1.0"
+    required_entry_points: [run-system-spec-compile, assign-system-spec-completeness-evaluator]
+    # C08 readiness gate (check-implementation-readiness.py) は entry-point skill に加え、下記の内部 script を
+    # producer-verification に runtime hard-depend する。rename/削除されると readiness が恒久 incomplete になり
+    # planner が全 run block するため、契約面として明示する (宣言外依存の可視化)。
+    required_runtime_scripts:
+      - skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py
+  dev-graph:
+    version: ">=0.1.0 <1.0.0"
+    relation: feature-context-provider-and-registration-consumer
+
+eval_sinks: [EVALS.json, eval-log/]
+governance:
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+observability:
+  hooks: [PreToolUse/guard-implementation-readiness]
+  metrics: [readiness_rejections, validation_failures, promotion_successes]

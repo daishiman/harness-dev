@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "B-C11",
+  "reason": "C01 output contract names system-build-handoff and registration receipt, but producer/schema/ownership and digest inclusion are absent; route/inventory changes are required.",
+  "discovered_at_artifact": "eval-log/system-dev-planner/build/route-C11.json",
+  "proposed_node": {
+    "id": "D-C14",
+    "title": "system build handoffとregistration receipt境界をbuildする",
+    "phase_ref": "P05",
+    "entity_ref": "C14",
+    "state": "pending",
+    "write_scope": "plugins/system-dev-planner/scripts/build-system-handoff.py; plugins/system-dev-planner/schemas/system-build-handoff.schema.json",
+    "acceptance_criterion": "versioned schemaに準拠するsystem-build-handoffをvalidated staging inputsから決定論生成し、その実体hashをstaging manifestのcanonical digestへ含める。registration requestはsystem-dev-planner、all-or-none applyとregistration receiptはdev-graphが所有し、promotion/receipt未成立のhandoffを実装authorizationとして扱わない",
+    "execution_kind": "component-build",
+    "route_ref": "C14",
+    "task_spec_ref": "task-specs/D-C14.md"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:8a5e843db8ab76ed2e8f94d988e4157eb59a4717c04b73b462be8a12a4ac70f0"
+}

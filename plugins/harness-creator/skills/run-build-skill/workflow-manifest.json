@@ -129,16 +129,16 @@
     {
       "id": "content-review",
       "step": 12,
-      "title": "内容 adequacy LLM 評価 (elegance + rubric) default-ON",
+      "title": "Verification obligation DAG 解決 (machine-first; semantic slicing)",
       "dependsOn": ["trace-write", "feedback-deploy"],
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "default_on": true,
       "opt_out_flag": "--skip-content-review",
-      "resourceIds": ["schema-content-review-verdict", "ref-content-review-protocol"],
-      "output_artifact": "eval-log/<plugin>/<skill>/content-review/{elegance-verdict.json, rubric-verdict.json}",
+      "resourceIds": ["schema-verification-contract", "schema-verification-evidence", "ref-verification-obligation-protocol", "schema-content-review-verdict", "ref-content-review-protocol"],
+      "output_artifact": "eval-log/<plugin>/build/{verification-contract.json,verification-plan.json,obligation-evidence/*.json} + legacy content-review projections",
       "verifier": "scripts/lint-content-review.py --changed-only --base origin/main",
-      "execution": "local-llm-only",
-      "note": "ローカル Claude Code で run-elegant-review + assign-skill-design-evaluator を SubAgent 起動し verdict json を保存する。PostToolUse/Stop hook は重い LLM を直接起動せず評価要求を queue 化し、pre-push/CI は成果物の存在・PASS・skill_md_sha256 一致を機械検査する。skip 時は trace.layer_decisions と feedback_contract.skip_reason に理由必須。実装手順は references/content-review-protocol.md。"
+      "execution": "deterministic-resolver-then-local-llm-exception",
+      "note": "derive-verification-contract.py でgraph全体をclaim DAG化し、plan-verification-obligations.py がexact proof reuse→deterministic check→未解決semantic batchの順に解決する。LLM起動はllm_batches[]だけ。4条件/rubricは同じsemantic obligationで判定し、legacy 2 verdictへprojectionしてreceiptにも束縛する。30思考法3並列はexhaustive audit obligationのみ。反復findingはautomation_candidatesからlint/schema/testへ昇格する。"
     },
     {
       "id": "live-acceptance",
@@ -157,7 +157,7 @@
       "resourceIds": [],
       "output_artifact": "eval-log/<plugin>/<skill>/live-trial/<run-id>/{verdict.json, transcript.jsonl}",
       "verifier": "scripts/lint-live-trial-verdict.py --plugin <plugin> (D13 record-only WARN。P3 常設化 go/no-go で --enforce へ昇格)",
-      "note": "常設=常時発火可能+条件必須 (D9)。発火は三積 (validate-build-plan.py derive_acceptance_tier が live) × (被験 skill の挙動面 skill_dir_tree_sha 差分あり) × (予算内) が全て真のときのみ。proof trial (model 実走証明) のみ無条件。非発火時は eval-log/review-queue.jsonl へ deferred 記録 (requested_at/reason/changed_skills/trigger — check-review-trigger.py の queue record と同一キー)。起動経路は main 会話直下から run-skill-live-trial (Skill→Agent 制約により SubAgent 再入不可)。リモート CI での実走は D14 で却下 — CI/pre-push は verifier の成果物機械検査のみ。反復上限は convergence-policy.json loop_bounds.trial_acceptance が正本。本 skill 自身と run-skill-live-trial / run-skill-iter-improve は被験 denylist (再帰遮断)。"
+      "note": "Step12 resolverのobservational_queue[]に入ったobligationだけを実走する。plan-live-trials.py はlive executor adapterとして対象skill内で挙動closure/transcript proofを再確認するが、plugin全skillを独自にfan-outしない。incremental既定のtrial/同時実行上限は暴走安全弁。exhaustive明示時のみ全candidate再実走。非発火はdeferred記録。リモートCIは実走せず証跡を機械検査する。"
     }
   ],
   "resources": [
@@ -169,9 +169,12 @@
     {"id": "schema-build-flags", "kind": "schema", "path": "./schemas/build-flags.schema.json", "phaseIds": ["init", "evaluator-emit"]},
     {"id": "schema-build-plan", "kind": "schema", "path": "./schemas/build-plan.schema.json", "phaseIds": ["init", "scripts"]},
     {"id": "schema-content-review-verdict", "kind": "schema", "path": "./schemas/content-review-verdict.schema.json", "phaseIds": ["content-review"]},
+    {"id": "schema-verification-contract", "kind": "schema", "path": "./schemas/verification-contract.schema.json", "phaseIds": ["content-review"]},
+    {"id": "schema-verification-evidence", "kind": "schema", "path": "./schemas/verification-evidence.schema.json", "phaseIds": ["content-review"]},
     {"id": "schema-route-build-report", "kind": "schema", "path": "./schemas/route-build-report.schema.json", "phaseIds": ["trace-write"]},
     {"id": "ref-route-build-report", "kind": "reference", "path": "./references/route-build-report.md", "phaseIds": ["trace-write"]},
     {"id": "ref-content-review-protocol", "kind": "reference", "path": "./references/content-review-protocol.md", "phaseIds": ["content-review"]},
+    {"id": "ref-verification-obligation-protocol", "kind": "reference", "path": "./references/verification-obligation-protocol.md", "phaseIds": ["content-review"]},
     {"id": "prompt-scaffold", "kind": "prompt", "path": "./prompts/R1-scaffold.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-template-select", "kind": "prompt", "path": "./prompts/R3-template-select.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-responsibility-emit", "kind": "prompt", "path": "./prompts/R2-responsibility-emit.md", "phaseIds": ["prompts-emit"]},

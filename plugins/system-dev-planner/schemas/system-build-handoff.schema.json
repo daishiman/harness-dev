@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "system-build-handoff.schema.json",
+  "title": "Versioned exact-13 system build handoff",
+  "description": "C14 output. The handoff pins every source artifact and the pre-handoff manifest. To avoid a digest cycle, its own SHA-256 and the final manifest digest are stored only by staging-manifest.json; neither value is embedded here.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "identity",
+    "source_inputs",
+    "source_manifest",
+    "digest_contract",
+    "execution_tasks",
+    "registration_request"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "kind": {
+      "const": "system-build-handoff"
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "feature_id",
+        "feature_package_id",
+        "parent_feature",
+        "source_feature_digest"
+      ],
+      "properties": {
+        "repository_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "feature_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The invoking dev-graph feature id; C14 enforces equality with parent_feature."
+        },
+        "feature_package_id": {
+          "type": "string",
+          "pattern": "^feature-package/[A-Za-z0-9._/-]+$"
+        },
+        "parent_feature": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_feature_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "source_inputs": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "description": "Exact ordered source set: package, inventory, graph, and P01..P13 task specs. The manifest is pinned separately as source_manifest.",
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "feature-package.json"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "workstream-inventory.json"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-graph.json"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-01-requirements.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-02-architecture.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-03-design-review.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-04-test-design.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-05-implementation.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-06-test-run.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-07-acceptance.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-08-refactoring-migration.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-09-quality-assurance.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-10-final-review.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-11-evidence.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-12-documentation-operations.md"}}}]},
+        {"allOf": [{"$ref": "#/$defs/digested_path"}, {"properties": {"path": {"const": "task-specs/phase-13-release-deploy.md"}}}]}
+      ],
+      "items": false
+    },
+    "source_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256_before_handoff",
+        "canonical_digest_before_handoff"
+      ],
+      "properties": {
+        "path": {
+          "const": "staging-manifest.json"
+        },
+        "sha256_before_handoff": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "canonical_digest_before_handoff": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "digest_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "source_digest_scope",
+        "handoff_digest_location",
+        "final_manifest_digest_scope",
+        "self_reference_policy"
+      ],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "source_digest_scope": {"const": "source_inputs only; handoff and manifest excluded"},
+        "handoff_digest_location": {"const": "staging-manifest.json#files/system-build-handoff.json"},
+        "final_manifest_digest_scope": {"const": "all manifest files including handoff; manifest itself excluded"},
+        "self_reference_policy": {"const": "handoff omits its own digest and final manifest digest"}
+      }
+    },
+    "execution_tasks": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "phase_ref", "task_spec_path", "build_target_kind", "depends_on"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "phase_ref": {"type": "string", "pattern": "^P(0[1-9]|1[0-3])$"},
+          "task_spec_path": {"type": "string", "pattern": "^task-specs/phase-[0-9]{2}-[A-Za-z0-9-]+\\.md$"},
+          "build_target_kind": {
+            "enum": ["application-code", "skill", "sub-agent", "slash-command", "hook", "script", "documentation", "infrastructure", "data-migration"]
+          },
+          "depends_on": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "registration_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "owner", "consumer", "status", "promotion_receipt", "registration_receipt"],
+      "properties": {
+        "path": {"const": "dev-graph-registration.json"},
+        "owner": {"const": "system-dev-planner/C11"},
+        "consumer": {"const": "dev-graph/C02"},
+        "status": {"const": "deferred-until-promotion"},
+        "promotion_receipt": {
+          "allOf": [
+            {"$ref": "#/$defs/deferred_receipt"},
+            {"properties": {"path": {"const": "atomic-promotion-receipt.json"}, "owner": {"const": "system-dev-planner/C11"}}}
+          ]
+        },
+        "registration_receipt": {
+          "allOf": [
+            {"$ref": "#/$defs/deferred_receipt"},
+            {"properties": {"path": {"const": "dev-graph-registration-receipt.json"}, "owner": {"const": "dev-graph/C02"}}}
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digested_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "deferred_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "owner", "status", "produced_by_this_component"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "status": {"const": "not-emitted"},
+        "produced_by_this_component": {"const": false}
+      }
+    }
+  }
+}

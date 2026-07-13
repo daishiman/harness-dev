@@ -1,0 +1,19 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "system-dev-planner",
+  "entry_points": {
+    "skills": ["run-system-dev-plan", "assign-system-dev-plan-evaluator"],
+    "agents": ["system-dev-plan-elicitor", "system-dev-plan-architect", "system-dev-plan-evaluator"],
+    "commands": ["system-dev-plan"],
+    "hooks": ["guard-implementation-readiness.py"]
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "development-planning",
+    "tags": ["system-design", "task-planning", "dev-graph"]
+  },
+  "depends_on": ["dev-graph", "system-spec-harness"],
+  "pkg_checks": {}
+}

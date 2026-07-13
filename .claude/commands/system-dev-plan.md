@@ -1,0 +1,1 @@
+../../plugins/system-dev-planner/commands/system-dev-plan.md

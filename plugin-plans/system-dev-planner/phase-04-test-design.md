@@ -16,7 +16,7 @@ applicability:
 # P04 — test-design (テスト設計)
 
 ## 目的
-C01のcriteria IN1/IN2/OUT1/OUT2とC08-C12のnegative testsを実装前にRedで固定する。
+C01のcriteria IN1/IN2/OUT1/OUT2とC08-C14のnegative testsを実装前にRedで固定する。
 
 ## 背景
 TDD 原則により実装 (P05) に先立って受入判定基準を固定する。criteria 対象は C01 のみである: C02 (`assign-system-dev-plan-evaluator`) は `skill_kind=assign` であり `FEEDBACK_LOOP_SKILL_KINDS` (run/wrap/delegate) に含まれないため `feedback_contract` を構造上省略する (P02 で確定済みの設計判断)。

@@ -358,7 +358,7 @@
     "task nodeごとにBeadsまたはGitHubを単一publication authorityとし、Projects Statusはlocal_to_project、PR mergeだけを完了事実authorityとする",
     "UI はゼロ依存の静的 HTML/CSS 生成とし、グラフ可視化は SVG + インライン JS で行い、成果物をリポジトリへコミットまたは CI 生成可能にする",
     "本ハーネスの実装責務は管理 + 要件定義までとし、実タスクの実装コード生成は既存 capability-build / task-graph build へ handoff する (実装自体は担わない)",
-    "実プラグインは生成せず L3 plan までに留める",
+    "実プラグインは生成せず L3 plan までに留める (本 plan 成果物の責務は決定論ゲート検証可能な L3 plan の生成に留まるという当初意図は不変。additive 注記: L4/L5 の稼働 plugin materialization (plugins/dev-graph/ 実体) は本 plan の意図を変更するものではなく、capability-build task-graph mode の deliberate な後続 step として別途実施済みである)",
     "自然文の『やりたいこと(大)』をマクロ分解してfeatureノード群+architecture+機能間depends_onを生成し、各featureをsystem-dev-planner(ミクロ層)で13タスク仕様書へ細分解してpromoted taskをparent_feature付きでlocal graphへatomic登録後、resolved tracker bindingに従いBeads/GitHub/noneへ投影する",
     "グラフの依存×完了状態から ready-set を算出し、次おすすめタスクと並列実行可能バッチを提示する",
     "作業コンフリクト最小化: 同期コンフリクト(id+updated_at)に加え、タスクノードのリソーススコープ(touches)重複回避 + conflict-aware スケジューリングで作業コンフリクトを最小化する",

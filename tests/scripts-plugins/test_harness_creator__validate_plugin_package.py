@@ -1,6 +1,6 @@
 """assign-plugin-package-evaluator/scripts/validate-plugin-package.py の genuine 機能テスト。
 
-PKG-002〜008 の各 sub-check を実ファイルパスから importlib でロードし、tmp_path に
+PKG-002〜008 / PKG-014 の各 sub-check を実ファイルパスから importlib でロードし、tmp_path に
 合格 fixture / 各違反 fixture を作って純関数を直接呼び、findings の内容を assert する。
 さらに main を subprocess (sys.executable) で起動し、exit code / JSON 出力 / 引数エラー
 (--check 不正, plugin 不在) を検証する。network/keychain は一切叩かない。
@@ -209,6 +209,36 @@ def test_pkg_002_missing_package_contract(tmp_path):
     assert "package-contract.json" in fs[0]["evidence"]
 
 
+def test_pkg_002_accepts_scoped_dependencies_within_allow_list(tmp_path):
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {k: "v" for k in MOD.PLUGIN_JSON_REQUIRED})
+    _write_package_contract(p, {
+        "package_mode": "bundle",
+        "entry_points": {"skills": ["run-a", "run-b"]},
+        "depends_on": ["dependency-a"],
+        "skill_dependencies": {"run-a": ["dependency-a"], "run-b": []},
+    })
+    assert MOD.check_pkg_002(p) == []
+
+
+def test_pkg_002_rejects_invalid_scoped_dependency_projection(tmp_path):
+    p = _plugin(tmp_path)
+    _write_plugin_json(p, {k: "v" for k in MOD.PLUGIN_JSON_REQUIRED})
+    _write_package_contract(p, {
+        "package_mode": "bundle",
+        "entry_points": {"skills": ["run-a"]},
+        "depends_on": ["dependency-a"],
+        "skill_dependencies": {
+            "run-missing": ["dependency-a"],
+            "run-a": ["dependency-b", "dependency-b"],
+        },
+    })
+    evidence = [item["evidence"] for item in MOD.check_pkg_002(p)]
+    assert any("entry_points.skills 未宣言" in item for item in evidence)
+    assert any("重複" in item for item in evidence)
+    assert any("depends_on 外" in item for item in evidence)
+
+
 # ============================================================================
 # check_pkg_003 : skill/agent 名前衝突 (実体 vs symlink)
 # ============================================================================
@@ -299,6 +329,41 @@ def test_pkg_004_full_frontmatter_clean(tmp_path):
     p = _plugin(tmp_path)
     _write_skill(p, "sk", _full_required_fm())
     assert MOD.check_pkg_004(p) == []
+
+
+def test_pkg_004_reasoned_manifest_exemption_is_mechanical_alternative(tmp_path):
+    p = _plugin(tmp_path)
+    fm = (
+        "name: demo-skill\n"
+        "description: a demo\n"
+        "kind: run\n"
+        "responsibility_refs: [prompts/R1.md]\n"
+        "schema_refs: [schemas/output.schema.json]\n"
+        "completeness_exempt:\n"
+        "  - \"manifest: inline goal loop is the runtime SSOT\""
+    )
+    _write_skill(p, "sk", fm)
+    assert MOD.check_pkg_004(p) == []
+
+
+def test_pkg_004_empty_values_and_unreasoned_exemption_fail(tmp_path):
+    p = _plugin(tmp_path)
+    fm = (
+        "name: demo-skill\n"
+        "description: a demo\n"
+        "kind: run\n"
+        "responsibility_refs: []\n"
+        "schema_refs: \"\"\n"
+        "manifest: \"\"\n"
+        "completeness_exempt:\n"
+        "  - \"manifest:\""
+    )
+    _write_skill(p, "sk", fm)
+    fs = MOD.check_pkg_004(p)
+    evid = {f["evidence"] for f in fs}
+    assert any("responsibility_refs" in e for e in evid)
+    assert any("schema_refs" in e for e in evid)
+    assert any("manifest" in e for e in evid)
 
 
 def test_pkg_004_no_frontmatter(tmp_path):
@@ -393,6 +458,25 @@ def test_pkg_006_registered_via_entry_points(tmp_path):
         "name": "demo",
         "entry_points": {"hooks": ["hooks/guard.py"]},
     })
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_registered_via_package_contract_sidecar(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir(parents=True)
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    _write_plugin_json(p, {
+        "name": "demo",
+        "version": "1.0.0",
+        "description": "native manifest without harness-only keys",
+    })
+    _write_package_contract(p, {
+        "package_mode": "bundle",
+        "entry_points": {"hooks": ["guard"]},
+        "distribution": {"distributable": False},
+        "pkg_checks": {},
+    })
+
     assert MOD.check_pkg_006(p) == []
 
 
@@ -525,6 +609,101 @@ def test_pkg_008_broken_json(tmp_path):
 
 
 # ============================================================================
+# check_pkg_014 : kind/combinator runtime contract
+# ============================================================================
+
+def _runtime_fm(*, kind: str = "run", combinators: str = "") -> str:
+    extra = f"\ncombinators: {combinators}" if combinators else ""
+    return _full_required_fm() + extra
+
+
+def test_pkg_014_plain_run_without_optional_combinator_is_clean(tmp_path):
+    p = _plugin(tmp_path)
+    _write_skill(p, "run-demo", _runtime_fm(), body="# body")
+    assert MOD.check_pkg_014(p) == []
+
+
+def test_pkg_014_goal_seek_and_feedback_wiring_clean(tmp_path):
+    p = _plugin(tmp_path)
+    fm = _runtime_fm(combinators="[with-goal-seek, with-feedback-contract]") + (
+        "\ngoal_seek:\n"
+        "  engine: inline\n"
+        "  fork: subagent\n"
+        "  max_loops: 5\n"
+        "feedback_contract:\n"
+        "  max_iterations: 3\n"
+        "  criteria:\n"
+        "    - id: IN1\n"
+        "      loop_scope: inner\n"
+        "    - id: OUT1\n"
+        "      loop_scope: outer"
+    )
+    _write_skill(p, "run-demo", fm, body="## ゴールシーク実行\nloop and stop")
+    assert MOD.check_pkg_014(p) == []
+
+
+def test_pkg_014_declared_goal_seek_requires_runtime_mapping_and_body(tmp_path):
+    p = _plugin(tmp_path)
+    _write_skill(p, "run-demo", _runtime_fm(combinators="[with-goal-seek]"))
+    fs = MOD.check_pkg_014(p)
+    evid = {f["evidence"] for f in fs}
+    assert any("goal_seek mapping" in e for e in evid)
+    assert any("ゴールシーク実行配線" in e for e in evid)
+
+
+def test_pkg_014_feedback_contract_requires_inner_and_outer(tmp_path):
+    p = _plugin(tmp_path)
+    fm = _runtime_fm(combinators="[with-feedback-contract]") + (
+        "\nfeedback_contract:\n"
+        "  max_iterations: 3\n"
+        "  criteria:\n"
+        "    - id: IN1\n"
+        "      loop_scope: inner"
+    )
+    _write_skill(p, "run-demo", fm)
+    fs = MOD.check_pkg_014(p)
+    assert any("loop_scope=outer" in f["evidence"] for f in fs)
+
+
+def test_pkg_014_runtime_mapping_without_combinator_fails(tmp_path):
+    p = _plugin(tmp_path)
+    fm = _runtime_fm() + "\ngoal_seek:\n  engine: inline\n  fork: inline\n  max_loops: 1"
+    _write_skill(p, "run-demo", fm, body="## ゴールシーク実行")
+    fs = MOD.check_pkg_014(p)
+    assert any("with-goal-seek combinator が未宣言" in f["evidence"] for f in fs)
+
+
+def test_pkg_014_feedback_skip_reason_is_explicit_runtime_exemption(tmp_path):
+    p = _plugin(tmp_path)
+    fm = _runtime_fm(kind="assign") + (
+        "\nfeedback_contract:\n"
+        "  skip_reason: assign evaluator uses its rubric and fail-closed aggregate gate"
+    )
+    _write_skill(p, "assign-demo", fm)
+    assert MOD.check_pkg_014(p) == []
+
+
+def test_pkg_014_symlinked_compatibility_skill_is_source_owned(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "skills").mkdir()
+    source = tmp_path / "source-skill"
+    source.mkdir()
+    (source / "SKILL.md").write_text(
+        "---\n" + _runtime_fm() + "\nfeedback_contract:\n  max_iterations: 1\n---\n",
+        encoding="utf-8",
+    )
+    os.symlink(source, p / "skills" / "run-shared")
+    assert MOD.check_pkg_014(p) == []
+
+
+def test_pkg_014_unknown_combinator_fails_closed(tmp_path):
+    p = _plugin(tmp_path)
+    _write_skill(p, "run-demo", _runtime_fm(combinators="[with-magic]"))
+    fs = MOD.check_pkg_014(p)
+    assert any("未定義 combinator" in f["evidence"] for f in fs)
+
+
+# ============================================================================
 # run_checks : package_mode と not_applicable 分岐
 # ============================================================================
 
@@ -538,8 +717,8 @@ def test_run_checks_skill_only_na(tmp_path):
         assert "skip_reason" in result["pkg_checks"][pid]
     # PKG-002/004 は実走
     assert result["pkg_checks"]["PKG-002"]["status"] in ("pass", "fail")
-    assert result["verdict"]["total"] == 7
-    assert result["verdict"]["not_applicable"] == 5
+    assert result["verdict"]["total"] == 8
+    assert result["verdict"]["not_applicable"] == 6
 
 
 def test_run_checks_plugin_mode_runs_all(tmp_path):
@@ -753,7 +932,7 @@ def test_main_inproc_check_all_branch(tmp_path, monkeypatch, capsys):
     rc = MOD.main()
     data = json.loads(capsys.readouterr().out)
     assert rc in (0, 1)
-    assert data["verdict"]["total"] == 7
+    assert data["verdict"]["total"] == 8
 
 
 def test_main_inproc_bare_numeric_check_normalized(tmp_path, monkeypatch, capsys):

@@ -14,7 +14,7 @@ triggers:
   ]
 disable-model-invocation: false
 user-invocable: true
-argument-hint: '[skill-name] [kind?] [--mode create|update] [--with-subagent] [--with-prompts] [--with-evaluator] [--with-hooks] [--with-knowledge index-search|router-registry] [--model opus|sonnet]'
+argument-hint: '[skill-name] [kind?] [--mode create|update] [--with-subagent] [--with-prompts] [--with-evaluator] [--with-hooks] [--with-knowledge index-search|router-registry] [--verification-profile incremental|exhaustive|build-only] [--model opus|sonnet]'
 arguments:
   [
     skill_name,
@@ -25,6 +25,7 @@ arguments:
     with_evaluator,
     with_hooks,
     with_knowledge,
+    verification_profile,
     model,
   ]
 allowed-tools:
@@ -62,6 +63,8 @@ template_refs:
   - templates/task-graph-engine/scripts/record-capability-graph-knowledge.py    # engine:task-graph 同梱 (ENG-C07)
 schema_refs:
   - references/capability-manifest.schema.json
+  - schemas/verification-contract.schema.json
+  - schemas/verification-evidence.schema.json
 prompt_format: markdown # 既定: Markdown (.md)。YAML (.yaml) は legacy 許容、新規禁止
 script_refs:
   - scripts/render-combinators.py
@@ -72,6 +75,10 @@ script_refs:
   - scripts/lint-goal-seek.py
   - scripts/lint-capability-graph-knowledge.py  # engine:task-graph の ENG-C06/ENG-C07 同梱・consult・source_ref 検査 (ENG-C08)
   - scripts/lint-ssot-duplication.py
+  - scripts/derive-route-build-obligations.py
+  - scripts/derive-verification-contract.py
+  - scripts/plan-verification-obligations.py
+  - scripts/record-verification-evidence.py
 reference_refs:
   - ref-skill-glossary
   - ref-task-context-map
@@ -79,6 +86,7 @@ reference_refs:
   - ref-knowledge-loop
   - references/reproducibility-trace-schema.md
   - references/goal-seek-paradigm.md
+  - references/verification-obligation-protocol.md
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
   max_iterations: 3
   criteria:
@@ -99,13 +107,13 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       derived_from: [CL-12]
     - id: OUT1
       loop_scope: outer
-      text: fork した assign-skill-design-evaluator の score>=80 かつ high severity 0 件
-      verify_by: evaluator
+      text: machine proof後に残るsemantic obligationがcurrent fingerprintに束縛されたPASS証拠を持ち、confidence閾値以上かつhigh severity 0件
+      verify_by: verification-obligation
       derived_from: [CL-5]
     - id: OUT2
       loop_scope: outer
-      text: 生成物がユーザ brief の goal を最適反映し 30 思考法 elegance と 4 条件を満たす
-      verify_by: elegant-review
+      text: 生成物がユーザ brief のgoalを最適反映し、incrementalは未解決claimだけ、exhaustiveは30思考法catalogのadversarial auditも含めて証拠DAGが閉じる
+      verify_by: verification-obligation
       derived_from: [CL-8]
 # context-budget (CD-005): 章一括ロード禁止 / max-reference-chapters: 3
 source: doc/ClaudeCodeスキルの設計書/
@@ -123,8 +131,8 @@ audit-trigger: quarterly
 ユーザー要求から Claude Code Skill を 1 本構築するワークフロー。
 
 - **入力**: `skill_name` (kebab-case), `kind` (run|ref|assign|wrap|delegate), `mode` (create|update), 各種 `--with-*` フラグ, `model` (opus|sonnet)。フラグ仕様は `schemas/build-flags.schema.json`。
-- **出力**: `$OUT_BASE/<name>/SKILL.md` (170 行を目安・本文 300 行以下が上限 (P0-2)、frontmatter 完備、本文は日本語) / `templates/` / `references/` / `scripts/` / `prompts/` / `eval-log/skill-build-trace.json` / `assign-skill-design-evaluator` の評価レポート。
-- **完了条件**: rubric score >= 80 かつ high severity 0 件、C1-C4 ゲート pass、`validate-build-trace.py` exit 0。
+- **出力**: `$OUT_BASE/<name>/SKILL.md` (170 行を目安・本文 300 行以下が上限 (P0-2)、frontmatter 完備、本文は日本語) / `templates/` / `references/` / `scripts/` / `prompts/` / `eval-log/skill-build-trace.json` / verification contract・plan・evidence receipts (既存content-review verdictも互換投影として保持)。
+- **完了条件**: build/semantic/behavior obligation DAGがcurrent PASS proofで閉じ、rubric high severity 0 件、C1-C4 ゲート pass、`validate-build-trace.py` exit 0。`build-only` は未実施proofを明示し完了を偽装しない。
 
 ## Key Rules
 
@@ -140,7 +148,7 @@ audit-trigger: quarterly
 ### 責務系 (responsibility)
 
 7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` 9 セクション固定構造。
-8. 評価分離: 生成本体は採点せず `assign-skill-design-evaluator` を fork 呼び (09章 Goodhart)。
+8. 評価分離: 生成本体は採点しない。machine proof後に未解決のsemantic obligationがある場合だけ、別contextの `assign-skill-design-evaluator` へ最小sliceを渡す (09章 Goodhart)。
 9. 実行レイヤー (Skill/Subagent/Hook/MCP/CLI/script) の配置理由を trace に記録 (01a/05章)。
 10. 横展開候補 (Harness Creator 基盤/hook/lint/adapter/rubric/reference) は plugin 登録判定へ戻す。
 11. 量産情報 (`pattern_refs` / `variant_axes` / `reuse_targets` / `deterministic_checks` / `placement_candidates` / `hook_events`) を trace と本文へ反映 (29-35章)。
@@ -350,9 +358,9 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 - **lint**: `scripts/lint-feedback-protocol.py --strict` が R1-R7 (schema/SKILL.md/upsert 三者整合 + R6 周知 + R7 配備存在) を CI で検査。違反時 merge ブロック。
 - **opt-out**: `brief.no_feedback_loop: true` または CLI `--no-feedback-loop` のみ。trace.layer_decisions に理由必須。harness-creator 自身は自動除外。
 
-### Step 12: 内容 adequacy LLM 評価 (content-review, default-ON / 静的設計ゲートの核)
+### Step 12: 証拠DAG解決 (verification obligations, profile 制御)
 
-機械 lint は「ひな形通り」しか見ない。**内容がユーザー要望を最適反映しているか** は LLM 評価で担保する。ローカル build 完了時に `run-elegant-review` (reset→3並列分析→改善) + `assign-skill-design-evaluator` を必須起動し verdict を `eval-log/<plugin>/<skill>/content-review/` に保存。hook は重い LLM を直接実行せず queue 化のみ・CI/pre-push の `scripts/lint-content-review.py --changed-only` が成果物存在 + verdict=PASS + `target.skill_md_sha256` 一致を機械検査する。`--skip-content-review` 明示時のみ skip (trace + `feedback_contract.skip_reason` 必須)。**`feedback_contract` の inner/outer × 正負フィードバック・有界反復 (max_iter=3 超過で `INCOMPLETE`+human_review)・hook queue/Stop block の詳細正本は `references/content-review-protocol.md`** (本文に再掲しない＝SSOT)。本 Step は design claim (設計 adequacy) の静的判定であり、behavioral claim (実行挙動) の受け入れは Gate D が実走証拠で担う (正本 `$PLUGIN_ROOT/references/orchestrate-gate-pattern.md`)。
+機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし、`plan-verification-obligations.py` がcurrent receiptと依存fingerprintから次の最小work setを決める。まず `check` を実行・記録してから再planし、machine proof後に残った `llm_batches[]` だけを独立 evaluatorへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、同時に `record-verification-evidence.py` でsemantic fingerprintへ束縛する。`observational_queue[]` だけをGate Dへ渡す。30思考法は `exhaustive` 明示時のaudit obligationであり通常runtime fan-outにしない。**正本は `references/verification-obligation-protocol.md`、legacy verdict/hook projectionは `references/content-review-protocol.md`**。
 
 ## 配置先
 

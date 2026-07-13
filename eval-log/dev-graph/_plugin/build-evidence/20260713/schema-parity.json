@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "run_at": "2026-07-13T15:05:00+09:00",
+  "status": "PASS",
+  "graph_hash": "sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d",
+  "checks": [
+    {"name":"plan schema and matrix","status":"PASS","evidence":"plugin-plans/dev-graph/plan-findings.json (11/11 deterministic gates)"},
+    {"name":"route inventory parity","status":"PASS","evidence":"25 routes == 25 inventory components"},
+    {"name":"task graph/state schema and hash pin","status":"PASS","evidence":"check-task-state-schema.py; task-graph/task-state graph_hash=sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d"},
+    {"name":"plugin bundle refs","status":"PASS","evidence":"validate-build-trace.py --bundle plugins/dev-graph/plugin-composition.yaml"},
+    {"name":"hook event topology","status":"PASS","evidence":"lint-plugin-composition.py plugins/dev-graph/plugin-composition.yaml"},
+    {"name":"runtime schema fixtures","status":"PASS","evidence":"plugins/dev-graph/tests: 33 passed, including exact-13 package registration and graph/runtime fixtures"}
+  ],
+  "schema_digests": {
+    "graph-node.schema.json":"1c6348bbe6fcca6c39e30f227a99b4605f5ebc22ea11732c52d8b189439b5848",
+    "repo-config.schema.json":"4f8a8707cb3536251d9dab0541303bd9e107a6bca5bee51636738befd2246bdb",
+    "package-registration-receipt.schema.json":"0c04ffbabd2eadb4ed955092dddfbd54110e3bf8d8d682a7d34c32587bf41a0b"
+  }
+}

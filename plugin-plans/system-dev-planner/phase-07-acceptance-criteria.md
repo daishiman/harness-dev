@@ -7,7 +7,7 @@ prev_phase: 6
 next_phase: 8
 status: 未実施
 gate_type: none
-entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12]
+entities_covered: [C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, C12, C13, C14]
 applicability:
   applicable: true
   reason: ""
@@ -43,5 +43,5 @@ system-dev-planner の受入は 2 層に分かれる: (1) system-dev-planner 自
 
 ## 参照情報
 - index.md 受入確認章。
-- 対象 component C01-C12。
+- 対象 component C01-C14。
 - 後続 P08 (refactoring)。

@@ -238,8 +238,9 @@ def main():
         for v in violations:
             print(f"  - {v}")
         print()
-        print("Fix: ローカル Claude Code で run-elegant-review + assign-skill-design-evaluator を")
-        print("     対象 skill に対し実行し eval-log/<plugin>/<skill>/content-review/ に verdict json を保存してください。")
+        print("Fix: ローカル Claude Code で assign-skill-design-evaluator の focused combined review を")
+        print("     1 context 実行し、4条件/rubric を2 verdictへ分離保存してください。")
+        print("     完全な run-elegant-review + rubric evaluator は exhaustive 明示時だけです。")
         print("     手順詳細: plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md")
         return 1
 

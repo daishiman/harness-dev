@@ -283,8 +283,11 @@ def validate_complete(handoff: dict, reports_dir: Path, repo_root: Path | None =
         findings.extend(route_findings)
         if not route_findings:
             report, _ = _load_report(reports_dir, slug, rid)
-            if report and report.get("status") == "failure":
-                findings.append(f"route {rid}: status=failure が残っている (build 未完了)")
+            if report and report.get("status") != "success":
+                findings.append(
+                    f"route {rid}: status={report.get('status')} が残っている "
+                    "(--complete は全 route success のみ完了)"
+                )
     known_ids = {r.get("id") for r in routes}
     if reports_dir.is_dir():
         for path in sorted(reports_dir.glob("route-*.json")):

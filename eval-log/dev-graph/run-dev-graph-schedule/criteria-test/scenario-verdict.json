@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-schedule",
+    "component_id": "C15",
+    "skill_md_sha256": "8536b4c26ce9164532526c34745faa13a01fe5f85201627793405570655cfadd"
+  },
+  "verdict": "PASS",
+  "reviewer": "elegant-logical-structural-analyst-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
+        "independent: direct schedule-graph.py mixed-readiness fixture"
+      ],
+      "observed": "Both self and bd-ready paths admitted only eligible confirmed/pass/readiness-complete active tasks; waiting, draft, unconfirmed, evaluation-fail, and readiness-incomplete fixtures were absent from ready_set."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
+        "independent: direct schedule-graph.py mixed dependency fixture"
+      ],
+      "observed": "The direct fixture admitted `eligible` only after its `done` dependency and rejected `waiting` with a missing/non-done dependency; the pytest scenario confirmed the same behavior for both ready sources."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_render_and_schedule",
+        "independent: direct schedule-graph.py same-resource fixture"
+      ],
+      "observed": "Two ready tasks sharing `resource_scope.touches=[web]` were placed into separate batches; an active lease on that scope caused the affected candidates to be reported as conflicts instead of recommendations."
+    },
+    "OUT3": {
+      "status": "PASS",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
+        "plugins/dev-graph/tests/test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation",
+        "independent: direct schedule-graph.py assignment-hint inspection"
+      ],
+      "observed": "Each admitted task received a unique `devgraph/<graph_node_id>` branch and public `/dev-graph worktree claim` command. Repeating the same C27 Beads claim kept one external bridge claim, while a failed claim released the reservation."
+    }
+  }
+}

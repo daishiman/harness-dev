@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "feature-context.schema.json",
+  "title": "system-dev-planner feature-context (plan input)",
+  "description": "`/system-dev-plan plan` の必須入力である --feature-context JSON の形。既存6 schema が全て出力側なのに対し、これは唯一の入力側 schema。caller repository 相対の feature context ファイル (例 features/feature-auth.json) が持つべきフィールドを定義する。詳細は skills/run-system-dev-plan/SKILL.md の `plan` 節と agents/system-dev-plan-elicitor.md を参照。graph_node_id と --feature-id の一致・realpath containment は runtime の C09 が検証する。",
+  "type": "object",
+  "required": ["graph_node_id", "artifact_kind", "purpose", "goal", "scope_in", "scope_out", "acceptance", "architecture_refs", "updated_at"],
+  "properties": {
+    "graph_node_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "起動元 dev-graph feature ノードの graph_node_id。--feature-id と一致必須で、不一致なら C09 が staging 作成前に停止する"
+    },
+    "artifact_kind": {
+      "const": "feature",
+      "description": "この context が単一 feature を表すことの固定タグ。feature 以外は本 plugin の対象外"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "description": "この feature がなぜ必要か。elicitor が goal-spec の purpose へ写像する (非空必須)"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "description": "達成する状態。elicitor が goal-spec の goal へ写像する (非空必須)"
+    },
+    "scope_in": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "この feature に含む範囲。exact-13 task が拡散しないための境界 (非空必須)"
+    },
+    "scope_out": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "この feature に含まない範囲。追加責務は14件目にせず follow-up feature candidate へ回すための境界 (非空必須)"
+    },
+    "acceptance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "feature の受け入れ条件。elicitor が goal-spec の acceptance へ写像する (非空必須)"
+    },
+    "architecture_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "description": "caller repository 内で解決できる architecture/system-spec への参照 (repository 相対の path 等)。elicitor が lineage で引用し、欠落は fail-closed"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "この feature context を最後に更新した日時 (RFC 3339 / ISO 8601)"
+    }
+  },
+  "additionalProperties": false
+}

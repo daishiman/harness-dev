@@ -1,0 +1,57 @@
+{
+  "skill_name": "run-dev-graph-render",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "グラフを可視化",
+    "dev-graph render",
+    "静的HTML生成"
+  ],
+  "output_contract": "静的HTML/CSS成果物 (SVG + インライン JS 可視化・追加ランタイム依存0件)",
+  "boundary": "入力=グラフストア/出力=単一の自己完結静的HTMLファイル。外部CDN・追加npm依存は導入しない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "validate-graph-schema.py",
+    "render-graph-html.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "HTML/CSS生成",
+    "SVGグラフ描画",
+    "コミット可能な静的出力",
+    "feature単位の子task進捗(X/Y)集約表示"
+  ],
+  "goal": "タスクグラフ情報から追加ランタイム依存なしでブラウザ表示可能な SVG + インライン JS 可視化済み静的 HTML/CSS が生成された状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "グラフ情報を人間が俯瞰するにはゼロ依存の静的可視化が必要で、コミットまたは CI 生成可能な成果物にすることで導入先リポジトリ内で完結させるため。feature ノードは配下task (parent_feature参照) の完了進捗 (X/Y) を集約表示し、機能単位のオーケストレーション状況を俯瞰できるようにする (§8.5・epic投影を持たないlocal_only profileでも実行状況を可視化)",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "可視化対象範囲と静的HTML出力先パスをヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "SVGノード配置とHTML/CSSレイアウトの生成計画を組み立てる",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-render",
+      "summary": "render-graph-html.py で静的HTML/CSS + SVG + インラインJSを生成しコミットまたはCI生成可能な成果物を返す",
+      "prompt_required": true
+    }
+  ]
+}

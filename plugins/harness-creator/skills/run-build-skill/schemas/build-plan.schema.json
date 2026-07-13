@@ -37,7 +37,7 @@
       "required": [
         "with_prompts", "with_evaluator", "with_hooks", "with_subagent",
         "with_knowledge", "with_goal_seek", "feedback_contract_required",
-        "feedback_loop_deploy", "content_review"
+        "feedback_loop_deploy", "content_review", "verification_profile"
       ],
       "properties": {
         "with_prompts": { "type": "boolean", "description": "brief.responsibilities 非空 かつ prompt_creator_policy != skip" },
@@ -48,7 +48,12 @@
         "with_goal_seek": { "type": "boolean", "description": "kind ∈ {run,wrap,delegate} (opt-out は CLI --flags のみ)" },
         "feedback_contract_required": { "type": "boolean", "description": "kind ∈ {run,wrap,delegate}" },
         "feedback_loop_deploy": { "type": "boolean", "description": "default-ON (Step 11.5)" },
-        "content_review": { "type": "boolean", "description": "default-ON (Step 12)" }
+        "content_review": { "type": "boolean", "description": "default-ON (Step 12)" },
+        "verification_profile": {
+          "type": "string",
+          "enum": ["incremental", "exhaustive", "build-only"],
+          "description": "Step 12/13の検証量。無指定はincremental。"
+        }
       }
     },
     "required_sections": {

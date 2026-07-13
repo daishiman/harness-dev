@@ -1,62 +1,9 @@
 {
   "name": "system-spec-harness",
   "version": "0.1.0",
-  "package_mode": "bundle",
-  "description": "システム構築(Web/モバイル/タブレット/デスクトップ横断)に必要な仕様情報を、ユーザーとの往復ヒアリングでカテゴリ×プラットフォームの網羅マトリクスとして漏れなく収集し、設計知識 (クリーンアーキテクチャ/デザインパターン/API デザインパターン/セキュアバイデザイン/DDD/クリーンコード) の参照と最新公式ドキュメントの出典記録を添えて、章立て複数 Markdown ファイル + index の仕様書ドキュメントセットへまとめるハーネス plugin。ヒアリングは5周ごとに状態保存+resume で継続し未収集セルを完了扱いしない。収集マトリクス網羅性 (validate-coverage-matrix.py) と出典記録 (validate-source-citation.py) を決定論ゲートで検証し、独立 context の完成度評価 (assign-system-spec-completeness-evaluator) と 3 監査 sub-agent (hearing/matrix/doc-freshness) で網羅性を担保する。確定済み章は fail-closed hook で誤上書きを防ぐ。改善要望は `/run-skill-feedback system-spec-harness` で投入可能。",
+  "description": "カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。",
   "author": {
     "name": "harness maintainers"
   },
-  "owner": "team-platform",
-  "since": "2026-07-11",
-  "last_audited": "2026-07-11",
-  "source": "plugins/system-spec-harness",
-  "distributable": true,
-  "bundle_targets": ["skills-full"],
-  "bundles": ["skills-full"],
-  "category": "productivity",
-  "tags": ["spec", "hearing", "system-design"],
-  "entry_points": {
-    "skills": [
-      "run-system-spec-elicit",
-      "run-system-spec-doc-fetch",
-      "run-system-spec-compile",
-      "ref-system-design-knowledge",
-      "assign-system-spec-completeness-evaluator"
-    ],
-    "agents": [
-      "system-spec-hearing-auditor",
-      "system-spec-matrix-auditor",
-      "system-spec-doc-freshness-auditor"
-    ],
-    "hooks": [
-      "guard-confirmed-chapter-overwrite"
-    ],
-    "commands": [
-      "spec-hearing-start",
-      "spec-compile"
-    ]
-  },
-  "permissions": {
-    "network": [],
-    "filesystem": [
-      "$CLAUDE_PLUGIN_ROOT/**",
-      "$CLAUDE_PROJECT_DIR/system-spec/**",
-      "$CLAUDE_PROJECT_DIR/eval-log/**"
-    ],
-    "secrets": []
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-confirmed-chapter-overwrite.py",
-            "timeout": 10000
-          }
-        ]
-      }
-    ]
-  }
+  "hooks": "./hooks/hooks.json"
 }

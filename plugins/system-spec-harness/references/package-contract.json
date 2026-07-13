@@ -1,0 +1,40 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "system-spec-harness",
+  "entry_points": {
+    "skills": [
+      "run-system-spec-elicit",
+      "run-system-spec-doc-fetch",
+      "run-system-spec-compile",
+      "ref-system-design-knowledge",
+      "assign-system-spec-completeness-evaluator"
+    ],
+    "agents": [
+      "system-spec-hearing-auditor",
+      "system-spec-matrix-auditor",
+      "system-spec-doc-freshness-auditor"
+    ],
+    "commands": [
+      "spec-hearing-start",
+      "spec-compile"
+    ],
+    "hooks": [
+      "guard-confirmed-chapter-overwrite"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "productivity",
+    "tags": [
+      "spec",
+      "hearing",
+      "system-design"
+    ]
+  },
+  "depends_on": [],
+  "pkg_checks": {}
+}

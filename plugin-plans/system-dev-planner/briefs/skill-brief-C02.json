@@ -1,0 +1,40 @@
+{
+  "skill_name": "assign-system-dev-plan-evaluator",
+  "prefix": "assign",
+  "kind": "assign",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "system-dev-plan結果を独立評価",
+    "assign-system-dev-plan-evaluator",
+    "計画を独立評価"
+  ],
+  "output_contract": "plan-findings.json (矛盾なし/漏れなし/整合性あり/依存関係整合の各条件×verdict×根拠)",
+  "boundary": "入力=C01生成物 (workstream-inventory/task-spec/task-graph)/出力=plan-findings。生成側の修正は行わずC01へ差し戻す",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "check-implementation-readiness.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "独立context起動",
+    "4条件評価",
+    "plan-findings出力"
+  ],
+  "goal": "C01が生成したworkstream-inventory/task-spec/task-graph/handoffが独立contextで4条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を満たすと評価された状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "生成 (C01) と評価を同一contextに残すと自己採点になりGoodhartが働くため、proposer≠approverでcontextを分離する",
+  "responsibilities": [
+    {
+      "id": "R4-evaluate",
+      "summary": "生成されたworkstream-inventory/task-spec/task-graph/handoffを独立contextで4条件評価しplan-findingsを返す (C05へ委譲)",
+      "prompt_required": true
+    }
+  ]
+}
