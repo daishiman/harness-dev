@@ -39,6 +39,10 @@ python3 "$SKILL_DIR/scripts/validate-route-build-reports.py" \
 | `inputs_consumed` | 依存 route レポートの読取宣言 (depends_on 全件を被覆・validator が強制) |
 | `handover` | 後続 route への申し送り。「渡すレポート」の本体で、次 route はここを必ず読む |
 | `covered_task_ids` | (optional) task-graph route モードの束ね done 用。この report が done を賄う task-graph node id 群。**writer=dispatcher** (TG-C06 が node→route join `entity_ref==route.component_id` から決定論導出して書く・SubAgent は書かない)。`sync-task-state.py` (TG-C02) が done 遷移時に `task_id ∈ covered_task_ids` を照合する。不在時は単一 task 後方互換 (PR#70 契約) |
+| `artifact_sha256` | `build_target` 実体の決定論 SHA-256 (64 lowercase hex)。`task_graph_ref` 付き success report で必須、validator が current bytes/tree と照合 |
+| `graph_hash` | producer `derive-task-graph.py --print-graph-hash` の `sha256:<64hex>`。consumer は canonical serializer を複製せず producer CLI を SSOT として current graph と照合 |
+| `generated_at` / `tool_versions` | report 確定時刻 (UTC RFC 3339) / evidence 生成 tool の非空 version map。`task_graph_ref` 付き success report で必須 |
+| `test_evidence` | 構造化 test 証跡 `{command, exit_code, passed, failed, started_at, completed_at, artifact?, artifact_sha256?}`。current success で 1 件以上、時刻は `started_at <= completed_at <= generated_at`。artifact fields はペアで指定し、repo-root 相対 path の実在/hash を validator が照合 |
 | `discovered` | (optional additive) `emit-discovered-task.py` で起票済み form の repo-root 相対パス列。**deviations 本文が discovered 報告へ言及するなら本フィールドで form パスを実証する** (validator が突合し、言及があるのに空/不在なら fail。corrections で訂正済みは除外)。残差が inbox 監査経路 (TG-C08 completion gate) に実際に乗った証跡 |
 | `corrections` | (optional additive) 既存 report 本文の誤り文言への追記型訂正 `{target, correction, corrected_by}`。evidence 改竄禁止の下で原文を上書きせず訂正を監査可能に残す (例: `target: "deviations[2]"`) |
 
@@ -46,4 +50,5 @@ python3 "$SKILL_DIR/scripts/validate-route-build-reports.py" \
 
 - **書き手/読み手 = 後段 builder (L4)**: run-skill-create / run-build-skill / 代替生成を含め、route の build を実行した主体が書く。planner (run-plugin-dev-plan) はレポートを生成しない。
 - **schema / validator の正本は本 skill 配下** (`schemas/route-build-report.schema.json` / `scripts/validate-route-build-reports.py`)。planner 側 `io-contract.md`「build handoff 契約」の route 実行レポート節は本契約への参照宣言であり、内容を再定義しない。
+- 後方互換境界: `task_graph_ref` が無い legacy handoff では上記 freshness fields は optional。`task_graph_ref` がある current success report のみ validator が fail-closed で必須化する。JSON Schema が field/key/enum の機械正本であり、validator はそこから key/enum/pattern を読み取る。
 - 単一 skill build 内部の工程受け渡し (`eval-log/handoff-<step>.json` / `skill-build-trace.json`) とは階層が異なる: あちらは 1 component の内側、本契約は component (route) 間。

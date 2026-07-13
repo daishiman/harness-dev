@@ -215,7 +215,7 @@ def test_build_script_route_report_records_covered_task_ids(tmp_path, monkeypatc
 
 
 def test_build_script_route_report_omits_covered_task_ids_without_graph(tmp_path, monkeypatch, script_route_builder):
-    """task_graph_ref 不在 / graph file 読込不能は covered_task_ids を省略する (後方互換)。"""
+    """legacy handoff は省略可、task_graph_ref 付き current handoff は読込不能を fail-closed にする。"""
     monkeypatch.chdir(tmp_path)
     route = _route("C01", "lint-a", f"plugins/{SLUG}/scripts/lint-a.py")
     handoff = _write_plan(tmp_path, [route])
@@ -225,15 +225,17 @@ def test_build_script_route_report_omits_covered_task_ids_without_graph(tmp_path
     assert rc == 0, payload
     assert "covered_task_ids" not in _read_report(tmp_path, "C01")
 
-    # task_graph_ref はあるが graph file 不在 → 読込不能として同じく省略
+    # task_graph_ref がある current handoff は structured evidence 必須。
+    # graph file 不在を legacy として黙示降格しない。
     data = json.loads(handoff.read_text(encoding="utf-8"))
     data["task_graph_ref"] = {"path": "task-graph.json", "schema_version": "1.0"}
     handoff.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
     rc, payload = script_route_builder.build_script_route(handoff_path=handoff, route_id="C01")
 
-    assert rc == 0, payload
-    assert "covered_task_ids" not in _read_report(tmp_path, "C01")
+    assert rc == 1
+    assert payload["ok"] is False
+    assert any("current handoff" in error for error in payload["errors"])
 
 
 def test_build_script_route_rejects_script_path_build_target_mismatch(tmp_path, monkeypatch, script_route_builder):

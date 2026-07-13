@@ -2,7 +2,7 @@
 # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
 # CI では --check gate (harness-creator-kit-ci.yml) が走るため二重防護となる。
 
-.PHONY: sync sync-check lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
+.PHONY: sync sync-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
 
 # LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
 # coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
@@ -16,6 +16,31 @@ sync:
 ## sync-check: 同期差分がないことを確認する（CI gate 相当、--check）
 sync-check:
 	bash scripts/sync-skills-to-claude.sh --check
+
+## native-surfaces: repo-owned native projections を apply してから read-only parity check する
+native-surfaces:
+	$(MAKE) native-surfaces-apply
+	$(MAKE) native-surfaces-check
+
+## native-surfaces-dry-run: C01 の単一 desired-set で変更計画だけを表示する（無書込）
+native-surfaces-dry-run:
+	python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --dry-run
+
+## native-surfaces-apply: repo-present + project-enabled scope の差分だけを原子的に反映する（trust は別 user gate）
+native-surfaces-apply:
+	python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --apply
+
+## native-surfaces-check: native surface / dual manifest / marketplace parity を書込なしで検査する
+native-surfaces-check:
+	python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --check
+
+## native-surfaces-pr-ready: local-only preflight (apply→check→schema validate→diff visibility; PR は作成しない)
+native-surfaces-pr-ready:
+	$(MAKE) native-surfaces-apply
+	$(MAKE) native-surfaces-check
+	python3 -c 'import json,tomllib; json.load(open(".claude/settings.json")); json.load(open(".codex/hooks.json")); json.load(open(".agents/plugins/marketplace.json")); tomllib.load(open(".codex/config.toml","rb")); tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb"))'
+	git status --short -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
+	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
 ## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + company-master vendored 検証を実行する
 lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored

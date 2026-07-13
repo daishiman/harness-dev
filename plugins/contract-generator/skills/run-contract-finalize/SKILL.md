@@ -1,7 +1,7 @@
 ---
 name: run-contract-finalize
 description: 業務委託契約書をSlack承認後にPDF発行・確定したいとき、承認(✅/OK)をポーリング検知してPDF生成・共有したいときに使う。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: [Read, Bash(python3 *)]
 kind: run

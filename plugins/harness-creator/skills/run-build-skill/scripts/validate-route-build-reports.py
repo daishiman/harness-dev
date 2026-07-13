@@ -33,23 +33,32 @@ CLI 出力契約:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path, PurePosixPath
 
-SCHEMA_VERSION = "1.0.0"
-COMPONENT_KINDS = {"skill", "sub-agent", "slash-command", "hook", "script"}
-BUILDERS = {"run-skill-create", "run-build-skill", "plugin-scaffold", "parent-skill-build"}
-STATUSES = {"success", "failure", "skipped"}
-ROUTE_ID_RE = re.compile(r"^C[0-9]+$")
-SLUG_RE = re.compile(r"^[a-z][a-z0-9-]*$")
-REQUIRED_KEYS = (
-    "schema_version", "plugin_slug", "route_id", "component_kind", "name",
-    "builder", "build_target", "status", "summary", "deviations",
-    "evidence", "inputs_consumed", "handover",
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schemas" / "route-build-report.schema.json"
+REPORT_SCHEMA = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+SCHEMA_PROPERTIES = REPORT_SCHEMA["properties"]
+SCHEMA_VERSION = SCHEMA_PROPERTIES["schema_version"]["const"]
+COMPONENT_KINDS = set(SCHEMA_PROPERTIES["component_kind"]["enum"])
+BUILDERS = set(SCHEMA_PROPERTIES["builder"]["enum"])
+STATUSES = set(SCHEMA_PROPERTIES["status"]["enum"])
+REQUIRED_KEYS = tuple(REPORT_SCHEMA["required"])
+OPTIONAL_KEYS = tuple(set(SCHEMA_PROPERTIES) - set(REQUIRED_KEYS))
+ROUTE_ID_RE = re.compile(SCHEMA_PROPERTIES["route_id"]["pattern"])
+SLUG_RE = re.compile(SCHEMA_PROPERTIES["plugin_slug"]["pattern"])
+SHA256_RE = re.compile(SCHEMA_PROPERTIES["artifact_sha256"]["pattern"])
+GRAPH_HASH_RE = re.compile(SCHEMA_PROPERTIES["graph_hash"]["pattern"])
+UTC_TIMESTAMP_RE = re.compile(SCHEMA_PROPERTIES["generated_at"]["pattern"])
+TOOL_NAME_RE = re.compile(SCHEMA_PROPERTIES["tool_versions"]["propertyNames"]["pattern"])
+_PLANNER_DERIVE_REL = (
+    "plugins", "plugin-dev-planner", "skills", "run-plugin-dev-plan", "scripts", "derive-task-graph.py",
 )
-OPTIONAL_KEYS = ("skip_reason", "covered_task_ids", "discovered", "corrections")
 
 
 def report_path(slug: str, route_id: str) -> str:
@@ -77,6 +86,58 @@ def report_rel(reports_dir: Path, route_id: str, repo_root: Path | None = None) 
 
 def _is_str_list(value: object) -> bool:
     return isinstance(value, list) and all(isinstance(x, str) and x for x in value)
+
+
+def _hash_target(path: Path) -> str:
+    """file または directory tree の決定論 SHA-256 (接頭辞なし)。"""
+    if path.is_file():
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    if not path.is_dir():
+        raise FileNotFoundError(path)
+    digest = hashlib.sha256()
+    for child in sorted((p for p in path.rglob("*") if p.is_file()), key=lambda p: p.as_posix()):
+        relative = child.relative_to(path).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        payload = child.read_bytes()
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
+    return digest.hexdigest()
+
+
+def _producer_graph_hash(graph_path: Path, repo_root: Path) -> tuple[str | None, str | None]:
+    """producer の read-only CLI から canonical graph hash を取得する。
+
+    canonical serializer を consumer 側に再実装すると field 追加時に silent drift
+    するため、derive-task-graph.py --print-graph-hash を唯一の SSOT とする。
+    """
+    derive_script = repo_root.joinpath(*_PLANNER_DERIVE_REL)
+    if not derive_script.is_file():
+        return None, f"graph_hash: producer 不在 ({derive_script})"
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(derive_script), "--print-graph-hash", str(graph_path)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, f"graph_hash: producer 起動失敗 ({exc})"
+    value = proc.stdout.strip()
+    if proc.returncode != 0 or not GRAPH_HASH_RE.fullmatch(value):
+        detail = proc.stderr.strip() or proc.stdout.strip() or f"exit={proc.returncode}"
+        return None, f"graph_hash: producer 算出失敗 ({detail})"
+    return value, None
+
+
+def _parse_utc_timestamp(value: object) -> datetime | None:
+    if not isinstance(value, str) or not UTC_TIMESTAMP_RE.fullmatch(value):
+        return None
+    try:
+        return datetime.fromisoformat(value.removesuffix("Z") + "+00:00")
+    except ValueError:
+        return None
 
 
 def validate_report_shape(report: object) -> list[str]:
@@ -116,6 +177,88 @@ def validate_report_shape(report: object) -> list[str]:
             findings.append(f"{key}: 非空文字列の配列でない")
     if "covered_task_ids" in report and not _is_str_list(report["covered_task_ids"]):
         findings.append("covered_task_ids: 非空文字列の配列でない")
+    if "artifact_sha256" in report and not (
+        isinstance(report["artifact_sha256"], str) and SHA256_RE.fullmatch(report["artifact_sha256"])
+    ):
+        findings.append("artifact_sha256: lowercase 64-hex でない")
+    if "graph_hash" in report and not (
+        isinstance(report["graph_hash"], str) and GRAPH_HASH_RE.fullmatch(report["graph_hash"])
+    ):
+        findings.append("graph_hash: sha256:<lowercase 64-hex> でない")
+    if "generated_at" in report and _parse_utc_timestamp(report["generated_at"]) is None:
+        findings.append("generated_at: UTC RFC 3339 (YYYY-MM-DDTHH:MM:SS[.fff]Z) でない")
+    if "tool_versions" in report:
+        versions = report["tool_versions"]
+        if not isinstance(versions, dict) or not versions:
+            findings.append("tool_versions: 非空 object でない")
+        else:
+            for tool, version in versions.items():
+                if not isinstance(tool, str) or not TOOL_NAME_RE.fullmatch(tool):
+                    findings.append(f"tool_versions: tool 名が不正 ({tool!r})")
+                if not isinstance(version, str) or not version.strip():
+                    findings.append(f"tool_versions[{tool!r}]: version が非空文字列でない")
+    if "test_evidence" in report:
+        test_evidence = report["test_evidence"]
+        if not isinstance(test_evidence, list):
+            findings.append("test_evidence: 配列でない")
+        else:
+            item_schema = SCHEMA_PROPERTIES["test_evidence"]["items"]
+            item_required = set(item_schema["required"])
+            item_allowed = set(item_schema["properties"])
+            for i, evidence in enumerate(test_evidence):
+                if not isinstance(evidence, dict):
+                    findings.append(f"test_evidence[{i}]: object でない")
+                    continue
+                missing = item_required - set(evidence)
+                if missing:
+                    findings.append(f"test_evidence[{i}]: 必須キー {sorted(missing)} 欠落")
+                unknown_evidence = set(evidence) - item_allowed
+                if unknown_evidence:
+                    findings.append(
+                        f"test_evidence[{i}]: 未知キー {sorted(unknown_evidence)} "
+                        "(additionalProperties=false)"
+                    )
+                command = evidence.get("command")
+                exit_code = evidence.get("exit_code")
+                passed = evidence.get("passed")
+                failed = evidence.get("failed")
+                if not isinstance(command, str) or not command.strip():
+                    findings.append(f"test_evidence[{i}].command: 非空文字列でない")
+                if isinstance(exit_code, bool) or not isinstance(exit_code, int) or exit_code < 0:
+                    findings.append(f"test_evidence[{i}].exit_code: 0 以上の整数でない")
+                for field, value in (("passed", passed), ("failed", failed)):
+                    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                        findings.append(f"test_evidence[{i}].{field}: 0 以上の整数でない")
+                if status == "success" and (exit_code != 0 or failed != 0):
+                    findings.append(
+                        f"test_evidence[{i}]: status=success なのに exit_code={exit_code!r}, failed={failed!r}"
+                    )
+                artifact_path = evidence.get("artifact")
+                artifact_hash = evidence.get("artifact_sha256")
+                if (artifact_path is None) != (artifact_hash is None):
+                    findings.append(
+                        f"test_evidence[{i}]: artifact/artifact_sha256 はペアで指定する"
+                    )
+                if artifact_path is not None and (
+                    not isinstance(artifact_path, str) or not artifact_path.strip()
+                ):
+                    findings.append(f"test_evidence[{i}].artifact: 非空文字列でない")
+                if artifact_hash is not None and (
+                    not isinstance(artifact_hash, str) or not SHA256_RE.fullmatch(artifact_hash)
+                ):
+                    findings.append(f"test_evidence[{i}].artifact_sha256: lowercase 64-hex でない")
+                started = evidence.get("started_at")
+                completed = evidence.get("completed_at")
+                if (started is None) != (completed is None):
+                    findings.append(f"test_evidence[{i}]: started_at/completed_at はペアで指定する")
+                started_at = _parse_utc_timestamp(started) if started is not None else None
+                completed_at = _parse_utc_timestamp(completed) if completed is not None else None
+                if started is not None and started_at is None:
+                    findings.append(f"test_evidence[{i}].started_at: UTC RFC 3339 でない")
+                if completed is not None and completed_at is None:
+                    findings.append(f"test_evidence[{i}].completed_at: UTC RFC 3339 でない")
+                if started_at is not None and completed_at is not None and started_at > completed_at:
+                    findings.append(f"test_evidence[{i}]: started_at が completed_at より後")
     if "discovered" in report and not _is_str_list(report["discovered"]):
         findings.append("discovered: 非空文字列の配列でない")
     if "corrections" in report:
@@ -193,6 +336,148 @@ def validate_against_route(report: dict, route: dict, slug: str, repo_root: Path
     return findings
 
 
+def validate_current_handoff_evidence(
+    report: dict,
+    route: dict,
+    handoff: dict,
+    plan_dir: Path | None,
+    repo_root: Path | None,
+) -> list[str]:
+    """task_graph_ref を持つ current handoff の structured freshness を fail-closed 検査。"""
+    if not isinstance(handoff.get("task_graph_ref"), dict):
+        return []  # task-graph の無い legacy handoff は後方互換。
+    findings: list[str] = []
+    if report.get("status") != "success":
+        return findings
+    if plan_dir is None or repo_root is None:
+        return ["current handoff: plan_dir/repo_root が無く structured evidence を検証できない"]
+
+    target_raw = report.get("build_target")
+    target = (repo_root / target_raw).resolve() if isinstance(target_raw, str) else None
+    if target is None:
+        findings.append("artifact_sha256: build_target を解決できない")
+    else:
+        try:
+            target.relative_to(repo_root.resolve())
+        except ValueError:
+            findings.append(f"build_target: repo root 外へ path escape ({target_raw!r})")
+        else:
+            expected_artifact = report.get("artifact_sha256")
+            if not isinstance(expected_artifact, str):
+                findings.append("artifact_sha256: current handoff の success report に必須")
+            elif target.exists():
+                actual_artifact = _hash_target(target)
+                if expected_artifact != actual_artifact:
+                    findings.append(
+                        f"artifact_sha256: current target hash と不一致 "
+                        f"(report={expected_artifact!r} actual={actual_artifact!r})"
+                    )
+
+    graph_ref = handoff["task_graph_ref"]
+    graph_rel = graph_ref.get("path")
+    graph_path: Path | None = None
+    if isinstance(graph_rel, str) and graph_rel and not Path(graph_rel).is_absolute():
+        candidate = (plan_dir / graph_rel).resolve()
+        try:
+            candidate.relative_to(plan_dir.resolve())
+        except ValueError:
+            pass
+        else:
+            graph_path = candidate
+    if graph_path is None:
+        findings.append(f"task_graph_ref.path: plan dir 内相対 path でない ({graph_rel!r})")
+        return findings
+    try:
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        findings.append(f"task_graph_ref: 読込/parse 不能 ({exc})")
+        return findings
+    if not isinstance(graph, dict) or not isinstance(graph.get("nodes"), list):
+        findings.append("task_graph_ref: graph object/nodes[] が不正")
+        return findings
+
+    actual_graph_hash, graph_hash_error = _producer_graph_hash(graph_path, repo_root)
+    if graph_hash_error:
+        findings.append(graph_hash_error)
+    expected_graph_hash = report.get("graph_hash")
+    if not isinstance(expected_graph_hash, str):
+        findings.append("graph_hash: current handoff の success report に必須")
+    elif actual_graph_hash is not None and expected_graph_hash != actual_graph_hash:
+        findings.append(
+            f"graph_hash: current task graph と不一致 "
+            f"(report={expected_graph_hash!r} actual={actual_graph_hash!r})"
+        )
+
+    covered = report.get("covered_task_ids")
+    if not _is_str_list(covered) or not covered:
+        findings.append("covered_task_ids: current handoff の success report に非空配列が必須")
+    else:
+        if len(covered) != len(set(covered)):
+            findings.append("covered_task_ids: 重複 task id がある")
+        nodes_by_id = {
+            node.get("id"): node
+            for node in graph["nodes"]
+            if isinstance(node, dict) and isinstance(node.get("id"), str)
+        }
+        for task_id in covered:
+            node = nodes_by_id.get(task_id)
+            if node is None:
+                findings.append(f"covered_task_ids: task graph に存在しない id {task_id!r}")
+            elif node.get("entity_ref") != route.get("id"):
+                findings.append(
+                    f"covered_task_ids: {task_id!r} entity_ref={node.get('entity_ref')!r} が "
+                    f"route={route.get('id')!r} と不一致"
+                )
+
+    test_evidence = report.get("test_evidence")
+    if not isinstance(test_evidence, list) or not test_evidence:
+        findings.append("test_evidence: current handoff の success report に構造化 test 証跡が必須")
+    else:
+        generated_at = _parse_utc_timestamp(report.get("generated_at"))
+        for i, evidence in enumerate(test_evidence):
+            if not isinstance(evidence, dict):
+                continue
+            started_at = _parse_utc_timestamp(evidence.get("started_at"))
+            completed_at = _parse_utc_timestamp(evidence.get("completed_at"))
+            if started_at is None or completed_at is None:
+                findings.append(
+                    f"test_evidence[{i}]: current handoff では started_at/completed_at が必須"
+                )
+            elif generated_at is not None and completed_at > generated_at:
+                findings.append(f"test_evidence[{i}]: completed_at が report.generated_at より後")
+
+            artifact_rel = evidence.get("artifact")
+            artifact_hash = evidence.get("artifact_sha256")
+            if artifact_rel is None and artifact_hash is None:
+                continue
+            if not isinstance(artifact_rel, str) or not artifact_rel or Path(artifact_rel).is_absolute():
+                findings.append(f"test_evidence[{i}].artifact: repo-root 相対 path でない")
+                continue
+            artifact = (repo_root / artifact_rel).resolve()
+            try:
+                artifact.relative_to(repo_root.resolve())
+            except ValueError:
+                findings.append(f"test_evidence[{i}].artifact: repo root 外へ path escape")
+                continue
+            if not artifact.exists():
+                findings.append(f"test_evidence[{i}].artifact: 実体が存在しない ({artifact_rel})")
+                continue
+            if isinstance(artifact_hash, str) and SHA256_RE.fullmatch(artifact_hash):
+                actual_artifact_hash = _hash_target(artifact)
+                if artifact_hash != actual_artifact_hash:
+                    findings.append(
+                        f"test_evidence[{i}].artifact_sha256: current artifact hash と不一致 "
+                        f"(report={artifact_hash!r} actual={actual_artifact_hash!r})"
+                    )
+
+    if _parse_utc_timestamp(report.get("generated_at")) is None:
+        findings.append("generated_at: current handoff の success report に UTC RFC 3339 時刻が必須")
+    versions = report.get("tool_versions")
+    if not isinstance(versions, dict) or not versions:
+        findings.append("tool_versions: current handoff の success report に非空 map が必須")
+    return findings
+
+
 def _load_report(reports_dir: Path, slug: str, route_id: str) -> tuple[dict | None, list[str]]:
     path = reports_dir / f"route-{route_id}.json"
     if not path.is_file():
@@ -255,7 +540,13 @@ def report_warnings(report: object) -> list[str]:
     return warnings
 
 
-def validate_route(handoff: dict, reports_dir: Path, route_id: str, repo_root: Path | None = None) -> list[str]:
+def validate_route(
+    handoff: dict,
+    reports_dir: Path,
+    route_id: str,
+    repo_root: Path | None = None,
+    plan_dir: Path | None = None,
+) -> list[str]:
     slug = handoff.get("target_plugin_slug", "")
     routes = {r.get("id"): r for r in handoff.get("routes", []) if isinstance(r, dict)}
     route = routes.get(route_id)
@@ -269,18 +560,24 @@ def validate_route(handoff: dict, reports_dir: Path, route_id: str, repo_root: P
         findings.append(f"route_id: ファイル名 route-{route_id}.json と不一致 ({report.get('route_id')!r})")
     findings.extend(validate_discovered_consistency(report))
     findings.extend(validate_against_route(report, route, slug, repo_root))
+    findings.extend(validate_current_handoff_evidence(report, route, handoff, plan_dir, repo_root))
     findings.extend(validate_dependency_chain(report, route, reports_dir, slug, repo_root))
     return findings
 
 
-def validate_complete(handoff: dict, reports_dir: Path, repo_root: Path | None = None) -> list[str]:
+def validate_complete(
+    handoff: dict,
+    reports_dir: Path,
+    repo_root: Path | None = None,
+    plan_dir: Path | None = None,
+) -> list[str]:
     slug = handoff.get("target_plugin_slug", "")
     routes = [r for r in handoff.get("routes", []) if isinstance(r, dict)]
     findings: list[str] = []
     for route in routes:
         rid = route.get("id", "?")
-        route_findings = validate_route(handoff, reports_dir, rid, repo_root)
-        findings.extend(route_findings)
+        route_findings = validate_route(handoff, reports_dir, rid, repo_root, plan_dir)
+        findings.extend(f"route {rid}: {finding}" for finding in route_findings)
         if not route_findings:
             report, _ = _load_report(reports_dir, slug, rid)
             if report and report.get("status") == "failure":
@@ -463,12 +760,13 @@ def main(argv: list[str]) -> int:
     reports_dir = Path(reports_dir_arg) if reports_dir_arg else Path(
         report_path(handoff["target_plugin_slug"], "C0")).parent
     repo_root = _repo_root_from_handoff_path(handoff_path)
+    plan_dir = handoff_path.resolve().parent
     slug = handoff["target_plugin_slug"]
     if route_id is not None:
-        findings = validate_route(handoff, reports_dir, route_id, repo_root)
+        findings = validate_route(handoff, reports_dir, route_id, repo_root, plan_dir)
         report, _ = _load_report(reports_dir, slug, route_id)
         return _emit(not findings, f"route:{route_id}", findings, report_warnings(report))
-    findings = validate_complete(handoff, reports_dir, repo_root)
+    findings = validate_complete(handoff, reports_dir, repo_root, plan_dir)
     warnings: list[str] = []
     for route in handoff.get("routes", []):
         if isinstance(route, dict):

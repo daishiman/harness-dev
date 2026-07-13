@@ -1,7 +1,7 @@
 ---
 name: run-contract-generate
 description: tenantの業務委託契約書の下書きを作成・量産したいとき、管理台帳から個人/法人のひな形に差込みDocs生成してSlack通知したいときに使う。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: [Read, Write, Edit, Bash(python3 *), AskUserQuestion]
 kind: run

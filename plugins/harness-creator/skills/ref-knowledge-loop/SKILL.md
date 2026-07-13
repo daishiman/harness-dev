@@ -1,7 +1,7 @@
 ---
 name: ref-knowledge-loop
 description: 生成スキルに knowledge/ を追加するとき読む。ナレッジ蓄積・検索・フィードバックループの設計を参照するとき読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 kind: ref
 prefix: ref
