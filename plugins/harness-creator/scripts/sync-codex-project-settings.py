@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+# /// script
+# name: sync-codex-project-settings
+# purpose: native-surfaces.toml を正本に Codex project settings (.codex/config.toml の features.hooks と .codex/hooks.json の managed hook entry) を apply/check する adapter。C01 (sync-native-surfaces.py) から child として呼ばれる。
+# inputs:
+#   - argv: --repo-root PATH --contract PATH(native-surfaces.toml) [--apply|--check|--dry-run(既定 check)] [--json]
+# outputs:
+#   - stdout: status 文字列 (既定) / JSON report (--json)。managed key の diff・verdict・exit_code。
+#   - write: .codex/config.toml の features.hooks と .codex/hooks.json の managed hook entry のみ (atomic replace)。foreign handler は温存。--check/--dry-run は無書込。
+#   - exit: 0=success/noop / 1=drift / 3=contract invalid (ContractError)。
+# contexts: [C, E]
+# network: false
+# write-scope: .codex/config.toml (features.hooks key のみ) / .codex/hooks.json (managed hook entry のみ)。他 .codex key・user global config・.agents は read-only。
+# dependencies: []
+# requires-python: ">=3.11"
+# ///
 """Apply/check project Codex settings derived from native-surfaces.toml."""
 from __future__ import annotations
 
