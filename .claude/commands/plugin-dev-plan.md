@@ -1,1 +1,0 @@
-../../plugins/plugin-dev-planner/commands/plugin-dev-plan.md

@@ -174,9 +174,12 @@ harness-coverage:
 harness-ratchet:
 	python3 scripts/validate-harness-coverage.py --ratchet
 
-## test: sync-check + lint + plugin-package-check + feedback-contract + content-review + pytest + gate-phase0 を順に実行する
+## test: native-surfaces-check + lint + plugin-package-check + feedback-contract + content-review + pytest + gate-phase0 を順に実行する
 ##   (coverage / llm-coverage は WARN のため test には含めず、coverage-gate を CI で別途実行する)
-test: sync-check lint plugin-package-check feedback-contract content-review pytest llm-coverage
+##   native-surfaces-check (C01 単一 desired-set) が legacy sync-check を置換する。
+##   legacy sync-check は enabled-scope を持たず disabled plugin まで投影を要求するため C01 と両立しない
+##   (native surface projection は enabled plugin scope のみ。governance-check.yml / kit-ci も native-surfaces-check を強制)。
+test: native-surfaces-check lint plugin-package-check feedback-contract content-review pytest llm-coverage
 	python3 scripts/gate-phase0.py
 
 ## help: このメッセージを表示する

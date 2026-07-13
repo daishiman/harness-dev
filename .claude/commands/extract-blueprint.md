@@ -1,1 +1,0 @@
-../../plugins/extract-system-blueprint/commands/extract-blueprint.md
