@@ -17,6 +17,7 @@ conftest 非依存で module-level に importlib ロードする (自己完結�
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -83,6 +84,50 @@ def _make_store(base: Path, consult_at: str) -> Path:
         encoding="utf-8",
     )
     return base
+
+
+_GRAPH_HASH = "sha256:" + "a" * 64
+
+
+def _runtime_ledger(build: Path, *, graph_hash: str = _GRAPH_HASH,
+                    gate_task_ids: dict[str, list[str]] | None = None) -> dict:
+    """schema-valid ledger と sha-pinned build-dir 相対 artifact を作る。"""
+    artifact_specs = [
+        ("local_build", "route-C01.json", b"c01\n"),
+        ("native_parity", "route-C02.json", b"c02\n"),
+        ("rollback", "rollback-evidence.json", b"rollback\n"),
+    ]
+    artifacts = []
+    for purpose, name, payload in artifact_specs:
+        (build / name).write_bytes(payload)
+        artifacts.append({
+            "purpose": purpose,
+            "path": name,
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        })
+    task_ids = gate_task_ids or {
+        "trust": ["P13-x-03"],
+        "new_session": ["P13-x-03"],
+        "uninstall": ["P13-x-04"],
+        "pr": ["P13-x-05"],
+    }
+    gates = {}
+    for gate_id in ("install", "enable", "trust", "new_session", "uninstall", "pr"):
+        state = "not_applicable" if gate_id == "pr" else "pending_user_gate"
+        gates[gate_id] = {
+            "state": state,
+            "task_ids": task_ids.get(gate_id, []),
+            "artifact_refs": ["rollback"] if gate_id == "uninstall" else [],
+            "reason": f"{gate_id} requires an explicit user decision",
+        }
+    return {
+        "schema_version": "2.0.0",
+        "graph_hash": graph_hash,
+        "generated_at": "2026-07-13T00:00:00Z",
+        "artifacts": artifacts,
+        "gates": gates,
+        "boundary": "local evidence is distinct from user-owned runtime state",
+    }
 
 
 # ─────────────────────────── scan_pending_discovered ───────────────────────────
@@ -287,16 +332,17 @@ def test_gate_blocked_nodes_handoff_arg_makes_rescue_command_concrete(tmp_path, 
     assert "<handoff>" not in rescue
 
 
-def test_gate_not_blocked_when_no_blocked_nodes(tmp_path, capsys):
-    """blocked node の無い task-state は gate を塞がない (done/pending/running は対象外)。"""
+def test_gate_blocks_pending_and_running_local_nodes(tmp_path, capsys):
+    """blocked でなくても local required node が done でなければ完了でない。"""
     inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
     state = _task_state(tmp_path, [{"id": "T1", "state": "done"},
                                    {"id": "T2", "state": "pending"},
                                    {"id": "T3", "state": "running"}])
     rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "none.jsonl"),
                    "--task-state", str(state), "--dry-run"])
-    assert rc == 0
-    assert json.loads(capsys.readouterr().out)["completion_gate"] == "ok"
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert [t["id"] for t in out["incomplete_required_tasks"]] == ["T2", "T3"]
 
 
 def test_pending_discovered_gate_takes_precedence_over_blocked_nodes(tmp_path, capsys):
@@ -874,6 +920,8 @@ def test_never_writes_task_graph_or_plan(tmp_path, capsys):
     assert not (build_dir / "component-inventory.json").exists()
 
 
+# Retired legacy direct symlink/settings gate tests. The C01-only contract below supersedes them.
+'''
 # ─────────────────────────── 完了ゲート第3段 (.claude symlink drift) ───────────────────────────
 def _fake_repo(tmp_path, generator_exit: int):
     """唯一の生成器 scripts/build-claude-symlinks.py を持つ repo root と配下 task-state を模す。"""
@@ -933,3 +981,422 @@ def test_gate_symlink_skipped_when_generator_absent(tmp_path, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["completion_gate"] == "ok"
     assert out["claude_symlink_gate"]["status"] == "skipped"
+
+
+# ────────── C03 拡張: hooks_settings_gate / native_surface_parity_gate (additive) ──────────
+_HOOKS_REL = rec._HOOKS_SETTINGS_GENERATOR_REL
+_PARITY_REL = rec._NATIVE_PARITY_GENERATOR_REL
+
+
+def _fake_generator(root: Path, rel, exit_code: int, out: str | None = None, err: str = "") -> Path:
+    """指定 exit_code で終了する fake generator を root/rel へ置く (rc→status 検証用)。"""
+    if out is None:
+        out = json.dumps({"probe": "structured-child-report"})
+    gen = root / rel
+    gen.parent.mkdir(parents=True, exist_ok=True)
+    gen.write_text(
+        "import sys\n"
+        f"sys.stdout.write({out!r})\n"
+        f"sys.stderr.write({err!r})\n"
+        f"sys.exit({int(exit_code)})\n",
+        encoding="utf-8")
+    return gen
+
+
+def _ts_under(root: Path) -> str:
+    """root 配下 eval-log/ に最小 task-state を置きパスを返す (gate の repo root 上方解決用)。"""
+    d = root / "eval-log" / "x" / "build"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / "task-state.json"
+    p.write_text(json.dumps({"nodes": []}, ensure_ascii=False), encoding="utf-8")
+    return str(p)
+
+
+def _resolved_inbox(tmp_path) -> Path:
+    """gate1/2/3 を通過させる全解決 inbox (gate4/5 へ到達)。"""
+    return _inbox(tmp_path, {"a.json": _form(status="accepted")})
+
+
+def _run_dry(tmp_path, inbox):
+    return ["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"), "--dry-run"]
+
+
+def test_resolve_gen_root_none_without_task_state():
+    assert rec._resolve_repo_root_for_generator(None, _HOOKS_REL) is None
+
+
+def test_resolve_gen_root_none_when_absent(tmp_path):
+    assert rec._resolve_repo_root_for_generator(_ts_under(tmp_path), _HOOKS_REL) is None
+
+
+def test_resolve_gen_root_finds_ancestor(tmp_path):
+    _fake_generator(tmp_path, _HOOKS_REL, 0)
+    assert rec._resolve_repo_root_for_generator(_ts_under(tmp_path), _HOOKS_REL) == tmp_path.resolve()
+
+
+def test_hooks_gate_skipped_when_absent(tmp_path):
+    assert rec._check_hooks_settings_gate(_ts_under(tmp_path))["status"] == "skipped_not_installed"
+
+
+def test_parity_gate_skipped_when_absent(tmp_path):
+    assert rec._check_native_surface_parity_gate(_ts_under(tmp_path))["status"] == "skipped_not_installed"
+
+
+def test_both_gates_skipped_when_task_state_none():
+    assert rec._check_hooks_settings_gate(None)["status"] == "skipped_not_installed"
+    assert rec._check_native_surface_parity_gate(None)["status"] == "skipped_not_installed"
+
+
+@pytest.mark.parametrize("rc,status", [(0, "ok"), (1, "drift"), (2, "conflict"),
+                                       (3, "parse"), (4, "parse"), (7, "parse")])
+def test_hooks_gate_rc_mapping(tmp_path, rc, status):
+    _fake_generator(tmp_path, _HOOKS_REL, rc)
+    g = rec._check_hooks_settings_gate(_ts_under(tmp_path))
+    assert g["status"] == status and g["return_code"] == rc
+    assert g["child_report"]["probe"] == "structured-child-report"
+    assert ("remediation" in g) is (status != "ok")
+    assert ("fix_command" in g) is (status == "drift")
+
+
+@pytest.mark.parametrize("rc,status", [(0, "ok"), (1, "drift"), (2, "conflict"), (3, "parse"), (9, "parse")])
+def test_parity_gate_rc_mapping(tmp_path, rc, status):
+    _fake_generator(tmp_path, _PARITY_REL, rc, err="err-x")
+    g = rec._check_native_surface_parity_gate(_ts_under(tmp_path))
+    assert g["status"] == status
+    if status != "ok":
+        assert g["remediation"]["retry_command"].endswith("--check --json")
+        assert "detail" in g
+
+
+def test_gate_ok_has_root_no_fix(tmp_path):
+    _fake_generator(tmp_path, _HOOKS_REL, 0)
+    g = rec._check_hooks_settings_gate(_ts_under(tmp_path))
+    assert g["status"] == "ok" and g["repo_root"] == str(tmp_path.resolve()) and "fix_command" not in g
+
+
+def test_gate_detail_truncated_to_400(tmp_path):
+    _fake_generator(tmp_path, _HOOKS_REL, 1, out="X" * 1000)
+    g = rec._check_hooks_settings_gate(_ts_under(tmp_path))
+    assert len(g["detail"]) <= 400
+
+
+def test_gate_rc0_with_non_json_report_is_parse_block(tmp_path):
+    _fake_generator(tmp_path, _HOOKS_REL, 0, out="not-json")
+    g = rec._check_hooks_settings_gate(_ts_under(tmp_path))
+    assert g["status"] == "parse"
+    assert g["return_code"] == 0
+    assert g["child_report"] is None
+    assert g["remediation"]["command"] is None
+
+
+def test_gate_report_exit_code_mismatch_is_parse_block(tmp_path):
+    _fake_generator(tmp_path, _PARITY_REL, 0,
+                    out=json.dumps({"verdict": "success", "exit_code": 1, "adapters": []}))
+    g = rec._check_native_surface_parity_gate(_ts_under(tmp_path))
+    assert g["status"] == "parse"
+    assert g["child_status"] == "success"
+
+
+def test_native_gate_preserves_child_status_and_structured_remediation(tmp_path):
+    report = {
+        "verdict": "drift",
+        "exit_code": 1,
+        "adapters": [{
+            "name": "codex_parity", "status": "drift", "warning": "stale evidence",
+            "remediation": "refresh digests", "changed": 0, "exit": 1,
+            "skipped_reason": None,
+        }],
+    }
+    _fake_generator(tmp_path, _PARITY_REL, 1, out=json.dumps(report))
+    g = rec._check_native_surface_parity_gate(_ts_under(tmp_path))
+    assert g["status"] == "drift"
+    assert g["child_status"] == "drift"
+    assert g["child_report"] == report
+    assert g["remediation"]["child_items"] == [{
+        "source": "codex_parity", "status": "drift", "warning": "stale evidence",
+        "remediation": "refresh digests",
+    }]
+
+
+def test_generator_spawn_error_is_parse_with_remediation(tmp_path, monkeypatch):
+    _fake_generator(tmp_path, _HOOKS_REL, 0)
+    monkeypatch.setattr(rec.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError("race")))
+    g = rec._check_hooks_settings_gate(_ts_under(tmp_path))
+    assert g["status"] == "parse"
+    assert g["child_status"] == "spawn_error"
+    assert g["return_code"] is None
+    assert g["remediation"]["retry_command"].endswith("--check --json")
+
+
+def test_generator_timeout_is_conflict_with_structured_status(tmp_path, monkeypatch):
+    _fake_generator(tmp_path, _PARITY_REL, 0)
+
+    def _timeout(*args, **kwargs):
+        assert kwargs["timeout"] == rec._READONLY_GATE_TIMEOUT_SECONDS
+        raise rec.subprocess.TimeoutExpired(args[0], kwargs["timeout"])
+
+    monkeypatch.setattr(rec.subprocess, "run", _timeout)
+    g = rec._check_native_surface_parity_gate(_ts_under(tmp_path))
+    assert g["status"] == "conflict"
+    assert g["child_status"] == "timeout"
+    assert g["return_code"] is None
+    assert "timeout" in g["remediation"]["action"]
+
+
+@pytest.mark.parametrize("gate_fn,key", [
+    ("_check_hooks_settings_gate", "hooks_settings_gate"),
+    ("_check_native_surface_parity_gate", "native_surface_parity_gate"),
+])
+@pytest.mark.parametrize("bad", ["drift", "conflict", "parse"])
+def test_main_blocks_on_new_gate(tmp_path, capsys, monkeypatch, gate_fn, key, bad):
+    inbox = _resolved_inbox(tmp_path)
+    monkeypatch.setattr(rec, gate_fn,
+                        lambda ts, _b=bad: {"status": _b, "repo_root": "/r",
+                                            "fix_command": "fix-me", "return_code": 1})
+    other = ("_check_native_surface_parity_gate" if gate_fn == "_check_hooks_settings_gate"
+             else "_check_hooks_settings_gate")
+    monkeypatch.setattr(rec, other, lambda ts: {"status": "skipped_not_installed"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["completion_gate"] == "blocked"
+    assert out[key]["status"] == bad and any("fix-me" in s for s in out["next_steps"])
+
+
+def test_main_ok_includes_new_gates_skipped(tmp_path, capsys, monkeypatch):
+    inbox = _resolved_inbox(tmp_path)
+    monkeypatch.setattr(rec, "_check_hooks_settings_gate", lambda ts: {"status": "skipped_not_installed"})
+    monkeypatch.setattr(rec, "_check_native_surface_parity_gate", lambda ts: {"status": "skipped_not_installed"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and out["completion_gate"] == "ok"
+    assert out["hooks_settings_gate"]["status"] == "skipped_not_installed"
+    assert out["native_surface_parity_gate"]["status"] == "skipped_not_installed"
+
+
+def test_main_ok_when_new_gates_ok(tmp_path, capsys, monkeypatch):
+    inbox = _resolved_inbox(tmp_path)
+    monkeypatch.setattr(rec, "_check_hooks_settings_gate", lambda ts: {"status": "ok", "repo_root": "/r"})
+    monkeypatch.setattr(rec, "_check_native_surface_parity_gate", lambda ts: {"status": "ok", "repo_root": "/r"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and out["hooks_settings_gate"]["status"] == "ok"
+
+
+def test_main_pending_precedes_new_gates(tmp_path, capsys, monkeypatch):
+    inbox = _inbox(tmp_path, {"p.json": _form(status=None)})
+    monkeypatch.setattr(rec, "_check_hooks_settings_gate", lambda ts: {"status": "drift", "fix_command": "x"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and "pending_discovered_tasks" in out and "hooks_settings_gate" not in out
+
+
+def test_main_symlink_precedes_new_gates(tmp_path, capsys, monkeypatch):
+    inbox = _resolved_inbox(tmp_path)
+    monkeypatch.setattr(rec, "_check_claude_symlink_gate", lambda ts: {"status": "drift", "repo_root": "/r"})
+    monkeypatch.setattr(rec, "_check_hooks_settings_gate", lambda ts: {"status": "drift", "fix_command": "x"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["claude_symlink_gate"]["status"] == "drift" and "hooks_settings_gate" not in out
+
+
+def test_main_both_new_gates_bad_lists_both(tmp_path, capsys, monkeypatch):
+    inbox = _resolved_inbox(tmp_path)
+    monkeypatch.setattr(rec, "_check_hooks_settings_gate",
+                        lambda ts: {"status": "drift", "fix_command": "fix-h", "repo_root": "/r"})
+    monkeypatch.setattr(rec, "_check_native_surface_parity_gate",
+                        lambda ts: {"status": "conflict", "fix_command": "fix-n", "repo_root": "/r"})
+    rc = rec.main(_run_dry(tmp_path, inbox))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    steps = " ".join(out["next_steps"])
+    assert "fix-h" in steps and "fix-n" in steps
+'''
+
+
+# ────────── C01 単一 desired-set gate ──────────
+_C01_REL = rec._NATIVE_SURFACE_GENERATOR_REL
+
+
+def _c01_report(exit_code=0, verdict="success", *, disabled=False):
+    scope = {"enabled": ["harness-creator"], "skipped": []}
+    if disabled:
+        scope = {"enabled": [], "skipped": [{"plugin": "disabled-plugin", "reason": "not enabled"}]}
+    return {
+        "verdict": verdict, "exit_code": exit_code,
+        "adapters": [
+            {"name": "claude_symlinks", "status": "noop", "changed": 0, "exit": 0},
+            {"name": "claude_settings", "status": "noop", "changed": 0, "exit": 0},
+            {"name": "codex_parity", "status": "checked", "changed": 0, "exit": 0},
+        ],
+        "scope": scope,
+    }
+
+
+def _fake_c01(root: Path, exit_code=0, report=None):
+    gen = root / _C01_REL
+    gen.parent.mkdir(parents=True, exist_ok=True)
+    output = json.dumps(report if report is not None else _c01_report(exit_code))
+    gen.write_text("import sys\n" f"sys.stdout.write({output!r})\n" f"sys.exit({exit_code})\n",
+                   encoding="utf-8")
+    return gen
+
+
+def _c01_state(root: Path, nodes=None):
+    build = root / "eval-log" / "x" / "build"
+    build.mkdir(parents=True, exist_ok=True)
+    return _write(build / "task-state.json", {
+        "schema_version": "1.0", "nodes": nodes or [{"id": "T1", "state": "done"}],
+    })
+
+
+def test_c01_gate_skipped_only_when_orchestrator_absent(tmp_path):
+    assert rec._check_native_surface_gate(str(_c01_state(tmp_path)))["status"] == "skipped_not_installed"
+
+
+def test_c01_pass_with_disabled_projections_is_ok(tmp_path):
+    report = _c01_report(disabled=True)
+    _fake_c01(tmp_path, report=report)
+    gate = rec._check_native_surface_gate(str(_c01_state(tmp_path)))
+    assert gate["status"] == "ok"
+    assert gate["child_report"]["scope"]["skipped"] == [
+        {"plugin": "disabled-plugin", "reason": "not enabled"},
+    ]
+
+
+@pytest.mark.parametrize("rc,verdict,status", [
+    (1, "drift", "drift"), (2, "conflict", "conflict"), (3, "invalid", "parse"),
+])
+def test_c01_failure_mapping_and_remediation(tmp_path, rc, verdict, status):
+    report = _c01_report(rc, verdict)
+    report["adapters"][0].update({"status": status, "remediation": "repair projection"})
+    _fake_c01(tmp_path, rc, report)
+    gate = rec._check_native_surface_gate(str(_c01_state(tmp_path)))
+    assert gate["status"] == status and gate["child_report"] == report
+    assert gate["remediation"]["child_items"][0]["remediation"] == "repair projection"
+
+
+def test_c01_success_requires_structured_report(tmp_path):
+    _fake_c01(tmp_path, 0, {"probe": "not-c01-contract"})
+    assert rec._check_native_surface_gate(str(_c01_state(tmp_path)))["status"] == "parse"
+
+
+def test_main_uses_only_c01_gate_and_preserves_disabled_scope(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    report = _c01_report(disabled=True)
+    _fake_c01(tmp_path, report=report)
+    state = _c01_state(tmp_path)
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and out["native_surface_gate"]["child_report"] == report
+    assert not ({"claude_symlink_gate", "hooks_settings_gate", "native_surface_parity_gate"} & out.keys())
+
+
+def test_local_missing_state_node_blocks_completion(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "T1", "phase_ref": "P05"}, {"id": "T2", "phase_ref": "P10"},
+    ]})
+    state = _task_state(tmp_path, [{"id": "T1", "state": "done"}])
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--plan-dir", str(plan), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert out["incomplete_required_tasks"] == [{"id": "T2", "state": "missing", "phase_ref": "P10"}]
+
+
+def test_p13_pending_allowed_only_with_explicit_runtime_ledger(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "T1", "phase_ref": "P12", "title": "local docs"},
+        {"id": "P13-x-03", "phase_ref": "P13",
+         "title": "R2 trust前 non-run / trust後 SessionStart run"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {
+        "graph_hash": _GRAPH_HASH, "nodes": [{"id": "T1", "state": "done"}],
+    })
+    _write(build / "runtime-evidence-ledger.json", _runtime_ledger(
+        build, gate_task_ids={
+            "trust": ["P13-x-03"], "new_session": ["P13-x-03"],
+        }))
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--plan-dir", str(plan), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and out["runtime_pending_user_gate"]["status"] == "accepted"
+    assert out["runtime_pending_user_gate"]["deferred_task_ids"] == ["P13-x-03"]
+
+
+def test_p13_local_parity_cannot_be_deferred_by_runtime_ledger(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "P13-x-02", "phase_ref": "P13", "title": "C02 native parity/freshness PASS。"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {"graph_hash": _GRAPH_HASH, "nodes": []})
+    ledger = _runtime_ledger(build, gate_task_ids={"trust": ["P13-x-02"]})
+    _write(build / "runtime-evidence-ledger.json", ledger)
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--plan-dir", str(plan), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1
+    assert out["incomplete_required_tasks"] == [
+        {"id": "P13-x-02", "state": "missing", "phase_ref": "P13"},
+    ]
+    assert out["runtime_pending_user_gate"]["status"] == "invalid"
+    assert any("明示 user-gated P13 node でない" in v
+               for v in out["runtime_pending_user_gate"]["violations"])
+
+
+def test_runtime_ledger_artifact_hash_tamper_fails_closed(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "P13-x-03", "phase_ref": "P13", "title": "trust後 SessionStart run"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {"graph_hash": _GRAPH_HASH, "nodes": []})
+    ledger = _runtime_ledger(build, gate_task_ids={
+        "trust": ["P13-x-03"], "new_session": ["P13-x-03"],
+    })
+    _write(build / "runtime-evidence-ledger.json", ledger)
+    (build / "route-C01.json").write_text("tampered", encoding="utf-8")
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--plan-dir", str(plan), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["runtime_pending_user_gate"]["status"] == "invalid"
+    assert any("sha256 不一致" in v for v in out["runtime_pending_user_gate"]["violations"])
+
+
+def test_runtime_ledger_graph_hash_and_unknown_key_fail_closed(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "P13-x-03", "phase_ref": "P13", "title": "trust後 SessionStart run"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {"graph_hash": _GRAPH_HASH, "nodes": []})
+    ledger = _runtime_ledger(build, graph_hash="sha256:" + "b" * 64, gate_task_ids={
+        "trust": ["P13-x-03"], "new_session": ["P13-x-03"],
+    })
+    ledger["unexpected"] = True
+    _write(build / "runtime-evidence-ledger.json", ledger)
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--task-state", str(state), "--plan-dir", str(plan), "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    violations = out["runtime_pending_user_gate"]["violations"]
+    assert rc == 1
+    assert any("未知キー" in v for v in violations)
+    assert any("graph_hash が task-state pin と不一致" in v for v in violations)

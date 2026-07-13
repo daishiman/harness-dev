@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "harness-creator",
+  "route_id": "C03",
+  "component_kind": "script",
+  "name": "record-task-graph-knowledge.py (native surface 完了ゲート拡張)",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+  "status": "success",
+  "summary": "C03 TG-C08 completion gate を拡張し、user-owned runtime node だけを schema-valid freshness ledger で保留し、local-required node、C01 child report、remediation、parse/timeout/exit 不整合を fail-closed 検査する。",
+  "deviations": [],
+  "evidence": [
+    "plugins/harness-creator/scripts/record-task-graph-knowledge.py exists sha256=3388090e91066c8fe2b664a7596f9fc859ecf768d434d8314666320a9299d00f",
+    "eval-log/harness-creator/build/evidence/C03-tests.xml sha256=97ca96a39a5cef8912cd6b1e6ee34ff0074003871dc83763121d428ec20b5b2e"
+  ],
+  "artifact_sha256": "3388090e91066c8fe2b664a7596f9fc859ecf768d434d8314666320a9299d00f",
+  "graph_hash": "sha256:b2d98bbb0d829e394259077aaf6cf0ea3328660a0e6233233d5fe57bfed4cf65",
+  "generated_at": "2026-07-13T01:59:58Z",
+  "tool_versions": {"python": "3.11.4", "pytest": "8.4.2"},
+  "test_evidence": [
+    {
+      "command": "pytest -q plugins/harness-creator/tests/test_record_task_graph_knowledge.py plugins/harness-creator/tests/test_manage_build_lease.py plugins/harness-creator/tests/test_sync_task_state.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_task_state_schema.py",
+      "exit_code": 0,
+      "passed": 201,
+      "failed": 0,
+      "started_at": "2026-07-13T01:59:51Z",
+      "completed_at": "2026-07-13T01:59:58Z",
+      "artifact": "eval-log/harness-creator/build/evidence/C03-tests.xml",
+      "artifact_sha256": "97ca96a39a5cef8912cd6b1e6ee34ff0074003871dc83763121d428ec20b5b2e"
+    }
+  ],
+  "inputs_consumed": [
+    "eval-log/harness-creator/build/route-C01.json",
+    "eval-log/harness-creator/build/route-C02.json"
+  ],
+  "handover": "script route C03 is available at plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+  "covered_task_ids": [
+    "P02-C03-01",
+    "P02-C03-02",
+    "P02-C03-03",
+    "P02-C03-04",
+    "P02-C03-05",
+    "P04-C03-01",
+    "P04-C03-02",
+    "P04-C03-03",
+    "P04-C03-04",
+    "P04-C03-05",
+    "P04-C03-06",
+    "P04-C03-07",
+    "P04-C03-08",
+    "P05-C03-01",
+    "P05-C03-02",
+    "P05-C03-03",
+    "P05-C03-04",
+    "P05-C03-05",
+    "P05-C03-06",
+    "P05-C03-07",
+    "P05-C03-08",
+    "P05-C03-09",
+    "P05-C03-10",
+    "P05-C03-11"
+  ]
+}

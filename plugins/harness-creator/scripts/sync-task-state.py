@@ -133,6 +133,45 @@ def assert_task_in_graph(task_graph: dict, task_id: str) -> None:
         raise ValueError(f"task {task_id!r} が task-graph nodes に不在 (未知 task-id)")
 
 
+def initialize_from_graph(task_state: dict, task_graph: dict) -> dict:
+    """graph の全 node を state へ materialize する単一-writer 初期化。
+
+    既存 node の state/証跡はそのまま保持し、graph にあって state に無い node
+    だけを canonical pending shape で追加する。両側の id 重複、非文字列/空 id、
+    graph 外の state node は曖昧な結合を禁止するため fail-closed で拒否する。
+    """
+    if not isinstance(task_state, dict) or not isinstance(task_state.get("nodes", []), list):
+        raise ValueError("task-state.nodes が list でない")
+    if not isinstance(task_graph, dict) or not isinstance(task_graph.get("nodes"), list):
+        raise ValueError("task-graph.nodes が list でない")
+
+    def _ids(nodes: list, owner: str) -> list[str]:
+        ids: list[str] = []
+        seen: set[str] = set()
+        for idx, node in enumerate(nodes):
+            if not isinstance(node, dict):
+                raise ValueError(f"{owner}.nodes[{idx}] が object でない")
+            nid = node.get("id")
+            if not isinstance(nid, str) or not nid.strip():
+                raise ValueError(f"{owner}.nodes[{idx}].id が空/非文字列")
+            if nid in seen:
+                raise ValueError(f"{owner} node id 重複: {nid!r}")
+            seen.add(nid)
+            ids.append(nid)
+        return ids
+
+    state_ids = _ids(task_state.get("nodes", []), "task-state")
+    graph_ids = _ids(task_graph["nodes"], "task-graph")
+    unknown = sorted(set(state_ids) - set(graph_ids))
+    if unknown:
+        raise ValueError(f"task-state 未知 node (graph に不在): {unknown}")
+
+    clone = _clone_state(task_state)
+    existing = set(state_ids)
+    clone["nodes"].extend(_new_node(nid) for nid in graph_ids if nid not in existing)
+    return clone
+
+
 # ── 公開 API: 状態遷移 ────────────────────────────────────────────────────────
 def transition(
     task_state: dict,
@@ -468,6 +507,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--events", default=None, help="省略時 resolve_build_dir(...)/task-events.jsonl")
     p.add_argument("--task-graph", default=None,
                    help="task-graph.json (指定時は遷移 task-id の nodes 存在検査 + propagate-blocked に使用)")
+    p.add_argument("--initialize-from-graph", action="store_true",
+                   help="--task-graph の全 node を不足分だけ pending で task-state へ初期化")
     p.add_argument("--task-id", default=None)
     p.add_argument("--to-state", default=None, choices=["pending", "running", "done", "blocked"])
     p.add_argument("--route-report", default=None)
@@ -523,7 +564,23 @@ def main(argv: list[str] | None = None) -> int:
 
     events: list[dict] = []
     try:
-        if args.reap_lease:
+        if args.initialize_from_graph:
+            if not args.task_graph:
+                print("--initialize-from-graph には --task-graph が必須", file=sys.stderr)
+                return 2
+            try:
+                task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
+                return 2
+            before_ids = {n.get("id") for n in state.get("nodes", []) if isinstance(n, dict)}
+            state = initialize_from_graph(state, task_graph)
+            added = sorted(
+                n["id"] for n in state["nodes"] if n.get("id") not in before_ids
+            )
+            events.append({"type": "task_state_initialized", "added_count": len(added),
+                           "added_task_ids": added})
+        elif args.reap_lease:
             if not args.task_id:
                 print("--reap-lease には --task-id が必須", file=sys.stderr)
                 return 2
@@ -601,7 +658,8 @@ def main(argv: list[str] | None = None) -> int:
                                    "from_state": None, "to_state": "blocked",
                                    "blocked_reason": "propagated", "origin_task_id": args.task_id})
         else:
-            print("操作 (--to-state / --reap-lease / --renew-lease / --pin-graph-hash / --repin-graph-hash) を 1 つ指定",
+            print("操作 (--initialize-from-graph / --to-state / --reap-lease / --renew-lease / "
+                  "--pin-graph-hash / --repin-graph-hash) を 1 つ指定",
                   file=sys.stderr)
             return 2
     except ValueError as exc:

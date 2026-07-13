@@ -1,1 +1,0 @@
-../../plugins/system-spec-harness/agents/system-spec-matrix-auditor.md

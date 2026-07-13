@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "harness-creator",
+  "route_id": "C04",
+  "component_kind": "slash-command",
+  "name": "capability-build",
+  "builder": "run-build-skill",
+  "build_target": "plugins/harness-creator/commands/capability-build.md",
+  "status": "success",
+  "summary": "capability-build コマンド doc を更新した: common TOML から .claude/.codex/.agents 公式 surface へ投影し、route 完了後と install/将来PR準備時に C01 apply→C01 check→TG-C08 を実行する fail-stop 順序、C05 SessionStart、runtime user gate を文書化した。",
+  "deviations": [],
+  "evidence": [
+    "plugins/harness-creator/commands/capability-build.md exists sha256=eaca2ff9684e548e1744601a2dd98af11c068d3fc6b888f6de04bffb4e027cb4",
+    "frontmatter 健全 (name: capability-build / kind: command / allowed-tools 不変)",
+    "eval-log/harness-creator/build/evidence/C04-tests.xml sha256=8d935901969abd40ca40bcc3a1b1837044c65202d9f295d362134866b191b6c5"
+  ],
+  "artifact_sha256": "eaca2ff9684e548e1744601a2dd98af11c068d3fc6b888f6de04bffb4e027cb4",
+  "graph_hash": "sha256:b2d98bbb0d829e394259077aaf6cf0ea3328660a0e6233233d5fe57bfed4cf65",
+  "generated_at": "2026-07-13T01:59:54Z",
+  "tool_versions": {"python": "3.11.4", "pytest": "8.4.2"},
+  "test_evidence": [
+    {
+      "command": "pytest -q plugins/harness-creator/tests/test_native_surface_repo_integration.py tests/test_install_bundle.py",
+      "exit_code": 0,
+      "passed": 18,
+      "failed": 0,
+      "started_at": "2026-07-13T01:59:51Z",
+      "completed_at": "2026-07-13T01:59:54Z",
+      "artifact": "eval-log/harness-creator/build/evidence/C04-tests.xml",
+      "artifact_sha256": "8d935901969abd40ca40bcc3a1b1837044c65202d9f295d362134866b191b6c5"
+    }
+  ],
+  "inputs_consumed": [
+    "eval-log/harness-creator/build/route-C03.json",
+    "eval-log/harness-creator/build/route-C05.json"
+  ],
+  "handover": "slash-command route C04 は plugins/harness-creator/commands/capability-build.md で利用可能。build 後 pre-step は C01 apply→C01 check に単一化され、C01 check が parity を内包する。TG-C08 完了ゲートと runtime user gate 分離も文書化済み。covered_task_ids は build が満たす設計/テスト/実装ノード (P02/P04/P05-C04-*) に限定。",
+  "covered_task_ids": [
+    "P02-C04-01",
+    "P02-C04-02",
+    "P02-C04-03",
+    "P02-C04-04",
+    "P02-C04-05",
+    "P04-C04-01",
+    "P04-C04-02",
+    "P04-C04-03",
+    "P04-C04-04",
+    "P04-C04-05",
+    "P04-C04-06",
+    "P04-C04-07",
+    "P04-C04-08",
+    "P05-C04-01",
+    "P05-C04-02",
+    "P05-C04-03",
+    "P05-C04-04",
+    "P05-C04-05",
+    "P05-C04-06",
+    "P05-C04-07",
+    "P05-C04-08",
+    "P05-C04-09",
+    "P05-C04-10",
+    "P05-C04-11"
+  ]
+}

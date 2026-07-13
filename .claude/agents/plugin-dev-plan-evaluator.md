@@ -1,1 +1,0 @@
-../../plugins/plugin-dev-planner/agents/plugin-dev-plan-evaluator.md

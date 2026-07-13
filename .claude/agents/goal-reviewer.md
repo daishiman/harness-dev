@@ -1,1 +1,0 @@
-../../plugins/ubm-goal-setting/agents/goal-reviewer.md

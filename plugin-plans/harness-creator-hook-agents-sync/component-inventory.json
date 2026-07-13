@@ -1,0 +1,192 @@
+{
+  "plugin_concept": "Claude の既存 hooks reflector を互換修復して機械ゲートへ接続し、Codex は native plugin / repo marketplace / plugin hooks を使って capability を公開する dual-surface 同期基盤",
+  "derivation": "旧案の .agents/{agents,commands,skills,hooks} 全 symlink と非公式 Codex TOML merge は廃止する。代わりに plugin-root `native-surfaces.toml` は共通 hook delivery と Codex discovery entry の意味論SSOT、plugin manifests/root marketplace は capability/activation identity の正本とし、C01 がそれらを結合して Claude `.claude/settings.json`、Codex project `.codex/hooks.json`/`.codex/config.toml`、Codex discovery `.agents/plugins/marketplace.json`、plugin-bundled `hooks/hooks.json` へ product-specific adapter で投影する。責務は MECE に5分割する。(1) C02 が authoritative source と repo 実測から native surface parity、delivery owner、二重 hook 不在を read-only 検査する。(2) C01 が複数正本を単一 desired-set に結合して Claude/Codex project settings・discovery の apply/check と manifest parity を行う。(3) C03 が TG-C08 に native surface parity gate を追加する。(4) C05 が SessionStart の薄い hook として C01 を呼び、lock/atomicity/structured warning を守る。(5) C04 が capability-build dispatcher の build 後 pre-step を C01 に集約する。common TOML、root reflector、Codex project adapter、Makefile/全CI、dual manifest と repo marketplace wiring は P05 repo integration task に owner/path/順序/証跡を固定する。plugin hook と project hook は delivery owner を分け、Codex plugin が native に読む skills/hooks を重複投影しない。agents/commands は unsupported/deferred report とする。",
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "components": [
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "check-native-surface-parity.py",
+      "script_name": "check-native-surface-parity.py",
+      "purpose": "Claude/Codex surface matrix、common native-surfaces.toml、Claude settings、Codex project hooks/config、dual manifest、repo marketplace、plugin hook、supported/unsupported kind、install/enable/trust 境界、artifact digest freshness を read-only で検査する。Codex の confirmed surface は .agents/skills、.codex/config.toml または .codex/hooks.json、.codex-plugin/plugin.json、.agents/plugins/marketplace.json、plugin hooks に限定し、推測 .agents/{agents,commands,hooks}、非公式 TOML key、hooks.json+inline hooks や project+plugin の同一 hook 二重配線を fail-closed にする。",
+      "inputs": "argv(--repo-root PATH --plugin-slug harness-creator --surface-contract PATH --plan-dir PATH [--json])",
+      "outputs": "stdout/JSON(surface ごとの confirmed|unsupported|deferred、manifest/marketplace parity、trust precondition、artifact digests、violations)",
+      "exit_codes": "0=parity PASS / 1=drift・unsupported silent projection・stale evidence / 2=conflict / 3=invalid contract or layout",
+      "network": false,
+      "write_scope": "none (read-only validator)",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "couples_with": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/harness-creator/scripts/check-native-surface-parity.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "sync-native-surfaces.py",
+      "script_name": "sync-native-surfaces.py",
+      "purpose": "build/update 時の単一 orchestrator。plugin-root common native-surfaces.toml の hook/discovery 契約と plugin manifests/root marketplace 正本を結合し、Claude 側は build-claude-symlinks.py/build-claude-settings.py、Codex 側は `.codex/hooks.json`/`.codex/config.toml` managed project settings、`.agents/plugins/marketplace.json`、native manifest/plugin hook parity を product-specific adapter で apply/check する。project hook と plugin hook は delivery owner で一意化し、native plugin が読む skills/hooks は重複投影しない。user global config・.agents/skills/beads・unsupported agents/commands へ書き込まない。--apply は repo-owned managed state の fingerprint 差分時だけ動作し、lock と atomic replace を使う。",
+      "inputs": "argv(--repo-root PATH [--apply|--check|--dry-run] [--json] [--lock-timeout SEC])",
+      "outputs": "stdout/JSON(各 adapter の status、changed count、skipped reason、warning、remediation command) と repo-owned managed projection のみ",
+      "exit_codes": "0=success/noop/skipped_not_installed / 1=drift / 2=conflict・lock timeout / 3=parse・invalid layout。SessionStart wrapper は非0を構造化 warning に変換するが status 自体は保持する",
+      "network": false,
+      "write_scope": ".claude/{skills,agents,commands} symlink と .claude/settings.json managed 領域、.codex/hooks.json の managed project hooks、.codex/config.toml の公式 repo-owned managed key、.agents/plugins/marketplace.json の対象 entry、plan で owner=repo と宣言した Codex manifest/plugin source に限定。user global config・tool-owned namespace・unsupported kind は read-only",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C02"],
+      "couples_with": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/harness-creator/scripts/sync-native-surfaces.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "record-task-graph-knowledge.py (native surface 完了ゲート拡張)",
+      "script_name": "record-task-graph-knowledge.py",
+      "purpose": "既存 TG-C08 に hooks_settings_gate と native_surface_parity_gate を追加する。C01 --check と C02 を read-only 呼出しし、drift/conflict/parse/race/stale evidence を completion_gate=blocked にする。generator 不在だけは skipped_not_installed として fail-soft にする。既存 CLI 引数と claude_symlink_gate を変更しない。",
+      "inputs": "argv(既存 --target-plugin-slug/--cycle-id/--plan-dir/--target-knowledge-dir/--summary-json/--task-state/--handoff。新規必須引数なし)",
+      "outputs": "既存 completion JSON + hooks_settings_gate + native_surface_parity_gate + structured next_steps/remediation",
+      "exit_codes": "既存契約を維持 (0=success / 1=gate blocked)。child return code と status は JSON に保持する",
+      "network": false,
+      "write_scope": "既存 knowledge dir 追記のみ。新規 gate は read-only check",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C01", "C02"],
+      "couples_with": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": ["lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C05",
+      "component_kind": "hook",
+      "name": "auto-sync-on-session-start",
+      "event": "SessionStart",
+      "matcher": "startup|resume|clear",
+      "exit_semantics": "session 自体は block しないが child failure を成功へ畳まない。C01 の status/returncode/stderr/remediation を structured warning と永続ログに残す。skipped_not_installed のみ warning なし。reentrancy guard、process lock、atomic replace、content hash no-op、timeout を必須とする",
+      "settings_wiring": "common native-surfaces.toml が delivery=plugin と宣言する SessionStart は Claude .claude-plugin/plugin.json inline、Codex plugin root の公式 default hooks/hooks.json に同じ semantic hook を1度だけ配線する。Codex manifest は default discovery と重複する hooks field を持たない。delivery=project の hook だけを Claude .claude/settings.json / Codex .codex/hooks.json へ生成し、config.toml に inline [hooks] を重複生成しない。Codex は install/enable/trust 済みの場合だけ plugin hook を発火し、trust を自動承認しない",
+      "fail_closed": false,
+      "purpose": "ユーザーが install/enable/trust を完了した後、新しいセッション開始時に repo-owned projection の drift だけを安全に修復する薄い lifecycle hook。毎回の全量書込みや user global config mutation は行わない",
+      "inputs": "stdin(SessionStart payload JSON) と repo root。C01 --apply --json を一度だけ呼ぶ",
+      "outputs": "stdout/statusMessage + structured local log。content hash 差分時のみ repo-owned managed state を更新",
+      "exit_codes": "0=session continuation。内部 status は success|noop|skipped_not_installed|warning_drift|warning_conflict|warning_invalid|warning_timeout として保持",
+      "network": false,
+      "write_scope": "C01 の repo-owned managed scope と hook local log/lock file のみ。global config・plugin trust store・.agents/skills/beads は対象外",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": ["C01", "C02"],
+      "couples_with": [],
+      "build_target": "plugins/harness-creator/hooks/auto-sync-on-session-start.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter", "lint-script-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+coverage"}
+    },
+    {
+      "id": "C04",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "description": "既存 dispatcher の全 route build 後・TG-C08 前の pre-step を C01 sync-native-surfaces.py --apply へ集約し、その直後に C01 --check と C02 parity validator を通す。install/enable/trust や public publish は行わない。既存引数と task-graph single-writer 契約を維持する",
+      "argument-hint": "[--handoff PATH] [--route-id ID] (既存引数を維持・新規必須引数なし)",
+      "allowed-tools": ["Read", "Bash", "Skill", "Task"],
+      "disable-model-invocation": false,
+      "depends_on": ["C03", "C05"],
+      "couples_with": [],
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": ["validate-frontmatter"],
+        "build_trace": "required",
+        "elegant_review": {"conditions": ["C1", "C2", "C3", "C4"], "all_pass": true},
+        "content_review": {"verdict": "PASS", "sha_match": true},
+        "evaluator": {"threshold": 80, "high_max": 0}
+      },
+      "harness_coverage": {"min": 80, "kind_pass": "content-review-verdict+test"}
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".codex-plugin/plugin.json",
+      "compatibility_manifest": ".claude-plugin/plugin.json",
+      "rule": "dual manifest は同一 source inventory から生成・検査し、hooks/skills の意味 parity を保つ"
+    },
+    "composition": {
+      "required": true,
+      "path": "plugin-composition.yaml",
+      "rule": "Claude settings projection と Codex native manifest parity の責務境界を記録する"
+    },
+    "harness_eval": {
+      "required": false,
+      "omitted_reason": "新規 skill/eval component は無く、script/hook/command の focused tests と parity gate で検証する"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "references/native-surface-contract.md と index.plugin_meta.ssot_dedup"
+    },
+    "schemas": {
+      "required": true,
+      "record_in": "surface contract の supported/unsupported/status/ownership/failure taxonomy schema"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "Python 標準ライブラリのみ"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "MCP/app connector を新設しない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "Notion 連携を伴わない"
+    },
+    "repo_marketplace": {
+      "required": true,
+      "target": ".agents/plugins/marketplace.json",
+      "public_distribution": false
+    }
+  }
+}

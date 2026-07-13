@@ -68,8 +68,12 @@ jobs:
       - name: check script drift
         run: bash scripts/check-scripts-drift.sh
         continue-on-error: false
-      - name: check skill drift
-        run: python3 scripts/build-claude-symlinks.py --check
+      # CI は read-only。修復は operator がローカルで make native-surfaces
+      # (C01 apply -> C01 check) を実行して差分を review/commit する。
+      - name: check repository-native capability projections
+        run: |
+          make native-surfaces-check
+          test -z "$(git status --porcelain -- .claude .codex .agents/plugins/marketplace.json plugins/harness-creator/native-surfaces.toml plugins/harness-creator/.codex-plugin/plugin.json)"
         continue-on-error: false
       - name: validate plugin manifests and marketplace
         run: |
@@ -77,6 +81,23 @@ jobs:
           for manifest in plugins/*/.claude-plugin/plugin.json; do
             jq -e '.name and .version and .description' "$manifest" >/dev/null
           done
+          jq -e '.plugins[] | select(.name == "harness-creator") | .source.source == "local" and .source.path == "./plugins/harness-creator"' .agents/plugins/marketplace.json
+          jq -e '
+            .name == "harness-creator" and
+            (.version | type == "string" and length > 0) and
+            .skills == "./skills/" and
+            (.interface.defaultPrompt | type == "array" and length > 0) and
+            (has("hooks") | not) and (has("x_harness") | not)
+          ' plugins/harness-creator/.codex-plugin/plugin.json
+          jq -e '
+            (.hooks.SessionStart) as $s |
+            ($s | type == "array" and length == 1) and
+            ($s[0].hooks | type == "array" and length == 1) and
+            ($s[0].hooks[0].type == "command") and
+            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py"))
+          ' plugins/harness-creator/hooks/hooks.json
+          python3 -c 'import tomllib; c=tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb")); assert c["schema_version"] == 1; p=tomllib.load(open(".codex/config.toml","rb")); assert p["features"]["hooks"] is True and "hooks" not in p'
+          python3 plugins/harness-creator/scripts/sync-codex-project-settings.py --repo-root . --contract plugins/harness-creator/native-surfaces.toml --check --json
         continue-on-error: false
       # marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査。
       # 実体ディレクトリ起点で全 plugin の marketplace + bundles 登録を強制し、登録漏れ

@@ -1,1 +1,0 @@
-../../plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md

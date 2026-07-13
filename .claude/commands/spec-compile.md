@@ -1,1 +1,0 @@
-../../plugins/system-spec-harness/commands/spec-compile.md

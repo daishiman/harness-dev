@@ -81,6 +81,84 @@
       "items": {"type": "string", "minLength": 1},
       "description": "task-graph route モードの束ね done 用 (optional)。この report が done を賄う task-graph node id 群。sync-task-state.py (TG-C02) が done 遷移時に task_id ∈ covered_task_ids を照合する。不在時は単一 task 後方互換 (PR#70 契約)"
     },
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "build_target 実体の決定論 SHA-256。file は bytes、directory は relative path + bytes のソート済 tree hash。task_graph_ref 付き success report では validator が必須化し current target と照合する"
+    },
+    "graph_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "producer=plugin-dev-planner derive-task-graph.py --print-graph-hash が返す canonical task-graph hash。task_graph_ref 付き success report では必須"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$",
+      "description": "report 確定時刻 (UTC RFC 3339)。task_graph_ref 付き success report では必須で、全 test_evidence.completed_at 以降であること"
+    },
+    "tool_versions": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-zA-Z0-9_.+-]+$"},
+      "additionalProperties": {"type": "string", "minLength": 1},
+      "description": "evidence 生成に使った tool 名→version の非空 map。task_graph_ref 付き success report では必須"
+    },
+    "test_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "passed", "failed"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "exit_code": {"type": "integer", "minimum": 0},
+          "passed": {"type": "integer", "minimum": 0},
+          "failed": {"type": "integer", "minimum": 0},
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+          },
+          "artifact": {
+            "type": "string",
+            "minLength": 1,
+            "description": "test 出力 artifact の repo-root 相対 path。記録時は artifact_sha256 とペア必須"
+          },
+          "artifact_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "artifact 実体の決定論 SHA-256。記録時は artifact とペア必須"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                {"required": ["artifact"]},
+                {"required": ["artifact_sha256"]}
+              ]
+            },
+            "then": {"required": ["artifact", "artifact_sha256"]}
+          },
+          {
+            "if": {
+              "anyOf": [
+                {"required": ["started_at"]},
+                {"required": ["completed_at"]}
+              ]
+            },
+            "then": {"required": ["started_at", "completed_at"]}
+          }
+        ]
+      },
+      "description": "structured test 結果。task_graph_ref 付き success report では 1 件以上必須、その場合は各 item の started_at/completed_at も必須"
+    },
     "discovered": {
       "type": "array",
       "items": {"type": "string", "minLength": 1},

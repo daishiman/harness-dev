@@ -1,0 +1,29 @@
+{
+  "name": "harness-creator",
+  "version": "1.3.0",
+  "description": "Build, validate, and govern repository-local capabilities with Claude Code compatibility and Codex-native plugin surfaces.",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "commands": ["capability-build"],
+    "skills": ["run-build-skill"]
+  },
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Harness Creator",
+    "shortDescription": "Build and govern repository-local capabilities",
+    "longDescription": "Create, validate, and govern skills, hooks, commands, agents, prompts, workflows, and plugin composition while preserving product-native loading contracts.",
+    "developerName": "harness maintainers",
+    "category": "Internal-Tooling",
+    "capabilities": ["Read", "Write"]
+  },
+  "x_harness": {
+    "distributable": false,
+    "repo_marketplace": ".agents/plugins/marketplace.json",
+    "compatibility_manifest": ".claude-plugin/plugin.json",
+    "unsupported_codex_surfaces": ["agents", "commands"],
+    "activation_requires": ["install", "enable", "hook-trust"]
+  }
+}
