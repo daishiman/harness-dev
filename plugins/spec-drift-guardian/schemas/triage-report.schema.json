@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/spec-drift-guardian/schemas/triage-report.schema.json",
+  "title": "Spec Drift Triage Report",
+  "description": "C01 (run-spec-drift-triage) が対象 issue の未triage完全 diff を hunk 単位で構造化し、artifact kind/path と name/type/required/enum/semantics 各軸への影響を before/after/evidence 付きで判定した結果。C03 が独立再導出で照合し、C10/C07 close gate が消費する。complete=true 以外は無効 (fail-closed)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issue", "base_commit", "source_commit", "diff_sha256", "complete", "impacts"],
+  "properties": {
+    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "base_commit": {"type": "string", "minLength": 7, "description": "完全 diff の親 (base) commit sha"},
+    "source_commit": {"type": "string", "minLength": 7, "description": "完全 diff の対象 (head) commit sha"},
+    "diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "C11 が算出した完全 diff の digest。C03 verdict と一致必須"},
+    "complete": {"const": true, "description": "完全性証明。C11 が complete=true な正規化完全 diff を供給したときのみ triage 可。false/欠落は上流で fail-closed"},
+    "impacts": {
+      "type": "array",
+      "description": "hunk 単位の影響判定。impacted=false の軸も evidence 付きで列挙してよい",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_kind", "artifact_path", "axis", "before", "after", "impacted", "evidence"],
+        "properties": {
+          "artifact_kind": {"type": "string", "enum": ["rubric", "schema", "template", "other"], "description": "影響先 artifact 種別"},
+          "artifact_path": {"type": "string", "minLength": 1, "description": "影響先 artifact の repo-root 相対パス (read-only 参照先)"},
+          "axis": {"type": "string", "enum": ["name", "type", "required", "enum", "semantics"], "description": "影響軸"},
+          "before": {"type": ["string", "null"], "description": "変更前の値 (追加なら null)"},
+          "after": {"type": ["string", "null"], "description": "変更後の値 (削除なら null)"},
+          "impacted": {"type": "boolean", "description": "当該軸に影響ありか"},
+          "evidence": {"type": "string", "minLength": 1, "description": "判定根拠 (diff hunk 抜粋・行番号など)"}
+        }
+      }
+    }
+  }
+}

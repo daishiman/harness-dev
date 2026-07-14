@@ -1,0 +1,1 @@
+../../plugins/spec-drift-guardian/agents/spec-impact-verifier.md

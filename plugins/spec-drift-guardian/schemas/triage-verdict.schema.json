@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/spec-drift-guardian/schemas/triage-verdict.schema.json",
+  "title": "Spec Drift Triage Verdict",
+  "description": "C03 (spec-impact-verifier) が C01 triage-report を再読せず、C11 の complete diff へ C08/C09 を独立 context で再実行して再導出した判定。C01 の見逃し/誤検出を agree/findings で示す。C02 apply と C10/C07 close gate が消費する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issue", "diff_sha256", "rederived_impacts", "agree", "findings", "verdict_sha256"],
+  "properties": {
+    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "diff_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "検証対象 diff の digest。triage-report.diff_sha256 と一致必須 (別 diff の検証を弾く)"},
+    "rederived_impacts": {
+      "type": "array",
+      "description": "生 diff から独立再導出した影響。triage-report.impacts と同形",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_kind", "artifact_path", "axis", "before", "after", "impacted", "evidence"],
+        "properties": {
+          "artifact_kind": {"type": "string", "enum": ["rubric", "schema", "template", "other"]},
+          "artifact_path": {"type": "string", "minLength": 1},
+          "axis": {"type": "string", "enum": ["name", "type", "required", "enum", "semantics"]},
+          "before": {"type": ["string", "null"]},
+          "after": {"type": ["string", "null"]},
+          "impacted": {"type": "boolean"},
+          "evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "agree": {"type": "boolean", "description": "C01 triage-report と独立再導出が一致したか。false は close gate を遮断"},
+    "findings": {
+      "type": "array",
+      "description": "不一致点 (見逃し/誤検出)。agree=true なら空配列",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "axis", "artifact_path", "detail"],
+        "properties": {
+          "kind": {"type": "string", "enum": ["missed", "false-positive", "mismatch"], "description": "見逃し / 誤検出 / 値不一致"},
+          "axis": {"type": "string", "enum": ["name", "type", "required", "enum", "semantics"]},
+          "artifact_path": {"type": "string", "minLength": 1},
+          "detail": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "verdict_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "本 verdict の正規化 digest (改竄検出)"}
+  }
+}

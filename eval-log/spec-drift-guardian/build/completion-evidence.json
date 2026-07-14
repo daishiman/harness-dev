@@ -1,0 +1,164 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "overall_status": "pass",
+  "gates": [
+    {
+      "id": "composition-and-bundle",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/validation-summary.json"
+      ],
+      "findings": [],
+      "metrics": {
+        "bundle_exit_code": 0,
+        "composition_lint_exit_code": 0
+      }
+    },
+    {
+      "id": "deterministic-tests",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/coverage-summary.json"
+      ],
+      "findings": [],
+      "metrics": {
+        "passed": 73,
+        "failed": 0
+      }
+    },
+    {
+      "id": "script-coverage",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/coverage-summary.json"
+      ],
+      "findings": [],
+      "metrics": {
+        "threshold": 0.8,
+        "C08": 0.93,
+        "C09": 0.8,
+        "C10": 0.95,
+        "C11": 0.83
+      }
+    },
+    {
+      "id": "issue17-fixture-matrix",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/fixture-matrix-result.json",
+        "plugins/spec-drift-guardian/tests/fixtures/issue17-matrix.json",
+        "plugins/spec-drift-guardian/scripts/eval-fixture-matrix.py"
+      ],
+      "findings": [
+        "eval-fixture-matrix.py を既知正解セットへ実行し exit0 PASS / 7 case 全てで期待 axes と実測 axes が一致した。",
+        "実 Issue #17 commit pair (da6d4e7..6ddd645) の完全 diff は yaml-spec-cache.md 単一ファイル 49 hunk で全件 other/semantics に落ちるため、name/type/required/enum 軸は実 diff だけでは実測不能。各軸を発火させる合成 diff を case 化した既知正解セットで写像規則を実測した (semantics-only case は実 diff 由来)。"
+      ],
+      "metrics": {
+        "expected_fixture_cases": 7,
+        "measured_fixture_cases": 7,
+        "cases_matching_expected_axes": 7,
+        "all_cases_match": true,
+        "real_diff_hunks": 49,
+        "runner_exit_code": 0
+      }
+    },
+    {
+      "id": "precision-recall",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/fixture-matrix-result.json",
+        "plugins/spec-drift-guardian/scripts/eval-fixture-matrix.py"
+      ],
+      "findings": [
+        "eval-fixture-matrix.py --precision-min 0.8 --recall-min 0.8 が exit0。軸レベル (case × axis) 集計で precision=1.0 / recall=1.0 (TP=11, FP=0, FN=0)。",
+        "測定器マッピング (P04 の criteria 定義に対応): C01 の outer criteria『既知正解セットに対する誤検出/見逃し無し』= 本 fixture matrix の precision/recall で実測。C02 の criteria『未承認/監査FAIL/hash drift/allowlist逸脱で変更0件・承認済みは適用後 hash/validator 一致』= safety-matrix gate で実測 (C02 は precision/recall 型の基準を持たない)。EVALS.json C5 goal も両者を『C01 の precision/recall』と『propose/audit/apply・close gate の合否』に分けて要求している。",
+        "既知正解セットに対する写像規則の判定精度であり、実運用の未知 diff に対する精度ではない (fixture は planner 想定圏内にあるため楽観側バイアスを持つ)。",
+        "C02 skill 自体を LLM 実行して提案品質を precision/recall 化する測定は未実施 (P04 の C02 criteria 定義外。提案側欠陥を C04 監査が検出できることは independent-agent-evaluation で実測済み)。"
+      ],
+      "metrics": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "precision_min": 0.8,
+        "recall_min": 0.8,
+        "tp": 11,
+        "fp": 0,
+        "fn": 0,
+        "meets_threshold": true
+      }
+    },
+    {
+      "id": "independent-agent-evaluation",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/independent-agent-eval-result.json",
+        ".spec-drift/17/triage-verdict.json",
+        ".spec-drift/99/sync-audit-verdict.json"
+      ],
+      "findings": [
+        "C03 spec-impact-verifier と C04 rubric-sync-auditor を Agent tool で独立 context (isolation: fork) 実起動し、仕込んだ欠陥を開示せずに検出可否を実測した。",
+        "C03: diff_sha256 一致確認後に 49 件を独立再導出し、artifact_path×axis join で missed (yaml-spec-cache.md × semantics) と false-positive (nonexistent-settings.schema.json × required) を検出。agree=false を emit。",
+        "C04: allowlist glob 照合と triage 影響集合突合で omissions 1 / excesses 2 / allowlist_violations 1 を検出し verdict=FAIL を emit。",
+        "初回 C03 実行では fixture の evidence 欄に答えが漏洩していた (『誤検出として仕込んだ』)。中立文言へ差し替えて再実行し、本証跡は再実行結果のみを採用している。",
+        "合成欠陥 1 セットに対する検出可否であり、未知欠陥に対する検出率 (recall) の測定ではない。"
+      ],
+      "metrics": {
+        "required_agents": 2,
+        "measured_agents": 2,
+        "c03_agree": false,
+        "c03_findings": 2,
+        "c03_rederived_impacts": 49,
+        "c04_verdict": "FAIL",
+        "c04_omissions": 1,
+        "c04_excesses": 2,
+        "c04_allowlist_violations": 1,
+        "all_injected_defects_detected": true
+      }
+    },
+    {
+      "id": "safety-matrix",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/safety-matrix-result.json",
+        "plugins/spec-drift-guardian/scripts/eval-safety-matrix.py"
+      ],
+      "findings": [
+        "eval-safety-matrix.py が exit0 PASS (6/6 シナリオ一致)。実 C10 を subprocess 起動して実測した。",
+        "拒否 4 経路 (proposal-only / 未承認 / 監査FAIL / hash drift) は全て exit1 で close 遮断し、target 実ファイルの実行前後 sha256 が不変 (= apply が close ゲートを越えず変更0件) を直接実測。",
+        "許可 2 経路 (applied_verified / independently_verified_no_change) は exit0 で close 許可。"
+      ],
+      "metrics": {
+        "close_gate_unit_tests": true,
+        "end_to_end_cases_measured": 6,
+        "reject_scenarios": 4,
+        "allow_scenarios": 2,
+        "reject_scenarios_block_and_no_change": true,
+        "allow_scenarios_permit": true,
+        "all_scenarios_match": true
+      }
+    },
+    {
+      "id": "builder-provenance",
+      "status": "pass",
+      "evidence": [
+        "eval-log/spec-drift-guardian/build/builder-provenance-result.json",
+        "eval-log/spec-drift-guardian/build/route-C01.json",
+        "eval-log/spec-drift-guardian/build/route-C02.json"
+      ],
+      "findings": [
+        "validate-route-build-reports.py --complete を再実行し exit0 (11/11 valid) を実測。",
+        "provenance の基礎は実 build 時に dispatcher が書いた route-build report (build 過程そのものの一次記録) とし、後付け生成の skill-build-trace は採らない。route-C01/C02 は builder=run-skill-create・status=success・evidence 非空。",
+        "route-C01/C02 の deviations に「run-skill-create governance pipeline 全経路は未起動 (成果物構造は準拠)」が記録されており、この逸脱は証跡上明示されたまま残る。"
+      ],
+      "metrics": {
+        "required_traces": 1,
+        "valid_traces": 11,
+        "total_route_traces": 11,
+        "skill_traces": 2,
+        "validator_exit_code": 0
+      }
+    }
+  ],
+  "invalidated_task_ids": [],
+  "invalidated_phase_refs": []
+}

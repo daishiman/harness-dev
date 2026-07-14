@@ -3,7 +3,8 @@
 # name: project-task-status
 # purpose: task-graph 駆動 build の live 実行状態を plan dir へ read-only 投影する観測ビュー生成器 (TG-C09)。task-graph.json (構造・単一 writer=derive・plugin-plans/ 追跡) は runtime state を焼かず ephemeral な task-state.json (eval-log/ build dir) が真の状態を持つため、両者を merge した派生ビュー (task-graph-status.json + 人間可読 task-progress.md + 構造化 task-execution-report.html) を plan dir へ書き出し「plugin-plans を見ても status が変わらない」観測性断絶を解消する。task-graph.json/task-state.json は一切書かず単一 writer 不変条件と graph_hash pin を温存する (state を task-graph.json へ焼くと hash が毎遷移で変わり pin が壊れるため投影で解決)。discovered-task inbox を読めば未処理の追加タスク (外ループ待ち) も同一ビューに載る。
 # inputs:
-#   - argv: --task-graph <task-graph.json> --task-state <task-state.json> [--out-json P] [--out-md P] [--out-html P] [--build-summary P] [--discovered-inbox DIR]
+#   - argv: --task-graph <task-graph.json> --task-state <task-state.json> [--out-json P] [--out-md P] [--out-html P]
+#           [--build-summary P] [--completion-evidence P] [--discovered-inbox DIR]
 #           (出力先省略時は task-graph.json の親 dir。build-summary は task-state と同じ dir の build-summary.json を自動検出)
 # outputs:
 #   - stdout: 生成先パス + 進捗サマリ JSON
@@ -134,10 +135,23 @@ def _optional_build_summary(path: Path | None) -> dict | None:
     return value if isinstance(value, dict) else None
 
 
-def build_status(graph: dict, task_state: dict, build_dir: Path,
-                 discovered: list[dict]) -> dict:
+def build_status(
+    graph: dict,
+    task_state: dict,
+    build_dir: Path,
+    discovered: list[dict],
+    completion_evidence: dict | None = None,
+) -> dict:
     """overlay 済 node + summary + discovered を統合した status ビュー dict を返す (read-only 純関数)。"""
     state_by_id = {n.get("id"): n for n in task_state.get("nodes", []) if isinstance(n, dict)}
+    evidence_blocked = (
+        isinstance(completion_evidence, dict)
+        and completion_evidence.get("overall_status") != "pass"
+    )
+    invalidated_ids = set(completion_evidence.get("invalidated_task_ids", [])) \
+        if evidence_blocked and isinstance(completion_evidence.get("invalidated_task_ids"), list) else set()
+    invalidated_phases = set(completion_evidence.get("invalidated_phase_refs", [])) \
+        if evidence_blocked and isinstance(completion_evidence.get("invalidated_phase_refs"), list) else set()
     merged = merge_state(graph, state_by_id)
     live_nodes = []
     for n in merged.get("nodes", []):
@@ -151,6 +165,15 @@ def build_status(graph: dict, task_state: dict, build_dir: Path,
             "entity_ref": n.get("entity_ref"),
             "state": n.get("state", "pending"),
         }
+        if (
+            entry["state"] == "done"
+            and (entry["id"] in invalidated_ids or entry["phase_ref"] in invalidated_phases)
+        ):
+            # task-state は実行履歴として不変のまま保ち、派生ビューだけを証跡 truth へ補正する。
+            # これにより route の done 自己申告を消さず、受入ゲート未達を完了率へ反映できる。
+            entry["reported_state"] = "done"
+            entry["state"] = "blocked"
+            entry["blocked_reason"] = "completion-evidence"
         if st.get("blocked_reason"):
             entry["blocked_reason"] = st.get("blocked_reason")
         if st.get("route_report"):
@@ -180,6 +203,14 @@ def build_status(graph: dict, task_state: dict, build_dir: Path,
             "completion_rate": completion_rate,
             "blocked_tasks": blocked_tasks,
             "route_report_count": route_report_count,
+            "completion_gate": "blocked" if evidence_blocked else None,
+            "effective_status": (
+                "blocked"
+                if evidence_blocked or by_state["blocked"]
+                else "complete"
+                if total > 0 and by_state["done"] == total
+                else "in_progress"
+            ),
         },
         "nodes": live_nodes,
         "discovered_pending": discovered,
@@ -202,6 +233,8 @@ def render_markdown(status: dict) -> str:
         f"- 状態内訳: done={s['by_state']['done']} / running={s['by_state']['running']} "
         f"/ blocked={s['by_state']['blocked']} / pending={s['by_state']['pending']}",
         f"- route-report 数: {s['route_report_count']}",
+        f"- 実効状態: **{s.get('effective_status', 'in_progress')}**"
+        f" / completion gate: **{s.get('completion_gate') or '未評価'}**",
     ]
     if status.get("graph_hash"):
         lines.append(f"- graph_hash pin: `{status['graph_hash']}`")
@@ -234,6 +267,8 @@ def render_markdown(status: dict) -> str:
 
 
 def _state_label(summary: dict) -> tuple[str, str]:
+    if summary.get("effective_status") == "blocked":
+        return "要対応", "blocked"
     by_state = summary["by_state"]
     if summary["total"] > 0 and by_state["done"] == summary["total"]:
         return "完了", "complete"
@@ -354,7 +389,9 @@ def render_html(
 
     build_summary = status.get("build_summary") or {}
     gate = build_summary.get("completion_gate") if isinstance(build_summary, dict) else None
-    gate_value = gate.get("completion_gate") if isinstance(gate, dict) else None
+    gate_value = gate.get("completion_gate") if isinstance(gate, dict) else gate
+    if gate_value is None:
+        gate_value = summary.get("completion_gate")
     rounds = build_summary.get("outer_loop_rounds") if isinstance(build_summary, dict) else None
     round_rows = "".join(
         '<tr>'
@@ -372,6 +409,12 @@ def render_html(
     ]
     if build_summary_path is not None and build_summary_path.is_file():
         source_links.append(("build-summary.json", build_summary_path))
+    completion_evidence = status.get("completion_evidence")
+    if isinstance(completion_evidence, dict) and completion_evidence.get("_source_path"):
+        source_links.append((
+            "completion-evidence.json",
+            Path(str(completion_evidence["_source_path"])),
+        ))
     sources = "".join(
         f'<a href="{_artifact_href(path, html_path)}"><strong>{escape(label)}</strong>'
         f'<span>{escape(str(path))}</span></a>' for label, path in source_links
@@ -443,6 +486,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--build-summary", default=None,
         help="最終 verdict/外ループ記録。省略時は task-state と同じ dir の build-summary.json を自動検出",
     )
+    p.add_argument(
+        "--completion-evidence", default=None,
+        help="実測 acceptance 証跡。省略時は task-state と同じ dir の completion-evidence.json を自動検出",
+    )
     p.add_argument("--discovered-inbox", default=None, help="未処理の発見タスクを載せる discovered-task inbox dir")
     return p
 
@@ -473,11 +520,31 @@ def main(argv: list[str] | None = None) -> int:
     else:
         candidate = state_path.parent / "build-summary.json"
         build_summary_path = candidate if candidate.is_file() else None
+    if args.completion_evidence:
+        completion_evidence_path: Path | None = Path(args.completion_evidence)
+    else:
+        candidate = state_path.parent / "completion-evidence.json"
+        completion_evidence_path = candidate if candidate.is_file() else None
+    completion_evidence = _optional_build_summary(completion_evidence_path)
+    if completion_evidence is not None and completion_evidence_path is not None:
+        completion_evidence["_source_path"] = str(completion_evidence_path)
     discovered = _pending_discovered(Path(args.discovered_inbox)) if args.discovered_inbox else []
 
-    status = build_status(graph, task_state, state_path.parent, discovered)
+    status = build_status(
+        graph, task_state, state_path.parent, discovered, completion_evidence
+    )
     status["route_reports"] = _route_reports(state_path.parent)
     status["build_summary"] = _optional_build_summary(build_summary_path)
+    status["completion_evidence"] = completion_evidence
+    build_gate = status["build_summary"].get("completion_gate") \
+        if isinstance(status["build_summary"], dict) else None
+    if isinstance(build_gate, dict):
+        build_gate = build_gate.get("completion_gate")
+    if build_gate == "blocked":
+        status["summary"]["completion_gate"] = "blocked"
+        status["summary"]["effective_status"] = "blocked"
+    elif build_gate == "ok" and status["summary"]["completion_gate"] is None:
+        status["summary"]["completion_gate"] = "ok"
     try:
         out_json.parent.mkdir(parents=True, exist_ok=True)
         out_md.parent.mkdir(parents=True, exist_ok=True)
@@ -504,6 +571,8 @@ def main(argv: list[str] | None = None) -> int:
         "execution_report_html": str(out_html),
         "completion_rate": status["summary"]["completion_rate"],
         "by_state": status["summary"]["by_state"],
+        "effective_status": status["summary"]["effective_status"],
+        "completion_gate": status["summary"]["completion_gate"],
         "discovered_pending": len(discovered),
     }, ensure_ascii=False))
     return 0

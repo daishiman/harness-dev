@@ -1,0 +1,79 @@
+# CapabilityBundle 宣言 — plugins/spec-drift-guardian
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: 検知済み spec-drift issue の影響トリアージ→更新提案→独立監査→限定適用→close 前ゲートを
+#       skill 2 / sub-agent 2 / slash-command 2 / hook 1 / script 4 の 11 実体で担う plugin の自己記述。
+
+name: spec-drift-guardian
+description: 検知済み spec-drift issue の影響を 4 軸+semantics でトリアージし、rubric/schema/template への更新提案を独立監査+明示承認+allowlist 限定で適用し、post-image 検証を通した applied_verified / verified-no-change のみ close 可とするゲート型 plugin。
+kind: plugin-composition
+version: 0.1.0
+owner: harness maintainers
+since: 2026-07-13
+last-audited: 2026-07-13
+
+contract:
+  intent: 検知後の spec-drift 対応 (full-diff 再構成→影響判定→提案→監査→承認→限定適用→検証→close ゲート) を、proposer≠approver と fail-closed を保ったまま半自動化し、対応漏れ close を機構的に防ぐ。
+  interface:
+    inputs: [issue-number, spec-diff-history.md, yaml-spec-cache-commit-pair, harness-creator-rubric/schema/template]
+    outputs: [triage-report.json, triage-verdict.json, sync-proposal.json, sync-audit-verdict.json, close-gate-status]
+  invariant:
+    - 検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher の責務であり本 plugin では再実装しない
+    - triage/verdict/proposal/audit は complete=true な完全 diff (C11 の commit pair 再構成) のみを入力とし、truncated preview 入力は fail-closed
+    - C03 verifier と C04 auditor は独立 context で再導出/監査し、対象 artifact を書き換えない (Goodhart 防止)
+    - harness-creator への書き込みは C02 apply mode のみ。C04 verdict=PASS・ユーザー明示承認・allowlist 内・pre-image hash 一致の 4 条件を満たさない場合は変更 0 件で fail-closed
+    - close (C10/C07) は applied_verified または independently_verified_no_change のみ許可し、proposal-only/未承認/未適用/validator 不備を遮断する
+    - C09 の diff→フィールド写像規則は references/field-impact-map の data から読み、code に hardcode しない (guardian 自身の drift 源化を防ぐ)
+    - 決定論的処理 (aggregate/parse/map/gate) は python3 stdlib script、LLM は意味判断 (triage/audit) のみ
+    - 成果物本文・レビューは日本語、JSON キー・CLI 引数・schema フィールド名は英語のまま
+    - 実 commit/PR/issue close は人間の責務。hook が捕捉するのは PreToolUse/Bash 経路の gh issue close のみ (Web UI/API/Actions は非カバー)
+
+capabilities:
+  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/run-spec-drift-triage, tier: core }
+  - { kind: skill, ref: skills/run-rubric-sync,       tier: core }
+
+  # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
+  - { kind: agent, ref: agents/spec-impact-verifier,  tier: core }
+  - { kind: agent, ref: agents/rubric-sync-auditor,   tier: core }
+
+  # === Commands (kind=command) ===
+  - { kind: command, ref: commands/spec-drift-triage, tier: core }
+  - { kind: command, ref: commands/rubric-sync,       tier: core }
+
+  # === Hook (kind=hook) — plugin.json hooks 配線と1対1対応 ===
+  - { kind: hook, ref: "hook:PreToolUse-Bash/guard-spec-drift-close", tier: core }
+
+  # === Scripts (kind=script) — plugin-root hoist の共有決定論段 ===
+  - { kind: script, ref: scripts/aggregate-issue-diffs.py, tier: core }
+  - { kind: script, ref: scripts/parse-spec-diff.py,       tier: core }
+  - { kind: script, ref: scripts/map-field-impact.py,      tier: core }
+  - { kind: script, ref: scripts/check-triage-complete.py, tier: core }
+
+dependencies:
+  # 主要 DAG (component-inventory.json depends_on を SSOT として転記)。lint-dependency-direction.py で循環検出。
+  - { from: scripts/parse-spec-diff.py,        to: scripts/aggregate-issue-diffs.py, type: reads }
+  - { from: scripts/map-field-impact.py,       to: scripts/parse-spec-diff.py,       type: reads }
+  - { from: skills/run-spec-drift-triage,      to: scripts/aggregate-issue-diffs.py, type: calls }
+  - { from: skills/run-spec-drift-triage,      to: scripts/parse-spec-diff.py,       type: calls }
+  - { from: skills/run-spec-drift-triage,      to: scripts/map-field-impact.py,      type: calls }
+  - { from: skills/run-rubric-sync,            to: skills/run-spec-drift-triage,     type: reads }
+  - { from: skills/run-rubric-sync,            to: scripts/map-field-impact.py,      type: calls }
+  - { from: agents/spec-impact-verifier,       to: skills/run-spec-drift-triage,     type: evaluates }
+  - { from: agents/spec-impact-verifier,       to: scripts/parse-spec-diff.py,       type: calls }
+  - { from: agents/spec-impact-verifier,       to: scripts/map-field-impact.py,      type: calls }
+  - { from: agents/rubric-sync-auditor,        to: skills/run-rubric-sync,           type: evaluates }
+  - { from: scripts/check-triage-complete.py,  to: agents/spec-impact-verifier,      type: reads }
+  - { from: scripts/check-triage-complete.py,  to: agents/rubric-sync-auditor,       type: reads }
+  - { from: scripts/check-triage-complete.py,  to: scripts/aggregate-issue-diffs.py, type: reads }
+  - { from: commands/spec-drift-triage,        to: skills/run-spec-drift-triage,     type: calls }
+  - { from: commands/rubric-sync,              to: skills/run-rubric-sync,           type: calls }
+  - { from: commands/rubric-sync,              to: agents/spec-impact-verifier,      type: calls }
+  - { from: commands/rubric-sync,              to: agents/rubric-sync-auditor,       type: calls }
+  - { from: commands/rubric-sync,              to: scripts/check-triage-complete.py, type: calls }
+  - { from: "hook:PreToolUse-Bash/guard-spec-drift-close", to: skills/run-spec-drift-triage,     type: reads }
+  - { from: "hook:PreToolUse-Bash/guard-spec-drift-close", to: skills/run-rubric-sync,           type: reads }
+  - { from: "hook:PreToolUse-Bash/guard-spec-drift-close", to: scripts/check-triage-complete.py, type: calls }
+
+eval_sinks:
+  - EVALS.json
+  - eval-log/

@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "description": "C09 (map-field-impact.py) が diff hunk を artifact kind/path と name/type/required/enum/semantics 各軸へ決定論マッピングするための写像規則。C09 はこの表を読むだけで、規則を code に hardcode しない (guardian 自身が drift 源になるのを防ぐ)。regex は Python re 構文で unified diff の '+'/'-' 行本文 (先頭マーカ除去後) に対して照合する。axis 判定は match_any の最初に一致した規則の axis を採る。",
+  "artifact_kinds": {
+    "schema": {
+      "path_globs": ["**/*.schema.json", "**/schemas/**/*.json"],
+      "rules": [
+        {"axis": "required", "match_any": ["\"required\"\\s*:\\s*\\[", "^\\s*\"[A-Za-z0-9_]+\"\\s*,?\\s*$"], "context_key": "required", "note": "required 配列への要素追加/削除"},
+        {"axis": "type", "match_any": ["\"type\"\\s*:\\s*\"(string|integer|number|boolean|object|array|null)\""], "note": "型宣言の変更"},
+        {"axis": "enum", "match_any": ["\"enum\"\\s*:\\s*\\[", "\"const\"\\s*:"], "note": "enum/const 許容値の変更"},
+        {"axis": "name", "match_any": ["^\\s*\"[A-Za-z0-9_-]+\"\\s*:\\s*\\{", "\"\\$id\"\\s*:", "\"title\"\\s*:"], "note": "property キー名/識別子の追加・改名"},
+        {"axis": "semantics", "match_any": ["\"description\"\\s*:", "\"pattern\"\\s*:", "\"minLength\"\\s*:", "\"maxLength\"\\s*:", "\"minimum\"\\s*:", "\"maximum\"\\s*:", "\"additionalProperties\"\\s*:"], "note": "意味・制約 (description/pattern/範囲) の変更"}
+      ]
+    },
+    "rubric": {
+      "path_globs": ["**/rubric.json", "**/rubrics/**/*.json"],
+      "rules": [
+        {"axis": "required", "match_any": ["\"weight\"\\s*:", "\"mandatory\"\\s*:\\s*(true|false)", "\"required\"\\s*:"], "note": "必須性/重み付けの変更"},
+        {"axis": "enum", "match_any": ["\"verdict\"\\s*:", "\"levels\"\\s*:\\s*\\[", "\"threshold\"\\s*:"], "note": "評価水準/しきい値の許容集合変更"},
+        {"axis": "name", "match_any": ["\"id\"\\s*:", "\"criterion\"\\s*:", "\"dimension\"\\s*:"], "note": "評価項目 id/名称の追加・改名"},
+        {"axis": "type", "match_any": ["\"kind\"\\s*:", "\"scoring\"\\s*:"], "note": "評価種別の変更"},
+        {"axis": "semantics", "match_any": ["\"description\"\\s*:", "\"guidance\"\\s*:", "\"prompt\"\\s*:", "\"rationale\"\\s*:"], "note": "評価意図・観点文の変更"}
+      ]
+    },
+    "template": {
+      "path_globs": ["**/templates/**", "**/*.template.*", "**/*.tmpl"],
+      "rules": [
+        {"axis": "name", "match_any": ["\\{\\{\\s*[A-Za-z0-9_]+\\s*\\}\\}", "\\$\\{[A-Za-z0-9_]+\\}", "<[A-Za-z0-9_]+>"], "note": "プレースホルダ/差込フィールド名の追加・改名"},
+        {"axis": "required", "match_any": ["required", "必須", "MUST"], "note": "必須セクション/フィールドの変更"},
+        {"axis": "enum", "match_any": ["\\|\\s*[A-Za-z0-9_]+\\s*\\|", "選択肢", "one of"], "note": "許容選択肢の変更"},
+        {"axis": "semantics", "match_any": [".*"], "note": "上記に該当しない本文変更は既定で semantics 影響"}
+      ]
+    },
+    "other": {
+      "path_globs": ["**"],
+      "rules": [
+        {"axis": "semantics", "match_any": [".*"], "note": "分類外 artifact は semantics 影響としてフラグしレビューへ委ねる"}
+      ]
+    }
+  }
+}

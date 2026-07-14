@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/spec-drift-guardian/schemas/sync-proposal.schema.json",
+  "title": "Rubric Sync Proposal",
+  "description": "C02 (run-rubric-sync) の二段階 artifact。1 つの spec-drift issue は複数の rubric/schema/template ファイル×軸へ影響しうるため、proposals[] を正本とするコンテナ形で表す。issue/proposal_sha256/status/approval は issue 単位のゲート。proposals[] の各要素は proposal 単位の適用証跡。propose mode は影響ありフィールドへの最小 Edit 差分と pre-image hash を status=proposed で emit する (read-only)。apply mode は C04 audit PASS とユーザー明示承認後に allowlist 対象だけへ適用し status=applied_verified と各 proposal の post-image hash・validator 結果を固定する。proposal-only は close 不可。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issue", "proposal_sha256", "status", "approval", "proposals"],
+  "properties": {
+    "issue": {"type": "integer", "description": "対象 GitHub issue 番号 (issue 単位のゲート)"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "全 proposals[] の不変核から算出した正規化 digest。C04 audit-verdict.proposal_sha256 と一致必須 (issue 単位のゲート)"},
+    "status": {"type": "string", "enum": ["proposed", "applied_verified"], "description": "proposed=提案のみ (read-only) / applied_verified=承認済み限定適用+各 proposal post-image 検証済み。この2値以外 close 不可 (issue 単位のゲート)"},
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["granted", "by", "evidence"],
+      "description": "ユーザー明示承認の証跡 (issue 単位のゲート)。granted=false なら apply 不能",
+      "properties": {
+        "granted": {"type": "boolean"},
+        "by": {"type": ["string", "null"], "description": "承認主体 (未承認なら null)"},
+        "evidence": {"type": ["string", "null"], "description": "承認の根拠 (発話・タイムスタンプ等)"}
+      }
+    },
+    "proposals": {
+      "type": "array",
+      "minItems": 1,
+      "description": "issue に紐づく proposal 単位の適用証跡。target_path×axis ごとに 1 要素。status=applied_verified では全要素が post_image_sha256 非 null かつ validator_results 全 passed であること",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_path", "axis", "before", "after", "proposed_diff", "pre_image_sha256", "post_image_sha256", "validator_results"],
+        "properties": {
+          "target_path": {"type": "string", "minLength": 1, "description": "適用先ファイルの repo-root 相対パス。allowlist (plugins/harness-creator/**/rubric.json・templates・schema) 内であること"},
+          "axis": {"type": "string", "enum": ["name", "type", "required", "enum", "semantics"], "description": "反映する影響軸"},
+          "before": {"type": ["string", "null"], "description": "変更前の値"},
+          "after": {"type": ["string", "null"], "description": "変更後の値"},
+          "proposed_diff": {"type": "string", "minLength": 1, "description": "最小 Edit 差分 (unified diff もしくは old_string/new_string 記述)"},
+          "pre_image_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "適用前ファイルの期待 hash。apply 時に実ファイルと照合し drift を fail-closed"},
+          "post_image_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$", "description": "適用後ファイルの実 hash。status=proposed では null、applied_verified では非 null 必須"},
+          "validator_results": {
+            "type": "array",
+            "description": "適用後 validator 実行結果。status=applied_verified では 1 件以上かつ全 passed",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["validator", "exit_code", "passed"],
+              "properties": {
+                "validator": {"type": "string", "minLength": 1},
+                "exit_code": {"type": "integer"},
+                "passed": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

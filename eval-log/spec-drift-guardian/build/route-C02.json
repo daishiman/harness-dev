@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C02",
+  "component_kind": "skill",
+  "name": "run-rubric-sync",
+  "builder": "run-skill-create",
+  "build_target": "plugins/spec-drift-guardian/skills/run-rubric-sync/",
+  "status": "success",
+  "summary": "propose(read-only)で最小Edit差分+pre-image hashを提案、apply で C04 PASS∧明示承認∧allowlist∧hash一致の4条件充足時のみ適用し post-image/validator を記録する二段階 run skill。",
+  "deviations": [
+    "builder=run-skill-create は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+    "sync-proposal を複数 impact 時に proposal 配列で emit する設計を採用。schema top-level は単一 object・C10 は単一消費のため runtime の単一/配列整合は要調整 (discovered-task で追跡)。"
+  ],
+  "evidence": [
+    "SKILL.md + prompts R1/R2/R3 + references/apply-gate-policy.md materialized",
+    "validate-frontmatter: warn(source field 推奨・非fatal)",
+    "sync-proposal/sync-audit-verdict schema 準拠"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C01.json",
+    "eval-log/spec-drift-guardian/build/route-C09.json"
+  ],
+  "handover": "sync-proposal.json を C04 auditor と C10 が消費する。単一/配列契約の整合は要フォロー。",
+  "covered_task_ids": [
+    "P02-C02-01",
+    "P02-C02-02",
+    "P02-C02-03",
+    "P02-C02-04",
+    "P04-C02-01",
+    "P04-C02-02",
+    "P04-C02-03",
+    "P04-C02-04",
+    "P05-C02-01",
+    "P05-C02-02",
+    "P05-C02-03",
+    "P06-C02-01",
+    "P06-C02-02",
+    "P06-C02-03",
+    "P06-C02-04",
+    "P07-C02-01",
+    "P07-C02-02",
+    "P07-C02-03",
+    "P09-C02-01",
+    "P09-C02-02",
+    "P09-C02-03"
+  ],
+  "discovered": [
+    "eval-log/spec-drift-guardian/build/discovered-tasks/35e3ba13f3bf421586b8fdbae665c57e.json"
+  ]
+}

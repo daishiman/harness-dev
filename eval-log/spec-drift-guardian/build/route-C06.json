@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C06",
+  "component_kind": "slash-command",
+  "name": "rubric-sync",
+  "builder": "run-build-skill",
+  "build_target": "plugins/spec-drift-guardian/commands/rubric-sync.md",
+  "status": "success",
+  "summary": "C01/C03一致→C02 propose→C04 audit→明示承認→C02 apply→C10検証 の7ステップ順序保証オーケストレーション command。no-change でも C03 独立 verdict 必須。proposer≠approver 二重化。",
+  "deviations": [
+    "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+    "allowed-tools は SSOT の Read,Bash,Skill に従い C03/C04 起動は散文記述 (Task 非付与)。"
+  ],
+  "evidence": [
+    "commands/rubric-sync.md materialized",
+    "frontmatter 規約準拠",
+    "7ステップ順序保証記述",
+    "plugin.json entry_points.commands 登録済み"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C02.json",
+    "eval-log/spec-drift-guardian/build/route-C03.json",
+    "eval-log/spec-drift-guardian/build/route-C04.json",
+    "eval-log/spec-drift-guardian/build/route-C10.json"
+  ],
+  "handover": null,
+  "covered_task_ids": [
+    "P02-C06-01",
+    "P02-C06-02",
+    "P02-C06-03",
+    "P02-C06-04",
+    "P05-C06-01",
+    "P05-C06-02",
+    "P05-C06-03",
+    "P06-C06-01",
+    "P06-C06-02",
+    "P06-C06-03",
+    "P06-C06-04",
+    "P07-C06-01",
+    "P07-C06-02",
+    "P07-C06-03",
+    "P09-C06-01",
+    "P09-C06-02",
+    "P09-C06-03"
+  ]
+}

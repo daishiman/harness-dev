@@ -235,6 +235,103 @@ def test_gate_ok_when_inbox_absent_exit0(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["completion_gate"] == "ok"
 
 
+def _completion_evidence(tmp_path: Path, *, status: str = "pass", slug: str = "acme") -> Path:
+    gate_status = "pass" if status == "pass" else "blocked"
+    (tmp_path / "coverage.json").write_text("{}", encoding="utf-8")
+    return _write(tmp_path / "completion-evidence.json", {
+        "schema_version": "1.0.0",
+        "target_plugin_slug": slug,
+        "overall_status": status,
+        "gates": [{
+            "id": "coverage",
+            "status": gate_status,
+            "evidence": ["coverage.json"] if gate_status == "pass" else [],
+            "findings": [] if gate_status == "pass" else ["C10 coverage 72% < 80%"],
+        }],
+        "invalidated_task_ids": [],
+        "invalidated_phase_refs": [] if gate_status == "pass" else ["P06"],
+    })
+
+
+def test_completion_evidence_missing_blocks_even_when_all_tasks_done(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main([
+        "--target-plugin-slug", "acme",
+        "--discovered-inbox", str(inbox),
+        "--completion-evidence", str(tmp_path / "missing.json"),
+        "--dry-run",
+    ])
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_gate"] == "blocked"
+    assert out["completion_evidence_gate"]["status"] == "missing"
+
+
+def test_completion_evidence_blocked_gate_blocks_completion(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    evidence = _completion_evidence(tmp_path, status="blocked")
+    rc = rec.main([
+        "--target-plugin-slug", "acme",
+        "--discovered-inbox", str(inbox),
+        "--completion-evidence", str(evidence),
+        "--dry-run",
+    ])
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_evidence_gate"]["status"] == "blocked"
+    assert out["completion_evidence_gate"]["failed_gates"] == ["coverage"]
+
+
+def test_completion_evidence_rejects_declared_pass_when_gate_is_blocked(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    evidence = _completion_evidence(tmp_path, status="blocked")
+    value = json.loads(evidence.read_text(encoding="utf-8"))
+    value["overall_status"] = "pass"
+    _write(evidence, value)
+    rc = rec.main([
+        "--target-plugin-slug", "acme",
+        "--discovered-inbox", str(inbox),
+        "--completion-evidence", str(evidence),
+        "--dry-run",
+    ])
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_evidence_gate"]["status"] == "invalid"
+    assert any("自己矛盾" in finding for finding in out["completion_evidence_gate"]["findings"])
+
+
+def test_completion_evidence_rejects_pass_gate_with_missing_evidence_file(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    evidence = _completion_evidence(tmp_path, status="pass")
+    (tmp_path / "coverage.json").unlink()
+    rc = rec.main([
+        "--target-plugin-slug", "acme",
+        "--discovered-inbox", str(inbox),
+        "--completion-evidence", str(evidence),
+        "--dry-run",
+    ])
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_evidence_gate"]["status"] == "invalid"
+    assert any("evidence file が存在しない" in finding
+               for finding in out["completion_evidence_gate"]["findings"])
+
+
+def test_completion_evidence_pass_allows_gate_to_continue(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    evidence = _completion_evidence(tmp_path, status="pass")
+    rc = rec.main([
+        "--target-plugin-slug", "acme",
+        "--discovered-inbox", str(inbox),
+        "--completion-evidence", str(evidence),
+        "--dry-run",
+    ])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_gate"] == "ok"
+    assert out["completion_evidence_gate"]["status"] == "ok"
+
+
 def test_missing_inbox_and_slug_usage_exit2(capsys):
     rc = rec.main(["--dry-run"])
     assert rc == 2
@@ -293,8 +390,9 @@ def test_gate_not_blocked_when_no_blocked_nodes(tmp_path, capsys):
     state = _task_state(tmp_path, [{"id": "T1", "state": "done"},
                                    {"id": "T2", "state": "pending"},
                                    {"id": "T3", "state": "running"}])
+    evidence = _completion_evidence(tmp_path)
     rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "none.jsonl"),
-                   "--task-state", str(state), "--dry-run"])
+                   "--task-state", str(state), "--completion-evidence", str(evidence), "--dry-run"])
     assert rc == 0
     assert json.loads(capsys.readouterr().out)["completion_gate"] == "ok"
 
@@ -308,6 +406,22 @@ def test_pending_discovered_gate_takes_precedence_over_blocked_nodes(tmp_path, c
     assert rc == 1
     out = json.loads(capsys.readouterr().out)
     assert "pending_discovered_tasks" in out and "blocked_tasks" not in out
+
+
+def test_task_graph_state_without_completion_evidence_is_blocked(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    state = _task_state(tmp_path, [{"id": "T1", "state": "done"}])
+    rc = rec.main([
+        "--discovered-inbox", str(inbox),
+        "--task-state", str(state),
+        "--dry-run",
+    ])
+    assert rc == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["completion_gate"] == "blocked"
+    assert out["completion_evidence_gate"]["status"] == "missing"
+    assert any("--completion-evidence が必須" in finding
+               for finding in out["completion_evidence_gate"]["findings"])
 
 
 # ─────────────────────────── inbox_absent (未発火と処理済の区別) ───────────────────────────
@@ -464,11 +578,13 @@ def test_roundtrip_records_deviation_lessons_from_route_reports(tmp_path, capsys
     rp = _route_report(tmp_path, "route-C14.json", route_id="C14",
                        deviations=["evaluator 独立起動不能のため rubric 観点を自己適用した"])
     state = _task_state(tmp_path, [{"id": "P05-C14-01", "state": "done", "route_report": str(rp)}])
+    evidence = _completion_evidence(tmp_path, slug="acme-plugin")
     rc = rec.main([
         "--target-plugin-slug", "acme-plugin",
         "--discovered-inbox", str(tmp_path / "nope"),
         "--task-events", str(tmp_path / "none.jsonl"),
         "--task-state", str(state),
+        "--completion-evidence", str(evidence),
         "--target-knowledge-dir", str(loop_a),
         "--harness-knowledge-dir", str(loop_b),
         "--add-entry-path", str(_ADD_ENTRY),
@@ -895,9 +1011,10 @@ def test_gate_blocked_on_claude_symlink_drift(tmp_path, capsys):
     """inbox/blocked node 全解決でも .claude symlink drift なら blocked + fix_command 単体提示。"""
     inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
     root, state = _fake_repo(tmp_path, generator_exit=1)
+    evidence = _completion_evidence(tmp_path)
     events_p = tmp_path / "task-events.jsonl"
     rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(events_p),
-                   "--task-state", str(state)])
+                   "--task-state", str(state), "--completion-evidence", str(evidence)])
     assert rc == 1
     out = json.loads(capsys.readouterr().out)
     assert out["completion_gate"] == "blocked"
@@ -915,8 +1032,9 @@ def test_gate_ok_when_symlink_check_green(tmp_path, capsys):
     """--check exit0 なら claude_symlink_gate:ok を携帯して completion_gate:ok。"""
     inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
     root, state = _fake_repo(tmp_path, generator_exit=0)
+    evidence = _completion_evidence(tmp_path)
     rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "none.jsonl"),
-                   "--task-state", str(state), "--dry-run"])
+                   "--task-state", str(state), "--completion-evidence", str(evidence), "--dry-run"])
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["completion_gate"] == "ok"
@@ -927,8 +1045,9 @@ def test_gate_symlink_skipped_when_generator_absent(tmp_path, capsys):
     """生成器を持つ祖先なし (隔離環境/配布先) は fail-soft skip で完了を block しない。"""
     inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
     state = _task_state(tmp_path, [{"id": "T1", "state": "done"}])
+    evidence = _completion_evidence(tmp_path)
     rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "none.jsonl"),
-                   "--task-state", str(state), "--dry-run"])
+                   "--task-state", str(state), "--completion-evidence", str(evidence), "--dry-run"])
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["completion_gate"] == "ok"

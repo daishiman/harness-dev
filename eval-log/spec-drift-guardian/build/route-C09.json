@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C09",
+  "component_kind": "script",
+  "name": "map-field-impact.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/spec-drift-guardian/scripts/map-field-impact.py",
+  "status": "success",
+  "summary": "field-impact-map.json を読み hunk→artifact_kind/5軸を map 駆動で判定 (規則は hardcode せず data 由来)。",
+  "deviations": [
+    "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。",
+    "hunk 入力契約は暫定定義したが C08 実出力 (added_lines/removed_lines) と整合を実データ疎通で確認済み。"
+  ],
+  "evidence": [
+    "--help exit0",
+    "pytest 19 passed",
+    "lint-script-frontmatter OK",
+    "test(d): カスタム --map で axis 変化=data駆動を立証",
+    "C08→C09 実データ疎通 49 impacts"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C08.json"
+  ],
+  "handover": "impacted キーは下流 C01 が triage-report 組立時に付与する。",
+  "covered_task_ids": [
+    "P02-C09-01",
+    "P02-C09-02",
+    "P02-C09-03",
+    "P02-C09-04",
+    "P04-C09-01",
+    "P04-C09-02",
+    "P04-C09-03",
+    "P04-C09-04",
+    "P05-C09-01",
+    "P05-C09-02",
+    "P05-C09-03",
+    "P06-C09-01",
+    "P06-C09-02",
+    "P06-C09-03",
+    "P06-C09-04",
+    "P07-C09-01",
+    "P07-C09-02",
+    "P07-C09-03",
+    "P09-C09-01",
+    "P09-C09-02",
+    "P09-C09-03"
+  ]
+}

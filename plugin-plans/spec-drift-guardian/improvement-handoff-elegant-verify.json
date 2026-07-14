@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "elegant-review",
+    "ref": "elegant-verification-30.json",
+    "generated_by": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY"
+  },
+  "target_plugin_slug": "spec-drift-guardian",
+  "plan_dir": "plugin-plans/spec-drift-guardian",
+  "provenance": {
+    "source_intake": null,
+    "prev_goal_spec": null,
+    "origin_request": {
+      "kind": "other",
+      "ref": "https://github.com/daishiman/harness-dev/issues/17"
+    }
+  },
+  "findings": [
+    {
+      "id": "EV-001",
+      "severity": "high",
+      "summary": "spec-diff-history.mdは80行previewなのに全diffとして扱われていた",
+      "recommendation": "履歴をイベント索引に限定しcache更新commit pairから完全diffをdigest/completeness付きで再構成する",
+      "target_ref": "component-inventory.json#C11"
+    },
+    {
+      "id": "EV-002",
+      "severity": "high",
+      "summary": "Issue #17 step2のname/type/required/enum判定軸が明示されていなかった",
+      "recommendation": "4軸とsemanticsのbefore/after/evidence、artifact kind/pathをschemaとfixtureへ固定する",
+      "target_ref": "component-inventory.json#C09"
+    },
+    {
+      "id": "EV-003",
+      "severity": "high",
+      "summary": "proposal artifactだけでclose可能でIssue #17 step3の実更新を保証しなかった",
+      "recommendation": "C02をpropose/apply二段階にしC04 PASS・明示承認・allowlist・hash/validatorを必須化する",
+      "target_ref": "component-inventory.json#C02"
+    },
+    {
+      "id": "EV-004",
+      "severity": "high",
+      "summary": "C03/C04の独立verdictがclose gateへ配線されていなかった",
+      "recommendation": "verdict schemaを追加しC10/C07が4 artifactとpost-imageを突合する",
+      "target_ref": "component-inventory.json#C10"
+    },
+    {
+      "id": "EV-005",
+      "severity": "high",
+      "summary": "P06/P07/P09/P10のcomponent数・C11被覆がinventoryと矛盾していた",
+      "recommendation": "全11 component、script4件、routes 11件へ揃える",
+      "target_ref": "phase-06-test-run.md"
+    },
+    {
+      "id": "EV-006",
+      "severity": "medium",
+      "summary": "requiredなfield-impact-mapとschemasにhandoff ownerがなかった",
+      "recommendation": "references_config_assetsとschemasをenvelopeへ追加しbuilder/targetを割り当てる",
+      "target_ref": "handoff-run-plugin-dev-plan.json#envelope"
+    },
+    {
+      "id": "EV-007",
+      "severity": "high",
+      "summary": "単一/doctor fixtureではIssue #17の実差分カテゴリを覆えなかった",
+      "recommendation": "完全commit pairとsettings、doctor、MCP matcher、hook transcript、sub-agent、semantics/no-impactのmatrixをpinする",
+      "target_ref": "phase-04-test-design.md"
+    },
+    {
+      "id": "EV-008",
+      "severity": "medium",
+      "summary": "C07はWeb/API/Actions経由のcloseを捕捉できない",
+      "recommendation": "保証境界を明示しserver-side gateはcomponent追加承認が必要なopen issueとして保持する",
+      "target_ref": "handoff-run-plugin-dev-plan.json#GAP-CLOSE-COVERAGE-001"
+    }
+  ]
+}

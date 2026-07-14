@@ -945,7 +945,10 @@ def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> li
     if not isinstance(caps, list) or not caps:
         f.append("plugin-composition.capabilities must be non-empty array")
         caps = []
-    cap_kinds = {"skill", "agent", "hook", "command", "prompt", "workflow"}
+    # capability-manifest.schema.json の kindPluginComposition と同じ集合を保つ。
+    # script は plugin-composition 専用 kind であり、ここから欠けると schema が受理する
+    # bundle を決定論 validator だけが拒否する schema drift になる。
+    cap_kinds = {"skill", "agent", "hook", "command", "prompt", "workflow", "script"}
     plugin_name = manifest_path.parent.name if manifest_path is not None else data.get("name")
     cap_refs: set[str] = set()
     for i, c in enumerate(caps):

@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "fixture": "plugins/spec-drift-guardian/tests/fixtures/issue17-matrix.json",
+  "expected_fixture_cases": 7,
+  "measured_fixture_cases": 7,
+  "precision_min": 0.8,
+  "recall_min": 0.8,
+  "precision": 1.0,
+  "recall": 1.0,
+  "counts": {
+    "tp": 11,
+    "fp": 0,
+    "fn": 0
+  },
+  "all_cases_match": true,
+  "meets_threshold": true,
+  "per_case": [
+    {
+      "case": "settings-add",
+      "expects_impact": true,
+      "expected_axes": [
+        "required",
+        "semantics"
+      ],
+      "measured_axes": [
+        "required",
+        "semantics"
+      ],
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "doctor-change",
+      "expects_impact": true,
+      "expected_axes": [
+        "semantics",
+        "type"
+      ],
+      "measured_axes": [
+        "semantics",
+        "type"
+      ],
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "plugin-mcp-matcher",
+      "expects_impact": true,
+      "expected_axes": [
+        "enum",
+        "name"
+      ],
+      "measured_axes": [
+        "enum",
+        "name"
+      ],
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "hook-transcript",
+      "expects_impact": true,
+      "expected_axes": [
+        "required",
+        "type"
+      ],
+      "measured_axes": [
+        "required",
+        "type"
+      ],
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "sub-agent",
+      "expects_impact": true,
+      "expected_axes": [
+        "name",
+        "semantics"
+      ],
+      "measured_axes": [
+        "name",
+        "semantics"
+      ],
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "semantics-only",
+      "expects_impact": true,
+      "expected_axes": [
+        "semantics"
+      ],
+      "measured_axes": [
+        "semantics"
+      ],
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    },
+    {
+      "case": "no-impact",
+      "expects_impact": false,
+      "expected_axes": [],
+      "measured_axes": [],
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "match": true
+    }
+  ]
+}

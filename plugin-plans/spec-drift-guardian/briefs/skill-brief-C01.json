@@ -1,0 +1,57 @@
+{
+  "skill_name": "run-spec-drift-triage",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "spec-drift issue が起票されたとき",
+    "diffトリアージ",
+    "spec drift triage"
+  ],
+  "output_contract": "triage-report schema に準拠し、issue、commit pair、diff digest、completeness、全hunk、artifact kind/path、axis、before/after、impacted、evidence を $CLAUDE_PROJECT_DIR/.spec-drift/<issue>/triage-report.json へ emit する",
+  "boundary": "入力=C11がローカルgitから再構成した全未triage完全 diff。検知/issue起票は既存workflowへ委ねる。完全性を証明できない入力は判定せずfail-closed。出力はトリアージまでで、提案・適用はC02、独立判定はC03の責務",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "gh"
+  ],
+  "deterministic_checks": [
+    "aggregate-issue-diffs.py",
+    "parse-spec-diff.py",
+    "map-field-impact.py"
+  ],
+  "external_systems": [
+    "GitHub Issues (gh CLI)"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "complete=true/digest一致の完全 diff",
+    "hunk 単位の構造化パース",
+    "name/type/required/enum/semantics 各軸の影響判定",
+    "before/after/evidence付きトリアージレポート出力"
+  ],
+  "goal": "C11 が再構成した issue 単位の全未triage完全 diff を hunk 単位で構造化し、artifact kind/path と name/type/required/enum/semantics 各軸への影響を before/after/evidence 付きで判定したトリアージレポートを生成した状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "spec-drift issue の影響判定 (step2) が人手依存であり、さらに spec-diff-history の80行previewだけでは Issue #17 の945行完全差分を判定できない。C11のcommit pair再構成とC09の4軸+semantics写像により取りこぼしと判断ブレを防ぐ",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "対象 spec-drift issue を確定し aggregate-issue-diffs.py で issue 単位の未triage 全 diff 集合を集約する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-parse",
+      "summary": "parse-spec-diff.py で集約 diff を hunk 単位に構造化し map-field-impact.py で影響フィールド候補をマッピングする",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-triage",
+      "summary": "name/type/required/enum/semantics 各軸の before/after/evidence と artifact kind/path を判定しトリアージレポートを返す",
+      "prompt_required": true
+    }
+  ]
+}

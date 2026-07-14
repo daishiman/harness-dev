@@ -1,0 +1,51 @@
+{
+  "skill_name": "run-rubric-sync",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "トリアージで影響ありと判定されたとき",
+    "rubric同期提案",
+    "rubric sync"
+  ],
+  "output_contract": "sync-proposal schemaに準拠し、status=proposed|applied_verified、対象ファイル、4軸、提案差分、approval evidence、pre/post hash、validator resultsを $CLAUDE_PROJECT_DIR/.spec-drift/<issue>/sync-proposal.json へemitする",
+  "boundary": "通常解析/proposeはread-only。apply modeだけがC04 sync-audit-verdict=PASSとユーザー明示承認を必須に、sync-proposal allowlist内のplugins/harness-creator/**/rubric.json・templates・schemaへEdit差分を適用できる。対象外パス、hash drift、監査不一致はfail-closed。commit/PR/issue closeは行わない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "map-field-impact.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "propose modeで対象パス/4軸/変更前後/expected hashを生成",
+    "C04 audit PASSとユーザー明示承認を検証",
+    "apply modeでallowlist対象だけをEdit適用",
+    "post-image hashとvalidator結果を記録"
+  ],
+  "goal": "propose modeで影響ありフィールドへの最小Edit差分を生成し、C04 auditor PASSとユーザー明示承認後のapply modeでallowlist対象だけを適用し、pre/post hash・validator結果をartifactへ固定した状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "Issue #17 step3は提案作成ではなくrubric/schema/template更新を要求する。proposal-onlyでclose可能になる穴を塞ぎ、監査と明示承認を保った二段階実行で実反映までを半自動化する",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "C01 のトリアージレポートと対象 rubric/schema/template の read-only 参照先を確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "4軸+semanticsの影響候補を基に最小Edit差分、allowlist、expected pre-image hashを組み立てる",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-apply",
+      "summary": "C04 PASSと明示承認後だけ差分を適用しpost-image hashとvalidator結果をartifactへ記録する",
+      "prompt_required": true
+    }
+  ]
+}

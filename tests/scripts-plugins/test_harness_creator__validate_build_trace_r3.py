@@ -800,6 +800,24 @@ def test_plugin_composition_allows_deploys_dependency_type():
     assert valid is True, findings
 
 
+def test_plugin_composition_allows_script_capability_kind():
+    """JSON Schema が宣言する composition-only script kind と validator を同期する。"""
+    data = {
+        "name": "bundle-x",
+        "description": "共有決定論 script を持つ plugin-composition 成功ケース本文。",
+        "kind": "plugin-composition",
+        "version": "1.0.0",
+        "owner": "team",
+        "capabilities": [
+            {"kind": "script", "ref": "scripts/check.py"},
+            {"kind": "skill", "ref": "skills/a"},
+        ],
+        "dependencies": [{"from": "skills/a", "to": "scripts/check.py", "type": "calls"}],
+    }
+    valid, _, findings = M.validate_manifest(data)
+    assert valid is True, findings
+
+
 def test_bundle_mode_ref_with_md_suffix(tmp_path, capsys):
     plugin_root = tmp_path / "plugins" / "demo"
     (plugin_root / "commands").mkdir(parents=True)

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "spec_drift_guardian_version": "0.1.0",
+  "harness_eval": {
+    "id": "C5",
+    "goal": "既知 diff→影響フィールド正解セットに対する run-spec-drift-triage の 4 軸+semantics precision/recall と、propose/audit/apply・verified-no-change・close gate の合否を測る。",
+    "pinned_fixture": {
+      "issue": 17,
+      "base_commit": "da6d4e7",
+      "source_commit": "6ddd645",
+      "note": "Issue #17 の完全 commit pair を pin する。spec-diff-history.md の 80 行 preview では判定できない完全差分を正解セットの基準にする。実測の結果、この commit pair の実差分は yaml-spec-cache.md 単一ファイル 49 hunk であり、写像表上は全件 other/semantics に落ちる (name/type/required/enum 軸を発火させない)。したがって 4 軸の実測には各軸を発火させる合成 diff case が必要で、その正解セット実体は tests/fixtures/issue17-matrix.json に materialize してある (semantics-only case のみ実 diff 由来)。"
+    },
+    "fixture_matrix": [
+      {"case": "settings-add", "expects_impact": true, "axes": ["required", "semantics"]},
+      {"case": "doctor-change", "expects_impact": true, "axes": ["type", "semantics"]},
+      {"case": "plugin-mcp-matcher", "expects_impact": true, "axes": ["enum", "name"]},
+      {"case": "hook-transcript", "expects_impact": true, "axes": ["required", "type"]},
+      {"case": "sub-agent", "expects_impact": true, "axes": ["name", "semantics"]},
+      {"case": "semantics-only", "expects_impact": true, "axes": ["semantics"]},
+      {"case": "no-impact", "expects_impact": false, "axes": []}
+    ],
+    "fixture_matrix_input": "tests/fixtures/issue17-matrix.json",
+    "metrics": {
+      "precision_min": 0.80,
+      "recall_min": 0.80,
+      "truncated_preview_input": "fail-closed",
+      "close_gate": "applied_verified または independently_verified_no_change のみ OK。proposal-only は INCOMPLETE"
+    },
+    "measurement_status": "measured",
+    "measured_at": "2026-07-14",
+    "measured_results": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "tp": 11,
+      "fp": 0,
+      "fn": 0,
+      "fixture_cases_measured": 7,
+      "fixture_cases_matching": 7,
+      "close_gate_scenarios_measured": 6,
+      "close_gate_all_match": true
+    },
+    "measurement_artifacts": [
+      "../../eval-log/spec-drift-guardian/build/fixture-matrix-result.json",
+      "../../eval-log/spec-drift-guardian/build/safety-matrix-result.json",
+      "../../eval-log/spec-drift-guardian/build/independent-agent-eval-result.json",
+      "../../eval-log/spec-drift-guardian/build/builder-provenance-result.json",
+      "../../eval-log/spec-drift-guardian/build/completion-evidence.json"
+    ],
+    "measurement_runners": [
+      "scripts/eval-fixture-matrix.py",
+      "scripts/eval-safety-matrix.py"
+    ],
+    "measurement_note": "C01 の 4 軸+semantics 判定は既知正解セット (fixture_matrix_input) に対し軸レベル (case × axis) で precision=1.0 / recall=1.0 (TP=11/FP=0/FN=0) を実測。propose/audit/apply・verified-no-change・close gate の合否は実 C10 を 6 シナリオ subprocess 起動して実測 (拒否4経路は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2経路は exit0)。C03/C04 は isolation:fork の独立 context で実起動し、開示していない合成欠陥を全て検出した。",
+    "known_limitations": [
+      "precision/recall は既知正解セットに対する写像規則の判定精度であり、実運用の未知 diff に対する精度ではない。fixture は planner 想定圏内にあるため楽観側バイアスを持つ。",
+      "C02 (run-rubric-sync) の outer criteria は P04 定義どおり『未承認/監査FAIL/hash drift/allowlist逸脱で変更0件・承認済みは適用後 hash/validator 一致』であり safety matrix で実測した。C02 skill 自体を LLM 実行して提案品質を precision/recall 化する測定は行っていない (提案側欠陥を C04 監査が検出できることは実測済み)。",
+      "independent-agent-evaluation は合成欠陥 1 セットに対する検出可否であり、未知欠陥に対する検出率 (recall) の測定ではない。"
+    ]
+  },
+  "evaluations": [
+    {"date": "2026-07-14", "skill": "run-spec-drift-triage", "kind": "run", "verdict": "measured", "findings": ["軸レベル precision=1.0 / recall=1.0 (TP=11 FP=0 FN=0) を既知正解セット 7 case に対し実測 (eval-fixture-matrix.py exit0)。threshold 0.8 を満たす。", "実 Issue #17 diff だけでは 4 軸が発火しないため合成 case を併用している。"]},
+    {"date": "2026-07-14", "skill": "run-rubric-sync", "kind": "run", "verdict": "measured", "findings": ["outer criteria (未承認/監査FAIL/hash drift で変更0件・承認済みは適用後一致) を実 C10 の 6 シナリオ E2E で実測 (eval-safety-matrix.py exit0, 6/6)。", "C02 skill 自体の LLM 実行による提案品質の precision/recall 化は未実施 (P04 の C02 criteria 定義外)。"]},
+    {"date": "2026-07-14", "agent": "spec-impact-verifier", "kind": "sub-agent", "verdict": "measured", "findings": ["isolation:fork の独立 context で実起動。diff_sha256 一致確認後に 49 件を独立再導出し、開示していない合成欠陥 (missed: yaml-spec-cache.md×semantics / false-positive: nonexistent-settings.schema.json×required) を両方検出し agree=false を emit。"]},
+    {"date": "2026-07-14", "agent": "rubric-sync-auditor", "kind": "sub-agent", "verdict": "measured", "findings": ["isolation:fork の独立 context で実起動。開示していない合成欠陥を検出し verdict=FAIL を emit (omissions=1 / excesses=2 / allowlist_violations=1 / proposal_sha256 不一致)。"]},
+    {"date": "2026-07-14", "command": "spec-drift-triage", "kind": "slash-command", "verdict": "measured", "findings": ["tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"]},
+    {"date": "2026-07-14", "command": "rubric-sync", "kind": "slash-command", "verdict": "measured", "findings": ["tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"]},
+    {"date": "2026-07-14", "hook": "guard-spec-drift-close", "kind": "hook", "verdict": "measured", "findings": ["tests/test_guard_spec_drift_close.py が pass。PreToolUse/Bash の gh issue close 捕捉・C10 INCOMPLETE で遮断・artifact 欠落で fail-closed を検証。branch coverage 92%。", "GAP-CLOSE-COVERAGE-001: Web UI/API/Actions 経由の close は本 hook の射程外。"]},
+    {"date": "2026-07-14", "script": "aggregate-issue-diffs.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 83% (threshold 80%)。実 Issue #17 commit pair から完全 diff 復元を実測 (diff_sha256=f288346b…)。"]},
+    {"date": "2026-07-14", "script": "parse-spec-diff.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 93%。実 diff を 49 hunk へ構造化を実測。"]},
+    {"date": "2026-07-14", "script": "map-field-impact.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 80%。既知正解セット 7 case で 4 軸+semantics 判定 precision=recall=1.0 を実測。"]},
+    {"date": "2026-07-14", "script": "check-triage-complete.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 95%。6 シナリオ E2E で close 許可/遮断と副作用0件を実測。"]}
+  ]
+}
