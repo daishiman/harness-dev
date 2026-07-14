@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "skill_md_sha256": "c0c379b213229bff97ab4a0c9745e7a604de79e2b82bdf1c78d0b187f84548eb"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "FM-001/NM-001 適合: name=run-dev-graph-system-spec は run- prefix + kebab-case (len<=60) でディレクトリ basename と一致",
+      "BD-001/BD-002 適合: '## Purpose & Output Contract' と '## Gotchas' を保持し、冒頭30行に『仕様生成ロジックを持たない』禁則を集約",
+      "単一責務が明確: system-spec-harness への委譲 + C02 取込に限定し、elicitation/compile logic の複製を明示禁止して境界を保っている"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric v1.3.0 の kind=skill rule で genuine 採点した。FM-001(prefix+kebab len<=60)/FM-002(2 trigger '〜たいとき'句点終端)/FM-003(trigger 数=2)/FM-004(内部動詞なし)/BD-001(Purpose & Output Contract)/BD-002(Gotchas)/BD-003(frontmatter 除く body 約80行<=300)/NM-001(basename==name)/PD-001(body<=100)/PD-002(冒頭30行に Purpose 見出し+『持たない/実装しない/停止する』禁則) が全 PASS。KL-001..005 は knowledge/ 不在で skip=PASS。委譲専任 skill として責務が凝集し high severity 違反 0 件のため PASS。body 全文 (sha256 c0c379b213229bff97ab4a0c9745e7a604de79e2b82bdf1c78d0b187f84548eb) を単一責務・命名・境界・出力契約・SSOT 観点で確認済み。"
+}

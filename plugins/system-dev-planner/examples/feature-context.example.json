@@ -1,0 +1,27 @@
+{
+  "graph_node_id": "feature-auth",
+  "artifact_kind": "feature",
+  "purpose": "利用者がメールとパスワードで安全にサインイン/サインアウトでき、既存の保護リソースへ本人としてアクセスできるようにする",
+  "goal": "メール+パスワードのサインイン・サインアウト・セッション維持が動作し、認証済み利用者だけが保護 API を呼べる状態にする",
+  "scope_in": [
+    "メール+パスワードのサインイン/サインアウト",
+    "サーバ側セッションの発行・検証・失効",
+    "保護 API への認証ミドルウェア適用"
+  ],
+  "scope_out": [
+    "ソーシャルログイン (OAuth 連携)",
+    "多要素認証 (MFA)",
+    "認可ロール/権限モデルの拡張"
+  ],
+  "acceptance": [
+    "正しい資格情報でサインインするとセッションが確立し保護 API を 200 で呼べる",
+    "誤った資格情報では 401 を返しセッションを発行しない",
+    "サインアウト後は同一セッションで保護 API が 401 になる"
+  ],
+  "architecture_refs": [
+    "system-spec/index.md",
+    "system-spec/00-requirements-definition.md",
+    "system-spec/architecture/auth-service.md"
+  ],
+  "updated_at": "2026-07-13T09:00:00Z"
+}

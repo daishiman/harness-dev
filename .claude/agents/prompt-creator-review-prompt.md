@@ -1,1 +1,0 @@
-../../plugins/prompt-creator/agents/prompt-creator-review-prompt.md

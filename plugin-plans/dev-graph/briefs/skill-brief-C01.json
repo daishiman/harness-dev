@@ -1,0 +1,72 @@
+{
+  "skill_name": "run-dev-graph-init",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "dev-graphを初期化",
+    "タスクグラフ初期化",
+    "dev-graph init"
+  ],
+  "output_contract": "初期化レポート (resolved repo root/repository_id/config/content roots/local state/GitHub publication設定 + symlink source + 非上書き一覧 + schema結果)",
+  "boundary": "入力=任意--repo-rootまたは呼出しcontext/出力=そのrepository内だけのcontent/config/state。symlink元はcode/template読取り専用でcontent authorityにせず、絶対pathを保存しない。既存file/docs/templateは上書きせずmigration previewへ回す",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "validate-graph-schema.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "caller repo/worktree root解決",
+    "repo-local config",
+    "6正規root",
+    "repo-local state/cache/lock",
+    "GitHub Issue/Projects設定template",
+    "worktree policy",
+    "Claude hook source policy",
+    "template scaffold",
+    "既存docs/settings非上書き",
+    "スキーマ検証"
+  ],
+  "goal": "symlinkで配布された任意の呼出し元repository/worktreeを解決し、そのrepo内だけに6 content root (issues/tasks/specs/architecture/features/docs)、repo-local config/template/stateと選択式Claude hook配線を冪等初期化できる状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "成果物種別を混在させず一元管理するには、単一グラフストアと正規ディレクトリ構造の双方が必要なため。物理配置はartifact_kind、横断分類はmetadataとし、小規模時はflat、大規模時だけ段階分割するhybrid policyを初期化時に敷く。初期化レポートにはgh CLI認証状態も含める。加えて、artifact kind別テンプレート正本 (`templates/template-contract.json` + kind別/subtype別Markdown雛形) はplugin同梱の静的資産であり、init実行時に導入先 `.dev-graph/templates/` へ冪等コピーする (要件C18のscaffold責務)",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-init",
+      "summary": "resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-template",
+      "summary": "共通/5kind/architecture 5 subtype/API/system phase/system task overlay/template contractを`.dev-graph/templates/`へ冪等scaffoldし、利用者編集済み版は上書きしない",
+      "prompt_required": true
+    },
+    {
+      "id": "R5-hooks",
+      "summary": "C25のplugin hookを共有既定とする。project fallbackはplain-symlink導入時だけ許可し、effective plugin hookが見えれば拒否する。C24で検証した`.claude/dev-graph-plugin`からC10/C25全eventを既存settingsへpreview付きdeep-mergeし、override/二重登録を診断してrollback manifestを残す",
+      "prompt_required": true
+    }
+  ]
+}

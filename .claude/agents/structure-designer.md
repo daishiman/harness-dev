@@ -1,1 +1,0 @@
-../../plugins/slide-report-generator/agents/structure-designer.md

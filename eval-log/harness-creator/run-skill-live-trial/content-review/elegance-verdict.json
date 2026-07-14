@@ -2,27 +2,20 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "f84185c25b5a3f9c8a6c8364d2065fd6e2236a5351a2c7bb9a339924d406bd9c"
+    "skill_md_sha256": "a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
-  },
-  "reviewer": "independent-rename-review-subagent-c",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
     "positive_feedback": [
-      "fork acceptance と live-trial の観測対象(Stop hook 自走 / 入れ子 Skill / 対話 gate 越え / 本番 plugin・hook ロード)を表で直交させ、どの段まで要るかを derive_acceptance_tier() の決定論導出(hooks 配線・allowed-tools の Skill/Agent/AskUserQuestion → live)に委ねているため、live 導出 skill のみが対象という適用境界が主観判断なく確定している。",
-      "proof trial の実走 model 証明を transcript 抽出の actual_model 機械 gate のみに限定し、boot READY 行の MODEL: は requested の echo に過ぎない(boot は不正 model を検出しない)と明記しているため、OUT2(boot echo を証拠にしない)が live-trial-verdict.py の actual_model 集合抽出と一致した機械 gate として担保されている。"
+      "fork acceptance と live-trial の観測対象 (Stop hook 自走 / 入れ子 Skill / 対話 gate 越え / 本番 plugin・hook ロード) を表で直交させ、どの段まで要るかを derive_acceptance_tier() の決定論導出に委ねているため適用境界が主観判断なく確定する。goal を proxy にしない絶対ルールと DEGRADED 降格 (nudge/gate 応答 >0) が判定ロジック表と一貫。",
+      "proof trial の実走 model 証明を transcript 抽出の actual_model 機械 gate のみに限定し boot READY 行の MODEL: は requested の echo と明記 (OUT2)、denylist を boot/verdict の二重機械 gate で拒否 (OUT3)、数値上限を convergence-policy.json 正本に委ねて本文へ生値を書かない (二重宣言禁止) など、証拠と正本の分離が徹底されている。"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -30,5 +23,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "skill-creator→harness-creator 改名後の SKILL.md(実測 sha256 f84185c2…)を全文実読し 4 条件で検証。(1) 旧名残存: skill-creator / skill_creator / スキルクリエイター の grep 0 件。SCRIPTS パス plugins/harness-creator/skills/run-skill-live-trial/scripts と source パス eval-log/harness-creator/… を harness 表現へ統一。スキル名 run-skill-live-trial は単体 skill の実走受け入れのため skill 表現維持で意味論境界に適合。(2) 改名追従: schema_refs(schemas/live-trial-verdict.schema.json)/ reference_refs(references/task-template.md・references/transcript-jsonl.md・../run-elegant-review/references/convergence-policy.json・../run-build-skill/references/goal-seek-paradigm.md・../../references/orchestrate-gate-pattern.md)/ script_refs(live-trial-backend.py・boot・send・status・poll・verdict.py)/ 本文の ../run-build-skill/scripts/validate-build-plan.py を実在確認し断線 0。(3) C1 矛盾: 判定ロジック表(起動 / 完走 / goal 適合 → 総合)・proof trial の扱い(DEGRADED→FAIL, model 不一致→FAIL)・数値上限の本文非記載(convergence-policy.json 正本)が一貫。(4) C2 漏れ: 準備 / boot / send / poll / STALL 分岐 / 回収 / goal verification / verdict+掃除 の全局面と適用境界表・denylist・配備境界を網羅。criteria IN1(status 4 状態+poll 4 分岐+state-file 永続化の pytest 検証)/ IN2(verdict.json の schema 自己検証)/ OUT1(fresh evaluator が PASS|FAIL+blocker のみ・点数なし)/ OUT2(actual_model 機械 gate・boot echo 非採用)/ OUT3(全経路 tmux reaper 回収+denylist の boot/verdict 二重機械拒否)を導出し adequacy を確認。4 条件すべて 0 で PASS。"
+  "notes": "現 SKILL.md (sha256 a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 判定ロジック表 (起動/完走/goal 適合→総合)・proof trial の扱い (DEGRADED→FAIL・actual_model 不一致→FAIL)・数値上限の本文非記載が一貫。②漏れなし: 適用境界表、スコープと配備境界、絶対ルール 1〜4、goal-seek、局面カタログ (事前計画/準備/boot/send/poll/STALL 分岐表/回収/goal verification/verdict+掃除)、判定ロジック、検証、Gotchas、関連を網羅。completeness_exempt で prompts/manifest の免除理由を明記し acceptance harness として妥当。③整合性: feedback_contract 5 criteria (IN1 test / IN2 script / OUT1 evaluator / OUT2 live-trial / OUT3 script) が本文主張と一致。④依存整合: schema_refs (live-trial-verdict.schema.json)、reference_refs (task-template.md/transcript-jsonl.md/../run-elegant-review/references/convergence-policy.json/../run-build-skill/references/goal-seek-paradigm.md/../../references/orchestrate-gate-pattern.md)、script_refs (plan-live-trials/live-trial-backend/boot/send/status/poll/verdict) を実ディスクで確認し全て resolve。検証節が参照する tests/test_live_trial_harness.py は repo-root 相対で実在 (harness cwd 規約に整合) し dependency break なし。重大問題なし PASS。"
 }

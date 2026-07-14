@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_kind": "managed-projection-rollback",
+  "generated_at": "2026-07-13T02:00:18Z",
+  "scope": [
+    ".claude/skills",
+    ".claude/agents",
+    ".claude/commands",
+    ".claude/settings.json",
+    ".codex/hooks.json",
+    ".codex/config.toml",
+    ".agents/plugins/marketplace.json"
+  ],
+  "patch": {
+    "path": "eval-log/harness-creator/build/evidence/claude-projection-rollback.patch",
+    "sha256": "3dcd144b5698614523c4faef7dc26fbf2d8ba0f5a9483ad8902606e8f5b87b1a",
+    "line_count": 792
+  },
+  "verification": {
+    "reverse_apply_check": {
+      "command": "git apply --check -R eval-log/harness-creator/build/evidence/claude-projection-rollback.patch",
+      "exit_code": 0
+    },
+    "isolated_fixture_restore_reapply": {
+      "test": "plugins/harness-creator/tests/test_sync_native_surfaces.py::test_integration_managed_projection_rollback_and_reapply_are_reproducible",
+      "result": "passed",
+      "proof": "fixture snapshots .claude symlink/settings, .codex hooks/config and .agents marketplace; apply changes only managed paths; rollback restores exact pre-bytes/removes created paths; reapply restores exact post snapshot; plugin manifests/native TOML hashes remain unchanged",
+      "junit": "eval-log/harness-creator/build/evidence/C01-tests.xml",
+      "junit_sha256": "ccb94fdf8cfe8979b3d8f88eba72019e1763b32f2f3b6c78755ab97cabfe45dc"
+    },
+    "sensitive_keyword_scan": {
+      "pattern": "api[_-]?key|secret|password|token|authorization|private[_-]?key",
+      "matches": 0
+    }
+  },
+  "ownership_boundary": {
+    "managed_projection_only": true,
+    "global_config_included": false,
+    "trust_store_included": false,
+    "user_gate_mutation_included": false
+  },
+  "runtime_activation": "pending_user_gate"
+}

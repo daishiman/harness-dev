@@ -8,7 +8,8 @@
 | PKG-002〜008 静的検査 | **本 skill** | findings JSON で返す |
 | PKG-009 外部参照ゼロ | **B** | 既存 `scripts/lint-external-refs.py` 直呼出 |
 | PKG-010 install smoke | **B** | `scripts/smoke-plugin-install.sh` |
-| PKG-011〜015 出荷前 gate | **B** | uninstall/upgrade/permission/runtime/rubric |
+| PKG-011〜013 / PKG-015 出荷前 gate | **B** | uninstall/upgrade/permission/rubric |
+| PKG-014 runtime contract | **本 skill** | kind/combinator 宣言と実配線の静的整合を findings JSON で返す |
 
 ## context: fork 理由
 
@@ -32,4 +33,4 @@
 
 ## 改廃
 
-PKG-002〜008 の **意味変更** は 27章 §4.1 governance 経由。本 skill 内のスクリプト実装変更は P1（governance 不要）。検査関数追加（例: PKG-004 に新規必須キー追加）は schema 変更を伴うため P0_breaking。
+PKG-002〜008 / PKG-014 の **意味変更** は 27章 §4.1 governance 経由。本 skill 内のスクリプト実装変更は P1（governance 不要）。検査関数追加（例: PKG-004 に新規必須キー追加）は schema 変更を伴うため P0_breaking。

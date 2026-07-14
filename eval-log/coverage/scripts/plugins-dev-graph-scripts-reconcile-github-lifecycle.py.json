@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:true, write-scope: git-common-dir completion request/transaction/event ledgers only; graph/Markdown writes belong to C02, dependencies:[gh-bridge.py, manage-worktree-lease.py, bd-bridge.py])。C12 検証済み default-branch PR fact を C02 consumer 経由で冪等 completion + C27 release + beads close へ収束。remote fact は gh-bridge(C12 ACL) 経由のみ、DEV_GRAPH_GH_FIXTURE テストフック有。c24_context が coordination root 一致を検証。completion decision は merged∧base==default∧branch==default∧clean∧synced_default∧merge_commit が HEAD の ancestor∧linkage(marker exact-unique + closing reference) の全 AND (fail-closed で conflicts 列挙)。completion-receipts/<digest>.json の二相トランザクション台帳に steps(c02_writer/completion_event/system_release/beads_close)を刻み writer_request を pin、status=complete なら冪等 replay。_writer_applied が C02 receipt の request_digest/graph_revision(+1)/graph_sha256/durable node+Markdown parity を厳格照合し偽装受領を拒否。feature_rollup は exact-13 + P07/P10/P11 の PASS evidence receipt(covered_task_ids/phase_ref/feature_acceptance 一致) を検証。system-release/beads 失敗は pending_retry + exit1 で安全再開。SMELL: main が ~220 行で巨大・分岐膨大 (監査負荷) だが各段は atomic_json で逐次 durable、各失敗経路が pending_retry へ縮退し中途破壊を回避。TESTS: test_c25_lifecycle_hook_contract.py、test_runtime_coverage.py::test_reconcile_lifecycle_modes、test_semantic_c25_c28 / c26。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

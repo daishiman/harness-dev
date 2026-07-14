@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/_common.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine code-review + py_compile OK / # /// script frontmatter 完備 (network:false, dependencies:[])。dev-graph script 群共通の stdlib-only fail-closed 基盤。ContractError=exit1 の単一例外型。run() は OSError を ContractError へ写像し check 時は stderr||stdout を添えて raise (握り潰さない)。atomic_json は mkstemp→fsync→os.replace で耐障害原子書込、temp は finally で unlink (FileNotFoundError 吸収)。contained() が本モジュールの security workhorse: resolve(strict)+relative_to(authority) で path escape を拒否し、must_exist で存在要否を切替。dump() は sort_keys+ensure_ascii=False で決定的出力。stable_id は sha256 前置。utc_now は +00:00→Z 正規化。責務が狭く純粋、副作用は caller 指定 atomic JSON target のみ。設計良好で smell ほぼ無し。TESTS: test_runtime_coverage.py::test_common_primitives が run/OSError/atomic/contained を exercise。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

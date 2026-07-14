@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "assign-system-dev-plan-evaluator",
+  "skill": "assign-system-dev-plan-evaluator",
+  "description": "Read-only fork evaluation that binds deterministic C1-C4 findings to the exact validated staging digest.",
+  "phases": [
+    {"id": "R1-validate", "step": 1, "title": "Resolve the caller repository and rerun deterministic validation", "gate": "C1", "dependsOn": [], "entryHook": null, "exitHook": null, "resourceIds": ["script-context", "script-validator"], "fatal_exit_codes": [1, 2]},
+    {"id": "R2-evaluate", "step": 2, "title": "Evaluate C1-C4 in an independent context and emit digest-bound findings", "gate": "C4", "dependsOn": ["R1-validate"], "entryHook": null, "exitHook": null, "resourceIds": ["prompt-evaluate", "schema-findings", "rubric"], "fatal_exit_codes": [2]}
+  ],
+  "resources": [
+    {"id": "script-context", "kind": "script", "path": "../../scripts/resolve-project-context.py", "phaseIds": ["R1-validate"]},
+    {"id": "script-validator", "kind": "script", "path": "../../scripts/validate-system-plan.py", "phaseIds": ["R1-validate"]},
+    {"id": "prompt-evaluate", "kind": "prompt", "path": "./prompts/R4-evaluate.md", "phaseIds": ["R2-evaluate"]},
+    {"id": "schema-findings", "kind": "schema", "path": "../../schemas/plan-findings.schema.json", "phaseIds": ["R2-evaluate"]},
+    {"id": "rubric", "kind": "reference", "path": "../../references/feature-execution-package-contract.md", "phaseIds": ["R2-evaluate"]}
+  ]
+}

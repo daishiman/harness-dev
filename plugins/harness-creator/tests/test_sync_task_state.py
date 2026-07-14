@@ -3,7 +3,8 @@
 conftest 非依存で module-level に importlib ロードする (共有 fixture に依存しない
 自己完結テスト)。正常系 + 異常系 (不正遷移/done route_report 欠落/blocked reason 欠落/
 covered_task_ids 照合失敗/--require-covered 不在 violation/graph 指定時の未知 task-id 拒否/
-lease 期限前 reap 拒否/再 pin 異値/propagate↔reactivate 往復/
+lease 期限前 reap 拒否/再 pin 異値・done dependency dirty-closure 再開/
+propagate↔reactivate 往復/
 resolve_build_dir cycle_id 有無/resolve_planner_root/canonical id 昇順) を網羅する。
 """
 from __future__ import annotations
@@ -95,6 +96,70 @@ def test_propagate_blocked_rejects_missing_consumes_producer():
     ]}
     with pytest.raises(ValueError, match="has no producer"):
         sts.propagate_blocked(_state(_node("T1")), graph, "T1", T0)
+
+
+def test_reconcile_done_dependency_closure_reopens_only_existing_done_nodes():
+    """unfinished sparse dependency の偽 done と done 下流だけを決定論的に再開する。"""
+    graph = {
+        "nodes": [{"id": tid} for tid in ("U", "A", "B", "C", "D", "Z")],
+        "edges": [
+            {"type": "depends_on", "from": "A", "to": "U"},
+            {"type": "depends_on", "from": "B", "to": "A"},
+            {"type": "depends_on", "from": "C", "to": "B"},
+            {"type": "depends_on", "from": "D", "to": "C"},
+        ],
+    }
+    state = _state(
+        # U は sparse state で未登録。current_state= pending として扱う。
+        _node("A", "done", started_at="old", lease_expires_at="old",
+              route_report="route-A.json", handoff_notes=["keep-me"]),
+        _node("B", "done", route_report="route-B.json"),
+        _node("C", "done", route_report="route-C.json"),
+        _node("D", "running", started_at="active", lease_expires_at="future"),
+        _node("Z", "done", route_report="route-Z.json"),
+    )
+
+    out, reopened = sts.reconcile_done_dependency_closure(state, graph)
+    by_id = {node["id"]: node for node in out["nodes"]}
+
+    assert [item["task_id"] for item in reopened] == ["A", "B", "C"]
+    assert reopened == [
+        {"task_id": "A", "dirty_origin_task_ids": ["A"],
+         "unsatisfied_dependency_ids": ["U"]},
+        {"task_id": "B", "dirty_origin_task_ids": ["A"],
+         "unsatisfied_dependency_ids": []},
+        {"task_id": "C", "dirty_origin_task_ids": ["A"],
+         "unsatisfied_dependency_ids": []},
+    ]
+    assert all(by_id[tid]["state"] == "pending" for tid in ("A", "B", "C"))
+    assert all("route_report" not in by_id[tid] for tid in ("A", "B", "C"))
+    assert by_id["A"]["started_at"] is None and by_id["A"]["lease_expires_at"] is None
+    assert by_id["A"]["handoff_notes"] == ["keep-me"]  # additive field 保持
+    assert by_id["D"]["state"] == "running" and by_id["D"]["started_at"] == "active"
+    assert by_id["Z"]["state"] == "done" and by_id["Z"]["route_report"] == "route-Z.json"
+    assert "U" not in by_id and len(out["nodes"]) == len(state["nodes"])  # sparse 不変
+    assert state["nodes"][0]["state"] == "done"  # 入力不変
+
+
+def test_reconcile_done_dependency_closure_resolves_consumes_edge():
+    """consumes も produces 逆引き後の producer 未完了を dirty origin として扱う。"""
+    state = _state(_node("T2", "pending"), _node("T4", "done", route_report="r4.json"))
+    out, reopened = sts.reconcile_done_dependency_closure(state, _graph())
+    by_id = {node["id"]: node for node in out["nodes"]}
+    assert reopened == [{
+        "task_id": "T4",
+        "dirty_origin_task_ids": ["T4"],
+        "unsatisfied_dependency_ids": ["T2"],
+    }]
+    assert by_id["T4"]["state"] == "pending"
+
+
+def test_reconcile_done_dependency_closure_is_noop_when_dependencies_done():
+    """dependency 充足済みの done は再開しない。"""
+    state = _state(_node("T1", "done"), _node("T2", "done", route_report="r2.json"))
+    out, reopened = sts.reconcile_done_dependency_closure(state, _graph())
+    assert reopened == []
+    assert out == state
 
 
 # ─────────────────────────── resolve_build_dir ───────────────────────────
@@ -231,6 +296,78 @@ def test_main_transition_known_task_with_graph_exit0(tmp_path):
     ])
     assert rc == 0
     assert json.loads(state_path.read_text(encoding="utf-8"))["nodes"][0]["state"] == "running"
+
+
+# ────────── initialize_from_graph (sparse state → complete node set) ──────────
+def test_initialize_from_graph_adds_missing_pending_and_preserves_existing():
+    state = _state(
+        _node("T1", "done", route_report="route-T1.json"),
+        _node("T2", "running", started_at="2026-07-06T10:00:00Z",
+              lease_expires_at="2026-07-06T11:00:00Z"),
+    )
+    graph = {"nodes": [{"id": "T1"}, {"id": "T2"}, {"id": "T3"}], "edges": []}
+    out = sts.initialize_from_graph(state, graph)
+    by_id = {node["id"]: node for node in out["nodes"]}
+    assert by_id["T1"] == state["nodes"][0]
+    assert by_id["T2"] == state["nodes"][1]
+    assert by_id["T3"] == _node("T3")
+    assert len(state["nodes"]) == 2  # 入力不変
+
+
+@pytest.mark.parametrize("owner", ["task-state", "task-graph"])
+def test_initialize_from_graph_rejects_duplicate_ids(owner):
+    state = _state(_node("T1"))
+    graph = {"nodes": [{"id": "T1"}], "edges": []}
+    if owner == "task-state":
+        state["nodes"].append(_node("T1"))
+    else:
+        graph["nodes"].append({"id": "T1"})
+    with pytest.raises(ValueError, match=rf"{owner} node id 重複"):
+        sts.initialize_from_graph(state, graph)
+
+
+def test_initialize_from_graph_rejects_unknown_state_node():
+    with pytest.raises(ValueError, match="未知 node"):
+        sts.initialize_from_graph(
+            _state(_node("T1"), _node("GHOST")),
+            {"nodes": [{"id": "T1"}], "edges": []},
+        )
+
+
+def test_cli_initialize_from_graph_materializes_all_nodes(tmp_path):
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_text(json.dumps({
+        "nodes": [{"id": f"T{i}"} for i in range(135)], "edges": [],
+    }), encoding="utf-8")
+    state_path = tmp_path / "task-state.json"
+    existing = [_node(f"T{i}", "done", route_report=f"route-{i}.json") for i in range(110)]
+    state_path.write_text(json.dumps(_state(*existing)), encoding="utf-8")
+    events_path = tmp_path / "task-events.jsonl"
+    rc = sts.main([
+        "--task-state", str(state_path), "--events", str(events_path),
+        "--task-graph", str(graph_path), "--initialize-from-graph",
+    ])
+    assert rc == 0
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    assert len(state["nodes"]) == 135
+    assert sum(node["state"] == "done" for node in state["nodes"]) == 110
+    assert sum(node["state"] == "pending" for node in state["nodes"]) == 25
+    event = json.loads(events_path.read_text(encoding="utf-8"))
+    assert event["type"] == "task_state_initialized" and event["added_count"] == 25
+
+
+def test_cli_initialize_rejection_does_not_write(tmp_path):
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_text(json.dumps({"nodes": [{"id": "T1"}]}), encoding="utf-8")
+    state_path = tmp_path / "task-state.json"
+    original = _state(_node("T1"), _node("GHOST"))
+    state_path.write_text(json.dumps(original), encoding="utf-8")
+    rc = sts.main([
+        "--task-state", str(state_path), "--task-graph", str(graph_path),
+        "--initialize-from-graph",
+    ])
+    assert rc == 1
+    assert json.loads(state_path.read_text(encoding="utf-8")) == original
 
 
 # ─────────────────────────── transition: blocked ───────────────────────────
@@ -517,7 +654,12 @@ def test_cli_repin_authorized_exit0(tmp_path):
     old, new = "sha256:" + "a" * 64, "sha256:" + "d" * 64
     sp = tmp_path / "task-state.json"
     sp.write_text(json.dumps({"schema_version": "1.0", "graph_hash": old, "nodes": []}), encoding="utf-8")
-    rc = sts.main(["--task-state", str(sp), "--repin-graph-hash", new, "--authorized-hash", new])
+    gp = tmp_path / "task-graph.json"
+    gp.write_text(json.dumps({"nodes": [], "edges": []}), encoding="utf-8")
+    rc = sts.main([
+        "--task-state", str(sp), "--task-graph", str(gp),
+        "--repin-graph-hash", new, "--authorized-hash", new,
+    ])
     assert rc == 0
     assert json.loads(sp.read_text(encoding="utf-8"))["graph_hash"] == new
 
@@ -527,6 +669,64 @@ def test_cli_repin_unauthorized_exit1(tmp_path):
     old, new = "sha256:" + "a" * 64, "sha256:" + "e" * 64
     sp = tmp_path / "task-state.json"
     sp.write_text(json.dumps({"schema_version": "1.0", "graph_hash": old, "nodes": []}), encoding="utf-8")
-    rc = sts.main(["--task-state", str(sp), "--repin-graph-hash", new])  # authorized 未指定
+    gp = tmp_path / "task-graph.json"
+    gp.write_text(json.dumps({"nodes": [], "edges": []}), encoding="utf-8")
+    rc = sts.main([
+        "--task-state", str(sp), "--task-graph", str(gp),
+        "--repin-graph-hash", new,
+    ])  # authorized 未指定
     assert rc == 1
     assert json.loads(sp.read_text(encoding="utf-8"))["graph_hash"] == old  # 変更されない
+
+
+def test_cli_repin_requires_task_graph_and_preserves_state(tmp_path):
+    """dirty closure を導出できない repin は exit2 で atomic 拒否する。"""
+    old, new = "sha256:" + "a" * 64, "sha256:" + "f" * 64
+    original = {"schema_version": "1.0", "graph_hash": old, "nodes": []}
+    sp = tmp_path / "task-state.json"
+    sp.write_text(json.dumps(original), encoding="utf-8")
+    rc = sts.main([
+        "--task-state", str(sp), "--repin-graph-hash", new, "--authorized-hash", new,
+    ])
+    assert rc == 2
+    assert json.loads(sp.read_text(encoding="utf-8")) == original
+
+
+def test_cli_same_hash_reconciles_false_done_and_records_events(tmp_path):
+    """old/new hash 差分が無くても現 graph の false done を修復し event に残す。"""
+    graph_hash = "sha256:" + "9" * 64
+    sp = tmp_path / "task-state.json"
+    ep = tmp_path / "task-events.jsonl"
+    gp = tmp_path / "task-graph.json"
+    sp.write_text(json.dumps({
+        "schema_version": "1.0",
+        "graph_hash": graph_hash,
+        "nodes": [_node("A", "done", route_report="route-A.json")],
+    }), encoding="utf-8")
+    gp.write_text(json.dumps({
+        "nodes": [{"id": "U"}, {"id": "A"}],
+        "edges": [{"type": "depends_on", "from": "A", "to": "U"}],
+    }), encoding="utf-8")
+
+    rc = sts.main([
+        "--task-state", str(sp), "--events", str(ep), "--task-graph", str(gp),
+        "--repin-graph-hash", graph_hash,
+    ])
+
+    assert rc == 0
+    saved = json.loads(sp.read_text(encoding="utf-8"))
+    assert saved["graph_hash"] == graph_hash
+    assert saved["nodes"] == [_node("A", "pending")]  # U を materialize しない
+    events = [json.loads(line) for line in ep.read_text(encoding="utf-8").splitlines()]
+    assert [event["type"] for event in events] == ["graph_hash_repinned", "state_transition"]
+    assert events[1] | {"ts": "ignored"} == {
+        "ts": "ignored",
+        "type": "state_transition",
+        "task_id": "A",
+        "from_state": "done",
+        "to_state": "pending",
+        "reason": "graph_dependency_dirty",
+        "graph_hash": graph_hash,
+        "dirty_origin_task_ids": ["A"],
+        "unsatisfied_dependency_ids": ["U"],
+    }

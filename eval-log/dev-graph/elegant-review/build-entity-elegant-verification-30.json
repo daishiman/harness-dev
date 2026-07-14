@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "CAPABILITY-BUILD-ELEGANT-VERIFY-BUILT-ENTITIES",
+  "target": "plugins/dev-graph (build された実体一式)",
+  "distinct_from": "elegant-verification-30.json は plan層(graph d14c30…)。本ファイルは build層(graph 4a6d81…)の実体検証。",
+  "mode": "task-graph route mode (handoff-run-plugin-dev-plan.json)",
+  "build_confirmation": {
+    "dispatch_ready_set": {"ready_batch": 0, "conflicts": 0, "blocked": 0, "graph_hash_pin": "verified"},
+    "route_component_parity": "24:24 OK",
+    "discovered_tasks_inbox": "empty",
+    "build_summary_verdict": "complete (iteration 2, 49/49 done)"
+  },
+  "orchestration": {
+    "phase1": "elegant-reset-observer (facts-only 俯瞰)",
+    "phase2": "3 独立並列 analyst: logical-structural(10) / meta-divergent(9) / system-strategic(11) = 30思考法",
+    "phase3": "build-entity fidelity 修正の適用 + 決定論再検証、plan-SSOT 残余はエスカレーション",
+    "iterations": 1
+  },
+  "methods_applied": 30,
+  "methods_skipped": 0,
+  "consolidated_islands": {
+    "A_declaration_drift": {
+      "severity": "high→resolved(entity層)",
+      "findings": [
+        "register-package.py (C02 exact-13 登録エンジン 432行) が SKILL script_refs/本文/composition capability/edge のどこからも未参照 = 存在するが呼ばれない dangling",
+        "repo-config.schema.json / package-registration-receipt.schema.json が envelope 未列挙"
+      ],
+      "resolution": "run-dev-graph-node/SKILL.md の script_refs+Exact-13 gate 本文に register-package.py を明示、package-registration-receipt.schema.json を本文参照。plugin-composition.yaml に register-package.py capability + edge(run-dev-graph-node→register-package.py) を追加。disk script ⊆ composition が 10/10 完全化。"
+    },
+    "B_state_contradiction": {
+      "severity": "high",
+      "status": "escalated (plan-SSOT・build側検証者は手編集しない)",
+      "findings": [
+        "D1: handoff build_readiness=blocked / 全 route status=planned のまま、build-summary は complete/49done",
+        "D2: goal-spec constraints '実プラグインは生成せず L3 plan までに留める' vs 稼働 plugin 実体一式が存在"
+      ],
+      "root_cause": "build が gap(GAP-SCRIPT-BUILDER/GAP-ENVELOPE-001)を埋めたが plan artifact へ reconcile されていない (build後plan再同期工程の欠落)",
+      "channel": "outer loop: run-plugin-dev-plan --mode update (structural は --approved) / または by-design として明文化"
+    },
+    "C_beyond_plan_materialization": {
+      "severity": "medium",
+      "status": "escalated (structural・要 --approved)",
+      "findings": [
+        "register-package.py / _common.py / package-registration-receipt.schema.json / tests/ が 24 route 外に materialize。register-package.py は route/inventory 未登録のため 24-route eval 母集団から漏れ、バグがあっても PASS を返す構造"
+      ],
+      "channel": "register-package.py を first-class script route(例C29)へ昇格 = planner drain + --approved"
+    },
+    "D_manifest_vs_runtime_skew": {
+      "severity": "medium",
+      "status": "partial (entity層は解消・残余は推奨)",
+      "findings": [
+        "16 非script route report が component_kind 非依存の同一 boilerplate evidence を共有。command/agent/hook route にも skill 専用 lint(lint-skill-name/description/tree)を誤計上",
+        "register-package.py が graph-node.schema 駆動の _validate_schema、C11 validate-graph-schema.py が手書き定数 = node契約 validator 二重実装で drift 余地"
+      ],
+      "channel": "route-report evidence を kind別に再生成(build-trace 領域) / node validator SSOT化(要 behavioral refactor・別タスク推奨)"
+    }
+  },
+  "four_conditions": {
+    "before_phase3": {
+      "no_contradiction": "FAIL (3/3 analyst 合議)",
+      "no_missing": "SPLIT (route→entity PASS / entity→route FAIL: register-package untracked)",
+      "consistent": "SPLIT (命名構造PASS / composition列挙・evidence忠実性 FAIL)",
+      "dependency_integrity": "FAIL (forward-dangling ゼロだが register-package reachability 欠落 + reverse-declaration)"
+    },
+    "after_phase3_entity_fixes": {
+      "no_contradiction": "PARTIAL — 実体レベル矛盾は解消、plan-SSOT の D1/D2 と route-report evidence(D3)が残余(エスカレーション)",
+      "no_missing": "PASS(route→entity) / entity→route は register-package 参照配線で改善、first-class 登録は structural 残余",
+      "consistent": "PASS — composition 10/10 完全化、frontmatter/tree/description lint 全緑。evidence忠実性(D3)は build-trace 残余",
+      "dependency_integrity": "PASS — forward-dangling ゼロ + register-package reachability 回復。plan-component 昇格は structural 残余"
+    }
+  },
+  "phase3_applied_edits": [
+    "plugins/dev-graph/skills/run-dev-graph-node/SKILL.md: script_refs に register-package.py 追加、Exact-13 gate 本文で register-package.py と receipt schema を名指し",
+    "plugins/dev-graph/plugin-composition.yaml: capabilities に register-package.py 追加、dependencies に run-dev-graph-node→register-package.py 追加"
+  ],
+  "phase3_reverification": [
+    "validate-frontmatter.py run-dev-graph-node: ok",
+    "lint-skill-tree.py: ok",
+    "lint-skill-description.py: VIOLATION=0",
+    "validate-plugin-completeness.py: 21 plugin complete",
+    "composition YAML valid (cap26/dep20)",
+    "disk script ⊆ composition capabilities: 10/10 完全",
+    "register-package.py reachability: SKILL 2参照 + composition 2参照"
+  ],
+  "rejected_analyst_suggestion": "register-package.py→validate-graph-schema.py edge は棄却。register-package.py は内部 _validate_schema で自己検証し validate-graph-schema.py を呼ばないため偽 edge になる (二重validator finding と整合)。",
+  "escalated_to_user_or_outer_loop": [
+    "B: plan artifact(handoff/goal-spec)の reconcile 方向 = 権威判断 (ユーザー) → 承認: 外ループで planner 反映",
+    "C: register-package.py first-class 化 = structural discovered-task (planner --approved) → 実施済",
+    "D(part): route-report evidence 再生成 / node validator SSOT化 = 別タスク → beads harness-7hy/harness-xsr"
+  ],
+  "user_decision": {
+    "reconcile": "外ループで planner に反映 (承認済)",
+    "medium_items": "beads で追跡し後続へ (harness-7hy/xsr/ms6)"
+  },
+  "outer_loop_executed": {
+    "structural_discovered_task": "B-C29 (register-package.py first-class) emit → accept-discovered-task --approved → accepted",
+    "planner_reconcile": "inventory C29 追加・task-graph 再derive(49→50 node)・handoff C29 route+build_readiness blocked→built+全route done・goal-spec materialization 注記・task-spec B-C29.md",
+    "new_graph_hash": "sha256:a326f43789bf52aae3b93a082b5df75d45f6c5e710f88bf113bbac68c0e5403d",
+    "reentry": "provenance-gated repin (form由来 authorized-hash) → dispatch B-C29 ready → confirm build (py_compile 0/pytest 23 passed/lint OK) → route-C29.json 固有evidence → running→done → 50/50 done",
+    "planner_gates": "validate-task-graph/check-build-handoff(25 routes)/check-plugin-goal-spec/check-surface-inventory/check-requirements-coverage 全 exit0",
+    "final_state": "ready 0 / blocked 0 / pin verified / parity 25:25 / disk⊆composition 10/10 / claude symlink drift 0"
+  },
+  "final_four_conditions": {
+    "no_contradiction": "PASS — plan↔実体の状態矛盾を外ループ reconcile で解消 (handoff built・全route done・goal-spec 注記)",
+    "no_missing": "PASS — register-package.py が C29 として route/inventory/task-graph/route-report へ登録され検証網に組込済",
+    "consistent": "PASS — composition 10/10・route-C29 固有evidence・lint全緑。残る 16 route evidence 再生成は harness-7hy",
+    "dependency_integrity": "PASS — forward-dangling ゼロ・register-package reachability 回復・first-class 昇格完了"
+  },
+  "verdict": "BUILD-ENTITY PASS_AFTER_FIX; PLAN-RECONCILE COMPLETE (4条件 PASS・50/50 done)"
+}

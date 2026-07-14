@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-render",
+    "skill_md_sha256": "b99930a8bf5f559969defbb343daa26323c5821e95705d4b32e1b452cda216f2"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "NM 命名: name=run-dev-graph-render が dir 名/prefix=run と一致、description は静的 HTML 可視化+ゼロ依存 SVG という発火条件を trigger 型で明示。",
+      "BD 出力契約: Purpose & Output Contract に入力/出力 (inline 化単一 HTML+renderer receipt)/完了条件を明記し、Gotchas 節も具備。本文は最小で PD 良好。",
+      "RG/責務: render という単一責務に収束し allowed-tools を Read/Bash 中心の最小 allowlist に絞る (Write 非付与で read-only 保証)。goal_seek/feedback_contract を frontmatter で明示。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric 規範で現 SKILL.md (sha256 b99930a8...) を採点。FM: name/description/trigger 適合、allowed-tools 最小。BD: Output contract+Gotchas 具備、body<300行。NM: dir 名一致。PD: 本文簡潔。RG: goal_seek/feedback_contract 明示。責務は『dev-graph をゼロ依存静的 HTML へ可視化』へ単一収束し、レンダリング本体は render-graph-html.py へ委譲、graph は read-only で越境なし。high severity 0 件。PASS。"
+}

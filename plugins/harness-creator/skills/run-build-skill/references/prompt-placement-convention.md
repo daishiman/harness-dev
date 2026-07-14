@@ -51,12 +51,13 @@ plugins/<plugin-name>/skills/<skill-name>/prompts/<responsibility-id>.md
 plugins/skill-intake/skills/run-intake-interview/prompts/R1-main.md
 plugins/skill-intake/skills/run-intake-finalize/prompts/R1-main.md
 plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1.md
+plugins/example/skills/run-example/prompts/R2b-readiness.md
 ```
 
 正規表現 (`validate-build-trace.py` が照合):
 
 ```
-^plugins/[a-z][a-z0-9-]*/skills/(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*/prompts/R[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?\.(md|yaml)$
+^plugins/[a-z][a-z0-9-]*/skills/(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*/prompts/R[0-9]+[a-z]?(-[a-z0-9]+(-[a-z0-9]+)*)?\.(md|yaml)$
 ```
 
 ## ディレクトリ規約
@@ -65,13 +66,14 @@ plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1.md
 |---|---|---|
 | ディレクトリ名 | `prompts/` (固定) | `agents/` は plugin 直下既存ディレクトリ。SubAgent 実体 (`agents/*.md`) と責務単位 prompt 生成物 (`prompts/<R-id>.md` 既定) を物理的に分離するため別名 |
 | ディレクトリ階層 | 1 階層のみ (ネスト禁止) | lint-skill-tree.py 第 13 条に準拠 |
-| ファイル名 | `<responsibility.id>.md` 既定 (`.yaml` legacy) | brief.responsibilities[].id (R1, R2, ...) と 1:1 対応 |
+| ファイル名 | `<responsibility.id>.md` 既定 (`.yaml` legacy) | brief.responsibilities[].id (R1, R1-elicit, R2b-readiness, ...) とstem完全一致 |
 | 拡張子 | `.md` 既定 (`.yaml` は legacy 後方互換) | seven-layer-format.md 正本フォーマット |
 | インデックス | `prompts/index.json` (任意) | 全 prompt (`.md` 既定 / `.yaml` legacy) の sha256 + responsibility メタを一覧。`build-trace.json` への突合補助。任意生成 |
 
 ## 命名規則の根拠
 
-- **`R[0-9]+`**: brief.responsibilities[].id の正規表現と同一 (正本 `../../run-skill-create/schemas/skill-brief.schema.json` `pattern: "^R[0-9]+$"`)
+- **`R[0-9]+[a-z]?(-<slug>...)?`**: legacyの`R1`、責務slug付きの`R1-elicit`、plannerの中間責務`R2b-readiness`を受理する。機械正本は`validate-build-trace.py#RESPONSIBILITY_ID_PATTERN`、schema射影は`schemas/responsibility-slot.schema.json`。
+- **stem完全一致**: `id=R1` は `R1.md`、`id=R1-elicit` は `R1-elicit.md`、`id=R2b-readiness` は `R2b-readiness.md`とのみ結合する。`id=R1` と `R1-elicit.md` の接頭辞一致は不十分である。
 - **`prompts/` の選択理由**: 
   - `agents/` は `plugins/<plugin>/agents/` として既存 plugin 直下に確保済み (SubAgent .md 用)
   - skill 内部の責務 prompt は **skill 単位の成果物** であり、skill ディレクトリ配下に隔離するのが SRP に適う
@@ -94,7 +96,7 @@ plugins/prompt-creator/skills/run-prompt-creator-7layer/prompts/R1.md
 - 再現性検証(同 brief → 同パス → 同 sha256、anchor coverage)の対象である prompts/ が空になり、`validate-build-trace.py` / `lint-agent-prompt-section.py --strict-coverage` が**無意味化**する。
 - DRY を理由に統合する場合でも、prompts(責務契約=WHAT/WHY)と agents(実行アダプタ=WHERE/WHO)は**別レイヤーで重複ではない**ため、統合の動機自体が誤り。dedup は同一 reuse_surface 内(prompts 同士 / agents 同士)に限る。
 
-**機械検査**: `scripts/lint-prompt-placement.py`(本 references と同一 skill 配下、canonical。ファイル名 regex は `validate_build_trace_shim` 経由で SSOT 共有)が kind ∈ {run, assign} の `prompts/<R-id>.md` について (a) リダイレクト空殻でない(7 層本文を持つ)、(b) ファイル名が `R[0-9]+...` regex 適合、を検査し、違反を `PROMPT-REDIRECT-INVERSION` / `PROMPT-FILENAME-FORMAT` として exit 1 で弾く。`harness-creator-kit-ci.yml` が全 PR で全プラグインを走査する。
+**機械検査**: `scripts/lint-prompt-placement.py`(本 references と同一 skill 配下、canonical。ファイル名 regex は `validate_build_trace_shim` 経由で SSOT 共有)が kind ∈ {run, assign} の `prompts/<R-id>.md` について (a) リダイレクト空殻でない(7 層本文を持つ)、(b) ファイル名が responsibility ID regex に適合、を検査する。trace内のid↔stem完全一致は`validate-build-trace.py` が検査する。違反は `PROMPT-REDIRECT-INVERSION` / `PROMPT-FILENAME-FORMAT` / `filename ... != id ...` として exit 1 で弾く。`harness-creator-kit-ci.yml` が全 PR で全プラグインを走査する。
 
 ## SKILL.md との関係
 
@@ -165,7 +167,7 @@ python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-tr
 
 ## 関連参照
 
-- `../../run-skill-create/schemas/skill-brief.schema.json#responsibilities` — id 仕様 (正本)
+- `../../run-skill-create/schemas/skill-brief.schema.json#responsibilities` — brief 側 id / prompt_required 仕様 (正本)
 - `reproducibility-trace-schema.md#prompt_generation_model` — per_responsibility[].layer_yaml_path
 - `agent-template.md#prompt-creator-連携` — SubAgent.md 側 anchor 規約
 - `plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md` — 出力フォーマット (7 層 YAML)

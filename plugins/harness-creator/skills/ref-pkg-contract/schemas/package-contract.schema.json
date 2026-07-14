@@ -60,6 +60,15 @@
       },
       "additionalProperties": false
     },
+    "depends_on": {
+      "description": "harness 用の plugin 間依存台帳。公式 plugin manifest には混在させない。",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$"
+      },
+      "uniqueItems": true
+    },
     "pkg_checks": {
       "description": "PKG ID 別の実行結果。閉列挙の PKG ID のみ受理。",
       "type": "object",

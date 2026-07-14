@@ -12,6 +12,9 @@ import importlib.util
 import json
 import shutil
 import sys
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -36,6 +39,7 @@ def _load(stem: str):
 status_mod = _load("live-trial-status")
 poll_mod = _load("live-trial-poll")
 verdict_mod = _load("live-trial-verdict")
+planner_mod = _load("plan-live-trials")
 backend_mod = _load("live-trial-backend")
 boot_mod = _load("live-trial-boot")
 send_mod = _load("live-trial-send")
@@ -332,6 +336,190 @@ def test_tree_sha_deterministic_and_content_sensitive(tmp_path):
     assert sha1 != verdict_mod.skill_dir_tree_sha(d2)  # 内容変更で変わる
 
 
+def _write_package_contract(
+    plugin_dir: Path, depends_on: list[str], *, skills: list[str] | None = None,
+    skill_dependencies: dict[str, list[str]] | None = None,
+) -> Path:
+    path = plugin_dir / "references" / "package-contract.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    document = {
+        "plugin_name": plugin_dir.name,
+        "depends_on": depends_on,
+        "entry_points": {
+            "skills": skills or [],
+            "agents": [],
+            "commands": [],
+            "hooks": [],
+        },
+    }
+    if skill_dependencies is not None:
+        document["skill_dependencies"] = skill_dependencies
+    path.write_text(json.dumps(document), encoding="utf-8")
+    return path
+
+
+def _behavior_closure_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    plugin_dir = _write_trial_plugin(
+        tmp_path, "dev-graph", "dev-graph", skill_name="run-behavior"
+    )
+    dependency = _write_trial_plugin(
+        tmp_path, "system-spec-harness", "system-spec-harness", skill_name="run-delegate"
+    )
+    _write_package_contract(plugin_dir, ["system-spec-harness"])
+    _write_package_contract(dependency, [], skills=["run-delegate"])
+    skill_dir = plugin_dir / "skills" / "run-behavior"
+    (skill_dir / "scripts").mkdir()
+    (skill_dir / "scripts" / "local.py").write_text("print('local')\n", encoding="utf-8")
+    (skill_dir / "prompts").mkdir()
+    (skill_dir / "prompts" / "R0.md").write_text("prompt-v1\n", encoding="utf-8")
+    (plugin_dir / "scripts").mkdir()
+    (plugin_dir / "scripts" / "shared.py").write_text("print('shared')\n", encoding="utf-8")
+    (plugin_dir / "references" / "contract.md").write_text("contract-v1\n", encoding="utf-8")
+    (plugin_dir / "hooks").mkdir()
+    (plugin_dir / "hooks" / "hooks.json").write_text("{}\n", encoding="utf-8")
+    (dependency / "hooks").mkdir()
+    (dependency / "hooks" / "hooks.json").write_text("{}\n", encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        "---\n"
+        "name: run-behavior\n"
+        "script_refs: [../../scripts/shared.py]\n"
+        "reference_refs:\n"
+        "  - ../../references/contract.md\n"
+        "responsibility_refs: [prompts/R0.md]\n"
+        "---\nbody\n",
+        encoding="utf-8",
+    )
+    return plugin_dir, skill_dir
+
+
+@pytest.mark.parametrize("relative_path", [
+    "prompts/R0.md",
+    "../../scripts/shared.py",
+    "../../references/contract.md",
+    "../../hooks/hooks.json",
+    "../../.claude-plugin/plugin.json",
+])
+def test_tree_sha_binds_declared_behavior_closure(tmp_path, relative_path):
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    path = (skill_dir / relative_path).resolve()
+    if path.name == "plugin.json":
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["version"] = "0.1.1"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+    else:
+        path.write_text(path.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
+
+
+def test_tree_sha_binds_declared_dependency_manifest_and_hooks(tmp_path):
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    dependency = tmp_path / "plugins" / "system-spec-harness"
+    (dependency / "hooks" / "hooks.json").write_text('{"changed":true}\n', encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
+
+
+def test_tree_sha_binds_declared_dependency_skill_behavior(tmp_path):
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    dependency_skill = (
+        tmp_path / "plugins" / "system-spec-harness" / "skills"
+        / "run-delegate" / "SKILL.md"
+    )
+    dependency_skill.write_text("---\nname: run-delegate\n---\nchanged\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
+
+
+def test_tree_sha_ignores_dependency_outside_skill_scope(tmp_path):
+    plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    _write_package_contract(
+        plugin_dir,
+        ["system-spec-harness"],
+        skills=["run-behavior"],
+        skill_dependencies={},
+    )
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    dependency_skill = (
+        tmp_path / "plugins" / "system-spec-harness" / "skills"
+        / "run-delegate" / "SKILL.md"
+    )
+    dependency_skill.write_text("---\nname: run-delegate\n---\nchanged\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
+def test_tree_sha_ignores_other_skills_package_contract_projection(tmp_path):
+    plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    _write_package_contract(
+        plugin_dir,
+        ["system-spec-harness"],
+        skills=["run-behavior", "run-other"],
+        skill_dependencies={"run-behavior": []},
+    )
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    _write_package_contract(
+        plugin_dir,
+        ["system-spec-harness"],
+        skills=["run-behavior", "run-other"],
+        skill_dependencies={
+            "run-behavior": [],
+            "run-other": ["system-spec-harness"],
+        },
+    )
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
+def test_tree_sha_rejects_missing_and_symlink_escape_refs(tmp_path):
+    plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: run-behavior\nscript_refs: [scripts/missing.py]\n---\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="missing"):
+        verdict_mod.skill_dir_tree_sha(skill_dir)
+
+    outside = tmp_path.parent / f"{tmp_path.name}-outside.py"
+    outside.write_text("unsafe\n", encoding="utf-8")
+    (plugin_dir / "scripts" / "escape.py").symlink_to(outside)
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: run-behavior\nscript_refs: [../../scripts/escape.py]\n---\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="escapes repository"):
+        verdict_mod.skill_dir_tree_sha(skill_dir)
+
+    (plugin_dir / "scripts" / "escape.py").unlink()
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: run-behavior\nscript_refs: [../../scripts/shared.py]\n---\n",
+        encoding="utf-8",
+    )
+    outside_dir = tmp_path.parent / f"{tmp_path.name}-outside-dir"
+    outside_dir.mkdir()
+    (plugin_dir / "hooks" / "escape-dir").symlink_to(
+        outside_dir, target_is_directory=True
+    )
+    with pytest.raises(ValueError, match="escapes repository"):
+        verdict_mod.skill_dir_tree_sha(skill_dir)
+
+
+def test_tree_sha_rejects_undeclared_cross_plugin_ref(tmp_path):
+    plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    extra = _write_trial_plugin(tmp_path, "undeclared", "undeclared", skill_name="run-x")
+    (extra / "references").mkdir()
+    (extra / "references" / "behavior.md").write_text("external\n", encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        "---\nname: run-behavior\n"
+        "reference_refs: [../../../undeclared/references/behavior.md]\n"
+        "---\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="not declared"):
+        verdict_mod.skill_dir_tree_sha(skill_dir)
+    _write_package_contract(extra, [], skills=["run-x"])
+    _write_package_contract(plugin_dir, ["system-spec-harness", "undeclared"])
+    assert len(verdict_mod.skill_dir_tree_sha(skill_dir)) == 64
+
+
 def test_schema_rejects_additional_properties(tmp_path, transcript):
     rc, out = _run_verdict(tmp_path, transcript, ["--goal-result", "PASS"])
     doc = json.loads(out.read_text())
@@ -343,6 +531,124 @@ def test_schema_rejects_additional_properties(tmp_path, transcript):
     del doc["timeline"]
     errs = verdict_mod.validate_schema(doc, schema)
     assert any("timeline" in e for e in errs)
+
+
+# ---- plan-live-trials: incremental evidence reuse / bounded dispatch ---------
+
+def _planner_plugin(tmp_path: Path, skills: list[str]) -> Path:
+    plugin_dir = tmp_path / "plugins" / "sample-plugin"
+    (plugin_dir / ".claude-plugin").mkdir(parents=True)
+    (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps({"name": "sample-plugin"}), encoding="utf-8"
+    )
+    for skill in skills:
+        skill_dir = plugin_dir / "skills" / skill
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(
+            f"---\nname: {skill}\nkind: run\nallowed-tools: [Read, Skill]\n---\nbody\n",
+            encoding="utf-8",
+        )
+    _write_package_contract(plugin_dir, [], skills=skills, skill_dependencies={})
+    return plugin_dir
+
+
+def _write_reusable_verdict(eval_root: Path, plugin_dir: Path, skill: str) -> Path:
+    run_dir = eval_root / plugin_dir.name / skill / "live-trial" / "20260713T000000"
+    run_dir.mkdir(parents=True)
+    transcript = run_dir / "transcript.jsonl"
+    transcript.write_text('{"type":"system","subtype":"turn_duration"}\n', encoding="utf-8")
+    transcript_sha = planner_mod._sha256(transcript)
+    behavior_sha = verdict_mod.skill_dir_tree_sha(plugin_dir / "skills" / skill)
+    verdict = {
+        "target_skill": f"{plugin_dir.name}:{skill}",
+        "args": "",
+        "requested_model": "",
+        "actual_model": ["claude-test"],
+        "nudge_count": 0,
+        "gate_response_count": 0,
+        "goal_verdict": {"result": "PASS", "blockers": []},
+        "overall": {
+            "launch": "PASS", "completion": "PASS", "goal_fit": "PASS",
+            "verdict": "PASS",
+        },
+        "skill_dir_tree_sha": behavior_sha,
+        "transcript_sha256": transcript_sha,
+        "scenario_origin": "synthetic",
+        "scenario_id": f"{skill}-positive",
+        "environment": {
+            "claude_version": "test", "tmux": True,
+            "transcript_layer": "jsonl", "permissions_mode": "test",
+        },
+        "tier": "live",
+        "downgrade_reason": None,
+        "timeline": {"boot_s": 1, "poll_exit": "DONE", "wall_clock_s": 2},
+    }
+    path = run_dir / "verdict.json"
+    path.write_text(json.dumps(verdict), encoding="utf-8")
+    return path
+
+
+def test_incremental_plan_reuses_current_pass_and_bounds_new_runs(tmp_path):
+    skills = ["run-a", "run-b", "run-c"]
+    plugin_dir = _planner_plugin(tmp_path, skills)
+    eval_root = tmp_path / "eval-log"
+    evidence = _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental",
+        max_live_trials=1, max_concurrency=2,
+    )
+    actions = {record["skill"]: record["action"] for record in plan["skills"]}
+    assert actions == {"run-a": "reuse", "run-b": "run", "run-c": "defer"}
+    assert plan["live_batches"] == [["run-b"]]
+    assert plan["counts"] == {"static": 0, "fork": 0, "reuse": 1, "run": 1, "defer": 1}
+    assert plan["skills"][0]["reused_evidence"] == str(evidence)
+
+
+def test_incremental_plan_invalidates_evidence_on_behavior_change(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+    with (plugin_dir / "skills" / "run-a" / "SKILL.md").open("a", encoding="utf-8") as handle:
+        handle.write("changed\n")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="incremental",
+        max_live_trials=1, max_concurrency=1,
+    )
+    assert [record["action"] for record in plan["skills"]] == ["run", "defer"]
+    assert plan["skills"][0]["reason"] == "behavior-changed"
+
+
+def test_exhaustive_plan_explicitly_reruns_current_evidence(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="exhaustive",
+        max_live_trials=0, max_concurrency=1,
+    )
+    assert [record["action"] for record in plan["skills"]] == ["run", "run"]
+    assert plan["policy"]["max_live_trials"] is None
+    assert plan["live_batches"] == [["run-a"], ["run-b"]]
+
+
+def test_build_only_plan_never_schedules_live_session(tmp_path):
+    plugin_dir = _planner_plugin(tmp_path, ["run-a", "run-b"])
+    eval_root = tmp_path / "eval-log"
+    _write_reusable_verdict(eval_root, plugin_dir, "run-a")
+
+    plan = planner_mod.build_plan(
+        plugin_dir, eval_root, profile="build-only",
+        max_live_trials=9, max_concurrency=9,
+    )
+    assert [record["action"] for record in plan["skills"]] == ["defer", "defer"]
+    assert {record["reason"] for record in plan["skills"]} == {
+        "not-run(profile=build-only)"
+    }
+    assert plan["live_batches"] == []
+    assert plan["policy"]["max_live_trials"] == 0
 
 
 # ---- backend / boot / send: オフライン検査 ------------------------------------
@@ -378,6 +684,167 @@ def test_boot_denylist_and_validation(tmp_path, capsys):
     assert boot_mod.main(["../evil", str(tmp_path)]) == 2
     assert boot_mod.main(["lt-x", str(tmp_path / "missing")]) == 2
     assert boot_mod.main(["lt-x", str(tmp_path), "--model", "bad model;rm"]) == 2
+    assert boot_mod.main([
+        "lt-x", str(tmp_path), "--session-id", "bad; touch /tmp/injected"
+    ]) == 2
+
+
+def _write_trial_plugin(
+    root: Path, directory_name: str, manifest_name: str,
+    skill_name: str = "run-dev-graph-init",
+) -> Path:
+    plugin_dir = root / "plugins" / directory_name
+    (plugin_dir / ".claude-plugin").mkdir(parents=True)
+    (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps({"name": manifest_name}), encoding="utf-8"
+    )
+    skill_dir = plugin_dir / "skills" / skill_name
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("---\ndescription: fixture\n---\n", encoding="utf-8")
+    return plugin_dir
+
+
+def test_boot_qualified_target_pins_cwd_plugin_dir(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    resolved = boot_mod.resolve_target_plugin_dir(
+        str(tmp_path), "dev-graph:run-dev-graph-init"
+    )
+    assert resolved == plugin_dir.resolve()
+    argv = boot_mod.build_claude_argv("u-1", "", resolved)
+    assert argv[-2:] == ("--plugin-dir", str(plugin_dir.resolve()))
+    assert argv[argv.index("--setting-sources") + 1] == "local"
+    assert boot_mod.resolve_target_plugin_dir(str(tmp_path), "plain-skill") is None
+    assert "--plugin-dir" not in boot_mod.build_claude_argv("u-1", "")
+
+
+def test_boot_qualified_target_loads_only_declared_dependencies(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    dep_b = _write_trial_plugin(tmp_path, "system-spec-harness", "system-spec-harness")
+    dep_a = _write_trial_plugin(tmp_path, "system-dev-planner", "system-dev-planner")
+    undeclared = _write_trial_plugin(tmp_path, "other-plugin", "other-plugin")
+    _write_package_contract(plugin_dir, ["system-spec-harness", "system-dev-planner"])
+
+    resolved = boot_mod.resolve_target_plugin_dirs(
+        str(tmp_path), "dev-graph:run-dev-graph-init"
+    )
+    assert resolved == (plugin_dir.resolve(), dep_a.resolve(), dep_b.resolve())
+    assert undeclared.resolve() not in resolved
+    argv = boot_mod.build_claude_argv("u-1", "", resolved)
+    loaded = [argv[index + 1] for index, value in enumerate(argv) if value == "--plugin-dir"]
+    assert loaded == [str(path) for path in resolved]
+
+
+def test_boot_qualified_target_honors_per_skill_dependency_scope(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    second = plugin_dir / "skills" / "run-dev-graph-system-spec"
+    second.mkdir(parents=True)
+    (second / "SKILL.md").write_text("---\ndescription: fixture\n---\n", encoding="utf-8")
+    dependency = _write_trial_plugin(
+        tmp_path, "system-spec-harness", "system-spec-harness"
+    )
+    _write_package_contract(
+        plugin_dir,
+        ["system-spec-harness"],
+        skills=["run-dev-graph-init", "run-dev-graph-system-spec"],
+        skill_dependencies={
+            "run-dev-graph-system-spec": ["system-spec-harness"],
+        },
+    )
+
+    init_dirs = boot_mod.resolve_target_plugin_dirs(
+        str(tmp_path), "dev-graph:run-dev-graph-init"
+    )
+    system_spec_dirs = boot_mod.resolve_target_plugin_dirs(
+        str(tmp_path), "dev-graph:run-dev-graph-system-spec"
+    )
+    assert init_dirs == (plugin_dir.resolve(),)
+    assert system_spec_dirs == (plugin_dir.resolve(), dependency.resolve())
+
+
+def test_boot_rejects_skill_dependency_outside_package_allow_list(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    _write_package_contract(
+        plugin_dir,
+        [],
+        skills=["run-dev-graph-init"],
+        skill_dependencies={"run-dev-graph-init": ["undeclared-plugin"]},
+    )
+    with pytest.raises(ValueError, match="subset of depends_on"):
+        boot_mod.resolve_target_plugin_dirs(
+            str(tmp_path), "dev-graph:run-dev-graph-init"
+        )
+
+
+def test_boot_declared_dependency_fails_closed_on_missing_or_manifest_mismatch(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    _write_package_contract(plugin_dir, ["system-spec-harness"])
+    with pytest.raises(ValueError, match="directory not found"):
+        boot_mod.resolve_target_plugin_dirs(
+            str(tmp_path), "dev-graph:run-dev-graph-init"
+        )
+    _write_trial_plugin(tmp_path, "system-spec-harness", "wrong-name")
+    with pytest.raises(ValueError, match="manifest name mismatch"):
+        boot_mod.resolve_target_plugin_dirs(
+            str(tmp_path), "dev-graph:run-dev-graph-init"
+        )
+
+
+def test_boot_declared_dependency_rejects_symlink_escape(tmp_path):
+    plugin_dir = _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    _write_package_contract(plugin_dir, ["system-spec-harness"])
+    outside = _write_trial_plugin(
+        tmp_path / "outside-root", "system-spec-harness", "system-spec-harness"
+    )
+    (tmp_path / "plugins" / "system-spec-harness").symlink_to(
+        outside, target_is_directory=True
+    )
+    with pytest.raises(ValueError, match="escapes cwd/plugins"):
+        boot_mod.resolve_target_plugin_dirs(
+            str(tmp_path), "dev-graph:run-dev-graph-init"
+        )
+
+
+@pytest.mark.parametrize("target", [
+    "../evil:run-safe",
+    "Dev_Graph:run-safe",
+    "dev-graph:../run-safe",
+    "dev-graph:run-safe:extra",
+])
+def test_boot_qualified_target_rejects_invalid_slug_or_path(tmp_path, target):
+    with pytest.raises(ValueError):
+        boot_mod.resolve_target_plugin_dir(str(tmp_path), target)
+
+
+def test_boot_qualified_target_rejects_symlink_escape(tmp_path):
+    outside = _write_trial_plugin(tmp_path / "outside-root", "outside", "escape")
+    plugins = tmp_path / "plugins"
+    plugins.mkdir()
+    (plugins / "escape").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="escapes cwd/plugins"):
+        boot_mod.resolve_target_plugin_dir(str(tmp_path), "escape:run-safe")
+
+
+def test_boot_qualified_target_rejects_manifest_name_mismatch(tmp_path):
+    _write_trial_plugin(tmp_path, "dev-graph", "different-plugin")
+    with pytest.raises(ValueError, match="manifest name mismatch"):
+        boot_mod.resolve_target_plugin_dir(
+            str(tmp_path), "dev-graph:run-dev-graph-init"
+        )
+
+
+def test_boot_qualified_target_rejects_missing_plugin(tmp_path):
+    with pytest.raises(ValueError, match="directory not found"):
+        boot_mod.resolve_target_plugin_dir(
+            str(tmp_path), "missing-plugin:run-safe"
+        )
+
+
+def test_boot_qualified_target_rejects_missing_skill_in_pinned_plugin(tmp_path):
+    _write_trial_plugin(tmp_path, "dev-graph", "dev-graph")
+    with pytest.raises(ValueError, match="target skill not found"):
+        boot_mod.resolve_target_plugin_dir(
+            str(tmp_path), "dev-graph:run-missing"
+        )
 
 
 def test_send_usage_errors(tmp_path, capsys):
@@ -468,12 +935,21 @@ class FakeBootBackend:
         self.tick = 0
         self.killed = []
         self.sent = ""
+        self.argv = None
+        self.send_calls = 0
+        self.key_sends = []
 
-    def new_session(self, _s, _c):
-        pass
+    def new_session(self, _s, _c, command_argv=None):
+        self.argv = command_argv
+        if command_argv:
+            self.sent = " ".join(command_argv)
 
     def send_line(self, _s, text):
+        self.send_calls += 1
         self.sent = text
+
+    def send_keys(self, _s, *keys):
+        self.key_sends.append(tuple(keys))
 
     def capture_pane(self, _s, scrollback=False):
         return self.captures[min(self.tick, len(self.captures) - 1)]
@@ -489,7 +965,7 @@ class FakeBootBackend:
 
 def test_boot_ready_line_contract(monkeypatch, capsys):
     monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
-    fb = FakeBootBackend(["... bypass permissions ..."], ["2.1.173"])
+    fb = FakeBootBackend(["Type /help for shortcuts\n❯ "], ["2.1.173"])
     rc = boot_mod.boot(fb, "lt-x", "/tmp", "claude-opus-4-8", "u-1",
                        timeout=5, grace=1)
     assert rc == 0
@@ -499,6 +975,54 @@ def test_boot_ready_line_contract(monkeypatch, capsys):
     assert out.strip().endswith("SESSION_ID:u-1")
     assert "MODEL:claude-opus-4-8" in out
     assert "--model claude-opus-4-8" in fb.sent
+    assert "--setting-sources local" in fb.sent
+    assert fb.argv == boot_mod.build_claude_argv("u-1", "claude-opus-4-8")
+    assert fb.send_calls == 0  # 対話 shell への send-line を経由しない
+    assert fb.key_sends == []
+
+
+def test_boot_accepts_exact_bypass_gate_once_then_waits_for_prompt(monkeypatch, capsys):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    gate = "\n".join(boot_mod._BYPASS_CONFIRM_MARKERS)
+    fb = FakeBootBackend(
+        [gate, "Welcome to Claude Code\nType /help for shortcuts\n❯ "],
+        ["claude", "claude"],
+    )
+    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=4, grace=1)
+    assert rc == 0
+    assert fb.key_sends == [("Down",), ("Enter",)]
+    assert "READY: lt-x (2s)" in capsys.readouterr().out
+
+
+def test_boot_ready_regex_matches_real_nbsp_try_prompt_not_numbered_gate():
+    real_prompt = '❯\u00a0Try "how do I log an error?"'
+    assert boot_mod._READY_RE.search(real_prompt)
+    assert boot_mod._READY_RE.search("❯   ")
+    assert not boot_mod._READY_RE.search("❯ 1. Yes, I trust this folder")
+    assert not boot_mod._READY_RE.search("❯\u00a01. No, exit")
+
+
+def test_boot_never_repeats_bypass_gate_acceptance(monkeypatch, capsys):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    gate = "\n".join(boot_mod._BYPASS_CONFIRM_MARKERS)
+    fb = FakeBootBackend([gate], ["claude"])
+    rc = boot_mod.boot(fb, "lt-x", "/tmp", "", "u-1", timeout=3, grace=1)
+    assert rc == 1
+    assert fb.key_sends == [("Down",), ("Enter",)]
+    assert "TIMEOUT" in capsys.readouterr().out
+
+
+def test_boot_does_not_answer_non_exact_gate(monkeypatch):
+    monkeypatch.setattr(boot_mod.time, "sleep", lambda _s: None)
+    partial = (
+        "WARNING: Claude Code running in Bypass Permissions mode\n"
+        "1. No, exit\n2. Continue\nEnter to confirm"
+    )
+    fb = FakeBootBackend([partial], ["claude"])
+    assert boot_mod.boot(
+        fb, "lt-x", "/tmp", "", "u-1", timeout=1, grace=1
+    ) == 1
+    assert fb.key_sends == []
 
 
 def test_boot_fail_when_claude_dies(monkeypatch, capsys):
@@ -535,6 +1059,10 @@ def test_backend_tmux_wrappers_with_fake_subprocess(monkeypatch, tmp_path):
     monkeypatch.setattr(backend_mod.subprocess, "run", fake_run)
 
     backend_mod.new_session("lt-x", str(tmp_path))
+    backend_mod.new_session(
+        "lt-direct", str(tmp_path),
+        command_argv=("printf", "%s", "safe; touch /tmp/not-created"),
+    )
     backend_mod.send_line("lt-x", "hello")
     backend_mod.paste_text("lt-x", "task body\nwith newline")
     assert backend_mod.capture_pane("lt-x", scrollback=True) == CP.stdout
@@ -543,9 +1071,19 @@ def test_backend_tmux_wrappers_with_fake_subprocess(monkeypatch, tmp_path):
     assert backend_mod.reap("lt-") == ["lt-a", "lt-b"]
     kill_calls = [c for c in calls if c[:2] == ["tmux", "kill-session"]]
     assert len(kill_calls) >= 3  # new_session 前掃除 + reap 2 件
-    # paste はファイル経由 (load-buffer → paste-buffer)
+    # paste は session/file 固有 named buffer を load → paste → delete する。
     flat = [c[1] for c in calls]
-    assert "load-buffer" in flat and "paste-buffer" in flat
+    assert {"load-buffer", "paste-buffer", "delete-buffer"} <= set(flat)
+    load_call = next(c for c in calls if c[1] == "load-buffer")
+    paste_call = next(c for c in calls if c[1] == "paste-buffer")
+    delete_call = next(c for c in calls if c[1] == "delete-buffer")
+    assert load_call[2] == "-b"
+    assert paste_call[2:4] == ["-b", load_call[3]]
+    assert delete_call[2:4] == ["-b", load_call[3]]
+    assert backend_mod.valid_buffer_name(load_call[3])
+    assert len(load_call[3]) <= backend_mod._BUFFER_NAME_MAX
+    direct = next(c for c in calls if c[1:5] == ["new-session", "-d", "-s", "lt-direct"])
+    assert direct[-1] == "printf %s 'safe; touch /tmp/not-created'"
     # CLI dispatch も同じ境界を通る
     assert backend_mod.main(["new-session", "lt-y", str(tmp_path)]) == 0
     assert backend_mod.main(["send-line", "lt-y", "hi"]) == 0
@@ -555,3 +1093,151 @@ def test_backend_tmux_wrappers_with_fake_subprocess(monkeypatch, tmp_path):
     assert backend_mod.main(["reap"]) == 0
     assert backend_mod.main(["require"]) == 0
     assert backend_mod.main(["kill-session", "../evil"]) == 2  # session 名検証は CLI 層でも効く
+
+
+def test_backend_cli_does_not_expose_arbitrary_direct_command(tmp_path):
+    """new-session CLI は command 余剰引数を受けず argparse で拒否する。"""
+    with pytest.raises(SystemExit) as exc:
+        backend_mod.main([
+            "new-session", "lt-x", str(tmp_path), "; touch /tmp/injected"
+        ])
+    assert exc.value.code == 2
+
+
+def test_backend_paste_buffer_name_is_deterministic_isolated_and_injection_safe(tmp_path):
+    path = tmp_path / "task; display-message.md"
+    same_a = backend_mod.paste_buffer_name("lt-route-a", path)
+    same_b = backend_mod.paste_buffer_name("lt-route-a", path)
+    other_session = backend_mod.paste_buffer_name("lt-route-b", path)
+    other_path = backend_mod.paste_buffer_name("lt-route-a", tmp_path / "other.md")
+
+    assert same_a == same_b
+    assert len({same_a, other_session, other_path}) == 3
+    assert backend_mod.valid_buffer_name(same_a)
+    assert ";" not in same_a and "/" not in same_a
+    assert not backend_mod.valid_buffer_name("x; display-message")
+    assert not backend_mod.valid_buffer_name(
+        "x" * (backend_mod._BUFFER_NAME_MAX + 1)
+    )
+    with pytest.raises(ValueError, match="invalid session"):
+        backend_mod.paste_buffer_name("lt-safe; display-message", path)
+    with pytest.raises(ValueError, match="invalid session"):
+        backend_mod.paste_buffer_name("lt-safe\n", path)
+
+
+def test_backend_paste_buffer_cleanup_runs_when_paste_fails(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_tmux(*args, check=False):
+        calls.append((args, check))
+        if args[0] == "paste-buffer":
+            raise RuntimeError("simulated paste failure")
+        return None
+
+    task = tmp_path / "task.md"
+    task.write_text("payload\n", encoding="utf-8")
+    monkeypatch.setattr(backend_mod, "require_tmux", lambda: None)
+    monkeypatch.setattr(backend_mod, "_tmux", fake_tmux)
+
+    with pytest.raises(RuntimeError, match="simulated paste failure"):
+        backend_mod.paste_file("lt-cleanup", str(task))
+
+    load = next(args for args, _check in calls if args[0] == "load-buffer")
+    delete = next(args for args, _check in calls if args[0] == "delete-buffer")
+    assert delete == ("delete-buffer", "-b", load[2])
+
+
+@pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux unavailable")
+def test_backend_real_tmux_eight_parallel_pastes_are_session_isolated(
+    monkeypatch, tmp_path
+):
+    """全 load を先に完了させ、default-buffer 実装なら確実に誤配信する race。"""
+    count = 8
+    sessions = [f"lt-buffer-race-{i}" for i in range(count)]
+    files = []
+    receiver = (
+        "import sys,time; "
+        "line=sys.stdin.readline().rstrip('\\n'); "
+        "print('RECEIVED:'+line,flush=True); time.sleep(5)"
+    )
+    original_tmux = backend_mod._tmux
+    barrier = threading.Barrier(count, timeout=10)
+
+    try:
+        for i, session in enumerate(sessions):
+            task = tmp_path / f"task-{i}.md"
+            task.write_text(f"PAYLOAD_{i}\n", encoding="utf-8")
+            files.append(task)
+            backend_mod.new_session(
+                session,
+                str(tmp_path),
+                command_argv=(sys.executable, "-u", "-c", receiver),
+            )
+
+        def synchronized_tmux(*args, check=False):
+            result = original_tmux(*args, check=check)
+            if args[0] == "load-buffer":
+                barrier.wait()
+            return result
+
+        monkeypatch.setattr(backend_mod, "_tmux", synchronized_tmux)
+        with ThreadPoolExecutor(max_workers=count) as pool:
+            futures = [
+                pool.submit(backend_mod.paste_file, session, str(path))
+                for session, path in zip(sessions, files)
+            ]
+            for future in futures:
+                future.result(timeout=15)
+
+        for i, session in enumerate(sessions):
+            expected = f"RECEIVED:PAYLOAD_{i}"
+            captured = ""
+            for _ in range(40):
+                captured = backend_mod.capture_pane(session)
+                if expected in captured:
+                    break
+                time.sleep(0.05)
+            assert expected in captured, captured
+            assert all(
+                f"RECEIVED:PAYLOAD_{other}" not in captured
+                for other in range(count)
+                if other != i
+            )
+
+        listed = original_tmux("list-buffers", "-F", "#{buffer_name}")
+        remaining = set(listed.stdout.splitlines()) if listed.returncode == 0 else set()
+        expected_names = {
+            backend_mod.paste_buffer_name(session, str(path))
+            for session, path in zip(sessions, files)
+        }
+        assert remaining.isdisjoint(expected_names)
+    finally:
+        monkeypatch.setattr(backend_mod, "_tmux", original_tmux)
+        for session in sessions:
+            backend_mod.kill_session(session)
+
+
+@pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux unavailable")
+def test_backend_real_tmux_direct_process_avoids_interactive_shell(tmp_path):
+    """tmux pane が対話 shell readiness 無しで指定processを実行する。"""
+    session = "lt-direct-process-fixture"
+    marker = "DIRECT_PROCESS_READY"
+    argv = (
+        sys.executable,
+        "-u",
+        "-c",
+        f"import time; print('{marker}', flush=True); time.sleep(5)",
+    )
+    try:
+        backend_mod.new_session(session, str(tmp_path), command_argv=argv)
+        captured = ""
+        for _ in range(40):
+            captured = backend_mod.capture_pane(session)
+            if marker in captured:
+                break
+            time.sleep(0.05)
+        assert marker in captured
+        assert backend_mod.has_session(session)
+        assert backend_mod.pane_current_command(session) not in {"", "zsh", "bash", "sh"}
+    finally:
+        backend_mod.kill_session(session)

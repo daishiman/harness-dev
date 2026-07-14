@@ -1,0 +1,72 @@
+{
+  "name": "system-dev-planner",
+  "distributable": false,
+  "distribution_mode": "multi-repository-symlink",
+  "version": "0.1.0",
+  "description": "system-spec-harness の確定成果物 (仕様書・アーキテクチャ graph node) を引用入力とし、システム開発タスク仕様書 (task-spec) + workstream-inventory.json + task-graph + handoff を、plugin-dev-planner 同型のゴールシーク型ライフサイクル (R1 goal-elicit → R2 decompose → R3 emit → R4 独立評価) で生成する内部計画ハーネス。implementation_readiness=complete 未達では実装 handoff を fail-closed で停止し、生成した task-spec を dev-graph の tasks/ グラフノードとして登録可能にする。実装コードの生成は行わず task-graph build/capability-build へ委譲する。",
+  "author": {
+    "name": "xl-skills maintainers"
+  },
+  "owner": "team-platform",
+  "since": "2026-07-12",
+  "last_audited": "2026-07-12",
+  "entry_points": {
+    "skills": [
+      "run-system-dev-plan",
+      "assign-system-dev-plan-evaluator"
+    ],
+    "agents": [
+      "system-dev-plan-elicitor",
+      "system-dev-plan-architect",
+      "system-dev-plan-evaluator"
+    ],
+    "commands": [
+      "system-dev-plan"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "system-spec-harness@0.1.0"
+  ],
+  "permissions": {
+    "note": "filesystem 列挙は default roots 基準。config の roots 変更時は C09 が configured roots ⊆ 許可集合を追加検査する",
+    "network": [],
+    "filesystem": [
+      "$CLAUDE_PLUGIN_ROOT/**",
+      "$CLAUDE_PROJECT_DIR/.dev-graph/**",
+      "$CLAUDE_PROJECT_DIR/issues/**",
+      "$CLAUDE_PROJECT_DIR/tasks/**",
+      "$CLAUDE_PROJECT_DIR/specs/**",
+      "$CLAUDE_PROJECT_DIR/architecture/**",
+      "$CLAUDE_PROJECT_DIR/docs/**",
+      "$CLAUDE_PROJECT_DIR/system-spec/**"
+    ],
+    "secrets": []
+  },
+  "portability": {
+    "content_authority": "$CLAUDE_PROJECT_DIR",
+    "content_boundary": "$CLAUDE_PROJECT_DIR",
+    "plugin_source_authority": "$CLAUDE_PLUGIN_ROOT (code/assets only)",
+    "config": "$CLAUDE_PROJECT_DIR/.dev-graph/config.json",
+    "stored_paths": "repository-relative-only",
+    "root_candidate_acceptance": "realpath(resolved_repo_root) == realpath($CLAUDE_PROJECT_DIR)",
+    "resolved_root_export": "SYSTEM_DEV_RESOLVED_REPO_ROOT",
+    "containment": "realpath-inside-caller-repository-required",
+    "absolute_paths": "forbidden",
+    "cross_repository_reads": "forbidden"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-implementation-readiness.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

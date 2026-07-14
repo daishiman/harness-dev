@@ -182,6 +182,15 @@ PENDING_RENAME_PATHS = {
     "scripts/notion-submit-improvement.py",
     "scripts/notion-upsert-plugin.py",
     "scripts/sync-notion-schema.py",
+    # harness-creator native-surface projection (C01/C02)。sync-/check- は native surface の
+    # 同期 (C01) / parity 検証 (C02) を表す domain 動詞で ALLOWED_VERBS 外。Makefile/CI
+    # (governance-check.yml)/reference doc/test が exact name を参照し、sync-native-surfaces.py
+    # が sibling として exact name で呼び出すため、許可動詞化 (build/validate 系リネーム or
+    # allowed-list 拡張) は参照を原子的に更新する後続 Change Governance PR まで PENDING
+    # (sync-notion-schema.py と同種の「sync-/check- verb pending」扱い)。
+    "plugins/harness-creator/scripts/sync-native-surfaces.py",
+    "plugins/harness-creator/scripts/sync-codex-project-settings.py",
+    "plugins/harness-creator/scripts/check-native-surface-parity.py",
     # PR #16: build-trace SSOT shim (Python import がハイフン不可のため underscore 許容、§4.3 例外)
     "plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py",
     # feedback_contract criteria の単一 SSOT モジュール。validate-build-trace.py /
@@ -420,6 +429,31 @@ PENDING_RENAME_PATHS = {
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py",
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py",
     "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/youtube_provider.py",
+    # dev-graph / system-dev-planner 投入 (マクロ/ミクロ二層 + verification-obligation 拡張):
+    # domain 動詞 (promote/resolve/check/init/manage/schedule/reconcile/register/derive/record/
+    # plan/sandbox/run) と bd-/gh- bridge, _common.py が ALLOWED_VERBS 外。SKILL.md script_refs /
+    # hooks / manifest / test 参照を原子的に更新する後続 Change Governance PR (許可動詞化 or 一括
+    # リネーム) まで PENDING。
+    "plugins/system-dev-planner/scripts/promote-system-plan.py",
+    "plugins/system-dev-planner/scripts/resolve-project-context.py",
+    "plugins/system-dev-planner/scripts/check-implementation-readiness.py",
+    "plugins/system-dev-planner/scripts/init-project-layout.py",
+    "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+    "plugins/dev-graph/scripts/bd-bridge.py",
+    "plugins/dev-graph/scripts/manage-worktree-lease.py",
+    "plugins/dev-graph/scripts/gh-bridge.py",
+    "plugins/dev-graph/scripts/schedule-graph.py",
+    "plugins/dev-graph/scripts/_common.py",
+    "plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+    "plugins/dev-graph/scripts/resolve-repo-context.py",
+    "plugins/dev-graph/scripts/register-package.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/derive-route-build-obligations.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/derive-verification-contract.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/record-verification-evidence.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/plan-verification-obligations.py",
+    "plugins/harness-creator/skills/run-plugin-package-check/scripts/sandbox-plugin-lifecycle.py",
+    "plugins/harness-creator/skills/run-plugin-package-check/scripts/run-pkg-015.py",
+    "plugins/harness-creator/skills/run-skill-live-trial/scripts/plan-live-trials.py",
 }
 
 VALID_NAME = re.compile(r"^([a-z]+)-[a-z0-9-]+\.py$")

@@ -24,11 +24,14 @@ BLOCKED (fail-closed) — verdict の overall.verdict=BLOCKED に対応する (D
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
+import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 
 # 被験 skill denylist (再帰遮断)。live-trial が自分自身や iter-improve を被験体に
@@ -40,6 +43,12 @@ DENY_TARGET_SKILLS = frozenset({"run-skill-live-trial", "run-skill-iter-improve"
 
 # session 名: path traversal / 区切り文字を拒否 (tmux -t への注入防止)
 _SESSION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+
+# tmux buffer は server 全体で共有される。default buffer を使うと並列 trial の
+# load-buffer → paste-buffer 間で別 session の本文へ上書きされるため、すべての
+# paste に明示名を付ける。生成名は shell/tmux target 構文を含まない固定長 ASCII。
+_BUFFER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_BUFFER_NAME_MAX = 64
 
 EXIT_BLOCKED = 3
 
@@ -53,7 +62,38 @@ def deny_target_skill(target: str) -> bool:
 def valid_session_name(name: str) -> bool:
     if not name or ".." in name:
         return False
-    return bool(_SESSION_RE.match(name))
+    return bool(_SESSION_RE.fullmatch(name))
+
+
+def valid_buffer_name(name: str) -> bool:
+    """tmux `-b` へ渡せる injection-safe な内部 buffer 名か。"""
+    return bool(
+        name
+        and len(name) <= _BUFFER_NAME_MAX
+        and ".." not in name
+        and _BUFFER_RE.fullmatch(name)
+    )
+
+
+def paste_buffer_name(session: str, path: str | Path) -> str:
+    """session + file ごとに決定論的で衝突しにくい tmux buffer 名を返す。
+
+    session を digest 入力へ含めることで、同時実行する別 trial は同じ task path
+    でも buffer を共有しない。path も含め、同一 session 内の並列 paste を分離する。
+    ユーザー入力そのものは buffer 名へ埋め込まず、固定 alphabet の digest にする。
+    """
+    if not valid_session_name(session):
+        raise ValueError(f"invalid session name for paste buffer: {session!r}")
+    raw_path = str(path)
+    if not raw_path or "\x00" in raw_path:
+        raise ValueError("paste path must be non-empty and contain no NUL")
+    digest = hashlib.sha256(
+        f"{session}\0{Path(raw_path).absolute()}".encode("utf-8")
+    ).hexdigest()[:32]
+    name = f"ltpaste-{digest}"
+    if not valid_buffer_name(name):  # defensive invariant for future format edits
+        raise ValueError("generated an invalid tmux paste buffer name")
+    return name
 
 
 def tmux_available() -> bool:
@@ -78,13 +118,45 @@ def _tmux(*args: str, check: bool = False) -> subprocess.CompletedProcess:
     )
 
 
-def new_session(session: str, cwd: str, width: int = 220, height: int = 50) -> None:
+def _direct_process_command(argv: Sequence[str]) -> str:
+    """tmux shell-command 用に argv 境界を保った1文字列へ変換する。
+
+    tmux new-session の shell-command は単一引数のため、各 argv 要素を
+    shlex.join でquoteする。文字列丸ごとの受付は禁止し、呼び出し側が
+    検証済み argv を渡す境界を強制する。
+    """
+    if isinstance(argv, (str, bytes)):
+        raise TypeError("direct process must be an argv sequence, not a shell string")
+    parts = tuple(argv)
+    if not parts:
+        raise ValueError("direct process argv must not be empty")
+    for part in parts:
+        if not isinstance(part, str) or not part or "\x00" in part or "\n" in part or "\r" in part:
+            raise ValueError("direct process argv contains an invalid element")
+    return shlex.join(parts)
+
+
+def new_session(
+    session: str,
+    cwd: str,
+    width: int = 220,
+    height: int = 50,
+    command_argv: Sequence[str] | None = None,
+) -> None:
+    """tmux session を作成し、任意の検証済み argv を直接起動する。
+
+    command_argv=None は従来どおり tmux 既定 shell を起動する。
+    CLI に command 受付は公開せず、boot 等の内部 caller だけが argv を渡す。
+    """
     require_tmux()
     kill_session(session)  # 同名残骸は事前掃除 (boot 再試行の冪等性)
-    _tmux(
+    args = [
         "new-session", "-d", "-s", session, "-c", cwd,
-        "-x", str(width), "-y", str(height), check=True,
-    )
+        "-x", str(width), "-y", str(height),
+    ]
+    if command_argv is not None:
+        args.append(_direct_process_command(command_argv))
+    _tmux(*args, check=True)
 
 
 def send_keys(session: str, *keys: str) -> None:
@@ -98,14 +170,21 @@ def send_line(session: str, text: str) -> None:
 
 
 def paste_file(session: str, path: str) -> None:
-    """load-buffer + paste-buffer によるファイル経由送信。
+    """session/file 固有 buffer の load + paste によるファイル経由送信。
 
     長文/改行/括弧を send-keys で生送信すると TUI のペースト検知が誤動作する
-    (絶対ルール: 送信はファイル経由)。paste-buffer は -d でバッファを消費する。
+    (絶対ルール: 送信はファイル経由)。tmux default buffer は server 全体で共有
+    されるため使用禁止。例外を含む全終了経路で named buffer を削除する。
     """
     require_tmux()
-    _tmux("load-buffer", str(path), check=True)
-    _tmux("paste-buffer", "-d", "-t", session, check=True)
+    buffer_name = paste_buffer_name(session, path)
+    try:
+        _tmux("load-buffer", "-b", buffer_name, str(path), check=True)
+        _tmux("paste-buffer", "-b", buffer_name, "-t", session, check=True)
+    finally:
+        # check=False: load/paste の原例外を cleanup 失敗で隠さない。存在しない
+        # buffer の delete も安全で、過去の同名残骸があれば併せて回収する。
+        _tmux("delete-buffer", "-b", buffer_name)
 
 
 def paste_text(session: str, text: str) -> None:
@@ -173,9 +252,26 @@ def _self_test() -> int:
     assert not valid_session_name("../evil")
     assert not valid_session_name("a/b")
     assert not valid_session_name("")
+    assert valid_buffer_name("ltpaste-0123456789abcdef")
+    assert not valid_buffer_name("x; display-message")
+    assert not valid_buffer_name("x" * (_BUFFER_NAME_MAX + 1))
+    buffer_a = paste_buffer_name("lt-a", "/tmp/task.md")
+    assert buffer_a == paste_buffer_name("lt-a", "/tmp/task.md")
+    assert buffer_a != paste_buffer_name("lt-b", "/tmp/task.md")
+    assert len(buffer_a) <= _BUFFER_NAME_MAX
     assert deny_target_skill("run-skill-live-trial")
     assert deny_target_skill("harness-creator:run-skill-iter-improve")
     assert not deny_target_skill("harness-creator:run-goal-seek")
+    assert _direct_process_command(("claude", "--model", "safe-model")) == \
+        "claude --model safe-model"
+    assert _direct_process_command(("printf", "%s", "x; touch /tmp/nope")) == \
+        "printf %s 'x; touch /tmp/nope'"
+    try:
+        _direct_process_command("claude --help")
+    except TypeError:
+        pass
+    else:
+        raise AssertionError("shell string must be rejected")
     print("OK: live-trial-backend self-test")
     return 0
 

@@ -29,6 +29,7 @@ INVARIANTS = [f"INV-{index}" for index in range(1, 13)]
 USAGE = """build-claude-settings.py [-h]
                                 [--plugins-dir PLUGINS_DIR]
                                 [--target TARGET]
+                                [--exclude-plugin PLUGIN]
                                 [--dry-run]
                                 [--check]
                                 [--print-user-section-hash]
@@ -53,6 +54,7 @@ def parse_args(argv=None):
     parser = ContractHelpParser(prog="build-claude-settings.py", usage=USAGE)
     parser.add_argument("--plugins-dir", default="plugins")
     parser.add_argument("--target", default=".claude/settings.json")
+    parser.add_argument("--exclude-plugin", action="append", default=[])
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--print-user-section-hash", action="store_true")
@@ -112,7 +114,7 @@ def command_from_hook_entry(entry):
     return commands
 
 
-def normalize_hook_entries(hooks_obj, from_plugin):
+def normalize_hook_entries(hooks_obj, from_plugin, *, source="unknown"):
     if not isinstance(hooks_obj, dict):
         raise LayoutError("hooks must be an object")
     normalized = []
@@ -135,6 +137,7 @@ def normalize_hook_entries(hooks_obj, from_plugin):
                         "matcher": matcher,
                         "command": command,
                         "from_plugin": from_plugin,
+                        "source": source,
                     }
                 )
     return normalized
@@ -194,9 +197,15 @@ def namespace_items(plugin_dir, plugin_name):
             frontmatter_name = read_skill_frontmatter_name(skill_dir)
             if frontmatter_name:
                 names.append(frontmatter_name)
+            real_path = str(skill_dir.resolve())
             for name in sorted(set(names)):
                 items["skills"].append(
-                    {"name": name, "from_plugin": plugin_name, "verdict": "ok"}
+                    {
+                        "name": name,
+                        "from_plugin": plugin_name,
+                        "verdict": "ok",
+                        "real_path": real_path,
+                    }
                 )
 
     for kind in ("agents", "commands"):
@@ -209,7 +218,12 @@ def namespace_items(plugin_dir, plugin_name):
             if not item.is_file() or item.suffix != ".md":
                 raise LayoutError(f"{kind} item must be a markdown file: {item}")
             items[kind].append(
-                {"name": item.name, "from_plugin": plugin_name, "verdict": "ok"}
+                {
+                    "name": item.name,
+                    "from_plugin": plugin_name,
+                    "verdict": "ok",
+                    "real_path": str(item.resolve()),
+                }
             )
     return items
 
@@ -219,8 +233,8 @@ def plugin_hooks_from_file(path, from_plugin):
     if not isinstance(data, dict):
         raise LayoutError(f"hook file root must be an object: {path}")
     if "hooks" in data:
-        return normalize_hook_entries(data["hooks"], from_plugin)
-    return normalize_hook_entries(data, from_plugin)
+        return normalize_hook_entries(data["hooks"], from_plugin, source=str(path))
+    return normalize_hook_entries(data, from_plugin, source=str(path))
 
 
 def plugin_permissions_from_file(path, from_plugin):
@@ -232,16 +246,42 @@ def plugin_permissions_from_file(path, from_plugin):
     return normalize_permissions(data, from_plugin)
 
 
-def discover_plugins(plugins_dir):
+PLUGIN_ROOT_VAR = "CLAUDE_PLUGIN_ROOT"
+PROJECT_DIR_VAR = "CLAUDE_PROJECT_DIR"
+
+
+def expand_plugin_root(command, plugin_path):
+    """plugin hook の $CLAUDE_PLUGIN_ROOT を project 文脈で解決可能な形へ展開する。
+
+    plugin manifest の hook command は plugin-manifest 文脈の $CLAUDE_PLUGIN_ROOT を
+    使うが、flat な project .claude/settings.json へ反映すると同変数は未定義で hook が
+    走らない。反映時に ${CLAUDE_PROJECT_DIR}/<plugin path> へ展開することで
+    (a) project settings でも実際に解決でき、(b) plugin ごとに別パスへ解決されるため
+    同名別実体の hook が偽の name/command 衝突 (INV-5) を起こさない。
+    """
+    replacement = "${%s}/%s" % (PROJECT_DIR_VAR, plugin_path)
+    return command.replace(
+        "${%s}" % PLUGIN_ROOT_VAR, replacement
+    ).replace("$%s" % PLUGIN_ROOT_VAR, replacement)
+
+
+def discover_plugins(plugins_dir, exclude_plugins=(), *, project_root=None):
     plugins_dir = Path(plugins_dir)
+    project_root = Path(project_root).resolve() if project_root is not None else plugins_dir.resolve().parent
     if not plugins_dir.exists():
         return []
     if not plugins_dir.is_dir():
         raise LayoutError(f"plugins dir is not a directory: {plugins_dir}")
 
+    excluded = set(exclude_plugins)
     plugins = []
     seen_names = {}
     for plugin_dir in sorted(path for path in plugins_dir.iterdir() if path.is_dir()):
+        # Activation/source selection is owned by the caller (C01).  Exclude by
+        # directory slug before reading the manifest so disabled/untrusted sources
+        # cannot contribute hooks, permissions, or namespace entries.
+        if plugin_dir.name in excluded:
+            continue
         manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
         if not manifest_path.is_file():
             raise LayoutError(f"plugin manifest missing: {manifest_path}")
@@ -262,7 +302,11 @@ def discover_plugins(plugins_dir):
             "namespace": namespace_items(plugin_dir, name),
         }
         if "hooks" in manifest:
-            plugin["hooks"].extend(normalize_hook_entries(manifest["hooks"], name))
+            plugin["hooks"].extend(
+                normalize_hook_entries(
+                    manifest["hooks"], name, source=f"{manifest_path}:inline"
+                )
+            )
         if "permissions" in manifest:
             plugin["permissions"].extend(normalize_permissions(manifest["permissions"], name))
 
@@ -276,6 +320,18 @@ def discover_plugins(plugins_dir):
         permissions_path = plugin_dir / "settings" / "permissions.json"
         if permissions_path.exists():
             plugin["permissions"].extend(plugin_permissions_from_file(permissions_path, name))
+
+        # project settings へ反映するため、この plugin の hook command 内の
+        # $CLAUDE_PLUGIN_ROOT を当該 plugin の実パスへ展開する (同名別実体の
+        # 偽 INV-5 衝突解消 + project 文脈での hook 実行可能化)。
+        try:
+            plugin_rel = plugin_dir.resolve().relative_to(project_root).as_posix()
+        except ValueError as exc:
+            raise LayoutError(
+                f"plugins must be inside project root {project_root}: {plugin_dir}"
+            ) from exc
+        for hook in plugin["hooks"]:
+            hook["command"] = expand_plugin_root(hook["command"], plugin_rel)
         plugins.append(plugin)
     return sorted(plugins, key=lambda item: item["name"])
 
@@ -293,10 +349,20 @@ def validate_settings_structure(data):
         if not isinstance(hooks, dict):
             raise LayoutError("hooks must be an object")
         for event, entries in hooks.items():
-            if event not in HOOK_EVENTS:
-                raise LayoutError(f"unknown hook event in target: {event}")
             if not isinstance(entries, list):
                 raise LayoutError(f"hooks.{event} must be an array")
+            if event not in HOOK_EVENTS:
+                # 互換修復 (target=preserve / managed source=block の非対称化):
+                # target の .claude/settings.json は、この script の HOOK_EVENTS
+                # allowlist より新しい Claude Code event (例: FileChanged) を持ちうる。
+                # 従来はここで raise して exit3 になり reflector が壊れていた。
+                # managed source 側 (normalize_hook_entries) は従来どおり block のまま。
+                #
+                # 未知 event は別 owner の領域ゆえ内部 schema を検証せず opaque に素通し
+                # (verbatim preserve)。managed event は必ず HOOK_EVENTS に含まれるため
+                # 未知 event に managed command は入り得ず、remove_managed_values も
+                # この event を skip する。将来の非標準 schema event にも頑健。
+                continue
             for entry in entries:
                 if not isinstance(entry, dict):
                     raise LayoutError(f"hooks.{event} entry must be an object")
@@ -333,6 +399,12 @@ def remove_managed_values(target):
     hooks = target.get("hooks", {})
     if isinstance(hooks, dict):
         for event in list(hooks):
+            if event not in HOOK_EVENTS:
+                # 未知 target event は verbatim 保持する。managed event は必ず
+                # HOOK_EVENTS に含まれる (managed source 側 normalize_hook_entries が
+                # block するため) ので、未知 event に managed command は入り得ず、
+                # ここで entry 内部を触る必要も剥がす対象も無い (非破壊 preserve)。
+                continue
             entries = []
             for entry in hooks.get(event, []):
                 matcher = entry.get("matcher")
@@ -380,17 +452,27 @@ def namespace_preflight(plugins):
         for kind in ("skills", "agents", "commands"):
             for item in plugin["namespace"][kind]:
                 existing = seen[kind].get(item["name"])
-                if existing and existing != item["from_plugin"]:
-                    conflict = {
-                        "type": kind[:-1],
-                        "name": item["name"],
-                        "plugins": sorted([existing, item["from_plugin"]]),
-                    }
-                    namespace["conflicts"].append(conflict)
+                if existing is None:
+                    # 初出。real_path も記録し、後続の同名を実体単位で照合する。
+                    seen[kind][item["name"]] = item
+                    namespace[kind].append(item)
+                    continue
+                if existing["real_path"] == item["real_path"]:
+                    # 同名かつ同一実体 (symlink で共通コンテンツを共有) = 衝突でなく共有。
+                    # 複数 plugin が意図的に 1 実体を symlink 参照する設計を尊重し dedupe する。
                     item = dict(item)
-                    item["verdict"] = "conflict"
-                else:
-                    seen[kind][item["name"]] = item["from_plugin"]
+                    item["verdict"] = "shared"
+                    namespace[kind].append(item)
+                    continue
+                # 同名かつ別実体 = 本物の名前衝突 (異なる中身が同名を奪い合う)。
+                conflict = {
+                    "type": kind[:-1],
+                    "name": item["name"],
+                    "plugins": sorted([existing["from_plugin"], item["from_plugin"]]),
+                }
+                namespace["conflicts"].append(conflict)
+                item = dict(item)
+                item["verdict"] = "conflict"
                 namespace[kind].append(item)
     return namespace
 
@@ -403,6 +485,8 @@ def merge_hooks(user, plugins):
 
     seen = {}
     conflicts = []
+    deduped = []
+    dedupe_count = 0
     for hook in generated:
         key = hook_key(hook)
         existing = seen.get(key)
@@ -416,9 +500,18 @@ def merge_hooks(user, plugins):
                     "plugins": sorted([existing["from_plugin"], hook["from_plugin"]]),
                 }
             )
-        else:
-            seen[key] = hook
-    return generated, conflicts
+            continue
+        if existing:
+            # A plugin may declare one native hook both in its inline Claude
+            # manifest and in hooks/hooks.json for another native loader.  The
+            # source declarations are evidence, not two runtime invocations.
+            # Collapse only exact same-plugin hooks; cross-plugin ownership is
+            # still an INV-5 conflict above.
+            dedupe_count += 1
+            continue
+        seen[key] = hook
+        deduped.append(hook)
+    return deduped, conflicts, dedupe_count
 
 
 def merge_permissions(plugins):
@@ -509,7 +602,7 @@ def build_desired_settings(target, generated_hooks, generated_permissions):
     validate_settings_structure(desired)
     return desired
 
-def build_plan(target_path, plugins, namespace, generated_hooks, generated_permissions, conflicts, user_preserved, dedupe_count):
+def build_plan(target_path, plugins, namespace, generated_hooks, generated_permissions, conflicts, user_preserved, dedupe_count, excluded_plugins=()):
     hooks = [
         {
             "event": hook["event"],
@@ -532,6 +625,7 @@ def build_plan(target_path, plugins, namespace, generated_hooks, generated_permi
     return {
         "target": str(target_path),
         "plugins": [plugin["name"] for plugin in plugins],
+        "excluded_plugins": sorted(set(excluded_plugins)),
         "management_format": "_build_claude_settings.managed_hooks",
         "namespace": namespace,
         "conflicts": conflicts,
@@ -585,13 +679,15 @@ def check_mode(target, desired):
     return serialize(target) == serialize(desired)
 
 
-def build(target_path, plugins_dir):
+def build(target_path, plugins_dir, exclude_plugins=()):
     target = load_target(target_path)
     before_hash = user_section_sha256(target)
-    plugins = discover_plugins(plugins_dir)
+    project_root = Path(target_path).resolve().parent.parent
+    plugins = discover_plugins(plugins_dir, exclude_plugins, project_root=project_root)
     namespace = namespace_preflight(plugins)
-    generated_hooks, hook_conflicts = merge_hooks(target, plugins)
-    generated_permissions, permission_conflicts, dedupe_count = merge_permissions(plugins)
+    generated_hooks, hook_conflicts, hook_dedupe_count = merge_hooks(target, plugins)
+    generated_permissions, permission_conflicts, permission_dedupe_count = merge_permissions(plugins)
+    dedupe_count = hook_dedupe_count + permission_dedupe_count
     conflicts = namespace["conflicts"] + hook_conflicts + permission_conflicts
     desired = build_desired_settings(target, generated_hooks, generated_permissions)
     after_hash = user_section_sha256(desired)
@@ -607,6 +703,7 @@ def build(target_path, plugins_dir):
         conflicts,
         user_preserved,
         dedupe_count,
+        exclude_plugins,
     )
     return target, desired, plan
 
@@ -615,7 +712,7 @@ def main(argv=None):
     args = parse_args(argv)
     try:
         target_path = Path(args.target)
-        target, desired, plan = build(target_path, args.plugins_dir)
+        target, desired, plan = build(target_path, args.plugins_dir, args.exclude_plugin)
         if args.print_user_section_hash:
             print(user_section_sha256(target))
             return 0

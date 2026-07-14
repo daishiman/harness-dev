@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "30-method-elegant-verification",
+    "generated_by": "Agent2/Agent3/Agent4 independent review"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "findings": [
+    {
+      "id": "EV-001",
+      "severity": "high",
+      "summary": "5成果物種別のhybrid directory policyと自動分類routingが欠落している。",
+      "recommendation": "当時の既存18 componentsを維持しC01/C02/C11/C14/C18へrouting契約を差分追加する。後続の別要件system-spec/system-planは独立責務としてC19-C23を追加する。",
+      "target_ref": "component-inventory.json#C01,C02,C11,C14,C18"
+    },
+    {
+      "id": "EV-002",
+      "severity": "high",
+      "summary": "artifact語彙とfrontmatter authorityが統一されていない。",
+      "recommendation": "artifact_kind enumとissues/tasks/specs/architecture/docsのpath写像、graph_node_id不変、file_path派生をschemaとindexへ固定する。",
+      "target_ref": "schemas-draft/graph-node.schema.json"
+    },
+    {
+      "id": "EV-003",
+      "severity": "high",
+      "summary": "L3 plan scopeとP05-P12の実build到達状態が混線している。",
+      "recommendation": "P05-P12を後段L4 build lifecycle contractとして明示し、plan完了を実build実測へ依存させない。",
+      "target_ref": "phase-05-implementation.md..phase-12-documentation.md"
+    },
+    {
+      "id": "EV-004",
+      "severity": "medium",
+      "summary": "C09 commandの説明、argument-hint、depends_onでnode/requirements verbが不一致。",
+      "recommendation": "正式verb集合をinit|node|status|sync|requirements|render|decompose|nextへ統一しC04依存を追加する。",
+      "target_ref": "component-inventory.json#C09"
+    },
+    {
+      "id": "EV-005",
+      "severity": "medium",
+      "summary": "件数増加時の段階分割と再配置migration契約がない。",
+      "recommendation": "flat-first、leaf 200件超でdomain、再超過でproject_id、必要時のみYYYY/MMへ分割し、dry-run migration manifestとrollbackを必須化する。",
+      "target_ref": "phase-02-design.md"
+    },
+    {
+      "id": "EV-006",
+      "severity": "medium",
+      "summary": "既存plan-findingsの入力hashが現物と一致せずstale。",
+      "recommendation": "全差分適用後に独立evaluatorと決定論ゲートを再実行する。",
+      "target_ref": "plan-findings.json"
+    },
+    {
+      "id": "EV-007",
+      "severity": "high",
+      "summary": "artifact kind/subtype別の編集可能なtemplate正本とimplementation-readiness契約が必要。",
+      "recommendation": "templates/に共通frontmatter、5 kind、architecture 5 subtype、API contract、system task specを追加しC01/C02/C04/C11へ配線する。",
+      "target_ref": "templates/; component-inventory.json#C01,C02,C04,C11"
+    },
+    {
+      "id": "EV-008",
+      "severity": "high",
+      "summary": "仕様/architecture作成はsystem-spec-harnessを引用し、system開発task specsはplugin-dev-planner同型の専用flowで生成する必要がある。",
+      "recommendation": "C19-C23を追加しsystem-spec lineage、13 phase+workstream inventory+task DAG+handoff+独立評価、readiness fail-closedを設計する。",
+      "target_ref": "component-inventory.json#C19-C23"
+    },
+    {
+      "id": "EV-009",
+      "severity": "high",
+      "summary": "共有harnessをsymlink配布する複数repositoryで、各repo固有docs/config/stateを安全に解決する必要がある。",
+      "recommendation": "C24 repo-context resolver、repo-local config schema、caller-root precedence、realpath containment、broken-link診断、multi-repo isolation fixtureを追加する。",
+      "target_ref": "component-inventory.json#C24; schemas-draft/repo-config.schema.json"
+    }
+  ],
+  "provenance": {
+    "source_intake": "intake.json",
+    "prev_goal_spec": "goal-spec.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "current-user-request"
+    }
+  }
+}

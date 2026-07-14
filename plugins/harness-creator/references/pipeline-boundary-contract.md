@@ -61,7 +61,7 @@ task-graph は planner が作る計画構造であり、harness-creator は buil
 
 実行は **2 つの入れ子ループ** (内=build-execution loop・TG-C06 所有 / 外=spec-improvement loop) で駆動する。dispatch 手順・stall 分岐・handback 提示などの**制御フロー正本は `commands/capability-build.md` の「task-graph route モード」節**であり、本ファイルはループ間契約の不変条件のみを定める:
 - **単一 writer**: state write-back は dispatcher (TG-C06) が直列呼出しする `sync-task-state.py` (TG-C02) のみが行う (SubAgent は state を書かない)。
-- **完了ゲート fail-closed**: `record-task-graph-knowledge.py` (TG-C08) が未処理 discovered-task 残存時に completed を機構的にブロックし、`handback_command` で外ループへ制御返却する。第2段=--task-state の blocked node 残存、第3段=build 実体の `.claude` symlink 未展開 (deploy-sync 漏れ・`--task-state` パス上方探索で repo root 解決→生成器 `--check`) も同様に block し fix_command を単体提示する (生成器不在環境は fail-soft skip)。
+- **完了ゲート fail-closed**: `record-task-graph-knowledge.py` (TG-C08) が未処理 discovered-task 残存時に completed を機構的にブロックし、`handback_command` で外ループへ制御返却する。第2段=--task-state の blocked node 残存、第3段=graph の local required node 全件 done (P13 一括例外は禁止。schema-valid `runtime-evidence-ledger.json` が task id 単位で列挙した install/enable/trust/new-session/uninstall/PR の user-owned node だけを保留可)、第4段=C01 `sync-native-surfaces.py --check --json` の単一 desired-set gate とする。TG-C08 から旧 reflector/C02 を個別再実行せず、C01 child report に含まれる parity 結果を判定する。
 - **provenance-gated repin**: 実行中の graph 差替えは accepted discovered-task の `resulting_graph_hash` と一致する場合のみ TG-C07→TG-C02 委譲で再 pin (`repinned`) し、不一致は不正混入 (F10) として `mismatch` で fail-closed 拒否する。
 
 本節が単一 writer 規約を含むループ間不変条件の唯一の正本であり、他文書・script header の同旨記述は本節への参照 (要約) である。
@@ -69,13 +69,14 @@ task-graph は planner が作る計画構造であり、harness-creator は buil
 | 項目 | writer / owner | reader / consumer | 完了ゲート | 備考 |
 |---|---|---|---|---|
 | `task-graph.json` / phase / inventory / handoff | plugin-dev-planner | harness-creator `/capability-build` | planner 側 graph/schema/gate | harness は read-only。plan 直接 mutation 禁止 (例外は下行 TG-C09 の gitignore 済派生投影ビューと、`reports/` 行のリッチ版納品物の 2 write class のみ) |
-| `task-state.json` / `task-events.jsonl` | harness-creator `sync-task-state.py` | `dispatch-ready-set.py` / `summarize-task-progress.py` / `record-task-graph-knowledge.py` | state schema + replay 整合 | state と event は同じ単一 writer |
+| `task-state.json` / `task-events.jsonl` | harness-creator `sync-task-state.py` | `dispatch-ready-set.py` / `summarize-task-progress.py` / `record-task-graph-knowledge.py` | state schema + replay 整合 | state と event は同じ単一 writer。TG-C07 acquire は dispatch 前に TG-C02 `--initialize-from-graph` へ委譲し、graph 全 node を pending materialize (既存 state は保持、未知/重複は拒否) して sparse state を禁止 |
 | discovered-task inbox | harness-creator `emit-discovered-task.py` | planner `accept-discovered-task.py` | 未処理 status があれば TG-C08 が completed 拒否 | status は `accepted` / `rejected` / `superseded` で解決済み |
 | build 成果物の周回 scope | harness-creator `resolve_build_dir(target_plugin_slug, cycle_id)` | TG-C02/TG-C05/TG-C07/TG-C08 | `cycle_id` は handoff top-level だけを消費 | `plan_dir` のパス解析は禁止 |
 | blocked 起点/伝播 | harness-creator `sync-task-state.py` | progress summary / knowledge distill | `blocked_reason` 必須 | `origin-failure` と `propagated` を state enum ではなく第一級 field で区別 |
 | knowledge Loop A | generated harness の `knowledge/` | 生成後 harness の build/runtime | add_entry.py schema | 生ログ全文ではなく source_ref 付き要約のみ |
 | knowledge Loop B | `plugins/harness-creator/knowledge/` | harness-creator の次回 build-time search | add_entry.py schema | 依存詰まり・成果物欠落・解決判断を再利用 |
-| `.build.lock` (build 排他 lock) | harness-creator `manage-build-lease.py` (TG-C07) | TG-C07 自身 (steal/renew 判定) | lock TTL + pid 生存判定 | 中身は `{started_at, pid, host}` JSON。runtime 生成物で git 追跡外 |
+| `.build.lock` (build 排他 lock) | harness-creator `manage-build-lease.py` (TG-C07) | TG-C07 自身 (steal/renew/release 判定) | owner token + lock TTL + pid 生存判定 | 中身は `{started_at, pid, host, owner_token}` JSON。acquire 出力 token をメモリ保持し renew/release で一致必須。runtime 生成物で git 追跡外 |
+| `runtime-evidence-ledger.json` | dispatcher (TG-C06) | TG-C08 completion gate | `runtime-evidence-ledger.schema.json` + artifact SHA-256 + task-state graph_hash pin + UTC timestamp + gate/task mapping | ledger 所在 build dir 相対 artifact path のみ。local build/native parity/rollback 証跡必須。`not_applicable` は user が不要と明示した PR gate のみ |
 | `route-*.json` (route-build-report) | route builder (`build-script-route.py` / `run-build-skill`) | `validate-route-build-reports.py` / TG-C02 (done 照合) / TG-C05 / TG-C08 | route-build-report 契約 (PR#70・additive のみ) | `covered_task_ids` は dispatcher (TG-C06) が node→route join から決定論導出して追記する |
 | `plan-P*.json` (checklist-verification report) | harness-creator dispatcher (TG-C06) | TG-C02 (done 照合) / TG-C08 | `verified_by` + `covered_task_ids` 必須 | `entity_ref=null` ノードの plan-node-verification 証跡 |
 | `task-graph-status.json` / `task-progress.md` / `task-execution-report.html` (live 状態・実行記録投影ビュー) | harness-creator `project-task-status.py` (TG-C09) | 人間 (plan dir 観測性) / 機械 (status JSON) | HTML は self-contained/escape/決定論テスト。最終 `build-summary.json` 保存後に再投影 | **read-only 派生ビュー**: task-graph.json(構造)+task-state.json(状態)+route reports/build-summary(証跡) を merge 投影するのみで SSOT を書かず graph_hash pin を温存する。HTML は slide-report-generator の report 原則を採用し進捗/フロー図/route 証跡/外ループを構造化表示する。3 ファイルとも gitignore 追跡外で追跡衝突しない (plan dir write 例外 class その1) |
@@ -94,6 +95,15 @@ handoff `routes[].status` は planner の計画時宣言のみであり、build 
 
 `record-task-graph-knowledge.py` は completion gate と knowledge 記録の owner だが、task-graph の owner ではない。未処理 discovered-task が残る限り completed を出さず、全 proposal が `accepted` / `rejected` / `superseded` のいずれかになった後で、task-events/stall summary/route-build-report handoff_notes から必要最小限の lesson を蒸留する。
 
+### build lock の legacy migration / 管理者救済
+
+owner token 導入前の `{started_at,pid,host}` lock は推測可能な pid/host だけでは所有権を証明できない。そのため TG-C07 は次の順序を固定する。
+
+1. legacy lock が TTL 超過または同一 host の死 pid なら stale と判定し、compare-delete + O_EXCL 再取得で owner-token 形式へ自動移行する。
+2. legacy lock が生存中なら `already-held` + `lock_format=legacy` で fail-closed にし、自動移行・renew・通常 release を禁止する。
+3. owner の正常終了または TTL 失効を待てない緊急時だけ、人間の管理者が `manage-build-lease.py --lock-action force-release --admin ...` を実行する。dispatcher はこの導線を使用しない。
+4. force-release も読取 snapshot と inode/content が一致する場合だけ compare-delete する。新 owner の lock が race で置換された場合は削除しない。
+
 ### task-state 損失時の再導出手順 (runbook)
 
 `task-state.json` は eval-log 配下の ephemeral 成果物 (gitignore) であり、損失・破損は設計上起こりうる。復旧は次の決定論手順のみを正とし、**handoff `routes[].status` を実行状態として読まない** ("planned" 据置は計画時宣言 — 誤読して route を再 build すると `--mode update` の Edit 差分が二重適用され非冪等):
@@ -108,7 +118,7 @@ handoff `routes[].status` は planner の計画時宣言のみであり、build 
 
 | ループ | ステップ | actor (主体) | 担い手 | 備考 |
 |---|---|---|---|---|
-| 内 | build 開始ゲート (lock 排他 / 孤児 lease 回収 / graph_hash pin) | 決定論 script | `manage-build-lease.py` (TG-C07) | O_EXCL・pid 生存判定・producer hash 照合 |
+| 内 | build 開始ゲート (lock 排他 / graph node 初期化 / 孤児 lease 回収 / graph_hash pin) | 決定論 script | `manage-build-lease.py` (TG-C07) → `sync-task-state.py --initialize-from-graph` (TG-C02) | owner-token + O_EXCL・pid 生存判定・全 node materialize・producer hash 照合 |
 | 内 | ready-set 計算 | 決定論 script | `dispatch-ready-set.py` (TG-C01) → producer `compute-ready-set.py` | depends_on 完了 + consumes 実在 + write_scope 非重複 |
 | 内 | fan-out 判断 (どの ready を並列起動するか) | **AI orchestrator** | dispatcher=`/capability-build` (TG-C06) | TG-C01 の `ready_batch`/`conflicts` を入力に起動を決める |
 | 内 | node→build 解決 (`entity_ref`→route 写像) | 決定論写像 | dispatcher (`entity_ref==route.component_id`) | 自然文 title 解釈に依存しない |

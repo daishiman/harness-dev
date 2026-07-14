@@ -18,6 +18,9 @@
 #       blocked 時 (第2段=--task-state の blocked node 残存): blocked_tasks[]{id,blocked_reason}
 #                   (origin-failure/propagated 双方・id 昇順) + next_steps 分岐指示
 #                   [人手救済 (受入基準修正→再検証), emit-discovered-task による外ループ合流]
+#       blocked 時 (C01 native surface drift): native_surface_gate
+#                   に status/return_code/child_status/child_report/remediation を保持し、
+#                   drift/conflict/parse/race/stale evidence を success へ畳まない
 #       ok 時: 記録サマリ (entries_recorded + knowledge_record_status=ok|ok_no_lessons|loop_a_skipped|
 #              loop_b_skipped|record_failed + store_results{loop_a,loop_b}{status,recorded[,reason]}
 #              per-store 件数 + empty_reason (entries==0 の理由・それ以外 null))。store 不在/consult_at
@@ -57,13 +60,17 @@ completion_gate:"blocked" とする (blocked を放置した completed 宣言を
 起票による外ループ合流] で救済経路を単体提示する。全出力形は inbox_absent (inbox ディレクトリ
 不在=外ループ未発火 と 実在+全件処理済 の区別) を携帯する。
 
-完了ゲート第3段: --task-state の実パスから上方探索した repo root に唯一の生成器
-scripts/build-claude-symlinks.py が実在する場合、--check を実行して .claude symlink drift
-(build した skill/agent/command が .claude へ未展開で Claude Code に認識されない状態) を検査し、
-drift なら completion_gate:"blocked" + fix_command (bash scripts/sync-skills-to-claude.sh --apply)
-を単体提示する (run-build-skill SKILL.md の build 完了契約「build/更新後は sync 必須」の機械層。
-宣言のみだと route 分散 build の task-graph モードで owner 不在のまま skip される実害が出た)。
-生成器不在 (テスト隔離環境・配布先) は claude_symlink_gate.status:"skipped" で fail-soft 通過する。
+完了ゲート第3段: local required node はすべて done を必須とする。P13 の user-owned
+runtime 操作だけは build dir の runtime-evidence-ledger.json に local evidence=present と
+pending_user_gate が明記された場合に保留できる。
+
+完了ゲート第4段: desired-set owner の C01 native surface orchestrator (symlink/settings child と
+C02 parity validator を内包) だけを ``--check --json`` で read-only 実行する。child の
+return code だけでなく、verdict/adapter status/violations/remediation を child_report として
+保持する。JSON が解釈できない、または報告 exit_code と process return code が
+不一致な場合は parse として fail-closed にする。最上位 generator 不在だけを
+skipped_not_installed とし、drift/conflict/parse (child 上の race/timeout/stale evidence を含む)
+は completion_gate:"blocked" とする。無効 projection は C01 scope.skipped として保持する。
 
 gate ok 時のみ knowledge 記録へ進む: task-events.jsonl / stall summary / route-build-report
 handoff_notes に加え、task-state nodes の route_report 実体から deviations[] (string 配列) と
@@ -80,8 +87,10 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 _HERE = Path(__file__).resolve().parent
@@ -194,6 +203,252 @@ def scan_blocked_tasks(task_state: dict) -> list[dict]:
         if isinstance(n, dict) and n.get("state") == "blocked"
     ]
     return sorted(blocked, key=lambda b: str(b["id"]))
+
+
+_RUNTIME_LEDGER_NAME = "runtime-evidence-ledger.json"
+_RUNTIME_LEDGER_SCHEMA_PATH = (
+    _PLUGIN_ROOT / "skills/run-build-skill/schemas/runtime-evidence-ledger.schema.json"
+)
+_RUNTIME_LEDGER_SCHEMA = json.loads(_RUNTIME_LEDGER_SCHEMA_PATH.read_text(encoding="utf-8"))
+_RUNTIME_LEDGER_VERSION = _RUNTIME_LEDGER_SCHEMA["properties"]["schema_version"]["const"]
+_RUNTIME_GATE_IDS = tuple(_RUNTIME_LEDGER_SCHEMA["properties"]["gates"]["required"])
+_RUNTIME_GATE_STATES = set(
+    _RUNTIME_LEDGER_SCHEMA["definitions"]["gate"]["properties"]["state"]["enum"]
+)
+_RUNTIME_ARTIFACT_PURPOSES = set(
+    _RUNTIME_LEDGER_SCHEMA["definitions"]["artifact"]["properties"]["purpose"]["enum"]
+)
+_RUNTIME_LOCAL_REQUIRED = {"local_build", "native_parity", "rollback"}
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_GRAPH_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_UTC_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?Z$")
+_LOCAL_REQUIRED_TITLE_MARKERS = (
+    "apply→check", "apply->check", "parity", "freshness", "observation", "remediation",
+)
+_USER_GATE_TITLE_MARKERS = {
+    "install": ("install",),
+    "enable": ("enable",),
+    "trust": ("trust",),
+    "new_session": ("sessionstart", "new-session", "new session"),
+    "uninstall": ("uninstall",),
+    "pr": ("r3", "commit", "push", "pull request", "明示承認"),
+}
+
+
+def _valid_utc(value: object) -> bool:
+    if not isinstance(value, str) or not _UTC_RE.fullmatch(value):
+        return False
+    try:
+        datetime.fromisoformat(value.removesuffix("Z") + "+00:00")
+    except ValueError:
+        return False
+    return True
+
+
+def _gate_matches_node(gate_id: str, node: dict) -> bool:
+    """ledger が local node を user gate と偽装できないよう graph title と照合する。"""
+    title = str(node.get("title", "")).casefold()
+    if any(marker in title for marker in _LOCAL_REQUIRED_TITLE_MARKERS):
+        return False
+    return any(marker in title for marker in _USER_GATE_TITLE_MARKERS.get(gate_id, ()))
+
+
+def validate_runtime_pending_ledger(
+    ledger: object,
+    *,
+    ledger_path: Path | None,
+    expected_graph_hash: object,
+    graph_nodes: list[dict],
+) -> list[str]:
+    """runtime ledger の schema・freshness・artifact・task mapping を fail-closed 検査する。"""
+    if not isinstance(ledger, dict):
+        return ["runtime evidence ledger が object でない"]
+    errs: list[str] = []
+    allowed_top = set(_RUNTIME_LEDGER_SCHEMA["properties"])
+    required_top = set(_RUNTIME_LEDGER_SCHEMA["required"])
+    missing_top = required_top - set(ledger)
+    unknown_top = set(ledger) - allowed_top
+    if missing_top:
+        errs.append(f"runtime evidence ledger 必須キー欠落: {sorted(missing_top)}")
+    if unknown_top:
+        errs.append(f"runtime evidence ledger 未知キー: {sorted(unknown_top)}")
+    if ledger.get("schema_version") != _RUNTIME_LEDGER_VERSION:
+        errs.append(f"runtime evidence ledger.schema_version は {_RUNTIME_LEDGER_VERSION} 必須")
+    graph_hash = ledger.get("graph_hash")
+    if not isinstance(graph_hash, str) or not _GRAPH_HASH_RE.fullmatch(graph_hash):
+        errs.append("runtime evidence ledger.graph_hash が sha256:<64-hex> でない")
+    if not isinstance(expected_graph_hash, str) or not _GRAPH_HASH_RE.fullmatch(expected_graph_hash):
+        errs.append("task-state.graph_hash が無い/不正で ledger freshness を検証できない")
+    elif graph_hash != expected_graph_hash:
+        errs.append("runtime evidence ledger.graph_hash が task-state pin と不一致")
+    if not _valid_utc(ledger.get("generated_at")):
+        errs.append("runtime evidence ledger.generated_at が UTC RFC 3339 でない")
+    if not isinstance(ledger.get("boundary"), str) or not ledger.get("boundary", "").strip():
+        errs.append("runtime evidence ledger.boundary は非空文字列必須")
+
+    artifacts = ledger.get("artifacts")
+    purposes: set[str] = set()
+    artifact_by_purpose: dict[str, dict] = {}
+    if not isinstance(artifacts, list):
+        errs.append("runtime evidence ledger.artifacts が配列でない")
+        artifacts = []
+    artifact_allowed = set(_RUNTIME_LEDGER_SCHEMA["definitions"]["artifact"]["properties"])
+    for i, artifact in enumerate(artifacts):
+        if not isinstance(artifact, dict):
+            errs.append(f"runtime evidence ledger.artifacts[{i}] が object でない")
+            continue
+        if set(artifact) != artifact_allowed:
+            errs.append(f"runtime evidence ledger.artifacts[{i}] のキー集合が schema と不一致")
+        purpose = artifact.get("purpose")
+        path_raw = artifact.get("path")
+        digest = artifact.get("sha256")
+        if purpose not in _RUNTIME_ARTIFACT_PURPOSES:
+            errs.append(f"runtime evidence ledger.artifacts[{i}].purpose が enum 外")
+        elif purpose in purposes:
+            errs.append(f"runtime evidence ledger artifact purpose 重複: {purpose}")
+        else:
+            purposes.add(purpose)
+            artifact_by_purpose[purpose] = artifact
+        path = Path(path_raw) if isinstance(path_raw, str) else None
+        if path is None or not path_raw or path.is_absolute() or ".." in path.parts:
+            errs.append(f"runtime evidence ledger.artifacts[{i}].path は build-dir 相対かつ confinement 必須")
+        if not isinstance(digest, str) or not _SHA256_RE.fullmatch(digest):
+            errs.append(f"runtime evidence ledger.artifacts[{i}].sha256 が lowercase 64-hex でない")
+        if path is not None and ledger_path is not None and not path.is_absolute() and ".." not in path.parts:
+            actual = ledger_path.parent / path
+            if not actual.is_file():
+                errs.append(f"runtime evidence artifact 不在: {path_raw}")
+            elif isinstance(digest, str) and _SHA256_RE.fullmatch(digest):
+                current = hashlib.sha256(actual.read_bytes()).hexdigest()
+                if current != digest:
+                    errs.append(f"runtime evidence artifact sha256 不一致: {path_raw}")
+    missing_purposes = _RUNTIME_LOCAL_REQUIRED - purposes
+    if missing_purposes:
+        errs.append(f"runtime evidence ledger local artifact 欠落: {sorted(missing_purposes)}")
+
+    nodes_by_id = {
+        node.get("id"): node for node in graph_nodes
+        if isinstance(node, dict) and isinstance(node.get("id"), str)
+    }
+    gates = ledger.get("gates")
+    if not isinstance(gates, dict):
+        errs.append("runtime evidence ledger.gates が object でない")
+        gates = {}
+    missing_gates = set(_RUNTIME_GATE_IDS) - set(gates)
+    unknown_gates = set(gates) - set(_RUNTIME_GATE_IDS)
+    if missing_gates:
+        errs.append(f"runtime evidence ledger gate 欠落: {sorted(missing_gates)}")
+    if unknown_gates:
+        errs.append(f"runtime evidence ledger gate 未知キー: {sorted(unknown_gates)}")
+    gate_allowed = set(_RUNTIME_LEDGER_SCHEMA["definitions"]["gate"]["properties"])
+    for gate_id in _RUNTIME_GATE_IDS:
+        gate = gates.get(gate_id)
+        if not isinstance(gate, dict):
+            continue
+        if set(gate) != gate_allowed:
+            errs.append(f"runtime evidence ledger.gates.{gate_id} のキー集合が schema と不一致")
+        state = gate.get("state")
+        task_ids = gate.get("task_ids")
+        refs = gate.get("artifact_refs")
+        reason = gate.get("reason")
+        if state not in _RUNTIME_GATE_STATES:
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.state が enum 外")
+        if not isinstance(task_ids, list) or any(not isinstance(x, str) or not x for x in task_ids):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.task_ids が文字列配列でない")
+            task_ids = []
+        elif len(task_ids) != len(set(task_ids)):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.task_ids が重複")
+        if not isinstance(refs, list) or any(ref not in purposes for ref in refs):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.artifact_refs が実在 purpose を参照していない")
+            refs = []
+        elif len(refs) != len(set(refs)):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.artifact_refs が重複")
+        if state == "verified" and not refs:
+            errs.append(f"runtime evidence ledger.gates.{gate_id}: verified は artifact_refs 必須")
+        if reason is not None and not isinstance(reason, str):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}.reason は string/null 必須")
+        if state in {"pending_user_gate", "not_applicable"} and (
+            not isinstance(reason, str) or not reason.strip()
+        ):
+            errs.append(f"runtime evidence ledger.gates.{gate_id}: {state} は reason 必須")
+        if state == "not_applicable" and gate_id != "pr":
+            errs.append(f"runtime evidence ledger.gates.{gate_id}: not_applicable は PR gate のみ許可")
+        for task_id in task_ids:
+            node = nodes_by_id.get(task_id)
+            if node is None:
+                errs.append(f"runtime evidence ledger.gates.{gate_id}.task_ids が graph node 不在: {task_id}")
+                continue
+            if node.get("phase_ref") != "P13" or not _gate_matches_node(gate_id, node):
+                errs.append(
+                    f"runtime evidence ledger.gates.{gate_id}.task_ids は明示 user-gated P13 node でない: {task_id}"
+                )
+    return errs
+
+
+def _deferred_runtime_task_ids(ledger: object) -> set[str]:
+    if not isinstance(ledger, dict) or not isinstance(ledger.get("gates"), dict):
+        return set()
+    out: set[str] = set()
+    for gate_id, gate in ledger["gates"].items():
+        if gate_id not in _RUNTIME_GATE_IDS or not isinstance(gate, dict):
+            continue
+        if gate.get("state") not in {"pending_user_gate", "not_applicable"}:
+            continue
+        task_ids = gate.get("task_ids")
+        if isinstance(task_ids, list):
+            out.update(task_id for task_id in task_ids if isinstance(task_id, str))
+    return out
+
+
+def scan_incomplete_required_tasks(task_state: dict, task_graph: dict | None,
+                                   runtime_ledger: object | None,
+                                   runtime_ledger_path: Path | None) -> tuple[list[dict], dict]:
+    """local required node の未完了を列挙する。
+
+    P13 全体ではなく、schema-valid ledger が task id 単位で列挙した user-owned runtime
+    gate だけを保留する。local apply/check/parity/freshness は ledger へ列挙しても保留不可。
+    """
+    state_nodes = task_state.get("nodes", []) if isinstance(task_state, dict) else []
+    state_by_id = {
+        n.get("id"): n for n in state_nodes
+        if isinstance(n, dict) and isinstance(n.get("id"), str)
+    }
+    graph_nodes = (task_graph.get("nodes", []) if isinstance(task_graph, dict) else state_nodes)
+    ledger_errors = validate_runtime_pending_ledger(
+        runtime_ledger,
+        ledger_path=runtime_ledger_path,
+        expected_graph_hash=task_state.get("graph_hash") if isinstance(task_state, dict) else None,
+        graph_nodes=graph_nodes,
+    ) if runtime_ledger is not None else [
+        f"{_RUNTIME_LEDGER_NAME} 不在"
+    ]
+    ledger_ok = not ledger_errors
+    ledger_deferred_ids = _deferred_runtime_task_ids(runtime_ledger) if ledger_ok else set()
+    incomplete: list[dict] = []
+    deferred_p13: list[str] = []
+    p13_incomplete = False
+    for graph_node in graph_nodes:
+        if not isinstance(graph_node, dict) or not isinstance(graph_node.get("id"), str):
+            continue
+        nid = graph_node["id"]
+        state_node = state_by_id.get(nid)
+        state = state_node.get("state") if state_node else "missing"
+        if state == "done":
+            continue
+        phase_ref = graph_node.get("phase_ref") or (state_node or {}).get("phase_ref")
+        is_runtime_candidate = nid in ledger_deferred_ids
+        p13_incomplete = p13_incomplete or phase_ref == "P13"
+        if is_runtime_candidate and ledger_ok:
+            deferred_p13.append(nid)
+            continue
+        incomplete.append({"id": nid, "state": state, "phase_ref": phase_ref})
+    return sorted(incomplete, key=lambda item: item["id"]), {
+        "status": "accepted" if ledger_ok and deferred_p13 else (
+            "invalid" if p13_incomplete and not ledger_ok else "not_needed"),
+        "path": None,
+        "deferred_task_ids": sorted(deferred_p13),
+        "violations": [] if ledger_ok else ledger_errors,
+    }
 
 
 # ── handback 構築 (TG-C08 出力単体で外ループを閉じられる copy-paste 実行可能形) ──
@@ -600,50 +855,169 @@ def _resolve_default_paths(args) -> tuple[Path, Path | None]:
     return inbox, events
 
 
-_SYMLINK_GENERATOR_REL = Path("scripts") / "build-claude-symlinks.py"
-_SYMLINK_FIX_COMMAND = "bash scripts/sync-skills-to-claude.sh --apply"
+# ── C01 単一 desired-set native surface 完了ゲート ─────────────────
+# symlink/settings child generator を TG-C08 から直接呼び出さない。activation-filtered
+# desired-set の owner である C01 の structured report のみを完了判定に使う。
+_NATIVE_SURFACE_GENERATOR_REL = Path("plugins") / "harness-creator" / "scripts" / "sync-native-surfaces.py"
+_NATIVE_SURFACE_FIX_COMMAND = "python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --apply"
+_NATIVE_SURFACE_CHECK_COMMAND = (
+    "python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --check --json"
+)
+_GATE_STATUS_BY_RC = {0: "ok", 1: "drift", 2: "conflict", 3: "parse"}
+_READONLY_GATE_TIMEOUT_SECONDS = 30
 
 
-def _resolve_repo_root_for_symlink_gate(task_state_path: str | None) -> Path | None:
-    """--task-state の実パスから上方探索で repo root (生成器を持つ祖先) を解決する。
+def _resolve_repo_root_for_generator(task_state_path: str | None, generator_rel: Path) -> Path | None:
+    """task-state の実パスから、generator_rel を持つ祖先 (repo root) を上方探索で解決する。
 
-    実 run の task-state は repo (worktree) 配下 eval-log/ に置かれるため必ず解決でき、
-    テスト (tmp dir) や生成器を持たない配布先では None を返して gate を fail-soft skip する
-    (cwd 非依存: dispatcher の起動位置に関わらず task-state の位置だけで決定論解決する)。
+    テスト (tmp dir) や generator を持たない配布先では None を返し gate を fail-soft skip する。
     """
     if not task_state_path:
         return None
     cur = Path(task_state_path).resolve().parent
     for anc in (cur, *cur.parents):
-        if (anc / _SYMLINK_GENERATOR_REL).is_file():
+        if (anc / generator_rel).is_file():
             return anc
     return None
 
 
-def _check_claude_symlink_gate(task_state_path: str | None) -> dict:
-    """完了ゲート第3段: .claude symlink drift (build 実体の .claude 未展開) を検査する。
+def _child_remediation_items(report: dict) -> list[dict]:
+    """C01/reflector の構造化 report から人手修復に必要な項目だけを抜き出す。"""
+    items: list[dict] = []
+    for adapter in report.get("adapters", []):
+        if not isinstance(adapter, dict):
+            continue
+        if adapter.get("remediation") or adapter.get("warning"):
+            items.append({
+                "source": adapter.get("name"),
+                "status": adapter.get("status"),
+                "warning": adapter.get("warning"),
+                "remediation": adapter.get("remediation"),
+            })
+    for conflict in report.get("conflicts", []):
+        if isinstance(conflict, dict):
+            items.append({"source": "conflict", "detail": conflict})
+    for violation in report.get("violations", []):
+        if isinstance(violation, dict):
+            items.append({"source": "violation", "detail": violation})
+    return items
 
-    build 完了契約 (run-build-skill SKILL.md「build/更新後は sync 必須」) の機械層。宣言のみ
-    だと task-graph モード (route 分散 build) で owner 不在のまま skip される実害が出た
-    (2026-07-11 extract-system-blueprint)。drift は blocked とし fix_command を単体提示する。
-    """
-    root = _resolve_repo_root_for_symlink_gate(task_state_path)
-    if root is None:
-        return {"status": "skipped",
-                "reason": "generator-absent (--task-state 未指定 or 生成器を持つ祖先なし)"}
-    proc = subprocess.run(
-        [sys.executable, str(root / _SYMLINK_GENERATOR_REL),
-         "--plugins-dir", str(root / "plugins"),
-         "--target-dir", str(root / ".claude"), "--check"],
-        capture_output=True, text=True)
-    if proc.returncode == 0:
-        return {"status": "ok", "repo_root": str(root)}
-    return {
-        "status": "drift",
-        "repo_root": str(root),
-        "detail": (proc.stdout or proc.stderr).strip()[-400:],
-        "fix_command": _SYMLINK_FIX_COMMAND,
+
+def _build_gate_remediation(status: str, fix_command: str, check_command: str,
+                            child_report: dict | None) -> dict:
+    """status 別の安全な action/command/retry を機械可読で返す。"""
+    actions = {
+        "drift": "managed projection を apply してから read-only check を再実行する",
+        "conflict": "child_report の conflict/remediation を解消し、apply せず check を再実行する",
+        "parse": "child_report/detail の invalid layout/parse/race を修復し、check を再実行する",
     }
+    return {
+        "action": actions.get(status, "child failure を修復し check を再実行する"),
+        "command": fix_command if status == "drift" else None,
+        "retry_command": check_command,
+        "child_items": _child_remediation_items(child_report or {}),
+    }
+
+
+def _check_readonly_generator_gate(task_state_path: str | None, generator_rel: Path,
+                                   args_fn, fix_command: str, check_command: str) -> dict:
+    """generator を ``--check --json`` で実行し child status/remediation を保持する。"""
+    root = _resolve_repo_root_for_generator(task_state_path, generator_rel)
+    if root is None:
+        return {"status": "skipped_not_installed",
+                "reason": f"generator-absent ({generator_rel})"}
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(root / generator_rel), *args_fn(root)],
+            capture_output=True, text=True, timeout=_READONLY_GATE_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as exc:
+        remediation = _build_gate_remediation(
+            "conflict", fix_command, check_command, None)
+        remediation["action"] = (
+            f"read-only check が {_READONLY_GATE_TIMEOUT_SECONDS}秒で timeout。"
+            "競合/子 process 停滞を解消して check を再実行する"
+        )
+        return {
+            "status": "conflict",
+            "repo_root": str(root),
+            "return_code": None,
+            "child_status": "timeout",
+            "child_report": None,
+            "detail": str(exc)[-400:],
+            "remediation": remediation,
+        }
+    except OSError as exc:
+        return {
+            "status": "parse",
+            "repo_root": str(root),
+            "return_code": None,
+            "child_status": "spawn_error",
+            "child_report": None,
+            "detail": str(exc)[-400:],
+            "remediation": _build_gate_remediation(
+                "parse", fix_command, check_command, None),
+        }
+    status = _GATE_STATUS_BY_RC.get(proc.returncode, "parse")
+    child_report: dict | None = None
+    try:
+        parsed = json.loads(proc.stdout)
+        if isinstance(parsed, dict):
+            child_report = parsed
+        else:
+            status = "parse"
+    except (json.JSONDecodeError, TypeError):
+        status = "parse"
+    # C01 JSON は exit_code/verdict/adapters を必須とする。欠落や process rc と
+    # 不一致な報告は「structured report が成立した」とみなさない。
+    reported_rc = child_report.get("exit_code") if child_report is not None else None
+    structured = (
+        child_report is not None
+        and isinstance(child_report.get("verdict"), str)
+        and isinstance(child_report.get("adapters"), list)
+        and isinstance(reported_rc, int)
+    )
+    if not structured or reported_rc != proc.returncode:
+        status = "parse"
+    child_status = status
+    if child_report is not None:
+        child_status = child_report.get("verdict", child_report.get("status", status))
+    result = {
+        "status": status,
+        "repo_root": str(root),
+        "return_code": proc.returncode,
+        "child_status": child_status,
+        "child_report": child_report,
+    }
+    if status != "ok":
+        result["detail"] = (proc.stderr or proc.stdout).strip()[-400:]
+        result["remediation"] = _build_gate_remediation(
+            status, fix_command, check_command, child_report)
+        # 後方互換: drift 時のみ実行可能な自動修復 command を従来 key にも残す。
+        if status == "drift":
+            result["fix_command"] = fix_command
+    return result
+
+
+def _check_native_surface_gate(task_state_path: str | None) -> dict:
+    """C01 単一 --check: activation-filtered projection + parity を一括検査する。"""
+    return _check_readonly_generator_gate(
+        task_state_path, _NATIVE_SURFACE_GENERATOR_REL,
+        lambda root: ["--repo-root", str(root), "--check", "--json"],
+        _NATIVE_SURFACE_FIX_COMMAND, _NATIVE_SURFACE_CHECK_COMMAND)
+
+
+def _gate_remediation_step(name: str, gate: dict) -> str:
+    """blocked gate の構造化 remediation を、実行可能性を保って表示する。"""
+    remediation = gate.get("remediation") if isinstance(gate.get("remediation"), dict) else {}
+    command = remediation.get("command") or gate.get("fix_command")
+    action = remediation.get("action") or "child failure を修復する"
+    retry = remediation.get("retry_command")
+    parts = [f"{name}: {gate.get('status')} - {action}"]
+    if command:
+        parts.append(f"command={command}")
+    if retry:
+        parts.append(f"retry={retry}")
+    return "; ".join(parts)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -712,23 +1086,69 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(payload, ensure_ascii=False))
         return 1
 
-    # ── 完了ゲート第3段: .claude symlink drift (build 実体の未展開) ──
-    symlink_gate = _check_claude_symlink_gate(args.task_state)
-    if symlink_gate["status"] == "drift":
+    # ── 完了ゲート第3段: local required node の done 強制 ──
+    # P13 だけは state と同じ build dir の明示 runtime ledger で user gate を分離できる。
+    task_graph: dict | None = None
+    if args.plan_dir:
+        graph_path = Path(args.plan_dir) / "task-graph.json"
+        try:
+            task_graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"task-graph 読込/parse 失敗 ({graph_path}): {exc}", file=sys.stderr)
+            return 2
+    runtime_ledger: object | None = None
+    runtime_ledger_path: Path | None = None
+    if args.task_state:
+        runtime_ledger_path = Path(args.task_state).parent / _RUNTIME_LEDGER_NAME
+        if runtime_ledger_path.is_file():
+            try:
+                runtime_ledger = json.loads(runtime_ledger_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                runtime_ledger = None
+    runtime_ledger_gate = {"status": "not_needed", "path": None,
+                           "deferred_task_ids": [], "violations": []}
+    if task_state is not None:
+        incomplete_tasks, runtime_ledger_gate = scan_incomplete_required_tasks(
+            task_state, task_graph, runtime_ledger, runtime_ledger_path)
+        runtime_ledger_gate["path"] = str(runtime_ledger_path) if runtime_ledger_path else None
+        if incomplete_tasks:
+            payload = {
+                "completion_gate": "blocked",
+                "inbox_absent": inbox_absent,
+                "incomplete_required_tasks": incomplete_tasks,
+                "runtime_pending_user_gate": runtime_ledger_gate,
+                "next_steps": [
+                    "local apply/check/parity/freshness を含む required task を done にし task-state を再同期する",
+                    f"user-owned runtime 保留は {_RUNTIME_LEDGER_NAME} schema に artifact hash、graph pin、"
+                    "gate state、対象 task id を明記する",
+                ],
+            }
+            if not args.dry_run:
+                append_gate_event(task_events, {
+                    "type": "build_blocked",
+                    "incomplete_required_task_count": len(incomplete_tasks),
+                })
+            print(json.dumps(payload, ensure_ascii=False))
+            return 1
+
+    # ── 完了ゲート第4段: C01 単一 desired-set check ──
+    native_surface_gate = _check_native_surface_gate(args.task_state)
+    if native_surface_gate["status"] in ("drift", "conflict", "parse"):
         payload = {
             "completion_gate": "blocked",
             "inbox_absent": inbox_absent,
-            "claude_symlink_gate": symlink_gate,
+            "runtime_pending_user_gate": runtime_ledger_gate,
+            "native_surface_gate": native_surface_gate,
             "next_steps": [
-                f"{_SYMLINK_FIX_COMMAND}  # repo root: {symlink_gate['repo_root']}"
-                " (唯一の生成器 build-claude-symlinks.py を冪等呼出)",
-                "sync 後に本 TG-C08 を同一引数で再実行し completion_gate:ok を確認する",
+                _gate_remediation_step("native_surface_gate", native_surface_gate),
+                "修復後に本 TG-C08 を同一引数で再実行し completion_gate:ok を確認する",
             ],
         }
         if not args.dry_run:
             append_gate_event(task_events, {
                 "type": "build_blocked",
-                "claude_symlink_gate": "drift",
+                "blocked_gates": ["native_surface_gate"],
+                "gate_statuses": {"native_surface_gate": native_surface_gate.get("status")},
             })
         print(json.dumps(payload, ensure_ascii=False))
         return 1
@@ -764,7 +1184,8 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({
             "completion_gate": "ok",
             "inbox_absent": inbox_absent,
-            "claude_symlink_gate": symlink_gate,
+            "runtime_pending_user_gate": runtime_ledger_gate,
+            "native_surface_gate": native_surface_gate,
             "dry_run": True,
             "loop_a_store": loop_a_store,
             "loop_b_store": loop_b_store,
@@ -843,7 +1264,8 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps({
         "completion_gate": "ok",
         "inbox_absent": inbox_absent,
-        "claude_symlink_gate": symlink_gate,
+        "runtime_pending_user_gate": runtime_ledger_gate,
+        "native_surface_gate": native_surface_gate,
         "entries_recorded": recorded,
         "knowledge_record_status": record_status,
         "empty_reason": empty_reason,

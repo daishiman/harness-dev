@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "dev-graph",
+  "route_id": "C02",
+  "component_kind": "skill",
+  "name": "run-dev-graph-node",
+  "builder": "run-skill-create",
+  "build_target": "plugins/dev-graph/skills/run-dev-graph-node/",
+  "status": "success",
+  "summary": "run-dev-graph-node を component inventory と task specification に従って具体実装し、依存 entry point・fail-closed 境界・入出力契約を配線した。",
+  "deviations": [],
+  "evidence": [
+    "validate-frontmatter.py: assigned dev-graph skill/agent/command exit 0",
+    "lint-skill-name.py + lint-skill-description.py + lint-skill-tree.py: assigned skills exit 0",
+    "python3 -m py_compile plugins/dev-graph/hooks/*.py plugins/dev-graph/scripts/*.py: exit 0",
+    "jq empty plugin envelope/schemas/templates: exit 0"
+  ],
+  "inputs_consumed": [
+    "eval-log/dev-graph/build/route-C11.json",
+    "eval-log/dev-graph/build/route-C24.json",
+    "eval-log/dev-graph/build/route-C29.json"
+  ],
+  "handover": "後続 route は caller-repository containment、C02 single-writer、binding別 projection authority、C14 macro/C19 import/system-dev-planner exact-13 の責務境界を保持する。",
+  "covered_task_ids": [
+    "B-C02"
+  ],
+  "corrections": [
+    {"target":"evidence","correction":"C02固有: build-trace component sha256=b89e50eaf2c17d2e45733a7207dc8a217ed92a28e820abee09f687d693e6e967。run-dev-graph-node/SKILL.md は4種skill lint全 exit 0、register-package.py exact-13 runtime tests 23 passed。","corrected_by":"elegant-improvement-executor iteration 2"}
+  ]
+}

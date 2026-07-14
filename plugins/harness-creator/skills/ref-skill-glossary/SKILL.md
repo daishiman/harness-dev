@@ -1,7 +1,7 @@
 ---
 name: ref-skill-glossary
 description: 未知の用語に遭遇したとき、用語統一を確認するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref

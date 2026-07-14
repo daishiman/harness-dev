@@ -1,0 +1,80 @@
+{
+  "skill_name": "run-system-dev-plan",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "システム開発タスク仕様書を作る",
+    "system-dev-plan",
+    "dev-graphからタスク仕様生成"
+  ],
+  "output_contract": "repo-local staging/feature-package.json + workstream-inventory.json + task-specs/phase-01..13.md + 13-node task-graph.json + system-build-handoff.json + atomic-promotion-receipt.json + dev-graph-registration.json + dev-graph-registration-receipt.json",
+  "boundary": "入力=呼出元repo-local .dev-graph/config.json + system-spec-harness v0.1.0確定成果物/出力=同じrepo内のタスク仕様書・DAG・promotion receipt。symlink物理元/別repoのcontent読書き、仕様書内容の新規作成、実装コード生成はしない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "check-implementation-readiness.py",
+    "resolve-project-context.py",
+    "init-project-layout.py",
+    "promote-system-plan.py",
+    "validate-system-plan.py"
+  ],
+  "external_systems": [
+    "system-spec-harness",
+    "dev-graph"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "caller repository root確定",
+    "single feature context解決",
+    "system-spec-harness lineage検証",
+    "P01..P13 exact task設計",
+    "13 task-spec+13-node DAG生成",
+    "phase欠落/重複/追加拒否",
+    "implementation_readiness判定",
+    "独立評価digest一致",
+    "atomic promotion",
+    "exact 13 dev-graph登録receipt検証",
+    "branch/worktree execution契約写像"
+  ],
+  "goal": "1つのdev-graph featureからP01..P13 exact 13 executable task specs + 13-entry inventory + 13-node intra-feature DAG + handoffがimplementation_readinessを満たして確定した状態",
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "仕様書内容の再構築とタスク分解を単一箇所に混在させると DRY が崩れ implementation-readiness 判定が属人化するため、system-spec-harness を引用専用入力とし R1-R4 のゴールシーク型ライフサイクルで分解を確定する",
+  "responsibilities": [
+    {
+      "id": "R0-resolve",
+      "summary": "C09で呼出元repo rootとrepo-local configを解決しcontainmentを確定する",
+      "prompt_required": false
+    },
+    {
+      "id": "R1-elicit",
+      "summary": "system-spec-harness v0.1.0確定成果物とdev-graph呼出し引数からgoal-specを確定する (C03へ委譲)",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-decompose",
+      "summary": "goal-specをsystem workstream語彙 (frontend/backend/api/data/infrastructure/security/quality/documentation/operations) へ分解しworkstream-inventoryを設計する (C04へ委譲)",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-emit",
+      "summary": "repo-local stagingへ別phase文書を作らず、P01..P13 exact 13 executable task specs + 13-node DAG + feature package + handoffを生成し、readiness未達を停止する (C04へ委譲)",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-evaluate",
+      "summary": "C02からC05を独立contextで起動し、staging digestにpinされた4条件plan-findingsを受領する。FAILまたはdigest不一致ではpromotionしない",
+      "prompt_required": false
+    },
+    {
+      "id": "R5-promote",
+      "summary": "C11で独立評価とstagingのdigest一致後だけatomic promotionする。dev-graph peer互換性とexpected/applied=13、P01..P13 exact-set、共通parent/package receipt一致後だけL4 handoffを解放する",
+      "prompt_required": false
+    }
+  ]
+}

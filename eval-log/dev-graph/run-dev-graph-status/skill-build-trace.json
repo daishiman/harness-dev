@@ -1,0 +1,641 @@
+{
+  "skill_name": "run-dev-graph-status",
+  "skill_kind": "run",
+  "build_mode": "create",
+  "skill_path": "plugins/dev-graph/skills/run-dev-graph-status",
+  "source_docs": [
+    "doc/ClaudeCodeスキルの設計書/02-claude-code-skill-spec.md",
+    "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+    "doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md",
+    "doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md",
+    "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+    "doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md",
+    "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+    "doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md",
+    "doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md",
+    "doc/ClaudeCodeスキルの設計書/11-templates.md",
+    "doc/ClaudeCodeスキルの設計書/13-checklists.md",
+    "doc/ClaudeCodeスキルの設計書/14-dynamic-context-injection.md",
+    "doc/ClaudeCodeスキルの設計書/15-official-source-notes.md",
+    "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md",
+    "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+    "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+    "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+    "doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md",
+    "doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md",
+    "doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md",
+    "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+    "doc/ClaudeCodeスキルの設計書/33-change-governance.md",
+    "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+    "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md",
+    "plugins/harness-creator/skills/run-build-skill/references/resource-map.yaml",
+    "plugins/harness-creator/skills/run-build-skill/references/build-steps.md",
+    "plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md",
+    "plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md",
+    "plugins/harness-creator/skills/run-build-skill/references/prompt-placement-convention.md",
+    "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+    "plugin-plans/dev-graph/component-inventory.json",
+    "plugins/dev-graph/plugin-composition.yaml",
+    "plugin-plans/dev-graph/briefs/skill-brief-C18.json",
+    "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md",
+    "plugins/dev-graph/skills/run-dev-graph-status/prompts/R1-elicit.md",
+    "plugins/dev-graph/skills/run-dev-graph-status/prompts/R2-plan.md",
+    "plugins/dev-graph/skills/run-dev-graph-status/prompts/R3-status.md"
+  ],
+  "context_map_decision": {
+    "map": "run-build-skill/references/resource-map.yaml categories selected by strict mass-production build",
+    "task_category": "baseline-skill-build + layering + evaluator + meta-reproducibility",
+    "selected_docs": [
+      "doc/ClaudeCodeスキルの設計書/02-claude-code-skill-spec.md",
+      "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md",
+      "doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md",
+      "doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md",
+      "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md",
+      "doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md",
+      "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md",
+      "doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md",
+      "doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md",
+      "doc/ClaudeCodeスキルの設計書/11-templates.md",
+      "doc/ClaudeCodeスキルの設計書/13-checklists.md",
+      "doc/ClaudeCodeスキルの設計書/14-dynamic-context-injection.md",
+      "doc/ClaudeCodeスキルの設計書/15-official-source-notes.md",
+      "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md",
+      "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md",
+      "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md",
+      "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md",
+      "doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md",
+      "doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md",
+      "doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md",
+      "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md",
+      "doc/ClaudeCodeスキルの設計書/33-change-governance.md",
+      "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md",
+      "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md",
+      "plugins/harness-creator/skills/run-build-skill/references/resource-map.yaml",
+      "plugins/harness-creator/skills/run-build-skill/references/build-steps.md",
+      "plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md",
+      "plugins/harness-creator/skills/run-build-skill/references/reproducibility-trace-schema.md",
+      "plugins/harness-creator/skills/run-build-skill/references/prompt-placement-convention.md",
+      "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+      "plugin-plans/dev-graph/component-inventory.json",
+      "plugins/dev-graph/plugin-composition.yaml",
+      "plugin-plans/dev-graph/briefs/skill-brief-C18.json",
+      "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md",
+      "plugins/dev-graph/skills/run-dev-graph-status/prompts/R1-elicit.md",
+      "plugins/dev-graph/skills/run-dev-graph-status/prompts/R2-plan.md",
+      "plugins/dev-graph/skills/run-dev-graph-status/prompts/R3-status.md"
+    ]
+  },
+  "design_model": {
+    "intent": "特定のissue/task/specification/architecture/documentをgraph_node_id/artifact_kind/project_id/domain/status/tagsで検索し、依存関係・close/tombstone状態をread-onlyで確認できる状態になっている",
+    "contract": "検索/状態表示レポート (該当ノード一覧 + artifact_kind/project_id/domain/tags/file_path/status/依存関係)",
+    "boundary": "入力=検索条件(graph_node_id/artifact_kind/project_id/domain/status/tags/キーワード)/出力=検索結果と状態表示のみ。書込みは一切行わない",
+    "execution": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md + declared script_refs/prompts",
+    "feedback": "frontmatter feedback_contract + DEV_GRAPH_ROOT goal-seek evidence"
+  },
+  "doc_coverage": [
+    {
+      "doc": "02-skill-structure",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/02-claude-code-skill-spec.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "03-frontmatter",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/03-yaml-frontmatter-reference.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "04-invocation-permissions",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/04-invocation-permissions-settings.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "05-layering",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/05-layering-skill-subagent-hook-mcp-cli.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "06-classification-naming",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/06-classification-and-naming.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "07-progressive-disclosure",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/07-progressive-disclosure.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "08-skill-writing-guidelines",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/08-skill-writing-guidelines.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "09-evaluation-orchestration",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "10-subagents-hooks-integration",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/10-subagents-hooks-integration.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "11-templates",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/11-templates.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "13-checklists",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/13-checklists.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "14-dynamic-context-injection",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/14-dynamic-context-injection.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "15-official-source-notes",
+      "status": "N/A",
+      "reason": "外部Webソースを生成入力にせず、planner inventory/briefとrepository内SSOTだけを使用したため。"
+    },
+    {
+      "doc": "16-official-skills-reference",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/16-official-skills-complete-reference.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "26-meta-skill-dogfooding",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/26-meta-skill-dogfooding.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "27-rubric-governance-runbook",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "28-script-execution-model",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/28-script-execution-model.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "29-multi-project-rubric-composition",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "30-paradigm-analogy-map",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/30-paradigm-analogy-map.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "31-output-routing-adapter-architecture",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/31-output-routing-adapter-architecture.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "32-creator-kit-implementation-ledger",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/32-creator-kit-implementation-ledger.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "33-change-governance",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/33-change-governance.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "34-plugin-governance-roadmap",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/34-plugin-governance-roadmap.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    },
+    {
+      "doc": "35-meta-harness-feedback-loop",
+      "status": "PASS",
+      "evidence": "doc/ClaudeCodeスキルの設計書/35-meta-harness-feedback-loop.md → plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / this trace"
+    }
+  ],
+  "build_flow_coverage": [
+    {
+      "step": "problem-definition",
+      "status": "PASS",
+      "evidence": "plugin-plans/dev-graph/briefs/skill-brief-C18.json"
+    },
+    {
+      "step": "execution-layer",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#Purpose & Output Contract"
+    },
+    {
+      "step": "classification",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#frontmatter kind"
+    },
+    {
+      "step": "naming",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#frontmatter name"
+    },
+    {
+      "step": "frontmatter",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md"
+    },
+    {
+      "step": "body",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#Purpose & Output Contract"
+    },
+    {
+      "step": "support-files",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/prompts/"
+    },
+    {
+      "step": "permissions-hooks",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/.claude-plugin/plugin.json"
+    },
+    {
+      "step": "validation",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/tests/"
+    },
+    {
+      "step": "operation-improvement",
+      "status": "PASS",
+      "evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#Gotchas"
+    }
+  ],
+  "layer_decisions": [
+    {
+      "layer": "Skill",
+      "decision": "use",
+      "reason": "利用者向けの実行契約とgoal-seekを単一SKILLに携帯する。",
+      "placement_evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md",
+      "fallback": "slash command dev-graph から同skillをdispatchする。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": false
+    },
+    {
+      "layer": "Subagent",
+      "decision": "use",
+      "reason": "goal-seekの重い判断をforkし、責務promptを独立contextで実行する。",
+      "placement_evidence": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#ゴールシーク実行",
+      "fallback": "親contextで有界反復し結果だけ統合する。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": false
+    },
+    {
+      "layer": "Hook",
+      "decision": "use",
+      "reason": "plugin lifecycle/guard hookが破壊操作と完了収束を補助する。",
+      "placement_evidence": "plugins/dev-graph/hooks/hooks.json",
+      "fallback": "manual/scheduled reconciliationを使用する。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    },
+    {
+      "layer": "MCP",
+      "decision": "skip",
+      "reason": "repository-local script/gh/bd境界で完結しMCP依存を追加しない。",
+      "placement_evidence": "plugins/dev-graph/plugin-composition.yaml#external_dependencies",
+      "fallback": "標準CLIとrepo-local scriptを使用する。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    },
+    {
+      "layer": "CLI",
+      "decision": "use",
+      "reason": "Skill/commandから決定論scriptと必要時gh/bd CLIを呼び出す。",
+      "placement_evidence": "plugins/dev-graph/commands/dev-graph.md",
+      "fallback": "dry-runまたはlocal-onlyでfail-closedする。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    },
+    {
+      "layer": "script",
+      "decision": "use",
+      "reason": "schema/identity/renderer/scheduler等を決定論Pythonに分離する。",
+      "placement_evidence": "plugins/dev-graph/scripts/resolve-repo-context.py, plugins/dev-graph/scripts/validate-graph-schema.py",
+      "fallback": "SKILLが診断してmutation前に停止する。",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    }
+  ],
+  "variant_support": {
+    "prefix": "run",
+    "role_suffix": "executor",
+    "subagent": "goal_seek.fork=subagent",
+    "hook": "plugin hooks with manual/scheduled fallback"
+  },
+  "pattern_decisions": [
+    {
+      "decision": "use",
+      "pattern_ref": "with-goal-seek",
+      "reason": "goal/checklistを最大5回の有界反復で収束する。",
+      "reuse_target": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md"
+    },
+    {
+      "decision": "use",
+      "pattern_ref": "with-feedback-contract",
+      "reason": "inner/outer criteriaを量産先frontmatterへ携帯する。",
+      "reuse_target": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md"
+    },
+    {
+      "decision": "use",
+      "pattern_ref": "responsibility-prompt-mass-production",
+      "reason": "prompt_required責務と7層promptを1対1化する。",
+      "reuse_target": "plugins/dev-graph/skills/run-dev-graph-status/prompts/"
+    }
+  ],
+  "reproducibility_gates": {
+    "lint": "PASS",
+    "evaluator": "N/A",
+    "elegant_review": "N/A",
+    "governance": "PASS"
+  },
+  "script_execution_model": {
+    "contexts": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "responsibility_matrix": "SKILL=orchestration; prompt=judgment; script=deterministic validation/mutation; hook=lifecycle acceleration",
+    "priority_order": "script validation before mutation; local authority before external projection",
+    "permission_boundary": "all content paths resolved by C24 DEV_GRAPH_ROOT; external writes stay behind explicit binding/dry-run gates",
+    "scripts": [
+      {
+        "path": "plugins/dev-graph/scripts/resolve-repo-context.py",
+        "type": "python-stdlib-script",
+        "allowed_contexts": [
+          "A",
+          "B",
+          "C",
+          "E"
+        ],
+        "frontmatter_status": "PASS"
+      },
+      {
+        "path": "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "type": "python-stdlib-script",
+        "allowed_contexts": [
+          "A",
+          "B",
+          "C",
+          "E"
+        ],
+        "frontmatter_status": "PASS"
+      }
+    ]
+  },
+  "governance_model": {
+    "rubric_version": "1.3.0",
+    "rubric_hash": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+    "proposal_required": "false: rubric itself is unchanged",
+    "impact_assessment": "dev-graph skill-local contract/evidence only; shared validator changes have regression tests",
+    "roles": {
+      "proposer": "capability-build Agent5",
+      "reviewer": "independent elegant analysts",
+      "approver": "human/orchestrator gate",
+      "tooling": "harness deterministic validators"
+    },
+    "newly_failing_count": 0
+  },
+  "dogfooding_model": {
+    "artifact_type": "skill",
+    "adapter": "run-build-skill content-review protocol",
+    "forked_evaluator": "assign-skill-design-evaluator independent context",
+    "eval_log_path": "eval-log/dev-graph/run-dev-graph-status",
+    "recursive_checks": [
+      "30-method elegance",
+      "rubric 1.3.0",
+      "criteria evidence",
+      "trace validator"
+    ]
+  },
+  "rubric_composition_model": {
+    "status": "PASS",
+    "ordered_refs": [
+      "ref-skill-design-rubric@1.3.0"
+    ],
+    "merge_strategy": "deep-merge",
+    "conflict_policy": "most-specific-wins",
+    "composition_hash_evidence": "cf1185c10cf52c92ceeb4e8e23aa252f454bfef96cda1b6c4e736b1feb3edd37"
+  },
+  "paradigm_analogy_model": {
+    "status": "PASS",
+    "primary_analogy": "local-first transaction coordinator",
+    "matched_skill_concept": "goal-seek plus deterministic script boundary",
+    "limits": "external tracker and lifecycle facts remain owned by dedicated bridges",
+    "placement_decision": "Skill orchestrates; scripts validate and mutate"
+  },
+  "output_routing_model": {
+    "status": "PASS",
+    "task_kind": "dev-graph capability execution",
+    "payload_schema_version": "component-inventory/feedback-contract current",
+    "route_ref": "C18",
+    "adapter_registry_ref": "plugins/dev-graph/plugin-composition.yaml",
+    "fallback": "dry-run/local-only/manual reconciliation",
+    "secret_boundary": "no tokens/node IDs persisted; C24 containment enforced"
+  },
+  "prompt_generation_model": {
+    "policy_resolution": {
+      "brief_policy": "required",
+      "resolved_policy": "required",
+      "resolved_via": "brief.kind=run and prompt_required responsibilities → required"
+    },
+    "per_responsibility": [
+      {
+        "id": "R1-elicit",
+        "name": "検索条件 (id/種別/キーワード) と表示したい状態範囲をヒアリングして確定する",
+        "owner_agent": null,
+        "layer_yaml_path": "plugins/dev-graph/skills/run-dev-graph-status/prompts/R1-elicit.md",
+        "path_convention": "skill-local-v1",
+        "layers_generated": [
+          "L1",
+          "L2",
+          "L3",
+          "L4",
+          "L5",
+          "L6",
+          "L7"
+        ],
+        "sha256": "7ee1250b4a1c967900340ac57e74266924b78c896931dc876dd0fb96e4aa92ac",
+        "lint_status": "PASS",
+        "iteration_count": 1,
+        "escalation": "none"
+      },
+      {
+        "id": "R2-plan",
+        "name": "グラフストア横断検索と状態表示の計画を組み立てる",
+        "owner_agent": null,
+        "layer_yaml_path": "plugins/dev-graph/skills/run-dev-graph-status/prompts/R2-plan.md",
+        "path_convention": "skill-local-v1",
+        "layers_generated": [
+          "L1",
+          "L2",
+          "L3",
+          "L4",
+          "L5",
+          "L6",
+          "L7"
+        ],
+        "sha256": "afdd059084310cbb687627585b9591e901f59771324e5a3b802b75eb6b9b0c1f",
+        "lint_status": "PASS",
+        "iteration_count": 1,
+        "escalation": "none"
+      },
+      {
+        "id": "R3-status",
+        "name": "validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)",
+        "owner_agent": null,
+        "layer_yaml_path": "plugins/dev-graph/skills/run-dev-graph-status/prompts/R3-status.md",
+        "path_convention": "skill-local-v1",
+        "layers_generated": [
+          "L1",
+          "L2",
+          "L3",
+          "L4",
+          "L5",
+          "L6",
+          "L7"
+        ],
+        "sha256": "91b52c4e31b4ea52f3118397a1ade72e981663fb372e9ab580538311e5e4c3b9",
+        "lint_status": "PASS",
+        "iteration_count": 1,
+        "escalation": "none"
+      }
+    ],
+    "cross_ref": {
+      "skill_build_id": "dev-graph-20260713-C18",
+      "prompt_creator_trace_path": "eval-log/dev-graph/run-dev-graph-status/skill-build-trace.json#/prompt_provenance",
+      "join_key": "responsibility.id"
+    },
+    "anchor_coverage": {
+      "agent_files_checked": [],
+      "missing_anchors": [],
+      "extra_anchors": []
+    }
+  },
+  "prompt_provenance": {
+    "prompt_creator_invocation": true,
+    "source_contract_ref": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-format.md",
+    "content_lint": {
+      "mode": "prompt",
+      "status": "PASS",
+      "evidence": "python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode prompt --plugins-dir plugins/dev-graph (41 files PASS)"
+    }
+  },
+  "feedback_contract": {
+    "max_iterations": 3,
+    "criteria": [
+      {
+        "id": "IN1",
+        "loop_scope": "inner",
+        "text": "validate-graph-schema.py で読み取ったグラフストアの検索結果に必須キー欠落が0件で、検索/状態表示がグラフ実状態と一致する",
+        "verify_by": "script"
+      },
+      {
+        "id": "OUT1",
+        "loop_scope": "outer",
+        "text": "検索/状態表示の結果がグラフストアの実際の状態 (status/closed_at/依存関係) と一致することを受入テストが確認する",
+        "verify_by": "live-trial"
+      },
+      {
+        "id": "OUT2",
+        "loop_scope": "outer",
+        "text": "本 skill 実行後もグラフストアと GitHub Issue 側に一切の変更が生じない (read-only で副作用なし) ことを受入テストが確認する",
+        "verify_by": "test"
+      }
+    ],
+    "hook_triggers": [
+      "manual capability-build",
+      "content-review",
+      "pre-push"
+    ]
+  },
+  "variable_contract": [
+    {
+      "name": "DEV_GRAPH_ROOT",
+      "meaning": "C24が解決・containment検証したcaller repository root",
+      "default": "C24 receipt.repo_root",
+      "required": true,
+      "not_applicable_when": "never for dev-graph content/evidence access",
+      "source_trace": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#ゴールシーク実行"
+    },
+    {
+      "name": "GOAL_SEEK_MAX_LOOPS",
+      "meaning": "goal-seek手順反復上限",
+      "default": "5",
+      "required": true,
+      "not_applicable_when": "goal already satisfied before first iteration",
+      "source_trace": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md#frontmatter goal_seek.max_loops"
+    }
+  ],
+  "brief_path": "plugin-plans/dev-graph/briefs/skill-brief-C18.json",
+  "requirement_coverage": [
+    {
+      "requirement_id": "trigger_conditions",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "output_contract",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "boundary",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "placement_candidates",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "deterministic_checks",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "needs_independent_context",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "checklist",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "goal",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "goal_seek",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "purpose_background",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    },
+    {
+      "requirement_id": "responsibilities",
+      "disposition": "mapped",
+      "mapped_to": "plugins/dev-graph/skills/run-dev-graph-status/SKILL.md / feedback_contract / prompts"
+    }
+  ]
+}

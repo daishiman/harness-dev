@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-plugin-composition
-# purpose: plugin-composition.yaml の capabilities 重複/実在と hooks↔plugin.json 配線対応を検査する。
+# purpose: plugin-composition.yaml の capability 実在・hook配線・skill/command dispatch dependency parityを検査する。
 # inputs:
 #   - argv: plugin-composition.yaml path(s) or --self-test
 # outputs:
@@ -28,6 +28,8 @@
   (d) contract.interface.outputs のパス実在                          → WARN
       proposals/*.md 等は governance 発火まで空が正当なため FAIL にしない
       (オオカミ少年回避)。パス形でない概念名 (CapabilityManifest 等) は skip。
+  (e) skill frontmatter script_refs ↔ dependencies(type=calls)      → FAIL
+  (f) command 本文の同 bundle Skill/script dispatch ↔ dependencies      → FAIL
 
 YAML パーサ非依存 (stdlib only): CI は pip install を行わないため、
 flow-mapping 行 `- { kind: x, ref: y, tier: z }` と block 形
@@ -54,6 +56,9 @@ TOP_KEY_RE = re.compile(r"^([A-Za-z_][\w-]*):\s*(?:#.*)?")
 OUTPUTS_RE = re.compile(r"^\s*outputs:\s*\[(.*)\]\s*(?:#.*)?$")
 HOOK_REF_RE = re.compile(r"^hook:([A-Za-z]+)(?:-[\w-]+)?/[\w.-]+$")
 GLOB_CHARS = ("*", "?", "[")
+FRONTMATTER_BOUNDARY_RE = re.compile(r"^---\s*$", re.MULTILINE)
+BACKTICK_SCRIPT_RE = re.compile(r"`(scripts/[A-Za-z0-9_.\-/]+\.py)`")
+SKILL_DISPATCH_RE = re.compile(r"\bSkill\s+`([A-Za-z0-9_.\-/]+)`", re.IGNORECASE)
 
 
 def _unquote(v: str) -> str:
@@ -118,6 +123,65 @@ def parse_composition(text: str) -> tuple[list[dict], list[str], list[str]]:
     return caps, outputs, errors
 
 
+def parse_dependencies(text: str) -> tuple[list[dict], list[str]]:
+    """dependencies[] のflow/block mappingをstdlibだけで読み取る。"""
+    entries: list[dict] = []
+    errors: list[str] = []
+    section = None
+    current_block: dict | None = None
+
+    def flush_block(lineno: int) -> None:
+        nonlocal current_block
+        if current_block is None:
+            return
+        missing = [key for key in ("from", "to", "type") if not current_block.get(key)]
+        if missing:
+            errors.append(
+                f"line {lineno}: dependency entry missing {','.join(missing)}: {current_block}"
+            )
+        else:
+            entries.append(current_block)
+        current_block = None
+
+    lines = text.splitlines()
+    for lineno, raw in enumerate(lines, start=1):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        top = TOP_KEY_RE.match(raw)
+        if top:
+            flush_block(lineno)
+            section = top.group(1)
+            continue
+        if section != "dependencies":
+            continue
+        flow = FLOW_ENTRY_RE.match(raw)
+        if flow:
+            flush_block(lineno)
+            entry = {k: _unquote(v) for k, v in KV_RE.findall(flow.group(1))}
+            missing = [key for key in ("from", "to", "type") if not entry.get(key)]
+            if missing:
+                errors.append(
+                    f"line {lineno}: dependency entry missing {','.join(missing)}: {stripped}"
+                )
+            else:
+                entries.append(entry)
+            continue
+        block = BLOCK_ENTRY_RE.match(raw)
+        if block:
+            flush_block(lineno)
+            current_block = {block.group(2): _unquote(block.group(3))}
+            continue
+        if current_block is not None:
+            kv = re.match(r"^\s+([A-Za-z_][\w-]*)\s*:\s*(.*?)\s*(?:#.*)?$", raw)
+            if kv:
+                current_block[kv.group(1)] = _unquote(kv.group(2))
+                continue
+        errors.append(f"line {lineno}: dependency entry is not a supported mapping: {stripped}")
+    flush_block(len(lines) + 1)
+    return entries, errors
+
+
 def _cap_ref(cap: dict) -> str | None:
     return cap.get("ref") or cap.get("path")
 
@@ -163,6 +227,147 @@ def check_ref_exists(caps: list[dict], plugin_dir: Path) -> list[str]:
     return findings
 
 
+def _canonical_cap_ref(cap: dict) -> str:
+    ref = str(_cap_ref(cap) or "").strip().rstrip("/")
+    kind = str(cap.get("kind", "")).strip()
+    if kind == "skill" and ref.endswith("/SKILL.md"):
+        return ref[: -len("/SKILL.md")]
+    if kind in ("agent", "command") and ref.endswith(".md"):
+        return ref[:-3]
+    return ref
+
+
+def _frontmatter_list(text: str, key: str) -> tuple[list[str], str | None]:
+    """Read an inline or block string list from the first YAML frontmatter."""
+    boundaries = list(FRONTMATTER_BOUNDARY_RE.finditer(text))
+    if len(boundaries) < 2 or boundaries[0].start() != 0:
+        return [], None
+    body = text[boundaries[0].end() : boundaries[1].start()]
+    lines = body.splitlines()
+    for idx, raw in enumerate(lines):
+        match = re.match(rf"^{re.escape(key)}\s*:\s*(.*?)\s*$", raw)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value:
+            if not (value.startswith("[") and value.endswith("]")):
+                return [], f"frontmatter {key} must be an inline list or block list"
+            inner = value[1:-1].strip()
+            if not inner:
+                return [], None
+            items = [_unquote(part) for part in inner.split(",")]
+            if any(not item for item in items):
+                return [], f"frontmatter {key} contains an empty item"
+            return items, None
+        items: list[str] = []
+        for continuation in lines[idx + 1 :]:
+            if not continuation.strip():
+                continue
+            item = re.match(r"^\s+-\s+(.+?)\s*$", continuation)
+            if item:
+                items.append(_unquote(item.group(1)))
+                continue
+            if re.match(r"^[A-Za-z_][\w-]*\s*:", continuation):
+                break
+            return [], f"frontmatter {key} block contains an unsupported line: {continuation.strip()}"
+        return items, None
+    return [], None
+
+
+def _calls_set(dependencies: list[dict]) -> set[tuple[str, str]]:
+    return {
+        (str(dep.get("from", "")).strip(), str(dep.get("to", "")).strip())
+        for dep in dependencies
+        if str(dep.get("type", "")).strip() == "calls"
+    }
+
+
+def check_skill_script_dependencies(
+    caps: list[dict], dependencies: list[dict], plugin_dir: Path
+) -> list[str]:
+    """Require every script_ref targeting a declared script capability to have a calls edge."""
+    findings: list[str] = []
+    calls = _calls_set(dependencies)
+    plugin_root = plugin_dir.resolve()
+    script_caps = {
+        _canonical_cap_ref(cap) for cap in caps if cap.get("kind") == "script"
+    }
+    for cap in caps:
+        if cap.get("kind") != "skill":
+            continue
+        source = _canonical_cap_ref(cap)
+        skill_path = plugin_dir / source / "SKILL.md"
+        if not skill_path.is_file():
+            continue  # check_ref_exists owns the missing capability finding
+        try:
+            refs, parse_error = _frontmatter_list(
+                skill_path.read_text(encoding="utf-8"), "script_refs"
+            )
+        except OSError as exc:
+            findings.append(f"cannot read skill frontmatter for dependency parity: {source}: {exc}")
+            continue
+        if parse_error:
+            findings.append(f"{source}/SKILL.md: {parse_error}")
+            continue
+        for declared in refs:
+            target_path = (skill_path.parent / declared).resolve()
+            try:
+                target = target_path.relative_to(plugin_root).as_posix()
+            except ValueError:
+                continue  # cross-plugin refs are governed by external_dependencies
+            if target not in script_caps:
+                continue  # skill-private helper, not a bundle-level capability edge
+            if (source, target) not in calls:
+                findings.append(
+                    f"missing calls dependency for skill script_ref: {source} -> {target}"
+                )
+    return findings
+
+
+def check_command_dispatch_dependencies(
+    caps: list[dict], dependencies: list[dict], plugin_dir: Path
+) -> list[str]:
+    """Require calls edges for same-bundle targets explicitly dispatched by commands."""
+    findings: list[str] = []
+    calls = _calls_set(dependencies)
+    skills = {
+        Path(_canonical_cap_ref(cap)).name: _canonical_cap_ref(cap)
+        for cap in caps
+        if cap.get("kind") == "skill"
+    }
+    scripts = {
+        _canonical_cap_ref(cap)
+        for cap in caps
+        if cap.get("kind") == "script"
+    }
+    for cap in caps:
+        if cap.get("kind") != "command":
+            continue
+        canonical = _canonical_cap_ref(cap)
+        command_path = plugin_dir / f"{canonical}.md"
+        if not command_path.is_file():
+            continue  # check_ref_exists owns the missing capability finding
+        try:
+            body = command_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            findings.append(f"cannot read command body for dependency parity: {canonical}: {exc}")
+            continue
+        source = f"{canonical}.md"
+        targets: set[str] = set()
+        for name in SKILL_DISPATCH_RE.findall(body):
+            if name in skills:
+                targets.add(skills[name])
+        for target in BACKTICK_SCRIPT_RE.findall(body):
+            if target in scripts:
+                targets.add(target)
+        for target in sorted(targets):
+            if (source, target) not in calls:
+                findings.append(
+                    f"missing calls dependency for command dispatch: {source} -> {target}"
+                )
+    return findings
+
+
 def _wired_hook_counts(plugin_json: dict) -> dict[str, int]:
     counts: dict[str, int] = {}
     for event, groups in (plugin_json.get("hooks") or {}).items():
@@ -171,6 +376,32 @@ def _wired_hook_counts(plugin_json: dict) -> dict[str, int]:
             n += len(group.get("hooks") or [])
         counts[event] = n
     return counts
+
+
+def _resolve_hook_manifest(plugin_json: dict, plugin_dir: Path) -> dict:
+    """Normalize inline hooks and Claude's supported external hooks manifest form."""
+    raw = plugin_json.get("hooks")
+    if not isinstance(raw, str):
+        return plugin_json
+    rel = Path(raw)
+    if rel.is_absolute() or ".." in rel.parts:
+        raise ValueError(f"external hooks path must stay inside plugin: {raw}")
+    plugin_root = plugin_dir.resolve()
+    path = (plugin_dir / rel).resolve()
+    if not path.is_relative_to(plugin_root):
+        raise ValueError(f"external hooks path escapes plugin: {raw}")
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"external hooks manifest read/parse error: {path}: {exc}") from exc
+    if not isinstance(manifest, dict):
+        raise ValueError(f"external hooks manifest must be an object: {path}")
+    hooks = manifest.get("hooks", manifest)
+    if not isinstance(hooks, dict):
+        raise ValueError(f"external hooks manifest hooks must be an object: {path}")
+    normalized = dict(plugin_json)
+    normalized["hooks"] = hooks
+    return normalized
 
 
 def check_hook_wiring(caps: list[dict], plugin_json: dict | None) -> list[str]:
@@ -224,6 +455,8 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
         return [f"{path}: read error: {e}"], [], 2
     plugin_dir = path.parent
     caps, outputs, parse_errors = parse_composition(text)
+    dependencies, dependency_parse_errors = parse_dependencies(text)
+    parse_errors.extend(dependency_parse_errors)
     if parse_errors:
         return [f"{path}: {e}" for e in parse_errors], [], 2
     if not caps:
@@ -234,13 +467,16 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
     if pj_path.is_file():
         try:
             plugin_json = json.loads(pj_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as e:
+            plugin_json = _resolve_hook_manifest(plugin_json, plugin_dir)
+        except (OSError, json.JSONDecodeError, ValueError) as e:
             return [f"{pj_path}: read/parse error: {e}"], [], 2
 
     findings: list[str] = []
     findings += check_duplicate_refs(caps)
     findings += check_ref_exists(caps, plugin_dir)
     findings += check_hook_wiring(caps, plugin_json)
+    findings += check_skill_script_dependencies(caps, dependencies, plugin_dir)
+    findings += check_command_dispatch_dependencies(caps, dependencies, plugin_dir)
     warnings = check_outputs(outputs, plugin_dir)
     return (
         [f"{path}: {f}" for f in findings],

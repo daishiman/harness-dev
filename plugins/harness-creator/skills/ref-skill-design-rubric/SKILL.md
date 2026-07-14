@@ -1,7 +1,7 @@
 ---
 name: ref-skill-design-rubric
 description: SKILL.mdを評価するとき、新規Skillを設計するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref

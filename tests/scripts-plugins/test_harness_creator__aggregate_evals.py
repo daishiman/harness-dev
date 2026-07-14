@@ -250,6 +250,7 @@ def test_load_evals_score_loader_exception_non_blocking(monkeypatch, tmp_path, c
 
     monkeypatch.setattr(MOD, "_load_score_jsonl", boom)
     monkeypatch.setattr(MOD, "_load_content_review_verdicts", lambda: [])
+    monkeypatch.setattr(MOD, "_load_live_trial_verdicts", lambda: [])
     out = MOD._load_evals()["evaluations"]
     assert out == []
     assert "score.jsonl load failed" in capsys.readouterr().err
@@ -258,6 +259,7 @@ def test_load_evals_score_loader_exception_non_blocking(monkeypatch, tmp_path, c
 def test_load_evals_verdict_loader_exception_non_blocking(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(MOD, "_evals_path", lambda: tmp_path / "no-evals.json")
     monkeypatch.setattr(MOD, "_load_score_jsonl", lambda: [])
+    monkeypatch.setattr(MOD, "_load_live_trial_verdicts", lambda: [])
 
     def boom():
         raise RuntimeError("verdict boom")

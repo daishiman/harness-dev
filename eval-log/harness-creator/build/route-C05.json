@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "harness-creator",
+  "route_id": "C05",
+  "component_kind": "hook",
+  "name": "auto-sync-on-session-start",
+  "builder": "run-build-skill",
+  "build_target": "plugins/harness-creator/hooks/auto-sync-on-session-start.py",
+  "status": "success",
+  "summary": "SessionStart lifecycle hook を実装した: install/enable/trust 完了後の新セッションで C01 sync-native-surfaces.py --apply --json を一度だけ呼び、exit/timeout を内部 status (success|noop|skipped_not_installed|warning_drift|warning_conflict|warning_invalid|warning_timeout) へ写像し、失敗を構造化 warning + remediation として保持する。プロセスは常に exit 0 で session continuation を壊さない。reentrancy guard (session debounce) + hook-local process lock、書込は .build local (log/lock/state) のみで managed projection は C01 へ委譲。",
+  "deviations": [],
+  "evidence": [
+    "plugins/harness-creator/hooks/auto-sync-on-session-start.py exists sha256=a835eb6ba6a2ff8dd24f7d2138bd5e18fe0acdee631538dca17ecc48e438a6b9",
+    "eval-log/harness-creator/build/evidence/C05-tests.xml sha256=72726ae5c1934da75730979b4d5b70b7df9e48f262fe38078187f9fb678d21b0 (171 passed)",
+    "空/不正 stdin + 不在 repo-root で exit 0 を確認 (session 非破壊)",
+    "lint-script-frontmatter OK (write-scope: .build local のみ)"
+  ],
+  "artifact_sha256": "a835eb6ba6a2ff8dd24f7d2138bd5e18fe0acdee631538dca17ecc48e438a6b9",
+  "graph_hash": "sha256:b2d98bbb0d829e394259077aaf6cf0ea3328660a0e6233233d5fe57bfed4cf65",
+  "generated_at": "2026-07-13T01:59:53Z",
+  "tool_versions": {"python": "3.11.4", "pytest": "8.4.2"},
+  "test_evidence": [
+    {
+      "command": "pytest -q plugins/harness-creator/tests/test_auto_sync_on_session_start.py",
+      "exit_code": 0,
+      "passed": 171,
+      "failed": 0,
+      "started_at": "2026-07-13T01:59:51Z",
+      "completed_at": "2026-07-13T01:59:53Z",
+      "artifact": "eval-log/harness-creator/build/evidence/C05-tests.xml",
+      "artifact_sha256": "72726ae5c1934da75730979b4d5b70b7df9e48f262fe38078187f9fb678d21b0"
+    }
+  ],
+  "inputs_consumed": [
+    "eval-log/harness-creator/build/route-C01.json",
+    "eval-log/harness-creator/build/route-C02.json"
+  ],
+  "handover": "hook route C05 は plugins/harness-creator/hooks/auto-sync-on-session-start.py で利用可能。P02/P04/P05 の設計・テスト・実装と P11 の local evidence/schema/rollback fixture を証跡化した。実製品の install/enable/trust/new-session/uninstall は runtime-evidence-ledger の task 単位 pending_user_gate として分離し、PR はユーザー指示により not_applicable とした。",
+  "covered_task_ids": [
+    "P02-C05-01",
+    "P02-C05-02",
+    "P02-C05-03",
+    "P02-C05-04",
+    "P02-C05-05",
+    "P04-C05-01",
+    "P04-C05-02",
+    "P04-C05-03",
+    "P04-C05-04",
+    "P04-C05-05",
+    "P04-C05-06",
+    "P04-C05-07",
+    "P04-C05-08",
+    "P05-C05-01",
+    "P05-C05-02",
+    "P05-C05-03",
+    "P05-C05-04",
+    "P05-C05-05",
+    "P05-C05-06",
+    "P05-C05-07",
+    "P05-C05-08",
+    "P05-C05-09",
+    "P05-C05-10",
+    "P05-C05-11",
+    "P11-C05-01",
+    "P11-C05-02",
+    "P11-C05-03",
+    "P11-C05-04",
+    "P11-C05-05",
+    "P11-C05-06",
+    "P11-C05-07"
+  ]
+}

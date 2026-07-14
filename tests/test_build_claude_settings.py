@@ -101,6 +101,7 @@ class BuildClaudeSettingsTest(unittest.TestCase):
             """usage: build-claude-settings.py [-h]
                                 [--plugins-dir PLUGINS_DIR]
                                 [--target TARGET]
+                                [--exclude-plugin PLUGIN]
                                 [--dry-run]
                                 [--check]
                                 [--print-user-section-hash]
@@ -108,6 +109,37 @@ class BuildClaudeSettingsTest(unittest.TestCase):
                                 [--verbose]
 """,
         )
+
+    def test_exclude_plugin_is_repeatable_and_removes_managed_source(self):
+        self.plugin("alpha", hooks=self.hook("python3 alpha.py"))
+        self.plugin("beta", hooks=self.hook("python3 beta.py"))
+        self.plugin("gamma", hooks=self.hook("python3 gamma.py"))
+
+        result = self.run_cli(
+            "--dry-run", "--json",
+            "--exclude-plugin", "alpha",
+            "--exclude-plugin", "gamma",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual(plan["plugins"], ["beta"])
+        self.assertEqual(plan["excluded_plugins"], ["alpha", "gamma"])
+        self.assertEqual(
+            {item["from_plugin"] for item in plan["settings"]["hooks"]},
+            {"beta"},
+        )
+
+    def test_excluded_malformed_plugin_is_not_a_managed_source(self):
+        malformed = self.plugins / "disabled"
+        malformed.mkdir()
+        self.plugin("enabled", hooks=self.hook("python3 enabled.py"))
+
+        result = self.run_cli("--check", "--exclude-plugin", "disabled")
+
+        # The valid enabled plugin still causes ordinary drift; the excluded
+        # malformed directory must not turn that into invalid-layout exit 3.
+        self.assertEqual(result.returncode, 1, result.stderr)
 
     def test_inv1_user_section_byte_equality(self):
         before = MODULE.user_section_sha256(MODULE.load_target(self.target))
@@ -264,6 +296,160 @@ class BuildClaudeSettingsTest(unittest.TestCase):
         result = self.run_cli()
 
         self.assertEqual(result.returncode, 3)
+
+    def test_target_unknown_hook_event_preserved(self):
+        # 互換修復 (正側): target が持つ未知 hook event (この script の HOOK_EVENTS
+        # allowlist に無い新しい Claude Code event) は exit3 で落とさず非破壊 preserve する。
+        self.write_target(
+            {
+                "permissions": {"deny": [], "ask": []},
+                "hooks": {
+                    "FileChanged": [
+                        {
+                            "matcher": "SKILL.md",
+                            "hooks": [
+                                {"type": "command", "command": "python3 user-fc.py"}
+                            ],
+                        }
+                    ]
+                },
+            }
+        )
+        self.plugin("alpha", hooks=self.hook("python3 alpha.py"))
+
+        result = self.run_cli()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = MODULE.load_target(self.target)
+        self.assertIn("FileChanged", data["hooks"])
+        self.assertEqual(
+            data["hooks"]["FileChanged"][0]["hooks"][0]["command"],
+            "python3 user-fc.py",
+        )
+        # 再 check は drift なし (idempotent)。
+        check = self.run_cli("--check")
+        self.assertEqual(check.returncode, 0, check.stderr)
+
+    def test_managed_source_unknown_hook_event_blocked_exit3(self):
+        # 互換修復 (負側=非対称性): managed source (plugin manifest) が未知 event を
+        # 宣言したら従来どおり fail-closed で block する (target preserve に巻き込まない)。
+        self.write_target({"permissions": {"deny": [], "ask": []}, "hooks": {}})
+        self.plugin(
+            "alpha",
+            hooks={
+                "FileChanged": [
+                    {"hooks": [{"type": "command", "command": "python3 alpha-fc.py"}]}
+                ]
+            },
+        )
+
+        result = self.run_cli()
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("unknown hook event", result.stderr)
+
+    def test_symlink_shared_skill_is_not_conflict(self):
+        # 複数 plugin が同名 skill を symlink で 1 実体から共有する場合は、
+        # 名前衝突ではなく共有 (shared) として dedupe し exit2 にしない。
+        alpha = self.plugin("alpha")
+        real_skill = alpha / "skills" / "run-shared"
+        real_skill.mkdir(parents=True)
+        (real_skill / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+        beta = self.plugin("beta")
+        (beta / "skills").mkdir(parents=True)
+        os.symlink(real_skill, beta / "skills" / "run-shared")
+
+        result = self.run_cli("--dry-run", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual([c for c in plan["conflicts"] if c["type"] == "skill"], [])
+        shared = [s for s in plan["namespace"]["skills"] if s.get("verdict") == "shared"]
+        self.assertTrue(shared)
+
+    def test_distinct_content_same_name_still_conflicts(self):
+        # 同名でも別実体 (symlink でない独立コピー) なら従来どおり本物の衝突。
+        for name in ("alpha", "beta"):
+            root = self.plugin(name)
+            skill = root / "skills" / "run-shared"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+
+        result = self.run_cli("--json")
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('"type": "skill"', result.stdout)
+
+    def test_plugin_root_expanded_makes_distinct_hooks_non_conflicting(self):
+        # 内容の違う同名 hook を 2 plugin が $CLAUDE_PLUGIN_ROOT 相対の同一コマンド
+        # 文字列で宣言しても、反映時に各 plugin の実パスへ展開され別コマンドになるので
+        # INV-5 衝突しない (project settings でも $CLAUDE_PLUGIN_ROOT 未定義にならない)。
+        self.plugin(
+            "alpha",
+            hooks=self.hook("python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py", matcher="Bash"),
+        )
+        self.plugin(
+            "beta",
+            hooks=self.hook("python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py", matcher="Bash"),
+        )
+
+        result = self.run_cli("--dry-run", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual([c for c in plan["conflicts"] if c["type"] == "hook"], [])
+        commands = [h["command"] for h in plan["settings"]["hooks"]]
+        self.assertTrue(all("CLAUDE_PLUGIN_ROOT" not in c for c in commands))
+        self.assertTrue(any("${CLAUDE_PROJECT_DIR}" in c and "alpha" in c for c in commands))
+        self.assertTrue(any("${CLAUDE_PROJECT_DIR}" in c and "beta" in c for c in commands))
+
+    def test_plugin_root_expansion_is_repo_relative_and_relocatable(self):
+        self.plugin(
+            "alpha",
+            hooks=self.hook("python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py", matcher="Bash"),
+        )
+
+        result = self.run_cli()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        generated = self.target.read_text(encoding="utf-8")
+        self.assertNotIn(str(self.root), generated)
+        command = MODULE.load_target(self.target)["_build_claude_settings"]["managed_hooks"][0]["command"]
+        self.assertEqual(
+            command,
+            "python3 ${CLAUDE_PROJECT_DIR}/plugins/alpha/hooks/guard.py",
+        )
+        clone = self.root / "different-clone"
+        expected = clone / "plugins" / "alpha" / "hooks" / "guard.py"
+        expected.parent.mkdir(parents=True)
+        expected.write_text("# hook\n", encoding="utf-8")
+        self.assertTrue(
+            Path(command.split("${CLAUDE_PROJECT_DIR}/", 1)[1].split()[0])
+            == Path("plugins/alpha/hooks/guard.py")
+        )
+        self.assertTrue(expected.is_file())
+
+    def test_same_plugin_inline_and_hook_file_are_wired_once(self):
+        plugin = self.plugin(
+            "alpha",
+            hooks=self.hook("python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py", matcher="Bash"),
+        )
+        hooks_dir = plugin / "hooks"
+        hooks_dir.mkdir()
+        (hooks_dir / "hooks.json").write_text(
+            MODULE.serialize(
+                {"hooks": self.hook("python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py", matcher="Bash")}
+            ),
+            encoding="utf-8",
+        )
+
+        result = self.run_cli("--dry-run", "--json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        hooks = report["settings"]["hooks"]
+        self.assertEqual(len(hooks), 1)
+        self.assertEqual(report["summary"]["dedupe"], 1)
 
 
 if __name__ == "__main__":

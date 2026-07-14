@@ -142,6 +142,12 @@ def test_scan_clean_repo_has_no_violations(tmp_path):
     assert LPP.scan(tmp_path) == []
 
 
+def test_scan_accepts_planner_responsibility_filename(tmp_path):
+    body = _frontmatter(responsibility_id="R2b-readiness") + "\n" + _long_body()
+    _make_prompt(tmp_path, "myplugin", "run-foo", "R2b-readiness.md", body)
+    assert LPP.scan(tmp_path) == []
+
+
 def test_scan_flags_bad_filename(tmp_path):
     # ファイル名が R<id> 形式でない → PROMPT-FILENAME-FORMAT
     body = _frontmatter(responsibility_id="R1") + "\n" + _long_body()
@@ -149,6 +155,13 @@ def test_scan_flags_bad_filename(tmp_path):
     viols = LPP.scan(tmp_path)
     assert any("PROMPT-FILENAME-FORMAT" in v for v in viols)
     assert any("main.md" in v for v in viols)
+
+
+def test_scan_rejects_invalid_planner_responsibility_filename(tmp_path):
+    body = _frontmatter(responsibility_id="R2B-readiness") + "\n" + _long_body()
+    _make_prompt(tmp_path, "myplugin", "run-foo", "R2B-readiness.md", body)
+    viols = LPP.scan(tmp_path)
+    assert any("PROMPT-FILENAME-FORMAT" in v for v in viols)
 
 
 def test_scan_flags_redirect_inversion_for_run_kind(tmp_path):

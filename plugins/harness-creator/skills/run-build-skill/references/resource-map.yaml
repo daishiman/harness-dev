@@ -55,6 +55,8 @@ local_artifacts:
     - ../schemas/responsibility-slot.schema.json
     - ../schemas/build-flags.schema.json
     - ../schemas/goal-seek-loop.schema.json   # loop実行系の周回progress契約 (with-goal-seek配線)
+    - ../schemas/verification-contract.schema.json
+    - ../schemas/verification-evidence.schema.json
   prompts:
     - ../prompts/R1-scaffold.md
     - ../prompts/R2-responsibility-emit.md
@@ -108,6 +110,12 @@ resources:
       - doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
       - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
     cover_concerns: ["09-evaluation-orchestration"]
+  - category: proof-driven-verification
+    keywords: ["verification", "obligation", "proof", "evidence", "token", "cost", "incremental", "semantic", "route reuse"]
+    max_docs: 1
+    local_reference:
+      - plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md
+    cover_concerns: ["verification-as-program", "llm-as-exception", "proof-carrying-build"]
   - category: skill-factory-reproducibility
     keywords: ["harness creator", "factory", "量産", "再現性", "rubric_refs", "adapter", "routing", "analogy", "template variable", "横展開"]
     max_docs: 3

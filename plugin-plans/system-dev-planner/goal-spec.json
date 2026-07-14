@@ -1,0 +1,141 @@
+{
+  "purpose": "dev-graphが管理する1つのfeatureを入力に、その機能を達成するPhase 1〜13の小さな実行タスク仕様書を各phaseちょうど1件、合計13件と機能内依存DAGへ変換するper-featureミクロファクトリsystem-dev-plannerを計画する。feature・architecture・feature間依存は生成せずdev-graphへ委譲し、13 taskは共通parent_feature/feature_package_idを持ってatomic登録される。",
+  "background": "従来の『13 lifecycle文書 + 可変N task』は、説明用phaseと実行taskを二重化し、Dev Graphのマクロ責務とSystem Dev Plannerのミクロ責務を混線させていた。新契約では1 featureをexact 13 executable task specsへ変換し、P01..P13の欠落・重複・14件目をfail-closedする。仕様/architecture内容はsystem-spec-harnessを引用し、feature間依存はdev-graphのfeature DAGを正本とする。実行中の追加作業は該当phaseへのEditまたは新feature candidateとしてマクロ層へ返す。",
+  "goal": "system-dev-planner自身のL3 plugin planと、runtime出力であるexact 13-task feature execution package契約・13-node DAG・handoff・atomic promotion・multi-repository isolationが決定論ゲートと独立評価で検証可能な状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "system-dev-planner",
+  "plan_dir": "plugin-plans/system-dev-planner",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "R1(goal-elicit) → R2(decompose) → R3(emit task specs) → R4(独立評価) → task-graph 射影 → build handoff のゴールシーク型ライフサイクルが、plugin-dev-planner と同型構造で index/phase 仕様書に設計記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C2",
+      "criterion": "workstream-inventory (component-inventory 相当) が、plugin-dev-planner の component_kind (skill/sub-agent/slash-command/hook/script) をビルド対象語彙として保持しつつ、生成対象であるシステム開発タスクの分類軸を frontend/backend/api/data/infrastructure/security/quality/documentation/operations の system workstream 語彙へ置換して記録する設計になっている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "index/phase 仕様書に、system-spec-harness が生成した確定仕様書 (system-spec/index.md・00-requirements-definition.md 等) およびアーキテクチャ graph node を引用入力とし、ヒアリング/出典取得/compile/完成度評価のロジックを複製しない設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C4",
+      "criterion": "index/phase 仕様書に、dev-graph から呼び出される入出力インターフェース (呼出し引数・戻り値 artifact) が定義され、implementation_readiness=complete 未達では実装 handoff を fail-closed で停止し、生成したタスク仕様書を dev-graph の tasks/ グラフノードとして登録可能にする契約が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "生成される各タスク仕様書が、実装着手に必要な内容 (前提条件/設計知識/成果物/依存/完了チェックリスト等) の充足度=implementation-readiness を判定できる構造化テンプレート仕様を持つ設計が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C6",
+      "criterion": "system-dev-planner 自身の計画が plugin-dev-planner 同型の決定論ゲート群 (verify-index-topsort/detect-unassigned/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage 等) で検証可能であり、生成物側 (タスク仕様書/task-graph) にも quality_conditions 相当の 4 条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を機械/推論検証できる設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C7",
+      "criterion": "system-dev-planner が独立 plugin (plugin-plan) として .claude-plugin/plugin.json・marketplace・cachebuster・validate-plugin-completeness.py の物理契約を後続 R3 の plugin_meta へ渡す意図が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "system-dev-planner は仕様書/アーキテクチャの内容構築 (system-spec-harness へ委譲) と実装コード生成 (task-graph build/capability-build へ handoff) を自身の担当外とし、タスク仕様書 + task-graph 生成までを担う責務境界が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "system-spec-harness の引用元を version=0.1.0、entrypoint=run-system-spec-compile + assign-system-spec-completeness-evaluator (manual command=/spec-compile) として pin し、同 harness が確定した repo-local system-spec と architecture graph node のみを入力にする契約が index/phase/lineage schema に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C10",
+      "criterion": "symlink 配布先ごとに content authority を呼出元 repository root へ固定し、--repo-root > trusted project env > git rev-parse --show-toplevel > cwd marker の解決順、host 宣言境界一致 (resolved root == $CLAUDE_PROJECT_DIR realpath。未宣言環境では git/marker 単独可)、repository_id 再導出照合、repo-local .dev-graph/config.json、repo相対path、realpath containment、別repo cross-read禁止、broken/moved content symlink診断、host launcherのbroken harness-link preflight、repo別state/cache/lock、既存docsを上書きしない冪等init、multi-repo isolation test、same-digest独立評価後のatomic promotionを fail-closed 契約として index/phase/component/handoff に記載している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C11",
+      "criterion": "生成するtyped task specificationがtracker_binding_intentと条件付きGitHub publication intentを持ち、promotion後にdev-graphがbinding別authorityへ冪等publish可能な契約になっている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C12",
+      "criterion": "dev-graph registrationがP01..P13 exact 13 taskをall-or-none登録しexpected_count=applied_count=13、phase_refs/node_ids exact-set、共通parent/package、graph_revision_before/afterとgraph_digest_afterを持つreceiptを返す境界が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C13",
+      "criterion": "生成するtask specificationがone-task-one-branch、resource_scope、worktree lease、feature branchではpending eventのみ、default branch reconciliationで完了投影という実行契約を持ち、dev-graphの複数worktree schedulerへ引き渡せる",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C14",
+      "criterion": "system-dev-planner がミクロ層として、自動起動時は dev-graph の feature ノード (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) を構造化入力として受理し goal-spec (purpose/background/goal/checklist) へ写像する経路を持ち、手動起動時 (/system-dev-plan) は従来どおり自然文構想を受理する経路を持つ設計が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C15",
+      "criterion": "生成する typed task specification と dev-graph registration payload が parent_feature (起動時に解決した dev-graph feature ノードの graph_node_id) を持ち、system-dev-planner の 1 run が生む全 promoted task が同一 parent_feature を共有して feature 配下へ atomic 登録される設計になっている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C16",
+      "criterion": "runtime outputが別の13 lifecycle文書+可変N taskではなく、P01..P13に1件ずつ対応するexact 13 executable task specsだけであり、13-node DAG、phaseの欠落/重複/追加拒否、追加作業のphase Editまたはfeature candidate返却がfeature-execution-package-contractで定義されている",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "実プラグインは生成せず、goal-spec + 13 phase + workstream-inventory + task-graph + handoff の L3 plan までに留める",
+    "仕様書・アーキテクチャの内容構築 (ヒアリング/出典取得/compile/完成度評価) は plugins/system-spec-harness/ へ委譲し複製しない (DRY)。system-dev-planner は system-spec-harness の確定成果物 (system-spec/index.md・00-requirements-definition.md 等の確定章・architecture graph node) を引用入力とする",
+    "実装コードの生成は行わず、生成したタスク仕様書確定後は既存の task-graph build / capability-build へ handoff する",
+    "システム開発タスクの分解語彙は plugin-dev-planner の component_kind (skill/sub-agent/slash-command/hook/script) ではなく system workstream (frontend/backend/api/data/infrastructure/security/quality/documentation/operations) を用いる",
+    "implementation_readiness=complete (system-spec-harness 側の完成度評価) 未達の場合、実装 handoff を fail-closed で停止する",
+    "生成したタスク仕様書はP01..P13 exact 13件で、共通parent_feature/feature_package_idを持ち、all-or-none登録receipt後にBeads/GitHub投影・ready-set・並列実行へ接続される",
+    "plugin-plans/dev-graph/templates/system-task-spec.md・system-plan-contract.json (draft) を出力形状/フェーズ構成の先行参照として継承しつつ、正式な phase 名称・workstream-inventory スキーマ・component 分解の確定は R2/R3 で行う",
+    "本計画は plugin-dev-planner 同型のゴールシーク型 (R1→R2→R3→R4) 構造を採用し、固定手順書ではなく達成ゴール + 完了チェックリストの反復で計画を確定する",
+    "system-spec-harness は plugins/system-spec-harness/.claude-plugin/plugin.json の version=0.1.0 を pin し、run-system-spec-compile と assign-system-spec-completeness-evaluator (手動導線 /spec-compile) の確定出力だけを引用する。入力version/entrypoint不一致はfail-closedにする",
+    "ハーネスcode/assetsはsymlink物理元からロードしてよいが、content/config/state/cache/lock authorityは呼出元repositoryに限定し、symlink物理元や別repositoryの管理contentを読書きしない",
+    "repository root解決順は明示 --repo-root > allowlistされた trusted project env (SYSTEM_DEV_PROJECT_ROOT または CLAUDE_PROJECT_DIR) > git rev-parse --show-toplevel > cwd の .dev-graph marker とし、host $CLAUDE_PROJECT_DIR不一致・曖昧・不存在・broken/moved content symlink は診断付きfail-closed、broken harness symlinkはhost launcher preflight責務とする",
+    ".dev-graph/config.json は repository 相対 path のみを許可し、issues/tasks/specs/architecture/docs/system-spec/published/staging/state/cache/lock roots を map する。absolute path、.. traversal、symlink escape、realpath(root外) は拒否する",
+    "init はrepo-local config/directories/editable templatesを冪等に生成し、既存docs/specs/architecture/tasks/issuesを上書きしない。複数repo同時実行でもstate/cache/lock/stagingを共有しない",
+    "公開は staging digest と独立4条件評価digestが一致し implementation_readiness=complete の場合だけ、同一repo filesystem内でatomic rename/promotionする。dev-graph登録はpromotion後のmanifestを入力にし部分生成物を観測しない",
+    "run-system-dev-plan / system-dev-plan-architect / system-dev-plan-evaluator / validate-system-plan.py の名前所有権は本 plugin にあり、dev-graph 側は引用のみ (同名 build 禁止)",
+    "typed task specificationはtracker binding/publication intentとlinked-PR completion policyを宣言するが、Beads/GitHub/Projects mutation、PR reconciliation、hooks、worktree claimはdev-graphへ委譲する",
+    "task分解はone-task-one-branchとresource_scopeを前提にし、生成時点のissue/project/PR/worktree linkage配列は空、completion evidenceはin_progressとして登録する",
+    "system-dev-planner は feature ノードを生成しない (feature は dev-graph マクロ層の実体)。feature を消費して 13 タスク仕様書へ細分解するのみで、program 全体の goal/scope の保持も dev-graph の責務であり本 plugin は担当しない"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": [],
+  "source_intake": {
+    "ref": "intake.json",
+    "schema_version": "2.0.0"
+  },
+  "source_improvement": {
+    "ref": "improvement-handoff-macro.json",
+    "schema_version": "1.0.0"
+  }
+}

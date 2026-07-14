@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "inventory_role": "output-shape-contract",
+  "source_contract": "system-spec-source-pin.json",
+  "workstream_kinds": [
+    {"kind": "frontend", "required_task_content": ["routes/screens", "components/state", "API binding", "accessibility", "visual/performance evidence"]},
+    {"kind": "backend", "required_task_content": ["service boundary", "runtime/framework", "transactions/concurrency", "errors", "observability"]},
+    {"kind": "api", "required_task_content": ["method/path", "auth", "request/response schema", "error model", "idempotency/rate limit/versioning"]},
+    {"kind": "data", "required_task_content": ["entities/relations", "constraints/indexes", "migration/backfill", "retention/privacy", "backup/restore"]},
+    {"kind": "infrastructure", "required_task_content": ["environment", "IaC", "network/compute/storage", "CI/CD", "scaling/cost"]},
+    {"kind": "security", "required_task_content": ["threat model", "trust boundaries", "authn/authz", "secret/encryption", "audit/incident response"]},
+    {"kind": "quality", "required_task_content": ["unit/contract/integration/e2e", "security/performance", "coverage", "fixtures", "evidence"]},
+    {"kind": "documentation", "required_task_content": ["user/developer docs", "decision records", "change history", "cross-links", "ownership"]},
+    {"kind": "operations", "required_task_content": ["runbook", "monitoring/alerts", "SLO", "rollout/rollback", "disaster recovery"]}
+  ],
+  "task_entry_required": ["id", "title", "workstream_kind", "build_target_kind", "phase_ref", "depends_on", "write_scope", "deploy_unit", "source_lineage", "implementation_readiness", "acceptance", "verification", "rollback", "graph_node_registration"],
+  "rules": [
+    "each generated task has exactly one primary workstream_kind and may list secondary workstreams",
+    "all nine workstream kinds are evaluated as applicable or N/A: reason",
+    "dependencies form a DAG and write_scope overlap serializes tasks",
+    "all stored paths are caller-repository relative and containment-validated"
+  ]
+}

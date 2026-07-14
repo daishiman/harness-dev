@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "beads-kanban-adoption-20260712",
+    "generated_by": "30思考法エレガント検証 (思考リセット + 3並列分析) + 外部3リポジトリ再調査 (gastownhall/beads v1.1.0 / doublej/beads-kanban 0.4.1 / AI-Driven-R-D-Dept/oh-my-beads 0.2.3) + ユーザー4決定 (hybrid維持 / 看板=beads-kanban採用 / 選定=独立router新設 / スコープ=--mode update)"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "context": {
+    "user_decisions": {
+      "tracker_policy": "hybrid維持 (ローカルMarkdown/graph正本 + beads実行projection既定 + 公開/共有時GitHub投影)。現行 execution_tracker.mode=beads|github|both を正式方針とする。",
+      "board_ui": "beads-kanban (doublej) を beads束縛タスクの標準live実行看板として採用。bd sql=server mode必須・外部依存・LICENSE不在を運用注意として記録。",
+      "planner_selection": "route-dev-planner を独立router skillとして新設。§0判定表を機械dispatch契約の正本に昇格。",
+      "scope": "3プランを --mode update で整備 (plugin-dev-planのrange内。実buildは範囲外)。"
+    },
+    "reset_observation": "両プランは plan-findings verdict=PASS・open_questions=0・macro/micro境界はschema(feature-execution-package/dev-graph-registration/graph-node)で多層fail-closed強制済み。ユーザー懸念『ごちゃ混ぜ・矛盾』は計画レベルでは既に解消済みで、残るのは (a) 看板UIの役割並存の未明文化 (b) 選定routerの未実装 (c) plugin-rooteds投影の外部依存fail-closed の3点。"
+  },
+  "findings": [
+    {
+      "id": "EV-BK01",
+      "severity": "high",
+      "summary": "§7 が beads-kanban を『交換可能な viewer として非結合』とし、improvement-handoff-beads.json の user_policy『AIエージェント実行系 = beads (bd ready + beads-kanban)』という採用意図と乖離していた。看板UIをどれにするかが未確定のまま設計本体に反映されていなかった。",
+      "detected_by": ["逆説思考 (自前UIとkanbanの役割並存が保守性を落とす逆説)", "価値提案思考 (看板がどのユーザー価値に直結するか未定義)", "論点思考 (本質論点=看板UI確定 と 非本質=命名 の切り分け)"],
+      "resolution": "ユーザー決定で beads-kanban を採用。§7 の該当bulletを『採用した実行看板 (API非結合は維持)』へ書換え、新§9で採用範囲/server mode前提/LICENSE注意/C05役割分担を正本化。",
+      "target_ref": "references/execution-tracker-contract.md §7,§9",
+      "status": "applied"
+    },
+    {
+      "id": "EV-BK02",
+      "severity": "high",
+      "summary": "beads-kanban は bd sql (=Dolt server mode) 必須だが、repo-config は server_mode を『dev-graphの正否判定に使わない運用hint』としており、看板採用時のserver mode前提が機械強制されていなかった。",
+      "detected_by": ["演繹思考 (bd sql必須 → server mode必須 → config強制 の機械的導出)", "アブダクション (なぜserver_modeがhint止まりか=看板が非結合だったから)", "システム思考 (embedded既定と看板要件の入出力不整合)"],
+      "resolution": "repo-config.schema.json の execution_tracker.beads へ board enum (beads-kanban|static-render|omb-board|none) を追加し必須化。allOf条件で board=beads-kanban ⇒ server_mode=true を fail-closed 強制。server_mode の description を前提条件へ更新。example config を board=static-render で追従。",
+      "target_ref": "schemas-draft/repo-config.schema.json + templates/repo-config.example.json",
+      "status": "applied"
+    },
+    {
+      "id": "EV-BK03",
+      "severity": "medium",
+      "summary": "C05 自前静的render と beads-kanban が『実行タスク看板』として機能的に並存するが、使い分けが §0 の一言 (表示は beads-kanban または GitHub Projects) 以上に明文化されていなかった (役割の明文化不足)。",
+      "detected_by": ["トレードオン思考 (依存性 vs 機能 の両立配置)", "水平思考 (oh-my-beads omb-board という第三の軽量選択肢の横展開)", "要素分解 (対象/更新/依存/用途/authority の5軸で責務を分離)"],
+      "resolution": "§9.2 に beads-kanban(live看板・bd issue限定・server mode) と C05(全6artifact俯瞰スナップショット・ゼロ依存) の役割分担表を新設。両者とも完了authorityを持たず補完関係であることを明記。index.md L73/L95 にも delineation を追記。",
+      "target_ref": "references/execution-tracker-contract.md §9.2 + index.md",
+      "status": "applied"
+    },
+    {
+      "id": "EV-BK04",
+      "severity": "medium",
+      "summary": "PR close→task close の自動化を beads-kanban 経由にすると server 起動・オフラインに引きずられる。看板UIと自動化経路の分離が未明示だった。",
+      "detected_by": ["因果関係分析 (看板経由自動化 → server依存 → CI/offline脆弱 の因果)", "戦略的思考 (upstream変動耐性を将来拡張として維持)", "プラスサム思考 (bd bridge と看板の責務分担で手戻りを減らす)"],
+      "resolution": "§9.3 で『自動化は看板を経由せず bd CLI (C28 bridge) + PR fact を直結』を正本化。看板起動有無は完了収束に影響しない (§7 drift耐性と同一設計) ことを明記。",
+      "target_ref": "references/execution-tracker-contract.md §9.3",
+      "status": "applied"
+    },
+    {
+      "id": "EV-BK05",
+      "severity": "high",
+      "summary": "『plugin構築 → plugin-dev-planner / システム構築 → dev-graph+system-dev-planner』の選定は execution-tracker-contract §0 に判定表として正本化されていたが、それを実行する機械 router が存在せず、人間/orchestrator の読解に依存していた (素人思考: index単独では入口の振り分けが分からない)。",
+      "detected_by": ["システム思考 (入口ノードの欠落=孤立した判定表)", "メタ思考 (5種kind写像の前段=成果物種別判定 が未機械化)", "素人思考 (初見開発者がどちらのプランナーを使うか判断できない)"],
+      "resolution": "route-dev-planner を独立router skillとして新設 (plugin-plans/route-dev-planner/)。§0判定表を router の decision table 正本に昇格し、§0へ router pointer を追記。router不在時は §0 を人間フォールバックとして維持 (fail-open禁止・曖昧構想は分割誘導)。分類シグナルは route-dev-planner-contract.md の classify_construction_target が正本 (ユーザー協働で確定)。",
+      "target_ref": "references/execution-tracker-contract.md §0 + plugin-plans/route-dev-planner/",
+      "status": "applied"
+    },
+    {
+      "id": "EV-BK06",
+      "severity": "low",
+      "summary": "hybrid維持 (beads既定 + GitHub投影) 方針は §1 決定表で既に確定していたが、『beadsを使わずGitHubのみ/beadsローカルのみ』という代替も検討した上での確定であることが記録されていなかった。",
+      "detected_by": ["批判的思考 (beadsは本当に必要か1件ずつ疑う)", "if思考 (beadsが存在しなかったらready-set算出がAPI往復になる)", "仮説思考 (hybridは最適という仮説の反証=GitHubのみ/beadsのみ を検討)"],
+      "resolution": "ユーザー確認により hybrid維持を正式方針として確定。§1 決定表 (ソロ+AI private=beads / public OSS=github / 協力者共有=both) をそのまま維持。beadsの固有価値=bd ready の依存認識ready-set + resource_scope並列安全性 (GitHub単独では表現困難) を確定理由として記録。",
+      "target_ref": "references/execution-tracker-contract.md §1 (変更なし・方針確定)",
+      "status": "confirmed"
+    },
+    {
+      "id": "EV-BK07",
+      "severity": "medium",
+      "summary": "system-dev-planner の runtime task-spec テンプレートが2箇所 (references/system-task-spec-template.md 正本 + templates/system-task-spec.md draft) に分裂し節構成が乖離。生成器の参照正本が曖昧になるリスク (未解消の follow-up)。",
+      "detected_by": ["帰納的思考 (2テンプレートの節構成パターン比較で乖離を検出)", "ダブル・ループ思考 (テンプレート分裂を生んだ pointer化未完という前提の見直し)"],
+      "resolution": "pointer 化を適用。dev-graph/templates/system-task-spec.md の draft body を正本 (system-dev-planner/references/system-task-spec-template.md) への pointer stub へ置換し重複を除去。overlay節→正本節の対応表と、beads投影フィールド (id=graph_node_id / depends_on=task-graph DAG / status=registration const / parent=parent_feature) の充足経路を明記。template-contract.json system_plan に task_overlay_status=pointer_to_canonical + runtime_emission_owner=system-dev-planner を追記。README 選択規則6 に runtime 正本を明記 (system-dev-planner phase-08/phase-12 の計画実行)。",
+      "target_ref": "plugin-plans/dev-graph/templates/system-task-spec.md + template-contract.json + README.md",
+      "status": "applied"
+    }
+  ],
+  "provenance": {
+    "prev_goal_spec": "goal-spec.json",
+    "prev_improvement_handoff": "improvement-handoff-beads.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "current-user-request (beads看板連携最適化 + plugin/system選定router + 30思考法エレガント検証)"
+    }
+  }
+}

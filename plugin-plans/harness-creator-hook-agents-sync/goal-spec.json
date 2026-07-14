@@ -1,0 +1,92 @@
+{
+  "purpose": "有効化・信頼済みのリポジトリ capability を、Claude Code と Codex それぞれの公式 native surface へ、製品ごとの手作業や推測投影なしに一貫公開し続けられる状態にする。両製品への投影 drift は build 完了ゲートと CI が検出・修復し、片側だけ未反映・stale になる状態を残さない。本タスクの成果物はこれを実現する実行可能な L3 開発仕様の確定であり、build/apply/install/trust/PR は実行しない。",
+  "background": "観測事実は2点。(1) Claude 側には scripts/build-claude-settings.py と INV-1〜INV-12 の merge 契約が既にあるが、Makefile・CI・capability-build 完了ゲートへ配線されておらず、現行 .claude/settings.json の FileChanged / TaskCompleted / TaskCreated を未知 event として exit 3 で停止する。(2) Codex 0.144.0+の公式仕様と repo 実測では、native surface は repo skill=.agents/skills、project hook=.codex/hooks.json または .codex/config.toml の inline hooks、plugin=.codex-plugin/plugin.json、repo marketplace=.agents/plugins/marketplace.json、plugin hook=hooks/hooks.json または manifest hooks であり、plugin hook は install/enable 後も user trust を要する。この2点から導く設計判断: 共通意味論を plugin-root TOML に置き、Claude `.claude/settings.json`、Codex `.codex/hooks.json`/`.codex/config.toml`、`.agents/plugins/marketplace.json` へ製品別 adapter で投影する。`.agents/{agents,commands,hooks}` の推測配置や非公式 TOML key は生成せず、plugin-bundled hook と project hook は delivery owner で一意化し二重発火を防ぐ。公式に対応が確認できない agents/commands は v1 で自動投影せず unsupported report に残す。",
+  "goal": "計画と local build 完了時に、次の5系統が component-inventory・13 phase・handoff・task-graph の4正本へ矛盾なく落ち、planner 決定論ゲートと elegant-review 4条件が全 PASS する状態を満たす: (A) Claude reflector の現行 event 互換修復と Makefile/全CI/capability-build 完了ゲート配線、(B) harness-creator の Codex native manifest・repo marketplace・plugin hook 契約、(C) supported/unsupported surface matrix、(D) exact plugin@marketplace identity での local projection と install/enable/trust 後の runtime 発火を分離した競合安全な SessionStart 同期、(E) artifact freshness を含む決定論 validator。初回 planner は spec-only、後続 handoff consumer は local build/apply/check を実行する。product install/enable/trust と commit/push/PR は user-gated で自動実行しない。",
+  "artifact_class": "existing-plugin-update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/harness-creator-hook-agents-sync",
+  "out_dir": "plugin-plans/harness-creator-hook-agents-sync",
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "Claude/Codex surface matrix が authoritative source URL・確認日・repo 実測を持ち、各 surface を confirmed / unsupported / deferred に分類している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "scripts/build-claude-settings.py が target 内の現行 hook event を非破壊 preserve し、managed source の未対応 event は明示 block する互換修復と回帰 fixture を持つ設計になっている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "Claude hooks 投影が Makefile・governance-check.yml・capability-build dispatcher・TG-C08 完了ゲートに配線され、apply 後 check exit0 を機械強制する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "Codex native surface は .codex-plugin/plugin.json・hooks/hooks.json・.codex/hooks.json・.codex/config.toml・.agents/plugins/marketplace.json を用途別に使い、共通 TOML 契約から project/plugin delivery owner を保って生成・検査する。.agents/skills 以外への推測 symlink、非公式 TOML key、hooks.json と inline [hooks] の二重定義は生成しない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "plugin capability の kind mapping が skills/hooks=confirmed、agents/commands=unsupported/deferred と明示され、unsupported kind を黙って成功扱いしない parity report を持つ",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "SessionStart 自動同期は install/enable/trust 済みを前提とし、reentrancy guard・process lock・atomic replace・content hash no-op・timeout・構造化 warning を持つ。generator 不在だけを skipped_not_installed とし、drift/conflict/parse/race は成功へ畳まない",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "Claude/Codex 両経路の回帰テストが、非破壊 merge、trust 未承認、同時2セッション、二重実行冪等、unsupported kind、orphan/prune 境界を固定する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "repo-owned / tool-owned / user-owned / worktree-local の state ownership matrix があり、.agents/skills/beads と user global config を書込対象外にし、secret・個人識別子を生成物へ書かない",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "goal-spec・inventory・handoff・task-graph・plan-findings の digest/freshness parity が検証され、古い component/route 数を根拠に PASS しない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C10",
+      "criterion": "plan 一式が矛盾なし・漏れなし・整合性あり・依存関係整合の4条件を全て満たし、同梱の plan validator が全 exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "planner 生成は L3 spec-only、handoff consumer は repo-owned local build/apply/check までを実行する。plugin install/enable/trust、commit、push、PR は独立 user gate で自動実行しない",
+    "Claude Code と Codex を人工的に対称化せず、各製品の公式 native loading contract を優先する",
+    "Codex 向けに .agents/{agents,commands,hooks} symlink や非公式 TOML key を生成しない。repo skill の confirmed path は .agents/skills、plugin discovery は .agents/plugins/marketplace.json、project hook は .codex/hooks.json（config.toml は features 等の managed key）、plugin 配布面は .codex-plugin/plugin.json + hooks/hooks.json とする",
+    "既存 build-claude-symlinks.py の VALID_KINDS と build-claude-settings.py の INV-1〜INV-12 は後方互換を維持する。未知 target event は preserve し、managed source の未知 event は fail-closed にする",
+    "plugin hook の install/enable/trust を自動 mutation しない。runtime activation と trust approval は user-gated evidence として build 完了から分離する",
+    "harness-creator は distributable:false の clone 専用基盤だが、repo-local marketplace は public distribution ではないため計画対象に含める。public marketplace publish は対象外とする",
+    "SessionStart は毎回の全量無条件書込みを避け、fingerprint 差分時のみ managed repo state を更新する。user global config と tool-owned namespace は変更しない",
+    "新規ロジックは Python 標準ライブラリのみとし、lock・atomic replace・structured status を共通契約に含める",
+    "plugin-plans/harness-creator/ と plugin-plans/with-task-graph-goalseek/ は別構想であり改変しない"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 3,
+  "open_questions": [
+    "Claude Code の local projection source selection を repo-present ∩ exact plugin@marketplace project-enabled に限定し、repo から観測不可能な install/current-hook-trust を runtime user gate へ分離する。全 plugins/* の無条件 apply と slug-only identity 照合は禁止する",
+    "Codex で Claude-style agents/commands を自動公開する公式 plugin surface は現行文書で確認できない。v1 は unsupported とし、将来公式 surface が追加された時だけ別 structural change として扱う",
+    "plugin-composition.yaml の hooks 配線検査と Claude settings / Codex native manifest parity validator の責務境界を P02 で確定する"
+  ]
+}

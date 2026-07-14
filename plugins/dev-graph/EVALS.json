@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "plugin": "dev-graph",
+  "mechanical": [
+    "graph-schema-template-parity", "system-spec-lineage-confirmation",
+    "system-plan-phase-task-separation", "task-dag-handoff-parity", "atomic-promotion",
+    "github-dry-run-idempotency", "ready-set-conflict-safety",
+    "symlink-caller-repository-resolution", "repository-id-rederivation-and-mismatch"
+  ],
+  "criteria_tests": {
+    "test_file": "tests/test_skill_criteria_contracts.py",
+    "components": {
+      "C01": {
+        "skill": "skills/run-dev-graph-init/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "validate-graph-schema.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "issues/tasks/specs/architecture/features/docs", "二回目init"],
+          "OUT2": ["criteria:out2", ".dev-graph/templates/", "利用者編集を上書きしない"],
+          "OUT3": ["criteria:out3", "cross-read/write 0件", "broken content symlink", "absolute stored path 0件"],
+          "OUT4": ["criteria:out4", "enabled:false", "node idを保存しない"],
+          "OUT5": ["criteria:out5", "project-fallback", "二重登録0件", "rollback"]
+        }
+      },
+      "C02": {
+        "skill": "skills/run-dev-graph-node/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "validate-graph-schema.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "通常5 artifact", "featureはc14", "frontmatter/path"],
+          "OUT2": ["criteria:out2", "architecture", "api-contract", "必須セクション"],
+          "OUT3": ["criteria:out3", "12/14", "applied_count=0", "expected_count=applied_count=13", "p01..p13/node exact-set", "graph_revision"]
+        }
+      },
+      "C03": {
+        "skill": "skills/run-dev-graph-sync/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "validate-graph-schema.py", "gh-bridge.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "二回同期", "2回目", "changes=0"],
+          "OUT2": ["criteria:out2", "updated_at", "新しい方", "同時刻はgithub"],
+          "OUT3": ["criteria:out3", "物理削除せず", "tombstone/status"],
+          "OUT4": ["criteria:out4", "--dry-run", "外部write 0"],
+          "OUT5": ["criteria:out5", "手動確認フラグ", "再同期で解消"],
+          "OUT6": ["criteria:out6", "project item", "重複0件", "aliasごとに1 item"],
+          "OUT7": ["criteria:out7", "3-way", "manual conflict", "snapshot"],
+          "OUT8": ["criteria:out8", "permission", "rate-limit", "local task promotionを維持", "pending_retry"],
+          "OUT9": ["criteria:out9", "closed未merge", "default branch", "pending event", "clean default worktree"]
+        }
+      },
+      "C04": {
+        "skill": "skills/run-dev-graph-requirements/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "gh-bridge.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "capability-build/task-graph", "実装コードを生成しない"],
+          "OUT2": ["criteria:out2", "implementation_readiness=incomplete", "missing_sections", "handoffを保留"]
+        }
+      },
+      "C05": {
+        "skill": "skills/run-dev-graph-render/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "外部script/link参照が0件", "ゼロ依存"],
+          "OUT1": ["criteria:out1", "ブラウザ", "svgグラフ", "追加ランタイム依存なく"]
+        }
+      },
+      "C14": {
+        "skill": "skills/run-dev-graph-decompose/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "validate-graph-schema.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "feature+architecture", "循環なし", "task粒度混入なし", "評価前draft", "confirmed/pass/readiness complete"],
+          "OUT2": ["criteria:out2", "二回実行", "bd issue/blocks edge", "issue/project item", "local node"],
+          "OUT3": ["criteria:out3", "--dry-run", "write 0件"],
+          "OUT4": ["criteria:out4", "mode=both+auto", "github+local_only", "beads+issue publication", "外部write 0件"],
+          "OUT5": ["criteria:out5", "local batch成功後", "pending_retry", "冪等再実行"],
+          "OUT6": ["criteria:out6", "p01..p13 exact 13", "一組だけ", "parent_feature", "feature_package_id"],
+          "OUT7": ["criteria:out7", "手動/system-dev-plan", "二重登録0件"]
+        }
+      },
+      "C15": {
+        "skill": "skills/run-dev-graph-schedule/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "blocked/draft/unconfirmed/evaluation非pass/readiness非complete", "0件"],
+          "OUT1": ["criteria:out1", "depends_on", "ready-set に0件"],
+          "OUT2": ["criteria:out2", "resource_scope.touches", "重複ペアが0件", "active lease"],
+          "OUT3": ["criteria:out3", "suggested_branch=devgraph/<graph_node_id>", "二重claimを0件"]
+        }
+      },
+      "C18": {
+        "skill": "skills/run-dev-graph-status/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "validate-graph-schema.py", "必須キー欠落が0件"],
+          "OUT1": ["criteria:out1", "status/closed_at/依存関係", "実状態と一致"],
+          "OUT2": ["criteria:out2", "digestを比較", "副作用0件"]
+        }
+      },
+      "C19": {
+        "skill": "skills/run-dev-graph-system-spec/SKILL.md",
+        "criteria": {
+          "IN1": ["criteria:in1", "coverage/source citation gate", "schema gate", "exit0"],
+          "OUT1": ["criteria:out1", "source lineage", "複製0件", "c02経由"]
+        }
+      }
+    }
+  },
+  "content_review": {
+    "required": true,
+    "receipt_pattern": "eval-log/dev-graph/<skill>/content-review/{elegance,rubric}-verdict.json",
+    "criteria_receipt_pattern": "eval-log/dev-graph/<skill>/criteria-test/scenario-verdict.json",
+    "verifier": "tests/test_skill_criteria_evidence.py",
+    "sha_match": true,
+    "criteria_exact_set": true,
+    "loop_scope": "both",
+    "iteration_limit": 3
+  },
+  "llm_eval": {"required": true, "conditions": ["no_contradiction", "no_missing", "consistent", "dependency_integrity"]}
+}

@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "review_id": "dev-graph-harness-contract-audit-20260713",
+  "scope": "plugin-plans/dev-graph handoff, task graph, 25 built routes, route reports, and plugins/dev-graph runtime wiring",
+  "graph_hash": "sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d",
+  "protocol": {
+    "reset_observation_completed_before_analysis": true,
+    "independent_phase2_groups": [
+      "logical-structural: 10 methods",
+      "meta-divergent: 9 methods",
+      "system-strategic: 11 methods"
+    ],
+    "mutual_intermediate_reference": false,
+    "iterations": 3,
+    "iteration_limit": 3,
+    "methods_required": 30,
+    "methods_applied": 30,
+    "methods_skipped": 0
+  },
+  "reset_observation": {
+    "facts_only": [
+      "handoff retains producer-owned plan-time route status=planned and build_readiness=blocked",
+      "task-state contains 50/50 done nodes and 25 route-build reports exist",
+      "all 25 build_target paths exist and their current hashes are recorded in build-trace.json",
+      "runtime tests and branch-inclusive coverage are green, but the existing tests do not replay every inventory semantic contract"
+    ]
+  },
+  "route_classification": {
+    "target_hash_and_trace_pass": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C24", "C25", "C26", "C27", "C28", "C29"],
+    "kind_and_semantic_pass": ["C06", "C07", "C08", "C13", "C17", "C29"],
+    "kind_fail_semantic_pass": ["C01", "C02", "C03", "C04", "C05", "C14", "C18", "C19"],
+    "kind_and_semantic_fail": ["C09", "C15", "C26", "C27"],
+    "kind_pass_semantic_fail": ["C10", "C11", "C12", "C16", "C24", "C25", "C28"]
+  },
+  "material_findings": [
+    {
+      "id": "SEM-C09",
+      "severity": "high",
+      "routes": ["C09", "C27"],
+      "finding": "The slash command dispatches `dev-graph worktree status`, while manage-worktree-lease.py accepts `list` and has no `status` operation.",
+      "evidence": ["plugins/dev-graph/commands/dev-graph.md", "plugins/dev-graph/scripts/manage-worktree-lease.py"]
+    },
+    {
+      "id": "SEM-C10-C11",
+      "severity": "high",
+      "routes": ["C10", "C11"],
+      "finding": "The guard declares a C11 dependency but never invokes validate-graph-schema.py; C11 validates a hand-coded subset instead of loading graph-node.schema.json, so the declared fail-closed schema boundary is not implemented.",
+      "evidence": ["plugins/dev-graph/hooks/guard-graph-schema.py", "plugins/dev-graph/scripts/validate-graph-schema.py", "plugins/dev-graph/schemas/graph-node.schema.json"]
+    },
+    {
+      "id": "SEM-C12",
+      "severity": "high",
+      "routes": ["C12"],
+      "finding": "The GitHub issue-create path passes unsupported `--json` arguments to `gh issue create`, and all completed operations are labelled retry_classification=not_retryable without classifying failures.",
+      "evidence": ["plugins/dev-graph/scripts/gh-bridge.py"]
+    },
+    {
+      "id": "SEM-C16",
+      "severity": "high",
+      "routes": ["C15", "C16"],
+      "finding": "The scheduler does not enforce confirmed/pass/readiness-complete and emits `task/<slug>` rather than the inventory contract `devgraph/<graph_node_id>`.",
+      "evidence": ["plugins/dev-graph/scripts/schedule-graph.py", "plugin-plans/dev-graph/component-inventory.json#component=C15"]
+    },
+    {
+      "id": "SEM-C24",
+      "severity": "high",
+      "routes": ["C24"],
+      "finding": "Repository containment does not fully enforce the declared symlink, git-common-dir, and repository-ownership boundaries.",
+      "evidence": ["plugins/dev-graph/scripts/resolve-repo-context.py", "plugin-plans/dev-graph/component-inventory.json#component=C24"]
+    },
+    {
+      "id": "SEM-C25-C26",
+      "severity": "critical",
+      "routes": ["C25", "C26"],
+      "finding": "The lifecycle hook invokes C26 reconcile without required graph/node/repo/PR arguments and suppresses the failure with a zero exit. C26 also mutates the graph directly, bypassing the C02 single-writer contract, and omits required feature rollup/evidence/Beads-close gates.",
+      "evidence": ["plugins/dev-graph/hooks/reconcile-task-lifecycle.py", "plugins/dev-graph/scripts/reconcile-github-lifecycle.py"]
+    },
+    {
+      "id": "SEM-C27-C28",
+      "severity": "critical",
+      "routes": ["C27", "C28"],
+      "finding": "C27 is only a local lease ledger and does not implement the declared Beads claim saga and compensation. C28 lacks workspace identity and exact edge-parity enforcement, leaving tracker authority weaker than its inventory contract.",
+      "evidence": ["plugins/dev-graph/scripts/manage-worktree-lease.py", "plugins/dev-graph/scripts/bd-bridge.py"]
+    },
+    {
+      "id": "EVIDENCE-SKILLS",
+      "severity": "medium",
+      "routes": ["C01", "C02", "C03", "C04", "C05", "C14", "C18", "C19"],
+      "finding": "Skill routes have naming/content lint evidence but no criteria-test evidence for the inventory-declared criteria-test plus content-review loop.",
+      "evidence": ["eval-log/dev-graph/build/route-C01.json", "eval-log/dev-graph/build/route-C19.json"]
+    }
+  ],
+  "methods": [
+    {"id": 1, "name": "批判的思考", "finding": "Structural success reports were challenged against actual command and hook call paths; multiple paths are not executable as declared."},
+    {"id": 2, "name": "演繹思考", "finding": "Inventory requirements imply concrete runtime checks; C09-C12 and C15-C28 do not derive all required behavior."},
+    {"id": 3, "name": "帰納的思考", "finding": "Routes with real criteria tests such as C29 provide stronger evidence than lint-only skill reports, exposing an inconsistent completion convention."},
+    {"id": 4, "name": "アブダクション", "finding": "The most likely root cause is a build confirmation gate that validates artifact shape and hashes but does not replay semantic joins."},
+    {"id": 5, "name": "垂直思考", "finding": "The purpose of deterministic graph operations is not met when a documented operation name or lifecycle invocation cannot execute."},
+    {"id": 6, "name": "要素分解", "finding": "Targets, reports, commands, parsers, hook subprocess calls, schemas, tracker calls, and tests were inspected as separate contract elements."},
+    {"id": 7, "name": "MECE", "finding": "All 25 routes were classified across target/hash, kind gate, and semantic gate with no unclassified route."},
+    {"id": 8, "name": "2軸思考", "finding": "Low-cost wiring fixes exist, but C26-C28 require higher-cost authority and saga corrections and cannot be treated as cosmetic."},
+    {"id": 9, "name": "プロセス思考", "finding": "Preflight, scaffold, trace, and structural validation ran; semantic acceptance was missing between trace validation and completion."},
+    {"id": 10, "name": "メタ思考", "finding": "A route being materially present is a different claim from the route purpose being implemented; the completion model conflated them."},
+    {"id": 11, "name": "抽象化思考", "finding": "A reusable route verifier should join inventory criteria to executable tests instead of accepting generic report shape."},
+    {"id": 12, "name": "ダブル・ループ思考", "finding": "Earlier rounds fixed route parity, ownership, evidence structure, and projections, but did not change the semantic completion rule."},
+    {"id": 13, "name": "ブレインストーミング", "finding": "Alternatives considered: contract tests, parser-to-doc parity tests, subprocess spies, schema loading, capability-specific evaluators, replay fixtures, and receipt-backed semantic gates."},
+    {"id": 14, "name": "水平思考", "finding": "C29's concrete behavioral tests and other plugin kind-specific validators provide patterns for the failing routes."},
+    {"id": 15, "name": "逆説思考", "finding": "Removing the generic success reports would not remove meaningful semantic assurance because that assurance is not currently present."},
+    {"id": 16, "name": "類推思考", "finding": "Declared script_refs and dependencies should correspond to real invocation edges; C10 and C25 violate that convention."},
+    {"id": 17, "name": "if思考", "finding": "At tenfold graph size, suppressed lifecycle failures and missing tracker parity would amplify silent divergence."},
+    {"id": 18, "name": "素人思考", "finding": "A user following `worktree status` receives a parser error, so the advertised interface is not understandable through successful use."},
+    {"id": 19, "name": "システム思考", "finding": "Direct graph mutation in C26 breaks the single-writer boundary and can invalidate downstream scheduler, tracker, and projection assumptions."},
+    {"id": 20, "name": "因果関係分析", "finding": "Shape-only report validation causes false done, which permits broken joins to reach the final projection as complete."},
+    {"id": 21, "name": "因果ループ", "finding": "False completion suppresses discovered-task creation, so the outer improvement loop cannot correct the originating spec-to-code gap."},
+    {"id": 22, "name": "トレードオン思考", "finding": "Centralized evidence structure is retained, while capability-specific criteria tests are the third path between duplicate validators and weak generic checks."},
+    {"id": 23, "name": "プラスサム思考", "finding": "Executable semantic receipts would improve planner feedback, builder confidence, and operational debugging simultaneously."},
+    {"id": 24, "name": "価値提案思考", "finding": "The plugin promises deterministic graph-to-execution coordination, but lifecycle and tracker authority are not yet dependable enough to deliver that value."},
+    {"id": 25, "name": "戦略的思考", "finding": "Hard-coded schema subsets and CLI assumptions will drift further as schemas and external CLIs evolve."},
+    {"id": 26, "name": "why思考", "finding": "The root chain is missing semantic replay, generic success evidence, false route completion, then false graph completion."},
+    {"id": 27, "name": "改善思考", "finding": "Three rounds removed several structural defects, but the final round still found critical semantic defects; automatic iteration must stop."},
+    {"id": 28, "name": "仮説思考", "finding": "The hypothesis that all harness-creator specifications were executed is rejected by direct command/parser and hook/callee counterexamples."},
+    {"id": 29, "name": "論点思考", "finding": "The decisive issue is whether completion authority requires runtime semantics, not whether all target files and reports exist."},
+    {"id": 30, "name": "KJ法", "finding": "Findings cluster into interface mismatch, validation bypass, lifecycle authority, tracker saga, and insufficient semantic evidence."}
+  ],
+  "four_conditions": {
+    "no_contradiction": "FAIL: declarations and runtime call paths contradict each other",
+    "no_missing": "FAIL: required semantic gates and saga steps are missing",
+    "consistent": "FAIL: completion evidence strength differs by route kind and does not consistently implement inventory criteria",
+    "dependency_integrity": "FAIL: C10 and C25 have declared dependencies that are not valid executable joins"
+  },
+  "score": {
+    "formula": "25 points each for target/hash trace, build-target criteria gate, semantic contract, and dependency integrity",
+    "target_hash_trace": 25,
+    "kind_criteria_gate": 13,
+    "semantic_contract": 14,
+    "dependency_integrity": 0,
+    "total": 52,
+    "threshold": 80
+  },
+  "verdict": "FAIL_ESCALATED",
+  "completion_decision": "Do not declare completed. Emit a structural discovered task and stop after the mandated three iterations pending human approval."
+}

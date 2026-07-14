@@ -1,0 +1,70 @@
+{
+  "skill_name": "run-dev-graph-node",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "グラフノード追加",
+    "グラフノード更新",
+    "dev-graph node"
+  ],
+  "output_contract": "ノード操作レポート (repository_id + repo相対path + 分類候補/confidence/reason + 追加更新件数 + template/schema結果)。batch登録はstatus/source_digest/expected_count/applied_count/graph_revision/registered_node_ids/committed_atを持つimmutable receiptを返す",
+  "boundary": "入力=成果物内容と任意hint/出力=artifact_kind/domain/project_idの分類preview、正規Markdown path、グラフノード追加・更新。保存先はユーザーに指定させない。confidence>=0.80かつ第2候補差>=0.15なら自動確定し、それ未満だけ確認する。物理削除はせず、全artifactがfile_pathを持つ。新規作成時はtemplates/template-contract.jsonの対応テンプレートから本文骨格(必須セクション見出し)を適用し、architectureはsubtype複数選択、specificationはAPI変更有無でapi-contract.md合成有無を判定する。更新時は既存本文を全書換せず差分のみ書込む",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "validate-graph-schema.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "artifact自動分類",
+    "候補path preview",
+    "低信頼時だけ確認",
+    "ノード追加/更新",
+    "frontmatter/path整合維持",
+    "kind別テンプレート適用",
+    "tracker binding明示解決",
+    "exact 13 phase task batch atomic登録とreceipt"
+  ],
+  "goal": "通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "成果物を単一graphで保持する専用writer。feature由来task batchはsystem-dev-plannerのfeature package契約に従い、P01..P13 exact 13 node、共通parent_feature/feature_package_id、同一package内dependencyを事前検証してall-or-none commitする。tracker bindingも同じtransactionで解決する",
+  "responsibilities": [
+    {
+      "id": "R0-context",
+      "summary": "C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする",
+      "prompt_required": true
+    },
+    {
+      "id": "R1-classify",
+      "summary": "成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-preview",
+      "summary": "分類previewを提示し、閾値未達時だけ確認して正規pathを確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-write",
+      "summary": "artifact_kindからtemplateを選び単一transactionで差分書込みする。feature package登録はexact 13 nodeのP01..P13、共通parent/package、機能内dependency/bindingを検証しpartial 0件のreceiptを生成する",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-apply-template",
+      "summary": "確定したartifact_kind (architectureはsubtype複数選択、specificationはAPI変更有無) からtemplates/template-contract.jsonが示す本文骨格を適用し、template_id/template_version/artifact_subtypesをfrontmatterへ書き込む。既存文書は全書換せず不足セクションのみ差分追記する (要件C18/C19)",
+      "prompt_required": true
+    }
+  ]
+}

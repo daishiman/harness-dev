@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/bd-bridge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine code-review + py_compile OK / frontmatter 正直 (network:true, write-scope: approved bd CLI only; never direct .beads I/O)。Beads 操作の単一決定的 CLI choke point。preflight で bd version を [1.1.0,2.0.0) に制約し、_workspace_identity が where 出力から stable key を fingerprint 化 (bdw_ 前置) して worktree↔workspace の同一性を照合。bd() は {data,schema_version} エンベロープを剥がし JSON 非パースは {text,returncode} へ退避。--dry-run は MUTATIONS を preview 抑止し、projection/feature-rollup は dry-run でも書込ゼロで契約検証。_package_projection が要: _validate_projection で exact-13 P01..P13・graph_node_id 一意・parent 共有・パッケージ内依存閉包を強制し、epic+13 task 生成→blocks 依存付与→verify_parity で status/edge 一致を fail-closed 確認。_find_external が external_ref マーカーで冪等 (重複は reject)、_create_one は既存 type/parent 不一致を拒否し idempotent 返却。_ready_with_parity は parity manifest 照合で ready/unmapped/conflicts 分類。gate-add/check は await_id/blocks/type で既存 gate を照合し重複拒否。SMELL: bd 出力の field 名ゆらぎ (dependency_type/type, blocks/blocked_issue_id, await_id/awaitId 等) を多数 fallback で吸収しており bd schema 未確定への防御的だが結合が広い。冪等・parity 検証は堅牢。TESTS: test_runtime_coverage.py::test_bd_helpers_and_all_operations、test_c27_c28_projection_contract.py / test_semantic_c25_c28.py。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

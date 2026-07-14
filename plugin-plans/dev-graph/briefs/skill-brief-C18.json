@@ -1,0 +1,55 @@
+{
+  "skill_name": "run-dev-graph-status",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "ノードを検索",
+    "状態を確認",
+    "dev-graph status"
+  ],
+  "output_contract": "検索/状態表示レポート (該当ノード一覧 + artifact_kind/project_id/domain/tags/file_path/status/依存関係)",
+  "boundary": "入力=検索条件(graph_node_id/artifact_kind/project_id/domain/status/tags/キーワード)/出力=検索結果と状態表示のみ。書込みは一切行わない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "validate-graph-schema.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "checklist": [
+    "ノード検索",
+    "状態表示",
+    "read-onlyで副作用なし"
+  ],
+  "goal": "特定のissue/task/specification/architecture/documentをgraph_node_id/artifact_kind/project_id/domain/status/tagsで検索し、依存関係・close/tombstone状態をread-onlyで確認できる状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "特定ノードの検索・状態確認 (要件C11) を独立の読取り専用経路として提供しないと、状態確認のたびに sync/render 相当の重い処理を経由せざるを得ず、副作用のない検索操作が書込みを伴う操作と混同されるリスクがあるため",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "検索条件 (id/種別/キーワード) と表示したい状態範囲をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "グラフストア横断検索と状態表示の計画を組み立てる",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-status",
+      "summary": "validate-graph-schema.py で読み取ったグラフストアから該当ノードを検索し、status/closed_at/依存関係を含む状態表示レポートを返す (書込みは行わない)",
+      "prompt_required": true
+    }
+  ]
+}

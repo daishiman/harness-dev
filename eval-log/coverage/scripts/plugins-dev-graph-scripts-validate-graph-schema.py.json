@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/validate-graph-schema.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope:none)。canonical dev-graph node/artifact/feature-package の副作用フリー fail-closed 検証。schema_findings は jsonschema があれば Draft202012Validator+FormatChecker、無ければ決定的 stdlib subset _schema_fallback にフォールバック ($ref は #/ 内部限定・外部参照禁止、allOf/if-then/type/const/enum/min-maxLength/pattern/format/min-max/items/uniqueItems(canonical JSON pack)/required/additionalProperties を被覆)。domain_findings が本体: duplicate_id、invalid kind/status、depends_on 型、tracker binding 制約 (beads→local_only必須 / github→beads_linkage 禁止 / repo-config-default は durable graph で禁止)、active→confirmed/pass/complete、dangling dep/ref/parent、3-color DFS で dependency_cycle、feature の exact-13 P01..P13 (feature_package_id 単一・phases 集合一致・count=13)、non-forward phase 依存、premature_feature_done、P07/P10/P11 completion_evidence。artifact_findings は kind→root path parity、contained(must_exist=False) で欠損を containment 失敗と分離し artifact_missing/frontmatter parity を分類。findings は (node,code,detail) で決定的 sort。exit: violations 有=1, 無=0, ContractError/OSError=2。SMELL: _schema_fallback の if は then のみで else/dependentSchemas 非対応 (意図的 subset)。堅牢で責務明快。TESTS: test_runtime_coverage.py::test_validate_graph_schema_and_main / test_validate_graph_schema_c11_coverage.py / test_semantic_contract_boundaries_c10_c11_c24.py。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

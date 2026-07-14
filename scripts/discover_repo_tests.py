@@ -95,7 +95,12 @@ def discover_test_files(root: Path) -> list[PurePosixPath]:
     found: list[PurePosixPath] = []
     for dirpath, dirnames, filenames in os.walk(root):
         # in-place 書換えで os.walk の降下を剪定する。
-        dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIR_NAMES]
+        dirnames[:] = [
+            d
+            for d in dirnames
+            if d not in EXCLUDE_DIR_NAMES
+            and not (Path(dirpath) / d / ".git").exists()
+        ]
         base = Path(dirpath)
         for filename in filenames:
             if not _is_test_filename(filename):
@@ -128,7 +133,12 @@ def group_plugin_tests(root: Path) -> dict[str, list[str]]:
     if not plugins_root.is_dir():
         return groups
     for dirpath, dirnames, filenames in os.walk(plugins_root):
-        dirnames[:] = [d for d in dirnames if d not in EXCLUDE_DIR_NAMES]
+        dirnames[:] = [
+            d
+            for d in dirnames
+            if d not in EXCLUDE_DIR_NAMES
+            and not (Path(dirpath) / d / ".git").exists()
+        ]
         base = Path(dirpath)
         for filename in filenames:
             if not _is_test_filename(filename):
