@@ -1,0 +1,58 @@
+{
+  "skill_name": "run-dev-graph-schedule",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "次のおすすめタスク",
+    "dev-graph next",
+    "並列実行可能タスク"
+  ],
+  "output_contract": "スケジューリングレポート (ready-set + 並列batch + 衝突ペア + taskごとのsuggested_branch=`devgraph/<graph_node_id>` + `dev-graph worktree claim <id>` attach command)",
+  "boundary": "入力=グラフストア/出力=ready-set と並列バッチの提示のみ。グラフや Issue への書込みは行わない (読み取り専用)",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "schedule-graph.py",
+    "manage-worktree-lease.py",
+    "bd-bridge.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "confirmed/pass/readyタスクだけを候補化",
+    "ready-set算出",
+    "並列実行可能バッチ識別",
+    "リソーススコープ重複回避"
+  ],
+  "goal": "グラフの依存関係・完了状態・active worktree leaseから次に着手すべきready-setと、リソーススコープ/lease重複のない複数worktree向け並列バッチを算出・提示した状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "依存関係を都度人手で追跡せずに次の一手を判断できるようにする。binding=beadsはC28でstatusとdepends_on edge exact-set parityがconfirmedの場合だけbd ready候補を採用し、parity pending/conflictは推薦しない。その候補へdev-graph固有のresource_scope/lease重複回避を重ねる。github/noneはC16で自前算出し、mode=bothはbinding別結果を合成する。二層ready-set: feature ready (機能間depends_on充足) はper-feature planning起動候補、task ready (feature内depends_on充足+resource_scope非競合) は実行候補として区別し、feature単位の並列batchとtask単位の並列batchを混在させない (MM-10)",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "算出対象範囲 (グラフ全体/サブツリー) と並列バッチの上限件数方針をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "schedule-graph.py 呼び出しと結果整形の計画を組み立てる",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-schedule",
+      "summary": "binding=beadsはC28のbd ready --jsonかつstatus/depends_on edge parity=confirmedの候補だけ、github/noneはstatus=activeかつconfirmed/pass/readiness completeだけをschedule-graph.pyへ渡し、resource_scope非重複batchへ整形する",
+      "prompt_required": true
+    }
+  ]
+}

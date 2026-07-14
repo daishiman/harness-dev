@@ -6,23 +6,6 @@
   "author": {
     "name": "harness maintainers"
   },
-  "entry_points": {
-    "commands": [
-      "capability-build"
-    ],
-    "skills": [
-      "run-build-skill"
-    ]
-  },
-  "requirements": {
-    "external_clis": [
-      {
-        "name": "tmux",
-        "reason": "live-trial 輸送層(別プロセス本物claudeセッションのpane制御)。Python stdlib代替不能。不在時はlive-trial verdict=BLOCKEDでfail-closed",
-        "required_for": ["run-skill-live-trial"]
-      }
-    ]
-  },
   "hooks": {
     "UserPromptSubmit": [
       {

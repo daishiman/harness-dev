@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: manage-build-lease
-# purpose: task-graph 駆動 build の開始前安全性ゲート (TG-C07)。build lock 排他 (.build.lock の O_EXCL 生成/孤児 steal)・孤児 lease 回収 (実書込は TG-C02 sync-task-state.py へ subprocess 委譲)・graph_hash pin 検証/初回 pin (producer derive/check への read-only subprocess) を build 開始時に一度だけ実行する。TG-C07 自身は task-state.json を直接書かない (単一 writer=TG-C02 を維持)。
+# purpose: task-graph 駆動 build の開始前安全性ゲート (TG-C07)。build lock 排他 (.build.lock の O_EXCL 生成/孤児 steal)・孤児 lease 回収 (実書込は TG-C02 sync-task-state.py へ subprocess 委譲)・graph_hash pin 検証/初回 pin (producer derive/check への read-only subprocess)・accepted graph 再 pin 時の done dependency dirty-closure 再開委譲を build 開始時に一度だけ実行する。TG-C07 自身は task-state.json を直接書かない (単一 writer=TG-C02 を維持)。
 # inputs:
 #   - argv: --lock-action acquire|release|force-release|renew
 #           --target-plugin-slug S [--cycle-id C] [--task-state P] [--task-graph G]
@@ -417,10 +417,11 @@ def _scan_authorized_hashes(inbox_dir: Path) -> set[str]:
 
 
 def _repin_graph_hash(sync_script: Path, state_path: Path, events_path: Path,
-                      new_hash: str, authorized: set[str]) -> int:
-    """TG-C02 --repin-graph-hash で provenance-gated 再 pin を委譲する (外ループ再入)。"""
+                      task_graph_path: Path, new_hash: str, authorized: set[str]) -> int:
+    """TG-C02 へ provenance-gated 再 pin + done dirty-closure 再開を委譲する。"""
     cmd = [sys.executable, str(sync_script), "--task-state", str(state_path),
-           "--events", str(events_path), "--repin-graph-hash", new_hash]
+           "--events", str(events_path), "--task-graph", str(task_graph_path),
+           "--repin-graph-hash", new_hash]
     for h in sorted(authorized):
         cmd += ["--authorized-hash", h]
     proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -453,7 +454,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--target-plugin-slug", default=None)
     p.add_argument("--cycle-id", default=None)
     p.add_argument("--task-state", default=None, help="省略時 resolve_build_dir(...)/task-state.json")
-    p.add_argument("--task-graph", default=None, help="acquire 時の graph_hash pin/検証用")
+    p.add_argument("--task-graph", default=None,
+                   help="acquire 時の graph_hash pin/検証 + accepted repin の done dirty-closure 再開用")
     p.add_argument("--lock-path", default=None, help="省略時 resolve_build_dir(...)/.build.lock")
     p.add_argument("--owner-token", default=None,
                    help="acquire 出力の owner_token (renew/release で必須)")
@@ -568,7 +570,9 @@ def _do_acquire(args, build_dir: Path, state_path: Path, events_path: Path, lock
             new_hash = _derive_graph_hash(derive_script, args.task_graph)
             authorized = _scan_authorized_hashes(build_dir / "discovered-tasks")
             if new_hash is not None and new_hash in authorized:
-                if _repin_graph_hash(sync_script, state_path, events_path, new_hash, authorized) != 0:
+                if _repin_graph_hash(
+                    sync_script, state_path, events_path, args.task_graph, new_hash, authorized
+                ) != 0:
                     release_lock(lock_path, lease)
                     print("graph_hash 再 pin 委譲失敗 (sync-task-state.py --repin-graph-hash)", file=sys.stderr)
                     return 1

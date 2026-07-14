@@ -282,6 +282,22 @@ python3 "$SKILL_DIR/scripts/check-build-handoff.py" "$PLAN_DIR/handoff-run-plugi
 python3 "$SKILL_DIR/scripts/validate-task-graph.py" "$PLAN_DIR"                    # デフォルト成果物 task-graph.json の 10 検査 (DAG/orphan/inventory 矛盾/couples(j)/非正準)
 python3 "$SKILL_DIR/scripts/lint-sibling-coupling.py" "$PLAN_DIR" || true          # advisory (record-only・非ゲート): 未宣言の密結合な同一 phase 兄弟候補を提示 (couples_with 宣言忘れの安全網・exit0)
 python3 "$SKILL_DIR/scripts/check-runtime-portability.py" "$PLAN_DIR"              # install 携帯性 (共有 script hoist + build_target 自己完結)
+# 計画構造レポート (plan-structure): task-graph 確定後に「この仕様書で何をやるか + 13/N タスク・ノード・依存の
+# 関係性」を 1 枚の自己完結 HTML へ投影し、build 前でも計画の全体像を把握できるようにする。両プランナー共通の
+# 完了ステップ (system-dev-planner も同一 reporter を呼ぶ)。共有 reporter (harness-creator) を best-effort 起動
+# (未配備環境では skip・非ゲート)。value セクションは goal-spec / value-narrative.json から dual audience 描画。
+# 仕様書ブラウザ (task-specs.html) を先に生成: 13 フェーズ仕様書 + task-specs/*.md の本文を、サイドバー
+# index → 各仕様書へページ遷移 → ブラウザ back で戻れる自己完結 HTML にする (中身閲覧ビュー・両プランナー共通)。
+# 構造レポートより先に出すことで、後段の構造レポートが仕様書ブラウザへの導線を持てる。
+SPEC_BROWSER="plugins/harness-creator/scripts/render-spec-browser.py"
+if [ -f "$SPEC_BROWSER" ]; then
+  python3 "$SPEC_BROWSER" --plan-dir "$PLAN_DIR" >/dev/null && echo "spec browser -> $PLAN_DIR/task-specs.html" || echo "warn: spec browser skipped"
+fi
+# 計画構造レポート (plan-structure): 構成・依存・実行フロー図・価値。仕様書ブラウザが既生成なら相互リンクする。
+REPORTER="plugins/harness-creator/scripts/project-task-status.py"
+if [ -f "$REPORTER" ]; then
+  python3 "$REPORTER" --task-graph "$PLAN_DIR/task-graph.json" --out-html "$PLAN_DIR/plan-structure-report.html" --out-md "$PLAN_DIR/plan-structure.md" --out-json "$PLAN_DIR/plan-structure-status.json" >/dev/null && echo "plan-structure report -> $PLAN_DIR/plan-structure-report.html" || echo "warn: plan-structure report skipped"
+fi
 # plugin-dev-planner 自身の dogfood (現物 surface 横断棚卸し・PLAN_DIR でなく plugins/ を対象)
 python3 "$SKILL_DIR/scripts/check-plugin-surface-audit.py" --plugins-dir plugins --strict-manifest --expect-plan-ready plugin-dev-planner
 ```

@@ -1,37 +1,22 @@
 #!/usr/bin/env bash
-# PKG-011: uninstall 完全性
-# 本実装は計画 stub。実際の uninstall flow は claude CLI 連携が必要なため、ここでは
-# plugin 由来の symlink/settings/hook 痕跡候補のリストを返す。
+# PKG-011: install then uninstall in an isolated sandbox; require zero residues.
 set -euo pipefail
 
 PLUGIN=""
+PLUGINS_ROOT=""
+SANDBOX_ROOT=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --plugin) PLUGIN="$2"; shift 2 ;;
-    *) shift ;;
+    --plugins-root) PLUGINS_ROOT="$2"; shift 2 ;;
+    --sandbox-root) SANDBOX_ROOT="$2"; shift 2 ;;
+    *) echo "error: unsupported argument: $1" >&2; exit 2 ;;
   esac
 done
+[[ -n "$PLUGIN" ]] || { echo "error: --plugin is required" >&2; exit 2; }
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../../../.." && pwd)"
-NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-
-# symlink 痕跡候補
-SYMLINKS=$(find "$REPO_ROOT/.claude/skills" -maxdepth 1 -type l 2>/dev/null | while read -r ln; do
-  target=$(readlink "$ln")
-  if [[ "$target" == *"plugins/$PLUGIN/"* ]]; then
-    echo "$ln"
-  fi
-done | wc -l | tr -d ' ')
-
-cat <<EOF
-{
-  "pkg_id": "PKG-011",
-  "status": "skip",
-  "skip_reason": "uninstall smoke は claude CLI 連携実装後に有効化。現状は痕跡候補列挙のみ。",
-  "last_run_at": "$NOW",
-  "trace_candidates": {
-    "claude_skills_symlinks": $SYMLINKS
-  }
-}
-EOF
-exit 0
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ARGS=(--plugin "$PLUGIN" --operation uninstall)
+[[ -z "$PLUGINS_ROOT" ]] || ARGS+=(--plugins-root "$PLUGINS_ROOT")
+[[ -z "$SANDBOX_ROOT" ]] || ARGS+=(--sandbox-root "$SANDBOX_ROOT")
+exec python3 "$SCRIPT_DIR/sandbox-plugin-lifecycle.py" "${ARGS[@]}"

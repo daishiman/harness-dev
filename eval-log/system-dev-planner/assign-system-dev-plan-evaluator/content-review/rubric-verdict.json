@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "system-dev-planner",
+    "skill": "assign-system-dev-plan-evaluator",
+    "skill_md_sha256": "3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
+    "positive_feedback": [
+      "単一責務が明確: 「独立した system plan 評価」に限定し build/生成を持たず対象成果物を改変しない (FM の kind=assign/allowed-tools=[Read,Write,Bash,Task] と本文が整合)",
+      "出力契約が SSOT で pin: plan-findings.schema.json を出力正本、feature-execution-package-contract.md を評価対象契約の正本として $CLAUDE_PLUGIN_ROOT で明示 (本文42)",
+      "命名規約準拠: ディレクトリ名 assign-system-dev-plan-evaluator と name/prefix:assign が一致し L1/role_suffix:evaluator も整合"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SKILL.md (sha256 3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点。FM: name は kebab + assign- prefix (prefix:assign と一致)、description は日本語 Use-when 形式、allowed-tools が明示 allowlist。BD: 出力契約 (plan-findings.json + 評価対象契約) を明示、失敗/境界注記あり、本文 43 行で ≤300 行、references 委譲済みで PD 満たす。NM: ディレクトリ名一致・role_suffix:evaluator と responsibility 整合。境界: plugin の道具・契約は $CLAUDE_PLUGIN_ROOT、評価対象と出力状態は caller repository 内に限定と明記され越境がない。SSOT: schema/contract の正本を単一に pin。high severity 該当 (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は本 skill の主要品質次元 (4 評価条件 C1-C4) を非空 id 配列で被覆 (frontmatter feedback_contract 不在のため品質次元 id を採用)。"
+}

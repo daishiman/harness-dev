@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "run_at": "2026-07-13T14:45:00+09:00",
+  "working_directory": "repository root",
+  "status": "PASS",
+  "commands": [
+    {"gate":"plan-evaluator","result":"11/11 exit 0","evidence":"plugin-plans/dev-graph/plan-findings.json"},
+    {"gate":"goal-spec","result":"PASS","command":"check-plugin-goal-spec.py plugin-plans/dev-graph/goal-spec.json"},
+    {"gate":"surface-audit","result":"PASS","command":"check-plugin-surface-audit.py --plugins-dir plugins --strict-manifest --expect-plan-ready dev-graph --json"},
+    {"gate":"handoff-boundary","result":"PASS","command":"check-build-handoff.py plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"},
+    {"gate":"route-inventory-parity","result":"25/25 PASS","command":"check-route-component-parity.py plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"},
+    {"gate":"route-reports","result":"25/25 PASS","command":"validate-route-build-reports.py --handoff plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json --complete"},
+    {"gate":"skill-frontmatter","result":"9 PASS","command":"validate-frontmatter.py --skills-dir plugins/dev-graph/skills"},
+    {"gate":"skill-name-description-tree","result":"9 PASS each","command":"lint-skill-name.py + lint-skill-description.py + lint-skill-tree.py"},
+    {"gate":"agent-section","result":"4 PASS","command":"lint-agent-prompt-section.py --agents-dir plugins/dev-graph/agents"},
+    {"gate":"agent-content","result":"4 PASS","command":"lint-agent-prompt-content.py --mode agent --plugins-dir plugins/dev-graph"},
+    {"gate":"script-frontmatter","result":"12 PASS","command":"lint-script-frontmatter.py plugins/dev-graph/hooks plugins/dev-graph/scripts"},
+    {"gate":"python-compile","result":"PASS","command":"python3 -m py_compile plugins/dev-graph/hooks/*.py plugins/dev-graph/scripts/*.py"},
+    {"gate":"composition-manifest","result":"PASS","command":"lint-capability-manifest.py plugins/dev-graph/plugin-composition.yaml"},
+    {"gate":"composition-topology","result":"PASS","command":"lint-plugin-composition.py plugins/dev-graph/plugin-composition.yaml"},
+    {"gate":"bundle-trace","result":"PASS","command":"validate-build-trace.py --bundle plugins/dev-graph/plugin-composition.yaml"},
+    {"gate":"harness-runtime-tests","result":"33 passed","command":"coverage run --branch --source=plugins/dev-graph/scripts,plugins/dev-graph/hooks -m pytest plugins/dev-graph/tests -q"}
+  ],
+  "clarification": "An earlier attempted lint command used non-existent harness-creator-local paths. Those attempts are not evidence; this receipt lists the corrected canonical skill-governance-lint and harness-creator paths that exited 0."
+}

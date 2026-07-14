@@ -1,0 +1,113 @@
+name: dev-graph
+description: macro feature graph、tracker projection、worktree lifecycleを構成するときに使うlocal-first plugin bundle。
+kind: plugin-composition
+version: 0.1.0
+owner: harness maintainers
+
+contract:
+  intent: 大きな構想をfeature/architecture/機能間依存へ分解し、external micro plannerのexact-13 packageを登録・実行収束する。
+  interface:
+    inputs: [natural-language-want, graph-node, system-spec-import, feature-execution-package]
+    outputs: [local-graph, markdown-artifacts, tracker-projections, ready-sets, build-handoff]
+  invariant:
+    - local graph/Markdownが正本で外部trackerはbinding別projectionである
+    - C02だけがgraph/content writerでC12/C28だけが外部tracker writerである
+    - C14はmacro featureだけを所有しexact-13 task生成はexternal system-dev-plannerへ委譲する
+    - C19はexternal system-spec-harnessを引用しcompilerを複製しない
+    - caller repository外content accessとfeature branch上durable completionを拒否する
+
+capabilities:
+  - {kind: skill, ref: skills/run-dev-graph-init, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-node, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-sync, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-requirements, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-render, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-decompose, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-schedule, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-status, tier: core}
+  - {kind: skill, ref: skills/run-dev-graph-system-spec, tier: core}
+  - {kind: agent, ref: agents/dev-graph-integrity-auditor.md, tier: core}
+  - {kind: agent, ref: agents/dev-graph-sync-conflict-verifier.md, tier: core}
+  - {kind: agent, ref: agents/dev-graph-requirements-verifier.md, tier: core}
+  - {kind: agent, ref: agents/dev-graph-parallel-safety-verifier.md, tier: core}
+  - {kind: command, ref: commands/dev-graph.md, tier: core}
+  - {kind: hook, ref: "hook:PreToolUse/guard-graph-schema", tier: core}
+  - {kind: hook, ref: "hook:SessionStart/reconcile-task-lifecycle", tier: core}
+  - {kind: hook, ref: "hook:PostToolUse/reconcile-task-lifecycle", tier: core}
+  - {kind: hook, ref: "hook:TaskCompleted/reconcile-task-lifecycle", tier: core}
+  - {kind: script, ref: scripts/resolve-repo-context.py, tier: core}
+  - {kind: script, ref: scripts/validate-graph-schema.py, tier: core}
+  - {kind: script, ref: scripts/gh-bridge.py, tier: core}
+  - {kind: script, ref: scripts/bd-bridge.py, tier: core}
+  - {kind: script, ref: scripts/manage-worktree-lease.py, tier: core}
+  - {kind: script, ref: scripts/reconcile-github-lifecycle.py, tier: core}
+  - {kind: script, ref: scripts/render-graph-html.py, tier: core}
+  - {kind: script, ref: scripts/schedule-graph.py, tier: core}
+  - {kind: script, ref: scripts/register-package.py, tier: core}
+
+internal_support:
+  - ref: scripts/_common.py
+    owners: [C11, C12, C13, C16, C24, C26, C27, C28, C29]
+    purpose: top-level capability ではなく、plugin-root scripts が共有する内部 runtime helper
+
+dependencies:
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-init, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-node, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-sync, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-requirements, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-render, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-decompose, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-schedule, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-status, type: calls}
+  - {from: commands/dev-graph.md, to: skills/run-dev-graph-system-spec, type: calls}
+  - {from: commands/dev-graph.md, to: scripts/manage-worktree-lease.py, type: calls}
+  - {from: skills/run-dev-graph-decompose, to: skills/run-dev-graph-node, type: calls}
+  - {from: skills/run-dev-graph-decompose, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-decompose, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-decompose, to: scripts/gh-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-decompose, to: scripts/bd-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-init, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-node, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-render, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-render, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-requirements, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-requirements, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-requirements, to: scripts/gh-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: scripts/manage-worktree-lease.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: scripts/bd-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-status, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-status, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/gh-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/bd-bridge.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/reconcile-github-lifecycle.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-sync, to: scripts/manage-worktree-lease.py, type: calls}
+  - {from: skills/run-dev-graph-render, to: scripts/render-graph-html.py, type: calls}
+  - {from: skills/run-dev-graph-schedule, to: scripts/schedule-graph.py, type: calls}
+  - {from: skills/run-dev-graph-init, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-node, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-node, to: scripts/register-package.py, type: calls}
+  - {from: skills/run-dev-graph-system-spec, to: scripts/resolve-repo-context.py, type: calls}
+  - {from: skills/run-dev-graph-system-spec, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: "hook:PreToolUse/guard-graph-schema", to: scripts/validate-graph-schema.py, type: calls}
+  - {from: "hook:SessionStart/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
+  - {from: "hook:PostToolUse/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
+  - {from: "hook:TaskCompleted/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}
+
+external_dependencies:
+  system-spec-harness:
+    version: ">=0.1.0 <1.0.0"
+    required_entry_points: [run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile, assign-system-spec-completeness-evaluator]
+  system-dev-planner:
+    version: ">=0.1.0 <1.0.0"
+    required_entry_points: [run-system-dev-plan, system-dev-plan-architect, system-dev-plan-evaluator, validate-system-plan.py]
+
+eval_sinks: [EVALS.json, eval-log/]
+governance:
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+observability:
+  hooks: [PreToolUse/guard-graph-schema, SessionStart/reconcile-task-lifecycle, PostToolUse/reconcile-task-lifecycle, TaskCompleted/reconcile-task-lifecycle]
+  metrics: [graph_validation_failures, tracker_pending_retries, active_worktree_leases]

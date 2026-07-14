@@ -29,7 +29,7 @@ import re
 
 # --- criteria 単一正本 (この4定数が唯一の真実) ---
 CRITERIA_ID_RE = re.compile(r"^(IN|OUT|C)[0-9]+$")
-CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"}
+CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"}
 LOOP_SCOPES = {"inner", "outer"}
 REQUIRED_CRITERION_KEYS = ("id", "loop_scope", "text", "verify_by")
 

@@ -9,7 +9,7 @@
 |---|---|
 | name | run-pkg-check |
 | skill | assign-plugin-package-evaluator |
-| responsibility | R1 (PKG-002〜008 worker 実行) |
+| responsibility | R1 (PKG-002〜008 / PKG-014 worker 実行) |
 | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
 | output_schema | schemas/findings.schema.json |
 | reproducible | true |
@@ -24,9 +24,9 @@
 - **CONST_002 (eval-log path 規約)**: 27章 §3.1 規約を厳守
   - **目的**: 集約 script の走査整合性を保つため
   - **背景**: 自由パスは aggregate-pkg-findings.py を壊す
-- **CONST_003 (受理 ID 限定)**: 静的検査の中核 7 件 (PKG-002/003/004/005/006/007/008) のみ受理。それ以外は `unsupported_pkg_id` エラー
+- **CONST_003 (受理 ID 限定)**: 静的検査の中核 8 件 (PKG-002/003/004/005/006/007/008/014) のみ受理。それ以外は `unsupported_pkg_id` エラー
   - **目的**: 責務外 ID の誤実行を防ぐため
-  - **背景**: PKG-001/009〜015 は別 worker / 別 script の管轄
+  - **背景**: PKG-001/009〜013/015 は別 worker / 別 script の管轄
 
 ### 1.2 倫理ガード
 
@@ -38,20 +38,20 @@
 ### 2.1 責務 (Single Responsibility)
 
 - 担当: 指定 PKG ID 群に対し `scripts/validate-plugin-package.py` を順次実行し findings JSON を集約
-- 非担当: PKG-001（claude CLI validate, run-plugin-package-check 直接）、PKG-009/015（外部 lint）、PKG-010〜014（smoke / permission scripts）
+- 非担当: PKG-001（claude CLI validate, run-plugin-package-check 直接）、PKG-009/015（外部 lint）、PKG-010〜013（smoke / permission scripts）
 
 ### 2.2 ドメインルール
 
-- `package_mode=skill-only` の場合、PKG-003/005/006/007/008 を即 `not_applicable` 確定（exec しない）
+- `package_mode=skill-only` の場合、PKG-003/005/006/007/008/014 を即 `not_applicable` 確定（exec しない）
 - `fail_fast=true` でも全 PKG ID の status を確定する。未実行は `status: skip` + `skip_reason: "fail_fast_triggered"`
-- 入力 `pkg_ids` 省略時は中核 7 件を全件実行
+- 入力 `pkg_ids` 省略時は中核 8 件を全件実行
 
 ### 2.3 入力契約
 
 | field | type | required | 説明 |
 |---|---|---|---|
 | `target_plugin` | string | yes | kebab-case plugin 名 |
-| `pkg_ids` | string[] | no | 省略時は中核 7 件 |
+| `pkg_ids` | string[] | no | 省略時は中核 8 件 |
 | `options.fail_fast` | bool | no | default false |
 | `options.output_path` | path | no | eval-log 保存先（指定なしなら stdout のみ） |
 | `options.render` | enum | no | `markdown` 指定時のみ `render-pkg-findings.py` 経由で markdown サマリも出力（§3.1 renderer / §7.1）。未指定は JSON のみ |
@@ -60,7 +60,7 @@
 
 - schema: `schemas/findings.schema.json`
 - 必須フィールド: `run_id`, `target_plugin`, `package_mode`, `pkg_checks`, `verdict`
-- `pkg_checks` は PKG ID (`PKG-002`〜`PKG-008`) をキーとするオブジェクト（`additionalProperties: false`）。各エントリは `status` (`pass|fail|skip|not_applicable`), `findings[]`, `last_run_at` を必須とし、`status ∈ {skip, not_applicable}` のとき `skip_reason` も必須
+- `pkg_checks` は PKG ID (`PKG-002`〜`PKG-008`, `PKG-014`) をキーとするオブジェクト（`additionalProperties: false`）。各エントリは `status` (`pass|fail|skip|not_applicable`), `findings[]`, `last_run_at` を必須とし、`status ∈ {skip, not_applicable}` のとき `skip_reason` も必須
 - 各 `findings[i]` は `id`, `pkg_id`, `severity` (`P0|P1|P2`), `location`, `evidence` を必須とし、`suggested_fix` / `auto_fixable` は任意
 - `verdict` は `total`, `pass`, `fail`, `skip`, `not_applicable`（各 integer）を含む
 
@@ -94,7 +94,7 @@
 
 - stdout: findings JSON（§2.4 schema 準拠）
 - stderr: 進捗ログ（`PKG-NNN start/end <duration>`）
-- `options.output_path` 指定時は eval-log に保存。27章 §3.1 の規約は **pkg-<id> 単位** (`eval-log/<plugin>/pkg-<id>/...`)。本 worker は 7 件を 1 回で束ねる batch 出力のため、呼出元 manifest 固有の集約パス `eval-log/<plugin>/pkg-batch/<YYYY-MM-DD>-<run>.json` (run-plugin-package-check/workflow-manifest.json の pkg phase output) を用いる
+- `options.output_path` 指定時は eval-log に保存。27章 §3.1 の規約は **pkg-<id> 単位** (`eval-log/<plugin>/pkg-<id>/...`)。本 worker は 8 件を 1 回で束ねる batch 出力のため、呼出元 manifest 固有の集約パス `eval-log/<plugin>/pkg-batch/<YYYY-MM-DD>-<run>.json` (run-plugin-package-check/workflow-manifest.json の pkg phase output) を用いる
 - 35章 observable は呼出元（run-plugin-package-check の aggregate-pkg-findings.py）が emit
 
 ### 4.3 セキュリティ
@@ -110,14 +110,14 @@
 
 ### 5.2 ゴール定義
 
-- **目的**: 中核 7 件の静的検査を一括実行し findings JSON を集約する
-- **背景**: 個別 worker / 別 script との責務分離。本 worker は静的検査 7 件の executor 集約点
+- **目的**: 中核 8 件の静的検査を一括実行し findings JSON を集約する
+- **背景**: 個別 worker / 別 script との責務分離。本 worker は静的検査 8 件の executor 集約点
 - **達成ゴール**: 指定 `target_plugin` の `pkg_checks` が全対象 ID 分揃い、`verdict` が集計され、§2.4 schema 準拠の findings JSON が stdout / eval-log に出力された状態
 
 ### 5.3 完了チェックリスト (ゴール到達の唯一の停止条件)
 
 - [ ] 全対象 PKG ID が `pkg_checks` に存在（`pass|fail|skip|not_applicable` のいずれか）
-- [ ] `package_mode=skill-only` のとき PKG-003/005/006/007/008 が `not_applicable` で確定
+- [ ] `package_mode=skill-only` のとき PKG-003/005/006/007/008/014 が `not_applicable` で確定
 - [ ] `fail_fast=true` 発火後の残 PKG ID が `status: skip` + `skip_reason: "fail_fast_triggered"`
 - [ ] `verdict.{total,pass,fail,skip,not_applicable}` が `pkg_checks` と一致
 - [ ] `schemas/findings.schema.json` の validation を通過
@@ -139,7 +139,7 @@
 
 ### 6.1 上位 skill との接続
 
-- 呼び出し元: `run-plugin-package-check` (PKG-002〜008 phase で `Skill(assign-plugin-package-evaluator, context=fork)`)
+- 呼び出し元: `run-plugin-package-check` (PKG-002〜008 / PKG-014 phase で `Skill(assign-plugin-package-evaluator, context=fork)`)
 - 後続 phase: `aggregate-pkg-findings.py` が本 worker findings + 他 script findings を結合
 
 ### 6.2 並列性

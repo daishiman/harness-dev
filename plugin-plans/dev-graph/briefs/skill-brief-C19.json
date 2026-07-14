@@ -1,0 +1,63 @@
+{
+  "skill_name": "run-dev-graph-system-spec",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "仕様書を作成",
+    "アーキテクチャを作成",
+    "dev-graph spec"
+  ],
+  "output_contract": "system spec import report (system-spec/index.md + requirements/architecture章のsource_lineage + confirmation_status + 登録graph_node_id + readiness)",
+  "boundary": "仕様内容の独自生成は行わない。入力収集とcompileはsystem-spec-harness、dev-graphは起動・成果物検証・C02経由の分類/graph登録のみを担う",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "validate-graph-schema.py",
+    "validate-coverage-matrix.py",
+    "validate-source-citation.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "system-spec-harness availability確認",
+    "elicit/doc-fetch/compile/evaluator引用",
+    "source lineage保持",
+    "C02経由graph登録"
+  ],
+  "goal": "仕様書・アーキテクチャをplugins/system-spec-harness/の正規フローで構築し、出典・確定状態・上位目的traceを保ったままdev-graphのspecification/architectureノードへ取り込んだ状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "system-spec-harnessが既に持つヒアリング、カテゴリ×platform matrix、公式出典、確定章保護、独立完成度評価を複製せず引用し、dev-graphはグラフ登録とlineage維持だけを担うため。本skillが取り込むarchitecture/specificationノードはfeature.architecture_refsから参照されfeatureのアーキテクチャ文脈を成す (複製せずlineage参照のみ・MM-12)",
+  "responsibilities": [
+    {
+      "id": "R0-context",
+      "summary": "C24で呼出しrepoのsystem_spec rootを解決し、symlink元や別repoのsystem-specを読まないcontainmentを検証する",
+      "prompt_required": true
+    },
+    {
+      "id": "R1-preflight",
+      "summary": "system-spec-harness versionが>=0.1.0 <1.0.0でrequired 4 entry pointsを持つことを確認し、不一致/未導入ならfallbackせず診断付きfail-closedにする",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-delegate",
+      "summary": "run-system-spec-elicit→必要時run-system-spec-doc-fetch→run-system-spec-compile→assign-system-spec-completeness-evaluatorを引用実行する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-import",
+      "summary": "確定system-spec章をC02経由で登録しsource_lineage(origin_kind/plugin/path/version/digest/imported_at)、confirmation=confirmed、evaluator evidenceを保持する",
+      "prompt_required": true
+    }
+  ]
+}

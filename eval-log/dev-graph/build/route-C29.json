@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "dev-graph",
+  "route_id": "C29",
+  "component_kind": "script",
+  "name": "register-package.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/dev-graph/scripts/register-package.py",
+  "status": "success",
+  "summary": "C02 exact-13 package registration の実装本体を first-class script component として検証網へ組込んだ。elegant 検証で untracked (route/inventory/composition/script_refs 全欠落) が判明したため、外ループ reconcile で inventory C29・handoff route C29・task-graph B-C29 へ登録し、run-dev-graph-node SKILL の script_refs+本文へ配線して到達経路を成立させた。confirm build として既存実体の実 gate を再走した。",
+  "deviations": [
+    "register-package.py は自身の _validate_schema (graph-node.schema.json 駆動) で node 検証し validate-graph-schema.py を呼ばない。validator 二重実装の SSOT 化は beads harness-xsr で追跡 (behavioral refactor のため本 confirm build のスコープ外)。"
+  ],
+  "evidence": [
+    "register-package.py 実在: 432 行 (C02 exact-13 consumer, _common import, fcntl single-writer, os.link immutable receipt)",
+    "python3 -m py_compile plugins/dev-graph/scripts/register-package.py: exit 0",
+    "python3 -m pytest plugins/dev-graph/tests/test_register_package.py -q: 23 passed",
+    "lint-script-frontmatter.py plugins/dev-graph/scripts/register-package.py: OK",
+    "register-package.py preflight: cross-plugin required_entrypoints 解決 JSON を出力 (smoke PASS)",
+    "reachability 回復: run-dev-graph-node/SKILL.md script_refs + Exact-13 gate 本文 + plugin-composition.yaml capability+edge (run-dev-graph-node→register-package.py)"
+  ],
+  "inputs_consumed": [
+    "eval-log/dev-graph/build/route-C24.json",
+    "eval-log/dev-graph/build/route-C02.json"
+  ],
+  "handover": "register-package.py の node 契約検証は graph-node.schema.json 駆動。C11 validate-graph-schema.py (手書き定数) との二重実装 SSOT 化は harness-xsr、route-report evidence の kind 別再生成は harness-7hy で別途対応。",
+  "covered_task_ids": ["B-C29"]
+}

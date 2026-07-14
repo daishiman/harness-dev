@@ -31,6 +31,8 @@ responsibilities:
   - id: R2
     name: delegate
     prompt_required: true
+completeness_exempt:
+  - "manifest: assign evaluator is a single forked scoring gate; its rubric, schema and aggregate script are the runtime SSOT."
 rubric_refs:
   - references/scoring-rubric.json
 reference_refs:

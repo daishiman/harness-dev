@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-render",
+    "component_id": "C05",
+    "skill_md_sha256": "b99930a8bf5f559969defbb343daa26323c5821e95705d4b32e1b452cda216f2"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_render_and_schedule",
+        "independent: render-graph-html.py on eval-log/dev-graph/live-trial-fixtures/r3-render graph + external script/link/CDN scan of emitted HTML"
+      ],
+      "observed": "pytest test_runtime_coverage.py::test_render_and_schedule passed (exit 0). Independently ran render-graph-html.py on the r3-render fixture graph → ok=true, nodes=5, edges=1, feature_progress aggregate 1/2. The emitted single HTML had 0 external <script src>, 0 external <link href>, 0 http(s)/CDN references and contained an inline <svg>, confirming the zero-dependency output contract."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "render-feature-progress-positive",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/transcript.jsonl",
+        "independent: live-trial-verdict.py replay of recorded r3 transcript + out/status.json"
+      ],
+      "observed": "Replayed the recorded r3 live trial (transcript.jsonl, actual_model claude-opus-4-6, claude 2.1.62, transcript_layer=jsonl) via the official live-trial-verdict.py generator → verdict PASS with launch/completion/goal_fit/verdict all PASS, nudge=0, gate=0, tier=live, downgrade_reason=null, scenario render-feature-progress-positive. The trial's out/status.json recorded {status:PASS, scenario:render-feature-progress-positive} and the agent reported 'DONE: PASS' after opening the generated HTML/CSS with a browser-renderable SVG graph and feature X/Y progress and no added runtime dependency."
+    }
+  }
+}

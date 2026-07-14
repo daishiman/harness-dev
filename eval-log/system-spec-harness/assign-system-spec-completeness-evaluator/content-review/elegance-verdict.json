@@ -2,13 +2,13 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "cad88d4d091246e5235479ded63e2166b3b099d32a1bfd2e28096adc6332d807"
+    "skill_md_sha256": "d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-completeness",
-  "reviewed_at": "2026-07-12T12:16:50+09:00",
-  "iterations": 2,
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
@@ -21,18 +21,15 @@
     "loop_scope": "both",
     "criteria_evaluated": ["foundation_trace", "decision_guidance", "matrix_coverage", "design_knowledge_reflection", "doc_freshness", "prompt_quality"],
     "positive_feedback": [
-      "C13-C16 追記は 6 aspect の top-level 構造を一切変更していない (aggregate-completeness.py の ASPECTS 辞書と aggregate_verdict は diff 非改変を実測確認)。新 gate G-knowledge-graph は conditions=[design_knowledge_reflection, matrix_coverage] という既存 aspect へ折り込むのみで、SKILL の主張『新 aspect を増やさず既存 aspect の追加次元に折り込む』と実装が一致。",
-      "参照する 4 profile (knowledge/doctrine/required-info/cross) を実 shipped カタログに対し実行し全 exit0 を確認 (aggregate-completeness.py --knowledge-graph の G-knowledge-graph exit_code=0)。存在しない参照はゼロ (dependency_break=0)。",
-      "C15 の機械層記述が正確: doctrine registry の concern 数=7・distinct authority=4 (Clean Arch/OWASP/SRE が各 2 concern 共有) を実測確認し、script が authority 一意性を検査しないことも正しく明記 (over/under-claim なし)。C16 の runtime 施行未実装を follow-up として誠実開示 (Goodhart 回避と同姿勢)。"
+      "観点↔評価主体の対応が矛盾なく一貫している: C06 (hearing-auditor) は system-spec/*.md を読まないため design_knowledge_reflection へ束縛せず matrix_coverage の sub-input へ再配置した旨を、対応表 (L70-74)・本文 (L76)・Step1 (L131)・Gotcha1 (L150) の全箇所で同一に記述し、旧世代の虚偽対応を明示撤去している。",
+      "Goodhart 防止が設計思想として貫通している: design_knowledge_reflection は『存在確認だけで PASS にしない』(意味層=確定セルへの具体適用)、総合判定は aggregate-completeness.py の aggregate_verdict で観点スコアから fail-closed 再導出しレポート verdict と一致必須、と自己肯定バイアスを断つ機構が本文全体で一致。",
+      "C13-C16 の知識グラフ/doctrine 要件を新 top-level aspect を増やさず既存 6 aspect の追加評価次元へ折り込む方針が、折込先 aspect と機械層ゲート (validate-knowledge-graph.py の profile) と意味層失敗を漏れなく対応付けており、C16 の runtime 施行未実装を follow-up として誠実開示している (漏れの隠蔽なし)。"
     ],
-    "negative_feedback": [
-      "[fixed] smell: 新セクション C16 行の括弧内 'C14' が goal-spec 要件 ID (topo_order 消費) と component-inventory C14 (validate-knowledge-graph.py) の二義だった点を、'機械層ゲート validate-knowledge-graph.py (component C14)' へ明示化。aspect-criteria.md の同トークンも同様に是正。",
-      "[fixed] omission: aggregate-completeness.py の新 --knowledge-graph フラグ (4 profile 独立再実行) が Steps に未反映だった点を、Step 2 に操作導線 (aggregate-completeness.py --knowledge-graph の全 exit0 確認・C13-C15 -> design_knowledge_reflection / C16 -> matrix_coverage の折込) として追記。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "独立 context 再評価。test -e で doctrine-anchor-registry.json / required-info-catalog.json / validate-knowledge-graph.py の実在を確認、4 profile 実行で全 exit0、pytest 85 passed。git diff で ASPECTS / aggregate_verdict 非改変 (6 aspect 不変) を確認。SubAgent が検出した smell 1 + omission 1 を本修正で全て解消 (C14 二義の component 明示化・Steps への機械層ゲート導線追記) し findings 0。修正後 SKILL.md sha=cad88d4d...。未解決 high なし -> PASS。"
+  "notes": "現 SKILL.md (sha256=d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 6 aspect 採点主体 (foundation_trace/decision_guidance/design_knowledge_reflection/prompt_quality=C05 自前 / matrix_coverage=C07+C06 sub-input / doc_freshness=C08) が対応表・本文・Steps・Gotchas で一致し矛盾なし。②漏れなし: Purpose/Output Contract・監査 sub-agent 対応・C13-C16 追加次元・評価レポート schema・fail-closed 集約・Key Rules・Steps・Gotchas を被覆。proposer≠approver / read-only / context:fork の境界も明示。③整合性: kind=assign のため feedback_contract.criteria は N/A で skip_reason に checklist 6 観点 + evaluator ゲートで担保する旨を書き Gotcha5 と整合。④依存整合: responsibility_refs (R1-score/R2-delegate)・rubric_refs (scoring-rubric.json)・reference_refs (aspect-criteria.md/resource-map.yaml)・script_refs (aggregate-completeness.py / ../../scripts/validate-coverage-matrix.py)・schema_refs (completeness-findings.schema.json)・agent_refs (matrix/hearing/doc-freshness auditor) を test -e で全件実在確認 (dependency_break=0)。重大問題なし。criteria_evaluated は feedback_contract に criteria が無い assign kind のため主要品質次元 (6 aspect id) を採用。"
 }

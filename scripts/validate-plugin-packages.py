@@ -32,7 +32,13 @@ VALIDATOR = (
     / "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py"
 )
 # 現状 advisory 扱いとする (未採用の将来標準) PKG。空にすると fail を昇格できる。
-ADVISORY_PKG = {"PKG-002", "PKG-004"}
+# PKG-014: kind/combinator ↔ runtime 宣言の整合を強化した際に追加した「構造→combinator 宣言」
+#   の逆方向チェック (例: feedback_contract ブロックがあるなら with-feedback-contract combinator を
+#   宣言せよ) が、convention 制定前の既存 plugin 群 (mf-kessai / notion-gmail-send / skill-intake /
+#   slide-report-generator / ubm-goal-setting 等) を横断で fail させる。新規 plugin は既に準拠済み。
+#   repo 横断マイグレーションが済むまで PKG-002/004 と同じく非ブロッキング advisory に留める
+#   (findings は引き続き報告される)。
+ADVISORY_PKG = {"PKG-002", "PKG-004", "PKG-014"}
 
 
 def discover_plugins() -> list[str]:

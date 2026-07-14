@@ -140,6 +140,31 @@ def test_parse_outputs_only_inside_contract_section():
     assert outputs == []
 
 
+def test_parse_dependencies_flow_and_block_entries():
+    text = (
+        "dependencies:\n"
+        "  - {from: skills/run-alpha, to: scripts/tool.py, type: calls}\n"
+        "  - from: commands/do-thing.md\n"
+        "    to: skills/run-alpha\n"
+        "    type: calls\n"
+    )
+    dependencies, errors = MOD.parse_dependencies(text)
+    assert errors == []
+    assert dependencies == [
+        {"from": "skills/run-alpha", "to": "scripts/tool.py", "type": "calls"},
+        {"from": "commands/do-thing.md", "to": "skills/run-alpha", "type": "calls"},
+    ]
+
+
+def test_parse_dependencies_fails_closed_on_missing_type():
+    dependencies, errors = MOD.parse_dependencies(
+        "dependencies:\n  - {from: skills/run-alpha, to: scripts/tool.py}\n"
+    )
+    assert dependencies == []
+    assert len(errors) == 1
+    assert "missing type" in errors[0]
+
+
 # --------------------------------------------------------------------------
 # check_duplicate_refs
 # --------------------------------------------------------------------------
@@ -293,6 +318,100 @@ def test_lint_composition_broken_plugin_json_is_error(tmp_path):
     findings, _, err = MOD.lint_composition(comp)
     assert err == 2
     assert any("plugin.json" in f for f in findings)
+
+
+def test_lint_composition_external_hooks_manifest(tmp_path):
+    plugin_json = {"name": "fixture-plugin", "hooks": "./hooks/hooks.json"}
+    comp = build_plugin(tmp_path, VALID_COMPOSITION, plugin_json)
+    (tmp_path / "hooks").mkdir()
+    (tmp_path / "hooks/hooks.json").write_text(
+        json.dumps({"hooks": VALID_PLUGIN_JSON["hooks"]}), encoding="utf-8"
+    )
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert findings == []
+
+
+def test_lint_composition_external_hooks_manifest_escape_is_error(tmp_path):
+    plugin_json = {"name": "fixture-plugin", "hooks": "../outside.json"}
+    comp = build_plugin(tmp_path, VALID_COMPOSITION, plugin_json)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err == 2
+    assert any("external hooks path" in finding for finding in findings)
+
+
+PARITY_COMPOSITION = """\
+name: fixture-plugin
+kind: plugin-composition
+
+capabilities:
+  - {kind: skill, ref: skills/run-alpha, tier: core}
+  - {kind: command, ref: commands/do-thing, tier: core}
+  - {kind: script, ref: scripts/tool.py, tier: core}
+
+dependencies:
+  - {from: skills/run-alpha, to: scripts/tool.py, type: calls}
+  - {from: commands/do-thing.md, to: skills/run-alpha, type: calls}
+  - {from: commands/do-thing.md, to: scripts/tool.py, type: calls}
+"""
+
+
+def build_dependency_parity_plugin(tmp_path: Path, composition: str) -> Path:
+    comp = build_plugin(tmp_path, composition, None)
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "tool.py").write_text("print('ok')\n", encoding="utf-8")
+    (tmp_path / "skills" / "run-alpha" / "SKILL.md").write_text(
+        "---\nname: run-alpha\nscript_refs: [../../scripts/tool.py]\n---\n# alpha\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "commands" / "do-thing.md").write_text(
+        "# dispatch\n\n| verb | dispatch |\n|---|---|\n"
+        "| alpha | Skill `run-alpha` |\n| tool | `scripts/tool.py` |\n",
+        encoding="utf-8",
+    )
+    return comp
+
+
+def test_dependency_parity_positive_fixture(tmp_path):
+    comp = build_dependency_parity_plugin(tmp_path, PARITY_COMPOSITION)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert findings == []
+
+
+def test_dependency_parity_rejects_missing_skill_script_ref_edge(tmp_path):
+    composition = PARITY_COMPOSITION.replace(
+        "  - {from: skills/run-alpha, to: scripts/tool.py, type: calls}\n", ""
+    )
+    comp = build_dependency_parity_plugin(tmp_path, composition)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any(
+        "missing calls dependency for skill script_ref: skills/run-alpha -> scripts/tool.py"
+        in finding
+        for finding in findings
+    )
+
+
+def test_dependency_parity_rejects_missing_command_dispatch_edges(tmp_path):
+    composition = PARITY_COMPOSITION.replace(
+        "  - {from: commands/do-thing.md, to: skills/run-alpha, type: calls}\n", ""
+    ).replace(
+        "  - {from: commands/do-thing.md, to: scripts/tool.py, type: calls}\n", ""
+    )
+    comp = build_dependency_parity_plugin(tmp_path, composition)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any(
+        "missing calls dependency for command dispatch: commands/do-thing.md -> skills/run-alpha"
+        in finding
+        for finding in findings
+    )
+    assert any(
+        "missing calls dependency for command dispatch: commands/do-thing.md -> scripts/tool.py"
+        in finding
+        for finding in findings
+    )
 
 
 # --------------------------------------------------------------------------

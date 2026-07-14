@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "repository_id": "__DERIVED_AT_INIT__",
+  "repository_id_note": "placeholder sentinel。C10 init が canonical GitHub remote (github:<owner>/<repo>) または local git common-dir fingerprint (local:sha256:<64hex>) から導出して置換する。example/sentinel 値のまま配置することは禁止で、C09 は schema pattern 不一致として exit 2 で拒否する",
+  "content_roots": {
+    "issues": "issues",
+    "tasks": "tasks",
+    "specifications": "specs",
+    "architecture": "architecture",
+    "documents": "docs",
+    "system_spec": "system-spec"
+  },
+  "local_state": {
+    "graph": ".dev-graph/state/graph.json",
+    "cache": ".dev-graph/cache",
+    "locks": ".dev-graph/locks"
+  },
+  "execution_tracker": {
+    "mode": "beads",
+    "beads": {
+      "issue_prefix": "system",
+      "server_mode": false,
+      "github_mirror": "bd_github_push_only"
+    }
+  },
+  "path_policy": {
+    "authority": "caller-repository",
+    "stored_paths": "repository-relative",
+    "allow_outside_repository": false,
+    "follow_content_symlinks_outside_repository": false
+  },
+  "plan_roots": {
+    "staging": ".dev-graph/staging",
+    "published": ".dev-graph/plans",
+    "state": ".dev-graph/state"
+  }
+}

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # /// script
 # name: sync-task-state
-# purpose: task-graph 駆動 build の runtime state (producer component C16 task-state.schema.json shape) への単一 writer (TG-C02)。状態遷移 (ALLOWED_TRANSITIONS)・lease 回収/延長・graph_hash pin・blocked 伝播/回復・実行イベントログ (task-events.jsonl) を一箇所へ閉じ、canonical serialization 規約 (id 昇順) を task-state shape へ踏襲する。他 consumer script (TG-C05/TG-C07) は resolve_build_dir を import 再利用する SSOT。
+# purpose: task-graph 駆動 build の runtime state (producer component C16 task-state.schema.json shape) への単一 writer (TG-C02)。状態遷移 (ALLOWED_TRANSITIONS)・lease 回収/延長・graph_hash pin・accepted graph 再 pin 時の done dependency dirty-closure 再開・blocked 伝播/回復・実行イベントログ (task-events.jsonl) を一箇所へ閉じ、canonical serialization 規約 (id 昇順) を task-state shape へ踏襲する。他 consumer script (TG-C05/TG-C07) は resolve_build_dir を import 再利用する SSOT。
 # inputs:
 #   - argv: --target-plugin-slug S [--cycle-id C] [--task-state P] [--events E] [--task-graph G]
 #           (--task-id T (--to-state ST [--route-report R] [--require-covered] [--reason origin-failure|propagated] [--propagate-blocked] | --reap-lease | --renew-lease)
-#            | --pin-graph-hash H | --repin-graph-hash H --authorized-hash H2
+#            | --pin-graph-hash H | --repin-graph-hash H [--authorized-hash H2] --task-graph G
 #            | --reactivate-cascade ORIGIN [--include-origin]) [--lease-seconds N] [--event-extra JSON]
 # outputs:
 #   - stdout: 更新サマリ JSON
@@ -39,7 +39,9 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-# ── 状態遷移表 (producer component C16 永続 4 値。done は終端・後退遷移不可) ───
+# ── 状態遷移表 (producer component C16 永続 4 値。done は通常遷移で終端) ───
+# done→pending は accepted graph 再 pin に伴う dependency dirty-closure 再開のみ、
+# reconcile_done_dependency_closure() の専用経路で行う。通常遷移表は緩めない。
 ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "pending": {"running", "blocked"},
     "running": {"done", "blocked"},
@@ -405,6 +407,70 @@ def _downstream_closure(task_graph: dict, origin_task_id: str) -> set[str]:
     return seen
 
 
+def reconcile_done_dependency_closure(
+    task_state: dict, task_graph: dict
+) -> tuple[dict, list[dict]]:
+    """unfinished dependency を持つ done node と done 下流閉包を pending へ再開する。
+
+    accepted discovered-task の graph を再 pin すると、既存 done node に新しい
+    dependency が追加されることがある。このとき旧 done を保持すると依存未完了の
+    偽 done になるため、現 graph 上で次の決定論的な dirty closure を求める。
+
+    1. state=done かつ current_state(dependency)!=done の node を dirty origin にする。
+    2. 各 origin とその下流閉包にある「既存の done state node」だけを
+       pending へ戻し、lease/timestamp/route_report を無効化する。
+
+    sparse state 不変のため graph node を新規 materialize せず、pending/running/blocked
+    node にも触れない。戻り値の metadata は caller が append-only event を記録する
+    ための決定論的な task-id 昇順リスト。ALLOWED_TRANSITIONS は緩めない。
+    """
+    producers_by_consumer, issues = resolve_dependency_producers(task_graph)
+    if issues:
+        raise ValueError(format_dependency_issue(issues[0]))
+
+    graph_node_ids = {
+        node.get("id")
+        for node in task_graph.get("nodes", []) or []
+        if isinstance(node, dict) and node.get("id") is not None
+    }
+    unsatisfied_by_origin: dict[str, list[str]] = {}
+    for task_id in sorted(graph_node_ids):
+        if current_state(task_state, task_id) != "done":
+            continue
+        unsatisfied = sorted(
+            producer_id
+            for producer_id in producers_by_consumer.get(task_id, set())
+            if current_state(task_state, producer_id) != "done"
+        )
+        if unsatisfied:
+            unsatisfied_by_origin[task_id] = unsatisfied
+
+    dirty_origins_by_task: dict[str, set[str]] = {}
+    for origin_task_id in sorted(unsatisfied_by_origin):
+        affected = {origin_task_id} | _downstream_closure(task_graph, origin_task_id)
+        for task_id in affected & graph_node_ids:
+            dirty_origins_by_task.setdefault(task_id, set()).add(origin_task_id)
+
+    clone = _clone_state(task_state)
+    by_id = {node.get("id"): node for node in clone.get("nodes", [])}
+    reopened: list[dict] = []
+    for task_id in sorted(dirty_origins_by_task):
+        node = by_id.get(task_id)
+        if node is None or node.get("state") != "done":
+            continue
+        node["state"] = "pending"
+        node["started_at"] = None
+        node["lease_expires_at"] = None
+        node.pop("route_report", None)
+        node.pop("blocked_reason", None)
+        reopened.append({
+            "task_id": task_id,
+            "dirty_origin_task_ids": sorted(dirty_origins_by_task[task_id]),
+            "unsatisfied_dependency_ids": unsatisfied_by_origin.get(task_id, []),
+        })
+    return clone, reopened
+
+
 def propagate_blocked(
     task_state: dict, task_graph: dict, origin_task_id: str, now: datetime
 ) -> dict:
@@ -506,7 +572,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--task-state", default=None, help="省略時 resolve_build_dir(...)/task-state.json")
     p.add_argument("--events", default=None, help="省略時 resolve_build_dir(...)/task-events.jsonl")
     p.add_argument("--task-graph", default=None,
-                   help="task-graph.json (指定時は遷移 task-id の nodes 存在検査 + propagate-blocked に使用)")
+                   help="task-graph.json (遷移 task-id 検査/blocked 閉包、repin 時の done dirty-closure 再開に使用)")
     p.add_argument("--initialize-from-graph", action="store_true",
                    help="--task-graph の全 node を不足分だけ pending で task-state へ初期化")
     p.add_argument("--task-id", default=None)
@@ -519,7 +585,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--renew-lease", action="store_true")
     p.add_argument("--pin-graph-hash", default=None)
     p.add_argument("--repin-graph-hash", default=None,
-                   help="外ループ再入用の provenance-gated 再 pin (要 --authorized-hash)")
+                   help="外ループ再入用の provenance-gated 再 pin (要 --task-graph; 異値は --authorized-hash も必須)")
     p.add_argument("--authorized-hash", action="append", default=[],
                    help="再 pin を認可する resulting_graph_hash (accepted discovered-task 由来・複数可)")
     p.add_argument("--propagate-blocked", action="store_true")
@@ -598,8 +664,29 @@ def main(argv: list[str] | None = None) -> int:
             state = pin_graph_hash(state, args.pin_graph_hash)
             events.append({"type": "graph_hash_pinned", "graph_hash": args.pin_graph_hash})
         elif args.repin_graph_hash is not None:
+            if not args.task_graph:
+                print("--repin-graph-hash には --task-graph が必須 (done dependency dirty-closure 導出)",
+                      file=sys.stderr)
+                return 2
+            try:
+                task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
+                return 2
             state = repin_graph_hash(state, args.repin_graph_hash, set(args.authorized_hash))
             events.append({"type": "graph_hash_repinned", "graph_hash": args.repin_graph_hash})
+            state, reopened = reconcile_done_dependency_closure(state, task_graph)
+            for item in reopened:
+                events.append({
+                    "type": "state_transition",
+                    "task_id": item["task_id"],
+                    "from_state": "done",
+                    "to_state": "pending",
+                    "reason": "graph_dependency_dirty",
+                    "graph_hash": args.repin_graph_hash,
+                    "dirty_origin_task_ids": item["dirty_origin_task_ids"],
+                    "unsatisfied_dependency_ids": item["unsatisfied_dependency_ids"],
+                })
         elif args.reactivate_cascade is not None:
             if not args.task_graph:
                 print("--reactivate-cascade には --task-graph が必須 (下流閉包導出)", file=sys.stderr)

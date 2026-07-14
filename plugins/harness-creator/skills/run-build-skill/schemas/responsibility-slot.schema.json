@@ -2,12 +2,12 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://harness/run-build-skill/schemas/responsibility-slot.schema.json",
   "title": "Responsibility Slot",
-  "description": "R-id 単位の prompt slot 形式。frontmatter.responsibility_refs から参照され、prompts/<R-id>.md (既定) または prompts/<R-id>.yaml (legacy) の 7 層プロンプト位置を確定する。",
+  "description": "R-id 単位の prompt slot 形式。R1 / R1-elicit / R2b-readiness 形式を受理し、prompt_path のファイルstemはr_idと完全一致させる (完全一致は validate-build-trace.py が機械検査)。",
   "type": "object",
   "additionalProperties": false,
   "required": ["r_id", "owner", "layers", "prompt_path"],
   "properties": {
-    "r_id": {"type": "string", "pattern": "^R[0-9]+$"},
+    "r_id": {"type": "string", "pattern": "^R[0-9]+[a-z]?(-[a-z0-9]+(-[a-z0-9]+)*)?$"},
     "owner": {"type": "string", "enum": ["Skill", "Subagent", "Hook"]},
     "title": {"type": "string"},
     "layers": {
@@ -15,7 +15,7 @@
       "minItems": 1,
       "items": {"type": "string", "enum": ["L1", "L2", "L3", "L4", "L5", "L6", "L7"]}
     },
-    "prompt_path": {"type": "string", "pattern": "^prompts/R[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?\\.(md|yaml)$"},
+    "prompt_path": {"type": "string", "pattern": "^prompts/R[0-9]+[a-z]?(-[a-z0-9]+(-[a-z0-9]+)*)?\\.(md|yaml)$"},
     "self_evaluation_required": {"type": "boolean", "default": true},
     "expected_output_schema": {"type": "string"},
     "context_inputs": {

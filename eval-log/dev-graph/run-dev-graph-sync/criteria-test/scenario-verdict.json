@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "component_id": "C03",
+    "skill_md_sha256": "7c0ffd26130cf92707c02f5152e3349e135525d44b8f45ea0f78cbd228a4b246"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "independent: python3 scripts/validate-graph-schema.py --graph <deficient sync payload> and gh-bridge.normalize_issue missing-key check"
+      ],
+      "observed": "Ran validate-graph-schema.py on a deficient sync payload: it failed closed (exit=1) enumerating every missing required key (graph_node_id via missing_id, github_publication.labels/milestone/project_aliases, plus dangling_dependency), so any pre-send payload with a required-key gap is rejected and only a 0-missing-key payload passes. gh-bridge.normalize_issue independently rejected a fetched issue missing id/url ('gh issue result missing fields: id, url'). pytest test_validate_graph_schema_and_main asserts the same violation-code set (missing_id, binding_collision, invalid_kind, dangling_dependency) and that a bad graph returns valid=false."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C03-OUT1-positive-second-sync-zero",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260713T090000-r3/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260713T090000-r3/transcript.jsonl"
+      ],
+      "observed": "Regenerated the live-trial verdict from the real 253-line transcript.jsonl (actual_model=[claude-opus-4-6], transcript_sha256=ef436424...) via live-trial-verdict.py: VERDICT PASS (launch=PASS completion=PASS goal_fit=PASS nudge=0 gate=0, downgrade_reason=null, tier=live, transcript_layer=jsonl). The transcript for scenario sync-positive-two-pass-convergence contains 15 'changes=0' and 14 'convergence' observations (imports/exports each 19, '2回目' x8), showing the second sync of the same state reports imports changes=0 and exports changes=0 with stable IDs/snapshots. Recorded out/status.json is {\"status\":\"PASS\"}."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "independent-scenario-review",
+      "test_refs": [
+        "independent: gh-bridge.normalize_issue updated_at exposure exercised directly",
+        "plugins/dev-graph/references/github-lifecycle-contract.md",
+        "plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md"
+      ],
+      "observed": "gh-bridge.normalize_issue surfaced updated_at ('2026-07-13T10:00:00Z') as the conflict hint that the id+updated_at tiebreak consumes. SKILL Protocol step 3 and github-lifecycle-contract.md define the rule: the newer updated_at wins, and simultaneous timestamps adopt the GitHub display value while leaving a local manual-confirmation flag. Independent review confirmed the plan layer keys the tiebreak off this normalized updated_at rather than physical overwrite."
+    },
+    "OUT3": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "independent: python3 scripts/gh-bridge.py --op issue-close --dry-run and validate-graph-schema tombstoned status support"
+      ],
+      "observed": "gh-bridge exposes no delete op; issue-close is a status transition (dry-run preview op=issue-close, mutation_suppressed=true, no node removal), and validate-graph-schema.py accepts 'tombstoned'/'closed' as node statuses (status vocabulary draft/active/blocked/done/closed/tombstoned). execution-tracker-contract.md maps tombstoned to 'bd close --reason=tombstoned' and explicitly forbids destructive delete ops, so close/delete is stored as a tombstone/status transition (open->closed) preserving graph_node_id rather than physical deletion. pytest test_gh_bridge_helpers_and_operations covers issue-close."
+    },
+    "OUT4": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "independent: python3 scripts/gh-bridge.py --op issue-create/--op issue-close --dry-run"
+      ],
+      "observed": "Ran gh-bridge.py issue-create --dry-run and issue-close --dry-run: both returned mutation_suppressed=true with a preview payload only and exit=0, performing zero external writes (the dry-run branch short-circuits before any gh invocation for every op in MUTATIONS = issue-create/issue-update/issue-close/project-item-add/project-item-edit). pytest test_gh_bridge_helpers_and_operations asserts mutation_suppressed is True on the dry-run create."
+    },
+    "OUT5": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "independent-scenario-review",
+      "test_refs": [
+        "plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md"
+      ],
+      "observed": "Independent review of R6-confirm (invariant purpose: read the manual-confirmation flag raised on id+updated_at simultaneous conflict as next-sync input, apply the user's confirmation result, then clear that node's flag) and SKILL Criteria acceptance OUT5. The resolve path is idempotent: once the confirmation result is applied on the follow-up sync the flag is dissolved, so a flagged node is cleared exactly by the confirmed re-sync and not left standing."
+    },
+    "OUT6": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "independent: gh-bridge project-item-find pagination/dedup and project-resolve unique-alias contract"
+      ],
+      "observed": "pytest test_gh_bridge_helpers_and_operations drives project-item-find across a 2-page paginated response and asserts pages==2 with exactly one item matched for the content id, so a repeat sync of the same content resolves the existing stable item_id instead of adding a duplicate. project-resolve additionally fails closed unless the default project resolves exactly once and rejects non-unique field aliases, keeping one linked item per alias across multiple Project targets."
+    },
+    "OUT7": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "independent-scenario-review",
+      "test_refs": [
+        "plugins/dev-graph/references/github-lifecycle-contract.md",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md"
+      ],
+      "observed": "github-lifecycle-contract.md defines the 3-way rule: Project field value updatedAt is the conflict hint, deletion/missing/option-rename resolve against the last-synced snapshot as canonical base, Status/done stays local->Project one-way, and only permitted fields go 3-way. Independent review of R2-plan and SKILL Protocol confirms both-sides changed => manual conflict with 0 auto-overwrite, one-side change => mapped sync with an updated snapshot. project-resolve (pytest-covered) supplies the unique field/option mapping the 3-way diff keys against."
+    },
+    "OUT8": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "independent: gh-bridge.retry_classification enumerated per op"
+      ],
+      "observed": "gh-bridge.retry_classification returns safe_read for reads (issue-fetch/lifecycle-facts/project-resolve/project-item-find), verify_before_retry for issue-create/project-item-add, and idempotent_with_same_arguments for issue-update/issue-close/project-item-edit. Combined with SKILL Protocol step 4 (partial Project failure does not roll back local promotion; only the uncompleted alias write becomes pending_retry), permission/rate-limit/field-deletion/option-rename/pagination/mid-failure fixtures keep the local task promotion and re-run only the pending_retry write. pytest test_gh_bridge_helpers_and_operations exercises these ops."
+    },
+    "OUT9": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_reconcile_lifecycle_modes",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_worktree_lease_lifecycle",
+        "plugins/dev-graph/tests/test_semantic_c26_completion.py::test_c26_local_first_transaction_calls_c27_before_beads_and_is_idempotent"
+      ],
+      "observed": "pytest test_reconcile_lifecycle_modes: a MERGED default-branch PR yields policy_decision 'complete' in check mode and 'writer_pending' when applied (node stays active until the durable writer runs), while a CLOSED unmerged PR returns policy_decision 'pending' with exit=1 and is never marked done. test_worktree_lease_lifecycle shows claim->heartbeat->park (pending_review) and system-release only after a completion event, so feature/dirty worktrees stay as pending events and durable task-spec/graph updates occur only on a clean default worktree. All 23 sync-related runtime/semantic tests passed."
+    }
+  }
+}

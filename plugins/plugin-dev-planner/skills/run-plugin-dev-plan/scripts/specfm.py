@@ -42,7 +42,7 @@ import re
 
 # --- feedback_contract.criteria SSOT 制約 (feedback_contract_ssot.py 逐語) ---
 CRITERIA_ID_RE = re.compile(r"^(IN|OUT|C)[0-9]+$")
-CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"}
+CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"}
 LOOP_SCOPES = {"inner", "outer"}
 REQUIRED_CRITERION_KEYS = ("id", "loop_scope", "text", "verify_by")
 

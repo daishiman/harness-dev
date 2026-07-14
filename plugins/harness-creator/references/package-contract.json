@@ -1,0 +1,38 @@
+{
+  "$schema": "../skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "harness-creator",
+  "entry_points": {
+    "skills": [
+      "run-build-skill"
+    ],
+    "agents": [],
+    "commands": [
+      "capability-build"
+    ],
+    "hooks": []
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "development-tools",
+    "tags": [
+      "capability-build",
+      "plugin-harness",
+      "quality-governance"
+    ]
+  },
+  "depends_on": [],
+  "requirements": {
+    "external_clis": [
+      {
+        "name": "tmux",
+        "reason": "live-trial 輸送層(別プロセス本物claudeセッションのpane制御)。Python stdlib代替不能。不在時はlive-trial verdict=BLOCKEDでfail-closed",
+        "required_for": [
+          "run-skill-live-trial"
+        ]
+      }
+    ]
+  },
+  "pkg_checks": {}
+}

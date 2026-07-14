@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/verification-contract.schema.json",
+  "title": "Verification Obligation Contract",
+  "description": "検証をAgent/思考法/routeの実行回数でなく、証明すべきclaimのDAGとして表す正本。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "subject", "obligations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "obligations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "claim", "kind", "risk", "activation", "depends_on", "inputs"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*$"},
+          "claim": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "enum": ["generative", "deterministic", "semantic", "observational", "audit"]},
+          "risk": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
+          "activation": {"type": "string", "enum": ["changed", "always", "exhaustive"]},
+          "depends_on": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string"}
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "required", "context"],
+              "properties": {
+                "path": {"type": "string", "minLength": 1},
+                "required": {"type": "boolean"},
+                "context": {"type": "boolean", "description": "true の入力だけをLLMの最小context sliceへ入れる。"}
+              }
+            }
+          },
+          "parameters": {"type": "object", "description": "path全体をhashせず、route固有の仕様sliceだけをfingerprintへ束縛するinline入力。"},
+          "expected_evidence_paths": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "model_required": {"type": "boolean", "description": "generative obligationがmodel contextを消費するか。"},
+          "checker": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "argv"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "argv": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+            }
+          },
+          "observation_tier": {"type": "string", "enum": ["fork", "live"]},
+          "minimum_confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.8},
+          "reuse": {"type": "boolean", "default": true}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"kind": {"const": "generative"}}},
+            "then": {"required": ["model_required"]}
+          },
+          {
+            "if": {"properties": {"kind": {"const": "deterministic"}}},
+            "then": {"required": ["checker"]}
+          },
+          {
+            "if": {"properties": {"kind": {"const": "audit"}}},
+            "then": {"properties": {"activation": {"const": "exhaustive"}}}
+          },
+          {
+            "if": {"properties": {"kind": {"const": "observational"}}},
+            "then": {"required": ["observation_tier"]}
+          }
+        ]
+      }
+    }
+  }
+}

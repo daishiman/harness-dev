@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/system-spec-fetched-references.json",
+  "title": "system-spec official reference records",
+  "type": "object",
+  "required": ["references"],
+  "properties": {
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "target_id",
+          "retrieved_at",
+          "source_url",
+          "official_publisher",
+          "official_host",
+          "latest_checked_at",
+          "summary"
+        ],
+        "properties": {
+          "target_id": {"type": "string", "minLength": 1},
+          "retrieved_at": {"type": "string", "format": "date-time"},
+          "source_url": {"type": "string", "format": "uri"},
+          "official_publisher": {"type": "string", "minLength": 1},
+          "official_host": {"type": "string", "minLength": 1},
+          "version": {"type": ["string", "null"]},
+          "last_updated": {"type": ["string", "null"]},
+          "latest_checked_at": {"type": "string", "format": "date-time"},
+          "summary": {"type": "string", "minLength": 1}
+        },
+        "anyOf": [
+          {"required": ["version"]},
+          {"required": ["last_updated"]}
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

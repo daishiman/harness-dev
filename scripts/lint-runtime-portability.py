@@ -37,6 +37,26 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def _resolve_hook_map(plugin_root: Path, hooks: object) -> dict:
+    """plugin.json の hooks を event->matchers の dict へ正規化する。
+
+    Claude Code は hooks を (a) inline object、または (b) 別ファイル参照の相対パス
+    文字列 ("hooks": "./hooks/hooks.json") のいずれでも受ける。文字列参照時はその
+    ファイルを読み、{"hooks": {...}} ラッパがあれば剥がして event map を取り出す。
+    inline dict は event map そのものなので unwrap しない (hook event 名に "hooks"
+    は存在しないため衝突しない)。解決不能・非 dict は空 map を返し fail-soft する。
+    """
+    if isinstance(hooks, str):
+        try:
+            loaded = json.loads((plugin_root / hooks).read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+        hooks = loaded.get("hooks", loaded) if isinstance(loaded, dict) else {}
+    if not isinstance(hooks, dict):
+        return {}
+    return hooks
+
+
 def _hook_scripts() -> list[Path]:
     """全 plugin.json の hooks[] に配線された command script の絶対パスを集める。"""
     scripts: list[Path] = []
@@ -46,11 +66,13 @@ def _hook_scripts() -> list[Path]:
             data = json.loads(pj.read_text(encoding="utf-8"))
         except Exception:
             continue
-        for _ev, matchers in (data.get("hooks") or {}).items():
+        hook_map = _resolve_hook_map(plugin_root, data.get("hooks"))
+        for _ev, matchers in hook_map.items():
             for m in matchers or []:
                 for h in m.get("hooks", []) or []:
                     cmd = h.get("command", "") or ""
-                    mm = re.search(r"\$CLAUDE_PLUGIN_ROOT/(\S+?\.py)", cmd)
+                    # $CLAUDE_PLUGIN_ROOT と ${CLAUDE_PLUGIN_ROOT} の両記法を拾う。
+                    mm = re.search(r"\$\{?CLAUDE_PLUGIN_ROOT\}?/(\S+?\.py)", cmd)
                     if not mm:
                         continue
                     p = plugin_root / mm.group(1)

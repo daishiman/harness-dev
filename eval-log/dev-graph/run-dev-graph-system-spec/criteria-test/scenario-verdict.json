@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "component_id": "C19",
+    "skill_md_sha256": "c0c379b213229bff97ab4a0c9745e7a604de79e2b82bdf1c78d0b187f84548eb"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_validate_rejects_invalid_authority_documents",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "independent: scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-system-spec/.dev-graph/state/graph.json"
+      ],
+      "observed": "test_validate_rejects_invalid_authority_documents and test_validate_graph_schema_and_main PASSED (the dev-graph schema gate accepts confirmed spec/architecture with lineage and rejects invalid authority docs). Independent validate-graph-schema.py on the r3-system-spec fixture (3 nodes: specification + architecture with source lineage) returned exit0 with valid=true, violations=[], missing_sections=[]. The system-spec-harness coverage/source-citation gate for this import is exercised end-to-end in the OUT1 live trial (harness 4 entry points run to evaluator PASS), so both gates land at exit0."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C19-OUT1-positive-system-spec-lineage",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/out/status.json"
+      ],
+      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-4-6], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live. Positive lineage scenario '--repo-root .../r3-system-spec' drove system-spec-harness's 4 entry points via qualified Skill calls; the imported specification/architecture retained source_lineage(origin_kind/plugin/path/version/digest/imported_at), confirmed status, and evaluator evidence, registered only through C02 with no duplicated elicit/compile logic in dev-graph (out/status.json scenario=system-spec-positive-lineage status=PASS)."
+    }
+  }
+}

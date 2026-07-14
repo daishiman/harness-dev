@@ -1,0 +1,17 @@
+{
+  "description": "Protect confirmed system-spec chapters and the canonical spec state from unsafe mutation.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-confirmed-chapter-overwrite.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

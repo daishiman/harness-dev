@@ -1,6 +1,6 @@
 ---
 description: Capability (Skill/Agent/Hook/Command/Plugin-Composition/Prompt/Workflow) を新規作成または更新する統一入口。通常 kind は run-build-skill Skill、script route は build-script-route.py に委譲する。
-argument-hint: "<kind> <name> [options] | --handoff <path> [--route-id <Cxx>]  例: skill run-foo / agent reviewer-bar / --handoff plugin-plans/x/handoff-run-plugin-dev-plan.json (既定=task-graph 全体・単一 route のみ --route-id C09)"
+argument-hint: "<kind> <name> [options] | --handoff <path> [--route-id <Cxx>] [--verification-profile incremental|exhaustive|build-only] [--max-workers N] [--max-model-actions N] [--max-live-trials N]  例: --handoff plugin-plans/x/handoff-run-plugin-dev-plan.json (既定=incremental・task-graph 全体)"
 allowed-tools: Read, Skill, Task, Bash(python3 *)
 name: capability-build
 kind: command
@@ -12,7 +12,7 @@ entrypoint: run-build-skill
 
 # /capability-build
 
-`$ARGUMENTS` を `<kind> <name> [options]` または E2 の `--handoff <path> [--route-id <Cxx>]` としてパースする薄いラッパ。Capability 種別の正規化・route 解析・前提チェックのみを担当し、7 capability kind は `run-build-skill` Skill、`build_kind=script` route は `build-script-route.py` に委譲する (run-build-skill 本体は無改修)。
+`$ARGUMENTS` を `<kind> <name> [options]` または E2 の `--handoff <path> [--route-id <Cxx>]` としてパースする統一入口。Capability 種別の正規化・route 解析・前提チェックに加え、buildと検証をverification obligation DAGへcompileする。通常コストはroute/Agent/思考法の総数でなく、変更された生成claimと未解決の意味・挙動claimに比例させる。7 capability kind は `run-build-skill` Skill、`build_kind=script` route は `build-script-route.py` に委譲する。
 
 ## 振る舞い
 
@@ -30,6 +30,29 @@ entrypoint: run-build-skill
 2. `name` の命名規約を `ref-skill-naming-convention` 準拠で軽く検証 (run-/ref-/assign- prefix など)。route モードでは route.name を用いる。
 3. `build_kind=script` は `$CLAUDE_PLUGIN_ROOT/scripts/build-script-route.py` が実行し、既存ファイルは非破壊で確認、新規ファイルは標準 Python scaffold を作成するが route status は `skipped` として後続依存を進めない。どちらの場合も `eval-log/<slug>/build/route-<id>.json` を書いて `$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/validate-route-build-reports.py --route <id>` を通す。7 capability kind の route は `run-build-skill` Skill を起動し、引数として `kind / name / options`(route モードでは加えて `build_target`) を渡し、同じ route-build-report 契約に従って route 結果を記録する。
 4. 7 capability kind の生成後は `$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/validate-build-trace.py` を実行し、PASS/FAIL を報告する。script route は route-build-report を書き、`$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/validate-route-build-reports.py --route <id>` の exit0 を確認する。route モードでは `$CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py` の exit0 を実行証跡に含める (validator の path 解決規約を統一: `scripts/` 直下 = parity/build-script-route、`skills/run-build-skill/scripts/` = build-trace/route-build-reports。F9)。
+5. **build/検証は obligation resolver が単一入口**: 正準契約は `run-build-skill/references/verification-obligation-protocol.md`。route build前に `derive-route-build-obligations.py`、build後に `derive-verification-contract.py` でgraph全体をcontract化し、必ず `plan-verification-obligations.py` を通す。resolverはLLMを起動せず `reuse/generate/check/adjudicate/observe/audit/...` を返す。`reuse` はcurrent target/reportの内容digestを持つPASS receiptがroute-local仕様fingerprintと一致した場合だけで、build SubAgent自体を起動しない。`generate/check` 完了後は `record-verification-evidence.py` で成果物をfingerprintへ束縛し再planする。`llm_batches[]` と `observational_queue[]` 以外からLLM/live sessionを起動してはならない。`budget_gate=blocked` ならmodel workを開始せず、context slice縮小または明示予算承認で再planする。`plan-live-trials.py` は `observe` のlive executor adapterとしてのみ使用し、plugin全Skillを直接起動しない。
+
+## 本質的なコストモデル (Verification-as-program)
+
+旧 `routes × agents × methods × iterations` 型のプロセス完遂を品質の代理指標にしない。品質の正本は「claimにcurrent proofがあるか」であり、実行量は次だけから決まる。
+
+1. `generative`: route固有のbuild_args/target/inventory component/task node/spec slice、または上流proofが変わったroute/direct-taskだけ `generation_queue` へ入る。無関係routeの変更で全routeを無効化しない。`phase-gate` は依存proofの投影でありAgentを起動しない。
+2. `deterministic`: schema/lint/testで証明し、LLMへ渡さない。
+3. `semantic`: machine proof後にも残る意味claimだけを、実context byte量でpackした `llm_batches` へ入れる。4条件を4Agentへ割らない。
+4. `observational`: 静的に証明不能なfork/live挙動だけを最小tierで観測する。
+5. `audit`: 30思考法はobligation設計catalogと明示 `exhaustive` auditに限定し、通常runtime fan-outにしない。
+
+fingerprintはclaim、route-local入力、checker契約、上流fingerprintから導出し、receiptのevidence自体もSHAで検証する。同じfinding codeが反復した場合は `automation_candidates` としてschema/lint/testへの昇格対象にする。この学習ラチェットにより、運用を重ねるほどLLM判定を機械判定へ移す。`run_id` と `model_action_id` で生成・semantic batch・live観測の累積model actionを重複なく数え、`--max-model-actions` 超過は次の起動前にblockする。
+
+## 検証 profile とコスト上限
+
+| profile | 既定動作 | LLM を使う条件 |
+|---|---|---|
+| `incremental` (既定) | route-local obligation proofを再利用し、変更claimだけ generate/check。machine proof後の未解決semantic claimを最小context batchで裁定 | `generation_queue`、`llm_batches`、`observational_queue` に明示されたclaimだけ |
+| `build-only` | route/build trace/schema/parity まで。live trial と LLM 設計レビューを起動しない | なし。未実施ゲートを PASS と偽装せず `not-run(profile=build-only)` と記録する |
+| `exhaustive` | 全 live candidate 再実走 + 思考リセット + 30思考法の3独立 analyst + 最大3周回 | 利用者が明示したときだけ。通常 build や変更なし再実行から自動昇格しない |
+
+既定値は `--max-workers 2`、incremental/build-onlyの `--max-model-actions 4`、`--max-live-trials 2`、`--live-concurrency 2`。これらは安全弁であり、通常の削減はobligation proof reuseと局所無効化で行う。`incremental` では30思考法を1件ずつ長文出力しない。30種全使用・3 analyst・最大3周回は明示 `exhaustive` のadversarial audit契約として保持する。
 
 ## task-graph route モード (並列 dispatch + 2 ループ)
 
@@ -41,14 +64,16 @@ handoff に `task_graph_ref` が**存在すれば (planner 生成 handoff は常
 - どちらのノードも build 実体そのものは書かず、SubAgent 完了報告を受けた dispatcher が TG-C02 で state を done へ write-back する (単一 writer)。node→route の join は `entity_ref==route.component_id` で決定論に引ける (message/title の自然文解釈に依存しない)。
 
 ### 内ループ (build-execution loop・現 task-graph を完了へ駆動)
-0. **build 開始時ゲート**: `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/manage-build-lease.py --lock-action acquire --target-plugin-slug <slug> --cycle-id <cid> --task-graph <task_graph_ref>)` (TG-C07)。exit1 (他プロセスが lock 保持中 / graph_hash pin 不一致) ならエラー表示し build 中断。成功 JSON の `owner_token` は dispatcher が build 終了までメモリ内で保持し、以後の renew/release へ `--owner-token <token>` として必ず渡す (ログや handoff へ永続化しない)。
+0. **build 開始時ゲート + route obligation compile**: `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/manage-build-lease.py --lock-action acquire --target-plugin-slug <slug> --cycle-id <cid> --task-graph <task_graph_ref>)` (TG-C07)。exit1 (他プロセスが lock 保持中 / graph_hash pin 不一致) ならエラー表示し build 中断。成功 JSON の `owner_token` は dispatcher が build 終了までメモリ内で保持し、以後の renew/release へ `--owner-token <token>` として必ず渡す (ログや handoff へ永続化しない)。取得後、`derive-route-build-obligations.py --handoff <handoff> --out <build_dir>/route-build-contract.json` → `plan-verification-obligations.py --contract ... --evidence-dir <build_dir>/obligation-evidence --profile <profile> --run-id <cycle-id-or-build-id> --max-model-actions <N> --out <build_dir>/route-build-plan.json` を実行する。同じ `run-id` を全再plan/receiptへ渡す。`reuse` routeはcurrent target+route-build-reportのproofを使って対応nodeをdoneへ投影しSubAgentを起動しない。`generation_queue` のrouteだけを下記ready dispatch対象にし、完了receiptごとに再planして下流をready化する。累積budget block後は自動loopを継続しない。
 1. `dispatch-ready-set.py` (TG-C01) を呼び `ready_batch`/`conflicts`/`blocked`/`graph_hash_pin` を得る。`graph_hash_pin=="mismatch"` なら中断 (F10・実行中の graph 変更混入拒否)。
-2. `ready_batch` が 2 件以上かつ `conflicts` に該当ペアを含まないものは、各 task を独立 SubAgent (Task tool) として **same-message で並列起動** する (`file_ownership` を各 Task へ渡す)。`file_ownership` は決定論導出する: 当該 node の `write_scope` (task-graph schema 上 string の排他書込パス) を単一要素の path list とし、route を消費する node は route の `build_target` を加える。この list は skill-governance-hooks の `hook-check-file-ownership.py` が TaskCreated 入力の `file_ownership` (path 文字列 list・owner=task_id) として照合し、他 task 所有 path との衝突を exit2 で deny する形式そのもの。各 ready ノードの SubAgent 指示は上記「node→build 解決」規則で作る (`entity_ref`→route なら当該 route build を委譲・null なら `phase_ref` チェックリスト項目を直接遂行)。
+2. `ready_batch` から conflict のない task を選ぶが、in-flight は **`--max-workers` (既定2) を超えない**。同じ `entity_ref`/route に属する ready node は route build 1 context へ束ね、`covered_task_ids` で個別証跡を保持する。`entity_ref=null` のうち同一 `phase_ref` かつ read-only/deterministic validator で完結する項目は最大4件を1 contextへ束ね、validator command・exit code・対象 task id を checklist-verification report に分離記録する。異なる判断責務・write_scope 衝突は束ねない。各 dispatch には `file_ownership` を渡す。これは当該 node の `write_scope` を単一要素の path list とし、route を消費する node は route の `build_target` を加える。`hook-check-file-ownership.py` が owner=task_id として照合する。
 3. 各 SubAgent の route build 完了報告を受け取った**dispatcher 自身のみ**が `sync-task-state.py` (TG-C02) を直列呼び出しして state write-back する (SubAgent は TG-C02 を呼ばない・単一 writer を dispatcher 一者に閉じる)。**TG-C02 呼出し規約**: dispatcher は全遷移で `--task-graph <path>` を渡し未知 task-id を fail-closed させる。done 遷移は `--require-covered` を常時付与する。**covered_task_ids の writer も dispatcher**: 複数 task-graph node を束ねる route の route-build-report には、dispatcher が node→route join (`entity_ref==route.component_id`) から決定論導出した `covered_task_ids=[束ねる node id...]` を書き込んでから done write-back する (sync-task-state の `_assert_covered` 照合を実効化する writer 責務)。checklist 検証ノード (`entity_ref=null`) の done には `verified_by` と `covered_task_ids` を持つ checklist-verification report を dispatcher が書く。失敗報告は `sync-task-state.py --task-id <失敗> --to-state blocked --reason origin-failure --propagate-blocked --task-graph <path>` で起点 blocked + 下流閉包を `blocked(propagated)` へ連鎖 (F3)。SubAgent が build 中に discovered-task (追加で必要になった作業) を報告した場合は、dispatcher が `emit-discovered-task.py --change-level <additive|structural>` (TG-C04) を呼んで discovered-tasks inbox へ追記する (state 書込みは伴わず inbox への emit のみ・下記 stall spec-gap 由来の structural emit と同じく後段の完了ゲート TG-C08 がこの inbox をドレインして外ループへ合流させる=emit 発火点は複数だが合流点は TG-C08 単一)。build 前に `inject-task-inputs.py` (TG-C03) で producer 成果物 (node.write_scope) と handoff_notes を dependent task の入力へ有界注入する。
    - **heartbeat (F1)**: SubAgent batch が in-flight の間、`manage-build-lease.py --lock-action renew --owner-token <acquire.owner_token>` (TG-C07) と実行中各 task の `sync-task-state.py --task-id <tid> --renew-lease` (TG-C02) を定期呼出し、lock/lease を延長する (正当な長時間 build の偽孤児回収を防ぐ)。呼出し周期は lock TTL の 1/3 以下とする (lease/TTL の契約値は `references/pipeline-boundary-contract.md` の既定値表を正本とする)。
 4. **ローリング発火 (イベント駆動・barrier 禁止)**: 手順 3 の done write-back (TG-C02) 完了そのものを次 dispatch の発火条件とする — 1 ノードの done を write-back したら、in-flight の残 SubAgent 完了を**待たずに** TG-C01 を再呼出しし、新たに ready 化したノードを即時 dispatch する (完了記述→ready 再計算→新規 ready 発火の連鎖で依存グラフを進行させる。batch 全完了を待つ barrier 同期は依存的に無関係な後続を遊ばせるため行わない)。ただし `conflicts` 該当ペアと、実行中 task の `file_ownership` に衝突する候補は dispatch せず次回再計算まで delay する (直列化維持)。`ready_batch` が空かつ in-flight 0 になるまでこの連鎖を繰り返す (TG-C01 は再呼出しごとに graph_hash を再検証)。
 5. 全 batch 完了または停滞検出で `summarize-task-progress.py` (TG-C05) の進捗サマリを出力する。dispatcher は TG-C05 最終出力と TG-C08 gate 出力を `<build_dir>/build-summary.json` として保存し (task-graph モードの最終 verdict artifact)、正常・停滞の終了経路では保存後に下記 TG-C09 を再実行して完了ゲートと外ループ周回も HTML に反映する。**真の最終手順として** `manage-build-lease.py --lock-action release --owner-token <acquire.owner_token>` (TG-C07) で自身が所有する lock だけを解放する (異常終了時も finally 相当で必ず解放)。`force-release` は人間の管理者救済専用で `--admin` を必須とし、通常 dispatcher は使わない。release 後は `<build_dir>`/plan dir への書込を行わない — 解放後の書込は次 build の lock 取得と競合するため、書込を伴う全工程 (build-summary 保存・TG-C09 投影) は release より前に完了させる。
    - **live status / HTML 実行記録の plan dir 投影 (TG-C09・観測性)**: `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/project-task-status.py --task-graph <task_graph_ref> --task-state <build_dir>/task-state.json --build-summary <build_dir>/build-summary.json --discovered-inbox <build_dir>/discovered-tasks)` を呼び、`plugin-plans/<slug>/task-graph-status.json` + `task-progress.md` + `task-execution-report.html` へ live 実行状態を **read-only 投影**する。HTML は slide-report-generator の report 原則 (読み物・1項目1ビジュアル・自己完結・印刷対応) を採用した決定論レンダラで、外部 CDN/LLM へ依存せず進捗ドーナツ、仕様→graph→dispatch→evidence の流れ、phase 状態、route 証跡、逸脱、discovered-task、正本リンクを構造化表示する。`task-graph.json` は構造 SSOT (単一 writer=derive・runtime state を焼くと graph_hash pin が毎遷移で壊れるため不変) ゆえ node.state は pending のままだが、この投影ビューが plan dir で done/running/blocked と未処理の発見タスク (外ループ待ち) を可視化し「plugin-plans を見ても status が変わらない/Markdownだけでは読みづらい」観測性断絶を解消する。**生きた文書モデル**: 構造=`task-graph.json` (不変 SSOT)・機械観測=`task-graph-status.json`・差分確認=`task-progress.md`・閲覧=`task-execution-report.html` (投影・毎回上書き)・新タスク追記/問題対応=下記外ループ drain が `task-graph.json` を再 derive で成長させる (consumer 手書きせず単一 writer 温存)。stall 検出時も本投影を呼び blocked 起点を HTML で見せる。**finally 相当で呼ぶ** (TG-C07 lock release と同じく異常終了・中断時も必ず 1 度は投影する): 内ループが途中クラッシュすると plan dir の投影は最後の投影時点で stale 化するため、build 終了経路 (正常/停滞/異常) のいずれでも最新 state を 1 度投影してから抜ける。異常終了で build-summary が未生成なら `--build-summary` を省略して partial HTML を生成する。最終応答では Markdown だけでなく `task-execution-report.html` のパスを必ず提示する。
+     - **非スキップ必須完了ステップ (guarantee)**: TG-C09 の投影は「タスク仕様書 (task-graph) の build が完了・停滞・中断した**すべての終了経路**」で必ず 1 度実行する不可欠ステップであり、省略・条件付き skip を禁止する。`task-execution-report.html` は build 完了の必須成果物であり、生成なしに completed を宣言しない (TG-C07 lock release と対で finally 相当に配置する)。dispatcher は投影 stdout の `execution_report_html` パスを確認し、最終応答へ必ずそのパスを載せる。
+     - **価値セクション (why & value) の必須携帯**: TG-C09 は状態遷移だけでなく、**なぜこの harness を導入するのか・どの本質的課題を解決するのか・導入すると何ができるようになるのか**を読み手へ伝える価値セクションを HTML/Markdown の先頭付近へ携帯する。source は plan dir の `goal-spec.json` (`purpose`/`background`/`goal`/`checklist`/`constraints`) と `component-inventory.json` (build された component 群) で、`project-task-status.py` が read-only 参照する (両者不在の環境では価値セクションを省略し他セクションは通常生成する fail-soft)。**本質的課題は goal-spec に明記された文言の転記に留めず、background・constraints・component 構成から読み取れる「明記されていない本質」も synthesize して記述する** (結果の羅列でなく「何を解決し何ができるようになったか」が伝わる読み物にする)。
    - **リッチ版実行記録レポート (任意・別スキルへ委譲)**: `task-execution-report.html` は決定論・自己完結の既定ビュー (軽量・毎回上書きの投影責務に限定)。より作り込んだ読み物レポート (ヒアリング→構成設計→生成後評価を経た narrative・図解最適化) が必要な場合は、本 script を拡張せず `run-slide-report-generate --mode report --report-type internal-analysis` を `build-summary.json` / `task-graph-status.json` / `task-progress.md` を素材に起動する (リッチ生成は slide-report-generator 側へ分離し、TG-C09 は投影ビューの決定論性を保つ)。**出力先と閲覧前提**: リッチ版は `plugin-plans/<slug>/reports/<run-id>/` へ保存する (tracked 納品物・毎回上書きしない点で TG-C09 の gitignore 済投影 3 ファイルと write class が異なる。境界契約の write 例外表に明記)。slide-report-generator 標準の web font 等の外部資産を含むオンライン閲覧想定であり、オフライン/自己完結の正本は決定論版 `task-execution-report.html`。
 
 ### 外ループ (spec-improvement loop・task 仕様書を改善して再実行)
@@ -77,6 +102,11 @@ handoff に `task_graph_ref` が**存在すれば (planner 生成 handoff は常
 | `options` | `--update` で既存更新、`--plugin=<name>` で配置先指定 |
 | `--handoff <path>` | handoff build: `handoff-run-plugin-dev-plan.json` のパス (E2)。`task_graph_ref` があれば既定で task-graph route モード (全体 build) |
 | `--route-id <Cxx>` | optional (escape hatch): 消費する単一 route の component id (例 route C09)。省略時は task-graph 全体を build し、明示時のみ単一 route モード (段階 build / デバッグ用) |
+| `--verification-profile <profile>` | `incremental` (既定) / `build-only` / `exhaustive`。全件30思考法レビューは exhaustive のみ |
+| `--max-workers <N>` | task-graph の同時 SubAgent 上限。既定2。正の整数 |
+| `--max-model-actions <N>` | 同一runで許可する生成context + semantic batch + live観測の累積上限。incremental/build-only既定4。超過はapproval gate |
+| `--max-live-trials <N>` | incremental 1起動あたりの新規 live trial 上限。既定2。0なら全件 defer |
+| `--live-concurrency <N>` | live trial の同時実行上限。既定2。正の整数 |
 
 ## 失敗時
 
@@ -87,4 +117,4 @@ handoff に `task_graph_ref` が**存在すれば (planner 生成 handoff は常
 
 ## 注意
 
-- 本 command は scaffold / route 消費のみ。設計品質は `/capability-review` で別途評価する。
+- 追加の `/capability-review` は任意。通常 build は本 command の incremental matrix で閉じ、30思考法の完全レビューが必要なときだけ `--verification-profile exhaustive` または `/capability-review` を明示する。

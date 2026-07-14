@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness/schemas/dev-graph-criteria-scenario-verdict.json",
+  "title": "dev-graph criteria scenario verdict",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target",
+    "verdict",
+    "reviewer",
+    "loop_scope",
+    "iteration_limit",
+    "criteria_results"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.1.0"},
+    "target": {
+      "type": "object",
+      "required": ["plugin", "skill", "component_id", "skill_md_sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "plugin": {"const": "dev-graph"},
+        "skill": {"type": "string", "minLength": 1},
+        "component_id": {"type": "string", "pattern": "^C[0-9]{2}$"},
+        "skill_md_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "verdict": {"const": "PASS"},
+    "reviewer": {"type": "string", "minLength": 1, "not": {"const": "root"}},
+    "loop_scope": {"const": "both"},
+    "iteration_limit": {"const": 3},
+    "criteria_results": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status",
+          "verify_by",
+          "evidence_kind",
+          "test_refs",
+          "observed"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {"const": "PASS"},
+          "verify_by": {"enum": ["script", "test", "live-trial"]},
+          "evidence_kind": {
+            "enum": ["pytest", "independent-scenario-review", "hybrid", "live-trial"]
+          },
+          "test_refs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "observed": {"type": "string", "minLength": 1},
+          "scenario_id": {"type": "string", "minLength": 1},
+          "live_trial_verdict_ref": {"type": "string", "minLength": 1}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"verify_by": {"const": "live-trial"}}},
+            "then": {
+              "required": ["scenario_id", "live_trial_verdict_ref"],
+              "properties": {"evidence_kind": {"const": "live-trial"}}
+            },
+            "else": {
+              "not": {
+                "anyOf": [
+                  {"required": ["scenario_id"]},
+                  {"required": ["live_trial_verdict_ref"]}
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

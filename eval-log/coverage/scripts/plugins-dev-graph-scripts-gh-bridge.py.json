@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/gh-bridge.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "genuine code-review + py_compile OK / frontmatter 正直 (network:true, write-scope: approved gh CLI mutations only)。gh Issue/Projects v2/lifecycle への決定的 dry-run-safe ブリッジ。MUTATIONS 集合を --dry-run で preview 抑止 (mutation_suppressed:true)。normalize_issue は id/number/url 欠落を fail-closed。lifecycle-facts は defaultBranchRef+PR(state/merged/mergedAt/base/head/mergeCommit/closingIssuesReferences) を単一 GraphQL snapshot で取得し、defaultBranchRef/pullRequest/closing の型を逐一検証。project-resolve は user XOR organization の projectV2 が正確に 1 件であること・field alias 一意性を強制。retry_classification で safe_read/verify_before_retry/idempotent を明示 (再試行安全性の契約化)。DEV_GRAPH_GH env override でテスト注入可。SMELL: project-item-find の page[\\\"data\\\"][\\\"node\\\"][\\\"items\\\"] は gh GraphQL 応答形状を直接添字参照しており、error 応答等で data.node が無い場合 KeyError/TypeError が main の except ContractError を素通りして traceback exit になりうる (lifecycle-facts 経路は .get で防御済みだが project 系は防御が薄い)。実運用の reconcile 主経路は lifecycle-facts のみ使用のため影響限定。TESTS: test_runtime_coverage.py::test_gh_bridge_helpers_and_operations、test_semantic_c25_c28.py / c26。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

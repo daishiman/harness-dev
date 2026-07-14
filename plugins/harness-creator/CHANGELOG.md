@@ -8,6 +8,7 @@
 
 ### Added
 
+- **incremental verification planner**: `run-skill-live-trial/scripts/plan-live-trials.py` を追加。挙動閉包 SHA と schema-valid PASS/transcript SHA を照合して現行証跡を再利用し、既定の新規 live trial を最大2本・同時2本へ制限。`build-only` は実セッション0、`exhaustive` は明示時のみ全件再実走する。
 - **Capability 統一抽象**: `Capability` / `CapabilityManifest` / `CapabilityBundle` の三層モデルを導入し、skill/agent/hook/command/prompt/workflow/plugin-composition を単一語彙で表現可能にした。
 - **plugin-composition.yaml**: plugin 間の依存・公開 capability・consume 関係を宣言する composition manifest を新設。
 - **target_type 7 種対応 rubric**: `skill` / `agent` / `hook` / `command` / `plugin-composition` / `prompt` / `workflow` の 7 種に対し、共通核 + kind 固有 addendum の rubric を提供。
@@ -77,6 +78,9 @@
 
 ### Changed
 
+- **post-build 検証を profile 制御へ変更**: `/capability-build` と `run-build-skill` の既定を `incremental` にし、変更時の内容評価を独立 evaluator 1 context (4条件+rubric、既存2 verdictへ分離) に集約。思考リセット+30思考法3並列+rubric evaluator+最大3周は `exhaustive` 明示時だけにした。
+- **live-trial 依存を Skill 単位へ縮小**: package sidecar の任意 `skill_dependencies` で `depends_on` を対象 Skill ごとの部分集合へ射影し、boot と behavior closure が同じ依存だけを load/hash する。無指定 package は従来どおり全 direct dependency を使う。
+- **harness-creator native manifest 正規化**: `distributable` / `entry_points` / `requirements` を `references/package-contract.json` へ分離し、Claude plugin validator が受理する native manifest にした。
 - **rubric 構造再編**: 単一 rubric から「共通核 + kind 固有 addendum」構造へ再編し、target_type ごとに必要項目を最小化。
 - **validate-build-trace.py 汎化**: skill 専用検証から kind 対応の汎用検証へリファクタし、7 種すべての build trace を検証可能にした。
 

@@ -1,0 +1,98 @@
+{
+  "skill_name": "run-dev-graph-sync",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "GitHubと同期",
+    "dev-graph sync",
+    "タスクグラフ双方向同期"
+  ],
+  "output_contract": "同期レポート (Issue取込/反映、Project item add/edit、project/field別snapshot、manual conflict、pending retry、tombstone件数)。--dry-run時は外部write 0件の差分preview",
+  "boundary": "入力=ローカルgraph、repo-local GitHub設定、GitHub Issues/Projects v2/出力=双方向反映済みgraph、issue_linkage、github_project_linkages、同期ledger。追加token管理と環境固有node IDの設定正本化はしない。ローカルpromotionをGitHub部分失敗でrollbackせずpending_retry化する。close/deleteはtombstone/status遷移としgraph_node_idを維持する",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "gh"
+  ],
+  "deterministic_checks": [
+    "validate-graph-schema.py",
+    "gh-bridge.py",
+    "reconcile-github-lifecycle.py",
+    "manage-worktree-lease.py",
+    "bd-bridge.py"
+  ],
+  "external_systems": [
+    "GitHub Issues",
+    "GitHub Projects v2"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "GitHubからの取込",
+    "Issue作成/更新",
+    "linked PR merged判定",
+    "複数Project item冪等追加",
+    "custom field mapping同期",
+    "Issue updated_at競合解決",
+    "Project field 3-way競合解決",
+    "worktree event収束",
+    "scheduled reconciliation",
+    "close/delete tombstone",
+    "pending retry",
+    "dry-run/preview"
+  ],
+  "goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側task仕様へ収束した状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "二重管理を防ぐため、task nodeをローカル正本、Beads/GitHubをbinding別の実行projectionとする。tracker_binding=beadsではC28経由でstatusだけでなくdepends_on edge集合もparity突合し、GitHub mirrorはbd github sync --push-onlyのviewer専用とする。tracker_binding=githubではC12がIssue/Projectsを管理するが、Projects Statusの逆流でPR merge authorityを迂回させない",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "repo-local configのissue repository、複数Projects target alias/owner/project number、default/auto-add policy、field name/type/option mappingを読み、GitHub node IDは実行時解決する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "Issueはid+updated_at、Projects custom fieldsはfield value updatedAtを競合hint、last-synced snapshotを削除/renameを含むcanonical baseとする3-way diffで同期計画を作る。Statusはlocal_to_project固定でremote変更を完了authorityにしない",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-sync",
+      "summary": "tracker_binding=githubだけをC12経由でIssue/Projects更新し、tracker_binding=beadsはC28でstatus・depends_on edge exact-setを突合する。Beads GitHub mirrorはbd github sync --push-onlyだけを使いC12 mutationを禁止する",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-tombstone",
+      "summary": "GitHub Issue の close/delete を検知し、C02 経由でローカルグラフノードを物理削除せず tombstone/status 遷移 (open→closed 等) として双方向伝播する",
+      "prompt_required": true
+    },
+    {
+      "id": "R5-dryrun",
+      "summary": "--dry-run時はIssue作成/更新/close、Project item-add/item-editを一切実行せず、project alias・field別の反映予定差分だけを提示する",
+      "prompt_required": true
+    },
+    {
+      "id": "R6-confirm",
+      "summary": "id+updated_at 同時競合で立てた手動確認フラグを次回同期の入力として読み取り、利用者の確認結果を反映した上で当該ノードのフラグを解消する",
+      "prompt_required": true
+    },
+    {
+      "id": "R7-lifecycle",
+      "summary": "C26でlinked PRのmerged/default-branch/closing-reference evidenceとC27 pending worktree eventをreconcileし、cleanなdefault branch worktreeだけでtask status/completion_evidence/execution_contextsをatomic更新する",
+      "prompt_required": true
+    },
+    {
+      "id": "R8-scheduled",
+      "summary": "configのinterval/owner/entry_pointとlast-reconciled時刻を読み、owner=claude_session_startならC25 SessionStart、owner=host_schedulerなら明示host invocationから同じC26 entry pointを冪等起動する",
+      "prompt_required": true
+    }
+  ]
+}

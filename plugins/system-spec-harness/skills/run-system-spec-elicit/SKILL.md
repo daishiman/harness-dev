@@ -41,6 +41,8 @@ reference_refs:
 script_refs:
   - scripts/apply-spec-transition.py
   - ../../scripts/validate-knowledge-graph.py
+schema_refs:
+  - ../../schemas/spec-state.schema.json
 responsibilities:
   - id: R0-foundation
     name: elicit-foundation
@@ -63,6 +65,12 @@ responsibilities:
 combinators:
   - with-goal-seek
   - with-feedback-contract
+goal_seek:
+  engine: inline
+  fork: subagent
+  max_loops: 5
+completeness_exempt:
+  - "manifest: inline goal-seek selects the next unmet interview/checklist responsibility dynamically; the SKILL body is the runtime SSOT."
 deterministic_checks:
   - ../../scripts/validate-coverage-matrix.py
 feedback_contract:
@@ -128,7 +136,7 @@ feedback_contract:
 | R4-reopen | `prompts/R4-reopen.md` | 確定済みセルを根拠付きで再オープンし追加質問サイクルへ戻す。reopen 非経由の確定直接変更は writer が遮断する。 |
 | R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `../../scripts/validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json` の `coverage_certificate.blocking_items` (`missing_effect=block` の未充足 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
 
-## goal-seek 実行 (with-goal-seek)
+## ゴールシーク実行
 
 - engine=inline / fork=subagent / max_loops=5 / loop_semantics = **per-invocation chunk limit**。
 - 1 invocation で最大 5 loop (質問→回答→反映) を回す。5 loop 到達で未収集が残れば `hearing_progress.complete=false` と `next_question` を保存し、resumable に返す (`--resume` で続行)。
