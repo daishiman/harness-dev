@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-node",
+    "component_id": "C02",
+    "skill_md_sha256": "ec6f3f06fe128192819c23d4ef4f8a4379519386c3058ed1d1cfcec0e86f5289"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_schema_engine_covers_ref_condition_arrays_and_objects",
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/state/graph.json"
+      ],
+      "observed": "validate-graph-schema.py returned exit 0 with valid=true, violations=[] on a schema-complete graph store (0 missing required keys). The C02 single-writer write path runs the same graph-node schema engine before atomic replace; the register-package schema-engine and runtime schema pytest nodes passed."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C02-OUT1-positive-mixed-artifacts",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-node/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-node/live-trial/20260713T090000-r3/verdict.json",
+        "independent: eval-log/dev-graph/live-trial-fixtures/r3-node registered-artifact routing inspection"
+      ],
+      "observed": "Replay of the node-five-artifact-positive live trial (model claude-opus-4-6, poll gate_ticks=0, status.json PASS). The single mixed batch routed all five artifacts to canonical kind paths (issues/R3-ISSUE-001, tasks/R3-TASK-001, specs/R3-SPEC-001, architecture/R3-ARCH-001, docs/R3-DOC-001); each frontmatter artifact_kind agrees with its stored file_path after a consecutive issue-body update, and features/ holds 0 direct feature files (C14 macro-only). verdict.json reports overall+goal PASS, downgrade_reason null."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
+        "independent: eval-log/dev-graph/live-trial-fixtures/r3-node/architecture/R3-ARCH-001.md + specs/R3-SPEC-001.md heading inspection"
+      ],
+      "observed": "R3-ARCH-001 (artifact_subtypes [backend, security]) contains both required subtype section trees '### Backend architecture' and '### Security architecture' with 0 missing headings; R3-SPEC-001 (subtype api) applied the '## API契約' api-contract overlay with per-endpoint Request/Response/Error contract/Contract tests sections. The OUT2 acceptance-clause contract test passed."
+    },
+    "OUT3": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "pytest",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_registers_exact_13_atomically_and_is_idempotent",
+        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_partial_registration",
+        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_non_forward_dependency",
+        "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_conflicting_duplicate_registration"
+      ],
+      "observed": "test_register_package.py passed in full (34 tests across both suites). The exact-13 happy path commits expected_count=applied_count=13 with a P01..P13 node exact-set and a graph_revision receipt; partial batches, non-forward/cross-feature or phase-omitting dependencies, and conflicting duplicate registrations each commit applied_count=0 (all-or-none), and --dry-run writes nothing."
+    }
+  }
+}

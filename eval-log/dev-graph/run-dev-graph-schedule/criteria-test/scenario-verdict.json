@@ -1,52 +1,59 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-schedule",
     "component_id": "C15",
-    "skill_md_sha256": "8536b4c26ce9164532526c34745faa13a01fe5f85201627793405570655cfadd"
+    "skill_md_sha256": "563212e822853591b1db0358af61490216864d23fdc6caf312c5d1047668414b"
   },
   "verdict": "PASS",
-  "reviewer": "elegant-logical-structural-analyst-r1",
+  "reviewer": "dev-graph-criteria-scenario-r1",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
     "IN1": {
       "status": "PASS",
+      "verify_by": "script",
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
-        "independent: direct schedule-graph.py mixed-readiness fixture"
+        "independent: schedule-graph.py on eval-log/dev-graph/live-trial-fixtures/r3-schedule graph"
       ],
-      "observed": "Both self and bd-ready paths admitted only eligible confirmed/pass/readiness-complete active tasks; waiting, draft, unconfirmed, evaluation-fail, and readiness-incomplete fixtures were absent from ready_set."
+      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready passed (exit 0), confirming blocked/draft/unconfirmed/evaluation!=pass/readiness!=complete are 0 in ready_set for both self and bd-ready sources. Independently ran schedule-graph.py on the r3-schedule fixture → ready_set.tasks=[LT-TASK-001], unmapped=0; only the eligible confirmed/pass/readiness-complete active task was admitted."
     },
     "OUT1": {
       "status": "PASS",
-      "evidence_kind": "hybrid",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "schedule-positive-ready-set",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/verdict.json",
       "test_refs": [
-        "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
-        "independent: direct schedule-graph.py mixed dependency fixture"
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/transcript.jsonl",
+        "independent: live-trial-verdict.py replay of recorded r3 transcript + out/status.json"
       ],
-      "observed": "The direct fixture admitted `eligible` only after its `done` dependency and rejected `waiting` with a missing/non-done dependency; the pytest scenario confirmed the same behavior for both ready sources."
+      "observed": "Replayed the recorded r3 schedule live trial (transcript.jsonl, actual_model claude-opus-4-6, claude 2.1.62, transcript_layer=jsonl) via the official live-trial-verdict.py generator → verdict PASS with launch/completion/goal_fit/verdict all PASS, nudge=0, gate=0, tier=live, downgrade_reason=null, scenario schedule-positive-ready-set. out/status.json recorded {status:PASS, scenario:schedule-positive-ready-set} and the agent reported 'DONE: PASS', confirming every recommended task had all depends_on satisfied (0 ready_set candidates with an unmet dependency)."
     },
     "OUT2": {
       "status": "PASS",
+      "verify_by": "test",
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_render_and_schedule",
-        "independent: direct schedule-graph.py same-resource fixture"
+        "independent: schedule-graph.py on eval-log/dev-graph/live-trial-fixtures/r3-schedule graph (conflict/batch inspection)"
       ],
-      "observed": "Two ready tasks sharing `resource_scope.touches=[web]` were placed into separate batches; an active lease on that scope caused the affected candidates to be reported as conflicts instead of recommendations."
+      "observed": "pytest test_runtime_coverage.py::test_render_and_schedule passed (exit 0). Independently ran schedule-graph.py on the r3-schedule fixture → conflicts=0 and batches.tasks=[[LT-TASK-001]], confirming no resource_scope.touches-overlapping node pair shares a parallel batch and lease-conflicting candidates are not recommended."
     },
     "OUT3": {
       "status": "PASS",
+      "verify_by": "test",
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
         "plugins/dev-graph/tests/test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation",
-        "independent: direct schedule-graph.py assignment-hint inspection"
+        "independent: schedule-graph.py assignment_hints inspection on r3-schedule graph"
       ],
-      "observed": "Each admitted task received a unique `devgraph/<graph_node_id>` branch and public `/dev-graph worktree claim` command. Repeating the same C27 Beads claim kept one external bridge claim, while a failed claim released the reservation."
+      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready and test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation both passed (exit 0). Independently ran schedule-graph.py on the r3-schedule fixture → 1 assignment_hint returning a unique devgraph/<graph_node_id> branch + public worktree claim command; the C27 saga test confirmed a duplicate same-graph_node_id claim is suppressed to a single external bridge claim (0 double claims)."
     }
   }
 }

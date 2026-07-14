@@ -11,9 +11,9 @@
 # outputs:
 #   - stdout: 生成先パス + 収集した仕様書件数の JSON
 #   - exit: 0=OK / 2=usage/IO error
-#   - write-scope: <plan-dir>/task-specs.html (既定・--out で上書き)
 # contexts: [C, E]
 # network: false
+# write-scope: <plan-dir>/task-specs.html (既定・--out で上書き)
 # requires-python: ">=3.10"
 # dependencies: []
 # ///
