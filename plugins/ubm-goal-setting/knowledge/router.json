@@ -1,27 +1,33 @@
 {
   "_comment": "info-collectorが最初に読むファイル。routing_rulesでエントリの振り分け先を決定する。ファイル名はここで管理し、エージェントはハードコードしない。",
-  "last_sync": "2026-07-13T00:00:00+09:00",
-  "total_entries": 215,
+  "last_sync": "2026-07-14T00:00:00+09:00",
+  "total_entries": 235,
   "categories": {
     "principles": {
       "description": "北原さんの原則・名言（引用可能な言葉）",
       "id_prefix": "PR",
       "files": [
-        "principles-relationship-trust.json",
+        "principles-relationship-trust-leadership.json",
+        "principles-relationship-trust-learning.json",
         "principles-relationship-value-circulation.json",
-        "principles-mindset.json",
-        "principles-business-growth.json",
+        "principles-mindset-selfhood.json",
+        "principles-mindset-leadership.json",
+        "principles-business-growth-foundation.json",
+        "principles-business-growth-organization.json",
         "principles-business-strategy.json",
         "principles-business-execution.json",
         "principles-business-product.json"
       ],
-      "entry_count": 64,
+      "entry_count": 74,
       "subcategory_counts": {
-        "principles-relationship-trust.json": 11,
-        "principles-relationship-value-circulation.json": 8,
-        "principles-mindset.json": 11,
-        "principles-business-growth.json": 11,
-        "principles-business-strategy.json": 10,
+        "principles-relationship-trust-leadership.json": 7,
+        "principles-relationship-trust-learning.json": 7,
+        "principles-relationship-value-circulation.json": 11,
+        "principles-mindset-selfhood.json": 7,
+        "principles-mindset-leadership.json": 6,
+        "principles-business-growth-foundation.json": 6,
+        "principles-business-growth-organization.json": 6,
+        "principles-business-strategy.json": 11,
         "principles-business-execution.json": 8,
         "principles-business-product.json": 5
       }
@@ -32,19 +38,21 @@
       "files": [
         "consultation-organization-structure-hierarchy.json",
         "consultation-organization-structure-development.json",
+        "consultation-organization-purpose.json",
         "consultation-organization-hiring.json",
         "consultation-sales.json",
         "consultation-business-model-expansion.json",
         "consultation-business-model-pricing.json"
       ],
-      "entry_count": 53,
+      "entry_count": 56,
       "subcategory_counts": {
+        "consultation-organization-structure-hierarchy.json": 8,
+        "consultation-organization-structure-development.json": 9,
+        "consultation-organization-purpose.json": 4,
         "consultation-organization-hiring.json": 12,
         "consultation-sales.json": 10,
-        "consultation-business-model-expansion.json": 6,
-        "consultation-business-model-pricing.json": 6,
-        "consultation-organization-structure-hierarchy.json": 8,
-        "consultation-organization-structure-development.json": 11
+        "consultation-business-model-expansion.json": 7,
+        "consultation-business-model-pricing.json": 6
       }
     },
     "phase-advice": {
@@ -67,12 +75,14 @@
       "id_prefix": "AG",
       "files": [
         "action-guides-relationship-networking.json",
+        "action-guides-relationship-circulation.json",
         "action-guides-relationship-execution.json",
         "action-guides-content.json"
       ],
-      "entry_count": 21,
+      "entry_count": 23,
       "subcategory_counts": {
-        "action-guides-relationship-networking.json": 9,
+        "action-guides-relationship-networking.json": 6,
+        "action-guides-relationship-circulation.json": 5,
         "action-guides-relationship-execution.json": 7,
         "action-guides-content.json": 5
       }
@@ -85,15 +95,17 @@
         "mindset-organization-management.json",
         "mindset-organization-culture.json",
         "mindset-goal-strategy.json",
-        "mindset-growth-habit.json"
+        "mindset-growth-habit.json",
+        "mindset-growth-reflection.json"
       ],
-      "entry_count": 40,
+      "entry_count": 45,
       "subcategory_counts": {
         "mindset-self.json": 3,
-        "mindset-goal-strategy.json": 7,
-        "mindset-growth-habit.json": 13,
-        "mindset-organization-management.json": 8,
-        "mindset-organization-culture.json": 9
+        "mindset-organization-management.json": 9,
+        "mindset-organization-culture.json": 11,
+        "mindset-goal-strategy.json": 8,
+        "mindset-growth-habit.json": 10,
+        "mindset-growth-reflection.json": 4
       }
     },
     "case-studies": {
@@ -115,8 +127,8 @@
   "routing_rules": {
     "_comment": "knowledge-extractorがエントリを格納するファイルをentry.tagsで決定するルール。tagsが複数ルールに一致する場合は最もマッチ数が多いファイルを選ぶ。どれにも一致しない場合はdefaultファイルを使う。",
     "principles": {
-      "principles-relationship-trust.json": {
-        "topic": "信頼構築・存在意義・リーダーの在り方",
+      "principles-relationship-trust-leadership.json": {
+        "topic": "求心力・リーダーの信頼・存在意義",
         "tags": [
           "信頼",
           "存在意義",
@@ -124,8 +136,26 @@
           "命令",
           "お願い",
           "ルール",
+          "大義",
+          "ビジョン",
+          "自己開示"
+        ],
+        "default": false
+      },
+      "principles-relationship-trust-learning.json": {
+        "topic": "信頼される作法・学び方・見極め",
+        "tags": [
+          "信頼",
           "相談",
-          "学び"
+          "学び",
+          "関係構築",
+          "見極め",
+          "辻褄",
+          "約束",
+          "コミットメント",
+          "教え子",
+          "師匠",
+          "可愛がられる"
         ],
         "default": false
       },
@@ -145,8 +175,8 @@
         ],
         "default": false
       },
-      "principles-mindset.json": {
-        "topic": "在り方・姿勢・経営者マインド",
+      "principles-mindset-selfhood.json": {
+        "topic": "自己の在り方・行動哲学・覚悟",
         "tags": [
           "姿勢",
           "在り方",
@@ -155,12 +185,31 @@
           "思考",
           "覚悟",
           "本気",
-          "自分"
+          "自分",
+          "挑戦",
+          "感情管理",
+          "目的"
         ],
         "default": false
       },
-      "principles-business-growth.json": {
-        "topic": "事業成長・信用・忍耐・組織・存在意義",
+      "principles-mindset-leadership.json": {
+        "topic": "経営者マインド・判断・優先順位・未来志向",
+        "tags": [
+          "幸せ",
+          "守り",
+          "経営哲学",
+          "選択と集中",
+          "大切な人",
+          "ナンバー2",
+          "未来を追う",
+          "優先順位",
+          "一貫性",
+          "スタンス"
+        ],
+        "default": false
+      },
+      "principles-business-growth-foundation.json": {
+        "topic": "事業成長の土台・信用の順番・存在意義・生き様",
         "tags": [
           "忍耐",
           "信用",
@@ -168,9 +217,25 @@
           "成長",
           "存在意義",
           "生き様",
-          "組織構築",
           "ぶれない",
-          "積み上げ"
+          "積み上げ",
+          "順番",
+          "軽量化"
+        ],
+        "default": false
+      },
+      "principles-business-growth-organization.json": {
+        "topic": "組織構築・採用・育成・お金の使い方教育",
+        "tags": [
+          "採用",
+          "人材",
+          "育成",
+          "リーダー",
+          "組織構築",
+          "お金の使い方",
+          "利益率",
+          "徳",
+          "当事者意識"
         ],
         "default": false
       },
@@ -245,6 +310,19 @@
           "ミッション",
           "目的整理",
           "マネジメント"
+        ],
+        "default": false
+      },
+      "consultation-organization-purpose.json": {
+        "topic": "目的整理・ビジョン設計・論点整理",
+        "tags": [
+          "ビジョン",
+          "会社の目的",
+          "目的と手段",
+          "論点整理",
+          "目標設定",
+          "来させる設計",
+          "スケール"
         ],
         "default": false
       },
@@ -366,6 +444,21 @@
         ],
         "default": true
       },
+      "action-guides-relationship-circulation.json": {
+        "topic": "信用醸成・経済循環・利他的営業",
+        "tags": [
+          "信用醸成",
+          "接触回数",
+          "接触時間",
+          "目標共有",
+          "経済循環",
+          "利他思考",
+          "人間相関図",
+          "お金の流れ",
+          "ボランティア"
+        ],
+        "default": false
+      },
       "action-guides-relationship-execution.json": {
         "topic": "顧客理解・施策管理・行動継続・組織内報連相",
         "tags": [
@@ -443,6 +536,20 @@
         ],
         "default": true
       },
+      "mindset-growth-reflection.json": {
+        "topic": "振り返り・月報・改善",
+        "tags": [
+          "振り返り",
+          "月報",
+          "改善",
+          "考察",
+          "前期比較",
+          "不足",
+          "成長",
+          "目標設定"
+        ],
+        "default": false
+      },
       "mindset-organization-management.json": {
         "topic": "組織管理・ルール設計・数字目標の思考転換",
         "tags": [
@@ -514,7 +621,8 @@
       "0to1": {
         "files": [
           "phase-advice-0to1.json",
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "action-guides-relationship-networking.json",
           "action-guides-relationship-execution.json"
@@ -546,7 +654,8 @@
         "files": [
           "action-guides-relationship-networking.json",
           "action-guides-relationship-execution.json",
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "consultation-sales.json"
         ],
@@ -559,7 +668,8 @@
       },
       "売上追求型": {
         "files": [
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "mindset-goal-strategy.json",
           "consultation-sales.json"
@@ -590,7 +700,8 @@
         "files": [
           "mindset-self.json",
           "mindset-growth-habit.json",
-          "principles-mindset.json"
+          "principles-mindset-selfhood.json",
+          "principles-mindset-leadership.json"
         ],
         "tags": [
           "自信",
@@ -601,7 +712,8 @@
       },
       "関係構築": {
         "files": [
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "action-guides-relationship-networking.json",
           "action-guides-relationship-execution.json",
@@ -665,7 +777,8 @@
           "consultation-organization-structure-development.json",
           "consultation-organization-hiring.json",
           "case-studies-organization.json",
-          "principles-business-growth.json"
+          "principles-business-growth-foundation.json",
+          "principles-business-growth-organization.json"
         ],
         "tags": [
           "採用",
@@ -712,7 +825,8 @@
           "外交不足"
         ],
         "files": [
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "mindset-goal-strategy.json",
           "consultation-sales.json"
@@ -752,7 +866,8 @@
         "files": [
           "mindset-self.json",
           "mindset-growth-habit.json",
-          "principles-mindset.json"
+          "principles-mindset-selfhood.json",
+          "principles-mindset-leadership.json"
         ]
       },
       "関係構築・接点の問題": {
@@ -764,7 +879,8 @@
         "files": [
           "action-guides-relationship-networking.json",
           "action-guides-relationship-execution.json",
-          "principles-relationship-trust.json",
+          "principles-relationship-trust-leadership.json",
+          "principles-relationship-trust-learning.json",
           "principles-relationship-value-circulation.json",
           "case-studies-success.json"
         ]
