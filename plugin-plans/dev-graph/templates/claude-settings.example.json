@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/dev-graph-plugin/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 10}]}],
+    "SessionStart": [{"matcher": "startup|resume", "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/dev-graph-plugin/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 10}]}],
+    "PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/dev-graph-plugin/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 10, "async": true}]}],
+    "TaskCompleted": [{"hooks": [{"type": "command", "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/dev-graph-plugin/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 20}]}]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-node",
+    "skill_md_sha256": "ec6f3f06fe128192819c23d4ef4f8a4379519386c3058ed1d1cfcec0e86f5289"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3"],
+    "positive_feedback": [
+      "NM 命名: name=run-dev-graph-node が dir 名/prefix=run と一致、description は atomic 追加/差分更新+exact-13 登録という発火条件を trigger 型で明示。",
+      "BD 出力契約: Purpose & Output Contract に入力/出力/完了条件を明記し、Classification and write・Exact-13 package gate・Execution-context consumer・Gotchas を節分割。",
+      "RG/責務: 『唯一の graph/content 単一 writer』という単一責務に収束し、exact-13 検証本体を register-package.py へ委譲して skill 内実装重複を回避。goal_seek/feedback_contract を frontmatter で明示。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric 規範で現 SKILL.md (sha256 ec6f3f06...) を採点。FM: name/description/trigger 適合、allowed-tools 明示。BD: Output contract+Gotchas 具備、body<300行。NM: dir 名一致。PD: 本文簡潔で prompts/schemas へ分離。RG: goal_seek/feedback_contract 明示。責務は『単一 writer による typed node/exact-13 package の atomic 登録』へ単一収束し、13-task 生成ロジックは register-package.py/system-dev-planner に委譲され越境なし。high severity 0 件。PASS。"
+}

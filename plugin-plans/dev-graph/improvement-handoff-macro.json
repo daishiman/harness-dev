@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "macro-micro-separation-20260712",
+    "generated_by": "ユーザー決定 (dev-graph=マクロ層 / system-dev-planner=ミクロ層の棲み分け。feature ノード新設 / C14 マクロ分解 retarget / 自動+手動フォールバック起動)。目的-目標-ゴールの3語重複はユーザー委任により purpose+goal+acceptance へ最適化"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "context": {
+    "principle": "dev-graph = マクロ管理・実行層。1つのプロダクト/プロジェクトを『複数の機能(feature)』へ分け、各 feature に 目的(purpose)/到達状態(goal)/スコープ内外/確実に実行したい二値(acceptance)/アーキテクチャ参照/機能間依存 を第一級に保持し、実行をオーケストレーションする。各 feature の細タスク仕様書(1機能=13タスク仕様書+機能内依存 DAG)生成は system-dev-planner(ミクロ層)へ委譲し、その promoted task を feature 配下の task ノードとして登録する。",
+    "shared_field_contract": {
+      "note": "system-dev-planner 側 improvement-handoff-macro.json (MS-*) と厳密に同名で合わせること。cross-plan 1:1 接点。",
+      "artifact_kind_add": "feature",
+      "file_path_roots": "issues|tasks|specs|architecture|features|docs",
+      "feature_node_fields": {
+        "purpose": "string — なぜこの機能が要るか (JTBD/価値)",
+        "goal": "string — 達成する到達状態 (旧 目標+ゴールを1本に統合)",
+        "scope_in": "string[] — スコープ内",
+        "scope_out": "string[] — スコープ外",
+        "acceptance": "string[] — 確実に実行したい観測可能な二値条件",
+        "architecture_refs": "string[] — 関連 architecture ノードの graph_node_id"
+      },
+      "hierarchy_field": "parent_feature (string=feature ノードの graph_node_id | null)。task ノードが属する feature を指す。inter-feature 依存は feature ノード間の既存 depends_on を流用"
+    },
+    "optimization_note": "ユーザーが挙げた『目的/目標/ゴール』は近義で重複するため purpose(なぜ)+goal(到達状態)+acceptance(二値の実行必達)の3本へ最適化(委任済み)。program 全体の goal/scope は従来どおり goal-spec が保持し、feature ノードは機能単位を保持する。"
+  },
+  "findings": [
+    {
+      "id": "MM-01",
+      "severity": "high",
+      "summary": "graph-node.schema.json に機能(feature)を束ねる第一級ノードが無い (artifact_kind は issue/task/specification/architecture/document のみ)。目的/goal/スコープ/機能間依存/アーキテクチャを保持する器が存在しない。",
+      "recommendation": "artifact_kind enum へ feature を追加。artifact_kind=feature のとき条件付き required (allOf) で purpose/goal/scope_in[]/scope_out[]/acceptance[]/architecture_refs[] を要求する。architecture_refs[] は architecture ノードの graph_node_id 参照。inter-feature 依存は feature ノード間の既存 depends_on を流用 (新フィールド不要)。",
+      "target_ref": "schemas-draft/graph-node.schema.json"
+    },
+    {
+      "id": "MM-02",
+      "severity": "high",
+      "summary": "feature ノードの file_path 正規 root が無い (pattern は issues|tasks|specs|architecture|docs の5固定)。feature を保存する正規ディレクトリが未定義。",
+      "recommendation": "file_path pattern を ^(issues|tasks|specs|architecture|features|docs)/.+\\.md$ へ拡張し、artifact_kind→root 写像に feature→features/ を追加 (templates/template-contract.json の graph_projection と index の正規ディレクトリ表・C02/C11 の routing 記述も同期)。",
+      "target_ref": "schemas-draft/graph-node.schema.json + templates/template-contract.json + index.md"
+    },
+    {
+      "id": "MM-03",
+      "severity": "high",
+      "summary": "feature→task の親子 (parent_of) を表現するフィールドが無い (parent 系は related_nodes のみ)。system-dev-planner が生む task 群を feature 配下に吊るせない。",
+      "recommendation": "graph-node.schema.json へ parent_feature (string=feature ノードの graph_node_id | null) を追加。artifact_kind=task のとき、feature 由来タスクは parent_feature 非 null を要求 (feature 文脈を持たない単発 task は null 可)。related_nodes (順序依存なし関連) とは別概念として description で区別。",
+      "target_ref": "schemas-draft/graph-node.schema.json"
+    },
+    {
+      "id": "MM-04",
+      "severity": "high",
+      "summary": "C14 run-dev-graph-decompose が『自然文→細タスク一気分解』でミクロ(system-dev-planner の領分)まで踏み込んでおり、マクロ/ミクロが混線している。",
+      "recommendation": "C14 をマクロ分解へ retarget する: 自然文の『やりたいこと(大)』→ feature ノード群 + architecture ノード + 機能間 depends_on を生成するところまでを担う (13タスク仕様書への細分解は行わない)。purpose/responsibilities を『マクロ分解 (want→features+architecture+inter-feature deps) + 各 feature の per-feature planning オーケストレーション』へ書き換える。既存の『promoted system task の入口一本化』は維持 (system-dev-planner 出力の登録経路)。",
+      "target_ref": "component-inventory.json#C14"
+    },
+    {
+      "id": "MM-05",
+      "severity": "high",
+      "summary": "feature を各機能の細タスク仕様書へ落とす per-feature planning の起動 (system-dev-planner 呼出し) が component として配線されていない。ユーザー要望=自動+手動フォールバック。",
+      "recommendation": "C14 に per-feature planning ステージを追加する: [自動] ready な feature ノードごとに system-dev-planner (run-system-dev-plan) を Skill 呼出しし、feature の purpose/goal/scope/architecture_refs を入力文脈として渡す → promoted typed task 群を parent_feature=当該 feature として C02 単一 writer 経由で atomic 登録。[手動] 人間が /system-dev-plan を実行 → その handoff を C14/C02 が同じ parent_feature で登録。二重登録禁止 (idempotency: graph_node_id+source_digest)。C14 depends_on に system-dev-planner external_contract_ref を明示。",
+      "target_ref": "component-inventory.json#C14 + references/ (新規 feature-planning-contract 検討)"
+    },
+    {
+      "id": "MM-06",
+      "severity": "high",
+      "summary": "goal-spec の purpose/background がマクロ層の役割 (機能・アーキテクチャ・機能間依存の保持 + オーケストレーション) を主役に据えておらず、『自然文からタスク分解』と書いてミクロ責務を自らに含めている。",
+      "recommendation": "purpose を『dev-graph は 目的(purpose)/到達状態(goal)/スコープ内外/確実に実行したい二値(acceptance)/機能(feature)/アーキテクチャ/機能間依存 を第一級に保持し、機能単位の実行をオーケストレーションするマクロ管理層。各機能の細タスク仕様書生成は system-dev-planner (ミクロ) へ委譲し、その promoted task を feature 配下の task ノードとして登録・実行する』へ最適化。background の『自然文…をatomic登録』を『自然文の want はマクロ分解して feature+architecture+機能間依存を作り、各 feature を system-dev-planner で細分解して登録』へ改める。目的/目標/ゴールの語彙は purpose+goal+acceptance に統一 (委任済み最適化)。",
+      "target_ref": "goal-spec.json (purpose/background)"
+    },
+    {
+      "id": "MM-07",
+      "severity": "medium",
+      "summary": "goal-spec checklist にマクロ層の受入条件 (feature ノードの保持項目・マクロ分解・per-feature 起動・機能間依存・parent_feature 整合) が無く、棲み分けが達成条件として追跡できない。",
+      "recommendation": "checklist へ後続番号で追加 (二値): feature ノードが purpose/goal/scope_in/scope_out/acceptance/architecture_refs を保持する / C14 のマクロ分解が feature+architecture+機能間 depends_on を生成し細タスクを生成しない / ready feature ごとに system-dev-planner を自動起動でき手動 /system-dev-plan もフォールバックできる / promoted task が parent_feature で feature 配下に登録される / 機能間依存が feature ノード間 depends_on として非循環に成立する。",
+      "target_ref": "goal-spec.json (checklist)"
+    },
+    {
+      "id": "MM-08",
+      "severity": "medium",
+      "summary": "index.md にマクロ/ミクロ棲み分けを説明する節が無く、feature 実体・二層モデル・system-dev-planner との呼び分けが初見で辿れない。",
+      "recommendation": "index.md ドメイン知識節へ『**二層モデル (マクロ/ミクロ棲み分け)**』を追加: dev-graph=マクロ (feature/architecture/goal/scope/機能間依存の保持 + 実行オーケストレーション)、system-dev-planner=ミクロ (1機能→13タスク仕様書+機能内依存 DAG)、両者の呼び分け (want→C14マクロ分解→feature→per-feature system-dev-planner→task 登録)。正規ディレクトリ表へ features/ を追加。artifact_kind 一覧へ feature を追加。",
+      "target_ref": "index.md"
+    },
+    {
+      "id": "MM-09",
+      "severity": "medium",
+      "summary": "C11 validate-graph-schema.py に feature ノードと親子・機能間依存の整合検査が無い。",
+      "recommendation": "C11 purpose へ追加: feature ノードの必須フィールド (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) を fail-closed 検査 / architecture_refs 参照先が実在 architecture ノードか / parent_feature 参照先が実在 feature ノードか / feature ノード間 depends_on の非循環 / feature 配下 task の parent_feature 一貫性 を violations へ計上する。",
+      "target_ref": "component-inventory.json#C11"
+    },
+    {
+      "id": "MM-10",
+      "severity": "medium",
+      "summary": "C15/C16 の ready-set/並列 batch が task 単位のみで、feature 単位の ready (機能間依存充足) が扱われていない。",
+      "recommendation": "C15/C16 に二層 ready-set を明記: feature ready (機能間 depends_on 充足) → per-feature planning 起動候補、task ready (feature 内 depends_on 充足 + resource_scope 非競合) → 実行候補。feature 単位の並列 batch と task 単位の並列 batch を区別する。",
+      "target_ref": "component-inventory.json#C15,C16"
+    },
+    {
+      "id": "MM-11",
+      "severity": "medium",
+      "summary": "templates/template-contract.json に feature artifact のテンプレートが無い (artifacts に feature 骨格が未定義)。",
+      "recommendation": "artifacts へ feature テンプレートを追加 (本文床: 目的/到達状態(goal)/スコープ内外/受入(acceptance 二値)/アーキテクチャ参照/機能間依存)。graph_projection の root 写像に feature→features/ を追加。system_plan 節と整合させ、system-dev-planner が feature を消費して 13 タスク仕様書を返す境界を注記。",
+      "target_ref": "templates/template-contract.json"
+    },
+    {
+      "id": "MM-12",
+      "severity": "low",
+      "summary": "C19 run-dev-graph-system-spec (system-spec-harness 引用) と feature.architecture_refs の関係が未接続。",
+      "recommendation": "C19 purpose へ 1 文: system-spec-harness 由来の architecture/specification ノードは feature.architecture_refs から参照され、feature のアーキテクチャ文脈を成す (複製せず lineage 参照)。",
+      "target_ref": "component-inventory.json#C19"
+    }
+  ],
+  "provenance": {
+    "prev_goal_spec": "goal-spec.json",
+    "prev_improvement_handoff": "improvement-handoff-beads.json",
+    "paired_handoff": "plugin-plans/system-dev-planner/improvement-handoff-macro.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "current-user-request (マクロ/ミクロ棲み分け: dev-graph=広い実行層 / system-dev-planner=細タスク仕様書。目的/背景/ゴールの最適化を委任)"
+    }
+  }
+}

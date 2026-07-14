@@ -1,1 +1,0 @@
-../../plugins/extract-system-blueprint/agents/uiux-rationale-analyzer.md

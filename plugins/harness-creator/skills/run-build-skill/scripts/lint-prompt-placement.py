@@ -105,10 +105,14 @@ def _self_test() -> int:
         "plugins/harness-creator/skills/wrap-bar/prompts/wrap.yaml",
         "plugins/harness-creator/skills/assign-baz/prompts/evaluate.yaml",
         "plugins/x/skills/run-y/prompts/main.md",
+        "plugins/x/skills/run-y/prompts/R2B-readiness.md",
+        "plugins/x/skills/run-y/prompts/R2b_readiness.md",
     ]
     cases_ok = [
         "plugins/harness-creator/skills/run-foo/prompts/R1.md",
+        "plugins/harness-creator/skills/run-foo/prompts/R1-elicit.md",
         "plugins/harness-creator/skills/run-foo/prompts/R2.yaml",
+        "plugins/harness-creator/skills/run-foo/prompts/R2b-readiness.md",
         "plugins/harness-creator/skills/delegate-x/prompts/R1-delegate.md",
     ]
     failures: list[str] = []

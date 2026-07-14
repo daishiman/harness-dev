@@ -269,6 +269,19 @@ def test_complete_missing_report_fails(reports_dir):
     assert any("C2" in f for f in MOD.validate_complete(_handoff(), reports_dir))
 
 
+def test_complete_rejects_terminal_skipped_route(reports_dir, tmp_path):
+    """依存を持たない最終 route でも skipped は build 完了ではない。"""
+    _materialize_targets(tmp_path)
+    _write(reports_dir, "C1", _report("C1", _routes()[0]))
+    _write(reports_dir, "C2", _report(
+        "C2", _routes()[1], status="skipped", evidence=[],
+        skip_reason="minimal scaffold only",
+        inputs_consumed=[MOD.report_path(SLUG, "C1")],
+    ))
+    findings = MOD.validate_complete(_handoff(), reports_dir, tmp_path)
+    assert any("status=skipped" in f and "全 route success" in f for f in findings)
+
+
 def test_complete_detects_orphan_report(reports_dir):
     _write(reports_dir, "C1", _report("C1", _routes()[0]))
     _write(reports_dir, "C2", _report("C2", _routes()[1],

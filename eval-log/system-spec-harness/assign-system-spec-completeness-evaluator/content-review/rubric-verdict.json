@@ -2,13 +2,13 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "cad88d4d091246e5235479ded63e2166b3b099d32a1bfd2e28096adc6332d807"
+    "skill_md_sha256": "d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-completeness",
-  "reviewed_at": "2026-07-12T12:16:50+09:00",
-  "iterations": 2,
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
@@ -21,16 +21,15 @@
     "loop_scope": "both",
     "criteria_evaluated": ["foundation_trace", "decision_guidance", "matrix_coverage", "design_knowledge_reflection", "doc_freshness", "prompt_quality"],
     "positive_feedback": [
-      "C13-C16 の 4 次元それぞれに『折込先 aspect / 機械層ゲート / 意味層で拾う失敗』を漏れなく対応付け、Goodhart 防止原則 (存在確認だけで PASS にしない) を C15/C16 双方へ一貫適用している。",
-      "全機械層主張が exit0 という検証可能述語に接地し実走で確認できる (verifiability 最上位)。未実装 runtime 施行を follow-up と明記する誠実さがあり実装の限界を隠さない。"
+      "単一責務が明確 (independent evaluator=採点ゲート) で境界が rubric 通り: proposer≠approver / read-only / context:fork を Key Rules と Purpose で明示し、修正は elicit/doc-fetch/compile への差し戻しに限定。allowed-tools は Read/Bash/Task の最小 allowlist。",
+      "出力契約が schema (completeness-findings.schema.json) に接地し、総合判定が aggregate-completeness.py の決定論再導出と一致必須という検証可能述語 (exit0) で担保され、rubric の出力契約・検証可能性次元を高く満たす。",
+      "SSOT が明快: completeness_exempt manifest で rubric/schema/aggregate script を runtime SSOT と宣言し、監査ロジックは各 auditor agent の SSOT prompt に委ね本 skill は集約のみ (書換えなし)。命名は assign prefix + role_suffix=evaluator + kebab-case で naming 規範に整合。"
     ],
-    "negative_feedback": [
-      "[fixed] 初回評価では 'C14' トークンの二義使用で consistency=2 だったが、component 明示化により内部整合が回復し 3 へ。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "5次元スコア (0-3・閾値2): 完全性=3 / 一貫性=3 (C14 二義修正後) / 深度=3 / 検証可能性=3 / 簡潔性=3。全次元>=2 で PASS。実装・test・実行結果すべてが本文主張を裏付け、6 aspect 構造破壊・存在しない参照・実装矛盾のいずれも無し。修正後 sha=cad88d4d...。"
+  "notes": "現 SKILL.md (sha256=d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d) を ref-skill-design-rubric の規範 (単一責務・命名 kebab+prefix・境界・出力契約・SSOT・Progressive Disclosure) で採点。FM: name=kebab+assign prefix・description=Use when 形・kind/prefix/role_suffix 整合。BD: Purpose & Output Contract 節・Gotchas 節・出力 schema あり (164 行、references へ Progressive Disclosure)。境界: read-only/context:fork/proposer≠approver 明示。SSOT: rubric.json + aggregate-completeness.py が runtime 正本と宣言。全参照 (prompts/rubric/reference/script/schema/agent) 実在。high severity 0 のため PASS。criteria_evaluated は feedback_contract に criteria を持たない assign kind のため 6 品質次元 (aspect id) を採用。"
 }

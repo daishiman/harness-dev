@@ -1,0 +1,1209 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "B-C01",
+      "title": "run-system-dev-planをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/skills/run-system-dev-plan/",
+      "acceptance_criterion": "repo-local stagingへ別phase docsを作らずexact 13 phase tasks/13-node DAGを生成し、phase exact-set・共通parent/package・評価PASS後だけpromotionする",
+      "execution_kind": "component-build",
+      "route_ref": "C01",
+      "task_spec_ref": "task-specs/B-C01.md"
+    },
+    {
+      "id": "B-C02",
+      "title": "assign-system-dev-plan-evaluatorをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator/",
+      "acceptance_criterion": "独立contextで4条件とevaluated digestを返す",
+      "execution_kind": "component-build",
+      "route_ref": "C02",
+      "task_spec_ref": "task-specs/B-C02.md"
+    },
+    {
+      "id": "B-C03",
+      "title": "goal elicitor agentをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/agents/system-dev-plan-elicitor.md",
+      "acceptance_criterion": "repo-local confirmed sourceからgoalを抽出しsource logicを複製しない",
+      "execution_kind": "component-build",
+      "route_ref": "C03",
+      "task_spec_ref": "task-specs/B-C03.md"
+    },
+    {
+      "id": "B-C04",
+      "title": "workstream architect agentをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/agents/system-dev-plan-architect.md",
+      "acceptance_criterion": "1 featureを9 workstream観点で分析し、P01..P13各1件のexact 13 executable task specs/13-node intra-feature DAGへ分解する",
+      "execution_kind": "component-build",
+      "route_ref": "C04",
+      "task_spec_ref": "task-specs/B-C04.md"
+    },
+    {
+      "id": "B-C05",
+      "title": "independent evaluator agentをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/agents/system-dev-plan-evaluator.md",
+      "acceptance_criterion": "生成者と分離して4条件・digest・repo boundaryを評価する",
+      "execution_kind": "component-build",
+      "route_ref": "C05",
+      "task_spec_ref": "task-specs/B-C05.md"
+    },
+    {
+      "id": "B-C06",
+      "title": "system-dev-plan commandをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/commands/system-dev-plan.md",
+      "acceptance_criterion": "init|planと--repo-root/configを安全にC01/C10へroutingする",
+      "execution_kind": "component-build",
+      "route_ref": "C06",
+      "task_spec_ref": "task-specs/B-C06.md"
+    },
+    {
+      "id": "B-C07",
+      "title": "readiness/containment hookをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
+      "acceptance_criterion": "plugin hooks/hooks.jsonから配線され、repo-local canonical lockがactiveな間は呼出sessionに依存せずreadinessを強制する。lock不在はexit0、malformed・canonical repository identity不一致・cleanup競合はexit2、期限切れlockはC13 public cleanup境界で監査付きcleanupする",
+      "execution_kind": "component-build",
+      "route_ref": "C07",
+      "task_spec_ref": "task-specs/B-C07.md"
+    },
+    {
+      "id": "B-C08",
+      "title": "readiness validatorをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/check-implementation-readiness.py",
+      "acceptance_criterion": "C09 canonical repo contextとrepo-relative pathだけを受理し、同一caller repo内のsystem-spec source pinと必須section不足を決定論判定する",
+      "execution_kind": "component-build",
+      "route_ref": "C08",
+      "task_spec_ref": "task-specs/B-C08.md"
+    },
+    {
+      "id": "B-C09",
+      "title": "caller repository resolverをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C09",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/resolve-project-context.py",
+      "acceptance_criterion": "root precedence後の候補がhost $CLAUDE_PROJECT_DIRと一致し、repository_idを再導出して、cross-repo/absolute/traversal/symlink escape/broken content linkを拒否する。broken harness linkはhost launcherが起動前検出する",
+      "execution_kind": "component-build",
+      "route_ref": "C09",
+      "task_spec_ref": "task-specs/B-C09.md"
+    },
+    {
+      "id": "B-C10",
+      "title": "repo-local idempotent initをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/init-project-layout.py",
+      "acceptance_criterion": "missing-only initが既存docsを上書きせず再実行で同じ意味結果を返す",
+      "execution_kind": "component-build",
+      "route_ref": "C10",
+      "task_spec_ref": "task-specs/B-C10.md"
+    },
+    {
+      "id": "B-C11",
+      "title": "same-digest atomic promoterをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/promote-system-plan.py",
+      "acceptance_criterion": "readiness/gates/evaluator digest/repo identityとC13 active lockのrepository/run/session/feature/digest/TTLが全一致する時だけatomic promotion/recoveryし、lock不在・owner不一致・期限切れはwrite前にexit2拒否する",
+      "execution_kind": "component-build",
+      "route_ref": "C11",
+      "task_spec_ref": "task-specs/B-C11.md"
+    },
+    {
+      "id": "B-C12",
+      "title": "staging生成物deterministic validatorをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/validate-system-plan.py",
+      "acceptance_criterion": "feature-package + P01..P13 exact 13 task specs + 13-entry inventory + 13-node DAG + C14 system-build-handoffを検証し、12/14件・phase重複・mixed parent/package・cross-feature edge・source digest/manifest不一致をexit2で拒否する",
+      "execution_kind": "component-build",
+      "route_ref": "C12",
+      "task_spec_ref": "task-specs/B-C12.md"
+    },
+    {
+      "id": "D-C13",
+      "title": "system plan lock lifecycle managerをbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+      "acceptance_criterion": "repository_id/run_id/session_owner/feature identityを束縛したrepo-local lockをatomic acquire・heartbeat renew・owner限定releaseし、expired lockを監査付きcleanupする。matching lockの競合、owner不一致、path escape、同一repo lock directory内のmalformed lockはfail-closedで拒否する",
+      "execution_kind": "component-build",
+      "route_ref": "C13",
+      "task_spec_ref": "task-specs/D-C13.md"
+    },
+    {
+      "id": "D-C14",
+      "title": "system build handoffとregistration receipt境界をbuildする",
+      "phase_ref": "P05",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugins/system-dev-planner/scripts/build-system-handoff.py; plugins/system-dev-planner/schemas/system-build-handoff.schema.json",
+      "acceptance_criterion": "versioned schemaに準拠するsystem-build-handoffをvalidated staging inputsから決定論生成し、その実体hashをstaging manifestのcanonical digestへ含める。registration requestはsystem-dev-planner、all-or-none applyとregistration receiptはdev-graphが所有し、promotion/receipt未成立のhandoffを実装authorizationとして扱わない",
+      "execution_kind": "component-build",
+      "route_ref": "C14",
+      "task_spec_ref": "task-specs/D-C14.md"
+    },
+    {
+      "id": "P01",
+      "title": "requirements",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02",
+      "title": "design",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P03",
+      "title": "design-review",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04",
+      "title": "test-design",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05",
+      "title": "implementation",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P05",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06",
+      "title": "test-run",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07",
+      "title": "acceptance-criteria",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08",
+      "title": "refactoring",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09",
+      "title": "quality-assurance",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10",
+      "title": "final-review",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11",
+      "title": "evidence",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12",
+      "title": "documentation",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13",
+      "title": "release",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "S01",
+      "title": "目的・境界・source pin・repo-local要件を確定する",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S01.json",
+      "acceptance_criterion": "goal-spec C1-C13とsystem-spec-harness v0.1.0 lineageが検証可能である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S01.md"
+    },
+    {
+      "id": "S02",
+      "title": "workstream・repo runtime・promotion契約を設計する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S02.json",
+      "acceptance_criterion": "9 workstreams、14 components、root containment、lock lifecycle、versioned handoff、atomic promotion、GitHub/worktree対応dev-graph登録契約が矛盾なく定義される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S02.md"
+    },
+    {
+      "id": "S03",
+      "title": "独立design reviewを通す",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S03.json",
+      "acceptance_criterion": "component/DAG/authority/promotion境界が独立contextで承認される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S03.md"
+    },
+    {
+      "id": "S04",
+      "title": "criteriaとnegative test matrixをRedで固定する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S04.json",
+      "acceptance_criterion": "readiness、containment、multi-repo isolation、no-overwrite、digest mismatchの未実装失敗条件が固定される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S04.md"
+    },
+    {
+      "id": "S05",
+      "title": "14 componentのL4 build完了を集約する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S05.json",
+      "acceptance_criterion": "全component routeがbuild_targetへ実体化されcriteriaがGreenになる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S05.md"
+    },
+    {
+      "id": "S06",
+      "title": "coverageとmulti-repo integration testを実行する",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S06.json",
+      "acceptance_criterion": "coverage閾値とrepo-A/repo-B隔離・symlink・init・promotion matrixがPASSする",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S06.md"
+    },
+    {
+      "id": "S07",
+      "title": "purpose由来の受入基準を確定する",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S07.json",
+      "acceptance_criterion": "citation/readiness/registration/isolation/no-overwrite/atomicityがbuild後受入へtraceされる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S07.md"
+    },
+    {
+      "id": "S08",
+      "title": "system task templateのSSOTを正規化する",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S08.json",
+      "acceptance_criterion": "生成器側templateが正本でdev-graph側draftは引用pointerになる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S08.md"
+    },
+    {
+      "id": "S09",
+      "title": "quality/security/portability gatesを確認する",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S09.json",
+      "acceptance_criterion": "全component gateとfilesystem permission/relative path/cross-read禁止がPASSする",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S09.md"
+    },
+    {
+      "id": "S10",
+      "title": "独立final reviewを通す",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S10.json",
+      "acceptance_criterion": "C1-C13と全成果物の一貫性が独立承認される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S10.md"
+    },
+    {
+      "id": "S11",
+      "title": "再現可能なgate evidenceを集約する",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S11.json",
+      "acceptance_criterion": "deterministic gates、DAG、isolation、init hash、promotion digestの一次証跡が揃う",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S11.md"
+    },
+    {
+      "id": "S12",
+      "title": "利用・導入・復旧文書を確定する",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S12.json",
+      "acceptance_criterion": "1 feature→P01..P13 exact 13 executable task template、symlink導入、repo config、diagnostics、promotion rollback、dev-graph登録が説明される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S12.md"
+    },
+    {
+      "id": "S13",
+      "title": "L3 planをrelease-readyとして引き渡す",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/system-dev-planner/evidence/S13.json",
+      "acceptance_criterion": "全gate PASS、handoff route一致、L3/L4境界明示でbuild可能になる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/S13.md"
+    }
+  ],
+  "edges": [
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C02"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C03"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C04"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C10"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C11"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C01",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C02",
+      "to": "B-C05"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C02",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C02",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C02",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C03",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C04",
+      "to": "B-C03"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C04",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C04",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C05",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C05",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C06",
+      "to": "B-C01"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C06",
+      "to": "B-C10"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C07",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C07",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C07",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C08",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C08",
+      "to": "S04"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C09",
+      "to": "S04"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C10",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "B-C02"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C11",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C12",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C12",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "B-C12",
+      "to": "S04"
+    },
+    {
+      "type": "depends_on",
+      "from": "D-C13",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "D-C14",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "S01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "S02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "S03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "S04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "S05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "S06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "S07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "S08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "S09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "S10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "S11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "S12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "S13"
+    },
+    {
+      "type": "depends_on",
+      "from": "S02",
+      "to": "S01"
+    },
+    {
+      "type": "depends_on",
+      "from": "S03",
+      "to": "S02"
+    },
+    {
+      "type": "depends_on",
+      "from": "S04",
+      "to": "S03"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C01"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C02"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C03"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C04"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C05"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C06"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C07"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C08"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C09"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C10"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C11"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "B-C12"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "D-C13"
+    },
+    {
+      "type": "depends_on",
+      "from": "S05",
+      "to": "D-C14"
+    },
+    {
+      "type": "depends_on",
+      "from": "S06",
+      "to": "S05"
+    },
+    {
+      "type": "depends_on",
+      "from": "S07",
+      "to": "S06"
+    },
+    {
+      "type": "depends_on",
+      "from": "S08",
+      "to": "S07"
+    },
+    {
+      "type": "depends_on",
+      "from": "S09",
+      "to": "S08"
+    },
+    {
+      "type": "depends_on",
+      "from": "S10",
+      "to": "S09"
+    },
+    {
+      "type": "depends_on",
+      "from": "S11",
+      "to": "S10"
+    },
+    {
+      "type": "depends_on",
+      "from": "S12",
+      "to": "S11"
+    },
+    {
+      "type": "depends_on",
+      "from": "S13",
+      "to": "S12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "S01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "S02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "S03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "S04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "B-C12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "D-C13"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "D-C14"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "S05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "S06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "S07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "S08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "S09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "S10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "S11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "S12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "S13"
+    },
+    {
+      "type": "produces",
+      "from": "B-C01",
+      "to": "plugins/system-dev-planner/skills/run-system-dev-plan/"
+    },
+    {
+      "type": "produces",
+      "from": "B-C02",
+      "to": "plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator/"
+    },
+    {
+      "type": "produces",
+      "from": "B-C03",
+      "to": "plugins/system-dev-planner/agents/system-dev-plan-elicitor.md"
+    },
+    {
+      "type": "produces",
+      "from": "B-C04",
+      "to": "plugins/system-dev-planner/agents/system-dev-plan-architect.md"
+    },
+    {
+      "type": "produces",
+      "from": "B-C05",
+      "to": "plugins/system-dev-planner/agents/system-dev-plan-evaluator.md"
+    },
+    {
+      "type": "produces",
+      "from": "B-C06",
+      "to": "plugins/system-dev-planner/commands/system-dev-plan.md"
+    },
+    {
+      "type": "produces",
+      "from": "B-C07",
+      "to": "plugins/system-dev-planner/hooks/guard-implementation-readiness.py"
+    },
+    {
+      "type": "produces",
+      "from": "B-C08",
+      "to": "plugins/system-dev-planner/scripts/check-implementation-readiness.py"
+    },
+    {
+      "type": "produces",
+      "from": "B-C09",
+      "to": "plugins/system-dev-planner/scripts/resolve-project-context.py"
+    },
+    {
+      "type": "produces",
+      "from": "B-C10",
+      "to": "plugins/system-dev-planner/scripts/init-project-layout.py"
+    },
+    {
+      "type": "produces",
+      "from": "B-C11",
+      "to": "plugins/system-dev-planner/scripts/promote-system-plan.py"
+    },
+    {
+      "type": "produces",
+      "from": "B-C12",
+      "to": "plugins/system-dev-planner/scripts/validate-system-plan.py"
+    },
+    {
+      "type": "produces",
+      "from": "D-C13",
+      "to": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py"
+    },
+    {
+      "type": "produces",
+      "from": "D-C14",
+      "to": "plugins/system-dev-planner/schemas/system-build-handoff.schema.json"
+    },
+    {
+      "type": "produces",
+      "from": "D-C14",
+      "to": "plugins/system-dev-planner/scripts/build-system-handoff.py"
+    },
+    {
+      "type": "produces",
+      "from": "S01",
+      "to": "plugin-plans/system-dev-planner/evidence/S01.json"
+    },
+    {
+      "type": "produces",
+      "from": "S02",
+      "to": "plugin-plans/system-dev-planner/evidence/S02.json"
+    },
+    {
+      "type": "produces",
+      "from": "S03",
+      "to": "plugin-plans/system-dev-planner/evidence/S03.json"
+    },
+    {
+      "type": "produces",
+      "from": "S04",
+      "to": "plugin-plans/system-dev-planner/evidence/S04.json"
+    },
+    {
+      "type": "produces",
+      "from": "S05",
+      "to": "plugin-plans/system-dev-planner/evidence/S05.json"
+    },
+    {
+      "type": "produces",
+      "from": "S06",
+      "to": "plugin-plans/system-dev-planner/evidence/S06.json"
+    },
+    {
+      "type": "produces",
+      "from": "S07",
+      "to": "plugin-plans/system-dev-planner/evidence/S07.json"
+    },
+    {
+      "type": "produces",
+      "from": "S08",
+      "to": "plugin-plans/system-dev-planner/evidence/S08.json"
+    },
+    {
+      "type": "produces",
+      "from": "S09",
+      "to": "plugin-plans/system-dev-planner/evidence/S09.json"
+    },
+    {
+      "type": "produces",
+      "from": "S10",
+      "to": "plugin-plans/system-dev-planner/evidence/S10.json"
+    },
+    {
+      "type": "produces",
+      "from": "S11",
+      "to": "plugin-plans/system-dev-planner/evidence/S11.json"
+    },
+    {
+      "type": "produces",
+      "from": "S12",
+      "to": "plugin-plans/system-dev-planner/evidence/S12.json"
+    },
+    {
+      "type": "produces",
+      "from": "S13",
+      "to": "plugin-plans/system-dev-planner/evidence/S13.json"
+    }
+  ]
+}

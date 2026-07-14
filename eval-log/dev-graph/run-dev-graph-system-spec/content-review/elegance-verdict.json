@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-system-spec",
+    "skill_md_sha256": "c0c379b213229bff97ab4a0c9745e7a604de79e2b82bdf1c78d0b187f84548eb"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "『本 skill は仕様生成ロジックを持たず system-spec-harness を起動し検証と C02 取込だけを担う』という委譲専任の責務境界が Purpose・Why・完了チェックリスト・Gotchas で一貫し、複製0 (MM-12) が矛盾なく貫かれている",
+      "preflight の version 制約 (>=0.1.0 <1.0.0) と required 4 entry points (elicit/doc-fetch/compile/completeness-evaluator) が R1/step2/checklist で一致し、不在/不一致時は fallback を実装せず fail-closed 停止する規則が明記されている",
+      "取込 node の source_lineage(origin_kind/plugin/path/version/digest/imported_at)+confirmation+evaluator evidence の保持要件が R3・Purpose・OUT1・Gotchas で漏れなく整合"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SKILL.md (sha256 c0c379b213229bff97ab4a0c9745e7a604de79e2b82bdf1c78d0b187f84548eb) を全文 read し 4 条件で genuine 再評価した。①矛盾なし: 委譲専任 (生成ロジック非保有) と C02 取込 (--mode write) は、仕様生成を system-spec-harness に委ね登録のみ行う分担で非矛盾。feature へは architecture_refs 参照で本文複製しない規則が全層一致。②漏れなし: IN1(coverage/source-citation/schema gate exit0)/OUT1(source lineage 引用+複製0+C02 経由) の 2 criteria に Criteria acceptance があり、R0-R3 responsibility が Purpose 4 step と完了チェックリストに被覆。③整合性: description の 2 trigger (仕様を作りたい/取り込みたい) と Purpose が対応、allowed-tools に Skill(委譲用)を保有し script_refs(resolve-repo-context/validate-graph-schema)と整合。④依存整合: C24(root 固定)/C02(登録) と system-spec-harness plugin.json/package-contract.json 参照が Why・step2 に配線、goal_seek fork=subagent に Agent を保有。重大問題なしで PASS。"
+}

@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "beads-kanban-reconciliation-20260712",
+    "generated_by": "3リポジトリ調査 (gastownhall/beads v1.1.0 / doublej/beads-kanban 0.4.1 / AI-Driven-R-D-Dept/oh-my-beads 0.2.6) + ユーザー決定 (ハイブリッド方針 / bd-bridge最小統合 / 差分中心検証) + 完了カスケード・Claude hooks・multi-worktree要望"
+  },
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "context": {
+    "user_policy": "AIエージェント実行系タスク = beads (bd ready + beads-kanban)、人間向け公開/俯瞰 = GitHub Issues/Projects v2。repo単位で execution_tracker を選択し、taskノード単位で単一 publication authority を強制する。",
+    "beads_facts": [
+      "bd v1.1.0 は bd github sync (双方向・競合解決付き) を本体内蔵。GitHubミラーはbdに一本化可能",
+      "bd ready はオフライン決定論ready検出。beads-kanban は bd CLI 経由で読み書きするローカル看板UI (ドラッグ=bd update --status、bd server モード必須)",
+      "bd の依存は typed (blocks/parent-child/discovered-from等)、gates機能 (gh:pr/gh:run) でPRマージ/CI成功を依存ノード化し bd gate check が gh CLI で自動解決",
+      "external_ref フィールド (例 gh-9) と metadata 任意JSONで外部ID対応付けが可能。全コマンド --json が安定契約",
+      "公式使い分けガイダンス (FAQ): 人間チーム+Web UI=GitHub Issues、AIエージェントのオフライン・グラフ意味論・決定論的クエリ=bd"
+    ],
+    "reference_draft": "references/execution-tracker-contract-draft.md (本handoffと同時に配置。EV-B06 の正本化の種)"
+  },
+  "findings": [
+    {
+      "id": "EV-B01",
+      "severity": "high",
+      "summary": "repo-config.schema.json に実行トラッカー選択がなく、beads と GitHub のどちらで実行タスクを管理するかが repo 単位で宣言できない。",
+      "recommendation": "repo-config.schema.json の github セクションと並置で execution_tracker セクションを追加する: {mode: beads|github|both, beads: {issue_prefix, server_mode(bool: bd sql/beads-kanban用), github_mirror: bd_github_sync|none}}。mode 既定と repo プロファイル別の選択基準は references/execution-tracker-contract.md の決定表を正本とする。",
+      "target_ref": "schemas-draft/repo-config.schema.json"
+    },
+    {
+      "id": "EV-B02",
+      "severity": "high",
+      "summary": "graph-node.schema.json に beads への linkage がなく、taskノードと bd issue の対応が記録できない (issue_linkage は GitHub 専用)。",
+      "recommendation": "issue_linkage と対称に tracker_binding (enum: beads|github|none) と beads_linkage ({bd_issue_id, linked_at, sync_state} | null) を追加する。beads_linkage は起票後に dev-graph 側が更新する可変 projection で、冪等キーは bd 側 external_ref=graph_node_id との相互参照。",
+      "target_ref": "schemas-draft/graph-node.schema.json"
+    },
+    {
+      "id": "EV-B03",
+      "severity": "high",
+      "summary": "beads への決定論的な橋渡し実体がない。gh-bridge.py (C12) は GitHub 専用で、bd CLI の呼び出し契約を持つ component が不在。",
+      "recommendation": "script component C28 bd-bridge.py を gh-bridge (C12) と対称に追加する (builder: plugin-scaffold, depends_on: [C24], build_target: plugins/dev-graph/scripts/bd-bridge.py)。責務: bd create/update/dep add/close/ready --json を決定論ラップし、external_ref=graph_node_id を冪等キーに taskノード→bd issue projection と状態還流を仲介。depends_on エッジは bd dep add (type=blocks) へ写像。破壊操作 (bd delete/purge/sql DML) は呼ばない。消費者: C14 (分解後の起票)、C15/C16 (ready委譲)、C25/C26 (完了還流)。",
+      "target_ref": "component-inventory.json"
+    },
+    {
+      "id": "EV-B04",
+      "severity": "medium",
+      "summary": "ready-set 算出 (C15/C16) が bd ready と機能重複しており、execution_tracker=beads の repo で二重実装になる。",
+      "recommendation": "C15/C16 に 2 段構成を明記する: execution_tracker=beads のとき ready 候補列挙は bd ready --json (C28経由) へ委譲し、その出力へ dev-graph 固有の resource_scope 重複回避・並列バッチ編成を重ねる。github/local のときは従来の schedule-graph.py 自前算出。resource_scope 並列安全性は beads に存在しない dev-graph 固有価値として維持する。",
+      "target_ref": "component-inventory.json#C15,C16"
+    },
+    {
+      "id": "EV-B05",
+      "severity": "high",
+      "summary": "dev-graph の gh-bridge 起票と bd github sync が同一 repo で併走すると GitHub Issue が二重起票される。単一 publication authority が未定義。",
+      "recommendation": "排他ルールを schema と検証に焼く: tracker_binding=beads の task ノードは github_publication.mode=local_only を強制 (validate-graph-schema.py C11 が fail-closed 検査)。beads 束縛タスクの GitHub ミラーが必要な場合は bd github sync のみが authority で、gh-bridge (C12) は当該ノードへ Issue mutation を行わない。tracker_binding=github のノードは bd へ projection しない。",
+      "target_ref": "schemas-draft/graph-node.schema.json + component-inventory.json#C11"
+    },
+    {
+      "id": "EV-B06",
+      "severity": "medium",
+      "summary": "beads と GitHub Issues の使い分け基準・状態写像・完了カスケードを定める契約文書が存在しない (新規 repo でどちらを使うべきかが決められない)。",
+      "recommendation": "references/execution-tracker-contract-draft.md を execution-tracker-contract.md として正本化する。内容: (0) プランナー選定ルール (plugin 構築=plugin-dev-planner→§6 beads 直接投影 / システム構築=system-dev-planner→dev-graph 登録→本契約。両ルートとも実行看板は beads に収束)、(1) repo プロファイル別の使い分け決定表 (beads 公式 FAQ ガイダンス準拠)、(2) dev-graph node.status ↔ bd status ↔ GitHub Issue state の状態写像表、(3) 完了カスケード契約 (EV-B07)、(4) 二重起票禁止ルール (EV-B05)、(6) plugin ルートの beads 直接投影契約 (task-state.json → bd 冪等 upsert、consumer 所有の追加投影、external_ref=<plan-slug>/<node-id>、逆流禁止)。index.md の参照一覧にも登録する。",
+      "target_ref": "references/execution-tracker-contract-draft.md"
+    },
+    {
+      "id": "EV-B07",
+      "severity": "high",
+      "summary": "完了忘れ防止の自動収束カスケードが GitHub 側で止まっており、beads とローカル task 仕様書への還流が設計されていない (ユーザー要望: PR close→タスク自動close→Projects反映→ローカルmerge時にtask仕様書へ反映)。",
+      "recommendation": "C26 (reconcile-github-lifecycle.py) の完了収束に下流還流を追加する。カスケード: [事実authority] default branch への linked PR merged=true → [remote fast path] GitHub linked-issue auto-close / Projects built-in Done / bd gates gh:pr → [修復経路] C26 が PR fact 照合し node.pull_request_linkages / completion_evidence / status=done を更新 → [beads還流] C28 経由で bd close <id> --reason=\"PR #N merged (<sha>)\" (既closedならskip、冪等) → [ローカル反映] task仕様書 (tasks/*.md) の frontmatter status を dev-graph 単一 writer (C02) 経由で更新。各下流は冪等 projection で、逆方向 (bd close が PR を close する等) は流さない。",
+      "target_ref": "component-inventory.json#C26 + references/github-lifecycle-contract.md"
+    },
+    {
+      "id": "EV-B08",
+      "severity": "medium",
+      "summary": "Claude Code hooks による自動発火と複数 worktree 開発の beads 側対応が未配線 (C25/C27 は GitHub/lease のみを見ており bd claim との対応がない)。",
+      "recommendation": "C25 (reconcile-task-lifecycle hook) の SessionStart/PostToolUse 発火に beads 分岐を追加する: SessionStart で C26 reconciliation + bd 状態突合を発火 (worktree merge-back 後のローカル反映を回収)、PostToolUse は git push / gh pr merge 検出時に即時発火。配線は既存方針どおり plugin hooks/hooks.json 共有既定 + .claude/settings.json fallback (二重登録禁止)。worktree 並列は C27 lease と bd update --claim を対応付け、execution_contexts へ worktree/branch を記録し、lease 取得時に bd claim・lease 解放/merge-back 時に default branch 側で最終収束する。",
+      "target_ref": "component-inventory.json#C25,C27"
+    },
+    {
+      "id": "EV-B09",
+      "severity": "low",
+      "summary": "goal-spec checklist に execution tracker 抽象化の受入条件がなく、本改善が達成条件として追跡できない。",
+      "recommendation": "goal-spec.json checklist へ追加する (既存 C42 の後続番号): execution_tracker 選択が repo-config で宣言できる / tracker_binding=beads と github_publication の排他が機械検査される / PR merged → bd close → task仕様書反映のカスケードが契約化されている / worktree claim と bd claim の対応が設計されている / bd 依存が bridge 単一チョークポイント + version window で隔離されている、の二値項目。",
+      "target_ref": "goal-spec.json"
+    },
+    {
+      "id": "EV-B10",
+      "severity": "medium",
+      "summary": "beads / beads-kanban は日々更新される upstream であり (bd v2.0 で JSON envelope 既定化の破壊的変更が予告済み)、bd CLI への散在依存や内部 schema 依存があると upstream 更新のたびに設計が壊れる。",
+      "recommendation": "upstream 変動耐性を契約化する (execution-tracker-contract §7): (1) bd 呼び出しは C28 bd-bridge / project-task-beads.py の単一チョークポイントに集約 (anti-corruption layer)、(2) 依存は安定 surface のみ (--json 安定契約 / JSONL import-export / external_ref・metadata。bd sql と .beads/ 直接読み書きと beads-kanban HTTP API は禁止)、(3) bridge preflight で bd version 受容 window >=1.1.0 <2.0.0 を fail-closed 検査 (system-spec-source-pin.json と同型の pin 運用)、(4) JSON envelope 有無の両形式受容パーサ、(5) beads-kanban は交換可能 viewer として非結合、(6) drift 検出時は同期停止+報告し正本無傷・冪等 upsert で復旧。C28 の inventory エントリ (purpose/exit_codes) にも preflight 検査を明記する。",
+      "target_ref": "references/execution-tracker-contract-draft.md#§7 + component-inventory.json (C28)"
+    }
+  ],
+  "provenance": {
+    "prev_goal_spec": "goal-spec.json",
+    "prev_improvement_handoff": "improvement-handoff.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "current-user-request (beads看板連携 + 完了カスケード + Claude hooks + multi-worktree)"
+    }
+  }
+}

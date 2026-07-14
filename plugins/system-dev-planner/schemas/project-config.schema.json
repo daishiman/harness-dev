@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project-config.schema.json",
+  "type": "object",
+  "required": ["schema_version", "repository_id", "content_roots", "local_state", "path_policy", "plan_roots"],
+  "$defs": {
+    "relative_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:[\\\\/]).+$"}
+  },
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "repository_id": {
+      "type": "string",
+      "description": "C10 initがcanonical GitHub remoteまたはlocal git common-dirから導出して書込み、C09が再導出して照合するrepository identity。example/sentinel値の配置は禁止 (pattern不一致としてC09がexit 2で拒否する)",
+      "pattern": "^(github:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|local:sha256:[0-9a-f]{64})$"
+    },
+    "content_roots": {
+      "type": "object",
+      "description": "dev-graph 基底 section (正本形=plugin-plans/dev-graph/templates/repo-config.example.json)。sdp は読取専用で既存値を上書きしない",
+      "required": ["issues", "tasks", "specifications", "architecture", "documents", "system_spec"],
+      "additionalProperties": {"$ref": "#/$defs/relative_path"}
+    },
+    "local_state": {
+      "type": "object",
+      "description": "dev-graph 基底 section。cache/locks は必須、graph 等の dev-graph 固有キーは共存を許容する",
+      "required": ["cache", "locks"],
+      "additionalProperties": {"$ref": "#/$defs/relative_path"}
+    },
+    "path_policy": {
+      "type": "object",
+      "description": "dev-graph 基底 section。caller-repository authority と repository 相対 path のみを固定する",
+      "required": ["authority", "stored_paths", "allow_outside_repository", "follow_content_symlinks_outside_repository"],
+      "properties": {
+        "authority": {"const": "caller-repository"},
+        "stored_paths": {"const": "repository-relative"},
+        "allow_outside_repository": {"const": false},
+        "follow_content_symlinks_outside_repository": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "plan_roots": {
+      "type": "object",
+      "description": "sdp 追加 section。C10 init が missing-key 追記 merge で非破壊追記する (既存値を上書きしない)",
+      "required": ["staging", "published", "state"],
+      "additionalProperties": {"$ref": "#/$defs/relative_path"}
+    }
+  },
+  "additionalProperties": true
+}

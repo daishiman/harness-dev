@@ -23,6 +23,9 @@ script_refs:
   - scripts/compile-spec-doc.py
   - ../../scripts/validate-coverage-matrix.py
   - ../../scripts/validate-source-citation.py
+schema_refs:
+  - ../../schemas/spec-state.schema.json
+  - ../../schemas/fetched-references.schema.json
 allowed-tools:
   - Read
   - Write
@@ -40,6 +43,12 @@ responsibilities:
 combinators:
   - with-goal-seek
   - with-feedback-contract
+goal_seek:
+  engine: inline
+  fork: subagent
+  max_loops: 5
+completeness_exempt:
+  - "manifest: compile retries select the failed deterministic/content gate dynamically; the SKILL body is the runtime SSOT."
 feedback_contract:
   max_iterations: 5
   criteria:
@@ -110,6 +119,10 @@ serves_goals: [G1, G2]    # 章が資する上位概念ゴール id (セル serv
 3. **出典必須**: 章に反映する最新ドキュメントは source_url・公式発行元・version|last_updated・取得/最新確認日時を伴う (C13 が形式検証)。
 4. **対象外は理由付き**: 対象外セルは必ず理由 (または承認参照) を章へ明示する (C12 が検証)。
 5. **日本語成果物**: 章・index の本文は日本語 (カテゴリ id・platform id・JSON キーは英語)。
+
+## ゴールシーク実行
+
+IN1/OUT1 の未達ゲートを起点に assemble/render/crosslink の該当責務だけを再実行する。各反復で決定論ゲートを先に通し、最大5周で未達なら成果物を確定せず呼出元へ blocker を返す。全ゲートPASS時だけ完了する。
 
 ## Feedback Contract (with-feedback-contract / with-goal-seek)
 

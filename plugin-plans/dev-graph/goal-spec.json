@@ -1,0 +1,403 @@
+{
+  "purpose": "タスクグラフでイシュー・ドキュメント・仕様・アーキテクチャ・機能(feature)情報を一元管理し、機能(feature)ごとに目的(purpose)/到達状態(goal)/スコープ内外(scope_in/scope_out)/確実に実行したい二値(acceptance)/アーキテクチャ参照/機能間依存を第一級に保持して機能単位の実行をオーケストレーションするマクロ管理層とし、各機能の細タスク仕様書生成(1機能=13タスク仕様書+機能内依存DAG)はsystem-dev-planner(ミクロ層)へ委譲してそのpromoted taskをfeature配下のtaskノードとして登録・実行しつつ、タスクごとにBeadsまたはGitHubを単一実行トラッカーとして投影し、要件定義から実装handoff、次タスク推薦、複数worktree実行、PR merge後の完了収束までを担う管理ハーネスdev-graphの開発計画を作る。",
+  "background": "ローカル仕様、Beads、GitHub Issues/Projectsを無条件に双方向同期すると二重起票と完了authority競合が生じる。そこでMarkdown/graphをローカル正本、BeadsまたはGitHubをnode単位の実行projection、GitHub Projectsを人間向け表示、default branchへmerge済みのlinked PRを完了事実とする。自然文の『やりたいこと』はマクロ分解してfeature+architecture+機能間depends_onを作り、各featureをsystem-dev-plannerで細分解してpromoted taskをparent_feature付きでatomic登録し、依存DAGとresource_scopeからready-set/並列batchを作り、Claude hooksと複数worktree ledgerでeventual reconciliationする。実装コード生成は既存capability-build/task-graph buildへ委譲する。",
+  "goal": "dev-graph の 13 phase ファイル + index + component-inventory + handoff が決定論ゲートで検証可能な状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "dev-graph",
+  "plan_dir": "plugin-plans/dev-graph",
+  "out_dir": null,
+  "requested_count": null,
+  "source_intake": {
+    "ref": "intake.json",
+    "schema_version": "2.0.0"
+  },
+  "source_improvement": {
+    "ref": "improvement-handoff-macro.json",
+    "schema_version": "1.0.0"
+  },
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "component-inventory.json がtask-graph管理・hybrid directory・自動分類・binding別Beads/GitHub投影・静的UI・capability-build handoffの各component_kindとplugin-level surfacesの採否を記録している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "handoff-run-plugin-dev-plan.json が builder/build_kind/build_args/build_target を持つ",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "index/phase 仕様書に、タスクグラフがイシュー・ドキュメント・仕様・アーキテクチャ情報を単一グラフ構造で保持し、タスク実行時にその情報から要件定義を導出する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C4",
+      "criterion": "tracker_binding=githubではIssueをid+updated_atで同期し、binding=beadsではstatusとdepends_on edge parityをC28経由で同期し、Projects Statusはlocal_to_project一方向で完了authorityを迂回しない仕様が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C5",
+      "criterion": "ハーネスを実行したとき、追加ランタイム依存なしにブラウザで開ける SVG + インライン JS 可視化済み静的 HTML/CSS がタスクグラフ情報から生成され、リポジトリへコミットまたは CI 生成可能な仕様が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C6",
+      "criterion": "タスク実装が必要になったとき、本ハーネスは既存 capability-build / task-graph build へ handoff し自身は実装コードを生成しない責務境界が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C7",
+      "criterion": "自然文の『やりたいこと(大)』入力からマクロ分解でfeatureノード群+機能間depends_onをall-or-none登録し(各featureの13タスク仕様書への細分解はsystem-dev-plannerへ委譲・C50)、promoted taskをresolved tracker_bindingに従いBeads、GitHub、またはlocal-onlyへ重複なく投影する二層のtask-decomposition機能が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C8",
+      "criterion": "グラフの依存関係と完了状態から「次に着手すべきおすすめタスク」を ready-set として算出・提示する機能が設計記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C9",
+      "criterion": "依存のない独立タスクを並列/並行実行可能なバッチとして識別し並列実行を支援する機能が設計記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C10",
+      "criterion": "各タスクノードが touch するリソース(ファイル/ディレクトリ)スコープをグラフに保持し、スケジューラがリソース重複する並列タスクを避けることで作業コンフリクトを最小化する設計が記載されている（同期コンフリクトの id+updated_at 解決に加えた\"作業\"コンフリクト回避）",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C11",
+      "criterion": "特定の issue/task/specification/architecture/document ノードをmetadataで検索・状態確認する読取り経路(status/read)が設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C12",
+      "criterion": "GitHub Issue の close/delete をローカルグラフへ tombstone/status遷移で双方向伝播する設計がある",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C13",
+      "criterion": "破壊的 gh 操作(sync/decompose)に dry-run/preview 経路と暴発防止 guard がある",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C14",
+      "criterion": "issue/task/specification/architecture/document の各管理成果物が、人間可読 markdown のディレクトリファースト配置 + ノード=薄いメタ+file_path参照 + 差分更新(全書換禁止) + 編集後の即時schema検証(C11/C10) により、直接編集で安全に修正改善できる設計が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C15",
+      "criterion": "管理ルート配下に issues/tasks/specs/architecture/features/docs の6独立ディレクトリが冪等生成され、artifact_kind は物理ディレクトリ、project_id/domain/status/tags/graph_node_id はfrontmatter metadataとして管理されるhybrid directory policyが設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C16",
+      "criterion": "ユーザーが保存先を指定しなくても入力内容からartifact_kind/domain/project_idを自動推定し、classification_confidence・classification_reason・候補pathをpreviewし、低信頼時だけ確認して正規pathへ配置するroutingが設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C17",
+      "criterion": "各artifact kind直下はflat-firstで管理し、1 leafが200件を超えた場合のみdomain→project_id→YYYY/MMの順に段階分割し、graph_node_idを不変に保ったdry-run migration manifest・link検証・rollbackを伴う再配置仕様が設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C18",
+      "criterion": "task/issue/document/specification/architecture の各 artifact kind が構造化テンプレートフォーマット (frontmatter 必須キー + 本文必須セクション床) の正本を持ち、テンプレート正本の置き場・init 時の導入先 scaffold・node 作成時の適用・schema 検証との連動 (必須セクション欠落の fail-closed 検出) が index/phase 仕様書に設計記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C19",
+      "criterion": "architecture テンプレートが backend/frontend/infra/database/security 等の subtype 別必須セクション (採用アーキテクチャパターン・技術スタック・データ構成等) を持ち、specification テンプレートが API 情報 (endpoint/request/response/error 等) とデータ構造の必須セクションを持つなど、kind 固有の内容要件がテンプレートに定義されている設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C20",
+      "criterion": "タスク実行時の要件定義が参照する各成果物についてテンプレート必須セクションの充足度 (implementation-readiness: 実装に着手するのに必要な内容が揃っているか) を機械判定し、不足セクションを surface する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C21",
+      "criterion": "仕様書またはアーキテクチャを新規作成・更新するときは plugins/system-spec-harness/ のヒアリング→公式出典取得→compile→独立完成度評価フローを引用し、dev-graphが同等ロジックを複製せず、その確定成果物をspecification/architectureノードへ取り込む設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C22",
+      "criterion": "システム開発タスク仕様書を生成する専用ハーネスが、plugins/plugin-dev-planner/ と同型の13フェーズ lifecycle + N workstream inventory + typed task DAG + handoff + 独立評価を持ち、plugin component build語彙をfrontend/backend/API/data/infrastructure/security/quality/docs/operationsのsystem workstream語彙へ置換する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C23",
+      "criterion": "system-dev-plannerは確定仕様を引用し、readiness未達を停止し、1 featureから生成したP01..P13 exact 13 taskをall-or-none receiptで確認してからbinding別投影・推薦・並列実行へ接続する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C24",
+      "criterion": "ハーネス本体を不特定多数の導入先リポジトリへsymbolic linkで配布しても、実行時content authorityはsymlink元でなく呼出し元repository rootとなり、各repo固有のissues/tasks/specs/architecture/docsとrepo-local configを読み取るproject-root解決契約が設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C25",
+      "criterion": "repo root解決優先順位とhost宣言$CLAUDE_PROJECT_DIRへの一致、realpath containment/path traversal guard、別repo文書のcross-read禁止、起動後に検査可能なcontent symlinkの壊れ/移動診断、同時multi-repo実行のstate/cache分離をfail-closedで検証する設計が記載されている。harness自身のbroken symlinkは起動前host launcher/installer preflight責務として明示される",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C26",
+      "criterion": "initが各導入先repoへrepo-local設定と編集可能templateを冪等生成し既存docsを上書きせず、絶対pathを保存せずrepo相対pathで可搬にし、複数repository fixtureとcontent-symlink/host-link-preflight/containmentテストで受入可能な設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C27",
+      "criterion": "system-dev-plannerのP01..P13 exact 13 taskをdev-graphへall-or-none登録し、expected/applied=13、phase/node exact-set、共通parent/package、graph_revision receipt確認後にbinding別authorityへ投影する契約が設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C28",
+      "criterion": "repo-local .dev-graph/config.jsonがGitHub issue repositoryと複数Projects v2 target、owner type/login、project number、default target、custom field mapping、status/priority/date/iteration option mapping、auto-add policyを構造化設定でき、秘密情報や環境固有node IDを正本保存しない設計になっている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C29",
+      "criterion": "graph nodeがissue_linkageと複数github_project_linkagesを保持し、Issue content IDをProject itemへ重複追加せず、item ID・project identity・field同期snapshotを保存して、Issue同期とProjects custom field同期を区別した双方向・再実行可能な同期設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C30",
+      "criterion": "Projects v2 field valueのupdatedAtを競合hint、last-synced snapshotを削除/欠落/renameも扱うcanonical baseとし、両側変更時manual conflict、権限/rate-limit/field drift/部分失敗retry、dry-run外部write 0件を検証する設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C31",
+      "criterion": "task specification、Issue、Pull Requestがgraph_node_id/issue_number/PR numberで追跡され、default branch向けPRにclosing keywordでIssueをlinkし、PR closedではなくmerged=trueを完了トリガーとする設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C32",
+      "criterion": "PR close未mergeではtaskをdoneにせず、linked PRが複数ある場合のall/any policy、Issue reopen時のtask再開、direct Issue close/not planned、revert時のfollow-up扱いを明示した状態遷移契約が設計されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C33",
+      "criterion": "GitHubのlinked PR auto-closeとProjects built-in Done automationをremote fast pathとして利用しつつ、C03がPR/Issue/Project状態を冪等reconcileしてローカルtask specification frontmatter/status/completion evidenceへ反映する設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C34",
+      "criterion": "symlink harnessがGitHub runnerで利用不能な場合を前提にremote native automationへ依存し、ローカルはmanual sync・任意Claude PostToolUse hook・scheduled reconciliationでeventual consistencyを達成し、hook不実行やoffline期間後もrepair可能な設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C35",
+      "criterion": "Claude Code連携はplugin hooks/hooks.jsonを共有既定、project .claude/settings.jsonを明示opt-in fallbackとし、両方を同時登録して二重発火しないhook source policyが設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C36",
+      "criterion": "SessionStartでstale/pending task contextと期限到来scheduled reconciliationを処理し、成功したBash git pull/merge/gh pr merge後のPostToolUseでasync reconciliationを発火し、TaskCompletedではGitHub完了と混同せず対象task leaseをpending_reviewへparkするClaude Code hook契約が設計されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C37",
+      "criterion": "hookがstdin JSONを検証しcwdをcaller repositoryへcontainし、shell injection/path traversal/secret出力を拒否し、async hookはdecisionを返さず、TaskCompleted blockingは対象taskだけに限定し、event ledger/lockで再入・無限loop・重複発火を防ぐ設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C38",
+      "criterion": "initが既存.claude/settings.jsonを全書換せずpreview付きdeep-mergeし、settings.local/managed allowManagedHooksOnly/disableAllHooksを診断し、uninstall/disable/rollbackと/hooks確認手順を提供する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C39",
+      "criterion": "linked worktreeを含む複数Git worktreeで、worktree root・git common dir・branch/ref・HEAD・base branch・repository_idを決定論的に識別し、content authorityとworktree横断coordination authorityを分離する設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C40",
+      "criterion": "同一graph_node_idを複数worktreeが同時実装しないよう、git common dir配下の非コミットlease registryでclaim/heartbeat/release/TTL reclaimを原子的に行い、session crash後も回復できる設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C41",
+      "criterion": "ready-setと並列batchがdepends_on/resource_scopeに加えてactive worktree leaseとbranch assignmentを考慮し、独立taskだけを別worktreeへ割当可能にする設計が記載されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C42",
+      "criterion": "feature branch/worktree上ではmerged完了を先行記録せずpending eventだけを共有ledgerへ記録し、cleanなdefault-branch worktreeでtask spec/graphを収束させ、default worktree不在またはdirty/diverged時はpendingのままfail-closedにする設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C43",
+      "criterion": "repo-config.schema.jsonのexecution_trackerセクションでmode(beads|github|both)とbeads設定(issue_prefix/server_mode/github_mirror)がrepo単位で宣言できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C44",
+      "criterion": "graph-node.schema.jsonでbeads|noneはgithub_publication.mode=local_only、githubはmode=issue|issue_and_projectsかつbeads_linkage=nullを強制し、GitHub+local_onlyとmode=both+autoをfail-closedにするルールが定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C45",
+      "criterion": "remote default branch ancestor確認済みPR merge → graph/task Markdownのlocal transaction → completion event → 最後にC28 bd close、という再開可能step ledgerが契約として記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C46",
+      "criterion": "C28のbd update --claimを実行claim authority、C27をcontext reservation/saga coordinatorとし、部分失敗repairとexecution_contexts記録が設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C47",
+      "criterion": "bd呼び出しがroute別bridge (systemルート=C28 / pluginルート=project-task-beads.py) に集約され、preflightでbd version受容window(>=1.1.0 <2.0.0)をfail-closedで検査する upstream変動耐性設計がreferences/execution-tracker-contract.md §7に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C48",
+      "criterion": "pluginルートのbeads直接投影契約 (references/execution-tracker-contract.md §6) が実装owner (harness-creator TG-C09並置のproject-task-beads.py) へのhandoffとして追跡されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C49",
+      "criterion": "graph-node.schema.json でartifact_kind=featureのノードがpurpose/goal/scope_in/scope_out/acceptance/architecture_refsを条件付きrequiredとして保持する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C50",
+      "criterion": "C14 run-dev-graph-decomposeのマクロ分解が自然文の『やりたいこと(大)』からfeatureノード群+architectureノード+機能間depends_onを生成し、13タスク仕様書への細分解は行わない責務境界が index/phase 仕様書に記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C51",
+      "criterion": "ready feature(機能間depends_on充足)ごとにsystem-dev-planner(run-system-dev-plan)を自動起動でき、人間による手動『/system-dev-plan』実行結果も同じ登録経路として受理するフォールバックが設計されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C52",
+      "criterion": "system-dev-plannerが生成したpromoted taskがparent_feature(feature ノードのgraph_node_id)を持って当該feature配下のtaskノードとしてC02経由でatomic登録される設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C53",
+      "criterion": "feature ノード間の機能間依存が既存depends_onフィールドを流用して表現され、C11 validate-graph-schema.pyが非循環性をfail-closedで検査する設計が記載されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C54",
+      "criterion": "feature ノードの完了が配下task (parent_feature参照) 全doneからの機械導出 (feature.status=done) としてC26導出+C02単一writerで確定し、feature.statusの手動done昇格とactive子taskを残したままのfeature close/tombstoneがfail-closedになる完了カスケードがreferences/execution-tracker-contract.md §8.2に記載され、C11/C26に配線されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C55",
+      "criterion": "feature進捗が13件中X/Yで集約表示され、beads profileではfeature→epic/P01..P13→child issues、github profileではMilestone/Project feature item→13 Issuesへ投影される。task dependencyは同一parent_feature/package内の前方edgeに閉じる",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C56",
+      "criterion": "feature由来taskがfeature_package_idとphase_refを持ち、同一feature/packageにP01..P13が各1件だけ存在することをC11/C02がfail-closed検査し、C26はexact 13全doneとacceptance evidence充足時だけfeatureをdoneへroll upする",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "GitHub 連携方式は gh CLI ベース (gh issue / gh project / gh api) とし、追加トークン管理は行わない",
+    "task nodeごとにBeadsまたはGitHubを単一publication authorityとし、Projects Statusはlocal_to_project、PR mergeだけを完了事実authorityとする",
+    "UI はゼロ依存の静的 HTML/CSS 生成とし、グラフ可視化は SVG + インライン JS で行い、成果物をリポジトリへコミットまたは CI 生成可能にする",
+    "本ハーネスの実装責務は管理 + 要件定義までとし、実タスクの実装コード生成は既存 capability-build / task-graph build へ handoff する (実装自体は担わない)",
+    "実プラグインは生成せず L3 plan までに留める (本 plan 成果物の責務は決定論ゲート検証可能な L3 plan の生成に留まるという当初意図は不変。additive 注記: L4/L5 の稼働 plugin materialization (plugins/dev-graph/ 実体) は本 plan の意図を変更するものではなく、capability-build task-graph mode の deliberate な後続 step として別途実施済みである)",
+    "自然文の『やりたいこと(大)』をマクロ分解してfeatureノード群+architecture+機能間depends_onを生成し、各featureをsystem-dev-planner(ミクロ層)で13タスク仕様書へ細分解してpromoted taskをparent_feature付きでlocal graphへatomic登録後、resolved tracker bindingに従いBeads/GitHub/noneへ投影する",
+    "グラフの依存×完了状態から ready-set を算出し、次おすすめタスクと並列実行可能バッチを提示する",
+    "作業コンフリクト最小化: 同期コンフリクト(id+updated_at)に加え、タスクノードのリソーススコープ(touches)重複回避 + conflict-aware スケジューリングで作業コンフリクトを最小化する",
+    "成果物種別の正規ルートは issues/tasks/specs/architecture/features/docs の6独立ディレクトリとし、artifact_kindを物理配置、project_id/domain/status/tags/graph_node_idをfrontmatter metadataとして扱うhybrid directory policyを採用する",
+    "特定の issue/task/specification/architecture/document ノードをmetadataで検索し状態確認できる読取り専用 (read-only) 経路を提供する",
+    "GitHub Issue の close/delete はローカルグラフを物理削除せず tombstone/status 遷移として双方向伝播する",
+    "破壊的 gh 操作 (sync/decompose の Issue 起票・更新) には dry-run/preview 経路と暴発防止 guard を備える",
+    "issue/task/specification/architecture/document の管理成果物は人間可読 markdown のディレクトリファースト配置 + ノード薄メタ(file_path参照) + 差分更新(全書換禁止) + 編集後の即時schema検証(C11)/破壊的変更のfail-closed guard(C10) により、直接編集で安全に修正改善できるようにする",
+    "ユーザーへ保存ディレクトリの指定を求めず、入力内容からartifact_kind/domain/project_idを自動分類し、分類根拠・confidence・候補pathをpreviewして低信頼時だけ確認する",
+    "各artifact kind直下はflat-firstとし、1 leafが200件を超えた場合のみdomain、再超過時はproject_id、なお超過する場合のみYYYY/MMへ段階分割する。自動collapseは禁止し、再配置はdry-run migration manifest・link検証・rollbackを伴う",
+    "graph_node_idは移動や再分類後も不変、file_pathは正規routing policyから再計算可能な派生値とする",
+    "task/issue/document/specification/architecture の各 artifact kind はテンプレートフォーマット正本 (frontmatter 必須キー + 本文必須セクション床) を plugin 内に持ち、init が導入先へ scaffold し node 作成が適用し schema 検証が必須セクション欠落を fail-closed で検出する",
+    "architecture テンプレートは backend/frontend/infra/database/security 等の subtype を持ち subtype 別必須セクション (採用アーキテクチャパターン/技術スタック/データ構成 等) を定義する。specification テンプレートは API 情報 (endpoint/request/response/error 等)・データ構造の必須セクションを定義する",
+    "要件定義はテンプレート必須セクションの充足度 (implementation-readiness) を機械判定し、不足セクションを列挙して実装着手可否を可視化する",
+    "仕様書・アーキテクチャの新規作成/更新はplugins/system-spec-harness/を引用し、ヒアリング・出典・確定章保護・完成度評価ロジックをdev-graph側へ複製しない",
+    "システム開発タスク仕様書はplugins/plugin-dev-planner/の13フェーズ/目録/task-DAG/handoff/独立評価の構造を引用するが、plugin component_kind/build_target語彙はsystem workstream/実装対象path/deploy unitへ置換する",
+    "system-spec-harnessの確定成果物とimplementation-readiness=completeをシステム開発タスク仕様書生成および実装handoffの前提条件とする",
+    "ハーネスcode/assetsはsymlink元から利用してよいが、管理content/state/config authorityは毎回呼出し元repository内に限定しsymlink元へ書き込まない",
+    "repository root解決優先順位は明示--repo-root > trusted project environment > git rev-parse --show-toplevel > cwd markerとし、解決不能・root外realpath・broken symlinkはfail-closedにする",
+    "保存するfile_path/source_pathはrepository相対とし、repo-local .dev-graph/config.jsonが6正規root(issues/tasks/specs/architecture/features/docs)とsystem-spec参照rootを定義する。複数repo間でcache/state/lockを共有しない",
+    "GitHub Projects v2連携はgh CLIの既存認証だけを使用し、PAT/token値や環境固有project/item/field node IDを設定正本へ保存しない。owner login + project number + field name/option nameを設定し、node IDは実行時解決してrepo-local cacheにのみ保持する",
+    "task specificationのローカルpromotionとdev-graph登録を外部publicationより先にcommitし、GitHub Issue/Project writeの部分失敗で確定済みローカル成果物をrollbackしない。失敗はsync_state=pending_retryとして再実行可能にする",
+    "GitHub Issueの競合はupdated_at、Projects v2 custom fieldの競合はlast-synced snapshotを基準にした3-way diffで判定し、local/remote双方変更は自動上書きせずmanual conflictへ送る",
+    "task完了の既定authorityはdefault branchへmergeされたlinked PRとし、pull_request closed未mergeだけではdoneにしない。GitHub repositoryのauto-close設定が無効でもC03 reconciliationがmerged evidenceを検証して状態を収束させる",
+    "GitHub Projects built-in workflowによるDone反映はremote fast pathであり唯一の正本にしない。task/Issue/PR/Project状態の不一致はC03がremote event factsとlocal completion evidenceからrepairする",
+    "Claude PostToolUse hookは任意の高速化経路であり唯一の完了検知にしない。hook未設定・offline・symlink source不在のCIでもmanual/scheduled reconciliationで収束可能にする",
+    "Claude Code hookの共有既定はplugin hooks/hooks.jsonとし、project .claude/settings.json fallbackとの同時有効化を禁止する。hook sourceはrepo-local configに一意記録する",
+    "Claude Code PostToolUseは成功済みBashだけを観測しgit pull/merge/gh pr merge以外ではno-op (execution_tracker=beadsのrepoではgit pushもbeads還流トリガーとして観測)、reconciliationはasyncで実行する。TaskCompletedはClaude作業単位の終了でありGitHub task doneと同一視せず、対象leaseをpending_reviewへparkする",
+    "hook commandは${CLAUDE_PROJECT_DIR}/${CLAUDE_PLUGIN_ROOT}を引用符付き固定command stringとして渡し、stdin/tool commandをshellへ再展開しない。stdin schema検証、realpath containment、repo-local lock/event ledger、出力redactionを必須とする",
+    "Git worktreeごとのcontent authorityは当該worktree rootとし、worktree横断の一時coordination metadataだけは検証済みgit common dir配下のdev-graph領域へ保存できる。仕様本文・graph・secret・絶対worktree pathはgit common dirへ保存しない",
+    "同一graph_node_idのactive leaseはrepository_id内で最大1件とし、claimは原子的create、heartbeatと通常releaseはowner一致、期限切れreclaimは監査event付きとする。例外はC26の未消費completion eventをC27がrepo/task/merge SHA/policyまで一致検証して一度だけconsumeする監査付きsystem-releaseに限定する",
+    "feature branch上のhookは完了状態を仕様書へ直接書かずpending eventだけを記録する。cleanなdefault branch worktree以外でdurable lifecycle projectionを更新しない",
+    "実行タスクのトラッカーはrepo-local configのexecution_tracker (mode: beads|github|both) で選択し、ノード単位のtracker_bindingを単一publication authorityとする",
+    "tracker_binding=beadsノードへのgh-bridge (C12) Issue mutationと、bridge (C28) 以外からのbd直接呼び出しを禁止する",
+    "bd依存は--json/JSONL/external_refの安定surfaceのみとし、bd version受容windowは>=1.1.0 <2.0.0とする"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": []
+}

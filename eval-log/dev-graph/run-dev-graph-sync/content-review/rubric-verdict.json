@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "skill_md_sha256": "7c0ffd26130cf92707c02f5152e3349e135525d44b8f45ea0f78cbd228a4b246"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7", "OUT8", "OUT9"],
+    "positive_feedback": [
+      "FM-001/NM-001 適合: name=run-dev-graph-sync は run- prefix + kebab-case でディレクトリ basename と一致",
+      "BD-001/BD-002 適合: '## Purpose & Output Contract'・'## Protocol'・'## Gotchas' を保持し、冒頭30行に authority 混在拒否の禁則を集約",
+      "SSOT 適合: 責務を Protocol と R1-R8 に分割し reference_refs で execution-tracker/github-lifecycle contract を外部化、body を約93行に抑えて Less is More を維持"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric v1.3.0 の kind=skill rule で genuine 採点した。FM-001(prefix+kebab len<=60)/FM-002(2 trigger '〜たいとき'句点終端)/FM-003(trigger 数=2)/FM-004(内部動詞なし)/BD-001(Purpose & Output Contract)/BD-002(Gotchas)/BD-003(frontmatter 除く body 約93行<=300)/NM-001(basename==name)/PD-001(body<=100 かつ references/ 存在)/PD-002(冒頭30行に Purpose 見出し+『混ぜない/逆流させない/拒否する』禁則) が全 PASS。KL-001..005 は knowledge/ ディレクトリ・frontmatter.knowledge_loop 不在で skip=PASS。9 個の OUT criteria を持つ複雑 skill だが単一責務(sync)に凝集し high severity 違反 0 件のため PASS。body 全文 (sha256 7c0ffd26130cf92707c02f5152e3349e135525d44b8f45ea0f78cbd228a4b246) を単一責務・命名・境界・出力契約・SSOT 観点で確認済み。"
+}

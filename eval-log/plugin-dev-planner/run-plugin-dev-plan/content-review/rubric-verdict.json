@@ -2,33 +2,27 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "62ff263535ca42c7258c1fcf577da92d28a86c26d61bdfb35524ca5a1fc0a3fa"
+    "skill_md_sha256": "347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
-  },
-  "reviewer": "capability-build R2 independent rubric projection (+ PR-flow description 書式修正 独立再確認 2026-07-11)",
-  "reviewed_at": "2026-07-11T06:41:52+00:00",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "C17-C19 target/runtime contract gates and route evidence are current",
-      "target shape remains backward compatible with fixed-13-phase"
+      "単一責務が明確: 出力は計画 (index + 13 phase files + component-inventory.json) のみで実 build を持たず run-skill-create/run-build-skill へ委譲すると境界章で明示",
+      "出力契約が SSOT で pin: 6 deliverables を §目的と出力契約に列挙し references/io-contract.md §9/§11 を正本、specfm.py を形状 SSOT として一元化",
+      "評価基準を inventory component へ operationalize (quality_gates + harness_coverage(block)) し feedback_contract.criteria を purpose-acceptance 由来に縛り緑のパラドクスを回避"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "capability-build",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Evidence: 864 passed, 1 skipped; route reports complete; review artifact R2。[PR-flow re-pin 2026-07-11] frontmatter description を lint-skill-description の R1(トリガー≤2)/R5(末尾『使う。』) 準拠へ書式修正 (task-graph 第3射影の情報は保持・意味不変) したため sha が 6c586fb… → 62ff263… へ更新。独立 SubAgent が current SKILL.md を再確認し description 変更は cosmetic・新規 finding 0・既存 PASS 維持を genuine 判定 (呼出元も二段確認済み)。"
+  "notes": "現 SKILL.md (sha256 347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点 (旧 verdict は stale SHA 62ff263… のため再固定)。FM: name は kebab + run- prefix、description は日本語 Use-when (トリガー凝縮・末尾『使う。』)、argument-hint/arguments 明示、effect:local-artifact、allowed-tools は allowlist。BD: §目的と出力契約で 6 deliverables と完了条件を明示、Gotchas 節あり、境界章で実 build 非生成を宣言、references/ 群への progressive disclosure が厚く PD を満たす。NM: ディレクトリ名 run-plugin-dev-plan と name 一致。境界: 具体値直書き禁止で {{PROJECT_ROOT}}/$CLAUDE_PLUGIN_ROOT/self-relative 変数化、cross-plugin SSOT は vendoring/self-derive、配布登録動作を一切しないと明記。SSOT: io-contract §11 表 + specfm.GATE_SCRIPTS + harness-creator-spec-reflection.md 46 行を単一正本に集約し二重保持は台帳+parity test で強制。所見(重大でない): 全体 377 行で rubric BD の ≤300行 目安を超過するが references 委譲が厚く計画メタ skill の契約密度に起因、high severity ではない。high severity (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は feedback_contract.criteria の全 id (IN1/IN2/OUT1/OUT2) を被覆。"
 }

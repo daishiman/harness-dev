@@ -96,6 +96,14 @@ def test_clean_handoff(tmp_path, handoff):
     assert handoff.main([str(path)]) == 0
 
 
+def test_route_status_is_plan_time_planned_only(tmp_path, handoff):
+    """consumer が handoff を実行台帳として done へ書換える境界違反を拒否する。"""
+    path, data = _write_plan(tmp_path)
+    data["routes"][0]["status"] = "done"
+    errs = handoff.validate_handoff(data, path)
+    assert any("plan-time 宣言 'planned'" in e for e in errs)
+
+
 def test_inventory_provenance_compares_depends_on(tmp_path, handoff):
     path, data = _write_plan(tmp_path)
     _write_inventory_for_handoff(tmp_path)

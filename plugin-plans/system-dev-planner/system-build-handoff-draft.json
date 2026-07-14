@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "status": "contract-draft-not-authorized",
+  "source": {
+    "promotion_receipt": "atomic-promotion-receipt.json",
+    "feature_package": "feature-package.json",
+    "workstream_inventory": "workstream-inventory.json",
+    "task_graph": "task-graph.json",
+    "task_specs": "task-specs/phase-01..13.md (exactly 13 executable tasks)"
+  },
+  "entry_gates": ["caller_repo_identity_pinned", "system_spec_harness_version_0.1.0", "implementation_readiness_complete", "deterministic_gates_pass", "independent_four_conditions_pass", "evaluated_digest_equals_published_digest", "dev_graph_runtime_contract_compatible", "dev_graph_registration_receipt_complete"],
+  "runtime_peer_preflight": {
+    "peer": "dev-graph",
+    "required_contracts": ["graph-node schema supports parent_feature/feature_package_id/phase_ref", "P01..P13 exact 13 registration receipt", "execution-tracker macro/micro authority"],
+    "required_receipt": "dev-graph-registration-receipt.json",
+    "success_condition": "status=registered and expected_count=applied_count=13 and phase_refs exact-set=P01..P13 and one parent_feature/feature_package_id"
+  },
+  "route_by_build_target_kind": {
+    "application-code": "task-graph-build/capability-build",
+    "skill": "harness-creator/run-skill-create",
+    "sub-agent": "harness-creator/run-build-skill",
+    "slash-command": "harness-creator/run-build-skill",
+    "hook": "harness-creator/run-build-skill",
+    "script": "plugin-scaffold"
+  },
+  "authorization": "L4 executor must obtain its own authorization; this L3 draft never executes implementation",
+  "fail_closed_on": ["unpromoted_generation", "readiness_incomplete", "digest_mismatch", "task_count_not_13", "phase_exact_set_mismatch", "mixed_parent_or_package", "cross_feature_task_dependency", "dev_graph_contract_incompatible", "missing_or_partial_registration_receipt", "unregistered_task_node", "path_escape", "unknown_route"]
+}

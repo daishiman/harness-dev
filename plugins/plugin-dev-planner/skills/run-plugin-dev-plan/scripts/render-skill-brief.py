@@ -19,7 +19,8 @@
 handoff routes[].build_args.brief_path (plan_dir 相対・推奨 briefs/skill-brief-<id>.json) が
 宣言する brief 実体を生成する renderer。射影は 3 段:
 
-  (1) planner 固有キー (build 軸 routing / plan 品質ゲート / loop 配線) を除去する
+  (1) planner 固有キー (build 軸 routing / plan 品質ゲート / sibling coupling) を除去する
+      (生成器入力である goal_seek は skill-brief へ保持する)
   (2) skill_kind→kind へ写像する (inventory は component_kind との衝突回避で skill_kind を
       canonical に携帯する。解決は specfm._skill_kind_of と同一)
   (3) 実 schema (plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json
@@ -43,13 +44,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import specfm  # noqa: E402
 
 # skill-brief.schema.json (additionalProperties:false) の properties に無い planner 固有キー。
-# build 軸 routing / plan 品質ゲート / loop 配線は plan 側 (inventory/handoff) に残し brief へ写さない。
+# build 軸 routing / plan 品質ゲート / sibling coupling は plan 側
+# (inventory/handoff) に残し brief へ写さない。goal_seek は生成器が
+# inline/task-graph 変種を決める必要入力なので schema どおり pass-through する。
 # skill_kind/kind は (2) の rename 対象として project_brief が別扱いする。
 PLANNER_ONLY_KEYS = frozenset({
-    "id", "component_kind", "name", "depends_on", "spec", "status",
+    "id", "component_kind", "name", "depends_on", "couples_with", "spec", "status",
     "build_target", "builder", "builder_status", "build_kind", "placement_scope", "gap_ref",
     "quality_gates", "harness_coverage", "entities_covered", "applicability",
-    "prompt_layer", "combinators", "goal_seek", "feedback_contract",
+    "prompt_layer", "combinators", "feedback_contract",
 })
 # 実 schema (owner) の plugins/ 配下相対パス。
 SCHEMA_REL = "harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json"

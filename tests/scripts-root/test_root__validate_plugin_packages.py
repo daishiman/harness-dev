@@ -292,7 +292,7 @@ def test_main_header_lists_advisory_pkgs(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     # ヘッダに plugin 件数と advisory 一覧が出る
     assert "1 plugin を検査" in out
-    assert "['PKG-002', 'PKG-004']" in out
+    assert "['PKG-002', 'PKG-004', 'PKG-014']" in out
 
 
 # ============================================================================

@@ -22,6 +22,12 @@
       "enum": ["static", "fork", "live"],
       "description": "受入検証の最低段 (順序 static<fork<live)。宣言は任意 (後方互換) だが、frontmatter/plan の静的信号から validate-build-plan.py の derive_acceptance_tier() が決定論導出する値を下回る宣言 (緩め方向) は violation。hooks配線 or allowed-tools に Skill/Agent/AskUserQuestion → live、それ以外の loop 実行系 (run/wrap/delegate) → fork、非実行系 → static。"
     },
+    "verification_profile": {
+      "type": "string",
+      "enum": ["incremental", "exhaustive", "build-only"],
+      "default": "incremental",
+      "description": "post-build検証量。incremental=証跡再利用+差分のみ、exhaustive=30思考法/全live明示実行、build-only=LLM/live未実施を記録。"
+    },
     "with_subagent": {
       "type": "object",
       "additionalProperties": false,

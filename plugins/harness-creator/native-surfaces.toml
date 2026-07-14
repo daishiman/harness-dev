@@ -1,0 +1,30 @@
+schema_version = 1
+
+[activation]
+claude_marketplace = "skills"
+codex_discovery = ".agents/plugins/marketplace.json"
+
+[codex]
+hooks_file = ".codex/hooks.json"
+config_file = ".codex/config.toml"
+features_hooks = true
+
+[discovery]
+marketplace_name = "harness-repo-internal"
+plugin_name = "harness-creator"
+source_path = "./plugins/harness-creator"
+installation = "AVAILABLE"
+authentication = "ON_INSTALL"
+category = "Internal-Tooling"
+distributable = false
+scope = "repo-internal"
+activation_requires = ["user-install", "user-enable", "user-hook-trust"]
+
+[[hooks]]
+id = "harness-creator-session-start-sync"
+owner = "harness-creator"
+event = "SessionStart"
+matcher = "startup|resume|clear"
+command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\""
+delivery = "plugin"
+products = ["claude", "codex"]

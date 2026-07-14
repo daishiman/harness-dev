@@ -1,0 +1,33 @@
+schema_version: "1.0"
+plugin: system-dev-planner
+composition:
+  skills:
+    - run-system-dev-plan
+    - assign-system-dev-plan-evaluator
+  agents:
+    - system-dev-plan-elicitor
+    - system-dev-plan-architect
+    - system-dev-plan-evaluator
+  command: system-dev-plan
+  hook: guard-implementation-readiness
+  scripts:
+    - check-implementation-readiness.py
+    - resolve-project-context.py
+    - init-project-layout.py
+    - promote-system-plan.py
+    - validate-system-plan.py
+upstream:
+  plugin: system-spec-harness
+  version: "0.1.0"
+  entrypoints:
+    - run-system-spec-compile
+    - assign-system-spec-completeness-evaluator
+runtime:
+  distribution: symlink
+  content_authority: caller-repository
+  content_boundary: $CLAUDE_PROJECT_DIR
+  candidate_acceptance: realpath(resolved_repo_root) == realpath($CLAUDE_PROJECT_DIR)
+  resolved_root_export: SYSTEM_DEV_RESOLVED_REPO_ROOT
+  config: .dev-graph/config.json
+  isolation: per-repository
+  promotion: same-digest-atomic

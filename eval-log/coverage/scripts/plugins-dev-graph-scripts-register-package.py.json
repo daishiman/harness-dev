@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/register-package.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope: explicitly selected dev-graph output and immutable receipt, dependencies:[_common.py])。3 サブコマンド (register / preflight / execution-context)。_validate_schema は stdlib-only JSON Schema subset ($ref 内部限定・allOf・if/then・prefixItems・items:false・contains・min/maxProperties 被覆)。preflight_contract は system-dev-planner plugin.json version・package-contract entry_points の物理存在・schema version pin を検証 (cross-plugin 契約ゲート)。_validate_registration が要: REGISTRATION_KEYS 完全一致、exact-13 P01..P13、node_ids==package.task_node_ids(phase 順)、binding_intents key 集合一致、repo-config-default sentinel 強制、source_lineage digest 一致、tasks/ path、forward phase 依存のみ。_resolved_nodes が tracker binding と github_publication.mode を解決し sentinel 残存を拒否。register 書込は _single_writer(fcntl LOCK_EX|NB) で単一 writer、graph は atomic_json、receipt は os.link で immutable 化 (FileExistsError→immutable receipt already exists)、receipt 作成失敗時は graph を original へ rollback。既存 13 node は resolved と厳密一致 + receipt identity/revision 照合で冪等 replay。execution-context projection は worktree_id で dedup、revision bump、graph_sha256 を書込後に再計算。main は broad except→{valid:false,error} exit2 で fail-closed。SMELL: os.link rollback 経路は graph を書換→復元の二重原子書込 (許容範囲)、_validate_schema 重複 (validate-graph-schema.py と別実装で微妙に差) は SSOT 観点の軽微 smell。TESTS: test_register_package.py が register/preflight/execution-context/idempotency を exercise。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

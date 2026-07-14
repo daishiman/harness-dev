@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://harness/schemas/pkg-validator-findings.json",
   "title": "PKG Validator Findings",
-  "description": "assign-plugin-package-evaluator が出力する findings JSON の schema。PKG-002〜008 の検査結果を統一形式で表現。",
+  "description": "assign-plugin-package-evaluator が出力する findings JSON の schema。PKG-002〜008 / PKG-014 の検査結果を統一形式で表現。",
   "type": "object",
   "required": ["run_id", "target_plugin", "package_mode", "pkg_checks", "verdict"],
   "properties": {
@@ -20,7 +20,7 @@
     "pkg_checks": {
       "type": "object",
       "patternProperties": {
-        "^PKG-(00[2-8])$": {
+        "^PKG-(00[2-8]|014)$": {
           "type": "object",
           "required": ["status", "findings", "last_run_at"],
           "properties": {
@@ -38,7 +38,7 @@
                     "pattern": "^F-PKG\\d{3}-\\d{3}$"
                   },
                   "pkg_id": {
-                    "enum": ["PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008"]
+                    "enum": ["PKG-002", "PKG-003", "PKG-004", "PKG-005", "PKG-006", "PKG-007", "PKG-008", "PKG-014"]
                   },
                   "severity": {
                     "enum": ["P0", "P1", "P2"]

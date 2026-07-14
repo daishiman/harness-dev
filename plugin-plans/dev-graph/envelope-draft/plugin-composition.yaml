@@ -1,0 +1,37 @@
+plugin: dev-graph
+schema_version: 1.0.0
+depends_on:
+  system-spec-harness:
+    version: ">=0.1.0 <1.0.0"
+    required_entry_points:
+      - run-system-spec-elicit
+      - run-system-spec-doc-fetch
+      - run-system-spec-compile
+      - assign-system-spec-completeness-evaluator
+  plugin-dev-planner:
+    relation: design-contract-reference
+    version: ">=0.1.0 <1.0.0"
+entry_flow:
+  - dev-graph spec
+  - dev-graph plan
+  - dev-graph requirements
+  - dev-graph decompose
+  - dev-graph next
+failure_policy: fail-closed
+runtime_context:
+  distribution: symbolic-link-supported
+  code_root: $CLAUDE_PLUGIN_ROOT
+  content_root: $CLAUDE_PROJECT_DIR
+  content_boundary: $CLAUDE_PROJECT_DIR
+  candidate_acceptance: realpath(resolved_repo_root) == realpath($CLAUDE_PROJECT_DIR)
+  resolved_root_export: DEV_GRAPH_REPO_ROOT
+  config: .dev-graph/config.json
+  containment: caller-repository-only
+  coordination_root: $GIT_COMMON_DIR/dev-graph
+  coordination_content: ephemeral-leases-events-cache-only
+hooks:
+  source_policy: plugin-preferred-project-fallback-never-both
+  events:
+    - SessionStart
+    - PostToolUse:Bash
+    - TaskCompleted

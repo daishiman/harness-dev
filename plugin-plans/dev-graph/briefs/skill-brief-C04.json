@@ -1,0 +1,68 @@
+{
+  "skill_name": "run-dev-graph-requirements",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "要件定義を導出",
+    "dev-graph requirements",
+    "capability-buildへhandoff"
+  ],
+  "output_contract": "要件定義 handoff パッケージ (要件定義書 + 参照ノードごとのimplementation_readiness/missing_sections一覧 + capability-build/task-graph build 向け handoff 参照 + グラフスナップショット)。readiness=incomplete のノードが残る場合はhandoffを保留し不足一覧を提示する",
+  "boundary": "入力=グラフの5 artifact kindノード/出力=要件定義書、readiness判定結果、capability-build handoff。実装コードは自身で生成しない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "gh"
+  ],
+  "deterministic_checks": [
+    "gh-bridge.py",
+    "render-graph-html.py",
+    "validate-graph-schema.py"
+  ],
+  "external_systems": [
+    "GitHub Issues"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "要件抽出",
+    "implementation-readiness判定",
+    "不足セクションのsurface",
+    "要件定義書生成",
+    "capability-build handoff"
+  ],
+  "goal": "system-spec-harness確定成果物とsystem development task planを含むグラフ情報から実装要件を導出し、implementation-readiness完了時だけcapability-build/task-graph buildへ実装をhandoffした状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "実装コード生成は既存 capability-build/task-graph build へ責務分離するため、本ハーネスはグラフ情報から要件定義を導出するところまでを担う。要件定義が参照する各成果物がテンプレート必須セクションを充足していない (implementation-readiness不足) まま handoff すると後段 build が要件不足のまま着手してしまうため、本 skill が readiness を機械判定し不足セクションを事前に surface する (要件C20)。system development task planはexternal plugin system-dev-plannerのrun-system-dev-planをSkill呼出しで引用する (external_contract_ref: plugin-plans/system-dev-planner/handoff-run-plugin-dev-plan.json)。implementation_readiness/validator (validate-system-plan.py) も同pluginが所有する",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "要件定義導出対象のグラフノード範囲と capability-build handoff 先をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "5 artifact kindを横断し、C19が取り込んだsystem-spec-harness成果物とexternal plugin system-dev-planner (run-system-dev-plan) 由来のsystem task planを引用する要件抽出計画を組み立てる",
+      "prompt_required": true
+    },
+    {
+      "id": "R2b-readiness",
+      "summary": "C11の純粋validation reportとC02が保存したimplementation_readiness/evaluation_statusを照合し、不一致またはincomplete/pending/fail/staleならmissing sectionsをsurfaceしてhandoffを保留する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-handoff",
+      "summary": "C11のreadiness検証とsystem-dev-planner所有のsystem-plan検証 (validate-system-plan.py) の完了時だけ要件定義書をcapability-build/task-graph buildへhandoffする。不足時はmissing_sectionsを返して停止し、実装コードは生成しない",
+      "prompt_required": true
+    }
+  ]
+}

@@ -66,6 +66,23 @@ CHANGE_LEVELS = ("additive", "structural")
 PROCESSED_STATUSES = ("accepted", "rejected", "superseded")
 
 
+def _validation_marker(graph: dict) -> str:
+    """Preserve the graph's producer shape when validating discovered additions.
+
+    Target-shape graphs carry ``execution_kind`` on every node.  Treating those
+    graphs as the legacy fixed shape would skip the executable-leaf contract and
+    allow a discovered node without task_spec_ref/produces/phase parentage to be
+    accepted.  A graph with no execution_kind remains the legacy shape for
+    backward compatibility.
+    """
+    nodes = graph.get("nodes") if isinstance(graph, dict) else None
+    if isinstance(nodes, list) and any(
+        isinstance(node, dict) and "execution_kind" in node for node in nodes
+    ):
+        return "task-graph-derived"
+    return "fixed-13-phase"
+
+
 def accept(form: dict, graph: dict, approved: bool = False) -> dict:
     """discovered-task form を受理し、更新後の canonical task-graph を返す。
 
@@ -225,7 +242,10 @@ def drain_inbox(inbox_dir: Path, graph: dict, approved: bool = False) -> tuple[d
     # form status も一切コミットせず元 graph を返す。C08 完了ゲートが block を継続し外ループが
     # 不正 graph を書き戻せない (accept の depends_on 自動配線で additive は通常 valid・
     # structural 承認済で循環を招くケース等をここで捕捉)。
-    violations = _vtg.validate(working, {}) if accepted_paths else []
+    violations = (
+        _vtg.validate(working, {}, marker=_validation_marker(working))
+        if accepted_paths else []
+    )
     if violations:
         results["accepted"] = []
         results["validation_failed"] = violations

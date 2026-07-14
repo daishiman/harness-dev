@@ -55,16 +55,24 @@ except Exception:  # pragma: no cover
     _HAS_YAML = False
 
 
+RESPONSIBILITY_ID_PATTERN = (
+    r"^R[0-9]+[a-z]?(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?$"
+)
+_RESPONSIBILITY_FILE_STEM_PATTERN = (
+    r"R[0-9]+[a-z]?(?:-[a-z0-9]+(?:-[a-z0-9]+)*)?"
+)
 LAYER_YAML_PATH_PATTERNS = {
     "skill-local-v1": re.compile(
         r"^plugins/[a-z][a-z0-9-]*/skills/(ref|run|wrap|assign|delegate)-"
-        r"[a-z0-9]+(-[a-z0-9]+)*/prompts/R[0-9]+(-[a-z0-9]+(-[a-z0-9]+)*)?\.(md|yaml)$"
+        r"[a-z0-9]+(-[a-z0-9]+)*/prompts/"
+        + _RESPONSIBILITY_FILE_STEM_PATTERN
+        + r"\.(md|yaml)$"
     ),
     "agents-legacy": re.compile(
         r"^plugins/[a-z][a-z0-9-]*/agents/prompts/[a-z][a-z0-9-]*\.(md|yaml)$"
     ),
 }
-RESPONSIBILITY_ID_RE = re.compile(r"^R[0-9]+$")
+RESPONSIBILITY_ID_RE = re.compile(RESPONSIBILITY_ID_PATTERN)
 PROMPT_REQUIRED_KINDS = {"run", "assign"}
 PROMPT_OPTIONAL_KINDS = {"ref", "wrap"}
 PROMPT_SKIP_KINDS = {"delegate"}
@@ -182,12 +190,21 @@ def _resolve_brief_kind(data: dict) -> str | None:
     return None
 
 
-def _validate_prompt_generation_model(data: dict) -> list[str]:
+def _validate_prompt_generation_model(
+    data: dict, trace_path: Path | None = None
+) -> list[str]:
     """Validate trace.prompt_generation_model against reproducibility-trace-schema.md.
 
-    Enforces rules 1-6 from the schema: policy resolution, regex path match,
-    id↔filename consistency, anchor_coverage emptiness, and required-policy
-    lint PASS gating. Kind-based optionality follows agent-template.md table.
+    Enforces the schema's policy resolution, brief↔trace responsibility-set
+    equality, regex path match, id↔filename consistency, anchor_coverage
+    emptiness, and required-policy lint PASS gating. Kind-based optionality
+    follows agent-template.md table.
+
+    ``trace_path`` is optional for backward-compatible pure-function callers.
+    The CLI always supplies it; when ``brief_path`` is declared, the brief must
+    be loadable and its prompt-required responsibility IDs must equal the trace
+    IDs exactly. ``prompt_required`` defaults to true and explicit false is
+    excluded, matching the build loop in references/build-steps.md.
     """
     errs: list[str] = []
     model = data.get("prompt_generation_model")
@@ -261,7 +278,8 @@ def _validate_prompt_generation_model(data: dict) -> list[str]:
         rid = str(item.get("id", "")).strip()
         if not RESPONSIBILITY_ID_RE.match(rid):
             errs.append(
-                f"per_responsibility[{idx}].id={rid!r} must match ^R[0-9]+$"
+                f"per_responsibility[{idx}].id={rid!r} must match "
+                f"{RESPONSIBILITY_ID_PATTERN}"
             )
         if rid in seen_ids:
             errs.append(f"per_responsibility[{idx}].id={rid!r} duplicated")
@@ -318,6 +336,54 @@ def _validate_prompt_generation_model(data: dict) -> list[str]:
             errs.append(
                 "cross_ref.prompt_creator_trace_path required when policy=required"
             )
+
+    brief_ref = str(data.get("brief_path", "") or "").strip()
+    if trace_path is not None and brief_ref:
+        brief = _load_brief(brief_ref, trace_path)
+        if brief is None:
+            errs.append(
+                "prompt_generation_model brief_path could not be loaded for "
+                f"responsibility-set validation: {brief_ref!r}"
+            )
+        else:
+            responsibilities = brief.get("responsibilities", [])
+            if not isinstance(responsibilities, list):
+                errs.append(
+                    "brief.responsibilities must be an array for "
+                    "prompt_generation_model responsibility-set validation"
+                )
+            else:
+                expected_ids: set[str] = set()
+                for idx, responsibility in enumerate(responsibilities):
+                    if not isinstance(responsibility, dict):
+                        errs.append(
+                            f"brief.responsibilities[{idx}] must be object"
+                        )
+                        continue
+                    if responsibility.get("prompt_required", True) is False:
+                        continue
+                    expected_id = str(responsibility.get("id", "")).strip()
+                    if not RESPONSIBILITY_ID_RE.match(expected_id):
+                        errs.append(
+                            f"brief.responsibilities[{idx}].id={expected_id!r} "
+                            f"must match {RESPONSIBILITY_ID_PATTERN}"
+                        )
+                        continue
+                    if expected_id in expected_ids:
+                        errs.append(
+                            f"brief.responsibilities[{idx}].id={expected_id!r} "
+                            "duplicated"
+                        )
+                    expected_ids.add(expected_id)
+
+                missing_ids = sorted(expected_ids - seen_ids)
+                extra_ids = sorted(seen_ids - expected_ids)
+                if missing_ids or extra_ids:
+                    errs.append(
+                        "prompt_generation_model.per_responsibility id set "
+                        "mismatch vs brief prompt-required responsibilities: "
+                        f"missing={missing_ids}, extra={extra_ids}"
+                    )
 
     return errs
 
@@ -437,7 +503,7 @@ def _fallback_feedback_contract_ssot():
     fc.FEEDBACK_LOOP_KINDS = {"run", "wrap", "delegate"}
     fc.FEEDBACK_SKIP_KINDS = {"ref", "assign"}
     fc.CRITERIA_ID_RE = _re.compile(r"^(IN|OUT|C)[0-9]+$")
-    fc.CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"}
+    fc.CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"}
     fc.validate_criteria = lambda criteria, **kw: [
         "WARN: feedback_contract_ssot.py 不在のため criteria 検証を skip しました "
         "(vendored copy が見つからない異常状態。plugins/harness-creator/scripts/ を確認)。"
@@ -945,7 +1011,11 @@ def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> li
     if not isinstance(caps, list) or not caps:
         f.append("plugin-composition.capabilities must be non-empty array")
         caps = []
-    cap_kinds = {"skill", "agent", "hook", "command", "prompt", "workflow"}
+    # Keep this set aligned with capability-manifest.schema.json's
+    # kindPluginComposition.capabilities[].kind enum.  Scripts do not carry a
+    # standalone CapabilityManifest, but a composition may still declare the
+    # bundled script as a dependency endpoint.
+    cap_kinds = {"skill", "agent", "hook", "command", "prompt", "workflow", "script"}
     plugin_name = manifest_path.parent.name if manifest_path is not None else data.get("name")
     cap_refs: set[str] = set()
     for i, c in enumerate(caps):
@@ -1448,7 +1518,7 @@ def main() -> int:
             if not model.get(key):
                 errs.append(f"{model_name}.{key} is empty")
 
-    errs.extend(_validate_prompt_generation_model(data))
+    errs.extend(_validate_prompt_generation_model(data, path))
 
     errs.extend(_validate_prompt_provenance(data))
 

@@ -5,10 +5,10 @@
 name: harness-creator
 description: Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.1.0
+version: 1.3.0+codex.20260713-1
 owner: team-platform
 since: 2026-05-17
-last-audited: 2026-05-22
+last-audited: 2026-07-13
 # 単独配布非対応: marketplace / bundle には含めず、repo を clone した開発環境でのみ .claude/ symlink 経由で利用する。
 distribution: repo-bundled
 
@@ -30,6 +30,8 @@ contract:
     - "全宣言面(lint 集合/完了条件/ゲート/評価 sink)は機械可読正本と対向突合 lint を持つこと。新しい宣言面を追加する際は突合 lint を同時に配線し、突合を持たない manual 宣言は理由注記付きの意図的残置のみ許容する。manual 宣言の残存数は ratchet 監視され増加は CI FAIL (enforcement: skill-governance-lint/scripts/lint-declaration-coverage.py)"
     - "run-skill-live-trial / run-skill-iter-improve (実行 acceptance 系) はローカル開発環境限定であり、量産先 plugin へ配備せず (feedback-deploy の配備対象は run-skill-feedback のみ) リモート CI でも実走しない (D14)。plugin 全体の非配布は distributable:false + NEVER_DISTRIBUTE denylist の二重閉路が保証する (enforcement: scripts/validate-plugin-completeness.py NEVER_DISTRIBUTE + run-build-skill workflow-manifest feedback-deploy 配備対象限定)"
     - "behavioral claim (自走/入れ子 Skill/対話 gate/goal 適合) の受け入れ証拠は live-trial verdict (schema 適合 + skill_dir_tree_sha 一致 + overall.verdict=PASS + tier=live 非降格) + transcript のみとし、静的レビュー成果物を Gate D の収束根拠に混ぜないこと (enforcement: scripts/lint-live-trial-verdict.py — D13 パイロットゲート中は record-only WARN、P3 常設化 go/no-go で --enforce 昇格)"
+    - "native surface projection の desired-set owner は scripts/sync-native-surfaces.py (C01) だけとし、ローカル修復は C01 apply→C01 check、CI は C01 check-only とする。user global config / trust store / beads-owned state は書かず、install/enable/trust/re-trust/uninstall は pending_user_gate とする (enforcement: tests/test_native_surface_repo_integration.py)"
+    - "native-surfaces.toml は共通 hook delivery と Codex discovery entry の意味論SSOT、plugin manifests/root marketplace は capability/activation identity の正本とし、C01 が結合して `.claude/settings.json`・`.codex/hooks.json`・`.codex/config.toml`・`.agents/plugins/marketplace.json`へ product-specific adapter で投影する。plugin/project delivery owner を1つに限定し、非公式 `.agents/settings.json`・`.agents/{agents,commands,hooks}`・hooks.json+inline [hooks] 重複を禁止する (enforcement: scripts/check-native-surface-parity.py + tests/test_sync_codex_project_settings.py)"
 
 capabilities:
   # === Skills (kind=skill) ===
@@ -83,7 +85,14 @@ capabilities:
   - { kind: command, ref: commands/plugin-compose,    tier: core }
   - { kind: command, ref: commands/skill-improve,     tier: core }
 
+  # === Native surface orchestration (kind=script) ===
+  - { kind: script, ref: scripts/check-native-surface-parity.py, tier: core }
+  - { kind: script, ref: scripts/sync-codex-project-settings.py, tier: core }
+  - { kind: script, ref: scripts/sync-native-surfaces.py,        tier: core }
+  - { kind: script, ref: scripts/record-task-graph-knowledge.py, tier: core }
+
   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
+  - { kind: hook, ref: "hook:SessionStart/auto-sync-on-session-start", tier: core }
   - { kind: hook, ref: "hook:UserPromptSubmit/cache-refresh",         tier: extension }
   - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
   - { kind: hook, ref: "hook:PostToolUse-Skill/auto-record-lesson",   tier: core }
@@ -126,6 +135,7 @@ dependencies:
   - { from: skills/assign-plugin-package-evaluator, to: skills/ref-pkg-contract, type: evaluates }
   - { from: skills/run-skill-rubric-governance,   to: skills/ref-skill-design-rubric, type: extends }
   - { from: commands/capability-build,      to: skills/run-build-skill,             type: calls }
+  - { from: commands/capability-build,      to: scripts/sync-native-surfaces.py,    type: calls }
   - { from: commands/capability-review,     to: skills/run-elegant-review,          type: calls }
   - { from: commands/skill-improve,         to: skills/run-elegant-review,          type: calls }
   - { from: commands/plugin-compose,        to: skills/run-build-skill,             type: calls }
@@ -136,6 +146,9 @@ dependencies:
   - { from: skills/run-skill-iter-improve,  to: skills/run-build-skill,             type: reads }
   - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
   - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
+  - { from: "hook:SessionStart/auto-sync-on-session-start",        to: scripts/sync-native-surfaces.py, type: calls }
+  - { from: scripts/sync-native-surfaces.py, to: scripts/sync-codex-project-settings.py, type: calls }
+  - { from: scripts/sync-native-surfaces.py, to: scripts/check-native-surface-parity.py, type: calls }
 
 eval_sinks:
   - EVALS.json
@@ -153,6 +166,7 @@ governance:
 
 observability:
   hooks:
+    - SessionStart/auto-sync-on-session-start
     - PostToolUse-Skill/auto-record-lesson
     - PostToolUse-Skill/content-review-queue
     - PostToolUse-EditWrite/lint-capability-manifest

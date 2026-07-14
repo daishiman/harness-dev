@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-init",
+    "component_id": "C01",
+    "skill_md_sha256": "1db7dd6c2cde83fc50e02704fb3e3b725f66dd2209b08521c88a5fc52fc535f0"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_frontmatter_repo_root_and_artifact_failure_classification",
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/state/graph.json"
+      ],
+      "observed": "Running validate-graph-schema.py directly on the real initialized r3-init graph store returned exit 0 with valid=true, violations=[], missing_sections=[] (0 missing required keys); a graph placed outside the authority root was rejected exit 2 (fail-closed). The two pytest schema-gate nodes passed, covering required-key and invalid-authority rejection paths."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C01-OUT1-positive-idempotence",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20260713T090000-r3/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-init/live-trial/20260713T090000-r3/out/status.json + poll-state.json"
+      ],
+      "observed": "Replay of the captured init-positive-idempotence live trial (model claude-opus-4-6, poll gate_ticks=0, stall=0, status.json PASS). The r3-init fixture holds the six content roots issues/tasks/specs/architecture/features/docs plus .dev-graph/{config.json,state/graph.json,cache,locks,templates}; the graph store passes C11 and the verdict.json reports overall launch/completion/goal_fit/verdict = PASS with downgrade_reason null."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
+        "independent: diff <(ls plugins/dev-graph/templates) <(ls eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/templates)"
+      ],
+      "observed": "The scaffolded .dev-graph/templates set is name-identical (21 entries: template-contract.json, common-frontmatter, issue/task/specification/document/feature kinds, architecture + 5 subtypes, api-contract, system-phase/task specs, example configs, README) to the plugin templates source; the OUT2 acceptance-clause contract test passed."
+    },
+    "OUT3": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c24_enforces_symlink_containment_and_common_repository_ownership",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_resolve_discover_and_main",
+        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json absolute-path scan"
+      ],
+      "observed": "r3-init config.json stores only repository-relative content_roots/local_state paths (grep for /Users/ returned 0), with path_policy.allow_outside_repository=false and follow_content_symlinks_outside_repository=false. The C24 containment and resolve pytest nodes passed, confirming cross-repo read/write, project-root mismatch and broken/escaping content symlinks are fail-closed."
+    },
+    "OUT4": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
+        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json github block inspection"
+      ],
+      "observed": "config.github.enabled=false while retaining owner_login=example, project_number=1, alias/auto_add and field_mappings (Status/Priority single_select option maps). A grep for token/node_id/item_id/project node IDs returned no matches; the OUT4 acceptance-clause contract test passed."
+    },
+    "OUT5": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
+        "plugins/dev-graph/tests/test_c25_lifecycle_hook_contract.py::test_session_start_owns_interval_and_persists_last_success",
+        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json claude_hooks inspection"
+      ],
+      "observed": "r3-init ran with --hook-source plugin: config.claude_hooks.source=plugin with project_plugin_link=.claude/dev-graph-plugin and no project-fallback .claude/settings.json was written (effective plugin hook present suppresses fallback, 0 double registration). The OUT5 acceptance clause (project-fallback / 二重登録0件 / rollback markers) and the C25 lifecycle-hook contract pytest passed."
+    }
+  }
+}

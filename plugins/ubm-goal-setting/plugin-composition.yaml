@@ -96,6 +96,11 @@ dependencies:
   - { from: skills/run-ubm-goal-setting,   to: agents/output-formatter,    type: calls }
   - { from: skills/run-ubm-knowledge-sync, to: agents/knowledge-extractor, type: calls }
   - { from: skills/run-ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py, type: calls }
+  # skill frontmatter script_ref ↔ calls edge の対応 (lint-plugin-composition check (e))
+  - { from: skills/run-ubm-goal-setting,   to: skills/run-ubm-goal-setting/scripts/validate-goal-output.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/validate-knowledge-graph.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/youtube_provider.py, type: calls }
   - { from: commands/ubm-goal-setting,   to: skills/run-ubm-goal-setting,   type: calls }
   - { from: commands/ubm-knowledge-sync, to: skills/run-ubm-knowledge-sync, type: calls }
   # 共有データ層 (実行時 depends_on ではなく schema 契約による整合)

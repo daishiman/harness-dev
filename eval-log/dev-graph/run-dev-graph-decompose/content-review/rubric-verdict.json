@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-decompose",
+    "skill_md_sha256": "0f687c574616ac556a0b45c1405ffb5ff9722a5c5e1d20e2a1df3cd388685d11"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7"],
+    "positive_feedback": [
+      "NM 命名: name=run-dev-graph-decompose が kind=run/prefix=run とディレクトリ名一致、description は『…したいときに使う』の trigger 型で発火条件が明快。",
+      "BD 出力契約: ## Purpose & Output Contract に入力/出力/完了条件を明記し、Gotchas 節も具備。本文行数は 300 未満で PD 良好。",
+      "RG/責務: goal_seek (engine=inline/fork=subagent/max_loops=5) と feedback_contract (max_iterations=3, IN1+OUT7) が frontmatter で明示され、macro 分解という単一責務に収束。register-package 委譲で単一 writer 原則を侵さない。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric (FM/BD/NM/PD/RG・threshold80/high-20) の規範で現 SKILL.md (sha256 0f687c57...) を採点。FM: name/description/trigger 適合。BD: Output contract+Gotchas 具備、body<300行。NM: dir 名一致・prefix 整合。PD: 本文簡潔で prompts/references へ分離済。RG: goal_seek/feedback_contract 明示。責務は elicit→plan→decompose→project→retry→dryrun とやや多段だが全て『macro 分解+micro planner オーケストレーション+binding 投影』の単一目的に従属し、13-task 生成は system-dev-planner へ委譲され越境なし。high severity 0 件。PASS。"
+}

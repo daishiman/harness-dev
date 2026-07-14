@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "plan-findings.schema.json",
+  "title": "system-dev-planner plan-findings (draft)",
+  "description": "C02 (assign-system-dev-plan-evaluator) が C05 (system-dev-plan-evaluator) を独立 context で fork して生成する plan-findings.json のスキーマ draft。C01 が生成した workstream-inventory/task-spec/task-graph/handoff を対象に4条件 (矛盾なし/漏れなし/整合性あり/依存関係整合) を評価する。plugin-dev-planner の plan-findings.json (dev-graph 実例) と同型構造を継承する。",
+  "type": "object",
+  "required": ["plan_dir", "evaluator", "evaluated_digest", "verdict", "conditions", "gate_results", "evaluated_inputs", "staleness_rule", "findings"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "producer(evaluator)/consumer(C11 promote) 間の破壊的変更を検知する version pin。他 schema と同じく const 固定。現状は optional (既存 producer 非破壊)。required 化と producer 側 emit は R4-evaluate.md の TODO(human) 判断に従う"
+    },
+    "plan_dir": {"type": "string"},
+    "evaluated_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "独立評価対象のstaging canonical digest。C11はpromotion対象digestとの完全一致を要求する"
+    },
+    "evaluator": {
+      "type": "object",
+      "required": ["name", "version", "context"],
+      "properties": {
+        "name": {"type": "string", "const": "assign-system-dev-plan-evaluator"},
+        "version": {"type": "string"},
+        "context": {"type": "string", "const": "fork", "description": "proposer≠approver。C01 生成 context とは独立した context で評価する"}
+      },
+      "additionalProperties": false
+    },
+    "verdict": {"type": "string", "enum": ["PASS", "FAIL"]},
+    "conditions": {
+      "type": "object",
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"$ref": "#/$defs/condition", "description": "矛盾なし (no_contradiction)"},
+        "C2": {"$ref": "#/$defs/condition", "description": "漏れなし (no_missing)"},
+        "C3": {"$ref": "#/$defs/condition", "description": "整合性あり (consistent)"},
+        "C4": {"$ref": "#/$defs/condition", "description": "依存関係整合 (dependency_integrity)"}
+      },
+      "additionalProperties": false
+    },
+    "gate_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "command", "exit_code", "conditions"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "command": {"type": "array", "items": {"type": "string"}},
+          "exit_code": {"type": "integer"},
+          "conditions": {"type": "array", "items": {"type": "string", "enum": ["C1", "C2", "C3", "C4"]}},
+          "stdout": {"type": "string"},
+          "stderr": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "evaluated_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "staleness_rule": {"type": "string", "minLength": 1},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "bucket", "observation"],
+        "properties": {
+          "severity": {"type": "string", "enum": ["info", "low", "medium", "high"]},
+          "bucket": {"type": "string"},
+          "observation": {"type": "string"},
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "condition": {
+      "type": "object",
+      "required": ["id", "status", "summary"],
+      "properties": {
+        "id": {"type": "string"},
+        "status": {"type": "string", "enum": ["PASS", "FAIL"]},
+        "summary": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -2,12 +2,12 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-compile",
-    "skill_md_sha256": "2667b488666f68e6b651b50b5ec1a5aebbbcd94a2f8bd2cc7528f6c16990e9fa"
+    "skill_md_sha256": "8c791dc0156cdf3ffb6fcf60eb2b523f8e83813d3031d510fca7391c587a08da"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-compile",
-  "reviewed_at": "2026-07-11T16:00:00+09:00",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -21,16 +21,17 @@
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "検証可能性が高い: IN1 は validate-coverage-matrix.py (--matrix, --require-complete) と validate-source-citation.py (--targets/--references) の 2 決定論ゲート exit0 を実測、OUT1 は tests/test_compile_spec_doc.py の 39 passed (golden fixtures 一致・確定マーカー・serves_goals・出典割当・CompileError 入力契約違反まで網羅) で担保され、frontmatter feedback_contract の verify_by (script/test) と実体が一致している。",
-      "深度が高い: 単一 writer/確定状態保全 (C03) と C11 hook の fail-closed 二重防御の役割境界、真理値表による集約再導出、serves_goals による上位概念 anchor、意思決定表 (AI 推奨と user_decision の分離描画) まで、なぜその設計かが評価可能な粒度で記述されている。"
+      "検証可能性が高い: IN1 が validate-coverage-matrix.py と validate-source-citation.py の 2 決定論ゲート exit0、OUT1 が tests/test_compile_spec_doc.py の受入テストに接地し、frontmatter feedback_contract の verify_by (script/test) と実体が一致。",
+      "単一責務・境界・SSOT が rubric 通り: system-spec/ への正本書込を compile-spec-doc.py へ一本化し (単一 writer)、入力 (spec-state/fetched-references) 非改変を Key Rules2 で明示、機械=決定論組み立て / AI=章構成の意味付けの二層分離を宣言。allowed-tools は Read/Write/Bash の最小 allowlist。",
+      "出力契約が明確: 要件定義書 (00-requirements-definition.md) + 章別 Markdown + index.md という成果物形状と完了条件を Purpose で具体化し、日本語成果物 / 英語 id の言語規約も明記。"
     ],
     "negative_feedback": [
-      "[low/smell] 簡潔性: 確定マーカーの真理値表と confirmed/draft 規則が SKILL.md 本体・R1/R2 プロンプト・chapter-template.md に重複記載される。責務プロンプト SSOT の二層分離という設計意図に沿った許容範囲の重複だが、密度はやや高い。閾値 2 は満たす。"
+      "[low/smell] 確定マーカーの真理値表と confirmed/draft 規則が SKILL.md 本体・R1/R2 プロンプト・chapter-template.md に重複記載される。責務プロンプト SSOT の二層分離意図に沿う許容範囲の重複だが密度はやや高い (簡潔性でわずかに減点、閾値は満たす)。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "5次元スコア (各0-3・閾値2、全次元2以上でPASS): 完全性=3 (入力/出力/境界/完了条件/IN1・OUT1/手順R1-R3/Key Rules/C9 anchor を網羅。knowledge_candidates 入力の記述薄さのみ減点候補だが additive)、一貫性=3 (SKILL本体・prompts・compile-spec-doc.py・tests・golden fixtures が serves_goals/確定マーカー/真理値表で整合。chapter-template.md の serves_goals 未記載は機械層が付与するため機能非影響の微ドリフト)、深度=3 (単一writer×hook二重防御・上位概念anchor・意思決定分離)、検証可能性=3 (2決定論ゲートexit0 + 39 passed受入テスト + golden)、簡潔性=2 (真理値表の重複はあるが二層分離意図で許容)。全次元2以上のため PASS。SKILL.md 未編集 (sha256=2667b488...)。"
+  "notes": "現 SKILL.md (sha256=8c791dc0156cdf3ffb6fcf60eb2b523f8e83813d3031d510fca7391c587a08da) を ref-skill-design-rubric 規範で採点。FM: name=kebab+run prefix・description=Use when 形・kind/effect 整合。BD: Purpose & Output Contract 節・Gotcha 相当 (Key Rules/ゴールシーク)・出力契約あり (142 行、resource-map で Progressive Disclosure)。NM: ディレクトリ名一致。境界: 単一 writer + 入力非改変を明示。SSOT: compile-spec-doc.py が正本書込経路、責務プロンプトが判断 SSOT。全参照実在。high severity 0・低 smell 1 (真理値表重複) のみで全次元閾値クリアのため PASS。"
 }

@@ -1,1 +1,0 @@
-../../plugins/slide-report-generator/agents/cross-deck-reviewer.md

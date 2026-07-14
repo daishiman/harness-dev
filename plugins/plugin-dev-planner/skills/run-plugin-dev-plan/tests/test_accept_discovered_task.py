@@ -364,6 +364,40 @@ def test_drain_structural_approved_accepts(tmp_path):
     assert len(results["accepted"]) == 1
 
 
+def test_drain_target_shape_rejects_incomplete_discovered_leaf(tmp_path):
+    """Target-shape validation must not silently downgrade to legacy shape."""
+    inbox = _inbox(tmp_path)
+    _write(inbox / "s.json", _form("structural", discovering="T1", node_id="T9"))
+    graph = accept_mod._dtg.canonicalize({
+        "schema_version": "1.0",
+        "nodes": [
+            {
+                "id": "P01", "title": "P01", "phase_ref": "P01", "entity_ref": None,
+                "state": "pending", "write_scope": "", "execution_kind": "phase-gate",
+                "route_ref": None, "task_spec_ref": None,
+            },
+            {
+                "id": "T1", "title": "T1", "phase_ref": "P01", "entity_ref": None,
+                "state": "pending", "write_scope": "out/T1.json",
+                "acceptance_criterion": "T1 passes", "execution_kind": "direct-task",
+                "route_ref": None, "task_spec_ref": "task-specs/T1.md",
+            },
+        ],
+        "edges": [
+            {"type": "parent_of", "from": "P01", "to": "T1"},
+            {"type": "produces", "from": "T1", "to": "out/T1.json"},
+        ],
+    })
+
+    unchanged, results = accept_mod.drain_inbox(inbox, graph, approved=True)
+
+    assert unchanged == graph
+    assert results["accepted"] == []
+    assert results["validation_failed"]
+    assert any("executable leaf T9" in finding for finding in results["validation_failed"])
+    assert results["needs_approval"][0]["reason"] == "graph validation failed"
+
+
 def test_drain_skips_already_processed(tmp_path):
     inbox = _inbox(tmp_path)
     done = _form("additive", node_id="T9")

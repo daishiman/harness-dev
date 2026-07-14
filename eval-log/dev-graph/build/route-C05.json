@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "dev-graph",
+  "route_id": "C05",
+  "component_kind": "skill",
+  "name": "run-dev-graph-render",
+  "builder": "run-skill-create",
+  "build_target": "plugins/dev-graph/skills/run-dev-graph-render/",
+  "status": "success",
+  "summary": "run-dev-graph-render を component inventory と task specification に従って具体実装し、依存 entry point・fail-closed 境界・入出力契約を配線した。",
+  "deviations": [],
+  "evidence": [
+    "validate-frontmatter.py: assigned dev-graph skill/agent/command exit 0",
+    "lint-skill-name.py + lint-skill-description.py + lint-skill-tree.py: assigned skills exit 0",
+    "python3 -m py_compile plugins/dev-graph/hooks/*.py plugins/dev-graph/scripts/*.py: exit 0",
+    "jq empty plugin envelope/schemas/templates: exit 0"
+  ],
+  "inputs_consumed": [
+    "eval-log/dev-graph/build/route-C02.json",
+    "eval-log/dev-graph/build/route-C11.json",
+    "eval-log/dev-graph/build/route-C13.json",
+    "eval-log/dev-graph/build/route-C24.json"
+  ],
+  "handover": "後続 route は caller-repository containment、C02 single-writer、binding別 projection authority、C14 macro/C19 import/system-dev-planner exact-13 の責務境界を保持する。",
+  "covered_task_ids": [
+    "B-C05"
+  ],
+  "corrections": [
+    {"target":"evidence","correction":"C05固有: build-trace component sha256=7a3e933fdd8e01d70c324fc433fcb1abb60d95010fc5c478ffc31cc77f937173。run-dev-graph-render/SKILL.md は4種skill lint全 exit 0、render runtime coverage=91%。","corrected_by":"elegant-improvement-executor iteration 2"}
+  ]
+}

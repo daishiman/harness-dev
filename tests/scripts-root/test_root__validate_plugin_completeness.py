@@ -143,6 +143,80 @@ def test_collect_manifest_none_when_absent(tmp_path):
     assert out["manifest"] is None
 
 
+def test_collect_resolves_plugin_relative_hook_config(tmp_path):
+    d = _make_plugin(
+        tmp_path,
+        "p4",
+        manifest={
+            "name": "p4",
+            "version": "1.0.0",
+            "description": "plugin relative hook config",
+            "hooks": "./hooks/hooks.json",
+        },
+        hooks=["guard.py"],
+    )
+    (d / "hooks" / "hooks.json").write_text(json.dumps({
+        "hooks": {
+            "PreToolUse": [{
+                "hooks": [{
+                    "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard.py"
+                }]
+            }]
+        }
+    }), encoding="utf-8")
+
+    out = MOD.collect(d)
+
+    assert isinstance(out["manifest"]["hooks"], dict)
+    assert out["manifest_hook_error"] is None
+    errs = MOD.validate("p4", out, {"p4"}, _mk("p4"))
+    assert not any("declares hooks not on disk" in err for err in errs)
+
+
+def test_collect_reports_invalid_plugin_relative_hook_config(tmp_path):
+    d = _make_plugin(
+        tmp_path,
+        "p5",
+        manifest={
+            "name": "p5",
+            "version": "1.0.0",
+            "description": "missing hook config",
+            "hooks": "./hooks/missing.json",
+        },
+        skills=["run-a"],
+    )
+
+    out = MOD.collect(d)
+    errs = MOD.validate("p5", out, set(), {})
+
+    assert any("manifest hook reference invalid" in err for err in errs)
+
+
+def test_collect_loads_harness_package_contract_sidecar(tmp_path):
+    d = _make_plugin(
+        tmp_path,
+        "sidecar",
+        manifest={"name": "sidecar", "version": "1.0.0", "description": "d"},
+        skills=["run-a"],
+    )
+    (d / "references").mkdir()
+    contract = {
+        "package_mode": "bundle",
+        "plugin_name": "sidecar",
+        "entry_points": {"skills": ["run-a"]},
+        "distribution": {"distributable": False},
+        "pkg_checks": {},
+    }
+    (d / "references" / "package-contract.json").write_text(
+        json.dumps(contract), encoding="utf-8"
+    )
+
+    out = MOD.collect(d)
+
+    assert out["package_contract"] == contract
+    assert out["package_contract_error"] is None
+
+
 # --- validate ----------------------------------------------------------------
 
 def _data(manifest, **assets):
@@ -312,6 +386,42 @@ def test_validate_distributable_false_registered_emits_mk004_bd002():
     assert not any("(BD-001" in e for e in errs)
 
 
+def test_validate_uses_sidecar_distribution_and_entry_points():
+    # Native manifest は公式 schema のキーだけで、harness 契約は sidecar が正本。
+    data = _data(
+        {"name": "p", "version": "1", "description": "d"},
+        skills=["run-a"], agents=["audit.md"], commands=["go.md"], hooks=["guard.py"],
+    )
+    data["package_contract"] = {
+        "plugin_name": "p",
+        "entry_points": {
+            "skills": ["run-a"],
+            "agents": ["audit"],
+            "commands": ["go"],
+            "hooks": ["guard"],
+        },
+        "distribution": {"distributable": False},
+    }
+
+    assert MOD.validate("p", data, set(), {}) == []
+
+
+def test_validate_sidecar_declared_entry_point_must_exist():
+    data = _data(
+        {"name": "p", "version": "1", "description": "d"},
+        skills=["run-a"],
+    )
+    data["package_contract"] = {
+        "plugin_name": "p",
+        "entry_points": {"skills": ["run-a", "run-missing"]},
+        "distribution": {"distributable": False},
+    }
+
+    errs = MOD.validate("p", data, set(), {})
+
+    assert any("declares skills not on disk" in err and "run-missing" in err for err in errs)
+
+
 # --- register_missing: 予防層 (--fix のコア) ---------------------------------
 
 def _setup_repo(tmp_path, monkeypatch, *, plugins, marketplace, bundles):
@@ -444,6 +554,61 @@ def test_register_missing_skips_distributable_false(tmp_path, monkeypatch):
     assert all(p["name"] != "internal" for p in mk["plugins"])
     bd = json.loads(bj.read_text())
     assert "internal" not in bd["bundles"][0]["plugins"]
+
+
+def test_register_missing_skips_sidecar_non_distributable(tmp_path, monkeypatch):
+    # 公式 manifest に harness-only key が無くても sidecar の非配布契約を守る。
+    mj, bj = _setup_repo(
+        tmp_path, monkeypatch,
+        plugins={"internal": {"name": "internal", "version": "0.1.0", "description": "d"}},
+        marketplace={"plugins": []},
+        bundles={"bundles": [{"name": "full", "plugins": []}]},
+    )
+    plugin_dir = MOD.PLUGINS_DIR / "internal"
+    (plugin_dir / "references").mkdir()
+    (plugin_dir / "references" / "package-contract.json").write_text(json.dumps({
+        "package_mode": "bundle",
+        "plugin_name": "internal",
+        "entry_points": {"skills": ["run-a"]},
+        "distribution": {"distributable": False, "bundle_targets": ["full"]},
+        "pkg_checks": {},
+    }), encoding="utf-8")
+
+    actions, changed = MOD.register_missing()
+
+    assert (actions, changed) == ([], False)
+    assert json.loads(mj.read_text())["plugins"] == []
+    assert json.loads(bj.read_text())["bundles"][0]["plugins"] == []
+
+
+def test_dev_graph_native_manifest_and_sidecar_are_separated():
+    plugin_dir = ROOT / "plugins" / "dev-graph"
+    manifest = json.loads(
+        (plugin_dir / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+    )
+    contract = json.loads(
+        (plugin_dir / "references" / "package-contract.json").read_text(encoding="utf-8")
+    )
+
+    assert {"distributable", "entry_points", "depends_on"}.isdisjoint(manifest)
+    assert contract["distribution"]["distributable"] is False
+    assert contract["depends_on"] == ["system-spec-harness", "system-dev-planner"]
+    actual = {
+        "skills": sorted(path.parent.name for path in plugin_dir.glob("skills/*/SKILL.md")),
+        "agents": sorted(path.stem for path in plugin_dir.glob("agents/*.md")),
+        "commands": sorted(path.stem for path in plugin_dir.glob("commands/*.md")),
+        "hooks": sorted(
+            path.stem for path in plugin_dir.glob("hooks/*")
+            if path.suffix in {".py", ".sh"}
+        ),
+    }
+    declared = {
+        kind: sorted(Path(name).stem if kind != "skills" else name for name in names)
+        for kind, names in contract["entry_points"].items()
+    }
+    assert declared == actual
+    for dependency in contract["depends_on"]:
+        assert (ROOT / "plugins" / dependency).is_dir()
 
 
 # --- _marketplace_entry_block / _insert_marketplace_entry (unit) -------------

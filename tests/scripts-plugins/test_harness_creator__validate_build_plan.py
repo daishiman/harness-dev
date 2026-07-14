@@ -52,6 +52,7 @@ def test_flags_all_derived_from_brief(mod):
     assert flags["with_subagent"] is True
     assert flags["with_goal_seek"] is True
     assert flags["feedback_contract_required"] is True
+    assert flags["verification_profile"] == "incremental"
 
 
 def test_flags_empty_brief_defaults_off(mod):
@@ -76,6 +77,14 @@ def test_prompt_creator_policy_skip_disables_prompts(mod):
 def test_cli_optout_goal_seek(mod):
     flags = mod.derive_flags({"kind": "run"}, {"no_goal_seek": True})
     assert flags["with_goal_seek"] is False
+
+
+def test_verification_profile_is_explicit_and_closed(mod):
+    assert mod.derive_flags(
+        {"kind": "run"}, {"verification_profile": "exhaustive"}
+    )["verification_profile"] == "exhaustive"
+    with pytest.raises(ValueError, match="verification_profile"):
+        mod.derive_flags({"kind": "run"}, {"verification_profile": "unbounded"})
 
 
 # --- derive: セクション正本はテンプレート ---------------------------------

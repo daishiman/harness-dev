@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workstream-inventory.schema.json",
+  "title": "system-dev-planner workstream-inventory (draft)",
+  "description": "C01が1 featureから生成するfeature execution packageの13 phase task inventory。runtime outputは可変N taskではなくP01..P13 exact-set。詳細はreferences/feature-execution-package-contract.mdとworkstream-inventory-schema-design.md。",
+  "type": "object",
+  "required": ["schema_version", "feature_package_id", "parent_feature", "repo_context", "source_lineage", "tasks"],
+  "properties": {
+    "schema_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+    "parent_feature": {"type": "string", "minLength": 1, "description": "起動元dev-graph feature graph_node_id。全13 taskと一致必須"},
+    "repo_context": {
+      "type": "object",
+      "required": ["config_path", "repo_identity", "root_resolution_source"],
+      "properties": {
+        "config_path": {"const": ".dev-graph/config.json"},
+        "repo_identity": {"type": "string", "minLength": 1},
+        "root_resolution_source": {"enum": ["explicit-cli", "trusted-env", "git", "cwd-marker"]}
+      },
+      "additionalProperties": false
+    },
+    "source_lineage": {
+      "type": "object",
+      "required": ["source_plugin", "source_version", "compile_entrypoint", "completeness_entrypoint", "source_paths", "confirmed"],
+      "properties": {
+        "source_plugin": {"type": "string", "const": "system-spec-harness"},
+        "source_version": {"const": "0.1.0"},
+        "compile_entrypoint": {"const": "run-system-spec-compile"},
+        "completeness_entrypoint": {"const": "assign-system-spec-completeness-evaluator"},
+        "source_paths": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "引用元の system-spec-harness 確定成果物パス (system-spec/index.md・00-requirements-definition.md 等)。内容ロジックを複製しない証跡"
+        },
+        "confirmed": {"type": "boolean", "description": "引用元の confirmation_status=confirmed かつ evaluation_status=pass であることの写し"}
+      },
+      "additionalProperties": false
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 13,
+      "maxItems": 13,
+      "prefixItems": [
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P01"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P02"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P03"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P04"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P05"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P06"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P07"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P08"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P09"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P10"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P11"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P12"}}}]},
+        {"allOf": [{"$ref": "#/$defs/task"}, {"properties": {"phase_ref": {"const": "P13"}}}]}
+      ],
+      "items": false,
+      "description": "exactly 13 executable task specs in P01..P13 order; no separate phase-document axis"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "task": {
+      "type": "object",
+      "required": ["id", "feature_package_id", "parent_feature", "title", "owners", "tags", "related_nodes", "workstream_kind", "build_target_kind", "phase_ref", "depends_on", "write_scope", "deploy_unit", "source_lineage", "classification", "tracker_binding_intent", "github_publication", "pr_completion_policy", "branch_policy", "acceptance", "verification", "rollback", "implementation_readiness", "graph_node_registration"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^SYS-[A-Z0-9][A-Z0-9-]*$",
+          "description": "task-spec id。dev-graph の graph_node_id 割当規約への接続は dev-graph-registration-contract.json と schemas-draft/dev-graph-registration.schema.json の確定契約に従う"
+        },
+        "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+        "parent_feature": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "owners": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "related_nodes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "workstream_kind": {
+          "type": "string",
+          "enum": ["frontend", "backend", "api", "data", "infrastructure", "security", "quality", "documentation", "operations"],
+          "description": "生成対象タスクの主分類軸 (9値)。component-inventory.json の component_kind とは別軸"
+        },
+        "secondary_workstreams": {
+          "type": "array",
+          "items": {"type": "string", "enum": ["frontend", "backend", "api", "data", "infrastructure", "security", "quality", "documentation", "operations"]},
+          "uniqueItems": true,
+          "description": "主分類 workstream_kind 以外に副次的に関与する workstream (optional)。契約文書の secondary workstreams 句の受け皿"
+        },
+        "build_target_kind": {
+          "type": "string",
+          "enum": ["skill", "sub-agent", "slash-command", "hook", "script", "application-code"],
+          "description": "ビルド対象語彙 (6値=component_kind5値+application-code)。component_kind 5値のときは plugin-dev-planner 同型 builder routing、application-code のときは task-graph build/capability-build へ汎用 handoff"
+        },
+        "phase_ref": {
+          "type": "string",
+          "pattern": "^P(0[1-9]|1[0-3])$",
+          "description": "13 taskの一意なphase slot。P01..P13を各1件、配列順も同順で持つ"
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "task-graph 射影の入力となる依存 task id 配列"
+        },
+        "implementation_readiness": {
+          "type": "object",
+          "required": ["status", "missing_sections", "checked_at"],
+          "properties": {
+            "status": {"type": "string", "enum": ["complete", "incomplete"]},
+            "missing_sections": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+            "checked_at": {"type": "string", "format": "date-time"}
+          },
+          "additionalProperties": false,
+          "description": "C08 (check-implementation-readiness.py) 判定結果。complete 未達では実装 handoff を fail-closed で停止する (goal-spec C4/constraints)"
+        },
+        "write_scope": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}},
+        "deploy_unit": {"type": "string", "minLength": 1},
+        "source_lineage": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "classification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["confidence", "reason", "candidates"],
+          "properties": {
+            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+            "reason": {"type": "string", "minLength": 1},
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["artifact_kind", "confidence", "candidate_path"],
+                "properties": {
+                  "artifact_kind": {"const": "task"},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                  "candidate_path": {"type": "string", "pattern": "^tasks/.+\\.md$"}
+                }
+              }
+            }
+          }
+        },
+        "tracker_binding_intent": {
+          "type": "string",
+          "enum": ["auto", "beads", "github", "none"],
+          "description": "spec側の明示intent。autoはdev-graph repo-configのexecution_tracker.modeで解決し、mode=bothでは禁止する。system-dev-plannerは宣言だけを行い、永続tracker_bindingへの解決と起票はdev-graphが所有する"
+        },
+        "github_publication": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "project_aliases", "labels", "milestone"],
+          "properties": {"mode": {"enum": ["local_only", "issue", "issue_and_projects"]}, "project_aliases": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "labels": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "milestone": {"type": ["string", "null"]}},
+          "description": "GitHubへの公開intent。tracker_binding_intent=beadsではlocal_only、githubではissue|issue_and_projectsを必須とする。beadsのGitHub viewer mirrorはbd github sync --push-onlyだけがauthorityで、Projects custom fieldsの管理対象外。"
+        },
+        "pr_completion_policy": {"enum": ["linked_pr_merged_all", "linked_pr_merged_any"]},
+        "branch_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["strategy", "worktree_lease_required", "completion_projection", "assignment_owner"],
+          "properties": {"strategy": {"const": "one-task-one-branch"}, "worktree_lease_required": {"const": true}, "completion_projection": {"const": "default-branch-reconciliation"}, "assignment_owner": {"const": "dev-graph-scheduler"}}
+        },
+        "acceptance": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "verification": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "rollback": {"type": "string", "minLength": 1},
+        "graph_node_registration": {
+          "type": ["object", "null"],
+          "properties": {
+            "graph_node_id": {"type": ["string", "null"]},
+            "file_path": {"type": ["string", "null"]},
+            "parent_feature": {"type": ["string", "null"]},
+            "feature_package_id": {"type": ["string", "null"]},
+            "phase_ref": {"type": ["string", "null"]}
+          },
+          "additionalProperties": false,
+          "description": "dev-graph の tasks/ グラフノード登録形式。実登録は dev-graph 側の所有 (本 plan は形式のみ提供)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {"required": ["tracker_binding_intent"], "properties": {"tracker_binding_intent": {"enum": ["beads", "none"]}}},
+          "then": {"properties": {"github_publication": {"properties": {"mode": {"const": "local_only"}}}}}
+        },
+        {
+          "if": {"required": ["tracker_binding_intent"], "properties": {"tracker_binding_intent": {"const": "github"}}},
+          "then": {"properties": {"github_publication": {"properties": {"mode": {"enum": ["issue", "issue_and_projects"]}}}}}
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

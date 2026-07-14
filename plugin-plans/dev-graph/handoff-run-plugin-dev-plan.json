@@ -1,0 +1,475 @@
+{
+  "plan_dir": "plugin-plans/dev-graph",
+  "target_plugin_slug": "dev-graph",
+  "mode": "update",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "build_readiness": {
+    "status": "blocked",
+    "reason": "L3 routing contract は検証済みだが、9 script route と manifest/schema/composition/EVALS envelope executor は planner 境界では contract-only。後段の materialization 実行状態は task-state.json と route-build-report が正本であり、この handoff の plan-time 状態とは分離する。",
+    "blockers": ["GAP-SCRIPT-BUILDER", "GAP-ENVELOPE-001"],
+    "unblock_when": "executor command/owner/version が preflight 可能な契約として planner 側で解決される"
+  },
+  "routes": [
+    {
+      "id": "C24",
+      "component_kind": "script",
+      "name": "resolve-repo-context.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C24",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/resolve-repo-context.py"},
+      "build_target": "plugins/dev-graph/scripts/resolve-repo-context.py",
+      "status": "planned"
+    },
+    {
+      "id": "C28",
+      "component_kind": "script",
+      "name": "bd-bridge.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C28",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/bd-bridge.py"},
+      "build_target": "plugins/dev-graph/scripts/bd-bridge.py",
+      "status": "planned"
+    },
+    {
+      "id": "C29",
+      "component_kind": "script",
+      "name": "register-package.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C29",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/register-package.py"},
+      "build_target": "plugins/dev-graph/scripts/register-package.py",
+      "status": "planned"
+    },
+    {
+      "id": "C27",
+      "component_kind": "script",
+      "name": "manage-worktree-lease.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C27",
+      "depends_on": ["C24", "C28", "C29"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/manage-worktree-lease.py"},
+      "build_target": "plugins/dev-graph/scripts/manage-worktree-lease.py",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "validate-graph-schema.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C11",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-graph-schema.py"
+      },
+      "build_target": "plugins/dev-graph/scripts/validate-graph-schema.py",
+      "status": "planned"
+    },
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "gh-bridge.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C12",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/gh-bridge.py"
+      },
+      "build_target": "plugins/dev-graph/scripts/gh-bridge.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-dev-graph-node",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C02",
+      "depends_on": ["C11", "C24", "C29"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-node",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-node/",
+      "status": "planned"
+    },
+    {
+      "id": "C26",
+      "component_kind": "script",
+      "name": "reconcile-github-lifecycle.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C26",
+      "depends_on": ["C02", "C11", "C12", "C24", "C27", "C28"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {"script_path": "scripts/reconcile-github-lifecycle.py"},
+      "build_target": "plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+      "status": "planned"
+    },
+    {
+      "id": "C25",
+      "component_kind": "hook",
+      "name": "reconcile-task-lifecycle",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C25",
+      "depends_on": ["C24", "C26", "C27", "C28"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {"kind": "hook", "name": "reconcile-task-lifecycle"},
+      "build_target": "plugins/dev-graph/hooks/reconcile-task-lifecycle.py",
+      "status": "planned"
+    },
+    {
+      "id": "C13",
+      "component_kind": "script",
+      "name": "render-graph-html.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C13",
+      "depends_on": ["C24"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/render-graph-html.py"
+      },
+      "build_target": "plugins/dev-graph/scripts/render-graph-html.py",
+      "status": "planned"
+    },
+    {
+      "id": "C16",
+      "component_kind": "script",
+      "name": "schedule-graph.py",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C16",
+      "depends_on": ["C24", "C27", "C28"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/schedule-graph.py"
+      },
+      "build_target": "plugins/dev-graph/scripts/schedule-graph.py",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "hook",
+      "name": "guard-graph-schema",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C10",
+      "depends_on": ["C11", "C24"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "guard-graph-schema"
+      },
+      "build_target": "plugins/dev-graph/hooks/guard-graph-schema.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-dev-graph-init",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C01",
+      "depends_on": ["C11", "C24", "C25"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-init",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-init/",
+      "status": "planned"
+    },
+    {
+      "id": "C19",
+      "component_kind": "skill",
+      "name": "run-dev-graph-system-spec",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C19",
+      "depends_on": ["C02", "C11", "C24"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {"skill_name": "run-dev-graph-system-spec", "kind": "run", "brief_path": "briefs/skill-brief-C19.json"},
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-system-spec/",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "run-dev-graph-sync",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C03",
+      "depends_on": ["C02", "C11", "C12", "C24", "C26", "C28"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-sync",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C03.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-sync/",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "name": "run-dev-graph-requirements",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C04",
+      "depends_on": ["C02", "C11", "C12", "C13", "C24"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-requirements",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C04.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-requirements/",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "skill",
+      "name": "run-dev-graph-render",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C05",
+      "depends_on": ["C02", "C11", "C13", "C24"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-render",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C05.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-render/",
+      "status": "planned"
+    },
+    {
+      "id": "C14",
+      "component_kind": "skill",
+      "name": "run-dev-graph-decompose",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C14",
+      "depends_on": ["C02", "C11", "C12", "C24", "C28"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-decompose",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C14.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-decompose/",
+      "status": "planned"
+    },
+    {
+      "id": "C15",
+      "component_kind": "skill",
+      "name": "run-dev-graph-schedule",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C15",
+      "depends_on": ["C02", "C16", "C24", "C27", "C28"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-schedule",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C15.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-schedule/",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "dev-graph-integrity-auditor",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C06",
+      "depends_on": ["C02"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "dev-graph-integrity-auditor"
+      },
+      "build_target": "plugins/dev-graph/agents/dev-graph-integrity-auditor.md",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "sub-agent",
+      "name": "dev-graph-sync-conflict-verifier",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C07",
+      "depends_on": ["C03"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "dev-graph-sync-conflict-verifier"
+      },
+      "build_target": "plugins/dev-graph/agents/dev-graph-sync-conflict-verifier.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "sub-agent",
+      "name": "dev-graph-requirements-verifier",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C08",
+      "depends_on": ["C04"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "dev-graph-requirements-verifier"
+      },
+      "build_target": "plugins/dev-graph/agents/dev-graph-requirements-verifier.md",
+      "status": "planned"
+    },
+    {
+      "id": "C17",
+      "component_kind": "sub-agent",
+      "name": "dev-graph-parallel-safety-verifier",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C17",
+      "depends_on": ["C15"],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "dev-graph-parallel-safety-verifier"
+      },
+      "build_target": "plugins/dev-graph/agents/dev-graph-parallel-safety-verifier.md",
+      "status": "planned"
+    },
+    {
+      "id": "C18",
+      "component_kind": "skill",
+      "name": "run-dev-graph-status",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C18",
+      "depends_on": ["C02", "C11", "C24"],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-dev-graph-status",
+        "kind": "run",
+        "brief_path": "briefs/skill-brief-C18.json"
+      },
+      "build_target": "plugins/dev-graph/skills/run-dev-graph-status/",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "slash-command",
+      "name": "dev-graph",
+      "spec": "phase-05-implementation.md",
+      "criteria_ref": "component-inventory.json#component=C09",
+      "depends_on": ["C01", "C02", "C03", "C04", "C05", "C14", "C15", "C18", "C19", "C27"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "dev-graph"
+      },
+      "build_target": "plugins/dev-graph/commands/dev-graph.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/dev-graph/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest scaffold executor は現時点で本 planner の外部。GAP-ENVELOPE-001 として tracking し、script route 用 GAP-SCRIPT-BUILDER とは分離する"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "配布登録はユーザー承認後に実行する (本 plan は distribution.distributable=false・L3 plan までに留める goal-spec constraint と整合)"
+    },
+    "schemas": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/dev-graph/schemas/graph-node.schema.json",
+      "draft_path": "schemas-draft/graph-node.schema.json",
+      "gap_reason": "schema scaffold executor は現時点で本 planner の外部。envelope の manifest と同型の draft_path 契約を踏襲し GAP-ENVELOPE-001 の対象に含める"
+    },
+    "composition": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/dev-graph/plugin-composition.yaml",
+      "draft_path": "envelope-draft/plugin-composition.yaml",
+      "gap_reason": "composition scaffold executorはGAP-ENVELOPE-001でtrackingする"
+    },
+    "harness_eval": {
+      "owner": "plugin-scaffold",
+      "status": "external_gap",
+      "build_target": "plugins/dev-graph/EVALS.json",
+      "draft_path": "envelope-draft/EVALS.json",
+      "gap_reason": "EVALS scaffold executorはGAP-ENVELOPE-001でtrackingする"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "severity": "high",
+      "text": "plugin envelope executor is external to run-plugin-dev-plan"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "high",
+      "text": "plugin-scaffold は contract-only builder 語彙。9 script (validate-graph-schema/gh-bridge/render/schedule/resolve-repo-context/reconcile-github-lifecycle/manage-worktree-lease/bd-bridge/register-package) が本 gap に依存する (validate-system-plan.py は external plugin system-dev-planner が所有)"
+    }
+  ]
+}

@@ -2,28 +2,28 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "e896502b4e6eb057b082691a281350147deb224e261c52cf4c194f1868ee6db0"
+    "skill_md_sha256": "37800145041e57de4d3231655097db084a2558652b40d8eab49b25849386cec8"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
-  "reviewer": "independent-group-b/assign-skill-design-evaluator",
-  "reviewed_at": "2026-07-12T00:28:08Z",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "ref-skill-design-rubric 6e1843e5…のFM/NM/BD/PDを独立採点し92/100。high severity findingは0。",
-      "name/directory一致、trigger記述、Purpose & Output Contract、Gotchas、referencesによるprogressive disclosure、参照実在性が全て適合。",
-      "focused suiteの内、harness-creatorのbuild-plan/trace/route/task-graph系を含む1529 passed, 2 skipped。"
+      "FM/BD/NM/PD 準拠: name=run-build-skill (kebab + run prefix・ディレクトリ名一致)、description は Use-when 形、Purpose & Output Contract と Gotchas 節が揃い、本文 258 行相当で 300 行上限内。100 行超は references/build-steps.md 等へ外出しし PD を満たす。",
+      "SSOT/評価分離: commonCore 必須集合・lint-matrix・engine 選択規則を外部正本へ集約し本文再掲を禁止。生成本体は自己採点せず fork 評価 (assign-skill-design-evaluator) と機械 lint/trace を分離する Goodhart 回避設計 (09章) が rubric の境界・出力契約規範に整合。"
     ],
-    "negative_feedback": ["low severity: live-trial criterionは現行baseline免除WARNのため将来ratchet候補。現行criteriaのPASSを阻害しない。"],
+    "negative_feedback": [
+      "低 severity (非ブロッキング): frontmatter triggers が 8 個で rubric FM 目安『trigger 2-3』を上回るが、7 kind 横断の量産 builder という単一責務の広さに起因する意図的設計で、description は発動条件のみに保たれており high severity ではない。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric hash=6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。全5 criteriaを証拠に写像し、score>=80/high=0。"
+  "notes": "ref-skill-design-rubric の規範 (FM/BD/NM/PD/RG・単一責務・SSOT・評価分離) で現 SKILL.md (sha256 37800145041e57de4d3231655097db084a2558652b40d8eab49b25849386cec8) を genuine 採点。FM (name kebab+prefix / description=Use-when)、BD (Output Contract + Gotchas + 本文 300 行以内)、NM (ディレクトリ名一致・plugin 名非混入)、PD (references/ 外出し)、SSOT (commonCore/lint-matrix/engine 規則を外部正本へ)、評価分離 (fork 評価と機械 lint を本体から分離) を確認。high severity 0 件。triggers 8 個は rubric 目安超過だが builder の責務幅に起因する意図的設計として低 severity 記録 (非ブロッキング)。閾値超過で PASS。"
 }

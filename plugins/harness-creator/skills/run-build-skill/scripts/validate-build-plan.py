@@ -156,6 +156,11 @@ def derive_flags(brief: dict, cli_flags: dict | None = None) -> dict:
     no_goal_seek) と明示 opt-in の上書きのみ許す。
     """
     cli = cli_flags or {}
+    verification_profile = str(cli.get("verification_profile", "incremental")).strip()
+    if verification_profile not in {"incremental", "exhaustive", "build-only"}:
+        raise ValueError(
+            "verification_profile must be incremental, exhaustive, or build-only"
+        )
     kind = str(brief.get("kind", "")).strip()
     prompt_policy = str(brief.get("prompt_creator_policy", "")).strip().lower()
     responsibilities = brief.get("responsibilities") or []
@@ -169,6 +174,7 @@ def derive_flags(brief: dict, cli_flags: dict | None = None) -> dict:
         "feedback_contract_required": kind in LOOP_KINDS,
         "feedback_loop_deploy": not cli.get("no_feedback_loop", False),
         "content_review": not cli.get("skip_content_review", False),
+        "verification_profile": verification_profile,
     }
     # 明示 opt-in 上書き (brief に無くても CLI で足す運用を許容)
     for key in ("with_prompts", "with_evaluator", "with_hooks", "with_subagent", "with_knowledge"):
@@ -753,7 +759,11 @@ def main(argv: list[str]) -> int:
         print(f"invalid input: {exc}", file=sys.stderr)
         return 2
 
-    plan = derive_plan(brief, cli_flags)
+    try:
+        plan = derive_plan(brief, cli_flags)
+    except ValueError as exc:
+        print(f"invalid input: {exc}", file=sys.stderr)
+        return 2
     if out:
         Path(out).parent.mkdir(parents=True, exist_ok=True)
         Path(out).write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

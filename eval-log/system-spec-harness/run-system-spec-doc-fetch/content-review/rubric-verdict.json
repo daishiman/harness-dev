@@ -2,12 +2,12 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "33a9e3ce9f572598dd339eafc9555b85db115b6bbf2f51c2ea919aeb84a2de94"
+    "skill_md_sha256": "0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-doc-fetch",
-  "reviewed_at": "2026-07-12T12:16:50+09:00",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -15,22 +15,23 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 1
   },
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "完全性=3: doctrine anchor 段落として対象 registry・concern -> authority 全対応・C13 gate/C14 graph 結線・下流供給・registry 非処方性・target_id 正本まで過不足なく被覆。",
-      "深度=3: registry 名指しに留まらず位相順供給と二層監査併用・正本分離まで踏み込む。検証可能性=3: 全主張が機械検証可能で実測裏取り済 (registry test -e・validator 一致・README 番号一致)。"
+      "単一責務が明確 (公式ドキュメント出典記録 fetched-references.json の組み立て) で境界が rubric 通り: 鮮度の意味判定を C08 へ委譲し取得は WebSearch/WebFetch に限定。allowed-tools は WebSearch/WebFetch/Read/Bash の目的整合 allowlist。",
+      "出力契約が schema (fetched-references.schema.json) と JSON 例に接地し、IN1 が validate-source-citation.py exit0 という検証可能述語で担保。SSOT: 記録は build-fetched-references.py で正規化し手書き JSON で緑化しない旨を Key Rule4 で明示。",
+      "深度が高い: 公式一次情報限定・捏造禁止 (fail-visible)・恒久キャッシュ禁止・実取得時刻厳守・doctrine anchor 準拠まで、なぜその制約かが評価可能な粒度で記述され、knowledge qualification の単一 writer (C01 set-knowledge-candidate) 経由も担保。"
     ],
     "negative_feedback": [
-      "簡潔性=2: 単一段落に C13/C14/C01/C03 と 4 authority を詰め密度が高い (事実正確・閾値2クリア・一語補足で改善余地)。"
+      "[low/smell] 簡潔性: doctrine anchor 段落が単一パラグラフに C13/C14/C01/C03 と 4 authority を高密度に詰め、また検証コマンド節の PLUGIN_ROOT が未使用。事実は正確で閾値は満たすが密度はやや高い。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "5次元スコア (0-3・閾値2): 完全性=3 / 一貫性=3 (README SSOT 番号・registry 内容と実測一致) / 深度=3 / 検証可能性=3 / 簡潔性=2。全次元>=2 で PASS。C10/C03 の並存は plugin 固有の正当な番号体系でこの diff 由来の不整合ではない。sha=33a9e3ce...。"
+  "notes": "現 SKILL.md (sha256=0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4) を ref-skill-design-rubric 規範で採点。FM: name=kebab+run prefix・description=Use when 形・kind/effect 整合。BD: Purpose & Output Contract 節・Gotchas 節・出力契約 (JSON 例) あり (162 行、resource-map で Progressive Disclosure)。NM: ディレクトリ名一致。境界: 鮮度判定を C08 委譲・MCP 対象外を明示。SSOT: build-fetched-references.py が決定論 assembler、validate-source-citation.py が IN1 ゲート。全参照実在。high severity 0・低 smell 1 (密度/PLUGIN_ROOT 未使用) のみで全次元閾値クリアのため PASS。"
 }

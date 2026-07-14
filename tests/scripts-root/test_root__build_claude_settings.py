@@ -175,8 +175,9 @@ def test_command_from_hook_entry_empty_command():
 
 def test_normalize_hook_entries_ok():
     out = MOD.normalize_hook_entries(_hook("python3 a.py"), "plg")
+    # 互換修復で managed source hook には provenance 用の source が付く (既定 "unknown")。
     assert out == [{"event": "PreToolUse", "matcher": "Write|Edit",
-                    "command": "python3 a.py", "from_plugin": "plg"}]
+                    "command": "python3 a.py", "from_plugin": "plg", "source": "unknown"}]
 
 
 def test_normalize_hook_entries_not_object():
@@ -445,8 +446,16 @@ def test_validate_settings_structure_hooks_not_object():
 
 
 def test_validate_settings_structure_unknown_event():
+    # 互換修復 (PRECONDITION-CLAUDE-REFLECTOR-COMPAT) の非対称契約:
+    #   - target 側 (validate_settings_structure = 既存 .claude/settings.json の検証) は
+    #     allowlist 外の未知 event を verbatim preserve する (raise しない)。
+    #     将来 Claude Code が追加する新 event で reflector が exit3 死する回帰を防ぐため。
+    MOD.validate_settings_structure({"hooks": {"Nope": []}})  # no raise = preserve
+
+    # - managed source 側 (plugin manifest 由来の hook) は従来どおり未知 event を
+    #   fail-closed で block する。この負側 (block) を assert する。
     with pytest.raises(MOD.LayoutError):
-        MOD.validate_settings_structure({"hooks": {"Nope": []}})
+        MOD.normalize_hook_entries(_hook("python3 a.py", event="Nope"), "plg")
 
 
 def test_validate_settings_structure_event_not_array():
@@ -553,7 +562,7 @@ def test_merge_hooks_conflict_on_shared_command(tmp_path):
     _plugin(tmp_path, "alpha", manifest_extra={"hooks": _hook("python3 shared.py", matcher="X")})
     _plugin(tmp_path, "beta", manifest_extra={"hooks": _hook("python3 shared.py", matcher="X")})
     plugins = MOD.discover_plugins(tmp_path)
-    generated, conflicts = MOD.merge_hooks({}, plugins)
+    generated, conflicts, _dedupe = MOD.merge_hooks({}, plugins)
     assert any(c["type"] == "hook" for c in conflicts)
 
 
@@ -561,7 +570,7 @@ def test_merge_hooks_sorted_by_plugin(tmp_path):
     _plugin(tmp_path, "beta", manifest_extra={"hooks": _hook("python3 b.py")})
     _plugin(tmp_path, "alpha", manifest_extra={"hooks": _hook("python3 a.py")})
     plugins = MOD.discover_plugins(tmp_path)
-    generated, conflicts = MOD.merge_hooks({}, plugins)
+    generated, conflicts, _dedupe = MOD.merge_hooks({}, plugins)
     assert [h["from_plugin"] for h in generated] == ["alpha", "beta"]
     assert conflicts == []
 

@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -106,6 +107,30 @@ class BuildClaudeSymlinksTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(os.readlink(dst), os.path.relpath(src, dst.parent))
+
+    def test_existing_wrong_symlink_is_atomically_replaced(self):
+        src = self.skill("alpha", "demo")
+        other = self.skill("alpha", "other")
+        dst = self.target / "skills" / "demo"
+        dst.parent.mkdir(parents=True)
+        old_target = os.path.relpath(other, dst.parent)
+        dst.symlink_to(old_target)
+        plan = MODULE.compute_plan(self.plugins, self.target, ["skills"])
+        real_replace = MODULE.os.replace
+        observed = {}
+
+        def inspect_replace(temp, destination):
+            if Path(destination) == dst:
+                observed["old_visible"] = os.readlink(destination) == old_target
+                observed["temp_is_link"] = Path(temp).is_symlink()
+            return real_replace(temp, destination)
+
+        with mock.patch.object(MODULE.os, "replace", side_effect=inspect_replace):
+            MODULE.apply_plan(plan)
+
+        self.assertEqual(observed, {"old_visible": True, "temp_is_link": True})
+        self.assertEqual(os.readlink(dst), os.path.relpath(src, dst.parent))
+        self.assertFalse(any(".tmp." in p.name for p in dst.parent.iterdir()))
 
     def test_duplicate_skill_names_conflict_exit_2(self):
         self.skill("alpha", "demo")

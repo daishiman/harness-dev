@@ -66,7 +66,7 @@ python3 scripts/sync-notion-schema.py --apply
 ### 1.4 動作確認
 
 ```bash
-python3 plugins/harness-creator/scripts/notion_config.py
+python3 "${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}/scripts/notion_config.py"
 ```
 
 `.notion-config.json` の内容と loaded path が表示されれば OK。
@@ -130,6 +130,6 @@ grep '"db_id"' doc/notion-schema/*.schema.json
 # 3. schema から db_id 行を削除（手動 or sed）
 
 # 4. 動作確認
-python3 plugins/harness-creator/scripts/notion_config.py
+python3 "${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}/scripts/notion_config.py"
 python3 scripts/sync-notion-schema.py --check
 ```
