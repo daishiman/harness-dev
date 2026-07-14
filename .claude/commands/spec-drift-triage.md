@@ -1,1 +1,0 @@
-../../plugins/spec-drift-guardian/commands/spec-drift-triage.md
