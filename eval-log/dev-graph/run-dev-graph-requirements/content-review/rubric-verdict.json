@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-requirements",
+    "skill_md_sha256": "3ce641ca34a5ef58c69014b8d5942f0490b116f95ff44ebd7e9b0f5c0e8d164c"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "NM 命名: name=run-dev-graph-requirements が dir 名/prefix=run と一致、description は要件導出+readiness 完了時のみ handoff という発火条件を trigger 型で明示。",
+      "BD 出力契約: Purpose & Output Contract に入力/出力 (requirements document+readiness matrix+handoff)/完了条件を明記し、Gotchas 節も具備。",
+      "RG/責務: 『要件導出と gated handoff』へ単一収束し、実装コード生成と exact-13 検証を外部 (capability-build/validate-system-plan.py) へ委譲。goal_seek/feedback_contract を frontmatter で明示。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric 規範で現 SKILL.md (sha256 3ce641ca...) を採点。FM: name/description/trigger 適合、allowed-tools 明示。BD: Output contract+Gotchas 具備、body<300行。NM: dir 名一致。PD: 本文簡潔で prompts/references へ分離。RG: goal_seek/feedback_contract 明示。責務は『確定 spec/package からの要件導出と readiness gated handoff』へ単一収束し、実装コード生成・13-task 検証は外部プラグインへ委譲され越境なし。high severity 0 件。PASS。"
+}

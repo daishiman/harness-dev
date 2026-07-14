@@ -2,12 +2,12 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "33a9e3ce9f572598dd339eafc9555b85db115b6bbf2f51c2ea919aeb84a2de94"
+    "skill_md_sha256": "0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-doc-fetch",
-  "reviewed_at": "2026-07-12T12:16:50+09:00",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -21,18 +21,18 @@
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "追記した doctrine anchor 段落の参照先 doctrine-anchor-registry.json は実在 (test -e) し、validate-knowledge-graph.py --profile doctrine が status:ok / exit0。dependency_break なし。",
-      "SKILL 列挙の 4 concern authority が registry validator 出力と 8/8 完全一致 (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / authentication・security=OWASP ASVS+Secrets Management / reliability・operations=Google SRE)。",
-      "C13=citation gate・C14=knowledge graph が README line35 の正本 component 番号と一致し、既存の二層監査 (C13 形式 / C08 鮮度) を破壊せず additive。IN1 完了条件も不変。target_id 正本 (spec-state.json) と registry 非処方性の責務分離も維持。"
+      "責務境界が矛盾なく分離されている: 本 skill は形式・全件・host 一致まで (IN1 = validate-source-citation.py exit0) を担い、現行最新版かの鮮度判定は C08 (doc-freshness-auditor, OUT1) へ明確に委譲 (Key Rule6)。取得は WebSearch/WebFetch のみで MCP 連携は GAP-MCP-DOCFETCH として保留する旨も正直開示。",
+      "fetched-references.json の出力契約が具体的で漏れがない: 必須フィールド (target_id/retrieved_at/source_url/official_publisher/official_host/latest_checked_at/summary + version|last_updated)・全件対応 (欠落0/重複0)・host 一致を JSON 例と Key Rules と完了チェックリストで一致記述。捏造禁止 (fail-visible)・恒久キャッシュ禁止・実取得時刻厳守も一貫。",
+      "doctrine anchor 段落が上流工程を導くのみで具体技術直書きを避け、取得対象 target_id の正本は spec-state.json という責務分離を維持。concern authority 4 種 (Apple HIG/Clean Arch/OWASP/SRE) が doctrine-anchor-registry.json と整合し、C14 knowledge graph 位相順で後続へ供給する結線も破壊なし。"
     ],
     "negative_feedback": [
-      "[smell] 参照パスを bare な 'ref-system-design-knowledge/references/...' で書いており、同一 plugin の他 SKILL が採る skill-dir 相対 '../ref-system-design-knowledge/...' と表記が不揃い (解決可能ゆえ dependency_break ではない・PASS 非阻害)。",
-      "[smell] 本文他所が compile 消費者を 'spec-compile (C10)' と表記する一方、追記は 'C03' (compile skill) と表記。README 上は双方正当 (C10=slash command / C03=skill) だが C 番号が高密度で読者が混同しやすい (一語補足で解消可・PASS 非阻害)。"
+      "[low/smell] 『検証コマンド』節 (L137) で PLUGIN_ROOT を算出しているが、後続コマンドは相対パス (skills/... や scripts/...) で PLUGIN_ROOT を参照せず、算出値が実質未使用のデッド変数。cwd=plugin-root 前提なら動くが導線としては不揃い (PASS 非阻害)。",
+      "[low/smell] 本文他所が compile 消費者を 'spec-compile (C10)' と表記する一方、doctrine anchor 段落と consumer 行では 'C03' (compile skill) 表記も混在。README 上は双方正当 (C10=slash command / C03=skill) だが C 番号が高密度で読者が混同しやすい (一語補足で解消可・PASS 非阻害)。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "独立 context 再評価。(1) registry test -e EXISTS。(2) validate-knowledge-graph.py --profile doctrine 実行で status:ok・pending_exceptions=[]・concern_authorities が SKILL 記載と 8/8 一致。(3) README line35 で C13=validate-source-citation.py, C14=validate-knowledge-graph.py 確認。(4) README line31/38 で C01=elicit, C03=compile skill, fetched-references.json -> C03/C08 消費を確認し追記の『後続(C01/C03)』整合。矛盾・依存破壊・欠落・不整合 0、残りは cosmetic smell 2 のみ -> PASS。doctrine anchor 段落追加後の現行 sha=33a9e3ce...。"
+  "notes": "現 SKILL.md (sha256=0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 2 起動経路 (spec-compile 前 / elicit R2 裏取り)・公式一次情報限定・鮮度判定 C08 委譲が節間で一致。②漏れなし: Purpose/Output Contract・JSON 形状・Key Rules(9)・ゴールシーク (Goal/Why/完了チェックリスト/ループ)・局面カタログ・検証コマンド・Gotchas・Additional Resources を被覆。③整合性: IN1=validate-source-citation.py exit0 が frontmatter/チェックリスト/検証コマンドで一致、max_iterations 5=goal_seek max_loops 5。④依存整合: prompts (R1/R2/R3)・reference (official-source-catalog.md/resource-map.yaml)・script (build-fetched-references.py, ../../scripts/validate-source-citation.py)・schema (fetched-references)・doctrine-anchor-registry.json を test -e で全件実在確認 (dependency_break=0)。残りは cosmetic smell 2 のみのため PASS。"
 }

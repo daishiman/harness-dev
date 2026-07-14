@@ -69,7 +69,7 @@
     "skill_dir_tree_sha": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$",
-      "description": "被験 skill の SKILL.md + scripts/ 複合 sha256 (どの版の skill を受け入れたかの固定)"
+      "description": "被験 skill の宣言済み挙動閉包 (SKILL.md、local scripts/prompts、各 *_refs、native plugin manifest/hooks、per-skill に選択された dependency plugin の executable surface) の複合 sha256。package-contract は raw file 全体でなく対象 skill への依存射影として反映し、無関係な skill の契約変更では invalidation しない。field名は既存verdict互換のため維持"
     },
     "transcript_sha256": {
       "type": ["string", "null"],
@@ -77,6 +77,12 @@
       "description": "回収した transcript.jsonl の sha256。transcript 不在 (tui 層のみ) は null"
     },
     "scenario_origin": {"enum": ["synthetic", "replay"]},
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "description": "criteria receipt / positive scenario fixture と実走を束縛する stable id。単発 trial では省略可"
+    },
     "environment": {
       "type": "object",
       "required": ["claude_version", "tmux", "transcript_layer", "permissions_mode"],

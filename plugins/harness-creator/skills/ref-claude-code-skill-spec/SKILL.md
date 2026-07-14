@@ -1,7 +1,7 @@
 ---
 name: ref-claude-code-skill-spec
 description: frontmatterを記述するとき、subagent/hooksを配線するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref

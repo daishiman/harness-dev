@@ -157,7 +157,7 @@ brief.responsibilities[].prompt_required=true が 1 件でもあれば
 | 観点 | 規約 |
 |---|---|
 | 配置パス | `plugins/<plugin>/skills/<skill>/prompts/<R-id>.yaml` |
-| ファイル名 | brief.responsibilities[].id (R1, R2, ...) と 1:1 |
+| ファイル名 | prompt_required=true/省略(true) の brief.responsibilities[].id (R1, R1-elicit, R2b-readiness, ...) とstem完全一致。prompt_required=false は生成対象外 |
 | ディレクトリ階層 | 1 階層 (ネスト禁止) |
 | SKILL.md 参照 | `## Additional Resources` 節に案内 1 行のみ可 |
 

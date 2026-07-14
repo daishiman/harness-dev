@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-system-dev-plan",
+  "skill": "run-system-dev-plan",
+  "description": "Repo-local feature planning from managed context and active lock through exact-13 generation, independent validation, atomic promotion, registration handoff, and guaranteed lock release.",
+  "phases": [
+    {"id": "R1-preflight-lock", "step": 1, "title": "Resolve caller context, acquire C13 lock, and prove implementation readiness", "gate": "IN1", "dependsOn": [], "entryHook": "PreToolUse:guard-implementation-readiness", "exitHook": null, "resourceIds": ["script-context", "script-lock", "script-readiness"], "fatal_exit_codes": [1, 2]},
+    {"id": "R2-emit-handoff", "step": 2, "title": "Elicit and emit the exact-13 package, then commit the C14 handoff", "gate": "IN2", "dependsOn": ["R1-preflight-lock"], "entryHook": null, "exitHook": null, "resourceIds": ["prompt-elicit", "prompt-decompose", "prompt-emit", "script-handoff"], "fatal_exit_codes": [1, 2]},
+    {"id": "R3-validate-evaluate", "step": 3, "title": "Run C12 deterministic validation and independent fork evaluation on one digest", "gate": "OUT1", "dependsOn": ["R2-emit-handoff"], "entryHook": null, "exitHook": null, "resourceIds": ["script-validator", "skill-evaluator"], "fatal_exit_codes": [1, 2]},
+    {"id": "R4-promote-register", "step": 4, "title": "Validate active owner again, atomically promote, and emit the registration request", "gate": "OUT2", "dependsOn": ["R3-validate-evaluate"], "entryHook": null, "exitHook": null, "resourceIds": ["script-promoter"], "fatal_exit_codes": [1, 2]},
+    {"id": "R5-release-report", "step": 5, "title": "Release C13 lock in finalization and project the plan structure report", "gate": "OUT3", "dependsOn": ["R4-promote-register"], "entryHook": null, "exitHook": null, "resourceIds": ["script-lock"], "fatal_exit_codes": [1, 2]}
+  ],
+  "resources": [
+    {"id": "prompt-elicit", "kind": "prompt", "path": "./prompts/R1-elicit.md", "phaseIds": ["R2-emit-handoff"]},
+    {"id": "prompt-decompose", "kind": "prompt", "path": "./prompts/R2-decompose.md", "phaseIds": ["R2-emit-handoff"]},
+    {"id": "prompt-emit", "kind": "prompt", "path": "./prompts/R3-emit.md", "phaseIds": ["R2-emit-handoff"]},
+    {"id": "script-context", "kind": "script", "path": "../../scripts/resolve-project-context.py", "phaseIds": ["R1-preflight-lock"]},
+    {"id": "script-lock", "kind": "script", "path": "../../scripts/manage-system-plan-lock.py", "phaseIds": ["R1-preflight-lock", "R5-release-report"]},
+    {"id": "script-readiness", "kind": "script", "path": "../../scripts/check-implementation-readiness.py", "phaseIds": ["R1-preflight-lock"]},
+    {"id": "script-handoff", "kind": "script", "path": "../../scripts/build-system-handoff.py", "phaseIds": ["R2-emit-handoff"]},
+    {"id": "script-validator", "kind": "script", "path": "../../scripts/validate-system-plan.py", "phaseIds": ["R3-validate-evaluate"]},
+    {"id": "skill-evaluator", "kind": "skill", "path": "../assign-system-dev-plan-evaluator/SKILL.md", "phaseIds": ["R3-validate-evaluate"]},
+    {"id": "script-promoter", "kind": "script", "path": "../../scripts/promote-system-plan.py", "phaseIds": ["R4-promote-register"]}
+  ]
+}

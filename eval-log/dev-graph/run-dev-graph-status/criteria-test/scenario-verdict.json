@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-status",
+    "component_id": "C18",
+    "skill_md_sha256": "553b58f43ebf0a15ed0f7dd1ff5225c16fee948f75a122382577717c708666fa"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
+        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c11_uses_canonical_schema_and_frontmatter_path_contract",
+        "independent: scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-status/.dev-graph/state/graph.json"
+      ],
+      "observed": "test_validate_graph_schema_and_main and test_c11_uses_canonical_schema_and_frontmatter_path_contract PASSED (C11 reads via the canonical schema + frontmatter path contract). Independent validate-graph-schema.py on r3-status (1 node) and r2-status (1 node) returned exit0 with valid=true, violations=[], missing_sections=[]: the read result carries the full required-key set with zero missing keys, matching the graph store's actual state."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C18-OUT1-positive-read-only-status",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20260713T090000-r3/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-status/live-trial/20260713T090000-r3/out/status.json"
+      ],
+      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-4-6], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live. Positive read-only scenario '--repo-root .../r3-status --id LT-TASK-001' returned status/closed_at/depends_on identical to the graph node's stored values with C11 exit0 (out/status.json scenario=status-positive-read-only status=PASS)."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c10_invokes_c11_then_still_rejects_direct_mutation",
+        "independent: git status --porcelain on r3-status/r2-status/r3-requirements/r3-system-spec fixtures after read-only validate-graph-schema.py runs"
+      ],
+      "observed": "test_c10_invokes_c11_then_still_rejects_direct_mutation PASSED (the C11 read path still rejects any direct mutation). Independently, invoking validate-graph-schema.py (the read path this skill relies on) against four graph stores left every fixture byte-identical: git status --porcelain reported no changes, confirming zero graph/content side effects and no GitHub/Beads writes (digest invariant before/after)."
+    }
+  }
+}

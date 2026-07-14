@@ -4,7 +4,7 @@ conftest 非依存で module-level に importlib ロードする (自己完結)�
 lock 取得/二重起動 already-held/孤児 steal (ttl 超過・pid 非生存)/破損 lock/別ホスト非 steal/
 force-release/release/renew (renewed・lost・foreign)/lock-ttl 既定=2×lease/producer scripts
 preflight/find_expired_leases 純関数/graph_hash pin 一致・不一致 (subprocess 委譲は
-monkeypatch)/reap 委譲 を網羅する。
+monkeypatch)/repin 時 task-graph 転送/reap 委譲 を網羅する。
 """
 from __future__ import annotations
 
@@ -51,7 +51,14 @@ def _dead_pid() -> int:
     return 999999
 
 
-def _write_lock(path: Path, *, started_at: str, pid: int, host: str) -> None:
+def _write_lock(path: Path, *, started_at: str, pid: int, host: str,
+                owner_token: str = "owner-a") -> None:
+    path.write_text(json.dumps({"started_at": started_at, "pid": pid, "host": host,
+                                "owner_token": owner_token}) + "\n",
+                    encoding="utf-8")
+
+
+def _write_legacy_lock(path: Path, *, started_at: str, pid: int, host: str) -> None:
     path.write_text(json.dumps({"started_at": started_at, "pid": pid, "host": host}) + "\n",
                     encoding="utf-8")
 
@@ -88,6 +95,7 @@ def test_acquire_lock_creates_when_absent(tmp_path):
     assert content["started_at"] == "2026-07-06T12:00:00Z"
     assert content["pid"] == os.getpid()
     assert content["host"] == HOST
+    assert isinstance(content["owner_token"], str) and len(content["owner_token"]) >= 16
 
 
 def test_acquire_lock_already_held_when_live(tmp_path):
@@ -116,6 +124,16 @@ def test_acquire_lock_steals_when_pid_dead(tmp_path):
     assert json.loads(lock.read_text(encoding="utf-8"))["pid"] == os.getpid()
 
 
+def test_acquire_stale_legacy_lock_migrates_to_owner_token(tmp_path):
+    lock = tmp_path / ".build.lock"
+    _write_legacy_lock(lock, started_at=mbl._iso(T0), pid=_dead_pid(), host=HOST)
+    lease = mbl.acquire_lock(lock, T0, 900)
+    assert lease == "stolen"
+    content = json.loads(lock.read_text(encoding="utf-8"))
+    assert mbl._lock_format(content) == "owner-token"
+    assert isinstance(content["owner_token"], str) and content["owner_token"]
+
+
 def test_acquire_lock_no_steal_when_different_host(tmp_path):
     lock = tmp_path / ".build.lock"
     # 別ホストは pid 生存判定できないため ttl 内なら steal しない。
@@ -131,11 +149,30 @@ def test_acquire_lock_steals_when_corrupt(tmp_path):
     assert json.loads(lock.read_text(encoding="utf-8"))["pid"] == os.getpid()
 
 
+def test_acquire_stale_compare_delete_race_preserves_new_owner(tmp_path, monkeypatch):
+    lock = tmp_path / ".build.lock"
+    _write_lock(lock, started_at=mbl._iso(T0 - timedelta(seconds=1800)), pid=_dead_pid(), host=HOST)
+    real_compare_delete = mbl._compare_delete
+    raced = False
+
+    def _race(path, expected):
+        nonlocal raced
+        if not raced:
+            raced = True
+            _write_lock(path, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST,
+                        owner_token="new-owner")
+        return real_compare_delete(path, expected)
+
+    monkeypatch.setattr(mbl, "_compare_delete", _race)
+    assert mbl.acquire_lock(lock, T0, 900) == "already-held"
+    assert json.loads(lock.read_text(encoding="utf-8"))["owner_token"] == "new-owner"
+
+
 # ─────────────────────────── renew_lock / release_lock ───────────────────────────
 def test_renew_lock_updates_started_at_when_held(tmp_path):
     lock = tmp_path / ".build.lock"
     _write_lock(lock, started_at=mbl._iso(T0 - timedelta(seconds=300)), pid=os.getpid(), host=HOST)
-    assert mbl.renew_lock(lock, T0) == "renewed"
+    assert mbl.renew_lock(lock, T0, "owner-a") == "renewed"
     content = json.loads(lock.read_text(encoding="utf-8"))
     assert content["started_at"] == "2026-07-06T12:00:00Z"
     assert content["pid"] == os.getpid() and content["host"] == HOST
@@ -143,14 +180,14 @@ def test_renew_lock_updates_started_at_when_held(tmp_path):
 
 def test_renew_lock_lost_when_absent(tmp_path):
     lock = tmp_path / ".build.lock"
-    assert mbl.renew_lock(lock, T0) == "lost"
+    assert mbl.renew_lock(lock, T0, "owner-a") == "lost"
     assert not lock.exists()  # 再作成しない (lock 喪失を隠蔽しない)
 
 
 def test_renew_lock_foreign_when_other_host(tmp_path):
     lock = tmp_path / ".build.lock"
     _write_lock(lock, started_at=mbl._iso(T0 - timedelta(seconds=300)), pid=os.getpid(), host="__other_host__")
-    assert mbl.renew_lock(lock, T0) == "foreign"
+    assert mbl.renew_lock(lock, T0, "wrong-owner") == "foreign"
     # 他者の lock を書き換えない。
     content = json.loads(lock.read_text(encoding="utf-8"))
     assert content["started_at"] == mbl._iso(T0 - timedelta(seconds=300))
@@ -160,17 +197,17 @@ def test_renew_lock_foreign_when_live_other_pid_same_host(tmp_path):
     lock = tmp_path / ".build.lock"
     live_other = os.getppid()  # 実際に生存している自プロセス以外の pid
     _write_lock(lock, started_at=mbl._iso(T0), pid=live_other, host=HOST)
-    assert mbl.renew_lock(lock, T0) == "foreign"
+    assert mbl.renew_lock(lock, T0, "wrong-owner") == "foreign"
     # 生きた他 dispatcher の lock は不変。
     assert json.loads(lock.read_text(encoding="utf-8"))["pid"] == live_other
 
 
-def test_renew_lock_renewed_when_dead_pid_same_host(tmp_path):
-    # CLI 都度呼出し運用: acquire した過去の自 subprocess pid は非生存が正常 → 自己継続。
+def test_renew_lock_renewed_with_owner_token_even_when_pid_is_dead(tmp_path):
+    # CLI 都度呼出し運用で pid は変わるため owner token で継続を認証する。
     lock = tmp_path / ".build.lock"
     dead = _dead_pid()
     _write_lock(lock, started_at=mbl._iso(T0 - timedelta(seconds=300)), pid=dead, host=HOST)
-    assert mbl.renew_lock(lock, T0) == "renewed"
+    assert mbl.renew_lock(lock, T0, "owner-a") == "renewed"
     content = json.loads(lock.read_text(encoding="utf-8"))
     assert content["started_at"] == "2026-07-06T12:00:00Z"
     assert content["pid"] == dead and content["host"] == HOST  # 識別情報は保持
@@ -178,13 +215,28 @@ def test_renew_lock_renewed_when_dead_pid_same_host(tmp_path):
 
 def test_release_lock_unlinks(tmp_path):
     lock = tmp_path / ".build.lock"
-    lock.write_text("{}", encoding="utf-8")
-    mbl.release_lock(lock)
+    _write_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)
+    assert mbl.release_lock(lock, "owner-a") == "released"
     assert not lock.exists()
 
 
 def test_release_lock_missing_ok(tmp_path):
-    mbl.release_lock(tmp_path / ".build.lock")  # 例外にならない
+    assert mbl.release_lock(tmp_path / ".build.lock", "owner-a") == "lost"
+
+
+def test_release_lock_refuses_foreign_owner(tmp_path):
+    lock = tmp_path / ".build.lock"
+    _write_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)
+    assert mbl.release_lock(lock, "owner-b") == "foreign"
+    assert lock.exists()
+
+
+def test_legacy_lock_cannot_be_renewed_or_released_without_admin(tmp_path):
+    lock = tmp_path / ".build.lock"
+    _write_legacy_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)
+    assert mbl.renew_lock(lock, T0, "guessed") == "foreign"
+    assert mbl.release_lock(lock, "guessed") == "foreign"
+    assert lock.exists()
 
 
 def test_write_lock_atomic_no_temp_residue(tmp_path):
@@ -221,26 +273,85 @@ def test_find_expired_leases_is_pure(tmp_path):
     assert json.dumps(st, sort_keys=True) == snapshot  # 入力不変
 
 
+def test_repin_graph_hash_forwards_task_graph_to_single_writer(tmp_path, monkeypatch):
+    """accepted repin は TG-C02 がdone dirty-closure を導出できるよう graph を渡す。"""
+    captured: dict[str, object] = {}
+
+    class _Proc:
+        returncode = 0
+
+    def _fake_run(cmd, *, capture_output, text):
+        captured["cmd"] = cmd
+        captured["capture_output"] = capture_output
+        captured["text"] = text
+        return _Proc()
+
+    monkeypatch.setattr(mbl.subprocess, "run", _fake_run)
+    graph = tmp_path / "task-graph.json"
+    new_hash = "sha256:" + "f" * 64
+    rc = mbl._repin_graph_hash(
+        tmp_path / "sync-task-state.py",
+        tmp_path / "task-state.json",
+        tmp_path / "task-events.jsonl",
+        graph,
+        new_hash,
+        {"sha256:" + "b" * 64, new_hash},
+    )
+
+    assert rc == 0
+    cmd = captured["cmd"]
+    assert cmd[cmd.index("--task-graph") + 1] == str(graph)
+    assert cmd[cmd.index("--repin-graph-hash") + 1] == new_hash
+    assert [cmd[i + 1] for i, value in enumerate(cmd) if value == "--authorized-hash"] == sorted({
+        "sha256:" + "b" * 64, new_hash,
+    })
+
+
 # ─────────────────────────── main: release / force-release / renew ───────────────────────────
 def test_main_release_exit0(tmp_path):
     lock = tmp_path / ".build.lock"
-    lock.write_text("{}", encoding="utf-8")
-    rc = mbl.main(["--lock-action", "release", "--lock-path", str(lock)])
+    _write_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)
+    rc = mbl.main(["--lock-action", "release", "--lock-path", str(lock),
+                   "--owner-token", "owner-a"])
     assert rc == 0 and not lock.exists()
 
 
 def test_main_force_release_exit0(tmp_path, capsys):
     lock = tmp_path / ".build.lock"
     _write_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)  # 生存 lock でも無条件解放
-    rc = mbl.main(["--lock-action", "force-release", "--lock-path", str(lock)])
+    rc = mbl.main(["--lock-action", "force-release", "--lock-path", str(lock), "--admin"])
     assert rc == 0 and not lock.exists()
     assert json.loads(capsys.readouterr().out.strip())["lock"] == "released"
+
+
+def test_main_force_release_requires_admin(tmp_path, capsys):
+    lock = tmp_path / ".build.lock"
+    _write_lock(lock, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST)
+    rc = mbl.main(["--lock-action", "force-release", "--lock-path", str(lock)])
+    assert rc == 2 and lock.exists()
+    assert "--admin" in capsys.readouterr().err
+
+
+def test_force_release_compare_delete_race_preserves_new_owner(tmp_path, monkeypatch):
+    lock = tmp_path / ".build.lock"
+    _write_legacy_lock(lock, started_at=mbl._iso(T0), pid=_dead_pid(), host=HOST)
+    real_compare_delete = mbl._compare_delete
+
+    def _race(path, expected):
+        _write_lock(path, started_at=mbl._iso(T0), pid=os.getpid(), host=HOST,
+                    owner_token="new-owner")
+        return real_compare_delete(path, expected)
+
+    monkeypatch.setattr(mbl, "_compare_delete", _race)
+    assert mbl.force_release_lock(lock) == "lost"
+    assert json.loads(lock.read_text(encoding="utf-8"))["owner_token"] == "new-owner"
 
 
 def test_main_renew_exit0(tmp_path, capsys):
     lock = tmp_path / ".build.lock"
     _write_lock(lock, started_at=mbl._iso(T0 - timedelta(seconds=300)), pid=os.getpid(), host=HOST)
-    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock)])
+    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock),
+                   "--owner-token", "owner-a"])
     assert rc == 0
     assert json.loads(capsys.readouterr().out.strip())["lock"] == "renewed"
     # started_at が現在時刻へ更新されている (300 秒前ではない)。
@@ -249,7 +360,8 @@ def test_main_renew_exit0(tmp_path, capsys):
 
 def test_main_renew_lost_exit1(tmp_path, capsys):
     lock = tmp_path / ".build.lock"
-    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock)])
+    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock),
+                   "--owner-token", "owner-a"])
     assert rc == 1
     assert json.loads(capsys.readouterr().out.strip())["lock"] == "lost"
     assert not lock.exists()  # 再作成しない
@@ -258,7 +370,8 @@ def test_main_renew_lost_exit1(tmp_path, capsys):
 def test_main_renew_foreign_exit1(tmp_path, capsys):
     lock = tmp_path / ".build.lock"
     _write_lock(lock, started_at=mbl._iso(T0), pid=4242, host="__other_host__")
-    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock)])
+    rc = mbl.main(["--lock-action", "renew", "--lock-path", str(lock),
+                   "--owner-token", "owner-b"])
     assert rc == 1
     assert json.loads(capsys.readouterr().out.strip())["lock"] == "foreign"
     # 他者の lock は不変。
@@ -268,6 +381,7 @@ def test_main_renew_foreign_exit1(tmp_path, capsys):
 # ─────────────────────────── main: acquire ───────────────────────────
 def _stub_ok(monkeypatch, *, derive_hash="sha256:" + "a" * 64, verify=True):
     """subprocess 委譲ヘルパを monkeypatch し決定論化する。"""
+    monkeypatch.setattr(mbl, "_initialize_state", lambda *a, **k: 0)
     monkeypatch.setattr(mbl, "_reap_lease", lambda *a, **k: 0)
     monkeypatch.setattr(mbl, "_derive_graph_hash", lambda *a, **k: derive_hash)
     monkeypatch.setattr(mbl, "_pin_graph_hash", lambda *a, **k: 0)
@@ -287,6 +401,22 @@ def test_main_acquire_already_held_exit1(tmp_path, monkeypatch, capsys):
     assert json.loads(capsys.readouterr().out.strip())["lock"] == "already-held"
 
 
+def test_main_acquire_live_legacy_lock_reports_admin_migration_path(tmp_path, monkeypatch, capsys):
+    build = tmp_path / "build"
+    build.mkdir()
+    _write_legacy_lock(build / ".build.lock", started_at=mbl._iso(mbl._utc_now()),
+                       pid=os.getpid(), host=HOST)
+    _stub_ok(monkeypatch)
+    rc = mbl.main([
+        "--lock-action", "acquire", "--task-state", str(build / "task-state.json"),
+        "--task-graph", str(tmp_path / "task-graph.json"),
+    ])
+    out = json.loads(capsys.readouterr().out.strip())
+    assert rc == 1 and out["lock_format"] == "legacy"
+    assert "force-release --admin" in out["remediation"]
+    assert mbl._lock_format(json.loads((build / ".build.lock").read_text())) == "legacy"
+
+
 def test_main_acquire_pins_when_unset(tmp_path, monkeypatch, capsys):
     build = tmp_path / "build"
     build.mkdir()
@@ -299,6 +429,7 @@ def test_main_acquire_pins_when_unset(tmp_path, monkeypatch, capsys):
     assert rc == 0
     out = json.loads(capsys.readouterr().out.strip())
     assert out["lock"] == "acquired" and out["graph_hash_pin"] == "pinned"
+    assert out["owner_token"] == json.loads((build / ".build.lock").read_text())["owner_token"]
     assert out["reaped_task_ids"] == []
     assert (build / ".build.lock").exists()  # lock は保持したまま
 
@@ -394,6 +525,7 @@ def test_main_acquire_reaps_expired_leases(tmp_path, monkeypatch, capsys):
         reaped_calls.append(task_id)
         return 0
 
+    monkeypatch.setattr(mbl, "_initialize_state", lambda *a, **k: 0)
     monkeypatch.setattr(mbl, "_reap_lease", _fake_reap)
     monkeypatch.setattr(mbl, "_derive_graph_hash", lambda *a, **k: "sha256:" + "a" * 64)
     monkeypatch.setattr(mbl, "_pin_graph_hash", lambda *a, **k: 0)
@@ -417,6 +549,39 @@ def test_main_acquire_requires_task_graph(tmp_path, monkeypatch):
     assert rc == 2
     # graph_hash 検証に到達できないため lock は解放される。
     assert not (build / ".build.lock").exists()
+
+
+def test_main_acquire_initialize_failure_releases_lock(tmp_path, monkeypatch, capsys):
+    build = tmp_path / "build"
+    build.mkdir()
+    _stub_ok(monkeypatch)
+    monkeypatch.setattr(mbl, "_initialize_state", lambda *a, **k: 1)
+    rc = mbl.main([
+        "--lock-action", "acquire", "--task-state", str(build / "task-state.json"),
+        "--task-graph", str(tmp_path / "task-graph.json"),
+    ])
+    assert rc == 1
+    assert "--initialize-from-graph" in capsys.readouterr().err
+    assert not (build / ".build.lock").exists()
+
+
+def test_initialize_state_delegates_to_c02_and_materializes_sparse_state(tmp_path):
+    build = tmp_path / "build"
+    build.mkdir()
+    state_path = build / "task-state.json"
+    events_path = build / "task-events.jsonl"
+    state_path.write_text(json.dumps(_state(*[_node(f"T{i}", "done") for i in range(110)])),
+                          encoding="utf-8")
+    graph_path = tmp_path / "task-graph.json"
+    graph_path.write_text(json.dumps({
+        "nodes": [{"id": f"T{i}"} for i in range(135)], "edges": [],
+    }), encoding="utf-8")
+    sync_script = SCRIPTS / "sync-task-state.py"
+    assert mbl._initialize_state(sync_script, state_path, events_path, str(graph_path)) == 0
+    nodes = json.loads(state_path.read_text(encoding="utf-8"))["nodes"]
+    assert len(nodes) == 135
+    assert sum(node["state"] == "done" for node in nodes) == 110
+    assert sum(node["state"] == "pending" for node in nodes) == 25
 
 
 def test_main_acquire_default_path_from_resolve_build_dir(tmp_path, monkeypatch, capsys):

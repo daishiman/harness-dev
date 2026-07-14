@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "plugin": "dev-graph",
+  "package_mode": "bundle",
+  "run_id": "2026-07-13-r3",
+  "completed_at": "2026-07-13T09:03:13Z",
+  "execution_scope": "PKG-001..015",
+  "safety": {
+    "external_mutation": false,
+    "lifecycle_mode": "temporary-sandbox",
+    "native_manifest_validation": "claude plugin validate fallback because installed CLI does not expose --strict"
+  },
+  "pkg_checks": {
+    "PKG-001": {"status": "pass", "evidence": "native claude plugin validate: Validation passed"},
+    "PKG-002": {"status": "pass", "evidence": "pkg-batch/2026-07-13-r3.json"},
+    "PKG-003": {"status": "pass", "evidence": "pkg-batch/2026-07-13-r3.json"},
+    "PKG-004": {"status": "pass", "evidence": "9 skill frontmatters: required keys, real schema_refs, reasoned manifest exemptions"},
+    "PKG-005": {"status": "pass", "evidence": "pkg-batch/2026-07-13-r3.json"},
+    "PKG-006": {"status": "pass", "evidence": "native hooks plus package-contract entrypoint ledger"},
+    "PKG-007": {"status": "pass", "evidence": "all Python/shell entrypoints have shebang and executable mode"},
+    "PKG-008": {"status": "pass", "evidence": "pkg-batch/2026-07-13-r3.json"},
+    "PKG-009": {"status": "pass", "evidence": "external_ref_count=0; declared_dependency_ref_count=5; contract_errors=[]"},
+    "PKG-010": {"status": "pass", "evidence": "sandbox install: 14 surfaces, non-executable=[], external refs=0"},
+    "PKG-011": {"status": "pass", "evidence": "sandbox uninstall: removed 14/14 surfaces, residues=[]"},
+    "PKG-012": {"status": "pass", "evidence": "same-version no-op; 0.1.0→0.1.1 non-destructive; user state preserved"},
+    "PKG-013": {"status": "pass", "sub_checks": {"PKG-013a": "pass", "PKG-013b": "pass", "PKG-013c": "pass", "PKG-013d": "pass"}},
+    "PKG-014": {"status": "pass", "evidence": "kind/combinator runtime wiring validation in pkg-batch/2026-07-13-r3.json"},
+    "PKG-015": {"status": "not_applicable", "evidence": "pkg-015/2026-07-13-r3.json", "skip_reason": "rubric history bootstrap 0/20; threshold verdict is not statistically applicable"}
+  },
+  "verdict": {
+    "status": "PASS",
+    "pass": 14,
+    "fail": 0,
+    "not_applicable": 1,
+    "total": 15
+  }
+}

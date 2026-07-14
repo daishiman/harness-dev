@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "skill_md_sha256": "7c0ffd26130cf92707c02f5152e3349e135525d44b8f45ea0f78cbd228a4b246"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7", "OUT8", "OUT9"],
+    "positive_feedback": [
+      "binding 別の mutation authority 一意化 (beads=C28 exact-set parity + push-only mirror / github=C12 / none=external write なし) が frontmatter R3・Purpose・Protocol step2・Gotchas で完全一致し authority 混在拒否が矛盾なく貫かれている",
+      "Status を local→Project 一方向投影に固定し remote Status を done authority に逆流させない規則が R2/Why/Protocol3/OUT9/Gotchas で整合、PR merge evidence 経由の done 判定 (C26/C27 reconcile) と衝突しない",
+      "OUT1-OUT9 の各契約 (冪等 changes=0/tie-break/tombstone/dry-run write0/manual flag 解消/Project item 安定/3-way manual conflict/pending_retry/merge evidence) が Criteria acceptance と Gotchas に 1:1 で漏れなく対応している"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SKILL.md (sha256 7c0ffd26130cf92707c02f5152e3349e135525d44b8f45ea0f78cbd228a4b246) を frontmatter・Purpose・Protocol・ゴールシーク・Criteria acceptance・Gotchas まで全文 read し 4 条件で genuine 再評価した。①矛盾なし: 9 個の OUT criteria 間に相反なし。dry-run(OUT4)の write0 と mutation 経路(R3)は排他条件で整合、tie-break『新しい方採用・同時刻 GitHub 優先+local 手動確認フラグ』(OUT2) が R2/Protocol3 と一致。②漏れなし: IN1+OUT1..OUT9 の全 10 criteria に Criteria acceptance 節があり、R1-R8 responsibility が Protocol 5 step と完了チェックリストに被覆される。③整合性: allowed-tools が write 系(Write/Edit)を含み --mode write と整合、script_refs(gh-bridge/bd-bridge/reconcile-github-lifecycle/manage-worktree-lease 等)と reference_refs(execution-tracker/github-lifecycle contract)が Protocol 記述に対応。④依存整合: C24/C11/C12/C02/C25/C26/C27/C28 の参照が Why・Protocol に配線され goal_seek fork=subagent に Agent を保有。最も複雑な skill だが重大な矛盾・欠落・依存断絶は検出されず PASS。"
+}

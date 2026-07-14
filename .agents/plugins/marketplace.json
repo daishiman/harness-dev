@@ -1,0 +1,29 @@
+{
+  "name": "harness-repo-internal",
+  "interface": {
+    "displayName": "Harness repository plugins"
+  },
+  "plugins": [
+    {
+      "name": "harness-creator",
+      "source": {
+        "source": "local",
+        "path": "./plugins/harness-creator"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Internal-Tooling",
+      "x_harness": {
+        "distributable": false,
+        "scope": "repo-internal",
+        "activation_requires": [
+          "user-install",
+          "user-enable",
+          "user-hook-trust"
+        ]
+      }
+    }
+  ]
+}

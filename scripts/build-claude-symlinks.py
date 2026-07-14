@@ -4,6 +4,7 @@
 import argparse
 import json
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -259,9 +260,18 @@ def apply_plan(plan, dry_run=False):
             continue
         src = Path(item["src"])
         src_rel = os.path.relpath(src, dst.parent)
-        if action == "update":
-            dst.unlink()
-        dst.symlink_to(src_rel)
+        # Create the new link beside the destination and atomically publish it.
+        # This avoids an unlink/create window where readers observe no surface.
+        tmp = dst.with_name(f".{dst.name}.tmp.{os.getpid()}.{secrets.token_hex(8)}")
+        try:
+            os.symlink(src_rel, tmp)
+            os.replace(tmp, dst)
+        except BaseException:
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
+            raise
 
 
 def check_drift(plan):

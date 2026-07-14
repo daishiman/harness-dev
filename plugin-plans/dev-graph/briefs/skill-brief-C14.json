@@ -1,0 +1,91 @@
+{
+  "skill_name": "run-dev-graph-decompose",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "やりたいことを分解",
+    "dev-graph decompose",
+    "自然文からタスク起票"
+  ],
+  "output_contract": "マクロ分解レポート + per-feature execution package report (exact 13 P01..P13、共通parent_feature/feature_package_id、13-node DAG) + binding別publication report。--dry-run時はwrite 0件",
+  "boundary": "入力=自然文の「やりたいこと(大)」またはsystem-dev-planner/`/system-dev-plan`が返すpromoted typed task specs/出力=マクロ分解によるfeature+architecture+機能間depends_on、およびC02のall-or-none local batchとbinding別external projection。feature自体の細タスク仕様書生成 (1機能=13タスク仕様書) は行わずsystem-dev-plannerへ委譲する。local batch commit後の外部部分失敗はrollbackせずnode単位pending_retryとする。実装コードは生成しない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [
+    "gh",
+    "bd (C28経由のみ)"
+  ],
+  "deterministic_checks": [
+    "validate-graph-schema.py",
+    "gh-bridge.py",
+    "bd-bridge.py"
+  ],
+  "external_systems": [
+    "Beads",
+    "GitHub Issues",
+    "GitHub Projects v2"
+  ],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "自然文からfeature+architecture+機能間depends_onへのマクロ分解",
+    "ready featureごとのsystem-dev-planner自動起動+手動/system-dev-planフォールバック",
+    "P01..P13 exact 13 task package検証",
+    "promoted taskの共通parent_feature/feature_package_id付きC02 atomic登録receipt",
+    "tracker_binding_intent解決",
+    "binding別の単一projection authority",
+    "依存edge parity",
+    "linkage保存",
+    "外部部分失敗pending retry",
+    "dry-run/preview"
+  ],
+  "goal": "自然文の「やりたいこと(大)」からfeatureノード群+architectureノード+機能間depends_onを生成するマクロ分解を行い、ready featureごとにsystem-dev-planner(ミクロ層)を自動起動または手動`/system-dev-plan`実行結果を受理してpromoted typed task群をparent_feature付きでC02へatomic登録し、binding=beadsはC28へissue/依存edge、binding=githubはC12へIssue/任意Projects、binding=noneはローカルのみへ冪等投影した状態になっている",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "mass_production_profile": "strict",
+  "output_language": "ja",
+  "purpose_background": "マクロ (feature/architecture/機能間依存の保持+実行オーケストレーション) とミクロ (1 feature→13タスク仕様書) の責務混線を避けるため、C14は自然文のwantをfeature+architecture+機能間depends_onへ分解するところまでを担い、feature単位の細タスク仕様書生成はexternal plugin system-dev-planner (external_contract_ref: plugin-plans/system-dev-planner/handoff-run-plugin-dev-plan.json) へ委譲する。ready feature (機能間depends_on充足) ごとに [自動] run-system-dev-planをSkill呼出しでpurpose/goal/scope_in/scope_out/acceptance/architecture_refsを入力文脈として渡し、[手動] 人間の`/system-dev-plan`実行結果も同じ入口として受理する。両経路が返すpromoted typed taskはgraph_node_id+source_digestを冪等キーにC02単一writer経由でparent_feature=当該featureとしてatomic登録し、二重登録を防ぐ。既存の「自然文とpromoted system taskの入口一本化」責務は維持し、tracker_binding_intentはC02がrepo-configと照合して解決し、mode=bothのautoは拒否する。beadsはC28 create/dep-add、githubはC12 Issue/Projects、noneはlocal graphだけへ投影する。GitHub binding+local_onlyは未管理taskを生むため拒否する",
+  "responsibilities": [
+    {
+      "id": "R1-elicit",
+      "summary": "自然文の「やりたいこと(大)」とマクロ分解の粒度基準 (feature単位)・機能間依存推定方針、および --dry-run 指定の有無をヒアリングして確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-plan",
+      "summary": "自然文のwantからfeatureノード群+architectureノード+機能間depends_onへのマクロ分解案を組み立てる (1機能=13タスク仕様書への細分解はsystem-dev-plannerへ委譲しここでは行わない)",
+      "prompt_required": true
+    },
+    {
+      "id": "R2b-feature-planning",
+      "summary": "ready featureごとにsystem-dev-plannerを起動し、返却packageがP01..P13 exact 13 task/13-node DAG、共通parent_feature/feature_package_idを満たす場合だけC02へ渡す。手動/system-dev-planも同じ検査経路を通す",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-decompose",
+      "summary": "C02で全feature/task (system-dev-planner/`/system-dev-plan`が返すpromoted task含む) のbinding/path/dependency/parent_featureを事前検証してall-or-none登録する。eligible taskをbinding=beadsならC28 create/dep-add、githubならC12 Issue、noneなら外部writeなしへ振り分け、既存linkageは再起票しない",
+      "prompt_required": true
+    },
+    {
+      "id": "R4-project",
+      "summary": "tracker_binding=githubかつissue_and_projectsのtaskだけをconfigured Projectsへ冪等追加し、Statusはlocal_to_projectで初期化する。beads mirrorとnoneはProject mutationしない",
+      "prompt_required": true
+    },
+    {
+      "id": "R5-retry",
+      "summary": "Issue成功後のProject mutation失敗はローカルtask/Issue linkageを維持し、alias単位のsync_state=pending_retryとして次回C03 syncへ渡す",
+      "prompt_required": false
+    },
+    {
+      "id": "R6-dryrun",
+      "summary": "--dry-run時はIssue/Project mutationを一切実行せず、Issue body、Project targets、field valuesのpreviewだけを返す",
+      "prompt_required": true
+    }
+  ]
+}

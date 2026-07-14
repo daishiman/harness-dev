@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "source": {
+    "kind": "manual",
+    "ref": "beads-kanban-reconciliation-20260712",
+    "generated_by": "3リポジトリ調査 (gastownhall/beads v1.1.0 ほか) + ユーザー決定 (ハイブリッド方針 / bd-bridge最小統合)。dev-graph 側の対改善 = plugin-plans/dev-graph/improvement-handoff-beads.json (EV-B01..B09) と対をなす"
+  },
+  "target_plugin_slug": "system-dev-planner",
+  "plan_dir": "plugin-plans/system-dev-planner",
+  "context": {
+    "user_policy": "AIエージェント実行系タスク = beads、人間向け公開/俯瞰 = GitHub Issues/Projects v2。実行トラッカーの解決・起票・完了収束は dev-graph が所有し、system-dev-planner は宣言 (intent) のみを持つ既存の責務境界を維持する。",
+    "principle": "system-dev-planner 側の変更は最小。トラッカー選択は spec の責務外であり、dev-graph repo-config (.dev-graph/config.json の execution_tracker) が実行時に解決する。"
+  },
+  "findings": [
+    {
+      "id": "EV-S01",
+      "severity": "medium",
+      "summary": "dev-graph-registration-contract.json の required_fields/fixed_values が GitHub linkage のみを持ち、dev-graph 側 graph-node schema に追加される tracker_binding / beads_linkage (dev-graph EV-B02) と 1:1 対応が崩れる。",
+      "recommendation": "required_fields へ tracker_binding と beads_linkage を追加し、fixed_values に tracker_binding: \"repo-config-default\" (登録時に dev-graph が .dev-graph/config.json の execution_tracker から解決する遅延束縛の印) と beads_linkage: null (bd 起票後に dev-graph 側が更新する。issue_linkage と対称) を追加する。node_schema_ref 先の dev-graph graph-node.schema.json 更新と同期を取る。",
+      "target_ref": "dev-graph-registration-contract.json"
+    },
+    {
+      "id": "EV-S02",
+      "severity": "low",
+      "summary": "typed task spec テンプレートの GitHub publication 節が GitHub のみを前提としており、beads 実行既定 (github_publication.mode=local_only + beads 束縛) との両立が読み取れない。",
+      "recommendation": "system-task-spec-template.md の『GitHub publication and completion』節と workstream-inventory.schema.json の github_publication 説明へ境界を 1-2 文追記する: 『実行トラッカー (beads/GitHub) の選択は spec の責務外で dev-graph repo-config が解決する。mode=local_only は beads 束縛タスクの既定であり、その場合の GitHub ミラーは bd github sync のみが authority (二重起票禁止)』。テンプレート構造 (7 section 必須) は変更しない。",
+      "target_ref": "references/system-task-spec-template.md + schemas-draft/workstream-inventory.schema.json"
+    },
+    {
+      "id": "EV-S03",
+      "severity": "low",
+      "summary": "goal-spec / index の責務境界記述が『Issue/Projects mutation は dev-graph 所有』と GitHub のみを列挙しており、beads を含む実行トラッカー全般の所有が不明確。",
+      "recommendation": "責務境界の文言を『実行トラッカー (GitHub Issues/Projects v2 および beads) の解決・起票・完了収束・bd close 還流は dev-graph が所有し、system-dev-planner は publication intent の宣言のみ行う』へ一般化する Edit 差分を index.md の責務境界節と goal-spec.json の該当 checklist 文言へ適用する。",
+      "target_ref": "index.md + goal-spec.json"
+    },
+    {
+      "id": "EV-S04",
+      "severity": "medium",
+      "summary": "プランナー選定境界が未記述: 構築対象が plugin かシステムかで plugin-dev-planner / system-dev-planner のどちらを使うかの入口ルールが index / goal-spec に存在せず、plugin 構築タスクが誤って system ルート (dev-graph 登録) へ流れうる。",
+      "recommendation": "index.md の責務境界節へ選定ルールを追記する: 『plugin 構築 (plugins/<slug>/ 配下の Claude Code plugin 実体) は plugin-dev-planner (/plugin-dev-plan) の管轄で、そのタスク仕様書は task-state.json からの beads 直接投影で看板反映する (dev-graph 非経由)。システム構築 (導入先リポジトリのアプリケーション/システムコード) のみが本 plugin (system-dev-planner) の管轄で、typed task spec → dev-graph atomic 登録 → execution-tracker contract の経路をとる。正本 = dev-graph plan の references/execution-tracker-contract.md §0 (二重登録禁止)』。",
+      "target_ref": "index.md + plugin-plans/dev-graph/references/execution-tracker-contract-draft.md#§0"
+    }
+  ],
+  "provenance": {
+    "prev_goal_spec": "goal-spec.json",
+    "prev_improvement_handoff": "improvement-handoff.json",
+    "paired_handoff": "plugin-plans/dev-graph/improvement-handoff-beads.json",
+    "origin_request": {
+      "kind": "verbal",
+      "ref": "current-user-request (beads看板連携 + 完了カスケード + Claude hooks + multi-worktree)"
+    }
+  }
+}

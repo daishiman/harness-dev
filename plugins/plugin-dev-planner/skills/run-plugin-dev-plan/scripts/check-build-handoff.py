@@ -77,6 +77,15 @@ def _route_errors(route: dict, idx: int, ids: set[str], plan_dir: Path) -> list[
     builder = _require_str(route, "builder", errors, prefix)
     build_kind = _require_str(route, "build_kind", errors, prefix)
     _require_str(route, "build_target", errors, prefix)
+    # handoff は planner-owned の routing 宣言であり、consumer の実行状態台帳ではない。
+    # build 後も planned 据置とし、done/blocked 等は task-state.json と route report にのみ
+    # 記録する (io-contract.md / pipeline-boundary-contract.md の単一 writer 境界)。
+    status = route.get("status")
+    if status != "planned":
+        errors.append(
+            f"{prefix}.status={status!r} は plan-time 宣言 'planned' でなければならない "
+            "(実行状態は task-state.json / route-build-report が正本)"
+        )
 
     ps = str(route.get("placement_scope", "skill")).strip() or "skill"
     if ck and ck not in specfm.COMPONENT_KINDS:

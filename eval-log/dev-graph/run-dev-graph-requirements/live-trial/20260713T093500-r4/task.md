@@ -1,0 +1,5 @@
+# R4: C04 persisted requirements handoff proof
+
+Invoke `Skill({skill:"dev-graph:run-dev-graph-requirements",args:"LT-FEATURE-001 --repo-root /Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/eval-log/dev-graph/live-trial-fixtures/r4-requirements"})` and follow it. Revalidate the confirmed feature, system-spec lineage, exact P01..P13 system plan, and implementation readiness. Produce an actual persisted artifact at `<repo>/requirements-handoff.json` (stdout-only output is failure). It must identify capability-build/task-graph consumption, include all 13 task refs, source digest/lineage, validation receipts, and use only repo-relative contained paths. Re-open that file and mechanically verify it before PASS.
+
+On real success only, write `{"status":"PASS","scenario":"requirements-persisted-handoff"}` to `/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260712-134250-wt-7/eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260713T093500-r4/out/status.json`; otherwise FAIL. End `DONE: <status>`.

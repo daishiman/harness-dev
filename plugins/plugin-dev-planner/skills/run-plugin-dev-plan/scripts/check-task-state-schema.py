@@ -28,6 +28,7 @@ import importlib.util
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -64,6 +65,12 @@ def validate_task_state(state: dict) -> list[str]:
     if not isinstance(nodes, list):
         errs.append("nodes が list でない (必須)")
         return errs
+
+    state_ids = [n.get("id") for n in nodes if isinstance(n, dict)]
+    for nid, count in sorted(Counter(
+            nid for nid in state_ids if isinstance(nid, str) and nid.strip()).items()):
+        if count > 1:
+            errs.append(f"task-state node id 重複: {nid!r} ({count}件)")
 
     for idx, n in enumerate(nodes):
         if not isinstance(n, dict):
@@ -105,8 +112,48 @@ def validate_task_state(state: dict) -> list[str]:
     return errs
 
 
+def check_node_id_parity(state: dict, graph: dict) -> list[str]:
+    """task-graph/state のnode id集合が完全一致することを検査する。
+
+    hash pin 一致だけでは state から node が落ちた、または未知 node が混入した
+    状態を検出できない。両側の重複も set 化前に fail-closed で拒否する。
+    """
+    errs: list[str] = []
+    state_nodes = state.get("nodes") if isinstance(state, dict) else None
+    graph_nodes = graph.get("nodes") if isinstance(graph, dict) else None
+    if not isinstance(state_nodes, list) or not isinstance(graph_nodes, list):
+        return ["node id parity 検査不能: task-state/task-graph nodes が list でない"]
+
+    def _ids(nodes: list, owner: str) -> list[str]:
+        ids: list[str] = []
+        for idx, node in enumerate(nodes):
+            if not isinstance(node, dict):
+                errs.append(f"{owner}.nodes[{idx}] が object でない (node id parity 検査不能)")
+                continue
+            nid = node.get("id")
+            if not isinstance(nid, str) or not nid.strip():
+                errs.append(f"{owner}.nodes[{idx}].id が空/非文字列 (node id parity 検査不能)")
+                continue
+            ids.append(nid)
+        for nid, count in sorted(Counter(ids).items()):
+            if count > 1:
+                errs.append(f"{owner} node id 重複: {nid!r} ({count}件)")
+        return ids
+
+    state_ids = _ids(state_nodes, "task-state")
+    graph_ids = _ids(graph_nodes, "task-graph")
+    state_set, graph_set = set(state_ids), set(graph_ids)
+    missing = sorted(graph_set - state_set)
+    unknown = sorted(state_set - graph_set)
+    if missing:
+        errs.append(f"task-state node 欠落 (graph には存在): {missing}")
+    if unknown:
+        errs.append(f"task-state 未知 node (graph に不在): {unknown}")
+    return errs
+
+
 def check_graph_hash_pin(state: dict, graph_path: Path) -> list[str]:
-    """state.graph_hash を graph_path の task-graph から再計算した hash と照合する。"""
+    """state.graph_hash と graph hash、および両者の node id 完全一致を照合する。"""
     graph_path = Path(graph_path)
     try:
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
@@ -117,13 +164,14 @@ def check_graph_hash_pin(state: dict, graph_path: Path) -> list[str]:
         actual = dtg.graph_hash(graph)
     except (TypeError, AttributeError, KeyError) as exc:
         return [f"graph_hash 算出不能 (graph 不正): {exc}"]
+    errs = check_node_id_parity(state, graph)
     pinned = state.get("graph_hash") if isinstance(state, dict) else None
     if pinned != actual:
-        return [
+        errs.append(
             f"graph_hash pin 不一致: state={pinned!r} != 実算出={actual!r} "
             "(discovered-task 受理等で graph 変化後 state が古い・反映は次周回のみ)"
-        ]
-    return []
+        )
+    return errs
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "scenarios": [
+    {
+      "scenario_id": "C02-OUT1-positive-mixed-artifacts",
+      "component_id": "C02",
+      "skill": "run-dev-graph-node",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "fixture_contract": "A contained initialized repository supplies one valid issue, task, specification, architecture, and document artifact in a single input batch.",
+      "required_observations": [
+        "all five artifacts are routed to canonical kind paths",
+        "frontmatter kind and stored path agree after a consecutive update",
+        "no feature is created outside the C14 macro-feature contract"
+      ]
+    },
+    {
+      "scenario_id": "C03-OUT1-positive-second-sync-zero",
+      "component_id": "C03",
+      "skill": "run-dev-graph-sync",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "task_args_template": "sync --repo-root <contained-fixture-repo> --binding github --adapter-fixture <contained-fixture-repo>/github-adapter.json --repeat 2",
+      "fixture_contract": "A deterministic GitHub adapter fixture has one valid import and one valid export, stable timestamps, IDs, aliases, and snapshots.",
+      "required_observations": [
+        "the first sync applies the expected import and export",
+        "the second sync reports imports changes=0 and exports changes=0",
+        "stable IDs and snapshots are unchanged on the second run"
+      ]
+    },
+    {
+      "scenario_id": "C04-OUT1-positive-ready-handoff",
+      "component_id": "C04",
+      "skill": "run-dev-graph-requirements",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "task_args_template": "handoff --repo-root <contained-fixture-repo> --feature-id F-LIVE-001 --package <contained-fixture-repo>/system-plan/F-LIVE-001/package.json",
+      "fixture_contract": "The feature is confirmed/evaluation-pass/readiness-complete and the package is a valid P01..P13 exact-13 DAG with matching source digest and parent feature.",
+      "required_observations": [
+        "a capability-build task-graph handoff is emitted for the exact-13 package",
+        "the handoff remains bound to the feature and source digest",
+        "the requirements skill generates no implementation source file"
+      ]
+    },
+    {
+      "scenario_id": "C19-OUT1-positive-system-spec-lineage",
+      "component_id": "C19",
+      "skill": "run-dev-graph-system-spec",
+      "criterion_id": "OUT1",
+      "mode": "positive",
+      "task_args_template": "--repo-root <contained-fixture-repo>",
+      "fixture_contract": "A contained system-spec workspace and the declared system-spec-harness plugin provide all four required entry points, confirmed output, citations, and evaluator PASS.",
+      "required_observations": [
+        "the declared system-spec-harness plugin is loaded and its canonical flow completes",
+        "the imported specification and architecture retain source lineage and evaluator evidence",
+        "registration occurs only through C02 and no duplicate elicitation or compile logic appears in dev-graph"
+      ]
+    }
+  ]
+}

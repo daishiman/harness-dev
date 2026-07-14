@@ -1,0 +1,61 @@
+{
+  "schema_version": "2.0.0",
+  "graph_hash": "sha256:b2d98bbb0d829e394259077aaf6cf0ea3328660a0e6233233d5fe57bfed4cf65",
+  "generated_at": "2026-07-13T02:01:29Z",
+  "artifacts": [
+    {
+      "purpose": "local_build",
+      "path": "route-C01.json",
+      "sha256": "7ddb1b97e0602683f0a346569a1f17152ed50d5ee9363289524fbadcebef570b"
+    },
+    {
+      "purpose": "native_parity",
+      "path": "route-C02.json",
+      "sha256": "f0aeaefd35c3710d5d1adb5ff8646d4095cb4bd0fdb4b1b4199a8e25fec8b6a8"
+    },
+    {
+      "purpose": "rollback",
+      "path": "rollback-evidence.json",
+      "sha256": "adfc86c0cd875f8691a6f0f3b5ed8f8d43a86c893cad5bf6ce33263505339933"
+    }
+  ],
+  "gates": {
+    "install": {
+      "state": "pending_user_gate",
+      "task_ids": [],
+      "artifact_refs": [],
+      "reason": "Codex plugin installation changes user-owned runtime state."
+    },
+    "enable": {
+      "state": "pending_user_gate",
+      "task_ids": [],
+      "artifact_refs": [],
+      "reason": "Codex plugin enablement changes user-owned runtime state."
+    },
+    "trust": {
+      "state": "pending_user_gate",
+      "task_ids": ["P13-x-03"],
+      "artifact_refs": [],
+      "reason": "Trust must be granted and observed by the user before runtime execution."
+    },
+    "new_session": {
+      "state": "pending_user_gate",
+      "task_ids": ["P13-x-03"],
+      "artifact_refs": [],
+      "reason": "A new interactive session is required to observe SessionStart execution."
+    },
+    "uninstall": {
+      "state": "pending_user_gate",
+      "task_ids": ["P13-x-04"],
+      "artifact_refs": ["rollback"],
+      "reason": "Uninstall and runtime prune mutate user-owned activation state; local rollback is already evidenced."
+    },
+    "pr": {
+      "state": "not_applicable",
+      "task_ids": ["P13-x-05"],
+      "artifact_refs": [],
+      "reason": "The user explicitly requested that no pull request be created for this work."
+    }
+  },
+  "boundary": "Local build/check/rollback evidence is pinned above. Installation, enablement, trust, new-session runtime observation, and uninstall remain user-owned; no global trust or user configuration was mutated."
+}

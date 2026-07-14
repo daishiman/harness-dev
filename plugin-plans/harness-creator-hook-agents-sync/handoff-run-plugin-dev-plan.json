@@ -1,0 +1,172 @@
+{
+  "mode": "update",
+  "target_plugin_slug": "harness-creator",
+  "plan_dir": "plugin-plans/harness-creator-hook-agents-sync",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C02",
+      "component_kind": "script",
+      "name": "check-native-surface-parity.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/check-native-surface-parity.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/check-native-surface-parity.py",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "script",
+      "name": "sync-native-surfaces.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C02"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/sync-native-surfaces.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/sync-native-surfaces.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "script",
+      "name": "record-task-graph-knowledge.py (native surface 完了ゲート拡張)",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02"],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/record-task-graph-knowledge.py"
+      },
+      "build_target": "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "hook",
+      "name": "auto-sync-on-session-start",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C01", "C02"],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "auto-sync-on-session-start"
+      },
+      "build_target": "plugins/harness-creator/hooks/auto-sync-on-session-start.py",
+      "status": "planned"
+    },
+    {
+      "id": "C04",
+      "component_kind": "slash-command",
+      "name": "capability-build",
+      "spec": "phase-05-implementation.md",
+      "depends_on": ["C03", "C05"],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "capability-build",
+        "options": "--update"
+      },
+      "build_target": "plugins/harness-creator/commands/capability-build.md",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": "plugins/harness-creator/.codex-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "compatibility_target": "plugins/harness-creator/.claude-plugin/plugin.json"
+    },
+    "marketplace": {
+      "owner": "plugin-scaffold",
+      "status": "planned",
+      "build_target": ".agents/plugins/marketplace.json",
+      "reason": "repo-local marketplace は public distribution ではなく、plugins/harness-creator を Codex native plugin として install/enable する公式 discovery surface"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "PRECONDITION-CLAUDE-REFLECTOR-COMPAT",
+      "severity": "high",
+      "change_level": "structural",
+      "owner_phase": "P05",
+      "status": "resolved",
+      "text": "scripts/build-claude-settings.py は現行 target event (FileChanged/TaskCompleted/TaskCreated) で exit 3。C01/C03/C05/C04 の実行前に、target unknown event preserve・managed source unknown event block の互換修復と focused regression fixture を完了する。warning skip で hook を黙って落とす実装は禁止"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "severity": "medium",
+      "change_level": "additive",
+      "owner_phase": "P05",
+      "text": "plugin-scaffold は planner 上の contract-only builder。script routes C01/C02/C03 は既存 plugins/harness-creator/scripts/build-script-route.py が消費する契約を build 前 preflight で再確認する"
+    },
+    {
+      "id": "GATE-CODEX-INSTALL-TRUST",
+      "severity": "high",
+      "change_level": "structural",
+      "owner_phase": "P11/P13",
+      "text": "Codex plugin hook は repo marketplace 登録だけでは発火せず、install/enable と current hook definition の user trust が必要。build は trust を自動承認せず、runtime evidence は user-gated とする"
+    },
+    {
+      "id": "DEFER-CODEX-AGENTS-COMMANDS",
+      "severity": "low",
+      "change_level": "structural",
+      "owner_phase": "P12",
+      "text": "現行公式 plugin surface で Claude-style agents/commands の自動公開契約は確認できない。v1 は unsupported report とし、将来公式 surface が追加された場合だけ別 structural task で扱う"
+    },
+    {
+      "id": "OQ-CLAUDE-ACTIVATION-SCOPE",
+      "severity": "medium",
+      "change_level": "structural",
+      "owner_phase": "P02",
+      "status": "resolved",
+      "text": "Claude settings reflector の local source selection は repo-present ∩ exact plugin@marketplace project-enabled に限定し、install/current-hook-trust は repo から観測不可能な runtime user gate として分離する。全 plugins/* hooks の無条件 apply と slug-only identity 照合は禁止する"
+    }
+  ],
+  "execution_policy": {
+    "spec_only_review_completed": true,
+    "capability_build_executed": true,
+    "dispatch_blockers": [],
+    "resolved_blockers": [
+      {
+        "id": "PRECONDITION-CLAUDE-REFLECTOR-COMPAT",
+        "resolved_by": "scripts/build-claude-settings.py 互換修復: target unknown event preserve / managed source block の非対称化 + symlink 共有 skill の real_path dedupe + plugin hook の $CLAUDE_PLUGIN_ROOT 展開。詳細は phase-05-implementation.md の事前解決済み判断。",
+        "evidence": "tests/test_build_claude_settings.py 21 green (16既存+5回帰); build-claude-settings.py --check exit3->drift(1); --dry-run exit0 conflict0 add31 user_values_preserved"
+      },
+      {
+        "id": "OQ-CLAUDE-ACTIVATION-SCOPE",
+        "resolved_by": "local projection scope = repo-present ∩ exact plugin@marketplace project-enabled、product install/current-hook-trust = pending_user_gate に分離。全 plugins/* 無条件 apply と slug-only identity 照合を禁止。enforcement owner=C01 (sync-native-surfaces.py)。"
+      }
+    ],
+    "runtime_user_gates": [
+      "GATE-CODEX-INSTALL-TRUST"
+    ],
+    "local_execution": {
+      "status": "implemented_local_review_in_progress",
+      "route_reports": "eval-log/harness-creator/build/route-C01.json..route-C05.json",
+      "runtime_activation": "pending_user_gate",
+      "git_publish": "skipped_by_user"
+    }
+  }
+}

@@ -13,7 +13,8 @@ skills/ agents/ commands/ hooks/ をまとめて配布する。本スクリプ�
 を行い、配布時に欠落するアセットがないこと・マーケットプレイス/バンドル登録漏れが
 ないことを保証する。
 
-manifest に ``"distributable": false`` を宣言した plugin は「実体は保持するが
+``references/package-contract.json`` の ``distribution.distributable`` (後方互換では
+manifest 直下の ``distributable``) に false を宣言した plugin は「実体は保持するが
 marketplace/bundle には非登録 (社内専用)」を意味する。この場合 MK-001/BD-001 の
 登録漏れ検査は適用せず、逆に登録が残っていれば MK-004 (marketplace に登録残存) /
 BD-002 (bundle に登録残存) を違反として検出する (放置すると意図せず配布される)。
@@ -93,6 +94,45 @@ def load_marketplace_entries() -> dict[str, str]:
     return entries
 
 
+def load_package_contract(plugin_dir: pathlib.Path) -> tuple[dict | None, str | None]:
+    """Harness-only package metadata sidecar を読む。
+
+    公式 Claude plugin manifest の schema には entry_points / distribution /
+    depends_on を混在させない。sidecar が無い既存 plugin は後方互換の
+    manifest fallback を使うが、sidecar が存在するのに壊れている場合は
+    fail-closed でエラーを返す。
+    """
+    path = plugin_dir / "references" / "package-contract.json"
+    if not path.exists():
+        return None, None
+    try:
+        contract = json.loads(path.read_text())
+        if not isinstance(contract, dict):
+            raise ValueError("top level must be an object")
+        return contract, None
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return None, f"{path}: {exc}"
+
+
+def harness_metadata(manifest: dict, contract: dict | None) -> dict:
+    """sidecar-first で harness 固有の配布メタデータを正規化する。"""
+    distribution = contract.get("distribution", {}) if isinstance(contract, dict) else {}
+    if not isinstance(distribution, dict):
+        distribution = {}
+    return {
+        "distributable": distribution.get(
+            "distributable", manifest.get("distributable", True)
+        ),
+        "bundle_targets": distribution.get(
+            "bundle_targets", manifest.get("bundle_targets") or manifest.get("bundles") or []
+        ),
+        "category": distribution.get("category", manifest.get("category")),
+        "tags": distribution.get(
+            "tags", manifest.get("tags") or manifest.get("keywords") or []
+        ),
+    }
+
+
 def collect(plugin_dir: pathlib.Path) -> dict:
     out = {
         "skills": sorted(p.parent.name for p in plugin_dir.glob("skills/*/SKILL.md")),
@@ -104,6 +144,27 @@ def collect(plugin_dir: pathlib.Path) -> dict:
     }
     manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
     out["manifest"] = json.loads(manifest_path.read_text()) if manifest_path.exists() else None
+    out["package_contract"], out["package_contract_error"] = load_package_contract(plugin_dir)
+    out["manifest_hook_error"] = None
+    # Claude Code plugin manifests may keep hook wiring in a plugin-relative
+    # hooks.json and reference it with ``"hooks": "./hooks/hooks.json"``.
+    # Normalize that official single-SSOT form for the same validation below
+    # instead of assuming the manifest always embeds the event map inline.
+    manifest = out["manifest"]
+    if isinstance(manifest, dict) and isinstance(manifest.get("hooks"), str):
+        hook_ref = manifest["hooks"]
+        hook_path = (plugin_dir / hook_ref).resolve()
+        try:
+            hook_path.relative_to(plugin_dir.resolve())
+            hook_doc = json.loads(hook_path.read_text())
+            event_map = hook_doc.get("hooks") if isinstance(hook_doc, dict) else None
+            if not isinstance(event_map, dict):
+                raise ValueError("referenced hook config must contain a hooks object")
+            normalized = dict(manifest)
+            normalized["hooks"] = event_map
+            out["manifest"] = normalized
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            out["manifest_hook_error"] = f"{hook_ref}: {exc}"
     return out
 
 
@@ -119,6 +180,56 @@ def validate(
         errs.append(f"{plugin_name}: .claude-plugin/plugin.json missing")
         return errs
 
+    if data.get("manifest_hook_error"):
+        errs.append(
+            f"{plugin_name}: manifest hook reference invalid: "
+            f"{data['manifest_hook_error']}"
+        )
+
+    if data.get("package_contract_error"):
+        errs.append(
+            f"{plugin_name}: package contract invalid: "
+            f"{data['package_contract_error']}"
+        )
+
+    contract = data.get("package_contract")
+    if isinstance(contract, dict):
+        contract_name = contract.get("plugin_name")
+        if contract_name is not None and contract_name != plugin_name:
+            errs.append(
+                f"{plugin_name}: package-contract.plugin_name "
+                f"'{contract_name}' != directory name"
+            )
+
+        entry_points = contract.get("entry_points", {})
+        if isinstance(entry_points, dict):
+            actual_entry_points = {
+                "skills": set(data["skills"]),
+                "agents": {pathlib.Path(name).stem for name in data["agents"]},
+                "commands": {pathlib.Path(name).stem for name in data["commands"]},
+                "hooks": {pathlib.Path(name).stem for name in data["hooks"]},
+            }
+            for kind, actual in actual_entry_points.items():
+                declared_raw = entry_points.get(kind, [])
+                if not isinstance(declared_raw, list) or not all(
+                    isinstance(name, str) for name in declared_raw
+                ):
+                    errs.append(
+                        f"{plugin_name}: package-contract entry_points.{kind} "
+                        "must be string[]"
+                    )
+                    continue
+                declared = {
+                    pathlib.Path(name).stem if kind != "skills" else name
+                    for name in declared_raw
+                }
+                missing_entry_points = declared - actual
+                if missing_entry_points:
+                    errs.append(
+                        f"{plugin_name}: package-contract declares {kind} not on disk: "
+                        f"{sorted(missing_entry_points)}"
+                    )
+
     for required in ("name", "version", "description"):
         if required not in m:
             errs.append(f"{plugin_name}: manifest missing '{required}'")
@@ -127,7 +238,13 @@ def validate(
         errs.append(f"{plugin_name}: manifest.name '{m.get('name')}' != directory name")
 
     declared_hooks = set()
-    for hook_event, entries in (m.get("hooks") or {}).items():
+    hook_map = m.get("hooks") or {}
+    if not isinstance(hook_map, dict):
+        # collect() records the actionable path/parse error for referenced
+        # configs.  Keep validation fail-closed without crashing on that
+        # malformed value.
+        hook_map = {}
+    for hook_event, entries in hook_map.items():
         for entry in entries:
             for h in entry.get("hooks", []):
                 cmd = h.get("command", "")
@@ -136,7 +253,7 @@ def validate(
                 except ValueError:
                     tokens = cmd.split()
                 for token in tokens:
-                    if "$CLAUDE_PLUGIN_ROOT/hooks/" in token:
+                    if "CLAUDE_PLUGIN_ROOT" in token and "/hooks/" in token:
                         declared_hooks.add(token.split("/hooks/", 1)[1])
     on_disk_hooks = set(data["hooks"])
     missing = declared_hooks - on_disk_hooks
@@ -149,16 +266,17 @@ def validate(
 
     # distributable:false = 実体は保持するが marketplace/bundle へは非登録 (社内専用)。
     # 未宣言は True 扱い (fail-closed): 登録漏れを既定で違反にする。
-    distributable = m.get("distributable", True)
+    metadata = harness_metadata(m, contract)
+    distributable = metadata["distributable"]
 
     # NEVER_DISTRIBUTE 固有名不変条件 (フラグ漂流の最後の砦)。distributable フラグの
     # 値に依存せず、恒久非配布 plugin が "distributable": false を明示宣言していなければ
     # fail-closed で違反にする。is not False により true / キー欠落(None) / その他を全て捕捉。
-    if plugin_name in NEVER_DISTRIBUTE and m.get("distributable") is not False:
+    if plugin_name in NEVER_DISTRIBUTE and distributable is not False:
         errs.append(
             f"{plugin_name}: internal-only plugin must explicitly declare "
             f'"distributable": false but got distributable='
-            f"{m.get('distributable', '<missing>')!r} (NEVER-DISTRIBUTE)"
+            f"{distributable!r} (NEVER-DISTRIBUTE)"
         )
 
     if distributable:
@@ -257,29 +375,39 @@ def register_missing() -> tuple[list[str], bool]:
         if not manifest_path.exists():
             continue
         manifest = json.loads(manifest_path.read_text())
+        contract, contract_error = load_package_contract(plugin_dir)
+        if contract_error:
+            actions.append(f"package-contract.json: ! {name} の解析失敗、自動登録を skip")
+            continue
+        metadata = harness_metadata(manifest, contract)
 
         # 非配布 plugin (distributable:false) は marketplace/bundle へ自動登録しない。
         # --fix が逆ガード (MK-004/BD-002) を踏む登録を生まないための断ち切り。
         # NEVER_DISTRIBUTE は フラグが漂流 (true 化/欠落) しても --fix が自動再登録しない
         # belt-and-suspenders: 固有名で恒久非配布を担保する。
-        if manifest.get("distributable") is False or name in NEVER_DISTRIBUTE:
+        if metadata["distributable"] is False or name in NEVER_DISTRIBUTE:
             continue
 
         # marketplace.json (テキスト挿入で append-only)
         if mk_text is not None and name not in mk_entries:
-            block = _marketplace_entry_block(name, manifest)
+            marketplace_metadata = dict(manifest)
+            marketplace_metadata.update({
+                "category": metadata["category"],
+                "tags": metadata["tags"],
+            })
+            block = _marketplace_entry_block(name, marketplace_metadata)
             mk_text, ok = _insert_marketplace_entry(mk_text, block)
             if ok:
                 mk_entries[name] = f"./plugins/{name}"
                 changed_mk = True
                 default_note = (
-                    "" if (manifest.get("category") and manifest.get("tags"))
+                    "" if (metadata["category"] and metadata["tags"])
                     else "  [category/tags はデフォルト値。PR で要確認]"
                 )
                 actions.append(f"marketplace.json: + {name}{default_note}")
 
         # bundles.json (bundle_targets を真実源として該当 bundle へ append)
-        targets = manifest.get("bundle_targets") or manifest.get("bundles") or []
+        targets = metadata["bundle_targets"]
         for bundle_name in targets:
             bundle = next(
                 (b for b in bundles_data.get("bundles", []) if b.get("name") == bundle_name),

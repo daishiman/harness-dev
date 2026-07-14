@@ -7,7 +7,8 @@
 # 出力2 (queue): 評価要求を eval-log/review-queue.jsonl へ 1 行 append
 #         (content-review-protocol.md「hook 発火と queue」の queue を実体化。診断ログであり自動 consumer は無い)。
 # 出力3 (確実起動 / decision:block): 他プラグインに未評価 or stale な変更 skill が残る場合、
-#         Stop を block し Claude 本体へ「run-elegant-review + assign-skill-design-evaluator を実行せよ」と差し戻す。
+#         Stop を block し Claude 本体へ「既定は focused combined review 1 context、
+#         exhaustive 明示時だけ run-elegant-review + rubric evaluator」と差し戻す。
 #         フック自身は重い LLM を実行しない(=protocol の原則を維持)。トリガのみ行い、実行は Claude 本体。
 # 出力4 (self 通知): 自プラグイン (dogfooding) の pending は block 除外のため完全無音だった。
 #         Stop 時に stdout 通知のみ出す (block はしない)。強制は CI/pre-push の lint-content-review.py。
@@ -353,10 +354,12 @@ def main() -> int:
                             "decision": "block",
                             "reason": (
                                 f"未評価 or stale な変更 skill が {len(pending)} 件あります: {shown}。"
-                                "停止前に各対象へ run-elegant-review (Phase1 思考リセット→Phase2 30思考法3並列分析→Phase3 改善) と "
-                                "assign-skill-design-evaluator を実行し、"
+                                "停止前に各対象へ assign-skill-design-evaluator の focused combined review "
+                                "(4条件+rubric、1 context・再評価1回まで) を実行し、"
                                 "eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json を保存してください "
                                 "(skill_md_sha256 を現在の SKILL.md と一致させる)。"
+                                "30思考法の run-elegant-review + 独立rubric evaluator は "
+                                "verification_profile=exhaustive を明示した場合だけ実行します。"
                                 "意図的にスキップする場合のみ環境変数 HARNESS_CREATOR_NO_REVIEW_BLOCK=1 を設定。"
                             ),
                         },

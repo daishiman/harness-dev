@@ -22,6 +22,8 @@ responsibility_refs:
   - prompts/R1-identify.md
   - prompts/R2-fetch.md
   - prompts/R3-record.md
+schema_refs:
+  - ../../schemas/fetched-references.schema.json
 responsibilities:
   - id: R1-identify
     name: identify
@@ -32,10 +34,15 @@ responsibilities:
   - id: R3-record
     name: record
     prompt_required: true
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
 goal_seek:
   engine: inline
   fork: subagent
   max_loops: 5
+completeness_exempt:
+  - "manifest: official-source discovery is an inline goal-seek loop selected from unmet targets; the SKILL body is the runtime SSOT."
 feedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)
   max_iterations: 5
   criteria:

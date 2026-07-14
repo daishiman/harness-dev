@@ -1,1 +1,0 @@
-../../plugins/ubm-goal-setting/commands/ubm-knowledge-sync.md

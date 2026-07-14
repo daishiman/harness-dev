@@ -1,7 +1,7 @@
 ---
 name: ref-skill-naming-convention
 description: Skillを命名するとき、改名するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref

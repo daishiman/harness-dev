@@ -1,1 +1,0 @@
-../../plugins/extract-system-blueprint/agents/frontend-surface-analyzer.md

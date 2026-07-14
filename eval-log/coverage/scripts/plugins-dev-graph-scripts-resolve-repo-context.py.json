@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/resolve-repo-context.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope:none)。C24 の canonical repository/worktree 権威解決。discover() は explicit→CLAUDE_PROJECT_DIR→git-toplevel→cwd-marker の順で候補列挙後、選定 root が git rev-parse --show-toplevel と一致することを再検証し、CLAUDE_PROJECT_DIR と不一致なら fail-closed。verify_common_ownership が要: git-path objects/config の実体一致・commondir marker(symlink 拒否)・origin remote 一致で worktree と common-dir が同一 repo であることを証明。repository_id は GitHub remote 正規表現 or local:sha256(common) で durable identity 導出。resolve_declared_path は各 path 構成要素を走査し content-root では leaf symlink を拒否、contained(must_exist=False) で escape 防御。path_policy が caller-repository containment を弱める設定 (authority≠caller-repository / allow_outside / follow_symlinks) を明示 reject。root_trust_evidence を出力して信頼根拠を可視化。SMELL: __import__(\"subprocess\").run をインラインで使う箇所が上部 import せず異質 (無害だが一貫性欠く)。エラーは ContractError/OSError→exit1 で fail-closed。TESTS: test_runtime_coverage.py::test_resolve_discover_and_main、C25/C26 semantic tests。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

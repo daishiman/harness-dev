@@ -76,8 +76,12 @@ def test_main_non_skill_component_exit1(tmp_path):
 def test_project_brief_removes_planner_keys_and_renames_kind(skill_brief, specfm_mod):
     """射影が planner 固有キーを除去し skill_kind→kind へ写像、base required を保持する。"""
     comp = component_entry("C01", "skill", skill_kind="run")
+    comp["couples_with"] = ["C02"]
+    comp["goal_seek"] = {"engine": "inline", "fork": "subagent", "max_loops": 5}
     brief = skill_brief.project_brief(comp)
     assert brief["kind"] == "run"
+    assert brief["goal_seek"] == comp["goal_seek"]
+    assert "couples_with" not in brief
     assert not set(brief) & (skill_brief.PLANNER_ONLY_KEYS | {"skill_kind"})
     assert [f for f in specfm_mod.SKILL_BRIEF_FIELDS if f not in brief] == []
     # キー順は base required 14 が先頭 (byte 再現性の安定順)

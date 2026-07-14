@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/render-graph-html.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope: argv --out only)。task graph を依存フリーな静的 HTML/SVG に決定的レンダリング。入力 node を正規化し dangling depends_on / parent_feature を fail-closed で reject、feature の子 done/total 進捗を集計 (feature_progress aggregate+by_feature)。XSS 防御が丁寧: 全補間テキストに html.escape、埋込 JSON payload は '<' を \\\\u003c へ置換し </script> 早期閉じ注入を封じる。出力は mkstemp→fsync→os.replace の原子書込、source==out を拒否し入力上書き防止。input_sha256/output_sha256 と node/edge 数を receipt 出力し整合性検証可能。SMELL: document 全体が巨大 f-string で密、フィルタ JS は n.className.baseVal 参照 (SVG 前提で妥当)。ContractError→exit1。TESTS: test_runtime_coverage.py::test_render_and_schedule / test_render_receipt_hashes_progress_and_rejects_invalid_input が hash・進捗・不正入力拒否を exercise。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

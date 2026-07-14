@@ -56,11 +56,24 @@ def _is_target(path: Path) -> bool:
 
 
 def _extract_frontmatter(text: str) -> dict | None:
-    # YAML frontmatter (--- ... ---) を抽出し、簡易 key:value パース
+    # YAML frontmatter (--- ... ---) を抽出する。nested list/object は
+    # responsibility_refs / responsibilities / goal_seek / feedback_contract で標準利用
+    # されるため、PyYAML 利用可能時は必ず完全 parse する。
     m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
     if not m:
         return None
     block = m.group(1)
+    if HAS_YAML:
+        try:
+            data = yaml.safe_load(block)
+            if isinstance(data, dict):
+                return _stringify_dates(data)
+            # scalar/list-only または壊れた legacy frontmatter は、既存の
+            # top-level scalar fallback に委ねて後方互換を保つ。
+        except Exception:
+            pass
+
+    # PyYAML なしの graceful fallback。commonCore の top-level scalar だけを検査する。
     data: dict = {}
     for line in block.splitlines():
         line = line.rstrip()

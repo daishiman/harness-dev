@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "system-dev-planner",
+    "skill": "run-system-dev-plan",
+    "skill_md_sha256": "ffa504058be24e15d0cb83389cbb13727184360e898811205b8e37adff1b0572"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
+    "positive_feedback": [
+      "単一責務が明確: 1 feature を exact 13 executable task specs へ分解し atomic promotion する範囲に限定し、実 build は持たない",
+      "出力契約が明示的: exact-13 task specs / 13-entry inventory / 13-node DAG / system-build-handoff / plan-structure・task-specs.html を成果物として列挙し schema_refs へ pin",
+      "feedback_contract が inner(IN1/IN2)+outer(OUT1/OUT2/OUT3) を verify_by (script/lint/elegant-review/evaluator/live-trial) 付きで携帯し評価基準が operationalize 済み"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SKILL.md (sha256 ffa504058be24e15d0cb83389cbb13727184360e898811205b8e37adff1b0572) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点。FM: name は kebab + run- prefix、description は日本語 Use-when、argument-hint 明示、user-invocable:true と disable-model-invocation:false が整合、allowed-tools は allowlist。BD: 出力契約 (§目的相当の成果物列挙) と Failure handling (Gotchas 相当) を持ち、本文実体は約40行、references/ 充実で PD 満たす。NM: ディレクトリ名 run-system-dev-plan と name 一致。境界: caller repository 解決と全 path 検査を resolve-project-context.py に一元化し $CLAUDE_PLUGIN_ROOT を code/assets 位置決めに限定 (caller 文書/状態の authority にしない) と明記され越境がない。SSOT: scripts/schemas/references を $CLAUDE_PLUGIN_ROOT の正本へ pin、lock は C13 単独 writer。single-responsibility (1 feature→exact 13) 明快。high severity (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は feedback_contract.criteria の全 id (IN1/IN2/OUT1/OUT2/OUT3) を被覆。"
+}

@@ -1,7 +1,7 @@
 ---
 name: ref-pkg-contract
 description: 36章 PKG-001〜017 と package-contract.json schema を参照するとき、PKG ID の意味・適用 package_mode・eval-log 保存先を判断するときに読む。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: false
 allowed-tools: [Read]
 kind: ref
@@ -59,7 +59,7 @@ schema_refs:
 | PKG-013c | network permissions scope | bundle | `scripts/validate-plugin-permissions.py --plugin <name> --check 013c` | 2 |
 | PKG-013d | MCP/external permissions scope | bundle | `scripts/validate-plugin-permissions.py --plugin <name> --check 013d` | 2 |
 | PKG-014 | runtime contract 検証 | bundle | `scripts/validate-plugin-package.py --check pkg-014` | 2 |
-| PKG-015 | rubric 違反率しきい値 | bundle | `scripts/lint-rubric-violation.py --logs <log-dir>` | 2 |
+| PKG-015 | rubric 違反率しきい値 | bundle | `run-plugin-package-check/scripts/run-pkg-015.py --plugin <name> --log-dir <log-dir> --out <pkg-log>` | 2 |
 | PKG-016 | 予約（未確定） | - | - | - |
 | PKG-017 | 予約（未確定） | - | - | - |
 

@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "harness-creator",
+  "route_id": "C01",
+  "component_kind": "script",
+  "name": "sync-native-surfaces.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/harness-creator/scripts/sync-native-surfaces.py",
+  "status": "success",
+  "summary": "C01 native-surface orchestrator を実装・検証した: common TOML から Claude settings/symlink、Codex project hooks/config、C02 parity を単一 desired-set として投影し、exact plugin identity、source-aware dedupe、owner-token lock、atomic replace、apply→check 冪等性を確認済み。",
+  "deviations": [],
+  "evidence": [
+    "plugins/harness-creator/scripts/sync-native-surfaces.py exists sha256=5ae4f61b186e348fa8cdc7f50687265bcb8e351a691be60f06c35ad7332f018f",
+    "eval-log/harness-creator/build/evidence/C01-tests.xml sha256=ccb94fdf8cfe8979b3d8f88eba72019e1763b32f2f3b6c78755ab97cabfe45dc"
+  ],
+  "artifact_sha256": "5ae4f61b186e348fa8cdc7f50687265bcb8e351a691be60f06c35ad7332f018f",
+  "graph_hash": "sha256:b2d98bbb0d829e394259077aaf6cf0ea3328660a0e6233233d5fe57bfed4cf65",
+  "generated_at": "2026-07-13T02:00:18Z",
+  "tool_versions": {"python": "3.11.4", "pytest": "8.4.2"},
+  "test_evidence": [
+    {
+      "command": "pytest -q plugins/harness-creator/tests/test_sync_native_surfaces.py plugins/harness-creator/tests/test_sync_codex_project_settings.py tests/test_build_claude_settings.py tests/test_build_claude_symlinks.py",
+      "exit_code": 0,
+      "passed": 183,
+      "failed": 0,
+      "started_at": "2026-07-13T01:59:51Z",
+      "completed_at": "2026-07-13T02:00:18Z",
+      "artifact": "eval-log/harness-creator/build/evidence/C01-tests.xml",
+      "artifact_sha256": "ccb94fdf8cfe8979b3d8f88eba72019e1763b32f2f3b6c78755ab97cabfe45dc"
+    }
+  ],
+  "inputs_consumed": [
+    "eval-log/harness-creator/build/route-C02.json"
+  ],
+  "handover": "script route C01 is available at plugins/harness-creator/scripts/sync-native-surfaces.py",
+  "covered_task_ids": [
+    "P02-C01-01",
+    "P02-C01-02",
+    "P02-C01-03",
+    "P02-C01-04",
+    "P02-C01-05",
+    "P04-C01-01",
+    "P04-C01-02",
+    "P04-C01-03",
+    "P04-C01-04",
+    "P04-C01-05",
+    "P04-C01-06",
+    "P04-C01-07",
+    "P04-C01-08",
+    "P05-C01-01",
+    "P05-C01-02",
+    "P05-C01-03",
+    "P05-C01-04",
+    "P05-C01-05",
+    "P05-C01-06",
+    "P05-C01-07",
+    "P05-C01-08",
+    "P05-C01-09",
+    "P05-C01-10",
+    "P05-C01-11"
+  ]
+}

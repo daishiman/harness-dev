@@ -187,9 +187,9 @@ jobs:
           python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py
           python3 plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py
 
-      # G-A3 gate: plugins/*/{skills,agents,commands}/ と .claude/ の drift をゼロに保証する
-      - name: Verify plugin symlink sync
-        run: bash scripts/sync-skills-to-claude.sh --check
+      # G-A3 gate: activation-scoped C01 desired-set と native surface 全体の drift を検査する
+      - name: Verify repository-native capability projections
+        run: make native-surfaces-check
 
       # G-A4 gate: Phase 2 後の script 参照整合を保証する
       - name: Verify script references

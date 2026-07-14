@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1.0",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-requirements",
+    "component_id": "C04",
+    "skill_md_sha256": "3ce641ca34a5ef58c69014b8d5942f0490b116f95ff44ebd7e9b0f5c0e8d164c"
+  },
+  "verdict": "PASS",
+  "reviewer": "dev-graph-criteria-scenario-r1",
+  "loop_scope": "both",
+  "iteration_limit": 3,
+  "criteria_results": {
+    "IN1": {
+      "status": "PASS",
+      "verify_by": "script",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_domain_dag_exact13_evidence_and_readiness_boundaries",
+        "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
+        "independent: scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-requirements/.dev-graph/state/graph.json"
+      ],
+      "observed": "test_domain_dag_exact13_evidence_and_readiness_boundaries PASSED: a 12-member package raises feature_package_not_exact_13 while a valid P01..P13 13-node DAG with shared parent_feature/feature_package_id and forward depends_on raises none of {feature_package_not_exact_13, non_forward_phase_dependency, premature_feature_done, feature_evidence_missing}. test_gh_bridge_helpers_and_operations PASSED (issue context stays auxiliary). Independent validate-graph-schema.py on the r3-requirements fixture (16 nodes) returned exit0 with valid=true, violations=[], implementation_readiness=complete, missing_sections=[] (no required-key gaps, no stale digest)."
+    },
+    "OUT1": {
+      "status": "PASS",
+      "verify_by": "live-trial",
+      "evidence_kind": "live-trial",
+      "scenario_id": "C04-OUT1-positive-ready-handoff",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260713T090000-r3/verdict.json",
+      "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260713T090000-r3/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260713T090000-r3/out/status.json"
+      ],
+      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-4-6], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live. Positive scenario 'handoff --feature-id LT-FEATURE-001 --package .../package.json' emitted a capability-build/task-graph handoff bound to the exact-13 package/feature/source-digest and generated zero implementation source files (out/status.json scenario=requirements-positive-handoff status=PASS)."
+    },
+    "OUT2": {
+      "status": "PASS",
+      "verify_by": "test",
+      "evidence_kind": "hybrid",
+      "test_refs": [
+        "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_domain_dag_exact13_evidence_and_readiness_boundaries",
+        "independent: scripts/validate-graph-schema.py readiness/missing_sections observation on r3-requirements"
+      ],
+      "observed": "test_domain_dag_exact13_evidence_and_readiness_boundaries PASSED: injecting a member with implementation_readiness={status:incomplete}, confirmation_status=draft, evaluation_status=pending makes domain_findings surface {active_not_ready, premature_feature_done, feature_evidence_missing}, so the incomplete node is flagged and the package is not clean for handoff. Independently, validate-graph-schema.py reports the readiness/missing_sections fields directly (missing_sections=[] on the all-complete r3-requirements fixture), confirming the surfaced-vs-clean distinction that gates handoff."
+    }
+  }
+}

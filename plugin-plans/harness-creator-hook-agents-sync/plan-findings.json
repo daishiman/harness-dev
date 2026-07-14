@@ -1,0 +1,96 @@
+{
+  "plan_dir": "plugin-plans/harness-creator-hook-agents-sync",
+  "reviewed_at": "2026-07-13T11:04:00+09:00",
+  "review_scope": "fresh reset + independent 30-method review of plan, built artifacts, projections, install and PR-preflight wiring",
+  "iteration": 3,
+  "max_iterations": 3,
+  "verdict": "PASS_LOCAL_BUILD_RUNTIME_GATED",
+  "artifact_digests": {
+    "goal-spec.json": "f30f44da10187ce2ca7dba1f11745ceab08b4fe5fae40b16f22cfeab69fd9c68",
+    "component-inventory.json": "9d39a279e771b2293e68830117b731fc1aed69975244310b303adf70c03899bd",
+    "handoff-run-plugin-dev-plan.json": "9c42113166d8cf63f6ee31f342d71f4c23d902e2dd4ab9907832b682f1783a10",
+    "task-graph.json": "4842de6e45100858add76f08a90d24232f777a89d0189e381eba0d3b8192fd9f",
+    "index.md": "e17d1cd222bd558b0477ca67d66fafcc2157b8b2b10b76eb7d4c55acaf7fcacc"
+  },
+  "conditions": {
+    "C1": {"name": "矛盾なし", "status": "PASS", "summary": "install identity は marketplace 正本から解決し、common TOML の所有範囲を hook/discovery semantic contract として実装・文書で一致させた"},
+    "C2": {"name": "漏れなし", "status": "PASS", "summary": "Claude settings/symlink、Codex hooks/config、.agents discovery、導入後同期、PR-preflight差分、rollback fixtureを被覆した"},
+    "C3": {"name": "整合性あり", "status": "PASS", "summary": "dual manifest、exact plugin identity、route/task graph/digest、delivery owner、公式project surfaceを同じ語彙へ同期した"},
+    "C4": {"name": "依存関係整合", "status": "PASS", "summary": "C02→C01→{C03,C05}→C04、install→apply→check、PR-preflight apply→checkを直列化し、runtime user gateを分離した"}
+  },
+  "method_coverage": [
+    {"id": 1, "method": "批判的思考", "finding": "installer test自身が誤った @harness identity を固定", "resolution": "marketplace.json.name を実行時解決し @skills 回帰テストへ修正"},
+    {"id": 2, "method": "演繹思考", "finding": "欠落surfaceをapplyで復元する要件に対し .agents discovery writer が不在", "resolution": "common TOML discovery entry から未知entry非破壊で marketplace を原子再生成"},
+    {"id": 3, "method": "帰納的思考", "finding": "manifest/marketplace/ledgerに形状検査のみで再生成・再pin不足の傾向", "resolution": "marketplace writer、fresh digest pin、ledger更新経路を追加"},
+    {"id": 4, "method": "アブダクション", "finding": "focused tests緑とC01赤の原因はplan digest stale", "resolution": "現5正本digestへplan-findingsを再生成"},
+    {"id": 5, "method": "垂直思考", "finding": "install→enable→applyが最初のidentity誤りで途切れる", "resolution": "固定marketplace名を廃止しinstall後C01 apply/checkへ到達可能化"},
+    {"id": 6, "method": "要素分解", "finding": "Claude/Codex projectは生成可能だがCodex discoveryだけ静的検査", "resolution": "Codex adapterの第三managed outputとしてdiscoveryを追加"},
+    {"id": 7, "method": "MECE", "finding": "導入・投影・証跡・PR表示の4領域に独立gap", "resolution": "dynamic installer、adapter、digest ledger、expanded git diffへ分割修正"},
+    {"id": 8, "method": "2軸思考", "finding": "Product×LifecycleでClaude installとCodex applyが欠落", "resolution": "identityとdiscoveryを低コスト高忠実度の優先修正とした"},
+    {"id": 9, "method": "プロセス思考", "finding": "make -jでapply/check sibling prerequisitesが競合可能", "resolution": "各target recipe内のsubmakeでapply→checkを直列化"},
+    {"id": 10, "method": "メタ思考", "finding": "common TOMLを完全SSOTとする説明と複数正本の実data flowが不一致", "resolution": "TOML=hook/discovery意味論、manifest/marketplace=capability/activation正本と再定義"},
+    {"id": 11, "method": "抽象化思考", "finding": "marketplace identityがinstall/activationで別固定値", "resolution": "root marketplace nameからexact identityを導出する共通規則へ抽象化"},
+    {"id": 12, "method": "ダブル・ループ思考", "finding": "仕様改善後のdigestが外ループへ還流せずroute successとcompletionが矛盾", "resolution": "task graph再導出・state repin・findings pinを同じ周回で更新"},
+    {"id": 13, "method": "ブレインストーミング", "finding": "identity解決の6案を比較", "resolution": "既存root marketplace正本をruntime読取する最小案へ収束"},
+    {"id": 14, "method": "水平思考", "finding": "Codex project hookはcommand完全一致のみで世代更新時に旧生成物を残す", "resolution": "stable owner/id markerで旧managed handlerを置換しforeign hooksを保持"},
+    {"id": 15, "method": "逆説思考", "finding": "設定が収束していてもstale plan evidenceがSessionStart自己修復を毎回warning化", "resolution": "freshness pinを周回内で更新し原因別remediationを保持"},
+    {"id": 16, "method": "類推思考", "finding": "bundle installerだけ旧 @harness を残しactivation exact identityと乖離", "resolution": "activationと同じplugin@marketplace規則をinstallerへ適用"},
+    {"id": 17, "method": "if思考", "finding": "並列makeとproject hook command変更で非決定・重複が発生", "resolution": "serial recipeとstable managed markerを追加"},
+    {"id": 18, "method": "素人思考", "finding": "文書から .agents が生成されるか事前準備か判別不能", "resolution": "common contractの所有範囲、生成面、user gate、非生成面を明記"},
+    {"id": 19, "method": "システム思考", "finding": "TOMLはCodex hooks/configだけを駆動し .agents を再現不能", "resolution": "discovery schema/payload/writer/parity/rollbackをend-to-end追加"},
+    {"id": 20, "method": "因果関係分析", "finding": "plan変更→digest stale→C02 fail→C01/TG-C08/CI block", "resolution": "現graph hashと5 artifact digestへ全証跡を再pin"},
+    {"id": 21, "method": "因果ループ", "finding": "C05がstale freshness warningを新sessionごとに反復", "resolution": "freshnessをlocal completion前に必ず閉じruntime gateと分離"},
+    {"id": 22, "method": "トレードオン思考", "finding": "単一完全SSOT化は簡潔だがmanifest固有情報を重複させる", "resolution": "複数native正本をC01がjoinする第三案で忠実度と簡潔性を両立"},
+    {"id": 23, "method": "プラスサム思考", "finding": "install同期の価値が誤identityで両製品に届かない", "resolution": "dynamic install後にClaude/Codex/.agentsを一括apply/check"},
+    {"id": 24, "method": "価値提案思考", "finding": "PR不要でも将来PR準備差分がmanaged symlinkを表示しない", "resolution": "preflight diff scopeを全managed projection/dual manifestへ拡張"},
+    {"id": 25, "method": "戦略的思考", "finding": "将来project hook追加でownership migrationが曖昧", "resolution": "versioned TOML schemaとstable managed marker、foreign preservationを導入"},
+    {"id": 26, "method": "why思考", "finding": "根因は実装・計画・runtime evidenceを同一current graphへ収束する経路欠落", "resolution": "derive→repin→route evidence→ledger→completionの順序を正本化"},
+    {"id": 27, "method": "改善思考", "finding": "malformed hooks/TOMLが未捕捉TypeError/KeyErrorになり得る", "resolution": "contractと既存hooksの型/必須keyをfail-closed検証"},
+    {"id": 28, "method": "仮説思考", "finding": "fresh cloneで全managed settings再生成仮説がdiscovery欠落で反証", "resolution": "欠落marketplace再生成とfixture rollback→restore→reapplyを追加"},
+    {"id": 29, "method": "論点思考", "finding": "TOMLが完全generation SSOTかsemantic contractか未決", "resolution": "semantic contract + native manifests joinと決定し全仕様へ反映"},
+    {"id": 30, "method": "KJ法", "finding": "SSOT生成・lifecycle・evidence・robustnessの4島", "resolution": "discovery→installer→freshness→robustnessの依存順で修正"}
+  ],
+  "round2_resolutions": [
+    "bundle name is passed to Python only through sys.argv and quote/code payload regression is fixed",
+    "native-surfaces.toml activation.claude_marketplace is mechanically compared with root marketplace name",
+    "Codex hooks/config/discovery use preimage rollback plus readback as one managed transaction",
+    "PR preflight prints scoped git status so untracked native surfaces are visible before diff",
+    "local observation/remediation and non-applicable merge observation are separated from runtime SessionStart user gate",
+    "Codex adapter reports the child changed path count instead of a constant"
+  ],
+  "round3_final": {
+    "independent_agents": 3,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "conditions": {
+      "contradiction_free": "PASS",
+      "omission_free": "PASS",
+      "convention_consistent": "PASS",
+      "dependency_consistent": "PASS"
+    },
+    "runtime_deferred_task_ids": ["P13-x-03", "P13-x-04", "P13-x-05"]
+  },
+  "runtime_boundaries": {
+    "capability_build": "executed_local",
+    "apply": "executed_repo_owned",
+    "plugin_install_enable_trust_new_session_uninstall": "pending_user_gate",
+    "git_publish": "not_applicable_user_requested_no_pr"
+  },
+  "gate_results": [
+    {"name": "verify-index-topsort", "exit_code": 0},
+    {"name": "detect-unassigned", "exit_code": 0},
+    {"name": "check-spec-frontmatter", "exit_code": 0},
+    {"name": "check-spec-gates", "exit_code": 0},
+    {"name": "check-spec-matrix-coverage-self-test", "exit_code": 0},
+    {"name": "check-spec-matrix-coverage-plan", "exit_code": 0},
+    {"name": "check-plugin-goal-spec", "exit_code": 0, "note": "backward-compatible source intake warnings only"},
+    {"name": "check-requirements-coverage", "exit_code": 0},
+    {"name": "check-surface-inventory", "exit_code": 0},
+    {"name": "check-build-handoff", "exit_code": 0, "note": "5 routes"},
+    {"name": "check-runtime-portability", "exit_code": 0},
+    {"name": "validate-task-graph", "exit_code": 0},
+    {"name": "check-generative-fidelity", "exit_code": 0},
+    {"name": "check-downstream-harness", "exit_code": 0}
+  ]
+}

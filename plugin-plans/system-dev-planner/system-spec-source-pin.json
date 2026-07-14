@@ -1,0 +1,12 @@
+{
+  "source_plugin": "system-spec-harness",
+  "manifest_path": "plugins/system-spec-harness/.claude-plugin/plugin.json",
+  "version": "0.1.0",
+  "compile_entrypoint": "run-system-spec-compile",
+  "completeness_entrypoint": "assign-system-spec-completeness-evaluator",
+  "manual_command": "/spec-compile",
+  "required_outputs": ["system-spec/index.md", "system-spec/00-requirements-definition.md", "architecture graph node", "completeness evaluation PASS"],
+  "consumption_policy": "citation-only; no hearing/fetch/compile/completeness logic duplication",
+  "version_policy": "exact-match until an explicit plan update reviews the new contract",
+  "cross_ref": "dev-graph C19 (spec-harness preflight) の受容 window (>=0.1.0 <1.0.0) は本 pin を超えて先行してはならない"
+}

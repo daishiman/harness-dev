@@ -20,6 +20,7 @@
 """
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -1219,6 +1220,57 @@ def test_pgm_required_contradicts_delegate():
     assert any("resolved_policy=required contradicts" in e for e in errs)
 
 
+@pytest.mark.parametrize(
+    ("responsibility_id", "filename"),
+    [
+        ("R1", "R1.md"),
+        ("R1-elicit", "R1-elicit.md"),
+        ("R2b-readiness", "R2b-readiness.md"),
+        ("R2b-feature-planning", "R2b-feature-planning.md"),
+    ],
+)
+def test_pgm_accepts_legacy_slugged_and_planner_responsibility_ids(
+    responsibility_id, filename,
+):
+    data = {
+        "variant_support": {"prefix": "run"},
+        "prompt_generation_model": {
+            "policy_resolution": {"resolved_policy": "required", "resolved_via": "x"},
+            "per_responsibility": [
+                {
+                    "id": responsibility_id,
+                    "path_convention": "skill-local-v1",
+                    "layer_yaml_path": f"plugins/harness-creator/skills/run-x/prompts/{filename}",
+                    "lint_status": "PASS",
+                }
+            ],
+            "anchor_coverage": {"missing_anchors": []},
+        },
+    }
+    assert M._validate_prompt_generation_model(data) == []
+
+
+@pytest.mark.parametrize("responsibility_id", ["R", "R2B-readiness", "R2b_readiness", "R2bb-readiness"])
+def test_pgm_rejects_invalid_responsibility_ids(responsibility_id):
+    data = {
+        "variant_support": {"prefix": "run"},
+        "prompt_generation_model": {
+            "policy_resolution": {"resolved_policy": "required", "resolved_via": "x"},
+            "per_responsibility": [
+                {
+                    "id": responsibility_id,
+                    "path_convention": "skill-local-v1",
+                    "layer_yaml_path": "plugins/harness-creator/skills/run-x/prompts/R1.md",
+                    "lint_status": "PASS",
+                }
+            ],
+            "anchor_coverage": {"missing_anchors": []},
+        },
+    }
+    errs = M._validate_prompt_generation_model(data)
+    assert any("must match" in e and M.RESPONSIBILITY_ID_PATTERN in e for e in errs)
+
+
 def test_pgm_bad_id_and_path():
     data = {
         "variant_support": {"prefix": "run"},
@@ -1226,7 +1278,7 @@ def test_pgm_bad_id_and_path():
             "policy_resolution": {"resolved_policy": "required", "resolved_via": "x"},
             "per_responsibility": [
                 {
-                    "id": "BAD",  # not ^R[0-9]+$
+                    "id": "BAD",
                     "path_convention": "unknown-conv",
                     "layer_yaml_path": "wrong/path.md",
                 }
@@ -1235,7 +1287,7 @@ def test_pgm_bad_id_and_path():
         },
     }
     errs = M._validate_prompt_generation_model(data)
-    assert any("must match ^R[0-9]+$" in e for e in errs)
+    assert any("must match" in e and M.RESPONSIBILITY_ID_PATTERN in e for e in errs)
     assert any("path_convention invalid" in e for e in errs)
 
 
@@ -1259,6 +1311,67 @@ def test_pgm_filename_id_mismatch():
     }
     errs = M._validate_prompt_generation_model(data)
     assert any("filename 'R1' != id 'R2'" in e for e in errs)
+
+
+def test_pgm_rejects_slugged_id_path_stem_mismatch():
+    data = {
+        "variant_support": {"prefix": "run"},
+        "prompt_generation_model": {
+            "policy_resolution": {"resolved_policy": "required", "resolved_via": "x"},
+            "per_responsibility": [
+                {
+                    "id": "R2b-readiness",
+                    "path_convention": "skill-local-v1",
+                    "layer_yaml_path": (
+                        "plugins/harness-creator/skills/run-x/prompts/R2-readiness.md"
+                    ),
+                    "lint_status": "PASS",
+                }
+            ],
+            "anchor_coverage": {"missing_anchors": []},
+        },
+    }
+    errs = M._validate_prompt_generation_model(data)
+    assert any("filename 'R2-readiness' != id 'R2b-readiness'" in e for e in errs)
+
+
+def test_responsibility_schema_patterns_accept_same_id_grammar():
+    schema_paths = [
+        ROOT / "plugins/harness-creator/skills/run-build-skill/schemas/responsibility-slot.schema.json",
+        ROOT / "plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
+        ROOT / "plugins/harness-creator/skills/run-skill-create/schemas/build-trace.schema.json",
+        ROOT / "plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json",
+    ]
+    patterns = []
+    slot = json.loads(schema_paths[0].read_text(encoding="utf-8"))
+    patterns.append(slot["properties"]["r_id"]["pattern"])
+    skill_trace = json.loads(schema_paths[1].read_text(encoding="utf-8"))
+    patterns.append(
+        skill_trace["properties"]["prompt_generation_model"]["properties"]
+        ["per_responsibility"]["items"]["properties"]["id"]["pattern"]
+    )
+    create_trace = json.loads(schema_paths[2].read_text(encoding="utf-8"))
+    patterns.append(
+        create_trace["properties"]["prompt_generation_model"]["properties"]
+        ["per_responsibility"]["items"]["properties"]["id"]["pattern"]
+    )
+    skill_brief = json.loads(schema_paths[3].read_text(encoding="utf-8"))
+    patterns.append(
+        skill_brief["properties"]["responsibilities"]["items"]["properties"]
+        ["id"]["pattern"]
+    )
+    for pattern in patterns:
+        compiled = re.compile(pattern)
+        assert all(
+            compiled.fullmatch(value)
+            for value in (
+                "R1",
+                "R1-elicit",
+                "R2b-readiness",
+                "R2b-feature-planning",
+            )
+        )
+        assert not any(compiled.fullmatch(value) for value in ("R", "R2B-readiness", "R2b_readiness"))
 
 
 def test_pgm_lint_fail_requires_escalation():
@@ -1339,6 +1452,90 @@ def test_pgm_required_empty_per_resp():
     }
     errs = M._validate_prompt_generation_model(data)
     assert any("per_responsibility must not be empty" in e for e in errs)
+
+
+def _write_prompt_responsibility_brief(tmp_path):
+    brief_path = tmp_path / "skill-brief.json"
+    brief_path.write_text(
+        json.dumps(
+            {
+                "responsibilities": [
+                    {"id": "R1-elicit", "prompt_required": True},
+                    {"id": "R2b-readiness"},  # omitted means true
+                    {"id": "R3-optional", "prompt_required": False},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    return brief_path
+
+
+def _prompt_model_for_ids(responsibility_ids):
+    return {
+        "variant_support": {"prefix": "run"},
+        "brief_path": "skill-brief.json",
+        "prompt_generation_model": {
+            "policy_resolution": {
+                "resolved_policy": "required",
+                "resolved_via": "kind=run",
+            },
+            "per_responsibility": [
+                {
+                    "id": responsibility_id,
+                    "path_convention": "skill-local-v1",
+                    "layer_yaml_path": (
+                        "plugins/harness-creator/skills/run-x/prompts/"
+                        f"{responsibility_id}.md"
+                    ),
+                    "lint_status": "PASS",
+                }
+                for responsibility_id in responsibility_ids
+            ],
+            "anchor_coverage": {"missing_anchors": []},
+        },
+    }
+
+
+def test_pgm_brief_prompt_required_id_set_matches_exactly(tmp_path):
+    _write_prompt_responsibility_brief(tmp_path)
+    data = _prompt_model_for_ids(["R1-elicit", "R2b-readiness"])
+
+    errs = M._validate_prompt_generation_model(data, tmp_path / "trace.json")
+
+    assert not any("responsibility-set" in error or "id set mismatch" in error for error in errs)
+
+
+@pytest.mark.parametrize(
+    ("responsibility_ids", "missing", "extra"),
+    [
+        (["R1-elicit"], "R2b-readiness", "[]"),
+        (
+            ["R1-elicit", "R2b-readiness", "R3-optional"],
+            "[]",
+            "R3-optional",
+        ),
+    ],
+)
+def test_pgm_brief_prompt_required_id_set_rejects_missing_or_extra(
+    tmp_path, responsibility_ids, missing, extra,
+):
+    _write_prompt_responsibility_brief(tmp_path)
+    data = _prompt_model_for_ids(responsibility_ids)
+
+    errs = M._validate_prompt_generation_model(data, tmp_path / "trace.json")
+
+    mismatch = next(error for error in errs if "id set mismatch" in error)
+    assert missing in mismatch
+    assert extra in mismatch
+
+
+def test_pgm_declared_brief_path_must_be_loadable(tmp_path):
+    data = _prompt_model_for_ids(["R1-elicit"])
+
+    errs = M._validate_prompt_generation_model(data, tmp_path / "trace.json")
+
+    assert any("brief_path could not be loaded" in error for error in errs)
 
 
 # =====================================================================

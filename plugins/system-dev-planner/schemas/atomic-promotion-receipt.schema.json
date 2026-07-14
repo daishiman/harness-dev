@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "atomic-promotion-receipt.schema.json",
+  "type": "object",
+  "required": ["schema_version", "status", "promoted_at", "repo_identity", "staging_digest", "evaluated_digest", "published_digest", "implementation_readiness", "quality_conditions", "promotion_method", "registration_manifest"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "promoted"},
+    "promoted_at": {"type": "string", "format": "date-time"},
+    "repo_identity": {"type": "string", "minLength": 1},
+    "staging_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "evaluated_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "published_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "implementation_readiness": {"const": "complete"},
+    "quality_conditions": {
+      "type": "object",
+      "required": ["no_contradiction", "no_missing", "consistent", "dependency_integrity"],
+      "properties": {
+        "no_contradiction": {"const": "PASS"},
+        "no_missing": {"const": "PASS"},
+        "consistent": {"const": "PASS"},
+        "dependency_integrity": {"const": "PASS"}
+      },
+      "additionalProperties": false
+    },
+    "promotion_method": {"const": "same-filesystem-atomic-rename"},
+    "registration_manifest": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}
+  },
+  "additionalProperties": false,
+  "description": "staging/evaluated/published digest equality is enforced by promote-system-plan.py because JSON Schema draft 2020-12 has no portable cross-field equality keyword"
+}

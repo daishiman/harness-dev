@@ -464,6 +464,139 @@
       }
     },
     {
+      "id": "runtime-handover_6b419eaf39",
+      "title": "route 申し送り (handover): 後続 route は caller-repository containment、C02 single-writer、b",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "後続 route は caller-repository containment、C02 single-writer、binding別 projection authority、C14 macro/C19 import/system-dev-planner exact-13 の責務境界を保持する。 (発生源: task_id=B-C01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "dev-graph"
+      ],
+      "source": {
+        "file": "eval-log/dev-graph/build/route-C01.json",
+        "task_id": "B-C01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-handover_e2f5b59cdd",
+      "title": "route 申し送り (handover): C11,C01",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "C11,C01 (発生源: task_id=B-C02, route_id=C02)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "system-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/system-dev-planner/build/route-C02.json",
+        "task_id": "B-C02",
+        "route_id": "C02"
+      }
+    },
+    {
+      "id": "runtime-handover_b3cf79bb72",
+      "title": "route 申し送り (handover): token/node IDはconfigへ保存せず毎回gh認証とremote factsから解決する。",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "token/node IDはconfigへ保存せず毎回gh認証とremote factsから解決する。 (発生源: task_id=B-C12, route_id=C12)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "dev-graph"
+      ],
+      "source": {
+        "file": "eval-log/dev-graph/build/route-C12.json",
+        "task_id": "B-C12",
+        "route_id": "C12"
+      }
+    },
+    {
+      "id": "runtime-handover_52c417166b",
+      "title": "route 申し送り (handover): C26はlocal patch前後に本validatorのvalid結果をcompletion gateとして扱う。",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "C26はlocal patch前後に本validatorのvalid結果をcompletion gateとして扱う。 (発生源: task_id=B-C11, route_id=C11)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "dev-graph"
+      ],
+      "source": {
+        "file": "eval-log/dev-graph/build/route-C11.json",
+        "task_id": "B-C11",
+        "route_id": "C11"
+      }
+    },
+    {
+      "id": "runtime-handover_ad81d6d1c3",
+      "title": "route 申し送り (handover): C06",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "C06 (発生源: task_id=B-C01, route_id=C01)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "system-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/system-dev-planner/build/route-C01.json",
+        "task_id": "B-C01",
+        "route_id": "C01"
+      }
+    },
+    {
+      "id": "runtime-handover_50a0d2cc98",
+      "title": "route 申し送り (handover): C04,C01",
+      "intent": "route 完了時の申し送り (次タスク前提の自然文) を次回 build の判断材料として残すこと",
+      "background": "C04,C01 (発生源: task_id=B-C03, route_id=C03)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "handover",
+        "system-dev-planner"
+      ],
+      "source": {
+        "file": "eval-log/system-dev-planner/build/route-C03.json",
+        "task_id": "B-C03",
+        "route_id": "C03"
+      }
+    },
+    {
+      "id": "runtime-deviation_fe56ab30cd",
+      "title": "計画からの逸脱 (route deviation): register-package.py は自身の _validate_schema (graph-node.schema",
+      "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",
+      "background": "register-package.py は自身の _validate_schema (graph-node.schema.json 駆動) で node 検証し validate-graph-schema.py を呼ばない。validator 二重実装の SSOT 化は beads harness-xsr で追跡 (behavioral refactor のため本 confirm build のス… (発生源: task_id=B-C29, route_id=C29)",
+      "keywords": [
+        "task-graph",
+        "runtime",
+        "build-execution",
+        "knowledge-loop",
+        "deviation",
+        "dev-graph"
+      ],
+      "source": {
+        "file": "eval-log/dev-graph/build/route-C29.json",
+        "task_id": "B-C29",
+        "route_id": "C29"
+      }
+    },
+    {
       "id": "runtime-deviation_9913d41abd",
       "title": "計画からの逸脱 (route deviation): builder=run-skill-create は handoff 宣言値。実 build は dispatcher ",
       "intent": "route 実行が計画から逸脱した判断・代替生成を次回 plan/build へ再利用できるよう記録すること",

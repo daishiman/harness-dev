@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "package-registration-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "registered_at", "feature_package_id", "parent_feature",
+    "source_digest", "expected_count", "applied_count", "phase_refs", "node_ids",
+    "graph_revision_before", "graph_revision_after", "graph_digest_after", "output_path"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "registered"},
+    "registered_at": {"type": "string", "format": "date-time"},
+    "feature_package_id": {"type": "string", "pattern": "^feature-package/[A-Za-z0-9._/-]+$"},
+    "parent_feature": {"type": "string", "minLength": 1},
+    "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "expected_count": {"const": 13},
+    "applied_count": {"const": 13},
+    "phase_refs": {"const": ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08", "P09", "P10", "P11", "P12", "P13"]},
+    "node_ids": {"type": "array", "minItems": 13, "maxItems": 13, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "graph_revision_before": {"type": "integer", "minimum": 0},
+    "graph_revision_after": {"type": "integer", "minimum": 1},
+    "graph_digest_after": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "output_path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}
+  }
+}

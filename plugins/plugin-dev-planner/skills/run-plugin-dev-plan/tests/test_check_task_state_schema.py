@@ -131,6 +131,14 @@ def test_node_missing_id():
     assert any("id が空" in e for e in errs)
 
 
+def test_duplicate_state_node_id_is_violation():
+    errs = CTS.validate_task_state(_base_state([
+        {"id": "T1", "state": "done"},
+        {"id": "T1", "state": "pending"},
+    ]))
+    assert any("task-state node id 重複" in e and "T1" in e for e in errs)
+
+
 # ─────────────────── check_graph_hash_pin ───────────────────
 def _write_graph(tmp_path, graph):
     p = tmp_path / "task-graph.json"
@@ -151,6 +159,48 @@ def test_pin_match(tmp_path):
     state = _base_state()
     state["graph_hash"] = DTG.graph_hash(graph)
     assert CTS.check_graph_hash_pin(state, gp) == []
+
+
+def test_pin_match_but_missing_state_node_fails_closed(tmp_path):
+    graph = _graph([
+        {"id": "T1", "title": "t", "phase_ref": "P05", "entity_ref": None,
+         "state": "pending", "write_scope": "ws/1"},
+        {"id": "T2", "title": "t2", "phase_ref": "P05", "entity_ref": None,
+         "state": "pending", "write_scope": "ws/2"},
+    ])
+    gp = _write_graph(tmp_path, graph)
+    state = _base_state([{"id": "T1", "state": "done"}])
+    state["graph_hash"] = DTG.graph_hash(graph)
+    errs = CTS.check_graph_hash_pin(state, gp)
+    assert any("task-state node 欠落" in e and "T2" in e for e in errs)
+
+
+def test_pin_match_but_unknown_state_node_fails_closed(tmp_path):
+    graph = _graph([
+        {"id": "T1", "title": "t", "phase_ref": "P05", "entity_ref": None,
+         "state": "pending", "write_scope": "ws/1"},
+    ])
+    gp = _write_graph(tmp_path, graph)
+    state = _base_state([
+        {"id": "T1", "state": "done"}, {"id": "GHOST", "state": "done"},
+    ])
+    state["graph_hash"] = DTG.graph_hash(graph)
+    errs = CTS.check_graph_hash_pin(state, gp)
+    assert any("task-state 未知 node" in e and "GHOST" in e for e in errs)
+
+
+def test_duplicate_graph_node_id_fails_closed(tmp_path):
+    graph = _graph([
+        {"id": "T1", "title": "t", "phase_ref": "P05", "entity_ref": None,
+         "state": "pending", "write_scope": "ws/1"},
+        {"id": "T1", "title": "dup", "phase_ref": "P05", "entity_ref": None,
+         "state": "pending", "write_scope": "ws/dup"},
+    ])
+    gp = _write_graph(tmp_path, graph)
+    state = _base_state([{"id": "T1", "state": "done"}])
+    state["graph_hash"] = DTG.graph_hash(graph)
+    errs = CTS.check_graph_hash_pin(state, gp)
+    assert any("task-graph node id 重複" in e for e in errs)
 
 
 def test_pin_mismatch_after_node_added(tmp_path):

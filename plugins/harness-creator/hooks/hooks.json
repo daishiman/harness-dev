@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\"",
+            "timeout": 60,
+            "statusMessage": "Checking repository-native capability projections"
+          }
+        ]
+      }
+    ]
+  }
+}

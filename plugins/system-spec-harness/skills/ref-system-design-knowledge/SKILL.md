@@ -14,6 +14,10 @@ last-audited: 2026-07-11
 audit-trigger: official-update
 responsibility_refs:
   - prompts/R1-system-design-knowledge.md
+schema_refs:
+  - references/knowledge-card.schema.json
+completeness_exempt:
+  - "manifest: ref/effect:none exposes immutable reference material and has no executable workflow phases."
 allowed-tools:
   - Read
 ---

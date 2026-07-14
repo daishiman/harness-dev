@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/schedule-graph.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:false, write-scope:none)。ready-set と非衝突 worktree バッチを決定的計算する純関数群。touches() は canonical resource_scope: string[] を強制し、旧 {touches:[...]} 形状を silent scope 消去を防ぐため明示 reject (良い防御コメント付き)。is_schedulable は status=active∧confirmation=confirmed∧evaluation=pass∧readiness=complete を要求。ready-source=self|bd-bridge、bd-bridge 経路は external_ref→node マップし schedulable かつ depends_on 全 done のみ ready、非マップは unmapped へ退避。active lease の graph_node_id と resource_scope を candidate から除外し衝突回避。greedy first-fit で resource_scope 素集合バッチ生成、conflicts と assignment_hints(claim_command 付き) を出力。sorted 反復で決定性確保。SMELL: 1行密集スタイルで可読性が犠牲 (main が argparse〜dump まで凝縮)、tasks=[n for n in candidates if n not in features] は dict 同一性の O(n^2) membership (規模的には無害)。TESTS: test_runtime_coverage.py::test_render_and_schedule / test_semantic_contract_cli_scheduler_20260713.py。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

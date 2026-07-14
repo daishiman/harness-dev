@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "dev-graph",
+  "verdict": "blocked_escalated",
+  "iteration": 3,
+  "iteration_limit": 3,
+  "graph_hash": "sha256:53ec688ae88c532847479adec06b4a7f2f306661c4a4ecb9bdb0ee77d702cb0d",
+  "progress": {
+    "total": 50,
+    "done": 50,
+    "blocked": 0,
+    "completion_rate": 1.0,
+    "route_reports": 25,
+    "meaning": "Runtime state and structural route materialization are complete; this does not override the failed semantic content review."
+  },
+  "completion_gate_status": "blocked",
+  "completion_gate": {
+    "completion_gate": "blocked",
+    "inbox_absent": false,
+    "needs_approval": true,
+    "pending_discovered_tasks": [
+      {
+        "path": "eval-log/dev-graph/build/discovered-tasks/semantic-contract-gaps.json",
+        "change_level": "structural",
+        "status": null
+      }
+    ],
+    "handback_command": "run-plugin-dev-plan --mode update --discovered-inbox eval-log/dev-graph/build/discovered-tasks --out-dir plugin-plans/dev-graph --approved",
+    "next_steps": [
+      "run-plugin-dev-plan --mode update --discovered-inbox eval-log/dev-graph/build/discovered-tasks --out-dir plugin-plans/dev-graph --approved",
+      "/capability-build --handoff plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"
+    ]
+  },
+  "claude_symlink_gate": "ok",
+  "conditions": {
+    "no_contradiction": "FAIL",
+    "no_missing": "FAIL",
+    "consistent": "FAIL",
+    "dependency_integrity": "FAIL"
+  },
+  "review": "eval-log/dev-graph/elegant-review/final-harness-contract-audit-20260713.json",
+  "evaluator": "eval-log/dev-graph/_plugin/build-evidence/20260713/evaluator-verdict.json",
+  "phase11_evidence": "eval-log/dev-graph/_plugin/build-evidence/20260713/phase11-evidence-manifest.json",
+  "pending_discovered_tasks": [
+    {
+      "path": "eval-log/dev-graph/build/discovered-tasks/semantic-contract-gaps.json",
+      "change_level": "structural",
+      "needs_approval": true
+    }
+  ],
+  "reconcile": {
+    "structural_repairs_completed": [
+      "25 route/inventory parity and 50-node graph reconciliation",
+      "C29 first-class registration",
+      "producer-owned handoff status restored to planned",
+      "composition internal-support and hook topology cleanup",
+      "kind-specific route evidence additions and five-element Phase 11 manifest"
+    ],
+    "semantic_gaps": [
+      "C09/C27 worktree operation mismatch",
+      "C10/C11 validation dependency bypass",
+      "C12 GitHub CLI and retry classification mismatch",
+      "C15/C16 scheduling readiness and branch mismatch",
+      "C24 repository containment gaps",
+      "C25/C26 lifecycle invocation and single-writer violations",
+      "C27/C28 Beads claim saga and parity gaps",
+      "C01-C05/C14/C18/C19 missing criteria-test evidence"
+    ],
+    "decision": "CONST_003 requires escalation after three review cycles; no further automatic implementation was applied."
+  },
+  "validation": [
+    "25/25 build targets and route reports structurally present",
+    "50/50 task-state nodes done with graph hash pin verified",
+    "33 runtime tests passed",
+    "branch-inclusive coverage 87% total and every script/hook >=80%",
+    "142 impacted validator/lint tests passed",
+    "plugin completeness: 21 plugins",
+    "plan evaluator: 11/11 deterministic gates",
+    "semantic content evaluator: 52/100, FAIL_ESCALATED"
+  ],
+  "handback_command": "run-plugin-dev-plan --mode update --discovered-inbox eval-log/dev-graph/build/discovered-tasks --out-dir plugin-plans/dev-graph --approved",
+  "next_steps": [
+    "run-plugin-dev-plan --mode update --discovered-inbox eval-log/dev-graph/build/discovered-tasks --out-dir plugin-plans/dev-graph --approved",
+    "/capability-build --handoff plugin-plans/dev-graph/handoff-run-plugin-dev-plan.json"
+  ]
+}

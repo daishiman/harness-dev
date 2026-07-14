@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "template_version": "1.0.0",
+  "placeholder_tokens": ["<", "TBD", "TODO", "未定"],
+  "not_applicable_format": "N/A: <reason>",
+  "common_frontmatter": {
+    "template": "common-frontmatter.md",
+    "required": ["graph_node_id", "artifact_kind", "artifact_subtypes", "title", "project_id", "domain", "status", "priority", "start_date", "target_date", "iteration", "owners", "tags", "file_path", "template_id", "template_version", "confirmation_status", "evaluation_status", "confirmation_evidence", "source_lineage", "created_at", "updated_at", "depends_on", "related_nodes", "resource_scope", "purpose", "goal", "scope_in", "scope_out", "acceptance", "architecture_refs", "parent_feature", "feature_package_id", "phase_ref", "classification_confidence", "classification_reason", "classification_candidates", "tracker_binding", "beads_linkage", "github_publication", "issue_linkage", "github_project_linkages", "pull_request_linkages", "execution_contexts", "completion_evidence", "implementation_readiness"]
+  },
+  "artifacts": {
+    "issue": {
+      "template": "issue.md",
+      "required_sections": ["概要", "背景と問題", "現在の挙動", "期待する挙動", "再現手順またはユースケース", "影響と優先度", "スコープ", "関連グラフ", "受入条件", "検証証跡"]
+    },
+    "task": {
+      "template": "task.md",
+      "required_sections": ["目的", "背景", "入力と前提条件", "出力と成果物", "依存関係", "実装対象", "Write scope と競合制約", "GitHub publication", "実行手順", "受入条件", "検証方法", "リスクとロールバック", "Handoff"],
+      "conditional_templates": {"system_development": "system-task-spec.md"},
+      "conditional_required_sections": {"system_development": ["Workstream applicability", "Architecture and deploy unit", "Verification and evidence", "Rollout and rollback", "Tracker publication and completion intent"]}
+    },
+    "document": {
+      "template": "document.md",
+      "required_sections": ["目的", "対象読者", "要約", "本文", "決定事項", "運用・更新方法", "関連資料", "変更履歴"]
+    },
+    "specification": {
+      "template": "specification.md",
+      "required_sections": ["目的と成功状態", "スコープ", "用語と主体", "ユースケースとユーザーフロー", "機能要件", "非機能要件", "UI・状態遷移", "ビジネスルールと検証", "API契約", "データモデル", "認証・認可", "エラー・例外・回復", "イベント・非同期処理", "可観測性", "互換性・移行・リリース", "テストと受入条件", "未決事項"],
+      "conditional_templates": {"api_changed": "api-contract.md"}
+    },
+    "architecture": {
+      "template": "architecture.md",
+      "required_sections": ["Architecture overview", "Context and drivers", "Goals and non-goals", "System context and boundaries", "Container and component view", "Cross-cutting contracts", "Subtype architecture", "Architecture decisions", "Delivery, migration and rollback", "Risks and verification"],
+      "subtype_templates": {
+        "frontend": "architecture-frontend.md",
+        "backend": "architecture-backend.md",
+        "infrastructure": "architecture-infrastructure.md",
+        "data": "architecture-data.md",
+        "security": "architecture-security.md"
+      },
+      "subtype_policy": "one_or_more_or_explicit_not_applicable"
+    },
+    "feature": {
+      "template": "feature.md",
+      "required_sections": ["目的", "到達状態", "スコープ", "受入", "アーキテクチャ参照", "機能間依存", "Handoff"],
+      "note": "マクロ層の機能単位ノード。purpose/goal/scope_in/scope_out/acceptance/architecture_refsを本文床として保持し、機能間依存は既存depends_onを流用する (MM-01, MM-11)。細タスク仕様書生成は external plugin system-dev-planner (ミクロ層) へ委譲し本テンプレートでは扱わない"
+    }
+  },
+  "graph_projection": {
+    "template": "task-graph-node.md",
+    "required_fields": ["graph_node_id", "artifact_kind", "file_path", "goal", "depends_on", "touches", "acceptance", "verification", "handoff_route"],
+    "root_map": {
+      "issue": "issues/",
+      "task": "tasks/",
+      "specification": "specs/",
+      "architecture": "architecture/",
+      "feature": "features/",
+      "document": "docs/"
+    }
+  },
+  "system_plan": {
+    "phase_template": null,
+    "legacy_phase_template": "system-phase-spec.md (compatibility only; runtime emission forbidden)",
+    "task_overlay": "system-task-spec.md",
+    "task_overlay_status": "pointer_to_canonical",
+    "task_overlay_canonical": "plugin-plans/system-dev-planner/references/system-task-spec-template.md",
+    "runtime_emission_owner": "system-dev-planner (dev-graph はruntime task specをemitせず登録・投影・完了収束のみ担う。templates/system-task-spec.md は後方互換のpointerで、節構成・必須フィールドの正本は canonical 側)",
+    "system_task_required_fields": ["parent_feature", "feature_package_id", "phase_ref"],
+    "rule": "one feature execution package contains exactly 13 executable task artifacts, one for each P01..P13; no separate phase-document set and no variable-N canonical tasks",
+    "feature_boundary": "system-dev-planner consumes exactly one dev-graph feature node (purpose/goal/scope_in/scope_out/acceptance/architecture_refs) as structured input context and never creates feature nodes; its promoted typed tasks register back into dev-graph with parent_feature=当該feature (MM-11)"
+  },
+  "readiness": {
+    "states": ["complete", "incomplete", "not_applicable"],
+    "complete_when": "all required fields and sections are substantive, all referenced nodes resolve, and conditional templates are satisfied",
+    "fail_closed_on": ["missing_required_frontmatter", "missing_required_section", "placeholder_only_section", "unresolved_graph_reference", "conditional_template_missing", "path_parity_error"]
+  }
+}
+

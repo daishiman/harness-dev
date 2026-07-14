@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/dev-graph/scripts/manage-worktree-lease.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine code-review + py_compile OK / frontmatter 完備 (network:true, write-scope: verified git-common-dir/dev-graph ephemeral coordination only, dependencies:[bd-bridge.py, register-package.py])。per-node worktree lease を fcntl.flock(LOCK_EX) で leases.lock 排他しつつ原子調停。identity は自前再導出せず C24 resolve-repo-context を subprocess 消費し repository_id が github:/local:sha256: canonical であること・root 一致を検証。claim は saga: reservation 作成→(beads 時) bd-bridge claim→失敗時 compensation(reservation を released 化 + lease.claim_compensated イベント)→workspace identity 不整合は claim_pending_local_repair へ縮退→C02 execution-context projection(register-package)失敗も repair 状態化。expiry sweep が claimed/in_progress の期限切れを expired 化。_ensure_claim_branch は canonical devgraph/<id> 強制・clean worktree ゲート・既存ブランチ衝突拒否・switch 後 converge 検証。release は pending_review/pending_merge を拒否し C26 system-release へ誘導、system-release は未消費 completion event の repository_id/merge_commit/policy_digest 一致を要求。ttl>=300。SMELL: main が極めて密で分岐多数 (cyclomatic 高) 監査負荷大だが各 repair/compensation 分岐は fail-closed で整合。persist 順序も reservation 先行で crash-safe。TESTS: test_runtime_coverage.py::test_worktree_lease_lifecycle、test_semantic_c25_c28 / c27_c28_projection / cli_scheduler。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

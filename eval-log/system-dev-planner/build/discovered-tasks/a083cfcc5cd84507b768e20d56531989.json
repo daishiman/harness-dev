@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "B-C01",
+  "reason": "SKILL contract requires acquire/heartbeat/release but no deterministic lock lifecycle owner exists; a new component and route are required.",
+  "discovered_at_artifact": "eval-log/system-dev-planner/build/route-C01.json",
+  "proposed_node": {
+    "id": "D-C13",
+    "title": "system plan lock lifecycle managerをbuildする",
+    "phase_ref": "P05",
+    "entity_ref": "C13",
+    "state": "pending",
+    "write_scope": "plugins/system-dev-planner/scripts/manage-system-plan-lock.py",
+    "acceptance_criterion": "repository_id/run_id/session_owner/feature identityを束縛したrepo-local lockをatomic acquire・heartbeat renew・owner限定releaseし、expired lockを監査付きcleanupする。matching lockの競合、owner不一致、path escape、同一repo lock directory内のmalformed lockはfail-closedで拒否する",
+    "execution_kind": "component-build",
+    "route_ref": "C13",
+    "task_spec_ref": "task-specs/D-C13.md"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:8a5e843db8ab76ed2e8f94d988e4157eb59a4717c04b73b462be8a12a4ac70f0"
+}
