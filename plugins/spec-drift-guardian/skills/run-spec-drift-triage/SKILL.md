@@ -95,7 +95,7 @@ feedback_contract:
 | 段 | 実体 | 役割 | fail-closed 条件 |
 |---|---|---|---|
 | C11 集約 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/aggregate-issue-diffs.py --issue N --events FILE` | issue 単位の未triage全 diff を完全 commit diff として時系列集約 | 欠落 / 曖昧照合 / shallow clone / digest 不一致 (exit≠0) |
-| C08 hunk化 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/parse-spec-diff.py --stdin` | 集約 diff を unified hunk 単位へ構造化 (commit pair / digest 継承) | `complete=false` / digest 不一致 (exit2) |
+| C08 hunk化 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/parse-spec-diff.py --stdin` | C11 stdout を verbatim で受け `untriaged_entries` を選別し unified hunk 単位へ構造化 (commit pair / digest 継承) | `complete=false` / digest 不一致 / commit pair 混在 (exit2)、入力形状不正・JSON parse 失敗 (exit1) |
 | C09 写像 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py --stdin` | hunk から artifact kind/path と 4 軸+semantics の before/after/evidence 候補へ写像 | 必須キー欠落 / 写像表不備 (exit≠0) |
 
 LLM が担うのは、C09 の影響候補が実 hunk 証拠と整合するかの**軸判定の妥当性確認**と、schema 準拠の triage-report への**組み立て**のみ。`base_commit` / `source_commit` / `diff_sha256` / `complete` は C11 が算出した provenance を**そのまま転記**し、LLM が再計算しない (C03 verdict と一致必須のため)。
@@ -137,10 +137,11 @@ LLM が担うのは、C09 の影響候補が実 hunk 証拠と整合するかの
 ## Gotchas
 
 1. **preview を diff と誤認しない**: `spec-diff-history.md` の 80 行 preview は**イベント日時の索引**にのみ使う。実 diff は必ず C11 が commit pair から復元したものを使う。
-2. **latest だけを見ない**: issue に紐づく未triage変更は**積層**しうる。`untriaged_entries` 全体を集約対象にする (最新 1 件固定にしない)。
-3. **digest を跨いで混ぜない**: parse/map は C11 が付した単一 commit pair / digest を継承する。異なる digest の hunk を 1 レポートに混在させない。
-4. **impacted の根拠必須**: `impacted=true` も `false` も `evidence` (hunk 抜粋・行番号) を空にしない (schema `minLength:1`)。
-5. **context 予算**: SKILL.md / 各 prompt は簡潔に保つ。`references/resource-map.yaml` を最初に読み、必要ファイルのみ open する。
+2. **triage 済みを再集約しない**: 集約対象は `entries` (issue の全 diff 履歴) ではなく `untriaged_entries` (未処理のみ)。C08 は C11 stdout を **verbatim で受け取り** untriaged_entries を自ら選別するため、再ラップも最新 1 件固定も不要 (`entries` を渡すと triage 済みまで再集約する)。
+3. **digest を跨いで混ぜない**: triage-report は `base_commit`/`source_commit`/`diff_sha256` を各 1 個しか持てない (単一 digest 契約・C03 verdict と一致必須)。積層できるのは **1 commit pair 内の複数ファイル・複数 hunk** までで、untriaged が複数 commit pair に跨る入力は C08 が集約せず fail-closed (exit2) する。同一 commit pair が履歴に重複しても C08 が dedup するので二重計上しない。
+4. **複数 commit pair の issue は分割する**: 出力先 `.spec-drift/<issue>/triage-report.json` は issue 単位で 1 本 (単一 writer)。1 issue に複数 commit pair の未triage変更が溜まった場合、同じパスへ上書きすると先の triage 証跡を失うため、**issue を commit pair 単位へ分割してから** triage する (C10 も `--triage-report` 単数 + digest 一致必須のため、1 issue = 1 commit pair が close 可能な形)。
+5. **impacted の根拠必須**: `impacted=true` も `false` も `evidence` (hunk 抜粋・行番号) を空にしない (schema `minLength:1`)。
+6. **context 予算**: SKILL.md / 各 prompt は簡潔に保つ。`references/resource-map.yaml` を最初に読み、必要ファイルのみ open する。
 
 ## Additional Resources
 

@@ -183,6 +183,11 @@ def validate_sync_proposal(d: object, errors: list[str]) -> None:
             errors.append(f"{plabel}.target_path が非空文字列でない")
         if p.get("axis") not in AXES:
             errors.append(f"{plabel}.axis={p.get('axis')!r} が enum 外")
+        # pre は「対象ファイル不在=新規作成提案」で null (apply-gate-policy §3)。
+        # schema と同じ nullability をここでも強制し、null が C10 だけ素通りするのを防ぐ。
+        pre = p.get("pre_image_sha256")
+        if pre is not None and not isinstance(pre, str):
+            errors.append(f"{plabel}.pre_image_sha256 が文字列/null でない")
         post = p.get("post_image_sha256")
         if post is not None and not isinstance(post, str):
             errors.append(f"{plabel}.post_image_sha256 が文字列/null でない")
@@ -226,6 +231,89 @@ def validate_sync_audit_verdict(d: object, errors: list[str]) -> None:
 
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def evaluate_pre_apply(
+    issue: int,
+    proposal: dict,
+    audit: dict,
+    target_root: Path,
+    verdict: dict,
+    report: dict,
+) -> tuple[str, str, list[str]]:
+    """apply 直前ゲート (apply-gate-policy §2 の G1-G5) を判定する。
+
+    close ゲート (evaluate) は適用**後**の post-image を突合するため、構造上 pre-image
+    drift を検出できない (適用後の実ファイルは post-image になっている)。G4「適用直前に
+    実ファイル sha256 を再計算し pre_image_sha256 と一致」を LLM 手順だけに委ねると、
+    見落とし時に drift したまま適用されるため、ここで機械検証する。
+    agree も同様: 独立 verifier (C03) が triage の見逃し/誤検出を指摘したまま (agree=false)
+    apply すると、誤った triage に基づく変更が入る。close で初めて弾くのでは手遅れなので
+    apply 前に止める (apply-gate-policy §2 の IN1 追加条件)。
+    全条件は AND。1 つでも欠けたら部分適用せず issue 全体を停止する (result != "OK")。
+    """
+    reasons: list[str] = []
+
+    # IN1 追加条件: 独立 verifier が triage に同意していること。
+    # agree=true は「特定の diff についての同意」であり、主語を束縛せず flag だけ見ると、
+    # C01 を再実行して triage-report が変わったのに C03 を再実行していない場合に旧 verdict の
+    # agree=true が流用され、誤 triage に基づく Edit が着弾する。close 経路と同じく
+    # diff_sha256 一致を強制して「どの diff への同意か」を固定する。
+    if verdict.get("agree") is not True:
+        reasons.append("triage_verdict.agree が true でない (独立 verifier が triage に不同意のまま apply 不可)")
+    if verdict.get("diff_sha256") != report.get("diff_sha256"):
+        reasons.append(
+            "triage_verdict.diff_sha256 が triage_report.diff_sha256 と不一致 "
+            "(別 diff への agree を流用不可・C01 再実行後は C03 も再実行する)"
+        )
+    for name, art in (("triage_report", report), ("triage_verdict", verdict)):
+        if art.get("issue") != issue:
+            reasons.append(f"{name}.issue={art.get('issue')!r} が --issue={issue} と不一致")
+
+    # G1: 監査 PASS + container digest 一致 (別提案の監査を流用させない)。
+    if audit.get("verdict") != "PASS":
+        reasons.append(f"G1 sync_audit_verdict.verdict={audit.get('verdict')!r} が PASS でない")
+    if audit.get("proposal_sha256") != proposal.get("proposal_sha256"):
+        reasons.append("G1 sync_audit_verdict.proposal_sha256 が sync_proposal.proposal_sha256 と不一致 (別提案の監査)")
+    for name, art in (("sync_proposal", proposal), ("sync_audit_verdict", audit)):
+        if art.get("issue") != issue:
+            reasons.append(f"{name}.issue={art.get('issue')!r} が --issue={issue} と不一致")
+
+    # G2: 明示承認。
+    approval = proposal.get("approval") or {}
+    if approval.get("granted") is not True:
+        reasons.append("G2 sync_proposal.approval.granted が true でない (未承認)")
+    elif not approval.get("by") or not approval.get("evidence"):
+        reasons.append("G2 approval.by / approval.evidence が空 (承認の出所が不明)")
+
+    for idx, p in enumerate(proposal.get("proposals") or []):
+        p = p if isinstance(p, dict) else {}
+        target_rel = str(p.get("target_path") or "")
+        # G3: allowlist 内。
+        if not in_allowlist(target_rel):
+            reasons.append(f"G3 sync_proposal.proposals[{idx}].target_path={target_rel!r} が allowlist 外")
+        # G4: pre-image 一致。null は「対象ファイル不在=新規作成提案」を表す。
+        pre = p.get("pre_image_sha256")
+        actual_file = target_root / target_rel
+        if pre is None:
+            if actual_file.is_file():
+                reasons.append(
+                    f"G4 sync_proposal.proposals[{idx}] pre_image_sha256=null (新規作成提案) だが対象ファイルが実在する: {actual_file}"
+                )
+        elif not actual_file.is_file():
+            reasons.append(
+                f"G4 sync_proposal.proposals[{idx}] pre-image 対象ファイルが存在しない: {actual_file}"
+            )
+        else:
+            actual = sha256_file(actual_file)
+            if actual != pre:
+                reasons.append(
+                    f"G4 sync_proposal.proposals[{idx}] 実ファイル pre-image sha256 が pre_image_sha256 と不一致 (hash drift): actual={actual} expected={pre}"
+                )
+
+    if reasons:
+        return "BLOCKED", reasons[0], reasons
+    return "OK", "apply_allowed", []
 
 
 def evaluate(
@@ -348,19 +436,25 @@ def main(argv: list[str] | None = None) -> int:
         description="C10 close 前共有ゲート: 4 artifact + 実 post-image を突合し applied_verified / independently_verified_no_change のみ close 可とする",
     )
     ap.add_argument("--issue", type=int, required=True, help="対象 GitHub issue 番号")
+    ap.add_argument(
+        "--mode", choices=("close", "pre-apply"), default="close",
+        help="close (既定): 4 artifact + 実 post-image で close 可否を判定 / "
+             "pre-apply: apply 直前に G1-G5 (監査 PASS・承認・allowlist・pre-image 一致・C03 agree + diff_sha256 束縛) を判定",
+    )
     ap.add_argument("--triage-report", required=True, help="C01 triage-report.json")
-    ap.add_argument("--triage-verdict", required=True, help="C03 triage-verdict.json")
+    ap.add_argument("--triage-verdict", required=True,
+                    help="C03 triage-verdict.json (両 mode で必須。pre-apply では agree と diff_sha256 束縛を検証する)")
     ap.add_argument("--sync-proposal", required=True, help="C02 sync-proposal.json")
     ap.add_argument("--sync-audit-verdict", required=True, help="C04 sync-audit-verdict.json")
-    ap.add_argument("--target-root", required=True, help="post-image 実ファイルを解決する repo-root ディレクトリ")
+    ap.add_argument("--target-root", required=True, help="pre/post-image 実ファイルを解決する repo-root ディレクトリ")
     args = ap.parse_args(argv)
 
     # --- 入力ロード (usage error → exit 2) ---
     load_errors: list[str] = []
-    report = _load_json(Path(args.triage_report), "triage-report", load_errors)
-    verdict = _load_json(Path(args.triage_verdict), "triage-verdict", load_errors)
     proposal = _load_json(Path(args.sync_proposal), "sync-proposal", load_errors)
     audit = _load_json(Path(args.sync_audit_verdict), "sync-audit-verdict", load_errors)
+    verdict = _load_json(Path(args.triage_verdict), "triage-verdict", load_errors)
+    report = _load_json(Path(args.triage_report), "triage-report", load_errors)
     if load_errors:
         for e in load_errors:
             sys.stderr.write(e + "\n")
@@ -369,15 +463,26 @@ def main(argv: list[str] | None = None) -> int:
 
     # --- schema 妥当性 (malformed → exit 2) ---
     schema_errors: list[str] = []
-    validate_triage_report(report, schema_errors)
-    validate_triage_verdict(verdict, schema_errors)
     validate_sync_proposal(proposal, schema_errors)
     validate_sync_audit_verdict(audit, schema_errors)
+    validate_triage_verdict(verdict, schema_errors)
+    validate_triage_report(report, schema_errors)
     if schema_errors:
         for e in schema_errors:
             sys.stderr.write(e + "\n")
         _emit(sys.stdout, "ERROR", "schema error", schema_errors)
         return 2
+
+    if args.mode == "pre-apply":
+        result, status, reasons = evaluate_pre_apply(
+            args.issue, proposal, audit, Path(args.target_root), verdict, report
+        )
+        _emit(sys.stdout, result, status, reasons)
+        if result != "OK":
+            for r in reasons:
+                sys.stderr.write(r + "\n")
+            return 1
+        return 0
 
     # --- close 判定 ---
     result, status, reasons = evaluate(

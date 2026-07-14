@@ -38,7 +38,7 @@
 - triage-verdict は同 issue・同 `diff_sha256` を持ち、`agree` と `findings` を確認する。agree=false かつ未解消 findings があれば「上流未確定」として R2 へ進めない。
 - `impacted=true` かつ `artifact_kind ∈ {rubric, schema, template}` の impact のみ同期候補。`other` と `impacted=false` は候補から除外し理由を記録。
 - 候補 `artifact_path` は `references/apply-gate-policy.md` §1 の allowlist glob で分類し、**allowlist 外は「対象外パス」**として候補から外す (guardian が自 drift 源化するのを防ぐ)。
-- mode 未指定時は既定 `propose`。`apply` 指定時も、後段 R3 が 4 条件を検証するまで実ファイルは触らない。
+- mode 未指定時は既定 `propose`。`apply` 指定時も、後段 R3 が apply-gate 条件 (G1-G5) を検証するまで実ファイルは触らない。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |

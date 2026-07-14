@@ -215,21 +215,22 @@ def test_digest_missing_exits_2():
 
 
 # ─────────────────── (d) 複数ファイル・複数 hunk の積層 ───────────────────
-def test_multi_file_multi_hunk_stacked_across_entries():
-    # entry1: 1 hunk (modify), entry2: add(1) + multi-hunk modify(2) = 3 hunks。
-    entry1 = _entry(DIFF_MODIFY, base="b1", source="s1")
-    entry2 = _entry(DIFF_ADD + DIFF_MULTI_HUNK, base="b2", source="s2")
-    hunks = psd.transform(_payload(entry1, entry2))
+def test_multi_file_multi_hunk_stacked_within_one_commit_pair():
+    # 1 完全 diff (= 1 commit pair) 内で modify(1) + add(1) + multi-hunk modify(2) = 4 hunks。
+    # triage-report は base/source/diff_sha256 を各 1 個しか持てない単一 digest 契約のため、
+    # 積層の単位は「1 commit pair 内の複数ファイル・複数 hunk」であり commit pair を跨がない
+    # (跨ぐ入力は test_mixed_diff_provenance_is_fail_closed で fail-closed を固定)。
+    entry = _entry(DIFF_MODIFY + DIFF_ADD + DIFF_MULTI_HUNK, base="b1", source="s1")
+    hunks = psd.transform(_payload(entry))
     assert len(hunks) == 4
 
-    # entry 出現順 → file 出現順 → hunk 出現順で安定していること。
+    # file 出現順 → hunk 出現順で安定していること。
     assert [h["file_path"] for h in hunks] == ["foo.txt", "new.py", "mod.py", "mod.py"]
     assert [h["change_type"] for h in hunks] == ["modify", "add", "modify", "modify"]
 
-    # commit フィールドが entry 単位で継承されること。
-    assert hunks[0]["source_commit"] == "s1" and hunks[0]["base_commit"] == "b1"
-    for h in hunks[1:]:
-        assert h["source_commit"] == "s2" and h["base_commit"] == "b2"
+    # commit フィールドが entry から全 hunk へ継承されること。
+    for h in hunks:
+        assert h["source_commit"] == "s1" and h["base_commit"] == "b1"
 
     # 2 hunk 目 (mod.py 前半) と 3 hunk 目 (mod.py 後半・section 付き header)。
     assert hunks[2]["header"] == "@@ -1,2 +1,2 @@"
@@ -294,3 +295,53 @@ def test_removed_line_starting_with_dashes_not_misread_as_header():
     assert h["removed_lines"] == ["- old header text"]
     assert h["added_lines"] == ["+ new header text"]
     assert h["file_path"] == "doc.md"
+
+
+# ─────────────── C11 stdout 接続 (untriaged 選別 / 単一 digest 契約) ───────────────
+def _c11_stdout(triaged: list[dict], untriaged: list[dict]) -> dict:
+    """C11 (aggregate-issue-diffs.py) stdout 形状。entries は全件・untriaged_entries は未処理のみ。"""
+    return {
+        "issue": 17,
+        "entries": triaged + untriaged,
+        "untriaged_entries": untriaged,
+        "latest_entry": (triaged + untriaged)[-1] if (triaged + untriaged) else None,
+        "source_provenance": {},
+    }
+
+
+def test_c11_stdout_verbatim_triages_only_untriaged_entries():
+    # C11 stdout をそのまま渡したとき、triage 済み entry を再集約しない。
+    triaged = _entry(DIFF_MODIFY, base="oldbase", source="oldsrc")
+    untriaged = _entry(DIFF_ADD, base="base0000", source="src11111")
+    hunks = psd.transform(_c11_stdout([triaged], [untriaged]))
+    assert {h["diff_sha256"] for h in hunks} == {untriaged["diff_sha256"]}
+    assert triaged["diff_sha256"] not in {h["diff_sha256"] for h in hunks}
+
+
+def test_mixed_diff_provenance_is_fail_closed():
+    # triage-report は単一 digest 契約。異なる commit pair の積層は集約せず exit2。
+    a = _entry(DIFF_MODIFY, base="baseAAAA", source="srcAAAAA")
+    b = _entry(DIFF_ADD, base="baseBBBB", source="srcBBBBB")
+    proc = _run(_c11_stdout([], [a, b]))
+    assert proc.returncode == 2
+    assert "provenance が混在" in proc.stderr
+
+
+def test_duplicate_history_heading_is_not_double_counted():
+    # 同一 commit pair は同一 diff。履歴に同じ見出しが 2 度現れても同じ変更を二重計上しない。
+    same = _entry(DIFF_MODIFY, base="baseSAME", source="srcSAME1")
+    hunks = psd.transform(_c11_stdout([], [same, same]))
+    assert len(hunks) == 1
+    assert hunks[0]["file_path"] == "foo.txt"
+
+
+def test_untriaged_entries_empty_yields_no_hunks():
+    # 全件 triage 済み = 処理対象なし。entries が非空でも hunk を出さない。
+    triaged = _entry(DIFF_MODIFY)
+    assert psd.transform(_c11_stdout([triaged], [])) == []
+
+
+def test_plain_entries_payload_still_accepted_for_backward_compat():
+    # untriaged_entries を持たない {entries:[...]} 直接入力も従来どおり受ける。
+    (h,) = psd.transform(_payload(_entry(DIFF_MODIFY)))
+    assert h["file_path"] == "foo.txt"

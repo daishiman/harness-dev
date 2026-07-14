@@ -35,7 +35,7 @@
           "before": {"type": ["string", "null"], "description": "変更前の値"},
           "after": {"type": ["string", "null"], "description": "変更後の値"},
           "proposed_diff": {"type": "string", "minLength": 1, "description": "最小 Edit 差分 (unified diff もしくは old_string/new_string 記述)"},
-          "pre_image_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "適用前ファイルの期待 hash。apply 時に実ファイルと照合し drift を fail-closed"},
+          "pre_image_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$", "description": "適用前ファイルの期待 hash。apply 時に実ファイルと照合し drift を fail-closed。対象ファイルが存在しない新規作成提案では null (before=null と対で表す・apply-gate-policy §3)"},
           "post_image_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$", "description": "適用後ファイルの実 hash。status=proposed では null、applied_verified では非 null 必須"},
           "validator_results": {
             "type": "array",

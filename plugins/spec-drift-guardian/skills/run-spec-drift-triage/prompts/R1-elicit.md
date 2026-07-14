@@ -20,10 +20,11 @@
 - **用語**: `issue`=検知済み spec-drift の GitHub issue 番号 / `event`=issue metadata・comment timestamp と `spec-diff-history.md` 見出しから作る変更イベント / `commit pair`=`chore: update yaml-spec-cache (<timestamp>)` commit とその親 commit / `完全 diff`=commit pair から復元した全行 diff (preview でない) / `未triage`=まだ triage-report を出していない変更 / `digest`=完全 diff の sha256。
 - **不変則 (fail-closed)**: 欠落 commit / 曖昧照合 / shallow clone / digest 不一致 / `complete=false` はいずれも**判定不能**とし、triage に進めず理由付きで停止する。network=false のため不足 commit を自動 fetch しない。
 - **索引と実体の分離**: `spec-diff-history.md` の 80 行 preview は**イベント日時の索引としてのみ**使う。実 diff は必ず commit pair から復元したものを使う (preview を diff と誤認しない)。
-- **積層**: issue に紐づく未triage変更は複数あり得る。`untriaged_entries` 全体を集約対象にし、最新 1 件固定にしない。
+- **積層と単一 digest 契約**: 集約対象は `entries` (全履歴) ではなく `untriaged_entries` (未処理のみ) であり、最新 1 件固定にしない。ただし triage-report は `base_commit`/`source_commit`/`diff_sha256` を各 1 個しか持てないため、積層できるのは **1 commit pair 内の複数ファイル・複数 hunk** までである。未triage変更が複数 commit pair に跨る場合、C08 は集約せず fail-closed (exit2) するので、commit pair 単位で分けて triage する (R1 の完了判定でも「未triage が単一 commit pair に収まるか」を確認する)。
 
 ## Layer 3: インフラ層
 - **入力**: `--issue NUMBER` / `--events FILE` (任意で `--since TIMESTAMP` / `--repo-root DIR`)。events FILE は `gh issue view <N>` の metadata / comment timestamps と `spec-diff-history.md` 見出しから組み立てる。
+- **events FILE の契約 (各要素)**: `event_at` (ISO8601・必須) / `history_heading` (`spec-diff-history.md` の見出し・必須) / **`triaged` (bool・既定 false)** / `expected_diff_sha256` (任意・照合用)。**`triaged` は `untriaged_entries` 選別の唯一の機構**で、C11 は未指定を `false`(=未triage) として扱う。既に triage 済みの変更へ `triaged: true` を付け忘れると、その entry が未triage として再集約され、別 commit pair と混在して C08 が exit2 で停止する (回復手順は下記 `--since`)。
 - **決定論段**: `python3 $CLAUDE_PLUGIN_ROOT/scripts/aggregate-issue-diffs.py --issue N --events FILE`。stdout に `entries[{event_at, history_heading, base_commit, source_commit, diff_sha256, complete:true, diff}]` + `latest_entry` + `untriaged_entries` + `source_provenance`。exit 0 のみ成功、1/2 は fail-closed。
 - **ツール**: Bash (`gh` で issue metadata 取得 / `python3` で C11 実行 / `git` は C11 内部が使用) / Read (events FILE / 既存 `.spec-drift/<issue>/` 確認)。ネットワークは gh の issue 読取に限り、diff 復元はローカル git のみ。
 
@@ -48,6 +49,8 @@
 - [ ] events FILE が issue 紐づきイベントのみで構成されている (preview は索引用途に限定)
 - [ ] `aggregate-issue-diffs.py` が exit 0 で完了している
 - [ ] `complete=true` で全 `untriaged_entries` が `base_commit` / `source_commit` / `diff_sha256` を持つ
+- [ ] triage 済みイベントに `triaged: true` が付いている (未指定は false 扱いで再集約される)
+- [ ] `untriaged_entries` が**単一 commit pair に収束**している (`base_commit`/`source_commit`/`diff_sha256` の組が 1 種類)。複数 pair に跨る場合は `--since` で対象 pair に絞るか issue を分割する (C11 は exit 0 を返すが後段 C08 が単一 digest 契約で exit2 になる)
 - [ ] exit≠0 の場合は triage に進まず stderr violation を理由として停止している
 - [ ] `source_provenance` と各 digest を改変せず保持している
 

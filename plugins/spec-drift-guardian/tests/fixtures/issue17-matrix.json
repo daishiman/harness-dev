@@ -10,54 +10,251 @@
     {
       "case": "settings-add",
       "expects_impact": true,
-      "expected_axes": ["required", "semantics"],
+      "expected_axes": [
+        "required",
+        "semantics"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/settings.schema.json", "change_type": "modify", "added_lines": ["  \"required\": [\"newSetting\"],"], "removed_lines": []},
-        {"file_path": "plugins/harness-creator/schemas/settings.schema.json", "change_type": "modify", "added_lines": ["  \"description\": \"new setting semantics\""], "removed_lines": ["  \"description\": \"old\""]}
+        {
+          "file_path": "plugins/harness-creator/schemas/settings.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"required\": [\"newSetting\"],"
+          ],
+          "removed_lines": []
+        },
+        {
+          "file_path": "plugins/harness-creator/schemas/settings.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"description\": \"new setting semantics\""
+          ],
+          "removed_lines": [
+            "  \"description\": \"old\""
+          ]
+        }
       ]
     },
     {
       "case": "doctor-change",
       "expects_impact": true,
-      "expected_axes": ["type", "semantics"],
+      "expected_axes": [
+        "type",
+        "semantics"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/doctor.schema.json", "change_type": "modify", "added_lines": ["    \"type\": \"integer\""], "removed_lines": ["    \"type\": \"string\""]},
-        {"file_path": "plugins/harness-creator/schemas/doctor.schema.json", "change_type": "modify", "added_lines": ["  \"description\": \"doctor check count\""], "removed_lines": ["  \"description\": \"doctor flag\""]}
+        {
+          "file_path": "plugins/harness-creator/schemas/doctor.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "    \"type\": \"integer\""
+          ],
+          "removed_lines": [
+            "    \"type\": \"string\""
+          ]
+        },
+        {
+          "file_path": "plugins/harness-creator/schemas/doctor.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"description\": \"doctor check count\""
+          ],
+          "removed_lines": [
+            "  \"description\": \"doctor flag\""
+          ]
+        }
       ]
     },
     {
       "case": "plugin-mcp-matcher",
       "expects_impact": true,
-      "expected_axes": ["enum", "name"],
+      "expected_axes": [
+        "enum",
+        "name"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/plugin.schema.json", "change_type": "modify", "added_lines": ["  \"enum\": [\"stdio\", \"sse\", \"http\"]"], "removed_lines": ["  \"enum\": [\"stdio\", \"sse\"]"]},
-        {"file_path": "plugins/harness-creator/schemas/plugin.schema.json", "change_type": "modify", "added_lines": ["  \"mcpMatcher\": {"], "removed_lines": []}
+        {
+          "file_path": "plugins/harness-creator/schemas/plugin.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"enum\": [\"stdio\", \"sse\", \"http\"]"
+          ],
+          "removed_lines": [
+            "  \"enum\": [\"stdio\", \"sse\"]"
+          ]
+        },
+        {
+          "file_path": "plugins/harness-creator/schemas/plugin.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"mcpMatcher\": {"
+          ],
+          "removed_lines": []
+        }
       ]
     },
     {
       "case": "hook-transcript",
       "expects_impact": true,
-      "expected_axes": ["required", "type"],
+      "expected_axes": [
+        "required",
+        "type"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/hook.schema.json", "change_type": "modify", "added_lines": ["  \"required\": [\"transcriptPath\"],"], "removed_lines": []},
-        {"file_path": "plugins/harness-creator/schemas/hook.schema.json", "change_type": "modify", "added_lines": ["    \"type\": \"object\""], "removed_lines": ["    \"type\": \"string\""]}
+        {
+          "file_path": "plugins/harness-creator/schemas/hook.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"required\": [\"transcriptPath\"],"
+          ],
+          "removed_lines": []
+        },
+        {
+          "file_path": "plugins/harness-creator/schemas/hook.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "    \"type\": \"object\""
+          ],
+          "removed_lines": [
+            "    \"type\": \"string\""
+          ]
+        }
       ]
     },
     {
       "case": "sub-agent",
       "expects_impact": true,
-      "expected_axes": ["name", "semantics"],
+      "expected_axes": [
+        "name",
+        "semantics"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/subagent.schema.json", "change_type": "modify", "added_lines": ["  \"allowedTools\": {"], "removed_lines": []},
-        {"file_path": "plugins/harness-creator/schemas/subagent.schema.json", "change_type": "modify", "added_lines": ["  \"description\": \"sub-agent invocation semantics\""], "removed_lines": ["  \"description\": \"agent\""]}
+        {
+          "file_path": "plugins/harness-creator/schemas/subagent.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"allowedTools\": {"
+          ],
+          "removed_lines": []
+        },
+        {
+          "file_path": "plugins/harness-creator/schemas/subagent.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"description\": \"sub-agent invocation semantics\""
+          ],
+          "removed_lines": [
+            "  \"description\": \"agent\""
+          ]
+        }
       ]
     },
     {
       "case": "semantics-only",
       "expects_impact": true,
-      "expected_axes": ["semantics"],
+      "expected_axes": [
+        "semantics"
+      ],
       "hunks": [
-        {"file_path": "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md", "change_type": "modify", "added_lines": ["last_fetched: 2026-07-13T02:32:46Z"], "removed_lines": ["last_fetched: 2026-07-06T03:50:22Z"]}
+        {
+          "file_path": "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md",
+          "change_type": "modify",
+          "added_lines": [
+            "last_fetched: 2026-07-13T02:32:46Z"
+          ],
+          "removed_lines": [
+            "last_fetched: 2026-07-06T03:50:22Z"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "single-hunk-multi-axis",
+      "expects_impact": true,
+      "expected_axes": [
+        "type",
+        "enum",
+        "semantics"
+      ],
+      "note": "1 hunk で type 変更・enum 拡張・description 更新が同時に起きる実 schema 編集の典型形。軸ごとに hunk が分かれている前提を置くと、first-match 写像が残りの軸を構造的に見逃す (2 hunk へ分解した fixture では露見しない)。",
+      "hunks": [
+        {
+          "file_path": "plugins/harness-creator/schemas/settings.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"type\": \"integer\",",
+            "  \"enum\": [1, 2, 3],",
+            "  \"description\": \"数値 ID へ移行 (旧: 文字列キー)\""
+          ],
+          "removed_lines": [
+            "  \"type\": \"string\",",
+            "  \"enum\": [\"a\", \"b\"],",
+            "  \"description\": \"文字列キー\""
+          ]
+        }
+      ]
+    },
+    {
+      "case": "single-hunk-name-and-required",
+      "expects_impact": true,
+      "expected_axes": [
+        "name",
+        "required"
+      ],
+      "note": "1 hunk 内でのキー改名と必須化の同時変更。name/required が別 hunk に分かれる保証はない。",
+      "hunks": [
+        {
+          "file_path": "plugins/harness-creator/schemas/settings.schema.json",
+          "change_type": "modify",
+          "added_lines": [
+            "  \"properties\": { \"pluginRoot\": {} },",
+            "  \"required\": [\"pluginRoot\"]"
+          ],
+          "removed_lines": [
+            "  \"properties\": { \"plugin_root\": {} },",
+            "  \"required\": []"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "template-placeholder-rename",
+      "expects_impact": true,
+      "expected_axes": [
+        "name"
+      ],
+      "note": "template kind の placeholder 改名のみ。写像表に全一致規則 (`.*`) があると semantics が無条件併発し過検出になる (kind 方向の死角: schema kind だけの fixture では観測できない)。",
+      "hunks": [
+        {
+          "file_path": "plugins/harness-creator/skills/run-build-skill/templates/commit-template.md",
+          "change_type": "modify",
+          "added_lines": [
+            "{{ pluginRoot }}"
+          ],
+          "removed_lines": [
+            "{{ plugin_root }}"
+          ]
+        }
+      ]
+    },
+    {
+      "case": "template-prose-only",
+      "expects_impact": true,
+      "expected_axes": [
+        "semantics"
+      ],
+      "note": "写像表のどの規則にも一致しない本文変更。FALLBACK_AXIS (semantics) へ落ちることを固定する。",
+      "hunks": [
+        {
+          "file_path": "plugins/harness-creator/skills/run-build-skill/templates/commit-template.md",
+          "change_type": "modify",
+          "added_lines": [
+            "変更理由を1文で述べる"
+          ],
+          "removed_lines": [
+            "理由を書く"
+          ]
+        }
       ]
     },
     {
@@ -65,7 +262,12 @@
       "expects_impact": false,
       "expected_axes": [],
       "hunks": [
-        {"file_path": "plugins/harness-creator/schemas/settings.schema.json", "change_type": "modify", "added_lines": [], "removed_lines": []}
+        {
+          "file_path": "plugins/harness-creator/schemas/settings.schema.json",
+          "change_type": "modify",
+          "added_lines": [],
+          "removed_lines": []
+        }
       ]
     }
   ]

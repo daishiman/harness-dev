@@ -11,18 +11,94 @@
       "note": "Issue #17 の完全 commit pair を pin する。spec-diff-history.md の 80 行 preview では判定できない完全差分を正解セットの基準にする。実測の結果、この commit pair の実差分は yaml-spec-cache.md 単一ファイル 49 hunk であり、写像表上は全件 other/semantics に落ちる (name/type/required/enum 軸を発火させない)。したがって 4 軸の実測には各軸を発火させる合成 diff case が必要で、その正解セット実体は tests/fixtures/issue17-matrix.json に materialize してある (semantics-only case のみ実 diff 由来)。"
     },
     "fixture_matrix": [
-      {"case": "settings-add", "expects_impact": true, "axes": ["required", "semantics"]},
-      {"case": "doctor-change", "expects_impact": true, "axes": ["type", "semantics"]},
-      {"case": "plugin-mcp-matcher", "expects_impact": true, "axes": ["enum", "name"]},
-      {"case": "hook-transcript", "expects_impact": true, "axes": ["required", "type"]},
-      {"case": "sub-agent", "expects_impact": true, "axes": ["name", "semantics"]},
-      {"case": "semantics-only", "expects_impact": true, "axes": ["semantics"]},
-      {"case": "no-impact", "expects_impact": false, "axes": []}
+      {
+        "case": "settings-add",
+        "expects_impact": true,
+        "axes": [
+          "required",
+          "semantics"
+        ]
+      },
+      {
+        "case": "doctor-change",
+        "expects_impact": true,
+        "axes": [
+          "type",
+          "semantics"
+        ]
+      },
+      {
+        "case": "plugin-mcp-matcher",
+        "expects_impact": true,
+        "axes": [
+          "enum",
+          "name"
+        ]
+      },
+      {
+        "case": "hook-transcript",
+        "expects_impact": true,
+        "axes": [
+          "required",
+          "type"
+        ]
+      },
+      {
+        "case": "sub-agent",
+        "expects_impact": true,
+        "axes": [
+          "name",
+          "semantics"
+        ]
+      },
+      {
+        "case": "semantics-only",
+        "expects_impact": true,
+        "axes": [
+          "semantics"
+        ]
+      },
+      {
+        "case": "no-impact",
+        "expects_impact": false,
+        "axes": []
+      },
+      {
+        "case": "single-hunk-multi-axis",
+        "expects_impact": true,
+        "axes": [
+          "type",
+          "enum",
+          "semantics"
+        ]
+      },
+      {
+        "case": "single-hunk-name-and-required",
+        "expects_impact": true,
+        "axes": [
+          "name",
+          "required"
+        ]
+      },
+      {
+        "case": "template-placeholder-rename",
+        "expects_impact": true,
+        "axes": [
+          "name"
+        ]
+      },
+      {
+        "case": "template-prose-only",
+        "expects_impact": true,
+        "axes": [
+          "semantics"
+        ]
+      }
     ],
     "fixture_matrix_input": "tests/fixtures/issue17-matrix.json",
     "metrics": {
-      "precision_min": 0.80,
-      "recall_min": 0.80,
+      "precision_min": 0.8,
+      "recall_min": 0.8,
       "truncated_preview_input": "fail-closed",
       "close_gate": "applied_verified または independently_verified_no_change のみ OK。proposal-only は INCOMPLETE"
     },
@@ -31,12 +107,14 @@
     "measured_results": {
       "precision": 1.0,
       "recall": 1.0,
-      "tp": 11,
+      "tp": 18,
       "fp": 0,
       "fn": 0,
-      "fixture_cases_measured": 7,
-      "fixture_cases_matching": 7,
+      "fixture_cases_measured": 11,
+      "fixture_cases_matching": 11,
       "close_gate_scenarios_measured": 6,
+      "pre_apply_gate_scenarios_measured": 7,
+      "gate_scenarios_measured_total": 13,
       "close_gate_all_match": true
     },
     "measurement_artifacts": [
@@ -50,24 +128,120 @@
       "scripts/eval-fixture-matrix.py",
       "scripts/eval-safety-matrix.py"
     ],
-    "measurement_note": "C01 の 4 軸+semantics 判定は既知正解セット (fixture_matrix_input) に対し軸レベル (case × axis) で precision=1.0 / recall=1.0 (TP=11/FP=0/FN=0) を実測。propose/audit/apply・verified-no-change・close gate の合否は実 C10 を 6 シナリオ subprocess 起動して実測 (拒否4経路は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2経路は exit0)。C03/C04 は isolation:fork の独立 context で実起動し、開示していない合成欠陥を全て検出した。",
+    "measurement_note": "C01 の 4 軸+semantics 判定は既知正解セット (fixture_matrix_input) に対し軸レベル (case × axis) で precision=1.0 / recall=1.0 (TP=18/FP=0/FN=0) を実測 (11 case)。うち 2 case は 1 hunk が複数軸を同時に変える実 schema 編集の典型形 (軸ごとに hunk が分かれる前提の写像だと構造的に見逃す)、2 case は template kind (schema kind だけの fixture では観測できない過検出を捕捉する) で、いずれも恒久 case として固定。propose/audit/apply・verified-no-change・gate の合否は実 C10 を 13 シナリオ subprocess 起動して実測: close gate 6 (拒否4=proposal-only/未承認/監査FAIL/post-image hash drift は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2は exit0) + apply 前 gate 7 (--mode pre-apply。拒否6=pre-image hash drift/未承認/監査FAIL/allowlist外/verifier不同意/別diffへのagree流用 は exit1 で変更0件、許可1は exit0)。pre-image drift は close gate では構造上検出できない (適用後の実ファイルは post-image) ため apply 前 gate で実測する。C03/C04 は isolation:fork の独立 context で実起動し、開示していない合成欠陥を全て検出した。",
     "known_limitations": [
       "precision/recall は既知正解セットに対する写像規則の判定精度であり、実運用の未知 diff に対する精度ではない。fixture は planner 想定圏内にあるため楽観側バイアスを持つ。",
       "C02 (run-rubric-sync) の outer criteria は P04 定義どおり『未承認/監査FAIL/hash drift/allowlist逸脱で変更0件・承認済みは適用後 hash/validator 一致』であり safety matrix で実測した。C02 skill 自体を LLM 実行して提案品質を precision/recall 化する測定は行っていない (提案側欠陥を C04 監査が検出できることは実測済み)。",
-      "independent-agent-evaluation は合成欠陥 1 セットに対する検出可否であり、未知欠陥に対する検出率 (recall) の測定ではない。"
+      "independent-agent-evaluation は合成欠陥 1 セットに対する検出可否であり、未知欠陥に対する検出率 (recall) の測定ではない。",
+      "apply 前ゲート (check-triage-complete.py --mode pre-apply) は advisory: R3-apply が Edit の前に呼ぶ規約であり、呼ばずに Edit することを機械的に止める hook は無い (hooks/guard-spec-drift-close.py は matcher=Bash の `gh issue close` 限定で Edit を捕捉しない)。ゲート未実行の apply は close ゲート (C10 --mode close) で post-image/agree/digest 不整合として遮断されるが、その時点では実ファイルが既に変更されている。PreToolUse(Edit) hook による強制は後続 issue で対応する。",
+      "eval-safety-matrix の target_unchanged は write-scope:none の C10 に対し構造上必ず true になるため、ゲートが apply を止めた証拠ではない (真の証拠は exit code)。apply 自体は LLM の Edit なので、変更0件の end-to-end 実測は live-trial (OUT2) の範囲。",
+      "写像表 (field-impact-map.json) は全 rule 照合で一致軸を全て採る。表に `.*` のような全一致規則を置くと全行に無条件一致して過検出源になるため禁止し、未一致は code 側 FALLBACK_AXIS (semantics) へ委譲する。fixture は schema/template/other kind を含むが、rubric kind の過検出は現 fixture では観測していない。",
+      "C11→C08 の結線は自動テストで固定していない: tests は C11 出力形状を手書き模倣した合成 payload を使い、実 C11 を subprocess 起動する結線テストは 0 件。C11 の出力形状が変わっても C08 側テストは緑のまま接続だけ壊れうる (手動では実 git repo で C11→C08→C09 exit 0/0/0・49 hunks を実測済み)。実結線テストの追加は後続 issue で対応する。"
     ]
   },
   "evaluations": [
-    {"date": "2026-07-14", "skill": "run-spec-drift-triage", "kind": "run", "verdict": "measured", "findings": ["軸レベル precision=1.0 / recall=1.0 (TP=11 FP=0 FN=0) を既知正解セット 7 case に対し実測 (eval-fixture-matrix.py exit0)。threshold 0.8 を満たす。", "実 Issue #17 diff だけでは 4 軸が発火しないため合成 case を併用している。"]},
-    {"date": "2026-07-14", "skill": "run-rubric-sync", "kind": "run", "verdict": "measured", "findings": ["outer criteria (未承認/監査FAIL/hash drift で変更0件・承認済みは適用後一致) を実 C10 の 6 シナリオ E2E で実測 (eval-safety-matrix.py exit0, 6/6)。", "C02 skill 自体の LLM 実行による提案品質の precision/recall 化は未実施 (P04 の C02 criteria 定義外)。"]},
-    {"date": "2026-07-14", "agent": "spec-impact-verifier", "kind": "sub-agent", "verdict": "measured", "findings": ["isolation:fork の独立 context で実起動。diff_sha256 一致確認後に 49 件を独立再導出し、開示していない合成欠陥 (missed: yaml-spec-cache.md×semantics / false-positive: nonexistent-settings.schema.json×required) を両方検出し agree=false を emit。"]},
-    {"date": "2026-07-14", "agent": "rubric-sync-auditor", "kind": "sub-agent", "verdict": "measured", "findings": ["isolation:fork の独立 context で実起動。開示していない合成欠陥を検出し verdict=FAIL を emit (omissions=1 / excesses=2 / allowlist_violations=1 / proposal_sha256 不一致)。"]},
-    {"date": "2026-07-14", "command": "spec-drift-triage", "kind": "slash-command", "verdict": "measured", "findings": ["tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"]},
-    {"date": "2026-07-14", "command": "rubric-sync", "kind": "slash-command", "verdict": "measured", "findings": ["tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"]},
-    {"date": "2026-07-14", "hook": "guard-spec-drift-close", "kind": "hook", "verdict": "measured", "findings": ["tests/test_guard_spec_drift_close.py が pass。PreToolUse/Bash の gh issue close 捕捉・C10 INCOMPLETE で遮断・artifact 欠落で fail-closed を検証。branch coverage 92%。", "GAP-CLOSE-COVERAGE-001: Web UI/API/Actions 経由の close は本 hook の射程外。"]},
-    {"date": "2026-07-14", "script": "aggregate-issue-diffs.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 83% (threshold 80%)。実 Issue #17 commit pair から完全 diff 復元を実測 (diff_sha256=f288346b…)。"]},
-    {"date": "2026-07-14", "script": "parse-spec-diff.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 93%。実 diff を 49 hunk へ構造化を実測。"]},
-    {"date": "2026-07-14", "script": "map-field-impact.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 80%。既知正解セット 7 case で 4 軸+semantics 判定 precision=recall=1.0 を実測。"]},
-    {"date": "2026-07-14", "script": "check-triage-complete.py", "kind": "script", "verdict": "measured", "findings": ["unit test pass / branch coverage 95%。6 シナリオ E2E で close 許可/遮断と副作用0件を実測。"]}
+    {
+      "date": "2026-07-14",
+      "skill": "run-spec-drift-triage",
+      "kind": "run",
+      "verdict": "measured",
+      "findings": [
+        "軸レベル precision=1.0 / recall=1.0 (TP=18 FP=0 FN=0) を既知正解セット 11 case に対し実測 (eval-fixture-matrix.py exit0)。threshold 0.8 を満たす。",
+        "1 hunk 複数軸 (single-hunk-multi-axis / single-hunk-name-and-required) と template kind (template-placeholder-rename / template-prose-only) を恒久 fixture 化した。C09 は全 rule を照合して一致軸を全て立てる (first-match で打ち切らない)。A/B 実測で first-match 版に戻すと新 case が落ちる (recall 0.8125) ことを確認済みで、緑は実装由来。",
+        "実 Issue #17 diff だけでは 4 軸が発火しない (全件 other/semantics) ため合成 case を併用している。実データ由来は semantics-only case のみ。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "skill": "run-rubric-sync",
+      "kind": "run",
+      "verdict": "measured",
+      "findings": [
+        "OUT1 の 4 拒否 case (未承認/監査FAIL/pre-image hash drift/allowlist外 で変更0件) と承認済み適用後一致を実 C10 の 13 シナリオ E2E で実測 (eval-safety-matrix.py exit0, 13/13)。pre-image hash drift と verifier 不同意 (agree=false) は close gate では検出不能なため --mode pre-apply の G1-G5 ゲートで止める。",
+        "C02 skill 自体の LLM 実行による提案品質の precision/recall 化は未実施 (P04 の C02 criteria 定義外)。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "agent": "spec-impact-verifier",
+      "kind": "sub-agent",
+      "verdict": "measured",
+      "findings": [
+        "isolation:fork の独立 context で実起動。diff_sha256 一致確認後に 49 件を独立再導出し、開示していない合成欠陥 (missed: yaml-spec-cache.md×semantics / false-positive: nonexistent-settings.schema.json×required) を両方検出し agree=false を emit。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "agent": "rubric-sync-auditor",
+      "kind": "sub-agent",
+      "verdict": "measured",
+      "findings": [
+        "isolation:fork の独立 context で実起動。開示していない合成欠陥を検出し verdict=FAIL を emit (omissions=1 / excesses=2 / allowlist_violations=1 / proposal_sha256 不一致)。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "command": "spec-drift-triage",
+      "kind": "slash-command",
+      "verdict": "measured",
+      "findings": [
+        "tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "command": "rubric-sync",
+      "kind": "slash-command",
+      "verdict": "measured",
+      "findings": [
+        "tests/test_command_wiring.py による配線検証が pass (73 passed の一部)。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "hook": "guard-spec-drift-close",
+      "kind": "hook",
+      "verdict": "measured",
+      "findings": [
+        "tests/test_guard_spec_drift_close.py が pass。PreToolUse/Bash の gh issue close 捕捉・C10 INCOMPLETE で遮断・artifact 欠落で fail-closed を検証。branch coverage 92%。",
+        "GAP-CLOSE-COVERAGE-001: Web UI/API/Actions 経由の close は本 hook の射程外。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "script": "aggregate-issue-diffs.py",
+      "kind": "script",
+      "verdict": "measured",
+      "findings": [
+        "unit test pass / branch coverage 83% (threshold 80%)。実 Issue #17 commit pair から完全 diff 復元を実測 (diff_sha256=f288346b…)。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "script": "parse-spec-diff.py",
+      "kind": "script",
+      "verdict": "measured",
+      "findings": [
+        "unit test pass / branch coverage 93%。実 diff を 49 hunk へ構造化を実測。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "script": "map-field-impact.py",
+      "kind": "script",
+      "verdict": "measured",
+      "findings": [
+        "unit test pass / branch coverage 80%。既知正解セット 11 case で 4 軸+semantics 判定 precision=recall=1.0 を実測。1 hunk 複数軸 (type+enum+semantics / name+required) の同時検出と template kind の過検出なしを含む。"
+      ]
+    },
+    {
+      "date": "2026-07-14",
+      "script": "check-triage-complete.py",
+      "kind": "script",
+      "verdict": "measured",
+      "findings": [
+        "unit test pass / branch coverage 95%。13 シナリオ E2E で close 許可/遮断・apply 前ゲート (G1-G5: 監査PASS/承認/allowlist/pre-image一致/C03 agree + diff_sha256 束縛) の許可/遮断と副作用0件を実測。"
+      ]
+    }
   ]
 }

@@ -20,7 +20,7 @@ contract:
     - 検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher の責務であり本 plugin では再実装しない
     - triage/verdict/proposal/audit は complete=true な完全 diff (C11 の commit pair 再構成) のみを入力とし、truncated preview 入力は fail-closed
     - C03 verifier と C04 auditor は独立 context で再導出/監査し、対象 artifact を書き換えない (Goodhart 防止)
-    - harness-creator への書き込みは C02 apply mode のみ。C04 verdict=PASS・ユーザー明示承認・allowlist 内・pre-image hash 一致の 4 条件を満たさない場合は変更 0 件で fail-closed
+    - harness-creator への書き込みは C02 apply mode のみ。C04 verdict=PASS・ユーザー明示承認・allowlist 内・pre-image hash 一致・C03 agree (対象 diff の diff_sha256 束縛つき) の 5 条件 (G1-G5) を満たさない場合は変更 0 件で fail-closed。判定は C10 --mode pre-apply の exit code で機械検証する
     - close (C10/C07) は applied_verified または independently_verified_no_change のみ許可し、proposal-only/未承認/未適用/validator 不備を遮断する
     - C09 の diff→フィールド写像規則は references/field-impact-map の data から読み、code に hardcode しない (guardian 自身の drift 源化を防ぐ)
     - 決定論的処理 (aggregate/parse/map/gate) は python3 stdlib script、LLM は意味判断 (triage/audit) のみ

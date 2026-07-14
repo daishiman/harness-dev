@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: eval-safety-matrix
-# purpose: C5 safety-matrix ゲートの end-to-end 実測器。C10 check-triage-complete.py を 6 シナリオ (applied_verified / no-change の許可 2 + proposal-only / 未承認 / 監査FAIL / hash drift の拒否 4) で実 subprocess 起動し、拒否経路では target 実ファイルの実行前後 sha256 が不変 (= apply が close ゲートを越えず変更0件) であることを直接実測して safety-matrix-result.json を書く。
+# purpose: C5 safety-matrix ゲートの end-to-end 実測器。C10 check-triage-complete.py を 12 シナリオで実 subprocess 起動する: close ゲート 6 (applied_verified / no-change の許可 2 + proposal-only / 未承認 / 監査FAIL / post-image hash drift の拒否 4) と apply 前ゲート 6 (--mode pre-apply。apply-allowed の許可 1 + pre-image hash drift / 未承認 / 監査FAIL / allowlist 外 / verifier 不同意 の拒否 5)。拒否経路では target 実ファイルの実行前後 sha256 が不変 (= 変更0件) であることを直接実測して safety-matrix-result.json を書く。pre-image drift は close ゲートでは構造上検出できない (適用後の実ファイルは post-image) ため apply 前ゲートで実測する。
 # inputs:
 #   - --c10-script FILE check-triage-complete.py のパス (既定 self-relative)
 #   - --out FILE 実測結果 JSON の出力先
@@ -14,14 +14,21 @@
 # dependencies: []
 # requires-python: ">=3.9"
 # ///
-"""C10 close ゲートの安全性を end-to-end で実測する (spec-drift-guardian)。
+"""C10 の close ゲートと apply 前ゲートの安全性を end-to-end で実測する (spec-drift-guardian)。
 
-各シナリオで schema-valid な 4 artifact (triage-report / triage-verdict /
-sync-proposal / sync-audit-verdict) を tempfile に組み、実 C10 を subprocess 起動する。
-拒否シナリオ (proposal-only / 未承認 / 監査FAIL / hash drift) では C10 が exit1
-(INCOMPLETE=close 遮断) を返すこと、かつ target 実ファイルが C10 実行の前後で
-sha256 不変であること (C10 は write-scope:none ゆえ副作用0=apply が close を越えない)
-を実測する。許可シナリオ (applied_verified / no-change) では exit0 と close 経路名を検証する。
+各シナリオで schema-valid な artifact (triage-report / triage-verdict / sync-proposal /
+sync-audit-verdict) を tempfile に組み、実 C10 を subprocess 起動する。
+
+- close ゲート (既定 --mode close): 拒否シナリオ (proposal-only / 未承認 / 監査FAIL /
+  post-image hash drift) で exit1 (INCOMPLETE=close 遮断)、許可シナリオ
+  (applied_verified / no-change) で exit0 と close 経路名を検証する。
+- apply 前ゲート (--mode pre-apply): G1-G5 (監査PASS/承認/allowlist/pre-image一致/C03 agree + diff_sha256 束縛) を検証する。close ゲートは適用**後**の
+  post-image を突合するため pre-image drift を構造上検出できない (適用後の実ファイルは
+  post-image になっている)。pre-image hash drift / 未承認 / 監査FAIL / allowlist 外 /
+  verifier 不同意 で exit1 (変更0件で停止)、全条件充足で exit0 (apply_allowed) を実測する。
+
+いずれのシナリオでも target 実ファイルが C10 実行の前後で sha256 不変であること
+(C10 は write-scope:none ゆえ副作用0) を確認する。
 """
 from __future__ import annotations
 
@@ -174,10 +181,75 @@ def scenarios(applied_post: str):
         ("audit-FAIL", False, 1, "PASS",
          lambda: (base_report(True), base_verdict(True),
                   base_proposal("applied_verified", True, applied_post, True), base_audit("FAIL"))),
-        ("hash-drift", False, 1, "post-image",
+        ("post-image-hash-drift", False, 1, "post-image",
          lambda: (base_report(True), base_verdict(True),
                   base_proposal("applied_verified", True, "f" * 64, True), base_audit("PASS"))),
     ]
+
+
+def _pre_apply_proposal(pre: str | None, *, granted: bool = True,
+                        target_path: str = TARGET_REL) -> dict:
+    """status=proposed (apply 直前) の sync-proposal を pre_image/承認/対象を変えて組む。"""
+    item = proposal_item(None, True)
+    item["target_path"] = target_path
+    item["pre_image_sha256"] = pre
+    prop = base_proposal("proposed", granted, None, True)
+    prop["proposals"] = [item]
+    return prop
+
+
+def pre_apply_scenarios(real_pre: str):
+    """apply 前ゲート (--mode pre-apply / G1-G5) の (name, allow?, exit, substr, build) 列挙。
+
+    close ゲートは適用**後**の post-image を突合するため pre-image drift を構造上検出できない
+    (適用後の実ファイルは post-image になっている)。G4 (適用直前の pre-image 一致) はここで実測する。
+    """
+    return [
+        ("apply-allowed", True, 0, "apply_allowed",
+         lambda: (_pre_apply_proposal(real_pre), base_audit("PASS"), base_verdict(True))),
+        ("pre-image-hash-drift", False, 1, "hash drift",
+         lambda: (_pre_apply_proposal("a" * 64), base_audit("PASS"), base_verdict(True))),
+        ("unapproved", False, 1, "G2",
+         lambda: (_pre_apply_proposal(real_pre, granted=False), base_audit("PASS"), base_verdict(True))),
+        ("audit-FAIL", False, 1, "G1",
+         lambda: (_pre_apply_proposal(real_pre), base_audit("FAIL"), base_verdict(True))),
+        ("outside-allowlist", False, 1, "G3",
+         lambda: (_pre_apply_proposal(real_pre, target_path="src/secret.py"), base_audit("PASS"), base_verdict(True))),
+        # IN1: 独立 verifier が不同意のまま apply させない (close 前に止める)。
+        ("verifier-disagrees", False, 1, "agree",
+         lambda: (_pre_apply_proposal(real_pre), base_audit("PASS"), base_verdict(False))),
+        # agree=true でも「別 diff への同意」なら流用不可 (主語の束縛)。
+        ("agree-for-other-diff", False, 1, "diff_sha256",
+         lambda: (_pre_apply_proposal(real_pre), base_audit("PASS"), _verdict_other_diff())),
+    ]
+
+
+def _verdict_other_diff() -> dict:
+    """agree=true だが triage-report とは別 diff への verdict (stale verdict 流用)。"""
+    v = base_verdict(True)
+    v["diff_sha256"] = "9" * 64
+    return v
+
+
+def run_c10_pre_apply(c10: Path, workdir: Path, proposal: dict, audit: dict,
+                      verdict: dict, target_root: Path):
+    """C10 を --mode pre-apply で起動し (exit_code, payload) を返す。"""
+    pp = _write(workdir, "sync-proposal.json", proposal)
+    ap = _write(workdir, "sync-audit-verdict.json", audit)
+    vp = _write(workdir, "triage-verdict.json", verdict)
+    rp = _write(workdir, "triage-report.json", base_report(True))
+    proc = subprocess.run(
+        [sys.executable, str(c10), "--mode", "pre-apply", "--issue", str(ISSUE),
+         "--triage-report", str(rp), "--triage-verdict", str(vp),
+         "--sync-proposal", str(pp), "--sync-audit-verdict", str(ap),
+         "--target-root", str(target_root)],
+        capture_output=True, text=True,
+    )
+    try:
+        payload = json.loads(proc.stdout) if proc.stdout.strip() else {}
+    except json.JSONDecodeError:
+        payload = {}
+    return proc.returncode, payload
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -222,6 +294,31 @@ def main(argv: list[str] | None = None) -> int:
                 "scenario": name,
                 "expected": {"allow_close": allow, "exit": exp_exit, "status_or_reason_contains": exp_status_sub},
                 "actual": {"exit": code, "status": status, "close_blocked": close_blocked},
+                "target_unchanged": unchanged,
+                "match": scenario_match,
+            })
+
+        # ── apply 前ゲート (G1-G5)。close ゲートでは検出不能な pre-image drift / agree を実測する ──
+        real_pre = _sha256_bytes(target_file.read_bytes())
+        for name, allow, exp_exit, exp_sub, build in pre_apply_scenarios(real_pre):
+            work = root / f"pre-apply-{name}"
+            work.mkdir(parents=True, exist_ok=True)
+            proposal, audit, verdict = build()
+            before = _sha256_bytes(target_file.read_bytes())
+            code, payload = run_c10_pre_apply(c10, work, proposal, audit, verdict, target_root)
+            after = _sha256_bytes(target_file.read_bytes())
+            status = payload.get("status", "")
+            reasons = payload.get("reasons", [])
+            exit_ok = code == exp_exit
+            status_ok = (exp_sub in status) if allow else any(exp_sub in r for r in reasons)
+            unchanged = before == after  # ゲート自身は write-scope:none
+            blocked = code != 0
+            scenario_match = exit_ok and status_ok and unchanged and (blocked != allow)
+            all_match = all_match and scenario_match
+            results.append({
+                "scenario": f"pre-apply:{name}",
+                "expected": {"allow_close": allow, "exit": exp_exit, "status_or_reason_contains": exp_sub},
+                "actual": {"exit": code, "status": status, "close_blocked": blocked},
                 "target_unchanged": unchanged,
                 "match": scenario_match,
             })

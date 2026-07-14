@@ -194,11 +194,26 @@ def parse_unified_diff(diff_text: str) -> list[dict]:
 
 # ─────────────────── 変換本体 ───────────────────
 def _entries(data: object) -> list:
+    """C11 stdout から triage 対象 entry 群を取り出す。
+
+    C11 は entries (issue の全 diff 履歴) と untriaged_entries (status 未処理のみ) の
+    双方を出す。triage 対象は後者であり、entries を読むと triage 済みまで再集約する
+    ため、untriaged_entries があればそれを正とする (C11 stdout を verbatim で渡せる)。
+    untriaged_entries を持たない {entries:[...]} 直接入力も後方互換で受ける。
+    """
     if not isinstance(data, dict):
-        raise InputError("入力 JSON の root が object ではありません (C11 stdout {entries:[...]} を期待)")
+        raise InputError(
+            "入力 JSON の root が object ではありません "
+            "(C11 stdout {entries:[...], untriaged_entries:[...]} を期待)"
+        )
+    untriaged = data.get("untriaged_entries")
+    if isinstance(untriaged, list):
+        return untriaged
     entries = data.get("entries")
     if not isinstance(entries, list):
-        raise InputError("入力 JSON に entries 配列がありません (C11 stdout 形状ではありません)")
+        raise InputError(
+            "入力 JSON に untriaged_entries / entries 配列がありません (C11 stdout 形状ではありません)"
+        )
     return entries
 
 
@@ -206,6 +221,7 @@ def transform(data: object) -> list[dict]:
     """C11 stdout JSON から hunks JSON 配列を生成する。ゲート違反は GateError (exit2)。"""
     entries = _entries(data)
     all_hunks: list[dict] = []
+    provenance: set[tuple] = set()
     for idx, entry in enumerate(entries):
         if not isinstance(entry, dict):
             raise InputError(f"entries[{idx}] が object ではありません")
@@ -215,8 +231,24 @@ def transform(data: object) -> list[dict]:
             "base_commit": entry.get("base_commit"),
             "diff_sha256": entry.get("diff_sha256"),
         }
+        key = (inherited["base_commit"], inherited["source_commit"], inherited["diff_sha256"])
+        if key in provenance:
+            # 同一 commit pair は同一 diff (commit pair から決定論復元) なので、
+            # 履歴に同じ見出しが複数回現れても同じ変更を二重計上しない。
+            continue
+        provenance.add(key)
         for hunk in parse_unified_diff(diff_text):
             all_hunks.append({**inherited, **hunk})
+    # triage-report は commit pair / diff_sha256 を各 1 個しか持てない (単一 digest 契約)。
+    # 異なる provenance を 1 本の hunk stream へ積層すると、どの digest にも帰属しない
+    # report ができるため、混在は集約せず fail-closed にする。
+    if len(provenance) > 1:
+        mixed = sorted(str(p[2]) for p in provenance)
+        raise GateError(
+            "diff provenance が混在しています (base/source commit または diff_sha256 が複数): "
+            f"{mixed}。triage-report は単一 digest 契約のため、issue の commit pair 単位で "
+            "分けて C08 を実行してください"
+        )
     return all_hunks
 
 

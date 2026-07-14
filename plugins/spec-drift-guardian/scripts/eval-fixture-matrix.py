@@ -46,6 +46,9 @@ def measure_case(case: dict, map_script: Path) -> list[str]:
     """case の hunks を C09 に通し、実測された axis の集合 (sorted list) を返す。
 
     map-field-impact.py を subprocess で起動し stdout の影響候補配列から axis を集める。
+    候補の `axis` は primary 1 軸だけなので、**軸フラグ (name/type/required/enum/semantics)
+    が true の全軸**を採る。1 hunk が複数軸を同時に変える場合 (実 schema 編集の典型形) に
+    primary だけを見ると、fixture 側が軸ごとに hunk を分けている限り見逃しが露見しない。
     map が exit2 (構造不正) を返したら EvalError。変更行の無い hunk は影響 0 になる。
     """
     hunks = case.get("hunks", [])
@@ -58,7 +61,11 @@ def measure_case(case: dict, map_script: Path) -> list[str]:
     if proc.returncode == 2:
         raise EvalError(f"map-field-impact usage/IO error for case {case.get('case')!r}: {proc.stderr.strip()}")
     impacts = json.loads(proc.stdout) if proc.stdout.strip() else []
-    return sorted({i["axis"] for i in impacts})
+    axes: set[str] = set()
+    for i in impacts:
+        flagged = {a for a in AXES if i.get(a) is True}
+        axes |= flagged or {i["axis"]}  # フラグ不在の旧形式は primary へフォールバック
+    return sorted(axes)
 
 
 def score_matrix(measured: list[dict], precision_min: float, recall_min: float) -> dict:
@@ -73,14 +80,12 @@ def score_matrix(measured: list[dict], precision_min: float, recall_min: float) 
       "all_cases_match" (bool: 全 case で期待集合==実測集合),
       "meets_threshold" (bool: precision>=precision_min かつ recall>=recall_min)
 
-    TODO(human): 軸レベル (case × axis のペア) で TP/FP/FN を数え、
-      precision = TP / (TP + FP)、recall = TP / (TP + FN) を算出する。
+    集計は軸レベル (case × axis のペア) で行う:
       - TP: 期待にあり実測にもある (case, axis)
       - FP: 実測にあるが期待にない (case, axis) — 過検出 (no-impact case で軸が出たら FP)
       - FN: 期待にあるが実測にない (case, axis) — 見逃し
-      - 分母が 0 になるケース (TP+FP==0 / TP+FN==0) の precision/recall をどう定義するか決める
-        (慣例では「検出0かつ期待0なら 1.0」など)。
-      per_case には case ごとの内訳と expected==measured の一致フラグを残す。
+      - precision = TP / (TP + FP)、recall = TP / (TP + FN)。分母 0 (検出0かつ期待0) は 1.0 とする。
+    case 単位でなく軸単位で数えるのは、複数軸 case で 1 軸だけ当てた状態を満点にしないため。
     """
     tp = fp = fn = 0
     per_case: list[dict] = []

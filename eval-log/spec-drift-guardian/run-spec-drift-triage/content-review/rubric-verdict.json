@@ -1,0 +1,54 @@
+{
+  "target": {
+    "plugin": "spec-drift-guardian",
+    "skill": "run-spec-drift-triage",
+    "skill_md_sha256": "37c814f5caa351deeb101736682a1366f44023af240300f53ae189602af71a62"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "claude-opus-4-8 (independent-context content reviewer, round 7)",
+  "reviewed_at": "2026-07-14T15:00:00Z",
+  "iterations": 7,
+  "human_review_required": false,
+  "rubric_version": "1.3.0",
+  "rubric_hash": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+  "score": 100,
+  "threshold": 80,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "rubric 正本の同一性を確認: plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json の sha256 = 6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d で round6 記録値と一致 (rubric 側 drift 無し)。評価対象 SKILL.md も sha256=37c814f5... で無変更のため、本 round の改修 (EVALS.json / map-field-impact.py / eval-fixture-matrix.py) は rubric 適用面に触れていない。ただし結論は引き継がず全 rule を再実測した。",
+      "適用 rule 集合を rubric.json の applies_to_kinds から機械導出: frontmatter kind=run (=skill) のため FM-001..005 / BD-001..004 / NM-001..003 / PD-001..002 / RG-001 の 16 rule が適用。AG/HK/CM/PC/PR/WF-* は applies_to_kinds が該当せず N/A。KL-001..005 は applies_to_kinds='*' だが存在ゲート (knowledge/ ディレクトリ or frontmatter.knowledge_loop) が両方とも不成立 (実測: skill 直下は prompts/ references/ SKILL.md の 3 実体のみ、knowledge_loop の grep は 0 件) のため無条件 PASS。",
+      "FM-001 (high) PASS: name='run-spec-drift-triage' が ^(run|ref|assign|wrap|delegate)-[a-z0-9][a-z0-9-]*$ に一致 (再実測 True)、len=21<=60。",
+      "FM-002 (medium) PASS: description が trigger phrase を含み '。' で終端 (再実測 True)。",
+      "FM-003 (medium) PASS: trigger phrase 数 = 2 (再実測 ['必要なとき','たいとき']) で hard rule 2..3 の範囲内。",
+      "FM-004 (medium) PASS: 禁止トークン ('採点する','JSONで返す','sha256','exit code') は description に 0 件 (再実測 all False)。軸名や triage-report は成果物語彙であり内部実装詳細ではない。",
+      "FM-005 (low) PASS: description は対象ドメイン名詞句で開始し '〜たいときに使う。' の動作動詞句で終端。これは ref-skill-naming-convention が定める本 repo 全 skill 共通の記述規約であり check の 'Japanese verb/noun phrase' 側を満たす。厳格に英語動詞開始のみを要求する読みでも -3 で score 97 >= 80 のため verdict 不変。",
+      "BD-001 (high) PASS: '## Purpose & Output Contract' 見出しが body に存在 (再実測 True)。",
+      "BD-002 (medium) PASS: '## Gotchas' 見出しが body に存在 (再実測 True)。",
+      "BD-003 (high) PASS: frontmatter を除く body 行数 = 93 <= 300 (再実測)。",
+      "BD-004 (medium) PASS (LLM judge): description の 2 trigger が body 手順と 1:1 対応することを実読確認。'spec-drift issue が起票され diff トリアージが必要なとき' → '## End-to-End Flow' の R1-elicit / R2-parse 段、'各軸の影響を before/after/evidence 付きで判定して triage-report を出したいとき' → 同 R3-triage 段および '## Purpose & Output Contract' の出力契約。",
+      "NM-001 (high) PASS: skill ディレクトリ basename 'run-spec-drift-triage' == frontmatter.name (再実測 True)。",
+      "NM-002 (medium) PASS: python3 scripts/lint-skill-name.py <SKILL.md path> を再実行し 'ok: run-spec-drift-triage' / exit=0。",
+      "NM-003 (low) PASS: python3 scripts/lint-skill-tree.py <skill dir> を再実行し 'ok: run-spec-drift-triage' / exit=0。",
+      "PD-001 (low) PASS: references/ が実在し resource-map.yaml を含む (再実測)。Progressive Disclosure 索引として機能。",
+      "PD-002 / RG-001 PASS: responsibility_refs 3 本 (prompts/R1-elicit.md / R2-parse.md / R3-triage.md)、script_refs 3 本、schema_refs 1 本、reference_refs 1 本の参照先実在を全件確認。参照切れ 0 件。",
+      "参照健全性は静的存在確認に留めず実行でも裏付けた: script_refs の 3 本 (aggregate-issue-diffs.py / parse-spec-diff.py / map-field-impact.py) を実 git commit pair (da6d4e74→6ddd6453) に対し直列実行し exit 0/0/0、49 hunks → 49 candidates を確認。frontmatter の宣言が実体と乖離していない。",
+      "本 round の code 変更 (map-field-impact.py の dead code 削除) が frontmatter 宣言に影響しないことを確認: script_refs は file 単位の参照であり関数単位ではない。削除された match_axis は repo 全体で参照 0 件、呼び出される match_axes は健在で pytest 90 passed。"
+    ],
+    "negative_feedback": [],
+    "iteration": 5,
+    "iteration_limit": 5,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "独立 context で rubric (ref-skill-design-rubric v1.3.0, sha 6e1843e520...) を適用し再実測した。前回 PASS を引き継がず、適用 16 rule を rubric.json の applies_to_kinds から機械導出したうえで各 check を実行・実読で再検証している。\n\n【結論】適用 16 rule すべて PASS、score=100 >= threshold=80 で PASS。\n\n【本 round の位置づけ】SKILL.md は無変更 (sha256=37c814f5... は round5/round6 と同一) で、改修は EVALS.json (known_limitations 追記) / map-field-impact.py (dead code 削除) / eval-fixture-matrix.py (TODO(human) → 実装仕様 docstring) の 3 ファイル。いずれも rubric の評価面 (frontmatter / body 構造 / 命名 / 参照健全性) を変えないため、rule 判定は round6 と同結論だが、SHA 据え置きの追認ではなく全 rule を再測定した結果として PASS を出している。\n\n【実測値】FM-001 name regex True / len 21。FM-003 trigger 2 件。FM-004 禁止トークン 0 件。BD-001/BD-002 見出し存在。BD-003 body 93 行。NM-001 dir==name True。lint-skill-name exit=0 / lint-skill-tree exit=0。KL-001..005 は knowledge/ 不在かつ knowledge_loop grep 0 件で存在ゲート不成立のため無条件 PASS。\n\n【参照健全性】静的存在確認に加え script_refs 3 本を実 git データで直列実行し exit 0/0/0 (49 hunks → 49 candidates) を確認。dead code 削除後も pytest 90 passed で参照切れ・import エラーは無い。"
+}

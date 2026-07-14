@@ -1,6 +1,6 @@
 # apply-gate-policy
 
-`run-rubric-sync` (C02) の **allowlist・apply-gate 4 条件・pre/post-image hash 手順・proposal_sha256 正規化・fail-closed マトリクス**の逐語正本。SKILL.md と `prompts/R2-plan.md`/`prompts/R3-apply.md` はここを参照し、規則を各所へ再定義しない (SSOT 一元化)。
+`run-rubric-sync` (C02) の **allowlist・apply-gate 条件 (G1-G5)・pre/post-image hash 手順・proposal_sha256 正規化・fail-closed マトリクス**の逐語正本。SKILL.md と `prompts/R2-plan.md`/`prompts/R3-apply.md` はここを参照し、規則を各所へ再定義しない (SSOT 一元化)。
 
 ## 1. allowlist (target_path の許容集合)
 
@@ -28,17 +28,30 @@ def in_allowlist(path: str) -> bool:
     return any(fnmatch.fnmatch(p, g) for g in ALLOWLIST)
 ```
 
-## 2. apply-gate 4 条件 (全充足で apply、1 つ欠けたら変更 0 件)
+## 2. apply-gate 条件 (G1-G5 全充足で apply、1 つ欠けたら変更 0 件)
 
 | # | 条件 | 検証 | fail 時 |
 |---|---|---|---|
 | G1 | **監査 PASS** | C04 `sync-audit-verdict.json` の `verdict=="PASS"` かつ `proposal_sha256==sync-proposal.proposal_sha256` (container digest) | 変更 0 件・「監査不一致/未 PASS」で停止 |
 | G2 | **明示承認** | container の `approval.granted==true` かつ `by`/`evidence` が非 null | 変更 0 件・「未承認」で停止 |
 | G3 | **allowlist 内** | 全 `proposals[].target_path` が §1 の glob に一致 | 変更 0 件・「対象外パス」で停止 |
-| G4 | **pre-image 一致** | 各 proposal の適用直前に実ファイル sha256 を再計算し `proposals[].pre_image_sha256` と一致 | 変更 0 件・「hash drift」で停止 |
+| G4 | **pre-image 一致** | 各 proposal の適用直前に実ファイル sha256 を再計算し `proposals[].pre_image_sha256` と一致 (`pre_image_sha256=null` は新規作成提案=対象ファイル不在が正) | 変更 0 件・「hash drift」で停止 |
+| G5 | **独立 verifier の同意 (対象束縛つき)** | C03 `triage-verdict.json` の `agree==true` **かつ** `diff_sha256 == triage-report.diff_sha256` | 変更 0 件・「不同意」/「別 diff への agree 流用」で停止 |
 
-- 追加で C03 `triage-verdict.json` の `agree==true`(または findings 解消済み) を IN1 で確認する。C03 が triage の見逃し/誤検出を指摘したまま (agree=false) では apply しない。
-- 4 条件は AND。**部分適用は禁止**: `proposals[]` のうち 1 つでも G1-G4 を満たさなければ、その issue の apply を実行せず全体を停止する (中途半端な適用で close ゲートを誤誘導しない)。
+**G1-G5 の機械検証 (適用直前に必ず実行)**:
+
+```bash
+python3 $CLAUDE_PLUGIN_ROOT/scripts/check-triage-complete.py --mode pre-apply \
+  --issue <N> --sync-proposal <sync-proposal.json> \
+  --sync-audit-verdict <sync-audit-verdict.json> \
+  --triage-report <triage-report.json> --triage-verdict <triage-verdict.json> \
+  --target-root .
+```
+
+exit 0 = apply 可 / exit 1 = G1-G5 のいずれか不成立で**変更 0 件のまま停止** (`reasons[]` に理由) / exit 2 = artifact malformed・引数不足。`--triage-report` / `--triage-verdict` は G5 の機械検証に使うため pre-apply でも必須 (省略すると exit 2 で apply へ進めない)。close ゲート (`--mode close` 既定) は適用**後**の post-image を突合するため pre-image drift を構造上検出できない (適用後の実ファイルは post-image になっている)。G4 を LLM の shasum 手順だけに委ねると見落とし時に drift したまま適用されるため、**この script の exit 0 を得てから Edit する**。
+
+- **G5 の対象束縛が要る理由**: `agree=true` は「**特定の diff についての**同意」であり、flag だけを見ると主語が浮く。C01 を再実行して triage-report が変わったのに C03 を再実行していない場合、旧 verdict の `agree=true` が流用され、誤 triage に基づく Edit が着弾する。close ゲートは同じ一致を強制するが、そこで弾いても実ファイルは既に変わっている。
+- G1-G5 は AND。**部分適用は禁止**: `proposals[]` のうち 1 つでも G1-G5 を満たさなければ、その issue の apply を実行せず全体を停止する (中途半端な適用で close ゲートを誤誘導しない)。
 
 ## 3. pre/post-image hash 手順
 

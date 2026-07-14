@@ -502,3 +502,153 @@ def test_evaluate_reports_issue_mismatch_missing_target_and_empty_validators(tmp
     assert any("issue=99" in reason for reason in reasons)
     assert any("存在しない" in reason for reason in reasons)
     assert any("validator_results が空" in reason for reason in reasons)
+
+
+# ───────────── apply 前ゲート (--mode pre-apply / apply-gate-policy §2 G1-G5) ─────────────
+# close ゲートは適用後の post-image を見るため構造上 pre-image drift を検出できない
+# (適用後の実ファイルは post-image になっている)。G4 を LLM 手順だけに委ねず機械検証する。
+def _seed_target(root: Path, rel: str = TARGET_REL, body: str = '{"seed": 1}') -> str:
+    """target-root 配下に実ファイルを置き、その sha256 を返す。"""
+    p = root / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(body, encoding="utf-8")
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def _run_pre_apply(tmp_path: Path, proposal, audit, target_root: Path, verdict=None, report=None):
+    pp = _write(tmp_path, "sync-proposal.json", proposal)
+    ap = _write(tmp_path, "sync-audit-verdict.json", audit)
+    vp = _write(tmp_path, "triage-verdict.json", verdict if verdict is not None else base_verdict(True))
+    rp = _write(tmp_path, "triage-report.json", report if report is not None else base_report(True))
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "--mode", "pre-apply", "--issue", str(ISSUE),
+         "--triage-report", str(rp), "--triage-verdict", str(vp),
+         "--sync-proposal", str(pp), "--sync-audit-verdict", str(ap),
+         "--target-root", str(target_root)],
+        capture_output=True, text=True,
+    )
+
+
+def _proposed(pre_sha, *, granted=True, target_path=TARGET_REL):
+    item = proposal_item(target_path, None, True)
+    item["pre_image_sha256"] = pre_sha
+    return base_proposal(status="proposed", granted=granted, proposals=[item])
+
+
+def test_pre_apply_allows_when_all_four_gates_pass(tmp_path):
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed(sha), base_audit("PASS"), root)
+    assert proc.returncode == 0
+    assert "apply_allowed" in proc.stdout
+
+
+def test_pre_apply_blocks_on_pre_image_hash_drift(tmp_path):
+    # G4: 提案作成後に対象ファイルが第三者に書き換えられた = pre-image drift。
+    root = tmp_path / "repo"
+    _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed("a" * 64), base_audit("PASS"), root)
+    assert proc.returncode == 1
+    assert "hash drift" in proc.stderr and "G4" in proc.stderr
+
+
+def test_pre_apply_blocks_when_unapproved(tmp_path):
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed(sha, granted=False), base_audit("PASS"), root)
+    assert proc.returncode == 1 and "G2" in proc.stderr
+
+
+def test_pre_apply_blocks_on_audit_fail(tmp_path):
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed(sha), base_audit("FAIL"), root)
+    assert proc.returncode == 1 and "G1" in proc.stderr
+
+
+def test_pre_apply_blocks_outside_allowlist(tmp_path):
+    root = tmp_path / "repo"
+    outside = "src/secret.py"
+    sha = _seed_target(root, rel=outside)
+    proc = _run_pre_apply(tmp_path, _proposed(sha, target_path=outside), base_audit("PASS"), root)
+    assert proc.returncode == 1 and "G3" in proc.stderr
+
+
+def test_pre_apply_blocks_audit_of_other_proposal(tmp_path):
+    # G1: container digest が違う監査 (別提案の PASS) を流用させない。
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    audit = base_audit("PASS")
+    audit["proposal_sha256"] = "e" * 64
+    proc = _run_pre_apply(tmp_path, _proposed(sha), audit, root)
+    assert proc.returncode == 1 and "別提案の監査" in proc.stderr
+
+
+def test_pre_apply_allows_new_file_proposal_with_null_pre_image(tmp_path):
+    # 対象ファイル不在 = 新規作成提案 (apply-gate-policy §3)。pre=null で通る。
+    root = tmp_path / "repo"
+    root.mkdir()
+    proc = _run_pre_apply(tmp_path, _proposed(None), base_audit("PASS"), root)
+    assert proc.returncode == 0
+
+
+def test_pre_apply_blocks_null_pre_image_when_file_exists(tmp_path):
+    # 新規作成提案のはずが実在する = 提案の前提が崩れている。
+    root = tmp_path / "repo"
+    _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed(None), base_audit("PASS"), root)
+    assert proc.returncode == 1 and "G4" in proc.stderr
+
+
+def test_pre_apply_blocks_agree_for_other_diff(tmp_path):
+    # agree=true は「特定の diff への同意」。C01 再実行後に C03 未再実行だと旧 agree が
+    # 流用され誤 triage の Edit が着弾するため、diff_sha256 一致で主語を束縛する。
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    stale = base_verdict(True)
+    stale["diff_sha256"] = "9" * 64  # triage-report とは別 diff への verdict
+    proc = _run_pre_apply(tmp_path, _proposed(sha), base_audit("PASS"), root, verdict=stale)
+    assert proc.returncode == 1
+    assert "diff_sha256" in proc.stderr
+
+
+def test_pre_apply_blocks_when_verifier_disagrees(tmp_path):
+    # IN1: 独立 verifier が triage の見逃し/誤検出を指摘したまま (agree=false) は apply 不可。
+    # close で初めて弾くのでは、誤った triage に基づく Edit が既に入っている。
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    proc = _run_pre_apply(tmp_path, _proposed(sha), base_audit("PASS"), root,
+                          verdict=base_verdict(False))
+    assert proc.returncode == 1
+    assert "agree" in proc.stderr
+
+
+def test_pre_apply_requires_triage_artifacts(tmp_path):
+    # --triage-verdict / --triage-report 未指定は usage error
+    # (agree と diff_sha256 束縛を検証せずに apply させない)。
+    root = tmp_path / "repo"
+    sha = _seed_target(root)
+    pp = _write(tmp_path, "p.json", _proposed(sha))
+    ap = _write(tmp_path, "a.json", base_audit("PASS"))
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--mode", "pre-apply", "--issue", str(ISSUE),
+         "--sync-proposal", str(pp), "--sync-audit-verdict", str(ap),
+         "--target-root", str(root)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 2
+    assert "--triage-report" in proc.stderr or "--triage-verdict" in proc.stderr
+
+
+def test_close_mode_still_requires_triage_artifacts(tmp_path):
+    # 後方互換: 既定 mode=close は C01/C03 必須のまま (usage error)。
+    pp = _write(tmp_path, "p.json", base_proposal())
+    ap = _write(tmp_path, "a.json", base_audit())
+    vp = _write(tmp_path, "v.json", base_verdict(True))
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--issue", str(ISSUE),
+         "--sync-proposal", str(pp), "--sync-audit-verdict", str(ap),
+         "--triage-verdict", str(vp), "--target-root", str(tmp_path)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 2 and "--triage-report" in proc.stderr

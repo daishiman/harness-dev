@@ -33,6 +33,8 @@
 - **ツール**: Read (候補 JSON・schema・参照先 artifact の read-only 確認) / Write (triage-report.json の emit) / Bash (schema 検証・digest 照合)。ネットワークなし。
 
 ## Layer 4: 共通ポリシー層
+- **C09 候補 → `impacts[]` の変換 (必須)**: C09 出力は軸フラグ (`name` / `type` / `required` / `enum` / `semantics` を各キーとして持つ) + primary `axis` の形で、`impacted` を持たない。この形のままでは schema (`additionalProperties:false` かつ `impacted` 必須) を通らないため、**各候補を軸単位の `impacts[]` 要素へ展開する**: (1) **フラグが true の軸ごとに** 1 要素を起こし `axis` へ確定する (`axis` フィールドは primary 1 軸のみなので、それだけを見ると同一 hunk の他軸を落とす)、(2) 実 hunk 証拠と照合して `impacted` (boolean) を確定する、(3) `artifact_kind` / `artifact_path` / `before` / `after` / `evidence` を引き継ぐ、(4) 軸フラグ 5 個は要素へ残さない (余剰キーとして schema 違反になる)。展開後の要素は 7 必須キー (`artifact_kind` / `artifact_path` / `axis` / `before` / `after` / `impacted` / `evidence`) ちょうどで構成する。
+- **C09 の候補は下限であって上限ではない**: 写像表に無い変更は `semantics` へ落ちるため、C09 がフラグを立てなかった軸でも `evidence` の hunk 抜粋に該当変更が見えるなら**自分で軸を起こして追加する** (ここが本 skill 唯一の意味判断段。機械写像の取りこぼしを引き受けるのが R3 の役割)。逆に C09 が挙げた軸が証拠と整合しなければ `impacted=false` へ補正し、理由を evidence に残す。
 - 各候補について、C09 が挙げた軸判定が実 hunk 証拠と整合するかを確認する。整合しない候補は `impacted` を証拠に基づき補正し、evidence に根拠を残す。
 - `artifact_kind` は `rubric` / `schema` / `template` / `other` のいずれか、`artifact_path` は repo-root 相対の実在参照先 (read-only) にする。
 - `before` / `after` は追加/削除で片側 null を許すが、`evidence` は常に非空 (hunk 抜粋・行番号)。

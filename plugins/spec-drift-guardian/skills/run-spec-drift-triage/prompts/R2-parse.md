@@ -18,8 +18,9 @@
 
 ## Layer 2: ドメイン層
 - **用語**: `hunk`=unified diff の変更ブロック (`@@` 単位) / `artifact_kind`=影響先種別 (`rubric` / `schema` / `template` / `other`) / `artifact_path`=影響先の repo-root 相対パス (read-only 参照先) / `axis`=影響軸 (`name` / `type` / `required` / `enum` / `semantics`) / `before`・`after`=変更前後の値 (追加は before=null、削除は after=null) / `evidence`=判定根拠 (hunk 抜粋・行番号)。
-- **不変則 (継承)**: C08 は R1 集約の `source_commit` / `base_commit` / `diff_sha256` を hunk JSON へ**継承**する。C09 はそれを保持したまま候補へ写像する。異なる digest の hunk を混在させない。
-- **fail-closed**: C08 は `complete=false` / digest 不一致で exit2。C09 は写像表不備 / 必須キー欠落で exit≠0。いずれも判定不能として停止する。
+- **不変則 (継承)**: C08 は R1 集約の `source_commit` / `base_commit` / `diff_sha256` を hunk JSON へ**継承**する。C09 はそれを保持したまま候補へ写像する。異なる digest の hunk を混在させない (C08 が機械的に強制する)。
+- **入力は verbatim**: C11 stdout をそのまま C08 へ渡す。C08 が `untriaged_entries` を自ら選別するため、再ラップ (`{entries: untriaged_entries}`) をしない (`entries` を渡すと triage 済みまで再集約する)。
+- **fail-closed**: C08 は `complete=false` / digest 不一致 / commit pair 混在で exit2、入力形状不正・JSON parse 失敗で exit1。C09 は写像表不備 / 必須キー欠落で exit≠0。いずれも判定不能として停止する。
 - **写像の外部化**: diff→フィールド写像規則は C09 が `references/field-impact-map` を読むだけで実現する。写像を prompt / code へ埋め込むと guardian 自身が drift 源になるため禁止。
 
 ## Layer 3: インフラ層

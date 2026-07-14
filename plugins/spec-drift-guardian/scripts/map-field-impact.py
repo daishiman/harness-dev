@@ -26,7 +26,8 @@ hardcode せず、references/field-impact-map/field-impact-map.json を読んで
   1. hunk の file_path を各 kind の path_globs (fnmatch) で照合し artifact_kind を
      決める (JSON 順で最初に一致した kind。どれにも一致しなければ other)。
   2. hunk の追加/削除行本文 (先頭 +/- マーカ除去後) を、その kind の rules の
-     match_any (Python re) 群へ順に照合。最初に一致した rule の axis を採る。
+     match_any (Python re) 群へ全て照合し、一致した rule の axis を全て採る
+     (1 hunk が複数軸を同時に変えうるため先勝ちで打ち切らない)。primary は rules 順で最初。
   3. before=削除行由来の値 / after=追加行由来の値 / evidence=一致 hunk 抜粋+file_path。
   表に無い pattern は semantics へフォールバックする。
 """
@@ -39,7 +40,8 @@ import re
 import sys
 from pathlib import Path
 
-# 影響軸。output オブジェクトはこの 5 キーを bool フラグとして持ち、決定した axis のみ true。
+# 影響軸。output オブジェクトはこの 5 キーを bool フラグとして持ち、一致した全軸が true
+# (one-hot ではない。`axis` フィールドは primary 1 軸なのでフラグ側を正とする)。
 AXES = ("name", "type", "required", "enum", "semantics")
 # axis 未一致時のフォールバック軸 (レビューへ委ねる)。
 FALLBACK_AXIS = "semantics"
@@ -180,25 +182,31 @@ def extract_changes(hunk: dict) -> tuple[list[str], list[str], list[str]]:
     return added, removed, excerpt
 
 
-def match_axis(
+def match_axes(
     rules: list[dict], added: list[str], removed: list[str]
-) -> tuple[str, str | None, str | None]:
-    """kind の rules を順に照合し (axis, before, after) を返す。
+) -> list[tuple[str, str | None, str | None]]:
+    """kind の rules を**全て**照合し、一致した (axis, before, after) を rules 順で列挙する。
 
-    最初に「削除行 or 追加行のいずれかに match する」rule の axis を採る。
-    before は最初に一致した削除行、after は最初に一致した追加行 (無ければ None)。
-    どの rule も一致しなければ FALLBACK_AXIS を採り、before/after は先頭変更行由来。
+    1 hunk が複数軸を同時に変えること (例: `"type": "string"`→`"integer"` と同じ hunk 内で
+    description を更新 = type + semantics) は実 schema 編集の典型形。最初の一致で打ち切ると
+    残りの軸を構造的に見逃すため、全 rule を照合する。
+    before は各 rule で最初に一致した削除行、after は最初に一致した追加行 (無ければ None)。
+    どの rule も一致しなければ FALLBACK_AXIS 単独を返し、before/after は先頭変更行由来。
     """
+    matched: list[tuple[str, str | None, str | None]] = []
     for rule in rules:
         patterns = rule["patterns"]
         before = next((b for b in removed if any(p.search(b) for p in patterns)), None)
         after = next((a for a in added if any(p.search(a) for p in patterns)), None)
         if before is not None or after is not None:
-            return rule["axis"], before, after
+            matched.append((rule["axis"], before, after))
+    if matched:
+        return matched
     # フォールバック: 表に無い pattern は semantics 影響としてレビューへ委ねる。
     before = removed[0] if removed else None
     after = added[0] if added else None
-    return FALLBACK_AXIS, before, after
+    return [(FALLBACK_AXIS, before, after)]
+
 
 
 def build_evidence(file_path: str, excerpt: list[str]) -> str:
@@ -217,15 +225,22 @@ def build_candidate(
     before: str | None,
     after: str | None,
     evidence: str,
+    matched_axes: list[str] | None = None,
 ) -> dict:
-    """出力契約どおりのキー順で影響候補オブジェクトを組み立てる。"""
+    """出力契約どおりのキー順で影響候補オブジェクトを組み立てる。
+
+    `axis` は primary (rules 順で最初に一致した軸)。軸フラグは matched_axes に含まれる
+    全軸を true にする (1 hunk が複数軸を同時に変えうるため one-hot に固定しない)。
+    matched_axes 省略時は axis 単独。
+    """
+    axes = set(matched_axes) if matched_axes else {axis}
     candidate = {
         "artifact_kind": kind,
         "artifact_path": file_path,
         "axis": axis,
     }
     for a in AXES:
-        candidate[a] = a == axis  # 決定した軸のみ true (one-hot フラグ)
+        candidate[a] = a in axes  # 一致した全軸を true (複数軸の同時変更を落とさない)
     candidate["before"] = before
     candidate["after"] = after
     candidate["evidence"] = evidence
@@ -271,10 +286,12 @@ def map_impacts(root: object, kinds: dict) -> tuple[list[dict], list[str]]:
             continue
         kind = detect_kind(file_path, kinds)
         rules = kinds.get(kind, {}).get("rules", [])
-        axis, before, after = match_axis(rules, added, removed)
+        matched = match_axes(rules, added, removed)
+        axis, before, after = matched[0]  # primary は rules 順で最初に一致した軸
         evidence = build_evidence(file_path, excerpt)
         candidates.append(
-            build_candidate(kind, file_path, axis, before, after, evidence)
+            build_candidate(kind, file_path, axis, before, after, evidence,
+                            matched_axes=[a for a, _, _ in matched])
         )
     return candidates, violations
 
