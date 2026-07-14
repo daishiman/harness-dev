@@ -68,3 +68,7 @@ promotion 前の失敗は commit されないため rollback 不要で、旧 `cu
 ## Macro/micro boundary
 
 want の feature 分解と feature 間依存は dev-graph、spec 内容は system-spec-harness、本 plugin は単一 feature 内の exact-13 package のみを所有します。追加責務は14件目にせず follow-up feature candidate として dev-graph へ返します。
+
+## フィードバック
+
+本 plugin への改善要望は `/run-skill-feedback system-dev-planner` で投入できます (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。

@@ -73,3 +73,7 @@ want
 - dev-graph: program goal、feature、architecture、feature間依存、registration、tracker、lease、completion。
 - system-dev-planner: 1 feature の P01..P13 exact 13 specs、inventory、intra-feature DAG、promotion。
 - system-spec-harness: system specification と architecture の内容。
+
+## フィードバック
+
+本 plugin への改善要望は `/run-skill-feedback dev-graph` で投入できます (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。
