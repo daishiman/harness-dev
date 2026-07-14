@@ -32,7 +32,7 @@
 - 非担当: exact-13 task spec 化・DAG/handoff emit (R3-emit)、readiness 判定 (C08)、独立評価 (C02..C05)、promotion (C11)、実装。
 
 ### 2.2 ドメインルール
-- `workstream_kind` enum: frontend / backend / api / data / infrastructure / security / quality / documentation / operations。dev-graph `templates/system-plan-contract.json` の `workstream_kinds` を継承する。
+- `workstream_kind` enum: frontend / backend / api / data / infrastructure / security / quality / documentation / operations。dev-graph `plugins/dev-graph/templates/system-plan-contract.json` の `workstream_kinds` を継承する。
 - `build_target_kind` enum: skill / sub-agent / slash-command / hook / script / application-code。component_kind 5値のいずれかなら plugin-dev-planner 同型の builder routing、`application-code` なら task-graph build / capability-build への汎用 handoff を意味する。
 - 上記 enum 外の値は schema 層が fail-closed で拒否する。語彙の拒否は分類側ではなく schema が担う。
 - feature 間依存を task へコピーしない。dev-graph の feature A→feature B を正本とし、本責務は同一 `parent_feature` 内だけを分類する。

@@ -44,8 +44,6 @@ script_refs:
   - scripts/validate-plugin-permissions.py
   - scripts/run-pkg-015.py
   - scripts/aggregate-pkg-findings.py
-subagent_refs:
-  - assign-plugin-package-evaluator
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
   max_iterations: 3
   criteria:

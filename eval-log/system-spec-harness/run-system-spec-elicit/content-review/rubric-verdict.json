@@ -2,35 +2,36 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "16ad46d2607877abb39c4786ad340545e19a9740ae9f5394198f5668fc256178"
+    "skill_md_sha256": "ce51c9c07563ef26d38ce7486a945a6831c04ce159d2f40b75eea0d56868ec2d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-elicit",
-  "reviewed_at": "2026-07-12T12:16:50+09:00",
-  "iterations": 2,
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
     "positive_feedback": [
-      "検証可能性=3: 主張が全て機械検証可能で検証済 (validate-knowledge-graph.py --profile required-info / knowledge が exit0、coverage_certificate.blocking_items と topo_order を実 emit し R5 prompt 記述と一致)。",
-      "完全性=3 (修正後): 機能核 (catalog + R5 ゲート + 検証器) に加え SKILL.md 完了条件・feedback-contract・R5 責務表・Additional Resources への統合を配線し skill 契約層として完結。深度=3: catalog に depends_on / required_when / completion_rule / missing_effect / serves_goals を持たせ収集順序と block 判定根拠が揃う。"
+      "単一責務・SSOT が明確: spec-state.json の状態書込を apply-spec-transition.py の単一 transition writer に一本化し、直接 JSON 編集を契約違反として遮断。foundation/decisions/matrix の書込を本 skill 所有と宣言。",
+      "検証可能性が高い: IN1=validate-coverage-matrix.py exit0 (6 platform/3値セル/対象外理由/確定 qa_ref/真理値表一致)、OUT1=--require-complete、OUT2=live-trial、C16=validate-knowledge-graph.py --profile required-info の blocking_items 空、と機械/対話の検証述語に接地し verify_by と一致。",
+      "境界と出力契約が具体的: platform は canonical 6 種のみ・cell states 3値・category_aggregate 4値は導出のみ、と Purpose で規定し、完了条件を requirements_foundation 確定 + 未収集0 + validator exit0 として明文化。責務表 R0-R5 で各 prompt SSOT を対応付け。"
     ],
     "negative_feedback": [
-      "[fixed] 初回 consistency=1 (frontmatter<->body 未反映・catalog の R2 過大主張・domain 数不一致の 3 件) が FAIL 要因だったが、本文配線・description 整合・domain 9 化で全解消し consistency=3 へ。"
+      "[low/smell] 簡潔性: 181 行と本文がやや長く、C16 収集ゲート/serves_goals トレースが Purpose・上位概念 anchor 節・R5 責務・feedback-contract 節に重複気味。ただし resource-map による Progressive Disclosure と単一 writer/段階条件の重要性から許容範囲で閾値は満たす。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "pre-push",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "5次元スコア (修正後・0-3・閾値2): 完全性=3 / 一貫性=3 (3 件の内部不整合を解消) / 深度=3 / 検証可能性=3 / 簡潔性=2。全次元>=2 で PASS。是正内容: SKILL.md Additional Resources に 2 参照・R5 責務表と完了条件と feedback-contract に収集ゲート明記・catalog description の R2 消費主張を follow-up へ緩和・domain に security 追加。sha=16ad46d2...。"
+  "notes": "現 SKILL.md (sha256=ce51c9c07563ef26d38ce7486a945a6831c04ce159d2f40b75eea0d56868ec2d) を ref-skill-design-rubric 規範で採点。FM: name=kebab+run prefix・hierarchy=L1・description=Use when 形・trigger_conditions 明示・kind/effect 整合。BD: Purpose & Output Contract 節・Gotchas 節・出力契約あり (181 行、resource-map で Progressive Disclosure)。NM: ディレクトリ名一致。境界: 単一 transition writer・canonical 6 platform・直接編集禁止を明示。SSOT: apply-spec-transition.py が状態書込正本、責務プロンプトが判断 SSOT。全参照実在。high severity 0・低 smell 1 (本文長/重複) のみで全次元閾値クリアのため PASS。criteria_evaluated は frontmatter feedback_contract の全 id (IN1/OUT1/OUT2) を被覆。"
 }

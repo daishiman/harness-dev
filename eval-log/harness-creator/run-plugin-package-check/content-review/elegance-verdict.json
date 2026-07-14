@@ -2,28 +2,28 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-plugin-package-check",
-    "skill_md_sha256": "7e08acebc6af27fd9e99ed357ec977ccaa28afced7562bc922cc2d0ecd5aa9f0"
+    "skill_md_sha256": "89ca764291ad7373690c963e46394943c41bea4606bfc687df12f893a1002090"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "independent-content-review-subagent-pkgcheck",
-  "reviewed_at": "2026-07-03T10:57:58+00:00",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-07-14",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1"],
     "positive_feedback": [
-      "C2/C3 完全性・一貫性: 今回の変更 (phase:0 コメントへの false green 警告追記) は完了条件 (Phase0=PKG-001〜009 / Phase1=+010 / Phase2=+011〜015) と厳密に整合する。警告文『省略時(=0)は PKG-001〜009 のみ走り 010〜015 が黙って未検査=subset PASS が緑に見える false green』は Phase0 の被覆範囲と一字一句矛盾しない。むしろ frontmatter description『出荷前に検査』と既定 phase=0 (部分検査) の間の潜在的ギャップを『出荷前検査は必ず --phase all を明示』で顕在化・封鎖する設計改善。false green を observable にする方向は本 plugin の false-green 検出思想と一致。",
-      "C4 依存整合・改名追従完全: SKILL.md 実 SHA=7e08aceb… を照合。script_refs 6 本・schema_refs 2 本 (`schemas/run-report.schema.json` / `../ref-pkg-contract/schemas/package-contract.schema.json`)・prompts 2 本・cross-plugin dep (`plugins/skill-governance-lint/scripts/lint-external-refs.py` / `lint-rubric-violation.py`) 全て実在 resolve。plugin=harness-creator に統一済で旧 skill-creator 固有名残存ゼロ。dependency break なし。",
-      "C1/C3 単一責務・役割直交: 変更は YAML コメント 1 行のみで orchestrator としての単一責務を保持し rubric 自己編集なし。PKG 定義を ref-pkg-contract に委譲する SSOT (Key Rule 1)・PKG-002〜008/014 を assign-plugin-package-evaluator へ context:fork 委譲する OUT1 の直交契約 (5/5.5/6 役割テーブル: 契約適合>elegance>rubric) は無傷。"
+      "phase 意味論 (Phase0=PKG-001〜009 / Phase1=+010 / Phase2=+011〜015) が入力・完了条件・局面カタログ・Gotchas で一貫し、既定 phase=0 が『出荷前検査』用途に対し subset PASS=false green になるトラップを ⚠️ 明示 + 『必ず --phase all を明示』で顕在化する自己整合した設計になっている。",
+      "PKG-002〜008/014 を assign-plugin-package-evaluator へ context:fork 委譲し、PKG 定義を ref-pkg-contract に委ねる責務直交 (OUT1) が Key Rules・局面カタログ・役割直交テーブル (Step5=契約適合 / 5.5=elegance / 6=rubric) で崩れず維持されている。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "低 severity (非阻害 smell): 局面カタログ ASCII 図 Step8 の説明文に『開each 時は fail』という文字化け断片 (line 157・恐らく breach 意図) があり、ASCII 図のインデントも一部ずれる。意味は文脈から判読でき構造の矛盾ではないが表記修正が望ましい。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SHA (7e08aceb…) に対する genuine 再評価。stale-sha を招いた変更は phase:0 コメントへの false green 警告 doc 追記のみ。実ファイルを read-only 逐一照合し、警告文と完了条件の整合・全 dep resolve・旧名残存ゼロを確認。既定 phase=0 を維持しつつ非破壊 doc で出荷前トラップを明示する最小改善であり、設計劣化なし。4 条件全 PASS。"
+  "notes": "現 SKILL.md (sha256 89ca764291ad7373690c963e46394943c41bea4606bfc687df12f893a1002090) を全文 read し 4 条件で genuine 再評価。①矛盾なし: phase 被覆範囲・fail 時 exit1・observable 1run1line が入力/完了条件/Gotchas で一貫。②漏れなし: 入力/出力/完了条件、Key Rules 1〜8、goal-seek (Goal/Why/Checklist/loop)、局面カタログ Step0〜10、役割直交テーブル、Gotchas、Additional Resources を網羅。③整合性: feedback_contract IN1/IN2/OUT1、pair=assign-plugin-package-evaluator が双方向一致、rubric_refs=ref-pkg-contract。④依存整合: prompts (R1-orchestrate/R2-gate-decide)、schema_refs (run-report.schema.json・ref-pkg-contract package-contract)、workflow-manifest.json、scripts (run-plugin-validate-strict.sh/smoke-plugin-install|uninstall|upgrade.sh/sandbox-plugin-lifecycle.py/validate-plugin-permissions.py/run-pkg-015.py/aggregate-pkg-findings.py) を実ディスクで確認し全て resolve。line 157 の『開each』文字化けを低 severity smell として記録するが構造矛盾ではなく PASS を阻害しない。"
 }

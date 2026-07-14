@@ -37,6 +37,31 @@ script_refs:
   - ../../scripts/build-system-handoff.py
   - ../../scripts/validate-system-plan.py
   - ../../scripts/promote-system-plan.py
+combinators:
+  - with-feedback-contract
+feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: "1 feature の分解が exact 13 task specs と 13-entry inventory・13-node の intra-feature DAG を生成し validate-system-plan.py が DAG 非循環/orphan 0/inventory 矛盾 0/13 件厳密一致で exit0 通過する"
+      verify_by: script
+    - id: IN2
+      loop_scope: inner
+      text: "各 task spec が system-task-spec 構造契約と workstream-inventory.schema.json の語彙(workstream_kind/build_target_kind)を満たし build-system-handoff.py が system-build-handoff.schema.json 準拠の handoff を exit0 生成する"
+      verify_by: lint
+    - id: OUT1
+      loop_scope: outer
+      text: "確定 system-spec 起点の分解が feature 境界と repository boundary を保ち UBM 固有物を混入せず run-elegant-review の C1-C4 を全 PASS する"
+      verify_by: elegant-review
+    - id: OUT2
+      loop_scope: outer
+      text: "13 task specs が atomic promotion 前提の readiness(check-implementation-readiness.py)を満たし各 spec が実装者へそのまま渡せる粒度であると fork した system-dev-plan-evaluator が確認する"
+      verify_by: evaluator
+    - id: OUT3
+      loop_scope: outer
+      text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion され二回目実行で構造が変化しないことを受入テストが確認する"
+      verify_by: live-trial
 ---
 
 # System development planning

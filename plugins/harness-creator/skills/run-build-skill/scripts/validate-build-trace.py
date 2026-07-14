@@ -503,7 +503,7 @@ def _fallback_feedback_contract_ssot():
     fc.FEEDBACK_LOOP_KINDS = {"run", "wrap", "delegate"}
     fc.FEEDBACK_SKIP_KINDS = {"ref", "assign"}
     fc.CRITERIA_ID_RE = _re.compile(r"^(IN|OUT|C)[0-9]+$")
-    fc.CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"}
+    fc.CRITERIA_VERIFY_BY = {"lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"}
     fc.validate_criteria = lambda criteria, **kw: [
         "WARN: feedback_contract_ssot.py 不在のため criteria 検証を skip しました "
         "(vendored copy が見つからない異常状態。plugins/harness-creator/scripts/ を確認)。"

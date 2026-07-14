@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-status",
+    "skill_md_sha256": "553b58f43ebf0a15ed0f7dd1ff5225c16fee948f75a122382577717c708666fa"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "FM-001/NM-001 適合: name=run-dev-graph-status は run- prefix + kebab-case でディレクトリ basename と一致",
+      "BD-001/BD-002 適合: '## Purpose & Output Contract' と '## Gotchas' を保持し、冒頭30行に read-only 禁則 (呼ばない対象列挙) を集約",
+      "単一責務が明確: 検索/状態表示の read-only 経路に限定し、書込系 tool (Write/Edit) を allowed-tools から意図的に排除している"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric v1.3.0 の kind=skill rule で genuine 採点した。FM-001(prefix+kebab len<=60)/FM-002(2 trigger '〜たいとき'句点終端)/FM-003(trigger 数=2)/FM-004(内部動詞なし)/FM-005(『検索』動詞相当で開始)/BD-001(Purpose & Output Contract)/BD-002(Gotchas)/BD-003(body 約75行<=300)/NM-001(basename==name)/PD-001(body<=100)/PD-002(冒頭30行に Purpose 見出し+『推測せず/緩めず/呼び出さない』禁則) が全 PASS。KL-001..005 は knowledge/ 不在で skip=PASS。high severity 違反 0 件のため PASS。body 全文 (sha256 553b58f43ebf0a15ed0f7dd1ff5225c16fee948f75a122382577717c708666fa) を単一責務・命名・境界・出力契約・SSOT 観点で確認済み。"
+}

@@ -15,7 +15,7 @@ repository root で preflight と最小の初期化確認を行います。
 claude plugin validate plugins/dev-graph
 claude plugin validate plugins/system-spec-harness
 claude plugin validate plugins/system-dev-planner
-python3 plugins/dev-graph/scripts/resolve-repo-context.py --repo-root "$PWD" --mode read
+python3 "${CLAUDE_PLUGIN_ROOT:-plugins/dev-graph}/scripts/resolve-repo-context.py" --repo-root "$PWD" --mode read
 ```
 
 ```text

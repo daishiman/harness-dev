@@ -1,1 +1,0 @@
-../../plugins/dev-graph/commands/dev-graph.md

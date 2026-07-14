@@ -1,0 +1,28 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-init",
+    "skill_md_sha256": "1db7dd6c2cde83fc50e02704fb3e3b725f66dd2209b08521c88a5fc52fc535f0"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "rubric-evaluator",
+  "reviewed_at": "2026-07-14",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5"],
+    "positive_feedback": [
+      "NM 命名: name=run-dev-graph-init が dir 名/prefix=run と一致、description は冪等初期化という発火条件を trigger 型で明示。",
+      "BD 出力契約: Purpose & Output Contract に入力/出力 (6 root+.dev-graph 配下)/完了条件を明記し、別に Input/output・Execution contract・Gotchas 節を具備。",
+      "RG/責務: init という単一責務に収束し、goal_seek/feedback_contract を frontmatter で明示。GitHub 設定は雛形生成に限定し token/node ID を保存しない境界が明確。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "ref-skill-design-rubric 規範で現 SKILL.md (sha256 1db7dd6c...) を採点。FM: name/description/trigger 適合、allowed-tools 明示。BD: Output contract+Gotchas 具備、body<300行。NM: dir 名一致。PD: 本文簡潔で prompts/templates/references へ分離。RG: goal_seek/feedback_contract 明示。責務は『caller repo 内への dev-graph 冪等初期化』に単一収束し、hook 配線も plugin 既定/fallback の非破壊 merge に限定され越境なし。high severity 0 件。PASS。"
+}
