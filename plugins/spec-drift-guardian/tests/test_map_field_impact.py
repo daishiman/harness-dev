@@ -306,3 +306,35 @@ def test_default_map_resolves_self_relative():
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# ───────── C08 契約: added_lines/removed_lines は marker 除去済み本文 ─────────
+def test_body_leading_dash_is_not_stripped_again():
+    """C08 は line[1:] で marker 除去済み本文を渡す。C09 が再除去すると YAML list の
+    `- item` や markdown 箇条書きが先頭 1 文字を失い、エラーなく写像対象が変質する。"""
+    hunk = {
+        "file_path": "plugins/harness-creator/skills/x/templates/t.yaml",
+        "change_type": "modify",
+        "added_lines": ["- new_item"],
+        "removed_lines": ["- old_item"],
+    }
+    rc, candidates, _ = run([hunk])
+    assert rc == 0 and candidates
+    c = candidates[0]
+    # before/after が本文そのまま (先頭 '-' を保持) であること。
+    assert c["after"] == "- new_item", c
+    assert c["before"] == "- old_item", c
+    # evidence にも本文が欠けずに載る。
+    assert "- new_item" in c["evidence"] and "- old_item" in c["evidence"]
+
+
+def test_raw_lines_path_still_strips_diff_markers():
+    """raw unified diff 行 (lines) を渡す経路では marker 除去が正しい挙動。"""
+    hunk = {
+        "file_path": "plugins/harness-creator/skills/x/templates/t.yaml",
+        "lines": ["+added_body", "-removed_body", " context", "+++ b/x", "--- a/x"],
+    }
+    rc, candidates, _ = run([hunk])
+    assert rc == 0 and candidates
+    c = candidates[0]
+    assert c["after"] == "added_body" and c["before"] == "removed_body"

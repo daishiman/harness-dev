@@ -65,9 +65,37 @@ ALLOWLIST = [
 ]
 
 
+def normalize_target_path(path: str) -> str | None:
+    """target_path を repo-root 相対の正規形へ直す。escape する path は None を返す。
+
+    fnmatch は純字句照合で `*` が `/` を跨ぐため、正規化前に glob 照合すると
+    `plugins/harness-creator/../../outside/rubric.json` のような `..` 列を allowlist が
+    吸収して fail-open する (apply-gate-policy §1 が要求する「先頭 `./`・`..` を排除」の実装)。
+    絶対 path・repo-root の外へ出る path は許可しない。
+    """
+    if not path or path.startswith("/") or PurePosixPath(path).is_absolute():
+        return None
+    parts: list[str] = []
+    for seg in PurePosixPath(path).parts:
+        if seg in ("", "."):
+            continue
+        if seg == "..":
+            if not parts:
+                return None  # repo-root より上へ出る
+            parts.pop()
+            continue
+        parts.append(seg)
+    return "/".join(parts) if parts else None
+
+
 def in_allowlist(path: str) -> bool:
-    """target_path が apply-gate allowlist glob のいずれかに一致するか (決定論照合)。"""
-    p = PurePosixPath(path).as_posix()
+    """target_path が apply-gate allowlist glob のいずれかに一致するか (決定論照合)。
+
+    照合前に repo-root 相対へ正規化する。正規化できない (escape する) path は不許可。
+    """
+    p = normalize_target_path(path)
+    if p is None:
+        return False
     return any(fnmatch.fnmatch(p, g) for g in ALLOWLIST)
 
 
@@ -289,12 +317,16 @@ def evaluate_pre_apply(
     for idx, p in enumerate(proposal.get("proposals") or []):
         p = p if isinstance(p, dict) else {}
         target_rel = str(p.get("target_path") or "")
-        # G3: allowlist 内。
+        # G3: allowlist 内。正規化できない (repo-root を escape する) path も不許可。
         if not in_allowlist(target_rel):
             reasons.append(f"G3 sync_proposal.proposals[{idx}].target_path={target_rel!r} が allowlist 外")
         # G4: pre-image 一致。null は「対象ファイル不在=新規作成提案」を表す。
+        # 実ファイルは正規化後の path で解決する (未正規化のまま join すると target_root の外を見る)。
         pre = p.get("pre_image_sha256")
-        actual_file = target_root / target_rel
+        safe_rel = normalize_target_path(target_rel)
+        if safe_rel is None:
+            continue  # G3 で既に不許可を記録済み。escape path の実ファイルは触らない
+        actual_file = target_root / safe_rel
         if pre is None:
             if actual_file.is_file():
                 reasons.append(
@@ -375,10 +407,13 @@ def evaluate(
         if not in_allowlist(target_rel):
             applied_reasons.append(f"sync_proposal.proposals[{idx}].target_path={target_rel!r} が allowlist 外")
         post = p.get("post_image_sha256")
+        safe_rel = normalize_target_path(target_rel)
         if not post:
             applied_reasons.append(f"sync_proposal.proposals[{idx}].post_image_sha256 が null/空 (未適用)")
+        elif safe_rel is None:
+            pass  # allowlist 外として記録済み。escape path の実ファイルは触らない
         else:
-            actual_file = target_root / target_rel
+            actual_file = target_root / safe_rel
             if not actual_file.is_file():
                 applied_reasons.append(f"sync_proposal.proposals[{idx}] post-image 対象ファイルが存在しない: {actual_file}")
             else:

@@ -113,8 +113,8 @@
       "fixture_cases_measured": 11,
       "fixture_cases_matching": 11,
       "close_gate_scenarios_measured": 6,
-      "pre_apply_gate_scenarios_measured": 7,
-      "gate_scenarios_measured_total": 13,
+      "pre_apply_gate_scenarios_measured": 9,
+      "gate_scenarios_measured_total": 15,
       "close_gate_all_match": true
     },
     "measurement_artifacts": [
@@ -128,7 +128,7 @@
       "scripts/eval-fixture-matrix.py",
       "scripts/eval-safety-matrix.py"
     ],
-    "measurement_note": "C01 の 4 軸+semantics 判定は既知正解セット (fixture_matrix_input) に対し軸レベル (case × axis) で precision=1.0 / recall=1.0 (TP=18/FP=0/FN=0) を実測 (11 case)。うち 2 case は 1 hunk が複数軸を同時に変える実 schema 編集の典型形 (軸ごとに hunk が分かれる前提の写像だと構造的に見逃す)、2 case は template kind (schema kind だけの fixture では観測できない過検出を捕捉する) で、いずれも恒久 case として固定。propose/audit/apply・verified-no-change・gate の合否は実 C10 を 13 シナリオ subprocess 起動して実測: close gate 6 (拒否4=proposal-only/未承認/監査FAIL/post-image hash drift は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2は exit0) + apply 前 gate 7 (--mode pre-apply。拒否6=pre-image hash drift/未承認/監査FAIL/allowlist外/verifier不同意/別diffへのagree流用 は exit1 で変更0件、許可1は exit0)。pre-image drift は close gate では構造上検出できない (適用後の実ファイルは post-image) ため apply 前 gate で実測する。C03/C04 は isolation:fork の独立 context で実起動し、開示していない合成欠陥を全て検出した。",
+    "measurement_note": "C01 の 4 軸+semantics 判定は既知正解セット (fixture_matrix_input) に対し軸レベル (case × axis) で precision=1.0 / recall=1.0 (TP=18/FP=0/FN=0) を実測 (11 case)。うち 2 case は 1 hunk が複数軸を同時に変える実 schema 編集の典型形 (軸ごとに hunk が分かれる前提の写像だと構造的に見逃す)、2 case は template kind (schema kind だけの fixture では観測できない過検出を捕捉する) で、いずれも恒久 case として固定。propose/audit/apply・verified-no-change・gate の合否は実 C10 を 15 シナリオ subprocess 起動して実測: close gate 6 (拒否4=proposal-only/未承認/監査FAIL/post-image hash drift は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2は exit0) + apply 前 gate 9 (--mode pre-apply。拒否8=pre-image hash drift/未承認/監査FAIL/allowlist外/allowlist traversal escape/allowlist 絶対path/verifier不同意/別diffへのagree流用 は exit1 で変更0件、許可1は exit0)。pre-image drift は close gate では構造上検出できない (適用後の実ファイルは post-image) ため apply 前 gate で実測する。C03/C04 は isolation:fork の独立 context で実起動し、開示していない合成欠陥を全て検出した。",
     "known_limitations": [
       "precision/recall は既知正解セットに対する写像規則の判定精度であり、実運用の未知 diff に対する精度ではない。fixture は planner 想定圏内にあるため楽観側バイアスを持つ。",
       "C02 (run-rubric-sync) の outer criteria は P04 定義どおり『未承認/監査FAIL/hash drift/allowlist逸脱で変更0件・承認済みは適用後 hash/validator 一致』であり safety matrix で実測した。C02 skill 自体を LLM 実行して提案品質を precision/recall 化する測定は行っていない (提案側欠陥を C04 監査が検出できることは実測済み)。",
@@ -136,7 +136,11 @@
       "apply 前ゲート (check-triage-complete.py --mode pre-apply) は advisory: R3-apply が Edit の前に呼ぶ規約であり、呼ばずに Edit することを機械的に止める hook は無い (hooks/guard-spec-drift-close.py は matcher=Bash の `gh issue close` 限定で Edit を捕捉しない)。ゲート未実行の apply は close ゲート (C10 --mode close) で post-image/agree/digest 不整合として遮断されるが、その時点では実ファイルが既に変更されている。PreToolUse(Edit) hook による強制は後続 issue で対応する。",
       "eval-safety-matrix の target_unchanged は write-scope:none の C10 に対し構造上必ず true になるため、ゲートが apply を止めた証拠ではない (真の証拠は exit code)。apply 自体は LLM の Edit なので、変更0件の end-to-end 実測は live-trial (OUT2) の範囲。",
       "写像表 (field-impact-map.json) は全 rule 照合で一致軸を全て採る。表に `.*` のような全一致規則を置くと全行に無条件一致して過検出源になるため禁止し、未一致は code 側 FALLBACK_AXIS (semantics) へ委譲する。fixture は schema/template/other kind を含むが、rubric kind の過検出は現 fixture では観測していない。",
-      "C11→C08 の結線は自動テストで固定していない: tests は C11 出力形状を手書き模倣した合成 payload を使い、実 C11 を subprocess 起動する結線テストは 0 件。C11 の出力形状が変わっても C08 側テストは緑のまま接続だけ壊れうる (手動では実 git repo で C11→C08→C09 exit 0/0/0・49 hunks を実測済み)。実結線テストの追加は後続 issue で対応する。"
+      "C11→C08 の結線は自動テストで固定していない: tests は C11 出力形状を手書き模倣した合成 payload を使い、実 C11 を subprocess 起動する結線テストは 0 件。C11 の出力形状が変わっても C08 側テストは緑のまま接続だけ壊れうる (手動では実 git repo で C11→C08→C09 exit 0/0/0・49 hunks を実測済み)。実結線テストの追加は後続 issue で対応する。",
+      "G3 allowlist の path 判定は字句正規化 (`..`/先頭 `./` の解決・絶対 path 拒否) までで、realpath 包含検査は行わない: allowlist 内の path が repo 外を指す symlink の場合は通過する。apply-gate-policy §1 が「symlink 追跡なし」を明記した仕様であり、symlink を commit できる権限は allowlist 対象の直接編集権限を含意するため昇格幅は限定的だが、realpath 検査の追加は後続 issue で検討する。",
+      "C09 の raw `lines` 経路 (hunk が unified diff 生行を持つ場合) は先頭 `---`/`+++` を file header と判定するため、本文行としての `---` (YAML frontmatter 区切り) や `--precision-min` の削除行が脱落しうる。現行 pipeline では C08 が `lines` を出さず `added_lines`/`removed_lines` 経路を通るため踏まないが、潜在バグとして残る (C08 は budget 追跡で同入力を正しく保持している)。",
+      "eval-fixture-matrix の --precision-min/--recall-min は実効ゲートではない: verdict は all_cases_match (期待集合==実測集合) が支配し、これが true なら定義上 precision=recall=1.0 になるため閾値は退化領域でしか効かない。",
+      "aggregate-issue-diffs の --issue は source_provenance へ echo されるだけで events の絞り込みには使われない (events FILE 側が issue 紐づきイベントのみで構成されている前提)。issue 紐付けの機械検証は行っていない。"
     ]
   },
   "evaluations": [
@@ -240,7 +244,7 @@
       "kind": "script",
       "verdict": "measured",
       "findings": [
-        "unit test pass / branch coverage 95%。13 シナリオ E2E で close 許可/遮断・apply 前ゲート (G1-G5: 監査PASS/承認/allowlist/pre-image一致/C03 agree + diff_sha256 束縛) の許可/遮断と副作用0件を実測。"
+        "unit test pass / branch coverage 95%。15 シナリオ E2E で close 許可/遮断・apply 前ゲート (G1-G5) の許可/遮断と副作用0件を実測。G3 は照合前に repo-root 相対へ正規化し `..` traversal・絶対 path を fail-closed (未正規化の fnmatch は `*` が `/` を跨ぐため `..` 列を吸収して fail-open していた)。"
       ]
     }
   ]

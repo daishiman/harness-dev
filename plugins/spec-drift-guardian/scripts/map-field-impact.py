@@ -25,7 +25,7 @@ hardcode せず、references/field-impact-map/field-impact-map.json を読んで
 判定手順:
   1. hunk の file_path を各 kind の path_globs (fnmatch) で照合し artifact_kind を
      決める (JSON 順で最初に一致した kind。どれにも一致しなければ other)。
-  2. hunk の追加/削除行本文 (先頭 +/- マーカ除去後) を、その kind の rules の
+  2. hunk の追加/削除行本文 (C08 が marker 除去済みで格納。ここで再除去しない) を、その kind の rules の
      match_any (Python re) 群へ全て照合し、一致した rule の axis を全て採る
      (1 hunk が複数軸を同時に変えうるため先勝ちで打ち切らない)。primary は rules 順で最初。
   3. before=削除行由来の値 / after=追加行由来の値 / evidence=一致 hunk 抜粋+file_path。
@@ -136,20 +136,17 @@ def detect_kind(file_path: str, kinds: dict) -> str:
     return FALLBACK_KIND
 
 
-def _strip_marker(line: str) -> str:
-    """先頭の単一 +/- マーカを除去する (+++/--- のファイルヘッダは対象外)。"""
-    if line[:3] in ("+++", "---"):
-        return line
-    if line[:1] in ("+", "-"):
-        return line[1:]
-    return line
-
-
 def _as_bodies(value: object) -> list[str]:
-    """added_lines/removed_lines を本文 list へ正規化する (単一マーカを除去)。"""
+    """added_lines/removed_lines を本文 list として取り出す。
+
+    C08 は `line[1:]` で diff marker を除去済みの本文を格納する契約なので、ここで
+    再度剥がしてはならない。二重除去すると本文先頭の `-`/`+` (YAML list item の
+    `- item`、markdown の箇条書き、diff 例を含む template 本文など) が欠落し、
+    エラーも出ないまま写像対象の文字列が変質する。
+    """
     if not isinstance(value, list):
         return []
-    return [_strip_marker(v) for v in value if isinstance(v, str)]
+    return [v for v in value if isinstance(v, str)]
 
 
 def extract_changes(hunk: dict) -> tuple[list[str], list[str], list[str]]:

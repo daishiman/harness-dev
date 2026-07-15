@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/eval-fixture-matrix.py",
+  "type": "scripts",
+  "mechanical": false,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 76,
+    "notes": "再レビュー (前回 PASS 76 → 76 据置)。script 未変更 (mtime Jul 14) で今回の修復対象外。前回の減点 3 件を独立に再実測し全て現存を確認したため据置。実行: --fixture tests/fixtures/issue17-matrix.json → [PASS] cases=11 precision=1.000 recall=1.000 all_match=True exit0。自己申告でなく実 subprocess で C09 を起動して測る姿勢は正しく、measure_case が軸フラグの true 全軸を採り primary だけを見ないため軸ごとに hunk を分けた fixture での見逃し隠蔽を避けている。score_matrix は case×axis ペア単位で TP/FP/FN を数え部分正解を満点にしない。感度も実測: 1 case の expected_axes を意図的に壊すと recall=0.857/all_match=False/exit1 と正しく赤へ転じる (空虚な緑ではない)。fixture が実 pipeline と同形状 (added_lines/removed_lines) を使う点も Goodhart 回避。write-scope は --out のみ、network:false・stdlib only。frontmatter 完備。DEDUCTION(-12): --precision-min/--recall-min が verdict に対して dead knob (実測で再確認)。PASS 条件は all_cases_match AND meets_threshold だが、all_cases_match=True は定義上 fp=fn=0 を含意し precision=recall=1.0 になるため閾値<=1.0 なら meets_threshold は常に true。実測: 正解 fixture では pmin=0.0/0.8/1.0 の全てで exit0、1 case を壊した fixture では recall=0.857 でも pmin=0.0 まで緩めて exit1 のまま。つまり閾値を動かしても結論は一切変わらず、実効ゲートは all_cases_match 単独で、閾値が verdict を変えうるのは pmin>1.0 (実測 exit1) という退化領域のみ。purpose が『precision-recall ゲートの実測器』と称し閾値を引数に出しているのに飾りなのは契約と実装の乖離 (厳しい側なので危険ではないが閾値運用ができると誤認させる)。DEDUCTION(-7): 既知正解セットの盲点。fixture の hunk は lines 経路 0 件 / added_lines 経路 16 件のため、C09 の raw lines 経路に実在する silent data loss (本文が '--' で始まる行の削除が脱落。map-field-impact.py の verdict 参照) を構造的に踏まず precision=1.000 を報告する。C5 precision-recall ゲートの唯一の裏付けがこれである以上、content class の欠落は正解セットの実質的な穴。DEDUCTION(-5): error-handling の取りこぼし (実測で再確認)。(a) C09 が exit1 (構造不正 hunk あり) を返しても returncode==2 のみを EvalError にするため violation を握り潰す — hunks=['not-an-object'] という完全に不正な case でも [PASS] cases=1 precision=1.000 all_match=True exit0 を報告した (測定器としての false green)。(b) fixture root が list だと fixture.get で素の AttributeError traceback となり exit2 の usage 契約から外れる (実測)。(c) json.loads(proc.stdout) の JSONDecodeError も EvalError に包まれない。TESTS: 本 script 専用の unit test は存在しない (tests/ 配下に該当なし) ため mechanical=false。score<80 のため coverage には計上されないが、実測に基づく正直な評価として据え置く (dead knob と false green が未修正のまま嵩上げしない)。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

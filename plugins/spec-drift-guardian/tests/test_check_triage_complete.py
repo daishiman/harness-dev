@@ -24,6 +24,8 @@ import importlib.util
 import json
 import subprocess
 import sys
+
+import pytest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "check-triage-complete.py"
@@ -652,3 +654,43 @@ def test_close_mode_still_requires_triage_artifacts(tmp_path):
         capture_output=True, text=True,
     )
     assert proc.returncode == 2 and "--triage-report" in proc.stderr
+
+
+# ───────────── allowlist の path 正規化 (apply-gate-policy §1) ─────────────
+# fnmatch は純字句照合で `*` が `/` を跨ぐため、正規化前に glob 照合すると `..` 列を
+# allowlist が吸収して fail-open する。policy §1 は「先頭 `./`・`..` を排除」を要求する。
+@pytest.mark.parametrize("path,allowed", [
+    ("plugins/harness-creator/skills/x/references/rubric.json", True),
+    ("./plugins/harness-creator/skills/x/references/rubric.json", True),
+    ("plugins/harness-creator/skills/x/schemas/y.schema.json", True),
+    # `..` で allowlist prefix を抜けて外部を指す (実体は repo/outside/rubric.json)
+    ("plugins/harness-creator/../../outside/rubric.json", False),
+    ("plugins/harness-creator/../../../etc/rubric.json", False),
+    ("plugins/harness-creator/skills/../../other-plugin/rubric.json", False),
+    # repo-root より上へ出る / 絶対 path
+    ("../outside/rubric.json", False),
+    ("/etc/passwd", False),
+    ("/plugins/harness-creator/x/rubric.json", False),
+    ("", False),
+])
+def test_allowlist_normalizes_before_glob_match(path, allowed):
+    assert C10.in_allowlist(path) is allowed
+
+
+def test_pre_apply_blocks_path_traversal_escape(tmp_path):
+    """G3: `..` で allowlist の外を指す target_path を apply させない (fail-open 防止)。
+
+    他の全ゲート (承認・監査PASS・agree・pre-image 一致) を満たしていても止まること。
+    """
+    root = tmp_path / "repo"
+    outside = root / "outside"
+    outside.mkdir(parents=True)
+    victim = outside / "rubric.json"
+    victim.write_text('{"victim": true}', encoding="utf-8")
+    sha = hashlib.sha256(victim.read_bytes()).hexdigest()
+    escape = "plugins/harness-creator/../../outside/rubric.json"
+    proc = _run_pre_apply(tmp_path, _proposed(sha, target_path=escape), base_audit("PASS"), root)
+    assert proc.returncode == 1
+    assert "G3" in proc.stderr and "allowlist 外" in proc.stderr
+    # ゲート自身は副作用なし (write-scope:none)
+    assert victim.read_text(encoding="utf-8") == '{"victim": true}'

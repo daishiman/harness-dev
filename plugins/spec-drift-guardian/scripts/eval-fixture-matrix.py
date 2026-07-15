@@ -58,9 +58,18 @@ def measure_case(case: dict, map_script: Path) -> list[str]:
         capture_output=True,
         text=True,
     )
-    if proc.returncode == 2:
-        raise EvalError(f"map-field-impact usage/IO error for case {case.get('case')!r}: {proc.stderr.strip()}")
-    impacts = json.loads(proc.stdout) if proc.stdout.strip() else []
+    # exit 1 (構造不正 hunk) を握り潰すと、壊れた fixture でも「検出 0 件」として
+    # precision=1.000 の false green になる。実測器自身が測定不能を隠さない。
+    if proc.returncode != 0:
+        raise EvalError(
+            f"map-field-impact exit {proc.returncode} for case {case.get('case')!r}: {proc.stderr.strip()}"
+        )
+    try:
+        impacts = json.loads(proc.stdout) if proc.stdout.strip() else []
+    except json.JSONDecodeError as exc:
+        raise EvalError(f"map-field-impact stdout が JSON でない (case {case.get('case')!r}): {exc}") from exc
+    if not isinstance(impacts, list):
+        raise EvalError(f"map-field-impact stdout が配列でない (case {case.get('case')!r})")
     axes: set[str] = set()
     for i in impacts:
         flagged = {a for a in AXES if i.get(a) is True}
@@ -143,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         if not fixture_path.is_file():
             raise EvalError(f"fixture not found: {fixture_path}")
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        if not isinstance(fixture, dict):
+            raise EvalError("fixture root が object でない ({cases:[...]} を期待)")
         cases = fixture.get("cases")
         if not isinstance(cases, list) or not cases:
             raise EvalError("fixture.cases が非空 list でない")

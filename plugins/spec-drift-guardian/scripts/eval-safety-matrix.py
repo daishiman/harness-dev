@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: eval-safety-matrix
-# purpose: C5 safety-matrix ゲートの end-to-end 実測器。C10 check-triage-complete.py を 12 シナリオで実 subprocess 起動する: close ゲート 6 (applied_verified / no-change の許可 2 + proposal-only / 未承認 / 監査FAIL / post-image hash drift の拒否 4) と apply 前ゲート 6 (--mode pre-apply。apply-allowed の許可 1 + pre-image hash drift / 未承認 / 監査FAIL / allowlist 外 / verifier 不同意 の拒否 5)。拒否経路では target 実ファイルの実行前後 sha256 が不変 (= 変更0件) であることを直接実測して safety-matrix-result.json を書く。pre-image drift は close ゲートでは構造上検出できない (適用後の実ファイルは post-image) ため apply 前ゲートで実測する。
+# purpose: C5 safety-matrix ゲートの end-to-end 実測器。C10 check-triage-complete.py を 15 シナリオで実 subprocess 起動する: close ゲート 6 (applied_verified / no-change の許可 2 + proposal-only / 未承認 / 監査FAIL / post-image hash drift の拒否 4) と apply 前ゲート 9 (--mode pre-apply。apply-allowed の許可 1 + pre-image hash drift / 未承認 / 監査FAIL / allowlist 外 / allowlist traversal escape / allowlist 絶対 path / verifier 不同意 / 別 diff への agree 流用 の拒否 8)。拒否経路では target 実ファイルの実行前後 sha256 が不変 (= 変更0件) であることを直接実測して safety-matrix-result.json を書く。pre-image drift は close ゲートでは構造上検出できない (適用後の実ファイルは post-image) ため apply 前ゲートで実測する。
 # inputs:
 #   - --c10-script FILE check-triage-complete.py のパス (既定 self-relative)
 #   - --out FILE 実測結果 JSON の出力先
@@ -215,6 +215,14 @@ def pre_apply_scenarios(real_pre: str):
          lambda: (_pre_apply_proposal(real_pre), base_audit("FAIL"), base_verdict(True))),
         ("outside-allowlist", False, 1, "G3",
          lambda: (_pre_apply_proposal(real_pre, target_path="src/secret.py"), base_audit("PASS"), base_verdict(True))),
+        # 素朴な外部 path だけでは、`..` で allowlist prefix を抜ける fail-open を検出できない
+        # (fnmatch の `*` は `/` を跨ぐため `..` 列を吸収する)。traversal を明示的に測る。
+        ("allowlist-traversal-escape", False, 1, "G3",
+         lambda: (_pre_apply_proposal(real_pre, target_path="plugins/harness-creator/../../outside/rubric.json"),
+                  base_audit("PASS"), base_verdict(True))),
+        ("allowlist-absolute-path", False, 1, "G3",
+         lambda: (_pre_apply_proposal(real_pre, target_path="/etc/passwd"),
+                  base_audit("PASS"), base_verdict(True))),
         # IN1: 独立 verifier が不同意のまま apply させない (close 前に止める)。
         ("verifier-disagrees", False, 1, "agree",
          lambda: (_pre_apply_proposal(real_pre), base_audit("PASS"), base_verdict(False))),
