@@ -126,6 +126,12 @@
         "matcher": ".*",
         "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\"",
         "from_plugin": "skill-intake"
+      },
+      {
+        "event": "PreToolUse",
+        "matcher": "Write|Edit|MultiEdit",
+        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
+        "from_plugin": "ubm-goal-setting"
       }
     ],
     "managed_permissions": []
@@ -327,6 +333,15 @@
             "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\""
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -443,6 +458,7 @@
   "enabledPlugins": {
     "contract-generator@skills": true,
     "harness-creator@skills": true,
-    "skill-intake@skills": true
+    "skill-intake@skills": true,
+    "ubm-goal-setting@skills": true
   }
 }
