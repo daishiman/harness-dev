@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/aggregate-issue-diffs.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "再レビュー (前回 PASS 84 → 84 据置)。script 未変更 (mtime Jul 13) で、今回は隔離した実 git repo を新規構築して end-to-end 再検証。中核主張 (spec-diff-history の 80行 preview を索引にだけ使い完全 diff は commit pair から復元) が機能することを実測: 'chore: update yaml-spec-cache (<heading>)' の exact subject 照合で cache commit を解決し親 commit との pair から diff を復元、complete=true + sha256 を付して untriaged_entries を emit (exit0)。未triage 2 件で entries=2/untriaged=2、triaged フラグを立てると untriaged=1 と、triaged/untriaged の分離も実測どおり。fail-closed 経路は網羅的: _ensure_not_shallow が is-shallow-repository の true でも判定失敗でも exit2 (古い git で判定不能なら完全性を保証できないという正しい向き)、_build_subject_index で --all 横断し subject 一致 0件/複数件を曖昧照合として exit2、親 commit 欠落と cat-file -e 不在を個別に exit2、expected_diff_sha256 不一致で exit2。全 violation に回復手順を添え network:false ゆえ自動 fetch しないことを明示 (宣言と実挙動が一致)。_DIFF_FLAGS が color.ui=false/--no-ext-diff/--no-textconv で環境非依存の決定論 diff を保証。_ArgumentParser が argparse 既定の exit2 を exit1 へ再写像し exit2=完全性違反の意味論衝突を回避。sort_key に (時刻, 見出し, source commit) を使う安定ソートも決定論的。git read-only のみで write-scope:none を実際に守る。frontmatter 完備。DEDUCTION(-10): C11↔C08 の契約不整合が未解消 (今回も e2e で再現)。本 script の存在意義は purpose 記載どおり『最新1件固定でなく issue 単位の積層』で untriaged_entries を複数返しうるが、documented consumer の C08 parse-spec-diff.py は provenance が複数になると exit2 で判定拒否する。未triage 2 件という本来の想定ケースで C11 stdout が下流を通らず、commit pair 単位の分割手順は呼び出し側 (R-verify-impact.md / spec-impact-verifier.md) にも記述が無い。fail-closed 方向ゆえ危険側ではないが、pipeline の看板機能が接続不能。DEDUCTION(-6): --issue が実質的に装飾。required 引数だが _aggregate 内では source_provenance['issue'] へ echo されるだけで events の絞り込みに一切使われず、『issue に紐づく』束縛は events ファイルの正しさに全面依存する (本 script は issue 紐付けを検証できない)。events 側に issue 番号を持たせて照合するか、purpose の主語を events 提供者へ移すのが正確。DEDUCTION(-4): _build_subject_index が毎回 git log --all を全走査 (履歴規模に線形)。TESTS: tests/test_aggregate_issue_diffs.py (plugin suite 103 passed)。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

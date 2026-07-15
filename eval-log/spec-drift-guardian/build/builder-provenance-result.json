@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "provenance_basis": "実 build 一次証跡 (dispatcher が build 時に書いた route-build report)。後付け trace ではなく build 過程そのものの記録。",
+  "validator": {
+    "command": "validate-route-build-reports.py --complete",
+    "exit_code": 0,
+    "valid": true
+  },
+  "required_traces": 1,
+  "valid_traces": 11,
+  "total_route_traces": 11,
+  "skill_traces": [
+    {
+      "route_id": "C01",
+      "component_kind": "skill",
+      "name": "run-spec-drift-triage",
+      "builder": "run-skill-create",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C01.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C02",
+      "component_kind": "skill",
+      "name": "run-rubric-sync",
+      "builder": "run-skill-create",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C02.json",
+      "evidence_count": 3,
+      "has_deviations": true
+    }
+  ],
+  "traces": [
+    {
+      "route_id": "C01",
+      "component_kind": "skill",
+      "name": "run-spec-drift-triage",
+      "builder": "run-skill-create",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C01.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C02",
+      "component_kind": "skill",
+      "name": "run-rubric-sync",
+      "builder": "run-skill-create",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C02.json",
+      "evidence_count": 3,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C03",
+      "component_kind": "sub-agent",
+      "name": "spec-impact-verifier",
+      "builder": "run-build-skill",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C03.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C04",
+      "component_kind": "sub-agent",
+      "name": "rubric-sync-auditor",
+      "builder": "run-build-skill",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C04.json",
+      "evidence_count": 5,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C05",
+      "component_kind": "slash-command",
+      "name": "spec-drift-triage",
+      "builder": "run-build-skill",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C05.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C06",
+      "component_kind": "slash-command",
+      "name": "rubric-sync",
+      "builder": "run-build-skill",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C06.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C07",
+      "component_kind": "hook",
+      "name": "guard-spec-drift-close",
+      "builder": "run-build-skill",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C07.json",
+      "evidence_count": 5,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C08",
+      "component_kind": "script",
+      "name": "parse-spec-diff.py",
+      "builder": "plugin-scaffold",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C08.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C09",
+      "component_kind": "script",
+      "name": "map-field-impact.py",
+      "builder": "plugin-scaffold",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C09.json",
+      "evidence_count": 5,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C10",
+      "component_kind": "script",
+      "name": "check-triage-complete.py",
+      "builder": "plugin-scaffold",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C10.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    },
+    {
+      "route_id": "C11",
+      "component_kind": "script",
+      "name": "aggregate-issue-diffs.py",
+      "builder": "plugin-scaffold",
+      "status": "success",
+      "report": "eval-log/spec-drift-guardian/build/route-C11.json",
+      "evidence_count": 4,
+      "has_deviations": true
+    }
+  ],
+  "meets_requirement": true
+}

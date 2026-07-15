@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "c10_script": "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260713-153259-wt-3/plugins/spec-drift-guardian/scripts/check-triage-complete.py",
+  "scenario_count": 6,
+  "reject_scenarios_block_and_no_change": true,
+  "allow_scenarios_permit": true,
+  "all_scenarios_match": true,
+  "scenarios": [
+    {
+      "scenario": "applied_verified",
+      "expected": {
+        "allow_close": true,
+        "exit": 0,
+        "status_or_reason_contains": "applied_verified"
+      },
+      "actual": {
+        "exit": 0,
+        "status": "applied_verified",
+        "close_blocked": false
+      },
+      "target_unchanged": true,
+      "match": true
+    },
+    {
+      "scenario": "no-change",
+      "expected": {
+        "allow_close": true,
+        "exit": 0,
+        "status_or_reason_contains": "independently_verified_no_change"
+      },
+      "actual": {
+        "exit": 0,
+        "status": "independently_verified_no_change",
+        "close_blocked": false
+      },
+      "target_unchanged": true,
+      "match": true
+    },
+    {
+      "scenario": "proposal-only",
+      "expected": {
+        "allow_close": false,
+        "exit": 1,
+        "status_or_reason_contains": "applied_verified"
+      },
+      "actual": {
+        "exit": 1,
+        "status": "sync_proposal.status='proposed' が applied_verified でない (proposal-only は close 不可)",
+        "close_blocked": true
+      },
+      "target_unchanged": true,
+      "match": true
+    },
+    {
+      "scenario": "unapproved",
+      "expected": {
+        "allow_close": false,
+        "exit": 1,
+        "status_or_reason_contains": "approval.granted"
+      },
+      "actual": {
+        "exit": 1,
+        "status": "sync_proposal.approval.granted が true でない (明示承認なし)",
+        "close_blocked": true
+      },
+      "target_unchanged": true,
+      "match": true
+    },
+    {
+      "scenario": "audit-FAIL",
+      "expected": {
+        "allow_close": false,
+        "exit": 1,
+        "status_or_reason_contains": "PASS"
+      },
+      "actual": {
+        "exit": 1,
+        "status": "sync_audit_verdict.verdict='FAIL' が PASS でない",
+        "close_blocked": true
+      },
+      "target_unchanged": true,
+      "match": true
+    },
+    {
+      "scenario": "hash-drift",
+      "expected": {
+        "allow_close": false,
+        "exit": 1,
+        "status_or_reason_contains": "post-image"
+      },
+      "actual": {
+        "exit": 1,
+        "status": "sync_proposal.proposals[0] 実ファイル post-image sha256 が post_image_sha256 と不一致 (drift): actual=720cfec9ff09b8b2bb47fe1d44e2bbab56efce20e3c711e8e43cd24908359827 expected=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "close_blocked": true
+      },
+      "target_unchanged": true,
+      "match": true
+    }
+  ]
+}

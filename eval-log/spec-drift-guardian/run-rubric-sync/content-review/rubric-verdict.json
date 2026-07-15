@@ -1,0 +1,40 @@
+{
+  "target": {
+    "plugin": "spec-drift-guardian",
+    "skill": "run-rubric-sync",
+    "skill_md_sha256": "4cc928b524693bf090bab36a14f11efc63af2b01b74e5eda298e92099814637d"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "claude-opus-4-8 (independent content review, fresh context, round 8)",
+  "reviewed_at": "2026-07-14T16:00:00Z",
+  "iterations": 8,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "[NM-001 (high) PASS] rubric 定義 (ref-skill-design-rubric/references/rubric.json) は『basename of skill directory == frontmatter.name』。実測で skill ディレクトリ basename = 'run-rubric-sync'、SKILL.md frontmatter の name = 'run-rubric-sync' で一致。命名 lint も実行: `python3 scripts/lint-skill-name.py plugins/spec-drift-guardian/skills/run-rubric-sync/SKILL.md` → 'ok: run-rubric-sync' / exit 0。`scripts/validate-frontmatter.py` も 'ok: run-rubric-sync' / exit 0。prefix: run と kind: run が frontmatter 内で整合し、動詞始まりの run-<対象>-<動作> 形に適合。",
+      "[BD-001 (high) PASS] rubric 定義は『body contains heading \\'## Purpose & Output Contract\\'』の厳格一致。SKILL.md L78 に `^## Purpose & Output Contract$` が 1 件 (grep -c で実測)。内容も入力 (--issue / --mode、C01 triage-report・C03 triage-verdict を read-only 参照、apply では C04 sync-audit-verdict) / 出力 (sync-proposal.json を schemas/sync-proposal.schema.json 準拠で emit、proposals[] コンテナ形、propose と apply の status・post_image_sha256・validator_results の別) / 完了条件 (propose と apply の各 2 条) を具体的に規定しており、見出しだけの空契約ではない。BD-001 PASS により rationale の言う PD-002 (冒頭 30 行内の Purpose/Output Contract 出現) も自動充足。",
+      "[BD-002 (medium) PASS] rubric 定義は『body contains heading \\'## Gotchas\\'』。SKILL.md L138 に `^## Gotchas$` が 1 件 (grep -c で実測)。配下に 7 項目 (propose で Edit しない / allowlist は target_path で明示 / proposal_sha256 の安定性 / hash drift は fail-closed / status は 2 値のみ / 配置非依存 / agent は消費のみ) の実際的な落とし穴が列挙され、いずれも本 skill 固有の失敗様式 (proposer≠approver、Goodhart 化、drift 見落とし) に対応している。",
+      "[300 行 cap PASS] SKILL.md は全体 167 行、frontmatter (L1-72) を除いた body は 94 行で cap の 31%。参照ファイルも全て cap 内: prompts/R1-elicit.md 131 / R2-plan.md 135 / R3-apply.md 143 / references/apply-gate-policy.md 118。allowlist glob・apply-gate 条件・pre/post hash 手順・proposal_sha256 正規化・fail-closed マトリクスの逐語詳細を references/apply-gate-policy.md へ外出しして SSOT 一元化する構成が、本文の肥大を防ぎつつ PD-001 (本文 100 行超なら references/ 必須) とも整合。",
+      "[frontmatter feedback_contract 実読] criteria id は IN1 (loop_scope: inner / verify_by: script) / OUT1 (outer / test) / OUT2 (outer / live-trial) の 3 件で、criteria_evaluated はこれを全て網羅。max_iterations: 3 が feedback_loop.iteration_limit と一致。各 criterion は本 skill 固有の受入 (allowlist 限定適用・fail-closed・auditor 実発火・AskUserQuestion 承認 gate) を述べ、汎用ゲート言い換えへ退化していない。`python3 scripts/lint-feedback-contract.py --all` は [OK] 67 loop-kind skill(s) carry per-skill criteria / exit 0 で、本 skill は baseline 免除 WARN の対象外。",
+      "[G1-G5 記述の rubric 適合を再実測] 前回 rubric review 以降の修復後も cap・見出し・命名の適合は不変であることを確認。加えて `grep -rn \"G1-G4|の 4 条件\" plugins/spec-drift-guardian/ | grep -v eval-log` = 0 件を実測し、SKILL.md 本文の apply-gate 記述 (L76/88/95/97/99/101-105/133/140/160-161/166) が全て G1-G5 で一貫。",
+      "[周辺 lint の実測] `scripts/lint-skill-description.py` = summary: OK=89 VIOLATION=0 / exit 0。`scripts/lint-skill-tree.py plugins/spec-drift-guardian/skills/run-rubric-sync` = 'ok: run-rubric-sync' / exit 0。`scripts/lint-script-naming.py` = summary: OK=137 EXCEPTION=19 PENDING=255 VIOLATION=0 / exit 0 (本 plugin の script に VIOLATION なし)。`scripts/validate-plugin-completeness.py` = OK: 22 plugin(s) complete / exit 0。`scripts/lint-plugin-lint-coverage.py` = ok / exit 0。",
+      "[構造検証の再実測] `cd plugins/spec-drift-guardian && python3 -m pytest -q` = 90 passed。`eval-safety-matrix.py --out /tmp/sf8.json` = [PASS] scenarios=13 all_match=True / exit 0。responsibility_refs (3)・schema_refs (4)・reference_refs (2)・script_refs (2)・agents (2) の計 13 ref が指す実体は全て存在確認済みで dangling reference なし。"
+    ],
+    "negative_feedback": [],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "独立 context で rubric 適合を実測。命名 lint (NM-001) / 300 行 cap / BD-001 / BD-002 は全て PASS。NM-001 は dirname == frontmatter.name = 'run-rubric-sync' を実測し lint-skill-name.py・validate-frontmatter.py とも exit 0。BD-001 は '## Purpose & Output Contract' の厳格一致見出しを SKILL.md L78 に確認 (grep -c = 1) し、契約内容も入力/出力/完了条件が具体規定されている。BD-002 は '## Gotchas' を L138 に確認 (grep -c = 1) し、配下 7 項目が本 skill 固有の失敗様式に対応。300 行 cap は body 94 行 (全体 167 行) で 31%、参照ファイルも最大 143 行と全て cap 内。SHA は shasum -a 256 で現物確認し 4cc928b5... と一致。criteria_evaluated は SKILL.md frontmatter feedback_contract.criteria (IN1/OUT1/OUT2) を実読して全件収載。OUT2 は verify_by: live-trial のため本 content review では記述適合性のみ評価し、実セッション観測は live-trial の責務。今回の修復 (G1-G5 化) は cap・見出し・命名の rubric 適合に影響せず、rubric 層では新規 finding なし。"
+}

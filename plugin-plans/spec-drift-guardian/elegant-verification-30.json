@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "PLUGIN-DEV-PLAN-ELEGANT-VERIFY",
+  "target": "plugin-plans/spec-drift-guardian",
+  "reset_observation": {
+    "purpose": "Issue #17の検知後対応を完全diffから検証可能な更新・close gateへつなぐL3 plan",
+    "scope": "plan成果物のみ。実plugin build、対象rubric更新、GitHub Issue closeは範囲外",
+    "initial_component_count": 11,
+    "initial_conditions": {
+      "矛盾なし": "FAIL",
+      "漏れなし": "FAIL",
+      "整合性あり": "FAIL",
+      "依存関係整合": "FAIL"
+    }
+  },
+  "methods": [
+    {"id": 1, "family": "論理分析系", "name": "批判的思考", "applied": true, "observation": "proposal-onlyのC02/C10ではIssue #17 step3完了を証明できないと反証した", "finding_refs": ["EV-003"]},
+    {"id": 2, "family": "論理分析系", "name": "演繹思考", "applied": true, "observation": "決定論変換はscript、独立判定はsub-agent、承認オーケストレーションはcommandへ写像した", "finding_refs": ["EV-004"]},
+    {"id": 3, "family": "論理分析系", "name": "帰納的思考", "applied": true, "observation": "既往planのcomponent/phase分離と比較し11実体維持が適切と判断した", "finding_refs": ["EV-005"]},
+    {"id": 4, "family": "論理分析系", "name": "アブダクション", "applied": true, "observation": "全diff集約主張と80行previewの不一致原因をsource fidelity欠落と仮説化しgit差分945行で裏取りした", "finding_refs": ["EV-001"]},
+    {"id": 5, "family": "論理分析系", "name": "垂直思考", "applied": true, "observation": "P01からP13へ完全diff、判定、apply、証跡、handoffが連続するよう修正した", "finding_refs": ["EV-001", "EV-005"]},
+    {"id": 6, "family": "構造分解系", "name": "要素分解", "applied": true, "observation": "C02をcomponent分割せずpropose/applyの明示状態機械へ分解し責務境界を固定した", "finding_refs": ["EV-003"]},
+    {"id": 7, "family": "構造分解系", "name": "MECE", "applied": true, "observation": "完全diff、4軸判定、独立verdict、監査、承認、適用、検証、closeを機能クラスタとinventoryで突合した", "finding_refs": ["EV-001", "EV-002", "EV-003", "EV-004"]},
+    {"id": 8, "family": "構造分解系", "name": "2軸思考", "applied": true, "observation": "component_kind×依存深さで5種kindとC11始点/C07終点の偏りを確認した", "finding_refs": ["EV-005"]},
+    {"id": 9, "family": "構造分解系", "name": "プロセス思考", "applied": true, "observation": "13phase軸と11component build軸の数・参照ずれを修正した", "finding_refs": ["EV-005"]},
+    {"id": 10, "family": "メタ・抽象系", "name": "メタ思考", "applied": true, "observation": "分解規則がpreviewの完全性を無検証で仮定した前提を見直した", "finding_refs": ["EV-001"]},
+    {"id": 11, "family": "メタ・抽象系", "name": "抽象化思考", "applied": true, "observation": "具体名を外しsource→classification→decision→mutation→verification→closureの抽象機能列を再導出した", "finding_refs": ["EV-001", "EV-004"]},
+    {"id": 12, "family": "メタ・抽象系", "name": "ダブル・ループ思考", "applied": true, "observation": "fixture追加だけでなく完全性provenanceと独立verdictを分解ルールへ戻した", "finding_refs": ["EV-001", "EV-007"]},
+    {"id": 13, "family": "発想・拡張系", "name": "ブレインストーミング", "applied": true, "observation": "Issue #17実差分からsettings、doctor、MCP、hook、sub-agent、no-impact候補を発散した", "finding_refs": ["EV-007"]},
+    {"id": 14, "family": "発想・拡張系", "name": "水平思考", "applied": true, "observation": "類似pluginの独立verdict/close gate構成を横展開しartifact配線漏れを検出した", "finding_refs": ["EV-004"]},
+    {"id": 15, "family": "発想・拡張系", "name": "逆説思考", "applied": true, "observation": "component追加が常に品質向上ではないとし既存11実体内で責務を閉じた", "finding_refs": ["EV-003"]},
+    {"id": 16, "family": "発想・拡張系", "name": "類推思考", "applied": true, "observation": "提案者と承認者を分ける既存gate契約からtriage/audit verdict schemaを類推した", "finding_refs": ["EV-004"]},
+    {"id": 17, "family": "発想・拡張系", "name": "if思考", "applied": true, "observation": "C11/C03/C04/C10が無い場合の取りこぼし・自己承認・proposal-only closeを思考実験した", "finding_refs": ["EV-001", "EV-004"]},
+    {"id": 18, "family": "発想・拡張系", "name": "素人思考", "applied": true, "observation": "index単読で実適用有無とIssue close完了を誤解する記述を明確化した", "finding_refs": ["EV-003", "EV-008"]},
+    {"id": 19, "family": "システム系", "name": "システム思考", "applied": true, "observation": "C11→C08→C09→C01→C03/C02→C04→C10→C07の入出力網を閉じた", "finding_refs": ["EV-004", "EV-005"]},
+    {"id": 20, "family": "システム系", "name": "因果関係分析", "applied": true, "observation": "Issue要件→完全diff→4軸影響→対象変更→検証済みcloseの因果連鎖を復元した", "finding_refs": ["EV-001", "EV-002", "EV-003"]},
+    {"id": 21, "family": "システム系", "name": "因果ループ", "applied": true, "observation": "depends_onを再計算しC10がC03/C04へ依存しても循環しないことを確認した", "finding_refs": ["EV-004"]},
+    {"id": 22, "family": "戦略・価値系", "name": "トレードオン思考", "applied": true, "observation": "11 component維持と厳格な承認/検証を両立した", "finding_refs": ["EV-003"]},
+    {"id": 23, "family": "戦略・価値系", "name": "プラスサム思考", "applied": true, "observation": "plugin-scaffoldへscript/reference/schema ownerを集約し各builderの手戻りを減らした", "finding_refs": ["EV-006"]},
+    {"id": 24, "family": "戦略・価値系", "name": "価値提案思考", "applied": true, "observation": "各componentを取りこぼし防止、判断再現、誤更新防止、早期close防止へ接続した", "finding_refs": ["EV-001", "EV-003", "EV-004"]},
+    {"id": 25, "family": "戦略・価値系", "name": "戦略的思考", "applied": true, "observation": "完全diff provenanceと外部close gapを将来拡張可能な契約として明示した", "finding_refs": ["EV-001", "EV-008"]},
+    {"id": 26, "family": "問題解決系", "name": "why思考", "applied": true, "observation": "なぜproposal-onlyへ退化したかを掘り、L3とL4の境界を実行責務と計画責務で混同したことを根因化した", "finding_refs": ["EV-003"]},
+    {"id": 27, "family": "問題解決系", "name": "改善思考", "applied": true, "observation": "全findingをmode=updateの最小Edit差分へ落とした", "finding_refs": ["EV-001", "EV-002", "EV-003", "EV-004", "EV-005", "EV-006", "EV-007"]},
+    {"id": 28, "family": "問題解決系", "name": "仮説思考", "applied": true, "observation": "最適分解仮説をpreview欠落、独立verdict未接続、数不一致で反証し修正後に再検証する", "finding_refs": ["EV-001", "EV-004", "EV-005"]},
+    {"id": 29, "family": "問題解決系", "name": "論点思考", "applied": true, "observation": "4条件に直結する完全性/網羅/契約/DAGを命名好みより優先した", "finding_refs": ["EV-001", "EV-005"]},
+    {"id": 30, "family": "問題解決系", "name": "KJ法", "applied": true, "observation": "3独立agentの指摘をsource fidelity、classification、apply/close、phase/handoffの4クラスタへ統合した", "finding_refs": ["EV-001", "EV-002", "EV-003", "EV-004", "EV-005", "EV-006", "EV-007", "EV-008"]}
+  ],
+  "finding_clusters": [
+    {"id": "KJ-1", "name": "source fidelity", "findings": ["EV-001", "EV-007"]},
+    {"id": "KJ-2", "name": "classification contract", "findings": ["EV-002", "EV-004"]},
+    {"id": "KJ-3", "name": "apply and closure", "findings": ["EV-003", "EV-008"]},
+    {"id": "KJ-4", "name": "phase and handoff consistency", "findings": ["EV-005", "EV-006"]}
+  ],
+  "iterations": [
+    {"iteration": 1, "result": "FAIL", "reason": "初期8 findingを検出"},
+    {"iteration": 2, "result": "PASS", "reason": "planner標準11ゲート、provenance、goal-spec、route/deps/toposort/phase coverage/30-method/schema-owner意味検証が全PASS"}
+  ],
+  "validation_evidence": {
+    "planner_evaluator": "plan-findings.json verdict=PASS; C1/C2/C3/C4=PASS",
+    "goal_spec": "check-plugin-goal-spec exit0",
+    "provenance": "check-provenance-chain --require-improvement --resolve exit0",
+    "inventory_handoff": "11 ids/dependencies一致、route top-sort成立",
+    "phase_coverage": "全11 componentがentities_covered unionに存在",
+    "method_coverage": "30 entries、30 unique names、全applied=true",
+    "schema_surface": "4 artifact schemasとreferences_config_assets/schemas ownerを確認"
+  },
+  "final_conditions": {
+    "矛盾なし": "PASS",
+    "漏れなし": "PASS",
+    "整合性あり": "PASS",
+    "依存関係整合": "PASS"
+  }
+}

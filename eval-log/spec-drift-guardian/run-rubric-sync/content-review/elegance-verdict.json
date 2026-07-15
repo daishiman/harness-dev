@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "spec-drift-guardian",
+    "skill": "run-rubric-sync",
+    "skill_md_sha256": "4cc928b524693bf090bab36a14f11efc63af2b01b74e5eda298e92099814637d"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "claude-opus-4-8 (independent content review, fresh context, round 8)",
+  "reviewed_at": "2026-07-14T16:00:00Z",
+  "iterations": 8,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "[前回 3 findings の一括解消を実測] `grep -rn \"G1-G4|の 4 条件\" plugins/spec-drift-guardian/ | grep -v eval-log` は 0 件 (exit 1)。plugin 全体を走査すると G-series 表記は G1-G5 が 36 箇所で一様、『4 条件』は皆無、『5 条件』2 箇所、『1 条件』3 箇所は全て「1 条件でも欠けたら変更 0 件」という fail-closed 表現で正しい用法。",
+      "[前回 finding 1 解消] plugin-composition.yaml:23 の C02 invariant が『C04 verdict=PASS・ユーザー明示承認・allowlist 内・pre-image hash 一致・C03 agree (対象 diff の diff_sha256 束縛つき) の 5 条件 (G1-G5) を満たさない場合は変更 0 件で fail-closed。判定は C10 --mode pre-apply の exit code で機械検証する』へ更新。C02 の書き込みゲートを規定する唯一の合成不変条件が SSOT (apply-gate-policy.md §2) の G1-G5 AND と条件・順序ともに一致し、機械検証手段も明示された。",
+      "[前回 finding 2 解消] eval-safety-matrix.py の 3 箇所が G1-G5 へ追従: L25 module docstring『apply 前ゲート (--mode pre-apply): G1-G5 (監査PASS/承認/allowlist/pre-image一致/C03 agree + diff_sha256 束縛)』/ L202 pre_apply_scenarios docstring『apply 前ゲート (--mode pre-apply / G1-G5) の (name, allow?, exit, substr, build) 列挙』/ L301 main コメント『apply 前ゲート (G1-G5)』。当の pre_apply_scenarios が実測する G5 系 2 シナリオ (verifier-disagrees→substr 'agree' / agree-for-other-diff→substr 'diff_sha256') を docstring が過少記述する自関数矛盾が解消した。",
+      "[前回 finding 3 解消] R3-apply.md:141 の括弧内が『G1 監査 PASS / G2 明示承認 / G3 allowlist 内 / G4 pre-image hash 一致 / G5 C03 agree + diff_sha256 束縛』となり、label『apply-gate G1-G5』に対し括弧内も 5 要素で一致 (前回は 5 を名乗る括弧に 4 要素)。判定が `check-triage-complete.py --mode pre-apply` の exit 0 である旨も同行に明記された。",
+      "[整合性: 5 ファイル横断で G1..G5 の割当が同一] SKILL.md:101-105 / apply-gate-policy.md:35-39 / R3-apply.md:141 / plugin-composition.yaml:23 / eval-safety-matrix.py:25 の全てで 監査PASS→承認→allowlist→pre-image一致→C03 agree の順序が一致。eval-safety-matrix.py の assertion substr (audit-FAIL→'G1' / unapproved→'G2' / outside-allowlist→'G3' / pre-image-hash-drift→'hash drift' / verifier-disagrees→'agree' / agree-for-other-diff→'diff_sha256') も同 label 体系に整合。",
+      "[矛盾なし] apply-gate-policy.md:3 の SSOT 宣言 (『SKILL.md と prompts/R2-plan.md/R3-apply.md はここを参照し、規則を各所へ再定義しない』) が実態と一致。G1-G5 は AND・部分適用禁止 (policy:54) が SKILL.md:88『部分適用禁止』および R3-apply.md:143『1 条件でも欠けたら変更 0 件』と齟齬なく揃う。",
+      "[doc の command を逐語実行して exit 0 に到達] apply-gate-policy.md:44-48 の code block を $CLAUDE_PLUGIN_ROOT 設定のうえ逐語実行 (issue=17、eval-safety-matrix の helper で組んだ実 fixture、--target-root=fixture root) し stdout {\"result\":\"OK\",\"status\":\"apply_allowed\",\"reasons\":[]} / exit 0 を実測。同 doc:51 の『--triage-report / --triage-verdict を省略すると exit 2』という主張も、実際に --triage-report を落として exit=2 を実測し一致を確認。SKILL.md:117 の `shasum -a 256 <target_file> | cut -d' ' -f1` も exit 0 で 64hex を返す。",
+      "[テスト実測] `cd plugins/spec-drift-guardian && python3 -m pytest -q` = 90 passed (8.12s)。`python3 plugins/spec-drift-guardian/scripts/eval-safety-matrix.py --out /tmp/sf8.json` = [PASS] scenarios=13 all_match=True / exit 0。close gate 6 + pre-apply gate 7 の全 13 シナリオが期待 exit・blocked・unchanged=True と一致し、G5 の対象束縛 (agree-for-other-diff) も実測で遮断されている。",
+      "[漏れなし: 全 refs の実在確認] frontmatter の responsibility_refs 3 (R1/R2/R3) + schema_refs 4 + reference_refs 2 + script_refs 2 + 本文が参照する agents 2 の計 13 ref を全て実ファイル存在確認し MISS 0 (dangling reference なし)。",
+      "[依存関係整合] plugin-composition.yaml の dependencies 22 edge を自前 DFS で循環検査し cycles=NONE を実測。SSOT (plugin-plans/spec-drift-guardian/component-inventory.json) は C02 depends_on=[C01,C09] / C10 depends_on=[C03,C04,C11] を宣言しており、前者は SKILL.md frontmatter depends_on: [C01,C09] と一致、後者は composition:65-67 の 3 edge (→spec-impact-verifier / →rubric-sync-auditor / →aggregate-issue-diffs.py) へ忠実転記されている。宣言 DAG は SSOT を過不足なく反映。",
+      "[C02→C10 edge 不在は整合的な設計と確認] 仮に skills/run-rubric-sync→scripts/check-triage-complete.py を DAG へ加えると run-rubric-sync→check-triage-complete.py→rubric-sync-auditor(C04)→run-rubric-sync の循環が生じることを実測。C10 の pre-apply 起動は orchestration 層の commands/rubric-sync→scripts/check-triage-complete.py (composition:72) へ帰属し、skill 側は script_refs:53 と SKILL.md:166 で C10 を宣言済み。よって dependency_break には当たらない。"
+    ],
+    "negative_feedback": [],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "独立 context で前回 verdict の結論を引き継がず実測。前回 CHANGES_REQUESTED の記述層 3 findings (inconsistency 2 / smell 1) は全て解消を確認し、新規 finding も検出されなかったため PASS。(1) plugin-composition.yaml:23 の C02 invariant は G5 を含む 5 条件へ拡張され、C02 の書き込みゲートを規定する唯一の合成不変条件が SSOT の G1-G5 AND と一致。(2) eval-safety-matrix.py の 3 箇所が G1-G5 化し、自関数 pre_apply_scenarios が実測する G5 シナリオ 2 件を docstring が正しく記述するようになった。(3) R3-apply.md:141 は label/括弧とも 5 要素で一致。plugin 全体で G1-G4 表記・『4 条件』表記は 0 件。SHA は shasum -a 256 で現物確認し 4cc928b5... と一致。criteria_evaluated は SKILL.md frontmatter feedback_contract.criteria (IN1/OUT1/OUT2) を実読して全件収載。OUT2 は verify_by: live-trial のため本 content review では記述適合性のみ評価 (rubric-sync-auditor の実発火と AskUserQuestion 承認 gate に具体束縛され、汎用ゲート言い換えへ退化していないことを確認); 実セッション観測は live-trial の責務であり本 review の scope 外。\n\n非ブロッキング観察 (finding に計上せず): plugin-composition.yaml:53 の YAML コメント『主要 DAG (component-inventory.json depends_on を SSOT として転記)。lint-dependency-direction.py で循環検出。』のうち後段は、当該 lint が SKILL.md body の Skill() 呼び出しパターンのみを追跡し (script docstring:22 および出力の dependency_tracking フィールド)、plugin-composition.yaml の dependencies ブロックを一切読まないため、この DAG に対する帰属としては不正確 (--skills-dir plugins/spec-drift-guardian/skills で実行しても skills_scanned=2 / invocation_graph={} / cycles=[] と vacuous)。ただし (a) 非規範的コメントで挙動に影響しない、(b) 主張されている性質『循環なし』自体は自前 DFS で真であることを独立実測済み、(c) 今回の修復対象 3 件および C02 invariant の範囲外にある既存記述、の 3 点から PASS を妨げないと判断した。将来改善するなら当該コメントを実際の検証手段へ書き換えるのが正確。"
+}

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/map-field-impact.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "再レビュー (前回 PASS 74 → 84)。前回の主入力経路 silent data corruption (二重除去) が実測で解消。_as_bodies から _strip_marker 適用を除去し C08 契約 (added_lines/removed_lines は marker 除去済み本文) をそのまま採るようになった。実測: added_lines=['- new_item'] / removed_lines=['- old_item'] に対し after='- new_item' / before='- old_item' と YAML list item の '-' が保持される。raw lines 経路は従来どおり line[1:] で marker を剥がす挙動を維持 (added=['- new_item'] from '+- new_item') し、両経路の契約差が正しく分離された。_strip_marker は未使用となり削除済み (hasattr で不在確認)。docstring も契約へ追従。実 pipeline で裏付け: C11→C08 を実 git repo で通した C08 の実出力が added_lines=['{\"weight\": 3}'] (marker 除去済み) であり、C09 の新しい前提と一致することを確認。設計思想は引き続き優秀: 写像規則を code に hardcode せず field-impact-map.json から読むだけに留め guardian 自身が drift 源になるのを防ぐ (C2)、load_map が artifact_kinds/path_globs/rules/axis enum/match_any 非空/regex compile を逐条検証し全て exit2 で fail-closed、match_axes が全 rule を照合し複数軸同時変更を落とさない、表に無い pattern は semantics へフォールバック。write-scope:none・network:false を実際に守る純変換。frontmatter 完備。DEDUCTION(-11): raw lines 経路に、前回修正した二重除去と同クラスの silent data loss が残存 (実測)。extract_changes は ln.startswith('+++')/('---') を file header として無条件 skip するため、本文が '--' で始まる行の削除が消失する: 本文 '---' (YAML frontmatter 区切り) の削除は diff 行 '----' となり startswith('---') に合致して脱落、本文 '--precision-min 0.8' (CLI flag を記す docs/template 行) の削除も '---precision-min 0.8' となり脱落。実測で removed=[] になりエラーも出ない。対照的に C08 parse-spec-diff.py は rem_old/rem_new の budget 追跡で同じ入力を正しく保持する (removed_lines=['---','-precision-min 0.8'] を実測) ため、C09 の naive 判定は明確に劣る。ただし C08 は lines を出力せず fixture の 16 hunk も lines 経路 0 件のため、現行 pipeline では踏まない潜在バグ (production 経路は added_lines 側)。修正するなら C08 と同じ budget 追跡か、header 判定を hunk 文脈に限定すべき。DEDUCTION(-5): detect_kind の fnmatch は '*' が '/' を跨ぐため path_globs の '**' が意図より緩く、artifact_path の '..' も正規化しない (ただし C09 は write-scope:none で分類のみ、下流 C10 が正規化付き allowlist で再検証するため fail-closed 側)。TESTS: tests/test_map_field_impact.py に test_body_leading_dash_is_not_stripped_again / test_raw_lines_path_still_strips_diff_markers が追加され、plugin suite 103 passed。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

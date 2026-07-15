@@ -1,0 +1,68 @@
+{
+  "purpose": "GitHub issue #17 系の spec-drift 対応で現状人手判断に依存している step2(仕様変更が frontmatter/settings フィールドに及ぶかの影響判定)・step3(及べば harness-creator の rubric/schema/template を更新)を構造化・半自動化し、対応漏れ・遅延・判断ブレを減らす plugin の開発計画(L3 plan)を作る",
+  "background": ".github/workflows/update-yaml-spec.yml (週次 cron) が SOURCES を fetch し yaml-spec-cache.md を更新、spec-diff-history.md に unified diff の先頭80行だけを記録し、実変更時に dedup 付きで単一 spec-drift issue を起票する。step1(diff 確認)は機械化済みだが、step2(影響判定)・step3(rubric/schema/template 更新)・step4(close) は人手依存。履歴の省略表示だけでは全変更を判定できないため、履歴日時と yaml-spec-cache 更新 commit を照合し commit pair から完全 diff を再構成する必要がある。Issue #17 の実差分 (base=da6d4e744e30c4ca5ac8aac9ab05127aa3471b41, head=6ddd6453213155ca70dbed950176699fcd9e2752) は945行で、browserExternalPageTools/workflowSizeGuideline の settings 追加、/doctor bundled skill、plugin MCP matcher、hook transcript、sub-agent 挙動を含む。これらを name/type/required/enum の4軸と semantics 軸で再現可能に判定し、必要なら監査・明示承認後に対象 rubric/schema/template を実更新して検証する契約が必要である",
+  "goal": "spec-drift-guardian の 13 phase ファイル + index + component-inventory + handoff が決定論ゲートで検証可能な状態になっている。plugin は (a) issue に対応する全未triage commit pair の完全 diff 再構成、(b) name/type/required/enum と semantics のフィールド影響トリアージ、(c) 独立 verifier/auditor の判定 artifact、(d) 更新提案→監査PASS→ユーザー明示承認→許可パスだけの実適用→post-image 検証、(e) applied_verified または verified no-change のみ許可する close 前ゲート、(f) 手動起動 command、(g) Issue #17 完全差分 fixture を含む harness/eval を備える設計になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "spec-drift-guardian",
+  "plan_dir": "plugin-plans/spec-drift-guardian",
+  "out_dir": null,
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "spec-diff-history.md の省略表示をイベント索引として issue に対応する yaml-spec-cache 更新 commit pair を特定し、最新を含む全未triage完全 diff を digest/provenance/completeness 付きで再構成して hunk 単位にパースする component が component-inventory に存在する。完全 diff が得られない場合は fail-closed とする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "diff hunk から artifact kind/path と name/type/required/enum の各軸および semantics 軸について before/after/evidence を持つ影響候補への決定論マッピング機構が存在し、独立 sub-agent が生 diff から再導出した verdict artifact で再検査する契約が定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "影響ありと独立検証されたフィールドに対し rubric/schema/template への Edit 差分提案を生成し、独立 auditor PASS とユーザー明示承認の後だけ許可パスへ適用し、pre/post hash と validator 結果を記録する二段階 skill が component-inventory に存在する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "triage/verifier/auditor のいずれかが未完了、不一致、提案のみ、未承認、未適用、post-image hash/validator 不備の場合に issue close をブロックし、applied_verified または independently_verified_no_change の場合だけ許可する fail-closed ゲートが定義されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "Issue #17 の完全 commit pair と settings追加、/doctor、plugin MCP matcher、hook transcript、sub-agent、semantics-only/no-impact を含む fixture matrix で name/type/required/enum/semantics 判定、適用、no-change、close gate を測る EVALS が component-inventory に定義されている",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "手動起動 command が component-inventory に定義され、fetch/diff/issue 起票の既存責務(ref-yaml-spec-fetcher/update-yaml-spec.yml)と重複しないことが handoff で明示されている",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "実プラグイン/実コード生成は禁止。L3 plan (index + 13 phase + component-inventory + handoff) までに留める",
+    "PR 作成やリリース対応は本 plugin の責務外とし、下流の人手判断に委ねる",
+    "harness-creator は distributable:false の clone 専用基盤である。guardian の通常解析は read-only とし、C02 の apply mode だけが C04 auditor PASS とユーザー明示承認後に sync-proposal の allowlist 対象 rubric/schema/template へ Edit 差分を適用できる。対象外パス、未承認、監査不一致は fail-closed とする",
+    "検知(fetch/diff/issue 起票)は既存 .github/workflows/update-yaml-spec.yml と ref-yaml-spec-fetcher に委ね再利用する。guardian は「検知後の triage→更新提案→close ゲート」に責務を絞り、既存責務と重複させない",
+    "実装言語は Python 標準ライブラリのみとし、.sh/.js の新規作成は禁止",
+    "PROJECT_ROOT・CLAUDE_PLUGIN_ROOT 等のパスは self-relative または既定の変数参照で表現し、具体値の直書きは禁止"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "source_improvement": {
+    "ref": "improvement-handoff-elegant-verify.json",
+    "schema_version": "1.0.0"
+  },
+  "open_questions": [
+    "guardian を新規 plugin として立てるか、harness-creator 内の新規 skill 群として吸収するかは plan 内で新規 plugin spec-drift-guardian として分解しつつ、build 時の吸収選択肢を残す仮定で進める",
+    "issue close ゲートは hook 採用で決着(PreToolUse/Bash で session 内 gh issue close を fail-closed 即時遮断・CI 非依存の即時性が採用理由)。workflow-gate 案(GitHub Actions 側 gate)は Web UI/API/Actions close の残余被覆を担う将来オプションとして handoff open_issues GAP-CLOSE-COVERAGE-001 に記録済み"
+  ]
+}
