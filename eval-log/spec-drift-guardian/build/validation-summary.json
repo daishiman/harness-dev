@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "commands": [
+    {
+      "command": "python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py --bundle plugins/spec-drift-guardian/plugin-composition.yaml",
+      "exit_code": 0,
+      "result": {
+        "valid": true,
+        "kind": "plugin-composition",
+        "findings": []
+      }
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/spec-drift-guardian/plugin-composition.yaml",
+      "exit_code": 0,
+      "result": "OK (4 expected generated-output warnings)"
+    },
+    {
+      "command": "claude plugin validate plugins/spec-drift-guardian",
+      "exit_code": 0,
+      "result": "validation passed with 5 ignored-field warnings"
+    }
+  ]
+}

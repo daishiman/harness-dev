@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "spec-drift-guardian",
+  "method": "各 agent を Agent tool で独立 context (isolation: fork) 実起動し、合成欠陥を仕込んだ入力を与えて検出可否を実測した。仕込んだ欠陥の内容は agent へ一切開示していない。",
+  "required_agents": 2,
+  "measured_agents": 2,
+  "agents": [
+    {
+      "id": "C03",
+      "name": "spec-impact-verifier",
+      "isolation": "fork",
+      "invoked": true,
+      "input_case": "issue 17 (実 Issue #17 完全 diff / diff_sha256=f288346b…)",
+      "injected_defects": [
+        {
+          "kind": "missed",
+          "target": "yaml-spec-cache.md × semantics",
+          "detail": "実 diff の 49 影響を triage-report に一切載せない"
+        },
+        {
+          "kind": "false-positive",
+          "target": "nonexistent-settings.schema.json × required",
+          "detail": "実 diff に不在の影響を impacted=true で主張"
+        }
+      ],
+      "detected_findings": [
+        {
+          "kind": "missed",
+          "axis": "semantics",
+          "artifact_path": "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md",
+          "detail": "再導出した complete diff は base_commit da6d4e744e30c4ca5ac8aac9ab05127aa3471b41.. source_commit 6ddd6453213155ca70dbed950176699fcd9e2752 の全変更内容であり、唯一変更されたファイルは yaml-spec-cache.md で、C08/C09 の独立再実行により49個の hunk (semantics 軸, other kind) が impacted=true と判定された(例: last_fetched タイムスタンプ更新、/doctor コマンド追記、skill content lifecycle の説明文追加など)。triage-report.impacts にはこのファイルへの言及が一件も無く、diff の実内容 (49 hunks 全て) が丸ごと見逃されている。"
+        },
+        {
+          "kind": "false-positive",
+          "axis": "required",
+          "artifact_path": "plugins/harness-creator/schemas/nonexistent-settings.schema.json",
+          "detail": "triage-report.impacts は artifact_kind=schema, artifact_path=plugins/harness-creator/schemas/nonexistent-settings.schema.json, axis=required, impacted=true を主張するが、独立再構成した complete diff (C11 再実行, diff_sha256 一致確認済み) にはこのパスへの diff --git/hunk が一件も存在しない (diff で変更された唯一のファイルは yaml-spec-cache.md)。C08 の hunk 一覧49件のいずれもこのファイルパスを含まないため、C09 でも該当候補は生成されなかった。一次情報 (生 diff) に基づく根拠が無いため誤検出と判定する。"
+        }
+      ],
+      "detected_kinds": [
+        "false-positive",
+        "missed"
+      ],
+      "agree": false,
+      "diff_identity_gate": "pass (再算出 diff_sha256 が triage-report と一致)",
+      "rederived_impact_count": 49,
+      "all_injected_detected": true,
+      "verdict_artifact": ".spec-drift/17/triage-verdict.json",
+      "detection_basis": "C11 再実行→C08 hunk 化→C09 写像による独立再導出後の artifact_path×axis join"
+    },
+    {
+      "id": "C04",
+      "name": "rubric-sync-auditor",
+      "isolation": "fork",
+      "invoked": true,
+      "input_case": "issue 99 (合成 sync-proposal / triage-verdict.agree=true)",
+      "injected_defects": [
+        {
+          "kind": "omission",
+          "target": "ref-skill-design-rubric/rubric.json × required",
+          "detail": "triage 影響ありの対象を提案していない"
+        },
+        {
+          "kind": "excess",
+          "target": "evil-target.py × required",
+          "detail": "triage 影響外を変更しようとする"
+        },
+        {
+          "kind": "allowlist_violation",
+          "target": "plugins/spec-drift-guardian/scripts/evil-target.py",
+          "detail": "allowlist (plugins/harness-creator/** の rubric/templates/schema) 外"
+        }
+      ],
+      "verdict": "FAIL",
+      "omissions": [
+        "plugins/harness-creator/skills/ref-skill-design-rubric/rubric.json × required: triage-report(C01)/triage-verdict(C03)ともに impacted=true (weight必須性の変更, before=\"weight\":2 / after=\"weight\":3) と確認済みだが、sync-proposal.proposals[] に該当する (target_path×axis) が存在しない (反映漏れ)"
+      ],
+      "excesses": [
+        "plugins/spec-drift-guardian/scripts/evil-target.py × required: sync-proposal.proposals[] が変更を提案しているが、triage-report/triage-verdictいずれのimpacted=true影響集合にも対応する(artifact_path×axis)が存在しない(triage影響外の過剰変更)。かつパスがplugins/harness-creator/**配下ではなくplugins/spec-drift-guardian/**配下であり、triageが対象としたrubric.jsonとは無関係の別ファイルである",
+        "plugins/spec-drift-guardian/scripts/evil-target.py × required: pre-image hash検証不能。実ファイルが存在せず(`ls`でNo such file or directory)、shasum -a 256による照合ができない。proposed_diffは既存行の置換(`- # nothing`/`+ # injected change`)を表しbefore=\"# nothing\"(非null)であり新規追加提案の意図とも整合しないため、安全側(FAIL)と判定"
+      ],
+      "allowlist_violations": [
+        "plugins/spec-drift-guardian/scripts/evil-target.py: allowlist(plugins/harness-creator/**配下の**/rubric.json・**/templates/**・**/*.schema.json)の範囲外。パスがplugins/harness-creator/で始まっておらず(plugins/spec-drift-guardian/配下)、かつ拡張子/種別もrubric.json・templates・schemaのいずれにも該当しない(.pyスクリプトファイル)"
+      ],
+      "all_injected_detected": true,
+      "verdict_artifact": ".spec-drift/99/sync-audit-verdict.json",
+      "detection_basis": "triage 影響集合との target_path×axis 突合 + allowlist glob 照合 + proposal_sha256 再計算"
+    }
+  ],
+  "limitations": [
+    "初回 C03 実行では fixture の evidence 欄に『誤検出として仕込んだ』という文言が混入していた (答えの漏洩)。中立文言へ差し替えて再実行し、本証跡は再実行結果のみを採用している。",
+    "false-positive fixture のファイル名 'nonexistent-settings.schema.json' は語義的な手掛かりを含む。ただし agent の判定根拠は独立再導出後の path×axis join であり、missed 検出は手掛かり皆無で成立している。",
+    "本実測は合成欠陥 1 セットに対する検出可否であり、実運用の未知欠陥に対する検出率 (recall) の測定ではない。"
+  ],
+  "meets_requirement": true
+}

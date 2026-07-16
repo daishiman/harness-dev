@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C07",
+  "component_kind": "hook",
+  "name": "guard-spec-drift-close",
+  "builder": "run-build-skill",
+  "build_target": "plugins/spec-drift-guardian/hooks/guard-spec-drift-close.py",
+  "status": "success",
+  "summary": "PreToolUse/Bash の gh issue close <N> を検出し 4 artifact を解決して C10 へ委譲、applied_verified/verified-no-change 以外は exit2 で close 遮断する fail-closed hook。",
+  "deviations": [
+    "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+    "捕捉は PreToolUse/Bash 経路の gh issue close のみ (Web UI/API/Actions は非カバー=GAP-CLOSE-COVERAGE-001)。"
+  ],
+  "evidence": [
+    "hooks/guard-spec-drift-close.py + tests materialized",
+    "pytest 9 passed",
+    "lint-script-frontmatter OK",
+    "exit 契約 0=pass/許可, 2=block",
+    "plugin.json PreToolUse/Bash 配線済み"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C01.json",
+    "eval-log/spec-drift-guardian/build/route-C02.json",
+    "eval-log/spec-drift-guardian/build/route-C10.json"
+  ],
+  "handover": null,
+  "covered_task_ids": [
+    "P02-C07-01",
+    "P02-C07-02",
+    "P02-C07-03",
+    "P02-C07-04",
+    "P05-C07-01",
+    "P05-C07-02",
+    "P05-C07-03",
+    "P06-C07-01",
+    "P06-C07-02",
+    "P06-C07-03",
+    "P06-C07-04",
+    "P07-C07-01",
+    "P07-C07-02",
+    "P07-C07-03",
+    "P09-C07-01",
+    "P09-C07-02",
+    "P09-C07-03"
+  ]
+}

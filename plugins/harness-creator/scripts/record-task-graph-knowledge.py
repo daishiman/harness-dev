@@ -4,7 +4,8 @@
 # purpose: task-graph 駆動 build の外ループ完了ゲート + knowledge 記録 owner (TG-C08)。inbox の未処理 discovered-task を検出して completion_gate:ok|blocked + handback_command を出す (未処理残存なら capability-build を completed にせず外ループへ制御返却)。gate ok 時のみ task-events/stall/handoff_notes から依存詰まり・成果物欠落・blocked 伝播起点・再試行で解消した判断だけを蒸留し、add_entry.py 経由で target harness (Loop A) と harness-creator (Loop B) の双方 knowledge へ source_ref 付き要約を追記する。graph 更新は planner 限定 (本 script は task-graph/phase/component-inventory/handoff を一切書かない)。
 # inputs:
 #   - argv: --target-plugin-slug S [--cycle-id C] [--discovered-inbox DIR] [--plan-dir PLAN_DIR]
-#           [--handoff H] [--task-events P] [--task-state P] [--summary-json P] [--target-knowledge-dir A]
+#           [--handoff H] [--task-events P] [--task-state P] [--completion-evidence P]
+#           [--summary-json P] [--target-knowledge-dir A]
 #           [--harness-knowledge-dir B] [--add-entry-path P] [--max-entries N] [--dry-run]
 # outputs:
 #   - stdout: completion_gate JSON (全形に inbox_absent: bool を携帯 = inbox ディレクトリ不在
@@ -18,6 +19,9 @@
 #       blocked 時 (第2段=--task-state の blocked node 残存): blocked_tasks[]{id,blocked_reason}
 #                   (origin-failure/propagated 双方・id 昇順) + next_steps 分岐指示
 #                   [人手救済 (受入基準修正→再検証), emit-discovered-task による外ループ合流]
+#       blocked 時 (実測 acceptance evidence 未達): completion_evidence_gate
+#                   に status/findings/failed_gates を保持し、証跡不在・自己矛盾・blocked gate を
+#                   pass へ畳まない
 #       blocked 時 (C01 native surface drift): native_surface_gate
 #                   に status/return_code/child_status/child_report/remediation を保持し、
 #                   drift/conflict/parse/race/stale evidence を success へ畳まない
@@ -27,7 +31,8 @@
 #              未宣言は書込前に事前検知して skipped へ分類し (record_failed にしない)、書込は store 単位+
 #              entry 単位で try 隔離する (Loop A 失敗でも Loop B 継続)。蒸留 0 件を vacuous "ok" で偽装しない
 #   - stderr: usage / Loop A 未配線・add_entry 失敗の WARN 診断
-#   - exit: 0=gate ok (knowledge 記録の成否に依らず・疎結合) / 1=gate blocked (未処理 discovered-task または blocked node 残存) / 2=usage/IO error (引数/parse のみ)
+#   - exit: 0=gate ok (knowledge 記録の成否に依らず・疎結合) / 1=gate blocked (未処理 discovered-task、
+#           blocked node、completion evidence 未達、または native surface drift) / 2=usage/IO error (引数/parse のみ)
 #   - write-scope: <target-knowledge-dir> knowledge/ (Loop A) + <harness-knowledge-dir> knowledge/ (Loop B) (add_entry.py 委譲) + <task-events> task-events.jsonl (gate 判定 event append・TG-C02 append_event 再利用・--dry-run 時は書かない)
 # contexts: [C, E]
 # network: false
@@ -64,7 +69,14 @@ completion_gate:"blocked" とする (blocked を放置した completed 宣言を
 runtime 操作だけは build dir の runtime-evidence-ledger.json に local evidence=present と
 pending_user_gate が明記された場合に保留できる。
 
-完了ゲート第4段: desired-set owner の C01 native surface orchestrator (symlink/settings child と
+完了ゲート第4段: task-graph のノード数と route report の自己申告だけで、実測要件
+(カバレッジ・precision/recall・独立監査等) を通過したことにしない。--completion-evidence
+は --task-state を使う task-graph build で必須とし、証跡 JSON を fail-closed で検査する。
+overall_status=pass かつ全 gate=pass の場合のみ次へ進む。不在・壊れた JSON・自己矛盾・
+blocked gate は completion_gate:"blocked" とする。これにより task-state が全 done でも、
+受入基準の実測証跡がなければ completed を拒否する。
+
+完了ゲート第5段: desired-set owner の C01 native surface orchestrator (symlink/settings child と
 C02 parity validator を内包) だけを ``--check --json`` で read-only 実行する。child の
 return code だけでなく、verdict/adapter status/violations/remediation を child_report として
 保持する。JSON が解釈できない、または報告 exit_code と process return code が
@@ -826,6 +838,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--task-state", default=None,
                    help="task-state.json (完了ゲート第2段: blocked node 残存で completion_gate:blocked"
                         " + gate ok 時の handoff_notes 収集)")
+    p.add_argument(
+        "--completion-evidence", default=None,
+        help=(
+            "実測受入基準の証跡 JSON (--task-state 指定時は必須)。不在/不正/overall_status!=pass/"
+            "blocked gate を completion_gate:blocked にする"
+        ),
+    )
     p.add_argument("--summary-json", default=None,
                    help="summarize-task-progress.py 出力 (stall/handoff_notes を含む JSON)")
     p.add_argument("--target-knowledge-dir", default=None, help="Loop A: target harness の knowledge store dir")
@@ -853,6 +872,105 @@ def _resolve_default_paths(args) -> tuple[Path, Path | None]:
     events = Path(args.task_events) if args.task_events else (
         build_dir / "task-events.jsonl" if build_dir else None)
     return inbox, events
+
+
+# ── 実測 acceptance evidence 完了ゲート ─────────────────
+def check_completion_evidence(path: str | None, target_plugin_slug: str | None) -> dict:
+    """実測証跡の自己整合性を fail-closed で検査する。
+
+    証跡の生成者が overall_status だけを pass にできないよう、個別 gates から状態を
+    再導出する。測定値の意味は各 plan/evaluator、存在・形・合否整合性は TG-C08 が担う。
+    """
+    if path is None:
+        return {"status": "skipped", "reason": "--completion-evidence 未指定"}
+    evidence_path = Path(path)
+    base = {"path": str(evidence_path)}
+    if not evidence_path.is_file():
+        return {**base, "status": "missing", "findings": ["証跡 JSON が存在しない"]}
+    try:
+        data = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {**base, "status": "invalid", "findings": [f"読込/parse 失敗: {exc}"]}
+
+    def evidence_ref_exists(ref: str) -> bool:
+        candidate = Path(ref)
+        if candidate.is_absolute():
+            return candidate.is_file()
+        # 正本は repo-relative path。cwd へ依存せず、completion-evidence の配置から
+        # 上方探索して解決する。evidence file 同階層からの相対参照も許可する。
+        if (evidence_path.parent / candidate).is_file():
+            return True
+        return any((ancestor / candidate).is_file() for ancestor in evidence_path.parents)
+
+    findings: list[str] = []
+    if not isinstance(data, dict):
+        return {**base, "status": "invalid", "findings": ["root は object 必須"]}
+    if data.get("schema_version") != "1.0.0":
+        findings.append("schema_version は 1.0.0 必須")
+    evidence_slug = data.get("target_plugin_slug")
+    if not isinstance(evidence_slug, str) or not evidence_slug:
+        findings.append("target_plugin_slug は非空 string 必須")
+    elif target_plugin_slug and evidence_slug != target_plugin_slug:
+        findings.append(
+            f"target_plugin_slug 不一致: expected={target_plugin_slug} actual={evidence_slug}"
+        )
+    overall = data.get("overall_status")
+    if overall not in {"pass", "blocked"}:
+        findings.append("overall_status は pass|blocked 必須")
+
+    gates = data.get("gates")
+    failed_gates: list[str] = []
+    seen: set[str] = set()
+    if not isinstance(gates, list) or not gates:
+        findings.append("gates は非空 array 必須")
+        gates = []
+    for index, gate in enumerate(gates):
+        if not isinstance(gate, dict):
+            findings.append(f"gates[{index}] は object 必須")
+            continue
+        gate_id = gate.get("id")
+        if not isinstance(gate_id, str) or not gate_id:
+            findings.append(f"gates[{index}].id は非空 string 必須")
+            continue
+        if gate_id in seen:
+            findings.append(f"gate id 重複: {gate_id}")
+        seen.add(gate_id)
+        gate_status = gate.get("status")
+        if gate_status not in {"pass", "blocked"}:
+            findings.append(f"gate {gate_id} status は pass|blocked 必須")
+        elif gate_status == "blocked":
+            failed_gates.append(gate_id)
+        evidence = gate.get("evidence")
+        if gate_status == "pass" and (
+            not isinstance(evidence, list)
+            or not evidence
+            or not all(isinstance(item, str) and item.strip() for item in evidence)
+        ):
+            findings.append(f"pass gate {gate_id} は非空 evidence[] 必須")
+        elif gate_status == "pass":
+            for ref in evidence:
+                if not evidence_ref_exists(ref):
+                    findings.append(f"pass gate {gate_id} の evidence file が存在しない: {ref}")
+
+    computed = "blocked" if failed_gates else "pass"
+    if gates and overall in {"pass", "blocked"} and overall != computed:
+        findings.append(f"overall_status 自己矛盾: declared={overall} computed={computed}")
+
+    for field in ("invalidated_task_ids", "invalidated_phase_refs"):
+        value = data.get(field, [])
+        if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+            findings.append(f"{field} は string array 必須")
+
+    if findings:
+        return {**base, "status": "invalid", "findings": findings, "failed_gates": failed_gates}
+    return {
+        **base,
+        "status": "ok" if computed == "pass" else "blocked",
+        "overall_status": computed,
+        "failed_gates": failed_gates,
+        "invalidated_task_ids": data.get("invalidated_task_ids", []),
+        "invalidated_phase_refs": data.get("invalidated_phase_refs", []),
+    }
 
 
 # ── C01 単一 desired-set native surface 完了ゲート ─────────────────
@@ -1131,7 +1249,38 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, ensure_ascii=False))
             return 1
 
-    # ── 完了ゲート第4段: C01 単一 desired-set check ──
+    # ── 完了ゲート第4段: 実測 acceptance evidence ──
+    if args.task_state and not args.completion_evidence:
+        completion_evidence_gate = {
+            "status": "missing",
+            "findings": [
+                "task-state を使う task-graph build では --completion-evidence が必須"
+            ],
+        }
+    else:
+        completion_evidence_gate = check_completion_evidence(
+            args.completion_evidence, args.target_plugin_slug
+        )
+    if completion_evidence_gate["status"] not in ("skipped", "ok"):
+        payload = {
+            "completion_gate": "blocked",
+            "inbox_absent": inbox_absent,
+            "completion_evidence_gate": completion_evidence_gate,
+            "next_steps": [
+                "failed_gates/findings の実測不足を解消し completion-evidence.json を再生成する",
+                "同じ --completion-evidence を指定して TG-C08 を再実行する",
+            ],
+        }
+        if not args.dry_run:
+            append_gate_event(task_events, {
+                "type": "build_blocked",
+                "completion_evidence_gate": completion_evidence_gate["status"],
+                "failed_gates": completion_evidence_gate.get("failed_gates", []),
+            })
+        print(json.dumps(payload, ensure_ascii=False))
+        return 1
+
+    # ── 完了ゲート第5段: C01 単一 desired-set check ──
     native_surface_gate = _check_native_surface_gate(args.task_state)
     if native_surface_gate["status"] in ("drift", "conflict", "parse"):
         payload = {
@@ -1185,6 +1334,7 @@ def main(argv: list[str] | None = None) -> int:
             "completion_gate": "ok",
             "inbox_absent": inbox_absent,
             "runtime_pending_user_gate": runtime_ledger_gate,
+            "completion_evidence_gate": completion_evidence_gate,
             "native_surface_gate": native_surface_gate,
             "dry_run": True,
             "loop_a_store": loop_a_store,
@@ -1265,6 +1415,7 @@ def main(argv: list[str] | None = None) -> int:
         "completion_gate": "ok",
         "inbox_absent": inbox_absent,
         "runtime_pending_user_gate": runtime_ledger_gate,
+        "completion_evidence_gate": completion_evidence_gate,
         "native_surface_gate": native_surface_gate,
         "entries_recorded": recorded,
         "knowledge_record_status": record_status,

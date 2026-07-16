@@ -218,5 +218,41 @@ def test_summary_uses_full_graph_denominator_on_sparse_state(tmp_path):
     assert "(1/3)" in md                                         # md も 1/3 表示 (100% と誤らない)
 
 
+def test_blocked_completion_evidence_overrides_false_done_in_projection(tmp_path):
+    graph_path, state_path = _plan(tmp_path)
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    for node in state["nodes"]:
+        node["state"] = "done"
+    state_path.write_text(json.dumps(state), encoding="utf-8")
+    (state_path.parent / "completion-evidence.json").write_text(json.dumps({
+        "schema_version": "1.0.0",
+        "target_plugin_slug": "x",
+        "overall_status": "blocked",
+        "gates": [{
+            "id": "precision-recall",
+            "status": "blocked",
+            "evidence": [],
+            "findings": ["metrics missing"],
+        }],
+        "invalidated_task_ids": [],
+        "invalidated_phase_refs": ["P05"],
+    }), encoding="utf-8")
+    (state_path.parent / "build-summary.json").write_text(json.dumps({
+        "completion_gate": "blocked",
+    }), encoding="utf-8")
+
+    assert pts.main(["--task-graph", str(graph_path), "--task-state", str(state_path)]) == 0
+    status = json.loads((tmp_path / "task-graph-status.json").read_text(encoding="utf-8"))
+    assert status["summary"]["effective_status"] == "blocked"
+    assert status["summary"]["completion_gate"] == "blocked"
+    assert status["summary"]["by_state"]["done"] == 0
+    assert status["summary"]["by_state"]["blocked"] == 2
+    assert all(node["reported_state"] == "done" for node in status["nodes"])
+    assert all(node["blocked_reason"] == "completion-evidence" for node in status["nodes"])
+    md = (tmp_path / "task-progress.md").read_text(encoding="utf-8")
+    assert "実効状態: **blocked**" in md
+    assert "completion gate: **blocked**" in md
+
+
 def test_usage_error_missing_required(tmp_path):
     assert pts.main([]) == 2

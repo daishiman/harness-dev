@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C10",
+  "component_kind": "script",
+  "name": "check-triage-complete.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/spec-drift-guardian/scripts/check-triage-complete.py",
+  "status": "success",
+  "summary": "4 artifact + digest 整合 + agree + verdict=PASS + applied_verified/verified-no-change を突合する close 前ゲート。proposal-only/未承認/hash不一致/FAIL は INCOMPLETE(exit1)。",
+  "deviations": [
+    "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。",
+    "issue 整合チェックを fail-closed 方向で追加 (仕様の突合趣旨に沿う最小追加)。"
+  ],
+  "evidence": [
+    "--help exit0",
+    "pytest 11 passed ((a)-(f)全網羅)",
+    "lint-script-frontmatter OK",
+    "exit code 契約 手動確認 (OK=0/INCOMPLETE=1/error=2)"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C03.json",
+    "eval-log/spec-drift-guardian/build/route-C04.json",
+    "eval-log/spec-drift-guardian/build/route-C11.json"
+  ],
+  "handover": "C07 hook がこのゲートへ 4 artifact + --target-root を供給する。",
+  "covered_task_ids": [
+    "P02-C10-01",
+    "P02-C10-02",
+    "P02-C10-03",
+    "P02-C10-04",
+    "P04-C10-01",
+    "P04-C10-02",
+    "P04-C10-03",
+    "P04-C10-04",
+    "P05-C10-01",
+    "P05-C10-02",
+    "P05-C10-03",
+    "P06-C10-01",
+    "P06-C10-02",
+    "P06-C10-03",
+    "P06-C10-04",
+    "P07-C10-01",
+    "P07-C10-02",
+    "P07-C10-03",
+    "P09-C10-01",
+    "P09-C10-02",
+    "P09-C10-03"
+  ]
+}

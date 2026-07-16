@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C03",
+  "component_kind": "sub-agent",
+  "name": "spec-impact-verifier",
+  "builder": "run-build-skill",
+  "build_target": "plugins/spec-drift-guardian/agents/spec-impact-verifier.md",
+  "status": "success",
+  "summary": "C01 出力を再読せず C11 complete diff へ C08/C09 を独立再実行し triage-report の見逃し/誤検出を agree/findings で判定、triage-verdict を emit する独立 verifier agent。",
+  "deviations": [
+    "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+    "validate-frontmatter 必須の kind/version/owner を frontmatter に追加 (現行様式)。"
+  ],
+  "evidence": [
+    "agents/spec-impact-verifier.md + prompts/R-verify-impact.md materialized",
+    "validate-frontmatter ok",
+    "lint-agent-prompt-section OK Tier1",
+    "triage-verdict.schema.json 準拠"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C01.json",
+    "eval-log/spec-drift-guardian/build/route-C08.json",
+    "eval-log/spec-drift-guardian/build/route-C09.json"
+  ],
+  "handover": "triage-verdict.json を C10 close gate が必ず消費する。",
+  "covered_task_ids": [
+    "P02-C03-01",
+    "P02-C03-02",
+    "P02-C03-03",
+    "P02-C03-04",
+    "P04-C03-01",
+    "P04-C03-02",
+    "P04-C03-03",
+    "P04-C03-04",
+    "P05-C03-01",
+    "P05-C03-02",
+    "P05-C03-03",
+    "P06-C03-01",
+    "P06-C03-02",
+    "P06-C03-03",
+    "P06-C03-04",
+    "P07-C03-01",
+    "P07-C03-02",
+    "P07-C03-03",
+    "P09-C03-01",
+    "P09-C03-02",
+    "P09-C03-03"
+  ]
+}

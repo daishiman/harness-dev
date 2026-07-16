@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/eval-safety-matrix.py",
+  "type": "scripts",
+  "mechanical": false,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "再レビュー (前回 PASS 75 → 85)。前回の致命的盲点 (Goodhart) が解消。allowlist-traversal-escape (target_path='plugins/harness-creator/../../outside/rubric.json') と allowlist-absolute-path ('/etc/passwd') が追加され 13→15 シナリオ、実行は [PASS] scenarios=15 all_match=True exit0。非空虚性を変異注入で実証: C10 の in_allowlist を旧字句実装へ差し戻すと本 matrix は [FAIL] へ転じ traversal シナリオが XX になる。特筆すべきは、変異版でも traversal は exit=1 blocked=True (G4 のファイル不在で偶然止まる) だったにもかかわらず、期待理由 substr 'G3' と照合しているため XX を正しく検出した点 — exit code だけでなく『どのゲートで止まったか』を突合する設計が、偶然の block による false green を防いでいる。測定手法は引き続き誠実: schema-valid な 4 artifact を tempfile に組んで実 C10 を subprocess 起動し宣言でなく実 exit/status/reasons を突合、target 実ファイルの sha256 を前後で採り unchanged を毎シナリオ検証、scenario_match = exit_ok and status_ok and unchanged and (blocked != allow) と AND を課す。pre-image drift を close でなく pre-apply で測る理由、agree-for-other-diff (stale verdict 流用) を測る鋭さも維持。write-scope は --out のみ + fixture を TemporaryDirectory に閉じ、network:false・stdlib only。DEDUCTION(-9): frontmatter が自身について事実誤認のまま。purpose は『12 シナリオ』『close ゲート 6 と apply 前ゲート 6』と書くが実体は 15 (close 6 + pre-apply 9) で、traversal/absolute/agree-for-other-diff の追加に追従していない。前回も同じ指摘 (13 なのに 12 と記載) をしており、修正時に再び更新漏れした形。spec drift を守る plugin の実測器自身が frontmatter drift を繰り返している点は象徴的で、シナリオ数を len(results) から導くか frontmatter を SSOT 化すべき。DEDUCTION(-6): 測定盲点が残存。C10 に実在する symlink escape (allowlist 内 path が repo 外への symlink を経由すると exit0 apply_allowed。check-triage-complete.py の verdict 参照) を測るシナリオが無く、本 matrix は緑を報告する。前回の traversal と同じ『素朴な外部 path しか試さないため脱出経路を見逃す』構図であり、symlink シナリオの追加が必要。DEDUCTION(-4): 期待値照合が status/reasons の部分文字列依存 (例 audit-FAIL の期待 substr が 'PASS') で、メッセージ文言変更に脆い。TESTS: 本 script 専用の unit test は存在しない (tests/ 配下に該当なし) ため mechanical=false。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

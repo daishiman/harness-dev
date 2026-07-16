@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C11",
+  "component_kind": "script",
+  "name": "aggregate-issue-diffs.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/spec-drift-guardian/scripts/aggregate-issue-diffs.py",
+  "status": "success",
+  "summary": "history 見出し→cache commit subject を照合し親子 commit pair から完全 diff を digest 付き復元。shallow/曖昧/欠落/digest不一致は exit2 で fail-closed。",
+  "deviations": [
+    "builder=plugin-scaffold は handoff 宣言値。実 build は dispatcher が general-purpose SubAgent へ spec 委譲し full 実装 (contract-only scaffold ではなく実機能を実装)。",
+    "events スキーマ未定義部を worker が設計 (expected_diff_sha256 を digest 照合入力に)。preview 80 行は索引のみで照合に非使用。"
+  ],
+  "evidence": [
+    "--help exit0",
+    "pytest passing (relocated tests/)",
+    "lint-script-frontmatter OK",
+    "実 commit 6ddd645/da6d4e7 で 76807 字完全 diff 復元 exit0"
+  ],
+  "inputs_consumed": [],
+  "handover": "C08 は C11 stdout の entries[].diff/diff_sha256 を継承する。digest 規約は sha256(diff utf-8 hexdigest)。",
+  "covered_task_ids": [
+    "P02-C11-01",
+    "P02-C11-02",
+    "P02-C11-03",
+    "P02-C11-04",
+    "P04-C11-01",
+    "P04-C11-02",
+    "P04-C11-03",
+    "P04-C11-04",
+    "P05-C11-01",
+    "P05-C11-02",
+    "P05-C11-03",
+    "P06-C11-01",
+    "P06-C11-02",
+    "P06-C11-03",
+    "P06-C11-04",
+    "P07-C11-01",
+    "P07-C11-02",
+    "P07-C11-03",
+    "P09-C11-01",
+    "P09-C11-02",
+    "P09-C11-03"
+  ]
+}

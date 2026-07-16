@@ -1,0 +1,49 @@
+{
+  "target": {
+    "plugin": "spec-drift-guardian",
+    "skill": "run-spec-drift-triage",
+    "skill_md_sha256": "37c814f5caa351deeb101736682a1366f44023af240300f53ae189602af71a62"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "claude-opus-4-8 (independent-context content reviewer, round 7)",
+  "reviewed_at": "2026-07-14T15:00:00Z",
+  "iterations": 7,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "R6-#3 (smell: TODO(human) 残置) は解消を実測。`grep -rn 'TODO(human)' plugins/spec-drift-guardian/` = 0 件。eval-fixture-matrix.py:71-88 の score_matrix docstring は実装済み仕様の記述へ置換されており、記述と実装の一致を行単位で照合した: (a)『TP=期待にあり実測にもある (case, axis) / FP=実測にあるが期待にない / FN=期待にあるが実測にない』は L95-97 の `len(expected & actual)` / `len(actual - expected)` / `len(expected - actual)` と一致、(b)『分母 0 (検出0かつ期待0) は 1.0』は L119-120 の `precision = 1.0 if (tp + fp) == 0 else ...` / `recall = 1.0 if (tp + fn) == 0 else ...` と一致、(c)『case 単位でなく軸単位で数えるのは、複数軸 case で 1 軸だけ当てた状態を満点にしないため』という理由も明記されている。placeholder が実装済み本体の上に残る不整合は消滅し、docstring は虚偽記載でなく実挙動の正確な記述。",
+      "R6-#2 (smell: match_axis() dead code) は解消を実測。`grep -rn 'match_axis\\b' --include='*.py' .` = 0 件 (repo 全体)。拡張子を問わない `match_axis[^e]` 走査を plugins/ tests/ .claude/ に対して行っても残存参照 0 件で、docs/json/md からの言及も無い。first-match で軸を落とす関数は repo から消滅し、再導入の誘引 (attractive nuisance) は除去された。",
+      "dead code 削除の後方互換性を批判的に検証し、破壊なしを確認。(a) 外部からの import 元は 0 件 (repo 全体 grep で match_axis の参照が定義・呼出・テストとも皆無)、(b) 複数形 match_axes は map-field-impact.py:185 に定義が残り L289 `matched = match_axes(rules, added, removed)` から実際に呼ばれている (呼び出し 1 件 = dead ではない)、(c) 削除対象を取り違えていない: match_axes の docstring は『kind の rules を**全て**照合し、一致した (axis, before, after) を rules 順で列挙する』『最初の一致で打ち切ると残りの軸を構造的に見逃すため、全 rule を照合する』であり multi-hot 実装が正しく温存されている。",
+      "R6-#1 (omission: C11↔C08 結線テスト不在の未開示) は **known_limitations への開示として解消**。EVALS.json harness_eval.known_limitations に KL[6] が追加され『C11→C08 の結線は自動テストで固定していない: tests は C11 出力形状を手書き模倣した合成 payload を使い、実 C11 を subprocess 起動する結線テストは 0 件。C11 の出力形状が変わっても C08 側テストは緑のまま接続だけ壊れうる (手動では実 git repo で C11→C08→C09 exit 0/0/0・49 hunks を実測済み)。実結線テストの追加は後続 issue で対応する。』と記載。",
+      "KL[6] が誤魔化しでなく**事実**であることを独立検証した。(a)『実 C11 を subprocess 起動する結線テストは 0 件』→ tests/*.py から aggregate-issue-diffs.py への参照を grep した結果、test_aggregate_issue_diffs.py (C11 自身の単体テスト) 以外のヒットは test_parse_spec_diff.py:302 の docstring 1 行のみで、その内容は『C11 (aggregate-issue-diffs.py) stdout 形状。entries は全件・untriaged_entries は未処理のみ。』という**説明文**であり subprocess 起動ではない。(b)『手書き模倣した合成 payload』→ 同ファイルの subprocess.run は self (parse-spec-diff.py) の駆動のみで、C11 を起動して stdout を渡す経路は存在しない。KL の自己申告は過小でも過大でもなく実態と一致する。",
+      "KL[6] が主張する『手動では実 git repo で C11→C08→C09 exit 0/0/0・49 hunks を実測済み』を評価者自身が再現して裏付けた。events FILE (history_heading='2026-07-13T02:32:50Z') を組んで実行: C11 exit=0 / commit pair da6d4e74→6ddd6453 / complete=True / diff 76807 bytes / digest f288346b1d15、C08 exit=0 / hunks=49、C09 exit=0 / candidates=49 で内訳は Counter({('other','semantics'): 49})。EVALS pinned_fixture の記述 (『実差分は yaml-spec-cache.md 単一ファイル 49 hunk、写像表上は全件 other/semantics に落ちる』) と完全一致し、KL の補償的実測の主張は誇張でない。",
+      "本 round の C09 (map-field-impact.py) 編集が実データ経路を壊していないことを、上記の実 C11→C08→C09 チェーンで直接確認した (49 hunks → 49 candidates、exit 0/0/0)。dead code 削除が編集対象ファイルそのものであったため、合成 fixture だけでなく実 git commit pair での回帰を明示的に測った。",
+      "KL 格下げの妥当性を判断: 妥当と結論。(a) 開示は正確 (上記のとおり独立検証済み)、(b) 機序が具体的 (『C11 の出力形状が変わっても C08 側テストは緑のまま接続だけ壊れうる』と失敗モードを明示)、(c) 補償措置が実在し再現可能 (実 git repo での手動実測、評価者も再現)、(d) 後続 issue へのコミットが明記、(e) plugin は新規追加・distributable:false・marketplace 未登録のため外部消費者は存在せず、seam が破れた場合の被害半径は本 repo 内に限定。潜在バグではなく『無防備な seam』であり、タスク基準『known_limitation として正確に開示されている事項は finding に数えない』に該当する。",
+      "退行がないことを A/B で独立に再実測。写像表 artifact_kinds.template.rules へ {axis:semantics, match_any:['.*']} を一時注入すると [FAIL] precision=0.947 / recall=1.000 / all_match=False / exit=1 となり、除去状態では [PASS] precision=1.000 / recall=1.000 / all_match=True / exit=0。fixture・測定器・C09 code は同一で差分は写像表のみのため、緑は fixture の甘さでなく写像表の正しさに由来する。A/B 後は復元し sha256 fc9ca397ddd923ccb6303890ef34e91210f62466a38ea8f8fec6e07812ac80fd の完全一致・AB-TEST マーカ 0 件・再測定 exit=0 を確認。この sha は round6 記録値と同一で、写像表に drift は無い。",
+      "写像表の無条件発火規則 0 件を機械監査で再確認: artifact_kinds は schema 5 / rubric 5 / template 3 / other 0 rules で、全 match_any を走査して '.*' '.+' '^.*$' 系のワイルドカードは 0 件。FP の構造的発生源は除去されたまま維持されている。",
+      "fixture matrix 実測: [PASS] cases=11 precision=1.000 recall=1.000 all_match=True / tp=18 fp=0 fn=0 / exit=0 (expected_fixture_cases=11 == measured_fixture_cases=11, meets_threshold=true)。EVALS.json の自己申告 (fixture_cases_measured=11 / fixture_cases_matching=11) と一致し誇張なし。",
+      "OUT1 (outer/test) を満たす: fixture matrix は 4 軸+semantics の誤検出/見逃しが threshold (precision_min=0.8 / recall_min=0.8) 内 (実測 1.000/1.000)。truncated preview 入力の fail-closed も実測で確認 — 評価者が誤形式の history_heading を与えた際、C11 は exit=2 で『曖昧照合: history 見出しに対応する cache commit が見つかりません (0件)』と停止し、下流 C08/C09 も空入力を parse error として exit 1/2 で fail-closed した (緑化せず落ちる挙動を偶発的に実証)。",
+      "IN1 (inner/script) を満たす: 実 C11 出力の complete=True・base_commit/source_commit の commit pair・diff_sha256 digest の存在を実測確認。C09 出力 49 件について artifact_kind/artifact_path/axis/name/type/required/enum/semantics/before/after/evidence の必須キー欠落は 0 件。",
+      "eval-safety-matrix.py exit=0 (pre-apply:outside-allowlist / verifier-disagrees / agree-for-other-diff がいずれも blocked=True で遮断)。ゲート挙動は本 round の編集で無傷。",
+      "pytest 90 passed (plugins/spec-drift-guardian, 8.75s)。dead code 削除後も全件緑で、削除に伴う import エラー・参照切れは無い。",
+      "dependency_break=0: script_refs 3 本 (aggregate-issue-diffs.py / parse-spec-diff.py / map-field-impact.py)、schema_refs 1 本、responsibility_refs 3 本、reference_refs 1 本の実在を確認し、かつ 3 script が実 git データで直列動作した (上記チェーン)。",
+      "SKILL.md は本 round も無変更で sha256=37c814f5... は round5/round6 と同一。SHA だけの書き換えによる緑化は行われていない (verdict の更新は実測に基づく)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 5,
+    "iteration_limit": 5,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "独立 context で実物を実行して判定した。前回 verdict の結論は引き継がず、主張された修復を grep/A-B/実チェーンで検証している。\n\n【結論】round6 で FAIL 主因だった 3 件 (omission 1 / smell 2) は**すべて解消**。4 条件 (矛盾なし / 漏れなし / 整合性あり / 依存関係整合) が全 PASS、smell 0 のため PASS とする。\n\n【R6 指摘の解消状況】#1 (C11↔C08 結線テスト不在の未開示 / omission) → **KL[6] として正確に開示され解消**。開示文の 2 つの事実主張を独立検証: 『実 C11 の subprocess 起動 0 件』は grep で確認 (test_parse_spec_diff.py の C11 参照は L302 の docstring 1 行のみ)、『手動で C11→C08→C09 exit 0/0/0・49 hunks』は評価者自身が実 git repo で再現 (da6d4e74→6ddd6453 / 76807 bytes / 49 hunks / 49 candidates)。誤魔化しでなく実態と一致。#2 (match_axis dead code / smell) → **解消**: repo 全体で match_axis の参照 0 件、複数形 match_axes は L185 定義・L289 呼出で健在。#3 (TODO(human) 残置 / smell) → **解消**: TODO(human) 0 件、docstring は実装 (L95-97 の集合演算、L119-120 の分母0→1.0) と行単位で一致。\n\n【批判的検証: 削除で壊れていないか】(a) match_axis の外部 import 元は repo 全体で 0 件 — 後方互換を要求する呼び手が存在しないことを確認したうえでの削除。(b) 削除対象の取り違えなし: 温存された match_axes は『最初の一致で打ち切ると残りの軸を構造的に見逃すため、全 rule を照合する』と docstring が述べるとおりの multi-hot 実装。(c) 編集ファイル (map-field-impact.py) を実 git commit pair に通し 49 hunks→49 candidates all other/semantics・exit 0 を確認。(d) pytest 90 passed / safety matrix exit=0。\n\n【緑の正当性 = 実装由来】A/B を独立に再実行し、写像表へ '.*' を戻すと p=1.000→0.947 / exit=1、戻さなければ exit=0。差分は写像表のみで fixture・測定器・code は同一のため、緑は測定の甘さでなく実装の正しさに由来する。復元後の写像表 sha256 は fc9ca397dd... で round6 記録値と一致し drift 無し。SKILL.md sha も 37c814f5... で不変 (SHA 書き換えによる緑化は無い)。\n\n【KL 格下げの妥当性】妥当と判断。開示は正確・機序は具体的 (C11 出力形状変更時に C08 側テストは緑のまま接続が壊れる)・補償実測は再現可能・後続 issue へのコミットあり。潜在バグではなく無防備な seam であり、plugin は新規追加/distributable:false/marketplace 未登録で外部消費者ゼロ、被害半径は本 repo 内に限定。タスク基準『known_limitation として正確に開示されている事項は finding に数えない』に該当するため finding に計上しない。ただし KL[3] (PreToolUse hook 未実装) と KL[6] (実結線テスト) はいずれも『後続 issue で対応する』と宣言しており、distributable:true への昇格や marketplace 登録の前にはこの 2 件の消化を条件にすることを推奨する (現時点では blocking にしない)。\n\n【measured】fixture matrix: 11 case / p=1.000 / r=1.000 / tp=18 fp=0 fn=0 / exit=0。safety matrix exit=0。pytest 90 passed。実チェーン C11/C08/C09 exit 0/0/0。TODO(human) 0 件。match_axis 参照 0 件。写像表ワイルドカード 0 件。lint-skill-name / lint-skill-tree ともに exit=0。"
+}

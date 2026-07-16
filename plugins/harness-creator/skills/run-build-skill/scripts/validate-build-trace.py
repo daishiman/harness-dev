@@ -1011,10 +1011,11 @@ def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> li
     if not isinstance(caps, list) or not caps:
         f.append("plugin-composition.capabilities must be non-empty array")
         caps = []
-    # Keep this set aligned with capability-manifest.schema.json's
-    # kindPluginComposition.capabilities[].kind enum.  Scripts do not carry a
-    # standalone CapabilityManifest, but a composition may still declare the
-    # bundled script as a dependency endpoint.
+    # capability-manifest.schema.json の kindPluginComposition.capabilities[].kind
+    # enum と同じ集合を保つ。script は standalone CapabilityManifest を持たない
+    # plugin-composition 専用 kind だが、composition が bundled script を dependency
+    # endpoint として宣言しうる。ここから欠けると schema が受理する bundle を
+    # 決定論 validator だけが拒否する schema drift になる。
     cap_kinds = {"skill", "agent", "hook", "command", "prompt", "workflow", "script"}
     plugin_name = manifest_path.parent.name if manifest_path is not None else data.get("name")
     cap_refs: set[str] = set()

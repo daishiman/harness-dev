@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/parse-spec-diff.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 87,
+    "notes": "再レビュー (前回 PASS 81 → 87)。script 自体は未変更 (mtime Jul 14) だが、前回の減点 2 件のうち『C09 に二重除去を誘発する handoff 形状の不整合 (-10)』が C09 側の修正で解消したため上方修正。C08 が added_lines/removed_lines に marker 除去済み本文を格納する契約は維持されたまま、consumer の C09 が再除去をやめて契約に従うようになり、実 pipeline (実 git repo で C11→C08 を通す) で C08 出力 added_lines=['{\"weight\": 3}'] が C09 の前提と一致することを実測確認。C08 単体の出力は元から正しく、seam が両側で整合した。パーサの核心的な正しさを改めて実測: parse_unified_diff が rem_old/rem_new の残 budget で hunk body を追跡するため content 行の '-'/'+' を file header と誤認しない。本文 '---' (frontmatter) と '--precision-min 0.8' の削除を含む diff を通すと removed_lines=['---','-precision-min 0.8'] と正しく保持する (同じ入力で C09 の raw lines 経路は脱落させる。この典型バグを回避できている点は明確な強み)。完全性ゲートも実測: complete!=true → exit2、diff_sha256 不一致 → exit2、diff/digest 欠落 → exit2。C11 の digest 規約 (utf-8 sha256) と compute_sha256 が一致し declared.strip().lower() で正規化比較。'\\ No newline at end of file' を budget 非消費で skip、想定外行で hunk を打ち切る truncated 耐性、count 省略時の git 慣習 (=1)、_change_type の add/delete/modify、_strip_path の a//b/ 除去と /dev/null→None も妥当。責務は diff→hunk 構造化に閉じ影響判定 (C09) へ踏み込まない。git を一切呼ばない純変換で write-scope:none・network:false を実際に守る。frontmatter 完備。DEDUCTION(-13): C11↔C08 の契約矛盾が未解消 (実 git repo で e2e 再現)。未triage event 2 件の issue に対し C11 は untriaged_entries 2 件 (complete=true・別 commit pair) を exit0 で出すが、それを verbatim で C08 へ渡すと transform の provenance 混在チェックが exit2 で fail-closed する。未triage 1 件に減らすと exit0 で hunks=1。つまり C11 の purpose (『最新1件固定でなく issue 単位の積層』) が謳う本来の想定ケースが pipeline を通らず、_entries の docstring が明記する『C11 stdout を verbatim で渡せる』は単一 entry のときしか成立しない。単一 digest 契約 (triage-report が diff_sha256 を 1 個しか持てない) 自体は正しい設計判断で fail-closed 方向ゆえ危険側ではないが、docstring の主張が事実と異なり、commit pair 単位の分割手順が呼び出し側にも記述されていないため運用が詰む。TESTS: tests/test_parse_spec_diff.py (plugin suite 103 passed)。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}

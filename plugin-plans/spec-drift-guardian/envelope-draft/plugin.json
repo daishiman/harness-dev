@@ -1,0 +1,44 @@
+{
+  "name": "spec-drift-guardian",
+  "version": "0.1.0",
+  "description": "spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin の manifest draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/spec-drift-guardian/.claude-plugin/plugin.json へ適用する。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-spec-drift-triage",
+      "run-rubric-sync"
+    ],
+    "agents": [
+      "spec-impact-verifier",
+      "rubric-sync-auditor"
+    ],
+    "commands": [
+      "spec-drift-triage",
+      "rubric-sync"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-spec-drift-close.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "developer-tools",
+  "tags": [
+    "spec-drift",
+    "triage",
+    "harness-creator"
+  ]
+}

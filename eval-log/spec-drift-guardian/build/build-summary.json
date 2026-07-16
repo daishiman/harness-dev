@@ -1,0 +1,79 @@
+{
+  "target_plugin_slug": "spec-drift-guardian",
+  "mode": "task-graph-route",
+  "progress": {
+    "total": 257,
+    "by_state": {
+      "pending": 0,
+      "running": 0,
+      "done": 257,
+      "blocked": 0
+    },
+    "completion_rate": 1.0
+  },
+  "route_report_count": 12,
+  "blocked_tasks": [],
+  "stall": {
+    "evaluated": false
+  },
+  "completion_gate": "ok",
+  "needs_approval": false,
+  "pending_discovered_tasks": null,
+  "next_steps": [],
+  "completion_evidence_gate": {
+    "path": "eval-log/spec-drift-guardian/build/completion-evidence.json",
+    "status": "ok",
+    "overall_status": "pass",
+    "failed_gates": [],
+    "invalidated_task_ids": [],
+    "invalidated_phase_refs": []
+  },
+  "machine_gates": {
+    "validate_route_build_reports": "valid (11/11 success, complete mode exit0)",
+    "pytest": "73 passed (scripts tests + hook/command wiring tests)",
+    "coverage": "C08=93%, C09=80%, C10=95%, C11=83% (branch coverage; threshold 80%)",
+    "lint_script_frontmatter": "OK (scripts + hooks)",
+    "validate_frontmatter": "ok (2 skills + 2 agents)",
+    "lint_agent_prompt_section": "OK Tier1 (2 agents)",
+    "integration_smoke": "C11->C08->C09 real Issue #17 commit exit0 (49 impacts)",
+    "claude_symlink_sync": "noop=170 created=0 conflict=0 (drift なし)"
+  },
+  "empirical_gates": {
+    "issue17_fixture_matrix": "PASS (7/7 case が期待 axes と一致・eval-fixture-matrix.py exit0)",
+    "precision_recall": "PASS (軸レベル precision=1.0 / recall=1.0・TP=11 FP=0 FN=0・threshold 0.8)",
+    "independent_agent_evaluation": "PASS (C03/C04 を isolation:fork で実起動。C03 agree=false で missed+false-positive 検出・独立再導出49件、C04 verdict=FAIL で omissions1/excesses2/allowlist_violations1 検出)",
+    "safety_matrix": "PASS (実 C10 を 6 シナリオ subprocess 起動。拒否4経路は exit1 で close 遮断かつ target sha256 不変=変更0件、許可2経路は exit0)",
+    "builder_provenance": "PASS (validate-route-build-reports --complete exit0・valid_traces=11/11・skill trace C01/C02)"
+  },
+  "knowledge_record_status": "loop_a_skipped",
+  "knowledge_store_results": {
+    "loop_a": {
+      "status": "skipped",
+      "recorded": 0,
+      "reason": "plugins/spec-drift-guardian/knowledge に knowledge-index.json 不在 (fail-soft・完了を block しない)"
+    },
+    "loop_b": {
+      "status": "ok",
+      "recorded": 3,
+      "store": "plugins/harness-creator/knowledge"
+    }
+  },
+  "claude_symlink_gate": {
+    "status": "ok",
+    "repo_root": "/Users/dm/dev/dev/個人開発/harness/.worktrees/task-20260713-153259-wt-3"
+  },
+  "outer_loop": {
+    "drained": [
+      "DISC-C02-proposal-shape"
+    ],
+    "reason": "sync-proposal を proposals[] コンテナ形へ確定 (schema/C10/C02/C04 整合)",
+    "new_graph_hash": "sha256:b0da62fe827ddf26a839c330b42f5888403b4a626dbda964ac33f63088b76708",
+    "repin": "repinned"
+  },
+  "known_limitations": [
+    "fixture matrix の name/type/required/enum 軸は合成 diff で実測している (実 Issue #17 diff は yaml-spec-cache.md 単一ファイル 49 hunk で全件 other/semantics に落ちるため)。precision/recall は既知正解セットに対する値であり未知 diff への精度ではない。",
+    "independent-agent-evaluation は合成欠陥 1 セットに対する検出可否であり、未知欠陥の検出率測定ではない。",
+    "route-C01/C02 の deviations に run-skill-create governance pipeline 全経路未起動が記録されたまま残る (成果物構造は準拠)。",
+    "GAP-CLOSE-COVERAGE-001: C07 は session 内 PreToolUse/Bash の gh issue close のみ遮断。Web UI/API/Actions 経由は未カバー。"
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/schemas/completion-evidence.schema.json",
+  "title": "Capability Build Completion Evidence",
+  "description": "task-state/route report の自己申告とは別に、phase の実測受入基準を fail-closed で完了判定へ接続する証跡。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "target_plugin_slug",
+    "overall_status",
+    "gates",
+    "invalidated_task_ids",
+    "invalidated_phase_refs"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "target_plugin_slug": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "overall_status": {
+      "enum": ["pass", "blocked"],
+      "description": "全 gates の status から再導出される。1件でも blocked なら blocked。"
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "evidence", "findings"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": ["pass", "blocked"]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": ["number", "integer", "string", "boolean", "null"]
+            }
+          }
+        }
+      }
+    },
+    "invalidated_task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "invalidated_phase_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^P[0-9]{2}$"
+      }
+    }
+  }
+}

@@ -207,6 +207,12 @@
       },
       {
         "event": "PreToolUse",
+        "matcher": "Bash",
+        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/spec-drift-guardian/hooks/guard-spec-drift-close.py",
+        "from_plugin": "spec-drift-guardian"
+      },
+      {
+        "event": "PreToolUse",
         "matcher": "Bash|Task",
         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
         "from_plugin": "system-dev-planner"
@@ -520,6 +526,15 @@
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/spec-drift-guardian/hooks/guard-spec-drift-close.py"
           }
         ]
       },

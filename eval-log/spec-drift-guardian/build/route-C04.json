@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C04",
+  "component_kind": "sub-agent",
+  "name": "rubric-sync-auditor",
+  "builder": "run-build-skill",
+  "build_target": "plugins/spec-drift-guardian/agents/rubric-sync-auditor.md",
+  "status": "success",
+  "summary": "sync-proposal を独立 context で監査し omissions/excesses/allowlist逸脱/pre-image hash不一致を判定、PASS が無い限り C02 apply と C10 close を許可しない独立 auditor agent。read-only (proposer≠approver)。",
+  "deviations": [
+    "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。"
+  ],
+  "evidence": [
+    "agents/rubric-sync-auditor.md + prompts/R-audit-sync.md materialized",
+    "validate-frontmatter ok",
+    "lint-agent-prompt-section OK",
+    "lint-skill-description VIOLATION=0",
+    "sync-audit-verdict.schema.json 準拠"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C02.json"
+  ],
+  "handover": "sync-audit-verdict.json を C02 apply と C10/C07 close gate が消費する。",
+  "covered_task_ids": [
+    "P02-C04-01",
+    "P02-C04-02",
+    "P02-C04-03",
+    "P02-C04-04",
+    "P04-C04-01",
+    "P04-C04-02",
+    "P04-C04-03",
+    "P04-C04-04",
+    "P05-C04-01",
+    "P05-C04-02",
+    "P05-C04-03",
+    "P06-C04-01",
+    "P06-C04-02",
+    "P06-C04-03",
+    "P06-C04-04",
+    "P07-C04-01",
+    "P07-C04-02",
+    "P07-C04-03",
+    "P09-C04-01",
+    "P09-C04-02",
+    "P09-C04-03"
+  ]
+}

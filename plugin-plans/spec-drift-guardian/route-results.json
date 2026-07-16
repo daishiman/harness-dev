@@ -1,0 +1,305 @@
+{
+  "_checklist_evidence": [
+    "plan は elegant-verification-30 と plan-findings を経て build 着手",
+    "全 11 route build が success (route-C*.json 参照)",
+    "統合 seam C11→C08→C09 を実 Issue #17 commit (6ddd645/da6d4e7) で疎通 (exit0, 49 impacts)",
+    "pytest 66 passed (scripts 4 + hook 1 の tests/)",
+    "lint-script-frontmatter scripts/hooks OK, validate-frontmatter skills/agents ok"
+  ],
+  "C11": {
+    "component_kind": "script",
+    "name": "aggregate-issue-diffs.py",
+    "builder": "plugin-scaffold",
+    "build_target": "plugins/spec-drift-guardian/scripts/aggregate-issue-diffs.py",
+    "depends_on": [],
+    "inputs_consumed": [],
+    "status": "success",
+    "summary": "history 見出し→cache commit subject を照合し親子 commit pair から完全 diff を digest 付き復元。shallow/曖昧/欠落/digest不一致は exit2 で fail-closed。",
+    "evidence": [
+      "--help exit0",
+      "pytest passing (relocated tests/)",
+      "lint-script-frontmatter OK",
+      "実 commit 6ddd645/da6d4e7 で 76807 字完全 diff 復元 exit0"
+    ],
+    "deviations": [
+      "builder=plugin-scaffold は handoff 宣言値。実 build は dispatcher が general-purpose SubAgent へ spec 委譲し full 実装 (contract-only scaffold ではなく実機能を実装)。",
+      "events スキーマ未定義部を worker が設計 (expected_diff_sha256 を digest 照合入力に)。preview 80 行は索引のみで照合に非使用。"
+    ],
+    "handover": "C08 は C11 stdout の entries[].diff/diff_sha256 を継承する。digest 規約は sha256(diff utf-8 hexdigest)。"
+  },
+  "C08": {
+    "component_kind": "script",
+    "name": "parse-spec-diff.py",
+    "builder": "plugin-scaffold",
+    "build_target": "plugins/spec-drift-guardian/scripts/parse-spec-diff.py",
+    "depends_on": [
+      "C11"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C11.json"
+    ],
+    "status": "success",
+    "summary": "C11 の complete=true 完全 diff 集合を unified diff hunk 単位へ構造化。complete!=true / digest 不一致は exit2 で fail-closed。",
+    "evidence": [
+      "--help exit0",
+      "pytest 17 passed",
+      "lint-script-frontmatter OK",
+      "C11→C08 実データ疎通 (49 hunks, 12キー完備)"
+    ],
+    "deviations": [
+      "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。"
+    ],
+    "handover": "hunk は added_lines/removed_lines を持ち C09 が消費する。"
+  },
+  "C09": {
+    "component_kind": "script",
+    "name": "map-field-impact.py",
+    "builder": "plugin-scaffold",
+    "build_target": "plugins/spec-drift-guardian/scripts/map-field-impact.py",
+    "depends_on": [
+      "C08"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C08.json"
+    ],
+    "status": "success",
+    "summary": "field-impact-map.json を読み hunk→artifact_kind/5軸を map 駆動で判定 (規則は hardcode せず data 由来)。",
+    "evidence": [
+      "--help exit0",
+      "pytest 19 passed",
+      "lint-script-frontmatter OK",
+      "test(d): カスタム --map で axis 変化=data駆動を立証",
+      "C08→C09 実データ疎通 49 impacts"
+    ],
+    "deviations": [
+      "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。",
+      "hunk 入力契約は暫定定義したが C08 実出力 (added_lines/removed_lines) と整合を実データ疎通で確認済み。"
+    ],
+    "handover": "impacted キーは下流 C01 が triage-report 組立時に付与する。"
+  },
+  "C10": {
+    "component_kind": "script",
+    "name": "check-triage-complete.py",
+    "builder": "plugin-scaffold",
+    "build_target": "plugins/spec-drift-guardian/scripts/check-triage-complete.py",
+    "depends_on": [
+      "C03",
+      "C04",
+      "C11"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C03.json",
+      "eval-log/spec-drift-guardian/build/route-C04.json",
+      "eval-log/spec-drift-guardian/build/route-C11.json"
+    ],
+    "status": "success",
+    "summary": "4 artifact + digest 整合 + agree + verdict=PASS + applied_verified/verified-no-change を突合する close 前ゲート。proposal-only/未承認/hash不一致/FAIL は INCOMPLETE(exit1)。",
+    "evidence": [
+      "--help exit0",
+      "pytest 11 passed ((a)-(f)全網羅)",
+      "lint-script-frontmatter OK",
+      "exit code 契約 手動確認 (OK=0/INCOMPLETE=1/error=2)"
+    ],
+    "deviations": [
+      "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。",
+      "issue 整合チェックを fail-closed 方向で追加 (仕様の突合趣旨に沿う最小追加)。"
+    ],
+    "handover": "C07 hook がこのゲートへ 4 artifact + --target-root を供給する。"
+  },
+  "C01": {
+    "component_kind": "skill",
+    "name": "run-spec-drift-triage",
+    "builder": "run-skill-create",
+    "build_target": "plugins/spec-drift-guardian/skills/run-spec-drift-triage/",
+    "depends_on": [
+      "C08",
+      "C09",
+      "C11"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C08.json",
+      "eval-log/spec-drift-guardian/build/route-C09.json",
+      "eval-log/spec-drift-guardian/build/route-C11.json"
+    ],
+    "status": "success",
+    "summary": "C11→C08→C09 を順に呼び完全 diff を hunk 化し 5軸影響を before/after/evidence 付きで判定、triage-report schema 準拠で emit する run skill。7層+with-goal-seek+with-feedback-contract。",
+    "evidence": [
+      "SKILL.md + prompts R1/R2/R3 + references materialized",
+      "validate-frontmatter: ok",
+      "3 script CLI 参照が実体と一致",
+      "triage-report.schema.json 準拠の出力契約"
+    ],
+    "deviations": [
+      "builder=run-skill-create は handoff 宣言値。実 build は dispatcher が SubAgent へ spec 委譲 (run-skill-create governance pipeline 全経路は未起動・成果物構造は準拠)。"
+    ],
+    "handover": "triage-report.json を C03 verifier と C02 が消費する。"
+  },
+  "C02": {
+    "component_kind": "skill",
+    "name": "run-rubric-sync",
+    "builder": "run-skill-create",
+    "build_target": "plugins/spec-drift-guardian/skills/run-rubric-sync/",
+    "depends_on": [
+      "C01",
+      "C09"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C01.json",
+      "eval-log/spec-drift-guardian/build/route-C09.json"
+    ],
+    "status": "success",
+    "summary": "propose(read-only)で最小Edit差分+pre-image hashを提案、apply で C04 PASS∧明示承認∧allowlist∧hash一致の4条件充足時のみ適用し post-image/validator を記録する二段階 run skill。",
+    "evidence": [
+      "SKILL.md + prompts R1/R2/R3 + references/apply-gate-policy.md materialized",
+      "validate-frontmatter: warn(source field 推奨・非fatal)",
+      "sync-proposal/sync-audit-verdict schema 準拠"
+    ],
+    "deviations": [
+      "builder=run-skill-create は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+      "sync-proposal を複数 impact 時に proposal 配列で emit する設計を採用。schema top-level は単一 object・C10 は単一消費のため runtime の単一/配列整合は要調整 (discovered-task で追跡)。"
+    ],
+    "handover": "sync-proposal.json を C04 auditor と C10 が消費する。単一/配列契約の整合は要フォロー。",
+    "discovered": [
+      "eval-log/spec-drift-guardian/build/discovered-tasks/35e3ba13f3bf421586b8fdbae665c57e.json"
+    ]
+  },
+  "C03": {
+    "component_kind": "sub-agent",
+    "name": "spec-impact-verifier",
+    "builder": "run-build-skill",
+    "build_target": "plugins/spec-drift-guardian/agents/spec-impact-verifier.md",
+    "depends_on": [
+      "C01",
+      "C08",
+      "C09"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C01.json",
+      "eval-log/spec-drift-guardian/build/route-C08.json",
+      "eval-log/spec-drift-guardian/build/route-C09.json"
+    ],
+    "status": "success",
+    "summary": "C01 出力を再読せず C11 complete diff へ C08/C09 を独立再実行し triage-report の見逃し/誤検出を agree/findings で判定、triage-verdict を emit する独立 verifier agent。",
+    "evidence": [
+      "agents/spec-impact-verifier.md + prompts/R-verify-impact.md materialized",
+      "validate-frontmatter ok",
+      "lint-agent-prompt-section OK Tier1",
+      "triage-verdict.schema.json 準拠"
+    ],
+    "deviations": [
+      "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+      "validate-frontmatter 必須の kind/version/owner を frontmatter に追加 (現行様式)。"
+    ],
+    "handover": "triage-verdict.json を C10 close gate が必ず消費する。"
+  },
+  "C04": {
+    "component_kind": "sub-agent",
+    "name": "rubric-sync-auditor",
+    "builder": "run-build-skill",
+    "build_target": "plugins/spec-drift-guardian/agents/rubric-sync-auditor.md",
+    "depends_on": [
+      "C02"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C02.json"
+    ],
+    "status": "success",
+    "summary": "sync-proposal を独立 context で監査し omissions/excesses/allowlist逸脱/pre-image hash不一致を判定、PASS が無い限り C02 apply と C10 close を許可しない独立 auditor agent。read-only (proposer≠approver)。",
+    "evidence": [
+      "agents/rubric-sync-auditor.md + prompts/R-audit-sync.md materialized",
+      "validate-frontmatter ok",
+      "lint-agent-prompt-section OK",
+      "lint-skill-description VIOLATION=0",
+      "sync-audit-verdict.schema.json 準拠"
+    ],
+    "deviations": [
+      "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。"
+    ],
+    "handover": "sync-audit-verdict.json を C02 apply と C10/C07 close gate が消費する。"
+  },
+  "C05": {
+    "component_kind": "slash-command",
+    "name": "spec-drift-triage",
+    "builder": "run-build-skill",
+    "build_target": "plugins/spec-drift-guardian/commands/spec-drift-triage.md",
+    "depends_on": [
+      "C01"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C01.json"
+    ],
+    "status": "success",
+    "summary": "$ARGUMENTS を --issue にパースし C01 run-spec-drift-triage を起動する薄いラッパ command。判定ロジック非保持。",
+    "evidence": [
+      "commands/spec-drift-triage.md materialized",
+      "frontmatter 規約準拠 (extract-blueprint 様式)",
+      "entrypoint=run-spec-drift-triage 配線",
+      "plugin.json entry_points.commands 登録済み"
+    ],
+    "deviations": [
+      "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。"
+    ],
+    "handover": null
+  },
+  "C06": {
+    "component_kind": "slash-command",
+    "name": "rubric-sync",
+    "builder": "run-build-skill",
+    "build_target": "plugins/spec-drift-guardian/commands/rubric-sync.md",
+    "depends_on": [
+      "C02",
+      "C03",
+      "C04",
+      "C10"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C02.json",
+      "eval-log/spec-drift-guardian/build/route-C03.json",
+      "eval-log/spec-drift-guardian/build/route-C04.json",
+      "eval-log/spec-drift-guardian/build/route-C10.json"
+    ],
+    "status": "success",
+    "summary": "C01/C03一致→C02 propose→C04 audit→明示承認→C02 apply→C10検証 の7ステップ順序保証オーケストレーション command。no-change でも C03 独立 verdict 必須。proposer≠approver 二重化。",
+    "evidence": [
+      "commands/rubric-sync.md materialized",
+      "frontmatter 規約準拠",
+      "7ステップ順序保証記述",
+      "plugin.json entry_points.commands 登録済み"
+    ],
+    "deviations": [
+      "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+      "allowed-tools は SSOT の Read,Bash,Skill に従い C03/C04 起動は散文記述 (Task 非付与)。"
+    ],
+    "handover": null
+  },
+  "C07": {
+    "component_kind": "hook",
+    "name": "guard-spec-drift-close",
+    "builder": "run-build-skill",
+    "build_target": "plugins/spec-drift-guardian/hooks/guard-spec-drift-close.py",
+    "depends_on": [
+      "C01",
+      "C02",
+      "C10"
+    ],
+    "inputs_consumed": [
+      "eval-log/spec-drift-guardian/build/route-C01.json",
+      "eval-log/spec-drift-guardian/build/route-C02.json",
+      "eval-log/spec-drift-guardian/build/route-C10.json"
+    ],
+    "status": "success",
+    "summary": "PreToolUse/Bash の gh issue close <N> を検出し 4 artifact を解決して C10 へ委譲、applied_verified/verified-no-change 以外は exit2 で close 遮断する fail-closed hook。",
+    "evidence": [
+      "hooks/guard-spec-drift-close.py + tests materialized",
+      "pytest 9 passed",
+      "lint-script-frontmatter OK",
+      "exit 契約 0=pass/許可, 2=block",
+      "plugin.json PreToolUse/Bash 配線済み"
+    ],
+    "deviations": [
+      "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。",
+      "捕捉は PreToolUse/Bash 経路の gh issue close のみ (Web UI/API/Actions は非カバー=GAP-CLOSE-COVERAGE-001)。"
+    ],
+    "handover": null
+  }
+}
