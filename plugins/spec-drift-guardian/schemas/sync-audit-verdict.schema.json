@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/spec-drift-guardian/schemas/sync-audit-verdict.schema.json",
+  "title": "Rubric Sync Audit Verdict",
+  "description": "C04 (rubric-sync-auditor) が C02 sync-proposal を独立 context で監査した判定。4 軸の反映漏れ (omissions)、過剰変更 (excesses)、allowlist 逸脱 (allowlist_violations)、pre-image hash 不一致を検出する。verdict=PASS がない限り C02 apply と C10/C07 close を許可しない (proposer≠approver)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["issue", "proposal_sha256", "audited_targets", "omissions", "excesses", "allowlist_violations", "verdict"],
+  "properties": {
+    "issue": {"type": "integer", "description": "対象 GitHub issue 番号"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "監査対象 proposal の digest。sync-proposal.proposal_sha256 と一致必須 (別提案の監査を弾く)"},
+    "audited_targets": {
+      "type": "array",
+      "minItems": 1,
+      "description": "監査した適用先パスと軸",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_path", "axis"],
+        "properties": {
+          "target_path": {"type": "string", "minLength": 1},
+          "axis": {"type": "string", "enum": ["name", "type", "required", "enum", "semantics"]}
+        }
+      }
+    },
+    "omissions": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "triage で影響ありなのに proposal に反映漏れした軸/パス。非空なら verdict=FAIL"},
+    "excesses": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "triage 影響外なのに proposal が変更しようとする過剰。非空なら verdict=FAIL"},
+    "allowlist_violations": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "allowlist 外パスへの変更提案。非空なら verdict=FAIL"},
+    "verdict": {"type": "string", "enum": ["PASS", "FAIL"], "description": "PASS のみ apply/close 可。omissions/excesses/allowlist_violations が非空なら FAIL"}
+  }
+}

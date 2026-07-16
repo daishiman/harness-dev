@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C01",
+  "component_kind": "skill",
+  "name": "run-spec-drift-triage",
+  "builder": "run-skill-create",
+  "build_target": "plugins/spec-drift-guardian/skills/run-spec-drift-triage/",
+  "status": "success",
+  "summary": "C11→C08→C09 を順に呼び完全 diff を hunk 化し 5軸影響を before/after/evidence 付きで判定、triage-report schema 準拠で emit する run skill。7層+with-goal-seek+with-feedback-contract。",
+  "deviations": [
+    "builder=run-skill-create は handoff 宣言値。実 build は dispatcher が SubAgent へ spec 委譲 (run-skill-create governance pipeline 全経路は未起動・成果物構造は準拠)。"
+  ],
+  "evidence": [
+    "SKILL.md + prompts R1/R2/R3 + references materialized",
+    "validate-frontmatter: ok",
+    "3 script CLI 参照が実体と一致",
+    "triage-report.schema.json 準拠の出力契約"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C08.json",
+    "eval-log/spec-drift-guardian/build/route-C09.json",
+    "eval-log/spec-drift-guardian/build/route-C11.json"
+  ],
+  "handover": "triage-report.json を C03 verifier と C02 が消費する。",
+  "covered_task_ids": [
+    "P02-C01-01",
+    "P02-C01-02",
+    "P02-C01-03",
+    "P02-C01-04",
+    "P04-C01-01",
+    "P04-C01-02",
+    "P04-C01-03",
+    "P04-C01-04",
+    "P05-C01-01",
+    "P05-C01-02",
+    "P05-C01-03",
+    "P06-C01-01",
+    "P06-C01-02",
+    "P06-C01-03",
+    "P06-C01-04",
+    "P07-C01-01",
+    "P07-C01-02",
+    "P07-C01-03",
+    "P09-C01-01",
+    "P09-C01-02",
+    "P09-C01-03"
+  ]
+}

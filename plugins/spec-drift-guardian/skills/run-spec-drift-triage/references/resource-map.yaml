@@ -1,0 +1,19 @@
+# resource-map.yaml — run-spec-drift-triage の Progressive Disclosure 索引。
+# 決定論本体は plugin-root の 3 script (C11/C08/C09)、出力契約は triage-report schema。
+# 写像規則は references/field-impact-map に外部化され C09 が読む (本 skill は改変しない)。
+resources:
+  - file: ../../scripts/aggregate-issue-diffs.py
+    topic: C11。issue 単位の未triage全 diff を commit pair から完全 diff として集約する決定論段
+    read_when: R1-elicit で対象 issue の完全 diff 集合を集約するとき
+  - file: ../../scripts/parse-spec-diff.py
+    topic: C08。集約完全 diff を unified hunk 単位へ構造化 (commit pair/digest 継承)
+    read_when: R2-parse で集約 diff を hunk 化するとき
+  - file: ../../scripts/map-field-impact.py
+    topic: C09。hunk から artifact kind/path と name/type/required/enum/semantics 各軸の before/after/evidence 候補へ写像
+    read_when: R2-parse で hunk から影響候補を写像するとき
+  - file: ../../references/field-impact-map
+    topic: C09 が読む diff→フィールド写像表の実体 (read-only / 本 skill は改変しない)
+    read_when: 写像の入出力を確認するとき (規則は C09 に委ね prompt へ埋め込まない)
+  - file: ../../schemas/triage-report.schema.json
+    topic: 出力契約。issue/base_commit/source_commit/diff_sha256/complete/impacts の JSON Schema
+    read_when: R3-triage で triage-report.json を組み立て・検証するとき

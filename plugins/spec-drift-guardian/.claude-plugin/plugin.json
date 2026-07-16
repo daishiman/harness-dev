@@ -1,0 +1,44 @@
+{
+  "name": "spec-drift-guardian",
+  "version": "0.1.0",
+  "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-spec-drift-triage",
+      "run-rubric-sync"
+    ],
+    "agents": [
+      "spec-impact-verifier",
+      "rubric-sync-auditor"
+    ],
+    "commands": [
+      "spec-drift-triage",
+      "rubric-sync"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $CLAUDE_PLUGIN_ROOT/hooks/guard-spec-drift-close.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "developer-tools",
+  "tags": [
+    "spec-drift",
+    "triage",
+    "harness-creator"
+  ]
+}

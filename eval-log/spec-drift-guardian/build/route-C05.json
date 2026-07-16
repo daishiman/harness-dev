@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C05",
+  "component_kind": "slash-command",
+  "name": "spec-drift-triage",
+  "builder": "run-build-skill",
+  "build_target": "plugins/spec-drift-guardian/commands/spec-drift-triage.md",
+  "status": "success",
+  "summary": "$ARGUMENTS を --issue にパースし C01 run-spec-drift-triage を起動する薄いラッパ command。判定ロジック非保持。",
+  "deviations": [
+    "builder=run-build-skill は handoff 宣言値。実 build は SubAgent へ spec 委譲。"
+  ],
+  "evidence": [
+    "commands/spec-drift-triage.md materialized",
+    "frontmatter 規約準拠 (extract-blueprint 様式)",
+    "entrypoint=run-spec-drift-triage 配線",
+    "plugin.json entry_points.commands 登録済み"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C01.json"
+  ],
+  "handover": null,
+  "covered_task_ids": [
+    "P02-C05-01",
+    "P02-C05-02",
+    "P02-C05-03",
+    "P02-C05-04",
+    "P05-C05-01",
+    "P05-C05-02",
+    "P05-C05-03",
+    "P06-C05-01",
+    "P06-C05-02",
+    "P06-C05-03",
+    "P06-C05-04",
+    "P07-C05-01",
+    "P07-C05-02",
+    "P07-C05-03",
+    "P09-C05-01",
+    "P09-C05-02",
+    "P09-C05-03"
+  ]
+}

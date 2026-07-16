@@ -191,6 +191,17 @@ PENDING_RENAME_PATHS = {
     "plugins/harness-creator/scripts/sync-native-surfaces.py",
     "plugins/harness-creator/scripts/sync-codex-project-settings.py",
     "plugins/harness-creator/scripts/check-native-surface-parity.py",
+    # PR #21: spec-drift-guardian の triage/sync パイプライン。parse-/map-/aggregate-/check-/eval-
+    # は spec 差分の解析段を表す domain 動詞で ALLOWED_VERBS 外。SKILL.md script_refs /
+    # commands / hooks / tests が exact name を参照し、skill 間で sibling 呼び出しするため、
+    # 許可動詞化 (validate-/extract- 系リネーム or allowed-list 拡張) は参照を原子的に更新する
+    # 後続 Change Governance PR まで PENDING (sync-native-surfaces.py と同種の domain verb pending)。
+    "plugins/spec-drift-guardian/scripts/parse-spec-diff.py",
+    "plugins/spec-drift-guardian/scripts/map-field-impact.py",
+    "plugins/spec-drift-guardian/scripts/aggregate-issue-diffs.py",
+    "plugins/spec-drift-guardian/scripts/check-triage-complete.py",
+    "plugins/spec-drift-guardian/scripts/eval-fixture-matrix.py",
+    "plugins/spec-drift-guardian/scripts/eval-safety-matrix.py",
     # PR #16: build-trace SSOT shim (Python import がハイフン不可のため underscore 許容、§4.3 例外)
     "plugins/harness-creator/skills/run-build-skill/scripts/validate_build_trace_shim.py",
     # feedback_contract criteria の単一 SSOT モジュール。validate-build-trace.py /

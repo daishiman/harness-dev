@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "spec-drift-guardian",
+  "route_id": "C08",
+  "component_kind": "script",
+  "name": "parse-spec-diff.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/spec-drift-guardian/scripts/parse-spec-diff.py",
+  "status": "success",
+  "summary": "C11 の complete=true 完全 diff 集合を unified diff hunk 単位へ構造化。complete!=true / digest 不一致は exit2 で fail-closed。",
+  "deviations": [
+    "builder=plugin-scaffold は handoff 宣言値。実 build は SubAgent が full 実装。"
+  ],
+  "evidence": [
+    "--help exit0",
+    "pytest 17 passed",
+    "lint-script-frontmatter OK",
+    "C11→C08 実データ疎通 (49 hunks, 12キー完備)"
+  ],
+  "inputs_consumed": [
+    "eval-log/spec-drift-guardian/build/route-C11.json"
+  ],
+  "handover": "hunk は added_lines/removed_lines を持ち C09 が消費する。",
+  "covered_task_ids": [
+    "P02-C08-01",
+    "P02-C08-02",
+    "P02-C08-03",
+    "P02-C08-04",
+    "P04-C08-01",
+    "P04-C08-02",
+    "P04-C08-03",
+    "P04-C08-04",
+    "P05-C08-01",
+    "P05-C08-02",
+    "P05-C08-03",
+    "P06-C08-01",
+    "P06-C08-02",
+    "P06-C08-03",
+    "P06-C08-04",
+    "P07-C08-01",
+    "P07-C08-02",
+    "P07-C08-03",
+    "P09-C08-01",
+    "P09-C08-02",
+    "P09-C08-03"
+  ]
+}

@@ -70,6 +70,8 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("slide-report-generator", "run-cross-deck-review", ("IN1", "OUT1")),
     ("slide-report-generator", "run-slide-report-generate", ("IN1", "OUT1")),
     ("slide-report-generator", "run-slide-report-modify", ("IN1", "OUT1")),
+    ("spec-drift-guardian", "run-rubric-sync", ("IN1", "OUT1", "OUT2")),
+    ("spec-drift-guardian", "run-spec-drift-triage", ("IN1", "OUT1")),
     ("system-dev-planner", "run-system-dev-plan", ("IN1", "IN2", "OUT1", "OUT2", "OUT3")),
     ("system-spec-harness", "run-system-spec-compile", ("IN1", "OUT1")),
     ("system-spec-harness", "run-system-spec-doc-fetch", ("IN1", "OUT1")),

@@ -1,0 +1,12 @@
+{
+  "artifact": "plugins/spec-drift-guardian/scripts/check-triage-complete.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "再レビュー (前回 FAIL 62 → PASS 86)。前回 FAIL 理由の G3 fail-open が実測で解消したことを確認。(1) normalize_target_path 新設により in_allowlist('plugins/harness-creator/../../outside/rubric.json')=False を実測。(2) pre-apply/close を実 subprocess 起動し、他ゲート (承認済み・監査PASS・agree=true・digest 一致・pre/post image 一致・validator pass) を全充足させた上でも exit=1 / reason=G3 で停止し、repo 外の victim ファイルが無傷であることを実測 (副作用0)。(3) 退行なし: 正当 path 10 ケース (./先頭・中間 ./・root 内に留まる内部 ..・連続 //・templates/**・*.schema.json) が全て許可、絶対 path・allowlist 接頭辞付き絶対 path・Windows 区切り・空文字・末尾 .. は全て不許可。(4) 変異注入試験 (in_allowlist を旧字句実装へ差し戻し) で eval-safety-matrix が [FAIL] traversal=XX、pytest 4 件失敗となり、ガードが非空虚であることを実証。実ファイル解決も正規化後 path で行い、escape path では pre/post 両経路とも実ファイルに触れない (continue/pass で明示 skip) 点も正しい。G3 以外の設計は前回同様堅牢: _is_int が JSON boolean を除外、malformed は exit2、cross-artifact digest 整合で別 diff/別提案の verdict 流用を封殺、pre-apply でも diff_sha256 束縛で stale agree=true を拒否、post-image は宣言値でなく実ファイル sha256 を再計算、pre_image=null を新規作成提案として実在ファイルとの矛盾を検出、close 経路を 2 本に限定。write-scope:none・network:false を実際に守る。frontmatter 完備。DEDUCTION(-14): symlink 経由の残存 fail-open を実測。normalize_target_path は純字句正規化で realpath 包含検査が無いため、allowlist 内 (例 plugins/harness-creator/x/link) が repo 外を指す symlink だと、target が repo-root 外へ解決されるのに pre-apply=exit0 apply_allowed / close=exit0 applied_verified を返す (実測確認)。SSOT apply-gate-policy §1 が『symlink 追跡なし』と明記するため仕様違反ではなく、また symlink を repo に commit できる権限は allowlist 対象ファイルの直接編集権限を含意するため昇格幅は限定的で深刻度は中。ただし『repo-root 外へは書かせない』という本ゲートの保護目標に対しては穴であり、target_root 配下への realpath 包含検査 (contained()) を追加し、eval-safety-matrix に symlink シナリオを足すのが望ましい。TESTS: tests/test_check_triage_complete.py に allowlist 正規化の parametrize 10 ケース + test_pre_apply_blocks_path_traversal_escape (他ゲート全充足でも G3 で停止 + 副作用なし) が追加され、plugin suite 103 passed。"
+  },
+  "reviewed_by": "workflow-code-review",
+  "checked": ["soundness", "responsibility", "error-handling", "side-effect-safety", "frontmatter"]
+}
