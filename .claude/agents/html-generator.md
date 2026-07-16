@@ -1,0 +1,1 @@
+../../plugins/slide-report-generator/agents/html-generator.md

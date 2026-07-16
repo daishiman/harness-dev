@@ -1,0 +1,1 @@
+../../plugins/company-master/agents/company-master-resolve-identity.md
