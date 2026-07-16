@@ -1,0 +1,1 @@
+../../plugins/system-spec-harness/agents/system-spec-doc-freshness-auditor.md

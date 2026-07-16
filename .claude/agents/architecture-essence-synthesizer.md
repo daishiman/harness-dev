@@ -1,0 +1,1 @@
+../../plugins/extract-system-blueprint/agents/architecture-essence-synthesizer.md

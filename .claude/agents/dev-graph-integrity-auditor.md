@@ -1,0 +1,1 @@
+../../plugins/dev-graph/agents/dev-graph-integrity-auditor.md
