@@ -39,6 +39,9 @@ WINDOW = 6  # DUP-PASSAGE の連続行窓
 MIN_LINE_LEN = 20  # 窓に含める「実質的」行の最小文字数 (定型・短文ノイズ除外)
 # 参照宣言行や定型句は重複判定から除外する。
 PASSAGE_IGNORE_RE = re.compile(r"(正本|canonical|詳細は|参照|references/|schemas/|SSOT)")
+# DUP-PASSAGE の伝搬例外ディレクトリ (パス要素の完全一致)。
+# いずれも「参照化すべき正本が存在しない」ため、指摘に従う操作自体が定義できない。
+PASSAGE_EXCLUDE_DIRS = frozenset({"templates", "proposals"})
 
 
 def parse_json(path: Path) -> dict | None:
@@ -119,7 +122,11 @@ def substantial_lines(md_text: str) -> list[str]:
 def check_passages(md_files: list[Path]) -> list[str]:
     # templates/ 配下は「生成物に焼き込む唯一の実体コピー」= 伝搬例外
     # (goal-seek-paradigm.md「コンテキスト分離」節の伝搬例外)。テンプレ間の意図的重複は対象外にする。
-    md_files = [p for p in md_files if "templates" not in p.parts]
+    # proposals/ 配下は aggregate-evals.py (SessionEnd hook) が EVALS.json の集計から日付ごとに
+    # 吐く自動生成ドラフト。同じ集計からは同じ本文が再出力されるため、パッセージ一致は正本の
+    # 欠如ではなく再出力の必然であり、参照先にできる正本がそもそも無い。除外しないと 2 件目の
+    # ドラフトが入った時点で --strict が必ず落ち、日付別ドラフトを残す提案運用と両立しない。
+    md_files = [p for p in md_files if not (PASSAGE_EXCLUDE_DIRS & set(p.parts))]
     # 窓ハッシュ -> {file: 代表行}
     window_owners: dict[str, dict[Path, str]] = defaultdict(dict)
     for path in md_files:

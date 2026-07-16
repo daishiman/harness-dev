@@ -287,6 +287,31 @@ def test_check_passages_templates_excluded(MOD, tmp_path):
     assert MOD.check_passages([a, b]) == []
 
 
+def test_check_passages_proposals_excluded(MOD, tmp_path):
+    # proposals/ 配下は aggregate-evals が同一集計から日付ごとに吐く自動生成ドラフト。
+    # 参照先にできる正本が無いので伝搬例外 (除外しないと 2 件目で必ず --strict が落ちる)。
+    a = _write_md(tmp_path, "proposals/2026-07-15-rubric-update.md", _PASSAGE_BLOCK)
+    b = _write_md(tmp_path, "proposals/2026-07-16-rubric-update.md", _PASSAGE_BLOCK)
+    assert MOD.check_passages([a, b]) == []
+
+
+def test_check_passages_proposals_excluded_against_outside_file(MOD, tmp_path):
+    # 除外は proposals 側のファイルが 1 つでも絡む組に効く。
+    # (通常ファイル 1 + proposals 1 で残 1 ファイル -> 点在が成立しない)
+    a = _write_md(tmp_path, "proposals/2026-07-15-rubric-update.md", _PASSAGE_BLOCK)
+    b = _write_md(tmp_path, "regular.md", _PASSAGE_BLOCK)
+    assert MOD.check_passages([a, b]) == []
+
+
+def test_check_passages_non_excluded_dirs_still_detected(MOD, tmp_path):
+    # 伝搬例外は templates/ と proposals/ に限る。他ディレクトリは従来どおり検出する。
+    a = _write_md(tmp_path, "prompts/a.md", _PASSAGE_BLOCK)
+    b = _write_md(tmp_path, "references/b.md", _PASSAGE_BLOCK)
+    warns = MOD.check_passages([a, b])
+    assert len(warns) == 1
+    assert "DUP-PASSAGE" in warns[0]
+
+
 def test_check_passages_single_file_no_dup(MOD, tmp_path):
     a = _write_md(tmp_path, "a.md", _PASSAGE_BLOCK)
     assert MOD.check_passages([a]) == []

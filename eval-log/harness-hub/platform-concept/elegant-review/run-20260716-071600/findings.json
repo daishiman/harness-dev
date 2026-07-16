@@ -1,0 +1,2417 @@
+{
+  "version": 1,
+  "target": {
+    "type": "proposal",
+    "path": "doc/harness-hub-platform-concept.md",
+    "reviewed_at": "2026-07-16T07:16:00+09:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "中心命題の唯一の実証的根拠は「今回、利用者が明示した障壁は2である」(doc/harness-hub-platform-concept.md:60) だが、ヒアリング記録・調査日・対象者数などの出典参照が文書全体に存在せず、「なぜそう言えるか」を遡れない。",
+        "ヘッダは Status: concept / decision proposal と宣言する (doc/harness-hub-platform-concept.md:3) が、この提案を誰がどの基準・期限で承認するのかは §21 結論まで含めて記載がない。",
+        "§3.1 の西山モデル7原則 (doc/harness-hub-platform-concept.md:81-89) は人名依存の参照のみで原典資料 (§20 参考資料にも該当なし) が示されず、抽象化の正確性を文書内で検証できない。",
+        "§17-18 の自己検証 PASS (doc/harness-hub-platform-concept.md:777-784) は判定者・判定手続の記載がなく、Phase 1 方針どおり結論として採用せず観察に留めた。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§2.1 の思考リセット定義と §21 結論は一貫しており、Result Hub 後続化 (§13.5) と中心命題 (§2.3) の間に相反はない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§2.2 の中心前提「障壁は2」に出典参照がない (doc/harness-hub-platform-concept.md:60)。",
+            "ヘッダ (§冒頭) と §21 に decision proposal の承認者・意思決定手続きが未記載。",
+            "§3 西山モデルの原典参照が §20 参考資料に含まれない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.2 内部用語表の定義間に批判的に見ても衝突はない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§14 Stage 0→1 の開始条件 (doc/harness-hub-platform-concept.md:648) は明示されており、このレンズで依存断絶は検出されない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "提案全体の根拠となる §2.2「利用者が明示した障壁は2」にヒアリング記録・調査方法・対象者数の出典参照がなく、decision proposal の中心前提が検証不能である。",
+          "recommended_intervention": "§2.2 に利用者ヒアリングの実施日・対象者数・記録参照 (Beads ID や議事録パス) を追記し、§19 の仮説と同様に「未検証前提」であるなら明示的にそう分類する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Status: decision proposal と宣言しながら、承認者・判断基準・判断期限・却下時の扱いという意思決定手続きが文書内に定義されていない。",
+          "recommended_intervention": "ヘッダまたは §21 に「承認者 / 判断に使う基準 (例: §19 仮説の Stage 0 検証計画妥当性) / 期限 / 却下時の代替」を1ブロック追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "ヘッダ/§21"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§3 西山モデルは提案の設計原型でありながら原典資料 (発表・記事・事例記録) への参照が §20 参考資料に含まれず、7原則への抽象化の正確性を確認できない。",
+          "recommended_intervention": "§20 に西山モデルの原典 (または社内共有された参照記録) を追加し、参照不能な場合は §3.1 冒頭に「口頭共有に基づく再構成であり原典未確認」と明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§3/§20"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "一般則「MVP は管理者 approval queue を含めない」(doc/harness-hub-platform-concept.md:508) を個別記述に当てはめると、§7.2 状態機械の Approval Pending→Approved (doc/harness-hub-platform-concept.md:309)、§5.4 の利用者状態「承認待ち」(doc/harness-hub-platform-concept.md:225)、§5.1 Hub Web の役割「承認」(doc/harness-hub-platform-concept.md:182)、§7.1 の PR 置換「Workspace承認request」(doc/harness-hub-platform-concept.md:289) がいずれも承認機構の存在を前提としており、MVP 時点でこれらが定義のみか実装かを接続する記述がない。",
+        "一般則「一般作者は Cloudflare account、DB、secret を直接操作しない」(doc/harness-hub-platform-concept.md:408) に対し、§7.2 は orphan_candidate を「ownerが再登録またはCloudflare側で削除する」(doc/harness-hub-platform-concept.md:337) と定め、owner=一般作者の場合に演繹的に齟齬が生じる。",
+        "不変条件「公開処理が失敗しても現在の安定版は利用可能なまま」(§4.3) は §7.2 の失敗時挙動 (旧stable維持) へ正しく展開されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§7.2 (orphan は owner が Cloudflare 側で削除) と §8.2 (一般作者は Cloudflare account を直接操作しない) が、owner が一般作者である典型ケースで相反する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "演繹レンズで見る限り、不変条件 (§4.3) から §7 公開契約への展開は網羅的に記述されている。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.3 不変条件の用語は §7.1-7.2 でも同一語 (stable pointer, Release) で使用されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§10.2 が approval queue を MVP から除外し §9 が「Greenの自動公開がMVP」(doc/harness-hub-platform-concept.md:456) とする一方、§7.2/§5.4/§5.1/§7.1 は承認経路を前提とし、MVP 時点の承認依存が断絶している。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§7.2 状態機械・§5.4 UI状態・§5.1 Hub Web 役割・§7.1 PR置換が管理者承認経路を前提とするのに、§10.2 は approval queue を MVP から除外しており、MVP で Yellow 相当の PublishRequest が Approval Pending に入った場合の挙動 (拒否か保留か) が未定義で依存が断絶している。",
+          "recommended_intervention": "§10.2 または §7.2 に「MVPでは Approval Pending へ遷移する request は自動的に Needs Fix (対象外) として差し戻し、承認経路は Stage 2 で有効化する」等の MVP 時点の状態機械サブセットを明記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2/§10.2"
+          }
+        },
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§7.2 の orphan_candidate 処理「ownerが再登録またはCloudflare側で削除する」が、§8.2 の「一般作者はCloudflare account、DB、secretを直接操作しない」と矛盾する (owner が一般作者の場合に Cloudflare 操作を要求してしまう)。",
+          "recommended_intervention": "§7.2 の当該文を「ownerが再登録するか、Workspace管理者へCloudflare側の削除を依頼する」に修正し、§8.2 の役割分担と整合させる。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2/§8.2"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "「各 Stage には進入条件がある」という文書内パターン (Stage 0→1 の開始条件 doc/harness-hub-platform-concept.md:648、Stage 3-5 の条件 §13.5 doc/harness-hub-platform-concept.md:624-634) に対し、Stage 2 Workspace Governance (doc/harness-hub-platform-concept.md:664-670) のみ開始条件が §14 にも §13.5 にも存在せず、パターンから逸脱している。",
+        "文書中の数値 (5〜10人 doc/harness-hub-platform-concept.md:462、介入15分未満 doc/harness-hub-platform-concept.md:538、2回連続公開 doc/harness-hub-platform-concept.md:535、30日以内再利用 doc/harness-hub-platform-concept.md:607、月2件 doc/harness-hub-platform-concept.md:531) を帰納すると、全件で導出根拠の記載がないという共通パターンがある。",
+        "§19 の9仮説 (doc/harness-hub-platform-concept.md:786-798) を全件走査すると、9/9 件で合否閾値・検証方法・§13 指標との対応付けが記載されていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "帰納で抽出した反復パターン (段階化・条件付き拡張・免責記述) は §9/§13.5/§14 間で相互に矛盾しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§19 の9仮説すべてに合否基準がない。",
+            "§10.1/§11.1/§13.3 の数値閾値すべてに根拠記載がない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Stage 表記・条件付き表記 (§14「条件付き」) の書式は節間で統一されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "Stage 0→1 と Stage 3-5 は条件が定義される一方、Stage 1→2 のみ遷移条件が欠落 (§14 Stage 2、§13.5 拡張判断表に該当行なし)。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Stage 1→Stage 2 (Workspace Governance) の開始条件だけが §14 と §13.5 のどちらにも定義されておらず、他の全 Stage が条件を持つパターンから逸脱し、承認・統制機能をいつ作るかの依存判断ができない。",
+          "recommended_intervention": "§13.5 の拡張判断表に「Workspace Governance (Stage 2)」行を追加し、進める条件 (例: Yellow 相当の公開需要が継続する、visibility 誤設定 incident が発生する) を定義する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.5/§14"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§19 の9仮説すべてについて、合否を判定する閾値・検証方法・§13 のどの指標で測るかの対応付けが欠落しており、「実証結果が揃うまで構築しない」というゲートが判定不能である。",
+          "recommended_intervention": "§19 の各仮説に「検証手段 (Stage 0 計測項目 / §13 指標名) と合格ライン」の2列を追加する。少なくとも仮説1-3 は Stage 0 の計測 (§10.1) と明示的に紐付ける。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "文書中の運用数値 (Pilot 5〜10人、介入15分未満、2回連続公開、30日再利用、月2件) の全件に導出根拠や仮置きである旨の注記がない。",
+          "recommended_intervention": "§10.1 と §11.1 に「これらの数値は経験的仮置きであり Stage 0 の実測で再設定する」との注記を1文追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.1/§11.1"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "文書は観測「公開が進まない」に対する最尤説明を「Git知識不足ではなく公開抽象層の欠如」(§17.1 doc/harness-hub-platform-concept.md:738) に収束させているが、その観測自体が出典のない §2.2 の一文 (doc/harness-hub-platform-concept.md:60) にのみ依拠している。",
+        "競合する説明仮説 (例: 公開需要そのものの不足、組織のIT統制による意図的な公開制約、作成能力側の障壁) を列挙して棄却した記録が §2/§17 のいずれにもない。",
+        "収束先の仮説自体は §19-1/2 (doc/harness-hub-platform-concept.md:790-791) で検証対象に載っており、反証可能性は確保されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§2.2 の原因診断と §16 HH-D01 の判断理由は同一の説明仮説で一貫している。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "最尤仮説への収束過程で代替仮説の検討・棄却記録が §2.2/§17.1 に欠落している一方、採用仮説の検証計画は §19 に存在する。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "原因記述の用語 (公開抽象層、Publish Control Plane) は §1/§2.3/§16 で一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "原因→解決策→検証 (§2→§6-10→§19) の論理依存は順序どおり接続されている。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "根本原因を「公開抽象層の欠如」に収束させる際、代替説明仮説 (公開需要の不足、IT統制による意図的制約等) の検討・棄却記録がなく、アブダクションの収束根拠が未検証観測1件に依存している。",
+          "recommended_intervention": "§2.2 に「検討した代替原因と棄却理由」の短い表 (2〜3行) を追加し、棄却しきれないもの (需要不足) は §19 の仮説3 と明示的に接続する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.2/§17.1"
+          }
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Why を辿ると「公開の複雑さを Hub が引き受ける」(doc/harness-hub-platform-concept.md:68) は複雑さの消滅ではなく Hub 運用者への移転であり、深掘りの終点である Hub 自体の可用性・障害時挙動 (Catalog 停止時に追加・更新・公開が全面停止する) が §6/§11.2 のどこにも定義されていない。§11.2 は「Platform自体の運用」を提供者責務とする (doc/harness-hub-platform-concept.md:550) のみで水準の記述がない。",
+        "§17.1 垂直思考は根本原因を「repositoryが公開UIを兼ねること」(doc/harness-hub-platform-concept.md:740) とし、§17.3 why思考は「社内公開層がないこと」(doc/harness-hub-platform-concept.md:771) とするが、2つの根の関係 (同一命題の裏表か別原因か) を接続する説明がない。",
+        "中心課題 (doc/harness-hub-platform-concept.md:15) → 不変条件 (§4.3) → Git置換 (§7.1) の一直線の深掘り自体は段差なく接続されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§17.1 と §17.3 の2つの根本原因表現は矛盾とまでは言えず、相互補完として読める余地がある。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "不変条件 (§4.3) は公開失敗時の安定版維持を定めるが、Hub 自体 (Catalog/Control Plane) の障害時に利用者体験がどう縮退するかは §6/§11.2 に未定義。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "根本原因の表現が §17.1 (repository が公開UIを兼ねる) と §17.3 (社内公開層がない) で二重化し、関係説明がない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "課題→原因→中心設計 (§1-§2.3-§6) の深掘り連鎖に工程飛びはない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "公開の複雑さを Hub へ移転した結果として生じる Hub 自体の可用性要件・障害時の縮退挙動 (Catalog 停止時の install/公開可否、導入済み Skill への影響) が未定義である。",
+          "recommended_intervention": "§6.1 末尾または §11.2 に「Hub 障害時: 導入済み Skill と公開済み Web App は影響を受けず、新規公開・追加のみ停止する。復旧責任は提供者の Platform 運用に含む」という縮退方針を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§6/§11.2"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "根本原因の表現が §17.1「repositoryが公開UIを兼ねること」と §17.3「社内公開層がないこと」で二重化しており、同一結論への収束関係が説明されていない。",
+          "recommended_intervention": "§17.3 why思考の行に「§17.1 垂直思考と同一の根 (公開層の欠如が repository を公開UIに兼務させている) への別経路」と補足し、根本原因を1命題に統一する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§17.1/§17.3"
+          }
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "構成要素を独立検査すると、Hub Web は `private / workspace` visibility (doc/harness-hub-platform-concept.md:489) と owner 管理を前提とするのに、社員の本人認証・Workspace 参加管理という認証基盤コンポーネントが §10.2 の「含めるもの」(doc/harness-hub-platform-concept.md:474-493) に存在しない。§19-6 は AI 製品側 Catalog の認証のみを扱う。",
+        "§6 の mermaid 図では target=web_app 経路が PUB→CF 直結 (doc/harness-hub-platform-concept.md:247) で Publish API / Validation (doc/harness-hub-platform-concept.md:239) を経由せず、§7.3 の Web App 固有検査 (build成功・health確認等、doc/harness-hub-platform-concept.md:358-364) の実施主体・実施位置がどのコンポーネントにも割り当てられていない。",
+        "図中の Immutable Package Registry (doc/harness-hub-platform-concept.md:243) は §4.2 内部用語表 (doc/harness-hub-platform-concept.md:136-147) に定義がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "定義済みコンポーネント間 (Publisher/Control Plane/Adapter) の責務記述 (§5.1/§6) に相反はない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§10.2 MVP 構成に Hub Web 自身の認証・アカウント管理コンポーネントが欠落している。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§6 図の Immutable Package Registry が §4.2 用語表に未定義で、要素一覧が図と表で不一致。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§7.3 Web App 固有検査の実施位置が §6 図 (Validation 非経由) と §10.2 (URL登録のみ) のどちらにも接続されていない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "`private / workspace` visibility と owner・公開承認の前提となる Hub Web 自身の認証・アカウント管理 (社員の本人確認、Workspace 参加) が §10.2 MVP 構成要素に含まれておらず、MVP の成立性が判断できない。",
+          "recommended_intervention": "§10.2「含めるもの」に「Workspace member 認証 (既存 IdP/SSO 連携等の最小方式)」を追加するか、意図的に外部前提とするなら §6.1 に「認証は顧客 Workspace の既存 IdP に委譲する」と明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.2"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§7.3 の Web App 固有検査 (build成功・公開先Workspace確認・health確認・URL取得) を MVP で誰がどこで実行するかが、§6 図 (web_app 経路が Validation を経由しない) とも §10.2 (Hub は URL 登録のみ) とも接続されておらず、検査工程の依存が断絶している。",
+          "recommended_intervention": "§6 図の web_app 経路を PUB→API→CF に修正するか、§7.3 冒頭に「Web App 固有検査のうち build/deploy/health は MVP では Cloudflare 側の結果を owner が確認し、Hub は URL 登録時に公開範囲のみ検査する」と実施主体を明記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§6/§7.3/§10.2"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§6 図に登場する Immutable Package Registry が §4.2 内部用語表に定義されておらず、コンポーネント語彙が図と用語表で不一致である。",
+          "recommended_intervention": "§4.2 の用語表に `PackageRegistry` (SkillPackage の immutable 保存先) の1行を追加する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.2/§6"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Green/Yellow/Red 3区分 (doc/harness-hub-platform-concept.md:429-455) は網羅を意図するが、区分を機械判定する基準語「低機密」(doc/harness-hub-platform-concept.md:433)、「限定的な更新」(doc/harness-hub-platform-concept.md:442)、「限定的な書き込み」(doc/harness-hub-platform-concept.md:444)、「広範な利用」(doc/harness-hub-platform-concept.md:451) の境界定義と判定主体がどこにも定義されておらず、「Greenの自動公開がMVP」(doc/harness-hub-platform-concept.md:456) の自動判定が成立しない。",
+        "同一主体に「支援者」(doc/harness-hub-platform-concept.md:70,87,465) と「提供者」(doc/harness-hub-platform-concept.md:100,524-531) の2ラベルが併用され、区分の相互排他性 (1主体1ラベル) が崩れている。",
+        "利用者体験の6語 (doc/harness-hub-platform-concept.md:36) には公開停止・廃止というライフサイクル終端がなく、機能側 (§5.4/§10.2 の公開停止) と体験側の集合が一致しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Green/Yellow/Red の各項目間に同一対象を別区分へ入れる直接矛盾はない (read-only 操作は Green、read-only MCP は Yellow と区別されている)。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§9 の区分境界を決める基準 (低機密/限定的/広範の定義、判定主体) が欠落し、区分が運用上 MECE にならない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "支援者/提供者の2語が §2-§10 と §11 以降で揺れている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Green→Yellow→Red と Stage 1→2→5 の対応 (§9/§14) は段階順序として整合している。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "Green/Yellow/Red の区分境界を決める基準 (「低機密」「限定的な更新・書き込み」「広範な利用」の定義) と判定主体・判定手続きが未定義で、MVP の中核である Green 自動公開の判定が実装不能である。",
+          "recommended_intervention": "§9 冒頭に「区分は §7.3 の static validation が package 内容 (Hook/script/secret/操作種別) から機械判定し、判定不能なものは Yellow 扱いで MVP では公開不可とする」という判定規則と、低機密・限定的の暫定定義 (例: 個人情報・認証必須データを扱わない) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "同一主体を指す「支援者」(§2.3/§3.1/§10.1) と「提供者」(§3.2/§11以降) の2語が定義なく併用され、責任分界 (§11.2) の主体参照が節によって揺れている。",
+          "recommended_intervention": "§4.2 内部用語に「提供者 (=支援者): 教育・有料助言・Platform 運用の主体」を追加して1語へ統一し、本文の残存箇所を置換する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.3/§11"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "利用者体験の6語ループに公開停止・廃止 (ライフサイクル終端) が含まれず、§5.4/§10.2 が備える公開停止機能と体験定義の集合が一致しない (警告)。",
+          "recommended_intervention": "§1 の6語は維持しつつ、§5.4 か §12 に「使われなくなったツールの公開停止・廃止も owner の1操作で行える」ことを体験として1文追加する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§1/§5.4"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "利用者属性×出口の2軸で §8.3 の選択基準表 (doc/harness-hub-platform-concept.md:414-423) を検査すると、AI利用者と非AI利用者が混在する象限 (両出口へ同時公開) の行が存在しない。一方でデータモデルは「1つのCatalogEntryに2つの利用導線を表示できる」(doc/harness-hub-platform-concept.md:162) と両出口併存を明示的に支持している。",
+        "依存度×代替可能性の2軸で外部依存を配置すると、native source / Bootstrap Installer (doc/harness-hub-platform-concept.md:493,648) は高依存・代替未定義の象限にあり、双方が不成立の場合の分岐が §14 にない。Cloudflare MCP 依存 (§19-5) には Stage 3 Deployment Adapter (doc/harness-hub-platform-concept.md:672-679) という代替が定義済みで、非対称である。",
+        "初心者負荷×構築負荷の2軸選択 (§17.1 2軸思考 doc/harness-hub-platform-concept.md:743) 自体は §6 の構成と整合している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§8.3 の各行と §9 の区分は象限配置として相反しない (Hook必要→初期対象外は §9.3 と一致)。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§8.3 に利用者混在時の「両出口同時公開」の判断行が欠落 (§4.2 は2導線を支持)。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "出口名 (Skill / Harness, Web App) は §3.3/§8/§8.3 で表記が統一されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "Stage 1 開始条件 (§14) が native source / Bootstrap Installer に依存する一方、双方不成立時の分岐が未定義で、Cloudflare 依存 (§19-5→Stage 3) と違い代替経路がない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§8.3 の出口選択基準に、AI利用者と非AI利用者が混在するチームで両出口へ同時公開するケースの判断行がなく、§4.2 が明示する CatalogEntry の2導線併存と選択ガイドが対応していない。",
+          "recommended_intervention": "§8.3 の表に「利用者にAI利用者と非利用者が混在する | 両出口 (SkillとWeb Appを同一Projectの別TargetChannelで公開)」の行を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§8.3"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Stage 1 の開始条件が native source または Bootstrap Installer の成立に依存する (§14) が、外部プラットフォーム仕様変更等で双方が不成立となった場合の分岐 (構想の中断基準・代替経路) が定義されておらず、高依存・代替なしの象限が放置されている。",
+          "recommended_intervention": "§14 Stage 0 末尾に「双方が不成立の場合は Stage 1 へ進まず、§19-6 を不成立と判定して配布方式を再設計する (この構想の前提が崩れたものとして §21 の推奨を再検討する)」という失敗分岐を追記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§14/§19"
+          }
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "6語体験の最終工程「改善する」(doc/harness-hub-platform-concept.md:36) を時系列分解すると、§5.2 の作者動線 (doc/harness-hub-platform-concept.md:190-198) と §7.1 の工程表は新規公開のみを記述しており、再公開時に publish 操作を既存 Project の更新として同定する手順 (新規/更新の判別、対象 TargetChannel の選択) が存在しない。version 自動採番 (doc/harness-hub-platform-concept.md:292) は同定済みであることを暗黙の前提にしている。",
+        "Stage 0 で shadow publish・既存 MCP により公開された成果物 (doc/harness-hub-platform-concept.md:464-467) を Stage 1 の Project/TargetChannel/Release 体系へ移行する工程が §10/§14 のどこにもない。",
+        "§7.2 の Publishing→Failed (doc/harness-hub-platform-concept.md:312) に対応する利用者表示状態が §5.4 の一覧 (doc/harness-hub-platform-concept.md:220-229) にも §7.1 の表示列にもない (検査失敗の「修正が必要」はあるが公開処理失敗の状態がない。doc/harness-hub-platform-concept.md:231 の失敗時表示方針は状態名を定義しない)。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§5.2 動線と §7.1 工程表の順序 (検査→承認→公開) は相反しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "更新 (再公開) 時の Project 同定手順が §5.2/§7.1 に欠落。",
+            "Publishing 失敗時の利用者状態が §5.4/§7.1 に欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "工程の利用者表示語 (検査中/承認待ち/公開済み) は §5.4 と §7.1 で概ね同一語が使われている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "Stage 0→1 の開始条件は定義済みだが、Stage 0 成果物の Stage 1 体系への引き継ぎ工程が未定義で段階間に gap がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "再公開 (改善する) 工程で、publish 操作が新規 Project 作成か既存 Project の更新かを同定する手順・判別材料 (manifest 内 Project 参照等) が未定義で、6語体験の最終工程が工程表 (§7.1) に接続されていない。",
+          "recommended_intervention": "§5.2 に更新時動線 (「同じ作業ディレクトリからの publish は既存 Project の新 Release として扱い、確認画面で新規/更新を選べる」等) を追加し、§7.1 の version 自動採番の前提として明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§5.2/§7.1"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Stage 0 の shadow publish・既存 MCP で公開済みの成果物を Stage 1 の Project/TargetChannel/Release/Catalog 体系へ取り込む移行工程が未定義で、Pilot 参加者の成果物が Stage 1 開始時に宙に浮く段階間 gap がある。",
+          "recommended_intervention": "§14 Stage 1 に「Stage 0 で公開済みの Skill/Web App は Publisher 経由で再公開し初版 Release として登録する (owner は Pilot 時の owner を引き継ぐ)」という移行手順を1項追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.1/§14"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§7.2 の Publishing→Failed (承認後の公開処理失敗) に対応する利用者表示状態が §5.4 の状態一覧と §7.1 の表示列のどちらにも定義されていない。",
+          "recommended_intervention": "§5.4 の状態一覧に「公開に失敗しました (安定版はそのまま)」を追加し、§7.2 の Failed と対応付ける。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§5.4/§7.2"
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "文書は Status: decision proposal を掲げるが、『何の決定を求めるか』『承認者は誰か』『判断基準は何か』を定義する節が本文のどこにもない。提案の枠組み自体が閉じていない。",
+        "§17-18 は提案者自身が30種の思考法と検証4条件で自己検証し全PASSと記載する構図であり、提案者=検証者。判定者・判定手続の記載がなく、第三者検証の位置付けが枠組みとして欠落している (Phase 1 観察と一致、PASS結論は未採用)。",
+        "問い直しの枠組み (§2.1 思考リセット = 従来案を正解とみなさない再設計) は明示されており、メタ認知の構造自体は文書内に存在する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§2.1 のリセット定義と §21 の結論 (最小でエレガントな構成) は一貫しており、枠組みレベルの自己矛盾はない"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "ヘッダは Status: concept / decision proposal と宣言するが、承認者・判断基準・要求する決定事項 (Stage 0 着手承認か構想全体の採用か) の記載が全21節にない",
+            "§18 の4条件PASSに判定者・判定手続の記載がない"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§1-§21 の章立て (課題→定義→設計→MVP→指標→判断→仮説) は decision proposal として一貫した構成を保っている"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§19 冒頭『実証結果が揃うまではフルプラットフォームを構築しない』により、検証→構築の依存順序は枠組みとして宣言されている"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "decision proposal と自称しながら、要求する決定事項・承認者・承認基準が未定義で、文書として意思決定を完了させられない。",
+          "recommended_intervention": "ヘッダまたは §1 冒頭に「本提案で求める決定 (例: Stage 0 Discovery Pilot の着手承認)」「承認者」「承認判断の基準と期限」を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "ヘッダ/§1"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§18 の検証4条件PASSは自己記載であり、判定者・判定手続・再検証条件が欠落している。",
+          "recommended_intervention": "§18 に判定主体 (自己検証である旨) と、承認前に第三者レビューを実施する再検証条件を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§18"
+          }
+        }
+      ],
+      "score": 0.55,
+      "reusable_abstraction": "decision proposal 型文書には『要求する決定・承認者・判断基準・自己検証の判定主体』の4点を必須メタデータとして課す承認可能性チェック。",
+      "template_variables": [
+        "doc_status=concept / decision proposal",
+        "required_meta=decision_requested,approver,criteria,verifier"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "承認を要しない個人メモ・作業ログ・観察記録には適用しない"
+      ],
+      "re_audit_trigger": "Status ヘッダに proposal / decision を含む文書の新規作成・改訂時"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "§4.2 の Project / TargetChannel / Release / target 抽象は出口 (skill / web_app) 非依存に汎化されており、§7.2 の状態機械・§4.3 の不変条件とも噛み合う適切な抽象度である。",
+        "一方、支援主体の抽象が『支援者』(§2.3, §3.1, §10.1) と『提供者』(§3.2, §11-13, §21) の2語に割れており、同一主体か役割差かが定義されていない。",
+        "出口名『Skill / Harness』の Harness は §4.2 内部用語表に定義がなく、製品名 Harness Hub・skills-only package (§8.1) との抽象関係が未接続のまま全編で使われている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.3 不変条件 (immutable Release + stable pointer) と §7.2 の Promote/Rollback 操作は抽象レベルで矛盾なく対応している"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§4.2 内部用語表に Harness のエントリがなく、§8.1 出口名『Skill / Harness』・製品名の構成語が未定義のまま使用されている"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§2.3/§3.1/§10.1 は『支援者』、§3.2/§11.1/§11.2/§11.3 は『提供者』を用い、§10.1 では両語が同節近傍に混在する"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.2 の Project→TargetChannel→Release 階層は §7.2 の PublishRequest→Release→Promote の操作依存と整合している"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "『支援者』と『提供者』が定義なしに併用され、責任分界 (§11.2) の主体解釈が節により揺れる。",
+          "recommended_intervention": "§4.2 に主体用語のエントリを追加し、全節を『提供者』へ統一するか、支援者=Stage 0 の役割・提供者=Stage 1 以降の役割と役割差を定義する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.3/§3.2/§10.1/§11"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "出口名・製品名に使われる『Harness』が内部用語表 (§4.2) で未定義のままで、SkillPackage・skills-only との関係が読者に決定できない。",
+          "recommended_intervention": "§4.2 に Harness の定義 (SkillPackage との包含関係、skills-only 初期範囲との対応) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.2/§8.1"
+          }
+        }
+      ],
+      "score": 0.6,
+      "reusable_abstraction": "出口名・製品名・章題に使う語は内部用語表に必ず定義エントリを持たせる『名前の閉包』検査パターン。",
+      "template_variables": [
+        "term_table_section=§4.2",
+        "undefined_terms=Harness",
+        "role_synonyms=支援者,提供者"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "Browser 等、一般名詞として文脈で自明な語には定義エントリを要求しない"
+      ],
+      "re_audit_trigger": "内部用語表 (§4.2) または出口名・製品名の変更時"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "文書全体は『利用者が明示した障壁は2である』(§2.2) という単一前提の上に立つが、ヒアリング記録・日付・対象者数等の一次出典参照がなく、前提そのものが文書内で検証不能。",
+        "西山モデル (§3) は人名依存の参照で原典資料が示されず、7原則への抽象化が原型を正確に表すか、社内 Skill 公開文脈への転用が成立するかを読者が確認できない。",
+        "§19 の9仮説はすべて『解決策が機能するか』の検証であり、『Git 障壁が主要障壁であり、除去すれば公開・再利用が増える』という §17.3 因果関係分析の問題定義前提を検証する仮説 (仮説0) が含まれていない。",
+        "前回改善の反映 (§2.1 で従来前提5項目を外す) は明示されているが、従来案自体への文書参照がなく、リセットの差分を追跡できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§2.2 の前提から §21 の結論まで、前提と推奨案の間に文書内の相反記述はない"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§2.2『利用者が明示した障壁は2である』に出典参照がない",
+            "§19 の9仮説に問題定義そのもの (Git 障壁が主要因) を検証する項目がない",
+            "§2.2 の『従来案』に文書参照がない"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§19 の仮説9項目は疑問形の統一フォーマットで記述されている"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§19 冒頭のガードと §14 Stage 0→1 開始条件により、検証→構築の依存自体は張られている"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "全設計の起点となる前提『利用者が明示した障壁は2』に一次出典 (ヒアリング記録等) がなく、提案の根拠を承認者が検証できない。",
+          "recommended_intervention": "§2.2 にヒアリングの実施日・対象者数・記録所在への参照を追記する。記録が存在しない場合はその旨と Stage 0 での確認計画を明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§19 に問題定義前提を検証する仮説 (Git 障壁除去で公開数・再利用が実際に増えるか) がなく、解決策仮説のみで検証網が閉じている。",
+          "recommended_intervention": "§19 に仮説0『公開障壁の除去が公開数増加の主要因である』を追加し、§10.1 Discovery Pilot の計測項目 (相談時間・公開完了時間) と接続する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "思考リセットの比較対象である『従来案』への文書参照がなく、§2.1 のリセット差分を第三者が追跡できない。",
+          "recommended_intervention": "§2.2 に従来案文書の所在 (パスまたは Beads ID) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.1-2.2"
+          }
+        }
+      ],
+      "score": 0.45,
+      "reusable_abstraction": "仮説リストに『解決策仮説』だけでなく『問題定義仮説 (仮説0)』を必ず含め、中心前提へ一次出典を紐付ける前提監査パターン。",
+      "template_variables": [
+        "premise=利用者が明示した障壁は2",
+        "evidence_source=未記載",
+        "hypothesis_zero=公開障壁の除去が公開数増加の主要因である"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "前提が既承認の上位文書で検証済みかつ参照済みの場合は仮説0を省略できる"
+      ],
+      "re_audit_trigger": "§2 の課題定義または §19 仮説リストの改訂時"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "§17.2 に発散の痕跡 (Web upload / desktop / command 等の候補) はあるが『等』で省略されており、decision proposal 本文に代替案の比較節が存在しない。§16 は採用判断の理由のみで、棄却した選択肢が見えない。",
+        "発散すると未検討の代替案が5件以上挙がる: (1) 現行 marketplace.json 運用 (§15/§20 の既存資産) を非エンジニア向けに薄く wrapper 化する案、(2) 社内既存ポータル/共有ドライブへ Catalog を統合する案、(3) GitHub template + Actions で publish 工程を隠す案、(4) Web App 出口を Cloudflare 以外のホスティングに置く案、(5) Discovery Pilot の手動運用 (shadow publish) を恒常化して何も構築しない案。いずれも採否理由が本文にない。",
+        "特に (1) は自リポジトリの実在資産 (§20 で全件実在確認済み) を直接使う最も近い代替であり、これとの比較欠如は推奨案の説得力を弱めている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "推奨案の内部 (§1 中心設計9項目と §16 HH-D01〜D12) は相互に矛盾しない"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§16 は採用判断のみで、検討した代替案と棄却理由の節が全編にない。§2.2 の従来案対比のみが唯一の比較である"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§16 の判断表は ID・判断・理由の統一フォーマットである"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§14 の Stage 依存関係は代替案の有無と独立に定義されている"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "推奨案以外の代替案 (現行 marketplace 薄 wrapper 案・手動運用継続案等) と棄却理由の比較節がなく、意思決定者が選択肢を評価できない。",
+          "recommended_intervention": "§16 の直前に『検討した代替案と棄却理由』節を追加し、最低3案 (フルプラットフォーム案 / 現行 marketplace.json 薄 wrapper 案 / Pilot 手動運用継続案) を推奨案と同じ観点で比較する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§16"
+          }
+        }
+      ],
+      "score": 0.65,
+      "reusable_abstraction": "decision proposal に『検討した代替案と棄却理由』節を必須化する比較表テンプレート (推奨案 + 最低2代替 + 現状維持案)。",
+      "template_variables": [
+        "alternatives_min=3",
+        "must_include=現状維持/手動運用継続案,既存資産の最小改修案"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "準拠必須の標準・規約により選択肢が一意に定まる場合は比較表を省略できる"
+      ],
+      "re_audit_trigger": "推奨アーキテクチャ (§6) または中心命題 (§2.3) の変更提案時"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "npm private registry・app store・citizen developer platform (Power Apps 等) という隣接分野の運用知見を移植して照合すると、公開『後』のライフサイクル周辺ケースが系統的に欠けている。",
+        "registry 分野の定番問題: 同名の業務ツールが複数公開された場合の名前空間・一意性規約が §4.2 (Workspace / CatalogEntry) にない。",
+        "citizen developer 分野の定番問題: owner の離任・退職時の Project 引き継ぎ手順がない。§11.1 は『継続 owner が明確』を卒業条件にするが、その owner が居なくなった後の再割当は未定義。",
+        "app store 分野の定番問題: 公開停止 (§5.4/§10.2) の発動権限者 (owner 本人か Workspace 管理者か提供者か) が未定義。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§10.2 の公開停止と §7.2 の Release 状態 Suspended は機能として矛盾しない"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§4.2 に業務ツール名の一意性・重複解決の規約がない",
+            "§11.1/§11.2 に owner 交代・離任時の手順がない",
+            "§5.1/§7.2 に公開停止の権限主体の定義がない"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§5.4 の利用者向け状態名 (承認待ち/公開済み/公開停止等) は §7.1 の利用者表示列と対応が取れている"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "owner 責任は §11.2 責任分界表で定義され、Project→owner の依存自体は張られている (欠けているのは交代手続で C2 に計上)"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "owner 離任・退職時の Project 引き継ぎ手順が未定義で、社内プラットフォームの既知の失敗様式 (orphaned tool) に無防備。",
+          "recommended_intervention": "§11.2 または §4.3 に owner 交代規約 (Workspace 管理者による再割当、後任不在時は公開停止) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "業務ツール名の一意性・同名衝突時の解決規約が未定義。",
+          "recommended_intervention": "§4.2 の CatalogEntry / Workspace に、Workspace 内での名称一意性と衝突時の扱い (owner+名称の複合キー等) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "公開停止 (Suspend) を発動できる権限主体が未定義。",
+          "recommended_intervention": "§5.1 の Hub Web 役割または §7.2 に、Suspend の発動権限者 (owner および Workspace 管理者) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§5.1/§7.2"
+          }
+        }
+      ],
+      "score": 0.6,
+      "reusable_abstraction": "公開プラットフォーム設計に registry / app store 由来のライフサイクル検査 (命名一意性・owner 交代・停止権限) を移植する横断チェックリスト。",
+      "template_variables": [
+        "lifecycle_checks=namespace_uniqueness,owner_transfer,suspend_authority"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "単一作者・単一利用者の私的ツールには owner 交代規約・名前空間規約を要求しない"
+      ],
+      "re_audit_trigger": "§4 データモデルまたは §11.2 責任分界の変更時"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『作らない場合』は Discovery Pilot (§10.1) と §19 冒頭のガード (実証が揃うまでフル構築しない) で部分的に検討されており、逆説の骨格は文書に存在する。この点は評価できる。",
+        "しかし『始めた後にやめる場合』が空白である。§13.5 は拡張判断ゲートのみを定義し、§19 の仮説が不成立だったときに構想を縮退・中止する判断条件が §13-14 のどこにもない。前進ゲートと後退ゲートが非対称。",
+        "公開を簡単にすることの逆効果 (低品質増加) は §17.3 因果ループで認知済みだが、公開数が増えた場合の Catalog 乱立・重複による『チームで見つける』体験の劣化への対策 (検索・分類・アーカイブ) が MVP 4画面 (§10.2) にもロードマップ (§14) にも現れない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§10.1『このPilotは恒常運用ではない』と §19 の構築ガードは、作る/作らないの両面で一貫している"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§13.5 に拡張条件はあるが、仮説不成立時の中止・縮退基準が §13-14 にない",
+            "§10.2 の初期4画面に発見性維持 (検索・分類) の要素がない"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§13.5 の拡張候補と進める条件は統一フォーマットの表で記述されている"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "§14 の Stage 依存は前進方向では Stage 1 開始条件・条件付き Stage 3-5 として整合している"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "仮説 (§19) が不成立だった場合の撤退・縮退基準が未定義で、拡張ゲート (§13.5) のみの非対称な判断構造になっている。",
+          "recommended_intervention": "§13.5 に『中止・縮退判断』列を追加するか、§19 に仮説1/3/7 が不成立の場合の判断 (構想棚上げ・Pilot 手動運用への縮退等) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.5/§19"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "公開の簡単化が成功するほど Catalog が乱立し『チームで見つける』体験が劣化するリスクへの対策 (検索・分類・アーカイブ) が MVP にもロードマップにもない。",
+          "recommended_intervention": "§10.2 の業務ツール一覧の要件に最小の検索/分類を追記し、§13.4 に Catalog 内の重複・未利用ツール率の観測を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.2/§13.4"
+          }
+        }
+      ],
+      "score": 0.6,
+      "reusable_abstraction": "拡張判断ゲートと対になる縮退・撤退ゲートを同じ表に併記し、前進と後退の判断条件を対称に保つゲート設計原則。",
+      "template_variables": [
+        "expansion_gates=§13.5",
+        "kill_criteria_candidates=仮説1不成立,仮説3不成立,仮説7不成立"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "撤退コストが実質ゼロの使い捨て実験には撤退基準の明文化を要求しない"
+      ],
+      "re_audit_trigger": "§13.5 拡張判断表または §19 仮説リストの増減時"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "西山モデルとの差分理由は §3.3 の対比表で明示されており、『そのまま真似しない部分』を宣言する類推の使い方自体は適切である。",
+        "ただし移植で実行主体が変質している: 西山モデルでは利用者本人の AI セッションが Cloudflare MCP を実行するが、Harness Hub では §6 図で Publisher (PUB) から CF へ deploy する経路が描かれる。§8.2 は『認証情報は原則として作者の local session または Cloudflare 側の OAuth / token 管理』とするが、deploy の実行場所 (利用者 local か Hub backend か) を確定させる記述がない。",
+        "この未確定は §6.2『顧客側 Cloudflare secret を持たない』・§4.3 の不変条件と、仮説 19-5 (既存 MCP で十分か) の成立性評価の両方に波及する。Publisher が Hub backend 実行なら credential 通過が発生し境界宣言と衝突し得る。",
+        "Vercel 類推 (§17.2) との差分は、Web App の deploy→health 確認→promote (§7.3) が実質のステージングとして機能しており追跡可能。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§6 図の PUB→CF 経路と §6.2 の secret 非保持宣言は、Publisher が利用者 local 実行なら両立するが、その限定が明文化されておらず矛盾の有無を確定できない"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "類推の差分理由自体は §3.3 と §8.2 で明示されている"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Publisher / Publish API / Control Plane の用語は §6 図と本文で一貫している"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§6 図・§8.2・§6.2 の間で、web_app deploy の実行主体と credential 通過経路という依存の要が未定義のまま、credential 非保持原則 (§4.3/§6.2) がその未定義に依存している"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "web_app deploy の実行主体 (利用者 local session か Hub backend か) が §6 図と §8.2 の間で未確定のまま、secret 非保持境界 (§6.2) と仮説 19-5 の評価がこの未確定に依存しており、アーキテクチャの依存関係が閉じていない。",
+          "recommended_intervention": "§6 に Publisher の実行場所を明記する (例: target=web_app の deploy は作者 local session の実行に限定し、Hub backend は deployment URL と release 情報の登録のみを受ける)。§6 図にも実行境界 (local / Hub) の区分を追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§6/§8.2"
+          }
+        }
+      ],
+      "score": 0.55,
+      "reusable_abstraction": "外部モデル転用時に『実行主体・credential 経路・責任境界』の3点が原型からどう変わるかを差分表で明示する転用トレースパターン。",
+      "template_variables": [
+        "original_executor=利用者本人のAIセッション (西山モデル)",
+        "transplanted_executor=未確定 (利用者local か Hub backend)",
+        "credential_path_section=§8.2"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "転用元と転用先で実行主体が同一 (個人→個人) の移植には差分表を要求しない",
+        "UI 文言・名称のみの借用には適用しない"
+      ],
+      "re_audit_trigger": "§6 アーキテクチャ図または §8.2 認証・credential 記述の変更時"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best case (採用が10倍に拡大): immutable Release + stable pointer (§7.2/§4.3) と Green 自動公開 (§9.1) は構造的に破綻しないが、発見性と管理者負荷が先に限界を迎える (paradox レンズで計上)。",
+        "worst case (外部依存の不成立): native source 不成立は Bootstrap Installer (§8.1/§14 Stage 0) が受け皿になる一方、仮説 19-5 (既存 Cloudflare 連携で十分か) が Stage 0 で不成立の場合に、MVP に含まれる Web App URL 登録・『開く』導線 (§10.2) をどう縮退するかの記述がない。",
+        "edge case (MVP 期間中に Yellow 該当物が提出される): §7.2 の状態機械は Approval Pending→管理者承認を定義するが、§10.2 は管理者 approval queue を MVP 除外とし、§9 は『Green の自動公開が MVP』とする。MVP 中に local script 同梱等の Yellow 相当 PublishRequest が来た場合の遷移先 (拒否か Needs Fix か無期限保留か) を接続する記述がない (shared_state の検証対象と一致)。",
+        "edge case (並行公開): 同一 TargetChannel へ複数 PublishRequest が同時進行した場合の stable pointer 更新順序・排他制御が未定義。",
+        "edge case (初版公開の失敗): 初回 Release に rollback 先がない問題は §7.2 が『2版目以降だけ rollback 先を検査する』と明示的に処理済みで、破壊試験に耐える。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§9『Yellow / Red の審査機能を先回りして作らない』と §10.2 の MVP 除外リストは方針として一致しており、矛盾ではなく接続の欠落である"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "仮説 19-5 不成立時の Web App 出口の縮退計画が §10.2/§14 にない",
+            "同一 TargetChannel への並行 PublishRequest の排他規則が §7.2 にない"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "状態名 (Draft/Validating/Needs Fix/Ready/Approval Pending/Approved/Publishing/Failed/Published) は §7.2 内で統一されている"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§7.2 の Approval Pending 経路は Stage 2 の approval queue (§14) に依存するが、MVP (§9/§10.2) で Yellow 該当物が提出された場合の遷移先が未接続で、状態機械とスコープ定義の依存が断絶している"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "MVP では approval queue が除外される (§10.2) にもかかわらず、状態機械 (§7.2) の Approval Pending 経路に入る Yellow 該当 PublishRequest の MVP 期間中の遷移先が未定義で、状態機械と MVP スコープの依存が断絶している。",
+          "recommended_intervention": "§7.2 または §10.2 に接続規則を追記する。例: 『MVP では policy 判定で Yellow / Red と判定された PublishRequest は Needs Fix へ遷移させ、対象外理由を表示する。Approval Pending 経路は Stage 2 で有効化する』。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2/§9/§10.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "仮説 19-5 (既存 Cloudflare 連携で十分) が Stage 0 で不成立となった場合に、MVP の Web App URL 登録・『開く』導線をどう縮退するかが未定義。",
+          "recommended_intervention": "§14 Stage 0 に Web App 出口の縮退判断 (不成立時は skill 出口のみで Stage 1 を開始し、Web App 出口は Stage 3 判断へ送る) を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§14/§10.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "同一 TargetChannel への並行 PublishRequest 競合時の stable pointer 更新順序が未定義。",
+          "recommended_intervention": "§7.2 に TargetChannel 単位の直列化 (同時は先行を優先し後続を Draft へ戻す等) の規則を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2"
+          }
+        }
+      ],
+      "score": 0.45,
+      "reusable_abstraction": "状態機械の全遷移を MVP スコープ表 (含める/含めない) と突合し、実装されない遷移に必ず受け皿状態を明文化させる破壊試験パターン。",
+      "template_variables": [
+        "best=採用10倍でも immutable Release + stable pointer (§7.2) は保持される",
+        "worst=仮説19-5不成立時に Web App 出口の縮退計画が不在 (§10.2/§14)",
+        "edge=MVP 期間中の Yellow 該当 PublishRequest の遷移先未定義 (§7.2×§10.2)"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "状態機械や段階スコープを持たない静的な説明文書には適用しない"
+      ],
+      "re_audit_trigger": "§7.2 状態機械または §10.2 MVP スコープ (含めるもの/含めないもの) の変更時"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見読者にとって §2.2『今回、利用者が明示した障壁は2である。』は『障壁が2つある』とも『直前のリスト2番 (公開・管理・社内共有基盤) が障壁である』とも読める。続く文脈は後者を示すが、設計全体の根拠となる基幹文が単独では多義である。",
+        "§4.1 の公開時質問は2択 (AI 用ツール / Web アプリ) に見えるが、§4.2 は 1 Project に skill と web_app の両 TargetChannel を許し CatalogEntry も2導線対応と述べる。両方に公開したい初見作者の導線が質問文から読み取れない。",
+        "『西山さん』(§2.2) は説明なしに初出し、初見読者は §3 に到達するまで誰のどのモデルか判断できない (出典欠如自体は double-loop レンズで計上)。",
+        "一方、UI 語彙の平易化 (§4.1『業務ツール』統一、§5.4 の平易な状態名、§5.4 の『AI に修正を依頼するボタン』) は初見利用者への配慮として一貫しており、素人目線の設計品質は高い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.1 の2択質問と §4.2 の2 TargetChannel 許容は、順次公開と解釈すれば両立し、確定的な相反記述ではない"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "初見読者向けの語彙定義は §4.1 (業務ツール)・§4.2 (内部用語)・§5.4 (状態名) で概ね提供されている"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§2.2『障壁は2である』が数量とも序数とも読める多義文で、課題定義の表現が意図と一意に対応していない",
+            "§4.1 の質問肢 (排他2択の見え方) と §4.2 のデータモデル (両 channel 併存可) の提示が揃っていない"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "読者の理解順序 (§1 サマリー→§2 課題→§4 定義→§7 契約) は前方参照が少なく初見でも追跡可能である"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "設計全体の根拠となる基幹文『利用者が明示した障壁は2である』が多義 (2つ/2番目) で、初見読者が課題定義を誤読し得る。",
+          "recommended_intervention": "§2.2 を『利用者が明示した障壁は、2. のユーザー作成 Skill / Plugin の公開・共有基盤の欠如である』のように序数参照を明示した文へ書き直す。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.2"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§4.1 の公開時質問が排他2択に見え、1 Project の両出口公開を許すデータモデル (§4.2) と提示が揃っていない。",
+          "recommended_intervention": "§4.1 の質問に『3. 両方 (AI 用ツールと Web アプリ)』を追加するか、『あとからもう一方にも公開できます』の注記を追記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.1/§4.2"
+          }
+        }
+      ],
+      "score": 0.65,
+      "reusable_abstraction": "課題定義・選択肢提示などの基幹文を文脈から切り離して単独提示し、複数の読みが成立するなら一意になるまで書き直す初見読者テスト。",
+      "template_variables": [
+        "ambiguous_sentence=利用者が明示した障壁は2である",
+        "readings=障壁が2つ存在する,リスト2番の要素が障壁である"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "著者本人のみが読む内部速記メモには適用しない"
+      ],
+      "re_audit_trigger": "§2 課題定義文または §4.1 公開時質問文の変更時"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "全体構造 (1 Control Plane + 2 delivery targets、§6) は責務境界が明確で、runtime 非所有 (§6.2) により利用者増と提供者負荷の比例を断つ全体最適設計になっている。",
+        "ただし Web App 出口では deploy 実行主体が Hub 外 (既存 Cloudflare MCP / API、§8.2) にあるため、§7.3 が Hub の検査契約として掲げる『build成功』『deployment完了とhealth確認』を MVP 構成 (§10.2 は独自 deployment engine を含めない) の中で誰がどの時点で実行するかがシステム境界と噛み合っていない。",
+        "Web App の rollback 先 (存続している過去 deployment、§8.2) は顧客側 Cloudflare 環境の資源であり、Hub は存続を保証できない。§7.3 の『2版目以降の rollback 先』検査は検査時点の存在確認にしかならず、rollback 実行時に消えている系全体のケースが残る。",
+        "orphan_candidate (§7.2) は owner の再登録または削除に委ねられるが、owner が放置した場合の検出・督促の仕組みがなく、顧客側 Cloudflare に費用と攻撃面を残す局所ケースが全体設計から漏れている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§6.1/§6.2 の保持・非保持境界と §4.3 不変条件は相互に矛盾なく、§16 HH-D05/D07 の判断とも一致する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§7.2 の orphan_candidate は owner 対応前提だが、owner 不作為時の検出・督促・期限が未定義。",
+            "§8.2 の rollback 先 deployment の存続責任 (顧客が削除しうる) の扱いが未記載。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§4.2 内部用語 (Project/TargetChannel/Release/PublishRequest) は §6/§7/§10 で一貫して使用されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§7.3 Web App 固有検査 (build成功・deployment完了とhealth確認) は Hub 内検査として定義されるが、§10.2 MVP は独自 deployment engine を持たず deploy は §8.2 の外部実行のため、検査の実行主体・観測点が MVP アーキテクチャに存在しない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§7.3 の Web App 固有検査 (build成功・health確認) は、deploy が Hub 外の Cloudflare 連携で行われる MVP 構成 (§8.2, §10.2) では実行主体と観測点が存在せず、公開処理契約と MVP アーキテクチャの依存が断絶している。",
+          "recommended_intervention": "§7.3 に MVP 時点の Web App 検査の実施位置を追記する。例: build 成功は作者ローカル (Claude Code/Codex) で self-report、health 確認は Hub が URL 登録時に HTTP レベルで実施、完全な deploy 検証は Stage 3 Deployment Adapter で回収、と段階を明記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.3"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Web App の rollback (§8.2) は『存続している過去 deployment』が前提だが、その存続責任は顧客側 (§11.2) にあり、Hub の rollback 契約 (§7.2) が実行時に成立しない依存が未処理。",
+          "recommended_intervention": "§8.2 に、rollback 先 deployment が消滅していた場合の挙動 (Catalog 上で『rollback 不可・再公開が必要』を表示) と、顧客側での deployment 保持期間の推奨を追記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§8.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "orphan_candidate (§7.2) の owner 不作為時の検出・督促・期限・顧客費用への影響が未定義で、失敗ケースの後始末が系として閉じていない。",
+          "recommended_intervention": "§7.2 に orphan_candidate の滞留を Hub Web で owner と Workspace 管理者に表示し、一定期間後に管理者へ通知するまでを Hub の責務、削除自体は顧客側責務、と閉じ方を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心の因果 chain は『Git 摩擦→公開減少→再利用減少』(§17.3) であり、これを『利用者が明示した障壁は2である』(§2.2) が根拠づけているが、この起点命題にヒアリング記録等の出典参照がなく (Phase 1 観察済み)、Publisher 中心という全設計の因果起点が文書内で検証不能。",
+        "§7.2 は Approval Pending→Approved (管理者承認) を含む状態機械を定義するが、§10.2 は管理者 approval queue を MVP 除外、§9 は Green 自動公開のみを MVP とする。MVP 期間中に Yellow 相当の PublishRequest が発生した場合の遷移先 (拒否か、状態のみ定義で滞留か) を接続する記述がなく、原因 (Yellow 案件発生) から結果 (どの状態へ落ちるか) への chain が切れている。",
+        "西山モデルの成功 (§3) から本文脈の成功への因果転移について、§3.3 は出口特性の差異を分析しているが、元モデルの成立条件 (対象者のスキル水準・組織規模・実績規模) と本件の差異が検証されておらず、類推の飛躍が残る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§17.3 因果関係分析の記述と §13.2 Activation 指標 (Git操作ゼロ割合) は因果的に整合している。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§2.2『利用者が明示した障壁は2である』に出典・ヒアリング記録参照がない。",
+            "§3 西山モデルの原典参照と成立条件の差異分析がない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "§1 の中心課題定義と §2.3 中心命題、§16 HH-D01 は同一の因果構造を一貫して述べている。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§7.2 の承認経路 (Approval Pending→Approved) と §10.2 の approval queue 除外・§9 の Green-only MVP の間に、MVP 期間中の Yellow 案件の帰結を定義する記述がない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "全設計の因果起点である『利用者が明示した障壁は2である』(§2.2) に出典 (ヒアリング日時・対象者数・記録場所) がなく、decision proposal の承認判断に必要な根拠が欠落している。",
+          "recommended_intervention": "§2.2 に障壁2件の根拠となるヒアリング/観察の出典 (記録の所在、件数、日付) を追記するか、根拠が非公式である場合は §19 に『障壁の再確認』を仮説0として追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§2.2"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§7.2 の状態機械は管理者承認経路を含むが、§10.2 で approval queue は MVP 除外・§9 で Green 自動公開のみが MVP のため、MVP 中に Yellow 判定された PublishRequest の遷移先が未定義 (状態機械と MVP スコープの依存断絶)。",
+          "recommended_intervention": "§7.2 または §10.2 に『MVP では policy 判定で Yellow/Red 相当は Needs Fix (対象外) として差し戻し、Approval Pending 状態は Stage 2 で有効化する』等、MVP 時点で到達可能な状態の部分集合を明記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "西山モデル (§3) の原典参照がなく、元モデルの成立条件と本件文脈 (社内 Skill 公開) の差異検証が §3.3 の出口特性比較に留まり、7原則への抽象化の妥当性が文書内で検証不能。",
+          "recommended_intervention": "§3.1 に西山モデルの原典 (資料・発表・事例の参照先) と、元モデルが成立した条件 (対象者・規模) を1段落追記し、転用時に成立しない可能性のある条件を §19 の仮説へ接続する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§3"
+          }
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "§17.3 は『簡単な公開→再利用増』の正ループと『低品質→信頼低下』の負ループを自ら認識し、skills-only と自動検査を dampener として置いたと主張する。しかし §7.3 は検査が業務要件・データ正確性・安全性全体を保証しないと明言しており、信頼低下ループの主要因 (業務的低品質) はこの dampener の守備範囲外にある。低品質ツールが Catalog に蓄積した際の除去 (公開停止) の判断主体・トリガー・基準が §5.1/§10.2 に機能名としてしか現れず、負ループの遮断機構が未定義。",
+        "もう一つの増幅ループが未検討: 公開が簡単になるほど公開件数と Yellow 相当の需要が増え、office hour・review の提供者時間が増える (§11.3, §13.4)。§13.4 は Provider Load を計測するのみで、需要超過時の抑制機構 (予約枠上限・優先順位・価格による調整) が定義されておらず、『提供者の手離れ』(§21) という目標と逆向きの amplifier が放置されている。",
+        "改善履歴の表示 (§12) と学習の蓄積 (§3.1) は正ループの強化因として整合的に設計されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§17.3 は『自動検査で正のloopを保護』と述べるが、§7.3 は検査が品質全体を保証しないと明言しており、ループ防御の主張と検査契約の射程に緊張がある (完全な矛盾ではなく射程の言い過ぎ)。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "低品質エントリの Catalog からの除去主体・基準が未定義 (§5.1 に公開停止の機能はあるが判断者なし)。",
+            "提供者時間需要の増幅ループに対する dampener が §11/§13.4 に不在。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "ループに関わる指標名 (rollback率、公開停止率、相談時間、§13.4) は一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "正ループの前提となる公開→Catalog→再利用の順序は §5.2/§5.3/§13.2 で整合している。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "『低品質→信頼低下』の負ループ (§17.3 が自認) に対し、§7.3 の検査は業務品質を保証せず、低品質ツールの公開停止・Catalog 除去の判断主体・トリガー・基準が未定義で、負ループ遮断機構が欠落している。",
+          "recommended_intervention": "§9 または §12 に『品質起因の公開停止は owner 自身または Workspace 管理者が実行でき、利用者からの報告導線を業務ツール詳細に置く』等、除去の主体と導線を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "公開容易化→公開件数増→提供者支援需要増という増幅ループに対する抑制機構 (office hour 予約枠上限、優先順位、価格調整) が §11/§13.4 に未定義で、『提供者の手離れ』(§21) を毀損する経路が放置されている。",
+          "recommended_intervention": "§11.3 に相談チケット/office hour の供給上限と超過時の扱い (待ち行列・追加課金・テンプレート化優先) を1項追加し、§13.4 の『1Workspace当たりの相談時間』に警戒閾値を紐付ける。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.3"
+          }
+        },
+        {
+          "condition": "C1",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§17.3 の『自動検査で正のloopを保護』という記述は、§7.3 の免責 (業務要件・安全性全体を保証しない) と併読すると防御範囲を過大に示唆する (警告レベルの表現の緊張)。",
+          "recommended_intervention": "§17.3 の当該行を『skills-only と自動検査で技術的品質のループを保護し、業務的品質は owner acceptance (§7.3) と改善履歴 (§12) で補完する』へ修正する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§17.3"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『簡単さと安全性』の止揚として skills-only + Green 自動公開 (§9, HH-D06) を採るのは方向として妥当。ただし §9.1 の Green 条件『read-only操作』『secretなし』に対応する判定手段が §7.3 の Skill 固有検査 (構造検査・禁止 Hook/script/binary 検出・secret scan) と完全には対応しない。instructions は自然言語で AI に破壊的操作を指示できるため、『read-only操作』を static validation でどう判定するかが未定義のまま自動公開される。両立解の要である検査可能性に穴がある。",
+        "『中央管理と portable の両立』(§17.3, HH-D11) は export (§4.3) で担保されるが、export の範囲に Web App 側 (deployment reference、顧客側リソースの構成情報) が含まれるかが未定義で、Web App 出口の可搬性は主張の裏付けが弱い。",
+        "『Webは管理面 / AI は操作面』(HH-D03) と Web upload の代替経路化 (§5.2) は、重複投資を避けつつ経路を残す良い第三案になっている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "HH-D06 (簡単さと安全性の両立) と §9 の段階化は方針として相互矛盾しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§9.1 Green 条件『read-only操作』の判定方法が §7.3 検査項目に存在しない。",
+            "§4.3 export の対象範囲に Web App の deployment reference / 顧客側構成が含まれるか未記載。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Green/Yellow/Red の3段階語彙は §9/§11.3/§13.5/§15 で一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Green 自動公開→Yellow (Stage 2 承認)→Red (対象外) の段階と Stage 順序 (§14) は方向として整合。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "Green 自動公開の条件『read-only操作』(§9.1) を判定する検査が §7.3 に定義されておらず、自然言語 instructions による破壊的操作の指示は構造検査 (Hook/script/binary 検出) で捕捉できないため、『簡単さと安全性の両立』の安全性側の根拠が欠落している。",
+          "recommended_intervention": "§7.3 Skill 固有検査に『instructions 内の高リスク操作パターン (一括送信・削除・外部送信の指示) の検出と、検出時は Yellow へ降格』を追加するか、§9.1 の『read-only操作』を『package 構造として実行可能物を含まない』へ検査可能な表現に置き換える。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9.1"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "HH-D11 (export による lock-in 回避) の export 範囲 (§4.3) に Web App の deployment reference・顧客側リソース構成情報が含まれるか未定義で、portable の主張が Skill 出口に偏っている。",
+          "recommended_intervention": "§4.3 の export 項目に『Web App の URL・deployment reference・公開履歴を含む。顧客側リソース実体は元より顧客所有 (§8.2)』と1行追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.3"
+          }
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "ユーザー (課題所有)・AI 利用者 (Skill 入手)・Browser 利用者 (Web App 利用)・提供者 (教育・助言収益)・顧客 (資産所有) の分業は §11.2 責任分界で明文化され、概ね全員が得る構造になっている。",
+        "例外は Workspace 管理者で、初回 Cloudflare 接続 (§8.2)・公開範囲承認 (§21)・将来の承認業務 (Stage 2) と負担のみが定義され、管理者が得る便益 (統制可視性・監査容易性など) と想定工数が記述されていない。win-win 設計の漏れ。",
+        "『支援者』(§2.3, §3.1, §10.1) と『提供者』(§3.2, §11 以降) が同一主体を指して併用されており (Phase 1 観察済み)、責任分界表 (§11.2) の行主体との対応が読者に委ねられている。",
+        "§11.3 の料金構成例に『Yellow / Red案件の個別review』があるが、Yellow review は Stage 2 の機能 (§14) であり、2か月プログラムが Stage 1 開始後 (§11.1) である以上、Stage 1 期間の料金メニューとして提供できないものが混在している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§11.2 の責任分界と §6.2 の非保持境界、HH-D12 は相互に矛盾しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "Workspace 管理者の便益・想定負荷が §8.2/§11.2 のどこにも定義されていない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "『支援者』(§2.3, §10.1) と『提供者』(§3.2, §11) の2語が定義なく併用されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§11.3 の『Yellow / Red案件の個別review』は Stage 2 機能 (§14) に依存するが、§11.1 はプログラムを Stage 1 開始後と定義しており提供時期の依存が未接続。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "Workspace 管理者は初回接続・承認の負担のみ定義され (§8.2, §21)、得る便益と想定工数が未記載で、全利害関係者 win-win の設計検証が管理者について欠落している。",
+          "recommended_intervention": "§11.2 の責任分界表に Workspace 管理者の行を追加し、責任 (初回接続・公開範囲承認) と便益 (Shadow IT の可視化、監査履歴、統制点の一元化) を明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.2"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "『支援者』と『提供者』が同一主体を指して定義なく併用されており (§2.3/§10.1 と §3.2/§11)、責任分界の主体対応が曖昧。",
+          "recommended_intervention": "§4.2 内部用語に『提供者 (支援者): 教育・有料助言・Platform 運用の主体。本書では同義』の1行を追加し、以降どちらかへ表記統一する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.2"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§11.3 の料金構成例『Yellow / Red案件の個別review』は Stage 2 の Yellow review 機能 (§14) に依存するが、2か月プログラムは Stage 1 開始後 (§11.1) とされ、Stage 1 期間に提供できない収益項目が例示されている。",
+          "recommended_intervention": "§11.3 に各料金項目の提供可能 Stage を注記する (例: Yellow/Red review は Stage 2 以降。Stage 1 では手動の相談対応として提供)。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.3"
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "『誰の何を解決するか』は §1 (作者の公開障壁) と §13.1 North Star (同僚の再利用) で明確に定義され、成果画面より『同僚がすぐ使える』を初期価値とする転換 (§17.3) は妥当。",
+        "ただし Browser 利用者 (非契約社員) への価値は Web App 出口に依存し、その Web App を MVP で公開する手段は既存 Cloudflare 連携 (§8.2) の作者側操作である。§19 の仮説5 は『技術的に十分公開できるか』を問うのみで、非エンジニア作者が公開を完了できるか (仮説1 の Skill 版に相当する操作完了性) が仮説として立っておらず、2出口のうち片方の価値提案が検証計画から漏れている。",
+        "North Star の認定条件 (§13.1『本人または owner が業務利用の成功を確認』) は Stage 0-2 が手動計測 (§13.4) である中で、誰がどこに記録し集計するかが未定義で、最重要指標の運用が宙に浮いている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§1 の中心課題、§13.1 North Star、HH-D01 は同一の価値定義で一貫している。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§19 に Web App 出口の作者側操作完了性 (非エンジニアが公開を完了できるか) の仮説がない (仮説5 は技術成立性のみ)。",
+            "§13.1 North Star の記録者・記録場所・集計方法が §13.4 の手動計測前提の下で未定義。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "『業務ツール』の UI 呼称統一 (§4.1) は §12 の詳細表示項目とも整合している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "価値仮説→指標→拡張判断 (§13.1→§13.2-13.4→§13.5) の連鎖は順序として成立している。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "2出口のうち Web App 側の価値提案 (非契約社員への到達) を支える『非エンジニア作者が Cloudflare 経由の公開を完了できるか』が §19 の仮説群に存在せず、検証計画から片翼が漏れている。",
+          "recommended_intervention": "§19 に仮説を追加する: 『Web App 出口でも、作者が Git・Cloudflare コンソール操作なしに公開を完了できるか (Workspace 管理者の初回接続後)』。対応する計測を §13.2 に追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "North Star (§13.1) の認定・記録・集計の運用主体が未定義で、Stage 0-2 の手動計測前提 (§13.4) の下では最重要指標が計測不能になりうる。",
+          "recommended_intervention": "§13.4 に『North Star の認定は owner が Catalog の改善履歴または簡易一覧 (§10.1) に記録し、提供者が月次で集計する』等、記録者と記録場所を明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.1"
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "wedge を Publisher + Thin Catalog に限定し (HH-D10, §17.3)、条件付き Stage で拡張する戦略は中長期でも防御的で妥当。lock-in を避ける HH-D11 も撤退容易性を確保している。",
+        "一方で本構想は外部プラットフォーム3系統 (Claude Code / Codex の marketplace・native source 仕様、Cloudflare) に強く依存するが、仕様変更・機能追加 (例: AI 製品側が社内共有機能を native 提供する) への継続追随の責任とコストが §11.2 責任分界 (『Platform自体の運用』の一語のみ) と §13.5 拡張判断のどちらにも構造化されておらず、3ヶ月〜1年後の陳腐化リスクの検討が §20 の『実装着手時に再確認』1文に留まる。",
+        "Stage 2 (Workspace Governance) だけ §13.5 の拡張判断表に進行条件が存在せず (他の拡張候補は全て条件が定義されている)、Yellow 需要の発生をどう検知して Stage 2 へ進むかが戦略上の空白になっている。",
+        "対象 AI 製品の選定 (§8.1『実証参加者が最も多く使う製品』) と Stage 0 参加者募集の順序・決定時期が未定義で、Stage 0 の technical gate (§14) がどちらの製品の private source を検証するのかが確定しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "段階戦略 (§14) と MVP 限定 (§10.2)、拡張判断 (§13.5) の方針は相互に矛盾しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "外部仕様変化への追随責任・コスト・撤退条件が §11.2/§13.5 に構造化されていない (§20 の1文のみ)。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Stage 名と機能の対応 (§10.2⇔§14 Stage 1) は概ね一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§13.5 の拡張判断表に Stage 2 (approval queue / governance) の進行条件だけが欠落している。",
+            "§8.1 の製品選定と §14 Stage 0 の検証対象確定の順序が未定義。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "外部プラットフォーム (Claude Code/Codex の source 仕様、Cloudflare) の仕様変更・機能内製化に対する継続追随の責任・コスト・撤退判断が未定義で、中期の陳腐化リスク検討が §20 の再確認1文に留まる。",
+          "recommended_intervention": "§13.5 に『adapter 追随』行を追加し (条件: 対象製品の破壊的仕様変更発生時、提供者が n 営業日以内に影響評価)、§11.2 の提供者責任に『配布 adapter の仕様追随』を明記する。AI 製品側が同等の社内共有機能を提供した場合の縮退方針も1行置く。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.5"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§13.5 の拡張判断表に Stage 2 (Workspace Governance / approval queue) の進行条件だけが存在せず、Yellow 需要発生から Stage 2 着手への依存関係が定義されていない。",
+          "recommended_intervention": "§13.5 に『Workspace Governance (Stage 2): Yellow 相当の公開要望が反復し、手動判断が提供者時間の主要因になる』の行を追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.5"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "対象 AI 製品の選定 (§8.1) は実証参加者の利用状況に依存するが、Stage 0 の technical gate (§14) は選定済み製品の private source 検証を前提としており、選定の時期と手続きが未定義。",
+          "recommended_intervention": "§14 Stage 0 の冒頭に『参加者募集時に利用製品を確認し、多数派の製品を Stage 0 の検証対象として確定する』と選定タイミングを明記する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§8.1"
+          }
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "因果連鎖「Git摩擦→公開減少→再利用減少」(§17.3 doc/harness-hub-platform-concept.md:765) は §13 の指標体系まで一貫して接続されている。",
+        "しかし why 連鎖は「社内公開層がないこと」(doc/harness-hub-platform-concept.md:771) で停止しており、「なぜ公開層がないのか」(IT統制・セキュリティ審査が Git/PR を意図的な統制点としている可能性) まで遡っていない。その帰結として、Hub 自体の社内導入審査・統制適合を担う主体 (情報システム/セキュリティ部門) が §11.2 責任分界表 (doc/harness-hub-platform-concept.md:543-552) にも stakeholder 記述にも存在しない。",
+        "§19-7 の「事業として成立する水準」(doc/harness-hub-platform-concept.md:796) は、なぜその水準なのかの根拠連鎖 (目標支援時間・損益条件) が定義されておらず、§11.3 の料金構成例 (金額なし) とも接続されていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§17.3 の因果連鎖と §13.2-13.4 の指標定義に相反はない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "why 連鎖の一段先にある社内IT統制・導入審査の観点が §11.2/§9 に欠落。",
+            "§19-7 の判定水準の定義が欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "原因・指標の用語 (再利用、提供者支援時間) は §13/§17.3/§19 で一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "原因→対策→指標→拡張判断 (§2→§7→§13→§13.5) の連鎖は順序どおり定義されている。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "「なぜ社内に公開層がないのか」の遡及が行われておらず、既存の Git/PR が組織のセキュリティ統制点である場合に Hub 自体が受けるべき社内導入審査・統制適合 (情報システム/セキュリティ部門との関係) が責任分界 (§11.2) と工程のどこにも現れない。",
+          "recommended_intervention": "§11.2 の責任分界表に「顧客の情報システム/セキュリティ部門: Hub 導入の審査、監査mirror (§7.1) の要否判断」を1行追加し、§9 冒頭に既存統制との接続 (PR mirror が監査要件を満たす旨) を1文補う。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9/§11.2"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "§19-7 の合否を決める「事業として成立する水準」の定義 (1公開当たり支援時間の目標値、料金との損益関係) がなく、卒業条件の15分 (§11.1) との関係も述べられていないため、仮説7の判定根拠連鎖が切れている。",
+          "recommended_intervention": "§19-7 に「水準の暫定定義: 卒業後の定常運用で1公開当たり提供者支援 {{MAX_SUPPORT_MINUTES_PER_PUBLISH}} 分未満、かつ office hour 収入で支援時間を回収できること」を追記し、§11.1/§11.3 と相互参照させる。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19/§11.3"
+          }
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Discovery Pilot で摩擦を記録し反復箇所だけを MVP で自動化する (§10.1)、拡張判断ゲート (§13.5) で機能追加を条件化する、という PDCA 構造は文書全体に組み込まれている。",
+        "ただし卒業条件の数値 (介入15分未満・2回連続公開、§11.1) と §19-7 の『事業として成立する水準』が接続されておらず、15分という閾値を何と比較して見直すか (Check→Act) のループが定義されていない。",
+        "§13.2 の『Git操作ゼロで完了した割合』は、不変条件 (§4.3) で一般利用者は Git を操作しない設計のため、どの段階の誰の操作を分母・分子にするか (Stage 0 の shadow publish 期は支援者が Git を操作する) の計測定義が欠落している。",
+        "§10.1 の『shadow作業が繰り返される箇所だけを自動化』は良い改善原則だが、『繰り返される』の判定基準 (回数・頻度) が仮置きすらされていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§10.1 Pilot→§10.2 MVP→§13.5 拡張の改善サイクル記述に相互矛盾はない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§11.1 の閾値 (15分・2回) の根拠と見直し手続きが未記載。",
+            "§13.2『Git操作ゼロ割合』の計測定義 (対象段階・分母) が未定義。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "指標名と節構成 (§13.2 Activation / §13.3 Reuse / §13.4 Provider Load) は一貫している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Pilot の記録→MVP の自動化対象決定 (§10.1) という改善の依存順序は定義されている。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "卒業条件の数値 (介入15分未満・2回連続公開、§11.1) の導出根拠と、§19-7『事業成立水準』との対応・見直し手続きが未定義で、閾値の PDCA が回らない。",
+          "recommended_intervention": "§11.1 に『15分は仮置き値であり、Stage 0 の相談時間計測 (§10.1) と §19-7 の検証結果で更新する』と閾値の出所と更新条件を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.1"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§13.2『Git操作ゼロで完了した割合』の計測定義 (対象 Stage、shadow publish 期の支援者操作の扱い、分母) が未記載で、指標が段階により意味を変える。",
+          "recommended_intervention": "§13.4 の計測方法の段落に『Git操作ゼロ割合は Stage 1 以降の一般作者の公開試行を分母とし、Stage 0 の shadow publish は除外する』と定義を追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.2"
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説を §19 で9項目に明文化し『実証結果が揃うまでフルプラットフォームを構築しない』とゲート宣言した構造は仮説思考として優れている。",
+        "しかし9仮説のいずれにも成功判定基準 (閾値: 完了率何%・再利用率何%・支援時間何分)、検証方法、判定時期、判定者が付されておらず、『揃った』と判定する手段が文書内に存在しない。ゲートとして機能しない。",
+        "仮説間・Stage 間の依存も未定義: 仮説6 (native source 認証) は Stage 1 開始条件 (§14) に対応し、仮説5 の否定は Stage 3 (§13.5) に接続されるが、仮説1/2 (publish 完了性・完了率) が否定された場合のフォールバックはどこにも記述がなく、中心命題そのものが崩れるケースの分岐が欠落している。",
+        "§13 の指標群と §19 の仮説群は内容的に対応する (例: 仮説3⇔§13.3 の30日再利用率) が、対応が明示されておらず、どの指標がどの仮説を判定するかの突合せが読者に委ねられている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§19 の仮説群と §10/§14 の段階方針に相互矛盾はない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "§19 の9仮説すべてに成功閾値・検証方法・判定時期・判定者がない。",
+            "仮説1/2 否定時のフォールバック分岐が §14/§13.5 に存在しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "§19 仮説と §13 指標の対応が明示されず、対応表がない (内容上は概ね対応可能)。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "仮説6⇔Stage 1 開始条件 (§14) の接続は明示されているが、他の仮説がどの Stage の gate かは未定義。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§19 の9仮説に成功判定基準 (閾値)・検証方法・判定時期・判定者がなく、『実証結果が揃うまで構築しない』というゲート宣言が判定不能で機能しない。",
+          "recommended_intervention": "§19 を表形式に改め、各仮説に『検証手段 (Stage 0 Pilot / Stage 1 運用)、判定指標 (§13 の該当指標)、仮の合格閾値、判定時期』の4列を追加する。閾値が仮置きである旨も明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19"
+          }
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "9仮説のうちどれが Stage 1/2/3 の進行をブロックするかの依存構造が未定義で、特に中心命題を支える仮説1/2 が否定された場合の分岐 (中止・pivot・Web upload 主経路化) がロードマップに存在しない。",
+          "recommended_intervention": "§14 の各 Stage 開始条件に対応仮説番号を付記し (例: Stage 1 開始 = 仮説6 PASS)、仮説1/2 否定時の扱い (構想の再検討に戻る) を §19 末尾に1段落追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§19"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§19 の仮説と §13 の指標が内容上対応するにもかかわらず対応付けの記法がなく、仮説判定に使う指標の同定が読者依存になっている。",
+          "recommended_intervention": "§13 の各指標に対応する仮説番号 (H1〜H9) を付す、または §19 側に判定指標列を追加して相互参照を統一する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "文書自身は本質論点を『フルWebを作るかでなく、誰へ何分で届けるか』(§17.3) と同定し、出口選択基準 (§8.3) へ落としており、プロダクト論点の同定は良い。",
+        "しかし decision proposal (ヘッダ Status) としての最上流論点『この提案を誰が・何の基準で・いつ承認するか』が本文のどこにも定義されていない (Phase 1 観察済み)。これが決まらなければ Stage 0 着手の可否も §19 ゲートの運用も決まらない、『何が決まれば残りが決まるか』の頂点が空白。",
+        "次点の論点『対象 AI 製品はどちらか』(§8.1) は決定基準 (実証参加者の多数派) はあるが、決定者と決定時点が特定されておらず、論点として閉じていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "ヘッダ Scope (リリース承認は含まない) と本文の関係に矛盾はない (承認手続きの不在は矛盾でなく欠落)。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "decision proposal の承認者・承認基準・意思決定手続きが本文に不在 (ヘッダ Status: decision proposal との対応欠落)。",
+            "§8.1 の製品決定の決定者・時点が未特定。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "論点→判断→理由の記法は §16 の HH-D01〜D12 で統一されている。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "提案の内部論点 (出口選択 §8.3、拡張判断 §13.5) は決定順序が定義されている。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "Status: decision proposal であるにもかかわらず、承認者・承認基準・承認後の次アクション (Stage 0 着手条件) が未記載で、この文書の帰結を決める最上流論点が空白のまま。",
+          "recommended_intervention": "ヘッダ直下または §21 の後に『意思決定事項』節を追加し、(1) 承認対象 (HH-D01〜D12 と Stage 0 着手)、(2) 承認者、(3) 承認基準 (§19 ゲートの採否を含む)、(4) 却下・修正時の扱いを明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "ヘッダ/§21"
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "対象 AI 製品の決定 (§8.1) について、決定基準はあるが決定者と決定時点が未特定で、Stage 0 の technical gate 対象が確定しない論点が開いたまま残る。",
+          "recommended_intervention": "§8.1 に『決定は Stage 0 参加者確定時に提供者と Workspace 管理者が行う』のように決定者・時点を1文追記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§8.1"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "文書自身が KJ 法で『初期必須・早期・条件付き・将来』へ分類したと述べ (§17.3)、§10.2 の含める/含めないリストと §14 の Stage 0-5 に反映されている。島づくりの構造自体は明快。",
+        "ボトムアップに §10.2 の除外13項目を §13.5/§14 と突合すると、大半は Stage 2-5 または拡張判断表に回収されるが、『Web会話型Creator』だけがどの Stage・どの拡張条件にも再登場せず、恒久除外 (§5.1 は『初期構築しない』とのみ記述) なのか条件付き延期なのか分類不能な浮遊項目になっている。",
+        "『会話全文・業務入力の保存』は §12 の『明示的に同意した場合の後続機能』と §14 Stage 4 (opt-in 計測) に内容上対応するが、除外項目→回収先 Stage の対応表がなく、除外リストと Stage マップの島の対応を読者が手作業で突合する必要がある。",
+        "グルーピングの副産物として、§9 (Green/Yellow/Red)・§10.2 (含めない)・§14 (Stage) の3軸分類が並存し、同一機能 (例: approval queue) が3箇所に別の文脈で現れるため、1箇所の変更が他2箇所へ伝播しない改訂リスクがある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "§10.2 の除外項目と §14 の Stage 配置に内容上の矛盾はない (対応の明示がないだけ)。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "『Web会話型Creator』(§10.2) の回収先 (恒久除外か条件付きか) が §13.5/§14 に不在。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "除外リスト (§10.2)・拡張判断 (§13.5)・Stage (§14) の3分類軸の相互参照記法がなく、同一機能の表記が節ごとに独立している。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Stage 0→1→2 と条件付き 3-5 の依存順序 (§14) 自体は定義されている。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "MVP 除外13項目 (§10.2) のうち『Web会話型Creator』だけが §13.5 の拡張判断にも §14 の Stage にも回収先を持たず、恒久除外か条件付き延期かが分類不能。",
+          "recommended_intervention": "§13.5 に『Web会話型Creator: 主動線 (AI 内公開) の完了率が低く、Web 起点の作成需要が反復確認された場合のみ再検討』の行を追加するか、§10.2 に恒久的な非目標である旨を明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.2"
+          }
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "除外リスト (§10.2)・拡張判断 (§13.5)・Stage マップ (§14) に同一機能が別文脈で3回現れるが相互参照がなく、分類軸間の突合せが読者依存で改訂時の不整合温床になる。",
+          "recommended_intervention": "§10.2 の『含めないもの』各項目に回収先 (→Stage 2 / →§13.5 条件付き / →非目標) を括弧書きで付し、3節の対応を機械的に確認できる形へ統一する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.2"
+          }
+        }
+      ],
+      "score": 0.65
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "abduction",
+      "abstraction",
+      "analogy",
+      "brainstorming",
+      "causal",
+      "causal-loop",
+      "critical",
+      "decomposition",
+      "deduction",
+      "double-loop",
+      "hypothesis",
+      "if",
+      "induction",
+      "issue",
+      "kaizen",
+      "kj",
+      "lateral",
+      "mece",
+      "meta",
+      "naive",
+      "paradox",
+      "plus-sum",
+      "process",
+      "strategic",
+      "systems",
+      "trade-on",
+      "two-axis",
+      "value-proposition",
+      "vertical",
+      "why"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "paradigm 2 (deduction): PARTIAL — §7.2 (orphan は owner が Cloudflare 側で削除) と §8.2 (一般作者は Cloudflare account を直接操作しない) が、owner が一般作者である典型ケースで相反する。",
+        "paradigm 16 (analogy): PARTIAL — §6 図の PUB→CF 経路と §6.2 の secret 非保持宣言は、Publisher が利用者 local 実行なら両立するが、その限定が明文化されておらず矛盾の有無を確定できない",
+        "paradigm 21 (causal-loop): PARTIAL — §17.3 は『自動検査で正のloopを保護』と述べるが、§7.3 は検査が品質全体を保証しないと明言しており、ループ防御の主張と検査契約の射程に緊張がある (完全な矛盾ではなく射程の言い過ぎ)。"
+      ],
+      "violation_count": 1
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "paradigm 1 (critical): FAIL — §2.2 の中心前提「障壁は2」に出典参照がない (doc/harness-hub-platform-concept.md:60)。",
+        "paradigm 3 (induction): FAIL — §19 の9仮説すべてに合否基準がない。",
+        "paradigm 4 (abduction): PARTIAL — 最尤仮説への収束過程で代替仮説の検討・棄却記録が §2.2/§17.1 に欠落している一方、採用仮説の検証計画は §19 に存在する。",
+        "paradigm 5 (vertical): PARTIAL — 不変条件 (§4.3) は公開失敗時の安定版維持を定めるが、Hub 自体 (Catalog/Control Plane) の障害時に利用者体験がどう縮退するかは §6/§11.2 に未定義。",
+        "paradigm 6 (decomposition): FAIL — §10.2 MVP 構成に Hub Web 自身の認証・アカウント管理コンポーネントが欠落している。",
+        "paradigm 7 (mece): FAIL — §9 の区分境界を決める基準 (低機密/限定的/広範の定義、判定主体) が欠落し、区分が運用上 MECE にならない。",
+        "paradigm 8 (two-axis): PARTIAL — §8.3 に利用者混在時の「両出口同時公開」の判断行が欠落 (§4.2 は2導線を支持)。",
+        "paradigm 9 (process): FAIL — 更新 (再公開) 時の Project 同定手順が §5.2/§7.1 に欠落。",
+        "paradigm 10 (meta): FAIL — ヘッダは Status: concept / decision proposal と宣言するが、承認者・判断基準・要求する決定事項 (Stage 0 着手承認か構想全体の採用か) の記載が全21節にない",
+        "paradigm 11 (abstraction): FAIL — §4.2 内部用語表に Harness のエントリがなく、§8.1 出口名『Skill / Harness』・製品名の構成語が未定義のまま使用されている",
+        "paradigm 12 (double-loop): FAIL — §2.2『利用者が明示した障壁は2である』に出典参照がない",
+        "paradigm 13 (brainstorming): FAIL — §16 は採用判断のみで、検討した代替案と棄却理由の節が全編にない。§2.2 の従来案対比のみが唯一の比較である",
+        "paradigm 14 (lateral): FAIL — §4.2 に業務ツール名の一意性・重複解決の規約がない",
+        "paradigm 15 (paradox): FAIL — §13.5 に拡張条件はあるが、仮説不成立時の中止・縮退基準が §13-14 にない",
+        "paradigm 17 (if): FAIL — 仮説 19-5 不成立時の Web App 出口の縮退計画が §10.2/§14 にない",
+        "paradigm 19 (systems): PARTIAL — §7.2 の orphan_candidate は owner 対応前提だが、owner 不作為時の検出・督促・期限が未定義。",
+        "paradigm 20 (causal): FAIL — §2.2『利用者が明示した障壁は2である』に出典・ヒアリング記録参照がない。",
+        "paradigm 21 (causal-loop): FAIL — 低品質エントリの Catalog からの除去主体・基準が未定義 (§5.1 に公開停止の機能はあるが判断者なし)。",
+        "paradigm 22 (trade-on): FAIL — §9.1 Green 条件『read-only操作』の判定方法が §7.3 検査項目に存在しない。",
+        "paradigm 23 (plus-sum): PARTIAL — Workspace 管理者の便益・想定負荷が §8.2/§11.2 のどこにも定義されていない。",
+        "paradigm 24 (value-proposition): FAIL — §19 に Web App 出口の作者側操作完了性 (非エンジニアが公開を完了できるか) の仮説がない (仮説5 は技術成立性のみ)。",
+        "paradigm 25 (strategic): PARTIAL — 外部仕様変化への追随責任・コスト・撤退条件が §11.2/§13.5 に構造化されていない (§20 の1文のみ)。",
+        "paradigm 26 (why): PARTIAL — why 連鎖の一段先にある社内IT統制・導入審査の観点が §11.2/§9 に欠落。",
+        "paradigm 27 (kaizen): PARTIAL — §11.1 の閾値 (15分・2回) の根拠と見直し手続きが未記載。",
+        "paradigm 28 (hypothesis): FAIL — §19 の9仮説すべてに成功閾値・検証方法・判定時期・判定者がない。",
+        "paradigm 29 (issue): FAIL — decision proposal の承認者・承認基準・意思決定手続きが本文に不在 (ヘッダ Status: decision proposal との対応欠落)。",
+        "paradigm 30 (kj): PARTIAL — 『Web会話型Creator』(§10.2) の回収先 (恒久除外か条件付きか) が §13.5/§14 に不在。"
+      ],
+      "violation_count": 45
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "paradigm 5 (vertical): PARTIAL — 根本原因の表現が §17.1 (repository が公開UIを兼ねる) と §17.3 (社内公開層がない) で二重化し、関係説明がない。",
+        "paradigm 6 (decomposition): PARTIAL — §6 図の Immutable Package Registry が §4.2 用語表に未定義で、要素一覧が図と表で不一致。",
+        "paradigm 7 (mece): PARTIAL — 支援者/提供者の2語が §2-§10 と §11 以降で揺れている。",
+        "paradigm 11 (abstraction): FAIL — §2.3/§3.1/§10.1 は『支援者』、§3.2/§11.1/§11.2/§11.3 は『提供者』を用い、§10.1 では両語が同節近傍に混在する",
+        "paradigm 18 (naive): FAIL — §2.2『障壁は2である』が数量とも序数とも読める多義文で、課題定義の表現が意図と一意に対応していない",
+        "paradigm 23 (plus-sum): PARTIAL — 『支援者』(§2.3, §10.1) と『提供者』(§3.2, §11) の2語が定義なく併用されている。",
+        "paradigm 28 (hypothesis): PARTIAL — §19 仮説と §13 指標の対応が明示されず、対応表がない (内容上は概ね対応可能)。",
+        "paradigm 30 (kj): PARTIAL — 除外リスト (§10.2)・拡張判断 (§13.5)・Stage (§14) の3分類軸の相互参照記法がなく、同一機能の表記が節ごとに独立している。"
+      ],
+      "violation_count": 9
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "paradigm 2 (deduction): FAIL — §10.2 が approval queue を MVP から除外し §9 が「Greenの自動公開がMVP」(doc/harness-hub-platform-concept.md:456) とする一方、§7.2/§5.4/§5.1/§7.1 は承認経路を前提とし、MVP 時点の承認依存が断絶している。",
+        "paradigm 3 (induction): PARTIAL — Stage 0→1 と Stage 3-5 は条件が定義される一方、Stage 1→2 のみ遷移条件が欠落 (§14 Stage 2、§13.5 拡張判断表に該当行なし)。",
+        "paradigm 6 (decomposition): PARTIAL — §7.3 Web App 固有検査の実施位置が §6 図 (Validation 非経由) と §10.2 (URL登録のみ) のどちらにも接続されていない。",
+        "paradigm 8 (two-axis): PARTIAL — Stage 1 開始条件 (§14) が native source / Bootstrap Installer に依存する一方、双方不成立時の分岐が未定義で、Cloudflare 依存 (§19-5→Stage 3) と違い代替経路がない。",
+        "paradigm 9 (process): PARTIAL — Stage 0→1 の開始条件は定義済みだが、Stage 0 成果物の Stage 1 体系への引き継ぎ工程が未定義で段階間に gap がある。",
+        "paradigm 16 (analogy): FAIL — §6 図・§8.2・§6.2 の間で、web_app deploy の実行主体と credential 通過経路という依存の要が未定義のまま、credential 非保持原則 (§4.3/§6.2) がその未定義に依存している",
+        "paradigm 17 (if): FAIL — §7.2 の Approval Pending 経路は Stage 2 の approval queue (§14) に依存するが、MVP (§9/§10.2) で Yellow 該当物が提出された場合の遷移先が未接続で、状態機械とスコープ定義の依存が断絶している",
+        "paradigm 19 (systems): FAIL — §7.3 Web App 固有検査 (build成功・deployment完了とhealth確認) は Hub 内検査として定義されるが、§10.2 MVP は独自 deployment engine を持たず deploy は §8.2 の外部実行のため、検査の実行主体・観測点が MVP アーキテクチャに存在しない。",
+        "paradigm 20 (causal): FAIL — §7.2 の承認経路 (Approval Pending→Approved) と §10.2 の approval queue 除外・§9 の Green-only MVP の間に、MVP 期間中の Yellow 案件の帰結を定義する記述がない。",
+        "paradigm 23 (plus-sum): PARTIAL — §11.3 の『Yellow / Red案件の個別review』は Stage 2 機能 (§14) に依存するが、§11.1 はプログラムを Stage 1 開始後と定義しており提供時期の依存が未接続。",
+        "paradigm 25 (strategic): PARTIAL — §13.5 の拡張判断表に Stage 2 (approval queue / governance) の進行条件だけが欠落している。",
+        "paradigm 28 (hypothesis): PARTIAL — 仮説6⇔Stage 1 開始条件 (§14) の接続は明示されているが、他の仮説がどの Stage の gate かは未定義。"
+      ],
+      "violation_count": 14
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "/harness-hub:publish",
+      "variable_name": "{{PUBLISH_COMMAND}}",
+      "source_trace": "§5.2, §8.1, §10.2"
+    },
+    {
+      "concrete_value": "15分",
+      "variable_name": "{{MAX_SUPPORT_MINUTES_PER_PUBLISH}}",
+      "source_trace": "§11.1"
+    },
+    {
+      "concrete_value": "2か月",
+      "variable_name": "{{ENABLEMENT_DURATION}}",
+      "source_trace": "§11, §14 Stage 1"
+    },
+    {
+      "concrete_value": "2回連続公開",
+      "variable_name": "{{GRADUATION_PUBLISH_COUNT}}",
+      "source_trace": "§11.1, §14 Stage 1"
+    },
+    {
+      "concrete_value": "30日",
+      "variable_name": "{{REUSE_WINDOW_DAYS}}",
+      "source_trace": "§13.3, §19-3"
+    },
+    {
+      "concrete_value": "5〜10人",
+      "variable_name": "{{PILOT_COHORT_SIZE}}",
+      "source_trace": "§10.1, §14 Stage 0"
+    },
+    {
+      "concrete_value": "Claude Code",
+      "variable_name": "{{AI_PRODUCT_A}}",
+      "source_trace": "§1, §5, §8.1"
+    },
+    {
+      "concrete_value": "Claude Code / Codex",
+      "variable_name": "{{AI_CLIENT_PRODUCTS}}",
+      "source_trace": "§1, §5.1, §8.1"
+    },
+    {
+      "concrete_value": "Cloudflare",
+      "variable_name": "{{HOSTING_PROVIDER}}",
+      "source_trace": "§6, §8.2, §11.2"
+    },
+    {
+      "concrete_value": "Codex",
+      "variable_name": "{{AI_PRODUCT_B}}",
+      "source_trace": "§1, §8.1, §13.5"
+    },
+    {
+      "concrete_value": "GitHub",
+      "variable_name": "{{VCS_PLATFORM}}",
+      "source_trace": "§4.3, §16 HH-D08, §21"
+    },
+    {
+      "concrete_value": "Green / Yellow / Red",
+      "variable_name": "{{RISK_TIER_LABELS}}",
+      "source_trace": "§9"
+    },
+    {
+      "concrete_value": "Harness Hub",
+      "variable_name": "{{PRODUCT_NAME}}",
+      "source_trace": "全§ (表題, §1, §21)"
+    },
+    {
+      "concrete_value": "Vercel",
+      "variable_name": "{{ANALOGY_PLATFORM}}",
+      "source_trace": "§17.2"
+    },
+    {
+      "concrete_value": "harness-creator",
+      "variable_name": "{{EXISTING_ASSET_PLUGIN}}",
+      "source_trace": "§15, §20"
+    },
+    {
+      "concrete_value": "harness-ny2",
+      "variable_name": "{{TRACKING_ISSUE_ID}}",
+      "source_trace": "ヘッダ Tracking"
+    },
+    {
+      "concrete_value": "https://code.claude.com/docs/en/plugin-marketplaces",
+      "variable_name": "{{AI_PRODUCT_A_DOCS_URL}}",
+      "source_trace": "§20"
+    },
+    {
+      "concrete_value": "https://developers.cloudflare.com/agents/model-context-protocol/",
+      "variable_name": "{{HOSTING_MCP_DOCS_URL}}",
+      "source_trace": "§20"
+    },
+    {
+      "concrete_value": "orphan_candidate",
+      "variable_name": "{{ORPHAN_STATE_LABEL}}",
+      "source_trace": "§7.2"
+    },
+    {
+      "concrete_value": "初期Web画面は4つ",
+      "variable_name": "{{MVP_SCREEN_COUNT}}",
+      "source_trace": "§10.2"
+    },
+    {
+      "concrete_value": "月2件",
+      "variable_name": "{{POST_ENABLEMENT_TARGET}}",
+      "source_trace": "§11.1"
+    },
+    {
+      "concrete_value": "西山モデル",
+      "variable_name": "{{REFERENCE_MODEL}}",
+      "source_trace": "§2.2, §3, §21"
+    }
+  ],
+  "total_score": 0.58
+}

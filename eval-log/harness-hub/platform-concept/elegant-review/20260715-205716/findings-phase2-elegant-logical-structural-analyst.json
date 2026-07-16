@@ -1,0 +1,918 @@
+{
+  "agent": "elegant-logical-structural-analyst",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "doc/harness-hub-platform-concept.md:7 が `Scope: 検討・設計のみ。実装、工数見積もり、リリース承認は含まない。` と宣言する一方、doc/harness-hub-platform-concept.md:711 は節題を「主要な設計判断」とし、doc/harness-hub-platform-concept.md:715-726 の 12 行が「〜とする」「〜を使う」「〜へ降格する」の確定形で記述される。",
+        "doc/harness-hub-platform-concept.md:713 の表ヘッダは `| ID | 判断 | 理由 |` の 3 列のみで、status 列・前提列・検証状態列を持たない。",
+        "「なぜ HH-Dxx をそう言えるか」を遡ると、根拠列は「理由」1 語 (例 doc/harness-hub-platform-concept.md:718 `HH-D04 | SkillとWeb Appの2出口を持つ | AI非契約者にも成果を届ける`) にとどまり、その理由の成否は doc/harness-hub-platform-concept.md:793 が未検証仮説として列挙する `Web App出口によってClaude Code非利用者まで利用が広がるか` に依存する。",
+        "同様に HH-D06 (doc/harness-hub-platform-concept.md:720) は doc/harness-hub-platform-concept.md:798 の仮説 9、HH-D07 (doc/harness-hub-platform-concept.md:721) は doc/harness-hub-platform-concept.md:794 の仮説 5、HH-D10 (doc/harness-hub-platform-concept.md:724) は doc/harness-hub-platform-concept.md:797 の仮説 8 に前提を持つが、doc/harness-hub-platform-concept.md:788 は `次の実証結果が揃うまでは、フルプラットフォームを構築しない` とだけ述べ、個々の判断と仮説の対応を書かない。",
+        "doc/harness-hub-platform-concept.md:715 の HH-D01 は doc/harness-hub-platform-concept.md:17 の中心命題と語が一致し、ID 採番と本文の表記ゆれは観測されない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:7 が「リリース承認は含まない」と宣言",
+            "doc/harness-hub-platform-concept.md:711-726 が 12 件を「判断」として確定形で記述",
+            "doc/harness-hub-platform-concept.md:788-798 が同一文書内で 9 件を未検証仮説として列挙"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:713 の表は ID / 判断 / 理由の 3 列を全 12 行で充足している",
+            "doc/harness-hub-platform-concept.md:713 に status・前提・検証手段の列が存在しない (欠落の依存面は C4 で計上)"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:715 `HH-D01 | HubをSelf-Service Publish Control Planeとする` と doc/harness-hub-platform-concept.md:17 の `Self-Service Publish Control Plane` が同一表記",
+            "HH-D01〜HH-D12 の ID 採番に欠番・重複がない (doc/harness-hub-platform-concept.md:715-726)"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:718 HH-D04 の前提が doc/harness-hub-platform-concept.md:793 の仮説 4 にあるが、§16 表に仮説番号への参照がない",
+            "doc/harness-hub-platform-concept.md:720/721/724 (HH-D06/D07/D10) も同様に doc/harness-hub-platform-concept.md:794/797/798 への参照を持たない"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§16 が 12 件を確定形の「判断」として記述する一方、冒頭 Scope は「リリース承認は含まない」と宣言し §19 が同判断の前提を未検証仮説として列挙するため、同一文書内で確定と未確定が status 注記なしに共存している。",
+          "recommended_intervention": "§16 の表に `status` 列 (`recommended` / `provisional` / `decided`) と `前提仮説` 列を追加し、HH-D04/D06/D07/D10 を `provisional` として §19 の仮説番号を記入する。あわせて §16 冒頭に「本表は冒頭 Scope により提案であり承認済み決定ではない」の 1 文を置く。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§16"
+          },
+          "root_cause": "文書が主張ごとに確定度 (status) を保持する列を持たず、節題の語 (「判断」) だけが確定度を暗示する構造になっているため。"
+        },
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "HH-D04/D06/D07/D10 が依存する §19 の未検証仮説 4/9/5/8 への参照が §16 表に存在せず、判断→仮説の依存辺が文書上追跡できない。",
+          "recommended_intervention": "§16 表に `依存仮説` 列を新設し、HH-D04→§19-4、HH-D06→§19-9、HH-D07→§19-5、HH-D10→§19-8 を記入する。逆方向に §19 の各仮説へ「反証時に見直す判断 ID」を併記して双方向リンクを閉じる。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§16"
+          },
+          "root_cause": "§16 と §19 が独立した列挙として並置され、両者を結ぶ参照規約が文書内に定義されていないため。"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "一般則 doc/harness-hub-platform-concept.md:166 `一般利用者はGitHubアカウントを必要としない。` を §15 の各行へ当てはめる。doc/harness-hub-platform-concept.md:705 は現行 `marketplace catalog` を「対象製品別Catalog Adapterの参考実装」として再利用すると宣言する。",
+        "その参考実装の実態を確認すると、README.md:40 の導線は `/plugin marketplace add manju/skills` であり GitHub リポジトリ参照、README.md:120 は `install で authentication failed | private リポジトリの可能性。gh auth login でログイン` と記載する。",
+        "doc/harness-hub-platform-concept.md:388 は `認証やrefreshが不足する場合だけ、最初に1回実行する軽量Bootstrap Installerを用意する` と緩和策を置くが、その成否は doc/harness-hub-platform-concept.md:795 の未検証仮説 6 に依存する。",
+        "一般則 doc/harness-hub-platform-concept.md:169 `公開処理が失敗しても、現在の安定版は利用可能なままにする。` を §8.2 へ当てはめると、doc/harness-hub-platform-concept.md:410 は `Web App MVPのrollbackは、Catalogの参照先を存続している過去deploymentへ戻すところまで` と述べ、過去 deployment の存続を前提にする。",
+        "doc/harness-hub-platform-concept.md:552 は顧客 Workspace 側に `停止・削除` の責任を割り当てており、過去 deployment が顧客側で削除された場合に不変条件 doc/harness-hub-platform-concept.md:169-170 が破れる経路が存在するが、doc/harness-hub-platform-concept.md:348 の rollback 先検査は公開時点の検査にとどまる。",
+        "一般則 doc/harness-hub-platform-concept.md:167 を §15 へ当てはめた doc/harness-hub-platform-concept.md:709 `一般利用者に13 Phase、Git、package check、review、PRを操作させない` は、Git/PR の除外方針としては §4.3 と整合する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:169-170 が安定版の可用性と pointer 切替 rollback を不変条件として宣言",
+            "doc/harness-hub-platform-concept.md:410 が rollback 成立条件を「存続している過去deployment」に限定",
+            "doc/harness-hub-platform-concept.md:552 が顧客 Workspace に停止・削除の責任を割り当て、外部削除で不変条件が破れる経路を残す"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:167-168 の 2 不変条件は doc/harness-hub-platform-concept.md:287-293 の 7 行 (branch〜cache更新) を被覆する",
+            "doc/harness-hub-platform-concept.md:166 (GitHubアカウント)・171 (Web App runtime/secret 非所有)・172 (export) に対応する行が doc/harness-hub-platform-concept.md:287-294 の Git 置換表 8 行に存在しない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:166 が「GitHubアカウント不要」を不変条件と宣言",
+            "doc/harness-hub-platform-concept.md:705 が現行 marketplace catalog を参考実装として再利用と宣言",
+            "README.md:40 の導線が `/plugin marketplace add manju/skills` (GitHub repo 参照)、README.md:120 が private repo で `gh auth login` を要求"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:388 が Bootstrap Installer の条件を「認証やrefreshが不足する場合だけ」と明示し、doc/harness-hub-platform-concept.md:795 の仮説 6 が同じ論点を未検証として保持する (依存自体は追跡可能)",
+            "doc/harness-hub-platform-concept.md:348 の rollback 先検査が公開時点に限定され、公開後の外部削除に対する検査契機が定義されない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§4.3 の不変条件「GitHubアカウント不要」を §15 が再利用元とする現行 marketplace catalog 方式へ適用すると、README.md の実態 (GitHub repo 参照 + private 時 gh auth login 要求) と齟齬し、その適合可否が §15 の 1 語対応表に記載されていない。",
+          "recommended_intervention": "§15 の `marketplace catalog` 行に「適合条件」列を追加し、`現行導線は GitHub repo 参照 (README.md:40) かつ private 時に gh auth login が必要 (README.md:120) のため、§4.3 の GitHub アカウント不要を満たすには native private source の Workspace 認証か Bootstrap Installer が前提 (§8.1, §19-6 で未検証)` と明記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§15"
+          },
+          "root_cause": "§15 の現行資産対応表が「資産名→新しい役割」の 1 語対応にとどまり、資産の実際の制約 (認証方式・配布可否) を保持する列を持たないため。"
+        },
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§4.3 の不変条件「公開処理が失敗しても現在の安定版は利用可能」が、§8.2 の rollback 成立条件「存続している過去deployment」と §11.2 の顧客側「停止・削除」責任により、外部要因で破れる経路を持ち、その処理が未定義である。",
+          "recommended_intervention": "§4.3 の当該不変条件に `target=web_app では過去 deployment の存続が前提であり、顧客側削除時は不変条件の適用外` の但し書きを追加するか、§7.3 Web App 固有検査に「rollback 先 deployment の存続を公開後も定期確認し、消失時は Catalog を Deprecated 表示へ落とす」検査項目を追加して経路を閉じる。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.3"
+          },
+          "root_cause": "不変条件が Hub 内部で閉じる target=skill を暗黙の基準に書かれ、外部 provider に実体を置く target=web_app へ演繹適用した際の破れ条件が検討されていないため。"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "個別事例から一般化を試みる。doc/harness-hub-platform-concept.md:287-294 の Git 置換表 8 行はすべて「難しい操作 → Hub 内部処理 → 利用者表示」の形をとる。ここから一般法則「利用者表示は doc/harness-hub-platform-concept.md:222-229 が列挙する 8 状態のいずれかである」を立てる。",
+        "反証事例 1: doc/harness-hub-platform-concept.md:290 の利用者表示 `修正が必要 / 公開準備完了` のうち「公開準備完了」は doc/harness-hub-platform-concept.md:222-229 の 8 状態に存在しない。",
+        "反証事例 2: doc/harness-hub-platform-concept.md:292 の利用者表示 `更新1、更新2等` は doc/harness-hub-platform-concept.md:222-229 に存在しない。",
+        "反証事例 3: doc/harness-hub-platform-concept.md:293 の利用者表示 `追加可能 / 更新あり` のうち「追加可能」は doc/harness-hub-platform-concept.md:222-229 に存在しない (「更新あり」は doc/harness-hub-platform-concept.md:227 に存在)。",
+        "別の個別事例群から一般化する。doc/harness-hub-platform-concept.md:628-634 の拡張判断表 7 行はすべて「進める条件」を持ち、doc/harness-hub-platform-concept.md:672/681/688 の Stage 3/4/5 はすべて「条件付き」と付記される。ここから一般法則「Stage 1 以降の後続 Stage は進行条件を持つ」を立てる。",
+        "反証事例: doc/harness-hub-platform-concept.md:664 `### Stage 2: Workspace Governance` にだけ「条件付き」の付記がなく、doc/harness-hub-platform-concept.md:665-669 の構成要素 (管理者approval queue / granular visibility / formal audit log / Yellow review / update通知) に対応する行が doc/harness-hub-platform-concept.md:628-634 の拡張判断表に 1 行も存在しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:231 が「Git、CI、merge、cache purge等の内部状態は表示しない」と述べ、doc/harness-hub-platform-concept.md:290-293 の利用者表示列も内部語を避けており、方針レベルの矛盾は観測されない",
+            "ただし表示語彙の集合が 2 箇所で一致しない (C3 で計上)"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:664 の Stage 2 に「条件付き」付記がない",
+            "doc/harness-hub-platform-concept.md:628-634 の拡張判断表 7 行に Stage 2 構成要素 (doc/harness-hub-platform-concept.md:665-669) の行が存在しない",
+            "対照的に doc/harness-hub-platform-concept.md:672/681/688 の Stage 3/4/5 は「条件付き」を明示する"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:222-229 が「初心者に見せる状態」を 8 種で列挙",
+            "doc/harness-hub-platform-concept.md:290 が「公開準備完了」、doc/harness-hub-platform-concept.md:292 が「更新1、更新2等」、doc/harness-hub-platform-concept.md:293 が「追加可能」を利用者表示として導入し、いずれも 8 種に含まれない"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:648 が Stage 1 の開始条件を明示し、Stage 0→1 の依存辺は記述されている (内容面の破れは paradigm 9 で計上)",
+            "Stage 1→2 の依存辺 (Stage 2 の開始条件) が doc/harness-hub-platform-concept.md:664-670 に存在しない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§7.1 の利用者表示列が §5.4 の 8 状態に存在しない「公開準備完了」「更新1、更新2等」「追加可能」を導入し、利用者向け状態語彙が 2 箇所で不一致になっている。",
+          "recommended_intervention": "§5.4 を利用者向け状態語彙の唯一の定義点と宣言し、「公開準備完了」「追加可能」を 8 状態へ追加するか、§7.1 の該当 3 行 (CI確認 / version更新 / cache更新) の利用者表示を §5.4 の既存 8 語 (検査中 / 公開済み / 更新あり 等) へ置換する。§7.1 表の見出しに「利用者表示 (§5.4 の状態語彙から選ぶ)」と注記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.1"
+          },
+          "root_cause": "§5.4 が状態語彙の正本であることが宣言されておらず、§7.1 が表の行ごとに表示語を独立に充てているため。"
+        },
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§14 の後続 Stage のうち Stage 2 だけが「条件付き」表記も §13.5 拡張判断表の行も持たず、進行条件が定義されていない唯一の Stage になっている。",
+          "recommended_intervention": "§13.5 拡張判断表に「Workspace Governance (Stage 2)」の行を追加し、進める条件を記述する (例: `Green 自動公開だけでは公開できない Yellow 相当の申請が Stage 1 で反復して発生する`)。または §14 Stage 2 見出しへ「条件付き」を付記し開始条件を 1 文で明記する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§14"
+          },
+          "root_cause": "Stage 2 が §10.2 の「含めないもの」を回収する受け皿として暗黙に無条件扱いされ、他 Stage と同じ gate 記述規則が適用されなかったため。"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "観測結果を集める。(1) doc/harness-hub-platform-concept.md:779-784 が 4 条件すべてを PASS と自己申告し、判定者・実施日・入力・再現手順の記載がない。(2) doc/harness-hub-platform-concept.md:711-726 が 12 件を確定形の「判断」として記述する。(3) doc/harness-hub-platform-concept.md:788-798 が 9 件を未検証仮説として記述する。(4) doc/harness-hub-platform-concept.md:730 が §17 を「3系統の並列分析を統合した記録」と述べるが実行の裏づけ参照がない。",
+        "競合仮説 A「執筆者の注意不足」: doc/harness-hub-platform-concept.md:222-229 と doc/harness-hub-platform-concept.md:290-293 の語彙不一致は説明できるが、doc/harness-hub-platform-concept.md:711-726 と doc/harness-hub-platform-concept.md:788-798 が節として整然と分離されている事実を説明できない。",
+        "競合仮説 B「文書が長すぎる」: 837 行という規模は説明要因になりうるが、doc/harness-hub-platform-concept.md:779-784 の 4 行という最小の表で PASS が根拠なく成立している事実を説明できない。",
+        "最尤仮説 C「主張単位の status メタデータが構造として存在しない」: 各主張が節番号でしか位置づけられず、確定 (§16)・未検証 (§19)・自己申告 PASS (§18)・記録 (§17) がすべて同じ Markdown 表/箇条書きで並置される。これは観測結果 (1)(2)(3)(4) をすべて 1 つの原因で説明し、doc/harness-hub-platform-concept.md:713 の表ヘッダに status 列がないこと、doc/harness-hub-platform-concept.md:779 の表ヘッダが `| 条件 | 判定 | 根拠 |` のみで実施者・入力列を持たないことと直接対応する。",
+        "仮説 C は予測を生む。予測「他の列挙も確定度を書けないはず」→ doc/harness-hub-platform-concept.md:628-634 の拡張判断表も「進める条件」を自然文で持つだけで判定者・判定時点の列を持たず、予測が成立する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:781-784 の PASS 主張は、文書内の反証事例 (doc/harness-hub-platform-concept.md:290 vs 222-229 等) と両立しないが、その個別矛盾は paradigm 3/5/8 で計上済み",
+            "根本原因レンズでは、主張の確定度を書ける場所がないこと自体は矛盾ではなく構造欠落として扱う"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:713 の表ヘッダ `| ID | 判断 | 理由 |` に status 列がない",
+            "doc/harness-hub-platform-concept.md:779 の表ヘッダ `| 条件 | 判定 | 根拠 |` に実施者・実施日・入力・再現手順の列がない",
+            "doc/harness-hub-platform-concept.md:730 が §17 を「記録」と称するが、記録の出力先・実行 ID への参照がない"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:715-726 と doc/harness-hub-platform-concept.md:790-798 は表と番号付き箇条書きという別形式だが、いずれも確定度を表す共通フィールドを持たない点で形式が揃っている (統一の欠如ではなく構造の欠如)"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:788 `次の実証結果が揃うまでは、フルプラットフォームを構築しない` は §19 全体から §14 全体への粗い依存辺を 1 本張るが、主張単位の依存辺は張られない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "各主張 (§16 の判断 / §18 の PASS / §19 の仮説 / §17 の記録) に status・根拠・検証手段のメタデータ列が存在せず、確定・未検証・自己申告が同一構造で並置されるため、読み手が確定度を区別できない。",
+          "recommended_intervention": "文書に「主張レジストリ」節を新設し、全主張へ `id / claim / status(decided|provisional|hypothesis|self-reported) / evidence_ref / verification_method` の 5 フィールドを付与する。§16・§18・§19 の各表は当該レジストリを参照する形へ書き換え、§18 の表には最低限 `実施者 / 実施日 / 入力 / 再現手順` の 4 列を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§16-§19"
+          },
+          "root_cause": "文書が説得順の読み物構成 (§1→§21) を採り、主張の確定度を機械的に保持するフィールド設計を持たなかったこと。これが §16・§17・§18・§19 で観測される 4 症状すべての単一根本原因である。"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "doc/harness-hub-platform-concept.md:782 `| 漏れなし | PASS | Git、PR、CI、merge、version、cache、承認、失敗、atomic publish、rollback、2出口、責任分界を定義した |` を起点に一直線で掘る。",
+        "深掘り 1: この根拠は「定義した項目の列挙」12 語である。列挙は分子 (定義済み集合) を示すが、分母 (対象スコープに必要な要素の全体集合) を示さない。",
+        "深掘り 2: 分母となる必須要素 checklist が文書内に存在するかを確認すると、doc/harness-hub-platform-concept.md:1-837 に「必須要素」「checklist」に相当する定義節が見当たらない。doc/harness-hub-platform-concept.md:730 の §17 も思考法ごとの発見を列挙するのみで分母を定義しない。",
+        "深掘り 3: 分母が定義されていない以上「漏れなし」は原理的に判定不能である。PASS は「列挙した項目については定義した」という同語反復に帰着する。",
+        "深掘り 4: 実際に分母候補を 1 つ立てて反証する。doc/harness-hub-platform-concept.md:574 は `初期Catalogでも「何を作ったか」を目に見える状態にする。` と述べ、doc/harness-hub-platform-concept.md:578-585 が業務ツール詳細の表示項目 8 件を列挙する。",
+        "深掘り 5: この 8 件を doc/harness-hub-platform-concept.md:476-493 の Stage 1 「含めるもの」18 項目と突合すると、doc/harness-hub-platform-concept.md:485 が `package detailとsample表示` で sample のみを拾い、doc/harness-hub-platform-concept.md:581 の `screenshot`・`想定出力`、doc/harness-hub-platform-concept.md:584 の `利用上の注意`、doc/harness-hub-platform-concept.md:585 の `改善履歴` に対応する項目が存在しない (doc/harness-hub-platform-concept.md:490 の `Release履歴` は語が異なる)。",
+        "到達点: 「漏れなし PASS」は分母不在で判定不能であり、かつ分母候補 1 つで実際に反証される。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:782 が「漏れなし PASS」と判定",
+            "同行の根拠は定義済み項目の列挙のみで、必須要素の全体集合 (分母) を示さない",
+            "doc/harness-hub-platform-concept.md:578-585 と doc/harness-hub-platform-concept.md:476-493 の突合により PASS が実際に反証される"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:574 が「初期Catalogでも」と Stage 1 での表示を約束",
+            "doc/harness-hub-platform-concept.md:581/584/585 の screenshot・想定出力・利用上の注意・改善履歴が doc/harness-hub-platform-concept.md:476-493 の Stage 1 含めるものに不在",
+            "doc/harness-hub-platform-concept.md:490 の `Release履歴` は doc/harness-hub-platform-concept.md:585 の `改善履歴` と語が一致しない"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:583 の `「追加する」または「Webアプリを開く」` は doc/harness-hub-platform-concept.md:486-487 の追加導線・「開く」導線と語が一致する",
+            "doc/harness-hub-platform-concept.md:585 `改善履歴` と doc/harness-hub-platform-concept.md:490 `Release履歴` は同一物か別物かを判別できる定義がない"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:587 が実行成果の自動収集を後続機能へ送る依存を明示しており、§12 から §13.4/§14 Stage 4 への依存辺は張られている",
+            "doc/harness-hub-platform-concept.md:574 の「初期Catalog」が §10.2 Stage 1 を指すことは明示参照されていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§18 が「漏れなし PASS」と自己判定するが、根拠が定義済み項目 12 語の列挙のみで必須要素の全体集合 (分母) が文書内に存在せず、判定が原理的に不能なうえ §12 と §10.2 の突合で実際に反証される。",
+          "recommended_intervention": "§18 の「漏れなし」行を PASS から CONDITIONAL へ改め、根拠列を「必須要素 checklist (新設節) に対する被覆率 n/m」へ置換する。あわせて必須要素 checklist を新設節として定義し (最低限: 用語 / データモデル / 状態機械 / 権限承認 / 検査 / 失敗例外 / スコープ / 段階 / 指標 / 責任分界 / 判断記録 / 未検証事項 / 現行資産整合 / 非機能)、各項目に充足状況を記す。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§18"
+          },
+          "root_cause": "「漏れなし」を判定するための分母 (必須要素 checklist) が文書内に定義されないまま、分子の列挙だけで PASS を宣言する検証手続きになっているため。"
+        },
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§12 が「初期Catalogでも」表示すると約束する 8 項目のうち screenshot / 想定出力 / 利用上の注意 / 改善履歴 が §10.2 の Stage 1 含めるものに存在せず、成果の見せ方と MVP スコープが対応していない。",
+          "recommended_intervention": "§12 の 8 項目それぞれに Stage 帰属を併記し、Stage 1 に含めるものは §10.2 の「含めるもの」へ追記する (例: `package detailとsample表示` を `package detail、sample、screenshot、想定出力、利用上の注意、改善履歴の表示` へ拡張)。Stage 2 以降に送る項目は §12 側へ「Stage 2」注記を付ける。あわせて §12 の `改善履歴` と §10.2 の `Release履歴` のどちらを正本語とするか §4.2 で定義する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§12"
+          },
+          "root_cause": "§12 が体験の理想像として書かれ、§10.2 の Stage 1 スコープ列挙と突合するための対応表・Stage 帰属列を持たないため。"
+        }
+      ],
+      "score": 0.35
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "対象を構成要素へ分解する。(a) 用語 doc/harness-hub-platform-concept.md:136-146、(b) 不変条件 doc/harness-hub-platform-concept.md:166-172、(c) 状態機械 doc/harness-hub-platform-concept.md:304-329、(d) 検査 doc/harness-hub-platform-concept.md:341-364、(e) 公開範囲 doc/harness-hub-platform-concept.md:429-456、(f) MVP スコープ doc/harness-hub-platform-concept.md:474-509、(g) 指標 doc/harness-hub-platform-concept.md:591-634、(h) Stage doc/harness-hub-platform-concept.md:636-694、(i) 判断 doc/harness-hub-platform-concept.md:711-726、(j) 仮説 doc/harness-hub-platform-concept.md:786-798、(k) 現行資産対応 doc/harness-hub-platform-concept.md:696-709 の 11 要素へ分解できる。",
+        "要素 (k) を独立検査する。doc/harness-hub-platform-concept.md:698 は `現行harness-creatorの構築・評価・統治フロー` を主語とし、doc/harness-hub-platform-concept.md:709 は `一般利用者に13 Phase、Git、package check、review、PRを操作させない` と述べ、13 Phase を現行 harness-creator のフローの構成要素として扱う。",
+        "実態を照合する。plugins/harness-creator/README.md:46 は 13 phase を `/plugin-dev-plan <構想>` (plugin-dev-planner) の産物 `index.md + 13 phase + component-inventory.json` と記載し、harness-creator 自身の標準フローは plugins/harness-creator/README.md:61-96 の 0〜6 の 7 ステップである。",
+        "要素 (c) を独立検査する。doc/harness-hub-platform-concept.md:321 は Release の状態を `Available | Suspended | Deprecated` の 3 値と定義するが、doc/harness-hub-platform-concept.md:327-328 が定義する TargetChannel の操作は `Promote(release_id)` と `Rollback(previous_release_id)` の 2 つのみで、Available→Suspended / Available→Deprecated の遷移契機と操作名が定義されていない。",
+        "その帰結として doc/harness-hub-platform-concept.md:492 の Stage 1 含めるもの `公開状態、公開停止、TargetChannel単位のrollback` と doc/harness-hub-platform-concept.md:228 の状態「公開停止」が、到達手段を持たない参照になっている。",
+        "同じく doc/harness-hub-platform-concept.md:312 の `Failed` に後続遷移が書かれておらず、doc/harness-hub-platform-concept.md:222-229 の 8 状態にも Failed に対応する利用者表示が存在しない (doc/harness-hub-platform-concept.md:224 の「修正が必要」は doc/harness-hub-platform-concept.md:307 の Needs Fix に対応する)。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:316 `承認必須のPublishRequestは、Approvedになるまで Publishing へ進めない` と doc/harness-hub-platform-concept.md:331 の記述は同一制約を述べ、要素 (c) 内部で矛盾しない",
+            "doc/harness-hub-platform-concept.md:333 の `Rolled Back` を Release 状態から除く宣言は doc/harness-hub-platform-concept.md:321 の 3 値と整合する"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "11 要素の分解自体は網羅的で、各要素に対応する節が存在する (doc/harness-hub-platform-concept.md:136-798)",
+            "要素 (c) 内部の遷移定義に欠落があるが、依存面の破れとして C4 で計上する"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:698 と doc/harness-hub-platform-concept.md:709 が 13 Phase を現行 harness-creator のフロー要素として記述",
+            "plugins/harness-creator/README.md:46 は 13 phase を plugin-dev-planner の `/plugin-dev-plan` 産物と記載",
+            "plugins/harness-creator/README.md:61-96 の harness-creator 標準フローは 0〜6 の 7 ステップ"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:321 が Suspended / Deprecated を定義するが doc/harness-hub-platform-concept.md:327-328 に到達操作がない",
+            "doc/harness-hub-platform-concept.md:492 と doc/harness-hub-platform-concept.md:228 の「公開停止」が到達手段を持たない dangling 参照になる",
+            "doc/harness-hub-platform-concept.md:312 の Failed に後続遷移がなく、doc/harness-hub-platform-concept.md:222-229 に対応する利用者表示もない"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§15 が 13 Phase を現行 harness-creator の構築・評価・統治フローの要素として記述するが、実態では 13 phase は plugin-dev-planner の /plugin-dev-plan 産物であり harness-creator 自身の標準フローは 0〜6 の 7 ステップである。",
+          "recommended_intervention": "§15 の記述を実態へ合わせ、`一般利用者に、plugin-dev-planner の 13 phase 計画・harness-creator の 7 ステップ標準フロー (plugins/harness-creator/README.md:61-96)・Git・package check・review・PR を操作させない` へ改める。あわせて §15 の対応表に `plugin-dev-planner` 行を追加するか、対象を harness-creator に限定する旨を明記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§15"
+          },
+          "root_cause": "§15 が現行リポジトリの plugin 境界 (harness-creator と plugin-dev-planner の分離) を検査せずに、記憶上の「13 Phase」という語だけを harness-creator へ帰属させたため。"
+        },
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "§7.2 の状態機械が Release の Suspended / Deprecated への遷移操作と PublishRequest の Failed からの復帰先を定義しておらず、§10.2 と §5.4 の「公開停止」が到達手段を持たない dangling 参照になっている。",
+          "recommended_intervention": "§7.2 の TargetChannel 操作へ `Suspend(release_id)` / `Deprecate(release_id)` / `Unsuspend(release_id)` を追加し、各操作の発火主体 (owner / Workspace 管理者) と Release 状態遷移 (Available↔Suspended、Available→Deprecated) を明記する。PublishRequest の Failed には `Failed → Draft (再試行)` の復帰辺を追加し、§5.4 の 8 状態へ Failed に対応する利用者表示 (例「公開できませんでした」) を追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2"
+          },
+          "root_cause": "状態集合 (Available/Suspended/Deprecated) と操作集合 (Promote/Rollback) が別々に列挙され、状態×操作の遷移表として突合されていないため。"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "concept / decision proposal (doc/harness-hub-platform-concept.md:3) が備えるべき必須要素 checklist を MECE で構成し、各項目の充足を確認する。課題定義 (doc/harness-hub-platform-concept.md:13-71) 充足、用語 (136-146) 充足、データモデル (148-160) 充足、状態機械 (304-329) 充足、権限承認 (429-456) 充足、検査 (341-364) 充足、失敗例外 (335-337) 充足、スコープ (474-509) 充足、段階 (636-694) 充足、指標 (591-634) 充足、責任分界 (544-560) 充足、判断記録 (711-726) 充足、未検証事項 (786-798) 充足、現行資産整合 (696-709) 充足。",
+        "漏れ (ME の E 側): 非機能 — Hub 自身 (Control Plane / Immutable Package Registry / Catalog) の可用性・データ保持・backup・障害時挙動を定義する項目が checklist に対応する記述を持たない。doc/harness-hub-platform-concept.md:544-550 の責任分界表 6 行で提供者に割り当てられるのは doc/harness-hub-platform-concept.md:550 の `導入教育、有料助言、Platform自体の運用` の 1 語のみである。",
+        "対照的に doc/harness-hub-platform-concept.md:552 は顧客 Workspace 側に `DB schema・migration・backup・retention、監視・障害対応、停止・削除` と粒度の細かい非機能責任を割り当てており、Hub 側と顧客側で非機能記述の粒度が非対称である。",
+        "重複 (ME の M 側) 1: doc/harness-hub-platform-concept.md:476 が Stage 1 含めるものに `Claude CodeまたはCodexの一方` を挙げ、doc/harness-hub-platform-concept.md:506 が含めないものに `Claude Code / Codex双方への同時対応` を挙げる。両者は同一制約の肯定形と否定形であり、含める/含めないの 2 リストが相互排他になっていない。",
+        "重複 (ME の M 側) 2: doc/harness-hub-platform-concept.md:327-328 の `Promote(release_id)` と `Rollback(previous_release_id)` について、doc/harness-hub-platform-concept.md:333 は Rollback を `過去Releaseを安定版へ再昇格するpointer操作` と定義する。これは Promote(過去 release_id) と同義であり、操作集合が相互排他でない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:476 と doc/harness-hub-platform-concept.md:506 は肯定形と否定形で同一制約を述べるため論理矛盾ではない (冗長)",
+            "doc/harness-hub-platform-concept.md:333 の Rollback 定義も Promote と両立するため矛盾ではない (冗長)"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "必須要素 checklist の「非機能」項目に対応する記述が doc/harness-hub-platform-concept.md:1-837 に見当たらない",
+            "doc/harness-hub-platform-concept.md:550 が提供者責任を `Platform自体の運用` の 1 語で済ませる",
+            "doc/harness-hub-platform-concept.md:552 が顧客側には backup・retention・監視・障害対応まで細分して割り当て、粒度が非対称",
+            "doc/harness-hub-platform-concept.md:476 と doc/harness-hub-platform-concept.md:506 の二重記載により含める/含めないリストが相互排他でない"
+          ],
+          "violation_count": 2
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:327-328 が Promote と Rollback を並列の操作として列挙",
+            "doc/harness-hub-platform-concept.md:333 が Rollback を「過去Releaseを安定版へ再昇格するpointer操作」と定義し Promote(過去release) と同義になる"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:279 が §6.2 の非保有境界の目的 (提供者の hosting 責任を比例増させない) を明示し、責任分界 §11.2 への依存辺を張る",
+            "Hub 自身の非機能が未定義のため §11.2 の提供者行から先の依存辺が存在しない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "必須要素 checklist の「非機能」項目に漏れがあり、Hub 自身 (Control Plane / Registry / Catalog) の可用性・データ保持・backup・障害時挙動が定義されず、責任分界表は提供者へ「Platform自体の運用」の 1 語しか割り当てていない。",
+          "recommended_intervention": "§11.2 の責任分界表の提供者行を、顧客 Workspace 行 (doc/harness-hub-platform-concept.md:552) と同水準の粒度へ展開する (Control Plane / Registry の可用性目標、Release と Catalog のデータ保持・backup・retention、障害時の Catalog 参照挙動、監査 event の保持期間)。あわせて §6.1 の共通 Control Plane が持つ情報 9 項目に対する保持期間・backup 方針を 1 節として追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§11.2"
+          },
+          "root_cause": "文書が「Hub が持たないもの」(§6.2) の境界画定に注力し、Hub が持つと決めた資産 (§6.1 の 9 項目) に対する非機能責任を対称に定義しなかったため。"
+        },
+        {
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "§10.2 の「含めるもの」の Claude Code または Codex の一方という制約と、「含めないもの」の Claude Code / Codex 双方への同時対応が同一制約の肯定形・否定形で二重記載され、2 リストが相互排他になっていない。",
+          "recommended_intervention": "§10.2 の「含めないもの」から `Claude Code / Codex双方への同時対応` を削除し、「含めるもの」の `Claude CodeまたはCodexの一方` に `(2 製品への同時対応は Stage 外。2 つ目の adapter は §13.5 の条件で判断)` の但し書きを付ける。含める/含めないリストは同一制約を 1 度だけ記す規則を §10.2 冒頭に明記する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§10.2"
+          },
+          "root_cause": "「含めるもの」「含めないもの」の 2 リストが独立に列挙され、両リスト間の相互排他性を検査する規則が置かれていないため。"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "schema",
+          "description": "§7.2 の TargetChannel 操作 Promote(release_id) と Rollback(previous_release_id) が相互排他でなく、§7.2 自身の Rollback 定義 (過去 Release の再昇格 pointer 操作) が Promote(過去 release_id) と同義になっている。",
+          "recommended_intervention": "操作を `Promote(release_id)` 1 つへ統合し、Rollback は「過去 release_id への Promote であり監査 event の kind が rollback になるもの」と定義し直す。または Promote を「未昇格 Release への前進のみ」と制約し Rollback を「昇格履歴上の過去 Release への後退のみ」と制約して、2 操作の定義域を互いに素にする。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§7.2"
+          },
+          "root_cause": "操作を利用者から見た意味 (前進/後退) で 2 つ立てた後、内部の pointer 操作としての実体が同一であることを §7.2:333 で認めながら、操作集合を再統合しなかったため。"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "軸 1 = 公開範囲 (Green / Yellow / Red)、軸 2 = 出口 (target=skill / target=web_app) で象限分けする。doc/harness-hub-platform-concept.md:429-454 の 3 段階リストは 2 軸のうち出口軸を持たず、doc/harness-hub-platform-concept.md:433 `skills-only package` (skill) と doc/harness-hub-platform-concept.md:435 `既存Cloudflare MCP等で正常に公開された低機密Web AppのCatalog自動登録` (web_app) を同一 Green リストへ混在させる。",
+        "対照的に doc/harness-hub-platform-concept.md:341-364 の最小検査は共通 / Skill 固有 / Web App 固有の 3 ブロックへ出口軸で分解されており、§9 と §7.3 で構造原理が一致しない。",
+        "象限 (Green × web_app) を精査する。doc/harness-hub-platform-concept.md:443 は `認証付きWeb App` を Yellow へ分類する。doc/harness-hub-platform-concept.md:456 は `Greenの自動公開がMVPであり、Yellow / Redの審査機能を先回りして作らない` と述べ、doc/harness-hub-platform-concept.md:508 は Stage 1 含めないものに `管理者approval queue` を挙げる。",
+        "一方 doc/harness-hub-platform-concept.md:28 は中心設計 6 で `Web App: Claude Code契約のない社員もブラウザから使う` と述べ、doc/harness-hub-platform-concept.md:487 は Stage 1 含めるものに `Web AppのURL登録と「開く」導線` を挙げ、doc/harness-hub-platform-concept.md:718 の HH-D04 は 2 出口を判断として確定形で記す。社内の複数社員が使う Web App は通常 doc/harness-hub-platform-concept.md:443 の `認証付きWeb App` に該当し Yellow へ落ちるため、Stage 1 に承認経路が存在しない象限が生じる。",
+        "軸 1 = 拡張候補、軸 2 = Stage 帰属で象限分けする。doc/harness-hub-platform-concept.md:628 は Stage 3、doc/harness-hub-platform-concept.md:630-631 は Stage 4、doc/harness-hub-platform-concept.md:632-633 は Stage 5、doc/harness-hub-platform-concept.md:634 は Stage 5 (public marketplace) へ対応するが、doc/harness-hub-platform-concept.md:629 の `CodexまたはClaudeの2つ目のadapter` に対応する Stage が doc/harness-hub-platform-concept.md:638-694 の Stage 0〜5 のどこにも存在しない。",
+        "doc/harness-hub-platform-concept.md:653 の Stage 1 は `1つのAI製品向け配布adapter` に限定し、doc/harness-hub-platform-concept.md:390 は `共通package正本から2つ目のadapterを後で追加する` と述べるが「後で」に対応する Stage が空セルである。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:28 と doc/harness-hub-platform-concept.md:718 が 2 出口を MVP 中心設計・判断として約束",
+            "doc/harness-hub-platform-concept.md:487 が Stage 1 に Web App の URL 登録と「開く」導線を含める",
+            "doc/harness-hub-platform-concept.md:443 が認証付き Web App を Yellow へ分類し、doc/harness-hub-platform-concept.md:456 と doc/harness-hub-platform-concept.md:508 が Yellow の審査機能と管理者 approval queue を Stage 1 から除外する"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:429-454 は Green/Yellow/Red の 3 段階を漏れなく列挙し、doc/harness-hub-platform-concept.md:416-423 の出口選択基準 6 行も存在する",
+            "ただし (公開範囲 × 出口) の象限を明示する表が存在しない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:341-364 の最小検査は共通 / Skill 固有 / Web App 固有と出口軸で分解される",
+            "doc/harness-hub-platform-concept.md:429-454 の Green/Yellow/Red は出口軸を持たず両出口の項目を混在させる (doc/harness-hub-platform-concept.md:433 と 435、doc/harness-hub-platform-concept.md:440 と 443)",
+            "doc/harness-hub-platform-concept.md:106-112 の §3.3 も出口ごとに Hub の役割を分けており、§9 だけが構造原理を共有しない"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:629 の拡張候補「2つ目のadapter」に対応する Stage が doc/harness-hub-platform-concept.md:638-694 に存在しない",
+            "doc/harness-hub-platform-concept.md:390 の「2つ目のadapterを後で追加する」の「後で」が roadmap 上の到達点を持たない",
+            "他の 6 行 (doc/harness-hub-platform-concept.md:628/630/631/632/633/634) は Stage 3/4/4/5/5/5 へ対応が取れる"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§1 と HH-D04 が 2 出口を MVP の中心設計として約束し §10.2 が Stage 1 に Web App 導線を含める一方、§9.2 が認証付き Web App を Yellow へ分類し §9.3 と §10.2 が Yellow 審査と管理者 approval queue を Stage 1 から除外するため、社内の誰でも使う Web App が Stage 1 で公開経路を持たない。",
+          "recommended_intervention": "§9 に (公開範囲 × 出口) の象限表を新設し、Green × web_app に該当する具体条件を明記する (例: `Workspace 認証を Cloudflare Access 等 provider 側で完結し、顧客 DB への書き込みがなく、低機密である Web App は Green`)。§9.2 の `認証付きWeb App` を `顧客 DB へ書き込む、または Hub 管理外の独自認証を持つ Web App` へ限定し直し、Stage 1 に成立する Web App 象限が空でないことを §10.2 に明示する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9.2"
+          },
+          "root_cause": "公開範囲の 3 段階が出口軸を持たないまま定義され、Web App 出口の典型形 (認証あり) が Yellow へ落ちることと Stage 1 スコープ (Green のみ) の交差が検査されなかったため。"
+        },
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§9 の Green/Yellow/Red が target 軸 (skill / web_app) を持たず両出口の項目を単一リストへ混在させており、§7.3 と §3.3 が採る出口別分解の構造原理と不一致である。",
+          "recommended_intervention": "§9.1/§9.2/§9.3 の各リストを §7.3 と同じく「共通 / Skill 固有 / Web App 固有」の 3 ブロックへ再構成する。最低限、各項目の行末に `(skill)` `(web_app)` `(共通)` のタグを付け、どの出口に適用される分類かを機械的に判別可能にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§9"
+          },
+          "root_cause": "§9 が安全性の観点だけで 1 次元に列挙され、文書の他節が一貫して採用する出口軸 (§3.3 / §7.3 / §8) を適用しなかったため。"
+        },
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§13.5 の拡張候補「CodexまたはClaudeの2つ目のadapter」に対応する Stage が §14 の Stage 0〜5 のどこにも存在せず、§8.1 の「2つ目のadapterを後で追加する」の到達点が roadmap 上で空セルになっている。",
+          "recommended_intervention": "§14 に「Stage 1.5: 2 つ目の配布 adapter (条件付き)」を新設し、§13.5:629 の条件 (2 つ目の製品利用者による具体的な公開需要が継続する) を開始条件として記す。または既存 Stage 2 の構成要素へ「2 つ目の配布 adapter」を追加し、§13.5 の当該行に Stage 帰属列を追記する。あわせて §13.5 の全 7 行へ Stage 帰属列を追加し、拡張候補と Stage の対応が全域で取れることを表で検証可能にする。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§13.5"
+          },
+          "root_cause": "§13.5 の拡張判断表と §14 の Stage リストが独立に作成され、両者の対応 (拡張候補 × Stage) を突合する列や表が存在しないため。"
+        }
+      ],
+      "score": 0.35
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Stage 工程を時系列分解する。Stage 0 の成果物は doc/harness-hub-platform-concept.md:640-647 の 7 項目で、うち adapter 関連は doc/harness-hub-platform-concept.md:645 `対象AI製品のprivate sourceで、認証・一覧取得・install・update・refreshを検証` と doc/harness-hub-platform-concept.md:647 `native sourceが不足する場合はBootstrap Installerの必要条件を確定` である。",
+        "step 間 gap: doc/harness-hub-platform-concept.md:648 は `Stage 1の開始条件は、native sourceまたはBootstrap Installerのどちらかで、別ユーザーがWorkspaceのSkillを追加・更新できることを実証済みであること` と要求するが、Stage 0 が産出するのは Bootstrap Installer の「必要条件の確定」までであり、Bootstrap Installer の実体は doc/harness-hub-platform-concept.md:655 `必要な場合のBootstrap Installer` として Stage 1 の成果物に置かれている。",
+        "したがって native source が不足する分岐では、Stage 1 開始条件が Stage 1 成果物の実証を要求する循環になる。native source が足りる分岐 (doc/harness-hub-platform-concept.md:645 で検証) では循環しないため、循環は条件分岐の一方にのみ存在する。",
+        "作者の主動線を工程分解する。doc/harness-hub-platform-concept.md:191-197 は `作る → ローカルで試す → 公開指示 → 公開対象を選ぶ → 検査中 → 公開済み → 完了URLを開く` の 7 step で、doc/harness-hub-platform-concept.md:307-313 の Needs Fix / Approval Pending / Failed を通らない happy path のみを記す。",
+        "終端 step の gap: doc/harness-hub-platform-concept.md:197 `完了URLを開く` に対し、target=skill の工程 doc/harness-hub-platform-concept.md:377-383 は `install可能` で終端し URL を産出しない。doc/harness-hub-platform-concept.md:206-210 の AI 用ツール利用者動線も `追加する → ネイティブ環境で使う` で URL を含まない。URL を産出するのは doc/harness-hub-platform-concept.md:396-401 の Web App 工程のみである。",
+        "doc/harness-hub-platform-concept.md:331 は Promote の発火主体を `Publishedになったqbe PublishRequest が続けて Promote する` と自動化するが、Rollback の発火主体は §7.2 に書かれず、doc/harness-hub-platform-concept.md:537 の卒業条件 `修正後の再公開またはCatalog参照のrollbackを自分で実行できる` と doc/harness-hub-platform-concept.md:181 の Hub Web の役割から間接的にしか読めない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:191-197 の主動線と doc/harness-hub-platform-concept.md:304-314 の状態機械は happy path 上で矛盾せず対応する (検査中→Validating、公開済み→Published)",
+            "doc/harness-hub-platform-concept.md:200 が Web upload を代替経路と位置づけ、主動線との併存を明示する"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:197 の主動線終端が `完了URLを開く`",
+            "doc/harness-hub-platform-concept.md:383 の Skill 工程終端は `install可能` で URL を産出しない",
+            "doc/harness-hub-platform-concept.md:206-210 の AI 用ツール利用者動線にも URL が現れず、URL 産出は doc/harness-hub-platform-concept.md:396-401 の Web App 工程に限られる"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:192-196 の主動線語 (作る / 試す / 公開する) は doc/harness-hub-platform-concept.md:36 の 6 語体験と一致する",
+            "doc/harness-hub-platform-concept.md:331 と doc/harness-hub-platform-concept.md:537 で rollback の発火主体の記述粒度が異なる"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:648 が Stage 1 開始条件に Bootstrap Installer による実証を要求",
+            "doc/harness-hub-platform-concept.md:647 の Stage 0 成果物は Bootstrap Installer の「必要条件を確定」まで",
+            "doc/harness-hub-platform-concept.md:655 が Bootstrap Installer 本体を Stage 1 成果物として置き、native source 不足分岐で Stage 0→1 が循環する"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "§14 の Stage 1 開始条件が Bootstrap Installer による実証を要求する一方、Stage 0 の成果物は Bootstrap Installer の必要条件確定までで本体は Stage 1 成果物に置かれるため、native source 不足の分岐で Stage 0→1 が循環する。",
+          "recommended_intervention": "§14 Stage 0 の成果物へ `native source が不足する場合は、Bootstrap Installer の prototype を Stage 0 内で作成し実証まで行う` を追加して循環を切る。または §14:648 の Stage 1 開始条件を分岐で書き分ける (`native source で実証済みであること。native source が不足する場合は Bootstrap Installer の必要条件が確定し、その prototype で別ユーザーの追加・更新が実証済みであること`)。あわせて §14:655 の `必要な場合のBootstrap Installer` を `Stage 0 prototype の製品化` へ改める。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§14"
+          },
+          "root_cause": "Stage 0 の成果物が「検証・条件確定」という調査行為で記述され、Stage 1 開始条件が「実証済み」という成果物の存在を要求する記述になっており、両者の産物レベルが揃っていないため。"
+        },
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "§5.2 の作者主動線の終端「完了URLを開く」に対応する産物が Skill 出口に存在せず (§8.1 の工程は install可能 で終端)、主動線の終端が Web App 出口を暗黙の前提にしている。",
+          "recommended_intervention": "§5.2 の終端 step を出口ごとに分岐させる (`公開済み → target=web_app なら完了 URL を開く / target=skill なら Catalog の業務ツール詳細を開き「追加する」を確認する`)。または §8.1 の Skill 工程終端へ `Catalog の業務ツール詳細 URL を返す` を追加し、両出口が URL を産出する形へ揃える。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§5.2"
+          },
+          "root_cause": "主動線が単一の直列フローとして記述され、§8 で分岐する 2 出口の終端差分が工程図へ反映されていないため。"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Why 1: なぜ doc/harness-hub-platform-concept.md:337 の `orphan_candidate` が doc/harness-hub-platform-concept.md:136-146 の内部用語 9 語に含まれないのか。→ §4.2 の 9 語は §4 執筆時点の語彙で確定し、§7.2 で新語が導入された際に §4.2 へ戻す規則がないため。",
+        "Why 2: なぜ戻す規則がないのか。→ doc/harness-hub-platform-concept.md:134 の見出しは `### 4.2 内部用語` であり、この表が用語の唯一の定義点である旨の宣言 (正本宣言) を持たないため。同様の未定義語は doc/harness-hub-platform-concept.md:465 の `shadow publish`、doc/harness-hub-platform-concept.md:648 の `native source`、doc/harness-hub-platform-concept.md:153-154 の `package_ref` / `marketplace_ref` にも観測される。",
+        "Why 3: なぜ正本宣言がないのか。→ 文書内のどの節も「この節が正本、他節は参照」という関係を宣言せず、21 節が対等に並置される構成のため。doc/harness-hub-platform-concept.md:222-229 の状態語彙、doc/harness-hub-platform-concept.md:591-621 の指標も同様に参照規約を持たない。",
+        "Why 4: なぜ参照規約がないのか。→ 各主張が単一の定義点を持つのではなく、同一主張が複数節へ再掲される構成を採っているため。例: 「Hub は 2 つの runtime を運営しない」は doc/harness-hub-platform-concept.md:29、doc/harness-hub-platform-concept.md:114、doc/harness-hub-platform-concept.md:273-274、doc/harness-hub-platform-concept.md:719 (HH-D05)、doc/harness-hub-platform-concept.md:833 の 5 箇所で反復される。",
+        "Why 5: なぜ再掲構成なのか。→ 文書が §1 から §21 へ読み進める説得順の読み物として設計され、各節が自己完結して読めることを優先した結果、要素ごとの単一定義点 (registry) と参照規約を持たない構造になったため。",
+        "根本原因: 要素 (用語 / 状態 / 指標 / 主張) ごとの単一定義点と参照規約が存在しないこと。これが用語の定義漏れと同一主張の 5 箇所反復の双方を同一の連鎖で説明する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:29 / 114 / 273-274 / 719 / 833 の 5 箇所の反復は現時点では同一内容を述べており、相互に矛盾していない",
+            "反復自体は矛盾ではなく、将来の同期漏れリスクとして C3 で計上する"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:136-146 は Project / TargetChannel / Release / target / SkillPackage / DeploymentReference / CatalogEntry / PublishRequest / Workspace の 9 語を定義しており、中核データモデルの語は揃っている",
+            "本文導入語 (orphan_candidate 等) の定義漏れは統一性の破れとして C3 で計上する"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:337 の `orphan_candidate`、doc/harness-hub-platform-concept.md:465 の `shadow publish`、doc/harness-hub-platform-concept.md:648 の `native source`、doc/harness-hub-platform-concept.md:153-154 の `package_ref` / `marketplace_ref` が doc/harness-hub-platform-concept.md:136-146 の内部用語 9 語に含まれない",
+            "doc/harness-hub-platform-concept.md:159 の `deployment_reference` (snake_case) と doc/harness-hub-platform-concept.md:142 の `DeploymentReference` (PascalCase) が同一概念で表記ゆれ",
+            "「Hub は 2 つの runtime を運営しない」が doc/harness-hub-platform-concept.md:29 / 114 / 273-274 / 719 / 833 の 5 箇所で反復"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "doc/harness-hub-platform-concept.md:148-160 の構造ツリーは Project → TargetChannel → Release の参照方向を一方向に保ち、循環を持たない",
+            "定義点が単一でないため、用語から定義への参照辺が節ごとに異なる先を指しうる"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "§4.2 が内部用語を 9 語と定義する一方、本文が orphan_candidate / shadow publish / native source / package_ref / marketplace_ref を定義なしで使用し、deployment_reference と DeploymentReference の表記ゆれも生じており、用語の単一定義点が成立していない。",
+          "recommended_intervention": "§4.2 の見出し直下に「本表は本文で用いる内部用語の唯一の定義点であり、本文で新語を導入する場合は必ず本表へ追加する」と宣言し、`orphan_candidate` (§7.2:337)・`shadow publish` (§10.1:465)・`native source` / `private source` (§8.1:388, §14:645-648)・`package_ref` / `marketplace_ref` (§4.2:153-154) を表へ追加する。あわせて §4.2:159 の `deployment_reference` を `DeploymentReference` へ統一するか、フィールド名と型名の命名規約を §4.2 冒頭に明記する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§4.2"
+          },
+          "root_cause": "要素ごとの単一定義点 (registry) と参照規約が存在せず、後続節が新語を導入しても §4.2 へ戻す規則がないこと。これが Why 連鎖 5 段の到達点である。"
+        },
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "同一主張「Hub は 2 つの runtime を運営しない」が §1 / §3.3 / §6.2 / §16 HH-D05 / §21 の 5 箇所で反復され、単一定義点と参照規約がないため更新時の同期漏れリスクを生んでいる。",
+          "recommended_intervention": "HH-D05 (§16:719) を当該主張の単一定義点と宣言し、§1:29 / §3.3:114 / §6.2:273-274 / §21:833 の記述を `(HH-D05)` の参照付き 1 行へ縮約する。同様の反復 (「Git 操作を見せない」= §1:24 / §4.3:167 / §16 HH-D08:722 / §21:832) にも同じ縮約規則を適用する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "doc/harness-hub-platform-concept.md",
+            "section": "§1"
+          },
+          "root_cause": "文書が §1→§21 の説得順の読み物として設計され、各節の自己完結性を優先した結果、主張ごとの単一定義点を置かない構成になったこと。"
+        }
+      ],
+      "score": 0.5
+    }
+  ],
+  "variable_abstraction": [
+    {
+      "concrete_value": "***",
+      "variable_name": "{{REFERENCE_MODEL_AUTHOR}}",
+      "source_trace": "由来: §2.2:62, §3, §21 の人名 (PII のためマスク)"
+    },
+    {
+      "concrete_value": "***モデル",
+      "variable_name": "{{REFERENCE_MODEL_NAME}}",
+      "source_trace": "由来: §3 節題および §3.1:79, §21:824 (人名由来のためマスク)"
+    },
+    {
+      "concrete_value": "Harness Hub",
+      "variable_name": "{{PLATFORM_NAME}}",
+      "source_trace": "由来: §1:13 文書題および全節"
+    },
+    {
+      "concrete_value": "Self-Service Publish Control Plane",
+      "variable_name": "{{PLATFORM_ARCHETYPE}}",
+      "source_trace": "由来: §1:17, §16 HH-D01:715, §21:828"
+    },
+    {
+      "concrete_value": "Claude Code / Codex",
+      "variable_name": "{{AI_PRODUCT_SET}}",
+      "source_trace": "由来: §1:21, §5.1:180, §8.1:390, §10.2:476"
+    },
+    {
+      "concrete_value": "Cloudflare",
+      "variable_name": "{{EXTERNAL_HOSTING_PROVIDER}}",
+      "source_trace": "由来: §1:29-30, §5.1:184, §8.2:399, §11.2:549"
+    },
+    {
+      "concrete_value": "GitHub",
+      "variable_name": "{{VCS_PROVIDER}}",
+      "source_trace": "由来: §4.3:166, §16 HH-D08:722, §21:832"
+    },
+    {
+      "concrete_value": "/harness-hub:publish",
+      "variable_name": "{{PUBLISH_COMMAND}}",
+      "source_trace": "由来: §5.2:194, §8.1:377, §10.2:477"
+    },
+    {
+      "concrete_value": "skills-only",
+      "variable_name": "{{INITIAL_PACKAGE_CLASS}}",
+      "source_trace": "由来: §8.1:374, §9.1:433, §10.2:479, §16 HH-D06:720"
+    },
+    {
+      "concrete_value": "orphan_candidate",
+      "variable_name": "{{ORPHAN_DEPLOYMENT_MARKER}}",
+      "source_trace": "由来: §7.2:337 (§4.2 の内部用語 9 語に未定義)"
+    },
+    {
+      "concrete_value": "HH-D01〜HH-D12",
+      "variable_name": "{{DECISION_ID_RANGE}}",
+      "source_trace": "由来: §16:715-726"
+    },
+    {
+      "concrete_value": "Stage 0〜Stage 5",
+      "variable_name": "{{ROADMAP_STAGE_RANGE}}",
+      "source_trace": "由来: §14:638-694"
+    },
+    {
+      "concrete_value": "Green / Yellow / Red",
+      "variable_name": "{{RISK_TIER_SET}}",
+      "source_trace": "由来: §9.1:429, §9.2:438, §9.3:447"
+    },
+    {
+      "concrete_value": "5〜10人",
+      "variable_name": "{{PILOT_PARTICIPANT_COUNT}}",
+      "source_trace": "由来: §10.1:462, §14:640"
+    },
+    {
+      "concrete_value": "2か月",
+      "variable_name": "{{ENABLEMENT_PROGRAM_DURATION}}",
+      "source_trace": "由来: §11 節題, §11.1:522, §14:662"
+    },
+    {
+      "concrete_value": "15分未満",
+      "variable_name": "{{PROVIDER_INTERVENTION_THRESHOLD}}",
+      "source_trace": "由来: §11.1:538 の卒業条件"
+    },
+    {
+      "concrete_value": "30日以内",
+      "variable_name": "{{REUSE_WINDOW}}",
+      "source_trace": "由来: §13.3:607, §19:792"
+    },
+    {
+      "concrete_value": "月2件",
+      "variable_name": "{{AUTHORING_TARGET_RATE}}",
+      "source_trace": "由来: §11.1:531"
+    },
+    {
+      "concrete_value": "13 Phase",
+      "variable_name": "{{LEGACY_PLAN_PHASE_COUNT}}",
+      "source_trace": "由来: §15:709 (実態は plugins/harness-creator/README.md:46 の plugin-dev-planner 産物)"
+    },
+    {
+      "concrete_value": "harness-creator",
+      "variable_name": "{{LEGACY_META_PLUGIN}}",
+      "source_trace": "由来: §15:698, §20:818"
+    },
+    {
+      "concrete_value": "manju/skills",
+      "variable_name": "{{CURRENT_MARKETPLACE_REF}}",
+      "source_trace": "由来: README.md:40 (§15:705 が参考実装として参照)"
+    },
+    {
+      "concrete_value": "harness-ny2",
+      "variable_name": "{{TRACKING_ISSUE_ID}}",
+      "source_trace": "由来: 冒頭 Tracking 行:9"
+    },
+    {
+      "concrete_value": "2026-07-15",
+      "variable_name": "{{DOC_UPDATED_AT}}",
+      "source_trace": "由来: 冒頭 Updated 行:5"
+    }
+  ]
+}

@@ -1,0 +1,2458 @@
+{
+ "version": 1,
+ "target": {
+  "type": "custom",
+  "path": "doc/harness-hub-platform-concept.md",
+  "reviewed_at": "2026-07-16T02:20:00+09:00"
+ },
+ "loop_count": 0,
+ "paradigm_findings": [
+  {
+   "paradigm_id": 1,
+   "paradigm_name": "批判的思考",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§18 L782『漏れなしPASS』の根拠は定義済み12語の列挙のみで探索母集団が不在",
+    "§2.2 L60『利用者が明示した障壁は2』が出典なし断定で、D01 L715の唯一の根拠"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "L782の主張は他記述と背反せず"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§18 L782 に探索母集団の記載なし"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§3.1 L79 西山モデルの出典が§20に不在"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§2.2 L60 の一次情報が辿れない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§18『漏れなし PASS』の根拠が『定義した項目』の列挙で、未定義項目が無いことの証明になっていない。探索範囲・母集団が未記載。",
+     "recommended_intervention": "§18 に探索母集団と非検出項目を明記、または判定を未検証へ格下げ",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 782,
+      "section": "§18"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "文書全体の一次前提『障壁は2』(L60)と西山モデル7原則(L79)が出典なし。§20の参考資料に西山の一次出典が無く参照が宙吊り。",
+     "recommended_intervention": "一次情報(調査日・対象・件数)と西山モデル出典を§20へ追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 60,
+      "section": "§2.2"
+     }
+    }
+   ],
+   "score": 0.45
+  },
+  {
+   "paradigm_id": 2,
+   "paradigm_name": "演繹思考",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§4.3 L169『失敗しても安定版は利用可能』がWeb App出口で成立しない(Hubはruntime非所有 L274)",
+    "§4.2 L140『変更不能な1版』と§7.2 L321 Release 3状態の可変性が両立しない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L169 不変条件 vs L274/L552 の責任分界"
+     ]
+    },
+    "C2": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "不変条件の適用範囲(出口別)が未記載"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L140 変更不能 vs L321 状態遷移"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "§4.3→§7の参照順序は成立"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "不変条件『公開処理が失敗しても現在の安定版は利用可能』は、Hubが Web App runtime を持たず(L274)顧客が停止・削除の責任を持つ(L552)ため web_app 出口で保証不能。",
+     "recommended_intervention": "不変条件を target=skill 限定と明記し、web_app は best-effort と再定義",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 169,
+      "section": "§4.3"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§4.2 L140 は Release を『変更不能な1版』と定義するが、§7.2 L321 は Available|Suspended|Deprecated と状態遷移させる。内容不変と状態可変の区別が未定義。",
+     "recommended_intervention": "Release の immutable 対象を artifact 内容に限定し status を別属性と明記",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 321,
+      "section": "§7.2"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 3,
+   "paradigm_name": "帰納的思考",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "skill出口は immutable registry で rollback先存続保証、web_app は L410『存続している過去deployment』依存で保証水準が非対称",
+    "§16 D表12件に §9 段階化・Stage0先行・一方製品限定・Web upload非主動線の判断が不在"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L335 atomic と L337 非atomic の非対称"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§16 に本文の主要判断4件が未収録"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "同語 rollback が2出口で別保証"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L410 過去deployment消失時の経路なし"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§16 HH-D01〜D12 に、§9 Green/Yellow/Red 段階化、§10.1 Pilot 先行、§8.1 L390 一方製品限定、§5.2 L200 Web upload 非主動線という主要判断が欠落。",
+     "recommended_intervention": "上記4判断を HH-D13〜D16 として決定表へ追加し本文と1:1化",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 714,
+      "section": "§16"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "Web App の rollback 先は Cloudflare 側に存続する過去 deployment 前提だが、顧客が削除した場合(L552 停止・削除責任)の rollback 不能経路が未定義。",
+     "recommended_intervention": "web_app rollback の前提破れ時の縮退動作と表示を §7.2/§8.2 に追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 410,
+      "section": "§8.2"
+     }
+    }
+   ],
+   "score": 0.45
+  },
+  {
+   "paradigm_id": 4,
+   "paradigm_name": "アブダクション",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "欠落が『主体・時点・閾値』へ一貫集中(§9判定主体なし/§13.5閾値なし/§14開始条件なし)",
+    "§17 30行が発見:反映=1:1で未反映・保留ゼロ、§18 全PASSで FAIL/保留行が皆無"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§17/§18 の全成功記述が §14 未確定と併存"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "運用述語(主体/時点/閾値)が全節で不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "形式構造が述語を伴わず装飾的"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§17→§18 の判定導出過程が不在"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "最尤仮説: 本文書は決定散文であり、状態機械・ゲート・MECE表が形式のみ持ち『誰が/いつ/どの閾値で』の運用述語を系統的に欠く。欠落の一貫性が偶発的記述漏れ仮説を棄却する。",
+     "recommended_intervention": "全表へ 判定主体/判定時点/閾値 の3列を必須化する記述規約を導入",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 626,
+      "section": "§13.5"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "eval-log",
+     "description": "§17 の30発見と §18 の4条件判定の対応関係が不在で、PASS がどの発見から導かれたか追跡不能。検証記録と成果物が同一文書内で反証不能。",
+     "recommended_intervention": "§17/§18 を別 eval-log へ分離し、発見ID→条件判定の対応表を付す",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 777,
+      "section": "§18"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 5,
+   "paradigm_name": "垂直思考",
+   "category": "A-logical",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "Why5連鎖の根: §14 Roadmap・§13.5 ゲート・§19 仮説が同一意思決定を別語彙で三重記述し正本不在",
+    "§14 で開始条件を持つのは Stage 1 (L648) のみ、Stage 2-5 は不在"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L788『揃うまで』と L648 単一条件が不一致"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§14 Stage 0/2/3/4/5 の開始条件が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "Stage 名と §13.5 拡張候補名が非対応"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "三重記述に single source 指定なし"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§14 で開始条件が明記されるのは Stage 1 のみ。Stage 0/2/3/4/5 の開始条件と全 Stage の完了条件が不在。Stage 3-5 は『条件付き』表記のみで条件本文なし(Stage 3 の L679 を除く)。",
+     "recommended_intervention": "各 Stage へ 開始条件/完了条件/判定者 を明記した表を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 636,
+      "section": "§14"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "根本原因: §14 Roadmap・§13.5 拡張判断・§19 仮説が同一の段階移行判断を3語彙で重複記述し、どれが正本かの指定がないため条件更新が3箇所へ分散する。",
+     "recommended_intervention": "§14 を正本とし §13.5/§19 から Stage ID 参照に一本化",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 624,
+      "section": "§13.5"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 6,
+   "paradigm_name": "要素分解",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§7.2 L337 orphan_candidate の owner 再登録が §10.2 MVP項目にも §5.2/§8.2 動線にも不在",
+    "Release 3状態のうち Suspended/Deprecated は L321 の1回のみ出現し遷移契機・復帰経路が未定義"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L492 公開停止機能と L321 Suspended が未接続"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Suspended/Deprecated の遷移契機が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "UI語『公開停止』と Suspended の対応未記載"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "orphan_candidate 再登録の実装先が不在"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "Release の Suspended/Deprecated は L321 に列挙されるのみで、遷移契機・実行主体・復帰経路が全て未定義。Deprecated は他節に一切出現せず到達不能状態。",
+     "recommended_intervention": "Release 状態遷移表(契機/主体/復帰可否)を §7.2 へ追加、不要なら Deprecated 削除",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 321,
+      "section": "§7.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§7.2 の orphan_candidate は『ownerが再登録またはCloudflare側で削除する』とするが、その導線が §5.2/§8.2 動線にも §10.2 MVP 含めるものにも存在しない。",
+     "recommended_intervention": "orphan_candidate 解消導線を §10.2 へ追加、または Stage 3 送りと明記",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 337,
+      "section": "§7.2"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 7,
+   "paradigm_name": "MECE",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§10.2 は含める18項目(L476-493)・含めない13項目(L497-509)で、Yellow公開の可否がどちらにも不属",
+    "§9.1 L434 read-only操作(Green)と §9.2 L441 read-only MCP/L442 filesystem read(Yellow)が境界重複"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L434 Green と L441 Yellow が read-only で重複"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Yellow公開の MVP 可否が両リストに不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L489 2段階visibility vs L508 柔軟なvisibility"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "§10.2→§14 Stage1 の対応は成立"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§10.2 の含める/含めないは MECE でない。Yellow相当案件の公開可否がどちらにも属さず、§7.2 の Approval Pending と §5.4 の承認待ちが MVP で機能するか決まらない。",
+     "recommended_intervention": "含めないもの側へ『Yellow公開経路そのもの』を明記し Stage 2 と接続",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 495,
+      "section": "§10.2"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§9 の分類が重複。Green に read-only操作(L434)、Yellow に read-only MCP(L441)・filesystem read(L442) があり、read-only 案件がどちらか判定不能。Green の『低機密』(L435)も未定義。",
+     "recommended_intervention": "Green/Yellow の境界を 能力×副作用範囲 の排他条件として再定義",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 434,
+      "section": "§9.1"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§9 の Green/Yellow/Red に判定主体・判定時点・争議時の扱い・再判定契機の記載がなく、§7.1 L289『policy判定』との対応も不明。",
+     "recommended_intervention": "§9 へ 判定主体/判定時点/再判定契機 を追記し policy 定義先を示す",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 427,
+      "section": "§9"
+     }
+    }
+   ],
+   "score": 0.3
+  },
+  {
+   "paradigm_id": 8,
+   "paradigm_name": "2軸思考",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "L490 Release履歴・最小event記録は MVP だが L622 は Stage0-2 指標を人手確認とし、L509 で閲覧画面も除外",
+    "L493 native source/Bootstrap Installer は MVP だが必要条件確定は Stage 0 (L646) 依存"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "L490 と L509 は記録と画面で背反せず"
+     ]
+    },
+    "C2": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "event記録の用途・読者が未記載"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "記録するが誰も読まない構成"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L493 が Stage0 成果に無条件依存"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "重要度×負荷で見ると L490『内部の最小event記録』は MVP 内だが、閲覧画面は L509 で除外、指標は L622 で人手確認とされ、消費者が本文に存在しない。",
+     "recommended_intervention": "event記録の用途(誰が何に使うか)を明記、無ければ Stage 2 へ移す",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 490,
+      "section": "§10.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "L493『native sourceまたはBootstrap Installerによる追加・更新』が Stage 1 スコープに無条件で入るが、その必要条件確定は Stage 0 (L646) の成果に依存し分岐が未記述。",
+     "recommended_intervention": "L493 を Stage 0 結果による条件付き項目と明記",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 493,
+      "section": "§10.2"
+     }
+    }
+   ],
+   "score": 0.55
+  },
+  {
+   "paradigm_id": 9,
+   "paradigm_name": "プロセス思考",
+   "category": "B-structural",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§8.2 L408 の Workspace管理者による初回接続が L397-401 の公開flowに step として現れず未完了時の分岐もなし",
+    "§5.2 L191-197 の作者動線に承認待ち step と 修正が必要→再公開 loop が不在"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L197 完了URL直行 と L309 承認待ちが不整合"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§8.2 flow に初回接続 step が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§8.1 flow に §7.3 試験install が不在"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "初回接続未完了時の分岐が未定義"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§8.2 の公開flow(L397-401)に、L408 が必須とする『Workspace管理者による初回接続1回』が step として存在せず、未完了時に作者の公開操作がどうなるかの分岐も未定義。",
+     "recommended_intervention": "初回接続を flow の前提 step として図示し未完了時の表示・待ち状態を定義",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 397,
+      "section": "§8.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§5.2 の作者主動線は 検査中→公開済み と直行し、§7.2 の Approval Pending/Needs Fix に対応する 承認待ち step と 修正→再公開 の戻り経路が欠落。",
+     "recommended_intervention": "§5.2 動線へ 承認待ち分岐と 修正が必要→再公開 loop を追記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 191,
+      "section": "§5.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§11.3 料金構成例の『Yellow / Red案件の個別review』(L569)と『Web App化…追加支援』(L570)が、Stage 1 期間の 2か月プログラム(L522)の商品に含まれるが、両機能は Stage 2(L669)/Stage 3(L672) で未実装。",
+     "recommended_intervention": "§11.3 の各料金項目へ提供開始 Stage を併記し Stage 1 提供分を限定",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 569,
+      "section": "§11.3"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 10,
+   "paradigm_name": "why思考",
+   "category": "G-problem",
+   "agent": "elegant-logical-structural-analyst",
+   "observations": [
+    "§5.4 の8状態に Failed(L312)と Deprecated(L321)の表示が無く、§7.1 の公開準備完了(L290)・追加可能(L293)は8状態に不在",
+    "PublishRequest に Rejected/却下の遷移が皆無で Approval Pending は Approved のみへ分岐(L309)"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§5.4 8状態 と §7.1 表示列が不一致"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "承認却下と Failed の表示状態が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L231 失敗表示の宣言と状態集合が不整合"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "Failed から先の遷移が定義なし"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§7.2 の PublishRequest に却下遷移が存在しない。Approval Pending は Approved へのみ分岐(L309)し、管理者が承認しない場合の状態・作者への表示・再申請経路が全て未定義。",
+     "recommended_intervention": "Rejected 状態と Draft への差し戻し経路、却下理由の表示を §7.2/§5.4 へ追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 309,
+      "section": "§7.2"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "表示状態集合が不一致。§5.4 の8状態に §7.1 の『公開準備完了』(L290)『追加可能』(L293)『更新1、更新2等』(L292)が無く、§7.1 に §5.4 の『下書き』『公開停止』が無い。",
+     "recommended_intervention": "表示状態の正本を1箇所に定め §5.4 と §7.1 の語彙を一致させる",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 220,
+      "section": "§5.4"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§7.2 の Failed(L312)に対応する表示状態が §5.4 の8状態に無い。L231 は失敗時に理由と修正ボタンを示すと宣言するが、その状態が状態一覧に存在しない。",
+     "recommended_intervention": "『公開に失敗しました』状態を §5.4 へ追加し Failed からの復帰遷移を定義",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 312,
+      "section": "§7.2"
+     }
+    }
+   ],
+   "score": 0.3
+  },
+  {
+   "paradigm_id": 11,
+   "paradigm_name": "メタ思考",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§2『思考リセット後の再定義』§2.2『第一印象で見つかった問題』がレビュー過程の記述のまま製品構想本文に残存",
+    "§17/§18 は著者自身の検証記録を成果物本文に同梱し、読者が判定根拠を本文外へ辿れない自己言及構造"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§18 L779-784 は自己判定で第三者検証なし"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§17/§18 に検証者・実施日時・手順が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§2 L39-71 の過程記述が構想本文に混在"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "§14 L636-694 の Stage 順序は非循環"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§2 の節名『思考リセット後の再定義』と §2.2『第一印象で見つかった問題』はレビュー過程の語彙であり、decision proposal として読む意思決定者には不要な内部工程が本文に残っている",
+     "recommended_intervention": "§2 を『中心課題の定義』へ改題し過程記述は review log へ分離",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 39,
+      "section": "§2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "§17/§18 は検証者・実施日時・検証手順・探索母集団を記載せず、自己申告の記録を成果物と同一文書に置いているため独立検証が不能",
+     "recommended_intervention": "§17/§18 を別 review log へ切り出し検証者と手順を明記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 728,
+      "section": "§17"
+     }
+    }
+   ],
+   "score": 0.45
+  },
+  {
+   "paradigm_id": 12,
+   "paradigm_name": "抽象化思考",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "Cloudflare が §1.7-8/§6/§8.2/§11.2/HH-D07 で唯一の Web App runtime として骨格に固定され代替 provider 抽象が不在",
+    "§3『西山モデル』が個人名のまま節題・表・結論に残り、一次出典が §20 に存在しない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "Skill/Web App の抽象分離は §4.2 で一貫"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Cloudflare 不可顧客の代替経路が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§3 L75 の個人名依存が §20 で未出典"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "HH-D07 L721 が単一 provider へ依存"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "Web App 出口の runtime が Cloudflare 固定 (§8.2 L404, HH-D07 L721)。Cloudflare を使えない顧客・値上げ・提供終了時に出口 B が消滅するが代替 provider 抽象も撤退条件も本文にない",
+     "recommended_intervention": "DeploymentProvider を抽象境界として定義し Cloudflare を既定実装に降格",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 404,
+      "section": "§8.2"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "variable-abstraction",
+     "description": "『西山モデル』が §3 節題・表・§21 L824 に個人名のまま骨格として残り、§20 に一次出典がない。個人名依存の原則が構想の正当化根拠になっている",
+     "recommended_intervention": "7 原則を出典付き参照モデルへ改名し §20 へ一次出典を追加",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 75,
+      "section": "§3.1"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Claude Code / Codex が §1/§5.1/§8.1 で AI 製品面の固有名として固定され、第三の AI 製品が現れた場合の adapter 抽象境界が §15 の Catalog Adapter 以外に定義されていない",
+     "recommended_intervention": "AI 製品面を CatalogAdapter 契約として抽象化し製品名を実装例に降格",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 390,
+      "section": "§8.1"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 13,
+   "paradigm_name": "ダブル・ループ思考",
+   "category": "C-meta",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§17 の 30 行 (L734-775) は全て『発見』→『反映した改善』が 1:1 で埋まり、未反映・反映不能・判断保留・FAIL の行が 0 件",
+    "§18 L779-784 の 4 条件は全て PASS で、PASS 以外の判定値・条件付き・保留が文書全体に存在しない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§17 の全反映と §19 の未検証 9 仮説が両立不能"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§17 L734-775 に未反映行が 0 件"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§18 L782 の漏れなし根拠が列挙のみ"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§19 仮説と §13.5 ゲートの対応が不在"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "eval-log",
+     "description": "§17 の 30 行すべてが発見→反映で 1:1 に埋まり未反映・保留・反映不能が 0 件。学習記録として反証可能性がなく、結論に合わせて記録が書かれた疑いを排除できない",
+     "recommended_intervention": "未反映・反映不能・保留の行を復元し、反映欄に対応節番号を付す",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 734,
+      "section": "§17.1"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "eval-log",
+     "description": "§17 は全思考法の発見が改善へ反映済みと記すが、§19 L790-798 は未検証仮説を 9 件残す。全反映と 9 件未検証は両立せず、少なくとも 9 件は反映ではなく先送りである",
+     "recommended_intervention": "§17 の反映欄を『反映』『仮説として先送り』へ二分し §19 と対応付ける",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 730,
+      "section": "§17"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "eval-log",
+     "description": "§18 L782『漏れなし PASS』の根拠が定義済み項目の列挙のみで、何を探索母集団として漏れなしと判定したかが不在。列挙は網羅の証明にならない",
+     "recommended_intervention": "探索母集団と未探索領域を明記し、PASS を PARTIAL へ再判定",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 782,
+      "section": "§18"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "eval-log",
+     "description": "§17 は前回 review の学習を記録すると称するが、前回 review の識別子・実施日・対象版が本文になく、どのループの学習かを追跡できない",
+     "recommended_intervention": "§17 冒頭へ前回 review の run_id と対象版を明記",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 730,
+      "section": "§17"
+     }
+    }
+   ],
+   "score": 0.2
+  },
+  {
+   "paradigm_id": 14,
+   "paradigm_name": "ブレインストーミング",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§17.2 L753 のブレストは Web upload / desktop / command の 3 候補のみで、5 件以上の発散も収束評価も本文にない",
+    "中心設計 Self-Service Publish Control Plane (§1 L17) は対立案との比較なく採用案として断定提示"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "採用案の内部記述は一貫"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "中心設計の代替案比較が §16 に不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§21 L836『最小』が比較なく断定"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "HH-D01-D12 に循環参照なし"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "中心設計の代替案 (GitHub Template 配布 / 既存 marketplace.json 手動運用 / CI bot 自動 PR / 社内 npm registry 流用 / Notion 等の既存共有基盤 + 手順書) が本文に列挙も棄却理由も持たない。§16 HH-D01 の理由は『一次障壁を直接解く』の 1 行のみ",
+     "recommended_intervention": "§16 へ代替案比較表 (5 案以上 × 棄却理由) を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 715,
+      "section": "§16 HH-D01"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§21 L836 は採用案を『最小でエレガントな構成』と断定するが、より小さい候補との比較検証が本文になく最小性が未証明",
+     "recommended_intervention": "『最小』の主張を比較根拠付きへ改めるか主張を弱める",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 836,
+      "section": "§21"
+     }
+    }
+   ],
+   "score": 0.4
+  },
+  {
+   "paradigm_id": 15,
+   "paradigm_name": "水平思考",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§17.2 L754 は『問題は Vercel や private registry に近い』と自認するが、両者が持つ preview 環境・yank・deprecation 運用は本文へ未移植",
+    "package registry 分野の標準解 (namespace 予約・yank・所有権移転) が §4.2 の用語モデルに不在"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "移植済み概念に矛盾なし"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "yank / namespace 予約が §7-9 に不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L754 の自認と本文の移植範囲が不一致"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "§15 の現行資産対応に断絶なし"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§17.2 L754 が private registry との同型性を認めながら、registry の標準機能である namespace 予約・yank (公開後の緊急撤回)・deprecation 通知が §7.2 の状態機械へ移植されていない。§7.2 L321 の Suspended / Deprecated は状態のみで運用契機が未定義",
+     "recommended_intervention": "§7.2 へ Suspended / Deprecated の発動契機・実行主体・利用者通知を追記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 321,
+      "section": "§7.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "Vercel 類似分野の preview deployment (公開前に URL で他者確認) が §7.3 L347 の『sample または preview』に留まり、Web App 出口の preview 経路として設計されていない",
+     "recommended_intervention": "Web App 出口へ preview URL 段階を追加するか対象外を明記",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 347,
+      "section": "§7.3"
+     }
+    }
+   ],
+   "score": 0.5
+  },
+  {
+   "paradigm_id": 16,
+   "paradigm_name": "逆説思考",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "『Hub を作らない場合』の対照 (既存 marketplace.json 手動運用で足りない理由) が §1/§16 に不在",
+    "§9.1 L429-436 は Green 自動公開の利点のみ記し、公開が簡単すぎる場合の副作用 (低品質公開の氾濫・Catalog 汚染) を扱わない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§17.3 L766 は低品質の負 loop を認識済み"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Hub 不採用時の対照が §16 に不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L766 の認識が §9 の設計へ未反映"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "§14 の条件付き Stage は不作為を許容"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "『Hub を作らない場合に何が起きるか』の対照が本文にない。現行 .claude-plugin/marketplace.json の手動運用や GitHub Template 配布で足りない理由が示されず、Hub 構築の必要性が未証明のまま前提化されている",
+     "recommended_intervention": "§1 へ『作らない場合』の対照節を追加し現行手動運用の限界を実測で示す",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 13,
+      "section": "§1"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "rubric-governance",
+     "description": "§17.3 L766 は『低品質は信頼を下げる』負 loop を発見済みと記すが、§9.1 の Green 自動公開には品質下限・公開数上限・Catalog からの降格経路がなく、発見が設計へ反映されていない",
+     "recommended_intervention": "§9.1 へ Green 公開物の品質下限と Catalog 降格・非表示契機を追加",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 456,
+      "section": "§9"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§5.2 L200 は Web upload を『新しい障壁を生む』として主動線から外すが、逆に publish command のみに絞った場合の失敗経路 (AI 製品が使えない状況での公開手段喪失) が検討されていない",
+     "recommended_intervention": "publish command 不可時の代替公開経路を §5.2 へ明記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 200,
+      "section": "§5.2"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 17,
+   "paradigm_name": "類推思考",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "AppExchange / VS Code Marketplace 等の類似構造が持つ審査・命名衝突・所有権移転・依存関係の 4 論点が本文に不在",
+    "§4.2 L138-146 の用語モデルに Project 間の依存関係 (Skill が他 Skill を参照) の表現がない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "用語モデル内部に矛盾なし"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "命名衝突・所有権移転が §4.2 に不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§15 L707 の内部審査が §9 と未接続"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Project 間依存が §4.2 に未定義"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "schema",
+     "description": "同名 Project / Skill が Workspace 内で衝突した場合の扱い (namespace 予約・一意性制約・改名要求) が §4.2 の用語モデルにない。Catalog Adapter が対象製品へ source を生成する時点で名前衝突が顕在化する",
+     "recommended_intervention": "§4.2 へ Project 名の一意性境界と衝突時の解決規則を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 138,
+      "section": "§4.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "Skill が他 Skill / MCP / 外部 API に依存する場合の依存宣言・解決・破壊検知が本文に一切ない。§7.3 の最小検査も単体 package の構造検査のみで依存の健全性を見ない",
+     "recommended_intervention": "§7.3 へ依存宣言の検査と依存先消失時の扱いを追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 339,
+      "section": "§7.3"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Project の所有権移転 (owner の異動・退職時の引き継ぎ手続) が §11.1 L539『継続 owner が明確である』の卒業条件のみで、移転操作・承認者・移転先不在時の扱いが未定義",
+     "recommended_intervention": "§4.2 / §11.2 へ owner 移転操作と移転先不在時の Suspend 規則を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 539,
+      "section": "§11.1"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 18,
+   "paradigm_name": "if思考",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§10.1 L462 の 5〜10 人と §14 Stage 0 を前提に設計され、Project 数が 3-4 桁へ増えた場合の Catalog 検索・分類・重複統合が §12 に不在",
+    "作者退職 (owner 不在)・公開済み Skill への個人情報混入判明・Cloudflare 終了という極端ケースで復旧経路が定義されていない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§7.2 L337 の orphan_candidate のみ例外経路"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "owner 不在時の Project 処理が未定義"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§12 の表示項目に検索・分類が不在"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Cloudflare 終了時の出口 B 復旧が不在"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "owner が退職・異動で不在になった場合の Project の扱いが未定義。§7.2 L337 の orphan_candidate は deployment の孤児のみを扱い、owner 側の孤児 (継続責任者不在の公開物) を扱わない。§11.2 L545 は owner に業務上の正しさを負わせるため owner 不在は責任の空白を生む",
+     "recommended_intervention": "owner 不在検知と自動 Suspend / 引受募集 / 一定期間後 Deprecated の経路を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 539,
+      "section": "§11.1"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "公開済み Skill に個人情報・secret の混入が事後判明した場合の緊急撤回経路が未定義。§7.3 L344 の secret scan は公開前検査のみで、Release は §4.3 L170 により変更不能、§7.2 L321 の Suspended も発動契機が書かれていない",
+     "recommended_intervention": "事後判明時の緊急 Suspend / 既配布分の失効通知手順を §7.2 へ追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 344,
+      "section": "§7.3"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "Cloudflare の値上げ・提供終了・障害という極端ケースで出口 B (Web App) 全体が停止するが、§11.2 L552 は Cloudflare 責任を顧客へ委譲するのみで Hub 側の縮退・移行経路がない",
+     "recommended_intervention": "provider 障害時の Catalog 表示縮退と移行方針を §8.2 へ追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 552,
+      "section": "§11.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Project が 1 万件規模になった場合の Catalog の検索・分類・重複統合・陳腐化整理が §12 L576-585 の詳細表示項目のみで未設計。§13.1 の North Star は再利用数の増加を目指すため規模増は成功時の必然",
+     "recommended_intervention": "§12 へ規模増時の検索・分類・陳腐化整理の想定を追記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 574,
+      "section": "§12"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Skill が悪意を持つ場合 (Green の instructions が prompt injection を含む) の検査が §7.3 L350-356 の構造・secret・Hook 検出に留まり、instructions 本文の内容的悪性を検査しない。§9.1 は instructions を Green 自動公開に置く",
+     "recommended_intervention": "§9.1 の Green 条件へ instructions 内容検査または人手確認を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 429,
+      "section": "§9.1"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "low",
+     "bucket": "doc",
+     "description": "§4.2 L146 は Workspace を『社内共有と権限の境界』と 1 行で定義するのみで、Workspace をまたいで共有したくなった場合の経路が未定義。§13.5 L630 は複数 Workspace を前提に語る",
+     "recommended_intervention": "§4.2 へ Workspace 間共有の可否と越境時の扱いを明記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 146,
+      "section": "§4.2"
+     }
+    }
+   ],
+   "score": 0.25
+  },
+  {
+   "paradigm_id": 19,
+   "paradigm_name": "素人思考",
+   "category": "D-divergent",
+   "agent": "elegant-meta-divergent-analyst",
+   "observations": [
+    "§4.1 L120 は UI 語彙を『業務ツール』へ統一すると宣言するが、本文自体は TargetChannel / pointer / atomic / orphan_candidate 等の専門語で構成され意思決定者が読めない",
+    "§15 L709 の『13 Phase』は本文に定義も参照もなく初見読者が何を指すか判別不能"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§4.1 の宣言と本文の語彙が乖離"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§15 L709 の 13 Phase が未定義"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§18 L783『整合性 PASS』が本文と不一致"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§20 に 13 Phase の参照先がない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§18 L783 は『整合性あり PASS / UI 用語を業務ツールへ統一した』と判定するが、これは UI 語彙の統一であって文書自体の可読性ではない。concept / decision proposal の読者である意思決定者に対し §4.2 / §7.2 は英語専門語のまま提示され、判断に必要な理解を妨げる",
+     "recommended_intervention": "§1 と §16 を非エンジニア読者が単独で判断できる語彙へ書き直す",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 783,
+      "section": "§18"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§15 L709『一般利用者に 13 Phase を操作させない』の 13 Phase が本文に定義も出典もなく、初見読者は何を指すか判別できない。§20 の参考資料にも対応する参照がない",
+     "recommended_intervention": "13 Phase の定義または §20 への参照追加、あるいは語を平易化",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 709,
+      "section": "§15"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§7.2 L337 の orphan_candidate は初見読者に意味不明の内部語だが、§5.4 L220-229 の『初心者に見せる 8 状態』には対応する日本語表示がなく、この例外が起きた時に利用者へ何と見せるかが未定義",
+     "recommended_intervention": "§5.4 の 8 状態へ orphan 発生時の利用者向け表示を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 337,
+      "section": "§7.2"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 20,
+   "paradigm_name": "システム思考",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§6.2 L270-277 の非所有6項目と §11.2 L544-552 の責任分界表の間に、誰も持たない責務が残る",
+    "Hub は runtime 非所有 (L271) のため Suspend (L321) しても install 済み copy を無効化できない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L321 Suspend と L271 runtime 非所有が両立不能"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "脆弱性発覚時の報告・停止・通知経路が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L279 の比例増回避の主張が支援負荷に及ばず"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L509 通知 Stage2 依存で Stage1 の停止が届かない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "other",
+     "description": "公開済み Skill に脆弱性・secret 混入が発覚した際の報告受付・Suspend 発動主体・影響利用者への通知が本文に存在しない。§13.4 L620 は incident 数を指標に置くのみで対応手順がない。",
+     "recommended_intervention": "incident 受付→Suspend 発動者→通知経路を §7.2 に追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 620,
+      "section": "§13.4"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "Release Suspend (L321) の実効性が update 通知に依存するが、通知は Stage 2 (L669)。Stage 1 の Green 自動公開 (L660) で公開した Skill を止めても既存利用者へ届かない。",
+     "recommended_intervention": "Stage1 に最小停止通知を含めるか Green 範囲を縮小",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 669,
+      "section": "§14 Stage 2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "owner 退職・異動時の Project 引き継ぎ経路が未定義。§11.1 L539 は継続 owner の明確性を卒業条件に置くが、owner 喪失後の遷移主体がない。",
+     "recommended_intervention": "owner 不在時の再指名主体と期限を §11.2 に定義",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 539,
+      "section": "§11.1"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "Workspace 解約時の Control Plane 側データ (L256-268 の Project/Release/監査履歴) の返却・削除・保持期間が未定義。L552 の顧客責任は Cloudflare 側 resource のみを対象とする。",
+     "recommended_intervention": "解約時の export・削除・retention を §11.2 に追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 552,
+      "section": "§11.2"
+     }
+    }
+   ],
+   "score": 0.45
+  },
+  {
+   "paradigm_id": 21,
+   "paradigm_name": "因果関係分析",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "L13/L60/L826 の中心因果『Git 障壁除去→自走・再利用』が出典なし断定形",
+    "§17.1 L736 が §2.2 L60 の未出典断定を根拠として再利用し循環している"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L60 の障壁認定に一次情報がない"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "中心因果が §19 の仮説に不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§17 が §2.2 を根拠にする循環"
+     ]
+    },
+    "C4": {
+     "verdict": "PASS",
+     "evidence": [
+      "L644 で失敗・相談・再利用を記録する"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "構想の中心因果『公開の技術的複雑さが一次障壁であり、除去すれば自走と再利用が起きる』が §19 L790-798 の9仮説のいずれにも明文化されていない。§19-1 は手段の実現性、§19-3 は結果測定にとどまる。",
+     "recommended_intervention": "中心因果を §19 の第0仮説として明記し検証法を付す",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 790,
+      "section": "§19"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§17.1 L736 の批判的思考の発見が『明示されたGit障壁』を前提とするが、その根拠は §2.2 L60 の未出典断定であり、検証記録が被検証対象を根拠にしている。",
+     "recommended_intervention": "L60 に一次情報 (実施日・発話者・件数) を付す",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 60,
+      "section": "§2.2"
+     }
+    }
+   ],
+   "score": 0.5
+  },
+  {
+   "paradigm_id": 22,
+   "paradigm_name": "因果ループ",
+   "category": "E-system",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§17.3 L766 は『自動検査で正のloopを保護』とするが、L366 は検査が品質を保証しないと自ら明言する",
+    "North Star=再利用数 (L593) が公開量の amplifier となる一方、低品質の dampener が本文にない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L766 の保護主張と L366 の非保証が矛盾"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "低品質 Skill の淘汰・非推奨化機構が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§12 L578-585 に品質判別情報がない"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L321 Deprecated への遷移操作が未定義"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§17.3 L766 は負ループを『skills-onlyと自動検査で正のloopを保護』と結論するが、§7.3 L366 は検査が業務要件・データ正確性・継続稼働を保証しないと明言する。検査は能力の安全性のみを見て品質を見ない。",
+     "recommended_intervention": "L766 の主張を撤回し品質 dampener を別途設計する",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 766,
+      "section": "§17.3"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "§7.2 L321 は Release 状態に Deprecated を列挙するが、TargetChannel 操作は Promote/Rollback の2つのみ (L327-328) で、Deprecated へ遷移させる操作・発動主体・契機が定義されていない。到達不能状態である。",
+     "recommended_intervention": "Deprecate 操作と発動主体・契機を §7.2 に定義",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 321,
+      "section": "§7.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "Catalog が低品質 Skill で溢れた場合の淘汰機構が Deprecated 以外に存在しない。§12 L578-585 の詳細表示8項目に評価・利用者数・成功率がなく、利用者が『見つける』段階で品質差を判別できない。",
+     "recommended_intervention": "§12 に利用実績または owner 評価の表示項目を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 578,
+      "section": "§12"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§6.2 L279 は『利用者が増えるほど提供者責任が比例増する構造を避ける』と主張するが、回避できるのは hosting と個別保守のみで、office hour 相談 (L528) と L619 の1Workspace当たり相談時間は比例増を止める機構がない。",
+     "recommended_intervention": "L279 の主張範囲を hosting・保守に限定し明記",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 279,
+      "section": "§6.2"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 23,
+   "paradigm_name": "トレードオン思考",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "Green 自動公開 (L456) は提供者が運用する Platform (L550) の機構だが、L366 と L554-560 で結果を免責する",
+    "secret 混入事故の回復経路が本文になく、L620 に incident 指標のみ存在する"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L547 の検査責任と L366 の非保証が未接続"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "検査すり抜け時の是正責任行が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PASS",
+     "evidence": [
+      "L767 の両立解が L170/L172 に対応する"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "回復経路が runtime 非所有で成立しない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "Green 自動公開の検査 (L547 Publisher の責任) がすり抜けて社内公開事故が起きた場合、§7.3 L366 と §11.2 L554-560 は提供者を免責するが、Platform 運用は提供者責任 (L550) である。検査機構の欠陥に対する是正責任が責任分界表に行として存在しない。",
+     "recommended_intervention": "§11.2 に『検査欠陥の是正責任』行を追加し保証と区別",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 544,
+      "section": "§11.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "dependency-loop",
+     "description": "secret 混入が Green で公開された際の回復は Release Suspend のみだが、Hub は runtime を持たない (L271) ため配布済み copy を回収できず、secret 失効は顧客責任 (L552)。事故の実務的回復経路が閉じていない。",
+     "recommended_intervention": "Green の適用を回復可能な影響範囲へ限定し手順を定義",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 456,
+      "section": "§9"
+     }
+    }
+   ],
+   "score": 0.45
+  },
+  {
+   "paradigm_id": 24,
+   "paradigm_name": "プラスサム思考",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§11.2 L544-550 の責任分界表6主体に Workspace 管理者の行がない",
+    "管理者は L408 初回接続・L438 Yellow 承認・L832 の確認承認を負うが得る便益と負荷指標がない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L832 の管理者責務が L544 の表に不在"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Workspace 管理者の責任行が欠落"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L768 の5主体分業に管理者が含まれない"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L668 Yellow が管理者容量に無検証依存"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§11.2 L544-550 の責任分界表は6主体 (ユーザー/AI製品/Publisher/Hub/Cloudflare/提供者) で構成されるが、L408・L438・L832 で実質的責務を負う Workspace 管理者の行がない。L552 は組織単位の記述で管理者個人の分界を与えない。",
+     "recommended_intervention": "§11.2 の表に Workspace 管理者を主体として追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 544,
+      "section": "§11.2"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Stage 2 L668 の Yellow review と L666 の approval queue は Workspace 管理者の承認容量に依存するが、§13 の指標群に管理者負荷の項目がなく、管理者がボトルネック化しても検知できない。",
+     "recommended_intervention": "§13.4 に管理者承認待ち時間・承認件数の指標を追加",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 613,
+      "section": "§13.4"
+     }
+    }
+   ],
+   "score": 0.5
+  },
+  {
+   "paradigm_id": 25,
+   "paradigm_name": "価値提案思考",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "North Star (L593) の認定は L595 で人手確認に依拠し、L622 の測定手段と整合する",
+    "§13.5 L624-634 の拡張判断7行のいずれも North Star を条件に用いていない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L630 が測定しない install を条件に使う"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "North Star を用いる判断ゲートが存在しない"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L593 と L624-634 が接続されていない"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L788 の『揃う』判定者・期限が未定義"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C1",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§13.5 L630 は opt-in 利用計測の条件を『installだけでは改善判断ができないと複数Workspaceが回答する』とするが、§10.2 L502 は共通 Runtime Connector を除外し、§13.5 節前段 L622 は自動 install event を Stage 4 以降とする。install を測らない設計で install を判断材料とする条件文は成立しない。",
+     "recommended_intervention": "L630 の条件を Catalog click・owner 確認ベースへ書き換え",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 630,
+      "section": "§13.5"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "North Star『同僚が再利用できた数』(L593) が §13.5 L624-634 の拡張判断7行の条件に一度も現れない。最重要指標が全ゲートから切断され、North Star が悪化しても拡張が進み、改善しても何も開かない。",
+     "recommended_intervention": "各拡張候補の条件に North Star 閾値を組み込む",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 624,
+      "section": "§13.5"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§13.5 の条件文『反復する』『継続する』『複数Workspaceが回答する』(L628-634) に閾値・母数・判定者・観測期間がなく、判断ゲートとして機能しない。§19 L788 の『実証結果が揃うまで』も同様に判定者と期限を欠く。",
+     "recommended_intervention": "各ゲートへ閾値・母数・判定者・観測窓を付与",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 626,
+      "section": "§13.5"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§11.1 L538 の卒業条件『1公開当たりの提供者介入が15分未満』と §13.4 L614 の支援時間指標に対し、L622 の測定手段は owner 確認・利用者確認・Catalog click・簡易アンケートのみで、時間計測の手段が本文にない。",
+     "recommended_intervention": "office hour 記録等の時間計測手段を §13.5 に明記",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 622,
+      "section": "§13.4"
+     }
+    }
+   ],
+   "score": 0.3
+  },
+  {
+   "paradigm_id": 26,
+   "paradigm_name": "戦略的思考",
+   "category": "F-strategic",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§20 L811 の仕様再確認は『実装着手時』の1回のみで、Stage 0-5 の期間中の追随機構がない",
+    "native source と Bootstrap Installer が共に不成立の場合、L648 で Stage 1 開始条件が満たせず停止する"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "L388 の fallback が L648 と整合する"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "private catalog 前提が崩れた際の代替案が不在"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L811 の再確認が1時点に限定される"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L648 開始条件の両系不成立時に経路がない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§8.1 L388 は native source 不足時の fallback として Bootstrap Installer を置くが、両者が共に対象製品仕様で成立しない場合の代替 (Web App 単独出口への縮退等) が本文にない。§14 L648 の Stage 1 開始条件が満たせず構想全体が停止する。",
+     "recommended_intervention": "両系不成立時の縮退案を §14 Stage 0 に定義",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 648,
+      "section": "§14 Stage 0"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§20 L811 は最新仕様の再確認を『実装着手時』の一時点に限定するが、Stage 0-5 は 2 か月プログラムを含む長期構想であり、実装期間中および公開後の仕様変化に追随する契機が定義されていない。",
+     "recommended_intervention": "仕様再確認を Stage 毎の入口条件として定期化",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 811,
+      "section": "§20"
+     }
+    }
+   ],
+   "score": 0.55
+  },
+  {
+   "paradigm_id": 27,
+   "paradigm_name": "改善思考",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§17.3 L772 の『反映した改善』が本文 §1 L36 の6語と一致せず、前回改善が反映されていない",
+    "§17.1 L742 の MECE 発見に対し、能力・出口・機能・時間の4分類軸が相互対応表なく併存し再発している"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L772 の3操作集約と L36 の6語が不一致"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§17 に未反映・保留の行が存在しない"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§5.4 と §7.1 の状態語彙が非対応"
+     ]
+    },
+    "C4": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L742 の MECE 分離が §9 で再混在"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C1",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§17.3 L772 は改善思考の反映を『作る・公開する・チームで使うに集約』(3操作) と記録するが、§1 L36 の実際の本文は『作る → 試す → 公開する → チームで見つける → 使う → 改善する』の6語である。検証記録が本文と矛盾する。",
+     "recommended_intervention": "L772 の反映欄を L36 の実体に合わせて訂正",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 772,
+      "section": "§17.3"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§17.2 L758 は『UI上は平易な状態名へ統一』と反映済みとするが、§5.4 L222-229 の8状態と §7.1 L286-294 の利用者表示は非対応。§7.1 のみに『公開準備完了』『更新1、更新2等』『追加可能』があり、§5.4 のみに『下書き』『公開停止』がある。",
+     "recommended_intervention": "§5.4 と §7.1 の状態語彙を1つの表へ統合",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 222,
+      "section": "§5.4"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§17.1 L742 の MECE 改善に反し、§9.2 L439 の Yellow『local script』と §9.3 L449 の Red『任意shell、binary』の境界が未定義で、§8.3 L422 は script を一律『初期自動公開の対象外』とする。同一対象が3節で異なる分類を受ける。",
+     "recommended_intervention": "script 系の分類基準を §9 に一元化し境界を明示",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 439,
+      "section": "§9.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "rubric-governance",
+     "description": "§17 の30行 (L734-775) は全行が発見と反映の1:1で埋まり、『発見したが未反映』『反映不能』『判断保留』が皆無。§18 L781-784 も4条件全 PASS で FAIL・保留がない。改善の PDCA として反証可能性がない自己申告である。",
+     "recommended_intervention": "§17/§18 を本文外の検証記録へ分離し未反映行を許容",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 777,
+      "section": "§18"
+     }
+    }
+   ],
+   "score": 0.3
+  },
+  {
+   "paradigm_id": 28,
+   "paradigm_name": "仮説思考",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "§19 L790-798 の9仮説はいずれも判定者と期限を持たず、成功基準は L792 の30日以外ほぼ未定義",
+    "偽の場合の分岐は 5/6/8/9 のみ §13.5 に存在し、1/2/3/4/7 は fallback がない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PASS",
+     "evidence": [
+      "L788 の非構築宣言は L638 と整合する"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "9仮説すべてに判定者と期限がない"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "§19 と §13.5 の対応が本文にない"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "§19-1/§19-7 の偽時に分岐が存在しない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "§19 L790-798 の9仮説に検証方法・成功基準・判定者・期限が体系的に付与されていない。L796 の『事業として成立する水準』、L798 の『どの程度か』は閾値がなく、判定者は9件すべて未記載である。",
+     "recommended_intervention": "各仮説へ検証法・閾値・判定者・期限の4列を付与",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 790,
+      "section": "§19"
+     }
+    },
+    {
+     "condition": "C4",
+     "severity": "critical",
+     "bucket": "dependency-loop",
+     "description": "§19-1 L790 (Git操作ゼロ公開) は §1 L24・§4.3 L166-168・HH-D08 L722 が依存する中心命題だが、偽だった場合の分岐が本文にない。§19-7 L796 (支援時間) も §11 のビジネスモデル全体の前提でありながら fallback を欠く。",
+     "recommended_intervention": "§19-1/§19-7 が偽の場合の構想縮退案を明記",
+     "condition_signal": "dependency_break",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 796,
+      "section": "§19"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "§19 の9仮説と §13.5 L624-634 の拡張判断7行の対応関係が本文に明示されない。5/6/8/9 は §13.5 に対応 gate が読み取れるが、1/2/3/4/7 は対応先が存在しない。",
+     "recommended_intervention": "§19 に対応ゲート列を追加し §13.5 と相互参照",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 786,
+      "section": "§19"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 29,
+   "paradigm_name": "論点思考",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "Claude Code / Codex の未決 (L390) は Stage 0 出力として §14 L640-646 の7行に列挙されていない",
+    "Workspace の定義が L146 の1行のみで、visibility・課金・管理者権限の決定を支えられない"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L146 と L406 の Workspace が同名別物"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "Stage 0 に製品選定が出力として不在"
+     ]
+    },
+    "C3": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L487/L567/L619 が未定義の境界に依存"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "L648 開始条件が未確定の製品に依存"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "§8.1 L390 は『初期はClaude CodeまたはCodexの一方に絞る』と選定基準のみ示すが、§14 Stage 0 の箇条書き7行 (L640-646) に『対象AI製品を1つ選定する』が出力として存在せず、選定の判定者・時点・同数時の扱いも未定義。L648 の Stage 1 開始条件は製品確定に依存する。",
+     "recommended_intervention": "Stage 0 の出力に製品選定と判定者・時点を追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 390,
+      "section": "§8.1"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "本質論点の取りこぼし: `Workspace` の定義は L146『社内共有と権限の境界』1行のみだが、L487 の2段階 visibility、L567 の Workspace 利用料、L619 の1Workspace当たり相談時間、L630 の複数 Workspace、L408 の管理者権限がすべてこの境界の確定に依存する。決まれば残りが決まる論点が最小記述のまま放置されている。",
+     "recommended_intervention": "Workspace の粒度 (企業/部署) と権限範囲を §4.2 で確定",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 146,
+      "section": "§4.2"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "Hub の `Workspace` (L146) と Cloudflare の Workspace (L406『顧客のCloudflare Workspace』、L408) が同名で別概念のまま併存し、L552『利用者または顧客Workspace』はどちらとも読める。",
+     "recommended_intervention": "Cloudflare 側を別名 (顧客Cloudflare環境) へ改称",
+     "condition_signal": "contradiction",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 406,
+      "section": "§8.2"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "提供者 (L550) と Harness Hub 開発チームが同一主体か未定義。L630 は複数 Workspace を前提とするが、2か月プログラム (L518-539) を顧客数分実施する主体の scale 前提が本文にない。",
+     "recommended_intervention": "提供者と Platform 運用者の同一性を §11.2 で明示",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 550,
+      "section": "§11.2"
+     }
+    }
+   ],
+   "score": 0.35
+  },
+  {
+   "paradigm_id": 30,
+   "paradigm_name": "KJ法",
+   "category": "G-problem",
+   "agent": "elegant-system-strategic-analyst",
+   "observations": [
+    "全 findings は5島に集約され、最大島は『ライフサイクル終端の設計欠落』である",
+    "第2島は『指標だけあって手順がない』で、L620/L538/L618 が同型に該当する"
+   ],
+   "condition_matrix": {
+    "C1": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L36 の6語に終端動詞が存在しない"
+     ]
+    },
+    "C2": {
+     "verdict": "FAIL",
+     "evidence": [
+      "廃止・削除・引き継ぎ・解約が全て未定義"
+     ]
+    },
+    "C3": {
+     "verdict": "PARTIAL",
+     "evidence": [
+      "L172 の不変条件が §10.2 に不在"
+     ]
+    },
+    "C4": {
+     "verdict": "FAIL",
+     "evidence": [
+      "終端状態が到達不能で状態機械が閉じない"
+     ]
+    }
+   },
+   "issues": [
+    {
+     "condition": "C2",
+     "severity": "critical",
+     "bucket": "doc",
+     "description": "島の最大構造的欠落: §1 L36 の体験6語『作る→試す→公開する→チームで見つける→使う→改善する』に終端動詞がなく、Skill 廃止 (L321 Deprecated)、Project 削除、owner 交代 (L539)、Workspace 解約、Web App 停止、契約終了のすべてが未定義。§5.4 L222-229 の8状態にも削除・非推奨がない。他11件の omission がこの1点を根とする。",
+     "recommended_intervention": "体験語彙に終端を追加しライフサイクル終端節を新設",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 36,
+      "section": "§1"
+     }
+    },
+    {
+     "condition": "C2",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "島『指標はあるが手順がない』: L620 secret・権限 incident 数 (対応手順なし)、L538/L614 支援時間 (計測手段なし)、L618 rollback 率・公開停止率 (発動主体・契機なし)。測定対象の事象を起こす手順が設計されていない指標が3件同型で存在する。",
+     "recommended_intervention": "各指標に対応する運用手順を §7.2/§11.2 へ追加",
+     "condition_signal": "omission",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 613,
+      "section": "§13.4"
+     }
+    },
+    {
+     "condition": "C3",
+     "severity": "high",
+     "bucket": "doc",
+     "description": "島『不変条件が MVP に降りていない』: §4.3 L172『利用者が自分のpackageと公開情報をexportできるようにする』は不変条件かつ HH-D11 (L725) の設計判断だが、§10.2 L474-494 の含めるもの17項目に export がなく、L509 は export を含めないものへ列挙し L668 で Stage 2 へ送る。不変条件が Stage 1 で破れる。",
+     "recommended_intervention": "§10.2 に package export を含めるか L172 を条件付き化",
+     "condition_signal": "inconsistency",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 172,
+      "section": "§4.3"
+     }
+    },
+    {
+     "condition": "C1",
+     "severity": "medium",
+     "bucket": "doc",
+     "description": "島『用語の近接衝突』: L337 の `orphan_candidate` は deployment の孤児を指すが、L539 の継続 owner 喪失という別種の孤児化には名前も経路もない。近接概念の一方だけが形式化されている。",
+     "recommended_intervention": "owner 不在 Project の状態名と再登録経路を定義",
+     "condition_signal": "smell",
+     "location": {
+      "file": "doc/harness-hub-platform-concept.md",
+      "line": 337,
+      "section": "§7.2"
+     }
+    }
+   ],
+   "score": 0.3
+  }
+ ],
+ "thought_method_coverage": {
+  "used": [
+   "批判的思考",
+   "演繹思考",
+   "帰納的思考",
+   "アブダクション",
+   "垂直思考",
+   "要素分解",
+   "MECE",
+   "2軸思考",
+   "プロセス思考",
+   "why思考",
+   "メタ思考",
+   "抽象化思考",
+   "ダブル・ループ思考",
+   "ブレインストーミング",
+   "水平思考",
+   "逆説思考",
+   "類推思考",
+   "if思考",
+   "素人思考",
+   "システム思考",
+   "因果関係分析",
+   "因果ループ",
+   "トレードオン思考",
+   "プラスサム思考",
+   "価値提案思考",
+   "戦略的思考",
+   "改善思考",
+   "仮説思考",
+   "論点思考",
+   "KJ法"
+  ],
+  "skipped_with_reason": [],
+  "total": 30
+ },
+ "four_conditions": {
+  "C1": {
+   "verdict": "FAIL",
+   "evidence": [
+    "C1: FAIL=7 PARTIAL=15 PASS=8 / 30 paradigms",
+    "不変条件『公開処理が失敗しても現在の安定版は利用可能』は、Hubが Web App runtime を持たず(L274)顧客が停止・削除の責",
+    "§9 の分類が重複。Green に read-only操作(L434)、Yellow に read-only MCP(L441)・files",
+    "表示状態集合が不一致。§5.4 の8状態に §7.1 の『公開準備完了』(L290)『追加可能』(L293)『更新1、更新2等』(L292)"
+   ],
+   "violation_count": 11
+  },
+  "C2": {
+   "verdict": "FAIL",
+   "evidence": [
+    "C2: FAIL=28 PARTIAL=2 PASS=0 / 30 paradigms",
+    "§18『漏れなし PASS』の根拠が『定義した項目』の列挙で、未定義項目が無いことの証明になっていない。探索範囲・母集団が未記載。",
+    "§16 HH-D01〜D12 に、§9 Green/Yellow/Red 段階化、§10.1 Pilot 先行、§8.1 L390 一方製品",
+    "最尤仮説: 本文書は決定散文であり、状態機械・ゲート・MECE表が形式のみ持ち『誰が/いつ/どの閾値で』の運用述語を系統的に欠く。欠落の一貫"
+   ],
+   "violation_count": 41
+  },
+  "C3": {
+   "verdict": "FAIL",
+   "evidence": [
+    "C3: FAIL=7 PARTIAL=22 PASS=1 / 30 paradigms",
+    "§4.2 L140 は Release を『変更不能な1版』と定義するが、§7.2 L321 は Available|Suspended|D",
+    "§7.2 の Failed(L312)に対応する表示状態が §5.4 の8状態に無い。L231 は失敗時に理由と修正ボタンを示すと宣言するが",
+    "§18 L782『漏れなし PASS』の根拠が定義済み項目の列挙のみで、何を探索母集団として漏れなしと判定したかが不在。列挙は網羅の証明にな"
+   ],
+   "violation_count": 15
+  },
+  "C4": {
+   "verdict": "FAIL",
+   "evidence": [
+    "C4: FAIL=15 PARTIAL=8 PASS=7 / 30 paradigms",
+    "文書全体の一次前提『障壁は2』(L60)と西山モデル7原則(L79)が出典なし。§20の参考資料に西山の一次出典が無く参照が宙吊り。",
+    "Web App の rollback 先は Cloudflare 側に存続する過去 deployment 前提だが、顧客が削除した場合(L5",
+    "根本原因: §14 Roadmap・§13.5 拡張判断・§19 仮説が同一の段階移行判断を3語彙で重複記述し、どれが正本かの指定がないため"
+   ],
+   "violation_count": 19
+  }
+ },
+ "variable_abstraction": [
+  {
+   "concrete_value": "2か月",
+   "variable_name": "{{ENABLEMENT_PERIOD}}",
+   "default_value": "2か月",
+   "source_trace": "§11 L518"
+  },
+  {
+   "concrete_value": "5〜10人",
+   "variable_name": "{{PILOT_SIZE}}",
+   "default_value": "5〜10人",
+   "source_trace": "§10.1 L462 / §14 L640"
+  },
+  {
+   "concrete_value": "30日",
+   "variable_name": "{{REUSE_WINDOW_DAYS}}",
+   "default_value": "30日",
+   "source_trace": "§13.3 L607 / §19 L792"
+  },
+  {
+   "concrete_value": "15分",
+   "variable_name": "{{PROVIDER_INTERVENTION_LIMIT}}",
+   "default_value": "15分",
+   "source_trace": "§11.1 L538"
+  },
+  {
+   "concrete_value": "月2件",
+   "variable_name": "{{AUTHORING_TARGET_RATE}}",
+   "default_value": "月2件",
+   "source_trace": "§11.1 L531"
+  },
+  {
+   "concrete_value": "13 Phase",
+   "variable_name": "{{CREATOR_PHASE_COUNT}}",
+   "default_value": "13 Phase",
+   "source_trace": "§15 L709"
+  },
+  {
+   "concrete_value": "Cloudflare",
+   "variable_name": "{{WEBAPP_RUNTIME_PROVIDER}}",
+   "default_value": "Cloudflare",
+   "source_trace": "§8.2 L404"
+  },
+  {
+   "concrete_value": "Claude Code / Codex",
+   "variable_name": "{{AI_PRODUCT}}",
+   "default_value": "Claude Code",
+   "source_trace": "§8.1 L390"
+  },
+  {
+   "concrete_value": "西山",
+   "variable_name": "{{REFERENCE_MODEL_OWNER}}",
+   "default_value": "西山",
+   "source_trace": "§3 L75"
+  },
+  {
+   "concrete_value": "Cloudflare",
+   "variable_name": "{{DEPLOYMENT_PROVIDER}}",
+   "default_value": "Cloudflare",
+   "source_trace": "§8.2 L404"
+  },
+  {
+   "concrete_value": "5〜10人",
+   "variable_name": "{{PILOT_PARTICIPANTS}}",
+   "default_value": "5-10",
+   "source_trace": "§10.1 L462 / §14 L640"
+  },
+  {
+   "concrete_value": "Claude Code / Codex",
+   "variable_name": "{{TARGET_AI_PRODUCT}}",
+   "default_value": "unresolved",
+   "source_trace": "§8.1 L390 / §10.2 L475"
+  },
+  {
+   "concrete_value": "Cloudflare",
+   "variable_name": "{{DEPLOY_PROVIDER}}",
+   "default_value": "cloudflare",
+   "source_trace": "§8.2 L404 / §11.2 L549"
+  }
+ ],
+ "total_score": 0.388
+}

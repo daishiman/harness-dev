@@ -24,6 +24,10 @@ HOOK_EVENTS = (
     "Notification",
     "PreCompact",
     "PostCompact",
+    # Agent Team の teammate artifact 完了時に発火する。dev-graph が
+    # hooks/reconcile-task-lifecycle.py を配線しており、allowlist に無いと
+    # 当該 plugin を enable した時点で exit 3 になる。
+    "TaskCompleted",
 )
 INVARIANTS = [f"INV-{index}" for index in range(1, 13)]
 USAGE = """build-claude-settings.py [-h]
@@ -302,11 +306,29 @@ def discover_plugins(plugins_dir, exclude_plugins=(), *, project_root=None):
             "namespace": namespace_items(plugin_dir, name),
         }
         if "hooks" in manifest:
-            plugin["hooks"].extend(
-                normalize_hook_entries(
-                    manifest["hooks"], name, source=f"{manifest_path}:inline"
+            manifest_hooks = manifest["hooks"]
+            if isinstance(manifest_hooks, str):
+                # Claude Code 標準形式: plugin.json の hooks は hook 定義ファイルへの
+                # 相対パス参照でもよい (dev-graph 等が "./hooks/hooks.json" を使う)。
+                # 実体は下の hooks_dir glob が読むため inline 展開しない (両方読むと
+                # 同一 hook が二重登録される)。ただし glob の走査外を指す参照は
+                # どちらの経路でも読まれず hook が無言で消えるため fail-closed で拒否する。
+                reference = (plugin_dir / manifest_hooks).resolve()
+                if not reference.is_file():
+                    raise LayoutError(
+                        f"hooks path reference not found: {manifest_path} -> {manifest_hooks}"
+                    )
+                if (plugin_dir / "hooks").resolve() not in reference.parents:
+                    raise LayoutError(
+                        "hooks path reference must live under the plugin hooks/ dir "
+                        f"(else it is never loaded): {manifest_path} -> {manifest_hooks}"
+                    )
+            else:
+                plugin["hooks"].extend(
+                    normalize_hook_entries(
+                        manifest_hooks, name, source=f"{manifest_path}:inline"
+                    )
                 )
-            )
         if "permissions" in manifest:
             plugin["permissions"].extend(normalize_permissions(manifest["permissions"], name))
 

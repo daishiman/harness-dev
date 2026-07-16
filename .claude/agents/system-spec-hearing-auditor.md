@@ -1,0 +1,1 @@
+../../plugins/system-spec-harness/agents/system-spec-hearing-auditor.md

@@ -1,0 +1,420 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 4ef20e1..9e31835 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -1,12 +1,48 @@
+ {
+   "_build_claude_settings": {
+     "managed_hooks": [
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/company-master/hooks/hook-guard-secret.py",
++        "from_plugin": "company-master"
++      },
+       {
+         "event": "PreToolUse",
+         "matcher": "Bash",
+         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/contract-generator/hooks/hook-guard-secret.py",
+         "from_plugin": "contract-generator"
+       },
++      {
++        "event": "PostToolUse",
++        "matcher": "Bash",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\"",
++        "from_plugin": "dev-graph"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
++        "from_plugin": "dev-graph"
++      },
++      {
++        "event": "SessionStart",
++        "matcher": "startup|resume",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\"",
++        "from_plugin": "dev-graph"
++      },
++      {
++        "event": "TaskCompleted",
++        "matcher": null,
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\"",
++        "from_plugin": "dev-graph"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash|WebFetch",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py",
++        "from_plugin": "extract-system-blueprint"
++      },
+       {
+         "event": "PostToolUse",
+         "matcher": "Edit",
+@@ -79,6 +115,42 @@
+         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py",
+         "from_plugin": "harness-creator"
+       },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py",
++        "from_plugin": "mf-kessai-invoice-check"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-readonly.py",
++        "from_plugin": "mf-kessai-invoice-check"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Write|Edit|MultiEdit",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py",
++        "from_plugin": "mf-kessai-invoice-check"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/notion-gmail-send/hooks/guard-gmail-send.py",
++        "from_plugin": "notion-gmail-send"
++      },
++      {
++        "event": "PostToolUse",
++        "matcher": "Edit|Write",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/plugin-dev-planner/hooks/hook-validate-plugin-plan.py",
++        "from_plugin": "plugin-dev-planner"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash|Task",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
++        "from_plugin": "plugin-dev-planner"
++      },
+       {
+         "event": "PostToolUse",
+         "matcher": "Bash",
+@@ -126,6 +198,30 @@
+         "matcher": ".*",
+         "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\"",
+         "from_plugin": "skill-intake"
++      },
++      {
++        "event": "PostToolUse",
++        "matcher": "Write|Edit|MultiEdit",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/slide-report-generator/hooks/hook-postgen-eval.py",
++        "from_plugin": "slide-report-generator"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Bash|Task",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
++        "from_plugin": "system-dev-planner"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Write|Edit|Bash",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py\"",
++        "from_plugin": "system-spec-harness"
++      },
++      {
++        "event": "PreToolUse",
++        "matcher": "Write|Edit|MultiEdit",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py",
++        "from_plugin": "ubm-goal-setting"
+       }
+     ],
+     "managed_permissions": []
+@@ -181,6 +277,15 @@
+         ],
+         "matcher": "Write|Edit"
+       },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\""
++          }
++        ]
++      },
+       {
+         "matcher": "Edit",
+         "hooks": [
+@@ -235,6 +340,15 @@
+           }
+         ]
+       },
++      {
++        "matcher": "Edit|Write",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/plugin-dev-planner/hooks/hook-validate-plugin-plan.py"
++          }
++        ]
++      },
+       {
+         "matcher": "Bash",
+         "hooks": [
+@@ -252,6 +366,15 @@
+             "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\""
+           }
+         ]
++      },
++      {
++        "matcher": "Write|Edit|MultiEdit",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/slide-report-generator/hooks/hook-postgen-eval.py"
++          }
++        ]
+       }
+     ],
+     "PreCompact": [
+@@ -274,6 +397,15 @@
+         ],
+         "matcher": "Write|Edit"
+       },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/company-master/hooks/hook-guard-secret.py"
++          }
++        ]
++      },
+       {
+         "matcher": "Bash",
+         "hooks": [
+@@ -283,6 +415,24 @@
+           }
+         ]
+       },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\""
++          }
++        ]
++      },
++      {
++        "matcher": "Bash|WebFetch",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py"
++          }
++        ]
++      },
+       {
+         "matcher": "Bash",
+         "hooks": [
+@@ -292,6 +442,51 @@
+           }
+         ]
+       },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
++          }
++        ]
++      },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-readonly.py"
++          }
++        ]
++      },
++      {
++        "matcher": "Write|Edit|MultiEdit",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/mf-kessai-invoice-check/hooks/guard-mfk-no-reinvent.py"
++          }
++        ]
++      },
++      {
++        "matcher": "Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/notion-gmail-send/hooks/guard-gmail-send.py"
++          }
++        ]
++      },
++      {
++        "matcher": "Bash|Task",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py"
++          }
++        ]
++      },
+       {
+         "matcher": "Bash",
+         "hooks": [
+@@ -327,6 +522,33 @@
+             "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/hook-guard-skillgen.py\""
+           }
+         ]
++      },
++      {
++        "matcher": "Bash|Task",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/system-dev-planner/hooks/guard-implementation-readiness.py"
++          }
++        ]
++      },
++      {
++        "matcher": "Write|Edit|Bash",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py\""
++          }
++        ]
++      },
++      {
++        "matcher": "Write|Edit|MultiEdit",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py"
++          }
++        ]
+       }
+     ],
+     "SessionStart": [
+@@ -339,6 +561,15 @@
+         ],
+         "matcher": ""
+       },
++      {
++        "matcher": "startup|resume",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\""
++          }
++        ]
++      },
+       {
+         "matcher": "startup|resume|clear",
+         "hooks": [
+@@ -367,6 +598,14 @@
+             "type": "command"
+           }
+         ]
++      },
++      {
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/dev-graph/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\""
++          }
++        ]
+       }
+     ],
+     "TaskCreated": [
+@@ -441,8 +680,26 @@
+     ]
+   },
+   "enabledPlugins": {
++    "company-master@skills": true,
+     "contract-generator@skills": true,
++    "dev-graph@skills": true,
++    "extract-system-blueprint@skills": true,
+     "harness-creator@skills": true,
+-    "skill-intake@skills": true
++    "mf-kessai-invoice-check@skills": true,
++    "notion-gmail-send@skills": true,
++    "plugin-dev-planner@skills": true,
++    "prompt-creator@skills": true,
++    "skill-governance-adapters@skills": true,
++    "skill-governance-automation@skills": true,
++    "skill-governance-config@skills": true,
++    "skill-governance-hooks@skills": true,
++    "skill-governance-lint@skills": true,
++    "skill-governance-migration@skills": true,
++    "skill-governance-secrets@skills": true,
++    "skill-intake@skills": true,
++    "slide-report-generator@skills": true,
++    "system-dev-planner@skills": true,
++    "system-spec-harness@skills": true,
++    "ubm-goal-setting@skills": true
+   }
+ }
+diff --git a/eval-log/review-queue.jsonl b/eval-log/review-queue.jsonl
+index 8071a07..4359f52 100644
+--- a/eval-log/review-queue.jsonl
++++ b/eval-log/review-queue.jsonl
+@@ -6,3 +6,5 @@
+ {"requested_at": "2026-07-13T22:50:27.133530+00:00", "reason": "評価対象 artifact の変更を検出 (1 件): plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "changed_skills": ["plugins/harness-creator/skills/run-plugin-package-check/SKILL.md"], "trigger": "Stop"}
+ {"requested_at": "2026-07-13T22:56:01.928484+00:00", "reason": "評価対象 artifact の変更を検出 (2 件): plugins/harness-creator/skills/run-plugin-package-check/SKILL.md, plugins/system-dev-planner/skills/run-system-dev-plan/SKILL.md", "changed_skills": ["plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "plugins/system-dev-planner/skills/run-system-dev-plan/SKILL.md"], "trigger": "Stop"}
+ {"requested_at": "2026-07-14T02:29:13.768761+00:00", "reason": "git 変更ファイルが 22 件 (閾値 20)", "changed_skills": [], "trigger": "Stop"}
++{"requested_at": "2026-07-15T09:16:13.444718+00:00", "reason": "評価対象 artifact の変更を検出 (1 件): doc/参考Skill/skill-creator/workflow-manifest.json", "changed_skills": ["doc/参考Skill/skill-creator/workflow-manifest.json"], "trigger": "Stop"}
++{"requested_at": "2026-07-15T09:26:05.833137+00:00", "reason": "git 変更ファイルが 122 件 (閾値 20)", "changed_skills": [], "trigger": "Stop"}
+diff --git a/scripts/build-claude-settings.py b/scripts/build-claude-settings.py
+index 545fa3f..972d1a5 100755
+--- a/scripts/build-claude-settings.py
++++ b/scripts/build-claude-settings.py
+@@ -24,6 +24,10 @@ HOOK_EVENTS = (
+     "Notification",
+     "PreCompact",
+     "PostCompact",
++    # Agent Team の teammate artifact 完了時に発火する。dev-graph が
++    # hooks/reconcile-task-lifecycle.py を配線しており、allowlist に無いと
++    # 当該 plugin を enable した時点で exit 3 になる。
++    "TaskCompleted",
+ )
+ INVARIANTS = [f"INV-{index}" for index in range(1, 13)]
+ USAGE = """build-claude-settings.py [-h]
+@@ -302,11 +306,29 @@ def discover_plugins(plugins_dir, exclude_plugins=(), *, project_root=None):
+             "namespace": namespace_items(plugin_dir, name),
+         }
+         if "hooks" in manifest:
+-            plugin["hooks"].extend(
+-                normalize_hook_entries(
+-                    manifest["hooks"], name, source=f"{manifest_path}:inline"
++            manifest_hooks = manifest["hooks"]
++            if isinstance(manifest_hooks, str):
++                # Claude Code 標準形式: plugin.json の hooks は hook 定義ファイルへの
++                # 相対パス参照でもよい (dev-graph 等が "./hooks/hooks.json" を使う)。
++                # 実体は下の hooks_dir glob が読むため inline 展開しない (両方読むと
++                # 同一 hook が二重登録される)。ただし glob の走査外を指す参照は
++                # どちらの経路でも読まれず hook が無言で消えるため fail-closed で拒否する。
++                reference = (plugin_dir / manifest_hooks).resolve()
++                if not reference.is_file():
++                    raise LayoutError(
++                        f"hooks path reference not found: {manifest_path} -> {manifest_hooks}"
++                    )
++                if (plugin_dir / "hooks").resolve() not in reference.parents:
++                    raise LayoutError(
++                        "hooks path reference must live under the plugin hooks/ dir "
++                        f"(else it is never loaded): {manifest_path} -> {manifest_hooks}"
++                    )
++            else:
++                plugin["hooks"].extend(
++                    normalize_hook_entries(
++                        manifest_hooks, name, source=f"{manifest_path}:inline"
++                    )
+                 )
+-            )
+         if "permissions" in manifest:
+             plugin["permissions"].extend(normalize_permissions(manifest["permissions"], name))
+ 

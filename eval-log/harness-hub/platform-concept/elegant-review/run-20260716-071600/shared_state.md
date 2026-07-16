@@ -1,0 +1,1 @@
+対象: Harness Hub構想提案 (doc/harness-hub-platform-concept.md)。Publisher中心のControl Planeと2公開出口 (Skill/Web App) を定義。§17-18の自己検証PASSは事実として観察のみで結論未採用。Phase 2は状態機械とMVP除外項目の整合、西山モデル転用と§19の9仮説の根拠、外部依存 (Cloudflare MCP/native source) の成立性を検証する。
