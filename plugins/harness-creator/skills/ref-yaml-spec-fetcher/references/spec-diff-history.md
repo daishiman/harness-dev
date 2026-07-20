@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-07-20T02:43:21Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -100,7 +100,11 @@
+ and
+ /verify
+ how to build and launch your project
+-All three skills require Claude Code v2.1.145 or later.
++All three skills require Claude Code v2.1.145 or later. Check your version with
++claude --version
++or the
++/status
++command.
+ /run
+ and
+ /verify
+@@ -331,6 +335,35 @@
+ Load from additional directories
+ .
+ ​
++Skills in Cowork and cloud sessions
++Cowork
++sessions and
++cloud sessions
++, including
++routines
++, don’t read
++~/.claude/skills/
++on your machine. Both interactive and scheduled Cowork sessions load the skills enabled for your claude.ai account, synced at session start; manage them from
++Customize
++in the Desktop app sidebar or from the skills settings on claude.ai. Cloud sessions additionally load project skills committed to the cloned repository’s
++.claude/skills/
++.
++If a skill exists only in
++~/.claude/skills/
++on your machine, Claude Code reports that the skill was not found when a
++routine
++invokes it, because each routine run starts as a fresh remote session. To make a personal skill available in these sessions:
++For Cowork and cloud sessions, enable the skill for your claude.ai account.
++For cloud sessions, you can instead commit the skill to the repository’s
++.claude/skills/
++, or ship it in a plugin declared in the repository’s
++.claude/settings.json
++. Repo-declared plugins
++install at session start
++; plugins enabled only in your user settings don’t transfer.
++Desktop scheduled tasks
++are different: they run locally on your machine and load skills from the same locations as any other local session.
++​
+ Configure skills
+ Skills are configured through YAML frontmatter at the top of
+ SKILL.md
+@@ -361,7 +394,11 @@
+ /skill-name
+ rather than letting Claude decide when to run them. Add
+ disable-model-invocation: true
+-to prevent Claude from triggering it automatically.
++to prevent Claude from triggering it automatically. The example below adds
++context: fork
++, which runs the skill in its own subagent context; see
++Run skills in a subagent
++.
+ ---
+ name
+ :
+@@ -474,7 +511,9 @@
+ .
+ allowed-tools
+ No
+-Tools Claude can use without asking permission when this skill is active. Accepts a space- or comma-separated string, or a YAML list.
++Tools Claude can use without asking permission during the turn that invokes this skill. The grant clears when you send your next message. Accepts a space- or comma-separated string, or a YAML list. See
++Pre-approve tools for a skill
++.
+ disallowed-tools
+ No
+ Tools removed from Claude’s available pool while this skill is active. Use for autonomous skills that should never call certain tools, such as
+@@ -507,7 +546,9 @@
+ No
+ Set to
+ fork
+-to run in a forked subagent context.
+... (3206 more lines)
+```
+
 ## 2026-07-13T02:32:50Z
 
 実仕様ページに変更を検知。
