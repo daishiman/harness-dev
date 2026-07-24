@@ -1,7 +1,7 @@
 version: 1
 # run-slide-report-generate 私有 references の帰属 + progressive disclosure マップ。
 # 各 reference は所有 skill の起動系 (agents/*.md thin-adapter) と SKILL.md の双方から
-# $CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/<file> で参照される SSOT。
+# ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/<file> で参照される SSOT。
 # lint-reference-attribution.py が本 map の網羅性 (orphan/dangling 0) を検査する (CI governance glue)。
 read_when:
   - file: references/structure-design-rules.md
@@ -18,7 +18,7 @@ read_when:
     when: データ可視化 (グラフ/chart) の設計規範・データ変換パターンを確認するとき
   - file: references/html-generation-rules.md
     owner_agent: html-generator
-    when: slide HTML の LLM 経路生成規範 (CONST_001-038・HTML/CSS/SVG/GSAP/印刷の全生成規約) を確認するとき
+    when: slide HTML の LLM 経路生成規範 (CONST_001-039・HTML/CSS/SVG/GSAP/印刷の全生成規約) を確認するとき
   - file: references/layout-optimization-rules.md
     owner_agent: layout-optimizer
     when: レイアウト最適化 (文字数カウント・カード/フォントサイズ決定・印刷 pt 換算) の計算式を確認するとき
@@ -33,4 +33,4 @@ read_when:
     when: Codex Image2 全面画像/差替パイプライン規範を確認するとき
   - file: references/report-quality-checklist.md
     owner_agent: report-quality-reviewer
-    when: report の品質補正 (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守・印刷) の検証観点 RQ1-20 を確認するとき。validate-report-visual.py の決定論ゲートと対で機械/意味を分離
+    when: report の品質補正 (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格・読者中心入口・印刷) の検証観点 RQ1〜RQ34 を確認するとき。validate-report-visual.py の決定論ゲートと対で機械/意味を分離

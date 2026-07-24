@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # Cross-Deck Reviewer Agent（7層構造プロンプト）
 
 > 読み込み条件: Phase 5（シリーズ横断品質検証）を実行するとき
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -59,7 +59,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・ビジネスルール CONST_001-005）は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・ビジネスルール CONST_001-005）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
 
 ---
 
@@ -155,19 +155,19 @@ last-audited: 2026-07-05
 
 ## 5.6 評価軸: 検証項目（C1〜C15）
 
-> **検証項目 C1〜C15 の観点定義・基準（合否判定可能な客観条件）・検出方法の全詳細は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§評価軸: 検証項目）を参照**（本アダプタは役割・起動条件・I/O契約に専念。C1〜C15 の逐語正本は当該 reference。機械的チェックは C1-C2・C11-C13・C15、Agent A/B/C は C3-C5 / C6-C10 / C11-C15 を分担検証し、完了チェックリスト 5.3 と判定マトリクス 5.7 がこれを参照する）。
+> **検証項目 C1〜C15 の観点定義・基準（合否判定可能な客観条件）・検出方法の全詳細は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§評価軸: 検証項目）を参照**（本アダプタは役割・起動条件・I/O契約に専念。C1〜C15 の逐語正本は当該 reference。機械的チェックは C1-C2・C11-C13・C15、Agent A/B/C は C3-C5 / C6-C10 / C11-C15 を分担検証し、完了チェックリスト 5.3 と判定マトリクス 5.7 がこれを参照する）。
 
 ## 5.7 評価軸: 判定マトリクス（4条件判定基準）
 
-> **4条件（矛盾なし / 漏れなし / 整合性あり / 依存関係整合）の PASS/WARN/FAIL 判定基準の全詳細は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§評価軸: 判定マトリクス）を参照**（判定マトリクスの逐語正本は当該 reference。各条件を根拠C番号 C1-C15 へ紐付けて集約する）。
+> **4条件（矛盾なし / 漏れなし / 整合性あり / 依存関係整合）の PASS/WARN/FAIL 判定基準の全詳細は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§評価軸: 判定マトリクス）を参照**（判定マトリクスの逐語正本は当該 reference。各条件を根拠C番号 C1-C15 へ紐付けて集約する）。
 
 ## 5.8 Agent A/B/C 3レンズ分析テンプレート（単一 context 内多角分析）
 
-> **Agent A（論理・構造）/ B（メタ・発想）/ C（システム・戦略）の3レンズ分析プロンプトテンプレート（CONST_002 で3レンズ分割を固定・30種思考法の割当・単一 fork context 内で順に適用し再 fork しない）の全詳細は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§Agent A/B/C 3レンズ分析テンプレート）を参照**（テンプレートの逐語正本は当該 reference）。
+> **Agent A（論理・構造）/ B（メタ・発想）/ C（システム・戦略）の3レンズ分析プロンプトテンプレート（CONST_002 で3レンズ分割を固定・30種思考法の割当・単一 fork context 内で順に適用し再 fork しない）の全詳細は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§Agent A/B/C 3レンズ分析テンプレート）を参照**（テンプレートの逐語正本は当該 reference）。
 
 ## 5.9 修正の優先度分類
 
-> **修正の優先度分類（P0 即時修正 / P1 要判断 / P2 将来改善）の分類基準と対応の全詳細は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§修正の優先度分類）を参照**（優先度分類の逐語正本は当該 reference）。
+> **修正の優先度分類（P0 即時修正 / P1 要判断 / P2 将来改善）の分類基準と対応の全詳細は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/references/cross-deck-consistency-rules.md`（§修正の優先度分類）を参照**（優先度分類の逐語正本は当該 reference）。
 
 ## 5.10 インターフェース
 
@@ -198,7 +198,7 @@ last-audited: 2026-07-05
 ## 5.12 ツール利用
 | ツール | 使用目的 | 使用場面 |
 |--------|---------|---------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
 | Read / Grep（Layer 3 定義） | structure.md・ソースmd・styles.css・scripts.js の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析を実行する主手段（再 fork しない） | 3レンズ分析（C3-C15の目視検証） |
 
 ---

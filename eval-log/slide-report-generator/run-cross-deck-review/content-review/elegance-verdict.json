@@ -2,19 +2,19 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-cross-deck-review",
-    "skill_md_sha256": "8ff77c97609ac3607779a54bf16291b59e592f59953d93ac8b6c738e441377f7"
+    "skill_md_sha256": "3f24f600d61ac7e06796de44561b090fd37e1d67996d12fada34812cc7184fbd"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "codex-independent-cross-deck-elegance",
-  "reviewed_at": "2026-07-12T00:41:31Z",
+  "reviewer": "review-group-c-independent-elegance",
+  "reviewed_at": "2026-07-22T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,16 +24,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: cross-deck-consistency.js now treats structure.md, index.html, styles.css, and scripts.js as one fail-closed required-input set. The Node acceptance removes index.html/styles.css/scripts.js from a deck and confirms three inputs errors with each filename, while SKILL, R1, and R2 name the same four-file contract and prohibit excluding the incomplete deck.",
-      "OUT1: vendor/tests/test-cross-deck-consistency.js executes the real checker against two-deck fixtures, detects injected shared-spec drift, rem residue, external URL contamination, and required-input omissions, rejects an unknown category with exit 2, and requires the clean control to return PASS with totalIssues=0.",
-      "The responsibility split is now exact across R1, R2, and cross-deck-consistency-rules: the machine layer supplies C1-C2/C11-C13/C15, Agent A supplies C3-C5, Agent B supplies C6-C10, and Agent C supplies C11-C15. C2 describes the implemented numeric-rem detector instead of claiming px detection.",
-      "The skill remains a concise read-only router. Detailed execution lives in the R1/R2 prompts and rule reference; the cross-deck-reviewer adapter resolves the R2 prompt; the manifest resolves checker, agent, reference, and report schema resources; all corrections remain inside the owning skill and vendor checker/test boundary."
+      "矛盾なし: SKILL.md は全編で『単一 fork context 内 3 レンズ・再 fork(SubAgent 起動)しない』を一貫主張し、workflow-manifest / R1-orchestrate / reference / agent adapter と齟齬なし。read-only(effect=conversation-output・allowed-tools に Write/Edit なし)も一貫。",
+      "漏れなし: IN1(機械チェック入力欠落 0 件・script 検証)と OUT1(注入不整合の全件検出+クリーン series の PASS・test 検証)が purpose-acceptance として具体化され、C1-C15 の機械層/意味層分担が reference 対応表で橋渡し。修正適用は run-slide-report-modify へ委譲し責務分離が明確。",
+      "依存関係整合: SRG_ROOT 起点の全パス(vendor/scripts/cross-deck-consistency.js・check-consistency.js、skills/run-cross-deck-review/references/cross-deck-consistency-rules.md・prompts/R2-agent-cross-deck-reviewer.md、references/spec-registry.md)および skill-relative の prompts/R1-orchestrate.md・schema・agents/cross-deck-reviewer.md・委譲先 run-slide-report-modify が全て実在。dependency_break なし。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "整合性(inconsistency x1・非ブロッキング・pre-existing): prompts/R2-agent-cross-deck-reviewer.md 5.5 知識ベース表(L151-153)が spec-registry.md / post-generation-evaluation.md / svg-design-spec.md / theme-style.md を相対 `../references/*.md` で参照するが、これは prompt 位置から skills/run-cross-deck-review/references/ を指し当該ファイルは不在(実体は plugin 直下 references/)。同一資源 spec-registry.md を reference 本体(cross-deck-consistency-rules.md L13)は正規形 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md で参照しており、パス規約のドリフト。今回の SRG_ROOT リネームが生んだものではなく既存。R2 prompt 側を ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/ 形へ揃えるのが望ましい。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual-human-approved-remediation",
+    "hook_trigger": "stop-hook",
     "next_action": "none"
   },
-  "notes": "Independent remediation review after the prior bounded INCOMPLETE cycle. Evidence: Node cross-deck acceptance PASS; slide-report-generator focused pytest 131 PASS; validate-frontmatter and prompt-contract drift checks exit 0; all four prior approval findings were checked directly against current prompt/reference/implementation/test text. No force-pass or copied prior verdict."
+  "notes": "4条件判定: contradiction=PASS / omission=PASS / consistency=WARN(下記) / dependency=PASS / smell=なし。パス変数リネーム検証: $CLAUDE_PLUGIN_ROOT -> ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT} は SKILL.md・R1/R2 prompt・reference・agent adapter で全て正規の POSIX default-value 展開 ${VAR:-default}(閉じ } 欠落/二重展開/ネスト崩れなし)。SRG_ROOT 未設定時は $CLAUDE_PLUGIN_ROOT へフォールバックし ObsidianMemo への symlink 移植時に SRG_ROOT を差し替えられる可搬性を確保。リネームは設計・責務・4条件次元を変えず参照切れも新規に生んでいない。唯一の指摘(inconsistency x1)は R2 prompt の pre-existing な `../references/*.md` 相対参照のパス規約ドリフトで、資源自体は plugin 直下に実在し正規形も併存するため hard break ではなく非ブロッキング。SKILL.md 本体とその直接依存グラフは健全なため verdict=PASS。Goodhart 緑化回避のため本 inconsistency を明示計上した。補足(advisory・別 target のため未計上): agent cross-deck-reviewer.md の description 文言『3並列分析』は本文・設計の『単一 fork context 内・再 fork しない』の short-hand であり SKILL.md L124 が明示的に再フレームしている。"
 }

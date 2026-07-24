@@ -6,6 +6,7 @@
       "cd plugins/slide-report-generator && python3 -m pytest tests/ -q",
       "python3 plugins/slide-report-generator/scripts/validate-output-mode.py --mode slide",
       "python3 plugins/slide-report-generator/scripts/validate-output-mode.py --mode report --report-type internal-analysis",
+      "python3 plugins/slide-report-generator/scripts/setup-playwright.py --check",
       "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
       "python3 plugins/slide-report-generator/scripts/lint-reference-attribution.py plugins/slide-report-generator",
       "python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/slide-report-generator",
@@ -13,12 +14,13 @@
       "node plugins/slide-report-generator/vendor/tests/test-render-report.js",
       "node plugins/slide-report-generator/vendor/tests/test-mermaid-render.js",
       "node plugins/slide-report-generator/vendor/tests/test-cross-deck-consistency.js",
+      "node plugins/slide-report-generator/vendor/tests/test-playwright-runtime.js",
       "node plugins/slide-report-generator/vendor/scripts/verify-report-runtime.js --self-test"
     ],
     "llm_eval": [
       "deck-evaluator (kind=agent, context:fork) が slide モード成果物(index.html)を 30種思考法・slide rubric(視覚崩れ/1メッセージ/chip/16:9)で区分評価する",
       "deck-evaluator (kind=agent, context:fork) が report モード成果物(report.html)を 30種思考法・report rubric(可読性/図解適合/情報密度/セクション論理)で区分評価する",
-      "run-slide-report-generate の feedback_contract IN1(inner: output_mode/reportType 値域と一貫伝播) / OUT1(outer: slide=1メッセージ・report=1項目1ビジュアルで視覚崩れ0) を criteria-test として実行する",
+      "run-slide-report-generate の feedback_contract IN1(inner: output_mode/reportType 値域と読者価値ブリーフの一貫伝播) / OUT1(outer: slide=1メッセージ・report=1項目1ビジュアルで視覚崩れ0、かつ想定読者内の共有課題→専門解決→自分ごと化の橋を根拠どおりに満たす) を criteria-test として実行する",
       "run-elegant-review C1-C4 all PASS を各 buildable component の昇格前ゲートとする"
     ],
     "threshold": 80,
@@ -42,10 +44,10 @@
     "agents": "frontmatter(name/description/kind:agent/tools/owner_skill/prompt_ref/prompt_layer) を機械固定。17 thin adapters が plugin.json entry_points.agents と 1 対 1",
     "commands": "frontmatter(name/description/argument-hint/allowed-tools/disable-model-invocation) 契約",
     "hooks": "plugin.json PostToolUse 配線 + hook-postgen-eval.py の fail-soft 挙動",
-    "scripts": "tests/test_validate_output_mode.py / test_validate_report_visual.py + validate-output-mode.py / validate-report-visual.py の exit code 規約",
+    "scripts": "tests/test_validate_output_mode.py / test_validate_report_visual.py / test_setup_playwright.py + validate-output-mode.py / validate-report-visual.py / setup-playwright.py の exit code・plugin-local browser規約",
     "schemas": "plugin-root schemas/ が runtime SSOT。vendor/schemas-fixtures の重複 schema は持たず、lint-vendor-parity.py が root schemas を upstream digest と照合",
     "references": "42 upstream + report 新規 5 (report-types/report-writing-rules/report-visual-strategy/mermaid-integration/report-narrative-logic)",
-    "vendor": "lint-vendor-parity.py が189 pinned fileをsha256照合し、package.json/package-lock.jsonのMermaid依存・実test配線2件をsemantic検証（合計191）。additive renderer群はvendor/testsで品質担保",
+    "vendor": "lint-vendor-parity.py が191 pinned fileをsha256照合し、package.json/package-lock.jsonとplugin-local Playwright runtimeをsemantic検証。additive renderer/runtime群はvendor/testsで品質担保",
     "plugin-manifest": "scripts/validate-plugin-completeness.py (name↔folder 一致 / distributable:false 整合 / placeholder 禁止 / declared hooks 実在)",
     "harness-evals": "declarative (本 EVALS.json 自体が harness。mechanical[] の全 invocation が一次)"
   }

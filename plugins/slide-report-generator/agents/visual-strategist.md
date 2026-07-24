@@ -20,12 +20,12 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-各セクションで SVG図解/Mermaid/Codex生成画像 の三択を独立 context で最適化し配置(grid/zones/readingOrder/focalPoint)を決めたいときに使う。固定比率なし・両モードに波及可。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` に置く。
+各セクションで SVG図解/Mermaid/Codex生成画像 の三択を独立 context で最適化し配置(grid/zones/readingOrder/focalPoint)を決めたいときに使う。固定比率なし・両モードに波及可。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` とその prompt が明示する references/scripts/schemas を読む。
 
 ## Outputs
 
@@ -40,13 +40,13 @@ last-audited: 2026-07-05
 
 - Owner skill: `run-slide-report-generate`。Phase: `R2-structure-gate`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` as the executable 7-layer prompt for responsibility `R2-agent-visual-strategist`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` as the executable 7-layer prompt for responsibility `R2-agent-visual-strategist`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

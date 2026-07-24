@@ -217,7 +217,7 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 
 #### スライド内統一感検証（必須）
 
-詳細ルール: `$CLAUDE_PLUGIN_ROOT/references/layout-visual.md` Section 6。各スライドは視覚的統一感を持つこと。
+詳細ルール: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/layout-visual.md` Section 6。各スライドは視覚的統一感を持つこと。
 
 統一感クイックチェック
 

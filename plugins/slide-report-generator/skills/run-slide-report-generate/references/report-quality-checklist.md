@@ -1,17 +1,17 @@
 # Report 品質チェックリスト（report-quality-reviewer 検証基準 SSOT）
 
-> **正本**: このファイルは report-quality-reviewer から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/report-quality-reviewer.md）の双方がこれを参照する。規則の上位素材は `$CLAUDE_PLUGIN_ROOT/references/report-types.md` / `report-writing-rules.md` / `report-visual-strategy.md`、構成契約は `schemas/report-structure.schema.json` を辿る。
+> **正本**: このファイルは report-quality-reviewer から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/report-quality-reviewer.md）の双方がこれを参照する。規則の上位素材は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md` / `report-writing-rules.md` / `report-visual-strategy.md`、構成契約は `schemas/report-structure.schema.json` を辿る。
 
-**責務**: report モードの品質検証ドメイン定義（用語集・評価基準・制約カタログ RQCONST_001-007）と検証基準（read-through 多面検証 MUST/SHOULD/MAY チェックリスト・必須検証基準 RQ1〜RQ20・補正指針・よくある問題と対処法）の逐語正本。report-quality-reviewer（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。本チェックリストは slide 側 `ui-quality-checklist.md`（S1〜S26 の視覚品質）＋ `layout-optimization-rules.md`（レイアウト補正）に**対応する report 版**であり、slide が「投影 HTML の視覚崩れ」を扱うのに対し report は「読み物としての成立性」を扱う。機械検出可能な項目は決定論ゲート `$CLAUDE_PLUGIN_ROOT/scripts/validate-report-visual.py` に先行させ、意味検証と分離する（RQCONST_001）。
+**責務**: report モードの品質検証ドメイン定義（用語集・評価基準・制約カタログ RQCONST_001-007）と検証基準（read-through 多面検証 MUST/SHOULD/MAY チェックリスト・必須検証基準 RQ1〜RQ34・補正指針・よくある問題と対処法）の逐語正本。report-quality-reviewer（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。本チェックリストは slide 側 `ui-quality-checklist.md`（S1〜S26 の視覚品質）＋ `layout-optimization-rules.md`（レイアウト補正）に**対応する report 版**であり、slide が「投影 HTML の視覚崩れ」を扱うのに対し report は「読み物としての成立性」を扱う。機械検出可能な項目は決定論ゲート `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py` に先行させ、意味検証と分離する（RQCONST_001）。
 
 ## 用語集
 | 用語 | 定義 | 関連概念 |
 |------|------|----------|
-| 必須検証基準 RQ1〜RQ20 | report.html を read-through 成立性の観点で確認する 20 項目の客観チェック。6 群（読み物文体・段落密度 / 1項目1ビジュアル・図解適合 / reportType 骨格・section 構造 / 見出し階層 / 印刷・letterbox / 可読性・意匠維持） | RQCONST_001-007 |
+| 必須検証基準 RQ1〜RQ34 | report.html を read-through 成立性・構造的魅力・読者との接続の観点で確認する 34 項目の客観チェック。9 群（読み物文体・段落密度 / 1項目1ビジュアル・図解適合 / reportType 骨格・section 構造 / 見出し階層 / 印刷・letterbox / 可読性・意匠維持 / 節内構造 / 節間構造 / 読者中心の入口設計） | RQCONST_001-007 |
 | 決定論ゲート | `validate-report-visual.py <report.html> [--structure …]`。同スクリプトが実検出する崩れ（1項目1ビジュアル超過 / 段落過密 / プレースホルダ・空セクション / letterbox 兆候 / 構造同期ずれ / 1.1.0-1.2.0 構造化＝羅列・強調過多・through-line・reportType横断role・render忠実度・色覚非依存）を LLM 検証に先行して確定するスクリプト（見出し階層スキップ/最小フォント/印刷px は対象外＝grep 手動 or C24 意味判定） | RQCONST_001 |
-| read-through 粒度 | 投影ではなく通読を前提とした本文密度。文章多め・複数段落を許容 | `$CLAUDE_PLUGIN_ROOT/references/report-writing-rules.md` |
-| reportType 骨格 | 目的別に定義された節（role）の必須並び。4 型（internal-analysis/client-proposal/tech-doc/learning） | `$CLAUDE_PLUGIN_ROOT/references/report-types.md` |
-| 1項目1ビジュアル | 1 section の非 none visual は最大 1。図解過多を避け読解を助ける 1 点に絞る | `$CLAUDE_PLUGIN_ROOT/references/report-visual-strategy.md` |
+| read-through 粒度 | 投影ではなく通読を前提とした本文密度。文章多め・複数段落を許容 | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-writing-rules.md` |
+| reportType 骨格 | 目的別に定義された節（role）の必須並び。4 型（internal-analysis/client-proposal/tech-doc/learning） | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md` |
+| 1項目1ビジュアル | 1 section の非 none visual は最大 1。図解過多を避け読解を助ける 1 点に絞る | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-visual-strategy.md` |
 | 補正指針 | 検出した崩れに対し「問題・箇所・補正指針」を対応づけた是正案。本エージェントは read_only で指針を返し、実補正は report-composer / slide-report-modifier が行う | I/O 契約 |
 | 構造同期 | report.html の内容が report-structure.json の忠実な射影であること（過不足ゼロ） | RQCONST_007 |
 | 退化耐性 | コード・数値・料金・精密表など逐語が変わる要素を画像に焼かず本文（表/コード）で持つこと | slide CONST_007 相当 |
@@ -35,7 +35,7 @@
   - 背景: The Checklist Manifesto の知見。機械層で捕れる項目を先に潰すことで、LLM は読み物成立・段落密度品質・種別適合・骨格論理順序という意味判断に集中できる。
 - **RQCONST_002 (read-through 成立)**: 各 section は見出しだけで終わらせず、要点を言い切る段落を持つ。空節・箇条書きだけの節は退化。chip 強制・長文禁止を緩和した read-through 粒度を守る。
   - 目的: 「見出しと chip の羅列」ではなく「読める文書」にする。
-  - 背景: report は slide の長文禁止（BP11-13）・chip 強制を緩和する。文章多めが正（`$CLAUDE_PLUGIN_ROOT/references/report-writing-rules.md`）。
+  - 背景: report は slide の長文禁止（BP11-13）・chip 強制を緩和する。文章多めが正（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-writing-rules.md`）。
 - **RQCONST_003 (段落密度)**: length（brief/standard/deep）に応じた段落密度を守り、1段落1論点・トピックセンテンス先行にする。過密（1 段落に論点が混在）・過疎（節が痩せる）を補正する。
   - 目的: 通読の負荷を length 相応に保ち、論点を追える文書にする。
   - 背景: report-writing-rules §2.1 段落・§2.3 length 方針。
@@ -94,7 +94,7 @@
 - [ ] 目次・アンカーで長文の可読性が補助されている
 - [ ] 印刷用の改ページ位置が節境界に整っている
 
-## 検証基準（必須検証基準 RQ1〜RQ20）
+## 検証基準（必須検証基準 RQ1〜RQ34）
 
 各基準は第三者が合否判定できる客観条件で記述し、agent の完了チェックリスト（5.3）はこれらを全件消化することで充足する。決定論ゲートで機械検出可能な項目（検出方法欄に「機械」を付記）は LLM 意味検証に先行して確定する（RQCONST_001）。
 
@@ -176,6 +176,19 @@
 
 **RQ27〜RQ30（1.2.0 積極評価）に違反する場合は「節間の流れが弱い / 強調が色依存 / 横断要素が意味的に欠落 / 構造が内容に不適合」の補正指針を上流（through-line・横断要素・適合性は report-structure-designer、色覚非依存の第2チャネルは report-composer / render）へ返す。多様性の水増しは加点せず、羅列だけを減点する（適合性 > 多様性）。**
 
+### I 群: 積極評価 — 読者中心の入口設計（RQ31〜RQ34・1.3.0）
+
+> G 群が**節内**、H 群が**節間**の構造化を積極評価するのに対し、I 群（1.3.0）は**読者との接続スケール**を評価する。入口（タイトル・throughLine・冒頭要約）が、想定読者の範囲内で共有される課題と得たい変化から開き（入口ホリゾンタル）、本文が専門の深さを保つ（中身バーティカル）かを見る。対象読者そのものを広げる評価ではなく、正式名称・検索性・適用範囲との両立も含む。本軸は**機械ゲート対象外**（C25 変更なし）で全項目を意味判定が担う（機械が担保しない項目を担保済みと誤認しない＝RQCONST_001 と同じ規律）。正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。
+
+| # | 検証項目 | 基準（検証可能条件） | 検出方法 |
+|---|---------|------|----------|
+| RQ31 | 入口ホリゾンタル | タイトル・throughLine・冒頭要約が、想定読者の範囲内で共有される課題と「読者が得る変化」を先に渡す。専門手段だけを主語にせず、不要な属性スタックを置かない。正式名称・検索語・適用範囲が必要な文書は主タイトルに残し subtitle/keyMessage/summary で読者価値を補う | audience / reportType / タイトル / throughLine / 導入節を照合（意味） |
+| RQ32 | 自分ごと化 | 第1段落が読者の状況・判断から開き、書き手の資格・専門自己紹介で始まらない。各主要 part / 節に「当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかがあり、読者が自分へ移せる | 導入段落の視点と主要 part / 節の transfer bridge を確認（意味） |
+| RQ33 | 変化の可視化と誠実さ | Before→After が冒頭または summary 節で提示され、数字・実績は入力素材または出典で裏づけられている。根拠がない場合は定性的変化として述べ、架空の数字・過大な約束にしていない | 冒頭・summary・出典・入力素材を照合（意味） |
+| RQ34 | 広い入口×深い中身 | 入口のホリゾンタル化の代償に本論の深さ（確認済みの数字・手順・失敗・再現条件・適用限界）が薄まっていない。一般論化も、本文が支えられない大きな約束もない | analysis / solution / procedure / caution 節と出典の具体性を確認（意味） |
+
+**RQ31〜RQ33 に違反する場合は「入口が専門側から開いている / 読者の変化または自分へ移す橋が見えない / 約束の根拠がない」の補正指針を上流（report-structure-designer＝title・throughLine・summary 節の設計）へ返す。RQ34（深さの薄化）は、承認済み構造・入力素材にある詳細の射影漏れなら report-composer へ、構造または素材自体が不足するなら report-structure-designer / hearing-facilitator へ返す。正式名称・検索性・適用範囲を壊すタイトル変更や、素材にない数字の追加は是正案にしない。入口と中身はトレードオンで両立させる。**
+
 ## 補正指針（検出問題→補正指針）
 
 検出問題ごとの補正指針。本エージェントは read_only で指針を返し、実補正は下流（report-composer / slide-report-modifier）が適用する。font-size 縮小は最小値（1.4rem）以上の範囲でのみ行う。
@@ -198,6 +211,10 @@
 | コントラスト不足 | テーマの色変数を使い WCAG AA を満たす。純黒/純白を避ける |
 | 意匠独自発明 | 共有 SSOT（vendor primitives / theme）の意匠トークンへ差し替え |
 | 構造同期崩れ | report-structure.json を正として過不足を是正（差し戻し: report-composer） |
+| 入口が専門手段だけで始まる | audience/reportType を維持し、共有課題と読後の変化を title/throughLine/summary の先頭へ。正式名称が必要なら subtitle/keyMessage で補う（差し戻し: report-structure-designer） |
+| 自分へ移す橋がない | 主要 part/節に「当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかを追加（差し戻し: report-structure-designer） |
+| 根拠のない数字・実績 | 入力素材/出典で確認できない数値を削除し、確認済みの定性的変化または未確認へ戻す（差し戻し: hearing-facilitator / report-structure-designer） |
+| 本論が一般論化 | 素材にある数字・手順・失敗・条件・限界の射影漏れを補う。素材自体が不足する場合は捏造せず再ヒアリング |
 
 ## よくある問題と対処法
 

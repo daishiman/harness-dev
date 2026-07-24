@@ -1,19 +1,19 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "37f991560886f6cdff32c0603bc7e6f33e1037837c56ec2ffbfdf7b3bae86b64"},
+  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "48719d73b39ea10103ef8d78313d34fb602f3dad9754e2fff1932c3e40ac9cef"},
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "review-group-c-independent-elegance",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-07-24T01:00:00Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "IN1: validate-output-mode.py fail-closes mode/reportType before R2, and workflow-manifest plus R1 prompt propagate the resolved mode to structure and generation agents. test_validate_output_mode covers valid and invalid paths.",
-      "OUT1/C1-C3: the shared design core is not duplicated across modes; slide and report branch only at content intent, schemas, renderers and mode-aware quality gates. validate-report-visual requires the structure SSOT and plugin tests cover defects/exit codes.",
-      "C4: all prompt, schema, reference and vendor/glue script paths listed by the manifest exist; boundaries delegate modification and cross-deck review. slide plugin pytest 131 PASS."
+      "iteration 1 の band-count drift が解消: html-generation-rules.md の CONST_001-039 帯を引用する全 5 箇所 (責務行・R3-agent-html-generator.md Layer 2 ポインタ・SKILL.md:185・R1-orchestrate.md:74・resource-map.yaml:21) が CONST_001-039 で整合。`grep -rn 'CONST_001-038'` が残存ゼロ (exit 1) を実測。指摘外だった resource-map.yaml:21 も同時修正され propagation が完全。",
+      "読者価値ガードが 2 レイヤ × 2 モードの首尾一貫した matrix を維持: 構成設計層 (slide CONST_008 / report RCONST_007) → 生成層 (slide CONST_039 / report CCONST_007) → 生成後評価層 (deck-evaluator D5 読者フック mode-aware) が全て正本 report-narrative-logic.md §7 (1.3.0) に収束。CONST_039 が参照する CONST_008・CCONST_007・§7・D5 検出器を全て実在確認 (dependency_break なし)。",
+      "OUT1 (共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動) の設計核が SKILL.md Purpose & Output Contract・output_mode 分岐契約・Gotchas 全体と読者価値ブリーフで一貫し frontmatter feedback_contract に接地。post-generation-evaluation.md D5 (上位正本) と deck-evaluation-rubric.md D5 (SSOT) の同期、report 側 RQ31-34 と slide 側 D5 の mode 別対称も維持。"
     ],
     "negative_feedback": [],
     "iteration": 2,
@@ -21,5 +21,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Iteration 1 found only rubric heading nonconformance; the meaning-preserving heading correction passed independent rubric re-evaluation. Four elegance conditions PASS."
+  "notes": "再評価 (iteration 2)。iteration 1 で記録した band-count drift (SKILL.md:185 / R1-orchestrate.md:74 が『CONST_001-038』残存) は team-lead が 3 箇所 (指摘 2 + 追加検出 resource-map.yaml:21) を CONST_001-039 へ更新して解消。残存ゼロを grep で実測、新 sha256=48719d73… を shasum で自己再確認。変更は citation テキスト『038→039』置換のみで構造・行数・依存・rubric 次元は不変、新規 finding なし。4 条件すべて 0 で PASS 維持。緑化なし=解消を独立実測。"
 }

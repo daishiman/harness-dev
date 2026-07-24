@@ -3,12 +3,12 @@
   "schemaVersion": 1,
   "workflowId": "run-slide-report-modify",
   "skill": "run-slide-report-modify",
-  "description": "既存成果物 (slide deck / report) の output_mode を保ったまま指定箇所だけを局所修正する。R1 で修正対象と output_mode を特定し validate-output-mode.py で値域整合を検証、R2 で slide-report-modifier を name 起動し mode 分岐で規範 (slide=modification-rules.md / report=report-modification-rules.md) に従い局所差分修正 (report は render-report.js で report.html を再レンダ)、R3 で mode 別に再評価する (slide=verify-slides.js ＋意匠/印刷影響時 evaluate-deck.js / validate-print.js で視覚崩れ 0、report=render-report.js 再レンダ整合 ＋ validate-report-visual.py ＋ mode-aware deck-evaluator)。",
+  "description": "既存成果物 (slide deck / report) の output_mode を保ったまま指定箇所だけを局所修正する。R1 でplugin-local Chromiumを復元・検査し、修正対象と output_mode を特定して validate-output-mode.py で値域整合を検証、R2 で slide-report-modifier を name 起動し mode 分岐で規範 (slide=modification-rules.md / report=report-modification-rules.md) に従い局所差分修正 (report は render-report.js で report.html を再レンダ)、R3 で mode 別に再評価する (slide=verify-slides.js ＋意匠/印刷影響時 evaluate-deck.js / validate-print.js で視覚崩れ 0、report=render-report.js 再レンダ整合 ＋ validate-report-visual.py ＋ mode-aware deck-evaluator)。",
   "phases": [
     {
       "id": "R1-identify-target",
       "step": 1,
-      "title": "修正対象成果物のパスと output_mode を特定し修正指示を mode 別 6 区分に分類、validate-output-mode.py で mode/reportType の値域整合を送信前検証",
+      "title": "setup-playwright.py でplatform別Chromiumをplugin-localへ復元・検査し、修正対象成果物のパスと output_mode を特定して修正指示を mode 別 6 区分に分類、validate-output-mode.py で mode/reportType の値域整合を送信前検証",
       "gate": "C1",
       "dependsOn": [],
       "entryHook": null,
@@ -18,6 +18,7 @@
         "ref-report-modification-rules",
         "schema-structure",
         "schema-report-structure",
+        "script-setup-playwright",
         "script-validate-output-mode"
       ],
       "fatal_exit_codes": [
@@ -27,7 +28,7 @@
     {
       "id": "R2-local-modify",
       "step": 2,
-      "title": "slide-report-modifier を name 起動 (isolation: fork) し mode 分岐で規範に従い指定箇所のみを局所差分修正。slide=modification-rules.md CONST_001-012 で index.html⇔structure.* 同期、report=report-modification-rules.md RCONST_001-012 で report-structure.json を正に編集し render-report.js で report.html を再レンダ・sidecar 履歴追記",
+      "title": "slide-report-modifier を name 起動 (isolation: fork) し mode 分岐で規範に従い指定箇所のみを局所差分修正。slide=modification-rules.md CONST_001-013 で index.html⇔structure.* 同期、report=report-modification-rules.md RCONST_001-013 で report-structure.json を正に編集し render-report.js で report.html を再レンダ・sidecar 履歴追記",
       "gate": "C2",
       "dependsOn": [
         "R1-identify-target"
@@ -62,6 +63,7 @@
         "script-render-report",
         "script-verify-report-runtime",
         "script-validate-report-visual",
+        "script-setup-playwright",
         "script-validate-output-mode"
       ],
       "fatal_exit_codes": [
@@ -113,6 +115,15 @@
       "kind": "schema",
       "path": "./schemas/modification-report.schema.json",
       "phaseIds": [
+        "R3-re-evaluate"
+      ]
+    },
+    {
+      "id": "script-setup-playwright",
+      "kind": "script",
+      "path": "../../scripts/setup-playwright.py",
+      "phaseIds": [
+        "R1-identify-target",
         "R3-re-evaluate"
       ]
     },

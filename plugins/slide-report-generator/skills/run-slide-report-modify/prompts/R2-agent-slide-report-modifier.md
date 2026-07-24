@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # Task仕様書：スライド/レポート改善・修正（mode-aware・7層構造プロンプト）
 
 > 読み込み条件: Phase 4（既存成果物修正）で起動。ユーザーが既存成果物（slide=`index.html` + `structure.md` / report=`report.html` + `report-structure.json`）への修正を要求した時。output_mode に応じ slide/report の 2 経路を切り替える（本文冒頭「モード分岐」節）。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/prompts/R2-agent-slide-report-modifier.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/prompts/R2-agent-slide-report-modifier.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -42,8 +42,8 @@ last-audited: 2026-07-05
 
 | output_mode | 正本ファイル | レンダ経路 | 詳細規範 SSOT |
 |-------------|-------------|-----------|----------------|
-| `slide` | `structure.md` ⇔ `index.html`（＋`styles.css`/`scripts.js`） | `html-generator`（オーケストレータ委譲）で再生成 | `references/modification-rules.md`（CONST_001-012） |
-| `report` | `report-structure.json` ⇔ `report.html` | `render-report.js`（本 worker が Bash 実行）で決定論再生成 | `references/report-modification-rules.md`（RCONST_001-012） |
+| `slide` | `structure.md` ⇔ `index.html`（＋`styles.css`/`scripts.js`） | `html-generator`（オーケストレータ委譲）で再生成 | `references/modification-rules.md`（CONST_001-013） |
+| `report` | `report-structure.json` ⇔ `report.html` | `render-report.js`（本 worker が Bash 実行）で決定論再生成 | `references/report-modification-rules.md`（RCONST_001-013） |
 
 > 以降の各 Layer は slide を主例に記述するが、report では対応正本（`report-structure.json`/`report.html`）と `report-modification-rules.md` の RCONST に読み替える。report の局所修正は本 worker が `report-structure.json` を Write で編集し `render-report.js` を Bash 実行して `report.html` を再生成する（下流 agent 委譲不要の常道経路）。
 
@@ -70,8 +70,8 @@ last-audited: 2026-07-05
 # Layer 2: ドメイン定義層
 
 > **ドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ）は mode 分岐で参照**（本アダプタは役割・起動条件・I/O契約に専念。逐語正本は当該 reference）。
-> - **slide**: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/modification-rules.md`（CONST_001-012・structure.md ⇔ index.html）。
-> - **report**: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/report-modification-rules.md`（RCONST_001-012・report-structure.json ⇔ report.html・reportType 4 骨格維持・読み物文体・1項目1ビジュアル・sidecar 履歴）。
+> - **slide**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/modification-rules.md`（CONST_001-013・structure.md ⇔ index.html）。
+> - **report**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/report-modification-rules.md`（RCONST_001-013・report-structure.json ⇔ report.html・reportType 4 骨格維持・読み物文体・1項目1ビジュアル・sidecar 履歴）。
 
 ---
 
@@ -79,7 +79,7 @@ last-audited: 2026-07-05
 
 ## 外部システム連携
 - 本 worker のツールは `Read, Write, Bash` のみ（frontmatter `tools` 正）。**Task を持たないため下流 agent を自ら dispatch しない**。slide の HTML 再生成（`html-generator`）・構成再設計（`structure-designer`/`report-structure-designer`）・画像生成（`ai-image-diagram-producer`）が要るケースでは、その必要を成果物1（修正案）に明記して返し、**オーケストレータ（run-slide-report-modify）が委譲する**。
-- **report のレンダ再生成は本 worker が直接行う**: `report-structure.json` を Write 編集後、`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <report.html>` を Bash 実行して `report.html` を決定論再生成する（下流委譲不要の常道経路）。同期確認は Layer 6 のチェックリストで検証する。
+- **report のレンダ再生成は本 worker が直接行う**: `report-structure.json` を Write 編集後、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` を Bash 実行して `report.html` を決定論再生成する（下流委譲不要の常道経路）。同期確認は Layer 6 のチェックリストで検証する。
 
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | エラー処理 |
@@ -181,7 +181,7 @@ last-audited: 2026-07-05
 | references/report-visual-strategy.md | （report）ビジュアル変更で、三択（svg/mermaid/codex-image/none）の内容適合・1項目1ビジュアル・環境可用性を判定する（RCONST_008/011）。 |
 | schemas/report-structure.schema.json | （report）修正後 `report-structure.json` が valid（`additionalProperties: false`）を保つことを確認する。履歴はインラインせず sidecar へ（RCONST_004）。 |
 
-> 部分修正の詳細規範は mode 分岐で当該 reference を判断軸として適用する（逐語 SSOT）。**slide**=制約カタログ CONST_001-012・修正タイプ分類・修正フローパターン・同期維持は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/modification-rules.md`。**report**=RCONST_001-012・reportType 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・sidecar 履歴は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/report-modification-rules.md`。
+> 部分修正の詳細規範は mode 分岐で当該 reference を判断軸として適用する（逐語 SSOT）。**slide**=制約カタログ CONST_001-013・修正タイプ分類・修正フローパターン・同期維持は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/modification-rules.md`。**report**=RCONST_001-013・reportType 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・sidecar 履歴は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/report-modification-rules.md`。
 
 ## 5.6 インターフェース
 
@@ -249,7 +249,7 @@ last-audited: 2026-07-05
 |--------|---------|--------------|
 | Read（Layer 3 定義） | 正本・描画物の読み込み（slide=`structure.md`/`index.html` / report=`report-structure.json`/`report.html`） | 読み込み・分析フェーズ |
 | Write（Layer 3 定義） | 正本の該当箇所・修正履歴の更新（slide=`structure.md` / report=`report-structure.json`＋sidecar `report-structure.history.json`）。局所差分編集 | 再生成・同期フェーズ（履歴更新時） |
-| Bash（report のみ・Layer 3 定義） | `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を決定論再生成 | report の再生成・同期フェーズ |
+| Bash（report のみ・Layer 3 定義） | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を決定論再生成 | report の再生成・同期フェーズ |
 
 > **下流 agent（`html-generator`／`structure-designer`／`report-structure-designer`／`ai-image-diagram-producer`）は本 worker が Task で起動しない**。必要を成果物1に明記し、オーケストレータ（run-slide-report-modify）が dispatch する。slide の再生成・視覚崩れ検証はオーケストレータ／後続 agent 側、report のレンダ再生成のみ本 worker が Bash で実施し、同期確認は Layer 6 チェックリストで検証する。
 
@@ -275,8 +275,8 @@ last-audited: 2026-07-05
 ## 修正フローパターン
 
 > **修正タイプ別の修正フローパターン（パース→対象特定→差分適用→非対象箇所保護→同期の具体ステップ）は mode 分岐で参照**（本アダプタは役割・起動条件・I/O契約に専念。逐語 SSOT は当該 reference）。
-> - **slide**（コンテンツ修正／タイプ変更／構成変更）: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/modification-rules.md`。
-> - **report**（本文修正／role・骨格節変更／構成変更／ビジュアル変更）: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-modify/references/report-modification-rules.md`。
+> - **slide**（コンテンツ修正／タイプ変更／構成変更）: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/modification-rules.md`。
+> - **report**（本文修正／role・骨格節変更／構成変更／ビジュアル変更）: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-modify/references/report-modification-rules.md`。
 
 ## 正本 ⇔ 描画物 整合性維持（重要）
 
@@ -337,8 +337,8 @@ Layer 1 成功基準（修正対象特定・ユーザー承認・同期確認チ
 ## 参照リソース
 | リソース | パス | 用途 |
 |----------|------|------|
-| 部分修正規範（slide） | skills/run-slide-report-modify/references/modification-rules.md | slide 経路の CONST_001-012・修正フロー・同期維持の逐語 SSOT |
-| 部分修正規範（report） | skills/run-slide-report-modify/references/report-modification-rules.md | report 経路の RCONST_001-012・reportType 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・sidecar 履歴の逐語 SSOT |
+| 部分修正規範（slide） | skills/run-slide-report-modify/references/modification-rules.md | slide 経路の CONST_001-013・修正フロー・同期維持の逐語 SSOT |
+| 部分修正規範（report） | skills/run-slide-report-modify/references/report-modification-rules.md | report 経路の RCONST_001-013・reportType 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・sidecar 履歴の逐語 SSOT |
 | 構造化データテンプレート | vendor/assets/structure-template.md | （slide）履歴更新時の参照 |
 | スライドタイプ一覧 | references/slide-types-overview.md | （slide）タイプ選択時（53種 + D3 24種） |
 | 基本スライド | references/slide-types-basic.md | （slide）基本7種のHTML/CSS |

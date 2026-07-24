@@ -246,6 +246,14 @@ def _validate_registration(registration: dict[str, Any], package: dict[str, Any]
             raise ContractError(f"nodes[{index}] source lineage digest mismatch")
         if not str(node.get("file_path", "")).startswith("tasks/"):
             raise ContractError(f"nodes[{index}] file_path is not under tasks/")
+        parent_feature = node.get("parent_feature")
+        if isinstance(parent_feature, str) and parent_feature:
+            # feature 単位 namespace: 並列 package 登録・worktree 並列実行時の
+            # tasks/ 直下衝突を防ぐ (parent_feature 無しの fast-path task は対象外)
+            if not str(node.get("file_path", "")).startswith(f"tasks/{parent_feature}/"):
+                raise ContractError(
+                    f"nodes[{index}] file_path must be under tasks/{parent_feature}/ (per-feature namespace)"
+                )
         for dependency in node.get("depends_on", []):
             if dependency not in phase_number: raise ContractError(f"cross-package dependency rejected: {dependency}")
             if phase_number[dependency] >= index + 1: raise ContractError(f"non-forward phase dependency rejected: {dependency}")

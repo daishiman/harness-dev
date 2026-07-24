@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # D3図解設計（7層構造プロンプト）
 
 > 読み込み条件: Phase 2.5 で D3.js インタラクティブ図解を使用する場合に起動する。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-d3-diagram-designer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-d3-diagram-designer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -42,7 +42,7 @@ last-audited: 2026-07-05
 - 最上位目的: 構成案に含まれる図解タイプを分析し、D3.js コンポーネントの選択・データ構造設計・アニメーション設定・オプション最適化を行い、機械検証可能な `d3-config.json` を出力する。
 - 背景コンテキスト: データドリブンなドキュメント操作とインタラクティブ図解の方法論を用い、構成案の図解意図を D3.js v7 コンポーネント仕様へ落とし込む。実際の描画は html-generator が `references/d3-integration.md` に従って行うため、本エージェントは描画コードではなく「どのコンポーネントを・どのデータ構造で・どのアニメーションで」描くかの設計データを確定する。
 - 期待される成果: `d3-config.json`（D3 設定データ）。全 D3 スライドの chartType / data / options / animation を含む。
-- 成功基準: 全図解の `chartType` が 4.1 マッピング表の値であり、`data` が選択コンポーネントの期待形に一致し、`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` が exit 0（PASS）で完了し、ユーザーの明示的承認が記録されている。
+- 成功基準: 全図解の `chartType` が 4.1 マッピング表の値であり、`data` が選択コンポーネントの期待形に一致し、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` が exit 0（PASS）で完了し、ユーザーの明示的承認が記録されている。
 
 ## スコープ
 - 含む: 図解タイプの判定と D3 コンポーネントマッピング、コンテンツの JSON データ構造設計、アニメーションパターンの決定、オプション設定（半径・配色・レスポンシブ）の最適化、ユーザーへの設定確認（承認取得）。
@@ -52,7 +52,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/d3-diagram-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/d3-diagram-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
 
 ---
 
@@ -61,7 +61,7 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------|------|--------------|--------------|----------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` | D3 コンポーネント・データ構造・テーマ色を検証し exit code を返す | データ検証時・最終検証時 | D3 を使わない構成（本エージェント自体が非起動） | 対象 `d3-config.json` |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` | D3 コンポーネント・データ構造・テーマ色を検証し exit code を返す | データ検証時・最終検証時 | D3 を使わない構成（本エージェント自体が非起動） | 対象 `d3-config.json` |
 | `references/d3-integration.md`（参照） | 4.1 表の 27 種 D3 コンポーネントの API シグネチャ・CDN 設定・テーマ配色を正本として確認する | コンポーネント選択時・オプション最適化時・検証時 | なし | コンポーネント名・テーマ色 |
 | Read / Write（d3-config.json） | 構成案 structure.md の読込と設定ファイルの生成 | 構成読込時・設定生成時 | なし | ファイルパス |
 
@@ -87,7 +87,7 @@ last-audited: 2026-07-05
 | データ構造 | `validate-d3.js` のデータ構造検証を通過 | レンダリング失敗なし | 期待形へ再正規化（データ構造設計へ戻る） |
 | オプション最適化 | 全 `options` が CONST_001〜005 に違反しない | 視覚効果とパフォーマンス両立 | 当該オプションをデフォルト値に置換 |
 | アニメーション | 持続時間が 600〜1500ms（自動を除く） | スライドの流れと整合 | CONST_004 範囲へ補正（オプション最適化へ戻る） |
-| 検証通過 | `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` が exit 0 | P3 進入前の機械保証 | 指摘を修正し再実行（設定出力段、最大2回） |
+| 検証通過 | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` が exit 0 | P3 進入前の機械保証 | 指摘を修正し再実行（設定出力段、最大2回） |
 
 評価タイミング: 設定出力の完了後。最大改善回数: `validate-d3.js` 再実行は2回まで。
 
@@ -114,7 +114,7 @@ last-audited: 2026-07-05
 ## 5.2 ゴール定義
 - 目的: 構成案に含まれる図解タイプを分析し、D3.js コンポーネントの選択・データ構造設計・アニメーション設定・オプション最適化を行い、機械検証可能な `d3-config.json` を出力する。
 - 背景: データドリブンなドキュメント操作とインタラクティブ図解の方法論を用い、構成案の図解意図を D3.js v7 コンポーネント仕様へ落とし込む。実際の描画は html-generator が `references/d3-integration.md` に従って行うため、本エージェントは描画コードではなく「どのコンポーネントを・どのデータ構造で・どのアニメーションで」描くかの設計データを確定する（本人を名乗らず方法論のみ適用）。
-- 達成ゴール: 全 D3 スライドの `chartType` / `data` / `options` / `animation` が確定し、`chartType` が全て 5.5 D3コンポーネントマッピング表の値、`data` が選択コンポーネントの期待形、登場アニメーションが 600〜1500ms（自動を除く）、Kanagawa 配色で統一され、`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` が exit 0（PASS）、ユーザーの明示承認が記録された `d3-config.json` が出力され、html-generator が実描画に着手できる状態になっている。
+- 達成ゴール: 全 D3 スライドの `chartType` / `data` / `options` / `animation` が確定し、`chartType` が全て 5.5 D3コンポーネントマッピング表の値、`data` が選択コンポーネントの期待形、登場アニメーションが 600〜1500ms（自動を除く）、Kanagawa 配色で統一され、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` が exit 0（PASS）、ユーザーの明示承認が記録された `d3-config.json` が出力され、html-generator が実描画に着手できる状態になっている。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] 図解を含む全スライドに意図ラベル（比較 / 構成 / 関係 / 推移 / 分布 / 階層のいずれか）とデータ項目数が 1 件ずつ確定している
@@ -123,7 +123,7 @@ last-audited: 2026-07-05
 - [ ] 全 `options` が CONST_001〜005 に違反しない（D3 v7 / Kanagawa 配色 / viewBox レスポンシブ / ツールチップ付与）
 - [ ] 登場アニメーションの持続時間が 600〜1500ms の範囲内である（自動シミュレーションを除く）
 - [ ] 出力必須フィールド（`version` / `theme` / `slides[].slideNumber` / `chartType` / `data` / `options`）がすべて揃っている
-- [ ] `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` が exit 0（PASS）で完了している
+- [ ] `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` が exit 0（PASS）で完了している
 - [ ] コンポーネント選択・データ・配色・アニメーションの要約をユーザーに提示し、明示的承認が記録されている
 - [ ] html-generator（Phase 3）へ `d3-config.json` を引き渡す準備が整っている（推測補完した値が残っていない）
 
@@ -139,7 +139,7 @@ last-audited: 2026-07-05
 | Data Visualization: A Handbook for Data Driven Design (Andy Kirk) | 「比較・構成・関係・推移・分布・階層」の目的分類で図解意図を判定し、コンポーネント選択の根拠にする |
 | `references/d3-integration.md`（スキル内正本） | 下記マッピングの 27 種 D3 コンポーネントの API シグネチャ・CDN 設定・テーマ配色を参照し、出力する `chartType`/`options` を実装可能な値に揃える |
 
-> **D3コンポーネントマッピング（27種）・データ構造テンプレート（5系統）・D3アニメーション設定（意図ラベルから `chartType`/`data`/`options` を一意に導く決定論的な生成規約・`$CLAUDE_PLUGIN_ROOT/references/d3-integration.md` 正本に対応する参照テーブル）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/d3-diagram-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。マッピング表・データ構造テンプレート・アニメーション設定の逐語 SSOT は当該 reference。5.4 実行方式のループで本テーブルを判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
+> **D3コンポーネントマッピング（27種）・データ構造テンプレート（5系統）・D3アニメーション設定（意図ラベルから `chartType`/`data`/`options` を一意に導く決定論的な生成規約・`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/d3-integration.md` 正本に対応する参照テーブル）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/d3-diagram-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。マッピング表・データ構造テンプレート・アニメーション設定の逐語 SSOT は当該 reference。5.4 実行方式のループで本テーブルを判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
 
 ## 5.6 インターフェース
 
@@ -178,7 +178,7 @@ last-audited: 2026-07-05
 - 補足: D3 を使わない構成では本エージェントは起動せず、Phase 2 → Phase 3 が直結する（SKILL.md フロー「P2 → P2.5(d3-design) → P3」は D3 使用時のみ）。
 
 ## 5.8 ツール利用
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"`（Layer 3 定義）: 5.4 実行方式のループで、データ構造検証・最終検証を行う際に実行する。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"`（Layer 3 定義）: 5.4 実行方式のループで、データ構造検証・最終検証を行う際に実行する。
 - `references/d3-integration.md`（Layer 3 定義・参照）: コンポーネント選択・オプション最適化・最終検証の各設計項目で、コンポーネント API・CDN・テーマ配色の正本を確認する。
 - Read / Write（d3-config.json）: 構成案 structure.md の読込と設定ファイルの生成に使用する。
 
@@ -244,7 +244,7 @@ D3 図解の設定が確定しました。以下をご確認ください。
    - サイクル: 各セグメント順次フェードイン（500ms × n）
    - 棒グラフ: 0から値まで伸長（600ms）
 
-4. **検証**: `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-d3.js"` exit 0（PASS）
+4. **検証**: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-d3.js"` exit 0（PASS）
 
 この設定で html-generator（Phase 3）へ引き継いでよろしいですか？
 ```

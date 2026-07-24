@@ -1,6 +1,6 @@
 ---
 name: report-composer
-description: slide の html-generator に対応する report 版として、report HTML/prose を独立 context で LLM 経路生成(文章多め・Markdown本文→HTML・visual-strategist 指定ビジュアル埋込)したいときに使う。
+description: 承認済み構造の読者価値・専門的深さを保った report HTML/prose を独立 context で生成し、指定ビジュアルを埋め込みたいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,12 +20,12 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-report HTML/prose を独立 context で LLM 経路生成(文章多め・Markdown本文→HTML・visual-strategist 指定ビジュアル埋込)したいときに使う。slide の html-generator に対応する report 版。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` に置く。
+承認済み構造の読者価値・専門的深さを保った report HTML/prose を独立 context で生成し、visual-strategist 指定ビジュアルを埋め込みたいときに使う。slide の html-generator に対応する report 版。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` とその prompt が明示する references/scripts/schemas を読む。
 
 ## Outputs
 
@@ -40,13 +40,13 @@ report HTML/prose を独立 context で LLM 経路生成(文章多め・Markdown
 
 - Owner skill: `run-slide-report-generate`。Phase: `R3-generate-evaluate`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` as the executable 7-layer prompt for responsibility `R3-agent-report-composer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` as the executable 7-layer prompt for responsibility `R3-agent-report-composer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

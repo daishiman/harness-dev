@@ -1,19 +1,19 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "37f991560886f6cdff32c0603bc7e6f33e1037837c56ec2ffbfdf7b3bae86b64"},
+  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "48719d73b39ea10103ef8d78313d34fb602f3dad9754e2fff1932c3e40ac9cef"},
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "review-group-c-independent-rubric",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-07-24T01:00:00Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "Deterministic rubric initially scored 70 because Japanese equivalent headings did not satisfy exact BD-001/BD-002. After correction, rubric 1.3.0 score=100/threshold=80 with no findings.",
-      "The skill is a new-generation orchestrator with explicit generate/modify/cross-review boundaries, 7-layer prompt SSOT, owner-mapped private references, schemas and deterministic exit-code gates.",
-      "Criteria are purpose-specific mode propagation and mode-aware visual acceptance, backed by validate-output-mode, validate-report-visual and 131 passing plugin tests."
+      "構造 rubric (ref-skill-design-rubric) 規則を SKILL.md 再評価版 (sha 48719d73) で照合し違反 0。BD-001 '## Purpose & Output Contract'・BD-002 '## Gotchas' の厳格一致 heading 保持、本文行数 <=300 (BD-003)、description trigger 2 個 ('新規に作りたいとき' / '駆動したいときに使う') が FM-003 の 2..3 域内。band-count 修正 (185 行の『038→039』置換) は構造次元に影響せず score 不変。",
+      "IN1/OUT1 が frontmatter feedback_contract に焼込済で汎用ゲート言い換えへ退化せず、validate-output-mode.py (fail-closed) と deck-evaluator 生成後評価 (test) の検証子に接地。OUT1 は読者価値知見 (入口ホリゾンタル・中身バーティカル) を『共有課題→変化→専門的解決→自分へ移す行動』として保持。",
+      "追加された規範 (CONST_039 / D5 読者フック) は既存の番号帯・SSOT 帰属規約 (resource-map.yaml・deck-evaluation-rubric.md 上位正本 post-generation-evaluation.md) を破らず additive に接続。iteration 1 の band-count drift 解消により CONST_001-039 帯の引用が全 5 箇所で整合。"
     ],
     "negative_feedback": [],
     "iteration": 2,
@@ -21,5 +21,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d; composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9。"
+  "notes": "再評価 (iteration 2)。構造 rubric スコア=100/threshold=80 passed=true・構造規則 findings 0 (FM/BD/NM/PD/RG 減点なし)。iteration 1 で elegance 次元に記録した band-count drift は team-lead の修正で解消し、elegance-verdict.json も inconsistency=0 へ更新済み。新 sha256=48719d73… を shasum で自己再確認。構造適合は再評価版 SKILL.md で実測、緑化なし。"
 }

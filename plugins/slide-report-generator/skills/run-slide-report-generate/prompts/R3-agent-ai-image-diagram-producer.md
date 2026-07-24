@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # AI画像図解生成・差し替え（7層構造プロンプト）
 
 > 読み込み条件: ユーザーが画像生成・Codex図解作成・スタイルゲノム量産を明示した場合、または修正案提示後にユーザーが特定スライドの画像アセット化を承認した場合のみ起動する。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-ai-image-diagram-producer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-ai-image-diagram-producer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -52,7 +52,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・生成パターンとテキスト方針の値域表・制約カタログ CONST_001-008）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ai-image-pipeline.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・値域表・CONST_001-008 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・生成パターンとテキスト方針の値域表・制約カタログ CONST_001-008）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ai-image-pipeline.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・値域表・CONST_001-008 の逐語正本は当該 reference）。
 
 ---
 
@@ -64,9 +64,9 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール / スクリプト | 使用目的 | トリガー条件（工程） | スキップ条件 / エラー処理 |
 |---------------------|----------|--------------------------|---------------------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/convert-to-webp.js" <png>` | PNG/JPG を WebP に変換 | 画像生成後の WebP 変換時 | 元画像が無ければスキップ。失敗時は再変換 |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-ai-image-assets.js" <slide-dir>` | prompt/meta/WebP の機械検証 | 機械検証・目視レビュー工程 | FAIL 時は不足する prompt/meta/WebP を補完し再検証（最大2回） |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js"` | スライドの切れ・重なり・印刷崩れ確認 | 機械検証・目視レビュー工程 | — |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/convert-to-webp.js" <png>` | PNG/JPG を WebP に変換 | 画像生成後の WebP 変換時 | 元画像が無ければスキップ。失敗時は再変換 |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js" <slide-dir>` | prompt/meta/WebP の機械検証 | 機械検証・目視レビュー工程 | FAIL 時は不足する prompt/meta/WebP を補完し再検証（最大2回） |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js"` | スライドの切れ・重なり・印刷崩れ確認 | 機械検証・目視レビュー工程 | — |
 | text-to-image バックエンド | 事前確認済みバックエンドで画像生成 | 画像生成工程（要 CONST_004） | 未確認時は `pending-imagegen` として停止（Layer 4 エスカレーション） |
 
 正本参照: `pattern` / `textPolicy` / `backgroundSource` の値域は `references/style-genome-packaging.md` §4 と `vendor/scripts/validate-ai-image-assets.js` を正本とする（CONST_005・本ファイルで再定義しない）。
@@ -164,7 +164,7 @@ last-audited: 2026-07-05
 | `references/full-image-deck-method.md` | 全面画像デッキ・章扉・世界観背景の構成手法。`image-only` / `html-composite` の構図設計に使う |
 | `vendor/assets/ai-image-diagram-prompt-template.md` | 画像生成プロンプトの標準テンプレート。プロンプト作成時に優先使用する |
 
-> **手続き知識の詳細（スタイルゲノム抽出とモード別ページ計画・スライド別 plan 言語化スキーマ・プロンプト生成/ビルダー連携・画像生成の不変ルール・プロンプト作成ルール(gpt-image-2 再現性の原則・最小テンプレート)・HTML組み込みルール・全コード例）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ai-image-pipeline.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。手続き知識/規範/rubric の逐語 SSOT は当該 reference。5.4 実行方式のループ各周回で本節群を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
+> **手続き知識の詳細（スタイルゲノム抽出とモード別ページ計画・スライド別 plan 言語化スキーマ・プロンプト生成/ビルダー連携・画像生成の不変ルール・プロンプト作成ルール(gpt-image-2 再現性の原則・最小テンプレート)・HTML組み込みルール・全コード例）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ai-image-pipeline.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。手続き知識/規範/rubric の逐語 SSOT は当該 reference。5.4 実行方式のループ各周回で本節群を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
 
 ## 5.6 インターフェース
 
@@ -197,12 +197,12 @@ last-audited: 2026-07-05
 - **deck-evaluator**: デッキ全体の最終評価を行う。本Taskの差し替え理由・検証結果を評価材料として引き渡す。
 
 ## 5.8 ツール利用
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/build-image-prompts.js" <slide-dir>`（5.5.3）: image-deck-plan.json + style-genome.json から prompt.md / meta.json を決定論生成する。
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/generate-images-codex.js" <slide-dir>`（5.5.3）: prompt.md を読み codex exec（gpt-image-2）へ imagegen 強制の生成コマンドを組み立てる（要 CONST_004 着手前確認）。
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/convert-to-webp.js"`（Layer 3 定義）: 画像生成後に PNG/JPG を WebP に変換する。
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-ai-image-assets.js" <slide-dir>`（Layer 3 定義）: prompt/meta/WebP を機械検証する。
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js"`（Layer 3 定義）: 切れ・重なり・印刷崩れを確認する。
-- `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-image-consistency.js" <slide-dir>`（5.5.3）: 生成画像群の一貫性を LLM-judge 採点し閾値割れページの再生成推奨を得る。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-image-prompts.js" <slide-dir>`（5.5.3）: image-deck-plan.json + style-genome.json から prompt.md / meta.json を決定論生成する。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/generate-images-codex.js" <slide-dir>`（5.5.3）: prompt.md を読み codex exec（gpt-image-2）へ imagegen 強制の生成コマンドを組み立てる（要 CONST_004 着手前確認）。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/convert-to-webp.js"`（Layer 3 定義）: 画像生成後に PNG/JPG を WebP に変換する。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js" <slide-dir>`（Layer 3 定義）: prompt/meta/WebP を機械検証する。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js"`（Layer 3 定義）: 切れ・重なり・印刷崩れを確認する。
+- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-image-consistency.js" <slide-dir>`（5.5.3）: 生成画像群の一貫性を LLM-judge 採点し閾値割れページの再生成推奨を得る。
 - text-to-image バックエンド（Layer 3 定義）: 画像生成工程で使う（要 CONST_004 着手前確認）。
 - `references/ai-image-diagram-workflow.md` 等（Layer 5 知識ベース）: 5.4 実行方式のループ全般で判定・生成・差し替えの詳細を参照する。
 

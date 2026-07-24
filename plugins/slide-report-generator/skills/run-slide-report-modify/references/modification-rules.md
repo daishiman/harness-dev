@@ -2,7 +2,7 @@
 
 > **正本**: このファイルは slide-report-modifier から抽出した手続き知識/規範の SSOT。run-slide-report-modify の SKILL.md と agent 本体（agents/slide-report-modifier.md）の双方がこれを参照する。規則の上位正本 (SR-ID) は spec-registry.md を辿る。
 
-**責務**: 既存成果物（slide deck / report）の指定箇所部分修正のドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ CONST_001-012）と部分修正規範（パース/差分適用/非対象箇所保護・修正フローパターン・index.html ⇔ structure.md 同期維持の詳細ルール/コード例）の逐語正本。slide-report-modifier（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。
+**責務**: 既存成果物（slide deck / report）の指定箇所部分修正のドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ CONST_001-013）と部分修正規範（パース/差分適用/非対象箇所保護・修正フローパターン・index.html ⇔ structure.md 同期維持の詳細ルール/コード例）の逐語正本。slide-report-modifier（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。
 
 ## 用語集
 | 用語 | 定義 | 関連概念 |
@@ -83,6 +83,9 @@
 - **CONST_012 (AI画像図解の責務分離)**: 通常は画像内テキストを禁止し、日本語ラベル・見出し・数値は HTML/SVG で重ね、structure.md に画像パス・alt・prompt/meta・差し替え理由を同期する。`kanagawa-comic-diagram` の漫画チック説明図では `image-only + baked-with-overlay` の時だけ短文・簡易表の焼き込みを許可し、`overlayText` を正本として残す。
   - 目的: 文字の判読性・編集可能性・多言語対応を保ちつつ、画像とテキストの正本を一意に保つ。
   - 背景: overlayText を正本とする責務分離（v8.0.3）であり、コード系・精密数値は実 HTML 側へ振り分ける横断原則（v8.0.7）に整合させるため。
+- **CONST_013 (入口ホリゾンタル保持)**: タイトルスライド・冒頭キーメッセージ・セクション扉を修正するときは、聴衆の「共有課題→得たい変化」を先に渡す入口設計（run-slide-report-generate 側 structure-design-rules.md CONST_008）を退化させない。専門手段だけを主語にするタイトルへの書き戻し・発表者の資格紹介起点への変更・素材にない数字/実績の追加をしない。ユーザーが正式名称・検索性・適用範囲を理由にタイトル変更を明示指示した場合は従い、subtitle/keyMessage/冒頭スライドで聴衆価値を補う代替を提案する。
+  - 目的: 部分修正の積み重ねで入口が専門特化へ退化し、聴衆が入口で離脱する状態へ戻ることを防ぐ。
+  - 背景: 生成時は CONST_008（設計）と deck-evaluator D5 読者フック（評価）が守るが、修正経路に保持ガードが無かった。正本 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。
 
 ## 修正フローパターン
 

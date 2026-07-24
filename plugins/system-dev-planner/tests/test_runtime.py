@@ -57,7 +57,7 @@ def task(index: int, package_id: str, parent: str) -> dict:
         "phase_ref": phase, "depends_on": previous, "write_scope": [f"src/{phase.lower()}"],
         "deploy_unit": "application", "source_lineage": ["system-spec/index.md"],
         "classification": {"confidence": 1, "reason": "phase mapping", "candidates": [
-            {"artifact_kind": "task", "confidence": 1, "candidate_path": f"tasks/{task_id}.md"}
+            {"artifact_kind": "task", "confidence": 1, "candidate_path": f"tasks/{parent}/{task_id}.md"}
         ]},
         "tracker_binding_intent": "none",
         "github_publication": {"mode": "local_only", "project_aliases": [], "labels": [], "milestone": None},
@@ -69,7 +69,7 @@ def task(index: int, package_id: str, parent: str) -> dict:
         "rollback": f"revert {phase}",
         "implementation_readiness": {"status": "complete", "missing_sections": [],
                                      "checked_at": "2026-07-13T00:00:00Z"},
-        "graph_node_registration": {"graph_node_id": task_id, "file_path": f"tasks/{task_id}.md",
+        "graph_node_registration": {"graph_node_id": task_id, "file_path": f"tasks/{parent}/{task_id}.md",
                                     "parent_feature": parent, "feature_package_id": package_id,
                                     "phase_ref": phase},
     }

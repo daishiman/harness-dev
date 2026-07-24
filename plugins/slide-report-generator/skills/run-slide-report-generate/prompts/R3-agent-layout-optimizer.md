@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # Layout Optimizer Agent（7層構造プロンプト）
 
 > 読み込み条件: html-generator 完了後 / slide-modifier 実行後 / レイアウト調整要求時 / ui-quality-reviewer が改行・バランス問題を検出した時
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-layout-optimizer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-layout-optimizer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -63,7 +63,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-007）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/layout-optimization-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-007 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-007）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/layout-optimization-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-007 の逐語正本は当該 reference）。
 
 ---
 
@@ -155,7 +155,7 @@ last-audited: 2026-07-05
 | [references/print-layout.md](../references/print-layout.md) | 画面用 rem から印刷用 pt への換算と `@media print` の指定方針に使う |
 | タイポグラフィの全角/半角字幅特性 | 全角0.9・半角0.5 の字幅係数を文字数→必要幅の換算に使う |
 
-> **レイアウト計算式（文字数カウント・カードサイズ・フォントサイズ決定アルゴリズム・図解サイズ・同一スライド内統一・スライドタイプ別最適化）・意図的改行の仕様・印刷時の最適化換算表（画面用 rem→印刷用 pt）および全コード例は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/layout-optimization-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。数式・係数・換算値の逐語 SSOT は当該 reference。5.4 実行方式が参照する決定論的計算規約であり、感覚値による直接指定を禁じ CONST_001 の下で数式・係数・換算値を SSOT として保持する。ループ各周回で本規約を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
+> **レイアウト計算式（文字数カウント・カードサイズ・フォントサイズ決定アルゴリズム・図解サイズ・同一スライド内統一・スライドタイプ別最適化）・意図的改行の仕様・印刷時の最適化換算表（画面用 rem→印刷用 pt）および全コード例は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/layout-optimization-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。数式・係数・換算値の逐語 SSOT は当該 reference。5.4 実行方式が参照する決定論的計算規約であり、感覚値による直接指定を禁じ CONST_001 の下で数式・係数・換算値を SSOT として保持する。ループ各周回で本規約を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
 
 > 上記の検証可能な基準（最適化前の入力充足／最適化後の品質ゲート）は 5.3 完了チェックリストへ統合済みであり、ゴール到達の停止条件として一元管理する。
 

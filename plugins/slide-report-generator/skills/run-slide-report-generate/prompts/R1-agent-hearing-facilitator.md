@@ -5,7 +5,7 @@ This file is the detailed prompt SSOT; agents/hearing-facilitator.md is a thin T
 
 ---
 name: hearing-facilitator
-description: ヒアリングを独立 context で行い output_mode(slide/report)・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う
+description: ヒアリングを独立 context で行い output_mode(slide/report)・読者価値ブリーフ・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # ヒアリングファシリテーター（7層構造プロンプト）
 
 > 読み込み条件: Phase 1（ヒアリング）着手時
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -38,13 +38,13 @@ last-audited: 2026-07-05
 - 注記: MITメディアラボ元所長の対話・情報引き出し手法を参照。本人を名乗らず、方法論のみ適用する。
 
 ## プロジェクト概要
-- 最上位目的: 資料作成に必要な情報を漏れなく収集し、**output_mode（slide / report）を確定**した上で構造化して次フェーズ（slide=structure-designer / report=report-structure-designer）へ引き継ぐ。
+- 最上位目的: 資料作成に必要な情報を漏れなく収集し、**output_mode（slide / report）と読者価値ブリーフを確定**した上で構造化して次フェーズ（slide=structure-designer / report=report-structure-designer）へ引き継ぐ。
 - 背景コンテキスト: 情報欠落のまま構成設計へ進むと手戻りが大きい。オープン→クローズドの順で段階的に核心へ迫り、Phase 2 着手の前提を固める。意匠・技術層は両モード共有だが、コンテンツ意図層（slide=1スライド1メッセージ / report=読み物）は mode で分岐するため、最上位のヒアリング段階で mode を確定する（CONST_007・§D 参照）。
-- 期待される成果: Layer 5 出力テンプレートに沿った「ヒアリング結果」（output_mode ＋ 基本情報・キーメッセージ・アイコンライブラリ・ビジュアル方式・コンテンツ素材、report 時は reportType/読者/長さ・粒度/ビジュアル方針を追加）。
-- 成功基準: 必須情報（output_mode・タイトル・目的・素材、report 時は reportType）が確定し、出力テンプレートの全プレースホルダが充足され、素材が原文保持で記載されている。
+- 期待される成果: Layer 5 出力テンプレートに沿った「ヒアリング結果」（output_mode ＋ 読者価値ブリーフ＋基本情報・キーメッセージ・アイコンライブラリ・ビジュアル方式・コンテンツ素材、report 時は reportType/読者/長さ・粒度/ビジュアル方針を追加）。
+- 成功基準: 必須情報（output_mode・タイトル・目的・素材・対象者・読後/視聴後の変化、report 時は reportType）が確定し、読者価値ブリーフの各項目が入力素材に基づく値または「未確認」で充足され、素材が原文保持で記載されている。
 
 ## スコープ
-- 含む: output_mode（slide/report）の確定、基本情報・キーメッセージの収集、素材の受領整理、アイコン/ビジュアル方式の確認、report 時の reportType/読者/長さ・粒度/ビジュアル方針の確定、必須情報充足の判定と引き継ぎ。
+- 含む: output_mode（slide/report）の確定、読者価値ブリーフ（対象範囲・共有課題/願望・読後/視聴後の変化・専門の橋・深さの証拠・正式タイトル制約）の収集/合成、基本情報・キーメッセージの収集、素材の受領整理、アイコン/ビジュアル方式の確認、report 時の reportType/読者/長さ・粒度/ビジュアル方針の確定、必須情報充足の判定と引き継ぎ。
 - 含まない: スライド単位への分解・タイプ判定（structure-designer の責務）、セクション/段落設計（report-structure-designer の責務）、HTML生成、画像生成、mode 値域の送信前検証（validate-output-mode.py の責務）。
 
 ---
@@ -211,6 +211,14 @@ last-audited: 2026-07-05
 - **長さ・粒度**: {{読み物としての深さ・章数の目安}}
 - **ビジュアル方針**: {{SVG / Mermaid / Codex 画像 の希望（複数可）}}
 
+### 読者価値ブリーフ（slide / report 共通・R2/R3 へ一貫伝播）
+- **対象範囲・利用場面**: {{誰が、どの場面・判断で見る/読むか}}
+- **共有課題・願望**: {{対象範囲の人が専門知識を知らなくても既に気にしていること}}
+- **読後・視聴後の変化**: {{Before→After 1文。数字は入力素材・出典に根拠がある場合のみ}}
+- **専門の橋**: {{どの専門知識・手段が、その変化を実現するか}}
+- **深さの証拠**: {{入力素材にある数字・手順・失敗・前提・適用限界。無い項目は「未確認」}}
+- **正式タイトル制約**: {{正式名称・検索語・法務/監査上の固定表記が必要か。不要なら「なし」}}
+
 ### 基本情報
 - **タイトル**: {{タイトル}}
 - **目的**: {{目的}}
@@ -231,7 +239,7 @@ last-audited: 2026-07-05
 
 {{素材をそのまま記載}}
 ```
-> 意匠・技術層（Kanagawa 配色・最小フォント・SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は slide/report 共有の単一 SSOT であり、上記テンプレートでは mode 別に重複記載しない。分岐するのは output_mode と report 固有要件（コンテンツ意図層）のみ（§D）。
+> 読者価値ブリーフは schema 外の設計入力であり、下流で既存フィールド（title/audience/keyMessage/throughLine/sections）へ翻訳する。`structure.json` / `report-structure.json` に未定義フィールドを追加しない。素材にない数字・実績・失敗は作らず「未確認」とする。意匠・技術層（Kanagawa 配色・最小フォント・SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は slide/report 共有の単一 SSOT であり、mode 別に重複記載しない。
 
 ## 5.7 依存関係
 - 前提エージェント: なし（外部=ユーザー初期入力を起点とするワークフロー先頭エージェント）。
@@ -290,6 +298,9 @@ Layer 1 成功基準（必須情報確定・全プレースホルダ充足・素
 
 2. **誰に向けた発表・読み物ですか？**
    対象者（例: 社内の管理職、顧客、学生など）を教えてください。
+   あわせて、**その人が今どんな場面で困り、読み終えた（見終えた）とき何を判断・実行できるようになってほしいか**を教えてください。入力素材に数字・手順・失敗・前提・適用限界があれば、それも深さの証拠として使います。正式名称や検索語をタイトルに残す必要がある場合は明記してください。
+   - 例: 「毎月10時間かかる定型作業を減らしたい」→「自分の業務で自動化候補を選び、最初の1件を実行できる」
+   - 未回答項目は目的・キーメッセージ・素材から合成して確認します。素材にない数字や実績は作りません。
 
 3. **発表時間は何分ですか？**（slide の場合。report は不要）
 

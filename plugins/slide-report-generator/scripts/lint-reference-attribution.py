@@ -12,6 +12,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
+# dependencies: []
 # requires-python: ">=3.10"
 # ///
 """skill 私有 references/ の帰属 (attribution) 完全性ゲート。

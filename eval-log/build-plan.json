@@ -1,0 +1,54 @@
+{
+  "schema": "schemas/build-plan.schema.json",
+  "skill_name": "run-slide-report-generate",
+  "kind": "run",
+  "role_suffix": "",
+  "template": "run.md",
+  "goal_seek_engine": "inline",
+  "engine_profile": "",
+  "full_task_spec_graph": null,
+  "capability_gaps": [],
+  "flags": {
+    "with_prompts": false,
+    "with_evaluator": false,
+    "with_hooks": false,
+    "with_subagent": false,
+    "with_knowledge": false,
+    "with_goal_seek": true,
+    "feedback_contract_required": true,
+    "feedback_loop_deploy": true,
+    "content_review": true,
+    "verification_profile": "incremental"
+  },
+  "acceptance_tier": "fork",
+  "required_sections": [
+    "目的と出力契約",
+    "境界",
+    "主要ルール",
+    "評価・改善ループ契約",
+    "ゴールシーク実行",
+    "検証",
+    "注意点",
+    "変数化契約",
+    "追加リソース",
+    "セキュリティと権限"
+  ],
+  "required_deliverables": [
+    {
+      "id": "skill-md",
+      "type": "file",
+      "path": "SKILL.md",
+      "source": "kind"
+    },
+    {
+      "id": "frontmatter:feedback_contract",
+      "type": "frontmatter-key",
+      "path": "feedback_contract",
+      "source": "kind (loop 実行系)",
+      "verified_by": "lint-feedback-contract.py"
+    }
+  ],
+  "notes": [
+    "needs_independent_context=true だが with_subagent_hint 未設定。SubAgent 化の要否を layer_decisions に理由付きで記録すること。"
+  ]
+}

@@ -62,7 +62,7 @@ def task_node(index: int) -> dict:
         "created_at": NOW, "updated_at": NOW, "depends_on": [] if index == 0 else [f"task-{PHASES[index - 1]}"],
         "related_nodes": [], "resource_scope": [], "parent_feature": "feature-1",
         "feature_package_id": "feature-package/demo", "phase_ref": phase,
-        "file_path": f"tasks/{phase.lower()}.md", "template_id": "task", "template_version": "1.0.0",
+        "file_path": f"tasks/feature-1/{phase.lower()}.md", "template_id": "task", "template_version": "1.0.0",
         "confirmation_status": "confirmed", "evaluation_status": "pass",
         "confirmation_evidence": {"evaluator": "system-dev-plan-evaluator", "evidence_ref": "plan-findings.json",
                                   "evaluated_digest": HEX_DIGEST},

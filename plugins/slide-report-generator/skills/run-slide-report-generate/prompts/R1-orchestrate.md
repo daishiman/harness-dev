@@ -21,7 +21,7 @@
 ### 1.1 不変ルール
 - **スライド／レポートの新規生成**を単一 skill で駆動する主オーケストレータである。7 フェーズ総体ワークフロー (P1 hearing → P2 structure → P2.5 仕様確定ゲート → P3 生成 → P3.5 UI 検証 → P3.6 生成後評価) を **R1／R2／R3** の 3 フェーズへ集約する。
 - **意匠／技術コアは単一 SSOT で共有**し、**コンテンツ意図だけを `output_mode`(slide／report) で分岐**する。意匠を mode ごとに二重定義しない。
-- 全実行パスは plugin root = `$CLAUDE_PLUGIN_ROOT` 起点。vendor script = `$CLAUDE_PLUGIN_ROOT/vendor/scripts/…`、plugin-root glue = `$CLAUDE_PLUGIN_ROOT/scripts/…`。**repo-root ハードコード禁止** (配置非依存)。
+- 全実行パスは plugin root = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`。**repo-root ハードコード禁止** (配置非依存)。
 - 参照 agent は **Task の name で起動**する (ファイルパス依存なし)。各 agent は独立 context (isolation) で自身の 7 層本文に従う。
 
 ### 1.2 倫理ガード / 越境禁止
@@ -36,6 +36,7 @@
 
 ### 2.2 ドメインルール (output_mode 分岐契約)
 - **共有 SSOT (mode で重複させない)**: Kanagawa 配色 ／ 16:9 ／ 最小 1.4rem ／ GSAP ／ インライン SVG2 ／ 印刷 CSS ／ letterbox ／ Codex Image2 ／ style genome ／ 決定論レンダラ ／ `theme`・`aiVisual` schema `$defs`。
+- **共有コンテンツ契約**: hearing-facilitator が作る読者価値ブリーフ（対象範囲・共有課題/願望・読後/視聴後の変化・専門の橋・深さの証拠・正式タイトル制約）を R1→R2→R3 へ一貫伝播する。下流は既存 schema の title/audience/keyMessage/throughLine/sections へ翻訳し、schema 外フィールドや素材にない数字・実績を発明しない。
 - **mode 別 (コンテンツ意図のみ分岐)**:
   - `slide`: 1 スライド 1 メッセージ ／ chip 強制 ／ 長文禁止 ／ 16:9 ／ 97 slideType ／ `../../schemas/structure.schema.json`。
   - `report`: 読み物 (文章多め可) ／ セクション＋段落 ／ 1 項目 1 ビジュアル最適化 ／ HTML レポート ／ 4 reportType ／ `../../schemas/report-structure.schema.json` (`sections[]` 主配列・structure と共通コア `$defs` 共有)。
@@ -48,6 +49,7 @@
 |---|---|---|---|
 | concept | 自然文 (構想) | yes | 生成対象のトピック／目的 |
 | output_mode | slide \| report | yes | R1 で hearing-facilitator が確定 |
+| reader_value_brief | 自然文の構造化ブリーフ | yes | 対象範囲・共有課題/願望・読後/視聴後の変化・専門の橋・深さの証拠・正式タイトル制約。未確認値は未確認と明示 |
 | reportType | internal-analysis \| client-proposal \| tech-doc \| learning | report 時 yes | report モードの骨格を決定 |
 | audience / length / visual_policy | 自然文 | report 時 yes | 読者・長さ・ビジュアル方針 |
 | out_dir | path | no | 任意 `--out-dir <path>` |
@@ -69,10 +71,10 @@
 | report-structure-types | references/report-structure-types.md | report 4 reportType 骨格 | report-structure-designer |
 | d3-diagram-rules | references/d3-diagram-rules.md | D3 インタラクティブ図解の意匠/実装規範 | d3-diagram-designer |
 | data-visualization-rules | references/data-visualization-rules.md | データ可視化 (グラフ/chart) 設計規範 | data-visualizer |
-| html-generation-rules | references/html-generation-rules.md | slide HTML LLM 経路生成規範 (CONST_001-038) | html-generator |
+| html-generation-rules | references/html-generation-rules.md | slide HTML LLM 経路生成規範 (CONST_001-039) | html-generator |
 | layout-optimization-rules | references/layout-optimization-rules.md | レイアウト最適化 (文字数・カード/フォント・印刷 pt 換算) | layout-optimizer |
 | ui-quality-checklist | references/ui-quality-checklist.md | slide UI 品質 S 系観点定義・判定基準 | ui-quality-reviewer |
-| report-quality-checklist | references/report-quality-checklist.md | report 品質観点 RQ1-20 (読み物文体/段落密度/1項目1ビジュアル/reportType 骨格) | report-quality-reviewer |
+| report-quality-checklist | references/report-quality-checklist.md | report 品質観点 RQ1〜RQ34 (読み物文体/段落密度/1項目1ビジュアル/reportType 骨格/読者中心入口) | report-quality-reviewer |
 | deck-evaluation-rubric | references/deck-evaluation-rubric.md | 生成後評価 (30 種思考法 mode-aware rubric・評価次元) | deck-evaluator |
 | ai-image-pipeline | references/ai-image-pipeline.md | Codex Image2 全面画像/差替パイプライン規範 | ai-image-diagram-producer |
 | resource-map | references/resource-map.yaml | reference の帰属・progressive disclosure マップ (lint-reference-attribution.py 網羅性検査) | (map) |
@@ -82,15 +84,15 @@
 ### 3.2 外部ツール / agent / scripts
 
 **統率する agent (Task の name で起動・15 体)**:
-- R1: `hearing-facilitator` (mode 推定・確定、`isolation: inherit` で会話履歴保持)。
+- R1: `hearing-facilitator` (mode・読者価値ブリーフを推定/確定、`isolation: inherit` で会話履歴保持)。
 - R2: `structure-designer` (slide) ／ `report-structure-designer` (report) ／ `d3-diagram-designer` ／ `data-visualizer` ／ `visual-strategist` (report の 1 項目 1 ビジュアル三択) ／ `structure-validator` (仕様確定ゲート)。
 - R3: `html-generator` (slide LLM 経路) ／ `slide-renderer` (slide 決定論経路) ／ `report-composer` (report 経路) ／ `ai-image-diagram-producer` (画像明示時) ／ **slide 品質補正** `layout-optimizer` ／ `ui-quality-reviewer` ／ **report 品質補正** `report-quality-reviewer` (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守) ／ `deck-evaluator` (生成後評価 30 種思考法・mode-aware)。
 
 **plugin-root glue (Bash python3)**:
-- `$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py` — 送信前 mode/reportType 値域検証 (fail-closed exit 2)。`--preflight` で node/npm/node_modules/codex CLI を fail-soft 検出。
-- `$CLAUDE_PLUGIN_ROOT/scripts/validate-report-visual.py <report.html> --structure <report-structure.json> --require-structure --json` — report 決定論視覚ゲート (report gate は構造正本必須・欠落 exit 2、section 構造/1項目1ビジュアル/段落密度/placeholder/印刷・0=PASS/1=崩れ/2=usage)。slide の `verify-slides.js`/`validate-print.js` に対称な report 版。
+- `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py --install` — 初回/更新後にlockfile依存とOS/CPU別Chromiumをplugin-local `vendor/playwright-browsers/`へ復元。続く `validate-output-mode.py --preflight` は node/npm/browser/codex CLI を fail-soft 検出する。
+- `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py <report.html> --structure <report-structure.json> --require-structure --json` — report 決定論視覚ゲート (report gate は構造正本必須・欠落 exit 2、section 構造/1項目1ビジュアル/段落密度/placeholder/印刷・0=PASS/1=崩れ/2=usage)。slide の `verify-slides.js`/`validate-print.js` に対称な report 版。
 
-**vendor scripts (Bash node・`$CLAUDE_PLUGIN_ROOT/vendor/scripts/…`・byte 携行/書換禁止)**:
+**vendor scripts (Bash node・`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`・byte 携行/書換禁止)**:
 - `validate-structure.js` — 構成の仕様確定ゲート (V-001〜043・spec-registry SR-ID 連動)。
 - `render-slide.cjs` — slide 決定論レンダラ (再現性 100%)。
 - `render-report.js` — report.html 決定論生成。
@@ -108,14 +110,14 @@
 - `validate-structure.js` の仕様確定ゲート判定: **PASS→R3** ／ **WARN→該当 ID をユーザー提示し承認後 R3** ／ **FAIL→R2 設計へ差し戻し** (structure-designer / report-structure-designer 再設計)。
 - `evaluate-deck.js` が **exit 4 (FAIL)** → 未達指摘を findings 化し R3 の生成/品質補正へ反映して再評価 (goal-seek reloop)。`verify-slides.js`/`validate-print.js` の視覚崩れ CRITICAL も同様。
 - **codex は画像生成器ではない**: `ai-image-diagram-producer` 起動時は着手前に実 text-to-image backend を確認する。`meta.source` は実体名 `codex-image2` を記録し plain `codex` は不可。
-- 環境エラー (node/node_modules/codex CLI 不在) は `--preflight` で fail-soft 検出。mode 検証のみ fail-closed。
+- 環境エラーは `--preflight` で検出する。node/npm不在は停止、plugin-local Chromium欠落は `setup-playwright.py --install` を1回実行して再検査、codex CLI不在は画像明示時のみ停止する。mode 検証は常に fail-closed。
 
 ### 4.2 観測 / ロギング
-- 進捗・次アクションは `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/workflow-manager.js" <out-dir> --check --next` で確認。
+- 進捗・次アクションは `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/workflow-manager.js" <out-dir> --check --next` で確認。
 - 生成後評価は `<out-dir>/evaluation-report.json` / `.md` に残す。未達は生成レポートの「未達指摘一覧」へ列挙する。
 
 ### 4.3 配置非依存 / セキュリティ
-- 全パスは `$CLAUDE_PLUGIN_ROOT` 起点。repo-root 直書き禁止。
+- 全パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。repo-root 直書き禁止。
 - 全面画像デッキは CSS/JS を `<style>`/`<script>` にインライン化した自己完結 HTML (`build-deck-html.js`)。別ファイル版は環境で消失しページ送り不可事故になりうる。
 
 ### 4.4 最大反復回数
@@ -127,13 +129,14 @@
 - 本 prompt 自体が**主オーケストレータ**。R1/R2/R3 で上記 15 worker agent を Task name 起動で統率し、決定論ゲート (validate-output-mode.py / validate-structure.js / evaluate-deck.js) を停止条件とする。
 
 ### 5.2 ゴール定義
-- 目的: `output_mode`(slide／report) を確定し意匠／技術コアを共有したまま、**構成設計 → 仕様確定ゲート → 生成 → 生成後評価 (30 種思考法)** まで駆動し、slide は「1 スライド 1 メッセージ／長文なし」、report は「読み物・1 項目 1 ビジュアル」で**視覚崩れ 0** の成果物を出力する。
+- 目的: `output_mode` と読者価値ブリーフを確定し意匠／技術コアを共有したまま、**構成設計 → 仕様確定ゲート → 生成 → 生成後評価**まで駆動する。両 mode とも「想定読者の共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動」を持ち、slide は「1 スライド 1 メッセージ／長文なし」、report は「読み物・1 項目 1 ビジュアル」で視覚崩れ 0 にする。
 - 背景: 意匠を mode ごとに二重定義すると SSOT が破綻し再現性を失う。mode を送信前に fail-closed 検証せず下流へ流すと仕様確定ゲート入力が欠落し手戻りする。
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] `output_mode` と (report 時) `reportType` が確定し `validate-output-mode.py` の値域検証 (exit 0) を通過
-- [ ] 確定 mode 一式 (mode/reportType/読者/長さ/ビジュアル方針) が下流 R2/R3 の全 agent へ一貫伝播し仕様確定ゲート入力の欠落が 0 件
+- [ ] 読者価値ブリーフの6項目が入力素材に基づく値または「未確認」で確定し、mode/reportType/読者/長さ/ビジュアル方針とともに下流 R2/R3 へ一貫伝播している
 - [ ] 構成設計 (structure.json / report-structure.json) が該当 schema に準拠
+- [ ] 入口が想定読者の共有課題と変化を先に渡し、本論に確認済みの数字・手順・失敗・条件・限界があり、各主要セクションに自分へ移す橋がある。正式名称・検索性が必要な文書は主タイトルを維持している
 - [ ] 仕様確定ゲート (`structure-validator` + `validate-structure.js`) が PASS (WARN は承認済 / FAIL なし)
 - [ ] 生成経路 (slide LLM / slide 決定論 / report / 画像明示) で成果物 (`index.html` / `report.html`) を生成
 - [ ] 全面画像時は `meta.source=codex-image2` で自己完結 HTML を生成し `validate-ai-image-assets.js` PASS
@@ -143,9 +146,9 @@
 - [ ] 責務外 (既存修正 / 横断整合) に踏み込んでいない
 
 ### 5.4 実行方式 (決定論)
-- **mode を先に fail-closed 検証する**: R1 で `hearing-facilitator` が `output_mode`/`reportType`/読者/長さ/ビジュアル方針を確定 → `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]` を実行。exit 2 なら伝播せず停止。exit 0 で確定 mode を下流全 agent へ一貫伝播。
-- **構成設計は mode 分岐で dispatch する**: slide=`structure-designer` (図解要時に `d3-diagram-designer`/`data-visualizer` 併用) ／ report=`report-structure-designer` + `visual-strategist` (1 項目 1 ビジュアルの三択 `svg`/`mermaid`/`codex-image`/`none`)。
-- **仕様確定ゲートで P3 進入を制御する**: `structure-validator` を起動し `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-structure.js" <structure|report-structure>` を実行。PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し。
+- **mode と読者価値を先に確定する**: R1 で `hearing-facilitator` が `output_mode`/読者価値ブリーフ/`reportType`/読者/長さ/ビジュアル方針を確定 → mode 値域を `validate-output-mode.py` で fail-closed 検証。exit 0 で一式を下流全 agent へ一貫伝播し、素材にない数字・実績は未確認のまま渡す。
+- **構成設計は mode 分岐で dispatch する**: slide=`structure-designer` ／ report=`report-structure-designer` + `visual-strategist`。両者は読者価値ブリーフを既存 schema フィールドへ翻訳し、入口ホリゾンタル・中身バーティカル・主要セクションの自分ごと化を設計する。
+- **仕様確定ゲートで P3 進入を制御する**: `structure-validator` を起動し `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <structure|report-structure>` を実行。PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し。
 - **生成経路を mode／指示で選択する**: slide LLM=`html-generator` ／ slide 決定論 (推奨)=`slide-renderer`+`render-slide.cjs` ／ report=`report-composer`+`render-report.js` ／ 画像明示=`ai-image-diagram-producer` (`build-image-prompts.js`→`generate-images-codex.js`→`build-deck-html.js`)。品質補正は mode 対称: slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer` (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守)。
 - **生成後評価は mode-aware で回す**: `deck-evaluator` を思考リセット後 30 種思考法で起動。slide=視覚崩れ/1 メッセージ、report=可読性/図解適合/情報密度の mode 別 rubric 次元で区分評価。改善→再評価は最大 3 周。
 - ループは分離 context で完結させ、親へは最終成果物パス + 生成レポート + exit code のみ返却する。
@@ -157,7 +160,7 @@
 - 委譲: 既存成果物の局所修正=`run-slide-report-modify` ／ シリーズ横断整合=`run-cross-deck-review`。本 skill は新規生成に限定。
 
 ### 6.2 ハンドオフ / 並列性 (R1 → R2 → R3 の agent dispatch)
-- **R1 → R2**: 確定 mode 一式を全下流 agent の入力へ接続。伝播前に `validate-output-mode.py` で値域検証。
+- **R1 → R2**: 確定 mode 一式と読者価値ブリーフを全下流 agent の入力へ接続。伝播前に `validate-output-mode.py` で mode 値域を検証し、ブリーフは schema 外フィールドとして構造 JSON に混入させない。
 - **R2 内**: `structure-designer`/`report-structure-designer` の構成 JSON を `structure-validator` の仕様確定ゲート入力へ。図解 agent (`d3-diagram-designer`/`data-visualizer`/`visual-strategist`) は構成設計に併走。
 - **R2 → R3**: ゲート PASS の構成 JSON を生成 agent の入力へ。
 - **R3 内**: 生成 agent の成果物を品質補正 (slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer`) → `deck-evaluator` (生成後評価) へ。評価 FAIL は生成/補正へ findings を戻し reloop。
@@ -180,6 +183,7 @@
 | 観点 | 確認内容 | 判定 |
 |---|---|---|
 | mode 値域/伝播 | `validate-output-mode.py` PASS / 確定 mode が全下流 agent へ伝播し仕様確定ゲート入力欠落 0 (IN1) | PASS/FAIL |
+| 読者価値/深さ | 読者価値ブリーフが R1→R2→R3 で保持され、入口・本文の深さ・自分へ移す橋へ反映。正式名称/検索性と事実性を毀損していない | PASS/FAIL |
 | 構成適合 | 構成 JSON が該当 schema 準拠 / 仕様確定ゲート (`validate-structure.js`) PASS (WARN 承認済) | PASS/FAIL |
 | 生成完全性 | 生成経路で成果物を生成 / 画像明示は `meta.source=codex-image2` + `validate-ai-image-assets.js` PASS | PASS/FAIL |
 | 視覚崩れ 0 | `verify-slides.js`/`validate-print.js` CRITICAL 0 / slide=1 メッセージ・report=1 項目 1 ビジュアル | PASS/FAIL |
@@ -192,4 +196,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-まず **R1**: `Task` で `hearing-facilitator` を `isolation: inherit` で起動し会話履歴から `output_mode`(slide/report) を推定確定せよ。report なら `reportType`(4 enum)/読者/長さ/ビジュアル方針も確定する。ユーザーが「画像生成でスライドを作る」等を明示したときのみ全面画像モード (CONST_006) を確定する。確定後 `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]` を実行し、exit 2 なら停止して逸脱をユーザー提示、exit 0 なら確定 mode 一式を下流全 agent へ一貫伝播する。次に **R2**: slide なら `Task` で `structure-designer` を起動し `structure.json` (`../../schemas/structure.schema.json` 準拠) を設計 (図解要時 `d3-diagram-designer`/`data-visualizer` 併用)、report なら `report-structure-designer` + `visual-strategist` で `report-structure.json` (`../../schemas/report-structure.schema.json` 準拠) を設計。続いて `Task` で `structure-validator` を起動し `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-structure.js" <structure|report-structure>` を実行、PASS→R3 / WARN→該当 ID を提示し承認後 R3 / FAIL→R2 設計へ差戻し。最後に **R3**: 経路を選び (`slide` 決定論=`slide-renderer`+`render-slide.cjs` 推奨 / `slide` LLM=`html-generator` / `report`=`report-composer`+`render-report.js` / 画像明示=`ai-image-diagram-producer` で `build-image-prompts.js`→`generate-images-codex.js`→`build-deck-html.js`) 成果物を生成し、品質補正は mode 対称に (slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer`) 適用、slide は `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js" ./index.html --check-ratio` と `validate-print.js`・report は `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-report-visual.py" ./report.html --structure ./report-structure.json --require-structure --json` で視覚崩れ 0 を確認する (構造正本欠落は exit 2 で停止)。最後に `Task` で `deck-evaluator` を思考リセット後に起動し `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" <out-dir>` (0=PASS/4=FAIL) を含む mode-aware 生成後評価を実行、FAIL は findings を生成/補正へ戻し最大 3 周 reloop する。ループは `Task` で SubAgent へ fork し、親へは最終成果物パス + 生成後評価スコア + 未達指摘一覧のみ返す。完成判定は必ず実体 (Read / PNG・WebP 署名 / スクショ目視) で行う。前置き禁止。
+まず **R1**: `Task` で `hearing-facilitator` を起動し、`output_mode` と読者価値ブリーフ（対象範囲/共有課題・願望/読後・視聴後の変化/専門の橋/深さの証拠/正式タイトル制約）を確定する。report なら `reportType`/読者/長さ/ビジュアル方針も確定し、mode 値域を `validate-output-mode.py` で検証する。素材にない数字・実績は作らず未確認とする。次に **R2**: slide は `structure-designer`、report は `report-structure-designer` + `visual-strategist` を起動し、ブリーフを既存 schema の title/audience/keyMessage/throughLine/sections へ翻訳する。入口は想定読者の共有課題と変化を先に渡し、本論は確認済みの数字・手順・失敗・条件・限界まで掘り、各主要セクションに自分へ移す橋を置く。正式名称・検索性・適用範囲が必要なら主タイトルを保持する。`structure-validator` で PASS→R3 / WARN→承認後 R3 / FAIL→R2。最後に **R3**: mode 対応経路で生成し、slide は UI/print、report は `report-quality-reviewer` RQ1〜RQ34 と report visual gate で補正する。`deck-evaluator` は D5 読者フックを含む mode-aware 評価を行い、FAIL は最大3周 reloop。完成判定は実体で行い、親へ成果物パス・評価スコア・未達指摘だけを返す。前置き禁止。

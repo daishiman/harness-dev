@@ -16,7 +16,7 @@ disable-model-invocation: false
 2. vendor の workflow-manager で現在 Phase と次アクションを判定する:
 
    ```bash
-   node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/workflow-manager.js" "$ARGUMENTS" --check --next
+   node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/workflow-manager.js" "$ARGUMENTS" --check --next
    ```
 
    - `--check`: プロジェクトディレクトリのファイル状態 (structure.md / index.html / styles.css / scripts.js / .workflow-state.json 等) から現在 Phase を判定・検証する。
@@ -27,4 +27,4 @@ disable-model-invocation: false
 
 - `$ARGUMENTS` (project-dir) が未指定の場合は、直近に生成した出力ディレクトリのパスを尋ねてから実行する。
 - report mode の出力 (`report.html` / `report-structure.json`) でも同じ workflow-manager でファイル状態から進行を確認できる。
-- node が未導入の場合は `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --preflight` で実行環境の欠落を確認する。
+- `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --preflight` で node/npm と plugin-local Chromium の状態を確認する。Chromium欠落時は `setup-playwright.py --install` でプラグイン配下へ復元する。

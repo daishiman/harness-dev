@@ -1,166 +1,532 @@
 {
-  "skill_name": "run-company-master-build",
+  "skill_name": "run-slide-report-generate",
   "skill_kind": "run",
-  "build_mode": "create",
-  "skill_path": "plugins/company-master/skills/run-company-master-build",
+  "build_mode": "update",
+  "skill_path": "plugins/slide-report-generator/skills/run-slide-report-generate",
+  "brief_path": "eval-log/skill-brief.json",
   "source_docs": [
     "eval-log/skill-brief.json",
-    "plugins/skill-creator/skills/run-build-skill/SKILL.md",
-    "plugins/skill-creator/skills/run-build-skill/templates/run.md",
-    "plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
-    "plugins/contract-generator/.claude-plugin/plugin.json",
-    "plugins/contract-generator/hooks/hook-guard-secret.py",
-    "plugins/skill-intake/notion-config.fixed.json",
-    "plugins/skill-intake/scripts/notion_config.py",
-    "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md"
+    ".claude/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/SKILL.md",
+    "plugins/slide-report-generator/references/report-narrative-logic.md",
+    "plugins/slide-report-generator/references/structure.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/references/structure-design-rules.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/references/report-structure-types.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/references/report-quality-checklist.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/references/deck-evaluation-rubric.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/references/html-generation-rules.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md",
+    "plugins/slide-report-generator/skills/run-slide-report-modify/references/modification-rules.md",
+    "plugins/slide-report-generator/skills/run-slide-report-modify/references/report-modification-rules.md",
+    "plugins/harness-creator/skills/run-build-skill/SKILL.md"
   ],
   "context_map_decision": {
-    "map": "run-build-skill references/resource-map.yaml を読み baseline-skill-build カテゴリの章を選択",
-    "task_category": "baseline-skill-build",
+    "map": "run-build-skill references/resource-map.yaml の task category 選択に基づく update-mode 最小読込。全章一括ロードは行わず、変更 claim (読者価値知見のライフサイクル保持) に関係する reference/prompt のみ Read",
+    "task_category": "existing-skill-update",
     "selected_docs": [
       "eval-log/skill-brief.json",
-      "plugins/skill-creator/skills/run-build-skill/SKILL.md",
-      "plugins/skill-creator/skills/run-build-skill/templates/run.md",
-      "plugins/skill-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
-      "plugins/contract-generator/.claude-plugin/plugin.json",
-      "plugins/contract-generator/hooks/hook-guard-secret.py",
-      "plugins/skill-intake/notion-config.fixed.json",
-      "plugins/skill-intake/scripts/notion_config.py",
-      "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md"
+      ".claude/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/SKILL.md",
+      "plugins/slide-report-generator/references/report-narrative-logic.md",
+      "plugins/slide-report-generator/references/structure.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/references/structure-design-rules.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/references/report-structure-types.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/references/report-quality-checklist.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/references/deck-evaluation-rubric.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/references/html-generation-rules.md",
+      "plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md",
+      "plugins/slide-report-generator/skills/run-slide-report-modify/references/modification-rules.md",
+      "plugins/slide-report-generator/skills/run-slide-report-modify/references/report-modification-rules.md",
+      "plugins/harness-creator/skills/run-build-skill/SKILL.md"
     ]
   },
   "design_model": {
-    "intent": "会社名/住所/法人番号の断片から信頼できる企業マスタ行を gBizINFO 確定法人番号で一意同定し確度付きで補完・維持する",
-    "contract": "resolve(同定)→enrich(属性補完) の2段で処理し、9列(6属性+情報の確かさ+備考+確認用URL)を notion_config.get_db_id('company-master') 解決のDBへ確度付きで upsert する",
-    "boundary": "同定(resolve)と属性補完(enrich)・確度保持のみ。契約書生成/与信判断/有料企業DB契約は対象外。電話番号は形式チェックのみで正確性は非保証",
-    "execution": "Skill(同定の判断/対話/ゴールシーク制御)+python3 scripts(gBizINFO照会/KEN_ALL逆引き/Web検索/Notion upsert/backfill)。MCPは書込不可のため不採用",
-    "feedback": "precondition gate(token不在 fail-closed exit2)と外部障害時のJSONL退避リプレイ(eval-log/backfill-replay.jsonl)。誤値より空欄優先で要確認保留"
+    "intent": "読者価値知見 (入口ホリゾンタル・中身バーティカル・自己紹介起点禁止・ターゲット絞り≠入口狭窄) を、生成・修正・評価の全ライフサイクルで退化させない保持ガードとして追補する",
+    "contract": "既存の正本 report-narrative-logic.md §7 と 2レイヤ×2モードの一貫マトリクス (構成設計層 CONST_008/RCONST_007 → 生成層 CONST_039/CCONST_007 → 評価層 D5/RQ31-34) を形成する additive な規則追加のみ。schema/機械ゲートへの意味判定持込みはしない (意図的設計の尊重)",
+    "boundary": "generate skill 資産 + plugin 共有 structure.md + modify skill 保持ガードまで。cross-deck-review への軸追加は bd memory へ先送り",
+    "execution": "Edit 差分のみ (CD-002 update 全書き換え禁止)。帯参照 (CONST_001-039 / 001-013) は grep で残存ゼロを機械確認",
+    "feedback": "focused combined review (assign-skill-design-evaluator 相当・4条件+rubric・1 context・再評価1回) を両 skill に実施し verdict を eval-log へ保存"
   },
   "build_flow_coverage": [
-    {"step": "problem-definition", "status": "PASS", "evidence": "skill-brief.json goal/purpose_background/checklist で課題定義(断片→信頼マスタ)"},
-    {"step": "execution-layer", "status": "PASS", "evidence": "layer_decisions で Skill+script 採用・MCP不採用・Hook(二段防御)採用を決定"},
-    {"step": "classification", "status": "PASS", "evidence": "kind=run/L1/role_suffix=generator に分類"},
-    {"step": "naming", "status": "PASS", "evidence": "run-company-master-build(dir==name・plugin名非包含・lint-skill-name PASS)"},
-    {"step": "frontmatter", "status": "PASS", "evidence": "commonCore(name/description/kind/version/owner)+effect=external-mutation・description発動条件のみtrigger2件"},
-    {"step": "body", "status": "PASS", "evidence": "SKILL.md 本文300行未満・ゴールシーク構造(Goal+Why+Checklist+Loop+配線+検証)・詳細はreferencesへ退避"},
-    {"step": "support-files", "status": "PASS", "evidence": "references4点(columns/data-sources/remarks-templates/resource-map)/scripts9点(notion_config/normalize/ken_all/remarks/validate_company_master含む)/prompts1点(R1)"},
-    {"step": "permissions-hooks", "status": "PASS", "evidence": "二段防御: hooks/hook-guard-secret.py(PreToolUse/Bash, plugin.json配線)が Notion/gBizINFO トークンの平文出力/誤削除をブロック + precondition gate fail-closed"},
-    {"step": "validation", "status": "PASS", "evidence": "Step4 lint群 exit0・deterministic_checks(a-h)を validate_company_master.py で実判定・KEN_ALL逆引き/normalize共有/verify_phoneクロスチェック/alt_key決定性をネット非依存単体検証(ダミーCSV行・DL失敗フォールバック含む)"},
-    {"step": "operation-improvement", "status": "PASS", "evidence": "backfill(空欄列/要確認行のみ)+JSONL退避リプレイ+/run-skill-feedback 周知(plugin.json description)"}
+    {
+      "step": "problem-definition",
+      "status": "PASS",
+      "evidence": "Explore agent による K1-K4 反映ギャップ調査: 正本 report-narrative-logic.md §7 は反映済み、ギャップは (a) modify 経路の保持ガード欠落 (b) slide LLM 生成器の保持ガード欠落 (c) structure.md 旧自己紹介導入例の K3 矛盾 (d) CONST/RCONST 帯の ID 曖昧さ"
+    },
+    {
+      "step": "design",
+      "status": "PASS",
+      "evidence": "additive 設計: CONST_039 (html-generation-rules・report 側 CCONST_007 と対称) / CONST_013・RCONST_013 (modify 両経路・既存帯の次番号) / D5 自己紹介起点明文化 / structure.md 注記。ID 衝突は namespace 注記で解消"
+    },
+    {
+      "step": "implementation",
+      "status": "PASS",
+      "evidence": "Edit 差分のみで 12 ファイル更新: html-generation-rules.md (CONST_039)・R3-agent-html-generator.md (帯+checklist)・deck-evaluation-rubric.md (D5)・structure.md (導入注記×3箇所)・modification-rules.md (CONST_013)・report-modification-rules.md (RCONST_013+namespace 注記)・modify SKILL.md/workflow-manifest.json/R2/R1 prompt (帯 013)・generate SKILL.md/R1-orchestrate.md/resource-map.yaml (帯 039)"
+    },
+    {
+      "step": "verification",
+      "status": "PASS",
+      "evidence": "P0 lint 群 (name/description/tree/frontmatter/script-frontmatter/completeness) 両 skill PASS・lint-ssot-duplication PASS・lint-reference-attribution PASS・workflow-manifest JSON valid・grep で旧帯 (CONST_001-038/001-012) 残存ゼロ・route C02 lint-agent-prompt-content で編集 prompt (R3-agent-html-generator/R2-agent-slide-report-modifier) の違反ゼロ"
+    },
+    {
+      "step": "evaluation",
+      "status": "PASS",
+      "evidence": "focused combined review: generate=elegance PASS/rubric PASS score100 (iterations 2・sha 48719d73)・modify=elegance PASS/rubric PASS score94 (iterations 2・sha f9dd5621)。レビュー検出の帯伝播漏れ (R1-orchestrate 4箇所・router 要約 3箇所) は修正済み・再評価で解消確認"
+    },
+    {
+      "step": "completion",
+      "status": "PASS",
+      "evidence": "bash scripts/sync-skills-to-claude.sh --apply 実行 (conflict=0)。フォローアップは bd memory followup-cross-deck-reader-hook-axis へ記録"
+    },
+    {
+      "step": "execution-layer",
+      "status": "PASS",
+      "evidence": "実行レイヤー変更なし。保持ガードは reference 規範 (LLM 判断層) へ配置し、機械ゲート (validate-structure.js) への意味判定持込みは意図的に不採用 (layer_decisions 参照)"
+    },
+    {
+      "step": "classification",
+      "status": "PASS",
+      "evidence": "kind=run (skill サブ種別) を維持。分類変更なし"
+    },
+    {
+      "step": "naming",
+      "status": "PASS",
+      "evidence": "既存名 run-slide-report-generate を維持 (run- prefix・ref-skill-naming-convention 準拠)。改名なし"
+    },
+    {
+      "step": "frontmatter",
+      "status": "PASS",
+      "evidence": "SKILL.md frontmatter は不変 (validate-frontmatter PASS)。feedback_contract IN1/OUT1 も既存のまま (OUT1 が本知見の読者フック受入基準を既に内包)"
+    },
+    {
+      "step": "body",
+      "status": "PASS",
+      "evidence": "SKILL.md 本文変更は帯表記 CONST_001-038→039 の置換のみ (行数不変・300 行以下維持)"
+    },
+    {
+      "step": "support-files",
+      "status": "PASS",
+      "evidence": "references/prompts への Edit 差分のみ: html-generation-rules.md (CONST_039)・deck-evaluation-rubric.md (D5)・R3-agent-html-generator.md (帯+checklist)・resource-map.yaml (帯)。新規ファイル追加なし"
+    },
+    {
+      "step": "permissions-hooks",
+      "status": "PASS",
+      "evidence": "allowed-tools・hook 配線とも変更なし"
+    },
+    {
+      "step": "validation",
+      "status": "PASS",
+      "evidence": "P0 lint 群+completeness+ssot-duplication+reference-attribution+route C02 content lint PASS・grep で旧帯残存ゼロ (詳細は verification step)"
+    },
+    {
+      "step": "operation-improvement",
+      "status": "PASS",
+      "evidence": "focused combined review の findings (帯伝播漏れ 7箇所) を反映し再評価 PASS (iterations=2)。自動化候補: 帯表記と実定義数の突合 lint (bd memory 記録)"
+    }
   ],
   "doc_coverage": [
-    {"doc": "02-skill-structure", "status": "PASS", "evidence": "SKILL.md+references+scripts+prompts の標準構成"},
-    {"doc": "03-frontmatter", "status": "PASS", "evidence": "commonCore充足・description発動条件のみ・trigger句2件"},
-    {"doc": "04-invocation-permissions", "status": "PASS", "evidence": "user-invocable=true/allowed-tools限定/effect=external-mutation"},
-    {"doc": "05-layering", "status": "PASS", "evidence": "Skill制御層(同定判断)+script決定論層(照会/正規化/upsert)の二層分離"},
-    {"doc": "06-classification-naming", "status": "PASS", "evidence": "run接頭辞・kebab-case・plugin名非包含・dir==name"},
-    {"doc": "07-progressive-disclosure", "status": "PASS", "evidence": "resource-map.yaml索引・本文100行超の詳細をreferencesへ退避"},
-    {"doc": "08-skill-writing-guidelines", "status": "PASS", "evidence": "description trigger句2件・日本語本文・末尾『使う』"},
-    {"doc": "09-evaluation-orchestration", "status": "N/A", "reason": "assign-skill-design-evaluator は親context制約により別途fork実行(Step5 skipped)"},
-    {"doc": "10-subagents-hooks-integration", "status": "PASS", "evidence": "PreToolUse hook(hook-guard-secret.py)をplugin.jsonに配線。重周回時のみAgentへfork"},
-    {"doc": "11-templates", "status": "PASS", "evidence": "templates/run.md を写経して骨格生成・R1は7層markdownテンプレ写経"},
-    {"doc": "13-checklists", "status": "PASS", "evidence": "ゴールシーク完了チェックリスト13項目を二値で記載(brief.checklist反映)"},
-    {"doc": "14-dynamic-context-injection", "status": "PASS", "evidence": "DB ID/tokenを notion_config 経由で注入・本文直書きなし"},
-    {"doc": "15-official-source-notes", "status": "PASS", "evidence": "capability-manifest commonCore・gBizINFO公式API仕様(X-hojinInfo-api-token)を参照"},
-    {"doc": "16-official-skills-reference", "status": "PASS", "evidence": "templates/run.md(公式skeleton)準拠"},
-    {"doc": "26-meta-skill-dogfooding", "status": "N/A", "reason": "本スキルは企業マスタ補完の機能スキルでメタ自己適用対象外"},
-    {"doc": "27-rubric-governance-runbook", "status": "N/A", "reason": "rubric非編集・L1のためrubric_refs空"},
-    {"doc": "28-script-execution-model", "status": "PASS", "evidence": "scripts は python3標準ライブラリ・PEP723拡張frontmatter付・lint-script-frontmatter PASS"},
-    {"doc": "29-multi-project-rubric-composition", "status": "N/A", "reason": "単一プロジェクト・rubric合成なし"},
-    {"doc": "30-paradigm-analogy-map", "status": "PASS", "evidence": "skill-intake/contract-generator の notion_config vendoring + hook二段防御パターンを類比適用"},
-    {"doc": "31-output-routing-adapter-architecture", "status": "N/A", "reason": "出力先はNotion企業マスタDB固定・アダプタ層不要"},
-    {"doc": "32-creator-kit-implementation-ledger", "status": "PASS", "evidence": "本traceとskill-brief.jsonで生成物台帳を記録"},
-    {"doc": "33-change-governance", "status": "PASS", "evidence": "既存非空セル非上書き・新規plugin追加のみで既存スキル破壊変更なし"},
-    {"doc": "34-plugin-governance-roadmap", "status": "PASS", "evidence": "新規plugin company-master/に配置・notion_config/hookをvendoring実体配備(cross-plugin参照回避)"},
-    {"doc": "35-meta-harness-feedback-loop", "status": "N/A", "reason": "ナレッジループ未配線(企業マスタDB自体がSSOTのためLoop A不要)"}
+    {
+      "doc": "15-official-source-notes",
+      "status": "PASS",
+      "evidence": "Skill(ref-yaml-spec-fetcher) を起動し yaml-spec-cache.md を Read。last_fetched=2026-07-13 (30日以内・鮮度OK)"
+    },
+    {
+      "doc": "16-official-skills-reference",
+      "status": "PASS",
+      "evidence": "yaml-spec-cache.md の skills 仕様セクションを確認。frontmatter 仕様に影響する変更なし (本 build は SKILL.md frontmatter を変更しない)"
+    },
+    {
+      "doc": "02-skill-structure",
+      "status": "PASS",
+      "evidence": "update は既存構造 (SKILL.md router + references SSOT + prompts 薄化アダプタ) を維持。新規ファイル追加なし"
+    },
+    {
+      "doc": "07-progressive-disclosure",
+      "status": "PASS",
+      "evidence": "SKILL.md 本文への追加は帯表記の 038→039 置換のみ (行数不変・300 行以下維持)"
+    },
+    {
+      "doc": "09-evaluation-orchestration",
+      "status": "PASS",
+      "evidence": "生成本体は採点せず。評価は独立 context の focused combined review (2 agent) が実施し verdict を eval-log へ保存。緑化なし (帯伝播漏れ FAIL を修正→再評価で PASS)"
+    },
+    {
+      "doc": "03-frontmatter",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "04-invocation-permissions",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "05-layering",
+      "status": "PASS",
+      "evidence": "実行レイヤー判断を layer_decisions に記録 (Skill=use / script=skip / CLI/Hook/MCP/Subagent=変更なし)"
+    },
+    {
+      "doc": "06-classification-naming",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "08-skill-writing-guidelines",
+      "status": "PASS",
+      "evidence": "description 不変・trigger 不変・本文 300 行以下維持。追補は references 側へ (本文肥大なし)"
+    },
+    {
+      "doc": "10-subagents-hooks-integration",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "11-templates",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "13-checklists",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "14-dynamic-context-injection",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "26-meta-skill-dogfooding",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "27-rubric-governance-runbook",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "28-script-execution-model",
+      "status": "N/A",
+      "reason": "script の新規追加・変更なし (意味判定の機械化は意図的不採用)"
+    },
+    {
+      "doc": "29-multi-project-rubric-composition",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "30-paradigm-analogy-map",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "31-output-routing-adapter-architecture",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "32-creator-kit-implementation-ledger",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "33-change-governance",
+      "status": "N/A",
+      "reason": "additive な規則追加のみで rubric/schema/breaking change なし (newly_failing=0)"
+    },
+    {
+      "doc": "34-plugin-governance-roadmap",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    },
+    {
+      "doc": "35-meta-harness-feedback-loop",
+      "status": "N/A",
+      "reason": "update-mode 最小読込 (CD-005 context 予算): 本 build の変更 claim (読者価値規範の references/prompts 追補) に関与しない章のため未読"
+    }
   ],
   "layer_decisions": [
-    {"layer": "Skill", "decision": "use", "reason": "同定の確度判断・同名異企業/住所1:Nの分岐・電話/会社名候補のWeb検索・ゴールシーク制御はLLM側が適任(Pythonは検証・整形のみ)", "placement_evidence": "SKILL.md ゴールシーク実行節 + prompts/R1-resolve-identity.md + enrich_company.verify_phone(web_findings)", "fallback": "なし(制御層は必須)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
-    {"layer": "script", "decision": "use", "reason": "gBizINFO照会/KEN_ALL逆引き(決定論)/正規化共有/電話検証/Notion upsert/backfillは再現性のためコード化。Web検索APIは叩かない", "placement_evidence": "scripts/{normalize,ken_all,resolve_company,enrich_company,notion_upsert,backfill,notion_config,remarks,validate_company_master}.py", "fallback": "なし(決定論処理の本体)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
-    {"layer": "CLI", "decision": "use", "reason": "各scriptをCLI起動(--hojin-bango/--name/--address/--dry-run等)", "placement_evidence": "scripts/*.py argparse", "fallback": "Skill本文からの逐次呼出", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
-    {"layer": "Subagent", "decision": "skip", "reason": "単一スキルで完結。重い候補突合時のみ将来fork", "placement_evidence": "なし", "fallback": "ゴールシーク重周回時にAgentへfork", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": false},
-    {"layer": "Hook", "decision": "use", "reason": "effect=external-mutationの二段防御動的層として Notion/gBizINFO トークンの平文出力/誤削除をPreToolUseでブロック", "placement_evidence": "plugins/company-master/hooks/hook-guard-secret.py + plugin.json hooks.PreToolUse", "fallback": "settings.json permissions.deny(静的層)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true},
-    {"layer": "MCP", "decision": "skip", "reason": "Notion MCPは未接続(404実績)・gBizINFOにMCPなし。REST直叩きで要件充足", "placement_evidence": "data-sources.md 取得元一覧", "fallback": "Notion/gBizINFO REST API(採用)", "dependency_direction_ok": true, "macos_stdlib_ok": true, "deterministic": true}
+    {
+      "layer": "Skill",
+      "decision": "use",
+      "reason": "保持ガードは reference (逐語 SSOT) へ置き、agent prompt は帯参照ポインタのみ更新する既存の progressive disclosure 設計を踏襲。LLM 判断が要る意味規則 (入口の退化判定) は reference の規範文として表現",
+      "placement_evidence": "CONST_039=html-generation-rules.md / CONST_013=modification-rules.md / RCONST_013=report-modification-rules.md (各経路の owner reference)",
+      "fallback": "なし (既存配置規約に従属)",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": false
+    },
+    {
+      "layer": "script",
+      "decision": "skip",
+      "reason": "入口ホリゾンタルの意味判定は機械化しない (validate-structure.js は視覚/機械項目のみ、意味判定は RQ31-34/D5 の LLM 評価層に委譲する意図的設計を尊重)。帯表記と実定義数の突合 lint は自動化候補として記録",
+      "placement_evidence": "report-narrative-logic.md §7 冒頭の「機械ゲートは約束の妥当性を判定しない」宣言",
+      "fallback": "deck-evaluator D5 / report-quality-reviewer RQ31-34 が検出",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": false
+    },
+    {
+      "layer": "Subagent",
+      "decision": "use",
+      "reason": "保持ガードの検出は既存の deck-evaluator (D5)・report-quality-reviewer (RQ31-34)・ui-quality-reviewer が担う。新規 agent は追加しない (評価分離の既存構成を踏襲)",
+      "placement_evidence": "deck-evaluation-rubric.md D5 追補・agents は Task name 起動 (SKILL.md ワークフロー節)",
+      "fallback": "decision論ゲート (validate-structure.js) は視覚/機械項目のみ",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": false
+    },
+    {
+      "layer": "CLI",
+      "decision": "skip",
+      "reason": "新規 CLI なし。既存 node/python3 検証系 (validate-structure.js 等) は変更しない",
+      "placement_evidence": "deterministic_checks 節 (SKILL.md) 不変",
+      "fallback": "なし",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    },
+    {
+      "layer": "Hook",
+      "decision": "skip",
+      "reason": "hook 配線変更なし (hook-postgen-eval は既存のまま D5 拡張を消費)",
+      "placement_evidence": "hooks/hook-postgen-eval.py 未変更",
+      "fallback": "なし",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    },
+    {
+      "layer": "MCP",
+      "decision": "skip",
+      "reason": "MCP 不使用 (本 skill はローカル成果物生成のみ)",
+      "placement_evidence": "SKILL.md allowed-tools に MCP なし",
+      "fallback": "なし",
+      "dependency_direction_ok": true,
+      "macos_stdlib_ok": true,
+      "deterministic": true
+    }
   ],
-  "variant_support": {
-    "prefix": "run",
-    "role_suffix": "generator",
-    "subagent": "none",
-    "hook": "hook-guard-secret(PreToolUse/Bash)"
-  },
   "pattern_decisions": [
-    {"decision": "use", "pattern_ref": "orchestrator", "reason": "4責務(resolve/enrich/upsert/backfill)をSKILL.mdゴールシークが統括", "reuse_target": "Notion連携 + 公的API照合の量産スキル雛形"},
-    {"decision": "use", "pattern_ref": "vendored-ssot", "reason": "notion_config.py/hook-guard-secret.py を実体コピーしcross-plugin参照を回避(自己完結)", "reuse_target": "単独installable plugin の vendoring 規約"},
-    {"decision": "use", "pattern_ref": "claude-search-python-verify", "reason": "Web検索はClaude Code内蔵検索が実施しPythonは検証・整形のみ(スクリプトがWeb検索APIを叩く実装は禁止)。決定論データ(KEN_ALL)は純Python完結", "reuse_target": "LLM検索+Python検証の責務分離が必要な量産スキル"},
-    {"decision": "skip", "pattern_ref": "evaluator-pair", "reason": "生成系単独。評価はassign-skill-design-evaluatorを別途fork", "reuse_target": "N/A"},
-    {"decision": "skip", "pattern_ref": "adapter-backed", "reason": "出力先はNotion企業マスタDB固定でアダプタ層は過剰", "reuse_target": "出力先多様化時のrouting adapter"}
+    {
+      "decision": "use",
+      "pattern_ref": "retention-guard (生成/修正段の保持ガード)",
+      "reason": "report 経路の既存 CCONST_007 (読者価値と深さの保持) と対称の規則を slide LLM 経路 (CONST_039) と修正経路 (CONST_013/RCONST_013) へ展開。設計→生成→修正→評価の各段で同一正本 (§7) を参照",
+      "reuse_target": "他の生成系 plugin で「設計時に作り込んだ品質を下流工程が退化させない」保持ガードの雛形"
+    },
+    {
+      "decision": "use",
+      "pattern_ref": "id-band-namespace (制約 ID 帯の skill 私有 namespace 宣言)",
+      "reason": "RCONST_007 が generate (読者中心の入口設計) と modify (読み物文体維持) で別義に衝突していたため、帯の私有 namespace を明文宣言して曖昧さを解消 (改番はリンク切れリスクが高く不採用)",
+      "reuse_target": "複数 skill が同形 ID 帯を持つ plugin での横断誤読防止"
+    }
   ],
   "reproducibility_gates": {
     "lint": "PASS",
-    "evaluator": "N/A",
+    "evaluator": "PASS",
     "elegant_review": "N/A",
-    "governance": "N/A"
+    "governance": "N/A",
+    "notes": {
+      "lint": "PASS (P0 群+completeness+ssot-duplication+reference-attribution+route C02 content lint。lint-goal-seek と validate-build-plan --check の必須セクション指摘 (## ゴールシーク実行/主要ルール等の run.md テンプレ構成) は HEAD 時点から存在する旧規約構成の乖離で本 build の変更起因ではない=pre-existing。update モードの全書き換え禁止 (CD-002) に抵触するためテンプレ追従は別 build へ切り出し、bd memory followup-slide-report-template-retrofit に記録)",
+      "evaluator": "PASS (focused combined review: generate elegance/rubric PASS score100・modify elegance/rubric PASS score94。iterations=2 で帯伝播漏れ修正を再評価確認。verdict は eval-log/slide-report-generator/{run-slide-report-generate,run-slide-report-modify}/content-review/ に skill_md_sha256 一致で保存)",
+      "elegant_review": "not-run 相当: profile=incremental のため 30種思考法 exhaustive は未実施 (明示指定時のみ)",
+      "governance": "rubric/schema 変更なし・additive 規則追加のみ"
+    }
+  },
+  "requirement_coverage": [
+    {
+      "requirement_id": "goal",
+      "disposition": "mapped",
+      "mapped_to": "CONST_039; CONST_013; RCONST_013; D5 読者フック明文化; structure.md 導入注記"
+    },
+    {
+      "requirement_id": "purpose_background",
+      "disposition": "mapped",
+      "mapped_to": "build_flow_coverage.problem-definition (ギャップ調査で欠落経路を特定)"
+    },
+    {
+      "requirement_id": "key_constraints[0]",
+      "disposition": "mapped",
+      "mapped_to": "CONST_039 (生成段の入口保持); CONST_013/RCONST_013 (修正段のタイトル書き戻し禁止)"
+    },
+    {
+      "requirement_id": "key_constraints[1]",
+      "disposition": "mapped",
+      "mapped_to": "CONST_039 (本論の数字/手順/失敗/条件/限界の欠落なし射影); D5 (深さが入口の広さの代償に薄まっていないか)"
+    },
+    {
+      "requirement_id": "key_constraints[2]",
+      "disposition": "mapped",
+      "mapped_to": "D5 自己紹介起点検出の明文化; structure.md 旧自己紹介導入例への K3 整合注記"
+    },
+    {
+      "requirement_id": "key_constraints[3]",
+      "disposition": "mapped",
+      "mapped_to": "RCONST_013 (正式名称等の明示指示時は従い subtitle/keyMessage/summary で読者価値を補完); CONST_013 同旨"
+    },
+    {
+      "requirement_id": "key_constraints[4]",
+      "disposition": "mapped",
+      "mapped_to": "additive 設計 (既存 ID の改変なし・次番号追加); namespace 注記 (RCONST 帯衝突解消); focused combined review の整合判定 (dependency_break=0)"
+    },
+    {
+      "requirement_id": "trigger_conditions",
+      "disposition": "not_applicable",
+      "reason": "既存 skill の発動条件は変更しない (description/frontmatter 不変)"
+    },
+    {
+      "requirement_id": "output_contract",
+      "disposition": "mapped",
+      "mapped_to": "update_scope_this_build (Edit 差分のみ・CD-002 準拠)"
+    },
+    {
+      "requirement_id": "boundary",
+      "disposition": "mapped",
+      "mapped_to": "out_of_scope 4 項目 (cross-deck-review は bd memory followup-cross-deck-reader-hook-axis へ・機械ゲート化/schema 変更/goal-seek 見出し追従は意図的スコープ外)"
+    },
+    {
+      "requirement_id": "deterministic_checks",
+      "disposition": "mapped",
+      "mapped_to": "build_flow_coverage.verification (grep 帯残存ゼロ・lint 群 PASS)"
+    },
+    {
+      "requirement_id": "cli_tools",
+      "disposition": "not_applicable",
+      "reason": "既存 skill の実行ツール (node/python3) は変更しない (本 build は references/prompts の規範追補のみ)"
+    },
+    {
+      "requirement_id": "goal_seek",
+      "disposition": "not_applicable",
+      "reason": "goal_seek.engine=inline は既存 frontmatter の現状宣言であり本 build で変更しない (engine 変更はスコープ外)"
+    },
+    {
+      "requirement_id": "needs_independent_context",
+      "disposition": "not_applicable",
+      "reason": "既存の agent fork 構成 (Task name 起動・isolation) は変更しない"
+    },
+    {
+      "requirement_id": "placement_candidates",
+      "disposition": "mapped",
+      "mapped_to": "plugins/slide-report-generator/skills/run-slide-report-generate/ 配下への Edit 差分 (新規配置なし・既存配置維持)"
+    }
+  ],
+  "variable_contract": [
+    {
+      "name": "SRG_ROOT",
+      "meaning": "slide-report-generator plugin root の解決変数 (marketplace install 配置非依存)。追補した CONST_039/CONST_013/RCONST_013 の正本参照 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md もこの規約に従う",
+      "default": "$CLAUDE_PLUGIN_ROOT",
+      "required": false,
+      "not_applicable_when": "repo 内 dev 実行では plugins/slide-report-generator を直接参照できる場合",
+      "source_trace": "run-slide-report-generate SKILL.md Gotchas 配置非依存節 / 本 build 追補規則の正本参照表記"
+    }
+  ],
+  "variant_support": {
+    "prefix": "run",
+    "role_suffix": "generate",
+    "subagent": "既存 15 worker agent (Task name 起動・本 build で新規追加なし)",
+    "hook": "hook-postgen-eval.py (生成後評価・既存)"
   },
   "script_execution_model": {
-    "contexts": ["A", "B", "C", "D", "E"],
-    "responsibility_matrix": "notion_config=DB ID/token/gBizINFOトークン解決(SSOT) / normalize=会社名・住所正規化と代替キー(共有正本) / ken_all=KEN_ALL初回DL+TTLキャッシュ+逆引き(純Python決定論) / resolve_company=gBizINFO同定(V1/V2フィールド吸収) / enrich_company=KEN_ALL郵便番号・電話検証(Claude検索結果)・確度付与・overall_certainty導出・備考展開 / remarks=remarks-templates.md(正本)をパースし定型文言展開 / notion_upsert=9列upsert(信頼キー/代替キー) / backfill=空欄列・要確認行の補完 / validate_company_master=deterministic_checks(a-h)実判定",
-    "priority_order": "precondition gate → resolve_company(法人番号>会社名>住所) → enrich_company(空欄属性のみ: ken_all逆引き+電話検証+overall_certainty導出+remarks展開) → notion_upsert(信頼キーupsert/代替キー新規追記) → validate_company_master(整合検査) → backfill(空欄列ごと)",
-    "permission_boundary": "トークンはKeychainのみ・平文保存禁止(hook-guard-secretがブロック)。書込はconfig解決の企業マスタDBに限定。--dry-runで外部副作用抑止。誤値より空欄優先。Web検索はClaudeが実施しPythonは検証のみ(スクリプトはWeb検索API非依存)",
+    "contexts": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "responsibility_matrix": "本 build は script を追加・変更しない。既存分担を維持: validate-output-mode.py=mode/reportType 値域検証 (fail-closed) / setup-playwright.py=環境 preflight / vendor/scripts=決定論レンダラ・視覚 validator 群 (byte 携行・書換禁止) / 意味判定 (入口ホリゾンタル) は script 化せず RQ31-34/D5 の LLM 評価層が担当",
+    "priority_order": "validate-output-mode (送信前) → validate-structure (仕様確定ゲート) → render (決定論優先) → verify-slides/validate-report-visual (視覚) → evaluate-deck (生成後評価)",
+    "permission_boundary": "書込は <out-dir> 配下の成果物のみ。vendor scripts は読取専用 (書換禁止)。外部送信なし (Codex 画像生成は明示指示時のみ)",
     "scripts": [
-      {"path": "scripts/notion_config.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/normalize.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/ken_all.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/resolve_company.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/enrich_company.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/remarks.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/notion_upsert.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/validate_company_master.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"},
-      {"path": "scripts/backfill.py", "type": "python", "allowed_contexts": ["C", "E"], "frontmatter_status": "present"}
+      {
+        "path": "../../scripts/validate-output-mode.py",
+        "type": "python",
+        "allowed_contexts": [
+          "A",
+          "B"
+        ],
+        "frontmatter_status": "present"
+      },
+      {
+        "path": "../../scripts/setup-playwright.py",
+        "type": "python",
+        "allowed_contexts": [
+          "A"
+        ],
+        "frontmatter_status": "present"
+      }
     ]
   },
   "governance_model": {
-    "rubric_version": "N/A (L1・rubric非依存)",
+    "rubric_version": "N/A (rubric 変更なし)",
     "rubric_hash": "N/A",
-    "proposal_required": "no (新規スキル・solo_operator_mode)",
-    "impact_assessment": "新規plugin company-master 追加のみ。既存スキルへの破壊的変更なし。newly_failing=0",
+    "proposal_required": "no (additive 規則追加・既存 ID 帯の次番号のみ・breaking change なし)",
+    "impact_assessment": "CONST_039/CONST_013/RCONST_013 の新設と D5/structure.md 追補は additive。既存規則の意味変更なし。newly_failing=0 (P0 lint 群 PASS 維持)",
     "newly_failing_count": 0,
     "roles": {
-      "proposer": "xl-skills maintainers",
-      "reviewer": "assign-skill-design-evaluator(別途fork)",
-      "approver": "xl-skills maintainers(solo)",
-      "tooling": "run-build-skill Step4 lint群"
+      "proposer": "harness maintainers",
+      "reviewer": "focused combined review (独立 2 agent・assign-skill-design-evaluator 相当)",
+      "approver": "harness maintainers (solo)",
+      "tooling": "run-build-skill Step4 lint 群 + check-review-trigger hook"
     }
   },
   "dogfooding_model": {
     "artifact_type": "skill",
-    "adapter": "N/A (skill直接生成)",
-    "forked_evaluator": "assign-skill-design-evaluator(Step5は親context制約でskipped・別途実行予定)",
+    "adapter": "N/A (既存 skill の update)",
+    "forked_evaluator": "focused combined review を独立 context の 2 agent で fork 実行 (verdict: eval-log/slide-report-generator/*/content-review/)",
     "eval_log_path": "eval-log/skill-build-trace.json",
-    "recursive_checks": ["lint-skill-name", "lint-skill-description", "lint-skill-tree", "validate-frontmatter", "lint-script-frontmatter", "lint-skill-completeness", "lint-goal-seek", "lint-ssot-duplication", "validate-build-trace"]
+    "recursive_checks": [
+      "lint-skill-name",
+      "lint-skill-description",
+      "lint-skill-tree",
+      "validate-frontmatter",
+      "lint-script-frontmatter",
+      "lint-skill-completeness",
+      "lint-ssot-duplication",
+      "lint-reference-attribution",
+      "lint-agent-prompt-content",
+      "validate-build-trace"
+    ]
   },
-  "rubric_composition_model": {"status": "N/A", "reason": "単一プロジェクト・L1のためrubric合成なし"},
-  "paradigm_analogy_model": {"status": "N/A", "reason": "skill-intake/contract-generator のvendoring+hookパターンを類比適用済。形式モデル化は不要"},
-  "output_routing_model": {"status": "N/A", "reason": "出力先はNotion企業マスタDBで固定。routing adapterは不要"},
-  "prompt_generation_model": {
-    "policy_resolution": {
-      "resolved_policy": "optional",
-      "resolved_via": "responsibilities[].prompt_required は resolve-identity のみ true。同責務のR1-resolve-identity.mdを7層markdown構造で手動作成(prompt-creator R-idループは未使用)。kind=runだが同定判断の補助プロンプト1点のためoptionalに解決"
-    },
-    "per_responsibility": []
+  "rubric_composition_model": {
+    "status": "N/A",
+    "reason": "rubric 合成なし (deck-evaluation-rubric への D5 追補は評価観点の明文化で L1 合成対象外)"
+  },
+  "paradigm_analogy_model": {
+    "status": "N/A",
+    "reason": "report 経路の既存 CCONST_007 パターンを slide/modify 経路へ類比適用 (pattern_decisions に記録済・形式モデル化不要)"
+  },
+  "output_routing_model": {
+    "status": "N/A",
+    "reason": "出力先は <out-dir> のローカル成果物で固定。routing adapter 不要"
   },
   "feedback_contract": {
     "max_iterations": 3,
     "criteria": [
-      {"id": "IN1", "loop_scope": "inner", "text": "差込後に未置換マーカー(黄色run/プレースホルダ残存)が0件である (検証: scripts/validate.py の drift 検知)", "verify_by": "script", "threshold": "未置換マーカー数==0", "weight": 1.0},
-      {"id": "IN2", "loop_scope": "inner", "text": "ひな形変更(scan_template.py のハッシュ差分)が検知されたら停止・報告し、無断生成しない", "verify_by": "script", "threshold": "template_hash 一致 / scan_template.py exit!=0 で停止・--dry-run 副作用なし", "weight": 0.8},
-      {"id": "OUT1", "loop_scope": "outer", "text": "黄色二系統出力(監査用Google Docs=黄色維持 / 提出用PDF=黄色除去)が作成指示行ごとに揃う (検証: render 出力2系統存在 + 台帳書き戻しURL)", "verify_by": "script", "threshold": "2系統/行", "weight": 1.0},
-      {"id": "OUT2", "loop_scope": "outer", "text": "P0 lint 群(lint-skill-name/validate-frontmatter/lint-goal-seek/validate-build-trace)が全て exit0", "verify_by": "lint", "threshold": "exit0", "weight": 0.9}
+      {
+        "id": "IN1",
+        "loop_scope": "inner",
+        "text": "validate-output-mode で output_mode(slide/report) と reportType の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が0件",
+        "verify_by": "script",
+        "threshold": "欠落0件・exit0",
+        "weight": 1.0
+      },
+      {
+        "id": "OUT1",
+        "loop_scope": "outer",
+        "text": "生成後に slide/report とも想定読者の共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動の流れを持ち、slide は1スライド1メッセージ/長文なし・report は読み物/1項目1ビジュアルで、生成後評価(30種思考法)が視覚崩れ0で PASS する (入口ホリゾンタル・中身バーティカルの受入基準。本 build の CONST_039/D5 追補で生成段・評価段の保持を強化)",
+        "verify_by": "test",
+        "threshold": "D5 読者フック FINDING 0 件・視覚崩れ 0",
+        "weight": 1.0
+      }
     ]
   },
-  "variable_contract": [
-    {"name": "company-master_db_id", "meaning": "企業マスタNotion DBのID", "default": "37a07a0c-d18c-8091-b8a7-c7eb85872fb5 (notion-config.fixed.json)", "required": true, "not_applicable_when": "N/A", "source_trace": "notion-config.fixed.json#databases.company-master.db_id / notion_config.get_db_id('company-master')"},
-    {"name": "notion_token", "meaning": "Notion REST API認証トークン", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": "macOS Keychain(notion-api-key.xl-skills / xl-skills) / notion_config.get_token"},
-    {"name": "gbizinfo_api_token", "meaning": "gBizINFO API認証トークン(X-hojinInfo-api-token)", "default": "(なし)", "required": true, "not_applicable_when": "N/A", "source_trace": "macOS Keychain(gbizinfo-api-token.xl-skills / xl-skills) / notion_config.get_gbizinfo_token"},
-    {"name": "ken_all_cache_path", "meaning": "日本郵便KEN_ALLローカルキャッシュ", "default": "~/.cache/company-master/ken_all.csv", "required": false, "not_applicable_when": "郵便番号補完を行わない場合", "source_trace": "enrich_company.py#KEN_ALL_CACHE"}
-  ]
+  "prompt_generation_model": {
+    "policy_resolution": {
+      "resolved_policy": "optional",
+      "resolved_via": "update-mode の帯参照置換+checklist 1行追記のみで、本 build は 7 層 prompt の新規生成を行わない (per_responsibility 空)。既存 prompt (prompt-creator 由来) を消費・微修正する構成のため optional 宣言。編集した prompt (R3-agent-html-generator.md/R2-agent-slide-report-modifier.md) は route C02 lint-agent-prompt-content --mode prompt で違反ゼロを確認済 (R1-orchestrate.md の Layer5 欠落は pre-existing・bd memory followup-slide-report-template-retrofit に記録)"
+    },
+    "per_responsibility": []
+  }
 }

@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # レポート生成（7層構造プロンプト）
 
 > 読み込み条件: output_mode=report で構成（report-structure.json）が承認・検証され、visual-strategist がビジュアル種別・配置を確定した後の生成フェーズ（R3-generate）着手時。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 > 対関係: 本エージェントは slide 版 `html-generator.md`（承認済み structure から slide HTML を LLM 経路生成）と**対になる report 版**である。slide が「1枚1メッセージの投影 HTML」を作るのに対し、report は「読み物（文章多め）の縦スクロール HTML/prose」を作る。決定論経路として `render-report.js` も選べる（下記 §決定論経路）。意匠/技術トークンは共有 SSOT を参照する。
 
@@ -120,6 +120,9 @@ last-audited: 2026-07-05
 - **CCONST_006（自己完結）**: 配布・検証の堅牢性のため、CSS/JS はインライン化した自己完結 HTML を既定とする。
   - 目的: 環境差での CSS/JS 消失事故を防ぐ。
   - 背景: full-image-deck-method §6.9.1。
+- **CCONST_007（読者価値と深さの保持）**: 承認済み構造の読者中心入口・自分へ移す橋・専門の深さを HTML/prose へ欠落なく射影する。LLM 経路で推敲するときも、正式名称・検索性・適用範囲を壊さず、素材にない数字・実績・失敗を足さない。
+  - 目的: 入口ホリゾンタル・中身バーティカルを生成段階で一般論化または誇張へ退化させない。
+  - 背景: 正本 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。構造自体に不足がある場合は本エージェントが新規節を発明せず report-structure-designer へ差し戻す。
 
 ---
 
@@ -133,7 +136,7 @@ last-audited: 2026-07-05
 report.html を決定論生成する標準コマンド:
 
 ```bash
-node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <out.html>
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <out.html>
 ```
 
 - 入力: 承認・検証・visual 確定済みの `report-structure.json`。
@@ -145,7 +148,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
 | Read | 構造・references・schema・意匠 SSOT の参照 | 把握・経路選択の段 | 対象未使用の段 | `report-structure.json`、`references/report-writing-rules.md` / `mermaid-integration.md` / `svg-diagram-primitives.md`、`schemas/report-structure.schema.json` |
-| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
+| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
 | Write | report.html / prose の出力（LLM 経路） | 生成の段（LLM 経路）・同期確認の段 | 決定論経路のみのとき | `<report-dir>/report.html` |
 
 エラーハンドリング: 決定論経路が node/依存不在で失敗する場合は LLM 経路へフォールバックする。ビジュアル埋め込みで画像アセットが欠落する場合は alt/caption を残しつつ pending を明示する。詳細は Layer 4 参照。
@@ -161,6 +164,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 
 ## 品質基準
 - 全セクションの本文が欠落なく HTML 化されている（構造同期・CCONST_001）。
+- title/throughLine/summary の読者価値、主要 part/節の自分へ移す橋、本論の確認済みの数字・手順・失敗・条件・限界が欠落なく保持されている（CCONST_007）。
 - 各ビジュアルが 1 項目 1 点で正しく埋め込まれ、alt/caption を持つ。
 - 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）が適用されている。
 - 自己完結 HTML（CSS/JS インライン）で単体表示できる（CCONST_006）。
@@ -173,6 +177,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 | 意匠適用 | トークン | 配色/フォント/最小サイズ/印刷 CSS が適用 | 同期確認の段で共有 SSOT から適用 |
 | 自己完結 | CSS/JS 実在 | インライン化または実在ファイルで単体表示可（CCONST_006） | 同期確認の段でインライン化 |
 | 可読性 | read-through | 段落で語り切り、chip 強制で痩せていない（CCONST_002） | 同期確認の段で本文を加筆 |
+| 読者価値と深さ | 入口・transfer bridge・具体性 | 承認済み構造の読者価値と専門的深さを欠落/誇張なく射影（CCONST_007） | 素材内の加筆は同期確認で補う。構造不足は report-structure-designer へ差し戻す |
 
 評価タイミング: 同期確認の段（出力）後。最大改善回数: 全項目合格まで。生成後評価は deck-evaluator（report rubric）が別途担う。
 
@@ -207,6 +212,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 - [ ] visual-strategist 確定通りに 1 項目 1 点でビジュアルが埋め込まれ、alt/caption を付与している（CCONST_004）
 - [ ] 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）
 - [ ] read-through 粒度で段落により語り切り、chip 強制で本文が痩せていない（CCONST_002）
+- [ ] title/throughLine/summary の読者価値、各主要 part/節の「兆候・問い・選択肢・次の行動」、本論の確認済みの数字・手順・失敗・条件・限界を欠落/誇張なく射影している。正式名称・検索性・適用範囲を壊さず、素材にない事実を足していない（CCONST_007）
 - [ ] 1.2.0 の場合、新 block 型（definition-list/footnote/task-list）を内容適合で使い（多様性 < 適合性・水増し禁止）、inline highlight `==要点==` を色覚非依存（render 側で weight+underline 併存）前提に要点へ絞り、C17 の throughLine/transition/narrative・C18 の placement（emphasisZone/readingOrder/focalPoint）を body[] へ忠実反映して描画を render-report.js へ委譲している
 - [ ] CSS/JS をインライン化した自己完結 HTML で単体表示できる（CCONST_006）
 - [ ] 決定論経路はレンダラを発明せず既存 render-report.js / vendor primitives を再利用している（CCONST_005）

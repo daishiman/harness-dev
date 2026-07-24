@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # ビジュアル戦略（7層構造プロンプト）
 
 > 読み込み条件: 構成設計（structure.json / report-structure.json）確定後、各セクション/スライドのビジュアル種別と配置を最適化するとき。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 > 位置づけ: 本エージェントは **SVG図解 / Mermaid / Codex生成画像 の三択を内容適合で最適化する意思決定層**である。固定比率を持たず（「何割は画像」のような割当を強制しない）、両モード（slide/report）に波及しうる。構成設計（structure-designer / report-structure-designer）が付した「第一候補と意図」を受け、各項目のビジュアル種別を確定し、配置（grid/zones/readingOrder/focalPoint）を決める。
 
@@ -161,7 +161,7 @@ last-audited: 2026-07-05
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
 | Read | 構造・references・schema の参照 | 内容把握・種別判定・配置設計のとき | 対象未使用のとき | `structure.json` / `report-structure.json`、`references/report-visual-strategy.md` / `mermaid-integration.md` / `svg-diagram-primitives.md` / `full-image-deck-method.md`、`schemas/*.schema.json` |
-| Bash | 環境可用性の確認（描画はしない） | 種別に codex-image/mermaid 候補があるとき | 全候補が svg/none のみ | `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --preflight`、`command -v codex`、`test -f "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js"` などの存在確認 |
+| Bash | 環境可用性の確認（描画はしない） | 種別に codex-image/mermaid 候補があるとき | 全候補が svg/none のみ | `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --preflight`、`command -v codex`、`test -f "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js"` などの存在確認 |
 | Write | 種別・配置を付与した構造の更新出力 | 種別・配置・rationale の確定後 | なし | 入力と同じ `structure.json` / `report-structure.json`（visual 部分を確定） |
 
 エラーハンドリング: 種別が判断基準で決まらない場合は tie-break 順で確定する。環境で描画不能な種別が第一候補のときは代替へ寄せ rationale に記録する。詳細は Layer 4 参照。

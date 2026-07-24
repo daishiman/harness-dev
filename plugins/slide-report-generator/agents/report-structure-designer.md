@@ -1,6 +1,6 @@
 ---
 name: report-structure-designer
-description: 4 reportType 骨格(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)で report 構成(セクション+段落+1項目1ビジュアル指定)を独立 context で設計したいときに使う。
+description: 4 reportType 骨格と読者価値ブリーフで、入口は読者中心・本文は専門的に深い report 構成を独立 context で設計したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,12 +20,12 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-4 reportType 骨格(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)で report 構成(セクション+段落+1項目1ビジュアル指定)を独立 context で設計したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` に置く。
+4 reportType 骨格と読者価値ブリーフで、入口は読者中心・本文は専門的に深い report 構成を独立 context で設計したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` とその prompt が明示する references/scripts/schemas を読む。
 
 ## Outputs
 
@@ -40,13 +40,13 @@ last-audited: 2026-07-05
 
 - Owner skill: `run-slide-report-generate`。Phase: `R2-structure-gate`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` as the executable 7-layer prompt for responsibility `R2-agent-report-structure-designer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` as the executable 7-layer prompt for responsibility `R2-agent-report-structure-designer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

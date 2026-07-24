@@ -57,8 +57,14 @@ def _read_stdin() -> str:
 
 
 def _plugin_root() -> Path:
-    """CLAUDE_PLUGIN_ROOT 優先。無ければ hooks/ の親 (= plugin root) を採用 (portability)。"""
-    env_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    """SRG_ROOT 優先。無ければ hooks/ の親 (= plugin 実体) を __file__ から自己解決。
+
+    ObsidianMemo 等では CLAUDE_PLUGIN_ROOT が別プラグイン (ubm-goal-setting) に env 固定
+    されるため、それを採用すると slide-report と別の root を指してしまう。よって
+    slide-report 専用の SRG_ROOT を優先し、無ければ symlink 経由でも実体を指す
+    Path(__file__).resolve() から自己解決する (CLAUDE_PLUGIN_ROOT は採用しない)。
+    """
+    env_root = os.environ.get("SRG_ROOT")
     if env_root:
         return Path(env_root)
     return Path(__file__).resolve().parent.parent
@@ -122,7 +128,7 @@ def build_context(mode: str, deck_dir: str) -> str:
         mechanical = (
             "1) slide 機械評価 (broken img・はみ出し・computed フォント・16:9 等の静的/動的検証):\n"
             f'   node "{evaluator}" "{deck_dir}"\n'
-            "   (chromium 未導入なら vendor で npx playwright install chromium 後に再実行)"
+            "   (Chromium 未導入なら scripts/setup-playwright.py --install 後に再実行)"
         )
     else:
         report_html = os.path.join(deck_dir, "report.html")

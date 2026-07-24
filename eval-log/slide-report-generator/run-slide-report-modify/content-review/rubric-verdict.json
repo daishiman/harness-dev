@@ -1,25 +1,27 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-modify", "skill_md_sha256": "aff9aeb31b92cc21440f35592c9ad216e049ab6f99eac7febacf9347d2080576"},
+  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-modify", "skill_md_sha256": "f9dd56217a4096a25e4c63c786f7666cc62860accbe162a66f26787fafb48dc0"},
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "review-group-c-independent-rubric",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "reviewer": "assign-skill-design-evaluator-focused-combined",
+  "reviewed_at": "2026-07-24T00:00:00Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "Deterministic rubric initially found exact BD-001/BD-002 heading violations; after correction rubric 1.3.0 score=100/threshold=80 with no findings.",
-      "Single responsibility is in-place local modification with mode preservation; new generation and series review are delegated. Router, 7-layer prompt, manifest and mode-specific references form progressive disclosure.",
-      "IN1/OUT1 are purpose acceptance rather than generic gates and map to concrete mode validation, local-change constraints and post-change visual tests; plugin pytest 131 PASS."
+      "SKILL.md 構造次元は満充足: BD-001『## Purpose & Output Contract』、BD-002『## Gotchas』、BD-003 body 行数(<=300)、FM-003 trigger(description は状況『既存デッキ/レポートを output_mode 保ったまま指定箇所だけ部分修正したいとき』を保持)いずれも維持。frontmatter feedback_contract.criteria(IN1/OUT1)は purpose-acceptance で汎用ゲート言い換えでなく、mode 判定→validate-output-mode→局所修正→mode 別 R3 再評価の責務連鎖と一貫。今回追加(013 帯・report 不変条件へ RCONST_013 の入口ホリゾンタル追記)は SKILL.md 内で自己整合。",
+      "additive 整合: SKILL.md L87 の RCONST_013 追記(入口ホリゾンタル=タイトル/リード/summary の読者価値)は既存の RCONST_007(読み物文体)/RCONST_008(1項目1ビジュアル)/RCONST_005(骨格順序)と非重複の新規次元で、意匠/技術 SSOT 不変(RCONST_010)や最小変更(RCONST_006)・承認必須(RCONST_003)を侵さない。生成側 CONST_008/RCONST_007(設計)・RQ31-34/D5(評価)が守る入口設計を修正経路にも保持ガードとして張る補完で、責務境界の逸脱なし。",
+      "cross-file 整合の解消(iter2): iter1 で context 記録した『SKILL.md が正本と参照する R1-orchestrate.md との帯不一致』は R1-orchestrate.md L67/98/99/211 の 013 帯更新により解消。SKILL.md とその参照先 orchestration SSOT が同一帯で整合し、変更伝播不足の減点要因が消失。IN1(script)/OUT1(test)は purpose-acceptance を維持し、frontmatter・schema_refs・combinators・境界は不変で rubric 採点次元への波及なし。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[open-item・意図的・非 FAIL] SKILL.md L87 が参照する RCONST_013 の規則本文は report-modification-rules.md L90 で TODO(human)。SKILL.md 側は完成文言だが指す先の規則本文が未充填という『不完全規則への参照』は SKILL.md 品質上の軽微な残存減点要因。Learning ワークフローの人間入力待ちの既知 open-item で、人間入力後に解消。"
+    ],
     "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d; composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9。"
+  "notes": "focused combined review(4条件+rubric を 1 context 統合)の rubric 側・再評価(iter2)。score=94/threshold=80/passed=true(構造次元 SKILL.md は全 rubric 項目=Purpose&Output Contract/Gotchas/body length/trigger を満充足し内部整合。iter1 の減点 -12 のうち (b)R1-orchestrate.md との帯不一致=変更伝播不足 は 013 帯更新で解消し +6 回復。残存 -6 は (a)SKILL.md L87 が指す RCONST_013 本文が TODO(human) の『不完全規則への参照』のみで、これは意図的 open-item)。cross-file の帯 self-inconsistency は elegance-verdict.json iter2 で解消・PASS 判定済み(統合 verdict=PASS、RCONST_013 TODO(human) を意図的 open-item として残置)。deterministic score 機構(render-findings-score.py の rubric_hash/composition_hash)は本 focused 手評価では未起動ゆえ score は定性判定であり、build harness exhaustive 経路で再採点する場合は当該機構の数値を正本とする。"
 }

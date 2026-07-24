@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# name: validate-plugin-completeness
+# purpose: slide-report-generatorのplugin surfaceとentry point完全性を検証する。
+# inputs:
+#   - argv: none
+# outputs:
+#   - stdout: PASS status
+#   - stderr: completeness findings
+# contexts: [C, E]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.10"
+# ///
 """validate-plugin-completeness.py - plugin surface completeness gate.
 
 Checks the local slide-report-generator plugin without importing project

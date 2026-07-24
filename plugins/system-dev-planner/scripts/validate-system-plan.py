@@ -340,11 +340,13 @@ def validate(staging: Path, repository_id: str) -> dict:
         file_path = registration.get("file_path") if isinstance(registration, dict) else None
         if (
             not isinstance(file_path, str)
-            or re.fullmatch(r"tasks/[^/]+\.md", file_path) is None
+            or re.fullmatch(r"tasks/[A-Za-z0-9._-]+/[^/]+\.md", file_path) is None
             or ".." in Path(file_path).parts
+            or not file_path.startswith(f"tasks/{parent}/")
         ):
             fail("registration-file-path", f"tasks[{i}].graph_node_registration.file_path",
-                 "single-segment tasks/<node>.md repository-relative path required")
+                 "tasks/<parent_feature>/<node>.md repository-relative path required "
+                 "(feature 単位 namespace で並列 package 生成の衝突を防ぐ)")
     for i, node in enumerate(nodes):
         for field in ("phase_ref", "feature_package_id", "parent_feature", "depends_on"):
             if field not in node:

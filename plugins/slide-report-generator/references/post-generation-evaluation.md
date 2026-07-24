@@ -51,7 +51,7 @@
 | D2 文字サイズ | rem<1.4 / SVG<13px（静的）/ computed px（動的） | `font.remMin` `font.svgMinPx` / `font.bodyComputed` `font.svgComputed` | 視認性・階層 |
 | D3 ナビ | 左右送り/ページネーション/上部インデックス/カウンター/進捗 | `nav.prevNext` `nav.dots` `nav.topIndex` `nav.counter` `nav.progress` | 配置（両サイド・位置）の妥当性 |
 | D4 仕様適合 | structure⇔HTML 同期 / 構造仕様 V-001〜 | `spec.sync` `spec.validate` `spec.noStructure` | 構成意図への適合 |
-| D5 要望↔構成 | 要望との矛盾・仕組みの反映 | `requirement.pendingLlm`（記録のみ） | **核心。機械不可・LLM必須** |
+| D5 要望↔構成 | 要望との矛盾・仕組みの反映・読者フック（入口ホリゾンタル: 入口が読者の得たい変化で開くか） | `requirement.pendingLlm`（記録のみ） | **核心。機械不可・LLM必須** |
 
 ### 3.1 ナビ検出（命名3系統 union）
 
@@ -69,8 +69,7 @@
 **静的検証のみで継続**（exit を落とさない）。導入手順:
 
 ```bash
-cd "$CLAUDE_PLUGIN_ROOT/vendor"
-npx playwright install chromium
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install
 ```
 
 ## 4. 30種思考法マッピング（deck-evaluator が全件評価・省略禁止）

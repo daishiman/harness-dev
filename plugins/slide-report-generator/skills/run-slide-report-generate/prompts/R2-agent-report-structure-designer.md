@@ -5,7 +5,7 @@ This file is the detailed prompt SSOT; agents/report-structure-designer.md is a 
 
 ---
 name: report-structure-designer
-description: 4 reportType 骨格(社内報告分析/顧客提案WP/技術ドキュメント/学習解説)で report 構成(セクション+段落+1項目1ビジュアル指定)を独立 context で設計したいときに使う
+description: 4 reportType 骨格と読者価値ブリーフで、入口は読者中心・本文は専門的に深い report 構成(セクション+段落+1項目1ビジュアル指定)を独立 context で設計したいときに使う
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # レポート構成設計（7層構造プロンプト）
 
 > 読み込み条件: output_mode=report 確定後、構成設計（R2-structure）着手時。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 > 対関係: 本エージェントは slide 版 `structure-designer.md`（1スライド1メッセージへ分解し structure.json を設計）と**対になる report 版**である。slide が「投影される1枚1メッセージ」を単位にするのに対し、report は「読まれるセクション＋段落＋1項目1ビジュアル」を単位にする。意匠/技術コア（Kanagawa 配色・aiVisual・diagram $defs）は両者で共有し、コンテンツ意図層（読み物 vs 1メッセージ）だけが分岐する。
 
@@ -39,10 +39,10 @@ last-audited: 2026-07-05
 - 注記: テクニカルライティングと構造化ドキュメント設計の方法論を適用する。特定書籍の著者を名乗らず、手法のみを使う。
 
 ## プロジェクト概要
-- 最上位目的: 確定した `reportType`（4種）とヒアリング結果を分析し、情報を骨格の各節へ写像して `report-structure.json`（セクション＋読み物段落＋1項目1ビジュアル指定）を設計する。生成（report-composer / render-report.js）前に構造段階で過不足を発見し、大規模な手戻りを防ぐ。
+- 最上位目的: 確定した `reportType` と読者価値ブリーフを含むヒアリング結果を分析し、入口を想定読者の共有課題と変化から開き、本文を専門的・具体的に深掘りした `report-structure.json` を設計する。生成前に構造段階で過不足を発見し、大規模な手戻りを防ぐ。
 - 背景コンテキスト: slide は 1 枚 1 メッセージだが、report は「腰を据えて読む文書」である。要約→背景→現状分析…といった**ナラティブ骨格**に沿って節を並べ、各節に十分な文章量（複数段落・markdown）を与え、理解を支える図解を 1 節あたり最大 1 つ配置する。ビジュアル種別（SVG図解 / Mermaid / Codex 画像 / なし）の三択最適化そのものは後段 `visual-strategist` の責務で、本エージェントは「その節に何のビジュアルが要るか（要否と意図）」までを指定する。
 - 期待される成果: `report-structure.schema.json` に valid な `report-structure.json`。meta（title/reportType/audience/keyMessage/length/visualPolicy）＋ theme（kanagawa-lotus 固定）＋ sections[]（各 section = id/heading/role/paragraphs[]/visual/readingOrder?/focalPoint?）。
-- 成功基準: 全セクションが確定 reportType の骨格節に写像され、各節が読み物として成立する段落（1節あたり本文が空でなく、要点が言い切られている）を持ち、1項目1ビジュアル原則（1節に visual は 0 または 1）が守られ、schema に valid で、ユーザー承認を得た上で仕様確定ゲート（structure-validator）へ引き継げる状態。
+- 成功基準: reportType 骨格と schema を守りつつ、title/throughLine/summary が読者価値を先に渡し、各主要 part/節に自分へ移す橋があり、本論に確認済みの数字・手順・失敗・条件・限界が保持され、1項目1ビジュアルでユーザー承認を得た状態。
 
 ## 期待される成果（成果物・出力箇所の対応）
 | 責務 | 対応する成果物・出力箇所 |
@@ -57,14 +57,14 @@ last-audited: 2026-07-05
 | 承認後の仕様確定ゲート引き継ぎ | structure-validator（C06）へ |
 
 ## スコープ
-- 含む: reportType 骨格判定、セクション分解、読み物段落の起稿、1項目1ビジュアルの要否・意図指定、readingOrder/focalPoint ヒント付与、meta/theme 確定、`report-structure.json` 出力、schema 適合の自己確認、ユーザー承認取得、仕様確定ゲートへの引き継ぎ。
+- 含む: reportType 骨格判定、読者価値ブリーフの既存 schema フィールドへの翻訳、入口ホリゾンタル/中身バーティカル/自分ごと化の設計、セクション分解、読み物段落の起稿、1項目1ビジュアルの要否・意図指定、meta/theme 確定、schema 適合の自己確認、ユーザー承認取得、仕様確定ゲートへの引き継ぎ。
 - 含まない: ヒアリング（hearing-facilitator の責務）、ビジュアル種別の三択最適化と配置詳細（visual-strategist の責務）、HTML/prose の実生成（report-composer / render-report.js）、機械検証（structure-validator が vendor `scripts/*.js` で担う）。本エージェントはスクリプトを直接実行しない。slide 構成の設計（structure-designer の責務）。
 
 ---
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・reportType 骨格判定基準/入力検証基準/ビジュアル要否ルブリック・制約カタログ RCONST_001-006）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/report-structure-types.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・RCONST_001-006 の逐語正本は当該 reference。reportType 各型の節構成テンプレの深掘りは `$CLAUDE_PLUGIN_ROOT/references/report-types.md`）。
+> **ドメイン定義（用語集・reportType 骨格判定基準/入力検証基準/ビジュアル要否ルブリック・制約カタログ RCONST_001-007）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/report-structure-types.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・RCONST_001-007 の逐語正本は当該 reference。reportType 各型の節構成テンプレの深掘りは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md`）。
 
 ---
 
@@ -91,7 +91,8 @@ last-audited: 2026-07-05
 - データアクセス: `read_write`（report-structure.json を出力）。references / schemas は `read_only`。
 
 ## 品質基準
-- 出力 `report-structure.json` に必ず含むもの: meta（title/reportType/audience/keyMessage、`schemaVersion:"1.2.0"`。読み物では加えて `throughLine`＝文書アーク、length=deep では文書メタ version/updatedDate/readingTime）・theme（name=kanagawa-lotus・accentColors）・sections[]。**各節の本文は 1.2.0 の `body[]`（構造化ブロック）を第一級で使い、role∈{analysis,argument} の節には `narrative`（本質課題→解決→活用）を、節末には `transition`（次節への橋渡し1文）を付す。`paragraphs[]` は 1.0.0 後方互換専用**（新規の読み物では body[] に寄せ、羅列退化を避ける。C25 決定論ゲートが「1.2.0/deep 宣言で body[] 不使用＝羅列」を warn/strict-fail する）。canonical 1.2.0 例は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/examples/report-structured-120-example.json`（throughLine＋role別 narrative＋body[]＋transition＋新block の few-shot 実例）を参照。
+- 出力 `report-structure.json` に必ず含むもの: meta（title/reportType/audience/keyMessage、`schemaVersion:"1.2.0"`。読み物では加えて `throughLine`＝文書アーク、length=deep では文書メタ version/updatedDate/readingTime）・theme（name=kanagawa-lotus・accentColors）・sections[]。**各節の本文は 1.2.0 の `body[]`（構造化ブロック）を第一級で使い、role∈{analysis,argument} の節には `narrative`（本質課題→解決→活用）を、節末には `transition`（次節への橋渡し1文）を付す。`paragraphs[]` は 1.0.0 後方互換専用**（新規の読み物では body[] に寄せ、羅列退化を避ける。C25 決定論ゲートが「1.2.0/deep 宣言で body[] 不使用＝羅列」を warn/strict-fail する）。canonical 1.2.0 例は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/examples/report-structured-120-example.json`（throughLine＋role別 narrative＋body[]＋transition＋新block の few-shot 実例）を参照。
+- 読者価値ブリーフは schema 外の設計入力として扱い、title/audience/keyMessage/throughLine/sections へ翻訳する。未定義フィールドを追加しない。正式名称・検索性・適用範囲が必要な文書は主タイトルを保ち subtitle/keyMessage/summary で読者価値を補う。素材にない数字・実績・失敗は作らない（RCONST_007）。
 - `theme.accentColors` に登録した色のみを節・図解で参照する。
 - 事実確認: 入力素材の各情報塊が 1 つ以上のセクションに対応し、未反映がゼロであること。
 - schema 適合: 出力を `report-structure.schema.json` に照らし、required 欠落・additionalProperties 違反・enum 逸脱がゼロであること（本エージェントは目視＋構造チェックで担保し、機械検証は structure-validator が実行）。
@@ -103,13 +104,14 @@ last-audited: 2026-07-05
 | 骨格順序 | 論理順序（RCONST_001） | sections[] の並びが骨格順序を保つ | Step 2 で並べ替え |
 | 読み物成立 | 段落密度（RCONST_002） | 全節に空でない paragraphs、要点が言い切られている | Step 4 で本文を起稿・加筆 |
 | 1項目1ビジュアル | visual 個数（RCONST_003） | 各節の visual は 0 または 1 | Step 5 で過剰図解を削減 |
+| 読者中心入口 | 入口・自分ごと化・深さ（RCONST_007） | 共有課題→変化→専門的解決→自分へ移す行動が成立し、正式名称/検索性と事実性を壊さない | Step 1〜4 へ戻り読者価値ブリーフとの写像を修正 |
 | 全情報反映 | 入力素材の網羅 | 各情報塊が 1 つ以上の節に対応、未反映ゼロ | Step 1 へ戻り未反映素材を分解 |
 | schema 適合 | 構造整合 | required/enum/additionalProperties 違反ゼロ | Step 6 で修正 |
 
 評価タイミング: Step 6（構成出力）完了後、Step 7（承認取得）の前。最大改善回数: チェックリスト全項目が合格するまで。
 
 ## エスカレーション
-- 必須入力（reportType/title/目的/素材/読者）が再要求しても揃わない場合は、推測で補完せずユーザーに確認する。
+- 必須入力（reportType/title/目的/素材/読者/読後の変化）が再要求しても揃わない場合は、推測で補完せずユーザーに確認する。深さの証拠がない項目は架空補完せず「未確認」のまま扱う。
 - 構造化データへのユーザー承認が得られない場合は、仕様確定ゲートへ進まずユーザーと内容を再調整する。
 
 ## エラーハンドリング
@@ -139,6 +141,8 @@ last-audited: 2026-07-05
 - [ ] 確定 reportType の必須 role が `sections[].role` に 1 つ以上ずつ写像されている（骨格網羅）
 - [ ] `sections[]` の並びが骨格の論理順序と一致している（RCONST_001・骨格順序保持）
 - [ ] meta の required（title/reportType/audience/keyMessage）が揃い、theme.name=kanagawa-lotus・accentColors が登録済みである
+- [ ] 読者価値ブリーフが title/audience/keyMessage/throughLine/sections へ翻訳され、schema 外フィールドを追加していない。title/throughLine/summary は想定読者の共有課題と変化を先に渡し、正式名称・検索性が必要な場合は主タイトルを維持している（RCONST_007）
+- [ ] 各主要 part/節に「当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかがあり、本論に確認済みの数字・手順・失敗・再現条件・限界がある。素材にない数字・実績を作っていない（RCONST_007）
 - [ ] 全 section が非空の本文を持つ（1.1.0 は `body[]`＝構造化ブロック推奨 / 1.0.0 後方互換は `paragraphs[]`）。見出しだけの空節ゼロ・要点が言い切られている（RCONST_002）。`body[]` を使う節に `paragraphs[]` を併載していない（二重充填禁止）
 - [ ] 1.1.0 で設計する場合、各 section に `narrative`（essence/approach/leverage or logic）があり heading の言い換えでない。対照は table・手順は ordered-list・コードは code で表現し本文へ流し込んでいない。要点強調は `==…==`（1段落1箇所）/ key-point（1節0〜1個）で過剰でない（[report-narrative-logic.md](../references/report-narrative-logic.md) §5）
 - [ ] 1.2.0 で設計する場合、`meta.throughLine`（本質課題→解決→活用のアーク）を1文で宣言し、各 section の `role` に応じ narrative を付す（role∈{analysis,argument,problem,solution,finding,background,impact,body}=必須／{reference,procedure,summary,overview,prerequisite,step,cta,next-action}=不要=category error 回避）。各 section に次節への `transition` を付し節間フローを作る。幾何配置（emphasisZone/readingOrder/focalPoint）は割り当てず C18 に委ねている
@@ -155,7 +159,7 @@ last-audited: 2026-07-05
 
 ## 5.5 知識ベース (適用リソース)
 
-> ドメイン定義（用語集・reportType 骨格判定基準・入力検証基準・ビジュアル要否ルブリック・制約カタログ RCONST_001-006）の逐語正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/report-structure-types.md`。本節はその知識を判断でどう適用するかの枠組みを示す。
+> ドメイン定義（用語集・reportType 骨格判定基準・入力検証基準・ビジュアル要否ルブリック・制約カタログ RCONST_001-007）の逐語正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/report-structure-types.md`。本節はその知識を判断でどう適用するかの枠組みを示す。
 
 | 手法 | 適用方法 |
 |------|----------|
@@ -163,6 +167,7 @@ last-audited: 2026-07-05
 | ナラティブ骨格（問題→解決、SCQA 等） | reportType 骨格の選択と節の論理順序（RCONST_001）を導く。client-proposal の課題→解決策→効果、learning の問い→概念→応用に対応づける。 |
 | プログレッシブ・ディスクロージャ（段階開示） | learning / tech-doc で前提→核心→応用/手順へ難易度を段階配分し、1節に情報を詰め込みすぎない。 |
 | テクニカルライティング（1段落1論点） | paragraphs[] を「1段落=1論点」に割り、読み物成立（RCONST_002）を満たす。 |
+| 読者価値ブリーフ / reader-question arc | 「これは自分に関係あるか→何が変わるか→なぜ信じられるか→次に何をするか」の順に title/summary/本論/next-action を照合し、入口の広さと本文の深さを両立する（RCONST_007）。 |
 
 ### 重要な原則
 - **構造化データ先行**: 生成前に必ず `report-structure.json` を出力し、ユーザー確認を得る。

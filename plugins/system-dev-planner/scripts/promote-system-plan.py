@@ -302,12 +302,18 @@ def _registration_nodes(*, inventory: dict, package: dict, destination_rel: str,
         file_path = registration.get("file_path")
         if node_id != task.get("id"):
             raise ValueError(f"task {task.get('id')} graph_node_registration id mismatch")
+        parent_feature = task.get("parent_feature")
         if (
             not isinstance(file_path, str)
-            or re.fullmatch(r"tasks/[^/]+\.md", file_path) is None
+            or re.fullmatch(r"tasks/[A-Za-z0-9._-]+/[^/]+\.md", file_path) is None
             or ".." in Path(file_path).parts
+            or not isinstance(parent_feature, str)
+            or not file_path.startswith(f"tasks/{parent_feature}/")
         ):
-            raise ValueError(f"task {task.get('id')} registration file_path must be under tasks/")
+            raise ValueError(
+                f"task {task.get('id')} registration file_path must be "
+                "tasks/<parent_feature>/<file>.md (feature 単位の namespace 分離)"
+            )
         for field in ("parent_feature", "feature_package_id", "phase_ref"):
             if registration.get(field) != task.get(field):
                 raise ValueError(f"task {task.get('id')} graph_node_registration {field} mismatch")

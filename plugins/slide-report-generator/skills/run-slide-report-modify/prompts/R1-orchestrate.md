@@ -64,11 +64,11 @@
 
 | agent (name) | 役割 | 起動ラウンド |
 |---|---|---|
-| `slide-report-modifier` | 既存成果物の指定箇所を独立 context で部分修正 (mode-aware・slide=`structure.md`⇔`index.html` / report=`report-structure.json`⇔`report.html` 同期駆動)。規範は mode 分岐で適用: slide=`./references/modification-rules.md` (CONST_001-012)、report=`./references/report-modification-rules.md` (RCONST_001-012・reportType 骨格維持・読み物文体・1項目1ビジュアル・sidecar 履歴)。report のレンダ再生成は worker が `render-report.js` を Bash 実行 | R2 (局所修正) / R3 (再評価の起点) |
+| `slide-report-modifier` | 既存成果物の指定箇所を独立 context で部分修正 (mode-aware・slide=`structure.md`⇔`index.html` / report=`report-structure.json`⇔`report.html` 同期駆動)。規範は mode 分岐で適用: slide=`./references/modification-rules.md` (CONST_001-013)、report=`./references/report-modification-rules.md` (RCONST_001-013・reportType 骨格維持・読み物文体・1項目1ビジュアル・sidecar 履歴)。report のレンダ再生成は worker が `render-report.js` を Bash 実行 | R2 (局所修正) / R3 (再評価の起点) |
 
 > `slide-report-modifier` はファイルパス依存でなく Task の **name 起動**。worker の tools は `Read, Write, Bash` のみで **Task を持たない**。下流 (`html-generator` 再生成・`ai-image-diagram-producer` 画像・`structure-designer`／`report-structure-designer` 構成変更・`ui-quality-reviewer`／mode-aware `deck-evaluator` 再検証) は **本オーケストレータが dispatch** する (worker は必要を修正案に明記して返す)。report の `report.html` レンダ再生成のみ worker が `render-report.js` (Bash) で直接行う。
 
-### 3.2 vendor scripts (`$CLAUDE_PLUGIN_ROOT/vendor/scripts/`)
+### 3.2 vendor scripts (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/`)
 
 | script | 用途 | いつ |
 |---|---|---|
@@ -77,14 +77,14 @@
 | `validate-print.js` | **slide** 印刷 CSS (@media print) 修正時の A4 レイアウト崩れ検証 | R3 (slide・印刷レイアウト影響時) |
 | `render-report.js` | **report** `report-structure.json` → `report.html` 決定論再レンダ。修正後の `report.html` が正本 `report-structure.json` の忠実な射影であること (再レンダ整合) を確認 | R3 (report・必須) |
 
-### 3.3 plugin-root glue script (`$CLAUDE_PLUGIN_ROOT/scripts/`)
+### 3.3 plugin-root glue script (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/`)
 
 | script | 用途 | いつ |
 |---|---|---|
-| `validate-output-mode.py` | `output_mode` (slide/report) と `reportType` (report 時 4 enum) の値域を fail-closed 検証 (送信前)。`--preflight` で node/npm/vendor/node_modules/codex CLI を fail-soft 検出 | R1 (送信前・必須) / R3 (再確認) |
+| `setup-playwright.py` / `validate-output-mode.py` | OS/CPU別Chromiumをplugin-localへ復元し、`output_mode` (slide/report) と `reportType` (report 時 4 enum) の値域を fail-closed 検証。`--preflight` で node/npm/plugin-local Chromium/codex CLI を検出 | R1 (送信前・必須) / R3 (再確認) |
 | `verify-report-runtime.js` / `validate-report-visual.py` | **report** 修正後に6 viewport＋print＋navigation/computed metrics bundleを生成し、`validate-report-visual.py <report.html> --structure <report-structure.json> --require-structure --json` で静的shape/構造同期をfail-closed判定 | R3 (report・必須) |
 
-### 3.4 schemas (`$CLAUDE_PLUGIN_ROOT/schemas/`)
+### 3.4 schemas (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/`)
 
 | schema | 用途 |
 |---|---|
@@ -95,13 +95,13 @@
 
 | reference | 用途 |
 |---|---|
-| `./references/modification-rules.md` | **slide** 部分修正規範の逐語 SSOT (用語集・評価基準・修正タイプ分類・CONST_001-012・修正フローパターン・`index.html` ⇔ `structure.md` 同期維持ルール)。worker と本オーケストレータの双方がこれを参照 |
-| `./references/report-modification-rules.md` | **report** 部分修正規範の逐語 SSOT (用語集・評価基準・修正タイプ分類・RCONST_001-012・reportType 4 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・読み物文体/1項目1ビジュアル・sidecar 履歴)。worker と本オーケストレータの双方がこれを参照 |
+| `./references/modification-rules.md` | **slide** 部分修正規範の逐語 SSOT (用語集・評価基準・修正タイプ分類・CONST_001-013・修正フローパターン・`index.html` ⇔ `structure.md` 同期維持ルール)。worker と本オーケストレータの双方がこれを参照 |
+| `./references/report-modification-rules.md` | **report** 部分修正規範の逐語 SSOT (用語集・評価基準・修正タイプ分類・RCONST_001-013・reportType 4 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・読み物文体/1項目1ビジュアル・sidecar 履歴)。worker と本オーケストレータの双方がこれを参照 |
 
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 配置非依存 (Gotcha)
-- 全実行パスは `$CLAUDE_PLUGIN_ROOT` 起点 (`vendor/scripts/…` ／ `scripts/…`)。repo-root 直書き禁止。宣言参照は skill dir 相対 (`../../` = plugin root、`./references/` = skill 私有)。
+- 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点 (`vendor/scripts/…` ／ `scripts/…`)。repo-root 直書き禁止。宣言参照は skill dir 相対 (`../../` = plugin root、`./references/` = skill 私有)。
 
 ### 4.2 局所性・意匠共有 (Gotcha)
 - 指定箇所以外・意匠 SSOT (Kanagawa 配色・16:9・最小 1.4rem・印刷 CSS・letterbox 等)・非対象セクションは**不変**。全書き換え禁止、Edit 差分のみ。
@@ -206,12 +206,12 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-**R1**: 修正対象の既存成果物パスと修正指示を受け取り、ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定せよ (曖昧なら `--mode` を優先)。既存成果物を Read し、修正が及ぶ範囲と**触れてはならない意匠／技術コア・非対象箇所**を明示、修正指示を `./references/modification-rules.md` の 6 区分に分類し影響範囲を導け。送信前に `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <internal-analysis|client-proposal|tech-doc|learning>]` を実行し exit 0 (IN1) を確認する。exit 2 なら修正を送信せず mode/reportType を再確定せよ。
+**R1**: 修正対象の既存成果物パスと修正指示を受け取り、ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定せよ (曖昧なら `--mode` を優先)。既存成果物を Read し、修正が及ぶ範囲と**触れてはならない意匠／技術コア・非対象箇所**を明示、修正指示を `./references/modification-rules.md` の 6 区分に分類し影響範囲を導け。送信前に `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <internal-analysis|client-proposal|tech-doc|learning>]` を実行し exit 0 (IN1) を確認する。exit 2 なら修正を送信せず mode/reportType を再確定せよ。
 
-**R2**: `Task` で `slide-report-modifier` を **name 起動** (`isolation: fork`) し、判定 mode・修正対象パス・修正指示・影響範囲を渡せ。worker は mode 分岐で規範を適用し**指定箇所のみ**を局所差分修正する: **slide**=`./references/modification-rules.md` の CONST_001-012・修正フローパターンに従い `index.html`／`styles.css`／`scripts.js`⇔`structure.*` 同期と履歴を維持 (HTML 再生成が要れば修正案に明記→オーケストレータが `html-generator` 委譲)。**report**=`./references/report-modification-rules.md` の RCONST_001-012 に従い `report-structure.json` を正として編集し `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を再レンダ、読み物文体・1項目1ビジュアル・reportType 骨格順序を維持し、履歴は `meta.version` bump ＋ sidecar `report-structure.history.json` に追記 (schema 外フィールドのインライン禁止)。いずれも意匠 SSOT・非対象箇所を不変に保ち、修正後 `structure.*`／`report-structure.json` が対応 schema (`../../schemas/structure.schema.json`／`report-structure.schema.json`) に valid であることを保つ。
+**R2**: `Task` で `slide-report-modifier` を **name 起動** (`isolation: fork`) し、判定 mode・修正対象パス・修正指示・影響範囲を渡せ。worker は mode 分岐で規範を適用し**指定箇所のみ**を局所差分修正する: **slide**=`./references/modification-rules.md` の CONST_001-013・修正フローパターンに従い `index.html`／`styles.css`／`scripts.js`⇔`structure.*` 同期と履歴を維持 (HTML 再生成が要れば修正案に明記→オーケストレータが `html-generator` 委譲)。**report**=`./references/report-modification-rules.md` の RCONST_001-013 に従い `report-structure.json` を正として編集し `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を再レンダ、読み物文体・1項目1ビジュアル・reportType 骨格順序を維持し、履歴は `meta.version` bump ＋ sidecar `report-structure.history.json` に追記 (schema 外フィールドのインライン禁止)。いずれも意匠 SSOT・非対象箇所を不変に保ち、修正後 `structure.*`／`report-structure.json` が対応 schema (`../../schemas/structure.schema.json`／`report-structure.schema.json`) に valid であることを保つ。
 
 **R3 (mode 分岐)**: 修正後、mode 別に機械ゲートを実行せよ。
-- **slide**: `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js" ./index.html --check-ratio` で視覚崩れ 0 を確認。意匠コア・印刷レイアウトに及ぶ場合は `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js"` ／ `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-print.js"` も併用。
-- **report**: `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で再レンダ整合を確認し、`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>`、`python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json`、bundle入力の mode-aware `deck-evaluator` の順に再評価。
+- **slide**: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html --check-ratio` で視覚崩れ 0 を確認。意匠コア・印刷レイアウトに及ぶ場合は `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js"` ／ `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js"` も併用。
+- **report**: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で再レンダ整合を確認し、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>`、`python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json`、bundle入力の mode-aware `deck-evaluator` の順に再評価。
 
 いずれかが非 0 (崩れ／乖離／FAIL) なら検出箇所を R2 へ差し戻し (feedback-contract 最大 3 周 / goal-seek max_loops 5)、全 exit 0 (OUT1) で完了とする。最終的に**修正レポート** (修正箇所一覧 ＋ 変更差分 ＋ 再評価スコア) を返し、`"PASS"` 文字列でなくゲートの exit code を完成根拠とせよ。前置き禁止。

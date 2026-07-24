@@ -12,8 +12,13 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os';
 import { dirname, relative, resolve } from 'path';
 import { pathToFileURL } from 'url';
+import {
+  configurePluginLocalPlaywright,
+  setupCommand,
+} from './playwright-runtime.js';
 
 const VIEWPORTS = [899, 900, 901, 1024, 1366, 1600];
+configurePluginLocalPlaywright();
 
 function parseArgs(argv) {
   if (argv.includes('--self-test')) return { selfTest: true };
@@ -35,7 +40,7 @@ async function loadPlaywright() {
   try {
     return await import('playwright');
   } catch (error) {
-    throw new Error(`playwright unavailable; run npm ci in vendor/: ${error.message}`);
+    throw new Error(`playwright unavailable; run ${setupCommand()}: ${error.message}`);
   }
 }
 

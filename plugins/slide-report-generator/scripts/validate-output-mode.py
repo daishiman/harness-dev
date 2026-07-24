@@ -32,6 +32,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -87,15 +88,62 @@ def validate_output_mode(mode, report_type=None):
 
 
 def _plugin_root() -> Path:
-    """CLAUDE_PLUGIN_ROOT 優先。無ければ scripts/ の親 (= plugin root)。"""
-    env_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    """SRG_ROOT 優先。無ければ scripts/ の親 (= plugin 実体) を __file__ から自己解決。
+
+    ObsidianMemo 等では CLAUDE_PLUGIN_ROOT が別プラグイン (ubm-goal-setting) に env 固定
+    されるため、それを採用すると slide-report と別の root を指してしまう。よって
+    slide-report 専用の SRG_ROOT を優先し、無ければ symlink 経由でも実体を指す
+    Path(__file__).resolve() から自己解決する (CLAUDE_PLUGIN_ROOT は採用しない)。
+    """
+    env_root = os.environ.get("SRG_ROOT")
     if env_root:
         return Path(env_root)
     return Path(__file__).resolve().parent.parent
 
 
+def _playwright_preflight(root: Path) -> dict:
+    """Plugin-local Playwright を write/network なしで検査する。"""
+    setup_script = root / "scripts" / "setup-playwright.py"
+    if not setup_script.is_file():
+        return {
+            "ready": False,
+            "detected": {
+                "browser_dir": str(root / "vendor" / "playwright-browsers"),
+                "chromium_executable": None,
+                "plugin_local": False,
+                "playwright_expected_version": None,
+                "playwright_installed_version": None,
+                "playwright_dependencies_current": False,
+            },
+            "warnings": [f"Playwright setup script missing: {setup_script}"],
+        }
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(setup_script), "--check"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        payload = json.loads(proc.stdout)
+    except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+        return {
+            "ready": False,
+            "detected": {
+                "browser_dir": str(root / "vendor" / "playwright-browsers"),
+                "chromium_executable": None,
+                "plugin_local": False,
+                "playwright_expected_version": None,
+                "playwright_installed_version": None,
+                "playwright_dependencies_current": False,
+            },
+            "warnings": [f"Playwright preflight failed: {exc}"],
+        }
+    return payload
+
+
 def run_preflight():
-    """node/npm/vendor/node_modules/codex CLI を検出 (fail-soft)。
+    """node/npm/vendor/node_modules/plugin-local Chromium/codex CLI を検出 (fail-soft)。
 
     返り値: {"ok": bool, "detected": {...}, "warnings": [str]}
     ok は「必須 (node/npm/vendor) が揃っているか」の目安。欠落は warnings に載るが
@@ -108,12 +156,26 @@ def run_preflight():
     node = shutil.which("node")
     npm = shutil.which("npm")
     codex = shutil.which("codex")
+    playwright = _playwright_preflight(root)
+    playwright_detected = playwright.get("detected", {})
 
     detected = {
         "node": node,
         "npm": npm,
         "vendor_dir": str(vendor) if vendor.is_dir() else None,
         "node_modules": str(node_modules) if node_modules.is_dir() else None,
+        "playwright_browser_dir": playwright_detected.get("browser_dir"),
+        "playwright_chromium": playwright_detected.get("chromium_executable"),
+        "playwright_plugin_local": bool(playwright_detected.get("plugin_local")),
+        "playwright_expected_version": playwright_detected.get(
+            "playwright_expected_version"
+        ),
+        "playwright_installed_version": playwright_detected.get(
+            "playwright_installed_version"
+        ),
+        "playwright_dependencies_current": bool(
+            playwright_detected.get("playwright_dependencies_current")
+        ),
         "codex_cli": codex,
     }
 
@@ -127,12 +189,18 @@ def run_preflight():
     if not node_modules.is_dir():
         warnings.append(
             "vendor/node_modules 未インストール "
-            "(vendor で npm install / mermaid 等が要る場合)"
+            "(setup-playwright.py --install で復元)"
         )
+    if not playwright.get("ready"):
+        warnings.append(
+            "plugin-local Playwright Chromium 未準備 "
+            f"(python3 \"{root / 'scripts' / 'setup-playwright.py'}\" --install)"
+        )
+        warnings.extend(playwright.get("warnings", []))
     if not codex:
         warnings.append("codex CLI not found (Codex 画像生成を使う場合のみ必要)")
 
-    ok = bool(node and npm and vendor.is_dir())
+    ok = bool(node and npm and vendor.is_dir() and playwright.get("ready"))
     return {"ok": ok, "detected": detected, "warnings": warnings}
 
 
