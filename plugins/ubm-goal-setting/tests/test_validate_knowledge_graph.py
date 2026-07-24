@@ -465,4 +465,4 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     r = run("--knowledge-dir", str(real), "--graph-out", str(out))
     assert r.returncode == 0, r.stdout + r.stderr
     graph = json.loads(out.read_text(encoding="utf-8"))
-    assert graph["node_count"] == 332  # 実データ entry 総数
+    assert graph["node_count"] == 386  # 実データ entry 総数
