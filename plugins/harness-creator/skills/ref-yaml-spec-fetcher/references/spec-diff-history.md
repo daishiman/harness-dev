@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-07-27T02:40:22Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -50,9 +50,7 @@
+ .
+ ​
+ Bundled skills
+-Claude Code includes a set of bundled skills that are available in every session unless disabled with the
+-disableBundledSkills
+-setting, including
++Claude Code includes a set of bundled skills, such as
+ /doctor
+ ,
+ /code-review
+@@ -64,14 +62,29 @@
+ /loop
+ , and
+ /claude-api
+-. Unlike most built-in commands, which execute fixed logic directly, bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. You invoke them the same way as any other skill, by typing
++. Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
++You invoke a bundled skill the same way as any other skill, by typing
+ /
+-followed by the skill name.
++followed by the skill name. Claude invokes some bundled skills automatically when relevant; others,
++including
++/verify
++and
++/code-review
++, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens. Before v2.1.215, Claude could also run
++/verify
++and
++/code-review
++on its own.
++Bundled skills are available in every session. To turn them off, use the
++disableBundledSkills
++setting, which disables every bundled skill except
++/doctor
++.
+ The
+ /doctor
+-setup checkup is the one exception to
++setup checkup stays typable when
+ disableBundledSkills
+-in Claude Code v2.1.205 and later: it stays typable when the setting is on. To hide it, set the
++is on, in Claude Code v2.1.205 and later. To hide it, set the
+ DISABLE_DOCTOR_COMMAND
+ environment variable or a
+ skillOverrides
+@@ -453,6 +466,27 @@
+ All fields are optional. Only
+ description
+ is recommended so Claude knows when to use the skill.
++Boolean fields accept
++yes
++,
++no
++,
++on
++,
++off
++,
++1
++, and
++0
++in any letter case, in addition to
++true
++and
++false
++. Before v2.1.218, Claude Code recognized only
++true
++and
++false
++.
+ Field
+ Required
+ Description
+@@ -460,7 +494,7 @@
+ No
+ Display name shown in skill listings. Defaults to the directory name. See
+ How a skill gets its command name
+-for how this differs from the name you type to invoke the skill.
+... (2301 more lines)
+```
+
 ## 2026-07-20T02:43:21Z
 
 実仕様ページに変更を検知。
