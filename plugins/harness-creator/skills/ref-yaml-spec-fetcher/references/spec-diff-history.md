@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-03T02:33:54Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -136,6 +136,13 @@
+ , and any other agent in the repo follow the recorded recipe instead of rediscovering it. Run
+ /run-skill-generator
+ once per project, and again if the build or launch process changes.
++/verify
++can also record its own recipe. When it has to build and drive your app without a recorded recipe, it writes what worked to
++.claude/skills/verify/SKILL.md
++at the repo root, or in the touched package directory in a monorepo, so later runs and other agents follow the same steps. At the repo root, the recorded skill replaces the bundled
++/verify
++. This requires Claude Code v2.1.200 or later.
++Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs. Before v2.1.205, the bundled skill told Claude to fold in anything a run learned, which caused frequent merge conflicts.
+ ​
+ Getting started
+ ​
+@@ -257,7 +264,7 @@
+ , this requires accepting the workspace trust dialog first.
+ ​
+ Live change detection
+-Claude Code watches skill directories for file changes. Adding, editing, or removing a skill under
++Claude Code watches skill directories for file changes. When you add, edit, or remove a skill under
+ ~/.claude/skills/
+ , the project
+ .claude/skills/
+@@ -265,7 +272,7 @@
+ .claude/skills/
+ inside an
+ --add-dir
+-directory takes effect within the current session without restarting. Creating a top-level skills directory that did not exist when the session started requires restarting Claude Code so the new directory can be watched.
++directory, Claude Code picks up the change within the current session, without a restart. If you create a top-level skills directory that didn’t exist when the session started, restart Claude Code so it can watch the new directory.
+ Live change detection covers
+ SKILL.md
+ text only. For a skill folder that is also a
+@@ -282,16 +289,21 @@
+ /reload-plugins
+ to take effect.
+ ​
+-Automatic discovery from parent and nested directories
++Discovery from parent and nested directories
+ Project skills load from
+ .claude/skills/
+-in your starting directory and in every parent directory up to the repository root, so starting Claude in a subdirectory still picks up skills defined at the root. When you work with files in subdirectories below your starting directory, Claude Code also discovers skills from nested
++in the directory where you start Claude Code and in every parent directory up to the repository root. Starting Claude in a subdirectory still picks up skills defined at the root. To load skills from a directory outside that path at startup, pass it with
++--add-dir
++. Claude Code reads
+ .claude/skills/
+-directories on demand. For example, if you’re editing a file in
++inside each added directory alongside the project skills.
++Skills in nested
++.claude/skills/
++directories below your starting directory aren’t loaded at startup. They load the first time Claude reads or edits a file inside that subdirectory, and stay available for the rest of the session. For example, after Claude edits a file under
+ packages/frontend/
+-, Claude Code also looks for skills in
++, skills in
+ packages/frontend/.claude/skills/
+-. This supports monorepo setups where packages have their own skills.
++become available. Until then, those skills don’t appear in autocomplete and can’t be invoked by name.
+ Each skill is a directory with
+ SKILL.md
+ as the entrypoint:
+@@ -1878,62 +1890,7 @@
+ =
+ f
+ '''<!DOCTYPE html>
+-<html><head>
+-<meta charset="utf-8"><title>Codebase Explorer</title>
+-<style>
+-body
+-{{
+-font: 14px/1.5 system-ui, sans-serif; margin: 0; background: #1a1a2e; color: #eee;
+-}}
+-.container
+-{{
+-display: flex; height: 100vh;
+-}}
+-.sidebar
+-{{
+-width: 280px; background: #252542; padding: 20px; border-right: 1px solid #3d3d5c; overflow-y: auto; flex-shrink: 0;
+-}}
+... (1004 more lines)
+```
+
 ## 2026-07-27T02:40:22Z
 
 実仕様ページに変更を検知。
