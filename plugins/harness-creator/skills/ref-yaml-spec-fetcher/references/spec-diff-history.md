@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-10T01:27:37Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -47,7 +47,9 @@
+ subagent execution
+ , and
+ dynamic context injection
+-.
++. See
++Using skill frontmatter outside Claude Code
++for which frontmatter fields are part of the standard and which are Claude Code extensions.
+ ​
+ Bundled skills
+ Claude Code includes a set of bundled skills, such as
+@@ -65,8 +67,7 @@
+ . Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
+ You invoke a bundled skill the same way as any other skill, by typing
+ /
+-followed by the skill name. Claude invokes some bundled skills automatically when relevant; others,
+-including
++followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
+ /verify
+ and
+ /code-review
+@@ -323,7 +324,7 @@
+ for more details.
+ Files in
+ .claude/commands/
+-still work and support the same
++support the same
+ frontmatter
+ . Skills are recommended since they support additional features like supporting files.
+ ​
+@@ -443,11 +444,6 @@
+ 1. Run the test suite
+ 2. Build the application
+ 3. Push to the deployment target
+-Your
+-SKILL.md
+-can contain anything, but thinking through how you want the skill invoked (by you, by Claude, or both) and where you want it to run (inline or in a subagent) helps guide what to include. For complex skills, you can also
+-add supporting files
+-to keep the main skill focused.
+ Keep the body itself concise. Once a skill loads, its content
+ stays in context across turns
+ , so every line is a recurring token cost. State what to do rather than narrating how or why, and apply the same conciseness test you would for
+@@ -540,8 +536,7 @@
+ /name
+ . Also prevents the skill from being
+ preloaded into subagents
+-.
+-As of v2.1.196, also prevents the skill from running when a
++. As of v2.1.196, also prevents the skill from running when a
+ scheduled task
+ fires with the skill as its prompt. Default:
+ false
+@@ -575,7 +570,13 @@
+ inherit
+ to keep the active model. A value excluded by your organization’s
+ availableModels
+-allowlist is not used and the session keeps its current model.
++allowlist is not used and the session keeps its current model. With
++context: fork
++, the value sets the
++forked subagent’s model
++instead, and an excluded value follows the
++same rules as a subagent model override
++.
+ effort
+ No
+ Effort level
+@@ -612,8 +613,7 @@
+ running it in the background
+ . Default:
+ true
+-.
+-Requires Claude Code v2.1.218 or later.
++. Requires Claude Code v2.1.218 or later.
+ hooks
+ No
+ Hooks scoped to this skill’s lifecycle. See
+@@ -641,6 +641,67 @@
+... (3690 more lines)
+```
+
 ## 2026-08-03T02:33:54Z
 
 実仕様ページに変更を検知。
