@@ -57,11 +57,21 @@ PLUGINS_DIR = ROOT / "plugins"
 # 「lint 時点で物理実在すべき」もの。eval-log/ log/ は runtime 出力なので除外。
 SOURCE_DIR_TOKENS = ("references", "schemas", "scripts", "templates", "prompts", "examples", "hooks")
 
+# 起点 token の追加分: plugin 直下の資産 dir。skill 配下の source dir ではないので
+# SOURCE_DIR_TOKENS へは入れない (入れると _is_dir_only_ref の意味が変わる) が、
+# prompt からは実パスとして引用されるため捕捉対象には含める。
+EXTRA_PATH_TOKENS = ("assets",)
+
 # path 捕捉: 先行する ../ 連鎖と非 token セグメント (例: ../run-prompt-create/) も取り込み、
 # フルパスを切り詰めない (切り詰めると兄弟 skill 相対参照を誤検出する)。
-# 起点 token は source dir または plugins/。
-_PREFIX = "|".join(SOURCE_DIR_TOKENS)
+# 起点 token は source dir / 資産 dir または plugins/。
+# 先頭の lookbehind はセグメント境界の強制: 直前が単語構成文字なら token の途中から
+# 切り出しているので捕捉しない (例: 'assets/slide-templates/x' から 'templates/x' を
+# 拾って偽陽性にするのを防ぐ)。'/' は除外しない ('${SRG_ROOT}/scripts/x.py' のように
+# 変数展開の直後から始まる正当な引用を落とさないため)。
+_PREFIX = "|".join(SOURCE_DIR_TOKENS + EXTRA_PATH_TOKENS)
 PATH_RE = re.compile(
+    r"(?<![A-Za-z0-9_.\-])"
     r"(?P<path>(?:\.\./)*(?:[A-Za-z0-9_.\-]+/)*?"
     r"(?:plugins|" + _PREFIX + r")/[A-Za-z0-9_\-./]+)"
 )
@@ -83,8 +93,16 @@ KNOWN_EXAMPLE_REFS = {
     "prompts/legacy/",  # run-migrate-audit R1-audit.md「回答例」内 exclude 値 (利用例)
 }
 
+# runtime 出力 dir。実行時に生成されるので lint 時点の非実在が正常な状態であり、
+# 引用が壊れている証拠にならない。SOURCE_DIR_TOKENS が eval-log/ log/ を外しているのと同じ理由。
+RUNTIME_OUTPUT_SEGMENTS = ("generated",)
+
 # 意図的に非実在を例示する等の除外は、行に本マーカーを置く (原則使用しない)。
 IGNORE_MARKER = "contract-drift-ignore"
+
+
+def _is_runtime_output(raw: str) -> bool:
+    return any(seg in RUNTIME_OUTPUT_SEGMENTS for seg in raw.strip("/").split("/"))
 
 
 def _iter_prompt_files(targets):
@@ -192,6 +210,8 @@ def check_tier1_referenced_paths(prompt_path: Path, text: str):
         if raw in KNOWN_EXAMPLE_REFS or raw.rstrip("/") in {r.rstrip("/") for r in KNOWN_EXAMPLE_REFS}:
             continue
         if _is_prose_dir_enumeration(raw):
+            continue
+        if _is_runtime_output(raw):
             continue
         line_no = text.count("\n", 0, m.start()) + 1
         line_text = lines[line_no - 1] if line_no - 1 < len(lines) else ""

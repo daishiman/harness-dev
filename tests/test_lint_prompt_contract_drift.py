@@ -13,6 +13,9 @@
     ⑤resource://<plugin>/... の plugin 共有参照 (PLUGINS_DIR base) → PASS
     ⑥任意/gitignore マーカー行 → 除外   ⑦placeholder (<>/foo) → 除外
     ⑧prose 列挙 (全 seg が dir token・拡張子なし) → 除外
+    ⑰token の途中から切り出さない (assets/slide-templates → templates 偽陽性の封じ)
+      ⑰b assets/ 配下の実際の破損は検出   ⑰c '${VAR}/scripts/...' は従来通り検出
+    ⑱runtime 出力 dir (generated/) → 除外
   Tier2 (allowed-tools):
     ⑨prompt L3.2 ツール ⊆ SKILL.md allowed-tools → PASS
     ⑩宣言ツールが未 grant → drift   ⑪「Bash 不使用」否定 → 除外
@@ -121,6 +124,35 @@ class TestTier1ReferencedPaths:
         assert MOD._is_prose_dir_enumeration("prompts/schemas/references") is True
         assert MOD._is_prose_dir_enumeration("references/real.md") is False
         assert MOD._is_prose_dir_enumeration("schemas") is False
+
+    def test_token_suffix_is_not_captured_midsegment(self, tmp_path):  # ⑰
+        # 'slide-templates' の途中から 'templates/...' を切り出して偽陽性にしない。
+        # 実体は plugin-root 直下の assets/ に在るので解決できなければならない。
+        sk = make_skill(tmp_path, ref_files=["plugin:assets/slide-templates/registry.json"])
+        p = write_prompt(sk, "| ひな形 | `../../assets/slide-templates/registry.json` | 読む |\n")
+        assert t1(p) == []
+
+    def test_assets_token_still_detects_real_break(self, tmp_path):  # ⑰b
+        # セグメント境界を強制しても assets/ 配下の壊れた引用は取り逃さない。
+        sk = make_skill(tmp_path)
+        p = write_prompt(sk, "`assets/slide-templates/gone-xyz.json` を読む。\n")
+        f = t1(p)
+        assert len(f) == 1 and f[0]["ref"] == "assets/slide-templates/gone-xyz.json"
+
+    def test_var_expansion_prefix_still_captured(self, tmp_path):  # ⑰c
+        # lookbehind が '/' を弾かないこと ('${SRG_ROOT}/scripts/...' の '/scripts' 起点)。
+        sk = make_skill(tmp_path)
+        p = write_prompt(sk, "run `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/gone-xyz.py`\n")
+        f = t1(p)
+        assert len(f) == 1 and f[0]["ref"] == "scripts/gone-xyz.py"
+
+    def test_runtime_output_dir_excluded(self, tmp_path):  # ⑱
+        # 実行時生成 dir は lint 時点の非実在が正常 (eval-log/ log/ と同じ扱い)。
+        sk = make_skill(tmp_path)
+        p = write_prompt(sk, "画像は `assets/generated/style-genome.json` へ出す。\n")
+        assert t1(p) == []
+        assert MOD._is_runtime_output("assets/generated/") is True
+        assert MOD._is_runtime_output("assets/slide-templates/registry.json") is False
 
 
 # ---------------------------------------------------------------- Tier2
