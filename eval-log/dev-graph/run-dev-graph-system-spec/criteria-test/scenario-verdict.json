@@ -27,12 +27,12 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C19-OUT1-failclosed-system-spec-lineage",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/out/status.json"
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/out/status.json"
       ],
-      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-5], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live。fail-closed 検証型シナリオを '--repo-root .../r7-spec-lineage' で実行。system-spec-harness の 4 entry point は qualified Skill 呼び出しで実ロードされ (Unknown skill 0 件)、C12/C13 は exit 0。上流の完全性 evaluator が verdict=FAIL を返したのを受けて本 skill は C02 import を実行せず、.dev-graph/state/graph.json は sha256 レベルで不変 (nodes:[])、specs/ architecture/ は ABSENT で 部分書き込み 0。dev-graph の C11 (validate-graph-schema.py --graph) を現物に対して実行し exit 0。blocker 4 件はすべて owner 付きで progress.json に記録。ゲート迂回・失敗の成功報告は検出されず。独立 evaluator が transcript と実ファイルから再検算し自己申告を追認ではなく再現した (前回 ref の r3 verdict は skill_dir_tree_sha が失効したため差し替え)。"
+      "observed": "Re-ran live (run 20260812T020000-r8) after the dev-graph manifest bump invalidated the prior behavior-closure digest. An independent fresh evaluator confirmed from the transcript tool_results that run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile and assign-system-spec-completeness-evaluator (twice, forked) each actually loaded via 'Launching skill' with no Unknown skill and no fallback re-implementation, against harness version 0.1.2 inside the declared >=0.1.0 <1.0.0 range with all four required entry points present in the package contract. Re-running validate-coverage-matrix.py --require-complete --require-foundation and validate-source-citation.py both gave exit 0. Both completeness-findings.json and its iter2 record verdict FAIL, and the fixture repo shows an empty git diff HEAD with nodes=0 in both graphs, so the fail-closed path correctly refused to import; validate-graph-schema.py exits 0 on both. specs/ and architecture/ were never created, all Write/Edit calls target scratchpad or out/status.json, and out/ holds that single file. No writes landed under plugins/dev-graph. The loop used 2 of its 3 allowed iterations, actually exercised the input-side injections (R4-reopen, set-decision, set-knowledge-candidate) to flip design_knowledge_reflection from FAIL to PASS, and reported the remaining blocker together with the evidence that it is not movable from the input side and its owner. The goal-seek verification script was re-run independently with 3 rows and matching hashes. verdict.json records overall+goal PASS, tier=live, downgrade_reason null."
     }
   }
 }

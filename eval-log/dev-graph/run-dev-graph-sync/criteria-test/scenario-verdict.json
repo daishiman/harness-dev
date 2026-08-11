@@ -27,12 +27,12 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C03-OUT1-positive-second-sync-zero",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260811T120000-r5/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260811T120000-r5/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260811T120000-r5/transcript.jsonl"
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260812T020000-r8/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-sync/live-trial/20260812T020000-r8/transcript.jsonl"
       ],
-      "observed": "Regenerated the live-trial verdict from the real 253-line transcript.jsonl (actual_model=[claude-opus-4-6], transcript_sha256=ef436424...) via live-trial-verdict.py: VERDICT PASS (launch=PASS completion=PASS goal_fit=PASS nudge=0 gate=0, downgrade_reason=null, tier=live, transcript_layer=jsonl). The transcript for scenario sync-positive-two-pass-convergence contains 15 'changes=0' and 14 'convergence' observations (imports/exports each 19, '2回目' x8), showing the second sync of the same state reports imports changes=0 and exports changes=0 with stable IDs/snapshots. Recorded out/status.json is {\"status\":\"PASS\"}."
+      "observed": "Re-ran live (run 20260812T020000-r8) after the dev-graph manifest bump invalidated the prior behavior-closure digest. An independent fresh evaluator cloned the fixture from its seed commit and re-ran the same driver for pass0 (dry-run) and passes 1-3, reproducing pass1 = 1 import / 1 export / 1 mutating gh call and pass2 = pass3 = all zero with digests equal before and after and stable IDs unchanged; the resulting graph.json, snapshot, adapter state and task markdown are byte-identical to the real fixture. The dry-run produced a zero mutation_log delta and zero local writes. The snapshot preserves the 3-way base (title, state, local and remote updated_at, body_digest) and pass2's plan base points at the post-pass1 snapshot. Every remote operation went through gh-bridge.py pinned to the fixture fake-gh via DEV_GRAPH_GH, with 0 api.github.com and 0 bare gh calls in the transcript. goal-spec / progress / intermediate.jsonl pass the skill's fail-closed hash checks and out/ holds only status.json. verdict.json records overall+goal PASS, tier=live."
     },
     "OUT2": {
       "status": "PASS",

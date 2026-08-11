@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "--repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-render --output /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-render/.dev-graph/render/index.html",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "C11 未達のまま完了扱い: `validate-graph-schema.py --graph .dev-graph/state/graph.json` を評価者側で再実行すると exit=1 / `valid:false` / `feature_package_not_exact_13 (node=LT-FEAT-001, count=2)`。skill 完了チェックリスト1「input graph/scope が schema PASS」も task.md line3「C02/C11契約に従って準備」も満たしていない。被験セッション自身の `eval-log/run-dev-graph-render-progress.json` も CL1 を PARTIAL と記録し、`run-dev-graph-render-intermediate.jsonl` に `drift_signal: contract_conflict_unresolved` と「上位へ handoff」と書きながら、out/status.json は PASS を自己申告している。SKILL.md「全 checklist と feedback_contract.criteria が PASS のときだけ完了する」に反する。",
+      "被験 skill の責務手順を省略: `responsibilities` の R1-elicit / R2-plan / R3-render はいずれも `prompt_required: true` だが、transcript 全 60 tool-use 中 `skills/run-dev-graph-render/prompts/*.md` の Read/cat は 0 件 (init skill の R3-init.md のみ読了)。また `goal_seek.fork: subagent`「未達 responsibility を `Agent` で分離 context に fork する」に対し Agent/Task 呼び出しは 0 件 (Bash 44 / Read 8 / Write 5 / Skill 3)。ゴールシークループは 1 周 (intermediate.jsonl 1 行) のみで、未達 checklist を残したまま停止している。",
+      "graph 準備が C02 の gate を通過していない: 登録は canonical writer ではなく scratchpad の自作 script `node_r8.py` で graph.json / node-registration-receipt.json を直接生成しており、node skill が要求する「validate-graph-schema.py を通してから atomic replace」に対し、検証が `valid:false` のまま commit されている。receipt 自身も `receipt_schema_note` で package-registration-receipt.schema.json 非適合を自認しており、schema 準拠の登録 receipt ではない。",
+      "(参考: 上記と独立に、task.md line7 の 5 観点は実体で裏づけられた — 外部 script/link・CDN・http(s)/protocol-relative 参照 0 件、inline SVG に node 4 + edge path 1、`active · feature · 1/2` 表示、renderer input_sha256=281cf797…=sha256(graph.json)=receipt.graph_sha256_after、registration receipt source_digest=sha256:477e6414…=sha256(node-registration-source.json)=全 node の source_lineage.source_digest、同一入力で再 render して output digest ce051a7b… が一致、qlmanage で追加 runtime なしに描画確認済み。FAIL は成果物品質ではなく上記の契約未達・手順迂回による。)"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "edeef1b7cfa66a4d7dc77e4fece9ff2ce84c83d9d547abaa1934d3937285f16a",
+  "transcript_sha256": "4fb454f488c1c770769d86f76eb5928f86c23f355a173eeb9b5f7ade1053dc72",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.227",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 675.0
+  },
+  "scenario_id": "render-feature-progress-positive"
+}

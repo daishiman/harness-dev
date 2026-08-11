@@ -26,13 +26,13 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "render-feature-progress-positive",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20260812T100000-r10/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260713T090000-r3/transcript.jsonl",
-        "independent: live-trial-verdict.py replay of recorded r3 transcript + out/status.json"
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260812T100000-r10/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20260812T100000-r10/transcript.jsonl",
+        "independent: fresh evaluator judgement over the r10 workdir artefacts + r10-render fixture"
       ],
-      "observed": "Replayed the recorded r3 live trial (transcript.jsonl, actual_model claude-opus-4-6, claude 2.1.62, transcript_layer=jsonl) via the official live-trial-verdict.py generator → verdict PASS with launch/completion/goal_fit/verdict all PASS, nudge=0, gate=0, tier=live, downgrade_reason=null, scenario render-feature-progress-positive. The trial's out/status.json recorded {status:PASS, scenario:render-feature-progress-positive} and the agent reported 'DONE: PASS' after opening the generated HTML/CSS with a browser-renderable SVG graph and feature X/Y progress and no added runtime dependency."
+      "observed": "Re-ran live (run 20260812T100000-r10) after the dev-graph manifest bump invalidated the prior behavior-closure digest. The earlier r8 attempt was recorded DEGRADED and is retained as evidence: its scenario asked the subject session to build the input graph itself as one feature with two tasks, which contradicts the C14 exact-13 feature package contract, and validate-graph-schema.py correctly reported feature_package_not_exact_13 — the fail-closed path worked, the scenario was wrong. The scenario was therefore redefined to hand the skill a graph that is already canonical: the r10-render fixture is a copy of the r5-requirements fixture produced by an earlier requirements live trial (17 nodes = feature 1 / task 13 / specification 1 / architecture 1 / document 1, validate-graph-schema valid=true, violations=[], readiness complete) together with its registration receipt (applied_count=13, expected_count=13, source_digest sha256:eb6a6bd8), with only the environment-dependent repository_id restamped for its own git dir so C24 resolves. The task forbade any graph creation or mutation and asked the skill to render and then verify OUT1 directly: no external script/link and no http(s) or protocol-relative references in the single HTML file, an inline SVG graph with feature/task nodes and edges, a feature X/Y child-task progress whose denominator equals the receipt applied_count/expected_count, a numerator derived from parent_feature in graph.json rather than a hard-coded value (checked against render-graph-html.py), the rendered input digest matching the receipt source_digest, and a byte-identical output digest on a second render. The subject session reported DONE: PASS with every skill checklist item PASS, and an independent fresh evaluator, instructed to judge from the artefacts rather than the self-report, returned PASS with no blockers. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
     }
   }
 }

@@ -27,12 +27,12 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C01-OUT1-positive-idempotence",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20260811T120000-r5/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20260811T120000-r5/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-init/live-trial/20260811T120000-r5/out/status.json + poll-state.json"
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20260812T020000-r8/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-init/live-trial/20260812T020000-r8/out/status.json + poll-state.json"
       ],
-      "observed": "Replay of the captured init-positive-idempotence live trial (model claude-opus-4-6, poll gate_ticks=0, stall=0, status.json PASS). The r3-init fixture holds the six content roots issues/tasks/specs/architecture/features/docs plus .dev-graph/{config.json,state/graph.json,cache,locks,templates}; the graph store passes C11 and the verdict.json reports overall launch/completion/goal_fit/verdict = PASS with downgrade_reason null."
+      "observed": "Re-ran live (run 20260812T020000-r8) after the dev-graph manifest bump invalidated the prior behavior-closure digest. The scenario replayed C01 idempotent initialisation on the r5-init fixture. An independent fresh evaluator, instructed to judge from the fixture artefacts rather than the subject session's self-report, returned PASS with no blockers; verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
     },
     "OUT2": {
       "status": "PASS",

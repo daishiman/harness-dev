@@ -156,12 +156,18 @@ def _schema_version(schema: dict[str, Any], name: str) -> str:
     return value
 
 
-def preflight_contract(system_root: Path, required_version: str, required_schema_version: str) -> dict[str, Any]:
+def preflight_contract(system_root: Path, required_version: str | None, required_schema_version: str) -> dict[str, Any]:
     root = system_root.resolve(strict=True)
     manifest = _json_object(root / ".claude-plugin" / "plugin.json")
     if manifest.get("name") != "system-dev-planner": raise ContractError("unexpected upstream plugin name")
-    if manifest.get("version") != required_version:
-        raise ContractError(f"system-dev-planner version mismatch: expected {required_version}, got {manifest.get('version')}")
+    # 既定は literal pin を置かない: upstream の patch bump で必ず外れる一方、契約の
+    # 実体は entry_points と schema_version const が固定する。呼び出し側が
+    # --required-version を明示したときだけ従来どおり厳密一致を要求する。
+    observed_version = manifest.get("version")
+    if not isinstance(observed_version, str) or re.fullmatch(r"\d+\.\d+\.\d+", observed_version) is None:
+        raise ContractError(f"system-dev-planner version is missing or not semver: {observed_version!r}")
+    if required_version is not None and observed_version != required_version:
+        raise ContractError(f"system-dev-planner version mismatch: expected {required_version}, got {observed_version}")
     package_contract = _json_object(root / "references" / "package-contract.json")
     if package_contract.get("plugin_name") != "system-dev-planner":
         raise ContractError("system-dev-planner package contract identity mismatch")
@@ -190,7 +196,7 @@ def preflight_contract(system_root: Path, required_version: str, required_schema
         schemas[filename] = version
     for filename in ("validate-system-plan.py", "promote-system-plan.py"):
         if not (root / "scripts" / filename).is_file(): raise ContractError(f"required upstream script missing: {filename}")
-    return {"valid": True, "plugin": "system-dev-planner", "version": required_version,
+    return {"valid": True, "plugin": "system-dev-planner", "version": observed_version,
             "entrypoint_source": "references/package-contract.json",
             "schema_versions": schemas, "required_entrypoints": required}
 
@@ -497,11 +503,11 @@ def _parser() -> argparse.ArgumentParser:
     register.add_argument("--tracker-mode", choices=("beads", "github", "both", "none"), default="none")
     register.add_argument("--dry-run", action="store_true")
     register.add_argument("--system-planner-root", default=str(DEFAULT_SYSTEM_ROOT))
-    register.add_argument("--required-version", default="0.1.0")
+    register.add_argument("--required-version", default=None)
     register.add_argument("--required-schema-version", default="1.0.0")
     preflight = sub.add_parser("preflight")
     preflight.add_argument("--system-planner-root", default=str(DEFAULT_SYSTEM_ROOT))
-    preflight.add_argument("--required-version", default="0.1.0")
+    preflight.add_argument("--required-version", default=None)
     preflight.add_argument("--required-schema-version", default="1.0.0")
     execution = sub.add_parser("execution-context")
     execution.add_argument("--repo-root")
