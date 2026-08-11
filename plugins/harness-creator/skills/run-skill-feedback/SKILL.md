@@ -11,8 +11,7 @@ arguments: [plugin, skill_name]
 arguments-optional: [plugin, skill_name]
 allowed-tools:
   - Read
-  - Bash(python3 *)
-  - Bash(security *)
+  - Bash(python3 *)   # Keychain 参照は notion_config が python 内から security を呼ぶので Bash(security *) は不要
   - Agent
   - Grep
   - Glob
@@ -25,6 +24,7 @@ version: 0.1.0
 max_loops: 5
 reference_refs:
   - plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
+  - plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md
 schema_refs:
   - doc/notion-schema/skill-list.schema.json
   - doc/notion-schema/improvement-request.schema.json
@@ -52,11 +52,11 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: lint
     - id: IN2
       loop_scope: inner
-      text: token と DB ID は notion_config の require_or_skip 経由(CLI > env > per-repo config > Keychain)でのみ解決され Claude の応答や log や context に一切露出しない
+      text: token は Keychain 既定(env NOTION_TOKEN は INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ)で DB ID は key 別 env > .notion-config.json の順に notion_config 経由でのみ解決され lint-feedback-protocol の R8 が submit script について秘密を受ける CLI 引数の不在と NOTION_* env 直読みの不在と Authorization ヘッダを argv へ載せないことと出力呼び出し(print/write/logging)へ token の値を渡さないことを AST で検査し加えて notion_config の解決順そのものを実呼び出しの返り値で pin することを exit0 で検証する(実行時に Claude が応答へ書き写す経路は機械検査の外で Gotcha 3 の責務)
       verify_by: lint
     - id: IN3
       loop_scope: inner
-      text: 改善要望投入前に対象プラグインのスキル一覧 DB 登録を dry-run で確認し未登録なら投入せず中断するため孤児レコードが生成されない
+      text: 対象プラグインが未登録なら find_plugin_page が改善要望ページ作成前に exit2 で fail-closed し孤児レコードが生成されない
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -104,8 +104,8 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 1. **SSOT 厳守**: 発火条件・同定フロー・対話項目は `doc/notion-schema/skill-list.schema.json` の `feedback_protocol` を唯一の正本とし、本 SKILL.md / スクリプト / Notion 本文の三者は派生のみ。
 2. **目的逆算同定を必ず先行させる**: `plugin` 引数があっても identification_step を省略しない。目的確認と現状仕様の提示を経てから要望収集へ進むこと (孤児・文脈ズレ防止)。
-3. **対象プラグイン存在確認必須**: スキル一覧 DB に未登録なら `run-build-skill --notion-register` を案内して中断 (孤児レコード防止)。
-4. **token / DB ID は notion-config SSOT 経由**: `plugins/harness-creator/scripts/notion_config.py` の `require_or_skip()` が解決順 (CLI 引数 > env `NOTION_TOKEN` / `NOTION_*_DATABASE_ID` > per-repo `.notion-config.json` > macOS Keychain slug-namespaced key) を一元管理。`scripts/notion-submit-improvement.py` は同 loader を import 済み。token / DB ID をコンテキストに乗せない。
+3. **存在確認は本投入内の fail-closed に委ねる**: 未登録プラグインは `find_plugin_page()` が改善要望ページ作成**前**に exit 2 で止めるため孤児レコードは出ない。**`--dry-run` は引数を印字して return するだけで Notion に触れないので登録確認には使えない** (未登録でも必ず成功する)。exit 2 (未登録) を見たら `run-build-skill --notion-register` を案内して中断。**exit 3 は別事象**で、登録操作では解決しない — token の有効期限・integration の DB 共有・ネットワークを確認させる。切り分けは query か create かではなく**原因が誰の手元にあるか**: exit 2 = 入力が Notion 側の実体と噛み合っていない (未登録・config 不在) ので利用者が直せる、exit 3 = API へ到達/認可できない (401/403/5xx・curl 失敗) ので直せない。**改善要望ページ作成 (`POST /v1/pages`) の失敗も exit 3** に入る。詳細は `references/notion-submit-contract.md` §3-§4。
+4. **token / DB ID は notion-config SSOT 経由**: `plugins/harness-creator/scripts/notion_config.py` が解決順を一元管理する。token は **Keychain 既定** (env `NOTION_TOKEN` は `INTAKE_ALLOW_ENV_TOKEN=1` 明示時のみ)、DB ID は key 別 env (`NOTION_DB_SKILL_LIST` / `NOTION_DB_IMPROVEMENT_REQUEST`) > `.notion-config.json`、config path は env `NOTION_CONFIG_PATH` > repo-root > plugin-root。**CLI 引数で token / DB ID を渡す経路は無い**。token / DB ID をコンテキストに乗せない。詳細は `references/notion-submit-contract.md` §1。
 5. **重複除去は人手**: 時系列ログ性質を保つため AI は重複判定せず投入する。
 6. **people 型は UI で人手追加**: API 経由でメール宛指定不可のため起票者/担当者は完了通知時に案内。
 
@@ -126,11 +126,12 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 - [ ] 「どんな作業をしていたか」をユーザーに聞き、目的から対象プラグイン・スキルを同定済み
 - [ ] 同定したスキルの SKILL.md を Read し、現状仕様をユーザーに提示して文脈確認済み
 - [ ] 要望タイトル / 種別 / 内容 / 優先度 / 重要度 が `feedback_protocol` 必須項目として収集済み
-- [ ] 対象プラグインがスキル一覧 DB に存在することを `--dry-run` で確認済み (未登録なら中断して案内)
-- [ ] Notion 改善要望 DB に 1 ページが新規作成され URL が取得できている
+- [ ] 本投入が exit 0 かつ `[CREATED]` 行を出している (exit 2 + `[ERR] スキル一覧に ... 存在しません` なら未登録。案内して中断)
+- [ ] Notion 改善要望 DB に 1 ページが新規作成され `[CREATED]` の page id から URL を組み立てて提示できている
 - [ ] スキル一覧 DB との N:1 relation が貼られ `未対応要望数` rollup が増分している
 - [ ] 完了通知に「起票者・担当者は Notion UI で人手追加」案内が含まれている
-- [ ] token / DB ID は `notion_config.require_or_skip()` 経由 (CLI > env > per-repo `.notion-config.json` > Keychain slug-namespaced key の解決順) で取得しており context に露出していない
+- [ ] token / DB ID は `notion_config.require_or_skip()` 経由 (token=Keychain 既定 / DB ID=key 別 env > `.notion-config.json`) で取得しており context に露出していない
+- [ ] `[SKIP] skill-list / improvement-request db_id missing` (exit 0 の fail-open) を成功と誤読していない
 
 ### ゴールシークループ
 
@@ -160,11 +161,13 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 **Step 2 — 全スキルを収集してマッチング**
 
-```bash
-# 全 SKILL.md から name と description を取得
-grep -r --include="SKILL.md" -E "^(name|description):" plugins/ | \
-  awk -F: '{print $2}' | paste - -
-```
+Grep ツールで全 SKILL.md の frontmatter を集める (allowed-tools に `Bash(grep *)` は無い。シェルへ落とさない):
+
+- Grep: `pattern="^(name|description):"`, `glob="plugins/*/skills/*/SKILL.md"`, `output_mode="content"`, `-n=true`
+
+> glob を `**/SKILL.md` にしない。ワークスペース全体では 229 件ヒットし、その大半は `.claude/skills/` への projection・`.worktrees/` 配下・plan 生成物で、**同一スキルが別パスで何度も現れる**。候補提示の段で同じ名前が並ぶと利用者は選べない。`plugins/*/skills/*/SKILL.md` に絞っても、量産プラグインへ配備された `run-skill-feedback` のように 1 スキルが複数プラグイン下に現れる正当な重複は残る (実体 94 に対し 116 ヒット) ので、**候補は name で名寄せしてから 1〜3 件に絞る**。
+
+
 
 ユーザーの回答のキーワード（動詞・対象物・症状）とスキルの description を照合し、候補を 1〜3 件に絞る。
 
@@ -182,10 +185,10 @@ grep -r --include="SKILL.md" -E "^(name|description):" plugins/ | \
 
 **Step 4 — 対象スキルの現状仕様を提示**
 
-```bash
-# 確定したスキルの SKILL.md を Read
-cat plugins/<plugin>/skills/<skill_name>/SKILL.md
-```
+Read ツールで確定したスキルの SKILL.md を開く (`Bash(cat *)` は allowed-tools に無い):
+
+- Read: `plugins/<plugin>/skills/<skill_name>/SKILL.md` (Read ツールの引数はワークスペース相対で解決する。`${VAR}` は shell 経由でないので展開されず、リテラルのまま渡って必ず失敗する — 変数を書かない)
+
 
 Purpose & Output Contract を 2〜3 行に要約してユーザーへ提示:
 
@@ -205,15 +208,17 @@ Purpose & Output Contract を 2〜3 行に要約してユーザーへ提示:
 6. **重要度**: `高` / `中` / `低` (デフォルト中)
 7. **関連 PR/コミット URL** (任意)
 
-### 対象プラグインの存在確認
+### 投入引数の目視確認 (任意)
 
 ```bash
-# スキル一覧 DB に対象プラグインが登録済みか確認
+# 引数の型・必須項目を印字するだけ。Notion へは一切アクセスしない
 python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py --plugin <plugin> --dry-run \
   --title "<title>" --type <type> --desire "<desire>"
 ```
 
-存在しない場合は `run-build-skill --notion-register` を先に走らせる旨を案内して中断。
+**これは登録確認ではない** (未登録プラグインでも必ず成功する)。スキル一覧 DB への登録有無は
+次の本投入が `find_plugin_page()` で判定し、未登録ならページ作成前に exit 2 で止まる。
+その時に `run-build-skill --notion-register` を先に走らせる旨を案内して中断する。
 
 ### 改善要望投入
 
@@ -226,21 +231,24 @@ python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py \
   --pr-url "<pr-url>"
 ```
 
-token / DB ID は `notion_config.require_or_skip()` 経由 (CLI > env > per-repo `.notion-config.json` > Keychain slug-namespaced key の解決順)。`notion-submit-improvement.py` 内で自動解決され、unresolvable なら skip + 利用者通知。
+token / DB ID は `notion_config.require_or_skip()` 経由で自動解決される (token=Keychain 既定 / DB ID=key 別 env > `.notion-config.json`)。**unresolvable なら skip ではなく fail-closed**: stderr に `[notion_config] FATAL:` を出して exit 2 で停止する (silent-skip 禁止)。緩和は `allow_skip=True` を渡した呼び出しのみで、本 script は渡さない。
+
+判定は exit code と標準出力で行う: `[CREATED]` 行があれば成功、`[ERR] スキル一覧に ...` (exit 2) は未登録、`[SKIP] skill-list / improvement-request db_id missing` は **exit 0 だが未投入** なので成功と数えない。一覧は `references/notion-submit-contract.md` §4。
 
 ### 完了通知
 
-投入された Notion ページ URL を提示し、起票者・担当者プロパティは Notion UI 側で人手追加するよう案内 (people 型は API 経由でメール宛指定不可のため)。
+script は `[CREATED] ... -> <page_id>` を印字する (URL は出さない)。`https://www.notion.so/<page_id からハイフンを除いた 32 桁>` を組み立てて提示し、起票者・担当者プロパティは Notion UI 側で人手追加するよう案内 (people 型は API 経由でメール宛指定不可のため)。
 
 ## Gotchas
 
 1. **identification_step を省略しない**: `plugin` 引数が渡されていても、目的確認と現状仕様提示を必ず実施する。省略すると「文脈ズレのフィードバック」や「誤ったスキルへの紐付け」が発生する。
-2. **孤児レコード禁止**: 対象プラグインがスキル一覧 DB 未登録のまま要望だけ投入しない。必ず `--dry-run` で先に存在確認。
-3. **token / DB ID を context に乗せない**: スクリプト内で `notion_config.require_or_skip()` (CLI > env > `.notion-config.json` > Keychain) 経由で取得し、Claude の応答や log に出力しない。
+2. **`--dry-run` を存在確認と誤用しない**: 実装は引数を印字して return するだけで Notion に触れないため、未登録プラグインでも通る。孤児レコードを防いでいるのは本投入内の `find_plugin_page()` → exit 2 (ページ作成前) であって dry-run ではない。
+3. **token / DB ID を context に乗せない**: スクリプト内で `notion_config.require_or_skip()` (token=Keychain 既定、env は `INTAKE_ALLOW_ENV_TOKEN=1` 時のみ / DB ID=key 別 env > `.notion-config.json`) 経由で取得し、Claude の応答や log に出力しない。**lint が守るのはソース側の 5 点だけ** (`lint-feedback-protocol.py` R8: 秘密を受ける CLI 引数の不在 / `NOTION_*` env 直読みの不在 / `-H "Authorization: …"` を argv へ載せないこと / 出力呼び出し (`print`・`*.write`・logging) へ token の**値**を渡さないこと (AST 走査なので複数行 print や stderr も対象) / `notion_config` の解決順を実呼び出しで pin)。**argv 禁止は「ps から見える」以上の理由がある** — `CalledProcessError.__str__()` が cmd 全体を含むため、例外を `{e}` で整形する print が一つあるだけで token が stdout へ出る (実際に踏んだ)。だから `curl --config -` で stdin から渡す。**実行時に Claude が応答へ書き写す経路は機械検査の外**なので、値そのものを会話へ引用しないのは実行者の責務として残る (lint 緑=秘密が漏れていない、と読み替えない)。
 4. **重複除去を AI 判定しない**: 似た要望でも別レコードとして投入する (時系列ログ性質を破壊しない)。
 5. **people 型を API で埋めない**: 起票者・担当者は UI 側案内のみ。API でメール宛指定はサポート外。
 6. **発火条件・同定フロー追加は schema 経由**: `feedback_protocol` 直接編集 → lint 通過 → 派生物同期の順。SKILL.md / triggers の先行編集禁止。
 7. **rollup 更新は Notion 側非同期**: 完了通知時に「rollup は数秒〜数分遅延あり」と添える。
+8. **exit 0 = 投入成功ではない**: `require_or_skip` が検査するのは `improvement-request` の db_id だけで、`skill-list` の db_id 欠落は `[SKIP] ...` を出して **exit 0** で抜ける (唯一の fail-open 経路)。完了通知は必ず `[CREATED]` 行の実在で判定する。
 
 ## Additional Resources
 

@@ -29,28 +29,20 @@
       "output_artifact": "(in-memory feedback record)"
     },
     {
-      "id": "verify-plugin",
+      "id": "submit",
       "step": 4,
-      "title": "対象プラグインがスキル一覧 DB に存在することを確認",
+      "title": "scripts/notion-submit-improvement.py で 改善要望 DB に POST。存在確認は本投入内包の fail-closed: find_plugin_page() が未登録プラグインをページ作成前に exit 2 で止める。事前確認ステップは持たない",
       "dependsOn": ["collect"],
       "kind_filter": ["run"],
-      "output_artifact": "(stdout: plugin page id)"
-    },
-    {
-      "id": "submit",
-      "step": 5,
-      "title": "scripts/notion-submit-improvement.py で 改善要望 DB に POST",
-      "dependsOn": ["verify-plugin"],
-      "kind_filter": ["run"],
-      "output_artifact": "Notion page URL"
+      "output_artifact": "(stdout: [CREATED] <title> -> <page_id>。URL は印字しない)"
     },
     {
       "id": "notify",
-      "step": 6,
+      "step": 5,
       "title": "完了通知 (Notion URL + 人手追加項目案内)",
       "dependsOn": ["submit"],
       "kind_filter": ["run"],
-      "output_artifact": "(stdout: completion message with Notion page URL)"
+      "output_artifact": "(stdout: page_id から組み立てた Notion URL + 人手追加項目 (起票者/担当者) の案内)"
     }
   ],
   "resources": [
@@ -59,6 +51,7 @@
     {"type": "script",    "path": "scripts/lint-feedback-protocol.py"},
     {"type": "schema",    "path": "doc/notion-schema/improvement-request.schema.json"},
     {"type": "schema",    "path": "doc/notion-schema/skill-list.schema.json"},
-    {"type": "reference", "path": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md"}
+    {"type": "reference", "path": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md"},
+    {"type": "reference", "path": "plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md"}
   ]
 }
