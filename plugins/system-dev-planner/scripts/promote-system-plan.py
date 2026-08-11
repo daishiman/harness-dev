@@ -240,12 +240,15 @@ def _validate_readiness(readiness: dict, repository_id: str) -> None:
     source_pin = readiness["source_pin"]
     expected_pin = {
         "plugin": "system-spec-harness",
-        "version": "0.1.0",
         "compile_entrypoint": "run-system-spec-compile",
         "completeness_entrypoint": "assign-system-spec-completeness-evaluator",
     }
     if not isinstance(source_pin, dict) or any(source_pin.get(key) != value for key, value in expected_pin.items()):
         raise ValueError("readiness source_pin does not match the required producer contract")
+    # version は producer の patch bump で動くため literal 比較しない。
+    # 記録が semver 形式で存在することだけを要求し、内容 drift は source_digest が捕捉する。
+    if re.fullmatch(r"\d+\.\d+\.\d+", str(source_pin.get("version", ""))) is None:
+        raise ValueError("readiness source_pin version is missing or not semver")
     if re.fullmatch(r"sha256:[0-9a-f]{64}", str(source_pin.get("source_digest", ""))) is None:
         raise ValueError("readiness source_pin source_digest is invalid")
 

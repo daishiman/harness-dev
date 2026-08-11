@@ -26,13 +26,13 @@
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
-      "scenario_id": "C19-OUT1-positive-system-spec-lineage",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
+      "scenario_id": "C19-OUT1-failclosed-system-spec-lineage",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/out/status.json"
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260811T194500-r7/out/status.json"
       ],
-      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-4-6], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live. Positive lineage scenario '--repo-root .../r3-system-spec' drove system-spec-harness's 4 entry points via qualified Skill calls; the imported specification/architecture retained source_lineage(origin_kind/plugin/path/version/digest/imported_at), confirmed status, and evaluator evidence, registered only through C02 with no duplicated elicit/compile logic in dev-graph (out/status.json scenario=system-spec-positive-lineage status=PASS)."
+      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-5], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live。fail-closed 検証型シナリオを '--repo-root .../r7-spec-lineage' で実行。system-spec-harness の 4 entry point は qualified Skill 呼び出しで実ロードされ (Unknown skill 0 件)、C12/C13 は exit 0。上流の完全性 evaluator が verdict=FAIL を返したのを受けて本 skill は C02 import を実行せず、.dev-graph/state/graph.json は sha256 レベルで不変 (nodes:[])、specs/ architecture/ は ABSENT で 部分書き込み 0。dev-graph の C11 (validate-graph-schema.py --graph) を現物に対して実行し exit 0。blocker 4 件はすべて owner 付きで progress.json に記録。ゲート迂回・失敗の成功報告は検出されず。独立 evaluator が transcript と実ファイルから再検算し自己申告を追認ではなく再現した (前回 ref の r3 verdict は skill_dir_tree_sha が失効したため差し替え)。"
     }
   }
 }

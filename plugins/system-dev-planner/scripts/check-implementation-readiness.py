@@ -42,6 +42,7 @@ EXIT_ERROR = 2
 _HERE = Path(__file__).resolve().parent
 _C09_PATH = _HERE / "resolve-project-context.py"
 _PLACEHOLDER_RE = re.compile(r"\bTODO\b|\bTBD\b|__PLACEHOLDER__|___FILL___|<[^>]*ここに[^>]*>", re.IGNORECASE)
+_SEMVER_RE = re.compile(r"\d+\.\d+\.\d+")
 
 
 def _now() -> str:
@@ -110,6 +111,17 @@ def _probe_architecture(repo_root: Path, arch_root: str) -> Probe:
                  verified=non_empty)
 
 
+def _producer_version(plugin_root: Path) -> str | None:
+    """producer manifest の version を観測値として読む (読めなければ None)。"""
+    manifest = plugin_root / ".claude-plugin" / "plugin.json"
+    try:
+        value = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    version = value.get("version") if isinstance(value, dict) else None
+    return version if isinstance(version, str) else None
+
+
 def _probe_source_plugin(plugin_root: Path) -> Probe:
     """Pinned producer identity and harness entry-point sidecar must match."""
     manifest = plugin_root / ".claude-plugin" / "plugin.json"
@@ -128,9 +140,12 @@ def _probe_source_plugin(plugin_root: Path) -> Probe:
     except (OSError, json.JSONDecodeError) as exc:
         return Probe(rel, True, False, True, 0, detail=f"invalid producer metadata: {exc}")
     skills = contract.get("entry_points", {}).get("skills", []) if isinstance(contract, dict) else []
+    # version は literal で pin しない: producer は patch bump され得るのに対し、
+    # 内容の drift は source_digest (byte hash) が捕捉する。ここでは version が
+    # semver 形式で実在することだけを fail-closed に要求する。
     verified = (
         value.get("name") == "system-spec-harness"
-        and value.get("version") == "0.1.0"
+        and _SEMVER_RE.fullmatch(str(value.get("version", ""))) is not None
         and contract.get("plugin_name") == "system-spec-harness"
         and "run-system-spec-compile" in skills
         and "assign-system-spec-completeness-evaluator" in skills
@@ -287,7 +302,9 @@ def build_report(
         "completeness_report": completeness_report,
         "source_pin": {
             "plugin": "system-spec-harness",
-            "version": "0.1.0",
+            # 観測した producer manifest の version をそのまま記録する
+            # (期待値の焼き込みではなく、何を見て判定したかの証跡)。
+            "version": _producer_version(producer),
             "compile_entrypoint": "run-system-spec-compile",
             "completeness_entrypoint": "assign-system-spec-completeness-evaluator",
             "source_digest": "sha256:" + source_digest.hexdigest() if status == "complete" else None,
