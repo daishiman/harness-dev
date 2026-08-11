@@ -1,6 +1,270 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-10T01:27:37Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -47,7 +47,9 @@
+ subagent execution
+ , and
+ dynamic context injection
+-.
++. See
++Using skill frontmatter outside Claude Code
++for which frontmatter fields are part of the standard and which are Claude Code extensions.
+ ​
+ Bundled skills
+ Claude Code includes a set of bundled skills, such as
+@@ -65,8 +67,7 @@
+ . Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
+ You invoke a bundled skill the same way as any other skill, by typing
+ /
+-followed by the skill name. Claude invokes some bundled skills automatically when relevant; others,
+-including
++followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
+ /verify
+ and
+ /code-review
+@@ -323,7 +324,7 @@
+ for more details.
+ Files in
+ .claude/commands/
+-still work and support the same
++support the same
+ frontmatter
+ . Skills are recommended since they support additional features like supporting files.
+ ​
+@@ -443,11 +444,6 @@
+ 1. Run the test suite
+ 2. Build the application
+ 3. Push to the deployment target
+-Your
+-SKILL.md
+-can contain anything, but thinking through how you want the skill invoked (by you, by Claude, or both) and where you want it to run (inline or in a subagent) helps guide what to include. For complex skills, you can also
+-add supporting files
+-to keep the main skill focused.
+ Keep the body itself concise. Once a skill loads, its content
+ stays in context across turns
+ , so every line is a recurring token cost. State what to do rather than narrating how or why, and apply the same conciseness test you would for
+@@ -540,8 +536,7 @@
+ /name
+ . Also prevents the skill from being
+ preloaded into subagents
+-.
+-As of v2.1.196, also prevents the skill from running when a
++. As of v2.1.196, also prevents the skill from running when a
+ scheduled task
+ fires with the skill as its prompt. Default:
+ false
+@@ -575,7 +570,13 @@
+ inherit
+ to keep the active model. A value excluded by your organization’s
+ availableModels
+-allowlist is not used and the session keeps its current model.
++allowlist is not used and the session keeps its current model. With
++context: fork
++, the value sets the
++forked subagent’s model
++instead, and an excluded value follows the
++same rules as a subagent model override
++.
+ effort
+ No
+ Effort level
+@@ -612,8 +613,7 @@
+ running it in the background
+ . Default:
+ true
+-.
+-Requires Claude Code v2.1.218 or later.
++. Requires Claude Code v2.1.218 or later.
+ hooks
+ No
+ Hooks scoped to this skill’s lifecycle. See
+@@ -641,6 +641,67 @@
+... (3690 more lines)
+```
+
+## 2026-08-03T02:33:54Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -136,6 +136,13 @@
+ , and any other agent in the repo follow the recorded recipe instead of rediscovering it. Run
+ /run-skill-generator
+ once per project, and again if the build or launch process changes.
++/verify
++can also record its own recipe. When it has to build and drive your app without a recorded recipe, it writes what worked to
++.claude/skills/verify/SKILL.md
++at the repo root, or in the touched package directory in a monorepo, so later runs and other agents follow the same steps. At the repo root, the recorded skill replaces the bundled
++/verify
++. This requires Claude Code v2.1.200 or later.
++Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs. Before v2.1.205, the bundled skill told Claude to fold in anything a run learned, which caused frequent merge conflicts.
+ ​
+ Getting started
+ ​
+@@ -257,7 +264,7 @@
+ , this requires accepting the workspace trust dialog first.
+ ​
+ Live change detection
+-Claude Code watches skill directories for file changes. Adding, editing, or removing a skill under
++Claude Code watches skill directories for file changes. When you add, edit, or remove a skill under
+ ~/.claude/skills/
+ , the project
+ .claude/skills/
+@@ -265,7 +272,7 @@
+ .claude/skills/
+ inside an
+ --add-dir
+-directory takes effect within the current session without restarting. Creating a top-level skills directory that did not exist when the session started requires restarting Claude Code so the new directory can be watched.
++directory, Claude Code picks up the change within the current session, without a restart. If you create a top-level skills directory that didn’t exist when the session started, restart Claude Code so it can watch the new directory.
+ Live change detection covers
+ SKILL.md
+ text only. For a skill folder that is also a
+@@ -282,16 +289,21 @@
+ /reload-plugins
+ to take effect.
+ ​
+-Automatic discovery from parent and nested directories
++Discovery from parent and nested directories
+ Project skills load from
+ .claude/skills/
+-in your starting directory and in every parent directory up to the repository root, so starting Claude in a subdirectory still picks up skills defined at the root. When you work with files in subdirectories below your starting directory, Claude Code also discovers skills from nested
++in the directory where you start Claude Code and in every parent directory up to the repository root. Starting Claude in a subdirectory still picks up skills defined at the root. To load skills from a directory outside that path at startup, pass it with
++--add-dir
++. Claude Code reads
+ .claude/skills/
+-directories on demand. For example, if you’re editing a file in
++inside each added directory alongside the project skills.
++Skills in nested
++.claude/skills/
++directories below your starting directory aren’t loaded at startup. They load the first time Claude reads or edits a file inside that subdirectory, and stay available for the rest of the session. For example, after Claude edits a file under
+ packages/frontend/
+-, Claude Code also looks for skills in
++, skills in
+ packages/frontend/.claude/skills/
+-. This supports monorepo setups where packages have their own skills.
++become available. Until then, those skills don’t appear in autocomplete and can’t be invoked by name.
+ Each skill is a directory with
+ SKILL.md
+ as the entrypoint:
+@@ -1878,62 +1890,7 @@
+ =
+ f
+ '''<!DOCTYPE html>
+-<html><head>
+-<meta charset="utf-8"><title>Codebase Explorer</title>
+-<style>
+-body
+-{{
+-font: 14px/1.5 system-ui, sans-serif; margin: 0; background: #1a1a2e; color: #eee;
+-}}
+-.container
+-{{
+-display: flex; height: 100vh;
+-}}
+-.sidebar
+-{{
+-width: 280px; background: #252542; padding: 20px; border-right: 1px solid #3d3d5c; overflow-y: auto; flex-shrink: 0;
+-}}
+... (1004 more lines)
+```
+
+## 2026-07-27T02:40:22Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -50,9 +50,7 @@
+ .
+ ​
+ Bundled skills
+-Claude Code includes a set of bundled skills that are available in every session unless disabled with the
+-disableBundledSkills
+-setting, including
++Claude Code includes a set of bundled skills, such as
+ /doctor
+ ,
+ /code-review
+@@ -64,14 +62,29 @@
+ /loop
+ , and
+ /claude-api
+-. Unlike most built-in commands, which execute fixed logic directly, bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. You invoke them the same way as any other skill, by typing
++. Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
++You invoke a bundled skill the same way as any other skill, by typing
+ /
+-followed by the skill name.
++followed by the skill name. Claude invokes some bundled skills automatically when relevant; others,
++including
++/verify
++and
++/code-review
++, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens. Before v2.1.215, Claude could also run
++/verify
++and
++/code-review
++on its own.
++Bundled skills are available in every session. To turn them off, use the
++disableBundledSkills
++setting, which disables every bundled skill except
++/doctor
++.
+ The
+ /doctor
+-setup checkup is the one exception to
++setup checkup stays typable when
+ disableBundledSkills
+-in Claude Code v2.1.205 and later: it stays typable when the setting is on. To hide it, set the
++is on, in Claude Code v2.1.205 and later. To hide it, set the
+ DISABLE_DOCTOR_COMMAND
+ environment variable or a
+ skillOverrides
+@@ -453,6 +466,27 @@
+ All fields are optional. Only
+ description
+ is recommended so Claude knows when to use the skill.
++Boolean fields accept
++yes
++,
++no
++,
++on
++,
++off
++,
++1
++, and
++0
++in any letter case, in addition to
++true
++and
++false
++. Before v2.1.218, Claude Code recognized only
++true
++and
++false
++.
+ Field
+ Required
+ Description
+@@ -460,7 +494,7 @@
+ No
+ Display name shown in skill listings. Defaults to the directory name. See
+ How a skill gets its command name
+-for how this differs from the name you type to invoke the skill.
+... (2301 more lines)
+```
+
 ## 2026-07-20T02:43:21Z
 
 実仕様ページに変更を検知。
