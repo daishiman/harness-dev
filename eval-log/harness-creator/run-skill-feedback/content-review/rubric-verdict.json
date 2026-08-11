@@ -1,26 +1,34 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "721008d629e05a56023638586339c46e63a4a978f032d6d07458fbbf58fcbe0e"},
+  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "4c6aa1144c1d34943b795d95a69d2e24d716d6a9be7874188b254f478a9465dd"},
   "review_kind": "rubric",
-  "verdict": "PASS",
-  "reviewer": "independent-content-review-subagent",
-  "reviewed_at": "2026-07-05T09:51:42Z",
+  "verdict": "FAIL",
+  "findings_summary": {"contradiction": 2, "omission": 0, "inconsistency": 1, "dependency_break": 2, "smell": 2},
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T05:35:19Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "5次元スコア内訳: 完全性3/一貫性3/深度3/検証可能性3/簡潔性2 = 合計14/15",
-      "完全性3: frontmatter+feedback_contract(IN1-OUT2の5基準・verify_by明記)+Purpose/責務境界/発火条件SSOT/Key Rules/ゴールシーク/局面カタログ/Gotchas/Additional Resources を網羅、入力/出力/冪等性も明記",
-      "深度3+検証可能性3: WHY(fail-open回避・時系列ログdedup無し事故回避・孤児防止・people型API制約)を根拠付きで説明し、lint-feedback-protocol.py/--dry-run/notion_config.require_or_skip/verify_by で機械検証可能"
+      "ref-skill-design-rubric の kind=skill 構造 rule は high/medium が全て充足: BD-001 (L75 '## Purpose & Output Contract' 実在)、BD-002 (L235 '## Gotchas' 実在)、BD-003 (frontmatter 69 行を除く body 184 行 <= 300)、PD-002 (冒頭 30 行内に Purpose 見出しと責務境界の Key Rule 相当)、FM 系 (name=ディレクトリ名一致 run-skill-feedback / prefix=run と kind=run が整合 / triggers 2 件 / description が動作詳細でなく発動条件で書かれている)",
+      "BD-004 (description ↔ body 整合) が成立: description の 2 発動条件『Notion 改善要望 DB にプッシュしたいとき』『利用者発端のフィードバックループを起動したいとき』は、それぞれ局面カタログ L218-229 の改善要望投入手順と L149-207 の同定→収集手順に対応する実手順を持ち、description だけ先行して本文が空洞という乖離が無い",
+      "verify_by 写像が criterion ごとに具体的で評価主体が識別できる (IN1=lint / IN3=script / OUT1=elegant-review / OUT2=evaluator)。content-review-protocol の『Checklist が上流・criteria が下流』の導出方向どおり、L126-133 の完了チェックリスト 8 項目が停止条件として先にあり criteria がその写像になっている構造は横展開に値する",
+      "completeness_exempt (L44-45) が『なぜ本文に展開したか (初見実行の自己完結性)』『整合を何が保証するか (lint-feedback-protocol.py)』『なぜ prompt-creator の 7 層は適用外か (二重定義禁止)』まで書いており、免除が言い訳でなく根拠付きの設計判断になっている"
     ],
     "negative_feedback": [
-      "簡潔性2: token/DB ID の解決順(CLI>env>.notion-config.json>Keychain)が Key Rules4/局面カタログ/checklist/Gotchas3 で4回逐語反復。completeness_exempt注記の初見自己完結性で一部は意図的だが冗長。verdictには影響しない"
+      "[criterion IN3 / high] verify_by=script が指す検証が実在しない。scripts/notion-submit-improvement.py L73-74 の --dry-run は print(json.dumps(vars(args))) して return するだけで Notion へアクセスせず、スキル一覧 DB 照会 find_plugin_page (L51-56) は L84 の非 dry-run 経路にしか無い。IN3 の text『dry-run で確認し未登録なら投入せず中断』は常に成功側に倒れる空ゲートを検証手段として指名しており criterion として不成立。孤児レコード防止という結果は L84-87 の exit 2 が担保するので、criterion text を実装 (投入時 fail-closed) に合わせるか dry-run 側に実照会を実装するかの二択",
+      "[criterion IN2 / high] text に埋め込まれた解決順『CLI > env > per-repo config > Keychain』が実装と一致しない。notion_config.py の実際は config path = env NOTION_CONFIG_PATH > repo-root > plugin-root .notion-config.json > plugin-root notion-config.fixed.json (L25-33)、token = Keychain 正 / env NOTION_TOKEN は INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ (L255-274)、db_id = key 別 env → config (L226-237、env 名は NOTION_DB_SKILL_LIST / NOTION_DB_IMPROVEMENT_REQUEST であり NOTION_*_DATABASE_ID ではない)、CLI 引数段は argparse (L60-70) に存在しない。frontmatter の criterion text と本文 L108 / L133 / L229 / L239 の 4 反復が同時に誤っており、正本 (notion_config) からの派生が壊れている。直近 3cb706e で他文書は plugin-root 多段解決へ追従済みだが本 skill は取り残されている",
+      "[整合性 / high] L229『unresolvable なら skip + 利用者通知』が require_or_skip の既定挙動 (fail-closed / FATAL + sys.exit(2)、notion_config.py L288-320) と逆。呼び出し側 (submit L76) は allow_skip を渡さないため skip 経路は発生せず、L77-78 の `if not cfg: return 0` は dead code。fail-closed ゲートを fail-open として文書化するのは 4 条件の『決定論ゲート / fail-closed』に対する直接の減点",
+      "[一貫性 / medium] 今回 diff の ${HARNESS_ROOT:-.} 適用が同一ファイル内で不揃い。L212 / L221 は変換済みだが L165 の grep -r ... plugins/ と L187 の cat plugins/<plugin>/... は repo 相対のまま。cwd が repo-root でない前提を導入した以上、同定フロー側だけ旧前提のままなのは規約整合の欠落",
+      "[検証可能性 / medium] allowed-tools (L12-18) に Bash(grep *) / Bash(cat *) が無いのに本文 L163-166 / L185-187 がそれらを Bash コマンドとして指示しており、本文どおりの実行が allowlist で止まる。L186 のコメントは『SKILL.md を Read』と書いていて直後の cat と表現も食い違う。許可済みの Grep / Read tool 指示へ書き換えるべき",
+      "[PD-001 / low] body 184 行 (> 100) にもかかわらず plugins/harness-creator/skills/run-skill-feedback/ 直下は SKILL.md と workflow-manifest.json のみで references/ が存在せず PD-001 を満たさない。completeness_exempt は prompts の免除しか宣言していないため references 不在の根拠は未記載",
+      "[smell / low] 最小 allowlist 原則に対し Bash(security *) が過剰。Keychain 参照は get_token (L267-271) が python 内 subprocess で行い Bash(python3 *) に包含されるため、本文のどの手順からも直接 security を叩かない"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "none"
+    "next_action": "improve"
   },
-  "notes": "5次元genuine採点=完全性3/一貫性3/深度3/検証可能性3/簡潔性2=14/15。責務境界の新設で一貫性(自動発火境界の明確化)と深度(制約6根拠)が強化。簡潔性のみ解決順・SSOT原則の反復で-1だが閾値十分超過。PASS。"
+  "notes": "rubric (ref-skill-design-rubric、kind=skill の FM/BD/NM/PD/RG) の構造 rule は high・medium 全件充足で、違反は PD-001 (low, references/ 不在かつ body 184 行) のみ。構造採点だけなら閾値超過だが、feedback_contract criteria の全件評価で IN2 / IN3 が実装との突合により不成立、加えて L229 の fail-closed/fail-open 反転があり未解決 high 3 件が残るため PASS 不可 (FAIL + improve)。4 条件では単一責務 (収集までの責務境界 L79) と SSOT 非重複 (feedback_protocol 正本 L85) は成立、決定論ゲートと fail-closed が上記 3 件で不成立。RG-001 (verdict JSON に rubric_hash を含む) は content-review-verdict.schema.json が additionalProperties:false でトップレベルに rubric_hash を許さないため本 projection では構造的に充足不能であり、違反として計上せず notes に記録する。検証できなかった点: Notion API 実投入 (token/DB 不在のため rollup 増分・404/401 分岐は未実走)、L85 が明示的に対象外とする対話文面の逐語一致。"
 }

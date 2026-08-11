@@ -1,25 +1,33 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "721008d629e05a56023638586339c46e63a4a978f032d6d07458fbbf58fcbe0e"},
+  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "4c6aa1144c1d34943b795d95a69d2e24d716d6a9be7874188b254f478a9465dd"},
   "review_kind": "elegance",
-  "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "independent-content-review-subagent",
-  "reviewed_at": "2026-07-05T09:51:42Z",
+  "verdict": "FAIL",
+  "findings_summary": {"contradiction": 2, "omission": 0, "inconsistency": 1, "dependency_break": 2, "smell": 1},
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T05:35:19Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "L77『rollup が自動更新され優先度判断シグナルになる』と新設L79/L248『rollup も改善着手を自動発火しない』は矛盾せず両立(Notion側件数集計の自動更新と、改善着手の自動発火は別レイヤ)。責務境界節がこの区別を genuine に明示している",
-      "新設責務境界(L79)と下流節(L248)の主張が一次証跡と整合: goal-spec.json:91『Notion への直接 read-back を避ける(制約6)』・runbook L111『/skill-improve は Notion / rollup を読まない』・runbook L4『Stage 2→3→6 の人間工程』を実読で確認し dependency_break=0",
-      "参照先 feedback-to-improvement-runbook.md は実在し、L79『Stage 2-3(繋ぐ工程)』とL248『Stage 2→3→6(全人間工程)』の差異は runbook L23『人間工程(2/3/6)』に照らし文脈依存で正当(smell化せず)"
+      "IN1 は一次証跡で成立: `python3 scripts/lint-feedback-protocol.py` を実走し exit 0 / '[OK] feedback_protocol SSOT lint: all checks passed' を確認。lint 側の R3 (SKILL.md が schema を SSOT 参照) / R4 (triggers ⊇ firing_conditions) が SKILL.md L85-93 の SSOT 宣言に実際に対応しており、SSOT 主張が飾りでなく機械検証に束縛されている",
+      "OUT1 は設計として genuine に成立: L106 Key Rule 2 と L237 Gotcha 1 が『plugin 引数があっても identification_step を省略しない』を二重に固定し、局面カタログ L149-194 が Step1 目的ヒアリング → Step2 全 SKILL.md マッチング → Step3 候補確認 → Step4 現状仕様提示 → 不一致なら Step1 へ戻す、と逆算同定の逃げ道を塞いでいる。引数ありの近道を明示的に禁じている点が横展開価値のあるパターン",
+      "OUT2 の『重複除去を AI 判定しない』(L101 冪等性 / L109 Key Rule 5 / L240 Gotcha 4) は時系列ログという出力性質から導かれた決定であり、根拠 (性質の破壊回避) 込みで書かれている。L79 の責務境界 (収集までが責務、改善着手は人間ブリッジ) と合わせ、Notion を機械 SSOT にしない fail-open 回避の設計意図が一貫している",
+      "今回の diff (L212 / L221 の `python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py`) 自体は方向として正しい: plugins/harness-creator/commands/marketplace-register.md L53 / run-build-skill/SKILL.md L282,288 / ref-output-routing/SKILL.md L90 と同一の `${HARNESS_ROOT:-.}` 慣行に揃っており、allowed-tools の `Bash(python3 *)` 前置一致も壊していない"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[contradiction/high] IN3 の中核である dry-run 存在確認が実装に存在しない。scripts/notion-submit-improvement.py L73-74 は `if args.dry_run: print(json.dumps(vars(args)...)); return` で、Notion へ 1 度もアクセスせず引数を印字して正常終了する。スキル一覧 DB 照会 find_plugin_page (L51-56) は L84 の非 dry-run 経路にしか無い。したがって SKILL.md L107 Key Rule 3 / L129 Checklist / L210-216 局面カタログ / L238 Gotcha 2 が主張する『--dry-run で登録済みか確認 → 未登録なら中断』は常に成功側へ倒れる空ゲートで、AI は未登録 plugin でも『確認済み』と判断して投入手順へ進む。孤児レコード自体は L84-87 の exit 2 が別途止めるため実害は中断点のズレに留まるが、criterion IN3 (verify_by: script) の記述と実装が一致していない",
+      "[contradiction/high] fail-closed 条件が逆向きに記述されている。SKILL.md L229 は『unresolvable なら skip + 利用者通知』と書くが、notion_config.require_or_skip() (notion_config.py L288-320) の既定は fail-closed で、config / token / db_id 欠落時に stderr へ FATAL を出して sys.exit(2) する。緩和は allow_skip=True 明示時のみで、notion-submit-improvement.py L76 は allow_skip を渡していない。結果として L77-78 の `if not cfg: return 0` は到達不能な dead code であり、SKILL.md は実装より緩い (fail-open 側の) 契約を読者に約束している",
+      "[dependency_break/high] IN2 が引用する解決順が実装と一致しない。SKILL.md は L108 / L133 / L229 / L239 の 4 箇所で『CLI 引数 > env NOTION_TOKEN / NOTION_*_DATABASE_ID > per-repo .notion-config.json > macOS Keychain』と書くが、実装は (1) config path = env NOTION_CONFIG_PATH > repo-root > plugin-root .notion-config.json > plugin-root notion-config.fixed.json (notion_config.py L25-33)、(2) token = Keychain が正で env NOTION_TOKEN は INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ (get_token L255-274) すなわち Keychain は最下位ではなく最優先、(3) db_id = key 別 env → config (get_db_id L226-237) で env 名は NOTION_DB_SKILL_LIST / NOTION_DB_IMPROVEMENT_REQUEST (DB_ENV_NAMES L182-186) であり NOTION_*_DATABASE_ID パターンではない、(4) notion-submit-improvement.py の argparse (L60-70) に token / db-id の CLI 引数は 1 つも無く『CLI 引数 >』の段自体が存在しない。直近コミット 3cb706e が『B4 引用を notion_config の plugin-root 多段解決へ追従』させた際に本 SKILL.md は追従されておらず、plugin-root 多段フォールバックの記述も欠けている。criterion IN2 の text 自身が同じ誤った解決順を埋め込んでいるため frontmatter 側の修正も要る",
+      "[inconsistency/medium] 今回の diff の `${HARNESS_ROOT:-.}` 化が同一ファイル内で中途半端。repo 相対直書きのコマンドは 4 箇所あり、L212 / L221 の 2 つだけが変換され、L165 の `grep -r --include=\"SKILL.md\" ... plugins/` と L187 の `cat plugins/<plugin>/skills/<skill_name>/SKILL.md` は素の repo 相対のまま残っている。diff が想定している『cwd が repo-root でない』状況では Step 2 の全スキル収集と Step 4 の現状仕様提示が先に壊れるため、同定フロー (OUT1 の実行経路) は救われていない",
+      "[dependency_break/medium] 本文のコマンドが allowed-tools の allowlist を越えている。L12-18 の allowed-tools は Read / Bash(python3 *) / Bash(security *) / Agent / Grep / Glob だが、L163-166 は grep -r、L185-187 は cat を Bash コマンドとして指示している。どちらも allowlist に前置一致しないため、本文どおり実行すると許可されない。Grep tool / Read tool が既に許可されているので、この 2 ブロックはツール指示に書き換えるのが筋 (L186 のコメントは『SKILL.md を Read』と書いており、直後の cat と表現も食い違っている)",
+      "[smell/low] `Bash(security *)` が本文のどの手順からも直接使われていない。Keychain 参照は notion_config.get_token (L267-271) が python プロセス内の subprocess で行うため `Bash(python3 *)` の内側で完結しており、独立した security 許可は最小 allowlist の原則に対して過剰。付与理由が本文に無いので、不要なら削り、必要なら根拠を明記すべき"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "none"
+    "next_action": "improve"
   },
-  "notes": "現SHA(721008d6...)を実読したgenuine再評価。今回deltaの責務境界節(L79)と下流節更新(L248)は、本文発火条件/出力契約/Notion push と矛盾せず、goal-spec制約6(read-back回避)・runbook(Stage2→3→6・/skill-improve非read)とも一次証跡で整合。『自動発火しない』は rollup自動更新(件数集計)と別レイヤで矛盾なし。二段検証で参照先 runbook 実在と主張の逐条整合を確認。4条件すべて0件でPASS。"
+  "notes": "現 SHA (4c6aa114...) を実読した genuine 再評価。今回 diff (L212/L221 の ${HARNESS_ROOT:-.} 化) 自体は退行ではなく repo 慣行への追従だが、focused combined review として 5 criteria 全件を判定した結果、diff が触れた 2 ブロックの周辺に未解決 high が 3 件残る: (1) --dry-run が実装上ただの引数印字で IN3 の存在確認ゲートが空、(2) L229 の『skip』が require_or_skip の fail-closed exit 2 と逆、(3) 4 箇所で反復される token/DB ID 解決順が notion_config の実装 (Keychain 最優先 / env 名 NOTION_DB_* / CLI 段なし / plugin-root 多段) と不一致。加えて ${HARNESS_ROOT:-.} 化が L165/L187 に及んでおらず同一ファイル内で不整合。IN1 は lint 実走 exit 0、OUT1/OUT2 は設計として成立。未解決 high があるため PASS 不可。検証できなかった点: Notion API への実投入 (token/DB 不在のため 404/401 経路と rollup 増分は未実走)、および L85 が『対象外』と明言する対話文面の逐語一致は本レビューでも未検証。"
 }
