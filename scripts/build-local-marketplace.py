@@ -3,8 +3,9 @@
 # name: build-local-marketplace
 # purpose: Generate a clone-local Claude Code marketplace covering non-distributable plugins.
 # inputs:
-#   - argv: --out, --check, --name, --source-style, --only-distributable
+#   - argv: --out, --check, --name, --only-distributable
 #   - fs: plugins/*/.claude-plugin/plugin.json, .claude-plugin/marketplace.json
+#   - fs: scripts/validate-plugin-completeness.py (distributable 判定の SSOT として import)
 # outputs:
 #   - fs: <out>/.claude-plugin/marketplace.json
 #   - stdout: summary / drift report
@@ -73,11 +74,15 @@ symlink なので machine 非依存で commit でき、別 clone でもそのま
 usage:
   python3 scripts/build-local-marketplace.py            # 生成 (既定 marketplaces/local)
   python3 scripts/build-local-marketplace.py --check    # drift 検出のみ (書き込まない)
-  python3 scripts/build-local-marketplace.py --out /tmp/mk --source-style absolute
+  python3 scripts/build-local-marketplace.py --out /tmp/mk --only-distributable
+
+`--source-style` のような出力形式 option は用意しない (上記「絶対パス出力は用意
+しない」と同じ理由)。source は常に `./plugins/<name>` 形式で生成される。
 
 exit code:
   0 成功 / drift なし
   1 drift あり (--check) または生成失敗
+  2 入力 (plugin.json / package-contract / 公開 marketplace) が読めない
 
 CONVENTIONS: stdlib only.
 """
@@ -90,6 +95,7 @@ import json
 import os
 import pathlib
 import sys
+from typing import NoReturn
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PLUGINS_DIR = ROOT / "plugins"
@@ -101,6 +107,12 @@ DEFAULT_OUT = ROOT / "marketplaces" / "local"
 DEFAULT_MARKETPLACE_NAME = "harness-local"
 
 DEFAULT_CATEGORY = "development-tools"
+
+
+def _fail_input(message: str) -> "NoReturn":
+    """入力が読めない系の停止 (exit 2)。生成失敗 (exit 1) と区別する。"""
+    print(f"[build-local-marketplace] {message}", file=sys.stderr)
+    raise SystemExit(2)
 
 
 def _load_completeness_module():
@@ -124,16 +136,21 @@ def load_public_entries() -> dict[str, dict]:
 
     description / category / tags は人手で整えられているので、ローカル側でも
     fallback として流用し表示の一貫性を保つ。
+
+    壊れた公開 marketplace を握り潰して `{}` に落とすと、fallback が消えた結果
+    「description が name に化けただけの正常な生成物」が出てしまい、drift 検出も
+    その退化後の内容で緑になる。読めるが壊れている場合は停止する (exit 2)。
+    未生成 (ファイルが無い) だけは fallback 無しで続行してよい。
     """
     if not PUBLIC_MARKETPLACE.exists():
         return {}
     try:
         data = json.loads(PUBLIC_MARKETPLACE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    except (OSError, ValueError) as exc:
+        _fail_input(f"{PUBLIC_MARKETPLACE}: {exc}")
     entries = data.get("plugins") if isinstance(data, dict) else None
     if not isinstance(entries, list):
-        return {}
+        _fail_input(f"{PUBLIC_MARKETPLACE}: plugins[] が配列でない")
     return {e["name"]: e for e in entries if isinstance(e, dict) and e.get("name")}
 
 
@@ -151,10 +168,10 @@ def discover_plugins(completeness) -> list[dict]:
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
-            raise SystemExit(f"[build-local-marketplace] {manifest_path}: {exc}")
+            _fail_input(f"{manifest_path}: {exc}")
         contract, err = completeness.load_package_contract(plugin_dir)
         if err:
-            raise SystemExit(f"[build-local-marketplace] {err}")
+            _fail_input(str(err))
         metadata = completeness.harness_metadata(manifest, contract)
         found.append(
             {

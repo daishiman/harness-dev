@@ -183,3 +183,41 @@ def test_real_file_at_link_path_is_refused(mod, tmp_path):
     with pytest.raises(SystemExit):
         mod.main(["--out", str(out)])
     assert (out / "plugins" / "keep.txt").exists()
+
+
+def test_broken_public_marketplace_stops_with_input_exit_code(mod, tmp_path, monkeypatch):
+    """公開 marketplace が壊れていたら握り潰さず exit 2 で止まる。
+
+    握り潰して {} に落とすと description/category/tags の fallback が消えたまま
+    「正常な生成物」が出てしまい、--check もその退化後の内容で緑になる。
+    """
+    broken = tmp_path / "marketplace.json"
+    broken.write_text("{ not json", encoding="utf-8")
+    monkeypatch.setattr(mod, "PUBLIC_MARKETPLACE", broken)
+    with pytest.raises(SystemExit) as excinfo:
+        mod.load_public_entries()
+    assert excinfo.value.code == 2
+
+    broken.write_text(json.dumps({"plugins": {"oops": 1}}), encoding="utf-8")
+    with pytest.raises(SystemExit) as excinfo:
+        mod.load_public_entries()
+    assert excinfo.value.code == 2
+
+
+def test_missing_public_marketplace_is_tolerated(mod, tmp_path, monkeypatch):
+    """未生成 (不在) は fallback 無しで続行してよい = 壊れているとは区別する。"""
+    monkeypatch.setattr(mod, "PUBLIC_MARKETPLACE", tmp_path / "absent.json")
+    assert mod.load_public_entries() == {}
+
+
+def test_documented_cli_surface_matches_argparse(mod, capsys):
+    """docstring / frontmatter が掲げる option だけを受理する (幽霊 option を作らない)。"""
+    frontmatter = SCRIPT.read_text(encoding="utf-8").split("# ///")[1]
+    declared = {tok.strip() for tok in frontmatter.split("argv:")[1].splitlines()[0].split(",")}
+    assert declared == {"--out", "--check", "--name", "--only-distributable"}
+    for flag in declared:
+        assert f'"{flag}"' in SCRIPT.read_text(encoding="utf-8"), f"{flag} が argparse に無い"
+    # 宣言に無い option は受理しない (幽霊 option を作らない)
+    with pytest.raises(SystemExit) as excinfo:
+        mod.main(["--source-style", "absolute"])
+    assert excinfo.value.code == 2

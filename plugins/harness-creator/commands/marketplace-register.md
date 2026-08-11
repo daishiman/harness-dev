@@ -76,6 +76,12 @@ python3 ${HARNESS_ROOT:-.}/scripts/build-plugin-release.py --install \
   --project-dir /path/to/your/project
 ```
 
+`--only <name>` を付けなければ**内容が変わった全 plugin** が対象になり、その
+`plugins/<name>/.claude-plugin/plugin.json` が in-place で書き換わる。1 つだけ上げたい
+ときは `--only` で絞ること。書込先は plugin manifest のほか
+`marketplaces/local/`・`.claude-plugin/marketplace.json`・`.codex-plugin/plugin.json`
+(持つ plugin のみ)・`config-version-lock.json` に及ぶ。まず `--dry-run` で対象を見るのが安全。
+
 これが一度に行うこと:
 
 1. 内容 hash を `marketplaces/local/plugin-fingerprints.json` と突き合わせ、変わった
@@ -142,10 +148,25 @@ install 経路なら Claude Code が plugin ごとに `CLAUDE_PLUGIN_ROOT` を�
 
 3. `/plugin install <name>@skills` で導入する。
 
-この経路では `distributable: false` の 8 plugin は**出てこない**。これは仕様であり、
-公開したい場合は `references/package-contract.json` の `distribution.distributable` を
-true にしたうえで、README の絶対パス依存 (`lint-readme-plugin-root-portability.py` が
-非配布 plugin では skip している) を解消する必要がある。
+この経路では `distributable: false` の 8 plugin は**出てこない**。これは仕様である。
+
+公開へ回せるのはそのうち 5 つだけで、`harness-creator` / `prompt-creator` /
+`plugin-dev-planner` の 3 つは `validate-plugin-completeness.py` の
+`NEVER_DISTRIBUTE` 固有名 denylist に載っており、`distribution.distributable` を true
+にしても
+
+```
+<name>: internal-only plugin must explicitly declare "distributable": false but got
+distributable=True (NEVER-DISTRIBUTE)
+```
+
+で hard error になる。フラグが true へ漂流しても再配布を止めるための多層防御なので、
+この 3 つは**ローカル経路 (パターン A) でのみ使う**。
+
+残る 5 つを公開したい場合は `references/package-contract.json` の
+`distribution.distributable` を true にしたうえで、README の絶対パス依存
+(`lint-readme-plugin-root-portability.py` が非配布 plugin では skip している) を
+解消する必要がある。
 
 ## 注意: marketplace 名の衝突
 
