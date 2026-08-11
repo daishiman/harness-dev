@@ -164,6 +164,8 @@
 
 ### CSS変数
 
+<!-- palette-variant: d3 コンポーネント固有の light/dark 2 面パレット。deck 全体のテーマ切替ではない (切替機構は存在しない・theme-style.md §2) -->
+
 ```css
 :root {
   /* Light Theme */

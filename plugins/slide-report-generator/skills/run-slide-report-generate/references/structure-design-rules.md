@@ -10,7 +10,7 @@
 | 1スライド1メッセージ | 1枚のスライドに核心メッセージを1つだけ持たせる原則 | CONST_001 / Presentation Zen |
 | スライドタイプ | 情報構造に対応する描画形式（基本7 / 拡張8 / ビジネスFW / 図解29 / グラフ9 / D3 24） | DT-ID 98 / decision-tree |
 | structure.md | 構造化データファイル。HTML生成前にユーザー承認を得る正本 | 構造化データ先行 |
-| structure.json | v8経路（schemaVersion=8.0.0）の構造化データ。schema 準拠（97 slideType） | structure.schema.json |
+| structure.json | v8経路（schemaVersion=8.0.0）の構造化データ。schema 準拠（<!-- count: slideType -->107 slideType） | structure.schema.json |
 | SVG設計メモ | 全SVG図解スライドに必須の座標・サイズ・文字数検証の記載セクション | 必須11点 / §4.4相当 |
 | STYLE BIBLE | 部分AI画像化時のスタイル統一仕様 | per-slide 画像ブロック |
 | ビジュアル形式 | 部分AI画像化時の HTML主役 / イラスト主役 / ハイブリッド の振り分け区分 | 形式振り分けルブリック |
@@ -19,7 +19,7 @@
 ## 評価基準（ドメイン固有の判定基準）
 
 ### スライドタイプ判定基準
-**詳細**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/slide-types-overview.md`
+**詳細**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/slide-type-decision-tree.md` §2「決定マトリクス」（§2.2 にタイプ→詳細ファイルの対応）
 
 #### 基本スライド（7種）
 | タイプ | 判定条件 |
@@ -51,8 +51,8 @@
 | STAR | 状況→課題→行動→結果の事例紹介 |
 | FABE | 特徴→利点→ベネフィット→証拠の商品紹介 |
 
-#### 図解タイプ（29種）・グラフ（9種）・D3（24種）
-複雑な関係性やデータ可視化が必要な場合は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/slide-types-overview.md` を参照して最適なタイプを選択。
+#### 図解タイプ・グラフ・D3
+複雑な関係性やデータ可視化が必要な場合は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §0 と `slide-type-decision-tree.md` §2 を参照して最適なタイプを選択する。件数はここへ複製しない。
 
 ### 入力検証基準
 | 基準 | 条件 |
@@ -144,7 +144,7 @@
 ### SVG設計メモ仕様（必須）
 **全SVG図解スライドに「SVG設計メモ」セクションを必ず記載する。**
 
-詳細: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/svg-design-spec.md`
+詳細: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` §5「SVG 設計」（SR-5-01〜SR-5-07）と §5-a「収まり計算の手順」
 
 #### 必須記載項目（省略不可）
 1. **viewBox**: SVG座標空間（例: `"0 0 860 480"`）

@@ -1,0 +1,50 @@
+{
+  "builder": "buildSequence",
+  "surface": "slide",
+  "diagramId": "d2",
+  "title": "発注確定までのやりとり",
+  "caption": "上から時間順に追う。与信照会の往復が入るため、利用者が待つ時間はこの一段だけ他より長くなる。",
+  "spec": {
+    "actors": [
+      "取引先",
+      "受注 API",
+      "与信サービス",
+      "受注台帳"
+    ],
+    "messages": [
+      {
+        "from": "取引先",
+        "to": "受注 API",
+        "label": "発注を送信"
+      },
+      {
+        "from": "受注 API",
+        "to": "与信サービス",
+        "label": "与信を照会 (同期・2 秒でタイムアウト)",
+        "external": true
+      },
+      {
+        "from": "与信サービス",
+        "to": "受注 API",
+        "label": "破線=戻り。残枠か否認を返す",
+        "dashed": true
+      },
+      {
+        "from": "受注 API",
+        "to": "受注台帳",
+        "label": "受注を登録 (承認時のみ)"
+      },
+      {
+        "from": "受注台帳",
+        "to": "受注 API",
+        "label": "受注番号",
+        "dashed": true
+      },
+      {
+        "from": "受注 API",
+        "to": "取引先",
+        "label": "受付を通知。否認とタイムアウトは保留として返す"
+      }
+    ]
+  }
+}

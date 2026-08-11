@@ -1,0 +1,25 @@
+{
+  "diagramId": "d-radar-chart",
+  "type": "radar-chart",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/chart-types.md §13.8 レーダーチャート",
+  "placement": "方形",
+  "canvas": {"viewBox": "0 0 960 540"},
+  "title": "競合との性格の違い",
+  "message": "総合力では並んでいるが、勝っている軸と負けている軸がはっきり分かれている。",
+  "axes": [
+    {"label": "価格", "scale": "0-100"},
+    {"label": "機能", "scale": "0-100"},
+    {"label": "サポート", "scale": "0-100"},
+    {"label": "導入速度", "scale": "0-100"},
+    {"label": "拡張性", "scale": "0-100"}
+  ],
+  "series": [{"name": "自社", "style": "focal", "values": [90, 75, 95, 60, 80]}, {"name": "競合平均", "style": "plain", "values": [70, 85, 55, 80, 60]}],
+  "grid": {"rings": 3, "shape": "五角形"},
+  "emphasis": {"focal": ["自社"], "reason": "軸は 5 本で D-2 #12 の上限ちょうど、系列は 2 本で #13 の上限内。焦点は塗りを持つ側 1 本だけとし、比較対象は塗らずに線だけにする（2 面を重ねると下の形が読めない）"},
+  "annotations": [],
+  "scaleNote": "各軸 0-100 の指数 (中心 0・外周 100、外側ほど優位)。面は自社、線は競合平均。数値は 自社 / 競合平均 の順。",
+  "provenance": "出所: 2026/4 実施の利用者評価 (n=32 名・単一回答)",
+  "caption": "二つの形を重ねて、へこんでいる方向と張り出している方向を見比べてほしい。面積の大小ではなく、どちらへ伸びているかがこの図の主題である。"
+}

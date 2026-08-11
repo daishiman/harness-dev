@@ -1,0 +1,88 @@
+<!--
+  pie-chart-golden.html — ゴールデン実例: 円グラフ (slide 骨格)
+
+  入力: pie-chart-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/chart-types.md §13.5 円グラフ
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-2 #20 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict pie-chart-golden.html
+
+  §13.5 は CSS の conic-gradient で円を作っているが、それは面の中に置く図解の
+  作図文法ではない (骨格 README §4「移植するのは作図文法であって配色ではない」)。
+  ここでは同じ分割を SVG の扇形 <path> で描く。中心穴と中央合計という節の構成は
+  引き継ぎ、hover 時の scale だけ落とした (印刷にも PDF にも残らない)。
+
+  扇形は「外弧 → 内側へ L → 内弧を逆回り → Z」で作る。この L は半径方向の
+  直線なので斜めに見えるが、塗りを持つ図形の輪郭であってコネクタではない
+  (§D-3 原則 1 は経路の話であり、D17 も塗りのある <path> を見ない)。
+
+  §13.5 の右側の凡例は置いていない。区画が 4 つなら区画のそばへ直接名乗らせる方が
+  読者の視線往復が 1 回減る (凡例は「色 → 名前」の変換表であって、変換が要らない
+  なら無い方がよい。D-2 #20 の凡例 5 件上限は上限であって推奨ではない)。
+
+  区画の境界は 4 の倍数へ丸めた端点で結んでいる。丸めによる半径のずれは最大 2px
+  で、区画の比率は各区画に添えた百分率が正本として担保する。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-pie-chart">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-pie-chart-caption">
+
+    <defs>
+      <marker id="d-pie-chart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-pie-chart-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-pie-chart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 焦点の区画 (12 時から時計回りに最初の 1 区画・30%) -->
+    <path d="M 480 112 A 160 160 0 0 1 632 320 L 564 300 A 88 88 0 0 0 480 184 Z"
+          fill="var(--sakura-pink, #D27E99)" stroke="#FFFFFF" stroke-width="2"/>
+
+    <!-- 残りの区画 (25% / 25% / 20%) -->
+    <path d="M 632 320 A 160 160 0 0 1 432 424 L 452 356 A 88 88 0 0 0 564 300 Z"
+          fill="var(--wave-blue, #7E9CD8)" stroke="#FFFFFF" stroke-width="2"/>
+    <path d="M 432 424 A 160 160 0 0 1 328 224 L 396 244 A 88 88 0 0 0 452 356 Z"
+          fill="var(--wave-aqua, #7FB4CA)" stroke="#FFFFFF" stroke-width="2"/>
+    <path d="M 328 224 A 160 160 0 0 1 480 112 L 480 184 A 88 88 0 0 0 396 244 Z"
+          fill="var(--autumn-yellow, #DCA561)" stroke="#FFFFFF" stroke-width="2"/>
+
+    <!-- 中心穴の中身 (母数。区画の名前は繰り返さない) -->
+    <text x="480" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">1,240件</text>
+    <text x="480" y="292" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">回答総数</text>
+
+    <!-- 直接ラベル (各区画の中央角の外側。焦点だけ文字色も accent) -->
+    <text x="636" y="160" text-anchor="start" font-size="14" fill="var(--fg, #43436c)">価格が高い</text>
+    <text x="636" y="180" text-anchor="start" font-size="14" fill="var(--sakura-pink, #D27E99)">30%</text>
+
+    <text x="568" y="444" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">機能が不足</text>
+    <text x="568" y="464" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">25%</text>
+
+    <text x="308" y="360" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">運用の手間</text>
+    <text x="308" y="380" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">25%</text>
+
+    <text x="368" y="116" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">その他</text>
+    <text x="368" y="136" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">20%</text>
+
+    <!-- 尺度の宣言 (I4) と出所・母数・回答方式 (I1) -->
+    <text x="40" y="500" font-size="12" fill="var(--fg-dim, #54546d)">上端から時計回りに読む。扇の大きさは構成比で、合計 100% (四捨五入)。</text>
+    <text x="40" y="522" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 見送り理由の調査・2026/4-6 実施・単一回答 (n=1,240 件・無回答除外)。</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-pie-chart-caption" class="srg-diagram__caption">
+    円の上端から時計回りに読む。最初の一区画だけが色を変えてあり、その一区画の大きさがこの調査の結論そのものである。
+  </figcaption>
+
+</figure>

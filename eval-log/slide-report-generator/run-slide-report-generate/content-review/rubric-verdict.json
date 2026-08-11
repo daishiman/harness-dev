@@ -1,25 +1,31 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "48719d73b39ea10103ef8d78313d34fb602f3dad9754e2fff1932c3e40ac9cef"},
+  "schema_version": "2.0.0",
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-generate",
+    "skill_md_sha256": "2c42829bb9a8b121043ded6a4d3ff20052bb1e47c8b4deb01bebdca33096b0b3",
+    "review_scope_sha256": "956b9f9d1a54903e9231f24b985b6002fdc1179dfa8bb561763cbeb63f0e580c"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-07-24T01:00:00Z",
-  "iterations": 2,
-  "human_review_required": false,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
-    "positive_feedback": [
-      "構造 rubric (ref-skill-design-rubric) 規則を SKILL.md 再評価版 (sha 48719d73) で照合し違反 0。BD-001 '## Purpose & Output Contract'・BD-002 '## Gotchas' の厳格一致 heading 保持、本文行数 <=300 (BD-003)、description trigger 2 個 ('新規に作りたいとき' / '駆動したいときに使う') が FM-003 の 2..3 域内。band-count 修正 (185 行の『038→039』置換) は構造次元に影響せず score 不変。",
-      "IN1/OUT1 が frontmatter feedback_contract に焼込済で汎用ゲート言い換えへ退化せず、validate-output-mode.py (fail-closed) と deck-evaluator 生成後評価 (test) の検証子に接地。OUT1 は読者価値知見 (入口ホリゾンタル・中身バーティカル) を『共有課題→変化→専門的解決→自分へ移す行動』として保持。",
-      "追加された規範 (CONST_039 / D5 読者フック) は既存の番号帯・SSOT 帰属規約 (resource-map.yaml・deck-evaluation-rubric.md 上位正本 post-generation-evaluation.md) を破らず additive に接続。iteration 1 の band-count drift 解消により CONST_001-039 帯の引用が全 5 箇所で整合。"
-    ],
-    "negative_feedback": [],
-    "iteration": 2,
-    "iteration_limit": 3,
-    "hook_trigger": "manual",
-    "next_action": "none"
+  "dimensions": {
+    "completeness": {"score": 3, "max": 3, "basis": "要件、runtime、validator、prompt、evalの推移閉包を検証"},
+    "consistency": {"score": 3, "max": 3, "basis": "件数、D-code、schema label、ID namespace、状態表示を同期"},
+    "depth": {"score": 3, "max": 3, "basis": "症状でなくfail-open、SSOT複製、保証鎖断線の根因を修正"},
+    "verifiability": {"score": 3, "max": 3, "basis": "Python/Node/strict golden/composition/DAGの決定論ゲートで再現可能"},
+    "simplicity": {"score": 3, "max": 3, "basis": "新validator乱立を避け既存ownerへ集約し、値複製とsilent fallbackを除去"}
   },
-  "notes": "再評価 (iteration 2)。構造 rubric スコア=100/threshold=80 passed=true・構造規則 findings 0 (FM/BD/NM/PD/RG 減点なし)。iteration 1 で elegance 次元に記録した band-count drift は team-lead の修正で解消し、elegance-verdict.json も inconsistency=0 へ更新済み。新 sha256=48719d73… を shasum で自己再確認。構造適合は再評価版 SKILL.md で実測、緑化なし。"
+  "weighted_score": 3.0,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewed_at": "2026-08-10T22:39:05+09:00",
+  "iterations": 1,
+  "iteration_limit": 3,
+  "human_review_required": false,
+  "notes": "elegance verdictと同一の推移ダイジェスト・同一検証実行から原子的に更新。aiworkflow-requirementsは不使用。"
 }

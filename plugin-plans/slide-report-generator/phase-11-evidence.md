@@ -34,7 +34,7 @@ GUI スクショ検証を原則 DROP し、Markdown による evidence 5 要素�
 ## 成果物
 - evidence 5 要素(P0 lint ログ / schema parity / build-trace coverage / content-review verdict / harness coverage JSON)を集約した Markdown 検証記録 + 生成 HTML の再現手順。
 - report UI/UX evidence (周回3 追加・C16-C18 受入・周回4 で narrow 幅 degrade breakpoint 追随): vendor playwright (S-VENDOR post_copy で chromium 導入済) による wide(≥1600px)/narrow(≤900px・iPad 縦 820px 等の degrade 発火域)/print emulation の 3 状態の実レンダリング確認手順 + 各状態のスクショ (C16-C18 受入は必須・その他は補助として許容) + C25 validate-report-visual.py の JSON 出力 (`--json`) 添付。
-- evidence freshness manifest: update id、render-report.js SHA、schemaVersion=1.3.0、C25 SHA、fixture digest、viewport、取得時刻を固定し、旧1.2.0/旧CSS evidenceをcurrent判定へ再利用しない。hash/font-ready/history/afterprintのnavigation logとcomputed metricsも添付する。
+- evidence freshness manifest: update id、render-report.js SHA、schemaVersion=1.2.0、C25 SHA、fixture digest、viewport、取得時刻を固定し、旧CSS evidenceをcurrent判定へ再利用しない。hash/font-ready/history/afterprintのnavigation logとcomputed metricsも添付する。
 
 ## スコープ外
 - 新規の検証実施(P06-P10 の結果を集約するのみ・ここで再テストしない)。

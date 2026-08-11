@@ -397,11 +397,11 @@ gsap.from('.item', {
 .desc-compare__panel { width: 48%; padding: 2vw; border-radius: 1vw; }
 .desc-compare__panel--bad {
   border: 2px solid var(--accent-pink-vivid);
-  background: color-mix(in srgb, var(--accent-pink-vivid) 6%, var(--bg-card));
+  background: color-mix(in srgb, var(--accent-pink-vivid) 6%, var(--bg-card, #F0F0F0));
 }
 .desc-compare__panel--good {
   border: 2px solid var(--accent-aqua-vivid);
-  background: color-mix(in srgb, var(--accent-aqua-vivid) 6%, var(--bg-card));
+  background: color-mix(in srgb, var(--accent-aqua-vivid) 6%, var(--bg-card, #F0F0F0));
 }
 .dc-badge { font-size: 1.4rem; color: var(--accent-pink-vivid); margin-bottom: 1vw; }
 .dc-badge--ok { color: var(--accent-aqua-vivid); }
@@ -412,7 +412,7 @@ gsap.from('.item', {
   font-size: 1.6rem;
   padding: 1vw 1.4vw;
   border-radius: 0.6vw;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   margin: 0.8vw 0;
 }
 ```

@@ -87,11 +87,11 @@ responsibility_refs: [prompts/R1-search-summarize.md]
 
 ```bash
 # Step 1: routing解決
-python3 scripts/adapters/resolve_route.py --kind task-spec
+python3 ${HARNESS_ROOT:-.}/scripts/adapters/resolve_route.py --kind task-spec
 # 出力: {"adapter":"notion","params":{"database_id":"..."},"fallback":"local"}
 
 # Step 2: 解決されたadapter起動
-python3 scripts/adapters/dispatch.py \
+python3 ${HARNESS_ROOT:-.}/scripts/adapters/dispatch.py \
   --kind task-spec \
   --payload payload.json \
 # 出力: {"status":"success","location":"{{OUTPUT_ROUTE}}","external_id":"..."}

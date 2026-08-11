@@ -1,0 +1,42 @@
+{
+  "diagramId": "f-mindmap",
+  "type": "mindmap",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-cycle-flow.md §11.3 マインドマップ",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "報告書が遅れる原因の分解",
+  "message": "四つの工程のうち三つは所要時間が読めるので、遅れの説明になるのは残りの一つだけである。",
+  "root": {
+    "id": "m0",
+    "label": "報告書が遅れる原因",
+    "style": "plain"
+  },
+  "axisNote": "枝の並びは順不同。枝の大きさは量ではない。線は分解であって流れではない",
+  "provenance": "2026/1-3 の報告書20件を実測 (着手から提出までを4枝で覆う)",
+  "nodes": [
+    { "id": "m1", "label": "材料集め", "sub": "探すのに0.5〜6時間", "branch": "右上", "style": "focal" },
+    { "id": "m2", "label": "構成づくり", "sub": "毎回1〜2時間", "branch": "右下", "style": "plain" },
+    { "id": "m3", "label": "執筆", "sub": "毎回2時間 (±0.3)", "branch": "左上", "style": "plain" },
+    { "id": "m4", "label": "見直し", "sub": "毎回1時間 (±0.2)", "branch": "左下", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "報告書が遅れる原因", "to": "材料集め", "kind": "branch" },
+    { "from": "報告書が遅れる原因", "to": "構成づくり", "kind": "branch" },
+    { "from": "報告書が遅れる原因", "to": "執筆", "kind": "branch" },
+    { "from": "報告書が遅れる原因", "to": "見直し", "kind": "branch" }
+  ],
+  "emphasis": {
+    "focal": ["m1"],
+    "reason": "本文がこれから語る対象。残り 3 枝は所要時間が読める側なので、muted のまま対照として残す"
+  },
+  "annotations": [],
+  "geometry": {
+    "rootBox": [380, 240, 200, 64],
+    "branchBox": [176, 56],
+    "note": "枝は Q（2 次ベジェ）だけで引く。中心から放射状に伸びる直線は §D-3 原則 1 の例外 (a) に当たるが、例外に頼らず曲線で引けるならその方が枝の親子関係が読める。枝に矢じりを付けないのは、分解であって流れではないためである"
+  },
+  "caption": "中央から右上の枝へ先に目を向けてほしい。四本の枝のうち三本は所要が読めるので、遅れの説明になるのは残りの一本だけである。"
+}

@@ -81,7 +81,7 @@ last-audited: 2026-07-05
 | V-001 | Before/After 48%/4%/48% | SR-4-03 | 構造段階で type=before-after を検出（CSS 検証は P3.5） |
 | V-002 | 補足テキスト最大3行 | SR-4-06 | structure.md 内 `補足:` ブロック確認 |
 | V-003 | フォント最小1.4rem (≒1.75vw) | SR-3-04 | P3.5 (verify-slides.js) |
-| V-004 | 印刷=画面同一比率 | SR-7-01 | P3.5 (validate-print.js) |
+| V-004 | 印刷=画面同一比率（**`slider-*` 面のみ**。`.srg-*` 面は SR-7-11 の `@page { margin: 21.47mm 0 }` が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
 | V-005 | code-block max-height 420px | SR-10-01 | P3.5 (check-consistency.js) |
 | V-006 | GSAP scale ≥ 0.8 | SR-6-02 | P3.5 (check-consistency.js) |
 | V-007 | SVG `<text>` font-size ≥ 13px | SR-3-05 | P3.5 (verify-slides.js) |
@@ -89,9 +89,9 @@ last-audited: 2026-07-05
 | V-009 | 全スライドタイプ h2 CSS 定義 | SR-3-08 | P3.5 (check-consistency.js) |
 | V-010 | section-nav 全セクション網羅 | SR-8-02 | P3.5 (check-consistency.js) |
 | V-011 | list-item/ig-item width:100% | SR-4-05 | P3.5 (check-consistency.js) |
-| V-012 | A4横フルサイズ余白なし | SR-7-02 | P3.5 (validate-print.js) |
-| V-013 | 印刷=画面同レイアウト | SR-7-01 | P3.5 (validate-print.js) |
-| V-014 | 印刷CSS GSAP リセット | SR-7-03 | P3.5 (validate-print.js) |
+| V-012 | A4横フルサイズ余白なし（**`slider-*` 面のみ**。`.srg-*` deck では赤が出るのが仕様どおりで、混在の証拠にしない） | SR-7-02 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
+| V-013 | 印刷=画面同レイアウト（**`slider-*` 面のみ**。`.srg-*` 面は `transform: scale()` → `zoom` の切替が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
+| V-014 | 印刷CSS GSAP リセット（**`slider-*` 面のみ**。`.srg-*` 面は GSAP を使わない） | SR-7-03 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
 | V-015 | clearProps content.children のみ | SR-6-03 | P3.5 (check-consistency.js) |
 | V-016 | foreignObject内 fo-card | SR-6-04 | P3.5 (check-consistency.js) |
 | V-017 | SVG fill/stroke にCSS変数 | SR-2-08 | P3.5 (check-consistency.js) |

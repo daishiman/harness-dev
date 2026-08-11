@@ -1,0 +1,51 @@
+{
+  "diagramId": "f-er",
+  "type": "er",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-technical.md §11.35 ER 図",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 360" },
+  "title": "予約データの持ち方",
+  "message": "議論の対象は注文の状態列だけで、両隣は結び付きを示すためにある。",
+  "nodes": [
+    {
+      "id": "customer", "label": "顧客", "style": "plain",
+      "fields": ["customer_id : PK", "name : text", "plan_code : text", "created_at : date"]
+    },
+    {
+      "id": "order", "label": "注文", "style": "focal",
+      "fields": ["order_id : PK", "customer_id : FK→顧客", "ordered_at : date", "status : enum"]
+    },
+    {
+      "id": "orderLine", "label": "注文明細", "style": "plain",
+      "fields": ["line_id : PK", "order_id : FK→注文", "sku : text", "qty : int"]
+    }
+  ],
+  "relations": [
+    { "from": "customer", "to": "order", "kind": "relates", "cardinality": "1:N", "label": "1対多 必須" },
+    { "from": "order", "to": "orderLine", "kind": "relates", "cardinality": "1:N", "label": "1対多 必須" }
+  ],
+  "legend": [
+    "── 参照関係 1対多 必須 (左端が 1・右端が N)",
+    "---- 注釈の指し線",
+    "桃色の枠 = 本文が論じる実体"
+  ],
+  "emphasis": {
+    "focal": ["order"],
+    "reason": "本文がこれから論じるのは注文の状態遷移なので、焦点は注文 1 件だけに置く"
+  },
+  "annotations": [
+    { "text": "主キーと論点に関わる列だけを残す", "anchor": "orderLine" }
+  ],
+  "geometry": {
+    "cardW": 256,
+    "headH": 44,
+    "fieldH": 32,
+    "gapX": 48,
+    "cardinalityStyle": "text",
+    "note": "crow's foot は斜辺を持つので使わない。1 / N のテキストラベルを線の両端へ置く"
+  },
+  "caption": "中央の色が付いた箱から読み始めてほしい。左右の箱はそこへ何が結び付くかを示すだけで、議論の対象は中央の状態列だけである。"
+}

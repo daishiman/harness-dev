@@ -1,0 +1,40 @@
+{
+  "diagramId": "d-state",
+  "type": "state",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-technical.md §11.37 状態遷移図",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "申請はどこで止まるか",
+  "message": "誰も手を出せない時間が発生するのは申請中の一状態だけで、差し戻しはそこへ戻る。",
+  "nodes": [
+    { "id": "start", "label": "開始", "style": "start" },
+    { "id": "draft", "label": "下書き", "sub": "本人だけが編集できる", "style": "plain" },
+    { "id": "applying", "label": "申請中", "sub": "誰も編集できない", "style": "focal" },
+    { "id": "approved", "label": "承認済み", "sub": "取り消しは別手続き", "style": "plain" },
+    { "id": "end", "label": "終了", "style": "end" }
+  ],
+  "relations": [
+    { "from": "start", "to": "draft", "kind": "transition", "label": "" },
+    { "from": "draft", "to": "applying", "kind": "transition", "label": "申請する [記入済]" },
+    { "from": "applying", "to": "approved", "kind": "transition", "label": "承認する [権限あり]" },
+    { "from": "approved", "to": "end", "kind": "transition", "label": "" },
+    { "from": "applying", "to": "draft", "kind": "transition", "label": "差し戻す [不備あり]", "route": "elbow-below" }
+  ],
+  "emphasis": {
+    "focal": ["applying"],
+    "reason": "滞留が起きるのはこの状態にいる間だけで、戻り辺の行き先でもあるため焦点を 1 つに絞る"
+  },
+  "annotations": [],
+  "geometry": {
+    "stateW": 176,
+    "stateH": 96,
+    "gapX": 80,
+    "startSymbol": "filled-circle r=12",
+    "endSymbol": "double-circle r=16/8",
+    "returnPathY": 368,
+    "note": "戻り辺は状態列の下を直交エルボーで回し、契機ラベルは線を跨ぐので白マスクを先に敷く"
+  },
+  "caption": "左の小さな円から右へ一度だけ読み、そのあと下を回る線を追ってほしい。色の付いた状態にいる間だけ、誰も手を出せない時間が発生している。"
+}

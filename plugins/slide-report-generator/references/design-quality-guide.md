@@ -9,25 +9,30 @@
 
 ## 1. ビビッドカラーパレット
 
-CSS変数定義の正本 → [SR-2-04](spec-registry.md#sr-2-04)。彩度強化の意図と元カラー対応:
+**値の正本は [SR-2-04](spec-registry.md#sr-2-04)** で、本ファイルは hex を再掲しない（2 箇所に書くと片方だけ古くなる）。
+本節が持つのは「なぜその彩度にしたか」＝ Lotus 原色からの変化と用途の対応だけ:
 
-| 変数名 | カラーコード | 元カラー | 彩度変化 | 用途 |
-|--------|-------------|---------|---------|------|
-| `--accent-blue-vivid` | #3B7DD8 | #4d699b | 34%→60% | 主アクセント強調 |
-| `--accent-pink-vivid` | #D94B6E | #b35b79 | 32%→60% | 課題・警告強調 |
-| `--accent-aqua-vivid` | #2EA88F | #597b75 | 16%→57% | 成功・解決強調 |
-| `--accent-violet-vivid` | #7B4FBA | #624c83 | 彩度深化 | サブアクセント強調 |
-| `--accent-yellow-vivid` | #F5A623 | #de9800 | 高彩度維持 | CTA・重要数値 |
+<!-- palette-variant: 「元カラー」列は Kanagawa Lotus 公式の原色（導出の出発点）で、変数の現在値ではない -->
 
-### WCAG AA コントラスト比（背景 #fafafa）
+| 変数名 | 元カラー（Lotus 原色） | 彩度変化 | 用途 |
+|--------|---------|---------|------|
+| `--accent-blue-vivid` | #4d699b | 34%→60% | 主アクセント強調 |
+| `--accent-pink-vivid` | #b35b79 | 32%→60% | 課題・警告強調 |
+| `--accent-aqua-vivid` | #597b75 | 16%→57% | 成功・解決強調 |
+| `--accent-violet-vivid` | #624c83 | 彩度深化 | サブアクセント強調 |
+| `--accent-yellow-vivid` | #de9800 | 高彩度維持 | CTA・重要数値 |
+
+### WCAG AA コントラスト比（背景 = SR-2-01 の Lotus White 地）
+
+各行は SR-2-04 の現在値に対する実測値。SR-2-04 の値を変えたら再測定が要る。
 
 | カラー | コントラスト比 | AA判定 |
 |--------|--------------|--------|
-| #3B7DD8 | 4.5:1 | PASS |
-| #D94B6E | 4.6:1 | PASS |
-| #2EA88F | 4.5:1 | PASS |
-| #7B4FBA | 5.2:1 | PASS |
-| #F5A623 | (装飾用) | 大テキストのみ |
+| `--accent-blue-vivid` | 4.5:1 | PASS |
+| `--accent-pink-vivid` | 4.6:1 | PASS |
+| `--accent-aqua-vivid` | 4.5:1 | PASS |
+| `--accent-violet-vivid` | 5.2:1 | PASS |
+| `--accent-yellow-vivid` | (装飾用) | 大テキストのみ |
 
 ### グラデーション定義
 
@@ -39,7 +44,7 @@ CSS変数定義の正本 → [SR-2-04](spec-registry.md#sr-2-04)。彩度強化�
   --gradient-violet-pink: linear-gradient(135deg, var(--accent-violet-vivid), var(--accent-pink-vivid));
 
   /* 微細グラデーション（カード背景用） */
-  --gradient-subtle: linear-gradient(135deg, var(--bg-dim), var(--bg-card));
+  --gradient-subtle: linear-gradient(135deg, var(--bg-dim, #F5F5F5), var(--bg-card, #F0F0F0));
 }
 ```
 
@@ -112,8 +117,8 @@ CSS変数定義の正本 → [SR-2-04](spec-registry.md#sr-2-04)。彩度強化�
   .glass-card-strong {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: var(--bg-card);
-    border: 1px solid var(--sumi-ink);
+    background: var(--bg-card, #F0F0F0);
+    border: 1px solid var(--sumi-ink, #FAFAFA);
   }
 }
 ```
@@ -387,8 +392,8 @@ UIテキスト要素（ナビゲーション、ラベル、キャプション等
   .glass-card-strong {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: var(--bg-card) !important;
-    border: 1px solid var(--sumi-ink) !important;
+    background: var(--bg-card, #F0F0F0) !important;
+    border: 1px solid var(--sumi-ink, #FAFAFA) !important;
   }
 }
 ```
@@ -419,7 +424,7 @@ UIテキスト要素（ナビゲーション、ラベル、キャプション等
 @media print {
   /* グラデーション → ソリッドカラー */
   .gradient-bg {
-    background: var(--bg-dim) !important;
+    background: var(--bg-dim, #F5F5F5) !important;
   }
 }
 ```

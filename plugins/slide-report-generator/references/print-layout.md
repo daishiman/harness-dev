@@ -91,7 +91,11 @@
 
 ```css
 @media print {
-  /* ページ設定: A4横向き、余白なし */
+  /* ページ設定: A4横向き、余白なし
+     ※ ひな形 (assets/slide-templates/) を使う deck ではこの @page を書かない。
+        slide-skeleton.css が `@page { margin: 21.47mm 0 }` を持っており、
+        連結後の styles.css で後に書いた側が後勝ちするため、ここで margin: 0 を
+        重ねるとレターボックス帯が消える。@page 宣言は成果物全体で 1 つに保つ。 */
   @page {
     size: A4 landscape;
     margin: 0;
@@ -179,7 +183,7 @@
     break-after: page;
     break-inside: avoid;
     background: var(--bg-dark) !important;
-    color: var(--fg-default);
+    color: var(--fg-default, var(--fg, #43436c));
     padding: 15mm 20mm;        /* 内部余白 */
     box-sizing: border-box;
     margin: 0;

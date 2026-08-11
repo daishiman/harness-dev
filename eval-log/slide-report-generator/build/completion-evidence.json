@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "slide-report-generator",
+  "overall_status": "pass",
+  "gates": [
+    {
+      "id": "routes-complete",
+      "status": "pass",
+      "evidence": [
+        "eval-log/slide-report-generator/build/route-C01.json",
+        "eval-log/slide-report-generator/build/route-C02.json",
+        "eval-log/slide-report-generator/build/route-C03.json",
+        "eval-log/slide-report-generator/build/route-C04.json",
+        "eval-log/slide-report-generator/build/route-C05.json",
+        "eval-log/slide-report-generator/build/route-C06.json",
+        "eval-log/slide-report-generator/build/route-C07.json",
+        "eval-log/slide-report-generator/build/route-C08.json",
+        "eval-log/slide-report-generator/build/route-C09.json",
+        "eval-log/slide-report-generator/build/route-C10.json",
+        "eval-log/slide-report-generator/build/route-C11.json",
+        "eval-log/slide-report-generator/build/route-C12.json",
+        "eval-log/slide-report-generator/build/route-C13.json",
+        "eval-log/slide-report-generator/build/route-C14.json",
+        "eval-log/slide-report-generator/build/route-C15.json",
+        "eval-log/slide-report-generator/build/route-C16.json",
+        "eval-log/slide-report-generator/build/route-C17.json",
+        "eval-log/slide-report-generator/build/route-C18.json",
+        "eval-log/slide-report-generator/build/route-C19.json",
+        "eval-log/slide-report-generator/build/route-C20.json",
+        "eval-log/slide-report-generator/build/route-C21.json",
+        "eval-log/slide-report-generator/build/route-C22.json",
+        "eval-log/slide-report-generator/build/route-C23.json",
+        "eval-log/slide-report-generator/build/route-C24.json",
+        "eval-log/slide-report-generator/build/route-C25.json"
+      ]
+    },
+    {
+      "id": "task-graph-drained",
+      "status": "pass",
+      "evidence": [
+        "eval-log/slide-report-generator/build/task-state.json"
+      ]
+    },
+    {
+      "id": "deterministic-lints",
+      "status": "pass",
+      "evidence": [
+        "plugins/slide-report-generator/scripts/lint-contract-drift.py",
+        "plugins/slide-report-generator/scripts/lint-vendor-parity.py",
+        "plugins/slide-report-generator/scripts/validate-plugin-completeness.py"
+      ]
+    },
+    {
+      "id": "diagram-migration-artifacts",
+      "status": "pass",
+      "evidence": [
+        "plugins/slide-report-generator/references/diagram-style-tokens.md",
+        "plugins/slide-report-generator/references/diagram-type-crosswalk.md",
+        "plugins/slide-report-generator/references/diagram-layout-contract.md",
+        "plugins/slide-report-generator/assets/diagram-templates/diagram-skeleton-slide.html",
+        "plugins/slide-report-generator/assets/diagram-templates/diagram-skeleton-report.html",
+        "plugins/slide-report-generator/skills/run-slide-report-generate/examples/diagram-goldens/README.md"
+      ]
+    },
+    {
+      "id": "checklist-verification",
+      "status": "pass",
+      "evidence": [
+        "eval-log/slide-report-generator/build/checklist-P01.json",
+        "eval-log/slide-report-generator/build/checklist-P02.json",
+        "eval-log/slide-report-generator/build/checklist-P03.json",
+        "eval-log/slide-report-generator/build/checklist-P04.json",
+        "eval-log/slide-report-generator/build/checklist-P05.json",
+        "eval-log/slide-report-generator/build/checklist-P06.json",
+        "eval-log/slide-report-generator/build/checklist-P07.json",
+        "eval-log/slide-report-generator/build/checklist-P08.json",
+        "eval-log/slide-report-generator/build/checklist-P09.json",
+        "eval-log/slide-report-generator/build/checklist-P10.json",
+        "eval-log/slide-report-generator/build/checklist-P11.json",
+        "eval-log/slide-report-generator/build/checklist-P12.json",
+        "eval-log/slide-report-generator/build/checklist-P13.json"
+      ]
+    }
+  ],
+  "findings": [
+    "PX-COMPOSITION-DRIFT-01 は解消済み。composition lint と completeness gate は現状態でPASS。",
+    "変更なし 15 route は LLM build を起動せず決定論検証 (現物確認 + kind 別 lint + 完全性ゲート) で bootstrap receipt を発行",
+    "P08 の lint-ssot-duplication は計画名。実体は scripts/lint-vendored-ssot.py + lint-contract-drift.py (exit0) が担う",
+    "2026-08-10 current review: Python 192 tests PASS、Node coverage 84.8% PASS、4条件 PASS"
+  ]
+}

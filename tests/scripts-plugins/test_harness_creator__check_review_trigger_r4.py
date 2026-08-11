@@ -99,11 +99,24 @@ def test_git_repo_root_none_on_exception_without_plugin_root(monkeypatch):
     assert MOD._git_repo_root() is None
 
 
-def test_git_repo_root_uses_plugin_root_when_git_fails(monkeypatch, tmp_path):
-    """git 失敗時に CLAUDE_PLUGIN_ROOT が実在ディレクトリなら self-relative root を返す。"""
+def test_git_repo_root_uses_plugin_root_when_git_fails(
+    monkeypatch, tmp_path, as_self_plugin
+):
+    """git 失敗時に CLAUDE_PLUGIN_ROOT が自 plugin を指すなら self-relative root を返す。"""
+    as_self_plugin(tmp_path)
     monkeypatch.setattr(MOD.subprocess, "run", lambda *a, **k: _fake_proc("", 128))
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
     assert MOD._git_repo_root() == str(tmp_path)
+
+
+def test_git_repo_root_ignores_foreign_plugin_env(
+    monkeypatch, tmp_path, as_foreign_plugin
+):
+    """env が別 plugin を指す (借用 repo の平置き projection) 場合は採用しない。"""
+    as_foreign_plugin(tmp_path)
+    monkeypatch.setattr(MOD.subprocess, "run", lambda *a, **k: _fake_proc("", 128))
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    assert MOD._git_repo_root() != str(tmp_path)
 
 
 # --------------------------------------------------------------------------

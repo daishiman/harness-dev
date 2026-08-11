@@ -1,0 +1,97 @@
+<!--
+  prep-golden.html — ゴールデン実例: PREP型 (slide 骨格)
+
+  入力: prep-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-business.md §11.18 PREP型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-3 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py prep-golden.html
+
+  §11.18 のコード例は 4 段を段ごとの色で塗り分け、GSAP の登場アニメーションを持つ。
+  アニメーションは静止面 (印刷・PDF) に存在しないので落とし、段の色分けもやめた。
+  PREP の 4 段は種別ではなく順序なので、色ではなく位置と左のラベル札が語る。
+
+  焦点は理由の 1 段に置いた。結論は 1 段目と 4 段目に二度現れるため、
+  そこを accent にすると視線の着地点が 2 つになり
+  「1 スライド 1 メッセージ」が崩れる (§D-2 #3 / style-tokens §3)。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-prep">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-prep-caption">
+
+    <defs>
+      <marker id="d-prep-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-prep-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-prep-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 段のあいだの矢印 3 本 (すべて垂直・下向き) -->
+    <line x1="440" y1="120" x2="440" y2="148"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-prep-arrow)"/>
+    <line x1="440" y1="248" x2="440" y2="276"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-prep-arrow)"/>
+    <line x1="440" y1="376" x2="440" y2="404"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-prep-arrow)"/>
+
+    <!-- 第 1 段: 結論 -->
+    <rect x="88" y="24" width="704" height="96" rx="6" fill="#F8F7F0"/>
+    <rect x="112" y="48" width="112" height="48" rx="4"
+          fill="#FFFFFF" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <text x="168" y="78" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">結論</text>
+    <text x="256" y="68" font-size="16" fill="var(--fg, #43436c)">日次照合へ切り替える</text>
+    <text x="256" y="96" font-size="14" fill="var(--fg-dim, #54546d)">経理課・2026/9 開始・追加費用なし (既存人員)</text>
+
+    <!-- 第 2 段: 理由 (焦点・1 図 1 件) -->
+    <rect x="88" y="152" width="704" height="96" rx="6"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <rect x="112" y="176" width="112" height="48" rx="4"
+          fill="#FFFFFF" stroke="var(--sakura-pink, #D27E99)" stroke-width="1.5"/>
+    <text x="168" y="206" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">理由</text>
+    <text x="256" y="196" font-size="16" fill="var(--fg, #43436c)">差分は時間が経つほど高くつく</text>
+    <text x="256" y="224" font-size="14" fill="var(--fg-dim, #54546d)">締め後の修正は 3 倍 (2026/1-6 実績・手戻り 42 件)</text>
+
+    <!-- 第 3 段: 例 -->
+    <rect x="88" y="280" width="704" height="96" rx="6" fill="#F8F7F0"/>
+    <rect x="112" y="304" width="112" height="48" rx="4"
+          fill="#FFFFFF" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <text x="168" y="334" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">例</text>
+    <text x="256" y="324" font-size="16" fill="var(--fg, #43436c)">2026/6 の 12 件はすべて締め後に発覚した</text>
+    <text x="256" y="352" font-size="14" fill="var(--fg-dim, #54546d)">調査に延べ 6 人日・対象は取引先 8 社</text>
+
+    <!-- 第 4 段: 結論 (行動へ落とす) -->
+    <rect x="88" y="408" width="704" height="96" rx="6" fill="#F8F7F0"/>
+    <rect x="112" y="432" width="112" height="48" rx="4"
+          fill="#FFFFFF" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <text x="168" y="462" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">結論</text>
+    <text x="256" y="452" font-size="16" fill="var(--fg, #43436c)">2026/9 から日次で回す</text>
+    <text x="256" y="480" font-size="14" fill="var(--fg-dim, #54546d)">試行は経理一課のみ・前提は照合ツールの 2026/8 改修</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="808" y="252" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">例は一件で足りる</text>
+    <path d="M 840 264 Q 820 300 796 328" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="796" cy="328" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 記号の凡例 (下端 1 行。figcaption へ逃がさない) -->
+    <text x="88" y="528" font-size="12" fill="var(--fuji-gray, #8a8980)">色は段の順序ではなく焦点を示す・破線は注記の引き出し</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-prep-caption" class="srg-diagram__caption">
+    上から下へ順に読んでほしい。最初の一行だけを持ち帰ればよいが、色の付いた段が無いとその一行は相手の中で根拠を持たない。
+  </figcaption>
+
+</figure>

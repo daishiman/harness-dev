@@ -174,7 +174,7 @@ last-audited: 2026-07-05
 | slide:ology (Nancy Duarte) | 修正案設計時に、ビジュアル階層・余白・1スライド1メッセージ原則に照らし、変更がメッセージを強化するか後退させるかを判定する。 |
 | Resonate (Nancy Duarte) | 構成変更（修正タイプ=構成変更）で、ストーリーアーク・コントラスト効果を基準に、スライド順序変更がデッキ全体の流れを損なわないか判定する。 |
 | references/ai-image-diagram-workflow.md | AI 画像図解判定時に、判定マトリクスに従い generate-image / keep-svg / keep-d3 を分類する。style-genome-packaging の漫画チック図解再現ルールも参照する。 |
-| references/slide-types-overview.md | （slide）修正タイプ=タイプ変更で、変更先スライドタイプ（53種 + D3 24種）の妥当性を確認する。 |
+| references/slide-type-decision-tree.md §2 | （slide）修正タイプ=タイプ変更で、変更先スライドタイプ（<!-- count: slideTypeNonD3 -->74種 + D3 <!-- count: d3Component -->33種）の妥当性を確認する。 |
 | vendor/assets/structure-template.md | （slide）正本把握時に、項目構造に照らして必須項目の欠落を確認する。 |
 | references/report-types.md | （report）修正タイプ=role/骨格節変更・構成変更で、`reportType` 4 骨格（role の論理順序）を確認し骨格を崩さないよう判定する（RCONST_005）。 |
 | references/report-writing-rules.md | （report）本文修正・全体改善で、読み物文体（1段落1論点・文章多め・chip 退化禁止）と維持ライン（最小1.4rem・退化耐性）に照らし判定する（RCONST_007/009/010）。 |
@@ -340,12 +340,12 @@ Layer 1 成功基準（修正対象特定・ユーザー承認・同期確認チ
 | 部分修正規範（slide） | skills/run-slide-report-modify/references/modification-rules.md | slide 経路の CONST_001-013・修正フロー・同期維持の逐語 SSOT |
 | 部分修正規範（report） | skills/run-slide-report-modify/references/report-modification-rules.md | report 経路の RCONST_001-013・reportType 骨格維持・section 局所修正・`report.html` ⇔ `report-structure.json` 同期・sidecar 履歴の逐語 SSOT |
 | 構造化データテンプレート | vendor/assets/structure-template.md | （slide）履歴更新時の参照 |
-| スライドタイプ一覧 | references/slide-types-overview.md | （slide）タイプ選択時（53種 + D3 24種） |
+| スライドタイプ一覧 | references/slide-type-decision-tree.md §2 | （slide）タイプ選択時（<!-- count: slideTypeNonD3 -->74種 + D3 <!-- count: d3Component -->33種） |
 | 基本スライド | references/slide-types-basic.md | （slide）基本7種のHTML/CSS |
 | 拡張スライド | references/slide-types-extended.md | （slide）拡張8種のHTML/CSS |
-| 図解スライド | references/diagram-*.md | （slide）図解29種（5ファイル、SVG2版） |
+| 図解スライド | references/diagram-type-crosswalk.md §0 | （slide）型数・参照ファイル・実装経路の正本。件数やファイル一覧を本promptへ複製しない |
 | グラフ | references/chart-types.md | （slide）グラフ9種 |
-| D3インタラクティブ | references/d3-integration.md | （slide）D3図解24種 |
+| D3インタラクティブ | references/d3-integration.md | （slide）D3図解 <!-- count: d3Component -->33種 |
 | アイコン | references/icons.md | アイコン変更時の参照（18カテゴリ） |
 | テーマ・スタイル | references/theme-style.md | スタイル変更時の参照（意匠 SSOT 共有・両モード維持） |
 | AI画像図解 | references/ai-image-diagram-workflow.md | ユーザーの明示指示により事前確認済みtext-to-imageバックエンドで図解・ビジュアルを高品質画像化する時 |

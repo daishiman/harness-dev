@@ -1,0 +1,91 @@
+<!--
+  triangle-cycle-golden.html — ゴールデン実例: 三角サイクル型 (slide 骨格)
+
+  入力: triangle-cycle-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.27 三角サイクル型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #1 / §D-3 原則 1 の例外 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict triangle-cycle-golden.html
+
+  接続子について。§D-3 原則 1 は直交の折れ線を求めるが、例外として
+  放射・環状型の円弧を認めている。三頂点を巡る輪はまさにその環状型なので、
+  ここでは曲線を採る。ただし直線の斜辺 (三角形の辺そのもの) は引かない。
+  斜辺で結ぶと三角形の輪郭に読め、循環ではなく関係の三つ組に見えるためである。
+  弧は三角形の外側へ膨らませてあり、頂点の円に接する位置で始終する。
+  §11.27 の中央装飾 (グラデーションの三角と box-shadow) は
+  style-tokens §5 と R9-14 に触れるので落とした。中央に置く情報が無い。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-tricycle">
+
+  <svg viewBox="0 0 480 480"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-tricycle-caption">
+
+    <defs>
+      <marker id="d-tricycle-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-tricycle-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-tricycle-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 輪 3 本 (環状型の例外として曲線・外側へ膨らませる) -->
+    <path d="M 195 157 Q 128 228 157 299" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-tricycle-arrow)"/>
+    <path d="M 176 344 Q 240 424 304 344" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-tricycle-arrow)"/>
+    <path d="M 323 299 Q 352 228 285 157" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-tricycle-arrow)"/>
+
+    <!-- 上の頂点: 計測 (焦点。ここが欠けると輪が回り始めない) -->
+    <g>
+      <circle cx="240" cy="112" r="64"
+              fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="240" y="108" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">計測</text>
+      <text x="240" y="132" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">何が起きたか</text>
+      <text x="240" y="32" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了 = 当月分を集計</text>
+    </g>
+
+    <!-- 左下の頂点: 学習 -->
+    <g>
+      <circle cx="112" cy="344" r="64"
+              fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="112" y="340" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">学習</text>
+      <text x="112" y="364" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">なぜ起きたか</text>
+      <text x="112" y="432" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了 = 原因を1件特定</text>
+    </g>
+
+    <!-- 右下の頂点: 改善 -->
+    <g>
+      <circle cx="368" cy="344" r="64"
+              fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="368" y="340" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">改善</text>
+      <text x="368" y="364" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">次にどうするか</text>
+      <text x="368" y="432" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了 = 手当を1件着手</text>
+    </g>
+
+    <!-- 周期・向き・凡例・出所 (下端 1 行。I1 / I3 / §2.7) -->
+    <text x="240" y="464" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">2026年度の運用。1周は月次・反時計回り。色は輪の起点</text>
+
+    <!-- 注釈 1 件 (左上の余白のみ・矢じりは付けない) -->
+    <text x="16" y="24" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">止まるのは最初の一手</text>
+    <path d="M 140 32 Q 160 44 172 76" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="172" cy="76" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-tricycle-caption" class="srg-diagram__caption">
+    三つの工程を反時計回りにたどる。三つは対等に見えるが、色の付いた一つが欠けると残り二つは着手すらできない。
+  </figcaption>
+
+</figure>

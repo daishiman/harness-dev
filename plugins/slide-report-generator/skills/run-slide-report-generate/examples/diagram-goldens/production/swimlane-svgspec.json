@@ -1,0 +1,74 @@
+{
+  "title": "請求差戻しの受け渡し",
+  "caption": "帯をまたぐ線は edges[] が宣言した受け渡しだけである。",
+  "svgSpec": {
+    "variant": "swimlane",
+    "nodes": [
+      {
+        "id": "n-issue",
+        "label": "請求書を発行",
+        "subtext": "月末締め当日",
+        "group": "g-sales"
+      },
+      {
+        "id": "n-fix",
+        "label": "金額を訂正",
+        "subtext": "差戻し 1 回あたり 1.5 営業日",
+        "group": "g-sales"
+      },
+      {
+        "id": "n-check",
+        "label": "計上を照合",
+        "subtext": "1 万円超は照会",
+        "group": "g-acct"
+      },
+      {
+        "id": "n-approve",
+        "label": "支払を承認",
+        "subtext": "2 営業日以内",
+        "group": "g-acct"
+      }
+    ],
+    "edges": [
+      {
+        "from": "n-issue",
+        "to": "n-check",
+        "label": "受け渡し"
+      },
+      {
+        "from": "n-check",
+        "to": "n-fix",
+        "label": "差戻し"
+      },
+      {
+        "from": "n-fix",
+        "to": "n-approve",
+        "label": "再提出"
+      }
+    ],
+    "groups": [
+      {
+        "id": "g-sales",
+        "label": "営業部"
+      },
+      {
+        "id": "g-acct",
+        "label": "経理部"
+      }
+    ],
+    "source": "請求業務実測・重複除外後 n=214",
+    "asOf": "2026/4",
+    "legend": {
+      "items": [
+        {
+          "label": "受け渡し",
+          "kind": "line"
+        },
+        {
+          "label": "差戻し",
+          "kind": "dashed"
+        }
+      ]
+    }
+  }
+}

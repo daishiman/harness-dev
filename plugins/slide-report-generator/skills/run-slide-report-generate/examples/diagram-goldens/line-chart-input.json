@@ -1,0 +1,27 @@
+{
+  "diagramId": "d-line-chart",
+  "type": "line-chart",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/chart-types.md §13.4 折れ線グラフ",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "指名検索の伸び",
+  "message": "自社の指名検索は 2026/7 に市場平均を追い越し、以降は差が開き続けている。",
+  "axis": {
+    "x": { "categories": ["2026/4", "2026/5", "2026/6", "2026/7", "2026/8", "2026/9", "2026/10"] },
+    "y": { "name": "継続指数", "unit": "指数", "min": 0, "max": 100, "ticks": [0, 25, 50, 75, 100], "note": "0 起点・目盛を切っていない" }
+  },
+  "series": [
+    { "name": "自社", "style": "focal", "values": [38, 44, 52, 61, 70, 78, 86] },
+    { "name": "市場平均", "style": "plain", "values": [40, 42, 45, 44, 47, 46, 49] }
+  ],
+  "emphasis": {
+    "focal": ["自社"],
+    "reason": "主張は「追い越した」という 1 点なので、追い越した側の線だけを accent にする。追い越しの瞬間 (7 月) は線の交差が既に語っているので、そこへ注釈も印も置かない"
+  },
+  "annotations": [],
+  "provenance": "出所: 契約管理台帳の月次抽出・対象 312 社 (n=312)",
+  "legendNote": "実線 2 本はいずれも実測 (予測を含まない)",
+  "caption": "左端では二本の線がほぼ重なっている。そこから右へ目を送り、離れはじめる地点と、離れたあとの傾きの差を見てほしい。"
+}

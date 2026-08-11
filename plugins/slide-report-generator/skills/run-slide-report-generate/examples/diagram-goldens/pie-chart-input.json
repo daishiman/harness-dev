@@ -1,0 +1,27 @@
+{
+  "diagramId": "d-pie-chart",
+  "type": "pie-chart",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/chart-types.md §13.5 円グラフ",
+  "placement": "方形",
+  "canvas": {"viewBox": "0 0 960 540"},
+  "title": "導入を見送った理由",
+  "message": "見送りの理由は分散しておらず、価格の一点に三割が集まっている。",
+  "total": {"value": 1240, "unit": "件", "label": "回答総数"},
+  "shape": "donut",
+  "slices": [
+    {"label": "価格が高い", "share": 30, "style": "focal"},
+    {"label": "機能が不足", "share": 25, "style": "plain"},
+    {"label": "運用の手間", "share": 25, "style": "plain"},
+    {"label": "その他", "share": 20, "style": "plain"}
+  ],
+  "emphasis": {
+    "focal": ["価格が高い"],
+    "reason": "系列色は 4 区分の判別のために使い、その中で本文が語る 1 区分だけを accent (= series-3) に割り当てる。系列色と焦点色を別々に重ねず、同じ 1 色が両方の役を兼ねる形にして style-tokens §2 の 4 条と衝突させない"
+  },
+  "annotations": [],
+  "scaleNote": "上端から時計回りに読む。扇の大きさは構成比で、合計 100% (四捨五入)。",
+  "provenance": "出所: 見送り理由の調査・2026/4-6 実施・単一回答 (n=1,240 件・無回答除外)。",
+  "caption": "円の上端から時計回りに読む。最初の一区画だけが色を変えてあり、その一区画の大きさがこの調査の結論そのものである。"
+}

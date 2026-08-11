@@ -27,6 +27,14 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 図解リファレンス（第 4 次 update・型別の参照配線）
+
+図解に関わる作業では、prompt 正本の指示に加えて次を**型別・節番号で**参照する。値（色・座標・件数）は下記 reference が正本で、本ファイルにも prompt にも写さない。
+
+- **型カタログ**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §0（表の読み方）→ §1-§8（見せたいものから型を引く）→ §10（経路の選び方と防具の有無）。**推奨配置列**が面内配置の決定へ直結する。
+- **配置契約**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4-4（横帯 / 方形 / 縦列 / 全幅の配置分類、focalPoint と図の強調要素の一致）、§D-2（複雑度予算。超過は配置面積を広げる方向でしか解消せず、縮小によるノード密度の誤魔化しは禁止）、§D-4-1（占有率）、§D-4-3（色数の文脈適合）。
+- **色の制約**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-style-tokens.md` §2（系列色の使用制限）/ §3（focal rule）。系列色を要求する型は、周囲が系列色を使う文脈でのみ選ぶ。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

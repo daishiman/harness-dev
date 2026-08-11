@@ -1,6 +1,6 @@
-# report 節内論理展開 & 構造化要素カタログ（1.3.0 正本）
+# report 節内論理展開 & 構造化要素カタログ（report narrative 正本）
 
-> 責務: output_mode=report を「情報の羅列」でなく「構造化された読み物」にするための **(A) 節内論理展開（narrative）** と **(B) 構造化本文ブロック（body[]）** と **(C) 本質的に含むべき横断要素カタログ** と **(D) 読者中心の入口設計（§7・1.3.0）** の正本。`report-structure.schema.json` 1.1.0 の `section.narrative` / `section.body[]` / inline `==highlight==` / `placement` を、どの内容にどう使うかの意思決定規準を定める。
+> 責務: output_mode=report を「情報の羅列」でなく「構造化された読み物」にするための **(A) 節内論理展開（narrative）** と **(B) 構造化本文ブロック（body[]）** と **(C) 本質的に含むべき横断要素カタログ** と **(D) 読者中心の入口設計（§7・reader-entry）** の正本。`report-structure.schema.json` 1.1.0 の `section.narrative` / `section.body[]` / inline `==highlight==` / `placement` を、どの内容にどう使うかの意思決定規準を定める。
 > 関連: 骨格は [report-types.md](report-types.md)、書式規律は [report-writing-rules.md](report-writing-rules.md)、ビジュアル三択は [report-visual-strategy.md](report-visual-strategy.md)、schema は `schemas/report-structure.schema.json`。
 
 ---
@@ -193,9 +193,9 @@ block 型を「増やすこと」自体は価値ではない。**内容が要求
 
 ---
 
-## 7. 1.3.0 追補 — 読者中心の入口設計（入口ホリゾンタル・中身バーティカル）
+## 7. reader-entry 追補 — 読者中心の入口設計（入口ホリゾンタル・中身バーティカル）
 
-1.1.0 が「節内」、1.2.0 が「文書スケール」の論理器を足したのに対し、1.3.0 は**読者との接続スケール**の規律を足す。内容がどれほど専門的で深くても、入口（タイトル・throughLine・冒頭要約）が書き手の専門領域から始まると、読者は「これは自分に関係がある」と判断できない。**読者が最初に知りたいのは「書き手が何を知っているか」ではなく「自分の状況・判断・行動がどう変わるか」**である。
+1.1.0 が「節内」、1.2.0 が「文書スケール」の論理器を足したのに対し、reader-entry は**読者との接続スケール**の規律を足す。これは schemaVersion ではなく、既存 schema 1.2.0 上の意味設計ラベルである。内容がどれほど専門的で深くても、入口（タイトル・throughLine・冒頭要約）が書き手の専門領域から始まると、読者は「これは自分に関係がある」と判断できない。**読者が最初に知りたいのは「書き手が何を知っているか」ではなく「自分の状況・判断・行動がどう変わるか」**である。
 
 この規律は想定読者を無制限に広げる指示ではない。`meta.audience` と reportType が定める対象範囲は維持し、その範囲の中で共有される課題・願望から入口を作る。機械ゲート（C25）は語の意味や約束の妥当性を判定しないため、本軸は意味判定（report-quality-reviewer RQ31〜RQ34・deck-evaluator D5 読者フック）が担う。
 

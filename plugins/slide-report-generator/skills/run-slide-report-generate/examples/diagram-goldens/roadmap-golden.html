@@ -1,0 +1,107 @@
+<!--
+  roadmap-golden.html — ゴールデン実例: ロードマップ型 (report 骨格)
+
+  入力: roadmap-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-business.md §11.15 ロードマップ型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-3 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py roadmap-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.15 のコード例はマイルストーン点に box-shadow のリングを重ね、
+  current へ pulse アニメーションを掛け、完了・進行中・未着手を 3 色で塗り分ける。
+  影は R9-14 で常に 0、アニメーションは印刷面に存在せず、3 色の状態塗りは
+  焦点を 3 つに増やす (§D-2 #3)。3 つとも落としてある。
+  ここでは状態を「進行中の 1 点だけが accent」に畳み、完了と未着手は
+  同じ muted の点で区別しない。読者が知る必要があるのは「いまどこか」であって、
+  過去の各点が完了したかどうかは時間軸の左側にあることが既に語っている。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-roadmap"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-roadmap-caption">
+
+    <defs>
+      <marker id="f-roadmap-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-roadmap-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-roadmap-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 時間軸 (水平・右向き。矢じりは 1 本にだけ付ける) -->
+    <line x1="48" y1="248" x2="912" y2="248"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#f-roadmap-arrow)"/>
+
+    <!-- 引き出し脚 (カードから軸へ・すべて垂直) -->
+    <line x1="132" y1="168" x2="132" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="364" y1="168" x2="364" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="596" y1="168" x2="596" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="828" y1="168" x2="828" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- マイルストーン 1 -->
+    <rect x="32" y="64" width="200" height="104" rx="6" fill="#F8F7F0"/>
+    <text x="132" y="108" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">取り込みを揃える</text>
+    <text x="132" y="140" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">入力元を二つに絞る</text>
+    <circle cx="132" cy="248" r="8" fill="var(--fg-dim, #54546d)"/>
+    <text x="132" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">準備</text>
+    <text x="132" y="320" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">〜2026/4</text>
+    <text x="132" y="344" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">終了: 取込2元が全件一致</text>
+
+    <!-- マイルストーン 2 (焦点・1 図 1 件) -->
+    <rect x="264" y="64" width="200" height="104" rx="6"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="364" y="108" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">日次で照合する</text>
+    <text x="364" y="140" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">差分を当日に出す</text>
+    <circle cx="364" cy="248" r="8" fill="var(--sakura-pink, #D27E99)"/>
+    <text x="364" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">試行 (現在)</text>
+    <text x="364" y="320" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">2026/5〜7</text>
+    <text x="364" y="344" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">終了: 20営業日連続で当日出力</text>
+
+    <!-- マイルストーン 3 -->
+    <rect x="496" y="64" width="200" height="104" rx="6" fill="#F8F7F0"/>
+    <text x="596" y="108" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">原因候補を添える</text>
+    <text x="596" y="140" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">調査の初動を短くする</text>
+    <circle cx="596" cy="248" r="8" fill="var(--fg-dim, #54546d)"/>
+    <text x="596" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">展開</text>
+    <text x="596" y="320" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">2026/8〜10</text>
+    <text x="596" y="344" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">終了: 原因候補の的中7割</text>
+
+    <!-- マイルストーン 4 -->
+    <rect x="728" y="64" width="200" height="104" rx="6" fill="#F8F7F0"/>
+    <text x="828" y="108" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">他部門へ広げる</text>
+    <text x="828" y="140" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">手順を移管する</text>
+    <circle cx="828" cy="248" r="8" fill="var(--fg-dim, #54546d)"/>
+    <text x="828" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">定着</text>
+    <text x="828" y="320" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">2026/11〜</text>
+    <text x="828" y="344" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">終了: 他部門2つが自走</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="928" y="440" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">二段目で止まるなら三段目は要らない</text>
+    <path d="M 700 428 Q 540 404 364 368" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="364" cy="368" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 読む向き・色の使い分け・段の依存 -->
+    <text x="32" y="496" font-size="12" fill="var(--fuji-gray, #8a8980)">左から時間順・色は現在地の一段だけ・各段は前段の終了条件を満たすことが前提</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-roadmap-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 1</span>
+    左端から右へ時間が流れる。上の枠が達成すること、下が時期である。二つ目で止まるかどうかが、その先を続けるかの分かれ目になる。
+  </figcaption>
+
+</figure>

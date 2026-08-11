@@ -1,0 +1,68 @@
+<!--
+  layout-chart-main.html — チャート + 読み取り
+  生成物。手で編集しない。正本: scripts/build-slide-skeletons.py + assets/slide-templates/frame-contract.json
+  再生成: python3 scripts/build-slide-skeletons.py
+
+  ■ この面を選ぶとき
+  定量データの面。グラフだけ置かず、そこから何が言えるかを必ず添える。
+
+  ■ 書き換えてよいのは次の 2 種類だけ
+  1. `data-slot` を持つ要素の**中身** ({{...}} のプレースホルダ)。
+     使えるスロット: title, media, caption, takeaway, note, index-bar, nav-bar
+  2. `data-media-slot` の中に置く差し込み物。
+     この面が受け入れる種別: chart, d3-diagram
+
+  ■ 書き換えてはいけないもの (書き換えると面がズレる)
+  - section / chrome / stage の class と構造、data-* 属性そのもの
+  - 座標・寸法の直書き (面の数値は assets/slide-templates/frame-contract.json が単一の正本)
+  - `.srg-slide__main` の `flex: 1 1 auto` (これが空白過多を止めている)
+  - 画像の `object-fit`。contain 固定 (cover にすると端が切れる)
+
+  ■ 文字が収まらないときの順序
+  1. `data-autofit` を持つ要素は slide-skeleton.js が font-size を 18px まで下げる。
+  2. 下限でなお溢れると data-overflow="true" が付く。これは表示であって修復ではない。
+     **面を割る**か本文を削る。18px 未満へ縮めない。
+
+  ■ 幾何 (すべて assets/slide-templates/frame-contract.json 由来)
+  canvas 1280x720px / chrome top 48 bottom 56 side 64
+  stage (64, 48) 1152x616px — 本文はこの矩形の外へ出さない
+  印刷は A4 横。zoom 0.8769 で 297x167.06mm、
+  上下 21.47mm がレターボックス帯。画面と PDF は同一物。
+-->
+<section class="srg-slide srg-slide--chart-main"
+         data-slide-skeleton="layout-chart-main"
+         data-media-kinds="chart d3-diagram"
+         id="{{slide_id}}">
+  <nav class="srg-slide__chrome-top" data-chrome="index" data-slot="index-bar">
+    <!-- 章インデックス。現在章に data-current="true" を付ける。位置は骨格が
+         決めるので、面ごとに座標を書かない (書くとページ間でズレる)。 -->
+    <ol class="srg-index" style="display: flex; gap: var(--srg-gap); margin: 0; padding: 0; list-style: none; font-size: var(--srg-fs-caption);">
+      <li data-current="{{is_current_1}}">{{section_1}}</li>
+      <li data-current="{{is_current_2}}">{{section_2}}</li>
+    </ol>
+  </nav>
+
+  <div class="srg-slide__stage">
+    <header class="srg-slide__title" data-slot="title" data-autofit="title">{{title}}</header>
+    <div class="srg-slide__main">
+      <figure class="srg-media" data-slot="media" data-media-slot="primary"
+              style="flex: 3 1 0; flex-direction: column; margin: 0;">
+        {{chart}}
+        <figcaption class="srg-media__caption" data-slot="caption" data-autofit="caption">{{axis_and_unit}}</figcaption>
+      </figure>
+      <aside class="srg-card" data-slot="takeaway" data-autofit="body"
+             style="flex: 2 1 0; justify-content: center; line-height: 1.7;">
+        {{what_this_means}}
+      </aside>
+    </div>
+    <p class="srg-slide__note" data-slot="note" data-autofit="note">出典: {{source}}（{{as_of}}）</p>
+  </div>
+  <nav class="srg-slide__chrome-bottom" data-chrome="nav" data-slot="nav-bar">
+    <!-- 前後ナビとページ番号。href は生成時に前後の面の id を入れる。
+         「戻る先が反映されない」を防ぐため、prev/next は必ず両方書き、
+         端の面では data-disabled="true" にする (要素ごと消すと幅が変わる)。 -->
+    <a class="srg-nav__prev" data-nav="prev" href="#{{prev_id}}" data-disabled="{{prev_disabled}}">前へ</a>
+    <span class="srg-nav__page" data-nav="page" style="margin-left: auto; font-size: var(--srg-fs-caption);">{{page_no}} / {{page_total}}</span>
+    <a class="srg-nav__next" data-nav="next" href="#{{next_id}}" data-disabled="{{next_disabled}}" style="margin-left: var(--srg-gap);">次へ</a>
+  </nav>
+</section>

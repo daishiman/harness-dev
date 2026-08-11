@@ -1,0 +1,36 @@
+{
+  "diagramId": "d-icongrid",
+  "type": "icon-grid",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.29 アイコン選択グリッド型",
+  "placement": "全幅",
+  "canvas": { "viewBox": "0 0 960 432" },
+  "title": "初期リリースに含める機能",
+  "message": "六つの候補のうち、初期リリースで先に決めるべきは権限設計だけである。",
+  "nodes": [
+    { "id": "g1", "label": "文書取込", "sub": "PDF と CSV を読む", "cell": [1, 1], "style": "plain" },
+    { "id": "g2", "label": "一覧表示", "sub": "条件で絞り込む", "cell": [1, 2], "style": "plain" },
+    { "id": "g3", "label": "通知", "sub": "期限前に知らせる", "cell": [1, 3], "style": "plain" },
+    { "id": "g4", "label": "集計", "sub": "月次で締める", "cell": [2, 1], "style": "plain" },
+    { "id": "g5", "label": "権限", "sub": "部門ごとに分ける", "cell": [2, 2], "style": "focal" },
+    { "id": "g6", "label": "履歴", "sub": "誰が直したか残る", "cell": [2, 3], "style": "plain" }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["g5"],
+    "reason": "並列に見える候補群で、後から変えると他の五つすべてに波及する一つがある。その非対称を示さないと、図は機能の一覧に留まる"
+  },
+  "annotations": [
+    { "text": "並びは順不同（左上が最重要ではない）。カード間に線は引いておらず、6 件は互いに独立している", "anchor": "figure-bottom" },
+    { "text": "候補は社内要望 12 件を突き合わせた 6 件（残る 6 件は次期検討）。色が付いた 1 件だけが、後から変えると他の 5 件へ波及する", "anchor": "figure-bottom" }
+  ],
+  "ordering": { "meaningful": false, "declaration": "並びは順不同" },
+  "coverage": { "total": 12, "shown": 6, "rest": "次期検討" },
+  "geometry": {
+    "grid": { "columns": [16, 336, 656], "rows": [32, 224], "width": 288, "height": 160 },
+    "plate": { "r": 28, "offset": [56, 80] },
+    "note": "§11.29 の 2 列 8 件から 3 列 6 件へ減らしてある。字形は水平・垂直の素片だけで組み、外部アイコンフォントには依存しない"
+  },
+  "caption": "六つの候補を同じ大きさで並べてある。色の付いた一つだけが、後から変えると残り五つすべてに波及する。"
+}

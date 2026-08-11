@@ -1,0 +1,40 @@
+{
+  "builder": "buildArchitecture",
+  "surface": "slide",
+  "diagramId": "d1",
+  "title": "受発注 SaaS の構成",
+  "caption": "左の入口から右の保管へ一方向に読む。中央の受注処理だけが外部の与信照会を待つため、遅延はここに集まる。",
+  "spec": {
+    "zones": [
+      {
+        "label": "利用者接点",
+        "nodes": [
+          { "label": "取引先ポータル", "sublabel": "発注入力", "type": "input" },
+          { "label": "営業担当アプリ", "sublabel": "代理入力", "type": "input" }
+        ]
+      },
+      {
+        "label": "業務処理",
+        "nodes": [
+          { "label": "受注処理", "sublabel": "在庫引当・受付は同期", "type": "plain" },
+          { "label": "請求処理", "sublabel": "締めと発行・日次", "type": "plain" }
+        ]
+      },
+      {
+        "label": "保管と外部 (青線は社外)",
+        "nodes": [
+          { "label": "与信照会", "sublabel": "外部信用機関・同期・不通時は保留", "type": "external" },
+          { "label": "受注データ", "sublabel": "明細と履歴・書込は即時", "type": "store" },
+          { "label": "会計データ", "sublabel": "仕訳の元帳・日次更新", "type": "store" }
+        ]
+      }
+    ],
+    "links": [
+      { "from": "取引先ポータル", "to": "受注処理", "label": "発注" },
+      { "from": "営業担当アプリ", "to": "受注処理", "label": "代理" },
+      { "from": "受注処理", "to": "与信照会", "label": "照会", "external": true },
+      { "from": "受注処理", "to": "受注データ" },
+      { "from": "請求処理", "to": "会計データ", "label": "仕訳" }
+    ]
+  }
+}

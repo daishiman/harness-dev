@@ -1,0 +1,33 @@
+{
+  "diagramId": "d-value-stack",
+  "type": "value-stack",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-business.md §11.16 価値スタック型",
+  "placement": "縦列",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "自動化が積み上げる価値",
+  "message": "下の段が終わらないと上の段は載らない。いるのは下から二段目である。",
+  "stackAxis": "上ほど後に載る (下から順にしか積めない)",
+  "linkMeaning": "矢印は依存。下の段が終わって初めて上の段が載る",
+  "colorRule": "色はいま着手中の段だけに付ける",
+  "nodes": [
+    { "id": "l1", "label": "データが揃う", "sub": "入力元と項目を一つに決める", "level": 1, "style": "plain" },
+    { "id": "l2", "label": "差分が当日出る", "sub": "締めを待たずに気づける", "level": 2, "style": "focal" },
+    { "id": "l3", "label": "原因の見当がつく", "sub": "調査の初動が短くなる", "level": 3, "style": "plain" },
+    { "id": "l4", "label": "他部門へ移せる", "sub": "手順が人から離れる", "level": 4, "style": "plain" }
+  ],
+  "relations": [
+    { "from": "l1", "to": "l2", "kind": "depends", "weight": "secondary" },
+    { "from": "l2", "to": "l3", "kind": "depends", "weight": "secondary" },
+    { "from": "l3", "to": "l4", "kind": "depends", "weight": "secondary" }
+  ],
+  "emphasis": {
+    "focal": ["l2"],
+    "reason": "段の序列は位置が語る。色を段ごとに変えると序列ではなく種別に見えるので、焦点は現在地の 1 段だけ"
+  },
+  "annotations": [
+    { "text": "下の段から順にしか積めない", "anchor": "l1" }
+  ],
+  "caption": "下の段から上へ読み上げてほしい。上の段は下が終わって初めて載るもので、いま手を付けているのは下から二段目である。"
+}

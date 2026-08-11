@@ -1,0 +1,132 @@
+{
+  "diagramId": "d-ascent",
+  "type": "ascent",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-cycle-flow.md §11.5 上昇型（成長・向上フロー）",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 800 400"
+  },
+  "title": "問い合わせ対応が引き継げるまで",
+  "message": "伸びの半分は最後の一段に集まる（1→3 で +36pt、3→4 で +35pt）。",
+  "axes": {
+    "x": {
+      "label": "時間",
+      "ticks": [
+        "2025/4",
+        "2025/10",
+        "2026/4",
+        "2026/10"
+      ],
+      "note": "絶対時点。各四半期末"
+    },
+    "y": {
+      "label": "定型業務の内製化率 (%)",
+      "min": 0,
+      "max": 100,
+      "note": "0 起点・最大 100"
+    }
+  },
+  "nodes": [
+    {
+      "id": "s1",
+      "label": "手順を写す",
+      "step": 1,
+      "style": "plain",
+      "value": "13%"
+    },
+    {
+      "id": "s2",
+      "label": "型を作る",
+      "step": 2,
+      "style": "plain",
+      "value": "25%"
+    },
+    {
+      "id": "s3",
+      "label": "例外を潰す",
+      "step": 3,
+      "style": "plain",
+      "value": "49%"
+    },
+    {
+      "id": "s4",
+      "label": "引き継げる",
+      "step": 4,
+      "style": "focal",
+      "value": "84%"
+    }
+  ],
+  "relations": [
+    {
+      "from": "s1",
+      "to": "s2",
+      "kind": "flow"
+    },
+    {
+      "from": "s2",
+      "to": "s3",
+      "kind": "flow"
+    },
+    {
+      "from": "s3",
+      "to": "s4",
+      "kind": "flow"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "s4"
+    ],
+    "reason": "本文がこれから語る対象。曲線が立ち上がる位置と焦点を一致させないと、視線の着地点が 2 つに割れる"
+  },
+  "annotations": [
+    {
+      "text": "三段合計 +36pt ≒ 最終段 +35pt",
+      "anchor": "s3"
+    }
+  ],
+  "geometry": {
+    "origin": [
+      80,
+      340
+    ],
+    "axisEnd": {
+      "x": [
+        752,
+        340
+      ],
+      "y": [
+        80,
+        40
+      ]
+    },
+    "points": [
+      [
+        160,
+        300
+      ],
+      [
+        320,
+        264
+      ],
+      [
+        456,
+        192
+      ],
+      [
+        600,
+        88
+      ]
+    ],
+    "pointRadius": 20,
+    "note": "上昇線は Q（2 次ベジェ）だけで作る。直線で結ぶと斜めセグメントになり §D-3 原則 1 に触れる。塗り面を閉じる L は垂直・水平の 2 本だけ"
+  },
+  "caption": "左下から右上へ順に追ってほしい。内製化率は 13% から 84% まで上がるが、伸びの内訳は 1→3 の三段合計で +36pt、3→4 の一段だけで +35pt である。最後の一段が全体の伸びのほぼ半分を占める、というのがこの図の要点である。",
+  "legend": [
+    "実線 = 実測値",
+    "破線 = 注釈の指し線"
+  ],
+  "provenance": "出所: 運用ログ実測・2025/4-2026/10・各四半期末時点"
+}

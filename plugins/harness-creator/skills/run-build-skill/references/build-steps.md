@@ -84,16 +84,23 @@ score >= 80 かつ high=0 で完了。
 - **新規 plugin の場合**（plugins/<name>/ を新設したとき）はルート2 SSOTへの登録が必須。
   これを怠ると `/plugin marketplace add` の一覧に出ず install もできない（表示漏れの直接原因）。
   手順:
-  1. `python3 scripts/validate-plugin-completeness.py --fix` を実行。実体ディレクトリ起点で
+  1. `python3 ${HARNESS_ROOT:-.}/scripts/validate-plugin-completeness.py --fix` を実行。実体ディレクトリ起点で
      未登録 plugin を `.claude-plugin/marketplace.json` plugins[] と
      `.claude-plugin/bundles.json`（plugin.json の `bundle_targets`）へ **append-only** で自動登録し、
      書込後に自己再検証して exit 0 を保証する（既登録なら no-op・冪等）。
   2. 自動生成エントリの `category` / `tags` / `description` は plugin.json 由来またはデフォルト。
      `[category/tags はデフォルト値。PR で要確認]` の警告が出たら plugin.json に
      `category` / `tags` を追記するか marketplace エントリを PR diff で磨き込む。
-  3. 人間が PR diff で最終承認する（機械は登録漏れを必ず塞ぎ、表示文言の磨き込みは人間が担う二層分離）。
-  - 検出層: CI/pre-push の `validate-plugin-completeness.py`（MK-001/002/003・BD-001）が
-    登録漏れを fail-closed で止める最後の砦。`--fix` を忘れても CI で必ず検出される。
+  3. `python3 ${HARNESS_ROOT:-.}/scripts/build-local-marketplace.py` を実行し、ローカル clone 用
+     marketplace（`marketplaces/local/.claude-plugin/marketplace.json`）を再生成する。
+     公開 marketplace は `distributable: false` の plugin を載せられない（MK-004 が拒否する）ため、
+     **非配布 plugin を手元の Claude Code へ install する経路はこちらだけ**。再生成を忘れると
+     Add Marketplace 済みの環境で新 plugin が無音で欠落する。`source` は marketplace ルートからの
+     相対パスなので生成物は machine 非依存で、そのまま commit する。
+  4. 人間が PR diff で最終承認する（機械は登録漏れを必ず塞ぎ、表示文言の磨き込みは人間が担う二層分離）。
+  - 検出層: CI/pre-push の `validate-plugin-completeness.py`（MK-001/002/003・BD-001）が公開側の、
+    `build-local-marketplace.py --check` がローカル側の登録漏れを fail-closed で止める最後の砦。
+    `--fix` / 再生成を忘れても CI で必ず検出される。
 - **plugin 全体 plan / 複数 surface を扱う場合**は、`plugin-dev-planner` の現物 surface 監査を
   Python gate として実行する。これは `skills/` だけでなく `agents/` / `commands/` /
   `hooks/` / `scripts/` / `tests/` / `references/` / `config/` / `assets/` /
@@ -115,7 +122,7 @@ score >= 80 かつ high=0 で完了。
   これを怠ると Claude Code が新規 surface を認識せず `/<command>` や SubAgent 起動が unresolved になる
   （手動 `ln -s` 1 本のみで `make sync` を飛ばすと残り surface が欠落する drift が実際に発生）。
   手順:
-  1. `bash scripts/sync-skills-to-claude.sh --apply`（`make sync` 可。唯一の生成器
+  1. `bash ${HARNESS_ROOT:-.}/scripts/sync-skills-to-claude.sh --apply`（`make sync` 可。唯一の生成器
      `scripts/build-claude-symlinks.py` を冪等呼出）を実行し、新規 skill/agent/command を
      `.claude/{skills,agents,commands}/` へ symlink 展開する。**手動 `ln -s` 禁止**（SSOT 生成器のみが正本経路）。
   2. `.claude/{skills,agents,commands}` は tracked のため生成 symlink を `git add` する（未追跡だと CI が赤のまま）。

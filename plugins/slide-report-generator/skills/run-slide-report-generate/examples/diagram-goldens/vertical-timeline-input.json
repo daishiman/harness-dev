@@ -1,0 +1,104 @@
+{
+  "diagramId": "f-vtimeline",
+  "type": "vertical-timeline",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-visual.md §11.25 縦タイムラインステップ型",
+  "placement": "縦列",
+  "canvas": {
+    "viewBox": "0 0 640 480"
+  },
+  "title": "移行 10 週間の内訳",
+  "message": "十週のうち五週は並行運用で、この期間だけ費用と手間が二重になる。",
+  "nodes": [
+    {
+      "id": "t1",
+      "label": "現行の棚卸し",
+      "sub": "何が動いているかを数える",
+      "period": "2026/4/6-4/10 (第 1 週)",
+      "style": "plain",
+      "owner": "情シス",
+      "doneCriterion": "対象業務を全件台帳化"
+    },
+    {
+      "id": "t2",
+      "label": "移行対象の確定",
+      "sub": "残す業務と捨てる業務を分ける",
+      "period": "2026/4/13-5/1 (第 2-4 週)",
+      "style": "plain",
+      "owner": "業務部",
+      "doneCriterion": "残す/捨てるを全件決裁",
+      "current": true
+    },
+    {
+      "id": "t3",
+      "label": "並行運用",
+      "sub": "旧系と新系を同時に回す",
+      "period": "2026/5/4-6/5 (第 5-9 週)",
+      "style": "focal",
+      "owner": "情シス+業務部",
+      "doneCriterion": "差異0件が2週連続"
+    },
+    {
+      "id": "t4",
+      "label": "旧系の停止",
+      "sub": "戻せなくなる一度きりの操作",
+      "period": "2026/6/8-6/12 (第 10 週)",
+      "style": "plain",
+      "owner": "情シス",
+      "doneCriterion": "旧系の接続を全遮断"
+    }
+  ],
+  "relations": [
+    {
+      "from": "t1",
+      "to": "t2",
+      "kind": "sequence"
+    },
+    {
+      "from": "t2",
+      "to": "t3",
+      "kind": "sequence"
+    },
+    {
+      "from": "t3",
+      "to": "t4",
+      "kind": "sequence"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "t3"
+    ],
+    "reason": "焦点は最終週ではなく、全体の半分を占めて費用が二重になる期間に置く。期間の長さは軸上の位置では読めないので、色で示す価値がある"
+  },
+  "annotations": [
+    {
+      "text": "止められるのは最後の一度だけ",
+      "anchor": "t4"
+    }
+  ],
+  "geometry": {
+    "spineX": 48,
+    "markerY": [
+      72,
+      176,
+      280,
+      384
+    ],
+    "cardX": 96,
+    "cardHeight": 80,
+    "note": "軸は 1 本の直線、節点は同じ半径の円、札は同じ高さで揃える。期間の長短を札の高さで表すと、内容量の差と読み違えられる"
+  },
+  "caption": "上から下へ 10 週間をたどる。色の付いた一段だけが全体の半分を占め、その間は旧系と新系の両方を維持することになる。",
+  "axis": {
+    "direction": "縦軸は時間順 (上から下)",
+    "dependency": "上の段の完了が下の段の着手条件 (先行→後続)"
+  },
+  "legend": [
+    "桃色=本文が扱う段",
+    "破線=注釈の指し線"
+  ],
+  "provenance": "出所: 移行計画書 2026/3 版・全 10 週 (2026/4/6-6/12)"
+}

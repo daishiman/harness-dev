@@ -1,0 +1,123 @@
+<!--
+  org-chart-golden.html — ゴールデン実例: 組織図型 (report 骨格)
+
+  入力: org-chart-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-visual.md §11.22 組織図型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #9 #10 / §D-3 原則 1 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict org-chart-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.22 の作図文法 (頂点 1・中間 3・その下に子を吊る) を SVG へ移した。
+  節のコード例は top ノードに linear-gradient を敷き、hover で translateY と
+  box-shadow を掛け、階層ごとに枠色を変えている。順に R9-14 (影は常に 0)・
+  style-tokens §5 (グラデーションは量を読ませる型のみ)・§2 (系列色は色でしか
+  区別できない図に限る) に触れるので落とした。階層は位置と接続線が既に語っている。
+  接続線に矢じりを付けないのは、組織図の線が流れではなく所属だからである。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-org"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 640 360"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-org-caption">
+
+    <defs>
+      <marker id="f-org-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-org-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-org-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 序列の軸 (位置に意味があるので名付ける) -->
+    <text x="16" y="16" font-size="12" fill="var(--fuji-gray, #8a8980)">上ほど決裁権が大きい・人数は2026/7/1 時点の在籍</text>
+
+    <!-- 所属の罫 (第 1 段から第 2 段へ・矢じり無し・直交のみ) -->
+    <line x1="320" y1="80" x2="320" y2="116" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="104" y1="116" x2="536" y2="116" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="104" y1="116" x2="104" y2="152" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="320" y1="116" x2="320" y2="152" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="536" y1="116" x2="536" y2="152" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+
+    <!-- 所属の罫 (第 2 段から第 3 段へ) -->
+    <line x1="320" y1="216" x2="320" y2="244" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="244" y1="244" x2="396" y2="244" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="244" y1="244" x2="244" y2="272" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="396" y1="244" x2="396" y2="272" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+
+    <!-- 第 1 段 (頂点) -->
+    <g>
+      <rect x="256" y="24" width="128" height="56" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="320" y="48" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">事業本部長</text>
+      <text x="320" y="68" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">最終決裁</text>
+    </g>
+
+    <!-- 第 2 段 左 -->
+    <g>
+      <rect x="16" y="152" width="176" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="104" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">開発部</text>
+      <text x="104" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">実装と検証・12名</text>
+    </g>
+
+    <!-- 第 2 段 中央 (焦点。下に自前の審査を 2 つ抱える) -->
+    <g>
+      <rect x="232" y="152" width="176" height="64" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="320" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">品質保証部</text>
+      <text x="320" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">可否の判断・5名</text>
+    </g>
+
+    <!-- 第 2 段 右 -->
+    <g>
+      <rect x="448" y="152" width="176" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="536" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">運用部</text>
+      <text x="536" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">本番の維持・8名</text>
+    </g>
+
+    <!-- 第 3 段 左 -->
+    <g>
+      <rect x="176" y="272" width="136" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="244" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">リリース審査</text>
+      <text x="244" y="316" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">週次</text>
+    </g>
+
+    <!-- 第 3 段 右 -->
+    <g>
+      <rect x="328" y="272" width="136" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="396" y="296" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">セキュリティ審査</text>
+      <text x="396" y="316" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">随時</text>
+    </g>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="16" y="300" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">権限は下へ降りていない</text>
+    <path d="M 148 292 Q 180 250 232 204" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="232" cy="204" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 線種と節点種別の凡例 (線が 1 種類でも、それが何かを書く) -->
+    <text x="16" y="348" font-size="12" fill="var(--fuji-gray, #8a8980)">実線=直属 (指揮系統)・淡い箱は常設の会議体 / 審査の合格基準は重大不具合0件</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-org-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 1</span>
+    上から下へ所属をたどる図だが、読みどころは二段目である。色の付いた部署だけが下に自前の審査を抱えている点を見てほしい。
+  </figcaption>
+
+</figure>

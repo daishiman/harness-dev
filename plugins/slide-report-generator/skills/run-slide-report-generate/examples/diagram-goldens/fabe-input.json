@@ -1,0 +1,37 @@
+{
+  "diagramId": "f-fabe",
+  "type": "fabe",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-business.md §11.20 FABE型 / references/diagram-fabe.md 2. 横フロー型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 360", "step": "sm" },
+  "title": "日次照合をどう説明するか",
+  "message": "効能書きではなく、四社の実測値だけが相手の判断材料になる。",
+  "nodes": [
+    { "id": "f", "tag": "特徴", "label": "日次で照合する", "sub": "取り込んだ直後に全件", "owner": "経理部", "start": "2026/7", "style": "plain" },
+    { "id": "a", "tag": "利点", "label": "締めを待たない", "sub": "差分がその日に表へ出る", "style": "plain" },
+    { "id": "b", "tag": "便益", "label": "翌月へ残らない", "sub": "残業が月末に偏らない", "style": "plain" },
+    { "id": "e", "tag": "証拠", "label": "四社で同じ結果", "sub": "工数は平均82%減", "style": "focal" }
+  ],
+  "evidence": {
+    "source": "自社導入の実測",
+    "period": "2025/4〜2026/3",
+    "cases": "4社12現場",
+    "spread": "削減幅は68〜91%"
+  },
+  "relations": [
+    { "from": "f", "to": "a", "kind": "flow", "weight": "primary" },
+    { "from": "a", "to": "b", "kind": "flow", "weight": "primary" },
+    { "from": "b", "to": "e", "kind": "flow", "weight": "primary" }
+  ],
+  "emphasis": {
+    "focal": ["e"],
+    "reason": "前の三枚は理屈なので相手は疑える。検証できるのは最後の一枚だけで、そこが本文の接続点になる"
+  },
+  "annotations": [
+    { "text": "色は証拠の一枚だけ・そこが決め手", "anchor": "e" }
+  ],
+  "caption": "左から右へ、四枚を一続きの説明として読んでほしい。前の三枚は理屈であり、最後の一枚だけが相手の側で検証できる事実である。"
+}

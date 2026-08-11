@@ -1,0 +1,63 @@
+{
+  "builder": "buildSwimlane",
+  "surface": "report",
+  "diagramId": "f3",
+  "figureLabel": "図 3",
+  "title": "月次締めの担当と工程",
+  "caption": "行が担当、列が時間である。経理と情報システムの間で二度受け渡しが起きる点が、締めが二営業日に収まらない直接の原因である。",
+  "spec": {
+    "stepLabels": [
+      "受付",
+      "確認",
+      "承認",
+      "確定"
+    ],
+    "lanes": [
+      {
+        "label": "営業部",
+        "steps": [
+          {
+            "label": "売上を計上",
+            "sublabel": "受注伝票を転記",
+            "step": 0,
+            "order": 1
+          },
+          {
+            "label": "差異を説明",
+            "sublabel": "差異一覧へ回答",
+            "step": 1,
+            "order": 3
+          }
+        ]
+      },
+      {
+        "label": "経理部",
+        "steps": [
+          {
+            "label": "計上を照合",
+            "sublabel": "1万円超は照会",
+            "step": 1,
+            "order": 2
+          },
+          {
+            "label": "仕訳を承認",
+            "sublabel": "2営業日以内に承認",
+            "step": 2,
+            "order": 4
+          }
+        ]
+      },
+      {
+        "label": "情報システム部",
+        "steps": [
+          {
+            "label": "帳票を出力",
+            "sublabel": "確定帳票を配信・矢印は受け渡し順",
+            "step": 3,
+            "order": 5
+          }
+        ]
+      }
+    ]
+  }
+}

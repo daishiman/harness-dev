@@ -1,0 +1,101 @@
+<!--
+  hbar-chart-golden.html — ゴールデン実例: 横棒グラフ (report 骨格)
+
+  入力: hbar-chart-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/chart-types.md §13.2 横棒グラフ
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-4 / R9-3 / R9-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict hbar-chart-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  canvas は sm 段 (960x360)。骨格が言うとおり横帯の図は sm 段である。
+  6 行 × 行高 48 で 336 に収まり、本文幅へ縮小しても読書 viewport の
+  60% を超えない (R9-3)。幅は本文幅 100% の "text" (R9-5)。
+
+  §13.2 の作図文法 (右揃えのラベル・下地の帯・角丸・帯の端に添える値) を移した。
+  落としたのは linear-gradient、hover の brightness と box-shadow (R9-14 影は付けない)、
+  そして帯 1 本ごとの色替えである。6 本は順位を並べた同一系列なので、
+  項目ごとに系列色を配ると順位ではなく分類として読まれる。
+
+  値は帯の外側へ置いた。§13.2 は帯の内側に白抜きで置き、短い帯だけ外へ逃がす
+  作りだが、内と外が混在すると値の位置が行ごとに揺れる。全行を外に統一してある。
+
+  帯の長さは 4 の倍数へ丸めてある (68% = 435.2px → 436px)。丸め幅は最大 2px で、
+  値の正本は input JSON と帯に添えた数値にある。
+
+  accent の面塗りは焦点の帯 1 本だけ。defs の accent マーカーも D7 は面塗りとして
+  数えるので、これで上限 2 件ちょうどである。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-hbar-chart"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 360"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-hbar-chart-caption">
+
+    <defs>
+      <marker id="f-hbar-chart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-hbar-chart-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-hbar-chart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 尺度の宣言 (0 起点・全幅が 100%・並びの向き) -->
+    <text x="200" y="44" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">上ほど多い</text>
+    <text x="216" y="44" font-size="12" fill="var(--fuji-gray, #8a8980)">0%</text>
+    <text x="856" y="44" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">100%</text>
+
+    <!-- 下地の帯 (全行共通・0 から 100% の範囲) -->
+    <rect x="216" y="64" width="640" height="32" rx="8" fill="#F8F7F0"/>
+    <rect x="216" y="112" width="640" height="32" rx="8" fill="#F8F7F0"/>
+    <rect x="216" y="160" width="640" height="32" rx="8" fill="#F8F7F0"/>
+    <rect x="216" y="208" width="640" height="32" rx="8" fill="#F8F7F0"/>
+    <rect x="216" y="256" width="640" height="32" rx="8" fill="#F8F7F0"/>
+    <rect x="216" y="304" width="640" height="32" rx="8" fill="#F8F7F0"/>
+
+    <!-- 実績の帯 (上から多い順。焦点は 1 本だけ) -->
+    <rect x="216" y="64" width="436" height="32" rx="8" fill="var(--sakura-pink, #D27E99)"/>
+    <rect x="216" y="112" width="344" height="32" rx="8" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="216" y="160" width="264" height="32" rx="8" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="216" y="208" width="212" height="32" rx="8" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="216" y="256" width="172" height="32" rx="8" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="216" y="304" width="96" height="32" rx="8" fill="var(--wave-blue, #7E9CD8)"/>
+
+    <!-- 項目名 (右揃え・帯の左) -->
+    <text x="200" y="84" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">価格が高い</text>
+    <text x="200" y="132" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">使いこなせない</text>
+    <text x="200" y="180" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">他社へ乗り換え</text>
+    <text x="200" y="228" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">担当者の異動</text>
+    <text x="200" y="276" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">機能が不足</text>
+    <text x="200" y="324" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">その他</text>
+
+    <!-- 値 (帯の右端の外・全行そろえて外側) -->
+    <text x="660" y="84" text-anchor="start" font-size="12" fill="var(--fg, #43436c)">68%</text>
+    <text x="568" y="132" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">54%</text>
+    <text x="488" y="180" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">41%</text>
+    <text x="436" y="228" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">33%</text>
+    <text x="396" y="276" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">27%</text>
+    <text x="320" y="324" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">15%</text>
+
+    <!-- 出所・時点・母数 (割合の図なので回答方式まで書く。合計が 238% になる理由) -->
+    <text x="216" y="352" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/1 解約時アンケート・複数回答 (n=312・回答率 58%)</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-hbar-chart-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 2</span>
+    多い順に上から並べてある。項目名を読む前に、いちばん上の帯と二番目の帯の長さの差を見てほしい。そこがこの調査の結論である。
+  </figcaption>
+
+</figure>

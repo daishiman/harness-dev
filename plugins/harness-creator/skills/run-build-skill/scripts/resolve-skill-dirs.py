@@ -36,8 +36,59 @@ def _existing_dir(value: str | None) -> Path | None:
     return path.resolve() if path.is_dir() else None
 
 
+def _manifest_name(root: Path) -> str | None:
+    """<root>/.claude-plugin/plugin.json の name。読めなければ None。"""
+    try:
+        manifest = json.loads(
+            (root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return None
+    return manifest.get("name") if isinstance(manifest, dict) else None
+
+
+def _self_plugin_name() -> str | None:
+    """このファイル自身が属する plugin の manifest name。
+
+    リテラル直書きは制御リテラル散在として禁止 (tests/test_dogfooding_boundary.py)、
+    SSOT 定数は「SSOT を探すのに plugin root が要る」循環のため使えない。__file__ は
+    循環せず改名にも自動追従する第三の出所。plugin は入れ子にならないので、上向きに
+    最初に見つかる manifest が自 plugin のもので確定する。
+    """
+    for parent in Path(__file__).resolve().parents:
+        name = _manifest_name(parent)
+        if name:
+            return name
+    return None
+
+
+def _hc_env_root() -> Path | None:
+    """env から自 plugin root を得る。他 plugin を指す値は拒否する。
+
+    他 repo が .claude 平置き projection で本 plugin を借用している場合、
+    env CLAUDE_PLUGIN_ROOT は **別 plugin** を指していることがある
+    (ObsidianMemo では ubm-goal-setting)。空ではなく「存在するが別物」なので
+    _existing_dir では弾けない。manifest の name で自 plugin か検証する。
+    借用側は HC_ROOT を設定すれば明示指定できる。
+    拒否するのは manifest が読めて **別 plugin と確認できた** 場合だけにする。
+    判定材料が無い (manifest 不在) env は従来どおり採用し、既存挙動を後退
+    させない。vendored コピー先 (company-master / skill-intake) でも同様。
+    """
+    expected = _self_plugin_name()
+    if not expected:
+        return None
+    for _var in ("HC_ROOT", "CLAUDE_PLUGIN_ROOT"):
+        root = _existing_dir(os.environ.get(_var))
+        if root is None:
+            continue
+        _name = _manifest_name(root)
+        if _name is None or _name == expected:
+            return root
+    return None
+
+
 def _discover_plugin_root() -> Path:
-    env_root = _existing_dir(os.environ.get("CLAUDE_PLUGIN_ROOT"))
+    env_root = _hc_env_root()
     if env_root:
         return env_root
 

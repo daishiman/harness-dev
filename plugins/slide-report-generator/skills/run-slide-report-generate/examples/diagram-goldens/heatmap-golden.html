@@ -1,0 +1,146 @@
+<!--
+  heatmap-golden.html — ゴールデン実例: ヒートマップ型 (slide 骨格)
+
+  入力: heatmap-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-extended.md §11.44 ヒートマップ型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict heatmap-golden.html
+
+  6 列 × 4 行 = 24 セル。セルは 120 × 72、間隔 8 (列 x = 160 / 288 / 416 / 544 / 672 / 800、
+  行 y = 96 / 176 / 256 / 336)。行ラベル列は左 128 を確保してある。
+
+  濃さは accent 1 色の不透明度 5 段 (0.05 / 0.14 / 0.20 / 0.30 / 0.50) だけで作る。
+  値はすべて NODE_STYLES の既存段からの引用で、新しい段を作っていない。
+  多色スケール (青→黄→赤) を使わないのは、色相が変わると読者が「量の順」ではなく
+  「種類の違い」を読み始めるためで、順序を語れるのは同一色相の濃淡だけである。
+
+  すべてのセルに件数を書いてあるのは、濃淡だけに順位を担わせないためである
+  (印刷・モノクロ・色覚特性のいずれでも順位が残る)。
+  accent の枠は最濃セル 1 つにしか置かない。濃淡が既に順位を語っているので、
+  2 つ目の枠は情報を増やさずに焦点だけを散らす。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-heatmap">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-heatmap-caption">
+
+    <defs>
+      <marker id="d-heatmap-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-heatmap-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-heatmap-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 2 軸の名前と並び順の意味 (書かなければ読者が勝手な順位軸を発明する) -->
+    <text x="144" y="48" text-anchor="end" font-size="12" fill="var(--fg, #43436c)">時間帯 (上ほど早い時刻)</text>
+    <text x="144" y="76" text-anchor="end" font-size="12" fill="var(--fg, #43436c)">曜日 (左から月〜土)</text>
+
+    <!-- 列ラベル -->
+    <text x="220" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">月</text>
+    <text x="348" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">火</text>
+    <text x="476" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">水</text>
+    <text x="604" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">木</text>
+    <text x="732" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">金</text>
+    <text x="860" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">土</text>
+
+    <!-- 行ラベル -->
+    <text x="144" y="136" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">午前</text>
+    <text x="144" y="216" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">昼</text>
+    <text x="144" y="296" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">夕方</text>
+    <text x="144" y="376" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">夜</text>
+
+    <!-- 第 1 行: 午前 -->
+    <rect x="160" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="288" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="416" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="544" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="672" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="800" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="220" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">12</text>
+    <text x="348" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">14</text>
+    <text x="476" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">11</text>
+    <text x="604" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">13</text>
+    <text x="732" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">18</text>
+    <text x="860" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">4</text>
+
+    <!-- 第 2 行: 昼 -->
+    <rect x="160" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="288" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="416" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="544" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="672" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="800" y="176" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="220" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">8</text>
+    <text x="348" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">9</text>
+    <text x="476" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">7</text>
+    <text x="604" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">10</text>
+    <text x="732" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">12</text>
+    <text x="860" y="220" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">3</text>
+
+    <!-- 第 3 行: 夕方 -->
+    <rect x="160" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="288" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="416" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="544" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="672" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="800" y="256" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="220" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">20</text>
+    <text x="348" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">22</text>
+    <text x="476" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">19</text>
+    <text x="604" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">24</text>
+    <text x="732" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">31</text>
+    <text x="860" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">9</text>
+
+    <!-- 第 4 行: 夜 (金曜が最濃 = 焦点。枠だけを accent にする) -->
+    <rect x="160" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="288" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="416" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="544" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="672" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <rect x="800" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="220" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">14</text>
+    <text x="348" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">15</text>
+    <text x="476" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">13</text>
+    <text x="604" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">16</text>
+    <text x="732" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">38</text>
+    <text x="860" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">22</text>
+
+    <!-- 濃さの凡例 (5 段。両端にだけ語を置く) -->
+    <rect x="160" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="220" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="280" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="340" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="400" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="152" y="456" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">少ない</text>
+    <text x="464" y="456" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">多い</text>
+    <text x="920" y="456" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">セルの数字は件数</text>
+
+    <!-- 5 段の境界値 (「濃い」が何件からかを書かないと段の意味が読めない) -->
+    <text x="188" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">0-9</text>
+    <text x="248" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">10-14</text>
+    <text x="308" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">15-19</text>
+    <text x="368" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">20-24</text>
+    <text x="428" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">25 以上</text>
+
+    <!-- 集計定義・期間・母数 (下端 1 行) -->
+    <text x="160" y="516" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/01-2026/03・一次受付のみ・重複除外後 全 364 件</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-heatmap-caption" class="srg-diagram__caption">
+    縦横のラベルを手掛かりに、最も濃い一区画を探してほしい。全体の傾向は夕方以降だが、増員の判断を左右するのはその一区画だけである。
+  </figcaption>
+
+</figure>

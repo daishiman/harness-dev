@@ -36,7 +36,14 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = resolve(__dirname, "..");
-const SCHEMA_PATH = join(SKILL_ROOT, "schemas", "structure.schema.json");
+// vendor 同梱 (vendor/schemas/) → plugin 直下 (schemas/) の順で解決する。
+// vendor 側に schema が同梱されない配布形態では plugin 直下が正本で、
+// どちらも無いときだけ legacy VALID_SLIDE_TYPES へフォールバックする。
+const SCHEMA_PATH_CANDIDATES = [
+  join(SKILL_ROOT, "schemas", "structure.schema.json"),
+  resolve(SKILL_ROOT, "..", "schemas", "structure.schema.json"),
+];
+const SCHEMA_PATH = SCHEMA_PATH_CANDIDATES.find((p) => existsSync(p)) || SCHEMA_PATH_CANDIDATES[0];
 
 // schema から slideType enum を取得（97 種）。失敗時は legacy にフォールバック
 let SCHEMA_SLIDE_TYPES = null;

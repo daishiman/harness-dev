@@ -1,0 +1,65 @@
+{
+  "diagramId": "f-architecture-layers",
+  "type": "architecture-layers",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-technical.md §11.38 アーキテクチャ層構成図",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "予約基盤の層構成",
+  "message": "依存は上から下への一方向しかなく、差し替えの対象は業務処理層の一つだけである。",
+  "layers": [
+    {
+      "id": "ui", "label": "画面層", "responsibility": "受付と管理の入口",
+      "nodes": [
+        { "id": "web", "label": "予約 Web", "style": "process" },
+        { "id": "admin", "label": "管理コンソール", "style": "process" }
+      ]
+    },
+    {
+      "id": "service", "label": "業務処理層", "responsibility": "在庫整合を保証",
+      "nodes": [
+        { "id": "reserve", "label": "予約サービス", "style": "process" },
+        { "id": "stock", "label": "在庫サービス", "style": "focal" },
+        { "id": "notify", "label": "通知ワーカー", "style": "process" }
+      ]
+    },
+    {
+      "id": "data", "label": "データ層", "responsibility": "永続化を保証",
+      "nodes": [
+        { "id": "db", "label": "予約 DB", "style": "store" },
+        { "id": "cache", "label": "在庫キャッシュ", "style": "store" }
+      ]
+    }
+  ],
+  "relations": [
+    { "from": "web", "to": "reserve", "kind": "depends", "protocol": "同期 REST" },
+    { "from": "admin", "to": "stock", "kind": "depends", "protocol": "同期 REST" },
+    { "from": "reserve", "to": "db", "kind": "depends", "protocol": "同期 SQL" },
+    { "from": "stock", "to": "cache", "kind": "depends", "protocol": "非同期 60 秒更新" }
+  ],
+  "emphasis": {
+    "focal": ["stock"],
+    "reason": "この節が検討するのは在庫サービスの差し替えだけで、他の箱は依存の位置を示すために置いている"
+  },
+  "legend": [
+    { "style": "process", "label": "処理" },
+    { "style": "store", "label": "保管" },
+    { "style": "focal", "label": "本文が扱う対象" }
+  ],
+  "legendNote": "破線の帯は層そのもの (器であって構成要素ではない)",
+  "annotations": [
+    { "text": "在庫サービスが落ちると予約確定まで止まる", "anchor": "stock" }
+  ],
+  "geometry": {
+    "layerW": 864,
+    "layerH": 112,
+    "layerGapY": 32,
+    "nodeW": 192,
+    "nodeH": 64,
+    "labelColW": 176,
+    "note": "層帯は破線の器なので塗らない。依存は垂直線のみで、逆流する線を 1 本も引かない"
+  },
+  "caption": "上の帯から下の帯へ一方向にしか線が無いことをまず確かめてほしい。色の付いた箱だけが、この節でこれから検討する差し替えの対象である。"
+}

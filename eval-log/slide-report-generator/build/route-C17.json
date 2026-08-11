@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C17",
+  "component_kind": "sub-agent",
+  "name": "report-structure-designer",
+  "builder": "run-build-skill",
+  "build_target": "plugins/slide-report-generator/agents/report-structure-designer.md",
+  "status": "success",
+  "summary": "report-structure-designer へ「narrative は図が語れないことを書く (R9 重複禁止契約の設計側担保)」と参照表を配線した (agent アダプタ + prompts/R2-agent-report-structure-designer.md)。",
+  "deviations": [],
+  "evidence": [
+    "plugins/slide-report-generator/agents/report-structure-designer.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md"
+  ],
+  "inputs_consumed": [],
+  "handover": "配線はポインタのみ (アダプタ規約維持)。数値の正本は diagram-layout-contract.md、色の正本は svg-kit.cjs/style-builder.cjs。",
+  "covered_task_ids": [
+    "P02-C17-01",
+    "P02-C17-02",
+    "P02-C17-03",
+    "P02-C17-04",
+    "P02-C17-05",
+    "P02-C17-06",
+    "P02-C17-07",
+    "P02-C17-08",
+    "P02-C17-09",
+    "P02-C17-10",
+    "P05-C17-01",
+    "P05-C17-02",
+    "P05-C17-03",
+    "P05-C17-04",
+    "P05-C17-05",
+    "P05-C17-06",
+    "P05-C17-07",
+    "P05-C17-08",
+    "P05-C17-09",
+    "P05-C17-10",
+    "P05-C17-11",
+    "P05-C17-12",
+    "P06-C17-01",
+    "P06-C17-02",
+    "P07-C17-01",
+    "P07-C17-02",
+    "P07-C17-03",
+    "P07-C17-04",
+    "P07-C17-05",
+    "P07-C17-06",
+    "P07-C17-07",
+    "P09-C17-01",
+    "P09-C17-02",
+    "P09-C17-03",
+    "P09-C17-04",
+    "P09-C17-05"
+  ],
+  "artifact_sha256": "3eab8470b297cf3c15e79272ff2a063f8a0b27d44372859885cc74ec47111542",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:25:13Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/lint-contract-drift.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py plugins/slide-report-generator/agents/report-structure-designer.md",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "diagramId": "f-flywheel",
+  "type": "flywheel",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-cycle-flow.md §11.30 フライホイール型",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 720 560"
+  },
+  "title": "問い合わせ対応が速くなる仕組み",
+  "message": "一巡するたび中心に残る記録があるから、二周目以降の対応が速くなる。",
+  "hub": {
+    "id": "h",
+    "label": "蓄積される運用知識",
+    "sub": "12,400 件・2026/8 時点",
+    "evidence": "1周目 6.1h → 3周目 2.6h",
+    "style": "focal"
+  },
+  "nodes": [
+    {
+      "id": "st1",
+      "label": "問い合わせを受ける",
+      "sub": "完了=記録を1件登録",
+      "angle": -90,
+      "style": "plain",
+      "writeback": "書き戻し: 一次対応ログ"
+    },
+    {
+      "id": "st2",
+      "label": "回答を型にする",
+      "sub": "完了=型を1件公開",
+      "angle": 0,
+      "style": "plain",
+      "writeback": "書き戻し: 定型回答文"
+    },
+    {
+      "id": "st3",
+      "label": "次の対応で引く",
+      "sub": "完了=平均2.6h以内",
+      "angle": 90,
+      "style": "focal",
+      "writeback": "書き戻し: 解決時間"
+    },
+    {
+      "id": "st4",
+      "label": "抜けを補う",
+      "sub": "完了=指摘0件",
+      "angle": 180,
+      "style": "plain",
+      "writeback": "書き戻し: 不足の指摘"
+    }
+  ],
+  "relations": [
+    {
+      "from": "st1",
+      "to": "st2",
+      "kind": "ring"
+    },
+    {
+      "from": "st2",
+      "to": "st3",
+      "kind": "ring"
+    },
+    {
+      "from": "st3",
+      "to": "st4",
+      "kind": "ring"
+    },
+    {
+      "from": "st4",
+      "to": "st1",
+      "kind": "ring"
+    },
+    {
+      "from": "st1",
+      "to": "h",
+      "kind": "writeback"
+    },
+    {
+      "from": "st2",
+      "to": "h",
+      "kind": "writeback"
+    },
+    {
+      "from": "st3",
+      "to": "h",
+      "kind": "writeback"
+    },
+    {
+      "from": "st4",
+      "to": "h",
+      "kind": "writeback"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "h",
+      "st3"
+    ],
+    "reason": "ハブと、効果が現れる 1 工程まで。3 件目を焦点にすると視線の着地点が消える"
+  },
+  "annotations": [
+    {
+      "text": "書き戻しが 1 周でも欠けると輪は止まる",
+      "anchor": "h"
+    }
+  ],
+  "geometry": {
+    "hubCenter": [
+      360,
+      280
+    ],
+    "ringRadius": 208,
+    "stationBox": [
+      160,
+      64
+    ],
+    "hubBox": [
+      200,
+      104
+    ],
+    "note": "リング円弧と破線スポークは放射状型の語彙なので、斜線禁止 (§D-3 原則 1) の例外 (a) に当たる"
+  },
+  "caption": "上の枠から時計回りに一周してほしい。外周だけなら普通の循環図だが、中心へ向かう破線があることで二周目が速くなる理由が読める。",
+  "cadence": {
+    "period": "1 周 = 1 か月",
+    "direction": "時計回り"
+  },
+  "legend": [
+    "実線=進む順",
+    "破線=ハブへの書き戻し"
+  ],
+  "stopCondition": "書き戻しが 1 周でも欠けると輪は止まる"
+}

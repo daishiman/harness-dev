@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C25",
+  "component_kind": "script",
+  "name": "validate-report-visual.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/slide-report-generator/scripts/validate-report-visual.py",
+  "status": "success",
+  "summary": "diagram-migration-1.4.0 の WP-B として validate-report-visual.py へ (p) figure-text-duplication (R9-7/8/9/10) と (q) visual-occupancy (R9-3/R9-5) の溶け込み契約検査を additive 追加した。閾値の正本は references/diagram-layout-contract.md §D-4 でランタイムパースし、Red/Green fixture の両方向で検出/沈黙を実測確認した。",
+  "deviations": [
+    "R9-1 の実描画面積占有率は静的 HTML から測定不能のため、(q) は宣言寸法 (vh/%) に限定して実装 (SR-15-17 とコードコメントに明記)"
+  ],
+  "evidence": [
+    "plugins/slide-report-generator/scripts/validate-report-visual.py",
+    "plugins/slide-report-generator/references/spec-registry.md",
+    "plugins/slide-report-generator/references/diagram-layout-contract.md"
+  ],
+  "inputs_consumed": [],
+  "handover": "新設 (p)(q) は warn 運用。閾値は diagram-layout-contract.md §D-4-1/§D-4-2 が正本 (数値の二重書き禁止)。report 系 golden 実例 (WP-D) は figure/figcaption でキャプション 40-120 字・ラベル再掲禁止を満たすこと。",
+  "covered_task_ids": [
+    "P02-C25-01",
+    "P02-C25-02",
+    "P02-C25-03",
+    "P02-C25-04",
+    "P02-C25-05",
+    "P02-C25-06",
+    "P02-C25-07",
+    "P02-C25-08",
+    "P02-C25-09",
+    "P02-C25-10",
+    "P04-C25-01",
+    "P04-C25-02",
+    "P04-C25-03",
+    "P04-C25-04",
+    "P04-C25-05",
+    "P04-C25-06",
+    "P04-C25-07",
+    "P05-C25-01",
+    "P05-C25-02",
+    "P05-C25-03",
+    "P05-C25-04",
+    "P05-C25-05",
+    "P05-C25-06",
+    "P05-C25-07",
+    "P05-C25-08",
+    "P05-C25-09",
+    "P05-C25-10",
+    "P05-C25-11",
+    "P05-C25-12",
+    "P06-C25-01",
+    "P06-C25-02",
+    "P07-C25-01",
+    "P07-C25-02",
+    "P07-C25-03",
+    "P07-C25-04",
+    "P07-C25-05",
+    "P07-C25-06",
+    "P07-C25-07",
+    "P09-C25-01",
+    "P09-C25-02",
+    "P09-C25-03",
+    "P09-C25-04",
+    "P09-C25-05"
+  ],
+  "artifact_sha256": "065960dec9c65efadf05f387813bad399b7d5b1c5d9f57bf9f0d22c9b3a497d1",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:12:21Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-report-visual.py <scratchpad>/lint-fixtures/red-report.html (新設 warn 6 件検出: R9-7x1 R9-8x1 R9-9x1 R9-10x1 R9-3x1 R9-5x1)",
+      "exit_code": 0,
+      "passed": 6,
+      "failed": 0,
+      "started_at": "2026-08-09T22:10:21Z",
+      "completed_at": "2026-08-09T22:11:21Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-report-visual.py <scratchpad>/lint-fixtures/green-report.html (fail=0 warn=0)",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:10:21Z",
+      "completed_at": "2026-08-09T22:11:21Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/lint-contract-drift.py (passed:true count:0)",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:10:21Z",
+      "completed_at": "2026-08-09T22:11:21Z"
+    }
+  ]
+}

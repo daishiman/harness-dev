@@ -1,0 +1,34 @@
+{
+  "diagramId": "f-stacked-bar",
+  "type": "stacked-bar",
+  "surface": "report",
+  "figureWidth": "text",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "reference": "references/chart-types.md §13.3 積み上げ棒グラフ",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540", "tier": "md" },
+  "title": "四半期ごとの売上構成",
+  "message": "総額は四半期を追うごとに伸びているが、伸びの源は継続更新ではなく既存顧客の拡大である。",
+  "scale": { "min": 0, "max": 80, "unit": "百万円", "ticks": [20, 40, 60, 80], "zeroBased": true, "axisLabel": "縦軸 百万円（0 起点・20 刻み）" },
+  "categories": ["2026 Q1", "2026 Q2", "2026 Q3", "2026 Q4"],
+  "totals": [48, 54, 64, 74],
+  "stackOrder": "下から 継続更新 → 既存の拡大 → 新規契約",
+  "series": [
+    { "name": "継続更新", "values": [28, 28, 30, 30], "style": "plain" },
+    { "name": "既存の拡大", "values": [8, 12, 18, 26], "style": "plain" },
+    { "name": "新規契約", "values": [12, 14, 16, 18], "style": "plain" }
+  ],
+  "emphasis": {
+    "focal": ["Q4 の 既存の拡大"],
+    "reason": "焦点は系列全体ではなく 1 区画だけにする。系列 4 区画すべてを accent にすると D7 の面塗り上限を超えるうえ、系列色の意味も壊れる。塗りは系列色のまま残し、accent の枠だけを重ねて 1 区画を指す"
+  },
+  "annotations": [
+    { "target": "Q4 の 既存の拡大", "text": "Q1比 3.3倍", "leader": "水平" },
+    { "text": "集計: 2026年度・受注ベース・税抜（役務提供期間で按分）", "anchor": "figure-bottom" }
+  ],
+  "provenance": {
+    "definition": "受注ベース・税抜・役務提供期間で按分",
+    "period": "2026年度（2026 Q1-Q4）"
+  },
+  "caption": "積み上げの下から順に見ていくと、いちばん下の層はほとんど厚みが変わらない。枠で囲った層だけが四半期ごとに厚くなっており、そこが総額を押し上げている。"
+}

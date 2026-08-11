@@ -1,0 +1,118 @@
+{
+  "diagramId": "d-matrix",
+  "type": "matrix",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-comparison.md §11.7 マトリックス型（n×m対応）",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 640 480"
+  },
+  "title": "障害の一次判断",
+  "message": "エスカレーションが要るのは九つの交点のうち一つだけである。",
+  "axes": {
+    "row": {
+      "label": "影響範囲",
+      "values": [
+        "全社",
+        "一部門",
+        "個人"
+      ],
+      "thresholds": "全社=3部門以上 / 一部門=1-2部門 / 個人=1名"
+    },
+    "column": {
+      "label": "復旧見込み",
+      "values": [
+        "即時",
+        "当日中",
+        "翌日以降"
+      ],
+      "thresholds": "即時=30分以内 / 当日中=当日18時まで / 翌日以降=それ以降"
+    }
+  },
+  "nodes": [
+    {
+      "id": "c11",
+      "row": "全社",
+      "column": "即時",
+      "label": "定時報告",
+      "style": "plain"
+    },
+    {
+      "id": "c12",
+      "row": "全社",
+      "column": "当日中",
+      "label": "定時報告",
+      "style": "plain"
+    },
+    {
+      "id": "c13",
+      "row": "全社",
+      "column": "翌日以降",
+      "label": "経営へ即報",
+      "style": "focal"
+    },
+    {
+      "id": "c21",
+      "row": "一部門",
+      "column": "即時",
+      "label": "記録のみ",
+      "style": "plain"
+    },
+    {
+      "id": "c22",
+      "row": "一部門",
+      "column": "当日中",
+      "label": "担当内で完結",
+      "style": "plain"
+    },
+    {
+      "id": "c23",
+      "row": "一部門",
+      "column": "翌日以降",
+      "label": "定時報告",
+      "style": "plain"
+    },
+    {
+      "id": "c31",
+      "row": "個人",
+      "column": "即時",
+      "label": "記録のみ",
+      "style": "plain"
+    },
+    {
+      "id": "c32",
+      "row": "個人",
+      "column": "当日中",
+      "label": "記録のみ",
+      "style": "plain"
+    },
+    {
+      "id": "c33",
+      "row": "個人",
+      "column": "翌日以降",
+      "label": "担当内で完結",
+      "style": "plain"
+    }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": [
+      "c13"
+    ],
+    "reason": "焦点は 1 セルだけ。§11.7 のコード例にある象限別の 4 色塗り分けを使うと、どのセルが判断の分かれ目なのかが色の多さに埋もれる"
+  },
+  "annotations": [
+    {
+      "text": "翌日以降だけが例外扱いになる",
+      "anchor": "column:翌日以降"
+    }
+  ],
+  "caption": "表の右上へ視線を送ってほしい。九つの交点のうち枠が立っているのは一つだけで、そこだけが手順を飛ばして人を動かす判断になる。",
+  "cellSemantics": "障害対応規程 (2026/4 改訂) の既定動作。現場判断で変更はできない",
+  "defaultForMissing": "表に無い組合せは全社行を適用",
+  "legend": [
+    "桃枠 = 本文が扱う 1 セル",
+    "破線 = 注釈の指し線"
+  ]
+}

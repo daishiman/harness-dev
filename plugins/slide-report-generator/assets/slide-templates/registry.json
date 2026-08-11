@@ -1,0 +1,487 @@
+{
+  "$comment": "slideType → ページひな形の写像表。107 種すべてを明示列挙する (前方一致や命名規則からの推測にしない: 推測にすると新しい型を足したとき静かに既定へ落ち、どのひな形に載ったのかが誰にも分からなくなる)。",
+  "schema_version": "1.0.0",
+  "source_of_truth": {
+    "slide_types": "schemas/structure.schema.json#/$defs/slideTypeEnum/enum",
+    "skeletons": "assets/slide-templates/layout-*.html",
+    "geometry": "assets/slide-templates/frame-contract.json",
+    "colors": "vendor/scripts/style-builder.cjs#SPEC.colors"
+  },
+  "media_override": {
+    "note": "visual-strategist が当該セクションの差し込み物を codex-image に決めた場合、slideType の既定ひな形ではなく画像系ひな形へ載せ替える。載せ替え先は画像の役割で決まる: 面いっぱい=layout-image-full / 文と並置=layout-image-side / 複数枚の並置=layout-image-grid。slideType は据え置き (構成の意味は変わらないため)。",
+    "targets": [
+      "layout-image-full",
+      "layout-image-side",
+      "layout-image-grid"
+    ]
+  },
+  "skeletons": {
+    "layout-cover": "表紙。deck 先頭 1 枚のみ",
+    "layout-agenda": "目次。章題 + その章で分かること",
+    "layout-section-divider": "章扉",
+    "layout-message": "1 メッセージを言い切る",
+    "layout-lead-list": "結論 1 行 + 根拠 3〜5 点",
+    "layout-compare-2": "左右 2 分割の対比",
+    "layout-profile": "人物 1 名の紹介 (自己紹介・ペルソナ)",
+    "layout-team": "人物 3〜6 名の並置",
+    "layout-diagram-main": "図解が主役",
+    "layout-diagram-side": "本文が主・図解が従",
+    "layout-chart-main": "チャート + 読み取り",
+    "layout-table": "表・マトリクス",
+    "layout-metrics": "KPI・数値の強調 (3 件まで)",
+    "layout-grid-cards": "並列項目のカード格子",
+    "layout-timeline": "時系列・段階の帯",
+    "layout-image-full": "生成画像を全面",
+    "layout-image-side": "生成画像 + 本文",
+    "layout-image-grid": "生成画像の格子",
+    "layout-quote": "引用",
+    "layout-qa": "問いと答えの対",
+    "layout-contact": "連絡先・問い合わせ導線",
+    "layout-closing": "締め"
+  },
+  "map": {
+    "slide-hero": {
+      "skeleton": "layout-cover",
+      "media": "none"
+    },
+    "slide-quote": {
+      "skeleton": "layout-quote",
+      "media": "none"
+    },
+    "slide-message": {
+      "skeleton": "layout-message",
+      "media": "none"
+    },
+    "slide-title": {
+      "skeleton": "layout-section-divider",
+      "media": "none"
+    },
+    "slide-list": {
+      "skeleton": "layout-lead-list",
+      "media": "none"
+    },
+    "slide-icon-grid": {
+      "skeleton": "layout-grid-cards",
+      "media": "none"
+    },
+    "slide-grid": {
+      "skeleton": "layout-grid-cards",
+      "media": "none"
+    },
+    "slide-pyramid": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "slide-circle": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "slide-compare": {
+      "skeleton": "layout-compare-2",
+      "media": "none"
+    },
+    "slide-code-compare": {
+      "skeleton": "layout-compare-2",
+      "media": "none"
+    },
+    "slide-flow": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "slide-process": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "slide-timeline": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "slide-table": {
+      "skeleton": "layout-table",
+      "media": "block"
+    },
+    "slide-code": {
+      "skeleton": "layout-diagram-main",
+      "media": "block"
+    },
+    "slide-highlight": {
+      "skeleton": "layout-message",
+      "media": "none"
+    },
+    "diagram-mindmap": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-concentric": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-value-stack": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-venn-2": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-venn-3": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-vs": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-butterfly": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-slope": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-matrix": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-table-advanced": {
+      "skeleton": "layout-table",
+      "media": "block"
+    },
+    "diagram-parallel": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-snake": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-flowchart": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-growth": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-roadmap": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-chevron": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-vertical-timeline": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-wave-step": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-gantt": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-cycle": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-pdca": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-triangle-cycle": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-org": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-person-network": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-problem-solution": {
+      "skeleton": "layout-diagram-side",
+      "media": "svg-diagram"
+    },
+    "diagram-value-prop": {
+      "skeleton": "layout-diagram-side",
+      "media": "svg-diagram"
+    },
+    "diagram-point-cards": {
+      "skeleton": "layout-grid-cards",
+      "media": "none"
+    },
+    "diagram-aidma": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-prep": {
+      "skeleton": "layout-diagram-side",
+      "media": "svg-diagram"
+    },
+    "diagram-star": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-fabe-horizontal": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-fabe-vertical": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-fabe-grid": {
+      "skeleton": "layout-grid-cards",
+      "media": "none"
+    },
+    "diagram-fabe-timeline": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-fabe-circular": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-persona": {
+      "skeleton": "layout-profile",
+      "media": "svg-diagram"
+    },
+    "diagram-icon-grid": {
+      "skeleton": "layout-grid-cards",
+      "media": "none"
+    },
+    "diagram-funnel": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-architecture": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-data-flow": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-er": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-sequence": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-state": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-swimlane": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-high-level": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-it-state": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "diagram-medallion": {
+      "skeleton": "layout-timeline",
+      "media": "svg-diagram"
+    },
+    "diagram-dp-integration": {
+      "skeleton": "layout-diagram-main",
+      "media": "svg-diagram"
+    },
+    "chart-bar-vertical": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-bar-horizontal": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-bar-stacked": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-line": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-pie": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-clock-pie": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-scatter": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-radar": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "chart-gauge": {
+      "skeleton": "layout-chart-main",
+      "media": "chart"
+    },
+    "d3-cycle": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-pdca": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-triangle-cycle": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-rotating-flow": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-tree": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-org-chart": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-sunburst": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-treemap": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-packed-circles": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-dendrogram": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-force": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-chord": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-arc": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-sankey": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-roadmap": {
+      "skeleton": "layout-timeline",
+      "media": "d3-diagram"
+    },
+    "d3-vertical-timeline": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    },
+    "d3-pyramid": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-funnel": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-waterfall": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-bar": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-line": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-pie": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-donut": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-radar": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-gauge": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-bubble": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-heatmap": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-radial-bar": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-bullet": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-lollipop": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-calendar": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-isotype": {
+      "skeleton": "layout-chart-main",
+      "media": "d3-diagram"
+    },
+    "d3-wordcloud": {
+      "skeleton": "layout-diagram-main",
+      "media": "d3-diagram"
+    }
+  },
+  "structural_pages": {
+    "$comment": "slideType を持たない構造ページ。structure.json のメタから生成されるので写像表の外にある。",
+    "cover": "layout-cover",
+    "agenda": "layout-agenda",
+    "section_divider": "layout-section-divider",
+    "closing": "layout-closing"
+  },
+  "role_pages": {
+    "$comment": "slideType を持たない役割ページ。目次や自己紹介のように「型」ではなく「その面が deck の中で果たす役割」で選ぶ。structure.json の該当セクションで役割名を指定して引く。",
+    "self_introduction": "layout-profile",
+    "speaker_list": "layout-team",
+    "key_metrics": "layout-metrics",
+    "anticipated_questions": "layout-qa",
+    "contact": "layout-contact"
+  }
+}

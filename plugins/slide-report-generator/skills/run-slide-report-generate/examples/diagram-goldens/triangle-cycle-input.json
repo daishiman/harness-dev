@@ -1,0 +1,39 @@
+{
+  "diagramId": "d-tricycle",
+  "type": "triangle-cycle",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.27 三角サイクル型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 480 480" },
+  "title": "運用改善が回り続ける条件",
+  "message": "三つの工程はどれも欠かせないが、輪が回り始めない原因はいつも計測の不在にある。",
+  "cycleNote": "2026年度の運用。1周は月次・反時計回り",
+  "legend": [
+    { "mark": "色", "means": "輪の起点" }
+  ],
+  "nodes": [
+    { "id": "m", "label": "計測", "sub": "何が起きたか", "vertex": "top", "style": "focal", "doneWhen": "完了 = 当月分を集計" },
+    { "id": "l", "label": "学習", "sub": "なぜ起きたか", "vertex": "bottom-left", "style": "plain", "doneWhen": "完了 = 原因を1件特定" },
+    { "id": "i", "label": "改善", "sub": "次にどうするか", "vertex": "bottom-right", "style": "plain", "doneWhen": "完了 = 手当を1件着手" }
+  ],
+  "relations": [
+    { "from": "計測", "to": "学習", "kind": "flow" },
+    { "from": "学習", "to": "改善", "kind": "flow" },
+    { "from": "改善", "to": "計測", "kind": "flow" }
+  ],
+  "emphasis": {
+    "focal": ["m"],
+    "reason": "三工程が対等に見える図で、実際には一つだけが着手条件になっている。その非対称を色で示さないと、図は用語の並びに留まる"
+  },
+  "annotations": [
+    { "text": "止まるのは最初の一手", "anchor": "m" }
+  ],
+  "geometry": {
+    "vertices": [[240, 112], [112, 344], [368, 344]],
+    "r": 64,
+    "connector": "quadratic",
+    "note": "頂点の円は同じ半径にし、輪は三角形の外側へ膨らませる。内側へ膨らませると三本の弧が中央で寄り合い、輪ではなく網に見える"
+  },
+  "caption": "三つの工程を反時計回りにたどる。三つは対等に見えるが、色の付いた一つが欠けると残り二つは着手すらできない。"
+}

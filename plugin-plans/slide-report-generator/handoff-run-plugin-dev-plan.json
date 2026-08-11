@@ -96,7 +96,13 @@
         "name": "d3-diagram-designer"
       },
       "build_target": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
-      "change_surface": "unchanged",
+      "requires_surfaces": [
+        "S-REFERENCES"
+      ],
+      "change_surface": "rebuild",
+      "build_contract": {
+        "diagram_migration_1_4_0": "本更新(第4次: diagram-design-migration)の additive。R2/R3 数値化規約(C21)・型カタログ対応表(C22)を prompt Layer6 に参照配線し、図解の作図判断(型選定・複雑度予算・接続点分散)を index 化された正本(diagram-style-tokens.md/diagram-layout-contract.md/diagram-type-crosswalk.md)に揃える。build_target は無改変"
+      },
       "status": "planned"
     },
     {
@@ -128,7 +134,13 @@
         "name": "html-generator"
       },
       "build_target": "plugins/slide-report-generator/agents/html-generator.md",
-      "change_surface": "unchanged",
+      "requires_surfaces": [
+        "S-REFERENCES"
+      ],
+      "change_surface": "rebuild",
+      "build_contract": {
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。R4 叩き台テンプレート方式(C23): plugin-root assets/diagram-templates/ の骨格 HTML をコピーし図解本体(インライン SVG)だけを書くフローへ変更。R5 プロンプト配線修復(C24要件): diagram-*.md を型別・節番号付きで prompt Layer6 に明記。R7 ゴールデン実例(C26)の few-shot 参照(golden_examples_ownership=slide系統owner)。build_target は無改変"
+      },
       "status": "planned"
     },
     {
@@ -183,9 +195,13 @@
       },
       "build_target": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
       "requires_surfaces": [
-        "S-VENDOR"
+        "S-VENDOR",
+        "S-REFERENCES"
       ],
-      "change_surface": "unchanged",
+      "change_surface": "rebuild",
+      "build_contract": {
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。R9(C28)溶け込み契約の slide 側 LLM チェックリスト追加: S27 図解と本文チップ/見出しの重複禁止(1スライド1メッセージ整合)、S28 図解の密度/サイズ/トーンが周囲スライドと調和、S29 図解が assets/diagram-templates(C23)の埋め込み用骨格を正としているか。既存 S1-S26 は維持。build_target は無改変"
+      },
       "status": "planned"
     },
     {
@@ -282,6 +298,9 @@
         "S-REFERENCES"
       ],
       "change_surface": "rebuild",
+      "build_contract": {
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。R9②重複禁止契約(C28-b)の節内論理設計側の担保: section.narrative が図解の担う内容を文章側で反復しないよう、narrative は図が語れないこと(意図/含意/次アクション)を書く指針を持つ。build_target/schema は無改変"
+      },
       "status": "planned"
     },
     {
@@ -307,7 +326,8 @@
       "change_surface": "rebuild",
       "build_contract": {
         "essence_visual": "essence-visual(role駆動): 論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響})に対し、形式三択より先に論理構造→図種の写像を行い非none visual(visual.kind!=none)を必ず1枚割り当てる。写像規律はreference report-visual-strategy.md §0.5.1とvisual-strategist VCONST_000が正本。schemaは1.2.0のまま(既存role/visual.kindを使いschema bump不要)",
-        "evaluation_bundle": "C24へreport-structure.jsonとwide/narrow/print renderを同時に渡し、図解すべき論理節でのvisual省略と装飾目的の図解の両方を負値評価する"
+        "evaluation_bundle": "C24へreport-structure.jsonとwide/narrow/print renderを同時に渡し、図解すべき論理節でのvisual省略と装飾目的の図解の両方を負値評価する",
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。R9①配置契約(C28-a): 型ごとの面内配置(zones/readingOrder/focalPoint)と型選定(C22 型カタログ)を接続する規律を追加。図解型の複雑度予算(C21)を超える型は配置面積を広げる方向でしか解消しない(縮小によるノード密度誤魔化しを禁止)。schema/build_target は無改変"
       },
       "status": "planned"
     },
@@ -334,7 +354,8 @@
       "build_contract": {
         "canonical_invocation": "validate-report-visual.py <report.html> --structure <report-structure.json> --json",
         "usage_error": "--structure欠落はexit2",
-        "uiux_shape_checks": ["card minmax/overflow-wrap", "aria-current+active class", "beforeprint/afterprint lifecycle", "essence-visual coverage(論理節 role の visual.kind 非none)", "piecewise viewport width rule"]
+        "uiux_shape_checks": ["card minmax/overflow-wrap", "aria-current+active class", "beforeprint/afterprint lifecycle", "essence-visual coverage(論理節 role の visual.kind 非none)", "piecewise viewport width rule"],
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。(p) 図解-本文重複検出(要件C28②): figure/svg の caption・alt・annotation テキストと narrative/body[] highlight テキストの正規化文字列オーバーラップ率が閾値超で warn(--strict でfail)。(q) 図解占有率レンジ検査(要件C28③): figure/svg の推定面積(width×height/viewBox)が section 占有率許容レンジ(diagram-layout-contract.md(C21)引用)内か検査。(r) diagram-style-tokens.md(C20)由来のクラス/var(--x)使用一貫性検査。責務境界: <svg> 要素の幾何(D0-D21)は validate-svg-diagram.py(governance glue)が担い本 script は report 埋め込み文脈(重複/占有率/トークン一貫性)を担う"
       },
       "status": "planned"
     },
@@ -394,7 +415,8 @@
       "build_contract": {
         "input_bundle": ["report-structure.json", "wide/narrow/print render", "computed layout metrics", "navigation event log"],
         "runtime_matrix": "899/900/901/1024/1366/1600px + print; initial hash/toc click/manual scroll/font-ready/history/beforeprint-afterprint",
-        "fail_closed": "bundle欠落、本質図解(essence-visual)と本文/render不一致、図解すべき論理節でのvisual省略はPASSにしない"
+        "fail_closed": "bundle欠落、本質図解(essence-visual)と本文/render不一致、図解すべき論理節でのvisual省略はPASSにしない",
+        "diagram_migration_1_4_0": "本更新(第4次)の additive。R9(C28) 積極評価次元を追加: 配置適合(①)/重複禁止(②)/文脈適合(③)、加えて C20(色ロール表)/C21(数値規約)準拠の意味評価。既存 RQ 次元は維持"
       },
       "status": "planned"
     },
@@ -564,7 +586,7 @@
       "status": "planned"
     }
   ],
-  "surface_tasks_note": "plugin_level_surfacesのbuild route。第3次UI updateはS-SCHEMAS(schema 1.2.0 据置・essence-visual は既存 role/visual.kind を使い schema bump なし)/S-REFERENCES(UI受入規律+essence-visual/図種写像§0.5.1)とC01/C02/C17/C18/C19/C24/C25をrebuildする。routesとsurface_tasks双方のchange_surfaceを機械可読な正本とする。component 25件の追加/統合/分割は行わない",
+  "surface_tasks_note": "plugin_level_surfacesのbuild route。第3次UI updateはS-SCHEMAS(schema 1.2.0 据置・essence-visual は既存 role/visual.kind を使い schema bump なし)/S-REFERENCES(UI受入規律+essence-visual/図種写像§0.5.1)とC01/C02/C17/C18/C19/C24/C25をrebuildする。第4次(diagram-design-migration)は新規 buildable component を増やさず S-REFERENCES(diagram-style-tokens.md/diagram-type-crosswalk.md/diagram-layout-contract.md augmented/assets/diagram-templates新設)とC07/C09/C12を追加でrebuildする(governance glueのvalidate-svg-diagram.pyはrouteを持たずD14+拡張は build 実装側で反映)。routesとsurface_tasks双方のchange_surfaceを機械可読な正本とする。component 25件の追加/統合/分割は行わない",
   "change_surface_note": "再 build 対象判定は change_surface が正 (rebuild=touch 対象・unchanged=本 update では skip 可・new=新設)。routes[].status は本 update 内の進行状態を表すのみで再 build 判定には使わない",
   "surface_tasks": [
     {
@@ -641,12 +663,18 @@
           "report-writing-rules.md",
           "report-visual-strategy.md",
           "mermaid-integration.md",
-          "report-narrative-logic.md (本 update 新設・plugin-root references・節内論理展開[本質課題→解決→活用/claim-evidence-implication]の語彙 + 本質的に含むべき横断要素カタログ[reportType 別: 共通=エグゼクティブ要約/キーテイクアウェイ/意思決定・次アクション/根拠・出典/リスク・留保/TL;DR、技術ドキュメント=前提条件/用語定義/手順番号/既知の問題、学習解説=学習目標/要点まとめ/演習]の正本。C17/C19 が参照。本再検証で追記する L4 執筆内容(build へ委譲): (1)section.role→narrative 適用表[analysis/argument=narrative 必須・reference/procedure/summary=narrative 不要で category error 回避]、(2)横断要素カタログに文書メタ[version/updatedDate/readingTime/audience]を追加、(3)report 長さ別 要素適用マトリクス[短尺=TOC/文書メタ等の opt-out 許容=MD-I5・長尺=throughLine/TOC/相互参照 必須]、(4)多様性 < 適合性 規律[内容が要求する範囲での block 適合・block 種類数の水増しを評価しない]、(5)inline highlight 2 チャネル規律[色 + weight/underline を必須併存=色覚非依存]、(6)reportType→narrative 形式の binding 正本[第1語彙 essence/approach/leverage と第2語彙 claim/evidence/implication/action の終端 role で本質課題→解決→活用の弧を保存])"
+          "report-narrative-logic.md (本 update 新設・plugin-root references・節内論理展開[本質課題→解決→活用/claim-evidence-implication]の語彙 + 本質的に含むべき横断要素カタログ[reportType 別: 共通=エグゼクティブ要約/キーテイクアウェイ/意思決定・次アクション/根拠・出典/リスク・留保/TL;DR、技術ドキュメント=前提条件/用語定義/手順番号/既知の問題、学習解説=学習目標/要点まとめ/演習]の正本。C17/C19 が参照。本再検証で追記する L4 執筆内容(build へ委譲): (1)section.role→narrative 適用表[analysis/argument=narrative 必須・reference/procedure/summary=narrative 不要で category error 回避]、(2)横断要素カタログに文書メタ[version/updatedDate/readingTime/audience]を追加、(3)report 長さ別 要素適用マトリクス[短尺=TOC/文書メタ等の opt-out 許容=MD-I5・長尺=throughLine/TOC/相互参照 必須]、(4)多様性 < 適合性 規律[内容が要求する範囲での block 適合・block 種類数の水増しを評価しない]、(5)inline highlight 2 チャネル規律[色 + weight/underline を必須併存=色覚非依存]、(6)reportType→narrative 形式の binding 正本[第1語彙 essence/approach/leverage と第2語彙 claim/evidence/implication/action の終端 role で本質課題→解決→活用の弧を保存])",
+          "diagram-style-tokens.md (本更新第4次: diagram-design-migration 新設・plugin-root・C20正本。色ロール表[paper/paper-2/ink/muted/soft/rule/rule-solid/accent/accent-tint/link相当]を既存 svg-kit.cjs TOKENS/style-builder.cjs SPEC の Kanagawa 値の索引参照で定義。lint-contract-drift.py がパースして許可色リストを構築。読者=C07/C09/C18/C19)",
+          "diagram-type-crosswalk.md (本更新第4次 新設・plugin-root・C22正本。決定論SVG38/CSS型44/.html.tpl128/R8新規型の対応表。読者=C07/C09/C17/C18/C19)"
         ],
         "augmented_files": [
           "report-writing-rules.md (computed 16-18px/line-height比1.6-1.8/title-body<=2.2、55%はviewport<=2254px・ultrawideは1240px上限、card最小幅/overflow、899/900/901境界を追補)",
           "report-visual-strategy.md (essence-visual/論理構造→図種の写像 §0.5.1 taxonomy、図解不足の負値評価を追補)",
-          "skills/run-slide-report-generate/references/report-quality-checklist.md (hash/aria-current/font-ready/print復帰とstructure+render bundle評価を追補)"
+          "skills/run-slide-report-generate/references/report-quality-checklist.md (hash/aria-current/font-ready/print復帰とstructure+render bundle評価を追補)",
+          "diagram-layout-contract.md (本更新第4次・C21: 4pxグリッド許可値/複雑度予算21項目/コネクタ5原則/focal rule/annotation文法/図解占有率レンジを additive 追補)",
+          "diagram-business.md/diagram-visual.md/diagram-fabe.md/diagram-comparison.md/diagram-extended.md/diagram-technical.md (本更新第4次・C27: quadrant/radar/venn/nested/org-chart/loop/layers/pyramid/annotation等の欠落型を追記。型→ファイルの正本は diagram-type-crosswalk.md §0)",
+          "assets/diagram-templates/*.html (本更新第4次・C23新設・plugin-root live・vendor対象外。成果物埋め込み用の骨格HTML)",
+          "skills/ref-diagram-system/references/diagram-type-catalog.md 及び SKILL.md §2 (本更新第4次・C22型対応表と重複させず相互参照する形で拡張)"
         ],
         "pointer_only": "118 templates/pagination/print-styles.css/style-genome/d3-components/gas-deploy-guide.md の byte 実体は S-VENDOR が携行 (相互参照ポインタのみ・二重 SSOT 禁止)"
       },

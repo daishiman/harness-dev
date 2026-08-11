@@ -109,7 +109,7 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 | `vendor/scripts/template-engine.cjs` | Mustache subset。slideType 別テンプレートの差し込み機構 | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
 | `vendor/scripts/style-builder.cjs` | SR-ID 駆動 CSS ビルダー。styles.css の生成根拠 | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
 | `vendor/scripts/svg-builder.cjs` | 決定論 SVG ビルダー。図版を再現性ありで生成する | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
-| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（24 種）。テンプレ不在検出の対象 | S4（render-slide.cjs 内部） | slideType ごとに選択 | — |
+| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（<!-- count: slideTemplate -->128 種）。テンプレ不在検出の対象 | S4（render-slide.cjs 内部） | slideType ごとに選択 | — |
 | `schemas/structure.schema.json` | 入力契約。render-slide.cjs 内部の JSON Schema 検証で適用 | S3 | 入力 `structure.json` を検証 | — |
 | `sync-checker.js` | structure.md と HTML の同期検証（SR-12-07） | S5（出力検証） | `<out>/structure.md` ⇔ `<out>/index.html` | — |
 | `vendor/assets/pagination.{html,css,js}` | 不変ナビ。styles.css 末尾に結合される（nth-child(5n) 等） | S4（生成）/ S5（検証） | レンダラ内部結合 | — |
@@ -202,7 +202,7 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 | `vendor/scripts/template-engine.cjs` | Mustache subset。slideType 別テンプレートの差し込み機構として作用する |
 | `vendor/scripts/style-builder.cjs` | SR-ID 駆動 CSS ビルダー。styles.css の生成根拠 |
 | `vendor/scripts/svg-builder.cjs` | 決定論 SVG ビルダー。図版を再現性ありで生成する |
-| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（24 種）。テンプレ不在検出の対象 |
+| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（<!-- count: slideTemplate -->128 種）。テンプレ不在検出の対象 |
 | `vendor/assets/pagination.{html,css,js}` | 不変ナビ。styles.css 末尾に結合される（nth-child(5n) 等） |
 
 ### 既存 html-generator.md との関係（並行存在）

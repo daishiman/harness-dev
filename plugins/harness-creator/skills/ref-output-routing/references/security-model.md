@@ -117,8 +117,8 @@ adapter scriptが `keychain:{{SECRET_NAMESPACE}}/<account>` 形式を解釈し�
 {
   "permissions": {
     "allow": [
-      "Bash(python3 scripts/adapters/dispatch.py:*)",
-      "Bash(python3 scripts/adapters/sink_*.py:*)"
+      "Bash(python3 ${HARNESS_ROOT:-.}/scripts/adapters/dispatch.py:*)",
+      "Bash(python3 ${HARNESS_ROOT:-.}/scripts/adapters/sink_*.py:*)"
     ],
     "deny": [
       "Bash(security find-generic-password:*)",

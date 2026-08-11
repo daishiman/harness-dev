@@ -103,6 +103,28 @@ def _mk_min_plugin(tmp_path: Path) -> Path:
         "| **文脈依存** | `summary` |\n",
         encoding="utf-8",
     )
+    # constant-parity は「作図定数の実体 ↔ 検査器の定数」を突合するので、
+    # 合成できない (両者が一致していることに意味がある) 2 ファイルは実物を複製する。
+    # 合成 tree に置かないと「対象ファイルが読めない」で陰性対照が赤くなり、
+    # 検出能テストの基準線が失われる。
+    for rel in (
+        "vendor/scripts/svg-kit.cjs",
+        "vendor/scripts/svg-builder.cjs",
+        "vendor/scripts/style-builder.cjs",
+        "scripts/validate-svg-diagram.py",
+        "scripts/validate-report-layout.js",
+        "references/spec-registry.md",
+    ):
+        (root / rel).write_bytes((_PLUGIN_ROOT / rel).read_bytes())
+    # render-report.js と report-narrative-logic.md は他検査のために合成した実体を
+    # 保ちつつ、constant-parity が読む定数だけ実物から足す (追記は phantom 検査を
+    # 弱めない: あの検査は「散文が語るのに emit されない属性」を見る片方向)。
+    p = root / "vendor" / "scripts" / "render-report.js"
+    p.write_text(
+        p.read_text(encoding="utf-8") + "\n"
+        + (_PLUGIN_ROOT / "vendor" / "scripts" / "render-report.js").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     return root
 
 
@@ -160,3 +182,36 @@ def test_role_policy_reference_matches_validator_on_real_plugin():
 def test_min_plugin_is_clean(tmp_path):
     # 合成 clean tree は drift ゼロ (検出能テストの陰性対照)。
     assert mod.run_checks(_mk_min_plugin(tmp_path)) == []
+
+
+# --- (2) H: パレット値の散文↔SPEC.colors 一致 -------------------------------------
+
+def test_detects_palette_drift(tmp_path):
+    root = _mk_min_plugin(tmp_path)
+    (root / "references" / "palette-note.md").write_text(
+        "# 配色\n\n```css\n:root {\n  --wave-aqua: #7AA89F;\n}\n```\n", encoding="utf-8"
+    )
+    findings = mod.run_checks(root)
+    assert any(f["check"] == "palette-drift" and "--wave-aqua" in f["message"] for f in findings)
+
+
+def test_palette_variant_marker_suppresses_intentional_difference(tmp_path):
+    # 上書き例・別テーマのように「わざと違う値」を載せる面は、理由付きマーカで除外できる。
+    root = _mk_min_plugin(tmp_path)
+    (root / "references" / "palette-note.md").write_text(
+        "# 配色\n\n<!-- palette-variant: 上書き例 -->\n\n"
+        "```css\n:root {\n  --wave-aqua: #7AA89F;\n}\n```\n", encoding="utf-8"
+    )
+    assert not [f for f in mod.run_checks(root) if f["check"] == "palette-drift"]
+
+
+def test_palette_check_allows_svg_kit_verbatim_fallback(tmp_path):
+    # 図解作例は svg-kit.cjs の綴りをそのまま写す必要がある (D10 が許可色をそこから
+    # 実行時抽出するため)。:root 実値との差は vendor 側 1 件の問題で、作例ごとに数える意味がない。
+    root = _mk_min_plugin(tmp_path)
+    kit = mod._read(root, "vendor/scripts/svg-kit.cjs")
+    assert "var(--fg-dim, #54546d)" in kit, "前提: svg-kit の muted は :root 実値と異なる"
+    (root / "references" / "palette-note.md").write_text(
+        '# 図解\n\n<text fill="var(--fg-dim, #54546d)">x</text>\n', encoding="utf-8"
+    )
+    assert not [f for f in mod.run_checks(root) if f["check"] == "palette-drift"]

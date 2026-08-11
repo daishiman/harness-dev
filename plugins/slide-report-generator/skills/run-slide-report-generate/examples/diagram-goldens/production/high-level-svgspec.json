@@ -1,0 +1,27 @@
+{
+  "title": "配信基盤の階層",
+  "caption": "段間の線は edges[] が宣言したものだけを引いている (宣言の無い項目には引かない)",
+  "svgSpec": {
+    "variant": "high-level",
+    "nodes": [
+      { "id": "n-portal", "label": "利用者ポータル", "subtext": "問合せ・申請", "group": "g-front", "emphasis": "highlight" },
+      { "id": "n-batch", "label": "夜間バッチ", "subtext": "日次集計", "group": "g-front" },
+      { "id": "n-api", "label": "業務 API", "subtext": "認可・整合性", "group": "g-app" },
+      { "id": "n-queue", "label": "非同期キュー", "subtext": "再送 3 回まで", "group": "g-app" },
+      { "id": "n-core", "label": "基幹 DB", "subtext": "正本", "group": "g-data" },
+      { "id": "n-lake", "label": "分析基盤", "subtext": "日次同期", "group": "g-data" }
+    ],
+    "edges": [
+      { "from": "n-portal", "to": "n-api", "label": "同期" },
+      { "from": "n-batch", "to": "n-queue", "label": "非同期" },
+      { "from": "n-api", "to": "n-core" },
+      { "from": "n-queue", "to": "n-core" },
+      { "from": "n-queue", "to": "n-lake" }
+    ],
+    "groups": [
+      { "id": "g-front", "label": "入口" },
+      { "id": "g-app", "label": "処理" },
+      { "id": "g-data", "label": "保管" }
+    ]
+  }
+}

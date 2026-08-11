@@ -27,6 +27,10 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-structure-designer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## スライド面の受け皿確認（slideType を確定する前）
+
+選んだ slideType には必ずページひな形の受け皿がある。`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/registry.json` の `map` で slideType → ひな形 id + 受け入れ media 種別を引き、その面で見せたい差し込み物（図解 / チャート / 生成画像 / 表・コード / なし）が受け入れ種別に含まれるかを確認してから確定する。含まれないなら slideType 側を変える（ひな形を無視して面を組ませない）。写像は 107 種すべてに存在するので「無いから既定でいく」は起こらない。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

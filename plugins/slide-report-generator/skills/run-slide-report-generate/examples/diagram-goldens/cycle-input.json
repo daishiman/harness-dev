@@ -1,0 +1,111 @@
+{
+  "diagramId": "d-cycle",
+  "type": "cycle",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-cycle-flow.md §11.1 サイクル図（円形サイクル）",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 500 500"
+  },
+  "title": "月次レビューの回し方",
+  "message": "翌月の判断が前月の写しになるかどうかを決めているのは、点検の 1 工程だけである。",
+  "hub": {
+    "id": "c0",
+    "label": "月次レビュー",
+    "lap": "第 12 周",
+    "asOf": "2026/8 実施中",
+    "style": "plain"
+  },
+  "nodes": [
+    {
+      "id": "c1",
+      "label": "計画",
+      "sub": "完了=重点1件を確定",
+      "angle": -90,
+      "style": "plain",
+      "doneCriterion": "重点1件を確定"
+    },
+    {
+      "id": "c2",
+      "label": "実行",
+      "sub": "完了=着手率100%",
+      "angle": 0,
+      "style": "plain",
+      "doneCriterion": "着手率100%"
+    },
+    {
+      "id": "c3",
+      "label": "点検",
+      "sub": "完了=差異3件以内",
+      "angle": 90,
+      "style": "focal",
+      "doneCriterion": "差異3件以内"
+    },
+    {
+      "id": "c4",
+      "label": "改善",
+      "sub": "完了=次月計画へ反映",
+      "angle": 180,
+      "style": "plain",
+      "doneCriterion": "次月計画へ反映"
+    }
+  ],
+  "relations": [
+    {
+      "from": "c1",
+      "to": "c2",
+      "kind": "ring"
+    },
+    {
+      "from": "c2",
+      "to": "c3",
+      "kind": "ring"
+    },
+    {
+      "from": "c3",
+      "to": "c4",
+      "kind": "ring"
+    },
+    {
+      "from": "c4",
+      "to": "c1",
+      "kind": "ring"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "c3"
+    ],
+    "reason": "本文がこれから語る対象。ここを飛ばした月だけ輪が閉じないので、他 3 工程は muted のまま残す"
+  },
+  "annotations": [
+    {
+      "text": "点検を飛ばすと輪が止まる",
+      "anchor": "c3"
+    }
+  ],
+  "geometry": {
+    "ringCenter": [
+      248,
+      248
+    ],
+    "ringRadius": 160,
+    "nodeBox": [
+      144,
+      64
+    ],
+    "hubRadius": 52,
+    "note": "リング円弧 (A コマンド) は環状型の語彙なので、斜線禁止 (§D-3 原則 1) の例外 (a) に当たる。§11.1 が示す中心 250 / 半径 180 / ノード幅 140 はノードが viewBox の外へ出るため、中心を 248・半径を 160 へ寄せて 4px グリッドと D1 の両方を満たす形にした"
+  },
+  "caption": "上の枠から時計回りに一周してほしい。四つの工程のうち一つだけ色が付いているのは、そこを飛ばした月に限って翌月の判断が前月の写しになるからである。",
+  "cadence": {
+    "period": "1 周 = 1 か月",
+    "direction": "時計回り"
+  },
+  "legend": [
+    "実線=工程の進む順",
+    "破線=注釈の指し線"
+  ],
+  "stopCondition": "点検を飛ばすと輪が止まる"
+}

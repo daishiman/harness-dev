@@ -1,0 +1,49 @@
+{
+  "diagramId": "f-swimlane-process",
+  "type": "swimlane-process",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "bleed",
+  "reference": "references/diagram-technical.md §11.39 スイムレーンプロセス図",
+  "placement": "全幅",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "経費精算の受け渡し",
+  "message": "帯を跨ぐ回数が待ち時間の回数であり、その回数を決めているのは判定の一箇所だけである。",
+  "lanes": [
+    { "id": "applicant", "label": "申請者" },
+    { "id": "manager", "label": "上長" },
+    { "id": "accounting", "label": "経理" }
+  ],
+  "stages": ["申請 (起点)", "確認", "判定", "支払 (終点)"],
+  "steps": [
+    { "id": "submit", "lane": "applicant", "stage": "申請", "label": "経費を申請", "style": "plain" },
+    { "id": "check", "lane": "manager", "stage": "確認", "label": "内容を確認", "style": "plain" },
+    { "id": "gate", "lane": "manager", "stage": "判定", "label": "5 万円以内か", "style": "focal", "kind": "gate" },
+    { "id": "pay", "lane": "accounting", "stage": "支払", "label": "支払を実行", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "submit", "to": "check", "kind": "handoff", "artifact": "上長へ: 申請書 + 領収書" },
+    { "from": "check", "to": "gate", "kind": "flow" },
+    { "from": "gate", "to": "pay", "kind": "handoff", "label": "はい", "artifact": "経理へ: 承認済み申請書" },
+    { "from": "gate", "to": "submit", "kind": "return", "label": "いいえ (不備あり)・2 回目で上長判断へ", "route": "outside-below" }
+  ],
+  "emphasis": {
+    "focal": ["gate"],
+    "reason": "分岐が 1 箇所しかなく、そこが差し戻しの発生源なので焦点はゲートに置く"
+  },
+  "annotations": [],
+  "legendNote": "帯の色は交互で意味は持たない",
+  "provenance": "2026/4 改定の経費精算規程・n=214",
+  "geometry": {
+    "laneW": 704,
+    "laneH": 112,
+    "laneGapY": 16,
+    "labelColW": 160,
+    "stageStepX": 176,
+    "stepW": 144,
+    "stepH": 64,
+    "gateH": 48,
+    "note": "ゲートにひし形を使わない (斜辺を持つため)。角丸 4 の小さめの枠 + 分岐ラベルで表す"
+  },
+  "caption": "左上から右下へ一度だけ辿り、そのあと下を回る線を見てほしい。帯をまたぐ回数がそのまま待ち時間の回数であり、色の付いた枠がその回数を決めている。"
+}

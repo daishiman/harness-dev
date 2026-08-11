@@ -44,6 +44,13 @@ try {
   });
   if (badText.length) throw new Error(`可視テキストの型崩れ: ${badText.join(', ')}`);
 
+  const d3Fallbacks = await page.locator('[data-d3-fallback]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute('data-d3-fallback') || 'unknown'),
+  );
+  if (d3Fallbacks.length) {
+    throw new Error(`D3未対応fallback: ${d3Fallbacks.join(', ')}`);
+  }
+
   const ratio = await page.evaluate(() => {
     const area = document.querySelector('.slide-area');
     if (!area) return { hasSlideArea: false };

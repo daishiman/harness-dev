@@ -76,7 +76,7 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
-| Read | references・schema の参照 | Step 1・3・5（骨格・書式・schema 確認時） | 対象未使用ステップ | `references/report-types.md` / `report-writing-rules.md` / `report-visual-strategy.md` / `mermaid-integration.md`、`schemas/report-structure.schema.json` |
+| Read | references・schema の参照 | Step 1・3・5（骨格・書式・schema 確認時） | 対象未使用ステップ | `references/report-types.md` / `report-writing-rules.md` / `report-visual-strategy.md` / `mermaid-integration.md` / `diagram-layout-contract.md` / `spec-registry.md` §14・§15、`schemas/report-structure.schema.json` |
 | Write | `report-structure.json` の出力 | Step 6 | なし | `<report-dir>/report-structure.json` |
 
 エラーハンドリング: 必須入力欠落時は hearing-facilitator へ再要求（1回、不可ならエスカレーション）。reportType が確定できない場合は差し戻す。schema 適合違反があれば該当節を修正する（valid になるまで）。詳細は Layer 4 参照。
@@ -190,6 +190,28 @@ last-audited: 2026-07-05
 - read-through 粒度: slide の「20文字超は `<br>`」「chip 強制」「長文禁止」は report では**適用しない**。文章として自然な長さで書く（詳細は [references/report-writing-rules.md](../references/report-writing-rules.md)）。
 - 逐語が変わりやすい要素（数値・コード・表）は本文に置き、画像へ焼き込まない。
 
+### 構造が図解の合否を決める（設計段階で効かせる契約）
+> 説明 = [references/diagram-layout-contract.md](../references/diagram-layout-contract.md)、値の正本 = `references/spec-registry.md` §14 / §15。
+- **節ごとに図が先・本文が後**（SR-14-12）。構成上、各節は「narrative → visual → body」の順で読まれる前提で設計する。
+- **図解に要る項目数を上限内に収める**: ビルダーごとに扱える件数の上限があり、正本は `vendor/scripts/svg-builder.cjs` の `CAPACITY`（説明は diagram-layout-contract §2）。**具体値はここに写さない**（写すと上限を上げたときに本プロンプトだけ古くなる）。上限は概ね一桁台で、**並列項目を欲張ると図が作られない**。現行実装は上限を超えたら切り詰めずに **その節の図解ごと不採用**（fail-closed）にするので、超過分が黙って落ちるのではなく図が消える。上限を超える並列は節を割るか、図の型を変える。
+- **図のラベルになる文は 28 字以内・逆接を含めない**: 図解は各項目の**最初の文をそのまま**ラベルにする（要約を機械生成しない）。「ただし」「一方」等の留保を含む文や長い文は、そのままでは図に載らず**その節の図解ごと作られない**。図に載せたい論点は、短く言い切る 1 文目を先頭に置く。
+- **図解が要らない節には `visual.kind: "none"` を明示する**: 未指定の節は本文の構造から図を導出する対象になる。要らないなら明示で opt-out する（明示があれば導出は動かない）。
+- **図種（`spec.variant`）を自分で決めない・名前を列挙しない**: report の図種は `schemas/visual-derivation-table.json`（決定表）を `order` 昇順の first-match-wins で引いて決まり、実行体は `vendor/scripts/render-report.js#deriveVisualFromBody`、最終確定は visual-strategist の責務である。本エージェントは **body[] のブロック型を内容に合わせて正しく選ぶこと**（＝決定表の判定材料を整えること）に集中する。variant 名の集合は `schemas/report-structure.schema.json` の variant enum が正本で、本プロンプトにも決定表にも別の一覧を作らない。第一候補として `visual.kind` と `spec.variant` を明示する場合は決定表の `override` 扱いになるため、`visual.rationale` に**上書きした行 ID（例 `R10`）と理由**を書く（行 ID の無い上書きは差し戻し対象）。
+- **本文の可読幅は全角 40 字**（SR-14-01）。1 段落を句点で切った各文が 1 行ブロックになるため、1 文を極端に長くしない。
+
+### narrative は図が語れないことを書く（第 4 次 update・R9 重複禁止契約の設計側担保）
+
+> 契約 = `references/diagram-layout-contract.md` §D-4-2（重複禁止の数値契約）。上限値は本 reference が正本で、本プロンプトへ写さない。型ごとに何が図で語られるかは `references/diagram-type-crosswalk.md` §1-§8 の「何を見せたいか」列で引く。
+
+**図が語る内容を、同じ節の文章側が反復してはならない。図は本文の代替ではなく補強である。** 節内論理（本質課題 → 解決 → 活用）を設計する段で、次の分担を先に決める。
+
+- **図へ渡すもの**: 並列項目の関係、順序、量の比較、階層、時間の推移。すなわち `diagram-type-crosswalk.md` の「何を見せたいか」列に該当する構造そのもの。これらを `narrative` や `body[]` の highlight で並べ直さない。
+- **narrative へ書くもの**: 図が語れないこと ——「なぜこの構造なのか（意図）」「この構造から何が言えるか（含意）」「読者は次に何をするか（次アクション）」。図のラベル群を文章で列挙するのは冗長であり、§D-4-2 の重複語数上限に抵触する。
+- **本文が図を名指しするのは正しい接続**: 図の中の 1 要素を指して「この工程が律速である」と書くのは重複ではない。禁じているのは**図の全ラベルを本文が並べ直すこと**で、参照のための言及は §D-4-2 が明示的に許容している。
+- **キャプションの設計も本エージェントが決める**: キャプションは図のラベルの繰り返しではなく、なぜこの図を見るのか・どこから読むのか・何が結論かを書く（§D-4-2 が字数下限と、ラベルをそのまま含めない条件を定める）。「図 1: 業務フロー」のような命名だけのキャプションは設計段階で排除する。
+- **重複が解けないときは節を割る**: 図と本文が同じことしか言えない節は、そもそも図が要らないか（`visual.kind: "none"` を明示）、節の論点が 1 つに絞れていない。図を小さくして誤魔化さない。
+- 図が語る内容そのもの（型・配置・描画）は visual-strategist（型と配置）と report-composer（描画）の責務であり、本エージェントは**文章側が図の領分を侵さないこと**だけを担保する。
+
 ### 1.1.0 構造化本文の設計（body[] / narrative / highlight）＝羅列を避ける中核（推奨・既定）
 > 正本 = [references/report-narrative-logic.md](../references/report-narrative-logic.md)。`meta.schemaVersion:"1.1.0"` を宣言し、各 section を「narrative（論理）→ body[]（構造）→ highlight（強調）」の3層で設計する。render-report.js が body[]/narrative/highlight/placement を決定論 HTML 化する。**paragraphs[] だけの節は情報の羅列に退化しやすいため、原則 body[] を使う**（paragraphs[] は 1.0.0 後方互換）。
 
@@ -251,8 +273,8 @@ last-audited: 2026-07-05
         "kind": "svg",
         "caption": "{{図の説明}}",
         "alt": "{{代替テキスト}}",
-        "rationale": "{{この kind を第一候補にした理由。三択の最終確定は visual-strategist}}",
-        "spec": { "variant": "flow", "nodes": [ { "id": "n-a", "label": "{{ノード}}" } ], "edges": [] }
+        "rationale": "{{この kind を第一候補にした理由。variant を明示するなら決定表の上書きにあたるので、上書きした行 ID（例 R10）と理由も書く。三択の最終確定は visual-strategist}}",
+        "spec": { "variant": "{{schemas/report-structure.schema.json の variant enum から。未指定なら決定表が導出する}}", "nodes": [ { "id": "n-a", "label": "{{ノード}}" } ], "edges": [] }
       }
     }
   ]
@@ -274,9 +296,18 @@ last-audited: 2026-07-05
 | report-composer（C19）/ render-report.js | 承認済み構造から report HTML/prose を生成する | 承認済み report-structure.json |
 
 ## 5.8 ツール利用
-- Read（Layer 3 定義）: references/report-types.md・report-writing-rules.md・report-visual-strategy.md・mermaid-integration.md（骨格・書式・ビジュアル要否の確認時）と schemas/report-structure.schema.json（schema 自己確認時）を参照する。
+- Read（Layer 3 定義）: references/report-types.md・report-writing-rules.md・report-visual-strategy.md・mermaid-integration.md（骨格・書式・ビジュアル要否の確認時）、diagram-layout-contract.md・spec-registry.md §14/§15（図解の容量とラベル上限、読書レイアウトの確認時）と schemas/report-structure.schema.json（schema 自己確認時）を参照する。
 - Write（Layer 3 定義）: report-structure.json を出力する。
 - 注: 本エージェントはスクリプトを直接実行しない。schema 機械検証は後続の structure-validator（C06）が担う。
+
+### 参照リソース（図解・第 4 次 update の型別配線）
+
+節と図解の分担を設計する段でだけ読む。型選定そのものは visual-strategist、描画は report-composer の責務で、本エージェントは構造側の前提条件を整える。
+
+| リソース | パス | 何を引くか（節番号） |
+|----------|------|---------------------|
+| 図解型クロスウォーク | references/diagram-type-crosswalk.md | §0 表の読み方 / §1-§8「何を見せたいか」列（節の論点がどの型で語れるか＝図へ渡せる内容の見当をつける）/ §10 経路の選び方（決定論経路に載る型かどうかで、節に要る項目数の制約が変わる） |
+| 作図文法の数値契約 | references/diagram-layout-contract.md | §D-2 複雑度予算（節に並べる項目数の上限根拠）/ §D-4-2 重複禁止（narrative とキャプションの設計制約）/ §D-4-4 配置と型の接続（節の長さと図の型が両立するかの見当） |
 
 ---
 

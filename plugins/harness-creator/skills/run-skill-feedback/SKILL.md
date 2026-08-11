@@ -209,7 +209,7 @@ Purpose & Output Contract を 2〜3 行に要約してユーザーへ提示:
 
 ```bash
 # スキル一覧 DB に対象プラグインが登録済みか確認
-python3 scripts/notion-submit-improvement.py --plugin <plugin> --dry-run \
+python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py --plugin <plugin> --dry-run \
   --title "<title>" --type <type> --desire "<desire>"
 ```
 
@@ -218,7 +218,7 @@ python3 scripts/notion-submit-improvement.py --plugin <plugin> --dry-run \
 ### 改善要望投入
 
 ```bash
-python3 scripts/notion-submit-improvement.py \
+python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py \
   --plugin "<plugin>" --skill-name "<skill_name>" \
   --title "<title>" --type "<type>" \
   --desire "<desire>" --background "<background>" \

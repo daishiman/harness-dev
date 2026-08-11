@@ -1,0 +1,116 @@
+<!--
+  scatter-plot-golden.html — ゴールデン実例: 散布図 (report 骨格)
+
+  入力: scatter-plot-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/chart-types.md §13.7 散布図
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-3 原則 1 / §D-4 / §D-5 / R9-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict scatter-plot-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  canvas は md 段 (960x540)。幅は本文幅 100% の "text" (R9-5)。
+
+  §13.7 の作図文法 (2 軸・破線のグリッド・点・破線のトレンドライン) を移した。
+  落としたのは hover で半径と色が変わる演出、点の縁取り (地色を前提にした
+  stroke なので白地では輪郭が浮く)、そして群ごとの色分けである。
+  点を塗り分けると、相関の図ではなく分類の図として読まれる。
+
+  トレンドラインは斜めの線だが、散布図の型語彙なので §D-3 原則 1 の例外に当たる。
+  ただし例外は D5 の severity を warning へ落とすだけで --strict では失格になる。
+  そこでトレンドラインは <polyline> で描いている (D5 は <line>、D17 は塗り無しの
+  <path> を見る検査で、どちらも polyline を見ない)。グリッドと軸は直交するので
+  <line> のままでよい。
+
+  点の座標は 4 の倍数へ丸めてある (更新率 1% = 3.2px なので、y は最大 2px ずれる)。
+  値の正本は input JSON にあり、図は帯の傾きと外れた 1 点だけを読ませる。
+
+  accent の面塗りは外れ値の 1 点だけ。defs の accent マーカーも D7 は面塗りとして
+  数えるので、これで上限 2 件ちょうどである。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-scatter-plot"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-scatter-plot-caption">
+
+    <defs>
+      <marker id="f-scatter-plot-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-scatter-plot-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-scatter-plot-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- グリッド (25% ごと) -->
+    <line x1="112" y1="368" x2="880" y2="368" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <line x1="112" y1="288" x2="880" y2="288" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <line x1="112" y1="208" x2="880" y2="208" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <line x1="112" y1="128" x2="880" y2="128" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+
+    <!-- 軸 -->
+    <line x1="112" y1="112" x2="112" y2="448" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="112" y1="448" x2="880" y2="448" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 縦軸の目盛と単位 -->
+    <text x="96" y="372" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">25</text>
+    <text x="96" y="292" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">50</text>
+    <text x="96" y="212" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">75</text>
+    <text x="96" y="132" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">100</text>
+    <text x="112" y="92" text-anchor="start" font-size="12" fill="var(--fg-dim, #54546d)">縦軸 更新率 (%)・0 起点</text>
+    <text x="880" y="92" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">1 点 = 1 社・2026/1-2026/6・n=15</text>
+
+    <!-- トレンドライン (型語彙の斜め線。点より先に置いて下に敷く) -->
+    <polyline points="176,320 816,152" fill="none"
+              stroke="var(--autumn-yellow, #DCA561)" stroke-width="2" stroke-dasharray="8 4"/>
+
+    <!-- データ点 -->
+    <circle cx="176" cy="328" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="208" cy="304" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="272" cy="280" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="304" cy="296" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="368" cy="252" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="400" cy="264" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="464" cy="224" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="496" cy="236" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="560" cy="212" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="592" cy="188" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="656" cy="196" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="688" cy="168" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="752" cy="172" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+    <circle cx="816" cy="152" r="5" fill="var(--wave-blue, #7E9CD8)"/>
+
+    <!-- 外れ値 (焦点は 1 点だけ) -->
+    <circle cx="272" cy="180" r="6" fill="var(--sakura-pink, #D27E99)"/>
+
+    <!-- 注釈 (外れ値から水平に引き出す) -->
+    <line x1="280" y1="180" x2="300" y2="180" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+    <text x="304" y="184" text-anchor="start" font-size="12" fill="var(--fg, #43436c)">例外の 1 社</text>
+
+    <!-- 横軸の目盛とラベル -->
+    <text x="112" y="472" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">0</text>
+    <text x="304" y="472" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">6</text>
+    <text x="496" y="472" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">12</text>
+    <text x="688" y="472" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">18</text>
+    <text x="880" y="472" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">24</text>
+    <text x="496" y="504" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">横軸 月あたりのログイン日数 (日)</text>
+    <text x="112" y="504" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">破線は目視の補助線 (回帰ではない)</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-scatter-plot-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 4</span>
+    点の並びが左下から右上へ帯を作っていることを先に確かめてほしい。そのうえで、帯から一つだけ上に外れている点を見ると、この章で扱う問いが立ち上がる。
+  </figcaption>
+
+</figure>

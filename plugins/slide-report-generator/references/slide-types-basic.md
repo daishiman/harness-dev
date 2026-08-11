@@ -106,7 +106,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   padding: 1.5rem 2rem;
   border-radius: 12px;
   min-width: 280px;
@@ -163,7 +163,7 @@
 .slide-compare .compare-item {
   flex: 1;
   max-width: 400px;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   padding: 2rem;
   border-radius: 16px;
   text-align: center;
@@ -255,7 +255,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   padding: 1.5rem;
   border-radius: 12px;
   min-width: 140px;
@@ -356,7 +356,7 @@
 }
 
 .slide-timeline .timeline-content {
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   padding: 1rem 1.5rem;
   border-radius: 8px;
   flex: 1;
@@ -406,13 +406,13 @@
 .slide-table table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .slide-table th {
-  background: var(--sumi-ink);
+  background: var(--sumi-ink, #FAFAFA);
   padding: 1rem;
   text-align: left;
   font-weight: 700;
@@ -478,7 +478,7 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: var(--fs-small, 1.4rem);
   line-height: 1.7;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 12px;
   padding: 20px 24px;
   white-space: pre-wrap;
@@ -498,7 +498,7 @@
 }
 
 .slide-code .code-block .code-variable {
-  background: rgba(var(--autumn-yellow-rgb), 0.15);
+  background: rgba(220, 165, 97, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -582,7 +582,7 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: var(--fs-small, 1.4rem);
   line-height: 1.7;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 0 0 12px 12px;
   padding: 20px 24px;
   white-space: pre-wrap;
@@ -603,7 +603,7 @@
 }
 
 .slide-code-compare .code-compare-body .code-variable {
-  background: rgba(var(--autumn-yellow-rgb), 0.15);
+  background: rgba(220, 165, 97, 0.15);
   padding: 2px 6px;
   border-radius: 4px;
 }

@@ -1,25 +1,75 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "48719d73b39ea10103ef8d78313d34fb602f3dad9754e2fff1932c3e40ac9cef"},
-  "review_kind": "elegance",
-  "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-07-24T01:00:00Z",
-  "iterations": 2,
-  "human_review_required": false,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
-    "positive_feedback": [
-      "iteration 1 の band-count drift が解消: html-generation-rules.md の CONST_001-039 帯を引用する全 5 箇所 (責務行・R3-agent-html-generator.md Layer 2 ポインタ・SKILL.md:185・R1-orchestrate.md:74・resource-map.yaml:21) が CONST_001-039 で整合。`grep -rn 'CONST_001-038'` が残存ゼロ (exit 1) を実測。指摘外だった resource-map.yaml:21 も同時修正され propagation が完全。",
-      "読者価値ガードが 2 レイヤ × 2 モードの首尾一貫した matrix を維持: 構成設計層 (slide CONST_008 / report RCONST_007) → 生成層 (slide CONST_039 / report CCONST_007) → 生成後評価層 (deck-evaluator D5 読者フック mode-aware) が全て正本 report-narrative-logic.md §7 (1.3.0) に収束。CONST_039 が参照する CONST_008・CCONST_007・§7・D5 検出器を全て実在確認 (dependency_break なし)。",
-      "OUT1 (共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動) の設計核が SKILL.md Purpose & Output Contract・output_mode 分岐契約・Gotchas 全体と読者価値ブリーフで一貫し frontmatter feedback_contract に接地。post-generation-evaluation.md D5 (上位正本) と deck-evaluation-rubric.md D5 (SSOT) の同期、report 側 RQ31-34 と slide 側 D5 の mode 別対称も維持。"
-    ],
-    "negative_feedback": [],
-    "iteration": 2,
-    "iteration_limit": 3,
-    "hook_trigger": "manual",
-    "next_action": "none"
+  "schema_version": "2.0.0",
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-generate",
+    "skill_md_sha256": "2c42829bb9a8b121043ded6a4d3ff20052bb1e47c8b4deb01bebdca33096b0b3",
+    "review_scope_sha256": "956b9f9d1a54903e9231f24b985b6002fdc1179dfa8bb561763cbeb63f0e580c",
+    "scope_rule": "plugin全ファイル。ただしvendor/node_modules、vendor/playwright-browsers、coverage、一時ファイルを除外"
   },
-  "notes": "再評価 (iteration 2)。iteration 1 で記録した band-count drift (SKILL.md:185 / R1-orchestrate.md:74 が『CONST_001-038』残存) は team-lead が 3 箇所 (指摘 2 + 追加検出 resource-map.yaml:21) を CONST_001-039 へ更新して解消。残存ゼロを grep で実測、新 sha256=48719d73… を shasum で自己再確認。変更は citation テキスト『038→039』置換のみで構造・行数・依存・rubric 次元は不変、新規 finding なし。4 条件すべて 0 で PASS 維持。緑化なし=解消を独立実測。"
+  "review_kind": "elegance-30-method",
+  "verdict": "PASS",
+  "conditions": {
+    "contradiction_free": {
+      "status": "PASS",
+      "evidence": [
+        "schemaVersion 1.2.0 と reader-entry/report-uiux 機能ラベルを分離",
+        "D0-D21、CSS44、golden65、script18 の正本とconsumerを同期",
+        "elegance/rubric/build のcurrent verdictを同一状態へ同期"
+      ]
+    },
+    "complete": {
+      "status": "PASS",
+      "evidence": [
+        "削除reference 5件の移管台帳とdangling参照解消",
+        "FABE 5 variant、D3不足8型、slide/report情報契約を実装・試験",
+        "全18 scriptをcomposition/completeness surfaceへ登録"
+      ]
+    },
+    "consistent": {
+      "status": "PASS",
+      "evidence": [
+        "要件/構成要素の表示namespaceをREQ-Cn/CMP-Cnnへ分離",
+        "diagram-style-tokensを値を複製しない索引へ限定",
+        "upstream byte-pinとmanaged local overlayを別責務として明示"
+      ]
+    },
+    "dependency_integrity": {
+      "status": "PASS",
+      "evidence": [
+        "composition lint PASS、sibling coupling候補0、task DAG PASS",
+        "prompt→strict validator→hook→evaluationの保証鎖を接続",
+        "unknown template/D3 fallbackをfail-closed化"
+      ]
+    }
+  },
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "thinking_methods": {
+    "count": 30,
+    "logical_structure": ["批判的思考", "演繹思考", "帰納的思考", "アブダクション", "垂直思考", "要素分解", "MECE", "2軸思考", "プロセス思考"],
+    "meta_creative": ["メタ思考", "抽象化思考", "ダブル・ループ思考", "ブレインストーミング", "水平思考", "逆説思考", "類推思考", "if思考", "素人思考"],
+    "systems_strategy_problem_solving": ["システム思考", "因果関係分析", "因果ループ", "トレードオン思考", "プラスサム思考", "価値提案思考", "戦略的思考", "why思考", "改善思考", "仮説思考", "論点思考", "KJ法"]
+  },
+  "verification": {
+    "python_tests": "192 passed",
+    "node_tests": "PASS; aggregate line coverage 84.8% (threshold 80%)",
+    "diagram_goldens": "65/65 strict PASS",
+    "diagram_information": "107 inspected; 0 errors; 0 warnings",
+    "composition": "PASS",
+    "completeness": "PASS",
+    "vendor_integrity": "191/191 pinned PASS + 8 managed local forks declared",
+    "plan_dag": "PASS"
+  },
+  "reviewer": "3 SubAgent並列監査（9+9+12思考法）をprimary agentが統合・改善・再検証",
+  "reviewed_at": "2026-08-10T22:39:05+09:00",
+  "iterations": 1,
+  "iteration_limit": 3,
+  "human_review_required": false,
+  "notes": "思考リセットは成果物削除ではなく先入観の破棄として実施。aiworkflow-requirementsは不使用。過去のphase-11生成物はcurrent plugin gateの入力ではなく履歴証跡として扱う。"
 }

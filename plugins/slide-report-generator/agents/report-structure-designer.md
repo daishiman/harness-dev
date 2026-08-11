@@ -27,6 +27,14 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 図解リファレンス（第 4 次 update・型別の参照配線）
+
+図解に関わる作業では、prompt 正本の指示に加えて次を**型別・節番号で**参照する。値（色・座標・件数）は下記 reference が正本で、本ファイルにも prompt にも写さない。
+
+- **重複禁止契約（文章側の担保）**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4-2。`section.narrative` には**図が語れないこと**（意図・含意・次アクション）を書き、図が担う構造（並列・順序・量の比較・階層・推移）を文章で並べ直さない。キャプションも図のラベルの繰り返しにしない。
+- **型カタログ**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §1-§8 の「何を見せたいか」列で、節の論点がどの型で語れるかの見当をつける（型の確定は visual-strategist の責務）。
+- **項目数の制約**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-2 複雑度予算 / §D-4-4 配置と型の接続。節に並べる項目数が図の容量を超えるなら節を割る。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

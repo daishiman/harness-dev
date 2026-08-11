@@ -1,0 +1,106 @@
+<!--
+  value-proposition-golden.html — ゴールデン実例: バリュープロポジション型 (slide 骨格)
+
+  入力: value-proposition-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-business.md §11.12 バリュープロポジション型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-3 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py value-proposition-golden.html
+
+  §11.12 のコード例は 4 枚のカードを wave-blue の枠で囲い、hover で
+  scale(1.1) + box-shadow を掛ける。影は R9-14 で常に 0、変形は静止面に無いので落とした。
+  周囲 4 枚を有彩色の枠にすると accent と競合して視線の着地点が 5 つになるため、
+  枠は ink に戻し、有彩色は中心の 1 つだけに残している (§D-4 R9-11)。
+  接続線は矢じりを付けない。中心から外へ「流れる」のではなく、
+  4 つが中心を成り立たせているという包含の関係だからである。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-value-proposition">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-value-proposition-caption">
+
+    <defs>
+      <marker id="d-value-proposition-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-value-proposition-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-value-proposition-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 顧客側のジョブとペイン (§2.10: 提供側だけでは この型は成立しない) -->
+    <text x="40" y="28" font-size="12" fill="var(--fg-dim, #54546d)">顧客のジョブ: 締め日前に実績を把握する。ペイン: 転記が 1 件 40 分・月 60 件で、差分は締め後まで出ない。</text>
+    <text x="920" y="28" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">四方はゲイン、中心が提供価値</text>
+
+    <!-- 接続線 4 本 (すべて軸平行・矢じり無し) -->
+    <line x1="480" y1="128" x2="480" y2="232" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="480" y1="312" x2="480" y2="412" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="264" y1="272" x2="400" y2="272" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="560" y1="272" x2="696" y2="272" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 上のカード -->
+    <g>
+      <rect x="380" y="48" width="200" height="80" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="480" y="84" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">入力が減る</text>
+      <text x="480" y="110" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">転記を自動で埋める</text>
+    </g>
+
+    <!-- 左のカード -->
+    <g>
+      <rect x="64" y="232" width="200" height="80" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="164" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">既存と繋がる</text>
+      <text x="164" y="294" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">会計システムへ書き戻す</text>
+    </g>
+
+    <!-- 右のカード -->
+    <g>
+      <rect x="696" y="232" width="200" height="80" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="796" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">差分が当日わかる</text>
+      <text x="796" y="294" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">締め日を待たない</text>
+    </g>
+
+    <!-- 下のカード -->
+    <g>
+      <rect x="380" y="412" width="200" height="80" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="480" y="448" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">手順が残る</text>
+      <text x="480" y="474" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">担当交代でも続く</text>
+    </g>
+
+    <!-- 中心の核 (焦点・1 図 1 件) -->
+    <g>
+      <rect x="400" y="232" width="160" height="80" rx="8"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="480" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">現場だけで回る</text>
+      <text x="480" y="294" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">問い合わせは月1件</text>
+    </g>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="48" y="516" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">機能数ではここは語れない</text>
+    <path d="M 204 508 Q 300 500 376 456" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="376" cy="456" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 打ち手の実行主体・期限・費用 (I-CLAIM) と 出所・凡例 (I1 / I3) -->
+    <text x="920" y="504" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">実行主体: 業務改革課 / 期限: 2026/9 末 / 費用: 初期 180 万円</text>
+    <text x="920" y="526" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 2026/4-6 の試行 3 社の実測 (n=3 社)。実線は成立の条件。</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-value-proposition-caption" class="srg-diagram__caption">
+    中心の枠を先に読み、そこから四方へ伸びる線をたどってほしい。周囲の四つは中心を成り立たせる条件であって、並列の機能一覧ではない。
+  </figcaption>
+
+</figure>

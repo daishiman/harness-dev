@@ -17,8 +17,8 @@
 # ///
 """report.html の決定論視覚ゲート (fail-closed)。
 
-C7 で vendor/ は byte 不可侵のため、report.html 用の視覚崩れ検出を plugin-root
-scripts/ に Python 標準ライブラリのみ (html.parser + re) で新設する。slide が持つ
+report runtimeと検証ownerを分離するため、report.html用の視覚崩れ検出をplugin-root
+scripts/にPython標準ライブラリのみ (html.parser + re) で置く。slide が持つ
 verify-slides.js (16:9比率) / validate-print.js (letterbox) に対応する report 版。
 
 検査項目 (report gate は --require-structure + --structure が必須。互換用の HTML 単体診断は可):
@@ -35,10 +35,16 @@ verify-slides.js (16:9比率) / validate-print.js (letterbox) に対応する re
                           reportType 横断要素 role・多様性<適合性(羅列の床)・render 忠実度
                           (structure が新block/throughLine/placement を宣言→html 反映) を検査。
                           render 忠実度の不一致は fail、密度/流れ系は warn (strict 昇格)。
-  C8 essence-visual(1.3.0): 論理構造を展開する実質節(分析/主張/課題/解決/所見/背景/影響/本文)が
+  C8 essence-visual: 論理構造を展開する実質節(分析/主張/課題/解決/所見/背景/影響/本文)が
                           内容を一目化する本質図解(非 none visual)を持つか。表・テキストのみで関係構造を
                           説明する『なんとなく表』(図解不在)を warn (strict 昇格)。要約/結論/次アクション等は
                           text-first 許容で対象外 (結論への図解強制=逆退化を避ける・意味判定は reviewer)。
+  C25 r9-blend(1.4.0)   : 図解が成果物の中で浮かないか (diagram-layout-contract.md 第4次 update §D-4)。
+                          (p) figure-text-duplication: 図解ラベル↔本文の完全一致件数・文字 n-gram 重複率・
+                              キャプション字数/ラベル重複 (R9-7/8/9/10) を warn。
+                          (q) visual-occupancy: figure に宣言された高さ/幅が占有率契約 (R9-3/R9-5) の
+                              レンジ外なら warn。面積比 R9-1 の実測は validate-report-layout.js の責務。
+                          数値の正本は契約文書側で、実行時に読む (検査器へ写経しない)。
 
 exit code 規約:
   - 0: 崩れ無し (PASS)。--strict 時は warn も無い。
@@ -73,6 +79,11 @@ DEFAULT_THRESHOLDS = {
     "throughline_min_sections": 4,    # section 数がこれ以上の文書で meta.throughLine 未宣言 → warn (文書アーク欠落)。
     "transition_min_sections": 3,     # section 数がこれ以上で transition が皆無 → warn (節が飛び石・流れが切れる)。
     "parts_suggest_sections": 12,     # length=deep でこれ以上の節数なら throughLineParts(part 単位 sub-arc) 未宣言を warn (大規模文書の道標)。
+    # -- 1.4.0 R9 溶け込みゲート (diagram-layout-contract.md 第4次 update §D-4) --
+    # 占有率・重複語率・キャプション字数の *数値* は契約文書 (§D-4-1/§D-4-2) が正本で、
+    # _load_r9_contract() が実行時に読む。ここに置くのは近似アルゴリズムの粒度だけ。
+    "figure_dup_ngram": 2,            # 図解ラベル↔本文の重複を測る文字 n-gram の n (R9-8 の近似手段)。
+    "figure_label_min_len": 3,        # R9-7 の完全一致で数えるラベルの最小文字数 (1-2 字は助詞・記号で偶然一致する)。
 }
 
 # narrative(節内論理展開) を必要とする role。report-narrative-logic.md §6.1 の role→narrative 表 (SSOT正本) と
@@ -95,7 +106,7 @@ assert _NARRATIVE_REQUIRED_ROLES.isdisjoint(_NARRATIVE_OPTIONAL_ROLES), (
     "role narrative 分類が重複: " + str(sorted(_NARRATIVE_REQUIRED_ROLES & _NARRATIVE_OPTIONAL_ROLES))
 )
 
-# 1.3.0 本質図解 (essence-visual) を必須とする role。narrative 必須 role のうち、
+# 本質図解 (essence-visual) を必須とする role。narrative 必須 role のうち、
 # 明確に *関係構造* を持つ分析系に限定する。汎用の body / 叙述寄りの background は
 # 図解を機械強制しない (過剰強制=『なんとなく図』の逆退化を避け、guidance/reviewer に委ねる)。
 _ESSENCE_REQUIRED_ROLES = _NARRATIVE_REQUIRED_ROLES - {"body", "background"}
@@ -138,6 +149,10 @@ class _ReportParser(HTMLParser):
         self._section_stack: list[dict] = []
         self._figure_depth = 0
         self._suppress_depth = 0
+        # R9 (図解と本文の溶け込み) 用。figure ごとに「図の中の文字」と
+        # 「figcaption の文字」を別々に溜め、閉じたら所属 section へ引き渡す。
+        self._fig_stack: list[dict] = []
+        self._in_figcaption = 0
         self._in_style = False
         self._in_script = False
         self._style_buf: list[str] = []
@@ -198,6 +213,8 @@ class _ReportParser(HTMLParser):
                     "table_count": 0,
                     "content_count": 0,  # 段落以外の構造化本文ブロック (リスト/定義リスト/タスク/強調/引用等) の存在量。空セクション誤判定を防ぐ。
                     "has_fallback": False,
+                    "body_text": "",     # R9-7/R9-8 用の本文テキスト (段落の連結)。
+                    "figures": [],       # R9 用の figure 記録 {labels, caption, style, viewbox}。
                 }
             )
             return
@@ -232,6 +249,14 @@ class _ReportParser(HTMLParser):
                     sec["has_fallback"] = True
             if not self_closing:
                 self._figure_depth += 1
+                self._fig_stack.append(
+                    {"labels": [], "caption": [], "style": attrd.get("style", "") or "", "viewbox": ""}
+                )
+        elif tag == "figcaption":
+            if self._fig_stack and not self_closing:
+                self._in_figcaption += 1
+        elif tag == "svg" and self._fig_stack:
+            self._fig_stack[-1]["viewbox"] = attrd.get("viewbox", "") or attrd.get("viewBox", "") or ""
         elif tag == "img":
             # figure 直下の img は figure 側でビジュアル計上済み。単独 img のみ数える。
             if sec is not None and self._figure_depth == 0:
@@ -250,8 +275,22 @@ class _ReportParser(HTMLParser):
             return
         if tag in _SUPPRESS_TAGS and self._suppress_depth > 0:
             self._suppress_depth -= 1
+        if tag == "figcaption" and self._in_figcaption > 0:
+            self._in_figcaption -= 1
         if tag == "figure" and self._figure_depth > 0:
             self._figure_depth -= 1
+            if self._fig_stack:
+                fig = self._fig_stack.pop()
+                sec = self._cur_section()
+                if sec is not None:
+                    sec["figures"].append(
+                        {
+                            "labels": [t for t in (s.strip() for s in fig["labels"]) if t],
+                            "caption": "".join(fig["caption"]).strip(),
+                            "style": fig["style"],
+                            "viewbox": fig["viewbox"],
+                        }
+                    )
         if self._capture and tag == self._capture:
             self._finish_capture()
         if tag == "section" and self._section_stack:
@@ -264,6 +303,13 @@ class _ReportParser(HTMLParser):
             return
         if self._in_script:
             return
+        # figure の中の文字は「図が語っていること」。図のラベル (svg の <text> や
+        # CSS 図解の div) と figcaption を分けて溜める (R9-7/R9-9/R9-10)。
+        if self._fig_stack:
+            if self._in_figcaption:
+                self._fig_stack[-1]["caption"].append(data)
+            else:
+                self._fig_stack[-1]["labels"].append(data)
         if self._capture:
             self._capture_buf.append(data)
         # プレースホルダ走査対象は pre/code/svg を除く可視テキストのみ。
@@ -292,6 +338,9 @@ class _ReportParser(HTMLParser):
                 sec["text_len"] += length
                 if length > sec["max_p_len"]:
                     sec["max_p_len"] = length
+                # figure の中の <p> は「図の一部」なので本文として数えない (R9 の比較相手は地の文)。
+                if self._figure_depth == 0:
+                    sec["body_text"] += text + "\n"
         self._capture = None
         self._capture_buf = []
 
@@ -373,7 +422,7 @@ def _has_content(sec: dict) -> bool:
 
 
 def _check_essence_visual(structure, add) -> None:
-    """1.3.0 本質図解カバレッジ (essence-visual)。
+    """本質図解カバレッジ (essence-visual)。
 
     明確な関係構造を持つ論理節 (_ESSENCE_REQUIRED_ROLES = 分析/主張/課題/解決/所見/影響)
     は、その節の論理構造を『パッと見て』掴ませる非 none ビジュアルを 1 枚持つべき。表・テキスト
@@ -404,6 +453,141 @@ def _check_essence_visual(structure, add) -> None:
                 f"(論理構造を持つ節は内容を一目化する図解を1枚持つ・表/テキストのみは『なんとなく表』の兆候)",
                 s.get("id"),
             )
+
+
+# ---------------------------------------------------------------------------
+# C25: R9 溶け込み契約の機械検査 ((p) 図解↔本文の重複 / (q) 図版の占有)
+#
+# 数値の正本は references/diagram-layout-contract.md の第 4 次 update §D-4-1 /
+# §D-4-2 の表で、この検査器へは写経しない (D10/D11/D13 が実装から実行時抽出するのと
+# 同じ作法。写した瞬間、契約を直した日に検査器だけが古い値で採点し続ける)。
+# 表が読めなくなったら該当検査を出さない — 誤った基準で warn を出すより黙る方がよい。
+# 意味の判定 (その重複が冗長か、参照として必要か) は report-quality-reviewer の責務。
+# ---------------------------------------------------------------------------
+_CONTRACT_PATH = Path(__file__).resolve().parent.parent / "references" / "diagram-layout-contract.md"
+_r9_cache: dict | None = None
+
+
+def _load_r9_contract() -> dict:
+    """§D-4-1 / §D-4-2 の表から R9-* の数値を読む ({"R9-3": [60], ...})。"""
+    global _r9_cache
+    if _r9_cache is not None:
+        return _r9_cache
+    out: dict[str, list[int]] = {}
+    try:
+        text = _CONTRACT_PATH.read_text(encoding="utf-8")
+    except OSError:
+        _r9_cache = out
+        return out
+    for row in re.finditer(r"^\|\s*(R9-\d+)\s*\|([^|]*)\|([^|]*)\|", text, re.M):
+        nums = [int(n) for n in re.findall(r"\d+", row.group(3))]
+        if nums:
+            out[row.group(1)] = nums
+    _r9_cache = out
+    return out
+
+
+def _ngrams(text: str, n: int) -> set:
+    """比較用の文字 n-gram。空白・記号は落とす (改行位置の違いで率が動かないように)。"""
+    body = re.sub(r"[\s　-〿！-／：-＠!-/:-@\[-`{-~]", "", text)
+    return {body[i:i + n] for i in range(len(body) - n + 1)} if len(body) >= n else set()
+
+
+def _check_r9_blend(sections, th, add) -> None:
+    """C25 (p): 図解と本文の文字列重複 (§D-4-2 R9-7 / R9-8 / R9-9 / R9-10)。
+
+    形態素解析を持ち込まず、(1) ラベルの完全一致件数 と (2) 文字 n-gram の重なり率 の
+    2 段で近似する。日本語は分かち書きが無いので、n-gram の重なりは「同じことを
+    言い直しているか」の代理として実用に足る。どちらも warn 止まりなのは、
+    本文が図の 1 要素を名指しする正しい接続 (R9-7 が 0 件でなく 1 件以下である理由) と
+    冗長な言い直しを、機械が見分けられないため。
+    """
+    r9 = _load_r9_contract()
+    if not r9:
+        return
+    dup_max = (r9.get("R9-7") or [None])[0]
+    overlap_pct = (r9.get("R9-8") or [None])[0]
+    cap_range = r9.get("R9-9") or []
+    cap_dup_max = (r9.get("R9-10") or [None])[0]
+    n = th["figure_dup_ngram"]
+    min_len = th["figure_label_min_len"]
+
+    for sec in sections:
+        figs = sec.get("figures") or []
+        if not figs:
+            continue
+        body = sec.get("body_text") or ""
+        sid = sec["id"] or "?"
+        for fig in figs:
+            labels = [ell for ell in fig["labels"] if len(ell) >= min_len]
+            caption = fig["caption"]
+
+            # R9-7: ラベル文字列が本文へそのまま現れる件数。
+            if dup_max is not None and body and labels:
+                hits = sorted({ell for ell in labels if ell in body})
+                if len(hits) > dup_max:
+                    add("figure-text-duplication", "warn",
+                        f"section '{sid}': 図解のラベル {len(hits)}件 が本文に完全一致で現れる "
+                        f"(R9-7 上限 {dup_max}件・例: {hits[:3]})。"
+                        "図が語ることを本文が並べ直している。本文は図の 1 点を名指して先へ進める", sec["id"])
+
+            # R9-8: ラベル群と本文の n-gram 重なり率。
+            if overlap_pct is not None and body and labels:
+                lg = _ngrams("".join(labels), n)
+                bg = _ngrams(body, n)
+                if lg:
+                    ratio = len(lg & bg) / len(lg) * 100
+                    if ratio > overlap_pct:
+                        add("figure-text-duplication", "warn",
+                            f"section '{sid}': 図解ラベルと本文の {n}-gram 重複率 {ratio:.0f}% が "
+                            f"R9-8 上限 {overlap_pct}% 超 (図は本文の代替ではなく補強・言い直しを削る)", sec["id"])
+
+            # R9-9: キャプションの字数 (命名だけのキャプションを禁じる下限がある)。
+            if caption and len(cap_range) >= 2:
+                lo, hi = cap_range[0], cap_range[1]
+                if not (lo <= len(caption) <= hi):
+                    add("figure-text-duplication", "warn",
+                        f"section '{sid}': キャプション {len(caption)}字 が R9-9 の {lo}-{hi}字 レンジ外 "
+                        "(キャプションには図が語れないこと=なぜ見るか/どこから読むか/何が結論かを書く)", sec["id"])
+
+            # R9-10: キャプションが図のラベルをそのまま含む。
+            if caption and cap_dup_max is not None and labels:
+                hits = sorted({ell for ell in labels if ell in caption})
+                if len(hits) > cap_dup_max:
+                    add("figure-text-duplication", "warn",
+                        f"section '{sid}': キャプションが図のラベルを含む {hits[:3]} "
+                        f"(R9-10 上限 {cap_dup_max}件・図とキャプションを 2 回読んで同じ情報しか得られない)", sec["id"])
+
+
+def _check_r9_occupancy(sections, add) -> None:
+    """C25 (q): 図版の占有 (§D-4-1 R9-3 高さ / R9-5 幅)。
+
+    R9-1 の面積比は実描画でしか測れないので validate-report-layout.js の責務として残し、
+    ここは figure に *宣言された* 寸法だけを見る。宣言が無ければ何も言わない
+    (存在しない事実を推測して warn を出すより、静かに素通りする方が正しい)。
+    """
+    r9 = _load_r9_contract()
+    if not r9:
+        return
+    max_vh = (r9.get("R9-3") or [None])[0]
+    for sec in sections:
+        sid = sec["id"] or "?"
+        for fig in (sec.get("figures") or []):
+            style = fig["style"]
+            if not style:
+                continue
+            m = re.search(r"\b(?:max-)?height\s*:\s*([0-9.]+)vh", style, re.I)
+            if m and max_vh is not None and float(m.group(1)) > max_vh:
+                add("visual-occupancy", "warn",
+                    f"section '{sid}': 図版の高さ {m.group(1)}vh が R9-3 の {max_vh}% 上限超 "
+                    "(図版がスクロール 1 画面を占有すると本文の流れが切れる)", sec["id"])
+            # R9-5 は「本文幅と同じ 100%」か「全幅の bleed」の 2 択。中途半端な幅は
+            # 本文の左揃えを乱す。100 未満の % 指定だけを拾う (bleed は 100% 超)。
+            w = re.search(r"\bwidth\s*:\s*([0-9.]+)%", style, re.I)
+            if w and float(w.group(1)) < 100:
+                add("visual-occupancy", "warn",
+                    f"section '{sid}': 図版幅 {w.group(1)}% が R9-5 の 2 択 (本文幅 100% / 全幅 bleed) から外れる "
+                    "(中途半端な幅は本文の左揃えを乱す)", sec["id"])
 
 
 def _check_structuring_1_1_0(html, structure, html_sections, th, add) -> None:
@@ -651,9 +835,9 @@ def _check_uiux_shape(html, facts, add) -> None:
         add("uiux-shape", "warn", "@media print ブロックが無い (print/A4 読了体験の非退行を検査できない)")
     elif "190mm" not in print_css and "--report-width" not in print_css and ".report" not in print_css:
         add("uiux-shape", "warn", "@media print 内に .report 幅規則 (190mm/A4) が無い")
-    # 狭画面 breakpoint (インライン TOC への graceful degrade)
+    # 狭画面 breakpoint (折り畳み可能な sticky TOC への graceful adaptation)
     if not re.search(r"@media[^{]*max-width", css_l):
-        add("uiux-shape", "warn", "狭画面 breakpoint (@media max-width) が無い (インライン TOC への degrade を検査できない)")
+        add("uiux-shape", "warn", "狭画面 breakpoint (@media max-width) が無い (sticky TOC の狭画面適応を検査できない)")
     # card 最小幅 (狭幅で潰れない grid)
     if "minmax(" not in css_l:
         add("uiux-shape", "warn", "grid の minmax( による card 最小幅指定が無い (狭幅で潰れる回帰)")
@@ -812,7 +996,7 @@ def check_report(html, structure=None, strict=False, thresholds=None) -> dict:
     # -- C6: 1.1.0 構造化ゲート (下限=羅列を塞ぐ / 上限=過剰構造化・強調過多を塞ぐ) --------
     _check_structuring_1_1_0(html, structure, sections, th, add)
 
-    # -- C8: 1.3.0 本質図解カバレッジ (論理節の図解不在=『なんとなく表』を塞ぐ) ----------
+    # -- C8: 本質図解カバレッジ (論理節の図解不在=『なんとなく表』を塞ぐ) ----------
     _check_essence_visual(structure, add)
 
     # -- C7: 1.2.0 構造化ゲート (through-line / 色覚非依存 / reportType横断 / render忠実度) --------
@@ -820,6 +1004,10 @@ def check_report(html, structure=None, strict=False, thresholds=None) -> dict:
 
     # -- C9: 第3次 UI/UX shape (screen接合トークン/print非退行/狭画面degrade/aria-current/タイポレンジ) --
     _check_uiux_shape(html, facts, add)
+
+    # -- C25: R9 溶け込み契約 ((p) 図解↔本文の重複 / (q) 図版の占有) ----------------
+    _check_r9_blend(sections, th, add)
+    _check_r9_occupancy(sections, add)
 
     n_fail = sum(1 for f in findings if f["severity"] == "fail")
     n_warn = sum(1 for f in findings if f["severity"] == "warn")

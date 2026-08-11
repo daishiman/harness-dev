@@ -1,0 +1,39 @@
+{
+  "diagramId": "d-pyramid",
+  "type": "pyramid",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.34 ピラミッド型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 480 416" },
+  "title": "自社に残す業務の階層",
+  "message": "上へ行くほど手放せない。外へ出す判断は下の二段からしか始まらない。",
+  "orientation": "apex-up",
+  "nodes": [
+    { "id": "s1", "label": "中核", "tier": 1, "style": "focal" },
+    { "id": "s2", "label": "差別化の源泉", "tier": 2, "style": "plain" },
+    { "id": "s3", "label": "標準化した業務", "tier": 3, "style": "plain" },
+    { "id": "s4", "label": "外部に任せる", "tier": 4, "style": "plain" },
+    { "id": "s5", "label": "やめてよい作業", "tier": 5, "style": "plain" }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["s1"],
+    "reason": "焦点は頂点に置く。最下段に置くと「上ほど希少」という向きの主張が消える"
+  },
+  "annotations": [
+    { "text": "上ほど動かせない", "anchor": "s1" },
+    { "text": "序列の軸は「上ほど代替不能」。幅は件数ではない", "anchor": "figure-bottom" },
+    { "text": "色は焦点の 1 段だけ。段の境目は「他社が同じものを用意できるか」", "anchor": "figure-bottom" }
+  ],
+  "ordering": { "axis": "上ほど代替不能", "widthMeansQuantity": false },
+  "tierCriterion": "他社が同じものを用意できるか",
+  "geometry": {
+    "apex": [240, 40],
+    "baseY": 360,
+    "baseHalfWidth": 216,
+    "tierHeight": 64,
+    "halfWidthAt": [44, 88, 128, 172]
+  },
+  "caption": "頂点から下へ順に読む。段ごとの色は付けていないので、序列を語っているのは位置と幅だけであり、色が付いた一段が今の議論の対象である。"
+}

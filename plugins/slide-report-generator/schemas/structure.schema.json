@@ -352,17 +352,20 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["label", "color"],
+                "required": ["label"],
                 "additionalProperties": false,
                 "properties": {
                   "label": { "type": "string", "maxLength": 40 },
-                  "color": { "$ref": "#/$defs/accentColorEnum" },
+                  "kind":  { "type": "string", "enum": ["fill", "line", "dashed", "double", "thick"], "default": "fill", "description": "見本の形。fill=塗りの四角 (分類色)、line/dashed/double/thick=線 (関係の種類)。線種で意味を分けた図に fill の凡例を出しても読み解けない。" },
+                  "color": { "$ref": "#/$defs/accentColorEnum", "description": "任意。色で意味を分けていない凡例 (線種だけの凡例) に色を書かせないため、必須にしない。省略時は fill なら muted、線なら ink。" },
                   "icon":  { "type": "string", "pattern": "^fa-" }
                 }
               }
             }
           }
-        }
+        },
+        "source": { "type": "string", "maxLength": 120, "description": "図が使った数値の出所。図の**内側**下端へ 1 行で描く。figcaption に書いた出所は図だけ引用された瞬間に消えるので、根拠は図と同じ矩形の中に置く (情報契約 §I1)。例: 社内請求実績・重複除外後 n=214" },
+        "asOf": { "type": "string", "maxLength": 60, "description": "データの時点・期間。相対表記にしない (「4月」ではなく「2026/4」)。source と併記され「・」で連結される。" }
       }
     },
 
@@ -389,7 +392,8 @@
         },
         "shape":    { "type": "string", "enum": ["rect", "round", "circle", "hex", "diamond", "card"], "default": "rect" },
         "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted", "warning"], "default": "normal" },
-        "group":    { "type": "string", "description": "diagramGroup.id への参照。" }
+        "group":    { "type": "string", "description": "diagramGroup.id への参照。" },
+        "role":     { "type": "string", "enum": ["core", "center", "hub", "legend", "note", "title", "caption"], "description": "線を持たないことが正しい節点の宣言。輪の中心・凡例・注記など。孤立節点検査 (I-REL-ISO) の免除はこのキーだけを根拠にする。id の綴りは識別子であって宣言ではないので免除に使わない。" }
       }
     },
 
@@ -597,6 +601,11 @@
         "diagram-fabe-horizontal", "diagram-fabe-vertical", "diagram-fabe-grid",
         "diagram-fabe-timeline", "diagram-fabe-circular",
         "diagram-persona", "diagram-icon-grid", "diagram-funnel",
+
+        "diagram-architecture", "diagram-data-flow", "diagram-er",
+        "diagram-sequence", "diagram-state", "diagram-swimlane",
+        "diagram-high-level", "diagram-it-state", "diagram-medallion",
+        "diagram-dp-integration",
 
         "chart-bar-vertical", "chart-bar-horizontal", "chart-bar-stacked",
         "chart-line", "chart-pie", "chart-clock-pie",
@@ -1798,7 +1807,11 @@
             "diagram-point-cards", "diagram-aidma", "diagram-star",
             "diagram-persona", "diagram-icon-grid", "diagram-funnel",
             "diagram-matrix", "diagram-table-advanced", "diagram-parallel",
-            "chart-scatter", "chart-gauge"
+            "chart-scatter", "chart-gauge",
+            "diagram-architecture", "diagram-data-flow", "diagram-er",
+            "diagram-sequence", "diagram-state", "diagram-swimlane",
+            "diagram-high-level", "diagram-it-state", "diagram-medallion",
+            "diagram-dp-integration"
           ]
         },
         "content": {

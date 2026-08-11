@@ -1,0 +1,36 @@
+{
+  "diagramId": "f-kanban",
+  "type": "kanban",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-extended.md §11.41 カンバンボード型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "問い合わせ改善チームの現在地",
+  "message": "止まっているのは着手前ではなく、着手済みが WIP 上限を超えて滞留している側である。",
+  "asOf": "2026/7/31",
+  "doneDefinition": "手順書を更新し、次の担当へ引き継ぎ済み",
+  "columns": [
+    { "id": "todo", "label": "未着手", "wipLimit": null },
+    { "id": "doing", "label": "着手中", "wipLimit": 2, "style": "focal" },
+    { "id": "done", "label": "完了", "wipLimit": null, "note": "2026/6 完了ぶん" }
+  ],
+  "nodes": [
+    { "id": "c1", "column": "todo", "label": "FAQ の分類やり直し", "sub": "担当未定", "style": "plain" },
+    { "id": "c2", "column": "todo", "label": "定型返信の棚卸し", "sub": "担当未定", "style": "plain" },
+    { "id": "c3", "column": "todo", "label": "問い合わせ種別の統合", "sub": "担当未定・台帳統合の後", "dependsOn": "c7", "style": "plain" },
+    { "id": "c4", "column": "doing", "label": "受付フォームの改修", "sub": "3週目", "style": "plain" },
+    { "id": "c5", "column": "doing", "label": "一次回答テンプレ化", "sub": "2週目", "style": "plain" },
+    { "id": "c6", "column": "doing", "label": "電話導線の見直し", "sub": "5週目・上限超過", "style": "focal" },
+    { "id": "c7", "column": "done", "label": "問い合わせ台帳の統合", "sub": "2026/6 完了", "style": "plain" },
+    { "id": "c8", "column": "done", "label": "エスカレーション基準", "sub": "2026/6 完了", "style": "plain" }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["doing", "c6"],
+    "reason": "焦点は「上限を超えている列」と「超過を作っている 1 枚」の 2 件だけ。カードの重要度で色を付けない"
+  },
+  "annotations": [],
+  "caption": "三つの列を左から右へ数えてほしい。真ん中の列だけが決めた枚数を超えており、五週目に入った一枚がその原因になっている。"
+}

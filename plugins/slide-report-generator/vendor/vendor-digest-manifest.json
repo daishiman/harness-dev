@@ -1,6 +1,6 @@
 {
  "version": 1,
- "purpose": "vendor whole-tree byte copy の再現性アンカー。byte-parity 検査 (P08/P09) の比較基準は本 manifest であり、移植元 live tree ではない。移植元不在/更新済み環境でも本 manifest との照合で byte 一致を判定する。",
+ "purpose": "upstream byte-pin と明示的な plugin-local overlay を一体で検証する vendor integrity アンカー。subtrees[].files は移植元 byte の比較基準、local_fork_managed は意図的 fork の semantic 回帰契約である。",
  "upstream_name": "presentation-slide-generator",
  "upstream_version": "v8.4.2",
  "source_root": "~/dev/dev/ObsidianMemo/.claude/skills/presentation-slide-generator/",
@@ -50,6 +50,17 @@
    "strategy": "semantic-additive",
    "note": "16:9検証とslide screenshotをplugin-local Chromiumで実行するworker。"
   }
+ },
+ "local_fork_managed": {
+  "note": "以下は upstream pin を上書きする意図的な plugin-local overlay。byte-parity 対象から黙って除外せず、owner と semantic/test gate を明示する。ここに無い pinned file の不一致は FAIL。",
+  "vendor/scripts/svg-builder.cjs": {"strategy": "semantic-contract", "owner": "diagram-runtime", "gates": ["lint-vendor-parity.py", "test_diagram_goldens.py"]},
+  "vendor/scripts/svg-kit.cjs": {"strategy": "semantic-contract", "owner": "diagram-runtime", "gates": ["lint-vendor-parity.py", "test_diagram_goldens.py", "validate-svg-diagram.py --self-test --strict"]},
+  "vendor/scripts/svg-structures.cjs": {"strategy": "semantic-contract", "owner": "diagram-runtime", "gates": ["lint-vendor-parity.py", "test_diagram_goldens.py"]},
+  "vendor/scripts/render-slide.cjs": {"strategy": "semantic-contract", "owner": "slide-runtime", "gates": ["lint-vendor-parity.py", "test_diagram_goldens.py"]},
+  "vendor/scripts/d3-bootstrap.cjs": {"strategy": "semantic-contract", "owner": "d3-runtime", "gates": ["lint-vendor-parity.py", "test_d3_bootstrap.py"]},
+  "vendor/scripts/validate-structure.js": {"strategy": "semantic-contract", "owner": "structure-gate", "gates": ["lint-vendor-parity.py", "npm test"]},
+  "vendor/scripts/render-report.js": {"strategy": "semantic-contract", "owner": "report-runtime", "gates": ["lint-vendor-parity.py", "npm test>=80%"]},
+  "vendor/scripts/style-builder.cjs": {"strategy": "semantic-contract", "owner": "shared-style-runtime", "gates": ["lint-vendor-parity.py", "npm test"]}
  },
  "excluded_dirs": [
   "node_modules",

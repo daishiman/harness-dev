@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C25-01",
+  "reason": "WP-C 検証中に lint-plugin-composition.py exit1 を確認。HEAD 時点の内容でも fail する既存負債: (1) malformed hook ref hooks/hook-postgen-eval.py (2) PostToolUse hook wiring mismatch composition0/plugin.json1 (3) commands/slide-report-generate.md -> scripts/validate-output-mode.py の calls 依存欠落。diagram-migration-1.4.0 の変更とは無関係だが completeness ゲート系の潜在リスク",
+  "discovered_at_artifact": "plugins/slide-report-generator/plugin-composition.yaml",
+  "proposed_node": {
+    "id": "PX-COMPOSITION-DRIFT-01",
+    "title": "plugin-composition.yaml の hook ref 形式・PostToolUse 配線・command calls 依存の既存 drift を修正",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "done",
+    "write_scope": "plugins/slide-report-generator/plugin-composition.yaml"
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C25"
+  },
+  "resolution": {
+    "resolved_at": "2026-08-10T22:39:05+09:00",
+    "summary": "plugin-composition.yaml の hook ref、PostToolUse 配線、command calls を同期し、script実体18本との1:1 completeness検査も追加した。",
+    "evidence": [
+      "lint-plugin-composition.py exit 0",
+      "validate-plugin-completeness.py exit 0"
+    ]
+  }
+}

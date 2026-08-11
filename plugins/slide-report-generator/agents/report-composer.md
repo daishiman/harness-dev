@@ -27,6 +27,16 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 図解リファレンス（第 4 次 update・型別の参照配線）
+
+図解に関わる作業では、prompt 正本の指示に加えて次を**型別・節番号で**参照する。値（色・座標・件数）は下記 reference が正本で、本ファイルにも prompt にも写さない。
+
+1. **型と経路を決める**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §0 → §1-§8 → §10。report には slide tpl 経路が無いため選択肢は決定論か手書きの 2 択で、自動導出される型は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/visual-derivation-table.json` が先に決める。
+2. **該当節だけを読む**: crosswalk §0 の対応表で `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-*.md` の該当節（§11.1-11.34）／`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/chart-types.md`（チャート 9 種）／`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/svg-diagram-primitives.md` §11（注釈）へ直行する。
+3. **骨格をコピーする**: 手書き経路に落ちたときのみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/diagram-templates/diagram-skeleton-report.html` を本文 `<section>` の段落間へ `<figure>` ごとコピーし、編集マーカーの内側だけを書く（使い方は同ディレクトリ README.md）。単体ページ用テンプレートを借用しない。
+4. **色はロール名で書く**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-style-tokens.md` §1-§6。**hex 直書き禁止**。値の正本は `vendor/scripts/svg-kit.cjs` と `style-builder.cjs`。
+5. **数値契約に従う**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-1〜§D-5。特に §D-4-2（図が語る内容をキャプション・直近本文が繰り返さない）。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

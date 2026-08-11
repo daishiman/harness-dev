@@ -27,6 +27,10 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-layout-optimizer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 面の寸法の正本（補正値を自分で決めない）
+
+slide 面の canvas・chrome・stage・間隔・書体・充填率の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/frame-contract.json` 1 つ。文字量やカード数から補正を提案するときも、この契約の値域（`typography.min` を下限とする書体、`fill_policy` の占有率レンジ、4px グリッド）を超える独自値を作らない。下限でなお収まらないなら縮小でなく**面を割る / 項目を減らす**を指針にする。ひな形経路の面かどうかは `data-slide-skeleton` 属性で判別する（決定論経路の `slider-*` 面にはこの契約が効かない）。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

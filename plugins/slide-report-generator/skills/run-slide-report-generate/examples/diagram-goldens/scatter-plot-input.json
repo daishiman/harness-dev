@@ -1,0 +1,44 @@
+{
+  "diagramId": "f-scatter-plot",
+  "type": "scatter-plot",
+  "surface": "report",
+  "figureWidth": "text",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "reference": "references/chart-types.md §13.7 散布図",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540", "tier": "md" },
+  "title": "利用頻度と更新率の関係",
+  "message": "利用頻度が高い契約ほど更新率も高いが、頻度が低いまま更新した 1 社だけが線から外れている。",
+  "axes": {
+    "x": { "label": "月あたりのログイン日数", "min": 0, "max": 24, "unit": "日", "ticks": [0, 6, 12, 18, 24] },
+    "y": { "label": "更新率", "min": 0, "max": 100, "unit": "%", "ticks": [25, 50, 75, 100], "note": "0 起点" }
+  },
+  "observationUnit": "1 点 = 1 社",
+  "provenance": "2026/1-2026/6・n=15",
+  "points": [
+    { "x": 2, "y": 38, "style": "plain" },
+    { "x": 3, "y": 45, "style": "plain" },
+    { "x": 5, "y": 52, "style": "plain" },
+    { "x": 5, "y": 84, "style": "focal", "note": "利用は少ないまま更新した 1 社" },
+    { "x": 6, "y": 48, "style": "plain" },
+    { "x": 8, "y": 61, "style": "plain" },
+    { "x": 9, "y": 58, "style": "plain" },
+    { "x": 11, "y": 70, "style": "plain" },
+    { "x": 12, "y": 66, "style": "plain" },
+    { "x": 14, "y": 74, "style": "plain" },
+    { "x": 15, "y": 81, "style": "plain" },
+    { "x": 17, "y": 79, "style": "plain" },
+    { "x": 18, "y": 88, "style": "plain" },
+    { "x": 20, "y": 86, "style": "plain" },
+    { "x": 22, "y": 93, "style": "plain" }
+  ],
+  "trendLine": { "from": { "x": 2, "y": 40 }, "to": { "x": 22, "y": 92 }, "style": "破線", "note": "破線は目視の補助線 (回帰ではない)" },
+  "emphasis": {
+    "focal": ["x=5 / y=84 の 1 点"],
+    "reason": "散布図の焦点は分布そのものではなく、分布から外れた 1 点に置く。点を群ごとに塗り分けると相関ではなく分類の図に変わる"
+  },
+  "annotations": [
+    { "target": "x=5 / y=84 の 1 点", "text": "例外の 1 社", "leader": "水平" }
+  ],
+  "caption": "点の並びが左下から右上へ帯を作っていることを先に確かめてほしい。そのうえで、帯から一つだけ上に外れている点を見ると、この章で扱う問いが立ち上がる。"
+}

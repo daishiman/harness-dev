@@ -1,0 +1,140 @@
+<!--
+  table-advanced-golden.html — ゴールデン実例: 高度な表型 (report 骨格)
+
+  入力: table-advanced-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-comparison.md §11.9 高度な表型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict table-advanced-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.9 のコード例から落としたものが 4 つある。いずれも検査側へ寄せた判断である。
+   ・thead と進捗バーの linear-gradient → 面は単色で塗る。グラデーションは
+     paper / paper-2 の 2 段という面の階層を 3 段目へ増やしてしまう
+     (style-tokens §1 の paper-2 の使用制限)。
+   ・4 色のステータスバッジ (success / warning / error / info) → 緑
+     (#98BB6C) はそもそも palette に無く D10 が落とす。加えて行ごとに色を配ると
+     §D-2 #3 の accent 上限 2 件を必ず超え、どの行を見るべきかを図が指さなくなる。
+     バッジは面を paper-2 + soft 枠に統一し、区別は文字が担う。
+   ・number-cell の 'JetBrains Mono' 指定 → R9-15 (書体は成果物の
+     --font-base / --font-mono のみ) と D13。数値は右揃えで桁を揃えれば足りる。
+   ・action-btn の hover scale と var(--bg-dark) → R9-14 (影・変形を持たない) と
+     palette 外の色。読む図に操作の見た目は要らない。
+
+  行の強調 (§11.9 の row-highlight) だけは残した。焦点 1 行を指す語彙として
+  accent-tint の塗り + accent の枠がそのまま使えるためで、色は accent 1 色に絞ってある。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-table-advanced"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-table-advanced-caption">
+
+    <defs>
+      <marker id="f-table-advanced-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-table-advanced-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-table-advanced-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 表の地と見出し帯 (面の階層は 2 段まで・行を交互に塗り分けない) -->
+    <rect x="32" y="64" width="896" height="368" rx="6"
+          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="32" y="64" width="896" height="48" fill="#F8F7F0"/>
+
+    <!-- 罫。見出しを分ける 1 本だけ rule-solid -->
+    <line x1="32" y1="112" x2="928" y2="112" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="280" y1="64" x2="280" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="440" y1="64" x2="440" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="720" y1="64" x2="720" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="176" x2="928" y2="176" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="240" x2="928" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="304" x2="928" y2="304" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="368" x2="928" y2="368" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 焦点は 1 行だけ。accent-tint の塗りと accent の枠はセットで使う -->
+    <rect x="32" y="176" width="896" height="64"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+
+    <!-- 見出し行 -->
+    <text x="48" y="92" font-size="14" fill="var(--fg-dim, #54546d)">システム</text>
+    <text x="424" y="92" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">停止許容（時間）</text>
+    <text x="456" y="92" font-size="14" fill="var(--fg-dim, #54546d)">移行進捗（全工程数比 %）</text>
+    <text x="800" y="92" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">状態</text>
+
+    <!-- 進捗バー。溝は rule、埋まりは muted。焦点の行だけ accent で塗る -->
+    <rect x="456" y="140" width="200" height="8" rx="4" fill="#DCD7BA"/>
+    <rect x="456" y="140" width="160" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
+    <rect x="456" y="204" width="200" height="8" rx="4" fill="#DCD7BA"/>
+    <rect x="456" y="204" width="80" height="8" rx="4" fill="var(--sakura-pink, #D27E99)"/>
+    <rect x="456" y="268" width="200" height="8" rx="4" fill="#DCD7BA"/>
+    <rect x="456" y="268" width="200" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
+    <rect x="456" y="332" width="200" height="8" rx="4" fill="#DCD7BA"/>
+    <rect x="456" y="332" width="40" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
+    <rect x="456" y="396" width="200" height="8" rx="4" fill="#DCD7BA"/>
+    <rect x="456" y="396" width="120" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
+
+    <!-- 状態バッジ。面は 1 種類に統一し、区別は文字が担う (色で区別しない) -->
+    <rect x="744" y="128" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <rect x="744" y="192" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <rect x="744" y="256" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <rect x="744" y="320" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <rect x="744" y="384" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+
+    <!-- 第 1 行 -->
+    <text x="48" y="148" font-size="14" fill="var(--fg, #43436c)">受注管理</text>
+    <text x="424" y="148" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">4時間</text>
+    <text x="712" y="148" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">80%</text>
+    <text x="800" y="148" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">検証中</text>
+
+    <!-- 第 2 行 (焦点) -->
+    <text x="48" y="212" font-size="14" fill="var(--fg, #43436c)">在庫連携</text>
+    <text x="424" y="212" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">1時間</text>
+    <text x="712" y="212" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">40%</text>
+    <text x="800" y="212" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">遅延</text>
+
+    <!-- 第 3 行 -->
+    <text x="48" y="276" font-size="14" fill="var(--fg, #43436c)">会計連携</text>
+    <text x="424" y="276" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">8時間</text>
+    <text x="712" y="276" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">100%</text>
+    <text x="800" y="276" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">完了</text>
+
+    <!-- 第 4 行 -->
+    <text x="48" y="340" font-size="14" fill="var(--fg, #43436c)">顧客ポータル</text>
+    <text x="424" y="340" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">0時間</text>
+    <text x="712" y="340" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">20%</text>
+    <text x="800" y="340" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">未着手</text>
+
+    <!-- 第 5 行 -->
+    <text x="48" y="404" font-size="14" fill="var(--fg, #43436c)">社内ワークフロー</text>
+    <text x="424" y="404" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">24時間</text>
+    <text x="712" y="404" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">60%</text>
+    <text x="800" y="404" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">検証中</text>
+
+    <!-- バッジの判定条件・列の定義・時点 (I1 / I3 / I4 / I-CMP)。
+         引き出し線の注釈は矢じりを外した 1 行として最下段へ残してある。 -->
+    <text x="32" y="460" font-size="12" fill="var(--fuji-gray, #8a8980)">行の並びは順不同。凡例  完了 = 本番移行済 ／ 検証中 = 計画どおり ／ 遅延 = 計画比 2 週超 ／ 未着手 = 着手日が未定</text>
+    <text x="32" y="484" font-size="12" fill="var(--fuji-gray, #8a8980)">停止許容 = 業務が止まるまでの猶予（0 時間は無停止でしか移行できない）。移行進捗 = 全工程数に対する完了工程の割合</text>
+    <text x="32" y="508" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/7/31 時点・対象 5 システム</text>
+    <text x="928" y="508" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">停止許容が短い行ほど遅れが効く</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-table-advanced-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 5</span>
+    上から順に眺めるのではなく、枠の立った一行だけを見てほしい。棒の短さと許される停止の短さが同じ行で重なっているのは、そこだけである。
+  </figcaption>
+
+</figure>

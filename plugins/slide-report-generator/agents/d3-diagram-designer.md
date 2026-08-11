@@ -27,6 +27,14 @@ D3 インタラクティブ図解を独立 context で設計し両モードの�
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-d3-diagram-designer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 図解リファレンス（第 4 次 update・型別の参照配線）
+
+図解に関わる作業では、prompt 正本の指示に加えて次を**型別・節番号で**参照する。値（色・座標・件数）は下記 reference が正本で、本ファイルにも prompt にも写さない。
+
+- **型カタログ**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §0（4 つの名前空間の対応）→ §1-§8（特に §6 量・分布）→ §10。インタラクションを要さない意図なら決定論ビルダーまたは静的 CSS 型の方が安く堅いため、D3 を選ぶ前に代替経路の有無を確認する。
+- **数値契約**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-1 4px グリッド / §D-2 複雑度予算（系列数・ノード数・注釈数）/ §D-3 コネクタ 5 原則 / §D-4-1 占有率 / §D-4-3 文脈適合 / §D-4-4 配置と型の接続 / §D-5 annotation の文法。
+- **色ロール**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-style-tokens.md` §1 ロール表 / §2 系列色と使用制限 / §3 focal rule / §5 線幅・角丸・影 / §6 書体。**hex 直書き禁止**。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

@@ -40,14 +40,75 @@ from pathlib import Path
 # 解決順: (a) env CLAUDE_PLUGIN_ROOT/scripts → (b) 上方探索 (vendored plugin 内コピーを dev/install 双方で発見)
 # → (c) 全滅時は最小 fallback。vendored コピー (plugins/harness-creator/scripts/) が常在するため
 # fallback は実質 dead code (多層防御の最終安全弁)。
+def _manifest_name(root: Path) -> str | None:
+    """<root>/.claude-plugin/plugin.json の name。読めなければ None (raise しない)。"""
+    try:
+        manifest = json.loads(
+            (root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+    except Exception:
+        return None
+    return manifest.get("name") if isinstance(manifest, dict) else None
+
+
+def _self_plugin_name() -> str | None:
+    """このファイル自身が属する plugin の manifest name。
+
+    リテラル直書きは制御リテラル散在として禁止 (tests/test_dogfooding_boundary.py)、
+    SSOT 定数は「SSOT を探すのに plugin root が要る」循環のため使えない (この関数の
+    結果が _load_feedback_contract_ssot() の入力になる)。__file__ は循環せず改名にも
+    自動追従する第三の出所。plugin は入れ子にならないので、上向きに最初に見つかる
+    manifest が自 plugin のもので確定する。
+    """
+    try:
+        parents = Path(__file__).resolve().parents
+    except Exception:
+        return None
+    for parent in parents:
+        name = _manifest_name(parent)
+        if name:
+            return name
+    return None
+
+
+def _hc_env_root() -> Path | None:
+    """env から自 plugin root を得る。他 plugin を指す値は拒否する。
+
+    他 repo が .claude 平置き projection で本 plugin を借用している場合、
+    env CLAUDE_PLUGIN_ROOT は **別 plugin** を指していることがある
+    (ObsidianMemo では ubm-goal-setting)。空ではなく「存在するが別物」なので
+    `if env:` や isdir 判定では弾けない。manifest の name で自 plugin か検証する。
+    借用側は HC_ROOT を設定すれば明示指定できる。
+    拒否するのは manifest が読めて **別 plugin と確認できた** 場合だけにする。
+    判定材料が無い (manifest 不在) env は従来どおり採用し、既存挙動を後退
+    させない。vendored コピー先 (company-master / skill-intake) でも同様。
+    本関数も import-time に呼ばれるため絶対に raise しない。
+    """
+    expected = _self_plugin_name()
+    if not expected:
+        return None
+    for _var in ("HC_ROOT", "CLAUDE_PLUGIN_ROOT"):
+        raw = os.environ.get(_var)
+        if not raw:
+            continue
+        try:
+            root = Path(raw).expanduser()
+        except Exception:
+            continue
+        _name = _manifest_name(root)
+        if _name is None or _name == expected:
+            return root.resolve()
+    return None
+
+
 def _load_feedback_contract_ssot():
     """feedback_contract_ssot を fail-soft に解決する (絶対に raise しない)。"""
     import importlib.util
 
     candidates: list[Path] = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    plugin_root = _hc_env_root()
     if plugin_root:
-        candidates.append(Path(plugin_root) / "scripts" / "feedback_contract_ssot.py")
+        candidates.append(plugin_root / "scripts" / "feedback_contract_ssot.py")
     here = Path(__file__).resolve()
     for ancestor in here.parents:
         candidates.append(ancestor / "scripts" / "feedback_contract_ssot.py")
@@ -116,9 +177,11 @@ def _git_repo_root() -> str | None:
     """queue / verdict の基準ルートを解決する。
 
     (a) git rev-parse が成功すればその repo root (dev での従来挙動を維持)。
-    (b) 失敗時 (git 外 / 単独 install) は env CLAUDE_PLUGIN_ROOT を基準にする。
-        CLAUDE_PLUGIN_ROOT は plugin ディレクトリを指すため、eval-log を
-        その配下へ self-relative に落とし、**無関係なユーザ cwd を汚染しない**。
+    (b) 失敗時 (git 外 / 単独 install) は env (HC_ROOT / 自 plugin を指す
+        CLAUDE_PLUGIN_ROOT) を基準にする。これは plugin ディレクトリを指すため、
+        eval-log をその配下へ self-relative に落とし、**無関係なユーザ cwd を
+        汚染しない**。他 plugin を指す CLAUDE_PLUGIN_ROOT は採用しない
+        (借用 repo で他 plugin の配下へ eval-log を書くのを防ぐ)。
     (c) どちらも無ければ None を返し、呼び出し側で queue 書込を silent skip する
         (append-only 副作用境界の宣言と整合・exit 0 維持)。
     旧実装は失敗時 os.getcwd() を返し、ユーザの作業ディレクトリに
@@ -136,9 +199,9 @@ def _git_repo_root() -> str | None:
             return root
     except Exception:
         pass
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root and os.path.isdir(plugin_root):
-        return plugin_root
+    plugin_root = _hc_env_root()
+    if plugin_root and plugin_root.is_dir():
+        return str(plugin_root)
     return None
 
 

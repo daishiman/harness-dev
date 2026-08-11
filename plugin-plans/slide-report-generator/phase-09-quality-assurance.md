@@ -44,7 +44,8 @@ applicability:
 - [ ] 全 25 component で P0 lint が component_kind 別に exit0。
 - [ ] build-trace coverage が全 component で PASS し、schema parity(skill は skill-brief 主要フィールドへ無加工写像)が一致。
 - [ ] content-review verdict=PASS・sha_match=true を独立 SubAgent の現 SHA 再生成で得ている。
-- [ ] vendor byte-parity が lint-vendor-parity.py (比較基準=`vendor-digest-manifest.json`・additive_new_files は除外集合) で exit0。
+- [ ] vendor integrity (upstream byte-pin + manifest管理local overlay) が lint-vendor-parity.py で exit0。
+- [ ] 図解移植 (C20-C28) の governance glue 検査 (`validate-svg-diagram.py` D14+ の CSS/HTML 図解・テンプレート機械検証・`lint-contract-drift.py` の `diagram-style-tokens.md` 整合検査) が exit0 で通過し、C12(S27-S29)・C24(配置適合/重複禁止/文脈適合)の積極評価 verdict が独立 SubAgent の現 SHA 再生成で PASS を得ている。
 
 ## 参照情報
 - component_kind 別 p0_lint 集合(`specfm.P0_LINT_BY_KIND`)。

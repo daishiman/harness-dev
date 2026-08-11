@@ -10,7 +10,7 @@
 ## 0. 中核設計（不変原則）
 
 1. **共通コア＋2モード**: 1 plugin 内で `output_mode = slide | report` を分岐。意匠/技術層は単一SSOT共有、コンテンツ意図層のみモード別。
-2. **vendored Node engine（最重要・Python化禁止）**: 既存の Node.js/CJS 製レンダリング・画像・印刷エンジンは `vendor` surface として **byte 維持で携行**。skill/agent から `Bash(node *)` で起動する。stdlib script component へ書き換えない。
+2. **vendored Node engine（最重要・Python化禁止）**: 既存の Node.js/CJS 製エンジンは `vendor` surface へwhole-tree取込し、upstream非改変fileはbyte-pin、明示local overlayはowner付きsemantic contract + tests/goldensで管理する。skill/agentから`Bash(node *)`で起動し、stdlib scriptへ書き換えない。
 3. **slide↔report のコンテンツ区分**:
    - slide = 1スライド1メッセージ / chip強制 / 長文禁止(BP11-13) / 16:9 / 97 slideType
    - report = 読み物（文章多め可）/ セクション+段落 / 1項目1ビジュアル最適化 / HTMLレポート / 4 reportType
@@ -23,16 +23,24 @@
 | 種別 | 数 | 移植先 |
 |---|---|---|
 | sub-agent (`agents/*.md`) | 13 | sub-agent component（§3 C04-C16） |
-| references (`references/*.md`) | 42 (全名 = §1.1) | `references_config_assets` surface + report新規追加 |
+| references (`references/*.md`) | upstream 42 (全名 = §1.1)。現行は統合済み37 + 新規11 = 48 | `references_config_assets` surface |
 | Node scripts (`scripts/*.js/.cjs`) | 30 | `vendor` surface（byte携行）+ report新規 |
 | HTML templates (`scripts/templates/*.tpl`) | 118 | `vendor`/`references_config_assets` surface |
 | schemas (`schemas/*.json`) | 7 (真 schema 4 + example fixture 3) | `schemas` surface (真 schema 4 本) + report-structure schema 新設で真 schema 計5。example fixture 3 本 (example.structure.json/example.v8.structure.json/example-full.structure.json) は `vendor/schemas-fixtures/` へ byte 携行 |
 | assets (`assets/*`, d3-components, style genome) | 多数 | `references_config_assets`/`vendor` surface |
 | feedback (`feedback/*.md`) | 数件 | `references_config_assets`（運用知見・移植任意） |
 
-### 1.1 既存 references 42 本の名前正本（機械照合可能）
+### 1.1 upstream references 42 本と統合先
 
-> upstream (移植元) references は数だけでは実装と突合できないため名前を列挙する。移植先 `plugins/slide-report-generator/references/*.md`（直下のみ・`feedback/` サブディレクトリは除外）は **46 本**で、うち report 新規 4 本（`report-types.md` / `report-writing-rules.md` / `report-visual-strategy.md` / `mermaid-integration.md`）を除いた **42 本**が既存移植分に一致する。すなわち `references/*.md − report新規4 == 下記42名` が成立する（差分が出たら本リストを先に更新＝spec-first）。実測 46 − 4 = 42（2026-07-05 Glob 実測。数の偽装なし）。
+> 下記は upstream v8.4.2 の入力台帳であり、現行ファイル一覧ではない。現行 `references/*.md` は **48 本**（統合後に残る upstream 37 本 + 新規11本）。旧5本は重複を避けて統合され、次表が移管先の正本である。
+
+| upstream 旧ファイル | 現行の移管先 | 裁定 |
+|---|---|---|
+| `changelog.md` | git history + `references/feedback/*.md` | 変更履歴の二重正本を廃止 |
+| `diagram-chart.md` | `diagram-type-crosswalk.md` / `chart-types.md` / `diagram-layout-contract.md` | 型選定・作例・検査契約へ責務分割 |
+| `llm-script-separation.md` | `plugin-composition.yaml` / 各 agent prompt の Tools・責務境界 | 実行主体に近い契約へ統合 |
+| `slide-types-overview.md` | `slide-type-decision-tree.md` §2 / `diagram-type-crosswalk.md` | 旧固定数一覧を廃止し機械注釈付き索引へ統合 |
+| `svg-design-spec.md` | `spec-registry.md` §5 / `diagram-layout-contract.md` §D-1〜§D-6 / `svg-diagram-primitives.md` | 規則・数値・実装例へ責務分割 |
 
 1. `agenda-navigation.md`
 2. `ai-image-diagram-workflow.md`
@@ -77,7 +85,7 @@
 41. `visual-hierarchy-principles.md`
 42. `writing-rules.md`
 
-> 照合コマンド例: `ls -1 plugins/slide-report-generator/references/*.md | xargs -n1 basename | grep -vxE 'report-types\.md|report-writing-rules\.md|report-visual-strategy\.md|mermaid-integration\.md'` の 42 行が上記と一致する。
+> 照合は「旧42名との文字列一致」ではなく、上表の5移管先が存在し、現行48本に dangling link がないことで行う。
 
 ---
 

@@ -1,0 +1,30 @@
+{
+  "diagramId": "d-value-proposition",
+  "type": "value-proposition",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-business.md §11.12 バリュープロポジション型",
+  "placement": "方形",
+  "canvas": {"viewBox": "0 0 960 540", "step": "md"},
+  "title": "この仕組みが提供している価値",
+  "message": "価値の中心は機能数ではなく、現場が自力で回し続けられることである。",
+  "nodes": [
+    {"id": "core", "label": "現場だけで回る", "sub": "導入後の問い合わせは月1件", "style": "focal"},
+    {"id": "v1", "label": "入力が減る", "sub": "転記を自動で埋める", "style": "plain", "position": "top"},
+    {"id": "v2", "label": "差分が当日わかる", "sub": "締め日を待たない", "style": "plain", "position": "right"},
+    {"id": "v3", "label": "手順が残る", "sub": "担当交代でも続く", "style": "plain", "position": "bottom"},
+    {"id": "v4", "label": "既存と繋がる", "sub": "会計システムへ書き戻す", "style": "plain", "position": "left"}
+  ],
+  "relations": [
+    {"from": "core", "to": "v1", "kind": "contains"},
+    {"from": "core", "to": "v2", "kind": "contains"},
+    {"from": "core", "to": "v3", "kind": "contains"},
+    {"from": "core", "to": "v4", "kind": "contains"}
+  ],
+  "emphasis": {"focal": ["core"], "reason": "周囲の 4 つは中心を成り立たせる条件であって、並列の機能一覧ではない。焦点は中心 1 つに限る"},
+  "annotations": [{"text": "機能数ではここは語れない", "anchor": "core"}],
+  "customerSide": "顧客のジョブ: 締め日前に実績を把握する。ペイン: 転記が 1 件 40 分・月 60 件で、差分は締め後まで出ない。四方はゲイン、中心が提供価値。",
+  "commitment": "実行主体: 業務改革課 / 期限: 2026/9 末 / 費用: 初期 180 万円",
+  "provenance": "出所: 2026/4-6 の試行 3 社の実測 (n=3 社)。実線は成立の条件。",
+  "caption": "中心の枠を先に読み、そこから四方へ伸びる線をたどってほしい。周囲の四つは中心を成り立たせる条件であって、並列の機能一覧ではない。"
+}

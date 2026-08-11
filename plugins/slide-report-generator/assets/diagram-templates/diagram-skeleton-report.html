@@ -1,0 +1,127 @@
+<!--
+  diagram-skeleton-report.html — レポートの読書フロー内に置く図版ブロックの骨格
+
+  ===========================================================================
+  これは単体ページではない。HTML 断片である。
+  レポート本文の section 要素の中、段落と段落の間へ、この figure 要素ごと差し込む。
+  DOCTYPE も html 要素も head 要素も書かない。書くと成果物が壊れる。
+  ===========================================================================
+
+  スライド版 (diagram-skeleton-slide.html) との違い:
+    ・図版は「読書の流れを一度止めてから再開させる」ものなので figcaption が必須
+    ・高さは読書 viewport 高の 60% 以下 (R9-3)。1 画面を図が占有すると本文の流れが切れる
+    ・幅は本文幅 100% か全幅 bleed の 2 択 (R9-5)。中途半端な 70% 幅にしない
+    ・印刷 (A4) を通るので、図版の途中でページが割れない前提で高さを決める
+
+  LLM が書き換えてよいのは次の 4 箇所だけ:
+    [1] data-diagram-id   … この図解の一意 id (同一成果物内で重複させない)
+    [2] data-figure-width … "text" (本文幅) または "bleed" (全幅) の 2 択
+    [3] EDIT: 図解本体     … svg 要素の中身
+    [4] figcaption 要素    … 図番号ラベルとキャプション本文
+
+  守る契約 (詳細は各正本を読む):
+    ・色は references/diagram-style-tokens.md のロール表からのみ引く。hex を書かない
+    ・数値契約は references/diagram-layout-contract.md 第 4 次 update 章 (D-1 から D-5)
+    ・型の選び方は references/diagram-type-crosswalk.md
+    ・出力前に: python3 scripts/validate-svg-diagram.py [出力file]
+                python3 scripts/validate-report-visual.py [出力file]
+
+  ===========================================================================
+  使える色は次の 11 個だけ。
+
+    役割                       CSS 変数名        フォールバック
+    主テキスト・主ストローク   fg                #43436c
+    副テキスト・既定の矢印     fg-dim            #54546d
+    補助ラベル                 fuji-gray         #8a8980
+    焦点 (1 図 1-2 件)         sakura-pink       #D27E99
+    接続・外部呼び出し         wave-blue         #7E9CD8
+    系列色 2                   wave-aqua         #7FB4CA
+    系列色 4                   autumn-yellow     #DCA561
+    系列色 5                   spring-violet     #957FB8
+    カード地・マスク           (変数なし)        #FFFFFF
+    副次的な面                 (変数なし)        #F8F7F0
+    ヘアライン                 (変数なし)        #DCD7BA
+    焦点の塗り                 (変数なし)        rgba(210,126,153,0.14)
+
+  書式 (var 参照 + フォールバック) は下の defs にある marker の fill 属性が
+  実物の見本なので、そこから写すのが確実である。ここへ書式ごと転記しないのは、
+  XML コメントが二重ハイフンを含められず、CSS 変数名をコメントへ書いた瞬間に
+  パースできない SVG になるためである。
+
+  作図の数値:
+    ・線幅は 2.5 / 2 / 1.5 / 1.25 の 4 段だけ。1.25 を下回らない (D9)
+    ・座標・寸法・間隔・角丸は 4 の倍数 (D-1)。角丸は 4 / 6 / 8
+    ・フォントサイズは 14 以上 (D4)。軸ラベル等の例外のみ 12
+    ・影は付けない (R9-14)
+    ・描く順序: 下地 → コネクタ → ノード → ラベル
+
+  レポート固有の注意: SVG は本文幅 (約 804px) へ縮小されて表示される。
+  viewBox 960 なら実効 0.84 倍なので、14 の文字は約 11.8px で表示される。
+  周囲本文の 0.7-1.0 倍に収まっているか確認する (R9-6)。
+-->
+
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f1"
+        data-figure-width="text">
+
+  <!--
+    viewBox は svg-builder.cjs の CANVAS が正本 (幅固定・高さ 3 段)。
+    下の 960x540 は md 段 (16:9)。横帯の図は sm、縦積み・環状の図は lg を使う。
+    lg でも足りない量は段を増やして解決しない。載せる件数を減らす
+    (diagram-layout-contract.md の §2)。
+  -->
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f1-caption">
+
+    <defs>
+      <!--
+        矢印マーカー 3 種。形状は svg-kit.cjs の MARKER が正本
+        (w=8 / h=6 / refX=7 / refY=3)。この数値を変えない。
+
+        id は「図解 id + 役割」で作る。レポートは 1 ページに複数の図版が
+        載るため、id="arrow" のような汎用名は 2 枚目以降で衝突する。
+
+        下の fill 属性の書き方が、そのまま図解本体で使う色の書き方の見本である。
+      -->
+      <marker id="f1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f1-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!--
+      背景は塗らない。本文の地色の上に直接置く。
+      図版だけ白いカードにすると、印刷時に紙面へ矩形が浮き出て
+      本文の組版から切り離されて見える (R9 溶け込み契約違反)。
+    -->
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <!--
+    figcaption はレポートでは必須。省略しない。
+
+    構成: 図番号ラベル + 本文 40-120 字 (R9-9)
+    書くのは「図が語れないこと」= なぜこの図を見るのか / どこから読むのか / 何が結論か。
+
+    禁止:
+      ・図のラベル文字列をそのまま含める (R9-10)
+      ・「図 1: 業務フロー」だけで終える (命名は説明ではない)
+      ・本文が既に書いたことの繰り返し (R9-7 / R9-8)
+  -->
+  <figcaption id="f1-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label"><!-- EDIT: 図 1 --></span>
+    <!-- EDIT: キャプション本文 -->
+  </figcaption>
+
+</figure>

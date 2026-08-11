@@ -1,0 +1,31 @@
+{
+  "diagramId": "d-prep",
+  "type": "prep",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-business.md §11.18 PREP型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "日次照合へ切り替える",
+  "message": "結論より、なぜそう言えるかの一行が判断を変える。",
+  "nodes": [
+    { "id": "p1", "tag": "結論", "label": "日次照合へ切り替える", "sub": "経理課・2026/9 開始・追加費用なし (既存人員)", "style": "plain" },
+    { "id": "r", "tag": "理由", "label": "差分は時間が経つほど高くつく", "sub": "締め後の修正は 3 倍 (2026/1-6 実績・手戻り 42 件)", "style": "focal" },
+    { "id": "e", "tag": "例", "label": "2026/6 の 12 件はすべて締め後に発覚した", "sub": "調査に延べ 6 人日・対象は取引先 8 社", "style": "plain" },
+    { "id": "p2", "tag": "結論", "label": "2026/9 から日次で回す", "sub": "試行は経理一課のみ・前提は照合ツールの 2026/8 改修", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "p1", "to": "r", "kind": "flow", "weight": "secondary" },
+    { "from": "r", "to": "e", "kind": "flow", "weight": "secondary" },
+    { "from": "e", "to": "p2", "kind": "flow", "weight": "secondary" }
+  ],
+  "emphasis": {
+    "focal": ["r"],
+    "reason": "結論は 1 段目と 4 段目に二度出るので、そこを焦点にすると視線が二度落ちる。理由の 1 段だけを焦点にする"
+  },
+  "annotations": [
+    { "text": "例は一件で足りる", "anchor": "e" }
+  ],
+  "legendNote": "色は段の順序ではなく焦点を示す・破線は注記の引き出し",
+  "caption": "上から下へ順に読んでほしい。最初の一行だけを持ち帰ればよいが、色の付いた段が無いとその一行は相手の中で根拠を持たない。"
+}

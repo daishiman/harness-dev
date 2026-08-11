@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C16",
+  "component_kind": "sub-agent",
+  "name": "cross-deck-reviewer",
+  "builder": "run-build-skill",
+  "build_target": "plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+  "status": "success",
+  "summary": "変更なし route (sub-agent)。diagram-migration-1.4.0 では仕様変更が無く、既存成果物 plugins/slide-report-generator/agents/cross-deck-reviewer.md の現物確認・sub-agent 別 lint・plugin 完全性ゲートの決定論検証で receipt 機構導入前の証跡欠落 (bootstrap 債務) を解消した。",
+  "deviations": [
+    "LLM build は起動せず、決定論検証のみで success を記録 (変更なし route の bootstrap receipt 発行)"
+  ],
+  "evidence": [
+    "plugins/slide-report-generator/agents/cross-deck-reviewer.md"
+  ],
+  "inputs_consumed": [],
+  "handover": null,
+  "covered_task_ids": [
+    "P02-C16-01",
+    "P02-C16-02",
+    "P02-C16-03",
+    "P02-C16-04",
+    "P02-C16-05",
+    "P02-C16-06",
+    "P02-C16-07",
+    "P02-C16-08",
+    "P02-C16-09",
+    "P02-C16-10",
+    "P05-C16-01",
+    "P05-C16-02",
+    "P05-C16-03",
+    "P05-C16-04",
+    "P05-C16-05",
+    "P05-C16-06",
+    "P05-C16-07",
+    "P05-C16-08",
+    "P05-C16-09",
+    "P05-C16-10",
+    "P05-C16-11",
+    "P05-C16-12",
+    "P06-C16-01",
+    "P06-C16-02",
+    "P07-C16-01",
+    "P07-C16-02",
+    "P07-C16-03",
+    "P07-C16-04",
+    "P07-C16-05",
+    "P07-C16-06",
+    "P07-C16-07",
+    "P09-C16-01",
+    "P09-C16-02",
+    "P09-C16-03",
+    "P09-C16-04",
+    "P09-C16-05"
+  ],
+  "artifact_sha256": "c54b3370049830db058a42c10cf76ac3a2cee4cbb074042e375eb5f85a3ec271",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:29:04Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py plugins/slide-report-generator/agents/cross-deck-reviewer.md",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:29:03Z",
+      "completed_at": "2026-08-09T22:29:03Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:29:03Z",
+      "completed_at": "2026-08-09T22:29:04Z"
+    }
+  ]
+}

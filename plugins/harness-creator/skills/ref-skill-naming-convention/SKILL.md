@@ -51,7 +51,7 @@ Skill 命名規約の正本サマリ（第1〜16条）。
 
 1. 用途 → prefix選定（matrix 参照）
 2. role-suffix を付与（第3条）
-3. `python3 scripts/lint-skill-name.py SKILL.md` で第1〜5,7条検証
+3. `python3 ${HARNESS_ROOT:-.}/scripts/lint-skill-name.py SKILL.md` で第1〜5,7条検証
 
 ## Gotchas
 

@@ -150,7 +150,7 @@ last-audited: 2026-07-05
 |---------|------------------------------------------------|
 | `../references/spec-registry.md`（SR-ID 共通仕様） | C1（shared-spec一致）の正本。各 structure.md の共通仕様セクションが SR-ID 定義に一致するかの照合基準に使う |
 | `../references/post-generation-evaluation.md`（4条件・30種思考法） | 4条件判定（矛盾/漏れ/整合性/依存）とAgent A/B/Cの思考法配分の根拠に使う |
-| `../references/svg-design-spec.md` / `theme-style.md` | C11（CSS変数統一）・C13（印刷品質）・C14（a11y）の比較基準に使う |
+| `../references/spec-registry.md` §5 / `theme-style.md` | C11（CSS変数統一）・C13（印刷品質）・C14（a11y）の比較基準に使う |
 | 30種思考法（演繹・帰納・MECE・因果・メタ認知・アナロジー・システム思考・制約理論 等） | Agent A/B/Cの各分析手法として割当て、観点漏れを防ぐ検証フレームに使う |
 
 ## 5.6 評価軸: 検証項目（C1〜C15）

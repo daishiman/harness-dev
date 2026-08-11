@@ -209,11 +209,29 @@ def _sanitize_log_value(value: object, *, key: str = "") -> object:
 
 
 def is_harness_repository(repo_root: Path) -> bool:
-    """Target root が harness source checkout であることを 2 markers で fail-closed 確認する。"""
+    """Target root が harness source checkout であることを 2 markers で fail-closed 確認する。
+
+    注意: marker は ``plugins/harness-creator/`` 配下にあるため、consumer repo が
+    ``plugins/harness-creator -> <harness>/plugins/harness-creator`` の symlink で
+    plugin を借用していると、marker が symlink 越しに解決されて source checkout と
+    誤認される。誤認すると C01 --apply が consumer repo の ``.claude`` managed 領域を
+    書き換えてしまうため、borrowed plugin を source checkout として扱ってはならない。
+    """
     root = Path(repo_root).resolve()
     manifest = root.joinpath(*HARNESS_MANIFEST_REL)
     c01 = root.joinpath(*HARNESS_C01_REL)
     if not manifest.is_file() or not c01.is_file():
+        return False
+    # borrowed plugin ガード: plugins/harness-creator 自体が symlink なら借用であり
+    # source checkout ではない (resolve 済みの root からではなく未解決 path で判定する)。
+    if root.joinpath("plugins", "harness-creator").is_symlink():
+        return False
+    # symlink 以外の借用 (bind mount 等) も塞ぐため、marker の実体が root の子孫に
+    # 収まっていることを要求する。外へ出るなら borrowed とみなし fail-closed する。
+    try:
+        manifest.resolve().relative_to(root)
+        c01.resolve().relative_to(root)
+    except (OSError, ValueError):
         return False
     try:
         data = json.loads(manifest.read_text(encoding="utf-8"))

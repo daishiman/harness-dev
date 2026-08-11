@@ -1,0 +1,36 @@
+{
+  "diagramId": "d-bar-chart",
+  "type": "bar-chart",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/chart-types.md §13.1 縦棒グラフ",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "問い合わせ件数の推移",
+  "message": "8 月の急増は季節要因ではなく、6 月の仕様変更が積み上がった結果である。",
+  "series": [
+    {
+      "name": "問い合わせ件数",
+      "unit": "件",
+      "scale": { "min": 0, "max": 100, "ticks": [0, 20, 40, 60, 80, 100], "zeroBased": true },
+      "points": [
+        { "label": "2026/4", "value": 42 },
+        { "label": "2026/5", "value": 58 },
+        { "label": "2026/6", "value": 51 },
+        { "label": "2026/7", "value": 76 },
+        { "label": "2026/8", "value": 94 }
+      ]
+    }
+  ],
+  "provenance": {
+    "definition": "サポート一次受付の新規問い合わせ・受付日基準・重複と再送を除外",
+    "period": "2026/4-8 実績",
+    "inFigure": "集計: サポート一次受付の新規問い合わせ・受付日基準・重複と再送を除外（2026/4-8 実績）"
+  },
+  "emphasis": {
+    "focal": ["8月"],
+    "reason": "本文がこれから語る対象は 8 月の 94 件だけである。他の 4 本は比較の背景なので単色にまとめ、焦点 1 本にだけ accent を置く（style-tokens §2 の 4 条: 系列色と焦点色を同一図で混ぜない → focal パレット）"
+  },
+  "annotations": [],
+  "caption": "背は高さだけを比べてほしい。右端の一本だけが色を変えてあり、そこがこれから話す対象である。左の四本は比較のための背景にすぎない。"
+}

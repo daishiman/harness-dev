@@ -1,0 +1,97 @@
+<!--
+  bar-chart-golden.html — ゴールデン実例: 縦棒グラフ (slide 骨格)
+
+  入力: bar-chart-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/chart-types.md §13.1 縦棒グラフ
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict bar-chart-golden.html
+
+  §13.1 の作図文法 (Y 軸 + 目盛線 + 等間隔の棒 + 棒上の値ラベル + 下のカテゴリラベル)
+  だけを移し、配色と装飾は移していない。節のコード例は棒に linear-gradient と
+  hover 時の box-shadow を当てているが、R9-14 (影は常に 0) と style-tokens §5
+  (グラデーションは量を連続的に読ませる型のみ) に触れるので落とした。
+  棒 4 色の色分けも落としてある。5 本の棒は同じ 1 系列であって 5 系列ではない
+  (style-tokens §2: 系列色は「色でしか区別できない図」だけの語彙) ので、
+  焦点 1 本だけ accent、残りは同一色の focal パレットにしている。
+
+  目盛は 20 刻み。100 単位あたり 360px = 1 単位 3.6px で、棒の高さは
+  4 の倍数へ丸めてある (42 件 = 151.2px → 152px)。丸め幅は最大 2px で、
+  値ラベルが実数を書いているため図と数値は矛盾しない。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-bar-chart">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-bar-chart-caption">
+
+    <defs>
+      <marker id="d-bar-chart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-bar-chart-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-bar-chart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 目盛線 (下地。棒より先に描いて棒の裏へ回す) -->
+    <line x1="112" y1="388" x2="904" y2="388" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="316" x2="904" y2="316" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="244" x2="904" y2="244" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="172" x2="904" y2="172" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="100" x2="904" y2="100" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 軸 (目盛線より濃い。軸は rule-solid・線幅 2) -->
+    <line x1="112" y1="460" x2="904" y2="460" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="112" y1="96" x2="112" y2="460" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 目盛ラベル (軸ラベルの例外サイズ 12) -->
+    <text x="100" y="464" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">0</text>
+    <text x="100" y="392" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">20</text>
+    <text x="100" y="320" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">40</text>
+    <text x="100" y="248" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">60</text>
+    <text x="100" y="176" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">80</text>
+    <text x="100" y="104" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">100</text>
+    <text x="112" y="80" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">縦軸 件（0 起点・20 件刻み）</text>
+
+    <!-- 棒 (比較の背景。5 本は 1 系列なので色を分けない) -->
+    <rect x="120" y="308" width="96" height="152" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="288" y="252" width="96" height="208" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="456" y="276" width="96" height="184" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="624" y="188" width="96" height="272" fill="var(--wave-blue, #7E9CD8)"/>
+
+    <!-- 焦点の棒 (1 図 1 件。本文がこれから語る対象) -->
+    <rect x="792" y="120" width="96" height="340" fill="var(--sakura-pink, #D27E99)"/>
+
+    <!-- 値ラベル (棒の上・棒に触れさせない) -->
+    <text x="168" y="300" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">42</text>
+    <text x="336" y="244" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">58</text>
+    <text x="504" y="268" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">51</text>
+    <text x="672" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">76</text>
+    <text x="840" y="112" text-anchor="middle" font-size="14" fill="var(--sakura-pink, #D27E99)">94</text>
+
+    <!-- カテゴリラベル (軸の下・年を含む絶対表記) -->
+    <text x="168" y="484" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026/4</text>
+    <text x="336" y="484" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026/5</text>
+    <text x="504" y="484" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026/6</text>
+    <text x="672" y="484" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026/7</text>
+    <text x="840" y="484" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">2026/8</text>
+
+    <!-- 出所と集計定義 (I1。図の下端 1 行・figcaption へ逃がさない) -->
+    <text x="112" y="516" font-size="12" fill="var(--fuji-gray, #8a8980)">集計: サポート一次受付の新規問い合わせ・受付日基準・重複と再送を除外（2026/4-8 実績）</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-bar-chart-caption" class="srg-diagram__caption">
+    背は高さだけを比べてほしい。右端の一本だけが色を変えてあり、そこがこれから話す対象である。左の四本は比較のための背景にすぎない。
+  </figcaption>
+
+</figure>

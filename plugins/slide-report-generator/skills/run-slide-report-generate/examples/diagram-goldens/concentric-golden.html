@@ -1,0 +1,81 @@
+<!--
+  concentric-golden.html — ゴールデン実例: コンセントリックサークル型 (slide 骨格)
+
+  入力: concentric-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-business.md §11.14 コンセントリックサークル型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-2 #20 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py concentric-golden.html
+
+  §11.14 のコード例はコアを linear-gradient で塗り、層ごとに別の有彩色の枠を持ち、
+  hover で scale + box-shadow を掛ける。グラデーションはパレット (style-tokens §1) の
+  外にあり、影は R9-14 で常に 0、hover 変形は静止面に存在しないので落とした。
+  層の色分けもやめてある。3 層に 3 色を割り当てると読者は「3 つの並列な種別」と読むが、
+  この図が語るのは入れ子の範囲であって種別ではない。塗りは ink の濃度 1 段ずつで
+  深さを表し、有彩色は最内層の 1 つだけに残した (§D-2 #3)。
+  凡例が語るのは色ではなく時期である。3 項目で §D-2 #20 の上限 5 の内側にある。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-concentric">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-concentric-caption">
+
+    <defs>
+      <marker id="d-concentric-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-concentric-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-concentric-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 第 1 層 (最も外・最も広い範囲) -->
+    <circle cx="320" cy="272" r="224"
+            fill="rgba(67, 67, 108, 0.03)" stroke="#DCD7BA" stroke-width="1.5"/>
+    <text x="320" y="88" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">全社への展開</text>
+
+    <!-- 第 2 層 -->
+    <circle cx="320" cy="272" r="144"
+            fill="rgba(67, 67, 108, 0.05)" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.5"/>
+    <text x="320" y="164" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">部門をまたぐ連携</text>
+
+    <!-- 第 3 層 (最内・焦点。accent は最内層 1 つのみ) -->
+    <circle cx="320" cy="272" r="72"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="320" y="278" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">経理内の締め作業</text>
+
+    <!-- 凡例 (色ではなく時期を語る。内側から順に並べる) -->
+    <text x="608" y="168" font-size="12" fill="var(--fg, #43436c)">凡例 — 色は時期・内側ほど先に着手</text>
+    <rect x="608" y="200" width="16" height="16" rx="4" fill="var(--sakura-pink, #D27E99)"/>
+    <text x="636" y="214" font-size="14" fill="var(--fg, #43436c)">最初の三か月</text>
+    <rect x="608" y="256" width="16" height="16" rx="4" fill="var(--fuji-gray, #8a8980)"/>
+    <text x="636" y="270" font-size="14" fill="var(--fg-dim, #54546d)">次の半年</text>
+    <rect x="608" y="312" width="16" height="16" rx="4" fill="#DCD7BA"/>
+    <text x="636" y="326" font-size="14" fill="var(--fg-dim, #54546d)">一年目の後半</text>
+
+    <!-- 包含の種別と最外層の外 (半径は量ではなく範囲の入れ子である) -->
+    <text x="608" y="360" font-size="12" fill="var(--fg-dim, #54546d)">外側の層は内側を含む (範囲の入れ子)</text>
+    <text x="608" y="384" font-size="12" fill="var(--fg-dim, #54546d)">最外の外は今期の対象外</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="608" y="448" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">外側は今期の判断材料にしない</text>
+    <path d="M 604 440 Q 560 380 548 296" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="548" cy="296" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-concentric-caption" class="srg-diagram__caption">
+    中心の円から外へ向かって読んでほしい。右の凡例は色ではなく時期を示しており、外側の二層は今期の判断材料には入れていない。
+  </figcaption>
+
+</figure>

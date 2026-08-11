@@ -1,0 +1,115 @@
+{
+  "diagramId": "d-system-context",
+  "type": "system-context",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-technical.md §11.40 システムコンテキスト図",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 960 540"
+  },
+  "title": "予約管理システムの周辺",
+  "message": "こちらの都合で変えられるのは境界の内側だけで、外の 4 者は相手の都合で動く。",
+  "boundary": {
+    "label": "自チームの変更範囲",
+    "contains": [
+      "core"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "core",
+      "label": "予約管理システム",
+      "sub": "予約と空き枠を持つ",
+      "style": "focal"
+    },
+    {
+      "id": "user",
+      "label": "利用者",
+      "style": "external",
+      "side": "top"
+    },
+    {
+      "id": "staff",
+      "label": "店舗スタッフ",
+      "style": "external",
+      "side": "bottom"
+    },
+    {
+      "id": "payment",
+      "label": "決済代行",
+      "style": "external",
+      "side": "left"
+    },
+    {
+      "id": "inventory",
+      "label": "在庫マスタ",
+      "style": "external",
+      "side": "right"
+    }
+  ],
+  "relations": [
+    {
+      "from": "user",
+      "to": "core",
+      "kind": "uses",
+      "label": "予約を申し込む",
+      "protocol": "同期 HTTPS・都度"
+    },
+    {
+      "from": "staff",
+      "to": "core",
+      "kind": "uses",
+      "label": "空き状況を更新",
+      "protocol": "同期 HTTPS・都度"
+    },
+    {
+      "from": "core",
+      "to": "payment",
+      "kind": "integrates",
+      "label": "決済を依頼",
+      "protocol": "同期 REST・都度"
+    },
+    {
+      "from": "core",
+      "to": "inventory",
+      "kind": "integrates",
+      "label": "在庫を照会",
+      "protocol": "同期 REST・都度"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "core"
+    ],
+    "reason": "図の主語は中心システム 1 つだけで、外部は主語ではなく文脈である"
+  },
+  "annotations": [
+    {
+      "text": "点線の外はこちらの都合では変えられない",
+      "anchor": "boundary"
+    }
+  ],
+  "geometry": {
+    "coreW": 224,
+    "coreH": 96,
+    "boundaryW": 288,
+    "boundaryH": 160,
+    "externalW": 176,
+    "externalH": 80,
+    "sides": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+    ],
+    "note": "外部は上下左右の 4 方向にだけ置く。そうすれば連携線はすべて軸に平行になる"
+  },
+  "caption": "まん中の一つだけがこちらの持ち物である。四方の箱は相手の都合で動くので、変更の話をするときは点線の内側だけを対象にしてほしい。",
+  "legend": [
+    "灰の実線=人の操作",
+    "青の実線=システム連携",
+    "破線=責任境界と注釈"
+  ],
+  "failureImpact": "決済代行が止まると新規予約の受付が止まる (空き照会だけは継続)"
+}

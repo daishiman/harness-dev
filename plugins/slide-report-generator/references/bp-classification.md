@@ -77,9 +77,10 @@
 | 32 | 全スライドタイプにh2 CSS定義 | 出現 `slide-*` クラスごとに `h2` セレクタが styles.css に存在 | V-009 | check-consistency.js |
 | 33 | section-nav 全セクション網羅 | HTML 中の `data-section` 値 ⊆ CSS の `[data-section="..."]` セレクタ | V-010 | check-consistency.js |
 | 35 | list-item/ig-item に width:100%/box-sizing | CSS regex（該当クラスに width:100%; box-sizing:border-box;） | V-011 | check-consistency.js |
-| 18 | A4横フルサイズ余白なし | `@page { size: A4 landscape; margin: 0 }` の存在 | V-012 | validate-print.js（既存） |
+| 18 | A4横フルサイズ余白なし | `@page { size: A4 landscape; margin: 0 }` の存在 (**ひな形 `.srg-*` 経路は `margin: 21.47mm 0` が正本 — SR-7-11**) | V-012 | validate-print.js（既存） |
 | 17 | 印刷=画面同レイアウト | 印刷mediaで `display:none` 構造変更がない（許容: 装飾系のみ） | V-013 | validate-print.js |
 | 22 | 印刷CSS GSAPリセット | `@media print { .gsap-target { transform:none !important; opacity:1 !important; } }` 存在 | V-014 | validate-print.js |
+| — | 2 体系の同居禁止 | 同一 HTML に `slider__item` と `srg-slide`/`data-slide-skeleton` が同居しない（SR-7-12） | SK12 | validate-slide-skeleton.py `--deck` |
 | 24 | clearPropsはcontent.childrenのみ | scripts.js: `clearProps:.*"\*"` または `querySelectorAll\('\*'\)` 検出時エラー | V-015 | check-consistency.js |
 | 25 | foreignObject内 fo-card class | SVG `<foreignObject> > div:not(.fo-card)` を検出 | V-016 | check-consistency.js |
 | 09 | SVG fill/strokeにCSS変数 | SVG `fill="#..."` / `stroke="#..."` 直書き検出 | V-017 | check-consistency.js |
@@ -90,7 +91,7 @@
 | 29 | UIテキスト opacity ≥ 0.6 | computed opacity の最小値スキャン | V-022 | verify-slides.js |
 | 28 | focus-visible + reduced-motion | CSS に `:focus-visible` / `@media (prefers-reduced-motion)` ブロック存在 | V-023 | check-consistency.js |
 | 03 | コードはSF Mono/Fira Code | `.code-block` 系の computed font-family に Mono系含む | V-024 | verify-slides.js |
-| 02 | 標準CSSクラス名のみ | `class=` 値が許可リスト（slide-types-overview）に含まれる | V-025 | validate-structure.js |
+| 02 | 標準CSSクラス名のみ | `class=` 値が許可リスト（slide-type-decision-tree §2）に含まれる | V-025 | validate-structure.js |
 | 16 | 質問は fs-subheading | スライドタイプ=質問 のスライドで `fs-heading` クラス不在 | V-026 | check-consistency.js |
 | 19 | section-nav 常時表示 | 各 `<section>` に `.section-nav` が存在し `display:none` でない | V-027 | verify-slides.js |
 | 20 | ページネーション5個区切り | `.pagination li:nth-child(5n)` のスタイル定義が styles.css に存在 | V-028 | check-consistency.js |
@@ -141,7 +142,7 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 | 元# | 項目 | 集約先 | SR-ID（提案） |
 |----|------|--------|---------------|
 | 01 | structure.md仕様を忠実に実装 | structure.md 自体が一次ソース | SR-001 |
-| 02 | タイプ→CSSクラス対応に従う | slide-types-overview.md の対応表 | SR-002（A-V-025と二重管理せず参照のみ） |
+| 02 | タイプ→CSSクラス対応に従う | slide-type-decision-tree.md §2.2 の対応表 | SR-002（A-V-025と二重管理せず参照のみ） |
 | 06 | 1スライド1メッセージ | C-1 と同一 | C-1 へ集約 |
 | 07 | 図解で表現 | C-2 と同一 | C-2 へ集約 |
 | 26 | ビビッドアクセント | C-4 と同一 | C-4 へ集約 |
@@ -188,7 +189,6 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 
 ### 影響範囲
 - `agents/ui-quality-reviewer.md`: S1-S26 の検証項目と V-001〜V-030 のマッピング表追加（別タスク）
-- `references/changelog.md`: v6.7 として「BP表を10条＋機械検証30項目に再構成」エントリ追加（別タスク）
 
 ---
 
@@ -218,4 +218,3 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 5. `references/spec-registry.md` を新設し SR-001, SR-002 を登録
 6. SKILL.md l.165-204 を §3 の置換後内容に差し替え
 7. `agents/ui-quality-reviewer.md` の S1-S26 と V-* のマッピング表を追加
-8. `references/changelog.md` に v6.7 エントリを追加

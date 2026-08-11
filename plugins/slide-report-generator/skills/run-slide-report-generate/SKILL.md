@@ -69,7 +69,7 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
 - **共有 SSOT (mode で重複させない)**: Kanagawa 配色 ／ 16:9 ／ 最小 1.4rem ／ GSAP ／ インライン SVG2 ／ 印刷 CSS ／ letterbox ／ Codex Image2 ／ style genome ／ 決定論レンダラ ／ `theme`・`aiVisual` schema `$defs`。
 - **共有コンテンツ契約**: 読者価値ブリーフを R1→R2→R3 へ一貫伝播し、既存フィールド（title/audience/keyMessage/throughLine/sections）へ翻訳する。schema 外フィールドや素材にない数字・実績を発明しない。正式名称・検索性・適用範囲が必要な文書は主タイトルを保ち、subtitle/keyMessage/summary で読者価値を補う。
 - **mode 別 (コンテンツ意図のみ分岐)**:
-  - `slide`: 1 スライド 1 メッセージ ／ chip 強制 ／ 長文禁止 ／ 16:9 ／ 97 slideType ／ `schemas/structure.schema.json`。
+  - `slide`: 1 スライド 1 メッセージ ／ chip 強制 ／ 長文禁止 ／ 16:9 ／ <!-- count: slideType -->107 slideType ／ `schemas/structure.schema.json`。
   - `report`: 読み物 (文章多め可) ／ セクション＋段落 ／ 1 項目 1 ビジュアル最適化 ／ HTML レポート ／ 4 reportType ／ `schemas/report-structure.schema.json`。
 - **reportType enum (4)**: `internal-analysis` (社内報告分析: 要約→背景→現状分析→所見→次アクション) ／ `client-proposal` (顧客提案 WP: 課題→解決策→効果実績→導入ステップ→CTA) ／ `tech-doc` (技術ドキュメント: 概要→前提→手順構造→注意点→参照) ／ `learning` (学習解説: 問い→核心概念→図解理解→例応用→まとめ)。
 - **確定と伝播**: `hearing-facilitator` が `output_mode`／読者価値ブリーフ／`reportType`／読者／長さ／ビジュアル方針を確定 → 主 skill が下流全 agent へ**一貫伝播** → `validate-output-mode.py` が mode 値域を生成着手前に検証 (fail-closed)。
@@ -126,6 +126,8 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <structure|report-structure>
 # slide の UI 品質 (テキスト切れ・16:9 比率)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html --check-ratio
+# slide 成果物の実描画契約 (実HTML必須・slide 0件/mixed体系/重なり/溢れを fail-closed)
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-layout.js" ./index.html --strict
 # report の決定論視覚ゲート (構造正本必須・欠落 exit 2 / 0=PASS / 1=崩れ検出)
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json
 # 生成後評価オーケストレータ (D1 視覚崩れ/D2 文字サイズ/D3 ナビ/D4 仕様適合・0=PASS/4=FAIL)
@@ -134,6 +136,8 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js" <out-dir
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js" <out-dir> --full-image-deck --strict-style-genome
 # 印刷 letterbox (@media print 内 cover を CRITICAL 検出)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js" <index.html>
+# ページひな形資産を触ったとき: 写像被覆/幾何整合/生成物一致 (HTML・CSS・JS)/色の直書き禁止/A4 印刷倍率 (0=PASS)
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 ```
 
 ## ゴールシークと受入基準 (combinators)
@@ -162,6 +166,9 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js" <index.
 - **全面画像デッキは自己完結 HTML**: CSS/JS を `<style>`/`<script>` にインライン化 (`build-deck-html.js`)。別ファイル版は環境で消失しページ送り不可事故になりうる。
 - **完成判定は実体で**: `echo`／サイズ／"PASS" 文字列で完成判断しない。ファイルは Read、画像は PNG/WebP 署名で検証し、出荷前にスクショ目視を推奨する。
 - **agent は name 参照**: worker agent はファイルパス依存でなく Task の name 起動。存在は plugin の他 component が保証する。
+- **slideType の受理と描画は別物 (被覆の caveat)**: schema の enum に載っている＝その型専用の絵が出る、ではない。集約 (9 型が `buildSnake` 1 本へ)・既定落ち (D3 の 8 型が汎用プレースホルダ)・検査の空振り (D3 出力で `validate-svg-diagram.py` が `coverage=none` を返す — この PASS は「検査して合格した」ではない) の 3 つが起きる。**型を選ぶ前に `references/diagram-type-crosswalk.md` §10「受理される型と、その型専用の絵が出る型は別」の表で描画実体を確認する** (型名の列挙はそちらが正本。ここへ写すと片方だけ更新されて食い違う)。
+- **手書き経路の slide 面はひな形へ嵌める (その場で組まない)**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/` の `layout-<役割>` から選ぶ(**役割名であって通し番号ではない** — 同じひな形を 1 deck で何枚使ってもよい)。ひな形 HTML と `slide-skeleton.css` / `.js` は**生成物**ゆえ手編集せず、`frame-contract.json` か生成器へ入れて再生成し `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"` で fail-closed 検査する。引き方・寸法と色・成果物への届け方の逐語の正本は `assets/slide-templates/README.md` (ここへ写さない)。
+- **ひな形の封じ手は「ひな形経路の保証」であって deck 全体の保証ではない**: 空白過多・chrome ズレ・戻るページ・PDF ズレの 4 症状への封じ手は、**ひな形をコピーして書いた面にだけ**効く (症状表と再発点の逐語の正本は `assets/slide-templates/README.md`)。決定論経路の `render-slide.cjs` は `frame-contract.json` を読まず独自体系で描くため、同症状は `verify-slides.js` / `validate-print.js` / `evaluate-deck.js` 側で見る。
 
 ## 配置先
 
@@ -185,13 +192,13 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js" <index.
 - `references/html-generation-rules.md` — slide HTML LLM 経路生成規範 (CONST_001-039)。owner=html-generator。
 - `references/layout-optimization-rules.md` — レイアウト最適化 (文字数・カード/フォント・印刷 pt 換算)。owner=layout-optimizer。
 - `references/ui-quality-checklist.md` — slide UI 品質 S 系観点定義・判定基準。owner=ui-quality-reviewer。
-- `references/report-quality-checklist.md` — report 品質観点 RQ1〜RQ34・RQCONST (読み物文体/段落密度/本質図解/through-line/読者中心入口/navigation/runtime layout)。owner=report-quality-reviewer。runtime bundle＋`validate-report-visual.py` と対 (実描画/静的shape/意味を分離)。
+- `references/report-quality-checklist.md` — report 品質観点 RQ1〜RQ34 (全節必須) + RQ35〜RQ37 (図解を含む節のみ)・RQCONST (読み物文体/段落密度/本質図解/through-line/読者中心入口/navigation/runtime layout)。owner=report-quality-reviewer。runtime bundle＋`validate-report-visual.py` と対 (実描画/静的shape/意味を分離)。
 - `references/deck-evaluation-rubric.md` — 生成後評価 (30 種思考法 mode-aware rubric・評価次元)。owner=deck-evaluator (hook-postgen-eval も消費)。
 - `references/ai-image-pipeline.md` — Codex Image2 全面画像/差替パイプライン規範。owner=ai-image-diagram-producer。
 - `references/resource-map.yaml` — 私有 reference の帰属 + progressive disclosure マップ (lint-reference-attribution.py の orphan/dangling 検査対象)。
 
 **plugin 共有 schemas (`schema_refs`)**
-- `../../schemas/structure.schema.json` — slide 入力契約 (97 slideType, `$defs`)。
+- `../../schemas/structure.schema.json` — slide 入力契約 (<!-- count: slideType -->107 slideType, `$defs`)。
 - `../../schemas/report-structure.schema.json` — report 入力契約 (`sections[]`・structure と共通コア `$defs` 共有)。
 
 **plugin 共有 scripts**

@@ -1,0 +1,105 @@
+<!--
+  matrix-golden.html — ゴールデン実例: マトリックス型 n×m (slide 骨格)
+
+  入力: matrix-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-comparison.md §11.7 マトリックス型（n×m対応）
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict matrix-golden.html
+
+  §11.7 のコード例は CSS grid で組まれ、box-shadow を伴う hover 変形と
+  象限別の 4 色塗り分け (nth-child ごとの背景色) を持つ。ここではどちらも落とした。
+  影は R9-14 が常に 0 と定め、4 色塗り分けは §D-2 #3 の accent 上限 2 件と
+  style-tokens §3 focal rule に正面から反する (色が 4 つあると焦点が無い)。
+  面の階層は paper と paper-2 の 2 段までで、行を交互に塗り分けない。
+
+  セル寸法 144x96・見出し帯 40・外周 32 はすべて 4 の倍数 (§D-1)。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-matrix">
+
+  <svg viewBox="0 0 640 480"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-matrix-caption">
+
+    <defs>
+      <marker id="d-matrix-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-matrix-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-matrix-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 表の地 (paper) と 2 つの見出し帯 (paper-2)。面の階層はこの 2 段まで -->
+    <rect x="32" y="72" width="576" height="328" rx="6"
+          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+    <rect x="32" y="72" width="576" height="40" fill="#F8F7F0"/>
+    <rect x="32" y="112" width="144" height="288" fill="#F8F7F0"/>
+
+    <!-- 罫。見出しと本体を分ける 2 本だけ rule-solid、内側は rule のヘアライン -->
+    <line x1="32" y1="112" x2="608" y2="112" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="176" y1="72" x2="176" y2="400" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="320" y1="72" x2="320" y2="400" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="464" y1="72" x2="464" y2="400" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="208" x2="608" y2="208" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="304" x2="608" y2="304" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 焦点は 1 セルだけ。accent-tint の塗りと accent の枠は必ずセットで使う -->
+    <rect x="464" y="112" width="144" height="96"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+
+    <!-- 隅の見出し (2 軸の名前。軸ラベルを回転させず表の中へ畳む) -->
+    <text x="48" y="96" font-size="12" fill="var(--fuji-gray, #8a8980)">影響範囲＼復旧見込み</text>
+
+    <!-- 列見出し -->
+    <text x="248" y="96" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">即時</text>
+    <text x="392" y="96" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">当日中</text>
+    <text x="536" y="96" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">翌日以降</text>
+
+    <!-- 行見出し -->
+    <text x="48" y="164" font-size="14" fill="var(--fg-dim, #54546d)">全社</text>
+    <text x="48" y="260" font-size="14" fill="var(--fg-dim, #54546d)">一部門</text>
+    <text x="48" y="356" font-size="14" fill="var(--fg-dim, #54546d)">個人</text>
+
+    <!-- セル (第 1 行) -->
+    <text x="248" y="164" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">定時報告</text>
+    <text x="392" y="164" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">定時報告</text>
+    <text x="536" y="164" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">経営へ即報</text>
+
+    <!-- セル (第 2 行) -->
+    <text x="248" y="260" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">記録のみ</text>
+    <text x="392" y="260" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">担当内で完結</text>
+    <text x="536" y="260" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">定時報告</text>
+
+    <!-- セル (第 3 行) -->
+    <text x="248" y="356" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">記録のみ</text>
+    <text x="392" y="356" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">記録のみ</text>
+    <text x="536" y="356" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">担当内で完結</text>
+
+    <!-- 軸の定義と分類の関数・既定値・凡例 (I4 / I-CMP / I3。figcaption へ逃がさない) -->
+    <text x="32" y="416" font-size="12" fill="var(--fuji-gray, #8a8980)">行の軸 = 影響範囲: 全社=3部門以上 / 一部門=1-2部門 / 個人=1名</text>
+    <text x="32" y="434" font-size="12" fill="var(--fuji-gray, #8a8980)">列の軸 = 復旧見込み: 即時=30分以内 / 当日中=当日18時まで / 翌日以降=それ以降</text>
+    <text x="32" y="452" font-size="12" fill="var(--fuji-gray, #8a8980)">セルの値 = 障害対応規程 (2026/4 改訂) の既定動作 (現場判断で変更はできない)</text>
+    <text x="32" y="470" font-size="12" fill="var(--fuji-gray, #8a8980)">表に無い組合せは全社行を適用・桃枠 = 本文が扱う 1 セル・破線 = 注釈の指し線</text>
+
+    <!-- 注釈 1 件 (表の上の余白のみ・矢じりは付けない) -->
+    <text x="608" y="40" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">翌日以降だけが例外扱いになる</text>
+    <path d="M 596 52 Q 560 56 536 68" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="536" cy="68" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-matrix-caption" class="srg-diagram__caption">
+    表の右上へ視線を送ってほしい。九つの交点のうち枠が立っているのは一つだけで、そこだけが手順を飛ばして人を動かす判断になる。
+  </figcaption>
+
+</figure>

@@ -47,7 +47,7 @@ last-audited: 2026-07-05
 | 責務 | 対応する成果物・出力箇所 |
 |------|------------------------|
 | 情報の1メッセージ単位への分解 | structure.md「スライド一覧」 |
-| スライドタイプの判定（53種 + D3 24種から選択） | structure.md「各スライド詳細」のタイプ |
+| スライドタイプの判定（<!-- count: slideTypeNonD3 -->74種 + D3 <!-- count: d3Component -->33種から選択） | structure.md「各スライド詳細」のタイプ |
 | アイコンの選定 | structure.md「各スライド詳細」のアイコン |
 | アニメーションパターンの決定 | structure.md「各スライド詳細」のアニメーション |
 | structure.md（構造化データ）の出力 | 成果物本体 |
@@ -75,7 +75,7 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
-| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID 98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID 62）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（97 slideType, $defs 55）・`vendor/schemas-fixtures/example.structure.json` |
+| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID <!-- count: slideTypeDecision -->98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID <!-- count: specRegistryRule -->121）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）・`vendor/schemas-fixtures/example.structure.json`・`assets/slide-templates/registry.json`（slideType → ページひな形 + 受け入れ media 種別の写像。選んだ型の受け皿にその面の差し込み物が含まれるかを確定前に確認する） |
 | Write | structure.md（v8経路は structure.json）の出力 | 構成案生成時 | なし | `05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/structure.md` |
 
 エラーハンドリング: 必須入力欠落時は hearing-facilitator へ再要求（1回、不可ならエスカレーション）。タイプが decision-tree で確定できない場合は再参照し近接タイプへ確定（2回）。テキスト収まり検証で必要行数 > 最大行数の場合はリライトまたはカード/viewBox拡大（制限内になるまで）。詳細は Layer 4 参照。
@@ -128,7 +128,7 @@ last-audited: 2026-07-05
 
 ## 5.2 ゴール定義
 - 目的: 読者価値ブリーフを含むヒアリング結果を分析し、入口を聴衆価値から開き、専門的な解決へ段階的に深めながら情報を最適なスライドタイプに分解する。HTML生成前の構造段階でコンテンツの過不足を発見する。
-- 背景: 視覚的デザインの世界的権威として、1スライド1メッセージの原則と視覚的シンプルさを重視したプレゼンテーション設計を行う。責務は、情報の1メッセージ単位への分解（structure.md「スライド一覧」）／スライドタイプの判定（53種 + D3 24種から選択）／アイコン選定とアニメーションパターン決定／structure.md（構造化データ）の出力／部分AI画像化指定時の STYLE BIBLE + per-slide 画像ブロック出力／ユーザーへの構造化データ確認依頼と承認後の Phase 2.5 引き継ぎ。
+- 背景: 視覚的デザインの世界的権威として、1スライド1メッセージの原則と視覚的シンプルさを重視したプレゼンテーション設計を行う。責務は、情報の1メッセージ単位への分解（structure.md「スライド一覧」）／スライドタイプの判定（<!-- count: slideTypeNonD3 -->74種 + D3 <!-- count: d3Component -->33種から選択）／アイコン選定とアニメーションパターン決定／structure.md（構造化データ）の出力／部分AI画像化指定時の STYLE BIBLE + per-slide 画像ブロック出力／ユーザーへの構造化データ確認依頼と承認後の Phase 2.5 引き継ぎ。
 - 達成ゴール: 全スライドが1メッセージ単位に分解され、decision-tree（DT-ID）対応の確定タイプを持ち、全SVG図解スライドに必須記載項目11点が揃い、共通仕様セクション一式が記載され、出力テンプレートの全プレースホルダが充足され、ユーザー承認を得た上で Phase 2.5（structure-validator）へ引き継げる状態になっている。部分AI画像化指定時は STYLE BIBLE と各スライドの画像ブロックを含む。
 
 ### 重要な原則 (設計不変)
@@ -176,7 +176,7 @@ last-audited: 2026-07-05
 
 ### v7.0.0 連携ルール（必読）
 - **出力後、Phase 2.5（`agents/structure-validator.md`）に必ず引き継ぐ**こと。validator が機械検証を行い、PASS でないと Phase 3 に進めない。
-- 新経路（structure.json）を選ぶ場合は **`schemas/structure.schema.json` に準拠** すること（97 slideType, $defs 55）。例は `vendor/schemas-fixtures/example.structure.json`。
+- 新経路（structure.json）を選ぶ場合は **`schemas/structure.schema.json` に準拠** すること（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）。例は `vendor/schemas-fixtures/example.structure.json`。
 - 仕様参照源は `references/spec-registry.md`（**SR-ID 62 項目**）を SSoT として使う。スライドタイプ選択は `references/slide-type-decision-tree.md`（DT-ID 98）に従う。
 - 単位は `references/unit-system.md` の vw 統一に従う。
 - BP は `references/bp-classification.md` の LLM 判断必須項目のみ意識する（残り 30 項目は機械検証で自動担保）。
@@ -252,13 +252,13 @@ last-audited: 2026-07-05
 
 | 項目 | ルール |
 |------|--------|
-| 単位 | mm / rem / vw を使用。px禁止（SVG内部座標を除く） |
+| 単位 | mm / rem / vw を使用。px禁止（SVG内部座標を除く）。**ひな形 `.srg-*` 経路は絶対 px が正本で px 禁止を適用しない — SR-1-07** |
 | 画面＝印刷一致 | @media print は画面と同じ grid/flex 構造を維持 |
 | カードpadding | 5mm以上 |
 | 本文フォント | 10pt以上 |
 | gap | 3mm以上 |
 | border-radius | 3mm以上 |
-| @page | size: A4 landscape; margin: 0 |
+| @page | size: A4 landscape; margin: 0（ひな形 `.srg-*` 経路は `margin: 21.47mm 0` が正本。**@page は成果物全体で 1 つ** — SR-7-11） |
 
 ### スライドタイプ定義テーブル
 

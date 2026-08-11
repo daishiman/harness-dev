@@ -1,0 +1,99 @@
+<!--
+  comparison-golden.html — ゴールデン実例: 対比型 (report 骨格)
+
+  入力: comparison-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-comparison.md §11.6 対比型
+        references/diagram-type-crosswalk.md §4「2 案を対等に比べる」(buildNeutralComparison)
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py comparison-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.6 のコード例は単体スライド向けに box-shadow・hover 変形・独自配色を持つ。
+  ここではそれらを落としてある (R9-14 影の禁止・骨格 README §4)。
+  行ごとに勝ち負けの色を付けず、焦点は推す側の見出し 1 つに限っている。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-comparison"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-comparison-caption">
+
+    <defs>
+      <marker id="f-comparison-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-comparison-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-comparison-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 観点の行 (面の階層は 2 段まで。行を交互に塗り分けない) -->
+    <rect x="32" y="136" width="896" height="64" rx="6" fill="#F8F7F0"/>
+    <rect x="32" y="220" width="896" height="64" rx="6" fill="#F8F7F0"/>
+    <rect x="32" y="304" width="896" height="64" rx="6" fill="#F8F7F0"/>
+    <rect x="32" y="388" width="896" height="64" rx="6" fill="#F8F7F0"/>
+
+    <!-- 観点の列と値の列を分ける基準線 -->
+    <line x1="256" y1="48" x2="256" y2="452" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 見出し (左が現行・右が推す側。焦点は 1 つだけ) -->
+    <g>
+      <rect x="272" y="48" width="312" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="428" y="88" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">現行の手作業</text>
+    </g>
+    <g>
+      <rect x="616" y="48" width="312" height="64" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="772" y="88" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">自動照合を挟む</text>
+    </g>
+
+    <!-- 第 1 行 -->
+    <text x="48" y="172" font-size="14" fill="var(--fg-dim, #54546d)">月次の所要時間</text>
+    <text x="428" y="172" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">4人日</text>
+    <text x="772" y="172" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">0.5人日</text>
+
+    <!-- 第 2 行 -->
+    <text x="48" y="256" font-size="14" fill="var(--fg-dim, #54546d)">差分に気づく時点</text>
+    <text x="428" y="256" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">締めた後</text>
+    <text x="772" y="256" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">取り込んだ当日</text>
+
+    <!-- 第 3 行 -->
+    <text x="48" y="340" font-size="14" fill="var(--fg-dim, #54546d)">属人化の度合い</text>
+    <text x="428" y="340" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">担当1名に集中</text>
+    <text x="772" y="340" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">手順が残る</text>
+
+    <!-- 第 4 行 -->
+    <text x="48" y="424" font-size="14" fill="var(--fg-dim, #54546d)">初期の作り込み</text>
+    <text x="428" y="424" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">不要</text>
+    <text x="772" y="424" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">2週間</text>
+
+    <!-- 判定の基準と、色の使い分け・並びの断り・出所 (図の下端 2 行) -->
+    <text x="32" y="486" font-size="12" fill="var(--fuji-gray, #8a8980)">採否の基準: 月次4人日を1人日以内へ下げられ、初期2週間を確保できるなら可</text>
+    <text x="32" y="508" font-size="12" fill="var(--fuji-gray, #8a8980)">色は推す案の列だけ・行の並びは順不同・出所: 2026/3 経理3名の実測 (3か月平均)</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="928" y="496" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">初期の2週間を誰が持つかだけが論点</text>
+    <path d="M 908 484 Q 860 470 772 456" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="772" cy="456" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-comparison-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 3</span>
+    左の列に並ぶ観点ごとに、二つの列を横へ読み比べてほしい。時間の差より、二行目で差がいつ表に出るかが判断を決める。
+  </figcaption>
+
+</figure>

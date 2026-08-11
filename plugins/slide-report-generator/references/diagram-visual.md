@@ -1,10 +1,17 @@
 # 図解タイプ: ビジュアル系（SVG2+CSS ハイブリッド版）
 
-**責務**: 購買ファネル、組織図、シェブロン、人物関係図、縦タイムライン、PDCA、三角サイクル、ウェーブステップ、アイコン選択グリッドのSVG2/CSSテンプレート
+**責務**: 購買ファネル、組織図、シェブロン、人物関係図、縦タイムライン、PDCA、三角サイクル、ウェーブステップ、アイコン選択グリッド、包含型、ピラミッド型のSVG2/CSSテンプレート
 
-**含まれるタイプ**: 11.21-11.29
+**含まれるタイプ**: 11.21-11.29 / 11.33-11.34
 
 **前提**: [svg-diagram-primitives.md](svg-diagram-primitives.md) のSVG2プリミティブを参照
+
+> 本ファイルは上記タイプの**テンプレート**を持つ。決定論経路で実際に呼べる**ビルダー名と容量の所在**、および各ビルダーの「選ぶとき / 選ばないとき」は `skills/ref-diagram-system/references/diagram-type-catalog.md` にまとまっている。CSS 維持の型と SVG2 化済みの型が混在する面なので、型の確定はそちらを先に引く。
+
+> **実装（HTML/CSS/SVG の実体）は各節末尾に挙げたゴールデンを正とする。**
+> 本ファイルの各節が持つのは**型を選ぶ / 選ばないための判断材料だけ**であり、
+> マークアップを書き起こす前に必ずゴールデンの `input.json` と `golden.html` を読むこと。
+> 節の記述とゴールデンが食い違った場合はゴールデンが勝つ。
 
 **方針**: ファネル(11.21)はインラインSVG2で描画済み。組織図・PDCA・三角サイクルはCSS維持（SVG2移行は将来対応）。カード型レイアウト（シェブロン、ウェーブステップ）はCSS維持。人物関係図・三角サイクルはCSS+SVG接続線のハイブリッド。
 
@@ -13,1373 +20,250 @@
 
 ### 11.21 購買ファネル型（Funnel・SVG2）
 
-SVG polygonで滑らかな台形段階を描画。clip-pathの印刷問題を解消。
+段を下るごとに幅が細る台形の積層で、**母集団が減衰していく過程**を見せる。
 
-```css
-.slide-funnel .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 各段で母数が実際に減る（資料請求 → 商談 → 契約など）
+- 減衰率そのものが主張になる（どこで最も細るか）
+- 段ごとに比率・実数の 1 行を添えたい
 
-.slide-funnel .funnel-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 減らずに進むだけの手順 → §11.23 シェブロン型（`buildChevron`）
+- 上ほど希少という向きの階層 → §11.34 ピラミッド型（向きが逆で主張が反転する）
+- 量の比較そのもの → `chart-types.md` の棒グラフ
 
-.slide-funnel .funnel-container {
-  display: flex;
-  align-items: center;
-  gap: 3rem;
-}
+**要素数の目安**: 3-6 段（`CAPACITY.buildFunnel` = 6）
+**複雑度の上限**: 段ラベルは短語（ゴールデン最長 4 字）、比率は `sub` の 1 行のみ。焦点は 1 段だけで、原則「最も細い段」ではなく「比率が最も落ちた直後の段」に置く
+**必須情報**: 各段の実数（先頭段が母数 n を兼ねる）、**段から段への転換率**（`商談 120 → 契約 18（15%）` の形で段の右へ。落差が主題なのに読者へ暗算させない）、各段の定義（何をもってその段に入ったと数えるか）、集計期間を年込みで 1 行。転換率が無いファネルは「どこで最も細るか」を台形の幅から目分量で読ませることになり、主張が検証されない。
+**配置**: 方形
 
-.slide-funnel .diagram-svg-container {
-  width: 100%;
-  max-width: 450px;
-  aspect-ratio: 4 / 5;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/funnel-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-funnel .diagram-svg .funnel-level {
-  cursor: pointer;
-  transition: opacity 0.3s ease, filter 0.3s ease;
-}
-
-.slide-funnel .diagram-svg .funnel-level:hover {
-  filter: brightness(1.1);
-}
-
-/* 右側の統計情報（CSS維持） */
-.slide-funnel .funnel-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.slide-funnel .funnel-stat {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: var(--bg-dim);
-  border-radius: 8px;
-  border-left: 3px solid var(--wave-blue);
-}
-
-.slide-funnel .funnel-stat:nth-child(1) { border-left-color: var(--wave-blue); }
-.slide-funnel .funnel-stat:nth-child(2) { border-left-color: var(--wave-aqua); }
-.slide-funnel .funnel-stat:nth-child(3) { border-left-color: var(--spring-green); }
-.slide-funnel .funnel-stat:nth-child(4) { border-left-color: var(--autumn-yellow); }
-.slide-funnel .funnel-stat:nth-child(5) { border-left-color: var(--sakura-pink); }
-
-.slide-funnel .funnel-stat-value {
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-}
-
-.slide-funnel .funnel-stat-label {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-```
-
-```html
-<div class="slider__item slide-funnel">
-  <div class="slider__content">
-    <h2 class="funnel-title"><i class="fas fa-filter"></i> {{タイトル}}</h2>
-    <div class="funnel-container">
-      <div class="diagram-svg-container">
-        <svg viewBox="0 0 400 450" xmlns="http://www.w3.org/2000/svg"
-             class="diagram-svg" role="img" aria-label="{{タイトル}}のファネル図">
-          <defs>
-            <filter id="fn-shadow" x="-5%" y="-5%" width="110%" height="115%">
-              <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.2" />
-            </filter>
-          </defs>
-
-          <!-- レベル1（最上段・最大幅） -->
-          <g class="funnel-level has-tooltip" data-tooltip="{{詳細1}}">
-            <polygon points="10,0 390,0 370,80 30,80"
-                     fill="var(--wave-blue,#7E9CD8)" filter="url(#fn-shadow)" />
-            <text x="200" y="45" text-anchor="middle" dominant-baseline="central"
-                  fill="var(--bg-dark,#1F1F28)" font-weight="600" font-size="15">
-              {{段階1}} 100%
-            </text>
-          </g>
-
-          <!-- レベル2 -->
-          <g class="funnel-level has-tooltip" data-tooltip="{{詳細2}}">
-            <polygon points="35,85 365,85 340,165 60,165"
-                     fill="var(--wave-aqua,#7AA89F)" filter="url(#fn-shadow)" />
-            <text x="200" y="130" text-anchor="middle" dominant-baseline="central"
-                  fill="var(--bg-dark,#1F1F28)" font-weight="600" font-size="15">
-              {{段階2}} 60%
-            </text>
-          </g>
-
-          <!-- レベル3 -->
-          <g class="funnel-level has-tooltip" data-tooltip="{{詳細3}}">
-            <polygon points="65,170 335,170 310,250 90,250"
-                     fill="var(--spring-green,#98BB6C)" filter="url(#fn-shadow)" />
-            <text x="200" y="215" text-anchor="middle" dominant-baseline="central"
-                  fill="var(--bg-dark,#1F1F28)" font-weight="600" font-size="15">
-              {{段階3}} 30%
-            </text>
-          </g>
-
-          <!-- レベル4 -->
-          <g class="funnel-level has-tooltip" data-tooltip="{{詳細4}}">
-            <polygon points="95,255 305,255 280,335 120,335"
-                     fill="var(--autumn-yellow,#DCA561)" filter="url(#fn-shadow)" />
-            <text x="200" y="300" text-anchor="middle" dominant-baseline="central"
-                  fill="var(--bg-dark,#1F1F28)" font-weight="600" font-size="15">
-              {{段階4}} 10%
-            </text>
-          </g>
-
-          <!-- レベル5（最下段） -->
-          <g class="funnel-level has-tooltip" data-tooltip="{{詳細5}}">
-            <polygon points="125,340 275,340 260,420 140,420"
-                     fill="var(--sakura-pink,#D27E99)" filter="url(#fn-shadow)" />
-            <text x="200" y="385" text-anchor="middle" dominant-baseline="central"
-                  fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="15">
-              {{段階5}} 5%
-            </text>
-          </g>
-        </svg>
-      </div>
-      <div class="funnel-stats">
-        <div class="funnel-stat">
-          <div class="funnel-stat-value">{{数値1}}</div>
-          <div class="funnel-stat-label">{{ラベル1}}</div>
-        </div>
-        <!-- 必要に応じて追加 -->
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.22 組織図型（Org Chart）
 
-階層的な組織構造を表示。
+線で結んだ上下関係で、**誰が誰に報告するか / どこを決裁が通るか**を見せる。
 
-```css
-.slide-org-chart .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- レポートラインや決裁経路が主題
+- 兄弟どうしの並び（同階層に何があるか）を見せたい
+- 親子が線で語れる（各ノードの親が 1 つに定まる）
 
-.slide-org-chart .org-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 親子を空間の入れ子で語りたい → §11.33 包含型
+- 各層の量・希少さに意味がある → §11.34 ピラミッド型
+- 木で描けない横断参照がある → `buildMindmap` / `buildArchitecture`
 
-.slide-org-chart .org-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-}
+**要素数の目安**: 階層 2-4 層（`CAPACITY.buildHierarchy` = 4）、ノード 4-8（ゴールデンは 3 層 6 ノード）
+**複雑度の上限**: ノード名は 8 字程度まで、役割は `sub` の 1 行（5 字前後）。1 階層に並べるのは 3-4 ノードまで
+**必須情報**: 線が 2 種類あるなら凡例（`── 直属` / `┄┄ 点線報告`）、1 種類しか引かないなら**その線が何でないか**（`── 指揮系統（連絡経路ではない）`）、部署と会議体を混在させるなら節点の種別の描き分け、決裁を語る図なら**どこで決裁が確定するか**。線の種別が無い組織図は、報告義務と相談関係が同じ形で吊られ、読者が誰の承認を取ればよいかを取り違える。
+**配置**: 縦列
 
-.slide-org-chart .org-level {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
-  position: relative;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/org-chart-{input.json,golden.html}`（report 骨格・検査指摘ゼロ）
 
-/* ノード */
-.slide-org-chart .org-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  background: var(--bg-dim);
-  border-radius: 12px;
-  border: 2px solid var(--wave-blue);
-  min-width: 120px;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-}
-
-.slide-org-chart .org-node:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* トップレベル（CEO等） */
-.slide-org-chart .org-node.top {
-  background: linear-gradient(135deg, var(--wave-blue), var(--sakura-pink));
-  color: var(--bg-dark);
-  border: none;
-  padding: 1.25rem 2rem;
-}
-
-.slide-org-chart .org-node-icon {
-  font-size: 1.5rem;
-}
-
-.slide-org-chart .org-node.top .org-node-icon {
-  color: var(--bg-dark);
-}
-
-.slide-org-chart .org-node-name {
-  font-weight: 700;
-}
-
-.slide-org-chart .org-node-title {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-
-.slide-org-chart .org-node.top .org-node-title {
-  color: rgba(31, 31, 40, 0.7);
-}
-
-/* 接続線 */
-.slide-org-chart .org-connector {
-  display: flex;
-  justify-content: center;
-  height: 30px;
-}
-
-.slide-org-chart .org-connector-line {
-  width: 2px;
-  height: 100%;
-  background: var(--fuji-gray);
-}
-
-.slide-org-chart .org-connector-branch {
-  display: flex;
-  align-items: flex-end;
-  height: 30px;
-}
-
-.slide-org-chart .org-connector-branch::before {
-  content: '';
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 2px;
-  background: var(--fuji-gray);
-}
-
-/* 中間レベル */
-.slide-org-chart .org-level.middle .org-node {
-  border-color: var(--wave-aqua);
-}
-
-/* 下位レベル */
-.slide-org-chart .org-level.bottom .org-node {
-  border-color: var(--spring-green);
-  min-width: 100px;
-  padding: 0.75rem 1rem;
-  font-size: var(--fs-small);
-}
-```
-
-```html
-<div class="slider__item slide-org-chart">
-  <div class="slider__content">
-    <h2 class="org-title"><i class="fas fa-sitemap"></i> {{タイトル}}</h2>
-    <div class="org-container">
-      <!-- トップレベル -->
-      <div class="org-level">
-        <div class="org-node top">
-          <div class="org-node-icon"><i class="fas fa-crown"></i></div>
-          <div class="org-node-name">{{トップ名}}</div>
-          <div class="org-node-title">{{トップ役職}}</div>
-        </div>
-      </div>
-      <div class="org-connector">
-        <div class="org-connector-line"></div>
-      </div>
-      <!-- 中間レベル -->
-      <div class="org-level middle">
-        <div class="org-node">
-          <div class="org-node-icon"><i class="fas {{アイコン1}}"></i></div>
-          <div class="org-node-name">{{部門1}}</div>
-        </div>
-        <div class="org-node">
-          <div class="org-node-icon"><i class="fas {{アイコン2}}"></i></div>
-          <div class="org-node-name">{{部門2}}</div>
-        </div>
-        <div class="org-node">
-          <div class="org-node-icon"><i class="fas {{アイコン3}}"></i></div>
-          <div class="org-node-name">{{部門3}}</div>
-        </div>
-      </div>
-      <!-- 下位レベル（必要に応じて） -->
-    </div>
-  </div>
-</div>
-```
 
 ### 11.23 シェブロン/矢印ステップ型（Chevron Steps）
 
-水平方向の矢印形状ステップ。
+矢羽根を横に連ねて、**後戻りしない段階の順序**を見せる。
 
-```css
-.slide-chevron .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 段階が一方向に進み、前へ戻らない
+- 段数が少なく横幅に収まる
+- 順序そのものが主張（どの手が重いかを 1 つ焦点にできる）
 
-.slide-chevron .chevron-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 終わりが始まりへ戻る → §11.26 PDCA / §11.27 三角サイクル（`buildCycle`）
+- 各段に説明文が要る → §11.25 縦タイムライン（`buildVerticalFlow`）
+- 段数が多く横幅が尽きる → §11.28 ウェーブステップ（`buildSnake`）
+- 段ごとに母数が減る → §11.21 ファネル型
 
-.slide-chevron .chevron-container {
-  display: flex;
-  gap: 0;
-  width: 100%;
-  max-width: 1000px;
-}
+**要素数の目安**: 3-7 段（`CAPACITY.buildChevron` = 7）
+**複雑度の上限**: 段ラベルは 4 字前後、補足は `sub` の 1 行（6 字前後）。焦点は 1 段のみで、終点に置くと矢の向きが既に言っていることの言い直しになる
+**必須情報**: 起点と終点（最初の段に何が入力され、最後の段で何が出るか）、**各段の完了条件**（測定可能な形で。`確認済み` ではなく `2 名承認`）、段ごとの担当。日程を載せるなら年込みの絶対時点にする。完了条件が無いと、読者は「今どの段にいるか」を自分で判定できず、後戻りしない図なのに戻る余地が生まれる。
+**配置**: 横帯
 
-.slide-chevron .chevron-step {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1.5rem 2rem;
-  text-align: center;
-  position: relative;
-  transition: filter 0.3s ease;
-  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 20px 50%);
-  margin-left: -10px;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/chevron-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-chevron .chevron-step:first-child {
-  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 50%, calc(100% - 20px) 100%, 0 100%, 0 50%);
-  margin-left: 0;
-}
-
-.slide-chevron .chevron-step:last-child {
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 20px 50%);
-}
-
-.slide-chevron .chevron-step:hover {
-  filter: brightness(1.15);
-  z-index: 10;
-}
-
-/* ステップカラー */
-.slide-chevron .chevron-step:nth-child(1) { background: var(--wave-blue); }
-.slide-chevron .chevron-step:nth-child(2) { background: var(--wave-aqua); }
-.slide-chevron .chevron-step:nth-child(3) { background: var(--spring-green); }
-.slide-chevron .chevron-step:nth-child(4) { background: var(--autumn-yellow); }
-.slide-chevron .chevron-step:nth-child(5) { background: var(--sakura-pink); }
-
-.slide-chevron .chevron-step-number {
-  width: 30px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--fs-small);
-  color: var(--bg-dark);
-}
-
-.slide-chevron .chevron-step-text {
-  font-weight: 600;
-  color: var(--bg-dark);
-}
-
-.slide-chevron .chevron-step-desc {
-  font-size: var(--fs-small);
-  color: rgba(31, 31, 40, 0.7);
-}
-```
-
-```html
-<div class="slider__item slide-chevron">
-  <div class="slider__content">
-    <h2 class="chevron-title"><i class="fas fa-chevron-right"></i> {{タイトル}}</h2>
-    <div class="chevron-container">
-      <div class="chevron-step">
-        <div class="chevron-step-number">1</div>
-        <div class="chevron-step-text">{{ステップ1}}</div>
-        <div class="chevron-step-desc">{{説明1}}</div>
-      </div>
-      <div class="chevron-step">
-        <div class="chevron-step-number">2</div>
-        <div class="chevron-step-text">{{ステップ2}}</div>
-        <div class="chevron-step-desc">{{説明2}}</div>
-      </div>
-      <div class="chevron-step">
-        <div class="chevron-step-number">3</div>
-        <div class="chevron-step-text">{{ステップ3}}</div>
-        <div class="chevron-step-desc">{{説明3}}</div>
-      </div>
-      <div class="chevron-step">
-        <div class="chevron-step-number">4</div>
-        <div class="chevron-step-text">{{ステップ4}}</div>
-        <div class="chevron-step-desc">{{説明4}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.24 人物関係図型（Person Network）
 
-中心人物と周囲のステークホルダーとの関係を表示。
+中心の 1 人と周囲のステークホルダーを線で結び、**誰が誰とつながっているか**を見せる。
 
-```css
-.slide-person-network .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 中心となる人物・役割が 1 つに定まる
+- 関係の有無・種類（窓口 / 決裁 / 協力）が主題
+- 上下の階層ではなく放射状の網で語れる
 
-.slide-person-network .pn-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 上下の従属・決裁経路が主題 → §11.22 組織図型
+- 中心が概念で人物でない → §11.3 マインドマップ（`buildMindmap`）
+- 関係でなく順序 → §11.23 シェブロン型
 
-.slide-person-network .pn-container {
-  position: relative;
-  width: 600px;
-  height: 500px;
-}
+**要素数の目安**: 中心 1 + 周囲 3-6（CSS の 6 方向配置が上限。決定論経路は `CAPACITY.buildMindmap` = 8）
+**複雑度の上限**: ノード名 8 字程度、役割は `sub` の 1 行（7 字前後）。周囲ノードが 7 を超えると円周上でラベルが衝突する
+**必須情報**: 各線の**関係の種類と向き**（窓口 / 決裁 / 協力を線種で描き分け、働きかけの向きを矢じりで）、線種が 2 つ以上なら図内の凡例、決裁権を持つのは誰か。ステークホルダーを描く図では各ノードに**スタンス**（賛成 / 中立 / 反対 / 未接触）を付ける——これが無いものは関係者一覧表と同じ情報量しか持たず、誰に先に会うべきかを読者へ渡せない。
+**配置**: 方形
 
-/* 中心人物 */
-.slide-person-network .pn-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 150px;
-  height: 150px;
-  background: linear-gradient(135deg, var(--wave-blue), var(--sakura-pink));
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--bg-dark);
-  z-index: 10;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/person-network-{input.json,golden.html}`（report 骨格・検査指摘ゼロ）
 
-.slide-person-network .pn-center-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-}
-
-.slide-person-network .pn-center-text {
-  font-weight: 700;
-}
-
-/* 周囲のノード */
-.slide-person-network .pn-node {
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  background: var(--bg-dim);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border: 3px solid var(--wave-blue);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-person-network .pn-node:hover {
-  transform: scale(1.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  z-index: 20;
-}
-
-/* 6方向配置 */
-.slide-person-network .pn-node:nth-child(1) { top: 30px; left: 50%; transform: translateX(-50%); border-color: var(--wave-blue); }
-.slide-person-network .pn-node:nth-child(2) { top: 100px; right: 50px; border-color: var(--wave-aqua); }
-.slide-person-network .pn-node:nth-child(3) { bottom: 100px; right: 50px; border-color: var(--spring-green); }
-.slide-person-network .pn-node:nth-child(4) { bottom: 30px; left: 50%; transform: translateX(-50%); border-color: var(--autumn-yellow); }
-.slide-person-network .pn-node:nth-child(5) { bottom: 100px; left: 50px; border-color: var(--sakura-pink); }
-.slide-person-network .pn-node:nth-child(6) { top: 100px; left: 50px; border-color: var(--wave-blue); }
-
-.slide-person-network .pn-node-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.slide-person-network .pn-node-text {
-  font-size: var(--fs-small);
-  font-weight: 600;
-}
-
-/* 接続線 */
-.slide-person-network .pn-lines {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.slide-person-network .pn-line {
-  stroke: var(--fuji-gray);
-  stroke-width: 2;
-  stroke-dasharray: 5 5;
-}
-```
-
-```html
-<div class="slider__item slide-person-network">
-  <div class="slider__content">
-    <h2 class="pn-title"><i class="fas fa-users"></i> {{タイトル}}</h2>
-    <div class="pn-container">
-      <!-- 接続線SVG -->
-      <svg class="pn-lines" viewBox="0 0 600 500">
-        <line class="pn-line" x1="300" y1="250" x2="300" y2="80"/>
-        <line class="pn-line" x1="300" y1="250" x2="500" y2="150"/>
-        <line class="pn-line" x1="300" y1="250" x2="500" y2="350"/>
-        <line class="pn-line" x1="300" y1="250" x2="300" y2="420"/>
-        <line class="pn-line" x1="300" y1="250" x2="100" y2="350"/>
-        <line class="pn-line" x1="300" y1="250" x2="100" y2="150"/>
-      </svg>
-
-      <!-- 周囲のノード -->
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-handshake"></i></div>
-        <div class="pn-node-text">{{関係者1}}</div>
-      </div>
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-user-tie"></i></div>
-        <div class="pn-node-text">{{関係者2}}</div>
-      </div>
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-users"></i></div>
-        <div class="pn-node-text">{{関係者3}}</div>
-      </div>
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-building"></i></div>
-        <div class="pn-node-text">{{関係者4}}</div>
-      </div>
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-chart-line"></i></div>
-        <div class="pn-node-text">{{関係者5}}</div>
-      </div>
-      <div class="pn-node">
-        <div class="pn-node-icon"><i class="fas fa-cog"></i></div>
-        <div class="pn-node-text">{{関係者6}}</div>
-      </div>
-
-      <!-- 中心人物 -->
-      <div class="pn-center">
-        <div class="pn-center-icon"><i class="fas fa-user"></i></div>
-        <div class="pn-center-text">{{中心人物}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.25 縦タイムラインステップ型（Vertical Timeline Steps）
 
-縦方向のステップ形式タイムライン。
+縦の 1 本線に沿って段を積み、**各段に説明文が付く時系列・手順**を見せる。
 
-```css
-.slide-vertical-steps .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+**いつ選ぶ**:
+- 段ごとに 1-2 行の説明が必要
+- 期間・日付のラベルを段に添えたい
+- 段数が多く横並びでは説明が入らない
 
-.slide-vertical-steps .vs-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 説明が不要で順序だけ → §11.23 シェブロン型
+- 段ごとに母数が減る → §11.21 ファネル型
+- 期間の重なりを見せたい → ガントチャート（`buildGantt`）
 
-.slide-vertical-steps .vs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding-left: 40px;
-  position: relative;
-}
+**要素数の目安**: 3-8 段（`CAPACITY.buildVerticalFlow` / `buildVerticalTimeline` = 8。CSS の色割り当ては 5 段で一巡する）
+**複雑度の上限**: 段タイトル 7 字前後、説明は 14 字前後の 1 行。期間ラベルは「第 5-9 週」のような短形に丸める
+**必須情報**: 期間ラベルの**起点となる絶対時点を年込みで 1 か所**（`第 5-9 週` の短形は許すが、図内のどこかに `起点 2026/04` を置く。相対週だけの図は他資料と突合できない）、各段の完了条件、前段に依存するのか並行できるのかの別、進行中の計画なら現在地。起点が無いと、読者はこの計画がいつ終わるかを図から出せない。
+**配置**: 縦列
 
-/* 縦線 */
-.slide-vertical-steps .vs-container::before {
-  content: '';
-  position: absolute;
-  left: 15px;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--fuji-gray);
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/vertical-timeline-{input.json,golden.html}`（report 骨格・検査指摘ゼロ）
 
-.slide-vertical-steps .vs-step {
-  display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem 0;
-  position: relative;
-}
-
-/* ステップポイント */
-.slide-vertical-steps .vs-step::before {
-  content: '';
-  position: absolute;
-  left: -32px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background: var(--wave-blue);
-  border-radius: 50%;
-  border: 3px solid var(--bg-dark);
-  box-shadow: 0 0 0 3px var(--wave-blue);
-  z-index: 2;
-}
-
-.slide-vertical-steps .vs-step:nth-child(1)::before { background: var(--wave-blue); box-shadow: 0 0 0 3px var(--wave-blue); }
-.slide-vertical-steps .vs-step:nth-child(2)::before { background: var(--wave-aqua); box-shadow: 0 0 0 3px var(--wave-aqua); }
-.slide-vertical-steps .vs-step:nth-child(3)::before { background: var(--spring-green); box-shadow: 0 0 0 3px var(--spring-green); }
-.slide-vertical-steps .vs-step:nth-child(4)::before { background: var(--autumn-yellow); box-shadow: 0 0 0 3px var(--autumn-yellow); }
-.slide-vertical-steps .vs-step:nth-child(5)::before { background: var(--sakura-pink); box-shadow: 0 0 0 3px var(--sakura-pink); }
-
-.slide-vertical-steps .vs-step-number {
-  width: 50px;
-  height: 50px;
-  background: var(--bg-dim);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--fs-body-lg);
-  flex-shrink: 0;
-}
-
-.slide-vertical-steps .vs-step:nth-child(1) .vs-step-number { color: var(--wave-blue); }
-.slide-vertical-steps .vs-step:nth-child(2) .vs-step-number { color: var(--wave-aqua); }
-.slide-vertical-steps .vs-step:nth-child(3) .vs-step-number { color: var(--spring-green); }
-.slide-vertical-steps .vs-step:nth-child(4) .vs-step-number { color: var(--autumn-yellow); }
-.slide-vertical-steps .vs-step:nth-child(5) .vs-step-number { color: var(--sakura-pink); }
-
-.slide-vertical-steps .vs-step-content {
-  flex: 1;
-  background: var(--bg-dim);
-  padding: 1.25rem;
-  border-radius: 12px;
-  border-left: 4px solid var(--wave-blue);
-  transition: transform 0.3s ease;
-}
-
-.slide-vertical-steps .vs-step:hover .vs-step-content {
-  transform: translateX(10px);
-}
-
-.slide-vertical-steps .vs-step:nth-child(1) .vs-step-content { border-left-color: var(--wave-blue); }
-.slide-vertical-steps .vs-step:nth-child(2) .vs-step-content { border-left-color: var(--wave-aqua); }
-.slide-vertical-steps .vs-step:nth-child(3) .vs-step-content { border-left-color: var(--spring-green); }
-.slide-vertical-steps .vs-step:nth-child(4) .vs-step-content { border-left-color: var(--autumn-yellow); }
-.slide-vertical-steps .vs-step:nth-child(5) .vs-step-content { border-left-color: var(--sakura-pink); }
-
-.slide-vertical-steps .vs-step-title {
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.slide-vertical-steps .vs-step-desc {
-  font-size: var(--fs-body);
-  color: var(--fg-dim);
-}
-```
-
-```html
-<div class="slider__item slide-vertical-steps">
-  <div class="slider__content">
-    <h2 class="vs-title"><i class="fas fa-list-ol"></i> {{タイトル}}</h2>
-    <div class="vs-container">
-      <div class="vs-step">
-        <div class="vs-step-number">1</div>
-        <div class="vs-step-content">
-          <div class="vs-step-title">{{ステップ1}}</div>
-          <div class="vs-step-desc">{{説明1}}</div>
-        </div>
-      </div>
-      <div class="vs-step">
-        <div class="vs-step-number">2</div>
-        <div class="vs-step-content">
-          <div class="vs-step-title">{{ステップ2}}</div>
-          <div class="vs-step-desc">{{説明2}}</div>
-        </div>
-      </div>
-      <div class="vs-step">
-        <div class="vs-step-number">3</div>
-        <div class="vs-step-content">
-          <div class="vs-step-title">{{ステップ3}}</div>
-          <div class="vs-step-desc">{{説明3}}</div>
-        </div>
-      </div>
-      <div class="vs-step">
-        <div class="vs-step-number">4</div>
-        <div class="vs-step-content">
-          <div class="vs-step-title">{{ステップ4}}</div>
-          <div class="vs-step-desc">{{説明4}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.26 PDCAサイクル型
 
-継続的改善のPDCAサイクルを表示。
+4 象限の扇と中心円で、**Plan-Do-Check-Act が回り続ける構造**を見せる。
 
-```css
-.slide-pdca .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 工程が固定の 4 つで、名前が PDCA に対応する
+- 終わりが始まりへ戻る反復が主張
+- どの工程で止まるかを 1 つ焦点にしたい
 
-.slide-pdca .pdca-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 工程数が 4 でない → §11.27 三角サイクル（3 要素）/ `buildCycle`（3-8）
+- 実際には戻らない一方向の手順 → §11.23 シェブロン型
+- 内側ほど核心という入れ子 → §11.14 同心円（`buildConcentric`）
 
-.slide-pdca .pdca-container {
-  position: relative;
-  width: 450px;
-  height: 450px;
-}
+**要素数の目安**: 象限 4（固定）+ 中心 1
+**複雑度の上限**: 象限ラベルは PDCA の語のみ、和訳・補足は `sub` の 1 行（8 字前後）。中心円は 4 字前後のまとめ語 1 つ
+**必須情報**: **一周の周期**（月次か四半期か。中心円か外周に `1 周 = 1 か月`）、回る向きの矢印、各工程の入力と出力（Check に何が入り Act に何が渡るか）、**輪が止まる条件**。中心円は総称語の再掲にしない——4 象限が PDCA と書いてある図の中心に「継続改善」を置くのは定義の言い直しであって情報ではないので、周回数・現在地・回す対象のいずれかを置く。周期が無い PDCA は、読者が自分の業務のどの頻度に当てはめるかを決められない。
+**配置**: 方形
 
-/* 4象限 */
-.slide-pdca .pdca-quadrant {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/pdca-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-pdca .pdca-quadrant:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-}
-
-/* 位置 */
-.slide-pdca .pdca-quadrant.plan {
-  top: 0;
-  left: 0;
-  background: var(--wave-blue);
-  border-radius: 100% 0 0 0;
-}
-
-.slide-pdca .pdca-quadrant.do {
-  top: 0;
-  right: 0;
-  background: var(--spring-green);
-  border-radius: 0 100% 0 0;
-}
-
-.slide-pdca .pdca-quadrant.check {
-  bottom: 0;
-  right: 0;
-  background: var(--autumn-yellow);
-  border-radius: 0 0 100% 0;
-}
-
-.slide-pdca .pdca-quadrant.act {
-  bottom: 0;
-  left: 0;
-  background: var(--sakura-pink);
-  border-radius: 0 0 0 100%;
-}
-
-.slide-pdca .pdca-label {
-  font-size: var(--fs-subtitle);
-  font-weight: 700;
-  color: var(--bg-dark);
-}
-
-.slide-pdca .pdca-desc {
-  font-size: var(--fs-small);
-  color: rgba(31, 31, 40, 0.7);
-  margin-top: 0.5rem;
-}
-
-/* 中心円 */
-.slide-pdca .pdca-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100px;
-  height: 100px;
-  background: var(--bg-dark);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-}
-
-.slide-pdca .pdca-center-icon {
-  font-size: 2rem;
-  color: var(--wave-blue);
-}
-
-.slide-pdca .pdca-center-text {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-  margin-top: 0.25rem;
-}
-
-/* 矢印 */
-.slide-pdca .pdca-arrows {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 15;
-}
-
-.slide-pdca .pdca-arrow {
-  position: absolute;
-  font-size: 1.5rem;
-  color: var(--bg-dark);
-}
-
-.slide-pdca .pdca-arrow.arrow-1 { top: 90px; left: 50%; transform: translateX(-50%); }
-.slide-pdca .pdca-arrow.arrow-2 { top: 50%; right: 90px; transform: translateY(-50%) rotate(90deg); }
-.slide-pdca .pdca-arrow.arrow-3 { bottom: 90px; left: 50%; transform: translateX(-50%) rotate(180deg); }
-.slide-pdca .pdca-arrow.arrow-4 { top: 50%; left: 90px; transform: translateY(-50%) rotate(270deg); }
-```
-
-```html
-<div class="slider__item slide-pdca">
-  <div class="slider__content">
-    <h2 class="pdca-title"><i class="fas fa-sync-alt"></i> {{タイトル}}</h2>
-    <div class="pdca-container">
-      <div class="pdca-quadrant plan has-tooltip" data-tooltip="{{Plan詳細}}">
-        <div class="pdca-label">Plan</div>
-        <div class="pdca-desc">計画</div>
-      </div>
-      <div class="pdca-quadrant do has-tooltip" data-tooltip="{{Do詳細}}">
-        <div class="pdca-label">Do</div>
-        <div class="pdca-desc">実行</div>
-      </div>
-      <div class="pdca-quadrant check has-tooltip" data-tooltip="{{Check詳細}}">
-        <div class="pdca-label">Check</div>
-        <div class="pdca-desc">評価</div>
-      </div>
-      <div class="pdca-quadrant act has-tooltip" data-tooltip="{{Act詳細}}">
-        <div class="pdca-label">Act</div>
-        <div class="pdca-desc">改善</div>
-      </div>
-
-      <div class="pdca-center">
-        <div class="pdca-center-icon"><i class="fas fa-redo"></i></div>
-        <div class="pdca-center-text">継続改善</div>
-      </div>
-
-      <div class="pdca-arrows">
-        <div class="pdca-arrow arrow-1"><i class="fas fa-chevron-right"></i></div>
-        <div class="pdca-arrow arrow-2"><i class="fas fa-chevron-right"></i></div>
-        <div class="pdca-arrow arrow-3"><i class="fas fa-chevron-right"></i></div>
-        <div class="pdca-arrow arrow-4"><i class="fas fa-chevron-right"></i></div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.27 三角サイクル型（Triangle Cycle）
 
-3要素の循環関係を三角形で表示。
+3 点を矢印で結んだ輪で、**3 要素が相互に回り続ける関係**を見せる。
 
-```css
-.slide-triangle-cycle .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 要素がちょうど 3 つで、どれも欠かせない
+- 循環が主張（最後が最初へ戻る）
+- 3 つのうち 1 つだけが着手条件、という非対称を示したい
 
-.slide-triangle-cycle .tc-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 要素数が 4 以上 → §11.26 PDCA（4）/ `buildCycle`（3-8）
+- 戻らない一方向の手順 → §11.23 シェブロン型
+- 3 つの重なり・共通部分が主題 → §11.2 ベン図（`buildVenn`）
 
-.slide-triangle-cycle .tc-container {
-  position: relative;
-  width: 500px;
-  height: 450px;
-}
+**要素数の目安**: 頂点 3（固定）+ 中心 1（省略可）
+**複雑度の上限**: 頂点ラベルは 2-4 字、補足は `sub` の 1 行（7 字前後）。焦点は 1 頂点のみ
+**必須情報**: 回る向きの矢じり、一周の周期、各辺が**前の頂点の何を次へ渡すか**（辺のラベル。頂点名だけを 3 つ結ぶと、循環しているのか単に併記なのかが読めない）、輪が止まる条件、中心を置くなら周回数・現在地・対象のいずれか。辺のラベルが無い三角サイクルは「どれも欠かせない」という主張の根拠を図の外に置いたままになる。
+**配置**: 方形
 
-/* 3つのノード */
-.slide-triangle-cycle .tc-node {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  background: var(--bg-dim);
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border: 4px solid var(--wave-blue);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/triangle-cycle-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-triangle-cycle .tc-node:hover {
-  transform: scale(1.1);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-}
-
-/* 3点配置 */
-.slide-triangle-cycle .tc-node:nth-child(1) {
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  border-color: var(--wave-blue);
-}
-
-.slide-triangle-cycle .tc-node:nth-child(2) {
-  bottom: 50px;
-  left: 50px;
-  border-color: var(--spring-green);
-}
-
-.slide-triangle-cycle .tc-node:nth-child(3) {
-  bottom: 50px;
-  right: 50px;
-  border-color: var(--sakura-pink);
-}
-
-.slide-triangle-cycle .tc-node-icon {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.slide-triangle-cycle .tc-node:nth-child(1) .tc-node-icon { color: var(--wave-blue); }
-.slide-triangle-cycle .tc-node:nth-child(2) .tc-node-icon { color: var(--spring-green); }
-.slide-triangle-cycle .tc-node:nth-child(3) .tc-node-icon { color: var(--sakura-pink); }
-
-.slide-triangle-cycle .tc-node-text {
-  font-weight: 700;
-}
-
-/* 中心 */
-.slide-triangle-cycle .tc-center {
-  position: absolute;
-  top: 55%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(135deg, var(--wave-blue), var(--sakura-pink));
-  border-radius: 50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--bg-dark);
-  z-index: 5;
-}
-
-.slide-triangle-cycle .tc-center-icon {
-  font-size: 1.5rem;
-}
-
-.slide-triangle-cycle .tc-center-text {
-  font-size: var(--fs-small);
-  font-weight: 600;
-}
-
-/* 接続矢印 */
-.slide-triangle-cycle .tc-arrows {
-  position: absolute;
-  inset: 0;
-}
-
-.slide-triangle-cycle .tc-arrow-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.slide-triangle-cycle .tc-arrow-path {
-  fill: none;
-  stroke: var(--fuji-gray);
-  stroke-width: 2;
-  marker-end: url(#arrowhead);
-}
-```
-
-```html
-<div class="slider__item slide-triangle-cycle">
-  <div class="slider__content">
-    <h2 class="tc-title"><i class="fas fa-recycle"></i> {{タイトル}}</h2>
-    <div class="tc-container">
-      <!-- 矢印SVG -->
-      <svg class="tc-arrows tc-arrow-svg" viewBox="0 0 500 450">
-        <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="var(--autumn-yellow)"/>
-          </marker>
-        </defs>
-        <path class="tc-arrow-path" d="M 280,70 Q 380,150 380,280"/>
-        <path class="tc-arrow-path" d="M 380,350 Q 250,400 130,350"/>
-        <path class="tc-arrow-path" d="M 120,280 Q 120,150 220,70"/>
-      </svg>
-
-      <!-- 3つのノード -->
-      <div class="tc-node has-tooltip" data-tooltip="{{詳細1}}">
-        <div class="tc-node-icon"><i class="fas {{アイコン1}}"></i></div>
-        <div class="tc-node-text">{{要素1}}</div>
-      </div>
-      <div class="tc-node has-tooltip" data-tooltip="{{詳細2}}">
-        <div class="tc-node-icon"><i class="fas {{アイコン2}}"></i></div>
-        <div class="tc-node-text">{{要素2}}</div>
-      </div>
-      <div class="tc-node has-tooltip" data-tooltip="{{詳細3}}">
-        <div class="tc-node-icon"><i class="fas {{アイコン3}}"></i></div>
-        <div class="tc-node-text">{{要素3}}</div>
-      </div>
-
-      <!-- 中心 -->
-      <div class="tc-center">
-        <div class="tc-center-icon"><i class="fas fa-sync"></i></div>
-        <div class="tc-center-text">{{中心}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.28 ウェーブステップカード型（Wave Step Cards）
 
-波形の装飾付きステップカード。
+波形ヘッダ付きのカードを並べ、**段ごとに説明が要る手順**をカード単位で見せる。
 
-```css
-.slide-wave-steps .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 段ごとに番号 + 見出し + 2 行程度の説明が必要
+- 段数が多く、矢羽根では説明が入らない
+- 折り返して並べても順序が読める
 
-.slide-wave-steps .ws-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 説明が不要で順序だけ → §11.23 シェブロン型
+- 縦 1 本の線に沿わせたい → §11.25 縦タイムライン型
+- 順序のない並列項目 → §11.29 アイコングリッド型 / §11.13 ポイントカード
 
-.slide-wave-steps .ws-container {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+**要素数の目安**: 3-4 枚（CSS の色割り当ては 4 枚で尽きる。決定論経路は `CAPACITY.buildSnake` = 8）
+**複雑度の上限**: カード見出し 8 字前後、説明は 11 字前後の 1 行。焦点は 1 枚のみで、最終段ではなく支援が外れる段に置く
+**必須情報**: 起点と終点、各カードの**担当**（誰がやる段か）と**完了条件**（測定可能な形で）、折り返して並べるなら**読み順**（番号を必ず振る。左上から右下でよいかは読者に自明でない）。担当と完了条件が無い手順カードは、読者が自分の着手点を特定できず、読んだあと何もできない。
+**配置**: 全幅
 
-.slide-wave-steps .ws-card {
-  width: 220px;
-  background: var(--bg-dim);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/wave-steps-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-wave-steps .ws-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* カードヘッダー（波形） */
-.slide-wave-steps .ws-card-header {
-  height: 80px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.slide-wave-steps .ws-card:nth-child(1) .ws-card-header { background: var(--wave-blue); }
-.slide-wave-steps .ws-card:nth-child(2) .ws-card-header { background: var(--wave-aqua); }
-.slide-wave-steps .ws-card:nth-child(3) .ws-card-header { background: var(--spring-green); }
-.slide-wave-steps .ws-card:nth-child(4) .ws-card-header { background: var(--autumn-yellow); }
-
-/* 波形SVG */
-.slide-wave-steps .ws-card-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: var(--bg-dim);
-  clip-path: ellipse(60% 100% at 50% 100%);
-}
-
-.slide-wave-steps .ws-step-number {
-  width: 50px;
-  height: 50px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--fs-subtitle);
-  font-weight: 700;
-  color: var(--bg-dark);
-}
-
-/* カード本体 */
-.slide-wave-steps .ws-card-body {
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.slide-wave-steps .ws-card-title {
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-}
-
-.slide-wave-steps .ws-card-desc {
-  font-size: var(--fs-body);
-  color: var(--fg-dim);
-  line-height: 1.6;
-}
-
-.slide-wave-steps .ws-card-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.slide-wave-steps .ws-card:nth-child(1) .ws-card-icon { color: var(--wave-blue); }
-.slide-wave-steps .ws-card:nth-child(2) .ws-card-icon { color: var(--wave-aqua); }
-.slide-wave-steps .ws-card:nth-child(3) .ws-card-icon { color: var(--spring-green); }
-.slide-wave-steps .ws-card:nth-child(4) .ws-card-icon { color: var(--autumn-yellow); }
-```
-
-```html
-<div class="slider__item slide-wave-steps">
-  <div class="slider__content">
-    <h2 class="ws-title"><i class="fas fa-water"></i> {{タイトル}}</h2>
-    <div class="ws-container">
-      <div class="ws-card">
-        <div class="ws-card-header">
-          <div class="ws-step-number">1</div>
-        </div>
-        <div class="ws-card-body">
-          <div class="ws-card-icon"><i class="fas {{アイコン1}}"></i></div>
-          <div class="ws-card-title">{{ステップ1}}</div>
-          <div class="ws-card-desc">{{説明1}}</div>
-        </div>
-      </div>
-      <div class="ws-card">
-        <div class="ws-card-header">
-          <div class="ws-step-number">2</div>
-        </div>
-        <div class="ws-card-body">
-          <div class="ws-card-icon"><i class="fas {{アイコン2}}"></i></div>
-          <div class="ws-card-title">{{ステップ2}}</div>
-          <div class="ws-card-desc">{{説明2}}</div>
-        </div>
-      </div>
-      <div class="ws-card">
-        <div class="ws-card-header">
-          <div class="ws-step-number">3</div>
-        </div>
-        <div class="ws-card-body">
-          <div class="ws-card-icon"><i class="fas {{アイコン3}}"></i></div>
-          <div class="ws-card-title">{{ステップ3}}</div>
-          <div class="ws-card-desc">{{説明3}}</div>
-        </div>
-      </div>
-      <div class="ws-card">
-        <div class="ws-card-header">
-          <div class="ws-step-number">4</div>
-        </div>
-        <div class="ws-card-body">
-          <div class="ws-card-icon"><i class="fas {{アイコン4}}"></i></div>
-          <div class="ws-card-title">{{ステップ4}}</div>
-          <div class="ws-card-desc">{{説明4}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
 
 ### 11.29 アイコン選択グリッド型（Icon Selection Grid）
 
-機能一覧やオプション選択をアイコングリッドで表示。
+アイコン付きセルを格子に並べ、**順序を持たない候補・機能の一覧**を見せる。
 
-```css
-.slide-icon-grid .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 項目どうしが対等で、順序も因果もない
+- 各項目をアイコン 1 つで見分けられる
+- 「この中の 1 つを先に決める」という選択が主張になる
 
-.slide-icon-grid .ig-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 項目に順序がある → §11.23 シェブロン型 / §11.28 ウェーブステップ型
+- 項目間に関係線が要る → §11.24 人物関係図型 / `buildMindmap`
+- 2 軸で位置づけたい → §11.31 象限図（`buildMatrix`）
 
-.slide-icon-grid .ig-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  max-width: 800px;
-}
+**要素数の目安**: 4-8（`grid-2x4`）／最大 9（`grid-3x3`）。CSS の色割り当ては 8 セルで一巡する
+**複雑度の上限**: セルのラベルは 4 字前後、補足は `sub` の 1 行（13 字前後）。焦点は 1 セルのみ
+**必須情報**: 並びに意味が無いことを図内へ明記する（`並びは順不同`。書かなければ読者は左上を最重要と読む）、この 9 セルが**候補の全部か一部か**（一部なら外に何があるか）、焦点セルを 1 つ選ぶならその選定基準。網羅性の宣言が無い候補グリッドは、載っていない選択肢が「検討して落ちた」のか「検討されていない」のかを読者が区別できない。
+**配置**: 全幅
 
-.slide-icon-grid .ig-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  background: var(--bg-dim);
-  border-radius: 16px;
-  text-align: center;
-  border: 2px solid transparent;
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/icon-grid-{input.json,golden.html}`（slide 骨格・検査指摘ゼロ）
 
-.slide-icon-grid .ig-item:hover {
-  transform: translateY(-5px);
-  border-color: var(--wave-blue);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
 
-/* 選択状態 */
-.slide-icon-grid .ig-item.selected {
-  border-color: var(--sakura-pink);
-  background: rgba(210, 126, 153, 0.1);
-}
+### 11.33 包含型（Nested Containment・SVG2）
 
-.slide-icon-grid .ig-item-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(126, 156, 216, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: var(--wave-blue);
-}
+**枠の入れ子そのもの**で階層を示す。外側ほど広い範囲、内側ほど具体。
+線で結ぶ階層図（§11.22 組織図）との違いは、**親子関係を線ではなく空間で語る**点にある。
 
-/* アイコンカラーバリエーション */
-.slide-icon-grid .ig-item:nth-child(1) .ig-item-icon { color: var(--wave-blue); background: rgba(126, 156, 216, 0.2); }
-.slide-icon-grid .ig-item:nth-child(2) .ig-item-icon { color: var(--wave-aqua); background: rgba(122, 162, 247, 0.2); }
-.slide-icon-grid .ig-item:nth-child(3) .ig-item-icon { color: var(--spring-green); background: rgba(152, 187, 108, 0.2); }
-.slide-icon-grid .ig-item:nth-child(4) .ig-item-icon { color: var(--autumn-yellow); background: rgba(220, 165, 97, 0.2); }
-.slide-icon-grid .ig-item:nth-child(5) .ig-item-icon { color: var(--sakura-pink); background: rgba(210, 126, 153, 0.2); }
-.slide-icon-grid .ig-item:nth-child(6) .ig-item-icon { color: var(--wave-blue); background: rgba(126, 156, 216, 0.2); }
-.slide-icon-grid .ig-item:nth-child(7) .ig-item-icon { color: var(--wave-aqua); background: rgba(122, 162, 247, 0.2); }
-.slide-icon-grid .ig-item:nth-child(8) .ig-item-icon { color: var(--spring-green); background: rgba(152, 187, 108, 0.2); }
+**いつ選ぶ**:
+- 「A は B の内側にある」という包含関係が主張の本体
+- スコープの入れ子（全社 → 部門 → チーム）、設定ファイルのカスケード
+- 信頼境界、影響範囲（blast radius）
+- 最内側だけが動かせる／動かせない、という非対称を示したい
 
-.slide-icon-grid .ig-item-label {
-  font-weight: 600;
-  font-size: var(--fs-body);
-}
+**いつ選ばない**:
+- 兄弟どうしの関係が主題 → §11.22 組織図
+- 各層の量に意味がある → §11.34 ピラミッド型
+- 内包でなく順序 → §11.16 バリュースタック
 
-.slide-icon-grid .ig-item-desc {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
+**要素数の目安**: 入れ子 3-4 層
+**複雑度の上限**: 入れ子 **3-4 層**（`diagram-layout-contract.md` §D-2 #9 ツリー深さ 4 の型別具体化）。5 層を超えると最内側の日本語が入らない。`accent` は**最内層 1 つのみ**（同 #3）。層ラベルは 8 字前後、最内層の補足は 11 字前後。全層のインセットを揃え（横 32 / 縦 36）、階層に属さない要素を枠の中に入れない
+**必須情報**: **包含の種別**を図内 1 行で宣言する（部分集合か・制約の継承か・影響範囲か。`内側は外側の設定を継承する` の形）、各層の境界が何で決まるか、**どの層を誰が変えられるか**（最内層だけが動く／動かないという非対称を主張するなら決定主体は図の中に要る）。種別の宣言が無い入れ子は、「内側は外側の一部」と「内側は外側に縛られる」のどちらとも読め、結論が反転する。
+**配置**: 方形
 
-/* 2x4グリッド */
-.slide-icon-grid.grid-2x4 .ig-container {
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/nested-{input.json,golden.html}`（report 骨格・検査指摘ゼロ）
 
-/* 3x3グリッド */
-.slide-icon-grid.grid-3x3 .ig-container {
-  grid-template-columns: repeat(3, 1fr);
-}
-```
 
-```html
-<div class="slider__item slide-icon-grid grid-2x4">
-  <div class="slider__content">
-    <h2 class="ig-title"><i class="fas fa-th"></i> {{タイトル}}</h2>
-    <div class="ig-container">
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細1}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン1}}"></i></div>
-        <div class="ig-item-label">{{ラベル1}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細2}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン2}}"></i></div>
-        <div class="ig-item-label">{{ラベル2}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細3}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン3}}"></i></div>
-        <div class="ig-item-label">{{ラベル3}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細4}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン4}}"></i></div>
-        <div class="ig-item-label">{{ラベル4}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細5}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン5}}"></i></div>
-        <div class="ig-item-label">{{ラベル5}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細6}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン6}}"></i></div>
-        <div class="ig-item-label">{{ラベル6}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細7}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン7}}"></i></div>
-        <div class="ig-item-label">{{ラベル7}}</div>
-      </div>
-      <div class="ig-item has-tooltip" data-tooltip="{{詳細8}}">
-        <div class="ig-item-icon"><i class="fas {{アイコン8}}"></i></div>
-        <div class="ig-item-label">{{ラベル8}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+### 11.34 ピラミッド型（Pyramid・SVG2）
+
+上へ行くほど幅が狭くなる台形の積層で、**希少さ・重要さの階層**を示す。
+§11.21 購買ファネル型が上下逆（上が広く、下が絞られる）なのに対し、
+本型は**下が広く上が頂点**である。この向きは主張そのものなので、1 枚の図で 2 つの向きを混ぜない。
+
+**いつ選ぶ**:
+- 欲求段階・価値階層・優先順位の階級
+- 「上ほど少なく価値が高い」構造そのものが主張
+- 段の位置で序列が読め、色分けが要らない
+
+**いつ選ばない**:
+- 段階的な絞り込み → §11.21 ファネル型
+- 階層でない並列項目 → §11.13 ポイントカード
+- 量の比較 → `chart-types.md` の棒グラフ
+- 土台どうしの依存 → §11.16 バリュースタック
+
+**要素数の目安**: 4-5 段（`CAPACITY.buildPyramid` = 5）
+**複雑度の上限**: **4-5 段**（`diagram-layout-contract.md` §D-2 #17）。6 段以上は最上段に日本語が入らない。段ラベルは 7 字前後。`accent` は **1 段のみ**（同 #3）で、焦点は原則として**頂点**に置く（最下段に置くと「上ほど希少」の主張が消える）。段高は全段等しく、段ごとに色を変えない
+**必須情報**: **序列の軸名と向き**を図の左脇か上端へ（`上ほど代替不能` `上ほど希少`。「上ほど何なのか」を書かない限り、読者は幅を件数と読む）、幅に量の意味が無いなら `幅は件数ではない` と書く、各段に**その段へ入る基準**（何を満たせばその段か）。向きの宣言が欠けたピラミッドは、下が広いという形だけが残り、それが土台なのか多数派なのかを読者が決められない。
+**配置**: 方形
+
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/pyramid-{input.json,golden.html}`（slide 骨格・区切りのヘアラインを D9 の下限＝`STROKE.hairline` へ寄せた版・検査指摘ゼロ）
 
 ---
 
@@ -1440,4 +324,3 @@ SVG polygonで滑らかな台形段階を描画。clip-pathの印刷問題を解
 | **全般** | □ ツールチップで補足情報を追加しているか |
 
 ---
-

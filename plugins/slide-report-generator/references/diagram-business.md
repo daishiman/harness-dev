@@ -4,1391 +4,247 @@
 
 **含まれるタイプ**: 11.11-11.20
 
+> 本ファイルは上記タイプの**テンプレート**を持つ。決定論経路で実際に呼べる**ビルダー名と容量の所在**、および各ビルダーの「選ぶとき / 選ばないとき」は `skills/ref-diagram-system/references/diagram-type-catalog.md` にまとまっている。テンプレートを書き写す前に、その型が本当に適合するかはそちらで確認する。
+
+> **実装（HTML/CSS/SVG の実体）はゴールデンを正とする。** 各節末に挙げた
+> `examples/diagram-goldens/*-{input.json, golden.html}` の対が唯一の正本であり、
+> 本ファイルは**どの型を選ぶかの判断材料だけ**を持つ。
+> マークアップを書く前に必ず対応するゴールデンを読むこと。本ファイルにコード断片を再掲しない。
+>
+> 各節の項目の読み方:
+>
+> - **いつ選ぶ / いつ選ばない**: 誘導先は §11.x の節番号か決定論ビルダー名で示す。
+>   ビルダーの容量の正本は `vendor/scripts/svg-builder.cjs` の `CAPACITY` にある。
+> - **要素数の目安**: ゴールデンが実際に載せている数。上限を超えるなら型を変えるか図を分ける。
+> - **複雑度の上限**: ゴールデン `input.json` の実測に基づく全角文字数の目安。
+>   折り返しが起きる長さは図が崩れる合図であり、文字を詰めるのではなく要素を減らす。
+> - **配置**: `references/diagram-type-crosswalk.md` の「推奨配置」列（`横帯` / `方形` / `縦列` / `全幅`）
+>   に一致させてある。R9 溶け込み契約 §D-4-4 の配置分類が正本である。
+> - **焦点**: どの型も accent は 1 要素に限る。段や枠ごとに色を変えると焦点が増えて図が読めなくなる。
+>   これは全節に共通する制約なのでここに一度だけ書く。
+
 ---
 
 
 ### 11.11 課題解決型（Problem-Solution）
 
-問題と解決策を左右に配置して対比表示。
+課題の並びと打ち手の並びを左右に置き、行どうしを一対一で対応させて見せる図。
 
-```css
-.slide-problem-solution .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 課題と打ち手が同数で、行単位に一対一で対応しているとき
+- 「何が問題か」より「どう変わるか」へ視線を渡したいとき
+- 課題側が既に共有済みで、本文が語るのは打ち手側だけのとき
 
-.slide-problem-solution .ps-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 2 案を優劣なしに比べるだけなら §11.6（`buildNeutralComparison` / `buildVs`）
+- 対応が n 対 m に崩れるなら §11.7 のマトリクス（`buildMatrix`）
 
-.slide-problem-solution .ps-container {
-  display: flex;
-  gap: 2rem;
-  align-items: stretch;
-  max-width: 1000px;
-  width: 100%;
-}
+**要素数の目安**: 枠 2（課題・打ち手）、各枠の行 2-4
+**複雑度の上限**: 枠見出しは 3 字程度、行は 1 行 12 字以内・折り返さない長さ
+**必須情報**: 課題行ごとの現況の量と時点（行末に `手戻り12件・2026/4` の形）、打ち手行ごとの実行主体と期限（行末に `営業部・2026/9` の形）、打ち手枠の見出し下 1 行にコスト、課題行と打ち手行の対応（同じ高さへ揃えるか、両枠へ同じ通し番号を振る）。これが欠けると、読者は打ち手を「誰がいつ幾らで実行するのか」で評価できず、賛否ではなく感想しか返せない。
+**配置**: 横帯
 
-/* 問題パネル */
-.slide-problem-solution .ps-panel {
-  flex: 1;
-  background: var(--bg-dim);
-  border-radius: 16px;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.slide-problem-solution .ps-panel.problem {
-  border-top: 4px solid var(--sakura-pink);
-}
-
-.slide-problem-solution .ps-panel.solution {
-  border-top: 4px solid var(--spring-green);
-}
-
-.slide-problem-solution .ps-panel-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-}
-
-.slide-problem-solution .ps-panel.problem .ps-panel-header {
-  color: var(--sakura-pink);
-}
-
-.slide-problem-solution .ps-panel.solution .ps-panel-header {
-  color: var(--spring-green);
-}
-
-.slide-problem-solution .ps-panel-header i {
-  font-size: 1.5rem;
-}
-
-.slide-problem-solution .ps-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.slide-problem-solution .ps-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-}
-
-.slide-problem-solution .ps-list li:hover {
-  transform: translateX(5px);
-}
-
-.slide-problem-solution .ps-list li i {
-  margin-top: 0.2rem;
-}
-
-.slide-problem-solution .ps-panel.problem .ps-list li i {
-  color: var(--sakura-pink);
-}
-
-.slide-problem-solution .ps-panel.solution .ps-list li i {
-  color: var(--spring-green);
-}
-
-/* 中央の矢印 */
-.slide-problem-solution .ps-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: var(--autumn-yellow);
-}
-```
-
-```html
-<div class="slider__item slide-problem-solution">
-  <div class="slider__content">
-    <h2 class="ps-title"><i class="fas fa-exchange-alt"></i> {{タイトル}}</h2>
-    <div class="ps-container">
-      <div class="ps-panel problem">
-        <div class="ps-panel-header">
-          <i class="fas fa-times-circle"></i>
-          <span>課題</span>
-        </div>
-        <ul class="ps-list">
-          <li>
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{課題1}}</span>
-          </li>
-          <li>
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{課題2}}</span>
-          </li>
-          <li>
-            <i class="fas fa-exclamation-circle"></i>
-            <span>{{課題3}}</span>
-          </li>
-        </ul>
-      </div>
-      <div class="ps-arrow">
-        <i class="fas fa-arrow-right"></i>
-      </div>
-      <div class="ps-panel solution">
-        <div class="ps-panel-header">
-          <i class="fas fa-check-circle"></i>
-          <span>解決策</span>
-        </div>
-        <ul class="ps-list">
-          <li>
-            <i class="fas fa-check"></i>
-            <span>{{解決策1}}</span>
-          </li>
-          <li>
-            <i class="fas fa-check"></i>
-            <span>{{解決策2}}</span>
-          </li>
-          <li>
-            <i class="fas fa-check"></i>
-            <span>{{解決策3}}</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/problem-solution-{input.json,golden.html}`（slide 骨格・純黒の行背景と hover 変形と 2 色の塗り分けを落とした版・検査指摘ゼロ）
 
 ### 11.12 バリュープロポジション型（Value Proposition）
 
-中心に核心価値、周囲に4つの価値・特徴を配置。
+中心に核心価値を置き、それを成り立たせる条件を四方から線で結んで見せる図。
 
-```css
-.slide-value-prop .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 中心が 1 つに定まり、周囲が「中心を支える条件」として従属しているとき
+- 提供価値の構造を、機能の列挙ではなく中心と条件の関係として語りたいとき
+- 周囲の要素に順序が無く、方角に意味を持たせなくてよいとき
 
-.slide-value-prop .vp-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 周囲が対等な並列項目なら §11.13 のポイントカード
+- 内側ほど核心という**入れ子**の構造なら §11.14（`buildConcentric`）
+- 中心から枝が多段に伸びるなら §11.3 のマインドマップ（`buildMindmap`）
 
-.slide-value-prop .vp-container {
-  position: relative;
-  width: 700px;
-  height: 450px;
-}
+**要素数の目安**: 中心 1 + 周囲 4（上下左右に固定）
+**複雑度の上限**: ラベル 8 字以内、補足 13 字以内、いずれも 1 行
+**必須情報**: 中心に価値を受け取る顧客を名指しで（`情シス（300名規模）` の形）、周囲 4 枠のうち 3 枠を顧客側のジョブ・ペイン・ゲインに充て、残る 1 枠を提供側の打ち手に充てる、各枠の補足 1 行に中心を支える根拠。顧客側 3 枠を欠いた図は中心付き機能一覧であって、読者は価値が誰のどの困りごとに当たるのかを判定できない。
+**配置**: 方形
 
-/* 中央ノードの基本 CSS は diagram-visual.md の中心円パターンを正本として参照 */
-
-.slide-value-prop .vp-center-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.slide-value-prop .vp-center-text {
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-}
-
-/* 周囲の価値カード */
-.slide-value-prop .vp-card {
-  position: absolute;
-  width: 180px;
-  background: var(--bg-dim);
-  border-radius: 12px;
-  padding: 1.25rem;
-  text-align: center;
-  border: 2px solid var(--wave-blue);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-value-prop .vp-card:hover {
-  transform: scale(1.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* 4方向配置 */
-.slide-value-prop .vp-card:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); }
-.slide-value-prop .vp-card:nth-child(2) { top: 50%; right: 0; transform: translateY(-50%); }
-.slide-value-prop .vp-card:nth-child(3) { bottom: 0; left: 50%; transform: translateX(-50%); }
-.slide-value-prop .vp-card:nth-child(4) { top: 50%; left: 0; transform: translateY(-50%); }
-
-.slide-value-prop .vp-card-icon {
-  font-size: 2rem;
-  color: var(--wave-blue);
-  margin-bottom: 0.5rem;
-}
-
-.slide-value-prop .vp-card-title {
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.slide-value-prop .vp-card-desc {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-
-/* 接続線 */
-.slide-value-prop .vp-line {
-  position: absolute;
-  background: var(--fuji-gray);
-  z-index: 1;
-}
-
-.slide-value-prop .vp-line-v {
-  width: 2px;
-  height: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.slide-value-prop .vp-line-h {
-  height: 2px;
-  width: 80px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.slide-value-prop .vp-line.top { top: 80px; }
-.slide-value-prop .vp-line.bottom { bottom: 80px; }
-.slide-value-prop .vp-line.left { left: 100px; }
-.slide-value-prop .vp-line.right { right: 100px; }
-```
-
-```html
-<div class="slider__item slide-value-prop">
-  <div class="slider__content">
-    <h2 class="vp-title"><i class="fas fa-gem"></i> {{タイトル}}</h2>
-    <div class="vp-container">
-      <!-- 接続線 -->
-      <div class="vp-line vp-line-v top"></div>
-      <div class="vp-line vp-line-v bottom"></div>
-      <div class="vp-line vp-line-h left"></div>
-      <div class="vp-line vp-line-h right"></div>
-
-      <!-- 周囲の価値カード -->
-      <div class="vp-card has-tooltip" data-tooltip="{{詳細1}}">
-        <div class="vp-card-icon"><i class="fas {{アイコン1}}"></i></div>
-        <div class="vp-card-title">{{価値1}}</div>
-        <div class="vp-card-desc">{{説明1}}</div>
-      </div>
-      <div class="vp-card has-tooltip" data-tooltip="{{詳細2}}">
-        <div class="vp-card-icon"><i class="fas {{アイコン2}}"></i></div>
-        <div class="vp-card-title">{{価値2}}</div>
-        <div class="vp-card-desc">{{説明2}}</div>
-      </div>
-      <div class="vp-card has-tooltip" data-tooltip="{{詳細3}}">
-        <div class="vp-card-icon"><i class="fas {{アイコン3}}"></i></div>
-        <div class="vp-card-title">{{価値3}}</div>
-        <div class="vp-card-desc">{{説明3}}</div>
-      </div>
-      <div class="vp-card has-tooltip" data-tooltip="{{詳細4}}">
-        <div class="vp-card-icon"><i class="fas {{アイコン4}}"></i></div>
-        <div class="vp-card-title">{{価値4}}</div>
-        <div class="vp-card-desc">{{説明4}}</div>
-      </div>
-
-      <!-- 中央の核心価値 -->
-      <div class="vp-center">
-        <div class="vp-center-icon"><i class="fas {{中央アイコン}}"></i></div>
-        <div class="vp-center-text">{{核心価値}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/value-proposition-{input.json,golden.html}`（slide 骨格・影と hover 変形を落とし周囲 4 枚の有彩色枠を ink に戻した版・検査指摘ゼロ）
 
 ### 11.13 ポイントカード型（Point Cards）
 
-アイコン付きカードで複数の特徴・メリットを並列表示。
+要点を通し番号つきのカードで横に並べ、そのうち 1 枚だけを焦点にする図。
 
-```css
-.slide-point-cards .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 要点が 3-4 個で、互いに依存も順序もないとき
+- 並んでいるが対等ではなく、本文が語るのは特定の 1 枚だけのとき
+- 各要点に短い補足行を 1-2 本添えたいとき
 
-.slide-point-cards .pc-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 要点どうしに前後関係があるなら §11.4 の横フロー（`buildHorizontalFlow`）
+- 中心に集約する構造なら §11.12
+- 5 個以上を並べるなら表（§11.9）へ倒す
 
-.slide-point-cards .pc-container {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 1000px;
-}
+**要素数の目安**: カード 3-4（3 枚と 4 枚で幅の当て方が変わる）
+**複雑度の上限**: 見出し 10 字以内、補足行は 1 枚あたり 2 本まで・各 12 字以内
+**必須情報**: 並びが何の順かを図の下端 1 行に書く（優先順・時系列なら軸名を `左から着手順`、意味が無いなら `並びは順不同・番号は通し番号` と書く）、焦点にした 1 枚がなぜ焦点かを示す語をその見出しの右に（`本日の論点` など）。並び順を宣言しないと読者は左端を最重要と読み、図が持っていない優先順位を勝手に作る。
+**配置**: 全幅
 
-.slide-point-cards .pc-card {
-  width: 280px;
-  background: var(--bg-dim);
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  border-top: 4px solid var(--wave-blue);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-point-cards .pc-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-}
-
-/* カラーバリエーション */
-.slide-point-cards .pc-card:nth-child(1) { border-top-color: var(--wave-blue); }
-.slide-point-cards .pc-card:nth-child(2) { border-top-color: var(--sakura-pink); }
-.slide-point-cards .pc-card:nth-child(3) { border-top-color: var(--spring-green); }
-.slide-point-cards .pc-card:nth-child(4) { border-top-color: var(--autumn-yellow); }
-
-.slide-point-cards .pc-card-icon {
-  width: 80px;
-  height: 80px;
-  background: rgba(126, 156, 216, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  font-size: 2rem;
-  color: var(--wave-blue);
-}
-
-.slide-point-cards .pc-card:nth-child(1) .pc-card-icon { color: var(--wave-blue); background: rgba(126, 156, 216, 0.2); }
-.slide-point-cards .pc-card:nth-child(2) .pc-card-icon { color: var(--sakura-pink); background: rgba(210, 126, 153, 0.2); }
-.slide-point-cards .pc-card:nth-child(3) .pc-card-icon { color: var(--spring-green); background: rgba(152, 187, 108, 0.2); }
-.slide-point-cards .pc-card:nth-child(4) .pc-card-icon { color: var(--autumn-yellow); background: rgba(220, 165, 97, 0.2); }
-
-.slide-point-cards .pc-card-title {
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-}
-
-.slide-point-cards .pc-card-desc {
-  font-size: var(--fs-body);
-  color: var(--fg-dim);
-  line-height: 1.6;
-}
-
-/* 3カード配置 */
-.slide-point-cards.cards-3 .pc-card {
-  width: 300px;
-}
-
-/* 4カード配置（2x2） */
-.slide-point-cards.cards-4 .pc-card {
-  width: 260px;
-}
-```
-
-```html
-<div class="slider__item slide-point-cards cards-3">
-  <div class="slider__content">
-    <h2 class="pc-title"><i class="fas fa-star"></i> {{タイトル}}</h2>
-    <div class="pc-container">
-      <div class="pc-card has-tooltip" data-tooltip="{{詳細1}}">
-        <div class="pc-card-icon"><i class="fas {{アイコン1}}"></i></div>
-        <div class="pc-card-title">{{ポイント1}}</div>
-        <div class="pc-card-desc">{{説明1}}</div>
-      </div>
-      <div class="pc-card has-tooltip" data-tooltip="{{詳細2}}">
-        <div class="pc-card-icon"><i class="fas {{アイコン2}}"></i></div>
-        <div class="pc-card-title">{{ポイント2}}</div>
-        <div class="pc-card-desc">{{説明2}}</div>
-      </div>
-      <div class="pc-card has-tooltip" data-tooltip="{{詳細3}}">
-        <div class="pc-card-icon"><i class="fas {{アイコン3}}"></i></div>
-        <div class="pc-card-title">{{ポイント3}}</div>
-        <div class="pc-card-desc">{{説明3}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/point-cards-{input.json,golden.html}`（slide 骨格・影と 4 色の色分けを落とし Font Awesome アイコンを通し番号へ置いた版・検査指摘ゼロ）
 
 ### 11.14 コンセントリックサークル型（Concentric Circles）
 
-同心円で層構造・優先順位を表現。
+同心円の入れ子で、内側ほど核心・外側ほど広い範囲という包含関係を見せる図。
 
-```css
-.slide-concentric .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 層が真に包含関係にあり、外は内を含むと言い切れるとき
+- 着手順や優先順位を、円の広さと凡例で語りたいとき
+- 層が 3 段に収まるとき
 
-.slide-concentric .cc-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 積み上げの土台関係（下が終わらないと上が載らない）なら §11.16（`buildValueStack`）
+- 上ほど少なく価値が高いだけなら §11.34 のピラミッド（`buildPyramid`）
+- 包含が枠の入れ子でよいなら §11.33
 
-.slide-concentric .cc-container {
-  position: relative;
-  width: 500px;
-  height: 500px;
-}
+**要素数の目安**: 層 3（外・中・核）、右に凡例 3 行
+**複雑度の上限**: 層ラベル 8 字以内。層ごとに塗りの濃度を 1 段上げ、色相は変えない
+**必須情報**: 内外の向きが何の順かを凡例の見出しに 1 行（`内側ほど不可欠`）、包含の種別を凡例の各行に（部分集合か・影響範囲か・着手順か）、最外層の外に何があるかを凡例の最終行に（`最外の外は対象外`）。半径は書き手の意図と無関係に量として読まれるので、向きと種別を欠いた同心円は読者が勝手な序列を発明する。
+**配置**: 方形
 
-/* 3層の同心円 */
-.slide-concentric .cc-layer {
-  position: absolute;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-concentric .cc-layer:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-/* 外層 */
-.slide-concentric .cc-layer.outer {
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background: rgba(126, 156, 216, 0.2);
-  border: 3px solid var(--wave-blue);
-}
-
-/* 中層 */
-.slide-concentric .cc-layer.middle {
-  width: 65%;
-  height: 65%;
-  top: 17.5%;
-  left: 17.5%;
-  background: rgba(210, 126, 153, 0.3);
-  border: 3px solid var(--sakura-pink);
-  z-index: 2;
-}
-
-/* 内層（コア） */
-.slide-concentric .cc-layer.core {
-  width: 35%;
-  height: 35%;
-  top: 32.5%;
-  left: 32.5%;
-  background: linear-gradient(135deg, var(--autumn-yellow), var(--sakura-pink));
-  border: none;
-  z-index: 3;
-  color: var(--bg-dark);
-  font-weight: 700;
-}
-
-.slide-concentric .cc-layer-label {
-  position: absolute;
-  font-size: var(--fs-body);
-  font-weight: 600;
-}
-
-/* ラベル配置 */
-.slide-concentric .cc-layer.outer .cc-layer-label {
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.slide-concentric .cc-layer.middle .cc-layer-label {
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.slide-concentric .cc-layer.core .cc-layer-label {
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
-}
-
-/* 右側の凡例 */
-.slide-concentric .cc-legend {
-  position: absolute;
-  right: -220px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.slide-concentric .cc-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.slide-concentric .cc-legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-}
-
-.slide-concentric .cc-legend-color.outer { background: var(--wave-blue); }
-.slide-concentric .cc-legend-color.middle { background: var(--sakura-pink); }
-.slide-concentric .cc-legend-color.core { background: var(--autumn-yellow); }
-```
-
-```html
-<div class="slider__item slide-concentric">
-  <div class="slider__content">
-    <h2 class="cc-title"><i class="fas fa-bullseye"></i> {{タイトル}}</h2>
-    <div class="cc-container">
-      <div class="cc-layer outer has-tooltip" data-tooltip="{{外層詳細}}">
-        <span class="cc-layer-label">{{外層ラベル}}</span>
-      </div>
-      <div class="cc-layer middle has-tooltip" data-tooltip="{{中層詳細}}">
-        <span class="cc-layer-label">{{中層ラベル}}</span>
-      </div>
-      <div class="cc-layer core has-tooltip" data-tooltip="{{コア詳細}}">
-        <span class="cc-layer-label">{{コア}}</span>
-      </div>
-      <div class="cc-legend">
-        <div class="cc-legend-item">
-          <div class="cc-legend-color core"></div>
-          <span>{{コア説明}}</span>
-        </div>
-        <div class="cc-legend-item">
-          <div class="cc-legend-color middle"></div>
-          <span>{{中層説明}}</span>
-        </div>
-        <div class="cc-legend-item">
-          <div class="cc-legend-color outer"></div>
-          <span>{{外層説明}}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/concentric-{input.json,golden.html}`（slide 骨格・グラデーションと影と層ごとの色分けを ink の濃度差へ寄せた版・検査指摘ゼロ）
 
 ### 11.15 ロードマップ型（Roadmap）
 
-横方向の時間軸・マイルストーン表示。
+横一本の時間軸にマイルストーンを置き、達成することと時期を上下に添えて見せる図。
 
-```css
-.slide-roadmap .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 施策が時間順に並び、各点に時期（月・四半期）が付くとき
+- 進行中の一点を焦点にして、その先を続けるかを問いたいとき
+- 段が 3-5 個で横幅に収まるとき
 
-.slide-roadmap .rm-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 段ごとに長い説明文が要るなら §11.25 の縦タイムライン（`buildVerticalFlow`）
+- 期間の重なりや依存を見せるならガント（`buildGantt`）
+- 時期を持たない手順なら §11.4
 
-.slide-roadmap .rm-container {
-  position: relative;
-  width: 100%;
-  max-width: 1000px;
-  padding: 3rem 0;
-}
+**要素数の目安**: マイルストーン 3-5
+**複雑度の上限**: 達成ラベル 8 字以内、補足 10 字以内、時期表記は「〜4月」「5〜7月」程度の短句
+**必須情報**: 時期の短句にも年を含める（`〜2026/4`・`2026/5〜7`）、各マイルストーンの完了条件を補足行へ測定可能な形で（`一次受付5分以内`）、現在地を軸上の 1 点に明示（`現在ここ`）、担当を各点の下に（`情シス`）、段の間に依存があるなら軸上へ矢印で示す（時間順に並べただけでは依存を示したことにならない）。年と完了条件を欠くと、その段が終わったのか、遅れたとき何が連鎖するのかを読者が判定できない。
+**配置**: 横帯
 
-/* 時間軸ライン */
-.slide-roadmap .rm-timeline {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--fuji-gray);
-  transform: translateY(-50%);
-}
-
-/* マイルストーン */
-.slide-roadmap .rm-milestones {
-  display: flex;
-  justify-content: space-between;
-  position: relative;
-  z-index: 2;
-}
-
-.slide-roadmap .rm-milestone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  max-width: 200px;
-}
-
-/* マイルストーンポイント */
-.slide-roadmap .rm-point {
-  width: 20px;
-  height: 20px;
-  background: var(--wave-blue);
-  border-radius: 50%;
-  border: 4px solid var(--bg-dark);
-  box-shadow: 0 0 0 3px var(--wave-blue);
-  transition: transform 0.3s ease;
-}
-
-.slide-roadmap .rm-milestone:hover .rm-point {
-  transform: scale(1.3);
-}
-
-/* 完了マイルストーン */
-.slide-roadmap .rm-milestone.completed .rm-point {
-  background: var(--spring-green);
-  box-shadow: 0 0 0 3px var(--spring-green);
-}
-
-/* 現在マイルストーン */
-.slide-roadmap .rm-milestone.current .rm-point {
-  background: var(--autumn-yellow);
-  box-shadow: 0 0 0 3px var(--autumn-yellow);
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-/* マイルストーンラベル */
-.slide-roadmap .rm-label {
-  font-size: var(--fs-body);
-  font-weight: 700;
-  text-align: center;
-}
-
-.slide-roadmap .rm-date {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-
-/* マイルストーンカード */
-.slide-roadmap .rm-card {
-  background: var(--bg-dim);
-  padding: 1rem;
-  border-radius: 8px;
-  text-align: center;
-  border-left: 3px solid var(--wave-blue);
-  transition: transform 0.3s ease;
-}
-
-.slide-roadmap .rm-milestone:hover .rm-card {
-  transform: translateY(-5px);
-}
-
-.slide-roadmap .rm-milestone.completed .rm-card {
-  border-left-color: var(--spring-green);
-}
-
-.slide-roadmap .rm-milestone.current .rm-card {
-  border-left-color: var(--autumn-yellow);
-}
-
-.slide-roadmap .rm-card-title {
-  font-size: var(--fs-body);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.slide-roadmap .rm-card-desc {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-```
-
-```html
-<div class="slider__item slide-roadmap">
-  <div class="slider__content">
-    <h2 class="rm-title"><i class="fas fa-road"></i> {{タイトル}}</h2>
-    <div class="rm-container">
-      <div class="rm-timeline"></div>
-      <div class="rm-milestones">
-        <div class="rm-milestone completed">
-          <div class="rm-card">
-            <div class="rm-card-title">{{Phase 1}}</div>
-            <div class="rm-card-desc">{{説明1}}</div>
-          </div>
-          <div class="rm-point"></div>
-          <div class="rm-label">{{Phase 1 名}}</div>
-          <div class="rm-date">{{日付1}}</div>
-        </div>
-        <div class="rm-milestone current">
-          <div class="rm-card">
-            <div class="rm-card-title">{{Phase 2}}</div>
-            <div class="rm-card-desc">{{説明2}}</div>
-          </div>
-          <div class="rm-point"></div>
-          <div class="rm-label">{{Phase 2 名}}</div>
-          <div class="rm-date">{{日付2}}</div>
-        </div>
-        <div class="rm-milestone">
-          <div class="rm-card">
-            <div class="rm-card-title">{{Phase 3}}</div>
-            <div class="rm-card-desc">{{説明3}}</div>
-          </div>
-          <div class="rm-point"></div>
-          <div class="rm-label">{{Phase 3 名}}</div>
-          <div class="rm-date">{{日付3}}</div>
-        </div>
-        <div class="rm-milestone">
-          <div class="rm-card">
-            <div class="rm-card-title">{{Phase 4}}</div>
-            <div class="rm-card-desc">{{説明4}}</div>
-          </div>
-          <div class="rm-point"></div>
-          <div class="rm-label">{{Phase 4 名}}</div>
-          <div class="rm-date">{{日付4}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/roadmap-{input.json,golden.html}`（report 骨格・影と pulse と 3 色の状態塗りを落とし accent を進行中の 1 点に畳んだ版・検査指摘ゼロ）
 
 ### 11.16 価値スタック型（Value Stack）
 
-複数の価値・レイヤーを縦に積み上げて階層を表現。
+段を縦に積み、下の段が終わって初めて上の段が載るという土台関係を見せる図。
 
-```css
-.slide-value-stack .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 段の間に「下が前提」という一方向の依存があるとき
+- 抽象度の段（レイヤスタック）を語りたいとき
+- 現在地が特定の 1 段に定まるとき
 
-.slide-value-stack .vs-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 包含関係（外が内を含む）なら §11.14
+- 上ほど数が少ないことを見せたいなら §11.34 のピラミッド
+- 段が独立で順序を持たないなら §11.13
 
-.slide-value-stack .vs-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  max-width: 700px;
-}
+**要素数の目安**: 段 3-4
+**複雑度の上限**: 段ラベル 8 字以内、補足 13 字以内。段の序列は位置が語るので段ごとに色を変えない
+**必須情報**: 積む向きが何の順かを段の左脇に 1 行（`下ほど前提`）、各段が載ったと言える条件を補足行へ測定可能な形で（`月次実行が3期連続`）、現在地の 1 段を明示（`現在ここ`）。土台関係は位置だけでは単なる「並び」と区別できず、条件と現在地を欠くと読者はどこまで積み上がっていて次に何をすべきかを判定できない。
+**配置**: 縦列
 
-.slide-value-stack .vs-layer {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem 2rem;
-  background: var(--bg-dim);
-  border-left: 5px solid var(--wave-blue);
-  position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-value-stack .vs-layer:hover {
-  transform: translateX(10px);
-  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
-}
-
-/* 層別の色 */
-.slide-value-stack .vs-layer:nth-child(1) { border-left-color: var(--sakura-pink); }
-.slide-value-stack .vs-layer:nth-child(2) { border-left-color: var(--autumn-yellow); }
-.slide-value-stack .vs-layer:nth-child(3) { border-left-color: var(--spring-green); }
-.slide-value-stack .vs-layer:nth-child(4) { border-left-color: var(--wave-blue); }
-
-/* 上向き矢印 */
-.slide-value-stack .vs-arrow {
-  display: flex;
-  justify-content: center;
-  padding: 0.5rem;
-  color: var(--autumn-yellow);
-  font-size: 1.5rem;
-}
-
-.slide-value-stack .vs-layer-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(126, 156, 216, 0.2);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.slide-value-stack .vs-layer:nth-child(1) .vs-layer-icon { background: rgba(210, 126, 153, 0.2); color: var(--sakura-pink); }
-.slide-value-stack .vs-layer:nth-child(2) .vs-layer-icon { background: rgba(220, 165, 97, 0.2); color: var(--autumn-yellow); }
-.slide-value-stack .vs-layer:nth-child(3) .vs-layer-icon { background: rgba(152, 187, 108, 0.2); color: var(--spring-green); }
-.slide-value-stack .vs-layer:nth-child(4) .vs-layer-icon { background: rgba(126, 156, 216, 0.2); color: var(--wave-blue); }
-
-.slide-value-stack .vs-layer-content {
-  flex: 1;
-}
-
-.slide-value-stack .vs-layer-title {
-  font-size: var(--fs-subheading);
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.slide-value-stack .vs-layer-desc {
-  font-size: var(--fs-body);
-  color: var(--fg-dim);
-}
-
-.slide-value-stack .vs-layer-level {
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-```
-
-```html
-<div class="slider__item slide-value-stack">
-  <div class="slider__content">
-    <h2 class="vs-title"><i class="fas fa-layer-group"></i> {{タイトル}}</h2>
-    <div class="vs-container">
-      <div class="vs-layer has-tooltip" data-tooltip="{{詳細1}}">
-        <div class="vs-layer-icon"><i class="fas {{アイコン1}}"></i></div>
-        <div class="vs-layer-content">
-          <div class="vs-layer-level">Level 3</div>
-          <div class="vs-layer-title">{{レイヤー1}}</div>
-          <div class="vs-layer-desc">{{説明1}}</div>
-        </div>
-      </div>
-      <div class="vs-arrow"><i class="fas fa-arrow-up"></i></div>
-      <div class="vs-layer has-tooltip" data-tooltip="{{詳細2}}">
-        <div class="vs-layer-icon"><i class="fas {{アイコン2}}"></i></div>
-        <div class="vs-layer-content">
-          <div class="vs-layer-level">Level 2</div>
-          <div class="vs-layer-title">{{レイヤー2}}</div>
-          <div class="vs-layer-desc">{{説明2}}</div>
-        </div>
-      </div>
-      <div class="vs-arrow"><i class="fas fa-arrow-up"></i></div>
-      <div class="vs-layer has-tooltip" data-tooltip="{{詳細3}}">
-        <div class="vs-layer-icon"><i class="fas {{アイコン3}}"></i></div>
-        <div class="vs-layer-content">
-          <div class="vs-layer-level">Level 1</div>
-          <div class="vs-layer-title">{{レイヤー3}}</div>
-          <div class="vs-layer-desc">{{説明3}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/value-stack-{input.json,golden.html}`（slide 骨格・影と hover 変形と 4 色の段分けを落とした版・検査指摘ゼロ）
 
 ### 11.17 AIDMA/ファネルフレームワーク型
 
-マーケティングファネルやカスタマージャーニーの段階を横方向のフレームワークで表示。
+購買心理の段階を列に取り、段階名・和名・実績の 3 行を縦に重ねて見せる図。
 
-```css
-.slide-aidma .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 認知から行動までの段階ごとに、施策と数字を対で示したいとき
+- どの段で落ちているかを列の比較で問いたいとき
+- 段が定型（AIDMA なら 5 段）に固定されているとき
 
-.slide-aidma .aidma-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 段の減り方そのものを面積で見せたいなら §11.21 のファネル（`buildFunnel`）
+- 段ごとに担当や受け渡しが変わるなら `buildSwimlane`
+- 数字の推移を軸で読ませたいなら `chart-types.md` の棒・線グラフ
 
-.slide-aidma .aidma-container {
-  width: 100%;
-  max-width: 1000px;
-}
+**要素数の目安**: 列 5（Attention / Interest / Desire / Memory / Action）× 行 3
+**複雑度の上限**: 和名 2 字、各セルの記述は 1 行 8 字以内を 2 本まで
+**必須情報**: 各段の実測値を単位つきで実績行に（`12,000件`）、隣り合う段の転換率を段の境目に（`→24%`）、集計定義・期間・母数を図の下端 1 行に年を含む絶対表記で（`2026/1-3・自社EC・重複除外後 (n=12,000)`）、施策セルの実行主体。転換率と母数を欠くと、どの段で落ちているかを読者が暗算するほかなく、施策の当て先を決められない。
+**配置**: 方形
 
-.slide-aidma .aidma-row {
-  display: flex;
-  gap: 0;
-}
-
-.slide-aidma .aidma-row:first-child .aidma-cell {
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-.slide-aidma .aidma-row:last-child .aidma-cell {
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.slide-aidma .aidma-cell {
-  flex: 1;
-  padding: 1.25rem;
-  text-align: center;
-  border: 1px solid var(--fuji-gray);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-aidma .aidma-cell:hover {
-  transform: scale(1.02);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  z-index: 10;
-}
-
-/* ヘッダー行 */
-.slide-aidma .aidma-row.header .aidma-cell {
-  background: var(--sumi-ink);
-  font-weight: 700;
-  color: var(--wave-blue);
-  font-size: var(--fs-body-lg);
-}
-
-/* フェーズ名行 */
-.slide-aidma .aidma-row.phase .aidma-cell {
-  background: rgba(126, 156, 216, 0.15);
-  font-weight: 600;
-}
-
-/* アクション行 */
-.slide-aidma .aidma-row.action .aidma-cell {
-  background: var(--bg-dim);
-  font-size: var(--fs-small);
-  color: var(--fg-dim);
-}
-
-/* フェーズ別カラー */
-.slide-aidma .aidma-cell:nth-child(1) { border-left-color: var(--wave-blue); border-left-width: 3px; }
-.slide-aidma .aidma-cell:nth-child(2) { border-left-color: var(--wave-aqua); border-left-width: 3px; }
-.slide-aidma .aidma-cell:nth-child(3) { border-left-color: var(--spring-green); border-left-width: 3px; }
-.slide-aidma .aidma-cell:nth-child(4) { border-left-color: var(--autumn-yellow); border-left-width: 3px; }
-.slide-aidma .aidma-cell:nth-child(5) { border-left-color: var(--sakura-pink); border-left-width: 3px; }
-```
-
-```html
-<div class="slider__item slide-aidma">
-  <div class="slider__content">
-    <h2 class="aidma-title"><i class="fas fa-funnel-dollar"></i> {{タイトル}}</h2>
-    <div class="aidma-container">
-      <div class="aidma-row header">
-        <div class="aidma-cell">Attention</div>
-        <div class="aidma-cell">Interest</div>
-        <div class="aidma-cell">Desire</div>
-        <div class="aidma-cell">Memory</div>
-        <div class="aidma-cell">Action</div>
-      </div>
-      <div class="aidma-row phase">
-        <div class="aidma-cell">認知</div>
-        <div class="aidma-cell">興味</div>
-        <div class="aidma-cell">欲求</div>
-        <div class="aidma-cell">記憶</div>
-        <div class="aidma-cell">行動</div>
-      </div>
-      <div class="aidma-row action">
-        <div class="aidma-cell">{{施策1}}</div>
-        <div class="aidma-cell">{{施策2}}</div>
-        <div class="aidma-cell">{{施策3}}</div>
-        <div class="aidma-cell">{{施策4}}</div>
-        <div class="aidma-cell">{{施策5}}</div>
-      </div>
-    </div>
-  </div>
-</div>
-```
-
----
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/aidma-funnel-{input.json,golden.html}`（report 骨格・影と 5 色の段分けを落とし 3 本の帯 + 4 本の区切り線へ組み直した版・検査指摘ゼロ）
 
 ### 11.18 PREP型（論理的説明フレームワーク）
 
-結論（Point）→ 理由（Reason）→ 例（Example）→ 結論（Point）の4段階で論理的に説明。ビジネスプレゼンの基本フレームワーク。
+結論 → 理由 → 例 → 結論の 4 段を縦に並べ、主張とその根拠の連結を見せる図。
 
-```css
-.slide-prep .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 提案の結論と、それを支える理由・具体例を一枚で通したいとき
+- 相手が結論だけでは動かず、根拠の一行が判断を変えるとき
+- 例が 1 件で足りるとき
 
-.slide-prep .prep-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 事例や実績の紹介なら §11.19 の STAR 型
+- 特徴から便益・証拠へ渡す提案話法なら §11.20 の FABE 型
+- 論点が並列に複数あるなら §11.13
 
-.slide-prep .prep-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 900px;
-}
-
-.slide-prep .prep-step {
-  display: flex;
-  align-items: stretch;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  background: var(--bg-dim);
-  border-radius: 16px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.slide-prep .prep-step:hover {
-  transform: translateX(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-/* 各ステップのアクセントカラー */
-.slide-prep .prep-step.point-1 { border-left: 5px solid var(--wave-blue); }
-.slide-prep .prep-step.reason { border-left: 5px solid var(--spring-green); }
-.slide-prep .prep-step.example { border-left: 5px solid var(--autumn-yellow); }
-.slide-prep .prep-step.point-2 { border-left: 5px solid var(--sakura-pink); }
-
-.slide-prep .prep-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 100px;
-  padding: 1rem;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.slide-prep .prep-step.point-1 .prep-label { background: rgba(126, 156, 216, 0.2); color: var(--wave-blue); }
-.slide-prep .prep-step.reason .prep-label { background: rgba(152, 187, 108, 0.2); color: var(--spring-green); }
-.slide-prep .prep-step.example .prep-label { background: rgba(220, 165, 97, 0.2); color: var(--autumn-yellow); }
-.slide-prep .prep-step.point-2 .prep-label { background: rgba(228, 104, 118, 0.2); color: var(--sakura-pink); }
-
-.slide-prep .prep-label-icon {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.slide-prep .prep-label-text {
-  font-size: var(--fs-small);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.slide-prep .prep-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.slide-prep .prep-content-title {
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-}
-
-.slide-prep .prep-content-desc {
-  font-size: var(--fs-body);
-  color: var(--fg-dim);
-}
-
-/* 矢印コネクター */
-.slide-prep .prep-arrow {
-  display: flex;
-  justify-content: center;
-  color: var(--fuji-gray);
-  font-size: 1.2rem;
-}
-```
-
-```html
-<div class="slider__item slide-prep">
-  <div class="slider__content">
-    <h2 class="prep-title"><i class="fas fa-bullseye"></i> {{タイトル}}</h2>
-    <div class="prep-container">
-      <div class="prep-step point-1">
-        <div class="prep-label">
-          <div class="prep-label-icon"><i class="fas fa-flag"></i></div>
-          <div class="prep-label-text">Point</div>
-        </div>
-        <div class="prep-content">
-          <div class="prep-content-title">{{結論}}</div>
-          <div class="prep-content-desc">{{結論の補足}}</div>
-        </div>
-      </div>
-      <div class="prep-arrow"><i class="fas fa-arrow-down"></i></div>
-      <div class="prep-step reason">
-        <div class="prep-label">
-          <div class="prep-label-icon"><i class="fas fa-lightbulb"></i></div>
-          <div class="prep-label-text">Reason</div>
-        </div>
-        <div class="prep-content">
-          <div class="prep-content-title">{{理由}}</div>
-          <div class="prep-content-desc">{{理由の詳細}}</div>
-        </div>
-      </div>
-      <div class="prep-arrow"><i class="fas fa-arrow-down"></i></div>
-      <div class="prep-step example">
-        <div class="prep-label">
-          <div class="prep-label-icon"><i class="fas fa-clipboard-list"></i></div>
-          <div class="prep-label-text">Example</div>
-        </div>
-        <div class="prep-content">
-          <div class="prep-content-title">{{具体例}}</div>
-          <div class="prep-content-desc">{{具体例の詳細}}</div>
-        </div>
-      </div>
-      <div class="prep-arrow"><i class="fas fa-arrow-down"></i></div>
-      <div class="prep-step point-2">
-        <div class="prep-label">
-          <div class="prep-label-icon"><i class="fas fa-check-circle"></i></div>
-          <div class="prep-label-text">Point</div>
-        </div>
-        <div class="prep-content">
-          <div class="prep-content-title">{{再結論}}</div>
-          <div class="prep-content-desc">{{まとめ・行動喚起}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+**要素数の目安**: 段 4 固定（結論・理由・例・結論）
+**複雑度の上限**: 主文 18 字以内、補足 16 字以内。結論は 1 段目と 4 段目に二度出るので焦点は理由の 1 段だけに置く
+**必須情報**: 結論が打ち手なら実行主体・期限・コストを 1 段目の補足行に（`情シス・2026/9・80万円`）、理由の段に量とその時点・出所（`解約12%・2026/1-6実績`）、例の段に件数と対象（`1社・製造業300名規模`）、前提かリスクを 4 段目の補足行に 1 つ。理由が定性語のままだと、読者は結論を信じるか信じないかしか選べず、検証の手がかりを持てない。
+**配置**: 横帯
 
 #### PREP型アニメーション
 
-```javascript
-// 登場アニメーション
-gsap.from('.slide-prep .prep-step', {
-  x: -50,
-  opacity: 0,
-  duration: 0.6,
-  stagger: 0.2,
-  ease: 'power2.out'
-});
+登場アニメーションはゴールデンでは落としている。
+付ける場合の要件（トリガ・duration・stagger・reduced-motion 時の扱い）は
+`references/slide-interactions.md` を正とする。本ファイルでは規定しない。
 
-gsap.from('.slide-prep .prep-arrow', {
-  scale: 0,
-  opacity: 0,
-  duration: 0.3,
-  stagger: 0.15,
-  delay: 0.8,
-  ease: 'back.out'
-});
-```
-
----
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/prep-{input.json,golden.html}`（slide 骨格・段の色分けと GSAP 登場アニメーションを落とした版・検査指摘ゼロ）
 
 ### 11.19 STAR型（事例・実績紹介フレームワーク）
 
-状況（Situation）→ 課題（Task）→ 行動（Action）→ 結果（Result）の4段階で事例を説明。実績紹介・成功事例・面接回答に最適。
+状況 → 課題 → 行動 → 結果の 4 枠を 2×2 に置き、結果の枠に数値成果を添えて見せる図。
 
-```css
-.slide-star .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 導入事例・成功事例・面接回答など、経緯から結果までを一枚で語るとき
+- 前の三つが背景で、意思決定に効くのは結果の 1 枠だけのとき
+- 結果に実測の数値（前後比較）を置けるとき
 
-.slide-star .star-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 主張と根拠の論証なら §11.18 の PREP 型
+- 課題と打ち手の対応を見せるだけなら §11.11
+- 時系列の段が 5 つ以上あるなら §11.15 や §11.25
 
-.slide-star .star-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  width: 100%;
-  max-width: 950px;
-}
-
-.slide-star .star-card {
-  background: var(--bg-dim);
-  border-radius: 16px;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.slide-star .star-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-}
-
-/* 各カードのアクセントカラー */
-.slide-star .star-card.situation { border-top: 4px solid var(--wave-blue); }
-.slide-star .star-card.task { border-top: 4px solid var(--autumn-yellow); }
-.slide-star .star-card.action { border-top: 4px solid var(--spring-green); }
-.slide-star .star-card.result { border-top: 4px solid var(--sakura-pink); }
-
-/* 番号バッジ */
-.slide-star .star-badge {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--fs-small);
-}
-
-.slide-star .star-card.situation .star-badge { background: var(--wave-blue); color: #fff; }
-.slide-star .star-card.task .star-badge { background: var(--autumn-yellow); color: #1f1f28; }
-.slide-star .star-card.action .star-badge { background: var(--spring-green); color: #1f1f28; }
-.slide-star .star-card.result .star-badge { background: var(--sakura-pink); color: #fff; }
-
-.slide-star .star-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.slide-star .star-icon {
-  font-size: 1.5rem;
-}
-
-.slide-star .star-card.situation .star-icon { color: var(--wave-blue); }
-.slide-star .star-card.task .star-icon { color: var(--autumn-yellow); }
-.slide-star .star-card.action .star-icon { color: var(--spring-green); }
-.slide-star .star-card.result .star-icon { color: var(--sakura-pink); }
-
-.slide-star .star-label {
-  font-size: var(--fs-body-lg);
-  font-weight: 700;
-}
-
-.slide-star .star-content {
-  font-size: var(--fs-body);
-  line-height: 1.6;
-}
-
-.slide-star .star-highlight {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 4px;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.slide-star .star-card.result .star-highlight {
-  background: rgba(228, 104, 118, 0.2);
-  color: var(--sakura-pink);
-}
-
-/* 中央の接続ライン（オプション） */
-.slide-star .star-connector {
-  position: absolute;
-  width: 2px;
-  height: 100%;
-  background: var(--fuji-gray);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: -1;
-}
-```
-
-```html
-<div class="slider__item slide-star">
-  <div class="slider__content">
-    <h2 class="star-title"><i class="fas fa-star"></i> {{タイトル}}</h2>
-    <div class="star-container">
-      <div class="star-card situation">
-        <div class="star-badge">S</div>
-        <div class="star-header">
-          <div class="star-icon"><i class="fas fa-map-marker-alt"></i></div>
-          <div class="star-label">Situation（状況）</div>
-        </div>
-        <div class="star-content">{{状況の説明}}</div>
-      </div>
-      <div class="star-card task">
-        <div class="star-badge">T</div>
-        <div class="star-header">
-          <div class="star-icon"><i class="fas fa-exclamation-triangle"></i></div>
-          <div class="star-label">Task（課題）</div>
-        </div>
-        <div class="star-content">{{課題の説明}}</div>
-      </div>
-      <div class="star-card action">
-        <div class="star-badge">A</div>
-        <div class="star-header">
-          <div class="star-icon"><i class="fas fa-bolt"></i></div>
-          <div class="star-label">Action（行動）</div>
-        </div>
-        <div class="star-content">{{行動の説明}}</div>
-      </div>
-      <div class="star-card result">
-        <div class="star-badge">R</div>
-        <div class="star-header">
-          <div class="star-icon"><i class="fas fa-trophy"></i></div>
-          <div class="star-label">Result（結果）</div>
-        </div>
-        <div class="star-content">
-          {{結果の説明}}
-          <div class="star-highlight">{{数値成果}}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-```
+**要素数の目安**: 枠 4 固定（S / T / A / R）、各枠の記述 2 行
+**複雑度の上限**: 枠ラベルは「状況」「結果」など 2 字、記述は 1 行 12 字以内を 2 本まで、数値成果は「四人日 → 半日」程度の短句
+**必須情報**: 状況の枠に対象と時期を年を含む絶対表記で（`製造業300名・2026/1-3`）、課題の枠に改善前の量、行動の枠に実行主体、結果の枠に前後の実測値と測定条件を短句で（`四人日→半日（同一業務・n=8）`）。前後の値と測定条件を欠くと、成果が行動によるものか条件差によるものかを読者が切り分けられない。
+**配置**: 横帯
 
 #### STAR型アニメーション
 
-```javascript
-// 登場アニメーション（2x2グリッド対応）
-gsap.from('.slide-star .star-card', {
-  scale: 0.8,
-  opacity: 0,
-  duration: 0.5,
-  stagger: {
-    amount: 0.8,
-    grid: [2, 2],
-    from: 'start'
-  },
-  ease: 'back.out(1.2)'
-});
+登場アニメーションはゴールデンでは落としている。
+2×2 グリッドの stagger やバッジのポップアップを付ける場合も、
+要件は `references/slide-interactions.md` を正とする。本ファイルでは規定しない。
 
-// バッジのポップアップ
-gsap.from('.slide-star .star-badge', {
-  scale: 0,
-  duration: 0.3,
-  stagger: 0.15,
-  delay: 0.6,
-  ease: 'elastic.out(1, 0.5)'
-});
-```
-
----
-
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/star-{input.json,golden.html}`（report 骨格・4 枠の色分けとパレット外の強調色と登場アニメーションを落とした版・検査指摘ゼロ）
 
 ### 11.20 FABE型
+
+特徴 → 利点 → 便益 → 証拠の 4 段で提案を組み立てる図。
 
 **詳細**: [diagram-fabe.md](diagram-fabe.md) を参照
 
 5種のレイアウトバリエーション（横フロー・縦スタック・2×2グリッド・タイムライン・円形配置）、詳細アニメーション対応。
+
+**いつ選ぶ**:
+- 提案・営業の話法として、機能から相手側の便益まで一続きに渡したいとき
+- 最後に検証可能な証拠（実測値・他社実績）を置けるとき
+
+**いつ選ばない**:
+- 主張の論証構造なら §11.18 の PREP 型
+- 自社の実績紹介なら §11.19 の STAR 型
+
+**要素数の目安**: 段 4 固定（特徴・利点・便益・証拠）
+**複雑度の上限**: ラベル 7 字以内、補足 11 字以内。焦点は証拠の 1 段だけ
+**必須情報**: 利点の段に比較対象を明示した差（`従来比 3 割減`）、便益の段に相手側に生じる量（`月20時間削減`）、証拠の段に出典・時期・件数・ばらつきを補足行へ（`自社8社・2025/7-12・12〜28時間`）、提案として渡すなら実行主体・期限・コストを証拠段の下に 1 行。出典と件数を欠いた証拠は利点の言い換えにすぎず、読者は便益の量を検証できない。
+**配置**: 横帯
+
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/fabe-{input.json,golden.html}`（report 骨格・横フロー版・段ごとの配色とプログレス演出と Font Awesome アイコンを落とした版・検査指摘ゼロ）

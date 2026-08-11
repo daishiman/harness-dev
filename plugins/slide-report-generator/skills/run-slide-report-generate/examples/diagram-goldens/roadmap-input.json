@@ -1,0 +1,33 @@
+{
+  "diagramId": "f-roadmap",
+  "type": "roadmap",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-business.md §11.15 ロードマップ型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "突合自動化の一年",
+  "message": "一年で全部はやらない。二段目で止まるかどうかが全体の分かれ目である。",
+  "asOf": "2026/7/31 時点。現在地は m2",
+  "readingRule": "左から時間順・色は現在地の一段だけ・各段は前段の終了条件を満たすことが前提",
+  "nodes": [
+    { "id": "m1", "label": "取り込みを揃える", "sub": "入力元を二つに絞る", "phase": "準備", "period": "〜2026/4", "exitCriteria": "取込2元が全件一致", "style": "plain" },
+    { "id": "m2", "label": "日次で照合する", "sub": "差分を当日に出す", "phase": "試行 (現在)", "period": "2026/5〜7", "exitCriteria": "20営業日連続で当日出力", "style": "focal" },
+    { "id": "m3", "label": "原因候補を添える", "sub": "調査の初動を短くする", "phase": "展開", "period": "2026/8〜10", "exitCriteria": "原因候補の的中7割", "style": "plain" },
+    { "id": "m4", "label": "他部門へ広げる", "sub": "手順を移管する", "phase": "定着", "period": "2026/11〜", "exitCriteria": "他部門2つが自走", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "m1", "to": "m2", "kind": "depends", "label": "m1 の終了条件が前提" },
+    { "from": "m2", "to": "m3", "kind": "depends", "label": "m2 の終了条件が前提" },
+    { "from": "m3", "to": "m4", "kind": "depends", "label": "m3 の終了条件が前提" }
+  ],
+  "emphasis": {
+    "focal": ["m2"],
+    "reason": "進行中の一点だけを焦点にする。完了・未着手を別々の色で塗ると焦点が四つに増える"
+  },
+  "annotations": [
+    { "text": "二段目で止まるなら三段目は要らない", "anchor": "m2" }
+  ],
+  "caption": "左端から右へ時間が流れる。上の枠が達成すること、下が時期である。二つ目で止まるかどうかが、その先を続けるかの分かれ目になる。"
+}

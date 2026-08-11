@@ -1,0 +1,117 @@
+<!--
+  diagram-skeleton-slide.html — スライド面内に埋め込む図解ブロックの骨格
+
+  ===========================================================================
+  これは単体ページではない。HTML 断片である。
+  16:9 スライド (.slider__item) の zones の 1 つに、この figure 要素ごと差し込む。
+  DOCTYPE も html 要素も head 要素も書かない。書くと成果物が壊れる。
+  ===========================================================================
+
+  LLM が書き換えてよいのは次の 3 箇所だけ:
+    [1] data-diagram-id   … この図解の一意 id (同一成果物内で重複させない)
+    [2] EDIT: 図解本体     … svg 要素の中身
+    [3] figcaption 要素    … キャプション本文
+
+  それ以外 (figure の class / CSS 変数の参照 / defs の marker 形状) は
+  書き換えない。書き換えると成果物側の CSS と検査が噛み合わなくなる。
+
+  守る契約 (詳細は各正本を読む):
+    ・色は references/diagram-style-tokens.md のロール表からのみ引く。hex を書かない
+    ・数値契約は references/diagram-layout-contract.md 第 4 次 update 章 (D-1 から D-5)
+    ・型の選び方は references/diagram-type-crosswalk.md
+    ・出力前に: python3 scripts/validate-svg-diagram.py [出力file]
+
+  ===========================================================================
+  使える色は次の 11 個だけ。
+
+    役割                       CSS 変数名        フォールバック
+    主テキスト・主ストローク   fg                #43436c
+    副テキスト・既定の矢印     fg-dim            #54546d
+    補助ラベル                 fuji-gray         #8a8980
+    焦点 (1 図 1-2 件)         sakura-pink       #D27E99
+    接続・外部呼び出し         wave-blue         #7E9CD8
+    系列色 2                   wave-aqua         #7FB4CA
+    系列色 4                   autumn-yellow     #DCA561
+    系列色 5                   spring-violet     #957FB8
+    カード地・マスク           (変数なし)        #FFFFFF
+    副次的な面                 (変数なし)        #F8F7F0
+    ヘアライン                 (変数なし)        #DCD7BA
+    焦点の塗り                 (変数なし)        rgba(210,126,153,0.14)
+
+  書式 (var 参照 + フォールバック) は下の defs にある marker の fill 属性が
+  実物の見本なので、そこから写すのが確実である。ここへ書式ごと転記しないのは、
+  XML コメントが二重ハイフンを含められず、CSS 変数名をコメントへ書いた瞬間に
+  パースできない SVG になるためである。
+
+  作図の数値:
+    ・線幅は 2.5 (主コネクタ) / 2 (副コネクタ・軸) / 1.5 (ノード枠) / 1.25 (補助罫)
+      の 4 段だけ。1.25 を下回らない (D9)
+    ・座標・寸法・間隔・角丸は 4 の倍数 (D-1)。角丸は 4 / 6 / 8
+    ・フォントサイズは 14 以上 (D4)。軸ラベル等の例外のみ 12
+    ・影は付けない (R9-14)
+    ・描く順序: 下地 → コネクタ → ノード → ラベル
+
+  R9 溶け込み契約 (この骨格が担保する範囲):
+    ・図解ブロックはスライド本文領域の 40-70% を占める (R9-1)
+    ・1 スライドに図解は 1 枚 (R9-2)
+    ・書体は base / mono の 2 つのみ (R9-15)
+-->
+
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d1">
+
+  <!--
+    viewBox は svg-builder.cjs の CANVAS が正本 (幅固定・高さ 3 段)。
+    下の 960x540 は md 段 (16:9) の値。sm / lg を使うときは CANVAS の値へ差し替える。
+    preserveAspectRatio は既定 (xMidYMid meet) のままにする。
+  -->
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d1-caption">
+
+    <defs>
+      <!--
+        矢印マーカー 3 種。形状は svg-kit.cjs の MARKER が正本
+        (w=8 / h=6 / refX=7 / refY=3)。この数値を変えない。
+        変えると markerOverhang による端点補正が全経路でずれる。
+
+        id は「図解 id + 役割」で作る。同じページに複数の SVG が載るため、
+        単に id="arrow" にすると 2 枚目以降が 1 枚目の marker を参照して
+        色が混ざる (D3 は同一 SVG 内の参照だけを見る検査なので気付けない)。
+
+        下の fill 属性の書き方が、そのまま図解本体で使う色の書き方の見本である。
+      -->
+      <marker id="d1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d1-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!--
+      背景は塗らない。スライド面の地色の上に直接置く。
+      白い矩形を全面に敷くと、周囲のスライドから図解だけが切り抜かれて見える
+      (R9 溶け込み契約違反)。カード地が要る要素だけ個別に #FFFFFF で塗る。
+    -->
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <!--
+    キャプション。40-120 字 (R9-9)。
+    図のラベルをそのまま繰り返さない (R9-10)。
+    書くのは「図が語れないこと」= なぜこの図を見るのか / どこから読むのか / 何が結論か。
+    スライドでは本文メッセージと図解の橋渡しになるので、省略しない。
+  -->
+  <figcaption id="d1-caption" class="srg-diagram__caption">
+    <!-- EDIT: キャプション本文 -->
+  </figcaption>
+
+</figure>

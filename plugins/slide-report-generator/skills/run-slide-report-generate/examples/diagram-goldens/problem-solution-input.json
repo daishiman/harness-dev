@@ -1,0 +1,88 @@
+{
+  "diagramId": "d-problem-solution",
+  "type": "problem-solution",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-business.md §11.11 課題解決型",
+  "placement": "横帯",
+  "canvas": {
+    "viewBox": "0 0 960 540",
+    "step": "md"
+  },
+  "title": "見積が遅れる理由と打ち手",
+  "message": "遅れの正体は作成そのものではなく、承認待ちの滞留である。",
+  "nodes": [
+    {
+      "id": "problem",
+      "label": "課題",
+      "style": "plain",
+      "items": [
+        {
+          "text": "作成後に承認待ちが3日",
+          "evidence": "平均 3.2 日・2026/1-6 実測 (n=214)"
+        },
+        {
+          "text": "差戻しの理由が残らない",
+          "evidence": "差戻し 46 件中 記録ありは 5 件・2026/1-6"
+        },
+        {
+          "text": "同じ質問が毎回発生する",
+          "evidence": "重複質問 月 38 件・2026/6 時点"
+        }
+      ],
+      "provenance": "出所: ワークフロー実測 2026/1-6 (n=214)"
+    },
+    {
+      "id": "solution",
+      "label": "打ち手",
+      "style": "focal",
+      "items": [
+        {
+          "text": "金額帯で承認者を分ける",
+          "owner": "経理部",
+          "due": "2026/9 まで",
+          "cost": "80 万円"
+        },
+        {
+          "text": "差戻し理由を定型で残す",
+          "owner": "情シス",
+          "due": "2026/10 まで",
+          "cost": "60 万円"
+        },
+        {
+          "text": "過去の回答を検索できる",
+          "owner": "情シス",
+          "due": "2026/12 まで",
+          "cost": "140 万円"
+        }
+      ],
+      "cost": "3 件合計 280 万円・2026年度予算内"
+    }
+  ],
+  "relations": [
+    {
+      "from": "problem",
+      "to": "solution",
+      "kind": "flow",
+      "weight": "primary"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "solution"
+    ],
+    "reason": "課題側は既に共有済みの前提。本文がこれから語るのは打ち手の側だけである"
+  },
+  "annotations": [
+    {
+      "text": "承認待ちが所要日数の6割",
+      "anchor": "problem"
+    }
+  ],
+  "caption": "左の枠を上から読み、右の枠の同じ行へ横に移ってほしい。三つの行が一対一で対応しており、色の付いた側だけが今回決めることである。",
+  "legend": [
+    "桃枠=今回決める側",
+    "破線=注釈の指し線",
+    "左右の同じ高さが対応"
+  ]
+}

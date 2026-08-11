@@ -1,0 +1,67 @@
+{
+  "$comment": "スライド面の寸法契約 (SSOT)。全ページひな形・レンダラ・検査器はこの 1 ファイルだけを参照する。散文へ数値を写さない。",
+  "schema_version": "1.0.0",
+  "canvas": {
+    "width": 1280,
+    "height": 720,
+    "aspect_ratio": "16 / 9",
+    "unit": "px",
+    "note": "面の内部は常に絶対座標。画面表示は外側の transform:scale だけで拡縮する。画面と PDF が定義上一致する。"
+  },
+  "grid": {
+    "base": 4,
+    "note": "座標・寸法・間隔・角丸はすべて 4 の倍数。図解契約 D-1 と同じ規律を面にも効かせる。"
+  },
+  "chrome": {
+    "top": 48,
+    "bottom": 56,
+    "side": 64,
+    "note": "chrome (インデックス帯・前後ナビ・ページ番号) の占有領域。予約帯と実物の描画はこの同じ値から作る。別管理にするとズレる。"
+  },
+  "stage": {
+    "x": 64,
+    "y": 48,
+    "width": 1152,
+    "height": 616,
+    "note": "本文が使える領域。width = 1280 - side*2、height = 720 - top - bottom。ひな形はこの矩形の外へ要素を置かない。"
+  },
+  "spacing": {
+    "gap": 24,
+    "gap_tight": 16,
+    "gap_loose": 32,
+    "title_block_height": 96,
+    "radius": 8
+  },
+  "typography": {
+    "title": 44,
+    "heading": 36,
+    "subheading": 28,
+    "body": 24,
+    "note": 20,
+    "caption": 18,
+    "min": 18,
+    "note_text": "最小 18px。1280px 基準なので 18px は既定契約の 1.4rem 下限を上回る。これを下回る文字を面に置かない。"
+  },
+  "fill_policy": {
+    "min_stage_fill_ratio": 0.62,
+    "max_stage_fill_ratio": 0.94,
+    "note": "本文要素が stage を占める面積比の許容レンジ。下限割れ = 空白過多、上限超え = 詰め込み過多。ひな形はスロットを stage いっぱいに伸ばすことで下限割れを構造的に防ぐ。"
+  },
+  "print": {
+    "page": "A4 landscape",
+    "page_width_mm": 297,
+    "page_height_mm": 210,
+    "stage_width_mm": 297,
+    "stage_height_mm": 167.06,
+    "letterbox_band_mm": 21.47,
+    "mm_per_px": 0.2320,
+    "zoom_factor": 0.8769,
+    "note": "A4 横に 16:9 の面をレターボックス配置する。幅で決まり (297mm / 1280px)、高さは 720px * mm_per_px = 167.06mm。上下に (210 - 167.06) / 2 = 21.47mm の帯が出る。cover による端切れは禁止。",
+    "note_zoom": "CSS px は 1/96 inch = 0.264583mm 固定なので、1280px は既定で 338.67mm 相当になる。これを 297mm へ落とす倍率が zoom_factor = 0.2320 / 0.264583 = 0.8769。面の中身は 1280x720 の座標系のまま zoom だけで縮むので、画面と PDF の相対位置は一致する。レターボックス帯は要素 margin ではなく @page margin で取る (@page margin は要素の zoom の影響を受けないため、帯幅が倍率で狂わない)。"
+  },
+  "media": {
+    "kinds": ["svg-diagram", "d3-diagram", "chart", "codex-image", "block", "none"],
+    "note": "ページひな形の media スロットが受け入れる差し込み物の種別。ひな形ごとに許可する種別を data-media-kinds で宣言する。",
+    "note_block": "block = 表・コードブロックなど、図ではないが media スロットと同じ『面の主役の矩形』を占める HTML ブロック。これを図解種別へ無理に寄せると slide-table / slide-code が写像表から漏れるので、独立した種別として持つ。"
+  }
+}

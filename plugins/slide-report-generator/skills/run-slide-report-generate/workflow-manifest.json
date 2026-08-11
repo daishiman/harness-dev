@@ -39,17 +39,22 @@
         "ref-report-structure-types",
         "ref-d3-diagram-rules",
         "ref-data-visualization-rules",
+        "ref-diagram-type-crosswalk",
+        "ref-diagram-style-tokens",
+        "ref-diagram-layout-contract",
+        "ref-diagram-information-contract",
         "schema-structure",
         "schema-report-structure",
         "vendor-validate-structure",
-        "vendor-workflow-manager"
+        "vendor-workflow-manager",
+        "ref-slide-skeleton-registry"
       ],
       "fatal_exit_codes": []
     },
     {
       "id": "R3-generate-evaluate",
       "step": 3,
-      "title": "経路(slide LLM=html-generator / slide 決定論=slide-renderer+render-slide.cjs / report=report-composer+render-report.js(+mermaid-render.js) / 画像明示=ai-image-diagram-producer)で成果物を生成し、slide は layout-optimizer/ui-quality-reviewer + verify-slides.js/evaluate-deck.js/validate-print.js、report は verify-report-runtime.js で899/900/901/1024/1366/1600px+printの実描画bundleを生成し、report-quality-reviewer + validate-report-visual.py がbundle必須で補正/検査する。RQ31-34 と D5 で読者価値・専門の深さ・自分ごと化・根拠完全性を確認し、deck-evaluator の mode-aware 30 種思考法 rubric を最大 3 周 reloop。bundle欠落またはCRITICAL残存はhard-fail",
+      "title": "経路(slide LLM=html-generator / slide 決定論=slide-renderer+render-slide.cjs / report=report-composer+render-report.js(+mermaid-render.js) / 画像明示=ai-image-diagram-producer)で成果物を生成し、slide は layout-optimizer/ui-quality-reviewer + verify-slides.js/evaluate-deck.js/validate-print.js、report は verify-report-runtime.js で899/900/901/1024/1366/1600px+printの実描画bundleを生成し、report-quality-reviewer + validate-report-visual.py がbundle必須で補正/検査する。加えて両モードで validate-svg-diagram.py --check-grid --strict (D0-D21 図解の静的契約。hook-postgen-eval が生成検知時に機械実行し warning も出荷前に停止する) と validate-diagram-information.py (I1-I5 + 型別スロット=図が図として成立する下限。同じく hook が機械実行する。warning は語彙近似ゆえ合否に入れず読んで判断する対象で、error は参照の取りこぼし I-ER-REF と孤立節点 I-REL-ISO の 2 件だけ=構造から確定的に判るので修正必須) を、report では validate-report-layout.js (R1-R8 読書レイアウトの実描画契約) を通す。RQ31-34 と D5 で読者価値・専門の深さ・自分ごと化・根拠完全性を確認し、deck-evaluator の mode-aware 30 種思考法 rubric を最大 3 周 reloop。bundle欠落またはCRITICAL残存はhard-fail",
       "gate": "C3",
       "dependsOn": [
         "R2-structure-gate"
@@ -63,6 +68,14 @@
         "ref-report-quality-checklist",
         "ref-deck-evaluation-rubric",
         "ref-ai-image-pipeline",
+        "ref-diagram-type-crosswalk",
+        "ref-diagram-style-tokens",
+        "ref-diagram-layout-contract",
+        "ref-diagram-information-contract",
+        "ref-diagram-skeleton-slide",
+        "ref-diagram-skeleton-report",
+        "ref-slide-skeleton-registry",
+        "ref-slide-frame-contract",
         "schema-structure",
         "schema-report-structure",
         "vendor-render-slide",
@@ -77,6 +90,10 @@
         "vendor-verify-report-runtime",
         "glue-setup-playwright",
         "glue-validate-report-visual",
+        "glue-validate-svg-diagram",
+        "glue-validate-diagram-information",
+        "glue-validate-slide-skeleton",
+        "glue-validate-report-layout",
         "vendor-validate-ai-image-assets",
         "vendor-workflow-manager"
       ],
@@ -176,6 +193,83 @@
       ]
     },
     {
+      "id": "ref-diagram-type-crosswalk",
+      "kind": "reference",
+      "path": "../../references/diagram-type-crosswalk.md",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-diagram-style-tokens",
+      "kind": "reference",
+      "path": "../../references/diagram-style-tokens.md",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-diagram-layout-contract",
+      "kind": "reference",
+      "path": "../../references/diagram-layout-contract.md",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-diagram-information-contract",
+      "kind": "reference",
+      "path": "../../references/diagram-information-contract.md",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-diagram-skeleton-slide",
+      "kind": "reference",
+      "path": "../../assets/diagram-templates/diagram-skeleton-slide.html",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-diagram-skeleton-report",
+      "kind": "reference",
+      "path": "../../assets/diagram-templates/diagram-skeleton-report.html",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-slide-frame-contract",
+      "kind": "reference",
+      "path": "../../assets/slide-templates/frame-contract.json",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "ref-slide-skeleton-registry",
+      "kind": "reference",
+      "path": "../../assets/slide-templates/registry.json",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-slide-skeleton",
+      "kind": "script",
+      "path": "../../scripts/validate-slide-skeleton.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
       "id": "schema-structure",
       "kind": "schema",
       "path": "../../schemas/structure.schema.json",
@@ -224,6 +318,30 @@
       "id": "glue-validate-report-visual",
       "kind": "script",
       "path": "../../scripts/validate-report-visual.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-svg-diagram",
+      "kind": "script",
+      "path": "../../scripts/validate-svg-diagram.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-diagram-information",
+      "kind": "script",
+      "path": "../../scripts/validate-diagram-information.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-report-layout",
+      "kind": "script",
+      "path": "../../scripts/validate-report-layout.js",
       "phaseIds": [
         "R3-generate-evaluate"
       ]

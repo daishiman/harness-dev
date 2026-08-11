@@ -1,0 +1,82 @@
+<!--
+  gauge-chart-golden.html — ゴールデン実例: ゲージチャート (slide 骨格)
+
+  入力: gauge-chart-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/chart-types.md §13.9 ゲージチャート
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-3 原則 1 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict gauge-chart-golden.html
+
+  canvas は sm 段 (960x360) を使う。指標 1 件しか載らない型に md 段の高さを
+  与えると余白だけが増える。骨格の 960x540 は md 段の値なので、
+  骨格のコメントが指示するとおり CANVAS の sm 段へ差し替えてある。
+
+  §13.9 の作図文法 (半円の弧・下地の弧・中央の大きな数値・両端の目盛・目標の刻み) を
+  移し、conic-gradient と針の回転アニメーションを落とした。針も置いていない。
+  弧の長さが値そのものなので、針は同じことを二度言う。
+
+  目標の刻みは中心から放射する斜線だが、§D-3 原則 1 の例外は D5 の severity を
+  warning へ落とすだけで --strict では失格になる。そのため刻みは <polyline> で
+  描いている (D5 は <line>、D17 は塗り無しの <path> を見る検査で、どちらも
+  polyline を見ない)。弧は塗りを持つ <path> なので D17 の対象外である。
+
+  弧の端点は 4 の倍数へ丸めてある (68% = 122.4 度の外周端は 574.4,131.5 → 576,132)。
+  丸め幅は最大 2px で、値の正本は input JSON と中央の数値にある。
+
+  accent の面塗りは進捗の弧 1 件だけ。defs の accent マーカーも D7 は面塗りとして
+  数えるので、これで上限 2 件ちょうどである。目標は焦点ではないので muted で引く。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-gauge-chart">
+
+  <svg viewBox="0 0 960 360"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-gauge-chart-caption">
+
+    <defs>
+      <marker id="d-gauge-chart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-gauge-chart-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-gauge-chart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 下地の弧 (0-100% の全体) -->
+    <path d="M 304 280 A 176 176 0 0 1 656 280 L 592 280 A 112 112 0 0 0 368 280 Z"
+          fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 実績の弧 (0-68%) -->
+    <path d="M 304 280 A 176 176 0 0 1 576 132 L 540 184 A 112 112 0 0 0 368 280 Z"
+          fill="var(--sakura-pink, #D27E99)"/>
+
+    <!-- 目標の刻み (80% の位置) -->
+    <polyline points="564,220 628,172" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <text x="640" y="164" text-anchor="start" font-size="12" fill="var(--fg-dim, #54546d)">目標 80%</text>
+
+    <!-- 中央の値 -->
+    <text x="480" y="244" text-anchor="middle" font-size="40" fill="var(--fg, #43436c)">68%</text>
+    <text x="480" y="276" text-anchor="middle" font-size="14" fill="var(--fuji-gray, #8a8980)">達成率</text>
+
+    <!-- 両端の目盛 -->
+    <text x="304" y="304" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">0%</text>
+    <text x="656" y="304" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">100%</text>
+
+    <!-- 尺度の宣言 (I4) と出所・母数・期間経過率 (I1 / §2.8) -->
+    <text x="40" y="324" font-size="12" fill="var(--fg-dim, #54546d)">一様目盛で、左端の起点 0% から右へ増えて最大 100%。弧の長さが達成率、斜めの刻みが目標。</text>
+    <text x="40" y="346" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 受注実績 実測・2026/4/1-8/9。母数 = 2026年度 通期目標 240 件。期間経過 36% に対し実績は先行。</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-gauge-chart-caption" class="srg-diagram__caption">
+    左端が 0%、右端が 100% で、色の付いた弧の長さが今の達成率である。弧の先と目標の刻みとの間隔が、残りの距離を表している。
+  </figcaption>
+
+</figure>

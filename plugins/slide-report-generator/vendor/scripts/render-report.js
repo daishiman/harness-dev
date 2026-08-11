@@ -31,6 +31,13 @@ const require = createRequire(import.meta.url);
 const { SPEC } = require('./style-builder.cjs');
 const { escapeHtml } = require('./template-engine.cjs');
 const svg = require('./svg-builder.cjs');
+// 構造図 10 種 (architecture / data-flow / swimlane …)。slide 側からしか呼べて
+// いなかったため report では 1 つも描けなかった。schema の variant enum へ追加した
+// 3 種を report からも引けるようにここで読み込む。
+const struct = require('./svg-structures.cjs');
+// 線幅・配色の語彙は svg-kit が正本。report engine が自前で描く SVG
+// (buildNeutralComparison) も同じ語彙を使わないと、節ごとに図の grammar が変わる。
+const kit = require('./svg-kit.cjs');
 
 // reportType (§D の 4 enum) → アクセント色。読み物の視覚的アイデンティティ付与。
 const REPORT_TYPE_ACCENT = {
@@ -60,6 +67,31 @@ const VARIANT_SINGLE_ARG = {
   funnel: 'buildFunnel',
   concentric: 'buildConcentric',
   'value-stack': 'buildValueStack',
+};
+
+// svgSpec.variant → svg-structures.cjs の構造図ビルダー 10 種。VARIANT_SINGLE_ARG と違い
+// 素材が items[] でなく zones[]/entities[]/tiers[] という入れ子だったり、2 引数
+// (actors + messages / states + transitions / hub + spokes) だったりするので、
+// 共通コア (nodes[]/edges[]/groups[]) からの射影 (project) を行ごとに持つ。
+//
+// project は「ビルダーへ渡す引数配列 + opts」を返すか、素材が足りなければ null を返す
+// (空の枠を黙って描かせない)。第 2 引数 (links / relations / transitions …) を spec から
+// 直接受け取らないのは、svgSpec が additionalProperties:false で variant/viewBox/nodes/
+// edges/groups しか持てず、spec.links のような追加キーは schema 検証を通れないため。
+// 関係はすべて edges[] から、入れ子はすべて groups[] + node.group から導く。
+// 引数の語彙は scripts/render-diagram-golden.cjs の BUILDERS 表 (= render-slide.cjs の
+// slideType 分岐と同一) に揃える。揃えないと同じビルダーが surface ごとに別物になる。
+const VARIANT_STRUCT = {
+  architecture: { builder: 'buildArchitecture', project: projectZones },
+  'data-flow': { builder: 'buildDataFlow', project: projectStages },
+  swimlane: { builder: 'buildSwimlane', project: projectLanes },
+  er: { builder: 'buildEr', project: projectEntities },
+  sequence: { builder: 'buildSequence', project: projectSequence },
+  state: { builder: 'buildState', project: projectStates },
+  'it-state': { builder: 'buildItState', project: projectItStateRows },
+  medallion: { builder: 'buildMedallion', project: projectTiers },
+  'high-level': { builder: 'buildHighLevel', project: projectLevels },
+  'dp-integration': { builder: 'buildDpIntegration', project: projectHubSpokes },
 };
 
 // ===== 1.2.0: footnote インライン係り先アンカー (文書レベル採番) =====
@@ -138,9 +170,17 @@ ${spacingVars}
   /* report ページ幅 (A4 縦・print 層の正本) */
   --report-width: 190mm;
   /* screen 読書レイアウト。パワポ的に横空間を使い切る (空白>本文 の逆転を根治) */
-  --report-measure: 72ch;      /* プレーン段落のみの可読幅。グラフィカル block は全幅で横を使う */
-  --report-sidebar-w: 15rem;   /* sticky sidebar TOC 幅 */
-  --report-page-max: 1240px;   /* sidebar + 本文の実効利用幅 (空白>本文 の逆転防止) */
+  /* 可読幅は「全角 40 字」を正本にする。ch は数字 0 の字幅 (= 半角) なので日本語の
+     行長指定には使えない。em なら全角 1 字 = 1em で一致するため 40em とする。
+     40 字は日本語組版の一般的な上限帯 (35-45) の中央で、視線の戻り距離が長すぎず、
+     かつ 1 行が細切れになって文の切れ目を見失うこともない。 */
+  --report-measure: 40em;      /* プレーン段落のみの可読幅。グラフィカル block は全幅で横を使う */
+  --report-sidebar-w: 16rem;   /* sticky sidebar TOC 幅 */
+  /* sidebar 16rem + gap 3rem + 本文 40em(17px 換算 680px) ≒ 984px。
+     page-max はここへ図解が横へ伸びる余地を足した値。広げすぎると本文右の
+     空白だけが増えるので、図解の実効幅 (本文幅の 1.5 倍程度) で頭打ちにする。 */
+  --report-page-max: 1160px;   /* sidebar + 本文の実効利用幅 (空白>本文 の逆転防止) */
+  --report-topbar-h: 3.25rem;  /* 追従ヘッダーの高さ。sticky 要素の top はこれを基準に揃える */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -154,6 +194,35 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 html { scroll-behavior: smooth; }
+
+/* ===== 追従ヘッダー (1.4.0) =====
+   スクロールで文書冒頭の .report-header が視界から消えると「いま何の文書を読んで
+   いるか」の手掛かりが失われる。細い帯を常時残し、文書名と現在節を出す。
+   帯は薄くする (3.25rem) — 追従 UI が縦を食うほど本文の可視行数が減るため。 */
+.report-topbar {
+  position: sticky; top: 0; z-index: 30;
+  height: var(--report-topbar-h);
+  display: flex; align-items: center; gap: var(--space-3, 0.75rem);
+  padding: 0 var(--space-6, 2rem);
+  background: color-mix(in srgb, var(--bg-dark) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+}
+.report-topbar__title {
+  font-size: var(--fs-small); font-weight: 700; color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%;
+}
+.report-topbar__sep { color: var(--fg-dim); flex: none; }
+.report-topbar__here {
+  font-size: var(--fs-small); color: var(--fg-dim); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+/* 読了進捗。位置の手掛かりを 1px の帯で与える (面積を食わずに全体の何割かが分かる) */
+.report-topbar__progress {
+  position: absolute; left: 0; bottom: -1px; height: 2px; width: 0;
+  background: var(--report-accent, var(--accent-blue-vivid));
+}
+@media print { .report-topbar { display: none !important; } }
 
 /* ===== 読み物レイアウト (screen: sidebar+可読幅 2 カラム / print: A4 縦 190mm 温存) ===== */
 .report-layout {
@@ -178,7 +247,16 @@ html { scroll-behavior: smooth; }
 .report-section > p,
 .report-section > ul,
 .report-section > ol { max-width: var(--report-measure); }
-.report-section[id] { scroll-margin-top: var(--space-5, 1.5rem); }
+/* 文 (句点まで) を 1 つの行ブロックにする。
+   句点をまたいで次の文が行の途中から始まると、どこで話題が切り替わったかを
+   読者が字面から拾い直すことになる。文頭が必ず行頭に来れば、視線を左端へ
+   戻した瞬間に次の文の始まりだと分かる。
+   40 字を超える長文はそのまま自然折り返しに委ねる (<br> だと折返しと二重の
+   改行が起きて段落が縦に間延びする)。 */
+.report-sent { display: block; }
+.report-sent + .report-sent { margin-top: 0.15em; }
+/* アンカー遷移時、節見出しが追従ヘッダーの下に潜らないよう帯のぶん送る */
+.report-section[id] { scroll-margin-top: calc(var(--report-topbar-h) + var(--space-4, 1rem)); }
 .report-header { margin-bottom: var(--space-7, 3rem); border-bottom: 3px solid var(--report-accent, var(--accent-blue-vivid)); padding-bottom: var(--space-4, 1rem); }
 .report-title { font-size: var(--fs-title); font-weight: 800; line-height: 1.25; color: var(--fg); }
 .report-subtitle { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-subheading); color: var(--fg-dim); font-weight: 500; }
@@ -212,7 +290,7 @@ html { scroll-behavior: smooth; }
 .report-callout--tip { border-top-color: var(--accent-yellow-vivid); }
 
 /* ===== 本質図解 (essence diagram) — 各実質節の論理構造を一目化する主役ブロック ===== */
-/* 1.3.0: 「小さく中央浮遊の装飾」→「本文幅いっぱいの枠付き figure (読解の主役)」へ。
+/* essence-visual: 「小さく中央浮遊の装飾」→「本文幅いっぱいの枠付き figure (読解の主役)」へ。
    screen は本文可読幅を満たし、print は @media print 側で A4 幅 (--report-width) にキャップ。 */
 .report-visual {
   margin: var(--space-7, 3rem) 0;
@@ -248,10 +326,23 @@ html { scroll-behavior: smooth; }
   .report-section { break-inside: avoid-page; }
   .report-visual { break-inside: avoid; }
 }
-/* ===== 狭画面 (max-width: 900px・タブレット縦含む): sidebar を解除しインライン TOC へ graceful degrade ===== */
-@media (max-width: 900px) {
+/* ===== 狭画面 (max-width: 900px・タブレット縦含む): 折り畳み可能な sticky TOC を維持 ===== */
+@media screen and (max-width: 900px) {
   .report-layout { display: block; max-width: 46rem; padding: 0 var(--space-4, 1rem); }
-  .report-toc--sidebar { position: static; max-height: none; overflow: visible; margin: 0 0 var(--space-6, 2rem); }
+  /* 狭画面でも追従は残す。static に落とすと、読み進めた先から他の節へ移動する
+     手段が無くなり (先頭へ戻る操作が要る)、読み物として辿れなくなる。
+     代わりに畳めるようにし、開いていても画面の 45% までに抑える。
+     背景を不透明にするのは、本文の上に重なったとき文字が透けて二重に見えるため。 */
+  /* sticky は親の box の中でしか動かない。.report-sidebar は内容ぶんの高さしか
+     持たないので、そのままだと移動できる余地がゼロで即座に流れ去る。
+     display:contents で器を外し、文書全体の高さを持つ .report-layout を
+     直接の親にする (grid の配置には関与しない狭画面だからできる)。 */
+  .report-sidebar { display: contents; }
+  .report-toc--sidebar {
+    position: sticky; top: var(--report-topbar-h); z-index: 20;
+    max-height: 45vh; overflow-y: auto; margin: 0 0 var(--space-5, 1.5rem);
+    background: var(--bg-dark); border-color: var(--border, rgba(255,255,255,0.16));
+  }
   .report-toc--sidebar ol { columns: 2; }
   .report { max-width: none; margin: 0 auto; padding-top: var(--space-6, 2rem); }
 }
@@ -337,6 +428,14 @@ pre.report-code code { background: none; padding: 0; color: inherit; font-size: 
 .report-callout__title { color: var(--fg); }
 /* 意味的配置: 本文と図の 2 カラム分割 */
 .report-grid--2col { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-5,1.5rem); align-items: start; }
+/* 2 列でも本文の可読幅は効かせる。.report-section > p の直下子セレクタは
+   prose 用の器に包んだ時点で外れるため、ここで別途指定する。 */
+.report-grid__prose > p,
+.report-grid__prose > ul,
+.report-grid__prose > ol,
+.report-keypoint__body,
+.report-callout,
+.report-deflist dd { max-width: var(--report-measure); }
 .report-grid__visual .report-visual { margin: 0; }
 @media (max-width: 720px) { .report-grid--2col { grid-template-columns: 1fr; } }
 /* section 強調度 (placement.emphasis) */
@@ -344,17 +443,26 @@ pre.report-code code { background: none; padding: 0; color: inherit; font-size: 
 .report-section[data-emphasis="muted"] { opacity: 0.82; }
 /* 目次 (TOC) */
 .report-toc { margin: 0 0 var(--space-7,3rem); padding: var(--space-4,1rem) var(--space-5,1.5rem); border-radius: 0.6rem; background: rgba(67,67,108,0.045); border: 1px solid rgba(67,67,108,0.12); }
-.report-toc__title { font-weight: 800; font-size: var(--fs-small); letter-spacing: 0.08em; color: var(--fg-dim); margin-bottom: 0.5rem; }
+.report-toc__title { font-weight: 800; font-size: var(--fs-small); letter-spacing: 0.08em; color: var(--fg-dim); margin-bottom: 0.5rem; cursor: pointer; list-style: none; }
+.report-toc__title::-webkit-details-marker { display: none; }
+/* 開閉の向きを ▾/▸ で示す。summary の既定マーカーを消しているので、
+   代わりの手掛かりがないと畳めることに気付けない。 */
+.report-toc__title::after { content: '▾'; margin-left: 0.5em; opacity: 0.7; }
+.report-toc__box:not([open]) .report-toc__title::after { content: '▸'; }
 .report-toc ol { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: var(--space-6,2rem); }
 .report-toc li { margin-bottom: 0.35rem; break-inside: avoid; }
 .report-toc a { color: var(--fg); text-decoration: none; font-size: var(--fs-small); }
 .report-toc a:hover { color: var(--report-accent, var(--accent-blue-vivid)); }
 .report-toc__num { display: inline-block; min-width: 1.9em; color: var(--report-accent, var(--accent-blue-vivid)); font-weight: 700; font-variant-numeric: tabular-nums; }
-/* 1.3.0: sticky sidebar TOC (スクロール追従・scrollspy 現在位置ハイライト) */
+/* report-uiux: sticky sidebar TOC (スクロール追従・scrollspy 現在位置ハイライト) */
 .report-toc--sidebar {
-  position: sticky; top: var(--space-5, 1.5rem);
-  max-height: calc(100vh - var(--space-6, 2rem) * 1.5);
-  overflow-y: auto; margin: var(--space-7, 3rem) 0 0;
+  /* top は追従ヘッダーの直下へ揃える。0 にすると帯の下へ潜り、見出し 1 行ぶんが
+     常に隠れて「今どこ」の項目が読めなくなる。
+     max-height はビューポートから帯と上下余白を引いた残り。これを指定しないと
+     項目数の多い文書で TOC が画面より高くなり、下端の節へ飛べなくなる。 */
+  position: sticky; top: calc(var(--report-topbar-h) + var(--space-4, 1rem));
+  max-height: calc(100vh - var(--report-topbar-h) - var(--space-5, 1.5rem) * 2);
+  overflow-y: auto; margin: var(--space-6, 2rem) 0 0;
 }
 .report-toc--sidebar ol { columns: 1; }
 .report-toc--sidebar li { margin-bottom: 0.45rem; }
@@ -435,10 +543,104 @@ function renderParagraphs(paragraphs) {
           .join('\n');
         return `  <ul>\n${items}\n  </ul>`;
       }
-      const html = lines.map((l) => inlineMd(l)).join('<br>\n    ');
+      // 段落は文ごとの行ブロックへ組む。.report-sent は display:block なので、
+      // その直後に <br> を置くと空行が 1 つ余分に生まれる (行の文数で段落の
+      // 縦間隔が変わる)。span を返した行の後ろでは <br> を落とす。
+      const rendered = lines.map((l) => {
+        const html = renderSentenceHtml(l);
+        return { html, block: html.indexOf('<span class="report-sent">') === 0 };
+      });
+      const html = rendered
+        .map((r, i) => {
+          if (i === rendered.length - 1) return r.html;
+          return r.block || rendered[i + 1].block ? r.html : `${r.html}<br>\n    `;
+        })
+        .join('');
       return `  <p>${html}</p>`;
     })
     .join('\n');
+}
+
+/**
+ * 段落テキストを文の配列へ分割する。
+ * 分割は inlineMd の「前」、まだ生テキストの段階で行う。装飾後の HTML を割ると
+ * <strong> や <a> をまたいで切ってしまい、閉じタグを失った断片ができる。
+ *
+ * 戻り値は文の配列 (分割しない場合は要素 1 つ)。空文字は含めない。
+ */
+function splitSentences(text) {
+  const s = String(text == null ? '' : text);
+  if (!s.trim()) return [];
+
+  // 括弧の内側の句点では切らない。「〜だ。」と述べた、のような引用や、
+  // (〜する。ただし〜) のような補足を途中で断ち切ると、係り先を失う。
+  // 対応表は開き→閉じ。ネストは深さで数え、深さ 0 のときだけ文末を認める。
+  // 開きと閉じが同じ字 (" や ') は入れない。深さで数える方式では開きとして
+  // 数え続け、以降その段落は永久に「括弧の内側」になって分割が止まる。
+  // 対を持つ引用符 (“ ” 〝 〟) だけを扱う。
+  const OPEN = {
+    '「': '」', '『': '』', '（': '）', '(': ')', '【': '】', '〈': '〉', '《': '》',
+    '“': '”', '〝': '〟',
+  };
+  const CLOSE = new Set(Object.values(OPEN));
+  // 文末記号の直後に続くとき、前の文へ含める字。閉じ括弧・閉じ引用符・
+  // 連続する終止符 (「本当に!?」) がこれに当たる。
+  const TRAILING = new Set([...CLOSE, '。', '！', '？', '!', '?', '」', '』', '）', ')']);
+
+  // markdown 記法の内側でも切らない。**強調です。次も強調** を割ると、
+  // 断片ごとに inlineMd を通したとき ** が対にならず記号が生のまま読者へ出る。
+  // 開きと閉じが同じ綴りなので深さでなく開閉のトグルで数える。
+  const TOGGLES = ['**', '==', '__', '`'];
+
+  const out = [];
+  let buf = '';
+  let depth = 0;
+  const openToggles = new Set();
+  let linkDepth = 0;   // [label](url) の label 内
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const tog = TOGGLES.find((t) => s.startsWith(t, i));
+    if (tog) {
+      buf += tog;
+      if (openToggles.has(tog)) openToggles.delete(tog);
+      else openToggles.add(tog);
+      i += tog.length - 1;
+      continue;
+    }
+    buf += ch;
+    if (ch === '[') { linkDepth++; continue; }
+    if (ch === ']' && linkDepth > 0) { linkDepth--; continue; }
+    if (OPEN[ch]) { depth++; continue; }
+    if (CLOSE.has(ch) && depth > 0) { depth--; continue; }
+    if (depth > 0 || linkDepth > 0 || openToggles.size) continue;
+
+    // 半角 . は文末として扱わない。Node.js / 1.5倍 / e.g. のような
+    // 語中の点と区別する術が無く、誤って切ると語が割れる。日本語の
+    // 文書として組む以上、句点は全角の 。 に統一されている前提を取る。
+    if (ch !== '。' && ch !== '！' && ch !== '？' && ch !== '!' && ch !== '?') continue;
+
+    // 終止符が続く間は前の文へ吸わせる (。」 や !? を割らない)
+    while (i + 1 < s.length && TRAILING.has(s[i + 1])) {
+      buf += s[i + 1];
+      i++;
+    }
+    out.push(buf);
+    buf = '';
+  }
+  if (buf.trim()) out.push(buf);
+
+  // 前後の空白は行ブロックにすると行頭・行末の余白として見えてしまう
+  return out.map((t) => t.trim()).filter(Boolean);
+}
+
+/**
+ * 段落の中身を「文ごとの行ブロック」へ組む。
+ * 文が 1 つしかない段落は包まない (span を足しても表示は変わらず、DOM だけ増える)。
+ */
+function renderSentenceHtml(text) {
+  const parts = splitSentences(text);
+  if (parts.length <= 1) return inlineMd(text || '');
+  return parts.map((s) => `<span class="report-sent">${inlineMd(s)}</span>`).join('');
 }
 
 /** インライン装飾 (escape 後の安全な文字列に対してのみ適用) */
@@ -476,10 +678,12 @@ function renderVisual(visual, counters) {
   if (!visual || !visual.kind || visual.kind === 'none') return { html: '', usesMermaid: false };
   const spec = visual.spec || {};
   let caption = visual.caption || '';
-  // 図表番号を自動付与 (1.1.0・caption があるビジュアルに 図N. を前置)
-  if (caption && counters) {
+  // 図表番号を自動付与。caption の有無で採番したりしなかったりすると、
+  // 番号付きの図と無番号の図が交互に現れて本文から参照できなくなる。
+  // caption が無い図にも番号だけは振る。
+  if (counters) {
     counters.fig += 1;
-    caption = `図${counters.fig}. ${caption}`;
+    caption = caption ? `図${counters.fig}. ${caption}` : `図${counters.fig}.`;
   }
   const alt = visual.alt || '';
   try {
@@ -509,6 +713,249 @@ function nodesToItems(nodes) {
   });
 }
 
+/* ===== 構造図 (svg-structures.cjs) 用の射影 =====
+ * report の svgSpec は nodes[]/edges[]/groups[] しか持たない (additionalProperties:false)。
+ * 構造図は入れ子の素材や 2 引数を取るので、共通コアを次の 2 つの読み替えで写す:
+ *   - groups[] = 入れ子の外側 (ゾーン / レーン / 実体 / 層 / 段)、node.group がその所属
+ *   - edges[]  = 関係 (接続 / 関連 / メッセージ / 遷移 / 昇格 / 向き)
+ * 素材が足りないときは null を返し、呼び側に「未対応」ではなく「素材が足りない」と
+ * 分かる形で落とさせる (空図を黙って出さない)。
+ * 返り値は { args: ビルダー引数の配列, opts: 追加オプション }。
+ */
+
+/** groups[] → architecture の zones[]{label, nodes[]}。edges[] は接続線 (links) になる */
+function projectZones(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const groups = Array.isArray(spec.groups) ? spec.groups.filter(Boolean) : [];
+  if (!nodes.length) return null;
+  const zones = groups.length
+    ? groups.map((g) => ({
+      label: g.label || g.id || '',
+      nodes: nodes.filter((n) => n && n.group === g.id).map((n) => ({ label: n.label || '', sublabel: n.subtext || '' })),
+    })).filter((z) => z.nodes.length)
+    : [{ label: '', nodes: nodes.map((n) => ({ label: (n && n.label) || '', sublabel: (n && n.subtext) || '' })) }];
+  if (!zones.length) return null;
+  // links を渡さないと buildArchitecture は「隣接ゾーンの先頭ノードを鎖状につなぐ」
+  // 既定へ落ちる。edges[] を書いた読者の意図はそこに無いので、あるときは必ず渡す。
+  const links = edgesByName(spec, nodes, (e) => ({
+    dashed: e.kind === 'dashed',
+    external: e.emphasis === 'highlight',
+  }));
+  return { args: [zones], opts: links.length ? { links } : {} };
+}
+
+/** nodes[] → data-flow の stages[]{label, sublabel, via}。via は edges[] のラベルから拾う */
+function projectStages(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  if (!nodes.length) return null;
+  const edges = Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [];
+  const stages = nodes.map((n, i) => {
+    const next = nodes[i + 1];
+    const e = next ? edges.find((x) => x && x.from === n.id && x.to === next.id) : null;
+    return { label: n.label || '', sublabel: n.subtext || '', via: (e && e.label) || '' };
+  });
+  return { args: [stages], opts: {} };
+}
+
+/** groups[] → swimlane の lanes[]{label, steps[]}。group がレーン、所属 node が工程 */
+function projectLanes(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const groups = Array.isArray(spec.groups) ? spec.groups.filter(Boolean) : [];
+  if (!nodes.length || !groups.length) return null;
+  const lanes = groups.map((g) => ({
+    label: g.label || g.id || '',
+    steps: nodes.filter((n) => n && n.group === g.id)
+      .map((n, i) => ({ id: n.id, label: n.label || '', sublabel: n.subtext || '', step: i })),
+  })).filter((l) => l.steps.length);
+  if (!lanes.length) return null;
+  // 受け渡しは edges[] に宣言されている。これを渡さないと buildSwimlane は
+  // 順序の手がかりを持てず、同じレーンの中しか結べない (レーンをまたぐ線が
+  // 消える)。svgSpec は id で辺を書くので id のまま渡す。
+  const links = (Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [])
+    .map((e) => ({ from: e.from, to: e.to, label: e.label || '' }));
+  return { args: [lanes], opts: links.length ? { links } : {} };
+}
+
+/* 共通コアから「名前」を引く小道具。svg-structures の builder は関係 (relations /
+ * messages / transitions) を **id ではなく表示名** で突合するので、edges[] の
+ * from/to (node.id) は必ずここで名前へ置き換えてから渡す。 */
+function nameByIdOf(nodes) {
+  return new Map(nodes.map((n) => [n && n.id, (n && n.label) || '']));
+}
+
+/** edges[] → [{from, to, label, ...}] を表示名で。両端が nodes[] に無い辺は落とす */
+function edgesByName(spec, nodes, extra) {
+  const nameById = nameByIdOf(nodes);
+  const edges = Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [];
+  return edges.map((e) => {
+    const from = nameById.get(e.from), to = nameById.get(e.to);
+    if (!from || !to) return null;
+    return { from, to, label: e.label || '', ...(extra ? extra(e) : {}) };
+  }).filter(Boolean);
+}
+
+/** nodes[] → er の entities[]{name, fields[]}。fields は subtext を "/" 区切りで読む
+ *  (共通コアに列一覧の器が無いため。空なら見出しだけのカードになる) */
+function projectEntities(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  if (!nodes.length) return null;
+  const entities = nodes.map((n) => ({
+    name: n.label || '',
+    fields: String(n.subtext || '').split('/').map((s) => s.trim()).filter(Boolean),
+  }));
+  const relations = edgesByName(spec, nodes);
+  return { args: [entities], opts: relations.length ? { relations } : {} };
+}
+
+/** nodes[] → sequence の actors[]、edges[] → messages[]。時系列は edges の配列順そのもの。
+ *  kind:'dashed' を返信 (破線)、emphasis:'highlight' を外部連携 (link 色) と読む */
+function projectSequence(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  if (nodes.length < 2) return null;
+  const messages = edgesByName(spec, nodes, (e) => ({
+    dashed: e.kind === 'dashed',
+    external: e.emphasis === 'highlight',
+  }));
+  if (!messages.length) return null;
+  return { args: [nodes.map((n) => n.label || ''), messages], opts: {} };
+}
+
+/** nodes[] → state の states[]{label, sublabel, focal}、edges[] → transitions[]。
+ *  遷移が 1 本も無いものは状態遷移図として成立しないので素材不足に倒す */
+function projectStates(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  if (!nodes.length) return null;
+  const transitions = edgesByName(spec, nodes);
+  if (!transitions.length) return null;
+  const states = nodes.map((n) => ({
+    label: n.label || '', sublabel: n.subtext || '', focal: n.emphasis === 'highlight',
+  }));
+  return { args: [states, transitions], opts: {} };
+}
+
+/** groups[] → it-state の rows[]{label, cells[]}。group が行 (観点)、所属 node が
+ *  左からの列 (現状 / 課題 / あるべき姿)。列見出しは builder の既定に委ねる */
+function projectItStateRows(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const groups = Array.isArray(spec.groups) ? spec.groups.filter(Boolean) : [];
+  if (!nodes.length || !groups.length) return null;
+  const rows = groups.map((g) => ({
+    label: g.label || g.id || '',
+    cells: nodes.filter((n) => n && n.group === g.id).map((n) => n.label || ''),
+  })).filter((r) => r.cells.length);
+  return rows.length ? { args: [rows], opts: {} } : null;
+}
+
+/** groups[] → medallion の tiers[]{label, items[], via}。group が層、所属 node が中身、
+ *  層をまたぐ edge のラベルが昇格の語 (via)。groups[] が無いときは nodes[] 自体を層と読む */
+function projectTiers(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const groups = Array.isArray(spec.groups) ? spec.groups.filter(Boolean) : [];
+  const edges = Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [];
+  if (!nodes.length) return null;
+  const filled = groups
+    .map((g) => ({ group: g, members: nodes.filter((n) => n && n.group === g.id) }))
+    .filter((t) => t.members.length);
+  if (filled.length) {
+    const tiers = filled.map(({ group, members }, i) => {
+      const next = filled[i + 1];
+      const e = next ? edges.find((x) => x
+        && members.some((m) => m.id === x.from) && next.members.some((m) => m.id === x.to)) : null;
+      return {
+        label: group.label || group.id || '',
+        items: members.map((m) => m.label || ''),
+        via: (e && e.label) || '',
+      };
+    });
+    return { args: [tiers], opts: {} };
+  }
+  const tiers = nodes.map((n, i) => {
+    const next = nodes[i + 1];
+    const e = next ? edges.find((x) => x && x.from === n.id && x.to === next.id) : null;
+    return { label: n.label || '', sublabel: n.subtext || '', via: (e && e.label) || '' };
+  });
+  return { args: [tiers], opts: {} };
+}
+
+/** groups[] (無ければ node.level) → high-level の levels[]{label, items[]}。
+ *  段の順は groups[] の並び順、level 経由のときは値の昇順。段見出しは group.label */
+function projectLevels(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const groups = Array.isArray(spec.groups) ? spec.groups.filter(Boolean) : [];
+  if (!nodes.length) return null;
+
+  // 段を「ノードの並び」として先に決める。項目へ畳むのは最後にする。
+  // 先に {label, sublabel} へ畳むと id が消え、edges と突き合わせられない。
+  let tiers = null;
+  if (groups.length) {
+    tiers = groups
+      .map((g) => ({ label: g.label || g.id || '', nodes: nodes.filter((n) => n && n.group === g.id) }))
+      .filter((t) => t.nodes.length);
+    if (!tiers.length) return null;
+  } else {
+    // group が無いときだけ node.level を段として読む。一部だけ level を持つ入力は
+    // 段の割り当てが恣意的になるので素材不足に倒す (欠けた段を勝手に作らない)。
+    if (!nodes.every((n) => Number.isInteger(n.level))) return null;
+    const byLevel = new Map();
+    for (const n of nodes) {
+      if (!byLevel.has(n.level)) byLevel.set(n.level, []);
+      byLevel.get(n.level).push(n);
+    }
+    // 段見出しは持たない (builder 側が「第 N 層」を補う)
+    tiers = [...byLevel.keys()].sort((a, b) => a - b).map((lv) => ({ label: '', nodes: byLevel.get(lv) }));
+    if (!tiers.length) return null;
+  }
+
+  // 段間の帰属を edges から渡す。渡さないと buildHighLevel には宣言が 1 つも
+  // 届かず、段レベルのトランク 1 本へ落ちる — 入力が持っている依存関係が
+  // 図から丸ごと消える。宣言できるのに宣言しないのは、情報の取りこぼしである。
+  // 渡すのは**次の段へ向かう辺だけ**。段を飛ばす辺や逆向きの辺をここで
+  // 上下対応として渡すと、隣り合っていない関係を隣接として描くことになる。
+  const labelOf = new Map(nodes.map((n) => [n.id, n.label || '']));
+  const edges = Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [];
+  const levels = tiers.map((t, ti) => {
+    const nextIds = ti + 1 < tiers.length ? new Set(tiers[ti + 1].nodes.map((n) => n.id)) : null;
+    return {
+      label: t.label,
+      items: t.nodes.map((n) => {
+        const item = { label: n.label || '', sublabel: n.subtext || '' };
+        if (!nextIds) return item;
+        // builder は次段の label で引き当てる。label が空のノードは引き当て
+        // 不能なので落とす (空文字で当たると別のノードへ線が付く)。
+        const to = edges
+          .filter((e) => e.from === n.id && nextIds.has(e.to))
+          .map((e) => labelOf.get(e.to))
+          .filter(Boolean);
+        if (to.length) item.to = to;
+        return item;
+      }),
+    };
+  });
+  return { args: [levels], opts: {} };
+}
+
+/** nodes[] → dp-integration の hub + spokes[]{label, sublabel, direction}。
+ *  ハブは emphasis:'highlight' の最初の node、無ければ先頭 node。向きは edge の
+ *  差し向き (ハブ→周辺 = out / 周辺→ハブ = in / 両方 = both)。辺が無ければ in 扱い */
+function projectHubSpokes(spec) {
+  const nodes = Array.isArray(spec.nodes) ? spec.nodes.filter(Boolean) : [];
+  const edges = Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [];
+  if (nodes.length < 2) return null;
+  const hubNode = nodes.find((n) => n.emphasis === 'highlight') || nodes[0];
+  const spokeNodes = nodes.filter((n) => n !== hubNode);
+  if (!spokeNodes.length) return null;
+  const spokes = spokeNodes.map((n) => {
+    const out = edges.some((e) => e.from === hubNode.id && e.to === n.id);
+    const into = edges.some((e) => e.from === n.id && e.to === hubNode.id);
+    return {
+      label: n.label || '',
+      sublabel: n.subtext || '',
+      direction: out && into ? 'both' : (out ? 'out' : 'in'),
+    };
+  });
+  return { args: [{ label: hubNode.label || '', sublabel: hubNode.subtext || '' }, spokes], opts: {} };
+}
+
 /** diagramNode[] → {label, value} 配列 (slope/butterfly 用。value は node.value か subtext 内の数値) */
 function nodesToValued(nodes) {
   const arr = Array.isArray(nodes) ? nodes : [];
@@ -526,15 +973,29 @@ function nodesToValued(nodes) {
 
 /**
  * 中立 A対B 対比図 (report engine 固有・決定論)。svg-builder.buildVs が Before/After(bad/good) を
- * 固定描画し vendor byte-parity で改変できないため、中立対比 (両列対等・group 名タイトル・bullet) を
+ * 固定描画するため、中立対比 (両列対等・group 名タイトル・bullet) を
  * ここで描く。列色は wave-blue / wave-aqua の対等な2色。逐語値は本文表に温存し、図は対比構造を一目化する。
+ *
+ * 契約 (diagram-layout-contract §2/§3): ラベルを切り詰めず、容量を超える素材も詰めない。
+ * 26 字を超えるラベル、または 6 件を超える列があれば **この図自体を作らない** (null を返す)。
+ * 以前はここで `slice(0,26)+'…'` と `slice(0,6)` を黙って行っていたが、日本語は述部が
+ * 末尾に来るため途中で切ると否定・条件・留保が落ち、図が本文と逆の主張になる。
+ * 呼び側 (renderSvgVisual / 導出) は null を受けたら図を出さずフォールバックへ倒す。
  */
+const NEUTRAL_COMPARISON_MAX_LABEL = 26;  // 決定表 R04 の label_max_length と同値
+const NEUTRAL_COMPARISON_MAX_ITEMS = 6;   // 決定表 R04 の capacity と同値
+
 function buildNeutralComparison(leftItems, rightItems, opts = {}) {
   const colW = 540, gap = 64, leftX = 40;
   const rightX = leftX + colW + gap;
   const headerH = 60, itemH = 54, padX = 22, itemGap = 12, topY = 36, bottomPad = 26;
-  const L = (Array.isArray(leftItems) ? leftItems : []).slice(0, 6);
-  const R = (Array.isArray(rightItems) ? rightItems : []).slice(0, 6);
+  const L = Array.isArray(leftItems) ? leftItems : [];
+  const R = Array.isArray(rightItems) ? rightItems : [];
+  const textOf = (it) => (typeof it === 'string' ? it : (it && (it.label || it.text)) || '');
+  // 容量超過は不採用 (詰めて載せると読者は全部が描かれていると信じる)
+  if (L.length > NEUTRAL_COMPARISON_MAX_ITEMS || R.length > NEUTRAL_COMPARISON_MAX_ITEMS) return null;
+  // 入らないラベルが 1 つでもあれば図ごと中止 (conciseLabel と同じ契約)
+  if ([...L, ...R].some((it) => textOf(it).length > NEUTRAL_COMPARISON_MAX_LABEL)) return null;
   const maxItems = Math.max(L.length, R.length, 1);
   const cardH = headerH + 18 + maxItems * itemH + Math.max(0, maxItems - 1) * itemGap + bottomPad;
   const W = 1200, H = topY + cardH + 28;
@@ -546,15 +1007,14 @@ function buildNeutralComparison(leftItems, rightItems, opts = {}) {
     b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${cardH}" rx="16" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.5"/>`);
     b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${headerH}" rx="16" fill="${color}" opacity="0.92"/>`);
     b.push(`<rect x="${x}" y="${topY + headerH - 16}" width="${colW}" height="16" fill="${color}" opacity="0.92"/>`);
-    b.push(`<text x="${x + 24}" y="${topY + 38}" text-anchor="start" fill="#FFFFFF" font-size="22" font-weight="800" font-family="'Noto Sans JP', sans-serif">${escapeHtml(title)}</text>`);
+    b.push(`<text x="${x + 24}" y="${topY + 38}" text-anchor="start" fill="${kit.TOKENS.white}" font-size="22" font-weight="800" font-family="'Noto Sans JP', sans-serif">${escapeHtml(title)}</text>`);
     items.forEach((it, i) => {
       const y = topY + headerH + 16 + i * (itemH + itemGap);
-      const raw = typeof it === 'string' ? it : (it && (it.label || it.text)) || '';
-      const text = raw.length > 26 ? raw.slice(0, 26) + '…' : raw;
-      b.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" rx="10" fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1"/>`);
+      const text = textOf(it);
+      b.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" rx="10" fill="${kit.TOKENS.paper2}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
       b.push(`<rect x="${x + padX}" y="${y}" width="6" height="${itemH}" fill="${color}"/>`);
       b.push(`<circle cx="${x + padX + 30}" cy="${y + itemH / 2}" r="6" fill="${color}"/>`);
-      b.push(`<text x="${x + padX + 50}" y="${y + itemH / 2 + 6}" text-anchor="start" fill="#43436c" font-size="17" font-weight="600" font-family="'Noto Sans JP', sans-serif">${escapeHtml(text)}</text>`);
+      b.push(`<text x="${x + padX + 50}" y="${y + itemH / 2 + 6}" text-anchor="start" fill="${kit.TOKENS.ink}" font-size="17" font-weight="600" font-family="'Noto Sans JP', sans-serif">${escapeHtml(text)}</text>`);
     });
     return b.join('\n  ');
   }
@@ -566,9 +1026,70 @@ function buildNeutralComparison(leftItems, rightItems, opts = {}) {
 }
 
 /** svgSpec {variant, nodes[], groups?} → svg-builder への dispatch (決定論) */
+/* 参照検査 (I-ER-REF / I-REL-ISO) が読む宣言を、描画結果へそのまま載せる。
+ *
+ * 描画済み SVG から実体と関係を復元しようとすると、線の端点と矩形を座標で
+ * 突き合わせることになり、必ず近似が入る。近似で error 重大度の失格を出すのは
+ * 誤検知の温床なので、検査器は生成物 (.html) を参照検査の対象から外していた
+ * — つまり本番の図は参照の取りこぼしを一度も見られていなかった。
+ *
+ * 復元する代わりに**宣言をそのまま運ぶ**。図が申告した実体・節点・関係だけを
+ * figure の属性へ載せ、検査器は JSON 経路と同一の検査を掛ける。近似は 0 になる。
+ * 宣言を持たない図 (本文からの導出図など) には属性が付かず、検査器はそれを
+ * 「参照検査をしていない」と数える (合格にはしない = 空振りガード)。
+ *
+ * 属性値は escapeHtml を通すので `<` `>` `"` が生の形で入らない。検査器側の
+ * タグ剥がし正規表現 `<[^>]+>` を壊さず、本文領域へ JSON が混ざることもない。
+ */
+function declarationAttr(spec) {
+  if (!spec || typeof spec !== 'object') return '';
+  const decl = {};
+  if (Array.isArray(spec.entities) && spec.entities.length) {
+    decl.entities = spec.entities
+      .filter((e) => e && typeof e === 'object')
+      .map((e) => ({ name: e.name, fields: Array.isArray(e.fields) ? e.fields.map(String) : [] }));
+  }
+  if (Array.isArray(spec.nodes) && spec.nodes.length) {
+    decl.nodes = spec.nodes
+      .filter((n) => n && typeof n === 'object')
+      .map((n) => {
+        const o = {};
+        if (n.id != null) o.id = n.id;
+        if (n.label != null) o.label = n.label;
+        if (n.name != null) o.name = n.name;
+        // role は「線を持たなくてよい節点」の免除根拠。落とすと凡例や注記が
+        // 孤立節点として error になるので、宣言されていれば必ず運ぶ。
+        if (n.role != null) o.role = n.role;
+        return o;
+      });
+  }
+  const rel = spec.relations || spec.links || spec.edges;
+  if (Array.isArray(rel) && rel.length) {
+    decl.relations = rel
+      .filter((r) => r && typeof r === 'object')
+      .map((r) => ({
+        from: r.from != null ? r.from : r.source,
+        to: r.to != null ? r.to : r.target,
+      }));
+  }
+  // 参照検査の語彙 (entities / nodes) を 1 つも持たない図には属性を付けない。
+  // 空の宣言を載せると「宣言したが空だった」と「そもそも宣言が無い」が
+  // 見分けられなくなり、検査したことにされる。
+  if (!decl.entities && !decl.nodes) return '';
+  return ` data-srg-declaration="${escapeHtml(JSON.stringify(decl))}"`;
+}
+
 function renderSvgVisual(spec, meta) {
   const variant = spec.variant || 'flow';
-  const opts = {};
+  const opts = meta && meta.alt ? { ariaLabel: meta.alt } : {};
+  // 出所と時点は figcaption ではなく図の**内側**へ置く。図が単独で引用された
+  // ときに根拠ごと消えないようにするため (情報契約 §I1)。
+  if (spec.source) opts.source = spec.source;
+  if (spec.asOf) opts.asOf = spec.asOf;
+  // 線種で意味を分けている図は、色見本だけの凡例では読み解けない。
+  if (spec.legend && Array.isArray(spec.legend.items) && spec.legend.items.length) {
+    opts.legendItems = spec.legend.items.filter(Boolean);
+  }
   const items = nodesToItems(spec.nodes);
   let inner = '';
 
@@ -580,16 +1101,39 @@ function renderSvgVisual(spec, meta) {
     inner = svg.buildMindmap(center, items.slice(1).map((it) => it.label), opts);
   } else if (variant === 'comparison') {
     // comparison = 中立の A対B 対比。svg-builder.buildVs は Before/After(×○/pink=bad/good) を固定描画し
-    // かつ vendor byte-parity で不可侵ゆえ使えない。report engine 側の中立レンダラ (両列対等・group 名タイトル・
+    // ため中立比較には使えない。report engine 側の中立レンダラ (両列対等・group 名タイトル・
     // bullet マーカー) で描く。before→after / bad→good の対比は slope/butterfly が担当 (owner 分離)。
     const cmpNodes = spec.nodes || [];
     const { left, right } = splitForComparison(cmpNodes);
     const cmpGroups = [...new Set(cmpNodes.map((n) => (n && n.group) || '').filter(Boolean))];
+    const cmpGroupLabel = (gid) => {
+      const g = (Array.isArray(spec.groups) ? spec.groups : []).find((x) => x && x.id === gid);
+      return (g && g.label) || gid;
+    };
     inner = buildNeutralComparison(
       nodesToItems(left).map((i) => i.label),
       nodesToItems(right).map((i) => i.label),
-      { leftTitle: cmpGroups[0] || 'A', rightTitle: cmpGroups[1] || 'B', ariaLabel: meta.alt },
+      {
+        leftTitle: cmpGroups.length ? cmpGroupLabel(cmpGroups[0]) : 'A',
+        rightTitle: cmpGroups.length > 1 ? cmpGroupLabel(cmpGroups[1]) : 'B',
+        ariaLabel: meta.alt,
+      },
     );
+    // 切り詰め禁止・容量超過不採用に触れた場合は null。空図を黙って出さずフォールバックへ。
+    if (!inner) {
+      return fallbackVisual('comparison: ラベルが 26 字を超えるか列が 6 件を超えるため図にしません', meta.caption);
+    }
+  } else if (VARIANT_STRUCT[variant]) {
+    // 構造図 (svg-structures.cjs)。素材が射影できないときは空の枠を描かせず理由を出す。
+    // 射影の戻り値は 2 形: 単一引数のビルダーは素材配列そのまま、複数引数 (actors+messages
+    // など) や opts (er の relations) を要るものは { args, opts }。
+    const def = VARIANT_STRUCT[variant];
+    const material = def.project(spec);
+    const call = Array.isArray(material) ? { args: [material], opts: {} } : material;
+    if (!call || !Array.isArray(call.args) || !call.args.length) {
+      return fallbackVisual(`${variant}: 図にできる素材 (nodes[]/edges[]/groups[]) がありません`, meta.caption);
+    }
+    inner = struct[def.builder](...call.args, { ...opts, ...(call.opts || {}) });
   } else if ((variant === 'slope' || variant === 'butterfly') && typeof svg[variant === 'slope' ? 'buildSlope' : 'buildButterfly'] === 'function') {
     // 数値対比 (before→after / 左右量): group で二分、node.value か subtext 数値を採る
     const { left, right } = splitForComparison(spec.nodes || []);
@@ -600,9 +1144,430 @@ function renderSvgVisual(spec, meta) {
   } else {
     return fallbackVisual(`未対応の svg variant: ${variant}`, meta.caption);
   }
+  // ビルダーが空文字を返した場合も黙って空の figure を出さない。
+  if (!inner) return fallbackVisual(`svg variant ${variant} の描画結果が空です`, meta.caption);
   const caption = meta.caption ? `\n  <figcaption>${escapeHtml(meta.caption)}</figcaption>` : '';
-  const label = meta.alt ? ` aria-label="${escapeHtml(meta.alt)}"` : '';
-  return `<figure class="report-visual report-visual--svg" role="img"${label}>\n  ${inner}${caption}\n</figure>`;
+  // role="img" を figure に付けると子孫が presentational になり figcaption が
+  // 支援技術へ届かない。説明は内側 svg の aria-label が持つので figure は素のまま。
+  return `<figure class="report-visual report-visual--svg"${declarationAttr(spec)}>\n  ${inner}${caption}\n</figure>`;
+}
+
+/* ===== 見出しごとの図解を保証する自動導出 (v7.7.0) =====
+ *
+ * 要件: 「各見出しごとに、その見出しの内容に含まれている情報を図解で表現する」。
+ * 読者はまず図で全体像を掴み、分からない箇所だけ本文へ降りる。そのため図解が
+ * 無い節があると、その節だけ読み方が変わってしまう。
+ *
+ * 設計上の一線: **この節に書かれている情報だけ**から作る。外部知識で補ったり
+ * 一般論の図を当てたりすると、図と本文が食い違って読者を誤らせる。導出できる
+ * 構造が本文に無ければ図解を作らない (無理に作らない方が正しい)。
+ */
+
+/** 図解に載せる 1 行ラベル。1 文に収まらない/収めると意味が変わるものは null。
+ *
+ * 日本語は述部が末尾に来るため、途中で切ると「〜しない」「〜する場合に限り」が
+ * 落ちて、本文と逆の主張が図に載る。だから「詰めれば載る」ではなく
+ * 「そのまま載る場合だけ載せる」に倒す。逆接を含む文も同じ理由で載せない。
+ * 文末の判定は splitSentences と同じもの (半角 . は語中と区別できないので使わない)。
+ */
+const RESERVATION_RE = /(ただし|ただ、|しかし|一方|とはいえ|ものの|except|however)/;
+
+function conciseLabel(text) {
+  const s = String(text == null ? '' : text)
+    .replace(/\s+/g, ' ')
+    .replace(/`[^`]*`/g, '')       // インラインコードは図解に載せない
+    .replace(/\*\*|__|\*|_/g, '')  // 強調記号を落とす
+    .trim();
+  if (!s) return null;
+  const sents = splitSentences(s);
+  const head = (sents.length ? sents[0] : s).replace(/[。！？]$/, '');
+  if (sents.length > 1 && RESERVATION_RE.test(s.slice(sents[0].length))) return null;
+  if (RESERVATION_RE.test(head)) return null;
+  if (head.length > 28) return null;  // 切り詰めない。載せない
+  return head;
+}
+
+/**
+ * 節の body[] から図解の素材を決定論的に取り出す。
+ * どの構造を選ぶかは「本文が実際に持っている形」で決める:
+ *   ordered-list / task-list → 順序がある     → 横フロー (chevron)
+ *   bullet-list              → 並列の要素     → 価値スタック (value-stack)
+ *   stat-tile                → 量の対比       → 横棒
+ * どれも無ければ null を返し、図解を作らない。
+ *
+ * 「1 項目でもラベルにできなければ導出をやめる」のは意図的。一部だけ落とすと
+ * 読者は図を全体像だと信じてしまう。全部載るか作らないかの二択にする。
+ */
+function labelsOf(items, pick) {
+  const out = [];
+  for (const it of items) {
+    const label = conciseLabel(pick(it));
+    if (!label) return null;
+    out.push(label);
+  }
+  return out;
+}
+
+/** ビルダーの上限を超える素材は、その variant では扱わない (黙って切らない)。
+ *
+ * fail-closed: 上限がどこにも宣言されていなければ「無制限」ではなく **不採用** にする。
+ * 以前は cap===0 を無制限と読んでいたため、CAPACITY への登録漏れが静かに通り、
+ * 超過分が黙って消えた図が出ていた (契約 §2 の思想と逆)。
+ * 上限の出所は 2 つあり、両方あるときは厳しい方を採る:
+ *   - svg-builder.cjs の CAPACITY (ビルダー実装の上限。正本)
+ *   - 決定表 rows[].result.capacity (CAPACITY 未登録のビルダーに対し、表が
+ *     schema の maxItems や実装の slice 値を代替として明示している値)
+ */
+function fitsCapacity(builderName, n, declaredCap) {
+  const registered = svg && svg.CAPACITY ? svg.CAPACITY[builderName] : undefined;
+  const caps = [registered, declaredCap].filter((v) => typeof v === 'number' && isFinite(v) && v > 0);
+  if (!caps.length) return false;
+  return n <= Math.min(...caps);
+}
+
+/* ===== 決定表 (visual-derivation-table.json) をそのまま実行する =====
+ *
+ * 図種選定の正本は schemas/visual-derivation-table.json 1 つ。ここでは表を
+ * **実行時に読み込んで評価する**。表からコードを生成する方式だと「表」と「生成物」が
+ * 二重に存在し、両者のズレを別の検査で塞ぎ続けなければならないが、表そのものを
+ * 入力として評価すれば乖離が構造的に起こり得ない (機械が気づくまでもなく起きない)。
+ * 表は HTML 生成時にしか読まないので、成果物 HTML の自己完結性 (外部参照を増やさない)
+ * には影響しない。
+ *
+ * 表が読めない場合は導出を行わない (fail-closed)。勝手な既定の順序で図を作ると、
+ * 正本を 2 箇所に持っていた元の問題に戻る。
+ */
+let DERIVATION_TABLE = null;
+try {
+  DERIVATION_TABLE = require('../../schemas/visual-derivation-table.json');
+} catch (e) {
+  DERIVATION_TABLE = null;
+}
+
+/** definitions.numeric: 量として読めるなら数値、読めなければ null */
+function numericValue(v) {
+  if (v == null) return null;
+  const n = parseFloat(String(v).replace(/,/g, '').replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** source.label / source.value の式を関数化。未知の式は null (=その行を不採用) */
+function makePicker(expr) {
+  const e = String(expr == null ? '' : expr).trim();
+  if (!e) return null;
+  if (e === 'item') return (x) => (typeof x === 'string' ? x : '');
+  const m = /^item\.([A-Za-z_][A-Za-z0-9_]*)$/.exec(e);
+  if (m) return (x) => (x && x[m[1]] != null ? x[m[1]] : '');
+  const r = /^row\[(\d+)\]$/.exec(e);
+  if (r) {
+    const i = Number(r[1]);
+    return (x) => (Array.isArray(x) && x[i] != null ? x[i] : '');
+  }
+  return null;
+}
+
+/** source.field → { blk, items }。実体が items[] でないブロックの取り違えを防ぐ */
+function materialsOf(sec, body, row) {
+  const field = (row.source && row.source.field) || '';
+  if (field === 'body[type=paragraph]') {
+    return { blk: null, items: body.filter((b) => b && b.type === 'paragraph') };
+  }
+  if (field === 'section.paragraphs') {
+    return { blk: null, items: Array.isArray(sec && sec.paragraphs) ? sec.paragraphs : [] };
+  }
+  const blk = body.find((b) => b && b.type === row.block); // select: first
+  if (!blk) return null;
+  return Array.isArray(blk[field]) ? { blk, items: blk[field] } : null;
+}
+
+/** predicate.has_block / no_block */
+function predicateBlocks(body, p) {
+  const types = new Set(body.map((b) => (b && b.type) || ''));
+  if (Array.isArray(p && p.has_block) && !p.has_block.every((t) => types.has(t))) return false;
+  if (Array.isArray(p && p.no_block) && p.no_block.some((t) => types.has(t))) return false;
+  return true;
+}
+
+/** predicate.header_matches (all = 各パターンが別々の列に一致 / any / ordered) */
+function matchHeaders(headers, spec) {
+  const flags = spec.flags == null ? 'i' : String(spec.flags).replace(/g/g, '');
+  let pats;
+  try {
+    pats = (spec.patterns || []).map((s) => new RegExp(s, flags));
+  } catch (e) {
+    return false; // 表の正規表現が壊れていたら成立させない
+  }
+  if (!pats.length) return false;
+  const mode = spec.mode || 'all';
+  if (mode === 'any') return pats.some((re) => headers.some((h) => re.test(h)));
+  if (mode === 'ordered') {
+    let i = 0;
+    for (const h of headers) if (i < pats.length && pats[i].test(h)) i += 1;
+    return i === pats.length;
+  }
+  const used = new Set();
+  for (const re of pats) {
+    const idx = headers.findIndex((h, i) => !used.has(i) && re.test(h));
+    if (idx < 0) return false;
+    used.add(idx);
+  }
+  return true;
+}
+
+/** predicate.value_matches */
+function matchValues(items, spec) {
+  let re;
+  try {
+    re = new RegExp(spec.pattern, spec.flags == null ? '' : String(spec.flags).replace(/g/g, ''));
+  } catch (e) {
+    return false;
+  }
+  const pick = makePicker(spec.field) || ((x) => (x && x[spec.field] != null ? x[spec.field] : ''));
+  const hit = items.map((it) => re.test(String(pick(it) == null ? '' : pick(it))));
+  return (spec.mode || 'any') === 'any' ? hit.some(Boolean) : hit.every(Boolean);
+}
+
+/* 決定表の result.builder → report 経路の実配線。
+ * ここに居ないビルダーの行は、表が status:'implemented' と書いていても採用しない
+ * (fail-closed)。逆に status:'planned' の行でも、ここへ配線した時点で有効になる。
+ * status は表側の宣言、実際の可否はこの表への配線が決める — 宣言だけで描けたことに
+ * しないためにゲートを配線側へ置く。
+ * materialize は「素材を、ラベルを切り詰めずに載せられる形へ写す」。写せなければ
+ * null を返し、その行は不成立として次行へ落ちる。 */
+const DERIVED_BUILDERS = {
+  // R02: stat-tile → 横棒 (label + 量)
+  buildBarChart: {
+    materialize: (ctx) => {
+      const nodes = [];
+      for (let i = 0; i < ctx.items.length; i += 1) {
+        const v = numericValue(ctx.pickValue(ctx.items[i]));
+        if (v === null) return null;
+        nodes.push({ label: ctx.labels[i], value: v });
+      }
+      return { nodes };
+    },
+    render: (d, opts) => svg.buildBarChart(d.nodes, opts),
+  },
+  // R03: table(開始/終了列あり) → 縦タイムライン
+  buildVerticalTimeline: {
+    materialize: (ctx) => {
+      const headers = ctx.headers;
+      // 行が成立した理由そのものである「開始」列の値を各段の日付として添える。
+      // 本文のセルをそのまま引くだけなので、図が本文以上のことを主張しない。
+      const si = headers.findIndex((h) => /(開始|着手|start|from|before)/i.test(h));
+      const nodes = ctx.labels.map((label, i) => {
+        const cell = si > 0 && Array.isArray(ctx.items[i]) ? String(ctx.items[i][si] == null ? '' : ctx.items[i][si]) : '';
+        const date = cell ? conciseLabel(cell) : null;
+        return date ? { label, subtext: date } : { label };
+      });
+      return { nodes };
+    },
+    render: (d, opts) => svg.buildVerticalTimeline(nodesToItems(d.nodes), opts),
+  },
+  // R04: 2 列の table → 中立 A対B 対比
+  buildNeutralComparison: {
+    materialize: (ctx) => {
+      const right = labelsOf(ctx.items, (r) => (Array.isArray(r) ? r[1] : ''));
+      if (!right) return null;
+      const max = (ctx.row.predicate && ctx.row.predicate.label_max_length) || NEUTRAL_COMPARISON_MAX_LABEL;
+      // 右列にも同じラベル契約を課す (表の predicate は row[0] にしか掛からないが、
+      // 図に載るのは両列なので、右列が切り詰め対象になるならこの行ごと落とす)。
+      if (right.some((t) => t.length > max)) return null;
+      return {
+        left: ctx.labels,
+        right,
+        leftTitle: ctx.headers[0] || 'A',
+        rightTitle: ctx.headers[1] || 'B',
+      };
+    },
+    render: (d, opts) => buildNeutralComparison(d.left, d.right, { ...opts, leftTitle: d.leftTitle, rightTitle: d.rightTitle }),
+  },
+  // R05: 担当列を持つ table → スイムレーン (svg-structures.cjs)
+  buildSwimlane: {
+    materialize: (ctx) => {
+      const headers = ctx.headers;
+      const lanes = [];
+      for (let i = 0; i < ctx.items.length; i += 1) {
+        const row = Array.isArray(ctx.items[i]) ? ctx.items[i] : [];
+        const steps = [];
+        for (let c = 1; c < headers.length; c += 1) {
+          const cell = String(row[c] == null ? '' : row[c]).trim();
+          if (!cell) continue;
+          const lab = conciseLabel(cell);
+          if (!lab) return null; // 1 セルでも載らなければレーン図ごと作らない
+          steps.push({ label: lab, step: c - 1 });
+        }
+        if (!steps.length) return null;
+        lanes.push({ label: ctx.labels[i], steps });
+      }
+      return { lanes, stepLabels: headers.slice(1) };
+    },
+    render: (d, opts) => struct.buildSwimlane(d.lanes, { ...opts, stepLabels: d.stepLabels }),
+  },
+  // R06 / R08: 順序のある列 → 矢羽根
+  buildChevron: {
+    materialize: (ctx) => ({ nodes: ctx.labels }),
+    render: (d, opts) => svg.buildChevron(nodesToItems(d.nodes), opts),
+  },
+  // R09 / R10: 並列の要素 → 価値スタック
+  buildValueStack: {
+    materialize: (ctx) => ({ nodes: ctx.labels }),
+    render: (d, opts) => svg.buildValueStack(nodesToItems(d.nodes), opts),
+  },
+  // R07 / R11 / R12 / R13: 縦フロー (connector は行の builderOptions が決める)
+  buildVerticalFlow: {
+    materialize: (ctx) => ({ nodes: ctx.labels }),
+    render: (d, opts) => svg.buildVerticalFlow(nodesToItems(d.nodes), { ...opts, ...(d.builderOptions || {}) }),
+  },
+};
+
+/** 1 行を評価する。成立すれば導出結果、しなければ null (=次行へ) */
+function evalSvgRow(sec, body, row) {
+  const p = row.predicate || {};
+  const res = row.result || {};
+  const reg = DERIVED_BUILDERS[res.builder];
+  if (!reg) return null; // report 経路へ未配線 (status:'planned' のまま) の行はここで落ちる
+
+  if (p.body_empty === true && body.length) return null;
+  if (p.body_empty === false && !body.length) return null;
+  if (!predicateBlocks(body, p)) return null;
+
+  const got = materialsOf(sec, body, row);
+  if (!got) return null;
+  const { blk, items } = got;
+  const headers = Array.isArray(blk && blk.headers) ? blk.headers.map((h) => String(h == null ? '' : h)) : [];
+
+  if (p.header_count) {
+    if (p.header_count.min != null && headers.length < p.header_count.min) return null;
+    if (p.header_count.max != null && headers.length > p.header_count.max) return null;
+  }
+  if (p.header_matches && !matchHeaders(headers, p.header_matches)) return null;
+  if (p.count) {
+    if (p.count.min != null && items.length < p.count.min) return null;
+    if (p.count.max != null && items.length > p.count.max) return null;
+  }
+  if (p.value_matches && !matchValues(items, p.value_matches)) return null;
+  if (p.has_mixed_done != null) {
+    const dones = items.map((t) => (t && t.done === true));
+    const mixed = dones.some(Boolean) && dones.some((x) => !x);
+    if (mixed !== p.has_mixed_done) return null;
+  }
+
+  const pick = makePicker((row.source || {}).label);
+  if (!pick) return null;
+  let labels;
+  if (p.all_labelable === true) {
+    labels = labelsOf(items, pick);
+    if (!labels) return null; // 1 件でも載らなければこの行は不成立 (切り詰めない)
+  } else {
+    labels = items.map((it) => String(pick(it) == null ? '' : pick(it)));
+  }
+  if (p.label_max_length != null && labels.some((t) => t.length > p.label_max_length)) return null;
+  if (p.min_label_length != null && labels.some((t) => t.length < p.min_label_length)) return null;
+
+  if (p.all_numeric === true || p.any_non_numeric === true) {
+    const pv = makePicker((row.source || {}).value);
+    if (!pv) return null;
+    const vals = items.map((it) => numericValue(pv(it)));
+    if (p.all_numeric === true && vals.some((v) => v === null)) return null;
+    if (p.any_non_numeric === true && !vals.some((v) => v === null)) return null;
+  }
+
+  if (!fitsCapacity(res.builder, items.length, res.capacity)) return null;
+
+  const pickValue = makePicker((row.source || {}).value) || (() => null);
+  const extra = reg.materialize({ sec, body, blk, items, labels, headers, row, pickValue });
+  if (!extra) return null;
+  return {
+    rowId: row.id,
+    block: row.block,
+    variant: res.variant,
+    builder: res.builder,
+    builderOptions: res.builderOptions || {},
+    ...extra,
+  };
+}
+
+/** subheading を分割子として body[] をグループへ切る (小見出し自体は素材にしない) */
+function splitBySubheading(body) {
+  const groups = [];
+  let cur = [];
+  for (const b of body) {
+    if (b && b.type === 'subheading') {
+      if (cur.length) groups.push(cur);
+      cur = [];
+      continue;
+    }
+    cur.push(b);
+  }
+  if (cur.length) groups.push(cur);
+  return groups;
+}
+
+/** 決定表を order 昇順に評価し、最初に成立した行を採用する (first-match-wins) */
+function evaluateDerivationTable(sec, body, depth) {
+  const table = DERIVATION_TABLE;
+  if (!table || !Array.isArray(table.rows)) return null;
+  const rows = table.rows.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  for (const row of rows) {
+    const res = (row && row.result) || {};
+    if (res.kind === 'none') return null; // 無条件フォールバック行 = 図解を作らない
+    if (res.kind === 'recurse') {
+      // 分割子。深さ 1 段だけ (節の中の小見出しは 1 階層しか無い)。
+      if (depth > 0) continue;
+      if (!predicateBlocks(body, row.predicate)) continue;
+      for (const g of splitBySubheading(body)) {
+        const d = evaluateDerivationTable(sec, g, depth + 1);
+        if (d) return d; // 非 none を返した最初のグループ 1 件のみ (RCONST_003)
+      }
+      // 分割した以上、平坦走査へは戻らない (小見出しをまたいだ素材の混在を防ぐ)
+      return null;
+    }
+    if (res.kind !== 'svg') continue;
+    const d = evalSvgRow(sec, body, row);
+    if (d) return d;
+  }
+  return null;
+}
+
+/**
+ * 節の body[] から図解の素材を決定論的に取り出す。
+ * どの構造をどの図種に写すかは visual-derivation-table.json が唯一の正本で、
+ * この関数はその表の実行器にすぎない (順序も上限もここには書かない)。
+ */
+function deriveVisualFromBody(sec) {
+  const body = Array.isArray(sec && sec.body) ? sec.body : [];
+  return evaluateDerivationTable(sec, body, 0);
+}
+
+/** 導出した素材を SVG へ。導出元が無ければ空を返す (呼び側は図解なしで進む)。 */
+function renderDerivedVisual(sec, counters) {
+  const derived = deriveVisualFromBody(sec);
+  if (!derived) return { html: '', usesMermaid: false };
+  const reg = DERIVED_BUILDERS[derived.builder];
+  if (!reg) return { html: '', usesMermaid: false };
+  const heading = (sec && sec.heading) || '';
+  const opts = { ariaLabel: `${heading}の要点を図にしたもの` };
+  let inner = '';
+  try {
+    inner = reg.render(derived, opts) || '';
+  } catch (e) {
+    // 図解の失敗で節そのものを落とさない。本文は残す。
+    return { html: '', usesMermaid: false };
+  }
+  if (!inner) return { html: '', usesMermaid: false };
+  if (counters) counters.fig += 1;
+  // 「構造」と名乗れるのは素材が構造を持っていたときだけ。段落を並べただけの
+  // 導出図は「論点」と呼ぶ (図が本文以上のことを主張しないため)。
+  const noun = (derived.block === 'paragraph' || derived.block === 'paragraphs') ? '論点' : '構造';
+  const cap = counters ? `\n  <figcaption>図${counters.fig}. ${escapeHtml(heading)}の${noun}</figcaption>` : '';
+  return {
+    // 図の説明は内側 svg の role="img" + aria-label が担う。figure にも aria-label を
+    // 付けると figcaption と二重に読み上げられるので付けない。
+    html: `<figure class="report-visual report-visual--svg report-visual--derived">`
+      + `\n  ${inner}${cap}\n</figure>`,
+    usesMermaid: false,
+  };
 }
 
 /** comparison 用に nodes を左右へ決定論分割 (group 優先、無ければ半々) */
@@ -632,7 +1597,7 @@ function renderCodexImage(spec, meta) {
   }
   const overlays = Array.isArray(spec.overlayText) ? spec.overlayText : [];
   const overlayHtml = overlays.map((t) => `    <li>${escapeHtml(t)}</li>`).join('\n');
-  return `<figure class="report-visual report-visual--image" role="img" aria-label="${alt}">
+  return `<figure class="report-visual report-visual--image" aria-label="${alt}">
   <svg viewBox="0 0 960 320" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="960" height="320" fill="rgba(46,168,143,0.08)" rx="10"/><text x="480" y="60" text-anchor="middle" fill="var(--accent-aqua-vivid, #2EA88F)" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif">Codex Image (${escapeHtml(spec.pattern || 'image')})</text><text x="480" y="170" text-anchor="middle" fill="var(--fg-dim, #727169)" font-size="16" font-family="'Noto Sans JP', sans-serif">${alt}</text></svg>
   <ul class="composite-overlay">
 ${overlayHtml}
@@ -695,7 +1660,7 @@ function renderBlock(b, counters) {
   if (!b || !b.type) return '';
   switch (b.type) {
     case 'paragraph':
-      return `  <p>${inlineMd(b.text || '')}</p>`;
+      return `  <p>${renderSentenceHtml(b.text || '')}</p>`;
     case 'subheading': {
       const lv = b.level === 4 ? 4 : 3;
       return `  <h${lv} class="report-subheading">${inlineMd(b.text || '')}</h${lv}>`;
@@ -862,16 +1827,75 @@ function renderToc(sections) {
     })
     .join('\n');
   if (!items) return '';
-  return `  <nav class="report-toc report-toc--sidebar" aria-label="目次">\n    <div class="report-toc__title">目次</div>\n    <ol>\n${items}\n    </ol>\n  </nav>`;
+  // details/summary にしてあるのは狭画面のため。狭い画面でも目次を追従させると
+  // 本文の上に居座って可読域を食うので、読者が畳める必要がある。
+  // open を既定にしてあるので、広い画面では従来どおり開いたまま出る。
+  return `  <nav class="report-toc report-toc--sidebar" aria-label="目次">
+    <details class="report-toc__box" open>
+      <summary class="report-toc__title">目次</summary>
+      <ol>
+${items}
+      </ol>
+    </details>
+  </nav>`;
 }
 
 /**
- * sticky sidebar TOC の scrollspy (1.3.0)。
+ * sticky sidebar TOC の scrollspy (report-uiux)。
  * 自己完結・再実行可能な controller として、初期 hash / TOC click / manual scroll /
  * hashchange / popstate / font-ready / print lifecycle を同じ activate 経路へ収束させる。
  * beforeprint で監視を停止し、afterprint で直前位置を復元して再起動する
  * (ハイライトは print CSS 側でも無効化する二重化)。
  */
+/**
+ * 追従ヘッダーの「現在節」と読了進捗を更新する。
+ * scrollspy とは分けてある。あちらは sidebar TOC が前提で nav が無ければ即 return
+ * するが、追従ヘッダーは目次を出さない文書でも要るため。
+ */
+function reportTopbarScript() {
+  return `<script>
+(function () {
+  'use strict';
+  // 狭画面では目次が本文の上に重なる。開いたままだと目次リンクで飛んだ見出しが
+  // 目次の背後へ着地するので、既定で畳んでおく (開くのは読者の意思で)。
+  var toc = document.querySelector('.report-toc__box');
+  if (toc && window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+    toc.removeAttribute('open');
+  }
+  var here = document.querySelector('[data-report-here]');
+  var bar = document.querySelector('[data-report-progress]');
+  if (!here && !bar) return;
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.report-section[id]'));
+  var frame = null;
+  function sync() {
+    frame = null;
+    if (bar) {
+      var doc = document.documentElement;
+      var span = doc.scrollHeight - window.innerHeight;
+      /* span<=0 は文書がビューポートに収まっている状態。0 除算を避けつつ
+         「全部見えている = 100%」を出す。 */
+      var ratio = span > 0 ? window.pageYOffset / span : 1;
+      bar.style.width = Math.max(0, Math.min(1, ratio)) * 100 + '%';
+    }
+    if (here && secs.length) {
+      /* 判定線を画面上部 28% に置く。上端 (0) だと節の境界で表示が
+         ちらつき、中央だと見出しを読んでいるのに前の節が出続ける。 */
+      var marker = Math.max(1, window.innerHeight * 0.28);
+      var cur = secs[0];
+      secs.forEach(function (s) { if (s.getBoundingClientRect().top <= marker) cur = s; });
+      var h = cur.querySelector('h2');
+      var text = h ? (h.textContent || '').trim() : '';
+      if (text && here.textContent !== text) here.textContent = text;
+    }
+  }
+  function onScroll() { if (frame === null) frame = window.requestAnimationFrame(sync); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  sync();
+})();
+</script>`;
+}
+
 function reportScrollspyScript() {
   return `<script>
 (function () {
@@ -1058,7 +2082,13 @@ export function renderReport(structure) {
       const heading = escapeHtml((sec && sec.heading) || '');
       const secNum = String(idx + 1).padStart(2, '0');
       const secAccent = REPORT_TYPE_ACCENT[(sec && sec.reportType) || reportType] || accent;
-      const vis = renderVisual(sec && sec.visual, counters);
+      // 各見出しに図解を 1 つ用意する。明示 visual があればそれを使い、
+      // 無い節だけ本文の構造から導出する (導出できなければ図解なしで進む)。
+      // visual.kind === 'none' は「この節に図解は要らない」という明示の指定なので、
+      // 導出で埋めない。指定が無い節 (visual 自体が無い) だけ導出の対象にする。
+      const visualOptOut = !!(sec && sec.visual && sec.visual.kind === 'none');
+      let vis = renderVisual(sec && sec.visual, counters);
+      if (!vis.html && !visualOptOut) vis = renderDerivedVisual(sec, counters);
       if (vis.usesMermaid) usesMermaid = true;
       const narrative = renderNarrative(sec && sec.narrative);
       // body[] 優先・排他 (1.1.0)。存在すれば paragraphs[] を無視。無ければ paragraphs[] (1.0.0 後方互換)
@@ -1087,15 +2117,26 @@ export function renderReport(structure) {
       const twoCol = typeof layout.grid === 'string' && /^2x/.test(layout.grid) && vis.html;
       let inner;
       if (twoCol) {
+        // 2 列でも図解を先 (左) に置く。横組みの視線は左から入るので、
+        // 縦積みの「図解 → 本文」と同じ順序が保たれる。狭画面では 1 列へ
+        // 落ちる (CSS) が、そのときも DOM 順のまま図解が先に来る。
         inner = `${narrative ? narrative + '\n' : ''}  <div class="report-grid report-grid--2col">
+    <div class="report-grid__visual">${vis.html}</div>
     <div class="report-grid__prose">
 ${bodyHtml}
 ${callouts ? callouts + '\n' : ''}    </div>
-    <div class="report-grid__visual">${vis.html}</div>
   </div>`;
       } else {
-        inner = `${narrative ? narrative + '\n' : ''}${bodyHtml}
-${callouts ? callouts + '\n' : ''}  ${vis.html}`;
+        // 縦積みは「図解 → 本文」の順に置く。
+        // 読者はまず図で全体像を掴み、そこで分からなかった箇所だけを本文で補う。
+        // 逆順 (本文 → 図) だと、読者は全体像を持たないまま文章を頭から処理する
+        // ことになり、図に辿り着く頃には本文で組み立てた理解と図の構造を
+        // 突き合わせ直す二度手間が生じる。
+        // narrative (本質課題→解決→活用のリード帯) は図の意味を先に規定する
+        // 見出しの一部なので、図より前に置く。
+        inner = `${narrative ? narrative + '\n' : ''}  ${vis.html}
+${bodyHtml}
+${callouts ? callouts + '\n' : ''}`;
       }
       const transition = renderTransition(sec && sec.transition);
       return `<section class="report-section"${idAttr}${roleAttr}${orderAttr}${emphAttr}${focalAttr} style="--section-accent: var(--${secAccent});${focalVar}">
@@ -1105,7 +2146,11 @@ ${inner}${transition ? '\n' + transition : ''}
     })
     .join('\n');
 
-  const tocHtml = meta.toc ? renderToc(sections) : '';
+  // 目次は既定 ON。読み物として成立させるには「全体像」と「任意の節へ飛べる手段」が
+  // 常に要る。節が 1 つしかない文書だけは目次が情報を足さないので出さない。
+  // 明示的に meta.toc:false を書いた文書のみ従来どおり非表示にする。
+  const wantToc = meta.toc !== false && sections.length >= 2;
+  const tocHtml = wantToc ? renderToc(sections) : '';
   const throughLineHtml = renderThroughLine(meta.throughLine, meta.throughLineParts);
 
   // meta 行 (schema 準拠: audience/keyMessage/author/length。date/reader は無い)
@@ -1140,15 +2185,27 @@ ${inner}${transition ? '\n' + transition : ''}
     .filter(Boolean)
     .join('\n');
 
-  // 1.3.0: screen は sidebar(TOC)+本文カラムの grid、print/狭画面は CSS 側で block へ degrade。
+  // report-uiux: screen は sidebar(TOC)+本文カラムの grid、print/狭画面は CSS 側で block へ degrade。
   // TOC が無ければ --no-toc で本文 1 カラム中央寄せ。
   const sidebarHtml = tocHtml ? `  <aside class="report-sidebar">\n${tocHtml}\n  </aside>\n` : '';
   const layoutClass = tocHtml ? 'report-layout' : 'report-layout report-layout--no-toc';
   const scrollspy = tocHtml ? reportScrollspyScript() : '';
 
+  // 追従ヘッダー。現在節 (__here) と読了進捗 (__progress) は scrollspy が更新する。
+  // JS が動かない環境でも文書名だけは出るよう、初期値をサーバ側で埋めておく。
+  const topbarHtml = `<header class="report-topbar">
+  <span class="report-topbar__progress" data-report-progress></span>
+  <span class="report-topbar__title">${title}</span>
+  <span class="report-topbar__sep" aria-hidden="true">›</span>
+  <span class="report-topbar__here" data-report-here>${escapeHtml(
+    (sections[0] && sections[0].heading) || '',
+  )}</span>
+</header>
+`;
+
   return `${head}
 <body style="--report-accent: var(--${accent});">
-<div class="${layoutClass}">
+${topbarHtml}<div class="${layoutClass}">
 ${sidebarHtml}  <main class="report">
   <header class="report-header">
     <h1 class="report-title">${title}</h1>${subtitle}${keyMessage}
@@ -1161,6 +2218,7 @@ ${throughLineHtml ? throughLineHtml + '\n' : ''}${sectionHtml}
   </main>
 </div>
 ${scrollspy}
+${reportTopbarScript()}
 </body>
 </html>
 `;
@@ -1184,6 +2242,11 @@ function lengthLabel(len) {
 }
 
 // ---- CLI ----
+// 決定表 (visual-derivation-table.json) の実行結果を行単位で検査できるよう導出器を
+// 公開する。表が正本であることは「どの入力でどの行が引かれたか」を機械で確かめられて
+// 初めて主張できる。既存の renderReport export はそのまま。
+export { deriveVisualFromBody };
+
 function isMain() {
   return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 }

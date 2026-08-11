@@ -1,0 +1,46 @@
+{
+  "diagramId": "f-table-advanced",
+  "type": "table-advanced",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-comparison.md §11.9 高度な表型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "移行対象の棚卸し",
+  "message": "止められる時間が短い行に限って進みが遅く、危ないのは一行だけである。",
+  "columns": [
+    { "id": "name", "label": "システム", "align": "start" },
+    { "id": "window", "label": "停止許容（時間）", "align": "end", "definition": "業務が止まるまでの猶予。0 時間は無停止でしか移行できない" },
+    { "id": "progress", "label": "移行進捗（全工程数比 %）", "align": "bar", "denominator": "全工程数" },
+    { "id": "status", "label": "状態", "align": "badge" }
+  ],
+  "nodes": [
+    { "id": "s1", "label": "受注管理", "style": "plain", "values": { "window": "4時間", "progress": 80, "status": "検証中" } },
+    { "id": "s2", "label": "在庫連携", "style": "focal", "values": { "window": "1時間", "progress": 40, "status": "遅延" } },
+    { "id": "s3", "label": "会計連携", "style": "plain", "values": { "window": "8時間", "progress": 100, "status": "完了" } },
+    { "id": "s4", "label": "顧客ポータル", "style": "plain", "values": { "window": "0時間", "progress": 20, "status": "未着手" } },
+    { "id": "s5", "label": "社内ワークフロー", "style": "plain", "values": { "window": "24時間", "progress": 60, "status": "検証中" } }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["s2"],
+    "reason": "焦点は 1 行だけ。§11.9 のコード例が用意する 4 色のステータスバッジは行ごとに色を持たせる設計で、どの行を見るべきかを図が指さなくなる"
+  },
+  "annotations": [
+    { "text": "停止許容が短い行ほど遅れが効く", "anchor": "column:window" },
+    { "text": "行の並びは順不同。凡例  完了 = 本番移行済 ／ 検証中 = 計画どおり ／ 遅延 = 計画比 2 週超 ／ 未着手 = 着手日が未定", "anchor": "figure-bottom" },
+    { "text": "停止許容 = 業務が止まるまでの猶予（0 時間は無停止でしか移行できない）。移行進捗 = 全工程数に対する完了工程の割合", "anchor": "figure-bottom" },
+    { "text": "2026/7/31 時点・対象 5 システム", "anchor": "figure-bottom" }
+  ],
+  "badgeCriteria": {
+    "完了": "本番移行済",
+    "検証中": "計画どおり",
+    "遅延": "計画比 2 週超",
+    "未着手": "着手日が未定",
+    "値が無いセル": "空欄にせず「未測定」と書く"
+  },
+  "ordering": { "meaningful": false, "declaration": "行の並びは順不同" },
+  "provenance": { "asOf": "2026/7/31", "scope": "対象 5 システム" },
+  "caption": "上から順に眺めるのではなく、枠の立った一行だけを見てほしい。棒の短さと許される停止の短さが同じ行で重なっているのは、そこだけである。"
+}

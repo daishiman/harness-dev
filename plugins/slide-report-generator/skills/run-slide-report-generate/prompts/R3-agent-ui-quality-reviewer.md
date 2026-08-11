@@ -168,6 +168,18 @@ last-audited: 2026-07-05
 
 > **検証基準の全詳細（必須構造検証基準 S1〜S26・多面検証チェックリスト・テーマ別視覚検証ポイント・修正指針および全判定表）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。検証観点・判定しきい値・修正指針の逐語 SSOT は当該 reference。各基準は第三者が合否判定できる客観条件で記述され、5.3 完了チェックリストはこれらを全件消化することで充足する。必須構造検証は他の検証に優先し、1つでも違反があれば UI 品質レビューを中断し html-generator へ差し戻す・CONST_001）。
 
+### 図解の溶け込み検証 S27〜S29（第 4 次 update・図解を含むスライドのみ）
+
+> 逐語正本は同じく `ui-quality-checklist.md`（「図解の溶け込み検証 S27〜S29」節）、契約と数値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4。閾値を本プロンプトへ写さない。
+
+図解を含むスライドでは S1〜S26 に加えて次の 3 観点を消化する。S1〜S26 が「投影 HTML として壊れていないか」を見るのに対し、S27〜S29 は「図解がスライドの中で浮いていないか」を見る。
+
+- **S27 占有率と主従**（§D-4-1）: 面内本文領域に対する図解ブロックの面積比、1 スライド 1 図解、図解内の実効フォントサイズが周囲本文に対する倍率レンジ内か。下限割れの装飾図も、本文が図のキャプションに見える主従逆転も不可。
+- **S28 本文チップ・見出しとの重複禁止**（§D-4-2）: 図が示す内容を見出し・チップ・箇条書きが反復していないか。図解リード（キャプション）が図のラベルの繰り返しでなく、図が語れないことを書いているか。1 スライド 1 メッセージと整合するか。
+- **S29 文脈適合と骨格の出自**（§D-4-3 / §D-4-4）: 有彩色の種類数・余白・角丸・影・書体が周囲と連続するか。型と `zones` / `focalPoint` の接続が §D-4-4 と一致するか。図解が `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/diagram-templates/diagram-skeleton-slide.html`（埋め込み用骨格）を正としており、単体ページ用テンプレートの借用でないか。型と推奨配置の対応は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` の推奨配置列で引く。
+
+機械層は `scripts/validate-svg-diagram.py`（D14-D17）が担うため、本 3 項目は機械が担えない意味判定に集中する。違反は S1〜S26 と異なり即時中断ではなく、補正指針を添えて html-generator へ返す。**縮小による解消を指針にしない**（実効フォントサイズ下限と衝突する）。型か配置を変えるか、項目を減らして解く。
+
 ## 5.7 インターフェース
 
 ### 入力
@@ -333,6 +345,11 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば修正
 | リソース | パス | 用途 |
 |----------|------|------|
 | 自動検証 | vendor/scripts/verify-slides.js | 16:9・スクリーンショット |
+| 図解型クロスウォーク | references/diagram-type-crosswalk.md | §0 表の読み方 / §1-§9 型の対応 / §10 経路の選び方。S29 で型と推奨配置の一致を見るとき |
+| 作図文法の数値契約 | references/diagram-layout-contract.md | §D-1 グリッド / §D-2 複雑度予算 / §D-3 コネクタ 5 原則 / §D-4 R9 溶け込み契約（S27-S29 の契約本体）/ §D-5 annotation / §D-6 検査 owner 一覧 |
+| 図解の色ロール | references/diagram-style-tokens.md | §1 ロール表 / §2 系列色の使用制限 / §3 focal rule / §5 線幅・角丸・影の禁止事項。S29 の色数・意匠判定の根拠 |
+| 図解の骨格テンプレート | assets/diagram-templates/diagram-skeleton-slide.html（README.md 併読） | S29 で骨格の出自（埋め込み用か単体ページ用の借用か）を判定するときの比較対象 |
+| スライド面のページひな形 | assets/slide-templates/frame-contract.json（症状表と印刷の根拠は同ディレクトリ README.md） | `data-slide-skeleton` を持つ面の検証で、空白・chrome 位置・書体下限（`typography.min`）・充填率（`fill_policy`）・単一 `@page` の判定基準として参照する。決定論経路（`slider-*`）の面には効かないため、そちらは verify-slides.js / validate-print.js の結果で見る |
 | 統一感検証 | vendor/scripts/check-consistency.js | カラー・フォント検証 |
 | テーマ | references/theme-style.md | カラーパレット |
 | レイアウト | references/layout-visual.md | 余白・統一感ルール |

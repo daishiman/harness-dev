@@ -1,0 +1,120 @@
+<!--
+  flywheel-golden.html — ゴールデン実例: フライホイール型 (report 骨格)
+
+  入力: flywheel-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-cycle-flow.md §11.30 フライホイール型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 / §D-3 原則 1 の例外 (a) / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py flywheel-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.30 の幾何をそのまま使う (ハブ中心 360,280 / リング半径 208 / 工程 4)。
+  中心へ向かう破線スポークがこの型の語彙の中核で、消すと単なる円形プロセスへ戻る。
+  工程数 4 ではスポークがすべて軸平行になるので、放射状の例外に頼らずに済んでいる。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-flywheel"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 720 560"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-flywheel-caption">
+
+    <defs>
+      <marker id="f-flywheel-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-flywheel-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-flywheel-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 周期・向き・凡例 (I-CYCLE / I3。figcaption へ逃がさない) -->
+    <text x="8" y="20" font-size="12" fill="var(--fuji-gray, #8a8980)">1 周 = 1 か月・時計回り</text>
+    <text x="8" y="38" font-size="12" fill="var(--fuji-gray, #8a8980)">実線=進む順・破線=ハブへの書き戻し</text>
+
+    <!-- リング円弧 (時計回り・すべて同じ半径・同じ回転方向) -->
+    <path d="M 452 92 A 208 208 0 0 1 548 188" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-flywheel-arrow)"/>
+    <path d="M 548 372 A 208 208 0 0 1 452 468" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-flywheel-arrow)"/>
+    <path d="M 268 468 A 208 208 0 0 1 172 372" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-flywheel-arrow)"/>
+    <path d="M 172 188 A 208 208 0 0 1 268 92" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-flywheel-arrow)"/>
+
+    <!-- 書き戻しスポーク (工程からハブへ・破線・矢じりは付けない) -->
+    <line x1="360" y1="104" x2="360" y2="228"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="488" y1="280" x2="460" y2="280"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="360" y1="456" x2="360" y2="332"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <line x1="232" y1="280" x2="260" y2="280"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+
+    <text x="368" y="136" font-size="12" fill="var(--fuji-gray, #8a8980)">書き戻し: 一次対応ログ</text>
+    <text x="364" y="440" font-size="12" fill="var(--fuji-gray, #8a8980)">書き戻し: 解決時間</text>
+    <text x="568" y="332" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">書き戻し: 定型回答文</text>
+    <text x="152" y="332" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">書き戻し: 不足の指摘</text>
+
+    <!-- 中心ハブ (蓄積される共有資産・必ず 1 個) -->
+    <g>
+      <rect x="260" y="228" width="200" height="104" rx="8"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="360" y="260" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">蓄積される運用知識</text>
+      <text x="360" y="284" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">12,400 件・2026/8 時点</text>
+      <text x="360" y="308" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">1周目 6.1h → 3周目 2.6h</text>
+    </g>
+
+    <!-- 工程 1 (上) -->
+    <g>
+      <rect x="280" y="40" width="160" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="360" y="68" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">問い合わせを受ける</text>
+      <text x="360" y="88" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=記録を1件登録</text>
+    </g>
+
+    <!-- 工程 2 (右) -->
+    <g>
+      <rect x="488" y="248" width="160" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="568" y="276" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">回答を型にする</text>
+      <text x="568" y="296" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=型を1件公開</text>
+    </g>
+
+    <!-- 工程 3 (下・焦点) -->
+    <g>
+      <rect x="280" y="456" width="160" height="64" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="360" y="484" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">次の対応で引く</text>
+      <text x="360" y="504" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=平均2.6h以内</text>
+    </g>
+
+    <!-- 工程 4 (左) -->
+    <g>
+      <rect x="72" y="248" width="160" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="152" y="276" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">抜けを補う</text>
+      <text x="152" y="296" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=指摘0件</text>
+    </g>
+
+    <!-- 輪が止まる条件 (2.7) -->
+    <text x="8" y="540" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">書き戻しが 1 周でも欠けると輪は止まる</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-flywheel-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 2</span>
+    上の枠から時計回りに一周してほしい。外周だけなら普通の循環図だが、中心へ向かう破線があることで二周目が速くなる理由が読める。
+  </figcaption>
+
+</figure>
