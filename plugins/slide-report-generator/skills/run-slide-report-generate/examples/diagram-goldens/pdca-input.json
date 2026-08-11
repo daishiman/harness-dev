@@ -1,0 +1,39 @@
+{
+  "diagramId": "d-pdca",
+  "type": "pdca",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.26 PDCA サイクル型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 480 480" },
+  "title": "改善サイクルのどこで止まるか",
+  "message": "四つの工程のうち、今期に手を入れるのは差分を見る Check である。",
+  "cycle": { "direction": "時計回り", "period": "1 周 = 1 か月", "position": "3 周目 (2026/7)", "stopCondition": "差分が基準内なら 2 周で終了" },
+  "nodes": [
+    { "id": "p", "label": "Plan", "sub": "打ち手を決める", "quadrant": "top-left", "style": "plain" },
+    { "id": "d", "label": "Do", "sub": "決めた順に実施", "quadrant": "top-right", "style": "plain" },
+    { "id": "c", "label": "Check", "sub": "差分を見る", "quadrant": "bottom-right", "style": "focal" },
+    { "id": "a", "label": "Act", "sub": "基準を書き換える", "quadrant": "bottom-left", "style": "plain" },
+    { "id": "core", "label": "3 周目", "sub": "2026/7", "role": "center", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "p", "to": "d", "kind": "flow", "artifact": "実施計画" },
+    { "from": "d", "to": "c", "kind": "flow", "artifact": "実施ログ" },
+    { "from": "c", "to": "a", "kind": "flow", "artifact": "差分一覧" },
+    { "from": "a", "to": "p", "kind": "flow", "artifact": "改訂基準" }
+  ],
+  "emphasis": {
+    "focal": ["c"],
+    "reason": "焦点は循環の起点 (Plan) ではなく、今期に手を入れる工程に置く。起点を焦点にすると図が定義の再掲になり、どこへ手を入れるのかを語らない"
+  },
+  "annotations": [
+    { "text": "差分が基準内なら 2 周で終了", "anchor": "c" }
+  ],
+  "geometry": {
+    "quadrant": { "size": 160, "origins": [[48, 48], [272, 48], [272, 272], [48, 272]] },
+    "core": { "cx": 240, "cy": 240, "r": 32 },
+    "note": "象限の間に 64 の隙間を空け、そこだけを矢印と中心円が使う。矢印を象限の上に重ねると、循環が四つの箱の縁飾りに見える"
+  },
+  "legendNote": "色の枠は今期の対象・破線は注記",
+  "caption": "四象限を時計回りにたどる。色が付いているのは、今期に手を入れる工程である。"
+}

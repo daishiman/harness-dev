@@ -37,11 +37,14 @@ def _run(cwd: Path, env: dict[str, str] | None = None) -> dict[str, object]:
     return json.loads(proc.stdout)
 
 
-def test_marketplace_install_separates_plugin_root_from_project_output(tmp_path):
+def test_marketplace_install_separates_plugin_root_from_project_output(
+    tmp_path, as_self_plugin
+):
     project = tmp_path / "user-project"
     project.mkdir()
     plugin = tmp_path / "marketplace-cache" / "harness-creator"
     (plugin / "skills" / "run-build-skill").mkdir(parents=True)
+    as_self_plugin(plugin)
     (plugin / "plugin-composition.yaml").write_text("name: harness-creator\n", encoding="utf-8")
 
     result = _run(project, {"CLAUDE_PLUGIN_ROOT": str(plugin)})

@@ -3,6 +3,10 @@
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは設計の文脈・例・適用ガイドのみ。規則の正本は SR-ID で参照すること
 
 **責務**: インラインSVG2の実装テンプレート・再利用可能なコンポーネント・defs パターン集。
+**型の選定はここではない**: 本ファイルはプリミティブの**使い方**（描き方のテンプレート）を持つ。**どの型で描くか**（実在ビルダーごとの「選ぶとき / 選ばないとき」）は `skills/ref-diagram-system/references/diagram-type-catalog.md` を先に読む。型が決まってから本ファイルへ戻ると、テンプレートの取り違えが起きない。
+
+**色の正本**: 本ファイルのテンプレート内の色は `references/diagram-style-tokens.md` のロールを `var(--x, fallback)` 形式で写したもの。値の正本は `vendor/scripts/svg-kit.cjs` の `TOKENS` / `SERIES` で、hex をロール外の値へ書き換えない（ずれは D10 が warning にする）。
+
 **規則の正本**: viewBox基準 → [SR-1-02](spec-registry.md#sr-1-02) / [SR-5-01](spec-registry.md#sr-5-01)、SVG fill/stroke の CSS変数化 → [SR-2-08](spec-registry.md#sr-2-08)、矢印マーカー5種 → [SR-5-05](spec-registry.md#sr-5-05)、defs/グラデ → [SR-5-06](spec-registry.md#sr-5-06)、レイアウト図解は absolute 禁止 → [SR-4-08](spec-registry.md#sr-4-08)、foreignObject 内 fo-card → [SR-6-04](spec-registry.md#sr-6-04)
 
 ---
@@ -60,7 +64,7 @@
 /* SVG内テキスト共通 */
 .diagram-svg text {
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
-  fill: var(--fg-default, #DCD7BA);
+  fill: var(--fg, #43436c);
 }
 
 /* SVG内ホバー効果 */
@@ -101,16 +105,16 @@
     <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--autumn-yellow, #DCA561)" />
   </marker>
 
-  <!-- 矢印（緑） -->
-  <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5"
+  <!-- 矢印（バイオレット） -->
+  <marker id="arrow-violet" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--spring-green, #98BB6C)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--spring-violet, #957FB8)" />
   </marker>
 
   <!-- 矢印（アクア） -->
   <marker id="arrow-aqua" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--wave-aqua, #7AA89F)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--wave-aqua, #7FB4CA)" />
   </marker>
 
   <!-- 丸ドット -->
@@ -140,8 +144,8 @@
   <!-- ファネル用グラデーション -->
   <linearGradient id="grad-funnel" x1="0%" y1="0%" x2="0%" y2="100%">
     <stop offset="0%" stop-color="var(--wave-blue, #7E9CD8)" />
-    <stop offset="25%" stop-color="var(--wave-aqua, #7AA89F)" />
-    <stop offset="50%" stop-color="var(--spring-green, #98BB6C)" />
+    <stop offset="25%" stop-color="var(--wave-aqua, #7FB4CA)" />
+    <stop offset="50%" stop-color="var(--spring-violet, #957FB8)" />
     <stop offset="75%" stop-color="var(--autumn-yellow, #DCA561)" />
     <stop offset="100%" stop-color="var(--sakura-pink, #D27E99)" />
   </linearGradient>
@@ -200,7 +204,7 @@
 <!-- 標準ノード -->
 <g class="interactive" transform="translate(100, 100)">
   <rect width="160" height="80" rx="12" ry="12"
-        fill="var(--bg-dim, #2A2A37)" stroke="var(--wave-blue, #7E9CD8)"
+        fill="#FFFFFF" stroke="var(--wave-blue, #7E9CD8)"
         stroke-width="2.5" filter="url(#shadow-sm)" />
   <foreignObject x="8" y="8" width="144" height="64">
     <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card">
@@ -218,7 +222,7 @@
 ```html
 <!-- 円形ノード（サイクル要素用） -->
 <g class="interactive" transform="translate(480, 270)">
-  <circle r="55" fill="var(--bg-dim, #2A2A37)"
+  <circle r="55" fill="#FFFFFF"
           stroke="var(--wave-blue, #7E9CD8)" stroke-width="3"
           filter="url(#shadow-sm)" />
   <foreignObject x="-45" y="-40" width="90" height="80">
@@ -240,7 +244,7 @@
            stroke="var(--autumn-yellow, #DCA561)" stroke-width="2"
            filter="url(#shadow-sm)" />
   <text text-anchor="middle" dominant-baseline="central"
-        fill="var(--bg-dark, #1F1F28)" font-weight="700" font-size="16">
+        fill="var(--fg, #43436c)" font-weight="700" font-size="16">
     {{条件?}}
   </text>
 </g>
@@ -254,7 +258,7 @@
   <rect width="140" height="45" rx="22" ry="22" x="-70" y="-22"
         fill="var(--sakura-pink, #D27E99)" filter="url(#shadow-sm)" />
   <text text-anchor="middle" dominant-baseline="central"
-        fill="var(--bg-dark, #1F1F28)" font-weight="700" font-size="16">
+        fill="var(--fg, #43436c)" font-weight="700" font-size="16">
     開始
   </text>
 </g>
@@ -283,7 +287,7 @@
 
 <!-- 3次ベジェ曲線（S字） -->
 <path d="M 200,140 C 250,200 350,80 400,140"
-      fill="none" stroke="var(--wave-aqua, #7AA89F)" stroke-width="2.5"
+      fill="none" stroke="var(--wave-aqua, #7FB4CA)" stroke-width="2.5"
       marker-end="url(#arrow-aqua)" />
 ```
 
@@ -315,13 +319,13 @@
 <!-- 中央揃えテキスト -->
 <text x="480" y="270" text-anchor="middle" dominant-baseline="central"
       font-size="18" font-weight="700"
-      fill="var(--fg-default, #DCD7BA)">
+      fill="var(--fg, #43436c)">
   {{テキスト}}
 </text>
 
 <!-- 折り返しテキスト（tspan使用） -->
 <text x="480" y="250" text-anchor="middle" font-size="14"
-      fill="var(--fg-default, #DCD7BA)">
+      fill="var(--fg, #43436c)">
   <tspan x="480" dy="0">{{1行目}}</tspan>
   <tspan x="480" dy="20">{{2行目}}</tspan>
 </text>
@@ -536,10 +540,81 @@ Y位置: y = startY + levelH * i
 
   /* テキストを黒に */
   .diagram-svg text {
-    fill: #2D2D2D !important;
+    fill: var(--fg, #43436c) !important;
   }
 }
 ```
+
+---
+
+## 11. 注釈（annotation）プリミティブ
+
+図の中に「編集者の声」を 1-2 個だけ置くための横断プリミティブ。
+特定の図解タイプに属さないので、どの型からも同じ形で呼べる。
+
+**文法の正本は `references/diagram-layout-contract.md` §D-5**。本節はその実装形を持つ。
+色は `references/diagram-style-tokens.md` のロールのみを使う。
+
+| 判断 | 内容 |
+|---|---|
+| **Best for** | 「図を見ただけでは分からないが、本文へ書くほどでもない」一言。読み始めの位置の指示、数値の但し書き、例外の明示 |
+| **使わない場面** | 要素の名前そのもの（→ ノードのラベルに書く）／因果や流れ（→ コネクタで描く）／3 つ以上言いたいことがある（→ 本文へ移す） |
+| **複雑度上限** | **1 図あたり最大 2**（`diagram-layout-contract.md` §D-2 #4）。3 つ目が要ると感じたら本文の担当である |
+
+### 11.1 3 要素の構成
+
+注釈は必ず次の 3 要素の組で書く。1 つでも欠けると図の語彙（箱・線・ラベル）と
+見分けが付かなくなる。
+
+1. **イタリックの注釈文** — `var(--font-base)` の italic。ノードラベルと同じ立体で書かない
+2. **破線のリーダー線** — `stroke-dasharray="4,3"`・直線または緩い 1 次ベジェ。**矢じりを付けない**
+3. **指示点のドット** — リーダー線の指示側の端に `r="2"`
+
+```svg
+<!-- 1. イタリックの注釈文（右上の余白へ） -->
+<text class="dg-annotation" x="608" y="36" text-anchor="end"
+      font-style="italic" font-size="12" fill="var(--fuji-gray,#8a8980)">
+  {{注釈テキスト}}
+</text>
+
+<!-- 2. 破線のリーダー線（矢じり無し） -->
+<path d="M 552 44 Q 480 84 384 216" fill="none"
+      stroke="var(--fuji-gray,#8a8980)" stroke-width="1.25" stroke-dasharray="4,3" />
+
+<!-- 3. 指示点のドット -->
+<circle cx="384" cy="216" r="2" fill="var(--fuji-gray,#8a8980)" />
+```
+
+矢じりを付けない理由: 注釈は図の中の流れではない。矢印にするとコネクタと
+同じ語彙になり「これも工程か」と誤読される。ドットは「ここを指している」だけを言い、
+方向を語らない。
+
+### 11.2 色（2 段のみ）
+
+| 用途 | 文字 | リーダー線 |
+|---|---|---|
+| 通常の注釈 | `soft` = `var(--fuji-gray, #8a8980)` | 同上・`stroke-width="1.25"`（`STROKE.hairline`） |
+| 焦点に添える注釈 | `accent` = `var(--sakura-pink, #D27E99)` | 同上 |
+
+3 段目（`ink` の注釈など）を作らない。注釈が本文と同じ濃さで組まれると、
+読者が図の一部だと誤認する。**焦点色の注釈を使えるのは、その注釈が
+`accent` 要素そのものを指しているときだけ**である。
+
+### 11.3 配置の規約
+
+- **図の余白部分のみ。** ノードや線の上に重ねない。マスクを敷いてまで置かない
+  （マスクを敷いた注釈は、下の図を隠しているという事実を隠すだけである）
+- 置ける場所は実質、右上・左下の 2 隅。ここは多くの型で最後に埋まる領域である
+- リーダー線がコネクタや他の注釈と交差しない経路を選ぶ。
+  交差する経路しか無いなら、注釈の置き場所が間違っている
+- 文字サイズはノードラベルより大きくしない（`MIN_FONT` と同値）
+
+### 11.4 チェックリスト
+
+□ 1 図 2 個以内か □ イタリックか（立体で書いていないか）
+□ リーダー線が破線で、矢じりが無いか □ 指示側の端に `r="2"` のドットがあるか
+□ ノード・コネクタの上に重なっていないか
+□ ノードのラベルに書くべき内容を注釈へ逃がしていないか
 
 ---
 

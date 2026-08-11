@@ -1,0 +1,36 @@
+{
+  "diagramId": "d-venn",
+  "type": "venn",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-cycle-flow.md §11.2.1 2円ベン図",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 600 400" },
+  "title": "手順書が使われる条件",
+  "message": "片方だけを満たす業務は 33 件あるが、両方を同時に満たすのは 9 件しかない。",
+  "population": "2026/4 時点・経理と購買の定型業務 (n=48)",
+  "membershipCriterion": "交差の判定: 手順書があり直近 3 か月に参照あり (参照できない手順書は右のみ)",
+  "complement": "どちらにも入らない新規業務 6 件",
+  "legendNote": "円の大きさは件数に比例しない",
+  "nodes": [
+    { "id": "sa", "label": "現場の判断", "sub": "手順書なし・再現しない", "count": 21, "style": "plain" },
+    { "id": "sb", "label": "文書化した手順", "sub": "手順書あり・参照は稀", "count": 12, "style": "plain" },
+    { "id": "sab", "label": "使われる手順書", "count": 9, "style": "focal", "role": "intersection" }
+  ],
+  "relations": [
+    { "from": "sa", "to": "sab", "kind": "contains" },
+    { "from": "sb", "to": "sab", "kind": "contains" }
+  ],
+  "emphasis": {
+    "focal": ["sab"],
+    "reason": "本文がこれから語る対象は交差そのもの。集合 2 つは対等な前提なので、色で序列を付けず muted のまま残す"
+  },
+  "annotations": [],
+  "geometry": {
+    "circleRadius": 152,
+    "centers": [[216, 200], [384, 200]],
+    "lensLabelBox": [220, 180, 160, 40],
+    "note": "2 円の交差は集合型の語彙であり、D5（斜め <line>）/ D17（<path> の斜めセグメント）のどちらの検出対象でもない。円は <circle> として描かれるため、検査が交差を斜め線と誤検出することはない"
+  },
+  "caption": "二つの円が重なる部分だけを見てほしい。片方だけに属する話はどちらの側でも既に足りていて、足りないのは両方の条件を同時に満たすものである。"
+}

@@ -39,7 +39,7 @@ applicability:
 | 根因 (現状の欠落・実運用レポートの目視で確認) | 対応要件 | 焼き先 |
 |---|---|---|
 | `--report-width: 190mm` が print 用 A4 契約を screen にも流用(`buildReportCss()` の `.report { max-width: var(--report-width) }`)し、広画面で両サイド余白が本文幅を超える『空白 > 本文』逆転が起きる | C16 | C19 render-report.js(report 読書 CSS の正本=inventory C19.build_contract: buildReportCss() inline 出力)の著者責務で screen/print 二層 CSS 化(screen=可読幅本文カラム+sidebar・print=190mm を `@media print` で温存)。print 側の非退行(`@media print` ブロック出力存在)は C25 shape 検査 + C24 積極評価の二層で担保する (周回2 追加) |
-| `.report-toc`(render-report.js の CSS 定義)が冒頭静的2カラムのみで、下部スクロール時にインデックスが失われる | C17 | C19 render-report.js が sticky sidebar TOC + scrollspy(self-contained JS・print 無効)を追加実装。狭画面はインライン TOC へ graceful degrade。print 時の TOC/scrollspy 無効化出力と狭画面 breakpoint 出力の存在は C25 shape 検査、degrade の読みやすさは C24 積極評価が担う (周回2 追加) |
+| `.report-toc`(render-report.js の CSS 定義)が冒頭静的2カラムのみで、下部スクロール時にインデックスが失われる | C17 | C19 render-report.js が sticky sidebar TOC + scrollspy + 現在節/読了進捗 topbar(self-contained JS・print 無効)を追加実装。狭画面も details/summary で折り畳める sticky TOC を維持する。print 時の無効化出力と狭画面 breakpoint 出力は C25 shape 検査、読みやすさは C24 積極評価が担う |
 | `--fs-title: calc(2.6rem * var(--font-scale))` 等の見出しスケールが狭カラム相対で過大(実運用指摘=文字が大きすぎる/バランスが悪い) | C18 | C19 render-report.js(buildReportCss() inline <style> 出力が正本責務の report 読書 CSS)のスケール/spacing 変数調整(意匠 SSOT Kanagawa 配色/フォントは無改変) |
 | visual-strategist(component C18)が SVG/Mermaid/画像の形式三択を先に決め、『本文のどの概念構造を図解すべきか』の抽出が後回しになり装飾目的の図解が混入し得る | C19 | C18 visual-strategist が形式三択より先に節の論理構造→図種の写像(essence-visual)を行い、論理節(role∈{分析/主張/課題/解決/所見/影響})に非none visual(visual.kind!=none)を必須設計(写像規律=reference report-visual-strategy.md §0.5.1・VCONST_000)。schema は 1.2.0 のまま(essence-visual は既存 role/visual.kind を使い schema bump 不要)。要件 C19 の設計 owner は component C18 であり component C19(report-composer)ではない点に注意 |
 
@@ -60,6 +60,24 @@ Phase1の実測で、現行差分後も本文 `21.84px`、`#section-route-build`
 
 積極評価(意味の適合)は C24 report-quality-reviewer(ナビゲーション成立/密度バランス/図解適合/print・狭画面degradeの成立)、決定論検査(shape/存在)は C25 validate-report-visual.py(screenレイアウトCSS出力/TOC+scrollspy出力/essence-visualカバレッジ[論理節のvisual.kind非none]/`@media print`出力/print時TOC・scrollspy無効化出力/狭画面breakpoint出力)の二層分離で担保する(Goodhart 回避)。**周回2 追加 (R4 HIGH是正)**: C16 の print 非退行・C17 の scrollspy print無効/狭画面 graceful degrade は screen 新挙動の shape 検査だけでは検査できないため、C25 に上記 3 種の print/狭画面 shape 検査を追加し C24 に print/狭画面 degrade の意味適合を追加した(緑のまま print 破壊を見逃す穴の是正)。
 
+## 改善要件 (図解移植・C20-C28)
+
+> 本節は goal-spec.source_improvement.ref (第4次: diagram-design-migration) の詳細正本。参考リポジトリ diagram-design の「テンプレート HTML 骨格 + セマンティックトークン SSOT + 型別作図文法 + 数値化品質規約 + ゴールデン実例」の再現性 4+1 点セットを、色/フォントは既存 Kanagawa トークンを維持したまま移植する。既存構造ギャップ G1-G8 (references/diagram-*.md の未配線・型3系統の対応表欠如・CSS/HTML 図解の幾何検査ゼロ・テンプレート自体の lint 欠如・ゴールデン実例ゼロ・plugin-root 孤立未検出・report 側テンプレート機構欠如・report 自動導出の型偏り) を解消する。新規 buildable component は増やさず (no-split)、既存 C07(d3-diagram-designer)/C09(html-generator)/C12(ui-quality-reviewer)/C17(report-structure-designer)/C18(visual-strategist)/C19(report-composer)/C24(report-quality-reviewer)/C25(validate-report-visual.py) の additive 強化と `validate-svg-diagram.py`(governance glue) の additive 強化で実現する。
+
+| 要件 | 内容 | 焼き先 |
+|---|---|---|
+| C20 | 図解スタイル契約の SSOT 化(セマンティックロール表・既存 Kanagawa トークンを値として使用) | `diagram-style-tokens.md` 新設・C18 が consume |
+| C21 | 作図文法・品質規約の数値化リファレンス(4pxグリッド/複雑度予算/コネクタ5原則/focal rule/annotation文法) | `diagram-layout-contract.md` augmented・C07/C18 が consume |
+| C22 | 型カタログの統一対応表(38決定論/29 CSS/128 tpl の突合) | `diagram-type-crosswalk.md` 新設・`ref-diagram-system` SKILL.md §2 と相互参照(索引の値正本は 1 箇所を維持) |
+| C23 | 叩き台テンプレート方式(plugin-root `assets/diagram-templates/*.html`・vendor 対象外) | C09 html-generator がコピー起点で consume |
+| C24(要件) | プロンプト配線の修復(resource-map.md/workflow-manifest.json/各 prompt Layer 6) | C07/C09/C17/C18 の references_config_assets 配線 |
+| C25(要件) | CSS/HTML 図解 lint の新設(D14+ コード・4pxグリッド/複雑度予算/accent個数/コネクタ幾何) | `validate-svg-diagram.py`(governance glue) 拡張 |
+| C26 | ゴールデン実例の同梱(入力→完成HTML の実例ペア) | C09/C19 の skill-private `examples/` |
+| C27 | 不足図解型の追加(quadrant/radar/venn/org-chart/loop 等) | 既存 LLM 手書き経路 (references/diagram-*.md) への additive・vendor 非改変 |
+| C28 | 溶け込み契約(最重要): 配置契約/重複禁止契約/文脈適合契約 | C18(配置)/C12・C24(重複禁止・文脈適合の積極評価)/C25・validate-svg-diagram.py(機械チェック) |
+
+積極評価は C12 ui-quality-reviewer(slide 側 S27-S29)/C24 report-quality-reviewer(report 側)、決定論検査は C25 validate-report-visual.py + validate-svg-diagram.py(governance glue・D14+)の二層分離で担保する(Goodhart 回避)。vendor/ は digest 凍結のため新規物は plugin-root 側(`assets/diagram-templates/`)へ置き、既存決定論経路(render-slide.cjs/render-report.js)は壊さない。
+
 ## 背景
 本プラグインは、単一 SKILL の巨大ハーネス(13 sub-agent / 42 references / 30 Node scripts / 118 templates / 7 schemas / Codex Image2 チェーン / 30種思考法評価 / A4印刷 / GASデプロイ)を plugin 化する構想から出発する。機能削減・平均回帰・オミットを禁じ、既存全資産が component か plugin-level surface に必ず対応することを要件の第一に据える。同一構想は常に同一 `PLAN_DIR` へ解決され(再現性アンカー)、以降のフェーズはこの goal-spec を唯一の起点にする。
 
@@ -71,7 +89,7 @@ Phase1の実測で、現行差分後も本文 `21.84px`、`#section-route-build`
 
 ## ドメイン知識
 - output_mode = slide | report の 2 分岐。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみモード別(purpose の中核語)。
-- vendored Node engine = Node/CJS 製レンダリング/画像/印刷/検証エンジンを byte 維持で携行し Python 化しない不変原則(既存資産の毀損回避)。
+- vendored Node engine = whole-tree取込後、upstream byte-pin + 明示local overlayでintegrityを管理しPython化しない不変原則。
 - 抜け漏れ厳禁 = source-inventory §5 被覆チェックリストで既存全資産が component or surface へ対応することを保証する。
 - その他の plan 全体用語(component_kind / 5 種 buildable / 2 軸直交等)は index `## ドメイン知識` を参照。
 
@@ -89,6 +107,7 @@ Phase1の実測で、現行差分後も本文 `21.84px`、`#section-route-build`
 - [ ] `goal-spec.json` が purpose を非空で保持し、受入観点が purpose 語彙から導出されている(要件 C1-C8 の被覆が確認できる)。
 - [ ] report 構造化改善の要件 C9-C15 (節内論理展開/block構造/色付き強調/意味的図解配置/積極評価ゲート/本質的横断要素/節間フロー through-line) が goal-spec.checklist に明記され、根因→要件→焼き先(第7根因 C15 含む)が本 phase の「改善要件」節で追跡できる。
 - [ ] report UI/UX改善の要件 C16-C19 (screen/print幅二層化/sticky sidebar TOC+scrollspy/タイポグラフィ密度再調整/本質図解(essence-visual)第一級化) が goal-spec.checklist に明記され、根因(実運用レポート実測)→要件→焼き先が本 phase の「改善要件 (report UI/UX・C16-C19)」節で追跡できる。
+- [ ] 図解移植改善の要件 C20-C28 (スタイル契約SSOT化/数値化リファレンス/型統一対応表/叩き台テンプレート/プロンプト配線修復/CSS・HTML図解lint新設/ゴールデン実例/不足図解型追加/溶け込み契約[配置・重複禁止・文脈適合]) が goal-spec.checklist に明記され、既存構造ギャップ G1-G8 → 要件 → 焼き先が本 phase の「改善要件 (図解移植・C20-C28)」節で追跡できる。新規 buildable component を増やさない no-split 制約が維持されている。
 - [ ] target_plugin_slug が ASCII kebab(`slide-report-generator`)で確定し以降のフェーズが参照できる。
 - [ ] 既存全資産(13 agents / 42 references / 30 Node scripts / 118 templates / 7 schemas / Codex Image2 / 30種思考法 / A4印刷 / GAS)が移植対象として goal-spec に明記されている。
 - [ ] `check-plugin-goal-spec.py` が exit0(R1 goal-spec + plugin 固有アンカー充足)。

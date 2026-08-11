@@ -6,7 +6,7 @@
 
 | ファイル | 内容 | 行数 |
 |----------|------|------|
-| [slide-types-overview.md](slide-types-overview.md) | タイプ一覧・選択ガイド | 70行 |
+| [slide-type-decision-tree.md](slide-type-decision-tree.md) | タイプ一覧・選択ガイド（§2 決定マトリクス / §2.2 タイプ→詳細ファイル） |
 | [slide-types-basic.md](slide-types-basic.md) | 基本7種 | 460行 |
 | [slide-types-extended.md](slide-types-extended.md) | 拡張8種 | 650行 |
 | [slide-interactions.md](slide-interactions.md) | ホバー・アニメ | 820行 |

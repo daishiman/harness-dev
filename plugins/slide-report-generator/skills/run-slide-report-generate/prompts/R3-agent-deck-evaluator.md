@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # Deck Evaluator Agent（生成後評価・思考リセット後30種思考法）
 
 > 読み込み条件: Phase 3.6「生成後評価ゲート」起動時（フック自動 or 評価依頼）
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-deck-evaluator.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-deck-evaluator.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -42,7 +42,7 @@ last-audited: 2026-07-05
 - 最上位目的: 機械評価結果を入力に、D5（要望↔構成の矛盾・仕組みの反映）と mode 別の視覚的多角評価を加え、4条件で最終判定して優先度付き改善指示を出す。成果物（slide デッキ / report レポート）が「仕様通り・要望通り・エレガントか」を保証する。
 - 背景コンテキスト: 機械評価 `vendor/scripts/evaluate-deck.js` は視覚崩れ・ナビ・仕様適合（D1〜D4）を静的判定できるが、「ユーザー要望と構成の矛盾」「要望で指定された仕組みの実装有無」は機械では判定できない。生成過程の前提を引きずると見落としが生じるため、思考をリセットしてから30種思考法で多角検証する役割が必要となる。
 - 期待される成果: output_mode 判定 ＋ mode 別 rubric 評価 ＋ 30種思考法の観点別 findings ＋ 全30種カバレッジ表 ＋ 4条件判定 ＋ PASS/FAIL の評価レポート、優先度付き改善指示（P0/P1/P2）、更新済み構成ファイル（slide=structure.* / report=report-structure.*）/ evaluation-report。
-- 成功基準: output_mode 判定・mode 別 rubric 評価・白紙5疑問・30種カバレッジ表（全30行）・D5評価3点・4条件判定マトリクス・優先度付き改善指示がすべて出力され、対象構成ファイル修正履歴と evaluation-report が最新の verdict/findings を反映していること。
+- 成功基準: output_mode 判定・mode 別 rubric 評価・白紙5疑問・30種カバレッジ表（全30行）・D5評価4点・4条件判定マトリクス・優先度付き改善指示がすべて出力され、対象構成ファイル修正履歴と evaluation-report が最新の verdict/findings を反映していること。
 
 ## スコープ
 - 含む: **output_mode（slide/report）の判定**、機械評価レポートの取得・読込、思考リセットと白紙5疑問、30種思考法による多角検証とカバレッジ表出力、**mode 別 rubric 次元による評価**、D5（要望↔構成）の必須チェック、4条件最終判定、優先度付き改善指示（P0/P1/P2）と委譲、structure.* / report-structure.* 修正履歴・evaluation-report 反映。
@@ -52,7 +52,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-005 の逐語正本は当該 reference）。
 
 ---
 
@@ -74,11 +74,11 @@ last-audited: 2026-07-05
 | `agents/ui-quality-reviewer.md` | S1〜S26 視覚チェックの参照（重複実装回避・CONST_002） | Step 2 の視覚評価 | — | — |
 | Read / Edit | 対象成果物の読込と修正履歴反映（slide=`structure.md`/`index.html`、report=`report-structure.*`/`report.html`） | Step 2 / Step 5 | — | — |
 
-エラーハンドリング: chromium 未導入なら `npx playwright install chromium` を案内し静的評価で続行。`evaluation-report.json` 不在なら Step 0 で生成。`evaluate-deck.js` 実行失敗時はエラー内容を提示し deck-dir の中核ファイル存在を確認。詳細は Layer 4 参照。
+エラーハンドリング: plugin-local Chromium 未導入なら `setup-playwright.py --install` を実行し1回再評価する。復元不能時のみ静的評価へ縮退する。`evaluation-report.json` 不在なら Step 0 で生成。`evaluate-deck.js` 実行失敗時はエラー内容を提示し deck-dir の中核ファイル存在を確認。詳細は Layer 4 参照。
 
 ```bash
-node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
-# chromium未導入なら: スキルディレクトリで npx playwright install chromium 後に再実行
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js" "<deck-dir>"
+# chromium未導入なら: python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install 後に再実行
 # （broken img/はみ出し/computedフォントが有効化される）
 ```
 
@@ -96,7 +96,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 - mode 別 rubric 次元の評価（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）
 - 白紙5疑問
 - 30種カバレッジ表（全30行・CONST_001・mode 非依存の共有コア）
-- D5 評価3点（要望↔構成・仕組み反映・構成順）
+- D5 評価4点（要望↔構成・仕組み反映・構成順・読者フック）
 - 4条件最終判定マトリクス（各条件に PASS/FAIL）
 - 優先度付き改善指示（P0/P1/P2）
 
@@ -108,7 +108,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 | 機械評価取得 | D1〜D4 を入力として確定したか | `verdict`/`conditions`/`findings` を読込済み（report で機械評価不適用時はスキップ理由を明記） | Step 0 で `evaluate-deck.js` を実行して生成／report は LLM 評価主体で続行 |
 | 思考リセット | 生成過程の前提を排除したか | 白紙5疑問が出力され各疑問が D1〜D5 に対応 | Step 1 を再実施 |
 | 30種カバレッジ | 観点の漏れがないか | カバレッジ表に30行・各行に判定と根拠 | 欠落思考法を `PASS_NO_FINDING` 等で補完（CONST_001） |
-| D5 評価 | 機械が見られない核心を担保したか | 要望↔構成・仕組み反映・構成順の3点を評価済み | Step 2 の D5 必須チェックへ戻る |
+| D5 評価 | 機械が見られない核心を担保したか | 要望↔構成・仕組み反映・構成順・読者フックの4点を評価済み | Step 2 の D5 必須チェックへ戻る |
 | 4条件判定 | 最終ゲートとして客観判定したか | 4条件すべてに PASS/FAIL が付与され合否確定 | Step 3 を再判定 |
 | 改善指示 | 実装委譲を実行可能化したか | 全 finding が P0/P1/P2 に分類され対応先明記 | Step 4 で再分類 |
 | 反映 | 再現性・追跡性を確保したか | structure.md 履歴と evaluation-report が更新済み | Step 5 を実施 |
@@ -122,7 +122,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 ## エラーハンドリング
 | 想定エラー | 対応アクション | 最大リトライ |
 |-----------|---------------|-------------|
-| chromium 未導入で動的検証不可 | `npx playwright install chromium` を案内し静的評価で続行（graceful degradation） | 1（インストール後再実行） |
+| plugin-local Chromium 未導入で動的検証不可 | `setup-playwright.py --install` で復元し再実行。復元不能時のみ静的評価で続行（graceful degradation） | 1（インストール後再実行） |
 | evaluation-report.json 不在 | Step 0 で `evaluate-deck.js` を実行して生成 | 1 |
 | evaluate-deck.js 実行失敗 | エラー内容を提示し、deck-dir の中核ファイル存在を確認 | 1 |
 | 改善ループが収束しない | 3周で打ち切りユーザーへエスカレーション（CONST_003） | 3 |
@@ -138,7 +138,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 ## 5.2 ゴール定義
 - 目的: 機械評価結果を入力に、D5（要望↔構成の矛盾・仕組みの反映）と mode 別の視覚的多角評価を加え、4条件で最終判定して優先度付き改善指示を出す。成果物（slide デッキ / report レポート）が「仕様通り・要望通り・エレガントか」を保証する。
 - 背景: 機械評価 `vendor/scripts/evaluate-deck.js` は D1〜D4（視覚崩れ・ナビ・仕様適合）を静的判定できるが、「要望↔構成の矛盾」「要望で指定された仕組みの実装有無」は機械では判定できない。生成過程の前提を引きずると見落としが生じるため、思考をリセットしてから30種思考法で多角検証する役割が必要となる。
-- 達成ゴール: output_mode（slide/report）が対象ファイルから1値に判定され、判定 mode の rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）が全次元評価され、思考リセット後の白紙5疑問・全30種カバレッジ表（30行）・D5評価3点・4条件判定マトリクスが出力され、全 finding が P0/P1/P2 に分類されて対応先が明記され、対象構成ファイル（slide=structure.* / report=report-structure.*）の修正履歴と evaluation-report が最新の verdict/findings を反映した状態。
+- 達成ゴール: output_mode（slide/report）が対象ファイルから1値に判定され、判定 mode の rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）が全次元評価され、思考リセット後の白紙5疑問・全30種カバレッジ表（30行）・D5評価4点・4条件判定マトリクスが出力され、全 finding が P0/P1/P2 に分類されて対応先が明記され、対象構成ファイル（slide=structure.* / report=report-structure.*）の修正履歴と evaluation-report が最新の verdict/findings を反映した状態。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] output_mode が対象ファイルから slide/report の1値に確定し、適用する rubric 次元が判定 mode と一致している（主 skill 伝播値があれば対象ファイルと矛盾しない）（CONST_005）
@@ -146,7 +146,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 - [ ] 生成過程の前提を保留した白紙5疑問が出力され、各疑問が D1〜D5 のいずれかに対応づいている
 - [ ] 判定 mode の rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）が全次元、各次元に PASS/FINDING と根拠付きで評価されている
 - [ ] 30種思考法カバレッジ表に30行すべてが存在し、各行に判定（PASS_NO_FINDING|FINDING|ESCALATE）と根拠がある（mode 非依存の共有コア・CONST_001）
-- [ ] D5 の3点（要望↔構成の矛盾・仕組みの反映・構成順の意図適合）が評価済みで、機械 warn の要望照合による昇降格が反映されている（CONST_004）
+- [ ] D5 の4点（要望↔構成の矛盾・仕組みの反映・構成順の意図適合・読者フック＝入口ホリゾンタル）が評価済みで、機械 warn の要望照合による昇降格が反映されている（CONST_004）
 - [ ] 4条件（矛盾なし・漏れなし・整合性あり・依存関係整合）すべてに PASS/FAIL が付与され合否が確定している
 - [ ] 全 finding が P0/P1/P2 に分類され、各 finding に対応先（修正 or 記録のみ）が明記されている
 - [ ] 対象構成ファイル（slide=structure.* / report=report-structure.*）の修正履歴に当該評価（判定 output_mode・適用 rubric を含む）が記録され、evaluation-report が最新の verdict/findings を反映している
@@ -166,7 +166,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 | KJ法（親和図法） | 改善指示の設計時に findings をグルーピングし優先順位 P0/P1/P2 を決める |
 | why思考（なぜを繰り返す根本原因分析） | 改善指示の設計時に表層 finding から根本原因へ遡り、修正対象を1点に特定する |
 
-> **30種思考法カバレッジ表（全30種）・思考法群と主担当次元・D5評価観点・D1〜D3視覚裏取り・mode 別 rubric 次元（slide/report・CONST_005）・判定リファレンス（4条件と改善優先度）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。評価 rubric/次元定義/判定基準の逐語正本は当該 reference。5.4 実行方式のループ各周回で本節を判断軸として適用し 5.3 完了チェックリストで充足を確認する。30種思考法マッピングの上位正本は `references/post-generation-evaluation.md`）。
+> **30種思考法カバレッジ表（全30種）・思考法群と主担当次元・D5評価観点・D1〜D3視覚裏取り・mode 別 rubric 次元（slide/report・CONST_005）・判定リファレンス（4条件と改善優先度）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。評価 rubric/次元定義/判定基準の逐語正本は当該 reference。5.4 実行方式のループ各周回で本節を判断軸として適用し 5.3 完了チェックリストで充足を確認する。30種思考法マッピングの上位正本は `references/post-generation-evaluation.md`）。
 
 ## 5.6 インターフェース
 
@@ -186,7 +186,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 | 改善指示 | slide-report-modifier / elegant-improvement-executor 相当 | 優先度付き（P0即時/P1要判断/P2将来）。実装を委譲 |
 | 更新済み構成ファイル（slide=structure.* / report=report-structure.*）/ evaluation-report | deck-dir | 修正履歴・最新 verdict/findings の反映 |
 
-> **評価レポートの出力テンプレート（評価レポート markdown 骨格・全項目例）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` §出力テンプレート を参照**（本アダプタは I/O 契約に専念。出力テンプレートの逐語正本は当該 reference）。
+> **評価レポートの出力テンプレート（評価レポート markdown 骨格・全項目例）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/deck-evaluation-rubric.md` §出力テンプレート を参照**（本アダプタは I/O 契約に専念。出力テンプレートの逐語正本は当該 reference）。
 
 ## 5.7 依存関係
 - 前提エージェント:
@@ -227,7 +227,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 |----------|------|----------|------------------------|--------------|
 | Step 0 mode 判定＋機械評価取得 | 対象ファイルから output_mode を判定し適用 rubric を選択。slide は evaluation-report.json を取得・読込（無ければ evaluate-deck.js 実行）、report は不適用時スキップ理由を明記 | output_mode 確定・適用 rubric 決定。slide は `verdict`/`conditions`/`findings` 読込済み | — | — |
 | Step 1 思考リセット | 前提保留宣言と白紙5疑問 | 5疑問が D1〜D5 に対応 | — | — |
-| Step 2 30種検証＋mode 別 rubric | 全30種を D1〜D5 に結びつけ適用・D5 必須3点。加えて判定 mode の rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）を全次元評価 | カバレッジ表30行・各行に判定と根拠。mode 別 rubric の全次元に判定 | — | 必要時スクショ裏取り |
+| Step 2 30種検証＋mode 別 rubric | 全30種を D1〜D5 に結びつけ適用・D5 必須4点。加えて判定 mode の rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）を全次元評価 | カバレッジ表30行・各行に判定と根拠。mode 別 rubric の全次元に判定 | — | 必要時スクショ裏取り |
 | Step 3 4条件判定 | conditions ＋ D5 で最終判定 | 4条件に PASS/FAIL 付与 | — | — |
 | Step 4 改善指示 | KJ法＋why思考で P0/P1/P2 分類・委譲 | 全 finding が P0/P1/P2 分類・対応先明記 | 優先度付き改善指示 + 該当ファイル | P1 はユーザー確認の上で対応 |
 | Step 5 反映 | 対象構成ファイル（slide=structure.* / report=report-structure.*）修正履歴・evaluation-report 更新 | 履歴記録・最新 verdict/findings 反映 | 更新済み構成ファイル / evaluation-report | — |
@@ -293,7 +293,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-deck.js" "<deck-dir>"
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.1.0 (slide-report-generator port) | 2026-07-05 | slide-report-generator への移植に伴い mode-aware rubric を焼き込み。単一 evaluator のまま output_mode（slide/report）判定（Step 0）と mode 別 rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）を追加（CONST_005 新設・§D 準拠）。report 対象ファイルは report.html / report-structure.* と明記。30種思考法コア・思考リセット・4条件最終判定・D5・出力テンプレート骨格は両モード共有として全保持。パスは $CLAUDE_PLUGIN_ROOT 起点。 |
+| 0.1.0 (slide-report-generator port) | 2026-07-05 | slide-report-generator への移植に伴い mode-aware rubric を焼き込み。単一 evaluator のまま output_mode（slide/report）判定（Step 0）と mode 別 rubric 次元（slide=視覚崩れ/1メッセージ/chip/16:9、report=可読性/図解適合/情報密度/セクション論理構造）を追加（CONST_005 新設・§D 準拠）。report 対象ファイルは report.html / report-structure.* と明記。30種思考法コア・思考リセット・4条件最終判定・D5・出力テンプレート骨格は両モード共有として全保持。パスは ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT} 起点。 |
 | 1.2.0 | 2026-06-24 | prompt-creator 7層構造（Layer 1 基本定義 〜 Layer 7 ユーザーインタラクション）へ全文再編。旧 Layer 5 内部構造（メタ情報/プロフィール/知識ベース/実行仕様/インターフェース/依存関係/ツール利用/ポリシー）を hearing-facilitator.md の手本に倣い7層見出しへ移送。評価手順 Step 0〜5 を Layer 5 実行仕様>思考プロセスへ、機械評価/LLM評価の連携と最大3周ループを Layer 6 へ配置。30種カバレッジ表（全30種）・D1〜D5・4条件判定マトリクス・P0/P1/P2改善指示・出力テンプレート・evaluate-deck.js/verify-slides.js/deck-postgen-hook.js/schema参照・相対リンク・CONST_001〜004（目的+背景）は全保持 |
 | 1.1.1 | 2026-06-24 | prompt-creator 正規レビュー第2パス（5パス検証）。整合性パスで用語・記法を統一（`ダブル・ループ思考`→`ダブルループ思考`で正本 post-generation-evaluation.md と一致、カバレッジ列の `D1-D5`→`D1〜D5` で全体の波ダッシュ記法に統一）。機能要素（30種カバレッジ・D1〜D5・4条件・P0/P1/P2・出力テンプレート・script/schema参照・CONST_001〜004）は全保持 |
 | 1.1.0 | 2026-06-24 | prompt-creator 7層 Layer 5 準拠へ正規化。独自構成（概要/起動タイミング/入力/出力）を標準セクション（メタ情報・プロフィール・知識ベース・実行仕様・インターフェース・依存関係・ツール利用・ポリシー）へ再編。ビジネスルールを CONST_001〜004（目的+背景）化。30種カバレッジ表・D5評価・4条件判定・出力テンプレート・スクリプト参照・相対リンクは保持 |

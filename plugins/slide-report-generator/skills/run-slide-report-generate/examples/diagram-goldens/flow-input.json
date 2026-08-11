@@ -1,0 +1,34 @@
+{
+  "diagramId": "d-flow",
+  "type": "flow",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-type-crosswalk.md §1「左から右へ進む少数の工程」/ CSS 型 §11.4",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "問い合わせ一次対応の流れ",
+  "message": "回答までの所要時間を決めているのは受付でも回答でもなく、一次判定である。",
+  "nodes": [
+    { "id": "n1", "label": "受付", "sub": "メール・フォーム", "style": "plain" },
+    { "id": "n2", "label": "一次判定", "sub": "定型か個別か", "style": "focal" },
+    { "id": "n3", "label": "担当割当", "sub": "見積 30 分超は専任へ", "style": "plain" },
+    { "id": "n4", "label": "回答", "sub": "受付から 3 営業日以内", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "n1", "to": "n2", "kind": "flow", "weight": "primary", "artifact": "受付票" },
+    { "from": "n2", "to": "n3", "kind": "flow", "weight": "primary", "artifact": "判定結果" },
+    { "from": "n3", "to": "n4", "kind": "flow", "weight": "primary", "artifact": "回答案" },
+    { "from": "n4", "to": "n2", "kind": "feedback", "weight": "secondary", "label": "不備あり → 差し戻し・2 回目で上長判断" }
+  ],
+  "emphasis": {
+    "focal": ["n2"],
+    "reason": "本文がこれから語る対象。滞留がここに集中するため、他 3 工程は muted のまま残す"
+  },
+  "annotations": [
+    { "text": "ここで止まる月 38 件が律速", "anchor": "n2" }
+  ],
+  "quantities": ["所要日数の平均 — 差し戻しなし 2.1 日 / あり 5.4 日"],
+  "provenance": "2026/4-6 実績・一次受付ベース・重複除外後 (n=312)",
+  "legendNote": "枠の色は焦点・破線は注記の引き出し",
+  "caption": "左端から順に追い、二番目の枠で一度立ち止まってほしい。戻り線が同じ枠へ帰っている点が、所要時間が伸びる理由そのものである。"
+}

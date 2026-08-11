@@ -1,0 +1,52 @@
+{
+  "diagramId": "f-sequence",
+  "type": "sequence",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-technical.md §11.36 シーケンス図",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "予約が成立するまでの往復",
+  "message": "利用者を待たせている区間は在庫の確保だけで、通知は待たせていない。",
+  "nodes": [
+    { "id": "user", "label": "利用者", "style": "plain" },
+    { "id": "api", "label": "予約 API", "style": "plain" },
+    { "id": "stock", "label": "在庫サービス", "style": "plain" },
+    { "id": "queue", "label": "通知キュー", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "user", "to": "api", "kind": "call", "label": "予約を申し込む" },
+    { "from": "api", "to": "stock", "kind": "call", "label": "在庫を確保する" },
+    { "from": "stock", "to": "api", "kind": "return", "label": "確保できた数量 (不足なら 0)" },
+    { "from": "api", "to": "queue", "kind": "async", "label": "非同期で通知する", "external": true },
+    { "from": "api", "to": "user", "kind": "return", "label": "予約番号を返す", "onFailure": "不足時は予約を作らず受付拒否" }
+  ],
+  "legend": [
+    "── 実線 = 同期 (返事を待つ)",
+    "---- 破線 = 戻り・非同期 (待たない)",
+    "青 = 外部サービス宛",
+    "桃色の帯 = 待ち時間を決める区間"
+  ],
+  "activations": [
+    { "actor": "user", "from": 0, "to": 4 },
+    { "actor": "api", "from": 0, "to": 4 },
+    { "actor": "stock", "from": 1, "to": 2, "style": "focal" }
+  ],
+  "emphasis": {
+    "focal": ["stock"],
+    "reason": "焦点はアクターではなく活性化帯 1 本。待ち時間の主語は「誰」ではなく「どの区間」である"
+  },
+  "annotations": [
+    { "text": "この区間が全体の待ち時間を決める", "anchor": "stock" }
+  ],
+  "geometry": {
+    "headW": 192,
+    "headH": 64,
+    "laneGapX": 224,
+    "messageStep": 56,
+    "activationW": 8,
+    "note": "戻りと非同期だけを破線にする。実線は「呼んで返事を待つ」に限る"
+  },
+  "caption": "上から下へ時間が流れる。実線は相手の返事を待つ呼び出しで、破線は待たない。色の付いた帯の長さだけが、待たされる側の体感に直接効いている。"
+}

@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C21",
+  "component_kind": "slash-command",
+  "name": "slide-report-generate",
+  "builder": "run-build-skill",
+  "build_target": "plugins/slide-report-generator/commands/slide-report-generate.md",
+  "status": "success",
+  "summary": "変更なし route (slash-command)。diagram-migration-1.4.0 では仕様変更が無く、既存成果物 plugins/slide-report-generator/commands/slide-report-generate.md の現物確認・slash-command 別 lint・plugin 完全性ゲートの決定論検証で receipt 機構導入前の証跡欠落 (bootstrap 債務) を解消した。",
+  "deviations": [
+    "LLM build は起動せず、決定論検証のみで success を記録 (変更なし route の bootstrap receipt 発行)"
+  ],
+  "evidence": [
+    "plugins/slide-report-generator/commands/slide-report-generate.md"
+  ],
+  "inputs_consumed": [
+    "eval-log/slide-report-generator/build/route-C01.json"
+  ],
+  "handover": null,
+  "covered_task_ids": [
+    "P02-C21-01",
+    "P02-C21-02",
+    "P02-C21-03",
+    "P02-C21-04",
+    "P02-C21-05",
+    "P02-C21-06",
+    "P02-C21-07",
+    "P02-C21-08",
+    "P02-C21-09",
+    "P02-C21-10",
+    "P05-C21-01",
+    "P05-C21-02",
+    "P05-C21-03",
+    "P05-C21-04",
+    "P05-C21-05",
+    "P05-C21-06",
+    "P05-C21-07",
+    "P05-C21-08",
+    "P05-C21-09",
+    "P05-C21-10",
+    "P05-C21-11",
+    "P05-C21-12",
+    "P06-C21-01",
+    "P06-C21-02",
+    "P07-C21-01",
+    "P07-C21-02",
+    "P07-C21-03",
+    "P07-C21-04",
+    "P07-C21-05",
+    "P07-C21-06",
+    "P07-C21-07",
+    "P09-C21-01",
+    "P09-C21-02",
+    "P09-C21-03",
+    "P09-C21-04",
+    "P09-C21-05"
+  ],
+  "artifact_sha256": "d8b69e3667ef515179728e9e5af5a5fb8c11d24193c270326f6bfc0c919aa4d0",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:29:07Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "test -s plugins/slide-report-generator/commands/slide-report-generate.md",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:29:07Z",
+      "completed_at": "2026-08-09T22:29:07Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:29:07Z",
+      "completed_at": "2026-08-09T22:29:07Z"
+    }
+  ]
+}

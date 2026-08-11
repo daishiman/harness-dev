@@ -1,0 +1,99 @@
+<!--
+  star-golden.html — ゴールデン実例: STAR型 (report 骨格)
+
+  入力: star-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-business.md §11.19 STAR型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py star-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.19 のコード例は 4 枚のカードを枠ごとの色で塗り分け、
+  star-highlight を rgba(228,104,118,0.2) で敷き、GSAP の登場アニメーションを持つ。
+  この rgba はパレット (style-tokens §1) のどのロールにも無い色なので accent-tint と
+  同じ役割の面へ寄せ、アニメーションは静止面に存在しないので落とした。
+  4 枚の色分けもやめてある。S / T / A / R は時系列の 4 段であって 4 種別ではなく、
+  4 色を当てると読み順が色に上書きされる (§D-2 #3)。
+
+  読み順は左上から時計回り。2 列を分ける縦罫が、左右のどちらを先に読むかを
+  1 本で示している。数値は結果の枠にだけ置き、他の 3 枠は文章のままにした。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-star"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-star-caption">
+
+    <defs>
+      <marker id="f-star-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-star-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-star-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 2 列を分ける縦罫 (読み順の合図。垂直) -->
+    <line x1="480" y1="48" x2="480" y2="480" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 左上: 状況 -->
+    <rect x="40" y="48" width="424" height="200" rx="8" fill="#F8F7F0"/>
+    <circle cx="80" cy="88" r="20" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="80" y="94" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">S</text>
+    <text x="120" y="94" font-size="16" fill="var(--fg, #43436c)">状況</text>
+    <text x="72" y="152" font-size="14" fill="var(--fg-dim, #54546d)">請求の突合に毎月四人日</text>
+    <text x="72" y="184" font-size="14" fill="var(--fg-dim, #54546d)">担当は経理の一名に固定</text>
+
+    <!-- 右上: 課題 -->
+    <rect x="496" y="48" width="424" height="200" rx="8" fill="#F8F7F0"/>
+    <circle cx="536" cy="88" r="20" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="536" y="94" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">T</text>
+    <text x="576" y="94" font-size="16" fill="var(--fg, #43436c)">課題</text>
+    <text x="528" y="152" font-size="14" fill="var(--fg-dim, #54546d)">差分が締めた後に出る</text>
+    <text x="528" y="184" font-size="14" fill="var(--fg-dim, #54546d)">調査が翌月へ食い込む</text>
+
+    <!-- 左下: 行動 -->
+    <rect x="40" y="280" width="424" height="200" rx="8" fill="#F8F7F0"/>
+    <circle cx="80" cy="320" r="20" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="80" y="326" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">A</text>
+    <text x="120" y="326" font-size="16" fill="var(--fg, #43436c)">行動</text>
+    <text x="72" y="384" font-size="14" fill="var(--fg-dim, #54546d)">取り込み直後に日次照合</text>
+    <text x="72" y="416" font-size="14" fill="var(--fg-dim, #54546d)">原因候補を自動で添える</text>
+    <text x="72" y="448" font-size="12" fill="var(--fuji-gray, #8a8980)">経理2名とベンダーで 2026/5末までに実施</text>
+
+    <!-- 右下: 結果 (焦点・1 図 1 件) -->
+    <rect x="496" y="280" width="424" height="200" rx="8"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <circle cx="536" cy="320" r="20" fill="#FFFFFF" stroke="var(--sakura-pink, #D27E99)" stroke-width="1.5"/>
+    <text x="536" y="326" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">R</text>
+    <text x="576" y="326" font-size="16" fill="var(--fg, #43436c)">結果</text>
+    <text x="528" y="376" font-size="14" fill="var(--fg-dim, #54546d)">差分が出た日に気づける</text>
+    <text x="528" y="404" font-size="14" fill="var(--fg-dim, #54546d)">調査の持ち越しが消えた</text>
+    <rect x="528" y="424" width="176" height="32" rx="4"
+          fill="#FFFFFF" stroke="var(--sakura-pink, #D27E99)" stroke-width="1.5"/>
+    <text x="616" y="445" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">四人日 → 半日</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="40" y="516" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">色は結果の枠。効いたのは頻度を上げたことだけ</text>
+    <path d="M 312 508 Q 404 500 496 484" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="496" cy="484" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-star-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 1</span>
+    左上から時計回りに読んでほしい。前の三つは背景であり、右下だけが相手の意思決定に直接効く。数字はすべて実測である。
+  </figcaption>
+
+</figure>

@@ -87,7 +87,19 @@ def test_preflight_returns_expected_shape():
     assert set(r.keys()) == {"ok", "detected", "warnings"}
     assert isinstance(r["ok"], bool)
     assert isinstance(r["warnings"], list)
-    for key in ("node", "npm", "vendor_dir", "node_modules", "codex_cli"):
+    for key in (
+        "node",
+        "npm",
+        "vendor_dir",
+        "node_modules",
+        "playwright_browser_dir",
+        "playwright_chromium",
+        "playwright_plugin_local",
+        "playwright_expected_version",
+        "playwright_installed_version",
+        "playwright_dependencies_current",
+        "codex_cli",
+    ):
         assert key in r["detected"]
 
 

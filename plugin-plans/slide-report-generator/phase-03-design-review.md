@@ -46,7 +46,7 @@ P02 の設計(inventory と envelope draft)を design-gate として elegant-rev
 - [ ] source-inventory §5 の既存全資産が component/surface へ漏れなく対応していることが確認済み(抜け漏れ 0)。
 - [ ] Node engine が vendor 携行で stdlib 書き換えされておらず、単一 skill 退化や不要な水増しが無い。
 - [ ] report 構造化改善 (C9-C15) の additive 設計が design-gate で確認済み: schema 後方互換 (body[] 優先の排他・1.2.0 additive 層 [section.role/throughLine/transition/文書メタ/新block型/placement 正規化] を含む)/slide 共通コア無改変/色付き強調の意匠 accent 流用/placement live 化の renderer 結線/C24-C25 の C01 受入・handoff route・manifest 結線 (baseline orphan 是正)/reference SSOT の build route。
-- [ ] C16-C19のcomputed/runtime受入と1.3.0 intent契約がhandoff/surface/briefまで漏れなく同期されている。
+- [ ] C16-C19のcomputed/runtime受入と report-uiux 契約（schemaVersion は1.2.0据え置き）がhandoff/surface/briefまで漏れなく同期されている。
 - [ ] 差し戻しが解消され後続フェーズへ進める状態になっている。
 
 ## 参照情報

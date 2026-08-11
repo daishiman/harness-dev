@@ -7,7 +7,7 @@ prev_phase: 3
 next_phase: 5
 status: 未実施
 gate_type: tdd-red
-entities_covered: [C01, C02, C03, C18, C19, C24, C25]
+entities_covered: [C01, C02, C03, C07, C09, C12, C18, C19, C24, C25]
 applicability:
   applicable: true
   reason: ""
@@ -54,6 +54,15 @@ TDD の Red を先に立てることで、実装が「何を満たせば完了�
 - **Playwright computed/runtime Red**: 899/900/901/1024/1366/1600px+printでcomputed本文16-18px/line-height比/title-body比、card最小幅と横overflow、初期hash/TOC click/manual scroll/font-ready/historyのtarget-active一致、beforeprint→afterprint復帰をassertする。現行21.84px・hashずれfixtureはFAIL。
 - **C18 producer Red**: 同一本文から論理構造→図種の写像(essence-visual)→visual.kind→placementの順を出力し、論理節(分析/主張/課題/解決/所見/影響)へ非none visualを割り当てる。装飾図解と図解すべき論理節でのvisual省略の両方をFAILにするprompt fixtureを追加する。
 
+### 図解移植のテスト設計 (C20-C28・Red)
+
+- **validate-svg-diagram.py (governance glue・機械・D14+)**: CSS/HTML 図解 fixture (斜め線接続/4pxグリッド逸脱/複雑度予算超過/accent 3個以上) が FAIL、規約準拠 fixture が PASS になる Red を追加する (R6/G3/G4 解消の受入)。テンプレート自体 (`assets/diagram-templates/*.html`) の未準拠 fixture も同様に FAIL で固定する。
+- **C25 validate-report-visual.py (機械・R9②③)**: (p) 図キャプション/隣接本文の重複語検出 fixture (図が語る内容を本文が反復する) が FAIL、非重複 fixture が PASS、(q) 図解占有率 (node面積/section面積比) が C21 許容レンジ外の fixture が FAIL、レンジ内が PASS になる Red を固定する。
+- **C12 ui-quality-reviewer (意味・slide 側・S27-S29)**: 図解と本文チップ/見出しの重複 (S27)・密度/サイズ/トーン不整合 (S28)・C23 テンプレート骨格非準拠 (S29) の各観点で、現状相当 fixture (装飾目的の図解混入・重複記述) が FAIL、改善後 fixture が PASS になるよう rubric を Red で設計する。
+- **C24 report-quality-reviewer (意味・report 側・R9)**: 配置適合/重複禁止/文脈適合の3次元を、既存 RQ 次元と同様に羅列/装飾サンプルで FAIL・構造化サンプルで PASS になるよう追加設計する。
+- **C09 html-generator / C19 report-composer (C26 ゴールデン実例)**: 主要図解型について「入力→完成HTML」の実例ペアが `examples/` 配下に存在し type reference からリンクされていることを Red で検証する fixture (実例欠落型を検出) を用意する。
+- **C07 d3-diagram-designer (C22 型統一対応表)**: 型選定が `diagram-type-crosswalk.md` の対応表と矛盾しない (存在しない/廃止型を選ばない) ことを検証する prompt fixture を Red で追加する。
+
 ## スコープ外
 - criteria を満たす実装(P05)。
 - harness カバレッジの設計・実行(P06・kind 別観点はそちらで扱う)。
@@ -65,6 +74,7 @@ TDD の Red を先に立てることで、実装が「何を満たせば完了�
 - [ ] 実装前は criteria が未達(Red)であることが確認できる。
 - [ ] report 構造化の受入テスト (C25 機械チェック / C24 積極評価 RQ21- / render-report.js block 単体) が Red で設計され、羅列サンプルで FAIL・構造化サンプルで PASS になる観点が固定されている。
 - [ ] report UI/UX の受入テスト (C25 screen レイアウト/TOC+scrollspy/essence-visual カバレッジ[論理節の visual.kind 非none]検査・C24 ナビゲーション成立/密度バランス/図解適合・render-report.js screen/print/TOC/タイポ単体) が Red で設計され、現行実装相当サンプルで FAIL・改善後サンプルで PASS になる観点が固定されている。
+- [ ] 図解移植 (C20-C28) の受入テストが Red で設計され、CSS/HTML 図解の規約逸脱 fixture (validate-svg-diagram.py D14+)・図解-本文重複/占有率レンジ逸脱 fixture (C25 (p)(q))・slide側 S27-S29/report側 R9次元 (C12/C24) の各 FAIL fixture で FAIL・改善後 fixture で PASS になる観点が固定され、ゴールデン実例(C26)欠落検出・型統一対応表(C22)整合性 fixture も Red で用意されている。
 - [ ] (周回2 追加・R4 HIGH是正) report UI/UX の print/狭画面非退行受入テスト (C25 の `@media print` 出力存在/print時TOC・scrollspy無効化出力存在/狭画面breakpoint出力存在の3種・C24 の print/狭画面degrade成立rubric) が Red で設計され、screen 新挙動のみを検査し print/狭画面を見逃す fixture では FAIL、print/狭画面が正しく非退行する fixture では PASS になる観点が固定されている。
 
 ## 参照情報

@@ -2,25 +2,27 @@
 
 > **正本**: このファイルは report-structure-designer から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/report-structure-designer.md）の双方がこれを参照する。規則の上位正本 (SR-ID) は spec-registry.md を辿る。
 
-**責務**: report モードの構成設計ドメイン定義（用語集・reportType 4種の骨格判定基準・入力検証基準・ビジュアル要否ルブリック・制約カタログ RCONST_001-006）の逐語正本。report-structure-designer（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。reportType 各型の節構成テンプレの深掘りは `$CLAUDE_PLUGIN_ROOT/references/report-types.md` を辿る。
+**責務**: report モードの構成設計ドメイン定義（用語集・reportType 4種の骨格判定基準・入力検証基準・ビジュアル要否ルブリック・制約カタログ RCONST_001-007）の逐語正本。report-structure-designer（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。reportType 各型の節構成テンプレの深掘りは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md` を辿る。
 
 ## 用語集
 | 用語 | 定義 | 関連概念 |
 |------|------|----------|
-| reportType | レポートの目的別骨格の型。4種（internal-analysis / client-proposal / tech-doc / learning） | `meta.reportType` / `$CLAUDE_PLUGIN_ROOT/references/report-types.md` |
+| reportType | レポートの目的別骨格の型。4種（internal-analysis / client-proposal / tech-doc / learning） | `meta.reportType` / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md` |
 | 骨格（skeleton） | reportType ごとに定義された節の並び。例: 要約→背景→現状分析→所見→次アクション | `sections[].role` |
 | section | 見出し＋読み物段落＋最大1ビジュアルからなる読み単位。slide の 1 枚に対応する report の主単位 | `sections[]` |
 | role | セクションが骨格のどの節かを示すラベル（summary/background/analysis…） | `sections[].role` |
-| read-through 粒度 | 投影ではなく通読を前提とした本文密度。文章多め・複数段落を許容 | `$CLAUDE_PLUGIN_ROOT/references/report-writing-rules.md` |
+| read-through 粒度 | 投影ではなく通読を前提とした本文密度。文章多め・複数段落を許容 | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-writing-rules.md` |
 | 1項目1ビジュアル | 1セクションに図解は最大1つ。過剰装飾を避け読解を助ける1点に絞る | `sections[].visual` |
-| visual kind | ビジュアル種別の三択（svg / mermaid / codex-image）＋none | visual-strategist / `$CLAUDE_PLUGIN_ROOT/references/report-visual-strategy.md` |
-| readingOrder / focalPoint | 視線誘導の向きと主ビジュアルの重心。デッキ内一貫性の配置ヒント | `$CLAUDE_PLUGIN_ROOT/references/full-image-deck-method.md` §1.11 |
-| report-structure.json | 構造化データ正本。生成前にユーザー承認を得る | `$CLAUDE_PLUGIN_ROOT/schemas/report-structure.schema.json` |
+| visual kind | ビジュアル種別の三択（svg / mermaid / codex-image）＋none | visual-strategist / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-visual-strategy.md` |
+| readingOrder / focalPoint | 視線誘導の向きと主ビジュアルの重心。デッキ内一貫性の配置ヒント | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/full-image-deck-method.md` §1.11 |
+| report-structure.json | 構造化データ正本。生成前にユーザー承認を得る | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/report-structure.schema.json` |
+| 読者価値ブリーフ | 対象範囲・共有課題/願望・読後の変化・専門の橋・深さの証拠・正式タイトル制約を、schema 外の設計入力としてまとめたもの | RCONST_007 / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7.2 |
+| 入口ホリゾンタル・中身バーティカル | 想定読者の範囲内で共有課題・得たい変化から広く開き（入口）、本論は専門の深さで応える（中身）設計原則 | RCONST_007 / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7 |
 
 ## 評価基準（ドメイン固有の判定基準）
 
 ### reportType 骨格判定基準
-**詳細**: `$CLAUDE_PLUGIN_ROOT/references/report-types.md`
+**詳細**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md`
 
 | reportType | 用途 | 骨格（role の標準並び） |
 |------------|------|------------------------|
@@ -36,6 +38,7 @@
 | 基準 | 条件 |
 |------|------|
 | 必須入力の充足 | 受理=reportType＋title＋目的＋素材＋読者を含む / 拒否=いずれか欠落（hearing-facilitator に再要求） |
+| 読者価値ブリーフ | 対象範囲・共有課題/願望・読後の変化・専門の橋・深さの証拠・正式タイトル制約が、入力素材に基づいて確定または未確認として明示されている。schema 外フィールドは report-structure.json に追加しない |
 | 骨格網羅 | 確定 reportType の必須 role が sections[] に 1 つ以上ずつ写像されている / 欠落があれば補うか、省略理由を notes に残す |
 | 読み物成立 | 各 section の paragraphs[] が空でなく、要点が言い切られている（見出しだけの空節ゼロ） |
 | 1項目1ビジュアル | 各 section の visual は 0 または 1。1 節に複数図解を積まない |
@@ -74,3 +77,6 @@
 - **RCONST_006（意匠コア共有）**: theme は `kanagawa-lotus` 固定。配色・フォント・最小サイズは slide と同一 SSOT を参照し report 独自に発明しない。
   - 目的: slide/report で意匠を単一 SSOT に保つ（build-contract §D 共有層）。
   - 背景: 分岐するのはコンテンツ意図層のみ。意匠/技術層は共有。
+- **RCONST_007（読者中心の入口設計）**: ヒアリングの読者価値ブリーフを設計入力とし、title・`meta.throughLine`・summary/導入節は、想定読者の範囲内で共有される課題と「読者が得る変化（Before→After・根拠があれば数字）」を先に渡す（入口ホリゾンタル）。専門手段だけを主語にしない・内容理解に不要な属性スタックを置かない・書き手の資格紹介から始めない。本論の節では専門の深さ（確認済みの数字・手順・失敗・再現条件・限界）を保ち、各主要 part / 節に「自分に当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかを置く（中身バーティカル＋自分ごと化）。
+  - 目的: 専門性を保ったまま、読者が「自分ごと」として入ってこられる文書にする。読者が知りたいのは書き手の知識ではなく自分の変化。
+  - 背景: 入口まで専門特化した文書は想定読者の注意を失う。「ターゲットを絞る」ことと「入口まで狭くする」ことは別。ただし tech-doc・社内定型報告・監査/契約/仕様文書では正式名称・検索語・適用範囲を主タイトルに残し、subtitle/keyMessage/summary で読者価値を補う。素材にない数字・実績は作らない。正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。違反は report-quality-reviewer の RQ31〜RQ34 が検出し本エージェントへ差し戻す。

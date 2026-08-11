@@ -1,0 +1,46 @@
+{
+  "diagramId": "f-org",
+  "type": "org-chart",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-visual.md §11.22 組織図型",
+  "placement": "縦列",
+  "canvas": { "viewBox": "0 0 640 360" },
+  "title": "リリース承認がどこを通るか",
+  "message": "決裁の名義は本部長にあるが、可否が実際に決まるのは一段下である。",
+  "hierarchyAxis": "上ほど決裁権が大きい",
+  "headcountAsOf": "2026/7/1 時点の在籍",
+  "legend": {
+    "line": "実線=直属 (指揮系統)。点線報告はこの図に無い",
+    "nodeKind": "淡い箱は常設の会議体で、部署ではない"
+  },
+  "nodes": [
+    { "id": "n1", "label": "事業本部長", "sub": "最終決裁", "depth": 1, "style": "plain" },
+    { "id": "n2", "label": "開発部", "sub": "実装と検証・12名", "headcount": 12, "depth": 2, "style": "plain" },
+    { "id": "n3", "label": "品質保証部", "sub": "可否の判断・5名", "headcount": 5, "depth": 2, "style": "focal" },
+    { "id": "n4", "label": "運用部", "sub": "本番の維持・8名", "headcount": 8, "depth": 2, "style": "plain" },
+    { "id": "n5", "label": "リリース審査", "sub": "週次", "depth": 3, "kind": "会議体", "passCriteria": "重大不具合0件", "style": "plain" },
+    { "id": "n6", "label": "セキュリティ審査", "sub": "随時", "depth": 3, "kind": "会議体", "passCriteria": "重大不具合0件", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "n1", "to": "n2", "kind": "reports" },
+    { "from": "n1", "to": "n3", "kind": "reports" },
+    { "from": "n1", "to": "n4", "kind": "reports" },
+    { "from": "n3", "to": "n5", "kind": "reports" },
+    { "from": "n3", "to": "n6", "kind": "reports" }
+  ],
+  "emphasis": {
+    "focal": ["n3"],
+    "reason": "焦点は組織図の頂点ではなく、二つの審査を抱えて実際に可否を決めている中間の一部署に置く。頂点を焦点にすると、図が組織表と同じことしか言わなくなる"
+  },
+  "annotations": [
+    { "text": "権限は下へ降りていない", "anchor": "n3" }
+  ],
+  "geometry": {
+    "trunkY": [116, 244],
+    "levelHeight": [56, 64, 56],
+    "note": "階層の接続は矢じりを持たない直交の罫だけで引く。組織図の線は流れではなく所属なので、向きを持たせない"
+  },
+  "caption": "上から下へ所属をたどる図だが、読みどころは二段目である。色の付いた部署だけが下に自前の審査を抱えている点を見てほしい。"
+}

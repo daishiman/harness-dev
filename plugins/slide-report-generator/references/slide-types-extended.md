@@ -124,7 +124,7 @@
   position: absolute;
   width: 120px;
   height: 120px;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -198,7 +198,7 @@
 .slide-grid .grid-container.grid-4 { grid-template-columns: repeat(4, 200px); }
 
 .slide-grid .grid-card {
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   padding: 2rem;
   border-radius: 16px;
   text-align: center;
@@ -337,7 +337,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1.5rem;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 12px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -406,7 +406,7 @@
   gap: 1.5rem;
   width: 100%;
   padding: 1.5rem;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 12px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -495,7 +495,7 @@
 .slide-quote .quote-author-avatar {
   width: 60px;
   height: 60px;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 50%;
   display: flex;
   align-items: center;

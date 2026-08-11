@@ -1,0 +1,98 @@
+<!--
+  er-golden.html — ゴールデン実例: ER 図 (report 骨格)
+
+  入力: er-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-technical.md §11.35 ER 図
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #7 #8 / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict er-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.35 の幾何をそのまま使う (カード幅 256・見出し帯 44・フィールド行 32・列間 48)。
+  カーディナリティは crow's foot を使わず 1 / N のテキストラベルで書く (斜辺を持たせない)。
+  列名と型は技術リテラルなので等幅、エンティティ名は人が読む名前なので既定書体で組む。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-er"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 360"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-er-caption">
+
+    <defs>
+      <marker id="f-er-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-er-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-er-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 関係線 (先に引いてカードの下へ潜らせる。カーディナリティは 1 / N のラベル) -->
+    <line x1="304" y1="200" x2="352" y2="200" stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <text x="310" y="188" font-size="12" fill="var(--fuji-gray, #8a8980)">1</text>
+    <text x="346" y="188" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">N</text>
+    <line x1="608" y1="200" x2="656" y2="200" stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <text x="614" y="188" font-size="12" fill="var(--fuji-gray, #8a8980)">1</text>
+    <text x="650" y="188" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">N</text>
+
+    <!-- エンティティ 1: 顧客 -->
+    <rect x="48" y="88" width="256" height="184" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="48" y="88" width="256" height="44" rx="6" fill="rgba(67, 67, 108, 0.05)"/>
+    <line x1="48" y1="132" x2="304" y2="132" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="176" y="118" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">顧客</text>
+    <text x="64" y="160" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">customer_id : PK</text>
+    <text x="64" y="192" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">name : text</text>
+    <text x="64" y="224" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">plan_code : text</text>
+    <text x="64" y="256" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">created_at : date</text>
+
+    <!-- エンティティ 2: 注文 (焦点。accent は 1 エンティティのみ) -->
+    <rect x="352" y="88" width="256" height="184" rx="6"
+          fill="#FFFFFF" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <rect x="352" y="88" width="256" height="44" rx="6" fill="rgba(210, 126, 153, 0.14)"/>
+    <line x1="352" y1="132" x2="608" y2="132" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="480" y="118" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">注文</text>
+    <text x="368" y="160" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">order_id : PK</text>
+    <text x="368" y="192" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">customer_id : FK→顧客</text>
+    <text x="368" y="224" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">ordered_at : date</text>
+    <text x="368" y="256" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">status : enum</text>
+
+    <!-- エンティティ 3: 注文明細 -->
+    <rect x="656" y="88" width="256" height="184" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="656" y="88" width="256" height="44" rx="6" fill="rgba(67, 67, 108, 0.05)"/>
+    <line x1="656" y1="132" x2="912" y2="132" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="784" y="118" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">注文明細</text>
+    <text x="672" y="160" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">line_id : PK</text>
+    <text x="672" y="192" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">order_id : FK→注文</text>
+    <text x="672" y="224" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">sku : text</text>
+    <text x="672" y="256" font-size="14" font-family="monospace" fill="var(--fuji-gray, #8a8980)">qty : int</text>
+
+    <!-- 凡例 (使い分けている線種と色だけを図内で定義する) -->
+    <text x="48" y="302" font-size="12" fill="var(--fuji-gray, #8a8980)">凡例  ── 参照関係 1対多 必須 (左端が 1・右端が N)</text>
+    <text x="48" y="326" font-size="12" fill="var(--fuji-gray, #8a8980)">---- 注釈の指し線 / 桃色の枠 = 本文が論じる実体</text>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="912" y="320" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">主キーと論点に関わる列だけを残す</text>
+    <path d="M 856 312 Q 828 296 792 280" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="792" cy="280" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-er-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 1</span>
+    中央の色が付いた箱から読み始めてほしい。左右の箱はそこへ何が結び付くかを示すだけで、議論の対象は中央の状態列だけである。
+  </figcaption>
+
+</figure>

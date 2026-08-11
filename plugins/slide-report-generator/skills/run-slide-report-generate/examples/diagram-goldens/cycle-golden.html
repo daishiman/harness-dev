@@ -1,0 +1,115 @@
+<!--
+  cycle-golden.html — ゴールデン実例: サイクル図（円形サイクル・slide 骨格）
+
+  入力: cycle-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-cycle-flow.md §11.1 サイクル図（円形サイクル）
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 / §D-3 原則 1 の例外 (a) / §D-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict cycle-golden.html
+
+  §11.1 のコード例からずらした点は 3 つで、いずれも検査側へ寄せた結果である。
+    ・中心 250 / 半径 180 / ノード幅 140 だと左のノードが viewBox の外へ出る
+      (節の例は x=-10 を書いている)。中心 248 / 半径 160 / ノード幅 144 へ寄せた
+    ・節の例の feDropShadow を落とした (R9-14 影は常に 0)
+    ・工程ごとに枠色を変える配色をやめ、焦点 1 件だけを accent にした
+      (§D-2 #3 と style-tokens §3。色は序列ではなく「本文が語る対象」を指す)
+  リング円弧の A コマンドは環状型の語彙なので §D-3 原則 1 の例外 (a) に当たる。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-cycle">
+
+  <svg viewBox="0 0 500 500"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-cycle-caption">
+
+    <defs>
+      <marker id="d-cycle-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-cycle-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-cycle-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 一周の周期と回る向き (I-CYCLE。figcaption へ逃がさない) -->
+    <text x="248" y="28" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">1 周 = 1 か月・時計回り</text>
+
+    <!-- リング円弧 4 本 (時計回り・同半径 160・中心 248,248)。
+         端点は「隣の枠の辺と半径 160 の円の交点から 8 の余白を引いた点」で、
+         枠が横長 (144x64) なので始点と終点は 45 度対称にならない。
+         鏡像で置くと、縦に並ぶ枠の手前 48 で矢印が途切れる。
+           計画 右辺 x=320 → 8 外側の x=328  → dy=-sqrt(160^2-80^2)=-138.6 → y=109
+           実行 上辺 y=216 → 8 手前の y=208  → dx= sqrt(160^2-40^2)= 154.9 → x=403 -->
+    <path d="M 328 109 A 160 160 0 0 1 403 208" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-cycle-arrow)"/>
+    <path d="M 403 288 A 160 160 0 0 1 328 387" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-cycle-arrow)"/>
+    <path d="M 168 387 A 160 160 0 0 1 93 288" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-cycle-arrow)"/>
+    <path d="M 93 208 A 160 160 0 0 1 168 109" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-cycle-arrow)"/>
+
+    <!-- 中央ラベル (輪そのものの名前。工程ではないので枠は細く、塗りは持たせない) -->
+    <g>
+      <circle cx="248" cy="248" r="52"
+              fill="#FFFFFF" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <text x="248" y="234" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">第 12 周</text>
+      <text x="248" y="254" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">月次レビュー</text>
+      <text x="248" y="274" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/8 実施中</text>
+    </g>
+
+    <!-- 工程 1 (上) -->
+    <g>
+      <rect x="176" y="56" width="144" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="248" y="84" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">計画</text>
+      <text x="248" y="106" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=重点1件を確定</text>
+    </g>
+
+    <!-- 工程 2 (右) -->
+    <g>
+      <rect x="336" y="216" width="144" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="408" y="244" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">実行</text>
+      <text x="408" y="266" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=着手率100%</text>
+    </g>
+
+    <!-- 工程 3 (下・焦点 1 件) -->
+    <g>
+      <rect x="176" y="376" width="144" height="64" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="248" y="404" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">点検</text>
+      <text x="248" y="426" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=差異3件以内</text>
+    </g>
+
+    <!-- 工程 4 (左) -->
+    <g>
+      <rect x="16" y="216" width="144" height="64" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="88" y="244" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">改善</text>
+      <text x="88" y="266" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">完了=次月計画へ反映</text>
+    </g>
+
+    <!-- 注釈 1 件 (イタリック + 破線リーダー + 半径 2 のドット・矢じりは付けない) -->
+    <text x="16" y="476" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">点検を飛ばすと輪が止まる</text>
+    <path d="M 164 468 Q 180 444 168 412" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="168" cy="412" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 凡例 (I3。線の語彙は 2 つしかないので 1 行で足りる) -->
+    <text x="484" y="476" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">実線=工程の進む順・破線=注釈の指し線</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-cycle-caption" class="srg-diagram__caption">
+    上の枠から時計回りに一周してほしい。四つの工程のうち一つだけ色が付いているのは、そこを飛ばした月に限って翌月の判断が前月の写しになるからである。
+  </figcaption>
+
+</figure>

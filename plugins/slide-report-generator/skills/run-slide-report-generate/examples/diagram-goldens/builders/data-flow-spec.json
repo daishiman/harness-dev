@@ -1,0 +1,22 @@
+{
+  "builder": "buildDataFlow",
+  "surface": "report",
+  "diagramId": "f1",
+  "figureLabel": "図 1",
+  "title": "受注データの流れ",
+  "caption": "左端の入力から右端の保管まで一本道である。段の間に書いた語が、その区間で何が付け加わるかを示している。",
+  "spec": {
+    "legend": [
+      { "label": "入力・利用者", "color": "var(--fuji-gray, #8a8980)" },
+      { "label": "処理", "color": "var(--fg, #43436c)" },
+      { "label": "保管・データ", "color": "var(--fg-dim, #54546d)" },
+      { "label": "実線の矢印は受け渡し（差し戻しの経路は無い）", "color": "var(--fg-dim, #54546d)" }
+    ],
+    "stages": [
+      { "label": "発注受付", "sublabel": "取引先が入力・起点", "type": "input", "via": "発注明細" },
+      { "label": "正規化", "sublabel": "品番と単位を統一", "type": "plain", "via": "統一済み明細" },
+      { "label": "在庫引当", "sublabel": "在庫残が受注数以上なら引当", "type": "plain", "via": "引当済み受注" },
+      { "label": "受注台帳", "sublabel": "確定後は追記のみ・終点", "type": "store" }
+    ]
+  }
+}

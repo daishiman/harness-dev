@@ -1,0 +1,96 @@
+<!--
+  chevron-golden.html — ゴールデン実例: シェブロン/矢印ステップ型 (slide 骨格)
+
+  入力: chevron-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.23 シェブロン/矢印ステップ型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #1 / §D-4-4 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict chevron-golden.html
+
+  §11.23 は clip-path で組んだ CSS 図解だが、切り欠きと矢先の噛み合いは
+  polygon そのものなので SVG へ移した (印刷で clip-path が落ちる問題も避けられる)。
+  節のコード例は段ごとに系列 5 色を敷き詰めて hover で brightness を上げるが、
+  順に style-tokens §2 (系列色は色でしか区別できない図に限る)・R9-14 に触れる。
+  段の順序は矢の向きが既に語っているので、色を持つのは焦点の一段だけである。
+  最終段の矢先は落とさない。落とすと「ここで終わる」ではなく「まだ続く」に読める。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-chevron">
+
+  <svg viewBox="0 0 960 200"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-chevron-caption">
+
+    <defs>
+      <marker id="d-chevron-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-chevron-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-chevron-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 第 1 段 (左端。切り欠きを持たない) -->
+    <g>
+      <polygon points="16,40 224,40 248,100 224,160 16,160"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="132" y="96" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">現状把握</text>
+      <text x="132" y="124" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">業務の棚卸し</text>
+      <text x="132" y="176" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4-5</text>
+      <text x="132" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">棚卸し表の承認で完了</text>
+    </g>
+
+    <!-- 第 2 段 -->
+    <g>
+      <polygon points="248,40 456,40 480,100 456,160 248,160 272,100"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="364" y="96" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">対象選定</text>
+      <text x="364" y="124" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">移行順の決定</text>
+      <text x="364" y="176" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/6</text>
+      <text x="364" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">移行順の合意で完了</text>
+    </g>
+
+    <!-- 第 3 段 (焦点。費用が二重になる唯一の区間) -->
+    <g>
+      <polygon points="480,40 688,40 712,100 688,160 480,160 504,100"
+               fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="596" y="96" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">並行運用</text>
+      <text x="596" y="124" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">二重で回す</text>
+      <text x="596" y="176" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/7-8</text>
+      <text x="596" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">差異ゼロが2週続けば完了</text>
+    </g>
+
+    <!-- 第 4 段 (右端。矢先は残す) -->
+    <g>
+      <polygon points="712,40 920,40 944,100 920,160 712,160 736,100"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="828" y="96" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">切替</text>
+      <text x="828" y="124" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">旧系の停止</text>
+      <text x="828" y="176" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/9</text>
+      <text x="828" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">旧系停止の確認で完了</text>
+    </g>
+
+    <!-- 軸と凡例と依存 (帯の右上の余白。I3 / I4 / §2.6 依存) -->
+    <text x="944" y="12" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">色は旧新を二重に抱える段</text>
+    <text x="944" y="29" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">左から時間順。各段は前段の完了後に着手 (並行不可)</text>
+
+    <!-- 注釈 1 件 (帯の上の余白のみ・矢じりは付けない) -->
+    <text x="16" y="24" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">二重運用の2か月は運用費が約1.8倍</text>
+    <path d="M 204 28 Q 400 20 596 36" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="596" cy="36" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-chevron-caption" class="srg-diagram__caption">
+    左から右へ一本の帯として読む。四つの区切りのうち色が付いた一区間だけが、前後と違って旧新の両方を抱える期間である。
+  </figcaption>
+
+</figure>

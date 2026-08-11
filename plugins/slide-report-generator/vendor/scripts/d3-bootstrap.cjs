@@ -56,9 +56,10 @@ function renderD3BootstrapJs() {
   }
 
   function fallbackRender(el, m) {
-    // CDN 失敗時の最小プレースホルダ
+    // CDN失敗または未対応componentを、成功した図と誤認させない。
     var div = document.createElement('div');
     div.className = 'd3-fallback';
+    div.setAttribute('data-d3-fallback', m.component || 'unknown');
     div.setAttribute('role', 'img');
     div.setAttribute('aria-label', m.component + ' chart');
     div.style.cssText = 'padding:1rem;border:2px dashed var(--wave-blue,#7E9CD8);color:var(--fg,#43436c);text-align:center;font-weight:700;';
@@ -234,16 +235,110 @@ function renderD3BootstrapJs() {
           });
           break;
         }
-        case 'radial-bar':
-        case 'pyramid':
-        case 'funnel':
-        case 'waterfall':
-        case 'roadmap':
-        case 'vertical-timeline':
-        case 'wordcloud':
-        case 'chevron':
+        case 'radial-bar': {
+          var rb = cfg.data || [];
+          var rr = Math.min(W, H) / 2 - 36, rc = W / 2, ry = H / 2;
+          var rmax = d3.max(rb, function (d) { return Number(d.value) || 0; }) || 1;
+          var ring = Math.max(10, rr / Math.max(1, rb.length));
+          rb.forEach(function (d, i) {
+            var outer = rr - i * ring;
+            var arc = d3.arc().innerRadius(Math.max(0, outer - ring * 0.65)).outerRadius(outer)
+              .startAngle(-Math.PI / 2).endAngle(-Math.PI / 2 + 2 * Math.PI * (Number(d.value) || 0) / rmax);
+            svg.append('path').attr('transform', 'translate(' + rc + ',' + ry + ')')
+              .attr('d', arc()).attr('fill', palette[i % palette.length]);
+          });
+          break;
+        }
+        case 'pyramid': {
+          var py = cfg.data || [];
+          var ph = (H - 48) / Math.max(1, py.length);
+          py.forEach(function (d, i) {
+            var top = 24 + i * ph, halfTop = (W * 0.08) + i * (W * 0.34 / Math.max(1, py.length));
+            var halfBottom = (W * 0.08) + (i + 1) * (W * 0.34 / Math.max(1, py.length));
+            svg.append('path').attr('d', 'M' + (W/2-halfTop) + ',' + top + ' H' + (W/2+halfTop) +
+              ' L' + (W/2+halfBottom) + ',' + (top+ph-4) + ' H' + (W/2-halfBottom) + ' Z')
+              .attr('fill', palette[i % palette.length]).attr('opacity', 0.9);
+            svg.append('text').attr('x', W/2).attr('y', top + ph/2 + 5).attr('text-anchor', 'middle')
+              .attr('fill', '#fff').attr('font-weight', 700).text(d.label || d.name || ('Layer ' + (i + 1)));
+          });
+          break;
+        }
+        case 'funnel': {
+          var fd = cfg.data || [];
+          var fh = (H - 48) / Math.max(1, fd.length);
+          fd.forEach(function (d, i) {
+            var t = i / Math.max(1, fd.length), b = (i + 1) / Math.max(1, fd.length);
+            var tw = W * (0.44 - 0.30 * t), bw2 = W * (0.44 - 0.30 * b), y = 24 + i * fh;
+            svg.append('path').attr('d', 'M' + (W/2-tw) + ',' + y + ' H' + (W/2+tw) +
+              ' L' + (W/2+bw2) + ',' + (y+fh-4) + ' H' + (W/2-bw2) + ' Z')
+              .attr('fill', palette[i % palette.length]).attr('opacity', 0.9);
+            svg.append('text').attr('x', W/2).attr('y', y + fh/2 + 5).attr('text-anchor', 'middle')
+              .attr('fill', '#fff').attr('font-weight', 700).text(d.label || d.name || ('Stage ' + (i + 1)));
+          });
+          break;
+        }
+        case 'waterfall': {
+          var wd = cfg.data || [], cumulative = 0;
+          var wmax = d3.max(wd, function (d) { cumulative += Number(d.value) || 0; return Math.abs(cumulative); }) || 1;
+          cumulative = 0;
+          var gap = (W - 80) / Math.max(1, wd.length), ww = gap * 0.62, baseY = H - 40;
+          wd.forEach(function (d, i) {
+            var prev = cumulative; cumulative += Number(d.value) || 0;
+            var y1 = baseY - (prev / wmax) * (H - 80), y2 = baseY - (cumulative / wmax) * (H - 80);
+            svg.append('rect').attr('x', 40 + i * gap).attr('y', Math.min(y1, y2)).attr('width', ww)
+              .attr('height', Math.max(3, Math.abs(y2-y1))).attr('fill', cumulative >= prev ? palette[1] : palette[2]);
+          });
+          break;
+        }
+        case 'roadmap': {
+          var rm = cfg.data || [];
+          var rstep = (W - 96) / Math.max(1, rm.length - 1);
+          svg.append('line').attr('x1', 48).attr('y1', H/2).attr('x2', W-48).attr('y2', H/2)
+            .attr('stroke', palette[0]).attr('stroke-width', 4);
+          rm.forEach(function (d, i) {
+            var x = 48 + i*rstep;
+            svg.append('circle').attr('cx', x).attr('cy', H/2).attr('r', 14).attr('fill', palette[i%palette.length]);
+            svg.append('text').attr('x', x).attr('y', H/2 + (i%2 ? 52 : -36)).attr('text-anchor', 'middle')
+              .attr('fill', 'var(--fg,#43436c)').attr('font-weight', 700).text(d.label || d.name || ('M' + (i+1)));
+          });
+          break;
+        }
+        case 'vertical-timeline': {
+          var vt = cfg.data || [], vx = W/2, vstep = (H - 64) / Math.max(1, vt.length - 1);
+          svg.append('line').attr('x1', vx).attr('y1', 32).attr('x2', vx).attr('y2', H-32)
+            .attr('stroke', palette[0]).attr('stroke-width', 4);
+          vt.forEach(function (d, i) {
+            var y = 32 + i*vstep, side = i%2 ? 1 : -1;
+            svg.append('circle').attr('cx', vx).attr('cy', y).attr('r', 10).attr('fill', palette[i%palette.length]);
+            svg.append('text').attr('x', vx + side*32).attr('y', y+5).attr('text-anchor', side>0?'start':'end')
+              .attr('fill', 'var(--fg,#43436c)').attr('font-weight', 700).text(d.label || d.name || ('Event ' + (i+1)));
+          });
+          break;
+        }
+        case 'wordcloud': {
+          var words = cfg.data || [];
+          words.forEach(function (d, i) {
+            var col = i % 4, row = Math.floor(i / 4), size = 14 + Math.min(28, Number(d.value) || 0);
+            svg.append('text').attr('x', 60 + col*(W-120)/3).attr('y', 60 + row*64)
+              .attr('text-anchor', 'middle').attr('font-size', size).attr('font-weight', 700)
+              .attr('fill', palette[i%palette.length]).text(d.text || d.label || d.name || '');
+          });
+          break;
+        }
+        case 'chevron': {
+          var ch = cfg.data || [], cw = (W - 48) / Math.max(1, ch.length), cy = H*0.25, chh = H*0.5;
+          ch.forEach(function (d, i) {
+            var x = 24 + i*cw, notch = Math.min(24, cw*0.18);
+            svg.append('path').attr('d', 'M' + x + ',' + cy + ' H' + (x+cw-notch) + ' L' + (x+cw) + ',' + (cy+chh/2) +
+              ' L' + (x+cw-notch) + ',' + (cy+chh) + ' H' + x + ' L' + (x+notch) + ',' + (cy+chh/2) + ' Z')
+              .attr('fill', palette[i%palette.length]).attr('opacity', 0.9);
+            svg.append('text').attr('x', x+cw/2).attr('y', cy+chh/2+5).attr('text-anchor', 'middle')
+              .attr('fill', '#fff').attr('font-weight', 700).text(d.label || d.name || ('Step ' + (i+1)));
+          });
+          break;
+        }
         default: {
-          // 汎用フォールバック描画
+          console.error('[d3-bootstrap] unsupported component:', m.component);
           fallbackRender(el, m);
           break;
         }

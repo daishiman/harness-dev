@@ -1,0 +1,105 @@
+<!--
+  mindmap-golden.html — ゴールデン実例: マインドマップ（report 骨格）
+
+  入力: mindmap-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-cycle-flow.md §11.3 マインドマップ
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #10 / §D-3 原則 1 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict mindmap-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.3 のコード例からずらした点は 3 つで、いずれも検査側へ寄せた結果である。
+    ・feDropShadow 2 種を落とした (R9-14 影は常に 0)
+    ・中央ノードの linearGradient を落として plain の枠へ戻した (style-tokens §5)
+    ・枝 6 本を 4 本へ、枝ごとの色分けを焦点 1 件へ減らした
+      (§D-2 #10 は 1 親あたり子数 5 が上限。色は序列ではなく本文が語る対象を指す)
+  枝は Q だけで引く。放射状型は §D-3 原則 1 の例外 (a) を申告できるが、
+  例外に頼らず曲線で引ける型なので使っていない。矢じりを付けないのは、
+  これが流れではなく分解だからである。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-mindmap"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-mindmap-caption">
+
+    <defs>
+      <marker id="f-mindmap-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-mindmap-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-mindmap-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 枝 4 本 (中央の左右の辺から出し、枝の左右の辺へ入る。矢じりは付けない) -->
+    <path d="M 580 256 Q 620 136 636 136" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <path d="M 580 288 Q 620 408 636 408" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <path d="M 380 256 Q 340 136 324 136" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+    <path d="M 380 288 Q 340 408 324 408" fill="none"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2"/>
+
+    <!-- 中央ノード (分解される当のもの。枝ではないので焦点にしない) -->
+    <g>
+      <rect x="380" y="240" width="200" height="64" rx="8"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="480" y="277" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">報告書が遅れる原因</text>
+    </g>
+
+    <!-- 枝 1 (右上・焦点 1 件) -->
+    <g>
+      <rect x="636" y="108" width="176" height="56" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="724" y="132" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">材料集め</text>
+      <text x="724" y="152" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">探すのに0.5〜6時間</text>
+    </g>
+
+    <!-- 枝 2 (右下) -->
+    <g>
+      <rect x="636" y="380" width="176" height="56" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="724" y="404" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">構成づくり</text>
+      <text x="724" y="424" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">毎回1〜2時間</text>
+    </g>
+
+    <!-- 枝 3 (左上) -->
+    <g>
+      <rect x="148" y="108" width="176" height="56" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="236" y="132" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">執筆</text>
+      <text x="236" y="152" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">毎回2時間 (±0.3)</text>
+    </g>
+
+    <!-- 枝 4 (左下) -->
+    <g>
+      <rect x="148" y="380" width="176" height="56" rx="6"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="236" y="404" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">見直し</text>
+      <text x="236" y="424" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">毎回1時間 (±0.2)</text>
+    </g>
+
+    <!-- 軸の宣言と出所 (図の下端。I1 / I4 / §2.11 序列の軸) -->
+    <text x="480" y="496" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">枝の並びは順不同。枝の大きさは量ではない。線は分解であって流れではない</text>
+    <text x="480" y="516" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/1-3 の報告書20件を実測 (着手から提出までを4枝で覆う)</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-mindmap-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 4</span>
+    中央から右上の枝へ先に目を向けてほしい。四本の枝のうち三本は所要が読めるので、遅れの説明になるのは残りの一本だけである。
+  </figcaption>
+
+</figure>

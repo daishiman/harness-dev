@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "slide-report-generator/visual-derivation-table.schema.json",
+  "title": "Visual Derivation Table",
+  "description": "visual-derivation-table.json の構造契約。report-structure.json の section.body[] から svg 図種（variant）を決定論的に導出する決定表そのものを機械検証する。表は rows[] を配列順に上から評価し、最初に成立した行を採用する（first-match-wins）。各行の predicate は body[] の JSON から算出可能な述語のみで構成されなければならず、LLM の解釈が入る余地を持たない。この schema は『表が決定論であること』を構造的に強制する: 行は必ず順序を持ち（order 昇順・重複禁止）、最終行は必ず fallback（無条件で kind=none に落ちる行）でなければならない。",
+  "type": "object",
+  "required": ["$schema", "$id", "title", "description", "version", "definitions", "override", "rows"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$id": { "type": "string" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1, "description": "表全体の優先順位の根拠を日本語で述べる。なぜこの並びなのかが読めない表は正本になれない。" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "appliesTo": { "type": "string", "description": "この表が正本として支配する契約（report-structure.schema.json の section.visual）。" },
+    "implementedBy": {
+      "type": "array",
+      "description": "この表を実装する（べき）コード/プロンプトのパス。表とコードの二重正本化を防ぐため、正本は常に本表であることを明示する。",
+      "items": { "type": "string", "minLength": 1 }
+    },
+
+    "definitions": {
+      "type": "object",
+      "description": "predicate で使う述語の厳密定義。実装（render-report.js）と一字一句同じ判定になるよう、判定式そのものを文字列で持つ。",
+      "required": ["labelable", "numeric"],
+      "additionalProperties": false,
+      "properties": {
+        "labelable": { "$ref": "#/$defs/predicateDefinition" },
+        "numeric": { "$ref": "#/$defs/predicateDefinition" },
+        "sentenceSplit": { "$ref": "#/$defs/predicateDefinition" },
+        "capacity": { "$ref": "#/$defs/predicateDefinition" }
+      }
+    },
+
+    "override": {
+      "type": "object",
+      "description": "LLM の判断が入ってよい唯一の口。section.visual.kind が明示指定されている場合の本表への優先関係を定める。",
+      "required": ["rule", "requires", "rationale"],
+      "additionalProperties": false,
+      "properties": {
+        "rule": { "type": "string", "minLength": 1 },
+        "requires": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "上書きを認めるための必須条件（例: visual.rationale に本表の第N行を上書きした理由を書く）。"
+        },
+        "rationale": { "type": "string", "minLength": 1 },
+        "forbidden": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "上書きとして認めない操作（例: 容量超過を切り詰めて載せる指定）。"
+        }
+      }
+    },
+
+    "rows": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/row" }
+    }
+  },
+
+  "allOf": [
+    {
+      "description": "最終行は必ず無条件フォールバック（fallback:true）でなければならない。どの行にも当たらない入力が黙って未定義に落ちるのを防ぐ。",
+      "properties": {
+        "rows": {
+          "type": "array",
+          "contains": {
+            "type": "object",
+            "properties": { "fallback": { "const": true } },
+            "required": ["fallback"]
+          }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+
+    "predicateDefinition": {
+      "type": "object",
+      "required": ["description", "expression"],
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string", "minLength": 1, "description": "日本語での定義。" },
+        "expression": { "type": "string", "minLength": 1, "description": "実装と一致させる判定式（JS 相当）。ここが正本。" },
+        "source": { "type": "string", "description": "現行実装の該当箇所（file:line）。" },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "blockRef": {
+      "type": "string",
+      "description": "決定表の左列。report-structure.schema.json $defs.bodyBlock.type の 13 値、1.0.0 互換の paragraphs[]（body[] 不在時）、および無条件行を表す '*'。",
+      "enum": [
+        "paragraph", "subheading", "bullet-list", "ordered-list", "table", "code",
+        "key-point", "stat-tile", "callout", "blockquote",
+        "definition-list", "footnote", "task-list",
+        "paragraphs", "*"
+      ]
+    },
+
+    "row": {
+      "type": "object",
+      "description": "決定表の 1 行。order 昇順に評価し、predicate が全て成立し capacity 内に収まった最初の行を採用する。",
+      "required": ["order", "id", "block", "predicate", "result", "rationale", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "integer", "minimum": 1, "description": "評価順（1 始まり・連番・昇順）。" },
+        "id": { "type": "string", "pattern": "^R[0-9]{2}$", "description": "行 ID。visual.rationale の『第N行を上書き』参照に使う。" },
+        "block": { "$ref": "#/$defs/blockRef" },
+        "select": {
+          "type": "string",
+          "description": "block を body[] から選ぶ規則。既定は 'first'（先頭に現れる 1 件のみ。deriveVisualFromBody の body.find と同じ）。'all' は同 type 全件。",
+          "enum": ["first", "all", "n/a"],
+          "default": "first"
+        },
+        "source": {
+          "type": "object",
+          "description": "図解ノードの素材をブロックのどのフィールドから取るか。実体が items[] でないブロック（stat-tile=stats[] / task-list=tasks[] / definition-list=terms[] / table=rows[]）の取り違えを防ぐ。",
+          "additionalProperties": false,
+          "properties": {
+            "field": { "type": "string", "description": "素材配列のフィールド名（例: 'tasks', 'stats', 'terms', 'items', 'rows'）。" },
+            "label": { "type": "string", "description": "各要素からラベルを取る式（例: 'item.text', 'item.label', 'row[0]'）。" },
+            "value": { "type": "string", "description": "数値を取る式（bar 等・任意）。" }
+          }
+        },
+        "predicate": {
+          "type": "object",
+          "description": "この行が成立する条件。全て AND。空オブジェクト {} は無条件成立（fallback 行のみ許す）。",
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "integer", "minimum": 0 },
+                "max": { "type": "integer", "minimum": 0 }
+              },
+              "description": "source.field の要素数の範囲（両端含む）。"
+            },
+            "all_labelable": { "type": "boolean", "description": "true: 全要素で conciseLabel() が非 null。1 件でも null なら行は不成立（切り詰めない・部分描画しない）。" },
+            "label_max_length": { "type": "integer", "minimum": 1, "description": "ビルダー側がさらに厳しい上限を持つ場合の追加制約（全角字数）。超過は行を不成立にする。" },
+            "min_label_length": { "type": "integer", "minimum": 1, "description": "ラベルが短すぎて図として意味を成さない場合に行を落とす下限。" },
+            "all_numeric": { "type": "boolean", "description": "true: 全要素で definitions.numeric.expression が有限値を返す。" },
+            "any_non_numeric": { "type": "boolean", "description": "true: 1 件以上が数値化不可。" },
+            "has_mixed_done": { "type": "boolean", "description": "task-list の tasks[].done に true と false が両方存在する。" },
+            "header_matches": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["patterns"],
+              "properties": {
+                "patterns": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "type": "string", "minLength": 1 },
+                  "description": "headers[] に対して評価する正規表現（各要素 1 パターン）。"
+                },
+                "mode": { "type": "string", "enum": ["all", "any", "ordered"], "default": "all", "description": "all=全パターンがそれぞれ別の列に一致 / any=1 つでも一致 / ordered=列順どおりに一致。" },
+                "flags": { "type": "string", "default": "i" }
+              }
+            },
+            "header_count": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "min": { "type": "integer", "minimum": 0 },
+                "max": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "value_matches": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["field", "pattern"],
+              "properties": {
+                "field": { "type": "string", "minLength": 1 },
+                "pattern": { "type": "string", "minLength": 1 },
+                "mode": { "type": "string", "enum": ["all", "any"], "default": "all" },
+                "flags": { "type": "string", "default": "" }
+              }
+            },
+            "body_empty": { "type": "boolean", "description": "section.body[] が不在または空（1.0.0 互換入力の判定）。" },
+            "has_block": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/blockRef" },
+              "description": "body[] に列挙 type のブロックが 1 つ以上存在する。" },
+            "no_block": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/blockRef" },
+              "description": "body[] に列挙 type のブロックが 1 つも存在しない。" }
+          }
+        },
+        "result": {
+          "type": "object",
+          "description": "この行が成立したときの出力。",
+          "required": ["kind"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "type": "string", "enum": ["svg", "mermaid", "codex-image", "none", "recurse"], "description": "recurse は分割子行（subheading）専用。分割後の各グループへ本表を再適用する。" },
+            "variant": { "type": "string", "description": "svgSpec.variant（report-structure.schema.json の enum 値、または builder 直呼びの内部 variant）。" },
+            "builder": { "type": "string", "description": "実際に呼ぶビルダー関数名（svg-builder.cjs / svg-structures.cjs / render-report.js ローカル）。" },
+            "builderModule": { "type": "string", "enum": ["svg-builder.cjs", "svg-structures.cjs", "render-report.js"] },
+            "builderOptions": { "type": "object", "description": "ビルダーへ渡す固定オプション（例: {connector:false}）。" },
+            "capacity": { "type": "integer", "minimum": 0, "description": "この行で 1 枚に載せられる件数上限。CAPACITY 由来。0 = 上限なし（データ系ビルダー）。超過時はこの行を不成立として次行へ落ちる。" },
+            "capacitySource": { "type": "string", "description": "capacity の出典（svg-builder.cjs CAPACITY のキー等）。" },
+            "recurseInto": { "type": "string", "description": "kind=recurse のとき、分割後の各グループに適用する表（通常は自身）。" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "kind": { "const": "svg" } }, "required": ["kind"] },
+              "then": { "required": ["variant", "builder", "capacity"] }
+            },
+            {
+              "if": { "properties": { "kind": { "const": "recurse" } }, "required": ["kind"] },
+              "then": { "required": ["recurseInto"] }
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["implemented", "planned"],
+          "description": "implemented = 現行 render-report.js が実際に描ける（ビルダーが存在し dispatch 済み）。planned = ビルダーは存在するが report 経路の dispatch 未配線、または表として新規追加。実装済みと明確に区別する。"
+        },
+        "implementationGap": { "type": "string", "description": "status=planned のとき、実装に必要な配線を具体的に書く。" },
+        "divergence": { "type": "string", "description": "現行 deriveVisualFromBody の挙動と本表がズレる点。実装を表へ寄せる際の差分。" },
+        "fallback": { "type": "boolean", "default": false, "description": "true = 無条件成立の最終行。表に 1 つだけ置く。" },
+        "rationale": { "type": "string", "minLength": 1, "description": "なぜこの block 型がこの図種なのか、なぜこの上限・この順位なのかを日本語で述べる。この表を人間向けドキュメントとして読める水準にする。" },
+        "example": { "type": "string", "description": "この行が引かれる実例（サンプル JSON の section id 等）。" }
+      },
+      "allOf": [
+        {
+          "description": "fallback:true の行は predicate を空にしなければならない（無条件成立）。",
+          "if": { "properties": { "fallback": { "const": true } }, "required": ["fallback"] },
+          "then": { "properties": { "predicate": { "maxProperties": 0 }, "result": { "properties": { "kind": { "const": "none" } } } } }
+        },
+        {
+          "description": "predicate が空の行は fallback でなければならない（無条件成立行の量産を禁止）。",
+          "if": { "properties": { "predicate": { "maxProperties": 0 } }, "required": ["predicate"] },
+          "then": { "required": ["fallback"], "properties": { "fallback": { "const": true } } }
+        }
+      ]
+    }
+  }
+}

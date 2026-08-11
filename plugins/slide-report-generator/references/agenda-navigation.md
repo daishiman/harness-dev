@@ -62,7 +62,7 @@ Kanagawa Lotus White（ライトテーマ）用。
   background: rgba(250, 250, 250, 0.92);
   backdrop-filter: blur(0.5rem);
   -webkit-backdrop-filter: blur(0.5rem);
-  border-bottom: 1px solid var(--sumi-ink);
+  border-bottom: 1px solid var(--sumi-ink, #FAFAFA);
   padding: 0 var(--space-4);
 }
 
@@ -77,14 +77,14 @@ Kanagawa Lotus White（ライトテーマ）用。
   cursor: pointer;
   font-family: 'Noto Sans JP', sans-serif;
   font-size: var(--fs-small);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-semibold, 600);
   color: var(--fg);
   opacity: 0.5;
   transition: opacity 0.3s ease, background 0.3s ease;
   white-space: nowrap;
 }
 
-.section-nav__item:hover { opacity: 0.8; background: var(--bg-dim); }
+.section-nav__item:hover { opacity: 0.8; background: var(--bg-dim, #F5F5F5); }
 .section-nav__item:focus-visible { outline: 2px solid var(--accent-blue-vivid); outline-offset: -2px; }
 .section-nav__item.active { opacity: 1; }
 
@@ -211,7 +211,7 @@ Kanagawa Wave（ダークテーマ）用。
 /* ホバー状態 */
 .agenda-indicator-item:hover {
   background: rgba(31, 31, 40, 0.95);
-  color: var(--fg-light);
+  color: var(--fg-light, var(--fg-dim, #54546d));
   border-left-color: var(--wave-aqua);
   transform: translateX(5px);
 }

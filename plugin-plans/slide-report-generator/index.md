@@ -28,7 +28,7 @@ plugin_meta:
   ssot_dedup:
     lint: ssot-duplication
     references_config_assets: tracked
-    vendor: byte-parity
+    vendor: upstream-byte-pin-plus-managed-overlay
   feedback_deploy:
     enabled: false
     reason: 本 plugin はローカル HTML 出力のみで Notion 連携を持たず (notion_config surface=false)、改善要望の Notion 受け皿を設けない (D6 opt-out)。フィードバックは repo 同梱の feedback/ references と lessons-learned で扱う
@@ -42,13 +42,13 @@ plugin_meta:
 
 > プラグイン構想「presentation-slide-generator の全機能を xl-skills plugin へ抜け漏れなく移植しつつ、共通コア + output_mode=slide/report の 2 モードへ再編し report 出力を新規追加する」を、人間可読な 13 フェーズのライフサイクル (本 index + phase-01..13.md) と、機械可読な buildable component 目録 (`component-inventory.json`) の 2 軸直交で計画したもの。
 > ライフサイクル軸 (フェーズ) は宣言型のタスク仕様 (`specfm.PHASE_BODY_SECTIONS` の 8 節) で primary deliverable。成果物実体軸 (component) は build routing・依存 DAG・品質機構を保持する唯一の SSOT。フェーズは component id を `entities_covered` で参照するだけで build_target を再記述しない (正規化)。
-> 注記: 本 index は当初の L3 計画正本を保持するためフェーズ一覧に「未実施」表記を残す。旧buildの完了記録は`outputs/phase-05..13/`、今回UI updateのcurrent evidenceは新しいPhase11 freshness manifestが正本。再buildはC01/C02/C17/C18/C19/C24/C25 + S-SCHEMAS/S-REFERENCES/S-EVALS。残りはunchanged、component数25は維持する。
+> 注記: P01〜P13 は build 証跡上すべて完了している。旧buildの記録は `outputs/phase-05..13/`、今回の current evidence は `eval-log/slide-report-generator/build/` と content-review の推移ダイジェストを正本とする。再検証対象は C01/C02/C07/C09/C12/C17/C18/C19/C24/C25 + S-SCHEMAS/S-REFERENCES/S-EVALS、残りは unchanged、component 数25は維持する。
 
 ## 基本定義
 - **プラグイン slug**: `slide-report-generator` (plan_dir=`plugin-plans/slide-report-generator/`・同一構想は常に同一出力先=再現性アンカー)。既存 `presentation-slide-generator` との併存・区別のため暫定命名 (確定後 rename 可)。
 - **最上位目的 (purpose)**: presentation-slide-generator の全機能を抜け漏れなく移植しつつ、共通の意匠・技術コアを単一 SSOT で共有する output_mode=slide/report の 2 モード・ビジュアル生成ハーネスを作る。
 - **仕様駆動 (大前提)**: 本計画は harness-creator 仕様を基に作成される (規律の焼き先=`harness-creator-spec-reflection.md` マトリクスの引用・独自流儀の発明禁止)。要件の正本は `goal-spec.json` の checklist (移植 C1-C8 + report 構造化改善 C9-C15) と `source-inventory.md` §5 被覆、仕様書 (本 index + 13 phase) はその被覆であり、乖離が出たら**仕様を先に更新**してから build へ戻す (spec-first)。
-- **要件 id と component id の識別 (誤読防止)**: 要件 id は非ゼロ埋め `C1`..`C19` (goal-spec.checklist)、component id はゼロ埋め `C01`..`C25` (component-inventory)。両者は別名前空間で、2桁域 (要件 C10-C19 ↔ component C10-C19) は要件 id と component id が文字列一致するため (例: 要件 C11 ↔ component C11 layout-optimizer、要件 C15 ↔ component C15 slide-report-modifier、要件 C19[本質図解(essence-visual)第一級化] ↔ component C19 report-composer) が指す対象は異なる (要件 C19 の設計 owner は component C18 visual-strategist であり component C19 ではない)。字面一致域では要件参照か component 参照かを文脈で明示する。本 index の「要件 Cn」表記は常に要件 checklist を指す。今後の update で追加する要件 id は component id (C01-C25) と字面衝突しない系列 (例: U1..) を採番する (恒久緩和規約)。
+- **要件 id と component id の識別 (誤読防止)**: 永続JSONのschema制約上、要件は `C1`..`C28`、componentは `C01`..`C25` を保持する。表示・議論では必ず要件を `REQ-Cn`、componentを `CMP-Cnn` と表記する。これにより文字列衝突域 C10-C25 を名前空間で分離する（例: `REQ-C19` の設計ownerは `CMP-C18`）。
 - **スコープ (含む)**: index + 13 フェーズ計画 + `component-inventory.json` + `handoff` + `envelope-draft` の生成 (計画=L3 契約)。
 - **スコープ (含まない)**: 実プラグイン/実コードの build (L4・後段 run-skill-create / run-build-skill へ委譲)、PR/配布登録。
 
@@ -61,7 +61,9 @@ plugin_meta:
 - **report 構造化 owner 表 (要件→焼き先の担当)**: 要件 C9(節内論理 narrative)→C17 設計 / C10(block構造+読書CSS render)→C19 render-report.js / C11(色付き強調・色覚非依存)→C19 render + 意匠SSOT / C12(図解の意味的配置)→C18 幾何配置 owner + C19 render / C13(積極評価ゲート)→C24 RQ + C25 機械 / C14(横断要素カタログ)→references(report-narrative-logic.md)+ 4 reportType 骨格 / C15(節間フロー throughLine/transition)→C17 throughLine 設計。**C17↔C18 責務境界**: C17=論理構造(narrative/throughLine/transition/section.role)+意味的スロット割当、C18=幾何配置(grid/zones/emphasisZone/readingOrder/focalPoint)の唯一 owner。
 - **report UI/UX 語彙 (C16-C19 の第一級用語)**: `screen/print 二層 CSS`、`sticky sidebar TOC`、`scrollspy lifecycle`、`computed typography`、`card minimum readable width`、`essence-visual`(論理節=role∈{分析/主張/課題/解決/所見/影響}が非none visual を持つ・論理構造→図種写像 §0.5.1)を第一級とする。C25は`--structure`必須、C24はstructure+render+metrics+navigation bundle必須。狭画面は900px、899/900/901境界を検査する。
 - **report UI/UX owner 表 (要件→焼き先の担当)**: 要件 C16(screen/print幅二層化)→C19 render-report.js(周回2 是正・R4 MEDIUM: report 読書 CSS の正本責務は buildReportCss() inline <style> 出力・独立ファイル report.css への分離は将来オプション・screen/print 分岐はこの CSS 出力内で行う) / C17(sticky sidebar TOC+scrollspy)→C19 render(self-contained JS 出力) / C18(タイポ/密度再調整)→C19 render(スケール/spacing 変数調整・意匠 SSOT 無改変) / C19(本質図解 essence-visual 第一級化)→C18 visual-strategist(essence-visual/図種写像 設計 owner・形式三択に先行。component C19 は essence-visual を render 側で素通しするのみで設計 owner ではない)。C16-C19 いずれも積極評価=C24・決定論検査=C25 が共通で担う (schema は 1.2.0 のまま=essence-visual は既存 role/visual.kind を使い schema bump 不要・第3次UIは render CSS のみで schema 非依存)。print/狭画面 degrade の非退行は C24(意味適合)+ C25(shape: @media print/print無効化/breakpoint 存在)の二層で検査する (周回2 追加)。
-- **vendored Node engine**: Node/CJS 製レンダリング/画像/印刷/検証エンジンは vendor surface として byte 維持で携行し stdlib script へ書き換えない。skill/agent は Bash(node *) で起動する (既存資産の毀損回避)。携行単位は個別ファイル allowlist ではなく `scripts/`/`assets/`/`schemas/`/`package.json` の **whole-tree byte copy**(inventory `plugin_level_surfaces.vendor.copy_mode=whole-tree`)とし、共有ランタイム `utils.js` を含む scripts/ 直下 30 Node script 全数(+ hooks/deck-postgen-hook.js 移植元 + 118 templates + test-fixtures/)を取りこぼしなく携行する。
+- **図解移植語彙 (`REQ-C20`–`REQ-C28`・第4次: diagram-design-migration)**: `セマンティックロール表`(値を持たずvendor正本キーだけを示す index=`diagram-style-tokens.md`)、`数値化品質規約`(4pxグリッド/複雑度予算21項目/コネクタ5原則/focal rule/annotation文法・`diagram-layout-contract.md` augmented)、`型統一対応表`(決定論SVG38/CSS型44/.html.tpl128 の crosswalk=`diagram-type-crosswalk.md`)、`叩き台テンプレート`(plugin-root `assets/diagram-templates/*.html`・vendor対象外・成果物埋め込み用が正)、`ゴールデン実例`、`溶け込み契約`(R9・配置/重複禁止/文脈適合)。件数の正本はcrosswalkの機械注釈であり、promptへ複製しない。
+- **図解移植 owner 表 (要件→焼き先の担当・C20-C28)**: 要件 C20(スタイル契約SSOT化)→`diagram-style-tokens.md`新設・C18 consume / C21(数値化リファレンス)→`diagram-layout-contract.md` augmented・C07/C18 consume / C22(型統一対応表)→`diagram-type-crosswalk.md`新設・`ref-diagram-system` SKILL.md §2 と相互参照・C07/C18 consume / C23(叩き台テンプレート)→`assets/diagram-templates/*.html`新設(vendor対象外)・C09 owner / C24要件(プロンプト配線修復)→C07/C09/C17/C18 の resource-map/workflow-manifest/prompt Layer6 配線 / C25要件(CSS/HTML図解lint新設)→`validate-svg-diagram.py`(governance glue) の D14+ 拡張 / C26(ゴールデン実例)→C09(slide系統)・C19(report系統)の skill-private examples/ / C27(不足図解型追加)→references/diagram-*.md への additive(LLM手書き経路・vendor無改変) / C28(溶け込み契約・最重要)→①配置契約=C18 owner、②重複禁止契約=C12(slide側 S27)・C24(report側)積極評価+C25(p)機械検査、③文脈適合契約=C12(S28/S29)・C24積極評価+C19 render 占有率+C25(q)機械検査。新規 buildable component は増やさない (no-split・component数25維持)。
+- **vendored Node engine**: 初回取込はwhole-treeで行う。稼働時のintegrity契約は **upstream非改変ファイルのbyte-pin + manifestへ明示したplugin-local overlay** で、未宣言のpin不一致を許可しない。overlayはowner付きsemantic contractとtests/goldensで検証し、stdlib scriptへ書き換えない。
 - **upstream 凍結**: upstream (presentation-slide-generator) は v8.4.2 で凍結。byte 正本 = `vendor-digest-manifest.json` (plan 同梱)。追従は明示的な再 vendor 手続き (manifest 再生成) のみ。
 - **elegant-review C1-C4**: 矛盾なし/漏れなし/整合性/依存整合 の設計審査 4 条件 (design-gate/final-gate 共通)。
 - **共通コア**: 意匠/技術 (Kanagawa/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ) は vendor + references + schemas (structure⇄report-structure の nodes/edges/groups/theme/aiVisual) で単一 SSOT 共有。
@@ -80,7 +82,7 @@ plugin_meta:
   | harness/eval | required | `EVALS.json` + `plugin_meta.harness_eval` (slide/report 両モード配線) |
   | schemas | required | inventory `plugin_level_surfaces.schemas` (structure 移植 + report-structure 新設) |
   | references/config/assets | required | `plugin_meta.ssot_dedup` (42 references + report 新規。118 templates/style-genome/d3-components/pagination/print-styles/gas-deploy-guide の byte 実体は vendor 側に一本化し本 surface からはポインタ参照のみ=二重 SSOT 回避) |
-  | vendor | required | inventory `plugin_level_surfaces.vendor` (Node engine を含む `scripts/`/`assets/`/`schemas/`/`package.json` の whole-tree byte 携行・Python 化しない) + `plugin_meta.ssot_dedup.vendor=byte-parity` + source_digest_manifest=`vendor-digest-manifest.json` (byte 比較基準) |
+  | vendor | required | inventory `plugin_level_surfaces.vendor` (whole-tree import後、upstream byte-pin + managed local overlay・Python化しない) + source_digest_manifest=`vendor-digest-manifest.json` |
   | MCP/app connector | omitted | inventory の omitted_reason (画像生成は codex exec Bash 経由) |
   | notion_config | omitted | inventory の omitted_reason (ローカル HTML 出力のみ・Notion 不使用) |
 
@@ -93,52 +95,61 @@ plugin_meta:
 
 ## フェーズ一覧
 
-1. P01 — requirements (要件定義) / 未実施
-2. P02 — design (設計) / 未実施
-3. P03 — design-review (設計レビューゲート) / 未実施
-4. P04 — test-design (テスト設計) / 未実施
-5. P05 — implementation (実装) / 未実施
-6. P06 — test-run (テスト実行) / 未実施
-7. P07 — acceptance-criteria (受入基準判定) / 未実施
-8. P08 — refactoring (リファクタリング) / 未実施
-9. P09 — quality-assurance (品質保証) / 未実施
-10. P10 — final-review (最終レビューゲート) / 未実施
-11. P11 — evidence (手動テスト検証) / 未実施
-12. P12 — documentation (ドキュメント) / 未実施
-13. P13 — release (完了/PR・リリース) / 未実施
+1. P01 — requirements (要件定義) / 完了
+2. P02 — design (設計) / 完了
+3. P03 — design-review (設計レビューゲート) / 完了
+4. P04 — test-design (テスト設計) / 完了
+5. P05 — implementation (実装) / 完了
+6. P06 — test-run (テスト実行) / 完了
+7. P07 — acceptance-criteria (受入基準判定) / 完了
+8. P08 — refactoring (リファクタリング) / 完了
+9. P09 — quality-assurance (品質保証) / 完了
+10. P10 — final-review (最終レビューゲート) / 完了
+11. P11 — evidence (手動テスト検証) / 完了
+12. P12 — documentation (ドキュメント) / 完了
+13. P13 — release (完了/PR・リリース) / 完了
 
 ## 完了チェックリスト
-- [ ] 基本定義 (plugin slug / purpose / スコープ) が宣言されている。
-- [ ] ドメイン知識 (2 軸直交 / component_kind 5 種 / output_mode 分岐 / vendor 携行 / 用語集) が宣言されている。
-- [ ] インフラ (実行環境 / core scripts / 目録所在 / surface 採否) が宣言されている。
-- [ ] 環境ポリシー (品質基準 / 抜け漏れ厳禁 / proposer≠approver / 現状値非焼込) が宣言されている。
-- [ ] 13 フェーズ (P01..P13) が phase_number 昇順で全存在し、各 phase 本文が §5 section 床 (`specfm.PHASE_BODY_SECTIONS` の宣言型 8 節) を満たす。
-- [ ] 要件 C1: 既存 13 sub-agent が新 plugin の component (C04-C16) へ漏れなく写像されている。
-- [ ] 要件 C2: output_mode=slide/report 分岐が主オーケストレータ skill (C01) と hearing-facilitator (C04) に焼かれ、意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別になっている。
-- [ ] 要件 C3: report モードが 4 reportType 骨格 (report-structure schema・C17)・visual-strategist (C18・三択最適化)・Mermaid 統合・report HTML レンダラ (C19+vendor) を component として持つ。
-- [ ] 要件 C4: Codex Image2 全面画像チェーン (C14+vendor) と 30種思考法の生成後評価ゲート (deck-evaluator C13 + hook C20) が両モードで機能する形で移植されている。
-- [ ] 要件 C5: Node 製レンダリング/画像/印刷エンジンが vendored asset surface として携行され、Python-stdlib 書換なしで install 携帯性を満たす (skill から Bash(node *) 起動)。
-- [ ] 要件 C6: `component-inventory.json` が 5 component_kind の検討証跡と plugin-level surfaces の採否・不要理由を記録している。
-- [ ] 要件 C7: 各 buildable component が core 規律 quality_gates + harness_coverage(min≥80/kind_pass) を携帯している。
-- [ ] 要件 C8: index が P01..P13 を phase_number 昇順で全列挙し plugin_meta (manifest/marketplace/ci/feedback_deploy) と受入確認章を携帯している。
-- [ ] 要件 C9 (report構造化): report が節内論理展開 (本質課題→解決策→活用/含意) を section.narrative として持ち、reportType 骨格の節順序だけでなく節内部の論理構造を強制する (C17 設計 + report-narrative-logic.md 正本)。
-- [ ] 要件 C10 (report構造化): report 本文が block 構造 (段落/markdownテーブル/フェンスドコードブロック/番号リスト/箇条書き/小見出し/キーポイント強調ボックス/統計タイル + 1.2.0 additive の定義リスト/脚注引用/タスクリスト) を第一級で表現し、決定論レンダラ render-report.js が各 block を正しく HTML 化する (表が `<br>` で潰れない・C19 実装 + schema 1.1.0→1.2.0 additive)。読み物可読性の report 読書 CSS は render-report.js の buildReportCss() が inline 出力する(正本=inventory C19.build_contract: buildReportCss() inline 出力・CCONST_006 自己完結 HTML・分離は将来オプション)。C25 pre-render gate が block 型多様性・新 block 型・読書 CSS class 出力の存在を被覆検査する。
-- [ ] 要件 C11 (report構造化): report が要点の色付き強調 (インライン highlight トークン + キーポイント/統計タイル) を schema トークン + render-report.js + 意匠SSOT配色 (Kanagawa accent) で表現し、見出しごとに整形される (bold→accent 1種のみを超える)。強調は色単一チャネルに依存せず font-weight/underline 等の第2チャネルを必須併存し色覚非依存 (C24 積極評価 + C25 非色属性の機械検査)。
-- [ ] 要件 C12 (report構造化): 図解の意味的配置 (placement.grid/zones/emphasis/focalPoint) を C18 の決定を render-report.js が反映し、図が段落末尾全幅固定でなく本文の該当箇所へ意味的に配置される (schema の placement デッドフィールドを live 化)。
-- [ ] 要件 C13 (report構造化): C24 report-quality-reviewer の RQ 積極評価次元 (論理展開成立/節間の論理接続 through-line/block 適合[多様性 < 適合性]/強調の効きと色覚非依存/意味的配置/reportType 横断要素の充足/見出し整形) と C25 validate-report-visual.py の機械チェック (block型多様性の決定論閾値/narrative 非空[role条件]/highlight 表現と非色属性/表・コード・番号リストの正 HTML 化/reportType別必須横断要素/placement live 反映/throughLine 非空) が『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も塞ぐ (機械強制の境界は shape/存在/閾値まで・意味の適合は C24 evaluator へ委譲=二層分離)。
-- [ ] 要件 C14 (report構造化): 『本質的に含むべき要素』の開いた読書体験カタログ (再問い由来) が report-narrative-logic.md 正本と 4 reportType 骨格へ reportType 別に additive 反映される。共通=エグゼクティブ要約/キーテイクアウェイ/意思決定・次アクション/根拠・出典/リスク・留保/TL;DR + 図表番号・キャプション + 長尺時の目次(TOC)・相互参照 + callout(note/warning/tip) + 文書メタ(version/updatedDate/readingTime/audience) + per-section recap + 表現機構(定義リスト/脚注引用/タスクリスト)、型別=技術ドキュメント(前提/用語定義/手順/既知の問題)・学習解説(学習目標/要点/演習)。C25 が reportType別必須横断要素の存在を機械検査し C01 受入へ結線する。読者が本質課題→解決→活用を追える。
-- [ ] 要件 C15 (report構造化): report が文書全体の通し筋 (meta.throughLine: 冒頭=本質課題→本論=解決→結=活用のアーク) と節間の論理接続 (section.transition) を持ち、節が羅列でなく弧で連結される。C17 が throughLine/transition/section.role の設計 owner、C24 が through-line を積極評価、C25 が長尺 report での throughLine 非空を機械検査する (節順序・節内論理に加え文書全体の弧を強制)。
-- [ ] 要件 C16 (report UI/UX): screen 表示が print 用 190mm 単層幅を流用せず、screen=可読幅本文カラム+sidebar レイアウト・print=190mm/A4 を `@media print` で温存する二層 CSS になっている (C19 render-report.js の buildReportCss() inline <style> 出力を正本責務として拡張。独立ファイル report.css への分離は将来オプション)。広画面で『空白 > 本文』の逆転が解消される。print 出力側は `@media print` ブロックの出力存在(C25 shape 検査)と従来 190mm/A4 読了体験の非退行(C24 積極評価)の二層で非退行を担保する (周回2 追加)。
-- [ ] 要件 C17 (report UI/UX): `.report-toc` が冒頭静的2カラムに留まらず、スクロール追従する sticky sidebar TOC + scrollspy (self-contained JS・print 無効) を持ち、狭画面はインライン TOC へ graceful degrade する (C19 実装)。print 時の TOC/scrollspy 無効化出力の存在と狭画面 breakpoint 出力の存在は C25 が shape 検査し、degrade の読みやすさ・探索性は C24 が積極評価する (周回2 追加)。
-- [ ] 要件 C18 (report UI/UX): 見出し/本文のタイポ・密度スケール (`--fs-title` 等) が狭カラム相対の過大から是正され、意匠 SSOT (Kanagawa 配色/フォント) は無改変のままスケール/spacing 変数のみ調整される (C19 実装)。
-- [ ] 要件 C19 (report UI/UX): C18が形式三択より先に節の論理構造→図種の写像(essence-visual)を行い、論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響}=_ESSENCE_REQUIRED_ROLES)に非none visual(visual.kind!=none)を必ず1枚割り当てる。写像規律はreference report-visual-strategy.md §0.5.1とvisual-strategist VCONST_000が正本。C24は装飾図表と図解すべき論理節でのvisual省略を負値評価し、C25はessence-visualカバレッジ(論理節のvisual.kind非none)を検査する。schemaは1.2.0のまま(essence-visualは既存role/visual.kindを使いschema bump不要)。
-- [ ] 全 25 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。
-- [ ] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0。
-- [ ] `handoff-run-plugin-dev-plan.json` の routes が inventory 由来で builder/build_kind/build_args/build_target を持ち、各 component を後段 builder へルーティングする。
+- [x] 基本定義 (plugin slug / purpose / スコープ) が宣言されている。
+- [x] ドメイン知識 (2 軸直交 / component_kind 5 種 / output_mode 分岐 / vendor 携行 / 用語集) が宣言されている。
+- [x] インフラ (実行環境 / core scripts / 目録所在 / surface 採否) が宣言されている。
+- [x] 環境ポリシー (品質基準 / 抜け漏れ厳禁 / proposer≠approver / 現状値非焼込) が宣言されている。
+- [x] 13 フェーズ (P01..P13) が phase_number 昇順で全存在し、各 phase 本文が §5 section 床 (`specfm.PHASE_BODY_SECTIONS` の宣言型 8 節) を満たす。
+- [x] 要件 C1: 既存 13 sub-agent が新 plugin の component (C04-C16) へ漏れなく写像されている。
+- [x] 要件 C2: output_mode=slide/report 分岐が主オーケストレータ skill (C01) と hearing-facilitator (C04) に焼かれ、意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別になっている。
+- [x] 要件 C3: report モードが 4 reportType 骨格 (report-structure schema・C17)・visual-strategist (C18・三択最適化)・Mermaid 統合・report HTML レンダラ (C19+vendor) を component として持つ。
+- [x] 要件 C4: Codex Image2 全面画像チェーン (C14+vendor) と 30種思考法の生成後評価ゲート (deck-evaluator C13 + hook C20) が両モードで機能する形で移植されている。
+- [x] 要件 C5: Node 製レンダリング/画像/印刷エンジンが vendored asset surface として携行され、Python-stdlib 書換なしで install 携帯性を満たす (skill から Bash(node *) 起動)。
+- [x] 要件 C6: `component-inventory.json` が 5 component_kind の検討証跡と plugin-level surfaces の採否・不要理由を記録している。
+- [x] 要件 C7: 各 buildable component が core 規律 quality_gates + harness_coverage(min≥80/kind_pass) を携帯している。
+- [x] 要件 C8: index が P01..P13 を phase_number 昇順で全列挙し plugin_meta (manifest/marketplace/ci/feedback_deploy) と受入確認章を携帯している。
+- [x] 要件 C9 (report構造化): report が節内論理展開 (本質課題→解決策→活用/含意) を section.narrative として持ち、reportType 骨格の節順序だけでなく節内部の論理構造を強制する (C17 設計 + report-narrative-logic.md 正本)。
+- [x] 要件 C10 (report構造化): report 本文が block 構造 (段落/markdownテーブル/フェンスドコードブロック/番号リスト/箇条書き/小見出し/キーポイント強調ボックス/統計タイル + 1.2.0 additive の定義リスト/脚注引用/タスクリスト) を第一級で表現し、決定論レンダラ render-report.js が各 block を正しく HTML 化する (表が `<br>` で潰れない・C19 実装 + schema 1.1.0→1.2.0 additive)。読み物可読性の report 読書 CSS は render-report.js の buildReportCss() が inline 出力する(正本=inventory C19.build_contract: buildReportCss() inline 出力・CCONST_006 自己完結 HTML・分離は将来オプション)。C25 pre-render gate が block 型多様性・新 block 型・読書 CSS class 出力の存在を被覆検査する。
+- [x] 要件 C11 (report構造化): report が要点の色付き強調 (インライン highlight トークン + キーポイント/統計タイル) を schema トークン + render-report.js + 意匠SSOT配色 (Kanagawa accent) で表現し、見出しごとに整形される (bold→accent 1種のみを超える)。強調は色単一チャネルに依存せず font-weight/underline 等の第2チャネルを必須併存し色覚非依存 (C24 積極評価 + C25 非色属性の機械検査)。
+- [x] 要件 C12 (report構造化): 図解の意味的配置 (placement.grid/zones/emphasis/focalPoint) を C18 の決定を render-report.js が反映し、図が段落末尾全幅固定でなく本文の該当箇所へ意味的に配置される (schema の placement デッドフィールドを live 化)。
+- [x] 要件 C13 (report構造化): C24 report-quality-reviewer の RQ 積極評価次元 (論理展開成立/節間の論理接続 through-line/block 適合[多様性 < 適合性]/強調の効きと色覚非依存/意味的配置/reportType 横断要素の充足/見出し整形) と C25 validate-report-visual.py の機械チェック (block型多様性の決定論閾値/narrative 非空[role条件]/highlight 表現と非色属性/表・コード・番号リストの正 HTML 化/reportType別必須横断要素/placement live 反映/throughLine 非空) が『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も塞ぐ (機械強制の境界は shape/存在/閾値まで・意味の適合は C24 evaluator へ委譲=二層分離)。
+- [x] 要件 C14 (report構造化): 『本質的に含むべき要素』の開いた読書体験カタログ (再問い由来) が report-narrative-logic.md 正本と 4 reportType 骨格へ reportType 別に additive 反映される。共通=エグゼクティブ要約/キーテイクアウェイ/意思決定・次アクション/根拠・出典/リスク・留保/TL;DR + 図表番号・キャプション + 長尺時の目次(TOC)・相互参照 + callout(note/warning/tip) + 文書メタ(version/updatedDate/readingTime/audience) + per-section recap + 表現機構(定義リスト/脚注引用/タスクリスト)、型別=技術ドキュメント(前提/用語定義/手順/既知の問題)・学習解説(学習目標/要点/演習)。C25 が reportType別必須横断要素の存在を機械検査し C01 受入へ結線する。読者が本質課題→解決→活用を追える。
+- [x] 要件 C15 (report構造化): report が文書全体の通し筋 (meta.throughLine: 冒頭=本質課題→本論=解決→結=活用のアーク) と節間の論理接続 (section.transition) を持ち、節が羅列でなく弧で連結される。C17 が throughLine/transition/section.role の設計 owner、C24 が through-line を積極評価、C25 が長尺 report での throughLine 非空を機械検査する (節順序・節内論理に加え文書全体の弧を強制)。
+- [x] 要件 C16 (report UI/UX): screen 表示が print 用 190mm 単層幅を流用せず、screen=可読幅本文カラム+sidebar レイアウト・print=190mm/A4 を `@media print` で温存する二層 CSS になっている (C19 render-report.js の buildReportCss() inline <style> 出力を正本責務として拡張。独立ファイル report.css への分離は将来オプション)。広画面で『空白 > 本文』の逆転が解消される。print 出力側は `@media print` ブロックの出力存在(C25 shape 検査)と従来 190mm/A4 読了体験の非退行(C24 積極評価)の二層で非退行を担保する (周回2 追加)。
+- [x] 要件 C17 (report UI/UX): `.report-toc` が sticky sidebar TOC + scrollspy + 現在節/読了進捗 topbar (self-contained JS・print 無効) を持ち、狭画面も details/summary で折り畳める sticky navigation を維持する (C19 実装)。print 無効化と狭画面 breakpoint は C25 が shape 検査し、読みやすさ・探索性は C24 が実描画で評価する。
+- [x] 要件 C18 (report UI/UX): 見出し/本文のタイポ・密度スケール (`--fs-title` 等) が狭カラム相対の過大から是正され、意匠 SSOT (Kanagawa 配色/フォント) は無改変のままスケール/spacing 変数のみ調整される (C19 実装)。
+- [x] 要件 C19 (report UI/UX): C18が形式三択より先に節の論理構造→図種の写像(essence-visual)を行い、論理構造を展開する実質節(role∈{分析/主張/課題/解決/所見/影響}=_ESSENCE_REQUIRED_ROLES)に非none visual(visual.kind!=none)を必ず1枚割り当てる。写像規律はreference report-visual-strategy.md §0.5.1とvisual-strategist VCONST_000が正本。C24は装飾図表と図解すべき論理節でのvisual省略を負値評価し、C25はessence-visualカバレッジ(論理節のvisual.kind非none)を検査する。schemaは1.2.0のまま(essence-visualは既存role/visual.kindを使いschema bump不要)。
+- [x] 要件 C20 (図解移植): セマンティックロール表 (`diagram-style-tokens.md`) が既存 svg-kit.cjs TOKENS/style-builder.cjs SPEC の Kanagawa 値を索引参照する形で新設され、diagram-design 独自配色を移植していない (色/フォントの既存デザイン維持)。
+- [x] 要件 C21 (図解移植): `diagram-layout-contract.md` に 4px グリッド/複雑度予算21項目/コネクタ5原則/focal rule/annotation文法/図解占有率レンジが additive 追補され、C07/C18 の prompt Layer6 に配線されている。
+- [x] 要件 C22 (図解移植): 決定論SVG38/CSS型44/.html.tpl128 の型統一対応表 (`diagram-type-crosswalk.md`) が新設され、`ref-diagram-system` の「索引は値を持たない」思想を保ったまま SKILL.md §2 と相互参照している。
+- [x] 要件 C23 (図解移植): plugin-root `assets/diagram-templates/*.html` の叩き台テンプレートが新設され (vendor integrity対象外のlive領域)、C09 html-generator がコピー起点フローで消費し、テンプレート骨格は成果物埋め込み用を正とする (単体ページ用でない)。
+- [x] 要件 C24 (図解移植・プロンプト配線修復): 図解関連 reference が resource-map.md/workflow-manifest.json resources[]/各 prompt Layer6 参照表へ型別・節番号付きで明記され、report-composer (C19) にも図解テンプレート参照が配線されている。
+- [x] 要件 C25 (図解移植・CSS/HTML図解lint新設): `validate-svg-diagram.py` (governance glue) が D14 以降のコードで CSS/HTML 図解とテンプレート自体を対象に 4pxグリッド/複雑度予算/accent個数/コネクタ幾何を機械検証する。
+- [x] 要件 C26 (図解移植・ゴールデン実例): 主要図解型の「入力→完成HTML」実例ペアが C09(slide系統)/C19(report系統)の skill-private examples/ 配下に追加され type reference からリンクされている。
+- [x] 要件 C27 (図解移植・不足図解型追加): diagram-design の27型と既存型の突合で判明した欠落型が既存 LLM 手書き経路 (references/diagram-*.md) へ既存トークン・経路体系で additive 追加され、vendor 決定論経路は無改変である。
+- [x] 要件 C28 (図解移植・溶け込み契約・最重要): 配置契約(C18 owner)・重複禁止契約(C12 S27/C24 積極評価+C25(p)機械検査)・文脈適合契約(C12 S28-S29/C24 積極評価+C19 render占有率+C25(q)機械検査) の3サブ契約が owner へ明確に結線され、図解が成果物へ違和感なく溶け込む (単体で豪華でも文脈から浮かない)。
+- [x] 全 25 component が >=1 phase の `entities_covered` に出現する (orphan 0 件)。新規 buildable component が増えていない (図解移植 C20-C28 も no-split で component数25を維持)。
+- [x] 同梱決定論ゲート (core + 拡張・機械正本=`specfm.GATE_SCRIPTS`) が全 exit0。
+- [x] `handoff-run-plugin-dev-plan.json` の routes が inventory 由来で builder/build_kind/build_args/build_target を持ち、各 component を後段 builder へルーティングする。
 
 ## 受入確認
 
-> 計画 (上記) が満たすのは「各 component が評価基準を携帯し決定論ゲートを通る」こと。**組み上がった実プラグインが当初 purpose を満たすか**は build 後に下記で確認する。plan は受入基準を**契約として焼く**だけで、実行は後段 build (run-skill-create の harness criteria-test)。purpose の正本 = `goal-spec.purpose`「presentation-slide-generator の全機能を抜け漏れなく移植した output_mode=slide/report の 2 モード・ビジュアル生成ハーネス」。要件 C1-C8 (移植/2モード) + C9-C15 (report 構造化改善) + C16-C19 (report UI/UX改善) の被覆は本章と上記完了チェックリストで宣言する。
+> 計画 (上記) が満たすのは「各 component が評価基準を携帯し決定論ゲートを通る」こと。**組み上がった実プラグインが当初 purpose を満たすか**は build 後に下記で確認する。plan は受入基準を**契約として焼く**だけで、実行は後段 build (run-skill-create の harness criteria-test)。purpose の正本 = `goal-spec.purpose`「presentation-slide-generator の全機能を抜け漏れなく移植した output_mode=slide/report の 2 モード・ビジュアル生成ハーネス」。要件 C1-C8 (移植/2モード) + C9-C15 (report 構造化改善) + C16-C19 (report UI/UX改善) + C20-C28 (図解移植・第4次: diagram-design-migration) の被覆は本章と上記完了チェックリストで宣言する。
 
 | 受入観点 (purpose 由来) | 確認の見方 (build 後) | 焼き先 |
 |---|---|---|
@@ -150,6 +161,7 @@ plugin_meta:
 | 生成後評価が両モードで機能する (C4) | 30種思考法で slide=視覚崩れ/1メッセージ・report=可読性/図解適合を区分評価し、hook が書込を検知して fail-soft に評価起動を促す | deck-evaluator (C13) + hook-postgen-eval (C20) |
 | Node engine が byte 携行で動く (C5) | node 再 install 後、skill/agent が Bash(node *) で render-slide.cjs 等を起動し HTML を出力 (Python 化していない)。byte 携行の検証は `vendor-digest-manifest.json` を比較基準に lint-vendor-parity.py で行う (移植元 live tree 非依存・additive_new_files は除外集合) | vendor surface + C10/C14/C18/C19 |
 | 修正/横断検証が独立起動できる | 既存成果物の局所修正 (C02)、シリーズ横断整合検出 (C03) が単独 skill で動く | modify skill (C02) / cross-deck-review skill (C03) の OUT criterion |
+| 図解が diagram-design 方式で再現性高く生成され成果物へ溶け込む (C20-C28) | セマンティックロール表(Kanagawa値)/数値化品質規約(4pxグリッド・複雑度予算・コネクタ5原則)/型統一対応表/叩き台テンプレート(plugin-root live)/プロンプト配線/CSS・HTML図解lint(D14+)/ゴールデン実例/不足図解型が揃い、生成図解が本文との重複なく(②)・周囲コンテンツと調和した密度/サイズ/トーンで(③)・型ごとの規定配置に(①)配置される。C12 slide側 S27-S29・C24 report側積極評価・C25(p)(q)機械検査・validate-svg-diagram.py(governance glue) D14+ が PASS する | C07(型選定/数値規約準拠)/C09(テンプレコピー起点/ゴールデン実例)/C12(S27-S29)/C17(narrative非重複)/C18(配置契約owner)/C19(render占有率/ゴールデン実例)/C24(重複禁止・文脈適合積極評価)/C25(機械検査(p)(q)(r))/validate-svg-diagram.py(D14+governance glue) + references_config_assets(diagram-style-tokens.md/diagram-type-crosswalk.md/assets/diagram-templates) |
 
 > C16-C19受入の追加精密化: 上表のwide/narrow/printは代表状態であり、必須matrixは899/900/901/1024/1366/1600px+print。宣言CSSだけでなくcomputed本文16-18px、card最小幅、hash-active+`aria-current`、font-ready/history/afterprint、essence-visual(論理節のvisual.kind非none・図が節の要旨を一目化するか)を判定する。本注記が旧来の「5分類+3状態」略記を上書きする。
 

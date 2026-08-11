@@ -23,6 +23,8 @@ const path = require('path');
 const { render, escapeHtml } = require('./template-engine.cjs');
 const { buildStyles } = require('./style-builder.cjs');
 const svg = require('./svg-builder.cjs');
+// 構造図 (配置戦略 × ノード語彙 × コネクタ語彙 の組合せで組んだ 10 タイプ)
+const struct = require('./svg-structures.cjs');
 const { renderD3BootstrapJs } = require('./d3-bootstrap.cjs');
 
 const SKILL_ROOT = path.resolve(__dirname, '..');
@@ -72,12 +74,11 @@ function parseArgs(argv) {
 const templateCache = {};
 function loadTemplate(slideType) {
   if (templateCache[slideType]) return templateCache[slideType];
-  // 直接マッチを試行 → schema 長名（slide-X）にフォールバック → message
+  // 直接マッチを試行 → schema 長名（slide-X）へalias解決。未知型はfail-closed。
   const candidates = [slideType];
   // alias 短縮名→長名
   const alias = TYPE_ALIASES && TYPE_ALIASES[slideType];
   if (alias) candidates.push(alias);
-  candidates.push('slide-message', 'message');
   for (const cand of candidates) {
     const p = path.join(TEMPLATE_DIR, `${cand}.html.tpl`);
     if (fs.existsSync(p)) {
@@ -86,7 +87,7 @@ function loadTemplate(slideType) {
       return t;
     }
   }
-  return '<section class="slider__item"><div class="slider__content"><h2>{{title}}</h2></div></section>';
+  throw new Error(`unknown slideType or missing template: ${slideType}`);
 }
 
 // ---------- slideType エイリアス（既存 24 短縮名 -> schema enum 名） ----------
@@ -98,6 +99,15 @@ const TYPE_ALIASES = {
   compare: 'slide-compare', 'code-compare': 'slide-code-compare',
   flow: 'slide-flow', process: 'slide-process', timeline: 'slide-timeline',
   table: 'slide-table', code: 'slide-code', highlight: 'slide-highlight',
+  // 構造図 10 タイプの別名。テンプレートは正式名の 1 枚だけを持ち、別名はここで寄せる
+  'diagram-system-map': 'diagram-architecture',
+  'diagram-pipeline': 'diagram-data-flow',
+  'diagram-entity': 'diagram-er',
+  'diagram-state-machine': 'diagram-state',
+  'diagram-lane': 'diagram-swimlane',
+  'diagram-overview': 'diagram-high-level',
+  'diagram-as-is-to-be': 'diagram-it-state',
+  'diagram-hub-spoke': 'diagram-dp-integration',
 };
 function normalizeSlideType(t) {
   return TYPE_ALIASES[t] || t;
@@ -262,6 +272,48 @@ function enrichSlideContext(slide, idx) {
   } else if (slideType === 'chart-gauge') {
     const v = typeof c.value === 'number' ? c.value : (typeof c.data === 'number' ? c.data : 0);
     ctx.svg = svg.buildGauge(v, { ariaLabel: aria });
+  } else if (slideType === 'diagram-architecture' || slideType === 'diagram-system-map') {
+    ctx.svg = struct.buildArchitecture(c.zones || c.layers || c.items || [], {
+      ariaLabel: aria, links: c.links || c.connections || [],
+    });
+  } else if (slideType === 'diagram-data-flow' || slideType === 'diagram-pipeline') {
+    ctx.svg = struct.buildDataFlow(c.stages || c.steps || c.items || [], { ariaLabel: aria });
+  } else if (slideType === 'diagram-er' || slideType === 'diagram-entity') {
+    ctx.svg = struct.buildEr(c.entities || c.items || [], {
+      ariaLabel: aria, relations: c.relations || c.links || [],
+    });
+  } else if (slideType === 'diagram-sequence') {
+    ctx.svg = struct.buildSequence(c.actors || c.items || [], c.messages || c.steps || [], { ariaLabel: aria });
+  } else if (slideType === 'diagram-state' || slideType === 'diagram-state-machine') {
+    ctx.svg = struct.buildState(c.states || c.items || [], c.transitions || c.links || [], { ariaLabel: aria });
+  } else if (slideType === 'diagram-swimlane' || slideType === 'diagram-lane') {
+    ctx.svg = struct.buildSwimlane(c.lanes || c.items || [], {
+      ariaLabel: aria, stepLabels: c.stepLabels || c.phases || [],
+    });
+  } else if (slideType === 'diagram-high-level' || slideType === 'diagram-overview') {
+    ctx.svg = struct.buildHighLevel(c.levels || c.tiers || c.items || [], { ariaLabel: aria });
+  } else if (slideType === 'diagram-it-state' || slideType === 'diagram-as-is-to-be') {
+    ctx.svg = struct.buildItState(c.rows || c.items || [], {
+      ariaLabel: aria, columns: c.columns || c.headers || [],
+    });
+  } else if (slideType === 'diagram-medallion') {
+    ctx.svg = struct.buildMedallion(c.tiers || c.layers || c.items || [], { ariaLabel: aria });
+  } else if (slideType === 'diagram-dp-integration' || slideType === 'diagram-hub-spoke') {
+    ctx.svg = struct.buildDpIntegration(c.hub || c.center || {}, c.spokes || c.systems || c.items || [], { ariaLabel: aria });
+  }
+
+  // 参照整合は描画済み座標から推測せず、作図宣言を成果物へそのまま運んで検査する。
+  const referentialTypes = new Set([
+    'diagram-architecture', 'diagram-data-flow', 'diagram-er', 'diagram-sequence',
+    'diagram-state', 'diagram-swimlane', 'diagram-high-level', 'diagram-it-state',
+    'diagram-medallion', 'diagram-dp-integration',
+  ]);
+  if (ctx.svg && referentialTypes.has(slideType)) {
+    const declaration = c.svgSpec || c.diagramSpec || c;
+    ctx.svg = ctx.svg.replace(
+      /^<svg\b/,
+      `<svg data-srg-declaration="${escapeHtml(JSON.stringify(declaration))}"`,
+    );
   }
 
   // ---- D3 dispatch ----
@@ -331,7 +383,15 @@ function normalizeRenderedSlideHtml(html, slide, idx, v8ctx) {
   }
   out = out.replace(/\bdata-index="[^"]*"/i, `data-index="${idx}"`);
   out = out.replace(/var\((--[a-z0-9-]+),\s*#[0-9a-f]{3,8}\)/gi, 'var($1)');
-  out = out.replace(/fill="#fff"/gi, 'fill="var(--bg-dark)"');
+  // 白の fill には役割が 2 つある。板の地色としての白は暗色テーマで反転させたいが、
+  // 色地の上に置いた文字の白を反転させると読めなくなる (色付き円のラベルが消える)。
+  // 属性の文字列一致だけで判断せず、タグ名を見てから置換する。
+  out = out.replace(
+    /<([a-zA-Z][\w-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)fill="#fff"/gi,
+    (whole, tag, attrs) => (/^(text|tspan)$/i.test(tag)
+      ? whole
+      : `<${tag}${attrs}fill="var(--bg-dark)"`),
+  );
   // v7.5.1: テンプレが付与する `slide-slide-*` を `slide-*` に正規化し、
   // style-builder.cjs の `.slide-table` `.slide-grid` 等のセレクタと整合させる。
   out = out.replace(/\bslide-slide-([a-z0-9-]+)/gi, 'slide-$1');
@@ -641,6 +701,7 @@ function main() {
   (data.sections || []).forEach(sec => v8ctx.sectionMap.set(sec.id, sec));
 
   // generate slide HTML fragments
+  const renderFailures = [];
   const slidesHtml = slides
     .map((s, i) => {
       try {
@@ -654,11 +715,16 @@ function main() {
         }
         return normalizeRenderedSlideHtml(render(tpl, ctx, {}), s, i, v8ctx);
       } catch (err) {
-        console.warn(`[render-slide] slide ${i} (${s.slideType}) failed:`, err.message);
-        return normalizeRenderedSlideHtml(`<section class="slider__item slide-error" data-index="${i}"><div class="slider__content"><h2>${escapeHtml(s.slideType || '')}</h2><p class="text-note">[render error: ${escapeHtml(err.message)}]</p></div></section>`, s, i, v8ctx);
+        renderFailures.push(`slide ${i} (${s.slideType}): ${err.message}`);
+        return '';
       }
     })
     .join('\n');
+
+  if (renderFailures.length) {
+    console.error('[render-slide] FAIL\n  ' + renderFailures.join('\n  '));
+    process.exit(3);
+  }
 
   const paginationHtml = buildPaginationFragment(slides.length, data.sections || meta.sections || []);
   const html = buildScaffold({ meta, slidesHtml, paginationHtml, theme: data.theme });

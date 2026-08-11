@@ -251,47 +251,106 @@ check('(1.1.0) blockquote', h110.includes('report-quote'));
 check('(1.1.0) 図の図表番号 図1.', h110.includes('図1. 図'));
 check('(1.1.0) 意味的配置 2カラム grid', h110.includes('report-grid--2col'));
 check('(1.1.0) 目次 TOC', h110.includes('report-toc') && h110.includes('目次'));
-check('(1.3.0 UI) screen layout の SSOT token (72ch/15rem/1240px)',
-  h110.includes('--report-measure: 72ch') &&
-  h110.includes('--report-sidebar-w: 15rem') &&
-  h110.includes('--report-page-max: 1240px'));
-check('(1.3.0 UI) sticky sidebar + 900px graceful degrade + print guard',
+// 1.4.0: 可読幅を ch (半角基準) から em (全角 1 字 = 1em) へ移し、全角 40 字を正本にした。
+// sidebar/page-max もその本文幅に合わせて配分し直している。
+check('(1.4.0 UI) screen layout の SSOT token (40em/16rem/1160px)',
+  h110.includes('--report-measure: 40em') &&
+  h110.includes('--report-sidebar-w: 16rem') &&
+  h110.includes('--report-page-max: 1160px'));
+// ===== 1.4.0: ブログとして成立させる読書導線 =====
+check('(1.4.0 UI) 追従ヘッダー: sticky + 現在節 + 読了進捗',
+  h110.includes('class="report-topbar"') &&
+  h110.includes('.report-topbar {\n  position: sticky; top: 0;') &&
+  h110.includes('data-report-here') &&
+  h110.includes('data-report-progress'));
+check('(1.4.0 UI) 追従ヘッダーは print で消える (紙に浮遊 UI は無い)',
+  h110.includes('@media print { .report-topbar { display: none !important; } }'));
+check('(1.4.0 UI) sticky 要素の top は追従ヘッダー高 (--report-topbar-h) を基準に揃う',
+  h110.includes('--report-topbar-h: 3.25rem') &&
+  h110.includes('position: sticky; top: calc(var(--report-topbar-h) + var(--space-4, 1rem))'));
+check('(1.4.0 UI) 目次は既定 ON (meta.toc 未指定でも出る)',
+  (() => {
+    const s = JSON.parse(JSON.stringify(s110));
+    delete s.meta.toc;
+    const h = renderReport(s);
+    return h.includes('class="report-toc report-toc--sidebar"')
+      && !h.includes('class="report-layout report-layout--no-toc"');
+  })());
+check('(1.4.0 UI) meta.toc:false は従来どおり目次なし 1 カラム',
+  (() => {
+    const s = JSON.parse(JSON.stringify(s110));
+    s.meta.toc = false;
+    const h = renderReport(s);
+    return !h.includes('class="report-toc report-toc--sidebar"')
+      && h.includes('class="report-layout report-layout--no-toc"');
+  })());
+check('(1.4.0 UI) 目次は details/summary で畳める (狭画面で本文を圧迫しない)',
+  h110.includes('<details class="report-toc__box" open>') &&
+  h110.includes('<summary class="report-toc__title">目次</summary>'));
+check('(1.4.0 UI) 狭画面でも目次は sticky を維持 (display:contents で親の高さを得る)',
+  h110.includes('.report-sidebar { display: contents; }') &&
+  h110.includes('position: sticky; top: var(--report-topbar-h); z-index: 20;'));
+check('(1.4.0 本文) 段落は文単位の行ブロックへ組まれる',
+  (() => {
+    const s = JSON.parse(JSON.stringify(s110));
+    s.sections[0].body = [{ type: 'paragraph', text: '前提を置く。次に検証する。' }];
+    const h = renderReport(s);
+    return h.includes('<span class="report-sent">前提を置く。</span>')
+      && h.includes('<span class="report-sent">次に検証する。</span>');
+  })());
+check('(1.4.0 本文) 括弧の内側の句点では切らない (引用が分断されない)',
+  (() => {
+    const s = JSON.parse(JSON.stringify(s110));
+    s.sections[0].body = [{ type: 'paragraph', text: '彼は「早い。だが粗い。」と述べた。以上。' }];
+    const h = renderReport(s);
+    return h.includes('<span class="report-sent">彼は「早い。だが粗い。」と述べた。</span>');
+  })());
+check('(1.4.0 本文) 1 文だけの段落は span で包まない (DOM を無駄に増やさない)',
+  (() => {
+    const s = JSON.parse(JSON.stringify(s110));
+    s.sections[0].body = [{ type: 'paragraph', text: 'ひとつの文だけ。' }];
+    return !renderReport(s).includes('<span class="report-sent">ひとつの文だけ。</span>');
+  })());
+check('(1.4.0 本文) 文ブロックは行として積まれる CSS を持つ',
+  h110.includes('.report-sent { display: block; }'));
+
+check('(report-uiux UI) sticky sidebar + 900px graceful degrade + print guard',
   h110.includes('.report-toc--sidebar') &&
-  h110.includes('@media (max-width: 900px)') &&
+  h110.includes('@media screen and (max-width: 900px)') &&  // print へ後勝ちしない
   h110.includes("matchMedia('print')"));
-check('(1.3.0 UI) printではsidebar TOCを非表示',
+check('(report-uiux UI) printではsidebar TOCを非表示',
   h110.includes('.report-sidebar { display: none !important; }'));
-check('(1.3.0 UI) scrollspy controller は再評価時に destroy して idempotent',
+check('(report-uiux UI) scrollspy controller は再評価時に destroy して idempotent',
   h110.includes("var CONTROLLER_KEY = '__slideReportScrollspy'") &&
   h110.includes('window[CONTROLLER_KEY].destroy()') &&
   h110.includes('var controller = { start: start, stop: stop, destroy: destroy'));
-check('(1.3.0 UI) 初期 hash / TOC click / manual scroll を単一 activate 経路へ統合',
+check('(report-uiux UI) 初期 hash / TOC click / manual scroll を単一 activate 経路へ統合',
   h110.includes('syncFromLocation(true); /* 初期 hash') &&
   h110.includes("addEventListener('click', onTocClick)") &&
   h110.includes("addEventListener('scroll', scheduleScrollSync") &&
   h110.includes("setAttribute('aria-current', 'location')"));
-check('(1.3.0 UI) hashchange / popstate / fonts.ready 後に再着地',
+check('(report-uiux UI) hashchange / popstate / fonts.ready 後に再着地',
   h110.includes("addEventListener('hashchange', onHistoryNavigation)") &&
   h110.includes("addEventListener('popstate', onHistoryNavigation)") &&
   h110.includes('document.fonts.ready.then') &&
   h110.includes("scrollIntoView({ block: 'start' })"));
-check('(1.3.0 UI) beforeprint stop / afterprint restart+active復元',
+check('(report-uiux UI) beforeprint stop / afterprint restart+active復元',
   h110.includes("addEventListener('beforeprint', onBeforePrint)") &&
   h110.includes("addEventListener('afterprint', onAfterPrint)") &&
   /function onBeforePrint\(\)\s*\{[^}]*printing = true;[^}]*stop\(\)/s.test(h110) &&
   /function onAfterPrint\(\)\s*\{[^}]*printing = false;[^}]*start\(\)/s.test(h110) &&
   h110.includes('restoreAfterPrint'));
-check('(1.3.0 UI) toc=false では scrollspy controller を出力しない', (() => {
+check('(report-uiux UI) toc=false では scrollspy controller を出力しない', (() => {
   const h = renderReport({ ...s110, meta: { ...s110.meta, toc: false } });
   return !h.includes('__slideReportScrollspy') && !h.includes('report-toc--sidebar" aria-label="目次');
 })());
 const scrollspy = runScrollspyHarness(h110);
-check('(1.3.0 runtime) 初期 hash target を active + aria-current + 再着地',
+check('(report-uiux runtime) 初期 hash target を active + aria-current + 再着地',
   scrollspy.activeId() === 'section-legacy' &&
   scrollspy.links[1].getAttribute('aria-current') === 'location' &&
   scrollspy.targets[1].scrollCount === 1);
 scrollspy.click('section-a');
-check('(1.3.0 runtime) TOC click は active/aria-current を即時同期',
+check('(report-uiux runtime) TOC click は active/aria-current を即時同期',
   scrollspy.activeId() === 'section-a' &&
   scrollspy.links[0].getAttribute('aria-current') === 'location' &&
   scrollspy.links[1].getAttribute('aria-current') === null);
@@ -299,34 +358,34 @@ scrollspy.setTop('section-a', -100);
 scrollspy.setTop('section-legacy', 500);
 scrollspy.dispatch('scroll');
 scrollspy.flushRaf();
-check('(1.3.0 runtime) manual scroll は viewport marker 直前の section を選択', scrollspy.activeId() === 'section-a');
+check('(report-uiux runtime) manual scroll は viewport marker 直前の section を選択', scrollspy.activeId() === 'section-a');
 scrollspy.fakeWindow.location.hash = '#section-legacy';
 scrollspy.dispatch('hashchange');
 scrollspy.flushRaf();
-check('(1.3.0 runtime) hashchange は target を active + 再着地',
+check('(report-uiux runtime) hashchange は target を active + 再着地',
   scrollspy.activeId() === 'section-legacy' && scrollspy.targets[1].scrollCount === 2);
 scrollspy.fakeWindow.location.hash = '#section-a';
 scrollspy.dispatch('popstate');
 scrollspy.flushRaf();
-check('(1.3.0 runtime) popstate は履歴 target を復元',
+check('(report-uiux runtime) popstate は履歴 target を復元',
   scrollspy.activeId() === 'section-a' && scrollspy.targets[0].scrollCount === 1);
 scrollspy.fakeWindow.location.hash = '#section-legacy';
 scrollspy.fontReady();
-check('(1.3.0 runtime) document.fonts.ready は hash target へ再着地',
+check('(report-uiux runtime) document.fonts.ready は hash target へ再着地',
   scrollspy.activeId() === 'section-legacy' && scrollspy.targets[1].scrollCount === 3);
 scrollspy.fakeWindow.location.hash = '';
 const observerBeforePrint = scrollspy.observerInstances.at(-1);
 scrollspy.dispatch('beforeprint');
-check('(1.3.0 runtime) beforeprint は observer/scroll監視を停止',
+check('(report-uiux runtime) beforeprint は observer/scroll監視を停止',
   observerBeforePrint.disconnected && scrollspy.listenerCount('scroll') === 0);
 scrollspy.dispatch('afterprint');
-check('(1.3.0 runtime) afterprint は controllerを再起動して直前activeを復元',
+check('(report-uiux runtime) afterprint は controllerを再起動して直前activeを復元',
   scrollspy.activeId() === 'section-legacy' &&
   scrollspy.listenerCount('scroll') === 1 &&
   scrollspy.observerInstances.length === 2);
 const controllerBeforeRerun = scrollspy.fakeWindow.__slideReportScrollspy;
 scrollspy.rerun();
-check('(1.3.0 runtime) script 再評価は旧controllerを破棄しlistenerを一重に維持',
+check('(report-uiux runtime) script 再評価は旧controllerを破棄しlistenerを一重に維持',
   scrollspy.fakeWindow.__slideReportScrollspy !== controllerBeforeRerun &&
   scrollspy.listenerCount('scroll') === 1 &&
   scrollspy.listenerCount('hashchange') === 1 &&
@@ -426,6 +485,71 @@ check('(1.2.0 parts) parts 無しは従来の主帯のみ (part 要素なし)', 
   return h.includes('class="report-throughline"') && !h.includes('<ol class="report-throughline-parts"');
 })());
 check('(1.2.0 parts) 決定論: 2回 byte 一致', hParts === renderReport(sParts));
+
+// ===== 1.4.0: 構造図 10 種の report 経路 =====
+// variant が schema enum に存在するだけでは、共通 core (nodes/edges/groups) から
+// svg-structures.cjs の引数へ射影できる保証にならない。各引数形を実描画し、
+// fallback へ静かに退避していないことまで確認する。
+const structuralVariants = {
+  architecture: {
+    groups: [{ id: 'g-a', label: '外部' }, { id: 'g-b', label: '内部' }],
+    nodes: [{ id: 'n-a', label: '入口', group: 'g-a' }, { id: 'n-b', label: '処理', group: 'g-b' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: '要求' }],
+  },
+  'data-flow': {
+    nodes: [{ id: 'n-a', label: '収集' }, { id: 'n-b', label: '変換' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: 'JSON' }],
+  },
+  swimlane: {
+    groups: [{ id: 'g-a', label: '担当A' }, { id: 'g-b', label: '担当B' }],
+    nodes: [{ id: 'n-a', label: '受付', group: 'g-a' }, { id: 'n-b', label: '承認', group: 'g-b' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: '引継ぎ' }],
+  },
+  er: {
+    nodes: [{ id: 'n-a', label: 'User', subtext: 'id/name' }, { id: 'n-b', label: 'Order', subtext: 'id/user_id' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: 'places' }],
+  },
+  sequence: {
+    nodes: [{ id: 'n-a', label: 'Client' }, { id: 'n-b', label: 'API' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: 'GET' }, { from: 'n-b', to: 'n-a', label: '200', kind: 'dashed' }],
+  },
+  state: {
+    nodes: [{ id: 'n-a', label: '未処理' }, { id: 'n-b', label: '完了', emphasis: 'highlight' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: '実行' }],
+  },
+  'it-state': {
+    groups: [{ id: 'g-a', label: '業務' }],
+    nodes: [{ id: 'n-a', label: '現状', group: 'g-a' }, { id: 'n-b', label: '理想', group: 'g-a' }],
+  },
+  medallion: {
+    groups: [{ id: 'g-a', label: 'Bronze' }, { id: 'g-b', label: 'Silver' }],
+    nodes: [{ id: 'n-a', label: 'Raw', group: 'g-a' }, { id: 'n-b', label: 'Clean', group: 'g-b' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: '品質化' }],
+  },
+  'high-level': {
+    groups: [{ id: 'g-a', label: '入口' }, { id: 'g-b', label: '中核' }],
+    nodes: [{ id: 'n-a', label: 'Web', group: 'g-a' }, { id: 'n-b', label: 'API', group: 'g-b' }],
+    edges: [{ from: 'n-a', to: 'n-b', label: '呼出' }],
+  },
+  'dp-integration': {
+    nodes: [{ id: 'n-hub', label: '基盤', emphasis: 'highlight' }, { id: 'n-a', label: 'CRM' }, { id: 'n-b', label: 'BI' }],
+    edges: [{ from: 'n-a', to: 'n-hub', label: '入力' }, { from: 'n-hub', to: 'n-b', label: '出力' }],
+  },
+};
+for (const [variant, material] of Object.entries(structuralVariants)) {
+  const structureVariant = {
+    meta: { title: variant, reportType: 'tech-doc', audience: 'dev', keyMessage: '構造図を検証', toc: false },
+    theme: { name: 'kanagawa-lotus', accentColors: ['blue'] },
+    sections: [{
+      id: 'section-structure', heading: variant, body: [{ type: 'paragraph', text: '構造図の本文。' }],
+      visual: { kind: 'svg', rationale: '構造図の実配線テスト', caption: variant, spec: { variant, ...material } },
+    }],
+  };
+  const rendered = renderReport(structureVariant);
+  check(`(1.4.0 structure) ${variant} を fallback せず描画`,
+    rendered.includes('class="report-visual report-visual--svg"') &&
+    !rendered.includes('report-visual--fallback'));
+}
 
 console.log('');
 if (failed > 0) {

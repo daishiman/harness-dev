@@ -3,6 +3,12 @@
 > **目的**: 画面プレビューと印刷PDFの見た目を完全に一致させる（差分ゼロ化）。
 > 既存 `references/print-layout.md` の「印刷時に font-size / padding / gap を別途縮小」する方式を撤廃し、
 > 画面と印刷の双方を「viewport正規化座標系」上で同一スケールに統一する。
+>
+> **適用範囲 (これを外すと 2 体系が同じ面へ同時に効く)**: 本ファイルは `slider-*` 体系の面に効く。
+> `assets/slide-templates/` のひな形 (`.srg-*` 体系) を使う面は **絶対 px の固定座標系 (1280x720) を
+> `transform: scale(--srg-fit)` 1 手段で合わせる**別体系で、本ファイルの vw/vh 規範と `@page { margin: 0 }`
+> は適用しない。どちらが効くかの逐語の正本は `references/spec-registry.md` の **SR-1-07 / SR-7-11**
+> (面の判別は `.srg-slide` の有無)。ここへ写すと片方だけ更新されて食い違うので写さない。
 
 ---
 
@@ -149,6 +155,11 @@ viewBox がスライド領域に伸縮するため、画面・印刷で完全に
 ## §4 印刷時の viewport 固定
 
 ### §4.1 必須 CSS（`assets/print-styles.css` 末尾に追記する想定）
+
+> **ひな形 (`.srg-*`) を使う deck ではこの `@page` を書かない** (SR-7-11)。
+> `slide-skeleton.css` が `@page { margin: 21.47mm 0 }` を持っており、`@page` はカスケードで
+> 後に書いた側が勝つため、ここで `margin: 0` を重ねるとレターボックス帯が消える。
+> `@page` 宣言は成果物全体でちょうど 1 つに保つ。
 
 ```css
 /* === A4 横向き、余白ゼロでviewportを固定 === */

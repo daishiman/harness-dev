@@ -1,0 +1,107 @@
+<!--
+  pdca-golden.html — ゴールデン実例: PDCA サイクル型 (slide 骨格)
+
+  入力: pdca-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.26 PDCA サイクル型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #1 / §D-3 原則 1 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict pdca-golden.html
+
+  §11.26 の作図文法 (四象限 + 中心 + 循環矢印) を SVG へ移した。
+  節のコード例は各象限に rgba(0,0,0,0.4) の影を敷き、象限ごとに系列 4 色を配るが、
+  影は R9-14 (常に 0)・純黒は style-tokens の禁止・系列色は §2 の使用制限に触れる。
+  循環の矢印は §D-3 原則 1 のとおり直交のみで引いてある。曲線の環にすると
+  象限の角を跨ぐことになり、矢印がどの箱から出てどの箱へ入るのかが曖昧になる。
+  中心円は象限の隙間 (64) にちょうど収め、象限と重ねない。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-pdca">
+
+  <svg viewBox="0 0 480 480"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-pdca-caption">
+
+    <defs>
+      <marker id="d-pdca-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-pdca-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-pdca-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 周期と向き / 記号の凡例 (上端の余白) -->
+    <text x="24" y="36" font-size="12" fill="var(--fg, #43436c)">時計回り・1 周 = 1 か月</text>
+    <text x="456" y="36" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">色の枠は今期の対象・破線は注記</text>
+
+    <!-- 循環 4 本 (象限の隙間だけを通る・直交のみ) -->
+    <path d="M 208 128 H 264" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-pdca-arrow)"/>
+    <path d="M 352 208 V 264" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-pdca-arrow)"/>
+    <path d="M 272 352 H 216" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-pdca-arrow)"/>
+    <path d="M 128 272 V 216" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-pdca-arrow)"/>
+
+    <!-- 各工程が次へ渡すもの (循環線のラベル。象限の隙間だけに置く) -->
+    <text x="236" y="120" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">実施計画</text>
+    <text x="360" y="244" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">実施ログ</text>
+    <text x="240" y="344" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">差分一覧</text>
+    <text x="136" y="244" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">改訂基準</text>
+
+    <!-- 左上: Plan -->
+    <g>
+      <rect x="48" y="48" width="160" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="128" y="120" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">Plan</text>
+      <text x="128" y="148" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">打ち手を決める</text>
+    </g>
+
+    <!-- 右上: Do -->
+    <g>
+      <rect x="272" y="48" width="160" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="352" y="120" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">Do</text>
+      <text x="352" y="148" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">決めた順に実施</text>
+    </g>
+
+    <!-- 右下: Check (焦点。実務で最も飛ばされる工程) -->
+    <g>
+      <rect x="272" y="272" width="160" height="160" rx="8"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="352" y="344" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">Check</text>
+      <text x="352" y="372" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">差分を見る</text>
+    </g>
+
+    <!-- 左下: Act -->
+    <g>
+      <rect x="48" y="272" width="160" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="128" y="344" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">Act</text>
+      <text x="128" y="372" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">基準を書き換える</text>
+    </g>
+
+    <!-- 中心 (象限の隙間にちょうど収める。総称語の再掲ではなく現在地を置く) -->
+    <g>
+      <circle cx="240" cy="240" r="32" fill="#FFFFFF" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <text x="240" y="236" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">3 周目</text>
+      <text x="240" y="254" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">2026/7</text>
+    </g>
+
+    <!-- 注釈 1 件 (輪が止まる条件。下辺の余白のみ・矢じりは付けない) -->
+    <text x="24" y="456" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">差分が基準内なら 2 周で終了</text>
+    <path d="M 200 448 Q 300 452 396 438" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="396" cy="438" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-pdca-caption" class="srg-diagram__caption">
+    四象限を時計回りにたどる。色が付いているのは、今期に手を入れる工程である。
+  </figcaption>
+
+</figure>

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-cross-deck-review",
-    "skill_md_sha256": "8ff77c97609ac3607779a54bf16291b59e592f59953d93ac8b6c738e441377f7"
+    "skill_md_sha256": "3f24f600d61ac7e06796de44561b090fd37e1d67996d12fada34812cc7184fbd"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "codex-independent-cross-deck-rubric",
-  "reviewed_at": "2026-07-12T00:41:31Z",
+  "reviewer": "review-group-c-independent-rubric",
+  "reviewed_at": "2026-07-22T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,16 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "Single responsibility remains read-only cross-deck detection and classification; generation and repair are explicitly delegated to run-slide-report-generate and run-slide-report-modify.",
-      "Progressive disclosure remains intact: SKILL.md routes to the R1 execution contract, workflow manifest, output schema, rule reference, and name-addressed cross-deck-reviewer adapter/R2 prompt without duplicating the full procedure in the router.",
-      "IN1 and OUT1 are purpose-specific and executable. The four-file input gate is fail-closed, machine and visual C-number ownership is unambiguous, and the Node fixture proves dirty detection plus a zero-issue clean PASS control.",
-      "Current validation evidence is validate-frontmatter exit 0, prompt-contract drift fatal=0/warn=0, feedback-contract exit 0, Node acceptance PASS, and 131 focused slide-report-generator pytest cases PASS."
+      "render-findings-score.py を L0(ref-skill-design-rubric)+L2(assign-skill-design-evaluator) 合成で実行し score=100 / threshold=80 / passed=true / findings=[] を得た。FM-001..005・BD-001..004・NM-001..003・PD-001 の全 rule で違反ゼロ。",
+      "frontmatter description の trigger は『〜したいとき』x2(2..3 に収まり FM-003 PASS)、動詞相当語『検出』を含み FM-005 PASS。name=run-cross-deck-review はディレクトリ名一致(NM-001)・prefix run 準拠(NM-002)。",
+      "body に '## Purpose & Output Contract'(BD-001) と '## Gotchas'(BD-002) が存在、frontmatter 除く行数は 300 行制約(BD-003)内、references/ 非空で PD-001 充足。",
+      "SRG_ROOT パス変数リネームは rubric 次元(命名・frontmatter・body 構造・progressive disclosure)に一切影響せず、決定論採点は満点を維持した。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual-skill-sha-change",
+    "hook_trigger": "stop-hook",
     "next_action": "none"
   },
-  "notes": "Genuine rubric re-evaluation was required because SKILL.md changed from the prior reviewed SHA. Existing repository-wide feedback-contract baseline warnings are non-fatal and unrelated to this skill."
+  "notes": "決定論採点: rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d, composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9, score=100, threshold=80, passed=true, findings=0。パス変数リネーム検証: SKILL.md 本文の $CLAUDE_PLUGIN_ROOT -> ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT} は全 5 箇所とも POSIX default-value 展開 ${VAR:-default} の正規形で閉じ } 欠落・二重展開・ネスト崩れなし。rubric ルールはパス変数値に依存しないため score/verdict 不変。実測に基づく PASS(Goodhart 緑化ではない)。"
 }

@@ -104,6 +104,14 @@ ${spec.spacing.map((v, i) => `  --space-${i + 1}: ${v};`).join('\n')}
   --nav-top-padding: ${spec.navTopPadding};
   --nav-arrow-padding: ${spec.navArrowPadding};
   --nav-bottom-padding: ${spec.navBottomPadding};
+  /* 浮遊ページネーション UI が実際に占める領域。各値は下の .pg-* 定義と対で、
+     ここを変えずに .pg-* の位置だけ動かすと本文が下に潜り込む。
+       下: pg-controls (bottom 4vh + btn 5vh) と pg-dots (bottom 1.6vh + dot 域) の外側
+       右: pg-controls (right 1.6vw + btn 5vh)
+       上: pg-counter (top 1.6vh + 高さ) / pg-section-nav */
+  --pg-reserve-bottom: calc(4vh + 5vh + 1.2vh);
+  --pg-reserve-side: calc(1.6vw + 5vh + 1.2vh);
+  --pg-reserve-top: calc(1.6vh + 4.2vh + 1.2vh);
 }
 `;
 }
@@ -121,7 +129,15 @@ html, body { width: 100%; height: 100%; background: var(--bg-dark); color: var(-
 .slider__item {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
-  padding: var(--nav-top-padding) var(--nav-arrow-padding) var(--nav-bottom-padding); /* SR-4-02 */
+  /* SR-4-02。浮遊 UI (pg-controls / pg-dots / pg-counter) は position:fixed で
+     vh・vw 指定、一方この逃げは rem 固定だった。単位系が違うため画面の縦横比が
+     変わると必ずどこかで衝突し、実測では 1440x900 で送りボタンと図解が
+     556px² 重なった。max() で「rem の意匠」と「浮遊 UI の占有域」の大きい方を
+     取り、どの比率でも重ならないことを保証する。 */
+  padding:
+    max(var(--nav-top-padding), var(--pg-reserve-top))
+    max(var(--nav-arrow-padding), var(--pg-reserve-side))
+    max(var(--nav-bottom-padding), var(--pg-reserve-bottom));
   opacity: 0; visibility: hidden;
   display: flex; flex-direction: column;
   background: var(--bg-dark);
@@ -332,6 +348,41 @@ function buildSlideTypes() {
 .slide-diagram h2, .slide-chart h2, .slide-d3 h2 { font-size: var(--fs-heading); margin-bottom: var(--space-4); }
 .slide-diagram svg, .slide-chart svg { width: 100%; max-height: 60vh; }
 .slide-d3 .d3-mount { width: 100%; height: 60vh; }
+
+/* ===== ビジュアルの縦寸は「残った空き」で決める (SR-4-02 の実効化) =====
+   上の 60vh / 70vh は見出しの行数を知らない固定値で、h2 が 2 行になると
+   nav-top(4rem) + 見出し + 60vh + nav-bottom(5rem) が 100vh を超え、
+   あふれた図解がページネーション帯へせり出す。ここで残余割当に上書きする。
+
+   セレクタを [class*=] にしているのは、.slide-diagram が完全一致であり
+   slide-diagram-architecture のような派生タイプに 1 つも効かないため。 */
+.slider__item[class*="slide-diagram"] > .slider__content > svg,
+.slider__item[class*="slide-chart"] > .slider__content > svg,
+.slider__item[class*="slide-flow"] > .slider__content > svg,
+.slider__item[class*="slide-cycle"] > .slider__content > svg,
+.slider__item[class*="slide-pyramid"] > .slider__content > svg,
+.slider__item[class*="slide-circle"] > .slider__content > svg {
+  flex: 1 1 auto;
+  /* flex item の既定 min-height:auto は「内容より小さくならない」を意味し、
+     これがある限り max-height を書いても縮まずにはみ出す。0 にして初めて
+     残余に収まる。この 1 行が実際の効き所。 */
+  min-height: 0;
+  max-height: 100%;
+  width: 100%;
+  height: auto;
+  /* SVG 自身のアスペクト比を保ったまま残余の中央へ置く */
+  object-fit: contain;
+}
+/* d3 のマウント先も同様に残余へ従わせる (60vh 固定を上書き) */
+.slider__item[class*="slide-d3"] > .slider__content > .d3-mount {
+  flex: 1 1 auto; min-height: 0; height: auto;
+}
+/* 見出しと本文は縮まない側に固定する。これが無いと flex が見出しを潰し、
+   「図解は収まったが見出しが読めない」という逆の破綻になる。 */
+.slider__content > h1,
+.slider__content > h2,
+.slider__content > h3,
+.slider__content > .slide-lead { flex: 0 0 auto; }
 
 /* ===== foreignObject card (SR-6-04) ===== */
 .fo-card { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.8vw; box-sizing: border-box; font-family: var(--font-base); }

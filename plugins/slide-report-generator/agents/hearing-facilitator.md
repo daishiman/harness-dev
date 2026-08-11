@@ -1,6 +1,6 @@
 ---
 name: hearing-facilitator
-description: ヒアリングを独立 context で行い output_mode(slide/report)・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う。
+description: ヒアリングを独立 context で行い output_mode(slide/report)・読者価値ブリーフ・全面画像化ゲート(CONST_006)・report固有要件を確定したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,12 +20,12 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-ヒアリングを独立 context で行い output_mode(slide/report)・全面画像化ゲート(CONST_006)・report固有要件(reportType/読者/長さ/ビジュアル方針)を確定したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` に置く。
+ヒアリングを独立 context で行い output_mode(slide/report)・読者価値ブリーフ・全面画像化ゲート(CONST_006)・report固有要件を確定したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` とその prompt が明示する references/scripts/schemas を読む。
 
 ## Outputs
 
@@ -40,13 +40,13 @@ last-audited: 2026-07-05
 
 - Owner skill: `run-slide-report-generate`。Phase: `R1-hearing-mode`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` as the executable 7-layer prompt for responsibility `R1-agent-hearing-facilitator`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R1-agent-hearing-facilitator.md` as the executable 7-layer prompt for responsibility `R1-agent-hearing-facilitator`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

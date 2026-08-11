@@ -20,12 +20,20 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-決定論経路で render-slide.cjs(vendor Node engine)を Bash(node *) 起動し slide HTML を独立 context で生成したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` に置く。
+決定論経路で render-slide.cjs(vendor Node engine)を Bash(node *) 起動し slide HTML を独立 context で生成したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` とその prompt が明示する references/scripts/schemas を読む。
+
+## スライド面のひな形との関係（適用範囲を誤らない）
+
+決定論経路は `render-slide.cjs` が自身のテンプレート体系（`slider-*` / `slide-area` / `pg-section-nav`）で面を描く。`assets/slide-templates/` のひな形（`srg-*`）は**この経路には適用されない** — engine は `frame-contract.json` を読まない。ひな形の封じ手（`flex: 1 1 auto` / 単一 `@page` / ナビの両方向保持）が効くのは手書き経路だけである、と理解して使い分ける。
+
+1. 決定論経路で出た面をそのまま採用するなら、ひな形は参照しない。空白・chrome・印刷の検証は `verify-slides.js` / `validate-print.js` 側の責務。
+2. engine出力へ面を足す/差し替える場合は、vendorの`slider-*` template/renderer経路だけを使う。`srg-*`ひな形をコピーしない。
+3. `assets/slide-templates/` は純手書きdeck専用。同一deckへ両体系を混ぜず、`validate-slide-layout.js <index.html> --strict`で排他分類を検証する（SR-7-12）。
 
 ## Outputs
 
@@ -40,13 +48,13 @@ last-audited: 2026-07-05
 
 - Owner skill: `run-slide-report-generate`。Phase: `R3-generate-evaluate`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` as the executable 7-layer prompt for responsibility `R3-agent-slide-renderer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md` as the executable 7-layer prompt for responsibility `R3-agent-slide-renderer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

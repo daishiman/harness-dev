@@ -57,7 +57,7 @@
 | 分布 | ヒートマップ | D3Advanced.createHeatmap |
 | テキスト頻度 | ワードクラウド | D3Advanced.createWordCloud |
 
-> このマッピングの正本は `$CLAUDE_PLUGIN_ROOT/references/chart-types.md`。コンポーネント名の差異が出た場合は chart-types.md / d3-integration.md を優先する。
+> このマッピングの正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/chart-types.md`。コンポーネント名の差異が出た場合は chart-types.md / d3-integration.md を優先する。
 
 ## データ変換パターン
 

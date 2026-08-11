@@ -30,7 +30,7 @@
 | HTML合成型 | `html-composite` | `overlay-only` | `raster` / `svg` | 背景・モチーフを画像生成（`raster`）または SVG/CSS で描画（`svg`）し、見出し・説明文・表・数値は HTML/CSS/SVG で重ねる |
 | HTML主役 | `html-primary` | `none` | `none` / `svg` | 表・料金・数値・精密図解。画像生成しない（`none`）、または SVG/CSS 背景地のみ（`svg`） |
 
-値域・パターンの正本は `$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md` §4 と `$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-ai-image-assets.js`（CONST_005）。`baked-with-overlay` は、ユーザーが画像内説明文を明示した場合だけ使用し、文言の正確性は `overlayText` と HTML fallback で担保する。
+値域・パターンの正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4 と `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js`（CONST_005）。`baked-with-overlay` は、ユーザーが画像内説明文を明示した場合だけ使用し、文言の正確性は `overlayText` と HTML fallback で担保する。
 
 ## ビジネスルール
 - **CONST_001 (明示指示必須)**: ユーザーが画像生成・Codex図解作成・スタイルゲノム量産を明示した場合、または修正案提示後に特定スライドの画像アセット化を承認した場合のみ起動する。「図解を作って」「見やすくして」「デザインを良くして」のみでは起動しない。
@@ -42,29 +42,29 @@
 - **CONST_003 (画像内テキスト原則禁止)**: 日本語ラベル・数値・重要テキストは画像内に焼き込まず HTML/SVG で重ねる（`overlay-only`）。`baked-with-overlay` はユーザーが画像内説明文を明示した場合だけ使用し、正テキストを必ず `overlayText` に保存する。
   - 目的: 文字化け・誤字・修正不能を防ぎ、テキストの真実源を1箇所に固定する。
   - 背景: text-to-image バックエンドは日本語・細かい文字を正しく描けないことが多いから。
-- **CONST_004 (バックエンド事前確認必須)**: 着手前に利用可能な text-to-image バックエンドを確認する。`meta.source` には実際に使ったバックエンド名を記録し、`codex` 単体を画像生成器として記録しない。codex exec はこの環境で画像生成の実績がある確認済みの生成系の具体例であり、`$CLAUDE_PLUGIN_ROOT/vendor/scripts/generate-images-codex.js` 経由で使う場合も `meta.source` には実体名 `codex-image2` を記録する（plain `codex` 単体は不可）。
+- **CONST_004 (バックエンド事前確認必須)**: 着手前に利用可能な text-to-image バックエンドを確認する。`meta.source` には実際に使ったバックエンド名を記録し、`codex` 単体を画像生成器として記録しない。codex exec はこの環境で画像生成の実績がある確認済みの生成系の具体例であり、`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/generate-images-codex.js` 経由で使う場合も `meta.source` には実体名 `codex-image2` を記録する（plain `codex` 単体は不可）。
   - 目的: 生成不能環境での空振りと、誤った出自記録を防ぐ。
   - 背景: `codex` は呼び出し起点になり得るが画像生成器ではなく、実バックエンドの有無で実行可否が変わるから。codex exec は確認済みの具体例だが、出自記録は実体名（`codex-image2`）に正規化する。
-- **CONST_005 (値域の単一正本)**: `pattern` / `textPolicy` / `backgroundSource` の値域は `$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md` §4 と `$CLAUDE_PLUGIN_ROOT/vendor/scripts/validate-ai-image-assets.js` を正本とし、本ファイルで再定義しない。
+- **CONST_005 (値域の単一正本)**: `pattern` / `textPolicy` / `backgroundSource` の値域は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4 と `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js` を正本とし、本ファイルで再定義しない。
   - 目的: 仕様の二重管理による不整合を防ぐ。
   - 背景: 値域が複数箇所に分散すると検証スクリプトと記述がずれるから。
 - **CONST_006 (structure.md 同期必須)**: 差し替え時は画像パス・alt・prompt ファイル・差し替え理由・`pattern`・`textPolicy`・`styleGenome` を `structure.md` に同期する。
   - 目的: 表示物と仕様（SSoT）の乖離を防ぎ、再現・引き継ぎを可能にする。
   - 背景: `structure.md` が後続エージェントの判断材料であり、未同期だと検証・再生成が破綻するから。
-- **CONST_007 (全面画像生成モードは背景化しない)**: ユーザーが「各ページを1枚ずつ画像生成」「スライド全体を生成画像で作る」「Codex Image 2 / image2 でページ画像を作る」と明示した場合、生成画像を単なる背景として扱わない。`$CLAUDE_PLUGIN_ROOT/references/full-image-deck-method.md` を適用し、非コードページは原則 `image-only` または必要時 `html-composite` として、各ページの主キャンバスを生成する。
+- **CONST_007 (全面画像生成モードは背景化しない)**: ユーザーが「各ページを1枚ずつ画像生成」「スライド全体を生成画像で作る」「Codex Image 2 / image2 でページ画像を作る」と明示した場合、生成画像を単なる背景として扱わない。`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/full-image-deck-method.md` を適用し、非コードページは原則 `image-only` または必要時 `html-composite` として、各ページの主キャンバスを生成する。
   - 目的: 「画像生成したはずなのに背景だけ」「スタイルゲノムが一部にしか反映されない」という実装ずれを防ぐ。
   - 背景: 全面画像生成は通常の図解差し替えより強いユーザー意図であり、デッキ全体の世界観を style genome で固定してから量産する必要があるから。
-- **CONST_008 (参照画像由来 style genome の先行固定)**: `05_Project/スライド/slide-2026-06-13-skill-mass-production/vendor/assets/generated/` 由来の画風再現を求められた場合は、生成前に同梱プリセット `$CLAUDE_PLUGIN_ROOT/vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `vendor/assets/generated/style-genome.json` へコピーし、STYLE BIBLE と各 `{slug}.prompt.md` の先頭に反映する。各 meta は `styleGenome=vendor/assets/generated/style-genome.json` を持つ。
+- **CONST_008 (参照画像由来 style genome の先行固定)**: `05_Project/スライド/slide-2026-06-13-skill-mass-production/vendor/assets/generated/` 由来の画風再現を求められた場合は、生成前に同梱プリセット `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `vendor/assets/generated/style-genome.json` へコピーし、STYLE BIBLE と各 `{slug}.prompt.md` の先頭に反映する。各 meta は `styleGenome=vendor/assets/generated/style-genome.json` を持つ。
   - 目的: 画風の一貫性をプロンプト作成後の努力目標ではなく、生成前の入力契約にする。
   - 背景: per-slide の差分だけで量産すると、モデルが平坦なボックス図や別画風へ退化しやすいから。
 
 ## 5.5.1 スタイルゲノム抽出とモード別ページ計画（不変ルール）
-- スタイル再現要求がある場合、参照画像・prompt・meta・HTML から STYLE BIBLE と `style-genome.json` を作る（`styleName`・パレット・反復モチーフ・カメラ角。抽出手順は `$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md`）。`slide-2026-06-13-skill-mass-production/vendor/assets/generated/` の画風再現では、同梱プリセット `$CLAUDE_PLUGIN_ROOT/vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `vendor/assets/generated/style-genome.json` へコピーし、必要な差分だけ上書きする（CONST_008）。全面画像生成モードで genome が存在しない場合は候補抽出に進まず `pending-style-genome` として停止する。
-- 全面画像生成モードでは全スライドを走査し、各ページに `pattern` / `textPolicy` / `backgroundSource` / `styleGenome` / `overlayText` を割り当てる。非コードページは原則 `image-only`、正確な表・数値・逐語が主役のページは `html-composite` または `html-primary`、コード系は実HTMLコードブロックに固定する（`$CLAUDE_PLUGIN_ROOT/references/full-image-deck-method.md` §0〜§2、`$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md` §4）。1スライド1行の生成計画を持ち、画像を「背景」としてだけ扱うページを作らない。各ページの prompt は STYLE GENOME / STYLE BIBLE preamble + per-slide diff で構成する。
-- 技術判定は Layer 2 生成対象の基準マトリクスに従い、各候補に `keep-svg` / `keep-d3` / `generate-image` / `needs-user-asset` の1判定を付ける。`generate-image` を `image-only` / `html-composite` / `html-primary` に分け、`textPolicy`（必要時 `backgroundSource` の `raster` / `svg`）を Layer 2 パターン表と `$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md` §4 の値域内で決める。
+- スタイル再現要求がある場合、参照画像・prompt・meta・HTML から STYLE BIBLE と `style-genome.json` を作る（`styleName`・パレット・反復モチーフ・カメラ角。抽出手順は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md`）。`slide-2026-06-13-skill-mass-production/vendor/assets/generated/` の画風再現では、同梱プリセット `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `vendor/assets/generated/style-genome.json` へコピーし、必要な差分だけ上書きする（CONST_008）。全面画像生成モードで genome が存在しない場合は候補抽出に進まず `pending-style-genome` として停止する。
+- 全面画像生成モードでは全スライドを走査し、各ページに `pattern` / `textPolicy` / `backgroundSource` / `styleGenome` / `overlayText` を割り当てる。非コードページは原則 `image-only`、正確な表・数値・逐語が主役のページは `html-composite` または `html-primary`、コード系は実HTMLコードブロックに固定する（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/full-image-deck-method.md` §0〜§2、`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4）。1スライド1行の生成計画を持ち、画像を「背景」としてだけ扱うページを作らない。各ページの prompt は STYLE GENOME / STYLE BIBLE preamble + per-slide diff で構成する。
+- 技術判定は Layer 2 生成対象の基準マトリクスに従い、各候補に `keep-svg` / `keep-d3` / `generate-image` / `needs-user-asset` の1判定を付ける。`generate-image` を `image-only` / `html-composite` / `html-primary` に分け、`textPolicy`（必要時 `backgroundSource` の `raster` / `svg`）を Layer 2 パターン表と `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4 の値域内で決める。
 
 ## 5.5.2 スライド別 plan の言語化スキーマ（プロンプト作成前の必須前提）
-各スライドについて、plan を書く前に次の項目と生成条件を必ず言語化してから `image-deck-plan.json`（または単発 plan）へ書く。空欄のまま prompt 作成に進まない。各項目は、100人中100人が同じ目的・場面・構図を理解できる粒度（具体名詞、配置、視認可能属性、禁止事項）で書く。図タイプ別の構図は `$CLAUDE_PLUGIN_ROOT/references/ai-image-diagram-workflow.md` の生成プロンプト仕様（構図プリセット集）を参照し、図タイプに合う `grid` / `zones` / `readingOrder` / `focalPoint` を引く。
+各スライドについて、plan を書く前に次の項目と生成条件を必ず言語化してから `image-deck-plan.json`（または単発 plan）へ書く。空欄のまま prompt 作成に進まない。各項目は、100人中100人が同じ目的・場面・構図を理解できる粒度（具体名詞、配置、視認可能属性、禁止事項）で書く。図タイプ別の構図は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/ai-image-diagram-workflow.md` の生成プロンプト仕様（構図プリセット集）を参照し、図タイプに合う `grid` / `zones` / `readingOrder` / `focalPoint` を引く。
 - **Purpose**: なぜこの図か（この図が解く課題・伝えたい論点を1文）。
 - **AudienceTakeaway**: 聴衆がこのスライドから得る一文（断定表現は避け、得られる理解を中立に書く）。
 - **Background**: 場面・前提・前後スライドとの接続・デッキ内役割。単なる「ビジネス背景」ではなく、何の状況を描くかまで書く。
@@ -78,10 +78,10 @@
 これらが言語化済みなら、ビルダー（5.5.3）が決定論で prompt.md へ展開できる。空欄のスライドは prompt 作成に進めない。
 
 ## 5.5.3 プロンプト生成（ビルダー連携）と画像生成の不変ルール
-- 全面画像生成モードでは per-slide 差分を `vendor/assets/generated/image-deck-plan.json`（`$CLAUDE_PLUGIN_ROOT/schemas/image-deck-plan.schema.json` 準拠）にまとめ、`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/build-image-prompts.js" <slide-dir>` で `image-deck-plan.json` + `vendor/assets/generated/style-genome.json` から `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。STYLE BIBLE preamble（プレースホルダ `{{STYLE_BIBLE}}`）は手動展開せず、ビルダーが決定論で展開する。`--check` で既存との差分のみ確認、`--only slide-06,...` で部分再生成できる。単発差し替えでテンプレートを直接書く場合のみ `$CLAUDE_PLUGIN_ROOT/vendor/assets/ai-image-diagram-prompt-template.md` を参照仕様として使う（`$CLAUDE_PLUGIN_ROOT/references/style-genome-packaging.md` §3.1 のビルダー連携）。
-- 画像生成は `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/generate-images-codex.js" <slide-dir>` 経由で行う。各 `slide-NN-{slug}.prompt.md` を読み、codex exec（内部で gpt-image-2 を使用・CONST_004 を満たす確認済み生成系）へ画像生成を依頼するコマンドを組み立てる（`--dry-run` でコマンド確認のみ・コスト無し、既定バッチ5）。**imagegen（text-to-image 拡散モデル）の使用を明示強制する文言が必須**で、指示が弱いと codex はコード（PIL / matplotlib / SVG）でプログラム描画し平坦な角丸ボックス図に退化する（パイロット実証）。この強制文言（imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持）を本スクリプトが担保するため、手書き codex exec ではなく必ず本スクリプト経由で呼ぶ。生成後は cwebp で WebP 化する。`meta.source` は実体名 `codex-image2` を記録し、plain `codex` 単体は記録しない（CONST_004 維持）。
+- 全面画像生成モードでは per-slide 差分を `vendor/assets/generated/image-deck-plan.json`（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/image-deck-plan.schema.json` 準拠）にまとめ、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-image-prompts.js" <slide-dir>` で `image-deck-plan.json` + `vendor/assets/generated/style-genome.json` から `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。STYLE BIBLE preamble（プレースホルダ `{{STYLE_BIBLE}}`）は手動展開せず、ビルダーが決定論で展開する。`--check` で既存との差分のみ確認、`--only slide-06,...` で部分再生成できる。単発差し替えでテンプレートを直接書く場合のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/ai-image-diagram-prompt-template.md` を参照仕様として使う（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §3.1 のビルダー連携）。
+- 画像生成は `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/generate-images-codex.js" <slide-dir>` 経由で行う。各 `slide-NN-{slug}.prompt.md` を読み、codex exec（内部で gpt-image-2 を使用・CONST_004 を満たす確認済み生成系）へ画像生成を依頼するコマンドを組み立てる（`--dry-run` でコマンド確認のみ・コスト無し、既定バッチ5）。**imagegen（text-to-image 拡散モデル）の使用を明示強制する文言が必須**で、指示が弱いと codex はコード（PIL / matplotlib / SVG）でプログラム描画し平坦な角丸ボックス図に退化する（パイロット実証）。この強制文言（imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持）を本スクリプトが担保するため、手書き codex exec ではなく必ず本スクリプト経由で呼ぶ。生成後は cwebp で WebP 化する。`meta.source` は実体名 `codex-image2` を記録し、plain `codex` 単体は記録しない（CONST_004 維持）。
 - テキストオーバーレイ: `overlay-only` は日本語ラベル・重要テキストを画像内に焼き込まず HTML/SVG で重ねる。`baked-with-overlay` は短い説明文・吹き出し・簡易表だけ画像内に許可し、正テキストを `overlayText` に必ず保存する（prompt/meta/structure.md に同値・Layer 2 パターン表の `textPolicy` 定義）。
-- 一貫性評価: `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/evaluate-image-consistency.js" <slide-dir> --threshold 0.8` で生成画像群の一貫性（genome の lockTiers.tier1 + consistencyAnchors を rubric 化）を LLM-judge 採点し、閾値割れページの再生成推奨を得る（破壊操作なし・目視の前段ゲート）。曖昧語・generation・styleReference を厳格化するには `--strict-intent` を付ける。機械検証は `validate-ai-image-assets.js`（全面時は `--full-image-deck --strict-style-genome`）、切れ・重なり・印刷崩れは `verify-slides.js` と目視で確認し、品質基準は `$CLAUDE_PLUGIN_ROOT/references/design-quality-guide.md` の検証4条件に従う。
+- 一貫性評価: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-image-consistency.js" <slide-dir> --threshold 0.8` で生成画像群の一貫性（genome の lockTiers.tier1 + consistencyAnchors を rubric 化）を LLM-judge 採点し、閾値割れページの再生成推奨を得る（破壊操作なし・目視の前段ゲート）。曖昧語・generation・styleReference を厳格化するには `--strict-intent` を付ける。機械検証は `validate-ai-image-assets.js`（全面時は `--full-image-deck --strict-style-genome`）、切れ・重なり・印刷崩れは `verify-slides.js` と目視で確認し、品質基準は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/design-quality-guide.md` の検証4条件に従う。
 
 ## 5.5.4 プロンプト作成ルール（必須要素）
 画像生成プロンプトには必ず以下を含める。最新の画像生成モデルは gpt-image-2（Codex CLI の `$imagegen` / codex exec が内部使用）であり、下記の再現性の原則に従って記述する。
@@ -110,7 +110,7 @@
 - **(h) 構造系の負制約**: `camera=structural` のスライドは `negativeSpecific`（20字以上）で誤ノード数・逆向き・対称崩れを禁止列挙する（schema・builder の両方が必須化）。
 - **(i) 焼き込みテーブル**: 表は画像内に焼く（`illustrated-full-table` + `tableContent`）。HTMLを画像上へピンポイント重ねするのは位置ズレするため image-only では使わない。各セルは verbatim・短語（14字以内・最大5列×6行）、コマンド列は monospace、`generation.quality: high` で再現性を上げる。`negativeSpecific` 必須で表の行数・列数の取り違え禁止を毎回宣言し、`camera=structural`（near top-down）を推奨して表セルを正対させる。表セルは bakedText の18字制限とは別経路（`tableContent`・14字以内）。固有名詞・コマンドが14字を超えるセル（例 `dependency-cruiser`=18字）が出る表は焼き込みをやめ `html-overlay-table` へ切り替える。崩れたら `overlayText` の HTML 表へ fallback。料金/精密数値/長文/複数行コードは `html-overlay-table` / `html-primary` へ。
 
-テンプレートは `$CLAUDE_PLUGIN_ROOT/vendor/assets/ai-image-diagram-prompt-template.md` を優先して使用する。最小テンプレート:
+テンプレートは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/ai-image-diagram-prompt-template.md` を優先して使用する。最小テンプレート:
 
 ```markdown
 Create a premium presentation diagram image for slide {{slide_no}}.

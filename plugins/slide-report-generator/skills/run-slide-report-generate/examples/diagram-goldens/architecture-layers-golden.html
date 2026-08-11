@@ -1,0 +1,117 @@
+<!--
+  architecture-layers-golden.html — ゴールデン実例: アーキテクチャ層構成図 (report 骨格)
+
+  入力: architecture-layers-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-technical.md §11.38 アーキテクチャ層構成図
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #16 #20 / §D-3 原則 1 / §D-4
+        references/diagram-layout-contract.md §1.6 (凡例は高さを確定してから下端へ)
+
+  §11.38 の幾何をそのまま使う (層帯 864x112・層間 32・コンポーネント 192x64・見出し列 176)。
+  依存は上から下への垂直線だけで、逆流する線を 1 本も引かない。
+  塗りが 2 語彙 (処理 / 保管) あるので下端に凡例帯を置く。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-architecture-layers"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-architecture-layers-caption">
+
+    <defs>
+      <marker id="f-architecture-layers-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-architecture-layers-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-architecture-layers-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 層帯 (破線の器。層は入れ物であってノードではないので塗らない) -->
+    <rect x="48" y="64" width="864" height="112" rx="8"
+          fill="none" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <text x="64" y="112" font-size="14" fill="var(--fg, #43436c)">画面層</text>
+    <text x="64" y="134" font-size="12" fill="var(--fg-dim, #54546d)">受付と管理の入口</text>
+    <rect x="48" y="208" width="864" height="112" rx="8"
+          fill="none" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <text x="64" y="256" font-size="14" fill="var(--fg, #43436c)">業務処理層</text>
+    <text x="64" y="278" font-size="12" fill="var(--fg-dim, #54546d)">在庫整合を保証</text>
+    <rect x="48" y="352" width="864" height="112" rx="8"
+          fill="none" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 4"/>
+    <text x="64" y="400" font-size="14" fill="var(--fg, #43436c)">データ層</text>
+    <text x="64" y="422" font-size="12" fill="var(--fg-dim, #54546d)">永続化を保証</text>
+
+    <!-- 依存 (上から下への垂直線のみ。逆流する線は引かない) -->
+    <line x1="320" y1="160" x2="320" y2="236"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-architecture-layers-arrow)"/>
+    <line x1="544" y1="160" x2="544" y2="236"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-architecture-layers-arrow)"/>
+    <line x1="320" y1="304" x2="320" y2="380"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-architecture-layers-arrow)"/>
+    <line x1="544" y1="304" x2="544" y2="380"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-architecture-layers-arrow)"/>
+
+    <!-- 依存の方式 (向きは線・方式は 12px のラベル。層間の隙間だけに置く) -->
+    <text x="328" y="202" font-size="12" fill="var(--fuji-gray, #8a8980)">同期 REST</text>
+    <text x="552" y="202" font-size="12" fill="var(--fuji-gray, #8a8980)">同期 REST</text>
+    <text x="328" y="346" font-size="12" fill="var(--fuji-gray, #8a8980)">同期 SQL</text>
+    <text x="552" y="346" font-size="12" fill="var(--fuji-gray, #8a8980)">非同期 60 秒更新</text>
+
+    <!-- 画面層 -->
+    <rect x="224" y="96" width="192" height="64" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="320" y="134" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">予約 Web</text>
+    <rect x="448" y="96" width="192" height="64" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="544" y="134" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">管理コンソール</text>
+
+    <!-- 業務処理層 (中央が焦点。accent はこの 1 つのみ) -->
+    <rect x="224" y="240" width="192" height="64" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="320" y="278" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">予約サービス</text>
+    <rect x="448" y="240" width="192" height="64" rx="6"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="544" y="278" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">在庫サービス</text>
+    <rect x="672" y="240" width="192" height="64" rx="6"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="768" y="278" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">通知ワーカー</text>
+
+    <!-- データ層 (保管の語彙) -->
+    <rect x="224" y="384" width="192" height="64" rx="6"
+          fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="320" y="422" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">予約 DB</text>
+    <rect x="448" y="384" width="192" height="64" rx="6"
+          fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="544" y="422" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">在庫キャッシュ</text>
+
+    <!-- 影響範囲 (accent の箱が落ちたとき止まる範囲。帯の外の余白へ置く) -->
+    <text x="912" y="480" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">在庫サービスが落ちると予約確定まで止まる</text>
+
+    <!-- 凡例 (図の外・下端の水平ストリップ。3 項目) -->
+    <rect x="48" y="496" width="16" height="16" rx="4"
+          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="72" y="508" font-size="12" fill="var(--fg-dim, #54546d)">処理</text>
+    <rect x="160" y="496" width="16" height="16" rx="4"
+          fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <text x="184" y="508" font-size="12" fill="var(--fg-dim, #54546d)">保管</text>
+    <rect x="272" y="496" width="16" height="16" rx="4"
+          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="296" y="508" font-size="12" fill="var(--fg-dim, #54546d)">本文が扱う対象</text>
+    <text x="912" y="508" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">破線の帯は層そのもの (器であって構成要素ではない)</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-architecture-layers-caption" class="srg-diagram__caption">
+    上の帯から下の帯へ一方向にしか線が無いことをまず確かめてほしい。色の付いた箱だけが、この節でこれから検討する差し替えの対象である。
+  </figcaption>
+
+</figure>

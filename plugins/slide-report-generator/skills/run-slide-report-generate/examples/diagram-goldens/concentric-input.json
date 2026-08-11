@@ -1,0 +1,44 @@
+{
+  "diagramId": "d-concentric",
+  "type": "concentric",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-business.md §11.14 コンセントリックサークル型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "どこから着手するか",
+  "message": "外側の二層は後から効いてくる。最初の三か月は中心だけを見る。",
+  "nodes": [
+    { "id": "outer", "label": "全社への展開", "depth": 1, "style": "external" },
+    { "id": "middle", "label": "部門をまたぐ連携", "depth": 2, "style": "plain" },
+    { "id": "core", "label": "経理内の締め作業", "depth": 3, "style": "focal" }
+  ],
+  "relations": [
+    { "from": "outer", "to": "middle", "kind": "contains" },
+    { "from": "middle", "to": "core", "kind": "contains" }
+  ],
+  "semantics": {
+    "containment": "外側の層は内側を含む (範囲の入れ子)",
+    "outside": "最外の外は今期の対象外",
+    "radius": "半径は量ではなく範囲の広さを表す"
+  },
+  "legendTitle": "凡例 — 色は時期・内側ほど先に着手",
+  "legend": [
+    { "for": "core", "text": "最初の三か月" },
+    { "for": "middle", "text": "次の半年" },
+    { "for": "outer", "text": "一年目の後半" }
+  ],
+  "emphasis": {
+    "focal": ["core"],
+    "reason": "同心円の accent は最内層 1 つのみ。層の広さは範囲を語り、色は着手順を語らない"
+  },
+  "annotations": [
+    { "text": "外側は今期の判断材料にしない", "anchor": "outer" }
+  ],
+  "geometry": {
+    "center": [320, 272],
+    "radii": [224, 144, 72],
+    "note": "半径は外から内へ。層ごとに塗りの濃度を 1 段ずつ上げ、色相は変えない"
+  },
+  "caption": "中心の円から外へ向かって読んでほしい。右の凡例は色ではなく時期を示しており、外側の二層は今期の判断材料には入れていない。"
+}

@@ -1,0 +1,116 @@
+{
+  "diagramId": "d-permission-matrix",
+  "type": "permission-matrix",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-comparison.md §11.32 可否マトリクス型（Permission Matrix・SVG2）",
+  "placement": "方形",
+  "canvas": {
+    "viewBox": "0 0 640 480"
+  },
+  "title": "経費精算の権限",
+  "message": "支払まで通せるのは一つの役割だけで、他は上限つきか参照に留まる。",
+  "axes": {
+    "row": {
+      "label": "役割",
+      "values": [
+        "申請者",
+        "承認者",
+        "経理",
+        "監査"
+      ],
+      "order": "順不同 (権限の強弱ではない)"
+    },
+    "column": {
+      "label": "操作",
+      "values": [
+        "起票",
+        "承認",
+        "支払",
+        "参照"
+      ],
+      "order": "伝票処理の順"
+    }
+  },
+  "valueDomain": [
+    {
+      "id": "yes",
+      "label": "可",
+      "glyph": "塗り円"
+    },
+    {
+      "id": "cond",
+      "label": "条件付き",
+      "glyph": "半円",
+      "condition": "1 件 5 万円以下・超過は承認者へ"
+    },
+    {
+      "id": "no",
+      "label": "不可",
+      "glyph": "空円"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "r1",
+      "label": "申請者",
+      "style": "plain",
+      "values": {
+        "起票": "yes",
+        "承認": "no",
+        "支払": "no",
+        "参照": "yes"
+      }
+    },
+    {
+      "id": "r2",
+      "label": "承認者",
+      "style": "plain",
+      "values": {
+        "起票": "yes",
+        "承認": "yes",
+        "支払": "cond",
+        "参照": "yes"
+      }
+    },
+    {
+      "id": "r3",
+      "label": "経理",
+      "style": "focal",
+      "values": {
+        "起票": "no",
+        "承認": "cond",
+        "支払": "yes",
+        "参照": "yes"
+      }
+    },
+    {
+      "id": "r4",
+      "label": "監査",
+      "style": "plain",
+      "values": {
+        "起票": "no",
+        "承認": "no",
+        "支払": "no",
+        "参照": "yes"
+      }
+    }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": [
+      "r3"
+    ],
+    "reason": "焦点は 1 行だけ。3 値のグリフは塗り面積が単調に減る形で既に区別が付いているので、セルごとに色を足すと凡例が二重になる"
+  },
+  "annotations": [
+    {
+      "text": "支払の列だけが役割を分ける",
+      "anchor": "column:支払"
+    }
+  ],
+  "caption": "左端の列から一行ずつ右へ走らせてほしい。円の塗り面積が三段階に減るだけなので、色を覚えなくても誰がどこで止まるかが分かる。",
+  "defaultForMissing": "表に無い役割 (派遣・委託) の既定は全操作 不可",
+  "absenceRule": "承認者の不在時は代理 1 名を指名し 3 営業日まで有効",
+  "provenance": "出所: 職務権限規程 2026/4 改訂・4 役割 × 4 操作 = 16 セル (うち条件付き 2 件)"
+}

@@ -61,11 +61,39 @@ def test_default_dir_is_plugin_root(monkeypatch):
     assert MOD._plugin_root().name == "harness-creator"
 
 
-def test_env_plugin_root_override(monkeypatch, tmp_path):
+def test_env_plugin_root_override(monkeypatch, tmp_path, as_self_plugin):
+    as_self_plugin(tmp_path)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
     monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
     assert MOD._plugin_root() == tmp_path.resolve()
     assert MOD._lessons_dir() == tmp_path.resolve() / "lessons-learned"
+
+
+def test_env_pointing_at_foreign_plugin_is_rejected(
+    monkeypatch, tmp_path, as_foreign_plugin
+):
+    """借用 repo の平置き projection で env が別 plugin を指す事故を弾く。
+
+    空でも非 dir でもないため `if env:` / isdir では検出できない。自 plugin の
+    manifest name と一致しない env は捨て、__file__ 相対 fallback へ落ちる。
+    """
+    as_foreign_plugin(tmp_path)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+    assert MOD._plugin_root() != tmp_path.resolve()
+    assert MOD._plugin_root() == SCRIPT.resolve().parents[3]
+
+
+def test_hc_root_wins_over_claude_plugin_root(
+    monkeypatch, tmp_path, as_self_plugin, as_foreign_plugin
+):
+    """借用側が HC_ROOT で明示指定した場合、他 plugin を指す env より優先される。"""
+    mine = as_self_plugin(tmp_path / "mine")
+    theirs = as_foreign_plugin(tmp_path / "theirs")
+    monkeypatch.setenv("HC_ROOT", str(mine))
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(theirs))
+    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+    assert MOD._plugin_root() == mine.resolve()
 
 
 def test_env_lessons_dir_override_is_sole_candidate(monkeypatch, tmp_path):

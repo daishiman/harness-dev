@@ -1,0 +1,115 @@
+<!--
+  vertical-timeline-golden.html — ゴールデン実例: 縦タイムラインステップ型 (report 骨格)
+
+  入力: vertical-timeline-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-visual.md §11.25 縦タイムラインステップ型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #1 / §D-3 原則 1 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict vertical-timeline-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.25 の作図文法 (左に軸・軸上に節点・右に札) をそのまま移した。
+  節のコード例は節点に box-shadow のリングを重ね、札に hover の translateX を
+  掛けるが、いずれも R9-14 (影は常に 0) に触れるので落とした。
+  節点の強調は輪の色と塗りだけで足りる。
+  札の高さは 4 段とも 80 で揃えてある。期間の長短で高さを変えると、
+  「長い期間」ではなく「情報量が多い段」に読める。長短は右端の期間表記が担う。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-vtimeline"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 640 480"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-vtimeline-caption">
+
+    <defs>
+      <marker id="f-vtimeline-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-vtimeline-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-vtimeline-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 軸の宣言と依存 (I4 / I-TIME) -->
+    <text x="96" y="20" font-size="12" fill="var(--fuji-gray, #8a8980)">縦軸は時間順 (上から下)・上の段の完了が下の段の着手条件 (先行→後続)</text>
+
+    <!-- 時間軸 (1 本の直線・矢じり無し) -->
+    <line x1="48" y1="32" x2="48" y2="424" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 第 1 段 -->
+    <g>
+      <line x1="56" y1="72" x2="96" y2="72" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <circle cx="48" cy="72" r="8" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+      <rect x="96" y="32" width="528" height="80" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="120" y="68" font-size="14" fill="var(--fg, #43436c)">現行の棚卸し</text>
+      <text x="120" y="92" font-size="12" fill="var(--fg-dim, #54546d)">何が動いているかを数える</text>
+        <text x="600" y="68" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">2026/4/6-4/10 (第 1 週)</text>
+      <text x="600" y="92" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">担当 情シス・完了=対象業務を全件台帳化</text>
+    </g>
+
+    <!-- 第 2 段 -->
+    <g>
+      <line x1="56" y1="176" x2="96" y2="176" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <circle cx="48" cy="176" r="8" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+      <rect x="96" y="136" width="528" height="80" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="120" y="172" font-size="14" fill="var(--fg, #43436c)">移行対象の確定</text>
+      <text x="120" y="196" font-size="12" fill="var(--fg-dim, #54546d)">残す業務と捨てる業務を分ける</text>
+        <text x="240" y="172" font-size="12" fill="var(--sakura-pink, #D27E99)">現在ここ</text>
+      <text x="600" y="172" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">2026/4/13-5/1 (第 2-4 週)</text>
+      <text x="600" y="196" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">担当 業務部・完了=残す/捨てるを全件決裁</text>
+    </g>
+
+    <!-- 第 3 段 (焦点。全 10 週のうち 5 週を占める) -->
+    <g>
+      <line x1="56" y1="280" x2="96" y2="280" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <circle cx="48" cy="280" r="8" fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <rect x="96" y="240" width="528" height="80" rx="8"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="120" y="276" font-size="14" fill="var(--fg, #43436c)">並行運用</text>
+      <text x="120" y="300" font-size="12" fill="var(--fg-dim, #54546d)">旧系と新系を同時に回す</text>
+        <text x="600" y="276" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">2026/5/4-6/5 (第 5-9 週)</text>
+      <text x="600" y="300" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">担当 情シス+業務部・完了=差異0件が2週連続</text>
+    </g>
+
+    <!-- 第 4 段 -->
+    <g>
+      <line x1="56" y1="384" x2="96" y2="384" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+      <circle cx="48" cy="384" r="8" fill="#FFFFFF" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+      <rect x="96" y="344" width="528" height="80" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="120" y="380" font-size="14" fill="var(--fg, #43436c)">旧系の停止</text>
+      <text x="120" y="404" font-size="12" fill="var(--fg-dim, #54546d)">戻せなくなる一度きりの操作</text>
+        <text x="600" y="380" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">2026/6/8-6/12 (第 10 週)</text>
+      <text x="600" y="404" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">担当 情シス・完了=旧系の接続を全遮断</text>
+    </g>
+
+    <!-- 注釈 1 件 (最下段の下の余白のみ・矢じりは付けない) -->
+    <text x="624" y="456" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">止められるのは最後の一度だけ</text>
+    <path d="M 452 448 Q 400 440 380 428" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="380" cy="428" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- 凡例と出所 (I3 / I1) -->
+    <text x="16" y="456" font-size="12" fill="var(--fuji-gray, #8a8980)">桃色=本文が扱う段・破線=注釈の指し線</text>
+    <text x="16" y="472" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 移行計画書 2026/3 版・全 10 週 (2026/4/6-6/12)</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-vtimeline-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 3</span>
+    上から下へ 10 週間をたどる。色の付いた一段だけが全体の半分を占め、その間は旧系と新系の両方を維持することになる。
+  </figcaption>
+
+</figure>

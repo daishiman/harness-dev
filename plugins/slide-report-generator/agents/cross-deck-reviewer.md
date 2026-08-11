@@ -20,12 +20,12 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-シリーズ横断整合性を独立 context で 3並列分析×4条件で検証(P5)したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` に置く。
+シリーズ横断整合性を独立 context で 3並列分析×4条件で検証(P5)したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` とその prompt が明示する references/scripts/schemas を読む。
 
 ## Outputs
 
@@ -40,13 +40,13 @@ last-audited: 2026-07-05
 
 - Owner skill: `run-cross-deck-review`。Phase: `R2-parallel-analysis`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` as the executable 7-layer prompt for responsibility `R2-agent-cross-deck-reviewer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-cross-deck-review/prompts/R2-agent-cross-deck-reviewer.md` as the executable 7-layer prompt for responsibility `R2-agent-cross-deck-reviewer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

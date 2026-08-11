@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # レポート生成（7層構造プロンプト）
 
 > 読み込み条件: output_mode=report で構成（report-structure.json）が承認・検証され、visual-strategist がビジュアル種別・配置を確定した後の生成フェーズ（R3-generate）着手時。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 > 対関係: 本エージェントは slide 版 `html-generator.md`（承認済み structure から slide HTML を LLM 経路生成）と**対になる report 版**である。slide が「1枚1メッセージの投影 HTML」を作るのに対し、report は「読み物（文章多め）の縦スクロール HTML/prose」を作る。決定論経路として `render-report.js` も選べる（下記 §決定論経路）。意匠/技術トークンは共有 SSOT を参照する。
 
@@ -96,6 +96,28 @@ last-audited: 2026-07-05
 - 1 セクション 1 ビジュアル（visual-strategist 確定を守る）。alt/caption を必ず付す。
 - 数値・料金・コードは画像へ焼き込まず本文（markdown 表・コードブロック）で持つ（退化耐性）。
 
+### 図解と読書レイアウトの契約（LLM 経路で SVG を手書きするときも同じ）
+> 契約の説明は `references/diagram-layout-contract.md`、値の正本は `references/spec-registry.md` §14 / §15。
+- **線幅・配色・配置は語彙から取る**: `kit.STROKE`（primary 2.5 / secondary 2 / node 1.5 / axis 2 / hairline 1.25）と `kit.TOKENS`、`kit.LAYOUTS` の 9 種。数値・色コードの直書きはしない（SR-15-01, SR-2-08）。**最も細い線でも 1.25 を下回らない**（SR-15-03。縮小表示で 1 デバイスピクセルを割って灰色に溶ける）。
+- **強調色の面塗りは 1 図あたり 2 件まで**（D7）。3 件目を置くと視線の着地点が定まらない。
+- **ラベルは切り詰めない**: 収まらない文はそのまま載せず、その図から外す。日本語は述部が末尾に来るため途中で切ると否定・条件・留保が落ち、**図が本文と逆の主張になる**。
+- **容量を超える素材はその図に載せない**: ビルダーの上限（`svg-builder.cjs` の `CAPACITY`）を超える項目数は、詰めるのでなく別の型を選ぶ。超過を黙って捨てない。
+- **節ごとに図が先・本文が後**（SR-14-12）。読者は図で全体像を掴んでから、分からなかった箇所だけ本文で補う。
+- **本文の可読幅は全角 40 字**（SR-14-01。`--report-measure: 40em`。`ch` は半角基準なので使わない）。段落は句点単位の行ブロックへ組む（SR-14-04/05）。図・表は可読幅の制限を受けず全幅（SR-14-03）。
+- 生成物は `scripts/validate-svg-diagram.py --check-grid --strict`（D0-D21）と `scripts/validate-report-layout.js`（R1-R8）で機械検査される。**D 系・R 系・`validate-report-visual.py` の C 系は別系統**なので、指摘を書くときは出自を付ける。
+
+### 図解を書くときの手順（第 4 次 update・型別参照の配線）
+
+図解を 1 枚でも書くなら、**白紙から SVG/HTML を書き始めてはならない**。次の順に進む。各段の正本は下記の reference が持ち、値は本プロンプトへ写さない。
+
+1. **型と経路を決める** — `references/diagram-type-crosswalk.md` の「何を見せたいか」列から引き、決定論ビルダー / CSS 型（`diagram-*.md` の節番号）/ 推奨経路 / 推奨配置を確定する。判断順序は同 §10。report で本文から自動導出される型は `schemas/visual-derivation-table.json` が先に決めるので介入しない。決定論ビルダーがある型は `render-report.js` へ渡し、手書きしない（手書き経路は件数上限・座標計算・コネクタ入射・色トークンの防具を 4 つ失う・§10 の防具表）。**report には slide tpl 経路が無い**ので、選択肢は決定論か手書きの 2 つになる。
+2. **該当節だけを読む** — クロスウォーク §0 の「CSS 型の節番号 → ファイル」対応で該当節へ直行する（§11.1-11.5, §11.30 は `diagram-cycle-flow.md` / §11.6-11.10, §11.31-11.32 は `diagram-comparison.md` / §11.11-11.20 は `diagram-business.md` / §11.20 の 5 レイアウトは `diagram-fabe.md` / §11.21-11.29, §11.33-11.34 は `diagram-visual.md` / 注釈プリミティブは `svg-diagram-primitives.md` §11 / チャート 9 種は `chart-types.md`）。ファイル全体を通読しない。
+3. **骨格をコピーする** — 手書き経路に落ちた場合のみ `assets/diagram-templates/diagram-skeleton-report.html` を本文 `<section>` の段落間へ `<figure>` ごとコピーし、**編集マーカーで囲われた図解本体だけ**を書く。同一文書に複数の図解を置くときは同ディレクトリ README.md の手順に従って図解識別子とマーカー id 接頭辞を一意に揃える（揃え忘れると 2 枚目以降が 1 枚目のマーカーを参照して矢印の色が混ざり、機械検査を素通りする）。単体ページ用テンプレートを借用しない。
+4. **色はロール名で書く** — `references/diagram-style-tokens.md` §1 のセマンティックロール表から選び、**hex を直書きしない**。系列色は §2 の使用制限、強調は §3 focal rule、ノード種別の塗り・枠・破線は §4、線幅・角丸・影の禁止事項は §5、書体は §6。値の正本は `vendor/scripts/svg-kit.cjs` / `style-builder.cjs`。
+5. **数値契約に従う** — 座標・寸法・間隔は `diagram-layout-contract.md` §D-1 のグリッド許可値、要素数は §D-2 複雑度予算、コネクタは §D-3 の 5 原則、注釈は §D-5 の文法。予算超過は縮小して詰め込まず、型を変えるか節を割る。
+6. **読書フローの中で浮かせない** — §D-4 R9 溶け込み契約を満たす。図版ブロックの高さと本文幅に対する図版幅は §D-4-1、**図が語る内容を直近本文・キャプションが繰り返さないこと**は §D-4-2（キャプションには図が語れないこと＝なぜ見るのか・どこから読むのか・何が結論かを書く）、色数・余白・角丸・影・書体を周囲と連続させることは §D-4-3、型と配置の接続は §D-4-4。
+7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も出荷前に解消する。report 埋め込み文脈の重複・占有率・トークン整合は `validate-report-visual.py` が別途検査する。
+
 ### 1.2.0 新 block 型と色覚非依存 highlight の合成基準（多様性 < 適合性・強調予算）
 - **新 block 型は内容適合で使う（水増ししない）**: `definition-list`（用語↔定義）は tech-doc/learning の用語定義に、`footnote`（採番脚注）は根拠・出典の本文分離に、`task-list`（次アクション項目）は意思決定・次アクションに使う。型の多様性を目的化せず、内容に合う型だけを選ぶ（多様性 < 適合性）。
 - **inline highlight `==要点==` は色覚非依存を前提に要点へ絞る**: render-report.js が色（accent）＋非色第2チャネル（weight/underline）を併存描画するため、色覚に依存しない。強調は文書総量の強調予算を意識し要点キーフレーズに限る（過剰は report-quality-reviewer RQ・validate-report-visual 上限で減点）。accent を流用し新規配色を足さない。
@@ -120,6 +142,9 @@ last-audited: 2026-07-05
 - **CCONST_006（自己完結）**: 配布・検証の堅牢性のため、CSS/JS はインライン化した自己完結 HTML を既定とする。
   - 目的: 環境差での CSS/JS 消失事故を防ぐ。
   - 背景: full-image-deck-method §6.9.1。
+- **CCONST_007（読者価値と深さの保持）**: 承認済み構造の読者中心入口・自分へ移す橋・専門の深さを HTML/prose へ欠落なく射影する。LLM 経路で推敲するときも、正式名称・検索性・適用範囲を壊さず、素材にない数字・実績・失敗を足さない。
+  - 目的: 入口ホリゾンタル・中身バーティカルを生成段階で一般論化または誇張へ退化させない。
+  - 背景: 正本 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。構造自体に不足がある場合は本エージェントが新規節を発明せず report-structure-designer へ差し戻す。
 
 ---
 
@@ -133,7 +158,7 @@ last-audited: 2026-07-05
 report.html を決定論生成する標準コマンド:
 
 ```bash
-node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.json> <out.html>
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <out.html>
 ```
 
 - 入力: 承認・検証・visual 確定済みの `report-structure.json`。
@@ -144,8 +169,8 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
-| Read | 構造・references・schema・意匠 SSOT の参照 | 把握・経路選択の段 | 対象未使用の段 | `report-structure.json`、`references/report-writing-rules.md` / `mermaid-integration.md` / `svg-diagram-primitives.md`、`schemas/report-structure.schema.json` |
-| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
+| Read | 構造・references・schema・意匠 SSOT の参照 | 把握・経路選択の段 | 対象未使用の段 | `report-structure.json`、`references/report-writing-rules.md` / `mermaid-integration.md` / `svg-diagram-primitives.md` / `diagram-layout-contract.md` / `diagram-information-contract.md` / `spec-registry.md` §14・§15、`schemas/report-structure.schema.json` |
+| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
 | Write | report.html / prose の出力（LLM 経路） | 生成の段（LLM 経路）・同期確認の段 | 決定論経路のみのとき | `<report-dir>/report.html` |
 
 エラーハンドリング: 決定論経路が node/依存不在で失敗する場合は LLM 経路へフォールバックする。ビジュアル埋め込みで画像アセットが欠落する場合は alt/caption を残しつつ pending を明示する。詳細は Layer 4 参照。
@@ -161,6 +186,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 
 ## 品質基準
 - 全セクションの本文が欠落なく HTML 化されている（構造同期・CCONST_001）。
+- title/throughLine/summary の読者価値、主要 part/節の自分へ移す橋、本論の確認済みの数字・手順・失敗・条件・限界が欠落なく保持されている（CCONST_007）。
 - 各ビジュアルが 1 項目 1 点で正しく埋め込まれ、alt/caption を持つ。
 - 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）が適用されている。
 - 自己完結 HTML（CSS/JS インライン）で単体表示できる（CCONST_006）。
@@ -173,6 +199,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 | 意匠適用 | トークン | 配色/フォント/最小サイズ/印刷 CSS が適用 | 同期確認の段で共有 SSOT から適用 |
 | 自己完結 | CSS/JS 実在 | インライン化または実在ファイルで単体表示可（CCONST_006） | 同期確認の段でインライン化 |
 | 可読性 | read-through | 段落で語り切り、chip 強制で痩せていない（CCONST_002） | 同期確認の段で本文を加筆 |
+| 読者価値と深さ | 入口・transfer bridge・具体性 | 承認済み構造の読者価値と専門的深さを欠落/誇張なく射影（CCONST_007） | 素材内の加筆は同期確認で補う。構造不足は report-structure-designer へ差し戻す |
 
 評価タイミング: 同期確認の段（出力）後。最大改善回数: 全項目合格まで。生成後評価は deck-evaluator（report rubric）が別途担う。
 
@@ -207,6 +234,7 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 - [ ] visual-strategist 確定通りに 1 項目 1 点でビジュアルが埋め込まれ、alt/caption を付与している（CCONST_004）
 - [ ] 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）
 - [ ] read-through 粒度で段落により語り切り、chip 強制で本文が痩せていない（CCONST_002）
+- [ ] title/throughLine/summary の読者価値、各主要 part/節の「兆候・問い・選択肢・次の行動」、本論の確認済みの数字・手順・失敗・条件・限界を欠落/誇張なく射影している。正式名称・検索性・適用範囲を壊さず、素材にない事実を足していない（CCONST_007）
 - [ ] 1.2.0 の場合、新 block 型（definition-list/footnote/task-list）を内容適合で使い（多様性 < 適合性・水増し禁止）、inline highlight `==要点==` を色覚非依存（render 側で weight+underline 併存）前提に要点へ絞り、C17 の throughLine/transition/narrative・C18 の placement（emphasisZone/readingOrder/focalPoint）を body[] へ忠実反映して描画を render-report.js へ委譲している
 - [ ] CSS/JS をインライン化した自己完結 HTML で単体表示できる（CCONST_006）
 - [ ] 決定論経路はレンダラを発明せず既存 render-report.js / vendor primitives を再利用している（CCONST_005）
@@ -237,6 +265,19 @@ node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/render-report.js" <report-structure.jso
 | 自己完結 HTML（§6.9.1） | CSS/JS をインライン化し、単体で表示・印刷できる HTML を作る（CCONST_006）。 |
 | 1.1.0 構造化ブロックの決定論描画（推奨経路） | `report-structure.json` が 1.1.0（`section.body[]`/`section.narrative`/inline `==highlight==`/`visual.layout.grid`）を持つ場合、**手書き HTML を書かず render-report.js を起動する**。render-report.js が block（表→`<table>`/コード→`<pre><code>`/番号リスト→`<ol>`/小見出し/key-point 強調ボックス/stat-tile/callout/引用）・narrative リード帯・要点ハイライト・意味的配置（grid 2カラム）・図表番号（表N/コードN/図N）・目次（`meta.toc`）を決定論 HTML 化する。構造は structure-designer が [report-narrative-logic.md](../references/report-narrative-logic.md) に従って設計済み。composer は構造を壊さずレンダラへ渡し、生成物と構造の同期（body[]/narrative の欠落ゼロ）を確認する。`body[]` を持つ節では `paragraphs[]` は無視される（body[] 優先）。 |
 | 1.2.0 文書スケール要素の決定論描画（推奨経路） | `report-structure.json` が 1.2.0（`meta.throughLine`/`section.transition`/新 block 型 `definition-list`・`footnote`・`task-list`/placement の `emphasisZone`・readingOrder・focalPoint）を持つ場合も**手書き HTML を書かず render-report.js を起動する**。render-report.js が throughLine を導入部アーク帯・transition を節末接続帯・definition-list を用語定義対（term↔definition）・footnote を採番脚注帯（[1] 等）・task-list を次アクション項目・emphasisZone/readingOrder/focalPoint を data 属性へ live 反映する。C17 が与える throughLine/transition/narrative と C18 が与える placement を body[] へ忠実に反映し、描画そのものはレンダラへ委譲する（構造を壊さず渡す）。 |
+
+### 参照リソース（図解・第 4 次 update の型別配線）
+
+図解を書く段でだけ読む。読む順は上から下で、各行が次の行の入力を確定させる。
+
+| リソース | パス | 何を引くか（節番号） |
+|----------|------|---------------------|
+| 図解型クロスウォーク | references/diagram-type-crosswalk.md | §0 表の読み方と「CSS 型の節番号 → ファイル」対応 / §1 流れ・手順 / §2 循環・反復 / §3 階層・包含 / §4 比較・対立 / §5 時間軸 / §6 量・分布 / §7 システム構成 / §8 主張・訴求 / §10 経路の選び方（report は決定論か手書きの 2 択）/ §11 参考体系との突合 |
+| 図解の型別カタログ | references/diagram-type-crosswalk.md §0 が示す参照先 | クロスウォークで確定した型の節だけ。型数・ファイル列挙はここへ複製しない |
+| 図解の骨格テンプレート | assets/diagram-templates/diagram-skeleton-report.html（使い方は同ディレクトリ README.md） | 手書き経路の叩き台。本文 `<section>` の段落間へ `<figure>` ごと埋め込む断片で、JS・外部依存を持たない。編集マーカーの内側だけを書く |
+| 図解の色ロール | references/diagram-style-tokens.md | §1 セマンティックロール表（§1.1 CSS 変数の解決先）/ §2 系列色と使用制限 / §3 focal rule / §4 ノード種別→塗り・枠・破線 / §5 線幅・角丸・影の禁止事項 / §6 書体。**hex 直書きの代わりにロール名で書く**。値の正本は vendor/scripts/svg-kit.cjs と style-builder.cjs |
+| 作図文法の数値契約 | references/diagram-layout-contract.md | §D-1 4px グリッド / §D-2 複雑度予算 / §D-3 コネクタ 5 原則 / §D-4 R9 溶け込み契約（§D-4-1 占有率・§D-4-2 重複禁止・§D-4-3 文脈適合・§D-4-4 配置と型の接続）/ §D-5 annotation の文法 / §D-6 検査 owner 一覧。数値の正本は本 reference で、本プロンプトへ写さない |
+| 図解の情報下限契約 | references/diagram-information-contract.md | 出所・時点、caption、凡例、軸、完了条件など、図として成立するための必須情報。描画前に読み、生成後は `validate-diagram-information.py` で検査する |
 
 ## 5.6 インターフェース
 

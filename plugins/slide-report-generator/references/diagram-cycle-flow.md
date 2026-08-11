@@ -1,10 +1,23 @@
 # 図解タイプ: サイクル・フロー系（SVG2版）
 
-**責務**: サイクル図、スネーク型、ベン図、マインドマップ、フローチャート、上昇型のインラインSVG2テンプレート
+**責務**: サイクル図、スネーク型、ベン図、マインドマップ、フローチャート、上昇型、フライホイール型の**型選択判断**
 
-**含まれるタイプ**: 11.1-11.5
+**含まれるタイプ**: 11.1-11.5 / 11.30
 
 **前提**: [svg-diagram-primitives.md](svg-diagram-primitives.md) の `<defs>` を共有
+
+> **実装はゴールデンを正とする。** 各節末尾の実例行が指す
+> `skills/run-slide-report-generate/examples/diagram-goldens/*-{input.json,golden.html}`
+> が唯一の実装正本であり（いずれも検査指摘ゼロ）、本ファイルはコードを持たない。
+> 座標・クラス名・`<defs>` はゴールデン HTML から写し、寸法の意図は input.json の
+> `geometry.note` に書かれている。
+>
+> 決定論経路で実際に呼べる**ビルダー名と容量の所在**は
+> `skills/ref-diagram-system/references/diagram-type-catalog.md`、
+> 型 → 配置・経路の対応は `references/diagram-type-crosswalk.md` にまとまっている。
+> 循環とフローは見た目が近く取り違えやすいので、描き始める前に型を確定させること。
+> 件数上限の正本は `references/diagram-layout-contract.md` §D-2（ノード総数 9 /
+> コネクタ 12 / accent 2 / annotation 2 / フォント階層 4）。
 
 ---
 
@@ -12,925 +25,172 @@
 
 ### 11.1 サイクル図（循環型）
 
-円形に配置された要素間の循環関係を表現。PDCAサイクル、継続的改善などに最適。
+円周上に並べた工程を一巡させ、終わりが始まりへ戻ることを見せる図。
+
+**いつ選ぶ**:
+- 最後の工程が最初の工程へ戻る（PDCA、月次レビュー、継続的改善）
+- 起点と終点をあえて特定させたくない反復構造
+- 工程どうしが対等で、どれか 1 つの停滞が輪全体を止めることを言いたい
+
+**いつ選ばない**:
+- 中心へ蓄積する共有資産がある → §11.30 フライホイール型
+- 分岐して終端へ向かう → §11.4 フローチャート型
+- 一方向に進んで戻らない → `buildHorizontalFlow` / `buildChevron`（§11.23）
+- 工程が 3 つだけ → §11.27 三角サイクル、PDCA 固定なら §11.26
+
+**要素数の目安**: 3-6 工程（3/4/5/6 それぞれに円周配置の既定座標がある）
+**複雑度の上限**: ノード総数 9・accent は 1 工程のみ・annotation 2 件まで（§D-2 #1/#3/#4）。ラベルは「計画」「点検」程度の短句、補足 1 行を添える範囲
+**必須情報**: 一周の周期を図内に「1 周 = 四半期」の形で書く、回る向きを円弧の矢じりと「時計回り」の語の両方で示す、各工程の完了条件を測定可能な形でラベル直下の補足 1 行に書く（「点検: 差異 3 件以内を確認」）、輪が止まる条件を annotation 1 件で書く、中心を置くなら「継続改善」のような総称の再掲ではなく周回数・現在地・対象を書く。これらが欠けると、読者はいま輪のどこにいるのか、次の工程へ進んでよいのかを判断できない。
+**配置**: 方形
 
 #### 11.1.1 円形サイクル（SVG2）
 
-**CSS（コンテナ+ホバー）**:
+中心にハブラベル、円周に工程、工程間を時計回りの円弧矢印で結ぶ既定形。
+円弧（`A` コマンド）は環状型の語彙なので、斜線禁止（§D-3 原則 1）の例外 (a) に当たる。
+ゴールデンは中心 `(248,248)`・半径 `160`・ノードボックス `144×64`・ハブ半径 `52` を採り、
+中心 250 / 半径 180 / ノード幅 140 だとノードが viewBox の外へ出るため寄せてある。
 
-```css
-.slide-cycle .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
-
-.slide-cycle .cycle-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
-
-.slide-cycle .diagram-svg-container {
-  width: 100%;
-  max-width: 700px;
-  aspect-ratio: 1 / 1;
-}
-
-.slide-cycle .diagram-svg .node-group {
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.slide-cycle .diagram-svg .node-group:hover rect,
-.slide-cycle .diagram-svg .node-group:hover circle {
-  filter: url(#shadow-lg);
-  stroke-width: 3.5;
-}
-```
-
-**HTML+SVG（4要素サイクル: PDCA等）**:
-
-```html
-<div class="slider__item slide-cycle">
-  <div class="slider__content">
-    <h2 class="cycle-title"><i class="fas fa-sync-alt"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}のサイクル図">
-        <defs>
-          <marker id="cyc-arrow" viewBox="0 0 10 10" refX="10" refY="5"
-                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--autumn-yellow,#DCA561)" />
-          </marker>
-          <filter id="cyc-shadow" x="-10%" y="-10%" width="120%" height="130%">
-            <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.25" />
-          </filter>
-          <filter id="cyc-shadow-lg" x="-10%" y="-10%" width="120%" height="130%">
-            <feDropShadow dx="4" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.35" />
-          </filter>
-        </defs>
-
-        <!-- 中央ラベル -->
-        <circle cx="250" cy="250" r="55" fill="var(--sakura-pink,#D27E99)" filter="url(#cyc-shadow)" />
-        <foreignObject x="195" y="215" width="110" height="70">
-          <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card"
-               style="color:var(--bg-dark,#1F1F28);font-weight:700;font-size:1.2rem;">
-            <span>{{中央ラベル}}</span>
-          </div>
-        </foreignObject>
-
-        <!-- 接続円弧（時計回り矢印） -->
-        <path d="M 310,100 A 160,160 0 0,1 400,190" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5" marker-end="url(#cyc-arrow)" />
-        <path d="M 400,310 A 160,160 0 0,1 310,400" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5" marker-end="url(#cyc-arrow)" />
-        <path d="M 190,400 A 160,160 0 0,1 100,310" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5" marker-end="url(#cyc-arrow)" />
-        <path d="M 100,190 A 160,160 0 0,1 190,100" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5" marker-end="url(#cyc-arrow)" />
-
-        <!-- 要素1: 上（Plan等） -->
-        <g class="node-group has-tooltip" data-tooltip="{{説明1}}">
-          <rect x="180" y="30" width="140" height="70" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--wave-blue,#7E9CD8)"
-                stroke-width="2.5" filter="url(#cyc-shadow)" />
-          <foreignObject x="188" y="38" width="124" height="54">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:600;">
-              <i class="fas {{アイコン1}}" style="color:var(--wave-blue,#7E9CD8)"></i>
-              <span>{{テキスト1}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 要素2: 右（Do等） -->
-        <g class="node-group has-tooltip" data-tooltip="{{説明2}}">
-          <rect x="370" y="215" width="140" height="70" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--spring-green,#98BB6C)"
-                stroke-width="2.5" filter="url(#cyc-shadow)" />
-          <foreignObject x="378" y="223" width="124" height="54">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:600;">
-              <i class="fas {{アイコン2}}" style="color:var(--spring-green,#98BB6C)"></i>
-              <span>{{テキスト2}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 要素3: 下（Check等） -->
-        <g class="node-group has-tooltip" data-tooltip="{{説明3}}">
-          <rect x="180" y="400" width="140" height="70" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--autumn-yellow,#DCA561)"
-                stroke-width="2.5" filter="url(#cyc-shadow)" />
-          <foreignObject x="188" y="408" width="124" height="54">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:600;">
-              <i class="fas {{アイコン3}}" style="color:var(--autumn-yellow,#DCA561)"></i>
-              <span>{{テキスト3}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 要素4: 左（Act等） -->
-        <g class="node-group has-tooltip" data-tooltip="{{説明4}}">
-          <rect x="-10" y="215" width="140" height="70" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--sakura-pink,#D27E99)"
-                stroke-width="2.5" filter="url(#cyc-shadow)" />
-          <foreignObject x="-2" y="223" width="124" height="54">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:600;">
-              <i class="fas {{アイコン4}}" style="color:var(--sakura-pink,#D27E99)"></i>
-              <span>{{テキスト4}}</span>
-            </div>
-          </foreignObject>
-        </g>
-      </svg>
-    </div>
-  </div>
-</div>
-```
-
-#### 要素数バリエーション座標
-
-| 要素数 | 座標計算（中心250,250、半径180） |
-|--------|--------------------------------|
-| 3要素 | 上(250,70) 右下(406,385) 左下(94,385) |
-| 4要素 | 上(250,70) 右(430,250) 下(250,430) 左(70,250) |
-| 5要素 | 上(250,70) 右上(421,141) 右下(356,392) 左下(144,392) 左上(79,141) |
-| 6要素 | 上(250,70) 右上(406,160) 右下(406,340) 下(250,430) 左下(94,340) 左上(94,160) |
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/cycle-{input.json,golden.html}`
 
 #### 11.1.2 スネーク型サイクル（蛇行フロー・SVG2）
 
-上下に蛇行しながら進むフロー。長いプロセスに最適。
+横幅が尽きる工程数を上下 2 行に折り返して進めるフロー。循環ではなく**直列**である。
 
-```css
-.slide-snake .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
-
-.slide-snake .snake-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
-
-.slide-snake .diagram-svg-container {
-  width: 100%;
-  max-width: 900px;
-  aspect-ratio: 16 / 9;
-}
-```
-
-```html
-<div class="slider__item slide-snake">
-  <div class="slider__content">
-    <h2 class="snake-title"><i class="fas fa-stream"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}の蛇行フロー">
-        <defs>
-          <marker id="snake-arrow" viewBox="0 0 10 10" refX="10" refY="5"
-                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--autumn-yellow,#DCA561)" />
-          </marker>
-          <filter id="snake-shadow" x="-5%" y="-5%" width="110%" height="115%">
-            <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.25" />
-          </filter>
-        </defs>
-
-        <!-- 行1: 左→右 (Step 1-3) -->
-        <!-- Step 1 -->
-        <g class="node-group">
-          <rect x="30" y="30" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--wave-blue,#7E9CD8)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="60" cy="50" r="15" fill="var(--wave-blue,#7E9CD8)" />
-          <text x="60" y="55" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">1</text>
-          <foreignObject x="80" y="40" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト1}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 矢印 Step1→2 -->
-        <line x1="230" y1="70" x2="310" y2="70"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5"
-              marker-end="url(#snake-arrow)" />
-
-        <!-- Step 2 -->
-        <g class="node-group">
-          <rect x="320" y="30" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--wave-blue,#7E9CD8)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="350" cy="50" r="15" fill="var(--wave-blue,#7E9CD8)" />
-          <text x="350" y="55" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">2</text>
-          <foreignObject x="370" y="40" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト2}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 矢印 Step2→3 -->
-        <line x1="520" y1="70" x2="600" y2="70"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5"
-              marker-end="url(#snake-arrow)" />
-
-        <!-- Step 3 -->
-        <g class="node-group">
-          <rect x="610" y="30" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--wave-blue,#7E9CD8)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="640" cy="50" r="15" fill="var(--wave-blue,#7E9CD8)" />
-          <text x="640" y="55" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">3</text>
-          <foreignObject x="660" y="40" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト3}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 折り返し矢印（右→下→左） -->
-        <path d="M 810,110 Q 850,180 810,210" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5"
-              marker-end="url(#snake-arrow)" />
-
-        <!-- 行2: 右→左 (Step 4-6) -->
-        <!-- Step 4 -->
-        <g class="node-group">
-          <rect x="610" y="220" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--spring-green,#98BB6C)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="640" cy="240" r="15" fill="var(--spring-green,#98BB6C)" />
-          <text x="640" y="245" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">4</text>
-          <foreignObject x="660" y="230" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト4}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 矢印 Step4→5（左向き） -->
-        <line x1="610" y1="260" x2="530" y2="260"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5"
-              marker-end="url(#snake-arrow)" />
-
-        <!-- Step 5 -->
-        <g class="node-group">
-          <rect x="320" y="220" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--spring-green,#98BB6C)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="350" cy="240" r="15" fill="var(--spring-green,#98BB6C)" />
-          <text x="350" y="245" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">5</text>
-          <foreignObject x="370" y="230" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト5}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 矢印 Step5→6（左向き） -->
-        <line x1="320" y1="260" x2="240" y2="260"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2.5"
-              marker-end="url(#snake-arrow)" />
-
-        <!-- Step 6 -->
-        <g class="node-group">
-          <rect x="30" y="220" width="200" height="80" rx="12"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--spring-green,#98BB6C)"
-                stroke-width="2.5" filter="url(#snake-shadow)" />
-          <circle cx="60" cy="240" r="15" fill="var(--spring-green,#98BB6C)" />
-          <text x="60" y="245" text-anchor="middle" font-size="14" font-weight="700"
-                fill="var(--bg-dark,#1F1F28)">6</text>
-          <foreignObject x="80" y="230" width="140" height="60">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="color:var(--fg-default,#DCD7BA);font-size:1.3rem;">
-              {{テキスト6}}
-            </div>
-          </foreignObject>
-        </g>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+**いつ選ぶ**: 工程が横一列に収まらない（既定は 2 行 × 3 = 6 工程）
+**いつ選ばない**: 終わりが始まりへ戻る → §11.1 ／ カード表現にしたい → §11.28 ウェーブステップ
+**必須情報**: 先頭ノードに起点の事象、末尾ノードに終点の事象を具体語で書く（「開始」「終了」で済ませない）、各工程に担当を短語で添える、工程間の矢印ラベルに受け渡す成果物を書く（「渡す」だけにしない）、各工程の完了条件を測定可能な形で書く。これらが欠けると、読者は流れが誰の手で止まっているのか、次の工程へ渡してよい状態かを判断できない。
+**配置**: 全幅（決定論経路は `buildSnake`）
 
 ### 11.2 ベン図（SVG2）
 
-SVGの`<circle>`と`opacity`で正確な重なり表現。
+複数の集合の重なりを円の交差で見せ、交差そのものを主張にする図。
+
+**いつ選ぶ**:
+- 「両方を同時に満たす一点」が主張の中心にある
+- 各集合が単独では足りていることを対照として示したい
+- 属性の所属関係が排他でなく重なる
+
+**いつ選ばない**:
+- 集合が 4 つ以上 → 領域が読めないので `buildMatrix`（§11.7）へ替える
+- 2 軸の位置づけを見せたい → §11.31 象限図
+- 包含が入れ子（重ならない） → §11.33 ネスト枠 / §11.14 同心円
+
+**要素数の目安**: 2-3 集合（+ 交差ラベル）
+**複雑度の上限**: ベン図の集合数 3（§D-2 #11）。3 円なら交差ラベルは 2 円交差 3 + 3 円交差 1 の計 4 まで。accent は交差 1 箇所のみ
+**必須情報**: 各円のラベルに集合の定義を書く（「対象者」ではなく「2026/4 時点の有償契約者」）、所属を決める判定基準を図内に置く、各領域に件数を n 付きで書く、どの円にも入らない補集合の意味と件数を枠の外側 1 行に書く。これらが欠けると、読者は自分のケースがどの領域に落ちるかを決められず、交差の主張が全体の何割の話なのかも読めない。
+**配置**: 方形
 
 #### 11.2.1 2円ベン図
 
-```css
-.slide-venn .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+左右 2 円を交差させ、レンズ部にラベルを重ねる形。集合 2 つは対等な前提なので
+色で序列を付けず、焦点は交差にだけ置く。円は `<circle>` で描くため、
+交差が斜め線として検出されることはない（D5 / D17 の対象外）。
 
-.slide-venn .venn-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
-
-.slide-venn .diagram-svg-container {
-  width: 100%;
-  max-width: 700px;
-  aspect-ratio: 3 / 2;
-}
-
-.slide-venn .diagram-svg .venn-area {
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.slide-venn .diagram-svg .venn-area:hover {
-  opacity: 0.9;
-}
-```
-
-```html
-<div class="slider__item slide-venn venn-2">
-  <div class="slider__content">
-    <h2 class="venn-title"><i class="fas fa-circle-notch"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}のベン図">
-        <!-- 左円 -->
-        <g class="venn-area">
-          <circle cx="220" cy="200" r="150"
-                  fill="var(--wave-blue,#7E9CD8)" fill-opacity="0.4"
-                  stroke="var(--wave-blue,#7E9CD8)" stroke-width="3" />
-          <foreignObject x="100" y="160" width="140" height="80">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-                 class="fo-card has-tooltip" data-tooltip="{{詳細A}}"
-                 style="gap:4px;color:var(--fg-default,#DCD7BA);font-size:1.4rem;font-weight:700;">
-              <i class="fas {{アイコンA}}" style="font-size:1.6rem;color:var(--wave-blue,#7E9CD8)"></i>
-              <span>{{ラベルA}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 右円 -->
-        <g class="venn-area">
-          <circle cx="380" cy="200" r="150"
-                  fill="var(--sakura-pink,#D27E99)" fill-opacity="0.4"
-                  stroke="var(--sakura-pink,#D27E99)" stroke-width="3" />
-          <foreignObject x="360" y="160" width="140" height="80">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-                 class="fo-card has-tooltip" data-tooltip="{{詳細B}}"
-                 style="gap:4px;color:var(--fg-default,#DCD7BA);font-size:1.4rem;font-weight:700;">
-              <i class="fas {{アイコンB}}" style="font-size:1.6rem;color:var(--sakura-pink,#D27E99)"></i>
-              <span>{{ラベルB}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 交差部分ラベル -->
-        <foreignObject x="250" y="170" width="100" height="60">
-          <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card"
-               style="background:var(--autumn-yellow,#DCA561);border-radius:8px;padding:0.5rem;
-                      color:var(--bg-dark,#1F1F28);font-weight:700;font-size:1.2rem;">
-            {{A∩B}}
-          </div>
-        </foreignObject>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/venn-{input.json,golden.html}`
 
 #### 11.2.2 3円ベン図
 
-```html
-<div class="slider__item slide-venn venn-3">
-  <div class="slider__content">
-    <h2 class="venn-title"><i class="fas fa-circle-notch"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}の3円ベン図">
-        <!-- 上円 -->
-        <g class="venn-area">
-          <circle cx="350" cy="180" r="140"
-                  fill="var(--wave-blue,#7E9CD8)" fill-opacity="0.35"
-                  stroke="var(--wave-blue,#7E9CD8)" stroke-width="3" />
-          <foreignObject x="295" y="100" width="110" height="70">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-                 class="fo-card has-tooltip" data-tooltip="{{詳細A}}"
-                 style="gap:4px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:700;">
-              <i class="fas {{アイコンA}}" style="color:var(--wave-blue,#7E9CD8)"></i>
-              <span>{{ラベルA}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 左下円 -->
-        <g class="venn-area">
-          <circle cx="250" cy="330" r="140"
-                  fill="var(--sakura-pink,#D27E99)" fill-opacity="0.35"
-                  stroke="var(--sakura-pink,#D27E99)" stroke-width="3" />
-          <foreignObject x="140" y="330" width="110" height="70">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-                 class="fo-card has-tooltip" data-tooltip="{{詳細B}}"
-                 style="gap:4px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:700;">
-              <i class="fas {{アイコンB}}" style="color:var(--sakura-pink,#D27E99)"></i>
-              <span>{{ラベルB}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 右下円 -->
-        <g class="venn-area">
-          <circle cx="450" cy="330" r="140"
-                  fill="var(--spring-green,#98BB6C)" fill-opacity="0.35"
-                  stroke="var(--spring-green,#98BB6C)" stroke-width="3" />
-          <foreignObject x="450" y="330" width="110" height="70">
-            <div xmlns="http://www.w3.org/1999/xhtml"
-                 class="fo-card has-tooltip" data-tooltip="{{詳細C}}"
-                 style="gap:4px;color:var(--fg-default,#DCD7BA);font-size:1.3rem;font-weight:700;">
-              <i class="fas {{アイコンC}}" style="color:var(--spring-green,#98BB6C)"></i>
-              <span>{{ラベルC}}</span>
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- 2円交差ラベル -->
-        <text x="280" y="240" text-anchor="middle" font-size="13" font-weight="600"
-              fill="var(--fg-default,#DCD7BA)">{{A∩B}}</text>
-        <text x="420" y="240" text-anchor="middle" font-size="13" font-weight="600"
-              fill="var(--fg-default,#DCD7BA)">{{A∩C}}</text>
-        <text x="350" y="380" text-anchor="middle" font-size="13" font-weight="600"
-              fill="var(--fg-default,#DCD7BA)">{{B∩C}}</text>
-
-        <!-- 3円交差ラベル -->
-        <foreignObject x="305" y="265" width="90" height="50">
-          <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card"
-               style="background:var(--autumn-yellow,#DCA561);border-radius:8px;
-                      color:var(--bg-dark,#1F1F28);font-weight:700;font-size:1.1rem;">
-            {{A∩B∩C}}
-          </div>
-        </foreignObject>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+上・左下・右下の 3 円。交差ラベルは 2 円交差 3 箇所と 3 円交差 1 箇所に置く。
+3 円交差だけを強調面にし、残りはテキストラベルに留めないと面が読めなくなる。
 
 ### 11.3 マインドマップ（SVG2）
 
-SVGのpath接続線で中央から放射状に広がる概念マップを正確に描画。
+中央テーマから枝を放射させ、概念の**分解**を見せる図。流れではない。
 
-```css
-.slide-mindmap .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 1 つのテーマを構成要素へ分解し、どの枝が論点かを指したい
+- 枝どうしに順序がなく、対等に並ぶ
+- 分解した枝のうち 1 本だけを本文で深掘りする
 
-.slide-mindmap .mindmap-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 親子に従属・指揮系統がある → §11.22 組織図 / `buildHierarchy`
+- 人物どうしの関係網 → §11.24 パーソンネットワーク
+- 枝に順序や時間がある → §11.4 / §11.25
 
-.slide-mindmap .diagram-svg-container {
-  width: 100%;
-  max-width: 960px;
-  aspect-ratio: 16 / 9;
-}
+**要素数の目安**: 中央 1 + 枝 4-6
+**複雑度の上限**: 1 親あたり子数 5・深さ 4（§D-2 #10/#9）。枝は 2 次ベジェ（`Q`）だけで引き、矢じりは付けない（分解であって流れではないため）
+**必須情報**: 中央に分解の対象を問いか対象名で書く、枝の並びに意味があるなら軸名を、無いなら「並びは順不同」を図内に書く、この分解が全体を覆うかを書き、覆わないなら「他に〜がある」を枠の外側へ置く、本文で深掘りする 1 枝を accent で指す。これらが欠けると、読者は挙がっていない要素が「検討して外した」のか「漏れた」のかを区別できない。
+**配置**: 方形
 
-.slide-mindmap .diagram-svg .branch-node {
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.slide-mindmap .diagram-svg .branch-node:hover rect {
-  filter: url(#mm-shadow-lg);
-  stroke-width: 3;
-}
-```
-
-```html
-<div class="slider__item slide-mindmap">
-  <div class="slider__content">
-    <h2 class="mindmap-title"><i class="fas fa-project-diagram"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}のマインドマップ">
-        <defs>
-          <filter id="mm-shadow" x="-5%" y="-5%" width="110%" height="115%">
-            <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.25" />
-          </filter>
-          <filter id="mm-shadow-lg" x="-8%" y="-8%" width="116%" height="120%">
-            <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#000" flood-opacity="0.35" />
-          </filter>
-          <linearGradient id="mm-grad-center" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="var(--wave-blue,#7E9CD8)" />
-            <stop offset="100%" stop-color="var(--sakura-pink,#D27E99)" />
-          </linearGradient>
-        </defs>
-
-        <!-- 接続線（中央→各ブランチ） -->
-        <path d="M 480,270 Q 600,200 720,160" fill="none"
-              stroke="var(--sakura-pink,#D27E99)" stroke-width="2" stroke-opacity="0.6" />
-        <path d="M 480,270 Q 620,270 760,270" fill="none"
-              stroke="var(--wave-aqua,#7AA89F)" stroke-width="2" stroke-opacity="0.6" />
-        <path d="M 480,270 Q 600,340 720,380" fill="none"
-              stroke="var(--spring-green,#98BB6C)" stroke-width="2" stroke-opacity="0.6" />
-        <path d="M 480,270 Q 360,200 240,160" fill="none"
-              stroke="var(--autumn-yellow,#DCA561)" stroke-width="2" stroke-opacity="0.6" />
-        <path d="M 480,270 Q 340,270 200,270" fill="none"
-              stroke="var(--wave-blue,#7E9CD8)" stroke-width="2" stroke-opacity="0.6" />
-        <path d="M 480,270 Q 360,340 240,380" fill="none"
-              stroke="var(--wave-blue,#7E9CD8)" stroke-width="2" stroke-opacity="0.6" />
-
-        <!-- 中央ノード -->
-        <g filter="url(#mm-shadow)">
-          <rect x="390" y="235" width="180" height="70" rx="16"
-                fill="url(#mm-grad-center)" />
-          <foreignObject x="398" y="243" width="164" height="54">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card"
-                 style="color:var(--bg-dark,#1F1F28);font-weight:700;font-size:1.5rem;">
-              {{中央テーマ}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ1: 右上 -->
-        <g class="branch-node">
-          <rect x="680" y="130" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--sakura-pink,#D27E99)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="688" y="138" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--sakura-pink,#D27E99)">&#9679;</span>
-              {{ブランチ1}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ2: 右 -->
-        <g class="branch-node">
-          <rect x="720" y="245" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--wave-aqua,#7AA89F)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="728" y="253" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--wave-aqua,#7AA89F)">&#9679;</span>
-              {{ブランチ2}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ3: 右下 -->
-        <g class="branch-node">
-          <rect x="680" y="355" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--spring-green,#98BB6C)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="688" y="363" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--spring-green,#98BB6C)">&#9679;</span>
-              {{ブランチ3}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ4: 左上 -->
-        <g class="branch-node">
-          <rect x="110" y="130" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--autumn-yellow,#DCA561)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="118" y="138" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--autumn-yellow,#DCA561)">&#9679;</span>
-              {{ブランチ4}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ5: 左 -->
-        <g class="branch-node">
-          <rect x="70" y="245" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--wave-blue,#7E9CD8)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="78" y="253" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--wave-blue,#7E9CD8)">&#9679;</span>
-              {{ブランチ5}}
-            </div>
-          </foreignObject>
-        </g>
-
-        <!-- ブランチ6: 左下 -->
-        <g class="branch-node">
-          <rect x="110" y="355" width="170" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)"
-                stroke="var(--wave-blue,#7E9CD8)" stroke-width="2" filter="url(#mm-shadow)" />
-          <foreignObject x="118" y="363" width="154" height="39">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card fo-card--row"
-                 style="gap:6px;color:var(--fg-default,#DCD7BA);font-size:1.2rem;font-weight:600;">
-              <span style="color:var(--wave-blue,#7E9CD8)">&#9679;</span>
-              {{ブランチ6}}
-            </div>
-          </foreignObject>
-        </g>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/mindmap-{input.json,golden.html}`
 
 ### 11.4 フローチャート型（SVG2）
 
-SVGのpolygon/rectで正確なノード形状、path接続線で精密なフロー表現。
+開始から終了まで、判断で分岐し再合流する処理の道筋を見せる図。
 
-```css
-.slide-flowchart .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 「はい / いいえ」で経路が割れる判断が図の中心にある
+- 開始と終了が明確に存在する（一巡して戻らない）
+- どの工程が律速かを 1 つ指したい
 
-.slide-flowchart .flowchart-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 最後が最初へ戻る → §11.1 サイクル図
+- 分岐がなく一直線 → `buildHorizontalFlow`（横帯に収まる）
+- 誰が処理するかが論点 → `buildSwimlane`
+- 状態と遷移条件が論点 → `buildState`
 
-.slide-flowchart .diagram-svg-container {
-  width: 100%;
-  max-width: 800px;
-  aspect-ratio: 4 / 5;
-}
+**要素数の目安**: 4-6 ノード（開始・処理・判断・分岐先 2・終了）、判断は 1 図 1 箇所
+**複雑度の上限**: ノード総数 9 / コネクタ総数 12（§D-2 #1/#2）。ノード形状は開始終了カプセル・処理矩形・判断ひし形の 3 種まで。分岐ラベルは Yes/No の 2 語に留める
+**必須情報**: 開始と終了のカプセルに具体の事象を書く（「開始」ではなく「申請受付」）、各処理に担当を短語で添える、判断ひし形には閾値まで書く（「基準内か」ではなく「5 万円以内か」）、Yes/No の各経路を終端まで結んで行き止まりを作らない、差し戻しの線があるなら何回で抜けるかを線ラベルに書く。これらが欠けると、読者は自分の案件がどちらの経路を通り、どこで止まるのかを図の上で辿れない。
+**配置**: 方形（分岐あり）。分岐がなく左から右へ進むだけなら横帯（`buildHorizontalFlow`）
 
-.slide-flowchart .diagram-svg .fc-node {
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.slide-flowchart .diagram-svg .fc-node:hover rect,
-.slide-flowchart .diagram-svg .fc-node:hover polygon {
-  filter: url(#fc-shadow-lg);
-}
-```
-
-```html
-<div class="slider__item slide-flowchart">
-  <div class="slider__content">
-    <h2 class="flowchart-title"><i class="fas fa-sitemap"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 500 600" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}のフローチャート">
-        <defs>
-          <marker id="fc-arrow" viewBox="0 0 10 10" refX="10" refY="5"
-                  markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--fuji-gray,#727169)" />
-          </marker>
-          <filter id="fc-shadow" x="-5%" y="-5%" width="110%" height="115%">
-            <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.25" />
-          </filter>
-          <filter id="fc-shadow-lg" x="-8%" y="-8%" width="116%" height="120%">
-            <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#000" flood-opacity="0.35" />
-          </filter>
-        </defs>
-
-        <!-- 開始（カプセル型） -->
-        <g class="fc-node">
-          <rect x="180" y="20" width="140" height="45" rx="22" ry="22"
-                fill="var(--sakura-pink,#D27E99)" filter="url(#fc-shadow)" />
-          <text x="250" y="47" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">開始</text>
-        </g>
-
-        <!-- 矢印: 開始→処理1 -->
-        <line x1="250" y1="65" x2="250" y2="100"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2.5" marker-end="url(#fc-arrow)" />
-
-        <!-- 処理1（矩形） -->
-        <g class="fc-node">
-          <rect x="170" y="105" width="160" height="55" rx="8"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--wave-blue,#7E9CD8)"
-                stroke-width="2.5" filter="url(#fc-shadow)" />
-          <text x="250" y="137" text-anchor="middle" dominant-baseline="central"
-                fill="var(--fg-default,#DCD7BA)" font-size="15">{{処理1}}</text>
-        </g>
-
-        <!-- 矢印: 処理1→判断 -->
-        <line x1="250" y1="160" x2="250" y2="200"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2.5" marker-end="url(#fc-arrow)" />
-
-        <!-- 判断（ひし形） -->
-        <g class="fc-node">
-          <polygon points="250,200 330,255 250,310 170,255"
-                   fill="var(--autumn-yellow,#DCA561)" filter="url(#fc-shadow)" />
-          <text x="250" y="258" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="14">{{条件?}}</text>
-        </g>
-
-        <!-- 分岐: Yes（左） -->
-        <line x1="170" y1="255" x2="80" y2="255"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <line x1="80" y1="255" x2="80" y2="370"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" marker-end="url(#fc-arrow)" />
-        <text x="130" y="248" text-anchor="middle" font-size="13" font-weight="700"
-              fill="var(--spring-green,#98BB6C)">Yes</text>
-
-        <!-- 処理A -->
-        <g class="fc-node">
-          <rect x="10" y="375" width="140" height="50" rx="8"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--spring-green,#98BB6C)"
-                stroke-width="2.5" filter="url(#fc-shadow)" />
-          <text x="80" y="404" text-anchor="middle" dominant-baseline="central"
-                fill="var(--fg-default,#DCD7BA)" font-size="14">{{処理A}}</text>
-        </g>
-
-        <!-- 分岐: No（右） -->
-        <line x1="330" y1="255" x2="420" y2="255"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <line x1="420" y1="255" x2="420" y2="370"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" marker-end="url(#fc-arrow)" />
-        <text x="370" y="248" text-anchor="middle" font-size="13" font-weight="700"
-              fill="var(--sakura-pink,#D27E99)">No</text>
-
-        <!-- 処理B -->
-        <g class="fc-node">
-          <rect x="350" y="375" width="140" height="50" rx="8"
-                fill="var(--bg-dim,#2A2A37)" stroke="var(--sakura-pink,#D27E99)"
-                stroke-width="2.5" filter="url(#fc-shadow)" />
-          <text x="420" y="404" text-anchor="middle" dominant-baseline="central"
-                fill="var(--fg-default,#DCD7BA)" font-size="14">{{処理B}}</text>
-        </g>
-
-        <!-- 合流線 -->
-        <line x1="80" y1="425" x2="80" y2="470"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <line x1="420" y1="425" x2="420" y2="470"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <line x1="80" y1="470" x2="420" y2="470"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <line x1="250" y1="470" x2="250" y2="510"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2.5" marker-end="url(#fc-arrow)" />
-
-        <!-- 合流点（丸） -->
-        <circle cx="250" cy="470" r="8" fill="var(--fuji-gray,#727169)" />
-
-        <!-- 終了（カプセル型） -->
-        <g class="fc-node">
-          <rect x="180" y="515" width="140" height="45" rx="22" ry="22"
-                fill="var(--sakura-pink,#D27E99)" filter="url(#fc-shadow)" />
-          <text x="250" y="542" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">終了</text>
-        </g>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/flow-{input.json,golden.html}`（基本フロー・slide 骨格・検査指摘ゼロ）
 
 ### 11.5 上昇型（SVG2: 成長・向上フロー）
 
-SVGのpath + circleで時間経過に伴う成長を精密に可視化。
+時間軸に沿って価値が積み上がる曲線と、その上の段階点を見せる図。
 
-```css
-.slide-growth .slider__content {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
-}
+**いつ選ぶ**:
+- 段階を追うごとに価値が非線形に伸びる（後半で急に効く）
+- 「どの段で効きめが現れるか」が主張である
+- 時間と価値の 2 軸を明示したい
 
-.slide-growth .growth-title {
-  font-size: var(--fs-heading);
-  font-weight: 700;
-  text-align: center;
-}
+**いつ選ばない**:
+- 実測値の推移を読ませたい → 折れ線グラフ（`chart-types.md`）
+- 段階に日付・期間がある → §11.25 縦タイムライン / ガント
+- 段が積層構造（時間軸でない） → §11.16 バリュースタック
 
-.slide-growth .diagram-svg-container {
-  width: 100%;
-  max-width: 900px;
-  aspect-ratio: 2 / 1;
-}
+**要素数の目安**: 段階点 4（既定）
+**複雑度の上限**: accent は立ち上がる 1 点のみ（曲線の立ち上がり位置と焦点を一致させる）。annotation 2 件まで。上昇線は 2 次ベジェ（`Q`）だけで作り、直線で結ぶと斜めセグメントになり §D-3 原則 1 に触れる。塗り面を閉じる `L` は垂直・水平の 2 本だけ
+**必須情報**: 縦軸に価値の名前と単位を軸端へ書く（「価値」だけにしない）、横軸に絶対時点を年込みで書く（「4 月」ではなく「2026/4」）、各段階点にその時点の値を数値で置く、実績と見通しが混在するなら境目を縦線で区切って両側にラベルを付ける。これらが欠けると、読者は「後半で急に効く」が実測なのか期待なのかを判断できず、立ち上がりがいつ来るかも読めない。
+**配置**: 方形
 
-.slide-growth .diagram-svg .growth-point {
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/ascent-{input.json,golden.html}`
 
-.slide-growth .diagram-svg .growth-point:hover circle {
-  r: 32;
-  filter: url(#growth-glow);
-}
-```
+### 11.30 フライホイール型（Flywheel・SVG2）
 
-```html
-<div class="slider__item slide-growth">
-  <div class="slider__content">
-    <h2 class="growth-title"><i class="fas fa-chart-line"></i> {{タイトル}}</h2>
-    <div class="diagram-svg-container">
-      <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"
-           class="diagram-svg" role="img" aria-label="{{タイトル}}の上昇フロー">
-        <defs>
-          <filter id="growth-shadow" x="-5%" y="-5%" width="110%" height="115%">
-            <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.25" />
-          </filter>
-          <filter id="growth-glow">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feFlood flood-color="var(--wave-blue,#7E9CD8)" flood-opacity="0.4" result="color" />
-            <feComposite in="color" in2="blur" operator="in" result="glow" />
-            <feMerge>
-              <feMergeNode in="glow" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <linearGradient id="growth-area" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="var(--wave-blue,#7E9CD8)" stop-opacity="0.3" />
-            <stop offset="100%" stop-color="var(--wave-blue,#7E9CD8)" stop-opacity="0.05" />
-          </linearGradient>
-        </defs>
+環状に回る工程と、**中心へ蓄積される共有資産**を 1 枚で見せる。
+§11.1 のサイクル図との違いは中心のハブである。各工程からハブへ向かう
+破線スポーク（書き戻し）が語彙の中核で、これを消すと単なる円形プロセスに戻る。
 
-        <!-- 時間軸（X軸） -->
-        <line x1="80" y1="340" x2="750" y2="340"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <text x="760" y="345" font-size="13" fill="var(--fg-dim,#727169)">時間</text>
+**いつ選ぶ**:
+- 一巡するたび中心に価値が積み上がる（データが貯まるほど推薦が当たる、実績が増えるほど紹介が増える）
+- 「回すほど強くなる」を主張したい
+- 二周目以降が速くなる理由を、中心への書き戻しで説明したい
 
-        <!-- 価値軸（Y軸） -->
-        <line x1="80" y1="340" x2="80" y2="40"
-              stroke="var(--fuji-gray,#727169)" stroke-width="2" />
-        <text x="70" y="30" font-size="13" fill="var(--fg-dim,#727169)" text-anchor="end">価値</text>
+**いつ選ばない**:
+- 中心に蓄積する共有資産が無い → §11.1 サイクル図
+- 経路が分岐して終端へ向かう → §11.4 フローチャート
+- 最後の工程が最初へ戻らない → §11.25 縦タイムライン
 
-        <!-- 上昇エリア（塗りつぶし） -->
-        <path d="M 150,300 Q 300,270 400,220 Q 500,150 600,80 L 600,340 L 150,340 Z"
-              fill="url(#growth-area)" />
+**要素数の目安**: 工程 4-6・ハブは必ず 1 個
+**複雑度の上限**: `accent` は 1 工程のみ（§D-2 #1 ノード総数 9 / #3 accent 2 の型別具体化）。7 工程以上は概要図と詳細図に割る。ハブが 2 つになったら図が 2 枚ある
+**必須情報**: 一周の周期をリングの外側に「1 周 = 1 か月」の形で書く、回る向きを矢じりと語の両方で示す、ハブに蓄積される資産の名前と現在の量を単位付きで書く（「データ」ではなく「レビュー 12,400 件」）、各工程がハブへ何を書き戻すかを破線スポークのラベルに書く、二周目が速くなる根拠を数値 1 件で示す、輪が止まる条件を書く。これらが欠けると、読者は「回すほど強くなる」がすでに成立しているのか、まだ主張に留まるのかを判断できない。
+**配置**: 方形（正方形に近い型なので左右分割の片側。全幅に伸ばすと余白が間延びする）
 
-        <!-- 上昇線 -->
-        <path d="M 150,300 Q 300,270 400,220 Q 500,150 600,80"
-              fill="none" stroke="var(--wave-blue,#7E9CD8)" stroke-width="3" />
+**幾何**（工程数 N=4 の既定値。`viewBox="0 0 720 560"`・すべて 4px グリッド）
 
-        <!-- ステップポイント1 -->
-        <g class="growth-point has-tooltip" data-tooltip="{{詳細1}}">
-          <circle cx="150" cy="300" r="28" fill="var(--wave-blue,#7E9CD8)" filter="url(#growth-shadow)" />
-          <text x="150" y="305" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">1</text>
-        </g>
-        <text x="150" y="365" text-anchor="middle" font-size="13"
-              fill="var(--fg-default,#DCD7BA)">{{ラベル1}}</text>
+- ハブ中心 `C = (360, 280)`、工程リング半径 `R = 208`
+- 工程 k の中心 `= (360 + R·cos θ, 280 + R·sin θ)`、`θ = -90° + k × (360°/N)`
+- 工程ボックス 160×64、ハブ 200×104
+- リングの実線円弧・ハブへの破線スポークはいずれも**放射状型の語彙**なので、
+  直交エルボー（同 §D-3 原則 1）の例外 (a) に該当する。斜線禁止は適用されない
 
-        <!-- ステップポイント2 -->
-        <g class="growth-point has-tooltip" data-tooltip="{{詳細2}}">
-          <circle cx="300" cy="260" r="28" fill="var(--wave-blue,#7E9CD8)" filter="url(#growth-shadow)" />
-          <text x="300" y="265" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">2</text>
-        </g>
-        <text x="300" y="365" text-anchor="middle" font-size="13"
-              fill="var(--fg-default,#DCD7BA)">{{ラベル2}}</text>
+**チェックリスト**: □ ハブは 1 個か □ 破線スポークが全工程から出ているか
+□ 最後の工程が最初へ戻る主張が本当に成立するか □ `accent` は 1 工程だけか
+□ リング円弧はすべて同じ半径・同じ回転方向か
 
-        <!-- ステップポイント3 -->
-        <g class="growth-point has-tooltip" data-tooltip="{{詳細3}}">
-          <circle cx="450" cy="190" r="28" fill="var(--wave-blue,#7E9CD8)" filter="url(#growth-shadow)" />
-          <text x="450" y="195" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">3</text>
-        </g>
-        <text x="450" y="365" text-anchor="middle" font-size="13"
-              fill="var(--fg-default,#DCD7BA)">{{ラベル3}}</text>
-
-        <!-- ステップポイント4 -->
-        <g class="growth-point has-tooltip" data-tooltip="{{詳細4}}">
-          <circle cx="600" cy="80" r="28" fill="var(--sakura-pink,#D27E99)" filter="url(#growth-shadow)" />
-          <text x="600" y="85" text-anchor="middle" dominant-baseline="central"
-                fill="var(--bg-dark,#1F1F28)" font-weight="700" font-size="16">4</text>
-        </g>
-        <text x="600" y="365" text-anchor="middle" font-size="13"
-              fill="var(--fg-default,#DCD7BA)">{{ラベル4}}</text>
-      </svg>
-    </div>
-  </div>
-</div>
-```
+ゴールデン実例: `skills/run-slide-report-generate/examples/diagram-goldens/flywheel-{input.json,golden.html}`（report 骨格・検査指摘ゼロ）
 
 ---
 
@@ -951,5 +211,6 @@ SVGのpath + circleで時間経過に伴う成長を精密に可視化。
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.0.0 | 2026-08-10 | 本文をゴールデンへ一本化。§11.x の HTML/CSS/SVG コードブロックを削除し、各節を型選択判断（いつ選ぶ / いつ選ばない / 要素数 / 複雑度上限 / 配置）へ薄化 |
 | 2.0.0 | 2026-02-15 | SVG2全面移行: サイクル図・スネーク型・ベン図・マインドマップ・フローチャート・上昇型の全6タイプをインラインSVG2に変換。CSS absoluteポジショニングを廃止し、SVG座標系・path・marker・filterに統一 |
 | 1.0.0 | 2026-01-23 | 初版（CSSベース） |

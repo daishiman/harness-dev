@@ -244,6 +244,25 @@ def extract_frontmatter_feedback_contract(skill_md_text: str) -> dict | None:
     return _parse_feedback_contract_block(fm_text)
 
 
+def _strip_inline_comment(raw: str) -> str:
+    """YAML スカラ値から行末インラインコメントを落とし、引用符を外す。
+
+    PyYAML 搭載環境と非搭載環境で値が食い違うと、ローカル緑・CI 赤 (あるいはその逆) を生む。
+    実際 `verify_by: evaluator  # 検証主体は deck-evaluator` が PyYAML では 'evaluator'、
+    こちらでは 'evaluator  # 検証主体は…' となり CI だけ enum 不一致で落ちた。
+    YAML の規約どおり「空白に続く #」だけをコメント開始とみなす (URL の `a#b` は値の一部)。
+    引用符付きスカラは閉じ引用符までを値とし、その内側の # は落とさない。
+    """
+    val = raw.strip()
+    if val[:1] in ('"', "'"):
+        quote = val[0]
+        end = val.find(quote, 1)
+        if end != -1:
+            return val[1:end]
+        return val[1:]
+    return re.split(r"\s+#", val, maxsplit=1)[0].strip()
+
+
 def _parse_feedback_contract_block(fm_text: str) -> dict | None:
     """yaml 非搭載環境向けの最小パーサ。
 
@@ -284,7 +303,7 @@ def _parse_feedback_contract_block(fm_text: str) -> dict | None:
             continue
         m = re.match(r"^(max_iterations|skip_reason):\s*(.+)$", stripped)
         if m and "- " not in line.split(":", 1)[0]:
-            key, val = m.group(1), m.group(2).strip().strip('"').strip("'")
+            key, val = m.group(1), _strip_inline_comment(m.group(2))
             fc[key] = int(val) if key == "max_iterations" and val.isdigit() else val
             continue
         if stripped.startswith("- "):
@@ -295,7 +314,7 @@ def _parse_feedback_contract_block(fm_text: str) -> dict | None:
                 continue
         if cur is not None and ":" in stripped:
             key, val = stripped.split(":", 1)
-            cur[key.strip()] = val.strip().strip('"').strip("'")
+            cur[key.strip()] = _strip_inline_comment(val)
     if criteria:
         fc["criteria"] = criteria
     return fc or None

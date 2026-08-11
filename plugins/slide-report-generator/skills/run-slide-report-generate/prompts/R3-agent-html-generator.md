@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # HTML生成（7層構造プロンプト）
 
 > 読み込み条件: Phase 3（HTML生成）着手時
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-html-generator.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-html-generator.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -51,7 +51,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・precheck-layout 判定基準・制約カタログ CONST_001-038）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/html-generation-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-038 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・precheck-layout 判定基準・制約カタログ CONST_001-039）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/html-generation-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-039 の逐語正本は当該 reference）。
 
 ---
 
@@ -64,9 +64,9 @@ last-audited: 2026-07-05
 
 | ツール / スクリプト | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------------------|------|--------------|--------------|----------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/precheck-layout.js" <structure-path>` | 全スライド一括レイアウトチェック（Phase 3 ゲート）。各スライドの PASS/WARN/FAIL 判定＋改善提案を出力 | 生成ループ着手前（必須・§Layer 5 前提） | なし（着手前ゲートのため必須） | 入力=structure.md / structure.json。終了コード PASS=0 / FAIL=1 / WARN=2 |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>` | 全スライド一括レイアウトチェック（Phase 3 ゲート）。各スライドの PASS/WARN/FAIL 判定＋改善提案を出力 | 生成ループ着手前（必須・§Layer 5 前提） | なし（着手前ゲートのため必須） | 入力=structure.md / structure.json。終了コード PASS=0 / FAIL=1 / WARN=2 |
 | `vendor/scripts/layout-calculator.js` | 単一構造ファイルに対するレイアウト計算（CLI / モジュール両用） | precheck 詳細確認・差し戻し検討時 | precheck が PASS で詳細不要なとき | 入力=単一構造ファイル |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/build-single-html.js" ./slide-dir/` | 分離形式から GAS 用 1ファイル HTML（index-single.html）を生成 | デプロイ用1ファイル化が必要なとき | GASデプロイ不要時 | 入力=スライドディレクトリ。`<link>`/`<script>` をインライン埋め込みに置換 |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js" ./slide-dir/` | 分離形式から GAS 用 1ファイル HTML（index-single.html）を生成 | デプロイ用1ファイル化が必要なとき | GASデプロイ不要時 | 入力=スライドディレクトリ。`<link>`/`<script>` をインライン埋め込みに置換 |
 | Read（vendor/assets/slide-template.html / structure.md / references/*） | テンプレート・SSoT・デザイン基準の読み込み | 仕様読込・テーマ適用時 | なし | — |
 | Write/Edit（index.html / styles.css / scripts.js / structure.md / deploy-guide.md） | 成果物の生成・更新 | スライド生成・出力・同梱ドキュメント生成時 | なし | 出力先=`05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/` |
 
@@ -138,6 +138,8 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - [ ] slide-area 要素がある（.slider 内に .slide-area が存在）
 - [ ] ライトテーマがデフォルトである（--bg-dark: #FFFFFF, --fg: #2D2D2D）
 - [ ] 分離形式で出力されている（index.html + styles.css + scripts.js。インライン CSS/JS の埋め込みが無く外部ファイル参照・CONST_002）
+- [ ] ひな形をコピーした面が 1 枚でもあるなら、`assets/slide-templates/slide-skeleton.css` を `styles.css` の先頭へ、`slide-skeleton.js` を `scripts.js` の末尾へ**連結**済み（ファイルを増やさず既存の外部 2 ファイルへ畳み込む＝CONST_002 と両立。未連結だと `--srg-*` も `data-autofit` も解決されない）
+- [ ] 上記を連結した場合、`styles.css` 全体で `@page` 宣言が**ちょうど 1 つ**（`slide-skeleton.css` 由来の `margin: 21.47mm 0`）。`print-layout.md` の `@page { margin: 0 }` を後ろへ重ねていない（後勝ちでレターボックス帯が消える）
 - [ ] DOCTYPE 宣言がある（HTML5形式）
 - [ ] CDN が正しい（GSAP 3.12.2, FontAwesome 6.5.1 または Bootstrap Icons / Material Symbols, Noto Sans JP）
 - [ ] 構成案の全スライドが HTML に反映されている
@@ -175,6 +177,7 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - [ ] 全スライドタイプの h2 CSS 定義が存在する（全 .slide-TYPE h2 に font-size 定義・詳細は reference CONST_019）
 - [ ] section-nav CSS 定義が HTML 全セクションを網羅している（全 data-section 値に active 定義・詳細は reference CONST_018）
 - [ ] list-item/ig-item に width:100% + box-sizing:border-box が適用されている（詳細は reference CONST_038）
+- [ ] structure の読者価値（タイトル・冒頭キーメッセージ・セクション扉の共有課題→得たい変化・自分へ移す橋・本論の数字/手順/失敗/条件/限界）を欠落/誇張なく射影している（詳細は reference CONST_039）
 - [ ] 事実確認: 推測を事実として述べていない（不確実な情報に限定詞を用いている）
 
 ## 5.4 実行方式
@@ -196,12 +199,12 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - 図解スライドは references/svg-diagram-primitives.md を参照しインライン SVG2 で描画する（CSS absolute での図配置は禁止）。SVG2 パーツ・viewBox 算出・CSS 変数連携を判断軸とする。
 - AI 画像図解候補は明示指示時のみ（CONST_028）。style-genome-packaging.md の pattern/textPolicy 値域で候補可否を判定する。
 - アニメーション・ナビは references/slide-components.md の定義を適用し、GSAP Timeline・ease 3種以上・clearProps 安全適用（CONST_009/010）に従う。
-- 分離形式（index.html + styles.css + scripts.js）で出力し、インライン CSS/JS を禁止する（CONST_002）。同梱ドキュメント（structure.md / deploy-guide.md）を index.html と同階層に出力し同期を維持する。
-- 具体的な生成規約（16:9・同期維持・部分AI画像化・意図的改行・スライドタイプ別問題・HTML 生成仕様・PDF 出力・操作方法）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/html-generation-rules.md` の §5.6 生成規約（ドメインルール）を参照する（旧 §5.6 の全規約を移設した SSOT）。
+- 分離形式（index.html + styles.css + scripts.js）で出力し、インライン CSS/JS を禁止する（CONST_002）。ひな形資産 `slide-skeleton.css` / `slide-skeleton.js` は 4・5 番目のファイルにもインライン埋め込みにもせず、この `styles.css`（先頭）/ `scripts.js`（末尾）へ連結して届ける（`assets/slide-templates/README.md` の「成果物への届け方」）。同梱ドキュメント（structure.md / deploy-guide.md）を index.html と同階層に出力し同期を維持する。
+- 具体的な生成規約（16:9・同期維持・部分AI画像化・意図的改行・スライドタイプ別問題・HTML 生成仕様・PDF 出力・操作方法）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/html-generation-rules.md` の §5.6 生成規約（ドメインルール）を参照する（旧 §5.6 の全規約を移設した SSOT）。
 
 ## 5.6 生成規約（ドメインルール）
 
-> **生成規約の全詳細（16:9・整合性維持・部分AI画像化・意図的改行・スライドタイプ別問題・HTML生成仕様・PDF出力・操作方法および全コード例）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/html-generation-rules.md` の §5.6 を参照**（本アダプタは役割・起動条件・I/O契約に専念。生成規約とコード例の逐語 SSOT は当該 reference。5.4 実行方式のループ各周回で本節を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
+> **生成規約の全詳細（16:9・整合性維持・部分AI画像化・意図的改行・スライドタイプ別問題・HTML生成仕様・PDF出力・操作方法および全コード例）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/html-generation-rules.md` の §5.6 を参照**（本アダプタは役割・起動条件・I/O契約に専念。生成規約とコード例の逐語 SSOT は当該 reference。5.4 実行方式のループ各周回で本節を判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
 
 ## 5.7 インターフェース
 
@@ -277,9 +280,9 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 
 | ツール / スクリプト | 使用目的 | 使用局面 |
 |--------------------|---------|--------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/precheck-layout.js" <structure-path>`（Layer 3 定義） | 全スライド一括レイアウトチェック（Phase 3 ゲート） | 生成ループ着手前（Layer 6 着手前ゲート） |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>`（Layer 3 定義） | 全スライド一括レイアウトチェック（Phase 3 ゲート） | 生成ループ着手前（Layer 6 着手前ゲート） |
 | `vendor/scripts/layout-calculator.js`（Layer 3 定義） | 単一構造ファイルのレイアウト計算（CLI/モジュール両用） | precheck 詳細確認・差し戻し検討時 |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/build-single-html.js" ./slide-dir/`（Layer 3 定義） | 分離形式から GAS 用 1ファイル HTML を生成 | デプロイ用1ファイル化が必要なとき（reference §5.6.6 GASデプロイ用1ファイル化） |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js" ./slide-dir/`（Layer 3 定義） | 分離形式から GAS 用 1ファイル HTML を生成 | デプロイ用1ファイル化が必要なとき（reference §5.6.6 GASデプロイ用1ファイル化） |
 | Read（vendor/assets/slide-template.html, structure.md, references/*） | テンプレート・SSoT・デザイン基準の読み込み | 仕様読込・テーマ適用時 |
 | Write/Edit（index.html / styles.css / scripts.js / structure.md / deploy-guide.md） | 成果物の生成・更新 | スライド生成・出力・同梱ドキュメント生成時 |
 
@@ -293,11 +296,18 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 | **構図パターン** | **references/composition-patterns.md** | **CARP原則・グリッド・余白リズム・三分割法** |
 | **配色戦略** | **references/color-strategy.md** | **60-30-10ルール・色彩心理・スライドタイプ別配色** |
 | **デザインパターン** | **references/slide-design-patterns.md** | **ヒーロー数値・Before/After・3ステップ等のビジュアルパターン** |
-| スライドタイプ一覧 | references/slide-types-overview.md | 53種+D3 24種タイプ選択ガイド |
+| スライドタイプ一覧 | references/slide-type-decision-tree.md §2 | <!-- count: slideTypeNonD3 -->74種+D3 <!-- count: d3Component -->33種タイプ選択ガイド（§2.2 にタイプ→詳細ファイルの対応） |
 | 基本スライド | references/slide-types-basic.md | 基本7種のHTML/CSS |
 | 拡張スライド | references/slide-types-extended.md | 拡張8種のHTML/CSS |
 | **SVG図解パーツ** | **references/svg-diagram-primitives.md** | **SVG2基本パーツ・マーカー・フィルター・座標計算** |
-| 図解スライド | references/diagram-*.md | 図解29種（5ファイルに分割、SVG2版） |
+| 図解の型別カタログ | references/diagram-type-crosswalk.md §0 が示す `diagram-*.md` / `chart-types.md` / `svg-diagram-primitives.md` | 型数と配置ファイルをここへ複製せず、crosswalk の count annotation と節番号対応から該当節だけを読む |
+| **図解型クロスウォーク（最初に引く索引）** | **references/diagram-type-crosswalk.md** | **§0 表の読み方と「CSS 型の節番号 → ファイル」対応 / §1 流れ・手順 / §2 循環・反復 / §3 階層・包含 / §4 比較・対立 / §5 時間軸 / §6 量・分布 / §7 システム構成 / §8 主張・訴求 / §9 slide 固有の面 / §10 経路の選び方（決定論 or tpl or 手書き）/ §11 参考体系との突合。図解を描く前に必ずここで型と経路と推奨配置を確定する** |
+| **図解の色ロール（hex 直書き禁止）** | **references/diagram-style-tokens.md** | **§1 セマンティックロール表（§1.1 CSS 変数の解決先）/ §2 系列色と使用制限 / §3 focal rule / §4 ノード種別→塗り・枠・破線 / §5 線幅・角丸・影の禁止事項 / §6 書体の役割。値の正本は vendor/scripts/svg-kit.cjs と style-builder.cjs で、本索引はロール名で引くためのもの** |
+| **作図文法の数値契約** | **references/diagram-layout-contract.md §D-1〜§D-5** | **§D-1 4px グリッド（座標・寸法・間隔の許可値）/ §D-2 複雑度予算 / §D-3 コネクタ 5 原則（直交エルボー・ラベル退避・交差 bridge・接続点の扇状分散・箱の裏を通さない）/ §D-4 R9 溶け込み契約（§D-4-1 占有率・§D-4-2 重複禁止・§D-4-3 文脈適合・§D-4-4 配置と型の接続）/ §D-5 annotation の文法。数値は本 reference が正本で、本プロンプトへ写さない** |
+| **図解の情報下限契約** | **references/diagram-information-contract.md** | **出所・時点、caption、凡例、軸、完了条件など、図として成立するための必須情報を描画前に確認する。生成後は `validate-diagram-information.py` が機械判定可能部分を検査する** |
+| **図解の骨格テンプレート（手書き経路）** | **assets/diagram-templates/diagram-skeleton-slide.html**（使い方は同ディレクトリ README.md） | **`.slider__item` の zones へ埋め込む図解ブロックの叩き台。JS・外部依存を持たず、色は CSS 変数のフォールバック付きで書かれ、矢印マーカーを同梱する。単体ページ用ではない** |
+| **スライド面のページひな形（面を書く前に必ず引く）** | **assets/slide-templates/registry.json** / **frame-contract.json**（使い方は同ディレクトリ README.md） | **`map` で slideType → ひな形 id + 受け入れ media 種別を引き、該当 `layout-*.html` を `<section>` ごとコピーして `data-slot` の中身と `data-media-slot` への差し込みだけを書く。slideType を持たない面は同じ registry.json の `structural_pages` / `role_pages` から役割名で引く（どの役割名がどちらに載っているかは registry.json が正本ゆえここへ列挙しない — 列挙すると役割ページの追加で散文だけが古くなる）。差し込み物が codex-image の面だけ `media_override` で `layout-image-full`/`layout-image-side`/`layout-image-grid` へ載せ替える（slideType は据え置く）。座標・寸法・font-size の正本は `frame-contract.json` 1 つ、色の正本は vendor の `SPEC.colors` 由来の `--srg-*` トークンで、面へ px も 16 進も直書きしない。ひな形 HTML と `slide-skeleton.css` / `slide-skeleton.js` は生成物ゆえ手編集せず、後 2 者は成果物の `styles.css` / `scripts.js` へ連結して届ける** |
+| 図解の型別カタログ（節番号→ファイル） | references/diagram-type-crosswalk.md §0 が示す参照先 | クロスウォークで決めた CSS 型の節だけを開いて実例を読む。型数・ファイル列挙はここへ複製しない |
 | グラフ | references/chart-types.md | グラフ9種 |
 | **画像フォーマット** | **references/image-format-guide.md** | **SVG/WebP/PNG選択基準・WebP変換手順** |
 | アニメーション | references/slide-interactions.md | ホバー・GSAP |
@@ -328,7 +338,7 @@ HTML生成（Phase 3）に着手する前に、必ず以下のゲートを通過
 
 1. **precheck-layout を実行**
    ```bash
-   node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/precheck-layout.js" <structure-path>
+   node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>
    ```
    - 入力: structure.md / structure.json（structure-designer の最終成果物）
    - 出力: 各スライドの PASS / WARN / FAIL 判定 + 改善提案
@@ -352,6 +362,18 @@ HTML生成（Phase 3）に着手する前に、必ず以下のゲートを通過
 - `vendor/scripts/test-fixtures/` — 期待挙動の参考（fixture-pass / fixture-warn / fixture-fail）
 
 **このゲートを通過しないまま Phase 3 を実行することは禁止。**
+
+## 図解を書くときの手順（第 4 次 update・型別参照の配線）
+
+図解スライドに着手したら、**白紙から SVG を書き始めてはならない**。次の順に進む。各段の正本は Layer 5.9 参照リソース表の該当行が持ち、値は本プロンプトへ写さない。
+
+1. **型と経路を決める** — `references/diagram-type-crosswalk.md` の「何を見せたいか」列から引き、決定論ビルダー / CSS 型（`diagram-*.md` の節番号）/ slide tpl / 推奨経路 / 推奨配置を確定する。判断順序は同 §10。決定論ビルダーまたは slide tpl が存在する型なら、手書きせずそちらへ渡す（手書き経路は防具を 4 つ失う・§10 の防具表）。
+2. **該当節だけを読む** — クロスウォーク §0 の「CSS 型の節番号 → ファイル」対応で `diagram-*.md` の該当節へ直行し、その節の実例だけを読む。ファイル全体の通読はしない。
+3. **骨格をコピーする** — 手書き経路に落ちた場合のみ `assets/diagram-templates/diagram-skeleton-slide.html` を成果物へ `<figure>` ごとコピーし、**編集マーカーで囲われた図解本体だけ**を書く。同一ページに複数の図解を置くときは README.md の手順に従って図解識別子とマーカー id 接頭辞を一意に揃える（揃え忘れると 2 枚目以降が 1 枚目のマーカーを参照して矢印の色が混ざり、機械検査を素通りする）。
+4. **色はロール名で書く** — `references/diagram-style-tokens.md` §1 のセマンティックロール表から選び、**hex を直書きしない**。系列色は §2 の使用制限、強調は §3 focal rule（1 図 1-2 要素）、ノード種別の塗り・枠・破線は §4、線幅・角丸・影の禁止事項は §5、書体は §6 に従う。値の正本は `vendor/scripts/svg-kit.cjs` / `style-builder.cjs`。
+5. **数値契約に従う** — 座標・寸法・間隔は `diagram-layout-contract.md` §D-1 のグリッド許可値、要素数は §D-2 複雑度予算、コネクタは §D-3 の 5 原則、注釈は §D-5 の文法。予算超過は縮小して詰め込むのではなく、型を変えるか節を割って解消する。
+6. **面の中で浮かせない** — §D-4 R9 溶け込み契約を満たす。面内の占有率は §D-4-1、図が語る内容を本文チップ・見出しが繰り返さないことは §D-4-2、色数・余白・角丸・影・書体を周囲と連続させることは §D-4-3、型と `zones` / `readingOrder` / `focalPoint` の接続は §D-4-4（`focalPoint` と図の強調要素は一致させる）。
+7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も含め、違反は ui-quality-reviewer へ渡す前に自分で解消する。
 
 ## 実行フロー
 

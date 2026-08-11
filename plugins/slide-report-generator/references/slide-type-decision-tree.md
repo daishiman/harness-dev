@@ -1,13 +1,12 @@
 # Slide Type Decision Tree
 
-**責務**: 79種のスライドタイプを「目的×情報構造」の2軸で決定論的に選択するための決定木リファレンス。
+**責務**: スライドタイプを「目的×情報構造」の2軸で決定論的に選択するための決定木リファレンス。
 
-**位置づけ**: presentation-slide-generator スキルにおいて、LLMが構成案からスライドタイプを選ぶ際の唯一の正本。本文書に存在しない判断基準は使用しない。
+**位置づけ**: 本文書は選択判断のowner。型の存在・件数・実装経路・参照節の正本は `structure.schema.json` と `diagram-type-crosswalk.md` であり、本書へ複製しない。
 
-**カバレッジ**: 基本9 + 拡張8 + 図解29 + グラフ9 + D3 24 = **79種を完全カバー**（重複ID なし）。
+**カバレッジ**: schema/crosswalkの現行集合を入力として選択する。件数は機械注釈付き正本から取得する。
 
 **関連**:
-- [slide-types-overview.md](slide-types-overview.md) - タイプ一覧
 - [slide-types-basic.md](slide-types-basic.md) - 基本9種
 - [slide-types-extended.md](slide-types-extended.md) - 拡張8種
 - [diagram-cycle-flow.md](diagram-cycle-flow.md) - 図解11.1-11.5
@@ -15,9 +14,11 @@
 - [diagram-business.md](diagram-business.md) - 図解11.11-11.19
 - [diagram-fabe.md](diagram-fabe.md) - 図解11.20（5バリエーション）
 - [diagram-visual.md](diagram-visual.md) - 図解11.21-11.29
+- [diagram-technical.md](diagram-technical.md) - 技術図解11.35-11.40
+- [diagram-extended.md](diagram-extended.md) - 運用・体験・増減図解11.41-11.44
+- [diagram-type-crosswalk.md](diagram-type-crosswalk.md) - 型集合・経路・参照節の正本
 - [chart-types.md](chart-types.md) - グラフ9種
-- [d3-integration.md](d3-integration.md) - D3 24種
-- [diagram-chart.md](diagram-chart.md) - 既存の選択ガイド（補助）
+- [d3-integration.md](d3-integration.md) - D3 24種 <!-- count-exempt: 本決定木の分類名(§2.1 の D3 群)の自己記述。schema の d3-* enum は 33 で、差分は決定木側の網羅ギャップ(別課題)であって数詞の drift ではない -->
 
 ---
 
@@ -70,18 +71,31 @@
 | **P-NUM 数値訴求** | `slide-highlight` [DT-069] | — | — | `diagram-funnel` [DT-070]<br>`d3-funnel` [DT-071]<br>`d3-waterfall` [DT-072] | `d3-pyramid` [DT-073] | `chart-bar-vertical` [DT-074]<br>`chart-bar-horizontal` [DT-075]<br>`chart-bar-stacked` [DT-076]<br>`chart-line` [DT-077]<br>`chart-pie` [DT-078]<br>`chart-clock-pie` [DT-079]<br>`chart-scatter` [DT-080]<br>`chart-radar` [DT-081]<br>`chart-gauge` [DT-082]<br>`d3-bar` [DT-083]<br>`d3-line` [DT-084]<br>`d3-pie` [DT-085]<br>`d3-donut` [DT-086]<br>`d3-radar` [DT-087]<br>`d3-gauge` [DT-088]<br>`d3-bubble` [DT-089]<br>`d3-heatmap` [DT-090]<br>`d3-radial-bar` [DT-091]<br>`d3-bullet` [DT-092]<br>`d3-lollipop` [DT-093]<br>`d3-calendar` [DT-094]<br>`d3-isotype` [DT-095]<br>`d3-wordcloud` [DT-096] | — |
 | **P-CIT 引用引証** | `slide-quote` [DT-097]<br>`slide-code` [DT-098] | — | — | — | — | — | `slide-code` [DT-098] |
 
-### 2.1 分類カバー数
+### 2.1 分類カバレッジ
 
-| カテゴリ | 期待数 | 本マトリクス記載 |
-|---------|-------|----------------|
-| 基本（slide-* 9種） | 9 | 9 ✓ |
-| 拡張（slide-* 8種） | 8 | 8 ✓ |
-| 図解（diagram-* 29種、FABE型は5バリ展開） | 29 + 4 = 33 | 33 ✓ |
-| グラフ（chart-* 9種） | 9 | 9 ✓ |
-| D3（d3-* 24種） | 24 | 24 ✓ |
-| **合計** | **83** | **83 ✓**（DT-IDも83、`slide-quote`/`slide-code` は P-EMO/P-CIT で重複参照のみ、実体は79+FABE展開4=83） |
+本マトリクスのDT-IDは選択上のaliasを含むため、型実体の件数正本にしない。
+漏れの判定は `structure.schema.json` のenumと `diagram-type-crosswalk.md` の機械注釈を
+`lint-count-parity.py` が照合する。新しい型を追加したときは本マトリクスの判断枝を追加し、
+型件数そのものはここへ転記しない。
 
-> **注**: SKILL.md記載の「55+24=79」は FABE型を1種カウントの数値。本決定木では運用上の選択肢として FABE 5バリエーション（horizontal/vertical/grid/timeline/circular）を独立IDで扱うため83として管理。`slide-quote` は P-EMO（演出主目的）と P-CIT（引用主目的）の両セルに登場するが、DT-ID は唯一（DT-002 / DT-097 はエイリアス、入力スキーマは同一）。同様に `slide-code` も DT-098 を共有。実タイプ数 79 種の漏れなし分類は完了。
+### 2.2 タイプ → 詳細ファイル
+
+マトリクスで決めたタイプの実装詳細は下表のファイルへ直行する。CSS クラス名はマトリクスのセルに書かれた識別子がそのまま `class=` 値になる。
+
+| タイプ群 | 詳細ファイル |
+|---|---|
+| 基本 `slide-*` | `slide-types-basic.md` |
+| 拡張 `slide-*` | `slide-types-extended.md` |
+| 図解 §11.1-11.5, §11.30 | `diagram-cycle-flow.md` |
+| 図解 §11.6-11.10, §11.31-11.32 | `diagram-comparison.md` |
+| 図解 §11.11-11.20 | `diagram-business.md` / `diagram-fabe.md` |
+| 図解 §11.21-11.29, §11.33-11.34 | `diagram-visual.md` |
+| 技術図解 §11.35-11.40 | `diagram-technical.md` |
+| 運用・体験・増減図解 §11.41-11.44 | `diagram-extended.md` |
+| グラフ `chart-*` | `chart-types.md` |
+| D3 `d3-*` | `d3-integration.md` |
+
+型そのものの選定（何を見せたいか → 経路と配置）は `diagram-type-crosswalk.md` が正本で、本表はタイプ名が決まった後の参照先だけを持つ。
 
 ---
 

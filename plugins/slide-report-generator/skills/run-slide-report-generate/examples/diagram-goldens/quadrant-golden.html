@@ -1,0 +1,100 @@
+<!--
+  quadrant-golden.html — ゴールデン実例: 象限プロット型 (slide 骨格)
+
+  入力: quadrant-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-comparison.md §11.31 象限プロット型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #15 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py quadrant-golden.html
+
+  §11.31 の幾何をそのまま使う (軸の交点 320,240 / 横軸 144-496 / 縦軸 48-432)。
+  節のコード例が class で当てていた塗りは、断片を自己完結させるため
+  presentation 属性へ展開してある。値は同じロールから引いている。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-quadrant">
+
+  <svg viewBox="0 0 640 480"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-quadrant-caption">
+
+    <defs>
+      <marker id="d-quadrant-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-quadrant-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-quadrant-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 焦点象限の薄敷き。面塗りは 1 象限だけで、4 象限を塗り分けない -->
+    <rect x="320" y="64" width="176" height="176" fill="rgba(210, 126, 153, 0.14)"/>
+
+    <!-- 軸 (増加方向の 1 端のみ矢じり。両端に付けると範囲の意味になる) -->
+    <line x1="144" y1="240" x2="496" y2="240"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-quadrant-arrow)"/>
+    <line x1="320" y1="432" x2="320" y2="48"
+          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-quadrant-arrow)"/>
+
+    <!-- 軸ラベル (各端 1 語・矢の先から外側へ。軸線の上に載せない) -->
+    <text x="512" y="240" text-anchor="start" font-size="12" fill="var(--fg, #43436c)">工数が小さい</text>
+    <text x="128" y="240" text-anchor="end" font-size="12" fill="var(--fg, #43436c)">工数が大きい</text>
+    <text x="320" y="32" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">効果が大きい</text>
+    <text x="320" y="448" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">効果が小さい</text>
+
+    <!-- 軸の交点の境界値 (軸線の根元。線の上へ載せず左右へ振り分ける) -->
+    <text x="310" y="262" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">工数 20人日が基準</text>
+    <text x="330" y="262" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">効果 年100万円が基準</text>
+
+    <!-- 分類の関数と位置の性質 (I1 / I4 / §2.9) -->
+    <text x="16" y="18" font-size="12" fill="var(--fuji-gray, #8a8980)">点の位置は相対評価。2 軸は 2026年度の見積り人日と年間削減額</text>
+    <text x="16" y="468" font-size="12" fill="var(--fuji-gray, #8a8980)">この 2 軸で判定できない案は図に載せていない</text>
+
+    <!-- 象限の隅タグ (4 つ・短い語のみ) -->
+    <text x="480" y="88" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">今期に着手</text>
+    <text x="160" y="88" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">計画して着手</text>
+    <text x="160" y="400" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">見送る</text>
+    <text x="480" y="400" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">手が空いたら</text>
+
+    <!-- プロット点 (右上・焦点は 1 点だけ) -->
+    <g>
+      <circle cx="420" cy="128" r="4" fill="var(--sakura-pink, #D27E99)"/>
+      <text x="432" y="132" font-size="14" fill="var(--fg, #43436c)">問い合わせテンプレ化</text>
+    </g>
+    <g>
+      <circle cx="352" cy="176" r="4" fill="var(--fg-dim, #54546d)"/>
+      <text x="364" y="180" font-size="14" fill="var(--fg, #43436c)">FAQ の再構成</text>
+    </g>
+
+    <!-- プロット点 (左上) -->
+    <g>
+      <circle cx="176" cy="152" r="4" fill="var(--fg-dim, #54546d)"/>
+      <text x="188" y="156" font-size="14" fill="var(--fg, #43436c)">基幹連携の刷新</text>
+    </g>
+
+    <!-- プロット点 (左下) -->
+    <g>
+      <circle cx="192" cy="344" r="4" fill="var(--fg-dim, #54546d)"/>
+      <text x="204" y="348" font-size="14" fill="var(--fg, #43436c)">報告書式の統一</text>
+    </g>
+
+    <!-- プロット点 (右下) -->
+    <g>
+      <circle cx="416" cy="328" r="4" fill="var(--fg-dim, #54546d)"/>
+      <text x="428" y="332" font-size="14" fill="var(--fg, #43436c)">会議体の整理</text>
+    </g>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-quadrant-caption" class="srg-diagram__caption">
+    軸の交点から右上へ視線を送ってほしい。四つの区画のうち色が敷かれているのは一つだけで、そこに置かれた点が今期の判断そのものである。
+  </figcaption>
+
+</figure>

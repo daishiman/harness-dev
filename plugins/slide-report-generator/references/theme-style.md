@@ -30,9 +30,11 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 | **ナビゲーション余白** | `--nav-bottom-padding` | 下部ドット用 | 2rem |
 | **アクセントカラー** | `--wave-blue` | メインアクセント色 | #7E9CD8 |
 | **課題カラー** | `--sakura-pink` | Before/課題の色 | #D27E99 |
-| **解決カラー** | `--wave-aqua` | After/解決の色 | #7AA89F |
+| **解決カラー** | `--wave-aqua` | After/解決の色 | #7FB4CA |
 
 ### カスタマイズ例
+
+<!-- palette-variant: 上書き例。正本の値ではなく「上書きするとこう書く」の見本 -->
 
 ```css
 /* プロジェクトごとの設定を上書き */
@@ -151,129 +153,45 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 
 ## 2. Kanagawaカラーパレット
 
-### テーマ選択
+> **配色の正本は `vendor/scripts/style-builder.cjs` の `SPEC.colors`**。
+> 成果物の `:root` はそこから生成されるので、この節の表は**正本の写し**であり、
+> ここを書き換えても出力の色は変わらない。値を変えるときは正本を変え、
+> `python3 scripts/lint-contract-drift.py` で写しの追従を確認する。
 
-**Lotus White**（デフォルト推奨）、**ライトテーマ**、**ダークテーマ**の3種類を提供。
+### 出荷されるパレットは 1 種類
 
-| テーマ | 用途 | 背景色 | テキスト色 | 特徴 |
-|--------|------|--------|-----------|------|
-| **Lotus White** | **印刷配布、明るい環境、ビジネス資料（推奨）** | #fafafa | #43436c | 黄色みのない白、Lotus公式アクセント |
-| ライト | 印刷配布、明るい環境 | #FFFFFF | #2D2D2D | 純白背景 |
-| ダーク | プロジェクター投影、暗い環境 | #1F1F28 | #DCD7BA | 目に優しい暗色 |
-
-### Lotus White（デフォルト推奨）
-
-Kanagawa公式Lotusパレットのアクセントカラーを維持しつつ、背景を黄色みのないニュートラルな白に調整したカスタムバリエーション。
-
-| 変数名 | カラーコード | 用途 |
-|--------|-------------|------|
-| `--bg-dark` | #fafafa | 背景（メイン・ニュートラル白） |
-| `--bg-dim` | #f0f0f2 | 背景（サブ・青み灰） |
-| `--bg-card` | #e8e8ec | カード背景（青み灰） |
-| `--fg` | #43436c | テキスト（lotusInk2） |
-| `--fg-dim` | #716e61 | テキスト（lotusGray2） |
-| `--fg-muted` | #888888 | テキスト（ミュート・汎用） |
-| `--wave-blue` | #4d699b | アクセント（lotusBlue4） |
-| `--spring-violet` | #624c83 | アクセント（lotusViolet4） |
-| `--sakura-pink` | #b35b79 | 警告・課題（lotusPink） |
-| `--wave-aqua` | #597b75 | 成功・解決（lotusAqua） |
-| `--autumn-yellow` | #de9800 | 強調（lotusYellow3） |
-
-**Lotus White CSS変数（デフォルト推奨）**:
-```css
-:root {
-  /* Kanagawa Lotus White - 白背景カスタム版（デフォルト推奨） */
-  --bg-dark: #fafafa;      /* ニュートラル白 */
-  --bg-dim: #f0f0f2;       /* 薄いグレー（青み） */
-  --bg-card: #e8e8ec;      /* カード背景（青み） */
-  --fg: #43436c;           /* lotusInk2 */
-  --fg-dim: #716e61;       /* lotusGray2 */
-  --wave-blue: #4d699b;    /* lotusBlue4 */
-  --spring-violet: #624c83; /* lotusViolet4 */
-  --sakura-pink: #b35b79;  /* lotusPink */
-  --wave-aqua: #597b75;    /* lotusAqua */
-  --autumn-yellow: #de9800; /* lotusYellow3 */
-  --sumi-ink: #e0e0e4;     /* ニュートラルグレー */
-  --fuji-gray: #8a8a90;    /* ニュートラルグレー */
-}
-```
-
-### ライトテーマ
+以前この節は「Lotus White / ライト / ダーク の 3 テーマを提供」と書いていたが、
+**テーマを切り替える機構は存在しない**。`buildRootVars()` が `SPEC.colors` を
+そのまま `:root` へ流すだけで、切替の入力も分岐もない。3 つの `:root` ブロックが
+どれも「デフォルト」と名乗り、しかもどれも実際の出力と違う値だったため、
+読んだ側が誤った配色を正解として複製していた。ここでは実際に出る 1 種類だけを載せる。
 
 | 変数名 | カラーコード | 用途 |
 |--------|-------------|------|
-| `--bg-dark` | #FFFFFF | 背景（メイン） |
-| `--bg-dim` | #F5F5F5 | 背景（サブ） |
-| `--bg-highlight` | #EBEBEB | ハイライト背景 |
-| `--bg-card` | #F0F0F0 | カード背景 |
-| `--sumi-ink` | #FAFAFA | 背景（補助） |
-| `--fg` | #2D2D2D | テキスト（メイン） |
-| `--fg-dim` | #555555 | テキスト（サブ） |
-| `--fg-muted` | #888888 | テキスト（薄い） |
-
-**ライトテーマCSS変数（デフォルト）**:
-```css
-:root {
-  /* Background Colors - Light Theme */
-  --bg-dark: #FFFFFF;
-  --bg-dim: #F5F5F5;
-  --bg-highlight: #EBEBEB;
-  --bg-card: #F0F0F0;
-  --sumi-ink: #FAFAFA;
-
-  /* Foreground Colors - Dark Text */
-  --fg: #2D2D2D;
-  --fg-dim: #555555;
-  --fg-muted: #888888;
-}
-```
-
-### ダークテーマ
-
-| 変数名 | カラーコード | 用途 |
-|--------|-------------|------|
-| `--bg-dark` | #1F1F28 | 背景（メイン） |
-| `--bg-dim` | #2A2A37 | 背景（サブ） |
-| `--bg-highlight` | #363646 | ハイライト背景 |
-| `--bg-card` | #363646 | カード背景 |
-| `--sumi-ink` | #16161D | 背景（補助） |
-| `--fg` | #DCD7BA | テキスト（メイン） |
-| `--fg-dim` | #C8C093 | テキスト（サブ） |
-| `--fg-muted` | #727169 | テキスト（薄い） |
-
-**ダークテーマCSS変数**:
-```css
-:root {
-  /* Background Colors - Dark Theme */
-  --bg-dark: #1F1F28;
-  --bg-dim: #2A2A37;
-  --bg-highlight: #363646;
-  --bg-card: #363646;
-  --sumi-ink: #16161D;
-
-  /* Foreground Colors - Light Text */
-  --fg: #DCD7BA;
-  --fg-dim: #C8C093;
-  --fg-muted: #727169;
-}
-```
-
-### アクセントカラー（共通）
-
-| 変数名 | カラーコード | 用途 |
-|--------|-------------|------|
+| `--bg-dark` | #fafafa | 背景（黄色みのないニュートラル白） |
+| `--fg` | #43436c | テキスト（メイン） |
+| `--fg-dim` | #727169 | テキスト（サブ） |
 | `--wave-blue` | #7E9CD8 | メインアクセント・リンク |
-| `--spring-violet` | #9CABCA | アクセント（紫） |
+| `--spring-violet` | #957FB8 | アクセント（紫） |
 | `--sakura-pink` | #D27E99 | 警告・課題・Before |
-| `--wave-aqua` | #7AA89F | 成功・解決策・After |
+| `--wave-aqua` | #7FB4CA | 成功・解決策・After |
 | `--autumn-yellow` | #DCA561 | 強調・数字 |
+| `--fuji-gray` | #727169 | 補助色・ホバー |
 
-### 補助カラー
+ビビッドアクセント 5 色（SR-2-04）は §4 の完全版に載せる。
 
-| 変数名 | カラーコード | 用途 |
-|--------|-------------|------|
-| `--sumi-ink` | #363646 | ボーダー・区切り（ダーク） |
-| `--fuji-gray` | #54546D | 補助色・ホバー |
+### 定義されていない変数を使わない
+
+`--bg-dim` / `--bg-card` / `--bg-highlight` / `--sumi-ink` / `--fg-muted` は
+**`:root` に存在しない**。`var(--fg-muted, #54546d)` のように書くと、
+フォールバックの `#54546d` が上書き不能な定数として常に効く。
+「既定値」のつもりで書いた値が「唯一の値」になる書き方なので、
+新しい面ではこれらを使わず、上の 9 変数とビビッド 5 変数の中から選ぶ。
+
+### 暗色が要るとき
+
+暗い面はテーマではなく用途で入る。コードブロック（`#1F1F28` / `#DCD7BA`、§10）と
+`data-bg="dark"` のスライドだけが暗色で、これは配色の切替ではなく個別の指定。
 
 ---
 
@@ -319,27 +237,22 @@ Kanagawa公式Lotusパレットのアクセントカラーを維持しつつ、�
 ```css
 :root {
   /* ========================================
-     カラーパレット（ライトテーマ - デフォルト）
+     カラーパレット (SR-2-01..03)
+     正本 = vendor/scripts/style-builder.cjs の SPEC.colors。
+     ここは写しであって、書き換えても出力の色は変わらない。
      ======================================== */
-  --bg-dark: #FFFFFF;
-  --bg-dim: #F5F5F5;
-  --bg-highlight: #EBEBEB;
-  --bg-card: #F0F0F0;
-  --sumi-ink: #FAFAFA;
-  --fg: #2D2D2D;
-  --fg-dim: #555555;
-  --fg-muted: #888888;
-
-  /* アクセントカラー（共通） */
+  --bg-dark: #fafafa;
+  --fg: #43436c;
+  --fg-dim: #727169;
   --wave-blue: #7E9CD8;
-  --spring-violet: #9CABCA;
+  --spring-violet: #957FB8;
   --sakura-pink: #D27E99;
-  --wave-aqua: #7AA89F;
+  --wave-aqua: #7FB4CA;
   --autumn-yellow: #DCA561;
-  --fuji-gray: #54546D;
+  --fuji-gray: #727169;
 
   /* ========================================
-     ビビッドアクセントカラー（彩度強化版）
+     ビビッドアクセントカラー（彩度強化版・SR-2-04）
      既存Lotus変数はそのまま維持
      ======================================== */
   --accent-blue-vivid: #3B7DD8;    /* 彩度 34%→60% */
@@ -365,7 +278,7 @@ Kanagawa公式Lotusパレットのアクセントカラーを維持しつつ、�
   --gradient-blue-pink:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-pink-vivid));
   --gradient-blue-aqua:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-aqua-vivid));
   --gradient-violet-pink: linear-gradient(135deg, var(--accent-violet-vivid), var(--accent-pink-vivid));
-  --gradient-subtle:      linear-gradient(135deg, var(--bg-dim), var(--bg-card));
+  --gradient-subtle:      linear-gradient(135deg, var(--bg-dim, #f0f0f2), var(--bg-card, #e8e8ec));
 
   /* ========================================
      スペーシングスケール（8pxベース）
@@ -499,7 +412,7 @@ body, html {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #f0f0f2);
   margin-bottom: 1rem;
 }
 
@@ -526,7 +439,7 @@ body, html {
   left: 0;
   width: 100%;
   height: 4px;
-  background: var(--sumi-ink);
+  background: var(--sumi-ink, #e0e0e4);
   z-index: 100;
 }
 

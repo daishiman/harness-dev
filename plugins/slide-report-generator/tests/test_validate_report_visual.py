@@ -53,7 +53,12 @@ def _section(sec_id, heading, paragraphs=None, visuals_html="", extra=""):
 _SVG_FIGURE = (
     '<figure class="report-visual report-visual--svg" role="img">\n'
     '  <svg viewBox="0 0 960 320"><rect x="0" y="0" width="10" height="10"/>'
-    '<text>ノード</text></svg>\n  <figcaption>図</figcaption>\n</figure>'
+    '<text>ノード</text></svg>\n'
+    # R9-9 はキャプションの字数レンジ (40-120 字) を課す。命名だけの
+    # キャプション (`図`) は「図が語れないこと」を書いていない典型なので、
+    # 正常系 fixture 側をレンジ内の実文へ合わせる。
+    "  <figcaption>工程の詰まりがどこで起きているかを見る図。左端の受付から"
+    "右端の完了まで順に追い、滞留の最も長い工程が改善の起点になる。</figcaption>\n</figure>"
 )
 _FALLBACK_FIGURE = (
     '<figure class="report-visual report-visual--fallback">\n'
@@ -651,7 +656,7 @@ def test_120_analysis_role_without_narrative_warns():
 
 
 def test_130_essence_visual_missing_on_logical_section_warns():
-    """1.3.0: 論理節(analysis/finding 等)が非 none visual を持たない → essence-visual warn (strict で fail)。"""
+    """essence-visual: 論理節が非 none visual を持たないと strict で fail。"""
     struct = {"meta": _meta_120(), "theme": {"name": "kanagawa-lotus", "accentColors": ["blue"]},
               "sections": [{"id": "section-an", "heading": "分析", "role": "analysis",
                             "narrative": {"essence": "e", "approach": "a"},
@@ -664,7 +669,7 @@ def test_130_essence_visual_missing_on_logical_section_warns():
 
 
 def test_130_essence_visual_present_passes():
-    """1.3.0: 論理節が非 none visual を持てば essence-visual は出ない。"""
+    """essence-visual: 論理節が非 none visual を持てば警告しない。"""
     struct = {"meta": _meta_120(), "theme": {"name": "kanagawa-lotus", "accentColors": ["blue"]},
               "sections": [{"id": "section-an", "heading": "分析", "role": "analysis",
                             "narrative": {"essence": "e", "approach": "a"},
@@ -678,7 +683,7 @@ def test_130_essence_visual_present_passes():
 
 
 def test_130_essence_visual_exempts_summary_and_next_action():
-    """1.3.0: 要約/次アクション等 (text-first 許容 role) は visual 無しでも essence-visual を出さない。"""
+    """essence-visual: text-first 許容 role は visual 無しでも警告しない。"""
     struct = {"meta": _meta_120(), "theme": {"name": "kanagawa-lotus", "accentColors": ["blue"]},
               "sections": [
                   {"id": "section-sum", "heading": "要約", "role": "summary",
@@ -1022,6 +1027,13 @@ def test_canonical_generate_consumers_enable_required_structure_mode():
     assert required_args in orchestrator
 
     hook = _load_postgen_hook()
-    context = hook.build_context("report", "/tmp/report-output")
+    # build_context は (評価文, 幾何契約の判定, 情報契約の判定) を返す。
+    # どちらの判定も no-target/unknown を PASS と言わないために text から
+    # 分離されている。情報契約は warn を持つ 5 値 — warning を合否へ入れると、
+    # 検査を通すためだけに語を足す圧力が生まれるので、pass とは別の値にする。
+    context, lint_status, info_status = hook.build_context("report", "/tmp/report-output")
+    assert lint_status in {"pass", "fail", "no-target", "unknown"}, lint_status
+    assert info_status in {"pass", "warn", "fail", "no-target", "unknown"}, info_status
+    assert "1d) 図解の情報契約" in context
     assert '--structure "/tmp/report-output/report-structure.json"' in context
     assert "--require-structure --json" in context

@@ -2,8 +2,8 @@
 
 presentation-slide-generator v8.4.2 の全機能を移植した共通コア + `output_mode = slide | report` の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa 配色 / 16:9 / GSAP / インライン SVG2 / Codex Image2 / 決定論レンダラ / A4 印刷 / style genome) を**単一 SSOT で共有**し、コンテンツ意図層のみ mode 別に分岐する。
 
-- **slide モード**: 1スライド1メッセージ / chip 強制 / 長文禁止 (BP11-13) / 16:9 / 97 slideType。
-- **report モード**: 読み物 (文章多め可) / セクション+段落 / 1項目1ビジュアル最適化 / 4 reportType / Mermaid 統合。**report-structure 1.2.0 で「情報の羅列」→「構造化された読み物」へ**: 節内論理展開 (`section.narrative` = 本質課題→解決→活用) / 文書アーク (`meta.throughLine`) / 構造化本文ブロック (`section.body[]` = 表・コードブロック・番号リスト・小見出し・キーポイント強調ボックス・統計タイル・callout・引用・定義リスト・脚注引用・タスクリスト) / 色覚非依存の要点強調 / 図解の意味的配置 (`placement.grid` / `emphasisZone` / `readingOrder`) / 図表番号・目次 (`meta.toc`) を `render-report.js` が決定論 HTML 化する。既存 `paragraphs[]` は後方互換で温存 (body[] 優先)。設計指針の正本は [`references/report-narrative-logic.md`](references/report-narrative-logic.md)、golden 例は [`skills/run-slide-report-generate/examples/report-structured-120-example.json`](skills/run-slide-report-generate/examples/report-structured-120-example.json)。品質は `validate-report-visual.py` と report-quality-checklist RQ21-26 (積極評価) が担う。
+- **slide モード**: 1スライド1メッセージ / chip 強制 / 長文禁止 (BP11-13) / 16:9 / <!-- count: slideType -->107 slideType。
+- **report モード**: 読み物 (文章多め可) / セクション+段落 / 1項目1ビジュアル最適化 / 4 reportType / Mermaid 統合。**report-structure 1.2.0 で「情報の羅列」→「構造化された読み物」へ**: 節内論理展開 (`section.narrative` = 本質課題→解決→活用) / 文書アーク (`meta.throughLine`) / 構造化本文ブロック (`section.body[]` = 表・コードブロック・番号リスト・小見出し・キーポイント強調ボックス・統計タイル・callout・引用・定義リスト・脚注引用・タスクリスト) / 色覚非依存の要点強調 / 図解の意味的配置 (`placement.grid` / `emphasisZone` / `readingOrder`) / 図表番号・目次 (`meta.toc`) を `render-report.js` が決定論 HTML 化する。既存 `paragraphs[]` は後方互換で温存 (body[] 優先)。設計指針の正本は [`references/report-narrative-logic.md`](references/report-narrative-logic.md)、golden 例は [`skills/run-slide-report-generate/examples/report-structured-120-example.json`](skills/run-slide-report-generate/examples/report-structured-120-example.json)。品質は `validate-report-visual.py` と report-quality-checklist RQ21-34 (積極評価。reader-entry 読者中心の入口設計=入口ホリゾンタル・中身バーティカルを含む) が担う。
 
 Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **byte 携行** し、skill/agent から `Bash(node *)` で起動する (Python-stdlib へ書き換えない = 既存資産の毀損回避)。
 
@@ -15,7 +15,7 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 | agents | 17 thin Task adapters (詳細 7 層 prompt は各 owner skill の `prompts/R*.md`) |
 | commands | `/slide-report-generate` / `/slide-report-status` |
 | hooks | `hook-postgen-eval.py` (PostToolUse・生成後評価の自動起動・fail-soft) |
-| scripts | 6 plugin-root scripts: `validate-output-mode.py` / `lint-vendor-parity.py` / `validate-plugin-completeness.py` / `lint-reference-attribution.py` / `validate-report-visual.py` / `lint-contract-drift.py` |
+| scripts | 主要な plugin-root scripts: `validate-output-mode.py` / `lint-vendor-parity.py` / `validate-plugin-completeness.py` / `lint-reference-attribution.py` / `validate-report-visual.py` / `lint-contract-drift.py` / `lint-count-parity.py` (散文の数詞 ↔ 正本の実測値。件数は `ls scripts/` が正本なのでここに書かない) |
 | schemas | `structure.schema.json` (slide) / `report-structure.schema.json` (report・共通コア共有) ほか |
 | references | 42 upstream + report 新規 5 (report-types / report-writing-rules / report-visual-strategy / mermaid-integration / report-narrative-logic) |
 | vendor | Node engine 一式 (191 files byte 携行: 真 schema 4本は plugin-root `schemas/` live SSOT) + report 新規 Node 2 (render-report.js / mermaid-render.js) |
@@ -32,17 +32,16 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 
 ## 初回セットアップ
 
-Node engine は `vendor/` に携行済みだが `node_modules` は再 install が必要:
+Node engine は `vendor/` に携行済み。初回は次の1コマンドで、lockfileどおりの `node_modules` とOS/CPUに合うChromiumをプラグイン内へ復元する:
 
 ```bash
-cd "$CLAUDE_PLUGIN_ROOT/vendor" && npm ci
-npx playwright install chromium   # render/verify 系のヘッドレス実行に必要
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-output-mode.py" --preflight
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --preflight
 ```
 
-すべての実行パスは `$CLAUDE_PLUGIN_ROOT` 起点で解決する (install 先非依存)。
+Chromium は platform-specific のためgitには固定同梱せず、インストール先ごとに `vendor/playwright-browsers/` へ取得する。`vendor/package.json` の `postinstall` も同じinstallerを呼ぶため、`vendor/` で `npm ci` した場合もglobal Playwright cacheへは保存しない。runtimeは自身のファイル位置からplugin rootを解決するため、install先の絶対パスに依存しない。
 
-`vendor/package.json` は upstream byte-parity 対象なので `npm test` などの scripts は追加しない。検証の正本は `EVALS.json` の `harness.mechanical[]` と下記の品質コマンド。
+`vendor/package.json` / lockfile とPlaywright runtimeは additive semantic gate、upstream vendor本体はsha256 pinで検証する。検証の正本は `EVALS.json` の `harness.mechanical[]` と下記の品質コマンド。
 
 Mermaid は runtime 依存を増やさず、`mermaid-render.js` が CDN 初期化 + `<pre class="mermaid">` fallback を出力する。オフラインでは図が SVG 化されない場合があるが、定義テキストは可読な fallback として残る。
 
@@ -57,7 +56,7 @@ Mermaid は runtime 依存を増やさず、`mermaid-render.js` が CDN 初期�
 
 ## 品質・再現性
 
-- **vendor byte-parity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` (191 files sha256 pin) と照合する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にし、vendor parity では example fixtures + README のみを固定する。
+- **vendor integrity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` と照合する。upstream 非改変ファイルは sha256 pin、明示local overlayは owner付き semantic contract + tests/goldens で検証する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にする。
 - **plugin completeness**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-plugin-completeness.py"` が manifest 名・entry_points・hook 実体・必須 surface を検証する。
 - **mode 検証**: `validate-output-mode.py` が `output_mode`/`reportType` の値域を fail-closed 検証。
 - **生成後評価**: `hook-postgen-eval.py` が deck/report 中核ファイル書込を検知し deck-evaluator を mode 判定つきで起動を促す。

@@ -13,7 +13,7 @@
 
 ## Lifecycle
 
-1. **Discover**: U1-U9、未決定事項、カテゴリmatrix、障害/非機能要件、既存カードの `related_topics` から不足知識を候補化する。現行6領域は探索開始点であり探索終了条件ではない。
+1. **Discover**: U1-U9、未決定事項、カテゴリmatrix、障害/非機能要件、既存カードの `related_topics` から不足知識を候補化する。`knowledge-catalog.json` に載っている現行の seed 領域は探索開始点であり探索終了条件ではない (個数をここへ複製しない — 8 枚目を足すたびに割れる)。
 2. **Qualify**: 公式標準、仕様、原著者、標準化団体、公式vendor docsを優先する。検索結果要約や二次ブログだけの候補は `unqualified` のまま仕様判断に使わない。書籍由来は書名・著者・版・年を記録する。
 3. **Deepen**: `knowledge-card.schema.json` の `purpose/background/problems/core_concepts/applies_when/does_not_apply_when/tradeoffs/failure_modes/goal_contribution/primary_sources/freshness` を埋める。名称と短い要点だけでは完了しない。
 4. **Goal map**: candidateが資する `goal_ids`、守る `constraint_ids`、解決するproblem、採用しない条件を明示する。goalに結べない候補は探索メモに留める。

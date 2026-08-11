@@ -63,13 +63,68 @@ _CAPABILITY_MAP = {
 }
 
 
+def _manifest_name(root: Path) -> str | None:
+    """<root>/.claude-plugin/plugin.json の name。読めなければ None。"""
+    try:
+        manifest = json.loads(
+            (root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return None
+    return manifest.get("name") if isinstance(manifest, dict) else None
+
+
+def _self_plugin_name() -> str | None:
+    """このファイル自身が属する plugin の manifest name。
+
+    なぜ定数リテラルでも SSOT 定数でもなく __file__ 由来なのか:
+      - リテラルの直書きは制御リテラル散在として禁止
+        (tests/test_dogfooding_boundary.py)。plugin 改名時に無音で失効する。
+      - SSOT (feedback_contract_ssot.SELF_DOGFOODING_PLUGIN) は使えない。SSOT を
+        探すのに plugin root が要り、plugin root の検証に SSOT が要る = 循環。
+      - __file__ は循環せず、改名時も自動追従する第三の出所。
+
+    parents[N] 固定ではなく上向き探索なのは、この関数を各 script へ複製する際に
+    深さ差 (parents[1] / parents[3]) を持ち込まないため。plugin は入れ子にならない
+    ので、最初に見つかる manifest が自 plugin のもので確定する。
+    """
+    for parent in Path(__file__).resolve().parents:
+        name = _manifest_name(parent)
+        if name:
+            return name
+    return None
+
+
+def _hc_env_root() -> Path | None:
+    """env から自 plugin root を得る。他 plugin を指す値は拒否する。
+
+    他 repo が .claude 平置き projection で本 plugin を借用している場合、
+    env CLAUDE_PLUGIN_ROOT は **別 plugin** を指していることがある
+    (ObsidianMemo では ubm-goal-setting)。空ではなく「存在するが別物」なので
+    `if env:` や isdir 判定では弾けない。manifest の name で自 plugin か検証する。
+    借用側は HC_ROOT を設定すれば明示指定できる。
+    拒否するのは manifest が読めて **別 plugin と確認できた** 場合だけにする。
+    判定材料が無い (manifest 不在) env は従来どおり採用し、既存挙動を後退
+    させない。vendored コピー先 (company-master / skill-intake) でも同様。
+    """
+    expected = _self_plugin_name()
+    if not expected:
+        return None
+    for _var in ("HC_ROOT", "CLAUDE_PLUGIN_ROOT"):
+        raw = os.environ.get(_var)
+        if not raw:
+            continue
+        root = Path(raw).expanduser()
+        _name = _manifest_name(root)
+        if _name is None or _name == expected:
+            return root.resolve()
+    return None
+
+
 def _plugin_root() -> Path:
     # このスクリプトは plugins/harness-creator/skills/run-build-skill/scripts/ 配下。
     # 4 つ上って plugins/harness-creator (= plugin-root)。
-    env = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if env:
-        return Path(env).resolve()
-    return Path(__file__).resolve().parents[3]
+    return _hc_env_root() or Path(__file__).resolve().parents[3]
 
 
 def _state_fallback_root() -> Path:

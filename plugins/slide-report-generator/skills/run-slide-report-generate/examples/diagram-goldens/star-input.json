@@ -1,0 +1,37 @@
+{
+  "diagramId": "f-star",
+  "type": "star",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-business.md §11.19 STAR型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "同業3社目の導入事例",
+  "message": "効いたのは機能ではなく、突合の頻度を月次から日次へ上げたことである。",
+  "nodes": [
+    { "id": "s", "badge": "S", "label": "状況", "style": "plain", "items": ["請求の突合に毎月四人日", "担当は経理の一名に固定"] },
+    { "id": "t", "badge": "T", "label": "課題", "style": "plain", "items": ["差分が締めた後に出る", "調査が翌月へ食い込む"] },
+    { "id": "a", "badge": "A", "label": "行動", "style": "plain", "items": ["取り込み直後に日次照合", "原因候補を自動で添える"], "note": "経理2名とベンダーで 2026/5末までに実施" },
+    {
+      "id": "r",
+      "badge": "R",
+      "label": "結果",
+      "style": "focal",
+      "items": ["差分が出た日に気づける", "調査の持ち越しが消えた"],
+      "highlight": "四人日 → 半日"
+    }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["r"],
+    "reason": "前の三つは背景。読者の意思決定に直接効くのは結果の 1 枠だけである"
+  },
+  "legend": [
+    { "mark": "色", "means": "結果の枠" }
+  ],
+  "annotations": [
+    { "text": "色は結果の枠。効いたのは頻度を上げたことだけ", "anchor": "r" }
+  ],
+  "caption": "左上から時計回りに読んでほしい。前の三つは背景であり、右下だけが相手の意思決定に直接効く。数字はすべて実測である。"
+}

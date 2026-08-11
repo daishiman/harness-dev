@@ -1,0 +1,78 @@
+<!--
+  venn-golden.html — ゴールデン実例: ベン図（2 円・slide 骨格）
+
+  入力: venn-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-cycle-flow.md §11.2.1 2円ベン図
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #11 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict venn-golden.html
+
+  §11.2.1 のコード例からずらした点は 2 つ。
+    ・節の例は 2 円を series-1 / series-3 で塗り分け、交差だけを series-4 の
+      箱で示す。style-tokens §2 条 3 は「系列色と焦点色を同一図で混ぜない」と
+      定めているので、集合 2 つを muted の面へ落とし、accent は交差 1 件だけに割り当てた
+    ・半径 150 を 152 へ寄せた (§D-1 4px グリッド)
+  交差は集合型の語彙であって斜め線ではない。D5 は <line>、D17 は <path> の
+  直線セグメントだけを見るので、<circle> の重なりは検出対象に入らない。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-venn">
+
+  <svg viewBox="0 0 600 400"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-venn-caption">
+
+    <defs>
+      <marker id="d-venn-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-venn-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-venn-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 集合 2 つ (対等な前提なので同じ見た目。重なりぶんだけ面が濃くなる) -->
+    <circle cx="216" cy="200" r="152"
+            fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <circle cx="384" cy="200" r="152"
+            fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+
+    <!-- 母数と時点 (上端 1 行) -->
+    <text x="300" y="28" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4 時点・経理と購買の定型業務 (n=48)</text>
+
+    <!-- 集合 A のラベル (左側の重ならない領域の中央) -->
+    <text x="148" y="176" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">現場の判断</text>
+    <text x="148" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">手順書なし・再現しない</text>
+    <text x="148" y="224" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">21 件</text>
+
+    <!-- 集合 B のラベル (右側の重ならない領域の中央) -->
+    <text x="452" y="176" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">文書化した手順</text>
+    <text x="452" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">手順書あり・参照は稀</text>
+    <text x="452" y="224" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">12 件</text>
+
+    <!-- 交差 (焦点 1 件。円の輪郭が文字を貫かないよう不透明な箱を敷く) -->
+    <g>
+      <rect x="220" y="180" width="160" height="40" rx="6" fill="#FFFFFF" stroke="none"/>
+      <rect x="220" y="180" width="160" height="40" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="300" y="205" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">使われる手順書 9 件</text>
+    </g>
+
+    <!-- 判定基準と補集合 (下端。自分のケースを図の上に置けるようにする) -->
+    <text x="300" y="364" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">交差の判定: 手順書があり直近 3 か月に参照あり (参照できない手順書は右のみ)</text>
+    <text x="300" y="384" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">どちらにも入らない新規業務 6 件・円の大きさは件数に比例しない</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-venn-caption" class="srg-diagram__caption">
+    二つの円が重なる部分だけを見てほしい。片方だけに属する話はどちらの側でも既に足りていて、足りないのは両方の条件を同時に満たすものである。
+  </figcaption>
+
+</figure>

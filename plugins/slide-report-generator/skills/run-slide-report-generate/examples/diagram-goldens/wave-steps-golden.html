@@ -1,0 +1,104 @@
+<!--
+  wave-steps-golden.html — ゴールデン実例: ウェーブステップカード型 (slide 骨格)
+
+  入力: wave-steps-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.28 ウェーブステップカード型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #1 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict wave-steps-golden.html
+
+  §11.28 の作図文法 (カード上部を波頭で満たし、そこに段番号を置く) を移した。
+  節のコード例は波頭に linear-gradient を敷き、カードに rgba(0,0,0,0.5) の
+  影と hover の translateY を掛けるが、順に style-tokens §5・純黒の禁止・
+  R9-14 に触れるので落とした。波頭は単色の面で足りる。
+  カードの外形は rect、波頭は同じ角丸を辿る path で作ってある
+  (rect に曲線の下端は持たせられないため)。
+  段番号に色を持たせないのは、順序が既に左右の位置で読めるからである。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-wave">
+
+  <svg viewBox="0 0 960 320"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-wave-caption">
+
+    <defs>
+      <marker id="d-wave-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-wave-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-wave-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 第 1 段 -->
+    <g>
+      <rect x="16" y="32" width="208" height="240" rx="8"
+            fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <path d="M 16 40 A 8 8 0 0 1 24 32 H 216 A 8 8 0 0 1 224 40 V 104 Q 120 136 16 104 Z" fill="#F8F7F0"/>
+      <text x="120" y="80" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">1</text>
+      <text x="120" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">環境を配る</text>
+      <text x="120" y="208" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">初日に触れる状態にする</text>
+      <text x="120" y="236" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4/1-4/3</text>
+      <text x="120" y="256" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了: 自分で1件起票</text>
+    </g>
+
+    <!-- 第 2 段 -->
+    <g>
+      <rect x="256" y="32" width="208" height="240" rx="8"
+            fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <path d="M 256 40 A 8 8 0 0 1 264 32 H 456 A 8 8 0 0 1 464 40 V 104 Q 360 136 256 104 Z" fill="#F8F7F0"/>
+      <text x="360" y="80" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">2</text>
+      <text x="360" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">手順に沿って一巡</text>
+      <text x="360" y="208" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">一件を最後まで通す</text>
+      <text x="360" y="236" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4/6-4/10</text>
+      <text x="360" y="256" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了: 1件を検収まで</text>
+    </g>
+
+    <!-- 第 3 段 (焦点。支援が外れて初めて一人になる) -->
+    <g>
+      <rect x="496" y="32" width="208" height="240" rx="8"
+            fill="#FFFFFF" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <path d="M 496 40 A 8 8 0 0 1 504 32 H 696 A 8 8 0 0 1 704 40 V 104 Q 600 136 496 104 Z" fill="rgba(210, 126, 153, 0.14)"/>
+      <text x="600" y="80" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">3</text>
+      <text x="600" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">単独で回す</text>
+      <text x="600" y="208" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">質問先を決めておく</text>
+      <text x="600" y="236" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4/13-4/24</text>
+      <text x="600" y="256" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了: 5件を独力で</text>
+    </g>
+
+    <!-- 第 4 段 -->
+    <g>
+      <rect x="736" y="32" width="208" height="240" rx="8"
+            fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <path d="M 736 40 A 8 8 0 0 1 744 32 H 936 A 8 8 0 0 1 944 40 V 104 Q 840 136 736 104 Z" fill="#F8F7F0"/>
+      <text x="840" y="80" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">4</text>
+      <text x="840" y="180" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">基準を書き足す</text>
+      <text x="840" y="208" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">詰まった箇所を残す</text>
+      <text x="840" y="236" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">2026/4/27-4/30</text>
+      <text x="840" y="256" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">完了: 手順書へ2件追記</text>
+    </g>
+
+    <!-- 軸と凡例 (カード下の余白。I3 / I4) -->
+    <text x="16" y="300" font-size="12" fill="var(--fuji-gray, #8a8980)">左から時間順・番号は順序のみ。色は支援が外れる段</text>
+
+    <!-- 注釈 1 件 (カード下の余白のみ・矢じりは付けない) -->
+    <text x="944" y="300" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">つまずくのは三つ目である</text>
+    <path d="M 800 292 Q 740 288 700 276" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="700" cy="276" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-wave-caption" class="srg-diagram__caption">
+    左から右へ四段を追う。番号は順序を示すだけで、色の付いた一段だけが支援の外れる場所である。
+  </figcaption>
+
+</figure>

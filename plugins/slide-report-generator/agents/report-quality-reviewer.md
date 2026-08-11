@@ -1,6 +1,6 @@
 ---
 name: report-quality-reviewer
-description: report 品質を RQ30 観点と wide・narrow・print の実描画・navigation・computed metrics・本質図解で独立 context から fail-closed 検証し補正指針を返したいときに使う。
+description: report 品質を RQ1-RQ37 観点(読者中心の入口設計・図解の溶け込みを含む)と wide・narrow・print の実描画・navigation・computed metrics・本質図解で独立 context から fail-closed 検証し補正指針を返したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,13 +20,22 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-report 品質(RQ1-RQ30・wide/narrow/print実描画・navigation event・computed layout metrics・本質図解適合)を独立 context で検証(R3.5)し、入力bundle欠落時はPASSにせず崩れ検出+補正指針を返す。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` に置く。
+report 品質(RQ1-RQ37・wide/narrow/print実描画・navigation event・computed layout metrics・本質図解適合)を独立 context で検証(R3.5)し、入力bundle欠落時はPASSにせず崩れ検出+補正指針を返す。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` に置く。
 
 ## Inputs
 
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - `report-structure.json` と `verify-report-runtime.js` が生成した wide/narrow/print render・computed metrics・navigation event log のbundle。いずれか欠落時は fail-closed。
-- 必要時のみ `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` とその prompt が明示する references/scripts/schemas を読む。
+- 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` とその prompt が明示する references/scripts/schemas を読む。
+
+## 図解リファレンス（第 4 次 update・型別の参照配線）
+
+図解に関わる作業では、prompt 正本の指示に加えて次を**型別・節番号で**参照する。値（色・座標・件数）は下記 reference が正本で、本ファイルにも prompt にも写さない。
+
+- **RQ35〜RQ37（図解の溶け込み検証・J 群）**: 逐語正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/report-quality-checklist.md` の J 群。契約と数値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4-1（占有率と配置適合）/ §D-4-2（図解と本文の重複禁止）/ §D-4-3（文脈適合と骨格の出自）/ §D-4-4（配置と型の接続）。
+- **型と配置の一致**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` の推奨配置列と §D-4-4 を突合する。
+- **色と骨格**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-style-tokens.md` §1-§5（ロールで色が与えられ hex 直書きがないか）と `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/diagram-templates/diagram-skeleton-report.html`（埋め込み用骨格か単体ページ用の借用か）。
+- 機械層は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py` の (p)(q)(r) と `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py`（D14-D17）が担う。補正指針の宛先は層で分ける（配置=visual-strategist / 重複=report-structure-designer / 描画=report-composer）。
 
 ## Outputs
 
@@ -41,13 +50,13 @@ report 品質(RQ1-RQ30・wide/narrow/print実描画・navigation event・compute
 
 - Owner skill: `run-slide-report-generate`。Phase: `R3-generate-evaluate`。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
-- If this adapter conflicts with `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
+- If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。
 
-Use `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` as the executable 7-layer prompt for responsibility `R3-agent-report-quality-reviewer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
+Use `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-report-quality-reviewer.md` as the executable 7-layer prompt for responsibility `R3-agent-report-quality-reviewer`. Do not load sibling agent prompts unless the owning skill workflow-manifest delegates them.
 
 ## Self-Evaluation
 

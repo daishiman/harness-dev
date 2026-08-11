@@ -1,0 +1,94 @@
+<!--
+  pyramid-golden.html — ゴールデン実例: ピラミッド型 (slide 骨格)
+
+  入力: pyramid-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.34 ピラミッド型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #17 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py pyramid-golden.html
+
+  §11.34 の幾何をそのまま使う (頂点 240,40 / 底辺 y=360・半幅 216 / 段高 64)。
+  節のコード例は区切りのヘアラインを stroke-width 1 で書いているが、
+  ここでは D9 の下限 1.25 へ寄せてある (STROKE.hairline)。
+  段ごとに色を変えない。序列を語っているのは位置と幅であって色ではない。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-pyramid">
+
+  <svg viewBox="0 0 480 416"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-pyramid-caption">
+
+    <defs>
+      <marker id="d-pyramid-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-pyramid-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-pyramid-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 第 1 段 (頂点・焦点。1 段のみ) -->
+    <g>
+      <polygon points="240,40 284,104 196,104"
+               fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="240" y="96" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">中核</text>
+    </g>
+
+    <!-- 第 2 段 -->
+    <g>
+      <polygon points="196,104 284,104 328,168 152,168"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="240" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">差別化の源泉</text>
+    </g>
+
+    <!-- 第 3 段 -->
+    <g>
+      <polygon points="152,168 328,168 368,232 112,232"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="240" y="204" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">標準化した業務</text>
+    </g>
+
+    <!-- 第 4 段 -->
+    <g>
+      <polygon points="112,232 368,232 412,296 68,296"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="240" y="268" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">外部に任せる</text>
+    </g>
+
+    <!-- 第 5 段 (底辺・最も広い) -->
+    <g>
+      <polygon points="68,296 412,296 456,360 24,360"
+               fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="240" y="332" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">やめてよい作業</text>
+    </g>
+
+    <!-- 外周シルエット -->
+    <polygon points="240,40 456,360 24,360"
+             fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+
+    <!-- 注釈 1 件 (図の余白部分のみ・矢じりは付けない) -->
+    <text x="24" y="56" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">上ほど動かせない</text>
+
+    <!-- 幅の断り・色の凡例・各段へ入る基準 (I3 / I4 / §11.34 必須情報)。
+         幅は量に見えるので、量でないなら図内で否定しておく必要がある。 -->
+    <text x="24" y="384" font-size="12" fill="var(--fuji-gray, #8a8980)">序列の軸は「上ほど代替不能」。幅は件数ではない</text>
+    <text x="24" y="404" font-size="12" fill="var(--fuji-gray, #8a8980)">色は焦点の 1 段だけ。段の境目は「他社が同じものを用意できるか」</text>
+    <path d="M 128 60 Q 176 68 216 88" fill="none"
+          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="216" cy="88" r="2" fill="var(--fuji-gray, #8a8980)"/>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-pyramid-caption" class="srg-diagram__caption">
+    頂点から下へ順に読む。段ごとの色は付けていないので、序列を語っているのは位置と幅だけであり、色が付いた一段が今の議論の対象である。
+  </figcaption>
+
+</figure>

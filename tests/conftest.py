@@ -22,6 +22,57 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _self_dogfooding_plugin() -> str:
+    """SSOT から自 plugin 名を引く (リテラル直書きを避け、改名に自動追従する)。"""
+    import importlib.util
+
+    path = ROOT / "scripts" / "feedback_contract_ssot.py"
+    spec = importlib.util.spec_from_file_location("_fc_ssot_for_conftest", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.SELF_DOGFOODING_PLUGIN
+
+
+@pytest.fixture
+def as_self_plugin():
+    """与えた dir を「自 plugin root」に見せかける manifest を置く factory。
+
+    harness-creator の script 群は $HC_ROOT / $CLAUDE_PLUGIN_ROOT を無条件には
+    採用せず、指す先の .claude-plugin/plugin.json の name が自 plugin と一致した
+    場合だけ採用する (_hc_env_root)。他 repo が .claude 平置き projection で本
+    plugin を借用すると env が **別 plugin** を指すため、空判定でも isdir 判定でも
+    弾けないのが理由。env 経路を検証するテストは本 fixture で manifest を用意する。
+    """
+    import json as _json
+
+    def _make(path) -> Path:
+        d = Path(path)
+        (d / ".claude-plugin").mkdir(parents=True, exist_ok=True)
+        (d / ".claude-plugin" / "plugin.json").write_text(
+            _json.dumps({"name": _self_dogfooding_plugin()}), encoding="utf-8"
+        )
+        return d
+
+    return _make
+
+
+@pytest.fixture
+def as_foreign_plugin():
+    """与えた dir を「別 plugin root」に見せかける factory (env 拒否の検証用)。"""
+    import json as _json
+
+    def _make(path, name: str = "some-other-plugin") -> Path:
+        d = Path(path)
+        assert name != _self_dogfooding_plugin()
+        (d / ".claude-plugin").mkdir(parents=True, exist_ok=True)
+        (d / ".claude-plugin" / "plugin.json").write_text(
+            _json.dumps({"name": name}), encoding="utf-8"
+        )
+        return d
+
+    return _make
+
+
 @pytest.fixture
 def xlocal_tenant_env(monkeypatch, tmp_path):
     """隔離された xlocal tenant 文脈を作り、ambient tenant 状態への依存を断つ。

@@ -57,10 +57,11 @@ def test_plugins_root_is_cwd_independent(monkeypatch, tmp_path):
     assert root != Path("plugins").resolve()
 
 
-def test_env_plugin_root_takes_precedence(monkeypatch, tmp_path):
+def test_env_plugin_root_takes_precedence(monkeypatch, tmp_path, as_self_plugin):
     """CLAUDE_PLUGIN_ROOT (単一 plugin ルート) があればその親 = plugins/ を返す。"""
     plugin = tmp_path / "myplugins" / "harness-creator"
     plugin.mkdir(parents=True)
+    as_self_plugin(plugin)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin))
     root = MOD._plugins_root()
     assert root == (tmp_path / "myplugins").resolve()
@@ -91,9 +92,10 @@ def test_main_passes_absolute_plugins_root(monkeypatch, tmp_path):
     assert Path(pr).name == "plugins"
 
 
-def test_main_passes_current_plugin_root(monkeypatch, tmp_path):
+def test_main_passes_current_plugin_root(monkeypatch, tmp_path, as_self_plugin):
     plugin = tmp_path / "marketplace-cache" / "harness-creator"
     plugin.mkdir(parents=True)
+    as_self_plugin(plugin)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin))
     captured = {}
 

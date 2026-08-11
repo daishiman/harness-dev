@@ -172,3 +172,74 @@ def test_parse_block_directly_returns_none_when_absent():
 
 def test_extract_not_starting_with_dashes_is_none():
     assert FC.extract_frontmatter_feedback_contract("no frontmatter here") is None
+
+
+# --- インラインコメント: yaml 搭載/非搭載の一致 -------------------------------
+# 回帰の実例: `verify_by: evaluator  # 検証主体は deck-evaluator` が PyYAML では
+# 'evaluator'、フォールバックでは 'evaluator  # 検証主体は…' となり、PyYAML を持つ
+# ローカルは緑・持たない CI だけが enum 不一致で赤になった。両経路の一致を固定する。
+@pytest.mark.parametrize(
+    "raw,want",
+    [
+        ("evaluator  # 検証主体は deck-evaluator", "evaluator"),
+        ("script", "script"),
+        ('"a # b"', "a # b"),          # 引用符内の # は値の一部
+        ("'x  # y'", "x  # y"),
+        ("https://x/y#frag", "https://x/y#frag"),  # 空白なしの # はコメントでない (YAML 規約)
+        ("lint\t# tab 区切り", "lint"),
+    ],
+)
+def test_strip_inline_comment_matches_yaml_semantics(raw, want):
+    assert FC._strip_inline_comment(raw) == want
+
+
+def _fm(verify_by: str) -> str:
+    return (
+        "---\n"
+        "kind: run\n"
+        "feedback_contract:\n"
+        "  criteria:\n"
+        "    - id: IN1\n"
+        "      loop_scope: inner\n"
+        "      text: t\n"
+        "      verify_by: lint\n"
+        "    - id: OUT1\n"
+        "      loop_scope: outer\n"
+        f"      verify_by: {verify_by}\n"
+        "      text: t\n"
+        "---\nbody\n"
+    )
+
+
+def test_fallback_parser_agrees_with_yaml_on_inline_comment():
+    """yaml 経路とフォールバック経路が同じ criteria を返す (環境差で lint 結果が割れない)。"""
+    text = _fm("evaluator  # 検証主体は deck-evaluator")
+    via_yaml = FC.extract_frontmatter_feedback_contract(text)
+    fm_only = text.split("\n---", 1)[0].lstrip("-").lstrip("\n")
+    via_fallback = FC._parse_feedback_contract_block(fm_only)
+    assert via_yaml is not None and via_fallback is not None
+    key = lambda fc: [
+        {k: c.get(k) for k in ("id", "loop_scope", "verify_by")} for c in fc["criteria"]
+    ]
+    assert key(via_yaml) == key(via_fallback)
+    assert key(via_fallback)[1]["verify_by"] == "evaluator"
+    assert key(via_fallback)[1]["verify_by"] in FC.CRITERIA_VERIFY_BY
+
+
+def test_repo_skill_md_parses_identically_on_both_paths():
+    """実 repo の全 SKILL.md で 2 経路の解析結果が一致する (CI と手元の乖離ゼロ)。"""
+    mismatches = []
+    for path in sorted(ROOT.glob("plugins/*/skills/*/SKILL.md")):
+        text = path.read_text(encoding="utf-8")
+        if not text.startswith("---"):
+            continue
+        via_yaml = FC.extract_frontmatter_feedback_contract(text)
+        fm_only = text.split("\n---", 1)[0].lstrip("-").lstrip("\n")
+        via_fallback = FC._parse_feedback_contract_block(fm_only)
+        pick = lambda fc: [
+            {k: c.get(k) for k in ("id", "loop_scope", "verify_by")}
+            for c in (fc or {}).get("criteria", [])
+        ]
+        if pick(via_yaml) != pick(via_fallback):
+            mismatches.append(str(path.relative_to(ROOT)))
+    assert not mismatches, f"yaml/フォールバックで解析が割れる SKILL.md: {mismatches}"

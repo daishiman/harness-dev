@@ -1,0 +1,124 @@
+<!--
+  icon-grid-golden.html — ゴールデン実例: アイコン選択グリッド型 (slide 骨格)
+
+  入力: icon-grid-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-visual.md §11.29 アイコン選択グリッド型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #4 #10 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict icon-grid-golden.html
+
+  §11.29 のコード例は Font Awesome の <i> でアイコンを置くが、これは
+  style-tokens の外部依存禁止に触れる (印刷や配布先で字形が消える)。
+  ここでは水平・垂直の素片だけで字形を組んである。斜線を使わないのは
+  §D-3 と、細い斜線が縮小時に最初に潰れるためでもある。
+  件数は節の 2 列 8 件から 3 列 6 件へ減らした。§D-2 の密度目安 (1 図あたり
+  ノード 9 件以下) には 8 件でも収まるが、8 件並べた時点で図は一覧表であり、
+  どれが焦点かという主張を失う。
+  節の rgba(0,0,0,0.4) の影と hover の translateY は R9-14 により落とした。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-icongrid">
+
+  <svg viewBox="0 0 960 432"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-icongrid-caption">
+
+    <defs>
+      <marker id="d-icongrid-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-icongrid-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-icongrid-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 上段 左: 文書取込 -->
+    <g>
+      <rect x="16" y="32" width="288" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="72" cy="112" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <rect x="64" y="100" width="16" height="24" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="68" y1="108" x2="76" y2="108" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="68" y1="116" x2="76" y2="116" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="120" y="104" font-size="14" fill="var(--fg, #43436c)">文書取込</text>
+      <text x="120" y="132" font-size="12" fill="var(--fg-dim, #54546d)">PDF と CSV を読む</text>
+    </g>
+
+    <!-- 上段 中: 一覧表示 -->
+    <g>
+      <rect x="336" y="32" width="288" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="392" cy="112" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <line x1="380" y1="104" x2="404" y2="104" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="380" y1="112" x2="404" y2="112" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="380" y1="120" x2="404" y2="120" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="440" y="104" font-size="14" fill="var(--fg, #43436c)">一覧表示</text>
+      <text x="440" y="132" font-size="12" fill="var(--fg-dim, #54546d)">条件で絞り込む</text>
+    </g>
+
+    <!-- 上段 右: 通知 -->
+    <g>
+      <rect x="656" y="32" width="288" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="712" cy="112" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="712" cy="108" r="10" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="700" y1="122" x2="724" y2="122" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="760" y="104" font-size="14" fill="var(--fg, #43436c)">通知</text>
+      <text x="760" y="132" font-size="12" fill="var(--fg-dim, #54546d)">期限前に知らせる</text>
+    </g>
+
+    <!-- 下段 左: 集計 -->
+    <g>
+      <rect x="16" y="224" width="288" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="72" cy="304" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <rect x="56" y="308" width="8" height="12" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <rect x="68" y="300" width="8" height="20" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <rect x="80" y="292" width="8" height="28" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="120" y="296" font-size="14" fill="var(--fg, #43436c)">集計</text>
+      <text x="120" y="324" font-size="12" fill="var(--fg-dim, #54546d)">月次で締める</text>
+    </g>
+
+    <!-- 下段 中: 権限 (焦点。後から変えると他の五つに波及する) -->
+    <g>
+      <rect x="336" y="224" width="288" height="160" rx="8"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <circle cx="392" cy="304" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <rect x="384" y="292" width="16" height="12" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <rect x="380" y="304" width="24" height="16" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="440" y="296" font-size="14" fill="var(--fg, #43436c)">権限</text>
+      <text x="440" y="324" font-size="12" fill="var(--fg-dim, #54546d)">部門ごとに分ける</text>
+    </g>
+
+    <!-- 下段 右: 履歴 -->
+    <g>
+      <rect x="656" y="224" width="288" height="160" rx="8"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="712" cy="304" r="28" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <circle cx="712" cy="304" r="12" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="712" y1="304" x2="712" y2="296" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <line x1="712" y1="304" x2="720" y2="304" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+      <text x="760" y="296" font-size="14" fill="var(--fg, #43436c)">履歴</text>
+      <text x="760" y="324" font-size="12" fill="var(--fg-dim, #54546d)">誰が直したか残る</text>
+    </g>
+
+    <!-- 並びの断り・網羅性・焦点の選定基準 (I4 / I-STRUCT / §11.29 必須情報)。
+         引き出し線の注釈と入れ替えてある。装飾の破線より、読者が候補集合を
+         位置づけるための 2 行のほうが図として要る。 -->
+    <text x="16" y="404" font-size="12" fill="var(--fuji-gray, #8a8980)">並びは順不同（左上が最重要ではない）。カード間に線は引いておらず、6 件は互いに独立している</text>
+    <text x="16" y="424" font-size="12" fill="var(--fuji-gray, #8a8980)">候補は社内要望 12 件を突き合わせた 6 件（残る 6 件は次期検討）。色が付いた 1 件だけが、後から変えると他の 5 件へ波及する</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-icongrid-caption" class="srg-diagram__caption">
+    六つの候補を同じ大きさで並べてある。色の付いた一つだけが、後から変えると残り五つすべてに波及する。
+  </figcaption>
+
+</figure>

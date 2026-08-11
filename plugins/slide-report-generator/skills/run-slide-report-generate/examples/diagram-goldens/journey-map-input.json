@@ -1,0 +1,42 @@
+{
+  "diagramId": "f-journey",
+  "type": "journey-map",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-extended.md §11.42 ユーザージャーニーマップ型",
+  "placement": "横帯",
+  "canvas": {"viewBox": "0 0 960 540"},
+  "title": "見積依頼までの 4 フェーズ",
+  "message": "落ち込みは価格を見た瞬間ではなく、条件を自分で調べさせている区間で起きている。",
+  "phases": [{"id": "p1", "label": "気づく"}, {"id": "p2", "label": "調べる", "style": "focal"}, {"id": "p3", "label": "試す"}, {"id": "p4", "label": "決める"}],
+  "rows": [{"id": "action", "label": "行動"}, {"id": "emotion", "label": "感情"}, {"id": "touchpoint", "label": "接点"}],
+  "cells": {
+    "action": [
+      {"phase": "p1", "label": "検索から流入", "sub": "比較記事経由"},
+      {"phase": "p2", "label": "条件を自力で照合", "sub": "資料を往復"},
+      {"phase": "p3", "label": "無料枠で試す", "sub": "2 週間"},
+      {"phase": "p4", "label": "見積を依頼", "sub": "稟議へ"}
+    ],
+    "emotion": [
+      {"phase": "p1", "level": -1, "label": "半信半疑"},
+      {"phase": "p2", "level": -2, "label": "面倒", "style": "focal"},
+      {"phase": "p3", "level": 1, "label": "手応え"},
+      {"phase": "p4", "level": 2, "label": "納得"}
+    ],
+    "touchpoint": [
+      {"phase": "p1", "label": "比較記事", "sub": "自社の管理外"},
+      {"phase": "p2", "label": "料金ページ", "sub": "条件の記述が分散", "style": "focal"},
+      {"phase": "p3", "label": "無料トライアル", "sub": "初期設定ガイド"},
+      {"phase": "p4", "label": "営業担当", "sub": "見積フォーム"}
+    ]
+  },
+  "emotionCurve": {"element": "polyline", "note": "感情の推移はデータ線なので §D-3 原則 1 の斜め線禁止の対象外。line-chart-golden と同じく <polyline> で描き、D5 / D17 の検査対象要素で書かない"},
+  "relations": [],
+  "emphasis": {"focal": ["p2"], "reason": "谷は 1 つだけ色を持つ。谷とその列の接点をそろえて指すことで「どこを直すか」が 1 点に定まる"},
+  "annotations": [],
+  "readingNote": "横は時間の流れ (左が先・右が後)、縦は感情の高低で破線が中立。各フェーズは前段の完了を前提に進む。",
+  "durations": "所要日数の中央値: 気づく 7 日 → 調べる 14 日 → 試す 14 日 → 決める 21 日。",
+  "provenance": "出所: 2026/1-6 に受注した 42 社の行動ログとインタビュー実測 (n=42 社・単一回答)。",
+  "caption": "上段の行動を左から追い、中段の線がどこで最も下がるかを見てほしい。谷の真下にある接点が、今いちばん手を入れる価値のある場所である。"
+}

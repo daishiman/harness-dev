@@ -210,7 +210,7 @@
 .slide-flow .flow-step:hover {
   transform: scale(1.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  background: var(--bg-card);
+  background: var(--bg-card, #F0F0F0);
 }
 
 /* タイムラインアイテム */
@@ -307,7 +307,7 @@
 /* 進捗バー付き統計 */
 .stat-progress {
   height: 6px;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
   border-radius: 3px;
   overflow: hidden;
   margin-top: 0.5rem;
@@ -333,7 +333,7 @@
 }
 
 .slide-table tbody tr:hover {
-  background: var(--bg-card);
+  background: var(--bg-card, #F0F0F0);
   transform: scale(1.01);
 }
 
@@ -348,12 +348,12 @@
 
 /* 強調行 */
 .slide-table tr.highlight {
-  background: var(--bg-card);
+  background: var(--bg-card, #F0F0F0);
   border-left: 4px solid var(--sakura-pink);
 }
 
 .slide-table tr.highlight:hover {
-  background: var(--sumi-ink);
+  background: var(--sumi-ink, #FAFAFA);
 }
 ```
 
@@ -373,7 +373,7 @@
   bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%) translateY(5px);
-  background: var(--sumi-ink);
+  background: var(--sumi-ink, #FAFAFA);
   color: var(--fg);
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -399,7 +399,7 @@
   left: 50%;
   transform: translateX(-50%);
   border: 8px solid transparent;
-  border-top-color: var(--sumi-ink);
+  border-top-color: var(--sumi-ink, #FAFAFA);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease;
@@ -425,7 +425,7 @@
   bottom: auto;
   top: calc(100% + 2px);
   border-top-color: transparent;
-  border-bottom-color: var(--sumi-ink);
+  border-bottom-color: var(--sumi-ink, #FAFAFA);
 }
 
 .has-tooltip-bottom:hover::after {

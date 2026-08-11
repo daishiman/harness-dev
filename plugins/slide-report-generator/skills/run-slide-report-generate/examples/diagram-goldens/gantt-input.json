@@ -1,0 +1,140 @@
+{
+  "diagramId": "f-gantt",
+  "type": "gantt",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "bleed",
+  "reference": "references/diagram-comparison.md §11.8 ガントチャート",
+  "placement": "全幅",
+  "canvas": {
+    "viewBox": "0 0 960 360"
+  },
+  "title": "基幹刷新の 6 か月",
+  "message": "日程を確定させる境目は一本の破線で、そこから先は開始日を動かせない。",
+  "timeline": {
+    "unit": "月",
+    "columns": [
+      "2026/4",
+      "2026/5",
+      "2026/6",
+      "2026/7",
+      "2026/8",
+      "2026/9"
+    ],
+    "axisNote": "横軸は暦月 (2026年度・確定計画)",
+    "milestones": [
+      {
+        "id": "m1",
+        "label": "移行判定",
+        "date": "2026/7/31",
+        "at": "2026/7 末"
+      },
+      {
+        "id": "m2",
+        "label": "本番稼働",
+        "date": "2026/9/15",
+        "at": "2026/9 中日"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "id": "t1",
+      "label": "要件定義",
+      "owner": "情報システム部",
+      "style": "plain",
+      "span": [
+        "2026/4",
+        "2026/4"
+      ]
+    },
+    {
+      "id": "t2",
+      "label": "設計",
+      "owner": "ベンダー",
+      "style": "plain",
+      "span": [
+        "2026/5",
+        "2026/5"
+      ]
+    },
+    {
+      "id": "t3",
+      "label": "実装",
+      "owner": "ベンダー",
+      "style": "plain",
+      "span": [
+        "2026/6",
+        "2026/7"
+      ]
+    },
+    {
+      "id": "t4",
+      "label": "移行リハーサル",
+      "owner": "情シス + 業務部門",
+      "style": "plain",
+      "span": [
+        "2026/8",
+        "2026/8"
+      ]
+    },
+    {
+      "id": "t5",
+      "label": "本番切替",
+      "owner": "情シス + ベンダー",
+      "style": "focal",
+      "span": [
+        "2026/9 前半",
+        "2026/9 前半"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from": "要件定義",
+      "to": "設計",
+      "kind": "finish-to-start",
+      "label": "要件定義の完了後"
+    },
+    {
+      "from": "設計",
+      "to": "実装",
+      "kind": "finish-to-start",
+      "label": "設計の完了後"
+    },
+    {
+      "from": "実装",
+      "to": "移行リハーサル",
+      "kind": "finish-to-start",
+      "label": "実装の完了後 (移行判定を通過)"
+    },
+    {
+      "from": "移行リハーサル",
+      "to": "本番切替",
+      "kind": "finish-to-start",
+      "label": "リハーサルの完了後"
+    }
+  ],
+  "legend": [
+    {
+      "mark": "矢印",
+      "means": "先行 → 後続の依存"
+    },
+    {
+      "mark": "破線と◆",
+      "means": "日程確定の期日"
+    },
+    {
+      "mark": "色",
+      "means": "焦点の 1 本"
+    }
+  ],
+  "emphasis": {
+    "focal": [
+      "t5"
+    ],
+    "reason": "焦点は最後の 1 本だけ。§11.8 のコード例は 5 色のバー色を用意しているが、行の区別は既に位置と行名が担っているので、色を足すと焦点が消える"
+  },
+  "annotations": [],
+  "caption": "左の列を上から下へ読み、次に帯がどこで途切れるかを見てほしい。破線は日程を確定させる境目で、そこから先は開始日を動かせない。"
+}

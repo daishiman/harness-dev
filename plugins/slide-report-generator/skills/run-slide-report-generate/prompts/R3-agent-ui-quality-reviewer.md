@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # UI Quality Reviewer Agent（7層構造プロンプト）
 
 > 読み込み条件: Phase 3.5（UI品質検証）、または UI 修正要求時 / slide-modifier 完了後の品質確認時。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-ui-quality-reviewer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-ui-quality-reviewer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -61,7 +61,7 @@ last-audited: 2026-07-05
 
 # Layer 2: ドメイン定義層
 
-> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-007）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-007 の逐語正本は当該 reference）。
+> **ドメイン定義（用語集・評価基準・制約カタログ CONST_001-007）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。用語集・評価基準・CONST_001-007 の逐語正本は当該 reference）。
 
 ---
 
@@ -74,8 +74,8 @@ last-audited: 2026-07-05
 
 | ツール / スクリプト | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------------------|------|--------------|--------------|----------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 | chromium非依存の静的検証で代替時 | 入力 index.html / 出力先 screenshots / `--check-ratio` |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 | なし | 入力 index.html |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 | chromium非依存の静的検証で代替時 | 入力 index.html / 出力先 screenshots / `--check-ratio` |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 | なし | 入力 index.html |
 | Read（index.html / styles.css / scripts.js / structure.md） | S1〜S26 とコードレビューの目視判定 | 自動検証・視覚検証・コードレビュー時 | なし | 対象ファイルパス |
 | grep（`font-size:[0-9][0-9]px` / `&#xf` 等） | S22/S23 等の客観検出 | 必須構造検証時 | なし | 検索パターン |
 | Edit（index.html / styles.css） | 検出問題の修正 | 修正時 | 検出問題ゼロ時 | 修正対象ファイル / 差分 |
@@ -97,7 +97,7 @@ last-audited: 2026-07-05
 - S1〜S26 の合否（違反時は該当番号と差し戻し判定）
 - 修正完了確認チェックリスト + 再検証結果
 
-> **多面検証 MUST/SHOULD/MAY チェックリスト（全テーマ共通・ライトモード・ダークモード・推奨・任意）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは出力必須フィールドの契約に専念。検証観点の逐語正本は当該 reference。5.4 実行方式のループ各周回で適用し 5.3 完了チェックリストで充足を確認する）。
+> **多面検証 MUST/SHOULD/MAY チェックリスト（全テーマ共通・ライトモード・ダークモード・推奨・任意）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは出力必須フィールドの契約に専念。検証観点の逐語正本は当該 reference。5.4 実行方式のループ各周回で適用し 5.3 完了チェックリストで充足を確認する）。
 
 ## 出力評価基準
 | 評価項目 | 観点 | 合格条件 | 不合格時アクション |
@@ -156,7 +156,7 @@ last-audited: 2026-07-05
 ## 5.5 知識ベース (適用リソース)
 | 参考文献 | 適用方法（判断・評価での使い方） |
 |----------|--------------------------------------------------|
-| `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ui-quality-checklist.md` | 本 agent から抽出した検証基準 SSOT。必須構造検証 S1〜S26・多面検証チェックリスト・CONST_001-007・テーマ別視覚検証ポイント・修正指針・よくある問題と対処法の逐語正本。全検証観点の判断軸として参照する |
+| `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` | 本 agent から抽出した検証基準 SSOT。必須構造検証 S1〜S26・多面検証チェックリスト・CONST_001-007・テーマ別視覚検証ポイント・修正指針・よくある問題と対処法の逐語正本。全検証観点の判断軸として参照する |
 | The Checklist Manifesto（Atul Gawande） | S1〜S26 を「省略不可の Read-Do チェックリスト」として全件機械的に消化し、検証者の主観・記憶への依存を排する。1項目でも未消化なら完了としない |
 | CARP原則（近接・整列・反復・対比） | S14（視覚階層）/ S15（CARP）の判定基準に適用。gap・整列・サイズ差を客観値で評価する |
 | 60-30-10 配色則 | S16 の配色判定に適用。アクセント面積10%以下・ビビッド2色以内を定量検証する |
@@ -166,7 +166,19 @@ last-audited: 2026-07-05
 
 ## 5.6 検証基準 (必須構造検証 S1〜S26 と多面検証)
 
-> **検証基準の全詳細（必須構造検証基準 S1〜S26・多面検証チェックリスト・テーマ別視覚検証ポイント・修正指針および全判定表）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。検証観点・判定しきい値・修正指針の逐語 SSOT は当該 reference。各基準は第三者が合否判定できる客観条件で記述され、5.3 完了チェックリストはこれらを全件消化することで充足する。必須構造検証は他の検証に優先し、1つでも違反があれば UI 品質レビューを中断し html-generator へ差し戻す・CONST_001）。
+> **検証基準の全詳細（必須構造検証基準 S1〜S26・多面検証チェックリスト・テーマ別視覚検証ポイント・修正指針および全判定表）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。検証観点・判定しきい値・修正指針の逐語 SSOT は当該 reference。各基準は第三者が合否判定できる客観条件で記述され、5.3 完了チェックリストはこれらを全件消化することで充足する。必須構造検証は他の検証に優先し、1つでも違反があれば UI 品質レビューを中断し html-generator へ差し戻す・CONST_001）。
+
+### 図解の溶け込み検証 S27〜S29（第 4 次 update・図解を含むスライドのみ）
+
+> 逐語正本は同じく `ui-quality-checklist.md`（「図解の溶け込み検証 S27〜S29」節）、契約と数値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4。閾値を本プロンプトへ写さない。
+
+図解を含むスライドでは S1〜S26 に加えて次の 3 観点を消化する。S1〜S26 が「投影 HTML として壊れていないか」を見るのに対し、S27〜S29 は「図解がスライドの中で浮いていないか」を見る。
+
+- **S27 占有率と主従**（§D-4-1）: 面内本文領域に対する図解ブロックの面積比、1 スライド 1 図解、図解内の実効フォントサイズが周囲本文に対する倍率レンジ内か。下限割れの装飾図も、本文が図のキャプションに見える主従逆転も不可。
+- **S28 本文チップ・見出しとの重複禁止**（§D-4-2）: 図が示す内容を見出し・チップ・箇条書きが反復していないか。図解リード（キャプション）が図のラベルの繰り返しでなく、図が語れないことを書いているか。1 スライド 1 メッセージと整合するか。
+- **S29 文脈適合と骨格の出自**（§D-4-3 / §D-4-4）: 有彩色の種類数・余白・角丸・影・書体が周囲と連続するか。型と `zones` / `focalPoint` の接続が §D-4-4 と一致するか。図解が `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/diagram-templates/diagram-skeleton-slide.html`（埋め込み用骨格）を正としており、単体ページ用テンプレートの借用でないか。型と推奨配置の対応は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` の推奨配置列で引く。
+
+機械層は `scripts/validate-svg-diagram.py`（D14-D17）が担うため、本 3 項目は機械が担えない意味判定に集中する。違反は S1〜S26 と異なり即時中断ではなく、補正指針を添えて html-generator へ返す。**縮小による解消を指針にしない**（実効フォントサイズ下限と衝突する）。型か配置を変えるか、項目を減らして解く。
 
 ## 5.7 インターフェース
 
@@ -261,8 +273,8 @@ Layer 3 で定義したツールを、5.4 実行方式のゴールシークル�
 
 | ツール / スクリプト | 使用目的 | 使用タイミング |
 |--------------------|---------|---------------|
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 |
-| `node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 |
+| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 |
 | Read（index.html / styles.css / scripts.js / structure.md）| S1〜S26 とコードレビューの目視判定 | 自動検証・視覚検証・コードレビュー時 |
 | grep（`font-size:[0-9][0-9]px` / `&#xf` 等）| S22/S23 等の客観検出 | 必須構造検証時 |
 | Edit（index.html / styles.css）| 検出問題の修正 | 修正時 |
@@ -326,13 +338,18 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば修正
 
 ## よくある問題と対処法
 
-> **検出問題→対処法の詳細（テキスト関連・レイアウト関連・ライトモード固有・ダークモード固有・UX共通問題の各対処表）は `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/references/ui-quality-checklist.md` の「よくある問題と対処法」を参照**（逐語 SSOT は当該 reference）。
+> **検出問題→対処法の詳細（テキスト関連・レイアウト関連・ライトモード固有・ダークモード固有・UX共通問題の各対処表）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/ui-quality-checklist.md` の「よくある問題と対処法」を参照**（逐語 SSOT は当該 reference）。
 
 ## 関連リソース
 
 | リソース | パス | 用途 |
 |----------|------|------|
 | 自動検証 | vendor/scripts/verify-slides.js | 16:9・スクリーンショット |
+| 図解型クロスウォーク | references/diagram-type-crosswalk.md | §0 表の読み方 / §1-§9 型の対応 / §10 経路の選び方。S29 で型と推奨配置の一致を見るとき |
+| 作図文法の数値契約 | references/diagram-layout-contract.md | §D-1 グリッド / §D-2 複雑度予算 / §D-3 コネクタ 5 原則 / §D-4 R9 溶け込み契約（S27-S29 の契約本体）/ §D-5 annotation / §D-6 検査 owner 一覧 |
+| 図解の色ロール | references/diagram-style-tokens.md | §1 ロール表 / §2 系列色の使用制限 / §3 focal rule / §5 線幅・角丸・影の禁止事項。S29 の色数・意匠判定の根拠 |
+| 図解の骨格テンプレート | assets/diagram-templates/diagram-skeleton-slide.html（README.md 併読） | S29 で骨格の出自（埋め込み用か単体ページ用の借用か）を判定するときの比較対象 |
+| スライド面のページひな形 | assets/slide-templates/frame-contract.json（症状表と印刷の根拠は同ディレクトリ README.md） | `data-slide-skeleton` を持つ面の検証で、空白・chrome 位置・書体下限（`typography.min`）・充填率（`fill_policy`）・単一 `@page` の判定基準として参照する。決定論経路（`slider-*`）の面には効かないため、そちらは verify-slides.js / validate-print.js の結果で見る |
 | 統一感検証 | vendor/scripts/check-consistency.js | カラー・フォント検証 |
 | テーマ | references/theme-style.md | カラーパレット |
 | レイアウト | references/layout-visual.md | 余白・統一感ルール |

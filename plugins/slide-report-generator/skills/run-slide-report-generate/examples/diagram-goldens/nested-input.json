@@ -1,0 +1,25 @@
+{
+  "diagramId": "f-nested",
+  "type": "nested",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-visual.md §11.33 包含型",
+  "placement": "方形",
+  "canvas": {"viewBox": "0 0 640 400"},
+  "title": "レビュー基準がどこで決まるか",
+  "message": "現場の判断は最内側にしか無く、その外側は現場では動かせない。",
+  "nodes": [
+    {"id": "l1", "label": "全社ポリシー", "depth": 1, "style": "external"},
+    {"id": "l2", "label": "事業部の運用基準", "depth": 2, "style": "plain"},
+    {"id": "l3", "label": "チームの実装規約", "depth": 3, "style": "plain"},
+    {"id": "l4", "label": "レビュー時の判断", "sub": "変えられるのはここだけ", "depth": 4, "style": "focal"}
+  ],
+  "relations": [{"from": "l1", "to": "l2", "kind": "contains"}, {"from": "l2", "to": "l3", "kind": "contains"}, {"from": "l3", "to": "l4", "kind": "contains"}],
+  "emphasis": {"focal": ["l4"], "reason": "包含型の accent は最内層 1 つのみ。親子関係は線ではなく空間が語る"},
+  "annotations": [{"text": "外側は現場では動かせない", "anchor": "l4"}],
+  "geometry": {"insetX": 32, "insetY": 36, "radius": 8, "note": "インセットは全層で同じ。不揃いだと事故で揃わなかったように見える"},
+  "axisNote": "外側ほど決定主体が遠く、内側ほど裁量が狭い。包含は制約の継承。",
+  "legend": "破線は注釈の指示線",
+  "caption": "外側の枠ほど決めた人が遠い。内側へ入るほど裁量が狭まるという順で読み、最後に色の付いた枠だけを見てほしい。"
+}

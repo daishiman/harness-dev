@@ -81,7 +81,7 @@
 |---|---|---|
 | manifest | workflow-manifest.json | phase=elicit context 取得時 |
 | schema | schemas/skill-brief.schema.json | brief 構造検証時 |
-| naming-rule | $CLAUDE_PLUGIN_ROOT/skills/ref-skill-naming-convention/references/decision-table.md | skill_name 検証時 |
+| naming-rule | ${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/ref-skill-naming-convention/references/decision-table.md | skill_name 検証時 |
 
 ### 3.2 外部ツール / API
 
@@ -169,7 +169,7 @@
 
 LLM は Layer 5.2 ゴール + 5.3 完了チェックリストを停止条件として、5.4 ループで動的に手順を生成・実行する。分岐は次の通り:
 
-- `{{brief_path}}` が与えられたら (E2 直接消費・CONST_014): R1 ヒアリングを skip し、`{{brief_path}}` の skill-brief.json を Read してそのまま Step1 成果物として採用する。`{{handoff}}` も与えられていれば (CONST_015)、build を dispatch する前に `Bash(python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py {{handoff}})` を実行し exit0 を確認する (非0 なら停止し不一致を報告)。
+- `{{brief_path}}` が与えられたら (E2 直接消費・CONST_014): R1 ヒアリングを skip し、`{{brief_path}}` の skill-brief.json を Read してそのまま Step1 成果物として採用する。`{{handoff}}` も与えられていれば (CONST_015)、build を dispatch する前に `Bash(python3 ${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/check-route-component-parity.py {{handoff}})` を実行し exit0 を確認する (非0 なら停止し不一致を報告)。
 - `--page-url` / `--page-id` が topic に含まれる場合は、先に `validate-intake-publish-ready.py` で指定 Notion ページへの publish 完了を確認し、未完了なら skill-brief 生成へ進まない。
 - いずれでもない通常時は `Skill(run-skill-elicit, args={{topic}})` を起点に、ユーザー要望から skill-brief.json を構築する。
 

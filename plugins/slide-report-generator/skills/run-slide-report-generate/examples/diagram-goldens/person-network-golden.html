@@ -1,0 +1,121 @@
+<!--
+  person-network-golden.html — ゴールデン実例: 人物関係図型 (report 骨格)
+
+  入力: person-network-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-visual.md §11.24 人物関係図型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #9 #10 / §D-3 原則 1 原則 5 / §D-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict person-network-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  §11.24 は中心から周辺へ放射状に斜線を引く型だが、ここでは直交の折れ線に替えた。
+  §D-3 原則 1 の例外は放射・環状型の円弧と kit.overArcPath に限られ、直線の
+  スポークはその例外に当たらない。斜線 6 本は交差角も 6 通りになり、印刷時に
+  最も潰れやすい。中心の上下辺から出して列の外側で曲げると、線は直交のまま残る。
+  節のコード例の linear-gradient・box-shadow・hover の translateY は
+  順に style-tokens §5・R9-14 に触れるので落とした。
+  接続線に矢じりを付けないのは、関係が流れではなく連絡経路だからである。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-network"
+        data-figure-width="bleed">
+
+  <svg viewBox="0 0 640 400"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-network-caption">
+
+    <defs>
+      <marker id="f-network-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-network-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-network-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 連絡経路 6 本 (矢じり無し・直交のみ・ノードを跨がない) -->
+    <line x1="232" y1="200" x2="160" y2="200" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <line x1="408" y1="200" x2="480" y2="200" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <path d="M 296 160 V 68 H 160" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <path d="M 344 160 V 68 H 480" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <path d="M 296 240 V 332 H 160" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <path d="M 344 240 V 332 H 480" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+
+    <!-- 中心 (窓口。焦点ではない) -->
+    <g>
+      <rect x="232" y="160" width="176" height="80" rx="8"
+            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+      <text x="320" y="196" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">導入担当者</text>
+      <text x="320" y="220" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">進行の窓口（決裁権は無い）</text>
+    </g>
+
+    <!-- 左列 上 -->
+    <g>
+      <rect x="16" y="40" width="144" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="88" y="64" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">現場リーダー</text>
+      <text x="88" y="84" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">日々の運用・賛成</text>
+    </g>
+
+    <!-- 左列 中 -->
+    <g>
+      <rect x="16" y="172" width="144" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="88" y="196" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">経理担当</text>
+      <text x="88" y="216" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">支払条件・中立</text>
+    </g>
+
+    <!-- 左列 下 -->
+    <g>
+      <rect x="16" y="304" width="144" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="88" y="328" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">調達担当</text>
+      <text x="88" y="348" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">契約手続き・中立</text>
+    </g>
+
+    <!-- 右列 上 -->
+    <g>
+      <rect x="480" y="40" width="144" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="552" y="64" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">経営企画</text>
+      <text x="552" y="84" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">投資判断・賛成</text>
+    </g>
+
+    <!-- 右列 中 (焦点。単独で案件を止められる) -->
+    <g>
+      <rect x="480" y="172" width="144" height="56" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="552" y="196" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">情報システム部長</text>
+      <text x="552" y="216" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">接続可否の決裁・反対</text>
+    </g>
+
+    <!-- 右列 下 -->
+    <g>
+      <rect x="480" y="304" width="144" height="56" rx="6"
+            fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="552" y="328" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">既存ベンダー</text>
+      <text x="552" y="348" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">移行の協力・未接触</text>
+    </g>
+
+    <!-- 線の凡例・並びの断り・スタンスの読み方 (I3 / I4 / §11.24 必須情報)。
+         引き出し線の注釈「窓口であって決裁者ではない」は中心ノードの副題へ
+         繰り上げてある。図の外へ出ない情報として、そこが本来の置き場所である。 -->
+    <text x="320" y="372" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">線は連絡経路のみ（指揮系統ではない）。矢じりを付けないのは働きかけの向きを表さないため</text>
+    <text x="320" y="392" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">配置に序列は無く並びは順不同。副題末尾の 賛成 / 中立 / 反対 / 未接触 は導入への立場</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-network-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 2</span>
+    線は連絡の有無だけを表しており、指揮系統ではない。色の付いた一人だけが、単独で案件を止められる決裁権を持つ。
+  </figcaption>
+
+</figure>

@@ -1,6 +1,6 @@
 # 生成後評価 rubric（deck-evaluator 手続き知識 SSOT）
 
-> **正本**: このファイルは deck-evaluator から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/deck-evaluator.md）の双方がこれを参照する。生成後評価サブシステムの上位正本（評価次元 Dx/D1〜D5・30種思考法マッピング・4条件の機械判定）は `$CLAUDE_PLUGIN_ROOT/references/post-generation-evaluation.md` を辿る。フック `hooks/hook-postgen-eval.py` も同サブシステムの消費者（consumers≥2）。
+> **正本**: このファイルは deck-evaluator から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/deck-evaluator.md）の双方がこれを参照する。生成後評価サブシステムの上位正本（評価次元 Dx/D1〜D5・30種思考法マッピング・4条件の機械判定）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/post-generation-evaluation.md` を辿る。フック `hooks/hook-postgen-eval.py` も同サブシステムの消費者（consumers≥2）。
 
 **責務**: mode-aware 生成後評価のドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）と評価 rubric（30種思考法カバレッジ・思考法群と主担当次元・D5評価観点・D1〜D3視覚裏取り・mode 別 rubric 次元 slide/report・判定リファレンス 4条件と改善優先度・評価レポート出力テンプレート）の逐語正本。deck-evaluator（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。
 
@@ -13,7 +13,7 @@
 | slide rubric 次元 | 視覚崩れ / 1スライド1メッセージ / chip / 16:9 崩れ（既存の slide 固有次元） | D1〜D3・§D slide |
 | report rubric 次元 | 可読性 / 図解適合（1項目1ビジュアルが適切か）/ 情報密度 / セクション論理構造 | §D report |
 | D1〜D4 | 機械評価（evaluate-deck.js）が静的判定する次元。視覚崩れ・ナビ・仕様適合（slide が主対象。report では該当する裏取りへ読み替え） | evaluation-report.json |
-| D5 | 機械評価対象外・本エージェントの核心。要望↔構成の矛盾・仕組みの反映・構成順の意図適合 | 元の要望 |
+| D5 | 機械評価対象外・本エージェントの核心。要望↔構成の矛盾・仕組みの反映・構成順の意図適合・読者フック（入口ホリゾンタル） | 元の要望 |
 | 思考リセット | 生成過程・前提・自分の判断を一旦保留し、白紙で疑う方法論 | 白紙5疑問 |
 | 30種思考法 | 論理分析系〜問題解決系の30種。全件適用・カバレッジ表で省略を防ぐ（**mode 非依存・共有コア**） | CONST_001 |
 | 4条件 | 矛盾なし・漏れなし・整合性あり・依存関係整合の最終判定軸 | The Checklist Manifesto |
@@ -36,7 +36,7 @@
 - **CONST_001 (30種省略禁止)**: 30種思考法はすべてカバレッジ表に行として記載する。finding が無い思考法も `PASS_NO_FINDING` として記録し省略しない。
   - 目的: 評価観点の抜け漏れを防ぎ、多角性を機械的に保証する。
   - 背景: 一部思考法を省くと特定種類の欠陥（例: if思考での印刷崩れ）を見落とす。全件記録で第三者がカバレッジを検証できる。
-- **CONST_002 (ui-quality-reviewer 重複禁止)**: 視覚崩れの詳細チェック S1〜S26 は本エージェントで再実装せず `$CLAUDE_PLUGIN_ROOT/agents/ui-quality-reviewer.md` を参照する。本エージェントは要望適合・仕様適合・矛盾検出・エレガンスの統合判定に専念する。
+- **CONST_002 (ui-quality-reviewer 重複禁止)**: 視覚崩れの詳細チェック S1〜S26 は本エージェントで再実装せず `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/agents/ui-quality-reviewer.md` を参照する。本エージェントは要望適合・仕様適合・矛盾検出・エレガンスの統合判定に専念する。
   - 目的: 同一チェックの二重実装による基準のずれ・保守コスト増を防ぐ。
   - 背景: 本エージェントは Phase 3.5 の置き換えではなく上位の最終ゲート。責務分離により各層が単一の正本を持つ。
 - **CONST_003 (最大3周ループ)**: 改善→再評価（`evaluate-deck.js`）のループは最大3周まで。3周で4条件が PASS に収束しなければユーザーにエスカレーションする。
@@ -53,7 +53,7 @@
 
 ## 30種思考法カバレッジ（出力必須・全30種）
 
-評価レポートには以下の30種すべてを含むカバレッジ表を出す。finding が無い思考法も `coverage` に `PASS_NO_FINDING` として記録し省略しない（CONST_001）。詳細マッピングは `$CLAUDE_PLUGIN_ROOT/references/post-generation-evaluation.md` §30種思考法マッピングを正本とする。
+評価レポートには以下の30種すべてを含むカバレッジ表を出す。finding が無い思考法も `coverage` に `PASS_NO_FINDING` として記録し省略しない（CONST_001）。詳細マッピングは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/post-generation-evaluation.md` §30種思考法マッピングを正本とする。
 
 | カテゴリ | 思考法 |
 |---------|--------|
@@ -84,10 +84,11 @@
 - 要望↔構成の矛盾: ユーザー要望の各点が structure / index.html に矛盾なく反映されているか。
 - 仕組みの反映: 要望で指定された仕組み（例: 両サイド左右送り・上部インデックス・ページネーション・特定の構成順）が実際に実装されているか。機械評価で `nav.topIndex` warn 等が出ていれば、要望と照合し「要望にあるのに無い＝error級」「要望に無く任意＝info」へ昇格/降格する（CONST_004）。
 - 構成順の意図適合: 目的→背景→手段→結論 等の意図した順序か（背景→質問の順序など）。
+- 読者フック（入口ホリゾンタル）: 入口（slide=タイトルスライド・冒頭キーメッセージ / report=タイトル・throughLine・冒頭要約）が、想定読者・聴衆の範囲内で共有される課題と「得たい変化（Before→After・根拠があれば数字）」を先に渡しているか。入口が書き手・発表者の資格/専門の自己紹介から始まっていないか（自己紹介スライドの存在自体は FINDING にせず、入口の主役化のみ FINDING とする）。各主要セクションに自分へ移す橋（兆候・問い・選択肢・次の行動）があるか。本論の深さ（確認済みの数字・手順・失敗・適用条件・限界）が入口の広さの代償に薄まっていないか。tech-doc・社内定型・監査/契約/仕様の正式名称や検索語は維持し、subtitle/keyMessage/summary で読者価値を補えていれば FINDING にしない。素材にない数字・実績を作った入口は FINDING。正本: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7（slide=CONST_008 / report=RCONST_007）。
 
 ## D1〜D3（機械findingの視覚的裏取り）
 
-- evaluation-report.json の D1〜D3 findingを、必要に応じスクリーンショットで裏取りする（slide=`node "$CLAUDE_PLUGIN_ROOT/vendor/scripts/verify-slides.js" <index.html> <out>` / report=`… <report.html> <out>` でスクショ撮影 → 目視。chromium要）。
+- evaluation-report.json の D1〜D3 findingを、必要に応じスクリーンショットで裏取りする（slide=`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" <index.html> <out>` / report=`… <report.html> <out>` でスクショ撮影 → 目視。chromium要）。
 - 「両サイドの左右送り」配置・「ページネーションの位置」・「上部インデックスの位置」は機械では存在のみ判定。配置の妥当性は本エージェントが視覚評価する。
 
 ## mode 別 rubric 次元（CONST_005・30種思考法とは別軸で必ず評価）
@@ -116,7 +117,7 @@
 
 ## 判定リファレンス（4条件と改善優先度）
 
-4条件の最終判定は機械レポートの `conditions` を起点に、D5 を加味して判定する（4条件すべて PASS かつ機械 `verdict=PASS` なら合格。いずれか FAIL なら改善へ）。改善指示は finding を KJ法でグルーピングし why思考で根本原因へ遡って優先度を付け、実装は `harness-creator:elegant-improvement-executor` 相当 or `$CLAUDE_PLUGIN_ROOT/agents/slide-modifier.md` に委譲する（修正後は `evaluate-deck.js` を再実行して再評価。ループは最大3周・CONST_003）。
+4条件の最終判定は機械レポートの `conditions` を起点に、D5 を加味して判定する（4条件すべて PASS かつ機械 `verdict=PASS` なら合格。いずれか FAIL なら改善へ）。改善指示は finding を KJ法でグルーピングし why思考で根本原因へ遡って優先度を付け、実装は `harness-creator:elegant-improvement-executor` 相当 or `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/agents/slide-modifier.md` に委譲する（修正後は `evaluate-deck.js` を再実行して再評価。ループは最大3周・CONST_003）。
 
 | 条件 | 定義 | 不合格の例 |
 |------|------|-----------|

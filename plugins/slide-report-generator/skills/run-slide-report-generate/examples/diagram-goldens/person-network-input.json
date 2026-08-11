@@ -1,0 +1,46 @@
+{
+  "diagramId": "f-network",
+  "type": "person-network",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "bleed",
+  "reference": "references/diagram-visual.md §11.24 人物関係図型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 640 400" },
+  "title": "導入担当者から見た関係者",
+  "message": "窓口に情報は集まるが、接続可否を決めるのは窓口ではない。",
+  "nodes": [
+    { "id": "hub", "label": "導入担当者", "sub": "進行の窓口（決裁権は無い）", "role": "hub", "style": "hub" },
+    { "id": "p1", "label": "現場リーダー", "sub": "日々の運用・賛成", "stance": "賛成", "style": "plain" },
+    { "id": "p2", "label": "経理担当", "sub": "支払条件・中立", "stance": "中立", "style": "plain" },
+    { "id": "p3", "label": "調達担当", "sub": "契約手続き・中立", "stance": "中立", "style": "plain" },
+    { "id": "p4", "label": "経営企画", "sub": "投資判断・賛成", "stance": "賛成", "style": "plain" },
+    { "id": "p5", "label": "情報システム部長", "sub": "接続可否の決裁・反対", "stance": "反対", "style": "focal" },
+    { "id": "p6", "label": "既存ベンダー", "sub": "移行の協力・未接触", "stance": "未接触", "style": "plain" }
+  ],
+  "relations": [
+    { "from": "hub", "to": "p1", "kind": "contact" },
+    { "from": "hub", "to": "p2", "kind": "contact" },
+    { "from": "hub", "to": "p3", "kind": "contact" },
+    { "from": "hub", "to": "p4", "kind": "contact" },
+    { "from": "hub", "to": "p5", "kind": "contact" },
+    { "from": "hub", "to": "p6", "kind": "contact" }
+  ],
+  "emphasis": {
+    "focal": ["p5"],
+    "reason": "焦点は中心の窓口ではなく、周辺に置かれているのに単独で案件を止められる決裁者に置く。中心を焦点にすると、配置が既に語っている「ここが中心」を色で反復するだけになる"
+  },
+  "annotations": [
+    { "text": "線は連絡経路のみ（指揮系統ではない）。矢じりを付けないのは働きかけの向きを表さないため", "anchor": "figure-bottom" },
+    { "text": "配置に序列は無く並びは順不同。副題末尾の 賛成 / 中立 / 反対 / 未接触 は導入への立場", "anchor": "figure-bottom" }
+  ],
+  "ordering": { "meaningful": false, "declaration": "並びは順不同" },
+  "legend": { "line": "連絡経路のみ（指揮系統ではない）", "arrowhead": "付けない（向きを表さない）" },
+  "geometry": {
+    "hub": { "x": 232, "y": 160, "width": 176, "height": 80 },
+    "columns": [16, 480],
+    "rows": [40, 172, 304],
+    "note": "中心から周辺へは直交の折れ線だけで届かせる。放射状に斜線を引くと本数ぶんの交差角が生まれ、印刷で線が潰れる"
+  },
+  "caption": "線は連絡の有無だけを表しており、指揮系統ではない。色の付いた一人だけが、単独で案件を止められる決裁権を持つ。"
+}

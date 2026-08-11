@@ -1,0 +1,48 @@
+{
+  "diagramId": "f-comparison",
+  "type": "comparison",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-comparison.md §11.6 対比型 / references/diagram-type-crosswalk.md §4「2 案を対等に比べる」(buildNeutralComparison)",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "請求突合をどう回すか",
+  "message": "所要時間ではなく、差分に気づく時点が変わることが選択の理由である。",
+  "decisionRule": "月次4人日を1人日以内へ下げられ、初期2週間を確保できるなら可",
+  "criteriaOrder": "順不同 (行の並びに優劣はない)",
+  "provenance": {
+    "period": "2026/3",
+    "definition": "経理3名の実測 (3か月平均)",
+    "colorRule": "色は推す案の列だけに付ける"
+  },
+  "criteria": [
+    { "id": "c1", "label": "月次の所要時間" },
+    { "id": "c2", "label": "差分に気づく時点" },
+    { "id": "c3", "label": "属人化の度合い" },
+    { "id": "c4", "label": "初期の作り込み" }
+  ],
+  "nodes": [
+    {
+      "id": "opt-a",
+      "label": "現行の手作業",
+      "style": "plain",
+      "values": { "c1": "4人日", "c2": "締めた後", "c3": "担当1名に集中", "c4": "不要" }
+    },
+    {
+      "id": "opt-b",
+      "label": "自動照合を挟む",
+      "style": "focal",
+      "values": { "c1": "0.5人日", "c2": "取り込んだ当日", "c3": "手順が残る", "c4": "2週間" }
+    }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["opt-b"],
+    "reason": "推す側の見出しだけを焦点にする。行ごとに勝ち負けの色を付けると読者が判断する余地が消える"
+  },
+  "annotations": [
+    { "text": "初期の2週間を誰が持つかだけが論点", "anchor": "opt-b" }
+  ],
+  "caption": "左の列に並ぶ観点ごとに、二つの列を横へ読み比べてほしい。時間の差より、二行目で差がいつ表に出るかが判断を決める。"
+}

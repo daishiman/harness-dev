@@ -53,6 +53,11 @@ def readiness_files(root: Path, *, placeholder: bool = False) -> None:
 
 
 class ReadinessCoverageTests(unittest.TestCase):
+    def setUp(self):
+        holder = tempfile.TemporaryDirectory()
+        self.addCleanup(holder.cleanup)
+        self.tmp = holder.name
+
     def test_main_complete_incomplete_and_policy_error(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td).resolve(); fx.make_repo(root); readiness_files(root)
@@ -108,6 +113,33 @@ class ReadinessCoverageTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("completeness_evaluation:producer-verification-failed",
                           json.loads(stdout)["missing_sections"])
+
+    def test_producer_pin_tracks_identity_not_a_frozen_version(self):
+        """producer の patch bump では落とさず、identity/entry-point 崩れでは落ちる。"""
+        def producer(version, *, name="system-spec-harness", skills=None) -> Path:
+            root = Path(tempfile.mkdtemp(dir=self.tmp))
+            fx.dump(root / ".claude-plugin/plugin.json", {"name": name, "version": version})
+            fx.dump(root / "references/package-contract.json", {
+                "plugin_name": name,
+                "entry_points": {"skills": skills if skills is not None else [
+                    "run-system-spec-compile", "assign-system-spec-completeness-evaluator"]},
+            })
+            return root
+
+        for version in ("0.1.0", "0.1.2", "1.0.0"):
+            with self.subTest(version=version):
+                probe = C08._probe_source_plugin(producer(version))
+                self.assertTrue(probe.verified, probe.detail)
+                self.assertEqual(C08._producer_version(producer(version)), version)
+
+        for label, root in (
+            ("version 欠落", producer(None)),
+            ("version 非 semver", producer("latest")),
+            ("plugin 名違い", producer("0.1.0", name="other-harness")),
+            ("entry-point 欠落", producer("0.1.0", skills=["run-system-spec-compile"])),
+        ):
+            with self.subTest(label=label):
+                self.assertFalse(C08._probe_source_plugin(root).verified)
 
     def test_leaf_symlink_escape_and_architecture_fallback_are_rejected(self):
         with tempfile.TemporaryDirectory() as td, tempfile.TemporaryDirectory() as outside_td:

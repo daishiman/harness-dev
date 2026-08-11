@@ -1,0 +1,18 @@
+{
+  "builder": "buildDpIntegration",
+  "surface": "slide",
+  "diagramId": "d5",
+  "title": "統合基盤と周辺システム",
+  "caption": "中央から放射状に読む。周辺システムどうしを直接つながず必ず中央を経由させる点が、接続数を線形に保つための設計である。",
+  "spec": {
+    "hub": { "label": "統合データ基盤", "sublabel": "全社の単一窓口・線は連携の向き" },
+    "spokes": [
+      { "label": "基幹システム", "sublabel": "受注と請求・日次バッチ", "direction": "in" },
+      { "label": "在庫管理", "sublabel": "拠点別の残高・随時API", "direction": "in" },
+      { "label": "会計システム", "sublabel": "仕訳の元帳・日次バッチ", "direction": "in" },
+      { "label": "人事システム", "sublabel": "組織と要員・月次バッチ", "direction": "in" },
+      { "label": "経営ダッシュボード", "sublabel": "週次で参照・停止時は前週値", "direction": "out" },
+      { "label": "帳票配信", "sublabel": "月次の定型帳票・締め後に配信", "direction": "out" }
+    ]
+  }
+}

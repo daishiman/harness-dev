@@ -1,0 +1,66 @@
+<!--
+  swimlane-golden.html — buildSwimlane のゴールデン (自動生成)
+
+  入力: swimlane-spec.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  ビルダー: vendor/scripts/svg-structures.cjs の buildSwimlane
+  生成: node scripts/render-diagram-golden.cjs <spec> --skeleton report > <golden>
+  検証: python3 scripts/validate-svg-diagram.py --check-grid --strict <golden>
+
+  svg 要素はビルダーの戻り値をそのまま埋めている (加工しない)。
+  骨格が持つ aria-labelledby の代わりに、ビルダーが出す <title> と aria-label が
+  アクセシブル名になる。これは骨格からの意図的な差で、ゴールデンは
+  「今のビルダーが実際に出すもの」を記録する側に倒している。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f3"
+        data-figure-width="text">
+  <svg viewBox="0 0 960 540" class="swimlane-svg" role="img" aria-label="月次締めの担当と工程" xmlns="http://www.w3.org/2000/svg">
+    <title>月次締めの担当と工程</title>
+    <defs>
+      <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/></marker>
+      <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fuji-gray, #8a8980)"/></marker>
+      <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg, #43436c)"/></marker>
+      <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/></marker>
+      <marker id="arrow-aqua" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+      <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/></marker>
+      <marker id="arrow-yellow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--autumn-yellow, #DCA561)"/></marker>
+      <marker id="arrow-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--spring-violet, #957FB8)"/></marker>
+    </defs>
+    <text x="288" y="51.55" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="288" dy="0">受付</tspan></text>
+    <text x="474" y="51.55" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="474" dy="0">確認</tspan></text>
+    <text x="658" y="51.55" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="658" dy="0">承認</tspan></text>
+    <text x="842" y="51.55" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="842" dy="0">確定</tspan></text>
+    <rect x="40" y="64" width="880" height="140" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="124" y="139.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="124" dy="0">営業部</tspan></text>
+    <rect x="216" y="80" width="144" height="108" rx="6" fill="#FFFFFF"/><rect x="216" y="80" width="144" height="108" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="288" y="116.75" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="288" dy="0">売上を計上</tspan></text>
+    <text x="288" y="167.7" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="288" dy="0">受注伝票を転記</tspan></text>
+    <rect x="404" y="80" width="140" height="108" rx="6" fill="#FFFFFF"/><rect x="404" y="80" width="140" height="108" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="474" y="116.75" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="474" dy="0">差異を説明</tspan></text>
+    <text x="474" y="167.7" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="474" dy="0">差異一覧へ回答</tspan></text>
+    <rect x="40" y="216" width="880" height="136" rx="6" fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="124" y="289.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="124" dy="0">経理部</tspan></text>
+    <rect x="404" y="232" width="140" height="104" rx="6" fill="#FFFFFF"/><rect x="404" y="232" width="140" height="104" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="474" y="267.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="474" dy="0">計上を照合</tspan></text>
+    <text x="474" y="316.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="474" dy="0">1万円超は照会</tspan></text>
+    <rect x="588" y="232" width="140" height="104" rx="6" fill="#FFFFFF"/><rect x="588" y="232" width="140" height="104" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="658" y="267.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="658" dy="0">仕訳を承認</tspan></text>
+    <text x="658" y="316.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="658" dy="0">2営業日以内に承認</tspan></text>
+    <rect x="40" y="364" width="880" height="136" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="124" y="437.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="124" dy="0">情報システム部</tspan></text>
+    <rect x="772" y="380" width="140" height="104" rx="6" fill="#FFFFFF"/><rect x="772" y="380" width="140" height="104" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <text x="842" y="415.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="842" dy="0">帳票を出力</tspan></text>
+    <text x="842" y="455.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="842" dy="0">確定帳票を配信・</tspan></text><text x="842" y="473.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="842" dy="0">矢印は受け渡し順</tspan></text>
+    <path d="M288,188 V202 Q288,210 296,210 H442.667 Q450.667,210 450.667,218 V232" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <path d="M497.333,232 V218 Q497.333,210 489.333,210 H458.667 Q450.667,210 450.667,202 V188" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <path d="M497.333,188 V202 Q497.333,210 505.333,210 H650 Q658,210 658,218 V232" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <path d="M658,336 V350 Q658,358 666,358 H834 Q842,358 842,366 V380" fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+  </svg>
+  <figcaption id="f3-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 3</span>
+    行が担当、列が時間である。経理と情報システムの間で二度受け渡しが起きる点が、締めが二営業日に収まらない直接の原因である。
+  </figcaption>
+</figure>

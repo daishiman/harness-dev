@@ -1,0 +1,23 @@
+version: 1
+# ref-diagram-system 私有 references の帰属 + progressive disclosure マップ。
+# SKILL.md は索引のみで値を持たないため、実際の手続き知識はここに挙げた 4 ファイルに入る。
+# 値の正本 (CAPACITY / TOKENS / SEVERITY / 決定表) は plugin root 側にあり、
+# 本スキルの references は「どの問いでそこへ到達するか」だけを持つ。
+read_when:
+  - file: references/diagram-type-catalog.md
+    owner_agent: visual-strategist
+    when: どの図種で描くか決まらないとき。実在ビルダー全 37 種の「選ぶとき / 選ばないとき」と、
+      決定表 (schemas/visual-derivation-table.json) の行に紐づく 7 種かどうかを確認するとき。
+      明示指定 (visual.kind) が必要な型を判別するときも読む。
+  - file: references/connector-incidence.md
+    owner_agent: visual-strategist
+    when: 線を引く段で詰まったとき。矢じりの向きが読めない・分岐が束に見えない・
+      段を跨ぐ結線をしたい・D5 / D9 で落ちたとき。値でなく入射規則と導出の根拠を確認する。
+  - file: references/label-japanese.md
+    owner_agent: report-composer
+    when: 日本語ラベルが箱に入らない・変な位置で折り返す・コネクタラベルの採否を決めたいとき。
+      幅を伸ばす / 縮める / 載せない の 3 分類のどれで吸収するかを判別する。D4 で落ちたときも読む。
+  - file: references/material-lint.md
+    owner_agent: report-quality-reviewer
+    when: validate-svg-diagram.py の D10-D13 (色・複雑度・外部参照・書体) で落ちたとき。
+      判定値は検査器側が正本なので、ここでは設計意図と正しい直し方の向きだけを確認する。

@@ -1,0 +1,36 @@
+{
+  "diagramId": "d-waterfall",
+  "type": "waterfall",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-extended.md §11.43 ウォーターフォールチャート型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "前期から当期への売上の橋渡し",
+  "message": "増えた分の大半は新規で、失った分は解約に集中している。",
+  "unit": "百万円",
+  "scale": { "pxPerUnit": 2, "baselineY": 456, "ticks": [0, 40, 80, 120, 160], "zeroBased": true, "axisLabel": "縦軸 百万円（基線 = 0・0 起点を切っていない）" },
+  "bars": [
+    { "id": "b1", "label": "前期売上", "role": "start", "value": 120, "cumulative": 120 },
+    { "id": "b2", "label": "新規顧客", "role": "increase", "value": 40, "cumulative": 160 },
+    { "id": "b3", "label": "単価改定", "role": "increase", "value": 24, "cumulative": 184 },
+    { "id": "b4", "label": "解約", "role": "decrease", "value": -16, "cumulative": 168 },
+    { "id": "b5", "label": "縮小", "role": "decrease", "value": -8, "cumulative": 160 },
+    { "id": "b6", "label": "当期売上", "role": "end", "value": 160, "cumulative": 160, "style": "focal" }
+  ],
+  "bridgeLine": {
+    "element": "polyline",
+    "note": "橋渡しと累計の推移を 1 本の <polyline> が兼ねる。棒間は水平・棒の上は累計の傾きで、データ線なので §D-3 原則 1 の対象外"
+  },
+  "relations": [],
+  "emphasis": {
+    "focal": ["b6"],
+    "reason": "焦点は着地点の 1 本だけ。増の棒と減の棒を別々の色相にすると、色が 3 つになって着地点が埋もれる"
+  },
+  "annotations": [
+    { "text": "凡例  白抜き = 期首と期末の実績 ／ 薄い棒 = 増 ／ 濃い棒 = 減 ／ 破線は累計の推移", "anchor": "figure-bottom-left" },
+    { "text": "2025年度 → 2026年度・連結・為替影響込み", "anchor": "figure-bottom-right" }
+  ],
+  "provenance": { "period": "2025年度 → 2026年度", "definition": "連結・為替影響込み" },
+  "caption": "左端の前期売上から右端の当期売上まで、破線を目で追ってほしい。四本の中間の棒がその差を作っており、下向きの二本は同じ濃さで揃えてある。"
+}

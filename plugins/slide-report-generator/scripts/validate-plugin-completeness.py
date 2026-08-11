@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# /// script
+# name: validate-plugin-completeness
+# purpose: slide-report-generatorのplugin surfaceとentry point完全性を検証する。
+# inputs:
+#   - argv: none
+# outputs:
+#   - stdout: PASS status
+#   - stderr: completeness findings
+# contexts: [C, E]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.10"
+# ///
 """validate-plugin-completeness.py - plugin surface completeness gate.
 
 Checks the local slide-report-generator plugin without importing project
@@ -40,6 +54,9 @@ AGENT_REQUIRED_SECTIONS = (
     "## Prompt Templates",
     "## Self-Evaluation",
     "## Handoff",
+)
+COMPOSITION_SCRIPT_RE = re.compile(
+    r"\{\s*kind:\s*script,\s*ref:\s*(scripts/[A-Za-z0-9_.-]+)\s*,"
 )
 
 
@@ -188,6 +205,27 @@ def check_plugin_surfaces(errors: list[str]) -> None:
             fail(errors, f"required directory missing: {rel}")
 
 
+def check_script_inventory(errors: list[str]) -> None:
+    """plugin-composition の script 宣言と scripts/ 直下の実体を集合一致させる。"""
+    composition = PLUGIN_ROOT / "plugin-composition.yaml"
+    if not composition.exists():
+        return
+    declared = sorted(set(COMPOSITION_SCRIPT_RE.findall(composition.read_text(encoding="utf-8"))))
+    actual = sorted(
+        str(path.relative_to(PLUGIN_ROOT))
+        for path in (PLUGIN_ROOT / "scripts").iterdir()
+        if path.is_file() and path.suffix in {".py", ".js", ".cjs"}
+    )
+    if declared != actual:
+        missing = sorted(set(actual) - set(declared))
+        dangling = sorted(set(declared) - set(actual))
+        fail(
+            errors,
+            "plugin-composition script inventory mismatch: "
+            f"undeclared={missing} dangling={dangling}",
+        )
+
+
 def main() -> int:
     errors: list[str] = []
     manifest = load_manifest(errors)
@@ -204,6 +242,7 @@ def main() -> int:
         check_hooks(errors, manifest)
 
     check_plugin_surfaces(errors)
+    check_script_inventory(errors)
     check_thin_agent_adapters(errors)
 
     if errors:

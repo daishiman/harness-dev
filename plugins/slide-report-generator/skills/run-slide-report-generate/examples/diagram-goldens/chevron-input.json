@@ -1,0 +1,41 @@
+{
+  "diagramId": "d-chevron",
+  "type": "chevron",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.23 シェブロン/矢印ステップ型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 200" },
+  "title": "旧システムを止めるまでの順序",
+  "message": "四手のうち費用が二重になるのは三手目だけで、そこをいつ抜けるかが計画の主題である。",
+  "axisNote": "左から時間順。各段は前段の完了後に着手 (並行不可)",
+  "legend": [
+    { "mark": "色", "means": "旧新を二重に抱える段" }
+  ],
+  "nodes": [
+    { "id": "s1", "label": "現状把握", "sub": "業務の棚卸し", "step": 1, "style": "plain", "at": "2026/4-5", "doneWhen": "棚卸し表の承認で完了" },
+    { "id": "s2", "label": "対象選定", "sub": "移行順の決定", "step": 2, "style": "plain", "at": "2026/6", "doneWhen": "移行順の合意で完了" },
+    { "id": "s3", "label": "並行運用", "sub": "二重で回す", "step": 3, "style": "focal", "at": "2026/7-8", "doneWhen": "差異ゼロが2週続けば完了" },
+    { "id": "s4", "label": "切替", "sub": "旧系の停止", "step": 4, "style": "plain", "at": "2026/9", "doneWhen": "旧系停止の確認で完了" }
+  ],
+  "relations": [
+    { "from": "現状把握", "to": "対象選定", "kind": "flow" },
+    { "from": "対象選定", "to": "並行運用", "kind": "flow" },
+    { "from": "並行運用", "to": "切替", "kind": "flow" }
+  ],
+  "emphasis": {
+    "focal": ["s3"],
+    "reason": "焦点は最後の到達点ではなく、費用と手間が最も重い一手に置く。終点を焦点にすると、シェブロンの矢の向きが既に言っていることを色で反復するだけになる"
+  },
+  "annotations": [
+    { "text": "二重運用の2か月は運用費が約1.8倍", "anchor": "s3" }
+  ],
+  "geometry": {
+    "bandTop": 40,
+    "bandBottom": 160,
+    "stepAdvance": 232,
+    "tipDepth": 24,
+    "note": "隣り合う段の切り欠きと矢先は同じ深さで噛み合わせる。深さを変えると段の間に楔形の隙間が空く"
+  },
+  "caption": "左から右へ一本の帯として読む。四つの区切りのうち色が付いた一区間だけが、前後と違って旧新の両方を抱える期間である。"
+}

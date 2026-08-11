@@ -29,11 +29,11 @@ applicability:
 ## ドメイン知識
 - 上書き一本化: 重複を発見したら両方残さず一方を正本に確定し、他方は削除して参照へ置換する(共存縮退は禁止)。
 - 共通コア共有: report-structure.schema.json は structure.schema.json の共通コアを複製せず共有する(意匠/技術 SSOT)。本 update の 1.1.0/1.2.0 schema additive (body block/narrative/highlight/placement live 化 + 1.2.0 の section.role/throughLine/transition/文書メタ/新block型/placement 正規化) と第3次UI(screen/print 二層 CSS・sticky TOC・タイポ密度=schema 非依存の render-report.js 側)・essence-visual(既存 role/visual.kind を使う本質図解カバレッジ・schema bump 不要) も slide 共通コア (nodes/edges/groups/theme/aiVisual) を複製せず、report 固有の追加のみを持つ(既存 paragraphs も温存する後方互換 additive で SSOT を割らない)。色付き強調は意匠 accent (--section-accent) を流用し新規配色トークンを足さない。
-- vendor byte-parity: byte 一致の対象は byte_parity_subtrees 由来ファイルのみ(比較基準=`vendor-digest-manifest.json`・検証器=lint-vendor-parity.py)。additive_new_files(render-report.js/mermaid-render.js・著者=C19 report-composer の build 責務)は明示的除外集合で、parity でなく tests_min の別検査で担保する(意匠/技術資産の毀損防止と report 新規追加の両立)。
+- vendor integrity: upstream非改変fileはmanifestのsha256 pin、local fork/additiveはmanifestのowner付きsemantic contractで検証する。`lint-vendor-parity.py`は両集合の増減も照合し、report runtimeはtests_min>=80を併用する。
 - tdd-refactor の不変条件: リファクタリング中もテスト緑を維持する(赤に戻ったら即巻き戻し)。
 
 ## 成果物
-- SSOT 重複が 0 件になった状態(意匠/技術共通コアが単一実体・vendor byte 一致)。
+- SSOT 重複が 0 件になった状態(意匠/技術共通コアが単一実体・vendor integrity一致)。
 
 ## スコープ外
 - 新機能の追加(リファクタリングは挙動不変)。

@@ -1,0 +1,98 @@
+<!--
+  er-golden.html — buildEr のゴールデン (自動生成)
+
+  入力: er-spec.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  ビルダー: vendor/scripts/svg-structures.cjs の buildEr
+  生成: node scripts/render-diagram-golden.cjs <spec> --skeleton report > <golden>
+  検証: python3 scripts/validate-svg-diagram.py --check-grid --strict <golden>
+
+  svg 要素はビルダーの戻り値をそのまま埋めている (加工しない)。
+  骨格が持つ aria-labelledby の代わりに、ビルダーが出す <title> と aria-label が
+  アクセシブル名になる。これは骨格からの意図的な差で、ゴールデンは
+  「今のビルダーが実際に出すもの」を記録する側に倒している。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f2"
+        data-figure-width="text">
+  <svg viewBox="0 0 960 540" class="er-svg" role="img" aria-label="受注まわりの実体関連" xmlns="http://www.w3.org/2000/svg">
+    <title>受注まわりの実体関連</title>
+    <defs>
+      <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/></marker>
+      <marker id="arrow-soft" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fuji-gray, #8a8980)"/></marker>
+      <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg, #43436c)"/></marker>
+      <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/></marker>
+      <marker id="arrow-aqua" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-aqua, #7FB4CA)"/></marker>
+      <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/></marker>
+      <marker id="arrow-yellow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--autumn-yellow, #DCA561)"/></marker>
+      <marker id="arrow-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--spring-violet, #957FB8)"/></marker>
+    </defs>
+    <rect x="48" y="48" width="252" height="168" rx="6" fill="#FFFFFF"/><rect x="48" y="48" width="252" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="48" y="48" width="252" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="48" y1="84" x2="300" y2="84" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="174" y="71.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">取引先</tspan></text>
+    <text x="174" y="106.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">取引先コード : PK 8桁</tspan></text>
+    <text x="174" y="130.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">名称 : 文字 必須</tspan></text>
+    <text x="174" y="154.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">与信限度額 : 円 0以上</tspan></text>
+    <text x="174" y="178.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">支払条件 : 末締翌末/都度</tspan></text>
+    <text x="174" y="202.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">担当営業 : 文字 任意</tspan></text>
+    <rect x="356" y="48" width="252" height="168" rx="6" fill="#FFFFFF"/><rect x="356" y="48" width="252" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="356" y="48" width="252" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="356" y1="84" x2="608" y2="84" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="482" y="71.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">受注</tspan></text>
+    <text x="482" y="106.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">受注番号 : PK 10桁</tspan></text>
+    <text x="482" y="130.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">取引先コード : FK→取引先</tspan></text>
+    <text x="482" y="154.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">受注日 : 日付 必須</tspan></text>
+    <text x="482" y="178.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">納期 : 日付 受注日以降</tspan></text>
+    <text x="482" y="202.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">状態 : 受付/出荷/締済</tspan></text>
+    <rect x="664" y="48" width="248" height="168" rx="6" fill="#FFFFFF"/><rect x="664" y="48" width="248" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="664" y="48" width="248" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="664" y1="84" x2="912" y2="84" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="788" y="71.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">受注明細</tspan></text>
+    <text x="788" y="106.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">受注番号 : PK,FK→受注</tspan></text>
+    <text x="788" y="130.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">行番号 : PK 1から連番</tspan></text>
+    <text x="788" y="154.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">品番 : FK→商品</tspan></text>
+    <text x="788" y="178.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">数量 : 整数 1以上</tspan></text>
+    <text x="788" y="202.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">単価 : 円 0以上</tspan></text>
+    <rect x="48" y="300" width="252" height="168" rx="6" fill="#FFFFFF"/><rect x="48" y="300" width="252" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="48" y="300" width="252" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="48" y1="336" x2="300" y2="336" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="174" y="323.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">商品</tspan></text>
+    <text x="174" y="358.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">品番 : PK 6桁</tspan></text>
+    <text x="174" y="382.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">品名 : 文字 必須</tspan></text>
+    <text x="174" y="406.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">単位 : 個/箱/kg</tspan></text>
+    <text x="174" y="430.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="174" dy="0">標準単価 : 円 0以上</tspan></text>
+    <rect x="356" y="300" width="252" height="168" rx="6" fill="#FFFFFF"/><rect x="356" y="300" width="252" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="356" y="300" width="252" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="356" y1="336" x2="608" y2="336" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="482" y="323.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">請求</tspan></text>
+    <text x="482" y="358.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">請求番号 : PK 10桁</tspan></text>
+    <text x="482" y="382.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">受注番号 : FK→受注</tspan></text>
+    <text x="482" y="406.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">締め日 : 日付 必須</tspan></text>
+    <text x="482" y="430.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="482" dy="0">請求金額 : 円 0以上</tspan></text>
+    <rect x="664" y="300" width="248" height="168" rx="6" fill="#FFFFFF"/><rect x="664" y="300" width="248" height="168" rx="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+    <rect x="664" y="300" width="248" height="36" rx="6" fill="rgba(210,126,153,0.14)"/>
+    <line x1="664" y1="336" x2="912" y2="336" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="788" y="323.25" text-anchor="middle" fill="var(--fg, #43436c)" font-size="15" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">入金</tspan></text>
+    <text x="788" y="358.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">入金番号 : PK 10桁</tspan></text>
+    <text x="788" y="382.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">請求番号 : FK→請求</tspan></text>
+    <text x="788" y="406.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">入金日 : 日付 必須</tspan></text>
+    <text x="788" y="430.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="788" dy="0">入金額 : 円 1以上</tspan></text>
+    <path d="M300,132 H356" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#arrow-soft)"/>
+    <rect x="316" y="100" width="112" height="24" rx="2" fill="#FFFFFF"/><text x="372" y="116.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="372" dy="0">1対多 必須 非識別</tspan></text>
+    <path d="M608,132 H664" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#arrow-soft)"/>
+    <rect x="624" y="100" width="100" height="24" rx="2" fill="#FFFFFF"/><text x="674" y="116.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="674" dy="0">1対多 必須 識別</tspan></text>
+    <path d="M788,216 V250 Q788,258 780,258 H182 Q174,258 174,266 V300" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#arrow-soft)"/>
+    <rect x="796" y="232" width="112" height="24" rx="2" fill="#FFFFFF"/><text x="852" y="248.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="852" dy="0">多対1 必須 非識別</tspan></text>
+    <path d="M482,216 V300" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#arrow-soft)"/>
+    <rect x="492" y="232" width="112" height="24" rx="2" fill="#FFFFFF"/><text x="548" y="248.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="548" dy="0">1対多 任意 非識別</tspan></text>
+    <path d="M608,384 H664" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="2" marker-end="url(#arrow-soft)"/>
+    <rect x="624" y="352" width="112" height="24" rx="2" fill="#FFFFFF"/><text x="680" y="368.2" text-anchor="middle" fill="var(--fuji-gray, #8a8980)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="680" dy="0">1対多 任意 非識別</tspan></text>
+  </svg>
+  <figcaption id="f2-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 2</span>
+    取引先を起点に読む。明細が単独では存在できず必ず受注に従属する点が、締め処理を受注単位でしか回せない理由である。
+  </figcaption>
+</figure>

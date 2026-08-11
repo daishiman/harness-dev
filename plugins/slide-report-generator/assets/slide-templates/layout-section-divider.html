@@ -1,0 +1,58 @@
+<!--
+  layout-section-divider.html — 章扉
+  生成物。手で編集しない。正本: scripts/build-slide-skeletons.py + assets/slide-templates/frame-contract.json
+  再生成: python3 scripts/build-slide-skeletons.py
+
+  ■ この面を選ぶとき
+  章の切り替え。章番号と章題、その章で何が分かるかの 1 行だけ。
+
+  ■ 書き換えてよいのは次の 2 種類だけ
+  1. `data-slot` を持つ要素の**中身** ({{...}} のプレースホルダ)。
+     使えるスロット: section-no, title, lead, index-bar, page-no
+  2. `data-media-slot` の中に置く差し込み物。
+     この面が受け入れる種別: none
+
+  ■ 書き換えてはいけないもの (書き換えると面がズレる)
+  - section / chrome / stage の class と構造、data-* 属性そのもの
+  - 座標・寸法の直書き (面の数値は assets/slide-templates/frame-contract.json が単一の正本)
+  - `.srg-slide__main` の `flex: 1 1 auto` (これが空白過多を止めている)
+  - 画像の `object-fit`。contain 固定 (cover にすると端が切れる)
+
+  ■ 文字が収まらないときの順序
+  1. `data-autofit` を持つ要素は slide-skeleton.js が font-size を 18px まで下げる。
+  2. 下限でなお溢れると data-overflow="true" が付く。これは表示であって修復ではない。
+     **面を割る**か本文を削る。18px 未満へ縮めない。
+
+  ■ 幾何 (すべて assets/slide-templates/frame-contract.json 由来)
+  canvas 1280x720px / chrome top 48 bottom 56 side 64
+  stage (64, 48) 1152x616px — 本文はこの矩形の外へ出さない
+  印刷は A4 横。zoom 0.8769 で 297x167.06mm、
+  上下 21.47mm がレターボックス帯。画面と PDF は同一物。
+-->
+<section class="srg-slide srg-slide--divider"
+         data-slide-skeleton="layout-section-divider"
+         data-media-kinds="none"
+         id="{{slide_id}}">
+  <nav class="srg-slide__chrome-top" data-chrome="index" data-slot="index-bar">
+    <!-- 章インデックス。現在章に data-current="true" を付ける。位置は骨格が
+         決めるので、面ごとに座標を書かない (書くとページ間でズレる)。 -->
+    <ol class="srg-index" style="display: flex; gap: var(--srg-gap); margin: 0; padding: 0; list-style: none; font-size: var(--srg-fs-caption);">
+      <li data-current="{{is_current_1}}">{{section_1}}</li>
+      <li data-current="{{is_current_2}}">{{section_2}}</li>
+    </ol>
+  </nav>
+
+  <div class="srg-slide__stage">
+    <div class="srg-slide__main" style="flex-direction: column; justify-content: center; gap: var(--srg-gap);">
+      <p class="srg-divider__no" data-slot="section-no" data-autofit="note"
+         style="font-size: var(--srg-fs-note); letter-spacing: .08em; margin: 0;">{{section_no}}</p>
+      <h2 class="srg-divider__title" data-slot="title" data-autofit="title"
+          style="font-size: var(--srg-fs-title); font-weight: 700; line-height: 1.3; margin: 0;">{{section_title}}</h2>
+      <p class="srg-divider__lead" data-slot="lead" data-autofit="body"
+         style="font-size: var(--srg-fs-body); line-height: 1.6; margin: 0; max-width: 72%;">{{what_reader_gets}}</p>
+    </div>
+  </div>
+  <div class="srg-slide__chrome-bottom" data-chrome="page" data-slot="page-no">
+    <span class="srg-nav__page" data-nav="page" style="margin-left: auto; font-size: var(--srg-fs-caption);">{{page_no}} / {{page_total}}</span>
+  </div>
+</section>

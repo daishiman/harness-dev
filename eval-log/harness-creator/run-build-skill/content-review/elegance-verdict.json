@@ -2,28 +2,40 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "37800145041e57de4d3231655097db084a2558652b40d8eab49b25849386cec8"
+    "skill_md_sha256": "70f8b6764da5a7ff7bfc90ba626660a7fc9e1b1ccb12ec4b54fb3656d057cbcf"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T05:35:20Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "Capability 7 kind を統一抽象として扱う多機能 builder ながら、commonCore 必須集合・kind→skeleton 対応表・template 選択規則を全て外部 schema (capability-manifest.schema.json / build-flags.schema.json / template-selection.schema.json) の唯一正本へ委譲し『本文に再掲しない=SSOT』を徹底しているため、矛盾源となる二重定義がない。",
-      "engine 既定=task-graph が Key Rule 19・Step 10.6・with-goal-seek.patch default で一貫し、feedback_contract の 5 criteria (IN1/IN2/IN3/OUT1/OUT2) が全て derived_from: [CL-n] で完了チェックリスト項目に紐づき、frontmatter と本文 goal-seek が同源で整合している。"
+      "本差分 4 箇所 (L282 lint-feedback-contract.py / L288 lint-readme-plugin-root-portability.py / L345 notion-upsert-plugin.py / L372 sync-skills-to-claude.sh) の ${HARNESS_ROOT:-.} 化が実装と合致している。実ファイルを読むと scripts/lint-feedback-contract.py:50・scripts/notion-upsert-plugin.py:26・scripts/lint-readme-plugin-root-portability.py:72 はいずれも ROOT = Path(__file__).resolve().parent.parent で repo root を自己解決し、lint-feedback-contract.py:91 の git diff も cwd=ROOT 固定、scripts/sync-skills-to-claude.sh は ROOT=$(cd $(dirname $0)/.. && pwd) で解決する。したがって prefix を付けるだけで任意 cwd から起動でき、既定展開 . は従来の repo-root cwd 実行と同一挙動 (退行なし)。",
+      "doc 間の乖離を 1 件解消している。references/build-steps.md:125 は既に `bash ${HARNESS_ROOT:-.}/scripts/sync-skills-to-claude.sh --apply` 形だったが SKILL.md L372 だけ旧形 `bash scripts/sync-skills-to-claude.sh --apply` で残っており、build 完了契約の表記が本文と詳細手順で割れていた。今回の変更で両者が同一表記へ収束した。",
+      "採用形が repo 既存の確立済み規約と一致し、新規方言を発明していない。git grep で ${HARNESS_ROOT:-.} は ref-output-routing/SKILL.md:90,94・ref-skill-naming-convention/SKILL.md:54・run-skill-create/SKILL.md:143-145・run-skill-feedback/SKILL.md:212,221・harness-creator/commands/marketplace-register.md:53,75,135・build-steps.md:87,94,125 に既出。",
+      "Step 4 bash ブロックが references/lint-matrix.json の build-preflight 射影である契約 (L271) を壊していない。lint-matrix-sync.py:38 の抽出は SCRIPT_NAME_RE = \\b((?:lint|validate)-[a-z0-9-]+\\.py)\\b という パス非依存のスクリプト名集合照合で、prefix 付与後も lint-matrix-sync.py + lint-matrix.json が exit 0 で通ることを実行確認した (lint 集合の増減なし)。"
     ],
     "negative_feedback": [
-      "非阻害 smell: 多機能 builder ゆえ本文情報量は大きいが、resource-map と外部 schema/references への progressive disclosure により責務境界は保たれる (本文 258 行相当・上限 300 行以内)。"
+      "omission / 低 severity — 部分適用: L235-237 の Step 1 bash フェンスだけが `python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py --dir plugins/harness-creator/knowledge/` と repo 相対直書きのまま残る。直前 L230 で resolve-skill-dirs.py により $SKILL_DIR が確定済みなので同形へ寄せられる。加えて scripts/lint-readme-plugin-root-portability.py の docstring『検査対象外』節が plugins/*/skills/*/SKILL.md を明示的に走査対象から外しているため、この 1 箇所は機械ゲートで検出されない (実際に同 lint は exit 0)。今回の差分が壊した箇所ではないが、同種正規化の未回収残り。",
+      "inconsistency / 低 severity — 記述の陳腐化: 冒頭 L127 の注記が『Step 4 等の lint コマンドは repo-root cwd 前提で実行する (bundles.json full bundle 同梱の plugins/skill-governance-lint/ への repo-root 相対パスに依存)』のままで、今回入った HARNESS_ROOT による cwd 非依存の逃げ道に言及していない。また根拠部の『repo-root 相対パスに依存』も実際の Step 4 は L274 GOV_LINT_DIR=$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint = $PLUGIN_ROOT 起点解決であり表現が実装とずれている (skill-governance-lint が skills-full bundle に同梱である点は .claude-plugin/bundles.json で確認でき、そこは真)。既定 . により実運用上の文言は真のままなので非阻害だが、差分と同時に更新すべき記述だった。",
+      "smell / 非退行: ${HARNESS_ROOT:-.} が無引用のため HARNESS_ROOT に空白を含むパスを与えると語分割で壊れる。同ブロック内の他行 (\"$SKILL_DIR/scripts/...\" / \"$GOV_LINT_DIR/...\") は引用済みで表記が不揃い。ただし repo 既存の同形 7 ファイルもすべて無引用であり、本差分固有の逸脱ではない。",
+      "検証できなかった点 (IN2): 本差分は commit 830ef76 (chore: 未 commit の作業ツリー変更を取り込む) による手編集で run-build-skill 経由の build ではないため、この変更に対応する eval-log/skill-build-trace.json が存在しない。現在 checked-in の trace は skill_name=run-slide-report-generate の別 build のもので (validate-build-trace.py は exit 0)、本編集の source_docs/doc_coverage/layer_decisions/reproducibility_gates は突合できていない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 37800145041e57de4d3231655097db084a2558652b40d8eab49b25849386cec8) を全文 read し 4 条件で genuine 再評価。①矛盾なし: engine 既定 task-graph・SSOT『本文再掲しない』宣言・default-ON combinator が全体で一貫し矛盾を検出せず。②漏れなし: Purpose/入力/出力/完了条件、goal-seek (Goal/Why/Checklist CL-1〜CL-12/loop)、局面カタログ Step0〜12、配置先、Gotchas、Additional Resources を網羅。③整合性: feedback_contract 5 criteria が derived_from で checklist に写像され frontmatter refs と本文が一致。④依存整合: workflow-manifest.json、capability-manifest.schema.json、verification-contract/evidence schema、goal-seek-paradigm.md、verification-obligation-protocol.md、prompts R1〜R4、scripts (render-combinators/render-frontmatter/validate-naming/build-subagent/validate-build-trace/lint-goal-seek/lint-ssot-duplication/derive-verification-contract/plan-verification-obligations/record-verification-evidence)、task-graph-engine templates を実ディスクで確認し全て resolve。重大問題なし。多機能性に伴う情報密度を非阻害 smell として記録し PASS。"
+  "notes": "incremental の unresolved semantic batch として、origin/main..HEAD の SKILL.md 差分 (4 箇所すべて repo-root スクリプト起動の ${HARNESS_ROOT:-.} 化) と SKILL.md 全文 (382 行 = frontmatter 123 行 + 本文 259 行 ≦ 300) を 1 context で読み (a)-(e) を一括判定した。(a) 矛盾なし: 既定展開 . が従来の repo-root cwd 実行と同値のため L127 の repo-root 前提記述と併存しても挙動矛盾はない (記述精度の問題として negative へ)。(b) 漏れ: 差分は Step 4 / Step 11 / 配置先の 3 節に閉じ Purpose・Key Rules・Checklist CL-1..CL-12・局面カタログ Step 0-12 の構造は無改変だが、同種の repo 相対直書きが Step 1 の bash に 1 件残存 (低 severity)。(c) 規約整合: Key Rule 6 (marketplace install 配置非依存) の方向に沿い、repo 既存の ${HARNESS_ROOT:-.} 規約と一致。(d) 依存関係整合: 参照 4 スクリプトの実在と __file__/$0 起点の自己解決を実読で確認し、build-steps.md:125 との表記収束も確認。(e) high severity 0。実行確認: lint-skill-name / lint-skill-description / lint-skill-tree / validate-frontmatter / lint-skill-completeness / lint-goal-seek / lint-matrix-sync / lint-ssot-duplication / lint-readme-plugin-root-portability / validate-plugin-completeness / validate-build-trace を全て exit 0、scripts/lint-feedback-contract.py --changed-only も exit 0 (WARN 3 件 = live-trial ratchet の既存 skill 免除で非 fail)。criteria: IN1=上記 lint 群 exit0 で充足、IN2=本編集は build 経由でなく trace 直接証拠なし (limitation として記録)、IN3=本ブランチで eval-log/harness-creator/build/route-*.json に変更はなく handoff route 消費 build ではないため N/A、OUT1=未解決 high 0 かつ本 verdict を current sha 70f8b676… へ束縛、OUT2=HARNESS_ROOT 規約はブランチ主題 (plugin release / marketplace 自動化) の可搬性ゴールに沿い incremental の未解決 claim だけを対象にした。30 思考法は使用していない (exhaustive 明示時の audit obligation)。"
 }

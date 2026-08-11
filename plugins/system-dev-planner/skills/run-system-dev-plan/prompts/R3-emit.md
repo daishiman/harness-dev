@@ -37,6 +37,7 @@
 - exact-set: `task_count==13`、`phase_refs`/inventory tasks/graph nodes が `["P01",..,"P13"]` の順で各1件。12件・14件・phase 欠落/重複は fail。
 - 共通束縛: 全 task/node/inventory が単一 `feature_package_id` と `parent_feature` を共有し、`repo_context.repo_identity` は C09 解決値に一致する。
 - 恒等: task id 13件が unique で graph node id と1対1、`feature-package.json.task_node_ids` が graph node 順に一致、`task_spec_paths` が canonical 13 path に一致する。
+- file_path namespace: `graph_node_registration.file_path` は `tasks/<parent_feature>/<task-id小文字>.md` とする (feature 単位 namespace。`tasks/` 直下フラット配置は fail。複数 feature の並列分解・並列実行で衝突しないため)。
 - DAG: `depends_on` は同一 feature 内・前方 edge (小 phase_ref → 大 phase_ref) のみ。後方 edge・循環・cross-feature/欠落参照は fail。
 - placeholder 禁止: 各 task spec に `TODO`/`TBD`/`__PLACEHOLDER__`/未解決 `<...>` を残さない。14 必須 section が非空で1件ずつ存在する。各 task の `implementation_readiness.status=="complete"`。
 - containment: 全 path は caller repository 相対で C09 containment 済み。absolute/drive-letter/`..`/root 外 symlink は禁止。

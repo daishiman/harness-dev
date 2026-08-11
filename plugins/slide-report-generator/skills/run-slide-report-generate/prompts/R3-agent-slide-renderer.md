@@ -24,7 +24,7 @@ last-audited: 2026-07-05
 # 決定論スライドレンダラ（7層構造プロンプト）
 
 > 読み込み条件: Phase 3 で入力が `structure.json`（構造化）のとき。
-> 相対パス: `$CLAUDE_PLUGIN_ROOT/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md`
+> 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-slide-renderer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
 ---
@@ -109,7 +109,7 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 | `vendor/scripts/template-engine.cjs` | Mustache subset。slideType 別テンプレートの差し込み機構 | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
 | `vendor/scripts/style-builder.cjs` | SR-ID 駆動 CSS ビルダー。styles.css の生成根拠 | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
 | `vendor/scripts/svg-builder.cjs` | 決定論 SVG ビルダー。図版を再現性ありで生成する | S4（render-slide.cjs 内部） | レンダラ内部呼び出し | — |
-| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（24 種）。テンプレ不在検出の対象 | S4（render-slide.cjs 内部） | slideType ごとに選択 | — |
+| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（<!-- count: slideTemplate -->128 種）。テンプレ不在検出の対象 | S4（render-slide.cjs 内部） | slideType ごとに選択 | — |
 | `schemas/structure.schema.json` | 入力契約。render-slide.cjs 内部の JSON Schema 検証で適用 | S3 | 入力 `structure.json` を検証 | — |
 | `sync-checker.js` | structure.md と HTML の同期検証（SR-12-07） | S5（出力検証） | `<out>/structure.md` ⇔ `<out>/index.html` | — |
 | `vendor/assets/pagination.{html,css,js}` | 不変ナビ。styles.css 末尾に結合される（nth-child(5n) 等） | S4（生成）/ S5（検証） | レンダラ内部結合 | — |
@@ -202,7 +202,7 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 | `vendor/scripts/template-engine.cjs` | Mustache subset。slideType 別テンプレートの差し込み機構として作用する |
 | `vendor/scripts/style-builder.cjs` | SR-ID 駆動 CSS ビルダー。styles.css の生成根拠 |
 | `vendor/scripts/svg-builder.cjs` | 決定論 SVG ビルダー。図版を再現性ありで生成する |
-| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（24 種）。テンプレ不在検出の対象 |
+| `vendor/scripts/templates/*.html.tpl` | slideType 別テンプレート（<!-- count: slideTemplate -->128 種）。テンプレ不在検出の対象 |
 | `vendor/assets/pagination.{html,css,js}` | 不変ナビ。styles.css 末尾に結合される（nth-child(5n) 等） |
 
 ### 既存 html-generator.md との関係（並行存在）
@@ -244,12 +244,12 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 ### 実行コマンド例
 ```bash
 # 標準実行
-node $CLAUDE_PLUGIN_ROOT/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./05_Project/スライド/2026-05-03_デモ
 
 # Schema 検証スキップ（デバッグ用、本番では使わない）
-node $CLAUDE_PLUGIN_ROOT/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./out \
   --no-validate
@@ -311,7 +311,7 @@ Phase 3 で入力が `structure.json`（構造化）のとき、決定論経路�
 structure-designer / structure-validator から受け取る入力の典型:
 ```bash
 # 入力: structure.json のパスと出力先
-node $CLAUDE_PLUGIN_ROOT/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./05_Project/スライド/2026-05-03_デモ
 ```

@@ -112,7 +112,7 @@ function main() {
     `次の評価を必ず実施すること:\n` +
     `1) 完全な機械評価（broken img・カードはみ出し・computedフォント・16:9 を含む動的検証）:\n` +
     `   node .claude/skills/presentation-slide-generator/scripts/evaluate-deck.js "${deckDir}"\n` +
-    `   （chromium未導入ならスキルディレクトリで npx playwright install chromium 後に再実行）\n` +
+    `   （Chromium未導入なら plugin root の scripts/setup-playwright.py --install 後に再実行）\n` +
     `2) deck-evaluator エージェント（思考リセット後30種思考法）を起動し、評価レポート(evaluation-report.json)を入力に\n` +
     `   D5(要望↔構成の矛盾・仕組み反映)を含む多角的・視覚的評価と4条件(矛盾なし/漏れなし/整合性/依存関係整合)の最終判定を行う。\n` +
     `   参照: .claude/skills/presentation-slide-generator/references/post-generation-evaluation.md`;

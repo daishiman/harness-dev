@@ -1,0 +1,130 @@
+<!--
+  stacked-bar-golden.html — ゴールデン実例: 積み上げ棒グラフ (report 骨格)
+
+  入力: stacked-bar-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/chart-types.md §13.3 積み上げ棒グラフ
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-4 / §D-5 / R9-3 / R9-5
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict stacked-bar-golden.html
+        python3 plugins/slide-report-generator/scripts/validate-report-visual.py [埋め込んだ report]
+
+  canvas は md 段 (960x540)。幅は本文幅 100% の "text" (R9-5)。
+
+  §13.3 の作図文法 (縦の積み上げ・区分ごとの色・下の分類ラベル・下端の凡例) を移した。
+  落としたのは hover の brightness と、区画の中に置く値である。区画内の値は
+  薄い区画では読めず、§13.3 自身が 0.7rem を指定していて D4 (14px 以上) と衝突する。
+  値は input JSON 側に残し、図では厚みの変化だけを読ませる。
+
+  §13.3 は segment-2 に sakura-pink を当てているが、これは accent と同値であり、
+  焦点表現と競合する (style-tokens §2 の 4 条)。そこで系列色は series-3 を外して
+  series-1 / series-2 / series-5 の 3 色を使っている。
+
+  焦点は系列全体ではなく Q4 の 1 区画だけに置いた。同じ系列の 4 区画すべてを
+  accent の塗りにすると D7 の上限 (defs のマーカーを含めて 2 件) を超えるうえ、
+  系列色が 1 系列だけ入れ替わって凡例と食い違う。塗りは系列色のまま残し、
+  accent の枠だけを重ねてある。本体に accent の面塗りは 1 件も無い。
+
+  棒の高さは 1 百万円 = 4px で、値がそのまま 4 の倍数になる目盛を選んである。
+  丸めは発生していない。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-stacked-bar"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-stacked-bar-caption">
+
+    <defs>
+      <marker id="f-stacked-bar-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-stacked-bar-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-stacked-bar-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 目盛線 (20 百万円ごと) -->
+    <line x1="112" y1="368" x2="880" y2="368" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="288" x2="880" y2="288" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="208" x2="880" y2="208" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="112" y1="128" x2="880" y2="128" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 軸 -->
+    <line x1="112" y1="120" x2="112" y2="448" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+    <line x1="112" y1="448" x2="880" y2="448" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 目盛ラベル (単位は上端に 1 回だけ) -->
+    <text x="96" y="372" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">20</text>
+    <text x="96" y="292" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">40</text>
+    <text x="96" y="212" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">60</text>
+    <text x="96" y="132" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">80</text>
+    <text x="112" y="100" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">縦軸 百万円（0 起点・20 刻み）</text>
+
+    <!-- Q1 (下から 継続更新 / 既存の拡大 / 新規契約) -->
+    <rect x="192" y="336" width="96" height="112" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="192" y="304" width="96" height="32" fill="var(--wave-aqua, #7FB4CA)"/>
+    <rect x="192" y="256" width="96" height="48" fill="var(--spring-violet, #957FB8)"/>
+
+    <!-- Q2 -->
+    <rect x="368" y="336" width="96" height="112" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="368" y="288" width="96" height="48" fill="var(--wave-aqua, #7FB4CA)"/>
+    <rect x="368" y="232" width="96" height="56" fill="var(--spring-violet, #957FB8)"/>
+
+    <!-- Q3 -->
+    <rect x="544" y="328" width="96" height="120" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="544" y="256" width="96" height="72" fill="var(--wave-aqua, #7FB4CA)"/>
+    <rect x="544" y="192" width="96" height="64" fill="var(--spring-violet, #957FB8)"/>
+
+    <!-- Q4 (中段が焦点。塗りは系列色のまま枠だけ accent) -->
+    <rect x="720" y="328" width="96" height="120" fill="var(--wave-blue, #7E9CD8)"/>
+    <rect x="720" y="224" width="96" height="104" fill="var(--wave-aqua, #7FB4CA)"
+          stroke="var(--sakura-pink, #D27E99)" stroke-width="2.5"/>
+    <rect x="720" y="152" width="96" height="72" fill="var(--spring-violet, #957FB8)"/>
+
+    <!-- 注釈 (焦点の区画から水平に引き出す) -->
+    <line x1="816" y1="276" x2="828" y2="276" stroke="var(--fg-dim, #54546d)" stroke-width="1.25"/>
+    <text x="832" y="280" text-anchor="start" font-size="12" fill="var(--fg, #43436c)">Q1比 3.3倍</text>
+
+    <!-- 合計値 (棒の上端。総額の推移を主張する図なので合計を暗算させない) -->
+    <text x="240" y="244" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">計 48</text>
+    <text x="416" y="220" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">計 54</text>
+    <text x="592" y="180" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">計 64</text>
+    <text x="768" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">計 74</text>
+
+    <!-- 分類ラベル (年を含む絶対表記) -->
+    <text x="240" y="472" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026 Q1</text>
+    <text x="416" y="472" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026 Q2</text>
+    <text x="592" y="472" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">2026 Q3</text>
+    <text x="768" y="472" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">2026 Q4</text>
+
+    <!-- 出所と集計定義 (I1。図の下端・figcaption へ逃がさない) -->
+    <text x="880" y="488" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">集計: 2026年度・受注ベース・税抜（役務提供期間で按分）</text>
+
+    <!-- 凡例 (図の内・下端。積み上げと同じ上下の順) -->
+    <text x="272" y="512" text-anchor="end" font-size="14" fill="var(--fuji-gray, #8a8980)">凡例</text>
+    <rect x="288" y="500" width="16" height="16" rx="4" fill="var(--spring-violet, #957FB8)"/>
+    <text x="312" y="512" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">新規契約</text>
+
+    <rect x="400" y="500" width="16" height="16" rx="4" fill="var(--wave-aqua, #7FB4CA)"/>
+    <text x="424" y="512" text-anchor="start" font-size="14" fill="var(--fg, #43436c)">既存の拡大</text>
+
+    <rect x="528" y="500" width="16" height="16" rx="4" fill="var(--wave-blue, #7E9CD8)"/>
+    <text x="552" y="512" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">継続更新</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-stacked-bar-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 3</span>
+    積み上げの下から順に見ていくと、いちばん下の層はほとんど厚みが変わらない。枠で囲った層だけが四半期ごとに厚くなっており、そこが総額を押し上げている。
+  </figcaption>
+
+</figure>

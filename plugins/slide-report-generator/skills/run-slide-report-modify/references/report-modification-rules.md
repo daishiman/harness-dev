@@ -1,8 +1,8 @@
 # 既存レポート 部分修正規約（slide-report-modifier report 経路 手続き知識 SSOT）
 
-> **正本**: このファイルは slide-report-modifier の **report 経路**（output_mode=report）の手続き知識/規範の SSOT。slide 経路の対になる正本が同ディレクトリの [modification-rules.md](modification-rules.md)（slide=`index.html` ⇔ `structure.md`）で、本ファイルは report=`report.html` ⇔ `report-structure.json` を担う。run-slide-report-modify の SKILL.md と agent 本体（agents/slide-report-modifier.md）の双方が mode 分岐でこれを参照する。素材（骨格・書式・ビジュアル規範）の上位正本は plugin-root の `$CLAUDE_PLUGIN_ROOT/references/report-types.md` / `$CLAUDE_PLUGIN_ROOT/references/report-writing-rules.md` / `$CLAUDE_PLUGIN_ROOT/references/report-visual-strategy.md`、構造契約は `$CLAUDE_PLUGIN_ROOT/schemas/report-structure.schema.json` を辿る。
+> **正本**: このファイルは slide-report-modifier の **report 経路**（output_mode=report）の手続き知識/規範の SSOT。slide 経路の対になる正本が同ディレクトリの [modification-rules.md](modification-rules.md)（slide=`index.html` ⇔ `structure.md`）で、本ファイルは report=`report.html` ⇔ `report-structure.json` を担う。run-slide-report-modify の SKILL.md と agent 本体（agents/slide-report-modifier.md）の双方が mode 分岐でこれを参照する。素材（骨格・書式・ビジュアル規範）の上位正本は plugin-root の `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-types.md` / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-writing-rules.md` / `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-visual-strategy.md`、構造契約は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/report-structure.schema.json` を辿る。
 
-**責務**: 既存 report 成果物（`report.html` ＋ `report-structure.json`）の指定箇所部分修正のドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ RCONST_001-012）と部分修正規範（reportType 4 骨格の維持・section 構造の局所修正・`report.html` ⇔ `report-structure.json` 同期維持・読み物文体と 1 項目 1 ビジュアルを壊さない修正・履歴の sidecar JSON 追記）の逐語正本。slide-report-modifier（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。slide 側の CONST_001-012（[modification-rules.md](modification-rules.md)）と番号帯を分けた **RCONST_001-012** を用いる（衝突回避・additive）。
+**責務**: 既存 report 成果物（`report.html` ＋ `report-structure.json`）の指定箇所部分修正のドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ RCONST_001-013）と部分修正規範（reportType 4 骨格の維持・section 構造の局所修正・`report.html` ⇔ `report-structure.json` 同期維持・読み物文体と 1 項目 1 ビジュアルを壊さない修正・履歴の sidecar JSON 追記）の逐語正本。slide-report-modifier（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。slide 側の CONST_001-013（[modification-rules.md](modification-rules.md)）と番号帯を分けた **RCONST_001-013** を用いる（衝突回避・additive）。
 
 ## 用語集
 | 用語 | 定義 | 関連概念 |
@@ -38,7 +38,7 @@
 
 ## ビジネスルール
 
-各制約に RCONST_NNN を付番し、目的（防ぐ事象）と背景（採用根拠）を併記する。slide 経路の CONST_001-012 と対を成す report 版であり、slide の CONST とは独立の番号帯を用いる。
+各制約に RCONST_NNN を付番し、目的（防ぐ事象）と背景（採用根拠）を併記する。slide 経路の CONST_001-013 と対を成す report 版であり、slide の CONST とは独立の番号帯を用いる。なお本 RCONST 帯は run-slide-report-modify 私有の namespace であり、run-slide-report-generate 側 `report-structure-types.md` の RCONST_001-007（構成設計帯。例: 同帯の RCONST_007=読者中心の入口設計）とは番号が同じでも別規則を指す。
 
 - **RCONST_001 (report-structure.json 必須)**: 修正フローは `report-structure.json` を前提とし、存在しない・schema 不適合の場合は新規生成フロー（`run-slide-report-generate`）へ案内する。
   - 目的: 正本不在のまま `report.html` だけを直接編集し、状態が復元不能になる事態を防ぐ。
@@ -87,6 +87,9 @@
 - **RCONST_012 (構造同期の忠実射影)**: `report.html` は `report-structure.json` の忠実な射影（`render-report.js` の決定論生成）である。勝手に section を増減しない。`report.html` を直接手編集した場合も、必ず `report-structure.json` へ同じ変更を反映し、`render-report.js` の再生成結果と一致させる。
   - 目的: 手編集による `report.html` と `report-structure.json` の恒久乖離（次回修正時の上書き喪失）を防ぐ。
   - 背景: `render-report.js` が `report-structure.json` を唯一の入力として `report.html` を決定論生成するため、正本を JSON 側に一元化する（RCONST_002 の技術的根拠）。
+- **RCONST_013 (入口ホリゾンタル保持)**: title・リード（冒頭 summary 節の導入段落）・`meta.throughLine` に触れる修正では、想定読者の「共有課題→得たい変化」を先に渡す入口設計（run-slide-report-generate 側 report-structure-types.md の RCONST_007）を退化させない。専門手段だけを主語にするタイトルへの書き戻し・書き手の資格紹介起点への変更・素材にない数字/実績の追加をしない。ユーザーが正式名称・検索性・適用範囲を理由に入口の変更を明示指示した場合は従い、subtitle/keyMessage/summary で読者価値を補う代替を修正案に添え、RCONST_003 の承認提示時に入口への影響（何が広く/狭くなるか）を明示する。入口要素に触れない修正には本規則の確認を強制しない（RCONST_006 の最小変更を優先）。
+  - 目的: 部分修正の積み重ねでタイトル・リード・summary が専門手段主語へ退化し、読者が入口で離脱する状態へ戻ることを防ぐ。
+  - 背景: 生成時は run-slide-report-generate 側の RCONST_007（読者中心の入口設計）と RQ31-34／D5 読者フックが守るが、修正経路に保持ガードが無かった。正本 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。
 
 ## 修正フローパターン
 

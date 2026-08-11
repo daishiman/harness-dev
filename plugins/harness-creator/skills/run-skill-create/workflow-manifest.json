@@ -72,11 +72,41 @@
       "fatal_exit_codes": [1]
     },
     {
+      "id": "local-marketplace-register",
+      "step": 3.6,
+      "gate": null,
+      "title": "ローカル clone marketplace 再生成",
+      "dependsOn": ["bundle-register"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "delegateSkill": null,
+      "command": "python3 scripts/build-local-marketplace.py",
+      "artifact": ["marketplaces/local/.claude-plugin/marketplace.json"],
+      "comment": "公開 marketplace は distributable:false を載せられない (MK-004 逆ガード + NEVER_DISTRIBUTE denylist) ため、非配布 plugin は手元でも install できない。ローカル clone 用 marketplace を再生成して新 plugin を載せる。検出層は build-local-marketplace.py --check (CI)。",
+      "fatal_exit_codes": [1]
+    },
+    {
+      "id": "plugin-release-record",
+      "step": 3.7,
+      "gate": null,
+      "title": "plugin fingerprint 記録 / version 採番",
+      "dependsOn": ["local-marketplace-register"],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "delegateSkill": null,
+      "command": "python3 scripts/build-plugin-release.py --only <plugin>",
+      "artifact": ["marketplaces/local/plugin-fingerprints.json"],
+      "comment": "marketplace install は version 単位の copy であり、version を据え置くと install 済み copy へ変更が届かない。新 plugin を内容 hash 対応表へ記録し、既存 plugin の内容変更には patch を採番する。検出層は build-plugin-release.py --check (CI)。install 済み copy への反映は --install。書き込みを伴う実行は Gate 2.5 承認後に限り、--only <plugin> を必須とする (SKILL.md Key Rule 6): write_version() は既存 version 行の in-place 置換で append-only ではなく、--only 無指定は _run() の only=None により全 plugin 走査となって無関係な変更済み plugin まで patch bump するため。",
+      "fatal_exit_codes": [1]
+    },
+    {
       "id": "p0-lint",
       "step": "4a",
       "gate": 2,
       "title": "P0 lint (自動)",
-      "dependsOn": ["bundle-register"],
+      "dependsOn": ["plugin-release-record"],
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [

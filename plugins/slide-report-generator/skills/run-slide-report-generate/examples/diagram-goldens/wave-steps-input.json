@@ -1,0 +1,39 @@
+{
+  "diagramId": "d-wave",
+  "type": "wave-steps",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.28 ウェーブステップカード型",
+  "placement": "横帯",
+  "canvas": { "viewBox": "0 0 960 320" },
+  "title": "新任者が独り立ちするまで",
+  "message": "四段のうち脱落が起きるのは三段目で、そこだけは支援の設計を要する。",
+  "axisNote": "左から時間順・番号は順序のみ",
+  "legend": [
+    { "mark": "色", "means": "支援が外れる段" }
+  ],
+  "nodes": [
+    { "id": "w1", "label": "環境を配る", "sub": "初日に触れる状態にする", "step": 1, "style": "plain", "at": "2026/4/1-4/3", "doneWhen": "完了: 自分で1件起票" },
+    { "id": "w2", "label": "手順に沿って一巡", "sub": "一件を最後まで通す", "step": 2, "style": "plain", "at": "2026/4/6-4/10", "doneWhen": "完了: 1件を検収まで" },
+    { "id": "w3", "label": "単独で回す", "sub": "質問先を決めておく", "step": 3, "style": "focal", "at": "2026/4/13-4/24", "doneWhen": "完了: 5件を独力で" },
+    { "id": "w4", "label": "基準を書き足す", "sub": "詰まった箇所を残す", "step": 4, "style": "plain", "at": "2026/4/27-4/30", "doneWhen": "完了: 手順書へ2件追記" }
+  ],
+  "relations": [
+    { "from": "環境を配る", "to": "手順に沿って一巡", "kind": "sequence" },
+    { "from": "手順に沿って一巡", "to": "単独で回す", "kind": "sequence" },
+    { "from": "単独で回す", "to": "基準を書き足す", "kind": "sequence" }
+  ],
+  "emphasis": {
+    "focal": ["w3"],
+    "reason": "焦点は最終段ではなく、支援が外れて初めて一人になる段に置く。番号が既に順序を語っているので、色は順序ではなく難所を示すために使う"
+  },
+  "annotations": [
+    { "text": "つまずくのは三つ目である", "anchor": "w3" }
+  ],
+  "geometry": {
+    "card": { "y": 32, "width": 208, "height": 240, "lefts": [16, 256, 496, 736] },
+    "waveDepth": 136,
+    "note": "波頭はカードの上部だけを占め、下端の曲線は四枚とも同じ深さにする。深さを変えると波が段の量を表しているように読める"
+  },
+  "caption": "左から右へ四段を追う。番号は順序を示すだけで、色の付いた一段だけが支援の外れる場所である。"
+}

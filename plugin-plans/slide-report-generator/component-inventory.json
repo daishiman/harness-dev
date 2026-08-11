@@ -29,7 +29,7 @@
       "cli_tools": ["node", "codex"],
       "mcp_tools": [],
       "external_systems": ["Codex Image2 (codex exec)"],
-      "deterministic_checks": ["validate-output-mode.py", "validate-output-mode.py --preflight (環境 preflight: node/npm/node_modules/codex CLI 検出)", "validate-structure.js", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report決定論視覚ゲート・--structure欠落はexit2)", "Playwright computed-layout/navigation matrix (899/900/901/1024/1366/1600px + print、hash/click/scroll/font-ready/afterprint)", "evaluate-deck.js", "validate-ai-image-assets.js", "validate-print.js"],
+      "deterministic_checks": ["validate-output-mode.py", "validate-output-mode.py --preflight (環境 preflight: node/npm/node_modules/codex CLI 検出)", "validate-structure.js", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report決定論視覚ゲート・--structure欠落はexit2)", "validate-svg-diagram.py --check-grid --strict (図解幾何決定論ゲート D0-D21・SVG/CSS/HTML/テンプレート対象・governance glue)", "Playwright computed-layout/navigation matrix (899/900/901/1024/1366/1600px + print、hash/click/scroll/font-ready/afterprint)", "evaluate-deck.js", "validate-ai-image-assets.js", "validate-print.js"],
       "needs_independent_context": true,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
@@ -82,7 +82,7 @@
       "cli_tools": ["node"],
       "mcp_tools": [],
       "external_systems": [],
-      "deterministic_checks": ["validate-output-mode.py", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report部分修正時・--structure欠落はexit2)", "report部分修正後にwide/narrow/print+hash navigation evidenceを再取得"],
+      "deterministic_checks": ["validate-output-mode.py", "verify-slides.js", "validate-report-visual.py <report.html> --structure <report-structure.json> --json (report部分修正時・--structure欠落はexit2)", "validate-svg-diagram.py --check-grid --strict (図解幾何決定論ゲート D0-D21・修正箇所に図解が含まれる場合)", "report部分修正後にwide/narrow/print+hash navigation evidenceを再取得"],
       "needs_independent_context": true,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
@@ -233,6 +233,11 @@
       "independent_context": true,
       "responsibility_anchor": "prompts/d3-diagram-designer.md",
       "prompt_layer": "7layer",
+      "diagram_migration_1_4_0": {
+        "owns": ["R2/R3 数値化規約(C21)・型カタログ対応表(C22)を prompt Layer6 に参照配線し、D3 図解の作図判断(型選定・ノード数/矢印数の複雑度予算・接続点分散)を index 化された正本に揃える"],
+        "consumes_references": ["diagram-style-tokens.md(C20)", "diagram-layout-contract.md(C21)", "diagram-type-crosswalk.md(C22)"],
+        "note": "本更新(第4次)の additive。build_target/schema は無改変(prompt Layer6 参照配線のみ)"
+      },
       "depends_on": [],
       "build_target": "plugins/slide-report-generator/agents/d3-diagram-designer.md",
       "builder": "run-build-skill",
@@ -277,6 +282,12 @@
       "independent_context": true,
       "responsibility_anchor": "prompts/html-generator.md",
       "prompt_layer": "7layer",
+      "diagram_migration_1_4_0": {
+        "owns": ["R4 叩き台テンプレート方式(C23): LLM 手書き図解経路を『plugin-root assets/diagram-templates/ の骨格 HTML をコピーし図解本体(インライン SVG)だけを書く』フローへ変更する", "R5 プロンプト配線修復(C24): diagram-*.md を型別・節番号付きで prompt Layer6 に明記する", "R7 ゴールデン実例(C26) の few-shot 参照"],
+        "consumes_references": ["diagram-style-tokens.md(C20)", "diagram-layout-contract.md(C21)", "diagram-type-crosswalk.md(C22)", "assets/diagram-templates/*.html(C23・plugin-root live・vendor 対象外)"],
+        "golden_examples_ownership": "C26(要件): 本 component が skill-private `skills/run-slide-report-generate/examples/` 配下に主要図解型の『入力(section.visual 相当)→完成HTML』実例ペアを追加し、type reference(diagram-*.md)末尾からリンクする few-shot・回帰基準線の著者(owner=C09 と C19 の共同責務。slide 系統は本 component、report 系統は C19 が担う)",
+        "note": "本更新(第4次)の additive。build_target/schema は無改変(手書き経路の入力=テンプレコピー+prompt 参照配線)"
+      },
       "depends_on": [],
       "build_target": "plugins/slide-report-generator/agents/html-generator.md",
       "builder": "run-build-skill",
@@ -343,6 +354,11 @@
       "independent_context": true,
       "responsibility_anchor": "prompts/ui-quality-reviewer.md",
       "prompt_layer": "7layer",
+      "diagram_migration_1_4_0": {
+        "owns": ["R9(C28)溶け込み契約の slide 側 LLM チェックリスト追加: S27 図解と本文チップ/見出しの重複禁止(1スライド1メッセージ整合)、S28 図解の密度/サイズ/トーンが周囲スライドと調和(単体で浮かない)、S29 図解が plugin-root assets/diagram-templates(C23)の埋め込み用骨格を正としているか(単体ページ用の借用でないか)"],
+        "consumes_references": ["diagram-layout-contract.md(C21・複雑度予算/focal rule)", "assets/diagram-templates/*.html(C23)"],
+        "note": "本更新(第4次)の additive。既存 S1-S26 を維持し S27-S29 を追加(build_target/schema 無改変)"
+      },
       "depends_on": [],
       "build_target": "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
       "builder": "run-build-skill",
@@ -453,6 +469,10 @@
       "independent_context": true,
       "responsibility_anchor": "prompts/report-structure-designer.md",
       "prompt_layer": "7layer",
+      "diagram_migration_1_4_0": {
+        "owns": ["R9②重複禁止契約(C28-b)の節内論理設計側の担保: section.narrative(本質課題/解決/活用)が図解の担う内容を文章側で反復しないよう、narrative は図が語れないこと(意図/含意/次アクション)を書く指針を持つ(図解が語ることは C18/C19 の visual 側へ委ねる)"],
+        "note": "本更新(第4次)の additive。schema/build_target 無改変(narrative 設計規律の拡張のみ)"
+      },
       "depends_on": [],
       "build_target": "plugins/slide-report-generator/agents/report-structure-designer.md",
       "builder": "run-build-skill",
@@ -475,6 +495,11 @@
       "independent_context": true,
       "responsibility_anchor": "prompts/visual-strategist.md",
       "prompt_layer": "7layer",
+      "diagram_migration_1_4_0": {
+        "owns": ["R9①配置契約(C28-a): 型ごとの面内配置(zones/readingOrder/focalPoint)と型選定(C22 型カタログ)を接続する規律を追加する。図解型の複雑度予算(C21 数値化リファレンス)を超える型は配置面積を広げる方向でしか解消しない(縮小によるノード密度の誤魔化しを禁止)"],
+        "consumes_references": ["diagram-style-tokens.md(C20 色ロール表 SSOT)", "diagram-layout-contract.md(C21 数値化規約: 4pxグリッド/複雑度予算/コネクタ5原則/focal rule/annotation文法)", "diagram-type-crosswalk.md(C22 型カタログ対応表)"],
+        "note": "本更新(第4次: diagram-design-migration)の additive。既存 essence-visual(論理構造→図種写像 §0.5.1)の設計 owner 責務に、型選定後の面内配置と C21 数値規約の整合検証を追加する。schema/build_target は無改変(prompt Layer6 参照配線 + 判断規律の追加のみ)"
+      },
       "depends_on": ["C17"],
       "build_target": "plugins/slide-report-generator/agents/visual-strategist.md",
       "builder": "run-build-skill",
@@ -492,7 +517,7 @@
       "id": "C19",
       "component_kind": "sub-agent",
       "name": "report-composer",
-      "description": "report HTML/prose を独立 context で生成(文章多め・block構造[段落/markdownテーブル/フェンスドコードブロック/番号リスト/小見出し/キーポイント強調ボックス/統計タイル]→HTML・要点の色付き強調・placement.grid/zones/emphasis の意味的配置反映・visual-strategist 指定ビジュアル埋込)したいときに使う。決定論 render-report.js の著者責務を持ち slide の html-generator に対応する report 版。本更新(第3次: report-uiux-layout-improvement)では render-report.js/report 読書 CSS(buildReportCss() の CSS 出力)の著者責務として screen/print 幅二層化(screen=本文可読幅+sidebar レイアウト・print=190mm/A4 を @media print で温存)・sticky sidebar TOC + scrollspy(self-contained JS・print 無効・狭画面はインライン TOC へ degrade)・タイポグラフィ/密度スケール再調整(意匠 SSOT 無改変でスケール/spacing 変数のみ)を additive 実装する(要件 C16-C18)",
+      "description": "report HTML/prose を独立 context で生成(文章多め・block構造[段落/markdownテーブル/フェンスドコードブロック/番号リスト/小見出し/キーポイント強調ボックス/統計タイル]→HTML・要点の色付き強調・placement.grid/zones/emphasis の意味的配置反映・visual-strategist 指定ビジュアル埋込)したいときに使う。決定論 render-report.js の著者責務を持ち report 専用のHTML生成担当。本更新(第3次: report-uiux-layout-improvement)では render-report.js/report 読書 CSS(buildReportCss() の CSS 出力)の著者責務として screen/print 幅二層化(screen=本文可読幅+sidebar レイアウト・print=190mm/A4 を @media print で温存)・sticky sidebar TOC + scrollspy(self-contained JS・print 無効・狭画面はインライン TOC へ degrade)・タイポグラフィ/密度スケール再調整(意匠 SSOT 無改変でスケール/spacing 変数のみ)を additive 実装する(要件 C16-C18)",
       "tools": ["Read", "Write", "Bash"],
       "independent_context": true,
       "responsibility_anchor": "prompts/report-composer.md",
@@ -510,9 +535,10 @@
           "through_line": "meta.throughLine(文書アーク)と section.transition(節間橋渡し)を読み物の通し筋として render し、節を単なる羅列でなく本質課題→解決→活用の弧で連結する(1.2.0 additive)",
           "report_css": "report 読書 CSS(block 装飾/reading measure ~65-75ch/縦リズム/section spacing)の正本責務は buildReportCss() の inline <style> 出力(独立ファイル vendor/assets/report.css への分離は将来オプション)。C25 が読書 CSS class 出力の存在を検査する",
           "consumes_schema": "report-structure.schema.json 1.2.0 (S-SCHEMAS additive・1.1.0 を包含)。本更新(第3次)は既存 role/visual.kind(essence-visual)を消費し schema bump を伴わない(第3次UIは render CSS のみで schema 非依存・schema は 1.2.0 のまま)",
-          "screen_print_layout": "1.3.0追加スコープ。screenは.report-layout/--report-measure:72ch/--report-sidebar-w:15rem/--report-page-max:1240px、printは190mm/A4を温存する。55%利用幅条件はviewport<=2254pxで適用しultrawideは1240px上限を優先するpiecewise契約。本文内card/gridはrepeat(auto-fit,minmax(min(100%,28rem),1fr))相当・overflow-wrap:anywhereを持ち最小幅未満は1列へ落ちる。899/900/901/1024/1366/1600pxと長文card/table/code/stat-tile fixtureで実測する",
-          "sticky_toc_scrollspy": "1.3.0追加スコープ。.report-toc--sidebarをsticky化しIntersectionObserverで.is-activeとaria-current=locationを同期する。初期hash/TOC click/手動scroll/hashchange/popstate/document.fonts.ready後のlayout shiftでtargetをsticky offset内へ再着地させる。scrollspyはidempotent start/stopを持ちbeforeprintでstop、afterprintでstartしてactive状態を復旧する。900px以下はインラインTOCへdegradeしPlaywrightが期待sectionとの一致を検査する",
-          "typography_density": "1.3.0追加スコープ。report screen専用scaleを共有--font-scaleから分離し、font-scale=1.3入力でもgetComputedStyle()で本文16-18px・line-height比1.6-1.8・title/body比<=2.2を満たす。--fs-title:2.2remの宣言値だけでPASSさせない。slide最小1.4rem規律はslide-only、Kanagawa配色/フォントfamilyは不変。Playwright computed-styleを受入正本とする"
+          "screen_print_layout": "report-uiux スコープ。screenは.report-layout/--report-measure:40em/--report-sidebar-w:16rem/--report-page-max:1160px、printは190mm/A4を温存する。本文内card/gridはrepeat(auto-fit,minmax(min(100%,28rem),1fr))相当・overflow-wrap:anywhereを持ち最小幅未満は1列へ落ちる。899/900/901/1024/1366/1600pxと長文card/table/code/stat-tile fixtureで実測する",
+          "sticky_toc_scrollspy": "report-uiux スコープ。.report-toc--sidebarと.report-topbarをsticky化し、IntersectionObserverで現在節・読了進捗・.is-active・aria-current=locationを同期する。初期hash/TOC click/手動scroll/hashchange/popstate/document.fonts.ready後のlayout shiftでtargetをsticky offset内へ再着地させる。scrollspyはidempotent start/stopを持ちbeforeprintでstop、afterprintでstartしてactive状態を復旧する。900px以下もdetails/summaryで折り畳めるsticky TOCを維持する",
+          "typography_density": "report-uiux スコープ。report screen専用scaleを共有--font-scaleから分離し、font-scale=1.3入力でもgetComputedStyle()で本文16-18px・line-height比1.6-1.8・title/body比<=2.2を満たす。複数文段落は.report-sentの行ブロックへ分割し、括弧内句点と1文段落を誤処理しない。slide最小1.4rem規律はslide-only、Kanagawa配色/フォントfamilyは不変。Playwright computed-styleを受入正本とする",
+          "diagram_migration_1_4_0": "1.4.0追加スコープ(R4/R9)。render-report.js は plugin-root assets/diagram-templates(C23)の骨格を埋め込み用テンプレとして render(単体ページ用ではなく成果物埋め込み用が正)。図解の占有率(node面積/section面積比)を diagram-layout-contract.md(C21)の許容レンジ内で render し、周囲の本文タイポ/spacing スケール(C18 UI 契約)と連続させる(R9③文脈適合契約の render 側実装)。R6/R8 拡張型(C22/C27)は既存 var(--x, fallback) 方式で render し hex 直書きしない。golden_examples_ownership(C26): report 系統の『入力(report-structure.json 抜粋)→完成HTML』実例ペアの著者責務は本 component(C19)が持ち、skill-private examples/ 配下へ追加する(slide 系統は C09 が担う共同責務。C09.diagram_migration_1_4_0.golden_examples_ownership を参照)"
         },
         "note": "vendor.additive_new_files の新規 2 Node (render-report.js/mermaid-render.js) + report 読書 CSS(正本責務=render-report.js の buildReportCss() inline <style> 出力・CCONST_006 自己完結 HTML 契約と両立。分離は将来オプション=配置候補 vendor/assets/report.css・build 契約上の必須生成物ではないため additional_outputs には載せない。block 装飾/reading measure ~65-75ch/縦リズム line-height/section spacing を意匠 SSOT の Kanagawa トークンで表現し C25 が読書 CSS class 出力の存在を検査する)の実装著者は本 component (C19 report-composer) の build 責務に含める (owner=C19)。本 update では render-report.js に block レンダラ + inline highlight(第2チャネル) + placement(emphasisZone/readingOrder) 反映 + throughLine/transition + 定義リスト/脚注/タスクリスト block を追加実装する(既存 renderParagraphs/inlineMd を additive 拡張)。render-report.js/mermaid-render.js は tests/test-render-report.js/tests/test-mermaid-render.js で coverage(tests_min>=80)を持ち C25 の test 名指し provenance と対称化する。mermaid 依存は byte copy 完了後の package.json additive として追記し package-lock.json を同時更新する(S-VENDOR post_copy の順序規約)。byte-parity の対象外扱いは vendor.parity_scope 準拠・品質は tests_min>=80 + lint + C25 決定論ゲート の別検査で担保する。本更新(第3次: report-uiux-layout-improvement)では screen_print_layout/sticky_toc_scrollspy/typography_density の 3 スコープを additive 追加し、essence-visual(C18 owner・既存 role/visual.kind)は render 側で素通し消費するのみで新規 render ロジックを持たない"
       },
@@ -631,7 +657,7 @@
       "id": "C24",
       "component_kind": "sub-agent",
       "name": "report-quality-reviewer",
-      "description": "report 品質(読み物文体/段落密度/1項目1ビジュアル整合/reportType 骨格順守 RQ1-20 + 積極評価次元 RQ21-: 節内論理展開[本質課題→解決→活用]の成立/節間の論理接続・流れの成立[through-line: throughLine と transition で節が羅列でなく弧で連結]/内容が要求する範囲での block 適合[必要な所に表・コード・リスト、不要な所は散文のまま=多様性 < 適合性を優先。単なる block 種類数の多さは評価しない]/要点強調の効き・色覚非依存[強調が色以外の手掛かり weight/underline も持つ]/図解の意味的配置/reportType 横断要素の充足[要約/キーテイクアウェイ/次アクション/根拠出典/リスク+型別]/見出しごとの整形 + 負次元 RQ: 強調・block が要点に集中し過剰・断片化していない[強調過多/構造過剰で読み物が断片化していない])を独立 context で検証(P3.5 report 版)したいときに使う。減点型だけでなく『構造化された読み物としての魅力』を積極評価し『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も塞ぐ双方向ゲート・slide の ui-quality-reviewer に対応する report 版。本更新(第3次: report-uiux-layout-improvement)で RQ 積極評価次元へ以下を追加する: ナビゲーション成立(sticky sidebar TOC + scrollspy でいま文書のどこを読んでいるか常時把握でき、任意の節へ1クリックで戻れるか・要件C17)/読み物としての密度バランス(screen 表示で本文と余白の比率・見出し階層の視覚差が適正で『空白>本文』の逆転が起きていないか・要件C16/C18)/図解適合(本文の主張と本質図解(essence-visual)の一致・図だけ見て節の要旨が掴めるか・図解すべき論理節での visual 省略または本文主張と乖離した装飾目的の図解は負値評価・要件C19) + 周回2 追加(R4 HIGH是正): print/狭画面 degrade の成立(print 出力で従来 190mm/A4 読了体験が退行していないか・sticky sidebar TOC/scrollspy が print で無効化され紙面を汚していないか・狭画面でインライン TOC への graceful degrade が読者の探索を妨げず成立しているか・要件C16/C17)。評価入力契約(周回3 追加・実描画盲点の閉鎖。周回4 で narrow 幅を degrade breakpoint 追随): Bash で vendor playwright(S-VENDOR post_copy で chromium 導入済)により wide(≥1600px)/narrow(≤900px・iPad 縦 820px 等の degrade 発火域を含む)/print emulation の 3 状態を実レンダリングし評価入力とする(HTML ソース Read のみで視覚品質を判定しない)。RQ rubric は総合 1 問『パッと見てわかるか』を頂点とし各次元はその根拠という階層構造で運用する(次元合算が総合を代替しない)。密度バランス/タイポの判定は S-REFERENCES report-writing-rules.md 追補のタイポ目標レンジ(screen 本文実効 16-18px 相当/見出し(title)・本文スケール比 ≤2.2/reading measure 65-75ch/本文カラム+sidebar 実効利用幅 ≥ viewport の 55%/縦リズム line-height 1.6-1.8)を引用して行う",
+      "description": "report 品質(読み物文体/段落密度/1項目1ビジュアル整合/reportType 骨格順守 RQ1-20 + 積極評価次元 RQ21-: 節内論理展開[本質課題→解決→活用]の成立/節間の論理接続・流れの成立[through-line: throughLine と transition で節が羅列でなく弧で連結]/内容が要求する範囲での block 適合[必要な所に表・コード・リスト、不要な所は散文のまま=多様性 < 適合性を優先。単なる block 種類数の多さは評価しない]/要点強調の効き・色覚非依存[強調が色以外の手掛かり weight/underline も持つ]/図解の意味的配置/reportType 横断要素の充足[要約/キーテイクアウェイ/次アクション/根拠出典/リスク+型別]/見出しごとの整形 + 負次元 RQ: 強調・block が要点に集中し過剰・断片化していない[強調過多/構造過剰で読み物が断片化していない])を独立 context で検証(P3.5 report 版)したいときに使う。減点型だけでなく『構造化された読み物としての魅力』を積極評価し『羅列でも破綻ゼロなら PASS』も『構造過剰でも多様性ありなら PASS』も塞ぐ双方向ゲート・report 専用のUI品質レビュー担当。本更新(第3次: report-uiux-layout-improvement)で RQ 積極評価次元へ以下を追加する: ナビゲーション成立(sticky sidebar TOC + scrollspy でいま文書のどこを読んでいるか常時把握でき、任意の節へ1クリックで戻れるか・要件C17)/読み物としての密度バランス(screen 表示で本文と余白の比率・見出し階層の視覚差が適正で『空白>本文』の逆転が起きていないか・要件C16/C18)/図解適合(本文の主張と本質図解(essence-visual)の一致・図だけ見て節の要旨が掴めるか・図解すべき論理節での visual 省略または本文主張と乖離した装飾目的の図解は負値評価・要件C19) + 周回2 追加(R4 HIGH是正): print/狭画面 degrade の成立(print 出力で従来 190mm/A4 読了体験が退行していないか・sticky sidebar TOC/scrollspy が print で無効化され紙面を汚していないか・狭画面でインライン TOC への graceful degrade が読者の探索を妨げず成立しているか・要件C16/C17)。評価入力契約(周回3 追加・実描画盲点の閉鎖。周回4 で narrow 幅を degrade breakpoint 追随): Bash で vendor playwright(S-VENDOR post_copy で chromium 導入済)により wide(≥1600px)/narrow(≤900px・iPad 縦 820px 等の degrade 発火域を含む)/print emulation の 3 状態を実レンダリングし評価入力とする(HTML ソース Read のみで視覚品質を判定しない)。RQ rubric は総合 1 問『パッと見てわかるか』を頂点とし各次元はその根拠という階層構造で運用する(次元合算が総合を代替しない)。密度バランス/タイポの判定は S-REFERENCES report-writing-rules.md 追補のタイポ目標レンジ(screen 本文実効 16-18px 相当/見出し(title)・本文スケール比 ≤2.2/reading measure 65-75ch/本文カラム+sidebar 実効利用幅 ≥ viewport の 55%/縦リズム line-height 1.6-1.8)を引用して行う。本更新(第4次: diagram-design-migration)で RQ 積極評価次元へ R9(溶け込み契約・要件C28)を追加する: 配置適合(図解の型が C21 数値化規約・C22 型カタログの想定配置と一致するか)/重複禁止(図解が示す内容を section.narrative や本文 highlight が反復していないか・逆に図が本文の要旨を代替せず補強しているか)/文脈適合(図解の密度・サイズ・トーンが周囲セクションと調和し単体で浮いていないか・テンプレート骨格が単体ページ用でなく成果物埋め込み用になっているか)。図解の色/数値規約遵守(C20/C21)も積極評価対象に加える",
       "evaluation_input_contract": {
         "bundle": ["report-structure.json", "wide/narrow/print render", "computed-style/layout metrics", "navigation event log"],
         "viewports": [899, 900, 901, 1024, 1366, 1600],
@@ -666,6 +692,14 @@
       "uiux_additive_contract": {
         "shape_checks": [".report-layout/card minmax/overflow-wrap", ".report-toc--sidebar/.is-active/aria-current", "beforeprint+afterprint lifecycle", "essence-visual coverage(論理節 role の visual.kind 非none)", "piecewise viewport<=2254px 55% rule"],
         "runtime_delegate": "computed px/bounding boxes/hash-active一致/afterprint復旧はC24 Playwrightへ委譲し、C01/C02が結果bundleを必須消費する"
+      },
+      "diagram_migration_1_4_0": {
+        "additive_checks": [
+          "(p) 図解-本文重複検出(要件C28②): section 内 figure/svg の caption・alt・annotation テキストと section.narrative/body[] highlight テキストの正規化文字列オーバーラップ率が閾値超で warn(--strict で fail)。R9重複禁止契約の機械層",
+          "(q) 図解占有率レンジ検査(要件C28③): figure/svg 要素の推定面積(width×height属性またはviewBox)が section 全体の占有率許容レンジ(下限=装飾目的の過小・上限=単体で浮く過大)内であることを検査(diagram-layout-contract.md(C21) の数値レンジを引用元とする)",
+          "(r) diagram-style-tokens.md(C20)由来の許可色リストとの整合(SVG/HTML内の hex 直書き検出は既存 lint-contract-drift.py G チェックに委譲し、本スクリプトは report 埋め込み図解の class/var(--x) 使用有無のみ検査)"
+        ],
+        "note": "本更新(第4次: diagram-design-migration)の additive。R6(CSS/HTML図解lint新設)の主体は scripts/validate-svg-diagram.py(plugin_level_surfaces.scripts governance glue・非 buildable component)であり、本スクリプト(C25)は report 埋め込み文脈での重複/占有率/トークン整合のみを追加担当する(責務境界: 図解単体の幾何=validate-svg-diagram.py、報告書内埋め込み文脈の適合=本スクリプト)"
       },
       "inputs": "argv(<report.html> --structure <report-structure.json> [--strict] [--json]) (report gateでは--structure必須・欠落exit2)",
       "outputs": "stdout(OK/JSON)/stderr(violation)",
@@ -742,6 +776,19 @@
       "record_in": "index.plugin_meta.ssot_dedup",
       "byte_parity_owner": "vendor(whole-tree)。本 surface は文書/参照のみを byte 実体として保有し、Node/テンプレ/意匠アセットの byte 実体は二重管理しない(LOW-1 解消)",
       "contents": ["既存 42 references(*.md・本 surface が byte 正本)", "report新規 references(report-types/report-writing-rules/report-visual-strategy/mermaid-integration)", "report-narrative-logic.md(節内論理展開と横断要素カタログの正本)", "report-writing-rules.md/report-visual-strategy.md/report-quality-checklist.md(第3次UI追補: computed本文16-18px/title-body比<=2.2/line-height比1.6-1.8/65-75ch、55%条件はviewport<=2254px・ultrawideは1240px上限優先、card最小28rem相当と1列degrade、899/900/901境界、deep-link/aria-current/print lifecycle、essence-visual(論理構造→図種の写像・§0.5.1)と図解不足の負値評価)", "feedback/*(運用知見・移植任意)"],
+      "diagram_migration_1_4_0": {
+        "new_files": [
+          "diagram-style-tokens.md(C20正本・plugin-root: 色ロール表 paper/paper-2/ink/muted/soft/rule/rule-solid/accent/accent-tint/link 相当を既存 svg-kit.cjs TOKENS/style-builder.cjs SPEC の Kanagawa 値で定義。lint-contract-drift.py がパースして許可色リストを構築する文書=lintの設定ファイル契約。読者=C07/C09/C18/C19)",
+          "diagram-type-crosswalk.md(C22正本・plugin-root: 決定論ビルダー38/CSS型44/.html.tpl128/R8新規型の対応表1枚。『何を見せたいか→型→経路[決定論/テンプレ穴埋め]→参照ファイル・節』の選択ガイド。読者=C07/C09/C17/C18/C19)",
+          "assets/diagram-templates/*.html(C23正本・plugin-root live・vendor 対象外の digest 非凍結領域: 本プラグイン Kanagawa トークン準拠の骨格 HTML。成果物埋め込み用を正とし単体ページ用は作らない[R9文脈適合契約]。読者/著者=C09 html-generator・C19 report-composer)"
+        ],
+        "augmented_files": [
+          "diagram-layout-contract.md(C21・既存317行の D0-D13 憲法へ 4px グリッド許可値列挙/複雑度予算21項目/コネクタ5原則/focal rule/annotation文法/影禁止/角丸上限/ストローク3段階/図解占有率レンジ[R9③文脈適合契約の数値]を additive 追補。値は svg-kit.cjs/style-builder.cjs と同一 SSOT を参照し index 化に留める=ref-diagram-system 思想維持)",
+          "diagram-business.md/diagram-visual.md/diagram-fabe.md/diagram-comparison.md/diagram-extended.md/diagram-technical.md(R8: quadrant/radar/venn/nested/org-chart/loop/layers/pyramid/annotation 等の欠落型を本プラグイントークン・経路体系で追記。型→ファイルの正本は diagram-type-crosswalk.md §0)",
+          "skills/ref-diagram-system/references/diagram-type-catalog.md 及び SKILL.md §2 ルーティング表(C22 型カタログ対応表と重複させず相互参照する形で拡張)"
+        ],
+        "note": "本更新(第4次: diagram-design-migration)の additive。C20(色SSOT)/C21(数値規約)/C22(型対応表)/C23(叩き台テンプレ)の正本を本 surface へ置き、読者側 component(C07/C09/C17/C18/C19/C24)は prompt Layer6 参照配線と build_contract の additive 拡張のみを持つ(新規 buildable component は増やさない)"
+      },
       "pointer_only": {
         "note": "以下は実体を vendor(whole-tree)が携行し、本 surface からは相互参照ポインタとしてのみ言及する(byte 実体の二重 SSOT にしない)",
         "items": ["118 HTML templates(実体= vendor scripts subtree の templates/)", "pagination(.html/.css/.js)(実体= vendor assets subtree)", "print-styles.css(実体= vendor assets subtree)", "style-genome-kanagawa-comic-diagram.json(実体= vendor assets subtree)", "d3-components(実体= vendor assets subtree)", "gas-deploy-guide.md(実体= vendor assets subtree)"]
@@ -749,7 +796,7 @@
     },
     "vendor": {
       "required": true,
-      "copy_mode": "whole-tree",
+      "copy_mode": "whole-tree-import-plus-managed-overlay",
       "derivation": "Node 製レンダリング/画像/印刷/検証エンジン一式を byte 維持で携行し Python-stdlib script へ書き換えない(既存資産の毀損回避)。skill/agent は Bash(node *) で起動する。携行単位はファイル個別列挙(allowlist)ではなく `scripts/`・`assets/`・`schemas/`・`package.json` をサブツリー丸ごと byte copy する whole-tree 方式とし、移植元 presentation-slide-generator の scripts/ 直下 *.js/*.cjs 実測30本(共有ランタイム utils.js、および log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む全数)+ scripts/hooks/deck-postgen-hook.js(移植元)+ scripts/templates/(118 templates)+ scripts/test-fixtures/ を1本の取りこぼしもなく携行する(cherry-pick しない=個別 import 依存の断線を構造的に排除)。個別ファイル名の記載は『代表例(非網羅)』であり allowlist として扱わない。report新規 Node(render-report.js/mermaid-render.js)はこの携行ツリーへの additive。source-inventory.md §5「30 Node scripts→vendor」は本 whole-tree 方式で 30本+新規2=漏れ0 で解消される。report新規 Node が要求する mermaid 依存は、byte copy 完了 (vendor-digest-manifest.json 照合 PASS) 後の additive 変更として package.json へ追記し package-lock.json も同時更新して依存解決を固定する (copy→manifest 照合→additive の順序規約。additive 変更部分は parity_scope.excluded_additive で照合除外し、品質は tests/lint の別検査で担保する)。",
       "byte_parity_subtrees": [
         {"source": "presentation-slide-generator/scripts/", "target": "plugins/slide-report-generator/vendor/scripts/", "policy": "丸ごと byte copy。30 Node script(*.js/*.cjs 全数・utils.js/log_usage.js/html-scaffold.js/test-schema-builder-equivalence.js を含む)+ hooks/deck-postgen-hook.js(移植元)+ templates/(118)+ test-fixtures/ を例外なく携行。byte-parity は plan 同梱 vendor-digest-manifest.json との manifest 照合で検証する (live tree 非依存)"},
@@ -760,11 +807,12 @@
       "source_digest_manifest": "vendor-digest-manifest.json",
       "parity_baseline": "manifest",
       "parity_scope": {
-        "baseline": "plan 同梱 vendor-digest-manifest.json (sha256・191 files pinned・upstream presentation-slide-generator v8.4.2。schemas subtree は真 schema 4本を plugin-root live へ移し fixture3+README=4 file のみ pin ゆえ従来 195 から 4 減算=191)。byte-parity の比較先は live tree でなく本 manifest",
-        "verifier": "lint-vendor-parity.py (build 時に plugin scripts/ へ同梱予定・plan 段階では契約のみ)",
-        "byte_parity_targets": "byte_parity_subtrees 由来の全 file (copy 直後に manifest と全件照合)",
-        "excluded_additive": ["render-report.js (新規・owner C19)", "mermaid-render.js (新規・owner C19)", "package.json/package-lock.json への mermaid 依存 additive 追記 (derivation の順序規約)"],
-        "excluded_policy": "additive_new_files と依存追記は byte-parity の明示的除外 (byte 維持契約との矛盾解消)。品質は tests_min>=80 + lint の別検査で担保する"
+        "baseline": "plan 同梱 vendor-digest-manifest.json の upstream v8.4.2 sha256 pin。live tree ではなくmanifestを比較基準とする",
+        "verifier": "lint-vendor-parity.py (vendor integrity: byte-pin + managed overlay集合/owner/semantic contract)",
+        "byte_parity_targets": "byte_parity_subtrees 由来のうち local_fork_managed/additive_managed に無い全file",
+        "managed_local_forks": ["svg-builder.cjs", "svg-kit.cjs", "svg-structures.cjs", "render-slide.cjs", "d3-bootstrap.cjs", "validate-structure.js", "render-report.js", "style-builder.cjs"],
+        "excluded_additive": ["mermaid-render.js (新規・owner C19)", "package.json/package-lock.json の依存追記", "plugin-local Playwright runtime"],
+        "excluded_policy": "除外ではなくmanifestのmanaged領域として全件宣言し、owner付きsemantic contract + tests/goldens/coverageで検証する。未宣言pin不一致はFAIL"
       },
       "additive_new_files": [
         {"file": "render-report.js", "role": "report HTML レンダラ (新規)", "owner": "C19", "verification": "tests_min"},
@@ -772,13 +820,13 @@
       ],
       "excluded": [],
       "contents": ["render-slide.cjs", "template-engine.cjs", "style-builder.cjs", "svg-builder.cjs", "d3-bootstrap.cjs", "utils.js(共有ランタイム・11+箇所から import される中核依存)", "workflow-manager.js", "log_usage.js(workflow-manager.js の runbook step から参照)", "html-scaffold.js", "test-schema-builder-equivalence.js", "build-image-prompts.js", "generate-images-codex.js", "build-deck-html.js", "build-image-manifest.js", "build-single-html.js", "convert-to-webp.js", "validate-ai-image-assets.js", "evaluate-image-consistency.js", "validate-structure.js", "verify-slides.js", "evaluate-deck.js", "validate-print.js", "validate-d3.js", "sync-checker.js", "precheck-layout.js", "phase-gate.js", "cross-deck-consistency.js", "check-consistency.js", "auto-linebreak.js", "layout-calculator.js", "hooks/deck-postgen-hook.js(移植元)", "templates/*.tpl(118)", "test-fixtures/*(構造検証テスト用フィクスチャ)", "package.json", "package-lock.json", "render-report.js(新規)", "mermaid-render.js(新規)"],
-      "contents_note": "上記 contents は代表例の明示列挙(非網羅)。byte 実体の網羅性は allowlist ではなく copy_mode=whole-tree の byte_parity_subtrees が保証する(ファイル追加・依存追加時も自動被覆)"
+      "contents_note": "上記 contents は代表例の明示列挙(非網羅)。初回取込の網羅性はwhole-tree import、稼働時の完全性はmanifestのbyte-pin + managed overlay集合一致が保証する"
     },
     "scripts": {
       "required": true,
-      "record_in": "component C23 + C25 + build-time governance gates",
-      "note": "plugin scripts/ 直下の実体は6本。buildable script component は2本: (1) validate-output-mode.py = C23 (output_mode/reportType 値域 + --preflight ゲート)。(2) validate-report-visual.py = C25 (report 決定論視覚ゲート・本 update で block型多様性/narrative 非空/highlight 表現/表・コード・番号リストの正 HTML 化を追加検査)。残り4本は buildable component ではなく plugin-root の governance glue: lint-vendor-parity.py (vendor byte-parity・copy 直後に vendor-digest-manifest.json と全件照合)、validate-plugin-completeness.py (配布可能性/surface 網羅を build 後に静的検証)、lint-reference-attribution.py (references 出典帰属の静的検証)、lint-contract-drift.py (散文↔実装 contract drift 検証)。glue 4本は buildable 総数に数えないため buildable component 総数は 25 (script component は C23/C25 の2本)",
-      "surface_files": ["validate-output-mode.py (C23 buildable script component)", "validate-report-visual.py (C25 buildable script component・report 決定論視覚ゲート)", "lint-vendor-parity.py (vendor byte-parity gate)", "validate-plugin-completeness.py (surface completeness gate)", "lint-reference-attribution.py (reference attribution gate)", "lint-contract-drift.py (contract drift gate)"]
+      "record_in": "component C23 + C25 + plugin-composition.yaml governance/output surfaces",
+      "note": "plugin scripts/ 直下の実体は18本。buildable script component は validate-output-mode.py (C23) と validate-report-visual.py (C25) の2本で、残る16本は生成器・governance glue・output gateであり buildable component 総数25には加算しない。全18本の列挙正本は plugin-composition.yaml capabilities で、validate-plugin-completeness.py が scripts/ 実体との集合一致を検査する。図解静的契約は validate-svg-diagram.py D0-D21、成果物レイアウトは validate-slide-layout.js / validate-report-layout.js、ひな形資産は build-slide-skeleton*.py / validate-slide-skeleton.py が所有し、資産検査と成果物検査を分離する。",
+      "surface_files": ["build-slide-skeleton-css.py", "build-slide-skeleton-js.py", "build-slide-skeletons.py", "lint-contract-drift.py", "lint-count-parity.py", "lint-reference-attribution.py", "lint-vendor-parity.py", "render-diagram-golden.cjs", "render-production-golden.cjs", "setup-playwright.py", "validate-diagram-information.py", "validate-output-mode.py (C23 buildable)", "validate-plugin-completeness.py", "validate-report-layout.js", "validate-report-visual.py (C25 buildable)", "validate-slide-layout.js", "validate-slide-skeleton.py", "validate-svg-diagram.py (D0-D21)"]
     },
     "mcp_app_connector": {"required": false, "omitted_reason": "画像生成は codex exec(Bash)経由で扱う。MCP/app connector を新設しない"},
     "notion_config": {"required": false, "omitted_reason": "Notion DB を読み書きしない(ローカル HTML 出力のみ)。改善要望の Notion 受け皿も設けず feedback_deploy は opt-out にする"}

@@ -1,0 +1,19 @@
+{
+  "diagramId": "d-gauge-chart",
+  "type": "gauge-chart",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/chart-types.md §13.9 ゲージチャート",
+  "placement": "方形",
+  "canvas": {"viewBox": "0 0 960 360", "tier": "sm"},
+  "title": "今期の目標達成率",
+  "message": "達成率は 68% で、目標の 80% には残り 12 ポイント届いていない。",
+  "metric": {"label": "達成率", "value": 68, "unit": "%", "min": 0, "max": 100, "style": "focal"},
+  "target": {"label": "目標", "value": 80, "unit": "%"},
+  "arc": {"shape": "semicircle", "sweep": "左から右へ 180 度"},
+  "emphasis": {"focal": ["達成率"], "reason": "単一指標の型なので焦点は 1 件だけ。目標は焦点にせず muted の刻みで示し、accent の面塗りは進捗の弧 1 件に留める (defs のマーカーと合わせて D7 の上限 2 件)"},
+  "annotations": [],
+  "scaleNote": "一様目盛で、左端の起点 0% から右へ増えて最大 100%。弧の長さが達成率、斜めの刻みが目標。",
+  "provenance": "出所: 受注実績 実測・2026/4/1-8/9。母数 = 2026年度 通期目標 240 件。期間経過 36% に対し実績は先行。",
+  "caption": "左端が 0%、右端が 100% で、色の付いた弧の長さが今の達成率である。弧の先と目標の刻みとの間隔が、残りの距離を表している。"
+}

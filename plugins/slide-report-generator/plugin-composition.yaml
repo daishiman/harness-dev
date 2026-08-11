@@ -4,7 +4,7 @@
 #       意匠/技術コアを単一 SSOT 共有するビジュアル生成 orchestrator プラグインの自己記述。
 
 name: slide-report-generator
-description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは vendor byte 携行。
+description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは upstream byte-pin + 明示local overlay で携行。
 kind: plugin-composition
 version: 0.1.0
 owner: harness maintainers
@@ -19,9 +19,9 @@ contract:
   invariant:
     - 意匠/技術層(配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ)は単一 SSOT で共有し slide/report で重複させないこと
     - コンテンツ意図層のみ output_mode で分岐する (slide=1メッセージ/chip強制/長文禁止 BP11-13、report=読み物/セクション+段落/1項目1ビジュアル)
-    - Node 製レンダリング/画像/印刷/検証エンジンは vendor surface として byte 維持で携行し Python-stdlib へ書き換えないこと。skill/agent は Bash(node *) で起動する
-    - vendor byte-parity は vendor-digest-manifest.json (191 files sha256 pin) を比較基準に検証すること (真 schema 4本は plugin-root schemas/ live SSOT、移植元 live tree 非依存)
-    - report 新規 Node (render-report.js/mermaid-render.js) は vendor ツリーへの additive で、parity 対象外・品質は tests_min>=80 + lint で担保すること
+    - Node 製レンダリング/画像/印刷/検証エンジンは vendor surface として携行し Python-stdlib へ書き換えないこと。skill/agent は Bash(node *) で起動する
+    - vendor integrity は vendor-digest-manifest.json を正本とし、upstream 非改変ファイルは sha256 byte-pin、明示的 local fork/additive は owner 付き semantic contract + tests/goldens で検証すること (移植元 live tree 非依存)
+    - report runtime を含む local fork は manifest の local_fork_managed に全件列挙し、未宣言の pin 不一致を許可しないこと。render-report.js の品質は tests_min>=80 + lint で担保すること
     - sub-agent/skill 本文は prompt-creator 7 層構造 (L1 基本定義 → L7 ユーザーインタラクション) で記述すること
     - 成果物本文・ヒアリング・評価は日本語、パラメーター名・JSON キー・CLI 引数・output_mode/reportType の enum 値は英語のままとすること
     - 生成後評価ゲート(deck-evaluator)は 30種思考法コアを共有しつつ mode 別 rubric 次元で区分評価する (単一 evaluator で mode-aware)
@@ -32,6 +32,8 @@ capabilities:
   - { kind: skill, ref: skills/run-slide-report-generate, tier: core }
   - { kind: skill, ref: skills/run-slide-report-modify,   tier: core }
   - { kind: skill, ref: skills/run-cross-deck-review,     tier: core }
+  # 参照専用 (kind=ref / effect=none)。図解 1 枚を描くときの手続き知識の索引。
+  - { kind: skill, ref: skills/ref-diagram-system,        tier: ref }
 
   # === Agents (kind=agent) — plugin.json agents 配線と 1 対 1 対応 ===
   - { kind: agent, ref: agents/hearing-facilitator,        tier: core }
@@ -53,13 +55,16 @@ capabilities:
   - { kind: agent, ref: agents/report-quality-reviewer,    tier: core }  # report 版品質補正 (slide の ui-quality-reviewer/layout-optimizer に対称)
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/slide-report-generate, tier: core }
-  - { kind: command, ref: commands/slide-report-status,   tier: core }
+  - { kind: command, ref: commands/slide-report-generate.md, tier: core }
+  - { kind: command, ref: commands/slide-report-status.md,   tier: core }
 
   # === Hooks (kind=hook) ===
-  - { kind: hook, ref: hooks/hook-postgen-eval.py, tier: core }
+  - { kind: hook, ref: "hook:PostToolUse/hook-postgen-eval", tier: core }
 
-  # === Scripts (kind=script) === scripts/ 実体 6 本と集合一致
+  # === Scripts (kind=script) === scripts/ 直下の実体と集合一致
+  - { kind: script, ref: scripts/build-slide-skeleton-css.py,        tier: core }
+  - { kind: script, ref: scripts/build-slide-skeleton-js.py,         tier: core }
+  - { kind: script, ref: scripts/build-slide-skeletons.py,           tier: core }
   - { kind: script, ref: scripts/validate-output-mode.py,          tier: core }
   - { kind: script, ref: scripts/lint-vendor-parity.py,           tier: core }
   - { kind: script, ref: scripts/validate-plugin-completeness.py,  tier: core }
@@ -72,14 +77,27 @@ capabilities:
   # report 経路 prose(references/prompts)↔code(render/validator/schema)の contract-drift ゲート。
   # 散文の data-*属性名/閾値/render-fidelity class/placement field を実装と機械突合し「宣言>実装」ドリフトを封鎖 (30思考法review の amplified pattern)。
   - { kind: script, ref: scripts/lint-contract-drift.py,           tier: core }
+  # 散文の数詞 ↔ 正本の実測値 の count-parity ゲート。`<!-- count: <key> -->N` で宣言した個数を
+  # schema enum / ファイル群 / 見出し群から実測した値と突合し、未宣言の数詞も検出する。
+  # lint-contract-drift の検査 B は `key=N` 形式しか見ないため、自然文中の数詞は本 lint が担う。
+  - { kind: script, ref: scripts/lint-count-parity.py,             tier: core }
+  - { kind: script, ref: scripts/render-diagram-golden.cjs,         tier: core }
+  - { kind: script, ref: scripts/render-production-golden.cjs,      tier: core }
+  - { kind: script, ref: scripts/setup-playwright.py,               tier: core }
+  - { kind: script, ref: scripts/validate-diagram-information.py,   tier: core }
+  - { kind: script, ref: scripts/validate-report-layout.js,         tier: core }
+  - { kind: script, ref: scripts/validate-slide-layout.js,          tier: core }
+  - { kind: script, ref: scripts/validate-slide-skeleton.py,        tier: core }
+  - { kind: script, ref: scripts/validate-svg-diagram.py,           tier: core }
 
 dependencies:
   # 本 DAG は skill→agent / command→skill / hook→agent の呼出構造を全被覆する (17 agent 全列挙・欠落エッジなし)。
   # 循環検出は lint-dependency-direction.py が担う。plugin 自身の component/capability 正本は本 composition の capabilities[] と .claude-plugin/plugin.json entry_points (両者は validate-plugin-completeness.py が 1:1 照合)。
   # 各 agent の粒度別依存 (前提/後続・R1→R2→R3 連鎖) の正本は該当 skill の workflow-manifest.json resources[]。build 計画の被覆正本は plugin-plans/slide-report-generator/component-inventory.json (validate-plan-coverage.py が sweep)。
   # --- command → skill 構造エッジ (entry points) ---
-  - { from: commands/slide-report-generate, to: skills/run-slide-report-generate,   type: calls }
-  - { from: commands/slide-report-status,   to: skills/run-slide-report-generate,   type: reads }
+  - { from: commands/slide-report-generate.md, to: skills/run-slide-report-generate, type: calls }
+  - { from: commands/slide-report-generate.md, to: scripts/validate-output-mode.py,  type: calls }
+  - { from: commands/slide-report-status.md,   to: skills/run-slide-report-generate, type: reads }
   # --- skill → agent 呼出 ---
   - { from: skills/run-slide-report-generate, to: agents/hearing-facilitator,       type: calls }
   - { from: skills/run-slide-report-generate, to: agents/structure-designer,        type: calls }
@@ -98,7 +116,7 @@ dependencies:
   - { from: skills/run-slide-report-generate, to: agents/report-quality-reviewer,   type: calls }
   - { from: skills/run-slide-report-modify,   to: agents/slide-report-modifier,     type: calls }
   - { from: skills/run-cross-deck-review,     to: agents/cross-deck-reviewer,       type: calls }
-  - { from: hooks/hook-postgen-eval.py,       to: agents/deck-evaluator,            type: triggers }
+  - { from: "hook:PostToolUse/hook-postgen-eval", to: agents/deck-evaluator,        type: triggers }
 
 eval_sinks:
   - EVALS.json

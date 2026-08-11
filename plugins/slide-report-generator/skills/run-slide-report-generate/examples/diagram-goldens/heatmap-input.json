@@ -1,0 +1,45 @@
+{
+  "diagramId": "d-heatmap",
+  "type": "heatmap",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-extended.md §11.44 ヒートマップ型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540" },
+  "title": "問い合わせの曜日 × 時間帯分布",
+  "message": "人員を足すべきは平日夜ではなく、金曜の夜だけである。",
+  "unit": "件",
+  "axes": {
+    "columns": { "name": "曜日", "order": "左から月〜土" },
+    "rows": { "name": "時間帯", "order": "上ほど早い時刻" }
+  },
+  "columns": ["月", "火", "水", "木", "金", "土"],
+  "rows": ["午前", "昼", "夕方", "夜"],
+  "values": [
+    [12, 14, 11, 13, 18, 4],
+    [8, 9, 7, 10, 12, 3],
+    [20, 22, 19, 24, 31, 9],
+    [14, 15, 13, 16, 38, 22]
+  ],
+  "scale": {
+    "hue": "accent",
+    "steps": [
+      { "max": 9, "alpha": 0.05 },
+      { "max": 14, "alpha": 0.14 },
+      { "max": 19, "alpha": 0.2 },
+      { "max": 24, "alpha": 0.3 },
+      { "max": null, "alpha": 0.5 }
+    ],
+    "labels": ["0-9", "10-14", "15-19", "20-24", "25 以上"],
+    "note": "色相は 1 つに固定し、濃さは NODE_STYLES の不透明度 5 段からのみ選ぶ。多色スケールを作らない"
+  },
+  "relations": [],
+  "emphasis": {
+    "focal": ["r4c5"],
+    "reason": "最濃セル 1 つだけに accent の枠を足す。濃淡そのものが順位を語っているので、2 つ目の焦点は情報を増やさない"
+  },
+  "annotations": [],
+  "legendNote": "セルの数字は件数",
+  "provenance": "2026/01-2026/03・一次受付のみ・重複除外後 全 364 件",
+  "caption": "縦横のラベルを手掛かりに、最も濃い一区画を探してほしい。全体の傾向は夕方以降だが、増員の判断を左右するのはその一区画だけである。"
+}

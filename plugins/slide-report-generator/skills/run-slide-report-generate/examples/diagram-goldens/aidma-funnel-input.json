@@ -1,0 +1,30 @@
+{
+  "diagramId": "f-aidma-funnel",
+  "type": "aidma-funnel",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-business.md §11.17 AIDMA/ファネルフレームワーク型",
+  "placement": "横帯",
+  "canvas": {"viewBox": "0 0 960 360", "step": "sm"},
+  "title": "認知から発注までのどこで落ちているか",
+  "message": "入口の数は足りている。落ちているのは比較検討の後、稟議の手前である。",
+  "nodes": [
+    {"id": "a", "stage": "Attention", "label": "認知", "style": "plain", "items": ["業界誌への寄稿", "月400件が到達"]},
+    {"id": "i", "stage": "Interest", "label": "興味", "style": "plain", "items": ["事例ページの公開", "月90件が閲覧"]},
+    {"id": "d", "stage": "Desire", "label": "欲求", "style": "plain", "items": ["無料の試算", "月40件が試算"]},
+    {"id": "m", "stage": "Memory", "label": "記憶", "style": "plain", "items": ["導入事例の送付", "月24件へ送付"]},
+    {"id": "ac", "stage": "Action", "label": "行動", "style": "focal", "items": ["見積と稟議の支援", "月3件が発注"]}
+  ],
+  "relations": [
+    {"from": "a", "to": "i", "label": "→ 22.5%"},
+    {"from": "i", "to": "d", "label": "→ 44.4%"},
+    {"from": "d", "to": "m", "label": "→ 60.0%"},
+    {"from": "m", "to": "ac", "label": "→ 12.5%"}
+  ],
+  "legend": "左から右へ段が進む。% は前段からの転換率。破線は注釈の指示線、色付きの列は本文が扱う段。",
+  "provenance": "出所: 自社CRM 実測・2026/4-6 の月平均 (重複除外後)。起点の母数 = Attention 到達 400 件/月。",
+  "emphasis": {"focal": ["ac"], "reason": "段の減り方は数字が語る。色は「本文がこれから語る段」の 1 列だけに置く"},
+  "annotations": [{"text": "最後の一段だけ桁が違う", "anchor": "ac"}],
+  "caption": "五つの列を左から右へ、上下三行を一組として読んでほしい。数字は一つ前の段からどれだけ残ったかを示し、最後の一段だけ桁が変わる。"
+}

@@ -1,0 +1,109 @@
+<!--
+  waterfall-golden.html — ゴールデン実例: ウォーターフォールチャート型 (slide 骨格)
+
+  入力: waterfall-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  参照: references/diagram-extended.md §11.43 ウォーターフォールチャート型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-3 原則 1 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict waterfall-golden.html
+
+  値は 1 単位 2px。基線 y=456 が 0 で、目盛は 40 単位 (80px) 刻みの 5 本。
+  棒は 96 幅・間隔 48 の 6 本 (x = 72 / 216 / 360 / 504 / 648 / 792)。
+  すべての棒の上端・下端が累計を 2px/単位で写しているので、目分量で読んでも
+  値ラベルと矛盾しない。
+
+  橋渡しの破線は 1 本の <polyline> が兼ねている。棒と棒の間では水平に走り、
+  棒の上では累計の傾きとして斜めに走る。これはデータ線なので §D-3 原則 1
+  (斜め線禁止) の対象外であり、line-chart-golden.html と同じく検査対象要素
+  (<line> / <path>) を避けて <polyline> で書いてある。
+
+  色役割は 3 つだけ。開始棒は paper-2 に ink の枠 (基準)、増と減は同じ色相の
+  不透明度 2 段 (0.05 / 0.20)、着地点の終了棒だけが accent である。
+  増を緑・減を赤にしないのは、色相を 2 つ増やすと着地点の焦点が埋もれるためで、
+  符号は値ラベルの + / − が既に語っている。
+-->
+<figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-waterfall">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="d-waterfall-caption">
+
+    <defs>
+      <marker id="d-waterfall-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="d-waterfall-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="d-waterfall-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- 目盛 (40 単位 = 80px 刻み。棒の下に敷く) -->
+    <line x1="64" y1="136" x2="928" y2="136" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="64" y1="216" x2="928" y2="216" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="64" y1="296" x2="928" y2="296" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="64" y1="376" x2="928" y2="376" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="56" y="140" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">160</text>
+    <text x="56" y="220" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">120</text>
+    <text x="56" y="300" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">80</text>
+    <text x="56" y="380" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">40</text>
+    <text x="56" y="460" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">0</text>
+    <text x="64" y="104" font-size="12" fill="var(--fuji-gray, #8a8980)">縦軸 百万円（基線 = 0・0 起点を切っていない）</text>
+
+    <!-- 基線 -->
+    <line x1="64" y1="456" x2="928" y2="456" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+
+    <!-- 開始棒 (基準。前期の実績そのもの) -->
+    <rect x="72" y="216" width="96" height="240" fill="#F8F7F0" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+
+    <!-- 増の棒 (薄い方) -->
+    <rect x="216" y="136" width="96" height="80" fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <rect x="360" y="88" width="96" height="48" fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+
+    <!-- 減の棒 (濃い方。色相は増と同じ) -->
+    <rect x="504" y="88" width="96" height="32" fill="rgba(67, 67, 108, 0.20)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+    <rect x="648" y="120" width="96" height="16" fill="rgba(67, 67, 108, 0.20)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+
+    <!-- 終了棒 (着地点 = 焦点) -->
+    <rect x="792" y="136" width="96" height="320" fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+
+    <!-- 橋渡し兼累計線 (データ線。棒間は水平・棒の上は累計の傾き) -->
+    <polyline points="168,216 216,216 312,136 360,136 456,88 504,88 600,120 648,120 744,136 792,136"
+              fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" stroke-dasharray="8 4"/>
+
+    <!-- 値ラベル (棒の外に置く。16px は開始と着地の 2 本だけ) -->
+    <text x="120" y="204" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">120</text>
+    <text x="264" y="124" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">+40</text>
+    <text x="408" y="76" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">+24</text>
+    <text x="552" y="76" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">−16</text>
+    <text x="696" y="108" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">−8</text>
+    <text x="840" y="124" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">160</text>
+
+    <!-- 項目ラベル -->
+    <text x="120" y="484" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">前期売上</text>
+    <text x="264" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">新規顧客</text>
+    <text x="408" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">単価改定</text>
+    <text x="552" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">解約</text>
+    <text x="696" y="484" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">縮小</text>
+    <text x="840" y="484" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">当期売上</text>
+
+    <!-- 色と線種の凡例 (I3。3 つの色役割と 1 本の破線が何を指すかを図内で定義する) -->
+    <text x="64" y="516" font-size="12" fill="var(--fuji-gray, #8a8980)">凡例  白抜き = 期首と期末の実績 ／ 薄い棒 = 増 ／ 濃い棒 = 減 ／ 破線は累計の推移</text>
+
+    <!-- 出所と対象期間 (I1。値ラベルと重ならない図の下端右へ置く) -->
+    <text x="928" y="516" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">2025年度 → 2026年度・連結・為替影響込み</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="d-waterfall-caption" class="srg-diagram__caption">
+    左端の前期売上から右端の当期売上まで、破線を目で追ってほしい。四本の中間の棒がその差を作っており、下向きの二本は同じ濃さで揃えてある。
+  </figcaption>
+
+</figure>

@@ -444,9 +444,9 @@
 
 | 用途 | CSS変数 |
 |------|---------|
-| 大きいアイコン | `var(--fs-icon-lg)` |
-| 中サイズアイコン | `var(--fs-icon-md)` |
-| 小さいアイコン | `var(--fs-icon-sm)` |
+| 大きいアイコン | `var(--fs-icon-lg, var(--fs-heading))` |
+| 中サイズアイコン | `var(--fs-icon-md, var(--fs-body-lg))` |
+| 小さいアイコン | `var(--fs-icon-sm, var(--fs-small))` |
 
 ---
 
@@ -460,11 +460,11 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--bg-dim);
+  background: var(--bg-dim, #F5F5F5);
 }
 
 .icon-wrapper i {
-  font-size: var(--fs-icon-md);
+  font-size: var(--fs-icon-md, var(--fs-body-lg));
   color: var(--wave-blue);
 }
 

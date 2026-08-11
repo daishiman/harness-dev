@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C19",
+  "component_kind": "sub-agent",
+  "name": "report-composer",
+  "builder": "run-build-skill",
+  "build_target": "plugins/slide-report-generator/agents/report-composer.md",
+  "status": "success",
+  "summary": "report-composer へ report 版の図解手順 (決定論/手書き二択・skeleton-report.html 転写・§D-4-2 キャプション規約) と参照リソース表を配線した (agent アダプタ + prompts/R3-agent-report-composer.md)。",
+  "deviations": [],
+  "evidence": [
+    "plugins/slide-report-generator/agents/report-composer.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R3-agent-report-composer.md"
+  ],
+  "inputs_consumed": [
+    "eval-log/slide-report-generator/build/route-C18.json",
+    "eval-log/slide-report-generator/build/route-C25.json"
+  ],
+  "handover": "配線はポインタのみ (アダプタ規約維持)。数値の正本は diagram-layout-contract.md、色の正本は svg-kit.cjs/style-builder.cjs。",
+  "covered_task_ids": [
+    "P02-C19-01",
+    "P02-C19-02",
+    "P02-C19-03",
+    "P02-C19-04",
+    "P02-C19-05",
+    "P02-C19-06",
+    "P02-C19-07",
+    "P02-C19-08",
+    "P02-C19-09",
+    "P02-C19-10",
+    "P04-C19-01",
+    "P04-C19-02",
+    "P04-C19-03",
+    "P04-C19-04",
+    "P04-C19-05",
+    "P04-C19-06",
+    "P04-C19-07",
+    "P05-C19-01",
+    "P05-C19-02",
+    "P05-C19-03",
+    "P05-C19-04",
+    "P05-C19-05",
+    "P05-C19-06",
+    "P05-C19-07",
+    "P05-C19-08",
+    "P05-C19-09",
+    "P05-C19-10",
+    "P05-C19-11",
+    "P05-C19-12",
+    "P06-C19-01",
+    "P06-C19-02",
+    "P07-C19-01",
+    "P07-C19-02",
+    "P07-C19-03",
+    "P07-C19-04",
+    "P07-C19-05",
+    "P07-C19-06",
+    "P07-C19-07",
+    "P09-C19-01",
+    "P09-C19-02",
+    "P09-C19-03",
+    "P09-C19-04",
+    "P09-C19-05"
+  ],
+  "artifact_sha256": "5a83a5a933b6326866a6f73b1ead1b40d7bfa969e9b52fa364aabb802440586f",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:25:13Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/lint-contract-drift.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py plugins/slide-report-generator/agents/report-composer.md",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    }
+  ]
+}

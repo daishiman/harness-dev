@@ -26,13 +26,13 @@
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
-      "scenario_id": "C19-OUT1-positive-system-spec-lineage",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
+      "scenario_id": "C19-OUT1-failclosed-system-spec-lineage",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260713T090000-r3/out/status.json"
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20260812T020000-r8/out/status.json"
       ],
-      "observed": "Live-trial verdict overall=PASS (launch=PASS, completion=PASS, goal_fit=PASS, verdict=PASS), actual_model=[claude-opus-4-6], transcript_layer=jsonl, transcript_sha256 present, downgrade_reason=null, tier=live. Positive lineage scenario '--repo-root .../r3-system-spec' drove system-spec-harness's 4 entry points via qualified Skill calls; the imported specification/architecture retained source_lineage(origin_kind/plugin/path/version/digest/imported_at), confirmed status, and evaluator evidence, registered only through C02 with no duplicated elicit/compile logic in dev-graph (out/status.json scenario=system-spec-positive-lineage status=PASS)."
+      "observed": "Re-ran live (run 20260812T020000-r8) after the dev-graph manifest bump invalidated the prior behavior-closure digest. An independent fresh evaluator confirmed from the transcript tool_results that run-system-spec-elicit, run-system-spec-doc-fetch, run-system-spec-compile and assign-system-spec-completeness-evaluator (twice, forked) each actually loaded via 'Launching skill' with no Unknown skill and no fallback re-implementation, against harness version 0.1.2 inside the declared >=0.1.0 <1.0.0 range with all four required entry points present in the package contract. Re-running validate-coverage-matrix.py --require-complete --require-foundation and validate-source-citation.py both gave exit 0. Both completeness-findings.json and its iter2 record verdict FAIL, and the fixture repo shows an empty git diff HEAD with nodes=0 in both graphs, so the fail-closed path correctly refused to import; validate-graph-schema.py exits 0 on both. specs/ and architecture/ were never created, all Write/Edit calls target scratchpad or out/status.json, and out/ holds that single file. No writes landed under plugins/dev-graph. The loop used 2 of its 3 allowed iterations, actually exercised the input-side injections (R4-reopen, set-decision, set-knowledge-candidate) to flip design_knowledge_reflection from FAIL to PASS, and reported the remaining blocker together with the evidence that it is not movable from the input side and its owner. The goal-seek verification script was re-run independently with 3 rows and matching hashes. verdict.json records overall+goal PASS, tier=live, downgrade_reason null."
     }
   }
 }

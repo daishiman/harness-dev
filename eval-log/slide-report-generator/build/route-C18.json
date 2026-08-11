@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "slide-report-generator",
+  "route_id": "C18",
+  "component_kind": "sub-agent",
+  "name": "visual-strategist",
+  "builder": "run-build-skill",
+  "build_target": "plugins/slide-report-generator/agents/visual-strategist.md",
+  "status": "success",
+  "summary": "visual-strategist へ「型選定と面内配置の接続 (R9 配置契約)」を配線した (§D-4-4 の配置形→placement 写像・focalPoint と強調要素の一致・複雑度予算超過は面積拡大で解消・占有率見積りを rationale に記録)。",
+  "deviations": [],
+  "evidence": [
+    "plugins/slide-report-generator/agents/visual-strategist.md",
+    "plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md"
+  ],
+  "inputs_consumed": [
+    "eval-log/slide-report-generator/build/route-C17.json"
+  ],
+  "handover": "配線はポインタのみ (アダプタ規約維持)。数値の正本は diagram-layout-contract.md、色の正本は svg-kit.cjs/style-builder.cjs。",
+  "covered_task_ids": [
+    "P02-C18-01",
+    "P02-C18-02",
+    "P02-C18-03",
+    "P02-C18-04",
+    "P02-C18-05",
+    "P02-C18-06",
+    "P02-C18-07",
+    "P02-C18-08",
+    "P02-C18-09",
+    "P02-C18-10",
+    "P04-C18-01",
+    "P04-C18-02",
+    "P04-C18-03",
+    "P04-C18-04",
+    "P04-C18-05",
+    "P04-C18-06",
+    "P04-C18-07",
+    "P05-C18-01",
+    "P05-C18-02",
+    "P05-C18-03",
+    "P05-C18-04",
+    "P05-C18-05",
+    "P05-C18-06",
+    "P05-C18-07",
+    "P05-C18-08",
+    "P05-C18-09",
+    "P05-C18-10",
+    "P05-C18-11",
+    "P05-C18-12",
+    "P06-C18-01",
+    "P06-C18-02",
+    "P07-C18-01",
+    "P07-C18-02",
+    "P07-C18-03",
+    "P07-C18-04",
+    "P07-C18-05",
+    "P07-C18-06",
+    "P07-C18-07",
+    "P09-C18-01",
+    "P09-C18-02",
+    "P09-C18-03",
+    "P09-C18-04",
+    "P09-C18-05"
+  ],
+  "artifact_sha256": "f3ee730439d11dda4179338f3bfc012e5d7e39f6d2273dea8a5cdb0b09a4fd3d",
+  "graph_hash": "sha256:26eec2ec144f9ab6b234bc274a7f8ce8b85894d63fdd7127515662644566d873",
+  "generated_at": "2026-08-09T22:25:13Z",
+  "tool_versions": {
+    "python3": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/lint-contract-drift.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py plugins/slide-report-generator/agents/visual-strategist.md",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    },
+    {
+      "command": "python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "started_at": "2026-08-09T22:22:13Z",
+      "completed_at": "2026-08-09T22:24:13Z"
+    }
+  ]
+}

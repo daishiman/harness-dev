@@ -32,6 +32,13 @@ system-dev-planner の 1 run は、dev-graph が管理する **1つの feature**
 
 別の「13 lifecycle phase documents」は生成しない。13 task specs自体がlifecycleを実行する。各taskは同じ`feature_package_id`と`parent_feature`を持つ。
 
+### 2.1 登録先 file_path の命名規約 (feature 単位 namespace)
+
+- `graph_node_registration.file_path` は **`tasks/<parent_feature>/<task-id小文字>.md`** とする (例: `tasks/feat-hub-foundation/sys-hub-foundation-p01.md`)。`tasks/` 直下へのフラット配置は禁止。
+- 根拠: 複数 feature を並列で分解・登録・実行する際に、`tasks/` 直下の混在を防ぎ、feature 単位でファイル群・resource_scope・worktree の境界を一致させるため。
+- 機械検査: validate-system-plan.py (`registration-file-path`) と promote-system-plan.py が `tasks/<parent_feature>/` 接頭辞を強制し、dev-graph 側 register-package.py も `parent_feature` を持つ node へ同一検査を行う (defense in depth)。`parent_feature=null` の fast-path task はこの規約の対象外。
+- legacy 例外: 本規約導入 (2026-07-17) 以前に登録済みの `feat-hub-foundation` package 13 件はフラット配置のまま。移行は C02 (run-dev-graph-node update) 経由の follow-up とする。
+
 ## 3. 13 taskの固定写像
 
 | phase_ref | task responsibility |

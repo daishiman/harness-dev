@@ -10,7 +10,7 @@
 | 4条件 | 矛盾なし / 漏れなし / 整合性あり / 依存関係整合 の横断品質判定軸 | C1〜C15・判定マトリクス |
 | C1〜C15 | 構造的整合性・コンテンツ一貫性・技術的品質の15検証項目 | 4条件・Agent A/B/C |
 | shared-spec | 全 structure.md が共有すべき共通仕様セクション（SVG設計/A4印刷/スライドタイプ定義/コードブロック/GSAP/フォント） | SR-ID・C1 |
-| SR-ID | `$CLAUDE_PLUGIN_ROOT/references/spec-registry.md` が定める共通仕様の正本ID | C1（shared-spec一致） |
+| SR-ID | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` が定める共通仕様の正本ID | C1（shared-spec一致） |
 | P0/P1/P2 | 修正優先度（P0即時修正・P1要判断・P2将来改善） | 修正提案リスト |
 | 3レンズ多角分析 | Agent A（論理・構造）/ B（メタ・発想）/ C（システム・戦略）への観点分担。単一 fork context 内で3レンズを順に適用し、再 fork（SubAgent 起動）はしない | 30種思考法・CONST_002 |
 

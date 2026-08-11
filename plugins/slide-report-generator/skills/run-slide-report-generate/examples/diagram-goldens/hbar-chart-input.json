@@ -1,0 +1,36 @@
+{
+  "diagramId": "f-hbar-chart",
+  "type": "hbar-chart",
+  "surface": "report",
+  "figureWidth": "text",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "reference": "references/chart-types.md §13.2 横棒グラフ",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 360", "tier": "sm" },
+  "title": "解約理由の内訳",
+  "message": "解約理由は分散しておらず、価格に関する回答が二位以下を大きく引き離している。",
+  "scale": { "min": 0, "max": 100, "unit": "%", "basis": "解約時アンケートの回答率", "direction": "上ほど多い" },
+  "provenance": {
+    "period": "2026/1",
+    "definition": "解約時アンケート (解約手続き完了時に自動送信)",
+    "answerMode": "複数回答",
+    "n": 312,
+    "responseRate": "58%",
+    "note": "複数回答のため合計は 238% になる"
+  },
+  "bars": [
+    { "label": "価格が高い", "value": 68, "style": "focal" },
+    { "label": "使いこなせない", "value": 54, "style": "plain" },
+    { "label": "他社へ乗り換え", "value": 41, "style": "plain" },
+    { "label": "担当者の異動", "value": 33, "style": "plain" },
+    { "label": "機能が不足", "value": 27, "style": "plain" },
+    { "label": "その他", "value": 15, "style": "plain" }
+  ],
+  "sort": "値の大きい順",
+  "emphasis": {
+    "focal": ["価格が高い"],
+    "reason": "6 本は同一系列の項目なので色を塗り分けない。系列色を項目ごとに配ると順位ではなく分類に見える。焦点は本文が語る 1 本だけ"
+  },
+  "annotations": [],
+  "caption": "多い順に上から並べてある。項目名を読む前に、いちばん上の帯と二番目の帯の長さの差を見てほしい。そこがこの調査の結論である。"
+}

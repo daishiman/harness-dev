@@ -1,0 +1,141 @@
+<!--
+  journey-map-golden.html — ゴールデン実例: ユーザージャーニーマップ型 (report 骨格)
+
+  入力: journey-map-input.json
+  骨格: assets/diagram-templates/diagram-skeleton-report.html
+  参照: references/diagram-extended.md §11.42 ユーザージャーニーマップ型
+  契約: references/diagram-layout-contract.md 第 4 次 update §D-1 / §D-2 #3 / §D-3 原則 1 / §D-4
+  検証: python3 plugins/slide-report-generator/scripts/validate-svg-diagram.py --check-grid --strict journey-map-golden.html
+
+  フェーズ列は 192 幅 4 列 (境界 160 / 352 / 544 / 736 / 928)、行ラベル列は左 128。
+  行は 行動 (104-176) / 感情 (200-320) / 接点 (336-408) の 3 段で、
+  どの行も同じ列境界を共有する。列境界がずれると「同じフェーズの話」に読めなくなる。
+
+  感情の推移線はデータ線なので、§D-3 原則 1 (斜め線禁止) の対象外である。
+  原則 1 が禁じているのはノード間を結ぶコネクタの斜めであって、量や気分の推移を
+  形にした線ではない。line-chart-golden.html と同じ作法で <polyline> を使う
+  (D5 は <line>、D17 は矢じり付き/塗り無しの <path> を見る検査で、どちらも polyline を見ない)。
+
+  焦点は谷 1 つと、その真下の接点セル 1 つの 2 件に限ってある。
+  4 フェーズすべての感情に色を付けると、線の形が語っている順位が消える。
+-->
+<figure class="srg-diagram srg-diagram--report"
+        data-diagram-id="f-journey"
+        data-figure-width="text">
+
+  <svg viewBox="0 0 960 540"
+       xmlns="http://www.w3.org/2000/svg"
+       role="img"
+       aria-labelledby="f-journey-caption">
+
+    <defs>
+      <marker id="f-journey-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+      </marker>
+      <marker id="f-journey-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+      </marker>
+      <marker id="f-journey-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+      </marker>
+    </defs>
+
+    <!-- ===== EDIT: 図解本体 ここから ===== -->
+
+    <!-- フェーズ見出しと列の下端 -->
+    <text x="256" y="68" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">気づく</text>
+    <text x="448" y="68" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">調べる</text>
+    <text x="640" y="68" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">試す</text>
+    <text x="832" y="68" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">決める</text>
+    <line x1="160" y1="88" x2="928" y2="88" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 列の境界 (行をまたいで同じ位置に立てる) -->
+    <line x1="352" y1="88" x2="352" y2="408" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="544" y1="88" x2="544" y2="408" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="736" y1="88" x2="736" y2="408" stroke="#DCD7BA" stroke-width="1.25"/>
+
+    <!-- 行ラベル -->
+    <text x="144" y="144" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">行動</text>
+    <text x="144" y="264" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">感情</text>
+    <text x="144" y="376" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">接点</text>
+
+    <!-- 行動の行 -->
+    <g>
+      <rect x="168" y="104" width="176" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="256" y="136" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">検索から流入</text>
+      <text x="256" y="160" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">比較記事経由</text>
+    </g>
+    <g>
+      <rect x="360" y="104" width="176" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="448" y="136" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">条件を自力で照合</text>
+      <text x="448" y="160" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">資料を往復</text>
+    </g>
+    <g>
+      <rect x="552" y="104" width="176" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="640" y="136" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">無料枠で試す</text>
+      <text x="640" y="160" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">2 週間</text>
+    </g>
+    <g>
+      <rect x="744" y="104" width="176" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
+      <text x="832" y="136" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">見積を依頼</text>
+      <text x="832" y="160" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">稟議へ</text>
+    </g>
+
+    <!-- 感情の行: 中立の基準線 (この線が無いと上下が相対値にしか読めない) -->
+    <line x1="160" y1="260" x2="928" y2="260" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <text x="152" y="252" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">中立</text>
+
+    <!-- 感情の推移線 (データ線。polyline で描く。§D-3 原則 1 の斜め線禁止の対象外) -->
+    <polyline points="256,288 448,304 640,232 832,216"
+              fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- 各フェーズの気分。谷 (調べる) だけが焦点 -->
+    <circle cx="256" cy="288" r="4" fill="var(--fg-dim, #54546d)"/>
+    <circle cx="448" cy="304" r="6" fill="var(--sakura-pink, #D27E99)"/>
+    <circle cx="640" cy="232" r="4" fill="var(--fg-dim, #54546d)"/>
+    <circle cx="832" cy="216" r="4" fill="var(--fg-dim, #54546d)"/>
+
+    <text x="256" y="312" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">半信半疑</text>
+    <text x="448" y="328" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">面倒</text>
+    <text x="640" y="216" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">手応え</text>
+    <text x="832" y="200" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">納得</text>
+
+    <!-- 接点の行 (谷の真下だけが焦点) -->
+    <g>
+      <rect x="168" y="336" width="176" height="72" rx="6" fill="#F8F7F0"/>
+      <text x="256" y="368" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">比較記事</text>
+      <text x="256" y="392" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">自社の管理外</text>
+    </g>
+    <g>
+      <rect x="360" y="336" width="176" height="72" rx="6"
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+      <text x="448" y="368" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">料金ページ</text>
+      <text x="448" y="392" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">条件の記述が分散</text>
+    </g>
+    <g>
+      <rect x="552" y="336" width="176" height="72" rx="6" fill="#F8F7F0"/>
+      <text x="640" y="368" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">無料トライアル</text>
+      <text x="640" y="392" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">初期設定ガイド</text>
+    </g>
+    <g>
+      <rect x="744" y="336" width="176" height="72" rx="6" fill="#F8F7F0"/>
+      <text x="832" y="368" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">営業担当</text>
+      <text x="832" y="392" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">見積フォーム</text>
+    </g>
+
+    <!-- 読み方 (I3 凡例 / I4 軸) ・依存 (I-TIME) ・所要と出所 (I1) -->
+    <text x="40" y="446" font-size="12" fill="var(--fg-dim, #54546d)">横は時間の流れ (左が先・右が後)、縦は感情の高低で破線が中立。各フェーズは前段の完了を前提に進む。</text>
+    <text x="40" y="468" font-size="12" fill="var(--fg-dim, #54546d)">所要日数の中央値: 気づく 7 日 → 調べる 14 日 → 試す 14 日 → 決める 21 日。</text>
+    <text x="40" y="490" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 2026/1-6 に受注した 42 社の行動ログとインタビュー実測 (n=42 社・単一回答)。</text>
+
+    <!-- ===== EDIT: 図解本体 ここまで ===== -->
+
+  </svg>
+
+  <figcaption id="f-journey-caption" class="srg-diagram__caption">
+    <span class="srg-diagram__label">図 5</span>
+    上段の行動を左から追い、中段の線がどこで最も下がるかを見てほしい。谷の真下にある接点が、今いちばん手を入れる価値のある場所である。
+  </figcaption>
+
+</figure>

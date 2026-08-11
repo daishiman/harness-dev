@@ -273,7 +273,7 @@
 
     "visual": {
       "type": "object",
-      "description": "1項目1ビジュアル。kind は SVG図解 / Mermaid / Codex生成画像 / なし の三択（＋none）で、visual-strategist が内容適合で最適化する。spec の形は kind により分岐する（allOf if/then）。",
+      "description": "1項目1ビジュアル。kind は SVG図解 / Mermaid / Codex生成画像 / なし の三択（＋none）で、visual-strategist が内容適合で最適化する。spec の形は kind により分岐する（allOf if/then）。図種選定の正本は visual-derivation-table.json（section.body[] の block 型から機械的に variant を引く決定表）であり、visual をここで明示指定することは決定表の上書きにあたる。上書きしてよいのは kind を非 none で明示する場合のみで、そのとき rationale は必須となり（下の allOf 条件付き必須）、決定表の何行目（R01..R14）をなぜ上書きしたかを記録する。",
       "required": ["kind"],
       "additionalProperties": false,
       "properties": {
@@ -282,7 +282,7 @@
         "layout": { "$ref": "#/$defs/placement" },
         "caption": { "type": "string", "maxLength": 200 },
         "alt":     { "type": "string", "maxLength": 200 },
-        "rationale": { "type": "string", "maxLength": 240, "description": "この kind を選んだ根拠（visual-strategist の三択判断の記録）。" }
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 240, "description": "この kind を選んだ根拠（visual-strategist の三択判断の記録）。visual-derivation-table.json の override 規則により、kind を非 none で明示指定した場合は必須となり、決定表の該当行 ID（例: 『R10 を上書き: 箇条書きより工程の順序を示すべき節のため』）を含めること。行 ID を書かない上書きは、決定表を読まずに図種を決めた証拠として扱う。" }
       },
       "allOf": [
         {
@@ -296,6 +296,12 @@
         {
           "if": { "properties": { "kind": { "const": "codex-image" } }, "required": ["kind"] },
           "then": { "properties": { "spec": { "$ref": "#/$defs/aiVisualSpec" } }, "required": ["spec"] }
+        },
+        {
+          "title": "決定表の上書きには理由の記録を要求する",
+          "description": "kind が非 none で明示指定された visual は visual-derivation-table.json の導出結果を上書きするため、rationale を必須にする。kind=none（＝決定表の R14 と同じ結論）と visual 自体の省略は従来どおり rationale 不要で、既存の必須フィールドは増やしていない。",
+          "if": { "properties": { "kind": { "enum": ["svg", "mermaid", "codex-image"] } }, "required": ["kind"] },
+          "then": { "required": ["rationale"] }
         }
       ]
     },
@@ -307,12 +313,16 @@
       "additionalProperties": false,
       "properties": {
         "variant": {
+          "description": "図種。選定の正本は visual-derivation-table.json（body[] の block 型から機械的に引く決定表）で、ここに明示するのはその上書き。末尾 10 種（swimlane / architecture / data-flow / er / sequence / state / it-state / medallion / high-level / dp-integration）は svg-structures.cjs の構造図ビルダーを report へ開放したもので、Mermaid にも既存 variant にも等価物が無い構造を受けるために追加した。render-report.js はこの 10 種を VARIANT_STRUCT で dispatch 済みで、共通コア（nodes[]/edges[]/groups[]）を各ビルダーの引数へ射影して描く。射影は groups[] を層／レーン／行、node.group をその所属、edges[] を関係（relations / messages / transitions / 昇格）として読む。素材が足りない場合（例: it-state で groups[] が無い、sequence で edges[] が無い）は空の図を描かず『図にできる素材がありません』フォールバックへ倒れる。",
           "type": "string",
           "enum": [
             "tree", "mindmap", "flow", "cycle", "pyramid", "matrix", "venn",
             "network", "timeline", "roadmap", "chevron", "funnel",
             "org", "concentric", "value-stack", "snake", "wave-step",
-            "comparison", "slope", "butterfly", "stepper", "custom"
+            "comparison", "slope", "butterfly", "stepper", "custom",
+            "swimlane", "architecture", "data-flow",
+            "er", "sequence", "state", "it-state", "medallion",
+            "high-level", "dp-integration"
           ]
         },
         "viewBox": { "$ref": "#/$defs/svgViewBox" },
@@ -329,6 +339,31 @@
         "groups": {
           "type": "array",
           "items": { "$ref": "#/$defs/diagramGroup" }
+        },
+        "source": { "type": "string", "maxLength": 120, "description": "図が使った数値の出所。図の**内側**下端へ 1 行で描かれる。figcaption に書いた出所は図だけ引用された瞬間に消えるので、根拠は図と同じ矩形の中に置く (情報契約 §I1)。例: 社内請求実績・重複除外後 n=214" },
+        "asOf": { "type": "string", "maxLength": 60, "description": "データの時点・期間。相対表記にしない (「4月」ではなく「2026/4」)。source と併記され「・」で連結される。" },
+        "legend": {
+          "type": "object",
+          "description": "凡例の明示。ビルダーが自前で作る凡例は塗り分けしか説明できないので、線種で意味を分けた図はここで宣言する。図の下へ帯として追加され、既存レイアウトへは干渉しない。",
+          "required": ["items"],
+          "additionalProperties": false,
+          "properties": {
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": {
+                "type": "object",
+                "required": ["label"],
+                "additionalProperties": false,
+                "properties": {
+                  "label": { "type": "string", "minLength": 1, "maxLength": 24 },
+                  "kind": { "type": "string", "enum": ["fill", "line", "dashed", "double", "thick"], "default": "fill", "description": "見本の形。fill=塗りの四角 (分類色)、line/dashed/double/thick=線 (関係の種類)。線で意味を分けた図に fill の凡例を出しても読み解けない。" },
+                  "color": { "type": "string", "maxLength": 60, "description": "任意。省略時は fill なら muted、線なら ink。色で意味を分けていない凡例に色を書かないためのオプション。" }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -506,7 +541,8 @@
         },
         "shape":    { "type": "string", "enum": ["rect", "round", "circle", "hex", "diamond", "card"], "default": "rect" },
         "emphasis": { "type": "string", "enum": ["normal", "highlight", "muted", "warning"], "default": "normal" },
-        "group":    { "type": "string", "description": "diagramGroup.id への参照。" }
+        "group":    { "type": "string", "description": "diagramGroup.id への参照。" },
+        "role":     { "type": "string", "enum": ["core", "center", "hub", "legend", "note", "title", "caption"], "description": "線を持たないことが正しい節点の宣言。輪の中心・凡例・注記など。孤立節点検査 (I-REL-ISO) の免除はこのキーだけを根拠にする。id の綴りは識別子であって宣言ではないので免除に使わない。" }
       }
     },
 

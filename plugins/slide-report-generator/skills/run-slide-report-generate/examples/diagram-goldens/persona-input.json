@@ -1,0 +1,46 @@
+{
+  "diagramId": "f-persona",
+  "type": "persona",
+  "surface": "report",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-report.html",
+  "figureWidth": "text",
+  "reference": "references/diagram-comparison.md §11.10 ペルソナ型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 960 540", "step": "md" },
+  "title": "導入を決めるのは誰か",
+  "message": "決裁するのは現場の担当ではなく、締め日に追われている管理職である。",
+  "nodes": [
+    { "id": "who", "label": "経理課長", "sub": "中堅製造業・従業員300名", "style": "plain" },
+    {
+      "id": "sec1",
+      "label": "置かれている状況",
+      "style": "plain",
+      "items": ["月次決算は8営業日", "経理は4名体制", "会計システムは10年もの", "決裁は月1回の役員会"]
+    },
+    {
+      "id": "sec2",
+      "label": "困っていること",
+      "style": "focal",
+      "items": ["締め日の直前に差分が出る (月に3〜5件)", "原因の追跡が1名に寄っている (1件あたり2時間)"]
+    },
+    {
+      "id": "sec3",
+      "label": "導入前に確かめること",
+      "style": "plain",
+      "items": ["既存の会計システムと繋がるか (判断は2026/6の役員会まで)", "担当が替わっても回るか (試用は2週間以内で)"]
+    }
+  ],
+  "provenance": "2026/2 に同業4社の経理課長へ聞き取り (n=4)",
+  "legend": [
+    { "mark": "色", "means": "今回の提案で動かせる範囲" }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["sec2"],
+    "reason": "本文がこれから語る対象は困りごとの側。属性と確認事項は背景として muted に残す"
+  },
+  "annotations": [
+    { "text": "稟議は月に1度しか通せない", "anchor": "sec3" }
+  ],
+  "caption": "左の人物像から読み始め、右の三つの枠を上から下へたどってほしい。真ん中の枠だけが、この提案で直接動かせる範囲である。"
+}

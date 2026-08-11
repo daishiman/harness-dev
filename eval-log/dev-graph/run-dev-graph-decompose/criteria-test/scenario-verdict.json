@@ -26,13 +26,13 @@
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
-      "scenario_id": "decompose-macro-positive-r3",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260713T090000-r3/verdict.json",
+      "scenario_id": "decompose-macro-positive",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260713T090000-r3/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260812T020000-r8/verdict.json",
         "independent: r3 tmux live run transcript.jsonl (145 records, model claude-opus-4-6) + pane.txt + out/status.json"
       ],
-      "observed": "The r3 live run (Claude Code v2.1.62, Opus 4.6, bypassPermissions, ~9m self-driven, 0 nudges/0 gate responses) invoked dev-graph:run-dev-graph-decompose with --dry-run on the macro-positive scenario. The transcript shows the skill genuinely executed resolve-repo-context.py, computed the pre-existing graph_digest e49f6b1f... with node_count=1, ran GOAL-SEEK VERIFICATION: PASS, and emitted only draft preview with no local/Beads/GitHub/Projects write; the source graph digest stayed unchanged (no direct C02 add). out/status.json recorded {\"status\":\"PASS\",\"scenario\":\"decompose-macro-positive\"} and the agent ended DONE: PASS. verdict.json overall=PASS, goal_verdict=PASS, tier=live, downgrade_reason=null, transcript_sha256 52fbefc2..., skill_dir_tree_sha 046f7725...."
+      "observed": "Re-ran live (run 20260812T020000-r8) after the dev-graph manifest bump invalidated the prior behavior-closure digest. An independent fresh evaluator re-derived the preview graph from scratch: preview-graph.json holds exactly 3 nodes (arch-auth-todo-api / feat-authentication / feat-todo), a self-implemented DFS found 0 cycles and 0 dangling refs, and feat-todo.depends_on == [feat-authentication] matches the requested dependency. artifact_kind is limited to architecture|feature with phase_ref / parent_feature / feature_package_id all null and no tasks/ paths, so no task-grain leakage occurred. Every node is draft preview (status=draft, confirmation_status=draft, evaluation_status=pending, tracker_binding=none, mode=local_only) with issue/beads/project linkage empty. validate-graph-schema.py re-run on a copy reports only artifact_missing x3 (expected under --dry-run) and 0 missing required keys. The fixture graph digest is unchanged versus git show HEAD:, git status is clean and no .git/dev-graph was created. Scanning every transcript tool_use found 0 gh / bd / bridge / register-package calls and 0 writes into the fixture repo, and 0 C02 direct registrations (commit_applied=false). verdict.json records overall+goal PASS, tier=live, downgrade_reason null."
     },
     "OUT2": {
       "status": "PASS",

@@ -1,0 +1,381 @@
+{
+  "$schema": "slide-report-generator/visual-derivation-table.schema.json",
+  "$id": "slide-report-generator/visual-derivation-table.json",
+  "title": "図種導出決定表（report）",
+  "description": "report-structure.json の section.body[] から svg 図種（variant）を決める唯一の正本。rows[] を order 昇順に評価し、predicate が全て成立し capacity 内に収まった最初の行を採用する（first-match-wins）。左列は body[] の block 型そのもの（bodyBlock.type の 13 値）と 1.0.0 互換の paragraphs[] だけで、『節の論理構造を一語化した名前』は左列に置かない。一語化は LLM の解釈であり、同じ節でも呼ぶたびに結果が変わる＝非決定論の発生源だからである。優先順位の根拠: (1) 分割子である subheading を最優先で処理する。図の対象範囲が確定しないと以降の行の count がそもそも定まらない。(2) 量の対比（stat-tile→bar）を構造行より上に置く。数値は読者が最も速く比較できる情報であり、同じ節に箇条書きと統計が併存する場合、箇条書きを図にすると数値という強い情報を図から落とすことになる。(3) 表（table）は列見出しという明示的な構造メタを持つ唯一のブロックで、機械判定の確度がリストより高いので次に置く。(4) 順序を持つ ordered-list / task-list は並列の bullet-list より情報量が多い（順序は捨てると復元できない）ため先に評価する。(5) definition-list は用語↔定義の対で、bullet-list より意味の粒度が揃っているため先に置く。(6) 自由文の段落は構造化ブロックが一つも無いときの最後の手段であり、抜き出した文を並べるだけで矢印を描かない。(7) どの行にも当たらなければ必ず kind=none に落ちる。図解の被覆率より、図と本文が一致していることを優先する（diagram-layout-contract §3）。容量超過（capacity 超え）とラベル不採用（conciseLabel が null）はいずれも『その行が不成立』として次行へ落とす。切り詰めて載せる行は本表に存在しない（同 §2/§3）。なお構造図 10 種（architecture / data-flow / swimlane / er / sequence / state / it-state / medallion / high-level / dp-integration）のうち swimlane だけは table の列見出しから機械判定できるため導出行（R05）を持つ。残る 9 種は body[] から機械導出できる形を持たないため導出行を置かない。ただし未配線という意味ではなく、report-structure.schema.json の enum と render-report.js の VARIANT_STRUCT dispatch には 10 種すべてが載っており、override（明示指定）経由でのみ選ばれる。",
+  "version": "1.0.0",
+  "appliesTo": "slide-report-generator/report-structure.schema.json#/$defs/visual",
+  "implementedBy": [
+    "vendor/scripts/render-report.js#deriveVisualFromBody",
+    "skills/run-slide-report-generate/prompts/R2-agent-visual-strategist.md"
+  ],
+
+  "definitions": {
+    "labelable": {
+      "description": "図解へ 1 行ラベルとして載せられること。conciseLabel() が null を返さないことと同義。判定は 3 段: (1) 空白正規化・インラインコード除去・強調記号除去した文字列の第 1 文だけを候補にする（句点で切る。これは要約でなく選択）。(2) 第 1 文、または第 1 文より後ろに逆接・留保語を含むなら不採用（日本語は述部が末尾に来るため、切ると否定や条件が落ちて図が本文と逆の主張になる）。(3) 候補が 28 字を超えるなら不採用（切り詰めない・載せない）。1 要素でも不採用なら、その行は不成立として次行へ落ちる。部分的に載せると読者は図を全体像だと信じてしまうため、全部載るか作らないかの二択にする。",
+      "expression": "conciseLabel(text) !== null  where  s = String(text).replace(/\\s+/g,' ').replace(/`[^`]*`/g,'').replace(/\\*\\*|__|\\*|_/g,'').trim(); sents = splitSentences(s); head = (sents[0] ?? s).replace(/[。！？]$/,''); RESERVATION_RE = /(ただし|ただ、|しかし|一方|とはいえ|ものの|except|however)/; null if (!s) || (sents.length>1 && RESERVATION_RE.test(s.slice(sents[0].length))) || RESERVATION_RE.test(head) || head.length>28",
+      "source": "vendor/scripts/render-report.js:795-817 (conciseLabel) / :830-838 (labelsOf)",
+      "notes": [
+        "splitSentences は括弧の内側の句点では切らない（render-report.js の同名関数と同一実装を使うこと）。",
+        "半角ピリオドは語中と区別できないため文末記号に含めない。",
+        "predicate.label_max_length を持つ行は、28 字に加えてビルダー側のより厳しい上限も満たす必要がある。"
+      ]
+    },
+    "numeric": {
+      "description": "値が量として読めること。'42%' や '1,200 件' のような表記から量だけを取り出し、有限の数値になるかを見る。1 件でも読めなければ棒の長さが嘘になるため、その行は不成立にする（一部だけ棒にしない）。",
+      "expression": "Number.isFinite(parseFloat(String(value).replace(/,/g, '').replace(/[^0-9.\\-]/g, '')))",
+      "source": "vendor/scripts/render-report.js:885",
+      "notes": ["all_numeric = 全要素が真 / any_non_numeric = 1 件以上が偽。両者は排他ではなく、行ごとに必要な側だけを書く。"]
+    },
+    "sentenceSplit": {
+      "description": "第 1 文の切り出し規則。labelable の (1) が依存する。文末は 。！？ とし、開き括弧の深さが 0 のときだけ文末と認める。",
+      "expression": "splitSentences(text)[0]",
+      "source": "vendor/scripts/render-report.js (splitSentences)"
+    },
+    "capacity": {
+      "description": "1 枚に載せられる件数上限。素材数が capacity を超える行は不成立として次行へ落ちる（詰めて載せない）。実効上限は svg-builder.cjs の CAPACITY（幾何から導いた描画側の上限）と、本表の capacity（素材側の上限）の厳しい方。両方に値が無い行は fail-closed で不採用になるため、本表は必ず capacity を持つ。",
+      "expression": "n <= min(CAPACITY[builderName] ?? Infinity, row.capacity ?? Infinity)  かつ 両方が未定義なら不採用",
+      "source": "vendor/scripts/render-report.js (fitsCapacity) / vendor/scripts/svg-builder.cjs (CAPACITY)"
+    }
+  },
+
+  "override": {
+    "rule": "section.visual.kind が既に非 none で明示指定されている場合、その指定が本表に優先する。本表は kind 未指定または kind=none の section にのみ適用される。これが本表における LLM の判断が入る唯一の口である。",
+    "requires": [
+      "visual.rationale を必須とし、そこに『本表の第 N 行（例: R10）を上書きした理由』を書くこと。行 ID を書かない上書きは、本表を読まずに図種を決めた証拠として扱い、レビューで差し戻す。",
+      "上書き後の spec も diagram-layout-contract §2（容量超過は載せない）と §3（ラベルは切り詰めない）に従うこと。",
+      "report-structure.schema.json の visual.rationale は kind を明示指定した場合の条件付き必須（if/then）として定義されている。"
+    ],
+    "rationale": "図種選定の正本が 2 箇所（agent プロンプトの写像表と render-report.js の導出）にあり互いを知らないことが、report の図解が毎回同じ構成にならない直接の原因だった。正本を本表 1 つに寄せ、LLM が介入できる点を『明示指定＋理由の記録』の 1 箇所だけに絞ることで、上書きが起きた事実と根拠が必ず成果物に残る。構造図 10 種のうち swimlane（R05）を除く 9 種は body[] から機械導出できる形を持たないため導出行を持たず、この override 経由でのみ選ばれる。render-report.js 側は VARIANT_STRUCT で 10 種とも dispatch 済みで、素材（nodes[]/edges[]/groups[]）が射影できないときは空の枠を描かず理由テキストへ落ちる。",
+    "forbidden": [
+      "capacity を超える素材を切り詰めて載せる指定（超過分が黙って消え、読者は全部が描かれていると信じる）。",
+      "conciseLabel が null を返すラベルを短縮して載せる指定（否定・条件・留保が落ち、図が本文と逆の主張になる）。",
+      "1 section に 2 つ以上の visual を置く指定（RCONST_003: 1 項目 1 ビジュアル）。"
+    ]
+  },
+
+  "rows": [
+    {
+      "order": 1,
+      "id": "R01",
+      "block": "subheading",
+      "select": "n/a",
+      "predicate": { "has_block": ["subheading"] },
+      "result": {
+        "kind": "recurse",
+        "recurseInto": "slide-report-generator/visual-derivation-table.json"
+      },
+      "status": "implemented",
+      "divergence": "旧実装は subheading をまたいで body.find('bullet-list') を引くため、小見出し A の箇条書きと小見出し B の統計が同じ 1 枚の図に混ざりえた。現行は splitBySubheading で body[] を区切り、evaluateDerivationTable が深さ 1 段だけ再帰する（分割した後は平坦走査へ戻らない）。",
+      "rationale": "subheading は図解の素材ではなく、節を論理的に区切る分割子である。素材として扱うと『小見出しの文字列を並べただけの図』になり、本文が持つ情報を何も伝えない。逆に無視すると、別々の話題に属するブロックが 1 枚の図へ混ざって図が本文と食い違う。したがって最初に body[] を subheading の位置で区切り、各グループへ本表を再適用する。1 項目 1 ビジュアル原則（RCONST_003）を守るため、採用するのは『非 none を返した最初のグループ』1 件のみとする（先頭優先で決定論）。subheading が 1 つも無ければこの行は不成立で、body[] 全体が 1 グループとして以降の行へ進む。",
+      "example": "report-structured-110-example.json / section-turn-based（paragraph → subheading → code → key-point）"
+    },
+    {
+      "order": 2,
+      "id": "R02",
+      "block": "stat-tile",
+      "select": "first",
+      "source": { "field": "stats", "label": "item.label", "value": "item.value" },
+      "predicate": {
+        "count": { "min": 2, "max": 6 },
+        "all_labelable": true,
+        "all_numeric": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "bar",
+        "builder": "buildBarChart",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 6,
+        "capacitySource": "report-structure.schema.json $defs.bodyBlock.stats.maxItems（svg-builder.cjs CAPACITY の buildBarChart=8 は軸ラベル帯の幾何から導いた描画側の上限。素材側の stat-tile は 6 件までなので、厳しい方の 6 を本表の上限にする）"
+      },
+      "status": "implemented",
+      "divergence": "現行実装では stat-tile は ordered-list / task-list / bullet-list の後に評価される。本表では最上位（分割子の次）へ繰り上げる。",
+      "rationale": "stat-tile は label と value の対を持ち、value から量が読めるかを機械判定できる唯一のブロックである。量の対比は箇条書きの並列より情報量が高く、読者が最も速く比較できる。同じ節に統計と箇条書きが併存するとき箇条書きを図にすると、数値という最も強い情報を図から落とすことになる。上限を 6 にしたのは stats[] の schema 上の maxItems が 6 だからで、ビルダー由来の制約ではない。1 件でも数値化できない value があれば棒の長さが嘘になるため、行ごと不成立にして次へ落とす（一部だけ棒にしない）。",
+      "example": "report-structured-120-example.json / section-summary（stats: 工数削減 42% / ROI 3.1x）"
+    },
+    {
+      "order": 3,
+      "id": "R03",
+      "block": "table",
+      "select": "first",
+      "source": { "field": "rows", "label": "row[0]" },
+      "predicate": {
+        "header_count": { "min": 2 },
+        "header_matches": {
+          "patterns": ["(開始|着手|start|from|before)", "(終了|完了|end|to|after)"],
+          "mode": "all",
+          "flags": "i"
+        },
+        "count": { "min": 2, "max": 8 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "timeline",
+        "builder": "buildVerticalTimeline",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 8,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildVerticalTimeline"
+      },
+      "status": "implemented",
+      "divergence": "旧実装では table を持つ節は導出対象外で図解が付かなかった。現行は DERIVED_BUILDERS.buildVerticalTimeline へ配線済みで、行が成立した根拠である「開始」列のセルを各段の subtext に添える（本文のセルをそのまま引くだけで、図が本文以上を主張しない）。",
+      "rationale": "table は列見出しという明示的な構造メタを持つ唯一のブロックで、機械判定の確度がリストより高い。開始列と終了列が揃っている表は『期間を持つ出来事の列』であり、時間軸の図（timeline）に一意に対応する。行の第 1 セルを出来事の名前として扱う（表の第 1 列を主キーに使う慣行に従う）。この行を後続の 2 列比較（R04）より上に置くのは、開始/終了を持つ表を単なる 2 列比較として描くと時間という軸の情報が落ちるためである。上限 8 は buildVerticalTimeline の CAPACITY。",
+      "example": "（現行サンプルに該当なし。headers=['マイルストーン','開始','完了'] のような表で成立する）"
+    },
+    {
+      "order": 4,
+      "id": "R04",
+      "block": "table",
+      "select": "first",
+      "source": { "field": "rows", "label": "row[0]" },
+      "predicate": {
+        "header_count": { "min": 2, "max": 2 },
+        "count": { "min": 2, "max": 6 },
+        "all_labelable": true,
+        "label_max_length": 26
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "comparison",
+        "builder": "buildNeutralComparison",
+        "builderModule": "render-report.js",
+        "capacity": 6,
+        "capacitySource": "render-report.js buildNeutralComparison の slice(0, 6)（列ごと 6 件）"
+      },
+      "status": "implemented",
+      "divergence": "旧実装は comparison を明示指定（visual.spec.variant='comparison'）のときしか描かず、かつラベルを 26 字で '…' へ切り詰めていた（diagram-layout-contract §3 違反）。現行は DERIVED_BUILDERS.buildNeutralComparison へ配線済みで、切り詰めは撤廃し 26 字超を含む素材はこの行ごと不成立にする。predicate は row[0] にしか掛からないため、図に載るもう一方の列（row[1]）へ materialize 側で同じ上限を課している。",
+      "rationale": "見出しがちょうど 2 列の表は A と B の対照であり、左右 2 列の中立比較図に一意に対応する。before→after や増減のような向きを持つ対比は slope / butterfly が担当し（owner 分離）、こちらは向きを持たない対等な比較に限る。第 1 列と第 2 列を左右へそのまま割り当てるため、どちらが優れているかを図が勝手に主張しない。上限 6 は buildNeutralComparison が列ごとに 6 件で切るため。label_max_length=26 を追加しているのは、conciseLabel の 28 字より buildNeutralComparison の切り詰め閾値のほうが厳しく、27-28 字のラベルが黙って '…' で切られてしまうためで、切られる可能性のある素材はこの行を不成立にして次へ落とす。",
+      "example": "report-structured-110-example.json / section-goal-based（table を持つ節）"
+    },
+    {
+      "order": 5,
+      "id": "R05",
+      "block": "table",
+      "select": "first",
+      "source": { "field": "rows", "label": "row[0]" },
+      "predicate": {
+        "header_count": { "min": 3, "max": 5 },
+        "header_matches": {
+          "patterns": ["^(担当|部門|主体|チーム|役割|owner|role|team|actor)"],
+          "mode": "any",
+          "flags": "i"
+        },
+        "count": { "min": 2, "max": 4 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "swimlane",
+        "builder": "buildSwimlane",
+        "builderModule": "svg-structures.cjs",
+        "capacity": 4,
+        "capacitySource": "svg-structures.cjs buildSwimlane の slice(0, 4)（svg-structures.cjs は CAPACITY 表を持たないため実装の slice 値を採る）"
+      },
+      "status": "implemented",
+      "divergence": "現行実装に対応行なし（新規）。導出は DERIVED_BUILDERS.buildSwimlane（materialize で headers[1..] を工程、row[0] をレーン名へ写像）として配線済み。",
+      "rationale": "担当・部門・役割を表す列を持つ 3-5 列の表は『誰が、どの工程で、何をするか』を持っており、責任分界を横帯で示すスイムレーンに一意に対応する。日本語ビジネスレポートで最も頻出する構造のひとつでありながら、Mermaid には対応する記法が無い（flowchart の subgraph は帯として読めない）ため、svg 側で受ける価値が高い。行数上限 4 は buildSwimlane がレーンを 4 本で切るため。第 1 列を主体名、残りの列を工程として左から順に割り当てる。",
+      "example": "（現行サンプルに該当なし。headers=['担当','設計','実装','検収'] のような表で成立する）"
+    },
+    {
+      "order": 6,
+      "id": "R06",
+      "block": "ordered-list",
+      "select": "first",
+      "source": { "field": "items", "label": "item" },
+      "predicate": {
+        "count": { "min": 2, "max": 7 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "chevron",
+        "builder": "buildChevron",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 7,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildChevron"
+      },
+      "status": "implemented",
+      "rationale": "ordered-list は『順序に意味がある』ことを著者が明示的に宣言したブロックである。順序は図から落とすと復元できない情報なので、並列表現（value-stack）ではなく矢羽根が右へ連なる chevron に写す。順序を持つこの行を並列の bullet-list（R10）より上に置くのはそのためである。上限 7 は buildChevron の CAPACITY で、8 件以上を渡すと超過分が消えるためこの行は不成立とし、次行へ落とす。",
+      "example": "report-structured-110-example.json / section-comparison（table, ordered-list, key-point, blockquote）"
+    },
+    {
+      "order": 7,
+      "id": "R07",
+      "block": "task-list",
+      "select": "first",
+      "source": { "field": "tasks", "label": "item.text" },
+      "predicate": {
+        "count": { "min": 2, "max": 8 },
+        "all_labelable": true,
+        "has_mixed_done": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "stepper",
+        "builder": "buildVerticalFlow",
+        "builderModule": "svg-builder.cjs",
+        "builderOptions": { "connector": true },
+        "capacity": 8,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildVerticalFlow"
+      },
+      "status": "implemented",
+      "divergence": "旧実装は done の値に関わらず chevron（横フロー・上限 7）だった。現行は evalSvgRow の has_mixed_done 判定で混在時のみ本行（stepper・縦フロー・上限 8）へ分け、混在しない task-list は R08 の chevron へ落ちる。",
+      "rationale": "done に true と false が混在する task-list は『どこまで終わったか』という進捗の局面を持つ。横並びの chevron は全ての段を等価に見せるため進捗の境目が読めないが、縦フローなら上から下への進行として読め、完了済みと未完了の境界が視線の途中に来る。上限が chevron の 7 でなく 8 なのは buildVerticalFlow の CAPACITY が 8 だからで、混在する task-list は件数が多くなりがちという実務上の事情とも合う。done が全て false（＝これから全部やる）の場合は進捗の局面が無いので次行（R08）の chevron に落ちる。",
+      "example": "report-structured-120-example.json / section-next（done=false と done=true が混在）"
+    },
+    {
+      "order": 8,
+      "id": "R08",
+      "block": "task-list",
+      "select": "first",
+      "source": { "field": "tasks", "label": "item.text" },
+      "predicate": {
+        "count": { "min": 2, "max": 7 },
+        "all_labelable": true,
+        "has_mixed_done": false
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "chevron",
+        "builder": "buildChevron",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 7,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildChevron"
+      },
+      "status": "implemented",
+      "rationale": "done が全て同じ値（全て未着手、または全て完了）の task-list は進捗の境目を持たないため、進行の局面でなく『実施する順番』として読む。次アクションは書かれた順に着手されるのが通例なので、順序を示す chevron に写す。素材の実体が items[] でなく tasks[]{text, done} である点に注意（取り違えると常に不成立になる）。上限 7 は buildChevron の CAPACITY。",
+      "example": "（tasks 全件 done=false の次アクション節）"
+    },
+    {
+      "order": 9,
+      "id": "R09",
+      "block": "definition-list",
+      "select": "first",
+      "source": { "field": "terms", "label": "item.term" },
+      "predicate": {
+        "count": { "min": 2, "max": 5 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "value-stack",
+        "builder": "buildValueStack",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 5,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildValueStack（委譲先 buildPyramid の上限を継承）"
+      },
+      "status": "implemented",
+      "divergence": "旧実装に対応行なし（新規）。現行は terms[].term をラベル源として DERIVED_BUILDERS.buildValueStack へ配線済み。",
+      "rationale": "definition-list は用語↔定義の対で、term 側だけを取れば『この節が扱う概念の一覧』が粒度の揃った短い名詞句として得られる。bullet-list より意味の粒度が揃っている（term は定義上短い名詞句であり、箇条書きのような文にならない）ため、bullet-list より先に評価する。図には term のみを載せ definition は載せない。定義文は 800 字まで許される長文で、載せると必ず切り詰めが必要になるからである（§3）。上限 5 は buildValueStack が委譲する buildPyramid の CAPACITY。",
+      "example": "report-structured-120-example.json / section-next（terms が 1 件のため count 下限 2 に届かず不成立→次行へ）"
+    },
+    {
+      "order": 10,
+      "id": "R10",
+      "block": "bullet-list",
+      "select": "first",
+      "source": { "field": "items", "label": "item" },
+      "predicate": {
+        "count": { "min": 2, "max": 5 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "value-stack",
+        "builder": "buildValueStack",
+        "builderModule": "svg-builder.cjs",
+        "capacity": 5,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildValueStack（委譲先 buildPyramid の上限を継承）"
+      },
+      "status": "implemented",
+      "rationale": "bullet-list は順序を宣言していない並列の要素であり、矢印で繋ぐと本文に無い因果を図が主張してしまう。積み重ねた面として並べる value-stack なら要素間に向きが生まれない。上限 5 は buildValueStack が委譲する buildPyramid の CAPACITY で、委譲型ビルダーは自分では件数を切らないため上限の継承漏れが起きやすい箇所である。6 件以上は次行（R11）で受ける。",
+      "example": "report-structured-110-example.json / section-what-is-loop（paragraph, bullet-list, callout）"
+    },
+    {
+      "order": 11,
+      "id": "R11",
+      "block": "bullet-list",
+      "select": "first",
+      "source": { "field": "items", "label": "item" },
+      "predicate": {
+        "count": { "min": 6, "max": 8 },
+        "all_labelable": true
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "stepper",
+        "builder": "buildVerticalFlow",
+        "builderModule": "svg-builder.cjs",
+        "builderOptions": { "connector": false },
+        "capacity": 8,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildVerticalFlow"
+      },
+      "status": "implemented",
+      "divergence": "旧実装は bullet-list を件数によらず value-stack のみで扱うため、6-8 件の箇条書きは図解なしに落ちていた。現行は 5 件以下を R10（value-stack）、6-8 件を本行（stepper・縦フロー）へ件数で分ける。",
+      "rationale": "6 件以上の並列要素は value-stack の 5 段に収まらない。ここで切り詰めると読者は図を全体像だと信じるため（§2/§3）、代わりに 8 件まで縦に並べられる buildVerticalFlow へ落とす。ただし connector:false を必ず付けて矢印を描かない。bullet-list は順序を宣言していないので、縦に並べたことを進行と読ませてはならないためである。9 件以上はこの行も不成立となり、最終的に none へ落ちる。",
+      "example": "（6 件の箇条書きを持つ節）"
+    },
+    {
+      "order": 12,
+      "id": "R12",
+      "block": "paragraph",
+      "select": "all",
+      "source": { "field": "body[type=paragraph]", "label": "item.text" },
+      "predicate": {
+        "count": { "min": 2, "max": 8 },
+        "all_labelable": true,
+        "min_label_length": 6
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "stepper",
+        "builder": "buildVerticalFlow",
+        "builderModule": "svg-builder.cjs",
+        "builderOptions": { "connector": false },
+        "capacity": 8,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildVerticalFlow"
+      },
+      "status": "implemented",
+      "rationale": "構造化ブロックが一つも引けなかった節（自由文だけの節）の最後の手段。各段落の第 1 文を抜き出して縦に並べる。要約を機械生成すると本文に無い主張が図に載るが、本文の文をそのまま抜き出すだけならその危険が無い。段落の並びが順序や因果を持つとは限らないので connector:false で矢印を描かない。この行から作られる図は『構造』ではなく『論点』であり、図が本文以上のことを主張しないよう figcaption の名詞も変える。min_label_length=6 は、極端に短い第 1 文（『そうだ。』等）が並ぶと図が意味を成さないため。上限 8 は buildVerticalFlow の CAPACITY。",
+      "example": "report-structured-110-example.json / section-turn-based（subheading 分割後、paragraph のみのグループ）"
+    },
+    {
+      "order": 13,
+      "id": "R13",
+      "block": "paragraphs",
+      "select": "all",
+      "source": { "field": "section.paragraphs", "label": "item" },
+      "predicate": {
+        "body_empty": true,
+        "count": { "min": 2, "max": 8 },
+        "all_labelable": true,
+        "min_label_length": 6
+      },
+      "result": {
+        "kind": "svg",
+        "variant": "stepper",
+        "builder": "buildVerticalFlow",
+        "builderModule": "svg-builder.cjs",
+        "builderOptions": { "connector": false },
+        "capacity": 8,
+        "capacitySource": "svg-builder.cjs CAPACITY.buildVerticalFlow"
+      },
+      "status": "implemented",
+      "rationale": "schemaVersion 1.0.0 の入力（body[] を持たず paragraphs[] だけを持つ section）へのフォールバック。body[] が存在すれば paragraphs[] は無視される（section の排他移行規則）ので、この行は body_empty のときだけ成立する。扱いは R12 と同一（第 1 文を抜き出し矢印なしで縦に並べる）で、入力の版が違うだけで図の意味が変わらないようにしてある。",
+      "example": "vendor/tests/sample-report-structure.json / section-summary（body[] 無し・paragraphs 2 件）"
+    },
+    {
+      "order": 14,
+      "id": "R14",
+      "block": "*",
+      "select": "n/a",
+      "predicate": {},
+      "result": { "kind": "none" },
+      "status": "implemented",
+      "fallback": true,
+      "rationale": "どの行にも当たらなかった節には図解を作らない。code / callout / blockquote / key-point / footnote だけの節は、順序・対・入れ子・比・循環のいずれの関係も持たないため、図にすると本文に無い関係を図が作り出すことになる。容量超過やラベル不採用でここまで落ちてきた場合も同じで、『詰めれば載る』ではなく『そのまま載る場合だけ載せる』に倒す。載る図が減るのは意図した結果であり、被覆率より図と本文の一致を優先する（diagram-layout-contract §3）。この行に落ちた節に図解が必要だと判断した場合は、override（section.visual.kind の明示指定＋rationale に『R14 を上書きした理由』）を使う。",
+      "example": "report-structured-110-example.json / section-turn-based の code+key-point グループ"
+    }
+  ]
+}

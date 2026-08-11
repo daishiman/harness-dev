@@ -26,13 +26,13 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "schedule-positive-ready-set",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260812T020000-r8/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260713T090000-r3/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260812T020000-r8/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260812T020000-r8/transcript.jsonl",
         "independent: live-trial-verdict.py replay of recorded r3 transcript + out/status.json"
       ],
-      "observed": "Replayed the recorded r3 schedule live trial (transcript.jsonl, actual_model claude-opus-4-6, claude 2.1.62, transcript_layer=jsonl) via the official live-trial-verdict.py generator → verdict PASS with launch/completion/goal_fit/verdict all PASS, nudge=0, gate=0, tier=live, downgrade_reason=null, scenario schedule-positive-ready-set. out/status.json recorded {status:PASS, scenario:schedule-positive-ready-set} and the agent reported 'DONE: PASS', confirming every recommended task had all depends_on satisfied (0 ready_set candidates with an unmet dependency)."
+      "observed": "Re-ran live (run 20260812T020000-r8) on the fresh r8-schedule fixture after the dev-graph manifest bump invalidated the prior behavior-closure digest. An independent fresh evaluator re-ran schedule-graph.py against the same graph, leases and events and got a byte-identical schedule-output.json, with the graph/leases/events sha256 unchanged from the pre-run record (read-only contract holds). Walking all 16 nodes confirmed the ready set (T-CHECKOUT-ASYNC-ACCEPT, T-INVENTORY-ALLOCATION-WORKER, T-OPS-RUNBOOK-ASYNC, T-ORDER-FLOW-METRICS) is exactly the active+confirmed+pass+readiness-complete tasks whose depends_on are all done, and that every exclusion is justified (draft, blocked+eval fail, blocked+readiness incomplete, unsatisfied dependencies, and an active lease routed to conflicts). Within a batch the resource_scope sets are disjoint with no prefix containment, feature and task batches are separated (MM-10), and every batch is within max_parallel=4. The 4 assignment_hints are unique, use the devgraph/<graph_node_id> branch form and match the ready set exactly. C27 double-claim rejection was verified in manage-worktree-lease.py (ContractError raised before any write) with leases.json and execution_contexts holding only the single session-a entry. validate-graph-schema.py returns valid=True and every node's artifact file exists with frontmatter agreeing with the graph. The skill's own path was followed (C24 read receipt, goal-spec/progress/intermediate records passing the SKILL.md fail-closed checks, and an independent C17 dev-graph-parallel-safety-verifier fork that agreed), with out/ holding only status.json. verdict.json records overall+goal PASS, tier=live, downgrade_reason null."
     },
     "OUT2": {
       "status": "PASS",

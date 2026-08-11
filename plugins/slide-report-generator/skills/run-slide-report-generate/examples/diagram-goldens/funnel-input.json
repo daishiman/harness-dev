@@ -1,0 +1,44 @@
+{
+  "diagramId": "d-funnel",
+  "type": "funnel",
+  "surface": "slide",
+  "skeleton": "assets/diagram-templates/diagram-skeleton-slide.html",
+  "reference": "references/diagram-visual.md §11.21 購買ファネル型",
+  "placement": "方形",
+  "canvas": { "viewBox": "0 0 480 496" },
+  "title": "商談がどこで細るか",
+  "message": "細り方は一定ではない。打ち手を置くのは、比率が最も落ちる一段だけである。",
+  "orientation": "wide-top",
+  "nodes": [
+    { "id": "t1", "label": "資料請求", "sub": "1,000件（母数 n）", "tier": 1, "style": "plain" },
+    { "id": "t2", "label": "初回商談", "sub": "620件・前段比 62%", "tier": 2, "style": "plain" },
+    { "id": "t3", "label": "提案", "sub": "180件・前段比 29%", "tier": 3, "style": "focal" },
+    { "id": "t4", "label": "稟議", "sub": "96件・前段比 53%", "tier": 4, "style": "plain" },
+    { "id": "t5", "label": "契約", "sub": "48件・前段比 50%", "tier": 5, "style": "plain" }
+  ],
+  "relations": [],
+  "emphasis": {
+    "focal": ["t3"],
+    "reason": "焦点は「最も細い段」ではなく「比率が最も落ちた直後の段」に置く。最下段を焦点にすると、細さという幾何が既に語っていることを色で言い直すだけになる"
+  },
+  "annotations": [
+    { "text": "ここで半分以上が消える", "anchor": "t3" },
+    { "text": "幅は件数に比例しない（一定に細らせている）。破線は注記の引き出し線", "anchor": "figure-bottom" },
+    { "text": "各段は初回到達日で計上・同一商談の重複は除外（2026/1-6 受付）", "anchor": "figure-bottom" }
+  ],
+  "provenance": {
+    "n": 1000,
+    "definition": "各段は初回到達日で計上・同一商談の重複は除外",
+    "period": "2026/1-6 受付分",
+    "rateBasis": "前段比（直前の段を分母とする転換率）"
+  },
+  "geometry": {
+    "topHalfWidth": 192,
+    "bottomHalfWidth": 72,
+    "tierHeight": 80,
+    "tierGap": 4,
+    "halfWidthStep": 24,
+    "note": "段ごとの幅の減り方は一定にする。実データの比率どおりに幅を変えると、上段の 100% と下段の 3% で最下段の文字が入らなくなる（§D-2 #17 と同じ理由）"
+  },
+  "caption": "上から順に幅が細るが、比率が最も大きく落ちるのは二段目と三段目の間である。色の付いた段の手前で何が起きているかを見てほしい。"
+}

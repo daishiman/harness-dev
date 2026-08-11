@@ -164,9 +164,19 @@ def test_find_repo_root_via_example_marker(tmp_path):
 
 # ===================== plugin_root =====================
 
-def test_plugin_root_env_wins(monkeypatch, tmp_path):
+def test_plugin_root_env_wins(monkeypatch, tmp_path, as_self_plugin):
+    as_self_plugin(tmp_path)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
     assert NC.plugin_root() == tmp_path
+
+
+def test_plugin_root_env_pointing_at_foreign_plugin_is_rejected(
+    monkeypatch, tmp_path, as_foreign_plugin
+):
+    """借用 repo で env が別 plugin を指す場合は __file__ 相対へ落ちる。"""
+    as_foreign_plugin(tmp_path)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+    assert NC.plugin_root() == SCRIPT.resolve().parents[1]
 
 
 def test_plugin_root_default_is_plugin_dir():
@@ -198,10 +208,11 @@ def test_find_config_path_repo_root(monkeypatch, tmp_path):
     assert NC.find_config_path(start=tmp_path) == cfg
 
 
-def test_find_config_path_plugin_root(monkeypatch, tmp_path):
+def test_find_config_path_plugin_root(monkeypatch, tmp_path, as_self_plugin):
     # 3 段目: repo-root 不在 → plugin-root 直下 .notion-config.json
     pr = tmp_path / "plugin"
     pr.mkdir()
+    as_self_plugin(pr)
     cfg = _write_cfg(pr / NC.CONFIG_FILENAME)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(pr))
     # start は marker の無い空 dir → repo-root None
@@ -210,10 +221,11 @@ def test_find_config_path_plugin_root(monkeypatch, tmp_path):
     assert NC.find_config_path(start=blank) == cfg
 
 
-def test_find_config_path_bundled_fixed(monkeypatch, tmp_path):
+def test_find_config_path_bundled_fixed(monkeypatch, tmp_path, as_self_plugin):
     # 4 段目: notion-config.fixed.json
     pr = tmp_path / "plugin"
     pr.mkdir()
+    as_self_plugin(pr)
     fixed = _write_cfg(pr / NC.BUNDLED_CONFIG_FILENAME)
     monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(pr))
     blank = tmp_path / "blank"

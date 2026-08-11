@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "ref-system-design-knowledge",
+    "skill_md_sha256": "011fec65ea94c39e8ce148d47ec0af8eef1e5ba4546ce0c44cb3e7bb5680f3bd"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T08:38:04Z",
+  "iterations": 4,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "a-no-contradiction",
+      "b-no-omission",
+      "c-convention-conformance",
+      "d-dependency-integrity",
+      "e-rubric-high-zero"
+    ],
+    "positive_feedback": [
+      "本パスの差分は Gotcha 1 bullet (L79) の本文書き換えのみで frontmatter を触っていないため、high 8 rule の充足は iteration 3 から構造的に不変であり、影響し得る rule だけを再実測してすべて成立を確認した。BD-001 ('## Purpose & Output Contract' 実在)、BD-003 (frontmatter 以降の本文は L28-L85 の 58 行で上限 300 に対し余裕。Gotchas 5 bullet を保ったまま)、REG-001 (validate-plugin-completeness.py 実走 exit 0『OK: 22 plugin(s) complete』)。frontmatter 由来の FM-001 (name が ^(run|ref|assign|wrap|delegate)-[a-z0-9][a-z0-9-]*$ に一致)・NM-001 (dir basename == frontmatter.name、lint-skill-name.py = ok)・KL-001 (knowledge/ も knowledge_loop も不在で前件不成立)・BND-001 (.claude-plugin/bundles.json に system-spec-harness 登録あり) は本文編集で動かない。PG-001 は kind: ref のため前件不成立。",
+      "medium 系も本文編集で動く 3 rule を再確認して成立。BD-002 (`## Gotchas` の見出し厳格一致 + bullet 5 本)、BD-004 (description の trigger 2 個と『使い方』1..6 の対応が維持、L79 は Gotcha であって使い方の写像に関与しない)、PD-002 (本文冒頭 30 行内に '## Purpose & Output Contract' と禁則『浅い pointer-only 要約は正本カードとして受け入れない』が現存 = L31/L41)。FM-002/003/004・NM-002・KL-002..004・PG-002 は frontmatter と別ファイル依存で本差分の影響外。",
+      "iteration 3 で唯一 PASS を止めていた content-review 側 (c) の low 2 件が実測で閉じ、rubric 満点と content-review PASS が一致した。L79 の支持例は `run-system-spec-elicit` の `../../../scripts/validate-coverage-matrix.py` (references/ 起点で実在解決) へ差し替わり、`run-system-spec-compile` は反例として明示された (skill 外の `../../scripts/*.py` 3 本が references/ 起点で 0/3)。後半は scripts/validate-frontmatter.py:170 の `(\"rubric_refs\", \"reference_refs\", \"script_refs\")` と一致する記述へ直り、schema_refs が検査対象外であることと『機械では止まらない』が明示された。",
+      "『機械では止まらない』という新記述を実験で検証した。schema_refs を `../../schemas/…` → `../../../schemas/…` (skill root 起点で外れる段数) へ一時改変して走らせたところ validate-frontmatter.py exit 0 / lint-skill-completeness.py ok / lint-skill-tree.py ok / pytest 404 passed と全て緑で、検出したゲートはゼロ (改変は復元済み、sha256 = 011fec65… 一致)。lint-skill-completeness.py は schema_refs の実在解決経路を持つが REQUIRED_BY_KIND['ref'] = {references, prompts} に schemas が無く本 skill では評価されない。rubric 側にもこれを採点する rule は存在しない (FM/BD/NM/PD/RG/KL/PG/BND/REG のいずれも path の可搬性・引用の事実性を見ない) ため、この種の欠陥は content-review の (c) でのみ捕捉できるという iteration 3 の観察は今回も妥当だった。",
+      "決定論ゲートを全数再走し回帰なしを確認した。pytest plugins/system-spec-harness -q = 404 passed、validate-frontmatter.py = exit 0 (MISSING_REF ゼロ)、lint-prompt-contract-drift.py --all = prompts_scanned=187 fatal=0 warn=0、validate-knowledge-graph.py --profile knowledge --order = exit 0 / --profile doctrine = exit 0、validate-plugin-completeness.py = exit 0、lint-skill-name.py = ok、lint-skill-tree.py = ok (Warn LS-203 は既存)。単一責務・fail-closed 条件も維持 (allowed-tools は Read 1 件のまま、L81 が『検索・取得・書込を足したくなったら C01/C02 側へ置く』と effect:none 境界を守る向き)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 4,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "none"
+  },
+  "notes": "iteration_limit (3) 超過の限定再検証パス (iteration 4)。対象は iteration 3 に残っていた low 2 件 (SKILL.md L79 の Gotcha 内の事実誤り 2 clause) のみで、全面再レビューではない — rubric 24 rule の全数再採点はしておらず、本文 1 bullet の書き換えで値が動きうる rule (BD-001/002/003/004・PD-002・REG-001) を再実測し、frontmatter・別ファイル依存の rule (FM-001..005 / NM-001..003 / RG-001 / KL-001..005 / PG-001,002 / BND-001) は差分が触れていないことを根拠に iteration 3 の判定を引き継いだ。超過を隠さないため iteration=4 / iteration_limit=3 をそのまま記録する。結果は high 未充足 0 / medium 未充足 0 で条件 (e) 成立、かつ iteration 3 で PASS を止めていた content-review (c) の low 2 件が実測で解消したため PASS。iteration 3 から引き継ぐ計上除外 3 件も不変: (i) REG-001 後半の validate-build-trace.py は本 plugin の build-trace.json が repo に無く実行不能のため前半の validate-plugin-completeness.py exit 0 のみで判定、(ii) RG-001 (output JSON に rubric_hash) は本 verdict schema が該当キーを許さない (許可キーは target/review_kind/verdict/findings_summary/reviewer/reviewed_at/iterations/human_review_required/feedback_loop/notes/retargeted_from) ため充足不能で計上しない、(iii) FM-005 は repo の ref-* 17 本すべてが同形で本差分でも description 無改変のため rubric 側 calibration 事項として扱う。計量上の留保 1 件 (欠陥として計上しない): L79 の『skill 外 3 entry』は compile の `..` 始まり entry を数えると 4 本 (`../../scripts/*.py` 3 + `../ref-system-design-knowledge/references/resource-map.yaml` 1) で、『plugin 直下資産』の読みなら 3 で正確・『この skill の外』の読みなら 4 になる曖昧さがある。4 本目も references/ 起点では解決しない (0/4) ため主張の向きは不変で、rubric にこれを採点する rule も無い。未検証 (iteration 3 から不変): (1) 一次資料 URL の到達性はネットワーク不使用のため未検証、(2) behavioral claim (C03 の実成果物の中身) は Gate D 管轄で未実行、(3) 本 skill は kind:ref のため lint-content-review.py:35 の EXEMPT_KINDS に該当し本 verdict 自体は同 lint の検査対象外 — schema 準拠 (許可キー / feedback_loop 必須キー / next_action enum) は同 script の _check_verdict (L102-161) を読んで手動確認した、(4) schema_refs は機械検査が無いため参照先の実在は本 review が手動 ls で確認した (plugins/system-spec-harness/schemas/information-priority-map.schema.json, 7473 bytes)。"
+}

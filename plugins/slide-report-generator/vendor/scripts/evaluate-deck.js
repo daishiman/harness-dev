@@ -57,8 +57,13 @@ import { dirname, join, basename, resolve, isAbsolute } from 'path';
 import { tmpdir } from 'os';
 import { spawnSync } from 'child_process';
 import { parseArgs, hasFlag, EXIT_CODES, getDirname, VIEWPORT } from './utils.js';
+import {
+  configurePluginLocalPlaywright,
+  setupCommand,
+} from './playwright-runtime.js';
 
 const __dirname = getDirname(import.meta.url);
+configurePluginLocalPlaywright();
 
 // ==================================================
 // 設定（閾値・セレクタ）— 視覚回帰テスト同様、ここを調整すれば基準を変えられる
@@ -830,7 +835,7 @@ if (staticOnly) {
 } else if (!chromiumAvailable()) {
   dynamicStatus = 'skipped(no-chromium)';
   add('D1', 'warn', 'chromium未導入のためdynamic検証をスキップ',
-    'broken img/カードはみ出し/computedフォントの動的検証ができない。スキルディレクトリで `npx playwright install chromium` を実行後に再実行を推奨。', { check: 'dynamic.noChromium' });
+    `broken img/カードはみ出し/computedフォントの動的検証ができない。plugin-local Chromium を \`${setupCommand()}\` で復元後に再実行する。`, { check: 'dynamic.noChromium' });
 } else {
   const dyn = runDynamic();
   if (dyn.ok) { dynamicStatus = 'ran'; dynamicMeta = dyn.meta; }
