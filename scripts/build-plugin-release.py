@@ -146,6 +146,25 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
         )
     path.write_text(replaced, encoding="utf-8")
     sync_public_marketplace_version(plugin_dir.name, version)
+    sync_codex_manifest_version(plugin_dir, version)
+
+
+def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
+    """Codex 側 manifest の version を追従させる。
+
+    .codex-plugin/plugin.json を持つ plugin は check-native-surface-parity が
+    .claude-plugin/plugin.json との一致を要求する。持たない plugin (大多数) は
+    何もしない。
+    """
+    path = plugin_dir / ".codex-plugin" / "plugin.json"
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    pattern = re.compile(r'("version"\s*:\s*)"[^"]*"')
+    replaced, count = pattern.subn(lambda m: f'{m.group(1)}{json.dumps(version)}', text, count=1)
+    if count != 1:
+        raise SystemExit(f"[build-plugin-release] {path} の version 行を一意に特定できない")
+    path.write_text(replaced, encoding="utf-8")
 
 
 def sync_public_marketplace_version(name: str, version: str) -> None:

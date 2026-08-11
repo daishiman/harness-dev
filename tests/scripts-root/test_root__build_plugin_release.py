@@ -188,6 +188,20 @@ def test_public_marketplace_sync_skips_unlisted_plugins(mod, tmp_path, monkeypat
     assert '"version": "9.9.9"' in (tmp_path / "marketplace.json").read_text(encoding="utf-8")
 
 
+def test_bump_syncs_codex_manifest_version(mod, tmp_path, monkeypatch):
+    """.codex-plugin を持つ plugin は check-native-surface-parity が
+    .claude-plugin との version 一致を要求する。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (plugin / ".codex-plugin").mkdir()
+    (plugin / ".codex-plugin" / "plugin.json").write_text(
+        '{\n  "name": "probe",\n  "version": "0.1.0"\n}\n', encoding="utf-8"
+    )
+    mod.write_version(plugin, "0.1.1")
+    codex = json.loads((plugin / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    assert codex["version"] == "0.1.1"
+
+
 def test_gitignored_artifacts_are_not_content(mod, tmp_path, monkeypatch):
     """機械ローカルの生成物を数えると fingerprint が machine 依存になる。
 
