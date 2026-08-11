@@ -127,6 +127,12 @@ fi
 # fail-closed 検査する。配線漏れで腐ると登録漏れ (notion-gmail-send 未表示) を永久に
 # 見逃す自己強化ループに陥るため hard 配線で再発を機械遮断する (F4/F5)。
 run "validate-plugin-completeness (MK/BD)" python3 scripts/validate-plugin-completeness.py
+# ローカル clone 用 marketplace (marketplaces/local) の drift 検出。公開 marketplace は
+# distributable:false を載せられない (MK-004) ため、非配布 plugin を手元で install する
+# 経路はこちらが担う。新 plugin 追加時に再生成を忘れると Add Marketplace 済みの環境で
+# 無音で欠落するので、公開側と同じ強度で fail-closed 検査する。
+run "build-local-marketplace --check"      python3 scripts/build-local-marketplace.py --check
+run "build-plugin-release --check"         python3 scripts/build-plugin-release.py --check
 
 # ── test discovery coverage (全 test が CI 実行で到達するか) ──
 # elegant-review 2026-06-30 (LS-F1/SS-02/SS-05): tests/・plugins/ 以外 (scripts/・doc/・
