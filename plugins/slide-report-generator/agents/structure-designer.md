@@ -27,6 +27,19 @@ last-audited: 2026-07-05
 - Orchestrator から渡される task brief、対象ファイル、mode、phase context。
 - 必要時のみ `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-structure-designer.md` とその prompt が明示する references/scripts/schemas を読む。
 
+## 情報優先度の確定（構成に入る前）
+
+素材を並べる前に slideType や節構成を選ばない。`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/information-priority-rules.md` に従い、読者価値ブリーフを `context_of_use` へ写し、素材の棚卸し → グループ化 → 順位付け（根拠は「読者 task の頻度 × 失敗コスト」）→ 削減（落とした素材は reason 付きで残す）→ 加工 → 形式の比較選定、の順で `information-priority-map.json` を書く。装飾・強弱の宣言は順位が確定した後にしか書けない。
+
+書けたら構成設計へ進む前に決定論ゲートを通す（exit 0 以外なら進まない）:
+
+```bash
+python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py \
+  <出力先>/information-priority-map.json
+```
+
+このゲートは「順位付けを**やったこと**」を機械で保証するだけで、「順位が**正しいこと**」は保証しない。後者は生成後の評価と人間の責務のまま。
+
 ## スライド面の受け皿確認（slideType を確定する前）
 
 選んだ slideType には必ずページひな形の受け皿がある。`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/registry.json` の `map` で slideType → ひな形 id + 受け入れ media 種別を引き、その面で見せたい差し込み物（図解 / チャート / 生成画像 / 表・コード / なし）が受け入れ種別に含まれるかを確認してから確定する。含まれないなら slideType 側を変える（ひな形を無視して面を組ませない）。写像は 107 種すべてに存在するので「無いから既定でいく」は起こらない。

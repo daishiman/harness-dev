@@ -63,10 +63,11 @@
 
 ## Layer 3: インフラ層 (外部依存)
 
-### 3.1 参照リソース (skill 私有 references 10 本 + resource-map + plugin schemas + slide ひな形資産)
+### 3.1 参照リソース (skill 私有 references 11 本 + resource-map + plugin schemas + slide ひな形資産)
 
 | id | path | when_to_read | owner_agent |
 |---|---|---|---|
+| information-priority-rules | references/information-priority-rules.md | **構成設計に着手する前** (両 mode 共通)。情報優先度の宣言 (文脈→棚卸し→グループ化→順位→削減→加工→形式選定→強弱→意味的装飾) の SRG 写像と生成前ゲート。原理の正本は本 plugin の外 (`plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`) でここは写像のみ | structure-designer / report-structure-designer |
 | structure-design-rules | references/structure-design-rules.md | slide 構成設計 (1スライド1メッセージ分解・共通仕様セクション・slideType 判定) | structure-designer |
 | report-structure-types | references/report-structure-types.md | report 4 reportType 骨格 | report-structure-designer |
 | d3-diagram-rules | references/d3-diagram-rules.md | D3 インタラクティブ図解の意匠/実装規範 | d3-diagram-designer |
@@ -130,7 +131,7 @@
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
 ### 5.1 担当 agent
-- 本 prompt 自体が**主オーケストレータ**。R1/R2/R3 で上記 15 worker agent を Task name 起動で統率し、決定論ゲート (validate-output-mode.py / validate-structure.js / evaluate-deck.js) を停止条件とする。
+- 本 prompt 自体が**主オーケストレータ**。R1/R2/R3 で上記 15 worker agent を Task name 起動で統率し、決定論ゲート (validate-output-mode.py / validate-information-priority.py / validate-structure.js / evaluate-deck.js) を停止条件とする。
 
 ### 5.2 ゴール定義
 - 目的: `output_mode` と読者価値ブリーフを確定し意匠／技術コアを共有したまま、**構成設計 → 仕様確定ゲート → 生成 → 生成後評価**まで駆動する。両 mode とも「想定読者の共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動」を持ち、slide は「1 スライド 1 メッセージ／長文なし」、report は「読み物・1 項目 1 ビジュアル」で視覚崩れ 0 にする。
@@ -139,6 +140,7 @@
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] `output_mode` と (report 時) `reportType` が確定し `validate-output-mode.py` の値域検証 (exit 0) を通過
 - [ ] 読者価値ブリーフの6項目が入力素材に基づく値または「未確認」で確定し、mode/reportType/読者/長さ/ビジュアル方針とともに下流 R2/R3 へ一貫伝播している
+- [ ] **構成着手前**に `information-priority-map.json` を出力し `validate-information-priority.py` が exit 0 (IN2: 順位の確定が強弱・装飾の宣言に先行し、削減/加工に理由があり、形式候補を 2 件以上比較し、色単独で意味を担わせていない)
 - [ ] 構成設計 (structure.json / report-structure.json) が該当 schema に準拠
 - [ ] 入口が想定読者の共有課題と変化を先に渡し、本論に確認済みの数字・手順・失敗・条件・限界があり、各主要セクションに自分へ移す橋がある。正式名称・検索性が必要な文書は主タイトルを維持している
 - [ ] 仕様確定ゲート (`structure-validator` + `validate-structure.js`) が PASS (WARN は承認済 / FAIL なし)
@@ -151,6 +153,7 @@
 
 ### 5.4 実行方式 (決定論)
 - **mode と読者価値を先に確定する**: R1 で `hearing-facilitator` が `output_mode`/読者価値ブリーフ/`reportType`/読者/長さ/ビジュアル方針を確定 → mode 値域を `validate-output-mode.py` で fail-closed 検証。exit 0 で一式を下流全 agent へ一貫伝播し、素材にない数字・実績は未確認のまま渡す。
+- **構成着手前に情報優先度を確定する (両 mode 共通)**: `structure-designer` / `report-structure-designer` は構成へ入る前に `information-priority-map.json` (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/schemas/information-priority-map.schema.json` 準拠) を出力し、`python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json` が exit 0 になるまで構成に着手しない。順位を決める前に強弱・装飾を宣言した構成は、後から「なぜこれが目立つのか」を説明できず、レビューが主観の応酬になる。
 - **構成設計は mode 分岐で dispatch する**: slide=`structure-designer` ／ report=`report-structure-designer` + `visual-strategist`。両者は読者価値ブリーフを既存 schema フィールドへ翻訳し、入口ホリゾンタル・中身バーティカル・主要セクションの自分ごと化を設計する。
 - **仕様確定ゲートで P3 進入を制御する**: `structure-validator` を起動し `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <structure|report-structure>` を実行。PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し。
 - **生成経路を mode／指示で選択する**: slide LLM=`html-generator` ／ slide 決定論 (推奨)=`slide-renderer`+`render-slide.cjs` ／ report=`report-composer`+`render-report.js` ／ 画像明示=`ai-image-diagram-producer` (`build-image-prompts.js`→`generate-images-codex.js`→`build-deck-html.js`)。品質補正は mode 対称: slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer` (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守)。
@@ -188,6 +191,7 @@
 |---|---|---|
 | mode 値域/伝播 | `validate-output-mode.py` PASS / 確定 mode が全下流 agent へ伝播し仕様確定ゲート入力欠落 0 (IN1) | PASS/FAIL |
 | 読者価値/深さ | 読者価値ブリーフが R1→R2→R3 で保持され、入口・本文の深さ・自分へ移す橋へ反映。正式名称/検索性と事実性を毀損していない | PASS/FAIL |
+| 情報優先度 | 構成着手**前**に `information-priority-map.json` を出力し `validate-information-priority.py` exit 0 (IN2) | PASS/FAIL |
 | 構成適合 | 構成 JSON が該当 schema 準拠 / 仕様確定ゲート (`validate-structure.js`) PASS (WARN 承認済) | PASS/FAIL |
 | 生成完全性 | 生成経路で成果物を生成 / 画像明示は `meta.source=codex-image2` + `validate-ai-image-assets.js` PASS | PASS/FAIL |
 | 視覚崩れ 0 | `verify-slides.js`/`validate-print.js` CRITICAL 0 / slide=1 メッセージ・report=1 項目 1 ビジュアル | PASS/FAIL |
@@ -200,4 +204,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-まず **R1**: `Task` で `hearing-facilitator` を起動し、`output_mode` と読者価値ブリーフ（対象範囲/共有課題・願望/読後・視聴後の変化/専門の橋/深さの証拠/正式タイトル制約）を確定する。report なら `reportType`/読者/長さ/ビジュアル方針も確定し、mode 値域を `validate-output-mode.py` で検証する。素材にない数字・実績は作らず未確認とする。次に **R2**: slide は `structure-designer`、report は `report-structure-designer` + `visual-strategist` を起動し、ブリーフを既存 schema の title/audience/keyMessage/throughLine/sections へ翻訳する。入口は想定読者の共有課題と変化を先に渡し、本論は確認済みの数字・手順・失敗・条件・限界まで掘り、各主要セクションに自分へ移す橋を置く。正式名称・検索性・適用範囲が必要なら主タイトルを保持する。`structure-validator` で PASS→R3 / WARN→承認後 R3 / FAIL→R2。最後に **R3**: mode 対応経路で生成し、slide は UI/print、report は `report-quality-reviewer` の必須 RQ1〜RQ34 (図解を含む節は RQ35〜RQ37 も) と report visual gate で補正する。`deck-evaluator` は D5 読者フックを含む mode-aware 評価を行い、FAIL は最大3周 reloop。完成判定は実体で行い、親へ成果物パス・評価スコア・未達指摘だけを返す。前置き禁止。
+まず **R1**: `Task` で `hearing-facilitator` を起動し、`output_mode` と読者価値ブリーフ（対象範囲/共有課題・願望/読後・視聴後の変化/専門の橋/深さの証拠/正式タイトル制約）を確定する。report なら `reportType`/読者/長さ/ビジュアル方針も確定し、mode 値域を `validate-output-mode.py` で検証する。素材にない数字・実績は作らず未確認とする。次に **R2**: slide は `structure-designer`、report は `report-structure-designer` + `visual-strategist` を起動する。**構成へ入る前に** `information-priority-map.json` を出力し `validate-information-priority.py` を exit 0 にする (IN2。非 0 なら構成に着手しない)。その上でブリーフを既存 schema の title/audience/keyMessage/throughLine/sections へ翻訳する。入口は想定読者の共有課題と変化を先に渡し、本論は確認済みの数字・手順・失敗・条件・限界まで掘り、各主要セクションに自分へ移す橋を置く。正式名称・検索性・適用範囲が必要なら主タイトルを保持する。`structure-validator` で PASS→R3 / WARN→承認後 R3 / FAIL→R2。最後に **R3**: mode 対応経路で生成し、slide は UI/print、report は `report-quality-reviewer` の必須 RQ1〜RQ34 (図解を含む節は RQ35〜RQ37 も) と report visual gate で補正する。`deck-evaluator` は D5 読者フックを含む mode-aware 評価を行い、FAIL は最大3周 reloop。完成判定は実体で行い、親へ成果物パス・評価スコア・未達指摘だけを返す。前置き禁止。

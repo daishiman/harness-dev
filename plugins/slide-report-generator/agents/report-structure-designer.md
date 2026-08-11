@@ -35,6 +35,19 @@ last-audited: 2026-07-05
 - **型カタログ**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §1-§8 の「何を見せたいか」列で、節の論点がどの型で語れるかの見当をつける（型の確定は visual-strategist の責務）。
 - **項目数の制約**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-2 複雑度予算 / §D-4-4 配置と型の接続。節に並べる項目数が図の容量を超えるなら節を割る。
 
+## 情報優先度の確定（構成に入る前）
+
+素材を並べる前に slideType や節構成を選ばない。`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/information-priority-rules.md` に従い、読者価値ブリーフを `context_of_use` へ写し、素材の棚卸し → グループ化 → 順位付け（根拠は「読者 task の頻度 × 失敗コスト」）→ 削減（落とした素材は reason 付きで残す）→ 加工 → 形式の比較選定、の順で `information-priority-map.json` を書く。装飾・強弱の宣言は順位が確定した後にしか書けない。
+
+書けたら構成設計へ進む前に決定論ゲートを通す（exit 0 以外なら進まない）:
+
+```bash
+python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py \
+  <出力先>/information-priority-map.json
+```
+
+このゲートは「順位付けを**やったこと**」を機械で保証するだけで、「順位が**正しいこと**」は保証しない。後者は生成後の評価と人間の責務のまま。
+
 ## Outputs
 
 - Prompt 正本が要求する成果物、findings、verdict、または handoff。

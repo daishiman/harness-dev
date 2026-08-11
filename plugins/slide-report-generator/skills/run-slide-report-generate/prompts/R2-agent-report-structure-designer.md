@@ -47,6 +47,7 @@ last-audited: 2026-07-05
 ## 期待される成果（成果物・出力箇所の対応）
 | 責務 | 対応する成果物・出力箇所 |
 |------|------------------------|
+| 情報優先度の確定（構成着手前） | information-priority-map.json（`validate-information-priority.py` exit 0） |
 | reportType 骨格への写像 | `report-structure.json` の `sections[].role` |
 | 情報のセクション単位分解 | `sections[]` |
 | 読み物本文の起稿 | `sections[].paragraphs[]`（markdown 可） |
@@ -136,6 +137,10 @@ last-audited: 2026-07-05
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる条件で記述する。全項目が YES になった時点でゴール到達とみなす。
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が強弱・装飾の宣言に先行していることの機械証明）
+- [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく読者 task の頻度 × 失敗コストで書かれている。map の group と `sections[]` の並び・分量配分が一致し、reportType の骨格順を無条件に採っていない
+- [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
+- [ ] 節形式（散文/表/手順/コード）の選定が map の `form_selection` に候補と不採用理由つきで記録されている
 - [ ] 全入力素材が構造タグ（列挙/対比/時系列/階層/手順/概念）で分類され、未分類素材がゼロである
 - [ ] reportType が 4 enum（internal-analysis/client-proposal/tech-doc/learning）のいずれか1値に確定している（未確定なら hearing-facilitator へ差し戻す）
 - [ ] 確定 reportType の必須 role が `sections[].role` に 1 つ以上ずつ写像されている（骨格網羅）
@@ -167,6 +172,7 @@ last-audited: 2026-07-05
 | ナラティブ骨格（問題→解決、SCQA 等） | reportType 骨格の選択と節の論理順序（RCONST_001）を導く。client-proposal の課題→解決策→効果、learning の問い→概念→応用に対応づける。 |
 | プログレッシブ・ディスクロージャ（段階開示） | learning / tech-doc で前提→核心→応用/手順へ難易度を段階配分し、1節に情報を詰め込みすぎない。 |
 | テクニカルライティング（1段落1論点） | paragraphs[] を「1段落=1論点」に割り、読み物成立（RCONST_002）を満たす。 |
+| information-design（情報設計の正本カード） | 骨格を選ぶ前に「誰が・どの文脈で・何の task を」から情報の順位を決め、削減・加工・形式選定・強弱をその写像として導く。SRG への写像は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/information-priority-rules.md`、原理の逐語 SSOT は `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。 |
 | 読者価値ブリーフ / reader-question arc | 「これは自分に関係あるか→何が変わるか→なぜ信じられるか→次に何をするか」の順に title/summary/本論/next-action を照合し、入口の広さと本文の深さを両立する（RCONST_007）。 |
 
 ### 重要な原則
@@ -323,6 +329,7 @@ last-audited: 2026-07-05
 ## 実行フロー
 | フェーズ | 内容 | 完了条件 | 次フェーズへの引き渡し | ユーザー確認 |
 |----------|------|----------|------------------------|--------------|
+| 情報優先度 | 文脈確定→棚卸し→グループ化→順位→削減→加工→形式選定 | `validate-information-priority.py` exit 0 | information-priority-map.json | — |
 | 分析・写像 | 素材を構造タグで分類し reportType 骨格へ写像する | 未分類素材ゼロ・必須 role 網羅・順序保持 | — | — |
 | 確定・起稿 | meta/theme を確定し読み物本文を起稿、ビジュアル要否を指定する | 空節ゼロ・1節1ビジュアル | — | — |
 | 出力・自己確認 | report-structure.json を出力し schema を自己確認する | schema 適合違反ゼロ | — | — |

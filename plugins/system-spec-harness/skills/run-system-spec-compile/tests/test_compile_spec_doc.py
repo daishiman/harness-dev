@@ -436,6 +436,14 @@ def test_category_design_refs_derived_from_resource_map():
     ]
     assert mod.category_design_refs("security") == ["secure-by-design.md"]
     assert mod.category_design_refs("maintenance-ops") == ["clean-code.md"]
+    # ui-ux / frontend は information-design.md を引く。C01 SKILL.md feedback-contract
+    # 「情報優先度の責務境界」が『C03 は原理カードの注入まで自動で効く』と主張する根拠が
+    # ここなので、read_when 側が緩んで写像が落ちたら doc の主張が黙って嘘になる。
+    assert mod.category_design_refs("ui-ux") == ["information-design.md"]
+    assert mod.category_design_refs("frontend") == [
+        "clean-architecture.md",
+        "information-design.md",
+    ]
     # 非正準カテゴリは無マッチ (空) → render 側が汎用ポインタへ倒す。
     assert mod.category_design_refs("no-such-category") == []
 

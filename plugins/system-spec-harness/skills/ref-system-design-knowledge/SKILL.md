@@ -16,6 +16,10 @@ responsibility_refs:
   - prompts/R1-system-design-knowledge.md
 schema_refs:
   - references/knowledge-card.schema.json
+  - ../../schemas/information-priority-map.schema.json
+script_refs:
+  - ../../scripts/validate-knowledge-graph.py
+  - ../../scripts/validate-information-priority.py
 completeness_exempt:
   - "manifest: ref/effect:none exposes immutable reference material and has no executable workflow phases."
 allowed-tools:
@@ -32,7 +36,7 @@ allowed-tools:
 **出力**: 該当知識領域の深い知識カード、一次資料・鮮度情報、open-world発見playbook、およびカテゴリ×プラットフォーム taxonomy。
 **完了条件**: 参照のみ。個別プロジェクトの設計判断そのものは elicit/compile 側の責務 (本スキルは知識源であって意思決定者ではない)。
 
-境界: `references/` 配下の `system-category-taxonomy.json` は **C01 のカテゴリ初期集合の正本を兼ねる** (prompt へ直書きせず本ファイルを SSOT とする)。現行6領域と8カテゴリは網羅リストではなく **seed examples** である。C04 は `ref/effect:none` のため発見・取得・永続化を実行せず、発見方法と品質契約だけを提供する。実プロジェクトの discover/公式一次資料取得/project candidate 記録は C01/C02、curated promotion は保守担当の承認付き更新が担う。
+境界: `references/` 配下の `system-category-taxonomy.json` は **C01 のカテゴリ初期集合の正本を兼ねる** (prompt へ直書きせず本ファイルを SSOT とする)。現行の設計知識領域 (正本 = `references/knowledge-catalog.json` の entries。個数をここへ複製しない) と 8 カテゴリは網羅リストではなく **seed examples** である。C04 は `ref/effect:none` のため発見・取得・永続化を実行せず、発見方法と品質契約だけを提供する。実プロジェクトの discover/公式一次資料取得/project candidate 記録は C01/C02、curated promotion は保守担当の承認付き更新が担う。
 
 各知識カードは `references/knowledge-card.schema.json` の必須概念に従い、目的・背景・解決する問題・中核概念・適用条件・非適用条件・トレードオフ/失敗モード・目的達成への寄与・一次資料・鮮度を保持する。浅い pointer-only 要約は正本カードとして受け入れない。
 
@@ -52,6 +56,7 @@ allowed-tools:
 | Secure by Design | `references/secure-by-design.md` | 攻撃者前提で被害を封じ込める設計 (最小権限/多層防御/fail-closed/脅威モデル) |
 | DDD (ドメイン駆動設計) | `references/ddd.md` | ドメインの複雑さに境界と共通言語で対処 (境界づけられたコンテキスト/集約/コアドメイン) |
 | Clean Code | `references/clean-code.md` | 変更し続けられる可読性を保つ (意図の命名/単一責務/副作用局所化/テスト容易性) |
+| Information Design (情報設計) | `references/information-design.md` | 表現物の情報を「文脈→棚卸し→グループ化→優先順位→削減→加工→形式選定→強弱→装飾」の順で設計する (装飾は最後で意味を運ぶ役) |
 | システム構成 taxonomy | `references/system-category-taxonomy.json` | カテゴリ×canonical platform id (C01 初期集合の正本) |
 | Open-world lifecycle | `references/open-world-knowledge-lifecycle.md` | discover→qualify→deepen→goal map→candidate→promotion→freshness audit |
 | Knowledge catalog | `references/knowledge-catalog.json` | seed/card metadata と深度・鮮度 + typed 辺 (depends_on/refines/conflicts_with) の知識依存グラフ (goal-spec C13) |
@@ -64,7 +69,16 @@ allowed-tools:
 2. 設計知識ポインタが必要なとき (C03 R2-render): 該当領域の `references/*.md` を Read し要点と一次資料 URL を章へ反映する。
 3. seed外の知識候補が必要なとき: `references/open-world-knowledge-lifecycle.md` を Read し、C01/C02 に発見・一次資料qualification・project candidate作成を委譲する。C04自身は検索や書込を行わない。
 4. 設計知識を位相順で消費するとき (C01 R5 / C03 R2): `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --input references/knowledge-catalog.json --order` の topo_order に従い上位概念→下位概念の順で反映する。
-5. 章の上流指針が必要なとき (C03 R2): `references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` を上流 doctrine として章へ反映する (`$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` で写像全射を事前検証)。
+5. 人間が読む表現物 (画面・report・slide・CLI 出力・通知・エラーメッセージ) を設計/レビューするとき: `references/information-design.md` を Read し、成果物側は `../../schemas/information-priority-map.schema.json` 準拠の宣言を持つ。`python3 $CLAUDE_PLUGIN_ROOT/scripts/validate-information-priority.py <map.json>` が手順の順序制約 (順位確定→装飾) と削除/加工の説明責任を機械検査する (exit 0=OK / 1=違反 / 2=usage)。
+6. 章の上流指針が必要なとき (C03 R2): `references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` を上流 doctrine として章へ反映する (`$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` で写像全射を事前検証)。
+
+## Gotchas
+
+- **exit 0 を「依存が正しい」と読まない**: validator の保証範囲は上の「知識依存グラフ」節の通り well-formedness だけ。カード追加時は本文で依存の理由を述べること — 機械は理由の不在を検出しない。
+- **カード追加はカタログ 1 行では終わらない**: `references/*.md` 実体・`knowledge-catalog.json` entry・`resource-map.yaml` の `read_when` の三者が parity を保つ必要があり、加えて `read_when` の字面は下流の写像そのものである — `run-system-spec-compile` の `category_design_refs()` はハードコード表を持たず `read_when` へのカテゴリ id 部分一致で章の設計知識ポインタを導出する。`read_when` からカテゴリ名を言い換えただけで写像は静かに空へ落ちる (`../run-system-spec-compile/tests/test_compile_spec_doc.py::test_category_design_refs_derived_from_resource_map` が代表カテゴリを pin している)。
+- **`resource-map.yaml` の path は `references/` からの相対**: skill 外の資産も載せてよく (`run-system-spec-elicit` が `../../../scripts/validate-coverage-matrix.py` を列挙している)、**基点は skill root ではなく `references/`** なので `../../scripts/…` と書くと 1 段浅く外して解決しない。この誤りは repo 内に実在する — `run-system-spec-compile` の resource-map の skill 外 3 entry は全て `../../scripts/*.py` で、`references/` 起点では 1 本も解決しない (真似る先を間違えないこと)。frontmatter 側は逆に **skill root 相対**なので、同じ資産を両方へ書くと段数が 1 つずれる (揃えられない)。ただし `validate-frontmatter.py:check_refs_exist` が実在検査するのは `rubric_refs` / `reference_refs` / `script_refs` の 3 つだけで、**`schema_refs` は検査対象外** — ここの段数ミスは機械では止まらない。
+- **`kind: ref` は CI の content-review 対象外**: `scripts/lint-content-review.py` の `EXEMPT_KINDS` に `ref` が入るため verdict 不在でも CI は緑になる。一方 stop hook (`check-review-trigger.py`) には同じ除外が無いので、変更すればローカルではレビューを求められる。CI が緑=レビュー済み、と読み替えないこと。
+- **`allowed-tools: [Read]` は事故防止であって不便ではない**: 検索・取得・書込を足したくなったら C01/C02 側へ置く (責務は上の「完了条件」と「境界」の通り)。ここに取得処理が入ると、参照した瞬間に内容が変わりうる正本になる。
 
 ## 責務プロンプト
 

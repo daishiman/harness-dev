@@ -46,6 +46,7 @@ last-audited: 2026-07-05
 ## 期待される成果（成果物・出力箇所の対応）
 | 責務 | 対応する成果物・出力箇所 |
 |------|------------------------|
+| 情報優先度の確定（構成着手前） | information-priority-map.json（`validate-information-priority.py` exit 0） |
 | 情報の1メッセージ単位への分解 | structure.md「スライド一覧」 |
 | スライドタイプの判定（<!-- count: slideTypeNonD3 -->74種 + D3 <!-- count: d3Component -->33種から選択） | structure.md「各スライド詳細」のタイプ |
 | アイコンの選定 | structure.md「各スライド詳細」のアイコン |
@@ -140,6 +141,10 @@ last-audited: 2026-07-05
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる状態基準として記述する。全項目が YES になった時点でゴール到達とみなす。
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が装飾・強弱の宣言に先行していることの機械証明）
+- [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく task 頻度 × 失敗コストで書かれている
+- [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
+- [ ] slideType の選定が map の `form_selection` に候補と不採用理由つきで記録され、decision-tree を免罪符にした早期形式固定になっていない
 - [ ] 全入力素材が「列挙/対比/手順/時系列/データ/階層/概念」のいずれかにタグ付けされ、未分類素材がゼロである
 - [ ] 各スライドに核心メッセージが1つだけ存在し、2メッセージ以上のスライドがゼロである（CONST_001）
 - [ ] 読者価値ブリーフが title/audience/keyMessage/sections/slides へ翻訳され、schema 外フィールドを追加していない。タイトル/冒頭キーメッセージが想定聴衆の共有課題と変化を先に渡し、正式名称・検索性が必要な場合は主タイトルを維持している（CONST_008）
@@ -201,6 +206,7 @@ last-audited: 2026-07-05
 | Presentation Zen (Garr Reynolds) | 1スライド1メッセージに分解する際の判断軸。メッセージ分解時と1メッセージ違反チェック（完了チェックリスト）で「このスライドの核心は1つか」を問う。視覚的シンプルさ・余白の活用で密度過多のスライドを分割する。 |
 | slide:ology (Nancy Duarte) | 情報の構造（対比・推移・階層・関係）から最適な視覚化パターンを選ぶ。タイプ判定時に「データ→テーブル/グラフ」「関係→図解」「時系列→タイムライン」を導く。コントラストでアクセントカラー割り当て（icon選定）を決める。 |
 | ノンデザイナーズ・デザインブック (Robin Williams) | 近接・整列・反復・コントラストの4原則。SVG設計メモ作成時に座標・gap・padding・反復するカードサイズを決める根拠とし、整列を viewBox 算出に反映する。 |
+| information-design（情報設計の正本カード） | 構成に入る前に「誰が・どの文脈で・何の task を」から情報の順位を決め、削減・加工・形式選定・強弱をその写像として導く。SRG への写像は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/information-priority-rules.md`、原理の逐語 SSOT は `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。 |
 | 読者価値ブリーフ / reader-question arc | 「これは自分に関係あるか→何が変わるか→なぜ信じられるか→次に何をするか」の順にタイトル/冒頭/本論/終盤を照合し、入口の広さと本文の深さを両立する（CONST_008）。 |
 
 ## 5.7 設計仕様
@@ -376,6 +382,7 @@ last-audited: 2026-07-05
 ## 実行フロー
 | フェーズ | 内容 | 完了条件 | 次フェーズへの引き渡し | ユーザー確認 |
 |----------|------|----------|------------------------|--------------|
+| 情報優先度 | 文脈確定→棚卸し→グループ化→順位→削減→加工→形式選定 | `validate-information-priority.py` exit 0 | information-priority-map.json | — |
 | 分析・分解 | 素材を分類し1メッセージへ分解 | 未分類素材ゼロ・複数メッセージスライドゼロ | — | — |
 | 設計 | タイプ判定・アイコン・アニメ・SVG設計メモを設計 | 全タイプ確定・必須11点完備・文字数検証OK | — | — |
 | 構成案作成 | 出力テンプレートへ structure.md 生成 | 全プレースホルダ充足 | — | — |

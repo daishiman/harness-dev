@@ -1,6 +1,6 @@
 ---
 name: run-slide-report-generate
-description: スライドやレポートを新規に作りたいとき、ヒアリングで output_mode(slide/report) を確定し構成設計→仕様確定ゲート→生成(HTML・決定論 render-slide.cjs・report render-report.js・Codex 画像)→30種思考法の生成後評価まで駆動したいときに使う。
+description: スライドやレポートを新規に作りたいとき、ヒアリングで output_mode(slide/report) と読者価値ブリーフを確定し構成着手前の情報優先度ゲート→構成設計→仕様確定ゲート→生成(HTML・決定論 render-slide.cjs・report render-report.js・Codex 画像)→30種思考法の生成後評価まで駆動したいときに使う。
 kind: run
 prefix: run
 version: 0.1.0
@@ -44,10 +44,14 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
       loop_scope: inner
       text: validate-output-mode で output_mode(slide/report)と reportType の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が0件
       verify_by: script
+    - id: IN2
+      loop_scope: inner
+      text: 構成着手前に information-priority-map.json を出力し validate-information-priority.py が exit 0 (順位の確定が強弱・装飾の宣言に先行し、削減/加工に理由があり、形式候補を2件以上比較し、色単独で意味を担わせていない)
+      verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: 生成後に slide/report とも想定読者の共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動の流れを持ち、slide は1スライド1メッセージ/長文なし・report は読み物/1項目1ビジュアルで、生成後評価(30種思考法)が視覚崩れ0で PASS する
-      verify_by: test
+      text: 生成後に slide/report とも想定読者の共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動の流れを持ち、slide は1スライド1メッセージ/長文なし・report は読み物/1項目1ビジュアルで、deck-evaluator の生成後評価(30種思考法・D5 読者フック)が視覚崩れ0で PASS する
+      verify_by: evaluator  # 検証主体は deck-evaluator。tests/ に読者フックの受入テストは無く、test と綴ると写像が空洞化する
 ---
 
 # run-slide-report-generate
@@ -60,7 +64,7 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
 
 - **入力**: 構想 (自然文) + `output_mode` + 読者価値ブリーフ。report 時は `reportType`／読者／長さ／ビジュアル方針。任意 `--out-dir <path>`。
 - **出力**: **生成レポート** (`output_mode` ／ 生成経路 ／ 生成後評価スコア ＋ 生成物パス (slide=`index.html`(+`styles.css`/`scripts.js`) ／ report=`report.html`) ＋ 未達指摘一覧)。
-- **完了条件**: (1) `output_mode`・読者価値ブリーフ・(report 時) `reportType` が確定し mode 値域検証を通過、(2) 構成が「共有課題→変化→専門的解決→自分へ移す行動」を既存 schema 内で表現し仕様確定ゲートを PASS、(3) 成果物を生成、(4) `deck-evaluator` の mode-aware 生成後評価が読者フックと視覚崩れ 0 を確認して PASS。
+- **完了条件**: (1) `output_mode`・読者価値ブリーフ・(report 時) `reportType` が確定し mode 値域検証を通過、(2) 構成着手前に情報優先度が確定し `validate-information-priority.py` が exit 0、かつ構成が「共有課題→変化→専門的解決→自分へ移す行動」を既存 schema 内で表現し仕様確定ゲートを PASS、(3) 成果物を生成、(4) `deck-evaluator` の mode-aware 生成後評価が読者フックと視覚崩れ 0 を確認して PASS。
 
 ## output_mode 分岐契約 (意匠は共有・意図のみ分岐)
 
@@ -92,6 +96,7 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
 
 確定 mode に応じて構成を設計し、**仕様確定ゲート**で P3 進入を制御する。
 
+- **情報優先度の確定 (構成着手前・両 mode 共通)**: 構成へ入る前に「誰が・どの文脈で・何の task を」から情報の順位を決め、`information-priority-map.json` (schema=`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/schemas/information-priority-map.schema.json`) へ宣言して下記 IN2 ゲートを exit 0 にする。順位が確定する前に強弱・装飾を宣言していれば fail-closed で差し戻す。SRG への写像は `references/information-priority-rules.md`、原理の正本は `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
 - **slide**: `Task` で **structure-designer** を起動 → `structure.json` (`schemas/structure.schema.json` 準拠) を設計。図解が要る場合は **d3-diagram-designer** (D3) ／ **data-visualizer** (データ可視化) を併用。
 - **report**: `Task` で **report-structure-designer** を起動 → `report-structure.json` (`schemas/report-structure.schema.json` 準拠・`sections[]` 主配列) を設計。各 section のビジュアルは **visual-strategist** が「1 項目 1 ビジュアル」の三択 (`svg`／`mermaid`／`codex-image`／`none`) を決定。
 - **読者中心設計**: 両 mode とも入口は想定読者の共有課題と変化を先に渡し、本論は確認済みの数字・手順・失敗・条件・限界まで掘る。各主要セクションに「兆候・問い・選択肢・次の行動」のいずれかを置き、自分ごと化する。
@@ -106,8 +111,8 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
   - `slide` 決定論経路 (推奨・再現性 100%): `Task` で **slide-renderer** → `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs" <structure.json> <out-dir>`。
   - `report` 経路: `Task` で **report-composer** → `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <out.html>` で `report.html` を決定論生成。
   - **画像明示時のみ**: `Task` で **ai-image-diagram-producer** (Codex Image2)。導線 = `build-image-prompts.js` → `generate-images-codex.js` (`meta.source=codex-image2`・PNG 署名回収＋リトライ) → `build-deck-html.js` (自己完結 index.html)。`codex` 単体は画像生成器ではなく実 backend を着手前に確認する。
-  - **品質補正 (mode 別・slide/report 対称)**:
-    - `slide`: 必要に応じ **layout-optimizer** (レイアウト最適化) ／ **ui-quality-reviewer** (テキスト切れ・改行・バランス) を併用 + `verify-slides.js`／`validate-print.js` の決定論視覚ゲート。
+  - **品質補正 (mode 別。読者中心入口の生成前補正は report 側のみ)**:
+    - `slide`: 必要に応じ **layout-optimizer** (レイアウト最適化) ／ **ui-quality-reviewer** (テキスト切れ・改行・バランス) を併用 + `verify-slides.js`／`validate-print.js` の決定論視覚ゲート。**読者中心入口の観点は生成前補正に無い** (`references/ui-quality-checklist.md` は視覚品質のみ)。slide の読者フックは生成後の `deck-evaluator` D5 が唯一の検出点なので、そこで落ちると手戻りが report より長い。
     - `report`: **report-quality-reviewer** (読み物文体・段落密度・1 項目 1 ビジュアル整合・reportType 骨格・読者中心入口 RQ31〜RQ34) を併用 + `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json` の決定論視覚ゲート。
 - **生成後評価 (mode-aware)**: `Task` で **deck-evaluator** を起動 (思考リセット後 30 種思考法)。`slide`=視覚崩れ／1 メッセージ、`report`=可読性／図解適合／情報密度の mode 別 rubric 次元で区分評価する。**改善→再評価は最大 3 周** (`feedback_contract.max_iterations`)。CRITICAL (視覚崩れ) が残存する場合はループ枯渇時も未完了 (hard-fail) とし、`未達指摘一覧` は非 CRITICAL に限定する。
 
@@ -117,19 +122,31 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
 
 送信前・生成後に以下の機械検証を実行する。値域外・仕様逸脱・視覚崩れは exit code で fail する。
 
+> **送信前の機械ゲートは 2 本ある** — IN1 `validate-output-mode.py` (mode 値域) と IN2 `validate-information-priority.py` (構成着手前の情報優先度)。**それでも見ないもの (既知の fail-open)**: `validate-output-mode.py` が検証するのは `mode`/`reportType` の**値域だけ**で、読者価値ブリーフは見ない。ブリーフの受け皿は仕様確定ゲート側の `meta.required` (structure=title/audience/durationMinutes/keyMessage、report-structure=title/reportType/audience/keyMessage) であり、そこへ写像されない「読者の変化・自分へ移す行動」の有無は生成後の `deck-evaluator` D5 まで機械検出されない。ブリーフ 6 項目のうち「対象範囲・共有課題・読者」は次の `validate-information-priority.py` が `context_of_use`(audience / primary_tasks の頻度・失敗コスト / environment / expertise) として構成着手前に必須化するため機械で欠落検出できるが、「読後の変化・自分へ移す行動」は依然 D5 まで機械検出されない。後者の写像は R2 へ渡す前に人間側で確認する。
+
 ```bash
-# 送信前: output_mode/reportType 値域検証 (値域外 exit 2・fail-closed)
-python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]
-# 初回/更新後に依存+plugin-local Chromiumを復元し、node/npm/browser/codexをpreflight
+# 0. 初回/更新後に依存+plugin-local Chromiumを復元し、node/npm/browser/codexをpreflight (以降の実描画ゲートの前提)
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install && python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --preflight
+# 1. 送信前 (IN1): output_mode/reportType 値域検証 (値域外 exit 2・fail-closed)
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]
+# 2. 構成着手前 (IN2): 情報優先度の宣言検証 (順位が装飾に先行しているか・0=OK/1=違反/2=usage)
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json
 # 構成の仕様確定ゲート (V-001〜043・SR-ID 連動)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <structure|report-structure>
 # slide の UI 品質 (テキスト切れ・16:9 比率)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html --check-ratio
 # slide 成果物の実描画契約 (実HTML必須・slide 0件/mixed体系/重なり/溢れを fail-closed)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-layout.js" ./index.html --strict
-# report の決定論視覚ゲート (構造正本必須・欠落 exit 2 / 0=PASS / 1=崩れ検出)
+# report の実描画入力 bundle 生成 (899/900/901/1024/1366/1600px + print)。**bundle を必須入力にするのは report-quality-reviewer だけ** (agents/report-quality-reviewer.md「入力bundle欠落時はPASSにせず」)。下の 2 つのゲート (静的 shape の `validate-report-visual.py` と実描画の `validate-report-layout.js`) はどちらも bundle を取らないので、bundle 不在のまま緑になりうる — その死角を埋めるのがこの生成 (0=成功 / 1=runtime acceptance 失敗 / 2=usage・環境)
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <out-dir>/runtime-bundle.json
+# report の決定論視覚ゲート (構造正本必須・欠落 exit 2 / 0=PASS / 1=崩れ検出)。bundle 入力は取らない (argparse は report/--structure/--strict/--json/--require-structure のみ)
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json
+# report 成果物の実描画契約 (R1-R8 読書レイアウト・0=error 0件 / 1=error あり)
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-layout.js" <report.html> [--viewport 1440x900] [--strict]
+# 図解の静的契約 (D0-D21 幾何・素材・上限。両 mode 共通。hook-postgen-eval が生成検知時に機械実行し --strict で warning も出荷前に止める)
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" <index.html|report.html> --check-grid --strict
+# 図解の情報契約 (I1-I5 + 型別スロット = 図が図として成立する下限。上記の上限検査を置き換えない・同じ図へ別々に掛ける)
+python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-diagram-information.py" <index.html|report.html>
 # 生成後評価オーケストレータ (D1 視覚崩れ/D2 文字サイズ/D3 ナビ/D4 仕様適合・0=PASS/4=FAIL)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js" <out-dir>
 # 画像明示時: prompt/meta/WebP 整合と style genome 反映 (PNG/WebP 署名検査)
@@ -140,6 +157,8 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js" <index.
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 ```
 
+> **図解 2 本の読み分け**: `validate-svg-diagram.py` は**上限** (座標・寸法・色・書体・要素数・複雑度) を、`validate-diagram-information.py` は**下限** (その情報を書いたなら必ず現れる語の有無) を見る。前者が全部緑でも「主キーの無い ER 図」「目盛の無い価値軸」は通るので、後者は前者の代わりにならない。後者の warning は語彙近似ゆえ**合否に入れず読んで判断する対象**で、確定的に判るのは error 2 件 (`I-ER-REF` 参照の取りこぼし / `I-REL-ISO` 孤立節点) だけ。両者とも `hook-postgen-eval` が生成検知時に機械実行する。
+
 ## ゴールシークと受入基準 (combinators)
 
 本 skill は固定手順でなく、**ゴール** (上記「目的と出力契約」の完了条件) へ向けて未達項目を埋める手順を都度生成して反復する。`with-goal-seek`(max_loops 5) + `with-feedback-contract` を適用する。ループ本体は親セッションで直接回さず `Task` で SubAgent へ fork し (`goal_seek.fork: subagent`)、親へは最終成果物パスと生成レポートのみ返す。
@@ -147,7 +166,8 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 受入基準 (`feedback_contract.criteria`・frontmatter に焼込済) は当該 skill の goal／checklist 由来の**受入条件 (purpose-acceptance)** であり、汎用品質ゲートの言い換えに退化させない:
 
 - **IN1 (inner・script)**: `validate-output-mode` で `output_mode`(slide／report) と `reportType` の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が 0 件。
-- **OUT1 (outer・test)**: 生成後に両 mode が「共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動」を持ち、slide は 1 スライド 1 メッセージ／長文なし・report は読み物／1 項目 1 ビジュアルで、生成後評価が読者フックと視覚崩れ 0 を確認して PASS。
+- **IN2 (inner・script)**: 構成着手前に `<出力先>/information-priority-map.json` を出力し、`python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json` が exit 0 (順位の確定が強弱・装飾の宣言に**先行**していること・削減/加工に理由があること・形式候補を 2 件以上比較したこと・色単独に意味を担わせていないこと)。**このゲートが保証するのは「順位付けをやったこと」であって「順位が正しいこと」ではない** — 後者は OUT1 と人間の未閉塞責務。
+- **OUT1 (outer・evaluator)**: 生成後に両 mode が「共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動」を持ち、slide は 1 スライド 1 メッセージ／長文なし・report は読み物／1 項目 1 ビジュアルで、生成後評価が読者フックと視覚崩れ 0 を確認して PASS。
 
 未達は最大 3 周 (inner) / 5 loops (goal-seek) で findings を反映し再実行、超過時は未達指摘一覧として生成レポートへ残す。
 
@@ -159,16 +179,16 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 
 ## Gotchas
 
-- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`。repo-root 直書き禁止。
+- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`、資産 = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/…`。repo-root 直書き禁止。**唯一の carve-out が cross-plugin glue** — system-spec-harness の資産だけは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/…` と兄弟相対で引く (IN2 の `validate-information-priority.py` と `information-priority-map.schema.json`)。本 plugin は `distributable: false` で marketplace source が `./plugins/<name>` ゆえ install 後も兄弟配置が保たれる前提であり、`HARNESS_ROOT` などの repo-root 変数へ戻さない。
 - **意匠は共有・mode で重複させない**: 配色／サイズ／レンダラ／schema `$defs` は単一 SSOT。slide／report で意匠を二重定義しない (`output_mode` 分岐契約)。
 - **入口を広げても対象範囲・正確さを壊さない**: audience/reportType は維持し、正式名称・検索語・適用範囲が必要なら主タイトルに残す。読者価値は subtitle/keyMessage/summary で補い、素材にない数字・実績を作らない。
 - **codex は画像生成器ではない**: `ai-image-diagram-producer` 起動時は着手前に実 text-to-image backend を確認する。`meta.source` は実体名 `codex-image2` を記録し plain `codex` は不可。
 - **全面画像デッキは自己完結 HTML**: CSS/JS を `<style>`/`<script>` にインライン化 (`build-deck-html.js`)。別ファイル版は環境で消失しページ送り不可事故になりうる。
 - **完成判定は実体で**: `echo`／サイズ／"PASS" 文字列で完成判断しない。ファイルは Read、画像は PNG/WebP 署名で検証し、出荷前にスクショ目視を推奨する。
 - **agent は name 参照**: worker agent はファイルパス依存でなく Task の name 起動。存在は plugin の他 component が保証する。
-- **slideType の受理と描画は別物 (被覆の caveat)**: schema の enum に載っている＝その型専用の絵が出る、ではない。集約 (9 型が `buildSnake` 1 本へ)・既定落ち (D3 の 8 型が汎用プレースホルダ)・検査の空振り (D3 出力で `validate-svg-diagram.py` が `coverage=none` を返す — この PASS は「検査して合格した」ではない) の 3 つが起きる。**型を選ぶ前に `references/diagram-type-crosswalk.md` §10「受理される型と、その型専用の絵が出る型は別」の表で描画実体を確認する** (型名の列挙はそちらが正本。ここへ写すと片方だけ更新されて食い違う)。
-- **手書き経路の slide 面はひな形へ嵌める (その場で組まない)**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/` の `layout-<役割>` から選ぶ(**役割名であって通し番号ではない** — 同じひな形を 1 deck で何枚使ってもよい)。ひな形 HTML と `slide-skeleton.css` / `.js` は**生成物**ゆえ手編集せず、`frame-contract.json` か生成器へ入れて再生成し `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"` で fail-closed 検査する。引き方・寸法と色・成果物への届け方の逐語の正本は `assets/slide-templates/README.md` (ここへ写さない)。
-- **ひな形の封じ手は「ひな形経路の保証」であって deck 全体の保証ではない**: 空白過多・chrome ズレ・戻るページ・PDF ズレの 4 症状への封じ手は、**ひな形をコピーして書いた面にだけ**効く (症状表と再発点の逐語の正本は `assets/slide-templates/README.md`)。決定論経路の `render-slide.cjs` は `frame-contract.json` を読まず独自体系で描くため、同症状は `verify-slides.js` / `validate-print.js` / `evaluate-deck.js` 側で見る。
+- **slideType の受理と描画は別物 (被覆の caveat)**: schema の enum に載っている＝その型専用の絵が出る、ではない。集約 (9 型が `buildSnake` 1 本へ)・fallback 標識 (D3 は未知 component だけが型別描画に入らず fallback へ落ちる。§10 の D3実装 8 型は型別 case を持つ)・検査の空振り (D3 出力で `validate-svg-diagram.py` が `coverage=none` を返す — この PASS は「検査して合格した」ではない) の 3 つが起きる。**型を選ぶ前に `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §10「受理される型と、その型専用の絵が出る型は別」の表で描画実体を確認する** (型名の列挙はそちらが正本。ここへ写すと片方だけ更新されて食い違う)。
+- **手書き経路の slide 面はひな形へ嵌める (その場で組まない)**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/` の `layout-<役割>` から選ぶ(**役割名であって通し番号ではない** — 同じひな形を 1 deck で何枚使ってもよい)。ひな形 HTML と `slide-skeleton.css` / `.js` は**生成物**ゆえ手編集せず、`frame-contract.json` か生成器へ入れて再生成し `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"` で fail-closed 検査する。引き方・寸法と色・成果物への届け方の逐語の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/README.md` (ここへ写さない)。
+- **ひな形の封じ手は「ひな形経路の保証」であって deck 全体の保証ではない**: 空白過多・chrome ズレ・戻るページ・PDF ズレの 4 症状への封じ手は、**ひな形をコピーして書いた面にだけ**効く (症状表と再発点の逐語の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/README.md`)。決定論経路の `render-slide.cjs` は `frame-contract.json` を読まず独自体系で描くため、同症状は `verify-slides.js` / `validate-print.js` / `evaluate-deck.js` 側で見る。
 
 ## 配置先
 
@@ -177,6 +197,7 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 | 本 skill 資産 | `plugins/slide-report-generator/skills/run-slide-report-generate/` |
 | slide 成果物 | `<out-dir>/index.html`(+`styles.css`/`scripts.js`)／決定論経路は `render-slide.cjs` の出力先 |
 | report 成果物 | `<out-dir>/report.html` (`render-report.js` の出力) |
+| 情報優先度宣言 (R2 中間成果物) | `<out-dir>/information-priority-map.json` (構成着手前に生成し `validate-information-priority.py` を exit 0 にする) |
 | 生成後評価レポート | `<out-dir>/evaluation-report.json` / `.md` (`evaluate-deck.js` 出力) |
 
 ## 追加リソース
@@ -184,7 +205,9 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 **パッケージ (実行 SSOT)**
 - `prompts/R1-orchestrate.md` — R1→R2→R3 の 7 層実行 SSOT (Layer 1-7・15 agent/vendor scripts/schema/reference を実体参照。SKILL.md は router 要約、本 prompt が完全駆動契約)。
 - `workflow-manifest.json` — phases (R1-hearing-mode → R2-structure-gate → R3-generate-evaluate)・gate(C1-C3)・dependsOn・entryHook/exitHook・fatal_exit_codes・resources[] (references/schemas/scripts の id↔path↔phaseIds)。
-**skill 私有 references (10 本・帰属は `references/resource-map.yaml`)**
+
+**skill 私有 references (11 本・帰属は `references/resource-map.yaml`)**
+- `references/information-priority-rules.md` — 構成設計に入る前の情報優先度宣言 (文脈→棚卸し→グループ化→順位→削減→加工→形式選定→強弱→意味的装飾) の SRG 写像と生成前ゲート。owner=structure-designer (report-structure-designer も参照)。**原理の正本は本 plugin の外** (`plugins/system-spec-harness/.../references/information-design.md`) で、ここは写像のみ。
 - `references/structure-design-rules.md` — slide 構成設計 (1スライド1メッセージ分解・共通仕様セクション・slideType 判定)。owner=structure-designer。
 - `references/report-structure-types.md` — report 4 reportType 骨格 (社内報告分析/顧客提案WP/技術ドキュメント/学習解説)。owner=report-structure-designer。
 - `references/d3-diagram-rules.md` — D3 インタラクティブ図解の意匠/実装規範。owner=d3-diagram-designer。
@@ -203,5 +226,6 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 
 **plugin 共有 scripts**
 - `../../scripts/setup-playwright.py` / `validate-output-mode.py` — plugin-local Chromium復元・検査 + 送信前 mode/reportType 値域検証 (fail-closed exit 2) / 環境 preflight。
-- `../../vendor/scripts/` — 決定論レンダラ・validator 群 (`render-slide.cjs`/`render-report.js`/`validate-structure.js`/`verify-slides.js`/`evaluate-deck.js`/`validate-print.js`/`build-image-prompts.js`/`generate-images-codex.js`/`build-deck-html.js`/`validate-ai-image-assets.js`/`workflow-manager.js`。byte 携行・書換禁止)。
+- `../../vendor/scripts/` — 決定論レンダラ・validator 群 13 本 (`render-slide.cjs`/`render-report.js`/`mermaid-render.js`/`validate-structure.js`/`verify-slides.js`/`verify-report-runtime.js`/`evaluate-deck.js`/`validate-print.js`/`build-image-prompts.js`/`generate-images-codex.js`/`build-deck-html.js`/`validate-ai-image-assets.js`/`workflow-manager.js`。byte 携行・書換禁止)。**この列挙は manifest の vendor script 全件と一致させる** — 携行制約を宣言する節が取りこぼすと「携行対象でない」と読み違えられる。
+- `../../../system-spec-harness/scripts/validate-information-priority.py` — 構成着手前の情報優先度宣言ゲート (順位が装飾・強弱に先行しているかの機械検査。0=OK/1=違反/2=usage)。SRG は `distributable: false` の repo 同梱 plugin なので同一 repo 内の他 plugin script を直接起動してよい。原理の正本は `system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
 - plugin-root references (本文が参照): `../../references/full-image-deck-method.md` / `post-generation-evaluation.md` / `report-types.md` ほか意匠・生成規範の共有正本。

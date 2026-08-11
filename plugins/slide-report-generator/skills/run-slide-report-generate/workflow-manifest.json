@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "workflowId": "run-slide-report-generate",
   "skill": "run-slide-report-generate",
-  "description": "output_mode(slide/report) と読者価値ブリーフを確定し、入口は想定読者内の共有課題・変化、本文は根拠・手順まで深く設計する。mode は送信前に fail-closed 検証し、意匠/技術コアを共有したまま構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/report render-report.js/Codex 画像)→生成後評価(30 種思考法)まで 15 agent を Task name 起動で統率する主オーケストレータ。",
+  "description": "output_mode(slide/report) と読者価値ブリーフを確定し、入口は想定読者内の共有課題・変化、本文は根拠・手順まで深く設計する。mode は送信前に fail-closed 検証し、意匠/技術コアを共有したまま構成着手前の情報優先度ゲート→構成設計→仕様確定ゲート→生成(HTML/決定論 render-slide.cjs/report render-report.js/Codex 画像)→生成後評価(30 種思考法)まで 15 agent を Task name 起動で統率する主オーケストレータ。",
   "phases": [
     {
       "id": "R1-hearing-mode",
@@ -27,7 +27,7 @@
     {
       "id": "R2-structure-gate",
       "step": 2,
-      "title": "確定 mode と読者価値ブリーフで structure-designer/report-structure-designer(+d3/data-visualizer/visual-strategist) が、想定読者内で共有される入口→専門解決→自分ごと化の橋を設計する。正式タイトル制約と根拠完全性を維持し、structure-validator + validate-structure.js の仕様確定ゲートで P3 進入を制御(PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し)",
+      "title": "構成設計に入る前に情報優先度を確定し(文脈→棚卸し→グループ化→順位→削減→加工→形式選定を information-priority-map.json へ宣言、validate-information-priority.py で順位が装飾に先行することを fail-closed 検証)、確定 mode と読者価値ブリーフで structure-designer/report-structure-designer(+d3/data-visualizer/visual-strategist) が、想定読者内で共有される入口→専門解決→自分ごと化の橋を設計する。正式タイトル制約と根拠完全性を維持し、structure-validator + validate-structure.js の仕様確定ゲートで P3 進入を制御(PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し)",
       "gate": "C2",
       "dependsOn": [
         "R1-hearing-mode"
@@ -35,6 +35,8 @@
       "entryHook": null,
       "exitHook": "validate-structure",
       "resourceIds": [
+        "ref-information-priority-rules",
+        "glue-validate-information-priority",
         "ref-structure-design-rules",
         "ref-report-structure-types",
         "ref-d3-diagram-rules",
@@ -54,7 +56,7 @@
     {
       "id": "R3-generate-evaluate",
       "step": 3,
-      "title": "経路(slide LLM=html-generator / slide 決定論=slide-renderer+render-slide.cjs / report=report-composer+render-report.js(+mermaid-render.js) / 画像明示=ai-image-diagram-producer)で成果物を生成し、slide は layout-optimizer/ui-quality-reviewer + verify-slides.js/evaluate-deck.js/validate-print.js、report は verify-report-runtime.js で899/900/901/1024/1366/1600px+printの実描画bundleを生成し、report-quality-reviewer + validate-report-visual.py がbundle必須で補正/検査する。加えて両モードで validate-svg-diagram.py --check-grid --strict (D0-D21 図解の静的契約。hook-postgen-eval が生成検知時に機械実行し warning も出荷前に停止する) と validate-diagram-information.py (I1-I5 + 型別スロット=図が図として成立する下限。同じく hook が機械実行する。warning は語彙近似ゆえ合否に入れず読んで判断する対象で、error は参照の取りこぼし I-ER-REF と孤立節点 I-REL-ISO の 2 件だけ=構造から確定的に判るので修正必須) を、report では validate-report-layout.js (R1-R8 読書レイアウトの実描画契約) を通す。RQ31-34 と D5 で読者価値・専門の深さ・自分ごと化・根拠完全性を確認し、deck-evaluator の mode-aware 30 種思考法 rubric を最大 3 周 reloop。bundle欠落またはCRITICAL残存はhard-fail",
+      "title": "経路(slide LLM=html-generator / slide 決定論=slide-renderer+render-slide.cjs / report=report-composer+render-report.js(+mermaid-render.js) / 画像明示=ai-image-diagram-producer)で成果物を生成し、slide は layout-optimizer/ui-quality-reviewer + verify-slides.js/validate-slide-layout.js(S 実描画契約)/evaluate-deck.js/validate-print.js、report は verify-report-runtime.js で899/900/901/1024/1366/1600px+printの実描画bundleを生成し、そのbundleを必須入力とする report-quality-reviewer が補正し、bundleを取らない静的ゲート validate-report-visual.py が構造正本に対して検査する(静的側は bundle 欠落を検出しないので生成を省略しない)。加えて両モードで validate-svg-diagram.py --check-grid --strict (D0-D21 図解の静的契約。hook-postgen-eval が生成検知時に機械実行し warning も出荷前に停止する) と validate-diagram-information.py (I1-I5 + 型別スロット=図が図として成立する下限。同じく hook が機械実行する。warning は語彙近似ゆえ合否に入れず読んで判断する対象で、error は参照の取りこぼし I-ER-REF と孤立節点 I-REL-ISO の 2 件だけ=構造から確定的に判るので修正必須) を、report では validate-report-layout.js (R1-R8 読書レイアウトの実描画契約) を通す。RQ31-34 と D5 で読者価値・専門の深さ・自分ごと化・根拠完全性を確認し、deck-evaluator の mode-aware 30 種思考法 rubric を最大 3 周 reloop。bundle欠落またはCRITICAL残存はhard-fail",
       "gate": "C3",
       "dependsOn": [
         "R2-structure-gate"
@@ -93,6 +95,7 @@
         "glue-validate-svg-diagram",
         "glue-validate-diagram-information",
         "glue-validate-slide-skeleton",
+        "glue-validate-slide-layout",
         "glue-validate-report-layout",
         "vendor-validate-ai-image-assets",
         "vendor-workflow-manager"
@@ -114,6 +117,22 @@
       "id": "ref-report-structure-types",
       "kind": "reference",
       "path": "./references/report-structure-types.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "ref-information-priority-rules",
+      "kind": "reference",
+      "path": "./references/information-priority-rules.md",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
+      "id": "glue-validate-information-priority",
+      "kind": "script",
+      "path": "../../../system-spec-harness/scripts/validate-information-priority.py",
       "phaseIds": [
         "R2-structure-gate"
       ]
@@ -334,6 +353,14 @@
       "id": "glue-validate-diagram-information",
       "kind": "script",
       "path": "../../scripts/validate-diagram-information.py",
+      "phaseIds": [
+        "R3-generate-evaluate"
+      ]
+    },
+    {
+      "id": "glue-validate-slide-layout",
+      "kind": "script",
+      "path": "../../scripts/validate-slide-layout.js",
       "phaseIds": [
         "R3-generate-evaluate"
       ]

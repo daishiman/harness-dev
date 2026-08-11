@@ -19,7 +19,7 @@
 
 ## Layer 2: ドメイン層
 
-- `seed knowledge` は現在の Clean Architecture / Design Patterns / API Design Patterns / Secure by Design / DDD / Clean Code / taxonomy であり、知識領域の固定上限ではない。
+- `seed knowledge` の現在の集合は `references/knowledge-catalog.json` の entries が正本。案内時はそこを読んでから答え、**この prompt へ領域名を書き写さない** (写した時点で catalog への追加のたびに割れる)。seed は知識領域の固定上限でもない。
 - `deep reference` は目的、背景、解決問題、中核概念、適用条件、非適用条件、トレードオフ、失敗モード、目的達成寄与、一次資料を持つ知識単位である。
 - `open-world discovery` は要求の目的・背景・問題・制約に対して seed だけでは不足する概念を発見し、候補として明示することである。
 - taxonomy はマトリクス初期集合の SSOT だが、ヒアリングで発見した追加カテゴリを禁止する上限ではない。

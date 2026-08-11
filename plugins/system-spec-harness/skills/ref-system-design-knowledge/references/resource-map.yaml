@@ -30,6 +30,21 @@ resources:
   - file: ddd.md
     topic: DDDの目的・complex domain条件・境界/aggregate失敗モード・一次資料・鮮度
     read_when: database/backend のドメインモデル境界を章へ反映するとき
+  - file: information-design.md
+    topic: 表現物の情報設計 (文脈先行・順位付け・削減/加工・形式の比較選定・視覚変数への写像・意味的装飾) の目的・適用/非適用境界・失敗モード・goal寄与・一次資料・鮮度
+    read_when: ui-ux / frontend カテゴリで画面・report・slide・CLI出力など人が読む表現物の情報構成を章へ反映するとき
   - file: clean-code.md
     topic: clean codeの目的・outcome・適用境界・過剰適用失敗モード・一次資料・鮮度
     read_when: maintenance-ops のコード規約を章へ反映するとき
+  - file: doctrine-anchor-registry.json
+    topic: design concern→doctrine authority (Apple HIG/Clean Arch/OWASP/SRE) と全 category→concern 写像 (goal-spec C15)
+    read_when: C03 が章の上流指針を引くとき / 未帰属 category の pending 例外を確認するとき
+  - file: ../../../scripts/validate-knowledge-graph.py
+    topic: knowledge/doctrine graph の形状・辺型則・写像全射・位相順 (--order) の検証器
+    read_when: 設計知識を位相順で消費するとき (C01 R5 / C03 R2) / catalog・registry を編集した直後
+  - file: ../../../scripts/validate-information-priority.py
+    topic: information-priority-map の順序制約 (順位確定→装飾) と削除/加工の説明責任の機械検査 (0=OK/1=違反/2=usage)
+    read_when: 人が読む表現物の情報優先度宣言を成果物側で検証するとき
+  - file: ../../../schemas/information-priority-map.schema.json
+    topic: 情報優先度宣言の形状契約 (context_of_use / 束の順位 / 削減・加工の理由 / 形式候補の比較)
+    read_when: information-design.md に沿った宣言を成果物側で作るとき

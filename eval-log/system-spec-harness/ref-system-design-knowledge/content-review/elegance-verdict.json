@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "system-spec-harness",
+    "skill": "ref-system-design-knowledge",
+    "skill_md_sha256": "011fec65ea94c39e8ce148d47ec0af8eef1e5ba4546ce0c44cb3e7bb5680f3bd"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T08:38:04Z",
+  "iterations": 4,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "a-no-contradiction",
+      "b-no-omission",
+      "c-convention-conformance",
+      "d-dependency-integrity",
+      "e-rubric-high-zero"
+    ],
+    "positive_feedback": [
+      "iteration 3 の low 1 (兄弟 skill の引用が実測では反例) が、支持例の差し替え + 反例の明示化で閉じた。現行 L79 は『skill 外の資産も載せてよく (`run-system-spec-elicit` が `../../../scripts/validate-coverage-matrix.py` を列挙している)』で、この 1 本は実測で存在し references/ 起点で解決する (plugins/system-spec-harness/skills/run-system-spec-elicit/references/resource-map.yaml の第 6 entry → plugins/system-spec-harness/scripts/validate-coverage-matrix.py)。elicit の resource-map は 6 entry・うち skill 外 4 本が全て references/ 起点で解決 (4/4: ../../../docs/requirements-foundation-framework.md / ../../ref-system-design-knowledge/references/system-category-taxonomy.json / ../scripts/apply-spec-transition.py / ../../../scripts/validate-coverage-matrix.py)。誤って支持例に使われていた `run-system-spec-compile` は『この誤りは repo 内に実在する […] 真似る先を間違えないこと』という反例へ役割が反転しており、iteration 3 が要求した最小修正と方向が一致する。両 resource-map は HEAD から無改変 (git diff 空) なので、直したのは記述側だけで実測対象を動かしていない。",
+      "反例として引いた compile の主張を実測で再現した。plugins/system-spec-harness/skills/run-system-spec-compile/references/resource-map.yaml の `../../scripts/validate-coverage-matrix.py` / `../../scripts/validate-source-citation.py` / `../../scripts/compile-spec-doc.py` の 3 本は、references/ 起点だと plugins/system-spec-harness/skills/scripts/… へ落ちて 1 本も解決しない (0/3)。よって『`../../scripts/…` と書くと 1 段浅く外して解決しない』『`references/` 起点では 1 本も解決しない』はどちらも実測どおり。規約本体も repo 全体で裏が取れた — plugins/*/skills/*/references/resource-map.yaml 57 本のうち skill 外 entry を持つのは 14 本 (1 本は YAML パース不能で除外)、12 本が skill 外 entry を全件 references/ 起点で解決し、skill root 起点なのは compile と plugins/spec-drift-guardian/skills/run-spec-drift-triage の 2 本だけ。本 skill 自身も resource-map 15 entry が 15/15 references/ 起点で解決する。",
+      "iteration 3 の low 2 (機械保証の帰属先の誤り) が、帰属の訂正だけでなく『機械では止まらない』という正しい帰結の明示まで含めて閉じた。現行 L79 後半は『`validate-frontmatter.py:check_refs_exist` が実在検査するのは `rubric_refs` / `reference_refs` / `script_refs` の 3 つだけで、**`schema_refs` は検査対象外** — ここの段数ミスは機械では止まらない』で、scripts/validate-frontmatter.py:170 の `for field in (\"rubric_refs\", \"reference_refs\", \"script_refs\")` と完全一致する (schema_refs は同 script のどの経路にも現れない)。旧文にあった『`validate-frontmatter.py` が解決する』という誤帰属も文から消え、代わりに『frontmatter 側は逆に skill root 相対』という基点の事実だけが残ったため、iteration 3 が指摘した『解決順は repo root 相対が先』(L190-191) と矛盾する主張も無くなった。",
+      "『機械では止まらない』を実測で反証しにいって、止まらないことを確認した。SKILL.md の `schema_refs` を `../../schemas/information-priority-map.schema.json` → `../../../schemas/…` (skill root 起点では外れる段数) へ一時的に書き換えて主要ゲートを全走させたところ、validate-frontmatter.py = exit 0 / lint-skill-completeness.py = ok / lint-skill-tree.py = ok / pytest plugins/system-spec-harness = 404 passed と全て緑のままで、誤りを検出した検査は 1 つも無かった (実施後ファイルは復元済み・sha256 = 011fec65… で一致)。lint-skill-completeness.py は schema_refs の実在解決経路 (MD-208 `_resolve_ref`) を持つが、REQUIRED_BY_KIND の `ref` は {references, prompts} のみで schemas カテゴリを要求しないため本 skill では呼ばれない — つまり kind: ref においては validate-frontmatter だけでなく repo 全体として機械保証が無い、という Gotcha の含意まで正しい。",
+      "機械検査が無い以上、人が確かめるべき当の参照先の実在を手で確認した。frontmatter の `schema_refs: ../../schemas/information-priority-map.schema.json` は skill root 起点で plugins/system-spec-harness/schemas/information-priority-map.schema.json (7473 bytes, 実在) を指す。同じ資産が resource-map 側では `../../../schemas/information-priority-map.schema.json` (references/ 起点) で載っており、『同じ資産を両方へ書くと段数が 1 つずれる (揃えられない)』も同一実体で成立する。script_refs 2 本 (`../../scripts/validate-knowledge-graph.py` / `../../scripts/validate-information-priority.py`) も skill root 起点で実在し、resource-map 側の `../../../scripts/…` と同一実体を指す。",
+      "本パスの差分が L79 の 1 bullet に閉じていることを、iteration 3 が verbatim 引用した文字列との照合で確認した。L77 (『exit 0 を「依存が正しい」と読まない…機械は理由の不在を検出しない。』)、L78 の test pin (`../run-system-spec-compile/tests/test_compile_spec_doc.py::test_category_design_refs_derived_from_resource_map`)、L81 (『`allowed-tools: [Read]` は事故防止であって不便ではない』) は現行でも同一文言・同一行番号で残り、`## Gotchas` は 5 bullet のまま。決定論ゲートも再走で全緑 — pytest plugins/system-spec-harness -q = 404 passed、validate-frontmatter.py = exit 0 (MISSING_REF ゼロ / warn は disable-model-invocation 由来の既存 1 件)、lint-prompt-contract-drift.py --all = prompts_scanned=187 fatal=0 warn=0、validate-knowledge-graph.py --profile knowledge --order / --profile doctrine = ともに exit 0、validate-plugin-completeness.py = exit 0『OK: 22 plugin(s) complete』、lint-skill-name.py = ok、lint-skill-tree.py = ok (Warn LS-203『規約外 top-level dir tests』は本差分以前からの既存)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 4,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "none"
+  },
+  "notes": "iteration_limit (3) 超過の限定再検証パス (iteration 4)。対象は iteration 3 に残っていた low 2 件 (SKILL.md L79 の Gotcha 内の事実誤り: 兄弟 skill の引用の取り違え / schema_refs の機械保証の帰属誤り) のみで、全面再レビューではない — iteration 1..3 で既に解消と判定済みの項目 (R1 prompt の自己矛盾、resource-map の全数索引化、三者 parity、解決しない相対 path 2 件、再掲 Gotcha 2 本の pointer 化) は再掲も再検証もしていない。超過の事実を隠さないため iteration=4 / iteration_limit=3 をそのまま記録する。判定は 2 件とも実測で解消を確認したうえでの PASS: (c) 規約整合 = 直った 2 clause を含む L79 の全 clause を実測で裏取りし NG ゼロ (resource-map の基点は references/ が repo の規約で 14 本中 12 本、本 skill 15/15・elicit 6/6 が references/ 起点で解決。compile の `../../scripts/*.py` 3 本は references/ 起点で 0/3 = 反例として正しい。check_refs_exist の走査 field は validate-frontmatter.py:170 の 3 つのみで schema_refs は対象外、実験的に段数を壊しても全ゲート緑)。(a) 矛盾なし = OK (差分は L79 の 1 bullet に閉じ、L77/L78/L81 は iteration 3 の引用と同一文言・同一行で残存。新旧の主張が同一ファイル内で衝突する箇所を検出せず)。(b) 漏れなし = OK (frontmatter の schema_refs 2 / script_refs 2 / responsibility_refs 1 と resource-map 15 entry を全件解決確認)。(d) 依存関係整合 = OK (404 passed / frontmatter exit 0 / prompt drift fatal 0 warn 0 / knowledge・doctrine 両 profile exit 0 / plugin-completeness exit 0)。(e) rubric high = 0 (rubric-verdict.json 参照)。計量上の留保 1 件 (欠陥として計上しない): L79 の『`run-system-spec-compile` の resource-map の skill 外 3 entry』は、compile の 5 entry のうち `..` で始まるものを数えると 4 本 (3 本の `../../scripts/*.py` + `../ref-system-design-knowledge/references/resource-map.yaml`) で、『どの skill にも属さない plugin 直下資産』と読めば 3 本で正確、『この skill の外』と読めば 4 本になる。4 本目も skill root 相対で references/ 起点では解決しないため主張の向きは変わらず (0/4)、どちらの読みでも『compile を真似るな』という結論は成立するので事実誤りとは扱わない。より紛れないのは『plugin 直下 scripts を指す 3 entry』のような限定。未検証 (iteration 3 から不変): (1) 一次資料 URL の到達性・版年はネットワーク不使用のため未検証、(2) behavioral claim (C03 が実際に ui-ux 章へ information-design を描画した成果物の中身) は Gate D 管轄で未実行、(3) 成果物側が実際に information-priority-map を持つかは本 skill の責務外、(4) 本 skill は kind:ref のため scripts/lint-content-review.py:35 の EXEMPT_KINDS に該当し本 verdict 自体は同 lint の検査対象外 — 許可キー / feedback_loop 必須キー / next_action enum {none, improve, re_evaluate, human_review} の準拠は同 script の _check_verdict (L102-161) を読んで手動確認した。"
+}
