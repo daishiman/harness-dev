@@ -16,6 +16,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
+import subprocess
 
 import pytest
 
@@ -156,6 +157,77 @@ def test_build_artifacts_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
     assert mod.main(["--check"]) == 0
 
 
+def test_bump_syncs_public_marketplace_version(mod, tmp_path, monkeypatch):
+    """公開 marketplace も version を二重に持つ。片方だけ動かすと
+    lint-config-version-sync が落ち、bump のたびに CI が赤くなる。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (tmp_path / "marketplace.json").write_text(
+        '{\n  "plugins": [\n'
+        '    {\n      "name": "other",\n      "version": "9.9.9",\n'
+        '      "tags": ["a", "b"]\n    },\n'
+        '    {\n      "name": "probe",\n      "version": "0.1.0",\n'
+        '      "tags": ["c", "d"]\n    }\n  ]\n}\n',
+        encoding="utf-8",
+    )
+    mod.write_version(plugin, "0.1.1")
+    after = (tmp_path / "marketplace.json").read_text(encoding="utf-8")
+    assert '"name": "probe",\n      "version": "0.1.1"' in after
+    assert '"version": "9.9.9"' in after  # 隣の plugin を巻き込まない
+    assert '"tags": ["c", "d"]' in after  # 1 行記法を展開しない
+
+
+def test_public_marketplace_sync_skips_unlisted_plugins(mod, tmp_path, monkeypatch):
+    """distributable: false の plugin は公開側に載らない。無いことは異常ではない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (tmp_path / "marketplace.json").write_text(
+        '{"plugins": [{"name": "other", "version": "9.9.9"}]}\n', encoding="utf-8"
+    )
+    mod.write_version(plugin, "0.1.1")
+    assert '"version": "9.9.9"' in (tmp_path / "marketplace.json").read_text(encoding="utf-8")
+
+
+def test_gitignored_artifacts_are_not_content(mod, tmp_path, monkeypatch):
+    """機械ローカルの生成物を数えると fingerprint が machine 依存になる。
+
+    実際に踏んだ: playwright のブラウザ実体と .coverage が手元にだけ存在し、
+    手元 --check OK / CI DRIFT という再現しない食い違いを起こした。
+    """
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    # パターンは .gitignore の位置を起点に解釈される。repo 直下に置くので
+    # plugin からの相対ではなく repo からの相対で書く (実 repo と同じ書き方)。
+    (tmp_path / ".gitignore").write_text(
+        "plugins/probe/vendor/browsers/\n.coverage\n", encoding="utf-8"
+    )
+    _isolate(mod, monkeypatch, tmp_path)
+    mod.main([])
+    (plugin / "vendor" / "browsers").mkdir(parents=True)
+    (plugin / "vendor" / "browsers" / "chromium").write_bytes(b"\x00" * 64)
+    (plugin / ".coverage").write_bytes(b"\x00")
+    assert mod.main(["--check"]) == 0
+
+
+def test_untracked_but_unignored_files_are_content(mod, tmp_path, monkeypatch):
+    """まだ commit していない新規ファイルも install されれば copy される。
+    ここを落とすと「新 skill を足したのに反映されない」を検出できない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    mod.main([])
+    (plugin / "skills" / "run-new").mkdir(parents=True)
+    (plugin / "skills" / "run-new" / "SKILL.md").write_text("new", encoding="utf-8")
+    assert mod.main(["--check"]) == 1
+
+
+def test_non_git_tree_fails_loudly(mod, tmp_path):
+    """全走査へ黙って落とすと、環境で答えが変わる状態が無音で復活する。"""
+    plugin = tmp_path / "plugins" / "probe"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin" / "plugin.json").write_text('{"version": "0.1.0"}', encoding="utf-8")
+    with pytest.raises(SystemExit):
+        mod.fingerprint(plugin)
+
+
 def test_session_handoff_notes_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
     """plugin ディレクトリを cwd にしてセッションを回すと .claude/handoff/ が書かれる。
     これで version が上がると、定時実行が「作業した」だけで空の版を量産する。"""
@@ -206,6 +278,9 @@ def test_install_targets_only_installed_plugins(mod, tmp_path, monkeypatch):
 
 
 def _fake_plugin(tmp_path: pathlib.Path, name: str, version: str) -> pathlib.Path:
+    # fingerprint は git に「何が内容か」を尋ねるので work tree が要る。
+    if not (tmp_path / ".git").exists():
+        subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     plugin = tmp_path / "plugins" / name
     (plugin / ".claude-plugin").mkdir(parents=True)
     (plugin / ".claude-plugin" / "plugin.json").write_text(
@@ -220,4 +295,7 @@ def _isolate(mod, monkeypatch, tmp_path: pathlib.Path) -> None:
     (ここで検証したいのは採番と検出であって、生成物の内容ではない)。"""
     monkeypatch.setattr(mod, "PLUGINS_DIR", tmp_path / "plugins")
     monkeypatch.setattr(mod, "FINGERPRINTS", tmp_path / "fingerprints.json")
+    monkeypatch.setattr(mod, "PUBLIC_MARKETPLACE", tmp_path / "marketplace.json")
     monkeypatch.setattr(mod, "regenerate_local_marketplace", lambda: None)
+    # 実 repo の config-version-lock.json へ --write するのを止める。
+    monkeypatch.setattr(mod, "regenerate_config_version_lock", lambda: None)

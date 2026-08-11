@@ -79,6 +79,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PLUGINS_DIR = ROOT / "plugins"
 LOCAL_MARKETPLACE_DIR = ROOT / "marketplaces" / "local"
 FINGERPRINTS = LOCAL_MARKETPLACE_DIR / "plugin-fingerprints.json"
+PUBLIC_MARKETPLACE = ROOT / ".claude-plugin" / "marketplace.json"
 MARKETPLACE_NAME = "harness-local"
 
 EXCLUDED_DIR_NAMES = frozenset(
@@ -144,13 +145,81 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
             f"[build-plugin-release] {path} の version 行を一意に特定できない"
         )
     path.write_text(replaced, encoding="utf-8")
+    sync_public_marketplace_version(plugin_dir.name, version)
+
+
+def sync_public_marketplace_version(name: str, version: str) -> None:
+    """公開 marketplace の version を plugin.json へ追従させる。
+
+    ローカル marketplace (marketplaces/local) は毎回生成し直すので放っておけばよいが、
+    公開側の .claude-plugin/marketplace.json は手で維持されており、version を二重に
+    持っている。片方だけ動かすと lint-config-version-sync が落ちる。この対応は
+    「片方だけの bump はキャッシュ更新に届かない」ことを守るためのもので、採番を
+    自動化した以上こちらも自動で合わせないと、bump のたびに CI が赤くなる。
+
+    載っていない plugin (distributable: false) は何もしない。
+    ローカル marketplace 側と違って json 往復で書き戻せない (tags 配列の 1 行記法が
+    展開されて無関係な差分が出る) ので、対象 plugin の object 内だけを原文置換する。
+    """
+    if not PUBLIC_MARKETPLACE.exists():
+        return
+    text = PUBLIC_MARKETPLACE.read_text(encoding="utf-8")
+    anchor = text.find(f'"name": "{name}"')
+    if anchor < 0:
+        return
+    # 次の plugin object へはみ出さないよう、探索窓を次の "name": までに限る。
+    nxt = text.find('"name": "', anchor + 1)
+    window_end = len(text) if nxt < 0 else nxt
+    pattern = re.compile(r'("version"\s*:\s*)"[^"]*"')
+    match = pattern.search(text, anchor, window_end)
+    if match is None:
+        raise SystemExit(
+            f"[build-plugin-release] {PUBLIC_MARKETPLACE} の {name} に version が無い"
+        )
+    updated = text[: match.start()] + f'{match.group(1)}{json.dumps(version)}' + text[match.end() :]
+    PUBLIC_MARKETPLACE.write_text(updated, encoding="utf-8")
+
+
+def content_paths(plugin_dir: pathlib.Path) -> list[pathlib.Path]:
+    """内容と見なすファイル一覧を git に決めさせる。
+
+    ファイルシステムを直に走査すると .gitignore された機械ローカルの生成物まで
+    数えてしまう。実際に踏んだのは playwright のブラウザ実体
+    (plugins/slide-report-generator/vendor/playwright-browsers/) と .coverage で、
+    手元にはあり CI のチェックアウトには無いため、手元 OK / CI DRIFT という
+    再現しない食い違いになった。fingerprint は「どの machine で計算しても同じ」で
+    なければ対応表として機能しない。基準を版管理下の内容へ寄せる。
+
+    tracked (--cached) と未追跡だが ignore されていないもの (--others
+    --exclude-standard) の和を取る。後者を含めるのは、まだ commit していない
+    新規ファイルも install されれば copy されるからで、ここを落とすと
+    「新 skill を足したのに反映されない」を検出できない。
+
+    git 管理外では黙って全走査へ落とさない。落とすと今回と同じ「環境によって
+    答えが変わる」状態が無音で復活する。
+    """
+    result = subprocess.run(
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "."],
+        cwd=plugin_dir,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            f"[build-plugin-release] {plugin_dir} で git ls-files に失敗した。"
+            f"fingerprint は版管理下の内容を基準にするため git work tree が要る\n"
+            f"{result.stderr.strip()}"
+        )
+    return sorted(
+        plugin_dir / rel for rel in result.stdout.split("\0") if rel
+    )
 
 
 def fingerprint(plugin_dir: pathlib.Path) -> str:
     """plugin ツリー全体の内容 hash。パスも hash に混ぜることで、内容が同じ
     ファイルの rename も変更として検出する。"""
     digest = hashlib.sha256()
-    for path in sorted(plugin_dir.rglob("*")):
+    for path in content_paths(plugin_dir):
         if is_excluded(plugin_dir, path):
             continue
         rel = path.relative_to(plugin_dir).as_posix()
@@ -252,7 +321,7 @@ def seconds_since_last_touch(plugin_dir: pathlib.Path) -> float:
     バージョン列が編集の中間状態で埋まるのを避けるため、静穏期間を設ける。
     """
     newest = 0.0
-    for path in plugin_dir.rglob("*"):
+    for path in content_paths(plugin_dir):
         if is_excluded(plugin_dir, path) or not path.is_file():
             continue
         newest = max(newest, path.stat().st_mtime)
@@ -335,6 +404,27 @@ def regenerate_local_marketplace() -> None:
     spec.loader.exec_module(module)
     if module.main([]) != 0:
         raise SystemExit("[build-plugin-release] ローカル marketplace の再生成に失敗")
+
+
+def regenerate_config_version_lock() -> None:
+    """焼き込み config の lockfile を version へ追従させる。
+
+    *.default.json / *.fixed.json を持つ plugin は config-version-lock.json に
+    version を控えており、bump するとこれが陳腐化して CI (lint-config-version-sync)
+    が落ちる。採番を自動化した以上、随伴する記録も自動で合わせないと bump のたびに
+    人手の後始末が要る。lockfile を持つ plugin が無ければ何もしない。
+    """
+    path = ROOT / "scripts" / "lint-config-version-sync.py"
+    if not path.exists():
+        return
+    result = subprocess.run(
+        [sys.executable, str(path), "--write"], cwd=ROOT, capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            "[build-plugin-release] config-version-lock の再生成に失敗\n"
+            f"{result.stdout}{result.stderr}"
+        )
 
 
 def installed_plugin_names() -> list[str]:
@@ -510,6 +600,8 @@ def _run(args) -> int:
 
     save_fingerprints(state)
     regenerate_local_marketplace()
+    if bumped:
+        regenerate_config_version_lock()
     print(f"[build-plugin-release] {len(bumped)} 件 bump / marketplace 再生成 完了")
 
     if args.install:

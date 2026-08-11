@@ -232,6 +232,13 @@ def lint_one(root: Path) -> list[str]:
                 top, fname = rel.parts[0], rel.parts[-1]
                 if top in {"templates", "references", "examples"}:
                     allowed_template_exts = (".md", ".md.tmpl", ".yaml", ".json", ".patch", ".j2")
+                    # examples/ は「生成出力の完成例」なので、その skill の出力形式が
+                    # そのまま拡張子になる。HTML を出す skill (slide/report/図解 golden) の
+                    # 見本を .md へ包むと、実際にブラウザで開いて確認できる golden という
+                    # 性質が失われる。上の nested dir skip と同じ論拠で examples だけ許す。
+                    # templates/ references/ は散文と雛形なので従来どおり制限する。
+                    if top == "examples":
+                        allowed_template_exts += (".html",)
                     if not fname.endswith(allowed_template_exts):
                         errs.append(f"第8〜11条違反: {rel} 拡張子不正")
                 if top == "scripts":

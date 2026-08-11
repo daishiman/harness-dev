@@ -465,6 +465,13 @@ PENDING_RENAME_PATHS = {
     "plugins/harness-creator/skills/run-plugin-package-check/scripts/sandbox-plugin-lifecycle.py",
     "plugins/harness-creator/skills/run-plugin-package-check/scripts/run-pkg-015.py",
     "plugins/harness-creator/skills/run-skill-live-trial/scripts/plan-live-trials.py",
+    # slide-report-generator の Playwright vendor bootstrap: §4.3 (kebab-case) は満たすが
+    # verb 'setup' が ALLOWED_VERBS 外。plugin-local vendor へ OS/CPU 別 Chromium を復元する
+    # 段で、build (成果物生成) とも validate (検査) とも意味がずれる。SKILL.md/README/
+    # tests/CI が exact name を参照するため、許可動詞化 (allowed-list 拡張) は参照を原子的に
+    # 更新する後続 Change Governance PR まで PENDING
+    # (setup-send-log-db.py と同種の「setup verb pending」扱い)。
+    "plugins/slide-report-generator/scripts/setup-playwright.py",
 }
 
 VALID_NAME = re.compile(r"^([a-z]+)-[a-z0-9-]+\.py$")

@@ -101,3 +101,8 @@ google-cloud-cli-darwin-arm.tar.gz
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# plugin ディレクトリを cwd にしてセッションを回すと落ちてくるハンドオフメモ。
+# plugin の中身ではないが、版管理に入れると skill tree lint の nested dir 規約
+# (第13条) に触れ、install 時には copy 対象にもなる。
+plugins/**/.claude/handoff/
