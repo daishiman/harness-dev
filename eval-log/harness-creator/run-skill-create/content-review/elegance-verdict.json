@@ -1,25 +1,34 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-create", "skill_md_sha256": "e91cc950cd1cee4ddbec1bfbb86466b0d830fcddd7b59bc289f82febf3f4ecf4"},
+  "target": {"plugin": "harness-creator", "skill": "run-skill-create", "skill_md_sha256": "c6296c6a2230919a8f85c5b5e2954e838b23c02ff74fa0c733b71aed729f198f"},
   "review_kind": "elegance",
-  "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "independent-group-b/run-elegant-review",
-  "reviewed_at": "2026-07-12T00:28:08Z",
-  "iterations": 2,
+  "verdict": "FAIL",
+  "findings_summary": {"contradiction": 1, "omission": 1, "inconsistency": 2, "dependency_break": 0, "smell": 1},
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T05:42:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "30思考法でgate順序、ユーザー承認、context fork、handoff、bundle登録、差戻し上限を検査し、C1-C4全PASS。",
-      "workflow-manifestのgate_orderとSKILLのゴールシーク制御が整合し、schema/prompt/manifest参照はmissing=[]。",
-      "初回に検出した廃止済みharness-* bundle名を現行skills-full/skills-intakeとbundle_targets契約へ修正し、再評価で不整合0。"
+      "追加 3 項目 (CL-4/4b/4c) がすべて『実行コマンド + 検出モード (--check または引数なし検出) が exit 0』の二層で書かれており、実行忘れを CI 側の検出層が拾う fail-closed 構造を崩していない。",
+      "順序の SSOT が workflow-manifest 側に一本化されている: 追加 phase local-marketplace-register(step 3.6) → plugin-release-record(step 3.7) が dependsOn 鎖で直列化され、p0-lint.dependsOn も bundle-register から plugin-release-record へ同一 commit で追従している。",
+      "CL-4b の根拠『公開 marketplace は distributable:false を載せられない (MK-004)』は実装と一致する: scripts/validate-plugin-completeness.py:307-309 が MK-004 を送出し、scripts/build-local-marketplace.py:173-181 が同じ判定式でローカル側だけ非配布 plugin を載せる旨を明記し、tests/scripts-root/test_root__build_local_marketplace.py:116 が両者の判定式一致を検査している。",
+      "CL-4c の根拠『marketplace install は version 単位の copy なので version 据え置きでは install 済みへ届かない』は scripts/build-plugin-release.py の module docstring (2026-08-11 実測: cache/<name>/<version>/ に実ファイル 539 件・symlink 0) と _run() の stale 判定 (--check で exit 1) に対応しており、checklist の理由文が実装の裏取り済み。",
+      "${HARNESS_ROOT:-.} への書換は repo の既存 portability 規約と同形 (build-steps.md:87,94 / run-build-skill/SKILL.md:282,288 / commands/marketplace-register.md:53) で、新語彙を持ち込んでいない。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "[omission] ## End-to-End Flow (SKILL.md:114-124) が [Step 3.5 bundle-register] の次を [Step 4a p0-lint] のままにしており、今回 manifest へ追加された step 3.6 local-marketplace-register / 3.7 plugin-release-record が図に無い。checklist 側には CL-4b/CL-4c として入ったため、同一 SKILL.md 内で step 列挙が 2 系統に割れている。フロー図だけを見て進めた実行者は 3.6/3.7 を飛ばし、CI の build-plugin-release.py --check (exit 1) で初めて落ちる。",
+      "[contradiction] Key Rule 6 (SKILL.md:107) は生成フロー内での自動実行を許す根拠を『append-only・冪等・書込後自己再検証ゆえ (破壊的変更を含まない)』と限定しているが、今回 gate 無し (manifest の plugin-release-record は gate:null) で追加された CL-4c は非 append-only な書込である。build-plugin-release.py の write_version() が plugins/<name>/.claude-plugin/plugin.json の version 文字列を in-place 置換し、sync_public_marketplace_version() / sync_codex_manifest_version() / regenerate_config_version_lock() が公開 marketplace.json・Codex manifest・config-version-lock まで同期する。さらに _run() は survey(only=None) で全 plugin を走査するため、今回作成した plugin 以外の『変更済み plugin』も同じ実行で bump される。Key Rule 6 の許容根拠が新ステップを覆っておらず、承認境界の記述が実挙動より狭い。",
+      "[inconsistency] SKILL.md:91 は `python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py <handoff>` のままだが、同ブランチの差分で詳細契約側 prompts/R1-elicit.md:172 は `${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/check-route-component-parity.py` へ変更された。SKILL.md 自身が『詳細契約は prompts/R1-elicit.md CONST_015』と名指ししている同一コマンドの表記が割れており、借用 plugin 配下で CLAUDE_PLUGIN_ROOT が別 plugin を指す環境では解決先が食い違う (この 2 ファイルは lint-readme-plugin-root-portability.py の走査対象外なので機械検査では検出されない)。",
+      "[inconsistency] SKILL.md:69 の冒頭注記は『本SKILL.md 内の lint / スクリプト起動コマンド (python3 plugins/...) は repo-root cwd 前提』のままで、今回 CL-4/4b/4c が採用した ${HARNESS_ROOT:-.} 形に触れていない。CL-2 (SKILL.md:141) は素の repo 相対 `python3 plugins/harness-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py` のままなので、同一 checklist 内に path 解決規約が 2 つ併存する形になった (${HARNESS_ROOT:-.} の既定値が '.' なので実害は無いが、注記が新形式を説明していない)。",
+      "[smell] CL-4b と CL-4c の実行が重複している。build-plugin-release.py の _run() は pending (status=new/changed/released) が 1 件でもあれば regenerate_local_marketplace() を必ず呼ぶため、CL-4b が対象とする『新規 plugin の場合』(status=new) では CL-4c 単独で marketplaces/local/.claude-plugin/marketplace.json は再生成される。CL-4b が単独の価値を持つのは pending が空で local marketplace 側だけ drift しているケースに限られるが、その限定条件が checklist に書かれていない。",
+      "[検証できなかった点] build-plugin-release.py --check / build-local-marketplace.py --check は今回実走していない (静的読解のみ)。IN1 の p0-lint 9 コマンドのうち 9 件目 validate-build-plan.py は、入力 eval-log/skill-brief.json が別 skill (run-slide-report-generate) の残置 brief であるため run-skill-create に対して意味のある実行にならず exit 1 となる。これは create 実行中にしか成立しない run-scoped 入力に起因する既存事情で、今回の差分による退行ではない。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "none"
+    "next_action": "improve"
   },
-  "notes": "IN1はp0-lint commandsとfocused test、IN2はhandoff/build-trace schemaとテスト、OUT1/OUT2はAskUserQuestion gateとfork evaluator/elegant phaseで確認。1回目findingは修正済み。"
+  "notes": "incremental の unresolved semantic batch として (a)矛盾/(b)漏れ/(c)規約整合/(d)依存関係整合/(e)rubric high severity を 1 context で判定した結果の elegance 投影。(d) は健全: SKILL.md が参照する scripts/validate-plugin-completeness.py・scripts/build-local-marketplace.py・scripts/build-plugin-release.py・marketplaces/local/.claude-plugin/marketplace.json・marketplaces/local/plugin-fingerprints.json・prompts/R1-R3・schemas/*.schema.json・references/governance-params.json.example・.claude-plugin/bundles.json の bundle 名 (skills-full / skills-intake) はすべて実在を確認済み。(e) も rubric rule 上は high severity 0 (rubric-verdict.json 参照)。FAIL 判定は (a)1 件 + (b)1 件 + (c)2 件によるもので、いずれも SKILL.md 本文側 (フロー図・Key Rule 6・path 表記) の追従漏れ。criteria 別: IN1=p0-lint 9 コマンド中 8 件を実走し全て exit 0、9 件目は上記理由で評価不能。IN2=今回の差分は handoff/build-trace 生成経路に触れておらず退行なし (追加 phase 3.6/3.7 に handoff キーが無い点は既存の bundle-register と同方針)。OUT1=Gate 1/2/2.5/3/4 の停止契約と context:fork 要求そのものは無傷だが、ungated な非 append-only 書込が 1 つ増えた点で承認境界の記述が実挙動に追いついていない。OUT2=evaluator/elegant-review の FAIL 残存禁止と C1-C4 契約 (CL-9/CL-10) は今回の差分で変更されておらず維持。"
 }

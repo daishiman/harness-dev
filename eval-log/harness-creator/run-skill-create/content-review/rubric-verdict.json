@@ -1,25 +1,33 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-create", "skill_md_sha256": "e91cc950cd1cee4ddbec1bfbb86466b0d830fcddd7b59bc289f82febf3f4ecf4"},
+  "target": {"plugin": "harness-creator", "skill": "run-skill-create", "skill_md_sha256": "c6296c6a2230919a8f85c5b5e2954e838b23c02ff74fa0c733b71aed729f198f"},
   "review_kind": "rubric",
-  "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "independent-group-b/assign-skill-design-evaluator",
-  "reviewed_at": "2026-07-12T00:28:08Z",
-  "iterations": 2,
+  "verdict": "FAIL",
+  "findings_summary": {"contradiction": 1, "omission": 1, "inconsistency": 2, "dependency_break": 0, "smell": 1},
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-11T05:42:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "ref-skill-design-rubric 6e1843e5…のFM/NM/BD/PD採点93/100、high severity 0。",
-      "orchestratorとして子skillに実装を委譲し、自身はgate・context fork・handoffに責務を絞っている。",
-      "現行bundles.jsonのskills-full/skills-intakeと本文が再び合致し、NM/BD/PDと参照契約もPASS。"
+      "ref-skill-design-rubric (rubric_version 1.3.0, hash 6e1843e5…) の kind=skill 適用 rule を全件採点し high severity 0: FM-001 (name=run-skill-create が prefix 規約に一致) / BD-001 (## Purpose & Output Contract が SKILL.md:71 に厳格一致) / BD-003 (frontmatter を除く body 130 行 ≤ 300) / NM-001 (ディレクトリ basename == frontmatter.name) がいずれも PASS。",
+      "medium/low も維持: FM-002/003 (description のトリガ句『〜たいとき』が 2 個で 2..3 の範囲・句点終端)、FM-004 (sha256/exit code 等の内部動作語なし)、BD-002 (## Gotchas 存在)、PD-002 (冒頭 30 行内に ## Purpose & Output Contract と『禁則』)、PD-001 (references/ に 4 ファイル) が今回の差分後も崩れていない。checklist を 3 行増やしても BD-003 の 300 行制約に余裕がある。",
+      "NM-002/NM-003 相当の機械検査を実走で確認: lint-skill-name / lint-skill-description / lint-skill-tree / validate-frontmatter / lint-dependency-direction / lint-skill-dep-step7 / lint-forbidden-deps / lint-manifest-contents が全て exit 0。特に lint-manifest-contents は追加 phase 3.6/3.7 を含む workflow-manifest.json を通過しており、manifest 側の構造整合は担保されている。",
+      "単一責務が保たれている: 追加された CL-4b/CL-4c も orchestrator 自身が実装を抱えず repo-root スクリプト (build-local-marketplace.py / build-plugin-release.py) へ委譲し、SKILL.md は『何をいつ実行し何が exit 0 であるべきか』だけを述べている。判定ロジックの複製は無い。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "[contradiction / 規約整合] Key Rule 6 (SKILL.md:107) が自動実行の許容根拠を『append-only・冪等ゆえ破壊的変更を含まない』と宣言しているのに対し、今回追加の CL-4c (manifest では plugin-release-record, gate:null) が呼ぶ build-plugin-release.py は write_version() で plugins/*/.claude-plugin/plugin.json の version を in-place 置換し、公開 marketplace.json / Codex manifest / config-version-lock まで同期する非 append-only 書込である。加えて _run() は survey(only=None) で全 plugin を対象にするため、当該 skill と無関係の変更済み plugin も同時に bump される。決定論ゲート (Gate 承認境界) の記述が実挙動を覆っていない。",
+      "[omission] ## End-to-End Flow (SKILL.md:114-124) に step 3.6 local-marketplace-register / 3.7 plugin-release-record が追記されておらず、checklist (CL-4b/CL-4c) と manifest phases とフロー図の 3 者で step 集合が食い違う。SSOT を manifest に置く方針自体は妥当だが、SKILL.md 内に不完全な第 2 の step 列挙が残るのは SSOT 非重複に反する。",
+      "[inconsistency] SKILL.md:91 の `$CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py` が、同ブランチで `${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/...` へ変更された prompts/R1-elicit.md:172 (SKILL.md が『詳細契約』と名指しする正本) と食い違ったままになっている。",
+      "[inconsistency] SKILL.md:69 の『python3 plugins/... は repo-root cwd 前提』という注記が、今回導入された ${HARNESS_ROOT:-.} 形を説明していない。CL-2 (SKILL.md:141) は素の repo 相対のままで、checklist 内に 2 つの path 解決規約が併存する。",
+      "[smell] CL-4b は CL-4c と重複実行になる。build-plugin-release.py の _run() は pending が非空なら regenerate_local_marketplace() を必ず呼ぶため、CL-4b が対象とする新規 plugin (status=new) では CL-4c だけで local marketplace が再生成される。CL-4b が独立の意味を持つ条件 (pending が空で local marketplace のみ drift) が明示されていない。",
+      "[検証できなかった点] rubric の RG-001 (出力 JSON への rubric_hash 同梱) は content-review-verdict.schema.json が additionalProperties:false でトップレベル追加キーを禁じているため、本 verdict では notes 内に hash を記載する形で代替した (schema 準拠を優先)。また build-plugin-release.py --check / build-local-marketplace.py --check の実走、および BD-004 の description↔body 1:1 対応は静的読解に留めている。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "none"
+    "next_action": "improve"
   },
-  "notes": "rubric hash=6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。4 criteria全件評価。"
+  "notes": "rubric hash=6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d (rubric_version 1.3.0, threshold 80)。incremental の unresolved semantic batch を 1 context で (a)-(e) 判定した結果の rubric 投影であり、elegance-verdict.json と同一判定の別射影。rubric rule 単体の採点では high severity 0・threshold 超過 (減点は medium 1 = Key Rule 6 の規約整合 -10 相当、low 3 = -9 相当) だが、同一 batch で (a)矛盾 1 / (b)漏れ 1 / (c)規約整合 2 の未解決 findings が出たため verdict は FAIL とし、改善義務を rubric 側でも落とさない。criteria 全件評価: IN1 = p0-lint 9 コマンド中 8 件を実走し exit 0、TODO / 未展開 {{...}} / 英語仮文の残存なし (SKILL.md 内の {{ 出現 1 件は CL-7 自身の説明文)。9 件目 validate-build-plan.py は入力 eval-log/skill-brief.json が別 skill (run-slide-report-generate) の残置で評価不能 (既存事情、本差分の退行ではない)。IN2 = handoff/build-trace の schema 契約 (CL-3/CL-12) は本差分で未変更、schemas/build-trace.schema.json・handoff.schema.json とも実在。IN2 に対する退行なし。OUT1 = AskUserQuestion 経由の Gate 停止と context:fork 要求は維持されているが、ungated な非 append-only 書込が 1 つ増えた点を上記 contradiction として計上。OUT2 = CL-9/CL-10 の FAIL 残存禁止・C1-C4 全 PASS 契約は本差分で不変。"
 }
