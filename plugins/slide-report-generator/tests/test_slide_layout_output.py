@@ -4,9 +4,23 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import pytest
+
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-slide-layout.js"
+
+# 本ファイルの 3 検査 (L0 の 0 件判定 / L7 の体系混在 / PASS 経路) はいずれも
+# ページを実際に描いてから DOM を数えるため、plugin-local な playwright と
+# Chromium が無いと動かない。vendor/node_modules は gitignore で CI では
+# 存在しないので、無い環境では skip する。「playwright が実在すること」自体は
+# scripts/validate-output-mode.py の preflight (test_validate_output_mode.py)
+# が別途固定しており、ここで代替検証すると browser 無しで通る偽の緑になる。
+_PLAYWRIGHT = PLUGIN_ROOT / "vendor" / "node_modules" / "playwright"
+pytestmark = pytest.mark.skipif(
+    not _PLAYWRIGHT.exists(),
+    reason=f"plugin-local playwright 未導入 ({_PLAYWRIGHT} 不在): 実描画検査は実行できない",
+)
 
 
 def _run(target: Path) -> subprocess.CompletedProcess[str]:
