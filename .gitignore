@@ -62,6 +62,9 @@ eval-log/intake-locks/
 eval-log/skill-brief.json
 eval-log/skill-brief*.json
 !eval-log/skill-brief-prompt-creator.json
+# CI (governance-check) が検証する eval-log/skill-build-trace.json の対になる brief。
+# trace だけ commit して brief を ignore すると、CI では brief 不在で必ず検証が落ちる。
+!eval-log/skill-brief-slide-report-generate.json
 # dev-graph live-trial のスクラッチ git repo / host fixture (各々が nested .git を持つ
 # 埋め込みリポジトリ = gitlink 化して壊れるため tracked にしない transient 生成物)
 eval-log/dev-graph/live-trial-fixtures/

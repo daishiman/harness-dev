@@ -1,0 +1,50 @@
+{
+  "skill_name": "run-slide-report-generate",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "スライド/レポートを新規生成したいとき (output_mode 確定→構成設計→仕様確定ゲート→生成→生成後評価)",
+    "capability-build 経由で本 skill のコンテンツ品質規範を更新するとき"
+  ],
+  "output_contract": {
+    "primary": "slide=index.html(+styles.css/scripts.js) / report=report.html",
+    "secondary": "生成レポート (mode/経路/生成後評価スコア/未達指摘一覧)",
+    "update_scope_this_build": "読者価値知見 (入口ホリゾンタル・中身バーティカル) のライフサイクル保持ガード追補 (references/prompts/rubric への Edit 差分のみ)"
+  },
+  "goal": "スライド・レポートの内容品質を改善する: タイトル・導入は読者の共有課題と変化から入り (入口ホリゾンタル)、本文は専門性・具体的数字・失敗・手順まで深く掘る (中身バーティカル)。読者が自分ごと化できる構成を、生成・修正・評価の全ライフサイクルで退化させない。",
+  "purpose_background": "読者は書き手の専門知識ではなく自分の変化を知りたい。ターゲットを絞ることと入口を狭くすることは別物。既存の正本 report-narrative-logic.md §7 と設計層 (CONST_008/RCONST_007)・評価層 (RQ31-34/D5) には反映済みだったが、slide LLM 生成経路と修正経路 (run-slide-report-modify) に保持ガードが欠落しており、生成後・修正時に入口が専門手段主語へ退化しうるギャップがあった。",
+  "key_constraints": [
+    "K1 入口ホリゾンタル: タイトル・導入は読者の成果/変化ベース (例:「毎月10時間かかっていた仕事をほぼゼロにした方法」) にし、専門手段ベースにしない",
+    "K2 中身バーティカル: 本文は専門性・確認済みの具体的数字・失敗・手順・条件・限界まで深く掘る (専門性を捨てない)",
+    "K3 自己紹介起点禁止: 「私は◯◯に詳しい」型の資格紹介起点導入をしない (読者は自分がどう変わるかを知りたい)",
+    "K4 ターゲットを絞ることと入口を狭くすることは別物 (audience/reportType は維持し入口表現を広くする)",
+    "既存機構 (hearing-facilitator 読者価値ブリーフ・structure-designer・report-structure-designer・deck-evaluator・report-quality-reviewer・validate-structure・spec-registry) と矛盾なく整合させる (additive・ID 帯衝突回避)"
+  ],
+  "boundary": {
+    "in_scope": [
+      "run-slide-report-generate の references/prompts への保持ガード追補 (CONST_039・D5 明文化)",
+      "plugin 共有 references/structure.md の旧自己紹介導入例の K3 整合",
+      "run-slide-report-modify への修正時保持ガード (CONST_013/RCONST_013) と帯参照の整合"
+    ],
+    "out_of_scope": [
+      "run-cross-deck-review への読者フック整合軸追加 (bd memory: followup-cross-deck-reader-hook-axis に記録)",
+      "validate-structure.js への意味判定の機械ゲート化 (意図的設計: 意味判定は RQ31-34/D5 の LLM 評価層に委譲)",
+      "schema description への読者価値ヒント追加 (読者価値ブリーフは schema 外 sidecar が意図的設計)",
+      "goal-seek 見出し規約 (## ゴールシーク実行) への追従 (既存状態・本 build のスコープ外)"
+    ]
+  },
+  "deterministic_checks": [
+    "python3 validate-output-mode.py (mode/reportType 値域・fail-closed)",
+    "node validate-structure.js (V-001〜043 仕様確定ゲート)",
+    "node verify-slides.js / python3 validate-report-visual.py (視覚ゲート)",
+    "grep による帯参照 (CONST_001-039 / CONST_001-013 / RCONST_001-013) の残存ゼロ確認"
+  ],
+  "external_systems": [],
+  "goal_seek": { "engine": "inline" },
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "cli_tools": ["node", "python3"],
+  "mcp_tools": [],
+  "placement_candidates": ["plugins/slide-report-generator/skills/run-slide-report-generate/"]
+}
