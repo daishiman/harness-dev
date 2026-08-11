@@ -1,0 +1,41 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-system-spec",
+  "args": "",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "task.md#3 C11 gate (dev-graph validate-graph-schema.py) 未実行: C02 import が実行されず検証対象ノード不在で到達不能 (owner=上流)",
+      "task.md#4 C02 登録ノードの source_lineage/confirmation/evaluator evidence/readiness 未達: completeness evaluator が VERDICT FAIL を返し被験スキルが SKILL.md:135 の Gotcha 通り fail-closed で import を実行しなかった。blocking findings 5 件は全て system-spec-harness C01/C02/C03 契約側で入力では動かせない (owner=上流)",
+      "scenario 側: fixture の .dev-graph/config.json が r5-init の repository_id を持ち回り C24 が EXIT=1。加えて positive(import 到達) 前提が現状の上流の意味層バーでは成立しない (owner=scenario)"
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "bd40910f167e4fa63cc040efcb066f7f38e21a31f7e91f2612a6613b2f0e509d",
+  "transcript_sha256": "376671aa9ed06c15519bac233bb66bb3b99364fb0438a4473ad1405856991a61",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.227",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 1605.0
+  },
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage"
+}
