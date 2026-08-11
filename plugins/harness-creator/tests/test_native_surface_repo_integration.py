@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -32,7 +33,13 @@ def test_dual_manifest_identity_version_and_session_start_match():
     claude = _json(PLUGIN / ".claude-plugin" / "plugin.json")
     codex = _json(PLUGIN / ".codex-plugin" / "plugin.json")
     assert (claude["name"], claude["version"]) == (codex["name"], codex["version"])
-    assert codex["version"].startswith("1.3.0+codex.")
+    # 版そのものを固定しない。正本は check-native-surface-parity.py の
+    # shared_required (name/version/description/author の完全一致) で、
+    # 特定の値を焼き込むと version が動いた瞬間に parity 契約と矛盾する。
+    # 実際 "1.3.0+codex.<date>" 固定は、build-plugin-release.py が bump 時に
+    # build metadata を落とす (1.3.1 に 7/13 の Codex ビルド印を残すのは嘘) 設計と
+    # 衝突していた。ここで守るべきは「両 manifest が同一の semver core を名乗る」こと。
+    assert re.fullmatch(r"\d+\.\d+\.\d+(?:[-+].+)?", codex["version"]), codex["version"]
 
     codex_group, codex_hook = _session_start_handler(_json(PLUGIN / "hooks" / "hooks.json"))
     claude_group, claude_hook = _session_start_handler({"hooks": claude["hooks"]})
