@@ -9,24 +9,27 @@ trigger: aggregate-evals (SessionEnd)
 
 ## 集計サマリ
 
-- 評価件数: 226
-- FAIL 率: 0.44%
+- 評価件数: 231
+- FAIL 率: 3.03%
 - 平均スコア: 91.714
 
 ## 検出された異常
 
-- **run-skill-create**: friction_density — {"friction_records": 2, "window": 5, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
+- **run-skill-create**: friction_density — {"friction_records": 2, "window": 5, "evidence": [{"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 6, "findings_count": 0}, {"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 6, "findings_count": 0}]}
+- **run-build-skill**: friction_density — {"friction_records": 2, "window": 5, "evidence": [{"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 4, "findings_count": 0}, {"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 4, "findings_count": 0}]}
 - **run-elegant-review**: friction_density — {"friction_records": 2, "window": 5, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-company-master-backfill**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-company-master-build**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-template-sync**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **assign-blueprint-fidelity-evaluator**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-blueprint-apply**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
+- **run-skill-feedback**: friction_density — {"friction_records": 2, "window": 4, "evidence": [{"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 6, "findings_count": 0}, {"date": "2026-08-11", "iterations": 1, "negative_feedback_count": 7, "findings_count": 0}]}
 - **run-skill-update-notifier**: friction_density — {"friction_records": 2, "window": 4, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-mf-invoice-db-setup**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-mf-invoice-report**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 1, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 1, "findings_count": 0}]}
 - **run-intake-option-catalog**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-12", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-notion-intake-publish**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-02", "iterations": 2, "negative_feedback_count": 3, "findings_count": 0}, {"date": "2026-07-02", "iterations": 2, "negative_feedback_count": 2, "findings_count": 0}]}
+- **run-slide-report-generate**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-08-11", "iterations": 2, "negative_feedback_count": 5, "findings_count": 0}, {"date": "2026-08-11", "iterations": 2, "negative_feedback_count": 5, "findings_count": 0}]}
 - **run-slide-report-modify**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-24", "iterations": 2, "negative_feedback_count": 1, "findings_count": 0}, {"date": "2026-07-24", "iterations": 2, "negative_feedback_count": 1, "findings_count": 0}]}
 - **run-rubric-sync**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-14", "iterations": 8, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-14", "iterations": 8, "negative_feedback_count": 0, "findings_count": 0}]}
 - **run-spec-drift-triage**: friction_density — {"friction_records": 2, "window": 2, "evidence": [{"date": "2026-07-14", "iterations": 7, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-07-14", "iterations": 7, "negative_feedback_count": 0, "findings_count": 0}]}

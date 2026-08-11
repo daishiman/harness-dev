@@ -66,7 +66,7 @@ audit-trigger: quarterly
 
 # run-skill-create
 
-> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。schema/prompt 参照は self-relative パスだが、本SKILL.md 内の lint / スクリプト起動コマンド (`python3 plugins/...`) は repo-root cwd 前提。
+> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。schema/prompt 参照は self-relative パスだが、本SKILL.md 内の lint / スクリプト起動コマンドは 2 綴りが併存する: repo 直下のものは `${HARNESS_ROOT:-.}/scripts/...` (未設定なら `.` = repo-root cwd 前提)、plugin 配下のものは `python3 plugins/...` の repo-root 相対または `${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/...`。前者 2 つはいずれも repo-root cwd を要求する。
 
 ## Purpose & Output Contract
 
@@ -88,7 +88,7 @@ audit-trigger: quarterly
 ### 起動モード
 
 - **引数なし**: Step 1 (run-skill-elicit) が起動、対話で topic を確定。フィールド意味は `schemas/skill-brief.schema.json` (詳細は `references/skill-brief-schema.json`)。
-- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 $CLAUDE_PLUGIN_ROOT/scripts/check-route-component-parity.py <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。
+- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。
 - **Notion 指定あり**: topic / 引数に `--page-url` または `--page-id` が含まれる場合、Step 1 は `skill-intake` の publish 完了証跡を必須入力とする。`output/<hint>/notion-log.json.status=="published"`、`notion-publish-result.json.page_id`、`notion-url.txt` が揃い、指定 page と一致するまで Step 2 build へ進まない。
 - **`--fast`**: 1ファイル変更/<=30行/kind ∈ {ref,wrap}/evaluator pair 不要を全て満たす場合のみ軽量フロー (Step 4b/5 skip)。判定は機械決定:
   ```bash
@@ -105,6 +105,8 @@ audit-trigger: quarterly
 4. **context:fork**: evaluator/governance reviewer は必ず context:fork で起動 (Sycophancy 防止)。
 5. **handoff 保存**: 各ゲート通過時に `eval-log/handoff-<step>.json` を `schemas/handoff.schema.json` 準拠で残す。PostCompact hook で復元。
 6. **plugin/marketplace 登録は確認後**: legacy manifest.json は `build-manifest-registration-plan.py` の提案 → Gate 2.5 承認 → `--apply` の順。新形式 plugin.json plugin のルート `marketplace.json` / `bundles.json` 登録は `scripts/validate-plugin-completeness.py --fix`（append-only・冪等・書込後自己再検証）が担い、人間が PR diff で最終承認する（破壊的変更を含まない append-only ゆえ生成フロー内で自動実行可）。
+   これに対し **CL-4c の `build-plugin-release.py` は承認境界の外側 (＝承認後) に置く**。理由は `validate-plugin-completeness.py --fix` と性質が違うため: `write_version()` は `plugin.json` の version 行を原文 in-place 置換し、そこから公開 `marketplace.json` (`sync_public_marketplace_version()`) と `.codex-plugin/plugin.json` (`sync_codex_manifest_version()`) を追従させる **既存行の書き換え**であり (さらに `_run()` が `bumped` 非空のとき `regenerate_config_version_lock()` で `config-version-lock.json` も再生成する)、append-only の安全性論拠がそのまま使えない。よって生成フロー内で自動実行してよいのは**読み取りのみの `--check`** に限る。version を実際に上げる実行は **Gate 2.5 承認後に、`--only <plugin>` を必ず付けて**行う — `_run()` は `only = set(args.only) or None` なので無指定は全 plugin 走査となり、本フローと無関係な変更済み plugin まで同じ実行で patch bump されるため、`--only` は範囲を宣言する必須引数として扱う。
+
 7. **resource-map 先読み**: `references/resource-map.yaml` を最初に読み、必要ファイルのみ open。
 8. **日本語成果物ゲート**: brief の `output_language=ja` と `parameter_language_exception=true` を既定とし、本文・レビュー・完了レポートを日本語に保つ (パラメーター名・JSON キー・CLI 引数は英語)。
 9. **prompt 形式**: 新規 prompt は **Markdown (`.md`) 既定**。`prompts/<R-id>-<slug>.md` で `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` を写経して生成。YAML は legacy のみ許容 (新規禁止、P0 lint で warn)。
@@ -115,6 +117,8 @@ audit-trigger: quarterly
 [Step 1 elicit] run-skill-elicit ─→ skill-brief.json ─[Gate 1]─▶
 [Step 2 build]  run-build-skill  ─→ skill-build-trace.json
 [Step 3 manifest-register] [Gate 2.5] [Step 3.5 bundle-register]
+[Step 3.6 local-marketplace-register] build-local-marketplace.py (非配布 plugin の install 経路)
+[Step 3.7 plugin-release-record] build-plugin-release.py --only <plugin> (内容 hash 記録 / patch 採番。Gate 2.5 承認後・--only 必須。Key Rule 6)
 [Step 4a p0-lint] (fail→Step 2、最大3周) ─[Gate 2 diff]─▶
 [Step 4a.5 pkg-check] run-plugin-package-check (条件: kind==plugin-composition or 新規 plugin 横展開)
 [Step 4b design-evaluate] (context:fork) ─→ findings
@@ -141,8 +145,8 @@ audit-trigger: quarterly
 - [ ] Notion 指定ありの場合、`python3 plugins/harness-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
 - [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き <!-- CL-3 -->
 - [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている <!-- CL-4 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
-- [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/build-local-marketplace.py` 実行済みで、`marketplaces/local/.claude-plugin/marketplace.json` が再生成され `--check` が exit 0。公開 marketplace は `distributable:false` を載せられない (MK-004) ため、非配布 plugin を手元の Claude Code へ install する経路はこれだけ <!-- CL-4b exempt: 登録の運用操作項目。build-local-marketplace.py --check が機械検査し評価 criteria の対象外 -->
-- [ ] `python3 ${HARNESS_ROOT:-.}/scripts/build-plugin-release.py` 実行済みで `--check` が exit 0。marketplace install は version 単位の copy なので、version を据え置いたまま内容を直すと install 済み plugin へ届かない。内容 hash 対応表への記録 (新 plugin) と patch 採番 (既存 plugin の変更) がここで済む <!-- CL-4c exempt: 登録の運用操作項目。build-plugin-release.py --check が機械検査し評価 criteria の対象外 -->
+- [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/build-local-marketplace.py` 実行済みで、`marketplaces/local/.claude-plugin/marketplace.json` が再生成され `--check` が exit 0。公開 marketplace は `distributable:false` を載せられない (MK-004) ため、非配布 plugin を手元の Claude Code へ install する経路はこれだけ。**CL-4c を実行するなら本項は不要** (`build-plugin-release.py` は pending が 1 件でもあれば local marketplace を再生成する)。単独で要るのは pending が空で local marketplace 側だけ drift しているときに限る <!-- CL-4b exempt: 登録の運用操作項目。build-local-marketplace.py --check が機械検査し評価 criteria の対象外 -->
+- [ ] `python3 ${HARNESS_ROOT:-.}/scripts/build-plugin-release.py --only <plugin>` 実行済みで `--check` が exit 0 (書き込みを伴う実行は Gate 2.5 承認後・`--only` 必須。Key Rule 6)。marketplace install は version 単位の copy なので、version を据え置いたまま内容を直すと install 済み plugin へ届かない。内容 hash 対応表への記録 (新 plugin) と patch 採番 (既存 plugin の変更) がここで済む <!-- CL-4c exempt: 登録の運用操作項目。build-plugin-release.py --check が機械検査し評価 criteria の対象外 -->
 - [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` の現行 bundle (`skills-full` / `skills-intake`) のうち `plugin.json.bundle_targets` で宣言した対象へ登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反) <!-- CL-5 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`) <!-- CL-6 exempt: legacy 経路の条件付き運用項目 -->
 - [ ] `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->

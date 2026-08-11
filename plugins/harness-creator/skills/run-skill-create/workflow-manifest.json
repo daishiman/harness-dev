@@ -96,9 +96,9 @@
       "exitHook": null,
       "resourceIds": [],
       "delegateSkill": null,
-      "command": "python3 scripts/build-plugin-release.py",
+      "command": "python3 scripts/build-plugin-release.py --only <plugin>",
       "artifact": ["marketplaces/local/plugin-fingerprints.json"],
-      "comment": "marketplace install は version 単位の copy であり、version を据え置くと install 済み copy へ変更が届かない。新 plugin を内容 hash 対応表へ記録し、既存 plugin の内容変更には patch を採番する。検出層は build-plugin-release.py --check (CI)。install 済み copy への反映は --install。",
+      "comment": "marketplace install は version 単位の copy であり、version を据え置くと install 済み copy へ変更が届かない。新 plugin を内容 hash 対応表へ記録し、既存 plugin の内容変更には patch を採番する。検出層は build-plugin-release.py --check (CI)。install 済み copy への反映は --install。書き込みを伴う実行は Gate 2.5 承認後に限り、--only <plugin> を必須とする (SKILL.md Key Rule 6): write_version() は既存 version 行の in-place 置換で append-only ではなく、--only 無指定は _run() の only=None により全 plugin 走査となって無関係な変更済み plugin まで patch bump するため。",
       "fatal_exit_codes": [1]
     },
     {
