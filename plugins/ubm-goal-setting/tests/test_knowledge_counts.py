@@ -131,11 +131,18 @@ def test_no_orphan_knowledge_files():
 
 
 def test_registry_internal_consistency():
-    # total_processed == files 件数、file_hash は全件 md5 32文字 (日付文字列・偽値の禁止)
+    # total_processed == files 件数、file_hash は md5 32文字 (日付文字列・偽値の禁止)。
+    # null は「vault に実ファイルがなく hash を取りようがない」直接貼付ソースのみ許容し、
+    # その旨を _note に明示させる (下の legacy 注記と同型の明示的例外)。
     registry = load("registry.json")
     files = registry["files"]
     assert registry["total_processed"] == len(files)
     for f in files:
+        if f["file_hash"] is None:
+            assert "file_hash なし" in f.get("_note", ""), (
+                f"{f['file_path']}: file_hash null に貼付由来の注記がない (null 禁止)"
+            )
+            continue
         assert MD5_RE.match(f["file_hash"]), f"{f['file_path']}: file_hash が md5 32文字でない"
 
 

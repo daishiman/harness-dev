@@ -466,5 +466,6 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     assert r.returncode == 0, r.stdout + r.stderr
     graph = json.loads(out.read_text(encoding="utf-8"))
     # 実データ entry 総数。ingest のたびに実測へ追従させる (削除の非後退を等号で守る)。
-    # 386 -> 390: 本ブランチで AG-048 / MS-080 / MS-081 / PR-143 の 4 件を追加、削除 0 件。
-    assert graph["node_count"] == 390
+    # 386 -> 390: AG-048 / MS-080 / MS-081 / PR-143 の 4 件を追加、削除 0 件。
+    # 390 -> 420: 北原さんコメント (2026-08-12) + YouTube 3本から 30 件を追加、削除 0 件。
+    assert graph["node_count"] == 420
