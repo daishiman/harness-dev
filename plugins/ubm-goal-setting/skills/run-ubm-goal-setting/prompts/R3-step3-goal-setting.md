@@ -74,6 +74,7 @@
 |---|---|---|
 | ナレッジサマリー | past_summary 内 (info-collector 生成・coordinator 経由で受領) | 前提検証の根拠・引用に使うとき |
 | data-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| selection-focus-goal-frame | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
 
 ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):
 - **上位概念 (翻訳済み)**: ユーザー状況に翻訳済みの原則 → 前提検証・前提問い直しの根拠として活用。

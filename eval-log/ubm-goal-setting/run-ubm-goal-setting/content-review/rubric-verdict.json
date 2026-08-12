@@ -1,25 +1,43 @@
 {
-  "target": {"plugin": "ubm-goal-setting", "skill": "run-ubm-goal-setting", "skill_md_sha256": "d92cf048445de27f88ed90272134e7d10ffecb4f2f8866586c8edc2a2e782429"},
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "skill_md_sha256": "d43d2cee3376e2818aeb65c3d79a9b59ed9f82dba71ecf62f03ec65a7cca2474"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
-  "reviewer": "review-group-c-independent-rubric",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "focused-combined-review-inline",
+  "reviewed_at": "2026-08-12T00:00:00Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "rubric 1.3.0 score=97/threshold=80. Exact Purpose/Output and Gotchas headings, line limit, naming, tool allowlist and manifest resources pass.",
-      "Phase0-6 assigns one actor per responsibility, keeps output format references external, limits vault writes and delegates knowledge updates. Criteria map to script, acceptance tests and live-trial without claim-type collapse.",
-      "validate-goal-output and write-path tests are included in the 199-passing UBM suite; all declared prompts, agents, schemas and hook exist."
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
     ],
-    "negative_feedback": ["FM-005 low: description's leading Japanese noun phrase is outside the evaluator's verb heuristic."],
+    "positive_feedback": [
+      "構造要件維持: Purpose & Output Contract / Key Rules / Gotchas / Additional Resources の見出し集合は不変。SKILL.md 153行で行数上限内。allowed-tools・manifest・naming は無変更。",
+      "単一責務維持: 追加した参照は『対話側の判断基準』のみで、出力整形（output-formatter）・検証（validate-goal-output.py）・ナレッジ更新（run-ubm-knowledge-sync）の責務境界を跨いでいない。",
+      "Progressive Disclosure 準拠: resource-map.yaml に read_when（Phase3 Step3 / Step4）付きで登録し、SKILL.md 本文へフレーム内容を展開せず参照に留めた。",
+      "宣言と実体の一致: reference_refs / resource-map / R3 / R4 の4箇所すべてで path が実在ファイルを指す（6/6 検証済）。",
+      "iteration2: §3 の期間別検査が実装され、R3 の when_to_read（§2 共通チェック / §3 期間別）が指す参照先が全て充足。差し戻し条件は『やることが2方向以上に分かれている』『やらないことが3項目未満』のように対話中に判定可能な観測形で記述され、phase3-coordinator がそのまま使える。"
+    ],
+    "negative_feedback": [
+      "smell(low): 本 review は独立 evaluator ではなく inline 実行のため、verification_profile=exhaustive（run-elegant-review + 独立 rubric evaluator）相当の外形独立性は持たない。"
+    ],
     "iteration": 2,
     "iteration_limit": 5,
-    "hook_trigger": "manual",
+    "hook_trigger": "stop-hook",
     "next_action": "none"
   },
-  "notes": "rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
+  "notes": "evidence: python3 -m pytest tests -k ubm → 39 passed / 参照実在 6/6 OK / TODO(human) はリポジトリ全体で1箇所のみ（learning style 制約充足）。ナレッジ側検証: check-knowledge-split.py exit0（全56ファイル500行以内）・validate-knowledge-graph.py exit0（nodes=420）。 iteration2 evidence: pytest -k ubm 39 passed / TODO(human) 残数 0 / validate-knowledge-graph exit0 (nodes=420) / check-knowledge-split exit0。"
 }
