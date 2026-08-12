@@ -50,6 +50,7 @@ script_refs:
   - scripts/validate-goal-output.py
 reference_refs:
   - references/resource-map.yaml
+  - references/selection-focus-goal-frame.md
   - references/thinking-guide.md
   - references/thinking-methods-toolkit.md
   - references/thinking-process.md
@@ -130,6 +131,8 @@ Anchor Step の検証は `required_keys = {"iteration","original_goal","current_
 - **やらないこと3項目以上** + 判断基準1文で迷いを排除する。
 - **合宿（アカデミー）整合**: 直近の合宿アドバイスと目標の方向性のズレを検出したら即軌道修正。
 - **プロジェクト別タスク**: 週報=任意 / 月報=必須 / 期報=禁止。`- [ ] [期日] [提出先・宛先] 対象物・行動` のチェックリスト形式・2階層まで・先方担当者付き。
+- **選択と集中の1点収束**: 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているかを検査し、中途半端が混ざっていたら差し戻す。判断基準は `references/selection-focus-goal-frame.md`（見出し構造は変更しない・対話側の検査基準のみ）。
+- **ポジティブ事故を起こさない**: 支出を伴う行動目標は「そもそもかけない → 回収してから実行 → かけてから回収」の順で検討させ、最後の手段を採る場合は回収条件と期限を明記させる。
 - **思考法駆動**: 質問の形で自然に思考法を適用し、名前は出さない。北原さんの原則引用は1対話あたり1〜2回まで。
 
 ## Gotchas
@@ -145,6 +148,6 @@ Anchor Step の検証は `required_keys = {"iteration","original_goal","current_
 - **agents**: `info-collector` / `goal-reviewer` / `phase3-coordinator` / `output-formatter`（plugin 直下 `agents/`。coordinator は `prompts/R1-R5` を Read でインライン参照）。
 - **prompts**: `prompts/R{1..5}-<slug>.md` — Phase3 対話 Step1-5 の責務単位 7 層プロンプト正本（prompt-placement-convention 準拠、verify-completeness.py で 7 層+l5-contract 検証）。
 - **scripts**: `scripts/validate-goal-output.py`（出力バリデーション・決定論ゲート）。
-- **references**: `references/thinking-guide.md`（思考法）/ `references/output-formats.md`（テンプレート21項目正本）/ `references/data-contract.md`（Phase 間 I/O）/ `references/thinking-methods-toolkit.md` / `references/thinking-process.md` / `references/version-history.md`。
+- **references**: `references/selection-focus-goal-frame.md`（北原さん 2026-08-12 コメント由来の選択と集中フレーム・期間別検査・運用カレンダー）/ `references/thinking-guide.md`（思考法）/ `references/output-formats.md`（テンプレート21項目正本）/ `references/data-contract.md`（Phase 間 I/O）/ `references/thinking-methods-toolkit.md` / `references/thinking-process.md` / `references/version-history.md`。
 - **assets**: `assets/execution-prompts.md`（フロー参照）/ `assets/interview-quick-templates.md` / `assets/action-goals-best-practices.md` / `assets/golden-sample-weekly.md`（Few-shot）。
 - **knowledge**: plugin 直下 `knowledge/`（`router.json` → `*.json` を info-collector がデュアルパス検索。L1 curated vendor 同梱でfresh-install 直後から機能）。

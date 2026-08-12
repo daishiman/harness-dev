@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 # /// script
 # name: ubm-write-path-guard
-# version: 0.1.0
+# version: 0.2.0
 # purpose: UBM_VAULT_ROOT 配下への Write|Edit|MultiEdit を PreToolUse で検査し、目標設定/
-#          保存と Templates/Daily.md の embed 更新以外の vault 書込を fail-closed(exit2)で阻む。
-#          vault 外(plugin 同梱 knowledge/*.json 等)への書込は検査対象外で素通しする。
+#          保存・Templates/Daily.md の embed 更新・各 vault が自身の scope-protection.md 等で
+#          明示的に書込許可している領域(05_Project/ 全体・.claude/skills 等の開発領域)以外の
+#          vault 書込を fail-closed(exit2)で阻む。読み取り専用ソースとして保護すべきなのは
+#          01_Notes/・02_Configs/(Daily.md除く)・03_Sources/・logs/・.obsidian/ 等、
+#          移植元由来のノート/設定領域に限る。vault 外(plugin 同梱 knowledge/*.json 等)への
+#          書込は検査対象外で素通しする。
 # inputs:
 #   - stdin: PreToolUse hook JSON ({tool_name, tool_input.file_path})
 #   - env: UBM_VAULT_ROOT (未設定時は保護対象 vault なしとして全許可)
@@ -20,11 +24,14 @@
 """PreToolUse(Write|Edit|MultiEdit) 動的ガード — 移植元 vault の破壊的書込を防ぐ。
 
 guard は UBM_VAULT_ROOT 配下への Write|Edit|MultiEdit のみを検査対象とする。vault 内では
-  - 05_Project/UBM/目標設定/  (目標ファイル保存)
+  - 05_Project/  (UBM目標設定に限らず、各種プロジェクト成果物の出力先全般)
+  - .claude/skills/ .claude/agents/ .claude/commands/ .claude/rules/ .claude/prompts/
+    (スキル・エージェント・コマンド等の開発領域)
   - 02_Configs/Templates/Daily.md  (embed 参照更新)
-のみ許可し、それ以外の vault パスへの書込を fail-closed で阻む。plugin 同梱 dir
-(plugins/ubm-goal-setting/knowledge/*.json 等) への knowledge-extractor の書込は
-vault 外ゆえ guard 対象外で妨げない。
+のみ許可し、それ以外の vault パス（01_Notes/・02_Configs/の他ファイル・03_Sources/・
+logs/・.obsidian/ 等、移植元由来のノート/設定領域）への書込を fail-closed で阻む。
+plugin 同梱 dir (plugins/ubm-goal-setting/knowledge/*.json 等) への knowledge-extractor
+の書込は vault 外ゆえ guard 対象外で妨げない。
 """
 from __future__ import annotations
 
@@ -34,7 +41,14 @@ import sys
 
 GUARDED_TOOLS = {"Write", "Edit", "MultiEdit"}
 # vault-root 相対で許可するパス
-ALLOWED_PREFIXES = ("05_Project/UBM/目標設定/",)
+ALLOWED_PREFIXES = (
+    "05_Project/",
+    ".claude/skills/",
+    ".claude/agents/",
+    ".claude/commands/",
+    ".claude/rules/",
+    ".claude/prompts/",
+)
 ALLOWED_EXACT = ("02_Configs/Templates/Daily.md",)
 
 
@@ -95,8 +109,10 @@ def main() -> int:
     sys.stderr.write(
         "ubm-write-path-guard: vault 配下の保護パスへの書込を阻止しました。\n"
         f"  対象: {rel}\n"
-        "  許可: 05_Project/UBM/目標設定/ 配下 / 02_Configs/Templates/Daily.md のみ。\n"
-        "  移植元 vault の他ファイルは読み取り専用ソースです (フォーク・複製・改変禁止)。\n"
+        "  許可: 05_Project/ 配下 / .claude/skills|agents|commands|rules|prompts/ 配下"
+        " / 02_Configs/Templates/Daily.md のみ。\n"
+        "  01_Notes/・02_Configs/(Daily.md除く)・03_Sources/・logs/・.obsidian/ 等、"
+        "移植元由来の領域は読み取り専用ソースです (フォーク・複製・改変禁止)。\n"
     )
     return 2
 

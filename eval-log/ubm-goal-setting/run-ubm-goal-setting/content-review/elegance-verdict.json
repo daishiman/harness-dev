@@ -1,25 +1,41 @@
 {
-  "target": {"plugin": "ubm-goal-setting", "skill": "run-ubm-goal-setting", "skill_md_sha256": "d92cf048445de27f88ed90272134e7d10ffecb4f2f8866586c8edc2a2e782429"},
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "skill_md_sha256": "d43d2cee3376e2818aeb65c3d79a9b59ed9f82dba71ecf62f03ec65a7cca2474"
+  },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "review-group-c-independent-elegance",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review-inline",
+  "reviewed_at": "2026-08-12T00:00:00Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "IN1: output-formats/data-contract define the 21-item hybrid structure once and validate-goal-output.py checks the structure, banned vague wording, numeric/action constraints and at least three do-not-do items before save.",
-      "OUT1: weekly/monthly/bimonthly variants, project-task rules and output formatter are covered by test_validate_goal_output; UBM plugin 199 tests PASS.",
-      "OUT2/C1-C4: the behavioral gate is now explicitly routed in the body from AskUserQuestion through Phase3 dialogue, Phase5 validation and Phase6 scoped Daily.md embed update. Agent/prompt/schema/hook dependencies exist and knowledge mutation delegates to run-ubm-knowledge-sync."
+      "IN1: 今回の変更は出力構造に触れていない。selection-focus-goal-frame.md は冒頭で『出力構造の正本ではない・21項目の見出しを追加/変更/並べ替えしない』と明示し、正本を output-formats.md に温存した。validate-goal-output.py の見出し完全一致ゲートと矛盾しない。",
+      "OUT1: tests -k ubm 39 passed（goal/write_path 関連 37 を含む）。目標設定出力の決定論ゲートは回帰なし。",
+      "OUT2: Phase3(R3)/Phase4(R4) の参照リソース表へ path 付きで配線したため、live-trial の対話経路から実際に到達可能。frontmatter reference_refs / resource-map.yaml / Additional Resources の3系統に同一ファイルを登録し、宣言と本文の乖離を作っていない。",
+      "C1-C4: 新規参照は全て実在（6/6 OK）。ナレッジ側の追記（PR-144〜167/MS-082〜085/AG-049〜050）は knowledge/ 配下で完結し、run-ubm-knowledge-sync への委譲境界を侵していない。",
+      "iteration2: selection-focus-goal-frame.md §3 を実装。固定対象（人・場所）と可変対象（やることの手段）を期間で分離し、週間=実行検査/月間=接続・組み替え検査/期報=固定対象の見直し検査という非対称な役割分担を定義。総会月（4月・10月）特例を期報にのみ適用し、毎期の全要素見直しによる『決めた人を固定する』の空洞化を回避した。TODO(human) 残数 0。"
     ],
     "negative_feedback": [],
     "iteration": 2,
     "iteration_limit": 5,
-    "hook_trigger": "manual",
+    "hook_trigger": "stop-hook",
     "next_action": "none"
   },
-  "notes": "Iteration 1 found OUT2 visible only in frontmatter; iteration 2 added the behavioral acceptance pointer without conflating static design review and live execution evidence."
+  "notes": "変更内容: SKILL.md へ reference_refs 1件・Key Rules 2条（選択と集中の1点収束 / ポジティブ事故を起こさない）・Additional Resources 追記。resource-map.yaml と R3/R4 の参照リソース表へ配線。SKILL.md 153行。出力構造・validate-goal-output.py・Daily.md embed 契約は不変。 iteration2: §3 実装により参照先の空欄を解消。SKILL.md は不変（sha 同一）のため出力構造・validate-goal-output 契約に影響なし。"
 }

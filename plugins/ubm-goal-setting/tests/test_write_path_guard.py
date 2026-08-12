@@ -43,8 +43,26 @@ def test_allow_daily_embed(tmp_path: Path):
 
 def test_block_other_vault_path(tmp_path: Path):
     vault = str(tmp_path)
-    # vault 配下だが許可外 (移植元ソース) → fail-closed
-    assert run(w(f"{vault}/05_Project/UBM/YouTube/2025-xx.md"), vault) == 2
+    # vault 配下だが許可外 (移植元由来のノート領域) → fail-closed
+    assert run(w(f"{vault}/01_Notes/2025-xx.md"), vault) == 2
+
+
+def test_allow_project_output_outside_goal_dir(tmp_path: Path):
+    vault = str(tmp_path)
+    # hook v0.2.0: 05_Project/ は目標設定に限らずプロジェクト成果物の出力先として許可
+    assert run(w(f"{vault}/05_Project/UBM/YouTube/2025-xx.md"), vault) == 0
+
+
+def test_allow_claude_dev_area(tmp_path: Path):
+    vault = str(tmp_path)
+    # hook v0.2.0: スキル・エージェント等の開発領域は許可
+    assert run(w(f"{vault}/.claude/skills/run-x/SKILL.md"), vault) == 0
+
+
+def test_block_sources_dir(tmp_path: Path):
+    vault = str(tmp_path)
+    # 読み取り専用ソースとして保護すべき領域は 03_Sources/ 等に限る
+    assert run(w(f"{vault}/03_Sources/clip.md"), vault) == 2
 
 
 def test_block_vault_config(tmp_path: Path):
@@ -94,7 +112,7 @@ def test_missing_file_path_blocked_fail_closed(tmp_path: Path):
 
 def test_edit_tool_also_guarded(tmp_path: Path):
     vault = str(tmp_path)
-    payload = {"tool_name": "Edit", "tool_input": {"file_path": f"{vault}/05_Project/UBM/合宿/rec.md"}}
+    payload = {"tool_name": "Edit", "tool_input": {"file_path": f"{vault}/01_Notes/合宿/rec.md"}}
     assert run(payload, vault) == 2
 
 
@@ -103,7 +121,7 @@ def test_multiedit_blocked_on_protected_path(tmp_path: Path):
     payload = {
         "tool_name": "MultiEdit",
         "tool_input": {
-            "file_path": f"{vault}/05_Project/UBM/YouTube/2025-xx.md",
+            "file_path": f"{vault}/01_Notes/2025-xx.md",
             "edits": [{"old_string": "a", "new_string": "b"}],
         },
     }
