@@ -937,6 +937,12 @@
           "additionalProperties": false,
           "properties": {
             "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "layout": {
+              "description": "カードの並べ方。省略時は grid (3 列)。説明が長く 3 列だと語中で折り返す面は stack を指定して 1 行 1 項目にする。既定が従来の挙動なので、このキーを持たない構成の出力は変わらない。",
+              "type": "string",
+              "enum": ["grid", "stack"],
+              "default": "grid"
+            },
             "cards": {
               "type": "array",
               "minItems": 3,
@@ -1000,12 +1006,15 @@
           "additionalProperties": false,
           "properties": {
             "title": { "type": "string", "minLength": 1, "maxLength": 25 },
+            "headline": { "type": "string", "maxLength": 24 },
+            "subtext":  { "type": "string", "maxLength": 80 },
             "center": {
               "type": "object",
               "required": ["label"],
               "additionalProperties": false,
               "properties": {
                 "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                "desc":  { "description": "中心の副ラベル。label が「何の図か」を言い、desc が「読者に何をしてほしいか」を言う。中心円の下半分に入るので 16 字程度が上限。", "type": "string", "maxLength": 16 },
                 "icon":  { "$ref": "#/$defs/iconOptional" }
               }
             },
@@ -1019,6 +1028,7 @@
                 "additionalProperties": false,
                 "properties": {
                   "label": { "type": "string", "minLength": 1, "maxLength": 12 },
+                  "desc":  { "description": "衛星の副ラベル。label が分類名 (背景)、desc が読者の行動 (いまの状況) を担う。節点円の下半分に入るので 10 字程度が上限。", "type": "string", "maxLength": 10 },
                   "icon":  { "$ref": "#/$defs/iconOptional" }
                 }
               }
@@ -1274,6 +1284,8 @@
           "additionalProperties": false,
           "properties": {
             "title":       { "type": "string", "minLength": 1, "maxLength": 30 },
+            "headline":    { "type": "string", "maxLength": 24 },
+            "subtext":     { "type": "string", "maxLength": 80 },
             "center_label":{ "type": ["string", "null"], "maxLength": 12 },
             "steps": {
               "type": "array",

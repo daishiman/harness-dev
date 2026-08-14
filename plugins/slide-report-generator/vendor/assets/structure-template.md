@@ -20,7 +20,7 @@
 **総スライド数**: {{N}}枚
 **アイコンライブラリ**: FontAwesome 6 Free
 **テーマ**: Kanagawa Light
-**共通仕様**: コードブロックはスクロール表示（max-height: 420px, overflow-y: auto）、SVGはインライン描画
+**共通仕様**: コードブロックはスクロール表示（縦上限は SR-10-01、overflow-y: auto）、SVGはインライン描画
 ```
 
 ---
@@ -132,20 +132,19 @@ HTML生成時はこのマッピングに従ってクラスを付与する。
 テンプレート:
 ```
 #### コードブロック共通仕様
-- max-height: 420px
+- max-height: 面の高さの 60%（値の正本は spec-registry SR-10-01。px 直書き禁止）
 - overflow-y: auto
 - background: var(--code-bg) with 0.03 opacity border
-- border-radius: 12px
-- padding: 20px 24px
+- border-radius / padding: SR-10-03（面単位。px 直書き禁止）
 - font-family: 'SF Mono', 'Fira Code', monospace
-- font-size: 1.75vw
+- font-size: SR-10-03（typography.min を面座標で表した値）
 - line-height: 1.7
 - ヘッダー行(#): accent-blue, 太字
 - 変数({変数}): accent-yellow ハイライト
 
 #### Before/After コードブロックレイアウト
 - 2カラム: 左48% / 右48% / gap 4%
-- 各カラムmax-height: 280px
+- 各カラムmax-height: SR-10-05（片側と同じ縦上限。SR-10-01 と同値）
 - ヘッダー: Before=accent-pink背景、After=accent-aqua背景
 - ラベル: 上部にBefore/Afterラベル（fs-small, 太字）
 ```

@@ -49,7 +49,7 @@
 | 31 | SVG内はFA unicode禁止・foreignObject+`<i>`またはemoji使用 | SVG `<text>`に`&#xf...;`（CDN未ロード時消失） | v6.6 アイコン事故 |
 | 32 | 全スライドタイプにh2 CSS定義必須（slide-quote/slide-message等） | 特定スライドタイプのh2定義を省略（極小表示） | v6.6 CSS網羅 |
 | 33 | section-nav CSS定義がHTML全セクションを網羅 | data-section値の一部がCSS未定義（ナビ色表示なし） | v6.6 CSS網羅 |
-| 34 | code-block max-heightは420pxで全回統一 | 回ごとに340px等の不統一 | v6.6 一貫性 |
+| 34 | code-block の縦上限は全回統一（値は SR-10-01） | 回ごとの不統一・px 直書き | v6.6 一貫性 |
 | 35 | list-item/ig-itemにwidth:100%;box-sizing:border-box | width指定なしでカード左寄り半幅表示 | v6.6 レイアウト事故 |
 | 36 | （Noto Sans JP明示） | （和欧混植の不備） | v6.0 タイポ（13と一部重複） |
 | 37 | （CSS変数：色直書き禁止） | （カラーハードコード） | v6.0 基本（10と重複） |
@@ -70,7 +70,7 @@
 | 05 | 補足テキスト最大3行 | DOM: `.supplement` の `<br>` 個数 ≤ 2 / textContent行数 | V-002 | verify-slides.js |
 | 13 | フォント最小1.4rem | computed font-size ≥ 22.4px をPuppeteerで全要素測定 | V-003 | verify-slides.js |
 | 21 | 印刷=画面同一比率 | screen / print 両mediaでvw比較、padding/gap差分閾値内 | V-004 | verify-slides.js |
-| 34 | code-block max-height 420px | CSS regex（`.code-block { max-height: 420px }`） | V-005 | check-consistency.js |
+| 34 | code-block の縦上限（SR-10-01） | CSS regex（`.code-block` の `max-height` が SR-10-01 の式と一致するか）**未実装** — V-005 は validate-structure.js で常に skip され、check-consistency.js に実体が無い | V-005 | check-consistency.js（未実装） |
 | 23 | GSAP scale最小0.8 | scripts.js regex（`scale:\s*0?\.[0-7]` を検出して警告） | V-006 | check-consistency.js |
 | 30 | SVGテキスト13px以上 | DOM: `<text>` の computed font-size ≥ 13px | V-007 | verify-slides.js |
 | 31 | SVG内FA unicode禁止 | SVG内 `<text>` に `&#xf` を含まない | V-008 | check-consistency.js |
@@ -99,7 +99,9 @@
 | 15 | 背景→質問の順 | structure.json の slide types 配列順序検証（背景系 index < 質問系 index） | V-030 | validate-structure.js |
 | 新規 | コード系 slideType は aiVisual で image-only / baked-with-overlay 不可（コードは実HTMLコードブロックで描画） | structure.json: slideType ∈ {slide-code, slide-code-compare} かつ aiVisual.pattern=image-only または textPolicy=baked-with-overlay を検出 | V-043 | validate-structure.js |
 
-**A合計: 31項目**（V-001〜V-030 + V-043。V-031〜V-038 は v8 拡張で別枠）
+| 新規 | slideType 別の本文キー整合（テンプレートが読む content キーを持つ） | structure.json: slideType が `TEMPLATE_BODY_KEYS` にある型で、表の本文キーがどれも非空でない面を検出 | V-044 | validate-structure.js |
+
+**A合計: 32項目**（V-001〜V-030 + V-043 + V-044。V-031〜V-038 は v8 拡張で別枠）
 
 ### B. テンプレート/CSSで強制（→ `assets/styles.css` 共通化 / `scripts/html-scaffold.js` 自動生成）
 
@@ -114,7 +116,7 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 | 22 | 印刷GSAPリセット | styles.css 共通 `@media print` ブロック固定 |
 | 28 | focus-visible / reduced-motion | styles.css 共通 a11y ブロック固定 |
 | 25 | foreignObject `.fo-card` クラス | svg-diagram-primitives テンプレ内で必須化、スニペット提供 |
-| 34 | code-block max-height 420px | styles.css 固定値、変更禁止 |
+| 34 | code-block の縦上限（SR-10-01） | engine 経路は `style-builder.cjs` が固定値として出力（LLM は書かない）。LLM 経路は `slide-types-basic.md` の CSS 例に従う |
 
 **B合計: 8項目**
 

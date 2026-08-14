@@ -76,7 +76,7 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
-| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID <!-- count: slideTypeDecision -->98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID <!-- count: specRegistryRule -->121）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）・`vendor/schemas-fixtures/example.structure.json`・`assets/slide-templates/registry.json`（slideType → ページひな形 + 受け入れ media 種別の写像。選んだ型の受け皿にその面の差し込み物が含まれるかを確定前に確認する） |
+| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID <!-- count: slideTypeDecision -->98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID <!-- count: specRegistryRule -->123）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）・`vendor/schemas-fixtures/example.structure.json`・`assets/slide-templates/registry.json`（slideType → ページひな形 + 受け入れ media 種別の写像。選んだ型の受け皿にその面の差し込み物が含まれるかを確定前に確認する） |
 | Write | structure.md（v8経路は structure.json）の出力 | 構成案生成時 | なし | `05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/structure.md` |
 
 エラーハンドリング: 必須入力欠落時は hearing-facilitator へ再要求（1回、不可ならエスカレーション）。タイプが decision-tree で確定できない場合は再参照し近接タイプへ確定（2回）。テキスト収まり検証で必要行数 > 最大行数の場合はリライトまたはカード/viewBox拡大（制限内になるまで）。詳細は Layer 4 参照。
@@ -276,7 +276,7 @@ last-audited: 2026-07-05
 
 | 項目 | 値 |
 |------|-----|
-| max-height | 420px |
+| max-height | 面の高さの 60%（値の正本は spec-registry SR-10-01。px 直書き禁止） |
 | overflow-y | auto |
 | font-family | 'SF Mono', 'Fira Code', monospace |
 | シンタックスハイライト | キーワード=accent-blue、文字列=accent-aqua、コメント=opacity: 0.5 |

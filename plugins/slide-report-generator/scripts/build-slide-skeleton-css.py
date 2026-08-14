@@ -145,7 +145,10 @@ def _plugin_root(explicit: str | None) -> Path:
 def build_css(c: dict, pal: dict[str, str]) -> str:
     cv, ch, st = c["canvas"], c["chrome"], c["stage"]
     sp, ty, pr = c["spacing"], c["typography"], c["print"]
-    fp = c["fill_policy"]
+    # fill_policy / vertical_margin_policy は CSS へ写さない。検査器
+    # (scripts/validate-slide-layout.js) が frame-contract.json を直接読むため、
+    # CSS 変数として出しても消費者ゼロの第 3 の写しになり、契約を動かすたびに
+    # 再生成が要る割にどれが正本か分からなくなる。
     tokens = "\n".join(
         f"  /* {note} */\n  {name}: {value};" for name, value, note in _tokens(pal)
     )
@@ -375,12 +378,6 @@ def build_css(c: dict, pal: dict[str, str]) -> str:
   }}
   .srg-slide:last-child {{ page-break-after: auto; break-after: auto; }}
   .srg-slide, .srg-slide * {{ print-color-adjust: exact; -webkit-print-color-adjust: exact; }}
-}}
-
-/* ---- 面の充填率レンジ (検査器が読む宣言。CSS 自体は効かせない) ----------- */
-.srg-slide {{
-  --srg-fill-min: {fp["min_stage_fill_ratio"]};
-  --srg-fill-max: {fp["max_stage_fill_ratio"]};
 }}
 """
 

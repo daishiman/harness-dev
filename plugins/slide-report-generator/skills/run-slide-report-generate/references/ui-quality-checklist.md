@@ -14,6 +14,8 @@
 | foreignObject | SVG内にHTMLを埋め込む要素。clearProps破壊回避のため `.fo-card` で保護 | S17 / S18 / CONST_006 |
 | Read-Do チェックリスト | 各項目を実行しつつ1件ずつ確認する省略不可の検証様式 | The Checklist Manifesto |
 | Gap-Bridge Cycle | 理想→現実→ギャップ→解決策の構成サイクル | 構成検証 |
+| 内容高ブロック | カード・帯・ステップを内容の高さで作り面いっぱいへ伸長させない状態。残余高さは群の外側余白へ回す | レイアウトバランス / layout-optimization-rules CONST_008 |
+| 高さ牽引 | 同一群の背の高いカード（読み取り用画像・図・長文）に行高が引かれ、内容の少ないカードに空洞ができる現象 | レイアウトバランス / 同 CONST_009 |
 
 ## 評価基準（ドメイン固有の判定基準）
 | 基準 | 条件 |
@@ -23,6 +25,7 @@
 | 最小フォントサイズ | 本文1.6rem以上・絶対下限1.4rem / SVG `<text>` 13px以上（補助ラベルのみ12px許容・11px以下禁止）（CONST_004） |
 | コントラスト比 | WCAG 2.1 AA（4.5:1）以上で合格 / 未満は不合格 |
 | 配色面積 | アクセント面積10%以下・1スライドのビビッド2色以内で合格（60-30-10、S16） |
+| 縦方向配分 | 合格=ブロック高が内容量に比例し残余が群の外側余白に残る / 不合格=**縦方向の伸長指定**（`grid-auto-rows: 1fr`・`align-content: stretch`・`flex: 1 1 0`・column flex 上の `justify-content: space-between\|space-evenly`）で伸長または分散。**対象外**=`grid-template-columns` の `1fr`・`--space-*` 変数・横方向の `align-items: stretch`。**grep 対象は `styles.css` / `index.html`（inline `<style>`）/ `custom.css` の 3 つ**（`styles.css` だけを見ると engine 出力には該当指定が 0 件なので常に緑になる構造的な偽陰性。override は `custom.css` か inline `<style>` に入る） |
 | 改善ループ収束 | 修正→再検証が3周以内で全基準充足=収束 / 3周で未収束=エスカレーション |
 
 ## ビジネスルール（制約カタログ CONST_001-007）
@@ -102,7 +105,7 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 
 | # | 検証項目 | 基準（検証可能条件） | 検出方法 |
 |---|---------|------|----------|
-| S1 | CSS/JS分離 | index.htmlに`<style>`タグおよびインライン`<script>...</script>`が0件 | `<style>`・インライン`<script>`の有無を確認 |
+| S1 | CSS/JS分離 | index.htmlに`<style>`タグおよびインライン`<script>...</script>`が0件。**補正 CSS の書き先は deck-local の `custom.css`**（`styles.css` は `render-slide.cjs` が `buildStyles()` の戻り値で毎回全文再生成するため追記は消える。`custom.css` は出力先に在るときだけ `index.html` へ `styles.css` の直後の `<link>` として自動注入され、render 側で生成も上書きもされないので後勝ちで効く）。「inline `<style>` へ書くな」だけでは運用は inline へ逃げるので、書き先と対で守る | `<style>`・インライン`<script>`の有無を確認。補正がある場合は `custom.css` に入っているか確認 |
 | S2 | 外部ファイル参照 | `<link rel="stylesheet" href="styles.css">` と `<script src="scripts.js"></script>` が各1件以上存在 | link/scriptタグの確認 |
 | S3 | 質問スライド配置順序 | 各セクション内で質問スライド(`.question-badge`)が背景情報スライドの後に配置 | スライド順序の確認 |
 | S4 | 質問スライドフォント | styles.cssに `.question-badge ~ .main-message { font-size: var(--fs-subheading) }` が存在 | CSSルールの確認 |
@@ -127,7 +130,7 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 | S23 | SVG内FA unicode禁止 | SVG `<text>`内に`&#xf`で始まるFont Awesome PUAコードが0件（CDN未ロード時の全アイコン消失防止） | `grep "&#xf"` で0件であることを確認 |
 | S24 | h2 CSS全スライドタイプ定義 | 全スライドタイプ（特にslide-quote・slide-message・slide-list・slide-cycle・slide-flow）の`.slide-TYPE h2 { font-size: var(--fs-heading); }`が定義 | styles.cssのh2定義をスライドタイプ別に確認 |
 | S25 | section-nav HTML/CSS整合 | HTML内の全data-section値（opening/lecture/demo/ws/summary/closing等）に対しCSSの`.section-nav__item.active[data-section="X"]`定義が1対1で存在 | HTMLのdata-section値を列挙 → CSS定義と照合 |
-| S26 | code-block max-height統一 | code-blockのmax-heightが全回で420pxに統一（340px等の不統一は不可） | styles.cssの`max-height`値を確認 |
+| S26 | code-block 縦上限統一 | code-block の max-height が全回で SR-10-01 の値（面の高さの 60%）に統一（px 直書き・回ごとの不統一は不可） | styles.css の `.code-block` の `max-height` が `calc(60 * var(--sv))` か確認 |
 
 **S1〜S26に1つでも違反がある場合、UI品質レビューを中断しhtml-generatorに差し戻す。**
 
@@ -170,24 +173,47 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 
 #### レイアウトバランス
 
+規範の正本は `references/layout-optimization-rules.md`（CONST_008 内容高ブロック / CONST_009 高さ牽引 / CONST_010 読み取り用画像 / CONST_011 浮遊UI）。**面の余白率・充填率の量的正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/frame-contract.json` の `fill_policy`（面積比）と `vertical_margin_policy`（高さ比）**で、閾値・CSS の逐語は本表へ写さない（写すと契約を動かしたときに本ファイルだけ古くなる）。**「面を埋めているか」ではなく「内容量に高さが対応しているか」で判定する。**
+
+検証の前に**適用系統を判別する**。エンジン経路（`slider-*`）とひな形経路（`data-slide-skeleton`・22 ひな形）では効いている CSS が別で、`layout-optimization-rules.md` の CSS セレクタはエンジン経路にしか当たらない。系統を取り違えると「規約通りの CSS が入っているのに直っていない」という誤判定になる。
+
 | 検証項目 | 基準 | 問題検出方法 |
 |---------|------|-------------|
 | 16:9アスペクト比 | すべてのスライドが16:9を維持 | aspect-ratio設定の確認 |
-| 余白バランス | 上下左右に均等な余白 | パディング・マージンの確認 |
+| 適用系統の判別 | 対象成果物がエンジン経路かひな形経路か特定され、指摘先の CSS が正しい系統にある | `data-slide-skeleton` 属性の有無を確認 |
+| 内容高ブロック | カード・帯・ステップの高さが内容量に比例し、面いっぱいへ引き伸ばされていない | `grid-auto-rows: 1fr`・`align-content: stretch`・`flex: 1 1 0` の残存を **`styles.css` / `index.html`（inline `<style>`）/ `custom.css` の 3 つに対して** grep（engine 出力の `styles.css` には 0 件なので、そこだけ見ると常に緑になる）。描画スクショで短い内容のブロックが背の高いブロックと同じ高さになっていないか |
+| 充填率 | 面ごとの充填率が `fill_policy` のレンジ内（面種別は `fill_policy.exceptions` を適用） | 本文要素の外接矩形合計 ÷ stage 面積を面ごとに算出し `fill_policy` と照合 |
+| 外側余白率・上下対称 | 群の外側余白率が `vertical_margin_policy` のレンジ内で、上下差が許容内 | 面上端・下端の余白量を実測し `vertical_margin_policy` と照合 |
+| 残余高さの置き場所 | 余った高さが群の外側（上下）に均等に残り、ブロック内部や項目間へ配られていない | 縦積みの群（column flex / grid の行方向）に `space-between`／`space-evenly` が0件であることを **`styles.css` / `index.html`（inline `<style>`）/ `custom.css` の 3 つで** 確認。エンジン既定の `.slider-footer { justify-content: space-between }` は row flex の装飾なので対象外 |
+| 群の一体感（近接） | 項目間 gap がブロック高より小さく、群が一塊に見える（比の上限は `vertical_margin_policy`） | gap 実効値とブロック高を計測して比較（S15 CARP と同じ規律） |
+| gap の単位と二重加算 | 縦方向の gap に `vh` を使っていない（印刷で基準が用紙高へ変わる）。gap と項目の `padding-bottom` が加算されて実効間隔が規定から外れていない | `vh` の grep（対象は `styles.css` / `index.html` の inline `<style>` / `custom.css`）。timeline は既定 `.timeline-item { padding-bottom: var(--space-4) }` があるため、縦方向指定と併せて 0 に戻しているか確認 |
+| 縦方向指定の有効性 | 単一行の column flex 項目（`flex-wrap` なし）に `align-content` を書いていない（無視されるため意図が出ない）。中身の縦中央は `justify-content: center` で指定されている | `align-content` の使用箇所を `styles.css` / `index.html`（inline `<style>`）/ `custom.css` の 3 つから列挙し、対象が単一行 column flex でないか確認 |
+| 縦方向規約の対象範囲 | column flex / grid の系統（list / timeline / process / grid / icon-grid）を網羅して見ている。row 系（compare / flow）は縦方向規約の対象外として扱っている | 対象スライドタイプの列挙 |
+| 空洞なし | 高さを牽引されたカードの中身が縦中央に置かれ、下半分が空いていない | 背の高い要素を含む群で、内容の少ないカードの上下余白が均等か描画確認 |
+| 内部順序の統一 | 同一群の全カードが icon → title → media → desc の同じ並び | 各カードの先頭子要素を列挙し、画像付きカードだけ icon が欠けていないか確認 |
+| カード内無折り返し | カード見出し・説明が折り返さない字数に収まり、隣接カードの media 縦位置がずれない | 描画後の行数を計測（2行以上なら文言短縮か当該群のみフォント微調整） |
+| 横幅の使い切り | 単列の帯（timeline / step）が面の横幅を使い、文字が左に寄って右半分が空いていない | 描画スクショで帯の右端と本文領域右端の差を確認 |
+| 背景画像の左右余白 | `has-ai-bg` の画像が右端で切れず、左本文の余白と同幅の右余白がある | `background-position` / `background-size` と本文 `padding-right` の整合を確認 |
+| 浮遊UIの非重畳 | ページ送り等が見出し帯・本文と重ならない。エンジン既定（`pagination.css` の `position: fixed` による右下集約）が維持され、`--pg-reserve-side` / `--pg-reserve-bottom` の予約帯と整合している | 描画スクショと要素の bounding box 交差で確認。**左右へ分離する上書きがあれば不合格**（左側には予約帯が無く prev ボタンが本文へ重なる） |
+| 情報量と余白の対応 | 余白過多（充填率が下限割れ）なら面の統合か項目追加で解かれ、詰まりすぎ（上限超え）なら面の分割か項目削減で解かれている | 伸長指定での下限充足、および `typography.min` 未満への縮小での上限充足を検出したら不合格 |
 | 要素の整列 | カード・リスト等の整列が一致 | flexbox/gridの設定確認 |
 | 視覚的バランス | 左右・上下の重心が均等 | スクリーンショットで視覚確認 |
 
 #### スライドタイプ別検証
 
+タイプ別の重点は下表。**タイプ横断の縦方向配分は上表（レイアウトバランス）が担い、ここでタイプ固有の値を再定義しない**（`data-slide="N"` 単位の個別調整は再現性を落とすため不可）。
+
 | タイプ | 重点確認項目 |
 |--------|-------------|
 | タイトル | 中央配置、タイトルの大きさ |
-| リスト | アイテム間隔、アイコン整列 |
+| リスト | 項目は内容高（伸長しない）、項目間は近接 gap、アイコン整列 |
 | 比較 | 左右パネルの均等性 |
-| フロー | ステップ間隔、矢印位置 |
+| フロー | ステップは内容高、ステップ間隔、矢印位置 |
+| タイムライン | 帯化して横幅を使い切る、`<ol>` の既定マーカーを消し連番の二重表示を防ぐ |
 | 統計 | 数値の視認性、カード配置 |
 | テーブル | セル幅、ヘッダー強調 |
-| 図解 | 要素の配置バランス |
+| 図解 | 要素の配置バランス（占有率は S27〜S29） |
+| 読み取り用画像（QR等） | 寸法上限を守る・全カードで内部順序と media の縦位置が揃う。図解占有率（L4／S27）の対象外として扱い、逸脱理由を評価レポートへ明示 |
 
 #### テーマ別UI/UX検証
 
@@ -309,8 +335,20 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 
 | 問題 | 原因 | 対処法 |
 |------|------|--------|
-| カードの高さ不揃い | align-itemsなし | `align-items: stretch`追加 |
-| フローステップの詰まり | gap不足 | `gap: 1.5rem` → `gap: 2rem` |
+| 面いっぱいに広がって逆に見にくい | `grid-auto-rows: 1fr` / `align-content: stretch` / `flex: 1 1 0` でブロックを伸長 | 行を `auto`・項目を `flex: 0 0 auto` にして内容高で作り、群を中央へ（grid コンテナは `align-content: center`／column flex コンテナは `justify-content: center`）（CONST_008） |
+| 群が割れて別々の要素に見える | 残余高さを `space-between` / `space-evenly` で項目間へ配った | gap を `frame-contract.json` の `spacing.gap` 由来のトークンに固定し、残余は群の外側余白として残す（比の上限は `vertical_margin_policy`・近接の原則・S15） |
+| 印刷すると間隔だけ変わる | 縦方向の gap や寸法上限に `vh` を使った（`@media print` で基準が用紙高へ変わる） | `spacing.gap` 由来のトークンを使い、印刷面では mm / rem / vw へ換算する（layout-optimization-rules CONST_006） |
+| 実効間隔が規定と合わない | コンテナの `gap` と項目の `padding-bottom` が加算されている | timeline は既定 `.timeline-item { padding-bottom: var(--space-4) }` を持つため、縦方向指定と併せて `padding-bottom: 0` に戻す |
+| 縦中央寄せの指定が効かない | 単一行の column flex 項目（`flex-wrap` なし）に `align-content` を書いた。この場合 `align-content` は無視される | `justify-content: center` に置き換える。ブロック要素（`.ig-item` 等）は先に column flex にしてから指定する |
+| カードの高さ不揃い | 高さを行で揃える指定がない | **軸で区別する**。横方向（同一行のカード外形の高さ揃え）の `align-items: stretch` は**許容**。縦方向の面いっぱい伸長（`align-content: stretch` / `grid-auto-rows: 1fr` / `flex: 1 1 0`）は**禁止**。内容の少ないカードは `justify-content: center` で中身を縦中央に置く（CONST_009） |
+| カード下半分が空洞 | 高さ牽引された側の中身が上詰め | 背の高い要素を持たないカードのみ縦中央寄せ。`margin-top: auto` で説明文を下端へ飛ばすと中央に穴が空くため使わない |
+| 画像付きカードだけ律動が崩れる | レンダラが `image` 指定時に `icon` を省略 | 生成後に icon 要素を補い、全カードを icon → title → media → desc へ揃える（構造は保つ） |
+| QRの位置が揃わない | カード見出し・説明が折り返して media の縦位置がずれた | 文言を1行に収まる字数へ短縮する（`structure.json` と成果物の両方を直す）。足りなければ当該群のみ見出しを微縮小 |
+| 単列の帯で右半分が空く | 文字だけを置き横幅を使っていない | 背景・角丸・影・padding を与えて帯にし、面の横幅を使い切る |
+| タイムラインに連番が二重表示 | `<ol>` の既定マーカーと擬似要素カウンタが併存 | `list-style: none` を付ける |
+| 背景画像が右端で切れる | `background-position: right` が端に密着 | 左本文と同幅の右余白を取り（`right N% center`）、本文 `padding-right` を画像幅＋余白に合わせる |
+| ページ送りが本文・帯に重なる | エンジン既定（`pagination.css` の右下集約）を上書きして位置を動かした。とくに左右分離は左側に予約帯が無いため prev が本文へ重なる | 上書きを削除しエンジン既定へ戻す。配置変更が要る場合に限り、先に `--pg-reserve-side` / `--pg-reserve-bottom` を移動先の辺へ拡張して予約帯を確保してから動かす（CONST_011） |
+| フローステップの詰まり | gap不足 | `spacing.gap` 由来のトークンの範囲で上げる。新しい間隔値を発明せず、上げすぎて群が割れないこと |
 | 比較パネルのずれ | flex設定 | `flex: 1`と`max-width`を両方設定 |
 
 ### ライトモード固有

@@ -73,7 +73,7 @@
 | d3-diagram-rules | references/d3-diagram-rules.md | D3 インタラクティブ図解の意匠/実装規範 | d3-diagram-designer |
 | data-visualization-rules | references/data-visualization-rules.md | データ可視化 (グラフ/chart) 設計規範 | data-visualizer |
 | html-generation-rules | references/html-generation-rules.md | slide HTML LLM 経路生成規範 (CONST_001-039) | html-generator |
-| layout-optimization-rules | references/layout-optimization-rules.md | レイアウト最適化 (文字数・カード/フォント・印刷 pt 換算) | layout-optimizer |
+| layout-optimization-rules | references/layout-optimization-rules.md | レイアウト最適化 (横=文字数・カード/フォント・印刷 pt 換算 / 縦=内容高ブロック・残余の外側余白・高さ牽引・読み取り用画像・浮遊UI) | layout-optimizer |
 | ui-quality-checklist | references/ui-quality-checklist.md | slide UI 品質 S 系観点定義・判定基準 | ui-quality-reviewer |
 | report-quality-checklist | references/report-quality-checklist.md | report 品質観点 必須 RQ1〜RQ34 + 図解を含む節のみ RQ35〜RQ37 (読み物文体/段落密度/1項目1ビジュアル/reportType 骨格/読者中心入口/図解の溶け込み) | report-quality-reviewer |
 | deck-evaluation-rubric | references/deck-evaluation-rubric.md | 生成後評価 (30 種思考法 mode-aware rubric・評価次元) | deck-evaluator |
@@ -147,6 +147,7 @@
 - [ ] 生成経路 (slide LLM / slide 決定論 / report / 画像明示) で成果物 (`index.html` / `report.html`) を生成
 - [ ] 全面画像時は `meta.source=codex-image2` で自己完結 HTML を生成し `validate-ai-image-assets.js` PASS
 - [ ] `verify-slides.js --check-ratio` / `validate-print.js` の視覚崩れが 0 (CRITICAL なし)
+- [ ] slide 経路で `ui-quality-reviewer` を起動済み (必須)。`validate-slide-layout.js` が error を出した面・崩れ検出面があれば `layout-optimizer` も起動済み
 - [ ] `deck-evaluator` の mode-aware 生成後評価 (30 種思考法) が視覚崩れ 0 で PASS (`evaluate-deck.js` exit 0)
 - [ ] 完成判定を実体 (Read / PNG・WebP 署名 / スクショ目視) で行い、echo・サイズ・文字列で判断していない
 - [ ] 責務外 (既存修正 / 横断整合) に踏み込んでいない
@@ -156,7 +157,7 @@
 - **構成着手前に情報優先度を確定する (両 mode 共通)**: `structure-designer` / `report-structure-designer` は構成へ入る前に `information-priority-map.json` (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/schemas/information-priority-map.schema.json` 準拠) を出力し、`python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json` が exit 0 になるまで構成に着手しない。順位を決める前に強弱・装飾を宣言した構成は、後から「なぜこれが目立つのか」を説明できず、レビューが主観の応酬になる。
 - **構成設計は mode 分岐で dispatch する**: slide=`structure-designer` ／ report=`report-structure-designer` + `visual-strategist`。両者は読者価値ブリーフを既存 schema フィールドへ翻訳し、入口ホリゾンタル・中身バーティカル・主要セクションの自分ごと化を設計する。
 - **仕様確定ゲートで P3 進入を制御する**: `structure-validator` を起動し `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <structure|report-structure>` を実行。PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し。
-- **生成経路を mode／指示で選択する**: slide LLM=`html-generator` ／ slide 決定論 (推奨)=`slide-renderer`+`render-slide.cjs` ／ report=`report-composer`+`render-report.js` ／ 画像明示=`ai-image-diagram-producer` (`build-image-prompts.js`→`generate-images-codex.js`→`build-deck-html.js`)。品質補正は mode 対称: slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer` (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守)。
+- **生成経路を mode／指示で選択する**: slide LLM=`html-generator` ／ slide 決定論 (推奨)=`slide-renderer`+`render-slide.cjs` ／ report=`report-composer`+`render-report.js` ／ 画像明示=`ai-image-diagram-producer` (`build-image-prompts.js`→`generate-images-codex.js`→`build-deck-html.js`)。品質補正は mode 対称: slide=`ui-quality-reviewer` (**必須**) + `layout-optimizer` (`validate-slide-layout.js` の error または `ui-quality-reviewer` の崩れ検出がある面で**必須**) ／ report=`report-quality-reviewer` (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格順守)。**slide 側を「必要に応じ」にしない** — 縦方向の停止条件 (充填率・外側余白率・残余の置き場所) を完了チェックリストに持つのはこの 2 agent だけで、呼ばれなければそのチェックリストは 1 項目も発火しない。
 - **生成後評価は mode-aware で回す**: `deck-evaluator` を思考リセット後 30 種思考法で起動。slide=視覚崩れ/1 メッセージ、report=可読性/図解適合/情報密度の mode 別 rubric 次元で区分評価。改善→再評価は最大 3 周。
 - ループは分離 context で完結させ、親へは最終成果物パス + 生成レポート + exit code のみ返却する。
 
@@ -170,7 +171,7 @@
 - **R1 → R2**: 確定 mode 一式と読者価値ブリーフを全下流 agent の入力へ接続。伝播前に `validate-output-mode.py` で mode 値域を検証し、ブリーフは schema 外フィールドとして構造 JSON に混入させない。
 - **R2 内**: `structure-designer`/`report-structure-designer` の構成 JSON を `structure-validator` の仕様確定ゲート入力へ。図解 agent (`d3-diagram-designer`/`data-visualizer`/`visual-strategist`) は構成設計に併走。
 - **R2 → R3**: ゲート PASS の構成 JSON を生成 agent の入力へ。
-- **R3 内**: 生成 agent の成果物を品質補正 (slide=`layout-optimizer`/`ui-quality-reviewer` ／ report=`report-quality-reviewer`) → `deck-evaluator` (生成後評価) へ。評価 FAIL は生成/補正へ findings を戻し reloop。
+- **R3 内**: 生成 agent の成果物を品質補正 (slide=`ui-quality-reviewer` 必須・`layout-optimizer` は崩れ検出時必須 ／ report=`report-quality-reviewer`) → `deck-evaluator` (生成後評価) へ。評価 FAIL は生成/補正へ findings を戻し reloop。
 - **並列性**: 各 worker agent は独立 context (isolation) で fork。goal-seek ループ本体も SubAgent へ fork し親を汚さない。
 
 ## Layer 7: UI / 提示層

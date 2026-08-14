@@ -473,10 +473,14 @@
 }
 
 .slide-code .code-block {
-  max-height: 420px;
+  /* SR-10-01: 縦上限は面の高さの 60%（--sv = 面の高さの 1%）。px 固定にすると
+     画面比率で面に対する占有率が変わり、コード面の充填率が頭打ちになる。
+     --su / --sv は html-generation-rules.md §5.6.1 の :root で定義する。 */
+  max-height: calc(60 * var(--sv));
   overflow-y: auto;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: var(--fs-small, 1.4rem);
+  /* SR-10-03: typography.min の 18px を面座標で表した値。1.4rem は 1280x1024 で 16.1px */
+  font-size: 1.5625rem;
   line-height: 1.7;
   background: var(--bg-dim, #F5F5F5);
   border-radius: 12px;
@@ -577,10 +581,12 @@
 }
 
 .slide-code-compare .code-compare-body {
-  max-height: 280px;
+  /* SR-10-05: 左右に並ぶぶん横は 48% だが、縦は片側と同じだけ与えてよい（SR-10-01 と同値）。
+     旧値 280px では使える縦の 36% しか使わず、比較したい 2 つがどちらも数行で切れていた。 */
+  max-height: calc(60 * var(--sv));
   overflow-y: auto;
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: var(--fs-small, 1.4rem);
+  font-size: 1.5625rem;
   line-height: 1.7;
   background: var(--bg-dim, #F5F5F5);
   border-radius: 0 0 12px 12px;

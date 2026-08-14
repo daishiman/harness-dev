@@ -104,7 +104,7 @@ last-audited: 2026-07-05
 - **容量を超える素材はその図に載せない**: ビルダーの上限（`svg-builder.cjs` の `CAPACITY`）を超える項目数は、詰めるのでなく別の型を選ぶ。超過を黙って捨てない。
 - **節ごとに図が先・本文が後**（SR-14-12）。読者は図で全体像を掴んでから、分からなかった箇所だけ本文で補う。
 - **本文の可読幅は全角 40 字**（SR-14-01。`--report-measure: 40em`。`ch` は半角基準なので使わない）。段落は句点単位の行ブロックへ組む（SR-14-04/05）。図・表は可読幅の制限を受けず全幅（SR-14-03）。
-- 生成物は `scripts/validate-svg-diagram.py --check-grid --strict`（D0-D21）と `scripts/validate-report-layout.js`（R1-R8）で機械検査される。**D 系・R 系・`validate-report-visual.py` の C 系は別系統**なので、指摘を書くときは出自を付ける。
+- 生成物は `scripts/validate-svg-diagram.py --check-grid --strict`（D0-D23）と `scripts/validate-report-layout.js`（R1-R8）で機械検査される。**D 系・R 系・`validate-report-visual.py` の C 系は別系統**なので、指摘を書くときは出自を付ける。
 
 ### 図解を書くときの手順（第 4 次 update・型別参照の配線）
 

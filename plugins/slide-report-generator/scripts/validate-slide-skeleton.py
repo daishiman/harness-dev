@@ -276,6 +276,37 @@ def run_checks(root: Path) -> list[dict]:
             add("S10-typography", _CONTRACT, f"typography.{a} < typography.{b} (階層が逆転)")
     if not 0 < fp["min_stage_fill_ratio"] < fp["max_stage_fill_ratio"] <= 1:
         add("S10-fill", _CONTRACT, "fill_policy が 0 < min < max <= 1 を満たさない")
+    # target が min-max の外にあると、ひな形は target へ寄せるほど検査で落ちる。
+    if not fp["min_stage_fill_ratio"] <= fp["target_stage_fill_ratio"] <= fp["max_stage_fill_ratio"]:
+        add("S10-fill", _CONTRACT,
+            f"target_stage_fill_ratio={fp['target_stage_fill_ratio']} が "
+            f"min({fp['min_stage_fill_ratio']})-max({fp['max_stage_fill_ratio']}) の外")
+    # 部材の中身の詰まり具合。stage_fill と対で効く指標なので、欠けていたら
+    # 「伸ばして面積を稼ぐ」を止める側が丸ごと無くなる。
+    ink = fp.get("min_block_ink_ratio")
+    if not (isinstance(ink, (int, float)) and 0 < ink < 1):
+        add("S10-fill", _CONTRACT, f"fill_policy.min_block_ink_ratio={ink} が 0 < 値 < 1 を満たさない")
+    rem = ty.get("min_rem_engine")
+    if not (isinstance(rem, (int, float)) and rem > 0):
+        add("S10-typography", _CONTRACT, f"typography.min_rem_engine={rem} が正の数でない")
+    for kind, ex in sorted(fp.get("exceptions", {}).items()):
+        if ex.get("exempt"):
+            continue
+        lo, hi = ex.get("min"), ex.get("max")
+        if not (isinstance(lo, (int, float)) and isinstance(hi, (int, float))):
+            add("S10-fill", _CONTRACT, f"fill_policy.exceptions.{kind} に min/max が無い (exempt でもない)")
+        elif not 0 < lo < hi <= 1:
+            add("S10-fill", _CONTRACT,
+                f"fill_policy.exceptions.{kind} が 0 < min({lo}) < max({hi}) <= 1 を満たさない")
+    # 縦方向の残余は fill_policy と別 key。片方だけ整合していても足りない。
+    vmp = c["vertical_margin_policy"]
+    for k in ("min_outer_margin_ratio", "max_outer_margin_ratio", "max_symmetry_delta",
+              "max_proximity_gap_ratio"):
+        v = vmp.get(k)
+        if not (isinstance(v, (int, float)) and 0 < v < 1):
+            add("S10-fill", _CONTRACT, f"vertical_margin_policy.{k}={v} が 0 < 値 < 1 を満たさない")
+    if not vmp["min_outer_margin_ratio"] < vmp["max_outer_margin_ratio"]:
+        add("S10-fill", _CONTRACT, "vertical_margin_policy が min_outer < max_outer を満たさない")
 
     # --- S11: 色の直書き禁止 ---------------------------------------------------
     #   ひな形に生の 16 進を書くと、パレット (vendor SPEC.colors) を変えてもその面
@@ -490,6 +521,35 @@ def _self_test(root: Path) -> tuple[bool, list[str]]:
                 encoding="utf-8")
 
         mutate(_stray_non_layout_html, "T17 layout- 以外の名前のひな形も検査対象 (S11)", "S11")
+
+        def _target_outside_range():
+            p = sandbox / _CONTRACT
+            d = _load_json(p)
+            d["fill_policy"]["target_stage_fill_ratio"] = 0.95
+            p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+        def _bad_exception_range():
+            p = sandbox / _CONTRACT
+            d = _load_json(p)
+            d["fill_policy"]["exceptions"]["cover"]["min"] = 0.9
+            p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+        def _bad_vertical_policy():
+            p = sandbox / _CONTRACT
+            d = _load_json(p)
+            d["vertical_margin_policy"]["max_outer_margin_ratio"] = 1.4
+            p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+        def _drop_block_ink():
+            p = sandbox / _CONTRACT
+            d = _load_json(p)
+            del d["fill_policy"]["min_block_ink_ratio"]
+            p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+
+        mutate(_target_outside_range, "T20 target が min-max の外で S10", "S10")
+        mutate(_drop_block_ink, "T23 min_block_ink_ratio 欠落で S10", "S10")
+        mutate(_bad_exception_range, "T21 例外の min>max で S10", "S10")
+        mutate(_bad_vertical_policy, "T22 縦余白の値が 0-1 の外で S10", "S10")
 
         # deck 経路 (--deck) は run_checks を通らないので、mutate では踏めない。
         # 混在で赤く・純粋で緑になる両方を固定する (片側だけだと常時赤の検査でも

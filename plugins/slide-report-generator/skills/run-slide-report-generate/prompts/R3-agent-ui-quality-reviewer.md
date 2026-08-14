@@ -143,6 +143,14 @@ last-audited: 2026-07-05
 - [ ] HTML/CSS のコードレビューで、1.4rem未満フォントの不在・インラインstyleの不適切なfont-size不在・overflow:hidden によるテキスト切れ不在・flexbox/grid 設定・CSS変数の正しい使用・data-theme 属性を点検した
 - [ ] 多面検証チェックリスト（詳細は reference: ui-quality-checklist.md）の全テーマ共通 MUST（テキスト切れなし／16:9維持／フォント1.4rem以上／WCAG AA 4.5:1／ナビ・ボタン視認／クリック領域44x44px以上／カラー直書きなし／アクセント2色以内／同レベル要素のスタイル統一）を全て YES にした
 - [ ] ライトモード MUST（--bg-dark:#FFFFFF / --fg:#2D2D2D・カード影/ボーダー・印刷時可読）とダークモード MUST（--bg-dark:#1F1F28 / --fg:#DCD7BA・純黒/純白不使用・投影コントラスト確保）を全て YES にした
+- [ ] 各面がどちらの系統か（決定論経路の `slider-*` / ページひな形の `data-slide-skeleton`）を最初に判別し、`fill_policy` / `vertical_margin_policy` を**両系統共通の契約**として適用したうえで以降の縦方向検証を行った
+- [ ] 面ごとの充填率が `frame-contract.json` の `fill_policy` レンジ内である（面種別の例外は `fill_policy.exceptions` を適用し、適用した kind をレポートに記載）
+- [ ] 残余高さが群の外側（上下）に残り、ブロック内部や項目間へ配られていない
+- [ ] 上下余白の対称性が `vertical_margin_policy.max_symmetry_delta` 以内であり、外側余白比が `min_outer_margin_ratio` / `max_outer_margin_ratio` の範囲にある
+- [ ] 群内 gap がブロック高より小さい（近接の原則。`vertical_margin_policy.max_proximity_gap_ratio` 以内）
+- [ ] 高さを牽引されたカードの中身が縦中央にあり、下半分が空いていない
+- [ ] 充填率をフォント縮小で調整していない（書体が `frame-contract.json` の `typography.min` を割っていない）
+- [ ] `node scripts/validate-slide-layout.js <html> --strict` を実行し、L8（充填率）/ L9（縦方向の残余配分）の結果を確認した
 - [ ] 検出した全問題に修正が対応づき、修正後の値が各基準（最小フォント1.4rem以上・統一感・コントラスト4.5:1以上）を満たす（font-size縮小は最小値以上のみ・CONST_004）
 - [ ] 修正後の再検証（スクリーンショット再撮影・必要に応じスクリプト再実行）で新たな違反が発生していない
 - [ ] 品質レポート必須フィールド（検証結果サマリ / 検出問題・箇所・修正 / S1〜S26 合否 / 修正完了確認 + 再検証結果）を出力に含めた
@@ -349,7 +357,8 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば修正
 | 作図文法の数値契約 | references/diagram-layout-contract.md | §D-1 グリッド / §D-2 複雑度予算 / §D-3 コネクタ 5 原則 / §D-4 R9 溶け込み契約（S27-S29 の契約本体）/ §D-5 annotation / §D-6 検査 owner 一覧 |
 | 図解の色ロール | references/diagram-style-tokens.md | §1 ロール表 / §2 系列色の使用制限 / §3 focal rule / §5 線幅・角丸・影の禁止事項。S29 の色数・意匠判定の根拠 |
 | 図解の骨格テンプレート | assets/diagram-templates/diagram-skeleton-slide.html（README.md 併読） | S29 で骨格の出自（埋め込み用か単体ページ用の借用か）を判定するときの比較対象 |
-| スライド面のページひな形 | assets/slide-templates/frame-contract.json（症状表と印刷の根拠は同ディレクトリ README.md） | `data-slide-skeleton` を持つ面の検証で、空白・chrome 位置・書体下限（`typography.min`）・充填率（`fill_policy`）・単一 `@page` の判定基準として参照する。決定論経路（`slider-*`）の面には効かないため、そちらは verify-slides.js / validate-print.js の結果で見る |
+| スライド面の寸法契約 | assets/slide-templates/frame-contract.json（症状表と印刷の根拠は同ディレクトリ README.md） | 面の余白率・充填率の唯一の正本。**まず面がどちらの系統か（`slider-*` / `data-slide-skeleton`）を判別する**のが検証手順の第一手。`fill_policy`（面種別の例外は `fill_policy.exceptions`）と `vertical_margin_policy`（外側余白比・`max_symmetry_delta`・`max_proximity_gap_ratio`）は**両系統共通の契約**として判定に用いる。空白・chrome 位置・書体下限（`typography.min`）・単一 `@page` は `data-slide-skeleton` を持つ面の判定基準。決定論経路（`slider-*`）の chrome・印刷は verify-slides.js / validate-print.js の結果で併せて見る |
+| 縦方向の機械検査 | scripts/validate-slide-layout.js（`--strict`） | L8（充填率）/ L9（縦方向の残余配分）の判定。5.3 完了チェックリストの縦方向項目はこの結果と併読して合否を確定する |
 | 統一感検証 | vendor/scripts/check-consistency.js | カラー・フォント検証 |
 | テーマ | references/theme-style.md | カラーパレット |
 | レイアウト | references/layout-visual.md | 余白・統一感ルール |
@@ -360,6 +369,8 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば修正
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2.0 | 2026-08-13 | 5.3 完了チェックリストへ**縦方向の停止条件**を新設（面の系統判別 / 充填率が `fill_policy` レンジ内・面種別は `fill_policy.exceptions` / 残余は群の外側 / 対称性 `max_symmetry_delta` / 近接 `max_proximity_gap_ratio` / 高さ牽引カードの縦中央 / 書体 `typography.min` 死守 / `validate-slide-layout.js --strict` の L8・L9 確認）。reference 側の観点表が agent の停止条件へ紐づいておらず縦方向を未消化のまま完了できた欠落を解消。関連リソースの frame-contract.json 参照を「`data-slide-skeleton` 限定」から「`fill_policy` / `vertical_margin_policy` は両系統共通の契約」へ改め、`validate-slide-layout.js` 行を追加（追記でなく既存記述の置換）。数値は契約 key を参照し本プロンプトへ写さない |
+| 2.1.0 | 2026-08-13 | 縦方向配分の検証観点を追加（ui-quality-checklist.md「レイアウトバランス」表を内容高ブロック・残余高さの置き場所・群の一体感・空洞なし・内部順序の統一・カード内無折り返し・横幅の使い切り・背景画像の左右余白・浮遊UI非重畳へ拡充）。「スライドタイプ別検証」をタイプ横断規約への参照へ改め、面固有値の再定義を禁止。「よくある問題と対処法（レイアウト関連）」の誤誘導（カードの高さ不揃い→`align-items: stretch` 追加）を是正し、面いっぱい伸長・群の分断・空洞・律動崩れ・帯化・連番二重表示・背景画像の切れ・浮遊UI重畳の対処へ差し替え（追記でなく既存記述の置換）。規範の逐語正本は layout-optimization-rules.md CONST_008-011 |
 | 2.0.0 | 2026-07-05 | Layer 5 を l5-contract v2.0.0（ゴールシーク原則）へ再構成。旧「プロフィール／知識ベース／実行仕様（固定手順 Step1〜5）／インターフェース」を 5.1 担当 agent・5.2 ゴール定義・5.3 完了チェックリスト（旧各段の判断基準＋検証チェックリストを YES/NO 統合）・5.4 実行方式（固定手順非保持＋中間成果物アンカー）・5.5 知識ベース・5.6 検証基準・5.7 インターフェース・5.8 依存関係・5.9 ツール利用へ節番号化。必須構造検証 S1〜S26・多面検証チェックリスト・テーマ別視覚検証ポイント・修正指針の各表は全保全。Layer 3/4/6 の Step N 参照を検証フェーズ名（自動検証／視覚検証／コードレビュー／修正／再検証）へ言い換え。verify-completeness.py exit 0 |
 | 1.9.0 | 2026-06-24 | prompt-creator 7層構造（Layer 1〜7 見出し）へ全面再編。メタ情報→Layer 1、用語集・評価基準・CONST_001〜007→Layer 2、検証スクリプト・grep・Read/Edit のツール定義→Layer 3、セキュリティ・品質基準・出力評価基準・エスカレーション・エラーハンドリング→Layer 4、プロフィール・知識ベース・実行仕様（S1〜S26 全件・検証チェックリスト・思考プロセス Step1〜5）・インターフェース・依存関係・ツール利用→Layer 5、全体フロー・最大3周改善ループ・完了判定→Layer 6、起動トリガー・想定入力例・ユーザー確認ポイント→Layer 7。S1〜S26 の検証内容・基準・検出方法、verify-slides.js / check-consistency.js 参照、フォントサイズ基準表、品質レポート出力テンプレート、相対リンク、よくある問題と対処法を全保持 |
 | 1.8.0 | 2026-06-24 | prompt-creator 7層フォーマット準拠へ再編。メタ情報・プロフィール・知識ベース・依存関係・ツール利用・ポリシーを新設。ビジネスルールに CONST_001〜007（目的・背景付与）を導入。思考プロセス各ステップにサブステップ・知識ベース適用・判断基準を付与。S1〜S26 の検証内容・スクリプト参照・相対リンクは全保持 |

@@ -82,7 +82,7 @@ last-audited: 2026-07-05
 | V-002 | 補足テキスト最大3行 | SR-4-06 | structure.md 内 `補足:` ブロック確認 |
 | V-003 | フォント最小1.4rem (≒1.75vw) | SR-3-04 | P3.5 (verify-slides.js) |
 | V-004 | 印刷=画面同一比率（**`slider-*` 面のみ**。`.srg-*` 面は SR-7-11 の `@page { margin: 21.47mm 0 }` が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
-| V-005 | code-block max-height 420px | SR-10-01 | P3.5 (check-consistency.js) |
+| V-005 | code-block の縦上限（値は SR-10-01） | SR-10-01 | P3.5 (check-consistency.js) — **未実装**。validate-structure.js は常に skip し、check-consistency.js に実体が無い |
 | V-006 | GSAP scale ≥ 0.8 | SR-6-02 | P3.5 (check-consistency.js) |
 | V-007 | SVG `<text>` font-size ≥ 13px | SR-3-05 | P3.5 (verify-slides.js) |
 | V-008 | SVG内 FA unicode 禁止 | SR-3-06 | P3.5 (check-consistency.js) |

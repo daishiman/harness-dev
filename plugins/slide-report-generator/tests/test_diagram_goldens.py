@@ -294,3 +294,240 @@ def test_all_goldens_carry_required_information():
     assert not unexpected, (
         "参照検査の語彙を持つはずの図が黙って素通りしている: " + " ".join(unexpected)
     )
+
+
+# --- (5) 文書全体の id 衝突 (D22 / D23・SR-15-20) --------------------------------
+#
+# 上の検査は全て「1 つの図」を単位に見る。1 面 1 図の golden では、面を
+# またいで同じ id が並ぶ状態そのものが作れない。実際 2026/8 に、全面の SVG が
+# 同じ `arrow-blue` を定義していたため 1 面目以外の矢じりが消えた欠陥が
+# D0-D21 を 1 件も鳴らさずに出荷された。文書を単位に見る検査をここで踏む。
+
+_RENDERER = _PLUGIN_ROOT / "vendor" / "scripts" / "render-slide.cjs"
+
+
+def _svg(*body: str, ids: str = "") -> str:
+    return (
+        '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+        + ids + "".join(body) + "</svg>"
+    )
+
+
+def _run_validator(path: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(_VALIDATOR), str(path)],
+        capture_output=True, text=True,
+    )
+
+
+def test_svg_diagram_validator_self_test():
+    """検査器そのものの健全性 (重大度の登録漏れ・D22/D23 の作動確認を含む)。"""
+    proc = subprocess.run(
+        [sys.executable, str(_VALIDATOR), "--self-test"],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, (proc.stdout + proc.stderr).strip()
+
+
+def test_duplicate_ids_across_svgs_in_one_file_is_error(tmp_path: Path):
+    """2 つの SVG が同じ id を定義したら error。
+
+    個々の SVG はどちらも正しい (D3 も通る) が、ブラウザは url(#...) を文書内で
+    最初に現れる定義へ解決するので、2 面目の参照は隠れている 1 面目を指す。
+    """
+    marker = '<defs><marker id="arrow-blue"><path d="M0 0"/></marker></defs>'
+    line = ('<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue)"/>')
+    deck = tmp_path / "dup.html"
+    deck.write_text(
+        "<html><body>" + _svg(line, ids=marker) * 2 + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(deck)
+    out = proc.stdout + proc.stderr
+    assert proc.returncode != 0, f"重複 id が素通りした:\n{out}"
+    assert "[D22]" in out and "arrow-blue" in out, out
+
+
+def test_duplicate_ids_are_checked_beyond_arrow_prefix(tmp_path: Path):
+    """罠は marker 固有ではない。clipPath でも同じ error が出る。
+
+    `arrow-` 接頭辞へ絞った検査だと、次に別の defs が増えた日にまた素通りする。
+    """
+    clip = ('<defs><clipPath id="clip-a">'
+            '<rect x="0" y="0" width="10" height="10"/></clipPath></defs>')
+    rect = ('<rect x="40" y="60" width="200" height="60" fill="#FFFFFF"'
+            ' stroke="#43436c" clip-path="url(#clip-a)"/>')
+    deck = tmp_path / "dup-clip.html"
+    deck.write_text(
+        "<html><body>" + _svg(rect, ids=clip) * 2 + "</body></html>",
+        encoding="utf-8",
+    )
+    out = _run_validator(deck)
+    assert "[D22]" in (out.stdout + out.stderr), (out.stdout + out.stderr)
+
+
+def test_reference_into_another_slide_svg_is_error(tmp_path: Path):
+    """参照先が別の面の SVG にしか無ければ error (D23)。"""
+    grad = ('<defs><linearGradient id="grad-a">'
+            '<stop offset="0" stop-color="#43436c"/></linearGradient></defs>')
+    rect = ('<rect x="40" y="60" width="200" height="60" fill="url(#grad-a)"'
+            ' stroke="#43436c"/>')
+    deck = tmp_path / "cross-ref.html"
+    deck.write_text(
+        "<html><body>" + _svg(rect, ids=grad) + _svg(rect) + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(deck)
+    out = proc.stdout + proc.stderr
+    assert proc.returncode != 0 and "[D23]" in out, out
+
+
+def test_shared_defs_svg_is_not_flagged(tmp_path: Path):
+    """描画物を持たない共有 defs 置き場への参照は正当 (誤検出させない)。
+
+    `<svg width="0" height="0">` に全面ぶんの gradient / filter を集める書き方は
+    既存デッキで実際に使われている。この SVG は何も描かないので面の切替
+    (visibility:hidden) の影響を受けず、どの面から参照しても定義は生きている。
+    """
+    shared = (
+        '<svg width="0" height="0" style="position:absolute"'
+        ' xmlns="http://www.w3.org/2000/svg"><defs>'
+        '<filter id="card-shadow"><feDropShadow dx="0" dy="4"/></filter>'
+        '<linearGradient id="card-fill-blue">'
+        '<stop offset="0" stop-color="#43436c"/></linearGradient></defs></svg>'
+    )
+    rect = ('<rect x="40" y="60" width="200" height="60" fill="url(#card-fill-blue)"'
+            ' stroke="#43436c" filter="url(#card-shadow)"/>')
+    deck = tmp_path / "shared-defs.html"
+    deck.write_text(
+        "<html><body>" + shared + _svg(rect) + _svg(rect) + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(deck)
+    out = proc.stdout + proc.stderr
+    # D1 (viewBox 無し) はこの置き場の形そのものへの別の指摘なので、ここでは
+    # 見ない。この test の主張は「参照の検査が正当な共有を咎めない」ことだけ。
+    assert "[D22]" not in out and "[D23]" not in out, f"正当な共有 defs を咎めた:\n{out}"
+
+
+def test_rendered_deck_scopes_marker_ids_per_slide(tmp_path: Path):
+    """決定論経路の出力が文書全体で id を一意に保つ (2026/8 の欠陥の回帰固定)。
+
+    svg-kit の `markerDefs` は面をまたいで同じ `arrow-blue` を出すので、
+    面番号による分離が外れると同名 id が並ぶ。上の合成 HTML と違い、
+    ここは実レンダラの出力そのものを検査に掛ける。
+    """
+    import json
+    step = lambda label, icon: {"label": label, "desc": "説明", "icon": icon}  # noqa: E731
+    source = tmp_path / "structure.json"
+    source.write_text(json.dumps({
+        "meta": {"title": "id scope regression"},
+        "slides": [
+            {"id": f"s{i}", "slideType": "slide-flow", "content": {
+                "title": f"流れ {i}",
+                "steps": [step("入力", "fa-solid fa-pen"),
+                          step("対話", "fa-solid fa-comments"),
+                          step("出力", "fa-solid fa-file-lines")],
+            }}
+            for i in (1, 2)
+        ],
+    }, ensure_ascii=False), encoding="utf-8")
+    out_dir = tmp_path / "deck"
+    proc = subprocess.run(
+        ["node", str(_RENDERER), str(source), "--out", str(out_dir), "--no-validate"],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, (proc.stdout + proc.stderr).strip()
+    html = (out_dir / "index.html").read_text(encoding="utf-8")
+
+    ids = re.findall(r'id="(arrow-[^"]+)"', html)
+    assert ids, "矢印 marker が 1 つも出ていない (検査が空振りしている)"
+    assert len(ids) == len(set(ids)), f"同名の marker id が並んでいる: {sorted(ids)}"
+    # 参照が定義の無い id を指していないこと (面番号の付け方が片側だけ変わる事故)
+    refs = set(re.findall(r"url\(#(arrow-[^)]+)\)", html))
+    assert refs <= set(ids), f"定義の無い marker を参照している: {sorted(refs - set(ids))}"
+
+    result = _run_validator(out_dir / "index.html")
+    assert result.returncode == 0, (result.stdout + result.stderr).strip()
+
+
+# --- (6) id をそのまま書く参照 (aria-labelledby・SR-15-20) ----------------------
+#
+# 2026/8、ブログ記事の 4 つの図が `aria-labelledby="title desc"` を共有していた。
+# 絵は 1px も変わらないため目視でもスクショ比較でも気付けないが、
+# 読み上げは全て先頭の図の <title>/<desc> になる。url(#...) だけを見る検査は
+# この形の参照を素通りするので、参照の種類ごとに踏んでおく。
+
+def _labelled_svg(uid: str, ref: str, label: str) -> str:
+    return (
+        '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+        f' role="img" aria-labelledby="{ref}">'
+        f'<title id="{uid}">{label}</title>'
+        '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/>'
+        "</svg>"
+    )
+
+
+def test_duplicate_title_id_across_figures_is_flagged(tmp_path: Path):
+    """同名の <title id> を持つ 2 図は D22 で止まる (読み上げが先頭へ吸われる)。"""
+    page = tmp_path / "aria-dup.html"
+    page.write_text(
+        "<html><body>"
+        + _labelled_svg("title", "title", "1 枚目")
+        + _labelled_svg("title", "title", "2 枚目")
+        + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(page)
+    out = proc.stdout + proc.stderr
+    assert "[D22]" in out, f"同名 title id を見逃した:\n{out}"
+    assert proc.returncode != 0
+
+
+def test_aria_labelledby_pointing_at_another_figure_is_flagged(tmp_path: Path):
+    """aria-labelledby が別の図の title を指していたら D23 で止まる。
+
+    id は一意なので D22 は鳴らない。url(#...) しか見ない検査だとここが穴になる。
+    """
+    page = tmp_path / "aria-cross.html"
+    page.write_text(
+        "<html><body>"
+        + _labelled_svg("title-s1", "title-s1", "1 枚目")
+        + _labelled_svg("title-s2", "title-s1", "2 枚目")
+        + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(page)
+    out = proc.stdout + proc.stderr
+    assert "[D22]" not in out, f"id は一意なのに D22 が鳴った:\n{out}"
+    assert "[D23]" in out, f"別の図を指す aria 参照を見逃した:\n{out}"
+
+
+def test_aria_labelledby_pointing_outside_svg_is_not_flagged(tmp_path: Path):
+    """SVG の外の見出しを指す aria 参照は咎めない (検査は SVG しか見ていない)。"""
+    page = tmp_path / "aria-outside.html"
+    page.write_text(
+        '<html><body><h2 id="sec-faq">FAQ</h2>'
+        + _labelled_svg("title-s1", "sec-faq", "1 枚目")
+        + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(page)
+    out = proc.stdout + proc.stderr
+    assert "[D23]" not in out, f"SVG 外への正当な参照を咎めた:\n{out}"
+
+
+def test_scoped_title_ids_pass(tmp_path: Path):
+    """図ごとに接尾辞を付けた形 (実ファイルへ施した修正と同じ形) は通る。"""
+    page = tmp_path / "aria-scoped.html"
+    page.write_text(
+        "<html><body>"
+        + _labelled_svg("title-s1", "title-s1", "1 枚目")
+        + _labelled_svg("title-s2", "title-s2", "2 枚目")
+        + "</body></html>",
+        encoding="utf-8",
+    )
+    proc = _run_validator(page)
+    out = proc.stdout + proc.stderr
+    assert "[D22]" not in out and "[D23]" not in out, f"正しい形を咎めた:\n{out}"

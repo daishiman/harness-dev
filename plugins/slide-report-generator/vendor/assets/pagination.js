@@ -17,7 +17,11 @@
    公開:
      window.Pagination = { goTo, next, prev, current, total, instance }
 
-   不変ルール: ロジック・キー割り当て・clearProps 範囲は変更禁止。
+   不変ルール: ロジック・キー割り当て・clearProps の対象（content.children
+   のみ・fo-card 除外）は変更禁止。
+   clearProps の「プロパティの列」は 2026-08-14 に 'all' から
+   'opacity,transform' へ限定した（対象は変えていない）。理由は
+   applyClearProps のコメントを見ること。
    ================================================================= */
 (function () {
   'use strict';
@@ -248,8 +252,17 @@
       const targets = Array.from(content.children).filter(
         (el) => !el.classList.contains('fo-card')
       );
+      // 'all' にしてはいけない。gsap の clearProps: 'all' は style 属性を丸ごと
+      // 落とすので、描画時に付けた作者側のインライン custom property
+      // (--grid-cols / --fit-t / --fit-d) まで一緒に消える。消えると
+      // grid の列数が CSS 側の既定へ落ち、見出しの幅フィットも効かなくなる
+      // (実測: 面を一度めくると --fit-t: 11.00 が消え、見出しが 45.78px から
+      //  設計値の 53.91px へ戻って「今はどうやっているか」が 2 行に割れた)。
+      // 初期表示では正しく、めくった後だけ崩れるので、静的な HTML の検査でも
+      // 初回スクショでも見つからない。ここを触ったら必ず「めくった後」を測ること。
+      // 消すのはこの timeline が実際に動かした 2 つだけでよい。
       if (targets.length) {
-        window.gsap.set(targets, { clearProps: 'all' });
+        window.gsap.set(targets, { clearProps: 'opacity,transform' });
       }
     }
 

@@ -33,7 +33,7 @@ precheck-layout の判定としきい値:
 | 項目 | 値 |
 |------|-----|
 | アスペクト比 | 16:9 固定（`.slide-area` / `.slider__item` に `aspect-ratio: 16/9`） |
-| コードブロック max-height | 420px 固定（340px禁止）、`overflow-y:auto` |
+| コードブロック max-height | 面の高さの 60%（`calc(60 * var(--sv))`）、`overflow-y:auto`。値の正本は spec-registry SR-10-01 |
 | SVGテキスト最小フォントサイズ | 13px以上（12pxは小バッジ・角の補助ラベルのみ、11px以下禁止） |
 | ページネーション区切り | `nth-child(5n)` で accent-aqua色・0.7remサイズ・margin-right:0.5rem |
 | GSAP scale 最小値 | 0.8（scale:0 / scale:0.5 等の極端値禁止。x/y移動で代替） |
@@ -99,6 +99,9 @@ precheck-layout の判定としきい値:
 - **CONST_015 (印刷レイアウト=画面同一)**: @media print は画面と同じ grid/flex 構造を維持。データ系は align-items:stretch で全幅。A4横フルサイズ（@page margin:0、border:none）。
   - 目的: 画面と印刷で同一構図を維持し、PDF版の見た目一貫性を保つ
   - 背景: 印刷専用に組み直すと画面と乖離し、配布資料の品質が落ちる
+- **CONST_015B (印刷の clip 戻し必須)**: @media print で `html, body` と `.slider` の画面用 clip を必ず戻す（`height: auto` / `overflow: visible`）。`.slider__item` に `page-break-after: always` を書いても、祖先が `height:100%` + `overflow:hidden` のままなら改ページは起きない。判定は目視でなく **PDF のページ数が面数と一致するか**で取る。
+  - 目的: 面数ぶんのページが確実に出ることを保証する
+  - 背景: 実測で、4 面の deck が PDF 1 ページになっていた（`html, body { height:100%; overflow:hidden }` が印刷でも生きていた）。同じ構成を決定論経路で出すと 4 ページ出る
 - **CONST_016 (印刷カード比率=画面同一)**: 印刷CSSの padding・font-size・gap・border-radius を画面CSSと同比率で維持。画面の50%以下に縮小禁止。具体基準: カードpadding≧5mm、本文フォント≧10pt、gap≧3mm、border-radius≧3mm。
   - 目的: 印刷で要素が過度に縮小され可読性・余白バランスが崩れるのを防ぐ
   - 背景: 印刷時の自動縮小でカードが潰れ、配布資料が読めなくなる事例があった
@@ -123,9 +126,9 @@ precheck-layout の判定としきい値:
 - **CONST_019 (h2 CSS定義全スライドタイプ必須)**: slide-quote / slide-message / slide-list / slide-cycle / slide-flow 等すべての `.slide-TYPE h2` に `font-size: var(--fs-heading)` 定義必須。
   - 目的: 見出しサイズの一貫性確保とタイプ別の不揃い防止
   - 背景: 定義漏れタイプで h2 がブラウザ既定サイズになり階層が崩れる
-- **CONST_020 (コードブロックmax-height統一)**: code-block の max-height は420px固定（340px禁止）。overflow-y:auto。
+- **CONST_020 (コードブロックmax-height統一)**: code-block の max-height は面の高さの 60%（`calc(60 * var(--sv))`）。px 直書き禁止。overflow-y:auto。値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` SR-10-01。
   - 目的: コード表示量を統一し、短すぎる枠でのスクロール多発を防ぐ
-  - 背景: 340px は実コードで頻繁に見切れ、可読性が低下した
+  - 背景: px 固定（旧 420px）は画面比率が変わると面に対する占有率が変わる。1920x1080 では内容枠の 54% しか使わず、コード面の充填率が 10 行で頭打ちになって `fill_policy.exceptions.code` の下限へ届かなかった
 - **CONST_021 (コードブロック書体)**: font-family は 'SF Mono', 'Fira Code', monospace。Noto Sans JP 禁止。
   - 目的: コードの等幅整列を保証
   - 背景: プロポーショナルフォントだとインデント・桁が崩れる
@@ -214,8 +217,20 @@ HTML/CSS/SVG/GSAP/印刷/レイアウトの不変生成規約。5.4 実行方式
   --slide-aspect-ratio: 16 / 9;
   --slide-max-width: min(100vw, calc(100vh * (16 / 9)));
   --slide-max-height: min(100vh, calc(100vw * (9 / 16)));
+  /* 面（レターボックスされた 16:9 の矩形）の 1% を表す単位。engine 経路
+     （style-builder.cjs）が使う --su / --sv と同義。両経路でこの単位を持つことで、
+     references の CSS 例に書かれた寸法をそのまま写せる。px 直書きは、画面比率が
+     変わると面に対する占有率が変わるため使わない。 */
+  --su: calc(var(--slide-max-width) / 100);
+  --sv: calc(var(--slide-max-height) / 100);
 }
 ```
+
+> `--su` / `--sv` が engine 経路と同じ寸法に解決することは、本経路で生成した deck と
+> 決定論経路の deck を同じ 4 観測点（1920x1080 / 1440x900 / 1280x1024 / 2560x1080）で
+> 実描画して確認済み。面の実寸と `calc(60 * var(--sv))` の着地値が全観測点で一致する
+> （648 / 486 / 432 / 648px）。`--sv` の宣言を落とすと `max-height` は `none` へ崩れる
+> （＝この 2 行は飾りではない）。
 
 #### 必須HTML構造
 
@@ -223,40 +238,157 @@ HTML/CSS/SVG/GSAP/印刷/レイアウトの不変生成規約。5.4 実行方式
 <div class="slider" id="slider">
   <div class="slide-area">  <!-- 16:9を強制するコンテナ -->
     <div class="slider__container">
-      <!-- スライドHTML -->
+      <!-- 面は必ず data-slide="N" (1 始まりの通し番号) と data-type="<slideType>" を持つ。下記参照 -->
+      <section class="slider__item slide-code" data-slide="1" data-type="slide-code">...</section>
+      <section class="slider__item slide-message" data-slide="2" data-type="slide-message">...</section>
     </div>
   </div>
 </div>
 ```
 
+> **`data-slide="N"` は必須である。これが無いと面が検査器から見えない。**
+> `scripts/validate-slide-layout.js` は面を `[data-slide], .srg-slide, [data-slide-skeleton]` で
+> 数える。この属性を落とすと `ERROR [L0] slide 要素が 0 件` になり、L1-L9（重なり・はみ出し・
+> 溢れ・図解面積・余白・文字量・充填率）が**1 件も評価されないまま FAIL する**。
+> 見た目は変わらないので、書き忘れても生成時には気付けない。
+> 番号の付け方は決定論経路に合わせる（engine は `data-slide="1"` から面順に振る）。
+> **この属性を CSS セレクタに使わないこと。** 面を指すのは検査器と同期検証の役目で、
+> 意匠を `data-slide="N"` で書くと deck ごとに書き直しが要る（layout-optimization-rules.md
+> の「面固有セレクタで書かない」と同じ理由）。
+>
+> **`data-type` も同じ理由で必須。** 検査器は `data-type`（次点 `data-slide-type`）で面種別を読み、
+> `frame-contract.json` の `fill_policy.exceptions` から面種別ごとの許容帯を選ぶ。属性が無いと
+> 種別が `?` になり、code 面（28-92%）や message 面（10-55%）にも既定帯（48-88%）が当たるため、
+> **充填率の指摘が誤った帯に対する数字になる**。値は slideType をそのまま書く（engine も
+> `data-type="slide-code"` の形で出す）。この属性も意匠には使わない。
+>
+> **面の可視・不可視は `.slider__item.is-active` のクラス切替だけで決めること。**
+> 検査器は面を 1 枚ずつ `is-active` へ付け替えて測る。可視状態がクラス以外のもの
+> （inline style・親要素の transform・横並びの位置）で決まっていると、付け替えても面が
+> 出てこない。旧版の横並びカルーセル（`.slider__container` を flex にして
+> `min-width:100%` の面を translateX で送り、GSAP が中身へ inline `visibility` を当てる方式）が
+> まさにこれで、2 枚目以降が**充填率 0.0%** と測れていた（中身は 371 / 324 / 263px の高さで
+> 存在するのに 0.0%）。`evaluate-deck.js` も同じ食い違いを別口から
+> `Dx スライド表示切替CSSが未定義` として検出していた。
+> 綴りと機構は決定論経路（`vendor/scripts/style-builder.cjs` の `.slider__item` と
+> `.slider__item.is-active`）に合わせる。3 つ目の綴りを作らないこと。詳細は下記 必須CSSルール。
+>
+> 旧版にあった「2 枚目以降の指摘件数を内容の良し悪しとして読まないこと」の但し書きは削除した。
+> 根本原因を塞いだ以上、残せば事実でない免責が規範に残り続けるため（数値の正本を 1 箇所へ
+> 寄せたのと同じ理由で、古い記述は上書きで消す）。
+
 #### 必須CSSルール
+
+面は同じ位置へ重ね、可視・不可視はクラスだけで決める。決定論経路
+（`vendor/scripts/style-builder.cjs`）と同じ機構・同じ綴りにすること。
 
 ```css
 .slider {
+  position: relative;
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .slide-area {
+  position: relative;
   width: var(--slide-max-width);
   height: var(--slide-max-height);
   aspect-ratio: 16 / 9;
+  margin: auto;
 }
 
-.slider__item {
+.slider__container {
+  position: relative;
+  width: 100%;
+  height: 100%;
   aspect-ratio: 16 / 9;
+}
+
+/* 全面を inset:0 で重ねる。位置ではなくクラスで見せ分ける。 */
+.slider__item {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.slider__item.is-active {
+  opacity: 1;
+  visibility: visible;
 }
 ```
 
+**禁止する書き方**（いずれも面を画面外へ残すため、検査器と印刷の両方が壊れる）:
+
+```css
+/* NG: 横並びカルーセル */
+.slider__container { display: flex; }
+.slider__item { min-width: 100%; }
+/* NG: 位置で見せ分ける（container を translateX で送る） */
+```
+
+#### 必須印刷CSS
+
+印刷では画面用の clip を必ず戻す。**戻し忘れると面が何枚あっても 1 ページしか出ない。**
+実測: `html, body { height: 100%; overflow: hidden }` が印刷でも生きていたため、
+4 面の deck が PDF 1 ページになっていた（同じ deck を決定論経路で出すと 4 ページ）。
+`.slider__item` 側に `page-break-after` を書いても、祖先が clip していれば効かない。
+
+`@page` は成果物全体でちょうど 1 つに保つ（複数ソースが書くと読み込み順で結果が変わる）。
+下記は `.slider__item` 系 deck の full-bleed モデル。**ひな形（`assets/slide-templates/slide-skeleton.css`）を
+連結した deck では `@page` を書かない** — ひな形が `@page { margin: 21.47mm 0 }` を持っており、
+`margin: 0` を後ろへ重ねるとレターボックス帯が消える（`references/print-layout.md` と同じ規約）。
+clip 戻し（`@media print` の中身）はどちらのモデルでも必須である。
+
+```css
+/* ひな形を連結していない deck のみ書く */
+@page { size: A4 landscape; margin: 0; }
+
+@media print {
+  html, body { width: 297mm; height: auto; overflow: visible; background: #fff; }
+  /* 画面では stage を中央へ置くため flex だが、印刷は面が縦に連なるので block へ戻す */
+  .slider { width: 297mm; height: auto; overflow: visible; display: block; }
+  .slide-area, .slider__container { width: 297mm; height: 210mm; }
+  .slider__item {
+    position: relative; inset: auto;
+    width: 297mm; height: 210mm;
+    opacity: 1 !important; visibility: visible !important;
+    page-break-after: always; break-after: page;
+    page-break-inside: avoid;
+  }
+  .slider__item:last-child { page-break-after: auto; break-after: auto; }
+}
+```
+
+GSAP リセット（CONST_014）・box-shadow 一括オフ（CONST_017）・グラデ文字の復帰（CONST_017B）は
+従来どおり同じ `@media print` 内に置く。
+
 #### JavaScript注意事項
 
-スライド幅計算は`.slide-area`の幅を使用：
+面送りは `.slider__item` への `is-active` の付け替えだけで行う。
+
+- `slideWidth` / `container` の x 移動 / `translateX` は**使わない**。面が画面外に残り、
+  クラスを付け替えても測れない・印刷にも出ない
+- **GSAP に `visibility` を触らせない。** inline style は CSS のクラス指定より強いので、
+  `is-active` を付けても `style="visibility:hidden"` が残っていれば隠れたままになる。
+  可視はクラス、演出は `opacity` と `transform` に分ける
+- 演出の完了時は `gsap.set(content.children, { clearProps: 'all' })` で inline を必ず消す
+  （CONST_010。決定論経路も同じで、実測で inline 残留 0 件）
 
 ```javascript
-this.slideWidth = this.slideArea ? this.slideArea.offsetWidth : window.innerWidth;
+// 面の見せ分けはこれだけ。位置も inline style も使わない。
+items.forEach(function (item, i) {
+  item.classList.toggle('is-active', i === index);
+});
 ```
 
 ### 5.6.2 index.html ⇔ structure.md 整合性維持（重要）
@@ -577,6 +709,7 @@ PDF出力チェックリスト:
 | A4横向きか | @page { size: A4 landscape; } |
 | 1スライド1ページか | page-break-after: always |
 | コンテンツが全表示か | overflow: visible, visibility: visible |
+| **面数ぶんページが出るか** | **PDF のページ数 = 面数（CONST_015B）。目視でなく実測で取る。1 ページしか出ないときは `html, body` / `.slider` の clip 戻し漏れ** |
 | カード影が全要素オフか | @media print 内に `* { box-shadow: none !important; }`（CONST_017） |
 | グラデ文字(タイトル等)が印刷で読めるか | @media print 内でグラデ文字(background-clip:text)を通常色に戻している（`background-clip: border-box` + 単色 `-webkit-text-fill-color`/`color`、CONST_017B） |
 

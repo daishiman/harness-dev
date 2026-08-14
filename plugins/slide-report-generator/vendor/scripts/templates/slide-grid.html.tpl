@@ -1,7 +1,7 @@
 <section class="slider__item slide-slide-grid" data-section="{{section}}" data-slide-type="slide-grid" data-index="{{index}}">
   <div class="slider__content">
     <h2>{{title}}</h2>
-    <div class="grid-container" style="--grid-cols: 3;">
+    <div class="grid-container" data-rows="{{gridRows}}"{{{gridLayoutAttr}}} style="--grid-cols: {{gridCols}};{{{gridFitVars}}}">
       {{#cards}}
       <div class="grid-cell">
         {{#icon}}<i class="{{icon}}" aria-hidden="true"></i>{{/icon}}

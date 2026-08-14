@@ -57,12 +57,30 @@ def test_rejects_mixed_engine_and_skeleton_markup(tmp_path: Path):
 
 
 def test_accepts_single_skeleton_system(tmp_path: Path):
+    # この検査の主題は「単一体系を受理するか」だが、--strict では L8 (充填率) と
+    # L9 (縦の残余) も fail へ昇格する。空の面は充填率 0 で必ず落ちるため、
+    # 面の体裁を持った最小の内容を入れて契約のレンジに実際に収める。
+    # 収まる根拠 (canvas 1280x720 / stage 64,48,1152x616 / kind=message 0.25-0.55):
+    #   充填率 = (h2 1152x64 + card 500x400) / (1152x616) = 0.39
+    #   縦の残余 = (616 - 512) / 616 = 0.17、上下余白は 52px ずつで非対称 0
     deck = tmp_path / "skeleton.html"
     deck.write_text(
         "<!doctype html><html><head><style>"
-        "html,body{margin:0}.srg-slide{width:1280px;height:720px;overflow:hidden}"
+        "html,body{margin:0}"
+        ".srg-slide{position:relative;width:1280px;height:720px;overflow:hidden}"
+        ".srg-slide__stage{position:absolute;left:64px;top:48px;width:1152px;height:616px}"
+        ".srg-slide__main{position:absolute;left:0;top:52px;width:1152px;height:512px}"
+        ".srg-slide__main h2{margin:0;height:64px;font-size:40px;line-height:64px}"
+        ".card{margin-top:48px;width:500px;height:400px;background:#eef}"
+        ".card p{margin:0;padding:16px;font-size:24px;line-height:36px}"
         "</style></head><body>"
-        '<section class="srg-slide" data-slide-skeleton="layout-message"></section>'
+        '<section class="srg-slide" data-slide-skeleton="layout-message">'
+        '<div class="srg-slide__stage"><div class="srg-slide__main">'
+        "<h2>単一体系の面</h2>"
+        '<div class="card"><p>この面は体系判定のための最小の内容を持つ。'
+        "充填率と縦の残余の契約を実際に満たすので、--strict でも赤にならない。"
+        "空の面で通してしまうと、体系判定だけが緑で他の契約は素通りになる。</p></div>"
+        "</div></div></section>"
         "</body></html>",
         encoding="utf-8",
     )

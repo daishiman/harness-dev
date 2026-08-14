@@ -79,13 +79,79 @@ const BACKGROUND_TYPES = new Set([
   "タイトル", "目次", "セクション", "背景", "導入"
 ]);
 
+/**
+ * engine の長い名 (slide-*) のテンプレートが本文として実際に読む「源のキー」。
+ *
+ * vendor/scripts/templates/ には短縮名 (message.html.tpl) と長い名
+ * (slide-message.html.tpl) が対で置かれていて、render-slide.cjs の loadTemplate は
+ * まず slideType そのままの名前を探し、無ければ TYPE_ALIASES を引く。短縮名の
+ * slideType を書いた旧世代の deck はそのまま短縮名テンプレートへ落ちるので、
+ * どちらも現役であり、片方は残骸ではない。ただし対の間で本文キーの名前が違う
+ * ものがあり (message: {{message}} / slide-message: {{main}}、timeline: {{items}} /
+ * slide-timeline: {{events}} など)、短縮名の書き方のまま slideType だけ長い名に
+ * すると、検証は通るのに本文が空で出る。ここはその取り違えを止めるための表。
+ *
+ * 値は「テンプレートのプレースホルダ名」ではなく「render-slide.cjs が読む源の
+ * キー」を書く。enrich が計算して差し込む派生キー (svg / headers / gridRows など)
+ * があるため、両者は一致しない。表とテンプレートのずれは
+ * tests/test_template_body_keys.py が検出する。
+ */
+const TEMPLATE_BODY_KEYS = {
+  "slide-message": ["main"],
+  "slide-title": ["title"],
+  "slide-hero": ["title"],
+  "slide-quote": ["quote"],
+  "slide-highlight": ["value"],
+  "slide-list": ["items"],
+  "slide-icon-grid": ["items"],
+  "slide-grid": ["cards"],
+  "slide-table": ["rows"],
+  "slide-timeline": ["events"],
+  "slide-process": ["steps"],
+  "slide-compare": ["left", "right"],
+  "slide-code": ["code"],
+  "slide-code-compare": ["before", "after"],
+  // 図解 3 種は enrich が items 系から svg を組み立てる (render-slide.cjs の SVG dispatch)
+  "slide-flow": ["steps", "items"],
+  "slide-circle": ["steps", "satellites", "items"],
+  "slide-pyramid": ["levels", "items", "layers"],
+};
+
+/**
+ * 型を特定できない面 (schemaVersion 差・拡張型・unknown) に使う「何かしら本文がある」判定の
+ * 受理キー集合。TEMPLATE_BODY_KEYS から導出する。
+ *
+ * 以前はここが独立した手書きの列挙 (main / title / message / items / steps / rows) だった。
+ * そのため content に quote しか無い slide-quote、value しか無い slide-highlight、cards しか
+ * 無い slide-grid のように、テンプレートが読む本文を正しく持っている面が「テキストコンテンツ
+ * が欠落」で落ちていた (実測: 17 型中 9 型 — quote / highlight / grid / timeline / compare /
+ * code / code-compare / circle / pyramid)。列挙を 2 箇所に持つ限り、型を足すたびに片方だけ
+ * 更新され「テンプレートは読むのに検証は本文と認めない」ずれが再発する。導出にして源を 1 つにする。
+ *
+ * message は TEMPLATE_BODY_KEYS に無いが、旧短縮名テンプレート (message: {{message}}) と
+ * md 形式の deck が使うため受理側に残す。
+ */
+const GENERIC_BODY_KEYS = [
+  ...new Set([...Object.values(TEMPLATE_BODY_KEYS).flat(), "message"]),
+];
+
+// 本文キーが「実際に中身を持っているか」。空文字・空配列は無いのと同じに扱う。
+function hasBodyValue(slide, content, key) {
+  const v = content[key] !== undefined ? content[key] : slide[key];
+  if (v === undefined || v === null) return false;
+  if (typeof v === "string") return v.trim() !== "";
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.keys(v).length > 0;
+  return true;
+}
+
 // V-ID 定義表（bp-classification.md §2-A 準拠）
 const V_DEFINITIONS = {
   "V-001": { sr: "SR-4-03", desc: "Before/After 48%/4%/48%", level: "FAIL" },
   "V-002": { sr: "SR-4-06", desc: "補足テキスト最大3行", level: "FAIL" },
   "V-003": { sr: "SR-3-04", desc: "フォント最小1.4rem (≒1.75vw)", level: "FAIL" },
   "V-004": { sr: "SR-7-01", desc: "印刷=画面同一比率（vw統一）", level: "FAIL" },
-  "V-005": { sr: "SR-10-01", desc: "code-block max-height 420px統一", level: "FAIL" },
+  "V-005": { sr: "SR-10-01", desc: "code-block の縦上限統一（値は SR-10-01）", level: "FAIL" },
   "V-006": { sr: "SR-6-02", desc: "GSAP scale最小0.8（残留transform対策）", level: "FAIL" },
   "V-007": { sr: "SR-3-05", desc: "SVG <text> 最小font-size 13px", level: "FAIL" },
   "V-008": { sr: "SR-3-06", desc: "SVG内 FA unicode禁止 (&#xf...)", level: "FAIL" },
@@ -121,7 +187,8 @@ const V_DEFINITIONS = {
   "V-036": { sr: "SR-V8-DIAGRAM", desc: "diagram.nodes.id は重複なし", level: "FAIL" },
   "V-037": { sr: "SR-V8-PAGE", desc: "pageOverride.background=image は backgroundImage 必須", level: "FAIL" },
   "V-038": { sr: "SR-V8-COLOR", desc: "section.theme/pageOverride の色は theme.accentColors に含む", level: "WARN" },
-  "V-043": { sr: "SR-13-01", desc: "コード系 slideType は aiVisual で image-only / baked-with-overlay にできない（コードは実HTMLコードブロックで描画）", level: "FAIL" }
+  "V-043": { sr: "SR-13-01", desc: "コード系 slideType は aiVisual で image-only / baked-with-overlay にできない（コードは実HTMLコードブロックで描画）", level: "FAIL" },
+  "V-044": { sr: "SR-16-01", desc: "slideType 別の本文キー整合（テンプレートが読む content キーを持つ）", level: "FAIL" }
 };
 
 // ==================================================
@@ -311,18 +378,29 @@ function validateBasicStructure(data, isMdFormat) {
     // 後段の V-* チェックで slide.type を参照しているため正規化
     if (!slide.type && slide.slideType) slide.type = slide.slideType;
 
-    // message: 新スキーマでは content.* に分散するため、いずれかがあれば許容
+    // message: 新スキーマでは content.* に分散するため、いずれかがあれば許容。
+    // 受理キーは GENERIC_BODY_KEYS (TEMPLATE_BODY_KEYS からの導出) を使う。
     const c = slide.content || {};
-    const hasText =
-      typeof slide.message === "string" ||
-      typeof c.main === "string" ||
-      typeof c.title === "string" ||
-      typeof c.message === "string" ||
-      Array.isArray(c.items) ||
-      Array.isArray(c.steps) ||
-      Array.isArray(c.rows);
+    const hasText = GENERIC_BODY_KEYS.some((k) => hasBodyValue(slide, c, k));
     if (!hasText) {
-      errors.push(`スライド${n}: テキストコンテンツ（message / content.main / title / items 等）が欠落`);
+      errors.push(
+        `スライド${n}: テキストコンテンツ（content.main / title / items / quote / value 等、いずれか 1 つ）が欠落`
+      );
+    }
+
+    // 上の hasText は slideType を見ない。どの型でも content.message があれば通るが、
+    // engine の slide-message テンプレートが読むのは {{main}} なので、content.message
+    // だけを持つ slide-message は「検証は通るのに本文が空で出る」。旧短縮名 (message)
+    // のテンプレートが {{message}} を読む一方、長い名 (slide-message) は {{main}} を
+    // 読むという名前のずれがそのまま素通りしていた。型ごとに、テンプレートが実際に
+    // 読む源のキーを持っているかを見る。
+    const bodyKeys = TEMPLATE_BODY_KEYS[stype];
+    if (bodyKeys && !bodyKeys.some((k) => hasBodyValue(slide, c, k))) {
+      errors.push(
+        `スライド${n}: slideType "${stype}" のテンプレートが読む本文キー（${bodyKeys
+          .map((k) => `content.${k}`)
+          .join(" / ")}）が無い。この型は他のキーがあっても本文が空で描画される [V-044 / SR-16-01]`
+      );
     }
 
     // icon: md 形式・新 schema 形式どちらでも省略可（content.icon など任意）
@@ -418,6 +496,9 @@ function runVChecks(data, report, options = {}) {
 
   // ----- コード非画像化 (V-043 / SR-13-01): 全 schemaVersion で実行 (aiVisual 不在時は no-op) -----
   runCodeNonImagingCheck(data, report);
+
+  // ----- slideType 別の本文キー整合 (V-044 / SR-16-01) -----
+  runBodyKeyCheck(data, report);
 }
 
 function runV8Checks(data, report) {
@@ -578,6 +659,34 @@ function runCodeNonImagingCheck(data, report) {
   });
   if (v043Hit && v043ok) report.pass("V-043", "コード系 slideType の aiVisual は image-only / baked-with-overlay 不使用");
   if (!v043Hit) report.skip("V-043", "コード系 slideType + aiVisual の組み合わせ未使用");
+}
+
+// V-044 (SR-16-01): slideType 別の本文キー整合。全 schemaVersion で実行。
+// 長い名 (slide-*) のテンプレートが読む源のキー (TEMPLATE_BODY_KEYS) を持たない面は、
+// 他のテキストキーを持っていても本文が空で描画される。短縮名の書き方 (content.message)
+// のまま slideType だけ長い名にした構造がここで止まる。
+function runBodyKeyCheck(data, report) {
+  const slides = data.slides || [];
+  let ok = true, hit = false;
+  slides.forEach((s, i) => {
+    const stype = s.slideType || s.type;
+    const keys = TEMPLATE_BODY_KEYS[stype];
+    if (!keys) return;
+    hit = true;
+    const c = s.content || {};
+    if (!keys.some((k) => hasBodyValue(s, c, k))) {
+      ok = false;
+      const tag = `slide[${i + 1}]${s.id ? ` (${s.id})` : ""}`;
+      report.fail(
+        "V-044",
+        `${tag}: slideType="${stype}" のテンプレートが読む本文キー（${keys
+          .map((k) => `content.${k}`)
+          .join(" / ")}）が無い。本文が空で描画される`
+      );
+    }
+  });
+  if (hit && ok) report.pass("V-044", "各 slideType がテンプレートの読む本文キーを持つ");
+  if (!hit) report.skip("V-044", "本文キー表の対象 slideType 未使用");
 }
 
 // ==================================================

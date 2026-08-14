@@ -136,6 +136,9 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - [ ] index.html の DOM 骨格と structure.md のスライド一覧・座標値が一致して書ける状態になっている
 - [ ] 16:9アスペクト比が設定されている（aspect-ratio: 16/9 が .slide-area と .slider__item に適用）
 - [ ] slide-area 要素がある（.slider 内に .slide-area が存在）
+- [ ] 面の見せ分けが `.slider__item.is-active` のクラス切替だけで成立している（面は `position:absolute; inset:0` の重ね。横並び + translateX と `content.style.visibility` への代入は不可・詳細は reference §5.6.1 必須CSSルール）
+- [ ] 各面に `data-slide="N"` と `data-type="<slideType>"` の両方がある（検査器が面を数え、面種別ごとの許容帯を選ぶために要る・詳細は reference §5.6.1 必須HTML構造）
+- [ ] 印刷で面数ぶんのページが出る（PDF のページ数 = 面数。`html, body` と `.slider` の clip 戻し・CONST_015B）
 - [ ] ライトテーマがデフォルトである（--bg-dark: #FFFFFF, --fg: #2D2D2D）
 - [ ] 分離形式で出力されている（index.html + styles.css + scripts.js。インライン CSS/JS の埋め込みが無く外部ファイル参照・CONST_002）
 - [ ] ひな形をコピーした面が 1 枚でもあるなら、`assets/slide-templates/slide-skeleton.css` を `styles.css` の先頭へ、`slide-skeleton.js` を `scripts.js` の末尾へ**連結**済み（ファイルを増やさず既存の外部 2 ファイルへ畳み込む＝CONST_002 と両立。未連結だと `--srg-*` も `data-autofit` も解決されない）
@@ -405,7 +408,7 @@ structure-designer から受け取る構成案（抜粋イメージ）:
 1. slide-title  | タイトル | accent-blue
 2. slide-message| キーメッセージ1文 | accent-aqua
 3. slide-cycle  | 4ステップ循環図（SVG2・共通SVG設計仕様 viewBox 0 0 800 450） | accent-pink
-4. slide-code   | コード例（max-height 420px / SF Mono） | accent-yellow
+4. slide-code   | コード例（縦上限は SR-10-01 / SF Mono） | accent-yellow
 ...
 
 ## 共通SVG設計仕様 / GSAP設定 / フォント仕様
