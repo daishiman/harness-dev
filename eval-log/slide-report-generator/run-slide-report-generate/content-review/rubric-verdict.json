@@ -2,7 +2,7 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-generate",
-    "skill_md_sha256": "ebf4d57daabecdc14e52d7aa0153424b76b90bac203aa60b34246eac882691db"
+    "skill_md_sha256": "574ecb45f6fa52dfb3151a5422597a60c4ee160835517fc80c08b3ea65a3c4a5"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -14,24 +14,28 @@
     "smell": 0
   },
   "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T09:22:45Z",
-  "iterations": 6,
+  "reviewed_at": "2026-08-14T01:02:45Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1"],
     "positive_feedback": [
-      "ref-skill-design-rubric (rubric.json・rubric_version 1.3.0・threshold 80・severity_weights high=-20/medium=-10/low=-3) の kind=skill 適用 rule は high/medium/low とも**違反 0 件**を維持し、rule 化されていない verifiability 欠陥も 0 になった。本 iteration の差分は :140 のコメント 1 行の分類語のみ (SKILL.md 231 行・body 176 行 ≤ max_skill_md_lines 300 は不変)。FM-001 (lint-skill-name.py=`ok: run-slide-report-generate` exit 0)、FM-002/003/004、BD-001 (:61 `## Purpose & Output Contract`)、BD-002 (:180 `## Gotchas`)、BD-003、NM-001〜003、PD-001 (references/ 12 entry 実在)、PD-002、RG-001、KL-001〜005 (knowledge/ 不在の存在ゲート) を再確認した。AG/HK/CM/PC/PR/WF 系は applies_to_kinds 不一致で非適用。",
-      "『書いた分類が実装で再現できる』という verifiability の中核が、残っていた 1 箇所で回復した。SKILL.md :140 は『下の 2 つのゲート (静的 shape の `validate-report-visual.py` と実描画の `validate-report-layout.js`) はどちらも bundle を取らない』となり、両側とも実装検算が通る — visual.py は playwright/chromium/browser の出現 0 件かつ `_build_parser()` (:1029-1052) が `report`/`--structure`/`--strict`/`--json`/`--require-structure` の 5 引数ちょうど、layout.js は :227 で `playwright-runtime.js` を構成し :239 で `chromium.launch()` して 4 viewport を実測し、argv 解釈 (:213-216) は `<report.html>`/`--viewport WxH`/`--strict` のみで bundle 入力を持たない。文書内の自己一貫性も回復し、:144『実描画契約』と :140 の分類が一致した。",
-      "SSOT 観点で、同一対象に対する分類語が 4 層すべてで一方向に揃った。manifest R3 phase title (静的ゲート=validate-report-visual.py 1 本 / validate-report-layout.js=R1-R8 読書レイアウトの実描画契約)、prompts/R3-agent-report-quality-reviewer.md :78・:275 (静的shape) と :349 (読書レイアウト実描画ゲート・4 viewport)、references/spec-registry.md :310 (Playwright・4 viewport) と §SR-15-17 (面積比の実測は静的解析では測れないので layout.js の責務)、そして SKILL.md :140/:144/:218。repo 全走査で layout.js を『静的』と呼ぶ記述は残っていない。iteration 4→5 で正誤の符号を反転しながら往復していた分類のずれが、写経元を壊さない方向 (誤っていた側を正しい側の粒度へ寄せる) で収束した。",
-      "新語を作らず既存語彙へ合流させた点が、次の drift を招きにくい。『静的 shape』は SKILL.md :218 が `report-quality-checklist.md` について既に使っていた語 (『runtime bundle＋validate-report-visual.py と対 (実描画/静的shape/意味を分離)』) と同一で、prompt 側 :78/:275 の『静的shape』とも一致する。分類語を 1 つ増やす代わりに既にある 2 語 (静的shape / 実描画) の割り当てを直したので、語彙表が増えていない。",
-      "count/attribution/契約 drift の機械検査が全て緑のまま退行していない。lint-count-parity.py=`passed: true / count: 0 / findings: []` exit 0、lint-reference-attribution.py=`ok: slide-report-generator (5 skills, reference attribution)` exit 0、lint-prompt-contract-drift.py --all=`prompts_scanned=187 fatal=0 warn=0` exit 0、validate-frontmatter.py=exit 0、lint-skill-name.py=`ok`。登録簿の実測値も維持: manifest の `vendor/scripts/` 系 13 本 ↔ SKILL.md :229 の 13 本で両方向差集合 0 (`build-deck-html.js`/`build-image-prompts.js`/`evaluate-deck.js`/`generate-images-codex.js`/`mermaid-render.js`/`render-report.js`/`render-slide.cjs`/`validate-ai-image-assets.js`/`validate-print.js`/`validate-structure.js`/`verify-report-runtime.js`/`verify-slides.js`/`workflow-manager.js`)。"
+      "機械採点は score 100 / threshold 80 / findings 0 (rubric_hash sha256:6e1843e5… / composition_hash sha256:964f754f… / L0+L2, DOMAIN_RUBRIC_REFS 未設定のため L1 無し)。SKILL.md は 231 行で max_skill_md_lines 300 の内側。",
+      "機械採点が触れなかった rule のうち適用対象を手で確認した。PD-002 / WF-001 / WF-002 / WF-003 (max_iterations 3周) / PG-002 (17/17 agents が対応する <!-- responsibility: R… --> アンカーを持つ) / AG-001 (17/17 agents が明示 tools allowlist を持つ) / AG-004 は通る。KL-* / PR-* / CM-* / HK-* は適用外。",
+      "今回の差分が持ち込んだ規範違反は 0 件。変更は起動条件の明示・検査コード範囲の同期・reference 説明の拡張の 3 点で、いずれも既存 rule の縛りを緩めていない。"
     ],
-    "negative_feedback": [],
-    "iteration": 6,
+    "negative_feedback": [
+      "この PASS の被覆は 45 rule 中 14 である。render-findings-score.py の check_rule() は FM-001..005 / BD-001..004 / NM-001..003 / PD-001 / RG-001 の if/elif 連鎖で、id が一致しない rule は末尾の `return None` へ落ちる。返り値が『合格』と区別できないため、AG-001/002・HK-001/002・CM-002/003・PC-001/002・PR-001/003・WF-001/002・KL-001・PG-001・BND-001・REG-001 を含む high severity 31 件は採点されないまま score 100 になる。TODO(human) rule は pending_human へ正しく退避するのに未実装 rule は退避しない非対称があり、閾値 80 を『未実装なら満たされる』へ変えている。したがって score 100 はこの verdict の根拠ではない。根拠は positive_feedback に列挙した手作業確認の範囲だけである。既定分岐を pending_human (または unscored 配列) へ倒し、出力が自分の被覆率を申告するようにするまで、この数値を再利用してはならない。",
+      "AG-002 (high・plugin scope・未解決): slide-report-generator の 17/17 agent に `## Isolation` / `## Context Boundary` 節が無い (実測)。frontmatter の isolation: fork で部分的に緩和されるが、rule が求める『この agent が触らないもの』の本文記述は全 agent で不在。この verdict の target は skill なので PASS を妨げないと判定したが、plugin scope では未解決 high のままである。",
+      "BND-001 (high・plugin scope・未解決): slide-report-generator が .claude-plugin/bundles.json のどのバンドルにも登録されていない (実測)。rule は新規追加 plugin を対象とするため適用外の可能性があるが、配布経路の実在ギャップである。",
+      "PG-001 は rubric 側が陳腐化している。prompts/<R-id>.yaml を要求するが、repo 内の prompts/*.yaml は 0 件で prompts/*.md が 185 件。実装すれば全 skill が落ちるため、rule の側を実態へ追従させる必要がある。",
+      "REG-001 は記述どおりには実行できない。validate-plugin-completeness.py は exit 0 (22 plugins complete) だが、validate-build-trace.py は build-trace.json を引数に要求し repo 全体へは掛けられない。rule の半分が判定不能のまま。",
+      "eval-log の振り分けが壊れている。write-eval-log.py の resolve_log_path は record['plugin'] を読むが render-findings-score.py はそのキーを出さず、既定値 'core' に落ちる。今回の評価も eval-log/slide-report-generator/... が既に在るのに eval-log/core/2026-08-14-score.jsonl へ書かれた。SKILL.md が約束する eval-log/<plugin>/ 契約が守られておらず、自己進化ループの集計入力が汚染される。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "none"
-  },
-  "notes": "本 verdict は **iteration_limit (3) 到達後、被験 SKILL.md が変更されたため実施した再検証パス**である (iteration=6 > iteration_limit=3。超過を隠さず記録する)。iteration 5 の記録 sha は bb3da7af… で現行実測 sha は ebf4d57d… (`shasum -a 256`) ゆえ stale であり、**sha の差し替えは行わず**、SKILL.md 全 231 行 / 決定論チェックブロック全文 (:121-160) / `git diff` 全ハンク / workflow-manifest.json (phases 3・resources) / prompts/R1-orchestrate.md / prompts/R3-agent-report-quality-reviewer.md / prompts/R3-agent-report-composer.md / references/spec-registry.md §14・§15 / 実装 3 本 (validate-report-layout.js・validate-report-visual.py・verify-report-runtime.js) を読み直して採点した。rubric = ref-skill-design-rubric (plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json・rubric_version 1.3.0・threshold 80・max_skill_md_lines 300・severity_weights high=-20/medium=-10/low=-3)。30 思考法は使用していない。rubric rule 単位の違反は high/medium/low とも **0 件** (kind=skill に掛かる FM-001〜005 / BD-001〜004 / NM-001〜003 / PD-001,002 / RG-001 / KL-001〜005 を個別確認)、rule ベース減点 0 で score 100 ≥ threshold 80。iteration 5 で verdict=FAIL の唯一の根拠だった **rule 外の verifiability 欠陥 (low・contradiction) が解消**したため、batch protocol の 4 条件が全成立し verdict=PASS へ反転する。解消内容: SKILL.md :140 の『下の 2 つの静的ゲート』→『下の 2 つのゲート (静的 shape の validate-report-visual.py と実描画の validate-report-layout.js)』。**修正が別箇所へ不整合を移していないことの確認**: (1) 『静的 shape』は :218 および R3 prompt :78/:275 の既存語と同一で新語の導入ではない、(2) manifest R3 phase title と粒度一致、(3) spec-registry.md :310/§SR-15-17 の実描画/静的解析の役割分担とも整合、(4) repo 全走査で layout.js を『静的』と呼ぶ残存記述 0 件、(5) :146『図解の静的契約』が指す `validate-svg-diagram.py` は playwright 出現 0 件の別 script で衝突しない、(6) 荷重主張『どちらも bundle を取らない』は両 script の引数定義 (visual.py 5 引数 / layout.js target+--viewport+--strict) で真。判定内訳: (a) 矛盾なし=PASS / (b) 漏れなし=PASS / (c) 規約整合=PASS / (d) 依存関係整合=PASS / (e) rubric high severity 0=PASS。criteria は frontmatter feedback_contract の実体に合わせ IN1/IN2/OUT1 の全 3 件を評価した。IN1: `validate-output-mode.py` の fail-closed と SKILL.md :131 / R1 :114,:155 の記述は維持され本差分の影響なし。IN2: script/schema とも実在し、SKILL.md (:99/:133/:169/:200/:230)・R1 (:134/:143/:156/:194/:207)・R2 designer 2 prompt・agent 定義 2 本の配線を維持。OUT1: frontmatter :51-54 と本文 :170 が verify_by=evaluator で一致し写像先 (deck-evaluation-rubric.md D5 / report-quality-checklist.md RQ31〜RQ34) も実在、本差分の影響なし。実測ログ: lint-count-parity.py=`passed true / count 0 / findings []` exit 0、lint-reference-attribution.py=`ok: slide-report-generator (5 skills, reference attribution)` exit 0、lint-prompt-contract-drift.py --all=`prompts_scanned=187 fatal=0 warn=0` exit 0、validate-frontmatter.py=exit 0 (warn: source field missing = doc/21 推奨・pre-existing)、lint-skill-name.py=`ok`。未検証 (実走なし): setup-playwright.py --install / verify-report-runtime.js / validate-slide-layout.js / validate-report-layout.js / validate-slide-skeleton.py の実描画実走 (Gate D run-skill-live-trial の管轄)、structure-designer の behavioral 確認、deck-evaluator D5 の実走。**pre-existing として notes へ引き継ぐ事項** (iteration 5 から継承・本 iteration で悪化していないことを再測済み): R1-orchestrate.md 3.2 の script 列挙が SKILL.md 決定論チェックブロックの 6 本 (verify-report-runtime.js / validate-report-layout.js / validate-slide-layout.js / validate-svg-diagram.py / validate-diagram-information.py / mermaid-render.js) を含まない (R1 全走査で各 0 件 = iteration 5 と同数)。当該節は本数を宣言せず全件性を名乗らないため rule 違反でも count 不整合でもないが、R1 が『完全駆動契約』を名乗る以上、次の設計改訂で扱う価値がある。IN2 の `validate-information-priority.py` は 3.2 の列挙外だが R1 の 5 箇所で駆動が配線されており漏れではない。iteration_limit 超過の再検証だが finding 0 件で 4 条件が成立したため human_review_required=false / next_action=none とする (超過の事実は本 notes と feedback_loop.iteration=6 に残す)。"
+    "next_action": "improve"
+  }
 }

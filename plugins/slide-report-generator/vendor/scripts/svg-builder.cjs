@@ -303,7 +303,6 @@ function buildHorizontalFlow(items, opts = {}) {
 function buildCycle(items, opts = {}) {
   // v7.5.0: 右にサイクル、左にキャプションカード
   const n = Math.min(8, items.length);
-  const W = CANVAS.w;
   const R = 200;
   const rNodeMax = 78;
   // 左キャプション（subtext / description / caption から拾う）。
@@ -314,6 +313,7 @@ function buildCycle(items, opts = {}) {
   // 円の左端 = cx - R - rNodeMax = W - 24 - 2*(R + rNodeMax) = 540。
   // キャプションカードは左余白 24 から始まるので、幅は 540 - 24 - 隙間 36 = 480。
   const captionX = 40, captionW = 480;
+  const hasCaption = Boolean(caption || heading);
   const headFs = 26;
   const bodyFs = 18;
   const textW = captionW - 48;
@@ -325,21 +325,110 @@ function buildCycle(items, opts = {}) {
   const cardPadTop = 40; // y(=100) - cardTop
   const cardPadBottom = 28;
   const cardH = cardPadTop + headBlockH + bodyBlockH + cardPadBottom;
-  // 高さ: リング直径 + 節点直径 + 上下の逃がし = 2*(R + rNodeMax + 20) = 596 と、
-  // キャプションカードの下端 (cardTop + cardH + 下余白 40) の大きい方で段を選ぶ。
-  const H = CANVAS.height(Math.max(2 * (R + rNodeMax + 20), cardTop + cardH + 40));
-  // 円は右端へ寄せる。中心 x = W - (R + rNodeMax + 右余白 24) で、節点の右端が
-  // ちょうど余白ぶんだけ内側に入る。
-  const cx = W - (R + rNodeMax + 24), cy = H / 2;
   const step = (2 * Math.PI) / n;
-  // 節点半径は分割数で頭打ちにする。隣接する節点の中心間距離は 2R sin(step/2) なので、
-  // その 4 割を上限にすると、節点が重ならず弧を描く余地も必ず残る (n=8 でも成立)。
-  // n = 1 は step = 2π で sin(step/2) = 0 となり半径 0 の節点になっていた
-  // (ラベル箱も 0 幅になり、文字が省略記号だけに潰れる)。隣接節点が無い以上
-  // 重なりの制約も無いので、そのときは上限をそのまま使う。
-  const rNode = n > 1
-    ? Math.min(rNodeMax, Math.round(2 * R * Math.sin(step / 2) * 0.4))
-    : rNodeMax;
+  const angles = Array.from({ length: n }, (_, i) => -Math.PI / 2 + step * i);
+  // 節点半径と外接矩形は横半径に依存するので、横半径を決める探索の中で引き直す。
+  // 節点半径は隣接する節点の中心間距離の 4 割を上限にすると、節点が重ならず弧を
+  // 描く余地も必ず残る (n=8 でも成立)。真円では中心間距離が 2R sin(step/2) に
+  // なり、旧実装と同じ値を返す。n = 1 は隣接節点が無く距離が定義できないので
+  // 上限をそのまま使う (旧実装では sin(step/2)=0 で半径 0 の節点になり、ラベル箱も
+  // 0 幅になって文字が省略記号だけに潰れていた)。
+  // 描画の実寸はリングの外接矩形ではなく「節点群の外接矩形」で決まる。n が奇数だと
+  // 上下・左右の張り出しが揃わない (n=3 なら上は -R-rNode、下は +R sin(30 度)+rNode)。
+  // n > 1 では弧が節点間を一周ぶん繋ぐので、描画は節点の外接矩形に加えてリング
+  // 全体を含む (n=3 の下端は節点ではなく弧の +R で決まる)。
+  const geomFor = (rx) => {
+    const px = (a) => rx * Math.cos(a);
+    const py = (a) => R * Math.sin(a);
+    let minDist = Infinity;
+    for (let i = 0; n > 1 && i < n; i++) {
+      const j = (i + 1) % n;
+      minDist = Math.min(minDist, Math.hypot(px(angles[i]) - px(angles[j]), py(angles[i]) - py(angles[j])));
+    }
+    const rNode = n > 1 ? Math.min(rNodeMax, Math.round(minDist * 0.4)) : rNodeMax;
+    const arcExtX = n > 1 ? rx : 0;
+    const arcExtY = n > 1 ? R : 0;
+    return {
+      rNode,
+      ext: {
+        minX: Math.min(-arcExtX, ...angles.map((a) => px(a) - rNode)),
+        maxX: Math.max(arcExtX, ...angles.map((a) => px(a) + rNode)),
+        minY: Math.min(-arcExtY, ...angles.map((a) => py(a) - rNode)),
+        maxY: Math.max(arcExtY, ...angles.map((a) => py(a) + rNode)),
+      },
+    };
+  };
+  // 16:9 / 16:10 の面に真円を置くと左右が必ず余る (実測で右に 314px 空き、
+  // h_ink 0.245)。viewBox を外接矩形ちょうどまで詰めても、図が縦横 1.05:1 である
+  // 以上これ以上は埋まらない。キャプションが無いときは節点を楕円上へ配置して、
+  // 図の縦横比そのものを面へ寄せる。目標 1.9 は「面の残余 (1440x900 で 1282x540、
+  // 1920x1080 で 1724x648) に対し高さ律速のまま充填率が下限 0.48 を超える最小値
+  // 1.57」に余裕を見た値。面の比 (2.37 / 2.66) までは広げない (図が平たくなり
+  // すぎる)。キャプション有りの側は左のカードが横を埋めるので真円のまま保つ
+  // (カード幅 480 が真円前提の cx から逆算されているため、動かすと重なる)。
+  // 中心節点の有無は横半径を決める前に要る (下の楕円化を分岐させるため)。
+  // 値の解釈自体は描画位置と無関係なので、ここで確定させても図は変わらない。
+  const centerSpec = opts.center && typeof opts.center === 'object' ? opts.center
+    : (typeof opts.center === 'string' && opts.center ? { label: opts.center } : null);
+  const centerLabel = centerSpec ? getLabel(centerSpec) : '';
+  const TARGET_ASPECT = 1.9;
+  let rx = R;
+  // 中心節点があるときは楕円化しない。中心から各節点までの距離が
+  // sqrt((RX cos a)^2 + (RY sin a)^2) で方向によって変わるため、「3 つが等しく中心へ
+  // 添う」という図の主張が距離の不均等として出てしまう (n=3 の実測: 楕円は
+  // RX=434 RY=200 に収束し、上の節点まで 200.0px・左右の節点まで 388.9px と
+  // 1.94 倍の開きになる。真円ならどの向きも 200.0px)。中心を持たない
+  // 循環図は「順に回る」ことしか言わないので、横へ伸びても意味は壊れない。
+  // 充填率はこのぶん落ちるが、それは面の側で解く (fill_policy.note_antipattern)。
+  if (!hasCaption && n > 1 && !centerLabel) {
+    // 節点半径が横半径に依存し、その節点半径が外接矩形を動かすので閉じた式が
+    // 無い。目標比との比率を掛ける反復で十分収束する (実測 6 回で 0.1% 以内)。
+    for (let i = 0; i < 6; i++) {
+      const g = geomFor(rx);
+      const aspect = (g.ext.maxX - g.ext.minX) / (g.ext.maxY - g.ext.minY);
+      rx = Math.min(R * 2.6, Math.max(R, rx * (TARGET_ASPECT / aspect)));
+    }
+    rx = Math.round(rx);
+  }
+  const RX = rx, RY = R;
+  const { rNode, ext } = geomFor(RX);
+  // viewBox の余白は左右上下とも 24 で固定する。ここを 8 まで詰めると図の実寸を
+  // 変えないまま面積比だけが上がるが、frame-contract の note_antipattern は
+  // 「充填率の下限割れは面の統合か項目の追加で直す」と定めており、余白を削って
+  // 数値を作るのはその意図に反する。充填率が足りないときは中身を足す側で解く。
+  const pad = 24;
+  const ringW = (ext.maxX - ext.minX) + 2 * pad;
+  const ringH = (ext.maxY - ext.minY) + 2 * pad;
+  // キャプションが無い deck では左半分が丸ごと空き、リングだけが右へ寄っていた
+  // (実測: viewBox 0 0 960 720 に対し描画 bbox が x=406.8-909.2)。viewBox は
+  // 描画を記述するものなので、キャプションを載せないときは左の予約帯も
+  // CANVAS の段丸めも畳み、節点群の外接矩形ちょうどにする。こうすると
+  // preserveAspectRatio の既定 (xMidYMid meet) が面の中央へ置き、かつ図が
+  // 面の高さいっぱいまで拡大される (viewBox が実寸より広いと図だけ縮む)。
+  const W = hasCaption ? CANVAS.w : ringW;
+  // 高さ: 節点群の実寸と、キャプションカードの下端 (cardTop + cardH + 下余白 40)
+  // の大きい方。キャプション無しなら段丸めせず実寸をそのまま使う。
+  const H = hasCaption
+    ? CANVAS.height(Math.max(ringH, cardTop + cardH + 40))
+    : ringH;
+  // 円は右端へ寄せる。中心 x = W - (右の張り出し + 余白) で、節点の右端が
+  // ちょうど余白ぶんだけ内側に入る。キャプション無しのときはこの式がそのまま
+  // 外接矩形の中心を返し、左右・上下の余白が等しくなる。
+  // キャプション有りの側は既存の座標をそのまま保つ (キャプション帯の幅 480 は
+  // この cx から逆算した値なので、ここを動かすとカードとリングが重なる)。
+  const cx = hasCaption ? W - (R + rNodeMax + 24) : W - (ext.maxX + pad);
+  const cy = hasCaption ? H / 2 : -ext.minY + pad;
+  // 節点に載せる文字の上限は節点半径から引く。固定値だと半径が変わっても文字が
+  // 追随しないため、n が増えて節点が縮んだときは箱だけ小さくなり、節点が大きい図
+  // では文字だけ小さいまま残る (実測: 旧出荷版と節点半径は同じ r=78 / r=104 なのに、
+  // ラベルは旧 29 / 40 に対し現行は 18 / 26 で、1920x1080 の実描画で 55px 対 32px)。
+  // 係数は旧の値を当時の半径で割った比の平均。ラベルは 29/78=0.372 と 40/104=0.385
+  // の平均で 0.378、副ラベルは 19/78=0.244 と 25/104=0.240 の平均で 0.242。
+  // 従来の固定値は下限として残す。maxFont は上限でしかなく、箱に入らなければ
+  // svgTextFit が下げるので、上へ外れても文字が溢れることはない。
+  const LABEL_FONT_RATIO = 0.378;
+  const SUB_FONT_RATIO = 0.242;
+  const fontCap = (r, ratio, floor) => Math.max(floor, Math.round(r * ratio));
   const nodes = [];
   const arrows = [];
   // 節点中心 P と、リング円上で角度 delta だけ離れた点 Q の距離は 2R sin(delta/2)。
@@ -349,39 +438,81 @@ function buildCycle(items, opts = {}) {
   //            書いていたため SVG 側で半径が補正され、接線方向がずれて矢じりが崩れた。
   //   旧実装2: 半径は揃えたが delta/2 しか離さなかったため、矢じりの先端が節点円の
   //            内側に入り、後から描く円に隠れて矢印そのものが消えていた。
-  const delta = 2 * Math.asin(Math.min(0.999, rNode / (2 * R)));
+  // 楕円では媒介変数の角度あたりの進み |dP/da| が角度ごとに違うので、px で決まる
+  // 量 (節点半径・隙間・矢じりの張り出し) はすべてこの局所速度で角度へ換算する。
+  // 真円では速度が R 一定になり、下の 3 つは旧実装と同じ値を返す。
+  const speedAt = (a) => Math.hypot(RX * Math.sin(a), RY * Math.cos(a));
+  const deltaAt = RX === RY
+    ? () => 2 * Math.asin(Math.min(0.999, rNode / (2 * R)))
+    : (a) => rNode / speedAt(a);
   // 矢じりは線の終端より先へ張り出す。その長さは marker の形状 (kit.MARKER) と
-  // 線幅から一意に決まるので、実 px を kit.markerOverhangPx に委ね、弧長 = R·角度
-  // の関係で角度へ換算する。ここに数値を直書きすると marker 形状を変えた瞬間に
-  // 補正だけが古い値のまま残る。
-  const markerOverhang = kit.markerOverhangPx(kit.STROKE.primary) / R;
-  const gap = 0.055;            // 節点との視覚的な隙間 (矢羽根が円縁に潰されない距離)
+  // 線幅から一意に決まるので、実 px を kit.markerOverhangPx に委ねる。ここに
+  // 数値を直書きすると marker 形状を変えた瞬間に補正だけが古い値のまま残る。
+  const overhangAt = (a) => kit.markerOverhangPx(kit.STROKE.primary) / speedAt(a);
+  // 節点との視覚的な隙間 11px (矢羽根が円縁に潰されない距離)。真円 R=200 では
+  // 旧実装の定数 0.055 rad と一致する。
+  const gapAt = (a) => 11 / speedAt(a);
   for (let i = 0; i < n; i++) {
     const a = -Math.PI / 2 + step * i;
-    const x = cx + R * Math.cos(a);
-    const y = cy + R * Math.sin(a);
+    const x = cx + RX * Math.cos(a);
+    const y = cy + RY * Math.sin(a);
     const it = items[i] || {};
     const color = colorOf(it, i, opts);
     const label = getLabel(it);
+    // 副ラベル。ラベルが「何を指すか」だけを言うのに対し、副ラベルは「読者が何を
+    // 書けばよいか」を言う (背景 -> いまの状況)。両方あって初めて図が指示になる。
+    const sub = typeof it === 'object' && it ? (it.desc || it.sub || '') : '';
     // 円に内接する概ねの矩形へ自動フィット (円内で文字が溢れない)
     const inner = { x: x - rNode * 0.78, y: y - rNode * 0.72, w: rNode * 1.56, h: rNode * 1.44 };
+    // 副ラベルがあるときは内接矩形を上下に割る。上下比 0.56 / 0.44 は、下に置く
+    // 副ラベルの方が字数が多く 2 行になりやすいぶんを見込んだ値。
+    const labelBox = sub ? { ...inner, h: inner.h * 0.56 } : inner;
+    const subBox = { ...inner, y: inner.y + inner.h * 0.56, h: inner.h * 0.44 };
     // 節点は弧より後に描いて端点のわずかな食い込みを隠す。ただし塗りが半透明だと
     // 弧が円内を横切って見えてしまうため、不透明な下敷きを 1 枚敷いてから塗る。
     nodes.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rNode}" fill="${kit.TOKENS.paper}"/>
       <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rNode}" fill="${color}" opacity="0.92"/>
-      ${svgTextFit(label, inner, { fill: '#fff', weight: 700, maxFont: 18, minFont: 13, singleLineFloor: 14, padX: 6, padY: 4 })}`);
+      ${svgTextFit(label, labelBox, { fill: '#fff', weight: 700, maxFont: fontCap(rNode, LABEL_FONT_RATIO, 18), minFont: 13, singleLineFloor: 14, padX: 6, padY: 4 })}${sub ? `
+      ${svgTextFit(sub, subBox, { fill: '#fff', weight: 500, maxFont: fontCap(rNode, SUB_FONT_RATIO, 14), minFont: 12, singleLineFloor: 12, padX: 6, padY: 3 })}` : ''}`);
     const a2 = a + step;
-    const start = a + delta + gap;
-    const end = a2 - delta - gap - markerOverhang;
+    const start = a + deltaAt(a) + gapAt(a);
+    const end = a2 - deltaAt(a2) - gapAt(a2) - overhangAt(a2);
     // 1 件だけのサイクルは循環しない。step が 2π になり自分自身へ戻る弧を
     // 描いてしまうため、2 件以上のときだけ矢印を出す。
     if (n > 1 && end > start) {
-      const sx = cx + R * Math.cos(start);
-      const sy = cy + R * Math.sin(start);
-      const ex = cx + R * Math.cos(end);
-      const ey = cy + R * Math.sin(end);
+      const sx = cx + RX * Math.cos(start);
+      const sy = cy + RY * Math.sin(start);
+      const ex = cx + RX * Math.cos(end);
+      const ey = cy + RY * Math.sin(end);
       const largeArc = end - start > Math.PI ? 1 : 0;
-      arrows.push(`<path d="M${sx.toFixed(2)},${sy.toFixed(2)} A ${R} ${R} 0 ${largeArc} 1 ${ex.toFixed(2)},${ey.toFixed(2)}" fill="none" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.primary}" marker-end="url(#arrow-blue)"/>`);
+      // 両端は同じ楕円上にあるので、半径に RX RY を書けばその楕円弧そのものになる。
+      arrows.push(`<path d="M${sx.toFixed(2)},${sy.toFixed(2)} A ${RX} ${RY} 0 ${largeArc} 1 ${ex.toFixed(2)},${ey.toFixed(2)}" fill="none" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.primary}" marker-end="url(#arrow-blue)"/>`);
+    }
+  }
+  // 中心節点。structure.schema.json の content_slide-circle は center を必須に
+  // していながら、ここが受け取らないため描画に出ていなかった。schema が受け取ると
+  // 宣言した値は描くか、宣言をやめるかのどちらかしかない。
+  // 半径は「中心から最も近い節点中心までの距離 - 節点半径 - 隙間 18」。この式は
+  // 節点と必ず離れる最大値を返すので、n や楕円率が変わっても重ならない。
+  // 中心は節点群の外接矩形の内側に必ず収まるため viewBox は変わらない
+  // (= center を持たない既存 deck と、持つ deck の図の寸法が同じままになる)。
+  let centerBlock = '';
+  if (centerLabel && n > 0) {
+    const minNodeDist = Math.min(...angles.map((a) => Math.hypot(RX * Math.cos(a), RY * Math.sin(a))));
+    const rCenter = Math.round(minNodeDist - rNode - 18);
+    // 半径が 40 を割ると中心円に 12px の文字が入らない。入らない箱を描くと
+    // svgTextFit が契約 §3 で文字を落とし、意味の無い丸だけが残るので描かない。
+    if (rCenter >= 40) {
+      const cSub = centerSpec.desc || centerSpec.sub || '';
+      const cInner = { x: cx - rCenter * 0.78, y: cy - rCenter * 0.72, w: rCenter * 1.56, h: rCenter * 1.44 };
+      const cLabelBox = cSub ? { ...cInner, h: cInner.h * 0.56 } : cInner;
+      const cSubBox = { ...cInner, y: cInner.y + cInner.h * 0.56, h: cInner.h * 0.44 };
+      // 中心は「衛星の色を束ねる場所」なので、節点の配色を持たせず紙色 + 輪郭に
+      // する。色を付けると 4 つ目の要素に見え、サイクルの数え方が狂う。
+      centerBlock = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rCenter}" fill="${kit.TOKENS.paper}"/>
+      <circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rCenter}" fill="none" stroke="${kit.TOKENS.muted}" stroke-width="${kit.STROKE.primary}"/>
+      ${svgTextFit(centerLabel, cLabelBox, { fill: kit.TOKENS.ink, weight: 700, maxFont: fontCap(rCenter, LABEL_FONT_RATIO, 26), minFont: 16, singleLineFloor: 18, padX: 8, padY: 6 })}
+      ${cSub ? svgTextFit(cSub, cSubBox, { fill: kit.TOKENS.muted, weight: 400, maxFont: fontCap(rCenter, SUB_FONT_RATIO, 16), minFont: 12, singleLineFloor: 12, padX: 8, padY: 4 }) : ''}`;
     }
   }
   let captionBlock = '';
@@ -398,7 +529,8 @@ function buildCycle(items, opts = {}) {
   return `<svg viewBox="0 0 ${W} ${H}" class="cycle-svg" role="img" aria-label="${escapeXml(opts.ariaLabel || 'サイクル図')}" xmlns="http://www.w3.org/2000/svg">
   ${defs()}
   ${captionBlock}
-  ${arrows.join('\n  ')}
+  ${arrows.join('\n  ')}${centerBlock ? `
+  ${centerBlock}` : ''}
   ${nodes.join('\n  ')}
 </svg>`;
 }
@@ -1038,12 +1170,18 @@ function buildRadarChart(axes, series, opts = {}) {
 function buildGauge(value, opts = {}) {
   const W = CANVAS.w, H = CANVAS.h.sm, cx = W / 2, cy = H - 60;
   // 半円の半径は「上に帯 (STROKE.band=24) の半分ぶんの逃がしを残す」条件で決まる。
-  //   cy - r - band/2 >= 上余白 40  →  r <= 360 - 40 - 12 = 308。4px 寄せで 280。
-  const r = 280;
+  //   cy - r - band/2 >= 上余白 40  →  r <= cy - 52。
+  // 旧値 280 はこの式へ H=360 ではなく 420 を入れた誤りで、cy=300 の実際には
+  // 弧の頂点が y=20、帯の外縁が y=8 まで来て上へ張り付いていた。
+  const r = kit.snap(cy - 52);
   const v = Math.max(0, Math.min(100, Number(value) || 0));
   const ang = Math.PI * (1 - v / 100);
   const x = cx + r * Math.cos(ang), y = cy - r * Math.sin(ang);
-  const large = v > 50 ? 1 : 0;
+  // 値の弧は左端から最大でも半周 (180 度) しか進まないので、large-arc-flag は
+  // 常に 0。ここを v > 50 で 1 にすると 180 度超の側、つまり同じ半径で中心の
+  // 違うもう一方の弧が選ばれ、トラックから外れた位置に別半径のように見える弧が
+  // 描かれる (見出しの高さまで伸びて分断されて見えていたのはこれ)。
+  const large = 0;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || 'ゲージ')}" xmlns="http://www.w3.org/2000/svg">
   <path d="M${cx - r},${cy} A${r},${r} 0 0 1 ${cx + r},${cy}" fill="none" stroke="${VAR_AQUA}" stroke-width="${kit.STROKE.band}" opacity="0.3"/>
   <path d="M${cx - r},${cy} A${r},${r} 0 ${large} 1 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.band}"/>

@@ -113,7 +113,7 @@ L2: 補足文（--fs-body, regular）
 L3: なし（余白を活かす）
 ```
 
-**設計の意図**: 要素を**減らす**ことが最大の強調。Apple Keynote では1行+余白80%がヒーロー。
+**設計の意図**: 要素を**減らす**ことが最大の強調。1行だけを置く低密度の面であり、充填率は `frame-contract.json` の `fill_policy.exceptions` の cover / quote 帯に属する。
 
 ### 3.3 統計・数値スライド
 

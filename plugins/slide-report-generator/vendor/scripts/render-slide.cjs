@@ -26,6 +26,9 @@ const svg = require('./svg-builder.cjs');
 // 構造図 (配置戦略 × ノード語彙 × コネクタ語彙 の組合せで組んだ 10 タイプ)
 const struct = require('./svg-structures.cjs');
 const { renderD3BootstrapJs } = require('./d3-bootstrap.cjs');
+// 文字幅の近似 (em 単位)。SVG 側で箱に文字を収めるのに使っているものと同じ表を
+// HTML 側でも使う。2 つの近似を別に持つと、同じ文字列に別の幅が出る。
+const { charWidth } = require('./svg-kit.cjs');
 
 const SKILL_ROOT = path.resolve(__dirname, '..');
 const TEMPLATE_DIR = path.join(__dirname, 'templates');
@@ -203,6 +206,9 @@ function enrichSlideContext(slide, idx) {
       ariaLabel: aria,
       headline: c.headline || c.lead || c.subtitle || '',
       subtext: c.subtext || c.description || c.caption || c.summary || '',
+      // content.center は content_slide-circle の必須項目。ここで渡さないと
+      // schema が要求した値が描画に一切現れない (中心の丸ごと欠落)。
+      center: c.center || c.hub || null,
     });
   } else if (slideType === 'slide-pyramid' || slideType === 'pyramid' ||
              slideType === 'diagram-value-stack') {
@@ -344,8 +350,58 @@ function enrichSlideContext(slide, idx) {
       items: normalizeTextList((c.right && c.right.items) || []),
     };
   }
-  if (slideType === 'slide-grid') ctx.cols = c.cols || 3;
-  if (slideType === 'grid' || slideType === 'icon-grid') ctx.cols = slide.cols || c.cols || 3;
+  // 格子の段数。カード 1 枚の高さは段数ぶん効くので、1 段の面に合わせた寸法のまま
+  // 2 段組むと stage を溢れる。段数は CSS からは :has() でしか数えられず、それは
+  // 効かない環境で「大きいまま溢れる」方へ倒れる (fail-open)。枚数と列数を知って
+  // いるのは render 側なので、ここで確定させて属性に出す。既定 (属性なし) が
+  // 詰まった寸法、data-rows="1" のときだけ拡大、という向きにしてある。
+  // 対になる定義は style-builder.cjs の .grid-container[data-rows="1"]。
+  const gridRows = (cells, cols) => Math.max(1, Math.ceil((cells || 0) / Math.max(1, cols)));
+  if (slideType === 'slide-grid') {
+    ctx.cols = c.cols || 3;
+    // content.layout は「1 枚あたりの説明が長い面を 1 行 1 項目へ倒す」ための
+    // 任意キー。既定 (未指定) は従来どおりの 3 列格子なので、キーを持たない
+    // 既存 deck の出力は 1 バイトも変わらない。
+    // 対になる定義は style-builder.cjs の .grid-container[data-layout="stack"]。
+    const gridLayout = c.layout === 'stack' ? 'stack' : '';
+    ctx.gridLayoutAttr = gridLayout ? ` data-layout="${gridLayout}"` : '';
+    ctx.gridCols = gridLayout === 'stack' ? 1 : 3;
+    // 段数は列数で決まる。stack は 1 列なので枚数がそのまま段数になり、
+    // 1 段だけの面を拡大する data-rows="1" の規則は自動的に外れる。
+    ctx.gridRows = gridRows(Array.isArray(c.cards) ? c.cards.length : 0, ctx.gridCols);
+    // 見出し・説明を「セル幅に入る大きさ」で頭打ちにするための実測値を面ごとに出す。
+    // CSS 側は書体を font-size: min(設計値, 100cqi / この値) で決めるので、ここで
+    // 渡すのは面内で最も長い文字列の幅 (em) になる。文字数ではなく em で渡すのは、
+    // 英数字が全角の半分ほどしかなく、文字数だと「ChatGPT」を 7 文字ぶんと数えて
+    // 不当に小さくしてしまうため。面ごとの最大を採るのは、同じ面のカードで書体が
+    // ばらつくと崩れて見えるから (カード単位で最適化しない)。
+    // 対になる定義は style-builder.cjs の --fit-t / --fit-d。
+    // charWidth は SVG のラベル (字重 400-500) に合わせた近似なので、字重 800 の
+    // 見出しでは欧文が細めに出る。Noto Sans JP を 100px で実測して比を採ったところ、
+    // 全角は 1.000 でぴたりと合い、欧文だけが最大 1.107 倍 (Facebook 4.30 -> 4.76)
+    // 大きかった。全角以外に 1.12 を掛けてこの差を吸収する。全角に掛けないのは、
+    // 日本語だけの見出しを理由なく縮めないため。
+    const LATIN_BOLD_MARGIN = 1.12;
+    const emWidth = (s) => {
+      let w = 0;
+      for (const ch of String(s == null ? '' : s)) {
+        const cw = charWidth(ch);
+        w += cw < 1 ? cw * LATIN_BOLD_MARGIN : cw;
+      }
+      return w;
+    };
+    const maxEm = (key) => (Array.isArray(c.cards) ? c.cards : [])
+      .reduce((m, card) => Math.max(m, emWidth(card && card[key])), 0);
+    const fitT = maxEm('title');
+    const fitD = maxEm('desc');
+    ctx.gridFitVars = (fitT > 0 ? ` --fit-t: ${fitT.toFixed(2)};` : '')
+      + (fitD > 0 ? ` --fit-d: ${fitD.toFixed(2)};` : '');
+  }
+  if (slideType === 'grid' || slideType === 'icon-grid') {
+    ctx.cols = slide.cols || c.cols || 3;
+    const cells = slide.cells || c.cells || slide.items || c.items || [];
+    ctx.gridRows = gridRows(Array.isArray(cells) ? cells.length : 0, ctx.cols);
+  }
   if (slideType === 'process') {
     ctx.steps = (slide.steps || slide.items || []).map((s, i) => ({
       num: i + 1,
@@ -368,6 +424,21 @@ function enrichSlideContext(slide, idx) {
   }
 
   return ctx;
+}
+
+// SVG の矢印 marker id を面単位で分離する。
+// svg-kit.cjs の markerDefs は `id="arrow-blue"` のように面をまたいで同じ id を出す。
+// 1 つの HTML に全面の SVG が同居するので、同名 id が複数回現れ、`url(#arrow-blue)`
+// はブラウザ規則で「最初の出現」へ解決される。1 面目以外は .slider__item が
+// visibility:hidden なので、参照先の marker も不可視になり、矢印の先端だけが
+// 描かれない。id と参照を同じ規則で面番号付きに書き換え、参照が必ず同一 SVG 内で
+// 閉じるようにする。置換は <svg>…</svg> の内側かつ `id="arrow-…"` /
+// `url(#arrow-…)` の形に限定し、本文やコード中の `arrow-` には触れない。
+function scopeSvgMarkerIds(html, idx) {
+  const suffix = `-s${idx + 1}`;
+  return String(html).replace(/<svg\b[\s\S]*?<\/svg>/gi, (svgEl) => svgEl
+    .replace(/id="arrow-([A-Za-z0-9]+)"/g, (m, name) => `id="arrow-${name}${suffix}"`)
+    .replace(/url\(#arrow-([A-Za-z0-9]+)\)/g, (m, name) => `url(#arrow-${name}${suffix})`));
 }
 
 function normalizeRenderedSlideHtml(html, slide, idx, v8ctx) {
@@ -395,6 +466,7 @@ function normalizeRenderedSlideHtml(html, slide, idx, v8ctx) {
   // v7.5.1: テンプレが付与する `slide-slide-*` を `slide-*` に正規化し、
   // style-builder.cjs の `.slide-table` `.slide-grid` 等のセレクタと整合させる。
   out = out.replace(/\bslide-slide-([a-z0-9-]+)/gi, 'slide-$1');
+  out = scopeSvgMarkerIds(out, idx);
 
   // v8: schemaVersion=8.0.0 のときだけ追加の data-* / inline-style を付与
   if (v8ctx && v8ctx.enabled) {
@@ -471,7 +543,7 @@ function computeV8SlideAttrs(slide, v8ctx) {
 }
 
 // ---------- HTML scaffold ----------
-function buildScaffold({ meta, slidesHtml, paginationHtml, theme }) {
+function buildScaffold({ meta, slidesHtml, paginationHtml, theme, hasCustomCss }) {
   const title = escapeHtml(meta.title || 'Presentation');
   const lang = meta.lang || 'ja';
   const author = meta.author ? `<meta name="author" content="${escapeHtml(meta.author)}"/>` : '';
@@ -485,6 +557,12 @@ function buildScaffold({ meta, slidesHtml, paginationHtml, theme }) {
   if (v8 && theme && theme.pagination && theme.pagination.style) {
     sliderAttrs.push(`data-pg-style="${escapeHtml(theme.pagination.style)}"`);
   }
+  // styles.css は毎回全文再生成される。追加の補正 CSS を styles.css へ書くと次の
+  // render で必ず消えるため、逃げ場が index.html の inline <style> になり
+  // ui-quality-checklist.md S1 (index.html に <style> 0 件) を構造的に破っていた。
+  // 出力先に custom.css があるときだけ styles.css の直後へ繋ぎ、後勝ちを固定する。
+  // custom.css は render 側で生成も上書きもしない (利用者・agent が置く受け皿)。
+  const customCssLink = hasCustomCss ? '\n  <link rel="stylesheet" href="custom.css"/>' : '';
   return `<!DOCTYPE html>
 <html lang="${lang}">
 <head>
@@ -495,7 +573,7 @@ function buildScaffold({ meta, slidesHtml, paginationHtml, theme }) {
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css"/>${customCssLink}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
 </head>
 <body>
@@ -596,7 +674,10 @@ function buildScriptsJs() {
       ease: 'power2.out',
       onComplete: function () {
         // SR-6-02 / SR-6-03
-        gsap.set(content.children, { clearProps: 'all' });
+        // 'all' は不可。style 属性ごと落ちるので、描画時に付けた
+        // --grid-cols / --fit-t / --fit-d が消えて、めくった後だけ
+        // 列数と見出しの幅フィットが壊れる。動かした分だけ戻す。
+        gsap.set(content.children, { clearProps: 'opacity,transform' });
       }
     });
   }
@@ -611,7 +692,8 @@ function buildScriptsJs() {
       stagger: 0.03 * S,
       ease: 'power3.inOut',
       onComplete: function () {
-        gsap.set(content.children, { clearProps: 'all' });
+        // 上と同じ理由で 'all' は不可
+        gsap.set(content.children, { clearProps: 'opacity,transform' });
         if (cb) cb();
       }
     });
@@ -727,7 +809,8 @@ function main() {
   }
 
   const paginationHtml = buildPaginationFragment(slides.length, data.sections || meta.sections || []);
-  const html = buildScaffold({ meta, slidesHtml, paginationHtml, theme: data.theme });
+  const hasCustomCss = fs.existsSync(path.join(outDir, 'custom.css'));
+  const html = buildScaffold({ meta, slidesHtml, paginationHtml, theme: data.theme, hasCustomCss });
 
   const css = buildStyles({
     paginationCssPath: path.join(ASSETS, 'pagination.css'),
@@ -745,7 +828,7 @@ function main() {
   in:  ${inputPath}
   out: ${outDir}
   slides: ${slides.length}
-  files: index.html (${fs.statSync(path.join(outDir, 'index.html')).size}B), styles.css, scripts.js, structure.json, structure.md`);
+  files: index.html (${fs.statSync(path.join(outDir, 'index.html')).size}B), styles.css, scripts.js, structure.json, structure.md${hasCustomCss ? '\n  custom.css: 検出。styles.css の後に連結した (再生成しない)' : ''}`);
 }
 
 if (require.main === module) main();

@@ -41,7 +41,7 @@
 | 図種の上書き | 同 `override` セクション | `visual.kind` を明示指定した場合のみ本表に優先。`visual.rationale` に上書きした行 ID（例 `R10`）と理由を必ず書く。`override.forbidden` の指定はしない |
 | 導出行を持たない variant | 同上 | `architecture` / `data-flow` は `body[]` から機械導出できる形を持たず、override 経由でのみ選ばれる |
 | variant 名の集合 | `schemas/report-structure.schema.json` の variant enum | 名前の列挙は schema 側が正本。ここにも決定表にも別集合を作らない |
-| 図の合否（幾何・素材の契約と D0-D21） | `references/diagram-layout-contract.md` | 決定表が図種を決め、契約が「その図を出してよいか」を決める（層が違う） |
+| 図の合否（幾何・素材の契約と D0-D23） | `references/diagram-layout-contract.md` | 決定表が図種を決め、契約が「その図を出してよいか」を決める（層が違う） |
 
 > 本節（§0.5）が担うのは「論理節は本質図解を 1 枚必ず持つ」という**下限の規律**であり、「どの図種にするか」ではない。図種は決定表、名前は schema、合否は契約——という 3 層分担を崩さない。
 

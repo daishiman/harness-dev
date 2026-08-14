@@ -26,7 +26,7 @@ references/spec-registry.md §15 / §15-a。
 検査コードは D (Diagram) 接頭辞。同じ scripts/ にある validate-report-visual.py も
 C1.. を使うため、番号だけで参照すると取り違える。
 
-検査する 18 項目 (根拠 SR-ID は references/spec-registry.md §15):
+検査項目 (根拠 SR-ID は references/spec-registry.md §15。件数は ALL_CODES が正本):
   D0  パース可能     SVG として構文解析できる
   D1  viewBox 収容   図形・文字が viewBox の外へ出ていない
   D2  数値健全性     NaN / undefined / Infinity が座標に混入していない
@@ -46,6 +46,12 @@ C1.. を使うため、番号だけで参照すると取り違える。
   D16 CSS accent     CSS/HTML 図解の accent 色を持つ要素が §D-2 #3 以内 (D7 の CSS 版)
   D17 斜め path      コネクタ <path> に斜めの直線セグメントが無い (§D-3 原則 1)
   D18 文字収容       文字が viewBox とラベル箱に収まる (§D-8・error/warning の 2 段)
+  D19 辺への溶け     コネクタが箱の辺と共線で 12px 以上走っていない (SR-15-19)
+  D20 線の重なり     別々のコネクタが同一直線上で 12px 以上重なっていない (SR-15-19)
+  D21 箱の貫通       コネクタが無関係な箱の内側を 12px 以上貫いていない (SR-15-19)
+  D22 id 一意性      1 ファイル内で SVG の id が重複していない (SR-15-20)
+  D23 参照の閉じ     文書内参照 (url(#id) / aria-labelledby / href="#id") の
+                     参照先が自分の SVG か共有 defs にある (SR-15-20)
 
 D0-D9 が幾何と可読性を見るのに対し、D10-D13 は「素材」を見る。素材の検査が
 必要なのは、ビルダー関数の入口 (CAPACITY やトークン表) は決定論経路にしか
@@ -146,6 +152,9 @@ SEVERITY: dict[str, str] = {
     # D21 も同型。箱を貫く線は「その箱を経由する」と誤読させるが、内側へ
     # 意図的に線を差し込む語彙 (ハブの中心、注記の引き出し) もありうる。
     "D21": "warning",
+    # --- 第 7 次 update (文書スコープの id 衝突) ---------------------------------
+    # D22/D23 は SEVERITY へ登録しない = fail-closed の error。理由は
+    # ERROR_BY_DESIGN の側に書いてある (D3 と同根拠で「矢じりが消える」)。
 }
 
 
@@ -156,7 +165,7 @@ SEVERITY: dict[str, str] = {
 # 検証される。一方で「未登録」は書き忘れとも区別が付かないため、意図的な
 # 未登録をここへ明示して両者を機械的に分ける。
 #
-# ここに載る 7 コードはいずれも「誤検知の余地がなく、直さないと図が読めない/
+# ここに載るコードはいずれも「誤検知の余地がなく、直さないと図が読めない/
 # 消える」もので、error 以外の重大度を選ぶ余地がない:
 #   D0  SVG として解析できない        (図が 1px も描かれない)
 #   D1  viewBox はみ出し              (通過点だけで測るので検出漏れ側。拾えたら本物)
@@ -165,22 +174,42 @@ SEVERITY: dict[str, str] = {
 #   D4  最小フォント違反              (SR-3-05 の明文規則)
 #   D8  Font Awesome PUA              (SR-3-06。CDN 未ロードで文字が全部消える)
 #   D12 外部依存                      (D8 と同根拠。CDN が落ちた瞬間に図が消える)
+#   D22 id が文書内で重複             (2 枚目以降の参照が 1 枚目へ吸われ矢じりが消える)
+#   D23 url(#...) の参照先が他の SVG   (同上。参照が自分の図の外を向いている)
+#
+# D22/D23 は D3 と同じ「参照が解決しない」型だが、D3 が 1 つの SVG の中しか
+# 見ないのに対し、D22 は 1 ファイル (= 1 HTML) の中の SVG どうしを見る。
+# スライド HTML は全面の SVG を 1 文書へ同居させるので、同名 id は必ず起きうる。
+# ブラウザは url(#x) を「文書内で最初に現れる #x」へ解決し、面の切替が
+# visibility:hidden である以上、2 枚目以降の参照先は不可視の marker になる。
+# 結果は「線は引かれているのに矢じりだけ消える」で、読んで判断する余地がない。
 #
 # _sev() の挙動はこの集合を参照しない (SEVERITY.get(code, "error") のまま)。
 # ここは宣言であって分岐ではない。分岐にすると fail-closed の既定値が
 # 「この表に載っているものだけ error」へ弱まり、新しい検査の書き忘れが
 # 再び静かに見逃されるようになる。
 ERROR_BY_DESIGN: frozenset[str] = frozenset({
-    "D0", "D1", "D2", "D3", "D4", "D8", "D12",
+    "D0", "D1", "D2", "D3", "D4", "D8", "D12", "D22", "D23",
 })
 
-# D0-D21 の全コード。SEVERITY ∪ ERROR_BY_DESIGN がこれと一致することを
+# D0-D23 の全コード。SEVERITY ∪ ERROR_BY_DESIGN がこれと一致することを
 # --self-test が検証する (新しい検査を足したとき、どちらかへの登録を強制する)。
-ALL_CODES: frozenset[str] = frozenset(f"D{i}" for i in range(22))
+ALL_CODES: frozenset[str] = frozenset(f"D{i}" for i in range(24))
 
 
 def _sev(code: str) -> str:
     return SEVERITY.get(code, "error")
+
+# `fill="url(#grad-1)"` `clip-path="url(#clip-2)"` `filter="url(#f)"` のような
+# 文書内参照。クォートの種類と前後の空白を許して id 部分だけを取る。
+_URL_REF_RE = re.compile(r"url\(\s*['\"]?#([^)'\"\s]+)['\"]?\s*\)")
+# marker-* の参照は D3 が見る。D23 で重ねて見ると同じ違反が 2 件出る。
+_MARKER_ATTRS = frozenset({"marker-end", "marker-start", "marker-mid", "marker"})
+# url(#...) 以外の文書内参照。値は id をそのまま (空白区切りで複数) 書く。
+# aria-labelledby="title desc" は <title>/<desc> を読み上げ名に使う指定で、
+# これも「文書内で最初に現れる #title」へ解決する。絵は変わらないので目視では
+# 気付けないが、後ろの図の読み上げが全て先頭の図の説明になる。
+_ARIA_IDREF_ATTRS = frozenset({"aria-labelledby", "aria-describedby"})
 
 # SR-3-05: 11px 以下は禁止。12px は小バッジ・軸ラベルのみ許容なので下限は 12。
 MIN_FONT_PX = 12
@@ -552,9 +581,14 @@ def _viewbox(root: ET.Element) -> tuple[float, float, float, float] | None:
     return tuple(parts)  # type: ignore[return-value]
 
 
+def _localname(qname: str) -> str:
+    """`{http://www.w3.org/2000/svg}rect` のような修飾名から局所名だけ取り出す。"""
+    return qname.split("}")[-1]
+
+
 def _iter(root: ET.Element):
     for el in root.iter():
-        yield el.tag.split("}")[-1], el
+        yield _localname(el.tag), el
 
 
 _NUM_TOKEN_RE = re.compile(r"-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
@@ -2044,6 +2078,135 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
     return findings
 
 
+def _is_shared_defs_svg(root: ET.Element) -> bool:
+    """描画物を持たない「共有 defs 置き場」の SVG か。
+
+    <svg width="0" height="0" style="position:absolute"><defs>…</defs></svg> の
+    形で全面ぶんの gradient / filter を 1 箇所へ置く書き方は、既存デッキで
+    実際に使われている正当な設計。この SVG は自分では何も描かないので面の
+    切替 (visibility:hidden) の影響を受けず、どの面から参照しても定義は
+    生きている。ここへの参照を D23 で咎めると誤検出になる。
+
+    判定は「defs / style / title / desc / metadata 以外の子要素を持たない」。
+    描画要素が 1 つでもあれば、それは面の一部なので共有置き場とは呼ばない。
+    """
+    ignorable = {"defs", "style", "title", "desc", "metadata"}
+    for child in root:
+        if _localname(child.tag) not in ignorable:
+            return False
+    return True
+
+
+def check_document(label: str, svgs: list[tuple[str, str]]) -> list[Finding]:
+    """D22 / D23: 1 ファイルに同居する SVG 全体で見ないと分からない違反 (SR-15-20)。
+
+    check_svg は 1 つの SVG しか見ないので、この 2 つは原理的に捕まらない。
+    スライド HTML は全面の SVG を 1 文書へ同居させ、各面のビルダーは自分の
+    defs を「その図の中では一意」な名前 (arrow-blue 等) で書く。個々の SVG
+    としては正しく、D3 も通る。それでもブラウザは url(#arrow-blue) を
+    「文書内で最初に現れる #arrow-blue」へ解決するため、2 枚目以降の面の参照は
+    1 枚目の marker を指す。面の切替が visibility:hidden である以上、その
+    marker は隠れており、線は引かれているのに矢じりだけが描かれない。
+
+    重複が起きるのは marker に限らない。clipPath / linearGradient / filter /
+    pattern / mask など url(#...) で参照される定義は全て同じ罠を踏むので、
+    検査対象は id 全般にする。arrow- 接頭辞へ絞ると、次に別の defs が
+    増えた日にまた素通りする。
+
+    D22 は「同名 id が 2 箇所以上で定義されている」。同じ id が 1 つの SVG の
+    中で 2 度出る場合も同じ表で拾う (そもそも不正)。
+    D23 は「参照先が自分の SVG にも共有 defs にも無い」。参照先が
+    別の面の SVG にしか無い場合と、どこにも無い場合の 2 通りを区別して出す。
+    marker-* の参照は D3 の担当なので、同じ違反を 2 度出さないよう除く。
+
+    参照は url(#...) だけではない。aria-labelledby / aria-describedby /
+    href="#..." は id をそのまま書く形の参照で、これも文書内で最初に現れる
+    id へ解決する。絵が変わらないぶん目視で気付けないので検査に含める。
+    ただしこの形の参照は SVG の外の要素 (見出し等) を指すことが正当にあり、
+    この関数は SVG しか受け取らないためその定義を見られない。よって
+    「別の SVG にしかない」時だけ出し、「どこにも無い」時は黙る。
+    """
+    findings: list[Finding] = []
+    # id -> その id を定義している SVG 名の一覧 (同じ SVG 内の重複も件数で残す)
+    owners: dict[str, list[str]] = {}
+    # SVG 名 -> (自分が定義した id 集合, 参照した id -> 参照箇所の説明)
+    local_defs: dict[str, set[str]] = {}
+    local_refs: dict[str, dict[str, str]] = {}
+    # id をそのまま書く参照 (aria-labelledby / href="#id")。url(#...) と違い
+    # 「SVG の外の h2 や figcaption を指す」正当な使い方があり、check_document
+    # は SVG しか受け取らないのでその定義を見られない。よって「どこにも無い」
+    # では鳴らさず、「別の SVG にしかない」時だけ鳴らす (下の emission を参照)。
+    idref_refs: dict[str, dict[str, str]] = {}
+    shared_ids: set[str] = set()
+    for name, svg_text in svgs:
+        try:
+            root = ET.fromstring(svg_text)
+        except ET.ParseError:
+            continue  # パース不能は D0 の担当。ここでは黙って飛ばす
+        defined: set[str] = set()
+        refs: dict[str, str] = {}
+        idrefs: dict[str, str] = {}
+        for tag, el in _iter(root):
+            eid = el.get("id")
+            if eid:
+                owners.setdefault(eid, []).append(name)
+                defined.add(eid)
+            for attr, value in el.attrib.items():
+                lname = _localname(attr)
+                if lname in _MARKER_ATTRS:
+                    continue  # D3 の担当
+                if lname in _ARIA_IDREF_ATTRS:
+                    for token in str(value).split():
+                        idrefs.setdefault(token, f"<{tag}> の {lname}")
+                    continue
+                if lname == "href" and str(value).startswith("#"):
+                    idrefs.setdefault(str(value)[1:], f"<{tag}> の {lname}")
+                    continue
+                for m in _URL_REF_RE.finditer(str(value)):
+                    refs.setdefault(m.group(1), f"<{tag}> の {lname}")
+            if tag == "style" and el.text:
+                for m in _URL_REF_RE.finditer(el.text):
+                    refs.setdefault(m.group(1), "<style> の中")
+        local_defs[name] = defined
+        local_refs[name] = refs
+        idref_refs[name] = idrefs
+        if _is_shared_defs_svg(root):
+            shared_ids |= defined
+    for eid in sorted(owners):
+        places = owners[eid]
+        if len(places) < 2:
+            continue
+        where = ", ".join(sorted(set(places)))
+        findings.append(Finding(
+            _sev("D22"), "D22", label,
+            f"id '#{eid}' が {len(places)} 回定義されている ({where})。"
+            "1 つの文書に同名 id があると url(#...) は最初の定義へ解決され、"
+            "後の面の参照が別の面 (= 隠れている面) を指す。"
+            "面ごとに接尾辞を付けて一意にする (SR-15-20)"))
+    for name, refs in local_refs.items():
+        for ref in sorted(set(refs) - local_defs.get(name, set()) - shared_ids):
+            elsewhere = sorted(set(owners.get(ref, [])))
+            if elsewhere:
+                detail = (f"参照先は {', '.join(elsewhere)} にしかない。"
+                          "その面が隠れている間は参照した側も描かれない")
+            else:
+                detail = "参照先がこのファイルのどこにも無い"
+            findings.append(Finding(
+                _sev("D23"), "D23", name,
+                f"'#{ref}' が {refs[ref]} から参照されているが同じ SVG 内で定義されていない。"
+                f"{detail} (SR-15-20)"))
+    for name, idrefs in idref_refs.items():
+        for ref in sorted(set(idrefs) - local_defs.get(name, set()) - shared_ids):
+            elsewhere = sorted(set(owners.get(ref, [])))
+            if not elsewhere:
+                continue  # SVG の外の要素を指している可能性がある。ここでは判断しない
+            findings.append(Finding(
+                _sev("D23"), "D23", name,
+                f"'#{ref}' が {idrefs[ref]} から参照されているが同じ SVG 内で定義されていない。"
+                f"参照先は {', '.join(elsewhere)} にしかなく、別の図の要素を指す (SR-15-20)"))
+    return findings
+
+
 # ---------------------------------------------------------------------------
 # 自己テスト (--self-test)
 #
@@ -2188,12 +2351,193 @@ _SELF_TEST_CASES: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, 
     ),
 )
 
+# D22/D23 は SVG どうしの関係を見るため、1 つの SVG を渡す _SELF_TEST_CASES では
+# 表現できない。(ラベル, [SVG 断片...], 期待コード, 出てはいけないコード) で持つ。
+# この表のケースは check_document と各 SVG の check_svg を合わせて採点する。
+_SELF_TEST_DOC_CASES: tuple[tuple[str, tuple[str, ...], tuple[tuple[str, str], ...], tuple[str, ...]], ...] = (
+    (
+        "2 面が同じ marker id を持つ (2 面目の矢じりが消える)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><marker id="arrow-blue"><path d="M0 0"/></marker></defs>'
+            '<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue)"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><marker id="arrow-blue"><path d="M0 0"/></marker></defs>'
+            '<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue)"/></svg>',
+        ),
+        (("error", "D22"),),
+        (),
+    ),
+    (
+        "面ごとに接尾辞を付けて一意にした 2 面",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><marker id="arrow-blue-s1"><path d="M0 0"/></marker></defs>'
+            '<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue-s1)"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><marker id="arrow-blue-s2"><path d="M0 0"/></marker></defs>'
+            '<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue-s2)"/></svg>',
+        ),
+        (),
+        ("D22",),
+    ),
+    (
+        "clipPath の id が 2 面で衝突 (marker 以外でも同じ罠)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><clipPath id="clip-a"><rect x="0" y="0" width="10" height="10"/>'
+            '</clipPath></defs>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF"'
+            ' stroke="#43436c" clip-path="url(#clip-a)"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><clipPath id="clip-a"><rect x="0" y="0" width="10" height="10"/>'
+            '</clipPath></defs>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF"'
+            ' stroke="#43436c" clip-path="url(#clip-a)"/></svg>',
+        ),
+        (("error", "D22"),),
+        (),
+    ),
+    (
+        "id を 1 つも持たない 2 面 (重複しようがない)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+        ),
+        (),
+        ("D22",),
+    ),
+    (
+        "参照先がどこにも無い gradient (参照が宙に浮く)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="40" y="60" width="200" height="60" fill="url(#grad-a)"'
+            ' stroke="#43436c"/></svg>',
+        ),
+        (("error", "D23"),),
+        (),
+    ),
+    (
+        "gradient を自分の defs に持つ (参照が閉じている)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><linearGradient id="grad-a"><stop offset="0" stop-color="#43436c"/>'
+            '</linearGradient></defs>'
+            '<rect x="40" y="60" width="200" height="60" fill="url(#grad-a)"'
+            ' stroke="#43436c"/></svg>',
+        ),
+        (),
+        ("D23",),
+    ),
+    (
+        "別の面の SVG にしかない gradient を参照している (参照が隠れる面を向く)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<defs><linearGradient id="grad-a"><stop offset="0" stop-color="#43436c"/>'
+            '</linearGradient></defs>'
+            '<rect x="40" y="60" width="200" height="60" fill="url(#grad-a)"'
+            ' stroke="#43436c"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="40" y="60" width="200" height="60" fill="url(#grad-a)"'
+            ' stroke="#43436c"/></svg>',
+        ),
+        (("error", "D23"),),
+        (),
+    ),
+    (
+        "共有 defs 置き場からの参照は正当 (描画物が無いので面の切替に影響されない)",
+        (
+            '<svg width="0" height="0" style="position:absolute"'
+            ' xmlns="http://www.w3.org/2000/svg">'
+            '<defs><filter id="card-shadow"><feDropShadow dx="0" dy="4"/></filter>'
+            '<linearGradient id="card-fill-blue"><stop offset="0" stop-color="#43436c"/>'
+            '</linearGradient></defs></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<rect x="40" y="60" width="200" height="60" fill="url(#card-fill-blue)"'
+            ' stroke="#43436c" filter="url(#card-shadow)"/></svg>',
+        ),
+        (),
+        ("D22", "D23"),
+    ),
+    (
+        "2 つの図が同じ title/desc id を持つ (絵は変わらないが読み上げが先頭の図になる)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title desc">'
+            '<title id="title">1 枚目</title><desc id="desc">1 枚目の説明</desc>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title desc">'
+            '<title id="title">2 枚目</title><desc id="desc">2 枚目の説明</desc>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+        ),
+        (("error", "D22"),),
+        (),
+    ),
+    (
+        "aria-labelledby が別の図の title を指している (読み上げが入れ替わる)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title-s1">'
+            '<title id="title-s1">1 枚目</title>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title-s1">'
+            '<title id="title-s2">2 枚目</title>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+        ),
+        (("error", "D23"),),
+        (),
+    ),
+    (
+        "aria-labelledby が SVG の外の見出しを指している (SVG しか見ない検査は黙る)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="sec-faq">'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+        ),
+        (),
+        ("D22", "D23"),
+    ),
+    (
+        "図ごとに接尾辞を付けた title/desc (参照が自分の中で閉じている)",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title-s1 desc-s1">'
+            '<title id="title-s1">1 枚目</title><desc id="desc-s1">1 枚目の説明</desc>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg"'
+            ' role="img" aria-labelledby="title-s2 desc-s2">'
+            '<title id="title-s2">2 枚目</title><desc id="desc-s2">2 枚目の説明</desc>'
+            '<rect x="40" y="60" width="200" height="60" fill="#FFFFFF" stroke="#43436c"/></svg>',
+        ),
+        (),
+        ("D22", "D23"),
+    ),
+    (
+        "marker 未定義は D3 の担当で D23 は重ねて出さない",
+        (
+            '<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">'
+            '<line x1="40" y1="100" x2="200" y2="100" stroke="#43436c"'
+            ' marker-end="url(#arrow-blue)"/></svg>',
+        ),
+        (("error", "D3"),),
+        ("D23",),
+    ),
+)
+
 
 def _check_severity_registry() -> list[str]:
     """重大度表そのものの自己検査。違反があれば説明文の一覧を返す。
 
     見るのは 2 点だけ:
-      1. D0-D21 の全コードが SEVERITY か ERROR_BY_DESIGN のどちらかに属する
+      1. D0-D23 の全コードが SEVERITY か ERROR_BY_DESIGN のどちらかに属する
          (= 新しい検査を足したとき、重大度の選択を必ず一度は明示させる)
       2. 両者が交差しない
          (= 「明示的に warning」と「意図して未登録の error」の二枚舌を禁じる)
@@ -2217,7 +2561,7 @@ def _check_severity_registry() -> list[str]:
                      key=lambda c: (len(c), c))
     if unknown:
         problems.append(
-            f"D0-D21 に無いコードが表に載っている: {', '.join(unknown)}"
+            f"D0-D23 に無いコードが表に載っている: {', '.join(unknown)}"
             " (検査を増やしたなら ALL_CODES の範囲も更新する)")
     return problems
 
@@ -2232,7 +2576,7 @@ def _self_test() -> int:
             print(f"  NG   - 重大度表の登録 ({p})", file=sys.stderr)
     else:
         print(f"  ok   - 重大度表の登録 (SEVERITY {len(SEVERITY)} 件 + "
-              f"ERROR_BY_DESIGN {len(ERROR_BY_DESIGN)} 件 = D0-D21 の {len(ALL_CODES)} 件・交差なし)")
+              f"ERROR_BY_DESIGN {len(ERROR_BY_DESIGN)} 件 = D0-D23 の {len(ALL_CODES)} 件・交差なし)")
     for label, svg, expect, forbid in _SELF_TEST_CASES:
         found = {(f.severity, f.code) for f in check_svg(f"self-test:{label}", svg, check_grid=True)}
         codes = {c for _, c in found}
@@ -2248,7 +2592,26 @@ def _self_test() -> int:
             print(f"  NG   - {label} ({' / '.join(detail)})", file=sys.stderr)
         else:
             print(f"  ok   - {label}")
-    total = len(_SELF_TEST_CASES) + 1  # +1 = 重大度表の登録検査
+    for label, fragments, expect, forbid in _SELF_TEST_DOC_CASES:
+        svgs = [(f"self-test:{label}#svg{i + 1}", frag) for i, frag in enumerate(fragments)]
+        results = list(check_document(f"self-test:{label}", svgs))
+        for svg_name, frag in svgs:
+            results.extend(check_svg(svg_name, frag))
+        found = {(f.severity, f.code) for f in results}
+        codes = {c for _, c in found}
+        missing = [f"{sev} {code}" for sev, code in expect if (sev, code) not in found]
+        extra = [c for c in forbid if c in codes]
+        if missing or extra:
+            failed += 1
+            detail = []
+            if missing:
+                detail.append(f"この severity/code で出るべきだが出ない: {', '.join(missing)}")
+            if extra:
+                detail.append(f"出てはいけないのに出た: {', '.join(extra)}")
+            print(f"  NG   - {label} ({' / '.join(detail)})", file=sys.stderr)
+        else:
+            print(f"  ok   - {label}")
+    total = len(_SELF_TEST_CASES) + len(_SELF_TEST_DOC_CASES) + 1  # +1 = 重大度表の登録検査
     print(f"validate-svg-diagram self-test: {total - failed}/{total} "
           f"{'PASS' if not failed else 'FAIL'}")
     return 1 if failed else 0
@@ -2289,10 +2652,15 @@ def main(argv: list[str]) -> int:
             print(f"ERROR [D0] {path}: ファイルが無い", file=sys.stderr)
             errors += 1
             continue
-        for name, svg_text in extract_svgs(path):
+        svgs = extract_svgs(path)
+        for name, svg_text in svgs:
             total_svgs += 1
             for f in check_svg(name, svg_text, check_grid=check_grid):
                 report(f)
+        # D22 は SVG どうしの関係を見るので、1 つずつ見る check_svg では捕まらない。
+        # ファイル単位で 1 度だけ走らせる。
+        for f in check_document(os.path.basename(path), svgs):
+            report(f)
         # CSS/HTML 構成の図解 (D14-D16)。<svg> を 1 つも持たない図解はここでしか見られない。
         for name, block in extract_diagram_blocks(path):
             total_blocks += 1

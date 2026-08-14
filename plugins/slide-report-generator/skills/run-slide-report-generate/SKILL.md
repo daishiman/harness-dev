@@ -112,7 +112,7 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。deck-evaluator
   - `report` 経路: `Task` で **report-composer** → `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <out.html>` で `report.html` を決定論生成。
   - **画像明示時のみ**: `Task` で **ai-image-diagram-producer** (Codex Image2)。導線 = `build-image-prompts.js` → `generate-images-codex.js` (`meta.source=codex-image2`・PNG 署名回収＋リトライ) → `build-deck-html.js` (自己完結 index.html)。`codex` 単体は画像生成器ではなく実 backend を着手前に確認する。
   - **品質補正 (mode 別。読者中心入口の生成前補正は report 側のみ)**:
-    - `slide`: 必要に応じ **layout-optimizer** (レイアウト最適化) ／ **ui-quality-reviewer** (テキスト切れ・改行・バランス) を併用 + `verify-slides.js`／`validate-print.js` の決定論視覚ゲート。**読者中心入口の観点は生成前補正に無い** (`references/ui-quality-checklist.md` は視覚品質のみ)。slide の読者フックは生成後の `deck-evaluator` D5 が唯一の検出点なので、そこで落ちると手戻りが report より長い。
+    - `slide`: **ui-quality-reviewer** (テキスト切れ・改行・バランス・縦方向配分 S1〜S26) は**必須**。**layout-optimizer** (レイアウト最適化) は `validate-slide-layout.js` が error を出した面・`ui-quality-reviewer` が崩れを検出した面がある場合に**必須** (無ければ省略可)。両者とも「必要に応じ」ではない — **呼ばれない agent の完了チェックリストは発火しない**ので、縦方向の停止条件 (充填率・外側余白率・残余の置き場所) を持つのが両 agent だけである以上、slide 経路では起動を既定とする。加えて `verify-slides.js`／`validate-print.js` の決定論視覚ゲートを通す。**読者中心入口の観点は生成前補正に無い** (`references/ui-quality-checklist.md` は視覚品質のみ)。slide の読者フックは生成後の `deck-evaluator` D5 が唯一の検出点なので、そこで落ちると手戻りが report より長い。
     - `report`: **report-quality-reviewer** (読み物文体・段落密度・1 項目 1 ビジュアル整合・reportType 骨格・読者中心入口 RQ31〜RQ34) を併用 + `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json` の決定論視覚ゲート。
 - **生成後評価 (mode-aware)**: `Task` で **deck-evaluator** を起動 (思考リセット後 30 種思考法)。`slide`=視覚崩れ／1 メッセージ、`report`=可読性／図解適合／情報密度の mode 別 rubric 次元で区分評価する。**改善→再評価は最大 3 周** (`feedback_contract.max_iterations`)。CRITICAL (視覚崩れ) が残存する場合はループ枯渇時も未完了 (hard-fail) とし、`未達指摘一覧` は非 CRITICAL に限定する。
 
@@ -143,7 +143,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" 
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json
 # report 成果物の実描画契約 (R1-R8 読書レイアウト・0=error 0件 / 1=error あり)
 node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-layout.js" <report.html> [--viewport 1440x900] [--strict]
-# 図解の静的契約 (D0-D21 幾何・素材・上限。両 mode 共通。hook-postgen-eval が生成検知時に機械実行し --strict で warning も出荷前に止める)
+# 図解の静的契約 (D0-D23 幾何・素材・上限。両 mode 共通。hook-postgen-eval が生成検知時に機械実行し --strict で warning も出荷前に止める)
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" <index.html|report.html> --check-grid --strict
 # 図解の情報契約 (I1-I5 + 型別スロット = 図が図として成立する下限。上記の上限検査を置き換えない・同じ図へ別々に掛ける)
 python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-diagram-information.py" <index.html|report.html>
@@ -213,7 +213,7 @@ python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-slide-skeleton.py"
 - `references/d3-diagram-rules.md` — D3 インタラクティブ図解の意匠/実装規範。owner=d3-diagram-designer。
 - `references/data-visualization-rules.md` — データ可視化 (グラフ/chart) 設計規範。owner=data-visualizer。
 - `references/html-generation-rules.md` — slide HTML LLM 経路生成規範 (CONST_001-039)。owner=html-generator。
-- `references/layout-optimization-rules.md` — レイアウト最適化 (文字数・カード/フォント・印刷 pt 換算)。owner=layout-optimizer。
+- `references/layout-optimization-rules.md` — レイアウト最適化 (横=文字数・カード/フォント・印刷 pt 換算 / 縦=内容高ブロック・残余の外側余白・高さ牽引・読み取り用画像・浮遊UI)。owner=layout-optimizer。
 - `references/ui-quality-checklist.md` — slide UI 品質 S 系観点定義・判定基準。owner=ui-quality-reviewer。
 - `references/report-quality-checklist.md` — report 品質観点 RQ1〜RQ34 (全節必須) + RQ35〜RQ37 (図解を含む節のみ)・RQCONST (読み物文体/段落密度/本質図解/through-line/読者中心入口/navigation/runtime layout)。owner=report-quality-reviewer。runtime bundle＋`validate-report-visual.py` と対 (実描画/静的shape/意味を分離)。
 - `references/deck-evaluation-rubric.md` — 生成後評価 (30 種思考法 mode-aware rubric・評価次元)。owner=deck-evaluator (hook-postgen-eval も消費)。

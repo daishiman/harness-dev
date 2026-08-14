@@ -1027,13 +1027,18 @@ def test_canonical_generate_consumers_enable_required_structure_mode():
     assert required_args in orchestrator
 
     hook = _load_postgen_hook()
-    # build_context は (評価文, 幾何契約の判定, 情報契約の判定) を返す。
-    # どちらの判定も no-target/unknown を PASS と言わないために text から
+    # build_context は (評価文, 幾何契約の判定, 情報契約の判定, 実描画レイアウト契約の判定)
+    # を返す。どの判定も no-target/unknown を PASS と言わないために text から
     # 分離されている。情報契約は warn を持つ 5 値 — warning を合否へ入れると、
     # 検査を通すためだけに語を足す圧力が生まれるので、pass とは別の値にする。
-    context, lint_status, info_status = hook.build_context("report", "/tmp/report-output")
+    # 実描画レイアウト (L1-L9) は slide 専用で、report では "n/a" になる
+    # (report 側は validate-report-layout.js の R1-R8 が担当する)。
+    context, lint_status, info_status, layout_status = hook.build_context(
+        "report", "/tmp/report-output"
+    )
     assert lint_status in {"pass", "fail", "no-target", "unknown"}, lint_status
     assert info_status in {"pass", "warn", "fail", "no-target", "unknown"}, info_status
+    assert layout_status == "n/a", layout_status
     assert "1d) 図解の情報契約" in context
     assert '--structure "/tmp/report-output/report-structure.json"' in context
     assert "--require-structure --json" in context

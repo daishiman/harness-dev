@@ -616,14 +616,32 @@ updateProgress() {
 
 ## 6. TweenSliderクラス
 
+**面の見せ分けは `.slider__item` への `is-active` の付け替えだけで行う。**
+面は CSS で `position: absolute; inset: 0` の重ねにし、`opacity` / `visibility` を
+`.slider__item.is-active` で切り替える（決定論経路 `vendor/scripts/style-builder.cjs` と同じ綴り）。
+
+以下は使わない。いずれも「面が画面外に残る」状態を作り、`validate-slide-layout.js` が
+面を測れず（充填率 0.0%）、印刷でも面が出なくなる。
+
+- `slideWidth` と `gsap.set(container, { x: -index * slideWidth })` による横送り
+- `.slider__container { display: flex }` + `.slider__item { min-width: 100% }` の横並び
+- `content.style.visibility` の直接代入（inline style は CSS のクラスより強く、
+  `is-active` を付けても隠れたままになる）
+
 ```javascript
 class TweenSlider {
-  constructor(selector) {
-    this.container = document.querySelector(selector + ' .slider__container');
-    this.items = document.querySelectorAll(selector + ' .slider__item');
+  // 引数は取らない。セレクタはリテラルで書く（決定論経路 render-slide.cjs も
+  // document.querySelectorAll('.slider__item') とリテラル）。
+  // selector + ' .slider__item' のような連結にすると、evaluate-deck.js の
+  // Dx（ページ送り制御JSの実在）が静的解析で拾えず「未実装」と判定される。
+  // 使わない selector 引数を互換のために残さないこと。呼び出し側に
+  // 「差し替えられる」と誤読させ、綴りの正本が引数側とリテラル側の 2 箇所に
+  // 見える状態（二重管理）を作る。差し替えたいときは HTML のクラス名を変える。
+  constructor() {
+    this.container = document.querySelector('.slider__container');
+    this.items = document.querySelectorAll('.slider__item');
     this.index = 0;
     this.isAnimating = false;
-    this.slideWidth = window.innerWidth;
 
     this.init();
   }
@@ -671,10 +689,8 @@ class TweenSlider {
       if (e.key === 'ArrowLeft') this.moveToPrev();
     });
 
-    window.addEventListener('resize', () => {
-      this.slideWidth = window.innerWidth;
-      gsap.set(this.container, { x: -this.index * this.slideWidth });
-    });
+    // 面は重ねて置くので resize で位置を計算し直す必要はない。
+    // 寸法は --slide-max-width / --slide-max-height（面単位）が追従する。
 
     // スワイプ対応（モバイル）
     this.bindSwipeEvents();
@@ -735,7 +751,7 @@ class TweenSlider {
     if (animations[type] && animations[type].enter) {
       return animations[type].enter(content);
     } else {
-      gsap.set(content, { visibility: 'visible' });
+      // visibility はクラス（.slider__item.is-active）の担当。ここでは触らない。
       return gsap.timeline();
     }
   }
@@ -767,16 +783,12 @@ class TweenSlider {
 
     masterTl.add(this.playLeaveAnimation(this.index));
 
-    masterTl.to(this.container, {
-      x: -index * this.slideWidth,
-      duration: 0.6,
-      ease: 'power3.inOut'
-    }, '-=0.2');
+    // 面の入替はクラスの付け替えだけ。container を動かさない。
+    masterTl.call(() => this.makeActive(index));
 
-    masterTl.add(this.playEnterAnimation(index), '-=0.3');
+    masterTl.add(this.playEnterAnimation(index), '-=0.1');
 
     this.index = index;
-    this.makeActive(index);
     this.updateProgress();
   }
 
@@ -822,7 +834,7 @@ class TweenSlider {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  new TweenSlider('#slider');
+  new TweenSlider();
 });
 ```
 
@@ -871,20 +883,23 @@ tl.from(q('.slider__content > *'), {
 ```javascript
 updateSlide(index, animate = true) {
   this.items.forEach((item, i) => {
+    // 可視・不可視はクラスだけで決める。content.style.visibility への代入は禁止
+    // （inline style はクラスより強く、is-active を付けても隠れたままになる）。
+    item.classList.toggle('is-active', i === index);
     const content = item.querySelector('.slider__content');
-    if (content) {
-      content.style.visibility = i === index ? 'visible' : 'hidden';
-      if (i === index) {
-        // 直下の子要素のみクリア（SVG内部には触れない）
-        gsap.set(content.children, { clearProps: 'all' });
-        // NG: gsap.set(content.querySelectorAll('*'), { clearProps: 'all' });
-        // → SVGのfill/strokeがデフォルト黒になり、foreignObjectのflexレイアウトが崩壊する
-      }
+    if (content && i === index) {
+      // 直下の子要素のみクリア（SVG内部には触れない）
+      gsap.set(content.children, { clearProps: 'all' });
+      // NG: gsap.set(content.querySelectorAll('*'), { clearProps: 'all' });
+      // → SVGのfill/strokeがデフォルト黒になり、foreignObjectのflexレイアウトが崩壊する
     }
   });
   if (animate) this.enterAnimation(this.items[index]);
 }
 ```
+
+演出が終わったら inline style を残さないこと。決定論経路は `clearProps: 'all'` により
+実測で inline 残留 0 件で、これが検査器のクラス付け替えが効く前提になっている。
 
 **leaveAnimation() 内の clearProps（必須）**:
 ```javascript

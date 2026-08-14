@@ -52,7 +52,12 @@ status: must-apply-going-forward
 1. フローカードの容器は `align-items: center`（矢印を縦中央に）
 2. カード内は `justify-content: center`（コンテンツを縦中央に）
 3. SVG 図解は固定 `max-height: NNNpx` で縛らない。HTML カード+chip で代替
-4. スライド本文に巨大な余白が出るなら、コンテンツが小さすぎるサイン → カード/フォント拡大
+4. スライド本文に巨大な余白が出たときの直し方（2026-08-13 更新。旧記述「コンテンツが小さすぎるサイン → カード/フォント拡大」は現行方針と逆向きなので置き換えた）:
+   余白率・充填率の正本は `assets/slide-templates/frame-contract.json` の `fill_policy` / `vertical_margin_policy`。
+   `fill_policy.note_antipattern` により、**下限割れ（空白過多）は面の統合か項目の追加で直す**のであって、
+   カードやフォントの拡大で埋めてはいけない（書体を `typography.min` 未満へ下げるのも同様に禁止）。
+   スロットの伸長（`flex: 1 1 0` / `grid-auto-rows: 1fr` / `align-content: stretch`）も、
+   内容量と無関係に面積比だけ稼ぐので禁止。残余高さは群の外側余白として上下へ均等に残す（CONST_008）。
 
 ### D. テキストサイズ最低基準（2026-05-09 改訂）
 - カード本文：`1.45rem` 以上

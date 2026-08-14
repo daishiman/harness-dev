@@ -280,6 +280,32 @@ _CONSTANT_PAIRS = (
         ("scripts/validate-svg-diagram.py", r"^COMPLEXITY_FACTOR\s*=\s*([0-9.]+)"),
         ("references/spec-registry.md", r"`COMPLEXITY_FACTOR = ([0-9.]+)`"),
     ),
+    # --- コードブロックの幾何 (spec-registry §10) --------------------------------
+    # engine が `calc(60 * var(--sv))` へ移った後も、§10 と CONST_020 と S26 と
+    # structure-template が「420px が正しい」と言い続けていた。数値の正本が
+    # style-builder.cjs にしか無いのに、読者向けの写しがどこにも縛られていなかった
+    # ためで、check-consistency.js は V-005 を実装していないので緑でも意味が無い。
+    # ここへ登録して、写しは spec-registry §10 の 1 枚だけにする。
+    (
+        "コードブロックの縦上限 .code-block max-height",
+        ("vendor/scripts/style-builder.cjs",
+         r"\.code-block \{ max-height: calc\(([0-9.]+) \* var\(--sv\)\)"),
+        ("references/spec-registry.md",
+         r"`\.code-block \{ max-height: calc\(([0-9.]+) \* var\(--sv\)\)"),
+    ),
+    (
+        "Before/After パネルの縦上限 .code-panel max-height",
+        ("vendor/scripts/style-builder.cjs",
+         r"\.code-panel \{ width: 48%; max-height: calc\(([0-9.]+) \* var\(--sv\)\)"),
+        ("references/spec-registry.md",
+         r"\.code-panel \{ width: 48%; max-height: calc\(([0-9.]+) \* var\(--sv\)\)"),
+    ),
+    (
+        "コードの字面 .code-block font-size (typography.min の面座標表現)",
+        ("vendor/scripts/style-builder.cjs",
+         r"\.code-block \{[^}]*font-size: ([0-9.]+)rem"),
+        ("references/spec-registry.md", r"`font-size: ([0-9.]+)rem; line-height: 1\.7;"),
+    ),
 )
 
 

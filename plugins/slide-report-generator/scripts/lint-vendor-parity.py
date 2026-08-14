@@ -155,6 +155,9 @@ ADDITIVE_LOCAL_FORK = {
         "data-srg-declaration=",
         # 未知型をplausibleなmessage面へ落とさない。
         "unknown slideType or missing template:",
+        # 段数を枚数と列数から確定させて CSS へ渡す。落ちると .tpl 側の
+        # {{gridRows}} が空になり、1 段の面の拡大規則が当たらなくなる。
+        "ctx.gridRows",
     ),
     # schemaが受理するD3型を汎用placeholderへ落とさないinline runtime。
     "scripts/d3-bootstrap.cjs": (
@@ -201,6 +204,37 @@ ADDITIVE_LOCAL_FORK = {
         'class*="slide-diagram"',
         "min-height: 0;",
         ".slider__content > h2,",
+    ),
+    # 格子の段数を描画側で確定させて CSS へ渡す属性。CSS 単体では段数を
+    # :has() でしか数えられず、効かない環境では「1 段用の大きい寸法のまま
+    # 2 段組んで stage を溢れる」fail-open へ倒れる。この属性が落ちると
+    # data-rows="1" の規則が誰にも当たらず、1 段の面が静かに半分空くだけで
+    # 例外も出ないため、トークンで縛る。対は style-builder.cjs の
+    # .grid-container[data-rows="1"] と render-slide.cjs の ctx.gridRows。
+    "scripts/templates/slide-grid.html.tpl": ('data-rows="{{gridRows}}"',),
+    "scripts/templates/grid.html.tpl": ('data-rows="{{gridRows}}"',),
+    # 構成の書き方を示す雛形。upstream は code-block の縦上限を px 実寸
+    # (420px / 280px) で書いていたが、engine 側は面座標 (calc(60 * var(--sv)))
+    # へ移った。雛形が px を言い続けると、engine と食い違う数値が structure を
+    # 書く人の目に最初に入る。数値の写しを spec-registry §10 の 1 枚へ寄せた
+    # ので、ここでは SR-ID 参照が残っているかだけを縛る。実寸へ戻ると
+    # lint-contract-drift のチェック F は生成器と §10 しか見ないため素通りする。
+    "assets/structure-template.md": (
+        "縦上限は SR-10-01",
+        "値の正本は spec-registry SR-10-01",
+        "SR-10-05",
+    ),
+    # 面をめくる遷移の後始末。upstream は clearProps: 'all' で、これは gsap に
+    # style 属性を丸ごと落とさせる。描画時に作者が付けたインライン custom
+    # property (--grid-cols / --fit-t / --fit-d) まで一緒に消えるため、2 面目
+    # 以降で列数と見出しの幅フィットが設計値へ戻る。初期表示は正しく、めくった
+    # 後だけ崩れるので静的 HTML の検査でも初回スクショでも見つからない。
+    # 消すのはこの timeline が実際に動かした 2 つだけでよい。'all' へ戻ると
+    # 例外も警告も出ずに静かに退行するため、プロパティの列をトークンで縛る。
+    # 対は validate-slide-layout.js の TRANSITION_KEPT_PROPS。
+    "assets/pagination.js": (
+        "clearProps: 'opacity,transform'",
+        "(el) => !el.classList.contains('fo-card')",
     ),
 }
 ADDITIVE_RUNTIME_CONTRACT = {
