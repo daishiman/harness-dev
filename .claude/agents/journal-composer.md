@@ -1,0 +1,1 @@
+../../plugins/ubm-goal-setting/agents/journal-composer.md
