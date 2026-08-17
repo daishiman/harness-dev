@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-17T01:05:13Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -69,13 +69,7 @@
+ /
+ followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
+ /verify
+-and
+-/code-review
+-, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens. Before v2.1.215, Claude could also run
+-/verify
+-and
+-/code-review
+-on its own.
++, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens.
+ Bundled skills are available in every session. To turn them off, use the
+ disableBundledSkills
+ setting, which disables every bundled skill except
+@@ -215,17 +209,59 @@
+ Plugin
+ <plugin>/skills/<skill-name>/SKILL.md
+ Where plugin is enabled
+-When skills share the same name across levels, enterprise overrides personal, and personal overrides project. A skill at any of these levels also overrides a bundled skill with the same name. For example, a
++When skills share the same name, Claude Code resolves the conflict by source:
++Across levels, enterprise overrides personal, and personal overrides project.
++For example, with a
++deploy
++skill in both
++~/.claude/skills/
++and your project’s
++.claude/skills/
++,
++/deploy
++runs the personal one.
++A skill at any of these levels also overrides a bundled skill with the same name, but not the bundled skill’s aliases.
++For example, a
+ code-review
+ skill in your project’s
+ .claude/skills/
+ replaces the bundled
+ /code-review
+-. Plugin skills use a
++, and typing the bundled alias
++/review
++never runs your skill.
++Plugin skills use a
+ plugin-name:skill-name
+-namespace, so they cannot conflict with other levels. If you have files in
++namespace, so they can’t conflict with other levels.
++For example,
++my-plugin/skills/deploy/SKILL.md
++becomes
++/my-plugin:deploy
++and loads alongside a
++deploy
++skill in your project’s
++.claude/skills/
++.
++If you have files in
+ .claude/commands/
+ , those work the same way, but if a skill and a command share the same name, the skill takes precedence.
++For example, with both
++.claude/commands/deploy.md
++and
++.claude/skills/deploy/SKILL.md
++,
++/deploy
++runs the skill.
++A skill or command from any of these sources overrides a skill
++synced from your claude.ai account
++with the same name.
++For example, with a
++deploy
++skill enabled on claude.ai and another in your project’s
++.claude/skills/
++,
++/deploy
++runs the project one.
+ Skills also load from nested
+ .claude/skills/
+ directories below your working directory. When Claude reads or edits a file in a subdirectory, skills from that subdirectory’s
+... (4423 more lines)
+```
+
 ## 2026-08-10T01:27:37Z
 
 実仕様ページに変更を検知。
