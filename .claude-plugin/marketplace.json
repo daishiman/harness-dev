@@ -95,7 +95,7 @@
       "name": "mf-kessai-invoice-check",
       "source": "./plugins/mf-kessai-invoice-check",
       "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理するプラグイン。前月発行・今月未発行の取引先を /billings/qualified の差集合で洗い出し、商品名・金額・取引先企業名を突合してNotion DBへ冪等upsert。MF APIは参照専用(PreToolUse hookで変更系を遮断)、誤検出は独立contextのsubagentで二段確認。API鍵はKeychain保管。0.5.0で照合層の根本原因を根治 (R1収集の決定論 producer 化で「今月なし」取引先の構造的脱落を解消)。0.6.0で月跨ぎ突合を MF顧客ID 第一キー化 (取引先名 drift の分裂を根治)・新規年契約開始を支払サイクルで正常☑・先月今月とも未発行の月払いアクティブ契約を要対応 surface。0.7.0で出力先 report DB を明示 pin する report_database_id を追加し構造同定ズレによる phantom 書込を抑止 (既定 fail-closed)、請求書確認シートの月次アーカイブ&ロールオーバー (R5-archive) を追加 (対象月シート行を月別 DB へ完全移行し読み戻し検証成功行だけ正本から archive)。0.8.0で『今月金額があるのに漏れチェック☐』を根治: 今月に権威ある実発行がある行は定義上発行漏れでない不変則を STATE_NEW・collapse 経路へ一般化 (Fix A/B/C)、cross-run guard の NEW 盲点を解消、collapse を契約 identity で phantom (正常化) と別契約 (要対応保持=漏れ隠蔽封鎖) に二分、category fallback 由来の reliable_issued 誤陽性を非権威化する安全弁を追加。3体並列エレガント検証で4条件 PASS。",
-      "version": "0.8.2",
+      "version": "0.8.3",
       "category": "productivity",
       "tags": ["money-forward", "invoice", "notion", "billing", "automation"]
     },
@@ -103,7 +103,7 @@
       "name": "notion-gmail-send",
       "source": "./plugins/notion-gmail-send",
       "description": "Notion 2DB（メール本文_DB／メール送信先_DB）を入力に、抑制条件を満たした宛先へ {{}} 差し込みで Gmail 一斉個別送信。承認済み plan＋人間承認ゲート＋冪等送信ログの三本柱で不可逆送信を安全化。",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "productivity",
       "tags": ["notion", "gmail", "email", "send", "automation"]
     },
@@ -127,7 +127,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "development-planning",
       "tags": ["task-graph", "feature-orchestration", "worktree"]
     },
@@ -151,7 +151,7 @@
       "name": "system-dev-planner",
       "source": "./plugins/system-dev-planner",
       "description": "確定したdev-graph featureを、同一digestで昇格可能なexact 13実行タスクへ分解するシステム開発planner。",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "category": "development-planning",
       "tags": ["system-design", "task-planning", "dev-graph"]
     },
@@ -159,7 +159,7 @@
       "name": "ubm-goal-setting",
       "source": "./plugins/ubm-goal-setting",
       "description": "北原さん式ゴールセッティング、会話型の日次ジャーナル作成、2-source YouTube全量/自動同期、根拠付きknowledge/harness artifact graph consultを提供する個人利用向けplugin。",
-      "version": "0.3.7",
+      "version": "0.3.12",
       "category": "productivity",
       "tags": ["goal-setting", "knowledge-sync", "journal", "obsidian"]
     }

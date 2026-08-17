@@ -291,7 +291,7 @@ def test_missing_vault_root_fails_closed(tmp_path: Path):
         [sys.executable, str(SCRIPT), "--vault-root", "", "--date", "2026-08-18"],
         capture_output=True, text=True, env={"PATH": "/usr/bin:/bin"},
     )
-    assert proc.returncode == 1
+    assert proc.returncode == 2, "入力不備は sibling script と揃えて exit 2"
 
 
 def test_missing_daily_dir_fails_closed(tmp_path: Path):
@@ -299,7 +299,7 @@ def test_missing_daily_dir_fails_closed(tmp_path: Path):
         [sys.executable, str(SCRIPT), "--vault-root", str(tmp_path), "--date", "2026-08-18"],
         capture_output=True, text=True,
     )
-    assert proc.returncode == 1
+    assert proc.returncode == 2, "入力不備は sibling script と揃えて exit 2"
 
 
 def test_daily_habits_are_always_included(vault: Path):
@@ -369,3 +369,383 @@ def test_unrecognized_content_blocks_the_write(vault: Path):
     ctx = run(vault, "2026-08-20")
     assert ctx["existing_file"]["write_mode"] == "blocked"
     assert ctx["existing_file"]["heading_date"] is None
+
+
+def test_blocked_file_does_not_reuse_the_other_days_number(vault: Path):
+    """blocked は別日の記録。その番号を継ぐと通番が重複する。
+
+    「上書きせず停止せよ」と「番号を維持して更新扱い」を同時に出す自己矛盾を防ぐ。
+    """
+    daily = vault / "02_Configs" / "Daily"
+    (daily / "2026-08-19.md").write_text(
+        JOURNAL_TEMPLATE.format(number=389, date="2026-08-18"), encoding="utf-8"
+    )
+    ctx = run(vault, "2026-08-19")
+    assert ctx["existing_file"]["write_mode"] == "blocked"
+    assert ctx["is_regeneration"] is False
+    assert ctx["journal_number"] == 390, "別日の No.389 を継がず最大値+1 で採番する"
+    assert not any("番号を維持" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_goal_body_keeps_colons(vault: Path):
+    """目標本文の半角コロン (時刻・URL) を区切りと誤認して先頭を落とさない。"""
+    daily = vault / "02_Configs" / "Daily"
+    text = JOURNAL_TEMPLATE.format(number=388, date="2026-08-17")
+    text = text.replace(
+        "- 目標：1週間目標の本文。",
+        "- 目標：毎日22:00までに退勤し https://example.com/plan を更新する",
+    )
+    (daily / "2026-08-17.md").write_text(text, encoding="utf-8")
+    ctx = run(vault, "2026-08-18")
+    goal = ctx["previous_journal"]["goals"]["weekly"]["goal"]
+    assert goal == "毎日22:00までに退勤し https://example.com/plan を更新する"
+
+
+def _weekly_with_lines(vault: Path, lines: str) -> None:
+    """週報の【今週の大きな到達ライン】ブロックだけ差し替える。"""
+    report = vault / "05_Project" / "UBM" / "目標設定" / "UBM - 1-週報 - 2026-08-17〜2026-08-23.md"
+    text = report.read_text(encoding="utf-8")
+    before, _, rest = text.partition("## 【今週の大きな到達ライン】\n")
+    _, sep, after = rest.partition("\n---\n")
+    report.write_text(f"{before}## 【今週の大きな到達ライン】\n{lines}{sep}{after}", encoding="utf-8")
+
+
+def test_day_heading_without_parens_is_not_absorbed_into_previous_day(vault: Path):
+    """「- 8/19 火曜」形式を見出しと認識しないと 8/18 のタスクへ silent に混入する。"""
+    _weekly_with_lines(vault, "\n".join([
+        "",
+        "- [ ] 8/18（月）：",
+        "\t- [ ] 18日の本来タスク",
+        "- [ ] 8/19 火曜",
+        "\t- [ ] 19日のタスク",
+        "",
+    ]))
+    ctx = run(vault, "2026-08-18")
+    assert ctx["weekly_report"]["day_tasks"] == ["18日の本来タスク"]
+    assert run(vault, "2026-08-19")["weekly_report"]["day_tasks"] == ["19日のタスク"]
+
+
+def test_day_like_line_that_is_not_a_heading_warns(vault: Path):
+    """見出しか子タスクか決めきれない行は子タスク扱いにするが、黙らせない。"""
+    _weekly_with_lines(vault, "\n".join([
+        "",
+        "- [ ] 8/18（月）：",
+        "\t- [ ] 8/25 の資料を先に作る",
+        "",
+    ]))
+    ctx = run(vault, "2026-08-18")
+    assert ctx["weekly_report"]["day_tasks"] == ["8/25 の資料を先に作る"]
+    assert any("判別できない行" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_weekday_word_in_task_text_is_not_a_day_heading(vault: Path):
+    """「8/27 日程調整」の『日』を曜日と誤読して以降を吸い込まない。"""
+    _weekly_with_lines(vault, "\n".join([
+        "",
+        "- [ ] 8/18（月）：",
+        "\t- [ ] 8/27 日程調整する",
+        "\t- [ ] 18日の別タスク",
+        "",
+    ]))
+    ctx = run(vault, "2026-08-18")
+    assert ctx["weekly_report"]["day_tasks"] == ["8/27 日程調整する", "18日の別タスク"]
+
+
+def test_days_overdue_key_is_always_present(vault: Path):
+    """キー集合が expired の有無で変わると消費側が `in` 判定と値判定で割れる。"""
+    goals = run(vault, "2026-08-18")["goals"]
+    assert set(goals) == {"yearly", "quarterly", "monthly", "weekly"}
+    for key, entry in goals.items():
+        assert "days_overdue" in entry, key
+    assert goals["yearly"]["expired"] is True and goals["yearly"]["days_overdue"] > 0
+    assert goals["monthly"]["expired"] is False and goals["monthly"]["days_overdue"] == 0
+
+
+def test_non_utf8_daily_file_does_not_crash(vault: Path):
+    """Daily に非 UTF-8 の .md が 1 つあるだけで traceback にしない。"""
+    (vault / "02_Configs" / "Daily" / "2026-08-10.md").write_bytes(
+        "# No.380 - ジャーナル（2026-08-10）\n日本語".encode("cp932")
+    )
+    ctx = run(vault, "2026-08-18")
+    assert ctx["journal_number"] >= 1
+
+
+def test_blocked_file_without_heading_reports_undeterminable(vault: Path):
+    """見出しが無いファイルは「別日 (None)」ではなく判別不能として報告する。"""
+    (vault / "02_Configs" / "Daily" / "2026-08-18.md").write_text("走り書き\n", encoding="utf-8")
+    ctx = run(vault, "2026-08-18")
+    assert ctx["existing_file"]["write_mode"] == "blocked"
+    assert any("判別できない内容" in w for w in ctx["warnings"]), ctx["warnings"]
+    assert not any("別日 (None)" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+# --- 他日のタスク混入 / 見出し取り違えの回帰 ---
+
+
+def _mod():
+    """純関数を直接叩くため script を module として読む。"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_build_journal_context", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+DAY_FORMATS = """## 今週の大きな到達ライン
+
+- 8/18（月）
+- 月曜のタスクA
+**8/19（火）**
+- 火曜のタスクB
+* 8/20（水）：水曜の同一行タスク
+2026/8/21（木）：木曜の同一行タスク
+- 8/22（金）
+* 金曜のタスクC
+8.23（土）
+- 土曜のタスクD
+"""
+
+
+@pytest.mark.parametrize(
+    "day,expected",
+    [
+        (18, ["月曜のタスクA"]),
+        (19, ["火曜のタスクB"]),      # `**8/19（火）**` 太字
+        (20, ["水曜の同一行タスク"]),  # `*` 箇条書き + 見出しと同じ行に本文
+        (21, ["木曜の同一行タスク"]),  # 年つき
+        (22, ["金曜のタスクC"]),      # `*` 箇条書きの子タスク
+        (23, ["土曜のタスクD"]),      # `8.19` ドット区切り
+    ],
+)
+def test_day_heading_format_variants_do_not_merge_days(day: int, expected: list[str]):
+    """日付見出しの書式ゆれを見出しと認識できないと、他日のタスクが今日へ黙って混ざる。
+
+    修正前は `-` と `/` の決め打ちだったため、これらの行がすべて子タスク扱いになり
+    直前の見出し (= 対象日) へ吸い込まれた。警告も出なかった。
+    """
+    from datetime import date
+
+    tasks, _ = _mod().extract_day_tasks(DAY_FORMATS, date(2026, 8, day))
+    assert tasks == expected
+
+
+def test_day_tasks_respect_the_year_when_written():
+    """covers_target=false の別年レポートから M/D 一致だけで拾わない。"""
+    from datetime import date
+
+    mod = _mod()
+    text = "## 今週の大きな到達ライン\n2025/8/19（火）：去年のタスク\n"
+    assert mod.extract_day_tasks(text, date(2026, 8, 19)) == ([], [])
+    assert mod.extract_day_tasks(text, date(2025, 8, 19))[0] == ["去年のタスク"]
+
+
+def test_section_body_prefers_exact_heading_over_retrospective():
+    """`### 1年目標` を探して `### 1年目標の振り返り` を掴むと先週の結果が目標になる。"""
+    mod = _mod()
+    text = "## 1年目標の振り返り\n- 目標：去年の結果\n\n## 1年目標\n- 目標：今期の目標\n"
+    assert "今期の目標" in mod.section_body(text, "1年目標")
+    # 振り返り節しか無いときは掴まない (空を返して未解決を未解決のまま残す)
+    assert mod.section_body("## 1年目標の振り返り\n- 目標：去年の結果\n", "1年目標") == ""
+
+
+def test_has_value_requires_the_goal_text():
+    """期間だけでは「引き継げた」と言えない。source=previous_journal が空目標になる。"""
+    mod = _mod()
+    assert mod.has_value({"period_start": "2026-01-01", "period_end": "2026-12-31"}) is False
+    assert mod.has_value({"goal": "  "}) is False
+    assert mod.has_value({"goal": "売上250,000"}) is True
+
+
+def test_daily_habits_non_object_is_exit_2(vault: Path, tmp_path: Path, monkeypatch):
+    """top-level が JSON 配列だと .get が AttributeError になり exit 1 + traceback だった。"""
+    import shutil
+
+    sandbox = tmp_path / "sandbox"
+    shutil.copytree(SCRIPT.parent.parent, sandbox)
+    (sandbox / "references" / "daily-habits.json").write_text("[]", encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / SCRIPT.name), "--date", "2026-08-18"],
+        capture_output=True,
+        text=True,
+        env={**dict(__import__("os").environ), "UBM_VAULT_ROOT": str(vault)},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr, proc.stderr
+
+
+def test_decimals_and_times_are_not_day_headings():
+    """`- 2.0：リリース` を 2/0 の見出しにすると以降のタスクが warning なしで消える。"""
+    from datetime import date
+
+    mod = _mod()
+    text = (
+        "## 今週の大きな到達ライン\n"
+        "- 8/19（火）：\n"
+        "- タスク1\n"
+        "- 2.0：リリースする\n"
+        "- 9.30：朝会に出る\n"
+        "- タスク2\n"
+    )
+    tasks, _ = mod.extract_day_tasks(text, date(2026, 8, 19))
+    assert tasks == ["タスク1", "2.0：リリースする", "9.30：朝会に出る", "タスク2"]
+    # `.` 区切りでも曜日注記があれば日付。時刻・小数と切り分けられていること。
+    dotted = "## 今週の大きな到達ライン\n- 8.19（火）：\n- 火曜タスク\n- 8.20（水）：\n- 水曜タスク\n"
+    assert mod.extract_day_tasks(dotted, date(2026, 8, 19))[0] == ["火曜タスク"]
+
+
+def test_japanese_day_heading_is_recognised():
+    """`- 8月19日（水）：` は最も自然な和文表記。見出しにできないと別日が混入する。"""
+    from datetime import date
+
+    mod = _mod()
+    text = (
+        "## 今週の大きな到達ライン\n"
+        "- 8月18日（火）：\n"
+        "- 火曜タスク\n"
+        "- 8月19日（水）：\n"
+        "- 水曜タスク\n"
+    )
+    assert mod.extract_day_tasks(text, date(2026, 8, 18))[0] == ["火曜タスク"]
+    assert mod.extract_day_tasks(text, date(2026, 8, 19))[0] == ["水曜タスク"]
+
+
+def test_parenthetical_review_word_does_not_blank_the_section():
+    """`（週次レビューで使う）` の補足まで振り返り扱いすると判断基準が無警告で空になる。"""
+    mod = _mod()
+    text = "## 今週の判断基準（週次レビューで使う）\n- 迷ったら短い方\n"
+    assert "迷ったら短い方" in mod.section_body(text, "今週の判断基準")
+    # 芯そのものが振り返りの節は従来どおり除外する
+    assert mod.section_body("## 今週の判断基準の振り返り\n- 先週の結果\n", "今週の判断基準") == ""
+
+
+def test_bracketed_heading_matches_exactly():
+    """実データの見出しは `## 【今週の判断基準】`。装飾で完全一致を落とすと部分一致頼みになる。"""
+    mod = _mod()
+    text = "## 【今週の判断基準】の振り返り\n- 先週\n\n## 【今週の判断基準】\n- 今週\n"
+    assert mod.section_body(text, "今週の判断基準").strip() == "- 今週"
+
+
+def test_report_alone_does_not_claim_a_resolved_goal(vault: Path):
+    """レポートは期間しか供給しない。goal 空で source=report は未解決を隠す。"""
+    daily = vault / "02_Configs" / "Daily"
+    # 前回ジャーナルの 1週間目標から目標本文だけを抜く (期間はレポートが供給する)
+    path = daily / "2026-08-17.md"
+    text = path.read_text(encoding="utf-8")
+    lines = []
+    in_weekly = False
+    for line in text.splitlines():
+        if line.startswith("### ") :
+            in_weekly = "1週間目標" in line
+        if in_weekly and line.lstrip().startswith("- 目標："):
+            lines.append("- 目標：")
+            continue
+        lines.append(line)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    ctx = run(vault, "2026-08-18")
+    assert ctx["goals"]["weekly"]["goal"].strip() == ""
+    assert ctx["goals"]["weekly"]["source"] == "unresolved"
+    # 期間はレポートから解決できているので残日数は出るが、未解決は黙らせない
+    assert ctx["goals"]["weekly"]["period_end"] == "2026-08-23"
+    assert any("weekly" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_habit_without_label_is_exit_2(vault: Path, tmp_path: Path):
+    """SKILL.md が編集を誘導している SSOT。KeyError で exit 1 にせず exit 2 を守る。"""
+    import json as _json
+    import os
+    import shutil
+
+    sandbox = tmp_path / "sandbox-label"
+    shutil.copytree(SCRIPT.parent.parent, sandbox)
+    path = sandbox / "references" / "daily-habits.json"
+    data = _json.loads(path.read_text(encoding="utf-8"))
+    del data["habits"][0]["label"]
+    path.write_text(_json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / SCRIPT.name), "--date", "2026-08-18"],
+        capture_output=True,
+        text=True,
+        env={**dict(os.environ), "UBM_VAULT_ROOT": str(vault)},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "Traceback" not in proc.stderr, proc.stderr
+
+
+def test_habit_without_target_section_is_exit_2(vault: Path, tmp_path: Path):
+    """検査の契約を validate 側と揃える。
+
+    Phase0 が素通しすると、利用者は 5〜10 分の対話を終えた Phase5 で初めて
+    daily-habits.json の破損を知る。検知は最初のゲートで済ませる。
+    """
+    import json as _json
+    import os
+    import shutil
+
+    sandbox = tmp_path / "sandbox-target-section"
+    shutil.copytree(SCRIPT.parent.parent, sandbox)
+    path = sandbox / "references" / "daily-habits.json"
+    data = _json.loads(path.read_text(encoding="utf-8"))
+    del data["habits"][0]["target_section"]
+    path.write_text(_json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(sandbox / "scripts" / SCRIPT.name), "--date", "2026-08-18"],
+        capture_output=True,
+        text=True,
+        env={**dict(os.environ), "UBM_VAULT_ROOT": str(vault)},
+    )
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "target_section" in proc.stderr, proc.stderr
+
+
+def test_parenthesised_retrospective_heading_is_reported():
+    """括弧内に振り返り語がある見出しを黙って採用しない。
+
+    `### 1年目標（2025年度の振り返り）` は除外語判定 (括弧を除いた芯に掛ける) を
+    すり抜けて採用される。採用そのものは残すが、過去データへ入れ替わった可能性を
+    warnings で人が気づけるようにする — これが除外語を細くし続けない構造的な解。
+    """
+    mod = _mod()
+    text = "### 1年目標（2025年度の振り返り）\n- 期間：2025-01-01〜2025-12-31\n- 目標：旧年度の目標\n"
+    notes: list[str] = []
+    body = mod.section_body(text, "1年目標", level="###", notes=notes)
+    assert "旧年度の目標" in body
+    assert notes and "1年目標（2025年度の振り返り）" in notes[0], notes
+
+
+def test_canonical_habit_goal_heading_is_not_a_partial_match(vault: Path):
+    """週報の正式名 `## 【習慣目標（仕組みで動く土台）】` で警告を出さない。
+
+    正式名は run-ubm-goal-setting が週報の必須セクションとして検査している表記なので、
+    毎回必ず現れる。これを部分一致 fallback 経由で拾うと「別の期の内容では」という
+    警告が全実行で立ち、本当に確認が要る warning が埋もれる。
+    """
+    ctx = run(vault, "2026-08-18")
+    assert ctx["weekly_report"]["habit_goals"], ctx["weekly_report"]
+    assert not [w for w in ctx["warnings"] if "習慣目標" in w], ctx["warnings"]
+
+
+def test_alternate_goal_spelling_does_not_warn(vault: Path):
+    """`### 2ヶ月目標` は `### 3ヶ月目標` の別表記。片方だけ在るのが正常。"""
+    ctx = run(vault, "2026-08-18")
+    assert ctx["goals"]["quarterly"]["goal"], ctx["goals"]["quarterly"]
+    assert not [w for w in ctx["warnings"] if "2ヶ月目標" in w], ctx["warnings"]
+
+
+def test_unresolved_goal_layer_still_warns():
+    """別表記の保留は「どの表記でも解決しなかった」ときまで黙らせない。"""
+    mod = _mod()
+    notes: list[str] = []
+    goals = mod.extract_journal_goals("### 1週間目標\n- 目標：あ\n", notes=notes)
+    assert "quarterly" not in goals
+    assert [n for n in notes if "3ヶ月目標" in n], notes
+
+
+def test_retrospective_only_heading_still_reports_after_buffering():
+    """振り返り節しか無い階層は、保留経路を通っても除外メモが外へ出る。"""
+    mod = _mod()
+    notes: list[str] = []
+    goals = mod.extract_journal_goals("### 3ヶ月目標の振り返り\n- 目標：先期の結果\n", notes=notes)
+    assert "quarterly" not in goals
+    assert [n for n in notes if "振り返り節と判定して除外" in n], notes

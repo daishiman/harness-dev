@@ -283,7 +283,7 @@ export NOTION_CONFIG_PATH="/path/to/.notion-config.json"
 
 | plugin | 役割 | 料理例 |
 |---|---|---|
-| **skill-creator** | Skill (作業手順書) を作る・更新する・評価する司令塔 | レシピを設計するシェフ |
+| **harness-creator** | Skill (作業手順書) を作る・更新する・評価する司令塔 | レシピを設計するシェフ |
 | **prompt-creator** | Skill の中で使う「AI への指示文」を 7 層構造で作る | 調味料の配合表を作る人 |
 | **skill-intake** | 非エンジニアからヒアリングして Skill 要件を引き出す | お客様の好みを聞き取る接客係 |
 
@@ -309,7 +309,7 @@ export NOTION_CONFIG_PATH="/path/to/.notion-config.json"
 
 ## どれを入れるべきか?
 
-- **試してみたいだけ** → `skill-creator` + `prompt-creator` の 2 つ
+- **試してみたいだけ** → `harness-creator` + `prompt-creator` の 2 つ
 - **チームで使う・品質を保ちたい** → 上記 + `skill-governance-config` / `lint` / `hooks` の 3 つ
 - **非エンジニアからヒアリングしたい** → `skill-intake` を追加
 - **全部試したい** → bundle `skills-full` で一括
@@ -326,7 +326,7 @@ export NOTION_CONFIG_PATH="/path/to/.notion-config.json"
 
 | 部品 | 役割 | 利用方法 |
 |---|---|---|
-| **Skill (スキル)** | 作業手順書 + 知識資料 | `/skill-creator:run-skill-create` のようにスラッシュコマンドで呼ぶ。または AI が自動で発火条件を見て呼ぶ |
+| **Skill (スキル)** | 作業手順書 + 知識資料 | `/harness-creator:run-skill-create` のようにスラッシュコマンドで呼ぶ。または AI が自動で発火条件を見て呼ぶ |
 | **SubAgent (サブエージェント)** | 独立した別 AI として動く専門家 | Skill から呼ばれて、別の文脈で 1 つの仕事だけをこなす |
 | **Hook (フック)** | 特定タイミングで自動実行されるスクリプト | ユーザーが直接呼ばない。「保存したら走る」「コマンド前に走る」など |
 | **Slash Command (スラッシュコマンド)** | `/コマンド名` で呼べるショートカット | ユーザーが直接タイプする |
@@ -338,7 +338,7 @@ export NOTION_CONFIG_PATH="/path/to/.notion-config.json"
 Skill は **1 つのフォルダ** で、中に以下のような構造を持ちます。
 
 ```
-plugins/skill-creator/skills/run-skill-create/
+plugins/harness-creator/skills/run-skill-create/
 ├── SKILL.md           ← 必須。何のスキルか、いつ呼ぶか、手順を書く
 ├── references/        ← 補助資料 (長い仕様書や採点表)
 │   ├── resource-map.yaml  ← 補助資料の索引
@@ -417,7 +417,7 @@ plugins/my-plugin/
 {
   "name": "skills",
   "plugins": [
-    {"name": "skill-creator", "source": "./plugins/skill-creator"},
+    {"name": "harness-creator", "source": "./plugins/harness-creator"},
     {"name": "skill-intake",  "source": "./plugins/skill-intake"}
   ]
 }

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +35,16 @@ def write(tmp_path: Path, text: str, name: str = GOLDEN_NAME) -> Path:
     p = tmp_path / name
     p.write_text(text, encoding="utf-8")
     return p
+
+
+def _load_validator():
+    """script を module として読み込む (純関数を直接検査するため)。"""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_validate_journal_output", VALIDATE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 @pytest.fixture
@@ -189,3 +200,315 @@ def test_daily_habits_json_is_wellformed():
         for key in ("id", "label", "natural_question", "target_section", "unmet_signal", "keywords"):
             assert h.get(key), f"{h.get('id')}: {key} が空"
         assert isinstance(h["keywords"], list) and h["keywords"], f"{h['id']}: keywords が空"
+
+
+# --- H01 が「本文のどこかに単語がある」で通る死んだ検査になっていないか ---
+
+def _strip_section(text: str, heading: str, next_heading: str) -> str:
+    """指定 H2 セクションの本文を空にする (見出しは残す)。"""
+    start = text.index(heading) + len(heading)
+    end = text.index(next_heading)
+    return text[:start] + "\n\n" + text[end:]
+
+
+def test_habit_keyword_outside_its_scope_does_not_satisfy_h01(tmp_path: Path, golden: str):
+    """禁止事項や見出しにキーワードが常在するだけで PASS してはいけない。
+
+    v1 の H01 は本文全体の substring 検索だったため、【行動のジャーナル】を空にしても
+    禁止事項の定型行・H1 見出し・チェックシートの固定設問に単語が残り、
+    Gridノート/ジャーナル/SNS の 3 件が発火しなかった。
+    """
+    text = _strip_section(golden, "## 【行動のジャーナル】", "## 【時間のジャーナル】")
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    for label in ("Gridノートを書いた", "ジャーナルを書いた", "SNSに投稿した"):
+        assert f"H01: 毎日の習慣「{label}」" in proc.stdout, proc.stdout
+
+
+def test_video_habit_is_not_satisfied_by_the_prohibition_boilerplate(tmp_path: Path, golden: str):
+    """【禁止事項】の『漫画・YouTubeへ逃げない』は記録ではなくテンプレの定型行。"""
+    text = _strip_section(golden, "## 【時間のジャーナル】", "## 【お金のジャーナル】")
+    proc = run(write(tmp_path, text))
+    assert "YouTube" in text, "禁止事項側の定型行は残っている前提のテスト"
+    assert "H01: 毎日の習慣「決められた時間以外に動画等を見なかった」" in proc.stdout, proc.stdout
+
+
+def test_habit_without_search_scopes_is_reported():
+    """scope 未宣言を素通しすると v1 の全文検索へ逆戻りする。
+
+    repo 同梱の daily-habits.json は書き換えず、検査関数を直接叩いて確かめる。
+    """
+    mod = _load_validator()
+    out = mod.check_daily_habits(
+        ["## 【行動のジャーナル】", "- Gridノートを朝に書いた"],
+        [{"id": "x", "label": "テスト習慣", "keywords": ["Gridノート"]}],
+    )
+    assert any(v.startswith("H02:") for v in out), out
+
+
+def test_scope_limits_the_search_range():
+    """scope 外に同じ単語があっても記録ありとみなさない。"""
+    mod = _load_validator()
+    lines = [
+        "## 【禁止事項】",
+        "- 漫画・YouTubeへ逃げない",
+        "## 【時間のジャーナル】",
+        "- 就寝は23:40。",
+    ]
+    habit = {
+        "id": "no-unplanned-video", "label": "動画", "target_section": "【時間のジャーナル】",
+        "search_scopes": [{"heading": "【時間のジャーナル】", "level": 2}],
+        "keywords": ["YouTube", "動画"],
+    }
+    assert mod.check_daily_habits(lines, [habit]), "禁止事項側の定型行で PASS してはいけない"
+    lines[3] = "- 予定外のYouTube視聴が45分あった。"
+    assert mod.check_daily_habits(lines, [habit]) == []
+
+
+# --- 見出し照合が部分一致で正本逸脱を通していないか ---
+
+@pytest.mark.parametrize("before,after", [
+    ("## 目標", "## 今週の習慣目標"),
+    ("## 感謝", "## 感謝したくないリスト"),
+])
+def test_renamed_heading_is_detected(tmp_path: Path, golden: str, before: str, after: str):
+    text = golden.replace(before + "\n", after + "\n", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "S01" in proc.stdout, proc.stdout
+
+
+# --- 「枠が埋まっている」検査が空値・波括弧プレースホルダを通していないか ---
+
+def test_empty_goal_value_fails(tmp_path: Path, golden: str):
+    text = golden.replace("- 目標：", "- 目標：\n<!--x-->", 1)
+    # 1行目の `- 目標：` を値なしにする (直後行はコメントで箇条書きにしない)
+    proc = run(write(tmp_path, text))
+    assert "G03" in proc.stdout, proc.stdout
+
+
+def test_curly_placeholder_is_detected(tmp_path: Path, golden: str):
+    text = golden.replace("- 残り：", "- 残り：{days_remaining}日 —— ", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "X01" in proc.stdout, proc.stdout
+
+
+def test_numbered_list_counts_as_content(tmp_path: Path, golden: str):
+    """正当な番号付きリストを空扱いにして誤 FAIL させない。"""
+    start = golden.index("## 感謝")
+    end = golden.index("## 【禁止事項】")
+    body = golden[start:end]
+    replaced = "## 感謝\n\n1. 北原さん: 打ち合わせの時間をいただきありがとうございました。\n\n"
+    proc = run(write(tmp_path, golden[:start] + replaced + golden[end:]))
+    assert "C02" not in proc.stdout, proc.stdout
+
+
+# --- 正本が要求する frontmatter / transclusion ---
+
+def test_missing_frontmatter_fails(tmp_path: Path, golden: str):
+    text = golden.split("---\n", 2)[-1]
+    proc = run(write(tmp_path, text))
+    assert "Y01" in proc.stdout, proc.stdout
+
+
+def test_missing_transclusion_fails(tmp_path: Path, golden: str):
+    text = golden.replace("![[人生の究極の目的", "[[人生の究極の目的", 1)
+    proc = run(write(tmp_path, text))
+    assert "Y02" in proc.stdout, proc.stdout
+
+
+# --- fail-open の回帰: 検査対象を取り違えていた 3 件 ---
+
+
+def test_g02_does_not_accept_a_date_range_from_another_line(tmp_path: Path, golden: str):
+    """G02 は「- 期間：」の値に掛かる。節全体に掛けると同節の別行で充足してしまう。
+
+    実測で再現済みだった fail-open: 期間を「今週いっぱい」にしても、目標本文に
+    日付範囲が 1 つあるだけで `PASS: 違反 0 件` exit 0 になっていた。
+    """
+    text = golden.replace(
+        "- 期間：2026-07-27〜2026-08-31\n- 残り：13日\n- 目標：",
+        "- 期間：今週いっぱい\n- 残り：13日\n- 目標：2026-07-27〜2026-08-31 の間に ",
+        1,
+    )
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1, proc.stdout
+    assert "G02" in proc.stdout, proc.stdout
+
+
+def test_y01_is_bound_to_the_tags_key(tmp_path: Path, golden: str):
+    """`- review` という行の存在ではなく tags キーの値を見る。"""
+    # 偽陰性: aliases 配下の `- review` では満たされない
+    text = golden.replace("tags:\n  - review\n", "aliases:\n  - review\n", 1)
+    proc = run(write(tmp_path, text))
+    assert "Y01" in proc.stdout, proc.stdout
+
+
+def test_y01_accepts_inline_tag_notation(tmp_path: Path, golden: str):
+    """偽陽性: `tags: [review]` は YAML として同値なので FAIL にしない。"""
+    text = golden.replace("tags:\n  - review\n", "tags: [review, daily]\n", 1)
+    proc = run(write(tmp_path, text))
+    assert "Y01" not in proc.stdout, proc.stdout
+
+
+def test_h01_is_not_satisfied_by_an_html_comment(golden: str):
+    """HTML コメントは Obsidian で表示されない = 記録ではない。
+
+    生行を照合していた頃は、キーワードを並べたコメントを貼るだけで全習慣が通った。
+    """
+    mod = _load_validator()
+    target = HABITS[0]
+    keyword = target["keywords"][0]
+    scope = target["search_scopes"][0]
+
+    lines = golden.splitlines()
+    body_start = next(
+        i for i, l in enumerate(lines) if l.strip().startswith("#") and scope["heading"] in l
+    )
+    # 本文の実記録を消し、代わりに同じキーワードを HTML コメントで置く
+    stripped = [l for l in lines if keyword not in l]
+    stripped.insert(body_start + 1, f"<!-- {keyword} -->")
+    out = mod.check_daily_habits(stripped, [target])
+    assert any("H01" in e for e in out), out
+
+
+def test_x01_does_not_flag_prose_braces(tmp_path: Path, golden: str):
+    """`/invoice/{id}` のような正当な記述を未置換プレースホルダにしない。"""
+    text = golden + "\n- API `/invoice/{id}` の疎通を確認した\n"
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert "X01" not in proc.stdout, proc.stdout
+
+
+def test_x01_still_flags_template_placeholders(tmp_path: Path, golden: str):
+    """正本テンプレの名前は引き続き検出する (限定した結果、検査が死んでいないこと)。"""
+    text = golden + "\n- 残り {days_remaining} 日\n"
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert "X01" in proc.stdout, proc.stdout
+
+
+def test_y02_is_not_satisfied_by_an_html_comment(tmp_path: Path, golden: str):
+    """コメント内の transclusion は Obsidian で埋め込まれない。H01 と同じ基準で見る。"""
+    mod = _load_validator()
+    m = mod.TRANSCLUSION_RE.search(golden)
+    assert m, "golden から究極目的の transclusion が消えた"
+    text = golden.replace(m.group(0), f"<!-- {m.group(0)} -->", 1)
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert "Y02" in proc.stdout, proc.stdout
+
+
+def test_habit_schema_problems_are_input_errors():
+    """label 欠落・keywords が文字列は「破損 = exit 2」契約の対象。
+
+    keywords を文字列にすると 1 文字ずつ照合され、'G' がどこかに当たるだけで
+    H01 が無条件 PASS になる (SSOT 破損時の fail-open)。
+    """
+    mod = _load_validator()
+    ok = {
+        "id": "x", "label": "習慣", "target_section": "節",
+        "keywords": ["Grid"], "search_scopes": [{"level": 2, "heading": "節"}],
+    }
+    assert mod.habit_schema_problems(ok, 0) == []
+    assert mod.habit_schema_problems({**ok, "label": ""}, 0)
+    assert mod.habit_schema_problems({**ok, "keywords": "Grid"}, 0)
+    assert mod.habit_schema_problems({**ok, "search_scopes": [{"level": 2}]}, 0)
+    # search_scopes 未宣言は H02 で報告する設計なので、読み込み時には落とさない
+    assert mod.habit_schema_problems({k: v for k, v in ok.items() if k != "search_scopes"}, 0) == []
+
+
+def test_y01_accepts_zero_indent_block_notation():
+    """`tags:` の次行にゼロインデントの `- review` は YAML として妥当。FAIL にしない。"""
+    mod = _load_validator()
+    assert mod.has_review_tag("tags:\n- review\n- daily") is True
+    assert mod.has_review_tag("tags:\n- daily\nauthor: x") is False
+    # aliases 配下の `- review` を tags と取り違えないこと (偽陰性の回帰)
+    assert mod.has_review_tag("aliases:\n- review\ntags:\n- daily") is False
+
+
+def test_g02_requires_hyphen_separated_dates(tmp_path: Path, golden: str):
+    """検査が文書 (output-format.md) より緩いと、直した人に何も返らない。"""
+    text = golden.replace("- 期間：2026-07-27〜2026-08-31", "- 期間：2026/07/27〜2026/08/31")
+    proc = run(write(tmp_path, text))
+    assert "G02" in proc.stdout, proc.stdout
+
+
+def test_string_level_in_search_scopes_is_an_input_error():
+    """`"level": "2"` は section_lines の `lv == level` を常に偽にする。
+
+    記録が正しく書かれた本文が H01 で FAIL し、利用者は本文を直しても直らない。
+    heading 欠落と同じく「読めない設定」として exit 2 側で原因を名指しする。
+    """
+    mod = _load_validator()
+    ok = {
+        "id": "x", "label": "習慣", "target_section": "節",
+        "keywords": ["Grid"], "search_scopes": [{"level": 2, "heading": "節"}],
+    }
+    assert mod.habit_schema_problems({**ok, "search_scopes": [{"level": "2", "heading": "節"}]}, 0)
+    assert mod.habit_schema_problems({**ok, "search_scopes": [{"level": 0, "heading": "節"}]}, 0)
+    # level 省略は既定 2 として妥当 (実データの大半がこの形)
+    assert mod.habit_schema_problems({**ok, "search_scopes": [{"heading": "節"}]}, 0) == []
+
+
+def test_brace_placeholders_cover_output_format():
+    """正本テンプレが使う `{...}` は全て X01 の検査対象であること。
+
+    コードのコメントは「output-format.md と対で管理する」と宣言していたが、
+    導入時点で `{名前}` が漏れており、`- {名前}: 手伝ってくれた` が exit 0 で
+    通っていた (部分置換の取りこぼし)。約束を人手の注意力に預けた結果なので、
+    ここで機械的に固定する。逆方向 (タプル側の過剰登録) は無害なので許す。
+    """
+    mod = _load_validator()
+    fmt = (
+        Path(mod.__file__).resolve().parents[1] / "references" / "output-format.md"
+    ).read_text(encoding="utf-8")
+    used = set(re.findall(r"\{([^{}\n]+)\}", fmt))
+    missing = used - set(mod.BRACE_PLACEHOLDERS)
+    assert not missing, f"output-format.md の {missing} が BRACE_PLACEHOLDERS に未登録"
+
+
+def test_x01_flags_the_gratitude_name_placeholder():
+    """`{名前}` だけが残った部分未置換を取りこぼさない。"""
+    mod = _load_validator()
+    assert mod.PLACEHOLDER_RE.search("- {名前}: 手伝ってくれた")
+
+
+def test_y02_is_not_satisfied_by_a_fenced_code_block():
+    """コードフェンス内の transclusion は Obsidian が埋め込まない。
+
+    HTML コメントと同じ「書いてはあるが表示されない」クラス。生テキスト照合だと
+    「究極目的が表示されている」という Y02 の判定根拠が成立しないまま PASS する。
+    """
+    mod = _load_validator()
+    fenced = "```\n![[人生の究極の目的]]\n```\n"
+    assert mod.TRANSCLUSION_RE.search(fenced)          # 生テキストには在る
+    assert not mod.TRANSCLUSION_RE.search(mod.visible_text(fenced))
+    # 素の transclusion は当然そのまま残る
+    assert mod.TRANSCLUSION_RE.search(mod.visible_text("![[人生の究極の目的]]\n"))
+
+
+def test_h01_treats_a_fenced_block_as_not_a_record():
+    """フェンス内だけの記録は H01 で「ありません」と言う (意図した fail-closed 側の誤り)。
+
+    Y02 は「Obsidian が埋め込まない」ことを根拠にフェンスを外すが、H01 では同じ根拠が
+    使えない (フェンスの中身は読者に見える)。それでも外すのは、フェンスに入るのが
+    その日の記録ではなく貼り付けたテンプレ・例・コマンドだからで、そこを数えると
+    H01 が v1 の死んだ検査へ戻る。副作用として素の記録より厳しく出るので、
+    偶然そうなっているのではなく決めた挙動であることをここで固定する。
+    """
+    mod = _load_validator()
+    habit = {
+        "id": "grid-note", "label": "Gridノートを書いた",
+        "target_section": "【行動のジャーナル】現状を確認する",
+        "keywords": ["Gridノート"],
+        "search_scopes": [{"heading": "【行動のジャーナル】", "level": 2}],
+    }
+
+    def h01(body: str) -> list[str]:
+        return mod.check_daily_habits(
+            f"## 【行動のジャーナル】\n{body}\n## 次\n".splitlines(), [habit]
+        )
+
+    assert h01("- 22:10 に Gridノートを書いた。") == []
+    assert h01("> 22:10 に Gridノートを書いた。") == []  # 引用は記録として数える
+    assert h01("```\n- 22:10 に Gridノートを書いた。\n```")
+    assert h01("<!-- Gridノートを書いた -->")

@@ -94,5 +94,9 @@ python3 scripts/validate-journal-output.py \
   --expected-number {journal_number} --expected-date {YYYY-MM-DD}
 ```
 
-違反コード: `F*`=ファイル名/見出し整合 / `S01`=骨格の存在と順序 / `G*`=目標4階層 /
-`C*`=中身が空 / `J*`=3ジャーナルの小節 / `P*`=フェーズ別チェック / `X01`=未置換プレースホルダ。
+違反コード: `F*`=ファイル名/見出し整合 / `Y01`=frontmatter の `tags: - review` /
+`Y02`=「人生の究極の目的」の transclusion / `S01`=骨格の存在と順序 / `G*`=目標4階層
+（`G01` ラベル行なし / `G02` 期間が YYYY-MM-DD〜YYYY-MM-DD 形式でない / `G03` 値が空）/
+`C*`=中身が空 / `J*`=3ジャーナルの小節 / `P*`=フェーズ別チェック / `X01`=未置換プレースホルダ /
+`H01`=固定習慣の記録が `search_scopes` の節に無い / `H02`=習慣に `search_scopes` の宣言が無い
+（`daily-habits.json` 側の不備）。

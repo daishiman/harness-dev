@@ -19,7 +19,7 @@ prefix: run
 effect: external-mutation
 owner: harness-maintainers
 since: 2026-08-17
-version: 0.1.0
+version: 0.5.0
 subagent_refs:
   - journal-composer
 schema_refs:
@@ -114,7 +114,9 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-contex
 - **固定習慣（毎日必須）**: Phase0 の `daily_habits`（6項目: Gridノート / 23時就寝 / ストレッチ /
   計画外の動画視聴 / ジャーナル / SNS投稿）は**毎回必ず確認する**。ただし頭から順に読み上げず、
   Phase1-2 で自然に出た項目は拾って済ませ、**Phase3 で残った分だけを2〜3問に束ねて**聞く。
-  達成/未達のどちらであれ本文に痕跡を残す（痕跡ゼロは Phase5 で H01 違反になる）。
+  達成/未達のどちらであれ痕跡を残す。ただし H01 が見るのは各習慣の `search_scopes` が
+  指すセクションの中だけなので、`interview-map.md` の「落とす先」列のセクションへ書く
+  （本文のどこかにあればよい、ではない）。痕跡ゼロは Phase5 で H01 違反になる。
 - **週次習慣目標**: 週報の習慣目標4群は独立セクションにせず、会話から達成状況を推し量って
   行動・時間・お金の各ジャーナルへ事実として織り込む（`references/interview-map.md` 参照）。
 - **目標セクションだけは自動**: 1年/3ヶ月/1ヶ月/1週間目標と残日数は Phase0 の結果をそのまま使い、
@@ -150,7 +152,9 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
 
 - **保存先の書込許可**: `ubm-write-path-guard` hook は vault 配下で `02_Configs/Daily/` を許可済み。
   `02_Configs/` の他のパスへは書けない（fail-closed）。
-- **`UBM_VAULT_ROOT` 未設定**: Phase0 が exit 1 になる。vault パスをユーザーに確認してから再実行する。
+- **`UBM_VAULT_ROOT` 未設定**: Phase0 が exit 2 になる。vault パスをユーザーに確認してから再実行する。
+  Phase0 の exit 2 は「引数不正・vault 解決不能・Daily 不在・daily-habits.json 破損」の総称なので、
+  stderr の 1 行目を必ず読んでから対処すること。
 - **週報が当日を含まない**: 週をまたいだ直後は直近週報を参照する（`covers_target: false` の warning）。
   1週間目標の残日数は `0日（期間終了・次週分の週報は未作成）` と書く。
 - **1年目標の対応レポートは存在しない**: 前回ジャーナルからの継承のみ。満了していたら対話で確認する。
@@ -162,6 +166,8 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
   `scripts/validate-journal-output.py`（保存前バリデーション）。
 - **references**: `references/resource-map.yaml`（どの Phase でどれを開くかの索引。迷ったら最初に見る）/
   `references/output-format.md`（骨格の正本）/ `references/interview-map.md`（問い→セクション対応）/
-  `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集する）。
+  `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集し、
+  `keywords` と `search_scopes`（H01 が検査するセクション）を必ず併記する。`search_scopes` を
+  書き忘れた習慣は検査不能として H02 違反になる）。
 - **assets**: `assets/golden-sample.md`（バリデータ PASS の見本 / Few-shot）。
 - **agents**: `journal-composer`（plugin 直下 `agents/`）。

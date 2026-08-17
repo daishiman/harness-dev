@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-journal-output
-# version: 0.1.0
-# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (見出し17ブロック・目標4階層の
-#          期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート) を満たすかを
-#          保存前に検査する決定論ゲート。未置換プレースホルダと空セクションを FAIL にする。
+# version: 0.5.0
+# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・骨格15ブロック・
+#          目標4階層の期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート・
+#          毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。習慣の件数と
+#          検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。
+#          未置換プレースホルダと空セクションを FAIL にする。
 # inputs:
 #   - argv: --file <path> [--expected-number N] [--expected-date YYYY-MM-DD]
+#   - fs: {skill}/references/daily-habits.json (欠落・破損は exit 2)
 # outputs:
 #   - stdout: PASS/FAIL と違反一覧
 #   - exit: 0=PASS / 1=FAIL / 2=引数不正・ファイル読み込み不能 (fail-closed)
@@ -19,8 +22,9 @@
 """日次ジャーナルの保存前バリデーション。
 
 「フォーマットに合わせる」ことより「やったことを構造的にまとめる」ことが目的なので、
-本文の中身までは縛らない。検査するのは (1) 骨格の存在と順序、(2) 各枠が実際に埋まって
-いること、(3) テンプレのプレースホルダが残っていないこと、の3点に絞る。
+本文の中身までは縛らない。検査するのは骨格の存在と順序、各枠が実際に埋まっていること、
+テンプレのプレースホルダが残っていないこと、そして daily-habits.json が宣言する固定習慣の
+記録が `search_scopes` の節にあること (H01/H02) に絞る。文章の質は評価しない。
 """
 from __future__ import annotations
 
@@ -41,34 +45,128 @@ def load_daily_habits() -> list[dict]:
     except (OSError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"validate-journal-output: daily-habits.json を読めません: {exc}\n")
         sys.exit(2)
+    # top-level が dict でない (例: JSON 配列) と .get が AttributeError になり、
+    # 宣言した exit 2 ではなく traceback 付き exit 1 で落ちる。
+    if not isinstance(data, dict):
+        sys.stderr.write("validate-journal-output: daily-habits.json の top-level が object ではありません\n")
+        sys.exit(2)
     habits = data.get("habits")
     if not isinstance(habits, list) or not habits:
         sys.stderr.write("validate-journal-output: daily-habits.json の habits が空です\n")
         sys.exit(2)
+    for i, h in enumerate(habits):
+        for problem in habit_schema_problems(h, i):
+            sys.stderr.write(f"validate-journal-output: daily-habits.json {problem}\n")
+            sys.exit(2)
     return habits
+
+
+def habit_schema_problems(h: object, i: int) -> list[str]:
+    """habit 1件の形の不備を列挙する。1件でもあれば読み込み不能 (exit 2) 扱い。
+
+    SKILL.md も interview-map も「項目を増減するときは daily-habits.json だけを編集する」と
+    利用者をこの編集面へ誘導している。にもかかわらず `label` 欠落は `habit['label']` の
+    KeyError → traceback + exit 1 になり、宣言した「破損 = exit 2」と食い違っていた。
+    さらに `keywords` を list でなく文字列で書くと 1 文字ずつ照合され、`"G"` が
+    どこかに当たるだけで H01 が無条件 PASS になる (SSOT 破損時の fail-open を実測)。
+    形の検査を読み込み時に寄せて、下流の素の添字アクセスを安全にする。
+    """
+    where = f"habits[{i}]"
+    if not isinstance(h, dict):
+        return [f"{where} が object ではありません"]
+    problems = []
+    for key in ("label", "target_section"):
+        if not isinstance(h.get(key), str) or not h[key].strip():
+            problems.append(f"{where} の {key} が非空文字列ではありません")
+    kws = h.get("keywords")
+    if not isinstance(kws, list) or not kws or not all(isinstance(k, str) and k for k in kws):
+        problems.append(f"{where} の keywords が非空文字列の配列ではありません")
+    scopes = h.get("search_scopes")
+    if scopes is not None:
+        if not isinstance(scopes, list) or not scopes:
+            problems.append(f"{where} の search_scopes が非空配列ではありません")
+        else:
+            for j, s in enumerate(scopes):
+                if not isinstance(s, dict):
+                    problems.append(f"{where}.search_scopes[{j}] が object ではありません")
+                    continue
+                if not isinstance(s.get("heading"), str) or not s["heading"]:
+                    problems.append(f"{where}.search_scopes[{j}] の heading がありません")
+                # level を検査しないと、`"level": "2"` (文字列) で section_lines の
+                # `lv == level` が常に偽になり、記録が正しく書かれた本文が H01 で
+                # FAIL する。利用者は本文を直し続けても直らない (実測)。
+                # heading の欠落は exit 2 で原因を名指しするので、level も同じ扱いに揃える。
+                lv = s.get("level", 2)
+                if not isinstance(lv, int) or isinstance(lv, bool) or not 1 <= lv <= 6:
+                    problems.append(f"{where}.search_scopes[{j}] の level が 1-6 の整数ではありません")
+    return problems
 
 HEADING_RE = re.compile(r"^#\s*No\.\s*(\d+)\s*[-–—]\s*ジャーナル\s*[（(]\s*(\d{4}-\d{2}-\d{2})\s*[)）]\s*$")
 FILE_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
-PLACEHOLDER_RE = re.compile(r"\[(?:数字|名前|日数|感謝の内容|分類|3ヶ月目標|1ヶ月目標|1週間目標|yyyy/mm/dd)\]")
+# 角括弧型 (`[名前]`) に加えて波括弧型 (`{分類}` `{journal_number}`) も拾う。
+# 正本テンプレ (references/output-format.md) が使うのは波括弧型で、
+# 「テンプレを貼って埋め忘れる」という最も起きやすい事故はこちら側で起きる。
+#
+# ただし波括弧を「中身が英数字か和文なら何でも」で拾うと、ジャーナル本文に書かれた
+# 正当な記述 (`/invoice/{id}` のような API パス、コード片) を未置換プレースホルダとして
+# X01 で FAIL にする (実測)。X01 の対象は正本テンプレが実際に使う名前だけに限定する。
+# テンプレへプレースホルダを足すときはここにも足す (output-format.md と対で管理する)。
+# なお「対で管理する」という上の約束は、導入時点で既に破れていた (`{名前}` の登録漏れ。
+# output-format.md:70 の `- {名前}: {何をしてもらったか}` が正本)。約束を人手の注意力へ
+# 預けたのが原因なので、tests 側で output-format.md の `{...}` 集合がこのタプルに
+# 含まれることを機械的に固定してある (test_brace_placeholders_cover_output_format)。
+BRACE_PLACEHOLDERS = (
+    "番号", "名前", "終了日", "何をしてもらったか", "journal_number", "N", "YYYY-MM-DD",
+    "分類", "日数", "days_remaining",
+)
+PLACEHOLDER_RE = re.compile(
+    r"\[(?:数字|名前|日数|感謝の内容|分類|3ヶ月目標|1ヶ月目標|1週間目標|yyyy/mm/dd)\]"
+    r"|\{(?:" + "|".join(re.escape(p) for p in BRACE_PLACEHOLDERS) + r")\}"
+)
 HRULE_RE = re.compile(r"^\s*(?:-{3,}|\*{3,}|_{3,})\s*$")
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+# コードフェンスの中身は Obsidian が描画せずそのまま文字として出す。HTML コメントと
+# 同じ「書いてはあるが埋め込まれない」クラスなので、埋め込みの有無を見る検査からは
+# 同じように外す。外さないと ```![[人生の究極の目的]]``` で Y02 が PASS する (実測)。
+FENCED_CODE_RE = re.compile(r"^(?P<f>`{3,}|~{3,}).*?(?:\n(?P=f)`*~*[ \t]*$|\Z)", re.M | re.S)
 
-# (見出しレベル, 見出しに含まれるべき文字列) を出現順で並べた骨格の正本
+
+def visible_text(text: str) -> str:
+    """Obsidian が実際に描画する部分だけを残す。埋め込み判定の前処理。"""
+    return FENCED_CODE_RE.sub(" ", HTML_COMMENT_RE.sub(" ", text))
+# 目標4階層の「- 期間：」が取るべき値の形。節全体ではなくこの行の値だけに掛ける。
+# 区切りは半角ハイフンのみ。`/` も通していたが、output-format.md も G02 の
+# メッセージも「YYYY-MM-DD〜YYYY-MM-DD」と宣言しており、検査だけが緩い状態だった。
+# 検査が文書より緩いと、文書を読んで直した人が「直したのに何も変わらない」を経験する。
+DATE_RANGE_RE = re.compile(
+    r"\d{4}-\d{2}-\d{2}\s*[〜～~]\s*\d{4}-\d{2}-\d{2}"
+)
+# 正本が要求する究極目的の transclusion。frontmatter の tags は has_review_tag() が見る。
+TRANSCLUSION_RE = re.compile(r"!\[\[[^\]]*人生の究極の目的[^\]]*\]\]")
+
+# 見出し照合の既定は完全一致。部分一致にすると `## 目標` が `## 今週の習慣目標` に、
+# `## 感謝` が `## 感謝したくないリスト` に化けても S01 が通ってしまい、
+# 「骨格が正本どおりか」という S01 の目的そのものが崩れる。
+# 部分一致を許すのは、日付や番号が可変で完全一致できない見出しだけに限る。
+EXACT, CONTAINS = "exact", "contains"
+
+# (見出しレベル, 照合する文字列, 照合モード) を出現順で並べた骨格の正本
 REQUIRED_OUTLINE = [
-    (1, "人生の究極の目標"),
-    (1, "ジャーナル"),
-    (2, "人生の究極目的"),
-    (2, "目標"),
-    (3, "1年目標"),
-    (3, "3ヶ月目標"),
-    (3, "1ヶ月目標"),
-    (3, "1週間目標"),
-    (2, "感謝"),
-    (2, "【禁止事項】"),
-    (2, "【タスク】"),
-    (2, "【行動のジャーナル】"),
-    (2, "【時間のジャーナル】"),
-    (2, "【お金のジャーナル】"),
-    (1, "フェーズ別 課題チェックシート"),
+    (1, "人生の究極の目標", EXACT),
+    (1, "ジャーナル", CONTAINS),  # `# No.388 - ジャーナル（2026-08-16）` は可変部を含む
+    (2, "人生の究極目的", EXACT),
+    (2, "目標", EXACT),
+    (3, "1年目標", EXACT),
+    (3, "3ヶ月目標", EXACT),
+    (3, "1ヶ月目標", EXACT),
+    (3, "1週間目標", EXACT),
+    (2, "感謝", EXACT),
+    (2, "【禁止事項】", EXACT),
+    (2, "【タスク】", EXACT),
+    (2, "【行動のジャーナル】", EXACT),
+    (2, "【時間のジャーナル】", EXACT),
+    (2, "【お金のジャーナル】", EXACT),
+    (1, "フェーズ別 課題チェックシート", EXACT),
 ]
 
 JOURNAL_SECTIONS = ["【行動のジャーナル】", "【時間のジャーナル】", "【お金のジャーナル】"]
@@ -91,7 +189,60 @@ def headings(lines: list[str]) -> list[tuple[int, str, int]]:
     return out
 
 
-def section_lines(lines: list[str], level: int, needle: str) -> list[str] | None:
+def frontmatter_block(lines: list[str]) -> str:
+    """先頭の `---` で挟まれた YAML frontmatter 本体。無ければ ""。
+
+    本文中の水平線 (`---`) を終端と取り違えないよう、1 行目が `---` の場合だけ探す。
+    """
+    if not lines or lines[0].strip() != "---":
+        return ""
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            return "\n".join(lines[1:i])
+    return ""
+
+
+def has_review_tag(fm: str) -> bool:
+    """frontmatter の `tags` が review を含むか。
+
+    「`- review` という行がどこかにある」だけを見ると、`aliases:` 配下の
+    `- review` でも通り (偽陰性)、正しい inline 記法 `tags: [review]` を
+    FAIL にする (偽陽性)。どちらも tags キーに紐づけていないことが原因なので、
+    キーを特定してからその値だけを見る。
+    """
+    lines = fm.splitlines()
+    for i, line in enumerate(lines):
+        m = re.match(r"^tags\s*:(?P<inline>.*)$", line)
+        if m is None:
+            continue
+        inline = m.group("inline").strip()
+        if inline:  # `tags: [review, x]` / `tags: review`
+            return "review" in re.findall(r"[A-Za-z0-9_-]+", inline)
+        # ブロック記法。`- item` が続く間だけを値とみなす。インデントを必須にすると
+        # YAML として妥当なゼロインデント記法 (`tags:` の次行に `- review`) を
+        # Y01 で FAIL にする (偽陽性を実測)。終端は「次のキー行が現れたとき」で見る。
+        for nxt in lines[i + 1 :]:
+            if not nxt.strip():
+                continue
+            item = re.match(r"^\s*-\s*(?P<v>.+?)\s*$", nxt)
+            if item is None:
+                break  # `- ` で始まらない = 別のキーへ移った
+            if item.group("v").strip("\"'") == "review":
+                return True
+        return False
+    return False
+
+
+def heading_matches(text: str, needle: str, mode: str) -> bool:
+    """見出しテキストの照合。exact は装飾記号 (`◇` や末尾コロン) だけ落として完全一致。"""
+    if mode == CONTAINS:
+        return needle in text
+    return text.strip().strip("◇◆・:：").strip() == needle
+
+
+def section_lines(
+    lines: list[str], level: int, needle: str, mode: str = EXACT
+) -> list[str] | None:
     """指定見出し直下の本文行 (同レベル以上の次見出しまで) を返す。見出しが無ければ None。"""
     start = None
     for i, line in enumerate(lines):
@@ -101,7 +252,7 @@ def section_lines(lines: list[str], level: int, needle: str) -> list[str] | None
         lv = len(s) - len(s.lstrip("#"))
         text = s[lv:].strip()
         if start is None:
-            if lv == level and needle in text:
+            if lv == level and heading_matches(text, needle, mode):
                 start = i + 1
             continue
         if lv <= level:
@@ -111,20 +262,31 @@ def section_lines(lines: list[str], level: int, needle: str) -> list[str] | None
     return lines[start:]
 
 
+# `-` に加えて `*` と番号付き (`1.` `1)`) も箇条書きとして数える。正本は `-` を使うが、
+# 「枠が埋まっているか」を見る C0x/J02 で番号付きリストを空扱いにすると、
+# 正しく書かれた記録を FAIL にしてしまう (書式の強制は S01/G01 の役目ではない)。
+BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)])\s*")
+
+
 def content_bullets(body: list[str]) -> list[str]:
     items = []
     for line in body:
         s = line.strip()
-        if not s.startswith("-") or HRULE_RE.match(line):
+        if HRULE_RE.match(line) or not BULLET_RE.match(s):
             continue
-        s = re.sub(r"^-\s*", "", s)
+        s = BULLET_RE.sub("", s, count=1)
         s = re.sub(r"^\[[ xX]\]\s*", "", s).strip()
         if s:
             items.append(s)
     return items
 
 
-def validate(path: Path, expected_number: int | None, expected_date: str | None) -> list[str]:
+def validate(
+    path: Path,
+    expected_number: int | None,
+    expected_date: str | None,
+    habits: list[dict],
+) -> list[str]:
     violations: list[str] = []
     text = path.read_text(encoding="utf-8")
     lines = text.splitlines()
@@ -158,14 +320,25 @@ def validate(path: Path, expected_number: int | None, expected_date: str | None)
         if expected_date is not None and heading_date != expected_date:
             violations.append(f"F05: 見出しの日付 {heading_date} が対象日 {expected_date} と一致しません")
 
+    # --- 正本が要求する frontmatter と transclusion ---
+    # Obsidian 側の検索性 (tags) と究極目的の埋め込みは正本仕様の一部。
+    # 見出しだけ揃っていても、これが欠けると vault 内で他のジャーナルと同じに扱われない。
+    if not has_review_tag(frontmatter_block(lines)):
+        violations.append("Y01: 先頭の YAML frontmatter に `tags: - review` がありません")
+    # H01 と同じ理由で HTML コメントを外してから探す。コメント内の `![[...]]` は
+    # Obsidian で埋め込まれないので、生テキスト照合だと「究極目的が表示されている」
+    # という Y02 の判定根拠が成立しないまま PASS する (実測)。
+    if not TRANSCLUSION_RE.search(visible_text(text)):
+        violations.append("Y02: 「人生の究極の目的」の transclusion (![[...]]) がありません")
+
     # --- 骨格の存在と順序 ---
     hs = headings(lines)
     cursor = 0
-    for level, needle in REQUIRED_OUTLINE:
+    for level, needle, mode in REQUIRED_OUTLINE:
         found = None
         for idx in range(cursor, len(hs)):
             lv, txt, _ = hs[idx]
-            if lv == level and needle in txt:
+            if lv == level and heading_matches(txt, needle, mode):
                 found = idx
                 break
         if found is None:
@@ -179,10 +352,22 @@ def validate(path: Path, expected_number: int | None, expected_date: str | None)
         if body is None:
             continue  # S01 で既に報告済み
         joined = "\n".join(body)
+        values: dict[str, str] = {}
         for field in ("期間", "残り", "目標"):
-            if not re.search(rf"^\s*-\s*{field}\s*[：:]", joined, re.MULTILINE):
+            # ラベル行の存在だけを見ると `- 目標：` (値なし) が通り、
+            # 「各枠が実際に埋まっている」という本 script の宣言目的が空振りする。
+            m = re.search(rf"^\s*-\s*{field}\s*[：:](?P<value>.*)$", joined, re.MULTILINE)
+            if m is None:
                 violations.append(f"G01: {goal} に「- {field}：」の行がありません")
-        if not re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}\s*[〜～~]\s*\d{4}[-/]\d{1,2}[-/]\d{1,2}", joined):
+            elif not m.group("value").strip():
+                violations.append(f"G03: {goal} の「- {field}：」が空です")
+            else:
+                values[field] = m.group("value")
+        # 日付範囲は「- 期間：」の値そのものに掛ける。節全体へ掛けると、期間を
+        # 「今週いっぱい」と書いても同じ節の別行 (目標本文の日付など) が要件を
+        # 満たしてしまい、G02 が fail-open になる (実測で exit 0 を再現済み)。
+        # 期間行が無い / 空のときは G01・G03 が既に報告しているので二重に出さない。
+        if "期間" in values and not DATE_RANGE_RE.search(values["期間"]):
             violations.append(f"G02: {goal} の期間が YYYY-MM-DD〜YYYY-MM-DD 形式で書かれていません")
 
     # --- 中身が埋まっているか ---
@@ -199,10 +384,14 @@ def validate(path: Path, expected_number: int | None, expected_date: str | None)
 
     task_body = section_lines(lines, 2, "【タスク】")
     if task_body is not None:
-        subheads = [l for l in task_body if l.strip().startswith("### ")]
-        if not subheads:
+        first_sub = next(
+            (i for i, l in enumerate(task_body) if l.strip().startswith("### ")), None
+        )
+        if first_sub is None:
             violations.append("C04: 【タスク】に分類見出し（### 【分類名】）が1つ以上必要です")
-        elif not content_bullets(task_body):
+        # 分類見出しより前の箇条書きは「分類の下」ではない。全体で数えると、
+        # 見出しだけ作って中身を書かなかったケースを取りこぼす。
+        elif not content_bullets(task_body[first_sub + 1:]):
             violations.append("C05: 【タスク】の分類の下に箇条書きが1件以上必要です")
 
     for section in JOURNAL_SECTIONS:
@@ -234,15 +423,64 @@ def validate(path: Path, expected_number: int | None, expected_date: str | None)
     # --- 毎日固定の習慣がヒアリングされ記録されたか ---
     # 達成/未達は問わない。「毎日確認する」契約なので、どちらであれ本文に痕跡が残るはず。
     # 痕跡ゼロ = そもそも聞かなかった、と判定する。
-    for habit in load_daily_habits():
-        keywords = habit.get("keywords") or []
-        if not any(kw in text for kw in keywords):
-            violations.append(
-                f"H01: 毎日の習慣「{habit['label']}」の記録がありません"
-                f"（{habit['target_section']} へ達成/未達のいずれかを書く）"
-            )
+    #
+    # 探索範囲は search_scopes が指す小節本文に限る。本文全体を substring 検索すると、
+    # 禁止事項の定型行 (「漫画・YouTubeへ逃げない」)・H1 見出し・必須セクション名
+    # (【行動のジャーナル】)・チェックシートの固定設問 (「発信、営業…」) にキーワードが
+    # 常在するため、6 習慣中 4 件が骨格さえ正しければ常に PASS する死んだ検査になる。
+    violations.extend(check_daily_habits(lines, habits))
 
     return violations
+
+
+def check_daily_habits(lines: list[str], habits: list[dict]) -> list[str]:
+    """search_scopes が指す小節の本文だけを見て習慣の記録有無を判定する。"""
+    out: list[str] = []
+    for habit in habits:
+        scopes = habit.get("search_scopes")
+        if not scopes:
+            # scope 未宣言を「全文検索でよい」と読み替えると v1 の死んだ検査へ逆戻りする。
+            # 検査できない habit は素通しではなく違反として可視化する。
+            out.append(
+                f"H02: 習慣「{habit.get('label', habit.get('id'))}」に search_scopes が"
+                "宣言されていません（daily-habits.json を修正してください）"
+            )
+            continue
+
+        keywords = habit.get("keywords") or []
+        found = False
+        missing_scope = False
+        for scope in scopes:
+            body = section_lines(lines, scope.get("level", 2), scope["heading"])
+            if body is None:
+                missing_scope = True
+                continue
+            # HTML コメントは Obsidian で表示されない = 記録として読まれない。
+            # 生行のまま照合すると `<!-- Gridノート -->` を貼るだけで H01 が通り、
+            # 「本文に痕跡が残るはず」という判定根拠が成立しなくなる。
+            #
+            # コードフェンスは Y02 とは理由が違う。フェンスの中身は Obsidian でも
+            # 読者に見えるので「表示されない」を根拠にはできない。除外するのは、
+            # フェンスに入るのはその日の記録ではなく貼り付けたテンプレ・例・コマンドで、
+            # そこにキーワードが常在すると H01 が v1 の死んだ検査へ戻るためである。
+            # 帰結として、記録をフェンスの中だけに書くと H01 は「記録がありません」と
+            # 言う (fail-closed 側の誤り)。素の箇条書きで書けば解消する。
+            joined = visible_text("\n".join(body))
+            if any(kw in joined for kw in keywords):
+                found = True
+                break
+        if found:
+            continue
+        # 見出しが無い (missing_scope) 場合も違反にする。欠落は S01/J01 が別途報告するが、
+        # 「書く場所が無かった」を H01 の免罪符にすると記録漏れが見えなくなる。
+        # 検査の粒度は search_scopes が指すセクション。メッセージで target_section
+        # (より細かい小節) だけを名指しすると「どこを直せば緑になるか」がズレる。
+        where = " / ".join(s["heading"] for s in scopes)
+        out.append(
+            f"H01: 毎日の習慣「{habit['label']}」の記録が {where} セクションに"
+            f"ありません（達成/未達のいずれかを、推奨は {habit['target_section']} へ書く）"
+        )
+    return out
 
 
 def main() -> int:
@@ -257,8 +495,11 @@ def main() -> int:
         sys.stderr.write(f"validate-journal-output: ファイルがありません: {path}\n")
         return 2
     try:
-        violations = validate(path, args.expected_number, args.expected_date)
-    except OSError as exc:
+        violations = validate(path, args.expected_number, args.expected_date, load_daily_habits())
+    except (OSError, UnicodeDecodeError) as exc:
+        # UnicodeDecodeError は OSError を継承しないため個別に拾う。
+        # 拾わないと非 UTF-8 ファイルが traceback + exit 1 となり、
+        # frontmatter が宣言する「1=違反あり / 2=読み込み不能」の契約が壊れる。
         sys.stderr.write(f"validate-journal-output: 読み込みに失敗しました: {exc}\n")
         return 2
 
