@@ -37,8 +37,8 @@ Failed to install: This plugin's marketplace entry is invalid: source: Invalid i
 ```
 
 そのためローカル marketplace は `marketplaces/local/plugins -> ../../plugins` の相対
-symlink を持ち、`source` を `./plugins/<name>` にしている (公式カタログ・`xl-skills` と
-同形)。symlink は生成物と一組で、`--check` が両方を検査する。
+symlink を持ち、`source` を `./plugins/<name>` にしている (公式カタログと同形)。
+symlink は生成物と一組で、`--check` が両方を検査する。
 
 **source がローカル実体を指していても、install は copy である。** 2026-08-11 実測:
 `~/.claude/plugins/cache/harness-local/<name>/<version>/` に 539 個の実ファイルが

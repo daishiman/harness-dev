@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
+import importlib.util
 import io
 import json
 import subprocess
@@ -13,7 +14,24 @@ import tarfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-NEVER_DISTRIBUTE = {"harness-creator", "prompt-creator", "plugin-dev-planner"}
+
+
+def _load_completeness_module():
+    """`validate-plugin-completeness.py` を恒久非配布 denylist の SSOT として import する。
+
+    NEVER_DISTRIBUTE を本 script でも再宣言すると、片方だけ更新されたときに
+    「bundle には入らないが marketplace には載る」(あるいはその逆) という
+    半端な状態が無音で成立する。ハイフンを含む file 名は通常の import 文で
+    読めないため importlib で読み込む (build-local-marketplace.py と同手法)。
+    """
+    path = ROOT / "scripts" / "validate-plugin-completeness.py"
+    spec = importlib.util.spec_from_file_location("_completeness_for_tenant_bundle", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+NEVER_DISTRIBUTE = set(_load_completeness_module().NEVER_DISTRIBUTE)
 
 
 def selected_plugins(tenant: dict, bundles: dict) -> list[str]:

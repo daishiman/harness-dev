@@ -35,6 +35,12 @@ FROZEN_PARTS = {"CHANGELOG.md", "changelog", "lessons-learned"}
 ALLOWLIST = {
     ".beads/config.yaml": "GitHub 上で現存する repository remote の外部識別子",
     "scripts/lint-legacy-plugin-name.py": "本 lint 自身 (deny パターン定義)",
+    "scripts/lint-marketplace-install-docs.py":
+        "本 lint が存在する理由である実際の事故 (plugin 改名で README の "
+        "install 導線が実体を失った) の歴史記述。新名へ書き換えると"
+        "「何が壊れたか」が消え、検査の動機が読めなくなる",
+    "tests/scripts-root/test_root__lint_marketplace_install_docs.py":
+        "上記 lint の回帰テスト docstring における同じ事故の歴史記述",
     "CONVENTIONS.md": "意味論境界ルールの旧名→新名対応の説明",
     "README.md": "改名移行手順 (旧 enabledPlugins キーの案内)",
     "plugins/harness-creator/skills/ref-skill-glossary/references/terms.md":

@@ -398,6 +398,16 @@ def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
             candidate = skill_dir / ref
         if not candidate.exists() and "/" not in ref and "." not in ref:
             candidate = plugin_root / "skills" / ref / "SKILL.md"
+        if not candidate.exists() and context and not ref.startswith("plugins/"):
+            # repo-root 配置の共有資産 (doc/notion-schema/*.schema.json など) を
+            # skill 相対で書いた ref。run-skill-feedback は SKILL.md 本文で
+            # 「repo-bundled 前提」と宣言済みだが、resolver が skill 相対しか
+            # 試さないため missing 扱いになり、その 1 件で plan-live-trials が
+            # plugin 全体に対して落ちていた。repo_root 内に収まることは
+            # _contained() が引き続き保証する。
+            repo_candidate = repo_root / ref
+            if repo_candidate.exists():
+                candidate = repo_candidate
         resolved = _contained(candidate, repo_root, ref)
         if context:
             try:

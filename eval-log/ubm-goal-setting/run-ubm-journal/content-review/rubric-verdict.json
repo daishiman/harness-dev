@@ -1,0 +1,51 @@
+{
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-journal",
+    "skill_md_sha256": "48e3692b64868fe0aff718d0d0b4eb315349391a39f4866be50807a36485db7d"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-ubm-journal-4 (focused combined content review の rubric 投影, incremental profile)",
+  "reviewed_at": "2026-08-18T09:40:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "構造規範 (FM/BD/PD/NM) を機械的に確認した範囲で満たす。name=run-ubm-journal は kebab + prefix 一致、description は『〜したいときに使う』型で動作詳細を含まない、SKILL.md は全 173 行 / frontmatter (1-58 行) を除く本文 115 行で BD の <=300 行を満たす。references/ が 4 ファイルあり resource-map.yaml が『どの Phase でどれを開くか』を索引しているため PD の要件を満たす。kind=run / prefix=run / effect=external-mutation / owner / since / last-audited / audit-trigger も揃う。version は SKILL.md / build-journal-context.py / validate-journal-output.py の 3 者とも 0.5.0 で drift 無し。",
+      "決定論 script と LLM 段の分離が規範どおり。採番・残日数・週報引き継ぎは build-journal-context.py が確定し、骨格検査は validate-journal-output.py が確定し、その間の判断だけを対話と journal-composer が担う。SKILL.md は『番号を自分で数えない・推測しない』を skill 側と agent 側の両方に書いており、決定論ゲートの越境が文書上で塞がれている。IN2 は実測で発火を確認した (--expected-number 999 → F04 / --expected-date 2026-08-19 → F05、正しい期待値では違反 0 件で exit 0)。",
+      "SSOT の置き方が明確で、破損時の挙動も 2 script で揃った。固定習慣は daily-habits.json が単一正本で 2 script が同一ファイルを読み、habit 1 件の形の検査 (label / target_section / keywords / search_scopes[].heading / search_scopes[].level) が両者で一致する。10 種の変異に対し build 側 10/10、validate 側 9/10 (id を要求しないため) が exit 2 で、traceback 付き exit 1 は再現しない。厳しい側 (build=Phase0) が先に立つ配置なので Phase0 を通った JSON が Phase5 で落ちることはない。search_scopes (機械可読・H01 の正本) と target_section (人間向け表示) の分離は再利用価値がある。",
+      "feedback_contract.criteria の verify_by 写像が実態と一致する。IN1 (script) は golden-sample と変異ファイルへの実行で、IN2 (script) は F04/F05 の発火で実測確認した。OUT1 (test) は plugin 内テスト 305 件が緑であることを確認した。criteria が検証手段に引きずられて空洞化しておらず、SKILL.md 本文の Phase 表・Key Rules と対応が取れている。",
+      "Gotchas 節が実際の事故から書かれている。write_mode=blocked での停止は実測で裏が取れ (別日見出しあり → blocked + 「別日 (2026-08-11) のジャーナル」、見出し無し → blocked + 「日付を判別できない内容」、いずれも番号は max+1 で既存番号を再利用しない)、UBM_VAULT_ROOT 未設定時の exit 2 と『stderr の 1 行目を必ず読む』指示も script の実挙動と一致する。",
+      "cr-ubm-journal-3 が rubric 側で挙げた 3 findings (section_body の括弧付き振り返り見出しによる silent な入替 / daily-habits.json 破損時の exit コード非対称 / search_scopes[].level の型未検査) は、いずれも実測で解消を確認した。特に 1 件目は、決定論 script が『LLM に推測させない』ために存在するのにその script 自身が見出しの当てはめを黙って推測していたという中心的な設計主張との衝突であり、除外語の追加ではなく warnings への可視化という構造修正で閉じられている。",
+      "X01 の SSOT が人手の約束から機械固定へ移った点を評価する。コメントは以前から『output-format.md と対で管理する』と宣言していたが導入時点で `{名前}` が漏れており、`- {名前}: 手伝ってくれた` が exit 0 で通っていた。実測: 現在は output-format.md の `{...}` 集合 8 件 (N / YYYY-MM-DD / journal_number / 何をしてもらったか / 分類 / 名前 / 番号 / 終了日) と BRACE_PLACEHOLDERS の差集合が空で、test_brace_placeholders_cover_output_format がこれを固定する。`GET /invoice/{id}` は依然通るため X01 の宣言目的 (テンプレの埋め忘れだけを捕まえる) も保たれている。",
+      "Y02 のコードフェンス穴が塞がった。実測: ```` ```\\n![[人生の究極の目的]]\\n``` ```` と `~~~` 版のいずれも Y02 で FAIL、素の transclusion は PASS。埋め込み判定の前処理を visible_text() に集約したことで、HTML コメントとフェンスという同クラスの入力が 1 か所で扱われている。"
+    ],
+    "negative_feedback": [
+      "[本レビューで検出し、コメントとテストで固定 — smell/low] visible_text() のフェンス除外は Y02 と H01 で根拠が異なるのに同じ理由づけで書かれていた。Y02 の『Obsidian が埋め込まない』はフェンスにも当てはまるが、H01 の判定根拠は『本文に痕跡が残るはず』であり、フェンスの中身は読者に見えるので『表示されない』では説明できない。実測: check_daily_habits はフェンス内だけの記録を H01『記録がありません』とする一方、素の箇条書きと引用ブロックは通す。fail-closed 側の過剰報告なので実害は小さく、フェンスに入るのが貼り付けたテンプレ・例である以上判断としては妥当だが、根拠が書かれていないと次の編集者が Y02 の理屈で逆向きに直しうる。H01 側へ本当の根拠と副作用を明記し、test_h01_treats_a_fenced_block_as_not_a_record で 4 分岐を固定した。",
+      "[本レビューで検出・未修正 — smell/low] インラインコードスパン `` `![[人生の究極の目的#🎯]]` `` は Y02 を通る (実測)。判定根拠としてはフェンスと同クラスだが、現実的な到達経路 (テンプレ・例の貼り付け) はフェンス側で起きるため、規則を足さず穴を明示して残す判断とした。",
+      "[本レビューで検証 — 欠陥ではない] team-lead が既知として挙げた Y01 のネスト tags 偽陽性は、実測すると `meta:\\n  tags:\\n    - review` で Y01 が発火する。Obsidian の frontmatter プロパティは top-level キーのみを解釈するため、ネストした tags を認めないのは正しい挙動であり修正不要と判断した。",
+      "[本レビューで検出し、同一 context 内で修正済み — medium] 上記の warnings 化が、正常系で必ず立つ偽陽性を 2 種生んでいた。(a) 週報の正式名 `## 【習慣目標（仕組みで動く土台）】` — 姉妹 skill run-ubm-goal-setting が週報の必須セクションとして検査している表記 (references/data-contract.md:344) — が部分一致 fallback を通り、毎回「別の期の内容を読んでいないか確認してください」を出した。(b) GOAL_KEYS の別表記「2ヶ月目標」は正本テンプレ (output-format.md:34 は `### 3ヶ月目標`) に存在しないため、「見つかりませんでした」が毎回出た。合成 vault で両方を再現。SKILL.md が warnings を『対話の切り口として使う』と規定している以上、常時鳴る警報は真の warning を希釈し、警告可視化という修正の意図そのものを削ぐ。section_body の heading に表記ゆれのタプルを許して正式名を完全一致側へ入れ、extract_journal_goals の見出し単位 note を階層単位で保留する形へ修正し、回帰テスト 4 件を追加した (pytest 305 passed)。修正後の同 vault の warnings は真の 3 本のみ。",
+      "[検証範囲の明示 — 未検証] OUT2 (verify_by: live-trial) は未検証である。本 rubric 投影の根拠は静的読解と scratchpad 上へ copytree した skill ツリーに対する script 実行のみで、対話の自走完遂も Daily 配下へのジャーナル実生成も観測していない。content-review-protocol §位置づけ のとおり behavioral claim の受け入れは Gate D (run-skill-live-trial) の実走証拠のみを根拠とし、本 verdict をその代替に使ってはならない。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は 1 context 内で行った focused combined review (incremental profile) の結果を content-review-protocol §incremental の規定どおり rubric 側へ投影したものであり、elegance-verdict.json と同一の finding 集合に基づく。採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはおらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (name / description / 本文行数 / references の存在 / kind・prefix・owner 等の frontmatter / version 整合) と、KL 相当の『決定論 script と LLM 段の分離』『feedback 配線』に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件 (本レビューが検出した medium 1 件は同一 context 内で修正し、回帰テスト付きで解消を実測。残る low 2 件は fail-closed 側の過剰報告と到達経路の乏しい残穴で、根拠と副作用をコメント・テストで固定した) であるため PASS とする。レビュー中に team-lead が並行投入した validate-journal-output.py の 2 件 (BRACE_PLACEHOLDERS への `名前` 追加と機械固定テスト、visible_text() によるフェンス除外) も同 iteration 内で実測して評価に含めた。PASS の射程は design claim に限り、OUT2 の behavioral claim は Gate D で別途要証である。"
+}

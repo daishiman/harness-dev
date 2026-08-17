@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # /// script
 # name: ubm-write-path-guard
-# version: 0.2.0
+# version: 0.3.0
 # purpose: UBM_VAULT_ROOT 配下への Write|Edit|MultiEdit を PreToolUse で検査し、目標設定/
-#          保存・Templates/Daily.md の embed 更新・各 vault が自身の scope-protection.md 等で
+#          保存・Templates/Daily.md の embed 更新・02_Configs/Daily/ の日次ジャーナル生成・
+#          各 vault が自身の scope-protection.md 等で
 #          明示的に書込許可している領域(05_Project/ 全体・.claude/skills 等の開発領域)以外の
 #          vault 書込を fail-closed(exit2)で阻む。読み取り専用ソースとして保護すべきなのは
 #          01_Notes/・02_Configs/(Daily.md除く)・03_Sources/・logs/・.obsidian/ 等、
@@ -27,6 +28,7 @@ guard は UBM_VAULT_ROOT 配下への Write|Edit|MultiEdit のみを検査対象
   - 05_Project/  (UBM目標設定に限らず、各種プロジェクト成果物の出力先全般)
   - .claude/skills/ .claude/agents/ .claude/commands/ .claude/rules/ .claude/prompts/
     (スキル・エージェント・コマンド等の開発領域)
+  - 02_Configs/Daily/  (run-ubm-journal が生成する日次ジャーナル YYYY-MM-DD.md)
   - 02_Configs/Templates/Daily.md  (embed 参照更新)
 のみ許可し、それ以外の vault パス（01_Notes/・02_Configs/の他ファイル・03_Sources/・
 logs/・.obsidian/ 等、移植元由来のノート/設定領域）への書込を fail-closed で阻む。
@@ -43,6 +45,7 @@ GUARDED_TOOLS = {"Write", "Edit", "MultiEdit"}
 # vault-root 相対で許可するパス
 ALLOWED_PREFIXES = (
     "05_Project/",
+    "02_Configs/Daily/",  # 日次ジャーナル (run-ubm-journal) の出力先
     ".claude/skills/",
     ".claude/agents/",
     ".claude/commands/",
@@ -109,9 +112,10 @@ def main() -> int:
     sys.stderr.write(
         "ubm-write-path-guard: vault 配下の保護パスへの書込を阻止しました。\n"
         f"  対象: {rel}\n"
-        "  許可: 05_Project/ 配下 / .claude/skills|agents|commands|rules|prompts/ 配下"
+        "  許可: 05_Project/ 配下 / 02_Configs/Daily/ 配下"
+        " / .claude/skills|agents|commands|rules|prompts/ 配下"
         " / 02_Configs/Templates/Daily.md のみ。\n"
-        "  01_Notes/・02_Configs/(Daily.md除く)・03_Sources/・logs/・.obsidian/ 等、"
+        "  01_Notes/・02_Configs/(Daily/・Templates/Daily.md 除く)・03_Sources/・logs/・.obsidian/ 等、"
         "移植元由来の領域は読み取り専用ソースです (フォーク・複製・改変禁止)。\n"
     )
     return 2

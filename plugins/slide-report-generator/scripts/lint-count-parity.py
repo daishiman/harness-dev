@@ -387,6 +387,11 @@ _SCAN_GLOBS = (
     # `.claude-plugin/plugin.json` の `97 slideType` が本 lint をすり抜けて生き残った。
     "agents/**/*.md",
     ".claude-plugin/*.json",
+    # .md / .json 以外は数字が腐らないという前提も同じく誤りだった。skill 私有の
+    # references/*.yaml (resource-map.yaml 等) は LLM が読む散文を値に持ち、実際に
+    # ref-diagram-system の「実在ビルダー全 37 種」が実測 38 とずれたまま生き残った。
+    "references/**/*.yaml",
+    "skills/**/*.yaml",
 )
 
 

@@ -67,7 +67,8 @@ def test_block_sources_dir(tmp_path: Path):
 
 def test_block_vault_config(tmp_path: Path):
     vault = str(tmp_path)
-    assert run(w(f"{vault}/02_Configs/Daily/2026-07-05.md"), vault) == 2
+    # 02_Configs/ は既定で保護。許可は Daily/ 配下と Templates/Daily.md のみ (下の 2 テスト参照)
+    assert run(w(f"{vault}/02_Configs/scope-protection.md"), vault) == 2
 
 
 def test_allow_outside_vault(tmp_path: Path):
@@ -138,6 +139,19 @@ def test_multiedit_allowed_on_goal_path(tmp_path: Path):
         },
     }
     assert run(payload, vault) == 0
+
+
+def test_allow_daily_journal(tmp_path: Path):
+    """run-ubm-journal の出力先 02_Configs/Daily/ は許可する。"""
+    vault = str(tmp_path)
+    assert run(w(f"{vault}/02_Configs/Daily/2026-08-18.md"), vault) == 0
+
+
+def test_block_other_configs_path(tmp_path: Path):
+    """Daily/ と Templates/Daily.md 以外の 02_Configs/ は引き続きブロックする。"""
+    vault = str(tmp_path)
+    assert run(w(f"{vault}/02_Configs/settings.md"), vault) == 2
+    assert run(w(f"{vault}/02_Configs/Templates/Weekly.md"), vault) == 2
 
 
 def test_manifest_matcher_matches_guarded_tools():

@@ -1,0 +1,42 @@
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "ref-diagram-system",
+    "skill_md_sha256": "0a2364cf89a0bfc58f8f7e66ad16efa42337098c3e3e84eb5d2b9b9278b922be"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator (focused combined review)",
+  "reviewed_at": "2026-08-17T00:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "inner",
+    "criteria_evaluated": [
+      "FM-001..005",
+      "BD-001..004",
+      "NM-001..003",
+      "PD-001",
+      "RG-001"
+    ],
+    "positive_feedback": [
+      "render-findings-score.py を L0(ref-skill-design-rubric)+L2(assign-skill-design-evaluator) 合成で実行し score=100 / threshold=80 / passed=true / findings=[] を得た。",
+      "初回採点 (skill_md_sha256=aa2e9b052e5af3946ef2524c234bc422995581975be02b484f3e2d3bd0ecfe67) は score=90 / findings=[BD-002 missing '## Gotchas'] だった。本文中に散在していた実在の落とし穴 5 件 (references/ の二重解決・resource-map の md/yaml 取り違え・D14-D23 の routing 欠落・buildNeutralComparison の CANVAS 非経由・値の二重管理禁止) を '## Gotchas' 節へ集約して解消。内容は本文と実装コードで裏取り済みで、節の見出しだけを足す Goodhart 緑化ではない。",
+      "NM-001 (name=ディレクトリ名一致) / NM-002 (prefix ref 準拠) / FM-003 (description の trigger は『引きたいとき』『参照したいとき』の 2 個で 2..3 に収まる) はいずれも変更前後で維持。",
+      "PD-001: 本文 149 行に対し references/ に 5 ファイル実在 (resource-map.yaml / diagram-type-catalog.md / connector-incidence.md / label-japanese.md / material-lint.md) で progressive disclosure 充足。"
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "stop-hook",
+    "next_action": "none"
+  },
+  "notes": "決定論採点: rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d, composition_hash=sha256:e2f9a3d9439229aed437def874e8ec908b41f5437921c6b05be2d587a77f1f52, rubric_version=1.3.0, score=100, threshold=80, passed=true, findings=0。再評価は規定の 1 回のみ (初回 90 -> 改訂後 100)。契機は validate-frontmatter.py が kind=ref に要求する source / source-tier の欠落補完で、その検証の過程で BD-002 を含む既存欠陥を検出・是正した。"
+}

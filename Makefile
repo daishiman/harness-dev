@@ -42,8 +42,8 @@ native-surfaces-pr-ready:
 	git status --short -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
-## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + company-master vendored 検証を実行する
-lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored
+## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + company-master vendored + ローカル marketplace drift 検証を実行する
+lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored local-marketplace install-docs distributable-ssot
 	python3 scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
@@ -66,6 +66,20 @@ lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-
 	python3 scripts/lint-skill-name.py --skills-dir plugins/system-spec-harness/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/system-spec-harness/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/system-spec-harness/skills
+	# 以下4 plugin は distributable: true 化で公開 marketplace の配布対象になったため
+	# skills lint の被覆へ編入した (lint-plugin-lint-coverage.py が UNCOVERED を検出)
+	python3 scripts/lint-skill-name.py --skills-dir plugins/dev-graph/skills
+	python3 scripts/lint-skill-description.py --skills-dir plugins/dev-graph/skills
+	python3 scripts/validate-frontmatter.py --skills-dir plugins/dev-graph/skills
+	python3 scripts/lint-skill-name.py --skills-dir plugins/slide-report-generator/skills
+	python3 scripts/lint-skill-description.py --skills-dir plugins/slide-report-generator/skills
+	python3 scripts/validate-frontmatter.py --skills-dir plugins/slide-report-generator/skills
+	python3 scripts/lint-skill-name.py --skills-dir plugins/spec-drift-guardian/skills
+	python3 scripts/lint-skill-description.py --skills-dir plugins/spec-drift-guardian/skills
+	python3 scripts/validate-frontmatter.py --skills-dir plugins/spec-drift-guardian/skills
+	python3 scripts/lint-skill-name.py --skills-dir plugins/system-dev-planner/skills
+	python3 scripts/lint-skill-description.py --skills-dir plugins/system-dev-planner/skills
+	python3 scripts/validate-frontmatter.py --skills-dir plugins/system-dev-planner/skills
 	python3 scripts/lint-plugin-lint-coverage.py
 	# repo 全域の全 test が CI のテスト実行で到達することを fail-closed 検査 (elegant-review 2026-06-30)
 	python3 scripts/lint-test-discovery-coverage.py
@@ -114,6 +128,28 @@ prompt-contract-drift:
 ## company-master-vendored: company-master の scripts が外部依存ゼロ(空 vendor が正常)か機械検証
 company-master-vendored:
 	python3 scripts/lint-company-master-vendored-deps.py
+
+## local-marketplace: marketplaces/local/ が plugins/ の現状と一致するか fail-closed 検査
+##   公開 marketplace は distributable:false を載せられない (MK-004) ため、非配布 plugin を
+##   手元の Claude Code へ install する唯一の経路がローカル marketplace になる。version bump や
+##   plugin 追加のたびに drift し、しかも誰も気づかないまま install 不能になっていたため lint に組込む。
+##   赤化したら `python3 scripts/build-local-marketplace.py` で再生成する。
+local-marketplace:
+	python3 scripts/build-local-marketplace.py --check
+
+## install-docs: README の install 導線 (marketplace add のリポジトリ名・install する plugin 名) が
+##   実体と一致するか fail-closed 検査。リポジトリ改名 (manju/skills → daishiman/harness-dev) や
+##   plugin 改名 (旧名から harness-creator へ) の際に README が取り残され、
+##   「PR をマージしても marketplace に反映されない」と見える事故の恒久再発防止器。
+install-docs:
+	python3 scripts/lint-marketplace-install-docs.py
+
+## distributable-ssot: distributable の真偽が sidecar (references/package-contract.json) と
+##   manifest (.claude-plugin/plugin.json) で食い違っていないか fail-closed 検査。
+##   解決順は sidecar-first なので、manifest だけを直しても無音で無視され
+##   「公開したのに marketplace に載らない」事故が再発する。その温床を機械遮断する。
+distributable-ssot:
+	python3 scripts/lint-distributable-ssot.py
 
 ## config-version-lock: 焼き込みconfig (*.default.json / *.fixed.json) を変更した後に lockfile を再生成する
 ##   version bump 漏れ / marketplace 不一致は書込みを拒否する (真因の papering over を防ぐ fail-closed)。
