@@ -157,8 +157,8 @@ required-primary（北原孝彦のコンサルティング）の全公開動画�
 無人（host scheduler が呼ぶ one-shot 本体）:
 
 ```bash
-python3 plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py \
-  --registry plugins/ubm-goal-setting/knowledge/youtube-registry.json \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py \
+  --registry ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/youtube-registry.json \
   --channel <handle> \
   --source-out "$UBM_VAULT_ROOT/05_Project/UBM/YouTube" \
   --mode sync
@@ -181,9 +181,9 @@ scheduler の cron 設定例・retry/alert・lease の確認は [`RUNBOOK.md`](.
 6 カテゴリ knowledge と `knowledge-relation-extractor`（C08）の根拠付き辺から、依存グラフを決定論再生成・検証します。
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py \
-  --knowledge-dir plugins/ubm-goal-setting/knowledge \
-  --graph-out plugins/ubm-goal-setting/knowledge/knowledge-graph.json
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/validate-knowledge-graph.py \
+  --knowledge-dir ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge \
+  --graph-out ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/knowledge-graph.json
 ```
 
 参照整合・self-loop 禁止・`depends_on` の DAG 非循環・evidence≥1・confidence 0..1・review_status 必須を検査し、PASS 時のみ `knowledge-graph.json` を書きます（exit 0=OK / 1=違反 / 2=usage）。
@@ -195,19 +195,19 @@ python3 plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py \
 index 生成:
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/index-harness-artifact-graph.py \
   --plan-glob "plugin-plans/ubm-goal-setting/*" \
-  --plugin-root plugins/ubm-goal-setting \
-  --out plugins/ubm-goal-setting/knowledge/harness-artifact-graph.json
+  --plugin-root ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting} \
+  --out ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/harness-artifact-graph.json
 ```
 
 consult（書込なし）:
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/consult-harness-artifact-graph.py \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/consult-harness-artifact-graph.py \
   --topic "youtube ingest 全量性" \
-  --knowledge-graph plugins/ubm-goal-setting/knowledge/knowledge-graph.json \
-  --harness-artifact-graph plugins/ubm-goal-setting/knowledge/harness-artifact-graph.json \
+  --knowledge-graph ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/knowledge-graph.json \
+  --harness-artifact-graph ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/harness-artifact-graph.json \
   --query-type local --depth 2
 ```
 

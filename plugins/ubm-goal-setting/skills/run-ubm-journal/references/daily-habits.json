@@ -1,0 +1,54 @@
+{
+  "description": "毎日必ずヒアリングする固定習慣。週報の【習慣目標】(週ごとに変わる4群) とは別軸で、日常化したい不変の項目をここに置く。build-journal-context.py が context へ載せ、validate-journal-output.py が記録漏れ (H01) を検査する。項目を増減したいときはこのファイルだけを編集する。",
+  "version": "1.0.0",
+  "habits": [
+    {
+      "id": "grid-note",
+      "label": "Gridノートを書いた",
+      "natural_question": "今日のGridノート、どのタイミングで書きました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "unmet_signal": "書いた時刻・場面が出てこない / 「まだ」「あとで」「今から」が返る",
+      "keywords": ["Gridノート", "グリッドノート", "gridノート"]
+    },
+    {
+      "id": "sleep-by-23",
+      "label": "23時以内に就寝した",
+      "natural_question": "昨日は何時に布団に入りました？",
+      "target_section": "【時間のジャーナル】現状を確認する",
+      "unmet_signal": "23:00 より後の時刻が出る / 時刻を答えられない",
+      "keywords": ["就寝", "寝た", "布団", "睡眠", "床に就"]
+    },
+    {
+      "id": "stretch",
+      "label": "ストレッチをした",
+      "natural_question": "体を動かす時間は取れました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "unmet_signal": "ストレッチ・運動の言及がない / 「時間がなかった」が返る",
+      "keywords": ["ストレッチ", "運動", "体を動か", "柔軟"]
+    },
+    {
+      "id": "no-unplanned-video",
+      "label": "決められた時間以外に動画等を見なかった",
+      "natural_question": "今日、予定していなかった時間に画面を見てしまった場面はありました？",
+      "target_section": "【禁止事項】(守れた/破った) + 【時間のジャーナル】効果性を評価する",
+      "unmet_signal": "動画・SNS閲覧・スマホの言及があり、それが計画外の時間帯だった",
+      "keywords": ["動画", "YouTube", "ユーチューブ", "視聴", "スマホ", "画面"]
+    },
+    {
+      "id": "journal",
+      "label": "ジャーナルを書いた",
+      "natural_question": "（本スキルの実行そのものが該当。何時から振り返りを始めたか）",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "unmet_signal": "前日分のジャーナルが存在しない (build-journal-context.py の previous_journal で判定)",
+      "keywords": ["ジャーナル", "振り返り"]
+    },
+    {
+      "id": "sns-post",
+      "label": "SNSに投稿した",
+      "natural_question": "今日は何を発信しました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "unmet_signal": "投稿の言及がない / 「明日まとめて」が返る",
+      "keywords": ["SNS", "投稿", "発信", "X(", "Twitter", "ツイート", "Instagram", "Facebook", "note"]
+    }
+  ]
+}

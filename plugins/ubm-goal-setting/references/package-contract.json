@@ -6,10 +6,12 @@
       "run-ubm-goal-setting",
       "run-ubm-knowledge-sync",
       "run-ubm-youtube-ingest",
-      "run-ubm-consult"
+      "run-ubm-consult",
+      "run-ubm-journal"
     ],
     "agents": [
       "info-collector",
+      "journal-composer",
       "output-formatter",
       "goal-reviewer",
       "phase3-coordinator",
@@ -21,19 +23,23 @@
       "ubm-goal-setting",
       "ubm-knowledge-sync",
       "ubm-youtube-ingest",
-      "ubm-consult"
+      "ubm-consult",
+      "ubm-journal"
     ],
     "hooks": [
       "ubm-write-path-guard.py"
     ]
   },
   "distribution": {
-    "distributable": false,
-    "bundle_targets": [],
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
     "category": "productivity",
     "tags": [
       "goal-setting",
       "knowledge-sync",
+      "journal",
       "obsidian"
     ],
     "vault_root_env": "UBM_VAULT_ROOT"

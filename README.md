@@ -17,7 +17,17 @@
 
 # Part 1: インストール手順
 
-このリポジトリは **GitHub の marketplace から直接インストール**します。リポジトリを手元に clone する必要はありません。
+このリポジトリの plugin を入れる入口は **2 つ**あります。用途で選んでください。
+
+| 入口 | 入る plugin | clone | 手順 |
+|---|---|---|---|
+| **公開 marketplace** (`skills`) | 配布可の 14 個 | 不要 | Step 1〜3 |
+| **ローカル marketplace** (`harness-local`) | **全 22 個**（非配布を含む） | 必要 | Step 4 |
+
+`harness-creator` / `prompt-creator` / `ubm-goal-setting` / `slide-report-generator` などの
+**開発・個人利用向け plugin は公開 marketplace に載りません**。これは事故防止の意図的な設計で、
+`.claude-plugin/marketplace.json` に `distributable: false` の plugin を書くと
+`validate-plugin-completeness.py` が fail-closed で拒否します。これらを使うには Step 4 へ進んでください。
 
 > **marketplace (マーケットプレイス)**: plugin が並んでいるお店のような場所。`skills` 自体が 1 つのお店で、その中に複数の plugin が並んでいます。
 
@@ -37,10 +47,14 @@ claude --version
 Claude Code セッションを起動し、以下を打ちます。
 
 ```text
-/plugin marketplace add manju/skills
+/plugin marketplace add daishiman/harness-dev
 ```
 
 これで「skills というお店」が Claude Code に登録されます。
+
+> 📌 **リポジトリ名と marketplace 名は別物です。** `marketplace add` に渡すのは
+> **リポジトリ名** `daishiman/harness-dev`、`install` の `@` の後ろに付けるのは
+> **marketplace 名** `skills` (`.claude-plugin/marketplace.json` の `name`) です。
 
 ✅ **確認**:
 
@@ -54,12 +68,14 @@ Claude Code セッションを起動し、以下を打ちます。
 
 用途に合わせて選んでください。**まずは最小構成から始めることをおすすめします。**
 
-### 2a. 最小構成 (Skill を作りたいだけ)
+### 2a. 最小構成 (やりたいことを Skill 化する入口だけ)
 
 ```text
-/plugin install skill-creator@skills
-/plugin install prompt-creator@skills
+/plugin install skill-intake@skills
 ```
+
+> ⚠️ Skill 本体を作る `harness-creator`、プロンプトを作る `prompt-creator` は**非配布**のため
+> ここでは入りません。**Step 4** のローカル marketplace 経由で入れてください。
 
 ### 2b. 標準構成 (品質検査も使う)
 
@@ -79,7 +95,8 @@ Claude Code セッションを起動し、以下を打ちます。
 /plugin install skills-full@skills
 ```
 
-> **bundle (バンドル)**: 複数の plugin を 1 行でまとめて入れるためのセット。`skills-minimal` / `skills-intake` などもあります。
+> **bundle (バンドル)**: 複数の plugin を 1 行でまとめて入れるためのセット。現在あるのは
+> `skills-full` (配布可能な全 plugin) と `skills-intake` (skill 作成の入口だけ) の 2 つです。
 
 ✅ **確認**:
 
@@ -94,20 +111,89 @@ Claude Code セッションを起動し、以下を打ちます。
 Claude Code セッション内で以下を打ち、補完候補に出ることを確認します。
 
 ```text
-/skill-creator:run-skill-create
+/skill-intake:run-skill-intake
 ```
 
 実行が始まれば成功。一旦キャンセル (`Ctrl-C` または「やめる」と返答) して構いません。
 
-## Step 4: アップデート / アンインストール
+## Step 4: 全 plugin を入れる (ローカル marketplace)
+
+非配布 plugin (`harness-creator` `prompt-creator` `plugin-dev-planner` `system-dev-planner`
+`dev-graph` `slide-report-generator` `spec-drift-guardian` `ubm-goal-setting`) は
+公開 marketplace に載らないため、**手元の clone を 2 枚目の marketplace として登録**します。
+配布ではなく、自分の clone を Claude Code へ束ねて見せるだけです。
+
+> ⚠️ **install は copy です。** source がローカル実体を指していても、実体は
+> `~/.claude/plugins/cache/harness-local/<name>/<version>/` へコピーされ、
+> `installed_plugins.json` に commit SHA が固定されます。**clone 側を編集しても
+> install 済み plugin には反映されません** (2026-08-11 実測)。反映手順は 4-4 参照。
+
+### 4-1. clone して marketplace を生成する
+
+```bash
+git clone <this-repo> harness && cd harness
+python3 scripts/build-local-marketplace.py
+```
+
+`marketplaces/local/.claude-plugin/marketplace.json` に**全 22 plugin** が書き出されます。
+
+### 4-2. 絶対パスで登録する
+
+`marketplace add` にはリポジトリ名ではなく `marketplaces/local` の**絶対パス**を渡します。
+
+```bash
+python3 -c "import pathlib; print(pathlib.Path('marketplaces/local').resolve())"
+```
+
+出力されたパスを使って、Claude Code セッション内で:
 
 ```text
-# アップデート
+/plugin marketplace add <出力された絶対パス>
+/plugin marketplace list
+```
+
+`harness-local` が表示されれば成功。
+
+### 4-3. インストールする
+
+サフィックスは `@skills` ではなく **`@harness-local`** です。
+
+```text
+/plugin install harness-creator@harness-local
+/plugin install ubm-goal-setting@harness-local
+```
+
+### 4-4. 変更を反映する
+
+plugin を編集したら **`version` を上げてから**再生成します。install は copy でありキャッシュが
+version 単位のため、version 据え置きの編集は install 側へ届きません。
+
+```bash
+python3 scripts/build-local-marketplace.py --check   # ズレていれば exit 1
+python3 scripts/build-local-marketplace.py           # 再生成
+```
+
+そのうえで Claude Code セッション内で:
+
+```text
+/plugin marketplace update harness-local
+/plugin update <name>@harness-local
+```
+
+`make lint` がこの `--check` を実行するため、再生成漏れは CI で赤化します。
+
+## Step 5: アップデート / アンインストール
+
+```text
+# アップデート (公開)
 /plugin marketplace update skills
-/plugin update skill-creator@skills
+/plugin update skill-intake@skills
+
+# アップデート (ローカル) — clone を git pull した後に
+/plugin marketplace update harness-local
 
 # アンインストール
-/plugin uninstall skill-creator@skills
+/plugin uninstall skill-intake@skills
 /plugin marketplace remove skills
 ```
 
@@ -116,9 +202,13 @@ Claude Code セッション内で以下を打ち、補完候補に出ること�
 | 症状 | 対処 |
 |---|---|
 | `/plugin` コマンドが効かない | Claude Code のバージョンが古い可能性。`claude --version` を確認し最新化 |
-| `marketplace add` で `not found` | リポジトリ名のスペルを確認。`manju/skills` が正しい |
-| `install` で `authentication failed` | private リポジトリの可能性。`gh auth login` でログイン |
+| `marketplace add` で `not found` | リポジトリ名を確認。`daishiman/harness-dev` が正しい (旧名 `manju/skills` は存在しません) |
+| `install` で `authentication failed` | `gh auth login` でログイン。現在このリポジトリは public です |
+| PR をマージしたのに新しい plugin が出てこない | ① `/plugin marketplace update skills` で目録を取り直す ② それでも出ないなら**非配布 plugin**。`.claude-plugin/marketplace.json` に載っているか確認し、無ければ **Step 4** 経由 |
 | Skill が補完に出ない | `/plugin list` で `installed` か確認、無ければ再 install |
+| 入れたい plugin が一覧に出ない | 非配布 plugin の可能性。**Step 4** のローカル marketplace 経由で入れる |
+| `source: Invalid input` で install 失敗 | `marketplaces/local/plugins` symlink が壊れている。`build-local-marketplace.py` を再実行 |
+| clone を編集したのに install 側が古い | `build-local-marketplace.py` で再生成し `/plugin marketplace update harness-local` |
 
 ---
 
@@ -333,7 +423,7 @@ plugins/my-plugin/
 }
 ```
 
-Claude Code は `/plugin marketplace add manju/skills` を実行すると、この `marketplace.json` を読み、`plugins/` 配下から実体をキャッシュにコピーします。
+Claude Code は `/plugin marketplace add daishiman/harness-dev` を実行すると、この `marketplace.json` を読み、`plugins/` 配下から実体をキャッシュにコピーします。
 
 ## 4.4 `.claude/` と `~/.claude/` の役割
 

@@ -105,6 +105,34 @@ jobs:
       - name: validate plugin completeness (marketplace + bundles registration)
         run: python3 scripts/validate-plugin-completeness.py
         continue-on-error: false
+      # version bump 忘れの fail-closed 検査。install はコピーで version がキャッシュキーに
+      # なるため、plugin の中身を変えても version を据え置くと install 側は永久に古いまま。
+      # これまで --check は scripts/run-ci-checks.sh (pre-push) にしか無く、GitHub Web の
+      # merge など pre-push を通さない経路では素通りしていた。「PR をマージしたのに
+      # 反映されない」の恒久再発源なのでここで塞ぐ (--check は書き込まない)。
+      - name: validate plugin release (version bump 忘れ)
+        run: python3 scripts/build-plugin-release.py --check
+        continue-on-error: false
+      # ローカル marketplace (marketplaces/local/) の drift を fail-closed 検査。
+      # 公開 marketplace は distributable:false を載せられない (MK-004) ため、非配布 plugin を
+      # install する唯一の経路がここになる。version bump のたびに drift し、誰も気づかないまま
+      # install 不能になっていた (2026-08-17 に ubm-goal-setting 0.3.0 で実際に発生)。
+      - name: validate local marketplace (非配布 plugin の install 経路が最新か)
+        run: python3 scripts/build-local-marketplace.py --check
+        continue-on-error: false
+      # README の install 導線 (marketplace add のリポジトリ名 / install する plugin 名) が
+      # 実体と一致するか fail-closed 検査。リポジトリ改名 manju/skills → daishiman/harness-dev の際に
+      # README が取り残され、「PR をマージしても marketplace に反映されない」と見える事故が実際に起きた。
+      - name: lint marketplace install docs (README 導線 ↔ 実体)
+        run: python3 scripts/lint-marketplace-install-docs.py
+        continue-on-error: false
+      # distributable の真偽が sidecar (references/package-contract.json の distribution) と
+      # manifest (.claude-plugin/plugin.json 直下) で食い違っていないか fail-closed 検査。
+      # harness_metadata() は sidecar-first で解決するため、manifest だけを true に直しても
+      # 無音で無視され「公開したのに載らない」事故になる。その分裂状態を機械遮断する。
+      - name: lint distributable ssot (sidecar ↔ manifest の食い違い)
+        run: python3 scripts/lint-distributable-ssot.py
+        continue-on-error: false
       - name: validate-plan-coverage self-test (計画↔実体 completeness 照合器の分岐検査)
         run: python3 plugins/harness-creator/scripts/validate-plan-coverage.py --self-test
         continue-on-error: false
@@ -289,10 +317,11 @@ jobs:
         run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml
         continue-on-error: false
       # ── extract-system-blueprint conformance (harness-creator 仕様準拠) ──
-      # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) だが
-      #   marketplace 登録は manual-user-gated のため lint-plugin-lint-coverage.py の
-      #   required 集合 (marketplace 起点) にはまだ入らない。配布除外と品質検査は
-      #   独立した関心事なので conformance lint をここで明示配線する。
+      # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) で
+      #   .claude-plugin/marketplace.json に登録済みのため lint-plugin-lint-coverage.py の
+      #   required 集合 (marketplace 起点) に入っている。ここの明示配線は被覆メタ検査と
+      #   二重になるが、配布可否が将来 false へ変わっても品質検査だけは落ちないよう
+      #   独立配線として残す (配布除外と品質検査は独立した関心事)。
       # per-plugin pytest (plugins/extract-system-blueprint/tests) は
       #   harness-creator-kit-ci.yml の「Run plugin behavior tests (pytest, per-plugin)」
       #   walk が plugins/**/test_*.py を全被覆するため本 workflow では重複させない。

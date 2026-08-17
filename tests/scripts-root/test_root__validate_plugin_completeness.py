@@ -591,7 +591,10 @@ def test_dev_graph_native_manifest_and_sidecar_are_separated():
     )
 
     assert {"distributable", "entry_points", "depends_on"}.isdisjoint(manifest)
-    assert contract["distribution"]["distributable"] is False
+    # 本テストの主旨は「manifest に harness 固有キーを混ぜず sidecar 側へ寄せる」分離の固定。
+    # distributable の真偽そのものは公開方針の変数で、2026-08-17 に公開 marketplace へ
+    # 載せる決定をして True へ移した (旧: False)。分離が保たれていることが要点。
+    assert contract["distribution"]["distributable"] is True
     assert contract["depends_on"] == ["system-spec-harness", "system-dev-planner"]
     actual = {
         "skills": sorted(path.parent.name for path in plugin_dir.glob("skills/*/SKILL.md")),
@@ -753,9 +756,17 @@ def test_real_internal_creator_plugins_are_not_distributed():
     marketplace = MOD.load_marketplace_entries()
     bundle_members = MOD.load_bundle_members()
     for name in ("harness-creator", "prompt-creator"):
-        manifest_path = ROOT / "plugins" / name / ".claude-plugin" / "plugin.json"
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        assert manifest["distributable"] is False
+        # 宣言がどのファイルにあるかではなく、harness_metadata() が解決する実効値を見る。
+        # manifest 直書きを assert すると、sidecar へ寄せる DS-002 の是正で赤化するうえ、
+        # sidecar が True へ漂流しても manifest が False なら緑のままという逆転が起きる。
+        plugin_dir = ROOT / "plugins" / name
+        manifest = json.loads(
+            (plugin_dir / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        contract, err = MOD.load_package_contract(plugin_dir)
+        assert err is None, err
+        meta = MOD.harness_metadata(manifest, contract)
+        assert meta["distributable"] is False
         assert name not in marketplace
         assert name not in bundle_members
 
