@@ -1,6 +1,6 @@
 ---
 name: run-ubm-journal
-description: 日次ジャーナルを作りたいとき、今日やったことを会話で振り返りながら Obsidian の Daily へ構造化して書き出したいときに使う。
+description: 日次ジャーナルを作りたいとき、今日やったことを会話で振り返りながら Obsidian の Daily へ構造化した新規ファイルを生成したいときに使う。
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[YYYY-MM-DD]"
@@ -41,7 +41,7 @@ feedback_contract:
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-journal-output.py が保存前に骨格17ブロック・目標4階層・3ジャーナル×3小節・未置換プレースホルダを検証し違反0件であることを確認する。
+      text: validate-journal-output.py が保存前に骨格15ブロック・目標4階層・3ジャーナル×3小節・未置換プレースホルダを検証し違反0件であることを確認する。
       verify_by: script
     - id: IN2
       loop_scope: inner
@@ -96,7 +96,12 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-contex
 - 対象日は引数 `$ARGUMENTS` があればそれ、無ければ **今日**（ファイル日付＝見出し日付＝振り返る日）。
 - `journal_number` をそのまま使う。**番号を自分で数えない・推測しない。**
 - `warnings` は対話の切り口として使う（例: 1年目標の期間満了、期報の期間ズレ、当日タスク未検出）。
-- `is_regeneration: true` なら既存ファイルの更新であることをユーザーへ伝えてから進める。
+- `existing_file.write_mode` を**必ず先に見る**。ジャーナルは Write で全置換されるため、
+  ここを飛ばすと利用者の既存ファイルが消える。
+  - `new`: そのまま新規作成して進む。
+  - `regenerate`: 同じ日のジャーナルを作り直す。番号を維持し、更新であることを伝えてから進む。
+  - `blocked`: **Write せず停止する。** 対象ファイルに別日の内容が入っている。
+    どうするか（別名で作る／既存を退避する／中止する）を必ずユーザーへ確認してから動く。
 
 ## Phase1-3: 対話
 

@@ -19,7 +19,7 @@
 # ///
 """日次ジャーナルの文脈解決 — 通し番号・残日数・週報引き継ぎを決定論で確定する。
 
-番号は「前回ジャーナルから読み取って +1」が仕様であるため、Daily/ 配下の全ファイルから
+番号は「Daily 配下の既存ジャーナルの最大値 +1」が仕様であるため、Daily/ 配下の全ファイルから
 `# No.<数字> - ジャーナル（YYYY-MM-DD）` を走査して最大値を取り、対象日のファイルが既に
 番号を持つ場合はそれを再利用する (再生成で番号が飛ばない)。
 
@@ -302,6 +302,45 @@ def load_daily_habits() -> list[dict[str, Any]]:
     return habits
 
 
+def classify_existing_file(same_day: dict[str, Any] | None, target: date) -> dict[str, Any]:
+    """対象日のファイルが既にある場合の「書き込んで安全か」を判定する。
+
+    ジャーナルは毎回 Write で全置換されるため、既存ファイルの扱いを誤ると
+    利用者の実データが消える。実際に 2026-08-17.md には見出し
+    `# No.388 - ジャーナル（2026-08-16）` を持つ 27KB の別日ジャーナルが存在し、
+    無引数実行で丸ごと置換される状態だった (C-1)。
+
+    same_day は scan_journals の要素 (path / file_date / number / heading_date) か
+    None。返り値は最低限 "write_mode" を持つ dict とし、呼び出し側はこれを
+    context["existing_file"] としてそのまま露出する。
+
+    write_mode の取りうる値:
+      "new"      = 対象パスにファイルが無い。そのまま Write してよい。
+      "regenerate" = 同じ日のジャーナルを作り直す。番号を維持し、確認のうえ Write。
+      "blocked"  = 別日の内容が入っている。Write すると失われるので停止する。
+    """
+    if same_day is None:
+        # scan_journals は FILE_DATE_RE (^YYYY-MM-DD\.md$) にマッチする全ファイルを
+        # 見出しの有無に関わらず entries へ入れる。よって None は「対象パスにファイルが
+        # 無い」と同義で、新規作成してよい唯一のケース。
+        return {"write_mode": "new"}
+
+    info = {
+        "path": str(same_day["path"]),
+        "number": same_day["number"],
+        "heading_date": same_day["heading_date"].isoformat() if same_day["heading_date"] else None,
+    }
+
+    if same_day["heading_date"] == target:
+        return {**info, "write_mode": "regenerate"}
+
+    # heading_date が None (旧形式の `# No.149 - ジャーナル` や見出しの無い手書きメモ) の
+    # 場合も blocked にする。中身が対象日のものか判別できない以上、「判別できない」を
+    # 「上書きしてよい」と読み替えるのは、消えるのが利用者の実データである以上許されない。
+    # 誤って止まっても失うのは一手間だが、誤って書けば失うのは記録そのもの。
+    return {**info, "write_mode": "blocked"}
+
+
 def build_context(vault: Path, target: date) -> dict[str, Any]:
     daily_dir = vault / DAILY_REL
     goals_dir = vault / GOALS_REL
@@ -310,6 +349,13 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
     journals = scan_journals(daily_dir)
     numbered = [j for j in journals if j["number"] is not None]
     same_day = next((j for j in journals if j["file_date"] == target), None)
+    existing = classify_existing_file(same_day, target)
+    if existing.get("write_mode") == "blocked":
+        warnings.append(
+            f"{target.isoformat()}.md には別日 "
+            f"({existing.get('heading_date')}) のジャーナルが入っています。"
+            "Write すると失われるため、上書きせず停止して利用者へ確認してください。"
+        )
 
     if same_day is not None and same_day["number"] is not None:
         number = same_day["number"]
@@ -344,7 +390,10 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
                 f"前回 No.{prev['number']} に対し今回 No.{number} です (Daily 全体の最大値 +1 で採番)。"
             )
     else:
-        warnings.append("前回ジャーナルが見つからないため、目標本文・究極目的・フェーズ別チェックは対話で確定してください。")
+        warnings.append(
+            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
+            "あわせてジャーナル習慣が途切れていないかも確認してください。"
+        )
 
     reports = scan_reports(goals_dir)
     if not reports:
@@ -424,17 +473,14 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
 
     daily_habits = load_daily_habits()
 
-    # 前日ジャーナルの不在は journal 習慣の未達シグナル。会話で「昨日は書けましたか」と
-    # 触れられるよう warnings へ出す (対象日そのものは常に新規作成なので判定材料は前日側)。
-    if previous is None or previous.get("path") is None:
-        warnings.append(
-            "前回ジャーナルが見つかりません。ジャーナル習慣が途切れていないか会話で確認してください。"
-        )
+    # 前回ジャーナル不在の warning は上流 (継承材料の不在) で 1 本出している。
+    # ここで習慣シグナル分をもう 1 本足すと、同じ事実で 2 回聞く導線になるため統合済み。
 
     return {
         "target_date": target.isoformat(),
         "journal_number": number,
         "is_regeneration": is_regeneration,
+        "existing_file": existing,
         "output_path": str(daily_dir / f"{target.isoformat()}.md"),
         "heading": f"# No.{number} - ジャーナル（{target.isoformat()}）",
         "previous_journal": previous,

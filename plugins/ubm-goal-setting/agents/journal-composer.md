@@ -58,15 +58,17 @@ isolation: fork
 
 ## 出力と検証
 
-1. `context.output_path` へ Write する。
-2. 次を実行し PASS を確認する。
+1. `context.existing_file.write_mode` が `blocked` なら **Write せず停止し、親へ差し戻す**。
+   Write は既存ファイルを全置換するため、別日の内容が入っていれば黙って消える。
+2. それ以外なら `context.output_path` へ Write する。
+3. 次を実行し PASS を確認する。
 
 ```bash
 python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-output.py" \
   --file "{output_path}" --expected-number {journal_number} --expected-date {target_date}
 ```
 
-3. FAIL なら違反コードに従って修正し、最大3回まで再実行する。収束しなければ残違反を親へ返す。
+4. FAIL なら違反コードに従って修正し、最大3回まで再実行する。収束しなければ残違反を親へ返す。
 
 ## 親へ返す内容
 

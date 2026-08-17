@@ -1,6 +1,6 @@
 # ubm-goal-setting — 北原さん式ゴールセッティング
 
-UBM（北原さん式ゴールセッティング）の**目標設定・振り返り対話**と**ナレッジ差分同期**を 1 つにした Claude Code プラグインです。ObsidianMemo vault で運用していた資産（skill / sub-agent / hook / script / knowledge JSON 一式）を移植したもので、**個人利用前提**（`distributable:false`・公開 marketplace 非掲載）です。
+UBM（北原さん式ゴールセッティング）の**目標設定・振り返り対話**と**ナレッジ差分同期**を 1 つにした Claude Code プラグインです。ObsidianMemo vault で運用していた資産（skill / sub-agent / hook / script / knowledge JSON 一式）を移植したものです。`distributable:true` で**公開カタログ（`.claude-plugin/marketplace.json`）に掲載済み**のため、GitHub 経由の marketplace add とローカル repo 起点の導入の**どちらでも取得できます**。
 
 このドキュメントは「初めて使う人がインストールし、`UBM_VAULT_ROOT` を設定して最初の目標設定を回せる状態にする」までの導入ガイドです。**日々の運用（入口コマンド詳細・検証コマンド・復旧手順）は [`RUNBOOK.md`](./RUNBOOK.md) が正本**で、本 README とは役割を分担しています（README=初見導入 / RUNBOOK=運用）。
 
@@ -38,7 +38,18 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 
 ## インストール（ローカル導入）
 
-本プラグインは `distributable:false` のため、**公開カタログ（`.claude-plugin/marketplace.json`）には掲載していません**。リモートの `/plugin marketplace add OWNER/harness` からは導入**できず**、clone したローカル repo を起点に導入します。
+本プラグインは `distributable:true` で公開カタログ（`.claude-plugin/marketplace.json`、marketplace 名 `skills`）に掲載済みです。**リモート経由**（方法 0）と**ローカル repo 起点**（方法 A / B）のどちらでも導入できます。
+
+### 方法 0 — GitHub の公開 marketplace から入れる（最短・repo の clone 不要）
+
+Claude Code（CLI / Desktop 共通）のチャット欄で:
+
+```
+/plugin marketplace add daishiman/harness-dev
+/plugin install ubm-goal-setting@skills
+```
+
+install は**コピー**で、キャッシュキーは version です。plugin を更新したら `plugin.json` の `version` を上げないと、install 済みの環境へ変更が届きません。
 
 ### 方法 A — harness repo 内で使う（開発・レビュー向け・最短）
 
@@ -251,7 +262,7 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 ### 書き込み保護（fail-closed hook）
 
-`hooks/ubm-write-path-guard.py` が PreToolUse（`Write|Edit|MultiEdit`）で `UBM_VAULT_ROOT` 配下への書き込みを検査し、許可 2 パス（`05_Project/UBM/目標設定/` 配下・`02_Configs/Templates/Daily.md`）以外は exit 2 で遮断します。vault 外（plugin 同梱 `knowledge/` 等）と `UBM_VAULT_ROOT` 未設定時は保護対象外です。判定不能な入力は**遮断側に倒します**（fail-closed）。
+`hooks/ubm-write-path-guard.py` が PreToolUse（`Write|Edit|MultiEdit`）で `UBM_VAULT_ROOT` 配下への書き込みを検査し、許可は prefix 7 件（`05_Project/`・`02_Configs/Daily/`・`.claude/{skills,agents,commands,rules,prompts}/`）と完全一致 1 件（`02_Configs/Templates/Daily.md`）で、それ以外は exit 2 で遮断します。vault 外（plugin 同梱 `knowledge/` 等）と `UBM_VAULT_ROOT` 未設定時は保護対象外です。判定不能な入力は**遮断側に倒します**（fail-closed）。
 
 ### 品質ゲート
 
@@ -292,14 +303,15 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 plugins/ubm-goal-setting/
 ├── skills/run-ubm-goal-setting/     # 目標設定 skill (+ scripts/validate-goal-output.py + prompts/R1-R5 対話プロンプト正本)
 ├── skills/run-ubm-knowledge-sync/   # ナレッジ同期 skill (+ detect/check scripts)
-├── agents/                          # sub-agent 5 本 (info-collector/goal-reviewer/phase3-coordinator/output-formatter/knowledge-extractor)
-├── commands/                        # /ubm-goal-setting, /ubm-knowledge-sync, /ubm-youtube-ingest, /ubm-consult
+├── skills/run-ubm-journal/          # 日次ジャーナル skill (+ build-journal-context / validate-journal-output)
+├── agents/                          # sub-agent 8 本 (info-collector/goal-reviewer/phase3-coordinator/output-formatter/knowledge-extractor/knowledge-relation-extractor/youtube-transcript-normalizer/journal-composer)
+├── commands/                        # /ubm-goal-setting, /ubm-knowledge-sync, /ubm-youtube-ingest, /ubm-consult, /ubm-journal
 ├── hooks/ubm-write-path-guard.py    # 書き込み保護 (PreToolUse)
 ├── knowledge/                       # L1 curated 28 JSON + router/schema/registry/sync-log
-├── tests/                           # pytest 44 件
+├── tests/                           # pytest 249 件
 ├── EVALS.json / plugin-composition.yaml / RUNBOOK.md / CHANGELOG.md
 ├── .claude-plugin/plugin.json       # 公式 plugin manifest (hooks 配線)
-└── references/package-contract.json # harness metadata (distributable:false, entry_points)
+└── references/package-contract.json # harness metadata (distributable:true, entry_points)
 ```
 
 ---

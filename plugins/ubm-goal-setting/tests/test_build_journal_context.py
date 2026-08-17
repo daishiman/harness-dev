@@ -328,3 +328,44 @@ def test_missing_previous_journal_warns_about_journal_habit(tmp_path: Path):
     assert proc.returncode == 0, proc.stderr
     ctx = json.loads(proc.stdout)
     assert any("ジャーナル習慣が途切れ" in w for w in ctx["warnings"])
+
+
+# --- existing_file: Write による実データ消失の防止 (C-1 回帰) ---
+#
+# ジャーナルは journal-composer が Write で全置換する。対象パスに別日の内容が
+# 入ったまま書くと利用者の記録がそのまま消える。実 vault の 2026-08-17.md には
+# 見出し `# No.388 - ジャーナル（2026-08-16）` の 27KB が存在し、無引数実行で
+# 消える状態だった。以下はその経路を塞いだままにするための固定。
+
+def test_new_file_is_writable(vault: Path):
+    ctx = run(vault, "2026-08-18")
+    assert ctx["existing_file"]["write_mode"] == "new"
+
+
+def test_same_day_regeneration_is_writable(vault: Path):
+    """ファイル日付と見出し日付が一致していれば同じ日の作り直し。"""
+    ctx = run(vault, "2026-08-17")
+    assert ctx["existing_file"]["write_mode"] == "regenerate"
+    assert ctx["existing_file"]["number"] == 388
+
+
+def test_other_days_content_blocks_the_write(vault: Path):
+    """ファイル日付と見出し日付がズレていたら別日の記録。上書きさせない。"""
+    daily = vault / "02_Configs" / "Daily"
+    (daily / "2026-08-19.md").write_text(
+        JOURNAL_TEMPLATE.format(number=389, date="2026-08-18"), encoding="utf-8"
+    )
+    ctx = run(vault, "2026-08-19")
+    existing = ctx["existing_file"]
+    assert existing["write_mode"] == "blocked"
+    assert existing["heading_date"] == "2026-08-18"
+    assert any("別日" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_unrecognized_content_blocks_the_write(vault: Path):
+    """見出しを読めないファイルは中身を判別できない。判別不能は遮断側へ倒す。"""
+    daily = vault / "02_Configs" / "Daily"
+    (daily / "2026-08-20.md").write_text("# No.149 - ジャーナル\n\n手書きのメモ\n", encoding="utf-8")
+    ctx = run(vault, "2026-08-20")
+    assert ctx["existing_file"]["write_mode"] == "blocked"
+    assert ctx["existing_file"]["heading_date"] is None

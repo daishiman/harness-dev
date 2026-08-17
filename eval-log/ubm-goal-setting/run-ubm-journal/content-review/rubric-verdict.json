@@ -1,0 +1,36 @@
+{
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-journal",
+    "skill_md_sha256": "daeb228dc58dc28e31a4543917166b5a19f01dc248dffa2c0e1df27a251d0750"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator (focused combined review)",
+  "reviewed_at": "2026-08-17T00:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "inner",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "render-findings-score.py を L0(ref-skill-design-rubric)+L2(assign-skill-design-evaluator) 合成で実行し score=100 / threshold=80 / passed=true / findings=[] を得た。",
+      "初回採点 (skill_md_sha256=f6bcc8ef0f29fcaca95787bd153bf90b2be95bd6b4b27b1d9595ccbfca10c322) は score=97 / findings=[FM-005 description 冒頭に動詞マーカー無し] だった。description を『…構造化した新規ファイルを生成したいときに使う』へ改訂して解消。『生成』『新規ファイル』は本スキルの実際の出力契約 (毎回新規作成) を述べた語であり、判定語を撒くだけの Goodhart 緑化ではない。",
+      "IN1 (骨格ブロック数の検証) の数詞を実測へ追随させた。validate-journal-output.py の REQUIRED_OUTLINE は 15 要素で、criteria text の『骨格17ブロック』は実測とどの数え方でも一致しなかったため 15 へ訂正した。",
+      "NM-001 (name=ディレクトリ名一致) / NM-002 (prefix run 準拠) / PD-001 (本文に対し references/ 4 件・scripts/ 2 件・assets/ 1 件が実在) は変更前後で維持。"
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "stop-hook",
+    "next_action": "none"
+  },
+  "notes": "決定論採点: rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d, composition_hash=sha256:e2f9a3d9439229aed437def874e8ec908b41f5437921c6b05be2d587a77f1f52, rubric_version=1.3.0, score=100, threshold=80, passed=true, findings=0。再評価は規定の 1 回のみ (初回 97 -> 改訂後 100)。OUT2 (verify_by=live-trial) は本 verdict では静的レビューによる評価であり、run-skill-live-trial による実走証拠は未取得。詳細は elegance-verdict.json の notes を参照。"
+}
