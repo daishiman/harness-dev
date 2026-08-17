@@ -27,12 +27,12 @@
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C18-OUT1-positive-read-only-status",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20260812T020000-r8/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20260817T214000-r11/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-status/live-trial/20260812T020000-r8/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-status/live-trial/20260812T020000-r8/out/status.json"
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20260817T214000-r11/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-status/live-trial/20260817T214000-r11/out/status.json"
       ],
-      "observed": "Re-ran live (run 20260812T020000-r8) on the fresh r8-status fixture after the dev-graph manifest bump invalidated the prior behavior-closure digest. The scenario replayed the C18 read-only status query. An independent fresh evaluator, instructed to judge from the fixture artefacts rather than the subject session's self-report, returned PASS with no blockers; verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null."
+      "observed": "Re-ran live (run 20260817T214000-r11, 660s wall clock, nudge 0 / gate responses 0) because the dev-graph distribution metadata change (plugin.json version bump + bundle_targets) is hashed in full by behavior_closure_files() and invalidated the prior behavior-closure digest. An independent fresh evaluator, instructed to reject the subject session's self-report as evidence, verified the artefacts itself. It proved read-only behaviour by diffing pre/post snapshots (identical) and independently recomputing the canonical digest 221fb03a..., and proved zero external writes by installing a PATH trap shim whose external-calls.log came back 0 bytes. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
     },
     "OUT2": {
       "status": "PASS",
