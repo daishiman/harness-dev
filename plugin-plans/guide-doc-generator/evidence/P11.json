@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-aggregate-evidence",
+  "task_id": "P11-x-01",
+  "phase_ref": "P11",
+  "produced_by": "P11-x-01 worker (direct-task / guide-doc-generator へのリネーム後に再測定)",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P11.json",
+  "acceptance_criterion_verbatim": "全ゲートの実行出力が実在ファイルとして残り、実題材の生成物が構成データとセットで保全されている",
+  "measurement_policy": {
+    "fail_closed": "実在確認は os.path.isfile で行い、注釈つきの pass を使わない",
+    "re_measured": "plugin slug を guide-doc-generator へ改めた際に script のパスが変わるため、旧測定を文字列置換せず全ゲートを再実行して測り直した"
+  },
+  "gate_outputs": [
+    {
+      "gate": "validate",
+      "description": "C12 構成データの決定論ゲート",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-validate.txt",
+      "exists": true
+    },
+    {
+      "gate": "render",
+      "description": "C11 単一 HTML 生成",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-render.txt",
+      "exists": true
+    },
+    {
+      "gate": "selfcontained",
+      "description": "C16 自己完結性ゲート",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-selfcontained.txt",
+      "exists": true
+    },
+    {
+      "gate": "a11y-print",
+      "description": "C17 a11y と A4 印刷ゲート",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-a11y-print.txt",
+      "exists": true
+    },
+    {
+      "gate": "language",
+      "description": "C18 初心者向け言語ゲート",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-language.txt",
+      "exists": true
+    },
+    {
+      "gate": "narrative",
+      "description": "C22 筋道ゲート",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-narrative.txt",
+      "exists": true
+    },
+    {
+      "gate": "routing",
+      "description": "C19 出力先ルーティング検査",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-routing.txt",
+      "exists": true
+    },
+    {
+      "gate": "roundtrip-extract",
+      "description": "C20 逆抽出と等価判定",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-roundtrip-extract.txt",
+      "exists": true
+    },
+    {
+      "gate": "roundtrip-validate",
+      "description": "逆抽出した構成データの再検証",
+      "exit_code": 0,
+      "output": "eval-log/guide-doc-generator/evidence/real-sample/gate-roundtrip-validate.txt",
+      "exists": true
+    }
+  ],
+  "gate_outputs_missing": [],
+  "real_subject_bundle": {
+    "dir": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1",
+    "artifacts": [
+      ".handout-route.json",
+      "README.md",
+      "assets",
+      "handout-config.json",
+      "handout.html"
+    ],
+    "naming_rule": "<YYYY-MM-DD>-<種別>-<主題slug>-<連番>",
+    "config_beside_html": true
+  },
+  "source_and_intermediates": {
+    "source_config": "eval-log/guide-doc-generator/evidence/real-sample/source-config.json",
+    "normalized_config": "eval-log/guide-doc-generator/evidence/real-sample/normalized-config.json",
+    "embedded_config": "eval-log/guide-doc-generator/evidence/real-sample/embedded-config.json",
+    "roundtrip_config": "eval-log/guide-doc-generator/evidence/real-sample/roundtrip-config.json",
+    "preset_matrix": "eval-log/guide-doc-generator/evidence/real-sample/preset-matrix.json"
+  },
+  "reproducibility_record": "eval-log/guide-doc-generator/evidence/real-sample/reproducibility-record.json",
+  "not_verifiable": [
+    {
+      "item": "assets 経路 (C13/C15) の実走",
+      "reason": "実題材が画像を含まないため data URI 埋め込みとアイコン sprite の経路は本 bundle で実行されていない。単体テスト (embed-assets.py 96 件 / build-icon-sprite.py 128 件) では覆っている"
+    }
+  ],
+  "overall": "pass"
+}

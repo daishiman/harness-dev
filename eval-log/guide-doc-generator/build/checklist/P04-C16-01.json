@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "status": "success",
+  "task_id": "P04-C16-01",
+  "covered_task_ids": [
+    "P04-C16-01"
+  ],
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls",
+      "result": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/ に test_*.py 7 本・共有 hb_c16.py・README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-selfcontained.py -p 'test_*.py' を dispatcher が独立実行",
+      "result": "Ran 354 tests / FAILED (failures=354)。ok 0 件・errors 0 件"
+    },
+    {
+      "claim": "実行中に伝達した SC-10 (同梱閉包の包括規則) が赤で固定されている",
+      "method": "grep -rl 'SC-10' と専用テストファイルの内容確認",
+      "result": "test_sc10_bundle_closure.py が専用に置かれ script@src / iframe / frame / portal / link@href / CSS url() を網羅。SC-02 の境界維持 (text node の URL・相対パス文字列・コード例を違反にしない) と <figure> を <frame> の前方一致で誤検出しないことも TestSC10TextNodeBoundaryPreserved / test_figure_element_is_not_a_frame として固定済み"
+    },
+    {
+      "claim": "SC-10 が module_api 経由で C10 / C11 へ届く契約も固定されている",
+      "method": "test_module_api.py の内容確認",
+      "result": "SC-10 を scan_external_references の返り値へ含める契約が赤で固定されている (P03 Y-02 の C10=C16 参照者の関係を維持)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    },
+    {
+      "kind": "design-canon-lags-test",
+      "detail": "SC-10 はテスト側にのみ存在し script-brief-C16.json 未反映。SubAgent 自身が README の gaps へこれを記録した。設計正本を追随させる leaf P04-x-02 を discovered-task 経由で追加済 (graph_hash sha256:7688d4a7... へ再 pin)。設計正本がテストに先行するという通常の向きとは逆の順序になっている"
+    }
+  ]
+}

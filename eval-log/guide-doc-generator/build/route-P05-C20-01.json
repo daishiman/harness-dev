@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C20",
+  "task_id": "P05-C20-01",
+  "covered_task_ids": [
+    "P05-C20-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (1115 行)"
+    },
+    {
+      "claim": "自スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/extract-handout-config.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 152 / failures=0 / errors=0 / OK / 19.591s。実装前は failures=150)"
+    },
+    {
+      "claim": "AC-C20-15 の許可 import 集合を守っている (関数内 import なし)",
+      "method": "grep -nE '^\\s*(import|from) ' で全 import を列挙",
+      "result": "pass (argparse / importlib.util / json / os / re / sys / tempfile / unicodedata / html.parser.HTMLParser / pathlib.Path の 10 本のみ。全て 21-30 行のモジュール先頭にあり関数内 import は 0 件。第三者ライブラリ / yaml / subprocess / network は 0 件)"
+    },
+    {
+      "claim": "部品 id literal が契約上許可された 1 箇所に閉じている",
+      "method": "grep -n -E '\"B[0-9]{2}\"' で全出現行と文脈を確認",
+      "result": "pass (13 行すべて 62-74 行の PART_CLASS_MAP 内で B03..B15 の連続。B01 / B02 (document スコープ) は 0 件。ブリーフ dependencies.reads が『部品 id → クラス名の対応だけは本 script が保持してよい』と明示許可し、test_parts_catalog_ssot.py の _class_map() が『部品 id を鍵とする dict がちょうど 1 つ存在すること』を逆に要求している。id 集合の判定は catalog.is_in_section() / section_scope 述語経由で内蔵名簿への退避なし (カタログ不在は exit 2))"
+    },
+    {
+      "claim": "用途語彙・R22 値域・数値閾値を列挙していない",
+      "method": "worker が grep 実測 (用途語彙 / detail_level・evidence_depth・prior_knowledge_level の値域 / '= [0-9]{2,}')",
+      "result": "pass (いずれも 0 件と報告。当方は部品 id の全出現を独立確認済みで、その結果が worker 報告と一致することから grep 手続き自体の信頼性を確認した)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "worker が実装前後で 11 ファイルの shasum -a 256 を採取し diff",
+      "result": "pass (差分なし。plugins/guide-doc-generator/ 全体が untracked のため git diff では検出できず、ハッシュ突合が唯一の証明手段である点も報告どおり)"
+    },
+    {
+      "claim": "決定論を守るため C12 の一部だけを借りている",
+      "method": "worker の裁量報告と理由の妥当性確認",
+      "result": "pass (normalize_config 全体でなく normalize_strings / parse_date_parts / format_date のみを importlib 共有。normalize_config は解釈不能な日付を実行日で埋めるため決定論が壊れ test_unnormalized_date_is_not_a_diff が原理的に通らない、という理由は妥当。日付書式文字列を自前に持たず strftime / '%Y年%m月%d日' の literal は 0 件)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "worker 報告 (write_scope 内の唯一の変更)",
+      "result": "pass (書込は scripts/extract-handout-config.py 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "acceptance-criterion-unsatisfiable",
+      "detail": "要裁定 / 最重要。**AC-C20-02 (復元した構成データを C11 で再レンダリングしてバイト一致) と AC-C20-01 の実パイプライン適用が現契約では成立しない**。worker が validate-handout-config.py --config を実測したところ、完全マーカー付き HTML から復元した構成データでも次が出る: (a) E-FOCUS-THEME /focus_theme と E-FIELD-MISSING /target_tasks|/attainment_level|/must_remember|/no_need_to_remember — C11 の renderer_marker_requirements にこれらのマーカーが存在しないため HTML 側に情報が刻まれておらず、原理的に復元できない (ties_to の E-SECTION-UNTIED-GOAL/TASK も同様) (b) E-TYPE-INVALID /notes_enabled (null) (c) E-DATE-FORMAT /date (HTML は表示書式を運ぶ) (d) assets[].data_uri が schema の additionalProperties:false に抵触。恒久解は『C11 のマーカー契約を上記フィールド用の data-hb-meta-* まで拡張する』か『C12 schema に round-trip 免除 (x_roundtrip_exempt 相当) を追加する』のいずれか。R14 (使い回し=既存 HTML から構成データを逆抽出して別テーマの出発点にする) の実効性に直結するため P06 の round-trip テスト設計より前に裁定が要る"
+    },
+    {
+      "kind": "test-schema-contradiction",
+      "detail": "要裁定 / 当方が独立に再現確認済み。tests/extract-handout-config.py/test_marker_extraction.py:112-123 の test_b03_rows_keep_key_and_raw_time / test_b09_rows_keep_key が rows[].key を要求するが、schemas/handout-config.schema.json の $defs.part_data.B03 は additionalProperties:false かつ properties が num / text / time / sub のみで key を持たない。よって『テストを満たすと C12 で E-KEY-UNKNOWN が出る』『C12 を満たすとテストが赤になる』の相互排他。worker は write_scope の都合でテスト側を採用した (テスト変更禁止の規律下では他に選択肢が無く、この判断は正しい)。裁定は schema に key を追加するか、テストを key 非依存へ書き換えるかの二択。schema と tests のどちらが正本かの決定が必要"
+    },
+    {
+      "kind": "brief-defect-permanent-warning",
+      "detail": "正常系でも stderr に W-EXTRACT-CATALOG-DRIFT が 4 行出続ける (B16 / B17 / IMG / DIAGRAM)。ブリーフの heuristic_fallback.class_map がこの 4 部品の行を持たないため、本 script が実装した双方向自己整合検査が『カタログにあって鍵が無い』を毎回報告する。当方の算術確認: カタログ id は B01..B17 + IMG + DIAGRAM + TEXT、PART_CLASS_MAP は B03..B15 + TEXT、B01/B02 は document スコープで対象外 — 差分はちょうど B16/B17/IMG/DIAGRAM の 4 件で報告と整合する。exit code には影響しないが『警告が常時出る状態』は警告を無意味にするので恒久解が要る (ブリーフの class_map に 4 行追記するか、検査を片方向報告に緩める)"
+    },
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C01 / C02 へ申し送り 3 件。(1) 正常系でも W-EXTRACT-CATALOG-DRIFT が 4 行出るため、C02 のレポート整形は W- 行を fail 扱いしないこと (2) --out は round-trip 不一致時に書かれない。C02 の R2-complete が作業台として --out を当てにする場合、--compare を別呼び出しにするか --report.roundtrip.diffs を素材に使うこと (3) exit 1 でも --report と (必須欠落時は) --out は残る。exit 2 では両方書かない"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 14 件。(1) C12 は normalize_config 全体でなく normalize_strings / parse_date_parts / format_date のみを共有 (決定論のため。上記 verified_by 参照) (2) 比較用の日付射影は C12 が受理しない書式を『数字ラン 3 個』に落として c12.format_date() へ渡す (書式文字列を自前に持たない) (3) 自己整合検査 (G1) の診断コードを W-EXTRACT-CATALOG-DRIFT とし exit code に影響させない (4) 任意フィールド欠落の診断コード W-EXTRACT-OPTIONAL を新設 (ブリーフの stderr 契約に該当項が無い)。--strict-fidelity はこれと W-EXTRACT-HEURISTIC の存在で exit 1 (5) 必須/任意の境界を『マーカー契約が定義されている値の欠落のみ必須』とした。文書必須 = schema_version/doc_type/subject_slug/reader/prior_knowledge_level/essential_problem/title/date/purpose/background/goal/duration、section 必須 = id/heading/goal/lead_line/judgment_axis。任意 = theme / section_kind / section duration / asset caption・src / attachment src / diagram title / 部品 id 自動採番 (6) data URI の格納キー (G4) を data_uri、原本パスを src とし、data-hb-src 不在時は data URI 自体を src にして任意欠落として報告 (7) 部品 data のキー名 (G6) を schemas/handout-config.schema.json の $defs.part_data.<id>.properties から導出 (配列型プロパティ名を反復要素の容器に、items の text|label|title を表示テキストのキーに、_id 系スカラーを data-hb-<name> 属性から)。literal を書かずに B03=rows/text・B15=chips/label 等が決まる (8) notes_enabled (G5) は値 null でキーのみ保持し gap として報告しない (再生成 chrome 側の設定であり穴でないため) (9) マーカーの無い文書レベル必須項目 (focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / detail_level / evidence_depth / presentation_order) はキー自体を出力しない。null を置くと『復元できた』と誤読されるため (10) heuristic の TEXT 行は値をクラス名でなくタグ名 ('p','div') にし FALLBACK_PART_ROW として最後に評価。data-hb-field 担持要素と h1-h6 は部品にしない (11) chrome のクラス名二重防御を pop-header / pop-bottom / memo および memo- 接頭辞とした (12) malformed 判定は終了タグが常にスタック最上位と一致必須 (不一致・余剰・EOF 時未閉鎖のいずれも E-HTML-MALFORMED + 行番号)。空 HTML / <html> 不在も同扱いで exit 1、非 UTF-8 は exit 2 (13) 書き込み順序を compare -> report -> out とし、E-ROUNDTRIP-DIFF 時は out を書かず report は書く (14) diff の向きを expected = --compare 側 / actual = 復元側とした"
+    }
+  ]
+}

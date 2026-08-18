@@ -1,0 +1,58 @@
+{
+  "skill_name": "run-handout-extract",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "既存の資料 HTML から構成データを取り出す",
+    "手書き HTML をテンプレート化",
+    "handout を逆抽出"
+  ],
+  "output_contract": "構成データ JSON + 逆抽出レポート (復元した部品一覧・復元不能箇所と採った補完・round-trip 差分)",
+  "boundary": "入力=既存の単一 HTML/出力=構成データ JSON と round-trip 判定。資料内容の書き換え・改善提案はしない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "extract-handout-config.py",
+    "validate-handout-config.py",
+    "render-handout.py",
+    "verify-handout-selfcontained.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "既存 HTML の走査",
+    "構成データの復元",
+    "復元不能箇所の補完判断",
+    "round-trip 等価の確認"
+  ],
+  "goal": "既存の単一 HTML から構成データ JSON が復元され、その構成データを再レンダリングした HTML が元 HTML と構成データ等価であることが round-trip テストで確認された状態",
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "output_language": "ja",
+  "purpose_background": "手書きで作られた過去の資料を資産化するには、HTML から構成データへ戻す経路が要る。戻せて初めてテンプレートとして反復配布できる",
+  "responsibilities": [
+    {
+      "id": "R1-scan",
+      "summary": "対象 HTML を決定論抽出器にかけ、復元できた部品と復元不能な箇所を切り分ける",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-complete",
+      "summary": "復元不能箇所 (lead-line や判断軸など HTML から一意に定まらない意味情報) の補完方針を判断し構成データを確定する",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-roundtrip",
+      "summary": "確定した構成データを再レンダリングし、元 HTML との構成データ等価を判定して逆抽出レポートを返す",
+      "prompt_required": true
+    }
+  ]
+}

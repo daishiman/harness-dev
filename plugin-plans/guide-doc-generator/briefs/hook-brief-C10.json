@@ -1,0 +1,97 @@
+{
+  "component_id": "C10",
+  "component_kind": "hook",
+  "name": "guard-handout-external-ref",
+  "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+  "purpose": "資料出力ディレクトリ配下の .html への書込が起きた直後に、外部参照と絵文字の混入だけを検査し、混入していれば exit2 + stderr で直ちに知らせる水際ガード。R01 (外部依存ゼロの単一 HTML) の運用時防御。判定規則そのものは持たず、C16 verify-handout-selfcontained.py の canonical_rules (CR-EXT / CR-EMOJI) を module として再実行して結果を受け取る (rule_delegation 参照)。完成物の網羅検査は C16 に委ねる",
+  "event": "PostToolUse",
+  "matcher": "Write|Edit",
+  "event_rationale": "PreToolUse ではなく PostToolUse を採る。Edit の PreToolUse ペイロードは old_string/new_string の差分しか持たず、書込後の文書全体を判定できないため誤検出と見逃しが同時に出る。PostToolUse なら書込済みの実ファイルを読めるので、Write と Edit を同一の判定で扱える。ただし PostToolUse は書込自体を止められないので、本 hook の fail-closed は「書込を阻止する」意味ではなく「違反があるとき exit2 が必ず立ち、後段が無検査で先へ進めない」意味である (inventory の exit_semantics: fail-closed-exit2 と同義)。ファイルの削除やロールバックは行わない (write-scope: none)",
+  "applies_to": {
+    "rule": "以下を上から順に評価し、外れた時点で exit0 (素通し)。(1) tool_name が Write / Edit のいずれか。(2) tool_input から書込先パスを取り出せる (file_path > filePath > path の順)。(3) 拡張子が .html (大小文字無視)。(4) そのファイルと同じディレクトリに handout-config.json が存在する。(5) そのディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}- に一致する。(4) と (5) を両方満たしたときだけ検査対象とする",
+    "resolution_rationale": "判定を環境変数や設定ファイル由来の out-dir ルートに依存させない。--out-dir で任意の場所へ出せる以上、ルート一致を必須条件にすると上書き出力時に hook が黙り、逆にルート未解決時の扱いで挙動が二分してしまう。代わりに『C19 が作ったディレクトリにしか存在しない 2 つのマーカー (日付接頭のディレクトリ名 + 同階層の handout-config.json)』で同定する。この判定は C19 の命名規則にのみ依存し、種別語彙は一切参照しないので C42 のハードコード重複を作らない",
+    "in_scope_examples": [
+      "<out-dir>/2026-08-17-lecture-生成AIの業務活用入門/handout.html (同階層に handout-config.json あり)",
+      "利用者が --out-dir で repo 配下へ出した 2026-08-17-agenda-月次定例/handout.html (同階層に handout-config.json あり)"
+    ],
+    "out_of_scope_examples": [
+      "plugins/guide-doc-generator/references/component-catalog.md への Write (.html でない)",
+      "repo 配下の任意の README.md / .py / .json への Write・Edit (.html でない)",
+      "外部 CDN を意図的に参照するデモ用 sample.html (日付接頭ディレクトリでも handout-config.json でもないため素通し)",
+      "2026-08-17-lecture-xxx/README.md への Edit (.html でない)",
+      "slide-report-generator が生成する deck の index.html (同階層に handout-config.json が無い)",
+      "Bash / Read / Grep など Write・Edit 以外の全ツール"
+    ]
+  },
+  "input_contract": "stdin に hook ペイロードの JSON オブジェクトが 1 個渡る。実物 (plugins/dev-graph/hooks/guard-graph-schema.py, plugins/slide-report-generator/hooks/hook-postgen-eval.py) で確認した形は {\"tool_name\": str, \"tool_input\": {...}, \"hook_event_name\": str, \"cwd\": str} で、PostToolUse ではさらに tool_response が付く。書込系ツールの tool_input からパスを取るキーは repo 内実装で file_path / filePath / path の 3 通りが観測されるため、この順で最初に見つかった非空 str を採用する (plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py と plugins/plugin-dev-planner/hooks/hook-validate-plugin-plan.py が同じフォールバックを持つ)。JSON パースに失敗した場合・dict でない場合は exit0 で素通しする (dev-graph の payload() と同じ姿勢)。ファイル本文は tool_input からではなく、書込先パスを実際に読んで取得する",
+  "output_contract": {
+    "pass": "exit 0。標準出力・標準エラーとも無出力。対象外ファイルの編集を一切妨げない",
+    "block": "exit 2。stderr に [guard-handout-external-ref] BLOCKED: を先頭に付けて、違反ごとに 1 行 (検出規則 id / 行番号 / 該当箇所の抜粋 120 文字以内) を出す。PostToolUse の exit 2 は stderr が Claude へ返る経路であり (dev-graph の guard-graph-schema.py が同じ契約で block している)、直後の修正を促す",
+    "abort": "検査を最後まで実行できなかった場合 (読込失敗・予算超過) は exit 0 とし、stdout へ {\"systemMessage\": \"...\"} の JSON を 1 行出して打ち切りを明示する (stdout に JSON を書く形は hook-postgen-eval.py の実装で確認済み)。exit 2 を立てない理由は fail_closed_scope を参照"
+  },
+  "fail_closed_scope": "fail-closed にする範囲は『適用対象と同定できたファイルを最後まで読めて、検出規則が違反を見つけたとき』に限る。この範囲では例外なく exit2 を立て、警告に留めない (外部参照の混入は成果物の正しさを壊すため、index.md の fail-soft/fail-closed 分界で fail-closed 側に置かれている)。fail-closed にしない範囲は 3 つ: (a) 適用対象かどうかを判定できないとき (パス取得不能・ペイロード不正) は exit0。判定不能で止めると導入環境の無関係な編集が動かなくなり、誤爆コストが見逃しコストを大きく上回る。(b) 対象ファイルを読めないとき (削除済み・権限不足) は exit0。(c) 自前予算 3 秒またはファイルサイズ 8 MiB を超えて検査を完走できないとき は打ち切って exit0。(a)-(c) のいずれも、見逃しは C16 verify-handout-selfcontained.py の完成物ゲートで必ず捕まる二重防御の内側であり、hook 側で無理に止める必要がない。ただし (c) は打ち切った事実を stdout の systemMessage で必ず可視化し、黙って合格に見せない",
+  "detection_rules": [
+    {
+      "id": "D1-external-url-attr",
+      "rule": "外部参照の判定規則は本 hook では定義しない。C16 script-brief の canonical_rules.external_reference_rule (CR-EXT) を単一正本とし、その判定を module_api.scan_external_references(html_text) の呼び出しで再実行して結果を受け取る。すなわち『取得 (fetch) を発生させる参照だけが違反』であり、src / href / srcset / poster / data-src 等の属性値と CSS の url() / @import が data: 以外の実体を指すときに違反、text node の URL 文字列は違反ではない、という区別は CR-EXT の定義そのものである。本 hook は対象ファイルの同定と exit code への写像だけを行う",
+      "rule_source": "C16 canonical_rules.external_reference_rule (CR-EXT)",
+      "violation_example": "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+JP\">",
+      "pass_example": "<img src=\"data:image/png;base64,iVBORw0KG...\" alt=\"構成図\"> と <a href=\"#section-3\">3. 手順</a>"
+    },
+    {
+      "id": "D2-emoji",
+      "rule": "絵文字の判定規則は本 hook では定義しない。C16 script-brief の canonical_rules.emoji_rule (CR-EMOJI = SC-05 の二層規則) を単一正本とし、その判定を module_api.scan_emoji(text) の呼び出しで再実行して結果を受け取る。Unicode ブロック丸ごとの denylist (旧記述の U+2600-U+27BF / U+2B00-U+2BFF 等) は廃止した。★ U+2605 / ✔ U+2714 (VS16 なし) のような記号は絵文字ではなく pass する",
+      "rule_source": "C16 canonical_rules.emoji_rule (CR-EMOJI)",
+      "violation_example": "<h2>ポイント 🚀 3 つ</h2>",
+      "pass_example": "<h2><svg class=\"icon\"><use href=\"#icon-rocket\"/></svg> ポイント 3 つ</h2> / <h2>★ ポイント 3 つ</h2> (U+2605 は絵文字ではない)"
+    }
+  ],
+  "rule_delegation": {
+    "canonical_owner": "C16 verify-handout-selfcontained.py",
+    "how": "importlib.util.spec_from_file_location('hb_selfcontained', <plugin_root>/scripts/verify-handout-selfcontained.py) で C16 を module として読み込み、scan_external_references / scan_emoji を呼ぶ。本 hook のソースに外部スキームの列挙も絵文字コードポイントの列挙も置かない (AC で grep 検査する)",
+    "invariant": "C10 と C16 は同一入力に対し必ず同一判定を返す。同一の判定関数を通すため、片方だけが FAIL/PASS になる状態は設計上存在しない。差異が出たらそれは実装バグである",
+    "if_import_fails": "C16 を module として読めないときは fail_closed_scope (a) と同じ扱いで exit0 とし、stdout の systemMessage に『判定モジュール解決不能のため未検査』を出す。見逃しは C16 の完成物ゲートで捕まる"
+  },
+  "boundary_with_C16": "hook は『書込のたびに走る小さな予算で、ファイル内の他の箇所を参照せずに判定できるもの』だけを見る。それが D1 と D2 に限られる。C16 側に置き hook では一切実行しないのは次の 4 つ: (1) アイコン様式検査 (viewBox / stroke=currentColor / fill=none / stroke-linecap=round) — 全 SVG の集計が要る、(2) 未使用 symbol 0 件 — 定義と参照の突合が要る、(3) ナビ href と section id のアンカー整合 — 文書全体の相互参照が要る、(4) data URI のサイズ上限と a11y / 印刷ゲート — 別 component (C22 系) の領分。D1 / D2 が hook と C16 の両方から報告されるのは『二重実装』ではなく『同一規則の二重適用』である: 規則の定義は C16 に 1 つしかなく、hook はそれを早い時点 (水際) でもう一度当てているだけで、判定結果は常に一致する",
+  "settings_registration": "inventory の settings_wiring: settings.json に従い、導入環境の settings.json (project の .claude/settings.json または user の ~/.claude/settings.json) の hooks.PostToolUse へ登録する。エントリは {\"matcher\": \"Write|Edit\", \"hooks\": [{\"type\": \"command\", \"command\": \"python3 \\\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\\\"\", \"timeout\": 10}]}。パスは index.md の実行時可搬性方針 (HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest name 照合 / __file__ 相対の自己解決フォールバック) に従い、どちらの env も効かない .claude/ 平置き projection では hook 本体が Path(__file__).resolve().parent.parent で自己解決する。repo 内には他に 2 つの登録面が実在する (plugins/dev-graph/hooks/hooks.json 方式と、plugins/slide-report-generator/.claude-plugin/plugin.json の hooks キー方式)。dev-graph の hooks.json が冒頭 description で『project settings fallback を同時に有効化してはならない』と明示しているとおり、settings.json 登録と plugin 同梱登録を同時に有効化すると 1 回の書込で 2 回発火するため、本 component はどちらか一方のみとし、settings.json 側を正本とする",
+  "requirements_covered": [
+    "R01 (外部依存ゼロの単一 HTML) の運用時防御",
+    "R08 (絵文字ゼロ・アイコン規約) のうち絵文字混入の水際検出"
+  ],
+  "checklist_covered": [
+    "C2",
+    "C10",
+    "C27"
+  ],
+  "acceptance_checks": [
+    "tool_name が Bash のペイロードを渡したとき exit0 かつ無出力",
+    "tool_input からパスを取り出せないペイロードを渡したとき exit0 かつ無出力",
+    "repo 配下の README.md / *.py への Write ペイロードで exit0 かつ無出力",
+    "https:// を含む .html でも、同階層に handout-config.json が無ければ exit0 (適用範囲外)",
+    "handout-config.json はあるが親ディレクトリ名が日付接頭でない .html は exit0",
+    "2026-08-17-lecture-xxx/handout.html + 同階層 handout-config.json という構成で、外部 CDN の link を含むとき exit2 になり stderr に D1-external-url-attr と行番号が出る",
+    "同じ構成で絵文字を含むとき exit2 になり stderr に D2-emoji が出る",
+    "同じ構成で data URI 画像とページ内アンカーのみを含むとき exit0 かつ無出力",
+    "地の文に https://example.com という文字列だけがあり属性値では参照していないとき exit0 (過剰検出しない)",
+    "書込先ファイルが既に削除されているペイロードで exit0 かつ非ゼロ終了しない",
+    "8 MiB を超える handout.html で exit0 になり、stdout に打ち切りの systemMessage JSON が 1 行出る",
+    "地の文に ★ ✔ © (VS16 なし) を含むとき exit0 (CR-EMOJI 層 2 の記号を殺さない。旧 denylist U+2600-U+27BF が撤去されたことの回帰テスト)",
+    "C16 と共通の境界事例 fixture 群を両者へ同一入力で掛け、判定 (違反有無・違反コードポイント) が全件一致する (AC-C16-11 と対をなす)",
+    "hook 本体を grep したとき、外部スキームの列挙と絵文字コードポイントの列挙が 0 件で、判定が C16 module_api の呼び出しに一本化されている",
+    "hook 本体に用途種別の語彙リテラルが 0 件である (C42 の重複を作らない)",
+    "hook 本体が Python 標準ライブラリのみを import する (C27)"
+  ],
+  "failure_modes": [
+    "適用範囲を宣言せず導入環境の全 .html を検査してしまい、外部 URL を含む無関係な文書で作業が止まる → マーカー 2 条件 (日付接頭ディレクトリ + 同階層 handout-config.json) の同時成立を必須にする",
+    "hook 内で重い解析 (DOM 構築・全 SVG 集計・chromium 起動) を行い、書込のたびに待ちが発生する → 検出規則を行単位 1 パスの D1 / D2 に限定し、それ以外は C16 へ委ねる",
+    "settings.json と plugin 同梱 hooks の二重登録で 1 回の書込に 2 回発火する → 登録面を settings.json に一本化し、同梱側には登録を置かない",
+    "PostToolUse の exit2 を『書込を取り消せる』と誤解した設計にする → 取り消しは起きない。fail-closed は違反の可視化と後段停止の担保であることを実装コメントにも残す",
+    "ペイロード形式の差異 (filePath / path) を吸収せず一部の書込を取りこぼす → 3 キーのフォールバックを実装する",
+    "検査の打ち切りを exit0 かつ無出力で行い、合格と区別できなくなる → 打ち切り時は必ず systemMessage を出す"
+  ],
+  "open_questions": [
+    "matcher が Write|Edit で MultiEdit を含まない (inventory の宣言に従った)。slide-report-generator の同種 hook は Write|Edit|MultiEdit を採っており、MultiEdit で書かれた handout.html は本 hook を素通りする。見逃しは C16 で捕まる範囲だが、matcher に MultiEdit を足すかは inventory 側の更新を伴うため本 leaf では変更せず未確定として残す",
+    "PostToolUse hook の exit 2 が Claude へ返る挙動は repo 内の実装契約 (dev-graph が同形式で block している) から確定させたが、PostToolUse 固有の停止セマンティクスを公式仕様で再確認していない。P04 のテストでは stderr 出力と exit code の 2 点のみを検証対象とし、上位の停止挙動には依存しない設計にする",
+    "8 MiB / 3 秒という打ち切り閾値は、data URI 埋め込みで肥大した資料を想定した仮置きであり、実測に基づく値ではない。index.md の現状値非焼込方針もあるため、config/handout-output.json のサイズ上限宣言と揃えるかどうかは C12 / config 側の確定待ち"
+  ]
+}

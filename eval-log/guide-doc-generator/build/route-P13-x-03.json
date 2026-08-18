@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P13-x-03",
+  "covered_task_ids": [
+    "P13-x-03"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "guide-doc-generator が .claude-plugin/marketplace.json (name: skills) に登録され validate-plugin-completeness.py が exit0 になる",
+      "method": "当方が manifest の distributable を true として登録前の検出を走らせ、次に --fix で append-only 登録し、登録後に検出を再実行した",
+      "result": "pass (**登録前は `VIOLATION guide-doc-generator: not registered in .claude-plugin/marketplace.json plugins[] (MK-001)` と `not registered in any bundles.json bundle (BD-001)` の 2 件で exit1**。--fix の実行ログは `marketplace.json: + guide-doc-generator` / `bundles.json[skills-full]: + guide-doc-generator` を報告し、再検出は exit0。登録は生成物から実測した: marketplace.json plugins[] に source=./plugins/guide-doc-generator のエントリが存在し当該ディレクトリが実在、bundles.json の skills-full バンドルの plugins[] に guide-doc-generator が含まれる)"
+    },
+    {
+      "claim": "lint-readme-plugin-root-portability.py が skip でなく exit0 になる",
+      "method": "当方が README.md を新規に書き、lint の出力行に guide-doc-generator が現れることと exit code を確認した",
+      "result": "pass (`plugins/guide-doc-generator/README.md: OK` / lint 全体 exit0。**skip でないことが重要**: distributable:false のあいだ lint は当該 plugin を検査対象から外すため、緑に見えても何も測っていない状態になる。今回は `OK` 行が出ており実際に走査されている。README の bash フェンスは全て `HB=\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/guide-doc-generator}}\"` の fallback 形で書き、素のターミナルへ貼っても空展開で `/scripts/...` を叩かない)"
+    },
+    {
+      "claim": "配布メタデータが単一の正本に収まっている",
+      "method": "当方が lint-distributable-ssot.py を実行した",
+      "result": "pass (`OK: 23 plugin の配布メタデータ (distributable/bundle_targets/category/tags) が単一の正本に収まっています` exit0)"
+    },
+    {
+      "claim": "phase-13-release.md の事前解決済み判断が新裁定と矛盾しない状態になっている",
+      "method": "当方が phase-13-release.md と index.md の plugin_meta を読み、旧判断と新裁定の食い違いを特定して追記で解消した",
+      "result": "pass (旧判断は「本 plugin は repo 内利用を既定とし配布はしない。marketplace 登録は判断と理由を記録し、**実登録は人手承認を経る**」。利用者からの『ローカルのプラグインと GitHub にプルリクを出した後の、そこからのマーケットプレイスからのインストールができる両方が対応できるようになっているか確認しておいてください』という明示要求が、旧判断が留保していた人手承認そのものにあたる。**旧記述を削除せず追記で反転した** — 削除すると「なぜ配布可になったのか」の根拠が消え、次に読む人が一から再検討することになる。index.md 側の `plugin_meta.distribution` (distributable/bundles/marketplace) と `marketplace.policy.installation` も同時に反転し、plan 内 2 箇所の記述が食い違わない状態にした)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "write-scope-exceeded",
+      "detail": "本 leaf の write_scope は `plugins/guide-doc-generator` だが、AC 第 3 要素が `plugin-plans/guide-doc-generator/phase-13-release.md` の更新を明示的に要求しているため、同ファイルと整合上不可分な `index.md` の plugin_meta を書き換えた。**scope 外への書込である**。AC と write_scope が両立していないのは task-graph 側の宣言の問題であり、AC を満たすために scope を黙って広げたことをここに記録する"
+    },
+    {
+      "kind": "github-path-not-machine-executable",
+      "detail": "GitHub 経路の install (`/plugin marketplace add daishiman/harness-dev` → `/plugin install guide-doc-generator@skills`) は、PR がマージされ remote の default branch に登録が乗って初めて成立する。本 leaf が実測したのは **ローカル作業ツリー上の登録と整合性** までであり、remote 反映後の install は未実測。P13-x-04 の証跡へ未実測範囲として記録する"
+    },
+    {
+      "kind": "no-commit-performed",
+      "detail": "Conservative プロファイルに従い、git commit / push / PR 作成は行っていない。marketplace.json / bundles.json の変更は作業ツリー上にあり、配布の成立には利用者による commit と PR が必要である"
+    }
+  ]
+}

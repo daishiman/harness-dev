@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-30",
+  "covered_task_ids": [
+    "P05-x-30"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "validate-handout-config.py スイートの赤 4 件がすべて解消し、278 件が OK になった",
+      "method": "当方が 4 件を個別実行して緑を確認したのち、4 スイート全体を各テストディレクトリへ cd して再実行し失敗テスト名を採取した",
+      "result": "pass (validate: Ran 278 **OK** (着手前は failures=2 errors=2)。extract: Ran 152 **OK**。a11y: Ran 187 **OK**。render: Ran 219 / 失敗 1 件 = test_cross_component.GateHandoffTest.test_round_trip_equivalence。**失敗テスト名の集合は 5 件 → 1 件へ減り、新規の赤は 0 件**。残る 1 件は P05-x-31 の所掌 (C20 の抽出粒度) であり本 leaf の対象外)"
+    },
+    {
+      "claim": "2 件は FAIL ではなく ERROR であり、assert 本体に一度も到達していなかった (『検査が落ちている』のではなく『検査が動いていない』)",
+      "method": "当方が 4 件の traceback を採取し、例外種別と発生行を確認した",
+      "result": "pass (**test_unknown_doc_type_lists_vocabulary / test_no_purpose_vocabulary_literals はいずれも `KeyError: 'entries'` で、カタログ読み出しの行で落ちており assert に到達していなかった**。したがって修正後に初めて本当の判定が走る — 緑になる保証は事前には無かった。実際に走らせた結果として緑になった。この 2 件は『赤を消した』のではなく『無効だった検査を有効化した』側の変更である)"
+    },
+    {
+      "claim": "語彙カタログのキー名は `vocabulary` が正本であり、`entries` と書いていた 2 テストが追随漏れ (PAT-6) だった",
+      "method": "当方が config/handout-purposes.json の top-level キーを採取し、`vocabulary` / `entries` を読む箇所を scripts/ tests/ 全体で grep して多数派・少数派と owner を特定した",
+      "result": "pass (カタログの top-level は `_meta / schema_version / vocabulary / presets` で **`entries` は存在しない**。`vocabulary` を読むのは owner の **resolve-handout-preset.py (C23) が 5 箇所**、加えて route-handout-output.py / resolve-handout-preset.py の 2 スイートで計 10 箇所以上。`entries` と書いていたのは **validate スイートの 2 テストのみ**。したがって寄せる向きは一意で、テスト側を `vocabulary` へ直した。**カタログへ `entries` を足す案は採らない** — 同じ配列に 2 つの入口を作ることになり第 2 の名簿を生む)"
+    },
+    {
+      "claim": "N12 の赤は script の欠陥ではなく、テストが harness 自身の固定物を数えていた誤検出だった",
+      "method": "当方が tests/validate-handout-config.py/_harness.py を読み、`self.root` と `self.out` の親ディレクトリを比較した",
+      "result": "pass (`self.root = self.tmp / \"plugin-root\"` と `self.out = self.tmp / \"out.json\"` は **同じ親 self.tmp** を持つ。旧テストは `out.parent.iterdir()` の全件を leftover とみなしていたため、**script が一時ファイルを 1 つも残さなくても harness が setUp で作る plugin-root を検出して赤になる**。実際 leftover は `['plugin-root']` の 1 件のみだった。判定を『実行前後の差分』へ改め、増えた分だけを leftover とした。**除外名 (plugin-root) を書き下す案は採らない** — harness の内部構造の第 2 の名簿になり、harness がディレクトリ名を変えると検査が黙って緩むため)"
+    },
+    {
+      "claim": "N11 の赤は R22 の追随漏れであり、script が正しくテストが古かった",
+      "method": "当方が validate-handout-config.py:1282-1289 の provenance 構築箇所を読み、テストが固定する集合と突合した",
+      "result": "pass (script は **8 キー** (normalized_by / schema_version / catalog_sha256 / date_source / presentation_order_source / **detail_level_source** / **evidence_depth_source** / text_fold_count) を出す。テストは R22 (C61-C66) 導入前の **6 キー**で固定されたままだった。テストを 8 キーへ更新し、**併せて追加 2 キーが非空文字列であることの assert を足した** (『どこから決まったか』の記録なので空では意味を持たない)。**これは assert を弱めた変更ではなく強めた変更である**)"
+    },
+    {
+      "claim": "変更範囲はテスト 4 ファイル分の 4 箇所に限られ、script を 1 行も変更していない",
+      "method": "当方が編集した箇所を列挙した",
+      "result": "pass (`tests/validate-handout-config.py/test_document_fields.py` (entries→vocabulary) / `test_source_hygiene.py` (同) / `test_normalize_date_determinism.py` の 2 メソッド (差分判定化・8 キー化)。**scripts/ 配下は無変更**。4 件はいずれも『script の欠陥』ではなく『テスト側の追随漏れ・誤検出』だったため、script を直す必要が無かった)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "all-four-resolved-on-test-side",
+      "detail": "**4 件すべてをテスト側の修正で解消しており、script を 1 行も直していない。これは通常なら Goodhart 緑化を疑うべき形である。**疑いを退けた根拠を 4 件個別に置いた: (1)(2) は正本カタログのキー名を多数派 (owner C23 の script 5 箇所 + 他 2 スイート) と突合して少数派 2 件が誤りだと機械的に特定した。(3) は harness の setUp が out と同じ親へ plugin-root を作ることをソースで確認し、script の残存物が 0 件であることを差分判定で示した。(4) は script 側が R22 の要求どおり 2 キーを出しておりテストが導入前のまま固定されていた。**いずれも『テストを緩めて通した』のではなく、(2) は無効だった検査の有効化、(4) は assert の追加を伴う。**ただしこの判断は当方の読解に依存しており、独立レビューは受けていない"
+    },
+    {
+      "kind": "task-spec-missing",
+      "detail": "`plugin-plans/guide-doc-generator/task-specs/P05-x-30.md` が実在しない (P05-x-25 / x-26 / x-27 / x-28 と同様・5 件目)。node の acceptance_criterion を正本として遂行した。**この欠落が 5 leaf 連続で起きており、`accept-discovered-task.py` の validate が新規 form にしか task_spec_ref の実在を要求していないことが原因である** (P05-x-26 / x-27 で既出)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

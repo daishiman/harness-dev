@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C20-01",
+  "reason": "AC-C20-02 (復元した構成データを C11 で再レンダリングしてバイト一致) が現契約では原理的に成立しない。完全マーカー付き HTML から復元しても focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to は C11 の renderer_marker_requirements に対応マーカーが無く HTML へ刻まれていないため復元不能。加えて notes_enabled(null) の型・date の表示書式・assets[].data_uri が C12 schema の additionalProperties:false に抵触する。R14 (既存 HTML から構成データを逆抽出して別テーマの出発点にする) の実効性に直結する",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+  "proposed_node": {
+    "id": "P05-x-11",
+    "title": "逆抽出の round-trip 成立条件を確定する (C11 マーカー契約の拡張か C12 schema の round-trip 免除か)",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas",
+    "acceptance_criterion": "完全マーカー付き HTML から extract-handout-config.py で復元した構成データが validate-handout-config.py --config を exit0 で通過する。焼き直しでなく、focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to / notes_enabled / date / assets[].data_uri の各項目について『HTML へマーカーとして刻む』か『round-trip の対象外と明示宣言する』かのどちらを採ったかが機械可読に記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-11.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

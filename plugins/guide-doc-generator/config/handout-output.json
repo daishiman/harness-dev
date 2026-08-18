@@ -1,0 +1,18 @@
+{
+  "_meta": {
+    "role": "既定出力先とサイズ上限の宣言データ (R17)",
+    "canon_authority": "C19 route-handout-output.py (script-brief-C19.json)",
+    "produced_by": "P05-x-03 (config/ の唯一の producer / P04-x-05 G-04)",
+    "rule": "既定出力先の値を script ソースへ書かない (C19 の受入検査は script ソースに環境固有の絶対パスが 0 件であることを要求する)。~ 展開と環境変数展開は C19 が行う。**配布物である本ファイルには環境固有の絶対パスを置かない** — 個人の固定出力先は環境変数 HB_OUT_DIR で与える",
+    "resolution_order": "--out-dir > 環境変数 HB_OUT_DIR > 本ファイルの default_out_dir > 未解決なら exit 2 (C19 algorithm 6)",
+    "default_out_dir_policy": "配布既定は cwd 相対の ./handout-output とする。別環境の利用者が何も指定しなくても他人のツリーを作りに行かず、手元に出力が落ちることを保証するため。固定の出力先が欲しい利用者は HB_OUT_DIR を設定する (--out-dir > HB_OUT_DIR > 本キー の順に強い)"
+  },
+  "version": 1,
+  "default_out_dir": "./handout-output",
+  "size_limits": {
+    "note": "値をここに置くのは『閾値を script ソースへ焼き込まない』ためであり、超過時の挙動 (fail-soft / warning 継続) の定義は各 component 側が持つ",
+    "asset_max_bytes": 5242880,
+    "asset_max_bytes_semantics": "1 素材あたりの埋め込み上限 (原本バイト数・base64 化前)。累積合計に対する閾値は持たない (合計は事実として報告するだけで合否判定に使わない)。超過素材は埋め込まずに warning を残して処理を継続する (C30)",
+    "asset_max_bytes_source": "script-brief-C13.json の --max-bytes 既定値 5 MiB (5242880)。base64 化で原本の約 4/3 に膨らむこと、単一 HTML が DOM 上 1 本の文字列として保持されることによる運用上の保守的な初期値"
+  }
+}

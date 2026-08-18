@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-06",
+  "covered_task_ids": [
+    "P04-x-06"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 P04-x-06-ALIGNMENT.md が実在する",
+      "method": "pathlib で存在と size を確認",
+      "result": "pass (10354 bytes)"
+    },
+    {
+      "claim": "裁定 B: C22 の検出順契約が NAR-01..NAR-10 になった",
+      "method": "_support.py の DETECTION_ORDER を正規表現で抽出",
+      "result": "pass (NAR-01 … NAR-10 の 10 件)"
+    },
+    {
+      "claim": "裁定 A: C23 のプリセットキー検査が閉じた allowlist へ移り granularity_defaults を含む",
+      "method": "resolve-handout-preset.py/_harness.py の ALLOWED_PRESET_KEYS を抽出",
+      "result": "pass (section_order / recommended_parts / notes / presentation_order_variants / required_document_fields / granularity_defaults の 6 キー。キー数を検査する名前と診断文は除去済み)"
+    },
+    {
+      "claim": "裁定 C: granularity_defaults が preset の必須キーとして検査される",
+      "method": "REQUIRED_PRESET_KEYS / GRANULARITY_DEFAULT_KEYS を抽出",
+      "result": "pass (REQUIRED に granularity_defaults が含まれ、値面は {detail_level, evidence_depth})"
+    },
+    {
+      "claim": "H-01: HTML 属性照合が case-insensitive になり get('viewBox') が到達可能",
+      "method": "render-diagram-svg.py/_harness.py に _AttrDict が存在すること + 実行結果",
+      "result": "pass"
+    },
+    {
+      "claim": "H-01..H-03 の修正で render-diagram-svg.py の全テストが到達可能になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-diagram-svg.py -p 'test_*.py'",
+      "result": "pass (Ran 166 / OK / failures=0 / errors=0。P05-C14-01 時点の 159/166 から 7 本が到達可能化し、実装が既にその挙動を満たしていたため緑。task-spec が明示した『緑にしない』の例外に該当)"
+    },
+    {
+      "claim": "裁定を反映した 3 ディレクトリは赤のまま (P04 は赤を固定する phase)",
+      "method": "各ディレクトリで unittest discover",
+      "result": "pass (build-icon-sprite.py Ran 128/failures 128、resolve-handout-preset.py Ran 128/failures 126、verify-handout-narrative.py Ran 217/failures 226 (subTest 単位計数)。いずれも対応 script 未実装が由来)"
+    },
+    {
+      "claim": "write_scope を逸脱していない (scripts/ を変更していない)",
+      "method": "find plugins/guide-doc-generator/scripts -name '*.py' -newer <本 leaf の産出物>",
+      "result": "pass (0 件)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "spec-premise-incorrect",
+      "detail": "task-spec は G-03 の追従を『C15 のテストが denylist 前提なら改める』と条件付きで書いていたが、実体は既に CR-EMOJI 準拠だった (_harness.find_emoji が二層規則で、✔ U+2714 の exit 0 と U+2699 U+FE0F の exit 1 は AC-C15-3b/3c として固定済み)。欠けていたのは『C15 と C16 が同じ実装を呼ぶ』ことの検査で、worker は委譲形 (spec_from_file_location での scan_emoji 参照) と C16 未解決時の exit 2 fail-closed をテスト化した。既存 assert の削除は 0 件"
+    },
+    {
+      "kind": "green-by-design",
+      "detail": "resolve-handout-preset.py の緑 2 本 (test_the_defaults_table_is_a_faithful_copy / test_proposal_default_is_standard_and_sourced) はブリーフ (正本) だけを読む検査で、正本が P04-x-05 で裁定済みのため緑が正しい。受入基準の消滅ではない"
+    },
+    {
+      "kind": "fixture-adjusted-not-criterion",
+      "detail": "test_preset_orphan の ghost preset へ granularity_defaults を付与した。手順 4(j) の新設により、この fixture が E-PRESET-ORPHAN より先に -GRANULARITY-MISSING を踏み得るため。検査対象 (4(f) の orphan 判定) を切り出すための fixture 修正で、期待エラーコードは不変"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker が判断した 3 件。(1) make_plugin_tree に with_c16 を追加し、C16 の script が実在するときだけ複製する。stub を置くと『退避経路が第 2 の正本になる』という裁定の趣旨に反するため置かず、C16 未実装の間は exit 2 fail-closed の赤が『C16 未実装』を正しく指す (2) 裁定 C の期待値の出所を granularity_defaults.defaults 表ではなく preset_definitions[] の内側へ置き、写しの忠実性は独立の 1 本で担保した (説明用の写しを期待値の出所にすると裁定 C と同じ罠を踏むため) (3) H-01 は Element.get だけでなく attrs 自体を case-insensitive dict にした ('width' in root.attrs 等の直接参照が非対称に残るのを避けるため。既存の attrs.items() 走査は非破壊)"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "task_id": "P02-x-01",
+  "phase_ref": "P02",
+  "status": "blocked",
+  "checks": [
+    {
+      "id": "brief-coverage",
+      "status": "pass",
+      "detail": "23/23 component (C01-C23) に対応するブリーフが存在し、全て JSON として parse でき、いずれも非空 (最小 863 bytes = skill-brief-C04.json、最大 37759 bytes = script-brief-C12.json)。命名規約も種別と一致する: skill-brief-C01..C04 / agent-brief-C05,C06 / command-brief-C07..C09 / hook-brief-C10 / script-brief-C11..C23。component-inventory.json の components 23 件の id 集合と過不足なく一致する。",
+      "missing": []
+    },
+    {
+      "id": "dag-acyclic",
+      "status": "pass",
+      "detail": "component-inventory.json の depends_on から有向グラフを構築 (23 node / 未知参照 0 件) し Kahn 法でトポロジカルソートが成立。残余 in-degree>0 の node は 0 件で循環なし。inventory の couples_with (C11<->C20, C19<->C18) は相互参照だが depends_on ではないため DAG には算入していない。",
+      "topological_order": ["C04", "C13", "C14", "C15", "C16", "C10", "C17", "C21", "C23", "C05", "C12", "C11", "C18", "C03", "C06", "C19", "C20", "C02", "C08", "C22", "C01", "C07", "C09"]
+    },
+    {
+      "id": "root-resolution-4stage",
+      "status": "pass",
+      "detail": "index.md L96 に 4 段防御が宣言済み: HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest (.claude-plugin/plugin.json) の name 照合 / __file__ 相対の自己解決フォールバック。plugin root 実体を必要とする 6 component (C09, C10, C12, C15, C21, C23) の全てが同じ 4 段を同順で明記し、矛盾する独自解決を持たない。C21 のみ --srg-root / SRG_ROOT を先行させるが、それは SRG 側 root の解決であり handout 側 root は 4 段目まで同一。C11 は plugin 同梱 assets/tokens・assets/mascot を読むにもかかわらず 4 段解決を明記していない (failure_modes に『plugin 実体解決の失敗』とだけ記載) が、方針と矛盾はしないため軽微不整合として findings へ記録した。",
+      "stages": ["HB_ROOT", "${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}", "plugin.json name==guide-doc-generator 照合", "__file__ 相対"]
+    },
+    {
+      "id": "cross-brief-consistency",
+      "status": "fail",
+      "detail": "6 観点のうち 3 観点 (種別語彙の単一正本 / 逆抽出マーカーの要求と供給 / 検証責務の非重複) は成立、画像パイプラインと write_scope 衝突も問題なし。ただし日付の単一 writer 観点で C12 と C11/C18/C19 の間に正規化後フォーマットの直接矛盾 (X-01)、および構成データの文書レベルフィールド名で C12 (schema 正本) と C11/C19 の間に不一致かつ `purpose` キーの意味衝突 (X-02) を検出した。いずれも下流 build が追加決定なしに着手できない。",
+      "conflicts": ["X-01", "X-02", "X-03", "X-04", "X-05"]
+    }
+  ],
+  "gates": [
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py --inventory plugin-plans/guide-doc-generator/component-inventory.json --specs-dir plugin-plans/guide-doc-generator",
+      "exit_code": 0,
+      "stdout": "OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持"
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py plugin-plans/guide-doc-generator/component-inventory.json",
+      "exit_code": 0,
+      "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
+    }
+  ],
+  "findings": [
+    {
+      "id": "X-01",
+      "severity": "blocking",
+      "title": "正規化後の date フォーマットが単一 writer と全消費者で食い違う",
+      "components": ["C12", "C11", "C18", "C19"],
+      "detail": "C12 (日付解決の単一 writer・schema 正本) は config_schema.document_level_fields で date の制約を『正規化後は ^\\\\d{4}/\\\\d{2}/\\\\d{2}$ (ゼロ埋め・スラッシュ区切り) の完全一致』と定義し、date_single_source_guarantee で『ディレクトリ名の <YYYY-MM-DD> は date.replace('/', '-') で C19 が導く』と明記している。一方で消費者 3 本が逆の前提で書かれている: C19 は algorithm 手順 3 で『date フィールドを ^\\\\d{4}-\\\\d{2}-\\\\d{2}$ で検証し、値をそのまま連結に使う』とし、書式不一致で exit2。C18 は DATE-02 で『config.date (正規化済みで YYYY-MM-DD 形式) を yyyy/mm/dd へ機械変換』。C11 は algorithm で『date (ISO 8601 の YYYY-MM-DD) を yyyy/mm/dd へ変換』。現状の brief をそのまま実装すると、C12 --normalize の出力を渡した C19 が常に exit2 になり、C11/C18 の変換も no-op と二重変換の分岐が壊れる。日付の単一 writer 原則そのもの (R18 / checklist C33-C35) が成立しない。",
+      "resolution_hint": "正規化後の正本表現を 1 つに確定する。C12 が正本なので (a) 正規化後は yyyy/mm/dd とし C11 は変換せずそのまま描画・C19 は replace('/','-')・C18 は config.date と date-pill を無変換比較、(b) 正規化後は YYYY-MM-DD とし C12 の制約と guarantee 文を改める、のいずれか。多数決ではなく単一 writer 側の宣言を起点に決めること。"
+    },
+    {
+      "id": "X-02",
+      "severity": "blocking",
+      "title": "構成データの文書レベルフィールド名が schema 正本と食い違い、`purpose` キーの意味が二重化している",
+      "components": ["C12", "C11", "C19", "C22", "C20"],
+      "detail": "C12 の config_schema が文書レベルの正本で、種別は doc_type、想定読者は reader、前提知識は prior_knowledge_level (enum none|basic|intermediate)、本質的問題は essential_problem、そして purpose は『R19 の 3 要素のひとつ = 目的の自由記述テキスト (10..400 文字)』と定義されている。C20 と C22 はこれに整合している (C20 は data-hb-doc-type / data-hb-meta-reader / data-hb-meta-knowledge / data-hb-meta-problem、C22 の NAR-02 は config.purpose を目的テキストとして扱う)。しかし C11 は algorithm 手順 5-6 で種別を doc.purpose_kind と呼び、必須フィールドを title / date / audience / prior_knowledge / purpose_kind / core_problem / background / goal / duration / sections[] と列挙しており、4 フィールド名が正本と異なる。さらに C19 は algorithm 手順 4 と exit_codes で『構成データの purpose を C23 の語彙一覧に照合』『purpose フィールド欠落で exit2』としており、C12/C22 が目的テキストに割り当てている purpose キーを種別として読む。同一キーに 2 つの意味が割り当たっているため、C19 は目的の自由記述を語彙照合して常に exit1 (語彙違反) を返す。C42 (語彙の単一正本) は守られているが、その語彙を載せるフィールドの同定が壊れている。",
+      "resolution_hint": "C12 の config_schema を唯一の正本と宣言し、C11 の purpose_kind→doc_type / audience→reader / prior_knowledge→prior_knowledge_level / core_problem→essential_problem、C19 の purpose→doc_type へ揃える。あわせて C12 が notes で述べる『同じ概念に 2 つの入口を作らない』方針をブリーフ横断の不変条件として P03 で固定する。"
+    },
+    {
+      "id": "X-03",
+      "severity": "high",
+      "title": "HTML の機械可読属性について、唯一の供給側 C11 が何も宣言しておらず、要求側は 2 つの命名空間に割れている",
+      "components": ["C11", "C16", "C17", "C18", "C20", "C22"],
+      "detail": "生成 HTML の単独 writer は C11 だが、C11 のブリーフに現れる data-* 属性は data-title / data-detail / data-single の 3 個のみで、下流が要求する検査アンカーを 1 つも出力契約として宣言していない。要求側は 5 本ある: C16 が data-kind (7 箇所)、C17 が data-part (13) と data-kind (8)、C18 が data-role (17) と data-part (5)、C22 が data-role (20) と data-part (6)、C20 が data-hb-* (31 種・49 箇所)。さらに要求側どうしで命名空間が二重化している — 部品同定は C20 の data-hb-part (値 B03..B16) と C17/C18/C22 の data-part (値 B05/B08/B13/section/lightbox/memo) の 2 系統、フィールド同定は C20 の data-hb-field (title|date|purpose|goal|lead_line|judgment_axis|section_goal) と C18/C22 の data-role (date-pill|lead-line|decision-axis|purpose|background|doc-goal|section-goal) の 2 系統で、同じ情報に 2 つの属性名が割り当たっている。C11 が両方を出力しない限りどちらかのゲートが必ず全項目 FAIL する。",
+      "mitigation": "inventory が couples_with: C11<->C20 を宣言しており、C16/C17/C18/C22 の open_questions が『属性語彙の正本をどこに置くか』を明示的に P03 design-gate へ委ねているため、決定点が設計上存在する。ただし供給側 C11 の open_questions にはこの論点が記録されておらず、C11 単体を先に build すると必ず作り直しになる。",
+      "resolution_hint": "P03 で属性語彙の正本を 1 箇所 (例: C11 のブリーフ、または plugin-level の attribute-contract として) に確定し、data-hb-* と data-part/data-role/data-kind を単一系統へ統合する。統合後に C11 の出力契約へ全属性を明記し、C16/C17/C18/C20/C22 は参照のみとする。"
+    },
+    {
+      "id": "X-04",
+      "severity": "medium",
+      "title": "C11 が参照する用途語彙カタログのファイル名が正本と異なる",
+      "components": ["C11", "C12", "C23"],
+      "detail": "語彙正本カタログの実ファイルは config/handout-purposes.json (C23 が単独 owner、C12 の --catalog 既定値も同じ)。しかし C11 の dependencies.reads は 'config/handout-presets.json (用途語彙正本・C23 経由で読む)' としており、存在しないファイル名を指している。C11 は C23 を module import して照合する設計なので実害は間接的だが、この記述のまま build すると別ファイルが新規作成され語彙正本が二重化しうる。",
+      "resolution_hint": "C11 の dependencies.reads を config/handout-purposes.json へ訂正するか、C23 module API 経由である旨だけを残してファイル名の直接言及を削る。"
+    },
+    {
+      "id": "X-05",
+      "severity": "low",
+      "title": "C11 が plugin root 実体解決の 4 段を宣言していない",
+      "components": ["C11"],
+      "detail": "C11 は assets/tokens/*.json と assets/mascot/*.svg という plugin 同梱リソースを読むが、index.md の 4 段解決を明記せず failure_modes に『plugin 実体解決の失敗』とだけ書いている。他の plugin root 参照 component (C09/C10/C12/C15/C21/C23) は全て 4 段を同順で明記しており、C11 だけ暗黙。方針と矛盾はしないが、実装者が独自解決を書く余地が残る。",
+      "resolution_hint": "C11 のブリーフへ 4 段解決の明記を追加する (P03)。"
+    },
+    {
+      "id": "X-06",
+      "severity": "low",
+      "title": "C23 の呼び出し形式が module import と subprocess で混在している",
+      "components": ["C23", "C11", "C12", "C19", "C05"],
+      "detail": "C23 の invoked_by は C12 / C19 / C05 をいずれも『モジュール import 経由』と記載し、C11 も module import で照合する。一方 C19 自身の dependencies.invokes は 'C23 resolve-handout-preset.py --list (subprocess で起動し stdout の JSON を読む)' としており、algorithm 手順 4 も subprocess 前提 (C23 が非 0 終了なら exit2)。矛盾というより契約の記載ずれで、C23 は CLI (--purpose/--list/--audit-duplication) と module API の両方を持つ設計なのでどちらでも動く。ただし『C23 不在時に exit2』の判定条件が import 失敗か subprocess 失敗かで実装が変わる。",
+      "resolution_hint": "C23 の呼び出し形式を stdlib-only の全 script で module import に統一する (subprocess は起動コストと Python 実体解決の不確定性を持ち込む)。"
+    },
+    {
+      "id": "X-07",
+      "severity": "info",
+      "title": "checklist ID 名前空間が component ID 名前空間と衝突している",
+      "components": ["all"],
+      "detail": "各ブリーフの checklist_covered が C5 / C17 / C18 / C23 / C27 / C42 といった形式で、component ID (C01-C23) と見分けがつかない。例えば C21 の checklist_covered=['C17','C18','C27'] は component C17/C18 ではなく checklist 項目、C19 の checklist_covered=['C23','C24','C35','C42','C27'] も同様。散文中でも『(C17)』『(C18・fail-soft)』のような表記が checklist 項目を指しており、下流 build の読み手が component 依存と誤読するリスクがある。",
+      "resolution_hint": "checklist 側に接頭辞 (例 CK-17) を付けて名前空間を分離する。inventory 全体の一括変更になるため P03 以降で判断。"
+    },
+    {
+      "id": "X-08",
+      "severity": "info",
+      "title": "出力ディレクトリ同梱物の生成主体が未確定として残っている",
+      "components": ["C19", "C11", "C01"],
+      "detail": "C19 は同梱 4 点 (handout.html / handout-config.json / assets/ / README.md) の存在検査のみを行い、mkdir 以外の書込をしない。README.md の生成主体は C19 の open_questions で『C01 か C13 系レンダラかは P02 の他 leaf の確定待ち』とされたまま。C11 も同梱 handout-config.json の書き戻し先について『C19 が解決する出力ディレクトリの同梱物名と一致しているか P03 で照合が要る』と open_questions に残している。write_scope の衝突は無い (C11=out-file、C19=out-dir の mkdir のみ、build_target 重複 0 件) が、README.md については現状どの component も writer になっていないため、そのまま build すると C19 の同梱 4 点検査が必ず exit1 になる。",
+      "resolution_hint": "README.md の writer を C01 (skill) に確定するのが自然 (原題・目的・適用プリセットの文言生成を伴うため決定論 script の責務ではない)。P03 で確定させる。"
+    }
+  ],
+  "notes": {
+    "went_well": [
+      "23 ブリーフが独立 context で書かれたにもかかわらず、種別語彙の単一正本は完全に守られていた。C23 が唯一 8 語を列挙し、C07 と C19 は語彙を再列挙せず C23 の --list / module API を参照する設計。両者に現れる 8 語は『script 本文に語彙リテラルが 0 件であること』を確認する acceptance_check の grep 対象としての出現であり、二重定義ではない。C23 は --audit-duplication モードで語彙ハードコードの重複検出まで用意している。",
+      "検証責務 4 分割が明確に非重複。C16=自己完結性/絵文字/アイコン様式/nav アンカー解決 (SC-01..08)、C17=a11y/印刷/sticky オフセット (A11Y-01..07, PRINT-01..04, STICKY-01)、C18=言語規約と日付 (LANG-01,04,05,06 / DATE-01..04)、C22=筋道のみ (NAR-01..06)。C22 は open_questions で『team-lead 案では R11/R18 も含める話だったが phase-02 の検証面独立に従い C18 へ寄せた』と分界の根拠まで記録している。hook C10 は boundary_with_C16 を独立フィールドで持ち、行単位 1 パスで判定できる D1 (外部 URL) と D2 (絵文字) だけに限定し、二重報告が起きる 2 種を『水際 + 完成物の意図的な二重防御』として明示的に残している。",
+      "画像パイプラインが一意。C21 は SRG の build-image-prompts.js / generate-images-codex.js へ subprocess 委譲するアダプタに徹し、プロンプト組み立てと画像生成の再実装 0 件を acceptance_check で grep 検証する。生成 PNG の base64 data URI 化は C21 が『行わず C13 へ委譲する』と明記し、C13 も『data URI を作る側だけを担い HTML/JS への焼き込みは一切行わない』と対称に書いており、責務が両側から一意に閉じている。",
+      "write_scope の衝突なし。build_target の重複 0 件、生成 HTML の単独 writer は C11、正規化済み構成データの単独 writer は C12、日付既定値充填の単独 writer も C12、出力ディレクトリ作成は C19 の mkdir のみ、素材ディレクトリは C21 のみ。single_writer フィールドを持つ 6 component が互いの領分を名指しで除外している。"
+    ],
+    "friction_points": [
+      "独立 context で書かれた結果、供給側 (C11) と要求側 (C16/C17/C18/C20/C22) の非対称が生じた。要求側 5 本は自分が必要とする属性を詳細に列挙し open_questions で『C11 と突き合わせが要る』と書いているが、C11 のブリーフにはその要求が 1 件も届いていない。ハブになる component のブリーフを最後に書くか、属性契約を先に plugin-level surface として固定する順序が要る。",
+      "schema 正本を持つ C12 が最も詳細 (37KB) だが、C11 と C19 はその正本を参照せず独自のフィールド名で書いている。X-01 と X-02 はいずれも『C12 のブリーフを読んでいれば起きなかった』種類の不一致で、並列 agent に共通の先行成果物 (schema) を渡す設計が要る。",
+      "checklist ID と component ID がどちらも Cnn 形式で、突合の自動化に追加の文脈判断が必要だった (X-07)。"
+    ],
+    "downstream_watchouts": [
+      "P03 design-gate は X-01 / X-02 を最優先で決着させること。両方とも C12 の config_schema を正本として C11 と C19 を合わせるのが自然で、逆向き (C12 を変える) にすると C20/C22 側も連鎖修正になる。",
+      "X-03 の属性語彙統一までは C11 の実装に着手しないこと。C16/C17/C18/C20/C22 の検査アンカーが全て C11 の出力に依存しており、属性名が確定する前に C11 を書くと 5 本のゲートが全項目 FAIL のまま作り直しになる。",
+      "C05 / C06 の open_questions に共通する未確定 3 点 (responsibility anchor の R<数字> 形式、prompt_ref の基準ディレクトリ、model 指定 inherit/sonnet) は P05 implementation で 2 agent 同時に決めること。片方だけ決めると lint-agent-prompt-section.py の ANCHOR_RE で片側が落ちる。",
+      "X-08 の README.md writer 不在は P05 までに埋めること。埋めないと C19 の同梱 4 点検査 (exit1) が P06 のテスト実行で必ず赤になる。",
+      "C09 の description が 3 ゲートしか列挙していないのに depends_on は C22 を含む 4 ゲート (C09 open_questions で自己申告済み)。P03 で description 文言を 4 面へ揃えるか判断すること。",
+      "C10 の matcher が Write|Edit で MultiEdit を含まない。MultiEdit で書かれた handout.html は hook を素通りするが C16 で捕まる。inventory 更新を伴うため P03 判断。"
+    ]
+  }
+}

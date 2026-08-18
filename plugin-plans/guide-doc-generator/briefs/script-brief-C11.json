@@ -1,0 +1,698 @@
+{
+  "component_id": "C11",
+  "component_kind": "script",
+  "name": "render-handout.py",
+  "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+  "purpose": "正規化済み構成データ JSON から、外部参照ゼロの単一 HTML を LLM 非依存で組み立てる決定論レンダラ。parts_catalog_ssot (config/handout-parts.json) が定める全部品・CSS 変数トークン・スタガー入場・sticky ナビとオフセット二重補正・冒頭の目的/背景/ゴール・全セクションのゴールチップ・日付ピル・lightbox・添付ダウンロード・メモと localStorage・A4 print 規則・a11y 属性を、この 1 本だけが書く。",
+  "argv": [
+    {
+      "flag": "--config",
+      "required": true,
+      "type": "path",
+      "description": "正規化済み構成データ JSON (C12 --normalize の出力に限る)。正規化済みの判定は provenance.normalized_by と schema 宣言の const の一致で行う (normalized:true のような schema に無いフラグは受け付けも要求もしない)",
+      "default": null
+    },
+    {
+      "flag": "--theme",
+      "required": false,
+      "type": "string",
+      "description": "テーマ名。構成データに theme 欄が無い場合に限り有効。theme 欄がある構成データと同時指定されたら exit 1。採用値は書き戻すため --config-out の併用が必須 (--config-out 無しの --theme は exit 2)",
+      "default": null
+    },
+    {
+      "flag": "--out",
+      "required": false,
+      "type": "path",
+      "description": "出力 HTML のパス。未指定なら HTML を stdout へ出す。指定時は stdout へレンダリング結果 JSON 1 行を出す",
+      "default": null
+    },
+    {
+      "flag": "--config-out",
+      "required": false,
+      "type": "path",
+      "description": "採用テーマを書き戻した構成データの書き出し先パス。--theme を採用したときのみ書く。P03 Y-04 の裁定により、出力ディレクトリ配下の handout-config.json を置く writer は C19 に一本化したため、本 script はここで指されたパス (作業領域のファイル) へ書き、そのファイルが C19 --place-config の --config として渡る。出力ディレクトリ配下を指す値が渡されても本 script は同梱物の固定名を組み立てない (受け取ったパスへそのまま書くだけ)",
+      "default": null
+    }
+  ],
+  "stdin": "使わない (--config のパス指定のみ)",
+  "stdout": "--out 未指定時は単一 HTML 全文。--out 指定時は結果 JSON 1 オブジェクト 1 行: {\"html_path\": \"...\", \"bytes\": N, \"sections\": N, \"blocks_by_type\": {\"steps\": 3, ...}, \"icons_used\": [...], \"diagrams\": [...], \"embedded_bytes\": N, \"theme\": \"...\", \"config_written\": \"...\"|null, \"warnings\": [...]}",
+  "stderr": "人間向け診断のみ。構成データ不整合のキーパス / 未解決のナビアンカー / 委譲先 (C14/C15) が返した診断の転記 / 進捗はセクション単位で 1 行ずつ",
+  "exit_codes": {
+    "0": "単一 HTML を出力した (warnings があっても 0)",
+    "1": "入力データの規約違反 (未正規化の構成データ・必須フィールド欠落・section goal 欠落・lead-line や判断軸の欠落・未知の block type・nav と section id の不整合・theme の二重指定・C14/C15 が exit 1 を返した)。差し戻し先は構成データ側",
+    "2": "実行不能 (argv 不正・--config のファイル不在・JSON 構文エラー・--theme 指定時の --out 欠落・出力先ディレクトリが書けない・plugin 実体解決の失敗・C14/C15 が exit 2 を返した)。差し戻し先は呼び出し側"
+  },
+  "write_scope": [
+    "--out で指定された HTML ファイル 1 個 (親ディレクトリが存在しない場合は作成しない・exit 2)",
+    "--theme を採用したときに限り、--config-out で明示されたパス 1 ファイル (採用テーマを書き戻した構成データ)。出力ディレクトリ配下へ handout-config.json という固定名で置くのは C19 であり、本 script はその名前もその場所も決めない"
+  ],
+  "single_writer": "生成 HTML の単独 writer。CSS・JS・HTML 構造・部品テンプレート・トークン定義・print 規則・a11y 属性を出力する箇所はこの script だけであり、他の script は生成物を読む側 (C16/C17/C18/C22/C20) か上流のデータ加工側 (C12/C13) に限られる。同梱構成データについては、日付既定値の充填と用途プリセット適用は C12 --normalize が単独 writer であり、本 script はテーマ欄が空のときにテーマ名 1 フィールドを追記した写しを --config-out へ出すだけで、他のフィールドを書き換えない。出力ディレクトリそのものの作成、同梱物 handout-config.json / assets/ の配置、充足検査はいずれも C19 の write_scope であり本 script は関与しない (P03 Y-04)。同梱 4 点のうち本 script が writer であるのは handout.html 1 点だけである。",
+  "stdlib_only": true,
+  "plugin_root_resolution": "plugin 同梱リソース (assets/tokens/*.json・assets/mascot/*.svg) の解決は実体解決 4 段 (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → 候補直下の .claude-plugin/plugin.json を読み name==\"guide-doc-generator\" を照合 → __file__ の親の親 (scripts/ の親)) を順に試し、最初に実在した root を採る。絶対パスを実装へ直書きしない。いずれも成立しなければ exit 2 で試した 4 経路と各々の不成立理由を stderr へ列挙する。方針の正本は index.md の実行時可搬性方針であり、C09/C10/C12/C15/C21/C23 と同一の 4 段・同一順序を使う (独自解決を書かない)",
+  "dependencies": {
+    "reads": [
+      "--config の正規化済み構成データ JSON",
+      "assets/tokens/*.json (CSS 変数トークン定義 + R21 で追加した text_limits ブロック) と assets/mascot/*.svg (plugin 同梱・read-only)",
+      "config/handout-parts.json (部品 id 語彙の正本。ファイルの単独 owner は本 script だが、実行時は plugin 同梱ファイルとして read-only で読む。部品テーブルの写像先はこのファイルの id に一致させ、id を実装へ列挙しない)",
+      "config/handout-purposes.json (用途語彙正本・ファイルの単独 owner は C23 であり、本 script は C23 のモジュール API 経由でのみ読む。ファイル名の正本は C23 のブリーフ)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (R3-render)",
+      "C02 run-handout-extract (round-trip の再レンダリング)"
+    ],
+    "not_invoked_by": "C07 /handout-build は本 script を直接起動しない。C07 は C01 skill を起動し、script 列の実行は C01 が持つ (inventory の C07.depends_on=[C01] がこの一段委譲を表す)。P03 evidence Y-09 で検出された brief 側だけの C11→C07 エッジはこの誤記であり、ここで解消した",
+    "invokes": [
+      "C14 render-diagram-svg.py — module import で render_diagram(spec, pattern, width) を呼ぶ",
+      "C15 build-icon-sprite.py — module import で build_sprite(config, icon_set) を呼ぶ",
+      "C23 resolve-handout-preset.py — module import で用途語彙の妥当性のみ照合する (語彙をこの script へ列挙しない)"
+    ],
+    "not_invoked": "C13 embed-assets.py は上流のデータ加工であり本 script からは呼ばない。data URI は構成データ内に既に畳み込まれている前提で受け取る (inventory の depends_on C13 はパイプライン順序の依存であって実行時呼び出しではない)",
+    "invocation_style_rationale": "C14/C15 を subprocess でなく module import (同一 scripts/ 配下・純関数 + main() の二層構造) で呼ぶ。プロセス境界を挟むと、実行環境の python 起動オプションや locale が出力へ漏れうるうえ、C29 のバイト一致再現性の検証範囲が広がる。同一プロセス内の純関数呼び出しなら決定論が入力データだけで閉じる。両者は CLI としても独立に検証できるよう main() を残す"
+  },
+  "parts_catalog_ssot": {
+    "catalog_path": "plugins/guide-doc-generator/config/handout-parts.json",
+    "plan_representation": "plugin-plans/guide-doc-generator/briefs/config/handout-parts.json (実装前の設計 plan 上の同内容表現。実ファイル生成は P05 の担当)",
+    "ownership": "本ファイルの単独 owner (writer) は C11 render-handout.py である。part id 語彙 (B01..B16 / IMG / DIAGRAM / TEXT) の正本はこの 1 ファイルだけであり、index.md・C04・C12・C18・C23 はいずれもこのファイルを参照する側で、id を自分の側へ列挙しない。C23 の config/handout-purposes.json と同形 (データファイルを 1 component が所有し、他は読むだけ) にそろえている",
+    "why_data_file": "part id は index.md / C04 の参照回答 / C12 のスキーマ検査 / C18 の LANG-06 / C23 のプリセット recommended_parts の 5 箇所で必要になる横断語彙で、どこか 1 component の散文へ書くと必ず写し違いが起きる (実際 B01-B15 と B03-B16 と B01..B16 の 3 版が並存していた)。データファイルにすれば読み手は全員同じ 1 ファイルを読み、追加時の更新点も 1 箇所になる",
+    "schema": {
+      "version": "スキーマ版 (C12 の schema_version とは独立)",
+      "parts": "[{id, name_ja, kind, section_scope, data_block_type, since, source}] の配列。id 昇順で並べる (決定論)",
+      "field_semantics": {
+        "kind": "structural (セクションに属さない骨格部品) | content (セクション内の具体部品) | media (画像・図解・素テキスト)",
+        "section_scope": "in-section | document — C18 LANG-06 が『具体部品』を数えるときの述語はこのフィールドであり、id の範囲指定 (B03..B15 のような書き方) を使わない",
+        "data_block_type": "この部品を出す構成データ側の block.type。構造部品は null",
+        "since": "v1 (参照資料 §2 由来) | plan (本 plugin plan で新設)",
+        "source": "由来の出典。参照資料由来は analysis/guide-doc-generator/reference-analysis.md §2、新設は inventory の preset_addon_decisions"
+      }
+    },
+    "b16_determination": {
+      "verdict": "B16 は存在する。ただし参照資料由来ではなく本 plugin plan で新設した部品である",
+      "grounds": [
+        "analysis/guide-doc-generator/reference-analysis.md の §2 部品カタログは B01-B15 の 15 行のみで、B16 は無い。同ファイル末尾も『骨格・部品カタログ・添付埋め込み (B01〜B15, §2) は v1 を正本とする』と書いており、参照資料側の語彙は B15 で閉じている",
+        "component-inventory.json の preset_addon_decisions にある『アクションアイテム』要件が verdict=new で採択され、new_component_ref が『C11 のレンダラへ追加する担当と期限を持つ行部品』となっている。これが B16 の出自である",
+        "C12 の config_schema.part_catalog と C23 の preset_definitions (agenda / report / proposal の recommended_parts) が既に B16 を前提に書かれている"
+      ],
+      "consequence": "catalog は B01-B16 の 16 部品を持ち、B01-B15 は since=v1、B16 は since=plan とする。『B01-B15』とだけ書いてある記述 (index.md・C04・AC-C11-5) は B16 を落としているので誤りであり、カタログ参照へ置き換える"
+    },
+    "consumer_contract": {
+      "sanctioned_access": "Python 側は本 script が公開する module API (importlib.util.spec_from_file_location('hb_parts', <plugin_root>/scripts/render-handout.py) で読み込み load_parts_catalog() / is_known_part(id) / in_section_parts() を呼ぶ) を使う。skill / agent / 文書は config/handout-parts.json を直接読む。いずれの経路でも id を自分の側へハードコードしない",
+      "consumers": [
+        "C12 validate-handout-config.py (構成データの block.type と part id の既知性検査)",
+        "C18 verify-handout-language.py (LANG-06 の『具体部品』判定を section_scope=in-section で行う)",
+        "C23 resolve-handout-preset.py (プリセットの recommended_parts が既知 id であることの検査)",
+        "C04 ref-handout-design-system (参照回答の部品一覧)",
+        "index.md (部品カタログの所在提示)"
+      ]
+    },
+    "entries_summary": "B01 sticky ナビ / B02 ヒーロー (ここまで structural・section_scope=document) / B03 ステップ行 / B04 トリオカード / B05 比較表 / B06 二択グリッド / B07 特徴カード / B08 選択マップ / B09 チェック行 / B10 アコーディオン / B11 プロンプト箱 / B12 DL ボタン / B13 タブ / B14 フロー / B15 選択チップ / B16 アクションアイテム行 (ここまで content・section_scope=in-section) / IMG 画像+lightbox / DIAGRAM 概念図解 / TEXT 素テキスト (media・section_scope=in-section)。各行の正確な値は catalog ファイルを見ること (この要約は所在案内であり正本ではない)",
+    "input_dialect": "**入力の正本は C12 の config_schema (sections[].parts[]) 一つだけである。**本 brief の block_to_component_map と algorithm 各手順が使う blocks[] / block.type という表記は、入力そのものの形ではなく project_schema_config() が入力を写した先の**描画モデルの語彙**を指す。翻訳点は project_schema_config() 一箇所で、has_schema_dialect() が sections[].parts の有無で入口を判別する。schema は normalized / nav / sections[].blocks を持たないため、『正規化済みか』は provenance.normalized_by が schema 宣言の const と一致するかで判定し、nav は sections から導出する (導出値を構成データへ書き下さない = PAT-1)。以前の本 brief は normalized:true / nav[] / blocks[] を入力側の必須として書いており schema に存在しない入力形を要求していたが、同じ brief の algorithm 手順 6/7 が 『フィールド名と制約の正本は C12 の config_schema』と宣言している以上、寄せる向きは一意に決まる"
+  },
+  "theme_token_schema_ownership": {
+    "since": "R21 (goal-spec C52)",
+    "owner": "C11 (assets/tokens/<theme>.json のスキーマ正本。ファイルの物理 writer も C11 の同梱リソースとして P05 が生成する)",
+    "added_block": "text_limits { block_body_max_chars: integer (既定 400) }",
+    "why_theme_scoped": "説明の長さの上限は版面の設計に属する値であり、テーマ (字送り・欄幅・想定印刷サイズ) が変われば妥当な値も変わる。script のソースへ数値を書くと、テーマを足すたびにコード変更が要る。値をテーマトークンへ置けば、上限の変更はデータ 1 行の編集で済む",
+    "consumer": "C12 --normalize (CR-TEXT-FOLD)。C12 はこのファイルを read-only で読み、キーが無いテーマに対しては既定 400 を使う。C11 自身は本文を切り詰めず、採用値を data-hb-text-limit として焼くだけ。R22 以降は C12 が detail_level をキーに block_body_max_chars_by_detail_level を引く (CR-DETAIL-TEXT-BUDGET)",
+    "not_a_new_config_file": "config/ 配下へ 4 本目のデータファイルを作らない。テーマ依存の値はテーマトークンに属するという既存の切り分けをそのまま延長する",
+    "added_block_r22": "text_limits { block_body_max_chars_by_detail_level: { overview: integer, standard: integer, detailed: integer } } — R22 (C63) で追加。既存の block_body_max_chars は standard の値として残し、水準別の値は本キーが持つ。キーを持たないテーマでは C12 が block_body_max_chars を全水準へ適用する (fail-soft・既存テーマを壊さない)",
+    "why_by_detail_level_lives_here": "detail_level ごとに変わるのは『どれだけ書くか』であって版面設計そのものではない、という反論があり得る。しかし上限の絶対値はテーマの字送り・欄幅に依存するため、水準別の値も同じテーマ空間に属する。水準別の値だけを script 側へ持つと、テーマを差し替えたときに standard の上限だけが追従して detailed が追従しない不整合が起きる",
+    "added_block_r22_values": {
+      "overview": 180,
+      "standard": 400,
+      "detailed": 900,
+      "decided_by": "dispatcher (P04-x-03)",
+      "why_standard_is_400": "R21 C52 の既定値と一致させる。既存テーマが持つ block_body_max_chars をそのまま standard として読めるようにするため動かせない",
+      "why_overview_is_180": "日本語で 3〜4 文。lead_line と要点 2 つが収まり、それ以上は入らない量。これ以上下げると『大まかに伝える』資料で折り畳みが多発し、畳まれた中身の総量は変わらないので粗さが実現しない (折り畳みは要約ではない)",
+      "why_detailed_is_900": "standard の 2.25 倍。overview との比を 5 倍に開いてあるのは NAR-09 のためで、この 3 値は折り畳み閾値であると同時に宣言↔実態判定の帯でもある。差が小さいと『detailed と宣言したが実態は overview 相当』を検出できない",
+      "fold_behavior_at_detailed": "detailed でも CR-TEXT-FOLD の折り畳みは行うが、生成する B10 を open=true で出力する (overview / standard は open=false)",
+      "why_open_true_not_no_fold": "折り畳み自体を止めると --normalize に水準依存の分岐が生まれ、構成データと HTML の構造対応が水準ごとに変わる。open 属性を変えるだけなら構造は全水準で同一のまま読み味だけが変わり、C20 の round-trip 等価 (C31) も C65 の共有の型の保持も無傷で、既存のアコーディオン部品に相乗りできる。『詳しく書いたのに畳まれている』も『版面が長大化して離脱する』も同時に避ける"
+    },
+    "accent_entry_point": "アクセント色を含むデザイントークンの唯一の入口は assets/tokens/<theme>.json である。本 script は色の実値を一切持たず、読み込んだトークンを <style> 冒頭の :root へ CSS 変数として展開するだけで、以降の全 CSS 規則と SVG は var() 参照になる (algorithm 手順 11)。したがってアクセントの差し替えはトークン 1 ファイルの編集で閉じ、生成 HTML の差分は :root の定義行だけに現れる (AC-C11-11 がこの性質を固定する)",
+    "theme_resolution_order": "テーマ名の決定点は 1 つだけであることを実行時に強制する。(a) 構成データがテーマ欄を持ち、かつ --theme も指定された場合は DataError で exit 1 (どちらを採るかを暗黙に決めない)。(b) --theme は書き戻し先を要するため --config-out との併用を必須とし、単独指定は exit 2。(c) 採用順は 構成データの theme 欄 → --theme → 既定テーマ。既定テーマ名は script へ literal で書かず、トークン側の is_default 宣言から読む (is_default:true がちょうど 1 件でなければ LaunchError)。この節は決定規則の正本であり、既定テーマの具体名はここにも書かない (導出値である)"
+  },
+  "html_attribute_contract": {
+    "ownership": "生成 HTML の機械可読属性の語彙は本 script (C11) が単独 owner であり、ここが唯一の正本。C16 / C17 / C18 / C20 / C22 は本節の語彙を参照するだけで、独自の属性名を定義しない。属性を増減するときは本節を先に更新し、消費側 5 本を追随させる",
+    "prefix_rule": "機械可読属性はすべて `data-hb-` プレフィクスを持つ (guide-doc-generator の名前空間)。プレフィクスなしの data-part / data-role / data-kind / data-title / data-detail / data-single は使わない。resolution X-03 で 2 系統 (data-hb-* と data-part/data-role/data-kind) に割れていた語彙をこの 1 系統へ統合した。同じ情報に 2 つの属性名を割り当てない",
+    "attributes": [
+      {
+        "name": "data-hb-schema-version",
+        "on": "<html>",
+        "value": "スキーマ版"
+      },
+      {
+        "name": "data-hb-doc-type",
+        "on": "<html>",
+        "value": "doc_type の slug (C12 schema の doc_type)"
+      },
+      {
+        "name": "data-hb-subject-slug",
+        "on": "<html>",
+        "value": "subject_slug"
+      },
+      {
+        "name": "data-hb-theme",
+        "on": "<html>",
+        "value": "採用テーマ名"
+      },
+      {
+        "name": "data-hb-meta-reader / data-hb-meta-knowledge / data-hb-meta-problem",
+        "on": "<html>",
+        "value": "reader / prior_knowledge_level / essential_problem (本文へ描画されない必須メタ)"
+      },
+      {
+        "name": "data-hb-field",
+        "on": "当該テキストを持つ要素",
+        "value": "title | date | purpose | background | goal | duration | lead_line | judgment_axis | section_goal | section_duration | focus_theme | target_task | attainment_level | must_remember | no_need_to_remember。値は C12 config_schema のキー名に一致させる。資料全体ゴールは goal、セクションゴールは section_goal で名前が分かれており、取り違えが構造的に起きない。末尾 5 値は R21 で追加した描画必須フィールド (C47 冒頭主題 / C58 具体業務 / C54 到達レベル / C57 覚えること・覚えなくてよいことの対) であり、must_remember と no_need_to_remember は必ず両方を描画する — 片方だけ出す経路をレンダラに設けない",
+        "replaces": "旧 data-role (date-pill / lead-line / decision-axis / purpose / background / doc-goal / section-goal) はこの属性へ統合。date-pill→date、lead-line→lead_line、decision-axis→judgment_axis、doc-goal→goal、section-goal→section_goal"
+      },
+      {
+        "name": "data-hb-part",
+        "on": "各部品と主要構造要素のルート要素",
+        "value": "部品は parts_catalog_ssot (config/handout-parts.json) の id をそのまま出す。加えて構造・UI 枠として section / lightbox / memo / memo-global / toolbar を出す (これらは部品ではないため catalog には無く、本契約が唯一の定義)",
+        "replaces": "旧 data-part を統合"
+      },
+      {
+        "name": "data-hb-part-id",
+        "on": "各部品のルート要素",
+        "value": "セクション内一意の部品 id"
+      },
+      {
+        "name": "data-hb-part-role",
+        "on": "部品ルート配下の補助ボタン",
+        "value": "aux (a11y 検査の対象から外す唯一の除外口。C17 A11Y-01 が参照する)"
+      },
+      {
+        "name": "data-hb-kind",
+        "on": "<svg> / <symbol>",
+        "value": "icon | mascot | decor | figure。全 svg/symbol に必ず付ける (未分類は C16 SC-06 が違反に計上する)",
+        "replaces": "旧 data-kind を統合"
+      },
+      {
+        "name": "data-hb-nav-goal",
+        "on": "B01 sticky ナビの各 <a href=\"#...\">",
+        "value": "対応セクションの goal 全文 (nav 本体のラベルは短縮見出しのままにし、ゴールは補助属性で運ぶ)。title 属性へも同値を出す。C22 NAR-05 が参照する",
+        "replaces": "旧 data-goal"
+      },
+      {
+        "name": "data-hb-section-kind",
+        "on": "<section>",
+        "value": "C12 の section_kind enum 値"
+      },
+      {
+        "name": "data-hb-key",
+        "on": "行・カード・チップ・タブ等の反復要素",
+        "value": "rows[].key / cards[].label / chips[].key 等の識別子"
+      },
+      {
+        "name": "data-hb-owner / data-hb-due",
+        "on": "B16 の各行",
+        "value": "owner / due の素値"
+      },
+      {
+        "name": "data-hb-time",
+        "on": "B03 の各行",
+        "value": "time の素値"
+      },
+      {
+        "name": "data-hb-title / data-hb-detail",
+        "on": "B08 選択マップの各項目",
+        "value": "items[].title / items[].detail の素値 (.map-detail の差し替え元)",
+        "replaces": "旧 data-title / data-detail"
+      },
+      {
+        "name": "data-hb-single",
+        "on": "B15 選択チップの部品ルート",
+        "value": "true のとき単一選択トグル",
+        "replaces": "旧 data-single"
+      },
+      {
+        "name": "data-hb-glossary-term / data-hb-glossary-plain / data-hb-glossary-scope",
+        "on": "用語言い換えを描画する要素",
+        "value": "term / plain / document|section"
+      },
+      {
+        "name": "data-hb-asset-id / data-hb-asset-alt / data-hb-asset-caption / data-hb-src",
+        "on": "<img> と画像ブロック",
+        "value": "assets の各値と原本相対パス"
+      },
+      {
+        "name": "data-hb-attachment-id / data-hb-filename / data-hb-mime / data-hb-fallback-hint",
+        "on": "<a download>",
+        "value": "attachments の各値"
+      },
+      {
+        "name": "data-hb-diagram-id / data-hb-diagram-pattern / data-hb-diagram-data",
+        "on": "図解 <svg> のラッパ要素",
+        "value": "id / pattern / 構造データの JSON 文字列"
+      },
+      {
+        "name": "data-hb-presentation-order",
+        "on": "<html>",
+        "value": "demo_first | explain_first (R21 C49/C50)。C12 が確定させた値をそのまま出す。C11 はこの値を導出しない (導出点は C12 の CR-PRESENTATION-ORDER のみ)。C22 NAR-07 が参照する",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-presentation-order-source",
+        "on": "<html>",
+        "value": "explicit | derived-from-prior-knowledge (R21 C49)。provenance の同名フィールドをそのまま出し、既定値で走ったのか明示指定だったのかを生成物だけから追えるようにする",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-section-role",
+        "on": "<section>",
+        "value": "main | appendix (R21 C48)。C22 NAR-08 が描画順の検査に使う",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-ties-to",
+        "on": "<section>",
+        "value": "section.ties_to の値をそのまま出す (goal | focus_theme:<idx> | target_task:<id>)。R21 C47/C58 の紐づけを生成物側からも追えるようにする",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-slot",
+        "on": "capability-explainer セクション内の各部品ルート",
+        "value": "outcome | breakdown | feature (R21 C51)。slot が null の部品には付けない。C18 LANG-07 が feature 見出しの特定に使う",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-asset-role",
+        "on": "<img> と画像ブロックのルート",
+        "value": "screenshot | figure | photo (R21 C56)。assets[].role の素値。既定値を持たないため、値が無い状態で描画されることはない (C12 が E-ASSET-ROLE-MISSING で先に落とす)。C22 NAR-07 が実画面判定に使う",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-attainment-step",
+        "on": "<section>",
+        "value": "overview | operable | reproducible | skill-authoring (R21 C54)。section.attainment_step の素値",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-text-limit",
+        "on": "<html>",
+        "value": "採用テーマの text_limits.block_body_max_chars の値 (R21 C52)。折り畳みの実行者は C12 --normalize であり C11 は分割しないが、どの上限で畳まれた資料かを生成物だけから追えるようにこの 1 値だけを焼く。C11 側で本文を切り詰めることは禁止 (切り詰めると C20 の round-trip が壊れる)",
+        "since": "R21"
+      },
+      {
+        "name": "data-hb-generated",
+        "on": "nav / hero 枠 / sprite / footer / メモ UI / lightbox の各ルート要素",
+        "value": "true (C20 の逆抽出はこの部分木を丸ごと読み飛ばす)"
+      },
+      {
+        "name": "data-hb-detail-level",
+        "on": "<html>",
+        "value": "detail_level の採用値 (overview | standard | detailed)。C12 --normalize が決めた値を焼くだけで、本 script は既定値を持たない"
+      },
+      {
+        "name": "data-hb-evidence-depth",
+        "on": "<html>",
+        "value": "evidence_depth の採用値 (none | cited | sourced)。同上"
+      },
+      {
+        "name": "data-hb-notes-enabled",
+        "on": "<html>",
+        "value": "notes_enabled の採用値 (\"true\" | \"false\")。メモ UI は読み飛ばし対象の chrome なので、UI の有無から C20 に推定させず宣言で持たせる (ROUNDTRIP-CONTRACT.md の /notes_enabled = marker 裁定)"
+      },
+      {
+        "name": "data-hb-tone",
+        "on": "当該テキストを持つ要素",
+        "value": "言い換え・トーンの区分。R11 の抽象↔具体の往復で、どの表現がどちら側かを消費側が判別できるようにする"
+      },
+      {
+        "name": "data-hb-live-demo",
+        "on": "handson 部品のルート要素",
+        "value": "live_demo:true のときだけ付く。実演を伴う手順であることの宣言"
+      },
+      {
+        "name": "data-hb-action",
+        "on": "操作を担う要素",
+        "value": "クライアント側 JS が拾う操作種別。生成 chrome 側の語彙であり著者データではない"
+      }
+    ],
+    "consumers": "C16 (data-hb-kind / R21 で data-hb-part=IMG・DIAGRAM を SC-09 の対象特定に使う)、C17 (data-hb-part / data-hb-part-role / data-hb-kind)、C18 (data-hb-field / data-hb-part / R21 で data-hb-section-kind と data-hb-slot)、C20 (全属性)、C22 (data-hb-field / data-hb-part / R21 で data-hb-presentation-order・data-hb-asset-role・data-hb-section-role)。5 本の検査アンカーはすべて本節の出力に依存するため、本節を変えるときは 5 本を同時に更新する",
+    "data-hb-detail-level": "root 要素へ焼く。構成データの detail_level をそのまま出力する。C22 の宣言↔実態突合 (C66) と C20 の逆抽出が読む",
+    "data-hb-evidence-depth": "root 要素へ焼く。構成データの evidence_depth をそのまま出力する。detail_level とは独立に判定されるため 2 属性に分ける (1 属性へ連結すると C22 が分解を要する)"
+  },
+  "block_to_component_map": [
+    {
+      "data": "doc.title / doc.date / sections[] (nav は sections から導出する。doc.nav という入力欄は存在しない)",
+      "component": "B01 sticky ナビ",
+      "notes": "header.pop-header に position:sticky。nav 各項目は href=\"#s{n}\" と data-hb-nav-goal=\"{section.goal}\" と title=\"{section.goal}\" と aria-describedby=\"goal-s{n}\" を持つ (nav 本体のラベルは section の短縮見出しのみ・ゴール本文は補助属性側)"
+    },
+    {
+      "data": "doc.title / doc.lead / doc.purpose / doc.background / doc.goal / doc.goal_chips[]",
+      "component": "B02 ヒーロー",
+      "notes": "h1 + lead 1 行 + 目的/背景/ゴールの 3 要素ブロック + .goal-chip 群"
+    },
+    {
+      "data": "block.type=\"steps\" items[].{label, detail?, time?, icon?}",
+      "component": "B03 ステップ行",
+      "notes": "連番バッジ .step-num は index+1 から生成。time があれば右端に .s-time ピル (アジェンダの時間配分)"
+    },
+    {
+      "data": "block.type=\"action-items\" items[].{label, owner, due}",
+      "component": "B16 アクションアイテム行",
+      "notes": "owner と due を必須メタとする B03 の派生形として実装するが、part id は独立した B16 であり catalog では since=plan (参照資料 §2 由来ではなく本 plan で新設) として持つ。inventory の preset_addon_decisions で『レンダラ内の部品テーブルへの登録で済ませ独立 component にしない』と決着済み。due は yyyy/mm/dd 整形を doc.date と同じ整形関数で行う"
+    },
+    {
+      "data": "block.type=\"handson\" steps[].{operation, expected, stuck_hint} asset_id?",
+      "component": "B17 ハンズオン手順",
+      "notes": "R21 C53。1 手順 = 操作 / 期待される結果 / つまずいたときの見どころ の 3 つ組を 1 行で並べる (3 つ組を欠く行は C12 が先に落とす)。B16 と同じく『レンダラ内の部品テーブルへの登録で済ませ独立 component にしない』扱い。asset_id があれば当該 asset を IMG と同じ経路で埋め込み、その img には assets[].role 由来の data-hb-asset-role を出す。live demo の実施指示を持つ B17 は C22 NAR-07 の実画面判定を満たす"
+    },
+    {
+      "data": "block.type=\"trio\" cards[2-3].{tone:\"today\"|\"rest\", title, body, icon?}",
+      "component": "B04 トリオカード",
+      "notes": "tone でトーン差。学習計画プリセットの『分かっている/分からない/次に調べる』3 分割もこの部品を器として使い、各枠へメモ機構を結線する"
+    },
+    {
+      "data": "block.type=\"table\" columns[] rows[][] highlight[[r,c]]",
+      "component": "B05 比較表",
+      "notes": ".table-wrap で overflow-x。th に scope=\"col\"/\"row\"。highlight のセルへ .hl-cell"
+    },
+    {
+      "data": "block.type=\"versus\" left/right.{label, tone, bullets[]}",
+      "component": "B06 二択グリッド",
+      "notes": "同一データを C14 の pattern=versus へ渡す図解化も選べる (block.render=\"svg\" で切替)"
+    },
+    {
+      "data": "block.type=\"features\" cards[2-3].{title, body, icon?, footnote?}",
+      "component": "B07 特徴カード",
+      "notes": "footnote は出典・参考の表記枠。外部 URL はリンクにせず出所のテキスト表記に留める (自己完結性の制約)"
+    },
+    {
+      "data": "block.type=\"map\" items[].{id, title, detail}",
+      "component": "B08 選択マップ",
+      "notes": "aria-pressed トグル + data-hb-title/data-hb-detail で .map-detail を差し替え。選択状態は localStorage 永続化対象"
+    },
+    {
+      "data": "block.type=\"checklist\" items[].{id, label}",
+      "component": "B09 チェック行",
+      "notes": "appearance:none の自作チェック + 進捗カウンタ。チェック状態は localStorage 永続化対象。アジェンダの決定事項リストもこの部品を使う"
+    },
+    {
+      "data": "block.type=\"accordion\" items[].{summary, body}",
+      "component": "B10 アコーディオン",
+      "notes": "ネイティブ <details>。::before の +/- 記号"
+    },
+    {
+      "data": "block.type=\"prompt\" {label, text}",
+      "component": "B11 プロンプト箱",
+      "notes": "<pre> + copy-btn。clipboard 失敗時に Range 選択フォールバック"
+    },
+    {
+      "data": "block.type=\"download\" attachments[].{name, mime, data_uri, bytes}",
+      "component": "B12 DL ボタン",
+      "notes": "data URI → Blob 変換で保存。効かない場合の代替手段テキストを .dl-hint に必ず出す"
+    },
+    {
+      "data": "block.type=\"tabs\" tabs[].{id, label, blocks[]}",
+      "component": "B13 タブ",
+      "notes": "role=tablist + aria-selected + panel.hidden。panel 内は blocks の再帰レンダリング (入れ子は 1 段まで・2 段目は exit 1)"
+    },
+    {
+      "data": "block.type=\"flow\" steps[]",
+      "component": "B14 フロー",
+      "notes": "C14 の pattern=flow へ委譲。フロー表現をレンダラ側で二重に持たない"
+    },
+    {
+      "data": "block.type=\"chips\" {single: bool, options[]}",
+      "component": "B15 選択チップ",
+      "notes": "data-hb-single のとき単一選択トグル。選択状態は localStorage 永続化対象"
+    },
+    {
+      "data": "block.type=\"diagram\" {pattern, ...}",
+      "component": "概念図解 (新規・G1)",
+      "notes": "C14 の 6 パターンへ委譲し inline SVG を figure 内へ埋め込む"
+    },
+    {
+      "data": "block.type=\"image\" {alt, data_uri, caption?}",
+      "component": "画像 + lightbox (新規・G2/G3)",
+      "notes": "data URI の img。クリックで lightbox を開き ESC/背景クリックで閉じ、開いている間フォーカストラップを張る"
+    },
+    {
+      "data": "block.type=\"note\" {label?}",
+      "component": "メモ欄 (新規・G4/G5)",
+      "notes": "セクション別メモ。全体メモは doc レベルで常に 1 個出す"
+    }
+  ],
+  "algorithm": [
+    "1. argv を解析する。--theme 指定かつ --config-out 未指定なら exit 2 (採用テーマの書き戻し先が無く、再現性の単位が構成データ 1 点に閉じなくなるため)。",
+    "2. --config を UTF-8 で読み json.load する (object_pairs_hook で入力順を保持)。不在・構文エラーは exit 2。",
+    "3. 正規化済みであることを確認する。判定材料は provenance.normalized_by が構成データ schema の $defs.provenance.properties.normalized_by.const と一致することであり、normalized:true のような schema に無いフラグは要求しない (const の値は schema から引き、script へ literal で書かない)。一致しなければ exit 1 (未正規化の構成データを受けると日付既定値の充填が 2 箇所に生まれ、日付の単一ソース原則が崩れる)。現在日時を自前で取得する処理をこの script は一切持たない。",
+    "4. テーマを決める。構成データに theme 欄があればそれを採用し、--theme が同時指定されていたら exit 1。theme 欄が無く --theme があれば採用し、後段 (手順 25) で --config-out へ書き戻す。どちらも無ければ既定テーマ pop。",
+    "5. 用途語彙を照合する。C23 の resolver を import して doc.doc_type が語彙正本に含まれることを確認する (含まれなければ exit 1)。語彙 8 語をこの script へ列挙しない (checklist C42)。フィールド名の正本は C12 validate-handout-config.py の config_schema.document_level_fields であり、本 script はそこに定義された名前をそのまま使う (doc_type が種別、purpose は目的の自由記述テキストで別フィールド)。",
+    "6. 資料単位の必須フィールドを検査する: title / date / reader / prior_knowledge_level / doc_type / essential_problem / purpose / background / goal / duration / sections[]。フィールド名と制約の正本は C12 の config_schema であり、本 script は再定義せず存在と非空だけを確認する。いずれか欠落または空文字なら exit 1 でキーパスを stderr へ (checklist C36 と二重に閉じる)。",
+    "7. 各セクションを検査する: id / heading / goal (非空) / lead_line (非空) / judgment_axis (非空) / blocks[]。セクションレベルのフィールド名も C12 の config_schema.section_fields が正本 (heading = 見出し、judgment_axis = 判断軸の一文)。goal 欠落は 1 件でも exit 1 (checklist C38)。lead_line と judgment_axis は R11 側の必須で、goal とは別軸として両方を独立に課す (checklist C40)。",
+    "8. ナビを sections から導出する。構成データは nav[] を持たない (持たせると section 集合と nav 集合という同じ情報の二重管理になる = PAT-1)。導出した nav 項目の href の fragment 集合と section id 集合が 1:1 で一致することを事後に確認し、崩れていれば exit 1 (checklist C3 を生成側でも閉じる)。section id は構成データが持つ id をそのまま使い、無ければ s{index+1} を採番する。",
+    "9. アイコン sprite を作る。C15 の build_sprite を呼ぶ。exit 1 相当なら診断を転記して exit 1、exit 2 相当なら exit 2。返った symbols_svg は <body> 直後へ 1 度だけ置き、参照は <use href=\"#hbic-{name}\"> のみを使う (未使用 symbol は定義上 0 件)。",
+    "10. 図解を作る。block.type が flow/diagram/(versus かつ render=svg) のものについて C14 の render_diagram を呼び、返った SVG 断片を figure 内へ埋め込む。座標計算をレンダラ側に持たない。",
+    "11. デザイントークンを CSS 変数として <style> 冒頭の :root へ展開する。--pop-primary / --pop-primary-pastel / --pop-primary-soft / --pop-primary-deep / --pop-bg / --ink / --ink-muted / --line / --subtle / --card-radius / --font-num をテーマ定義 JSON から出す。アクセント色の実値が現れるのはこの :root ブロックだけで、以降の全 CSS 規則と SVG は var() 参照にする (checklist C14)。",
+    "12. 全体タイポグラフィを焼く。body に font-feature-settings:\"palt\"、.num クラスに font-variant-numeric: tabular-nums と letter-spacing:-0.015em を出す。",
+    "13. 日付を出す。doc.date は C12 --normalize の時点で既に yyyy/mm/dd (ゼロ埋め・スラッシュ区切り) へ確定済みなので、本 script は書式変換もゼロ埋め補正も行わず値をそのまま .date-pill として 1 個だけ出す。置き場所は文書冒頭の <header class=\"doc-head\"> の内側に限り、sticky ナビの <header class=\"pop-header\"> の内側には置かない (header 要素が 2 つあるため『header の中』では場所が一意に決まらない。sticky ナビは印刷時に position:static へ落ちる帯であり、日付は資料の属性であってナビの属性ではない) (正本は C12 の config_schema.document_level_fields#date と date_single_source_guarantee#handoff_to_c11)。文字列操作のみで行い datetime.now() を呼ばない (checklist C33/C34/C35)。なお R17 のディレクトリ命名規則に現れる <YYYY-MM-DD> は日付『表示』の書式ではなく、C19 が date.replace('/','-') で導くディレクトリ名専用の派生表現であり、本 script は一切関与しない。",
+    "14. sticky ナビを出す。header.pop-header は position:sticky; top:0。nav 各項目は簡潔なラベルのみを表示し、対応セクションのゴールは data-hb-nav-goal 属性と title 属性 (同値) と aria-describedby=\"goal-s{n}\" で持たせる (phase-02 の事前解決: nav 本体は簡潔に保つ)。参照先 id=\"goal-s{n}\" の要素はセクション冒頭のゴールチップそのものであり、ゴール文言を nav 用に複製しない。",
+    "15. オフセット補正を二重に焼く。CSS 側は全 section へ scroll-margin-top: var(--nav-h, 96px)。JS 側は nav クリック時に header.getBoundingClientRect().height + 12 を実測して window.scrollTo する (checklist C4)。",
+    "16. hero を出す。h1 + lead + 目的/背景/ゴールの 3 要素 (それぞれ独立の要素として出し、1 つでも欠けたら手順 6 で既に止まっている) + .goal-chip 群 (checklist C37)。",
+    "17. 各セクションを固定順序で組み立てる: (a) .section-label (連番 + 見出し + 所要時間) → (b) .goal-chip (セクションゴール・常時表示・id=\"goal-s{n}\") → (c) .lead-line (1 行の抽象) → (d) blocks[] を配列順に部品テーブルで写像 → (e) .decision-axis (判断軸の一文) → (f) セクションメモ欄。この順序は参照解析 §5 の『抽象 → 具体 → 判断軸』を構造として固定するもので、構成データの並びでは変えられない。",
+    "18. スタガー入場を焼く。@keyframes rise-in と animation-delay: var(--stagger, 0ms) を CSS に置き、各セクション/カードへ style=\"--stagger: {min(index*120, 720)}ms\" をインライン付与する。JS を一切使わない (checklist C14)。@media (prefers-reduced-motion: reduce) で animation と scroll-behavior と transition を無効化する。",
+    "19. 機構スクリプトを 1 つの <script> へ 'use strict' で出す。(a) nav オフセットスクロール (b) lightbox 開閉 (ESC / 背景クリック / フォーカストラップ / 開閉前の focus を復帰) (c) data URI → Blob 変換ダウンロード + 失敗時の .dl-hint 表示 (d) clipboard コピー + Range 選択フォールバック (e) タブ / 選択マップ / 選択チップ / チェック行のトグルと aria 状態更新 (f) メモ機構。素の DOM API のみでフレームワーク・CDN を一切参照しない。",
+    "20. メモ機構を焼く。セクション別メモ + 全体メモ + チェック行 + 選択チップ + 選択マップの状態を、キー `handout:{doc.slug}:{kind}:{id}` で localStorage へ input/change 時に保存し、DOMContentLoaded で復元する。Markdown 書き出し (コピー / .md としてダウンロード) と全消去ボタンを付ける。slug は構成データの slug をそのまま使い、生成のたびに変わる値をキーへ混ぜない (再訪時にメモが消えないため)。",
+    "21. A4 print 規則を出す。@page { size: A4; margin: 14mm } と @media print で header の sticky を解除して static 化 / lightbox とメモの操作 UI と copy/dl ボタンを display:none / details を open 相当で展開 / section に break-inside: avoid / 背景色を印刷向けへ落とす。メモ本文は印刷に残す (会議後に手元へ残る価値があるため) が入力枠の装飾は落とす (checklist C21)。",
+    "22. a11y 属性を焼く。トグルに aria-pressed / タブに role=tablist と aria-selected と panel の hidden / 意味を持たないアイコン SVG に aria-hidden=\"true\" / 意味を持つものに role=\"img\" と <title> / 表の th に scope / 全操作要素に :focus-visible の統一 outline / lightbox に role=\"dialog\" と aria-modal=\"true\" (checklist C22)。",
+    "22b. 機械可読属性を焼く。html_attribute_contract の全属性を、そこに書かれた要素へ漏れなく付与する: <html> の文書メタ / 全部品ルートの data-hb-part と data-hb-part-id / 全 svg・symbol の data-hb-kind / 描画フィールドの data-hb-field / 再生成 chrome の data-hb-generated 等。これらは任意装飾ではなく下流 5 本 (C16/C17/C18/C20/C22) の検査アンカーおよび round-trip 契約であり、欠落は当該ゲートの全項目 FAIL を招く。属性名の正本は本ブリーフの html_attribute_contract だけで、消費側は再定義しない。",
+    "23. 自己完結を検査する。判定規則は本 script では定義せず、C16 verify-handout-selfcontained.py の canonical_rules.external_reference_rule (CR-EXT) を module_api.scan_external_references(html) で再実行し、返った違反リストをそのまま受け取る。違反が 1 件でもあれば出力せず exit 1 (C16 の完成物ゲートを待たず、生成の単独 writer として同じ規則を出力直前にもう一度当てる)。何が違反かの列挙 (スキーム・属性・url()/@import の扱い、text node の URL を違反としないこと、data URI を許すこと) は CR-EXT の定義であり、本 script のソースへ複製しない。",
+    "24. 決定論を担保する。dict の順序は入力順のまま、集合を出すときは sorted、id は index 由来、時刻・乱数・プロセス id・ファイルの mtime を一切使わない。エスケープは html.escape(quote=True) 統一、インデントは 2 スペース、改行 \\n 固定、UTF-8 (BOM なし)、末尾改行 1 個。同一構成データから 2 回生成してバイト一致する (checklist C29)。",
+    "25. 出力する。--out があれば HTML を書き、テーマを --theme から採用した場合のみ --config-out が指すパスへ構成データ (theme 追記済み・他フィールドは非改変) を書き、結果 JSON 1 行を stdout へ出す。--out が無ければ HTML を stdout へ出す。出力ディレクトリ配下への同梱物の配置は行わない (writer は C19)。exit 0。"
+  ],
+  "requirements_covered": [
+    "R01",
+    "R02",
+    "R04",
+    "R05",
+    "R06",
+    "R08",
+    "R09",
+    "R10",
+    "R11",
+    "R13",
+    "R15",
+    "R16",
+    "R18",
+    "R19",
+    "R20",
+    "R21 (描画面のみ。B17 の描画・R21 追加属性の焼き込み・text_limits トークンの提供。判定は C12 / C16 / C18 / C22 が持ち C11 は判定しない)",
+    "R22 (detail_level ごとの本文上限をテーマトークンへ持ち、宣言 2 軸を data 属性として出力する)"
+  ],
+  "checklist_covered": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C6",
+    "C7",
+    "C8",
+    "C11",
+    "C12",
+    "C14",
+    "C19",
+    "C21",
+    "C22",
+    "C29",
+    "C33",
+    "C34",
+    "C37",
+    "C38",
+    "C39",
+    "C40",
+    "C44",
+    "C63",
+    "C65"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C11-1",
+      "how": "同一の正規化済み構成データで 2 回生成し sha256 を比較する",
+      "expected": "完全一致 (checklist C29)"
+    },
+    {
+      "id": "AC-C11-2",
+      "how": "生成 HTML を C16 verify-handout-selfcontained.py へ渡す",
+      "expected": "exit 0 (外部参照 0 / 絵文字 0 / アイコン様式 / 未使用 symbol 0 / アンカー整合)"
+    },
+    {
+      "id": "AC-C11-3",
+      "how": "生成 HTML を C17 verify-handout-a11y-print.py へ渡す",
+      "expected": "exit 0 (checklist C21/C22)"
+    },
+    {
+      "id": "AC-C11-4",
+      "how": "生成 HTML と正規化済み構成データを C18 / C22 へ渡す",
+      "expected": "いずれも exit 0 (日付表記・言い換え・目的/背景/ゴール・セクションゴール・nav のゴール参照)"
+    },
+    {
+      "id": "AC-C11-5",
+      "how": "config/handout-parts.json の全 id を 1 個ずつ含む fixture で生成し、部品 id ごとに golden HTML と比較する。fixture の網羅性はカタログを読んで機械判定する (テスト側にも id を列挙しない)",
+      "expected": "カタログの全部品 (現在 B01-B16 + IMG / DIAGRAM / TEXT の 19 件) に独立したレンダリングテストがあり全て一致。カタログに部品を足したのにテストが無い状態は網羅検査で FAIL する (checklist C12)"
+    },
+    {
+      "id": "AC-C11-6",
+      "how": "生成 HTML を正規表現 ^\\d{4}/\\d{2}/\\d{2}$ で .date-pill のテキストに対して照合する",
+      "expected": "1 件以上一致。正規化済み構成データの date が 2026/01/05 のとき date-pill も 2026/01/05 (無変換の同値) になる (checklist C33/C34)"
+    },
+    {
+      "id": "AC-C11-7",
+      "how": "section goal を 1 件だけ空にした構成データで実行する",
+      "expected": "exit 1 / stderr に該当 section id (checklist C38)"
+    },
+    {
+      "id": "AC-C11-8",
+      "how": "nav の href に存在しない fragment を混ぜた構成データで実行する",
+      "expected": "exit 1 / stderr に未解決アンカー"
+    },
+    {
+      "id": "AC-C11-R21-a",
+      "how": "R21 の全フィールドを埋めた正規化済み構成データ (focus_theme 2 件 / target_tasks 2 件 / attainment_level / must_remember 2 件 / no_need_to_remember / presentation_order=demo_first / role と ties_to と attainment_step 付き section / slot 付き部品 / role 付き asset / B17 ブロック) で生成し、生成 HTML を走査する",
+      "expected": "html_attribute_contract の R21 追加属性 (data-hb-presentation-order / -source / data-hb-section-role / data-hb-ties-to / data-hb-slot / data-hb-asset-role / data-hb-attainment-step / data-hb-text-limit) が定義どおりの要素に全て付き、data-hb-field に focus_theme / target_task / attainment_level / must_remember / no_need_to_remember が出る。B17 は 3 つ組 (操作 / 期待される結果 / つまずいたときの見どころ) を 1 行として描画される"
+    },
+    {
+      "id": "AC-C11-R21-b",
+      "how": "must_remember だけを描画し no_need_to_remember を省く改変レンダラで同じ入力を処理する (回帰の見張り)",
+      "expected": "AC-C11-R21-a が FAIL する。片方だけを出す経路が存在しないことをテストで固定する (C57)"
+    },
+    {
+      "id": "AC-C11-R21-c",
+      "how": "text_limits.block_body_max_chars を超える body を持つ TEXT を、C12 --normalize を通さずに直接 C11 へ渡す",
+      "expected": "C11 は本文を切り詰めず、そのまま描画して exit 0 (未正規化検出は既存の exit 1 経路が担当。切り詰めが C11 側で起きないことの担保 — 起きると C20 の round-trip が壊れる)"
+    },
+    {
+      "id": "AC-C11-9",
+      "how": "生成 HTML から scroll-margin-top と getBoundingClientRect を grep する",
+      "expected": "両方が存在 (CSS と JS の二重補正・checklist C4)"
+    },
+    {
+      "id": "AC-C11-10",
+      "how": "生成 HTML から --stagger の inline 付与と @keyframes rise-in を grep し、スタガーに関与する JS が無いことを確認する",
+      "expected": "CSS のみでスタガーが成立 (checklist C14)"
+    },
+    {
+      "id": "AC-C11-11",
+      "how": "アクセント色トークンだけを差し替えて再生成し、旧版との diff を取る",
+      "expected": "差分が :root のアクセント定義行のみ (checklist C14)"
+    },
+    {
+      "id": "AC-C11-12",
+      "how": "theme 欄を持つ構成データへ --theme を同時指定する / --theme を --config-out なしで指定する",
+      "expected": "前者 exit 1・後者 exit 2"
+    },
+    {
+      "id": "AC-C11-13",
+      "how": "theme 欄の無い構成データへ --theme pop --out out.html --config-out work/config.json を指定する",
+      "expected": "work/config.json に theme が追記され他フィールドは入力と同一。out.html の親ディレクトリには handout-config.json が生成されない (同梱物の writer は C19 だけであることの担保)"
+    },
+    {
+      "id": "AC-C11-14",
+      "how": "6 用途プリセットそれぞれで生成し、sticky 目次 / date-pill / 目的・背景・ゴール / セクションの (goal → lead-line → 部品 → 判断軸) 順序 / アイコン様式 / 外部参照 0 を全件で照合する",
+      "expected": "全プリセットで共有の型が保持され、差分がセクションの並びと部品選択に限定される (checklist C44)"
+    },
+    {
+      "id": "AC-C11-15",
+      "how": "生成 HTML を C20 extract-handout-config.py で逆抽出し、正規化後の構成データ等価を判定する",
+      "expected": "等価 (round-trip・couples_with C20)"
+    },
+    {
+      "id": "AC-C11-16",
+      "how": "未正規化の構成データ (normalized 欄なし・date 欠落) を渡す",
+      "expected": "exit 1。script 本文に datetime.now / date.today / time.time が 0 件であることも grep で確認する"
+    },
+    {
+      "id": "AC-C11-17",
+      "how": "import 文を列挙する",
+      "expected": "標準ライブラリのみ (json / sys / os / argparse / html / re / base64 / pathlib / hashlib 等)。yaml import 0 件・外部パッケージ 0 件 (checklist C27)"
+    },
+    {
+      "id": "AC-C11-19",
+      "how": "plugins/guide-doc-generator 配下 (scripts / skills / agents / commands / hooks / references) を `B0[0-9]|B1[0-9]` で grep する",
+      "expected": "config/handout-parts.json 以外に part id のリテラル列挙が 0 件。部品 id を必要とする箇所はすべて catalog の読み込み経由になっている (Y-05 の単一語彙の担保)"
+    },
+    {
+      "id": "AC-C11-20",
+      "how": "外部参照違反を仕込んだ構成データで生成し、C11 の exit 1 と、同じ HTML を C16 CLI へ渡したときの違反リストを比較する",
+      "expected": "違反箇所・件数が完全一致 (algorithm 23 が CR-EXT の再実行であり独自判定を持たないことの担保)"
+    },
+    {
+      "id": "AC-C11-18",
+      "how": "生成 HTML を走査し、html_attribute_contract の全属性について (a) 定義された要素に付いているか (b) `data-` で始まり `data-hb-` で始まらない属性が 0 件か を確認する",
+      "expected": "全部品ルートに data-hb-part、全 svg/symbol に data-hb-kind、全 chrome に data-hb-generated が付き、非 data-hb- の独自 data 属性が 0 件 (X-03 の単一系統化の担保)"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "構成データが未正規化 (provenance.normalized_by が schema 宣言の const と一致しない / date が無い)",
+      "behavior": "exit 1 / stderr へ『C12 --normalize を先に通すこと』と欠落キー",
+      "rationale": "レンダラが日付既定値を自前で埋めると日付の単一ソース原則が崩れ、日付境界をまたいだとき本文の日付と出力ディレクトリ名がずれる (phase-02/05 の事前解決)"
+    },
+    {
+      "case": "section goal / lead_line / decision_axis のいずれかが欠落または空",
+      "behavior": "exit 1 / stderr へ section id とキーパス",
+      "rationale": "R19 の目的地明示と R11 の書き方の型は別軸で両立させる必要があり、一方の存在で他方を代替させない (checklist C40)"
+    },
+    {
+      "case": "nav の href と section id が 1:1 で対応しない",
+      "behavior": "exit 1 / stderr へ未解決 fragment と孤立 section id",
+      "rationale": "壊れた目次を出してから C16 で検出するより、レンダラ側で止める方が差し戻し先が近い (二重防御)"
+    },
+    {
+      "case": "未知の block.type",
+      "behavior": "exit 1 / stderr へ受理する type 一覧とキーパス",
+      "rationale": "既定部品へフォールバックすると意図と違う見た目が黙って出る。部品テーブルは本 script が単独 owner なので語彙外は fail-closed"
+    },
+    {
+      "case": "tabs の panel 内でさらに tabs を入れ子にした (2 段目)",
+      "behavior": "exit 1 / stderr へキーパス",
+      "rationale": "入れ子タブは a11y の focus 順と aria の対応が破綻しやすく、初心者向け資料の可読性も落ちる。1 段までを構造で課す"
+    },
+    {
+      "case": "theme を構成データと --theme の両方で指定",
+      "behavior": "exit 1 / stderr へ両値",
+      "rationale": "どちらを優先しても再現性の単位が曖昧になる。phase-02 の決着 (構成データのテーマ欄が正・CLI は欄が無い場合のみ) を機械で強制する"
+    },
+    {
+      "case": "--theme 指定だが --out 未指定",
+      "behavior": "exit 2 / stderr へ『採用テーマの書き戻し先が無い』",
+      "rationale": "書き戻せないと『同梱構成データ 1 点で再現できる』が成り立たない。データの誤りではなく起動方法の誤りなので exit 2"
+    },
+    {
+      "case": "組み上げた HTML が C16 CR-EXT の外部参照違反を含む",
+      "behavior": "exit 1 / stderr へ C16 が返した違反箇所をそのまま転記",
+      "rationale": "規則の実装は C16 に 1 つだけ存在し、C10 hook・本 script はそれを異なる時点で適用しているにすぎない (三重実装ではなく同一規則の三重適用)。生成の最終責任は単独 writer にあるため、出力前に自分で一度当てる"
+    },
+    {
+      "case": "C14 / C15 が exit 1 相当を返した",
+      "behavior": "診断を stderr へ転記して exit 1",
+      "rationale": "原因は構成データ側にあり差し戻し先が同じ。code を握り潰すと図解やアイコンが欠けた HTML が出る"
+    },
+    {
+      "case": "C14 / C15 が exit 2 相当を返した (アイコンセット正本の不在など)",
+      "behavior": "診断を stderr へ転記して exit 2",
+      "rationale": "環境設定の問題であり構成データ側では直せない"
+    },
+    {
+      "case": "plugin 実体解決に失敗 (plugin_root_resolution の 4 段すべて外れ)",
+      "behavior": "exit 2 / stderr へ試した 4 経路と各々の不成立理由",
+      "rationale": "環境設定の問題であり構成データの規約違反ではないため exit 1 と分ける。試行経路を出さないと HB_ROOT 未設定の切り分けができない (C15 と同じ扱い)"
+    },
+    {
+      "case": "--out の親ディレクトリが存在しない / 書き込み不可",
+      "behavior": "exit 2 / stderr へ OS エラー",
+      "rationale": "出力ディレクトリの作成は C19 route-handout-output.py の write_scope であり、レンダラが勝手にディレクトリを掘ると出力先の単独 writer が 2 箇所になる"
+    },
+    {
+      "case": "添付の data URI 合計が大きく HTML が肥大",
+      "behavior": "exit 0 のまま結果 JSON の warnings と stderr へサイズを報告",
+      "rationale": "サイズ上限判断と warning は C13 embed-assets.py の責務。レンダラが二重に上限を持つと閾値が 2 箇所になる。ここでは実測値の報告に留める"
+    }
+  ],
+  "open_questions": [
+    "【X-07 先送り・未解決の記録】checklist ID 名前空間 (C1-C45) と component ID 名前空間 (C01-C23) がどちらも Cnn 形式で衝突している。本ブリーフの checklist_covered の C1/C2/C3/C4/C6/... や散文中の『(checklist C42)』はいずれも checklist 項目であって component C01-C23 ではない。P02 evidence X-07 (severity: info) の裁定により、接頭辞導入 (例 CK-17) は component-inventory.json 全体の一括変更を伴うため P03 では解消せず先送りとする。本 plugin-plan 全体で唯一の記録箇所としてここに残す — 読み手は Cnn 表記を、checklist_covered 配列内および『checklist』の語を伴う文脈では checklist 項目、dependencies / depends_on / couples_with では component と読むこと。解消するまでこの曖昧さは残る",
+    "【P03 Y-04 で決着】採用テーマの書き戻し先は新設した --config-out で明示する。出力ディレクトリ配下の handout-config.json は C19 --place-config が唯一の writer であり、本 script はそこへ書かない。旧記述 (『--out と同一ディレクトリの handout-config.json へ書く』) は同梱物の writer が 2 つになるため破棄した。component-inventory.json の C11 inputs/outputs もこの形へ揃える"
+  ]
+}

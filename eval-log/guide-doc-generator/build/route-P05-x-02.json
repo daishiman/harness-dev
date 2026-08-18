@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "task_id": "P05-x-02",
+  "covered_task_ids": [
+    "P05-x-02"
+  ],
+  "route_id": null,
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/assets/",
+  "verified_by": [
+    {
+      "claim": "assets/ 配下に 5 ファイルが実在する",
+      "method": "find plugins/guide-doc-generator/assets -type f",
+      "result": "pass (tokens/pop.json, tokens/warm-sand.json, icons/icon-set.json, mascot/mascot-defs.svg, mascot/mascot-set.json)"
+    },
+    {
+      "claim": "AC1: テーマトークンが C63 の 3 水準を持つ",
+      "method": "json.load して text_limits を出力",
+      "result": "pass (両テーマとも block_body_max_chars=400、by_detail_level={overview:180, standard:400, detailed:900}。RESOLUTION-R22 の確定値と一致)"
+    },
+    {
+      "claim": "AC1: 2 テーマの css_variables キー集合が順序込みで同一 (差し替え可能性)",
+      "method": "list(d['css_variables'].keys()) を両テーマで比較",
+      "result": "pass (11 変数 --pop-primary … --font-num が順序込みで一致)"
+    },
+    {
+      "claim": "AC2: 全アイコンが R08 の統一様式で、per-icon に様式の上書き点が無い",
+      "method": "uniform_style を読み、icons[] のキー和集合を取る",
+      "result": "pass (uniform_style = viewBox '0 0 24 24' / fill none / stroke currentColor / stroke-linecap round / stroke-linejoin round。icons 41 件のキー和集合は {name, paths, stroke_width, title} のみで様式キーを持てない)"
+    },
+    {
+      "claim": "AC3: マスコット SVG が well-formed で外部依存を持たない",
+      "method": "ET.fromstring('<root>'+svg+'</root>') と grep -rEc 'xmlns[:=]'、id/href/url(#) の参照解決",
+      "result": "pass (well-formed / xmlns 0 件 / dangling ref 0 件)"
+    },
+    {
+      "claim": "AC4: 外部 URL 参照ゼロ (R01)",
+      "method": "grep -rEc 'https?://' plugins/guide-doc-generator/assets",
+      "result": "pass (5 ファイルすべて 0)"
+    },
+    {
+      "claim": "全 JSON が json.load 可能",
+      "method": "assets/**/*.json を json.load",
+      "result": "pass (4 件)"
+    },
+    {
+      "claim": "絵文字が 1 文字も含まれない (R08)",
+      "method": "配下全ファイルの distinct 文字を unicodedata.category が So/Sk/Cf または符号位置 >= U+1F000 で走査 (denylist のブロック列挙は用いない)",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "既定テーマ pop.json のアクセント/ink 9 色が ref-handout-design-system/SKILL.md の :root 例示と完全一致する",
+      "method": "css_variables の hex 値集合が SKILL.md の 9 色を包含するか照合",
+      "result": "pass (9 色すべて一致・missing 0)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --short",
+      "result": "pass (guide-doc-generator 配下は未追跡ディレクトリ 1 件として現れるのみ。tracked の M 4 件 = emit-discovered-task.py / discovered-task.schema.json / accept-discovered-task.py / test_accept_discovered_task.py は P03 期の structural discovered-task 対応による既存差分で本 leaf 由来ではない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "canon-duplication-deferred",
+      "detail": "既定テーマ pop.json の 9 色を SKILL.md の :root 例示と意図的に同値へ揃えた。worker の判断根拠は『値をずらすと重複が矛盾へ格上げされ、P05-x-01 の集約に「どちらが正本か」という余分な判断が増える。値が同一なら集約側は SKILL.md の例示を削除するかプレースホルダ化するかを値の変更なしに決められる』。重複そのものは未解消であり P05-x-01 で裁定する。なお ink 系 4 色 (#1b2733 / #5b6b7a / #dbe6ef / #f4f8fc) は参照 v2 の値 (#16191d / #545e6b / #e3e6ea / #f5f6f8) と異なり SKILL.md 側を採っている (アクセントと同系色相へ揃える R10 の原則により忠実との判断)。この選択も P05-x-01 の照合対象"
+    },
+    {
+      "kind": "emoji-gate-provisional",
+      "detail": "C16 verify-handout-selfcontained.py が未実装のため CR-EMOJI の scan_emoji へ委譲できず、本 leaf は category allowlist への反転 (C60 SC-10 と同じ向き) で暫定検査した。assets 側に判定コードを一切置いていないため第 2 の正本は生じていないが、C16 実装後に C15 --strict-style 経由で再検査されることが正規の判定であり、P05-x-01 で再確認する"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "8 件を worker が判断して決定。(1) 様式を per-icon でなく集合レベルの uniform_style に 1 度だけ宣言 — C15 ブリーフの icon_set_source.schema が『様式は正本側に持たせない』と定めるのと、本 leaf の AC2 が『全アイコンが 4 点様式』を求めるのを両立させる形。P04-x-05 の裁定 C と同じ一般則 (様式のブレを表現できないデータ形にする) の適用 (2) 参照 v2 の線画アイコンは実測 2 件 (arrow-right / settings) しかなく B01-B15 を被覆できないため、C15 の 41 語彙を収録範囲の正本とし該当 2 件は参照 v2 の path を写して used_in_reference_v2 で明示 (3) 既定テーマ名 pop — C11 algorithm[4] と tests/render-handout.py/README.md が名指し (4) 差し替えテーマ名 warm-sand — 既存テストが sorted(glob)[0] を検査対象に採るため、既定テーマが検査対象であり続ける辞書順を選んだ (5) 差し替えテーマの text_limits を pop と同値に固定 — 全テーマに確定値を要求するテストがあり、例示のために数値を動かすと C63 の正本が 2 値を持つように見えるため (6) マスコット id へ hbm- prefix — inline 埋め込み時の id 衝突回避。C15 の hbic- と揃えた。id 採番 owner が未宣言だったため producer である本 leaf が定めた (7) mascot-set.json を追加 — task-spec は SVG の存在しか求めないが、symbol id の宣言点が無いと C11/C19 が id を推測することになる。色の実値は持たせない (8) マスコット再着色 11 変数をテーマトークン側の mascot_css_variables へ — 参照解析 §9 D2 の『テーマ差し替えでマスコットの色が追従する』を満たす唯一の置き場。C11 algorithm[11] の変数集合を汚さないよう別キーにした"
+    }
+  ]
+}

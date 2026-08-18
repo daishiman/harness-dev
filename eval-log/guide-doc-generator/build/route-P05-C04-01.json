@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "task_id": "P05-C04-01",
+  "covered_task_ids": [
+    "P05-C04-01"
+  ],
+  "route_id": "C04",
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+  "verified_by": [
+    {
+      "claim": "build_target が実在する",
+      "method": "find plugins/guide-doc-generator/skills/ref-handout-design-system -type f",
+      "result": "pass (SKILL.md / assets/jp-web-design-mode-b.md / references/answer-patterns.md の 3 件)"
+    },
+    {
+      "claim": "P04-C04-01 が固定した赤が全て緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/ref-handout-design-system -p 'test_*.py'",
+      "result": "pass (Ran 37 / OK / failures=0 / errors=0)"
+    },
+    {
+      "claim": "テストが改変されていない (判定基準の自作差し替えが無い)",
+      "method": "find tests/ref-handout-design-system -newer skills/ref-handout-design-system/SKILL.md -type f -name '*.py' が空",
+      "result": "pass"
+    },
+    {
+      "claim": "絵文字が 1 文字も含まれない (R08)",
+      "method": "配下全ファイルを走査し unicodedata.category=='So' または U+1F000 以上の符号位置を検出",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "外部参照ゼロ (R01)",
+      "method": "grep -rcE 'https?://'",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --short plugins/guide-doc-generator/",
+      "result": "pass (untracked 配下のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "canon-duplication-risk",
+      "detail": "SKILL.md の :root 例示に具体的な hex 実値 9 色 (#43a4f5 / #2273b8 / #8ecdf8 / #d9edfe / #eaf5fe / #f4f8fc / #dbe6ef / #1b2733 / #5b6b7a) が入っている。AC-C04-14 が『アクセント実値は :root ブロック内にだけ現れる』ことを実値の出現位置で検査するため、:root が空だと規範の例示として成立しないという構造的要請による。ただし色値の正本は P05-x-02 が生成する assets/tokens/<theme>.json (スキーマ owner は C11) であり、C63 の数値を 1 箇所に保つ判断と同じ問題が色でも起きる。P05-x-02 の既定テーマを SKILL.md の例示値へ揃えるか、例示をプレースホルダ化するかを P05-x-01 の集約時に裁定する。worker は本文へ『以下は形の例示であって値の正本ではない』と明記済み"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "5 件の未定義事項を worker が判断して実装した。(1) vendoring 先を assets/ (デザイン言語の規範記述) と references/ (回答手順) の 2 ディレクトリへ分割 — テストは VENDOR_DIRS のどちらかに 1 件以上あり SKILL.md が相対パスで参照することしか要求しない (2) vendored の jp-web-design モード B から色の具体 hex 表・マスコット使用ルール・フォームコントロール自前描画・完了画面演出を落とした (hex はテーマ値の正本を二重化する / 残り 3 つは単一 HTML の配布資料に対応物が無い)。落とした事実と理由は vendored ファイルの『採らなかったもの』節に明記 (3) 面 4『文章設計の型』の中身を analysis/guide-doc-generator/reference-analysis.md 5 節から起こした — skill-brief-C04.json は面の名前しか持たない。C06 agent-brief が同じ型を参照しているため突合が要る (4) frontmatter へ effect/since/version を追加 (repo の他 ref 系 SKILL.md の慣行) (5) SKILL.md が指す config/handout-parts.json 等の参照先データファイルは C11/C12/C23 の P05 成果物であり未生成。C04 の契約は『パスと owner を指す』ことのみで実ファイル存在はテストの検査対象外だが、build 完了後にパスと実体の一致を突き合わせる必要がある"
+    }
+  ]
+}

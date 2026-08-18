@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P13-x-01",
+  "reason": "利用者要件 (2026-08-18) と phase-13-release.md の事前解決済み判断が正面から矛盾する。計画は『本 plugin は repo 内利用を既定とし配布はしない』『スコープ外: marketplace への実登録』と明記するが、利用者は GitHub PR 後の marketplace install を明示要件として述べた。validate-plugin-completeness.py の NEVER_DISTRIBUTE は 3 plugin のみで guide-doc-generator は対象外のため公開自体は可能。裁定を反転して記録する leaf を起票する",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/phase-13-release.md",
+  "proposed_node": {
+    "id": "P13-x-03",
+    "title": "配布可否の裁定を反転し公開 marketplace への GitHub 経路 install を成立させる",
+    "phase_ref": "P13",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "guide-doc-generator が .claude-plugin/marketplace.json (name: skills) に登録され validate-plugin-completeness.py が exit0 になること。lint-readme-plugin-root-portability.py が skip でなく exit0 になること。phase-13-release.md の事前解決済み判断が新裁定と矛盾しない状態になっていること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P13-x-03.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P13-x-03.md"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/references/package-contract.json"
+    ],
+    "depends_on": [
+      "P13-x-02"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P13-x-03"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:12735051ca65438b9094b5b1533adca5f58e7768607f6f800cd53c408390fdf1"
+}

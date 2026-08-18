@@ -1,0 +1,162 @@
+{
+  "plan_dir": "plugin-plans/guide-doc-generator",
+  "target_plugin_slug": "guide-doc-generator",
+  "responsibility": "R2-R3 (component 分解 + envelope 設計 / 13 phase + inventory 生成)",
+  "component_count": 23,
+  "component_kind_breakdown": {
+    "skill": 4,
+    "sub-agent": 2,
+    "slash-command": 3,
+    "hook": 1,
+    "script": 13
+  },
+  "resolved_open_questions": [
+    {
+      "question": "既定の出力先をどこにするか",
+      "resolution": "plugin 同梱の設定ファイルでキーのみ宣言し、実値は設置先が供給する。起動引数での上書きを常に可能にし、未設定時は明示を必須にする",
+      "rationale": "絶対パスを plan や実装へ焼くと install 先で必ず壊れる。実行時可搬性の要件と両立させる"
+    },
+    {
+      "question": "素材サイズ上限を超えたときどうするか",
+      "resolution": "警告して生成を継続する (fail-soft)。上限値は設定で変更できる",
+      "rationale": "資料が出来上がらないことの損失が、サイズが大きいことの損失より大きい。判断は利用者に残す"
+    },
+    {
+      "question": "round-trip の等価をどの粒度で判定するか",
+      "resolution": "構成データ等価 (正規化したうえでの比較) で判定する。バイト一致は同一構成データからの再生成にのみ課す",
+      "rationale": "HTML は空白や属性順で差が出るため、バイト一致を逆抽出に課すと実質不可能な要件になる"
+    },
+    {
+      "question": "テーマ (配色) の入力経路",
+      "resolution": "構成データのテーマ欄でプリセット名を指定し、任意でアクセント色を上書きできる。CLI の --theme は構成データにテーマ欄が無い場合に限り有効で、採用値は出力先へ同梱する構成データへ書き戻す(再現性の単位を同梱構成データ 1 点に閉じるため)",
+      "rationale": "入力経路を構成データへ一本化すると、再現性の単位が構成データだけで閉じる"
+    },
+    {
+      "question": "読みやすさレビュアーを別実体として持つ必要があるか",
+      "resolution": "持つ。決定論ゲート (文長・言い換え宣言の被覆・日付) と、独立 context の意味判定の二段構えにする",
+      "rationale": "初心者に伝わるかは機械では測れず、生成した本人が採点すると甘くなる"
+    },
+    {
+      "question": "専門用語をどう検出するか",
+      "resolution": "構成データの用語宣言を規範とし、宣言された用語の言い換え併記を fail-closed で検査する。宣言外の用語を推定する検出は警告に留める",
+      "rationale": "推定に依存すると誤検出で生成が止まる。何を専門用語とみなすかの決定権を書き手に残す"
+    },
+    {
+      "question": "日付の意味論 (作成日か開催日か)",
+      "resolution": "必須の日付フィールドを 1 つ持ち、それが表示と出力先命名の両方の単一ソースになる。未指定時の既定 (生成実行日) 充填は構成データ正規化 (C12 --normalize) の 1 箇所だけで行い、C11/C19 は現在日を自前で取得しない",
+      "rationale": "ソースが 2 つあると表示とディレクトリ名がずれる。ずれ 0 件を機械検査できる形にする"
+    },
+    {
+      "question": "曜日や和暦などの補助表記を許すか",
+      "resolution": "本体の表記は固定書式のみ。曜日や和暦は別要素として併記でき、検査は本体要素だけを見る",
+      "rationale": "補助情報を禁じると実用性が落ちる。検査対象を本体に限定すれば両立する"
+    },
+    {
+      "question": "ヒアリングを対話必須にするか、構成データ直渡しの非対話経路も許すか",
+      "resolution": "非対話経路を必ず用意する。対話は既定の入口であって唯一の入口ではない",
+      "rationale": "対話必須にすると、逆抽出した構成データからの再生成と自動実行が対話に塞がれる。生成の入口が 1 つに固定されると再現性の検証も人手依存になる"
+    },
+    {
+      "question": "目次上でのセクションゴールの表示形式",
+      "resolution": "目次本体は簡潔に保ち、ゴールは補助属性として持たせる。常時表示はセクション冒頭側で担う",
+      "rationale": "固定表示の目次に説明文を常時並べると横幅を圧迫し、目次そのものの使い勝手を損なう。連なりが追えるという要件は補助属性 + セクション冒頭表示で満たせる"
+    },
+    {
+      "question": "利用者がプリセットを自作・追加できるようにするか",
+      "resolution": "プリセット定義を宣言的データファイルとして外に出し拡張点を開く。ただし用途語彙の正本と同じファイルに置く",
+      "rationale": "追加をコード変更なしにできる一方、語彙とプリセットを別ファイルに分けると片方だけ追加されて未被覆が生じる。同一ファイルなら追加漏れが構造的に起きない"
+    },
+    {
+      "question": "用途をまたぐ混成資料を許すか",
+      "resolution": "プリセットの合成は許さない。主用途を 1 つ選び、足りない要素はセクションの追加で補う",
+      "rationale": "合成規則を持つとプリセットの組合せが増え、どの組合せでも共有の型が保たれているかを検証できなくなる"
+    },
+    {
+      "question": "追加する用途語彙の具体名",
+      "resolution": "agenda / study-notes / study-plan を採用し、既存の lecture / guide / onboarding / report / proposal と合わせて 1 正本に置く",
+      "rationale": "いずれも小文字ハイフン区切りでディレクトリ名として安全、かつ用途が一意に読み取れる"
+    }
+  ],
+  "design_decisions_of_note": [
+    {
+      "topic": "決定論レンダリングの分界",
+      "decision": "構成データから HTML への変換経路に LLM を一切置かない。LLM は構成データを書く側と、出来上がりをレビューする側にだけ関与する",
+      "impact": "同一構成データからのバイト一致再現性と、外部参照ゼロ・絵文字ゼロなどの機械ゲートがこの分界に依存する"
+    },
+    {
+      "topic": "検証器の分割",
+      "decision": "自己完結性 / a11y と印刷 / 言語と日付 / 筋道 の 4 面を別 script に分けた",
+      "impact": "差し戻し先が exit code で特定でき、要件が求める「導入一文の検査とゴールの検査が相互に代替しない」性質を構造で満たす"
+    },
+    {
+      "topic": "用途語彙の単一正本",
+      "decision": "用途種別の語彙とプリセットを設定側の 1 正本に置き、解決 script を唯一の入口にした",
+      "impact": "出力先の命名と構成データ検証とプリセット選択が同じ語彙を見る。語彙追加時の追従漏れが起きない"
+    },
+    {
+      "topic": "画像生成の委譲",
+      "decision": "既存 plugin のパイプラインへ subprocess 委譲し、不在時は画像ステップのみ skip する",
+      "impact": "再実装を持たない代わりに、委譲先の契約変更に対する監視手段を持たない (open_issues の GAP-SRG-CONTRACT-DRIFT)"
+    },
+    {
+      "topic": "実体解決",
+      "decision": "専用 env を一次、共通 env を二次とし、manifest の name 照合と自己解決フォールバックを重ねる",
+      "impact": "共通 env が別 plugin に占有されている環境でも単独で解決できる"
+    },
+    {
+      "topic": "R11 と R19 の分離",
+      "decision": "1 セクション内の書き方の型 (導入一文→具体→判断軸・用語の言い換え) の検査と、資料全体および各セクションの目的地の明示 (目的・背景・ゴール) の検査を、別 script (C18 / C22) に置いた",
+      "impact": "同一構成データに両ゲートを同時にかけて双方が独立に成立する。片方の合格が他方を代替しない"
+    },
+    {
+      "topic": "日付解決の単一 writer",
+      "decision": "日付未指定時の既定充填を構成データ正規化 (C12 --normalize) の 1 箇所へ寄せ、C11 (本文表記) と C19 (出力先命名) は正規化済み構成データの日付フィールドだけを読む。C18 は両者の一致を検査する側であってソースではない",
+      "impact": "日付境界をまたいでも本文と出力先ディレクトリ名が食い違わない。C35 の不一致 0 件ゲートが比較対象を持てる"
+    },
+    {
+      "topic": "hook の適用範囲",
+      "decision": "PostToolUse の matcher は Write|Edit のままとし、hook 本体が資料出力ディレクトリ配下の *.html だけを検査対象にする。対象外は判定せず exit0 で素通しする",
+      "impact": "fail-closed exit2 が適用対象内でのみ働き、handout と無関係な文書の外部 URL で書込を止めない"
+    },
+    {
+      "topic": "dispatch 契約としての task-graph",
+      "decision": "shape_marker を task-graph-derived にし、task-specs/*.md 82 件を dispatchable leaf の正本にした。component 粒度へ分岐するのは P02 (設計ブリーフ) / P04 (テスト実体) / P05 (build route) の 3 phase で、他 phase は集約 1 本",
+      "impact": "P04/P05 の component 粒度 leaf 各 23 件が envelope として render でき、13x23 の擬似 leaf を作らずに dispatch できる。P05 がテストを追加しない宣言を持つため、赤の作成を build と同じ粒度へ割って tdd-red の単一障害点を解消した"
+    },
+    {
+      "topic": "skill-brief 射影が通る hierarchy_level / rubric_refs",
+      "decision": "C04 ref-handout-design-system は自身が評価を持たない handout ドメインの被参照正本なので hierarchy_level を L1 (ドメイン基準) にした。C03 assign-handout-readability-evaluator は案件基準 L2 のままで、判定の依拠先として rubric_refs=[ref-handout-design-system] と depends_on C04 を明示した",
+      "impact": "skill-brief.schema.json の allOf (L2 → rubric_refs 必須) を満たし、render-skill-brief.py の決定論射影が C01-C04 の 4 本すべて exit0 になる。評価者が資料の可読性を何に照らして判定するかが plan 上で追跡できる"
+    },
+    {
+      "topic": "plan 層と build 層の書き手の分界",
+      "decision": "index.md の L3 完結宣言に「task-graph の dispatch leaf (P04 のテスト実体・P05 の component build) は下流 builder が plugins/guide-doc-generator/ 配下へ書く。plan 生成物はこの配下を作らない」を追記し、P04-C<nn>-01 の本文にも P05 と同じ「実行は下流 builder の責務」を入れた",
+      "impact": "build_target 配下を write_scope に持つ leaf の実行者が plan 層 agent か builder かで読み手ごとに割れる矛盾を解消した"
+    }
+  ],
+  "deferred_to_open_issues": [
+    "GAP-ENVELOPE-001: manifest draft を実体へ適用する executor が無く、適用は人手承認",
+    "GAP-SCRIPT-BUILDER: script の builder が contract-only で、実装は scaffold 後に人手または後段 executor が行う",
+    "GAP-SRG-CONTRACT-DRIFT: 画像生成委譲先の入力契約が変わったとき skip ではなく誤動作になりうる",
+    "GAP-DEFAULT-OUTPUT-DIR: 既定出力先の実値は設置時供給で、plan には焼かない"
+  ],
+  "gate_results": {
+    "verify-index-topsort.py": 0,
+    "detect-unassigned.py": 0,
+    "check-spec-frontmatter.py": 0,
+    "check-spec-gates.py": 0,
+    "check-spec-matrix-coverage.py --self-test": 0,
+    "check-spec-matrix-coverage.py PLAN": 0,
+    "check-plugin-goal-spec.py": 0,
+    "check-requirements-coverage.py": 0,
+    "check-surface-inventory.py": 0,
+    "check-build-handoff.py": 0,
+    "validate-task-graph.py": 0,
+    "check-runtime-portability.py": 0,
+    "check-plugin-surface-audit.py": 0,
+    "lint-sibling-coupling.py (advisory)": 0,
+    "check-downstream-harness.py (layer B)": 0,
+    "render-task-execution-envelope.py (P05 component-build 23 件 + P02-C01-01)": 0
+  },
+  "note": "architect (R2/R3) の作業メモ。設計を拘束する決着は 13 phase 本文 (phase-02 ドメイン知識 / 各 phase の ### 事前解決済み判断) へ転記済みで、本ファイルはその写し。plan-findings.json は独立評価者 (R4) の出力枠として空けてある。"
+}

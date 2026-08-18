@@ -1,0 +1,1154 @@
+{
+  "component_id": "C12",
+  "component_kind": "script",
+  "name": "validate-handout-config.py",
+  "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "purpose": "構成データ JSON の正本スキーマを保持し、schema と意味規約 (資料単位の必須フィールド一式・各セクションの lead_line と judgment_axis と goal・日付フィールド・用語言い換え宣言・doc_type が語彙正本に含まれること) で fail-closed 検証する決定論ゲート。--normalize 指定時は正規化済み構成データを 1 箇所で確定し --out へ書く。日付未指定時に生成実行日を既定として充填するのはこの正規化だけであり、C11 レンダラ・C19 出力先ルーティング・C18 言語検査・C20 逆抽出・C22 筋道検査はすべて確定後の値を読むだけになる。R21 (研修フィードバック由来の型の制約) のうち構成データ層で表現できるもの — 冒頭の流れの項目数上限・主題枠・ゴール/主題/具体業務への紐づけ必須と運営連絡の付録隔離・presentation_order の決定論導出・成果起点の解説順序・説明文字数上限と超過分の折り畳み・到達レベルの整合・覚えること/覚えなくてよいことの対・所要時間と対話枠の下限割合 — の検査もこのゲートが持つ (r21_type_constraints)",
+  "single_writer": "資料日付 (date) の既定値解決、presentation_order の既定値導出 (CR-PRESENTATION-ORDER)、説明文の折り畳み (CR-TEXT-FOLD)、および正規化済み構成データの確定。plugin 内で datetime.date.today() 相当を呼ぶことを許される唯一の component",
+  "argv": [
+    {
+      "flag": "--config",
+      "required": true,
+      "type": "path",
+      "description": "検証対象の構成データ JSON。UTF-8。この script はこのファイルを絶対に書き換えない",
+      "default": null
+    },
+    {
+      "flag": "--schema",
+      "required": false,
+      "type": "path",
+      "description": "スキーマ定義ファイルの差し替え。未指定時は実体解決 4 段で schemas/handout-config.schema.json を求める",
+      "default": "<resolved plugin root>/schemas/handout-config.schema.json"
+    },
+    {
+      "flag": "--strict",
+      "required": false,
+      "type": "flag",
+      "description": "warning も違反として扱い exit 1 にする。CI / hook から使う既定の姿勢。未指定時は warning を stderr へ出したうえで exit 0 を許す",
+      "default": false
+    },
+    {
+      "flag": "--normalize",
+      "required": false,
+      "type": "flag",
+      "description": "検証を通過した構成データを正規化して --out へ書く。--out 併用が必須で、単独指定は exit 2",
+      "default": false
+    },
+    {
+      "flag": "--out",
+      "required": false,
+      "type": "path",
+      "description": "正規化済み構成データの書き出し先。--normalize と対で使う。--config と同一 realpath を指すと exit 2 (in-place 書き換えの禁止)",
+      "default": null
+    },
+    {
+      "flag": "--today",
+      "required": false,
+      "type": "string(YYYY-MM-DD)",
+      "description": "date 既定値に用いる『生成実行日』を明示的に固定する試験用の縫い目。指定時はシステム日付を読まない。plugin 内でこの縫い目を持つのはこの script だけで、C29 のバイト一致再現性テストと C33/C35 のテストはこれを使って日付を凍結する",
+      "default": "システムのローカル日付"
+    },
+    {
+      "flag": "--catalog",
+      "required": false,
+      "type": "path",
+      "description": "用途種別語彙の正本 (C23 の catalog) の差し替え。C23 の resolve_catalog_path へそのまま渡す",
+      "default": "<resolved plugin root>/config/handout-purposes.json"
+    }
+  ],
+  "stdin": "読まない。stdin が接続されていても無視する非対話 script",
+  "stdout": "人間可読の 1 行サマリ + 内訳。例: 'OK handout-config: sections=6 parts=17 glossary=9 doc_type=lecture date=2026/08/17 warnings=0'。構成データ JSON を stdout へ流すことはしない (JSON の行き先は常に --out 一箇所。hook や CI が stdout をそのまま人間へ見せられる状態を保つため)",
+  "stderr": "違反と warning のみ。1 行 1 件で先頭に診断コード、続けて JSON Pointer 形式のキーパス、続けて説明。例: 'E-FIELD-EMPTY /sections/2/goal セクション goal が空文字。読み終えて何が分かるかを 1 文で書く'。warning は 'W-' 接頭辞",
+  "exit_codes": {
+    "0": "スキーマと意味規約の違反が 0 件。--strict 併用時は warning も 0 件。--normalize 指定時は --out への書き出しまで完了している",
+    "1": "構成データ側の違反。schema 違反 / 必須フィールドの欠落または空 / 型不一致 / 未知キー / 日付書式違反 / doc_type が語彙正本に無い / section id の重複または不正 / 部品データの必須キー欠落 / section_kind の追加制約違反 / glossary の重複または空 / --strict 下での warning。JSON として parse できない場合もここ (内容の問題)。fail-closed で --out へは一切書かない",
+    "2": "起動側の不正。--config 未指定 / --config が存在しないか読めない / --schema や --catalog が解決できない / --normalize を --out なしで指定 / --out が --config と同一 realpath / --out の親ディレクトリが存在しない / --today の書式が YYYY-MM-DD でない"
+  },
+  "write_scope": [
+    "--out で指定された 1 ファイルのみ (out-file)"
+  ],
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--config で指定された構成データ JSON (読み取りのみ)",
+      "schemas/handout-config.schema.json (スキーマ正本。plugin-level surface)",
+      "config/handout-purposes.json (doc_type 語彙の照合。直接読まず C23 のモジュール API 経由)",
+      "config/handout-parts.json (part id 語彙の正本。ファイルの単独 owner は C11 であり、本 script は C11 の module API (load_parts_catalog) 経由で読む。id を自前に列挙しない)",
+      "config/handout-sections.json (section_kind 語彙。本 script が単独 owner のデータファイルで、検証時も同じファイルを読んで enum を得る。R21 で追加した max_items / forbid_row_detail / min_duration_share / required_role の各属性もここから読み、閾値を script へ書かない)",
+      "assets/tokens/<theme>.json (R21 C52 の説明文字数上限 text_limits.block_body_max_chars だけを読む。テーマ定義ファイルの schema owner は C11 であり、本 script はこの 1 キーの read-only consumer。config.theme が null / 不在なら既定テーマの値を使い、キー自体が無ければ 400 を用いる)",
+      "config/handout-visual-policy.json (図解密度・散文量・役割別の文字数上限の閾値正本。本 script が単独 reader であり、閾値を script へ書かない。読めない場合は fallback 定数で fail-soft に進む。裁定は briefs/RESOLUTION-R24-visual-first-draft-first.md)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (対話経路の構成データ確定ゲート。skill 名の正本は skill-brief-C01.json の skill_name)",
+      "C02 run-handout-extract (逆抽出した構成データの検証)",
+      "C11 render-handout.py の前段 (正規化済みであることの前提)",
+      "P09 品質ゲート / hook"
+    ],
+    "not_invoked_by": "P03 evidence Y-09 で検出した brief 側だけのエッジ 3 本をここで解消した。(a) C05 handout-content-architect は tools が Read / Write だけで script を起動できないため、本 script を呼ばない。起草した構成データの検証は C05 を呼び出した C01 が行う。(b) C07 /handout-build は C01 skill を起動する一段委譲であり、本 script を直接叩かない。(c) C04 ref-handout-design-system は参照回答専用でどの経路の持ち主でもなく、依存関係を持たない (旧記述は C07 の説明中で C04 に言及していたためエッジとして誤読されていた)",
+    "invokes": [
+      "C23 resolve-handout-preset.py (importlib 経由でモジュールとして読み込み、load_catalog / vocabulary / resolve / catalog_sha256 を呼ぶ。語彙リテラルを自前に持たない)"
+    ]
+  },
+  "section_kind_ssot": {
+    "catalog_path": "plugins/guide-doc-generator/config/handout-sections.json",
+    "plan_representation": "plugin-plans/guide-doc-generator/briefs/config/handout-sections.json",
+    "ownership": "本ファイルの単独 owner (writer) は C12 である。section_kind の値・既定値・意味の正本はこの 1 ファイルだけで、C12 のスキーマ散文にも C23 のプリセット定義にも enum を列挙しない",
+    "why_neutral_file": "P03 evidence Y-08: 従来は enum の正本が C12 のスキーマ側にあり C23 がそれを参照する一方、C12 は doc_type 語彙のために C23 を import していたため、宣言上 C12 ⇄ C23 の相互依存 (循環) になっていた。enum を中立なデータファイルへ出し、C23 は C12 を import せずこのファイルを読むだけにすることで、残る依存は C12 → C23 の一方向だけになり循環が消える",
+    "read_access": {
+      "C23": "config/handout-sections.json を直接 json.load する。C12 を import しない (してはならない)",
+      "C11": "data-hb-section-kind の値域として読む",
+      "C22": "筋道検査で section_kind 別の期待を引くときに読む"
+    },
+    "constraint_note": "section_kind ごとの『追加制約』(agenda-timebox の time 非空 等) の定義は C12 側 (config_schema / normalize_algorithm N8) に残る。データファイルが持つのは値の語彙と意味だけであり、検査規則は持たない"
+  },
+  "r21_type_constraints": {
+    "role": "R21 (goal-spec C46-C59) が求める『資料の型』のうち、構成データ層で表現・検査できるものの単一正本。P03-x-04 の裁定に従い、新 component を作らず本 script の責務追加として実装する",
+    "presentation_order_derivation": {
+      "id": "CR-PRESENTATION-ORDER",
+      "owner": "C12 (単一正本。この導出規則を他のいかなる component・ブリーフ・prompt にも複製しない)",
+      "rule": "presentation_order が構成データに明示されていればその値を採る (provenance.presentation_order_source = 'explicit')。無い場合は prior_knowledge_level から決定論導出する: none → demo_first / basic → demo_first / intermediate → explain_first (provenance.presentation_order_source = 'derived-from-prior-knowledge')",
+      "why_no_new_hearing_item": "デモ先行と説明先行の優劣は聴き手の習熟度に依存する時と場合の問題であり、片方を型として固定できない。同時に、選ばせるための新しいヒアリング項目を足すと利用者の判断負荷が増え、R19 が既に取得している prior_knowledge_level と意味が重なる第 2 の入口ができる。既定値を導出にし明示上書きだけを受けることで、語彙は 1 つのまま両モードを表現できる",
+      "why_basic_is_demo_first": "basic (触ったことはあるが体系的には知らない) の読み手も『何ができるか』の像が先に無いと機能名の羅列で離脱する、というのが R21 の一次観測 (実施済み研修のフィードバック)。境界を intermediate に置き、迷ったらデモ先行へ倒す",
+      "consumers": "C23 は --presentation-order でこの値を受け取り section_order を並べ替えるだけで、自分では導出しない。C05 は親 (C01) から確定値を渡される。C11 は data-hb-presentation-order として出力する。C22 NAR-07 は出力された値を読んで第一提示物を検査する"
+    },
+    "text_length_fold": {
+      "id": "CR-TEXT-FOLD",
+      "owner": "C12",
+      "limit_source": "assets/tokens/<theme>.json の text_limits.block_body_max_chars (既定 400。テーマ設定で変更できるという C52 の要求はこの 1 キーで満たす)",
+      "rule": "TEXT 部品の body が上限を超えるとき、--normalize は body を上限以下の先頭部分と残余へ分割し、残余を同一セクションの直後に置く B10 (items 1 件・summary は固定文字列 '詳しい説明 (続き)'・open=false) へ移す。分割点は上限位置以前で最後に現れる文末 (。 ! ? のいずれか) の直後とし、文末が 1 つも無ければ上限位置の直後で切る (決定論)。折り畳んだ件数を provenance.text_fold_count に記録する",
+      "why_normalize_not_render": "折り畳みをレンダラ (C11) 側で行うと、生成 HTML には B10 があるのに構成データには TEXT しか無い状態になり、C20 の逆抽出による round-trip 等価 (C31) が原理的に成立しない。正規化済み構成データを唯一の真値に保つため、変形は --normalize の中で完結させる",
+      "why_not_new_part": "『長い説明を畳む』器は部品カタログの B10 アコーディオンが既に持っている。折り畳み専用部品を新設すると同じ構造に 2 つの表現ができる (P03-x-04 の裁定)"
+    },
+    "checks": [
+      {
+        "checklist": "C46",
+        "detection": "E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL",
+        "where": "A9 (section_kind=flow-overview)",
+        "note": "上限値は config/handout-sections.json の max_items。script へ 5 を書かない"
+      },
+      {
+        "checklist": "C47",
+        "detection": "E-FOCUS-THEME",
+        "where": "A5 (document 必須フィールド)"
+      },
+      {
+        "checklist": "C48",
+        "detection": "E-SECTION-UNTIED-GOAL / E-TIES-DANGLING / E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER",
+        "where": "A7 / A9b",
+        "note": "描画側の隔離は C22 NAR-08 が併せて検査する"
+      },
+      {
+        "checklist": "C49",
+        "detection": "E-PRESENTATION-ORDER + N4b の導出",
+        "where": "A5 / N4b"
+      },
+      {
+        "checklist": "C51",
+        "detection": "E-CAPABILITY-SLOT-MISSING / E-CAPABILITY-SLOT-ORDER",
+        "where": "A8b",
+        "note": "描画文面側の『機能名から始まる説明』は C18 LANG-07 が併せて検査する"
+      },
+      {
+        "checklist": "C52",
+        "detection": "E-TEXT-OVERFLOW (検証時) / CR-TEXT-FOLD (正規化時)",
+        "where": "A8c / N14"
+      },
+      {
+        "checklist": "C54",
+        "detection": "E-ATTAINMENT-LEVEL / E-ATTAINMENT-OVERRUN / E-ATTAINMENT-UNREACHED",
+        "where": "A9c"
+      },
+      {
+        "checklist": "C57",
+        "detection": "E-REMEMBER-PAIR / E-REMEMBER-MAX",
+        "where": "A5b"
+      },
+      {
+        "checklist": "C58",
+        "detection": "E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK",
+        "where": "A5 / A9b",
+        "note": "ヒアリングで必須にする責務は C01 R1-elicit。本 script は結果の検査だけを持つ"
+      },
+      {
+        "checklist": "C59",
+        "detection": "E-SECTION-DURATION-FORMAT / E-DURATION-INCOMPLETE / E-TIMEBOX-SUM / E-SECTIONKIND-DURATION-SHARE",
+        "where": "A9d",
+        "note": "下限割合は config/handout-sections.json の min_duration_share。対話枠を必須セクションにするのは C23 のプリセット側"
+      }
+    ],
+    "not_owned_here": "C50 (両モードの部品順序と共有の型の保持) は C23 の presentation_order_variants が正本、C53 (ハンズオン部品と先回り Q&A 枠の用途別必須) は C23 の section_order.required と required_document_fields が正本、C55 (図表・グラフの欠落検査) は C16 SC-09 が正本、C56 (demo_first の第一提示物の限定) は C22 CR-DEMO1 が正本。本 script はこれらの規則を再実装しない"
+  },
+  "config_schema": {
+    "format": "JSON Schema draft 2020-12 を schemas/handout-config.schema.json に置く。ただし plugin は jsonschema パッケージを持てない (C27: 標準ライブラリのみ) ため、この script が schema ファイルの構造を読んで自前の決定論バリデータで解釈する。schema ファイルは C05 agent / C20 逆抽出 / エディタ補完のための機械可読な正本であり、解釈系はこの script が単独で持つ",
+    "encoding_rules": {
+      "input": "UTF-8。BOM は許容して剥がす。CRLF は LF へ正規化する",
+      "output": "json.dump(ensure_ascii=False, indent=2, sort_keys=True) + 末尾改行 1 個 + LF 固定。sort_keys によりオブジェクトのキー順が入力に依らず一意になり、C29 のバイト一致再現性の前提が構成データ側で閉じる",
+      "arrays": "配列の順序は意味を持つため再ソートしない (sections / parts / glossary / attachments / assets)",
+      "strings": "全ての文字列を NFC 正規化し、行末の空白を除去する。文字列内の改行は保持する"
+    },
+    "unknown_keys": "既知キー以外は全レベルで E-KEY-UNKNOWN の違反 (exit 1)。予約された拡張点は parts[].data の部品固有キーのみで、そこも部品 id ごとに許容キーが定義されている。将来の拡張は schema ファイルの更新で行い、実行時の緩和はしない",
+    "document_level_fields": [
+      {
+        "key": "schema_version",
+        "type": "string",
+        "required": "normalize が充填",
+        "constraint": "既知バージョンの完全一致 ('1.0')。未知は E-SCHEMA-VERSION で exit 1",
+        "covers": [],
+        "notes": "入力に無ければ normalize が現行版を充填する。ある場合は照合のみ"
+      },
+      {
+        "key": "title",
+        "type": "string",
+        "required": true,
+        "constraint": "非空 (空白のみは空扱い)。1..120 文字。60 文字超は W-TITLE-LONG",
+        "covers": [
+          "C36"
+        ],
+        "notes": "hero の h1 と header のタイトル、および subject_slug 導出の元"
+      },
+      {
+        "key": "subject_slug",
+        "type": "string",
+        "required": "normalize が導出または要求",
+        "constraint": "^[a-z0-9][a-z0-9-]{0,39}$",
+        "covers": [
+          "C23"
+        ],
+        "notes": "C19 のディレクトリ名 <主題slug> の値。導出規則は normalize_algorithm 参照。日本語のみのタイトルからは導出できないため明示指定を要求する"
+      },
+      {
+        "key": "date",
+        "type": "string",
+        "required": "normalize が充填",
+        "constraint": "正規化後は ^\\d{4}/\\d{2}/\\d{2}$ (ゼロ埋め・スラッシュ区切り) の完全一致。かつ暦として実在する日付",
+        "covers": [
+          "C33",
+          "C34",
+          "C35"
+        ],
+        "notes": "資料の日付は 1 フィールドだけ。意味は『資料の日付 (作成日または実施日として利用者が意図した 1 点)』と確定し、作成日 / 実施日 / 更新日を分けない。派生値 (ディレクトリ名の YYYY-MM-DD) はフィールドとして保存せず、date.replace('/', '-') の純変換で C19 が導く"
+      },
+      {
+        "key": "doc_type",
+        "type": "string",
+        "required": true,
+        "constraint": "C23 の語彙正本に slug として存在すること。この script は語彙を列挙せず C23 のモジュール API へ照合を委ねる",
+        "covers": [
+          "C36",
+          "C42",
+          "C43"
+        ],
+        "notes": "goal-spec C36 が言う『利用シーン (R20 種別)』はこのフィールドのこと。use_scene という別フィールドは作らない (同じ概念に 2 つの入口を作ると片方が腐る)"
+      },
+      {
+        "key": "purpose",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..400 文字",
+        "covers": [
+          "C36",
+          "C37"
+        ],
+        "notes": "R19 の 3 要素のひとつ。hero 直下へ描画され C22 が存在を検査する"
+      },
+      {
+        "key": "background",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..600 文字",
+        "covers": [
+          "C36",
+          "C37"
+        ],
+        "notes": "R19 の 3 要素のひとつ"
+      },
+      {
+        "key": "goal",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..400 文字",
+        "covers": [
+          "C36",
+          "C37",
+          "C39"
+        ],
+        "notes": "資料全体ゴール。R19 の 3 要素のひとつで、各 section の goal はこれの分解として連なる"
+      },
+      {
+        "key": "reader",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。5..200 文字",
+        "covers": [
+          "C36"
+        ],
+        "notes": "想定読者"
+      },
+      {
+        "key": "prior_knowledge_level",
+        "type": "string",
+        "required": true,
+        "constraint": "enum: none | basic | intermediate",
+        "covers": [
+          "C36"
+        ],
+        "notes": "3 段に固定する。自由記述にすると C05 が資料ごとに違う語で書き、用語言い換えの厚みを機械判断できなくなる"
+      },
+      {
+        "key": "detail_level",
+        "type": "string",
+        "required": "normalize が充填",
+        "constraint": "enum: overview | standard | detailed",
+        "covers": [
+          "C61",
+          "C63",
+          "C65"
+        ],
+        "notes": "説明の詳しさ。入力に無ければ normalize が doc_type から C23 のモジュール API 経由で既定値を引いて充填し、provenance.detail_level_source='preset-default' を立てる。明示指定があれば値をそのまま採り 'explicit' を立てる。この script は既定値の対応表を持たない (持つと C23 と二重正本になる)"
+      },
+      {
+        "key": "evidence_depth",
+        "type": "string",
+        "required": "normalize が充填",
+        "constraint": "enum: none | cited | sourced",
+        "covers": [
+          "C62",
+          "C66"
+        ],
+        "notes": "根拠の明示度。detail_level と同じく C23 の既定値を normalize が充填し provenance.evidence_depth_source を立てる。detail_level との組み合わせに禁止の対は無く 3x3=9 通り全てが valid (CR-GRANULARITY-ORTHOGONAL)"
+      },
+      {
+        "key": "essential_problem",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..400 文字",
+        "covers": [
+          "C36"
+        ],
+        "notes": "本質的課題。読み手が抱えている問題の 1 文"
+      },
+      {
+        "key": "duration",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。^\\d{1,3}(分|時間)$ または ^\\d{1,3}〜\\d{1,3}分$ または 'A4 n 枚相当'",
+        "covers": [
+          "C36"
+        ],
+        "notes": "所要時間・分量感。書式を絞るのは hero と B03 の時間ピルで表記が揺れないようにするため"
+      },
+      {
+        "key": "focus_theme",
+        "type": "array<string>",
+        "required": true,
+        "constraint": "1..2 件。各要素は非空で 10..60 文字。0 件・3 件以上・空文字混入は E-FOCUS-THEME",
+        "covers": [
+          "C47"
+        ],
+        "notes": "R21 C47。『今回身につけていただきたいこと』を聴き手向けの言葉で 1〜2 件に絞った主題枠。document.goal (作り手の言葉での全体ゴール) とは別フィールドで、goal の言い換えを禁じない代わりに件数上限で絞りを強制する。上限を 2 にしているのは、3 件以上を許すと冒頭が再び情報過多になり R21 の起点である離脱要因へ戻るため。C11 が hero 直下へ data-hb-field=\"focus_theme\" として描画する"
+      },
+      {
+        "key": "target_tasks",
+        "type": "array<object>",
+        "required": true,
+        "constraint": "1 件以上。要素は {id: ^[a-z0-9][a-z0-9-]{0,39}$ で一意, label: 非空 10..80 文字}。0 件は E-TARGET-TASKS-EMPTY",
+        "covers": [
+          "C58"
+        ],
+        "notes": "R21 C58。受講者が達成したい具体業務 (例: 車両収支の自動化)。reader / prior_knowledge_level / essential_problem は受講者の『属性』であってこの『達成目標』を代替しないため、別軸の必須フィールドとして持つ。ヒアリングでこの項目を必須にする責務は C01 R1-elicit にあり、本 script はその結果が構成データへ載っていることと、各本編セクションが id で紐づいていること (section.ties_to) を検査する"
+      },
+      {
+        "key": "presentation_order",
+        "type": "string",
+        "required": "normalize が導出または照合",
+        "constraint": "enum: demo_first | explain_first。列挙外は E-PRESENTATION-ORDER",
+        "covers": [
+          "C49",
+          "C50"
+        ],
+        "notes": "R21 C49。提示順の型。新しいヒアリング項目は増やさず prior_knowledge_level から決定論導出する (導出規則の単一正本は本 brief の r21_type_constraints.presentation_order_derivation。他 component へ複製しない)。利用者が明示指定した場合はその値を尊重し、provenance.presentation_order_source へ 'explicit' を記録する"
+      },
+      {
+        "key": "attainment_level",
+        "type": "string",
+        "required": true,
+        "constraint": "enum (到達の浅い順): overview | operable | reproducible | skill-authoring。列挙外は E-ATTAINMENT-LEVEL",
+        "covers": [
+          "C54"
+        ],
+        "notes": "R21 C54。この資料でどこまで到達させるかの宣言。prior_knowledge_level と同じく 3〜4 段の固定 enum を C12 のスキーマへ直に置く (語彙が用途にもセクション種別にも属さないため新規データファイルを作らない)。レクチャー用途で言う『Skill 化まで』は skill-authoring。順序つき enum であることが C54 の整合検査 (section.attainment_step が宣言値を超えない / 少なくとも 1 セクションが宣言値に到達する) の前提になる"
+      },
+      {
+        "key": "must_remember",
+        "type": "array<string>",
+        "required": true,
+        "constraint": "1..must_remember_max 件。各要素は非空 5..60 文字。空配列は E-REMEMBER-PAIR",
+        "covers": [
+          "C57"
+        ],
+        "notes": "R21 C57。『今回覚えていただきたいこと』の明示列挙。既定上限 2 件"
+      },
+      {
+        "key": "must_remember_max",
+        "type": "integer",
+        "required": false,
+        "constraint": "1..5。既定 2 を normalize が充填",
+        "covers": [
+          "C57"
+        ],
+        "notes": "R21 C57 の『上限を指定可』。上限だけを可変にし、下限 1 件と no_need_to_remember との対は不変にする"
+      },
+      {
+        "key": "no_need_to_remember",
+        "type": "array<string>",
+        "required": true,
+        "constraint": "1 件以上。各要素は非空 5..80 文字。空配列は E-REMEMBER-PAIR",
+        "covers": [
+          "C57"
+        ],
+        "notes": "R21 C57。『覚えなくてよいこと (その場で調べればよい / 本資料を見返せば足りる)』。must_remember と対で必須にする理由: 覚える対象を絞っても、覚えなくてよい範囲を宣言しない限り読み手は残り全部を暗記対象と見なし、認知負荷が下がらない。片方だけが非空の状態は E-REMEMBER-PAIR で落とす (どちらを先に書いたかに依らない対称な検査)"
+      },
+      {
+        "key": "theme",
+        "type": "string | null",
+        "required": false,
+        "constraint": "assets のテーマ名として実在するか null。^[a-z][a-z0-9-]*$",
+        "covers": [],
+        "notes": "テーマの入力経路の正。C11 の --theme はこのフィールドが null か不在のときに限り有効で、採用値は C11 が出力先へ同梱する構成データへ書き戻す。C12 はこのフィールドを触らない (書き戻しの writer は C11 ただ 1 つ)"
+      },
+      {
+        "key": "glossary",
+        "type": "array<object>",
+        "required": true,
+        "constraint": "0 件以上。要素は {term: 非空 string, plain: 非空 string}。term は NFC 正規化後に全体で一意。prior_knowledge_level が none のとき 0 件なら W-GLOSSARY-EMPTY",
+        "covers": [
+          "C16"
+        ],
+        "notes": "『初出専門用語の言い換え宣言』の宣言側。R11 の用語言い換えゲート (C18) の判定方式を辞書やヒューリスティックではなく明示宣言方式に確定させる要。C18 は本文中の term 初出箇所に plain が括弧書きで併記されているかを、この配列を照合表として検査する"
+      },
+      {
+        "key": "sections",
+        "type": "array<object>",
+        "required": true,
+        "constraint": "1 件以上。要素は section_fields に従う。12 件超は W-SECTIONS-MANY",
+        "covers": [
+          "C36",
+          "C19"
+        ],
+        "notes": "セクション構成。C12 はプリセットからセクション骨格を生成しない (materialize しない)。骨格の供給は C23 --purpose の出力で、それを埋めるのは C05 agent の仕事。ここで骨格を作ると『構成データを作る』責務が 2 箇所に分かれる"
+      },
+      {
+        "key": "assets",
+        "type": "array<object>",
+        "required": false,
+        "constraint": "要素は {id: ^[a-z0-9][a-z0-9-]*$ 一意, kind: image, src: 相対パスまたは data URI, alt: 非空 string, caption: string | null, role: screenshot | figure | photo}",
+        "covers": [
+          "C5",
+          "C6",
+          "C56"
+        ],
+        "notes": "画像ノード。C13 embed-assets.py が src を data URI へ畳み込む。alt を必須にしているのは a11y ゲート (C22) を構成データ段階で満たすため。role は R21 C56 の『実際の画面かどうか』を機械判定するための必須メタで、normalize は既定値を充填しない (推測させない。未指定は E-ASSET-ROLE-MISSING)。C11 は値を data-hb-asset-role として出し、C22 NAR-07 がそれを読む"
+      },
+      {
+        "key": "attachments",
+        "type": "array<object>",
+        "required": false,
+        "constraint": "要素は {id: 一意, filename: 非空, mime: 非空, src: 相対パスまたは data URI, fallback_hint: 非空 string}",
+        "covers": [
+          "C7"
+        ],
+        "notes": "添付ファイル。fallback_hint は data URI ダウンロードが効かない環境向けの代替手段テキストで、参照 v1 の .dl-hint を継承して必須にする"
+      },
+      {
+        "key": "diagrams",
+        "type": "array<object>",
+        "required": false,
+        "constraint": "要素は {id: 一意, pattern: flow|compare|hierarchy|cycle|matrix|dichotomy, data: object, title: 非空}",
+        "covers": [
+          "C9"
+        ],
+        "notes": "概念図解の構造データ。C14 が inline SVG へ変換する。pattern の 6 値は C14 側の正本を参照する"
+      },
+      {
+        "key": "notes_enabled",
+        "type": "boolean",
+        "required": false,
+        "constraint": "既定 true。normalize が充填",
+        "covers": [
+          "C8"
+        ],
+        "notes": "メモ機構と localStorage 永続化の出力可否"
+      },
+      {
+        "key": "provenance",
+        "type": "object",
+        "required": "normalize が充填",
+        "constraint": "{normalized_by: 'validate-handout-config.py', schema_version, catalog_sha256, date_source: 'config'|'default-today', presentation_order_source: 'explicit'|'derived-from-prior-knowledge', text_fold_count: integer}",
+        "covers": [
+          "C35",
+          "C49",
+          "C52"
+        ],
+        "notes": "date_source は日付が利用者指定かこの script の既定充填かを記録する。C20 の round-trip 比較では provenance ブロック全体を比較対象から外す (生成のたびに変わりうる情報であり、構成データの意味的同一性には属さないため)"
+      }
+    ],
+    "section_fields": [
+      {
+        "key": "id",
+        "type": "string",
+        "required": true,
+        "constraint": "^[a-z0-9][a-z0-9-]{0,39}$ かつ sections 内で一意。予約語 (hero / nav / footer / memo) は禁止",
+        "covers": [
+          "C3"
+        ],
+        "notes": "sticky ナビの href アンカーと 1:1 対応する。予約語を禁じるのは C11 が生成する chrome の id と衝突させないため"
+      },
+      {
+        "key": "heading",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。1..80 文字",
+        "covers": [],
+        "notes": "セクション見出し"
+      },
+      {
+        "key": "goal",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..200 文字",
+        "covers": [
+          "C38",
+          "C39",
+          "C40"
+        ],
+        "notes": "R19。読み終えたら何が分かる / できるか。1 件でも空なら exit 1。C11 が .goal-chip をセクション粒度へ展開して描画し、nav 項目も補助属性でこれを参照する"
+      },
+      {
+        "key": "lead_line",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..80 文字。60 文字超は W-LEADLINE-LONG。改行を含むと E-LEADLINE-MULTILINE",
+        "covers": [
+          "C15",
+          "C40"
+        ],
+        "notes": "R11。1 行の抽象。参照解析 §5 の『抽象 1 行 → 具体部品 → 判断軸 1 行』の入口"
+      },
+      {
+        "key": "judgment_axis",
+        "type": "string",
+        "required": true,
+        "constraint": "非空。10..120 文字。改行を含むと E-AXIS-MULTILINE",
+        "covers": [
+          "C15",
+          "C40"
+        ],
+        "notes": "R11。判断軸の一文。具体部品の直後に置かれる締め"
+      },
+      {
+        "key": "duration",
+        "type": "string | null",
+        "required": "時間配分を要求する資料では必須",
+        "constraint": "正規化後は ^\\d{1,3}分$ の完全一致 (normalize が '1時間' → '60分' / '90 分' → '90分' へ整形する)。範囲表記 (30〜45分) と 'A4 n 枚相当' はセクション単位では受け付けない (E-SECTION-DURATION-FORMAT)",
+        "covers": [
+          "C45",
+          "C59"
+        ],
+        "notes": "R21 C59。セクション単位の所要時間であり、これが資料内で唯一の時間フィールドである。R20 のアジェンダ用途が要求する時間配分もこのフィールドを正本とし、B03 rows[].time は『そのセクション内の内訳』として、総和が当該 section.duration と一致することを検査する (E-TIMEBOX-SUM)。所要時間フィールドを 2 つ持たないための裁定 (P03-x-04)。min_duration_share を持つ section_kind が 1 件でも存在する資料では、全セクションの duration が非空でなければ割合を計算できないため E-DURATION-INCOMPLETE。document.duration は資料全体の分量感の表示値であり、割合計算の分母には使わない (分母は sections[].duration の総和)"
+      },
+      {
+        "key": "role",
+        "type": "string",
+        "required": false,
+        "constraint": "enum: main | appendix。既定 main を normalize が充填する。section_kind 側に required_role がある場合はその値と一致すること (E-SECTION-ROLE-CONFLICT)",
+        "covers": [
+          "C48"
+        ],
+        "notes": "R21 C48。本編か付録かの区分。appendix のセクションは全ての main セクションより後ろに置かれていなければならない (E-APPENDIX-ORDER)。運営連絡 (section_kind=logistics) は required_role=appendix により本編へ置けない"
+      },
+      {
+        "key": "ties_to",
+        "type": "array<string>",
+        "required": "role=main のとき必須",
+        "covers": [
+          "C48",
+          "C58"
+        ],
+        "constraint": "role=main のセクションでは 1 件以上。各要素は 'goal' / 'focus_theme:<0-based index>' / 'target_task:<target_tasks[].id>' のいずれかの形で、参照先が実在すること (E-TIES-DANGLING)。role=main のセクションは (a) 'goal' または 'focus_theme:*' を 1 件以上 (C48) かつ (b) 'target_task:*' を 1 件以上 (C58) 含むこと。欠ければ E-SECTION-UNTIED-GOAL / E-SECTION-UNTIED-TASK。role=appendix のセクションでは空配列でよい",
+        "notes": "R21 C48/C58。『何のためにこのセクションがあるか』を機械可読な参照として持たせ、ゴールにも主題にも具体業務にも紐づかない話題を本編から構造的に排除する。紐づけを持てない伝達事項は role=appendix + section_kind=logistics へ隔離する以外の置き場が無い、という形で禁止を成立させる"
+      },
+      {
+        "key": "attainment_step",
+        "type": "string | null",
+        "required": false,
+        "constraint": "document の attainment_level と同じ順序つき enum。normalize は充填しない (推測しない)",
+        "covers": [
+          "C54"
+        ],
+        "notes": "R21 C54。そのセクションが読み手を到達させる段。全セクションの値が document.attainment_level 以下であること (超過は E-ATTAINMENT-OVERRUN) と、少なくとも 1 セクションが document.attainment_level と一致すること (未達は E-ATTAINMENT-UNREACHED) が整合検査の中身。null のセクションは上限検査の対象外だが到達判定にも寄与しない"
+      },
+      {
+        "key": "section_kind",
+        "type": "string",
+        "required": false,
+        "constraint": "config/handout-sections.json の section_kinds[].slug に存在すること。既定値は同ファイルの default (standard) を normalize が充填する。enum 値をこのスキーマ散文へ列挙しない",
+        "covers": [
+          "C45"
+        ],
+        "notes": "用途固有の追加要求を共通スキーマで表現するための唯一の分岐点。値の物理正本は section_kind_ssot (config/handout-sections.json) にあり、本 script はその唯一の writer として、また読み手として振る舞う。プリセットごとに別スキーマを作らないための要"
+      },
+      {
+        "key": "parts",
+        "type": "array<object>",
+        "required": true,
+        "constraint": "1 件以上。要素は {part: config/handout-parts.json の id, id: セクション内一意の ^[a-z0-9][a-z0-9-]*$, slot: outcome | breakdown | feature | null, data: part_data_schema の許容キーに従う object}",
+        "covers": [
+          "C12",
+          "C51"
+        ],
+        "notes": "slot は R21 C51 の『成果 → 分解 → 用いる機能』の順序を部品の並びとして機械検査するための任意ラベルで、section_kind=capability-explainer のセクションでは全 part に必須 (E-CAPABILITY-SLOT-MISSING)。同セクションでは並びが outcome+ → breakdown+ → feature+ の 3 区画に分かれ、各区画が 1 件以上あり、区画をまたぐ出戻り (feature の後に outcome) が無いことを検査する (E-CAPABILITY-SLOT-ORDER)。catalog の section_scope が in-section の部品だけが parts に置ける。section_scope=document の部品 (sticky ナビ・ヒーロー) は document 構造から C11 が生成する chrome であり parts では指定できない。ここで id を列挙せず catalog の section_scope で判定する"
+      },
+      {
+        "key": "glossary",
+        "type": "array<object>",
+        "required": false,
+        "constraint": "document の glossary と同形。document 側の term と重複したら E-GLOSSARY-DUP",
+        "covers": [
+          "C16"
+        ],
+        "notes": "セクションスコープの追加宣言。normalize が document の glossary へマージせず、そのまま保持する (C20 の逆抽出でどちらのスコープに書かれていたかを復元できるようにするため)"
+      }
+    ],
+    "part_data_schema_note": "ここが定義するのは『各部品の data がどういう形か』だけである。part id の語彙・日本語名・セクション内可否の正本は C11 が所有する config/handout-parts.json (C11 brief の parts_catalog_ssot) にあり、本 script は起動時にそれを読み込んで id 集合を得る。したがってこの配列は catalog の id をキーにした形の定義表であって、id の第 2 の名簿ではない。catalog に無い id がここに現れる (またはその逆) 場合は起動時に E-PARTS-CATALOG-MISMATCH で exit 2 とし、二重名簿が黙って乖離する状態を作らない。placement は catalog の section_scope=document かつ kind=structural な部品が generated-chrome に対応する",
+    "part_data_schema": [
+      {
+        "part": "B01",
+        "placement": "generated-chrome",
+        "data_keys": [],
+        "notes": "parts では指定不可。C11 が sections の id / heading / goal から生成する"
+      },
+      {
+        "part": "B02",
+        "placement": "generated-chrome",
+        "data_keys": [],
+        "notes": "parts では指定不可。C11 が title / purpose / background / goal / date / duration から生成する"
+      },
+      {
+        "part": "B03",
+        "placement": "section",
+        "data_keys": [
+          "rows: array<{num: int|null, text: 非空, time: string|null, sub: string|null}> (1 件以上)"
+        ],
+        "notes": "section_kind が agenda-timebox のとき全 row の time が非空であり、time の総和が当該 section.duration と一致すること (E-TIMEBOX-SUM) を追加検査する。section_kind が flow-overview のとき rows 件数が当該 section_kind の max_items (既定 5) 以下であり (E-SECTIONKIND-MAXITEMS)、全 row の sub が null であること (E-SECTIONKIND-ROWDETAIL) を追加検査する — R21 C46 の『大きな流れだけを列挙し、個々の手順・操作の詳細を冒頭に含めない』の実体"
+      },
+      {
+        "part": "B04",
+        "placement": "section",
+        "data_keys": [
+          "cards: array<{label: 非空, body: 非空, tone: today|rest|neutral, note_key: string|null}> (2..3 件)"
+        ],
+        "notes": "section_kind が known-unknown-next のとき cards がちょうど 3 件で全件 note_key 非空であることを追加検査する (メモ機構への結線)"
+      },
+      {
+        "part": "B05",
+        "placement": "section",
+        "data_keys": [
+          "columns: array<非空> (2 件以上)",
+          "rows: array<{header: 非空, cells: array<string> (columns と同数), highlight: array<int>}>"
+        ],
+        "notes": "cells 数と columns 数の不一致は E-PART-SHAPE"
+      },
+      {
+        "part": "B06",
+        "placement": "section",
+        "data_keys": [
+          "left: {label: 非空, items: array<非空> 1 件以上}",
+          "right: 同形"
+        ],
+        "notes": "『A ならこっち / B ならこっち』の型"
+      },
+      {
+        "part": "B07",
+        "placement": "section",
+        "data_keys": [
+          "cards: array<{title: 非空, body: 非空, icon: string|null, footnote: string|null}> (1..3 件)"
+        ],
+        "notes": "section_kind が sources のとき少なくとも 1 card の footnote が非空であることを追加検査する"
+      },
+      {
+        "part": "B08",
+        "placement": "section",
+        "data_keys": [
+          "items: array<{key: 一意, title: 非空, detail: 非空}> (2 件以上)"
+        ],
+        "notes": "押すと解説が差し替わる。detail は aria 連携のため空を許さない"
+      },
+      {
+        "part": "B09",
+        "placement": "section",
+        "data_keys": [
+          "rows: array<{key: 一意, text: 非空, decided: bool|null}> (1 件以上)",
+          "show_counter: bool"
+        ],
+        "notes": "section_kind が decisions のとき全 row の decided が bool (null 不可) であることを追加検査する"
+      },
+      {
+        "part": "B10",
+        "placement": "section",
+        "data_keys": [
+          "items: array<{summary: 非空, body: 非空, open: bool}> (1 件以上)"
+        ],
+        "notes": "ネイティブ details/summary。R21 C52 の折り畳み先はこの部品であり、専用の折り畳み部品を新設しない。section_kind が anticipated-qa のとき items が 2 件以上で全件 open=false であることを追加検査する (先回り Q&A は既定で畳んで冒頭の情報量を増やさない)"
+      },
+      {
+        "part": "B11",
+        "placement": "section",
+        "data_keys": [
+          "label: string|null",
+          "body: 非空 string",
+          "copyable: bool"
+        ],
+        "notes": "body の改行は保持する。コピー対象の原文であるため trim を行末空白除去に留める"
+      },
+      {
+        "part": "B12",
+        "placement": "section",
+        "data_keys": [
+          "attachment_id: attachments の id を参照",
+          "label: 非空"
+        ],
+        "notes": "参照先 id が attachments に存在しなければ E-REF-DANGLING"
+      },
+      {
+        "part": "B13",
+        "placement": "section",
+        "data_keys": [
+          "tabs: array<{key: 一意, label: 非空, panel_parts: array<part オブジェクト>}> (2 件以上)"
+        ],
+        "notes": "panel_parts は 1 段だけネストを許し、その中に B13 を再帰させない (E-PART-NESTED-TABS)"
+      },
+      {
+        "part": "B14",
+        "placement": "section",
+        "data_keys": [
+          "steps: array<{title: 非空, body: string|null}> (2..4 件)"
+        ],
+        "notes": "矢印は C11 が inline SVG で生成する"
+      },
+      {
+        "part": "B15",
+        "placement": "section",
+        "data_keys": [
+          "key: 一意",
+          "single: bool",
+          "chips: array<{key: 一意, label: 非空}> (2 件以上)"
+        ],
+        "notes": "選択状態は notes_enabled の localStorage 機構で永続化される"
+      },
+      {
+        "part": "B16",
+        "placement": "section",
+        "data_keys": [
+          "rows: array<{key: 一意, text: 非空, owner: 非空, due: 非空 (yyyy/mm/dd または '未定')}> (1 件以上)"
+        ],
+        "notes": "preset_addon_decisions の『new』判定に対応する新規部品。独立 component ではなく C11 のレンダラ部品テーブルへの登録として実装される。owner と due が必須メタである点が既存部品のどれとも異なる"
+      },
+      {
+        "part": "B17",
+        "placement": "section",
+        "data_keys": [
+          "steps: array<{operation: 非空, expected: 非空, stuck_hint: string|null}> (1 件以上)",
+          "asset_id: assets の id を参照 | null",
+          "live_demo: boolean (既定 false)"
+        ],
+        "notes": "R21 C53 のハンズオン部品。live_demo=true は『登壇者がその場で実演し受講者が画面を見る』手順であることを表し、C22 NAR-07 が demo_first の実画面判定でこのフラグを見る (実画面の代替として認めるのは screenshot 画像かこのフラグだけ)。operation (手元で行う操作) と expected (そのとき画面に何が起きれば正しいか) を対で必須にしているのが要で、expected が無いと読み手は自分の結果が正しいか判定できずその場で詰まる。section_kind が handson のとき本部品が 1 件以上必要 (E-SECTIONKIND-HANDSON)。asset_id は操作後の画面のスクリーンショット参照 (任意)。独立 component は作らず C11 の部品テーブルへ登録する (B16 と同じ扱い)"
+      },
+      {
+        "part": "IMG",
+        "placement": "section",
+        "data_keys": [
+          "asset_id: assets の id を参照",
+          "lightbox: bool"
+        ],
+        "notes": "assets への参照。dangling は E-REF-DANGLING"
+      },
+      {
+        "part": "DIAGRAM",
+        "placement": "section",
+        "data_keys": [
+          "diagram_id: diagrams の id を参照"
+        ],
+        "notes": "diagrams への参照。dangling は E-REF-DANGLING"
+      },
+      {
+        "part": "TEXT",
+        "placement": "section",
+        "data_keys": [
+          "body: 非空 string"
+        ],
+        "notes": "部品に当てはまらない散文。1 文が 45 文字を超える文が 3 つ以上あると W-SENTENCE-LONG (参照解析 §5-6 の『一文が短い』の型)。R21 C52: body の文字数がテーマ設定の上限を超える場合、--normalize が超過分を既定で畳んだ B10 へ切り出す (text_length_fold 参照)。--normalize なしの検証では超過を E-TEXT-OVERFLOW として落とす"
+      }
+    ]
+  },
+  "algorithm": [
+    "A1. argv を解析する。--config 未指定 / --normalize を --out なしで指定 / --out が --config と同一 realpath / --today の書式違反 はいずれも exit 2",
+    "A2. 実体解決 4 段 (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → manifest name 照合 → __file__ 相対) で plugin root を求め、schemas/handout-config.schema.json と C23 の catalog を解決する。解決できなければ exit 2",
+    "A3. --config を読む。読めなければ exit 2、JSON として parse できなければ exit 1 (行番号と桁を添える)",
+    "A4. schema ファイルを読み、自前の決定論バリデータで解釈する (jsonschema パッケージは使えない: C27)",
+    "A5. 文書レベルの検査を行う。既知キー以外の混入 (E-KEY-UNKNOWN) / 必須フィールドの欠落と空 (E-FIELD-MISSING / E-FIELD-EMPTY) / 型と長さと enum と正規表現の適合",
+    "A6. doc_type を C23 のモジュール API (load_catalog → resolve) で照合する。語彙リテラルを自前に持たない。未定義は E-DOCTYPE-UNKNOWN",
+    "A7. sections を走査する。id の書式・一意性・予約語衝突 / heading / goal / lead_line / judgment_axis の非空と長さと単一行 / section_kind の enum",
+    "A8. parts を走査する。part id が config/handout-parts.json に存在すること、その部品の section_scope が in-section であること (document スコープの部品は generated-chrome なので指定不可)、data の許容キーと形 (E-PART-SHAPE)、B13 のネスト制限",
+    "A5b. R21 の document 追加検査を行う。focus_theme が 1..2 件で全件非空 (E-FOCUS-THEME) / target_tasks が 1 件以上で id 一意 (E-TARGET-TASKS-EMPTY) / attainment_level が順序つき enum に含まれる (E-ATTAINMENT-LEVEL) / must_remember が 1..must_remember_max 件 (E-REMEMBER-MAX) / must_remember と no_need_to_remember が両方とも非空 (片方だけ非空は E-REMEMBER-PAIR) / presentation_order が enum に含まれる (E-PRESENTATION-ORDER)",
+    "A8b. section_kind=capability-explainer のセクションについて parts[].slot を検査する。全 part が slot を持つこと (E-CAPABILITY-SLOT-MISSING) と、並びが outcome+ → breakdown+ → feature+ の 3 区画に分かれ各区画 1 件以上で出戻りが無いこと (E-CAPABILITY-SLOT-ORDER)。他の section_kind では slot は任意で、値があっても順序を要求しない",
+    "A8c. TEXT 部品の body 長を text_length_fold の上限と突き合わせる。--normalize が無い実行では超過を E-TEXT-OVERFLOW として計上する (この経路では折り畳まない。検証専用実行が入力を変えないため)",
+    "A9. section_kind ごとの追加制約を検査する (agenda-timebox の time 非空と総和一致 / decisions の decided が bool / action-items の owner と due 非空 / sources の footnote 非空 / known-unknown-next の cards 3 件と note_key / flow-overview の max_items と sub 禁止 / handson の B17 1 件以上 / anticipated-qa の B10 2 件以上かつ open=false)。閾値はすべて config/handout-sections.json 側の属性から読む",
+    "A9b. R21 の紐づけと隔離を検査する。role の enum と section_kind.required_role との一致 (E-SECTION-ROLE-CONFLICT) / appendix セクションが全 main セクションより後ろにあること (E-APPENDIX-ORDER) / role=main の ties_to が 1 件以上でありゴールか主題への参照を 1 件以上含むこと (E-SECTION-UNTIED-GOAL) / 同じく具体業務への参照を 1 件以上含むこと (E-SECTION-UNTIED-TASK) / 参照先の実在 (E-TIES-DANGLING)",
+    "A9c. 到達レベルの整合を検査する。全 section.attainment_step が document.attainment_level 以下 (E-ATTAINMENT-OVERRUN) かつ、少なくとも 1 セクションが document.attainment_level と一致すること (E-ATTAINMENT-UNREACHED)",
+    "A9d. 時間配分を検査する。section.duration の書式 (E-SECTION-DURATION-FORMAT) / min_duration_share を持つ section_kind が 1 件でもあるとき全セクションの duration が非空であること (E-DURATION-INCOMPLETE) / agenda-timebox の B03 行 time の総和が当該 section.duration と一致すること (E-TIMEBOX-SUM) / min_duration_share を持つ種別ごとに『その種別のセクションの duration 合計 ÷ 全セクションの duration 合計』が下限以上であること (E-SECTIONKIND-DURATION-SHARE)",
+    "A10. 参照整合 (attachment_id / asset_id / diagram_id) と未参照アセットの warning を検査する",
+    "A11. glossary の一意性をスコープ横断で検査する",
+    "A12. 診断を集計する。E- が 1 件以上、または --strict かつ W- が 1 件以上なら、全件を stderr へ列挙して exit 1 (--out へは書かない)",
+    "A13. --normalize が無ければ stdout へ OK サマリを出して exit 0",
+    "A14. --normalize があれば normalize_algorithm の N1-N13 (R21 で挿入した N4b / N7b / N7c / N10b を含む) を実行し、完了後に stdout へ OK サマリを出して exit 0"
+  ],
+  "normalize_algorithm": [
+    "N1. 前段として検証を完了させる。1 件でも E- 診断があれば --out へは書かず exit 1 (fail-closed。部分成果物を残さない)",
+    "N2. 入力の BOM 除去 / CRLF→LF / 全文字列の NFC 正規化 / 行末空白除去を適用する",
+    "N3. schema_version が無ければ現行版を充填し、あれば照合のみ",
+    "N4. date を確定する。値があれば yyyy/mm/dd / yyyy-mm-dd / yyyy/m/d / yyyy-m-d を受理して yyyy/mm/dd へ整形し、暦として実在するかを datetime.date で検査する。値が無いか null なら --today の値 (未指定ならシステムのローカル日付) を yyyy/mm/dd へ整形して充填し、provenance.date_source に 'default-today' を記録する。これが plugin 全体で唯一の日付解決点である",
+    "N5. subject_slug を確定する。値があれば書式検査のみ。無ければ title から導出する: NFKC 正規化 → 小文字化 → [a-z0-9] 以外を '-' へ置換 → 連続する '-' を 1 個へ畳む → 前後の '-' を除去 → 40 文字で切る。結果が空文字になる場合 (日本語のみのタイトル) は導出せず E-SLUG-UNDERIVABLE で exit 1 とし、subject_slug を明示指定するよう stderr で促す。ここでローマ字化やハッシュ化に逃げないのは、ディレクトリ名は人間が後から探す索引であり、機械が作った無意味文字列を残すと R17 の目的を損なうため",
+    "N6. doc_type を C23 のモジュール API で解決する。alias で書かれていた場合は正規の slug へ置き換える (正規化の一部)。未定義なら E-DOCTYPE-UNKNOWN で exit 1",
+    "N7. 各 section の section_kind が無ければ 'standard' を充填する。notes_enabled が無ければ true を充填する",
+    "N8. section_kind ごとの追加制約 (part_data_schema の notes に記した agenda-timebox / decisions / action-items / sources / known-unknown-next の各条件) を検査する。違反は E-SECTIONKIND-CONSTRAINT",
+    "N9. 参照整合を検査する。parts の attachment_id / asset_id / diagram_id が実在すること、逆に参照されない assets / attachments / diagrams があれば W-REF-UNUSED",
+    "N10. glossary を正規化する。document スコープ内で term を NFC 比較して重複を検出 (E-GLOSSARY-DUP)。section スコープの term が document スコープと衝突しても E-GLOSSARY-DUP。順序は保持し、マージはしない",
+    "N4b. presentation_order を確定する。値があれば enum 検査のみを行い provenance.presentation_order_source = 'explicit' を記録する。無いか null なら r21_type_constraints.presentation_order_derivation (CR-PRESENTATION-ORDER) に従い prior_knowledge_level から導出して充填し、'derived-from-prior-knowledge' を記録する。導出は本ステップが plugin 全体で唯一の実行点である (日付の N4 と同じ扱い)",
+    "N7b. R21 の既定値を充填する。各 section の role が無ければ 'main' を充填する。must_remember_max が無ければ 2 を充填する。attainment_step / attainment_level / focus_theme / target_tasks / ties_to は推測で埋めない (欠落は N1 の検証段で E- として落ちる)",
+    "N7c. section.duration を整形する。'1時間' → '60分'、'90 分' → '90分'、'1時間30分' → '90分' の純変換を行い ^\\d{1,3}分$ へ揃える。範囲表記は変換せず E-SECTION-DURATION-FORMAT。agenda-timebox で section.duration が空かつ B03 行 time が全て埋まっている場合に限り、行 time の総和を section.duration へ充填する (導出は 1 方向のみ。逆に section.duration から行 time を割り振ることはしない)",
+    "N10b. text_length_fold (CR-TEXT-FOLD) を適用する。TEXT 部品の body が上限超過なら分割し、残余を直後の B10 (open=false) へ移す。生成する B10 の part id は元の TEXT の id に '-cont' を付与した値とし、セクション内一意性が破れる場合は '-cont2', '-cont3' と連番を伸ばす (決定論)。折り畳み件数を provenance.text_fold_count に記録する。折り畳み後の body も上限を超えない",
+    "N11. provenance を組み立てる。normalized_by / schema_version / C23 の catalog_sha256 / date_source / presentation_order_source / text_fold_count を記録する",
+    "N12. --out へ書き出す。まず --out と同一ディレクトリへ一時ファイルを作り、書き終えてから os.replace で原子的に差し替える (途中失敗で壊れた JSON を残さない)。書式は encoding_rules に従い、同一入力から常にバイト一致する",
+    "N13. --config のパス・タイムスタンプ・内容が無変更であることを実装上保証する (--config を開くのは 'r' モードのみ)"
+  ],
+  "date_single_source_guarantee": {
+    "problem": "R17 のディレクトリ名 <YYYY-MM-DD> と R18 の本文表示 yyyy/mm/dd が別々に日付を取得すると、日付境界をまたぐ実行で不一致が起きる (goal-spec C35)",
+    "mechanism": "(1) 日付フィールドは date ただ 1 つ。派生形をスキーマに保存しない。(2) 既定値の充填はこの script の N4 だけで行い、C11 / C19 / C18 は現在日時を一切取得しない (実装検査: これらの script に datetime.now / date.today / time.time が出現しないことを P09 のゲートで grep する)。(3) ディレクトリ名の <YYYY-MM-DD> は date.replace('/', '-') という純変換で C19 が導く。保存された第 2 のフィールドを持たないため、2 値が乖離する状態そのものを表現できない。(4) C18 は同じ純変換を HTML 側の date-pill と出力ディレクトリ名の双方へ適用して照合する側であり、日付のソースにはならない",
+    "handoff_to_c19": "C19 は正規化済み構成データの date と、C23 の dir_token(doc_type)、subject_slug の 3 値だけからディレクトリ名を組む。すなわち <date.replace('/','-')>-<dir_token>-<subject_slug>",
+    "handoff_to_c11": "C11 は date をそのまま date-pill へ出す。書式変換もゼロ埋め補正も行わない (N4 で確定済み)"
+  },
+  "requirements_covered": [
+    "R11",
+    "R13",
+    "R18",
+    "R19",
+    "R20 (語彙照合の consumer として)",
+    "R21 (構成データ層で表現・検査できる項目の担い手)",
+    "R22 (記述粒度の可変。detail_level と evidence_depth の 2 軸を直交独立に持ち、用途プリセットは既定値のみを与える)"
+  ],
+  "checklist_covered": [
+    "C15",
+    "C16",
+    "C27",
+    "C33",
+    "C35",
+    "C36",
+    "C38",
+    "C40",
+    "C42",
+    "C45",
+    "C46",
+    "C47",
+    "C48",
+    "C49",
+    "C51",
+    "C52",
+    "C54",
+    "C57",
+    "C59",
+    "C61",
+    "C62",
+    "C63"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C12-R21-46",
+      "how": "section_kind=flow-overview のセクションに B03 rows を 6 件置く / rows[].sub に手順詳細を書く の 2 通りを実行",
+      "expected": "前者は E-SECTIONKIND-MAXITEMS、後者は E-SECTIONKIND-ROWDETAIL で exit 1 (C46)。config/handout-sections.json の max_items を 6 に書き換えると前者だけが exit 0 になる (閾値が script に埋まっていないことの回帰)"
+    },
+    {
+      "id": "AC-C12-R21-47",
+      "how": "focus_theme を削除 / 空配列 / 3 件 の 3 通りで実行",
+      "expected": "いずれも E-FOCUS-THEME または E-FIELD-MISSING で exit 1 (C47)"
+    },
+    {
+      "id": "AC-C12-R21-48",
+      "how": "role=main のセクションから ties_to を削る / 実在しない focus_theme:5 を指す / section_kind=logistics のセクションを role=main で置く / appendix セクションを main セクションより前に置く の 4 通り",
+      "expected": "順に E-SECTION-UNTIED-GOAL / E-TIES-DANGLING / E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER で exit 1 (C48)"
+    },
+    {
+      "id": "AC-C12-R21-49",
+      "how": "presentation_order 無し × prior_knowledge_level = none / basic / intermediate の 3 通りで --normalize、および presentation_order=explain_first を明示した prior_knowledge_level=none の 1 通り",
+      "expected": "順に demo_first / demo_first / explain_first が充填され provenance.presentation_order_source='derived-from-prior-knowledge'、明示指定の 1 件は explain_first のまま 'explicit' (C49)。同一入力に対し何度実行しても同じ値 (決定論)"
+    },
+    {
+      "id": "AC-C12-R21-51",
+      "how": "section_kind=capability-explainer のセクションで parts を feature → outcome の順に置く / slot を 1 件だけ省く",
+      "expected": "順に E-CAPABILITY-SLOT-ORDER / E-CAPABILITY-SLOT-MISSING で exit 1 (C51)"
+    },
+    {
+      "id": "AC-C12-R21-52",
+      "how": "上限 (既定 400) を 120 文字超過する TEXT を持つ構成データを (a) --normalize 無し (b) --normalize 付き で実行し、(c) テーマの text_limits.block_body_max_chars を大きくして再実行",
+      "expected": "(a) E-TEXT-OVERFLOW で exit 1 / (b) exit 0 かつ out.json で TEXT の body が上限以下へ縮み、直後に open=false の B10 が 1 件増え、provenance.text_fold_count=1 / (c) 折り畳みが起きず TEXT が元のまま (C52)。(b) を 2 回実行してバイト一致すること"
+    },
+    {
+      "id": "AC-C12-R21-54",
+      "how": "attainment_level=skill-authoring で全セクションの attainment_step が operable 以下 / いずれかのセクションが宣言を超える reproducible+skill-authoring 混在 の 2 通り",
+      "expected": "前者は E-ATTAINMENT-UNREACHED、後者 (宣言 operable に対し skill-authoring のセクション) は E-ATTAINMENT-OVERRUN で exit 1 (C54)"
+    },
+    {
+      "id": "AC-C12-R21-57",
+      "how": "must_remember だけを 2 件書き no_need_to_remember を空にする / 逆に no_need_to_remember だけを書く / must_remember を 3 件書く (must_remember_max=2)",
+      "expected": "前 2 者はいずれも E-REMEMBER-PAIR、最後は E-REMEMBER-MAX で exit 1 (C57)。片方だけの充足が通らないことが対称に確認できる"
+    },
+    {
+      "id": "AC-C12-R21-58",
+      "how": "target_tasks を空配列にする / role=main のセクションの ties_to から target_task: 参照だけを外す (goal 参照は残す)",
+      "expected": "順に E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK で exit 1 (C58)。一般論だけで構成された資料が『goal には紐づいているから合格』にならないことの回帰"
+    },
+    {
+      "id": "AC-C12-R21-59",
+      "how": "全 6 セクション計 60 分のうち section_kind=dialogue のセクションを 5 分にする / dialogue セクションを持つ資料で 1 セクションの duration を空にする / agenda-timebox の B03 行 time の総和を section.duration と食い違わせる",
+      "expected": "順に E-SECTIONKIND-DURATION-SHARE (5/60=0.083 < 0.15) / E-DURATION-INCOMPLETE / E-TIMEBOX-SUM で exit 1 (C59)。所要時間フィールドが section.duration の 1 系統だけであることを schema の grep でも確認する"
+    },
+    {
+      "id": "AC-C12-01",
+      "how": "全必須フィールドを満たす構成データで --config のみ実行",
+      "expected": "stdout に OK サマリ 1 行、stderr 空、exit 0"
+    },
+    {
+      "id": "AC-C12-02",
+      "how": "任意のセクションから goal を削って実行",
+      "expected": "stderr に 'E-FIELD-MISSING /sections/N/goal' が出て exit 1 (C38)"
+    },
+    {
+      "id": "AC-C12-03",
+      "how": "任意のセクションの lead_line を空文字にして実行",
+      "expected": "E-FIELD-EMPTY で exit 1 (C15)"
+    },
+    {
+      "id": "AC-C12-04",
+      "how": "lead_line / judgment_axis / section goal を全て備えた構成データへ、R11 相当の検査と R19 相当の検査を同時にかける",
+      "expected": "両方 exit 0。片方の充足が他方を代替しないことが同一構成データ上で確認できる (C40)"
+    },
+    {
+      "id": "AC-C12-05",
+      "how": "date を持たない構成データへ --normalize --out out.json --today 2026-08-17",
+      "expected": "out.json の date が '2026/08/17'、provenance.date_source が 'default-today' で exit 0 (C33)"
+    },
+    {
+      "id": "AC-C12-06",
+      "how": "date に '2026-8-17' を与えて --normalize",
+      "expected": "out.json の date が '2026/08/17' へ整形される (C34 が要求するゼロ埋めスラッシュ区切りの生成点がここであることの確認)"
+    },
+    {
+      "id": "AC-C12-07",
+      "how": "date に '2026/02/30' を与える",
+      "expected": "E-DATE-INVALID で exit 1 (書式は合っても暦として存在しない日付を通さない)"
+    },
+    {
+      "id": "AC-C12-08",
+      "how": "同一入力に対し --normalize --out を 2 回実行し 2 つの出力を cmp する",
+      "expected": "バイト一致 (sort_keys と書式固定により C29 の前提が構成データ段で閉じる)"
+    },
+    {
+      "id": "AC-C12-09",
+      "how": "--out に --config と同じパスを与える",
+      "expected": "exit 2。--config は無変更 (in-place 書き換えの禁止)"
+    },
+    {
+      "id": "AC-C12-10",
+      "how": "--normalize を --out なしで指定",
+      "expected": "exit 2"
+    },
+    {
+      "id": "AC-C12-11",
+      "how": "違反のある構成データへ --normalize --out を指定",
+      "expected": "exit 1 かつ --out のファイルが作られていない (fail-closed で部分成果物を残さない)"
+    },
+    {
+      "id": "AC-C12-12",
+      "how": "doc_type に 'workshop' (語彙外) を与える",
+      "expected": "E-DOCTYPE-UNKNOWN と全語彙一覧が stderr に出て exit 1 (C42/C43 の consumer 側)"
+    },
+    {
+      "id": "AC-C12-13",
+      "how": "doc_type に '勉強会' (alias) を与えて --normalize",
+      "expected": "out.json の doc_type が 'lecture' へ正規化されて exit 0"
+    },
+    {
+      "id": "AC-C12-14",
+      "how": "grep で本 script 内の語彙リテラルを検査する",
+      "expected": "lecture / agenda 等の語彙 slug が 1 つも出現しない (C23 の --audit-duplication が緑になる。C42)"
+    },
+    {
+      "id": "AC-C12-15",
+      "how": "section_kind: 'action-items' のセクションに owner を欠く B16 行を置く",
+      "expected": "E-SECTIONKIND-CONSTRAINT で exit 1 (C45 の追加要求が共通スキーマの検査として働く)"
+    },
+    {
+      "id": "AC-C12-16",
+      "how": "section_kind: 'known-unknown-next' のセクションに B04 を 2 枚構成で置く",
+      "expected": "E-SECTIONKIND-CONSTRAINT で exit 1 (3 分割の担保)"
+    },
+    {
+      "id": "AC-C12-17",
+      "how": "存在しない attachment_id を参照する B12 を置く",
+      "expected": "E-REF-DANGLING と該当キーパスで exit 1"
+    },
+    {
+      "id": "AC-C12-18",
+      "how": "glossary に同一 term を 2 件書く",
+      "expected": "E-GLOSSARY-DUP で exit 1 (C18 の照合表が一意であることの前提)"
+    },
+    {
+      "id": "AC-C12-19",
+      "how": "既知キー以外のトップレベルキー 'author' を足す",
+      "expected": "E-KEY-UNKNOWN で exit 1"
+    },
+    {
+      "id": "AC-C12-20",
+      "how": "warning のみを含む構成データを --strict 有無で 2 回実行",
+      "expected": "--strict なしは exit 0 で stderr に W- 行、--strict ありは exit 1"
+    },
+    {
+      "id": "AC-C12-21",
+      "how": "日本語のみの title で subject_slug 未指定のまま --normalize",
+      "expected": "E-SLUG-UNDERIVABLE で exit 1 と明示指定を促す文言 (無意味な自動生成をしない)"
+    },
+    {
+      "id": "AC-C12-22",
+      "how": "theme を持つ構成データを --normalize",
+      "expected": "out.json の theme が入力と同値で保持され、C12 が書き換えていない (書き戻しの writer は C11 のみ)"
+    },
+    {
+      "id": "AC-C12-23",
+      "how": "import 文を検査する",
+      "expected": "json / sys / argparse / pathlib / re / datetime / unicodedata / hashlib / importlib.util / os / tempfile のみ。yaml と外部パッケージが 0 件 (C27)"
+    },
+    {
+      "id": "AC-C12-R24-01",
+      "how": "概念図解 0 枚・main セクション 5 個の構成データを検証する / config/handout-visual-policy.json の thresholds.min_diagrams_per_main_sections.value を 0 にして再実行する",
+      "expected": "前者は W-DIAGRAM-FEW を stderr に出して exit 0 (--strict では exit 1)。後者は同じ構成データで警告が消える (閾値が script に埋まっていないことの回帰)"
+    },
+    {
+      "id": "AC-C12-R24-02",
+      "how": "config/handout-visual-policy.json を一時的に退避して検証を実行する",
+      "expected": "図解密度の警告は出ないが、他の検査は従来どおり動き exit code が変わらない (fail-soft の回帰)"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "構成データが JSON として parse できない",
+      "behavior": "exit 1 に行番号と桁を添える",
+      "rationale": "内容の不備であり利用者が構成データを直すべき事象。起動引数の問題 (exit 2) と分けることで、差し戻し先が argv かデータかを呼び出し側が判別できる"
+    },
+    {
+      "case": "必須フィールドが複数欠けている",
+      "behavior": "最初の 1 件で止めず全件を stderr へ列挙してから exit 1",
+      "rationale": "1 件ずつ直して再実行させると対話ループが長くなる。C05 agent が 1 往復で全部を修正できる情報量を返す"
+    },
+    {
+      "case": "date が未指定で --today も未指定",
+      "behavior": "システムのローカル日付を採り exit 0 (エラーにしない)",
+      "rationale": "R18/C33 が『日付未指定のとき生成実行日が既定として埋まる』ことを要求している。ただし provenance.date_source に記録して、後から既定充填だったことを追跡できるようにする"
+    },
+    {
+      "case": "--out の書き込み中にディスクエラーが起きた",
+      "behavior": "一時ファイルを消して exit 2。--out に半端な JSON を残さない",
+      "rationale": "os.replace による原子的差し替えの目的。壊れた正規化済み構成データを C11 が読むと、失敗が下流の描画段まで遅延する"
+    },
+    {
+      "case": "C23 の catalog が壊れている / 見つからない",
+      "behavior": "C23 の例外を捕捉し、catalog 解決の失敗は exit 2、catalog の内容違反は exit 1 として伝播する",
+      "rationale": "語彙の正本が壊れている状態で doc_type を通すと、語彙外の値が下流へ流れて C19 のディレクトリ命名で初めて落ちる。最上流で止める"
+    },
+    {
+      "case": "section が 30 件あるような極端な構成データ",
+      "behavior": "W-SECTIONS-MANY を出しつつ exit 0 (--strict では 1)",
+      "rationale": "分量は品質の問題であって正しさの問題ではない。既定で落とすと正当な長編資料が作れなくなるが、CI では --strict で締められる"
+    },
+    {
+      "case": "TEXT 部品に長文が並んでいる",
+      "behavior": "W-SENTENCE-LONG を出すが既定では通す",
+      "rationale": "参照解析 §5-6 の『一文は 20〜45 字』は観測された型であって達成必須の閾値ではない (goal-spec の constraints が実測値を目標値に焼くことを禁じている)。助言として出し、判断は --strict の有無に委ねる"
+    },
+    {
+      "case": "同一の意味を持つフィールドを利用者が use_scene として書いてきた",
+      "behavior": "E-KEY-UNKNOWN で exit 1 とし、doc_type を使うよう stderr で示す",
+      "rationale": "利用シーン (C36) と R20 種別を 2 フィールドに分けると、C19 のディレクトリ命名がどちらを見るかが曖昧になる。同義の入口を作らない"
+    }
+  ],
+  "open_questions": [],
+  "r22_granularity_constraints": {
+    "role": "R22 (goal-spec C61-C66) が求める『記述粒度の可変』のうち、構成データ層で表現・検査できるものの単一正本。P04-x-03 の裁定に従い、新 component を作らず本 script の責務追加として実装する (R21 を r21_type_constraints へ載せたのと同じ扱い)",
+    "since": "R22 (利用者要件 2026-08-17)。原文『詳しく詳細に伝えるパターンと、勉強会のように大まかに伝えるパターン、レポートのように詳細に伝えるパターンがある。根拠だったりとか、作成する成果物によって、どこまで具体的に、詳細に書くのかという粒度が変わってくるので、その辺もヒアリングしながら整えられるようにしておいてほしい』",
+    "granularity_orthogonality": {
+      "id": "CR-GRANULARITY-ORTHOGONAL",
+      "owner": "C12 (単一正本。この直交性の主張を他のいかなる component・ブリーフ・prompt にも複製しない)",
+      "rule": "detail_level (overview | standard | detailed) と evidence_depth (none | cited | sourced) は独立した 2 軸であり、片方の値から他方を導出しない。3x3=9 通りの組み合わせは全て valid で、禁止の対を 1 つも設けない。検証は『どちらか一方だけを変えた 2 つの構成データが両方とも受理される』ことで行う",
+      "why_two_axes": "利用者が挙げた 3 パターンのうち『詳しく詳細に伝える』と『レポートのように詳細に伝える』はどちらも詳細だが同じものではない。両者を分けている実質は根拠・出典をどこまで書くかであり、説明の詳しさとは独立に動く。1 軸に畳むと『詳しいが根拠は不要』(社内向けの操作説明) と『粗いが根拠は示す』(経営向けの要約) が表現できなくなる",
+      "why_not_a_single_pattern_enum": "3 パターンを 1 つの enum (detailed / overview / report) として持つ案は、パターン名が用途と粒度を同時に含んでしまう点で破綻する。report は用途 (doc_type) であって粒度ではなく、doc_type と意味が重なる第 2 の入口ができる。軸を分ければ『レポートのように詳細に』は doc_type=report ではなく detail_level=detailed + evidence_depth=sourced として、用途と独立に任意の資料へ適用できる",
+      "consumers": "C23 は doc_type ごとの既定値だけを持ち直交性の判断はしない。C11 は data-hb-detail-level / data-hb-evidence-depth として出力する。C22 は出力された宣言値を読んで実態との一致を検査する (C66)。C05 は親 (C01) から確定値を渡される"
+    },
+    "preset_default_only": {
+      "id": "CR-GRANULARITY-PRESET-DEFAULT-ONLY",
+      "owner": "C12",
+      "rule": "用途プリセット (doc_type) は detail_level / evidence_depth の既定値を与えるだけで、値を固定しない。normalize は既定を充填した後も明示指定による上書きを常に受理し、provenance.<field>_source へ 'preset-default' か 'explicit' のいずれかを必ず記録する。プリセットと粒度の組み合わせに『この doc_type ではこの値を禁止』という規則を 1 つも置かない",
+      "why_not_baked_into_preset": "『勉強会のように大まかに』は勉強会という用途の傾向であって定義ではない。粒度をプリセットへ焼き込むと『勉強会だから必ず粗い』が型として固定され、同じ勉強会で詳細版を作る要求に応えられなくなる。これは R21 の presentation_order で確定した『時と場合の問題を片方に固定してはならない』(CR-PRESENTATION-ORDER) と同一構造なので、新機構を足さず同じ扱いにする",
+      "why_provenance_is_required": "既定のまま通ったのか意図して選ばれたのかを後から区別できないと、粒度が合っていない資料を見たときに『プリセットの既定が悪い』のか『指定が悪い』のかを切り分けられない。provenance はこの切り分けのためだけに存在し、レンダリングには影響しない"
+    },
+    "detail_text_budget": {
+      "id": "CR-DETAIL-TEXT-BUDGET",
+      "owner": "C12 (適用) / C11 (テーマトークンのスキーマ正本かつ物理 writer)",
+      "limit_source": "assets/tokens/<theme>.json の text_limits.block_body_max_chars_by_detail_level。CR-TEXT-FOLD が参照する既定キー text_limits.block_body_max_chars は standard の値として残し、detail_level ごとの値は本キーが持つ",
+      "rule": "CR-TEXT-FOLD の折り畳み上限を detail_level ごとにテーマトークンから引く。この script は上限の数値リテラルを 1 つも持たず、detail_level をキーにトークンを引くだけにする。トークンに該当キーが無いテーマでは block_body_max_chars を全水準へ適用する (fail-soft・既存テーマを壊さない)",
+      "why_token_not_script": "C52 が既に上限をテーマトークンへ置いている。detail_level ごとの値をスクリプト側へ書くと同じ概念の数値が 2 箇所に分かれ、テーマで上限を変えたときに水準別の値だけが追従しない。正本を 1 箇所に保つ",
+      "values_defined_in": "C11 の theme_token_schema_ownership.added_block_r22.values (数値の正本はテーマトークンであり、本ブリーフは値を持たない)"
+    },
+    "declared_vs_actual": {
+      "id": "CR-GRANULARITY-DECLARED-VS-ACTUAL",
+      "owner": "C22 (検査) / C12 (宣言値の正規化)",
+      "rule": "宣言値は生成物の自己申告であり、実測との突合が無ければ意味を持たない。C22 は出力 HTML の data-hb-detail-level / data-hb-evidence-depth を読み、detailed 宣言で本文総量が overview 相当しかない資料と、evidence_depth=cited 以上の宣言で根拠を持たない主張ブロックがある資料を不合格にする",
+      "why_not_c12": "構成データ段階では『書かれる予定の量』しか分からず、実際の描画量は C11 を通した後にしか測れない。宣言と実態の突合は出力 HTML を見る C22 の責務であり、C12 は宣言値が enum に収まることだけを保証する"
+    }
+  },
+  "visual_density_constraints": {
+    "resolution": "briefs/RESOLUTION-R24-visual-first-draft-first.md",
+    "ssot": "config/handout-visual-policy.json",
+    "why_warning_not_error": "値域の縛りを error にすると既存の構成データと最小例が一斉に落ちる。『警告 0 件で完了』の強制は C01 のゴールシーク完了チェックリストが持ち、C12 は発火だけを担う",
+    "codes": [
+      {
+        "code": "W-VISUAL-ABSENT",
+        "threshold_key": "thresholds.min_visual_parts_per_main_section",
+        "meaning": "main セクションに目で形が分かる部品が下限未満"
+      },
+      {
+        "code": "W-DIAGRAM-FEW",
+        "threshold_key": "thresholds.min_diagrams_per_main_sections",
+        "meaning": "概念図解が main セクション数に対して不足"
+      },
+      {
+        "code": "W-TEXT-HEAVY",
+        "threshold_key": "thresholds.max_text_parts_ratio_per_section",
+        "meaning": "セクション内の部品の過半が TEXT"
+      },
+      {
+        "code": "W-TEXT-RUN",
+        "threshold_key": "thresholds.max_consecutive_text_parts",
+        "meaning": "TEXT が連続し画面上 1 つの長文と区別が付かない"
+      }
+    ],
+    "fail_soft": "方針ファイルが読めなくても検証そのものを止めない。閾値は編集方針であって構成データの妥当性ではない"
+  }
+}

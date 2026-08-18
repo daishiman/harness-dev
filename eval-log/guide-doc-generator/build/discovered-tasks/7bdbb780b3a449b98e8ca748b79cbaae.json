@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C11-01",
+  "reason": "C11 の fixture base_config() が provenance.normalized_by を持たない未正規化 config を C18 / C22 へ渡すため、両 script が仕様どおり exit 2 (構成データが正規化済みでない) を返し HTML が読まれる前に落ちる。C18 / C22 側で吸収すると未正規化 config を検証通過させる穴になるため吸収不可。fixture の owner である P04-x-06 は既に done",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+  "proposed_node": {
+    "id": "P05-x-09",
+    "title": "render-handout.py のテスト fixture に正規化済み provenance を持たせる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/render-handout.py",
+    "acceptance_criterion": "tests/render-handout.py/_harness.py の base_config() が provenance.normalized_by に schemas/handout-config.schema.json の $defs.provenance.properties.normalized_by.const と一致する値を持ち、test_cross_component.GateHandoffTest の test_language_gate_passes と test_narrative_gate_passes が緑になる。C18 / C22 側の正規化検査を緩めることで緑にしてはならない",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-09.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/render-handout.py/_harness.py"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

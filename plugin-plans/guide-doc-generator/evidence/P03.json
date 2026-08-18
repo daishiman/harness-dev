@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P03-x-01",
+  "status": "fail",
+  "checks": [
+    {
+      "id": "D1",
+      "status": "pass",
+      "count": 1,
+      "how": "決定論経路を『構成データ(handout-config.json) → C11 render-handout.py → 単一 HTML → C16/C17/C18/C20/C22 検証』と定義し、その経路に載る全 script brief 13 本 (C11-C23) と hook brief C10 を対象に、(1) LLM/agent 起動語彙を grep -E '(Task tool|subagent|sub-agent|Skill\\(|agent を(起動|呼)|LLM (へ|に)(委|問)|prompt を投げ|claude |anthropic|codex)' で全文検索、(2) 非決定論入力を grep 'random|uuid4|time.time()' で全文検索、(3) 日付解決語彙 (today|now|datetime|date_source|--normalize|--today) を 14 本横断で列挙して writer を同定、の 3 段で調べた。結果: (1) のヒットは C21 の codex 25 箇所のみで、他 12 script と C10 はゼロ。(2) はすべて 0 件。(3) は C12 のみが datetime.date.today() 相当の呼び出し権を持つと明記し (date_single_source_guarantee)、--today テストシームと provenance.date_source を備え、C11 は algorithm step 13 で datetime.now() を明示禁止、step 24 で time/random/pid/mtime 由来値の混入を禁止している。C17 は日付を検証するのみで解決しない。よって『日付を解決してよいのは C12 --normalize だけ』は満たされている。C21 のみが外部プロセス (codex CLI) へ委譲するが、その出力は PNG 素材であり fail-soft skip (srg-absent / runtime-absent) が定義され、C29 のバイト一致は C11 側で閉じる設計なので決定論経路への LLM 介在とは判定しない。ただし inventory の申告と食い違う点を info として 1 件記録した (Y-01)。count は当該 check に紐づく findings 件数で、severity medium 以上が 0 のため status は pass。",
+      "findings": ["Y-01"]
+    },
+    {
+      "id": "D2",
+      "status": "fail",
+      "count": 6,
+      "how": "(a) 単一 writer: component-inventory.json の write_scope 23 件を書き込み先パス単位に反転集計し、同一パス/ディレクトリに 2 人以上の writer が付くもの、および誰も writer に立っていないのに他 component が存在を前提にするものを両方向で探した。出力ディレクトリ側は C19 brief step 10 の存在検査リスト (handout.html / handout-config.json / assets/ / README.md) を『必要な成果物の全量』とみなし、各々の writer を全 brief から逆引きした。(b) 語彙・スキーマの正本: 用途語彙 (handout-purposes)、部品 id (B01-B16)、section_kind enum、data-hb-* 属性、日付形式の 5 つについて、定義を持つ箇所を briefs/ 全 23 本 + index.md + goal-spec.json 横断で grep し、定義箇所が 2 つ以上あるものを列挙した。(c) 同一検査の二重実装: 検証 face (C16 SC / C17 NAR / C18 LANG+DATE / C20 A11Y+PRINT+STICKY / C22)、hook C10 の detection_rules、C11 の自己チェック step 23、C01 R4-verify、C09 のゲート集約を並べ、検査対象 (外部参照/絵文字/必須項目/nav 1:1/ゲート結果) 単位で実装数を数え、実装が複数あるものは判定基準の文面まで突き合わせた。結果、(a) で 1 件、(b) で 2 件、(c) で 3 件の重複または正本不在を検出。C17/C18/C20/C22 の検証 face 分割自体は重複なし (SC/A11Y/PRINT/STICKY/LANG/DATE/NAR が排他)、C11 step 6-8 の必須項目・nav 1:1 再チェックは C12 スキーマ検証との二重防御だが判定基準が同一 (同一スキーマ参照) のため違反としない。",
+      "findings": ["Y-02", "Y-03", "Y-04", "Y-05", "Y-06", "Y-07"]
+    },
+    {
+      "id": "D3",
+      "status": "fail",
+      "count": 2,
+      "how": "python3 で機械計算した (目視ではない)。(1) component-inventory.json の components[].depends_on から宣言辺集合を構築。(2) briefs/*.json 23 本の dependencies.invokes / dependencies.depends_on / invoked_by を走査し、invoked_by は向きを反転して brief 辺集合を構築。(3) 両者の和集合上で Kahn 法による位相ソートと DFS による back-edge 検出を実行。結果は nodes 23 / order 23 / cycle nodes: [] で、位相順は ['C13','C14','C15','C16','C10','C17','C21','C23','C12','C04','C05','C11','C19','C18','C03','C06','C20','C02','C08','C22','C01','C07','C09']。すなわち現在の宣言+brief の文面上は循環 0。(4) 宣言と実態の差分を両方向で集計し、brief 側にのみ存在する辺 6 件 (C11->C07, C12->C04, C12->C05, C12->C07, C16->C21, C19->C18)、inventory 側にのみ存在する辺 0 件を得た。(5) 差分 6 件と、辺として現れていないが本文が依存を語っている箇所 (C23 step 4(h) の section_kind enum 照合、C01 boundary の C03 委譲、C23 consumer_contract の sanctioned_access) を個別に読み合わせ、各 component の tools 宣言 (C05=[Read,Write] 等) と hook のイベント種別 (C10=PostToolUse) に照らして実行可能性を検証した。循環 0 は満たすが、DAG が実態を表していない箇所が 2 件あり (うち 1 件は実装時に循環化するか enum が二重定義になるかの二択)、『循環 0』を証跡として使える状態にないため fail とする。",
+      "findings": ["Y-08", "Y-09"]
+    },
+    {
+      "id": "D4",
+      "status": "pass",
+      "count": 0,
+      "how": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py の PLUGIN_LEVEL_SURFACES を正本として canonical な 8 surface (manifest / composition / harness_eval / references_config_assets / schemas / vendor / mcp_app_connector / notion_config) を取得し、check-surface-inventory.py の検査ロジックと突き合わせた上で component-inventory.json の plugin_level_surfaces と集合比較した。欠落 surface 0 件・未知 surface 0 件。required:false は vendor / mcp_app_connector / notion_config の 3 件で、いずれも omitted_reason が非空。3 件の理由の実質性を本文照合で検証した: vendor は『stdlib のみで完結し外部ランタイム同梱が不要』を C11-C23 の stdlib_only:true 申告および .sh/.js 不使用 (goal-spec C27) と照合して一致、mcp_app_connector は外部サービス接続を持たない設計 (network:false 群) と一致、notion_config は index.md frontmatter の feedback_deploy.notion_sink.config_key: improvement-request を実際に参照しており、参照先が実在することを確認した。定型文の使い回しや空文字・『N/A』相当は無し。",
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "Y-01",
+      "severity": "info",
+      "check": "D1",
+      "where": [
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C21].network",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json"
+      ],
+      "what": "inventory は C21 を network:false と申告しているが、C21 brief は codex CLI への委譲アダプタであり、外部プロセス起動と (codex 側の) ネットワーク到達を含みうる。brief 自身も failure_modes で『画像生成は本質的に非決定論』と認めている。",
+      "why_it_matters": "決定論経路そのものは C11 で閉じているため成果物の再現性は壊れないが、network フラグが『この plugin でネットワークに触れる component はどれか』の監査に使えなくなる。将来 network:false を根拠に C21 をサンドボックス内で無条件許可する判断が起きうる。",
+      "suggested_resolution": "C21 の network を true (または delegated 等の第三の値) にし、決定論経路外である根拠を network フラグではなく『C29 のバイト一致は C11 で閉じる / C21 は fail-soft skip』という別フィールドで明示する。あわせて C21 algorithm step 12-13 に、failure_modes と open_questions にしか書かれていない『既存 PNG が在れば再生成せず再利用する』冪等手順を昇格させる。"
+    },
+    {
+      "id": "Y-02",
+      "severity": "blocking",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json#algorithm step 23",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json#SC-01,SC-02",
+        "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json#detection_rules.D1-external-url-attr"
+      ],
+      "what": "外部参照検査が 3 箇所で独立実装されており、しかも判定基準が三者三様。C11 step 23 は組み上げた HTML 文字列全体に対して http:// / https:// / // (protocol-relative) / @import / <link rel=\"stylesheet\"> / 外部 src の不在を検査し、あれば exit 1。C16 SC-02 は text node 中の URL を明示的に PASS させる。C10 D1 は属性値のみを走査する。つまり本文テキストに https://example.com と書かれた資料は C11 で exit 1 になる一方、C16 と C10 は通す。",
+      "why_it_matters": "同じ名前の検査に 3 つの意味論が同居している。最も厳しい C11 がレンダリング時に落ちるため、C16 を pass する構成データでも HTML が生成できないという、ゲート結果と実挙動が食い違う状態が起きる。利用者から見ると『検証は全部通ったのに作れない』になり、原因箇所の特定が困難。さらに規則を 1 つ変えるとき 3 箇所を同時に直す必要があり、乖離が再発する構造になっている。",
+      "suggested_resolution": "外部参照の判定規則を単一の正本 (C16 を所有者にするのが自然) に集約し、C11 の step 23 と C10 の D1 はその規則を import して呼ぶ形にする。text node の URL を許すのか禁じるのかを正本側で一意に決め、C11 の二重防御は『同じ規則を再実行する』ものに限定する。二重防御を残すこと自体は妥当なので、消すのではなく規則の出所を 1 つにすること。"
+    },
+    {
+      "id": "Y-03",
+      "severity": "high",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json#SC-05",
+        "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json#detection_rules.D2-emoji",
+        "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json#boundary_with_C16"
+      ],
+      "what": "絵文字検査が C16 SC-05 と C10 D2 の 2 実装で、判定が正面から矛盾する。C16 SC-05 は『日本語の記号・約物を誤検出しないため Unicode ブロック丸ごとの denylist を避ける』と明記し、layer 1 (単体で違反) と layer 2 (U+FE0F を伴う場合のみ違反) の 2 層構成で、★☆■□ や U+2714 単体は非違反と明示している。一方 C10 D2 は U+1F300-U+1FAFF / U+2600-U+27BF / U+2B00-U+2BFF / U+FE0F / ZWJ をブロック単位で列挙し 1 件でも検出したら違反とする。★ (U+2605) と ✔ (U+2714) はいずれも U+2600-U+27BF に含まれるため、C16 が意図的に通す文字を C10 が fail-closed で止める。",
+      "why_it_matters": "C10 は PostToolUse hook で Write/Edit を止める側にいるため、C16 が pass と判定する正常な資料が書き込み時点でブロックされる。しかも C10 の boundary_with_C16 は『意図的な二重被覆は D1/D2 のみ』と重複の存在は認めているのに、判定基準が異なることには触れていない。設計文書が『重複は把握済み』と述べていることで、この矛盾がレビューをすり抜ける。",
+      "suggested_resolution": "絵文字判定関数の正本を C16 に置き、C10 はそれを import して同一の 2 層規則で判定する。二重被覆を維持する意図は妥当なので、boundary_with_C16 の記述を『同一規則の二重適用』と明確化し、『同じ入力に対して C10 と C16 の判定は必ず一致する』を検証項目 (goal-spec 側) に追加する。"
+    },
+    {
+      "id": "Y-04",
+      "severity": "blocking",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json#algorithm step 10",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json#single_writer",
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C13].write_scope",
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C19].write_scope"
+      ],
+      "what": "出力ディレクトリ同梱物のうち、素材原本 (assets/ 配下) と handout-config.json の writer が誰にも割り当たっていない。C19 は mkdir と命名の唯一の所有者を名乗るが、自身が書くのは .handout-route.json だけで、step 10 では handout.html / handout-config.json / assets/ / README.md の存在を検査する側に回る。C13 の single_writer は『素材原本の配置は C19、HTML への焼き込みは C11』と述べており、C19 側の手順にはその配置ステップが無い。両者が相手を writer だと述べている。",
+      "why_it_matters": "単一 writer 原則の観点では writer 0 人であり、C19 step 10 の存在検査が構造上必ず失敗するか、実装時に誰かが場当たり的に書き足して writer が 2 人になる。README.md は X-08 の決着で C01 と明記され handout.html は C11 と明記されているため、残る 2 つだけが穴として残っている状態で、P02 の解消作業が途中で止まった痕跡に見える。",
+      "suggested_resolution": "assets/ 配下の素材原本コピーと handout-config.json の出力先への配置について、writer をそれぞれ 1 component に確定して write_scope と brief の algorithm 双方に書く。C13 の single_writer 文面 (C19 を指す) と C19 の algorithm を同時に直し、片方だけ直して逆向きの矛盾を作らないこと。確定後は C19 step 10 の存在検査 4 項目それぞれに writer id を併記すると、以後この穴が再発しない。"
+    },
+    {
+      "id": "Y-05",
+      "severity": "high",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/index.md",
+        "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json#output_contract",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#algorithm step 4(h)",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json#LANG-06"
+      ],
+      "what": "部品 id 語彙 (B01-B16) の正本が存在せず、3 つの異なる範囲が 3 箇所にハードコードされている。index.md と C04 の output_contract は『部品カタログ B01-B15』、C23 step 4(h) は『recommended_parts が B03-B16 の既知 part id であること』、C18 LANG-06 は具体部品を B03..B15 と定義 (B16 を除外) している。部品カタログそのものを保持する component が inventory に存在しない。",
+      "why_it_matters": "B16 が存在するのかしないのかが文書間で決まっていない。C23 が B16 を許可し C04 が B15 までしか出力せず C18 が B16 を検証対象外にするため、B16 を使った構成データは『生成でき、検証も通り、しかしカタログには載っていない』という検出不能な穴になる。部品 id は data-hb-* 属性や検証ロジックが直接参照する語彙なので、範囲のずれは後段の検証 face すべてに波及する。",
+      "suggested_resolution": "用途語彙を C23 が config/handout-purposes.json で所有しているのと同じ形で、部品カタログにも単一の所有 component とデータファイルを与える (C23 に相乗りさせるか、独立させるかは設計判断)。B16 の存否を先に決め、index.md / C04 / C23 / C18 の 4 箇所はその正本を参照する記述に置き換える。範囲を文面へ再度ハードコードしないこと。"
+    },
+    {
+      "id": "Y-06",
+      "severity": "medium",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/index.md",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#vocabulary_ssot"
+      ],
+      "what": "用途語彙の slug とラベルの対応が index.md と C23 catalog で矛盾している。index.md は 一般配布資料 = report と列挙するが、C23 catalog は guide = 一般配布資料 / report = 報告資料 と定義する。C23 は vocabulary_ssot を名乗り --audit-duplication ゲート (goal-spec C42) まで備えているのに、index.md が第二の定義を持っている。",
+      "why_it_matters": "index.md は人間が最初に読む設計の入口であり、ここでの slug 対応が誤っていると、ヒアリング担当 (C01/C05) が 一般配布資料 に対して report を書き込む実装になりうる。C23 の重複監査は catalog 内部の重複しか見ないため、この不一致はゲートで検出されない。",
+      "suggested_resolution": "index.md 側の用途語彙の列挙を削除して C23 の catalog へのポインタに置き換える (SSOT を名乗る側に一本化する)。列挙を残す必要がある場合は、C23 の --audit-duplication に index.md の記述との照合を追加し、ずれたら落ちるようにする。"
+    },
+    {
+      "id": "Y-07",
+      "severity": "medium",
+      "check": "D2",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json#open_questions",
+        "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json#R4-verify",
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C09].description"
+      ],
+      "what": "ゲート結果の集約が C01 の R4-verify と C09 の両方に存在する。C09 は pass/fail/error/not-run の 4 状態集約 (not-run を pass に畳まない) を所有し、open_questions で C01 との重複を自ら指摘している。さらに inventory の C09 description はゲート face を 3 つしか挙げていないが、C09 brief が集約する実体は C16/C17/C18/C22 の 4 つ。",
+      "why_it_matters": "not-run を pass に畳まないという設計の要点は C09 側にしか書かれていないため、C01 の R4-verify が独自に集約すると『検証を実行していないのに緑』が生まれうる。これは Goodhart 的な緑化を防ぐための中核ルールなので、実装が 2 つあること自体がリスク。description の 3 対 4 のずれは、集約対象が 1 つ抜けたまま実装される導線になる。",
+      "suggested_resolution": "4 状態集約のロジックを C09 に一本化し、C01 R4-verify は C09 を呼ぶ (または集約せず個別 face の結果を提示するだけに留める) 形にする。あわせて inventory の C09 description を 4 face (C16/C17/C18/C22) に訂正する。C09 の open_questions は本 finding の解決で閉じられる。"
+    },
+    {
+      "id": "Y-08",
+      "severity": "blocking",
+      "check": "D3",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#algorithm step 4(h)",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#addon_requirements_as_common_schema.ownership",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#dependencies.invokes",
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C12].depends_on"
+      ],
+      "what": "C23 は『section_kind の enum 値の正本は C12 のスキーマ定義側にあり、C23 の catalog はその値を参照するだけ (手順 4(h) で照合)』と述べているが、C23 の dependencies.invokes は空で、inventory にも C23 -> C12 の辺が無い。一方 inventory には C12 -> C23 の辺が宣言済み。したがって C23 が実装時に C12 を import すれば C12 <-> C23 の循環が成立し、import しなければ section_kind enum が C12 と C23 に黙って二重定義される。",
+      "why_it_matters": "計算上の循環は現時点で 0 だが、それは C23 が語っている依存が辺として宣言されていないことによる見かけ上の 0 であり、『循環 0』を証跡として使えない。しかも二択のどちらに転んでも問題が出る (循環 or 語彙の二重定義) ため、実装者の裁量に委ねると必ずどちらかの欠陥が入る。enum は C12 のスキーマ検証と C23 の catalog 照合の両方が使う中核語彙なので影響が広い。",
+      "suggested_resolution": "section_kind enum の物理的な置き場を、C12 と C23 のどちらでもない中立なデータファイル (config 配下の JSON) に出し、両者がそれを読む形にして循環を作らずに正本を 1 つにする。それが難しい場合は C23 -> C12 の依存方向のみを認め、inventory の C12 -> C23 の辺が本当に必要か (C12 が C23 の何を呼ぶのか) を再検証して片方向へ倒す。いずれにせよ、決めた依存は inventory の depends_on と brief の dependencies 双方へ辺として明示すること。"
+    },
+    {
+      "id": "Y-09",
+      "severity": "medium",
+      "check": "D3",
+      "where": [
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json#invoked_by",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json#invoked_by",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json#invoked_by",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json#consumer_contract.sanctioned_access",
+        "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json#invoked_by",
+        "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json#boundary",
+        "plugin-plans/guide-doc-generator/component-inventory.json#components[C01].depends_on"
+      ],
+      "what": "python3 で宣言辺と brief 辺を突き合わせた結果、brief 側にのみ存在する辺が 6 件 (C11->C07, C12->C04, C12->C05, C12->C07, C16->C21, C19->C18)、inventory 側にのみ存在する辺が 0 件。うち複数は誤記と判定できる: (1) C16.invoked_by の『C21 相当の pre-write hook 経路』は hook が C21 ではなく C10 であり、かつ C10 は PostToolUse なので pre-write でもない (id と発火タイミングの二重の誤り)。(2) C19.invoked_by の C18 は、C18 が検証専用でディレクトリ作成を起動しないため成立しない。(3) C12.invoked_by の C05 は、C05 の tools が [Read, Write] のみで script を起動できないため実行不能。同じ理由で C23 の consumer_contract が述べる『skill/agent/hook は subprocess CLI で C23 にアクセス』も C05 では成立しない。加えて (4) C01 brief は readability を C03 へ委譲すると述べるが、inventory の C01.depends_on に C03 が無い (逆向きの、宣言されていない実依存)。",
+      "why_it_matters": "依存グラフが実態を表していないため、循環検査・並列実行順序・影響範囲の算出がすべて誤った入力の上で行われる。特に (3) は tools 宣言と矛盾する呼び出しなので、実装時に C05 の tools に Bash を足す (agent の権限拡大) という誤った解決へ誘導しやすい。(1) は hook の id と発火タイミングを取り違えたまま『pre-write で止まる』前提の設計判断を招く。",
+      "suggested_resolution": "6 件の差分を 1 件ずつ、『brief が誤り (辺を消す)』か『inventory が漏れ (辺を足す)』かに仕分けする。C16.invoked_by は C10 (PostToolUse) に訂正、C19.invoked_by から C18 を削除、C12.invoked_by と C23.consumer_contract から C05 を削除して C05 が script を起動しない設計を維持 (C05 の tools は変えない)、C01.depends_on に C03 を追加。訂正後に同じ python3 スクリプトで再計算し、brief 辺と宣言辺の差分が 0 になることを P04 以降のゲートに固定する。"
+    }
+  ],
+  "notes": [
+    "checks[].count は当該 check に紐づく findings の件数 (severity を問わない)。check の status は、紐づく findings に severity medium 以上が 1 件でもあれば fail、info のみ (または 0 件) なら pass とした。D1 は Y-01 (info) のみのため pass。",
+    "全体 status は 4 check すべて pass の場合のみ pass とする規定に従い fail。blocking 3 件 (Y-02 / Y-04 / Y-08)、high 2 件 (Y-03 / Y-05)。",
+    "P02 の X-01..X-08 は現行 briefs の本文を 1 件ずつ再確認し、X-01 (日付形式 ^\\d{4}/\\d{2}/\\d{2} + replace('/','-'))、X-02 (フィールド名)、X-03 (data-hb-* への属性名前空間統一)、X-04 (カタログファイル名)、X-06 (C23 の呼び出し形式)、X-08 (README.md の writer = C01) はいずれも解消済みと判定し、蒸し返していない。ただし X-08 と同じ『同梱物の writer 確定』作業のうち assets/ 素材原本と handout-config.json が未着手のまま残っている点は解消の不完全として Y-04 に、X-03 の属性統一に伴う検査規則の集約が行われていない点は Y-02 / Y-03 に、新規 finding として計上した。",
+    "D3 の循環検出は目視ではなく python3 (Kahn 法 + DFS back-edge 検出) で実行した。nodes 23 / topological order 23 / cycle nodes 0。位相順序と差分辺の一覧は checks[D3].how に記載。",
+    "本 evidence は判定のみで、briefs/ および component-inventory.json は一切変更していない。修正は別 leaf の責務。",
+    "反証を探す方向で調べたが違反が見つからなかった範囲: 検証 face の分割 (C16 SC / C17 NAR / C18 LANG+DATE / C20 A11Y+PRINT+STICKY / C22) は検査対象が排他で重複なし。C20 は semantic フィールドを推測しない (never_guessed) と明記され、決定論経路への推測混入なし。plugin_level_surfaces は canonical 8 件と完全一致し省略理由も実質的。stdlib_only は C11-C23 の全 13 script で true、.sh/.js の使用および yaml import は全 brief に出現せず (goal-spec C27 と整合)。日付の書き手は C12 単独で、テストシーム --today と provenance.date_source を備える。"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C15",
+  "task_id": "P05-C15-01",
+  "covered_task_ids": [
+    "P05-C15-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (704 行)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙",
+      "result": "pass (argparse / difflib / html / importlib.util / json / os / re / sys / pathlib の 9 本 + __future__。すべて標準ライブラリ。yaml / subprocess / 通信系は 0 件)"
+    },
+    {
+      "claim": "AC-C15-11: コードポイントを script 側に列挙していない",
+      "method": "grep -cE 'U\\+[0-9A-Fa-f]{4}|\\\\u[0-9A-Fa-f]{4}|0x1F'",
+      "result": "pass (0 件。絵文字判定は C16 の scan_emoji へ完全委譲され、独自判定への退避経路が存在しない)"
+    },
+    {
+      "claim": "AC-C15-10: アイコン名の語彙を script へ列挙していない",
+      "method": "assets/icons/icon-set.json の 41 名を抽出し script 内の文字列リテラル出現を全件照合",
+      "result": "pass (41 語のうち script にリテラル出現するもの 0 件。語彙は icon-set.json からのみ読む)"
+    },
+    {
+      "claim": "AC-C15-2: 統一様式を正本からでなく定数から付与している",
+      "method": "UNIFORM_* 定数の定義と _symbol_lines での使用箇所を確認",
+      "result": "pass (UNIFORM_STROKE=\"currentColor\" / UNIFORM_VIEWBOX / UNIFORM_LINECAP を定数で持ち、正本の同名フィールドは読まない)"
+    },
+    {
+      "claim": "テストが 128 件中 38 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/build-icon-sprite.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=90 / errors=0。実装前は failures=128)"
+    },
+    {
+      "claim": "残る赤 90 件が全件 C16 未実装由来であり実装不足でない",
+      "method": "unittest 出力を '=' 70 個の区切りで失敗ブロックへ分割し、各ブロックが verify-handout-selfcontained.py 解決失敗の stderr を含むかを機械分類",
+      "result": "pass (失敗ブロック 90 / C16 未実装が原因 90 / それ以外 0。stderr は 4 段の候補 root をすべて列挙して exit 2 する裁定 G-03 の fail-closed 経路)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/build-icon-sprite.py/ 配下 12 ファイルのサイズと mtime を実装開始時と突合 (plugins/guide-doc-generator/ は untracked のため git 差分では証明不可)",
+      "result": "pass (12 ファイルすべてサイズ・mtime 一致。変化は __pycache__ のみ)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "書込 API の有無を確認し、検証用の参照 C16 の設置場所を確認",
+      "result": "pass (script は Path.read_text のみで書込 API を持たない。C16 参照実装は scratchpad にのみ置かれ repo には無い = 裁定 G-03 の第 2 の正本を作っていない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C16 実装者 (P05-C16-01) への申し送り 1 件。test_layer2_violation_reports_sc05_and_codepoints が stderr に 2699 と FE0F の両方を要求する。C15 は Violation.codepoints を言い換えず転記するだけなので、C16 は「層 2 + VS16」を 1 件の Violation にまとめ codepoints へ 'U+2699 U+FE0F' 相当の整形済み文字列を入れる必要がある。VS16 を層 1 として単独計上する実装だとここが赤のまま残る"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 7 件。(1) 外枠 svg の data-hb-kind 値を decor に決定 (README G-01/G-02 が plan 確定を要望していた項目。テストは 'icon 以外' しか固定していない) (2) --format=manifest の中身に used に加え unused_in_set と set_version を追加 (診断情報を落とす理由が無いため) (3) 候補 root の stage 3 を「cwd とその祖先 + __file__ の親の親 のうち .claude-plugin/plugin.json の name が一致するもの」と定義 (テストは範囲を検査していない) (4) 走査順の粒度を構成データの dict 挿入順そのままと解釈 (5) stroke_width 許容域 2.2-2.6 を script 側の定数で持つ (テスト正本が定数で持つため。様式の閾値であり語彙ではないと判断) (6) 正本の per-icon 余分キー (viewBox 等) を拒否せず無視 (test_style_is_not_taken_from_the_icon_set が exit 0 を要求) (7) set_version 欠落時は空文字列を返し exit 1 にしない"
+    }
+  ]
+}

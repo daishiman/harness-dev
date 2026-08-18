@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C06-01",
+  "reason": "tests/handout-readability-reviewer/test_no_side_effects.py:23-29 の test_only_one_agent_definition_for_c06 が PLUGIN_ROOT.glob('**/handout-readability-reviewer.md') で plugin ルート全域を再帰探索し、C03 の受入 fixture tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md を第2の agent 定義として誤検出するため恒久的に赤になる。守るべき不変条件は production surface の agent 定義が 1 本であることで、tests/fixtures は production surface ではない。テストを書いた leaf は既に done のため受け皿が無い",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/handout-readability-reviewer/test_no_side_effects.py",
+  "proposed_node": {
+    "id": "P05-x-10",
+    "title": "C06 の agent 定義一意性テストの探索範囲を production surface へ限定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer",
+    "acceptance_criterion": "test_only_one_agent_definition_for_c06 の探索対象が agents/ 配下 (もしくは tests/ を除外した範囲) に限定され、tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md が存在する状態でも C06 スイートが Ran 164 / OK になる。fixture 側の改名・削除では解決しないこと (C03 の受入 fixture を壊すため)",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-10.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/handout-readability-reviewer/test_no_side_effects.py"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C06"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

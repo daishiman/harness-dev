@@ -1,0 +1,320 @@
+{
+  "component_id": "C21",
+  "component_kind": "script",
+  "name": "srg-image-bridge.py",
+  "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+  "purpose": "資料の各セクション向けアニメ調図解イメージの生成を slide-report-generator (SRG) の既存 2 段パイプラインへ委譲するアダプタ。handout 側の画像計画を SRG の image-deck-plan.json へ機械変換し、SRG の vendor script を subprocess で順に起動して生成 PNG を素材ディレクトリへ回収する。プロンプト組み立ても画像生成も guide-doc-generator 側に再実装しない (C17)。SRG 実体または委譲先ランタイムが解決できないときは起動前に skip を宣言して exit0 で返す (C18・fail-soft)。回収した PNG の base64 data URI 化は行わず C13 へ委譲する。加えて本 script は『画像が読み手に直感的に伝わる形になっているか』の唯一の機械検査点である — 焼き込みテキストの量的規律 (baked_text_discipline)、style family の決定論選択 (image_style_families)、平坦化退化の代理指標 (degradation_proxy_checks) を起動前に検査し、違反は差し戻し先が handout の計画側だと分かる位置で exit2 にする (RESOLUTION-R23)",
+  "argv": [
+    {
+      "flag": "--image-plan",
+      "required": true,
+      "type": "path",
+      "description": "handout 側の画像計画 JSON。セクションごとに section_id / heading / lead_line / goal と、C05 handout-content-architect が書いた次のフィールドを持つ。subject (英文 40 字以上) / diagram_structure (同) / overlay_text[] (非空・両 text_policy で必須) / alt / motifs (配列ではなく {platform, primary, props[]} の 3 役構造体) / density_level (genome の densityLevels のキーのいずれか) / adaptation_trace[] ({concept, motif} の対応・非空) / diagram_pattern (6 図解型のいずれか。無いセクションもある) / style_family (2 語の allowlist。diagram_pattern が無いときは必須) / baked_text[] ({form, text, emphasis?} のタグ付きブロック列) / text_policy (省略時 baked-with-overlay) / text_policy_reason (text_policy=overlay-only のときのみ必須)。SRG の image-deck-plan.json そのものではなく、本 script が変換する前段の形式。フィールドの意味と規律の正本は本ブリーフの baked_text_discipline / image_style_families / degradation_proxy_checks",
+      "default": null
+    },
+    {
+      "flag": "--assets-dir",
+      "required": true,
+      "type": "path",
+      "description": "素材ディレクトリ。生成 PNG の回収先 (<assets-dir>/images/<slug>.png) と SRG 作業ディレクトリ (<assets-dir>/srg-work/) の親。本 script が書き込むのはこの配下だけ",
+      "default": null
+    },
+    {
+      "flag": "--srg-root",
+      "required": false,
+      "type": "path",
+      "description": "SRG plugin root の明示指定。解決順の最優先。指定したのに実体検査 (下記 algorithm 3) を通らないときは skip ではなく exit2 (明示指定の誤りを黙って skip へ畳まない)",
+      "default": null
+    },
+    {
+      "flag": "--dry-run",
+      "required": false,
+      "type": "flag",
+      "description": "課金の発生する codex exec を呼ばない。prompt/meta の機械展開 (無料・決定論) までは実行し、generate-images-codex.js へ --dry-run を渡して組み立てコマンドを回収する。SRG 自身の --dry-run 定義に揃える",
+      "default": false
+    }
+  ],
+  "stdin": "使用しない",
+  "stdout": "判定 JSON 1 個。{\"status\":\"generated|partial|skipped|dry-run\", \"skip_reason\": null|\"srg-absent\"|\"runtime-absent\", \"skip_detail\": null|文字列, \"srg_root\": path|null, \"runtime\": {\"node\": 版数|null, \"codex\": path|null}, \"images\": [{\"section_id\",\"slug\",\"path\"(assets-dir 相対)|null,\"status\":\"generated|failed|dry-run\",\"png_bytes\":int|null}], \"delegated_commands\": [実行した argv 列]}。skip 時も images は全件 status=\"skipped\" で列挙し、下流が「何が作られなかったか」を欠測として扱えるようにする",
+  "stderr": "委譲先の失敗理由 (どの script のどの slug がどの exit code / どのログ行で落ちたか)、SRG 解決の探索経路、skip 宣言の理由。人間向けの文はここだけに出す",
+  "exit_codes": {
+    "0": "全 slug の PNG 回収に成功した / --dry-run が完走した / SRG 実体もしくはランタイム不在で skip を宣言した (C18)。skip は status=\"skipped\" + skip_reason 付きで stdout に明示され、生成成功と区別できる",
+    "1": "委譲の失敗。SRG は在るのに build-image-prompts.js が非 0 で終了した / prompt が 1 件も生成されなかった / 生成後に有効な PNG (署名 89 50 4E 47) を回収できた slug が全件に満たない / 回収時のファイル書き込みに失敗した。部分成功でも 1 を返し、stdout の images で成否を slug 単位に示す",
+    "2": "呼び出し契約違反。必須 flag 欠落 / 未知 flag / --assets-dir がディレクトリでない / --image-plan が JSON として読めない・必須キーを欠く / plan の motifs (3 役のいずれか) が style genome の motifs[] に無い / --srg-root を明示指定したのにそこが SRG 実体でない / 使用する style family の genome が実在しない (algorithm 3b) / RESOLUTION-R23 の事前検査 (algorithm 8b) の違反 — overlayText 欠落・overlay-only なのに理由なし・焼き込みブロック数または字数の超過・不正な form・数値強調の件数不一致または構成データに無い数字・density_level の欠落や値域外・motifs の 3 役欠落や props 空・adaptation_trace 欠落・全セクションで (図解型, motifs.primary) が同一・図解型を持たないセクションの style_family 欠落"
+  },
+  "write_scope": [
+    "<assets-dir>/images/<slug>.png (回収した生成物)",
+    "<assets-dir>/srg-work/assets/generated/ 配下 (SRG が要求する作業ディレクトリ。image-deck-plan.json / <slug>.prompt.txt / <slug>.meta.json / <slug>.png / <slug>.webp が SRG によって置かれる)"
+  ],
+  "single_writer": "<assets-dir> 配下のみ。SRG plugin 配下は read-only (vendor script を実行するだけで 1 バイトも書かない)。構成データ JSON は書かない (画像参照の構成データへの反映は C01/C05、data URI 化は C13)",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--image-plan の handout 画像計画 JSON",
+      "<SRG_ROOT>/vendor/scripts/build-image-prompts.js (実体存在検査と起動)",
+      "<SRG_ROOT>/vendor/scripts/generate-images-codex.js (同上)",
+      "<SRG_ROOT>/vendor/assets/style-genome-kanagawa-comic-diagram.json (同梱スタイルゲノム。style family isometric-diorama の正本。motifs[].name の照合、densityPreservation.densityLevels のキー集合 (density_level の値域の正本)、semanticMapping / noveltyRule (C05 の内容適応の語彙の正本) をここから読む。read-only・複製しない)",
+      "plugins/guide-doc-generator/genomes/style-genome-flat-infographic-jp.json (style family flat-infographic-jp の正本。producer は P05-x-04。read-only。上と同じ用途で参照する。不在時の扱いは algorithm 3b)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (R3-render の script 列。画像を使う資料のときだけ呼ばれる)"
+    ],
+    "invokes": [
+      "node <SRG_ROOT>/vendor/scripts/build-image-prompts.js <work-dir> --plan <work-dir>/assets/generated/image-deck-plan.json --genome <genome> [--source codex-image2]",
+      "node <SRG_ROOT>/vendor/scripts/generate-images-codex.js <work-dir> [--batch 5] [--dry-run] [--source codex-image2]"
+    ]
+  },
+  "algorithm": [
+    "1. argv を argparse で解析する。未知 flag・必須欠落・--assets-dir が非ディレクトリは exit2",
+    "2. --image-plan を json.load する。読めない・sections が空・各 section に section_id / slug 素材 (heading) / subject / diagram_structure / overlay_text / alt / motifs (3 役) / density_level / adaptation_trace / baked_text のいずれかを欠くときは exit2 (契約違反。ここを skip へ畳むと『画像が無い理由』が SRG 不在と区別できなくなる)。style_family は diagram_pattern を持たない section でのみ必須 (image_style_families.no_pattern_rule)",
+    "3. SRG 実体を解決する。優先順: (a) --srg-root、(b) 環境変数 SRG_ROOT、(c) 解決済み handout plugin root (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → manifest name 照合 → __file__ 相対の 4 段) の兄弟ディレクトリ ../slide-report-generator。実体判定は名前ではなくファイルの実在で行う: vendor/scripts/build-image-prompts.js と vendor/scripts/generate-images-codex.js が両方あること。どれも通らなければ skip_reason=\"srg-absent\" で stdout を出し exit0。(a) を明示指定して外したときだけ exit2",
+    "3b. style family ごとの genome を解決する。isometric-diorama は <SRG_ROOT>/vendor/assets/style-genome-kanagawa-comic-diagram.json、flat-infographic-jp は <HB_ROOT>/genomes/style-genome-flat-infographic-jp.json。解決は『その family を実際に使う section が 1 件以上あるときだけ』行う (フラット図が 1 件も無い資料で flat genome 不在が阻害要因にならない)。使う family の genome が実在しないときは exit2 — skip へ畳まない。SRG 不在は環境の問題 (fail-soft) だが、同梱すべき handout 側 genome の欠落は plugin の同梱漏れであり、黙って画風を差し替えると利用者が気づけない。解決した genome は json.load し、motifs[].name 集合と densityPreservation.densityLevels のキー集合を検査用に取り出す (これらの語彙を script が自前で列挙してはならない)",
+    "4. ランタイムを確認する。shutil.which('node') と `node --version` の実行で major 版を得る (下限は 18)。生成本番 (--dry-run でない) のときは shutil.which('codex') も確認する (generate-images-codex.js は codex exec を execSync するため、codex 不在では全 slug が 3 回リトライして失敗する)。いずれか欠けるときは skip_reason=\"runtime-absent\" と skip_detail (node/codex/version のどれか) を出して exit0。SRG script は ESM で vendor/package.json の \"type\":\"module\" に依存するため、script は必ず vendor 配下の元位置のまま絶対パスで起動する (コピーして動かさない)",
+    "5. 作業ディレクトリ <assets-dir>/srg-work/assets/generated/ を作る (SRG は <slide-dir>/assets/generated を固定で見る。この配置規約に handout 側を合わせる)",
+    "6. handout 画像計画 → SRG image-deck-plan.json へ機械変換する。トップレベルは {\"styleGenome\": <genome への相対パス>, \"deck\": {\"title\": 資料タイトル, \"totalSlides\": n}, \"slides\": [...]}。1 セクション = 1 slide とし、slide 番号はセクションの出現順 (1 始まり)、slug は `sec-NN-<section_id の kebab 化>` (SRG の ^[a-z0-9]+(?:-[a-z0-9]+)*$ に適合させる)",
+    "7. セクション素材 → SRG 必須フィールドの写像を固定する。purpose ← セクション goal (「読み終えたら何が分かる/できるか」がそのまま『このスライドが存在する理由』になる)、audienceTakeaway ← lead_line (1 行の抽象がそのまま聴衆の 1 文テイクアウェイ)、background ← 資料全体の背景 + セクション heading + 直前セクションの heading (読み手が今どこにいるかの文脈)、intendedUse ← 固定文 'explanatory illustration for a printable single-file handout section'、subject / diagramStructure / overlayText / alt / motifs ← 計画がそのまま持つ LLM 執筆値 (英文の具体記述は決定論変換では作れないため C05 が書く。本 script は日本語見出しから英文を捏造しない)、layout ← 計画の layout があればそれ、無ければ図解型ごとの既定 (grid=left-right, zones 2 個, readingOrder, focalPoint, emphasis)、pattern=\"image-only\" / backgroundSource=\"none\"、textPolicy ← 計画の text_policy (省略時 \"baked-with-overlay\"。RESOLUTION-R23 (a) で overlay-only 固定を撤回した。焼き込みは『パッと見て分かる』性質の主要因であり、印刷 (R15) の安全弁は overlayText を常時正本に置くこと自体で確保される。overlay-only は正確な表・料金・頻繁に変わる文言を扱うセクションの選択肢として残る)、overlayText ← 計画の overlay_text (両 policy で必須・非空。焼き文字が崩れた画像は装飾が崩れただけであり、内容は overlay 側で読める)、bakedText ← textPolicy=\"baked-with-overlay\" のとき計画の baked_text[].text を順に並べた配列 (SRG の入力契約は文字列配列のままにする。form / emphasis は handout 側の検査用メタであり委譲先へは渡さない)、motifs ← 計画の 3 役構造体を platform → primary → props の順に連結した文字列配列 (委譲先の入力契約を 1 バイトも変えない)、densityLevel ← 計画の density_level、layoutTemplate ← genome の layoutSelectionByStructure を図解型で引いた値 (script が対応表を自前で持たず genome から引く)、camera ← 図解型が順序・向き・個数を持つとき \"structural\" でそのとき negativeSpecific を必須化、accent ← 資料テーマのアクセント色 (HEX)、generation ← {modelSnapshot, quality:\"high\", size:\"2560x1440\"}、reason ← セクション goal の要約。styleGenome ← そのセクションの style family から解決した genome への相対パス (algorithm 3b)",
+    "8. 変換結果を SRG の受け入れ規約に対して事前検査する。motifs の 3 役 (platform / primary / props[] の各要素) が全て genome の motifs[].name の要素であること、subject / diagramStructure が 40 字以上、purpose / audienceTakeaway が 12 字以上、background / intendedUse が 20 字以上、曖昧語 (beautiful/high quality/おしゃれ 等) を含まないこと。違反は exit2 で止める (build-image-prompts.js 側も同じ検査で exit1 になるが、こちらで止めれば差し戻し先が handout の計画側だと分かる)",
+    "8b. RESOLUTION-R23 の 4 系統を事前検査する。いずれの違反も exit2 で、診断コードと section_id を stderr へ出す。(a) overlayText が非空であること。text_policy=\"overlay-only\" のとき text_policy_reason が非空であること (理由なしで焼き込みを外せない = 迷ったら焼かないへの無言の退避を封じる) — E-IMG-OVERLAY-MISSING / E-IMG-POLICY-REASON-MISSING。(b) baked_text の検査を baked_text_discipline の規定どおり行う — E-IMG-BAKED-BLOCKS / -CHARS / -FORM / -METRIC-COUNT / -METRIC-UNSOURCED。(c) style family を image_style_families の全域写像で決定し、上書きと明示必須の規則に照らす — E-IMG-FAMILY-MISSING / -FAMILY-UNKNOWN。(d) density_level が genome の densityLevels のキー集合の要素であること、motifs の 3 役が揃い props が 1 件以上であること、adaptation_trace が非空で各 motif が当該セクションの 3 役のいずれかと一致すること — E-IMG-DENSITY / -MOTIF-ROLE / -TRACE。(e) セクションが 2 件以上の資料で (diagram_pattern, motifs.primary) の組が全セクション同一でないこと — E-IMG-UNIFORM-COMPOSITION。閾値や割合は置かない (degradation_proxy_checks.why_no_threshold)",
+    "9. image-deck-plan.json を作業ディレクトリへ書き、build-image-prompts.js を subprocess.run (shell=False・argv 配列・cwd=作業ディレクトリの親) で起動する。genome は algorithm 3b で解決した実パスを --genome で明示する (既定解決に任せると project-local の有無で挙動が変わる)。2 系統が同一資料に混在するときは family ごとに image-deck-plan.json を分けて build-image-prompts.js を 2 回起動する (1 回の起動が受け取れる --genome は 1 つであり、混在を 1 プランに詰めると片方の family が誤った画風で組み立てられる)。プラン分割は slide 番号を通しで維持し、slug は変えない。非 0 終了なら stderr を転記して exit1",
+    "10. <slug>.prompt.txt が全 slug 分そろったことを実ファイルで確認する。1 件も無ければ exit1",
+    "11. --dry-run のときは generate-images-codex.js に --dry-run を付けて起動し、組み立てられた codex コマンドを delegated_commands へ入れ、images を全件 status=\"dry-run\" として stdout を出し exit0",
+    "12. 起動前に冪等スキップを判定する。<assets-dir>/images/<slug>.png が既に実在し先頭 4 バイトの PNG 署名 (89 50 4E 47) を満たす slug は、再生成せずその実ファイルを回収済みとして images[] へ status=\"generated\" / path つきで積み、以降の委譲対象から外す。全 slug が既存で満たされたときは generate-images-codex.js を一切起動せず status=\"generated\" で exit0 (追加課金なし)。画像生成は非決定論 (gpt-image-2 に seed が無い) であり、既存素材の再生成は同一入力から別バイトの成果物を生む。素材を確定させたうえで再現性の鎖を C11 側に閉じるため、この再利用は failure_modes ではなく通常の正規ステップである",
+    "13. 本番は generate-images-codex.js を起動する。重要: この script は slug 単位の回収失敗を warn して継続し、最後まで走れば exit0 を返す (produced 件数はログにしか出ない)。したがって exit code を成功判定に使わず、本 script が <generated>/<slug>.png の実在と先頭 4 バイトの PNG 署名 (89 50 4E 47) を自前で検査する",
+    "14. 署名検査を通った PNG だけを <assets-dir>/images/<slug>.png へ copy2 し、コピー後にもう一度署名を検査する。images[] に path とバイト数を記録する。回収できなかった slug は status=\"failed\" とし、stderr へ理由を出す",
+    "14b. 回収後に <generated>/<slug>.meta.json を読み、densityLevel と motifs が計画値と一致することを確認する。不一致は exit1 ではなく images[].meta_drift へ記録して stderr へ warn を出す (画像自体は有効であり出荷を止める理由にならない。ただし『委譲先が密度指示を落とした』= 平坦化退化の唯一の観測点なので黙らない)。画素を読む検査は行わない — 理由は degradation_proxy_checks.why_no_pixel_check",
+    "15. stdout の判定 JSON を 1 個出す。全件成功なら status=\"generated\" で exit0、1 件でも failed があれば status=\"partial\" で exit1 (成功分の path は残したまま返し、C01 が部分素材で先へ進むか再実行するかを選べるようにする)"
+  ],
+  "baked_text_discipline": {
+    "resolution_ref": "RESOLUTION-R23 (b)",
+    "ssot_note": "焼き込みテキストの量的規律の数値はここが唯一の正本であり、本 script の事前検査 (algorithm 8b) が唯一の実行点である。agent-brief-C05.json は数値リテラルを持たず、質的規律 (要点語のみを焼く / 差し戻されたら削るのではなく言い換える) だけを持つ。同じ数値を 2 箇所に書かない",
+    "blocks_per_image_max": 6,
+    "blocks_rationale": "genome patterns['image-only'].rules の範囲 6-8 の下限を採る。単一整数にするのは範囲が機械検査にならないため。下限を採る理由は 2 つ。(1) handout の挿絵は印刷単一 HTML のセクション内に収まり、1920x1080 のスライド 1 枚を占有する参考画像より線寸が小さい。同じ字数でも可読性が落ちる (R15)。(2) 下限を採ると本契約が genome の規則の部分集合であり続け、genome を満たさない値を handout が要求する状況が起きない。参考画像の実測も支持する — ブロック数が 8 を超えた 2 枚 (15 件 / 13 件) がまさに文字の歪みを起こした 2 枚である",
+    "chars_per_block_max": 12,
+    "chars_rationale": "参考のフラット正面図の実測値の最大 —『作れない』4 字 /『連携要件を言語化できない』12 字 /『ではどう量産するか？』10 字 /『AIが自動生成し人は微調整』12 字 — がそのまま 12。参考アイソメ群の見出しブロックは 25-33 字あるが、それはスライドの見出しであって handout では該当しない (見出しとリード文は HTML 側 C11 が持つ)。『見出しを焼き込めない字数』であることは欠陥ではなく、HTML と画像の責務境界が字数上限として現れたものである。数え方は書記素単位 (結合文字・異体字セレクタを 1 字として数え、コードポイント数で数えない)",
+    "block_shape": "焼き込みブロックは裸の文字列ではなく {form, text, emphasis?} のタグ付きオブジェクト。form は閉じた 3 語 keyword / question / metric。形で書けなくすることで完全文の焼き込みを表現不可能にする (規則で禁じない)",
+    "forms": {
+      "keyword": "要点語・体言止め。text が文末記号 (。 ． . ？ ? ！ !) と読点 (、) を 1 文字も含まない。chars_per_block_max 以下",
+      "question": "短い問い。text の末尾がちょうど 1 つの か または ？ で終わる。末尾以外に文末記号が現れない。chars_per_block_max 以下",
+      "metric": "数値強調。text が数字 (半角 0-9 / 全角 ０-９ / 漢数字) を 1 文字以上含み、文末記号を含まない。chars_per_block_max 以下"
+    },
+    "why_forms_are_an_allowlist": "12 字以下かつ文末記号を持てない文字列で日本語の完全文を成立させることは実用上できない。『句点を含む完全文を焼かない』という禁止規則を書く代わりに、許される 3 形だけを定義して他を書けなくしている (P04-x-05 の『違反を表現不可能にする』)",
+    "metric_rule": {
+      "kind": "条件付き必須 (推奨でも無条件必須でもない)",
+      "when_section_has_numbers": "セクションの構成データが数値 (効果値・所要時間・件数・比率) を持つとき、その画像は form=metric のブロックをちょうど 1 件持ち、その 1 件に emphasis=\"max\" (画像内で最大級の字面) を与える。0 件も 2 件以上も exit2",
+      "when_section_has_no_numbers": "metric ブロックは 0 件。無いものを強調させない",
+      "provenance": "metric ブロックの数字部分は、そのセクションの構成データに逐語で存在すること。存在しない数字は exit2 (E-IMG-METRIC-UNSOURCED)",
+      "rationale": "数値強調を無条件の推奨として置くと、生成側は『効果的に見える数字』を捏造する誘因を持つ。数字の出所を構成データへ固定すれば、強調は『持っている数字を大きく描く』だけの操作になり、捏造が契約違反として落ちる。参考画像の『約94%削減』『約8時間→約30分』が読み手に効いているのは大きさではなく、その数字が実測に裏づけられているからである"
+    },
+    "not_c11_text_limits": "C11 の text_limits (C63 の 180 / 400 / 900) と本規律は別系統であり、同じキー名へ寄せない。あちらは HTML 本文の折り畳み閾値で単位は『セクション本文の字数』、writer は C11、失敗時の症状は『折り畳まれる』。こちらは画像内に焼く文字の量で単位は『ブロック数と 1 ブロックの字数』、writer は C05、失敗時の症状は『文字が潰れて読めない』。混同すると正本が二重化する"
+  },
+  "image_style_families": {
+    "resolution_ref": "RESOLUTION-R23 (c)",
+    "families": {
+      "isometric-diorama": {
+        "genome": "<SRG_ROOT>/vendor/assets/style-genome-kanagawa-comic-diagram.json",
+        "genome_ownership": "SRG 同梱の既存資産。read-only で参照するだけで複製しない",
+        "look": "アイソメ 30 度・ドットグリッド床・角丸プラットフォームタイル・紺 #0B2A55 アウトライン・kanagawa 系の低彩度パレット"
+      },
+      "flat-infographic-jp": {
+        "genome": "<HB_ROOT>/genomes/style-genome-flat-infographic-jp.json",
+        "genome_ownership": "guide-doc-generator が同梱する新規資産。producer は P05-x-04。schemaVersion は SRG 同梱 genome と同じ 1.3.0 系で、build-image-prompts.js がそのまま食える形",
+        "look": "フラット正面図・クリーム地・濃緑を支配色に橙をアクセント・大きな数値強調・カード枠で対比 (導入前/導入後) や 3 要素収束を表す・チェックリストと簡易バーで量を示す"
+      }
+    },
+    "selection_rule": {
+      "primary_key": "図解型 (diagram_pattern)。C11 / C14 が持つ 6 語の閉じた列挙がそのまま定義域であり、全域写像なので未定義の入力が存在しない",
+      "map": {
+        "flow": "isometric-diorama",
+        "cycle": "isometric-diorama",
+        "hierarchy": "isometric-diorama",
+        "comparison": "flat-infographic-jp",
+        "matrix": "flat-infographic-jp",
+        "binary-contrast": "flat-infographic-jp"
+      },
+      "boundary_principle": "奥行き・順序・連結を読む図はアイソメ、面積・格子・二項対比を読む図はフラット。この線は genome 自身も引いている (tableAndMatrixRules と nonApplicableTypes.precise-table-or-number が格子と精密な数値をアイソメから退避させよと述べている)。本裁定はその退避先に『画風を変える』という第 3 の選択肢を与えたもので、新しい原則を持ち込んでいない",
+      "override": "構成データのセクションが style_family を明示したときはそれが勝つ。値は families のキー 2 語の allowlist で、それ以外は exit2"
+    },
+    "no_pattern_rule": "図解型を持たないセクションの画像は style_family の明示が必須。既定へ落とさない。欠落は exit2 (E-IMG-FAMILY-MISSING)。fallback を置かないのは RESOLUTION-P04-x-05 裁定 C と同じ理由で、無言の既定は『誰も適切さを判断していない画風』を出荷させるためである",
+    "why_purpose_vocabulary_is_not_a_key": "資料の用途種別 (C23 の 8 語) を選択キーに入れない。入れると C23 の語彙が C21 にも並び、RESOLUTION-P04-x-05 裁定 C が根本原因と名指した形 (同じ概念の被覆が 2 つの独立した列挙に分かれる) が再発する。語彙が 9 語目を得たとき C21 の表は 8 行のままで、しかも catalog 検査は通る。実質的な損失も無い — 画風は『何を描くか (構造)』に従うべきで『資料の用途』には従わない。同じ比較図はレクチャーでも提案でも同じ画風が読みやすく、用途差はセクション構成 (preset) が既に吸収している",
+    "future_extension": "用途種別を選択に関与させる必要が出た場合の唯一の正しい経路は、script-brief-C23.json の preset_definitions[] へ image_style_family を必須キーとして足すこと (granularity_defaults と同じ、preset の内側へ入れて漏れを表現不可能にする形)。C21 側へ用途表を置く形は採らない。実施には C23 を produces に持つ裁定 leaf が別に要る",
+    "not_a_reimplementation": "genome ファイルを handout 側へ供給することは build-image-prompts.js --genome <path> に渡す設定値の供給であって、C17 が禁じる再実装ではない。AC-C21-1 が禁じているのは (1) プロンプト本文の組み立て (2) style genome の複製 (3) 画像生成 API 呼び出し の 3 つで、いずれにも当たらない。(1) 実測した <slug>.prompt.md の STYLE BIBLE preamble は artStyle / palette / compositionRules / densityPreservation / notACopyTemplate の全てを vendor script が genome から組み立てており、C21 はプロンプト文字列を 1 文字も書かない。(2) flat-infographic-jp は kanagawa genome の写しではなく SRG 同梱に該当形が無い別の画風であり、isometric 側は SRG 同梱を参照するだけで複製しない。(3) 委譲経路は 1 段も変わらない"
+  },
+  "degradation_proxy_checks": {
+    "resolution_ref": "RESOLUTION-R23 (d)",
+    "problem": "genome の contentAdaptationRules.densityPreservation.degradationBan は『再生成で平坦化・単純化 (小物の脱落・占有率の低下・ベタ塗りボックス化) が起きたら不合格』と述べるが、生成画像の画素から機械判定はできない。判定を計画とプロンプトの側へ移す",
+    "checks": [
+      {
+        "id": "density-level-required",
+        "where": "事前検査 (algorithm 8b)",
+        "rule": "各セクションが density_level を明示し、その値が genome の densityPreservation.densityLevels のキー集合の要素であること。script は low/medium/high を自前で列挙せず genome から読んで照合する (規則を書かず実装を読む)"
+      },
+      {
+        "id": "motif-roles-structural",
+        "where": "事前検査 (algorithm 8b)",
+        "rule": "motifs は平坦な配列ではなく {platform, primary, props[]} の 3 役構造体。platform と primary は必須の単一名、props は 1 件以上。3 名とも genome の motifs[].name の要素であること",
+        "why_shape_not_check": "genome の richnessFloor (『各シーンタイルは プラットフォーム + 主モチーフ + 小物 1 点以上 + 影 を最低限持つ』) をそのままデータ形にした。非空検査を足す案は motifs: ['speech-label'] (ラベルだけの平坦図) を通してしまう。3 役構造体は同じことを検査 0 件で達成し、『空の角丸枠 + テキストだけ』の計画を書けなくする。影は artStyle が常時与えるため役に入れない",
+        "delegation_safety": "SRG plan へ変換する際に platform → primary → props の順で連結して従来どおりの motifs[] 配列にする。委譲先の入力契約は変わらない (algorithm 7)"
+      },
+      {
+        "id": "adaptation-trace-required",
+        "where": "事前検査 (algorithm 8b)",
+        "rule": "adaptation_trace が非空で、各エントリの motif 名が当該セクションの 3 役のいずれかと一致すること",
+        "source": "genome の contentAdaptationRules.biasPrevention.traceRequirement と noveltyRule.biasGuard.trace が要求する『主題語 → 選択 motif』の対応を計画の必須フィールドへ昇格させたもの。根拠なき motif 選定がここで落ちる"
+      },
+      {
+        "id": "meta-drift-observed",
+        "where": "回収後 (algorithm 14b)",
+        "rule": "<slug>.meta.json の densityLevel と motifs が計画値と一致することを確認し、不一致は images[].meta_drift と stderr warn で開示する (exit code は変えない)",
+        "rationale": "委譲先が値を落としていれば、プロンプトに密度指示が乗っていない証拠になる。画像自体は有効なので出荷は止めないが黙らない"
+      }
+    ],
+    "why_no_pixel_check": "画素判定は採らない。(1) 非決定論の出力を非決定論に判定する構図になり閾値が Goodhart 化する (占有率 X% を満たすためだけの飾りが増える)。(2) C21 は stdlib_only=true であり、画素解析は画像ライブラリを要求して C27 と正面から衝突する。(3) 失敗時の差し戻し先が『モデルの出力』になり、修正できる主体が存在しない。C21 の設計思想は差し戻し先が handout の計画側だと分かる位置で落とすこと (algorithm 8) であり、画素判定はこれに反する",
+    "why_not_prompt_injection": "richnessFloor の文言をプロンプトへ毎回明記することは C21 の責務にしない。実測した <slug>.prompt.md では densityPreservation 本文と notACopyTemplate を既に vendor script が genome から STYLE BIBLE preamble へ組み込んでいる。C21 が文言を足すことは AC-C21-1 が禁じる『プロンプト本文の組み立て』そのものになる。C21 がすべきなのは vendor script が消費するフィールド (densityLevel / motifs / layoutTemplate) を計画に正しく載せることだけである",
+    "why_not_diagram_primitives": "生成後 meta の diagramPrimitives 非空検査は採らない。実測した参考 22 枚の meta.json にこのフィールドは 1 件も無い。genome の noveltyRule step 4 を読むと diagramPrimitives は semanticMapping に無い概念を新規に描いたときだけ記録されるフィールドであり、非空を必須にすると『毎回どこかで新規モチーフを発明しろ』という要求になって biasPrevention.deterministicSelection (候補リスト先頭から決定論的に選ぶ) と矛盾する。存在しないフィールドの非空を要求する検査は、常に赤いか、赤くしないための無駄な発明を誘発するかのどちらかにしかならない",
+    "uniform_composition_ban": {
+      "rule": "セクションが 2 件以上ある資料で (diagram_pattern, motifs.primary) の組が全セクションで同一であってはならない。違反は exit2 (E-IMG-UNIFORM-COMPOSITION)",
+      "why_no_threshold": "多様性の割合や閾値は置かない。閾値は Goodhart 化する (『7 割以上が異なること』は 3 割を機械的に散らせば通る)。一方『全部同じ』は退化の完全な証拠であり正当な例外を持たない — 同じ構図で全セクションを描くなら、そもそもセクションごとに画像を持つ意味が無い。genome の biasGuard.usageBudgetHint (同一 motif が 6 回超で warn) は 20 枚のデッキを前提とした目安であり、セクション数 4-8 件の handout へ持ち込むと機能しない。件数に依存しない条件を選んだ",
+      "props_excluded": "props の重複は許す。小物は一貫性のために再利用されるべきもので、platform と primary と図解型が全て同一であることだけを退化とみなす"
+    }
+  },
+  "requirements_covered": [
+    "R12",
+    "R15 (焼き込みを許す代わりに overlayText 必須を検査し、崩れても読める状態を保証する側)"
+  ],
+  "checklist_covered": [
+    "C17",
+    "C18",
+    "C27"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C21-1",
+      "how": "script 本体と guide-doc-generator/scripts 全体を grep する",
+      "expected": "プロンプト本文の組み立て・style genome の複製・画像生成 API 呼び出しが 0 件で、画像生成は build-image-prompts.js / generate-images-codex.js への subprocess 起動だけである (C17)"
+    },
+    {
+      "id": "AC-C21-2",
+      "how": "SRG_ROOT を実体でない一時ディレクトリに向け、--srg-root を付けずに実行する",
+      "expected": "exit0。stdout が status=\"skipped\" / skip_reason=\"srg-absent\" / images 全件 skipped を返し、node も codex も起動されない (C18)"
+    },
+    {
+      "id": "AC-C21-3",
+      "how": "SRG は解決できるが PATH から node を外して実行する",
+      "expected": "exit0・skip_reason=\"runtime-absent\"・skip_detail に node を含む。起動を試みたログが出ない (起動前に判定している)"
+    },
+    {
+      "id": "AC-C21-4",
+      "how": "C01 の生成フローを SRG 不在環境で通す (C18 の統合確認)",
+      "expected": "画像ステップだけが skip され、残りのゲートが完走して全体が exit0。生成レポートに skip が明示され、成功として黙って畳まれていない"
+    },
+    {
+      "id": "AC-C21-5",
+      "how": "--dry-run で実行する",
+      "expected": "exit0・status=\"dry-run\"。<assets-dir>/srg-work/assets/generated に image-deck-plan.json と <slug>.prompt.txt / <slug>.meta.json が生成され、delegated_commands に codex exec 行が入り、<assets-dir>/images に PNG が 1 件も作られない (課金ゼロ)"
+    },
+    {
+      "id": "AC-C21-6",
+      "how": "generate-images-codex.js を、PNG を 1 件だけ置いて exit0 を返す stub に差し替えて 2 slug で実行する",
+      "expected": "委譲先が exit0 でも本 script は exit1 / status=\"partial\" を返し、images の 1 件が failed になる (委譲先の exit code を鵜呑みにしない)"
+    },
+    {
+      "id": "AC-C21-7",
+      "how": "PNG 署名を持たないテキストファイルを .png 名で回収対象に置いて実行する",
+      "expected": "その slug は failed 扱いになり <assets-dir>/images へコピーされない"
+    },
+    {
+      "id": "AC-C21-8",
+      "how": "genome に無い motif 名を含む画像計画で実行する / --srg-root に非 SRG ディレクトリを明示する",
+      "expected": "どちらも exit2。skip へ畳まれない"
+    },
+    {
+      "id": "AC-C21-9",
+      "how": "書き込み先を検査する",
+      "expected": "書き込みが <assets-dir> 配下だけで、SRG plugin 配下・構成データ JSON・出力 HTML が変更されない"
+    },
+    {
+      "id": "AC-C21-10",
+      "how": "script 本体の import を確認する",
+      "expected": "標準ライブラリのみ (argparse/json/os/pathlib/shutil/subprocess/sys)。node の起動は委譲であって Python 依存ではない (C27)"
+    },
+    {
+      "id": "AC-C21-11",
+      "how": "全 slug 分の有効な PNG を <assets-dir>/images に置いた状態で本番実行する (algorithm 12 の冪等スキップ)",
+      "expected": "exit0・status=\"generated\"。delegated_commands が空で generate-images-codex.js が起動されず、既存 PNG のバイト列が変化しない (追加課金ゼロ)"
+    },
+    {
+      "id": "AC-C21-12",
+      "how": "text_policy を指定しない画像計画で --dry-run 実行し、生成された image-deck-plan.json を読む",
+      "expected": "全 slide の textPolicy が \"baked-with-overlay\" で bakedText が非空。script 本文と生成物のどこにも textPolicy の overlay-only 固定が残っていない (RESOLUTION-R23 (a))"
+    },
+    {
+      "id": "AC-C21-13",
+      "how": "overlay_text を空にした計画 / text_policy=\"overlay-only\" を text_policy_reason 無しで指定した計画 をそれぞれ実行する",
+      "expected": "どちらも exit2 (E-IMG-OVERLAY-MISSING / E-IMG-POLICY-REASON-MISSING)。skip へ畳まれず、node が起動されない"
+    },
+    {
+      "id": "AC-C21-14",
+      "how": "焼き込みブロックを baked_text_discipline の境界で試す — 上限ちょうどのブロック数と字数 / 1 件超過 / 1 字超過 / 句点入りの keyword / 末尾が か でない question / 構成データに無い数字を持つ metric / 数値を持つセクションで metric 0 件",
+      "expected": "境界ちょうどは通り、超過と形式違反は全て exit2 で対応する診断コードが出る。期待値は baked_text_discipline の値から導き、テスト側に 6 / 12 の数値リテラルを直書きしない (RESOLUTION-P04-x-05 の導出値を契約にしない原則)"
+    },
+    {
+      "id": "AC-C21-15",
+      "how": "6 図解型それぞれ 1 セクションずつの計画を --dry-run で通し、生成された image-deck-plan.json の styleGenome を読む。あわせて style_family を明示上書きした計画と、diagram_pattern も style_family も無いセクションを持つ計画を実行する",
+      "expected": "image_style_families.selection_rule.map どおりに genome が振り分けられ、2 family 混在時は build-image-prompts.js が family ごとに 2 回起動される (delegated_commands が 2 行)。明示上書きが勝つ。どちらも無いセクションは exit2 (E-IMG-FAMILY-MISSING)"
+    },
+    {
+      "id": "AC-C21-16",
+      "how": "motifs を平坦な配列で書いた計画 / props を空にした計画 / density_level を欠く計画 / adaptation_trace を欠く計画 / 全セクションが同じ (diagram_pattern, motifs.primary) を持つ 3 セクションの計画 をそれぞれ実行する",
+      "expected": "全て exit2 で対応する診断コード。あわせて成功時の image-deck-plan.json では motifs が platform → primary → props の順に連結された文字列配列になっており、委譲先の入力契約が変わっていない"
+    },
+    {
+      "id": "AC-C21-17",
+      "how": "script 本体を grep する",
+      "expected": "low/medium/high の密度語彙、motif 名、layoutTemplate 名、6 図解型に対応する genome 側の語彙のいずれもハードコードされておらず、全て genome ファイルから読み出して照合している。画素解析ライブラリの import が 0 件 (C27 と degradation_proxy_checks.why_no_pixel_check)"
+    }
+  ],
+  "network": {
+    "value": true,
+    "rationale": "本 script 自身は socket を開かないが、委譲先 generate-images-codex.js が codex CLI を execSync し codex がモデル API へ通信する。network=false と宣言すると『委譲を経由した通信』が棚卸しから漏れるため、実効の通信有無で true を宣言する。--dry-run 経路 (prompt/meta の機械展開のみ) は通信しない",
+    "inventory_sync": "component-inventory.json の components[C21].network も true"
+  },
+  "failure_modes": [
+    {
+      "case": "SRG が未導入 (実体ファイルが見つからない)",
+      "behavior": "起動を試みず skip_reason=\"srg-absent\" を宣言して exit0",
+      "rationale": "C18 が要求する fail-soft。ただし stdout に skip として現れるため、生成成功と取り違えられない"
+    },
+    {
+      "case": "node または codex が PATH に無い / node が古い",
+      "behavior": "起動前に skip_reason=\"runtime-absent\" + skip_detail を宣言して exit0",
+      "rationale": "generate-images-codex.js は codex 不在でも 3 回リトライしてから warn するだけなので、そのまま走らせると無駄な時間を使ったうえで『画像 0 枚だが exit0』という最も紛らわしい状態になる"
+    },
+    {
+      "case": "委譲先 build-image-prompts.js が検証エラーで exit1",
+      "behavior": "stderr の FAIL 行を転記して exit1。skip にしない",
+      "rationale": "SRG は在るのに計画が SRG の契約を満たしていない、という差し戻し可能な誤り。fail-soft の対象は『委譲先が無いこと』であって『委譲が失敗したこと』ではない"
+    },
+    {
+      "case": "一部の slug だけ PNG を回収できた",
+      "behavior": "成功分は回収して path を返しつつ status=\"partial\" / exit1",
+      "rationale": "委譲先が partial を exit0 で返す実装なので、ここで exit code を分けないと欠落が下流まで無音で流れる"
+    },
+    {
+      "case": "回収した .png が PNG 署名を持たない (codex が説明テキストを .png 名で保存した)",
+      "behavior": "failed 扱いにして素材ディレクトリへコピーしない",
+      "rationale": "SRG 側も同じ事故対策 (署名検査) を持つが、素材ディレクトリの健全性は回収側の責務。壊れた素材を C13 が base64 化すると壊れた資料が出荷される"
+    },
+    {
+      "case": "画像生成は本質的に非決定論 (gpt-image-2 に seed が無い)",
+      "behavior": "本 script は生成 PNG のバイト一致を約束しない。既存 PNG の再利用による冪等化は algorithm 12 の正規ステップで行う (ここでは定義しない)",
+      "rationale": "C29 のバイト一致は『同一構成データからの再レンダリング』に課される要件であり、素材が確定した後の C11 で閉じる。画像生成を再現性の鎖に入れないことでその境界を保つ"
+    }
+  ],
+  "open_questions": [
+    "handout 画像計画 (--image-plan) の JSON Schema を C12 のスキーマ群に含めるか、C21 専用の別スキーマとして plugin-level surface に置くかが未確定。C05 が書く必須フィールドは RESOLUTION-R23 で subject / diagram_structure / overlay_text / alt / motifs (3 役) / density_level / adaptation_trace / baked_text / diagram_pattern / style_family / text_policy(+reason) へ確定しており、agent-brief-C05.json の procedure 13-15 と一致している。schema 側の表現 (とくに motifs の 3 役構造体と baked_text のタグ付きオブジェクト) は P02-C12-01 系の確定待ち",
+    "SRG の validate-ai-image-assets.js を回収後の検証として噛ませるかは未確定 (未読・deck HTML 前提の検査を含む可能性がある)。現設計では回収側の PNG 署名検査のみとし、SRG validator は採用していない",
+    "[解決済み / RESOLUTION-R23 (c)] style genome を SRG 同梱固定にするか handout 側へ vendoring するかは、両方で閉じた。isometric-diorama は SRG 同梱 kanagawa-comic-diagram を read-only で参照 (複製しない)、flat-infographic-jp は handout 側 genomes/ へ新規供給 (producer は P05-x-04・SRG に該当形が無いため複製ではない)。選択は図解型からの全域写像で決定論。再実装に当たらない根拠は image_style_families.not_a_reimplementation。残る未決は flat genome の中身 (パレット値・motif 語彙) であり P05-x-04 の担当",
+    "既に生成済み PNG があるときの再生成 (--force 相当) を argv へ足すかは未確定。inventory の argv 契約を変えないため今回は入れず、再生成は素材ファイルの削除で行う",
+    "codex exec は 1 枚あたり概ね 1-2 分かかり課金が発生する。C01 が本番生成を走らせる前にユーザー確認を挟むか、既定を --dry-run にするかは C01 側の設計事項"
+  ]
+}

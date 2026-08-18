@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P08",
+  "covered_task_ids": [
+    "P08"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "refactoring 前後で全テストが green のままで、生成 HTML がバイト一致で不変である",
+      "method": "evidence/P08.json",
+      "result": "suites=23 ran=3308 failed=0。sha256 一致 (20284 bytes)"
+    },
+    {
+      "claim": "公開インターフェイス (argv と exit code) が変わっていない",
+      "method": "evidence/P08.json の acceptance_elements",
+      "result": "本周回の変更は manifest の hooks キー・README・SKILL.md 記述・fixture 3 件のみで script の argv / exit code は不変"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "skill-md-content-changed",
+      "detail": "skills/run-handout-build/SKILL.md へ skip_reason の扱いを追記した。script の挙動ではなく指示テキストの変更だが、LLM が読む面である以上『内部構造の整理のみ』と完全には言い切れない"
+    }
+  ]
+}

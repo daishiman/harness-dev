@@ -1,0 +1,154 @@
+{
+  "component_id": "C13",
+  "component_kind": "script",
+  "name": "embed-assets.py",
+  "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+  "purpose": "正規化済み構成データが参照するローカル画像 (R03) と任意添付ファイル (xlsx/zip/pdf 等・R05) を base64 data URI へ決定論的に変換して構成データへ畳み込み、1 件あたりの上限を超えた素材は埋め込まずに warning と代替手段の材料を残して処理を継続する (C30)。data URI を作る側だけを担い、HTML/JS への焼き込み (img/lightbox/DL ボタン/Blob 変換/.dl-hint) は一切行わない。ファイルの『配置』には一切関与しない — 素材原本を出力ディレクトリの assets/ へ複製するのは C19 resolve-handout-output.py であり (P03 Y-04 の裁定)、本 script は素材を読んで data URI 文字列へ変換し構成データへ畳み込むだけで、出力ディレクトリ配下へ 1 ファイルも置かない",
+  "argv": [
+    {
+      "flag": "--config",
+      "required": true,
+      "type": "path",
+      "description": "入力構成データ JSON。C12 --normalize が確定した正規化済み構成データを前提とする。素材参照は assets_dir 相対のパス文字列で書かれている",
+      "default": null
+    },
+    {
+      "flag": "--assets-dir",
+      "required": true,
+      "type": "path",
+      "description": "素材原本ディレクトリ。構成データ中の素材参照はこのディレクトリ相対として解決する。read-only であり本 script は 1 バイトも書かない",
+      "default": null
+    },
+    {
+      "flag": "--max-bytes",
+      "required": false,
+      "type": "int",
+      "description": "1 素材あたりの埋め込み上限 (原本バイト数・base64 化前)。1 以上の整数のみ受け付ける。累積合計に対する閾値は持たない (合計は事実として stderr サマリへ出すだけで合否判定に使わない)",
+      "default": 5242880
+    },
+    {
+      "flag": "--out",
+      "required": false,
+      "type": "path",
+      "description": "埋め込み済み構成データ JSON の書き出し先。省略時は stdout へ出す。指定時 stdout は空にする (同一データを 2 面へ出さない)",
+      "default": null
+    }
+  ],
+  "stdin": "使用しない。stdin が与えられても読まない",
+  "stdout": "--out 省略時のみ、埋め込み済み構成データ JSON 1 個 (UTF-8・ensure_ascii=false・キー順は入力の順序を保存・末尾改行 1 個)。--out 指定時は空",
+  "stderr": "人間向けサマリ (処理素材数 / 埋め込み成功数 / skip 数 / 合計原本バイト数 / 合計 data URI 文字数) と warning 行。warning は 1 素材 1 行で `WARN <asset_id>: <reason>; 代替手段: <hint>` 形式。exit0 でも出る",
+  "exit_codes": {
+    "0": "全素材の処理を完了した。上限超過による skip が 1 件以上あっても 0 を返す (C30 の「生成を止めない」を exit code で表現する)",
+    "1": "入力データ由来の失敗。構成データが JSON として読めない / 素材参照キーの型が不正 / 宣言された素材ファイルが assets-dir に存在しない / 素材が読めない (権限・ディレクトリ) / --out への書き込みに失敗した。いずれも出力を書かずに終了する (部分書き込みを残さない)",
+    "2": "呼び出し契約違反。必須 flag 欠落 / 未知 flag / --max-bytes が 1 以上の整数でない / --assets-dir がディレクトリでない / 素材参照が絶対パスまたは assets-dir 外へ脱出する相対パス"
+  },
+  "write_scope": [
+    "--out で指定された 1 ファイルのみ"
+  ],
+  "single_writer": "--out ファイル (未指定時は書き込み無し)。assets-dir・出力ディレクトリ・HTML には一切書かない。素材原本の複製・配置 (--assets-src → 出力先 assets/) は C19 が単一 writer、HTML への焼き込みは C11 が単一 writer",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--config で渡された正規化済み構成データ JSON",
+      "--assets-dir 配下の素材ファイル (バイナリ read-only)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (R3-render の script 列)",
+      "C11 render-handout.py の上流 (C11 は depends_on に C13 を持つが直接 exec せず、C01 が順に呼んで構成データを受け渡す)"
+    ],
+    "invokes": []
+  },
+  "algorithm": [
+    "1. argv を argparse で解析する。未知 flag・必須欠落・--max-bytes 非正整数は exit2。--assets-dir が実在ディレクトリでなければ exit2",
+    "2. --config を json.load する。読めなければ exit1",
+    "3. 構成データを決まった順序で走査し、埋め込み対象を 2 種に分けて収集する。(a) 画像素材: セクション要素および hero の画像参照フィールド (R03)。(b) 添付素材: 資料単位/セクション単位の添付リスト (R05)。走査順は「構成データ上の出現順」で固定し、辞書のハッシュ順に依存しない (C29 のバイト一致再現性はここから始まる)",
+    "4. 各素材参照について pathlib で assets-dir 相対解決する。絶対パス、および os.path.normpath 後に assets-dir 外へ出るパス (.. 脱出・symlink 先が外) は exit2 で止める。存在しない素材は exit1 で止める (「作者が宣言した素材が無い」は事実誤りであり、黙って続けると素材の無い資料を出荷してしまう。上限超過とは性質が違うので同じ warning 扱いにしない)",
+    "5. MIME を決定する。拡張子 → MIME の対応表を本 script 内に自前で持つ (mimetypes は /etc/mime.types や OS レジストリを読むためプラットフォーム依存で、同一構成データから別マシンで別 MIME が出ると C29 のバイト一致が壊れる)。表は小文字化した拡張子で引く。表に無い拡張子は application/octet-stream として続行し warning を 1 行出す",
+    "6. 画像に限り先頭バイトのシグネチャ (PNG 89 50 4E 47 / JPEG FF D8 FF / GIF 47 49 46 38 / WebP RIFF....WEBP / SVG は先頭非空白が '<') を確認する。拡張子と食い違う場合はシグネチャ由来の MIME を採用し warning を出す (誤 MIME はブラウザ描画を壊すため、決定論を保ったまま実バイトを優先する)。判定は純関数 (バイト列と拡張子のみに依存)",
+    "7. 原本バイト数が --max-bytes を超える素材は埋め込まない。data_uri は付けず embed_status=\"skipped-oversize\" と embed_skip_reason・source_bytes・素材の assets-dir 相対パスを素材オブジェクトへ書き、warning を stderr へ 1 行出す。処理は継続し、後続素材の埋め込みも行う (C30)",
+    "8. 上限内の素材は base64.b64encode で 1 行の base64 文字列にし (base64.encodebytes は 76 文字ごとに改行を挟むため使わない)、`data:<mime>;base64,<payload>` を素材オブジェクトの data_uri へ書き、embed_status=\"embedded\" と source_bytes / encoded_chars を併記する。画像の再エンコード・リサイズ・圧縮は一切行わない (Pillow は stdlib 外で C27 に反する。zlib で PNG/xlsx/zip を再圧縮しても既に deflate 済みで縮まず、逆に C20 の逆抽出で原本バイトを復元できなくなる)",
+    "9. 資料単位のサマリを構成データ直下 asset_embedding へ書く: {\"max_bytes\": N, \"embedded_count\": n, \"skipped_count\": m, \"total_source_bytes\": x, \"total_encoded_chars\": y, \"warnings\": [{\"asset_id\", \"reason\", \"hint\"}]}。合計値は事実の記録であって閾値ではない",
+    "10. 出力する。--out 指定時はテンポラリへ書いて os.replace で原子的に差し替え (途中失敗で壊れた構成データを残さない)、省略時は stdout へ 1 個だけ書く。json.dump は ensure_ascii=False / indent=2 / キー順保存で固定し、同一入力から同一バイトになるようにする",
+    "11. stderr へサマリを出し、skip の有無に関わらず exit0 で終わる"
+  ],
+  "requirements_covered": [
+    "R03",
+    "R05"
+  ],
+  "checklist_covered": [
+    "C5",
+    "C7",
+    "C27",
+    "C29",
+    "C30"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C13-1",
+      "how": "ローカル PNG を 1 枚参照する構成データで実行し、出力 JSON を検査する",
+      "expected": "該当素材に data:image/png;base64, で始まる data_uri が入り、元のローカルパス文字列が data_uri 側に残らず、embed_status=embedded になる (C5)"
+    },
+    {
+      "id": "AC-C13-2",
+      "how": "xlsx / zip / pdf を添付指定した構成データで実行する",
+      "expected": "3 件とも data_uri を持ち、MIME が自前対応表の値 (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet / application/zip / application/pdf) と一致する (C7 のうち data URI 生成側)"
+    },
+    {
+      "id": "AC-C13-3",
+      "how": "--max-bytes に素材サイズ未満の値を与えて実行し、exit code と出力を見る",
+      "expected": "exit0。該当素材は data_uri を持たず embed_status=skipped-oversize と embed_skip_reason / source_bytes を持ち、stderr に WARN 行と代替手段が 1 行出て、同じ実行内の他素材は埋め込まれている (C30)"
+    },
+    {
+      "id": "AC-C13-4",
+      "how": "同一の構成データと素材で 2 回実行し、出力バイト列を比較する",
+      "expected": "完全一致する。異なる OS (mimetypes の登録内容が違う環境) でも MIME が同一で、base64 に改行が混入しない (C29 の前提)"
+    },
+    {
+      "id": "AC-C13-5",
+      "how": "存在しない素材を宣言した構成データ / 絶対パス参照 / ../ で assets-dir 外を指す参照 / --max-bytes 0 をそれぞれ渡す",
+      "expected": "順に exit1 / exit2 / exit2 / exit2。exit1・exit2 のいずれでも --out ファイルは作られない (または既存ファイルが書き換わらない)"
+    },
+    {
+      "id": "AC-C13-6",
+      "how": "script 本体を grep する",
+      "expected": "import が標準ライブラリのみ (argparse/base64/json/os/pathlib/sys)。Pillow・yaml・requests が 0 件、subprocess 起動が 0 件 (C27)"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "素材が --max-bytes を超える",
+      "behavior": "その素材だけ埋め込まず embed_status=skipped-oversize を記録し、stderr へ WARN と代替手段 (同梱素材ディレクトリのファイル名を案内する文言の材料) を出して継続、最終 exit0",
+      "rationale": "R05/C30 が「生成を止めず warning」を要求している。大きいことは事実であって作者の誤りではないため、資料そのものの生成を人質に取らない"
+    },
+    {
+      "case": "宣言された素材ファイルが assets-dir に無い",
+      "behavior": "exit1 で停止し、出力を書かない",
+      "rationale": "上限超過と違い、これは構成データの誤り。黙って空の資料を出荷すると C24 (同梱物の充足) が後段で初めて落ちて差し戻し先が分からなくなる"
+    },
+    {
+      "case": "拡張子が MIME 対応表に無い",
+      "behavior": "application/octet-stream で埋め込み、warning を 1 行出して継続 (exit0)",
+      "rationale": "未知形式でもダウンロード配布は成立する。表の網羅を完璧にすることを埋め込み成否の条件にしない"
+    },
+    {
+      "case": "拡張子とバイトシグネチャが食い違う画像",
+      "behavior": "シグネチャ由来の MIME を採用し warning を出して継続",
+      "rationale": "誤 MIME の img は描画されない。実バイトを優先しても判定はバイト列の純関数なので決定論は保たれる"
+    },
+    {
+      "case": "--out への書き込みが途中で失敗する",
+      "behavior": "テンポラリのまま破棄し exit1。既存の --out ファイルは変更しない",
+      "rationale": "壊れた構成データが残ると後段 (C11/C20) が原因不明の失敗を起こす。原子的差し替えで単一 writer の不変条件を守る"
+    },
+    {
+      "case": "同一素材が複数箇所から参照される",
+      "behavior": "解決後の絶対パスをキーに 1 回だけ読み込み・1 回だけ base64 化して同じ data URI 文字列を各参照へ入れる",
+      "rationale": "同一バイト列を 2 回エンコードしても結果は同じだが、大きい添付で無駄な二重エンコードを避けつつ、出力の決定論性も保てる"
+    }
+  ],
+  "open_questions": [
+    "既定 --max-bytes を 5 MiB (5242880) とした根拠は、(a) base64 化で原本の約 4/3 に膨らむため 1 素材あたり約 6.8 MiB の HTML テキストになること、(b) 単一 HTML は DOM 上 1 本の文字列として保持されるため素材 1 件が突出して大きいと閲覧環境 (ブラウザ・Notion 埋め込み) での読み込み体感が壊れること、の 2 点による運用上の保守的な初期値であり、参照 HTML の実測値 (data URI 比率 99.16%・原本 5.12 MiB) を目標値として採ったものではない。閲覧環境ごとの実務的な上限を実測して既定値を見直すかは P04 のテスト設計で判断する余地がある",
+    "asset_embedding サマリと素材オブジェクトの追加フィールド (data_uri / embed_status / embed_skip_reason / source_bytes / encoded_chars) を、C12 の JSON Schema でどう宣言し、C20 の逆抽出 round-trip 等価判定でどう扱うか (正規化時に落とす / 比較対象外にする) は C12・C20 側の設計と突き合わせて確定する必要がある",
+    "添付の代替手段テキストの実文言 (.dl-hint に出る日本語) を C13 が生成して構成データへ入れるか、C13 は理由コードだけ渡して C11 が文言化するかは、現設計では後者 (C13 は reason + ファイル名のみ) としたが、C11 側の brief と整合を取る必要がある"
+  ]
+}

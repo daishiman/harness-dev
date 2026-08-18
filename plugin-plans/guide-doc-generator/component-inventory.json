@@ -1,0 +1,1633 @@
+{
+  "plugin_concept": "guide-doc-generator — 初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成するプラグイン",
+  "derivation": "goal-spec の R01-R20 を capability へ展開し、LLM 判断が要る側 (ヒアリング→構成データ設計 / 初心者向け読みやすさ判定 / 逆抽出の意味補完) と、決定論に閉じる側 (構成データ→単一 HTML のレンダリング・埋め込み・検証・出力先ルーティング) を分界線として最初に引いた。この分界が R01/R08/R11/R16/R18 の機械ゲートを成立させる前提であり、レンダラに LLM を挟むと同一構成データからのバイト一致再現性 (C29) が原理的に失われる。分界の結果 buildable 実体は 23: skill×4 (build 統括 run / 逆抽出 run / 読みやすさレビュー assign / デザイン言語 ref) / sub-agent×2 (構成データ設計・読みやすさ判定の独立 context) / slash-command×3 (生成・逆抽出・既存成果物の再検証) / hook×1 (外部参照と絵文字の混入を書込時に fail-closed 阻止) / script×13 (決定論パイプライン)。script を 13 に分けたのは水増しではなく、(a) 各々が独立に exit code で検証される単位 (レンダラ / スキーマ検証 / 埋め込み / 図解 / アイコン / 自己完結検査 / a11y+印刷検査 / 言語+日付検査 / 筋道検査 / 用途プリセット解決 / 出力先ルーティング / 逆抽出 / SRG 委譲)、(b) いずれも 280 行超が見込まれる、(c) 2 skill 以上または hook/command からも共有される、の no-split threshold を満たすため。全 script は placement_scope=plugin-root で plugins/guide-doc-generator/scripts/ へ hoist し、単独 install や第二 consumer からの dangling を防ぐ。単一 skill 退化を回避した根拠は surface_decisions と responsibility_decisions に全候補分記録した。",
+  "canon_rules": [
+    {
+      "field": "components[].argument-hint (component_kind=slash-command)",
+      "canon": "briefs/command-brief-<id>.json#argument_hint",
+      "role_of_this_file": "derived-copy",
+      "sync_direction": "brief -> inventory (一方向。inventory 側を先に編集しない)",
+      "rationale": "argument_hint は brief の arguments[] (name / position / required / 既定値 / 上書き規則) から機械的に導出できる表示文字列であり、arguments[] を持つのは brief だけである。成果物 frontmatter とテストの契約定数も brief を読んで組まれており、inventory は plan 索引として写しを保持するに過ぎない。決定と退けた案は RESOLUTION-P05-x-15-argument-hint.md を参照",
+      "resolution_ref": "RESOLUTION-P05-x-15-argument-hint.md"
+    }
+  ],
+  "considered_component_kinds": [
+    "skill",
+    "sub-agent",
+    "slash-command",
+    "hook",
+    "script"
+  ],
+  "responsibility_decisions": [
+    {
+      "candidate": "ヒアリング/構成設計",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C01",
+        "C05"
+      ],
+      "rationale": "何を伝えるかの決定は LLM 判断であり決定論化できない。skill (対話統括) と sub-agent (独立 context での構成データ設計) に分け、親会話の思い込みが構成へ漏れないようにする"
+    },
+    {
+      "candidate": "構成データスキーマ定義と検証",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C12"
+      ],
+      "rationale": "lead-line / 判断軸 / 日付 / 用語言い換え宣言の必須性 (C15/C16/C33) を fail-closed にする単一の入口が要る。JSON Schema 実体は plugin-level surface schemas に置き、検証器のみ component 化する"
+    },
+    {
+      "candidate": "HTMLレンダラ (決定論・LLM 非依存)",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C11"
+      ],
+      "rationale": "同一構成データ→バイト一致 (C29) を成立させるため LLM を一切挟まない。部品カタログ (config/handout-parts.json・owner C11) が定める全部品の組み立て・トークン・スタガー・print CSS・a11y 属性・date-pill を単一 writer で出力する"
+    },
+    {
+      "candidate": "アセット埋め込み (data URI 化・サイズ上限と warning)",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C13"
+      ],
+      "rationale": "画像 (R03) と任意添付 (R05) で入力種別が異なり、上限超過時の warning 継続挙動 (C30) を独立にテストする必要がある。レンダラへ畳むとバイナリ I/O がレンダラのテスト面を汚す"
+    },
+    {
+      "candidate": "SVG 図解ジェネレータ",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C14"
+      ],
+      "rationale": "6 パターン (フロー/比較/階層/サイクル/マトリクス/対比2択) それぞれに再現性テストが要る (C9)。レンダラとは別の座標計算ドメインで、独立に golden 比較できる"
+    },
+    {
+      "candidate": "アイコンセット (symbol 抽出)",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C15"
+      ],
+      "rationale": "使用したアイコンだけを symbol 定義し未使用 0 件にする (C11) のは、構成データ走査→sprite 構築という独立の関数。検証側 (C16) と sprite 契約を共有する producer↔consumer ゆえ couples_with を宣言する"
+    },
+    {
+      "candidate": "Codex 画像生成の SRG 委譲アダプタ",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C21"
+      ],
+      "rationale": "slide-report-generator の build-image-prompts / generate-images-codex を再実装せず subprocess で委譲する (C17)。SRG 不在時に画像ステップのみ skip する fail-soft 判定 (C18) を単一箇所へ閉じ込める"
+    },
+    {
+      "candidate": "生成物品質検証",
+      "verdict": "adopted-split",
+      "mapped_to": [
+        "C16",
+        "C17",
+        "C18"
+      ],
+      "rationale": "1 本に畳むと 280 行を大きく超え、検証面 (自己完結性 / a11y+印刷 / 言語+日付) ごとの exit code が混ざって差し戻し先が特定できない。3 本へ分割し、それぞれ独立に hook と command から再利用する"
+    },
+    {
+      "candidate": "出力先ルーティングと命名規則",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C19"
+      ],
+      "rationale": "<YYYY-MM-DD>-<種別>-<主題slug>/ の生成と同梱物 4 種の充足検査 (C23/C24) は資料内容に依存しない決定論処理。正規化済み構成データ (C12 --normalize の出力) の日付フィールドを唯一のソースとし、C18 が本文 date-pill と出力ディレクトリ名の一致を検査することで R17/R18 の不一致 0 件 (C35) を成立させる"
+    },
+    {
+      "candidate": "既存 HTML からの構成データ逆抽出",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C02",
+        "C20"
+      ],
+      "rationale": "round-trip (C20) はレンダラの逆関数であり、構成データ等価で判定する。抽出そのものは決定論 script、曖昧箇所の意味補完と再レンダリング比較の統括は skill が担う"
+    },
+    {
+      "candidate": "初心者向け読みやすさレビュー (独立 context)",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C03",
+        "C06"
+      ],
+      "rationale": "文長・言い換え被覆は決定論 (C18) で測れるが「初心者に伝わるか」は LLM でしか測れない。生成した本人が採点しないよう assign skill + fork sub-agent で proposer≠approver を構造保証する"
+    },
+    {
+      "candidate": "目的・背景・ゴールの構造検証 (資料全体ゴールから各セクションゴールへの連なり)",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C22"
+      ],
+      "rationale": "冒頭の目的/背景/ゴール 3 要素・セクション単位のゴール表示・目次からのゴール参照は、導入一文と判断軸 (C18 が担当) とは別の検証面であり、一方が他方を代替しないことを要件が明示している。検証器を分けることでその独立性を構造で保証する"
+    },
+    {
+      "candidate": "用途別プリセットと種別語彙の単一正本",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C23"
+      ],
+      "rationale": "用途種別の語彙は出力先の命名 (C19) とプリセット選択 (C11/C05) の双方が参照するため、どちらかへ埋め込むと二重管理になる。語彙とプリセットを解決する単一の入口を設け、ハードコード重複の検出もそこへ閉じる"
+    },
+    {
+      "candidate": "デザイン言語 (部品カタログ config/handout-parts.json / トークン / アイコン規約) の参照正本",
+      "verdict": "adopted",
+      "mapped_to": [
+        "C04"
+      ],
+      "rationale": "参照解析 §2/§3/§9/§10 の規範を run skill 本文へ焼くと肥大し、レンダラ・構成データ設計・レビューの三者で二重管理になる。ref skill 1 本へ集約し全員がそれを引用する"
+    },
+    {
+      "candidate": "資料内容そのものの執筆 (原稿生成)",
+      "verdict": "rejected",
+      "rationale": "資料の中身はユーザーの題材に固有で、plugin が持つべき資産ではない。C05 が構成データを設計する範囲までに留め、本文執筆を自動化しない (Goodhart 回避)"
+    },
+    {
+      "candidate": "HTML→PDF 変換",
+      "verdict": "rejected",
+      "rationale": "@media print (C21) をブラウザ印刷で使う設計とし、ヘッドレスブラウザ依存を持ち込まない。Python 標準ライブラリのみの制約とも両立しない"
+    },
+    {
+      "candidate": "生成物のホスティング/配信",
+      "verdict": "rejected",
+      "rationale": "外部依存ゼロの単一 HTML はファイルを渡すだけで成立する。配信は plugin のスコープ外"
+    }
+  ],
+  "preset_addon_decisions": [
+    {
+      "preset": "定例会議アジェンダ",
+      "requirement": "時間配分",
+      "verdict": "reuse",
+      "reuse_of": "手順行部品 (B03) の右列を所要時間の表示に割り当てる",
+      "rationale": "既存部品が「並び + 補助情報」の形を持ち、補助情報の意味づけを構成データ側で与えるだけで満たせる。新規部品は要らない"
+    },
+    {
+      "preset": "定例会議アジェンダ",
+      "requirement": "決定事項",
+      "verdict": "reuse",
+      "reuse_of": "チェック行部品 (B09) をセクション内の決定事項リストとして用いる",
+      "rationale": "決定済みか否かの二値表示という同じ構造で、状態表現も既存の a11y 属性で足りる"
+    },
+    {
+      "preset": "定例会議アジェンダ",
+      "requirement": "アクションアイテム",
+      "verdict": "new",
+      "new_component_ref": "C11 のレンダラへ追加する担当と期限を持つ行部品",
+      "rationale": "担当と期限という 2 つの必須メタを持つ行は既存部品のどれにも無く、構成データ側の必須フィールドと表示の両方が新規になる。部品追加はレンダラ内の部品テーブルへの登録で済み、独立 component にはしない"
+    },
+    {
+      "preset": "学習内容のまとめ",
+      "requirement": "出典・参考リンク",
+      "verdict": "reuse-with-constraint",
+      "reuse_of": "特徴カード部品 (B07) の脚注領域",
+      "rationale": "表示自体は既存部品で足りるが、外部参照ゼロの要件があるためリンクは資料内アンカーか本文中の出典表記として扱い、外部 URL は素材の出所表示に留める。この制約は自己完結検査 (C16) が担保する"
+    },
+    {
+      "preset": "学習計画",
+      "requirement": "分かっていること / 分からないこと / 次に調べること の 3 分割",
+      "verdict": "reuse",
+      "reuse_of": "3 枚組カード部品 (B04) を 3 分割の器として用い、メモ機構 (C11 が出力する localStorage 保持) を各枠へ結線する",
+      "rationale": "3 分割は既存の 3 枚組と構造が一致し、更新され続ける内容はメモ機構の既存の保持と書き出しで満たせる。新規部品も新規機構も要らない"
+    }
+  ],
+  "r21_decisions": {
+    "source": "goal-spec C46-C59 (2026-08-17 に研修フィードバックとして追加された要件群 R21)。反映 leaf は P03-x-04、判断の正本散文は briefs/RESOLUTION-R21.md",
+    "component_count_unchanged": "23。R21 は既存 component の責務追加だけで解決し、新規 component を 1 つも作っていない。P04/P05 の leaf が前提とする component 数は変わらない",
+    "new_mechanisms": "無し。用途別の差分は R20 のプリセット機構 (C23) へ相乗りし、長文の折り畳みは既存部品 B10 アコーディオンを器として使い、時間配分は R20 のアジェンダ用途が既に要求する section.duration をそのまま単一の時間フィールドとして用いる",
+    "new_parts": "B17 ハンズオン手順の 1 件のみ (config/handout-parts.json へ追加。描画は C11 の部品テーブル登録で、B16 と同じ扱い。独立 component にしない)",
+    "new_section_kinds": "flow-overview / capability-explainer / handson / anticipated-qa / dialogue / logistics の 6 件 (config/handout-sections.json へ追加。writer は C12)",
+    "ownership_map": [
+      {"checklist": "C46", "requirement": "冒頭の流れは大きな流れだけ・項目数上限", "owner": "C12", "verify": "script", "verify_detail": "C12 A9 の section_kind 追加検査 (E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL)。閾値は handout-sections.json の max_items / forbid_row_detail"},
+      {"checklist": "C47", "requirement": "冒頭主題を 1-2 件へ絞る", "owner": "C12", "verify": "script", "verify_detail": "document.focus_theme の件数検査 (E-FOCUS-THEME) と section.ties_to の紐づけ検査"},
+      {"checklist": "C48", "requirement": "ゴール・主題に紐づかない伝達事項を本編から排除", "owner": "C12", "verify": "script", "verify_detail": "E-TIES-DANGLING / E-SECTION-UNTIED-GOAL / E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER。描画順の副検査は C22 NAR-08"},
+      {"checklist": "C49", "requirement": "presentation_order を必須フィールド化し prior_knowledge から決定論導出", "owner": "C12", "verify": "script", "verify_detail": "CR-PRESENTATION-ORDER (--normalize の N4b が唯一の実行点)。provenance.presentation_order_source で由来を記録"},
+      {"checklist": "C50", "requirement": "両モードで共有の型が保持される", "owner": "C23", "verify": "test", "verify_detail": "AC-C23-R21-50a..50d。presentation_order_variants は自身の section_order の順列に限られ、許可キー 5 つの構造保証が C44 を守る"},
+      {"checklist": "C51", "requirement": "機能名から始めず成果→分解→機能の順で書く", "owner": "C12", "verify": "script", "verify_detail": "parts[].slot の順序検査 (E-CAPABILITY-SLOT-MISSING / E-CAPABILITY-SLOT-ORDER)。描画テキスト面の副検査は C18 LANG-07"},
+      {"checklist": "C52", "requirement": "説明文字数上限と超過分の既定折り畳み", "owner": "C12", "verify": "script", "verify_detail": "CR-TEXT-FOLD (--normalize の N10b)。上限はテーマトークン text_limits.block_body_max_chars (スキーマ owner は C11)。器は既存部品 B10"},
+      {"checklist": "C53", "requirement": "ハンズオン枠と先回り Q&A 枠", "owner": "C23", "verify": "test", "verify_detail": "AC-C23-R21-53 (lecture プリセットが handson / anticipated-qa を必ず含む)。部品側の必須検査は C12 の E-SECTIONKIND-HANDSON"},
+      {"checklist": "C54", "requirement": "到達レベルの宣言と超過の検出", "owner": "C12", "verify": "script", "verify_detail": "attainment_level enum と section.attainment_step の検査 (E-ATTAINMENT-OVERRUN / E-ATTAINMENT-UNREACHED)"},
+      {"checklist": "C55", "requirement": "図表・グラフの欠落検出", "owner": "C16", "verify": "test", "verify_detail": "SC-09。外部参照ゼロ検査 (SC-01..SC-04) を通過する欠陥クラスなので独立検出として追加した"},
+      {"checklist": "C56", "requirement": "demo_first の最初の提示物は実画面 (概念図先行の禁止)", "owner": "C22", "verify": "test", "verify_detail": "NAR-07 / CR-DEMO1。推奨ではなく禁止として判定式を書く"},
+      {"checklist": "C57", "requirement": "覚えていただきたいこと / 覚えなくてよいこと を対で明示", "owner": "C12", "verify": "script", "verify_detail": "E-REMEMBER-PAIR / E-REMEMBER-MAX。ヒアリング項目としての必須化は C01、描画の両方出しは C11"},
+      {"checklist": "C58", "requirement": "達成したい具体業務をヒアリング必須項目化し紐づけを検査", "owner": "C01", "verify": "script", "verify_detail": "項目の owner は C01 R1-elicit (ヒアリング責務の所有者)。機械検査は C12 の E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK"},
+      {"checklist": "C59", "requirement": "対話枠を必須化し所要時間の下限割合を確保", "owner": "C12", "verify": "script", "verify_detail": "E-SECTIONKIND-DURATION-SHARE。時間の正本は section.duration の 1 フィールドのみで、B03 rows[].time はその内訳 (総和一致を E-TIMEBOX-SUM が強制)。下限割合 0.15 は handout-sections.json の dialogue.min_duration_share が持つ"}
+    ],
+    "single_ssot_impact": "RESOLUTION-P03.md が固定した SSOT を 1 つも動かしていない。部品追加は config/handout-parts.json (owner C11)、section_kind 追加は config/handout-sections.json (writer C12)、用途語彙とプリセットは script-brief-C23.json の vocabulary_ssot / preset_definitions (owner C23) に閉じており、ブリーフ散文へ id を列挙していない。R21 で新設した規則正本は CR-PRESENTATION-ORDER (C12) / CR-TEXT-FOLD (C12) / CR-DEMO1 (C22) の 3 つで、いずれも所有 component 1 つに閉じている"
+  },
+  "components": [
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "validate-handout-config.py",
+      "script_name": "validate-handout-config.py",
+      "purpose": "構成データ JSON を schema と意味規約 (資料単位の必須フィールド一式・各セクションの lead-line と判断軸とゴール・日付フィールド・用語言い換え宣言・用途種別が語彙正本に含まれること) で fail-closed 検証し、--normalize 指定時は正規化済み構成データを 1 箇所で確定して書き出す決定論ゲート。日付未指定時に生成実行日を既定として埋めるのはこの正規化だけであり、以降の全 component はこの正規化済み構成データの日付フィールドのみを読む (日付解決の単一 writer)。section_kind の enum は中立データファイル config/handout-sections.json を物理正本とし、本 component がその唯一の writer、C23 は読むだけで本 component を import しない (C12 ⇄ C23 の循環を断つ・P03 Y-08)。R21 (P03-x-04): 構成データスキーマの正本として C46/C47/C48/C49/C51/C52/C54/C57/C59 の担い手でもある。presentation_order の決定論導出 (CR-PRESENTATION-ORDER。prior_knowledge_level → demo_first/explain_first) と長文の自動折り畳み (CR-TEXT-FOLD) は --normalize が plugin 全体で唯一の実行点",
+      "inputs": "argv(--config FILE [--schema FILE] [--strict] [--normalize] [--out FILE])",
+      "outputs": "stdout(OK サマリ)/--out(正規化済み構成データ JSON: 日付既定値と用途プリセット適用後)/stderr(違反箇所とキーパス)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "out-file",
+      "date_resolution": "single-writer: 日付未指定時の既定 (生成実行日) 充填はここだけで行い、C11/C19/C18 は現在日時を自前で取得しない",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C13",
+      "component_kind": "script",
+      "name": "embed-assets.py",
+      "script_name": "embed-assets.py",
+      "purpose": "ローカル画像と任意添付ファイルを base64 data URI へ変換して構成データへ畳み込み、上限超過時は生成を止めず warning を返す。ファイルの配置には関与せず、素材原本の複製先は C19 が単一 writer (P03 Y-04)",
+      "inputs": "argv(--config FILE --assets-dir DIR [--max-bytes N] [--out FILE])",
+      "outputs": "stdout(埋め込み済み構成データ JSON)/stderr(warning: 上限超過 + 代替手段の提示)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "out-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C14",
+      "component_kind": "script",
+      "name": "render-diagram-svg.py",
+      "script_name": "render-diagram-svg.py",
+      "purpose": "構造データからフロー/比較/階層/サイクル/マトリクス/対比2択 の 6 パターンの概念図解を inline SVG として決定論出力する",
+      "inputs": "argv(--diagram FILE --pattern NAME [--width N])",
+      "outputs": "stdout(inline SVG 断片)/stderr(未知パターン・データ不整合)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C15",
+      "component_kind": "script",
+      "name": "build-icon-sprite.py",
+      "script_name": "build-icon-sprite.py",
+      "purpose": "構成データが参照するアイコンだけを assets のアイコンセットから抽出し、統一様式の symbol 定義ブロックと use 参照表を決定論生成する",
+      "inputs": "argv(--config FILE --icon-set FILE)",
+      "outputs": "stdout(symbol 定義 SVG + 参照表 JSON)/stderr(未定義アイコン名・様式違反)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C16"
+      ],
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C16",
+      "component_kind": "script",
+      "name": "verify-handout-selfcontained.py",
+      "script_name": "verify-handout-selfcontained.py",
+      "purpose": "生成 HTML の自己完結性を検査する (外部 CDN/フォント/img src/http(s) 参照 0 件・絵文字 0 件・アイコン様式・未使用 symbol 0 件・ナビ href と section id のアンカー整合)。R21: 図表・グラフの枠が空でないこと (SC-09 / C55) を追加判定する。外部参照ゼロ検査を通過してしまう欠陥クラスであるため独立した検出項目として持つ",
+      "inputs": "argv(--html FILE [--json-report FILE])",
+      "outputs": "stdout(検査サマリ)/stderr(違反種別と行番号)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "report-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C15"
+      ],
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C17",
+      "component_kind": "script",
+      "name": "verify-handout-a11y-print.py",
+      "script_name": "verify-handout-a11y-print.py",
+      "purpose": "生成 HTML の a11y 必須適用 (aria-pressed/aria-selected/aria-label/scope/:focus-visible/prefers-reduced-motion) と A4 印刷規則 (@media print で sticky/lightbox/メモ UI が版面を崩さない) を検査する",
+      "inputs": "argv(--html FILE [--json-report FILE])",
+      "outputs": "stdout(検査サマリ)/stderr(欠落した必須適用箇所)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "report-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C18",
+      "component_kind": "script",
+      "name": "verify-handout-language.py",
+      "script_name": "verify-handout-language.py",
+      "purpose": "初心者向け言語規約と日付表記を検査する (初出専門用語の言い換え併記・lead-line と判断軸の存在・冒頭 date-pill の yyyy/mm/dd 一致・出力ディレクトリ名の日付が正規化済み構成データの日付フィールドと同一値であること)。自前で現在日を取得せず、比較の基準は常に正規化済み構成データ 1 点。『具体部品』の判定は部品カタログ config/handout-parts.json の section_scope==\"in-section\" で行い、部品 id の範囲を自前に列挙しない (P03 Y-05)。R21: できること起点セクションの lead_line が機能名から始まっていないこと (LANG-07 / C51 の描画テキスト面) を追加判定する",
+      "inputs": "argv(--html FILE --config FILE(正規化済み) [--out-dir DIR] [--json-report FILE])",
+      "outputs": "stdout(検査サマリ)/stderr(未言い換え用語・日付書式違反・日付不一致)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "report-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C19"
+      ],
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C19",
+      "component_kind": "script",
+      "name": "route-handout-output.py",
+      "script_name": "route-handout-output.py",
+      "purpose": "出力先を決定論解決して <YYYY-MM-DD>-<種別>-<主題slug>/ を作り、自分が writer である同梱物 (handout-config.json の配置・素材原本の assets/ への複製) を置いたうえで、資料 HTML・構成データ・素材・README の同梱 4 点が揃うことを検査する (同梱物の writer 割り当ての正本は本 component の brief bundle_writers・P03 Y-04)。種別は語彙正本から解決し自前に列挙しない。ディレクトリ名の <YYYY-MM-DD> は正規化済み構成データの日付フィールドをそのまま整形するだけで、自前で現在日を取得しない",
+      "inputs": "argv(--config FILE(正規化済み) [--out-dir DIR] [--assets-src DIR] [--place-config] [--check-only] [--json-report FILE])",
+      "outputs": "stdout(解決した出力先パスと同梱物一覧と各点の writer)/stderr(種別語彙違反・命名規則違反・複製失敗・--check-only 時の同梱物欠落)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "out-dir",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C18"
+      ],
+      "depends_on": [
+        "C12",
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C21",
+      "component_kind": "script",
+      "name": "srg-image-bridge.py",
+      "script_name": "srg-image-bridge.py",
+      "purpose": "slide-report-generator の Codex 画像生成パイプラインへ委譲するアダプタ。SRG 実体を解決して画像計画を渡し生成物を素材ディレクトリへ回収する。委譲先を再実装しない。SRG 実体 (SRG_ROOT 経由の vendor/scripts) または委譲先が要求する実行ランタイム (node) のいずれかが解決できないときは、起動を試みる前に skip を宣言して exit0 で返す (fail-soft)。本 script 自身は socket を開かないが、委譲先 (generate-images-codex.js → codex CLI) がモデル API へ通信するため network=true と宣言する (P03 Y-01)。既存 PNG が揃っている slug は再生成せず回収する冪等スキップを通常経路として持つ",
+      "inputs": "argv(--image-plan FILE --assets-dir DIR [--srg-root DIR] [--dry-run])",
+      "outputs": "stdout(生成/skip の判定と skip 理由 (srg-absent|runtime-absent) と回収した素材一覧)/stderr(委譲先の失敗理由)",
+      "exit_codes": "0/1/2",
+      "network": true,
+      "write_scope": "assets-dir",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C22",
+      "component_kind": "script",
+      "name": "verify-handout-narrative.py",
+      "script_name": "verify-handout-narrative.py",
+      "purpose": "資料の筋道を検査する (冒頭の目的・背景・ゴールの 3 要素の描画・全セクションのゴールがセクション冒頭に常時表示されること・目次各項目が対応セクションのゴールを補助属性で参照すること)。導入一文と判断軸の検査とは独立に判定し、一方が他方を代替しない。R21: demo_first のとき最初の提示物が実画面であること (NAR-07 / CR-DEMO1 / C56。概念図・抽象説明の先行提示を禁止として判定する) と、付録の描画順隔離 (NAR-08 / C48 の描画面) を追加判定する",
+      "inputs": "argv(--html FILE --config FILE [--json-report FILE])",
+      "outputs": "stdout(検査サマリ)/stderr(欠落した要素とセクション id)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "report-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C23",
+      "component_kind": "script",
+      "name": "resolve-handout-preset.py",
+      "script_name": "resolve-handout-preset.py",
+      "purpose": "用途種別の語彙正本 (lecture / agenda / guide / onboarding / study-notes / study-plan / report / proposal) を単一の入口から解決し、対応するセクション構成プリセットを返す。語彙とプリセット定義は同一の宣言データファイル 1 本を正本とし、利用者の追加プリセットもそこへ書き足す。語彙のハードコード重複と正本語彙に対するプリセットの未被覆を検出する。混成用途は受け付けず、主用途 1 つの選択とセクション追加で表現させる。section_kind の enum はこの component の正本ではなく config/handout-sections.json (writer: C12) を読むだけであり、依存の向きは C12 → C23 の一方向に保つ (P03 Y-08)。R21: プリセットへ presentation_order_variants (自身の section_order の順列に限る) と required_document_fields (追加のみ) を足し、C50 の提示順切替と C53 の必須枠追加を既存のプリセット機構だけで表現する。許可キーは 5 つに固定され C44 の共有の型は preset から壊せない",
+      "inputs": "argv(--purpose NAME | --list | --audit-duplication [--catalog FILE])",
+      "outputs": "stdout(語彙一覧またはプリセットのセクション構成 JSON)/stderr(未定義語彙・未被覆プリセット・重複定義箇所)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "none",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "render-handout.py",
+      "script_name": "render-handout.py",
+      "purpose": "構成データ JSON から単一 HTML を LLM 非依存で組み立てる決定論レンダラ (部品カタログ config/handout-parts.json (本 component が正本 owner・P03 Y-05) が定める全部品・CSS 変数トークン・スタガー入場・sticky ナビとオフセット補正とゴール参照 (nav 本体は簡潔に保ちゴールは補助属性で持たせる)・冒頭の目的と背景とゴール・セクションゴールのチップ表示・print 規則・a11y 属性・日付表記・メモと localStorage 機構を単一 writer で出力)。入力は C12 --normalize が確定した正規化済み構成データに限定し、日付は構成データの日付フィールドをそのまま整形する (自前で現在日を取得しない)。--theme は構成データにテーマ欄が無い場合に限り有効で、採用したテーマ名は --config-out が指すパスへ書き戻す (出力ディレクトリ配下の handout-config.json を置く writer は C19 に一本化した・P03 Y-04)",
+      "inputs": "argv(--config FILE(正規化済み) [--theme NAME (構成データにテーマ欄が無い場合のみ有効・--config-out 併用必須)] [--config-out FILE (採用テーマ書き戻し先)] [--out FILE])",
+      "outputs": "stdout または --out(単一 HTML)/--config-out(採用テーマ書き戻し済み構成データ)/stderr(構成データ不整合)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "out-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C20"
+      ],
+      "depends_on": [
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C20",
+      "component_kind": "script",
+      "name": "extract-handout-config.py",
+      "script_name": "extract-handout-config.py",
+      "purpose": "生成済み単一 HTML を走査して構成データ JSON を逆抽出し、レンダラの逆関数として round-trip の構成データ等価を判定可能にする",
+      "inputs": "argv(--html FILE [--out FILE] [--compare FILE])",
+      "outputs": "stdout(構成データ JSON)/stderr(復元不能な部品と欠落キー)",
+      "exit_codes": "0/1/2",
+      "network": false,
+      "write_scope": "out-file",
+      "stdlib_only": true,
+      "tests_min": 80,
+      "couples_with": [
+        "C11"
+      ],
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "builder": "plugin-scaffold",
+      "build_kind": "script",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+coverage"
+      }
+    },
+    {
+      "id": "C10",
+      "component_kind": "hook",
+      "name": "guard-handout-external-ref",
+      "event": "PostToolUse",
+      "matcher": "Write|Edit",
+      "applies_to": {
+        "in_scope": "書込先が資料出力ディレクトリ (<YYYY-MM-DD>-<種別>-<主題slug>/ 配下・C19 が解決した out-dir) の生成物であり、かつ拡張子が .html のファイルのみ",
+        "out_of_scope": "上記以外の全 Write/Edit (plugin 導入環境の一般ファイル・Markdown・ソースコード) は判定せず exit0 で素通しする",
+        "resolution": "書込先パスを out-dir 判定 → .html 判定の順で評価し、いずれか外れた時点で exit0。対象内でのみ外部参照と絵文字の混入を検査する",
+        "rationale": "hook は導入環境の全 Write/Edit を受け取るため、適用範囲を宣言しないと handout と無関係な http(s) URL を含む文書まで exit2 で止めうる。fail-closed は適用対象内でのみ働かせる"
+      },
+      "exit_semantics": "fail-closed-exit2 (適用対象内のみ・対象外は exit0 素通し)",
+      "settings_wiring": "settings.json",
+      "fail_closed": true,
+      "depends_on": [
+        "C16"
+      ],
+      "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-script-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+test"
+      }
+    },
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "name": "ref-handout-design-system",
+      "skill_kind": "ref",
+      "kind": "ref",
+      "skill_name": "ref-handout-design-system",
+      "prefix": "ref",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "資料の部品カタログを確認",
+        "デザイントークンの値を引く",
+        "アイコン規約を確認"
+      ],
+      "output_contract": "部品カタログ (config/handout-parts.json = 部品 id 語彙の正本・owner C11) の構成データ表現 / CSS 変数トークン一覧 / アイコン規約 (viewBox・stroke・symbol+use) / 文章設計の型 の参照回答。部品 id をこの skill 側へ列挙しない (P03 Y-05)",
+      "boundary": "入力=部品またはトークンの問い合わせ/出力=規範の引用。部品 id は config/handout-parts.json、用途語彙は config/handout-purposes.json、section_kind は config/handout-sections.json を読んで答える。HTML の生成・検証はしない (C11/C16-C18 の責務)",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": false,
+      "needs_lifecycle_enforcement": false,
+      "combinators": [],
+      "feedback_contract": {
+        "skip_reason": "ref kind は参照回答のみで反復ループを持たない (source-traceability と ref-review でカバーする)"
+      },
+      "depends_on": [],
+      "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "ref=source-traceability+ref-review"
+      }
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "handout-content-architect",
+      "description": "ヒアリング結果から資料の構成データ (セクション構成・部品選択・lead-line・判断軸・用語言い換え宣言・日付・R21 の型フィールド) を独立 context で設計したいときに使う",
+      "tools": [
+        "Read",
+        "Write"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-design-config.md",
+      "prompt_layer": "7layer",
+      "depends_on": [
+        "C04",
+        "C23"
+      ],
+      "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+verdict"
+      }
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-handout-build",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-handout-build",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "レクチャー資料を作りたい",
+        "導入ガイドの HTML を生成",
+        "handout を作る"
+      ],
+      "goal": "題材のヒアリングから構成データを確定し、外部依存ゼロの単一 HTML 資料 1 個と同梱物一式が既定の命名規則で出力され、自己完結性・a11y・印刷・言語規約・日付表記の全ゲートが exit0 になった状態",
+      "purpose_background": "初心者・非エンジニア向けの資料は毎回ゼロから手書きされ、部品もデザイン言語も資産として残らない。構成データ駆動へ移せば反復配布できるテンプレートになる",
+      "checklist": [
+        "題材と読み手のヒアリング",
+        "構成データの確定",
+        "単一 HTML の決定論生成",
+        "生成物ゲートの exit0",
+        "出力先への配置"
+      ],
+      "output_contract": "出力ディレクトリ 1 個 (資料 HTML / 構成データ JSON / 素材 / README) + 生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果)",
+      "boundary": "入力=題材と素材、または検証済みの構成データ/出力=単一 HTML と同梱物。対話は既定経路であって唯一経路ではない (逆抽出からの再生成と自動実行を対話で塞がない)。HTML の組み立て自体は決定論 script へ委譲し LLM で書かない。読みやすさの最終判定は C03 へ委譲する",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-elicit",
+          "summary": "読み手・前提知識・用途・本質的課題・背景・資料全体のゴール・分量・セクション構成・素材・日付・出力先に加え、R21 で必須化した 達成したい具体業務 (target_tasks・C58) / 冒頭主題 (focus_theme・C47) / 到達レベル (attainment_level・C54) / 覚えていただきたいこと・覚えなくてよいこと (must_remember と no_need_to_remember の対・C57) を対話でヒアリングして確定する。ヒアリング項目定義の単一正本は本責務 (skill-brief-C01.json の hearing_required_items_r21)。提示順はヒアリング項目にせず、利用者の明示上書きだけを受け付ける。検証済みの構成データを直接渡された場合はヒアリングを省いて後続へ進む非対話経路も受け付ける",
+          "prompt_required": true
+        },
+        {
+          "id": "R2-design",
+          "summary": "用途に対応するプリセットを選び、構成データ設計を handout-content-architect へ委譲して、部品選択と lead-line・判断軸・セクションゴール・用語言い換え宣言を含む構成データを確定する",
+          "prompt_required": true
+        },
+        {
+          "id": "R3-render",
+          "summary": "検証済み構成データからアセット埋め込み・図解・アイコン sprite・レンダリングを決定論 script 列で実行し単一 HTML を生成する",
+          "prompt_required": true
+        },
+        {
+          "id": "R4-verify",
+          "summary": "4 ゲートを /handout-verify (C09) 経由で実行しその集約結果を受け取り、出力先ルーティングまで通して生成レポートを返す。4 状態分類と全体 verdict の規則は C09 が単一正本でここでは再実装しない (P03 Y-07)。出力ディレクトリへ README.md を書くのはこの責務、handout-config.json と assets/ 原本の配置は C19 (P03 Y-04)",
+          "prompt_required": true
+        }
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "validate-handout-config.py",
+        "resolve-handout-preset.py",
+        "verify-handout-selfcontained.py",
+        "verify-handout-a11y-print.py",
+        "verify-handout-language.py",
+        "verify-handout-narrative.py",
+        "route-handout-output.py"
+      ],
+      "external_systems": [
+        "slide-report-generator (画像生成の委譲先・不在時 skip)"
+      ],
+      "mcp_tools": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": [
+        "with-goal-seek",
+        "with-feedback-contract"
+      ],
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "構成データが validate-handout-config.py を通り、各セクションの lead-line と判断軸の一文・日付フィールド・用語言い換え宣言の欠落が 0 件で確定する",
+            "verify_by": "script"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "生成した単一 HTML 資料 1 個が外部依存ゼロで開き、自己完結性・a11y・印刷・言語規約・日付表記のゲートが全て exit0 になり、出力先に資料 HTML と構成データと素材と README が揃うことを受入テストが確認する",
+            "verify_by": "test"
+          },
+          {
+            "id": "OUT2",
+            "loop_scope": "outer",
+            "text": "出力先へ同梱された構成データから 2 回生成したとき出力 HTML がバイト一致し、決定論レンダリングの再現性が保たれることを受入テストが確認する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "depends_on": [
+        "C03",
+        "C04",
+        "C05",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C21",
+        "C22",
+        "C23"
+      ],
+      "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-handout-extract",
+      "skill_kind": "run",
+      "kind": "run",
+      "skill_name": "run-handout-extract",
+      "prefix": "run",
+      "hierarchy_level": "L1",
+      "trigger_conditions": [
+        "既存の資料 HTML から構成データを取り出す",
+        "手書き HTML をテンプレート化",
+        "handout を逆抽出"
+      ],
+      "goal": "既存の単一 HTML から構成データ JSON が復元され、その構成データを再レンダリングした HTML が元 HTML と構成データ等価であることが round-trip テストで確認された状態",
+      "purpose_background": "手書きで作られた過去の資料を資産化するには、HTML から構成データへ戻す経路が要る。戻せて初めてテンプレートとして反復配布できる",
+      "checklist": [
+        "既存 HTML の走査",
+        "構成データの復元",
+        "復元不能箇所の補完判断",
+        "round-trip 等価の確認"
+      ],
+      "output_contract": "構成データ JSON + 逆抽出レポート (復元した部品一覧・復元不能箇所と採った補完・round-trip 差分)",
+      "boundary": "入力=既存の単一 HTML/出力=構成データ JSON と round-trip 判定。資料内容の書き換え・改善提案はしない",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-scan",
+          "summary": "対象 HTML を決定論抽出器にかけ、復元できた部品と復元不能な箇所を切り分ける",
+          "prompt_required": true
+        },
+        {
+          "id": "R2-complete",
+          "summary": "復元不能箇所 (lead-line や判断軸など HTML から一意に定まらない意味情報) の補完方針を判断し構成データを確定する",
+          "prompt_required": true
+        },
+        {
+          "id": "R3-roundtrip",
+          "summary": "確定した構成データを再レンダリングし、元 HTML との構成データ等価を判定して逆抽出レポートを返す",
+          "prompt_required": true
+        }
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "extract-handout-config.py",
+        "validate-handout-config.py",
+        "render-handout.py",
+        "verify-handout-selfcontained.py"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": true,
+      "prompt_layer": "7layer",
+      "combinators": [
+        "with-goal-seek",
+        "with-feedback-contract"
+      ],
+      "goal_seek": {
+        "engine": "inline",
+        "fork": "subagent",
+        "max_loops": 5
+      },
+      "feedback_contract": {
+        "criteria": [
+          {
+            "id": "IN1",
+            "loop_scope": "inner",
+            "text": "逆抽出した構成データが validate-handout-config.py を通り、復元不能箇所が補完方針つきでレポートへ列挙される",
+            "verify_by": "script"
+          },
+          {
+            "id": "OUT1",
+            "loop_scope": "outer",
+            "text": "復元した構成データを再レンダリングした HTML が元 HTML と構成データ等価であることを round-trip テストが確認する",
+            "verify_by": "test"
+          }
+        ]
+      },
+      "depends_on": [
+        "C11",
+        "C12",
+        "C16",
+        "C20"
+      ],
+      "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "loop=criteria-test+content-review-verdict"
+      }
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "assign-handout-readability-evaluator",
+      "skill_kind": "assign",
+      "kind": "assign",
+      "skill_name": "assign-handout-readability-evaluator",
+      "prefix": "assign",
+      "hierarchy_level": "L2",
+      "trigger_conditions": [
+        "資料が初心者に伝わるか見てほしい",
+        "読みやすさレビュー",
+        "handout のレビューを依頼"
+      ],
+      "goal": "生成した資料が初心者に伝わるかを、生成した本人とは別 context のレビュアーが判定し、指摘と根拠を含む verdict が返っている状態",
+      "purpose_background": "文長や言い換え被覆は決定論ゲートで測れるが、初心者に伝わるかは意味判断であり機械では測れない。提案者が自作を採点しない構造にする必要がある",
+      "checklist": [
+        "レビュー入力の受け渡し",
+        "独立 context での判定",
+        "verdict の返却"
+      ],
+      "rubric_refs": [
+        "ref-handout-design-system"
+      ],
+      "output_contract": "readability verdict (PASS/FAIL + 指摘一覧 + 根拠となる該当箇所 + 改善提案)",
+      "boundary": "入力=生成 HTML と構成データ/出力=verdict のみ。資料の書き換えはしない (修正は C01 の責務)",
+      "output_language": "ja",
+      "placement_candidates": [
+        "Skill"
+      ],
+      "responsibilities": [
+        {
+          "id": "R1-assign",
+          "summary": "生成 HTML と構成データと決定論ゲート結果を独立 context のレビュアーへ渡し verdict を回収する",
+          "prompt_required": true
+        }
+      ],
+      "cli_tools": [],
+      "deterministic_checks": [
+        "verify-handout-language.py"
+      ],
+      "external_systems": [],
+      "mcp_tools": [],
+      "needs_independent_context": true,
+      "needs_lifecycle_enforcement": false,
+      "prompt_layer": "7layer",
+      "combinators": [],
+      "feedback_contract": {
+        "skip_reason": "assign kind は評価委譲のみで自身は反復ループを持たない (evaluator verdict でカバーする)"
+      },
+      "depends_on": [
+        "C18",
+        "C04"
+      ],
+      "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "quality_gates": {
+        "p0_lint": [
+          "lint-skill-name",
+          "lint-skill-description",
+          "lint-skill-tree",
+          "validate-frontmatter",
+          "lint-dependency-direction",
+          "lint-skill-dep-step7",
+          "lint-forbidden-deps",
+          "lint-manifest-contents"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "assign=evaluator verdict"
+      }
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "handout-readability-reviewer",
+      "description": "生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・一文の長さを指摘したいときに使う",
+      "tools": [
+        "Read",
+        "Bash"
+      ],
+      "independent_context": true,
+      "responsibility_anchor": "prompts/R-review-readability.md",
+      "prompt_layer": "7layer",
+      "evaluator_pair": "C01",
+      "depends_on": [
+        "C03"
+      ],
+      "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter",
+          "lint-skill-description",
+          "lint-agent-prompt-section"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+verdict"
+      }
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "handout-build",
+      "description": "題材から単一 HTML の資料生成を手動起動する (--theme は構成データにテーマ欄が無い場合のみ有効で、採用値は同梱構成データへ書き戻されるため再現の単位は同梱構成データに閉じる)",
+      "argument-hint": "[題材] [--config <config.json>] [--doc-type <種別>] [--out-dir <path>] [--theme <preset>] [--date <yyyy/mm/dd>]",
+      "allowed-tools": [
+        "Read",
+        "Write",
+        "Bash",
+        "Skill"
+      ],
+      "disable-model-invocation": false,
+      "depends_on": [
+        "C01"
+      ],
+      "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+test"
+      }
+    },
+    {
+      "id": "C08",
+      "component_kind": "slash-command",
+      "name": "handout-extract",
+      "description": "既存の単一 HTML から構成データの逆抽出と round-trip 判定を手動起動する",
+      "argument-hint": "<html-path> [--out <config.json>]",
+      "allowed-tools": [
+        "Read",
+        "Write",
+        "Bash",
+        "Skill"
+      ],
+      "disable-model-invocation": false,
+      "depends_on": [
+        "C02"
+      ],
+      "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+test"
+      }
+    },
+    {
+      "id": "C09",
+      "component_kind": "slash-command",
+      "name": "handout-verify",
+      "description": "既存の資料 HTML に自己完結性・a11y と印刷・言語と日付・語りの一貫性の 4 ゲート (C16/C17/C18/C22) を手動で掛け、pass/fail/error/not-run の 4 状態で集約する。ゲート結果の集約規則の単一正本はこの command (P03 Y-07)",
+      "argument-hint": "<html-path> [--config <config.json>] [--out-dir <path>] [--only <gate,...>] [--json-report <dir>]",
+      "allowed-tools": [
+        "Read",
+        "Bash"
+      ],
+      "disable-model-invocation": false,
+      "depends_on": [
+        "C16",
+        "C17",
+        "C18",
+        "C22"
+      ],
+      "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "quality_gates": {
+        "p0_lint": [
+          "validate-frontmatter"
+        ],
+        "build_trace": "required",
+        "elegant_review": {
+          "conditions": [
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "all_pass": true
+        },
+        "content_review": {
+          "verdict": "PASS",
+          "sha_match": true
+        },
+        "evaluator": {
+          "threshold": 80,
+          "high_max": 0
+        }
+      },
+      "harness_coverage": {
+        "min": 80,
+        "kind_pass": "content-review-verdict+test"
+      }
+    }
+  ],
+  "plugin_level_surfaces": {
+    "manifest": {
+      "required": true,
+      "path": ".claude-plugin/plugin.json"
+    },
+    "composition": {
+      "required": true,
+      "path": "plugin-composition.yaml"
+    },
+    "harness_eval": {
+      "required": true,
+      "path": "EVALS.json"
+    },
+    "references_config_assets": {
+      "required": true,
+      "record_in": "index.plugin_meta.ssot_dedup",
+      "detail": "assets/ にデザイントークン・マスコット SVG・アイコンセットを vendoring し (jp-web-design はユーザーグローバル資産で本 repo 非同梱ゆえ実行時参照しない)、config/ に既定出力先とサイズ上限の既定値・用途種別の語彙正本・用途別セクション構成プリセットを置き、config/handout-parts.json に部品 id 語彙の正本 (owner C11)・config/handout-sections.json に section_kind の正本 (writer C12) を置き、references/ にはアイコン規約と部品の使い分け規範 (id 列挙を含まない散文) を置く。用途種別の語彙は config/ の 1 ファイルが単一正本で、出力先命名 (C19) とプリセット解決 (C23) の双方がそれを参照する"
+    },
+    "schemas": {
+      "required": true,
+      "path": "schemas/handout-config.schema.json",
+      "detail": "構成データは全 component の共有 contract であり、レンダラ・検証器・逆抽出器・構成データ設計 agent が同一 schema を参照する。script 内へ埋め込むと 4 箇所で二重管理になる"
+    },
+    "vendor": {
+      "required": false,
+      "omitted_reason": "cross-plugin SSOT の複製は行わない。デザイントークンとマスコットは assets/ 配下の自前資産として vendoring し (references_config_assets 側で計上)、slide-report-generator の画像生成パイプラインは複製せず subprocess 委譲 + 不在時 fail-soft で扱うため vendor/ ディレクトリを設けない"
+    },
+    "mcp_app_connector": {
+      "required": false,
+      "omitted_reason": "資料生成は入力ファイルと標準ライブラリのみで完結し外部サービス接続を持たない。画像生成も既存 plugin への subprocess 委譲であり MCP/app connector を新設しない"
+    },
+    "notion_config": {
+      "required": false,
+      "omitted_reason": "domain DB を持たない (資料の入出力はローカルファイルのみ)。改善フィードバックの受け皿キーは index.plugin_meta.feedback_deploy.notion_sink 側が宣言し、二重に載せない"
+    }
+  },
+  "envelope_design": {
+    "manifest_owner": "Phase02 (design)",
+    "draft_path": "envelope-draft/plugin.json",
+    "name": "guide-doc-generator",
+    "distributable": false,
+    "rationale": "初版は本 repo 内での dogfood を先行させ、marketplace 登録は受入確認が通ってからユーザー承認のもとで行う。distributable:false と bundles 空を整合させる",
+    "env_resolution": {
+      "primary": "HB_ROOT",
+      "fallback_expression": "${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}",
+      "second_fallback": "__file__ 相対の自己解決 (scripts/ の親 = plugin 実体)",
+      "guard": "plugin.json の name が guide-doc-generator であることを照合してから採用する二重防御",
+      "rationale": ".claude/ 平置き projection では CLAUDE_PLUGIN_ROOT が 1 値しか持てず別 plugin (ubm-goal-setting) が保持しているため、slide-report-generator (SRG_ROOT) / harness-creator (HC_ROOT) と同じ専用 env 方式を採る"
+    }
+  }
+}

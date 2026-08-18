@@ -1,0 +1,42 @@
+{
+  "skill_name": "assign-handout-readability-evaluator",
+  "prefix": "assign",
+  "kind": "assign",
+  "hierarchy_level": "L2",
+  "trigger_conditions": [
+    "資料が初心者に伝わるか見てほしい",
+    "読みやすさレビュー",
+    "handout のレビューを依頼"
+  ],
+  "output_contract": "readability verdict (PASS/FAIL + 指摘一覧 + 根拠となる該当箇所 + 改善提案)",
+  "boundary": "入力=生成 HTML と構成データ/出力=verdict のみ。資料の書き換えはしない (修正は C01 の責務)",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "verify-handout-language.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "checklist": [
+    "レビュー入力の受け渡し",
+    "独立 context での判定",
+    "verdict の返却"
+  ],
+  "goal": "生成した資料が初心者に伝わるかを、生成した本人とは別 context のレビュアーが判定し、指摘と根拠を含む verdict が返っている状態",
+  "output_language": "ja",
+  "purpose_background": "文長や言い換え被覆は決定論ゲートで測れるが、初心者に伝わるかは意味判断であり機械では測れない。提案者が自作を採点しない構造にする必要がある",
+  "responsibilities": [
+    {
+      "id": "R1-assign",
+      "summary": "生成 HTML と構成データと決定論ゲート結果を独立 context のレビュアーへ渡し verdict を回収する",
+      "prompt_required": true
+    }
+  ],
+  "rubric_refs": [
+    "ref-handout-design-system"
+  ]
+}

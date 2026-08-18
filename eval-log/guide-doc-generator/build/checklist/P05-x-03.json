@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P05-x-03",
+  "covered_task_ids": [
+    "P05-x-03"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "config/ 配下に 4 本の宣言データが実在する",
+      "method": "ls -la plugins/guide-doc-generator/config/",
+      "result": "pass (handout-output.json 1611 / handout-parts.json 5949 / handout-purposes.json 17350 / handout-sections.json 5468 bytes)"
+    },
+    {
+      "claim": "4 本とも json.load 可能",
+      "method": "python3 で全 4 本を json.load しトップレベルキーを列挙",
+      "result": "pass (parts=_meta/version/field_semantics/parts/non_part_structure_markers、sections=_meta/version/default/kind_attribute_semantics/section_kinds、purposes=_meta/schema_version/vocabulary/presets、output=_meta/version/default_out_dir/size_limits)"
+    },
+    {
+      "claim": "用途語彙 8 語が presets のキー集合と一致する",
+      "method": "sorted(presets) を独立に列挙",
+      "result": "pass (agenda/guide/lecture/onboarding/proposal/report/study-notes/study-plan)"
+    },
+    {
+      "claim": "裁定 A: 全 preset のキーが閉じた allowlist の部分集合である",
+      "method": "ALLOWED_PRESET_KEYS 6 キーを再定義し set(preset) - ALLOWED を全 8 件で計算",
+      "result": "pass (extra=set() が 8/8)"
+    },
+    {
+      "claim": "裁定 C: granularity_defaults が 8 preset すべてに存在し proposal が standard/sourced である",
+      "method": "各 preset の granularity_defaults を出力",
+      "result": "pass (8/8 存在。proposal={detail_level: standard, evidence_depth: sourced})"
+    },
+    {
+      "claim": "part id 語彙が canon と一致する",
+      "method": "handout-parts.json の parts から id を列挙",
+      "result": "pass (B01..B17 + DIAGRAM/IMG/TEXT の 20 件。B17 は下記 deviation を参照)"
+    },
+    {
+      "claim": "外部 URL を含まない",
+      "method": "grep -rEn 'https?://' plugins/guide-doc-generator/config/ | wc -l",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain",
+      "result": "pass (untracked の plugins/guide-doc-generator/ 配下のみ。tracked の変更は本 leaf と無関係な既存 4 ファイルで、いずれも本 leaf 開始前から dirty)"
+    },
+    {
+      "claim": "既存テストが config 起因の新規エラーを出していない (resolve-handout-preset)",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/resolve-handout-preset.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=123。全件 scripts/resolve-handout-preset.py 未実装が由来で、catalog 読み込み系の診断コードは 0 件)"
+    },
+    {
+      "claim": "報告された render-handout テストとの衝突が実在する",
+      "method": "unittest -k test_no_config_file_added_for_text_limits を単体実行",
+      "result": "pass (再現。AssertionError: config/ のデータファイルは 3 本 (P03 で固定)。差分は +handout-output.json のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "spec-acceptance-text-stale",
+      "detail": "task-spec の受入文は part id 語彙を 'B01..B16 / IMG / DIAGRAM / TEXT' と書くが、canon (briefs/config/handout-parts.json、C12 の handson section_kind、C23 の lecture preset の recommended_parts) は B17 (ハンズオン手順) を要求する。B17 を落とすと lecture preset が未知 part を参照して catalog 検査が落ちるため canon に従い B17 を含めた。受入文側の表記が古い"
+    },
+    {
+      "kind": "contract-derived-value-not-invariant",
+      "detail": "tests/render-handout.py/test_r21_rendering.py::test_no_config_file_added_for_text_limits が config/ のファイル一覧を 3 本のリテラル list として固定しており、C19 が必須とする handout-output.json の追加で落ちる。C11 ブリーフの not_a_new_config_file の趣旨は『text_limits のために 4 本目を作るな』であって出力先宣言ファイルまで禁じる射程は無く、tests/route-handout-output.py/_harness.py は config/handout-output.json の実在を必須としているため、両テストは現状両立しない。これは本 build で 3 度目の『導出値 (ファイル本数) を契約に書いた』欠陥クラス。修正は tests/ を write_scope に持つ後続 leaf の責務 (テスト修正は本 leaf の write_scope 外)"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker が裁量で決めた 3 件。(1) handout-purposes.json の schema_version の具体値がブリーフに無いため 1 (整数) を採用 (2) handout-output.json のサイズ上限の鍵名と値がブリーフ未確定。C10 の 8 MiB は仮置きと明記されているため採らず、根拠のある C13 の --max-bytes 既定 5 MiB を size_limits.asset_max_bytes として置き出所をフィールドに明記した。C13 CLI 既定との二重正本化を避けるには『C13 がこのファイルを読む』ことの明文化が要る (3) 全 4 本に _meta トップレベルキーを付与。C23 の catalog 検査は未知トップレベルキーを拒まないが、実装時に strict 化するなら _meta を許可リストへ入れる必要がある"
+    }
+  ]
+}

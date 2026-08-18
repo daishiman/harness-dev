@@ -1,0 +1,238 @@
+{
+  "component_id": "C05",
+  "component_kind": "sub-agent",
+  "name": "handout-content-architect",
+  "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+  "description": "ヒアリング結果から資料の構成データ (セクション構成・部品選択・lead-line・判断軸・用語言い換え宣言・日付) を独立 context で設計したいときに使う",
+  "tools": [
+    "Read",
+    "Write"
+  ],
+  "tools_rationale": "Read は 3 種の正本 (schemas/handout-config.schema.json / config/handout-parts.json の部品カタログ (id 語彙の正本・owner C11) と references のアイコン規約 / config の用途語彙+プリセット正本、および親が渡すヒアリング結果 JSON と素材一覧) を引くために要る。Write は構成データ JSON を 1 ファイル書き出すために要る (戻り値本文へ長大な JSON を載せると親 context を汚し、C12 検証器へそのまま渡せない)。Bash は持たせない: resolve-handout-preset.py (C23) と validate-handout-config.py (C12) の実行は親 skill C01 の R2-design が担い、この agent は親が解決済みのプリセット JSON を入力として受け取る。設計者に検証器の実行権を与えると、自分の出力を自分で合否判定する構図 (proposer=approver) が構成データ層にも生まれる。Edit も持たせない: 既存 HTML や既存構成データの部分改変はこの agent の責務ではない (C02 逆抽出 / C01 再生成の責務)。inventory C05.tools=[Read, Write] と一致する",
+  "question_solved": "確定済みのヒアリング結果と用途プリセットから、決定論レンダラ C11 がそのまま食える構成データ JSON 1 個を、R11 (抽象1行→具体部品→判断軸1行) と R19 (資料全体ゴールから各セクションゴールへの連なり) を両立させた形で設計すると、どのセクション構成・部品選択・lead-line・判断軸・section goal・用語言い換え宣言になるか。加えて、挿絵を持つセクションについて『そのセクションで言いたいこと』に固有の図解 (被写体・図解構造・焼き込む要点語・モチーフ) をどう書くか — 参照デッキの構図を丸写しせず、内容が変われば図も変わる形で書けるか (R23)",
+  "input_contract": {
+    "receives": [
+      "hearing_result: R19 のヒアリング確定値。{reader, prior_knowledge_level, usage_scene(=用途種別 1 語), essential_problem(なぜこの資料が要るのか), background, overall_goal, duration_or_volume, section_outline[]} の 8 項目に、R21 で {focus_theme[] (1-2 件), target_tasks[] ({id,label} 1 件以上), attainment_level, must_remember[] (最大 2 件), no_need_to_remember[], presentation_order (利用者が明示上書きしたときのみ。省略時は null で渡り C12 が prior_knowledge_level から導出する)} の 6 項目を加えた 14 項目。項目定義の正本は C01 の R1-elicit.hearing_required_items_r21 であり、本 agent は受け取るだけで項目を増やさない。presentation_order 以外は全項目が確定済みで渡される (未確定項目があるときは設計に進まず blocked を返す)",
+      "preset: 親が resolve-handout-preset.py --purpose <種別> で解決済みのプリセット JSON (セクション順序と推奨部品)。用途種別の語彙もこの JSON の値が正で、agent 側で 8 語を列挙し直さない",
+      "materials: 利用可能な素材の一覧 (画像・添付ファイルの論理名と用途メモ)。実バイナリは受け取らない",
+      "theme: 任意。指定があれば構成データのテーマ欄へ写す。指定が無ければテーマ欄を出さない",
+      "date: 任意。ヒアリングで資料日付が明示されたときのみ渡る",
+      "out_config_path: 構成データ JSON の書き出し先 1 パス"
+    ],
+    "reads_files": [
+      "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "plugins/guide-doc-generator/config/handout-parts.json (部品 id 語彙の正本) と plugins/guide-doc-generator/references/ (部品の構成データ表現・アイコン規約・文章設計の型。id 列挙は持たない)",
+      "plugins/guide-doc-generator/config/ (用途種別の語彙正本と用途別セクション構成プリセット)",
+      "親から渡された hearing_result / preset / materials の JSON ファイル",
+      "style genome 2 系統 (挿絵を持つセクションを設計するときだけ読む)。isometric-diorama = <SRG_ROOT>/vendor/assets/style-genome-kanagawa-comic-diagram.json、flat-infographic-jp = plugins/guide-doc-generator/genomes/style-genome-flat-infographic-jp.json。読むのは semanticMapping / noveltyRule.industryObjectTable / motifs[] / contentAdaptationRules / layoutSelectionByStructure / densityPreservation.densityLevels の 6 節で、概念語彙・motif 名・密度語彙はここから引く (記憶で書かない)"
+    ],
+    "must_not_assume": "親会話に載っている次のものを一切持ち込まない。(1) 参照 HTML (reference-guide-stripped.html / reference-guide-v2.html) の本文・見出し・例文。持ち込むと『Claude に触って慣れる日』のような参照資料固有の文言を今回の題材へ流用する方向へ寄る。参照 HTML は部品と文章設計の型の出所であって、文面の出所ではない。(2) plugin-plans / analysis / task-graph といった開発計画側の文脈。資料の読者は plugin 開発者ではない。(3) 親が会話中に述べた読者像・目的の言い換えや、ヒアリング前の仮説。入力 hearing_result に書かれていない読者属性・課題・ゴールを補って設計しない。(4) 用途種別の語彙とプリセット内容を記憶から復元すること。必ず渡された preset と config 正本を読む。(5) 現在日。日付が入力に無いときは date フィールドを出力せず、既定充填は C12 --normalize に委ねる (日付の単一 writer 規約)。(6) 参照デッキ・参考画像の構図。genome は特定構図のコピー金型ではない (contentAdaptationRules.notACopyTemplate)。歯車群・蛇行パス・鳥居・章番号配置といった既存デッキの絵をそのまま持ち込まず、同じ画風で今回の内容に合う構図と被写体を新規に組む。固定してよいのは画風・配色・motif 語彙・構図ルールだけで、図解の中身 (ノード数・配置・被写体・人物数) は可変である。(7) genome の語彙の記憶復元。motif 名・概念カテゴリ名・密度語彙・layoutTemplate 名を記憶で書かず、必ず genome ファイルを読んで引く (存在しない motif 名を書くと C21 が exit2 で差し戻す)。(8) 焼き込みテキストの上限値。ブロック数と字数の上限は C21 の baked_text_discipline が正本であり、この agent は数値を持たない"
+  },
+  "output_contract": {
+    "returns": "{\"status\": \"ok|blocked\", \"config_path\": \"書き出した構成データ JSON の絶対パス\", \"purpose\": \"用途種別 1 語 (preset 由来)\", \"section_summary\": [{\"id\": \"s1\", \"title\": \"\", \"goal\": \"\", \"lead_line\": \"\", \"decision_line\": \"\", \"components\": [\"B03\", \"B09\"]}], \"glossary_terms\": [\"初出の専門用語\"], \"date_supplied\": true|false, \"materials_used\": [\"論理名\"], \"materials_unused\": [{\"name\": \"\", \"reason\": \"\"}], \"decision_log\": [{\"decision\": \"\", \"rationale\": \"\", \"alternatives_rejected\": [\"\"]}], \"open_questions\": [\"設計を止めるほどではないが親の確認が要る点\"], \"image_plan_summary\": [{\"section_id\": \"\", \"diagram_pattern\": \"\", \"style_family\": \"\", \"density_level\": \"\", \"primary_motif\": \"\", \"baked_block_count\": 0}], \"blocked_reason\": \"status=blocked のときだけ非空\"} — section_summary と image_plan_summary は構成データの写しではなく親が一覧で確認するための要約 (本体は config_path 側 1 点が正)。image_plan_summary は挿絵を持つセクションだけを並べ、全セクションで (diagram_pattern, primary_motif) が同一でないことを親が目視でも確認できるようにする (機械判定は C21)",
+    "writes_files": [
+      "out_config_path で指定された構成データ JSON 1 ファイルのみ"
+    ]
+  },
+  "boundary": "HTML を 1 行も書かない。CSS 変数値・クラス名・SVG マークアップ・localStorage 実装のいずれも出力しない。出力は schemas/handout-config.schema.json に従う構成データ JSON 1 個だけであり、そこから単一 HTML への写像は決定論レンダラ C11 の専有責務である (LLM をレンダリング経路へ挟むと同一構成データ→バイト一致再現性 C29 が原理的に失われる)。図解は『パターン名 (フロー/比較/階層/サイクル/マトリクス/対比2択) と構造データ』を構成データへ宣言するところまでで、SVG 座標計算は C14 が行う。アイコンは『アイコン名の参照』までで、symbol 抽出は C15 が行う。素材は論理名の参照までで、data URI 化は C13 が行う。挿絵は『画像計画フィールド (subject / diagram_structure / overlay_text / alt / motifs の 3 役 / density_level / adaptation_trace / diagram_pattern / style_family / baked_text / text_policy) を構成データへ書く』までで、そこから先は一切触らない — 画像生成プロンプトの本文を書かない (組み立ては SRG の build-image-prompts.js が genome から行う。C17)、genome ファイルを書かない・複製しない・値を引用して構成データへ写さない (読んで引くだけ)、画像そのものを生成しない、生成後の画像を評価しない。焼き込みブロック数と字数の上限値も持たない (正本は C21 の baked_text_discipline)。ヒアリングそのものは行わない: inventory の C01.responsibilities R1-elicit が読者・前提知識・用途・本質的課題・背景・全体ゴール・分量・セクション構成・素材・日付・出力先の確定を担い、この agent は R2-design が確定値を渡してきた後にだけ起動する。ユーザーへ質問を投げ返さず、判断に足りない項目があれば status=blocked と blocked_reason で親へ差し戻す。構成データの合否判定 (validate-handout-config.py) と出力先解決 (route-handout-output.py) も親が実行し、この agent は自分の出力を自分で合格判定しない。資料本文の全原稿を書き切ることもしない: 各セクションに要る lead-line / 判断軸の一文 / section goal / 部品ごとの要素 (見出し・項目・比較軸など) を設計する範囲に留め、題材固有の長文執筆を自動化しない (inventory の rejected 判断『資料内容そのものの執筆』に従う)",
+  "isolation_rationale": "親会話 (C01 run-handout-build) には参照 HTML v1/v2 の内容、部品カタログの実装詳細、plugin の build 文脈、そしてヒアリング途中の仮説と言い直しが全て載っている。同一 context で構成設計まで行うと 3 つの壊れ方が起きる。(1) 参照資料の文面が今回の題材へ流用され、読者と本質的課題が違うのに書き出しだけ似た資料が出る。(2) ヒアリングの途中で捨てた仮説 (最初に述べた読者像など) が構成へ残留し、確定値と食い違う。(3) レンダラや検証器の実装事情が構成データへ漏れ、『検証を通しやすい形』へ最適化した lead-line が書かれて Goodhart 化する。独立 context で入力を hearing_result + preset + 正本ファイルに限ることで、構成データが確定値だけから導かれたことを入力面で保証する",
+  "procedure": [
+    "入力 hearing_result の 14 項目 (読者 / 前提知識レベル / 利用シーン / 本質的課題 / 背景 / 資料全体ゴール / 所要時間・分量感 / セクション構成 / 冒頭主題 / 達成したい具体業務 / 到達レベル / 覚えていただきたいこと / 覚えなくてよいこと / 提示順の明示上書き) の充足を確認する。提示順を除き、空または未確定の項目が 1 つでもあれば設計に入らず status=blocked で差し戻す (C36 の必須フィールドをここで先に満たす)。とくに『覚えていただきたいこと』と『覚えなくてよいこと』は対であり、片方だけが埋まっている入力は blocked とする (R21 C57)",
+    "R21 の型制約を構成データへ写す。(a) focus_theme を 1-2 件に保ち、冒頭セクションでは focus_theme に紐づく内容だけを扱う (b) 各 section へ ties_to を必ず与え、goal / focus_theme:<idx> / target_task:<id> のいずれかを指す。どれにも紐づかない伝達事項は role=appendix の logistics セクションへ隔離する (C48) (c) 冒頭に flow-overview セクションを 1 件置き、大きな流れだけを 5 件以内で並べて個々の手順の詳細を書かない (C46) (d) 機能解説は capability-explainer セクションとし、parts[].slot を outcome → breakdown → feature の順に与え、lead_line を機能名から始めない (C51) (e) attainment_level を超える内容のセクションを作らない (C54) (f) 対話枠 (dialogue) と handson と anticipated-qa を preset の required に従って配置し、各 section の duration を書く (C53 / C59)。提示順は自分で決めない — hearing_result.presentation_order が null なら構成データにも書かず、C12 --normalize の導出に委ねる (CR-PRESENTATION-ORDER の実行点は C12 のみ)",
+    "schemas/handout-config.schema.json を読み、資料単位の必須フィールドとセクション要素の必須フィールドを把握する。以降の出力は記憶ではなくこの schema に従う",
+    "渡された preset JSON を読み、セクションの順序と推奨部品を採用する。プリセットの合成はしない (混成用途は不可)。ヒアリングの section_outline がプリセットに無い要素を求めている場合は、順序を組み替えるのではなくセクション追加で吸収し、その判断を decision_log へ残す",
+    "config/handout-parts.json の部品カタログ (section_scope が in-section の部品が候補) を読み、各セクションの内容に対して部品を選ぶ。選定根拠は『その部品が担う構造 (並び / 比較 / 分岐 / 折りたたみ / 手を動かす)』であり、見た目ではない。用途別追加要求 (アジェンダの時間配分は B03 の右列 / 決定事項は B09 / 学習まとめの出典は B07 の脚注領域 / 学習計画の 3 分割は B04 + メモ機構) は inventory の preset_addon_decisions の再利用判断に従い、新規部品を発明しない",
+    "各セクションに何を載せるかを決める前に、**何を載せないか** を決める (R24 D5)。正本は config/handout-visual-policy.json#content_selection。素材の項目数と資料の項目数は一致しなくてよい。載せるのは『読み手がその節を読んで判断できるようになること』に必要な項目だけで、網羅の確認には素材そのものを見てもらう。落とした項目は decision_log へ『載せなかった』と残し、生成レポートで開示する。全項目を残すために付録へ流し込まない — 付録は『本編に置くと焦点がぼやけるが参照される見込みがある項目』の置き場であって、網羅欲の逃がし先ではない。粒度は doc_type によらず一定であり、プリセットが変えるのはセクションの順序と推奨部品であって 1 部品あたりの情報量ではない",
+    "部品を選んだら、散文を書く前に **そのセクションが伝えている関係が図解にできるか** を先に判定する (R24 D1/D4)。判定表の正本は config/handout-visual-policy.json#diagram_patterns_by_intent であり、順番に進む=flow / 同観点で並べる=compare / 全体と内訳=hierarchy / 繰り返し=cycle / 2 軸の位置づけ=matrix / 2 案の突き合わせ=versus。**長文が生まれる箇所は、たいてい図解にできる関係を文章で代用している箇所である**。図解にできる関係を散文へ流すと、後段でどれだけ推敲しても短くならない。図解の下限は config/handout-visual-policy.json#thresholds.min_diagrams_per_main_sections が持ち、C12 が W-DIAGRAM-FEW / W-VISUAL-ABSENT / W-TEXT-HEAVY / W-TEXT-RUN として発火する。閾値を本 agent の本文へ書き写さず、ファイルを読んで従う",
+    "文字量は総量ではなく **1 部品あたり** で縛る。上限の正本は config/handout-visual-policy.json#micro_copy.roles (label / title / caption の max_chars と対象フィールド)、由来の記録は examples/granularity-anchor.md にある参照実物の実測値である。上限を超えたときは削る前に『この文が説明している関係は何か』を見て、前段の判定表で図解へ逃がす。免除は config/handout-visual-policy.json#micro_copy.exempt_parts / exempt_fields に挙がるものだけで、カード (B04) と表の本文は免除しない — 利用者が『長すぎる』と言うのはまさにそこである。狙う目標形は config/handout-visual-policy.json#draft_first.granularity_anchor (本編セクション数・セクションあたり部品数・概念図解の枚数・表の行数・用語数)",
+    "資料単位の目的 / 背景 / ゴールを書く。目的は本質的課題 (なぜこの資料が要るのか) に答える形にし、ゴールは『読み終えたとき読者が何を分かる/できるか』の到達状態で書く (R19・C37)",
+    "各セクションに R11 の 3 点セットを与える。lead_line = そのセクションが扱う抽象を 1 行で言い切った文 (20-45 字を目安に短く)、具体部品 = 前段で選んだ B0x とその中身、decision_line = 具体を見た読者が次に何を選べばよいかを示す判断軸の一文。判断軸は要約や再掲ではなく『選ぶための問い』の形にする。lead_line は『何の話か』ではなく『何が言えるか』を書く (話題の提示で終える形にしない)。書き方の正本は config/handout-visual-policy.json#opening.section_opening.assertion_style",
+    "節の中の部品を『宣言 → 内訳 → 関係 → 補足』の順に並べる。順序の正本は config/handout-visual-policy.json#opening.section_opening.progression。lead_line で言い切り、要点を並べる部品でその内訳を見せ、DIAGRAM でなぜそう言えるかを見せ、残った補足だけを TEXT 1 本に置く。step を飛ばすのは可、順番を入れ替えるのは不可。図解を節の先頭へ置いて要点を後から足す形にしない (何の主張を支える図なのか分からないまま図を読ませることになる)。読み手はどこで読むのをやめても、そこまでで筋が通っていなければならない",
+    "文書冒頭 (hero) に描画される文を総量で抑える。上限の正本は config/handout-visual-policy.json#opening.hero_total。目的・背景・ゴールをそれぞれ 1 行に収めても、focus_theme・target_tasks・must_remember・no_need_to_remember の 4 リストが縦に積み上がると冒頭だけで 1 画面を超える。溢れたときに削るのは『読み終えたときの持ち帰り』(覚えておくこと・覚えなくてよいこと) である — これは読み手が読む前の判断に使う材料ではない。ただし schema が minItems: 1 を課すため冒頭から消すことはできない。件数を絞って残りを role=appendix の節へ移し、移したことを設計要約に書く。黙って落とさない (content_selection)",
+    "各セクションに R19 の goal を与える。goal は lead_line と別フィールドであり、lead_line で代替しない (C40: 同一セクションに両方が併存し、R11 ゲートと R19 ゲートが同時に exit0 になる必要がある)。全体ゴール → 各セクション goal の連なりが辿れることを自分で確認する",
+    "初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の言い換え宣言を出す。言い換えは前提知識レベルに合わせ、別の専門用語で言い換えない (『コネクタ = 外とつながる』の水準)。宣言した用語が本文フィールドで初出時に括弧書き併記される形になっていることを確認する (C16)",
+    "図解が要るセクションについて、6 パターン (フロー / 比較 / 階層 / サイクル / マトリクス / 対比2択) から 1 つを選び、構造データを宣言する。パターンで表せない内容は図解にせず部品で表す",
+    "アイコンは名称参照のみを書く。絵文字は構成データのどのフィールドにも書かない (C10・機械ゲートで落ちる前に設計側で 0 件にする)",
+    "素材 (画像・添付) を参照するセクションへ論理名で結線し、使わなかった素材は理由付きで materials_unused に残す",
+    "日付を扱う。入力に date があればそのまま構成データへ写す。無ければ date フィールドを出力しない (現在日を自分で取得しない)。テーマも同様に、指定があるときだけテーマ欄を出す",
+    "挿絵を持つセクションについて、セクション別内容適応の 4 段を必ずこの順で踏む (R23 (e)・required。genome の contentAdaptationRules.notACopyTemplate 『固定 = スタイル仕様、可変 = 図解の中身』の執筆側の実装である)。(1) そのセクションの goal と lead_line から主要概念と動詞を抽出する (流れ / 蓄積 / 検証 / 比較 / 成長 / 問題 / 役割 / 自動化 / 判断 / 配布 / 循環 / 階層 / 時系列 の類。語彙は genome の contentAdaptationRules.steps から引く)。抽出語は adaptation_trace の左辺として必ず記録する。(2) genome の semanticMapping で各概念に対応する具体物 motif を引く。該当が無ければ noveltyRule.industryObjectTable を主題の業種で引き、それも無ければ noveltyRule.fallbackOrder に従う。選び方は genome の biasPrevention.deterministicSelection に従い『候補リストの先頭から、この資料でまだ未使用のものを 1 つ』(同点は先頭優先)。同一概念が複数セクションに再出現するときだけ意図的に同じ物を再利用してよい。(3) 内容の論理構造から図解型を選ぶ (genome の layoutSelectionByStructure。図解型そのものは前段の 6 パターンから選んだものと一致させる)。情報量から density_level を選ぶ (値域は genome の densityPreservation.densityLevels のキー)。(4) motifs を {platform, primary, props[]} の 3 役で書く — platform は場面の土台、primary はそのセクションの主題を担う具体物、props は 1 件以上の小物。3 役とも genome の motifs[].name にある名前で書く。この 3 役構造は genome の richnessFloor をデータ形にしたもので、『空の角丸枠 + テキストだけ』の平坦図を書けなくするためにある。subject と diagram_structure は英文で、この 4 段の結果を具体的に記述する (曖昧語 beautiful / high quality / おしゃれ は書かない)。全セクションで (図解型, motifs.primary) が同一になっていないことを自分で確認する — 同一なら内容適応が起きておらず C21 が exit2 で差し戻す",
+    "焼き込みテキスト (baked_text) を書く。既定の text_policy は baked-with-overlay であり、画像内に短い日本語ラベルを焼く (R23 (a)。参考画像が『パッと見て直感的に分かる』のはこの焼き込みラベルが図解の意味を担っているためで、外すと何の図か分からなくなる)。書けるのは 3 形式だけ — keyword (要点語・体言止め) / question (短い問い) / metric (数値強調)。句点を含む完全文、セクション本文の言い換え、見出しの再掲は焼かない (見出しとリード文は HTML 側 C11 が持つ)。metric はそのセクションの構成データに数値があるときだけ 1 件書き、その数字は構成データに逐語で存在するものに限る (無い数字を作らない。効果的に見える数字の捏造を封じる)。数値が無いセクションに metric は書かない。overlay_text は text_policy に関わらず必ず非空で書く — これが正本であり、焼き文字が崩れても overlay 側で内容が読める状態を保つのが印刷 (R15) の安全弁である。text_policy を overlay-only にするのは正確な表・料金・頻繁に変わる文言を扱うときだけで、そのときは text_policy_reason を対で書く (理由なしに焼き込みを外さない)。精密な数値表・料金表そのものは画像にせず HTML 本文で表現し、そのセクションは画像を持たない (genome の nonApplicableTypes.precise-table-or-number)。1 画像あたりのブロック数と 1 ブロックの字数には上限があるが、その数値は C21 の事前検査が正本であり、この agent は数値を持たない。超過で差し戻されたら、文を削って途中で切るのではなく要点語へ言い換える",
+    "style_family を決める。図解型が flow / cycle / hierarchy のときは isometric-diorama (奥行き・順序・連結を読む図)、comparison / matrix / binary-contrast のときは flat-infographic-jp (面積・格子・二項対比を読む図)。この写像の正本は C21 の image_style_families であり、この agent は既定と異なる family を選ぶときだけ style_family を明示する。図解型を持たないセクションの画像は style_family の明示が必須 (既定へ落とさない。欠落は C21 が exit2)。family を選んだら、その family の genome を読んで motif 名を引く (family ごとに motif 語彙が異なるため、別 family の genome から引いた名前は C21 で落ちる)",
+    "out_config_path へ構成データ JSON を書き出し、section_summary / glossary_terms / decision_log / open_questions を含む戻り値を返す。書いた JSON を自分で合格判定せず、検証は親の validate-handout-config.py に委ねる"
+  ],
+  "requirements_covered": [
+    "R07",
+    "R09",
+    "R11",
+    "R12 (画像計画フィールドの唯一の writer。生成と回収は C21)",
+    "R13",
+    "R18",
+    "R19",
+    "R20",
+    "R21 (構成データを R21 の型に沿って書く側。判定は持たない)",
+    "R23 (セクション別内容適応と焼き込み規律を書く側。判定は C21)"
+  ],
+  "checklist_covered": [
+    "C10",
+    "C12",
+    "C15",
+    "C16",
+    "C17 (プロンプト本文と genome を書かない側の遵守者)",
+    "C19",
+    "C33",
+    "C36",
+    "C37",
+    "C38",
+    "C40",
+    "C41",
+    "C43",
+    "C44",
+    "C45"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC1",
+      "how": "build 後の plugins/guide-doc-generator/agents/handout-content-architect.md の frontmatter を読む",
+      "expected": "name=handout-content-architect / description が本 brief の description と一致 (『〜したいときに使う』形式) / tools: Read, Write / isolation: fork / kind: agent / owner_skill: run-handout-build / prompt_ref が責務 prompt を指す。validate-frontmatter と lint-skill-description が exit0"
+    },
+    {
+      "id": "AC2",
+      "how": "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py plugins/guide-doc-generator/agents/handout-content-architect.md",
+      "expected": "exit0。本文に '## Prompt Templates' と '## Self-Evaluation' の見出しがあり、Prompt Templates 節は自動起動 agent ゆえ '(対話なし: 自動実行 agent)' マーカーを持つか '> ' 引用行を持つ。Self-Evaluation 節が 完全性/一貫性/深度/検証可能性/簡潔性 の少なくとも 1 つに言及する"
+    },
+    {
+      "id": "AC3",
+      "how": "agent 本文を読み、出力物の記述を検査する",
+      "expected": "HTML / CSS / SVG マークアップの生成を指示する記述が 0 件で、出力が構成データ JSON 1 個に限定されていると明記されている (決定論分界線の保持)"
+    },
+    {
+      "id": "AC4",
+      "how": "agent 本文の入力節を読む",
+      "expected": "must_not_assume の 5 項目 (参照 HTML の文面 / 開発計画の文脈 / ヒアリング前の仮説 / 語彙とプリセットの記憶復元 / 現在日の自己取得) が禁止として明記されている"
+    },
+    {
+      "id": "AC5",
+      "how": "agent 本文のセクション設計手順を読む",
+      "expected": "lead_line (R11) と section goal (R19) が別フィールドとして両方必須で、一方が他方を代替しないことが明記されている (C40)"
+    },
+    {
+      "id": "AC6",
+      "how": "agent が出力した構成データ JSON に python3 plugins/guide-doc-generator/scripts/validate-handout-config.py --config <out> --strict を掛ける (P06 の実行時検査)",
+      "expected": "exit0。資料単位 8 必須フィールド・全セクションの lead-line / 判断軸 / goal・glossary 宣言の欠落が 0 件"
+    },
+    {
+      "id": "AC7",
+      "how": "date を渡さない入力で 1 回実行し、出力 JSON の日付フィールドを見る",
+      "expected": "date フィールドが存在しない (または null)。agent が生成実行日を自前で埋めていない"
+    },
+    {
+      "id": "AC8",
+      "how": "agent 本文の画像計画の節を読む",
+      "expected": "セクション別内容適応の 4 段 (概念・動詞の抽出 → semanticMapping / noveltyRule での具体物写像 → 内容構造からの図解型と密度の選択 → 3 役 motifs と要点語のみの焼き込み) が required として順番付きで明記されている。あわせて『参照デッキの構図を丸写ししない』『genome の語彙を記憶で書かない』が禁止として書かれている (R23 (e))"
+    },
+    {
+      "id": "AC9",
+      "how": "agent 本文を grep する",
+      "expected": "焼き込みブロック数・字数の上限を表す数値リテラルが 0 件 (正本は C21 の baked_text_discipline)。motif 名・密度語彙・layoutTemplate 名の列挙も 0 件 (正本は genome ファイル)。プロンプト本文のテンプレート文字列と genome の値の写しも 0 件 (C17)"
+    },
+    {
+      "id": "AC10",
+      "how": "挿絵を 3 セクション以上持つ入力で 1 回実行し、出力 JSON の画像計画フィールドを検査する。続けて python3 plugins/guide-doc-generator/scripts/srg-image-bridge.py --image-plan <出力から作った計画> --dry-run を通す",
+      "expected": "全セクションで overlay_text が非空、baked_text が 3 form のいずれか、motifs が 3 役で props が 1 件以上、density_level と adaptation_trace が非空。(diagram_pattern, motifs.primary) が全セクション同一でない。C21 が exit2 を返さない (RESOLUTION-R23 の事前検査を設計側で先に満たしている)"
+    },
+    {
+      "id": "AC-C05-R24-01",
+      "how": "build 後の plugins/guide-doc-generator/agents/handout-content-architect.md 本文を読む",
+      "expected": "図解パターンの判定が散文の執筆より前の手順として現れ、6 パターンの値・文字数上限・目標形の数値がいずれも本文へ直書きされておらず config/handout-visual-policy.json の参照になっている (閾値の二重名簿を作らない)"
+    },
+    {
+      "id": "AC-C05-R24-02",
+      "how": "agent が出力した構成データ JSON に python3 plugins/guide-doc-generator/scripts/validate-handout-config.py --config <out> --strict を掛け、警告一覧を見る",
+      "expected": "W-VISUAL-ABSENT / W-DIAGRAM-FEW / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG が 0 件。0 件でない場合は C01 のゴールシークが本 agent を再委譲する (exit code は warning なので変わらない)"
+    },
+    {
+      "id": "AC-C05-R24-03",
+      "how": "agent 本文のセクション設計手順を読み、doc_type 別の記述を探す",
+      "expected": "『何を載せないかを先に決める』手順が図解判定より前に現れ、かつ粒度・情報量を doc_type やプリセットごとに変える記述が 0 件 (粒度は用途によらず一定)"
+    },
+    {
+      "id": "AC-C05-R24-04",
+      "how": "agent が出力した構成データ JSON の各 main セクションについて、lead_line と parts[] の並びを読む",
+      "expected": "lead_line が主張の言い切りであり見出しの言い換えでない。parts[0] が TEXT でない (W-OPENS-PROSE が 0 件)。DIAGRAM を持つ節では、その前に要点を並べる部品 (カード・表・チェックリスト) が置かれている。TEXT は節あたり 1 本以下で、置くなら最後尾"
+    },
+    {
+      "id": "AC-C05-R24-05",
+      "how": "agent が出力した構成データ JSON に python3 plugins/guide-doc-generator/scripts/validate-handout-config.py --config <out> --strict を掛け、警告一覧を見る",
+      "expected": "W-HERO-HEAVY が 0 件。上限を超えていた場合、超過分は role=appendix の節へ移されており、移した事実が設計要約に記録されている (黙って落としていない)"
+    }
+  ],
+  "frontmatter_fields": {
+    "observed_from": [
+      "plugins/slide-report-generator/agents/report-structure-designer.md",
+      "plugins/harness-creator/agents/run-build-skill-subagent.md"
+    ],
+    "fields": [
+      "name",
+      "description",
+      "kind: agent",
+      "version",
+      "owner",
+      "tools",
+      "isolation: fork",
+      "model",
+      "owner_skill",
+      "prompt_ref",
+      "prompt_layer: 7layer",
+      "since",
+      "last-audited"
+    ],
+    "note": "tools は YAML のカンマ区切り文字列 (`tools: Read, Write`) で書かれている。model は SRG 系が `sonnet`、harness-creator 系が `inherit`"
+  },
+  "body_sections": [
+    "# handout-content-architect",
+    "<!-- responsibility: R1 --> アンカー",
+    "## Purpose",
+    "## Inputs",
+    "## Outputs",
+    "## Goal-Seeking Execution",
+    "## Constraints",
+    "## Prompt Templates",
+    "## Self-Evaluation"
+  ],
+  "prompt_ref": "plugins/guide-doc-generator/skills/run-handout-build/prompts/R-design-config.md",
+  "failure_modes": [
+    "参照 HTML の文面流用: 独立 context にしても、部品カタログ references に例文が載っていると今回の題材へ写す。references 側は構造の記述に留め、例文は『型の例示であり流用禁止』と明示する",
+    "lead-line の判断軸化: lead_line に『〜を選ぶときは』と書いてしまい decision_line と重複する。lead_line は扱う抽象の宣言、decision_line は選択のための問い、と役割を分けて例示する",
+    "section goal の lead-line 化: goal に『〜について説明します』と書くと到達状態にならず C38 は通っても R19 の意図を満たさない。goal は『読み終えたら何が分かる/できるか』で書かせる",
+    "glossary の空回し: 専門用語を宣言だけして本文フィールドで初出時に括弧書き併記しない。宣言と本文の両方を出す責務であることを明示する",
+    "プリセットの合成: ヒアリングが『勉強会兼アジェンダ』のような混成を含むとき、2 プリセットを混ぜて型が崩れる。主用途 1 つ + セクション追加へ落とすことを手順で固定する",
+    "日付の先回り充填: 親切心で生成実行日を埋め、C12 の単一 writer 規約を破って C35 の日付一致検査を不安定にする",
+    "絵文字の混入: 構成データのタイトルや chip 文字列に絵文字が入り、C10 hook / C16 検査で落ちる。設計段階で 0 件にする",
+    "スキーマの記憶依存: schema ファイルを読まずに記憶のフィールド名で書き、C12 で FAIL する",
+    "参照デッキ構図の丸写し: genome を『コピー金型』として読み、鳥居・歯車群・蛇行パスといった既存デッキの絵を今回の題材へ流用する。結果として全セクションが同じ構図になり、内容が変わっても図が変わらない。4 段手順の (1)(2) を毎セクション独立に踏むことと、(図解型, motifs.primary) の全セクション同一を自分で確認することを手順で固定する (C21 が exit2 で落とすが、そこまで行くと差し戻しが遠い)",
+    "本文の言い換えを焼く: 焼き込みにセクション本文や lead_line の要約を入れてしまい、文字が潰れて読めない画像になる。焼くのは要点語・短い問い・数値だけで、見出しとリード文は HTML 側 (C11) が持つ。3 form の allowlist をそのまま手順に置く",
+    "数値の捏造: 数値強調が効くことを知って『約94%削減』の類を構成データに無いまま焼く。metric ブロックの数字は構成データに逐語で存在するものに限る、を手順で固定する (C21 の E-IMG-METRIC-UNSOURCED で落ちるが、設計側で 0 件にする)",
+    "motif の根拠なき選定: 語感で motif を選び adaptation_trace を後付けで埋める。trace の左辺は goal / lead_line から抽出した語であり、選定の後に書くのではなく選定の入力として先に書く。genome の deterministicSelection (候補リスト先頭・未使用優先) に従わないと同一 motif へ偏る",
+    "焼き込み上限の記憶書き: 上限値を本文へ書いてしまい C21 の baked_text_discipline と二重の正本になる。上限が変わったときに片方だけが更新される。数値は持たず、超過は C21 の差し戻しで知る",
+    "family をまたいだ motif 名の借用: flat-infographic-jp のセクションに kanagawa genome の motif 名 (rounded-isometric-platform 等) を書く。family を決めてからその family の genome を読む順序を守る"
+  ],
+  "open_questions": [
+    "responsibility_anchor が inventory では 'prompts/R-design-config.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は `<!-- responsibility: R<数字> -->` (R + 数字のみ) しか受け付けない。本文アンカーは `<!-- responsibility: R1 -->` とし、prompt ファイル名は R-design-config.md のままにする案を採るか、prompt 名も R1-design-config.md へ揃えるかは build 時 (P05) に確定が要る。Tier2 coverage は agent brief に responsibilities[] が無いため現状は skip される",
+    "prompt_ref の基準ディレクトリを owner skill 配下 (skills/run-handout-build/prompts/) とする前提で書いたが、inventory は 'prompts/R-design-config.md' としか書いておらず、plugin 直下 prompts/ の可能性も残る。SRG/harness-creator の先例は owner skill 配下ゆえそちらを推奨するが、確定は P05",
+    "model 指定 (sonnet 固定 / inherit) が inventory に無い。SRG agents は sonnet 固定、harness-creator agents は inherit。構成設計は判断密度が高いため inherit を推奨するが未確定",
+    "構成データの部品ごとの要素 (比較表の行列・チェック行の項目文) をどこまで agent が書き、どこからユーザー原稿とするかの線引きが schema 側で表現されているかは C12 の schema 確定 (P02-C12-01) 待ち",
+    "RESOLUTION-R23 (a) は『C11 が画像の焼き文字が崩れた場合に overlay_text を表示できる markup を出す』ことを安全弁の受け側として要求しているが、script-brief-C11.json への反映は P04-x-07 の write_scope 外で未実施。C05 が overlay_text を必ず非空で書いても、C11 が overlay を出せなければ R15 の安全弁は片肺になる。C11 の owner leaf での追従が要る",
+    "画像計画フィールド (motifs の 3 役構造体・baked_text のタグ付きオブジェクト・adaptation_trace) を handout-config.schema.json のどこに置くか (section の直下か image サブオブジェクトか) が未確定。C21 の --image-plan は構成データそのものではなく変換前の形式であり、両者の写像を誰が持つかも P02-C12-01 / C01 側の確定待ち"
+  ],
+  "visual_first_contract": {
+    "resolution": "briefs/RESOLUTION-R24-visual-first-draft-first.md",
+    "ssot": "config/handout-visual-policy.json",
+    "anchor_record": "examples/granularity-anchor.md",
+    "rule": "図解パターンの判定を散文の執筆より前に置く。順序を逆にすると『書いた文章を図に起こす』作業になり、図が文章の要約 (= 二重記載) にしかならない",
+    "target_shape": "config/handout-visual-policy.json#draft_first.granularity_anchor",
+    "not_checked_here": "本 agent は自分の出力を合格判定しない。密度の判定は C12、強制は C01 の完了条件が持つ (既存 procedure 末尾の分界線を維持する)",
+    "content_selection": "config/handout-visual-policy.json#content_selection。図解密度と文字数上限より前に効く最上位の編集方針。散文は最後の手段で、関係は図解・列挙は箇条書き / カード / 表へ落とす",
+    "section_progression": "config/handout-visual-policy.json#opening.section_opening。冒頭で言いたいことを言い切り、その後に徐々に補足と図解を足す。並び順の判定は本 agent が持ち、機械検査は W-OPENS-PROSE のみが持つ",
+    "hero_volume": "config/handout-visual-policy.json#opening.hero_total。個別フィールドの上限 (W-HERO-LONG) をどれも超えていなくても、短い行の積み上げで冒頭は長くなる。総量は W-HERO-HEAVY が持つ"
+  }
+}

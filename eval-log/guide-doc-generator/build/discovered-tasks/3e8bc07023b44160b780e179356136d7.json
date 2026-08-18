@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-11",
+  "reason": "P05-x-11 が実測で確定した構造的乖離。C11 (renderer) と C12 (schema) の入力契約が 2 点で食い違う。(a) render-handout.py:387 が config['normalized'] is True を、:441 が nav の存在を要求するが、handout-config.schema.json のトップレベル properties に normalized も nav も無く additionalProperties は false。(b) render-handout.py:1523 が section.get('blocks') を走査するが schema の section は parts を宣言し required にも parts が入っており blocks は存在しない。よって schema 準拠の config を renderer へ渡すと部品が 1 件も描画されない (実測 blocks_by_type: {})。round-trip 以前に正規の入力経路が通っておらず、この乖離が解けない限りどの項目にマーカーを刻んでも round-trip は成立しない。どちらを正本とするかは裁定を要する構造的決定",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+  "proposed_node": {
+    "id": "P05-x-20",
+    "title": "C11 と C12 の入力契約の乖離を裁定して統一する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "schema 準拠かつ validate-handout-config.py --normalize を通った構成データをそのまま render-handout.py へ渡して exit0 になり、生成 HTML に部品が 1 件以上描画される (blocks_by_type が非空)。normalized / nav / blocks-parts の 3 点について schema と renderer のどちらを正本としたかと理由が INPUT-CONTRACT-RESOLUTION.md に記録されている。schema の値域・required・additionalProperties を緩める解は不可",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-20.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/INPUT-CONTRACT-RESOLUTION.md"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "plugins/guide-doc-generator/schemas/handout-config.schema.json"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

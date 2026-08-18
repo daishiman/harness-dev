@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C03",
+  "task_id": "P05-C03-01",
+  "covered_task_ids": [
+    "P05-C03-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の構成を持つ",
+      "method": "wc -l",
+      "result": "pass (SKILL.md 101 行 + prompts/R-review-readability.md 164 行 = 265 行)"
+    },
+    {
+      "claim": "テスト 34 件中 31 件が緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/assign-handout-readability-evaluator -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 34 / failures=3 / errors=0 / 0.167s。実装前は failures=24)"
+    },
+    {
+      "claim": "残る赤 3 件が全件 C06 待ちであり実装不足でない",
+      "method": "FAIL 行を全列挙し、各テストが参照するファイルパスを確認",
+      "result": "pass (test_AC_C03_4_delegates_to_independent_reviewer_agent / test_no_contract_violation_remains / test_reviewer_agent_exists の 3 件。いずれも単一原因が agents/handout-readability-reviewer.md (component C06・別 leaf の build_target) の不在。worker は当該位置にスタブを置いた状態で contract_lib.check_skill を実行し違反 0 件になることを確認しており、C03 側の宣言的契約 AC-C03-2..20 は充足済み)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み産出 md 全 2 ファイルへ適用",
+      "result": "pass (両ファイルとも違反 0 件)"
+    },
+    {
+      "claim": "用途語彙・部品 id・R22 の値域を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -roE '\\b(B[0-9]{2}|lecture|onboarding|study-notes|study-plan|overview|standard|detailed|cited|sourced)\\b' を build_target 配下へ適用",
+      "result": "pass (0 件。severity=high の扱いも『C06 側の規則』とのみ記述し判定規則の数値・条件を複製していない)"
+    },
+    {
+      "claim": "集約規則を複製していない",
+      "method": "本文の CR-GATE-AGG 参照箇所を確認",
+      "result": "pass (Key Rules に C09 の CR-GATE-AGG へ委ねる 1 行を置くのみで、4 状態分類と verdict 判定規則は書き下していない)"
+    },
+    {
+      "claim": "件数リテラルを本文へ焼いていない",
+      "method": "worker 報告の確認と本文の記述形式の確認",
+      "result": "pass (fixture の受入例は『の 7 項目』という件数を含むがテストは項目名の存在のみを検査するため、件数を書かずリスト自体を列挙する形にしている。件数リテラルを強制するテスト行は存在しない。C09 の contract_lib:509 のような強制が本 leaf には無かった)"
+    },
+    {
+      "claim": "assign kind の本質 (提案者が自作を採点しない) を守っている",
+      "method": "SKILL.md の責務記述と C01 への申し送り内容の確認",
+      "result": "pass (C03 は 1 回の委譲と 1 回の回収で終わり max_loops を持たない。verdict は無加工で返し、項目欠落時も補完・要約せず欠落のまま報告する。C01 へ渡す文脈から設計意図・ヒアリング生ログ・参照 HTML 文面・loop 周回数・過去 findings を除くよう明記しており、独立 context の価値を守る条件が申し送られている)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/assign-handout-readability-evaluator/ 配下 10 ファイルの sha256 を実装前後で取得し diff",
+      "result": "pass (fixtures / reject_cases / contract_lib / README を含め全て同一ハッシュ)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status と plugins/guide-doc-generator/ 配下の書込確認",
+      "result": "pass (書込は build_target 配下 2 ファイルのみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C06 (agents/handout-readability-reviewer.md) へ申し送り。name: handout-readability-reviewer / isolation: fork / owner_skill: assign-handout-readability-evaluator / prompt_ref: plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R-review-readability.md を期待している。責務アンカーは C03 側で <!-- responsibility: R1 --> を採用済みなので C06 本文もこれに揃えること (lint-agent-prompt-section.py の ANCHOR_RE が R<数字> のみを受理するため)。C06 の実体が置かれた時点で C03 の残赤 3 件は解消する"
+    },
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C01 (skills/run-handout-build/SKILL.md) へ申し送り 5 件。(1) C03 は 1 回の委譲と 1 回の回収で終わる。再レビューの起動と打ち切り (loop 上限) は C01 の goal_seek が単独で持つ (2) C03 呼び出しの前提条件は C16/C17/C18/C22 が全て exit0 であること。FAIL 残存で呼ぶと status=blocked が返るので PASS と読み替えないこと。ゲート集約の正本は C09 の CR-GATE-AGG (3) C03 は verdict を無加工で返す。項目欠落時の扱い (再委譲するか FAIL 扱いにするか) は C01 側で決める必要がある (4) C03 へ渡す文脈に設計意図・ヒアリング生ログ・参照 HTML 文面・何周目の loop か・過去 findings を含めないこと (独立 context の価値が壊れる) (5) reader_profile は構成データの reader / prior_knowledge_level / usage_scene から C03 が組み立てるため、これらが正規化済み構成データに存在する必要がある"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "agent-brief-C06 の open_question 2 件が未確定のまま残る。(a) responsibility id は inventory では R1-assign だが prompt 名は R-review-readability で、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみを受理する。worker は prompt ファイル名を据え置きアンカーだけ R1 とする案を採ったが、C05 / C06 と揃える最終確定は未了 (b) gate_reports の json-report 出力先ディレクトリの owner が未確定。worker は『C03 側が --json-report つきで実行して収集する』と書いたが出力先の owner は明記していない。どちらも P05-x-01 で確定すること"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 9 件。(1) 本文アンカーを <!-- responsibility: R1 --> とした (上記 unowned-followup) (2) argument-hint を [--html ...] [--config ...] [--scope ...] とした (ブリーフ規定なし・テストも検査していない) (3) allowed-tools を [Read, Bash(python3 *), Task] とし委譲手段に Task を選択 (契約は Task/Agent のどちらでも可)。Bash(python3 *) は gate_reports 収集のため (4) gate_reports の json-report を C03 側収集に倒した (5) verdict の項目欠落時は補完も要約もせず欠落のまま呼び出し元へ報告 (C03 が補完すると『判定基準を持たない』前提が崩れるため。再委譲は選ばなかった) (6) version 0.1.0 / owner harness maintainers / disable-model-invocation false は近隣成果物の慣行に合わせた (7) 集約規則は C09 へ委ねる 1 行のみ (8) 件数リテラルを書かずリスト自体を列挙 (9) 用途語彙・部品 id・R22 値域・閾値を一切列挙しない"
+    }
+  ]
+}

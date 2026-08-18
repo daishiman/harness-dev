@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "task_id": "P05-C17-01",
+  "covered_task_ids": [
+    "P05-C17-01"
+  ],
+  "route_id": "C17",
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在する",
+      "method": "ls plugins/guide-doc-generator/scripts/",
+      "result": "pass"
+    },
+    {
+      "claim": "P04-C17-01 が固定した赤が全て緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-a11y-print.py -p 'test_*.py'",
+      "result": "pass (Ran 187 / OK / failures=0 / errors=0)"
+    },
+    {
+      "claim": "テストが改変されていない (判定基準の自作差し替えが無い)",
+      "method": "find tests/verify-handout-a11y-print.py -newer scripts/verify-handout-a11y-print.py -type f が空",
+      "result": "pass"
+    },
+    {
+      "claim": "標準ライブラリのみに依存する",
+      "method": "import 文の列挙 (argparse/json/re/sys/html.parser/pathlib/__future__)",
+      "result": "pass"
+    },
+    {
+      "claim": "ブリーフの detection 12 件が実装に 1:1 で現れる",
+      "method": "script-brief-C17.json の detections[].id 全件をソースへ突合 (A11Y-01..07 / PRINT-01..04 / STICKY-01)",
+      "result": "pass"
+    },
+    {
+      "claim": "決定論的である",
+      "method": "同一 HTML への 2 回実行で stdout/stderr がバイト一致 (exit=2 で安定)",
+      "result": "pass"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --short plugins/guide-doc-generator/",
+      "result": "pass (untracked 配下のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "brief-underspecified",
+      "detail": "5 件の未定義事項を worker が判断して実装した。(1) PRINT-03 に『最上位のみ』規則を導入 (memo-note が対象で lightbox-close が対象外である理由がブリーフから引けず、両立させるにはこの規則が要る) (2) 裸の :focus-visible を非ユニバーサル扱いとする保守的な静的近似 (A11Y-06(c) のテストを満たすため) (3) A11Y-02 は aria-selected=true の個数が 1 でない時点でパネルの hidden 検査を短絡し『1 原因 = 1 違反』を保つ (4) 解析不能な CSS の報告チャネルが未定義のため stderr へ CSS-PARSE を出す (5) lightbox のキーボード操作・フォーカストラップ・ESC (R04) がブリーフの detections にもテストにも無く C17 のスコープ外。(1)(4) は C11/C09 との語義突合、(5) は R04 の検証責務の帰属確定が別途要る"
+    }
+  ]
+}

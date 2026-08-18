@@ -1,0 +1,813 @@
+{
+  "x_dialect": "json-schema-2020-12",
+  "x_dialect_note": "方言識別子は URL ではない文字列で示す (R01 自己完結性: プラグイン同梱データに外部 URL を置かない)。$schema / $id は意図的に持たない。plugin は jsonschema パッケージを持てない (C27 標準ライブラリのみ) ため、解釈系は scripts/validate-handout-config.py (C12) が単独で持ち、このファイルは C05 agent / C20 逆抽出 / エディタ補完のための機械可読な正本として振る舞う。",
+  "x_canon_authority": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json#config_schema",
+  "x_value_canon_elsewhere": {
+    "doc_type": "config/handout-purposes.json の vocabulary[].slug (owner C23)",
+    "section_kind": "config/handout-sections.json の section_kinds[].slug と default (owner C12 / 物理正本は中立データファイル)",
+    "part": "config/handout-parts.json の parts[].id と section_scope (owner C11)",
+    "theme": "assets/ 配下のテーマ名"
+  },
+  "x_roundtrip_contract": "schemas/ROUNDTRIP-CONTRACT.md#32-機械可読な裁定表",
+  "x_roundtrip_contract_note": "R14 逆抽出 round-trip の成立条件と、各項目を『HTML へマーカーとして刻む』か『round-trip 対象外と明示宣言する』かの裁定は ROUNDTRIP-CONTRACT.md の JSON ブロックが正本。裁定表をここへ写さないのは二名簿を作らないため。裁定の結果として著者記述の項目は 1 件も免除されておらず、このファイルの値域 / required / additionalProperties は round-trip のために緩めない。",
+  "x_value_canon_here": "detail_level / evidence_depth の値域 (CR-GRANULARITY-ORTHOGONAL) はこのファイルが唯一の正本であり、C23 resolve-handout-preset.py はこのファイルを読んで照合する。3x3=9 通りの全組み合わせが valid で、禁止の対は無い。",
+  "title": "handout 構成データ",
+  "description": "単一 HTML 資料 1 本を記述する構成データ。schemas は形だけを宣言し、語彙の値は config/ が持つ。既知キー以外は全レベルで E-KEY-UNKNOWN (exit 1)。予約された拡張点は parts[].data の部品固有キーのみ。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "title",
+    "doc_type",
+    "purpose",
+    "background",
+    "goal",
+    "reader",
+    "prior_knowledge_level",
+    "essential_problem",
+    "duration",
+    "focus_theme",
+    "target_tasks",
+    "attainment_level",
+    "must_remember",
+    "no_need_to_remember",
+    "glossary",
+    "sections"
+  ],
+  "x_required_after_normalize": [
+    "schema_version",
+    "subject_slug",
+    "date",
+    "detail_level",
+    "evidence_depth",
+    "presentation_order",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "既知バージョンの完全一致。未知は E-SCHEMA-VERSION で exit 1。入力に無ければ --normalize が現行版を充填する。"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "x_non_blank": true,
+      "description": "hero の h1 と header のタイトル、および subject_slug 導出の元。空白のみは空扱い。60 文字超は W-TITLE-LONG。"
+    },
+    "subject_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+      "description": "C19 の出力ディレクトリ名 <主題slug> の値。導出規則の正本は C12 の normalize_algorithm。日本語のみのタイトルからは導出できないため明示指定を要求する。"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}/\\d{2}/\\d{2}$",
+      "x_calendar_valid": true,
+      "description": "資料の日付 (作成日または実施日として利用者が意図した 1 点)。この 1 フィールドだけを持ち、作成日 / 実施日 / 更新日へ分けない。ディレクトリ名の YYYY-MM-DD は date.replace('/', '-') の純変換で C19 が導く派生値であり、フィールドとして保存しない。"
+    },
+    "doc_type": {
+      "type": "string",
+      "minLength": 1,
+      "x_value_source": "config/handout-purposes.json#vocabulary[].slug",
+      "description": "利用シーン (R20 種別)。語彙を列挙せず C23 のモジュール API / 語彙正本へ照合を委ねる。use_scene という別フィールドは作らない。"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 400,
+      "x_non_blank": true,
+      "description": "R19 の 3 要素のひとつ。hero 直下へ描画され C22 が存在を検査する。"
+    },
+    "background": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 600,
+      "x_non_blank": true,
+      "description": "R19 の 3 要素のひとつ。"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 400,
+      "x_non_blank": true,
+      "description": "資料全体ゴール。R19 の 3 要素のひとつで、各 section の goal はこれの分解として連なる。"
+    },
+    "reader": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 200,
+      "x_non_blank": true,
+      "description": "想定読者。"
+    },
+    "prior_knowledge_level": {
+      "type": "string",
+      "enum": ["none", "basic", "intermediate"],
+      "description": "3 段に固定する。自由記述にすると資料ごとに違う語で書かれ、用語言い換えの厚みを機械判断できなくなる。"
+    },
+    "detail_level": {
+      "type": "string",
+      "enum": ["overview", "standard", "detailed"],
+      "x_domain_canon": "this-file",
+      "description": "R22。説明の詳しさ。入力に無ければ normalize が doc_type から C23 の既定値を引いて充填し provenance.detail_level_source='preset-default' を立てる。明示指定があれば 'explicit'。値域の正本はこの enum ただ 1 箇所で、script 側に値リテラルを書かない。"
+    },
+    "evidence_depth": {
+      "type": "string",
+      "enum": ["none", "cited", "sourced"],
+      "x_domain_canon": "this-file",
+      "description": "R22。根拠の明示度。detail_level と同じく C23 の既定値を normalize が充填し provenance.evidence_depth_source を立てる。detail_level との組み合わせに禁止の対は無い (CR-GRANULARITY-ORTHOGONAL)。"
+    },
+    "essential_problem": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 400,
+      "x_non_blank": true,
+      "description": "本質的課題。読み手が抱えている問題の 1 文。"
+    },
+    "duration": {
+      "type": "string",
+      "anyOf": [
+        {"pattern": "^\\d{1,3}(分|時間)$"},
+        {"pattern": "^\\d{1,3}〜\\d{1,3}分$"},
+        {"pattern": "^A4\\s?\\d{1,3}\\s?枚相当$"}
+      ],
+      "description": "資料全体の所要時間・分量感 (表示値)。書式を絞るのは hero と時間ピルで表記が揺れないようにするため。割合計算の分母には使わない (分母は sections[].duration の総和)。"
+    },
+    "focus_theme": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {"type": "string", "minLength": 10, "maxLength": 60, "x_non_blank": true},
+      "description": "R21 C47。『今回身につけていただきたいこと』を聴き手向けの言葉で 1〜2 件に絞った主題枠。0 件 / 3 件以上 / 空文字混入は E-FOCUS-THEME。document.goal (作り手の言葉での全体ゴール) とは別フィールド。"
+    },
+    "target_tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/target_task"},
+      "x_unique_by": "id",
+      "description": "R21 C58。受講者が達成したい具体業務。0 件は E-TARGET-TASKS-EMPTY。各本編セクションが section.ties_to から id で紐づく。"
+    },
+    "presentation_order": {
+      "type": "string",
+      "enum": ["demo_first", "explain_first"],
+      "description": "R21 C49。提示順の型。列挙外は E-PRESENTATION-ORDER。既定は prior_knowledge_level から決定論導出する (導出規則の正本は script-brief-C12.json#r21_type_constraints.presentation_order_derivation)。明示指定時は provenance.presentation_order_source='explicit'。"
+    },
+    "attainment_level": {
+      "$ref": "#/$defs/attainment_level",
+      "description": "R21 C54。この資料でどこまで到達させるかの宣言。列挙外は E-ATTAINMENT-LEVEL。"
+    },
+    "must_remember": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 5, "maxLength": 60, "x_non_blank": true},
+      "x_max_items_from": "must_remember_max",
+      "description": "R21 C57。『今回覚えていただきたいこと』の明示列挙。件数上限は must_remember_max (既定 2)。空配列は E-REMEMBER-PAIR。no_need_to_remember と対で必須 (対の強制は C12 の責務)。"
+    },
+    "must_remember_max": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 2,
+      "description": "R21 C57 の『上限を指定可』。上限だけを可変にし、下限 1 件と no_need_to_remember との対は不変にする。normalize が既定 2 を充填する。"
+    },
+    "no_need_to_remember": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 5, "maxLength": 80, "x_non_blank": true},
+      "description": "R21 C57。『覚えなくてよいこと (その場で調べればよい / 本資料を見返せば足りる)』。空配列は E-REMEMBER-PAIR。片方だけが非空の状態も E-REMEMBER-PAIR で落とす (どちらを先に書いたかに依らない対称な検査)。"
+    },
+    "theme": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "x_value_source": "assets/ のテーマ名",
+      "description": "テーマの入力経路の正。C11 の --theme はこのフィールドが null か不在のときに限り有効で、採用値の書き戻し writer は C11 ただ 1 つ。C12 はこのフィールドを触らない。"
+    },
+    "glossary": {
+      "type": "array",
+      "minItems": 0,
+      "items": {"$ref": "#/$defs/glossary_entry"},
+      "x_unique_by": "term",
+      "description": "初出専門用語の言い換え宣言 (宣言側)。term は NFC 正規化後に全体で一意。prior_knowledge_level が none のとき 0 件なら W-GLOSSARY-EMPTY。C18 はこの配列を照合表として本文の初出併記を検査する。"
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/section"},
+      "x_order_significant": true,
+      "description": "セクション構成。12 件超は W-SECTIONS-MANY。C12 はプリセットからセクション骨格を生成しない (骨格の供給は C23 --purpose の出力、埋めるのは C05 agent)。"
+    },
+    "assets": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/asset"},
+      "x_unique_by": "id",
+      "x_order_significant": true,
+      "description": "画像ノード。**本 schema が記述するのは C13 前の著者構成データである。**C13 embed-assets.py は各 entry へ data_uri / embed_status / embed_source_path / embed_skip_reason / encoded_chars / source_bytes を、文書へ asset_embedding を足すが、いずれも本 schema に無く $defs.asset は additionalProperties:false なので、**C13 後の埋め込み済み構成データは本 schema では検証できない** (別の文書型である)。C20 が HTML から復元するのは後者であり、src に原本相対パス・data_uri にペイロードを持つ。裁定は schemas/ROUNDTRIP-CONTRACT.md の /assets/*/data_uri と RESOLUTION-P05-x-28.md。"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/attachment"},
+      "x_unique_by": "id",
+      "x_order_significant": true,
+      "description": "添付ファイル。**本 schema が記述するのは C13 前の著者構成データである。**assets と同じく C13 が data_uri ほかを足し $defs.attachment は additionalProperties:false なので、C13 後の形は本 schema では検証できない。裁定は RESOLUTION-P05-x-28.md。"
+    },
+    "diagrams": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/diagram"},
+      "x_unique_by": "id",
+      "description": "概念図解の構造データ。C14 が inline SVG へ変換する。"
+    },
+    "notes_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "メモ機構と localStorage 永続化の出力可否。normalize が既定 true を充填する。"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance",
+      "description": "normalize が充填する来歴ブロック。C20 の round-trip 比較ではこのブロック全体を比較対象から外す。"
+    }
+  },
+  "$defs": {
+    "attainment_level": {
+      "type": "string",
+      "enum": ["overview", "operable", "reproducible", "skill-authoring"],
+      "x_ordered": true,
+      "description": "到達の浅い順に並んだ順序つき enum。順序つきであることが C54 の整合検査 (section.attainment_step が宣言値を超えない / 少なくとも 1 セクションが宣言値に到達する) の前提になる。"
+    },
+    "target_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"},
+        "label": {"type": "string", "minLength": 10, "maxLength": 80, "x_non_blank": true}
+      }
+    },
+    "glossary_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term", "plain"],
+      "properties": {
+        "term": {"type": "string", "minLength": 1, "x_non_blank": true},
+        "plain": {"type": "string", "minLength": 1, "x_non_blank": true}
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "src", "alt", "role"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "kind": {"type": "string", "const": "image"},
+        "src": {"$ref": "#/$defs/local_source"},
+        "alt": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "a11y ゲート (C22) を構成データ段階で満たすため必須。"},
+        "caption": {"type": ["string", "null"]},
+        "role": {
+          "type": "string",
+          "enum": ["screenshot", "figure", "photo"],
+          "description": "R21 C56。『実際の画面かどうか』を機械判定するための必須メタ。normalize は既定値を充填しない (推測させない)。未指定は E-ASSET-ROLE-MISSING。C11 が data-hb-asset-role として出し C22 NAR-07 が読む。"
+        }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "filename", "mime", "src", "fallback_hint"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "filename": {"type": "string", "minLength": 1, "x_non_blank": true},
+        "mime": {"type": "string", "minLength": 1, "x_non_blank": true},
+        "src": {"$ref": "#/$defs/local_source"},
+        "fallback_hint": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "data URI ダウンロードが効かない環境向けの代替手段テキスト。"}
+      }
+    },
+    "local_source": {
+      "type": "string",
+      "minLength": 1,
+      "anyOf": [
+        {"pattern": "^data:"},
+        {"pattern": "^(?!data:)(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!//)[^\\s]+$"}
+      ],
+      "description": "相対パスまたは data URI のみ。scheme 付き絶対参照とプロトコル相対参照は R01 / C16 CR-EXT により不可。"
+    },
+    "diagram": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "pattern", "data", "title"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "pattern": {
+          "type": "string",
+          "enum": ["flow", "compare", "hierarchy", "cycle", "matrix", "versus"],
+          "x_value_canon": "script-brief-C14.json#argv[--pattern] (C12 は形だけを持ち、パターン別の必須フィールドとノード数の許容範囲は C14 が検査する)"
+        },
+        "data": {"type": "object", "description": "パターン別の構造データ。形の正本は C14。"},
+        "title": {"type": "string", "minLength": 1, "x_non_blank": true}
+      }
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "heading", "goal", "lead_line", "judgment_axis", "parts"],
+      "x_required_after_normalize": ["role", "section_kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+          "x_unique_within": "sections",
+          "x_reserved_ids": ["hero", "nav", "footer", "memo"],
+          "description": "sticky ナビの href アンカーと 1:1 対応する。予約語は C11 が生成する chrome の id と衝突するため禁止。"
+        },
+        "heading": {"type": "string", "minLength": 1, "maxLength": 80, "x_non_blank": true},
+        "goal": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "x_non_blank": true,
+          "description": "R19。読み終えたら何が分かる / できるか。1 件でも空なら exit 1。"
+        },
+        "lead_line": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 80,
+          "x_single_line": true,
+          "description": "R11。1 行の抽象。60 文字超は W-LEADLINE-LONG。改行を含むと E-LEADLINE-MULTILINE。"
+        },
+        "judgment_axis": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 120,
+          "x_single_line": true,
+          "description": "R11。判断軸の一文。改行を含むと E-AXIS-MULTILINE。"
+        },
+        "duration": {
+          "type": ["string", "null"],
+          "pattern": "^\\d{1,3}分$",
+          "description": "R21 C59。セクション単位の所要時間であり、これが資料内で唯一の時間フィールドである。normalize が '1時間' → '60分' / '90 分' → '90分' へ整形する。範囲表記と 'A4 n 枚相当' はセクション単位では受け付けない (E-SECTION-DURATION-FORMAT)。min_duration_share を持つ section_kind が 1 件でも存在する資料では全セクションの duration が非空でなければ E-DURATION-INCOMPLETE。"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["main", "appendix"],
+          "default": "main",
+          "description": "R21 C48。本編か付録かの区分。section_kind 側に required_role がある場合はその値と一致すること (E-SECTION-ROLE-CONFLICT)。appendix のセクションは全ての main セクションより後ろに置かれていなければならない (E-APPENDIX-ORDER)。"
+        },
+        "ties_to": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(goal|focus_theme:\\d+|target_task:[a-z0-9][a-z0-9-]{0,39})$"
+          },
+          "description": "R21 C48/C58。参照先が実在すること (E-TIES-DANGLING)。role=main では 1 件以上で、(a) 'goal' または 'focus_theme:<0-based index>' を 1 件以上 (欠ければ E-SECTION-UNTIED-GOAL) かつ (b) 'target_task:<target_tasks[].id>' を 1 件以上 (欠ければ E-SECTION-UNTIED-TASK) 含むこと。role=appendix では空配列でよい。"
+        },
+        "attainment_step": {
+          "oneOf": [{"$ref": "#/$defs/attainment_level"}, {"type": "null"}],
+          "description": "R21 C54。そのセクションが読み手を到達させる段。document.attainment_level と同じ順序つき enum。超過は E-ATTAINMENT-OVERRUN、どのセクションも宣言値に達しなければ E-ATTAINMENT-UNREACHED。normalize は充填しない (推測しない)。null は上限検査の対象外だが到達判定にも寄与しない。"
+        },
+        "section_kind": {
+          "type": "string",
+          "minLength": 1,
+          "x_value_source": "config/handout-sections.json#section_kinds[].slug",
+          "x_default_source": "config/handout-sections.json#default",
+          "description": "用途固有の追加要求を共通スキーマで表現するための唯一の分岐点。値をこのファイルへ列挙しない (物理正本は中立データファイル)。プリセットごとに別スキーマを作らないための要。"
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/part"},
+          "x_order_significant": true,
+          "description": "catalog の section_scope が in-section の部品だけを置ける。section_scope=document の部品は document 構造から C11 が生成する chrome であり parts では指定できない (判定は catalog の section_scope で行い、id をここへ列挙しない)。"
+        },
+        "glossary": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/glossary_entry"},
+          "description": "セクションスコープの追加宣言。document 側の term と重複したら E-GLOSSARY-DUP。normalize は document の glossary へマージせずそのまま保持する (C20 の逆抽出でスコープを復元できるようにするため)。"
+        }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["part", "id", "data"],
+      "properties": {
+        "part": {
+          "type": "string",
+          "x_value_source": "config/handout-parts.json#parts[].id",
+          "description": "部品 id。語彙の正本は C11 が所有するカタログ。$defs.part_data のキー集合とカタログの id 集合が一致しない場合は E-PARTS-CATALOG-MISMATCH で exit 2 (二重名簿が黙って乖離する状態を作らない)。"
+        },
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$", "x_unique_within": "section.parts"},
+        "slot": {
+          "type": ["string", "null"],
+          "enum": ["outcome", "breakdown", "feature", null],
+          "description": "R21 C51 の『成果 → 分解 → 用いる機能』の順序を部品の並びとして機械検査するための任意ラベル。required_slot を持つ section_kind では全 part に必須 (E-CAPABILITY-SLOT-MISSING)。並びは outcome+ → breakdown+ → feature+ の 3 区画で、各区画が 1 件以上あり区画をまたぐ出戻りが無いこと (E-CAPABILITY-SLOT-ORDER)。"
+        },
+        "data": {
+          "type": "object",
+          "x_dispatch_on": "part",
+          "x_dispatch_table": "#/$defs/part_data",
+          "description": "部品固有キー。許容キーは $defs/part_data の part id ごとの定義に従う。形の不一致は E-PART-SHAPE。"
+        }
+      }
+    },
+    "part_data": {
+      "description": "各部品の data がどういう形かだけを定義する。part id の語彙・日本語名・セクション内可否の正本は config/handout-parts.json (owner C11) にあり、ここは catalog の id をキーにした形の定義表であって id の第 2 の名簿ではない。",
+      "B01": {
+        "x_placement": "generated-chrome",
+        "not": {},
+        "description": "parts では指定不可。C11 が sections の id / heading / goal から生成する。"
+      },
+      "B02": {
+        "x_placement": "generated-chrome",
+        "not": {},
+        "description": "parts では指定不可。C11 が title / purpose / background / goal / date / duration から生成する。"
+      },
+      "B03": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rows"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["text"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "この step row 1 件を同定する鍵。C11 が data-hb-key として当該 row の要素へ載せ (render-handout.py の steps: entry_key)、C20 がそこから同じ値を復元する (round-trip の row 同定鍵)。省略した場合 C11 は並び順由来の i0/i1… を振るため、行を挿入・並べ替えると同定が崩れる。順序ではなく行そのものを指したいとき (メモ・チェック状態の保存先や差分の指示先) に付ける。同一 rows 内で重複しないこと。"},
+                "num": {"type": ["integer", "null"]},
+                "text": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "time": {"type": ["string", "null"]},
+                "sub": {"type": ["string", "null"]}
+              }
+            }
+          }
+        },
+        "description": "section_kind の属性による追加検査を受ける: 時間配分を要求する種別では全 row の time が非空でその総和が当該 section.duration と一致すること (E-TIMEBOX-SUM)。max_items を持つ種別では rows 件数がその上限以下 (E-SECTIONKIND-MAXITEMS)、forbid_row_detail を持つ種別では全 row の sub が null (E-SECTIONKIND-ROWDETAIL) — R21 C46 の『大きな流れだけを列挙し、個々の手順・操作の詳細を冒頭に含めない』の実体。"
+      },
+      "B04": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cards"],
+        "properties": {
+          "cards": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["label", "body", "tone"],
+              "properties": {
+                "label": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "body": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "tone": {"type": "string", "enum": ["today", "rest", "neutral"]},
+                "note_key": {"type": ["string", "null"]}
+              }
+            }
+          }
+        },
+        "description": "既知・未知・次の一歩を扱う section_kind では cards がちょうど 3 件で全件 note_key 非空であること (メモ機構への結線) を追加検査する。"
+      },
+      "B05": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["columns", "rows"],
+        "properties": {
+          "columns": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1, "x_non_blank": true}},
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["header", "cells"],
+              "properties": {
+                "header": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "cells": {"type": "array", "items": {"type": "string"}, "x_length_equals": "columns"},
+                "highlight": {"type": "array", "items": {"type": "integer"}}
+              }
+            }
+          }
+        },
+        "description": "cells 数と columns 数の不一致は E-PART-SHAPE。"
+      },
+      "B06": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["left", "right"],
+        "properties": {
+          "left": {"$ref": "#/$defs/labeled_items"},
+          "right": {"$ref": "#/$defs/labeled_items"}
+        },
+        "description": "『A ならこっち / B ならこっち』の型。"
+      },
+      "B07": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cards"],
+        "properties": {
+          "cards": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title", "body"],
+              "properties": {
+                "title": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "body": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "icon": {"type": ["string", "null"]},
+                "footnote": {"type": ["string", "null"]}
+              }
+            }
+          }
+        },
+        "description": "出典を扱う section_kind では少なくとも 1 card の footnote が非空であることを追加検査する。"
+      },
+      "B08": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "title", "detail"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "この選択肢 1 件を同定する鍵。C11 は選択肢を button.map-item として描き data-hb-key / data-hb-title / data-hb-detail を同じ要素へ載せるので、この鍵は aria-pressed の選択状態と、押されたときに差し替わる detail の帰属先になる。重複すると 1 回の選択で同じ鍵の選択肢が同時に押された状態と区別できなくなり、C20 も同じ鍵の entry を複数復元して title/detail の対応が入れ替わる。省略すると entry_key が並び順由来の i<添字> へ退避するため、選択肢を 1 件挿入しただけで 以降の選択が 1 つずつ別の項目へずれる。"},
+                "title": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "detail": {"type": "string", "minLength": 1, "x_non_blank": true}
+              }
+            }
+          }
+        },
+        "description": "押すと解説が差し替わる。detail は aria 連携のため空を許さない。"
+      },
+      "B09": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rows"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "text"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "このチェック項目 1 件を同定する鍵。C11 が data-hb-key として載せると同時に checkbox の DOM id (chk-<part id>-<key>) の構成要素にするため、重複すると label/for と localStorage のチェック状態保存先が混線する。C20 はこの値を復元する。row の並び順ではなく項目そのものを指す鍵なので必須かつ同一 rows 内で一意。"},
+                "text": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "decided": {"type": ["boolean", "null"]}
+              }
+            }
+          },
+          "show_counter": {"type": "boolean"}
+        },
+        "description": "決定事項を扱う section_kind では全 row の decided が boolean (null 不可) であることを追加検査する。"
+      },
+      "B10": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["summary", "body", "open"],
+              "properties": {
+                "summary": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "body": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "open": {"type": "boolean"}
+              }
+            }
+          }
+        },
+        "description": "ネイティブ details/summary。R21 C52 の折り畳み先はこの部品であり、専用の折り畳み部品を新設しない。先回り Q&A の section_kind では items が 2 件以上で全件 open=false であることを追加検査する (冒頭の情報量を増やさない)。"
+      },
+      "B11": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body"],
+        "properties": {
+          "label": {"type": ["string", "null"]},
+          "body": {"type": "string", "minLength": 1, "x_non_blank": true},
+          "copyable": {"type": "boolean"}
+        },
+        "description": "body の改行は保持する。コピー対象の原文であるため trim を行末空白除去に留める。"
+      },
+      "B12": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["attachment_id", "label"],
+        "properties": {
+          "attachment_id": {"type": "string", "x_references": "attachments[].id"},
+          "label": {"type": "string", "minLength": 1, "x_non_blank": true}
+        },
+        "description": "参照先 id が attachments に存在しなければ E-REF-DANGLING。"
+      },
+      "B13": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tabs"],
+        "properties": {
+          "tabs": {
+            "type": "array",
+            "minItems": 2,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "label", "panel_parts"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "このタブ 1 枚を同定する鍵。C11 はこの値からタブ本体とパネルの 2 つの DOM id (tab-<part id>-<key> と panel-<part id>-<key>) を組み立て、aria-controls と aria-labelledby で相互に指させる。したがって重複は復元の曖昧さでは済まず、同一 id が 文書内に 2 つ生まれてタブを押しても先頭側のパネルが開くという描画時点の不整合になり、支援技術のタブ⇔パネル対応も壊れる。省略すると id が並び順由来になり、タブを並べ替えるだけで別のパネルへ id が付け替わる。"},
+                "label": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "panel_parts": {
+                  "type": "array",
+                  "items": {"$ref": "#/$defs/part"},
+                  "x_max_nesting_depth": 1,
+                  "description": "1 段だけネストを許し、その中に B13 を再帰させない (E-PART-NESTED-TABS)。"
+                }
+              }
+            }
+          }
+        }
+      },
+      "B14": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["steps"],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["title"],
+              "properties": {
+                "title": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "body": {"type": ["string", "null"]}
+              }
+            }
+          }
+        },
+        "description": "矢印は C11 が inline SVG で生成する。"
+      },
+      "B15": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "chips"],
+        "properties": {
+          "key": {"type": "string", "minLength": 1, "x_non_blank": true, "x_unique_within": "document"},
+          "single": {"type": "boolean"},
+          "chips": {
+            "type": "array",
+            "minItems": 2,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "label"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "このチップ 1 件を同定する鍵。B15 直下の key が『どの設問か』を document 内で一意に決めるのに対し、こちらは『その設問のどの選択肢か』を決める側で、C11 は button.chip の data-hb-key として載せる。選択状態は aria-pressed と localStorage へ保存されるため、重複すると同一設問内で保存先が二重になり、single:true を指定していても復元時にどちらを選択済みとするか決まらない。省略すると並び順由来の鍵になり、選択肢の追加・並べ替えで保存済みの選択が別のチップへ移る。"},
+                "label": {"type": "string", "minLength": 1, "x_non_blank": true}
+              }
+            }
+          }
+        },
+        "description": "選択状態は notes_enabled の localStorage 機構で永続化される。"
+      },
+      "B16": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rows"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "minItems": 1,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "text", "owner", "due"],
+              "properties": {
+                "key": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "この作業 1 件を同定する鍵。C11 は li.ai-row に data-hb-key と data-hb-owner / data-hb-due を 同じ要素の属性として並べ、C20 は data-hb-key を持つ要素ごとに 1 entry を起こして owner と due を そこから拾う。つまりこの鍵は『その担当者と期限がどの作業に属するか』の結び先であり、重複すると往復後に owner/due が別の作業へ付け替わる。省略すると鍵が並び順由来になり、行を 1 つ足す・入れ替えるだけで担当と期限の対応が静かに崩れる。"},
+                "text": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "owner": {"type": "string", "minLength": 1, "x_non_blank": true},
+                "due": {
+                  "type": "string",
+                  "anyOf": [{"pattern": "^\\d{4}/\\d{2}/\\d{2}$"}, {"const": "未定"}]
+                }
+              }
+            }
+          }
+        },
+        "description": "owner と due が必須メタである点が既存部品のどれとも異なる。独立 component ではなく C11 のレンダラ部品テーブルへの登録として実装される。"
+      },
+      "B17": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["steps"],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["operation", "expected"],
+              "properties": {
+                "operation": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "手元で行う操作。"},
+                "expected": {"type": "string", "minLength": 1, "x_non_blank": true, "description": "そのとき画面に何が起きれば正しいか。無いと読み手は自分の結果が正しいか判定できずその場で詰まる。"},
+                "stuck_hint": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "asset_id": {"type": ["string", "null"], "x_references": "assets[].id"},
+          "live_demo": {"type": "boolean", "default": false}
+        },
+        "description": "R21 C53 のハンズオン部品。live_demo=true は『登壇者がその場で実演し受講者が画面を見る』手順であることを表し、C22 NAR-07 が demo_first の実画面判定でこのフラグを見る (実画面の代替として認めるのは role=screenshot の画像かこのフラグだけ)。ハンズオンの section_kind では本部品が 1 件以上必要 (E-SECTIONKIND-HANDSON)。"
+      },
+      "IMG": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["asset_id"],
+        "properties": {
+          "asset_id": {"type": "string", "x_references": "assets[].id"},
+          "lightbox": {"type": "boolean"}
+        },
+        "description": "assets への参照。dangling は E-REF-DANGLING。"
+      },
+      "DIAGRAM": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["diagram_id"],
+        "properties": {
+          "diagram_id": {"type": "string", "x_references": "diagrams[].id"}
+        },
+        "description": "diagrams への参照。dangling は E-REF-DANGLING。"
+      },
+      "TEXT": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["body"],
+        "properties": {
+          "body": {"type": "string", "minLength": 1, "x_non_blank": true}
+        },
+        "description": "部品に当てはまらない散文。1 文が 45 文字を超える文が 3 つ以上あると W-SENTENCE-LONG。R21 C52: body の文字数がテーマ設定の上限を超える場合、--normalize が超過分を既定で畳んだ B10 へ切り出す。--normalize なしの検証では超過を E-TEXT-OVERFLOW として落とす。"
+      }
+    },
+    "labeled_items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "items"],
+      "properties": {
+        "label": {"type": "string", "minLength": 1, "x_non_blank": true},
+        "items": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1, "x_non_blank": true}}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normalized_by", "schema_version"],
+      "properties": {
+        "normalized_by": {"type": "string", "const": "validate-handout-config.py"},
+        "schema_version": {"type": "string", "const": "1.0"},
+        "catalog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "date_source": {"type": "string", "enum": ["config", "default-today"]},
+        "presentation_order_source": {"type": "string", "enum": ["explicit", "derived-from-prior-knowledge"]},
+        "detail_level_source": {"type": "string", "enum": ["explicit", "preset-default"]},
+        "evidence_depth_source": {"type": "string", "enum": ["explicit", "preset-default"]},
+        "text_fold_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

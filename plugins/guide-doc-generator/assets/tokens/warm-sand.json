@@ -1,0 +1,78 @@
+{
+  "schema_owner": "C11 (script-brief-C11.json#theme_token_schema_ownership)",
+  "produced_by": "P05-x-02 (assets/ の唯一の producer / P04-x-05 G-04)",
+  "theme": "warm-sand",
+  "label": "Warm Sand・落ち着き",
+  "is_default": false,
+  "source": "pop.json と同一スキーマの差し替え例。テーマ追加がトークンファイル 1 枚の追加だけで済み、script の変更を伴わないことを示すために置く (R10)",
+  "--pop-primary": "#e0883c",
+  "accent_top_level_note": "アクセント色 (CSS 変数 --pop-primary) をトークンファイルのトップレベルから 1 手で解決するための入口 (P05-x-08)。値は accent.scale[step=bright].value および css_variables[\"--pop-primary\"] と必ず同一に保つ。キー集合は pop.json と完全に一致させる",
+  "accent": {
+    "policy": "アクセントは 1 色だけ置き、そこから明度の 4 段階を派生させる。5 色目のアクセントを足さない",
+    "base": "#e0883c",
+    "scale": [
+      {"step": "bright", "value": "#e0883c", "role": "CTA とトグル ON", "css_var": "--pop-primary"},
+      {"step": "pastel", "value": "#f2c48d", "role": "面", "css_var": "--pop-primary-pastel"},
+      {"step": "soft", "value": "#fbe6cd", "role": "選択状態・チップ・リング", "css_var": "--pop-primary-soft"},
+      {"step": "deep", "value": "#9a5714", "role": "文字・リンク・線画。面には使わない", "css_var": "--pop-primary-deep"}
+    ]
+  },
+  "css_variables": {
+    "--pop-primary": "#e0883c",
+    "--pop-primary-pastel": "#f2c48d",
+    "--pop-primary-soft": "#fbe6cd",
+    "--pop-primary-deep": "#9a5714",
+    "--pop-bg": "#fdf5ec",
+    "--ink": "#2b2118",
+    "--ink-muted": "#6d6055",
+    "--line": "#ece0d2",
+    "--subtle": "#fbf6f0",
+    "--card-radius": "20px",
+    "--font-num": "\"Helvetica Neue\", -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif"
+  },
+  "css_variables_note": "キー集合は pop.json と完全に一致する。差し替えで変わるのは値だけであり、変数名は C11 algorithm 11 の 11 変数に固定する",
+  "typography": {
+    "body": {
+      "font_feature_settings": "\"palt\"",
+      "why": "和文の字間を詰める。テーマが変わっても和文組みの作法は変えない"
+    },
+    "numeric": {
+      "selector": ".num",
+      "font_family_var": "--font-num",
+      "font_variant_numeric": "tabular-nums",
+      "letter_spacing": "-0.015em",
+      "white_space": "nowrap",
+      "why": "桁が揃わない表は読み比べができない"
+    },
+    "unit": {
+      "selector": ".unit",
+      "font_size": "62%",
+      "font_weight": 600,
+      "why": "単位を従属表示にして数値の主役性を保つ"
+    }
+  },
+  "mascot_css_variables": {
+    "--border-light": "#fff6ec",
+    "--border-mid": "#fbe6cd",
+    "--border-dark": "#f4d3ab",
+    "--body-light": "#ef9f57",
+    "--body-main": "#e0883c",
+    "--body-dark": "#c67229",
+    "--eye-white": "#ffffff",
+    "--pupil-light": "#6a6a6a",
+    "--pupil-dark": "#515151",
+    "--highlight": "#ffffff",
+    "--pupil-gloss": "rgba(255,255,255,0.24)"
+  },
+  "mascot_css_variables_note": "同じ mascot-defs.svg がこの 11 変数だけでこのテーマの配色になる。マスコット SVG 側を差し替える必要はない",
+  "text_limits": {
+    "block_body_max_chars": 400,
+    "block_body_max_chars_by_detail_level": {
+      "overview": 180,
+      "standard": 400,
+      "detailed": 900
+    },
+    "canonical_source": "RESOLUTION-R22.md「確定した数値 (C63)」。値の再解釈も丸めも行わない",
+    "why_same_as_pop": "水準別上限は版面設計に属する値だがテーマごとに動かしてよい。ただし本テーマは版面 (欄幅・字送り) を pop から変えていないため、確定値をそのまま採る。テーマ差し替えの例示のために数値を動かすと C63 の正本が 2 つの異なる値を持つように見える"
+  }
+}

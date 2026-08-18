@@ -1,0 +1,91 @@
+{
+  "title": "生成AIで月次集計を頼めるようになる",
+  "doc_type": "lecture",
+  "date": "2026/08/18",
+  "purpose": "毎月の集計作業を、生成AIへ指示文で頼めるようにする",
+  "background": "集計は毎月同じ手順なのに、担当者の手作業に張り付いている",
+  "goal": "自分の集計業務を1つ選び、指示文に落として実行できる",
+  "reader": "表計算ソフトは使えるが、生成AIは触ったことがない事務担当者",
+  "prior_knowledge_level": "none",
+  "essential_problem": "何をどう頼めば正しい集計が返ってくるのかが分からない",
+  "duration": "60分",
+  "focus_theme": [
+    "自分の集計業務を1つ選んで指示文に落とす力"
+  ],
+  "target_tasks": [
+    {
+      "id": "monthly-close",
+      "label": "月次の車両収支を締めまでにまとめる"
+    }
+  ],
+  "attainment_level": "operable",
+  "must_remember": [
+    "指示文は目的から書く",
+    "元データの範囲を必ず明示する"
+  ],
+  "no_need_to_remember": [
+    "モデル名ごとの細かい上限値 (本資料を見返せば足りる)"
+  ],
+  "glossary": [
+    {
+      "term": "プロンプト",
+      "plain": "生成AIへ出す指示文のこと"
+    }
+  ],
+  "sections": [
+    {
+      "id": "intro",
+      "heading": "まず1回やってみる",
+      "goal": "この節を読み終えると、指示文を出して結果を受け取る流れが分かる",
+      "lead_line": "指示は目的から書くと崩れない",
+      "judgment_axis": "迷ったら、受け取る人が何を判断できるかで決める",
+      "duration": "20分",
+      "parts": [
+        {
+          "part": "B17",
+          "id": "p1",
+          "data": {
+            "live_demo": true,
+            "steps": [
+              {
+                "operation": "生成AIの入力欄へ、集計してほしい内容をそのまま書いて送る",
+                "expected": "数分待たずに、集計結果の表が返ってくる",
+                "stuck_hint": "何も返らないときは、元データを貼り忘れていないか見る"
+              }
+            ]
+          }
+        },
+        {
+          "part": "TEXT",
+          "id": "p2",
+          "data": {
+            "body": "いま出したのがプロンプト (生成AIへ出す指示文のこと) です。ここからは、これを毎月使える形に整えます。"
+          }
+        },
+        {
+          "part": "B03",
+          "id": "p3",
+          "data": {
+            "rows": [
+              {
+                "key": "collect",
+                "text": "元データを集める",
+                "time": "10分"
+              },
+              {
+                "key": "ask",
+                "text": "指示文を書く",
+                "time": "10分"
+              }
+            ]
+          }
+        }
+      ],
+      "ties_to": [
+        "goal",
+        "target_task:monthly-close"
+      ],
+      "attainment_step": "operable"
+    }
+  ]
+}

@@ -1,0 +1,507 @@
+{
+  "component_id": "C20",
+  "component_kind": "script",
+  "name": "extract-handout-config.py",
+  "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+  "purpose": "生成済みまたは手書きの単一 HTML を標準ライブラリの html.parser で走査し、C12 のスキーマに従う構成データ JSON を逆抽出する。C11 レンダラの逆関数として振る舞い、--compare 併用時は正規化済み構成データ同士の等価判定 (round-trip) を行う。HTML から一意に定まらない意味情報は捏造せず null として残し、復元不能箇所を stderr へ機械可読に列挙して人間 (C02 skill の R2-complete) へ引き渡す",
+  "single_writer": "生成済み HTML から構成データへの復元 (逆写像の唯一の実装。C02 skill も C11 も自前で HTML を parse しない)",
+  "argv": [
+    {
+      "flag": "--html",
+      "required": true,
+      "type": "path",
+      "description": "逆抽出対象の単一 HTML。UTF-8。この script は絶対に書き換えない",
+      "default": null
+    },
+    {
+      "flag": "--out",
+      "required": false,
+      "type": "path",
+      "description": "復元した構成データ JSON の書き出し先。--html と同一 realpath なら exit 2。未指定時は書き出さず検査のみ行う",
+      "default": null
+    },
+    {
+      "flag": "--compare",
+      "required": false,
+      "type": "path",
+      "description": "比較対象の構成データ JSON (正規化済みまたは未正規化のどちらでもよい)。指定時は round-trip 等価判定を行い、不一致なら exit 1",
+      "default": null
+    },
+    {
+      "flag": "--strict-fidelity",
+      "required": false,
+      "type": "flag",
+      "description": "復元不能箇所が 1 件でもあれば exit 1 にする。未指定時は必須フィールドの欠落のみを exit 1 とし、任意フィールドの欠落は warning に留める",
+      "default": false
+    },
+    {
+      "flag": "--report",
+      "required": false,
+      "type": "path",
+      "description": "抽出レポート JSON (復元した部品一覧・fidelity 内訳・unrecoverable 一覧・compare の差分) の書き出し先。C02 skill の逆抽出レポートの素材",
+      "default": null
+    }
+  ],
+  "stdin": "読まない。非対話 script",
+  "stdout": "人間可読の 1 行サマリ + 内訳。例: 'EXTRACTED sections=6 parts=17 exact=15 heuristic=2 unrecoverable=3 roundtrip=EQUIVALENT'。構成データ JSON は stdout へ流さず常に --out へ書く (stderr の診断と混ざらず、hook から素直に扱えるようにするため)",
+  "stderr": "復元不能箇所と差分のみ。1 行 1 件で先頭に診断コード。この一覧が本 script が発火させ得る診断コードの正本であり、下流 (C02 / C08) はここに載っているコード名だけを分岐条件として参照する。E-EXTRACT-UNRECOVERABLE <JSON Pointer> <理由> / W-EXTRACT-OPTIONAL <JSON Pointer> <理由> / W-EXTRACT-HEURISTIC <JSON Pointer> <採用した推定と根拠クラス名> / W-EXTRACT-CATALOG-DRIFT <JSON Pointer> <照合表とカタログの過不足> / E-ROUNDTRIP-DIFF <JSON Pointer> expected=<...> actual=<...> / E-HTML-MALFORMED <行番号> <内容>。E- で始まる 3 件は exit != 0 を伴う失敗、W- で始まる 3 件は既定では exit 0 のまま抽出を続行する警告 (W-EXTRACT-OPTIONAL と W-EXTRACT-HEURISTIC は --strict-fidelity 指定時のみ exit 1 へ格上げされ、W-EXTRACT-CATALOG-DRIFT は起動時の自己整合検査 (RESOLUTION-P03.md Y-05) が出すもので exit code を変えない)",
+  "exit_codes": {
+    "0": "抽出が成立し、必須フィールドに復元不能が無く (E-EXTRACT-UNRECOVERABLE が 0 件)、--compare 指定時は正規化済み構成データが等価だった (E-ROUNDTRIP-DIFF が 0 件)。--strict-fidelity 指定時は任意フィールドの復元不能 (W-EXTRACT-OPTIONAL) と heuristic 採用 (W-EXTRACT-HEURISTIC) も 0 件。W-EXTRACT-CATALOG-DRIFT は出ていても exit 0 を妨げない",
+    "1": "復元または比較の失敗。必須フィールドの復元不能 (E-EXTRACT-UNRECOVERABLE) / --compare の不一致 (E-ROUNDTRIP-DIFF) / --strict-fidelity 下での任意フィールドの復元不能 (W-EXTRACT-OPTIONAL) / --strict-fidelity 下での heuristic 経路による部品同定 (W-EXTRACT-HEURISTIC) / HTML の構造が閉じておらず要素の親子が確定できない (E-HTML-MALFORMED)。ただし E-EXTRACT-UNRECOVERABLE の場合に限り --out へは穴を null にした部分成果物を書く (fail_semantics 参照)",
+    "2": "起動側の不正。--html 未指定 / --html が存在しないか読めない / --out または --report が --html と同一 realpath / --out や --report の親ディレクトリが存在しない / --compare のファイルが JSON として読めない。この経路には stderr 契約の診断コードを割り当てない — コード名を持つのは HTML を読み始めた後の抽出・比較の診断だけであり、起動引数の不正は usage メッセージで返す (下流が exit 2 をコード名で分岐する必要が生じたら、まず stderr 契約へコードを追加してから本節を揃える)"
+  },
+  "write_scope": [
+    "--out で指定された 1 ファイル",
+    "--report で指定された 1 ファイル (out-file 系のみ。--html は常に読み取り専用)"
+  ],
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--html で指定された HTML (読み取りのみ)",
+      "--compare で指定された構成データ JSON (読み取りのみ)",
+      "部品→クラス名対応 (ヒューリスティック経路の照合表。実体は本 script 内の定数表として持つ)。本 script が保持してよいのは『部品 id → クラス名』の対応だけであり、『どの部品 id が存在するか』は保持しない — 部品 id 集合の正本は config/handout-parts.json (owner: C11) ただ 1 箇所であり (P03 Y-05)、C12 のスキーマを id 語彙の出所として参照しない。照合表はカタログの id を鍵として引き、カタログに無い id を鍵に持つ行、およびカタログにあって鍵が無い部品は、起動時の自己整合検査で列挙して報告する"
+    ],
+    "invoked_by": [
+      "C02 run-handout-extract (R1-scan / R3-roundtrip)",
+      "P06 の round-trip テスト (C20 チェックリスト項目の検証)"
+    ],
+    "invokes": [
+      "C12 validate-handout-config.py (importlib 経由でモジュールとして読み込み、正規化関数と比較用の正規化を共有する。正規化ロジックを再実装すると等価判定の基準が 2 つになるため)"
+    ]
+  },
+  "algorithm": [
+    "A1. argv を解析する。--html 未指定 / 読めない / --out や --report が --html と同一 realpath / 出力先の親ディレクトリ不在 はいずれも exit 2",
+    "A2. --html を UTF-8 で読み、parsing_strategy に従って html.parser でノード木を構築する。スタックが破綻したら E-HTML-MALFORMED で exit 1",
+    "A3. renderer_marker_requirements.chrome_boundary の規定に従って生成 chrome を走査対象から外す。マーカーが無い場合は .pop-header / .pop-bottom / .memo-* のクラス名でも切り落とす (二重防御)。いずれの経路でも chrome 内側の著者データマーカーは規定どおり残す",
+    "A4. <html> の data-hb-schema-version / doc-type / subject-slug / theme / meta-* / notes-enabled から文書レベルのメタを取り出す。data-hb-notes-enabled は boolean へ戻す (属性が無ければ null を書かず unrecoverable へ積む)。欠けているものは null として記録し unrecoverable へ積む",
+    "A5. data-hb-field を持つ要素から title / date / purpose / background / goal / duration / focus_theme / target_task (data-hb-key が id) / attainment_level / must_remember / no_need_to_remember を取り出す。配列フィールドは同じ data-hb-field 値を持つ要素を文書順に集める。マーカーが無ければ heuristic_fallback の never_guessed 規則により推測せず unrecoverable へ積む",
+    "A6. <section> を文書順に走査する。id は要素の id 属性、heading / section_goal / lead_line / judgment_axis は data-hb-field から、section_kind は data-hb-section-kind、role は data-hb-section-role、attainment_step は data-hb-attainment-step、ties_to は data-hb-ties-to を required_serialization に従って分解して取る。section id の重複は E-EXTRACT-UNRECOVERABLE",
+    "A7. 各 section 配下を DOM 順に走査し、data-hb-part を持つ要素を部品として復元する。data-hb-key / owner / due / time などの素値属性を優先して data を組み立て、表示テキストからの切り出しはマーカーが無い場合の代替に留める",
+    "A8. マーカーを持たない要素は heuristic_fallback の class_map で部品種別を推定し、W-EXTRACT-HEURISTIC として記録する。どれにも当たらず本文とみなせるものは TEXT 部品にする",
+    "A9. <img> / <a download> / 図解ラッパから assets / attachments / diagrams を復元する。data URI 本体はそのまま文字列として保持する",
+    "A10. data-hb-glossary-term / plain / scope から glossary を document スコープと section スコープへ振り分けて復元する",
+    "A11. unrecoverable を集計する。必須フィールドに 1 件でもあれば exit 1 を予定し、任意フィールドのみなら --strict-fidelity の有無で判定を決める",
+    "A12. --out があれば復元結果を C12 と同じ書式規約 (ensure_ascii=false, indent=2, sort_keys=true, LF, 末尾改行 1 個) で一時ファイルへ書き os.replace で差し替える。fail_semantics に従い E-ROUNDTRIP-DIFF / E-HTML-MALFORMED / exit 2 のときは書かない",
+    "A13. --compare があれば roundtrip_granularity の compare_procedure 1-5 を実行する",
+    "A14. --report があればレポート JSON を書く",
+    "A15. stdout へ 1 行サマリを出し、集計に応じて 0 または 1 で終了する"
+  ],
+  "parsing_strategy": {
+    "library": "html.parser.HTMLParser を継承した最小の木構築器。convert_charrefs=True で実体参照を解決する。正規表現による DOM 解析は行わない (属性順や空白の差で壊れるため)",
+    "tree_building": "handle_starttag / handle_endtag でスタックを積み降ろしし、{tag, attrs(dict), children, text} のノード木を作る。void 要素 (br / img / input / meta / link / hr / source) はスタックへ積まない。終了タグが対応せずスタックが破綻したら E-HTML-MALFORMED で exit 1",
+    "script_style": "<script> と <style> の中身は html.parser が CDATA モードで生テキストとして渡すため、そのまま破棄する。JS/CSS は C11 が構成データから決定論生成する chrome であり、構成データの一部ではない",
+    "comments_doctype": "handle_comment / handle_decl は無視する",
+    "text_handling": "要素直下のテキストノードを連結し、連続空白を単一空白へ畳んでから前後を trim、最後に NFC 正規化する。ただし <pre> 配下 (B11 プロンプト箱の本文) は空白と改行を一切畳まず原文のまま取る",
+    "ordering": "sections は文書順、parts は DOM 順で復元する。ソートしない"
+  },
+  "roundtrip_granularity": {
+    "verdict": "バイト一致ではなく『正規化済み構成データの比較対象射影 (comparable projection) 上での深い等価』を round-trip の合格条件とする。バイト一致は同一構成データからの再生成 (C29) にのみ課す",
+    "why": "HTML は空白・属性順・改行位置で差が出るうえ、C11 は nav / sprite / CSS / JS / footer を構成データから毎回生成する。これらを逆抽出して構成データへ戻すと、構成データが生成物を抱え込み単一正本が崩れる。したがって『再生成できるものは復元しない』ことを設計として宣言し、比較は構成データ側で行う",
+    "comparable_projection": "正規化済み構成データから provenance ブロック全体 (normalized_by / schema_version / catalog_sha256 / date_source) を除いた残り。provenance は実行環境と catalog 版に依存するため、意味的同一性には属さない",
+    "preserved_exact": [
+      "title / date / doc_type / subject_slug / duration / theme",
+      "purpose / background / goal (文書レベル)",
+      "focus_theme / target_tasks[].id / target_tasks[].label / attainment_level / must_remember / no_need_to_remember (文書レベルの著者記述。配列は順序込み)",
+      "sections[].id / heading / goal / lead_line / judgment_axis / duration / section_kind / role / attainment_step / ties_to (ties_to は配列として順序込みで比較する)",
+      "parts[].part / id / data の全キー (部品ごとの許容キーに従う)",
+      "glossary[].term / plain (文書スコープ・セクションスコープの別も含む)",
+      "attachments[].filename / mime / fallback_hint と data URI 本体",
+      "assets[].alt / caption と data URI 本体",
+      "diagrams[].id / title / pattern (構造データ data は data-hb-diagram-data の JSON から復元)",
+      "notes_enabled"
+    ],
+    "preserved_only_with_markers": [
+      "reader / prior_knowledge_level / essential_problem — 本文へ描画されない資料メタであり、C11 が <html> の data-hb-meta-* 属性として焼かない限り HTML から取り出せない",
+      "assets[].src / attachments[].src の原本相対パス — 埋め込み後は data URI しか残らないため、data-hb-src で原本パスを併記しない限り失われる",
+      "diagrams[].data — 生成された SVG から構造データへは戻せないため data-hb-diagram-data が必須"
+    ],
+    "not_preserved_by_design": [
+      "HTML の空白・改行・属性順 (再生成で決まる)",
+      "構成データのキー順 (C12 の sort_keys で正規化時に一意化される)",
+      "生成 chrome: sticky ナビ (B01) / ヒーロー枠 (B02 の枠そのもの) / アイコン sprite / CSS 変数ブロック / JS / footer / メモ UI / lightbox — いずれも構成データから決定論生成されるため復元対象外。枠の内側にある著者記述はこの免除に含まれない (適用範囲は renderer_marker_requirements.chrome_boundary が定める)",
+      "provenance ブロック",
+      "コメント・DOCTYPE"
+    ],
+    "compare_procedure": [
+      "1. --html から構成データを復元する",
+      "2. 復元結果と --compare の両方を C12 のモジュール API で正規化する (同一の正規化実装を通すことが等価判定の前提)。--compare 側が未正規化でもここで揃う",
+      "3. 両者から comparable_projection を取る",
+      "4. 深い等価を再帰比較する。配列は順序込みで比較する (順序は意味を持つため)",
+      "5. 不一致を JSON Pointer + expected + actual の形で全件 stderr へ出し exit 1。全一致なら stdout に roundtrip=EQUIVALENT を添えて exit 0"
+    ]
+  },
+  "renderer_marker_requirements": {
+    "addressed_to": "C11 render-handout.py",
+    "principle": "構成データ全体を <script type=\"application/json\"> として HTML へ埋め込む方式は採らない。(a) 構成データが HTML 内に二重化して単一正本が崩れる (b) data URI 添付を含む構成データを丸ごと埋めるとファイルサイズが倍化する (c) 何より R14 の主用途は『手書き HTML のテンプレート化』であり、埋め込み blob を前提にすると機械生成物しか逆抽出できない。したがって構造そのものに機械可読なマーカーを付け、逆抽出は本物の parse として成立させる",
+    "required_markers": [
+      {
+        "marker": "data-hb-schema-version",
+        "on": "<html>",
+        "value": "スキーマ版",
+        "why": "抽出器が解釈規則を選ぶ"
+      },
+      {
+        "marker": "data-hb-doc-type",
+        "on": "<html>",
+        "value": "doc_type の slug",
+        "why": "本文に描画されないため属性でしか運べない"
+      },
+      {
+        "marker": "data-hb-subject-slug",
+        "on": "<html>",
+        "value": "subject_slug",
+        "why": "同上。C19 のディレクトリ名との突き合わせにも使える"
+      },
+      {
+        "marker": "data-hb-theme",
+        "on": "<html>",
+        "value": "採用テーマ名",
+        "why": "C11 が書き戻したテーマを HTML 側からも確認できる"
+      },
+      {
+        "marker": "data-hb-meta-reader / data-hb-meta-knowledge / data-hb-meta-problem",
+        "on": "<html> または hero 直下の 1 要素",
+        "value": "reader / prior_knowledge_level / essential_problem",
+        "why": "本文へ描画されない必須メタ (C36)。これが無いと逆抽出結果は必ず C12 の必須検査で落ちる"
+      },
+      {
+        "marker": "data-hb-field",
+        "on": "当該テキストを持つ要素 (配列フィールドは要素 1 件につき 1 要素)",
+        "value": "title|date|purpose|background|goal|duration|focus_theme|target_task|attainment_level|must_remember|no_need_to_remember|lead_line|judgment_axis|section_goal|section_duration|heading",
+        "why": "見た目のクラス名に依存せずフィールドを同定する。テーマ変更でクラス名が変わっても逆抽出が壊れない。値の集合は marker_source_of_truth の裁定表から導出したものであり、この列挙を先に書いて裁定表を後から合わせない"
+      },
+      {
+        "marker": "data-hb-section-kind",
+        "on": "<section>",
+        "value": "section_kind の enum 値",
+        "why": "既定 standard 以外は描画差分からは一意に逆算できない"
+      },
+      {
+        "marker": "data-hb-part / data-hb-part-id",
+        "on": "各部品のルート要素",
+        "value": "B03..B16 / IMG / DIAGRAM / TEXT と部品 id",
+        "why": "部品種別の同定をクラス名推定ではなく確定情報にする。これが parts 復元の主経路"
+      },
+      {
+        "marker": "data-hb-key",
+        "on": "行・カード・チップ・タブ等の反復要素、および data-hb-field=\"target_task\" の各要素",
+        "value": "rows[].key / cards[].label / chips[].key 等の識別子。target_task では target_tasks[].id",
+        "why": "B09 / B15 / B16 のキーは localStorage の保存キーでもあり、失うとメモ状態と構成データの対応が切れる。target_tasks[].id は sections[].ties_to の参照先実体であり、失うと ties_to が必ず dangling になる"
+      },
+      {
+        "marker": "data-hb-ties-to",
+        "on": "<section>",
+        "value": "sections[].ties_to の直列化文字列",
+        "required_serialization": "半角スペース区切りのトークン列。各トークンは schema $defs.section.properties.ties_to.items.pattern に適合する。空配列は空文字列。Python の list repr や JSON 配列リテラルを属性値へ入れることは禁止する",
+        "why": "R21 C48/C58 の紐づけの実体。マーカー自体は既に出ているが直列化形式が宣言されていないため機械的に読み戻せない。欠けると role=main の全セクションが E-SECTION-UNTIED-GOAL / E-SECTION-UNTIED-TASK で落ちる"
+      },
+      {
+        "marker": "data-hb-section-role",
+        "on": "<section>",
+        "value": "sections[].role の enum 値",
+        "why": "appendix の並び順検査 (E-APPENDIX-ORDER) と ties_to 必須性の分岐に効く。既定 main で埋めると appendix セクションが誤って本編扱いになるため、抽出器は推測せずこの属性からのみ復元する"
+      },
+      {
+        "marker": "data-hb-attainment-step",
+        "on": "<section>",
+        "value": "sections[].attainment_step の素値",
+        "why": "attainment_level との整合検査の被検査側。schema は normalize が充填しない (推測しない) と明記しているため、抽出器が埋めることも許されない"
+      },
+      {
+        "marker": "data-hb-notes-enabled",
+        "on": "<html>",
+        "value": "true|false (boolean の文字列表現。省略・空文字は不可)",
+        "why": "本文へ描画されない文書レベルの真偽値。属性が無いと normalize が既定 true を充填し、著者が false を選んだ資料が round-trip で true へ化ける (値の消失であって P1 の再生成ではない)。メモ UI の有無からの推定は採らない — メモ UI は chrome_boundary で読み飛ばし対象と定めた領域であり、そこへ意味情報の復元を依存させると chrome 境界の規約と矛盾する"
+      },
+      {
+        "marker": "data-hb-owner / data-hb-due",
+        "on": "B16 の各行",
+        "value": "owner / due",
+        "why": "表示は装飾を伴うため、素の値を属性で持たないと文字列から切り出す羽目になる"
+      },
+      {
+        "marker": "data-hb-time",
+        "on": "B03 の各行",
+        "value": "time の素値",
+        "why": "同上 (時間ピルの装飾文字を含まない値)"
+      },
+      {
+        "marker": "data-hb-glossary-term / data-hb-glossary-plain",
+        "on": "用語言い換えを描画する要素",
+        "value": "term / plain",
+        "why": "本文中の括弧書きから機械的に切り出すと誤検出が出る。宣言を属性で持たせる"
+      },
+      {
+        "marker": "data-hb-glossary-scope",
+        "on": "同上",
+        "value": "document|section",
+        "why": "どちらのスコープに書かれていたかを復元して round-trip 等価を成立させる"
+      },
+      {
+        "marker": "data-hb-asset-id / data-hb-asset-alt / data-hb-asset-caption / data-hb-src",
+        "on": "<img> と画像ブロック",
+        "value": "assets の各値と原本相対パス",
+        "why": "data URI 化後に原本パスを取り戻す唯一の手段",
+        "payload_placement": "埋め込みペイロードの置き場は schema 上 assets[]/attachments[] の src ただ 1 箇所 ($defs.local_source の src は ^data: を既に許す)。data-hb-src が非空ならその値を src へ戻し data URI は捨てる (再埋め込みは C13 の責務)。schema に無い data_uri キーを復元結果へ新設しない — 新設は C12 の E-KEY-UNKNOWN になり、それを受け入れるために schema を緩めるのは基準を弱める側に当たる"
+      },
+      {
+        "marker": "data-hb-attachment-id / data-hb-filename / data-hb-mime / data-hb-fallback-hint",
+        "on": "<a download>",
+        "value": "attachments の各値",
+        "why": "同上"
+      },
+      {
+        "marker": "data-hb-diagram-id / data-hb-diagram-pattern / data-hb-diagram-data",
+        "on": "図解の <svg> のラッパ要素",
+        "value": "id / pattern / 構造データの JSON 文字列",
+        "why": "生成された SVG 座標から構造データへは戻せない。data を属性へ持たせるのが唯一の復元路"
+      },
+      {
+        "marker": "data-hb-generated=\"true\"",
+        "on": "nav / hero 枠 / sprite / footer / メモ UI / lightbox の各ルート要素",
+        "value": "true",
+        "why": "最重要。これが無いと再生成可能な chrome が parts として構成データへ混入し、round-trip が必ず不一致になる。読み飛ばしの適用範囲は chrome_boundary の規定に従う (『部分木を丸ごと』ではない)"
+      }
+    ],
+    "marker_source_of_truth": {
+      "derived_from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md の fenced JSON の adjudications",
+      "rule": "decision=marker の各裁定が挙げるマーカー (属性名および data-hb-field の値) は、その全件が required_markers に現れていなければならない。両者の包含関係は列挙から機械的に検査する対象であり、件数や一覧を散文へ書き下して二名簿を作らない",
+      "check": "adjudications の marker 文字列から属性名と data-hb-field の値を正規表現で抽出した集合が、required_markers から同様に抽出した集合に包含されること",
+      "divergence_policy": "包含が破れたときに直すのは本 brief 側である。裁定表 (ROUNDTRIP-CONTRACT.md) は裁定の正本であり、brief に合わせて書き換えない"
+    },
+    "chrome_boundary": {
+      "purpose": "data-hb-generated による読み飛ばしの適用範囲を宣言で確定する。範囲が未定義であったため、著者記述を内包する hero 枠が chrome として丸ごと捨てられ、既に刻まれている data-hb-field へ到達できない状態が生じた",
+      "what_is_chrome": "構成データから決定論的に再生成できる提示層のみ。すなわち sticky ナビ (B01) / ヒーロー枠 (B02 の枠そのもの) / アイコン sprite / CSS 変数ブロック / JS / footer / メモ UI / lightbox。これは roundtrip_granularity.not_preserved_by_design の P1 免除と同じ集合であり、本規定は範囲を広げない",
+      "what_is_not_chrome": "著者が書いた内容。chrome の内側に描画されていても chrome ではない。とくに hero 枠の内側にある文書レベルのフィールド (title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember とその data-hb-key) は著者記述であり、枠が生成物であることを理由に捨ててはならない",
+      "rule": "data-hb-generated=\"true\" は『この要素とその子孫のうち、著者データマーカーを持たないノード』が再生成可能であることの宣言である。したがって読み飛ばしの単位は部分木そのものではなく『著者データマーカーを持つノードを抜いた部分木』である。chrome 部分木の内側で著者データマーカーを持つ要素に出会ったら、その要素と、値の復元に必要なその子孫・属性は読み飛ばしの対象から外れる",
+      "authored_data_markers": "読み飛ばしから除外される著者データマーカーは required_markers のうち文書・セクション・部品・用語・添付・図解の値を運ぶもの全てであり、その集合は marker_source_of_truth の裁定表から導出する。除外されないのは data-hb-generated 自身と、純粋な提示属性のみ",
+      "nesting": "chrome の内側の著者データ領域に、さらに data-hb-generated=\"true\" の子 (例: 枠内の装飾スプライト) が現れた場合、その子は再び読み飛ばし対象へ戻る。判定は最も内側の宣言が勝つ",
+      "class_name_fallback": "マーカーを持たない HTML に対する二重防御 (.pop-header / .pop-bottom / .memo-* 等のクラス名による読み飛ばし) にも同じ規定が及ぶ。クラス名一致で切り落とす場合も、内側の著者データマーカーは残す。クラス名は宣言より弱い根拠であり、宣言を覆さない",
+      "no_inference_inside_chrome": "読み飛ばし領域の存在・不在から意味情報を推定しない (例: メモ UI が描画されているから notes_enabled=true と決める、といった推定を採らない)。chrome から復元してよい構成データは 0 件であり、著者データはマーカーからのみ復元する",
+      "renderer_obligation": "C11 は、著者記述を運ぶ要素に必ず著者データマーカーを付ける。マーカーの無い著者記述を data-hb-generated 部分木の内側に置くことは、本規定の下では復元不能を意味する",
+      "extractor_obligation": "C20 は data-hb-generated 部分木を走査対象から外す際、内側の著者データマーカーを取りこぼさない。取りこぼしは E-EXTRACT-UNRECOVERABLE として現れるため、chrome 由来ノードが parts へ 1 件も混入しないこと (AC-C20-07) と、hero 内の文書レベルフィールドが復元されること (AC-C20-01) の両方が同時に成立する状態を合格とする",
+      "not_specified_here": "上記を満たす実装方法は規定しない。renderer 側で枠を分割してマーカー付き著者データを data-hb-generated の外へ出すか、抽出器側を穴あき走査にするか、あるいは両方かの選択は P05-x-18 (C11) / P05-x-19 (C20) の裁量である。本 brief は宣言正本として満たすべき条件だけを定める"
+    },
+    "consequence_if_absent": "マーカーの無い HTML (手書きや旧版) に対しては heuristic 経路へ落ち、当該箇所は W-EXTRACT-HEURISTIC または E-EXTRACT-UNRECOVERABLE として報告される。すなわちマーカーは C11 の任意装飾ではなく round-trip 契約の一部であり、C11 側の受入検査 (『全 part ルートに data-hb-part がある』『全 chrome に data-hb-generated がある』) として P04 のテスト設計へ渡す必要がある"
+  },
+  "heuristic_fallback": {
+    "when": "data-hb-* マーカーを持たない要素に遭遇したとき (手書き HTML のテンプレート化という R14 の主用途)",
+    "class_map": [
+      {
+        "selector_class": "step-row",
+        "block_type": "steps"
+      },
+      {
+        "selector_class": "trio / trio-card",
+        "block_type": "trio"
+      },
+      {
+        "selector_class": "table-wrap",
+        "block_type": "table"
+      },
+      {
+        "selector_class": "vs-grid",
+        "block_type": "versus"
+      },
+      {
+        "selector_class": "pop-features / duo / pop-feature",
+        "block_type": "features"
+      },
+      {
+        "selector_class": "map-grid / map-detail",
+        "block_type": "map"
+      },
+      {
+        "selector_class": "pop-row",
+        "block_type": "checklist"
+      },
+      {
+        "selector_class": "acc",
+        "block_type": "accordion"
+      },
+      {
+        "selector_class": "prompt-box",
+        "block_type": "prompt"
+      },
+      {
+        "selector_class": "dl-btn",
+        "block_type": "download"
+      },
+      {
+        "selector_class": "prompt-panel",
+        "block_type": "tabs"
+      },
+      {
+        "selector_class": "flow / flow-step",
+        "block_type": "flow"
+      },
+      {
+        "selector_class": "pop-chips",
+        "block_type": "chips"
+      },
+      {
+        "selector_class": "action-items / ai-row",
+        "block_type": "action-items"
+      },
+      {
+        "selector_class": "handson / hs-row",
+        "block_type": "handson"
+      },
+      {
+        "selector_class": "diagram",
+        "block_type": "diagram"
+      },
+      {
+        "selector_class": "asset / asset-img",
+        "block_type": "image"
+      },
+      {
+        "selector_class": "p / div (タグ名照合。上記いずれのクラス名にも当たらない本文の受け皿)",
+        "block_type": "text"
+      }
+    ],
+    "class_map_completeness": "カタログ (config/handout-parts.json) の section_scope=in-section 部品は、全件がこの表に行を持つ。行が無い部品はマーカー無し HTML で TEXT の受け皿へ黙って落ち、図解や画像が本文テキストに化ける。起動時の自己整合検査 (RESOLUTION-P03.md Y-05) はこの過不足を双方向に W-EXTRACT-CATALOG-DRIFT として報告する。整合していれば 1 行も出さない — 常時発火する警告は警告として機能しないため、この表はカタログ追加のたびに追従させる",
+    "recovery_limits": "class_map は『部品種別の同定』までしか担わない。同定できても値が復元できない部品がある。DIAGRAM は生成 SVG の座標から構造データへ戻せず (data-hb-diagram-data が唯一の復元路)、IMG は原本相対パス (data-hb-src) と asset_id を、B16 は owner / due を、それぞれ属性なしでは持てない。これらはマーカーが無い場合、部品としては復元しつつ欠けた値を E-EXTRACT-UNRECOVERABLE として報告する。同定を諦めて TEXT にするのではなく、同定したうえで穴を明示するのが正しい失敗の仕方 (fail_semantics と同じ方針)",
+    "reporting": "heuristic で同定した部品は復元結果に含めるが、全件を W-EXTRACT-HEURISTIC として stderr と --report へ出し、根拠クラス名を添える。--strict-fidelity 下では exit 1",
+    "never_guessed": "lead_line / judgment_axis / section goal / reader / prior_knowledge_level / essential_problem / doc_type は、マーカーが無い限り推測しない。文章の位置から『たぶんこれが lead_line』と当てにいくと、C02 skill が誤った意味情報を正しいものとして受け取り、以後の資料へ固定化される。必ず null + E-EXTRACT-UNRECOVERABLE として人間の判断へ返す",
+    "class_map_key": "鍵は部品 id ではなくカタログ (config/handout-parts.json) の data_block_type である。部品 id を鍵にすると、この照合表が『どの部品 id が存在するか』の第 2 の名簿へ退化し、カタログを唯一の名簿とする AC-C11-19 と衝突する。どの id がどの block_type かはカタログが持ち、本表が持つのは『その block_type をクラス名から見分ける根拠』だけに限定する (C11 の PART_DATA_PROJECTIONS / C17 の load_part_ids_by_block_type と同じ形)。裁定の正本は schemas/PART-CLASS-MAP-RESOLUTION.md",
+    "selector_notation": "selector_class の値は CSS セレクタではなくクラス名 (最終行のみタグ名) である。子孫・隣接・属性条件を伴う CSS セレクタ記法は書かない。heuristic 経路は 『クラス名の集合に当たるか』だけで判定する実装であり、セレクタ記法で書くと 契約が実装より強いことを暗示して読み手を誤らせる。判定を強めたい場合は 本表の記法を変えるのでなく、別途セレクタ照合機構を裁定してから両方を同時に改める",
+    "never_guessed_by_tag": "タグ名だけを根拠にした同定は image 行では行わない。クラス名を持たない裸の <img> は 本文中の装飾 (アイコン・ロゴ) と区別できず、部品として拾うと構造を捏造することになる。最終行 (text) のタグ名照合だけは『どの型にも当たらない本文の受け皿』という別の根拠に立つため例外とする"
+  },
+  "fail_semantics": {
+    "rule": "E-EXTRACT-UNRECOVERABLE のときに限り --out へ穴を null にした部分成果物を書き、exit 1 を返す。E-ROUNDTRIP-DIFF と E-HTML-MALFORMED と exit 2 のときは --out を書かない",
+    "why_asymmetric_with_c12": "C12 は『下流が読む正しい構成データ』を作るゲートなので部分成果物は害でしかない。C20 の部分成果物は逆に成果物そのもの — C02 skill の R2-complete が穴を埋める作業台になる。exit 1 で機械的には不合格を明示しつつ、人間の作業に必要な素材は残す",
+    "no_extra_keys": "穴の一覧を構成データへ書き込まない (C12 の未知キー検査に落ちるため)。復元不能一覧は stderr と --report にのみ出す。これは component-inventory の outputs 定義 (stderr = 復元不能な部品と欠落キー) と一致する",
+    "downstream": "穴のある構成データは C12 の必須検査で必ず exit 1 になる。すなわち未完成の逆抽出結果が C11 でレンダリングされてしまう経路が構造的に存在しない"
+  },
+  "report_shape": "{\"source_html\": path, \"sections\": [{\"id\":..., \"parts\": [{\"id\":..., \"part\":..., \"fidelity\": \"exact|heuristic\"}]}], \"fidelity_summary\": {\"exact\": N, \"heuristic\": N, \"unrecoverable\": N}, \"unrecoverable\": [{\"pointer\":..., \"reason\":...}], \"roundtrip\": {\"compared\": bool, \"equivalent\": bool, \"diffs\": [{\"pointer\":..., \"expected\":..., \"actual\":...}]}}",
+  "requirements_covered": [
+    "R14",
+    "R13 (部品カタログの逆写像として)"
+  ],
+  "checklist_covered": [
+    "C20",
+    "C27",
+    "C29 (バイト一致の適用範囲を構成データ等価と切り分ける側)"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C20-01",
+      "how": "正規化済み構成データ A を C11 でレンダリングし、その HTML を --html に、A を --compare に与える",
+      "expected": "roundtrip=EQUIVALENT で exit 0 (C20 の本体)"
+    },
+    {
+      "id": "AC-C20-02",
+      "how": "AC-C20-01 の復元結果を --out へ書き、C11 で再レンダリングして元 HTML と cmp する",
+      "expected": "バイト一致 (構成データ等価が成立していれば同一構成データからの再生成なので C29 が適用される)"
+    },
+    {
+      "id": "AC-C20-03",
+      "how": "A の任意セクションの judgment_axis を書き換えた A' を --compare に与える",
+      "expected": "E-ROUNDTRIP-DIFF /sections/N/judgment_axis と expected/actual が出て exit 1"
+    },
+    {
+      "id": "AC-C20-04",
+      "how": "8 用途プリセット全てで生成した HTML に対して round-trip を回す",
+      "expected": "全 8 件で exit 0 (section_kind と用途固有部品も復元できている)"
+    },
+    {
+      "id": "AC-C20-05",
+      "how": "B03..B16 + IMG / DIAGRAM / TEXT を 1 つずつ含む構成データで round-trip を回す",
+      "expected": "全部品が exact で復元され unrecoverable=0"
+    },
+    {
+      "id": "AC-C20-06",
+      "how": "data URI 添付 (xlsx) と埋め込み画像を含む HTML を逆抽出する",
+      "expected": "attachments / assets の filename / mime / alt / fallback_hint と data URI 本体が復元される"
+    },
+    {
+      "id": "AC-C20-07",
+      "how": "生成 HTML の nav / footer / メモ UI / sprite を含む全体を逆抽出する",
+      "expected": "復元された構成データに B01 / B02 が現れず、chrome 由来のノードが parts に 1 件も混入しない (data-hb-generated の読み飛ばしが効いている)"
+    },
+    {
+      "id": "AC-C20-08",
+      "how": "マーカーを持たない参照 v1 相当の手書き HTML を逆抽出する",
+      "expected": "部品は class_map により heuristic で復元され W-EXTRACT-HEURISTIC が出る。lead_line / judgment_axis / section goal / reader / prior_knowledge_level / essential_problem は null のまま E-EXTRACT-UNRECOVERABLE となり exit 1。--out には穴つき構成データが書かれる"
+    },
+    {
+      "id": "AC-C20-09",
+      "how": "AC-C20-08 の --out を C12 --config へ渡す",
+      "expected": "E-FIELD-MISSING で exit 1 (未完成の逆抽出結果がレンダリングへ抜けない)"
+    },
+    {
+      "id": "AC-C20-10",
+      "how": "終了タグが閉じていない HTML を与える",
+      "expected": "E-HTML-MALFORMED と行番号が出て exit 1、--out は作られない"
+    },
+    {
+      "id": "AC-C20-11",
+      "how": "--out に --html と同じパスを与える",
+      "expected": "exit 2。--html は無変更"
+    },
+    {
+      "id": "AC-C20-12",
+      "how": "同一 HTML に対して --out を 2 回生成して cmp する",
+      "expected": "バイト一致 (抽出も決定論)"
+    },
+    {
+      "id": "AC-C20-13",
+      "how": "<pre> を含む B11 プロンプト箱を逆抽出する",
+      "expected": "改行とインデントが原文のまま復元される (空白畳み込みの例外が効いている)"
+    },
+    {
+      "id": "AC-C20-14",
+      "how": "実行後に --html のタイムスタンプと内容を確認する",
+      "expected": "無変更 (write_scope が out-file 系のみ)"
+    },
+    {
+      "id": "AC-C20-15",
+      "how": "import 文を検査する",
+      "expected": "html.parser / json / sys / argparse / pathlib / re / unicodedata / importlib.util / os / tempfile のみ。yaml と外部パッケージが 0 件、BeautifulSoup 等の HTML ライブラリも 0 件 (C27)"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "data-hb-* マーカーが全く無い HTML",
+      "behavior": "heuristic 経路で部品だけ復元し、意味情報は null + E-EXTRACT-UNRECOVERABLE で exit 1。--out は穴つきで書く",
+      "rationale": "R14 の主用途 (手書き HTML のテンプレート化) を諦めないが、推測を成果物へ混ぜない。判断を人間へ返すのが正しい失敗の仕方"
+    },
+    {
+      "case": "生成 chrome を parts として拾ってしまう",
+      "behavior": "chrome_boundary の規定に従って data-hb-generated 領域を走査対象から外すことで構造的に防ぐ。マーカーが無い場合はクラス名 (.pop-header / .pop-bottom / .memo-*) でも読み飛ばす二重防御",
+      "rationale": "chrome が構成データへ混入すると round-trip が必ず不一致になり、しかも原因が『何が構成データか』の定義の問題なので diff から追いにくい"
+    },
+    {
+      "case": "chrome 枠の内側にある著者記述を枠ごと捨ててしまう",
+      "behavior": "chrome_boundary の規定により、読み飛ばし領域の内側でも著者データマーカーを持つ要素は復元対象として残す",
+      "rationale": "hero 枠は P1 の生成物だが、その内側の title / date / focus_theme などは著者記述である。枠の生成物性を理由に内側を一括で捨てると、マーカーが刻まれているのに全項目が E-EXTRACT-UNRECOVERABLE になる (これが round-trip 不成立の実測上の真因だった)"
+    },
+    {
+      "case": "--compare の構成データが未正規化 (date が yyyy-mm-dd 等)",
+      "behavior": "比較前に C12 の正規化を通してから比較する",
+      "rationale": "書式の揺れを不一致として報告すると、意味は同じなのに round-trip が落ちる。正規化の実装を C12 から import して共有するのは、等価判定の基準を 1 つに保つため"
+    },
+    {
+      "case": "--compare 側に provenance があり復元側に無い",
+      "behavior": "両者から comparable projection を取って比較するため差分にならない",
+      "rationale": "provenance は実行環境依存の記録であり構成データの意味に属さない。ここを比較対象にすると round-trip が原理的に成功しない"
+    },
+    {
+      "case": "同一 section id が HTML 内に 2 回現れる",
+      "behavior": "E-EXTRACT-UNRECOVERABLE で exit 1 (どちらを採るか決めない)",
+      "rationale": "nav アンカーの 1:1 対応 (C3) が既に壊れている HTML であり、片方を黙って選ぶと壊れた入力から一見正しい構成データが生まれる"
+    },
+    {
+      "case": "diagrams の data-hb-diagram-data が壊れた JSON",
+      "behavior": "当該 diagram を E-EXTRACT-UNRECOVERABLE とし、他の抽出は続行する",
+      "rationale": "1 箇所の破損で全体の抽出を捨てると、C02 skill が残りを手作業でやり直すことになる。復元できた分は返し、穴だけを報告する"
+    },
+    {
+      "case": "巨大な data URI (数 MiB) を含む HTML",
+      "behavior": "属性値をそのまま文字列として保持し、逐次読みはしない。メモリ上限は設けず、標準ライブラリの範囲で素直に扱う",
+      "rationale": "参照 v1 の実測で本文の 99% が data URI であり、これは正常な入力。人為的な上限を設けると正当な資料が逆抽出できなくなる (サイズ上限の判断は C13 の埋め込み側の責務)"
+    }
+  ],
+  "open_questions": []
+}

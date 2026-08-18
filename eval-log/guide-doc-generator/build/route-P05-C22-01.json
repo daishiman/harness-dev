@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C22",
+  "task_id": "P05-C22-01",
+  "covered_task_ids": [
+    "P05-C22-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (1365 行)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で全 import を列挙し、加えて grep -nE '^\\s+(import|from) [a-z]' で関数内 import を全走査",
+      "result": "pass (argparse / json / re / sys / unicodedata / html.parser.HTMLParser / pathlib.Path + __future__ の 7 本のみ。関数内 import は 0 件。第三者ライブラリ・subprocess ともに 0)"
+    },
+    {
+      "claim": "テスト 217 件中 216 件が緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-narrative.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 217 / failures=1 / errors=0 / 21.590s。実装前は failures=226)"
+    },
+    {
+      "claim": "残る赤 1 件がテスト側の stale literal であり実装不足でない",
+      "method": "失敗出力の全文取得と、テスト実体・_support.DETECTION_ORDER の実読",
+      "result": "pass (test_scope_and_determinism.py:173 は self.assertEqual(8, len(rows)) と 8 を直書きするが、_support.DETECTION_ORDER は 10 要素であり同ファイル _support.py:27 のコメント自体が『件数は導出値なので数値リテラルとして別に持たない (len(DETECTION_ORDER) を使う)』と明記している。同一 fixture 系の test_cli_contract.test_ac15_detection_id_column_matches_detections_exactly が DETECTION_ORDER との順序込み完全一致を要求するため 8 と 10 は同時に充足不能。実測 stdout も NAR-01..NAR-10 の 10 行を出力しており実装側は正しい)"
+    },
+    {
+      "claim": "R22 の値域と閾値を script へ literal 化していない (SSOT 維持)",
+      "method": "grep -nE '\"(overview|standard|detailed|cited|sourced|none)\"' と grep -nE '\\b(80|120|900|1800|450)\\b' を全文へ適用",
+      "result": "pass (どちらも 0 件。detail_level / evidence_depth の値域はテーマトークン text_limits.block_body_max_chars_by_detail_level から、1 行の抽象の上限は schema の x_single_line フィールドの maxLength 最大値から実行時に導出しており、第 2 の正本を作っていない)"
+    },
+    {
+      "claim": "部品語彙を script へ列挙していない",
+      "method": "grep -oE '\"B[0-9]{2}\"' で part id リテラルを全抽出し文脈を実読",
+      "result": "pass (B02 / B17 の 2 件のみ。B02 は HERO_PART 定数 (NAR-01/02 の検査アンカーであり語彙の複製ではない)、B17 は data-hb-live-demo 属性の有無を見る個別判定。提示物集合そのものは config/handout-parts.json の section_scope == 'in-section' を実行時走査して得ており列挙していない)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "テスト 9 ファイルの sha256 を worker 報告値と当方実測で突合",
+      "result": "pass (9 ファイルすべて一致)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "plugins/guide-doc-generator/ 配下の全ファイル mtime を走査し 45 分以内の書込を全列挙",
+      "result": "pass (本 leaf の実行時間帯に対応する書込は scripts/verify-handout-narrative.py 1 本のみ。他の新しいファイルは並行実行中の C11 / C18 leaf 由来で本 leaf の書込ではない)"
+    },
+    {
+      "claim": "OUT-OF-SCOPE 宣言が責務分離を守っている",
+      "method": "実行 stdout の OUT-OF-SCOPE 節を実読",
+      "result": "pass (セクションゴールの意味的妥当性を C06、R11/R18 を C18、自己完結性を C16、印刷面を C17 へ明示委譲し、他 component の判定を重複実装していない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-defect-stale-literal",
+      "detail": "要修正 / 本 leaf の write_scope 外。test_scope_and_determinism.py:173 の `self.assertEqual(8, len(rows))` は detection が 8 件だった時点の写しで、DETECTION_ORDER が 10 件へ拡張された際に追従漏れした。RESOLUTION-P04-x-05 裁定 B が『既存テストの 8 固定は受入基準の本体でなく、テスト実体の物理的更新は P04-x-06 が行う』と明記しており、_support.py と test_cli_contract.py は 10 件へ追従済み。修正案: `self.assertEqual(len(DETECTION_ORDER), len(rows), ...)` (当該ファイルは DETECTION_ORDER 未 import のため import 追加が要る)。P04-x-06 の write_scope で処理すること。これは『導出値を契約へ書き下す』という RESOLUTION-P04-x-05 が同定した欠陥クラスの 4 例目にあたる"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 12 件。(1) NAR-09 の standard 帯は常に PASS (違反 0) とした。brief の boundary が『standard 宣言は帯が広く実質ほぼ通る。これは意図的』と明記し、テストが実測平均 0 と detailed*2 の両端で PASS を要求するため、閾値の正本に standard の外側境界として使える数値が存在しない。数値を発明すれば『script に閾値を持たない』制約に反する (2) NAR-09/NAR-10 の SKIP 条件を『config が detail_level / evidence_depth キーを持たないとき』とし、宣言済みで HTML root 属性が欠落する場合のみ違反とした (R22 非対象の base fixture を落とさないため) (3) presentation_order を exit 2 の必須キーへ追加 (schema の x_required_after_normalize に含まれるため) (4) NAR-07 の 1 行閾値を brief 直書きでなく schema の x_single_line フィールドの maxLength 最大値から導出 (5) NAR-07 の提示物語彙を brief 列挙でなく handout-parts.json の section_scope == 'in-section' から導出 (brief の PASS 例が B17 を提示物前提にしており列挙の方が不整合だったため) (6) テーマトークンは config.theme 優先、無ければ assets/tokens/*.json を名前順走査し text_limits を完備する最初のもの (7) NAR-08 は付録セクション 1 件につき最大 1 違反 (文書順 → role 属性 → nav 順の最初の失敗のみ計上) (8) NAR-03 は HTML 未描画のセクションを検査対象外とし描画欠落は NAR-06 が単独計上 (二重計上回避) (9) NAR-09 の実測値は role=main セクションの全可視テキスト長合計を main セクション数で整数除算した平均 (10) NAR-06/NAR-04/NAR-08 の checked 列の母数定義 (11) 『検査アンカー不在』を専用 detection 行にせず既存違反行の value 列へ data-hb-field を出すことで満たした (detection 行を 10 行固定する契約を壊さないため) (12) C16 の import は行っていない — NAR-01..10 のどの判定にも絵文字判定・外部参照判定が現れないため。スキーム名・絵文字コードポイントの列挙も 0 件で、該当時は委譲する方針は維持されている"
+    },
+    {
+      "kind": "resolved-open-question",
+      "detail": "P05-x-01 へ持ち越し予定だった R22-AMENDMENT 未決事項『NAR-09 standard 帯の閾値』は、本 leaf で『閾値を定義しない (常に PASS)』として解決した。テーマトークンの text_limits が overview/standard/detailed の 3 値しか持たない以上、standard の外側境界を表す数値は正本に存在せず、発明すれば SSOT 違反になる。P05-x-01 では未決事項でなく『解決済みの設計判断』として扱えばよい"
+    }
+  ]
+}

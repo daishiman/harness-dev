@@ -1,0 +1,83 @@
+{
+  "task_id": "P01-x-01",
+  "phase_ref": "P01",
+  "status": "pass",
+  "checks": [
+    {
+      "id": "verify-by-coverage",
+      "status": "pass",
+      "detail": "goal-spec.json の checklist は 45 件 (id は C1..C45 の連番で欠番・重複なし)。全件が非空の verify_by を持つ。内訳は script=29 / test=15 / reasoning=1 (C25 のみ)。C25 は 'plugin 実体の配置先が index に明記されている' であり、index.md `## インフラ` の「実プラグインの配置先: plugins/guide-doc-generator/」記述で充足されている",
+      "missing": []
+    },
+    {
+      "id": "no-measured-value-baked",
+      "status": "pass",
+      "detail": "reference-analysis.md §0 (v1) と §8 (v2) の実測値を抽出し、goal-spec.json 全文 (checklist + constraints) に対して文字列一致検査を行った結果、いずれも 0 件。checklist 本文に現れる数値トークンは要件由来のもの (R 番号・C 番号・B01-B15・6 パターン/6 用途・base64・viewBox 0 0 24 24) に限られ、参照資料の観測統計が達成目標として焼かれた箇所は無い。viewBox='0 0 24 24' / stroke-linecap='round' 等は §10 の『アイコン規約 (確定事項・ユーザー明示要求)』であって観測統計ではないため、目標値焼込には当たらない。さらに constraints 末尾に『参照解析の実測値 (サイズ・data URI 比率など) は現状の観測であり、生成物の達成目標値として焼かない』という明示の禁止条項があり、index.md `## 環境ポリシー` の『現状値非焼込』および phase-01-requirements.md `## ドメイン知識` にも同趣旨が重複宣言されている",
+      "measured_values_examined": [
+        "原本サイズ 5,364,417 chars (5.12 MiB)",
+        "data URI 数 3 (xlsx x2 / zip x1)",
+        "data URI 合計 5,319,184 chars (全体の 99.16%)",
+        "本文 (base64 除去後) 45,447 chars",
+        "<style> ブロック 1 (約 250 行)",
+        "<script> ブロック 3",
+        "<section> 8 (v1) / 9 (v2)",
+        "scroll-margin-top: 96px",
+        "header.getBoundingClientRect().height + 12",
+        "main max-width: 860px",
+        "f-sub / s-sub 一文 20〜45 字",
+        "v2 総サイズ 30,586 chars",
+        "v2 絵文字使用数 0 / 外部参照 0 / data URI 0",
+        "v2 <svg> 8 / <symbol> 2 / <use> 5",
+        "CSS 変数 11 個 (--body-main 等)",
+        "stroke-width 2.2〜2.6",
+        "animation-delay --stagger: 120ms",
+        ".unit font-size: 62%",
+        "--card-radius: 24px / カラートークン hex 値"
+      ]
+    },
+    {
+      "id": "boundary-stated",
+      "status": "pass",
+      "detail": "index.md `## ドメイン知識` に『分界線 (本計画の中核)』として要件文で明示されている。同趣旨が goal-spec.json constraints (R19 の分界を崩さない) と phase-01-requirements.md `## ドメイン知識` / `## 完了チェックリスト` にも宣言されており、3 箇所で整合している。LLM 側 = ヒアリングと構成データの起草・可読性レビュー、決定論 script 側 = 構成データから HTML への描画・生成物の検証・出力先の解決、という割当が言い切られている。C29 (同一構成データから 2 回生成してバイト一致) が本分界の機械的裏づけとして checklist へ接地している",
+      "quote": "**分界線 (本計画の中核)**: 「ヒアリング→構成データを書く」「読みやすさをレビューする」は LLM、「構成データ→単一 HTML」「生成物の検証」「出力先の解決」は決定論 script。レンダリング経路に LLM を挟むと同一入力からの再現性が原理的に失われ、機械ゲートが成立しない。"
+    }
+  ],
+  "gates": [
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py plugin-plans/guide-doc-generator/goal-spec.json",
+      "exit_code": 0,
+      "stdout_tail": "WARN: source_intake 不在: intake/改善 由来でない既存 goal-spec として WARN 受理 (後方互換) / WARN: source_improvement 不在 (同上) / OK: plugin goal-spec schema + plugin anchors validated"
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py plugin-plans/guide-doc-generator",
+      "exit_code": 0,
+      "stdout_tail": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み"
+    }
+  ],
+  "findings": [
+    "goal-spec.json の open_questions が 13 件未回答のまま残っている。phase-01-requirements.md `## 完了チェックリスト` は『open_questions が回答済みで、設計を拘束する決着は 13 phase 本文へ転記されている』を P01 の完了条件に挙げているが、goal-spec 側は凍結対象 (write_scope 外) のため本 leaf では未着手。ただし index.md `## ドメイン知識` に、少なくとも 3 件 (混成用途の可否=『主用途は 1 つ』/ 非対話経路の要否=『対話は既定経路であって唯一経路ではない』/ 追加語彙の具体名=agenda・study-notes・study-plan を含む語彙正本) の決着が既に転記されている。残る open_questions (既定出力先の解決方式・単一ファイルサイズ上限・round-trip 一致粒度・テーマ入力経路・レビュアー独立 subagent の要否・専門用語判定方式・日付の意味論・補助日付表記の可否・nav ゴール表示形式のうち index に決着済みでないもの・プリセットの利用者拡張) の転記状況は P02 以降の phase 本文側で確認が要る。両ゲートは exit0 であり、この差分はゲート検出範囲外の未達。",
+    "verify_by=reasoning は C25 の 1 件のみ。C25 は index への明記という文書側の事実を問うており人手判断で足りるが、check-requirements-coverage は id のトレース有無しか見ないため『plugins/guide-doc-generator/ という具体パスが index に書かれているか』自体は機械検査されていない。本 leaf の目視では index.md `## インフラ` に当該記述が存在する。",
+    "goal-spec.json の checklist は C25 / C26 / C27 / C28 / C29 / C30 / C31 / C32 の 8 件が [Rnn] 前置タグを持たない (要件 R01-R20 に紐づかない計画自体への要件)。index.md の要件被覆表では全 45 件が焼き先を持つため被覆ゲートは通るが、『要件 R01-R20 を被覆した checklist』という goal の文言と、R タグなし 8 件の位置づけの関係は明文化されていない。",
+    "check-plugin-goal-spec.py が source_intake / source_improvement 不在で WARN を 2 件出している (後方互換受理)。exit0 のため blocker ではないが、本 goal-spec が intake 由来の lineage を持たないことの記録。"
+  ],
+  "notes": {
+    "went_well": [
+      "checklist の id 連番性・verify_by 非空を JSON パースで機械確認でき、目視漏れの余地なく 45/45 を確定できた",
+      "実測値の非焼込は『reference-analysis から数値を抽出 → goal-spec 全文へ文字列一致』という対照検査で二値判定でき、Goodhart 回避が推測でなく検査結果として言えた",
+      "分界線が index / goal-spec constraints / phase-01 の 3 箇所で同趣旨に書かれており、単一ファイル消失で失われない冗長性が既に確保されていた",
+      "2 ゲートとも引数形が想定どおり (goal-spec.json パス / PLAN_DIR) で --help 参照を要さず exit0"
+    ],
+    "friction_points": [
+      "『実測値が数値目標として焼かれていない』の判定は、規約由来の数値 (viewBox 0 0 24 24) と観測由来の数値 (99.16%) を切り分ける必要があり、単純な数値 grep では判定しきれなかった。出典 (§10 規約 vs §0/§8 数量事実) を突き合わせる二段の判断を要した",
+      "phase-01 の完了チェックリスト 4 項目のうち open_questions 回答は goal-spec の書換を伴い、本 leaf の write_scope と衝突するため検証のみに留めざるを得なかった",
+      "evidence/ ディレクトリが未作成で、書込時に新規作成が必要だった"
+    ],
+    "downstream_watchouts": [
+      "P02 は open_questions 13 件の決着を phase 本文へ転記する責務を負う。特に『round-trip 一致の粒度』(C20 は暫定で意味的一致) と『日付が指す意味』(C33 は暫定で単一フィールド) は checklist 本文に暫定値が既に書かれており、決着が暫定と異なる場合は goal-spec の checklist 文言も追随更新が要る (spec-first)",
+      "C29 のバイト一致再現性は分界線の機械的裏づけであり、レンダラ component (C11) の設計へ LLM 呼出が混入すると原理的に破れる。P02 の C11 設計ブリーフでこの制約を明示的に継承させること",
+      "index.md 要件被覆表の C29 行は『再現の単位は同梱構成データ 1 点』と限定しており、goal-spec C29 の『同一構成データから 2 回生成』より狭い読みになりうる。P07 の受入判定でどちらを採るか要確定",
+      "R タグなし 8 件 (C25-C32) は plugin 実体ではなく計画・パッケージング側の要件であり、P05 の component-build leaf ではなく P02 / P03 / P09 / P13 で消化される。build 側の leaf がこれらを取り違えて拾わないよう注意",
+      "check-plugin-goal-spec の source_intake WARN は、後段で intake 由来 plan と混在させたとき静かな差になりうる"
+    ]
+  }
+}

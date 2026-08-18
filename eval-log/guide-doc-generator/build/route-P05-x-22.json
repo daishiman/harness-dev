@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-22",
+  "covered_task_ids": [
+    "P05-x-22"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
+  "verified_by": [
+    {
+      "claim": "contract_lib.py が argument-hint の完全文字列リテラルを保持していない",
+      "method": "当方が `<html-path> [--out <config.json>]` の完全一致を Python の re.findall で数えた (BSD grep の \\b artifact を避けるため)",
+      "result": "pass (hit 0 件。`:65` が `ARGUMENT_HINT = command_brief()[\"argument_hint\"]` となっており brief 由来の導出値になっている)"
+    },
+    {
+      "claim": "brief の値を変えると当該テストが赤くなり、戻すと緑に戻る",
+      "method": "**当方が独立に実測した** (worker 報告に依拠していない)。command-brief-C08.json の argument_hint へ ` [--DISPATCHER-PROBE]` を付与してスイートを実行し、finally で必ず復元してから再実行",
+      "result": "pass (変異中は failures=4 で `test_AC_C08_1_checker_constants_match_inventory` / `test_AC_C08_1_frontmatter_matches_inventory` / `test_accept_fixture_has_no_violation` / `test_no_contract_violation_remains` が赤。復元後 OK。**赤くなったのが inventory 側と frontmatter 側の両方である点が重要** — 片側だけが brief へ追随する形になっていれば検査が弱まっていたが、そうなっていない。**これが『リテラルを別の場所へ移しただけ』でないことの決定的証拠**)"
+    },
+    {
+      "claim": "brief が元の内容へ完全復元されている",
+      "method": "当方が sha256 を worker 報告値と突合し、プローブ文字列の残存数も数えた",
+      "result": "pass (sha256 = f17667b6c850113ff8e14229f42678fe445906ffd6604e3401bae17c746737a5 で worker 報告値と一致。MUTATED / DISPATCHER-PROBE の残存 0 件。**当方自身の変異実測の後始末も finally で保証し、実測で 0 件を確認している**)"
+    },
+    {
+      "claim": "assert を弱めていない (frontmatter 側・inventory 側の双方の完全一致検査が維持されている)",
+      "method": "当方が変異実測の失敗テスト名の内訳で確認",
+      "result": "pass (frontmatter 側 `test_AC_C08_1_frontmatter_matches_inventory` と inventory 側 `test_AC_C08_1_checker_constants_match_inventory` が**両方**赤くなった。比較演算子は完全文字列一致のままで、突合の基準値が brief 由来になっただけ)"
+    },
+    {
+      "claim": "token 集合へ寄せず完全文字列一致を維持した判断が妥当である",
+      "method": "当方が worker の理由を検討",
+      "result": "pass (C07/C09 の `ARGUMENT_HINT_TOKENS` はフラグ名の包含しか見ないため、語順・空白・角括弧・positional の表記崩れを通す。**『形を揃える』より『検査の強さを落とさない』を優先した判断は正しい**。C07/C09 が token 集合なのは hint が長く引数 6 個あるためで、短く一意な C08 と同列に扱う理由が無いという説明も筋が通る)"
+    },
+    {
+      "claim": "自スイートが緑である",
+      "method": "当方がスイートを再実行",
+      "result": "pass (Ran 47, OK。失敗テスト名の集合は着手前後とも空集合)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が brief の sha256 一致で確認",
+      "result": "pass (plugin-plans/ 配下は復元済みで無変更。変更は contract_lib.py 1 ファイルのみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方が dispatch prompt で参照させた RESOLUTION §6-1 の『貼り付け可能な形』のコードは、そのまま貼ると import 時に NameError で落ちる** (PAT-1 の 13 例目)。`ARGUMENT_HINT = _brief_argument_hint()` はモジュール読込時に即評価されるが、参照する `plan_root()` は同ファイルの 600 行目定義で未定義。さらに §6-1 の但し書き『plan_root() に相当するヘルパが無い場合は私的ヘルパを 1 本足す』も外れており、**`plan_root()` は既に存在していた** (`test_handout_extract_command.py:24` が使用中)。実際に必要だったのは新規ヘルパでなく**定義順序の是正**。当方は dispatch prompt で『dispatcher は実行検証していないので鵜呑みにするな』と明示していたため worker が正しく掘り下げた"
+    },
+    {
+      "kind": "worker-restraint-on-scope",
+      "detail": "worker が write_scope **内**に見つけた 2 件の写しへ手を出さず記録に留めた。(1) `reject_cases.py:25` が hint 文字列を保持しているが、これは『期待値』でなく accept fixture への 1 箇所置換キーであり正本ではない。当方の変異実測でも `test_contract_checker` は fixture 由来で正しく赤くなっており誤緑化は起きない。(2) `fixtures/accept/commands/handout-extract.md` の frontmatter は依然 brief の写しだが、これは『チェッカを通る入力例』であり正本ではない。**受入基準の範囲を勝手に広げず、かつ黙って落とさずに記録した**判断は正しい。写しの総数は 5 → 4 へ減少"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

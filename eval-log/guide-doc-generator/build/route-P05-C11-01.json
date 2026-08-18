@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C11",
+  "task_id": "P05-C11-01",
+  "covered_task_ids": [
+    "P05-C11-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (1811 行。本 build 最大の component)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で全 import を列挙",
+      "result": "pass (argparse / html / importlib.util / json / os / sys / collections.OrderedDict / pathlib.Path + __future__ の 8 本のみ。subprocess / yaml / re / datetime は 0 件。ヒットした 1058 行は CSS keyframes の from であり import ではない)"
+    },
+    {
+      "claim": "C11 の自スイートが 174 件中 169 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-handout.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 174 / failures=5 / errors=0 / skipped=1 / 26.805s。実装前は Ran 110 / failures=142 / errors=20。件数が 110→174 に増えたのは実装前に setUpClass が例外で落ち 10 クラス分が実行されなかったため)"
+    },
+    {
+      "claim": "C16 (verify-handout-selfcontained.py) が完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-selfcontained.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 354 / failures=0 / errors=0 / OK / 31.876s。推移は 26 → 3 (C10 実装後) → 0 (本 leaf 後)。C11 待ちだった test_c11_has_no_scheme_enumeration / test_c11_has_no_codepoint_enumeration / test_c11_calls_the_canonical_functions の 3 件がすべて緑)"
+    },
+    {
+      "claim": "C19 が申し送った 2 条件を満たしている",
+      "method": "grep -c 'handout-config.json' と replace(\"/\", \"-\") 相当の正規表現を全文へ適用",
+      "result": "pass (どちらも 0 件。ディレクトリ名の組み立ては C19 の単独責務のまま保たれており『唯一の writer』検査を壊していない)"
+    },
+    {
+      "claim": "裁定 G-03 の単一正本委譲を守っている",
+      "method": "grep -n 'spec_from_file_location'",
+      "result": "pass (205 行に汎用ローダを 1 本持ち、C14 / C15 / C16 / C23 をすべて importlib で読み込む。スキーム名・絵文字コードポイントの自前列挙は 0 件で、これを C16 のスイートが独立に検証して緑)"
+    },
+    {
+      "claim": "部品 id を script へ列挙していない (SSOT 維持)",
+      "method": "grep -oE '\"B[0-9]{2}\"' を全文へ適用",
+      "result": "pass (0 件。骨格部品はカタログの section_scope==\"document\" をカタログ順で取り出し位置で解決し、block→部品の対応は data_block_type 経由。既定テーマも名前を列挙せず is_default: true が唯一 1 件であることから解決している)"
+    },
+    {
+      "claim": "生成 HTML が C16 / C17 のゲートを実際に通過する",
+      "method": "worker が生成 HTML へ両 script を直接実行した結果を報告、当方は C16 スイート全緑で裏取り",
+      "result": "pass (C16 RESULT: PASS / C17 は A11Y-01..07 + PRINT-01..04 + STICKY-01 の全検出が PASS)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/render-handout.py/ 配下の mtime とサイズを確認 (当該 scratchpad の sha256 baseline は別 leaf のものだったため mtime で代替)",
+      "result": "pass (全件 8/17 15:17〜18:04 で本 leaf の作業開始 18:55 より前。サイズも P04 生成時のまま)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "plugins/guide-doc-generator/ 配下の mtime 走査",
+      "result": "pass (本 leaf の書込は scripts/render-handout.py 1 本のみ。同時間帯の他ファイル更新は並行稼働していた C18 / C22 / C09 / C05 / C19 leaf 由来と特定済み)"
+    },
+    {
+      "claim": "範囲を勝手に広げていない",
+      "method": "P04-x-07 の overlay-fallback markup 申し送りの扱いを確認",
+      "result": "pass (tests/render-handout.py/ のどのテストからも要求されていないため実装せず未所有のまま残置した。owner 未確定の作業を無断で取り込まない方針として正しい。P05-x-01 で owner を決めること)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "残る赤 5 件はすべて C11 の write_scope 外にあり、当方が 5 件とも独立に原因ファイルまで特定した。(1)(2) test_language_gate_passes / test_narrative_gate_passes: C11 の fixture _harness.base_config() が provenance.normalized_by を持たない未正規化 config を C18 / C22 へ渡し、両 script が仕様どおり exit 2 を返す (verify-handout-language.py:855 / verify-handout-narrative.py:505)。HTML は読まれる前に落ちており C11 実装とは無関係。C18 側で吸収すると未正規化 config を検証通過させる穴になるため吸収不可 (3) test_part_ids_are_not_enumerated_outside_the_catalog: 違反 14 件は validate-handout-config.py:84-91 (8 件) / verify-handout-a11y-print.py:56-58 (4 件) / verify-handout-narrative.py:50,1003 (2 件) にあり、render-handout.py 由来は 0 件 (grep 実測) (4) test_catalog_is_sorted_and_well_formed: config/handout-parts.json の並びが ...B17, IMG, DIAGRAM, TEXT で sorted(ids) の ...B17, DIAGRAM, IMG, TEXT と一致しない。当該ファイルの _meta.produced_by は P05-x-03 (5) test_accent_token_change_only_diffs_root_block: テストの _accent_key はトークンファイルのトップレベルキーに pop-primary を含むものを探すが、assets/tokens/pop.json のトップレベルは schema_owner / produced_by / theme / label / is_default / source / accent / css_variables / ... でありアクセント色は accent.scale[].value と css_variables['--pop-primary'] の下にある。当該ファイルの produced_by は P05-x-02"
+    },
+    {
+      "kind": "owner-leaf-already-closed",
+      "detail": "要裁定 / 構造的な問題。上記 (4)(5) の owner である P05-x-02 (assets/ の唯一の producer) と P05-x-03 (config/ の唯一の producer) は既に done であり、(1)(2) の fixture を所有する P04-x-06 も done。つまり赤を残す 5 件のうち 4 件は『閉じた leaf の成果物を直す』作業で、現行 graph に受け皿が無い。additive の discovered-task を emit して外ループで受けること。これは P04-x-05 が同定した『artifact に producer がゼロでも validate-task-graph が検出しない』欠陥の変種で、今回は producer が存在したが先に閉じてしまった形"
+    },
+    {
+      "kind": "test-forces-derived-value",
+      "detail": "test_parts_catalog.py:94 の docstring が『各エントリは 6 フィールドを持つ』と書くが、直下のループは id / name_ja / kind / section_scope / data_block_type / since / source の 7 フィールドを検査している。実害は無いが (docstring は実行されない)、導出値を契約へ書き下す欠陥クラスの再発例として記録する。修正時は件数を書かず必須フィールドのリスト自体を書くこと"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 17 件。(1) 骨格部品はカタログの section_scope==\"document\" をカタログ順で [nav, hero] として位置解決 (件数が 2 でなければ exit 2)、既定テーマは is_default: true が唯一 1 件であることから解決 (2) C15 の collect_icon_refs が nav を dict 前提で歩くため {\"sections\": [...]} だけを投影して渡す (3) アイコンは装飾扱いとし icon-set から title 欄を落として build_sprite へ渡す (C17 A11Y-05 が aria-hidden の svg が title を持つことを無条件で違反とするため。意味は隣接する可読テキストが担う) (4) C14 出力のルート svg にのみ data-hb-kind=\"figure\" を注入し、title 未指定時は block の title→caption→label→セクション見出し→文書タイトルの順に補う (5) <use> ホスト svg は data-hb-kind=\"decor\" + aria-hidden=\"true\" (viewBox/stroke 等の統一スタイル定数を C11 側へ複製しないため) (6) 埋め込み実体の正本を assets レジストリ側に置き asset.data_uri を優先、block の data_uri は asset_id 未解決時の控え (7) data-hb-generated=\"true\" を nav/hero/lightbox/memo/memo-global/toolbar に付与、part-id は骨格部品のみカタログ id 由来、通常 block は config の id、無ければ type-連番 (8) data-hb-detail-level / -evidence-depth は値が無くても空文字で必ず出す (R22 の level-invariants が属性を strip して比較するため) (9) data-hb-text-limit はテーマトークンの text_limits.block_body_max_chars_by_detail_level[level]、無ければ block_body_max_chars。180/400/900 のリテラルは書かず、報告しきい値は 1 << 18 と表記 (10) warnings は報告のみで上限判断は C13 の責務、exit 0 を維持 (11) C17 の CSS トークナイザが入れ子 at-rule / CSS nesting を解釈できないため全規則をフラットに記述 (12) STICKY-01 は html{scroll-padding-top} と .section-card{scroll-margin-top} の CSS 二重 + JS の getBoundingClientRect 実測補正 (13) aria-pressed を持つトグルが無い構成でも属性が文書に存在するよう生成部品 data-hb-part=\"toolbar\" を常置し data-hb-part-role=\"aux\" で A11Y-01 の対象から外す (14) nav は <nav class=\"navbar\"> (C16 SC-08 の認識条件)、hero は <div> (セクション数の一致要件を壊さないため) (15) glossary は schema の $defs.glossary_entry に従い文書スコープは main 末尾・セクションスコープは judgment_axis の直後に <dl> で描画し data-hb-glossary-term/-plain/-scope を付与、カタログ外なので data-hb-part は付けない (16) C23 の内部解決が HB_ROOT で止まるため C11 側の 4 段解決で得たパスを load_catalog(path) へ明示的に渡す (17) P04-x-07 の overlay-fallback markup はテスト要求が無いため実装せず未所有のまま残置"
+    }
+  ]
+}

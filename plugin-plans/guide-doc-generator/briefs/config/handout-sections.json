@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "role": "section_kind enum の単一正本 (P03 Y-08 の裁定)。中立なデータファイルへ物理正本を移し、C12 ⇄ C23 の相互依存を断つ",
+    "build_target": "plugins/guide-doc-generator/config/handout-sections.json",
+    "owner_component": "C12 validate-handout-config.py (スキーマ正本の所有者。このファイルの唯一の writer)",
+    "readers": ["C23 resolve-handout-preset.py (読むだけ。C12 を import しない)", "C11 render-handout.py (data-hb-section-kind の値域)", "C22 verify-handout-narrative.py"],
+    "cycle_note": "従来は C12 のスキーマ散文が enum 正本で、C23 がそれを参照し、同時に C12 が C23 のプリセットを参照していたため C12 ⇄ C23 の循環に見えていた。enum をこのファイルへ出し、C23 は C12 ではなくこのファイルを読む形にしたので、残る依存は C12 → C23 (プリセット解決) の一方向だけになる",
+    "note": "ここは plugin-plans 配下の設計 plan 上の表現であり、実ファイルの生成は P05 の担当"
+  },
+  "version": 2,
+  "default": "standard",
+  "kind_attribute_semantics": {
+    "note": "R21 (P03-x-04) で追加した任意属性。値を持つ section_kind に対してだけ C12 が追加検査を行い、値そのものはこのファイルで変更できる (script 側に数値を書かない)",
+    "max_items": "この種別のセクションに置ける列挙行 (B03 rows / B04 cards / B09 rows) の上限件数。超過は E-SECTIONKIND-MAXITEMS",
+    "forbid_row_detail": "true のとき B03 rows[].sub を非 null にできない (詳細を書けなくすることで『大きな流れだけ』を型で担保する)",
+    "min_duration_share": "資料全体の所要時間 (sections[].duration の総和) に占める、この種別のセクションの所要時間合計の下限割合。下回れば E-SECTIONKIND-DURATION-SHARE",
+    "required_role": "この種別のセクションが取らねばならない section.role。main を禁じたい種別に appendix を指定する"
+  },
+  "section_kinds": [
+    {"slug": "standard", "label_ja": "標準セクション", "description": "抽象 (lead-line) → 具体部品 → 判断軸 の既定型。section_kind 未指定時に C12 --normalize が充填する値"},
+    {"slug": "agenda-timebox", "label_ja": "時間配分つきアジェンダ", "description": "所要時間を持つ手順の列。B03 の time を必須に近い扱いで使う。行 time の総和は当該 section.duration と一致すること (時間の正本は section.duration 1 点。R21 C59)"},
+    {"slug": "decisions", "label_ja": "決定事項", "description": "会議で決まったことの確定列挙。曖昧表現を残さない"},
+    {"slug": "action-items", "label_ja": "アクションアイテム", "description": "担当と期限を持つ行の列挙。B16 を主部品とする"},
+    {"slug": "sources", "label_ja": "出典・参考", "description": "参照元の表記。外部 URL はリンクにせず出所のテキスト表記に留める (自己完結性)"},
+    {"slug": "known-unknown-next", "label_ja": "分かっている / 分からない / 次に調べる", "description": "学習計画型の 3 分割。B04 トリオカードを器として使う"},
+    {"slug": "flow-overview", "label_ja": "冒頭の大きな流れ", "description": "冒頭に置く『今日の流れ』枠。大きな流れだけを列挙し、個々の手順・操作の詳細は書かない (R21 C46)。B03 を器として使い、time は任意 (書けば当該セクションの内訳)", "max_items": 5, "forbid_row_detail": true},
+    {"slug": "capability-explainer", "label_ja": "できること起点の機能解説", "description": "機能名から始めず『成果 (何ができるか) → 分解 → 用いる機能』の順で書く解説セクション (R21 C51)。parts[].slot が outcome → breakdown → feature の順に現れることを C12 が検査する"},
+    {"slug": "handson", "label_ja": "その場で手を動かす", "description": "読み手が実際に操作するハンズオン枠 (R21 C53)。B17 ハンズオン手順を 1 件以上必須とする"},
+    {"slug": "anticipated-qa", "label_ja": "先回り Q&A", "description": "聞き手が疑問を持ちやすい点 (生成内容の誤り・精度の限界・費用・情報の扱い等) へ先に答える枠 (R21 C53)。新部品を作らず B10 アコーディオンを器として使い、items を 2 件以上必須とする"},
+    {"slug": "dialogue", "label_ja": "悩み・やりたいことを聞く対話枠", "description": "受講者の具体業務と困りごとを聞き出す時間 (R21 C59)。時間配分へ載せない限り必ず削られるため、全体所要時間に占める下限割合を数値で持つ", "min_duration_share": 0.15},
+    {"slug": "logistics", "label_ja": "運営連絡", "description": "日程調整・事務連絡など、資料のゴールにも主題にも紐づかない伝達事項 (R21 C48)。本編に置けず付録に隔離される", "required_role": "appendix"}
+  ]
+}

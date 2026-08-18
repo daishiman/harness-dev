@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C21",
+  "task_id": "P05-C21-01",
+  "covered_task_ids": [
+    "P05-C21-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+  "verified_by": [
+    {
+      "claim": "build_target が RESOLUTION-R23 対応として全面再実装された",
+      "method": "wc -l",
+      "result": "pass (1222 行。R23 以前の旧実装は 695 行で、裁定 (a)-(e) を満たさない設計だった)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれ、画像処理を自前で行っていない",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙し、別途 PIL/Pillow/numpy/cv2/imghdr/base64 を grep -c",
+      "result": "pass (argparse / json / os / shutil / subprocess / sys / unicodedata / pathlib の 8 本 + __future__。画像処理・base64 は 0 件 = 画素解析でなく宣言的検査で退化を検出する裁定 (d) に合致)"
+    },
+    {
+      "claim": "テストが 291 件中 286 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/srg-image-bridge.py -p 'test_*.py'",
+      "result": "pass (Ran 291 / failures=5 / errors=0 / 117.899s。P04-x-08 直後は failures=120 で、うち 111 件が単一原因 (motif 'platform' が style の語彙に無い) に収束していた。この 111 件が解消した)"
+    },
+    {
+      "claim": "SRG 再実装禁止の不変条件 (DelegationOnlyTest) を弱体化していない",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/srg-image-bridge.py -p 'test_source_invariants.py'",
+      "result": "pass (Ran 23 / OK。genome 複製・プロンプト組み立て・API 直叩きを持たず、build-image-prompts.js / generate-images-codex への委譲のみで構成されている)"
+    },
+    {
+      "claim": "残る赤 5 件が実装不足でない",
+      "method": "5 件それぞれの失敗原因を当方が独立確認 (下記 deviations に個別記載)",
+      "result": "pass (3 件=C01 の SKILL.md 未実装待ち / 2 件=_harness.plan_payload の fixture 自己矛盾。実装側の修正で緑化できるものは 0 件)"
+    },
+    {
+      "claim": "fixture 自己矛盾 (残存赤 2 件の原因) が実在する",
+      "method": "当方が tests/srg-image-bridge.py/ 配下で `s=H.section('intro'); s.pop('diagram_pattern'); H.plan_payload(sections=[s])` を直接実行",
+      "result": "pass (返り値の diagram_pattern が 'flow' として復活する。テストは pop によって『図解型なし』の状態を作ったつもりだが、plan_payload の AUTO_KEY 補完が消した値を再注入するため、script が受け取る計画には正当な図解型が入っており E-IMG-FAMILY-MISSING は原理的に発火しない。worker の主張どおり fixture 側の欠陥)"
+    },
+    {
+      "claim": "検査に実際の識別力がある (Goodhart 緑化でない)",
+      "method": "worker が fail_check() を no-op へ潰した mutant で test_r23_*.py を実行した変異検査の結果を報告として受領。復元は md5 一致で確認され、復元後の全件再実行 (Ran 291 / failures=5) が当方の実測と一致",
+      "result": "pass (mutant では 99 件中 39 件が赤化する。裁定 (a)(b)(d)(e) の検査がテストを実際に支えている)"
+    },
+    {
+      "claim": "SRG 未導入環境で fail-soft する (R12)",
+      "method": "worker 報告の実行結果 (srg-absent / runtime-absent) を確認",
+      "result": "pass (いずれも exit 0 で status=skipped、作業ディレクトリを作らず delegated_commands も空。ただし明示 --srg-root が実体でない場合は skip へ畳まず exit 2 = 指定ミスを黙って握り潰さない)"
+    },
+    {
+      "claim": "テストと SRG 本体を変更していない",
+      "method": "tests/ 配下の最新 mtime (18:23:55) と plugins/slide-report-generator/ の最新 mtime (10:32:14) を本 leaf の書込時刻 (18:40:04) と突合",
+      "result": "pass (書込時刻より後に更新されたテスト / SRG ファイルは 0 件。git diff --stat HEAD -- tests slide-report-generator は空)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C01 実装者 (P05-C01-01) への申し送り。test_cross_component.BuildSkillContractTest の 3 件 (test_build_skill_invokes_this_script / test_build_skill_surfaces_the_skip_reason / test_build_skill_does_not_treat_exit0_as_generated) は plugins/guide-doc-generator/skills/run-handout-build/SKILL.md が未存在のため赤。SKILL.md は本 script を起動し、skip_reason を利用者へ可視化し、exit0 を『生成された』と誤解釈しない記述を持つ必要がある"
+    },
+    {
+      "kind": "test-fixture-defect",
+      "detail": "要裁定 / 当方で独立再現済み。tests/srg-image-bridge.py/_harness.py の plan_payload() が AUTO_KEY 由来の補完で、テストが section.pop('diagram_pattern') した値を 'flow' として再注入する。このため DeterministicSelectionTest.test_section_without_pattern_and_without_family_is_exit2 と test_family_missing_stops_before_delegating の 2 件は、実装をどう書いても緑にできないか、あるいは緑にすると『図解型のみ・family 明示なし』を拒否することになり DeckPlanShapeTest / MixedFamilyDelegationTest / determinism 系の数十件と両立しない。_harness.py は C21 の write_scope 外。裁定方針: plan_payload が section の明示的なキー削除を尊重する (pop されたキーを AUTO 補完の対象から外す) よう _harness.py を直す leaf を立てる"
+    },
+    {
+      "kind": "brief-test-conflict",
+      "detail": "要裁定。generation.quality の値が genome に存在しないため固定値を持たざるを得ないが、密度語彙のハードコード検査 (test_density_vocabulary_is_not_hard_coded) が同綴りの引用 literal を禁じるため、worker は隣接 literal 連結 (\"hi\" \"gh\") で回避した。これは検査を迂回する書き方であり、本来は『密度語彙』と『画像生成品質』を別語彙として区別すべき。裁定方針: 検査側を『densityLevel 系のキーに代入される literal』へ絞るか、quality を genome / config 側の正本から読む"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 10 件。(1) 書記素の数え方は Mn/Me カテゴリ・結合クラス非 0・異体字セレクタ (U+FE00-FE0F) を数えず ZWJ とその直後 1 文字を畳む近似。地域表示記号ペアは未対応 (2) metric の出所照合は heading/lead_line/goal/subject/diagram_structure/alt/overlay_text[] の連結を走査し baked_text 自身は除外 (自己参照防止) (3) 『セクションが数値を持つ』の判定は半角・全角数字のみ (漢数字は『一つ』等で誤検出するため除外)。ただし metric ブロック自身の数字要件には漢数字も認める (4) meta drift は不一致フィールド名の配列、一致時は null、meta 不読は [\"meta\"] (5) 単一 family は image-deck-plan.json、複数は image-deck-plan-<family>.json とし委譲順は family 名昇順で決定論化 (6) 分割 deck の deck.totalSlides はその deck の slide 数 (7) layoutTemplate は genome の layoutSelectionByStructure のキーを昇順走査し図解型の語を含む最初のキーを採る。値が散文なら渡さず、対応キーが無ければフィールド自体を出さない (script にキー名 literal を持たない) (8) 上記の generation.quality 固定値 (9) overlay-only セクションでは bakedText を出さず量的規律・metric 規則を適用しない (10) 再利用済み PNG は委譲していないため meta drift 照合の対象外"
+    }
+  ]
+}

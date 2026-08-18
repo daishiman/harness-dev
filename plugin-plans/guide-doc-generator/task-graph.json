@@ -1,0 +1,5972 @@
+{
+  "schema_version": "1.0",
+  "nodes": [
+    {
+      "id": "P01",
+      "title": "requirements",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P01",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P01-x-01",
+      "title": "要件正本と分界線を確定する",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P01.json",
+      "acceptance_criterion": "C1-C45 が全て verify_by を持ち、参照解析の実測値が要件へ数値として混入しておらず、分界線が要件文として明示されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P01-x-01.md"
+    },
+    {
+      "id": "P02",
+      "title": "design",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P02",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P02-C01-01",
+      "title": "run-handout-build (skill) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+      "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C01 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/run-handout-build/ へ着手するのに追加質問が要らない。加えて C01 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C01-01.md"
+    },
+    {
+      "id": "P02-C02-01",
+      "title": "run-handout-extract (skill) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+      "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C02 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/run-handout-extract/ へ着手するのに追加質問が要らない。加えて C02 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C02-01.md"
+    },
+    {
+      "id": "P02-C03-01",
+      "title": "assign-handout-readability-evaluator (skill) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+      "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C03 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ へ着手するのに追加質問が要らない。加えて C03 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C03-01.md"
+    },
+    {
+      "id": "P02-C04-01",
+      "title": "ref-handout-design-system (skill) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+      "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C04 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ へ着手するのに追加質問が要らない。加えて C04 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C04-01.md"
+    },
+    {
+      "id": "P02-C05-01",
+      "title": "handout-content-architect (sub-agent) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "acceptance_criterion": "独立 context で解く問い / 入力と返却の形 / 親会話の前提を持ち込まない境界 が component-inventory.json#component=C05 と矛盾なく確定し、build_target=plugins/guide-doc-generator/agents/handout-content-architect.md へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C05-01.md"
+    },
+    {
+      "id": "P02-C06-01",
+      "title": "handout-readability-reviewer (sub-agent) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+      "acceptance_criterion": "独立 context で解く問い / 入力と返却の形 / 親会話の前提を持ち込まない境界 が component-inventory.json#component=C06 と矛盾なく確定し、build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C06-01.md"
+    },
+    {
+      "id": "P02-C07-01",
+      "title": "handout-build (slash-command) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+      "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C07 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-build.md へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C07-01.md"
+    },
+    {
+      "id": "P02-C08-01",
+      "title": "handout-extract (slash-command) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+      "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C08 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-extract.md へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C08-01.md"
+    },
+    {
+      "id": "P02-C09-01",
+      "title": "handout-verify (slash-command) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C09",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+      "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C09 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-verify.md へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C09-01.md"
+    },
+    {
+      "id": "P02-C10-01",
+      "title": "guard-handout-external-ref (hook) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+      "acceptance_criterion": "event と matcher / 適用対象パスの判定規則 / 対象外を exit0 で素通しする境界 / fail-closed の範囲 が component-inventory.json#component=C10 と矛盾なく確定し、build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C10-01.md"
+    },
+    {
+      "id": "P02-C11-01",
+      "title": "render-handout.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C11 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/render-handout.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C11-01.md"
+    },
+    {
+      "id": "P02-C12-01",
+      "title": "validate-handout-config.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C12 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C12-01.md"
+    },
+    {
+      "id": "P02-C13-01",
+      "title": "embed-assets.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C13 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/embed-assets.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C13-01.md"
+    },
+    {
+      "id": "P02-C14-01",
+      "title": "render-diagram-svg.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C14 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C14-01.md"
+    },
+    {
+      "id": "P02-C15-01",
+      "title": "build-icon-sprite.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C15",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C15 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C15-01.md"
+    },
+    {
+      "id": "P02-C16-01",
+      "title": "verify-handout-selfcontained.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C16",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C16 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C16-01.md"
+    },
+    {
+      "id": "P02-C17-01",
+      "title": "verify-handout-a11y-print.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C17",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C17 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C17-01.md"
+    },
+    {
+      "id": "P02-C18-01",
+      "title": "verify-handout-language.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C18",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C18 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C18-01.md"
+    },
+    {
+      "id": "P02-C19-01",
+      "title": "route-handout-output.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C19",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C19 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/route-handout-output.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C19-01.md"
+    },
+    {
+      "id": "P02-C20-01",
+      "title": "extract-handout-config.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C20 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C20-01.md"
+    },
+    {
+      "id": "P02-C21-01",
+      "title": "srg-image-bridge.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C21",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C21 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C21-01.md"
+    },
+    {
+      "id": "P02-C22-01",
+      "title": "verify-handout-narrative.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C22",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C22 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C22-01.md"
+    },
+    {
+      "id": "P02-C23-01",
+      "title": "resolve-handout-preset.py (script) の設計ブリーフを確定する",
+      "phase_ref": "P02",
+      "entity_ref": "C23",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+      "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C23 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py へ着手するのに追加質問が要らない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-C23-01.md"
+    },
+    {
+      "id": "P02-x-01",
+      "title": "23 component の設計を確定する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P02.json",
+      "acceptance_criterion": "23 component 全てに設計ブリーフが存在し、依存 DAG に循環が無く、実体解決が HB_ROOT 起点の 4 段で宣言されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-x-01.md"
+    },
+    {
+      "id": "P03",
+      "title": "design-review",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P03",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P03-x-01",
+      "title": "設計を独立 context でレビューする",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P03.json",
+      "acceptance_criterion": "決定論経路への LLM 介在 0 件・責務重複 0 件・循環 0 件で、不採用 surface 全てに理由が付いている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P03-x-01.md"
+    },
+    {
+      "id": "P03-x-02",
+      "title": "設計ブリーフ横断矛盾を単一 writer で解消する",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "evidence/P02.json の findings X-01..X-08 のうち blocking/high 全件が briefs/ 側で解消され、日付正本表現・構成データフィールド名・HTML 機械可読属性語彙がそれぞれ単一の定義を持つ",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P03-x-02.md"
+    },
+    {
+      "id": "P03-x-03",
+      "title": "独立レビュー指摘 Y-01..Y-09 を単一 writer で解消する",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "evidence/P03.json の findings Y-01..Y-09 のうち blocking/high 全件が解消され、外部参照検査・絵文字検査・ゲート結果集約がそれぞれ単一の実装に帰属し、出力ディレクトリ同梱物の全てに writer が一意に割り当たり、部品 id 語彙と用途語彙の slug 対応がそれぞれ単一の正本を持つ",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P03-x-03.md"
+    },
+    {
+      "id": "P03-x-04",
+      "title": "研修フィードバック由来の要件 R21 (C46-C59) を設計へ反映する",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "goal-spec の C46-C59 の各項目に対し、それを満たす責務を持つ component が component-inventory と briefs 上で一意に特定でき、presentation_order (demo_first/explain_first) が構成データスキーマの必須フィールドとして prior_knowledge から決定論導出される設計になっており、冒頭主題枠・流れ項目数上限・目的紐づけ必須・説明文字数上限・ハンズオン部品・先回り Q&A 枠・到達レベル宣言・図表欠落検査・実画面先行・覚えること/覚えなくてよいことの対の明示・具体業務への紐づけ必須・対話枠の時間確保のそれぞれに検証手段 (script か test) が割り当たっている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P03-x-04.md"
+    },
+    {
+      "id": "P04",
+      "title": "test-design",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P04",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P04-C01-01",
+      "title": "run-handout-build (skill) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/run-handout-build/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/run-handout-build/ が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C01-01.md"
+    },
+    {
+      "id": "P04-C02-01",
+      "title": "run-handout-extract (skill) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/run-handout-extract/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/run-handout-extract/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/run-handout-extract/ が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C02-01.md"
+    },
+    {
+      "id": "P04-C03-01",
+      "title": "assign-handout-readability-evaluator (skill) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C03-01.md"
+    },
+    {
+      "id": "P04-C04-01",
+      "title": "ref-handout-design-system (skill) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/ref-handout-design-system/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C04-01.md"
+    },
+    {
+      "id": "P04-C05-01",
+      "title": "handout-content-architect (sub-agent) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-content-architect/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-content-architect/ に 返却物の形式検査 / 親会話の前提を持ち込んだ場合に落ちる検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/agents/handout-content-architect.md が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C05-01.md"
+    },
+    {
+      "id": "P04-C06-01",
+      "title": "handout-readability-reviewer (sub-agent) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-readability-reviewer/ に 返却物の形式検査 / 親会話の前提を持ち込んだ場合に落ちる検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C06-01.md"
+    },
+    {
+      "id": "P04-C07-01",
+      "title": "handout-build (slash-command) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-build/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-build/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-build.md が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C07-01.md"
+    },
+    {
+      "id": "P04-C08-01",
+      "title": "handout-extract (slash-command) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-extract/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-extract.md が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C08-01.md"
+    },
+    {
+      "id": "P04-C09-01",
+      "title": "handout-verify (slash-command) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C09",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-verify/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-verify.md が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C09-01.md"
+    },
+    {
+      "id": "P04-C10-01",
+      "title": "guard-handout-external-ref (hook) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/guard-handout-external-ref/ に 適用対象で発火して落ちる違反系 / 対象外を exit0 で素通しする系 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C10-01.md"
+    },
+    {
+      "id": "P04-C11-01",
+      "title": "render-handout.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/render-handout.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/render-handout.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C11-01.md"
+    },
+    {
+      "id": "P04-C12-01",
+      "title": "validate-handout-config.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/validate-handout-config.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C12-01.md"
+    },
+    {
+      "id": "P04-C13-01",
+      "title": "embed-assets.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/embed-assets.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/embed-assets.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/embed-assets.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C13-01.md"
+    },
+    {
+      "id": "P04-C14-01",
+      "title": "render-diagram-svg.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/render-diagram-svg.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/render-diagram-svg.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C14-01.md"
+    },
+    {
+      "id": "P04-C15-01",
+      "title": "build-icon-sprite.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C15",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/build-icon-sprite.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/build-icon-sprite.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C15-01.md"
+    },
+    {
+      "id": "P04-C16-01",
+      "title": "verify-handout-selfcontained.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C16",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C16-01.md"
+    },
+    {
+      "id": "P04-C17-01",
+      "title": "verify-handout-a11y-print.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C17",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C17-01.md"
+    },
+    {
+      "id": "P04-C18-01",
+      "title": "verify-handout-language.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C18",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-language.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-language.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C18-01.md"
+    },
+    {
+      "id": "P04-C19-01",
+      "title": "route-handout-output.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C19",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/route-handout-output.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/route-handout-output.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/route-handout-output.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C19-01.md"
+    },
+    {
+      "id": "P04-C20-01",
+      "title": "extract-handout-config.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/extract-handout-config.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C20-01.md"
+    },
+    {
+      "id": "P04-C21-01",
+      "title": "srg-image-bridge.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C21",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/srg-image-bridge.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/srg-image-bridge.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C21-01.md"
+    },
+    {
+      "id": "P04-C22-01",
+      "title": "verify-handout-narrative.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C22",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C22-01.md"
+    },
+    {
+      "id": "P04-C23-01",
+      "title": "resolve-handout-preset.py (script) の受入テストを赤で固定する",
+      "phase_ref": "P04",
+      "entity_ref": "C23",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+      "acceptance_criterion": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py が未実装の時点で実行すると失敗する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-C23-01.md"
+    },
+    {
+      "id": "P04-x-01",
+      "title": "23 component 分の赤を集約する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P04.json",
+      "acceptance_criterion": "23 component 全てに tests/<component 名>/ のテスト実体が存在し、実装前の実行で全て失敗している",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-01.md"
+    },
+    {
+      "id": "P04-x-02",
+      "title": "単一ファイル自己完結の判定を許可列挙へ反転する (C60 / SC-10)",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "script-brief-C16.json が SC-10 として『取得を発生させ得る参照は data: 以外を一律違反とする』許可列挙規則を持ち、script@src・link@href (rel 不問)・iframe/frame/portal・CSS url() (@font-face 外を含む)・img/source/video/object/embed の各参照が例外なくその適用対象として列挙され、スキームの有無ではなく data: か否かで判定すると明記され、かつ HTML テキストノードの URL を違反としない SC-02 の境界が維持されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-02.md"
+    },
+    {
+      "id": "P04-x-03",
+      "title": "記述粒度の可変要件 R22 (C61-C66) を設計へ反映する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "goal-spec の C61-C66 の各項目に対し、それを満たす責務を持つ component が component-inventory と briefs 上で一意に特定でき、detail_level (overview/standard/detailed) と evidence_depth (none/cited/sourced) が構成データスキーマの必須フィールドかつ相互に独立した 2 軸として定義され、用途プリセットは既定値のみを与えて粒度を固定しないこと・detail_level が C52 の本文文字数上限をテーマトークン側の値で決定論 modulate すること・宣言と実態の一致検査が存在することのそれぞれに責務 component と検証手段 (script か test) が割り当たっている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-03.md"
+    },
+    {
+      "id": "P04-x-04",
+      "title": "R22 (C61-C66) の赤を既存テスト実体へ追補する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "C61-C66 の各項目に対応する失敗するテストが、責務 component のテストディレクトリ (C12=validate-handout-config.py / C23=resolve-handout-preset.py / C11=render-handout.py / C22=verify-handout-narrative.py / C09=handout-verify / C01=run-handout-build) へ追補され、追補分を含めた各ディレクトリの unittest 実行が実装前に赤であり、既存テストの受入基準を緩める書き換えが 1 件も含まれず、追補内容と対応 checklist 項目の対応表が R22-AMENDMENT.md に記録されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-04.md"
+    },
+    {
+      "id": "P04-x-05",
+      "title": "テスト実装が検出した設計正本の欠陥 5 件を裁定する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "(G-03) script-brief-C15.json の絵文字判定が Unicode ブロック denylist を持たず C16 の CR-EMOJI へ委譲する記述に置き換わっている・(G-04) plugins/guide-doc-generator/assets/ 配下の同梱資産に producer を持つ leaf が task-graph 上に一意に存在する・(A) script-brief-C23.json の structural_guarantee とプリセット鍵面の矛盾が解消されている・(B) script-brief-C22.json の検出 10 件と CLI 契約の固定順の関係が確定している・(C) C23 granularity_defaults が C64 の『無回答でも既定が引ける』を全語彙で満たす、の 5 件それぞれについて裁定と反映先が RESOLUTION-P04-x-05.md に記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-05.md"
+    },
+    {
+      "id": "P04-x-06",
+      "title": "P04-x-05 の裁定をテスト実体へ追従させる",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "P04-x-05 が裁定した G-03 / A / B / C の各件について、正本と矛盾したまま残っていたテストが裁定後の正本に一致するよう更新され、加えて H-01..H-03 のテストハーネス欠陥 3 件が修正され、更新前後で受入基準が 1 件も緩んでおらず (削除された assert が無く・許容範囲が広がっておらず)、更新対象と裁定項目の対応が P04-x-06-ALIGNMENT.md に記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-06.md"
+    },
+    {
+      "id": "P04-x-07",
+      "title": "R23 (セクション別挿絵の画風と焼き込み規律) を裁定しブリーフへ反映する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "RESOLUTION-R23.md が (a) textPolicy 既定を baked-with-overlay へ変更する裁定 (b) 焼き込みテキストの量的規律の確定値 (c) 2 系統の style family と選択規則 (d) 平坦化退化の検査可能な代理指標 (e) セクション別内容適応の必須化 の 5 点を確定し、script-brief-C21.json と agent-brief-C05.json の該当節が裁定どおりに書き換わっていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-07.md"
+    },
+    {
+      "id": "P04-x-08",
+      "title": "R23 の裁定をテストへ固定する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "RESOLUTION-R23.md の裁定 (a)-(e) がすべて対応するテストとして存在し、tests/srg-image-bridge.py/ の既存 DelegationOnlyTest を 1 件も弱めず、baked-with-overlay 既定 / 焼き込み量の確定値 / style family 選択 / 平坦化代理指標 / セクション別適応 の 5 系統が赤として固定されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-08.md"
+    },
+    {
+      "id": "P04-x-09",
+      "title": "B04 / B06 / B07 / B14 のレンダリングテストを追加する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/render-handout.py",
+      "acceptance_criterion": "schemas/handout-config.schema.json の $defs.part_data の全 part id (20 件) が tests/render-handout.py/ 配下のテストに出現し、各 part の描画結果を検査する赤テストが存在する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P04-x-09.md"
+    },
+    {
+      "id": "P05",
+      "title": "implementation",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P05",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P05-C01-01",
+      "title": "run-handout-build (skill) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C01",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/run-handout-build/",
+      "acceptance_criterion": "route_ref=C01 の build_target=plugins/guide-doc-generator/skills/run-handout-build/ が実在し、criteria_ref=component-inventory.json#component=C01 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C01",
+      "task_spec_ref": "task-specs/P05-C01-01.md"
+    },
+    {
+      "id": "P05-C02-01",
+      "title": "run-handout-extract (skill) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C02",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/run-handout-extract/",
+      "acceptance_criterion": "route_ref=C02 の build_target=plugins/guide-doc-generator/skills/run-handout-extract/ が実在し、criteria_ref=component-inventory.json#component=C02 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C02",
+      "task_spec_ref": "task-specs/P05-C02-01.md"
+    },
+    {
+      "id": "P05-C03-01",
+      "title": "assign-handout-readability-evaluator (skill) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C03",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+      "acceptance_criterion": "route_ref=C03 の build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ が実在し、criteria_ref=component-inventory.json#component=C03 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C03",
+      "task_spec_ref": "task-specs/P05-C03-01.md"
+    },
+    {
+      "id": "P05-C04-01",
+      "title": "ref-handout-design-system (skill) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+      "acceptance_criterion": "route_ref=C04 の build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ が実在し、criteria_ref=component-inventory.json#component=C04 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C04",
+      "task_spec_ref": "task-specs/P05-C04-01.md"
+    },
+    {
+      "id": "P05-C05-01",
+      "title": "handout-content-architect (sub-agent) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C05",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+      "acceptance_criterion": "route_ref=C05 の build_target=plugins/guide-doc-generator/agents/handout-content-architect.md が実在し、criteria_ref=component-inventory.json#component=C05 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=agent) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C05",
+      "task_spec_ref": "task-specs/P05-C05-01.md"
+    },
+    {
+      "id": "P05-C06-01",
+      "title": "handout-readability-reviewer (sub-agent) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C06",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+      "acceptance_criterion": "route_ref=C06 の build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md が実在し、criteria_ref=component-inventory.json#component=C06 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=agent) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C06",
+      "task_spec_ref": "task-specs/P05-C06-01.md"
+    },
+    {
+      "id": "P05-C07-01",
+      "title": "handout-build (slash-command) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C07",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/commands/handout-build.md",
+      "acceptance_criterion": "route_ref=C07 の build_target=plugins/guide-doc-generator/commands/handout-build.md が実在し、criteria_ref=component-inventory.json#component=C07 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C07",
+      "task_spec_ref": "task-specs/P05-C07-01.md"
+    },
+    {
+      "id": "P05-C08-01",
+      "title": "handout-extract (slash-command) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C08",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/commands/handout-extract.md",
+      "acceptance_criterion": "route_ref=C08 の build_target=plugins/guide-doc-generator/commands/handout-extract.md が実在し、criteria_ref=component-inventory.json#component=C08 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C08",
+      "task_spec_ref": "task-specs/P05-C08-01.md"
+    },
+    {
+      "id": "P05-C09-01",
+      "title": "handout-verify (slash-command) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C09",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/commands/handout-verify.md",
+      "acceptance_criterion": "route_ref=C09 の build_target=plugins/guide-doc-generator/commands/handout-verify.md が実在し、criteria_ref=component-inventory.json#component=C09 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C09",
+      "task_spec_ref": "task-specs/P05-C09-01.md"
+    },
+    {
+      "id": "P05-C10-01",
+      "title": "guard-handout-external-ref (hook) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+      "acceptance_criterion": "route_ref=C10 の build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py が実在し、criteria_ref=component-inventory.json#component=C10 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=hook) の build trace で満たす",
+      "execution_kind": "component-build",
+      "route_ref": "C10",
+      "task_spec_ref": "task-specs/P05-C10-01.md"
+    },
+    {
+      "id": "P05-C11-01",
+      "title": "render-handout.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "acceptance_criterion": "route_ref=C11 の build_target=plugins/guide-doc-generator/scripts/render-handout.py が実在し、criteria_ref=component-inventory.json#component=C11 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C11",
+      "task_spec_ref": "task-specs/P05-C11-01.md"
+    },
+    {
+      "id": "P05-C12-01",
+      "title": "validate-handout-config.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "acceptance_criterion": "route_ref=C12 の build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py が実在し、criteria_ref=component-inventory.json#component=C12 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C12",
+      "task_spec_ref": "task-specs/P05-C12-01.md"
+    },
+    {
+      "id": "P05-C13-01",
+      "title": "embed-assets.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C13",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/embed-assets.py",
+      "acceptance_criterion": "route_ref=C13 の build_target=plugins/guide-doc-generator/scripts/embed-assets.py が実在し、criteria_ref=component-inventory.json#component=C13 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C13",
+      "task_spec_ref": "task-specs/P05-C13-01.md"
+    },
+    {
+      "id": "P05-C14-01",
+      "title": "render-diagram-svg.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+      "acceptance_criterion": "route_ref=C14 の build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py が実在し、criteria_ref=component-inventory.json#component=C14 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C14",
+      "task_spec_ref": "task-specs/P05-C14-01.md"
+    },
+    {
+      "id": "P05-C15-01",
+      "title": "build-icon-sprite.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C15",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+      "acceptance_criterion": "route_ref=C15 の build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py が実在し、criteria_ref=component-inventory.json#component=C15 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C15",
+      "task_spec_ref": "task-specs/P05-C15-01.md"
+    },
+    {
+      "id": "P05-C16-01",
+      "title": "verify-handout-selfcontained.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C16",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+      "acceptance_criterion": "route_ref=C16 の build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py が実在し、criteria_ref=component-inventory.json#component=C16 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C16",
+      "task_spec_ref": "task-specs/P05-C16-01.md"
+    },
+    {
+      "id": "P05-C17-01",
+      "title": "verify-handout-a11y-print.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C17",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+      "acceptance_criterion": "route_ref=C17 の build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py が実在し、criteria_ref=component-inventory.json#component=C17 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C17",
+      "task_spec_ref": "task-specs/P05-C17-01.md"
+    },
+    {
+      "id": "P05-C18-01",
+      "title": "verify-handout-language.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C18",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+      "acceptance_criterion": "route_ref=C18 の build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py が実在し、criteria_ref=component-inventory.json#component=C18 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C18",
+      "task_spec_ref": "task-specs/P05-C18-01.md"
+    },
+    {
+      "id": "P05-C19-01",
+      "title": "route-handout-output.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C19",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+      "acceptance_criterion": "route_ref=C19 の build_target=plugins/guide-doc-generator/scripts/route-handout-output.py が実在し、criteria_ref=component-inventory.json#component=C19 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C19",
+      "task_spec_ref": "task-specs/P05-C19-01.md"
+    },
+    {
+      "id": "P05-C20-01",
+      "title": "extract-handout-config.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "acceptance_criterion": "route_ref=C20 の build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py が実在し、criteria_ref=component-inventory.json#component=C20 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C20",
+      "task_spec_ref": "task-specs/P05-C20-01.md"
+    },
+    {
+      "id": "P05-C21-01",
+      "title": "srg-image-bridge.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C21",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+      "acceptance_criterion": "route_ref=C21 の build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py が実在し、criteria_ref=component-inventory.json#component=C21 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C21",
+      "task_spec_ref": "task-specs/P05-C21-01.md"
+    },
+    {
+      "id": "P05-C22-01",
+      "title": "verify-handout-narrative.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C22",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "acceptance_criterion": "route_ref=C22 の build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py が実在し、criteria_ref=component-inventory.json#component=C22 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C22",
+      "task_spec_ref": "task-specs/P05-C22-01.md"
+    },
+    {
+      "id": "P05-C23-01",
+      "title": "resolve-handout-preset.py (script) を build する",
+      "phase_ref": "P05",
+      "entity_ref": "C23",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+      "acceptance_criterion": "route_ref=C23 の build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py が実在し、criteria_ref=component-inventory.json#component=C23 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+      "execution_kind": "component-build",
+      "route_ref": "C23",
+      "task_spec_ref": "task-specs/P05-C23-01.md"
+    },
+    {
+      "id": "P05-x-01",
+      "title": "23 component の実装完了を集約する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P05.json",
+      "acceptance_criterion": "23 component 全ての build_target が実在し、P04 が固定した各 component のテストが実装後に緑であり、テストが 1 行も改変されていないことが記録されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-01.md"
+    },
+    {
+      "id": "P05-x-02",
+      "title": "同梱アセット (テーマトークン / アイコンセット / マスコット) を実体化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/assets/",
+      "acceptance_criterion": "plugins/guide-doc-generator/assets/ 配下に (1) テーマトークン JSON が 1 件以上あり text_limits.block_body_max_chars と text_limits.block_body_max_chars_by_detail_level (overview=180 / standard=400 / detailed=900) を持つこと (2) icons/icon-set.json が存在し全アイコンが viewBox='0 0 24 24' / stroke='currentColor' / fill='none' / stroke-linecap='round' の統一様式であること (3) マスコット SVG が存在すること (4) 配下の全ファイルが外部 URL 参照を 1 件も含まないこと、の 4 点を満たす",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-02.md"
+    },
+    {
+      "id": "P05-x-03",
+      "title": "宣言データファイル (語彙・部品・セクション・出力先) を実体化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/",
+      "acceptance_criterion": "plugins/guide-doc-generator/config/ 配下に (1) handout-parts.json (部品 id 語彙 B01..B16 / IMG / DIAGRAM / TEXT・owner 宣言は C11) (2) handout-sections.json (section_kind 語彙と R21 の max_items / forbid_row_detail / min_duration_share / required_role・owner 宣言は C12) (3) handout-purposes.json (用途語彙 8 語と各 preset の section_order / recommended_parts / notes / presentation_order_variants / required_document_fields / granularity_defaults・owner 宣言は C23) (4) handout-output.json (default_out_dir とサイズ上限・owner 宣言は C19) の 4 本が存在し、それぞれ対応するブリーフの schema 節に適合し、環境固有の絶対パスと外部 URL を含まないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03.md"
+    },
+    {
+      "id": "P05-x-04",
+      "title": "flat-infographic-jp スタイルゲノムを実体化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/genomes/",
+      "acceptance_criterion": "plugins/guide-doc-generator/genomes/style-genome-flat-infographic-jp.json が存在し、SRG 同梱 genome と同じ schemaVersion / 同じトップレベルキー集合を持ち (build-image-prompts.js が読める形)、textPolicies に baked-with-overlay を持ち、参考画像 2 枚 (LP制作の前後 / 指示の3要素) の画風・配色・構図規則を再現できる記述であり、外部 URL を 1 件も含まないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-04.md"
+    },
+    {
+      "id": "P05-x-05",
+      "title": "構成データスキーマ (handout-config.schema.json) を実体化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas/",
+      "acceptance_criterion": "plugins/guide-doc-generator/schemas/handout-config.schema.json が存在し、script-brief-C12.json の config_schema を正本として (1) セクション/部品/画像の構造 (2) R22 の detail_level (overview/standard/detailed) と evidence_depth (none/cited/sourced) の enum (3) R21 の必須文書フィールド の 3 系統を宣言し、json.load 可能で外部 URL を 1 件も含まないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-05.md"
+    },
+    {
+      "id": "P05-x-06",
+      "title": "config/handout-parts.json の parts[] を id 昇順へ並べ替える",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-parts.json",
+      "acceptance_criterion": "config/handout-parts.json の parts[] の id 列が sorted(ids) と完全一致し、tests/render-handout.py/test_parts_catalog.py の test_catalog_is_sorted_and_well_formed が緑になる。並べ替え以外の内容変更を行わない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-06.md"
+    },
+    {
+      "id": "P05-x-07",
+      "title": "部品 id の列挙を単一正本カタログ外から除去する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "scripts/validate-handout-config.py:84-91 / scripts/verify-handout-a11y-print.py:56-58 / scripts/verify-handout-narrative.py:50,1003 および agents/handout-content-architect.md:113 から部品 id の literal を除去し、config/handout-parts.json の kind / section_scope / data_block_type 述語で解決する形へ置き換える。tests/render-handout.py/test_parts_catalog.py の test_part_ids_are_not_enumerated_outside_the_catalog が緑になる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-07.md"
+    },
+    {
+      "id": "P05-x-08",
+      "title": "テーマトークンのアクセント色をトップレベルから解決可能にする",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/assets/tokens",
+      "acceptance_criterion": "assets/tokens/*.json でアクセント色 (--pop-primary 相当) がトークンファイルのトップレベルキーから解決でき、tests/render-handout.py/test_determinism.py の test_accent_token_change_only_diffs_root_block が緑になる。既存の accent.scale と css_variables の内容を壊さないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-08.md"
+    },
+    {
+      "id": "P05-x-09",
+      "title": "render-handout.py のテスト fixture に正規化済み provenance を持たせる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/render-handout.py",
+      "acceptance_criterion": "tests/render-handout.py/_harness.py の base_config() が provenance.normalized_by に schemas/handout-config.schema.json の $defs.provenance.properties.normalized_by.const と一致する値を持ち、test_cross_component.GateHandoffTest の test_language_gate_passes と test_narrative_gate_passes が緑になる。C18 / C22 側の正規化検査を緩めることで緑にしてはならない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-09.md"
+    },
+    {
+      "id": "P05-x-10",
+      "title": "C06 の agent 定義一意性テストの探索範囲を production surface へ限定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer",
+      "acceptance_criterion": "test_only_one_agent_definition_for_c06 の探索対象が agents/ 配下 (もしくは tests/ を除外した範囲) に限定され、tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md が存在する状態でも C06 スイートが Ran 164 / OK になる。fixture 側の改名・削除では解決しないこと (C03 の受入 fixture を壊すため)",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-10.md"
+    },
+    {
+      "id": "P05-x-11",
+      "title": "逆抽出の round-trip 成立条件を確定する (C11 マーカー契約の拡張か C12 schema の round-trip 免除か)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas",
+      "acceptance_criterion": "完全マーカー付き HTML から extract-handout-config.py で復元した構成データが validate-handout-config.py --config を exit0 で通過する。焼き直しでなく、focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to / notes_enabled / date / assets[].data_uri の各項目について『HTML へマーカーとして刻む』か『round-trip の対象外と明示宣言する』かのどちらを採ったかが機械可読に記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-11.md"
+    },
+    {
+      "id": "P05-x-12",
+      "title": "B03/B09 の rows[].key について schema と tests のどちらが正本かを確定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas",
+      "acceptance_criterion": "extract-handout-config.py の自スイート 152 件が緑のまま、その出力が validate-handout-config.py で E-KEY-UNKNOWN /sections/*/parts/*/data/rows/*/key を出さない。schema へ key を追加した場合は B09 も含め key の意味 (何を同定する鍵か) が description に書かれていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-12.md"
+    },
+    {
+      "id": "P05-x-13",
+      "title": "C20 の常時発火する catalog-drift 警告を解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs",
+      "acceptance_criterion": "完全マーカー付き HTML に対する extract-handout-config.py の正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 1 行も出ない。解消手段は class_map への 4 行追記か検査の片方向化のいずれかで、選んだ理由が記録されていること。警告条件そのものを削除して黙らせる解は不可",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-13.md"
+    },
+    {
+      "id": "P05-x-14",
+      "title": "AC-C01-19 の reject fixture が検出可能になるよう述語か置換範囲を直す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/run-handout-build",
+      "acceptance_criterion": "run-handout-build スイートが Ran 48 / OK になる。かつ受入 fixture (無置換) では AC-C01-19 が発火しないこと (reject 側だけを通すために述語を無効化していないことの確認)。修正方向は検出条件を節スコープへ限定するか、reject の置換範囲を該当宣言の全出現へ広げるか",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-14.md"
+    },
+    {
+      "id": "P05-x-15",
+      "title": "component-inventory の argument_hint を brief の正本へ同期する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator",
+      "acceptance_criterion": "commands/ 配下の全成果物について frontmatter の argument-hint が component-inventory.json#<id> の argument_hint と文字列一致する。かつ同期後も各 command の自スイートが緑のままであること。単発の手当てでなく、brief と inventory のどちらが argument_hint の正本かを決めて記録すること (両方に書く限り再発する)",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-15.md"
+    },
+    {
+      "id": "P05-x-16",
+      "title": "script-brief-C20 の stderr 契約へ W-EXTRACT-OPTIONAL を追記し実装との乖離を解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs",
+      "acceptance_criterion": "scripts/extract-handout-config.py が発火させる診断コードの集合が script-brief-C20.json の stderr 契約に記載された集合に包含されることを grep で確認できる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-16.md"
+    },
+    {
+      "id": "P05-x-17",
+      "title": "contract_lib の body 全体一致述語について reject 可能性の方針を決める",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+      "acceptance_criterion": "contract_lib.py の全 AC 述語について、対応する reject case が『注入した 1 箇所だけを潰して違反状態を作れる』ことが機械的に確認でき、確認できない述語には節スコープ化か複数置換対応のどちらを採ったかが PREDICATE-SCOPE-POLICY.md に記録されている。run-handout-build スイートが Ran 48 以上で緑のままであること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-17.md"
+    },
+    {
+      "id": "P05-x-18",
+      "title": "C11 render-handout.py の実装欠陥 5 件 (トークン間接参照 / B14 委譲 / chrome 境界 / heading・ties_to マーカー / 日付配置) を是正する",
+      "phase_ref": "P05",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts",
+      "acceptance_criterion": "tests/render-handout.py の test_accent_token_change_only_diffs_root_block / FlowRenderingTest.test_flow_is_delegated_to_inline_svg / FlowRenderingTest.test_diagram_pattern_is_exposed および test_cross_component.GateHandoffTest.test_language_gate_passes の 4 件が緑になる。加えて生成 HTML から title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / sections[].heading が抽出器の読み飛ばし規則の下でも到達可能になり、ties_to が ROUNDTRIP-CONTRACT.md の required_serialization に従って直列化される。テストの assert を弱めない。アクセント実値の重複を現状の 4 箇所から増やさない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-18.md"
+    },
+    {
+      "id": "P05-x-19",
+      "title": "C20 extract-handout-config.py の照合表と読み取り範囲を裁定結果へ追随させる",
+      "phase_ref": "P05",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts",
+      "acceptance_criterion": "完全マーカー付き HTML への正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 0 行。双方向の drift 検査 (:261-267) は無改変で、カタログ側・照合表側それぞれへ不整合を注入すると依然として鳴ること。TEXT 行は本文の受け皿でタグ名照合のため最後に置く。加えて ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目が復元され、復元結果が validate-handout-config.py --config を exit0 で通過する。schema に無いキーを発明しない。tests/extract-handout-config.py が緑を維持する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-19.md"
+    },
+    {
+      "id": "P05-x-20",
+      "title": "C11 と C12 の入力契約の乖離を裁定して統一する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "schema 準拠かつ validate-handout-config.py --normalize を通った構成データをそのまま render-handout.py へ渡して exit0 になり、生成 HTML に部品が 1 件以上描画される (blocks_by_type が非空)。normalized / nav / blocks-parts の 3 点について schema と renderer のどちらを正本としたかと理由が INPUT-CONTRACT-RESOLUTION.md に記録されている。schema の値域・required・additionalProperties を緩める解は不可",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-20.md"
+    },
+    {
+      "id": "P05-x-21",
+      "title": "C20 brief のマーカー語彙と chrome 境界規定を裁定結果へ追随させる",
+      "phase_ref": "P05",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs",
+      "acceptance_criterion": "ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目の marker 名が script-brief-C20.json の宣言集合に含まれる。chrome 読み飛ばし規約が『data-hb-field を持つ子孫は読み飛ばさない』か『data-hb-generated は枠自体に限る』のどちらへ改まったかが明記されている。既存の stderr 契約行 (P05-x-16 の担当) は触らない。加えて exit_codes の各文言が言及する失敗事由に対応する診断コード名が stderr 契約のコード名と相互参照できる状態になっている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-21.md"
+    },
+    {
+      "id": "P05-x-22",
+      "title": "C08 テストの argument-hint 突合基準を brief 正本へ移す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
+      "acceptance_criterion": "tests/handout-extract/contract_lib.py が argument-hint の期待値を plugin-plans/guide-doc-generator/briefs/command-brief-C08.json#argument_hint から読み取り、完全文字列リテラルを保持しない。frontmatter と component-inventory.json 双方への完全一致検査は維持する (assert を弱めない)。brief の値を変えると当該テストが追随して赤くなることを実測で示す。tests/handout-extract が緑のままであること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-22.md"
+    },
+    {
+      "id": "P05-x-23",
+      "title": "部品 id ↔ CSS クラス名 写像の owner を裁定し AC-C11-19 と SSOT テストの二重契約を解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "tests/render-handout.py/test_parts_catalog.py::test_part_ids_are_not_enumerated_outside_the_catalog と tests/extract-handout-config.py/test_parts_catalog_ssot.py が同時に緑になる。どちらのテストの assert も弱めない。extract-handout-config.py の正常系実行で W-EXTRACT-CATALOG-DRIFT が 0 行のまま。カタログ側・照合表側それぞれへ不整合を注入すると依然として drift 検査が鳴ること。3 スイートの失敗テスト名の集合が着手前から増えないこと。裁定内容と退けた案が schemas/PART-CLASS-MAP-RESOLUTION.md に記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-23.md"
+    },
+    {
+      "id": "P05-x-24",
+      "title": "C17 / C22 brief を実装が獲得した実行時依存と失敗経路へ追随させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs",
+      "acceptance_criterion": "script-brief-C17.json に verify-handout-a11y-print.py の config/handout-parts.json への実行時依存とカタログ読取失敗時の exit 2 が宣言されている。script-brief-C22.json に hero 内フィールドの解決規約がマーカーで引く形で宣言されている。両ファイルが json.load を通り編集前後でトップレベルキーの集合が保存されていること。script-brief-C20.json には触れないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-24.md"
+    },
+    {
+      "id": "P05-x-25",
+      "title": "C11/C20/C17 brief の未追随 3 件を解消する (受け皿消滅分の再割当)",
+      "phase_ref": "P05",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs",
+      "acceptance_criterion": "3 件それぞれについて brief 本文が現行実装と一致するか、一致しない場合は『実装を直すべき』と明記されている。実装と brief のどちらを正本とするかの裁定と根拠が RESOLUTION-P05-x-25.md に記録されている。既存のトップレベルキー集合・class_map の行数と順序・stderr 診断コード集合を壊さない。導出可能な値を brief へ literal で書き下さない (PAT-1)",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-25.md"
+    },
+    {
+      "id": "P05-x-26",
+      "title": "prune_chrome を chrome_boundary.rule の穴あき走査へ合わせる (宣言と実装の乖離解消)",
+      "phase_ref": "P05",
+      "entity_ref": "C20",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts",
+      "acceptance_criterion": "chrome 部分木の内側へ著者データマーカーを持つノードを 1 個置いた HTML を prune_chrome() へ通すと、そのノードが生き残ることを実測で示す (現状は消えることを反例として先に実測し、両方向を測る)。既存の chrome 読み飛ばし自体は弱めない — マーカーを持たない chrome ノードは従来どおり捨てられること。読み飛ばし対象から外す著者データマーカーの集合は literal で列挙せず schemas/ROUNDTRIP-CONTRACT.md の裁定表から導出する (PAT-1)。tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-26.md"
+    },
+    {
+      "id": "P05-x-27",
+      "title": "B08/B13/B15/B16 の rows[].key に同定根拠の description を与える",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas",
+      "acceptance_criterion": "4 部品それぞれの key.description に『何を同定する鍵か』と『省略/重複したとき何が壊れるか』が部品ごとの実際の用途に即して書かれている (B09 の文面の複製でない)。各記述の根拠を render-handout.py の実装で確認したうえで書く。additionalProperties:false と required を緩めない。key を新たに required へ昇格させない (著者が省略した config も正当であるため)。tests/validate-handout-config.py / tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-27.md"
+    },
+    {
+      "id": "P05-x-28",
+      "title": "AC-C20-06 と ROUNDTRIP-CONTRACT の data URI 保持契約を裁定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "assets[] の data URI 保持について schema・ROUNDTRIP-CONTRACT・AC-C20-06 の 3 者が同一の契約を述べる状態にする。テストの assert を弱めずに達成すること (弱める場合は裁定文書へ理由を書き、代替の検査を残す)。着手前後で 3 スイートの失敗テスト名の集合が増えないこと。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-28.md"
+    },
+    {
+      "id": "P05-x-29",
+      "title": "AC-C11-19 の走査除外を『読まれないテキスト』へ厳密化し scripts/*.json の抜け道を塞ぐ",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests",
+      "acceptance_criterion": "scripts/ 配下のデータファイル (.json 等) へ部品 id の名簿を置いた反例が RED になること。同時に、scripts/*.md の作業記録と .py の docstring/コメント内の散文は GREEN のままであること (P05-x-23 が確立した『そのテキストを何かが読むか』の基準を保つ)。両方向を反例注入で実測すること。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-29.md"
+    },
+    {
+      "id": "P05-x-30",
+      "title": "validate-handout-config.py の残存する赤 4 件を解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "tests/validate-handout-config.py の失敗テスト名の集合が空になること。テストの assert を弱めずに達成すること。とくに (1)(2) は ERROR であり検査本体へ到達していないので、形状 drift を直した後に『検査が実際に働いている』ことを反例注入で示すこと (到達していない 0 件と直った 0 件は出力では区別が付かない)。着手前後で他 3 スイートの失敗テスト名の集合が増えないこと。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-30.md"
+    },
+    {
+      "id": "P05-x-31",
+      "title": "C20 の抽出粒度を上げて round-trip 等価性を成立させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "test_round_trip_equivalence が緑になること。抽出器が部品を『それらしく』復元して等価に見せるのではなく、往復が本当に一致していることを反例注入で示すこと (構成データを 1 箇所変えたら往復が壊れることを実測する)。ROUNDTRIP-CONTRACT.md の裁定と矛盾する場合は先に裁定を更新し、更新理由を書くこと。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-31.md"
+    },
+    {
+      "id": "P06",
+      "title": "test-run",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P06",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P06-x-01",
+      "title": "テストを実行して緑を記録する",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P06.json",
+      "acceptance_criterion": "全テストが green で、env 未設定でも __file__ 相対フォールバックで一気通貫が成功する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P06-x-01.md"
+    },
+    {
+      "id": "P07",
+      "title": "acceptance-criteria",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P07",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P07-x-01",
+      "title": "purpose 由来の受入基準を確定する",
+      "phase_ref": "P07",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P07.json",
+      "acceptance_criterion": "index の受入確認表の全行が観測手段つきで判定でき、導入一文の検査と目的背景ゴールの検査が独立に判定されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P07-x-01.md"
+    },
+    {
+      "id": "P08",
+      "title": "refactoring",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P08",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P08-x-01",
+      "title": "内部構造を整理して不変性を確認する",
+      "phase_ref": "P08",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P08.json",
+      "acceptance_criterion": "argv と exit code が不変で、生成 HTML がバイト一致のまま保たれている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P08-x-01.md"
+    },
+    {
+      "id": "P09",
+      "title": "quality-assurance",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P09",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P09-x-01",
+      "title": "品質ゲートを通す",
+      "phase_ref": "P09",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P09.json",
+      "acceptance_criterion": "全 component の p0_lint と build trace が揃い、カバレッジが閾値以上で絶対パス直書きが 0 件である",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P09-x-01.md"
+    },
+    {
+      "id": "P10",
+      "title": "final-review",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P10",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P10-x-01",
+      "title": "最終レビューを独立 context で通す",
+      "phase_ref": "P10",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P10.json",
+      "acceptance_criterion": "hook が対象内で発火し対象外で発火しないことと、委譲先不在時に縮退動作で完走することが確認されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P10-x-01.md"
+    },
+    {
+      "id": "P11",
+      "title": "evidence",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P11",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P11-x-01",
+      "title": "再現可能な証跡を保全する",
+      "phase_ref": "P11",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P11.json",
+      "acceptance_criterion": "全ゲートの実行出力が実在ファイルとして残り、実題材の生成物が構成データとセットで保全されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P11-x-01.md"
+    },
+    {
+      "id": "P12",
+      "title": "documentation",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P12",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P12-x-01",
+      "title": "利用文書を確定する",
+      "phase_ref": "P12",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P12.json",
+      "acceptance_criterion": "README だけで起動から出力物受け取りまでを追加質問なしに実行でき、専門用語に初出言い換えがある",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P12-x-01.md"
+    },
+    {
+      "id": "P13",
+      "title": "release",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13",
+      "execution_kind": "phase-gate",
+      "route_ref": null,
+      "task_spec_ref": null
+    },
+    {
+      "id": "P13-x-01",
+      "title": "repo 内利用可能として引き渡す",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P13.json",
+      "acceptance_criterion": "manifest の配布可否と実体が整合し、marketplace 登録の判断と理由が記録されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P13-x-01.md"
+    },
+    {
+      "id": "P13-x-02",
+      "title": "plugin envelope を実体化しローカル marketplace 経路の install を成立させる",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "plugin_level_surfaces で required:true の 3 サーフェスの実体が存在し、build-local-marketplace.py --check が exit0 で guide-doc-generator を掲載対象として解決できること。掲載を生成物から実測し、manifest を壊した反例で --check が RED になることを示すこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P13-x-02.md"
+    },
+    {
+      "id": "P13-x-03",
+      "title": "配布可否の裁定を反転し公開 marketplace への GitHub 経路 install を成立させる",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator",
+      "acceptance_criterion": "guide-doc-generator が .claude-plugin/marketplace.json (name: skills) に登録され validate-plugin-completeness.py が exit0 になること。lint-readme-plugin-root-portability.py が skip でなく exit0 になること。phase-13-release.md の事前解決済み判断が新裁定と矛盾しない状態になっていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P13-x-03.md"
+    },
+    {
+      "id": "P13-x-04",
+      "title": "ローカル経路と GitHub 経路の install 可能性を実測して証跡化する",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence",
+      "acceptance_criterion": "2 経路それぞれについて実行コマンド・exit code・実測範囲と未実測範囲が evidence へ記録されていること。機械実行できない手順を pass と推定しないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P13-x-04.md"
+    }
+  ],
+  "edges": [
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R22.md",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R22.md",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R23.md",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R23.md",
+      "to": "P05-x-04"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "to": "P04-C05-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+      "to": "P04-C06-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+      "to": "P04-C07-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+      "to": "P04-C08-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+      "to": "P04-C10-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json",
+      "to": "P04-C13-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "to": "P04-C14-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json",
+      "to": "P04-C17-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json",
+      "to": "P04-C18-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P04-C20-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-25"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-26"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "to": "P04-C21-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+      "to": "P04-C02-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+      "to": "P04-C03-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+      "to": "P04-C04-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/evidence/P02.json",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/evidence/P03.json",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/assets/",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/assets/",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/genomes/",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/references/package-contract.json",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/RESOLUTION-P13-x-03.md",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-18"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-20"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-21"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-26"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "to": "P05-x-20"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "to": "P05-x-27"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/R22-AMENDMENT.md",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/build-icon-sprite.py/",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/embed-assets.py/",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/handout-build/",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/handout-content-architect/",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/handout-extract/",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/handout-verify/",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-diagram-svg.py/",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-x-18"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog_coverage.py",
+      "to": "P05-x-18"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/route-handout-output.py/",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/run-handout-build/",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/run-handout-extract/",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/srg-image-bridge.py/",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/verify-handout-language.py/",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C01-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C02-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C03-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C04-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C05-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C06-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C07-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C08-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C09-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C10-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C11-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C12-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C13-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C14-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C15-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C16-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C17-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C18-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C19-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C20-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C21-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C22-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-C23-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-x-01",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-01",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-01",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03-x-04",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P04-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C01-01",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C01-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C01-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C01-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C02-01",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C02-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C02-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C02-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C03-01",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C03-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C03-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C03-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C04-01",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C04-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C04-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C04-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C05-01",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C05-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C05-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C05-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C06-01",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C06-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C06-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C06-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C07-01",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C07-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C07-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C07-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C08-01",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C08-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C08-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C08-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C09-01",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C09-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C09-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C09-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C10-01",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C10-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C10-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C10-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C11-01",
+      "to": "P02-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C11-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C11-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C11-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C12-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C12-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C12-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C12-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C13-01",
+      "to": "P02-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C13-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C13-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C13-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C14-01",
+      "to": "P02-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C14-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C14-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C14-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C15-01",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C15-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C15-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C15-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C16-01",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C16-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C16-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C16-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C17-01",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C17-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C17-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C17-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C18-01",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C18-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C18-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C18-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C19-01",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C19-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C19-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C19-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C20-01",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C20-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C20-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C20-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C21-01",
+      "to": "P02-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C21-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C21-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C21-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C22-01",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C22-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C22-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C22-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C23-01",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C23-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C23-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-C23-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-01",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-02",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-03",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-05",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-06",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-07",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-07",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-08",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04-x-09",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-10"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-13"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-14"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-15"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-16"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-17"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-18"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-20"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-21"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-22"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-24"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-25"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-26"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-27"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-28"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-29"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-30"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-31"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C01-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P04-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C02-01",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P04-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C03-01",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C04-01",
+      "to": "P04-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P04-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C05-01",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P04-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C06-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P04-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C07-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P04-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C08-01",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C09-01",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C10-01",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C10-01",
+      "to": "P04-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C10-01",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P02-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C11-01",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C13-01",
+      "to": "P02-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C13-01",
+      "to": "P04-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P02-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C14-01",
+      "to": "P04-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C15-01",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C15-01",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C15-01",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C15-01",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C16-01",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C16-01",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C16-01",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C17-01",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C17-01",
+      "to": "P04-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C18-01",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C18-01",
+      "to": "P04-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C18-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C18-01",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C19-01",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C19-01",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C19-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C19-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C19-01",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C20-01",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C20-01",
+      "to": "P04-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C20-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C20-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C21-01",
+      "to": "P02-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C21-01",
+      "to": "P04-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C21-01",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C21-01",
+      "to": "P05-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C22-01",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C22-01",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C22-01",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C22-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C23-01",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C23-01",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C23-01",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C23-01",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-01",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-02",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-05",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-05",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-06",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-07",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-08",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-09",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-10",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-11",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-12",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-13",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-14",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-15",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-16",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-17",
+      "to": "P05-x-14"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-22",
+      "to": "P05-x-15"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-23",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-24",
+      "to": "P05-x-16"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-25",
+      "to": "P05-x-24"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-26",
+      "to": "P05-x-24"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-27",
+      "to": "P05-x-12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-28",
+      "to": "P05-x-20"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-29",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-30",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-31",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P06-x-01",
+      "to": "P05-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P07-x-01",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P08-x-01",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P09-x-01",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P10-x-01",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P11-x-01",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P12-x-01",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-01",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-02",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-03",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-04",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C11-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C13-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C14-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C21-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C03-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C04-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C05-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C06-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C07-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C08-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C10-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C13-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C14-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C15-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C17-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C18-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C20-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C21-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P04-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C01-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C02-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C03-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C05-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C06-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C07-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C08-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C09-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C11-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C13-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C14-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C15-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C16-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C17-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C18-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C19-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C20-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C21-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C22-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-07"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-08"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-09"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-10"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-13"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-14"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-15"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-16"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-17"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-18"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-19"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-20"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-21"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-22"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-24"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-25"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-26"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-27"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-28"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-29"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-30"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-31"
+    },
+    {
+      "type": "parent_of",
+      "from": "P06",
+      "to": "P06-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P07",
+      "to": "P07-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P08",
+      "to": "P08-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P09",
+      "to": "P09-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P10",
+      "to": "P10-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P11",
+      "to": "P11-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P12",
+      "to": "P12-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-02"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "produces",
+      "from": "P01-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P01.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C01-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C02-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C03-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C04-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C05-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C06-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C07-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C08-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C09-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C10-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C11-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C12-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C13-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C14-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C15-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C16-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C17-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C18-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C19-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C20-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C21-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C22-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-C23-01",
+      "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P02.json"
+    },
+    {
+      "type": "produces",
+      "from": "P03-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P03.json"
+    },
+    {
+      "type": "produces",
+      "from": "P03-x-02",
+      "to": "plugin-plans/guide-doc-generator/briefs/"
+    },
+    {
+      "type": "produces",
+      "from": "P03-x-03",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P03.md"
+    },
+    {
+      "type": "produces",
+      "from": "P03-x-04",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R21.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C01-01",
+      "to": "plugins/guide-doc-generator/tests/run-handout-build/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C02-01",
+      "to": "plugins/guide-doc-generator/tests/run-handout-extract/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C03-01",
+      "to": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C04-01",
+      "to": "plugins/guide-doc-generator/tests/ref-handout-design-system/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C05-01",
+      "to": "plugins/guide-doc-generator/tests/handout-content-architect/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C06-01",
+      "to": "plugins/guide-doc-generator/tests/handout-readability-reviewer/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C07-01",
+      "to": "plugins/guide-doc-generator/tests/handout-build/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C08-01",
+      "to": "plugins/guide-doc-generator/tests/handout-extract/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C09-01",
+      "to": "plugins/guide-doc-generator/tests/handout-verify/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C10-01",
+      "to": "plugins/guide-doc-generator/tests/guard-handout-external-ref/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C11-01",
+      "to": "plugins/guide-doc-generator/tests/render-handout.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C12-01",
+      "to": "plugins/guide-doc-generator/tests/validate-handout-config.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C13-01",
+      "to": "plugins/guide-doc-generator/tests/embed-assets.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C14-01",
+      "to": "plugins/guide-doc-generator/tests/render-diagram-svg.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C15-01",
+      "to": "plugins/guide-doc-generator/tests/build-icon-sprite.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C16-01",
+      "to": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C17-01",
+      "to": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C18-01",
+      "to": "plugins/guide-doc-generator/tests/verify-handout-language.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C19-01",
+      "to": "plugins/guide-doc-generator/tests/route-handout-output.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C20-01",
+      "to": "plugins/guide-doc-generator/tests/extract-handout-config.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C21-01",
+      "to": "plugins/guide-doc-generator/tests/srg-image-bridge.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C22-01",
+      "to": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-C23-01",
+      "to": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P04.json"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-02",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-C60.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-03",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R22.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-04",
+      "to": "plugins/guide-doc-generator/tests/R22-AMENDMENT.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-05",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-06",
+      "to": "plugins/guide-doc-generator/tests/P04-x-06-ALIGNMENT.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-07",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R23.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-08",
+      "to": "plugins/guide-doc-generator/tests/R23-ALIGNMENT.md"
+    },
+    {
+      "type": "produces",
+      "from": "P04-x-09",
+      "to": "plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog_coverage.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C01-01",
+      "to": "plugins/guide-doc-generator/skills/run-handout-build/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C02-01",
+      "to": "plugins/guide-doc-generator/skills/run-handout-extract/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C03-01",
+      "to": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C04-01",
+      "to": "plugins/guide-doc-generator/skills/ref-handout-design-system/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C05-01",
+      "to": "plugins/guide-doc-generator/agents/handout-content-architect.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C06-01",
+      "to": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C07-01",
+      "to": "plugins/guide-doc-generator/commands/handout-build.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C08-01",
+      "to": "plugins/guide-doc-generator/commands/handout-extract.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C09-01",
+      "to": "plugins/guide-doc-generator/commands/handout-verify.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C10-01",
+      "to": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C11-01",
+      "to": "plugins/guide-doc-generator/scripts/render-handout.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C12-01",
+      "to": "plugins/guide-doc-generator/scripts/validate-handout-config.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C13-01",
+      "to": "plugins/guide-doc-generator/scripts/embed-assets.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C14-01",
+      "to": "plugins/guide-doc-generator/scripts/render-diagram-svg.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C15-01",
+      "to": "plugins/guide-doc-generator/scripts/build-icon-sprite.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C16-01",
+      "to": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C17-01",
+      "to": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C18-01",
+      "to": "plugins/guide-doc-generator/scripts/verify-handout-language.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C19-01",
+      "to": "plugins/guide-doc-generator/scripts/route-handout-output.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C20-01",
+      "to": "plugins/guide-doc-generator/scripts/extract-handout-config.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C21-01",
+      "to": "plugins/guide-doc-generator/scripts/srg-image-bridge.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C22-01",
+      "to": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C23-01",
+      "to": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P05.json"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-02",
+      "to": "plugins/guide-doc-generator/assets/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03",
+      "to": "plugins/guide-doc-generator/config/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-04",
+      "to": "plugins/guide-doc-generator/genomes/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-05",
+      "to": "plugins/guide-doc-generator/schemas/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-06",
+      "to": "plugins/guide-doc-generator/config/handout-parts.json"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-07",
+      "to": "plugins/guide-doc-generator/scripts/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-08",
+      "to": "plugins/guide-doc-generator/assets/tokens/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-09",
+      "to": "plugins/guide-doc-generator/tests/render-handout.py/_harness.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-10",
+      "to": "plugins/guide-doc-generator/tests/handout-readability-reviewer/test_no_side_effects.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-11",
+      "to": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-12",
+      "to": "plugins/guide-doc-generator/schemas/handout-config.schema.json"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-13",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-14",
+      "to": "plugins/guide-doc-generator/tests/run-handout-build/reject_cases.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-15",
+      "to": "plugin-plans/guide-doc-generator/RESOLUTION-P05-x-15-argument-hint.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-16",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-16.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-17",
+      "to": "plugins/guide-doc-generator/tests/run-handout-build/PREDICATE-SCOPE-POLICY.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-18",
+      "to": "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-18.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-19",
+      "to": "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-19.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-20",
+      "to": "plugins/guide-doc-generator/schemas/INPUT-CONTRACT-RESOLUTION.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-21",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-21.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-22",
+      "to": "plugins/guide-doc-generator/tests/handout-extract/contract_lib.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-23",
+      "to": "plugins/guide-doc-generator/schemas/PART-CLASS-MAP-RESOLUTION.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-24",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-24.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-25",
+      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-25.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-26",
+      "to": "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-26.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-27",
+      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-27.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-28",
+      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-28.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-29",
+      "to": "plugins/guide-doc-generator/tests/RESOLUTION-P05-x-29.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-30",
+      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-30.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-31",
+      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-31.md"
+    },
+    {
+      "type": "produces",
+      "from": "P06-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P06.json"
+    },
+    {
+      "type": "produces",
+      "from": "P07-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P07.json"
+    },
+    {
+      "type": "produces",
+      "from": "P08-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P08.json"
+    },
+    {
+      "type": "produces",
+      "from": "P09-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P09.json"
+    },
+    {
+      "type": "produces",
+      "from": "P10-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P10.json"
+    },
+    {
+      "type": "produces",
+      "from": "P11-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P11.json"
+    },
+    {
+      "type": "produces",
+      "from": "P12-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P12.json"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-01",
+      "to": "plugin-plans/guide-doc-generator/evidence/P13.json"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-02",
+      "to": "plugins/guide-doc-generator/.claude-plugin/plugin.json"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-02",
+      "to": "plugins/guide-doc-generator/EVALS.json"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-02",
+      "to": "plugins/guide-doc-generator/plugin-composition.yaml"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-02",
+      "to": "plugins/guide-doc-generator/references/package-contract.json"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-03",
+      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P13-x-03.md"
+    },
+    {
+      "type": "produces",
+      "from": "P13-x-04",
+      "to": "plugin-plans/guide-doc-generator/evidence/P13-distribution.json"
+    }
+  ]
+}

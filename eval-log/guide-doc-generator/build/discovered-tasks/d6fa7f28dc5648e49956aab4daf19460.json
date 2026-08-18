@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-20",
+  "reason": "PAT-7 (両立不能な二重契約): tests/extract-handout-config.py/test_marker_extraction.py の AC-C20-06 は同一 assets[] エントリに原本相対パス (src == 'assets/shot-1.png') と data URI 本体の両方が残ることを要求するが、schemas/handout-config.schema.json の assets[] は src 1 本しか持たない。一方 schemas/ROUNDTRIP-CONTRACT.md の裁定は『data URI は捨てる』『data_uri キーを発明しない』。したがって裁定を実装すると現在 green の 2 件が赤へ転じ、テストを満たすと裁定に反する。どちらを正本とするかの決着が要る。P05-x-20 の完了により受け皿が消滅している (PAT-4)。判定材料: renderer 内部の _project_asset が作る data_uri は描画モデル上の一時値であり --config-out は投影前の入力を書き戻すため、裁定が禁じる『復元結果への新設』には当たらない (dispatcher 確認済み)。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+  "proposed_node": {
+    "id": "P05-x-28",
+    "title": "AC-C20-06 と ROUNDTRIP-CONTRACT の data URI 保持契約を裁定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "assets[] の data URI 保持について schema・ROUNDTRIP-CONTRACT・AC-C20-06 の 3 者が同一の契約を述べる状態にする。テストの assert を弱めずに達成すること (弱める場合は裁定文書へ理由を書き、代替の検査を残す)。着手前後で 3 スイートの失敗テスト名の集合が増えないこと。",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-28.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-28.md"
+    ],
+    "depends_on": [
+      "P05-x-20"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

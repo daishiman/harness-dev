@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-12",
+  "covered_task_ids": [
+    "P05-x-12"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/schemas",
+  "verified_by": [
+    {
+      "claim": "B03 の rows[].key が schema へ追加され、かつ optional である",
+      "method": "当方が handout-config.schema.json を json.load して $defs.part_data.B03 を検査",
+      "result": "pass (properties に key が存在し `required` は `[\"text\"]` のまま。`x_unique_by: \"key\"` が rows へ付いている)"
+    },
+    {
+      "claim": "key の description に『何を同定する鍵か』が書かれている (受入基準の明示要求)",
+      "method": "当方が B03 / B09 双方の key.description を読解",
+      "result": "pass (B03 = 『省略すると C11 が並び順由来の i0/i1 を振るため行の挿入・並べ替えで同定が崩れる』、B09 = 『checkbox の DOM id chk-<part id>-<key> の構成要素で重複すると label/for と localStorage の保存先が混線する』。**必須と任意の根拠を書き分けており、B09 の形を機械的にコピーしていない**)"
+    },
+    {
+      "claim": "additionalProperties:false という検査の本体を外す逃げ道を採っていない",
+      "method": "当方が B03 / B09 の items.additionalProperties を検査",
+      "result": "pass (双方 false のまま。未知キーを弾く機構は無傷)"
+    },
+    {
+      "claim": "E-KEY-UNKNOWN が解消している",
+      "method": "当方がテストと同じ組み立て (`H.full_html(sections=[H.section_html(\"intro\", parts=part_b03()+part_b09())])`) で抽出器を `--html` 経由で走らせ、出力 config を validate-handout-config.py へ通した",
+      "result": "pass (E-KEY-UNKNOWN 0 件。抽出された row は `{\"key\": \"collect\", \"text\": \"元データを集める\", \"time\": \"10分\"}` で key が実際に載っている)"
+    },
+    {
+      "claim": "上記の 0 件が『直った 0 件』であって『検査に到達していない 0 件』ではない",
+      "method": "**当方が反例を独立に構成して実測した**。schema から B03 の key を削除して同じ経路を再実行し、finally で必ず復元",
+      "result": "pass (変異中は E-KEY-UNKNOWN が **2 件**復活し、メッセージも `既知キーではない。ここで使えるキー: num, sub, text, time` で worker 報告の verbatim と一致。復元後は元ファイルと完全一致。**片側だけ測ると偽緑を掴むため反例側を必ず測る**)"
+    },
+    {
+      "claim": "退けた案 3 (key を required 化する) の却下根拠が実在する",
+      "method": "**当方が変異実測した**。B03 の required を `[\"key\",\"text\"]` へ変えて test_r21_duration を実行し finally で復元",
+      "result": "pass (`test_normalize_derives_section_duration_from_rows` / `test_row_time_sum_matches` の 2 件が赤化。worker の『同スイートの row() ヘルパが key を作らないため必須化は赤化する』という主張は正しい。**renderer が key 欠如時に i{index} へフォールバックする以上、著者が省略した config も正当であり optional が正しい**)"
+    },
+    {
+      "claim": "テストの assert を弱めていない (テストを 1 行も触っていない)",
+      "method": "当方が tests/extract-handout-config.py と tests/validate-handout-config.py 配下の .py について本 leaf 着手時刻以降の更新有無を find -newermt で確認",
+      "result": "pass (該当 0 件。更新されたのは schemas/handout-config.schema.json 1 ファイルのみ)"
+    },
+    {
+      "claim": "失敗テスト名の集合が着手前から増えていない",
+      "method": "当方が両スイートを各テストディレクトリへ cd して再実行し、失敗テスト名の集合を採取 (件数でなく名前集合で判定)",
+      "result": "pass (extract-handout-config.py は Ran 152 OK で **失敗名集合は空**。validate-handout-config.py は Ran 278 で失敗名集合が `test_no_purpose_vocabulary_literals` / `test_no_temp_file_left_behind` / `test_provenance_shape` / `test_unknown_doc_type_lists_vocabulary` の 4 件 = **既知 4 件と完全一致し 5 件目は増えていない**。この 4 件は R22 粒度軸の未追随などで本 leaf の責務外)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-measurement-bug",
+      "detail": "**当方自身の最初の検証が空振りしていた**。`extract-handout-config.py` は HTML を `--html` 必須オプションで受けるが、当方は positional 引数で渡したため抽出器が argparse で即エラー終了し config が生成されていなかった。それにもかかわらず validate 側は E-KEY-UNKNOWN 0 件を返すため、**『検査対象へ到達していない 0 件』が『直った 0 件』と見分けが付かない偽緑**が成立していた。これを検出できたのは反例 (key 削除) 側も測っていたためで、変異が 0 件のまま動かなかったことが測定系の故障を露呈させた。**片側だけの測定は偽緑を掴む**という規律の実例として記録する"
+    },
+    {
+      "kind": "premise-confirmed",
+      "detail": "本 leaf に限り **dispatcher 前提の外れは無かった** (B09 が既に key を持つ / B03 のみ欠落 / test_b03_rows_keep_key_and_raw_time が key を要求 / E-KEY-UNKNOWN が実発火する、の 4 点すべて worker の実測と一致)。task-spec 本文の『B09 も含め』という記述だけが現状より古く、worker はこれを『B09 には description のみ追加する』と解釈して整合を取った"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が write_scope 外として手を出さず報告した 3 件。(1) **C11 と C12/C20 の config 形状の乖離** — renderer は `sections[].blocks[]` (`type:\"steps\"`, `items[].label/detail`) を読むが schema/抽出器は `sections[].parts[]` (`part:\"B03\"`, `data.rows[].text`) を扱う。`test_round_trip_equivalence` の赤の実体であり、**受け皿は起票済みの `P05-x-20` (C11 と C12 の入力契約の乖離を裁定して統一する)**。(2) `extract-handout-config.py` の `PART_CLASS_MAP` による part id リテラル列挙 — **受け皿は起票済みの `P05-x-23` (PAT-7 裁定)**。(3) **B08/B13/B15/B16 の key に description が無い** — 本 leaf の受入基準は B03/B09 のみ指定ゆえ意図的に見送られた。write_scope 内だが受入基準外で、**現時点で受け皿 leaf が無い**"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

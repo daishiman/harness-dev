@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-31",
+  "covered_task_ids": [
+    "P05-x-31"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "C20 の逆抽出が全カタログ部品を含む schema 方言の構成データと round-trip 等価になり、再生成した HTML がバイト一致する",
+      "method": "当方が schema 方言 fixture (全部品) を C12 --normalize → C11 render → C20 extract → C12 --config → 再 normalize → 再 render の順に流し、各段の exit code と最終 HTML のバイト長・内容を突き合わせた",
+      "result": "pass (compare exit 0 / `EXTRACTED sections=1 parts=20 exact=20 heuristic=0 unrecoverable=0 roundtrip=EQUIVALENT`。復元結果は `validate-handout-config.py --config` を exit 0 で通り (`OK handout-config: sections=1 parts=18 glossary=1 doc_type=guide date=2026/01/05 warnings=0`)、再 render の出力は **byte-identical 28302 == 28302**。ROUNDTRIP-CONTRACT.md §1 のとおり、バイト一致は構成データ等価が成立した後の派生検査として自動的に従った)"
+    },
+    {
+      "claim": "素材の『参照』と『実体』を別の印で分けたことが、alt / filename / mime の復元不能と存在しない diagrams[] 項目の発明を同時に解消した",
+      "method": "当方が collect_media の入口を素材 id 属性から data-hb-media-record ただ 1 本へ変え、変更前後で E-EXTRACT-UNRECOVERABLE の pointer 集合と diagrams[] の件数を採取した",
+      "result": "pass (変更前は `/assets/0/alt`・`/attachments/0/filename|mime|fallback_hint` が復元不能で、参照しかしない B14 の図解部品が diagrams[] の 2 件目として **発明されていた**。原因は data-hb-asset-id / attachment-id / diagram-id が block() のスカラ刻みにより **素材を参照するだけの部品にも付く** ことで、付随情報を持たない要素が素材の出所に選ばれていたこと。実体側だけを名指しする印を足し、あわせて figure の直下 <img> から実体を探す payload_in_subtree を入れた結果、いずれも 0 件になった)"
+    },
+    {
+      "claim": "data_uri を足すか src へ入れるかは ROUNDTRIP-CONTRACT.md §3.2 の payload_field 規則を出所として決めた (比較を緩める方向へは逃げていない)",
+      "method": "当方が一度 comparable_projection へ埋め込み方言を畳む fold_embed_dialect を書いたのち、§3.1 の裁定原則に照らして破棄し、抽出側の出力規則を書き換えた",
+      "result": "pass (**fold_embed_dialect は『受入基準を満たすために基準を弱める』側の変更であり §3.1 が明文で禁じている**。破棄して、data-hb-src が空なら実体の置き場は src ただ 1 本とする規則へ改めた。これにより `E-KEY-UNKNOWN /assets/0/data_uri` と `/attachments/0/data_uri` が消え、復元結果が --config を通るようになった — $defs.asset / $defs.attachment はいずれも additionalProperties:false なので、発明したキーは必ず落ちる)"
+    },
+    {
+      "claim": "文書レベルの R21 / R22 フィールド 11 件が復元されるようになった",
+      "method": "当方が E-ROUNDTRIP-DIFF の pointer を採取し、各項目について『印が HTML にあるか』『抽出器が読んでいるか』を個別に確認した",
+      "result": "pass (attainment_level / detail_level / evidence_depth / focus_theme / must_remember / must_remember_max / no_need_to_remember / notes_enabled / presentation_order / target_tasks と、発明されていた theme。**印は出ていたが抽出器が読んでいなかった** ものと、`collect_fields` が印ごとに先頭 1 件しか残さないため配列項目の 2 件目以降を落としていたものの 2 種。DOC_TYPED_ATTRS / DOC_LIST_FIELDS / DOC_ENTRY_FIELDS と collect_field_nodes を足して解消した。theme は data-hb-theme (既定値解決後の実効値) ではなく data-hb-config-theme (著者が書いた値) を読む二本立てにした — 前者を読むと『書いていない』が『書いた』へ化ける)"
+    },
+    {
+      "claim": "4 スイート 836 件がすべて緑で、失敗テスト名の集合が空である",
+      "method": "当方が 4 テストディレクトリへ cd して unittest discover を実行し、FAIL / ERROR 行を採取した",
+      "result": "pass (validate 278 OK / a11y 187 OK / render 219 OK / extract 152 OK。着手時点の赤は render 1 件 (round-trip) で、作業途中では extract が failures=40 errors=1・render が failures=6 まで悪化したが、最終的に **失敗テスト名の集合は 0 件**)"
+    },
+    {
+      "claim": "extract スイートの 40 件の赤は script の欠陥ではなく、手書き fixture _harness.py が renderer の実出力に追随していなかった (PAT-6 派生正本の未同期) ものが大半である",
+      "method": "当方が renderer の実出力 HTML を採取して fixture の生成文字列と突合し、欠けている印を 1 件ずつ特定した",
+      "result": "pass (fixture 側に不足していた印: 文書 R21/R22 属性 6 本・data-hb-config-theme・attainment_level と 4 つの配列項目の data-hb-field・section の role / ties_to / attainment_step・反復要素の data-hb-entries と data-hb-<field>・B15 の必須 data-hb-key・B12 の data-hb-label・TEXT/B11 の data-hb-body・素材 3 種の data-hb-media-record。**いずれも renderer が実際に出している印であり、fixture がそれ以前の形で固定されていた**)"
+    },
+    {
+      "claim": "ただし赤のうち 2 件は script 側の実欠陥であり、抽出器を直して解消した",
+      "method": "当方が失敗の traceback から到達点を特定し、宣言 (schema) と実装の対応を読み直した",
+      "result": "pass (**(1) heuristic 経路で部品 data が常に空になっていた**: build_part_data は宣言された項目を印からしか読まないため、印を 1 つも持たない手書き HTML では部品種別だけ当たって data={} になっていた (参照 v1 相当の地の文が該当)。必須の文字列項目が 1 つだけ空いている場合に限り本文へ落とす経路を heuristic 側だけに足した — 2 つ以上あるとどちらへ入れるかが本文から決まらないので入れない。**(2) 印つき生成 HTML で必須項目の印が無いとき無言で空の data を返していた**: 『部品はあるが中身が消えた』資料が復元成功として出るため E-EXTRACT-UNRECOVERABLE を出すようにした。これは検査を **足した** 変更である)"
+    },
+    {
+      "claim": "render スイートの 5 件は測り方の失効であり、検査を弱めずに強める向きで直した",
+      "method": "当方が失敗した属性名 5 件を script のソースと生成物の双方で grep して所在を確認した",
+      "result": "pass (data-hb-detail / due / owner / time / title は、部品 data の項目名から属性名を導出する経路 (data-hb-<field>) へ移ったため **script のどこにも literal として現れなくなった**。ソース文字列の grep では『実装から消えた』と『導出で出している』が区別できない。判定を **生成物側の語彙も見る** 形へ改めた — これは『文字列はあるが出力されない』偽の緑も同時に潰すので、弱める変更ではない)"
+    },
+    {
+      "claim": "render の R22 不変条件 1 件は、同じ 1 つの差分を 2 か所で数えていた誤検出だった",
+      "method": "当方が差分文字列を採取し、どの属性が食い違っているかを特定した",
+      "result": "pass (比較の正規形は素の `open` 属性だけを落としていたが、逆抽出用に同じ展開状態を運ぶ `data-hb-open` が残っていた。テストが自ら『差分は任意詳細部の展開状態に限定される』と宣言している対象そのものなので、正規形へ data-hb-open を加えた)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "c11-brief-attribute-contract-drift",
+      "detail": "**C11 のブリーフ `plugin-plans/guide-doc-generator/briefs/script-brief-C11.json` の `html_attribute_contract` (36 属性) は、本 leaf の作業で確定的に drift した。** 削除: data-hb-detail / due / owner / time / title (部品 data 項目名からの導出へ移行)。追加: data-hb-<field> 系の行属性・data-hb-entries・data-hb-panel-for・data-hb-part-data・data-hb-media-record・data-hb-asset-kind・data-hb-diagram-title・data-hb-diagram-record-data・data-hb-config-theme・data-hb-must-remember-max。ブリーフは `plugin-plans/` 配下にあり本 leaf の write_scope (`plugins/guide-doc-generator`) の外なので更新していない。**ブリーフを正本として読む下流があれば古い名簿を見ることになる**"
+    },
+    {
+      "kind": "test-side-changes-are-the-majority",
+      "detail": "解消した赤 47 件のうち、script を直したのは 2 件分 (heuristic 経路の data 欠落 / 必須項目欠落の無言許容) で、残りは fixture とテストの追随である。**通常なら Goodhart 緑化を疑うべき比率**。疑いを退けた根拠は verified_by に個別に置いた: (a) fixture へ足した印はすべて renderer が実際に出している印であり、実出力を採取して突合した。(b) 属性契約テストは判定対象を生成物へ広げて **強めた**。(c) 必須項目欠落の検出は新規に **足した** 検査である。(d) 何より、fixture に一切依存しない end-to-end 経路 (normalize→render→extract→validate→再 render) が byte-identical まで到達している。ただしこの判断は当方の読解に依存しており、独立レビューは受けていない"
+    },
+    {
+      "kind": "roundtrip-contract-not-read-by-any-test",
+      "detail": "`schemas/ROUNDTRIP-CONTRACT.md` の裁定表を機械で読むテストは依然として 1 本も無い (P05-x-28 の RESOLUTION §7-3 で既出)。本 leaf でも裁定は当方が手で参照しており、裁定と実装の乖離は自動では検出されない"
+    },
+    {
+      "kind": "part-data-body-has-no-adjudication",
+      "detail": "部品 data の値をどこへ載せるか (要素本文か data-hb-<field> 属性か) は ROUNDTRIP-CONTRACT.md に裁定が無い。実装は属性側を採っており round-trip も成立しているが、**書かれた裁定ではなく実装が事実上の正本になっている**。裁定表への追記が要る"
+    },
+    {
+      "kind": "task-spec-missing",
+      "detail": "`plugin-plans/guide-doc-generator/task-specs/P05-x-31.md` が実在しない (P05-x-25 / x-26 / x-27 / x-28 / x-30 と同様・6 件目)。node の acceptance_criterion を正本として遂行した。原因は `accept-discovered-task.py` の validate が新規 form にしか task_spec_ref の実在を要求していないこと (既出)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

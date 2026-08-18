@@ -1,0 +1,423 @@
+{
+  "schemaVersion": "1.3.0",
+  "styleName": "flat-infographic-jp",
+  "flowLegendRule": "この画風の矢印は原則 1 意味 (収束または移行) なので凡例を描かない。1 枚の中で矢印が 2 種類以上の意味を担うときだけ、下部結論帯の直上に幅の狭い横一列の凡例チップ (色面 + 短い日本語 1 語) を置く。凡例チップ自体は橙アクセントを使わず、濃緑と中間緑だけで塗り分ける。",
+  "lockTiers": {
+    "tier1": [
+      "flat orthographic front elevation: every object is seen straight-on, no isometric axes, no vanishing point, no perspective foreshortening",
+      "cream paper ground #FDF6E3 across the entire canvas, never white and never tinted dark",
+      "deep green #1E4620 as the dominant color for headline band, outlines, icon bodies, arrows and the circular focus ring",
+      "orange #E8722C touches only numerals and one emphasis word per zone; it never fills a card, a background, or an icon body"
+    ],
+    "tier2": [
+      "hand-drawn feel: outlines are slightly uneven in width and the corners are drawn, not geometrically perfect (the marker-sketch quality of a whiteboard drawing that was inked cleanly)",
+      "the single largest visual element on the page is a numeral, not an illustration",
+      "card frames with a thin deep-green rule and a very short flat offset shadow toward the lower right; no gradient and no blur in the shadow",
+      "people are drawn as simplified torso-and-head silhouettes with no face drawn at all (no eyes, no mouth, not even dots)",
+      "registered motifs only, drawn as their genome appearance describes"
+    ],
+    "tier3": [
+      "which small props sit beside the main motif inside a card",
+      "the exact tick count of a simple comparison bar",
+      "the presence of sparse dotted or dashed connector lines between minor elements",
+      "secondary green tints (mid green, soft green wash) used to separate two adjacent cards"
+    ]
+  },
+  "ambiguityReplacements": {
+    "high quality": "even hand-inked deep-green #1E4620 outlines on a flat cream #FDF6E3 ground, with every Japanese label large enough to read at arm's length",
+    "beautiful": "one large orange numeral against calm green-on-cream fields, with wide empty cream margins around each card",
+    "nice": "two balanced cards of the same size on a cream ground, joined by one deep-green arrow",
+    "detailed": "each card carries one main motif plus one small supporting prop and one short label; no crowd of tiny icons",
+    "cool": "restrained deep-green #1E4620 fields with a single orange #E8722C numeral as the only warm point",
+    "きれい": "flat cream ground with even green outlines and generous margins; nothing overlapping the headline band",
+    "おしゃれ": "hand-drawn flat infographic look with a two-color green-and-orange discipline on cream paper",
+    "いい感じ": "the composition follows one of the registered layout templates and keeps the numeral as the focal point",
+    "手描き風": "outlines with slight width variation and softly drawn corners, as if inked by hand with a marker, but with flat even fills and no sketch hatching",
+    "ポップ": "large rounded shapes and one oversized orange numeral, still limited to the cream / deep-green / orange trio"
+  },
+  "description": "配布資料 (handout) のセクション挿絵のうち、面積・格子・二項対比を読ませる図をフラット正面図で描くためのスタイルゲノム。クリーム地に濃緑を主役、橙を数値と強調語だけに使い、手描きの線でカード枠・簡略人物・大きな数値を描く『お絵かき調のフラットインフォグラフィック』を正本化する。奥行き・順序・連結を読ませる図は本ゲノムの対象外で、アイソメ側の系統が担当する。特定の 1 枚を複製する金型ではなく、任意のセクション内容をこの画風へ翻訳するための生成ルールブックである (semanticMapping / contentAdaptationRules / layoutSelectionByStructure / figureUsageRules / colorSemantics / noveltyRule を備える)。",
+  "referenceAssets": [
+    {
+      "kind": "user-supplied-reference",
+      "shows": "導入前 / 導入後の二枚看板型。左右に同寸のカード枠を置き、左は人が机で手作業する場面、右はノート PC と AI ロボットが並ぶ場面。中央に円形の結果指標を重ね、その中に橙の大きな数値と小さな単位を焼く",
+      "note": "参照画像は利用者から提示された実物であり、本リポジトリにはファイルとして同梱しない。パスを持たないのは意図であって欠落ではない"
+    },
+    {
+      "kind": "user-supplied-reference",
+      "shows": "3 要素収束型。上部に大見出し帯、その下に 3 つの要素カード (指示 / 素材 / 条件に相当する簡略アイコン) を横一列に置き、3 本の濃緑矢印が中央下の 1 つの成果物へ収束する。最下部に 1 行の結論帯",
+      "note": "参照画像は利用者から提示された実物であり、本リポジトリにはファイルとして同梱しない"
+    }
+  ],
+  "artStyle": {
+    "family": "hand-drawn flat front-elevation Japanese explanatory infographic on cream paper (style family: flat-infographic-jp)",
+    "rendering": "flat fills with no gradient, no texture and no ambient occlusion; depth exists only as a short hard offset shadow under card frames; the ink line carries a slight hand-drawn width variation while the fills stay perfectly even; edges are crisp with no blur or feathering",
+    "camera": {
+      "default": "straight-on front elevation, orthographic, the viewer looks at the page dead center",
+      "structural": "the same straight-on front elevation with the grid axes exactly horizontal and vertical so cells, bars and columns can be compared by length",
+      "geometry": "flat orthographic front elevation, zero-degree tilt, no isometric axes, no vanishing point, no perspective foreshortening; all objects share one picture plane and equal scale by importance rather than by distance"
+    },
+    "line": "hand-inked deep green #1E4620 outline of roughly 4px at 2560x1440, with small natural width variation; label underlines and grid rules are drawn thinner at about 2px",
+    "corners": "softly drawn rounded corners, 10-24px radius; the radius is visibly hand-set rather than machine-uniform, but never wobbly enough to look sketchy",
+    "shadow": "a short flat offset shadow toward the lower right, 6-10px, in a darker cream-brown; one shadow per card frame only, never on icons or text",
+    "background": "flat cream paper #FDF6E3 filling the whole canvas, with no grid, no dots, no paper grain and no vignette",
+    "title": "one large bold deep-green Japanese headline inside the top band, left-aligned or centered, occupying the full band width",
+    "labels": "short Japanese labels set directly on the cream ground or on a card, in bold deep green, with an optional thin deep-green underline; no speech bubbles",
+    "flow": "solid deep-green arrows with a plain triangular head, drawn straight or as one gentle curve; arrows converge inward rather than snaking across the page",
+    "figures": {
+      "humans": "simplified front-facing people: one rounded head with no face drawn at all (no eyes, no mouth, no dots, no hair detail beyond a single silhouette shape), a simple torso in deep green or mid green, and arms only when the arms carry the meaning (typing, holding, pointing); a figure is about one-third of its card height; heads are never turned or tilted more than slightly; several figures on one page share one identical construction",
+      "humanVariationTokens": {
+        "note": "職業・姿勢を描き分けるための差分トークン。不変条件 (正面向き・顔を一切描かない・濃緑〜中間緑の胴・カード高の約 1/3) は全変種で固定し、差は持ち物 1 点と腕の形だけで表す。服の色替えで描き分けない。",
+        "occupation": {
+          "desk-worker": "机に向かう作業者。胴は濃緑、前に書類束かノート PC を 1 点置く。導入前カードの既定",
+          "reviewer": "確認する人。片腕を上げてチェックリスト板を持つ。検算・確認の場面",
+          "presenter": "説明する人。片腕を横へ開き、隣にモニタか掲示物を 1 点置く",
+          "learner": "受け取る人。両腕を下ろし、前に本かスマートフォンを 1 点置く"
+        },
+        "posture": {
+          "seated-at-desk": "机の天板線より上だけを描く座位。手作業・入力を表す",
+          "standing-plain": "腰から上の立ち姿。主体・利用者そのものを表す",
+          "arm-raised-holding": "片腕を上げて板や札を持つ。確認・提示を表す",
+          "arms-open": "両腕を軽く開く。困りごと・分からなさを表す"
+        },
+        "scale": {
+          "card-figure": "カード高の約 1/3。既定",
+          "band-figure": "結論帯や見出し帯の脇に置く小さい人物。カード高の約 1/6。輪郭のみ"
+        },
+        "invariant": "全変種で共通: 正面向き・顔の描画を一切しない・濃緑 #1E4620 か中間緑 #3F7D4E の胴・手描き線の輪郭・フラット塗り。橙は人物に一切使わない。同一ページに同じ姿勢の人物を 3 体以上並べない。"
+      },
+      "numeralTreatment": "この画風の主役は数値である。強調する数値は 1 枚につき 1 つか 2 つに限り、カード高の半分以上を占める極太の橙 #E8722C で焼く。単位・助詞 (「%」「時間」「分」「約」「削減」) は数値の 3 分の 1 以下の字面で、濃緑で数値に寄り添わせる。数値の背後に円形の薄緑フォーカス面を敷いてよいが、数値そのものに影・縁取り・グラデーションを付けない。before/after の 2 値を並べるときは同じ字面サイズにし、変化量だけをさらに大きく描く。"
+    }
+  },
+  "palette": {
+    "background": { "name": "cream paper ground", "hex": "#FDF6E3" },
+    "surface": { "name": "warm off-cream card face", "hex": "#FFFCF2" },
+    "ink": { "name": "deep green ink and outline", "hex": "#1E4620" },
+    "accentOrange": { "name": "signal orange for numerals and one emphasis word", "hex": "#E8722C" },
+    "midGreen": { "name": "mid green for secondary fills", "hex": "#3F7D4E" },
+    "softGreenWash": { "name": "soft green wash for focus discs and bar troughs", "hex": "#CBE0CC" },
+    "beforeGrey": { "name": "muted grey-green for the before / manual side", "hex": "#8B9A8C" },
+    "shadowCream": { "name": "darker cream used only for the flat offset shadow", "hex": "#E7DCC2" },
+    "roleUsage": {
+      "note": "60-30-10 の配分。60 = クリーム地、30 = 濃緑 (見出し帯・線・アイコン・矢印)、10 = 橙。橙が 10 を超えたら数値以外の橙を落とす。",
+      "dominant60": "background",
+      "structural30": "ink + midGreen",
+      "accent10": "accentOrange"
+    },
+    "orangeBudget": "橙は 1 枚につき『大きな数値 1〜2 個』と『強調語 1 語』まで。カード面・背景・アイコン本体・人物・矢印には使わない。禁止を破ると画風が別物になる。"
+  },
+  "compositionRules": {
+    "aspect": "16:9",
+    "targetResolution": "2560x1440",
+    "safeArea": "top/bottom 8%, left/right 6%",
+    "density": "低〜中密度で描く。1 枚あたりの主要要素はカード 2〜3 枚、または要素 3 個 + 収束先 1 個までとし、その周りに広いクリームの余白を残す。1 カードの中身は『主モチーフ 1 点 + 補助小物 1 点 + 短いラベル 1 行』を上限とする。小さなアイコンを敷き詰めない。逆に、枠と文字だけで中身の絵が無いカード (空枠) も禁止する。数値を描くカードは中身をさらに削り、数値が最大面積を取るようにする。",
+    "sceneTile": "カード枠 = 角丸長方形、面はほぼクリームの温白 #FFFCF2、細い濃緑の枠線、右下へ短いフラット影。カードは必ず水平垂直に整列し、傾けない。",
+    "titlePlacement": "上部の見出し帯の中。帯は濃緑のベタ面にクリームの抜き文字、または濃緑の太い下線 1 本 + 濃緑文字のどちらかに統一する",
+    "captionPlacement": "最下部の結論帯 1 行。帯は左右いっぱいの細い横帯で、短い断定文を 1 つだけ置く",
+    "structuralDiagram": "格子・表・棒の比較は正面図のまま、行と列を水平垂直に保って描く。斜めに倒したり奥行きを付けたりしない (面積が歪んで比較が読めなくなるため、この画風がそもそも選ばれている)",
+    "layoutTemplates": {
+      "before-after-cards-with-metric": "対比 2 枚型: 左右に同寸のカード枠を置き、左を『導入前』(くすんだ灰緑寄り)、右を『導入後』(濃緑と温白) にする。両カードの間、上下方向の中央に円形の結果指標を重ね、その中へ大きな橙の数値と小さな単位を焼く。円は両カードにわずかに重なってよい",
+      "three-into-one-convergence": "3 要素収束型: 上段に 3 つの要素カードを等間隔で横一列に置き、各カードから濃緑の矢印を 1 本ずつ中央下へ引いて、1 つの成果物カードへ収束させる。矢印は 3 本とも同じ太さ・同じ意味にする",
+      "headline-band-and-conclusion-strip": "共通枠: 上部に大見出し帯、下部に 1 行の結論帯を置き、中央の広い領域を他のテンプレートに明け渡す共通の器。単独でも、他の 2 型と重ねても使う。中央領域が空にならないようにする",
+      "quantity-bars-side-by-side": "量の比較型: 同じ基線から立つ (または同じ左端から伸びる) 2〜4 本の簡易バーを並べ、最長のバーだけ橙の数値を添える。目盛りは描かず、長さの比だけで読ませる",
+      "labeled-grid-matrix": "格子型: 2x2 から 3x3 までの正対した格子。行見出しと列見出しを濃緑の短語で置き、各セルには短語かチェック印 1 つだけを置く。セル内に長文を入れない"
+    },
+    "gridDiscipline": "全要素を水平垂直のグリッドに乗せる。カード幅・カード間隔・帯の高さはページ内で 1 種類ずつに揃える。回転したカードや斜めのラベルは使わない"
+  },
+  "motifs": [
+    { "name": "card-frame", "meaning": "1 つの場面・選択肢・状態のまとまり", "appearance": "角丸長方形の枠。温白 #FFFCF2 の面に細い濃緑の枠線、右下へ短いフラット影。中に主モチーフ 1 点と短いラベル 1 行" },
+    { "name": "headline-band", "meaning": "そのセクションの主張の見出し", "appearance": "画面上部を横切る濃緑のベタ帯にクリームの抜き文字、または太い濃緑の下線 1 本と濃緑の見出し文字" },
+    { "name": "conclusion-strip", "meaning": "結論・持ち帰り 1 行", "appearance": "最下部の細い横帯。薄緑 #CBE0CC の面に濃緑の短い断定文 1 行" },
+    { "name": "circular-metric", "meaning": "対比の結果を 1 つの数で言い切る", "appearance": "薄緑の円面に細い濃緑の輪。中央へ極太の橙の数値、その脇に小さな濃緑の単位語" },
+    { "name": "big-numeral", "meaning": "最も伝えたい量・効果", "appearance": "カード高の半分以上を占める極太の橙の数字。単位と修飾語は 3 分の 1 以下の濃緑" },
+    { "name": "before-after-pair", "meaning": "導入前と導入後の二項対比", "appearance": "同寸のカード 2 枚。左はくすんだ灰緑 #8B9A8C 主体で要素が散らかり、右は濃緑と温白で要素が整列している" },
+    { "name": "converging-arrows", "meaning": "複数の入力が 1 つの成果へまとまる", "appearance": "太さの揃った濃緑の直線矢印が 3 本前後、中央下の 1 点へ向かう" },
+    { "name": "transition-arrow", "meaning": "左から右への状態変化", "appearance": "水平に伸びる 1 本の太い濃緑矢印。三角の頭、装飾なし" },
+    { "name": "quantity-bar", "meaning": "量の大小を長さで比べる", "appearance": "同じ基線から伸びる角丸の帯。既定は濃緑、強調する 1 本だけ薄緑の溝に濃緑の実バー。目盛りは描かない" },
+    { "name": "checklist-board", "meaning": "確認項目・満たすべき条件", "appearance": "縦長の板に 3〜4 本の横線、左端に濃緑のチェック印。文字は短語のみ" },
+    { "name": "grid-matrix", "meaning": "2 軸での分類・整理", "appearance": "正対した 2x2〜3x3 の格子。細い濃緑の罫、見出しは短語、セルは短語かチェック印 1 つ" },
+    { "name": "laptop-front", "meaning": "作業・生成・画面上の成果物", "appearance": "正面から見たノート PC。濃緑の輪郭、画面は温白、画面内には 2〜3 本の横線だけ" },
+    { "name": "monitor-front", "meaning": "共有・提示・確認する画面", "appearance": "正面から見た据置モニタ。台座付き、画面内は短い横線かグラフ 1 つ" },
+    { "name": "smartphone-front", "meaning": "手元・すぐ見られること", "appearance": "縦長の角丸端末。濃緑の輪郭、画面は温白に横線 2 本" },
+    { "name": "document-sheet", "meaning": "資料・原稿・成果物 1 通", "appearance": "角を 1 つ折った紙 1 枚。横線 3 本。束ねるときは 3 枚までを少しずらして重ねる" },
+    { "name": "person-plain", "meaning": "利用者・担当者そのもの", "appearance": "正面向きの簡略人物。顔は一切描かない。濃緑か中間緑の胴、腕は意味があるときだけ" },
+    { "name": "ai-robot-plain", "meaning": "AI に任せる部分", "appearance": "角丸四角の頭に短いアンテナ 1 本、胴は台形。顔面は温白の面に濃緑の短い横線 1 本だけ (目を描かない)" },
+    { "name": "shield-mark", "meaning": "安全・守られていること", "appearance": "濃緑の盾形にチェック印 1 つ。中を塗り分けない" },
+    { "name": "book-stack", "meaning": "知識・蓄積・参照先", "appearance": "正面から見た本を 2〜3 冊積む。背は濃緑と中間緑を交互に" },
+    { "name": "cycle-arrows-flat", "meaning": "繰り返し・見直し", "appearance": "正面の円を描く 2 本の濃緑の弧矢印。奥行きを付けず真円で描く" },
+    { "name": "clock-face", "meaning": "所要時間", "appearance": "正面の円に短い針 2 本。目盛りは 4 つだけ。時間の数値は big-numeral 側で描く" },
+    { "name": "magnifier-flat", "meaning": "確認・見つける", "appearance": "正面の円と短い柄。中は透かさず温白のまま" },
+    { "name": "speech-bracket", "meaning": "短い引用・呼びかけ", "appearance": "濃緑の鉤括弧 2 つで短語を挟む。吹き出しは使わない" },
+    { "name": "plus-minus-token", "meaning": "増える / 減る の記号的表示", "appearance": "小さな円の中に濃緑の + か −。橙は使わない" },
+    { "name": "focus-disc", "meaning": "注目させる下敷き", "appearance": "薄緑 #CBE0CC のベタ円。上に数値かアイコンを 1 つだけ載せる" },
+    { "name": "step-number-chip", "meaning": "手順の番号", "appearance": "小さな角丸チップに濃緑の数字 1 文字。橙にしない (橙は効果の数値専用)" }
+  ],
+  "patterns": {
+    "image-only": {
+      "pattern": "image-only",
+      "recommendedTextPolicy": ["baked-with-overlay", "overlay-only"],
+      "backgroundSource": "none (生成画像そのものが 1 枚の挿絵になる)",
+      "useWhen": "セクションの主張を 1 枚のフラット図で言い切るとき。見出し・ラベル・数値・結論を画像内に焼いてよい場合。",
+      "rules": [
+        "焼く日本語は太く大きく、1 枚あたり短語 6 ブロック程度まで",
+        "数値は必ず橙、それ以外の焼き文字は濃緑",
+        "overlayText が常に正本。文字が崩れたら overlay を出して画像内文字を装飾扱いにする",
+        "枠と文字だけのカード (中身の絵が無い空枠) は禁止"
+      ]
+    },
+    "html-composite": {
+      "pattern": "html-composite",
+      "recommendedTextPolicy": ["overlay-only"],
+      "backgroundSource": ["raster", "svg"],
+      "useWhen": "HTML が器で、画像はカード枠・人物・アイコンだけを持ち、文字は HTML 側が持つとき。",
+      "rules": [
+        "画像内に読める文字を一切描かない (数値も描かない)",
+        "文字が乗る位置にはクリームの余白を空けておく",
+        "見出し・ラベル・数値・結論は HTML/CSS/SVG が正本"
+      ]
+    },
+    "html-primary": {
+      "pattern": "html-primary",
+      "recommendedTextPolicy": ["none"],
+      "backgroundSource": ["none", "svg"],
+      "useWhen": "精密な表・金額・頻繁に変わる文言など、1 文字の正確さが価値の中心のとき。生成画像を使わない。",
+      "rules": [
+        "AI 生成ラスターを使わない",
+        "既存の HTML 部品で組み、画風の一貫性は色と角丸の作法だけで担保する"
+      ]
+    }
+  },
+  "textPolicies": {
+    "baked-with-overlay": "見出し・短いラベル・数値・結論 1 行を画像内へ焼き込む。overlayText が常に正本で、焼いた文字が崩れたときは overlay を表示して画像内文字を装飾扱いへ落とす。この画風の既定。",
+    "overlay-only": "画像内に読める文字を描かない。数値も描かず、数値の居場所だけを円や余白として空ける。全テキストを HTML/SVG で重ねる。",
+    "none": "画像内テキストという概念を持たない (html-primary など、ラスター画像に文字判定が不要なケース)。"
+  },
+  "backgroundSources": {
+    "raster": "生成したラスター画像 (PNG/WebP) を挿絵として使う。",
+    "svg": "SVG/CSS でこの画風を再現して描く (ラスターなし)。線幅と色はゲノムの値に合わせる。",
+    "none": "背景ビジュアルなし (クリームのフラット面のみ)。"
+  },
+  "machineContract": {
+    "validator": "scripts/validate-ai-image-assets.js",
+    "note": "pattern / textPolicy / backgroundSource の許容値と style genome の必須キーは validator を正本とし、本ファイルはそれに合わせる。pattern->textPolicy は image-only:{baked-with-overlay|overlay-only} / html-composite:overlay-only / html-primary:none。本ゲノムは build-image-prompts.js に --genome で渡す設定値であり、プロンプト本文の組み立ては行わない。motifs は追加してよいが既存 name は削除・改名しない (per-slide の motifs が name で参照するため)。camera は default / structural / geometry の 3 キーを必ず持ち、両者とも正面図である (structural を俯瞰へ倒すとこの画風の存在理由である面積比較が壊れる)。"
+  },
+  "perSlideDiffContract": {
+    "note": "画風の記述を毎回書き下さず、1 枚ごとには差分だけを書く。使用するレイアウトテンプレート、カード枚数、強調する数値、人物の有無、焼く短語を指定する。",
+    "requiredFields": ["slide", "slug", "pattern", "textPolicy", "backgroundSource", "styleGenome", "source", "decision", "reason", "alt", "overlayText", "prompt"],
+    "recommendedFields": ["diagramPrimitives", "layoutTemplate", "densityLevel", "figures", "robotMascot", "tableMode", "imageFit", "printIntent", "emphasisNumeral"],
+    "diagramPrimitives": "この 1 枚で使う motif を motifs[].name の部分集合として列挙する (例: card-frame, before-after-pair, circular-metric, big-numeral)。motifs に無い名前は使わない。",
+    "figures": "登場する人物 motif と人数・位置を書く (例: 'person-plain x1 (左カード, seated-at-desk), ai-robot-plain x1 (右カード)')。顔を描かない条件は常に有効。",
+    "robotMascot": "ai-robot-plain の有無と形。値は機械契約の enum (none / full-body / floating-head / upper-body-clipboard) に一致させ、この画風では full-body = 頭 + 台形の胴を正面から、floating-head = 角丸の頭だけ、upper-body-clipboard = 胴に板を 1 枚持たせた形として描く。AI に任せる話でないなら none。",
+    "layoutTemplate": "compositionRules.layoutTemplates のいずれか (before-after-cards-with-metric / three-into-one-convergence / headline-band-and-conclusion-strip / quantity-bars-side-by-side / labeled-grid-matrix)。",
+    "densityLevel": "機械契約の enum は low / medium / high だが、この画風では low と medium しか使わない (要素を詰めると数値の主役性が消えるため high を選ばない)。",
+    "emphasisNumeral": "橙で焼く数値とその単位を 1〜2 個だけ書く (例: '94 / %', '30 / 分')。無い場合は none と書き、そのときは big-numeral / circular-metric を使わない。",
+    "tableMode": "表・比較・格子の扱い (none / illustrated-mini-table / illustrated-full-table / html-overlay-table / diagram-translation / html-primary)。",
+    "imageFit": "HTML 組み込み時のフィット契約 (contain / html-composite-contain / cover-safe)。既定は contain。",
+    "printIntent": "印刷で切れないための 1 枚ごとの方針。例: '円形指標と下部結論帯を上下 8% の安全域の内側に収める'。"
+  },
+  "promptSuffix": "Style: hand-drawn flat front-elevation Japanese infographic on a cream #FDF6E3 paper ground, deep green #1E4620 hand-inked outlines with slight natural width variation, flat even fills with no gradient and no texture, rounded card frames in warm off-cream #FFFCF2 with a short hard offset shadow, one oversized orange #E8722C numeral as the single focal point with a small deep-green unit word beside it, simplified front-facing people whose faces are not drawn at all, plain rounded AI robot, laptops and monitors and documents drawn straight-on, solid deep-green arrows with plain triangular heads, bold deep-green Japanese headline band at the top and a thin conclusion strip at the bottom, wide calm cream margins, whiteboard-drawing warmth kept tidy, 16:9.",
+  "negativePrompt": "photorealistic, 3d render, stock photo, isometric projection, axonometric tiles, perspective depth, vanishing point, drop shadows with blur, gradients, glow, dark background, white background, neon colors, high saturation, more than three hues, orange used for fills or icons or people, drawn faces, eyes, mouths, facial expressions, realistic humans, extra fingers, malformed hands, garbled Japanese, distorted characters, tiny unreadable labels, emoji-style pictograms, clip-art icon grids, flat boxes-with-text-only diagram with no illustration inside, cluttered tiny icons, rotated or tilted cards, handwriting scrawl, sketch hatching, paper grain, logos, watermarks, brand marks, chart gridlines with numeric scales",
+  "consistencyAnchors": [
+    "flat cream #FDF6E3 ground edge to edge, never white and never textured",
+    "every outline is deep green #1E4620, hand-inked with slight width variation, about 4px at 2560x1440",
+    "strict front elevation: no isometric axes, no perspective, no tilted cards",
+    "orange #E8722C appears only on numerals and at most one emphasis word",
+    "the largest element on the page is a numeral, and it sits inside or above a focus disc",
+    "card frames are warm off-cream #FFFCF2 with a short hard offset shadow toward the lower right and no blur",
+    "people are front-facing simplified figures with no face drawn at all",
+    "wide even cream margins inside top/bottom 8% and left/right 6%",
+    "no stray text, no watermark, no logo, no brand mark anywhere in the image"
+  ],
+  "semanticMapping": {
+    "note": "抽象概念をどの具体物 motif で表すかの辞書。セクションの主張から概念を拾い、ここから選ぶ。候補が複数あるときは、そのページでまだ使っていないものを先頭から選ぶ。",
+    "binary_contrast_before_after": ["before-after-pair", "card-frame", "transition-arrow"],
+    "quantified_effect": ["big-numeral", "circular-metric", "focus-disc"],
+    "quantity_comparison": ["quantity-bar", "plus-minus-token"],
+    "classification_matrix": ["grid-matrix", "checklist-board"],
+    "convergence_inputs_to_output": ["converging-arrows", "card-frame", "document-sheet"],
+    "conditions_requirements": ["checklist-board", "shield-mark"],
+    "people_roles": ["person-plain"],
+    "ai_delegation": ["ai-robot-plain", "laptop-front"],
+    "artifact_output": ["document-sheet", "monitor-front"],
+    "time_effort": ["clock-face", "big-numeral"],
+    "knowledge_reference": ["book-stack"],
+    "safety_trust": ["shield-mark"],
+    "review_check": ["magnifier-flat", "checklist-board"],
+    "repetition_revision": ["cycle-arrows-flat"],
+    "at_hand_immediacy": ["smartphone-front"],
+    "ordered_steps": ["step-number-chip", "transition-arrow"],
+    "quotation_callout": ["speech-bracket"],
+    "section_claim": ["headline-band"],
+    "takeaway": ["conclusion-strip"],
+    "unknown_concept": "上記に無い概念は noveltyRule に従い、その概念を最もよく象徴する実在の具体物を 1 つ選び、正面図・濃緑輪郭・フラット塗りで新規に描く"
+  },
+  "contentAdaptationRules": {
+    "note": "特定の 1 枚をなぞる金型ではない。任意のセクション内容をこの画風へ翻訳する手順。",
+    "steps": [
+      "1. セクションの主張を 1 文に縮め、そこから比較・量・分類・収束・条件のどれを読ませたいかを決める",
+      "2. layoutSelectionByStructure でレイアウトテンプレートを選ぶ",
+      "3. semanticMapping で概念を motif へ落とす (無ければ noveltyRule)",
+      "4. 橙で焼く数値を 1〜2 個だけ決める。決まらないなら数値強調をやめ、量はバーの長さで見せる",
+      "5. 人物・AI ロボの要否を figureUsageRules で決める",
+      "6. 焼く短語を決め、それと同一の文字列を overlayText に必ず持たせる",
+      "7. 余白を最後に確認し、要素を足さずに引く"
+    ],
+    "principle": "図の中身 (被写体・カード枚数・数値・ラベル) はセクションごとに可変。固定するのは画風・配色・モチーフ語彙・正面図の幾何・数値主役の規律だけ。同じ構図を毎回再生産しない。",
+    "notACopyTemplate": "重要原則: 参照した 2 枚の構図 (左右対比 + 中央円形、3 要素収束) をそのまま複製せず、同じ画風で内容に合う構図を組み直す。固定 = 画風仕様、可変 = 図の中身。1 つの資料の中で同じレイアウトテンプレートを 3 回以上続けて使わない。",
+    "densityPreservation": {
+      "note": "この画風の退化は『詰め込み』ではなく『空枠化』として起きる。枠と文字だけになり絵が消える方向を防ぐ。",
+      "densityLevels": {
+        "low": "カード 2 枚または要素 3 個まで。数値 1 個。余白が画面の半分近くを占める",
+        "medium": "カード 3 枚 + 収束先 1 個、または 3x3 までの格子。数値 2 個まで"
+      },
+      "richnessFloor": "どのカードも『主モチーフの絵 1 点 + 短いラベル 1 行』を最低限持つ。枠 + 文字だけのカードは全密度で禁止",
+      "degradationBan": "再生成で絵が消えて文字だけの箱になる、数値が小さくなる、橙が面に広がる、線が均一な機械線になる、のいずれかが起きたら不合格とみなし、tier1/tier2 を再提示して描き直す",
+      "flatnessGuarantee": "退化の逆方向も禁止する。奥行き・アイソメ・立体影・グラデーションが付いたら不合格。この画風は平面であることが仕様である"
+    },
+    "biasPrevention": {
+      "note": "motif 選定が同じものへ偏らないための決定論手順。",
+      "deterministicSelection": "概念から具体物へは『semanticMapping の候補リストの先頭から、その資料でまだ使っていないものを選ぶ』を既定とする",
+      "coverageHint": "1 資料の中で同一 motif の登場が概ね 5 回を超えたら別候補へ振る。ただし card-frame / headline-band / conclusion-strip は器なので対象外",
+      "traceRequirement": "選定根拠を 1 枚ごとの adaptationTrace (主題語 → 選択 motif) に残す"
+    }
+  },
+  "layoutSelectionByStructure": {
+    "note": "内容の論理構造から compositionRules.layoutTemplates を選ぶ目安。奥行き・順序・連結を読ませたい構造はこのゲノムの担当ではない。",
+    "before_after_or_two_options": "before-after-cards-with-metric",
+    "multiple_inputs_one_result": "three-into-one-convergence",
+    "single_claim_with_takeaway": "headline-band-and-conclusion-strip",
+    "amount_comparison": "quantity-bars-side-by-side",
+    "two_axis_classification": "labeled-grid-matrix",
+    "checklist_conditions": "headline-band-and-conclusion-strip の中央へ checklist-board を 1 枚置く",
+    "process_flow_or_cycle_or_hierarchy": "このゲノムでは扱わない。奥行き・順序・連結を読む図はアイソメ側の系統へ渡す"
+  },
+  "figureUsageRules": {
+    "aiRobot": "AI に任せる話・自動化の話のときだけ ai-robot-plain を 1 体置く。道具や成果物が主題なら置かない。",
+    "humans": "利用者・担当者・困りごとが主題のときに使う。1 枚あたり 1〜3 人まで。顔は一切描かない。装飾目的で人数を増やさない。",
+    "absence": "書類・画面・条件・量だけが主題の図に人物を無理に入れない。意味のある要素だけを置く。",
+    "faceRule": "顔の描画は全変種で禁止。目・口・眉・表情のいずれも描かない。頭は輪郭のみで、必要なら髪型の輪郭 1 本までにする。"
+  },
+  "colorSemantics": {
+    "note": "概念からアクセント色への対応。橙は効果量の数値専用で、概念色として広げない。",
+    "primary_standard": "ink #1E4620",
+    "secondary_structure": "midGreen #3F7D4E",
+    "quantified_effect_or_emphasis": "accentOrange #E8722C",
+    "before_manual_side": "beforeGrey #8B9A8C",
+    "focus_backdrop": "softGreenWash #CBE0CC",
+    "surface_card": "surface #FFFCF2",
+    "ground": "background #FDF6E3"
+  },
+  "noveltyRule": {
+    "note": "semanticMapping に無い概念に出会ったときの拡張ルール。任意選定が偏らないよう、分野ごとに具体物候補と順序を決めておく。",
+    "steps": [
+      "1. industryObjectTable で主題の分野を判定し、候補リストの先頭から、その資料でまだ使っていないものを 1 つ決定論的に選ぶ。該当が無ければ fallbackOrder に従う",
+      "2. 共通の画風 (正面図・濃緑 #1E4620 の手描き輪郭・フラット塗り・角丸 10-24px・右下への短いフラット影) で描く",
+      "3. 色は colorSemantics に従って割り当てる。新規物に橙を使わない",
+      "4. 新しい名前を kebab-case で 1 枚ごとの diagramPrimitives に記録し、根拠を残す。3 回以上再利用するなら motifs への昇格を検討する",
+      "5. 1 枚 1 メッセージ・低〜中密度・空枠禁止・平面維持 は常に守る"
+    ],
+    "industryObjectTable": {
+      "note": "分野から概念、概念から具体物候補への決定論テーブル。全て正面図・濃緑輪郭で描く。",
+      "office_general": { "作業": ["laptop-front", "document-sheet"], "共有": ["monitor-front", "smartphone-front"], "象徴物": ["desk-front", "folder-front", "clipboard-front"] },
+      "education": { "学習": ["book-stack", "checklist-board"], "象徴物": ["whiteboard-front", "pencil-front", "open-book-front"] },
+      "medical_care": { "確認": ["checklist-board", "magnifier-flat"], "象徴物": ["cross-badge", "chart-sheet", "pill-token"] },
+      "manufacturing": { "工程": ["quantity-bar", "step-number-chip"], "象徴物": ["box-front", "wrench-front", "gauge-face"] },
+      "retail_service": { "受付": ["person-plain", "smartphone-front"], "象徴物": ["shop-front", "cart-front", "receipt-sheet"] },
+      "finance_admin": { "計算": ["big-numeral", "quantity-bar"], "象徴物": ["coin-front", "ledger-sheet", "stamp-front"] },
+      "public_community": { "案内": ["headline-band", "person-plain"], "象徴物": ["signboard-front", "envelope-front", "map-sheet"] },
+      "it_software": { "処理": ["laptop-front", "ai-robot-plain"], "象徴物": ["window-front", "database-front", "cloud-front"] }
+    },
+    "fallbackOrder": [
+      "1. テーブルに分野が無ければ、概念の動詞 (比べる/数える/分類する/まとめる/確かめる/任せる) で semanticMapping を引き直す",
+      "2. それでも無ければ、その概念を日常で最もよく象徴する実在物を 1 つ決める (例: 安全 → 盾、時間 → 時計)",
+      "3. 具体物に落とせない純抽象は nonApplicableTypes に従い、図解化を諦めるか HTML 側へ退避する"
+    ],
+    "biasGuard": {
+      "note": "同一モチーフへの偏りを観測・抑制するルール。",
+      "deterministicPick": "候補リストは常に『先頭優先・その資料で未使用のものを選ぶ』。同じ概念が複数箇所に出るときだけ一貫性のため同一物を再利用してよい",
+      "usageBudgetHint": "1 資料で同一 motif の登場が概ね 5 回を超えたら別候補へ振る (器の 3 motif は対象外)",
+      "trace": "選定根拠を adaptationTrace に残し、根拠なき選択を後から観測できるようにする"
+    },
+    "nonApplicableTypes": {
+      "note": "この画風へ落とすべきでない内容。無理に描くと誤読を生むため別経路へ退避する。",
+      "depth-order-linkage": "工程の受け渡し・循環・階層など奥行きと連結で読む図はアイソメ側の系統へ渡す",
+      "code-or-api": "コード・API 応答は画像化せず HTML のコードブロックへ",
+      "precise-table-or-number": "精密な数値表・金額表は html-overlay-table か html-primary へ (焼いた数値は 1 文字の正確さを保証できない)"
+    }
+  },
+  "tableAndMatrixRules": {
+    "note": "この画風は格子と面積を読ませるために選ばれるので、表そのものは得意な側にある。ただし焼いた文字の正確さは保証できないため、正確さが価値の中心の表は HTML へ退避する。",
+    "policy": "分類・比較・判断軸の表は正対した grid-matrix として画像内に描いてよい。金額・精密な数値・頻繁に変わる文言は HTML 前面を正本にする。画像内の表と HTML の表は同じ作法 (角丸 10-24px・濃緑の細い罫・温白のセル面・短いフラット影) で揃える。",
+    "modes": {
+      "illustrated-mini-table": "3 列 x 4 行までの短い比較・チェック。grid-matrix か checklist-board として描く。各セルは短語かチェック印 1 つ。overlayText が正本",
+      "illustrated-full-table": "見出し + 全行を画像内へ逐語で焼く完全な表。正対した格子で描き、罫線は濃緑の細線、見出し行だけ薄緑 #CBE0CC の面にする。最大 5 列 x 6 行、各セル短語、数値セルは橙にせず濃緑にする (橙は効果量の数値専用で、表のすべての数字を橙にすると 10 の配分が壊れる)。overlayText に表全文を正本保持し、崩れたときだけ HTML へ退避",
+      "html-overlay-table": "列数・行数が多い、金額や固有名詞が重要な表。画像はカード枠と余白だけを作り、実表は HTML で重ねる",
+      "diagram-translation": "表の意味を左右対比・バーの長さ・チェック板へ翻訳する。罫線を主役にせず意味のまとまりで読ませる。判断軸・比較の既定モード",
+      "html-primary": "1 文字の正確さが価値の中心のページ。画像化せず HTML で作る",
+      "frame-only-image": "画像は正対した空の格子枠だけを描き、セル文字は HTML を枠内へ嵌める。文字の正確さと画風統一を両立させたいとき",
+      "icon-row-table": "各行を motif アイコン + 短語にして表自体を絵にする。短い分類向け"
+    },
+    "selectionAxes": {
+      "note": "列数・更新頻度・正確性要件の 3 軸で決定論的に絞る。",
+      "columnsRows": "3 列 x 4 行以内なら illustrated-mini-table / icon-row-table。5 列 x 6 行までなら illustrated-full-table。それ超は frame-only-image / html-overlay-table",
+      "updateFrequency": "文言が頻繁に変わるなら HTML 正本側へ。固定なら画像内表も可",
+      "accuracyRequirement": "金額・精密数値は html-primary。比較・分類が目的なら diagram-translation を優先"
+    },
+    "selection": [
+      "分類・比較が目的で罫線が本質でないなら diagram-translation を先に検討する",
+      "短い分類表は illustrated-mini-table、固定的で 5 列 x 6 行までなら illustrated-full-table",
+      "金額・精密数値・頻繁な更新・長文は html-overlay-table / html-primary",
+      "画像内へ焼いた表の正テキストは必ず overlayText にも保持し、崩れたときだけ HTML へ切り替える"
+    ],
+    "visualBalanceTokens": {
+      "note": "HTML 側の表・部品に当てて画像版と作法を揃えるトークン。palette 由来の値を使う。",
+      "surface": "セル面 = palette.surface #FFFCF2",
+      "ground": "外側の地 = palette.background #FDF6E3",
+      "outline": "罫線・枠線 = palette.ink #1E4620 の細線",
+      "cornerRadius": "角丸 10-24px (compositionRules.corners 相当)",
+      "shadow": "右下への短いフラット影。ぼかしを入れない",
+      "accent": "見出し行は softGreenWash #CBE0CC。橙は効果量の数値 1 箇所だけ",
+      "props": "表の脇に checklist-board か document-sheet を 1 点だけ添え、急に素の HTML 部品に見せない"
+    },
+    "visualBalance": "表だけが急に素の HTML 部品に見えないよう、HTML 表にも visualBalanceTokens (角丸・温白のセル面・濃緑の細罫・短いフラット影・薄緑の見出し行) を当てる。画像版と HTML 版で余白・角丸・線色・影を揃える。",
+    "boundaryRule": "画像と HTML の境界は意味境界に一致させる。分類・比較・主張は画像側、金額・精密数値・コードは HTML 側。境界が意味境界とずれていないかを 1 枚ごとに点検する。"
+  },
+  "printReadinessRules": {
+    "note": "配布資料は必ず紙で出る前提に立つ。挿絵は白黒印刷でも意味が残るようにする。",
+    "imageCanvas": "16:9 / 2560x1440 を基準にし、主要被写体を safeArea (top/bottom 8%, left/right 6%) の内側へ置く。object-fit: contain を既定にし、cover は被写体の切れを確認した場合だけ許可する。",
+    "textForPrint": "画像内の文字は大きく短くし、同じ正テキストを overlayText に保持する。精密な表・長文は HTML 前面にしてベクタで印刷する。",
+    "contrast": "クリーム地 #FDF6E3 と濃緑 #1E4620 のコントラストで読ませる。白黒印刷では橙が中間グレーに落ちるため、橙は必ず『大きな字面』か『円形フォーカスの中』に置き、色だけに意味を持たせない。薄緑 #CBE0CC の面に濃緑の細い文字を置かない。",
+    "monochromeFallback": "グレースケール化したときに、濃緑 / 中間緑 / 灰緑 / 薄緑 の 4 段が別の明度として残るように塗り分ける。隣接する面を同じ明度にしない。",
+    "validation": "生成後は画像アセットの検証、比率検証、印刷 / PDF 目視の 3 点を通す。"
+  },
+  "reproducibility": {
+    "styleReference": "最も画風がよく出た 1 枚 (対比 2 枚 + 円形指標の型が望ましい) を参照画像として固定し、以後の生成へ毎回渡して線の手描き感・顔を描かない人物・数値の字面比を固定する。文言だけ差し替えるときも、平面性と数値主役の規律を必ず維持する。",
+    "seed": "画像生成に seed は無いものとして扱う。再現性はプロンプト不変 (STYLE LOCK と lockTiers)、参照画像の連鎖、生成後の目視評価で担保する。",
+    "files": [
+      "assets/generated/style-genome.json",
+      "assets/generated/<slug>.prompt.md",
+      "assets/generated/<slug>.meta.json",
+      "assets/generated/<slug>.png",
+      "assets/generated/<slug>.webp"
+    ],
+    "validation": [
+      "画像アセット検証 (style genome 厳格モード) を通す",
+      "比率検証を通す",
+      "焼いた文字と overlayText の一致を目視で確認する"
+    ]
+  },
+  "changelog": [
+    {
+      "version": "1.3.0",
+      "summary": "flat-infographic-jp 系統の初版。参考のフラット正面図 2 枚から画風・配色・構図規則を起こし、アイソメ系統と同じキー構造で供給する。",
+      "changes": [
+        "styleName を RESOLUTION-R23 裁定 (c) の family 名 flat-infographic-jp に一致させた",
+        "artStyle.camera.geometry を正面正射影に固定し、アイソメ・透視を tier1 と negativePrompt の両方で禁止した",
+        "palette をクリーム地 / 濃緑 / 橙の 3 色主軸 + 補助 4 色に絞り、orangeBudget で橙の使用面を数値と強調語へ限定した",
+        "artStyle.figures.numeralTreatment を新設し、数値を最大級の字面で焼く規律を画風の中心に置いた",
+        "compositionRules.layoutTemplates に参考画像由来の 3 型 (対比 2 枚 + 中央円形指標 / 3 要素収束 / 見出し帯 + 結論帯の共通枠) と派生 2 型を登録した",
+        "textPolicies に baked-with-overlay を既定として置き、overlayText を常に正本とした",
+        "printReadinessRules.monochromeFallback を追加し、白黒印刷で 4 段の明度が残るよう塗り分けを規定した"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "component_id": "C17",
+  "component_kind": "script",
+  "name": "verify-handout-a11y-print.py",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+  "purpose": "生成された単一 HTML について (a) a11y 属性が「存在するか」ではなく「正しい要素に付いているか」を部品宣言 (data-hb-part) を基準に検査し、(b) A4 印刷用の @media print 規則が sticky ヘッダー・lightbox・メモ UI に対して実際に宣言されているかを検査し、(c) sticky ヘッダー分のアンカーオフセット補正が CSS と JS の両方に存在するかを検査する fail-closed ゲート。本 script が保証するのは『規則の宣言が正しい要素へ結び付いていること』であり、A4 実版面に収まることではない (実描画を伴う検査は本 script の範囲外であり、範囲外項目を PASS に畳まない)",
+  "argv": [
+    "--html FILE (必須): 検査対象の生成 HTML",
+    "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す。未指定時は一切ファイルを書かない"
+  ],
+  "stdin": "使用しない (C16 と同じ理由。違反位置の行番号と入力パスの再現性のためファイルパス指定を必須とする)",
+  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL|NOT-STATICALLY-CHECKABLE> checked=<件数> violations=<件数>` を固定順 (A11Y-01..A11Y-07, PRINT-01..PRINT-04, STICKY-01) で出力する。末尾に `OUT-OF-SCOPE:` 節を必ず出し、静的に検査していない事項 (実版面の収まり・改ページ位置・実フォーカスリング描画・JS 実行後の DOM) を毎回明示する",
+  "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB>line:col<TAB><対象要素または対象セレクタ><TAB><欠落している必須適用の内容>`。使用法エラー・入出力エラーは `ERROR<TAB><reason>` の 1 行",
+  "exit_codes": {
+    "0": "全 detection が違反 0 件。a11y 必須適用の欠落 0・print 規則の宣言欠落 0・オフセット補正の両系存在",
+    "1": "1 件以上の違反を検出した。加えて検査アンカーである data-hb-part 属性が 1 個も存在しない場合も 1 とする (検査対象を同定できない HTML を PASS にしない fail-closed)",
+    "2": "検査そのものが成立しなかった。引数不正、--html の不在・読み取り不可・デコード不能、HTML パーサの回復不能例外、--json-report の書き込み失敗、および部品カタログ正本 (config/handout-parts.json) を解決できない場合。カタログ失敗は既存の 2 と別番号を割かない — 2 の意味は『検査が成立しなかった』であり、検査対象の器を同定できない状態はその一例だからである。品質違反 (1) とは常に区別される"
+  },
+  "write_scope": [
+    "--json-report で明示指定されたファイル 1 点のみ"
+  ],
+  "single_writer": "--json-report のパス。対象 HTML および CSS には一切書き込まない",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--html で指定された生成 HTML (内部の <style> ブロックを含む)",
+      "部品カタログ正本 config/handout-parts.json (実行時依存・read-only)。argv では受け取らず plugin root から解決する。本 script は部品 id を literal で持たないため、これが引けないと検査対象の器を同定できない"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (生成後の品質ゲート段)",
+      "P06 のテスト実行"
+    ],
+    "invokes": [],
+    "runtime_catalog": {
+      "path": "<plugin root>/config/handout-parts.json",
+      "root_resolution": "環境変数 HB_ROOT → CLAUDE_PLUGIN_ROOT の順に見て、いずれも未設定なら本 script の 2 階層上 (scripts/ の親) を root とする。カタログのパスは root からの固定相対であり argv で差し替えられない",
+      "why_runtime": "P03 Y-05 / AC-C11-19。部品 id の名簿を本 script に literal で持つと、カタログ (C23 が owner) と script の二名簿になり、カタログが動いても script が追従しない。検査対象は id の列挙ではなく data_block_type 述語でカタログから実行時に引く",
+      "predicate": "検査対象の器は data_block_type の値で指定する。A11Y-01 (aria-pressed) の対象はトグル UI を持つ block type、A11Y-02 (aria-selected) の対象はタブの block type。どの block type がどの部品 id に対応するかは本 brief にも script にも書かず、カタログの parts[].data_block_type → parts[].id の対応から導出する",
+      "catalog_invariants_required": [
+        "parts[].data_block_type が非 null の範囲で一意であること (同じ block type に 2 部品が対応してはならない)",
+        "検査対象の block type がカタログに存在すること",
+        "カタログが UTF-8 の JSON として読めること"
+      ],
+      "on_failure": "上記いずれかが破れた場合は fail-closed で exit 2。カタログが引けないことを『対象 0 件の PASS』へ畳まない (畳むとカタログ破損が品質 PASS として通過する)",
+      "note": "この依存は P05-x-07 の実装変更で獲得したものであり、本 brief の宣言はその追随である。検出規則の側 (detections) も同じ理由で部品 id の literal を判定条件に使わない"
+    }
+  },
+  "algorithm": [
+    "1. argparse で --html / --json-report を解析。不正は exit 2",
+    "1b. 部品カタログ正本 (dependencies.runtime_catalog) を解決し、data_block_type → 部品 id の対応表を作る。読めない・不正・block type が一意でない・検査対象の block type が無い、のいずれも exit 2 (fail-closed)。この段は検出評価より前に置き、検査対象を同定できないまま検出へ入らない",
+    "2. HTML を UTF-8 で読み、html.parser 派生の収集器で軽量ツリー (tag, attrs, 開始位置, 親子関係, テキスト子の有無) を構築する。<style> と <script> の本文は別途保持する",
+    "3. CSS は完全なパーサを書かず、粗いトークナイザで扱う: コメント (/* */) を除去 → 中括弧の深さを数えて (at-rule prelude | セレクタリスト, 宣言ブロック) の入れ子木を作る → 宣言ブロックは `prop: value` の素朴分割のみ行う。セレクタはトリム・連続空白 1 個化・小文字化して正規化キーとする。詳細度計算・カスケード解決・CSS 変数の展開・calc の評価・セレクタと要素のマッチングは行わない (行わないことを OUT-OF-SCOPE に明記する)",
+    "4. data-hb-part 属性を持つ要素を索引化する。1 個も無ければ全 A11Y 検査を『検査不能』として exit 1 へ落とす",
+    "5. A11Y-01..A11Y-07 を評価する",
+    "6. PRINT-01..PRINT-04 を CSS 木に対して評価する",
+    "7. STICKY-01 を CSS 木と <script> 本文に対して評価する",
+    "8. 違反を stderr、サマリと OUT-OF-SCOPE 節を stdout、詳細を --json-report へ出す",
+    "9. 違反 0 なら exit 0、それ以外は exit 1、検査不能 (引数・入出力・カタログ・回復不能例外) は exit 2"
+  ],
+  "requirements_covered": [
+    "R02",
+    "R15",
+    "R16"
+  ],
+  "checklist_covered": [
+    "C4",
+    "C21",
+    "C22"
+  ],
+  "detections": [
+    {
+      "id": "A11Y-01",
+      "rule": "aria-pressed が『トグル要素』に付いていること。対象は「トグル UI を持つ block type (選択マップ / 選択チップ) に対応する部品 id」を dependencies.runtime_catalog の述語でカタログから引き、その data-hb-part 値を持つ部品 root 配下にある <button> と [role=\"button\"] のすべて (対象部品 id をこの規則本文へ literal で書き下さない — 名簿はカタログが唯一の正本)。各要素に aria-pressed が存在し値が \"true\"|\"false\" のいずれかであること。data-hb-single を持つチップ群 (単一選択) では aria-pressed=\"true\" が高々 1 個であること。文書のどこかに aria-pressed という文字列があるだけでは PASS にしない",
+      "violation_example": "<div data-hb-part=\"B08\"><button class=\"map-item\" data-hb-title=\"…\">Claude Code</button></div> (aria-pressed 欠落) / <button aria-pressed=\"on\"> (値が不正)",
+      "pass_example": "<div data-hb-part=\"B08\"><button class=\"map-item\" aria-pressed=\"false\" data-hb-title=\"…\" data-hb-detail=\"…\">Claude Code</button>…</div>",
+      "false_positive_risk": "中。data-hb-part の付与が C11 render-handout.py の出力契約に依存する。契約未実装なら『検査不能』で FAIL する (fail-closed として正しい向き)。逆に data-hb-part 配下にトグルでない補助ボタンを置くと誤検出するため、レンダラ側で補助ボタンには data-hb-part-role=\"aux\" を付ける除外口を 1 つだけ設ける"
+    },
+    {
+      "id": "A11Y-02",
+      "rule": "aria-selected がタブに正しく付いていること。タブの block type に対応する部品 id を dependencies.runtime_catalog の述語でカタログから引き、その data-hb-part 値を持つ部品 root について (a) root またはその子に role=\"tablist\" が存在 (b) role=\"tab\" のすべてに aria-selected が \"true\"|\"false\" で存在 (c) aria-selected=\"true\" がちょうど 1 個 (d) 各 tab の aria-controls が実在する id を指し、その要素が role=\"tabpanel\" (e) 非選択 tab に対応する panel に hidden 属性が付き、選択 tab に対応する panel には付かないこと",
+      "violation_example": "<div data-hb-part=\"B13\"><button class=\"tab\" aria-selected=\"true\">Markdown</button><button class=\"tab\" aria-selected=\"true\">箇条書き</button></div> (true が 2 個・role/aria-controls 欠落)",
+      "pass_example": "<div data-hb-part=\"B13\"><div role=\"tablist\"><button role=\"tab\" aria-selected=\"true\" aria-controls=\"p-md\">Markdown</button><button role=\"tab\" aria-selected=\"false\" aria-controls=\"p-bul\">箇条書き</button></div><div id=\"p-md\" role=\"tabpanel\">…</div><div id=\"p-bul\" role=\"tabpanel\" hidden>…</div></div>",
+      "false_positive_risk": "低。初期選択が JS で決まる設計だと (c)(e) が誤検出するが、決定論レンダラは初期状態を静的に出力する契約なので発生しない"
+    },
+    {
+      "id": "A11Y-03",
+      "rule": "アクセシブル名を持たない対話要素が無いこと。対象は <button> / <a href> / <summary> / <input>。判定: 子孫に非空の text node を持つ、または aria-label / aria-labelledby / title のいずれかを持つこと。<input type=\"checkbox\"> は対応する <label for> か祖先 <label> があること。svg のみを子に持つ <button> (アイコンボタン) は aria-label 必須。aria-label が空文字・空白のみは違反",
+      "violation_example": "<button class=\"copy-btn\"><svg data-hb-kind=\"icon\">…</svg></button> (アイコンのみで名前なし) / <a href=\"#s1\" aria-label=\" \">",
+      "pass_example": "<button class=\"copy-btn\" aria-label=\"プロンプトをコピー\"><svg data-hb-kind=\"icon\" aria-hidden=\"true\">…</svg></button> / <a href=\"#s1\">1. 導入</a>",
+      "false_positive_risk": "低〜中。テキストが CSS の ::before で入る設計だと誤検出するが、その設計自体がスクリーンリーダーに読まれないので違反として正しい"
+    },
+    {
+      "id": "A11Y-04",
+      "rule": "表の見出しセルに scope が付いていること。**文書内のすべての <table> を対象とする** — data-hb-part の有無でも部品種別でも絞り込まない。表は宣言漏れでも a11y 要件が変わらないため、本検査だけは部品宣言に依存しない (この非依存は意図的な例外であり、他の検査へ一般化しない)。各 <table> 配下のすべての <th> に scope=\"col\"|\"row\" が存在すること。<thead> 内の th は col、それ以外の位置の th は row であることまで検査する (thead 内で scope=\"row\" は違反、thead 外で scope=\"col\" も違反)。",
+      "violation_example": "<table><thead><tr><th>観点</th><th scope=\"row\">Chat</th></tr></thead>…</table> (1 個目 scope 欠落・2 個目が row)",
+      "pass_example": "<table><thead><tr><th scope=\"col\">観点</th><th scope=\"col\">Chat</th></tr></thead><tbody><tr><th scope=\"row\">得意なこと</th><td>…</td></tr></tbody></table>",
+      "false_positive_risk": "低。レイアウト目的の table は本 plugin では生成しない"
+    },
+    {
+      "id": "A11Y-05",
+      "rule": "装飾 SVG と意味を持つ SVG の扱いが整合していること。(a) data-hb-kind=\"decor\" または data-hb-kind=\"icon\" の <svg> が、テキストを持つ親要素の子である場合 aria-hidden=\"true\" 必須 (b) aria-hidden=\"true\" の svg が <title> 子を持つのは矛盾なので違反 (c) A11Y-03 でアクセシブル名の供給源になっている svg (親にテキストが無く親に aria-label も無い) が aria-hidden=\"true\" であれば違反 (名前が消えるため)",
+      "violation_example": "<button aria-label=\"コピー\"><svg data-hb-kind=\"icon\"><title>コピー</title>…</svg></button> に aria-hidden が無く title と aria-label が二重になる / <svg data-hb-kind=\"decor\" aria-hidden=\"true\"><title>波</title></svg>",
+      "pass_example": "<button aria-label=\"コピー\"><svg data-hb-kind=\"icon\" aria-hidden=\"true\">…</svg>コピー</button>",
+      "false_positive_risk": "中。単独で意味を持つ図版 (概念図解 SVG) を装飾扱いしてしまう可能性があるため、概念図解には data-hb-kind=\"figure\" を付け A11Y-05 の対象から外し、代わりに <title> または aria-label を必須とする"
+    },
+    {
+      "id": "A11Y-06",
+      "rule": ":focus-visible のフォーカス表示が実効的に定義されていること。(a) <style> 内に `:focus-visible` を含むセレクタの規則が 1 つ以上存在 (b) その宣言ブロックに outline (値が none / 0 以外) または box-shadow (値が none 以外) が存在 (c) 文書内に `outline: none` / `outline: 0` を宣言する規則がある場合、同じ正規化セレクタ (または `*`) に対する :focus-visible 規則が存在すること。文字列 `:focus-visible` の存在だけでは PASS にしない",
+      "violation_example": ".pop-chip:focus{outline:none} だけがあり :focus-visible 規則が無い / a:focus-visible{outline:none}",
+      "pass_example": ":focus-visible{outline:3px solid var(--pop-primary-deep);outline-offset:2px}",
+      "false_positive_risk": "中。(c) のセレクタ突合は文字列一致であり、`.a:focus` と `.a, .b:focus-visible` のような書き分けを取り違える。セレクタリストはカンマ分割して個別に正規化することで緩和するが、詳細度に基づく実効性は判定していない (OUT-OF-SCOPE に明記)"
+    },
+    {
+      "id": "A11Y-07",
+      "rule": "動きの抑制が宣言されていること。(a) `@media` prelude に `prefers-reduced-motion` と `reduce` の両方を含むブロックが 1 つ以上存在 (b) そのブロック内で scroll-behavior が auto に、かつ animation 系 (animation / animation-duration) と transition 系 (transition / transition-duration) の双方が none または 0s へ落とされていること (参照 §4 の『2 箇所以上』を機械化する) (c) <script> 本文に `behavior:'smooth'` / `behavior: \"smooth\"` の指定がある場合、同じ script 内に `matchMedia` と `prefers-reduced-motion` の参照が存在すること (JS 側のスムーススクロールが media query を無視していないことの静的近似)",
+      "violation_example": "@media (prefers-reduced-motion: reduce){*{animation:none}} のみで scroll-behavior と transition が残る / script が window.scrollTo({top:y,behavior:'smooth'}) を無条件に呼ぶ",
+      "pass_example": "@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}} かつ script 内で const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; を参照している",
+      "false_positive_risk": "中。(c) は文字列の共起を見ているだけで、matchMedia の結果が実際に behavior の分岐へ使われているかは検査していない。json-report に『共起検査に留まる』旨を出力し、OUT-OF-SCOPE に明記する"
+    },
+    {
+      "id": "PRINT-01",
+      "rule": "@media print ブロックが 1 つ以上存在し、その中に 1 つ以上の宣言があること (空ブロックは違反)。加えて `@page` 規則が存在し size に A4 が含まれるか、または @media print 内で body/main のページ幅前提 (max-width が mm 単位 または 100%) が再指定されていること",
+      "violation_example": "<style> に @media print が無い / @media print{}",
+      "pass_example": "@page{size:A4;margin:14mm} @media print{main.pop{max-width:100%}}",
+      "false_positive_risk": "低"
+    },
+    {
+      "id": "PRINT-02",
+      "rule": "sticky/fixed 要素が印刷で版面を占有しないこと。通常規則から position:sticky または position:fixed を宣言するセレクタ集合 S を収集し (正規化キーで保持)、@media print 内で S の各セレクタに対して position:static / position:relative / display:none のいずれかが宣言されていること。S の要素で print 側の指定が無いものを 1 件ずつ違反に計上する",
+      "violation_example": ".pop-header{position:sticky;top:0} があり @media print 内に .pop-header への指定が無い",
+      "pass_example": ".pop-header{position:sticky;top:0} と @media print{.pop-header{position:static}}",
+      "false_positive_risk": "中。セレクタは文字列一致で突合するため、通常規則が `.pop-header` で print 側が `header.pop-header` だと誤検出する。緩和として、print 側セレクタが S のセレクタを部分列として含む場合も一致とみなす簡易マッチを 1 段だけ入れるが、詳細度に基づく実効的な上書き成否は判定していない"
+    },
+    {
+      "id": "PRINT-03",
+      "rule": "印刷時に不要な画面専用 UI が非表示化されていること。対象は data-hb-part が lightbox / memo / memo-global / toolbar のいずれかである要素、および class に `lightbox` / `memo` を含む要素。それぞれについて、その要素へ到達しうるセレクタ (タグ+class の文字列一致レベル) が @media print 内で display:none を宣言していること。宣言が見つからない対象を 1 件ずつ違反に計上する",
+      "violation_example": "data-hb-part=\"lightbox\" の <div class=\"lightbox\"> があり @media print に .lightbox の display:none が無い",
+      "pass_example": "@media print{.lightbox,.memo-panel,[data-hb-part=\"toolbar\"]{display:none!important}}",
+      "false_positive_risk": "中。セレクタ突合が文字列レベルなので、祖先セレクタ経由の非表示 (`.print-hide .memo-panel`) を検出できず誤検出する。緩和として属性セレクタ `[data-hb-part=\"…\"]` 形での指定を推奨形とし、推奨形なら確実に一致する"
+    },
+    {
+      "id": "PRINT-04",
+      "rule": "改ページの意図が宣言されていること。@media print 内でセクションカードに対する break-inside / page-break-inside (値 avoid) が 1 つ以上宣言され、かつ見出し要素に break-after: avoid 相当が宣言されていること。宣言の有無のみを見る",
+      "violation_example": "@media print{main{max-width:100%}} だけで改ページ制御が無い",
+      "pass_example": "@media print{.pop-card{break-inside:avoid;page-break-inside:avoid}h2,h3{break-after:avoid}}",
+      "false_positive_risk": "低。ただしこれは『宣言があること』しか意味せず、実際に改ページが適切に入るかは検査していない (OUT-OF-SCOPE)"
+    },
+    {
+      "id": "STICKY-01",
+      "rule": "sticky ヘッダー分のアンカーオフセット補正が CSS と JS の両方に存在すること (goal-spec C4)。(a) 通常規則に scroll-margin-top (または scroll-padding-top) が正の長さで宣言され、その対象セレクタが SC-08 で照合される section 群に到達しうること (タグ/class の文字列一致レベル) (b) <script> 本文に `getBoundingClientRect` の呼び出しと、position:sticky を持つセレクタに対応する要素の取得 (querySelector で当該 class/tag を指す文字列) が共起すること。(a)(b) のどちらかが欠けたら違反",
+      "violation_example": ".pop-card{scroll-margin-top:96px} はあるが script に getBoundingClientRect が無い (CSS 単独では sticky 高さの変化に追従しない)",
+      "pass_example": ".pop-card{scroll-margin-top:96px} かつ script に const off=header.getBoundingClientRect().height+12; が存在する",
+      "false_positive_risk": "中。(b) は文字列の共起検査であり、実測値がスクロール処理に使われているかは判定していない。本項目は C16 (自己完結性) ではなく本 script が持つ。理由は CSS 規則を読む機構を持つのが本 script だけであり、goal-spec C4 を担当する gate が他に無いため (findings に記録)"
+    }
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C17-01",
+      "how": "a11y 属性と print 規則を完備した HTML を渡す",
+      "expected": "exit 0、stdout に `RESULT: PASS` と 12 detection 行、末尾に OUT-OF-SCOPE 節、stderr は空"
+    },
+    {
+      "id": "AC-C17-02",
+      "how": "文書の隅に `aria-pressed` という文字列をコメントとして置き、data-hb-part=\"B08\" の button には付けない HTML を渡す",
+      "expected": "exit 1、A11Y-01 に違反。文字列の存在だけで PASS にならないことの回帰テスト"
+    },
+    {
+      "id": "AC-C17-03",
+      "how": "data-hb-part 属性を 1 個も持たない HTML を渡す",
+      "expected": "exit 1、stdout の A11Y-01/02/05 が `NOT-STATICALLY-CHECKABLE` ではなく検査不能による FAIL として計上される (PASS にならない)"
+    },
+    {
+      "id": "AC-C17-04",
+      "how": "tab の aria-selected=\"true\" が 2 個ある HTML を渡す",
+      "expected": "exit 1、A11Y-02 に違反 1 件"
+    },
+    {
+      "id": "AC-C17-05",
+      "how": ":focus-visible 規則が無く `outline:none` だけがある HTML を渡す",
+      "expected": "exit 1、A11Y-06 に違反"
+    },
+    {
+      "id": "AC-C17-06",
+      "how": "@media (prefers-reduced-motion: reduce) 内で animation だけを無効化した HTML を渡す",
+      "expected": "exit 1、A11Y-07 に scroll-behavior と transition の欠落が違反として出る"
+    },
+    {
+      "id": "AC-C17-07",
+      "how": ".pop-header{position:sticky} があり @media print 内に .pop-header への指定が無い HTML を渡す",
+      "expected": "exit 1、PRINT-02 に違反 1 件"
+    },
+    {
+      "id": "AC-C17-08",
+      "how": "@media print を持たない HTML を渡す",
+      "expected": "exit 1、PRINT-01 に違反。PRINT-02..04 も未充足として計上される"
+    },
+    {
+      "id": "AC-C17-09",
+      "how": "scroll-margin-top はあるが script に getBoundingClientRect が無い HTML を渡す",
+      "expected": "exit 1、STICKY-01 に違反 1 件"
+    },
+    {
+      "id": "AC-C17-10",
+      "how": "PASS する HTML で stdout を確認する",
+      "expected": "OUT-OF-SCOPE 節に『A4 実版面への収まり・改ページ実位置・実フォーカスリング描画・JS 実行後 DOM・CSS カスケード実効性は本ゲートの範囲外』が必ず出力される"
+    },
+    {
+      "id": "AC-C17-11",
+      "how": "--html 不在 / --json-report 書き込み不可",
+      "expected": "exit 2、stderr に ERROR 1 行。品質 FAIL (1) と混ざらない"
+    },
+    {
+      "id": "AC-C17-13",
+      "how": "部品カタログ正本 (config/handout-parts.json) を退避してから、それ以外は正常な HTML を渡して起動する",
+      "expected": "exit 2、stdout は空、stderr に ERROR 1 行 (読めなかったカタログの絶対パスと原因を含む)。カタログ不在を『対象 0 件の PASS』にしない",
+      "why": "この失敗経路は argv からは到達できない実行時依存の失敗であり、引数系の exit 2 とは別に回帰で押さえる必要がある"
+    },
+    {
+      "id": "AC-C17-14",
+      "how": "カタログを (a) 不正 JSON (b) 検査対象の block type が欠落 (c) 同じ data_block_type を 2 部品が持つ、の 3 形へ差し替えて起動する",
+      "expected": "いずれも exit 2 で、stderr の ERROR 本文が 3 者を区別できること (読めない / block.type が無い / 一意でない)。dependencies.runtime_catalog.catalog_invariants_required の各項に 1 対 1 で対応する"
+    },
+    {
+      "id": "AC-C17-12",
+      "how": "同一 HTML に対して 2 回実行し stdout / --json-report を比較",
+      "expected": "バイト一致"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "CSS に本 script の粗いトークナイザが解けない構文 (ネストされた @supports / CSS ネスト構文) が現れる",
+      "behavior": "解けなかったブロックを json-report の `unparsed_css_blocks` に位置つきで列挙し、その存在自体を違反として exit 1 にする",
+      "rationale": "解けない CSS を無視すると『print 規則を見落として PASS』が起きる。fail-closed を保つには未解析を FAIL に倒すしかない。レンダラは決定論生成なので、生成側で使う構文を本 script が解ける範囲へ限定するのが正しい向き"
+    },
+    {
+      "case": "部品カタログ正本 config/handout-parts.json が不在・不正 JSON・検査対象の block type 欠落・data_block_type の重複のいずれかである",
+      "behavior": "検出評価へ入る前に exit 2 とし、stderr へ ERROR 1 行 (解決を試みた絶対パスと原因) を出す。stdout には何も書かず --json-report も書かない",
+      "rationale": "本 script は部品 id を literal で持たないため、カタログが引けない状態は『違反 0 件』ではなく『検査対象を同定できない』である。1 (品質違反) へ落とすとカタログ破損が品質問題として報告され、0 へ落とすと破損が PASS で通過する。どちらも呼び出し側 (C01) が対処を選べなくなるので 2 で分離する"
+    },
+    {
+      "case": "data-hb-part 契約が C11 側で未実装",
+      "behavior": "『検査アンカー不在』として exit 1 とし、stderr に必要な属性名を明示する",
+      "rationale": "検査できないものを PASS へ畳まない。build 順序としては C11 の契約が先に決まる"
+    },
+    {
+      "case": "@media print が複数ブロックに分かれている",
+      "behavior": "すべての @media print ブロックの宣言を統合してから PRINT-02/03/04 を評価する",
+      "rationale": "ブロック分割は書き手の都合であり、判定結果を変えてはならない"
+    },
+    {
+      "case": "検査対象が資料 HTML ではない",
+      "behavior": "<style> も data-hb-part も無い場合、exit 1 (資料 HTML の構造要件を満たさない)",
+      "rationale": "対象選別は呼び出し側の責務。届いた以上は資料 HTML として判定する"
+    }
+  ],
+  "open_questions": [
+    "【X-03 決着済み・記録】data-hb-part の語彙 (B01..B16 / IMG / DIAGRAM / TEXT / section / lightbox / memo / memo-global / toolbar)、data-hb-part-role、data-hb-kind の語彙 (icon / mascot / decor / figure) の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定した。本 script と C15 は参照するだけで再定義しない (C23 の宣言データへ寄せる案は採らない — C23 は用途種別語彙の owner であり、HTML 属性語彙は生成側 C11 が持つのが単独 writer 原則に沿う)。旧称 data-part / data-part-role / data-kind は data-hb-* 系統へ統合済み",
+    "PRINT-02/03 のセレクタ突合を文字列一致に留めるか、`[data-hb-part=\"…\"]` 属性セレクタでの指定をレンダラ側の必須形にして突合を厳密一致にできるか。後者にできれば false positive が消えるので、C11 側の合意が取れるなら後者を採る",
+    "A4 実版面への収まり (テキストのはみ出し・図版の分断) は静的には検査できない。実描画による検証を P06 のテストで別途持つか、ゲートとしては宣言検査に留めるかは P04 test-design の判断。本 script では OUT-OF-SCOPE として毎回 stdout に明示する",
+    "goal-spec C4 (sticky オフセット補正) を本 script が担当する分界でよいか。C16 は自己完結性、C18 は言語、C22 は筋道であり、CSS 規則を読む機構を持つのは本 script だけなので暫定で引き受けている。P03 design-gate で確認が要る"
+  ]
+}

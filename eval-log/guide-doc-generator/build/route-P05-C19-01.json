@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C19",
+  "task_id": "P05-C19-01",
+  "covered_task_ids": [
+    "P05-C19-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (495 行 / 18235 bytes)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙",
+      "result": "pass (argparse / hashlib / importlib.util / json / os / re / shutil / sys / unicodedata / pathlib の 10 本 + __future__。subprocess は 0 件)"
+    },
+    {
+      "claim": "R17 の用途語彙を script へ literal 列挙していない",
+      "method": "config/handout-purposes.json の vocabulary から slug と dir_token を全抽出し、script 内の引用符付きリテラル出現を正規表現で全件照合",
+      "result": "pass (0 件。語彙は C23 (resolve-handout-preset.py) を importlib で読み込んで load_catalog() / vocabulary() から取得する経路のみ = 第 2 の正本を作っていない)"
+    },
+    {
+      "claim": "テストが 113 件中 108 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/route-handout-output.py -p 'test_*.py'",
+      "result": "pass (Ran 113 / failures=5 / errors=0 / 18.260s。実装前は failures=113 の全赤)"
+    },
+    {
+      "claim": "残る赤 5 件が全件 C11 / C01 / C18 の未実装待ちであり実装不足でない",
+      "method": "unittest 出力の FAIL 行を全列挙し、参照している未実装ファイル名で機械分類",
+      "result": "pass (5 件すべて test_cross_component.py 由来。C11 (render-handout.py) 待ち 2 件 / C01 (skills/run-handout-build/SKILL.md) 待ち 2 件 / C18 (verify-handout-language.py) 待ち 1 件 / それ以外 0 件。テスト側の README.md も『C19 単体では緑にできない』と明記している意図された結合テスト)"
+    },
+    {
+      "claim": "実行が既定出力先を汚していない",
+      "method": "ls -A /Users/dm/dev/dev/ObsidianMemo/05_Project/資料作成",
+      "result": "pass (空のまま。テスト実行で実出力先へ 1 バイトも書いていない)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "テスト 10 ファイル + README.md の sha256 を実装前に取得し実装後に shasum -c で照合",
+      "result": "pass (11 ファイルすべて OK)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status と scripts/ 配下の mtime 確認",
+      "result": "pass (本 leaf 由来の書込は scripts/route-handout-output.py 1 本のみ。__pycache__ の再生成も無し)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "残る赤 5 件を緑にする条件を下流 leaf へ申し送る。(1) C11 (P05-C11-01): ソースに `handout-config.json` という文字列と `replace(\"/\", \"-\")` を含めないこと (ディレクトリ名の組み立ては C19 の単独責務であり、C11 が同じ処理を持つと『唯一の writer』検査が落ちる) (2) C01 (P05-C01-01): SKILL.md に `--place-config` と `--assets-src` の記載が必要 (配置を C19 へ委譲していることの宣言) (3) C18 (P05-C18-01): C19 が作る `<YYYY-MM-DD>-<dir_token>-<subject_slug>` を日付整合違反として弾かないこと"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 12 件。(1) stdout 書式を『1 行目=解決先の realpath / 2 行目=resolved_from: <段> / 以降 4 行 <name>: present|absent (writer: Cxx)』に決定 (2) 解決段の記録語を argv=--out-dir / env=HB_OUT_DIR / config=handout-output.json とした (3) --json-report のキー構造を resolved_path / resolved_from / check_only / config_sha256 / bundle / bundle_writers とし sort_keys + 末尾改行で決定論化 (4) .handout-route.json は時刻フィールドを持たない (毎回バイト一致させるため) (5) doc_type は slug 完全一致のみ受理し alias は exit 1。C23 の import / 呼び出し失敗はすべて fail-closed exit 2 (6) 明示 subject_slug の禁止文字違反と先頭ドットは exit 2 (out-dir 脱出防止と同じ扱い) (7) 導出 slug の小文字化は ASCII A-Z のみ (非 ASCII は変換しない) (8) 衝突連番 -2..-99 に同一 sha256 の来歴があれば再利用してから最小未使用連番へ倒す (再生成でディレクトリが増殖するのを防ぐ) (9) --out-dir / HB_OUT_DIR にも ~ と環境変数の展開を適用 (brief は config 段のみ明記) (10) --assets-src の symlink 検査を複製前に全走査し、脱出経路があれば mkdir 前に exit 2 (11) --check-only は衝突解決せず base 名だけを検査し、出力先ルート配下へは一切書かない (12) exit 1 時の stderr は語彙違反 1 行 / 同梱物欠落は 1 点 1 行の全件列挙、いずれも [route-handout-output] を前置"
+    }
+  ]
+}

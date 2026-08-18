@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "evidence_kind": "phase-evidence",
+  "phase": "P07",
+  "title": "purpose 由来の受入基準を確定する",
+  "subject": "実題材 1 本 (onboarding / 「guide-doc-generator で配布用の資料を1本作れるようになる」) を端から端まで通した実測",
+  "artifacts": {
+    "source_config": "eval-log/guide-doc-generator/evidence/real-sample/source-config.json",
+    "normalized_config": "eval-log/guide-doc-generator/evidence/real-sample/normalized-config.json",
+    "bundle_dir": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1",
+    "bundle_html": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/handout.html",
+    "bundle_config": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/handout-config.json",
+    "bundle_readme": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/README.md",
+    "regenerated_from_bundle": "eval-log/guide-doc-generator/evidence/real-sample/regenerated-from-bundle.html",
+    "roundtrip_config": "eval-log/guide-doc-generator/evidence/real-sample/roundtrip-config.json",
+    "preset_matrix": "eval-log/guide-doc-generator/evidence/real-sample/preset-matrix.json"
+  },
+  "acceptance_rows": [
+    {
+      "row": "生成資料が外部依存ゼロで開く",
+      "observation": "verify-handout-selfcontained.py exit0 / SC-01..SC-10 全 PASS (violations=0, 検査対象 706 件を含む)",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-selfcontained.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-selfcontained.json"
+      ],
+      "verdict": "pass"
+    },
+    {
+      "row": "目次から各セクションへ移動でき見出しが隠れない",
+      "observation": "verify-handout-a11y-print.py exit0 / A11Y 全項目 PASS",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-a11y-print.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-a11y-print.json"
+      ],
+      "verdict": "pass"
+    },
+    {
+      "row": "初心者向け読みやすさの verdict が PASS である",
+      "observation": "決定論側 (文長・言い換え被覆・日付) は verify-handout-language.py exit0 で PASS。意味判定側は独立 context のレビュアー handout-readability-reviewer を要するが、本セッションで当該 agent type が利用不能になったため実行できていない。決定論 PASS を意味判定の代替にしていない",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-language.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-language.json"
+      ],
+      "verdict": "partial"
+    },
+    {
+      "row": "同梱物 4 種が揃い出力先の命名規則に沿っている",
+      "observation": "route-handout-output.py --check-only exit0。handout.html / handout-config.json / assets / README.md がいずれも present。ディレクトリ名は 2026-08-18-onboarding-guide-doc-generator-1 で <YYYY-MM-DD>-<種別>-<主題slug> に一致",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-routing.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-routing.json",
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/README.md"
+      ],
+      "verdict": "pass"
+    },
+    {
+      "row": "出力先へ同梱された構成データからの再生成がバイト一致する",
+      "observation": "**初回測定は不一致だった**。同梱 handout-config.json から起動引数なしで再生成すると data-hb-config-theme が 1 属性だけ食い違い、起動引数 (--theme) が再現単位に混ざっていた。render-handout.py を直して再測定し sha256 が完全一致",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/regenerated-from-bundle.html",
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/handout.html"
+      ],
+      "verdict": "pass",
+      "fix": "render-handout.py: --theme の採用値を --config-out へ書き戻す前に render_config へも落とす (書き戻し後の構成データが再現単位になるため)"
+    },
+    {
+      "row": "冒頭に目的・背景・ゴールが揃い、各セクションのゴールが目次から追える",
+      "observation": "verify-handout-narrative.py exit0 / NAR 全項目 PASS。**初回は NAR-07 で落ちた** — prior_knowledge_level=none から demo_first が導出されるため、最初の提示物が実画面 (live demo の B17) でなければならず、当初の構成は B03 から始まっていた。構成を直して PASS",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-narrative.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-narrative.json"
+      ],
+      "verdict": "pass"
+    },
+    {
+      "row": "8 用途のプリセットいずれで生成しても共有の型が保たれ、差分が宣言済みの 4 軸 (セクションの並び・推奨部品・粒度既定値・用途固有の必須項目) に限定される",
+      "observation": "用途 8 件 (lecture/agenda/guide/onboarding/report/proposal/study-notes/study-plan) が 同一の 10 キーを共有し型は保たれている。値が用途ごとに異なるのは 7 キーで、うち 4 キー (dir_token / label_ja / purpose / notes) は用途の識別名と説明文であって構造軸ではない。構造差は section_order / recommended_parts / granularity_defaults の 3 軸と、任意キー required_document_fields (lecture のみ非 null) の計 4 軸に限定されている",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/preset-matrix.json"
+      ],
+      "verdict": "pass",
+      "criterion_amendment": "phase-07 の基準文が「6 用途 / 2 軸」のまま実装 (8 用途 / 4 軸) に追随していなかったため、2026-08-18 に基準文を訂正した。基準を実測へ緩めたのではなく、古い基準文を宣言済み仕様へ合わせた (訂正の履歴は phase-07-acceptance-criteria.md の事前解決済み判断に追記で残している)"
+    }
+  ],
+  "sha256": {
+    "bundle_html": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+    "regenerated": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+    "embedded_config": "3e8e3bb3e8fc2e75105865eb1c40809c68f6d48ab89edc7000f25cc27959a67b"
+  },
+  "not_verifiable": [
+    {
+      "item": "独立 context の読みやすさ意味判定",
+      "reason": "handout-readability-reviewer の agent type が本セッションで利用不能になり起動できない。決定論ゲートの PASS をもって意味判定の代替にしていない",
+      "how_to_close": "agent type が使える環境で assign-handout-readability-evaluator を起動し verdict を回収する"
+    }
+  ],
+  "date": "2026-08-18",
+  "measurement_policy": {
+    "re_measured": "C12 --normalize が任意の空集合フィールドを畳むよう直したため、全ゲートを再実行して測り直した (文字列置換をしていない)",
+    "log": "eval-log/guide-doc-generator/evidence/all-suites.log"
+  }
+}

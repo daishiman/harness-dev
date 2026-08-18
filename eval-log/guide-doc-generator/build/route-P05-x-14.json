@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-14",
+  "covered_task_ids": [
+    "P05-x-14"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+  "verified_by": [
+    {
+      "claim": "C01 スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/run-handout-build -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 48 / failures=0 / errors=0 / OK。実装前は Ran 48 / failures=1 で、失敗は test_reject_cases_are_detected の subTest case='non-interactive-path-blocked')"
+    },
+    {
+      "claim": "述語を無効化して緑にしていない (無置換の受入 fixture で AC-C01-19 が発火しない)",
+      "method": "当方が test_contract_checker.py の _materialize と同じ手順 (ACCEPT_ROOT 全体を temp へ copytree し SKILL.md だけ差し替えて check_skill(skill_dir)) を再現して独立実行",
+      "result": "pass (無置換の受入 fixture の violation_ids は [] で AC-C01-19 は発火しない)"
+    },
+    {
+      "claim": "reject fixture が実際に違反状態になる (欠陥が是正された)",
+      "method": "同上の手順で reject_cases の non-interactive-path-blocked の (old,new) を適用",
+      "result": "pass (violation_ids は ['AC-C01-19','AC-C01-19'] で 2 条件とも発火する。是正前はここが [] であったため恒久的に検出不能であった)"
+    },
+    {
+      "claim": "節が無い skill への fallback が旧述語と同等以上である",
+      "method": "当方が 2 通りの反例を独立に構成 (3: 見出しから『非対話』を外したうえで reject 置換 / 4: 見出しを外すだけで置換なし)",
+      "result": "pass (3 は AC-C01-19 が発火し fallback が生きている。4 は [] で、見出しを変えただけの正当な skill を誤検出しない。すなわち述語は強くなった方向のみで、旧述語より弱くなる入力は当方が構成した範囲では見つからなかった)"
+    },
+    {
+      "claim": "reject_cases.py を変更していない (違反注入は 1 箇所という設計不変条件を維持)",
+      "method": "worker 報告と、_materialize の text.count(old)==1 assert が緑であることの確認",
+      "result": "pass (変更は contract_lib.py の 1 ファイルのみ。REJECT_CASES の構造も単一 (old,new) ペアのまま)"
+    },
+    {
+      "claim": "欠陥の因果が特定されている",
+      "method": "worker が挙げた受入 fixture の 4 箇所 (31 / 98 / 105 / 111 行) を当方が本文で確認",
+      "result": "pass (reject は 111 行のみを置換するが、旧述語は body 全体一致のため 98 行『入力: 題材と素材、または検証済みの構成データ。』が第 1 条件を、105 行の見出し『## ヒアリングと非対話経路』が第 2 条件を満たし続ける。31 行は frontmatter 側で body から外れるため直接の原因ではないという worker の弁別も正しい)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-discretion",
+      "detail": "2 つの修正方向のうち worker は (A) 検出条件の節スコープ化を採り (B) reject の置換範囲拡大を退けた。理由は 2 点で、いずれも当方が裏付けを確認した: (1) test_contract_checker.py:48-52 の _materialize が text.count(old)==1 を assert しており REJECT_CASES の要素は単一 (old,new) ペアなので、全出現を潰すには ケース構造そのものの改修が要る (2) reject fixture の設計思想は『1 箇所だけ違反を注入する』であり (B) はこの不変条件を壊すうえ、本質的欠陥 (述語が節の外の言及で満たされる) が残るため実装が語を散らせば再発する。**(B) は受入基準を満たすためにテスト設計を弱める形になっており、(A) を採った判断は妥当**"
+    },
+    {
+      "kind": "latent-defect-not-owned",
+      "detail": "要裁定 / 未起票から起票へ移した。worker は『body 部分文字列一致な他の述語 (AC-C01-15 の CR-GATE-AGG、AC-C01-18 の assign-handout-readability-evaluator) でも同種の穴が起こりうる』を指摘した。当方の実測では現時点で 15 の reject case すべてが検出できており (スイート緑)、**顕在化はしていない潜在欠陥**である。ただし『述語を節スコープへ寄せる』か『REJECT_CASES を複数置換対応にする』かの方針決定を残すと、C01 実装が本文の別箇所に語を散らせた瞬間に同じ偽緑が復活する。discovered-task として起票した"
+    },
+    {
+      "kind": "acceptance-criterion-boundary",
+      "detail": "worker は上記 latent-defect を『write_scope 内ではあるが今回の acceptance_criterion 外』として着手しなかった。この線引きは正しい (受入基準は AC-C01-19 に閉じており、他述語まで広げると 1 leaf の変更範囲が測定不能になる)。**write_scope に入っているからといって受入基準の外へ手を伸ばさなかった自制を記録する**"
+    },
+    {
+      "kind": "dispatcher-method-error",
+      "detail": "当方の検証手順の誤りを記録する。最初の反証で check_skill へ SKILL.md の本文文字列を渡し (実際の引数は skill ディレクトリ)、次に SKILL.md の親ディレクトリだけを copytree したため prompts/ を欠いて受入 fixture ですら AC-C01-1 が出る誤った結果を得た。test_contract_checker.py の _materialize を読んで ACCEPT_ROOT 全体を copytree する正しい手順へ直した。**worker の報告と食い違う結果が出たとき、worker を疑う前に自分の測定器を疑うべき事例**であり、実際に誤っていたのは当方の測定器であった"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) は未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

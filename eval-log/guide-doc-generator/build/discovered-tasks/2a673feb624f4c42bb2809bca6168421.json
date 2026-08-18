@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-07",
+  "reason": "P05-x-07 が verify-handout-a11y-print.py を『部品 id のリテラル列挙』から『config/handout-parts.json を data_block_type 述語で実行時に引く』形へ変えた結果、この script は新しい実行時依存とカタログ読取失敗時の exit 2 という新しい失敗経路を獲得したが、宣言正本 script-brief-C17.json にはどちらも記載が無い。同様に hero 内フィールドの解決規約が script-brief-C22.json に無い。brief は plugin-plans/ 配下で P05-x-07 の write_scope 外のため worker は正しく手を出さず報告に留めた",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-24.md",
+  "proposed_node": {
+    "id": "P05-x-24",
+    "title": "C17 / C22 brief を実装が獲得した実行時依存と失敗経路へ追随させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs",
+    "acceptance_criterion": "script-brief-C17.json に verify-handout-a11y-print.py の config/handout-parts.json への実行時依存とカタログ読取失敗時の exit 2 が宣言されている。script-brief-C22.json に hero 内フィールドの解決規約がマーカーで引く形で宣言されている。両ファイルが json.load を通り編集前後でトップレベルキーの集合が保存されていること。script-brief-C20.json には触れないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-24.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-24.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C17"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

@@ -1,0 +1,1880 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "phase-aggregate-evidence",
+ "task_id": "P05-x-01",
+ "phase_ref": "P05",
+ "generated_at": "2026-08-17T20:52:10+09:00",
+ "produced_by": "P05-x-01 worker (aggregation gate / direct-task)",
+ "write_scope": "plugin-plans/guide-doc-generator/evidence/P05.json",
+ "no_implementation_performed": true,
+ "acceptance_criterion_verbatim": "23 component 全ての build_target が実在し、P04 が固定した各 component のテストが実装後に緑であり、テストが 1 行も改変されていないことが記録されている",
+ "measurement_policy": {
+  "fail_closed": "実測できなかった要素は pass と書かず blocked / not-verifiable と書く。注釈つきの pass は使わない",
+  "counts_vs_enumeration": "件数リテラルは列挙から導いた実測結果であり、列挙と併記する。両者が食い違う場合は列挙を残し件数を捨てること",
+  "derivation_note": "本 leaf の起動指示は tests ディレクトリを 26 件・route report を 26 本と述べたが、実測はそれぞれ 23 件・24 本 (leaf 単位) であった。指示の件数ではなく実測の列挙を採用している"
+ },
+ "acceptance_elements": {
+  "element_1_build_targets_exist": {
+   "verdict": "pass",
+   "measured": {
+    "inventory_component_count": 23,
+    "inventory_ids": [
+     "C01",
+     "C02",
+     "C03",
+     "C04",
+     "C05",
+     "C06",
+     "C07",
+     "C08",
+     "C09",
+     "C10",
+     "C11",
+     "C12",
+     "C13",
+     "C14",
+     "C15",
+     "C16",
+     "C17",
+     "C18",
+     "C19",
+     "C20",
+     "C21",
+     "C22",
+     "C23"
+    ],
+    "expected_count_from_task_spec": 23,
+    "count_matches_task_spec": true,
+    "build_target_exists_count": 23,
+    "build_target_missing_ids": []
+   },
+   "method": "component-inventory.json の components[] を列挙し os.path.exists と行数計測 (ディレクトリはファイル単位で列挙)",
+   "not_measured": [
+    "build_target の内容が brief の要求を満たすかは本 leaf の検査対象外 (各 route report の verified_by が担当)"
+   ]
+  },
+  "element_2_tests_green": {
+   "verdict": "blocked",
+   "verdict_reason": "23 スイート中 6 スイートに赤が残る。合計 3258 件中 failures=12 / errors=2 の計 14 件。受入条件は『実装後に緑』を求めており、緑でない以上 pass と書けない",
+   "measured": {
+    "suite_count": 23,
+    "total_ran": 3258,
+    "total_failures": 14,
+    "total_errors": 2,
+    "total_skipped": 13,
+    "green_suite_count": 17,
+    "green_suite_ids": [
+     "C02",
+     "C03",
+     "C04",
+     "C05",
+     "C07",
+     "C08",
+     "C09",
+     "C10",
+     "C13",
+     "C14",
+     "C15",
+     "C16",
+     "C17",
+     "C18",
+     "C19",
+     "C20",
+     "C23"
+    ],
+    "red_suite_ids": [
+     "C01",
+     "C06",
+     "C11",
+     "C12",
+     "C21",
+     "C22"
+    ],
+    "red_test_count": 16
+   },
+   "method": "cd plugins/guide-doc-generator && python3 -m unittest discover -s tests/<dir> -p 'test_*.py' を 23 ディレクトリすべてで実行。赤スイートは再実行して失敗名を採取",
+   "red_tests": [
+    {
+     "suite": "handout-readability-reviewer",
+     "component": "C06",
+     "test": "test_no_side_effects.TestBuildTargetPlacement.test_only_one_agent_definition_for_c06",
+     "reason": "PLUGIN_ROOT.glob('**/handout-readability-reviewer.md') が tests/assign-handout-readability-evaluator/fixtures/accept/agents/ の正当な fixture を第 2 の定義として拾う",
+     "defect_class": "test-defect-b (検出スコープ過大)",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-10 (graph 未登録)"
+    },
+    {
+     "suite": "run-handout-build",
+     "component": "C01",
+     "test": "test_contract_checker.TestRejectFixtures.test_reject_cases_are_detected[non-interactive-path-blocked]",
+     "reason": "contract_lib の検出条件が body 全体の部分文字列一致であり、reject fixture の置換後も別箇所に該当語が残るため違反状態を作れず検出 0 件",
+     "defect_class": "test-defect-c (述語が緩く reject fixture が違反にならない)",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-14 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_cross_component.GateHandoffTest.test_language_gate_passes",
+     "reason": "fixture base_config() が provenance.normalized_by を持たず C18 が仕様どおり exit 2",
+     "defect_class": "fixture 不備 (未正規化 config)",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-09 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_cross_component.GateHandoffTest.test_narrative_gate_passes",
+     "reason": "同上 (C22 が provenance.normalized_by=None で exit 2)",
+     "defect_class": "fixture 不備 (未正規化 config)",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-09 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_cross_component.GateHandoffTest.test_round_trip_equivalence",
+     "reason": "逆抽出が unrecoverable=8 を返す。C11 のマーカー契約に focus_theme/target_tasks/attainment_level 等が無く原理的に復元不能",
+     "defect_class": "acceptance-criterion-unsatisfiable",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-11 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_determinism.TokenIndirectionTest.test_accent_token_change_only_diffs_root_block",
+     "reason": "assets/tokens/pop.json のトップレベルに --pop-primary 相当が無く accent が入れ子",
+     "defect_class": "artifact 形状不一致",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-08 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_parts_catalog.CatalogCoverageTest.test_catalog_is_sorted_and_well_formed",
+     "reason": "config/handout-parts.json の並びが ...B17, IMG, DIAGRAM, TEXT で id 昇順でない",
+     "defect_class": "artifact 順序不一致",
+     "implementation_can_fix": false,
+     "proposed_owner": "P05-x-06 (graph 未登録)"
+    },
+    {
+     "suite": "render-handout.py",
+     "component": "C11",
+     "test": "test_parts_catalog.SingleVocabularyTest.test_part_ids_are_not_enumerated_outside_the_catalog",
+     "reason": "C12/C17/C20/C22/C05 の成果物に部品 id リテラルが残存 (実測ヒットに extract/validate/a11y/narrative/agent が含まれる)",
+     "defect_class": "SSOT 違反 (第 2 正本)",
+     "implementation_can_fix": true,
+     "proposed_owner": "P05-x-07 (graph 未登録)"
+    },
+    {
+     "suite": "srg-image-bridge.py",
+     "component": "C21",
+     "test": "test_cross_component.BuildSkillContractTest.test_build_skill_surfaces_the_skip_reason",
+     "reason": "C01 の SKILL.md に skip 理由をレポートへ明示する記述が無い",
+     "defect_class": "下流 leaf への申し送り未消化",
+     "implementation_can_fix": true,
+     "proposed_owner": "未提案 (C01=P05-C01-01 は done。owner 不在)"
+    },
+    {
+     "suite": "srg-image-bridge.py",
+     "component": "C21",
+     "test": "test_r23_style_family.DeterministicSelectionTest.test_family_missing_stops_before_delegating",
+     "reason": "_harness.plan_payload() が AUTO_KEY 補完でテストが pop したキーを再注入するため違反状態を作れない",
+     "defect_class": "NEW: harness 自走型偽赤 (test-defect-d)",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "srg-image-bridge.py",
+     "component": "C21",
+     "test": "test_r23_style_family.DeterministicSelectionTest.test_section_without_pattern_and_without_family_is_exit2",
+     "reason": "同上",
+     "defect_class": "NEW: harness 自走型偽赤 (test-defect-d)",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "validate-handout-config.py",
+     "component": "C12",
+     "test": "test_document_fields.DocTypeVocabulary.test_unknown_doc_type_lists_vocabulary",
+     "reason": "KeyError: 'entries'。config/handout-purposes.json のトップレベルは [_meta, schema_version, vocabulary, presets] で entries は不在",
+     "defect_class": "test-canon-conflict (テスト側のキー名誤り)",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "validate-handout-config.py",
+     "component": "C12",
+     "test": "test_source_hygiene.SourceHygiene.test_no_purpose_vocabulary_literals",
+     "reason": "同上 KeyError: 'entries'",
+     "defect_class": "test-canon-conflict (テスト側のキー名誤り)",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "validate-handout-config.py",
+     "component": "C12",
+     "test": "test_normalize_date_determinism.FailClosed.test_no_temp_file_left_behind",
+     "reason": "_harness.setUp が tmp 直下に 'plugin-root' ディレクトリを必ず作り、走査が suffix!='.json' を残留とみなすため恒常赤",
+     "defect_class": "NEW: harness 自走型偽赤 (test-defect-d)",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "validate-handout-config.py",
+     "component": "C12",
+     "test": "test_normalize_date_determinism.NormalizeDefaults.test_provenance_shape",
+     "reason": "provenance をちょうど 6 キーへ assertEqual で固定するが schema と R22 が detail_level_source / evidence_depth_source を要求し 8 キー。相互排他",
+     "defect_class": "test-defect-a (導出値=キー集合の焼き込み) + 両立不能な二重契約",
+     "implementation_can_fix": false,
+     "proposed_owner": "未提案 (owner 不在)"
+    },
+    {
+     "suite": "verify-handout-narrative.py",
+     "component": "C22",
+     "test": "test_scope_and_determinism.TestMultiViolationAccounting.test_all_detections_reported_even_when_first_fails",
+     "reason": "assertEqual(8, len(rows)) が DETECTION_ORDER の 10 件拡張へ追従漏れ (実測 rows=10)",
+     "defect_class": "test-defect-a (導出値の焼き込み)",
+     "implementation_can_fix": false,
+     "proposed_owner": "P04-x-06 (done。受け皿消滅)"
+    }
+   ],
+   "red_attributable_to_implementation": {
+    "count": 2,
+    "tests": [
+     "test_parts_catalog.SingleVocabularyTest.test_part_ids_are_not_enumerated_outside_the_catalog",
+     "test_cross_component.BuildSkillContractTest.test_build_skill_surfaces_the_skip_reason"
+    ],
+    "note": "残り 12 件は実装内容に関わらず赤であり (テスト欠陥 / fixture 不備 / 達成不能な受入基準)、実装の未完了を示すものではない。ただし『緑である』という受入条件は依然として満たされていない"
+   },
+   "not_measured": [
+    "各スイートが inventory の tests_min を満たすかは件数を記録するに留め、充足判定は行っていない",
+    "テストが検査していない振る舞いの正しさ (テストの十分性) は本 leaf の検査対象外",
+    "lint / build_trace / elegant_review / content_review / evaluator の各ゲートは本 leaf では未実行 (C02 / C08 の gates-not-run 申告どおり P05 の他ゲートは未消化)"
+   ]
+  },
+  "element_3_tests_unmodified": {
+   "verdict": "blocked",
+   "verdict_reason": "(1) byte 単位の無改変を独立に証明する手段が無い (plugins/guide-doc-generator/ 全体が git untracked で、P04 の証跡にも基準となる sha256 実値が 1 件も記録されていない。route report が『sha256 が一致した』と述べているだけで digest 値そのものは残っていない)。(2) mtime による独立検査で C14 の 2 ファイルが build_target より後に改変されていることを検出した。(3) phase 全体では tests/ が P04 以降に 3 leaf (P04-x-04 / P04-x-06 / P04-x-08) によって意図的に改訂されており、『P04 が固定したテストが 1 行も改変されていない』は字義どおりには成立しない",
+   "independent_method": {
+    "what": "各 component について、担当テストディレクトリ配下の *.py の mtime が、その build_target 配下の最新 mtime より後になっていないことを確認した (find -newer 相当を全 component へ機械適用)",
+    "why_independent": "route worker が報告した sha256 突合とは別系統の観測量 (mtime) を用い、かつ 23 component を横断して一括適用している",
+    "results": {
+     "components_with_no_newer_test": 22,
+     "components_with_newer_test": [
+      {
+       "id": "C14",
+       "files": [
+        {
+         "path": "plugins/guide-doc-generator/tests/render-diagram-svg.py/_harness.py",
+         "mtime": "2026-08-17T17:01:36"
+        },
+        {
+         "path": "plugins/guide-doc-generator/tests/render-diagram-svg.py/test_argv_and_exit_codes.py",
+         "mtime": "2026-08-17T17:01:48"
+        }
+       ]
+      }
+     ]
+    },
+    "limitations": [
+     "mtime は『成果物より後に触られたか』しか見ない。成果物が作られる前にテストが改変されていた場合は原理的に検出できない",
+     "mtime は改変内容を見ない。触られていても中身が同一の可能性、逆に mtime を保ったまま内容を変える操作 (touch -t / コピー) は検出できない",
+     "git が使えない (plugins/guide-doc-generator/ は全体が untracked = ?? 1 行のみ) ため、内容ベースの差分は取得できない",
+     "P04 時点の sha256 実値が証跡に残っていないため、いま digest を取っても比較対象が無い。これが本要素を pass にできない一次的な理由である"
+    ]
+   },
+   "phase_level_finding": {
+    "tests_amended_after_P04": true,
+    "amendment_records": [
+     {
+      "file": "plugins/guide-doc-generator/tests/P04-x-06-ALIGNMENT.md",
+      "mtime": "2026-08-17T17:12:13",
+      "leaf": "P04-x-06",
+      "claim_in_doc": "assert の削除・許容範囲の拡大・skip の追加は 1 件も無い (古い正本の写しを新しい正本の写しへ差し替えたのみ)"
+     },
+     {
+      "file": "plugins/guide-doc-generator/tests/R22-AMENDMENT.md",
+      "mtime": "2026-08-17T17:10:40",
+      "leaf": "P04-x-04 (R22 C61-C66 の赤を追補)"
+     },
+     {
+      "file": "plugins/guide-doc-generator/tests/R23-ALIGNMENT.md",
+      "mtime": "2026-08-17T18:22:46",
+      "leaf": "P04-x-08 (R23 の裁定をテストへ固定)"
+     }
+    ],
+    "not_verified": "上記 3 件の改訂が『検査を弱めていない』ことは、各 ALIGNMENT 文書の自己申告に依っており、本 leaf は独立に検証していない。基準 digest も改訂前スナップショットも残っていないため検証手段が無い",
+    "interpretation": "受入条件の『テストが 1 行も改変されていない』は、component build worker (P05-C**-01) の振る舞いとしては成立していると見てよい (23 中 22 component で後続改変 0、C14 の 2 件も後続の是正 leaf による)。しかし phase 全体としては成立していない。この 2 つの読みを混ぜて 1 つの pass にするのは不正確なので分けて記録する"
+   },
+   "route_claims_cross_check": {
+    "claim_present_in_all_24_leaf_reports": true,
+    "all_claim_pass": true,
+    "invalidated_by_later_events": [
+     {
+      "route": "C14",
+      "claim": "find tests/render-diagram-svg.py -newer scripts/render-diagram-svg.py -type f -name '*.py' が空 → pass",
+      "now": "実測で _harness.py (17:01:36) と test_argv_and_exit_codes.py (17:01:48) が build_target (16:28:00) より新しい",
+      "reading": "報告時点では真だったが、その後 P04-x-06 が H-01..H-03 のハーネス欠陥を是正したため事後に無効化された。実際 C14 スイートは route 報告時の 7 赤から現在 166 件全緑へ変化しており、この改変が起きたことを実行結果も裏付けている"
+     }
+    ],
+    "method_weakness_observed": "24 leaf のうち sha256 で照合したのは 15、mtime/サイズのみで代替したのが 8 (C04/C10 の一部/C11/C13/C14/C15/C16/C17/C21/C23)。後者は上記の限界をそのまま引き継ぐ"
+   },
+   "not_measured": [
+    "改変が『検査を弱めたか』の意味的判定",
+    "P04 時点のテスト内容そのもの"
+   ]
+  }
+ },
+ "components": [
+  {
+   "id": "C01",
+   "component_kind": "skill",
+   "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "dir",
+    "files": [
+     "SKILL.md",
+     "prompts/R-design-config.md",
+     "prompts/R1-elicit.md",
+     "prompts/R2-design.md",
+     "prompts/R3-render.md",
+     "prompts/R4-verify.md"
+    ],
+    "file_count": 6,
+    "lines_by_file": {
+     "SKILL.md": 235,
+     "prompts/R-design-config.md": 155,
+     "prompts/R1-elicit.md": 161,
+     "prompts/R2-design.md": 161,
+     "prompts/R3-render.md": 157,
+     "prompts/R4-verify.md": 167
+    }
+   },
+   "build_target_mtime_min": "2026-08-17T19:50:25",
+   "build_target_mtime_max": "2026-08-17T19:59:49",
+   "test_dir": "plugins/guide-doc-generator/tests/run-handout-build",
+   "test_py_file_count": 12,
+   "suite_result": {
+    "ran": 48,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C02",
+   "component_kind": "skill",
+   "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "dir",
+    "files": [
+     "SKILL.md",
+     "prompts/R1-scan.md",
+     "prompts/R2-complete.md",
+     "prompts/R3-roundtrip.md"
+    ],
+    "file_count": 4,
+    "lines_by_file": {
+     "SKILL.md": 236,
+     "prompts/R1-scan.md": 164,
+     "prompts/R2-complete.md": 165,
+     "prompts/R3-roundtrip.md": 166
+    }
+   },
+   "build_target_mtime_min": "2026-08-17T20:09:19",
+   "build_target_mtime_max": "2026-08-17T20:11:41",
+   "test_dir": "plugins/guide-doc-generator/tests/run-handout-extract",
+   "test_py_file_count": 8,
+   "suite_result": {
+    "ran": 46,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C03",
+   "component_kind": "skill",
+   "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "dir",
+    "files": [
+     "SKILL.md",
+     "prompts/R-review-readability.md"
+    ],
+    "file_count": 2,
+    "lines_by_file": {
+     "SKILL.md": 101,
+     "prompts/R-review-readability.md": 164
+    }
+   },
+   "build_target_mtime_min": "2026-08-17T19:27:24",
+   "build_target_mtime_max": "2026-08-17T19:28:07",
+   "test_dir": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator",
+   "test_py_file_count": 5,
+   "suite_result": {
+    "ran": 34,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C04",
+   "component_kind": "skill",
+   "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "dir",
+    "files": [
+     "SKILL.md",
+     "assets/jp-web-design-mode-b.md",
+     "references/answer-patterns.md"
+    ],
+    "file_count": 3,
+    "lines_by_file": {
+     "SKILL.md": 178,
+     "assets/jp-web-design-mode-b.md": 79,
+     "references/answer-patterns.md": 42
+    }
+   },
+   "build_target_mtime_min": "2026-08-17T16:47:40",
+   "build_target_mtime_max": "2026-08-17T16:48:35",
+   "test_dir": "plugins/guide-doc-generator/tests/ref-handout-design-system",
+   "test_py_file_count": 5,
+   "suite_result": {
+    "ran": 37,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C05",
+   "component_kind": "sub-agent",
+   "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 209
+   },
+   "build_target_mtime_min": "2026-08-17T19:03:35",
+   "build_target_mtime_max": "2026-08-17T19:03:35",
+   "test_dir": "plugins/guide-doc-generator/tests/handout-content-architect",
+   "test_py_file_count": 5,
+   "suite_result": {
+    "ran": 49,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C06",
+   "component_kind": "sub-agent",
+   "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 201
+   },
+   "build_target_mtime_min": "2026-08-17T19:38:48",
+   "build_target_mtime_max": "2026-08-17T19:38:48",
+   "test_dir": "plugins/guide-doc-generator/tests/handout-readability-reviewer",
+   "test_py_file_count": 14,
+   "suite_result": {
+    "ran": 164,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C07",
+   "component_kind": "slash-command",
+   "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 153
+   },
+   "build_target_mtime_min": "2026-08-17T20:08:03",
+   "build_target_mtime_max": "2026-08-17T20:08:03",
+   "test_dir": "plugins/guide-doc-generator/tests/handout-build",
+   "test_py_file_count": 4,
+   "suite_result": {
+    "ran": 45,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C08",
+   "component_kind": "slash-command",
+   "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 96
+   },
+   "build_target_mtime_min": "2026-08-17T20:23:02",
+   "build_target_mtime_max": "2026-08-17T20:23:02",
+   "test_dir": "plugins/guide-doc-generator/tests/handout-extract",
+   "test_py_file_count": 10,
+   "suite_result": {
+    "ran": 47,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C09",
+   "component_kind": "slash-command",
+   "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 117
+   },
+   "build_target_mtime_min": "2026-08-17T19:22:49",
+   "build_target_mtime_max": "2026-08-17T19:22:49",
+   "test_dir": "plugins/guide-doc-generator/tests/handout-verify",
+   "test_py_file_count": 11,
+   "suite_result": {
+    "ran": 60,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C10",
+   "component_kind": "hook",
+   "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 349
+   },
+   "build_target_mtime_min": "2026-08-17T18:47:44",
+   "build_target_mtime_max": "2026-08-17T18:47:44",
+   "test_dir": "plugins/guide-doc-generator/tests/guard-handout-external-ref",
+   "test_py_file_count": 9,
+   "suite_result": {
+    "ran": 196,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 13,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": null
+  },
+  {
+   "id": "C11",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1811
+   },
+   "build_target_mtime_min": "2026-08-17T19:21:32",
+   "build_target_mtime_max": "2026-08-17T19:21:32",
+   "test_dir": "plugins/guide-doc-generator/tests/render-handout.py",
+   "test_py_file_count": 11,
+   "suite_result": {
+    "ran": 174,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C12",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1492
+   },
+   "build_target_mtime_min": "2026-08-17T18:40:48",
+   "build_target_mtime_max": "2026-08-17T18:40:48",
+   "test_dir": "plugins/guide-doc-generator/tests/validate-handout-config.py",
+   "test_py_file_count": 15,
+   "suite_result": {
+    "ran": 278,
+    "failures": 2,
+    "errors": 2,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C13",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 353
+   },
+   "build_target_mtime_min": "2026-08-17T16:15:55",
+   "build_target_mtime_max": "2026-08-17T16:15:55",
+   "test_dir": "plugins/guide-doc-generator/tests/embed-assets.py",
+   "test_py_file_count": 8,
+   "suite_result": {
+    "ran": 96,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C14",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 872
+   },
+   "build_target_mtime_min": "2026-08-17T16:28:00",
+   "build_target_mtime_max": "2026-08-17T16:28:00",
+   "test_dir": "plugins/guide-doc-generator/tests/render-diagram-svg.py",
+   "test_py_file_count": 7,
+   "suite_result": {
+    "ran": 166,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [
+    {
+     "path": "plugins/guide-doc-generator/tests/render-diagram-svg.py/_harness.py",
+     "mtime": "2026-08-17T17:01:36"
+    },
+    {
+     "path": "plugins/guide-doc-generator/tests/render-diagram-svg.py/test_argv_and_exit_codes.py",
+     "mtime": "2026-08-17T17:01:48"
+    }
+   ],
+   "immutability_local_verdict": "TEST-FILE-MODIFIED-AFTER-BUILD-TARGET",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C15",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 704
+   },
+   "build_target_mtime_min": "2026-08-17T18:09:12",
+   "build_target_mtime_max": "2026-08-17T18:09:12",
+   "test_dir": "plugins/guide-doc-generator/tests/build-icon-sprite.py",
+   "test_py_file_count": 11,
+   "suite_result": {
+    "ran": 128,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C16",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1344
+   },
+   "build_target_mtime_min": "2026-08-17T18:32:54",
+   "build_target_mtime_max": "2026-08-17T18:32:54",
+   "test_dir": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py",
+   "test_py_file_count": 8,
+   "suite_result": {
+    "ran": 354,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C17",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1287
+   },
+   "build_target_mtime_min": "2026-08-17T16:21:47",
+   "build_target_mtime_max": "2026-08-17T16:21:47",
+   "test_dir": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py",
+   "test_py_file_count": 8,
+   "suite_result": {
+    "ran": 187,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C18",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 992
+   },
+   "build_target_mtime_min": "2026-08-17T19:13:28",
+   "build_target_mtime_max": "2026-08-17T19:13:28",
+   "test_dir": "plugins/guide-doc-generator/tests/verify-handout-language.py",
+   "test_py_file_count": 9,
+   "suite_result": {
+    "ran": 248,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C19",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 495
+   },
+   "build_target_mtime_min": "2026-08-17T18:57:22",
+   "build_target_mtime_max": "2026-08-17T18:57:22",
+   "test_dir": "plugins/guide-doc-generator/tests/route-handout-output.py",
+   "test_py_file_count": 10,
+   "suite_result": {
+    "ran": 113,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C20",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1115
+   },
+   "build_target_mtime_min": "2026-08-17T19:42:45",
+   "build_target_mtime_max": "2026-08-17T19:42:45",
+   "test_dir": "plugins/guide-doc-generator/tests/extract-handout-config.py",
+   "test_py_file_count": 10,
+   "suite_result": {
+    "ran": 152,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C21",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1222
+   },
+   "build_target_mtime_min": "2026-08-17T18:49:02",
+   "build_target_mtime_max": "2026-08-17T18:49:02",
+   "test_dir": "plugins/guide-doc-generator/tests/srg-image-bridge.py",
+   "test_py_file_count": 18,
+   "suite_result": {
+    "ran": 291,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C22",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 1365
+   },
+   "build_target_mtime_min": "2026-08-17T19:08:32",
+   "build_target_mtime_max": "2026-08-17T19:08:32",
+   "test_dir": "plugins/guide-doc-generator/tests/verify-handout-narrative.py",
+   "test_py_file_count": 9,
+   "suite_result": {
+    "ran": 217,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "green": false
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  },
+  {
+   "id": "C23",
+   "component_kind": "script",
+   "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+   "exists": true,
+   "build_target_shape": {
+    "kind": "file",
+    "lines": 919
+   },
+   "build_target_mtime_min": "2026-08-17T17:47:19",
+   "build_target_mtime_max": "2026-08-17T17:47:19",
+   "test_dir": "plugins/guide-doc-generator/tests/resolve-handout-preset.py",
+   "test_py_file_count": 12,
+   "suite_result": {
+    "ran": 128,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "green": true
+   },
+   "tests_newer_than_build_target": [],
+   "immutability_local_verdict": "no-test-file-newer-than-build_target",
+   "tests_min_declared": 80
+  }
+ ],
+ "deviation_ledger": {
+  "source_files": [
+   "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C04-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C05-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C09-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C10-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C13-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C14-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C15-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C16-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C17-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C18-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C19-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C21-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C22-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-C23-01.json",
+   "eval-log/guide-doc-generator/build/route-P05-x-02.json"
+  ],
+  "leaf_route_report_count": 24,
+  "note": "eval-log/guide-doc-generator/build/route-*.json の glob は 26 件だが、うち route-build-contract.json と route-build-plan.json は leaf report ではない。leaf 単位は 24 件 (C01..C23 の 23 件 + x-02 の 1 件)",
+  "total_deviations": 88,
+  "by_kind": {
+   "brief-underspecified": 24,
+   "handoff-to-downstream-leaf": 12,
+   "unowned-followup": 12,
+   "canon-conflict": 6,
+   "gates-not-run": 2,
+   "resolved-open-question": 2,
+   "test-canon-conflict": 2,
+   "test-forces-derived-value": 2,
+   "acceptance-criterion-unsatisfiable": 1,
+   "blocked-by-missing-producer": 1,
+   "brief-defect-permanent-warning": 1,
+   "brief-implementation-drift": 1,
+   "brief-test-conflict": 1,
+   "budget-contract-not-enforceable-as-written": 1,
+   "canon-duplication-deferred": 1,
+   "canon-duplication-risk": 1,
+   "canon-location-inversion": 1,
+   "deliberate-abstraction": 1,
+   "doc-drift": 1,
+   "emoji-gate-provisional": 1,
+   "fail-closed-forbidden-by-test": 1,
+   "handoff-resolved": 1,
+   "known-approximation": 1,
+   "owner-leaf-already-closed": 1,
+   "test-defect-always-red": 1,
+   "test-defect-overbroad-scope": 1,
+   "test-defect-predicate-too-loose": 1,
+   "test-defect-stale-literal": 1,
+   "test-fixture-defect": 1,
+   "test-harness-defect": 1,
+   "test-schema-contradiction": 1,
+   "verification-gap-carried": 1,
+   "worker-premise-incorrect": 1,
+   "write-scope-excursion-directed-by-tests": 1
+  },
+  "by_kind_note": "件数は entries の列挙から導いた。食い違ったら entries を残すこと",
+  "entries": [
+   {
+    "route_id": "C01",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+    "kind": "test-defect-predicate-too-loose",
+    "detail": "要裁定 / 本 leaf の write_scope 外。当方が実体を読んで独立に再現確認した。reject_cases.py:110-114 の non-interactive-path-blocked は fixtures/accept/.../SKILL.md:111 の 1 行を『常に対話でヒアリングを行ってから R2 へ進む。』へ置換して AC-C01-19 の発火を期待する。しかし contract_lib.py:423-427 の検出条件は body 全体に対する部分文字列一致 ('検証済みの構成データ' not in body / '非対話' not in body and 'ヒアリングを省' not in body) であり、置換後もフィクスチャ本文の別箇所に『入力: 題材と素材、または検証済みの構成データ。』の行と見出し『## ヒアリングと非対話経路』が残るため、どちらの条件も満たされず検出 0 件になる。これは『実装内容によらず恒久的に赤』であり、C01 の産出物を空にしても結果は変わらない。欠陥の性質は『述語が緩すぎて reject fixture を違反状態にできない』こと。修正には fixtures か reject_cases の変更が必要で、どちらも write_scope 外かつ tests 変更禁止。実装前ベースライン failures=42 にもこの 1 件は含まれていた既存の赤である"
+   },
+   {
+    "route_id": "C01",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+    "kind": "canon-conflict",
+    "detail": "C03 / C06 は委譲入力 reader_profile の構成要素として reader / prior_knowledge_level / usage_scene を要求するが、schemas/handout-config.schema.json に usage_scene フィールドは存在せず、schema には『use_scene という別フィールドは作らない』旨が明記されている (実質 doc_type が利用シーンを担う)。worker は存在しないフィールド名を本文へ書かず『読み手・前提知識・用途が正規化済み構成データに入っている必要がある』と表現した。C03 / C06 側の申し送り文言か schema のどちらを正本にするかを P05-x-01 で確定すること"
+   },
+   {
+    "route_id": "C01",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+    "kind": "canon-conflict",
+    "detail": "brief の deterministic_checks は 7 本だが、自スイートが実際に機械検査するのは AC-C01-1..24 の宣言的契約であり両者の粒度が 1 対 1 に対応しない。worker は自スイートの AC を優先した。brief 側の deterministic_checks を AC へ写像する対応表が無いため、どの check がどの AC で担保されているかが追えない"
+   },
+   {
+    "route_id": "C01",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+    "kind": "unowned-followup",
+    "detail": "lint-skill-dep-step7.py がディレクトリ引数で IsADirectoryError を投げて exit1 になる (skill-governance-lint 側の引数処理の問題)。このため C01 に対する当該 lint は未実行のまま。他 skill の build でも同じ症状が出る可能性があるが、本 build の write_scope 外"
+   },
+   {
+    "route_id": "C01",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 20 件。(1) version 0.1.0 (2) owner harness maintainers (3) user-invocable true (4) argument-hint '[--config <handout-config.json>] [--out-dir <dir>] [--assets-src <dir>]' (5) allowed-tools [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent] (6) script_refs へ brief 未記載の 5 本 (embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / render-handout.py) を追加 (R3 の決定論 script 列を参照するため) (7) schema_refs / command_refs / agent_refs / skill_refs の 4 キーを追加 (8) completeness_exempt に manifest 免除 1 項 (goal_seek.engine=inline のため固定 phase の workflow-manifest.json を持たない) (9) feedback_contract.max_iterations: 3 (inventory は criteria のみ規定) (10) 必須 4 節以外の節名と切り方 (ヒアリングと非対話経路 / 構成データの設計と検証 / 単一 HTML の決定論生成 / ゲート集約と出力配置 / 読みやすさレビューの委譲) (11) ゴールシーク配線の eval-log パスを eval-log/guide-doc-generator/run-handout-build-{goal-spec.json,progress.json,intermediate.jsonl} とした (dev-graph の run 系 skill に倣った) (12) ゴールシーク検証の bash ブロックを plugins/dev-graph/skills/run-dev-graph-node/SKILL.md の様式に倣って書いた (13) C03 から返った verdict に必要項目の欠落があった場合は再委譲すると決めた (C03 が『C01 側で決めること』と申し送った点の決着) (14) srg-image-bridge.py の委譲先が不在のときは skip して warning に載せる (R12 の fail-soft 規定の具体化) (15) prompts/R-design-config.md を新規作成した。brief の responsibilities には無いが agents/handout-content-architect.md の prompt_ref が write_scope 内のこのパスを指しており実体が無かったため。手順と判定規範は agent 本体を正本として複製せず起動契約のみを書いた (16) 同ファイルの本文アンカーを <!-- responsibility: R2 --> とした (起動元が R2-design であり、lint の ANCHOR_RE は R+数字のみ許容するため R-design-config は使えない) (17) 同ファイルを responsibility_refs へ追記 (lint-skill-tree MED-4 Warn の解消) (18) fixture が使っていた件数リテラル (4 ゲート / 同梱 4 点 / 4 状態分類 等) を意図的に採用しなかった。fixture は判定器の入力例であって文言の正本ではないと解釈し横断規律を優先した (19) ゲート面の id 一覧を本文へ列挙しない方針 (面の集合は C09 の正本にある) (20) 各 prompt の Layer 3 参照リソース表のパス選択と相対表記 (../../../scripts/...)"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "brief-implementation-drift",
+    "detail": "当方が実測して独立確認した。診断コード W-EXTRACT-OPTIONAL は実装 (scripts/extract-handout-config.py) に 1 件存在するが、plugin-plans/guide-doc-generator/briefs/script-brief-C20.json の stderr 契約には 0 件で未記載。これは C20 worker が自ら『ブリーフの stderr 契約に該当項が無いため新設した』と申告した裁量 4 件目に対応するもので、実装が brief を追い越した状態。C02 は実機出力から確認して本文へ記載したが、brief 側は未追随。P05-x-13 (catalog-drift の brief 是正) と同じ script-brief-C20.json が対象なので、そこで併せて是正できる"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "deliberate-abstraction",
+    "detail": "worker の裁量による情報の抽象化を記録する。C20 申し送り 4 の具体フィールド名 (focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to / notes_enabled / date / assets[].data_uri) と discovered-task id (P05-x-11) を本文へ literal 列挙せず、現象の性質のみを記述した。理由は SSOT 規律と『テストが要求していない詳細を焼かない』判断。**この抽象化は妥当と判断する** (フィールド名は schema 側の正本であり、P05-x-11 が解決すれば列挙自体が古くなる)。ただし利用者から見て『どの項目が復元できなかったか』は実行時に needs_human として返る設計になっているかが要確認事項として残る"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "unowned-followup",
+    "detail": "--compare で比較するか skill が再レンダリング比較するかの決着が未了 (C08 open_questions)。C02 本文は再レンダリング経路を主とし --compare を補助として書いたが、これは plan 上の決着ではなく worker の暫定選択。C08 (commands/handout-extract.md) の build 時に整合を確認すること"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "unowned-followup",
+    "detail": "brief / inventory には AC-C02-* の採番が無く、契約 id はテスト側で採番されたもの (テスト README の gaps に明記)。同様に contract_lib.REQUIRED_SUBSECTIONS が要求する『### ゴール (Goal)』『### 目的・背景 (Why)』『### 完了チェックリスト』も brief に無く repo の run 系慣行としてテストが課している。brief がテストの要求集合を包含していない状態が常態化している (C01 の deterministic_checks 7 本 vs AC-C01-1..24 と同型の問題)"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "gates-not-run",
+    "detail": "worker が明示的に未実行と申告した検査。P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) は未実行。worker が実行したのは自スイート・emoji scan・SSOT grep・sha256 検証のみで、それ以外を pass と主張していない。この自己申告は正しい振る舞いであり、未実行を pass と偽装しなかった点を記録する。P05-x-01 の集約時に lint 系を通すこと"
+   },
+   {
+    "route_id": "C02",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C02-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 16 件。(1) version 0.1.0 / owner harness maintainers (姉妹 skill C01 に合わせた・テスト要求外) (2) user-invocable true (C08 から Skill() 起動されるが直接起動も塞がない判断) (3) argument-hint '<html-path> [--out <handout-config.json>] [--report <extract-report.json>]' (C08 behavior 1 の引数形から) (4) allowed-tools [Read, Write, Bash, Glob, Grep, AskUserQuestion]。テスト要求は Read/Write/Bash のみ。AskUserQuestion は補完方針の利用者確認と --out 上書き確認、Glob/Grep は入力 HTML の所在確認のため (5) schema_refs ../../schemas/handout-config.schema.json (テスト要求外) (6) completeness_exempt を C01 に倣って付与 (goal_seek engine=inline のため固定 manifest 適用外) (7) eval-log パスを eval-log/guide-doc-generator/run-handout-extract-{goal-spec,progress,intermediate}.* と命名 (C01 の命名からの類推) (8) ゴールシーク検証節の hash 検査スクリプトを C01 と同型で採用 (9) 必須骨格に無い追加セクション『## 逆抽出の入出力契約』(R1/R2/R3 の 3 小節) を設けた (10) 完了チェックリストへ brief の 4 項目に加えて『復元できなかった意味情報を、利用者が埋められる形で提示した』を追加 (C20 申し送り 4 を停止条件へ結びつけるため) (11) feedback_contract.max_iterations は inventory に無いため設定せず (C01 は 3 を持つ・非対称) (12) prompts の内部構成と responsibility アンカーを R1/R2/R3 の短縮形とした (C01 の慣行に合わせた。brief の完全 id ではない) (13) 各 prompt の出力契約フィールド名 (R1: config_path/report_path/exit_code/recovered/unrecoverable/advisories、R2: completions/fidelity_map/validation/needs_human、R3: verdict/diffs/rendered_html/selfcontained/report_path/next_step) はすべて worker の命名 (14) 診断コード W-EXTRACT-OPTIONAL を本文と R1 prompt へ記載 (上記 brief-implementation-drift) (15) 復元対象外の例示 (ナビ・ヒーロー枠・アイコン sprite・CSS 変数・JS・footer・メモ UI) を Gotchas へ記載。C20 の not_preserved_by_design を部品 id 抜きで言い換えたもの (16) 非対話文脈では利用者への確認を未確定のまま返し既定値で埋めない、を R2 prompt 4.1 へ追加"
+   },
+   {
+    "route_id": "C03",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C06 (agents/handout-readability-reviewer.md) へ申し送り。name: handout-readability-reviewer / isolation: fork / owner_skill: assign-handout-readability-evaluator / prompt_ref: plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R-review-readability.md を期待している。責務アンカーは C03 側で <!-- responsibility: R1 --> を採用済みなので C06 本文もこれに揃えること (lint-agent-prompt-section.py の ANCHOR_RE が R<数字> のみを受理するため)。C06 の実体が置かれた時点で C03 の残赤 3 件は解消する"
+   },
+   {
+    "route_id": "C03",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C01 (skills/run-handout-build/SKILL.md) へ申し送り 5 件。(1) C03 は 1 回の委譲と 1 回の回収で終わる。再レビューの起動と打ち切り (loop 上限) は C01 の goal_seek が単独で持つ (2) C03 呼び出しの前提条件は C16/C17/C18/C22 が全て exit0 であること。FAIL 残存で呼ぶと status=blocked が返るので PASS と読み替えないこと。ゲート集約の正本は C09 の CR-GATE-AGG (3) C03 は verdict を無加工で返す。項目欠落時の扱い (再委譲するか FAIL 扱いにするか) は C01 側で決める必要がある (4) C03 へ渡す文脈に設計意図・ヒアリング生ログ・参照 HTML 文面・何周目の loop か・過去 findings を含めないこと (独立 context の価値が壊れる) (5) reader_profile は構成データの reader / prior_knowledge_level / usage_scene から C03 が組み立てるため、これらが正規化済み構成データに存在する必要がある"
+   },
+   {
+    "route_id": "C03",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
+    "kind": "unowned-followup",
+    "detail": "agent-brief-C06 の open_question 2 件が未確定のまま残る。(a) responsibility id は inventory では R1-assign だが prompt 名は R-review-readability で、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみを受理する。worker は prompt ファイル名を据え置きアンカーだけ R1 とする案を採ったが、C05 / C06 と揃える最終確定は未了 (b) gate_reports の json-report 出力先ディレクトリの owner が未確定。worker は『C03 側が --json-report つきで実行して収集する』と書いたが出力先の owner は明記していない。どちらも P05-x-01 で確定すること"
+   },
+   {
+    "route_id": "C03",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 9 件。(1) 本文アンカーを <!-- responsibility: R1 --> とした (上記 unowned-followup) (2) argument-hint を [--html ...] [--config ...] [--scope ...] とした (ブリーフ規定なし・テストも検査していない) (3) allowed-tools を [Read, Bash(python3 *), Task] とし委譲手段に Task を選択 (契約は Task/Agent のどちらでも可)。Bash(python3 *) は gate_reports 収集のため (4) gate_reports の json-report を C03 側収集に倒した (5) verdict の項目欠落時は補完も要約もせず欠落のまま呼び出し元へ報告 (C03 が補完すると『判定基準を持たない』前提が崩れるため。再委譲は選ばなかった) (6) version 0.1.0 / owner harness maintainers / disable-model-invocation false は近隣成果物の慣行に合わせた (7) 集約規則は C09 へ委ねる 1 行のみ (8) 件数リテラルを書かずリスト自体を列挙 (9) 用途語彙・部品 id・R22 値域・閾値を一切列挙しない"
+   },
+   {
+    "route_id": "C04",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C04-01.json",
+    "kind": "canon-duplication-risk",
+    "detail": "SKILL.md の :root 例示に具体的な hex 実値 9 色 (#43a4f5 / #2273b8 / #8ecdf8 / #d9edfe / #eaf5fe / #f4f8fc / #dbe6ef / #1b2733 / #5b6b7a) が入っている。AC-C04-14 が『アクセント実値は :root ブロック内にだけ現れる』ことを実値の出現位置で検査するため、:root が空だと規範の例示として成立しないという構造的要請による。ただし色値の正本は P05-x-02 が生成する assets/tokens/<theme>.json (スキーマ owner は C11) であり、C63 の数値を 1 箇所に保つ判断と同じ問題が色でも起きる。P05-x-02 の既定テーマを SKILL.md の例示値へ揃えるか、例示をプレースホルダ化するかを P05-x-01 の集約時に裁定する。worker は本文へ『以下は形の例示であって値の正本ではない』と明記済み"
+   },
+   {
+    "route_id": "C04",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C04-01.json",
+    "kind": "brief-underspecified",
+    "detail": "5 件の未定義事項を worker が判断して実装した。(1) vendoring 先を assets/ (デザイン言語の規範記述) と references/ (回答手順) の 2 ディレクトリへ分割 — テストは VENDOR_DIRS のどちらかに 1 件以上あり SKILL.md が相対パスで参照することしか要求しない (2) vendored の jp-web-design モード B から色の具体 hex 表・マスコット使用ルール・フォームコントロール自前描画・完了画面演出を落とした (hex はテーマ値の正本を二重化する / 残り 3 つは単一 HTML の配布資料に対応物が無い)。落とした事実と理由は vendored ファイルの『採らなかったもの』節に明記 (3) 面 4『文章設計の型』の中身を analysis/guide-doc-generator/reference-analysis.md 5 節から起こした — skill-brief-C04.json は面の名前しか持たない。C06 agent-brief が同じ型を参照しているため突合が要る (4) frontmatter へ effect/since/version を追加 (repo の他 ref 系 SKILL.md の慣行) (5) SKILL.md が指す config/handout-parts.json 等の参照先データファイルは C11/C12/C23 の P05 成果物であり未生成。C04 の契約は『パスと owner を指す』ことのみで実ファイル存在はテストの検査対象外だが、build 完了後にパスと実体の一致を突き合わせる必要がある"
+   },
+   {
+    "route_id": "C05",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C05-01.json",
+    "kind": "unowned-followup",
+    "detail": "README G1 が求める『CANONICAL_DESCRIPTIONS を 1 件へ縮める』作業に owner leaf が無い。worker は inventory 側の長い description (R21 の型フィールドを含む方) を採ったが、正本の重複自体は残っている。P05-x-01 phase gate で owner を決めること"
+   },
+   {
+    "route_id": "C05",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C05-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 13 件。(1) description の正本ずれは inventory 側の長い方を採用 (2) 責務アンカー id は ANCHOR_RE 互換の `<!-- responsibility: R1 -->` (3) prompt_ref は owner skill 配下の skills/run-handout-build/prompts/R-design-config.md。C01 側の実ファイル整合は別 leaf 依存 (4) model は inherit (fixture に合わせ sonnet 固定を避けた) (5) version 0.1.0 / owner harness maintainers / since / last-audited は 2026-08-17 (6) R21 のレクチャー型は識別子でなく自然文で表記し導出を C12 へ委譲 (7) R22 は 2 軸のキー名のみ記載し値域は列挙しない (8) 図解型 6 語も列挙せず schema と C11/C14 を参照 (9) part id は B17 のみ単発指名し他は config/handout-parts.json 参照 (10) 戻り値へ image_plan_summary を追加 (brief の output_contract に定義があるためテストの必須 11 キー外だが正本に合わせた) (11) must_remember / no_need_to_remember が両方欠落した場合も blocked と明記 (12) セクション別内容適応の 4 段を独立小見出しに切り出し、テストが要求する順序 (adaptation_trace → semanticMapping → layoutSelectionByStructure → props) を本文構造で満たした (13) 参照 HTML のファイル名を本文から除去し一般名詞のみとした"
+   },
+   {
+    "route_id": "C05",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C05-01.json",
+    "kind": "verification-gap-carried",
+    "detail": "P04-x-08 が挙げた『C05 AC10 は agent 実行が機械検査不能なため宣言的検査に留め、実行側判定を C21 の事前検査へ委譲』が本 leaf でも解消していない。agent が実際にセクションごとに異なる画像計画を出すことは、C21 の E-IMG-UNIFORM-COMPOSITION (2 セクション以上で構図が全件同一なら exit2) が実行時に担保する"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "test-defect-overbroad-scope",
+    "detail": "要裁定 / 本 leaf の write_scope 外。tests/handout-readability-reviewer/test_no_side_effects.py:23-29 の test_only_one_agent_definition_for_c06 が PLUGIN_ROOT.glob('**/handout-readability-reviewer.md') と plugin ルート全域を再帰探索するため、C03 が正当に置いたテスト fixture (tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md) を第 2 の定義として誤検出し恒久的に赤になる。守りたい不変条件は『production surface における agent 定義の正本が 1 本であること』であり、tests/fixtures は production surface でない。修正方向は glob 対象を agents/ 配下へ限定するか tests/ を除外すること (fixture の改名は C03 の受入 fixture を壊すため不可)。owner は tests を書いた leaf (P04-x-06 系) だが既に done のため受け皿が無く、additive discovered-task で外ループへ回す"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "canon-conflict",
+    "detail": "責務アンカーの形式が 2 正本で非互換。component-inventory.json#C06 の responsibility_anchor は 'prompts/R-review-readability.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみ受理する。worker は C03 と揃えて <!-- responsibility: R1 --> を採用したが、inventory 側は未更新のまま。C05 も含めた 3 者の表記を P05-x-01 で確定し inventory を更新すること (inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む)"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "canon-conflict",
+    "detail": "description の末尾句点。agent-brief-C06.json と component-inventory.json#C06 の description は『使う』で終わるが、lint-skill-description.py の R5 は『使う。』を要求する。AC1 が両方の充足を求めるため brief の文言のままでは両立しない (tests は句点の有無を吸収する設計になっており、これが唯一の逃げ道になっている)。成果物は句点ありを採用。brief と inventory 側へ句点を足すのが本筋"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "unowned-followup",
+    "detail": "本 agent は plugins/guide-doc-generator/references/ (ref-handout-design-system) を評価規範の正本として読む前提で書かれているが、当該ディレクトリは現時点で未作成。references を産出する leaf が完了するまでこの読み取りは空振りする。tests/ref-handout-design-system は存在するため producer leaf 自体は graph 上にあると見られるが、C06 完了時点で未着手であることを記録する"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C01 (skills/run-handout-build/SKILL.md) へ申し送り 4 件。(1) verdict 規則 (severity=high が 1 件でもあれば FAIL) の正本は本 agent 本文にある。C01 側で再判定・再定義しないこと (2) 本 agent は loop 制御・再レビュー起動・打ち切りを一切持たない。max_loops 等の収束制御は C01 の goal_seek が単独で持つ (brief open_questions[2] はこの形で確定) (3) status=blocked (決定論ゲート未 exit0 で起動された場合) は verdict を伴わない。C01 は blocked を FAIL とも PASS とも読まず、ゲート修復へ戻す分岐を持つ必要がある (4) 修正実施は C01 の責務であり、本 agent の suggestion は提案であって適用指示ではない (本文に明記済み)"
+   },
+   {
+    "route_id": "C06",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 13 件。(1) model: inherit (brief open_questions[3] 未確定。先例 handout-content-architect.md と brief 本文の推奨に従った) (2) prompt_ref を plugin 相対 skills/assign-handout-readability-evaluator/prompts/R-review-readability.md とした (brief 本文は repo ルート相対だが先例は plugin 相対。テストは両者を区別しない) (3) 責務アンカーを <!-- responsibility: R1 --> 1 個とした (上記 canon-conflict) (4) version 0.1.0 / owner harness maintainers / since 2026-08-17 / last-audited 2026-08-17 は先例に揃えた (5) --json-report 出力先の provider を本文で断定しなかった (brief open_questions[4] 未確定のため『書き込みは --json-report の一時パスのみ』とだけ書いた) (6) description 末尾に句点を追加 (上記 canon-conflict) (7) finding.id を F1 から始まる連番とした (brief は例示 'F1' のみ) (8) location.element の例として lead-line / 判断軸 / 具体部品 を挙げた (9) machine_gate_overlap を『常に false』と本文で書いた (brief は『true の finding を出してはならない』) (10) Goal-Seeking Execution を brief の procedure と同数の番号付きステップへ展開しゴール文を追加 (11) Constraints を 4 小見出しへ分割 (brief は小見出し構成を規定せず) (12) Purpose へ proposer=approver の説明段落を追加 (brief の isolation_rationale を本文化) (13) Bash 許可 script の記述で『4 本に限る』という件数リテラルを 1 箇所使用。script 名自体も併記しているが、導出値忌避の規律からは『次の script に限る』へ落とす余地がある (自己申告された 7 例目の候補・実害は小さいが記録する)"
+   },
+   {
+    "route_id": "C07",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+    "kind": "canon-conflict",
+    "detail": "要裁定 / 当方が実測して独立確認した。argument-hint が 2 正本で食い違う。成果物 (= brief 準拠) は '[題材] [--config <config.json>] [--doc-type <種別>] [--out-dir <path>] [--theme <preset>] [--date <yyyy/mm/dd>]' の 6 引数版だが、component-inventory.json#C07 は '[題材] [--out-dir <path>] [--theme <preset> (構成データ未指定時のみ)]' の 3 引数版のまま。テスト (contract_lib.ARGUMENT_HINT_TOKENS + SourceOfTruthTest.test_argument_hint_tokens_come_from_brief) が brief を正本として 6 引数すべてを要求するため brief 側の採用は正しいが、AC-C07-1 の『frontmatter が inventory と一致』を字義通り読むと inventory の更新が必要。**これは C09 で記録済みの同種 canon-conflict と同じ欠陥の 2 例目**であり、inventory の argument-hint 列が brief の後追いをできていない構造的問題。inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む"
+   },
+   {
+    "route_id": "C07",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+    "kind": "unowned-followup",
+    "detail": "brief open_questions[0] (C11 render-handout.py 側の衝突時挙動が『無視』か『exit≠0』か) が未決のまま。C07 本文は brief どおり『command 側で停止』と宣言したため、C11 が『無視』を採ると command 経由と直叩きで挙動が割れる。C11 は既に done であり受け皿が無い"
+   },
+   {
+    "route_id": "C07",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+    "kind": "unowned-followup",
+    "detail": "--presentation-order の CLI 面を C07 に持たせるか否かが未決 (tests/handout-build/README.md gaps#1)。worker は brief arguments[] に無いものを発明しない方針で一切書かず、同時に『提示順は CLI 入口を持たない』という明記も追加しなかった (brief にも tests にも根拠が無いため)。R21 の presentation_order は構成データ側にしか入口が無い状態"
+   },
+   {
+    "route_id": "C07",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+    "kind": "doc-drift",
+    "detail": "tests/handout-build/README.md が実装前の期待値を 'Ran 45 tests / FAILED (failures=26)' と記載するが実測は failures=22。worker は差分の原因を『README 執筆後に C01 skill と scripts 群が実装済みになり BuildTargetLayoutTest / ConsumerParityTest 側の 4 件が先に緑化したため』と推定しつつ、未検証の推定であると明記している。これは README に赤の件数という導出値を書いた結果であり、本 build で追跡中の『導出値を契約へ書き下す』欠陥クラスの 8 例目に相当する (実害は小さいが記録する)"
+   },
+   {
+    "route_id": "C07",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C07-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 10 件。(1) frontmatter へ source: 'plugin-plans/guide-doc-generator/component-inventory.json#C07' と output_language: ja を追加 (brief / inventory に規定なし。既存の C09 handout-verify.md と揃えた。契約チェッカは未知キーを検査しない) (2) description を YAML ダブルクォートで囲んだ (C09 に合わせた。素の値としては inventory と完全一致) (3) 見出し構成 (資料生成の起動入口 / 引数の既定値と上書き規則 / 引数別小節 / 手順 / 停止条件と縮退時の挙動 / 報告) を C09 の書きぶりに寄せて自前決定 (4) brief の behavior と failure_modes を別節にせず停止条件と縮退を 1 節へ統合 (5) 報告項目の『同梱 4 点』を列挙へ置換 (上記 verified_by) (6) 『再現の単位は同梱構成データ 1 点』を『同梱構成データただ一つ』へ (7) ゲート FAIL 時に『状態分類と全体判定の規則は /handout-verify (C09) の単一正本に従い再解釈しない』の 1 文を追加 (brief には無いが集約を C09 へ委ねる方針の明示。テストは要求していない) (8) --date 節に『ディレクトリ名の <YYYY-MM-DD> は C19 が導く命名専用の派生表現で、表示の正本表現とは別概念』を記載 (brief open_questions[1] の X-01 決着の反映。テスト要求ではない) (9) 冒頭 boundary 段落で skill 側責務 (ヒアリング・構成データ確定・プリセット解決・script 実行順序・ゲート結果集約・出力先ルーティング) を列挙する位置を決めた (10) disable-model-invocation は出典が inventory のみのため inventory の false を採用 (brief に規定なし・README gaps#4)"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "worker-premise-incorrect",
+    "detail": "当方が実測して補正した。worker は『needs_human という語は C02 の SKILL.md 本文に存在しないため、存在しないキー名を command 側に焼くと下流に偽の契約が生まれる』を理由に本文へ書かなかったと報告したが、grep -rn 'needs_human' plugins/guide-doc-generator/skills/run-handout-extract/ を当方が実行したところ prompts/R2-complete.md:75 に『needs_human — 利用者への確認 を選んだキーパスの一覧 (人が埋める経路の入口)』として**実在する**。よって『存在しないキー名』という前提は誤り。ただし**結論 (本文へ書かない) 自体は妥当**である: needs_human は C02 の R2 responsibility prompt の内部出力契約フィールドであり、command が下流 skill の内部フィールド名を写せばそれ自体が第 2 の正本になる。worker は正しい結論へ誤った理由で到達した。申し送り 1 (C02 側でキー名を正式化するなら C08 にも追記が要る) は前提が崩れたため**不要**と裁定する — キー名は既に C02 側で定着しており、command が持つべきは『人が埋める項目が残ることは失敗ではない』という意味だけで足りる (これは本文へ織り込み済み)"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "canon-location-inversion",
+    "detail": "要裁定。停止理由の語彙 (html-path-missing / html-path-not-found / html-path-is-directory) の正本が tests 側の resolution_spec.py:41-45 STOP_REASONS にあり、同 file:188-189 が未知の reason を SpecError で拒否する。一方 command-brief-C08.json の failure_modes は『html-path 未指定 / 不在 / ディレクトリ指定』を自然文で 1 case にまとめており、機械可読な語彙を持たない。**テストが brief の上位互換になっている構造**であり、これは C02 で記録した『brief がテストの要求集合を包含していない』と同型だが、C08 では更に一歩進んで『brief に存在しない語彙をテストが定義し実装がそれに従う』という正本の逆転が起きている。brief へ逆流させるべき"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "unowned-followup",
+    "detail": "brief open_questions[0] (--out 既存ファイル上書き確認を command 側の対話で行うか、extract-handout-config.py に既存拒否フラグを持たせるか) が未決のまま。C08 は『command 側で confirm-overwrite を宣言する』までを固定したが、C20 が無条件上書きなら宣言は素通りする。C20 は既に done であり受け皿が無い。brief 自身が『script 側が無条件上書きなら command の確認は素通りされる』と正しく予見していたにもかかわらず、どちらの leaf でも決着しなかった"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "unowned-followup",
+    "detail": "逆抽出レポートのファイル名が未定 (tests/handout-extract/README.md gap 1)。C08 はディレクトリ併置のみを契約化し名前は C02/C20 へ委ねたが、C02 も C20 も名前を確定していない。3 leaf すべてが『他が決める』として通過した項目であり、round-trip の再実行時にレポートを特定できない"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "gates-not-run",
+    "detail": "worker が明示的に未実行と申告した検査。(a) brief の AC-C08-1 が how として名指す validate-frontmatter は repo 内に実行可能な実体を発見できず未実行 (frontmatter の inventory 一致は contract_lib._check_frontmatter が同等の照合をしており緑)。(b) repo scripts/ 配下の lint 79 本のうち slash-command md を対象とするものが見当たらず未実行。worker はこれらを pass と偽装せず未実行と報告しており正しい。**この (b) は C07/C08/C09 の 3 command に共通する統治の穴**であり、command 定義の品質は現状 tests/<command>/contract_lib.py だけが担保している。P05-x-01 で横断ゲートの要否を裁定すること"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 14 件。(1) frontmatter へ source: 'plugin-plans/guide-doc-generator/component-inventory.json#C08' を追加 (brief に規定なし・C07/C09 に揃えた) (2) output_language: ja を追加 (同上) (3) description を引用符で囲んだ (テストは引用の有無を問わない) (4) frontmatter キーの並びを C07 と同一順にした (5) 見出しを '# /handout-extract — 逆抽出の起動入口' とした (C07 '— 資料生成の起動入口' / C09 '— 検証ゲートの集約入口' の踏襲) (6) 節構成 (引数の既定値と上書き規則 / 手順 / round-trip の粒度 / 復元される範囲とされない範囲 / 縮退 / 失敗時の扱い / 境界) を C07 を基に C08 固有の開示を独立節として決めた。fixture の節名 '## 引数' でなく C07 の '## 引数の既定値と上書き規則' を採用 (7) CR-EXTRACT-ARGS へ owner: 'C08 /handout-extract' を追加 (テスト形式は要求しないが C09 の CR-GATE-AGG に揃えた・resolve_declared は未知キーを無視) (8) CR-EXTRACT-ARGS へ positional: ['html-path'] を保持 (評価に使われないが自己記述性のため) (9) 『散文と食い違った場合は機械可読宣言が正しい』という優先順位を明記 (brief になし。二重記載が構造上避けられないため正本を一方へ固定した・良い判断) (10) 逆抽出レポートのファイル名を決めなかった (上記 unowned-followup) (11) 停止理由の語彙をテスト側から採用 (上記 canon-location-inversion) (12) 委譲先不在時の縮退を『停止 + 解決を試みたパスの提示』とした (brief failure_modes に該当項がなく failure_modes 3 の『空を成功にしない』思想を延長) (13) 境界へ C19 の項を 1 行追加 (brief boundary になし。出力先ルーティング非自前実装を明示的に閉じるため) (14) 『人が埋める必要のある項目が残ることは失敗ではない』の一文を追加 (C02 申し送りの本文化)"
+   },
+   {
+    "route_id": "C08",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C08-01.json",
+    "kind": "handoff-resolved",
+    "detail": "上流申し送りの決着を記録する。(a) C02 の needs_human は意味のみ織り込み・キー名は非記載 (上記 worker-premise-incorrect で裁定済み・結論は妥当) (b) brief open_questions[1] の --compare vs 再レンダリング比較は**再レンダリング比較で決着**。C02 が R3-roundtrip で render-handout.py による再レンダリング等価判定を採り、--compare つき起動は --out を書かないため同一起動に兼ねさせないと決めていたため、C08 はそれに従属し『比較の実行主体は委譲先 skill の再レンダリング比較であり、この command は比較方式を選ばない』と書いた。brief 自身の但し書き (どちらでも command の契約は変わらない) と一致する。**C02 の route report で unowned-followup として記録した項目はこれで解消**する (c) W- 行を fail 扱いしない・exit≠0 の成果物を捨てない はいずれも述語と委譲の形で織り込み済み、診断コード名と exit code 対応表は非列挙"
+   },
+   {
+    "route_id": "C09",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C09-01.json",
+    "kind": "test-forces-derived-value",
+    "detail": "要裁定 / 本 leaf の write_scope 外。tests/handout-verify/contract_lib.py:509 が `re.search(r\"4\\s*(ゲート|行|面)\", body)` でゲート件数 4 を成果物本文へ literal で書くことを強制している。これは RESOLUTION-P04-x-05 が同定した『導出値を契約へ書き下す』欠陥クラスの 5 例目 (C22 の assertEqual(8,...) に続く) であり、ゲートが 1 本増減した瞬間にドキュメントが嘘になるうえ検査は緑のまま通る。worker は SSOT 規律とテスト要求の衝突を認識したうえでテスト側を優先し (テスト変更は禁止のため)、4 の使用を 2 箇所に限定して報告した。修正の方向は『件数を書け』でなく『gate_faces の全要素が表に現れること』を述語にすること。owner leaf を P05-x-01 で決めること"
+   },
+   {
+    "route_id": "C09",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C09-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C01 (P05-C01-01) へ申し送り。(1) SKILL.md 本文に `/handout-verify` と `CR-GATE-AGG` の 2 語を literal で含めること (ConsumerParityTest がこの 2 語の存在を要求しており、満たすまで C09 のテストは 1 件赤のまま) (2) R4-verify は自前集約を持たず /handout-verify を起動し --json-report の summary.json (verdict + gates) を受け取って報告に載せること。4 状態分類と verdict 判定規則を SKILL.md の散文へ複製しないこと (3) 同一のゲート実行結果に対し C09 直叩き経路と C01 経路の verdict が一致することが invariant。差異が出たら C01 側の独自集約バグ"
+   },
+   {
+    "route_id": "C09",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C09-01.json",
+    "kind": "canon-conflict",
+    "detail": "argument-hint が brief と component-inventory.json#C09 で食い違う。worker は brief 側の長い形 (`<html-path> [--config ...] [--out-dir ...] [--only ...] [--json-report ...]`) を採用したが、inventory 側は短い形のまま (README gap 1 が既知として記録)。inventory は他 leaf の criteria_ref でもあるため、放置すると別 leaf が短い形を前提に組む。P05-x-01 で inventory 側を更新すること"
+   },
+   {
+    "route_id": "C09",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C09-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 8 件。(1) argument-hint は brief 側を採用 (上記 canon-conflict) (2) 集約規則の機械可読形式は brief に無く、テスト群が定めた CR-GATE-AGG の fenced json 形式を採用。verdict_table は aggregation_spec.REFERENCE_VERDICT_TABLE と同じ 4 行 first-match (3) frontmatter に source と output_language: ja を追加 (テスト要求外だが fixture の accept 例と他 component の書きぶりに合わせた) (4) 集約サマリのファイル名を summary.json、各ゲートを <gate_id>.json と規定 (brief は『同ディレクトリへ置く』としか書いていない) (5) exit 2 は引数エラーを含め error として fail 側へ倒す。brief の open_questions は C16/C17/C18/C22 側の確定待ちとしていたが、実物の script が EXIT_UNUSABLE = 2 を使っており矛盾しないことを確認済み (6) 『手順』節を追加 (テスト要求外だが command として実行可能にするため) (7) 件数 4 の使用を 2 箇所へ限定 (上記 test-forces-derived-value) (8) 見出しと description では件数語を避け『検証ゲート』『ゲート面』と書き、ゲートは表で列挙する形にした"
+   },
+   {
+    "route_id": "C10",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C10-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C11 実装者 (P05-C11-01) への申し送り。C16 suite に残る 3 件 (test_c11_has_no_scheme_enumeration / test_c11_has_no_codepoint_enumeration / test_c11_calls_the_canonical_functions) は C11 が同じ importlib 経路で C16 の canonical 関数を呼べば緑になる。逆に C11 が自前でスキーム列挙・コードポイント列挙を持つと落ちる (既に dispatch 済みの P05-C11-01 へ本文で伝達済み)"
+   },
+   {
+    "route_id": "C10",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C10-01.json",
+    "kind": "budget-contract-not-enforceable-as-written",
+    "detail": "worker の実測に基づく申し送り。brief は『時間予算 3 秒』を宣言するが、C16 の scan_emoji は 7 MiB の HTML で実測約 13 秒かかる (scan_external_references は 0.03 秒)。3 秒の壁時計打ち切りを入れると TestUnderLimitIsInspected (8 MiB 未満は完走して exit2) が必ず落ちるため、予算をチェックポイント方式 (3 箇所で time.monotonic() 照合) とし走査の途中中断は行わない設計にした。実効的な打ち切りは 8 MiB のサイズ上限のみ。要裁定: brief 側の 3 秒という数値が実測と乖離しているので、閾値を上げるか『予算は診断用で打ち切りに使わない』と brief に明記するかを決める必要がある"
+   },
+   {
+    "route_id": "C10",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C10-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 9 件。(1) 文字参照の復号は scan_emoji(html.unescape(text)) として標準ライブラリへ委ね自前の表を持たない (parity fixture に実体参照が無いため html.unescape は恒等写像で parity は保たれる) (2) 上記の時間予算チェックポイント方式 (3) stderr 1 行の書式を `D1-external-url-attr [SC-01] line 7 col 1: <抜粋>` とし C16 の canonical 規則 id を併記。抜粋は C16 が EVIDENCE_MAX=120 で整形済みのものを再切詰せず転記 (4) BLOCKED 見出しに対象パスと件数を含めた (5) 読込不能 (削除済み・ディレクトリ・権限不足・UTF-8 復号不能) は無出力 exit0 とし、systemMessage を出すのは module 解決不能とサイズ打ち切りの 2 経路のみ (6) 相対パスの基準は payload の cwd、無ければ os.getcwd() (7) applies_to の評価順は brief の宣言順。.html は Path.suffix.lower() の完全一致で判定し .htm と handout.html.bak は対象外 (8) main() 全体を except Exception: return 0 で包み traceback を stderr へ漏らさない (9) settings.json / hooks.json / plugin.json への登録は write_scope 外のため行っていない"
+   },
+   {
+    "route_id": "C10",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C10-01.json",
+    "kind": "unowned-followup",
+    "detail": "hook の settings 登録 (settings_registration) に owner leaf が無い。同梱 hooks/hooks.json および .claude-plugin/plugin.json の hook 宣言をどの leaf が書くかを P05-x-01 phase gate で裁定する必要がある。現状は『存在しなければ pass』のテストしか無いため、登録漏れが緑のまま通過し得る"
+   },
+   {
+    "route_id": "C11",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "残る赤 5 件はすべて C11 の write_scope 外にあり、当方が 5 件とも独立に原因ファイルまで特定した。(1)(2) test_language_gate_passes / test_narrative_gate_passes: C11 の fixture _harness.base_config() が provenance.normalized_by を持たない未正規化 config を C18 / C22 へ渡し、両 script が仕様どおり exit 2 を返す (verify-handout-language.py:855 / verify-handout-narrative.py:505)。HTML は読まれる前に落ちており C11 実装とは無関係。C18 側で吸収すると未正規化 config を検証通過させる穴になるため吸収不可 (3) test_part_ids_are_not_enumerated_outside_the_catalog: 違反 14 件は validate-handout-config.py:84-91 (8 件) / verify-handout-a11y-print.py:56-58 (4 件) / verify-handout-narrative.py:50,1003 (2 件) にあり、render-handout.py 由来は 0 件 (grep 実測) (4) test_catalog_is_sorted_and_well_formed: config/handout-parts.json の並びが ...B17, IMG, DIAGRAM, TEXT で sorted(ids) の ...B17, DIAGRAM, IMG, TEXT と一致しない。当該ファイルの _meta.produced_by は P05-x-03 (5) test_accent_token_change_only_diffs_root_block: テストの _accent_key はトークンファイルのトップレベルキーに pop-primary を含むものを探すが、assets/tokens/pop.json のトップレベルは schema_owner / produced_by / theme / label / is_default / source / accent / css_variables / ... でありアクセント色は accent.scale[].value と css_variables['--pop-primary'] の下にある。当該ファイルの produced_by は P05-x-02"
+   },
+   {
+    "route_id": "C11",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+    "kind": "owner-leaf-already-closed",
+    "detail": "要裁定 / 構造的な問題。上記 (4)(5) の owner である P05-x-02 (assets/ の唯一の producer) と P05-x-03 (config/ の唯一の producer) は既に done であり、(1)(2) の fixture を所有する P04-x-06 も done。つまり赤を残す 5 件のうち 4 件は『閉じた leaf の成果物を直す』作業で、現行 graph に受け皿が無い。additive の discovered-task を emit して外ループで受けること。これは P04-x-05 が同定した『artifact に producer がゼロでも validate-task-graph が検出しない』欠陥の変種で、今回は producer が存在したが先に閉じてしまった形"
+   },
+   {
+    "route_id": "C11",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+    "kind": "test-forces-derived-value",
+    "detail": "test_parts_catalog.py:94 の docstring が『各エントリは 6 フィールドを持つ』と書くが、直下のループは id / name_ja / kind / section_scope / data_block_type / since / source の 7 フィールドを検査している。実害は無いが (docstring は実行されない)、導出値を契約へ書き下す欠陥クラスの再発例として記録する。修正時は件数を書かず必須フィールドのリスト自体を書くこと"
+   },
+   {
+    "route_id": "C11",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 17 件。(1) 骨格部品はカタログの section_scope==\"document\" をカタログ順で [nav, hero] として位置解決 (件数が 2 でなければ exit 2)、既定テーマは is_default: true が唯一 1 件であることから解決 (2) C15 の collect_icon_refs が nav を dict 前提で歩くため {\"sections\": [...]} だけを投影して渡す (3) アイコンは装飾扱いとし icon-set から title 欄を落として build_sprite へ渡す (C17 A11Y-05 が aria-hidden の svg が title を持つことを無条件で違反とするため。意味は隣接する可読テキストが担う) (4) C14 出力のルート svg にのみ data-hb-kind=\"figure\" を注入し、title 未指定時は block の title→caption→label→セクション見出し→文書タイトルの順に補う (5) <use> ホスト svg は data-hb-kind=\"decor\" + aria-hidden=\"true\" (viewBox/stroke 等の統一スタイル定数を C11 側へ複製しないため) (6) 埋め込み実体の正本を assets レジストリ側に置き asset.data_uri を優先、block の data_uri は asset_id 未解決時の控え (7) data-hb-generated=\"true\" を nav/hero/lightbox/memo/memo-global/toolbar に付与、part-id は骨格部品のみカタログ id 由来、通常 block は config の id、無ければ type-連番 (8) data-hb-detail-level / -evidence-depth は値が無くても空文字で必ず出す (R22 の level-invariants が属性を strip して比較するため) (9) data-hb-text-limit はテーマトークンの text_limits.block_body_max_chars_by_detail_level[level]、無ければ block_body_max_chars。180/400/900 のリテラルは書かず、報告しきい値は 1 << 18 と表記 (10) warnings は報告のみで上限判断は C13 の責務、exit 0 を維持 (11) C17 の CSS トークナイザが入れ子 at-rule / CSS nesting を解釈できないため全規則をフラットに記述 (12) STICKY-01 は html{scroll-padding-top} と .section-card{scroll-margin-top} の CSS 二重 + JS の getBoundingClientRect 実測補正 (13) aria-pressed を持つトグルが無い構成でも属性が文書に存在するよう生成部品 data-hb-part=\"toolbar\" を常置し data-hb-part-role=\"aux\" で A11Y-01 の対象から外す (14) nav は <nav class=\"navbar\"> (C16 SC-08 の認識条件)、hero は <div> (セクション数の一致要件を壊さないため) (15) glossary は schema の $defs.glossary_entry に従い文書スコープは main 末尾・セクションスコープは judgment_axis の直後に <dl> で描画し data-hb-glossary-term/-plain/-scope を付与、カタログ外なので data-hb-part は付けない (16) C23 の内部解決が HB_ROOT で止まるため C11 側の 4 段解決で得たパスを load_catalog(path) へ明示的に渡す (17) P04-x-07 の overlay-fallback markup はテスト要求が無いため実装せず未所有のまま残置"
+   },
+   {
+    "route_id": "C12",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+    "kind": "test-canon-conflict",
+    "detail": "要裁定 1 / 当方で独立確認済み。test_source_hygiene.test_no_purpose_vocabulary_literals と test_document_fields.DocTypeVocabulary.test_unknown_doc_type_lists_vocabulary が catalog[\"entries\"] を読むが、config/handout-purposes.json のトップレベルは [_meta, schema_version, vocabulary, presets] で entries キーは存在しない (当方が json.load で再確認)。用途語彙の正本キー名は vocabulary。config/ も tests/ も C12 の write_scope 外のため本 leaf では解消不能。裁定方針: config が正本でテスト側の参照名が誤り。テスト 2 件を vocabulary へ改める leaf を別途立てる"
+   },
+   {
+    "route_id": "C12",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+    "kind": "test-canon-conflict",
+    "detail": "要裁定 2 / 当方で独立確認済み。test_normalize_date_determinism.NormalizeDefaults.test_provenance_shape は provenance を {normalized_by, schema_version, catalog_sha256, date_source, presentation_order_source, text_fold_count} のちょうど 6 キーへ assertEqual で固定するが、schemas/handout-config.schema.json の $defs.provenance と R22 は detail_level_source / evidence_depth_source を要求する (P05-x-05 の worker 裁量 (5) で追加され、C12 ブリーフの notes が名指ししている)。6 キー固定と 8 キーは相互排他。実装は schema+R22 側を採り 8 キーを出力している (R22 の 21 件が緑を維持)。加えて本テストは『キー集合ちょうど一致』という導出値を契約に書いた形であり、RESOLUTION-P04-x-05 の欠陥クラスに該当する。裁定方針: 述語を『規定の 6 キーを含む』+『normalized_by と text_fold_count の型』へ緩める"
+   },
+   {
+    "route_id": "C12",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+    "kind": "test-defect-always-red",
+    "detail": "当方で独立確認済み。test_normalize_date_determinism.FailClosed.test_no_temp_file_left_behind は out.parent を iterdir し suffix != '.json' の実体を残留とみなすが、_harness.setUp が self.tmp/'plugin-root' を必ず作り self.out も self.tmp 直下に置く (_harness.py:144-154)。plugin-root は拡張子を持たないディレクトリなので実装の内容に関わらず常に leftovers へ入り恒常赤。裁定方針: 走査対象を『out.parent 直下のファイルのみ』かつ『out.stem を前置する一時名のみ』へ絞る"
+   },
+   {
+    "route_id": "C12",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+    "kind": "resolved-open-question",
+    "detail": "P05-x-05 から引き継いだ未決 3 件のうち 2 件が本 leaf で解けた。(1) $defs.diagram のネスト形 vs C14 のフラット形: C12 suite に diagram オブジェクトの形を検査するテストが 1 件も無いため、C12 側からは schema のネスト形が無競合で立つ。決着は P05-C14-01 に残る。(2) diagram.pattern の 6 値目: script は enum を schema から動的に読み literal を持たないため versus/dichotomy のどちらでも壊れない (正本は C14)。(3) script-brief-C11.json の 'C12 の config_schema.part_catalog' は誤記で、実体は $defs.part_data。script は起動時に config/handout-parts.json の id 集合と $defs.part_data の id 集合の一致 (20 件) を assert し、不一致なら exit 2 する = 第 2 の部品レジストリを作らせない fail-closed"
+   },
+   {
+    "route_id": "C12",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C12-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量。用途語彙・section_kind・part id・テーマ名を script へ列挙せず、すべて config/ と schemas/ から読む方針を全面採用した (語彙の第 2 正本を作らない)。読み込み失敗時は exit 2 の fail-closed"
+   },
+   {
+    "route_id": "C13",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C13-01.json",
+    "kind": "brief-underspecified",
+    "detail": "5 件の未定義事項を worker が判断して実装した。(1) 素材収集対象を assets[]/attachments[] に限定 (C12 正規化後はセクション側が id 参照のみを持つため) (2) skip 素材の相対パスキー名を embed_source_path として採用 (ブリーフ未定義) (3) attachments[].mime の宣言値より自前対応表を優先 (優先順位がブリーフ未定義) (4) 重複参照のキャッシュキーを (相対パス, MIME) とした (failure_modes は絶対パスと書くが出力へ絶対パスを漏らさない方針を優先) (5) embedded_count/total_source_bytes を参照件数ベースとした。いずれも P05 の他 component (C11/C12/C20) との名前・語義の突合が要る"
+   },
+   {
+    "route_id": "C14",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C14-01.json",
+    "kind": "test-harness-defect",
+    "detail": "残る 7 赤は正しい実装でも構造上パスできないテストハーネス欠陥 3 件に起因する。H-01: _harness.Element.get が大文字小文字を区別する一方 HTMLParser が属性名を小文字化するため get('viewBox') が常に None (5 テスト)。H-02: test_stdin_is_not_used が TemporaryDirectory の with 外で read_text し FileNotFoundError。H-03: test_width_float_is_exit2 が assertEqual へ位置引数 4 個を渡し TypeError。いずれも dispatcher が該当行を読んで確認済みで、修正は P04-x-06 の H-01..H-03 として task-spec 化した。テストは 1 行も改変していない"
+   },
+   {
+    "route_id": "C14",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C14-01.json",
+    "kind": "write-scope-excursion-directed-by-tests",
+    "detail": "worker が write_scope 外へ plugins/guide-doc-generator/tests/render-diagram-svg.py/golden/ の 6 SVG を書いた。GoldenSvgTest 7 件が golden ファイルの実在を要求し、テスト群の README.md と record_goldens.py が『実装後に 1 回だけ実行する』と明示指示している手順による。テストファイル自体は 1 行も変更されておらず、既存ファイルの上書きもなく新規ディレクトリの追加のみ。P04-C14-01 が意図した手順であるため撤回せず保持する"
+   },
+   {
+    "route_id": "C14",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C14-01.json",
+    "kind": "brief-underspecified",
+    "detail": "ブリーフ未定義でテスト README の gaps に沿って解釈した点。compare.cells は items x axes の 2 次元配列、hierarchy の深さは root を第 1 層と数える、title の折返し上限 2 行、note/bullets の上限 2 行、flow の margin=16 / gap=24 / padding=12、単一行テキストは tspan を出さない (test_first_line_dy_is_zero_and_later_lines_are_one_point_four_five_em が文書順の全 tspan に dy=1.45em を要求するため)。C11 の埋め込み側との語義突合が要る"
+   },
+   {
+    "route_id": "C15",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C15-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C16 実装者 (P05-C16-01) への申し送り 1 件。test_layer2_violation_reports_sc05_and_codepoints が stderr に 2699 と FE0F の両方を要求する。C15 は Violation.codepoints を言い換えず転記するだけなので、C16 は「層 2 + VS16」を 1 件の Violation にまとめ codepoints へ 'U+2699 U+FE0F' 相当の整形済み文字列を入れる必要がある。VS16 を層 1 として単独計上する実装だとここが赤のまま残る"
+   },
+   {
+    "route_id": "C15",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C15-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 7 件。(1) 外枠 svg の data-hb-kind 値を decor に決定 (README G-01/G-02 が plan 確定を要望していた項目。テストは 'icon 以外' しか固定していない) (2) --format=manifest の中身に used に加え unused_in_set と set_version を追加 (診断情報を落とす理由が無いため) (3) 候補 root の stage 3 を「cwd とその祖先 + __file__ の親の親 のうち .claude-plugin/plugin.json の name が一致するもの」と定義 (テストは範囲を検査していない) (4) 走査順の粒度を構成データの dict 挿入順そのままと解釈 (5) stroke_width 許容域 2.2-2.6 を script 側の定数で持つ (テスト正本が定数で持つため。様式の閾値であり語彙ではないと判断) (6) 正本の per-icon 余分キー (viewBox 等) を拒否せず無視 (test_style_is_not_taken_from_the_icon_set が exit 0 を要求) (7) set_version 欠落時は空文字列を返し exit 1 にしない"
+   },
+   {
+    "route_id": "C16",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C16-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C10 (P05-C10-01) と C11 (P05-C11-01) の実装者への申し送り。残る赤 26 件は、両者が spec_from_file_location で本 script を module として読み込み scan_external_references / scan_emoji を呼ぶ実装にすれば緑になる (module API は実装済みで、C15 が同じ経路で稼働中であることが 128/128 緑で裏づけられている)。逆に両者が自前でスキーム列挙やコードポイント列挙を持つと test_c10_has_no_scheme_enumeration / test_c11_has_no_codepoint_enumeration が落ちる"
+   },
+   {
+    "route_id": "C16",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C16-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 13 件。(1) SC-09 の対象 data-hb-part 値を part id リテラルでなく kind==\"media\" かつ data_block_type!=\"text\" という属性述語で導出 (部品 id の正本が config/handout-parts.json にあり script へ列挙できないため。config 不読時は fail-closed exit 2) (2) 外部スキーム値は SC-01 のみ報告し SC-03 は黙る (test_href_url_returns_violation が戻り値ちょうど 1 件を要求) が SC-10 は裁定どおり SC-01 と二重報告 (3) a@href の閉包判定を SC-03 の領分とし SC-10 の一般属性ルールから外した (4) SC-05 の evidence に生グリフを入れずコードポイント整形文字列を入れた (stderr を絵文字フリーに保つため) (5) CLI は text node + 全属性値 (data: 値は先頭 64 文字) を region 化して単一の _emoji_hits() を呼ぶ (CLI 専用分岐を持たない) (6) 孤立 ZWJ / VS1-VS15 / VS16 無し層 2 は違反にせず info として json-report に残す (7) SC-06 の様式違反は要素 1 個につき 1 件へ集約 (8) SC-08 の data-hb-nav=\"exclude\" 逃げ道を実装し除外 section を info に記録 (テストは無い) (9) srcset の分割を『カンマ + 空白』でのみ行う近似 (data: URI 内のカンマで割らないため。空白なしで連結された data URI 候補は誤分割し得る) (10) json-report に warnings と各 detection の info を追加 (detections は SC-01..SC-10 の 10 件固定で SC-00 を混ぜない) (11) --json-report の書き出しを stdout/stderr より前に行い、書けなければ ERROR 1 行のみで exit 2 (12) ArgumentParser.error/exit を上書きし usage を出さず ERROR<TAB>... 1 行に統一 (13) 絵文字違反の代替提案を assets/icons/icon-set.json の先頭 3 件から読む (語彙を script に持たない)"
+   },
+   {
+    "route_id": "C16",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C16-01.json",
+    "kind": "known-approximation",
+    "detail": "上記 (9) の srcset 分割は近似であり、空白を挟まずカンマ連結された data URI を誤分割し得る。現行テストは検出しない。実データで誤検知が出た場合はここが疑い箇所"
+   },
+   {
+    "route_id": "C17",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C17-01.json",
+    "kind": "brief-underspecified",
+    "detail": "5 件の未定義事項を worker が判断して実装した。(1) PRINT-03 に『最上位のみ』規則を導入 (memo-note が対象で lightbox-close が対象外である理由がブリーフから引けず、両立させるにはこの規則が要る) (2) 裸の :focus-visible を非ユニバーサル扱いとする保守的な静的近似 (A11Y-06(c) のテストを満たすため) (3) A11Y-02 は aria-selected=true の個数が 1 でない時点でパネルの hidden 検査を短絡し『1 原因 = 1 違反』を保つ (4) 解析不能な CSS の報告チャネルが未定義のため stderr へ CSS-PARSE を出す (5) lightbox のキーボード操作・フォーカストラップ・ESC (R04) がブリーフの detections にもテストにも無く C17 のスコープ外。(1)(4) は C11/C09 との語義突合、(5) は R04 の検証責務の帰属確定が別途要る"
+   },
+   {
+    "route_id": "C18",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C18-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C11 (P05-C11-01) へ申し送り。tests/render-handout.py/test_cross_component.py の test_language_gate_passes は従来 script 不在で skip されていたが、C18 実装により fail へ変わった。原因は C11 の harness H.base_config() が provenance.normalized_by を持たない未正規化 config を C18 へ渡していることで、C18 は 'ERROR 構成データが正規化済みでない' として exit 2 を返す。これは brief C18 の exit_codes.2 と AC-C18-11 が明示的に要求する挙動であり C18 側では吸収できない (吸収すると未正規化 config を検証通過させる穴になる)。C11 leaf 側で正規化済み config を渡すよう fixture を直すこと"
+   },
+   {
+    "route_id": "C18",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C18-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 14 件。(1) 閾値・書式・正規化マーカーをすべて schema から実行時取得し、読めなければ exit 2 (2) LANG-07 の対象種別 slug のみ識別子として持ちカタログ実在を起動時検査 (3) LANG-07 の記号集合・名詞句規則・見出し最小長 3 文字・evidence 半径 40 文字は中立データに存在しないため script 内定数 (ブリーフ参照コメント付き) (4) DATE-01 の『冒頭』を『<header> の子孫、または section_scope==\"document\" 部品の先頭要素より文書順で前』と定義しヒーロー部品 id の焼き込みを回避 (5) 本文テキスト T から script/style/template に加え head 配下 (title 含む) を除外し属性値は含めない (6) LANG-01 は長さを保つ per-char NFKC fold で全角半角差を吸収しつつオフセットを保持、長い term を先に照合してその占有区間を短い term の初出から除外、英数 term のみ単語境界を適用 (7) LANG-06 はアンカーがちょうど 1 個でない section も 1 違反として計上し、1 section 最大 1 違反 (アンカー → 具体部品欠落 → 順序 の優先順) (8) LANG-07 も 1 section 最大 1 違反とし lead_line 不在時は LANG-04 と二重計上しない (9) DATE-02 の基準値は冒頭位置の最初の date-pill、無ければ文書順の最初の pill、0 個なら 1 違反 (10) stderr は FAIL<TAB>id<TAB>locator<TAB>target<TAB>reason<TAB>evidence の 6 フィールド固定、空欄は '-'、空白類は 1 個へ畳む (11) --json-report のキー構造は未確定 (README gap 1) のため detections[]/notes[]/info/out_of_scope[] を sort_keys+indent=2 で決定論出力、親ディレクトリ不在は解析前に exit 2 (12) config.date の書式不正 (README gap 4) は意図的に exit 2 化せず DATE-02/03 の突合値としてそのまま使用 (未確定事項へ判断を持ち込まない) (13) data-hb-glossary-first アンカー経路と section スコープ glossary は owner 未確定のため未採用 (14) --html 欠落時の ERROR 文言に 'date'/'validate' の部分文字列が入らないよう引数検査順を --html → --config → 正規化マーカー の順に固定 (C19 の cross-component テストが文言で判別するため)"
+   },
+   {
+    "route_id": "C18",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C18-01.json",
+    "kind": "unowned-followup",
+    "detail": "README gap 1 (--json-report のキー名スキーマ) と gap 4 (config.date 書式不正時の exit code) は依然 owner 不在のまま。worker は決定論的な既定を置いて先へ進めたが、正本化されていないため C11 や C01 が別の想定でキーを読むと壊れる。P05-x-01 phase gate で owner を決めること。gap 13 の glossary アンカー経路も同様"
+   },
+   {
+    "route_id": "C19",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C19-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "残る赤 5 件を緑にする条件を下流 leaf へ申し送る。(1) C11 (P05-C11-01): ソースに `handout-config.json` という文字列と `replace(\"/\", \"-\")` を含めないこと (ディレクトリ名の組み立ては C19 の単独責務であり、C11 が同じ処理を持つと『唯一の writer』検査が落ちる) (2) C01 (P05-C01-01): SKILL.md に `--place-config` と `--assets-src` の記載が必要 (配置を C19 へ委譲していることの宣言) (3) C18 (P05-C18-01): C19 が作る `<YYYY-MM-DD>-<dir_token>-<subject_slug>` を日付整合違反として弾かないこと"
+   },
+   {
+    "route_id": "C19",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C19-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 12 件。(1) stdout 書式を『1 行目=解決先の realpath / 2 行目=resolved_from: <段> / 以降 4 行 <name>: present|absent (writer: Cxx)』に決定 (2) 解決段の記録語を argv=--out-dir / env=HB_OUT_DIR / config=handout-output.json とした (3) --json-report のキー構造を resolved_path / resolved_from / check_only / config_sha256 / bundle / bundle_writers とし sort_keys + 末尾改行で決定論化 (4) .handout-route.json は時刻フィールドを持たない (毎回バイト一致させるため) (5) doc_type は slug 完全一致のみ受理し alias は exit 1。C23 の import / 呼び出し失敗はすべて fail-closed exit 2 (6) 明示 subject_slug の禁止文字違反と先頭ドットは exit 2 (out-dir 脱出防止と同じ扱い) (7) 導出 slug の小文字化は ASCII A-Z のみ (非 ASCII は変換しない) (8) 衝突連番 -2..-99 に同一 sha256 の来歴があれば再利用してから最小未使用連番へ倒す (再生成でディレクトリが増殖するのを防ぐ) (9) --out-dir / HB_OUT_DIR にも ~ と環境変数の展開を適用 (brief は config 段のみ明記) (10) --assets-src の symlink 検査を複製前に全走査し、脱出経路があれば mkdir 前に exit 2 (11) --check-only は衝突解決せず base 名だけを検査し、出力先ルート配下へは一切書かない (12) exit 1 時の stderr は語彙違反 1 行 / 同梱物欠落は 1 点 1 行の全件列挙、いずれも [route-handout-output] を前置"
+   },
+   {
+    "route_id": "C20",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+    "kind": "acceptance-criterion-unsatisfiable",
+    "detail": "要裁定 / 最重要。**AC-C20-02 (復元した構成データを C11 で再レンダリングしてバイト一致) と AC-C20-01 の実パイプライン適用が現契約では成立しない**。worker が validate-handout-config.py --config を実測したところ、完全マーカー付き HTML から復元した構成データでも次が出る: (a) E-FOCUS-THEME /focus_theme と E-FIELD-MISSING /target_tasks|/attainment_level|/must_remember|/no_need_to_remember — C11 の renderer_marker_requirements にこれらのマーカーが存在しないため HTML 側に情報が刻まれておらず、原理的に復元できない (ties_to の E-SECTION-UNTIED-GOAL/TASK も同様) (b) E-TYPE-INVALID /notes_enabled (null) (c) E-DATE-FORMAT /date (HTML は表示書式を運ぶ) (d) assets[].data_uri が schema の additionalProperties:false に抵触。恒久解は『C11 のマーカー契約を上記フィールド用の data-hb-meta-* まで拡張する』か『C12 schema に round-trip 免除 (x_roundtrip_exempt 相当) を追加する』のいずれか。R14 (使い回し=既存 HTML から構成データを逆抽出して別テーマの出発点にする) の実効性に直結するため P06 の round-trip テスト設計より前に裁定が要る"
+   },
+   {
+    "route_id": "C20",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+    "kind": "test-schema-contradiction",
+    "detail": "要裁定 / 当方が独立に再現確認済み。tests/extract-handout-config.py/test_marker_extraction.py:112-123 の test_b03_rows_keep_key_and_raw_time / test_b09_rows_keep_key が rows[].key を要求するが、schemas/handout-config.schema.json の $defs.part_data.B03 は additionalProperties:false かつ properties が num / text / time / sub のみで key を持たない。よって『テストを満たすと C12 で E-KEY-UNKNOWN が出る』『C12 を満たすとテストが赤になる』の相互排他。worker は write_scope の都合でテスト側を採用した (テスト変更禁止の規律下では他に選択肢が無く、この判断は正しい)。裁定は schema に key を追加するか、テストを key 非依存へ書き換えるかの二択。schema と tests のどちらが正本かの決定が必要"
+   },
+   {
+    "route_id": "C20",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+    "kind": "brief-defect-permanent-warning",
+    "detail": "正常系でも stderr に W-EXTRACT-CATALOG-DRIFT が 4 行出続ける (B16 / B17 / IMG / DIAGRAM)。ブリーフの heuristic_fallback.class_map がこの 4 部品の行を持たないため、本 script が実装した双方向自己整合検査が『カタログにあって鍵が無い』を毎回報告する。当方の算術確認: カタログ id は B01..B17 + IMG + DIAGRAM + TEXT、PART_CLASS_MAP は B03..B15 + TEXT、B01/B02 は document スコープで対象外 — 差分はちょうど B16/B17/IMG/DIAGRAM の 4 件で報告と整合する。exit code には影響しないが『警告が常時出る状態』は警告を無意味にするので恒久解が要る (ブリーフの class_map に 4 行追記するか、検査を片方向報告に緩める)"
+   },
+   {
+    "route_id": "C20",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C01 / C02 へ申し送り 3 件。(1) 正常系でも W-EXTRACT-CATALOG-DRIFT が 4 行出るため、C02 のレポート整形は W- 行を fail 扱いしないこと (2) --out は round-trip 不一致時に書かれない。C02 の R2-complete が作業台として --out を当てにする場合、--compare を別呼び出しにするか --report.roundtrip.diffs を素材に使うこと (3) exit 1 でも --report と (必須欠落時は) --out は残る。exit 2 では両方書かない"
+   },
+   {
+    "route_id": "C20",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C20-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 14 件。(1) C12 は normalize_config 全体でなく normalize_strings / parse_date_parts / format_date のみを共有 (決定論のため。上記 verified_by 参照) (2) 比較用の日付射影は C12 が受理しない書式を『数字ラン 3 個』に落として c12.format_date() へ渡す (書式文字列を自前に持たない) (3) 自己整合検査 (G1) の診断コードを W-EXTRACT-CATALOG-DRIFT とし exit code に影響させない (4) 任意フィールド欠落の診断コード W-EXTRACT-OPTIONAL を新設 (ブリーフの stderr 契約に該当項が無い)。--strict-fidelity はこれと W-EXTRACT-HEURISTIC の存在で exit 1 (5) 必須/任意の境界を『マーカー契約が定義されている値の欠落のみ必須』とした。文書必須 = schema_version/doc_type/subject_slug/reader/prior_knowledge_level/essential_problem/title/date/purpose/background/goal/duration、section 必須 = id/heading/goal/lead_line/judgment_axis。任意 = theme / section_kind / section duration / asset caption・src / attachment src / diagram title / 部品 id 自動採番 (6) data URI の格納キー (G4) を data_uri、原本パスを src とし、data-hb-src 不在時は data URI 自体を src にして任意欠落として報告 (7) 部品 data のキー名 (G6) を schemas/handout-config.schema.json の $defs.part_data.<id>.properties から導出 (配列型プロパティ名を反復要素の容器に、items の text|label|title を表示テキストのキーに、_id 系スカラーを data-hb-<name> 属性から)。literal を書かずに B03=rows/text・B15=chips/label 等が決まる (8) notes_enabled (G5) は値 null でキーのみ保持し gap として報告しない (再生成 chrome 側の設定であり穴でないため) (9) マーカーの無い文書レベル必須項目 (focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / detail_level / evidence_depth / presentation_order) はキー自体を出力しない。null を置くと『復元できた』と誤読されるため (10) heuristic の TEXT 行は値をクラス名でなくタグ名 ('p','div') にし FALLBACK_PART_ROW として最後に評価。data-hb-field 担持要素と h1-h6 は部品にしない (11) chrome のクラス名二重防御を pop-header / pop-bottom / memo および memo- 接頭辞とした (12) malformed 判定は終了タグが常にスタック最上位と一致必須 (不一致・余剰・EOF 時未閉鎖のいずれも E-HTML-MALFORMED + 行番号)。空 HTML / <html> 不在も同扱いで exit 1、非 UTF-8 は exit 2 (13) 書き込み順序を compare -> report -> out とし、E-ROUNDTRIP-DIFF 時は out を書かず report は書く (14) diff の向きを expected = --compare 側 / actual = 復元側とした"
+   },
+   {
+    "route_id": "C21",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C21-01.json",
+    "kind": "handoff-to-downstream-leaf",
+    "detail": "C01 実装者 (P05-C01-01) への申し送り。test_cross_component.BuildSkillContractTest の 3 件 (test_build_skill_invokes_this_script / test_build_skill_surfaces_the_skip_reason / test_build_skill_does_not_treat_exit0_as_generated) は plugins/guide-doc-generator/skills/run-handout-build/SKILL.md が未存在のため赤。SKILL.md は本 script を起動し、skip_reason を利用者へ可視化し、exit0 を『生成された』と誤解釈しない記述を持つ必要がある"
+   },
+   {
+    "route_id": "C21",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C21-01.json",
+    "kind": "test-fixture-defect",
+    "detail": "要裁定 / 当方で独立再現済み。tests/srg-image-bridge.py/_harness.py の plan_payload() が AUTO_KEY 由来の補完で、テストが section.pop('diagram_pattern') した値を 'flow' として再注入する。このため DeterministicSelectionTest.test_section_without_pattern_and_without_family_is_exit2 と test_family_missing_stops_before_delegating の 2 件は、実装をどう書いても緑にできないか、あるいは緑にすると『図解型のみ・family 明示なし』を拒否することになり DeckPlanShapeTest / MixedFamilyDelegationTest / determinism 系の数十件と両立しない。_harness.py は C21 の write_scope 外。裁定方針: plan_payload が section の明示的なキー削除を尊重する (pop されたキーを AUTO 補完の対象から外す) よう _harness.py を直す leaf を立てる"
+   },
+   {
+    "route_id": "C21",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C21-01.json",
+    "kind": "brief-test-conflict",
+    "detail": "要裁定。generation.quality の値が genome に存在しないため固定値を持たざるを得ないが、密度語彙のハードコード検査 (test_density_vocabulary_is_not_hard_coded) が同綴りの引用 literal を禁じるため、worker は隣接 literal 連結 (\"hi\" \"gh\") で回避した。これは検査を迂回する書き方であり、本来は『密度語彙』と『画像生成品質』を別語彙として区別すべき。裁定方針: 検査側を『densityLevel 系のキーに代入される literal』へ絞るか、quality を genome / config 側の正本から読む"
+   },
+   {
+    "route_id": "C21",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C21-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 10 件。(1) 書記素の数え方は Mn/Me カテゴリ・結合クラス非 0・異体字セレクタ (U+FE00-FE0F) を数えず ZWJ とその直後 1 文字を畳む近似。地域表示記号ペアは未対応 (2) metric の出所照合は heading/lead_line/goal/subject/diagram_structure/alt/overlay_text[] の連結を走査し baked_text 自身は除外 (自己参照防止) (3) 『セクションが数値を持つ』の判定は半角・全角数字のみ (漢数字は『一つ』等で誤検出するため除外)。ただし metric ブロック自身の数字要件には漢数字も認める (4) meta drift は不一致フィールド名の配列、一致時は null、meta 不読は [\"meta\"] (5) 単一 family は image-deck-plan.json、複数は image-deck-plan-<family>.json とし委譲順は family 名昇順で決定論化 (6) 分割 deck の deck.totalSlides はその deck の slide 数 (7) layoutTemplate は genome の layoutSelectionByStructure のキーを昇順走査し図解型の語を含む最初のキーを採る。値が散文なら渡さず、対応キーが無ければフィールド自体を出さない (script にキー名 literal を持たない) (8) 上記の generation.quality 固定値 (9) overlay-only セクションでは bakedText を出さず量的規律・metric 規則を適用しない (10) 再利用済み PNG は委譲していないため meta drift 照合の対象外"
+   },
+   {
+    "route_id": "C22",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C22-01.json",
+    "kind": "test-defect-stale-literal",
+    "detail": "要修正 / 本 leaf の write_scope 外。test_scope_and_determinism.py:173 の `self.assertEqual(8, len(rows))` は detection が 8 件だった時点の写しで、DETECTION_ORDER が 10 件へ拡張された際に追従漏れした。RESOLUTION-P04-x-05 裁定 B が『既存テストの 8 固定は受入基準の本体でなく、テスト実体の物理的更新は P04-x-06 が行う』と明記しており、_support.py と test_cli_contract.py は 10 件へ追従済み。修正案: `self.assertEqual(len(DETECTION_ORDER), len(rows), ...)` (当該ファイルは DETECTION_ORDER 未 import のため import 追加が要る)。P04-x-06 の write_scope で処理すること。これは『導出値を契約へ書き下す』という RESOLUTION-P04-x-05 が同定した欠陥クラスの 4 例目にあたる"
+   },
+   {
+    "route_id": "C22",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C22-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 12 件。(1) NAR-09 の standard 帯は常に PASS (違反 0) とした。brief の boundary が『standard 宣言は帯が広く実質ほぼ通る。これは意図的』と明記し、テストが実測平均 0 と detailed*2 の両端で PASS を要求するため、閾値の正本に standard の外側境界として使える数値が存在しない。数値を発明すれば『script に閾値を持たない』制約に反する (2) NAR-09/NAR-10 の SKIP 条件を『config が detail_level / evidence_depth キーを持たないとき』とし、宣言済みで HTML root 属性が欠落する場合のみ違反とした (R22 非対象の base fixture を落とさないため) (3) presentation_order を exit 2 の必須キーへ追加 (schema の x_required_after_normalize に含まれるため) (4) NAR-07 の 1 行閾値を brief 直書きでなく schema の x_single_line フィールドの maxLength 最大値から導出 (5) NAR-07 の提示物語彙を brief 列挙でなく handout-parts.json の section_scope == 'in-section' から導出 (brief の PASS 例が B17 を提示物前提にしており列挙の方が不整合だったため) (6) テーマトークンは config.theme 優先、無ければ assets/tokens/*.json を名前順走査し text_limits を完備する最初のもの (7) NAR-08 は付録セクション 1 件につき最大 1 違反 (文書順 → role 属性 → nav 順の最初の失敗のみ計上) (8) NAR-03 は HTML 未描画のセクションを検査対象外とし描画欠落は NAR-06 が単独計上 (二重計上回避) (9) NAR-09 の実測値は role=main セクションの全可視テキスト長合計を main セクション数で整数除算した平均 (10) NAR-06/NAR-04/NAR-08 の checked 列の母数定義 (11) 『検査アンカー不在』を専用 detection 行にせず既存違反行の value 列へ data-hb-field を出すことで満たした (detection 行を 10 行固定する契約を壊さないため) (12) C16 の import は行っていない — NAR-01..10 のどの判定にも絵文字判定・外部参照判定が現れないため。スキーム名・絵文字コードポイントの列挙も 0 件で、該当時は委譲する方針は維持されている"
+   },
+   {
+    "route_id": "C22",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C22-01.json",
+    "kind": "resolved-open-question",
+    "detail": "P05-x-01 へ持ち越し予定だった R22-AMENDMENT 未決事項『NAR-09 standard 帯の閾値』は、本 leaf で『閾値を定義しない (常に PASS)』として解決した。テーマトークンの text_limits が overview/standard/detailed の 3 値しか持たない以上、standard の外側境界を表す数値は正本に存在せず、発明すれば SSOT 違反になる。P05-x-01 では未決事項でなく『解決済みの設計判断』として扱えばよい"
+   },
+   {
+    "route_id": "C23",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C23-01.json",
+    "kind": "blocked-by-missing-producer",
+    "detail": "残る赤 3 件は plugins/guide-doc-generator/schemas/handout-config.schema.json (C12 の構成データスキーマ) の producer が task-graph に存在しないために緑にできない。assets/ (P04-x-05 裁定 G-04) / config/ (P05-x-03) と同一の欠陥クラスで、validate-task-graph.py の規則 (c) が producer 0 個を検出しないために残った 3 例目。P05-x-02 / P05-x-03 と同形の producer leaf が必要"
+   },
+   {
+    "route_id": "C23",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C23-01.json",
+    "kind": "fail-closed-forbidden-by-test",
+    "detail": "スキーマ不在時に一律 exit 1 とする fail-closed は、同一ファイルの test_single_field_of_the_pair_is_not_rejected_by_c23 が『スキーマ不在の fixture root で required_document_fields を持つ lecture が exit 0』を固定しているため採れない。よってスキーマ不在時は当該 2 検査のみを行わない (照合できないものを判定したふりをしない) 形にした"
+   },
+   {
+    "route_id": "C23",
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-C23-01.json",
+    "kind": "brief-underspecified",
+    "detail": "worker 裁量 7 件。(1) HB_ROOT / CLAUDE_PLUGIN_ROOT を排他的候補にした — 4 段フォールバックを素直に読むと明示 root に catalog が無いとき黙って別 root へ落ちて exit 0 になり、test_missing_catalog_lists_candidate_paths と両立せず fail-closed にも反するため (2) 隣接データの解決元を catalog ファイルの親ディレクトリに固定、スキーマは catalog_dir.parent/schemas/ (3) schema_version の既知値を {1} と定義 (4) --purpose 出力の notes / required_document_fields は preset に存在するときだけ出す (granularity_defaults は裁定 C に従い常時) (5) required_document_fields の重複は E-CATALOG-MALFORMED とし E-PRESET-REQFIELD-UNKNOWN は未知フィールド専用に温存 (6) preset トップレベルの recommended_parts は実在検査のみ、section_scope 制約は section 内にのみ適用 (ブリーフ 4(h) が section 側のみを規定) (7) 監査走査から __ で始まるディレクトリを除外 (scanned が実行環境で変動するのを避ける決定論のため)"
+   },
+   {
+    "route_id": null,
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-x-02.json",
+    "kind": "canon-duplication-deferred",
+    "detail": "既定テーマ pop.json の 9 色を SKILL.md の :root 例示と意図的に同値へ揃えた。worker の判断根拠は『値をずらすと重複が矛盾へ格上げされ、P05-x-01 の集約に「どちらが正本か」という余分な判断が増える。値が同一なら集約側は SKILL.md の例示を削除するかプレースホルダ化するかを値の変更なしに決められる』。重複そのものは未解消であり P05-x-01 で裁定する。なお ink 系 4 色 (#1b2733 / #5b6b7a / #dbe6ef / #f4f8fc) は参照 v2 の値 (#16191d / #545e6b / #e3e6ea / #f5f6f8) と異なり SKILL.md 側を採っている (アクセントと同系色相へ揃える R10 の原則により忠実との判断)。この選択も P05-x-01 の照合対象"
+   },
+   {
+    "route_id": null,
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-x-02.json",
+    "kind": "emoji-gate-provisional",
+    "detail": "C16 verify-handout-selfcontained.py が未実装のため CR-EMOJI の scan_emoji へ委譲できず、本 leaf は category allowlist への反転 (C60 SC-10 と同じ向き) で暫定検査した。assets 側に判定コードを一切置いていないため第 2 の正本は生じていないが、C16 実装後に C15 --strict-style 経由で再検査されることが正規の判定であり、P05-x-01 で再確認する"
+   },
+   {
+    "route_id": null,
+    "source_file": "eval-log/guide-doc-generator/build/route-P05-x-02.json",
+    "kind": "brief-underspecified",
+    "detail": "8 件を worker が判断して決定。(1) 様式を per-icon でなく集合レベルの uniform_style に 1 度だけ宣言 — C15 ブリーフの icon_set_source.schema が『様式は正本側に持たせない』と定めるのと、本 leaf の AC2 が『全アイコンが 4 点様式』を求めるのを両立させる形。P04-x-05 の裁定 C と同じ一般則 (様式のブレを表現できないデータ形にする) の適用 (2) 参照 v2 の線画アイコンは実測 2 件 (arrow-right / settings) しかなく B01-B15 を被覆できないため、C15 の 41 語彙を収録範囲の正本とし該当 2 件は参照 v2 の path を写して used_in_reference_v2 で明示 (3) 既定テーマ名 pop — C11 algorithm[4] と tests/render-handout.py/README.md が名指し (4) 差し替えテーマ名 warm-sand — 既存テストが sorted(glob)[0] を検査対象に採るため、既定テーマが検査対象であり続ける辞書順を選んだ (5) 差し替えテーマの text_limits を pop と同値に固定 — 全テーマに確定値を要求するテストがあり、例示のために数値を動かすと C63 の正本が 2 値を持つように見えるため (6) マスコット id へ hbm- prefix — inline 埋め込み時の id 衝突回避。C15 の hbic- と揃えた。id 採番 owner が未宣言だったため producer である本 leaf が定めた (7) mascot-set.json を追加 — task-spec は SVG の存在しか求めないが、symbol id の宣言点が無いと C11/C19 が id を推測することになる。色の実値は持たせない (8) マスコット再着色 11 変数をテーマトークン側の mascot_css_variables へ — 参照解析 §9 D2 の『テーマ差し替えでマスコットの色が追従する』を満たす唯一の置き場。C11 algorithm[11] の変数集合を汚さないよう別キーにした"
+   }
+  ]
+ },
+ "patterns": [
+  {
+   "id": "PAT-1",
+   "name": "導出値を契約へ書き下す (既知クラス・本 leaf で 10 例まで拡大)",
+   "status": "known",
+   "instances": [
+    "C09 contract_lib.py:509 が本文へ『4 ゲート』の literal を書くことを強制 (5 例目)",
+    "C22 test_scope_and_determinism.py:173 assertEqual(8, len(rows)) が detection 10 件へ追従漏れ (4 例目・実測で今も赤)",
+    "C11 test_parts_catalog.py:94 docstring『6 フィールド』に対しループは 7 フィールドを検査",
+    "C07 tests/handout-build/README.md が 'failures=26' と記載するが実測 22 (8 例目)",
+    "C12 test_provenance_shape が provenance をちょうど 6 キーへ固定するが正本は 8 キー (9 例目・実測で今も赤)",
+    "C23 preset 鍵面の『5 キー』allowlist (P04-x-06 が allowlist 述語へ是正済み・解消例)",
+    "C10 brief の『時間予算 3 秒』に対し実測 13 秒 (未計測の予算リテラル)",
+    "本 leaf の起動指示自体が『tests 配下に 26 個のディレクトリがある』と書くが実測 23 (10 例目)",
+    "本 leaf の起動指示自体が『route report が 26 本』と書くが leaf 単位の route report は 24 本 (残り 2 本は route-build-contract.json と route-build-plan.json)",
+    "P04-x-06-ALIGNMENT.md が『8 行』表記を件数由来へ是正した記録 (是正例)"
+   ],
+   "note": "是正済み 2 例を含め計 10 例。指示文・README・docstring・assert・brief の 5 面すべてで再発しており、面を問わない再発である点が本 leaf の追加知見"
+  },
+  {
+   "id": "PAT-2",
+   "name": "テスト欠陥 3 類型 (既知クラス)",
+   "status": "known",
+   "sub": {
+    "a-derived-value-baked": [
+     "C22 assertEqual(8,...)",
+     "C12 provenance 6 キー固定"
+    ],
+    "b-overbroad-scope": [
+     "C06 test_only_one_agent_definition_for_c06 が PLUGIN_ROOT 全域を再帰探索し fixture を誤検出"
+    ],
+    "c-predicate-too-loose": [
+     "C01 non-interactive-path-blocked が reject fixture を違反状態にできず恒久 0 件検出"
+    ]
+   },
+   "note": "3 類型すべてが実測でいまも赤として残存している (それぞれ 1 件以上)"
+  },
+  {
+   "id": "PAT-3",
+   "name": "NEW: ハーネス自走型偽赤 (harness-generated false red) — テスト欠陥 第 4 類型",
+   "status": "new",
+   "definition": "assert も fixture も正しいのに、テストハーネス (setUp / payload builder) 側が状態を自動補完・自動生成するため、テストが作ろうとした条件が成立せず実装内容に関わらず赤になる。既知の (a)(b)(c) はいずれも assert 側または探索側の欠陥であり、ハーネスの副作用は別類型である",
+   "instances": [
+    "C21 tests/srg-image-bridge.py/_harness.py plan_payload() が AUTO_KEY 補完でテストが pop した diagram_pattern を 'flow' として再注入 (実測 2 件赤)",
+    "C12 tests/validate-handout-config.py/_harness.py setUp が tmp 直下に 'plugin-root' ディレクトリを必ず作り、残留ファイル検査が常に検出 (実測 1 件赤)",
+    "C14 _harness.Element.get の大文字小文字区別により get('viewBox') が常に None (P04-x-06 で是正済み。現在は緑)"
+   ],
+   "detection_hint": "『実装を空にしても結果が変わらない』かつ『失敗の原因が assert でなく setUp / builder にある』ものを探す"
+  },
+  {
+   "id": "PAT-4",
+   "name": "NEW: 受け皿消滅 (owner-closed-before-consumer)",
+   "status": "new",
+   "definition": "欠陥を検出したのは下流 leaf だが、その修正の write_scope を持つ leaf が既に done になっており、現行 graph に受け皿が無い状態。producer 0 件欠陥 (validate-task-graph 規則(c)) の時間軸版",
+   "instances": [
+    "C11 の赤 4 件の owner が P05-x-02 / P05-x-03 / P04-x-06 でいずれも done",
+    "C12 の赤 4 件の owner (tests/validate-handout-config.py と config/) が done",
+    "C21 の赤 3 件の owner (tests/srg-image-bridge.py/_harness.py と C01 の SKILL.md) が done",
+    "C22 の赤 1 件の owner P04-x-06 が done",
+    "C06 の赤 1 件の owner (P04-x-06 系) が done",
+    "C07 open_questions[0] の受け皿である C11 が done",
+    "C08 open_questions[0] の受け皿である C20 が done",
+    "C05 README G1 (CANONICAL_DESCRIPTIONS を 1 件へ) に owner leaf 無し"
+   ],
+   "structural_evidence": "discovered-tasks に提案された 26 ノードのうち 12 が task-graph-status.json の nodes に存在しない (P04-x-09, P05-x-06..P05-x-16)。提案は書かれたが graph へ吸収されていない"
+  },
+  {
+   "id": "PAT-5",
+   "name": "NEW: テスト起源正本の逆流未了 (test-as-canon inversion)",
+   "status": "new",
+   "definition": "brief が機械可読な語彙・AC 採番・必須節を持たず、テストが独自に定義し、実装がテストに従う。結果としてテストが brief の上位互換になり、brief は永久に追いつかない",
+   "instances": [
+    "C01 brief の deterministic_checks 7 本 vs テストの AC-C01-1..24 (写像表が無い)",
+    "C02 AC-C02-* の採番が brief に無くテスト側で採番。contract_lib.REQUIRED_SUBSECTIONS も brief 外",
+    "C08 停止理由語彙 (html-path-missing 等) の正本が tests/resolution_spec.py:41-45 にあり brief は自然文 1 case のみ",
+    "C09 集約規則 CR-GATE-AGG の機械可読形式が brief に無くテスト群が定めた",
+    "C20 rows[].key をテストが要求し schema が禁じる (どちらが正本か未確定)"
+   ],
+   "note": "C08 は更に一歩進み『brief に存在しない語彙をテストが定義し実装が従う』正本の逆転になっている"
+  },
+  {
+   "id": "PAT-6",
+   "name": "NEW: 派生正本の未同期 (derived-canon staleness)",
+   "status": "new",
+   "definition": "component-inventory.json は他 leaf の criteria_ref でもある派生正本だが、brief 更新に追随する writer がおらず、AC が『inventory と一致』を要求すると成果物と衝突する",
+   "instances": [
+    "C07 argument-hint 6 引数版 (brief) vs 3 引数版 (inventory)",
+    "C09 argument-hint 長形 (brief) vs 短形 (inventory)",
+    "C06 responsibility_anchor が inventory では prompts/R-review-readability.md、lint の ANCHOR_RE は R<数字> のみ受理",
+    "C05 description の正本が brief と inventory で二重"
+   ],
+   "note": "P05-x-15 が提案済みだが graph 未登録"
+  },
+  {
+   "id": "PAT-7",
+   "name": "NEW: 両立不能な二重契約 (mutually-exclusive dual contract)",
+   "status": "new",
+   "definition": "2 つのゲートが同時に真になり得ない条件を課し、実装がどちらを選んでも他方が赤/違反になる",
+   "instances": [
+    "C20 rows[].key を tests が要求 / schema が additionalProperties:false で禁止",
+    "C12 provenance ちょうど 6 キー (test) / schema+R22 が 8 キー",
+    "C06 description 末尾句点なし (brief/inventory) / lint-skill-description.py R5 が句点を要求",
+    "C23 スキーマ不在時の fail-closed exit 1 / 同ファイルの別テストが exit 0 を固定",
+    "C21 generation.quality の固定値 / 密度語彙ハードコード検査 (worker は literal 連結で迂回)"
+   ]
+  },
+  {
+   "id": "PAT-8",
+   "name": "NEW: 常時発火警告による鈍麻 (permanent-warning desensitization)",
+   "status": "new",
+   "definition": "正常系でも警告が毎回出るため、警告が信号として機能しなくなる",
+   "instances": [
+    "C20 W-EXTRACT-CATALOG-DRIFT が正常系でも B16/B17/IMG/DIAGRAM の 4 行を毎回出力 (P05-x-13 提案済み・graph 未登録)"
+   ]
+  }
+ ],
+ "open_adjudications": [
+  {
+   "id": "ADJ-01",
+   "topic": "argument-hint が brief と component-inventory.json で食い違う (C07・C09)",
+   "current_state": "C07 は成果物が brief 準拠の 6 引数版、inventory は 3 引数版のまま。C09 は成果物が brief 準拠の長形、inventory は短形のまま。両 suite は緑 (テストが brief を正本としているため)",
+   "recommendation": "brief を正本とし inventory を追随更新する",
+   "rationale": "(1) テスト (contract_lib.ARGUMENT_HINT_TOKENS / SourceOfTruthTest.test_argument_hint_tokens_come_from_brief) が既に brief を正本と宣言して機械検査している (2) inventory は複数 leaf の criteria_ref であり、追随させないと後続 leaf が旧表記を前提に組む (3) 逆に inventory を正本にすると 2 command の実装と 2 スイートを同時に壊す。提案済み節点 P05-x-15 を graph へ登録するのが最小コスト",
+   "caveat": "AC-C07-1 の『frontmatter が inventory と一致』の字義は inventory 更新まで満たされない。更新完了までは AC-C07-1 を pass と書けない"
+  },
+  {
+   "id": "ADJ-02",
+   "topic": "責務アンカーの形式 (inventory は prompts/R-review-readability.md / lint の ANCHOR_RE は R<数字> のみ受理)",
+   "current_state": "C03/C05/C06 の成果物は <!-- responsibility: R1 --> を採用。inventory は未更新",
+   "recommendation": "lint の ANCHOR_RE (R<数字>) を正本とし、inventory の responsibility_anchor 列を『アンカー id (R1)』と『prompt ファイル名』の 2 列へ分離する",
+   "rationale": "(1) ANCHOR_RE は harness 横断の統治 lint であり、1 plugin の都合で緩めると他 plugin の検査面が落ちる (2) 現状の inventory 値はアンカーとファイル名という異なる 2 概念を 1 列に混載しており、これが衝突の根因。列を分ければどちらも失わない (3) 成果物 3 件が既に R<数字> で揃っており、変更コストは inventory 側のみ",
+   "caveat": "prompt ファイル名を R1-*.md へ改名する案は C03 の受入 fixture を壊すため非推奨"
+  },
+  {
+   "id": "ADJ-03",
+   "topic": "description の末尾句点 (brief/inventory は句点なし / lint-skill-description.py R5 が句点を要求)",
+   "current_state": "成果物は句点ありを採用。テストは句点の有無を吸収する設計のため緑。AC1 は両方の充足を求める",
+   "recommendation": "lint の R5 (句点あり) を正本とし、brief と inventory の description 末尾へ句点を足す",
+   "rationale": "(1) R5 は harness 横断 lint であり例外化は他 plugin へ波及する (2) 差分は 1 文字で、意味を一切変えずに衝突を消せる (3) テスト側の吸収設計は『唯一の逃げ道』として機能しているが、逃げ道に依存し続けると AC1 が実質検査されない状態が固定化する",
+   "caveat": "lint 側を緩める案は、句点の有無という表記ゆれを全 plugin へ解放するため非推奨"
+  },
+  {
+   "id": "ADJ-04",
+   "topic": "usage_scene を C03/C06 が要求するが handout-config.schema.json に存在しない",
+   "current_state": "schema は use_scene 相当の別フィールドを作らない旨を明記し doc_type が利用シーンを担う。C01 worker は存在しないフィールド名を本文へ書かず意味表現で回避",
+   "recommendation": "schema (doc_type が利用シーンを担う) を正本とし、C03/C06 の申し送り文言から usage_scene というフィールド名を削って doc_type へ言い換える",
+   "rationale": "(1) schema は 4 brief と 4 テストが参照する物理正本で、フィールド追加は round-trip・normalize・additionalProperties:false の全面へ波及する (2) usage_scene は現状どのテストも要求していない (C01/C03/C06 スイートは全緑) ため、削除側のコストが最小 (3) doc_type は既に用途語彙 vocabulary で閉じており、第 2 の用途軸を作ると語彙の正本が 2 つになる",
+   "caveat": "『読み手・前提知識・用途』の 3 点セットを reader_profile として渡す必要自体は残るので、doc_type を用途として読む旨は brief へ明記が要る"
+  },
+  {
+   "id": "ADJ-05",
+   "topic": "B03/B09 の rows[].key を tests が要求 / schema が additionalProperties:false で禁止 (相互排他)",
+   "current_state": "実装はテスト側を採用 (テスト変更禁止の規律下では他に選択肢が無い)。C20 スイートは緑 (152 OK)、schema 側の検査は C12 経由で衝突が顕在化する",
+   "recommendation": "schema に key を追加する (テストを正本とする)",
+   "rationale": "(1) key は逆抽出 (R14) が HTML の行識別を復元するために必要な情報で、無いと round-trip の情報量が落ちる — ADJ-06 と同じ根 (2) テストを key 非依存へ書き換えると、B03/B09 の行同定が位置依存になり、行の挿入で復元が壊れる (3) schema 側の追加は additionalProperties:false を維持したまま properties へ 1 キー足すだけで、既存データを 1 件も壊さない",
+   "caveat": "key を optional にするか required にするかは別途決定が要る。既存 fixture の多くは key を持たないため optional を推奨"
+  },
+  {
+   "id": "ADJ-06",
+   "topic": "逆抽出の round-trip がマーカー不在のため原理的に成立しない (AC-C20-02 / R14 の実効性)",
+   "current_state": "実測で test_round_trip_equivalence が unrecoverable=8 で赤。focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to が HTML に刻まれておらず復元不能。加えて notes_enabled の型・date の書式・assets[].data_uri の schema 抵触がある",
+   "recommendation": "C11 のマーカー契約を data-hb-meta-* まで拡張する (schema へ round-trip 免除を足す案は非推奨)",
+   "rationale": "(1) R14 の要件は『既存 HTML から構成データを逆抽出して別テーマの出発点にする』であり、免除を足すと復元されないフィールドが恒久的に欠落したまま『成立した』ことになる — 受入基準を満たすために基準の方を弱める形になる (2) マーカー拡張は HTML の表示面に影響しない data 属性の追加で、既存の描画テストを壊さない (3) date の書式と notes_enabled の型は正規化側 (C12) で吸収でき、恒久解の対象は実質 6 フィールド",
+   "caveat": "assets[].data_uri の additionalProperties:false 抵触だけは schema 側の追加が要る。P05-x-11 が提案済みだが graph 未登録"
+  },
+  {
+   "id": "ADJ-07",
+   "topic": "deterministic_checks (brief 7 本) と AC-C01-1..24 の粒度が対応しない",
+   "current_state": "実装はテストの AC を優先。写像表が無くどの check がどの AC で担保されているか追えない。同型の問題が C02 (AC-C02-* の採番がテスト側) にもある",
+   "recommendation": "AC を正本とし、brief の deterministic_checks を『AC 群への参照』へ書き換える (7 本を維持したまま各項へ AC id の列を持たせる)",
+   "rationale": "(1) 機械検査が実在するのは AC 側のみで、deterministic_checks には実行主体が無い (2) 7 本を 24 本へ展開すると brief がテストの写しになり第 2 の正本が生まれる (3) 参照形にすれば、AC が増減しても brief 側は不変条件の記述のまま追随でき、PAT-1 (導出値を契約へ書き下す) の再発も防げる",
+   "caveat": "これは C01/C02 の 2 件で確認された構造 (PAT-5) であり、1 component の是正では再発する。brief テンプレート側の規約として入れるのが本筋"
+  },
+  {
+   "id": "ADJ-08",
+   "topic": "command 定義を対象とする横断 lint が repo に存在しない",
+   "current_state": "C08 worker が repo の lint 79 本を調べ slash-command md を対象とするものが無いと報告。当方も lint-*.py 側から commands/ を対象とする実体を確認できなかった。現状 C07/C08/C09 の品質は tests/<command>/contract_lib.py だけが担保している",
+   "recommendation": "横断 lint を新設する。ただし本 build の scope 外の別 leaf として起票する",
+   "rationale": "(1) 3 command すべてに共通する統治の穴で、component 単位では埋まらない (2) 現状の contract_lib は plugin ローカルで、他 plugin の command には一切かからない (3) ただし新設は harness 側 (scripts/) の write_scope であり、guide-doc-generator の P05 で行うと plugin 実装が統治ツールを書く逆転になる",
+   "caveat": "当面は contract_lib による担保で機能しているため blocking ではない。優先度は中"
+  },
+  {
+   "id": "ADJ-09",
+   "topic": "既定テーマ pop.json の 9 色と C04 SKILL.md の :root 例示が重複 (canon-duplication)",
+   "current_state": "両者は意図的に同値へ揃えられている。AC-C04-14 が実値の出現位置を検査するため :root を空にできない構造的要請がある",
+   "recommendation": "assets/tokens/<theme>.json を正本とし、SKILL.md の :root 例示はプレースホルダ (--pop-primary: <accent>) 化したうえで AC-C04-14 の述語を『実値が現れるなら :root 内のみ』へ読み替える",
+   "rationale": "(1) 色は下流の描画が実際に読む値であり、正本は機械が読むファイル側にあるべき (2) 現在は値が一致しているため、いま分離すればコストゼロで済む (値がずれた後だと『どちらが正本か』の判断が追加で要る)",
+   "caveat": "AC-C04-14 の述語変更はテスト改変にあたるため、本 leaf では実施できない。C04 の ink 系 4 色が参照 v2 と異なる点も併せて確認が要る"
+  },
+  {
+   "id": "ADJ-10",
+   "topic": "hook の settings 登録 (hooks.json / plugin.json の hook 宣言) に owner leaf が無い",
+   "current_state": "『存在しなければ pass』のテストしか無く、登録漏れが緑のまま通過し得る",
+   "recommendation": "plugin 同梱面 (hooks.json / .claude-plugin/plugin.json) を産出する leaf を 1 本立て、そこを唯一の writer にする",
+   "rationale": "P05-x-02 (assets) / P05-x-03 (config) / P05-x-05 (schemas) と同じ producer 0 件欠陥クラスの再発であり、同形の解が既に 3 回機能している",
+   "caveat": "テストが『存在しなければ pass』である限り、leaf を立てても検査面は増えない。テスト側の fail-closed 化が別途要る"
+  }
+ ],
+ "unowned_followups": [
+  {
+   "item": "C11 の赤 4 件 (accent token / parts 順序 / part id 列挙 / 未正規化 fixture)",
+   "proposed": "P05-x-06 / P05-x-07 / P05-x-08 / P05-x-09",
+   "graph_registered": false,
+   "reason": "提案 4 件すべて task-graph-status.json の nodes に不在"
+  },
+  {
+   "item": "C12 の赤 4 件 (entries キー名誤り 2 件 / plugin-root 残留 / provenance 6 キー固定)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "discovered-task が起票されていない。tests/validate-handout-config.py の owner leaf は done"
+  },
+  {
+   "item": "C21 の赤 3 件 (_harness plan_payload 自走 2 件 / C01 SKILL.md の skip 理由記述 1 件)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "_harness の owner と C01 の owner がいずれも done"
+  },
+  {
+   "item": "C22 の赤 1 件 (assertEqual(8, len(rows)))",
+   "proposed": "P04-x-06 の write_scope",
+   "graph_registered": true,
+   "reason": "P04-x-06 は done。同 leaf が _support.py と test_cli_contract.py は 10 件へ追従させたが test_scope_and_determinism.py:173 を取りこぼした"
+  },
+  {
+   "item": "C06 の赤 1 件 (agent 定義一意性テストの探索範囲)",
+   "proposed": "P05-x-10",
+   "graph_registered": false,
+   "reason": "提案済みだが nodes に不在"
+  },
+  {
+   "item": "C01 の赤 1 件 (AC-C01-19 reject fixture)",
+   "proposed": "P05-x-14",
+   "graph_registered": false,
+   "reason": "提案済みだが nodes に不在"
+  },
+  {
+   "item": "C05 README G1 (CANONICAL_DESCRIPTIONS を 1 件へ縮める)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "owner leaf が最初から存在しない"
+  },
+  {
+   "item": "C07 open_questions[0] (C11 の衝突時挙動が無視か exit≠0 か)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "受け皿の C11 が done"
+  },
+  {
+   "item": "C08 open_questions[0] (--out 既存ファイル上書き確認の担当)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "受け皿の C20 が done。brief 自身が素通りを予見していたが 2 leaf とも決着させなかった"
+  },
+  {
+   "item": "C08 逆抽出レポートのファイル名",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "C08/C02/C20 の 3 leaf すべてが『他が決める』として通過"
+  },
+  {
+   "item": "C08 --presentation-order の CLI 入口の要否 (C07)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "brief にも tests にも根拠が無く worker が明記を見送った"
+  },
+  {
+   "item": "C18 README gap 1 (--json-report のキー名スキーマ) / gap 4 (date 書式不正時の exit code) / gap 13 (glossary アンカー経路)",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "owner 不在のまま worker が決定論的既定を置いて前進"
+  },
+  {
+   "item": "C10 hook の settings 登録",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "ADJ-10 参照"
+  },
+  {
+   "item": "C10 時間予算 3 秒と実測 13 秒の乖離",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "brief の数値是正に owner が無い"
+  },
+  {
+   "item": "C01 lint-skill-dep-step7.py がディレクトリ引数で IsADirectoryError",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "skill-governance-lint 側の問題で本 build の write_scope 外"
+  },
+  {
+   "item": "C08 command 横断 lint の不在",
+   "proposed": "未提案",
+   "graph_registered": false,
+   "reason": "ADJ-08 参照"
+  },
+  {
+   "item": "P04-x-09 (B04/B06/B07/B14 のレンダリングテスト追加)",
+   "proposed": "P04-x-09",
+   "graph_registered": false,
+   "reason": "discovered_pending には載るが nodes に不在"
+  },
+  {
+   "item": "P05-x-11 / P05-x-12 / P05-x-13 / P05-x-15 / P05-x-16",
+   "proposed": "同左",
+   "graph_registered": false,
+   "reason": "提案済みだが nodes に不在"
+  }
+ ],
+ "graph_absorption_gap": {
+  "finding": "discovered-tasks に書かれた提案ノード 26 件のうち 12 件が task-graph-status.json の nodes に存在しない",
+  "absent_ids": [
+   "P04-x-09",
+   "P05-x-06",
+   "P05-x-07",
+   "P05-x-08",
+   "P05-x-09",
+   "P05-x-10",
+   "P05-x-11",
+   "P05-x-12",
+   "P05-x-13",
+   "P05-x-14",
+   "P05-x-15",
+   "P05-x-16"
+  ],
+  "impact": "実測で残っている赤 14 件のうち 8 件はこの 12 件のいずれかが owner であり、残り 6 件は提案自体が存在しない。つまり現行 graph を完走しても赤は解消しない",
+  "method": "discovered-tasks/*.json の proposed_node.id と task-graph-status.json の nodes[].id の差集合"
+ },
+ "overall": "blocked",
+ "overall_reason": "受入条件 3 要素のうち element_1 のみ pass。element_2 は 14 件の赤が残るため blocked、element_3 は独立検証手段 (基準 digest) が存在せず、かつ mtime 検査が C14 の 2 ファイルの事後改変を検出したため blocked。element_2 の赤 14 件のうち 12 件は実装内容に依らない外部要因だが、それは『緑である』という受入条件を満たす根拠にはならない",
+ "blocking_summary": [
+  "B-1: 6 スイートに赤 14 件 (failures 12 / errors 2)。うち 12 件は実装では解消不能",
+  "B-2: 赤 14 件の owner のうち 8 件は graph 未登録の提案ノード、6 件は提案すら未起票",
+  "B-3: テスト無改変を byte 単位で独立検証する基準値 (P04 時点の sha256) が証跡に存在しない",
+  "B-4: tests/ は P04 以降 3 leaf により意図的に改訂済みで、受入条件の字義は phase レベルでは不成立",
+  "B-5: P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) が全 component で未実行"
+ ],
+ "worker_discretion": [
+  "受入条件を 3 要素へ分解し、要素ごとに verdict を持たせた (単一 pass/fail に畳むと『どこが測れていないか』が消えるため)",
+  "『26 ディレクトリ / 26 route report』という指示中の件数を実測値 (23 / 24) で上書きし、両方を証跡へ残した",
+  "テスト無改変を component ローカルな主張と phase 全体の主張に分けて判定した",
+  "実装で解消可能な赤 (2 件) と不能な赤 (12 件) を区別して記録したが、いずれも element_2 を pass にする根拠には使っていない",
+  "新規パターンを PAT-3..PAT-8 として 6 件命名した",
+  "裁定事項には推奨のみを書き、決定は行っていない"
+ ]
+}

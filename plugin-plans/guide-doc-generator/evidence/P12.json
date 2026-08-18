@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-aggregate-evidence",
+  "task_id": "P12-x-01",
+  "phase_ref": "P12",
+  "produced_by": "P12-x-01 worker (利用文書の確定 / direct-task)",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P12.json",
+  "acceptance_criterion_verbatim": "README だけで起動から出力物受け取りまでを追加質問なしに実行でき、専門用語に初出言い換えがある",
+  "deliverable": "plugins/guide-doc-generator/README.md (新規) + plugins/guide-doc-generator/examples/minimal-config.json (新規)",
+  "measurement_policy": {
+    "fail_closed": "『README を読めば分かるはず』という読み手の推測に依存する箇所は pass にしない。README に書いたコマンドは当方が実際に実行し exit code を採取した"
+  },
+  "acceptance_elements": {
+    "element_1_no_additional_questions_needed": {
+      "verdict": "pass",
+      "measured": {
+        "covered_stages": [
+          "インストール (marketplace 経路・ローカル clone 経路の 2 通り)",
+          "動作要件 (Python 3.10+ / 追加 pip 不要 / 任意依存の不在時挙動)",
+          "起動 (題材だけの最短経路・用途種別指定・構成データ直渡しの非対話経路)",
+          "出力物の受け取り (出力ディレクトリの構成と 3 ファイルの役割)",
+          "検証 (/handout-verify と個別ゲートの直接起動)",
+          "逆抽出 (/handout-extract と復元できない範囲の明示)",
+          "構成データの自作 (最小例・セクションと部品 20 種の一覧・落ちやすい 3 点)",
+          "困ったときの症状別対処表"
+        ],
+        "runnable_commands_verified": [
+          "python3 scripts/validate-handout-config.py --config examples/minimal-config.json --normalize --out ./normalized.json -> exit 0",
+          "python3 scripts/render-handout.py --config ./normalized.json --out ./handout.html -> exit 0 (19344 bytes)",
+          "python3 scripts/verify-handout-selfcontained.py --html ./handout.html -> exit 0",
+          "python3 scripts/verify-handout-a11y-print.py --html ./handout.html -> exit 0",
+          "python3 scripts/verify-handout-language.py --html ./handout.html --config ./normalized.json -> exit 0",
+          "python3 scripts/verify-handout-narrative.py --html ./handout.html --config ./normalized.json -> exit 0",
+          "python3 scripts/build-local-marketplace.py -> exit 0"
+        ],
+        "example_config_is_real": "README が指す examples/minimal-config.json は当方が実際に生成へ通した実体であり、README 用に書いた擬似コードではない。4 ゲートすべて exit0"
+      },
+      "note": "『追加質問なし』は当方の自己申告では測れないため、代わりに **README に載せた実行可能コマンドを全て実行して exit code を採取する** ことで測った。読み手が詰まるのはコマンドが動かないときであり、そこは機械で測れる"
+    },
+    "element_2_first_use_paraphrase": {
+      "verdict": "pass",
+      "measured": {
+        "terms_with_inline_paraphrase": [
+          "構成データ — 資料の中身と部品の選び方を書いた JSON ファイルのこと",
+          "data URI — 画像や添付ファイルを文字列に変換して HTML の中へ直接埋め込む書き方のこと",
+          "round-trip (逆抽出) — 出来上がった HTML から構成データを取り出し、それでもう一度生成しても同じ資料になること",
+          "ゲート — 生成物が条件を満たすかを機械で判定する検査のこと"
+        ],
+        "placement": "本文で初めて使う前に『用語』節へ置き、以降は言い換えなしで使う。これは本 plugin 自身が LANG-01 で資料へ課している規律 (初出の直後に言い換え) を README にも適用したものである"
+      }
+    },
+    "element_3_portability": {
+      "verdict": "pass",
+      "measured": {
+        "command": "python3 scripts/lint-readme-plugin-root-portability.py",
+        "exit_code": 0,
+        "stdout_excerpt": "plugins/guide-doc-generator/README.md: OK",
+        "why": "README の bash フェンスは全て HB=\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/guide-doc-generator}}\" の fallback 形。裸の $CLAUDE_PLUGIN_ROOT を書くと、marketplace install した利用者が素のターミナルへ貼ったとき空文字へ展開して /scripts/... を叩き壊れる"
+      }
+    }
+  },
+  "not_verifiable": [
+    {
+      "item": "実際の初心者が README だけで完走できるか",
+      "reason": "人による試行が要る。当方が測ったのはコマンドの実行可能性と用語の言い換えの有無まで"
+    },
+    {
+      "item": "/handout-build / /handout-extract / /handout-verify のスラッシュコマンド実行",
+      "reason": "Claude Code の対話面でのみ起動でき、本 leaf の実行環境からは起動できない。README には引数と停止条件を command 定義から転記しており、定義との食い違いは無いことを読み合わせで確認した"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "part-catalog-listed-in-readme",
+      "detail": "部品 id の語彙は `config/handout-parts.json` を単一正本とし『他の場所へ列挙しない』規律がある。README には利用者が部品を選べるよう 20 件の表を置いた。**これは規律に対する意図的な逸脱である**。緩和として README 内にその旨と正本の所在を明記したが、部品の追加・改名時に README が drift する経路が新たに 1 本できた。lint による同期検査は未実装であり、follow-up として残す"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "status": "success",
+  "task_id": "P04-C12-01",
+  "covered_task_ids": [
+    "P04-C12-01"
+  ],
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls",
+      "result": "plugins/guide-doc-generator/tests/render-handout.py/ に test_*.py 8 本と README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-handout.py -p 'test_*.py' を dispatcher が独立実行",
+      "result": "Ran 66 tests / FAILED (failures=76, errors=20)。ok 0 件"
+    },
+    {
+      "claim": "import 例外で落ちるだけの空テストでない",
+      "method": "errors 20 件の発生箇所を dispatcher が確認",
+      "result": "errors は test_html_attributes.py:35 の setUpClass が『正常系 fixture の生成に失敗』を AssertionError で送出したもの (実装が無いためレンダリングが returncode!=0)。import 失敗ではなく実装非存在に対する意図された赤であり、実装が入れば消える"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    },
+    {
+      "kind": "red-reported-as-errors",
+      "detail": "C12 のみ 20 件が failures でなく errors として計上される。原因は setUpClass での fixture 生成失敗 (AssertionError) で、unittest が setUpClass 内例外を error に分類するため。判定上は赤として扱うが、P05 実装完了時に errors が 0 になることを緑の条件へ含める"
+    }
+  ]
+}

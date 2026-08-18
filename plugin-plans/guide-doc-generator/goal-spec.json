@@ -1,0 +1,447 @@
+{
+  "purpose": "初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として決定論的に生成し、テンプレートとして反復配布できる plugin (guide-doc-generator) の開発計画を作る",
+  "background": "参照 HTML 2 本 (analysis/guide-doc-generator/reference-analysis.md) の解析で、環境非依存で開ける・抽象と具体を往復して読ませる・触って手を動かせる、という 3 条件を同時に満たす型が実在することが確認できた。一方その型は毎回ゼロから手書きされており、部品カタログ B01-B15 とデザイン言語が資産として残らず、概念図解・画像埋め込み・lightbox・会議メモ・localStorage 永続化・印刷・テンプレート化 (gap G1-G7) は未実装のまま毎回失われる。この型を構成データ駆動の生成資産へ移し、外部参照ゼロ・絵文字ゼロ・a11y を機械ゲートで担保する必要がある。",
+  "goal": "guide-doc-generator の component-inventory + index + 13 phase ファイル + handoff が PLAN_DIR に揃い、要件 R01-R20 を被覆した checklist 全 id が index へトレースされ、run-plugin-dev-plan の決定論ゲート群が exit0 で通る状態になっている",
+  "artifact_class": "plugin-plan",
+  "target_plugin_slug": "guide-doc-generator",
+  "plan_dir": "plugin-plans/guide-doc-generator",
+  "out_dir": "plugin-plans/guide-doc-generator",
+  "requested_count": null,
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "[R01] 資料を生成したとき、成果物が単一 HTML ファイル 1 個であり、追加のアセットファイルを伴わない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "[R01] 生成 HTML を検証ゲートにかけたとき、外部 CDN / 外部フォント / 外部 img src / http(s) 参照の検出が 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C3",
+      "criterion": "[R02] 生成 HTML に position:sticky の常時表示インデックスが存在し、各ナビ項目の href が実在する section id と 1:1 で対応する (アンカー整合検査が未解決参照 0 件で exit0)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C4",
+      "criterion": "[R02] sticky ヘッダー高さ分のオフセット補正が CSS (scroll-margin-top) と JS (getBoundingClientRect 実測) の両方に存在する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C5",
+      "criterion": "[R03] ローカル画像パスを渡して埋め込みスクリプトを実行したとき、対応する img が base64 data URI として HTML 内に埋め込まれ、元パス参照が 0 件になる",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "[R04] 埋め込み画像に lightbox が付与され、ESC キー・背景クリックで閉じる処理とフォーカストラップの実装が存在する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "[R05] 任意ファイル (xlsx/zip/pdf 等) を添付指定したとき、data URI として埋め込まれ、data URI → Blob 変換によるダウンロードボタンと失敗時の代替手段テキストが HTML に出力される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "[R06] 生成 HTML がセクション単位メモ + 全体メモ + localStorage 自動保存 + Markdown/テキスト書き出し (コピー/DL) + 全消去を単一ファイル内で提供し、チェックボックスと選択チップの状態も同じ機構で永続化される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C9",
+      "criterion": "[R07] 概念図解ジェネレータがフロー / 比較 / 階層 / サイクル / マトリクス / 対比2択 の 6 パターンを構造データから inline SVG として出力し、各パターンに再現性テストがある",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C10",
+      "criterion": "[R08] アイコン検証ゲートにかけたとき、絵文字の検出が 0 件で、全アイコンが viewBox=\"0 0 24 24\" / stroke=\"currentColor\" / fill=\"none\" / stroke-linecap=\"round\" 様式の inline SVG であり exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C11",
+      "criterion": "[R08] アイコンが <symbol> 定義 + <use> 参照で構成され、生成 HTML に未使用 symbol が 0 件である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C12",
+      "criterion": "[R09] 参照解析 §2 の部品 B01-B15 が全て、宣言的な構成データから組み立てられるテンプレート部品として実装され、部品 id ごとにレンダリングテストがある",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C13",
+      "criterion": "[R10] デザイントークンとマスコット SVG が plugin の assets/ へ vendoring され、~/.claude/skills など plugin 外資産への実行時参照が 0 件である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C14",
+      "criterion": "[R10] CSS 変数駆動でアクセント色を差し替えたとき、生成 HTML のアクセント定義箇所のみが変わり、font-feature-settings:\"palt\" / tabular-nums / --stagger によるスタガー入場 (JS 非依存) が保持される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C15",
+      "criterion": "[R11] 構成データスキーマが各セクションに lead-line (1 行の抽象) と判断軸の一文を必須フィールドとして課し、欠落した構成データを検証ゲートが FAIL にする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C16",
+      "criterion": "[R11] 用語言い換えゲートが、初出の専門用語・固有名詞に括弧書きの平易な言い換えが無い場合を検出し、検出 0 件のとき exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C17",
+      "criterion": "[R12] 画像生成が slide-report-generator の Codex 画像生成パイプラインへ委譲するアダプタ経由で行われ、guide-doc-generator 内に画像生成ロジックの再実装が 0 件である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C18",
+      "criterion": "[R12] slide-report-generator が未導入の環境で生成を実行したとき、画像生成ステップのみが skip され、他ステップが完走して exit0 になる (fail-soft)",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C19",
+      "criterion": "[R13] 引数なしで生成したときデフォルトテンプレートの構成が適用され、構成データでセクション種別と部品の並びを変更したとき、その順序どおりに出力される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C20",
+      "criterion": "[R14] 生成済み HTML を逆抽出スクリプトにかけたとき構成データ (JSON) が復元され、その構成データを再レンダリングした HTML が元 HTML と意味的に一致する round-trip テストが PASS する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C21",
+      "criterion": "[R15] 生成 HTML が A4 印刷用の @media print 規則を持ち、印刷時に sticky ヘッダー・lightbox・メモ UI が版面を崩さないことを検査するゲートが exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C22",
+      "criterion": "[R16] a11y 検証ゲートにかけたとき、aria-pressed / aria-selected / aria-label / scope / :focus-visible / prefers-reduced-motion の必須適用箇所の欠落が 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C23",
+      "criterion": "[R17] --out-dir 未指定で生成したとき既定出力先配下に、指定時はその配下に、`<YYYY-MM-DD>-<種別>-<主題slug>/` (種別語彙は R20 の単一正本を参照) のディレクトリが決定論スクリプトで作られ、命名規則検証ゲートが exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C24",
+      "criterion": "[R17] 生成ディレクトリ内に 資料 HTML 本体 / 構成データ JSON / 素材 (画像・添付の原本) / README が揃い、欠落があるとき検証ゲートが FAIL する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C25",
+      "criterion": "plugin 実体の配置先が plugins/guide-doc-generator/ に固定され、計画側の PLAN_DIR および資料の出力先と混同されないことが index に明記されている",
+      "done": false,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C26",
+      "criterion": "plugin packaging 契約 (.claude-plugin/plugin.json / marketplace 登録 / update cachebuster / validate-plugin-completeness.py) が phase の plugin_meta へ渡され、後続 L4 build が追加質問なしで実行できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C27",
+      "criterion": "計画が定める scripts が Python 標準ライブラリのみに依存し、新規 .sh / .js が 0 件かつ yaml import が 0 件であることを検査するゲートが exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C28",
+      "criterion": "component-inventory.json が単一 skill への退化を回避し、ヒアリング/構成設計・構成データスキーマ検証・決定論 HTML レンダラ・アセット埋め込み・SVG 図解ジェネレータ・アイコンセット・SRG 委譲アダプタ・生成物品質検証・出力先ルーティング・逆抽出・初心者向け読みやすさレビュー の各責務候補について採否と根拠を記録している",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C29",
+      "criterion": "HTML レンダラが LLM 非依存の決定論処理として計画され、同一構成データから 2 回生成したとき出力 HTML がバイト一致する再現性テストがある",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C30",
+      "criterion": "アセット埋め込みが data URI 変換のサイズ上限を持ち、上限超過時に生成を止めず warning を出して継続する挙動がテストで確認できる",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C31",
+      "criterion": "harness-creator ネイティブ規律 (TDD Red→Green / 評価 proposer≠approver / goal-seek 4 ブロック+6 ステップ / feedback-contract) が生成 plugin 側の設計として phase に焼かれ、UBM 固有物 (IPC/Cloudflare/スクショ/PR) が 0 件である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C32",
+      "criterion": "PLAN_DIR の 13 phase ファイル + index + component-inventory + handoff が run-plugin-dev-plan の R4 検証ゲート群 (要件被覆 RTM を含む) で全て exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C33",
+      "criterion": "[R18] 構成データスキーマが資料日付を必須フィールドとして持ち、レンダラが yyyy/mm/dd (ゼロ埋めスラッシュ区切り) へ決定論的に整形し、日付未指定の構成データを渡したとき生成実行日が既定として埋まる",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C34",
+      "criterion": "[R18] 生成 HTML を検証ゲートにかけたとき、冒頭 (sticky ヘッダー領域 / hero 直上) の日付表記要素 (参照 v1 の .date-pill を継承) に `^\\d{4}/\\d{2}/\\d{2}$` へ一致する文字列が 1 つ以上存在して exit0 になり、不在または桁欠け・区切り違い (8/17 / 2026-8-17 等) のとき FAIL する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C35",
+      "criterion": "[R18] R17 のディレクトリ名 `<YYYY-MM-DD>` と R18 の本文表示 `yyyy/mm/dd` が同一の日付ソースから導出されることを検査するゲートが、両者の日付値の不一致 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C36",
+      "criterion": "[R19] 構成データスキーマが資料単位の必須フィールドとして 読者 / 前提知識レベル / 利用シーン (R20 種別) / 本質的課題 / 背景 / 資料全体ゴール / 所要時間・分量感 / セクション構成 を課し、いずれかが欠落または空の構成データを検証ゲートが FAIL にする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C37",
+      "criterion": "[R19] 生成 HTML の hero 直下に 目的 / 背景 / ゴール の 3 要素が描画され、3 要素いずれかの不在を検出するゲートが欠落 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C38",
+      "criterion": "[R19] 構成データの各セクション要素が非空の goal (読み終えたら何が分かる/できるか) を必須で持ち、レンダラが参照 v1 の .goal-chip をセクション粒度へ展開して決定論的に描画する。goal 未設定セクションが 1 件でもあるとき検証ゲートが FAIL する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C39",
+      "criterion": "[R19] sticky nav の各項目が対応セクションの goal を参照する表示要素を持ち、資料全体ゴールから各セクションゴールへの連なりが nav 上で追えることを検査するゲートが、goal 参照を持たない nav 項目 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C40",
+      "criterion": "[R19] 同一セクションに R11 の lead-line / 判断軸と R19 の section goal が併存でき、R11 ゲートと R19 ゲートを同一の構成データへ同時にかけたとき両方が exit0 になる (一方が他方を代替しない)",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C41",
+      "criterion": "[R20] 勉強会・レクチャー / 定例会議アジェンダ / 一般配布資料 / オンボーディング・導入ガイド / 学習内容のまとめ / 学習計画 (学びたいことの整理) の 6 用途それぞれに既定セクション構成プリセットが存在し、プリセット未定義の用途が 0 件である",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C42",
+      "criterion": "[R20] 用途種別の語彙が単一正本として 1 箇所に定義され、R17 のディレクトリ命名と R20 のプリセット選択の双方がその正本を参照する。語彙リストのハードコード重複を検出するゲートが 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C43",
+      "criterion": "[R20] 種別語彙の正本が既存の lecture / guide / onboarding / report / proposal に加えて 定例アジェンダ・学習まとめ・学習計画 に対応する語彙を含み、正本の全語彙がプリセットに被覆されることを検査するゲートが未被覆 0 件で exit0 になる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C44",
+      "criterion": "[R20] プリセットを切り替えて生成したとき、共有の型 (sticky 目次 / 日付表記 / 目的・背景・ゴール明示 / 抽象↔具体の往復 / アイコン規約 / 単一ファイル自己完結) が全プリセットで保持され、差分がセクションの並びと推奨部品に限定されることをテストが確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C45",
+      "criterion": "[R20] 用途別の追加要求 (アジェンダ = 時間配分・決定事項・アクションアイテム / 学習まとめ = 出典・参考リンク / 学習計画 = 分かっていること・分からないこと・次に調べること の 3 分割) の各項目について、R06 メモ機構および部品カタログ B01-B15 の再利用で満たせるか新規部品が必要かの判定と根拠が component-inventory に記録されている",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C46",
+      "criterion": "[R21] 冒頭の「今日の流れ」は大きな流れのみを列挙し、項目数が上限 (既定 5) を超えないこと。個々の手順・操作の詳細を冒頭の流れに含めない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C47",
+      "criterion": "[R21] 冒頭に「今回身につけていただきたいこと」を 1〜2 件に絞って提示する主題枠が必須フィールドとして存在し、空にできない (R19 の overall goal を聴き手向けの言葉へ落とした枠)",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C48",
+      "criterion": "[R21] 全ての本編セクションは overall goal または主題のいずれかへの紐づけを必須とし、紐づかない運営連絡 (日程調整・事務連絡等) は本編から排除され付録セクションへ隔離されることをスキーマとゲートが強制する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C49",
+      "criterion": "[R21] 構成データが必須フィールド presentation_order ∈ {demo_first, explain_first} を持ち、既定値が R19 のヒアリング項目 prior_knowledge から決定論導出される (初心者寄り → demo_first / 既知者寄り → explain_first)。ユーザーによる明示上書きが可能",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C50",
+      "criterion": "[R21] presentation_order=demo_first のとき部品順序が「できること (デモ・成果物) → 分解 → 使う機能の組み合わせ → 操作」、explain_first のとき「説明 → デモで具体化」となり、いずれのモードでも C44 の共有の型が保持されることをテストが確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C51",
+      "criterion": "[R21] 機能名から始まる説明を禁止し、各機能解説ブロックが「成果 (何ができるか) → 分解 → 用いる機能」の順であることをスキーマと検証ゲートが検査する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C52",
+      "criterion": "[R21] 各説明ブロックに文字数上限を持ち、超過分は既定で畳んだアコーディオン (部品カタログのアコーディオン相当) へ格納される。上限値はテーマ設定で変更できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C53",
+      "criterion": "[R21] 読み手がその場で手を動かすハンズオン部品と、聞き手が疑問を持ちやすい点への先回り Q&A 枠 (生成内容の誤り・精度の限界など) を型として持ち、レクチャー用途プリセットでは両方が必須になることをテストが確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C54",
+      "criterion": "[R21] レクチャーの到達レベルを段階で宣言でき、レクチャー用途では到達点として「Skill 化まで」を指定できる。宣言した到達レベルと各セクションの内容範囲の整合を検査する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C55",
+      "criterion": "[R21] 生成物中の図表・グラフが欠落・空描画になっていないこと (SVG が描画要素を持つ / 画像 data URI が空でない / 図解ノードが未解決 placeholder のまま残らない) を機械検証ゲートが確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C56",
+      "criterion": "[R21] presentation_order=demo_first のとき最初に提示されるのは概念図や抽象説明ではなく実際の画面 (スクリーンショットまたは実演の指示) であることを型として強制し、機能説明が必ずその後に置かれることをテストが確認する",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C57",
+      "criterion": "[R21] 「今回覚えていただきたいこと」の明示列挙枠 (既定 2 件・上限を指定可) と、対になる「覚えなくてよいこと (その場で調べればよい / 本資料を見返せば足りる)」の明示枠を型として持ち、レクチャー用途プリセットでは両方を必須にする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C58",
+      "criterion": "[R21] ヒアリング項目に受講者が達成したい具体業務 (例: 車両収支の自動化) を 1 件以上必須で持ち、各本編セクションがそのいずれかへ紐づくことをスキーマと検証ゲートが検査する。具体業務への紐づけを持たない一般論だけで構成された資料を不合格にする",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C59",
+      "criterion": "[R21] 構成データが各セクションの想定所要時間を持ち、レクチャー用途プリセットでは受講者の悩み・やりたいことを聞き出す対話枠を必須セクションとして確保して、全体所要時間に占めるその下限割合を検査する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C60",
+      "criterion": "[R01拡張] 生成物は JavaScript・CSS・画像・フォント・添付ファイルの全てを単一 HTML の内部に実体として持ち、取得を発生させ得る参照が 1 つも残らない。検査は許可列挙 (allowlist) 方式で行い、取得を発生させ得る全ての参照 (script@src / link@href / iframe・frame・portal / CSS の url() / img・source・video・object・embed の各参照) について data: 以外を一律違反とする。スキームの有無で判定してはならず、相対パス・絶対パスも違反とする。この HTML を 1 ファイル配置するだけで完全に成立することを機械検証する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C61",
+      "criterion": "[R22] 構成データが説明の粒度 detail_level (overview / standard / detailed) を必須フィールドとして持つ。用途プリセットは既定値を持つだけで粒度を固定せず、プリセットと独立に上書きできる。既定由来か明示指定かを provenance として記録する",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C62",
+      "criterion": "[R22] 根拠の明示度 evidence_depth (none / cited / sourced) を detail_level と直交する独立の軸として必須フィールドに持つ。片方の値から他方を決定しない。『詳しいが根拠は書かない』『粗いが根拠は示す』の組み合わせが表現できる",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C63",
+      "criterion": "[R22] detail_level が R21 C52 のブロック本文文字数上限を決定論的に modulate する。上限の正本はテーマトークン 1 箇所のままで、detail_level ごとの値をそのトークンファイルが持ち、スクリプト側に数値を持たない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C64",
+      "criterion": "[R22] ヒアリングで detail_level と evidence_depth を確定する。用途プリセット由来の既定値を提示したうえで上書きの要否だけを聞き、無回答時は既定を採用して停止しない",
+      "done": false,
+      "verify_by": "script"
+    },
+    {
+      "id": "C65",
+      "criterion": "[R22] 同一の構成データから detail_level だけを変えて生成したとき、C44 の共有の型 (sticky 目次・日付表記・目的/背景/ゴールの明示・抽象↔具体の往復・アイコン規約・単一ファイル自己完結) が全水準で保持され、差分は各ブロックの記述量と任意詳細部の展開/畳み込みに限定される",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C66",
+      "criterion": "[R22] 宣言した detail_level / evidence_depth と生成物の実態が一致することを機械検査する。evidence_depth が cited 以上なら各主張ブロックに根拠が付き、detailed を宣言して記述量が overview 相当しかない資料を不合格にする。宣言だけして実態が伴わない資料を通さない",
+      "done": false,
+      "verify_by": "script"
+    }
+  ],
+  "constraints": [
+    "plugin 実体の配置は本リポジトリの plugins/guide-doc-generator/ 配下。資料の出力先 (既定はユーザー指定の Obsidian 配下 / --out-dir で上書き) とは別軸で扱う",
+    "画像生成は既存 plugin slide-report-generator の Codex 画像生成パイプライン (build-image-prompts / generate-images-codex 相当) へ委譲し、guide-doc-generator 内で再実装しない。SRG 不在時は画像生成ステップのみ skip する fail-soft",
+    "jp-web-design は ~/.claude/skills 配下のユーザーグローバル資産で本リポジトリ非同梱。必要トークンとマスコット SVG は plugin の assets/ へ vendoring して自己完結させる",
+    "scripts は Python 標準ライブラリのみ。新規 .sh / .js の追加禁止、yaml import 禁止",
+    "単一 skill へ退化させない。責務分離候補の採否は component-inventory に根拠付きで記録する",
+    "要件の一次根拠は analysis/guide-doc-generator/reference-analysis.md (参照 v1 = 骨格・部品カタログ B01-B15 の正本 / 参照 v2 = デザイン言語・アイコン規約・マスコットの正本)",
+    "R18 の日付表記は 2 軸を混同しない。資料本文の表示は yyyy/mm/dd (スラッシュ区切り・ゼロ埋め)、R17 のディレクトリ名は <YYYY-MM-DD> (ハイフン区切り)。両者は同一の日付ソース (構成データの日付フィールド、未指定時は生成実行日) から決定論的に導出する",
+    "R18 の日付表示は HTML 手書きに依存させない。参照 v1 の .date-pill を必須要素として継承し、レンダラが構成データから生成する",
+    "R19 の分界を崩さない。ヒアリングと構成データの起草は LLM 側 (skill) の責務、構成データから HTML への描画は決定論 script 側の責務。レンダラを LLM 依存にしない (C29 のバイト一致再現性と整合させる)",
+    "R19 と R11 は別軸で両立させる。R11 は 1 セクション内の書き方の型 (抽象 → 具体 → 判断軸・用語の括弧書き)、R19 は資料全体と各セクションの目的地の明示 (purpose/background/goal と section goal)。片方のゲートで他方を代替しない",
+    "R20 の用途種別語彙は単一正本として 1 箇所に定義する。R17 のディレクトリ命名と R20 のプリセット選択が同一定義を参照し、語彙リストを二重定義しない",
+    "R20 のプリセットは共有の型 (sticky 目次 / 日付 / ゴール明示 / 抽象↔具体 / アイコン規約 / 自己完結 HTML) を変更しない。差分はセクションの並びと推奨部品に限定し、R13 の「型は揃うが内容は自由」を維持する",
+    "本 R1 の成果物は L3 plan までであり、plugin 実体は生成しない",
+    "参照解析の実測値 (サイズ・data URI 比率など) は現状の観測であり、生成物の達成目標値として焼かない",
+    "R21 は 2026-08-17 に利用者が実施済み研修のフィードバックとして追加した要件群 (C46-C55)。認知負荷を下げ本題への導入を速くすることが主眼であり、「目的に直結しない内容は離脱を招くので載せない」「説明は短いほどよい」「機能説明より先に具体例を見せる」「まず触ってもらう」が原則。デモ先行 (demo_first) / 説明先行 (explain_first) の選択は聴き手の習熟度に依存する時と場合の問題であり、どちらか一方を型として固定しない",
+    "R21 の追補 (C56-C59): 理解の起点は実画面であって概念図ではない。覚える対象は明示的に絞り、同時に「覚えなくてよい範囲」も明示して認知負荷を下げる。資料は受講者が達成したい具体業務へ紐づいていなければ一般論として流されるため、具体業務をヒアリング必須項目に加える (R19 の読者・前提知識・利用シーンとは別軸)。レクチャーは一方向の説明ではなく、受講者の悩みとやりたいことを引き出す対話枠に十分な時間を割く構成にする",
+    "C60 は 2026-08-17 に利用者が R01 の拡張として提示した要件。JavaScript・CSS・画像を全て 1 つの HTML に入れ、画像はリンク先の記述ではなく HTML 内へ実体を埋め込む。この HTML をデプロイするだけで資料が成立することが要求水準である。設計上の要点は個別規則の追加ではなく判定方式の反転にある — 対象を列挙する denylist は列挙漏れを黙って通し、実際に script@src (相対パス) と iframe/frame/portal が既存の SC-01/SC-03/SC-04 を全通過していた。取得を発生させ得る参照は data: でなければ一律違反とする許可列挙 (allowlist) へ反転し、将来 HTML に新しい取得属性が増えても既定で違反側へ倒れる fail-closed にする。ただし HTML テキストノードの URL は取得を発生させないため違反としない (SC-02 の境界を維持する)",
+    "R22 は 2026-08-17 に利用者が追加した要件。成果物の種類によって『どこまで具体的に・詳細に書くか』の粒度が変わり、根拠の書き方も変わる — 詳しく詳細に伝えるパターン、勉強会のように大まかに伝えるパターン、レポートのように詳細に伝えるパターンがある。設計上の要点は 2 つ。(1) 挙げられた 3 パターンのうち『詳しく詳細に』と『レポートのように詳細に』はどちらも詳細だが同じではなく、違いは根拠・出典をどこまで書くかである。したがって粒度は 1 軸ではなく detail_level (説明の詳しさ) と evidence_depth (根拠の明示度) の直交する 2 軸として持つ。1 軸に畳むと『詳しいが根拠は不要』が表現できなくなる。(2) 粒度を用途プリセットに埋め込むと『勉強会だから必ず粗い』が型として固定されてしまう。これは R21 の presentation_order で確定した『時と場合の問題を片方に固定しない』と同じ構造なので、同じ扱いにする — プリセットは既定値を持つだけで、粒度は独立に上書きできる"
+  ],
+  "handoff_targets": [
+    "plugin-dev-plan-architect"
+  ],
+  "max_loops": 5,
+  "open_questions": [
+    "資料の既定出力先 (ユーザー環境のローカル絶対パス配下) を plugin 内に既定値として持つか、環境変数/設定ファイル経由で解決するか未確定。plugin の可搬性と利便性のトレードオフを R2 で判断する",
+    "生成 HTML の単一ファイルサイズ上限と、上限超過時の扱い (warning 継続 / 添付の外部化提案 / 圧縮) が未確定",
+    "R14 の逆抽出における round-trip 一致の粒度 (バイト一致か構成データ等価か) が未確定。C20 は暫定で意味的一致を採用している",
+    "テーマ (アクセント色) 差し替えの入力経路 (CLI 引数 / 構成データ内フィールド / プリセット名) が未確定",
+    "初心者向け読みやすさレビューを独立 context の subagent として持つか、決定論ゲート (文長・言い換え被覆) のみで足りるかの採否が未確定",
+    "R11 の用語言い換えゲートにおける「専門用語」の判定方式 (辞書ベース / ヒューリスティック / 構成データでの明示宣言) が未確定",
+    "R18 の日付が指す意味 (資料作成日 / 実施日・開催日 / 最終更新日) が未確定。構成データ上で 1 フィールドに畳むか複数持つかを R2 で判断する。C33 は暫定で単一フィールド (既定=生成実行日) を採用している",
+    "R18 の日付表示に曜日や和暦などの補助表記を許すか (yyyy/mm/dd 本体は固定として、併記の可否) が未確定",
+    "R19 のヒアリングを対話必須にするか、構成データを直接渡す非対話経路も許すかが未確定 (非対話経路が無いと R14 の逆抽出からの再生成が対話を強制されうる)",
+    "R19-d の sticky nav 上でのセクションゴール表示形式 (title 属性 / サブテキスト常時表示 / hover 展開) が未確定。常時表示は nav の横幅を圧迫するトレードオフがある",
+    "R20 のプリセットをユーザーが自作・追加できるようにするか (プリセット定義の外部ファイル化の要否) が未確定",
+    "R20 で用途をまたぐ混成資料 (勉強会兼定例アジェンダ 等) を許すか、許す場合のプリセット合成規則とディレクトリ種別語彙の決め方が未確定",
+    "R20-c の追加語彙の具体名が未確定 (agenda / study-notes / study-plan は例示であり確定でない)。語彙は正本 1 箇所で確定させる必要がある"
+  ]
+}

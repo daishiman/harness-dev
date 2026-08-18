@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-26",
+  "covered_task_ids": [
+    "P05-x-26"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/scripts",
+  "verified_by": [
+    {
+      "claim": "chrome 部分木の内側へ著者データマーカーを持つノードを 1 個置くと、そのノードが生き残る (穴あき走査が成立している)",
+      "method": "当方が extract-handout-config.py を importlib で読み込み、`<div data-hb-generated=\"true\">` の内側に `data-hb-attainment-step` 付き `<p class=\"inner\">` と マーカー無し `<p class=\"chrome-only\">`、chrome 外に `<p class=\"outside\">` を置いた HTML を build_tree → prune_chrome へ通し、残存ノードの class 属性を採取した。リポジトリ上のファイルは 1 バイトも変更していない (メモリ上のツリーのみ)",
+      "result": "pass (残存 = ['inner', 'outside']。**chrome 内側のマーカー付きノードが生存し、最も近い非 chrome 祖先の直下へ繰り上がっている**)"
+    },
+    {
+      "claim": "既存の chrome 読み飛ばし自体は弱まっていない (マーカーを持たない chrome ノードは従来どおり捨てられる)",
+      "method": "同じ HTML から inner のマーカー属性だけを外して同経路へ通した (反例の逆方向)",
+      "result": "pass (残存 = ['outside'] のみ。**inner も chrome-only も捨てられた**。①でも chrome-only は捨てられており、残すのは穴だけで chrome 由来のテキストは外へ出ていない)"
+    },
+    {
+      "claim": "検査が素通りしていない (穴あき走査が実際に marker 集合を見ている)",
+      "method": "変異注入。①と同一の HTML を、authored_markers に空集合 frozenset() を渡して通した",
+      "result": "pass (残存 = ['outside'] へ崩れ、**①の結果が②へ一致した**。marker 集合を空にすると生存が消えるので、①の生存は marker 判定に由来しており偶然ではない)"
+    },
+    {
+      "claim": "読み飛ばし対象から外す著者データマーカーの集合が literal 列挙でなく裁定表から導出されている (PAT-1 回避)",
+      "method": "当方が `authored_data_markers()` の実装を読解し、実際の導出結果を実行して採取した",
+      "result": "pass (導出結果 7 件 = data-hb-attainment-step / data-hb-field / data-hb-key / data-hb-notes-enabled / data-hb-section-role / data-hb-src / data-hb-ties-to。出所は `schemas/ROUNDTRIP-CONTRACT.md` の fenced JSON のうち `decision=marker` の裁定の marker 文字列を正規表現で機械抽出したもので、**script 側に写しの名簿は無い**。`data-hb-generated` 自身は読み飛ばしを宣言する側なので discard される。**導出結果が空なら LaunchAbort で fail-closed** し、既定へ退避して chrome 内側の著者記述を黙って落とす側へ倒れない)"
+    },
+    {
+      "claim": "tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えていない",
+      "method": "当方が 4 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名を採取 (件数でなく名前集合で判定)",
+      "result": "pass (extract: Ran 152 **OK** (失敗集合 空)。render: Ran 219 / failures=1 で集合は `{test_cross_component.GateHandoffTest.test_round_trip_equivalence}` のみ。この 1 件は **P05-x-31 が所有する既知の赤**であり本 leaf の対象外。a11y: Ran 187 **OK**。**増加 0 件**)"
+    },
+    {
+      "claim": "class_name_fallback 経路が宣言経路と同じ規定に従っている (二重防御が分岐していない)",
+      "method": "当方が `is_generated_chrome()` / `prune_chrome()` / `perforate_chrome()` を読解",
+      "result": "pass (`is_generated_chrome` が `data-hb-generated==\"true\"` とクラス名 (CHROME_CLASSES / CHROME_CLASS_PREFIXES) の両経路を **1 つの判定へまとめており**、prune_chrome 側で経路を分けていない。したがって「クラス名は宣言より弱い根拠であり宣言を覆さない」が構造として保たれている)"
+    },
+    {
+      "claim": "入れ子の chrome が最も内側の宣言で判定される",
+      "method": "当方が `perforate_chrome()` の再帰構造を読解",
+      "result": "pass (マーカーを持つノードを拾ったあと `prune_chrome(node, ...)` で**通常走査へ戻している**ため、その内側に再び data-hb-generated が現れれば再度読み飛ばし対象になる。chrome_boundary.nesting の規定と一致)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "work-found-already-complete",
+      "detail": "**本 leaf の実装は前セッションで既に完遂されており、state の write-back だけが落ちていた**。dispatcher (当方) は実装を行わず、独立に反例を注入して成立を実測したうえで done へ write-back した。実装の mtime は本セッションの窓の外"
+    },
+    {
+      "kind": "dispatch-failed-worker-idle",
+      "detail": "**SubAgent (tg-P05-x-26) を dispatch したが 15 分間 1 ファイルも触らず idle 通知のみを返した**。催促を 1 度送っても内容のある返答が無かったため、応答待ちを打ち切って dispatcher が直接遂行した。`find -newermt '-15 minutes'` で worker が実際に何も書いていないことを実測してから切り替えており、二重作業は起きていない"
+    },
+    {
+      "kind": "measurement-error-by-dispatcher-corrected",
+      "detail": "**当方の最初の反例注入は誤っていた**。`data-hb-generated=\"index\"` を chrome の宣言として書いたが、`is_generated_chrome()` は `== \"true\"` を要求するため、その div はそもそも chrome と判定されず ①②③ が全て同じ結果になった。**『期待と違う結果が出たときに実装を読む』で発見**し、`\"true\"` へ直して測り直した。属性値を推測で書いたのが原因で、シグネチャ/契約を先に読む規律の再発事例"
+    },
+    {
+      "kind": "task-spec-missing",
+      "detail": "**`plugin-plans/guide-doc-generator/task-specs/P05-x-26.md` が実在しない** (task-graph の `task_spec_ref` は指しているが未作成)。P05-x-25 / P05-x-27 も同様。当方は node の `acceptance_criterion` を正本として遂行した。`accept-discovered-task.py` の validate は新規 form に対しては task_spec_ref の実在を要求するが、**既存 node に対しては要求していない**ため、この欠落が検出されていない (受け皿と検査の非対称)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}
