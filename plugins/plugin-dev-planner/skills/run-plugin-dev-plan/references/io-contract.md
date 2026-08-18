@@ -72,7 +72,7 @@ phase ファイルは build_target/depends_on を**再記述しない** (正規�
 | **sub-agent** | `name`/`description`/`tools`(最小権限)/`independent_context: true`/`responsibility_anchor`(prompts 参照)/(任意)`evaluator_pair` | 親 skill build 内 `run-build-skill --with-subagent` |
 | **slash-command** | `name`/`description`/`argument-hint`/`allowed-tools`/`disable-model-invocation` | 親 skill build 内 run-build-skill kind=command dispatch |
 | **hook** | `event`(PreToolUse\|PostToolUse\|Stop\|UserPromptSubmit\|SessionEnd)/`matcher`/`exit_semantics`(fail-closed は exit2)/`settings_wiring`/`fail_closed: true` | 親 skill build 内 `run-build-skill --with-hooks` |
-| **script** | `/// script` 相当 (`script_name`/`purpose`/`inputs`/`outputs`/`exit_codes`/`network`/`write_scope`) + `stdlib_only: true` + `tests_min: 80` | 親 skill build の scripts/ + tests/ |
+| **script** | `/// script` 相当 (`script_name`/`purpose`/`inputs`/`outputs`/`exit_codes`/`network`/`write_scope`) + `stdlib_only: true` + `tests_min: 12 以上` (本数の床=specfm.SCRIPT_TESTS_MIN。網羅性は harness_coverage.min の 80%) | 親 skill build の scripts/ + tests/ |
 
 `run-skill-create` は **skill 専用**。非 skill 4 種は単独投入せず、親 skill の build フロー (run-build-skill の kind dispatch / `--with-*`) で生成される。
 

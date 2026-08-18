@@ -83,6 +83,65 @@ def _validation_marker(graph: dict) -> str:
     return "fixed-13-phase"
 
 
+def _is_target_shape(graph: dict) -> bool:
+    """graph が target shape (実行可能 leaf 契約を課す形) かを execution_kind 携帯で判定する。
+
+    validate-task-graph の `_target_shape_adopted` と同じ述語 (marker 非依存)。fixed-13-phase
+    bootstrap graph (execution_kind 皆無) では (k) が発火しないため配線も行わない。
+    """
+    return any(
+        isinstance(n.get("execution_kind"), str) and n.get("execution_kind")
+        for n in graph.get("nodes", [])
+    )
+
+
+def _wire_target_shape_edges(proposed: dict, updated: dict) -> None:
+    """target shape の実行可能 leaf が (k) 契約を満たすよう parent_of / produces を配線する。
+
+    accept は従来 depends_on しか張らず、(k) が要求する
+      - phase root (`id == phase_ref` かつ execution_kind == "phase-gate") からの parent_of
+      - leaf が産出する各成果物への produces
+    を欠いたため、target shape graph では発見タスクが必ず validation_failed になっていた
+    (外ループが構造的に収束不能)。ここを埋めて外ループの帰路を開通させる。
+
+    `updated["edges"]` を in-place で伸ばす。重複エッジは張らない (canonicalize は重複を
+    吸収しないため呼び出し前に自前で防ぐ)。phase root 不在・produces 不在はここで補わず、
+    後段の validate ゲートに fail-closed で落とさせる (欠落を黙って捏造しない)。
+    """
+    proposed_id = proposed.get("id")
+    phase_ref = proposed.get("phase_ref")
+    existing = {(e.get("type"), e.get("from"), e.get("to")) for e in updated["edges"]}
+
+    def _add(edge_type: str, src: str, dst: str) -> None:
+        if (edge_type, src, dst) not in existing:
+            updated["edges"].append({"type": edge_type, "from": src, "to": dst})
+            existing.add((edge_type, src, dst))
+
+    # parent_of: phase root の実在を確認してから張る。不在なら張らず (k) の
+    # "not parented by phase root" で落とす — dangling な親エッジを作って orphan 検査を汚さない。
+    root_exists = any(
+        n.get("id") == phase_ref and n.get("execution_kind") == "phase-gate"
+        for n in updated["nodes"]
+    )
+    if root_exists:
+        _add("parent_of", phase_ref, proposed_id)
+        # phase gate が新 leaf を完了集約対象に含める辺 (derive の rel["depends_on"] 同等)。
+        # これが無いと P<nn> ゲートが新 leaf を待たずに done になれてしまう (完了判定の穴)。
+        _add("depends_on", phase_ref, proposed_id)
+
+    # produces: 宣言された成果物だけを張る。write_scope からの推測補完はしない
+    # (成果物宣言のない leaf を通すと「何を作れば done か」が曖昧なまま下流が進む)。
+    for artifact in proposed.get("produces") or []:
+        if isinstance(artifact, str) and artifact.strip():
+            _add("produces", proposed_id, artifact)
+
+    # consumes は derive に合わせて向きが produces の逆 (from=成果物 / to=leaf)。
+    # 揃えないと (e) consumes↔produces 突合が空振りする。
+    for artifact in proposed.get("consumes") or []:
+        if isinstance(artifact, str) and artifact.strip():
+            _add("consumes", artifact, proposed_id)
+
+
 def accept(form: dict, graph: dict, approved: bool = False) -> dict:
     """discovered-task form を受理し、更新後の canonical task-graph を返す。
 
@@ -162,6 +221,9 @@ def accept(form: dict, graph: dict, approved: bool = False) -> dict:
                     if (proposed_id, sid) not in existing_dep:
                         updated["edges"].append({"type": "depends_on", "from": proposed_id, "to": sid})
                         existing_dep.add((proposed_id, sid))
+        # target shape の leaf 契約 (k) を満たす構造エッジを張る (depends_on だけでは validate に落ちる)。
+        if _is_target_shape(updated) and proposed.get("execution_kind") != "phase-gate":
+            _wire_target_shape_edges(proposed, updated)
     return _dtg.canonicalize(updated)
 
 

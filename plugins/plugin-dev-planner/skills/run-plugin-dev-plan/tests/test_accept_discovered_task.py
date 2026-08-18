@@ -557,3 +557,87 @@ def test_drain_written_back_form_stays_schema_valid(tmp_path):
     written = json.loads(f.read_text(encoding="utf-8"))
     allowed = set(props.keys())
     assert set(written.keys()) <= allowed, set(written.keys()) - allowed
+
+
+# ───────────── target shape の実行可能 leaf 契約エッジ配線 (外ループ収束) ─────────────
+def _target_shape_graph() -> dict:
+    """target shape (全 leaf が execution_kind を携帯) の最小 graph。
+
+    validate-task-graph (k) が発火する形状。ここへ発見タスクを追記したとき、accept が
+    parent_of / depends_on(phase root→leaf) / produces / consumes を張らないと (k) で必ず
+    落ち、外ループが構造的に収束不能になる (回帰させないための fixture)。
+    """
+    dtg = _load("derive-task-graph")
+    return dtg.canonicalize({
+        "schema_version": "1.0",
+        "nodes": [
+            {"id": "P01", "title": "P01", "phase_ref": "P01", "entity_ref": None,
+             "state": "pending", "write_scope": "P01",
+             "execution_kind": "phase-gate", "route_ref": None, "task_spec_ref": None},
+            {"id": "P01-x-01", "title": "T1", "phase_ref": "P01", "entity_ref": None,
+             "state": "pending", "write_scope": "out/a.json",
+             "acceptance_criterion": "a", "execution_kind": "direct-task",
+             "route_ref": None, "task_spec_ref": "task-specs/P01-x-01.md"},
+        ],
+        "edges": [
+            {"type": "parent_of", "from": "P01", "to": "P01-x-01"},
+            {"type": "depends_on", "from": "P01", "to": "P01-x-01"},
+            {"type": "produces", "from": "P01-x-01", "to": "out/a.json"},
+        ],
+    })
+
+
+def _target_shape_form(phase_ref: str = "P01") -> dict:
+    return {
+        "discovering_task_id": "P01-x-01",
+        "reason": "集約判定で未網羅の解消タスクを発見した",
+        "discovered_at_artifact": "out/a.json",
+        "proposed_node": {
+            "id": "P01-x-02", "title": "解消タスク", "phase_ref": phase_ref,
+            "entity_ref": None, "state": "pending", "write_scope": "out/b/",
+            "acceptance_criterion": "矛盾が 0 件",
+            "execution_kind": "direct-task", "route_ref": None,
+            "task_spec_ref": "task-specs/P01-x-02.md",
+            "produces": ["out/b/"], "consumes": ["out/a.json"],
+        },
+        "change_level": "structural",
+    }
+
+
+def test_target_shape_leaf_gets_contract_edges_and_validates():
+    vtg = _load("validate-task-graph")
+    out = accept_mod.accept(_target_shape_form(), _target_shape_graph(), approved=True)
+    edges = {(e["type"], e["from"], e["to"]) for e in out["edges"]}
+    assert ("parent_of", "P01", "P01-x-02") in edges
+    # phase gate が新 leaf を完了集約対象に含める (これが無いとゲートが leaf を待たず done になる)
+    assert ("depends_on", "P01", "P01-x-02") in edges
+    assert ("produces", "P01-x-02", "out/b/") in edges
+    # consumes は produces と逆向き (from=成果物)
+    assert ("consumes", "out/a.json", "P01-x-02") in edges
+    assert vtg.validate(out, {}, marker=accept_mod._validation_marker(out)) == []
+
+
+def test_target_shape_leaf_produces_is_not_fabricated_from_write_scope():
+    """produces 未宣言の leaf は補完せず (k) で fail-closed に落とす (Goodhart 緑化の回避)。"""
+    vtg = _load("validate-task-graph")
+    form = _target_shape_form()
+    del form["proposed_node"]["produces"]
+    out = accept_mod.accept(form, _target_shape_graph(), approved=True)
+    assert not any(e["type"] == "produces" and e["from"] == "P01-x-02" for e in out["edges"])
+    violations = vtg.validate(out, {}, marker=accept_mod._validation_marker(out))
+    assert any("requires at least one produces artifact" in v for v in violations)
+
+
+def test_target_shape_parent_of_not_fabricated_for_absent_phase_root():
+    """実在しない phase root への dangling parent_of を作らない (orphan 検査を汚さない)。"""
+    out = accept_mod.accept(_target_shape_form(phase_ref="P07"), _target_shape_graph(), approved=True)
+    assert not any(e["type"] == "parent_of" and e["to"] == "P01-x-02" for e in out["edges"])
+
+
+def test_legacy_fixed_shape_graph_gets_no_contract_edges():
+    """execution_kind 皆無の後方互換 graph では配線しない (既存出力を byte 不変に保つ)。"""
+    baseline = accept_mod.accept(_form("additive"), _base_graph())
+    form = _form("additive")
+    form["proposed_node"]["produces"] = ["out/z/"]
+    out = accept_mod.accept(form, _base_graph())
+    assert out == baseline

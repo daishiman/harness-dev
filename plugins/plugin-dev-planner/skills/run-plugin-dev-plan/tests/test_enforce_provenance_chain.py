@@ -32,11 +32,33 @@ def hook() -> ModuleType:
     return _load()
 
 
-def _plan_with_goal_spec(tmp_path) -> Path:
+def _plan_with_goal_spec(tmp_path, source_intake=None, raw: str | None = None) -> Path:
+    """plan dir を作る。
+
+    既定は greenfield (source_intake なし)。intake 由来 plan を作りたいときだけ
+    source_intake を渡す。raw は JSON として壊れた goal-spec を置くための逃げ口。
+    """
     plan = tmp_path / "plugin-plans" / "sample"
     plan.mkdir(parents=True)
-    (plan / "goal-spec.json").write_text(json.dumps({"purpose": "x"}), encoding="utf-8")
+    if raw is None:
+        spec = {"purpose": "x"}
+        if source_intake is not None:
+            spec["source_intake"] = source_intake
+        raw = json.dumps(spec)
+    (plan / "goal-spec.json").write_text(raw, encoding="utf-8")
     return plan
+
+
+def _gates_in(hook, problems, phrase: str) -> set[str]:
+    """指定の診断語を出したゲート名の集合 (件数でなく名前で判定する)。
+
+    ゲート名は hook.REQUIRED_GATES から引き、テスト側に第 2 の名簿を作らない。
+    """
+    return {
+        g
+        for g in hook.REQUIRED_GATES
+        if any(p.startswith(f"{g} の pass marker が") and phrase in p for p in problems)
+    }
 
 
 def _write_markers(plan: Path, gates, digest=None):
@@ -78,17 +100,79 @@ def test_resolve_plan_dir_none(hook):
 
 
 # ─────────────────── check_markers (単体) ───────────────────
-def test_check_markers_missing(tmp_path, hook):
+def test_check_markers_missing_greenfield_requires_only_provenance_chain(tmp_path, hook):
+    # greenfield (source_intake なし): C04 は --intake が無く原理的に PASS 不能なので
+    # 要求しない。C05 は --allow-missing-intake で PASS 可能なので要求し続ける。
     plan = _plan_with_goal_spec(tmp_path)
     problems = hook.check_markers(plan)
-    assert len(problems) == 2 and all("pass marker が無い" in p for p in problems)
+    assert _gates_in(hook, problems, "無い") == {"provenance-chain"}
+
+
+def test_check_markers_missing_intake_derived_requires_both(tmp_path, hook):
+    # intake 由来: 従来どおり両ゲートを fail-closed で要求する (緩めていないことの固定)。
+    plan = _plan_with_goal_spec(tmp_path, source_intake="analysis/x/intake.json")
+    problems = hook.check_markers(plan)
+    assert _gates_in(hook, problems, "無い") == {"intake-consumption", "provenance-chain"}
+
+
+def test_check_markers_greenfield_passes_with_provenance_chain_only(tmp_path, hook):
+    # 本 fix の主目的: greenfield plan が C05 の marker だけで --mode update へ進める。
+    plan = _plan_with_goal_spec(tmp_path)
+    _write_markers(plan, ("provenance-chain",))
+    assert hook.check_markers(plan) == []
+
+
+def test_check_markers_intake_derived_blocked_by_provenance_chain_only(tmp_path, hook):
+    # 反例: 同じ marker 構成でも intake 由来なら通してはならない。
+    plan = _plan_with_goal_spec(tmp_path, source_intake="analysis/x/intake.json")
+    _write_markers(plan, ("provenance-chain",))
+    assert _gates_in(hook, hook.check_markers(plan), "無い") == {"intake-consumption"}
+
+
+@pytest.mark.parametrize("empty", [None, "", {}, [], 0, False])
+def test_check_markers_empty_source_intake_is_greenfield(tmp_path, hook, empty):
+    # planner は greenfield で source_intake に null を書く。空の器は出自の証拠にならない。
+    plan = _plan_with_goal_spec(tmp_path, source_intake=empty)
+    if empty is None:
+        # source_intake: null を明示的に置く経路も同じ扱いになることを固定する。
+        (plan / "goal-spec.json").write_text(
+            json.dumps({"purpose": "x", "source_intake": None}), encoding="utf-8"
+        )
+    _write_markers(plan, ("provenance-chain",))
+    assert hook.check_markers(plan) == []
+
+
+def test_check_markers_unparsable_goal_spec_is_fail_closed(tmp_path, hook):
+    # 壊れた goal-spec で C04 を回避できてはならない (緩める側の抜け道封鎖)。
+    plan = _plan_with_goal_spec(tmp_path, raw="{ not json")
+    _write_markers(plan, ("provenance-chain",))
+    problems = hook.check_markers(plan)
+    assert _gates_in(hook, problems, "無い") == {"intake-consumption"}
+    # かつ「marker が無い」ではなく「壊れている」と分かる診断が出る (誤診の防止)。
+    assert any("JSON として読めない" in p for p in problems)
+
+
+def test_check_markers_non_object_goal_spec_is_fail_closed(tmp_path, hook):
+    plan = _plan_with_goal_spec(tmp_path, raw=json.dumps(["not", "an", "object"]))
+    _write_markers(plan, ("provenance-chain",))
+    problems = hook.check_markers(plan)
+    assert _gates_in(hook, problems, "無い") == {"intake-consumption"}
+    assert any("object でない" in p for p in problems)
 
 
 def test_check_markers_stale(tmp_path, hook):
-    plan = _plan_with_goal_spec(tmp_path)
+    plan = _plan_with_goal_spec(tmp_path, source_intake="analysis/x/intake.json")
     _write_markers(plan, hook.REQUIRED_GATES, digest="deadbeef")
     problems = hook.check_markers(plan)
-    assert len(problems) == 2 and all("stale" in p for p in problems)
+    assert _gates_in(hook, problems, "stale") == {"intake-consumption", "provenance-chain"}
+
+
+def test_check_markers_stale_greenfield(tmp_path, hook):
+    # greenfield でも C05 の stale 検出は生きている (要求集合を絞っただけで弱めていない)。
+    plan = _plan_with_goal_spec(tmp_path)
+    _write_markers(plan, ("provenance-chain",), digest="deadbeef")
+    problems = hook.check_markers(plan)
+    assert _gates_in(hook, problems, "stale") == {"provenance-chain"}
 
 
 def test_check_markers_clean(tmp_path, hook):
@@ -129,6 +213,22 @@ def test_main_clean_markers_allows(tmp_path, hook, monkeypatch):
     _write_markers(plan, hook.REQUIRED_GATES)
     cmd = f"run-plugin-dev-plan --mode update --out-dir {plan}"
     assert _run(hook, monkeypatch, {"tool_input": {"command": cmd}}) == 0
+
+
+def test_main_greenfield_allows_with_provenance_chain_only(tmp_path, hook, monkeypatch):
+    # exit code の水準でも greenfield が通ること (check_markers 単体だけでなく経路全体)。
+    plan = _plan_with_goal_spec(tmp_path)
+    _write_markers(plan, ("provenance-chain",))
+    cmd = f"run-plugin-dev-plan --mode update --out-dir {plan}"
+    assert _run(hook, monkeypatch, {"tool_input": {"command": cmd}}) == 0
+
+
+def test_main_intake_derived_blocks_with_provenance_chain_only(tmp_path, hook, monkeypatch):
+    # 同じ marker 構成で intake 由来は block されたままであること (fail-closed の保全)。
+    plan = _plan_with_goal_spec(tmp_path, source_intake="analysis/x/intake.json")
+    _write_markers(plan, ("provenance-chain",))
+    cmd = f"run-plugin-dev-plan --mode update --out-dir {plan}"
+    assert _run(hook, monkeypatch, {"tool_input": {"command": cmd}}) == 2
 
 
 def test_main_improvement_handoff_plan_dir_blocks_without_markers(tmp_path, hook, monkeypatch):
