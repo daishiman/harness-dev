@@ -154,6 +154,10 @@ feedback_contract:
       loop_scope: outer
       text: "出力先へ同梱された構成データから 2 回生成したとき出力 HTML がバイト一致し、決定論レンダリングの再現性が保たれることを受入テストが確認する"
       verify_by: test
+    - id: OUT3
+      loop_scope: outer
+      text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D9 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲と挿絵生成 (C13) が draft 段で起動していないことを実走の痕跡で確認する"
+      verify_by: live-trial
 ---
 
 # run-handout-build
@@ -283,6 +287,7 @@ PY
 - `criteria:IN1`: validate-handout-config.py が exit0 で、lead-line と判断軸の一文・日付フィールド・用語言い換え宣言の欠落が 0 件である。
 - `criteria:OUT1`: 生成した単一 HTML が外部依存ゼロで開き、検証ゲートが全て exit0 になり、出力先に資料 HTML と構成データと素材と README が揃うことを受入テストが確認する。
 - `criteria:OUT2`: 同梱された構成データからの再生成で出力 HTML がバイト一致することを受入テストが確認する。
+- `criteria:OUT3`: 題材と素材だけを与えた実起動で、質問ラウンドが `draft_first.max_question_rounds_before_first_draft` 回以内に収まり、D1-D9 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示し、C03 委譲と挿絵生成 (C13) が draft 段で起動していないことを実走の痕跡で確認する。
 
 ## Gotchas
 

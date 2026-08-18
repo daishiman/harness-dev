@@ -145,7 +145,7 @@ def _mutations():
             f"criterion-verify-by-{cid}",
             "AC-C01-7",
             text_line + f"      verify_by: {verify_by}\n",
-            text_line + "      verify_by: live-trial\n",
+            text_line + f"      verify_by: {'test' if verify_by == 'live-trial' else 'live-trial'}\n",
         ))
 
     # AC-C01-8: 必須セクション / サブセクション
@@ -334,6 +334,7 @@ def _criterion_text_head(cid):
         "IN1": "構成データが",
         "OUT1": "生成した単一 HTML 資料",
         "OUT2": "同梱された構成データから",
+        "OUT3": "題材と素材だけを与えた実起動で",
     }
     return heads[cid]
 

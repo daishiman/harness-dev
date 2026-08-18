@@ -44,6 +44,10 @@ feedback_contract:
       loop_scope: outer
       text: "復元した構成データを再レンダリングした HTML が元 HTML と構成データ等価であることを round-trip テストが確認する"
       verify_by: test
+    - id: OUT2
+      loop_scope: outer
+      text: "実在の手書き HTML 1 本を与えた実起動で、元 HTML を 1 バイトも書き換えず、復元不能箇所が補完方針つきでレポートへ列挙され、資料内容の書き換えや部品構成の改善提案を出力に含めないことを実走の痕跡で確認する"
+      verify_by: live-trial
 ---
 
 # run-handout-extract
@@ -123,6 +127,8 @@ HTML のバイト一致は課さない (バイト一致が課されるのは同�
 - **IN1** (inner / script): `validate-handout-config.py` が exit 0 を返し、復元不能箇所が
   補完方針つきでレポートへ列挙されていること。
 - **OUT1** (outer / test): round-trip テストが構成データ等価を確認したこと。
+- **OUT2** (outer / live-trial): 実起動で元 HTML を書き換えず、復元不能箇所が補完方針つきで
+  レポートへ列挙され、改善提案を出力に含めないことを確認したこと。
 
 ## Gotchas
 

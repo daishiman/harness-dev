@@ -147,7 +147,7 @@ REJECT_CASES = [
     (
         "extra-criterion-added",
         "    - id: OUT1",
-        "    - id: OUT2\n      loop_scope: outer\n      text: \"逆抽出の所要時間が短い\"\n      verify_by: test\n    - id: OUT1",
+        "    - id: OUT9\n      loop_scope: outer\n      text: \"逆抽出の所要時間が短い\"\n      verify_by: test\n    - id: OUT1",
         "AC-C02-7",
     ),
     (

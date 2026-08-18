@@ -196,20 +196,104 @@
     "new_parts": "B17 ハンズオン手順の 1 件のみ (config/handout-parts.json へ追加。描画は C11 の部品テーブル登録で、B16 と同じ扱い。独立 component にしない)",
     "new_section_kinds": "flow-overview / capability-explainer / handson / anticipated-qa / dialogue / logistics の 6 件 (config/handout-sections.json へ追加。writer は C12)",
     "ownership_map": [
-      {"checklist": "C46", "requirement": "冒頭の流れは大きな流れだけ・項目数上限", "owner": "C12", "verify": "script", "verify_detail": "C12 A9 の section_kind 追加検査 (E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL)。閾値は handout-sections.json の max_items / forbid_row_detail"},
-      {"checklist": "C47", "requirement": "冒頭主題を 1-2 件へ絞る", "owner": "C12", "verify": "script", "verify_detail": "document.focus_theme の件数検査 (E-FOCUS-THEME) と section.ties_to の紐づけ検査"},
-      {"checklist": "C48", "requirement": "ゴール・主題に紐づかない伝達事項を本編から排除", "owner": "C12", "verify": "script", "verify_detail": "E-TIES-DANGLING / E-SECTION-UNTIED-GOAL / E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER。描画順の副検査は C22 NAR-08"},
-      {"checklist": "C49", "requirement": "presentation_order を必須フィールド化し prior_knowledge から決定論導出", "owner": "C12", "verify": "script", "verify_detail": "CR-PRESENTATION-ORDER (--normalize の N4b が唯一の実行点)。provenance.presentation_order_source で由来を記録"},
-      {"checklist": "C50", "requirement": "両モードで共有の型が保持される", "owner": "C23", "verify": "test", "verify_detail": "AC-C23-R21-50a..50d。presentation_order_variants は自身の section_order の順列に限られ、許可キー 5 つの構造保証が C44 を守る"},
-      {"checklist": "C51", "requirement": "機能名から始めず成果→分解→機能の順で書く", "owner": "C12", "verify": "script", "verify_detail": "parts[].slot の順序検査 (E-CAPABILITY-SLOT-MISSING / E-CAPABILITY-SLOT-ORDER)。描画テキスト面の副検査は C18 LANG-07"},
-      {"checklist": "C52", "requirement": "説明文字数上限と超過分の既定折り畳み", "owner": "C12", "verify": "script", "verify_detail": "CR-TEXT-FOLD (--normalize の N10b)。上限はテーマトークン text_limits.block_body_max_chars (スキーマ owner は C11)。器は既存部品 B10"},
-      {"checklist": "C53", "requirement": "ハンズオン枠と先回り Q&A 枠", "owner": "C23", "verify": "test", "verify_detail": "AC-C23-R21-53 (lecture プリセットが handson / anticipated-qa を必ず含む)。部品側の必須検査は C12 の E-SECTIONKIND-HANDSON"},
-      {"checklist": "C54", "requirement": "到達レベルの宣言と超過の検出", "owner": "C12", "verify": "script", "verify_detail": "attainment_level enum と section.attainment_step の検査 (E-ATTAINMENT-OVERRUN / E-ATTAINMENT-UNREACHED)"},
-      {"checklist": "C55", "requirement": "図表・グラフの欠落検出", "owner": "C16", "verify": "test", "verify_detail": "SC-09。外部参照ゼロ検査 (SC-01..SC-04) を通過する欠陥クラスなので独立検出として追加した"},
-      {"checklist": "C56", "requirement": "demo_first の最初の提示物は実画面 (概念図先行の禁止)", "owner": "C22", "verify": "test", "verify_detail": "NAR-07 / CR-DEMO1。推奨ではなく禁止として判定式を書く"},
-      {"checklist": "C57", "requirement": "覚えていただきたいこと / 覚えなくてよいこと を対で明示", "owner": "C12", "verify": "script", "verify_detail": "E-REMEMBER-PAIR / E-REMEMBER-MAX。ヒアリング項目としての必須化は C01、描画の両方出しは C11"},
-      {"checklist": "C58", "requirement": "達成したい具体業務をヒアリング必須項目化し紐づけを検査", "owner": "C01", "verify": "script", "verify_detail": "項目の owner は C01 R1-elicit (ヒアリング責務の所有者)。機械検査は C12 の E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK"},
-      {"checklist": "C59", "requirement": "対話枠を必須化し所要時間の下限割合を確保", "owner": "C12", "verify": "script", "verify_detail": "E-SECTIONKIND-DURATION-SHARE。時間の正本は section.duration の 1 フィールドのみで、B03 rows[].time はその内訳 (総和一致を E-TIMEBOX-SUM が強制)。下限割合 0.15 は handout-sections.json の dialogue.min_duration_share が持つ"}
+      {
+        "checklist": "C46",
+        "requirement": "冒頭の流れは大きな流れだけ・項目数上限",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "C12 A9 の section_kind 追加検査 (E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL)。閾値は handout-sections.json の max_items / forbid_row_detail"
+      },
+      {
+        "checklist": "C47",
+        "requirement": "冒頭主題を 1-2 件へ絞る",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "document.focus_theme の件数検査 (E-FOCUS-THEME) と section.ties_to の紐づけ検査"
+      },
+      {
+        "checklist": "C48",
+        "requirement": "ゴール・主題に紐づかない伝達事項を本編から排除",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "E-TIES-DANGLING / E-SECTION-UNTIED-GOAL / E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER。描画順の副検査は C22 NAR-08"
+      },
+      {
+        "checklist": "C49",
+        "requirement": "presentation_order を必須フィールド化し prior_knowledge から決定論導出",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "CR-PRESENTATION-ORDER (--normalize の N4b が唯一の実行点)。provenance.presentation_order_source で由来を記録"
+      },
+      {
+        "checklist": "C50",
+        "requirement": "両モードで共有の型が保持される",
+        "owner": "C23",
+        "verify": "test",
+        "verify_detail": "AC-C23-R21-50a..50d。presentation_order_variants は自身の section_order の順列に限られ、許可キー 5 つの構造保証が C44 を守る"
+      },
+      {
+        "checklist": "C51",
+        "requirement": "機能名から始めず成果→分解→機能の順で書く",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "parts[].slot の順序検査 (E-CAPABILITY-SLOT-MISSING / E-CAPABILITY-SLOT-ORDER)。描画テキスト面の副検査は C18 LANG-07"
+      },
+      {
+        "checklist": "C52",
+        "requirement": "説明文字数上限と超過分の既定折り畳み",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "CR-TEXT-FOLD (--normalize の N10b)。上限はテーマトークン text_limits.block_body_max_chars (スキーマ owner は C11)。器は既存部品 B10"
+      },
+      {
+        "checklist": "C53",
+        "requirement": "ハンズオン枠と先回り Q&A 枠",
+        "owner": "C23",
+        "verify": "test",
+        "verify_detail": "AC-C23-R21-53 (lecture プリセットが handson / anticipated-qa を必ず含む)。部品側の必須検査は C12 の E-SECTIONKIND-HANDSON"
+      },
+      {
+        "checklist": "C54",
+        "requirement": "到達レベルの宣言と超過の検出",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "attainment_level enum と section.attainment_step の検査 (E-ATTAINMENT-OVERRUN / E-ATTAINMENT-UNREACHED)"
+      },
+      {
+        "checklist": "C55",
+        "requirement": "図表・グラフの欠落検出",
+        "owner": "C16",
+        "verify": "test",
+        "verify_detail": "SC-09。外部参照ゼロ検査 (SC-01..SC-04) を通過する欠陥クラスなので独立検出として追加した"
+      },
+      {
+        "checklist": "C56",
+        "requirement": "demo_first の最初の提示物は実画面 (概念図先行の禁止)",
+        "owner": "C22",
+        "verify": "test",
+        "verify_detail": "NAR-07 / CR-DEMO1。推奨ではなく禁止として判定式を書く"
+      },
+      {
+        "checklist": "C57",
+        "requirement": "覚えていただきたいこと / 覚えなくてよいこと を対で明示",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "E-REMEMBER-PAIR / E-REMEMBER-MAX。ヒアリング項目としての必須化は C01、描画の両方出しは C11"
+      },
+      {
+        "checklist": "C58",
+        "requirement": "達成したい具体業務をヒアリング必須項目化し紐づけを検査",
+        "owner": "C01",
+        "verify": "script",
+        "verify_detail": "項目の owner は C01 R1-elicit (ヒアリング責務の所有者)。機械検査は C12 の E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK"
+      },
+      {
+        "checklist": "C59",
+        "requirement": "対話枠を必須化し所要時間の下限割合を確保",
+        "owner": "C12",
+        "verify": "script",
+        "verify_detail": "E-SECTIONKIND-DURATION-SHARE。時間の正本は section.duration の 1 フィールドのみで、B03 rows[].time はその内訳 (総和一致を E-TIMEBOX-SUM が強制)。下限割合 0.15 は handout-sections.json の dialogue.min_duration_share が持つ"
+      }
     ],
     "single_ssot_impact": "RESOLUTION-P03.md が固定した SSOT を 1 つも動かしていない。部品追加は config/handout-parts.json (owner C11)、section_kind 追加は config/handout-sections.json (writer C12)、用途語彙とプリセットは script-brief-C23.json の vocabulary_ssot / preset_definitions (owner C23) に閉じており、ブリーフ散文へ id を列挙していない。R21 で新設した規則正本は CR-PRESENTATION-ORDER (C12) / CR-TEXT-FOLD (C12) / CR-DEMO1 (C22) の 3 つで、いずれも所有 component 1 つに閉じている"
   },
@@ -1112,6 +1196,12 @@
             "loop_scope": "outer",
             "text": "出力先へ同梱された構成データから 2 回生成したとき出力 HTML がバイト一致し、決定論レンダリングの再現性が保たれることを受入テストが確認する",
             "verify_by": "test"
+          },
+          {
+            "id": "OUT3",
+            "loop_scope": "outer",
+            "text": "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D9 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲と挿絵生成 (C13) が draft 段で起動していないことを実走の痕跡で確認する",
+            "verify_by": "live-trial"
           }
         ]
       },
@@ -1249,6 +1339,12 @@
             "loop_scope": "outer",
             "text": "復元した構成データを再レンダリングした HTML が元 HTML と構成データ等価であることを round-trip テストが確認する",
             "verify_by": "test"
+          },
+          {
+            "id": "OUT2",
+            "loop_scope": "outer",
+            "text": "実在の手書き HTML 1 本を与えた実起動で、元 HTML を 1 バイトも書き換えず、復元不能箇所が補完方針つきでレポートへ列挙され、資料内容の書き換えや部品構成の改善提案を出力に含めないことを実走の痕跡で確認する",
+            "verify_by": "live-trial"
           }
         ]
       },

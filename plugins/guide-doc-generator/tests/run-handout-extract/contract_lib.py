@@ -48,6 +48,7 @@ REQUIRED_SCRIPTS = (
 REQUIRED_CRITERIA = {
     "IN1": ("inner", "script"),
     "OUT1": ("outer", "test"),
+    "OUT2": ("outer", "live-trial"),
 }
 
 # component-inventory.json #C02 goal_seek

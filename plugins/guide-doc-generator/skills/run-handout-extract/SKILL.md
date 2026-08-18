@@ -52,6 +52,10 @@ feedback_contract:
       loop_scope: outer
       text: "復元した構成データを再レンダリングした HTML が元 HTML と構成データ等価であることを round-trip テストが確認する"
       verify_by: test
+    - id: OUT2
+      loop_scope: outer
+      text: "実在の手書き HTML 1 本を与えた実起動で、元 HTML を 1 バイトも書き換えず、復元不能箇所が補完方針つきでレポートへ列挙され、資料内容の書き換えや部品構成の改善提案を出力に含めないことを実走の痕跡で確認する"
+      verify_by: live-trial
 ---
 
 # run-handout-extract
@@ -217,6 +221,9 @@ PY
 - **OUT1** (outer / test): 復元した構成データを再レンダリングした HTML が元 HTML と
   構成データ等価であることを round-trip テストが確認した。等価でない場合は差分を全件
   提示したうえで未達として返す。
+- **OUT2** (outer / live-trial): 実在の手書き HTML 1 本を与えた実起動で、元 HTML を
+  1 バイトも書き換えず、復元不能箇所が補完方針つきでレポートへ列挙され、資料内容の
+  書き換えや部品構成の改善提案を出力に含めないことを実走の痕跡で確認した。
 
 ## Gotchas
 
