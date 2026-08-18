@@ -11,6 +11,25 @@
 
 route、Agent、思考法の個数はコストモデルに含めない。
 
+## build stage (draft / release)
+
+profile が「作った物にどれだけ証明を要求するか」であるのに対し、stage は「そもそもどこまで作るか」を決める**直交した別の軸**である。両者を 1 本へ潰さないのは、`build-only` を選んでも生成 obligation の集合が変わらないためである — 検証の深さを下げても、component 数と同じだけの受入テスト設計 (P04) は最後まで走る。利用者が最初の 1 本を手にするまでの時間を決めているのは検証の深さではなく生成の集合であり、profile ではそこへ手が届かない。
+
+| stage | 実行する obligation | 繰り越すもの |
+|---|---|---|
+| `draft` | `stage=draft` かつ kind が `generative` / `deterministic` のもの。実体 (route build) と、それを立ち上げるのに要る phase (P01 goal-spec / P02 設計ブリーフ / P05 実装) | 受入テスト設計 (P04)、設計レビュー (P03)、P06 以降の検証・文書・リリース、および全ての `semantic` / `observational` / `audit` |
+| `release` (既定) | 全 obligation | なし |
+
+stage は `derive-route-build-obligations.py` が `phase_ref` から決定論導出する (`DRAFT_PHASES`)。title の自然文や entity_ref の有無で判断しない。**stage 未宣言の obligation は `draft` 扱い**とする — 未分類を release へ倒すと、stage を知らない旧 contract を draft で回した瞬間に全件 defer され「何も作られていないのに何も落ちていない」計画が成立するためである。分類漏れは遅くなる側へ倒す。
+
+**畳み込みの単位は component ではなく「component × stage」である。** task-graph の `P02-Cxx-01` / `P04-Cxx-01` はどちらも `entity_ref` に component を持つため、component 単位で route obligation へ畳むと、第1稿の route build 指示に「受入テストを赤で固定する」が同梱され、stage を分けても待ち時間が縮まらない状態が黙って成立する。`_folds_into_route()` は `component-build` (route build 本体・`phase_ref` を持たない node がある) と draft 段の node だけを畳み、release 段の node は独立した `task:<node-id>` obligation として第1稿の外へ出す。
+
+draft は**速い完了ではなく、未完了だが動く状態**である。繰り越しは `stage_gate.deferred_to_release[]` に名前つきで残り、`stage_gate.status` は `draft-incomplete` を返す。この状態で completed を宣言しない。draft 側の obligation がその繰り越し先に依存する場合 (実グラフの `P05-x-01 → P04-x-01` がこれにあたる)、`blocked` ではなく `defer` + `dependency-deferred` として理由を残す。両者を混ぜると「証拠が足りない」と「意図的に後ろへ回した」の区別が計画から引けなくなり、昇格時に何を回収すべきか読めない。
+
+**stage は fingerprint に含めない。** draft で得た PASS receipt は release でそのまま再利用され、昇格は繰り越し分の追加実行だけで済む。含めてしまうと昇格のたびに全 route を作り直すことになり、二段階にした意味 (待ち時間の短縮) がそっくり失われる。
+
+第1稿の「smoke」水準の検証は新設しない。route build ごとに dispatcher が既に回している決定論ゲート (`validate-build-trace.py` / `validate-route-build-reports.py` / `check-route-component-parity.py`) がそれであり、draft が外すのは受入テストの**設計工程**であって、成果物が壊れていないことの機械確認ではない。
+
 ## 証拠DAG
 
 `verification-contract.json` は obligation を5種類に分類する。
