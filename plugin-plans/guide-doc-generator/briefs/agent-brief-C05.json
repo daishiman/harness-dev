@@ -205,7 +205,7 @@
     "## Prompt Templates",
     "## Self-Evaluation"
   ],
-  "prompt_ref": "plugins/guide-doc-generator/skills/run-handout-build/prompts/R-design-config.md",
+  "prompt_ref": "plugins/guide-doc-generator/skills/run-handout-build/prompts/R2a-design-config.md",
   "failure_modes": [
     "参照 HTML の文面流用: 独立 context にしても、部品カタログ references に例文が載っていると今回の題材へ写す。references 側は構造の記述に留め、例文は『型の例示であり流用禁止』と明示する",
     "lead-line の判断軸化: lead_line に『〜を選ぶときは』と書いてしまい decision_line と重複する。lead_line は扱う抽象の宣言、decision_line は選択のための問い、と役割を分けて例示する",
@@ -223,8 +223,8 @@
     "family をまたいだ motif 名の借用: flat-infographic-jp のセクションに kanagawa genome の motif 名 (rounded-isometric-platform 等) を書く。family を決めてからその family の genome を読む順序を守る"
   ],
   "open_questions": [
-    "responsibility_anchor が inventory では 'prompts/R-design-config.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は `<!-- responsibility: R<数字> -->` (R + 数字のみ) しか受け付けない。本文アンカーは `<!-- responsibility: R1 -->` とし、prompt ファイル名は R-design-config.md のままにする案を採るか、prompt 名も R1-design-config.md へ揃えるかは build 時 (P05) に確定が要る。Tier2 coverage は agent brief に responsibilities[] が無いため現状は skip される",
-    "prompt_ref の基準ディレクトリを owner skill 配下 (skills/run-handout-build/prompts/) とする前提で書いたが、inventory は 'prompts/R-design-config.md' としか書いておらず、plugin 直下 prompts/ の可能性も残る。SRG/harness-creator の先例は owner skill 配下ゆえそちらを推奨するが、確定は P05",
+    "responsibility_anchor が inventory では 'prompts/R2a-design-config.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は `<!-- responsibility: R<数字> -->` (R + 数字のみ) しか受け付けない。本文アンカーは `<!-- responsibility: R1 -->` とし、prompt ファイル名は R2a-design-config.md のままにする案を採るか、prompt 名も R1-design-config.md へ揃えるかは build 時 (P05) に確定が要る。Tier2 coverage は agent brief に responsibilities[] が無いため現状は skip される",
+    "prompt_ref の基準ディレクトリを owner skill 配下 (skills/run-handout-build/prompts/) とする前提で書いたが、inventory は 'prompts/R2a-design-config.md' としか書いておらず、plugin 直下 prompts/ の可能性も残る。SRG/harness-creator の先例は owner skill 配下ゆえそちらを推奨するが、確定は P05",
     "model 指定 (sonnet 固定 / inherit) が inventory に無い。SRG agents は sonnet 固定、harness-creator agents は inherit。構成設計は判断密度が高いため inherit を推奨するが未確定",
     "構成データの部品ごとの要素 (比較表の行列・チェック行の項目文) をどこまで agent が書き、どこからユーザー原稿とするかの線引きが schema 側で表現されているかは C12 の schema 確定 (P02-C12-01) 待ち",
     "RESOLUTION-R23 (a) は『C11 が画像の焼き文字が崩れた場合に overlay_text を表示できる markup を出す』ことを安全弁の受け側として要求しているが、script-brief-C11.json への反映は P04-x-07 の write_scope 外で未実施。C05 が overlay_text を必ず非空で書いても、C11 が overlay を出せなければ R15 の安全弁は片肺になる。C11 の owner leaf での追従が要る",

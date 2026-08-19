@@ -160,7 +160,7 @@
     "## Prompt Templates",
     "## Self-Evaluation"
   ],
-  "prompt_ref": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R-review-readability.md",
+  "prompt_ref": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R1-review-readability.md",
   "failure_modes": [
     "機械面の重複指摘: findings が『絵文字が使われている』『aria-label がない』で埋まり、意味の指摘が 0 件になる。boundary の除外リストと突合する手順を最終ステップに固定して防ぐ",
     "設計意図での穴埋め: 構成データの意図フィールドを読んで『こういう狙いだろう』と補完し、読者には見えない情報で PASS を出す。判定根拠を HTML の逐語引用に限る (location.quote 必須) ことで防ぐ",
@@ -171,7 +171,7 @@
     "blocked の握りつぶし: 機械ゲート FAIL のまま意味レビューを始め、形式起因の読みにくさを意味の問題として報告する"
   ],
   "open_questions": [
-    "【決着済み・記録】本文アンカーは `<!-- responsibility: R1 -->`、inventory の responsibility_anchor は 'prompts/R-review-readability.md' のまま据え置きで確定した (成果物 plugins/guide-doc-generator/agents/handout-readability-reviewer.md:19 に当該アンカーが実在。lint-agent-prompt-section.py の ANCHOR_RE が `R<数字>` のみを受けるという制約と両立している)",
+    "【決着済み・記録】本文アンカーは `<!-- responsibility: R1 -->`、inventory の responsibility_anchor は 'prompts/R1-review-readability.md' のまま据え置きで確定した (成果物 plugins/guide-doc-generator/agents/handout-readability-reviewer.md:19 に当該アンカーが実在。lint-agent-prompt-section.py の ANCHOR_RE が `R<数字>` のみを受けるという制約と両立している)",
     "【要 discovered-task・成果物側の追従】成果物 handout-readability-reviewer.md が本ブリーフの旧記述をそのまま焼いている箇所が 2 件ある。(1) :57 と :125 の `plugins/guide-doc-generator/references/` (実体は skills/ref-handout-design-system/references/。当該直下ディレクトリは存在しない) (2) :156 の『C18 (言語と日付): …一文の字数上限』(C18 は文長を判定しない。正本は C12)。plugins/ は本ノードの write_scope 外のため未修正。P05-C06 の再 build で追従が要る",
     "prompt_ref の基準を owner skill (assign-handout-readability-evaluator) 配下としたが、inventory は相対名しか持たない。C03 側の brief (skill-brief-C03.json) の responsibilities は R1-assign 1 本で、prompt ファイル名との対応は P05 で確定",
     "【決着済み・記録】再レビュー回数の上限は C06 が持たない。収束制御 (max_loops 等) は C01 の goal_seek が単独で持ち、その数値は C01 側の 1 箇所が正本なので本ブリーフへ写さない (P05 evidence の handoff-to-downstream-leaf(2) で C01 へ申し送り済み。C03 は verdict を運ぶだけで打ち切り判断をしない)",

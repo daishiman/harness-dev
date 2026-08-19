@@ -39,7 +39,7 @@ responsibility_refs:
   - prompts/R3-render.md
   - prompts/R4-verify.md
   - prompts/R5-refine.md
-  - prompts/R-design-config.md
+  - prompts/R2a-design-config.md
 responsibilities:
   - id: R1-elicit
     prompt_required: true

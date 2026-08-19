@@ -75,7 +75,7 @@ class AssignHandoutReadabilityReviewContractTest(unittest.TestCase):
         self.assertContract("AC-C03-5")
 
     def test_AC_C03_6_responsibility_prompt_exists(self):
-        """prompts/R-review-readability.md が宣言され実在する (C06 prompt_ref)。"""
+        """prompts/R1-review-readability.md が宣言され実在する (C06 prompt_ref)。"""
         self.assertContract("AC-C03-6")
 
     def test_AC_C03_7_depends_on_matches_inventory(self):

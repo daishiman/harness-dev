@@ -38,7 +38,7 @@ C03 は skill component であり、「実際にレビューが良かったか�
 | AC-C03-3 | description が trigger (読みやすさ・レビュー・資料/handout) から発見でき「〜使う」で終わる | skill-brief-C03 `trigger_conditions` / lint-skill-description |
 | AC-C03-4 | `context: fork` で `handout-readability-reviewer` (C06) へ委譲し、agent 実体が存在する | skill-brief-C03 `needs_independent_context: true` / inventory #C06 `name` `build_target` / agent-brief-C06 `isolation_rationale` |
 | AC-C03-5 | responsibilities は `R1-assign` 1 件ちょうど・`prompt_required: true` | skill-brief-C03 `responsibilities` |
-| AC-C03-6 | `prompts/R-review-readability.md` が宣言され実在する | agent-brief-C06 `prompt_ref` |
+| AC-C03-6 | `prompts/R1-review-readability.md` が宣言され実在する | agent-brief-C06 `prompt_ref` |
 | AC-C03-7 | `depends_on` は C04 / C18 と完全一致 | component-inventory #C03 `depends_on` (P03 Y-09: 依存グラフの正本は inventory) |
 | AC-C03-8 | `verify-handout-language.py` が `script_refs` にあり実体が存在する | skill-brief-C03 `deterministic_checks` |
 | AC-C03-9 | `## Purpose & Output Contract` / `## Key Rules` / `## Gotchas` / `## Additional Resources` | repo の assign 系 SKILL.md 7 本中 6 本が共有する骨格 |
@@ -84,7 +84,7 @@ FAILED (failures=24)
 | what | why |
 | --- | --- |
 | 委譲先を指す frontmatter キーを `agent:` / `context: fork` / `agent_refs:` に確定した | skill-brief-C03 は `needs_independent_context: true` と `placement_candidates: [Skill]` しか持たず、キー名を定めていない。repo の assign 系 (`assign-skill-design-evaluator` の `agent:` / `assign-plugin-plan-evaluator` の `context: fork`) に合わせた。P05 が別のキー名を採るなら、本テストと合わせて 1 回だけ変更してよい (契約の意味 = 独立 context の named agent への委譲 は変えないこと) |
-| 責務 prompt のファイル名を `prompts/R-review-readability.md` に固定した | agent-brief-C06 `prompt_ref` の値をそのまま採った。ただし同 brief `open_questions` は「responsibility id は `R1-assign` なのに prompt 名は `R-review-readability`」というズレを P05 で確定させる宿題として残しており、`lint-agent-prompt-section.py` の ANCHOR_RE (`R<数字>`) とも噛み合わない。名前を変えるなら C05/C06 と揃えて 1 度に決めること |
+| 責務 prompt のファイル名を `prompts/R1-review-readability.md` に固定した | 当初は `R-review-readability.md` (責務番号なし) だったが `lint-prompt-placement.py` の skill-local-v1 regex (`R<数字>[a-z]?-<slug>`) に適合しないため `R1-` を付けて確定した。責務 id は `R1-assign` のまま、本文アンカーも `<!-- responsibility: R1 -->` のままで、`lint-agent-prompt-section.py` の ANCHOR_RE (`R<数字>`) と両立する。名前を変えるなら C05/C06 と揃えて 1 回だけ変更すること |
 | `user-invocable: false` を契約に含めた | ブリーフに記載が無い。assign は上位 skill から呼ばれる評価委譲であり、repo の assign 系 6/7 が `user-invocable: false` を持つことから採った |
 | 必須セクションを repo の assign 系 4 見出しに固定した | skill-brief-C03 は `body_sections` を持たない (C06 の agent-brief だけが持つ)。run 系の骨格 (`## ゴールシーク実行` 等) は C03 がループを持たない以上そぐわないため、assign 系の共通骨格を採った |
 | verdict 回収時の「項目欠落」を、埋めずに欠落のまま報告する扱いにした | C06 の出力契約は 7 項目を必須としているが、欠落時に C03 が何をするかはどのブリーフにも無い。C03 が補完すると判定を持たない前提が崩れるため、報告に倒した。P05 で別の扱い (再委譲など) を採るならブリーフ側の追記が要る |

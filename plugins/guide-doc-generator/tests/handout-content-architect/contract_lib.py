@@ -80,7 +80,7 @@ AUTO_AGENT_MARKER = "(対話なし: 自動実行 agent)"
 SELF_EVAL_DIMENSIONS = ("完全性", "一貫性", "深度", "検証可能性", "簡潔性")
 
 # agent-brief-C05.json prompt_ref と open_questions[0] (R1- へ揃える案が残る)
-PROMPT_REF_BASENAMES = ("R-design-config.md", "R1-design-config.md")
+PROMPT_REF_BASENAMES = ("R2a-design-config.md", "R1-design-config.md")
 
 # agent-brief-C05.json input_contract.receives の hearing_result 13 項目
 # (duration_or_volume は所要時間の撤去で消えた。時間・分量の宣言は資料の

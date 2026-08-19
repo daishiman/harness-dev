@@ -93,7 +93,7 @@ FAILED (failures=26)
 | id | what | why |
 | --- | --- | --- |
 | G1 | `description` の正本文言が brief と inventory で 1 箇所ずれている (inventory 側だけ「・R21 の型フィールド」を含む) | AC1 は「brief の description と一致」を要求するが、inventory も同格の正本として参照されている。テストは**どちらか一方に一致すれば受入**とした。P05 でどちらへ寄せるかを決め、片方へ揃えたら `CANONICAL_DESCRIPTIONS` を 1 件へ縮めること |
-| G2 | 責務アンカーの id (`R1` か `R-design-config` か) と prompt ファイル名 | brief `open_questions[0]`。`lint-agent-prompt-section.py` の ANCHOR_RE は `R<数字>` しか受け付けないため、テストは ANCHOR_RE 互換であることのみ要求し、id の綴りは固定していない |
+| G2 | 責務アンカーの id (`R1` か `R2a-design-config` か) と prompt ファイル名 | brief `open_questions[0]`。`lint-agent-prompt-section.py` の ANCHOR_RE は `R<数字>` しか受け付けないため、テストは ANCHOR_RE 互換であることのみ要求し、id の綴りは固定していない |
 | G3 | `prompt_ref` の基準ディレクトリ (owner skill 配下 / plugin 直下 `prompts/`) と実ファイルの存在 | brief `open_questions[1]`。prompt 本体は C01 の build_target 側にあり、この leaf から存在検査すると別 leaf の完成順に依存する。テストはパス形と basename だけを検査する |
 | G4 | `model` の値 (`sonnet` 固定 / `inherit`) | brief `open_questions[2]` で未確定。テストは `model` キーの存在のみ要求し値を固定していない |
 | G5 | 部品 id を散文へ何件まで書いてよいか | P03 Y-05 は「id 列挙を持たない」とするが件数の閾値を定めていない。テストは **1 行あたり相異なる部品 id 3 件以上を列挙したら違反** (`PART_ID_LINE_MAX = 2`) とした。B17 のような単発の指名は許す |

@@ -1,4 +1,4 @@
-# Prompt: R-review-readability
+# Prompt: R1-review-readability
 
 > 7 層プロンプトの Markdown 表現。責務 id は `R1-assign` (skill-brief-C03.json)、
 > 本文アンカーは `<!-- responsibility: R1 -->` を用いる。Layer 番号と依存方向

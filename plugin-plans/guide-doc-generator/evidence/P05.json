@@ -336,7 +336,7 @@
     "kind": "dir",
     "files": [
      "SKILL.md",
-     "prompts/R-design-config.md",
+     "prompts/R2a-design-config.md",
      "prompts/R1-elicit.md",
      "prompts/R2-design.md",
      "prompts/R3-render.md",
@@ -345,7 +345,7 @@
     "file_count": 6,
     "lines_by_file": {
      "SKILL.md": 235,
-     "prompts/R-design-config.md": 155,
+     "prompts/R2a-design-config.md": 155,
      "prompts/R1-elicit.md": 161,
      "prompts/R2-design.md": 161,
      "prompts/R3-render.md": 157,
@@ -412,12 +412,12 @@
     "kind": "dir",
     "files": [
      "SKILL.md",
-     "prompts/R-review-readability.md"
+     "prompts/R1-review-readability.md"
     ],
     "file_count": 2,
     "lines_by_file": {
      "SKILL.md": 101,
-     "prompts/R-review-readability.md": 164
+     "prompts/R1-review-readability.md": 164
     }
    },
    "build_target_mtime_min": "2026-08-17T19:27:24",
@@ -1031,7 +1031,7 @@
     "route_id": "C01",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C01-01.json",
     "kind": "brief-underspecified",
-    "detail": "worker 裁量 20 件。(1) version 0.1.0 (2) owner harness maintainers (3) user-invocable true (4) argument-hint '[--config <handout-config.json>] [--out-dir <dir>] [--assets-src <dir>]' (5) allowed-tools [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent] (6) script_refs へ brief 未記載の 5 本 (embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / render-handout.py) を追加 (R3 の決定論 script 列を参照するため) (7) schema_refs / command_refs / agent_refs / skill_refs の 4 キーを追加 (8) completeness_exempt に manifest 免除 1 項 (goal_seek.engine=inline のため固定 phase の workflow-manifest.json を持たない) (9) feedback_contract.max_iterations: 3 (inventory は criteria のみ規定) (10) 必須 4 節以外の節名と切り方 (ヒアリングと非対話経路 / 構成データの設計と検証 / 単一 HTML の決定論生成 / ゲート集約と出力配置 / 読みやすさレビューの委譲) (11) ゴールシーク配線の eval-log パスを eval-log/guide-doc-generator/run-handout-build-{goal-spec.json,progress.json,intermediate.jsonl} とした (dev-graph の run 系 skill に倣った) (12) ゴールシーク検証の bash ブロックを plugins/dev-graph/skills/run-dev-graph-node/SKILL.md の様式に倣って書いた (13) C03 から返った verdict に必要項目の欠落があった場合は再委譲すると決めた (C03 が『C01 側で決めること』と申し送った点の決着) (14) srg-image-bridge.py の委譲先が不在のときは skip して warning に載せる (R12 の fail-soft 規定の具体化) (15) prompts/R-design-config.md を新規作成した。brief の responsibilities には無いが agents/handout-content-architect.md の prompt_ref が write_scope 内のこのパスを指しており実体が無かったため。手順と判定規範は agent 本体を正本として複製せず起動契約のみを書いた (16) 同ファイルの本文アンカーを <!-- responsibility: R2 --> とした (起動元が R2-design であり、lint の ANCHOR_RE は R+数字のみ許容するため R-design-config は使えない) (17) 同ファイルを responsibility_refs へ追記 (lint-skill-tree MED-4 Warn の解消) (18) fixture が使っていた件数リテラル (4 ゲート / 同梱 4 点 / 4 状態分類 等) を意図的に採用しなかった。fixture は判定器の入力例であって文言の正本ではないと解釈し横断規律を優先した (19) ゲート面の id 一覧を本文へ列挙しない方針 (面の集合は C09 の正本にある) (20) 各 prompt の Layer 3 参照リソース表のパス選択と相対表記 (../../../scripts/...)"
+    "detail": "worker 裁量 20 件。(1) version 0.1.0 (2) owner harness maintainers (3) user-invocable true (4) argument-hint '[--config <handout-config.json>] [--out-dir <dir>] [--assets-src <dir>]' (5) allowed-tools [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent] (6) script_refs へ brief 未記載の 5 本 (embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / render-handout.py) を追加 (R3 の決定論 script 列を参照するため) (7) schema_refs / command_refs / agent_refs / skill_refs の 4 キーを追加 (8) completeness_exempt に manifest 免除 1 項 (goal_seek.engine=inline のため固定 phase の workflow-manifest.json を持たない) (9) feedback_contract.max_iterations: 3 (inventory は criteria のみ規定) (10) 必須 4 節以外の節名と切り方 (ヒアリングと非対話経路 / 構成データの設計と検証 / 単一 HTML の決定論生成 / ゲート集約と出力配置 / 読みやすさレビューの委譲) (11) ゴールシーク配線の eval-log パスを eval-log/guide-doc-generator/run-handout-build-{goal-spec.json,progress.json,intermediate.jsonl} とした (dev-graph の run 系 skill に倣った) (12) ゴールシーク検証の bash ブロックを plugins/dev-graph/skills/run-dev-graph-node/SKILL.md の様式に倣って書いた (13) C03 から返った verdict に必要項目の欠落があった場合は再委譲すると決めた (C03 が『C01 側で決めること』と申し送った点の決着) (14) srg-image-bridge.py の委譲先が不在のときは skip して warning に載せる (R12 の fail-soft 規定の具体化) (15) prompts/R2a-design-config.md を新規作成した。brief の responsibilities には無いが agents/handout-content-architect.md の prompt_ref が write_scope 内のこのパスを指しており実体が無かったため。手順と判定規範は agent 本体を正本として複製せず起動契約のみを書いた (16) 同ファイルの本文アンカーを <!-- responsibility: R2 --> とした (起動元が R2-design であり、lint の ANCHOR_RE は R+数字のみ許容するため R2a-design-config は使えない) (17) 同ファイルを responsibility_refs へ追記 (lint-skill-tree MED-4 Warn の解消) (18) fixture が使っていた件数リテラル (4 ゲート / 同梱 4 点 / 4 状態分類 等) を意図的に採用しなかった。fixture は判定器の入力例であって文言の正本ではないと解釈し横断規律を優先した (19) ゲート面の id 一覧を本文へ列挙しない方針 (面の集合は C09 の正本にある) (20) 各 prompt の Layer 3 参照リソース表のパス選択と相対表記 (../../../scripts/...)"
    },
    {
     "route_id": "C02",
@@ -1073,7 +1073,7 @@
     "route_id": "C03",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
     "kind": "handoff-to-downstream-leaf",
-    "detail": "C06 (agents/handout-readability-reviewer.md) へ申し送り。name: handout-readability-reviewer / isolation: fork / owner_skill: assign-handout-readability-evaluator / prompt_ref: plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R-review-readability.md を期待している。責務アンカーは C03 側で <!-- responsibility: R1 --> を採用済みなので C06 本文もこれに揃えること (lint-agent-prompt-section.py の ANCHOR_RE が R<数字> のみを受理するため)。C06 の実体が置かれた時点で C03 の残赤 3 件は解消する"
+    "detail": "C06 (agents/handout-readability-reviewer.md) へ申し送り。name: handout-readability-reviewer / isolation: fork / owner_skill: assign-handout-readability-evaluator / prompt_ref: plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R1-review-readability.md を期待している。責務アンカーは C03 側で <!-- responsibility: R1 --> を採用済みなので C06 本文もこれに揃えること (lint-agent-prompt-section.py の ANCHOR_RE が R<数字> のみを受理するため)。C06 の実体が置かれた時点で C03 の残赤 3 件は解消する"
    },
    {
     "route_id": "C03",
@@ -1085,7 +1085,7 @@
     "route_id": "C03",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C03-01.json",
     "kind": "unowned-followup",
-    "detail": "agent-brief-C06 の open_question 2 件が未確定のまま残る。(a) responsibility id は inventory では R1-assign だが prompt 名は R-review-readability で、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみを受理する。worker は prompt ファイル名を据え置きアンカーだけ R1 とする案を採ったが、C05 / C06 と揃える最終確定は未了 (b) gate_reports の json-report 出力先ディレクトリの owner が未確定。worker は『C03 側が --json-report つきで実行して収集する』と書いたが出力先の owner は明記していない。どちらも P05-x-01 で確定すること"
+    "detail": "agent-brief-C06 の open_question 2 件が未確定のまま残る。(a) responsibility id は inventory では R1-assign だが prompt 名は R1-review-readability で、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみを受理する。worker は prompt ファイル名を据え置きアンカーだけ R1 とする案を採ったが、C05 / C06 と揃える最終確定は未了 (b) gate_reports の json-report 出力先ディレクトリの owner が未確定。worker は『C03 側が --json-report つきで実行して収集する』と書いたが出力先の owner は明記していない。どちらも P05-x-01 で確定すること"
    },
    {
     "route_id": "C03",
@@ -1115,7 +1115,7 @@
     "route_id": "C05",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C05-01.json",
     "kind": "brief-underspecified",
-    "detail": "worker 裁量 13 件。(1) description の正本ずれは inventory 側の長い方を採用 (2) 責務アンカー id は ANCHOR_RE 互換の `<!-- responsibility: R1 -->` (3) prompt_ref は owner skill 配下の skills/run-handout-build/prompts/R-design-config.md。C01 側の実ファイル整合は別 leaf 依存 (4) model は inherit (fixture に合わせ sonnet 固定を避けた) (5) version 0.1.0 / owner harness maintainers / since / last-audited は 2026-08-17 (6) R21 のレクチャー型は識別子でなく自然文で表記し導出を C12 へ委譲 (7) R22 は 2 軸のキー名のみ記載し値域は列挙しない (8) 図解型 6 語も列挙せず schema と C11/C14 を参照 (9) part id は B17 のみ単発指名し他は config/handout-parts.json 参照 (10) 戻り値へ image_plan_summary を追加 (brief の output_contract に定義があるためテストの必須 11 キー外だが正本に合わせた) (11) must_remember / no_need_to_remember が両方欠落した場合も blocked と明記 (12) セクション別内容適応の 4 段を独立小見出しに切り出し、テストが要求する順序 (adaptation_trace → semanticMapping → layoutSelectionByStructure → props) を本文構造で満たした (13) 参照 HTML のファイル名を本文から除去し一般名詞のみとした"
+    "detail": "worker 裁量 13 件。(1) description の正本ずれは inventory 側の長い方を採用 (2) 責務アンカー id は ANCHOR_RE 互換の `<!-- responsibility: R1 -->` (3) prompt_ref は owner skill 配下の skills/run-handout-build/prompts/R2a-design-config.md。C01 側の実ファイル整合は別 leaf 依存 (4) model は inherit (fixture に合わせ sonnet 固定を避けた) (5) version 0.1.0 / owner harness maintainers / since / last-audited は 2026-08-17 (6) R21 のレクチャー型は識別子でなく自然文で表記し導出を C12 へ委譲 (7) R22 は 2 軸のキー名のみ記載し値域は列挙しない (8) 図解型 6 語も列挙せず schema と C11/C14 を参照 (9) part id は B17 のみ単発指名し他は config/handout-parts.json 参照 (10) 戻り値へ image_plan_summary を追加 (brief の output_contract に定義があるためテストの必須 11 キー外だが正本に合わせた) (11) must_remember / no_need_to_remember が両方欠落した場合も blocked と明記 (12) セクション別内容適応の 4 段を独立小見出しに切り出し、テストが要求する順序 (adaptation_trace → semanticMapping → layoutSelectionByStructure → props) を本文構造で満たした (13) 参照 HTML のファイル名を本文から除去し一般名詞のみとした"
    },
    {
     "route_id": "C05",
@@ -1133,7 +1133,7 @@
     "route_id": "C06",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
     "kind": "canon-conflict",
-    "detail": "責務アンカーの形式が 2 正本で非互換。component-inventory.json#C06 の responsibility_anchor は 'prompts/R-review-readability.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみ受理する。worker は C03 と揃えて <!-- responsibility: R1 --> を採用したが、inventory 側は未更新のまま。C05 も含めた 3 者の表記を P05-x-01 で確定し inventory を更新すること (inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む)"
+    "detail": "責務アンカーの形式が 2 正本で非互換。component-inventory.json#C06 の responsibility_anchor は 'prompts/R1-review-readability.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみ受理する。worker は C03 と揃えて <!-- responsibility: R1 --> を採用したが、inventory 側は未更新のまま。C05 も含めた 3 者の表記を P05-x-01 で確定し inventory を更新すること (inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む)"
    },
    {
     "route_id": "C06",
@@ -1157,7 +1157,7 @@
     "route_id": "C06",
     "source_file": "eval-log/guide-doc-generator/build/route-P05-C06-01.json",
     "kind": "brief-underspecified",
-    "detail": "worker 裁量 13 件。(1) model: inherit (brief open_questions[3] 未確定。先例 handout-content-architect.md と brief 本文の推奨に従った) (2) prompt_ref を plugin 相対 skills/assign-handout-readability-evaluator/prompts/R-review-readability.md とした (brief 本文は repo ルート相対だが先例は plugin 相対。テストは両者を区別しない) (3) 責務アンカーを <!-- responsibility: R1 --> 1 個とした (上記 canon-conflict) (4) version 0.1.0 / owner harness maintainers / since 2026-08-17 / last-audited 2026-08-17 は先例に揃えた (5) --json-report 出力先の provider を本文で断定しなかった (brief open_questions[4] 未確定のため『書き込みは --json-report の一時パスのみ』とだけ書いた) (6) description 末尾に句点を追加 (上記 canon-conflict) (7) finding.id を F1 から始まる連番とした (brief は例示 'F1' のみ) (8) location.element の例として lead-line / 判断軸 / 具体部品 を挙げた (9) machine_gate_overlap を『常に false』と本文で書いた (brief は『true の finding を出してはならない』) (10) Goal-Seeking Execution を brief の procedure と同数の番号付きステップへ展開しゴール文を追加 (11) Constraints を 4 小見出しへ分割 (brief は小見出し構成を規定せず) (12) Purpose へ proposer=approver の説明段落を追加 (brief の isolation_rationale を本文化) (13) Bash 許可 script の記述で『4 本に限る』という件数リテラルを 1 箇所使用。script 名自体も併記しているが、導出値忌避の規律からは『次の script に限る』へ落とす余地がある (自己申告された 7 例目の候補・実害は小さいが記録する)"
+    "detail": "worker 裁量 13 件。(1) model: inherit (brief open_questions[3] 未確定。先例 handout-content-architect.md と brief 本文の推奨に従った) (2) prompt_ref を plugin 相対 skills/assign-handout-readability-evaluator/prompts/R1-review-readability.md とした (brief 本文は repo ルート相対だが先例は plugin 相対。テストは両者を区別しない) (3) 責務アンカーを <!-- responsibility: R1 --> 1 個とした (上記 canon-conflict) (4) version 0.1.0 / owner harness maintainers / since 2026-08-17 / last-audited 2026-08-17 は先例に揃えた (5) --json-report 出力先の provider を本文で断定しなかった (brief open_questions[4] 未確定のため『書き込みは --json-report の一時パスのみ』とだけ書いた) (6) description 末尾に句点を追加 (上記 canon-conflict) (7) finding.id を F1 から始まる連番とした (brief は例示 'F1' のみ) (8) location.element の例として lead-line / 判断軸 / 具体部品 を挙げた (9) machine_gate_overlap を『常に false』と本文で書いた (brief は『true の finding を出してはならない』) (10) Goal-Seeking Execution を brief の procedure と同数の番号付きステップへ展開しゴール文を追加 (11) Constraints を 4 小見出しへ分割 (brief は小見出し構成を規定せず) (12) Purpose へ proposer=approver の説明段落を追加 (brief の isolation_rationale を本文化) (13) Bash 許可 script の記述で『4 本に限る』という件数リテラルを 1 箇所使用。script 名自体も併記しているが、導出値忌避の規律からは『次の script に限る』へ落とす余地がある (自己申告された 7 例目の候補・実害は小さいが記録する)"
    },
    {
     "route_id": "C07",
@@ -1621,7 +1621,7 @@
    "instances": [
     "C07 argument-hint 6 引数版 (brief) vs 3 引数版 (inventory)",
     "C09 argument-hint 長形 (brief) vs 短形 (inventory)",
-    "C06 responsibility_anchor が inventory では prompts/R-review-readability.md、lint の ANCHOR_RE は R<数字> のみ受理",
+    "C06 responsibility_anchor が inventory では prompts/R1-review-readability.md、lint の ANCHOR_RE は R<数字> のみ受理",
     "C05 description の正本が brief と inventory で二重"
    ],
    "note": "P05-x-15 が提案済みだが graph 未登録"
@@ -1660,7 +1660,7 @@
   },
   {
    "id": "ADJ-02",
-   "topic": "責務アンカーの形式 (inventory は prompts/R-review-readability.md / lint の ANCHOR_RE は R<数字> のみ受理)",
+   "topic": "責務アンカーの形式 (inventory は prompts/R1-review-readability.md / lint の ANCHOR_RE は R<数字> のみ受理)",
    "current_state": "C03/C05/C06 の成果物は <!-- responsibility: R1 --> を採用。inventory は未更新",
    "recommendation": "lint の ANCHOR_RE (R<数字>) を正本とし、inventory の responsibility_anchor 列を『アンカー id (R1)』と『prompt ファイル名』の 2 列へ分離する",
    "rationale": "(1) ANCHOR_RE は harness 横断の統治 lint であり、1 plugin の都合で緩めると他 plugin の検査面が落ちる (2) 現状の inventory 値はアンカーとファイル名という異なる 2 概念を 1 列に混載しており、これが衝突の根因。列を分ければどちらも失わない (3) 成果物 3 件が既に R<数字> で揃っており、変更コストは inventory 側のみ",

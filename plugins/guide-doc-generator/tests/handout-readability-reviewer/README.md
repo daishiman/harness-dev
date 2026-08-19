@@ -122,14 +122,14 @@ task-spec `P04-C06-01.md` の `acceptance_criterion` が名指しした 2 本は
 
 2. **責務アンカーの形** — ブリーフ `open_questions[0]` のとおり、
    `lint-agent-prompt-section.py` の `ANCHOR_RE` は `R<数字>` しか受けないのに
-   inventory の `responsibility_anchor` は `prompts/R-review-readability.md` である。
+   inventory の `responsibility_anchor` は `prompts/R1-review-readability.md` である。
    どちらに寄せるかが未確定なので、テストは**アンカーが 1 個存在すること**だけを固定し、
    形は `lint-agent-prompt-section` の exit0 に委ねている。C05 と揃えて P05 で決めること。
 
 3. **`prompt_ref` の基準ディレクトリ** — ブリーフ本文は
-   `plugins/guide-doc-generator/skills/.../R-review-readability.md`、
+   `plugins/guide-doc-generator/skills/.../R1-review-readability.md`、
    先例 (`ui-quality-reviewer.md`) は `skills/...` の plugin 相対である。
-   テストは「`prompts/R-review-readability.md` で終わる」かつ
+   テストは「`prompts/R1-review-readability.md` で終わる」かつ
    「`skills/assign-handout-readability-evaluator/` を含む」までしか見ていない。
 
 4. **`model` の値** — `sonnet` 固定か `inherit` かが未確定 (`open_questions[3]`)。

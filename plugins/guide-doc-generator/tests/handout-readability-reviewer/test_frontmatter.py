@@ -76,7 +76,7 @@ class TestFrontmatterValues(H.AgentContractTestCase):
     def test_prompt_ref_points_at_responsibility_prompt(self):
         ref = self.fm.get("prompt_ref", "")
         self.assertTrue(
-            ref.endswith("prompts/R-review-readability.md"),
+            ref.endswith("prompts/R1-review-readability.md"),
             "prompt_ref が責務 prompt を指していない: {}".format(ref),
         )
 
@@ -134,7 +134,7 @@ class TestToolGrant(H.AgentContractTestCase):
 
 
 class TestResponsibilityAnchor(H.AgentContractTestCase):
-    """body_sections が要求する責務アンカー。形 (R1 か R-review-readability か) は
+    """body_sections が要求する責務アンカー。形 (R1 か R1-review-readability か) は
     open_questions[0] で未確定のため、ここでは『アンカーが存在すること』だけを固定する。"""
 
     ANCHOR_ANY = re.compile(r"<!--\s*responsibility:\s*([^\s>-]+(?:-[^\s>]+)*)\s*-->")

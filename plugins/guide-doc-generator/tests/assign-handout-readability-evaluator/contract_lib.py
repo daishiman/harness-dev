@@ -44,7 +44,7 @@ AGENT_REF = "../../agents/handout-readability-reviewer.md"
 REQUIRED_RESPONSIBILITIES = ("R1-assign",)
 
 # agent-brief-C06.json prompt_ref (owner skill 配下の責務 prompt)
-PROMPT_REF = "prompts/R-review-readability.md"
+PROMPT_REF = "prompts/R1-review-readability.md"
 
 # skill-brief-C03.json deterministic_checks
 REQUIRED_SCRIPTS = ("verify-handout-language.py",)

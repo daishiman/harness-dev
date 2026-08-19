@@ -1,4 +1,4 @@
-# Prompt: R-design-config
+# Prompt: R2a-design-config
 
 > 7 層プロンプトの Markdown 表現。委譲先 agent は handout-content-architect (C05) で、
 > その `prompt_ref` が本ファイルを指す。責務 prompt の所有は owner skill

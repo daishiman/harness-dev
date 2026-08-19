@@ -61,7 +61,7 @@ REJECT_CASES = [
     ),
     (
         "responsibility-prompt-unreferenced",
-        "responsibility_refs:\n  - prompts/R-review-readability.md\n",
+        "responsibility_refs:\n  - prompts/R1-review-readability.md\n",
         "",
         "AC-C03-6",
     ),

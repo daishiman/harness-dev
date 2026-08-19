@@ -8,7 +8,7 @@ tools: Read, Bash
 isolation: fork
 model: inherit
 owner_skill: assign-handout-readability-evaluator
-prompt_ref: skills/assign-handout-readability-evaluator/prompts/R-review-readability.md
+prompt_ref: skills/assign-handout-readability-evaluator/prompts/R1-review-readability.md
 prompt_layer: 7layer
 since: 2026-08-17
 last-audited: 2026-08-17

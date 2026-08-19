@@ -81,7 +81,7 @@ class TestRejectFixtures(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp(prefix="hb-c03-prompt-"))
         self.addCleanup(shutil.rmtree, tmp, True)
         shutil.copytree(ACCEPT_ROOT, tmp / "accept")
-        (tmp / "accept" / SKILL_SUBPATH / "prompts" / "R-review-readability.md").unlink()
+        (tmp / "accept" / SKILL_SUBPATH / "prompts" / "R1-review-readability.md").unlink()
         ids = contract_lib.violation_ids(contract_lib.check_skill(tmp / "accept" / SKILL_SUBPATH))
         self.assertIn("AC-C03-6", ids)
 

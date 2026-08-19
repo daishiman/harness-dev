@@ -20,7 +20,7 @@ agent_refs:
 script_refs:
   - ../../scripts/verify-handout-language.py
 responsibility_refs:
-  - prompts/R-review-readability.md
+  - prompts/R1-review-readability.md
 responsibilities:
   - id: R1-assign
     prompt_required: true
@@ -87,5 +87,5 @@ verdict を回収して呼び出し元 (C01) へ返す運搬役である。生�
 ## Additional Resources
 
 - `../../agents/handout-readability-reviewer.md` — 委譲先 (C06) の判定規範と出力契約
-- `prompts/R-review-readability.md` — R1-assign の責務プロンプト
+- `prompts/R1-review-readability.md` — R1-assign の責務プロンプト
 - `ref-handout-design-system` — 文章設計の型 (評価規範の正本)

@@ -27,14 +27,14 @@ REJECT_CASES = [
     ),
     (
         "prompt-ref-wrong-target",
-        "prompt_ref: skills/run-handout-build/prompts/R-design-config.md",
+        "prompt_ref: skills/run-handout-build/prompts/R2a-design-config.md",
         "prompt_ref: skills/run-handout-build/prompts/R2-design.md",
         "AC-C05-5",
     ),
     (
         "responsibility-anchor-unmatchable",
         "<!-- responsibility: R1 -->",
-        "<!-- responsibility: R-design-config -->",
+        "<!-- responsibility: R2a-design-config -->",
         "AC-C05-6",
     ),
     (

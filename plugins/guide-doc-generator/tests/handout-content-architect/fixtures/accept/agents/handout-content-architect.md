@@ -8,7 +8,7 @@ tools: Read, Write
 isolation: fork
 model: inherit
 owner_skill: run-handout-build
-prompt_ref: skills/run-handout-build/prompts/R-design-config.md
+prompt_ref: skills/run-handout-build/prompts/R2a-design-config.md
 prompt_layer: 7layer
 since: 2026-08-17
 last-audited: 2026-08-17
