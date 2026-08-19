@@ -88,6 +88,9 @@ NAV_LAYOUT_SIDEBAR = "sidebar"
 NAV_LAYOUT_BAND = "band"
 NAV_LAYOUTS = (NAV_LAYOUT_SIDEBAR, NAV_LAYOUT_BAND)
 
+# 本文の入口 (目次を読み飛ばして本文へ跳ぶ先)。id は 1 個しか無いので定数で持つ。
+MAIN_ANCHOR_ID = "handout-main"
+
 TEXT_LIMITS_KEY = "text_limits"
 DEFAULT_LIMIT_KEY = "block_body_max_chars"
 BY_LEVEL_LIMIT_KEY = "block_body_max_chars_by_detail_level"
@@ -1666,6 +1669,37 @@ body {
    (--nav-h が 0 になるのはこのため)。柱の中で溢れた分だけが柱の中で
    縦スクロールし、柱そのものは sticky なのでどこまで読んでも消えない。 */
 .page-shell { display: block; }
+/* 柱は DOM 上つねに本文より前にある。キーボードで読む人は毎回すべての札を
+   通り抜けないと本文へ入れないので、最初の Tab で本文へ跳べる出口を置く。
+   display:none にすると focus できないため、幅 1px へ畳んで隠し、
+   focus されたときだけ柱の上へ現れる (マウスで読む人の紙面は変わらない)。 */
+.skip-to-main {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-to-main:focus {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 40;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 8px 14px;
+  clip-path: none;
+  border-radius: 999px;
+  background: var(--pop-primary-deep);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
 .doc-title-bar {
   margin: 0;
   padding: 8px 16px 0;
@@ -1740,6 +1774,9 @@ body {
     background: var(--chip-accent);
     border-color: var(--chip-accent);
   }
+  /* 下の帯は本文に対する操作なので、柱の上には掛けない。画面幅いっぱいに
+     敷くと 100vh の柱の足元 (最後の札) が帯の下に隠れて押せなくなる。 */
+  .toolbar { left: var(--side-nav-w); }
 }
 @media (max-width: {NAV_COLLAPSE_MAX}px) {
   /* 柱を置くと本文が読める幅を割る画面では、従来どおり上の帯へ戻す
@@ -2065,6 +2102,8 @@ textarea:focus-visible {
      段組みを解いて目次を先頭の帯へ戻す。 */
   .page-shell { display: block; }
   .pop-header--sidebar { height: auto; border-right: none; box-shadow: none; }
+  /* 紙に「本文へ移動」は届かない。焦点を持てない媒体では消す。 */
+  .skip-to-main, .skip-to-main:focus { display: none; }
   .navbar { flex-wrap: wrap; overflow-x: visible; }
   .pop-header--sidebar .navbar { flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
   .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
@@ -2714,13 +2753,18 @@ def build_nav(config, nav_part) -> str:
     # `pop-header` は残す — C20 の chrome 判定・C17 の PRINT-02・C16 の nav 認識が
     # この名前に接地しているため、見た目の変更で読み戻しと検査を道連れにしない。
     layout_class = "pop-header pop-header--{}".format(nav_layout())
+    # 柱は常に本文より前にあるため、キーボードで読む人は毎回 8 個の札を
+    # 通り抜けてから本文へ入ることになる。最初の Tab で本文へ跳べる出口を
+    # 置く (見えないが focus すると現れる。マウスの人の紙面は変えない)。
+    skip = tag("a", [("class", "skip-to-main"), ("href", "#" + MAIN_ANCHOR_ID)],
+               esc("本文へ移動"))
     return tag("header", [
         ("class", layout_class),
         ("data-hb-nav-layout", nav_layout()),
         ("data-hb-part", nav_part),
         ("data-hb-part-id", "{}-1".format(nav_part.lower())),
         ("data-hb-generated", "true"),
-    ], title_bar + nav)
+    ], skip + title_bar + nav)
 
 
 def build_glossary(entries, scope) -> str:
@@ -2978,7 +3022,7 @@ def render_document(config, theme, tokens, modules):
         # 器は装飾でなく配置の骨なので、DOM 順 (目次 → 本文) は変えない。
         '<div class="page-shell">',
         build_nav(config, nav_part),
-        '<main class="wrap">',
+        '<main class="wrap" id="{}">'.format(MAIN_ANCHOR_ID),
         build_hero(config, hero_part),
         "".join(sections_html),
         build_glossary(config.get("glossary"), SECTION_SCOPE_DOCUMENT),

@@ -111,7 +111,7 @@ class SidebarIsAlwaysVisible(unittest.TestCase):
         shell = html_text.index('<div class="page-shell">')
         header = html_text.index("<header ")
         self.assertLess(shell, header, "器は目次より前に開く")
-        self.assertLess(header, html_text.index('<main class="wrap">'),
+        self.assertLess(header, html_text.index('<main class="wrap"'),
                         "DOM 順は 目次 → 本文")
 
     def test_body_is_not_pushed_down_by_the_nav(self):
@@ -169,6 +169,45 @@ class IndexContentIsUnchanged(unittest.TestCase):
         _, html_text, cfg = render()
         for section in cfg["sections"]:
             self.assertIn(section["heading"], html_text)
+
+
+class SidebarDoesNotBlockOperation(unittest.TestCase):
+    """柱を置いたことで「押せない・辿り着けない」を作らない (UI/UX 側の受入)。"""
+
+    def test_bottom_toolbar_starts_after_the_column(self):
+        """下の帯は本文への操作。画面いっぱいに敷くと 100vh の柱の足元
+        (最後の札) が帯の下へ隠れて押せなくなる。柱の幅だけ右へ寄せる。"""
+        _, html_text, _ = render()
+        wide = re.search(
+            r"@media \(min-width: {}px\)\s*\{{(.*?)\n\}}".format(
+                canon_nav()["collapse_below_px"]),
+            html_text, re.S)
+        self.assertIsNotNone(wide, "柱を立てる幅の分岐が無い")
+        self.assertRegex(wide.group(1),
+                         r"\.toolbar\s*\{[^}]*left\s*:\s*var\(--side-nav-w\)")
+
+    def test_keyboard_can_skip_the_index(self):
+        """柱は DOM 上つねに本文より前。最初の Tab で本文へ抜ける出口を置く。"""
+        _, html_text, _ = render()
+        anchors = [el for el in H.parse(html_text)
+                   if el.tag == "a" and "skip-to-main" in (el.attrs.get("class") or "").split()]
+        self.assertEqual(1, len(anchors), "本文へ跳ぶリンクは 1 本だけ置く")
+        target = anchors[0].attrs.get("href")
+        self.assertTrue(target.startswith("#"), target)
+        self.assertIn('id="{}"'.format(target[1:]), html_text,
+                      "跳び先の id が本文側に無い")
+        self.assertLess(html_text.index("skip-to-main"), html_text.index("nav-chip"),
+                        "出口は札より前に無いと最初の Tab で拾えない")
+
+    def test_skip_link_is_hidden_until_focused(self):
+        """マウスで読む人の紙面は変えない。ただし display:none にはしない
+        (焦点が当たらなくなり、置いた意味が消える)。"""
+        _, html_text, _ = render()
+        rule = re.search(r"\.skip-to-main \{([^}]*)\}", html_text)
+        self.assertIsNotNone(rule)
+        self.assertNotRegex(rule.group(1), r"display\s*:\s*none")
+        self.assertRegex(rule.group(1), r"width\s*:\s*1px")
+        self.assertRegex(html_text, r"\.skip-to-main:focus \{[^}]*width\s*:\s*auto")
 
 
 class SidebarFallsBackOnPaper(unittest.TestCase):
