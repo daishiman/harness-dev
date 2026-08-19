@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "handout-visual-policy.json に sentence キーが存在せず ('sentence' in policy が False)、C05/C06/C12/C18 の 4 brief が名指す正本が不在。出荷 validate-handout-config.py は LONG_SENTENCE_CHARS=45 / LONG_SENTENCE_COUNT=3 を Python 定数で持ち :1425 で W-SENTENCE-LONG (warning) としか出さないため build を止めない。利用者の最優先要件『文章が長ったらしく何行も書くのを絶対に防ぐ』が機構として効いていない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-35-sentence-length-error-gate",
+    "title": "文長判定を warning から error へ昇格し config#sentence を正本にする",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "handout-visual-policy.json#sentence が正本となり、閾値超過が E-TEXT-* として exit1 で build を止める。Python 定数の重複保持が 0 件",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

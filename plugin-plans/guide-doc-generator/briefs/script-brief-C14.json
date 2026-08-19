@@ -1,0 +1,87 @@
+{
+  "component_id": "C14",
+  "component_kind": "script",
+  "name": "render-diagram-svg.py",
+  "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+  "purpose": "構造データ (図解 1 個分の宣言 JSON) から フロー / 比較 / 階層 / サイクル / マトリクス / 対比2択 の 6 パターンの概念図解を inline SVG 断片として決定論生成する。装飾ではなく理解を助ける図解であることを、必須の意味フィールド (各ノードの label と、パターンごとの関係フィールド) を fail-closed で課すことで担保する。",
+  "argv": [
+    {"flag": "--diagram", "required": true, "type": "path", "description": "図解 1 個分の宣言 JSON。構成データ内の diagram ブロック 1 個と同一スキーマ (schemas/handout-config.schema.json の $defs.diagram を参照)", "default": null},
+    {"flag": "--pattern", "required": true, "type": "enum", "description": "flow | compare | hierarchy | cycle | matrix | versus のいずれか 1 語。--diagram の pattern フィールドが存在し値が異なるときは exit 1 (取り違えを黙って通さない)", "default": null},
+    {"flag": "--width", "required": false, "type": "int", "description": "SVG の viewBox 幅 (px 相当の無次元値)。高さはパターンごとの版組規則から決定論導出する。既定 860 は参照解析 §1 の main max-width と一致させたもの", "default": 860}
+  ],
+  "stdin": "使わない (--diagram のパス指定のみ)",
+  "stdout": "inline SVG 断片 1 個 (先頭 `<svg` 終端 `</svg>` + 末尾改行 1 個)。XML 宣言と DOCTYPE は出さない (HTML へ inline 埋め込みされる前提)",
+  "stderr": "人間向け診断のみ。未知パターン / 必須フィールド欠落のキーパス / ノード数がパターンの許容範囲外 / テキストがノード枠に収まらない場合の該当ノード id と実測見積り幅",
+  "exit_codes": {
+    "0": "SVG を stdout へ出力した",
+    "1": "入力データの規約違反 (未知 pattern・--pattern と diagram.pattern の不一致・必須フィールド欠落・ノード数が許容範囲外・テキストがノード枠に収まらない)。差し戻し先は構成データ側",
+    "2": "実行不能 (argv 不正・--diagram のファイル不在・JSON 構文エラー・--width が正整数でない)。差し戻し先は呼び出し側"
+  },
+  "write_scope": ["なし (write_scope=none)。ファイルを一切作成・更新・削除せず、出力は stdout のみ"],
+  "single_writer": "ファイルを書かないため writer 競合は原理的に発生しない。概念図解 SVG の版組規則 (座標計算・折返し・矢印形状) の単独 owner はこの script であり、C11 は生成済み断片を埋め込むだけで座標計算を持たない。B14 フロー部品も C11 側で描かず本 script の pattern=flow へ委譲することで、フロー表現が 2 箇所へ分岐しないようにする",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": ["--diagram で指定された JSON ファイル 1 個のみ"],
+    "invoked_by": ["C11 render-handout.py (module import 経由: render_diagram(spec, pattern, width) -> str を直接呼ぶ)", "C01 run-handout-build (CLI 経由・図解単体プレビュー時)"],
+    "invokes": [],
+    "test_time_only": ["C16 verify-handout-selfcontained.py (受入検査 AC-C14-3 / AC-C14-4 のみが module_api scan_external_references / scan_emoji を呼ぶ。本 script の実行時依存ではないため stdlib_only と AC-C14-8 は不変。判定を C16 単一へ寄せ、外部参照・絵文字の denylist を本 brief へ複製しないための委譲先)"]
+  },
+  "algorithm": [
+    "1. argv を解析する。--width が正整数でなければ exit 2。--pattern が 6 語のいずれでもなければ exit 1 (未知パターンはデータ側の誤りとして扱う)。",
+    "2. --diagram を UTF-8 で読み json.load する (object_pairs_hook=collections.OrderedDict で入力順を保持)。構文エラーは exit 2、ファイル不在は exit 2。",
+    "3. diagram に pattern フィールドがあり --pattern と異なれば exit 1。title (図解の主題 1 行) は全パターン必須、欠落は exit 1。",
+    "4. パターン別に必須フィールドとノード数の許容範囲を検査する。flow: steps[] 2-6、各 step に label 必須・note 任意 / compare: axes[] 1-6 と items[] 2-4、cells は items×axes の全マスが埋まっていること / hierarchy: root.label と children[] (深さ 2-3・各層 1-5) / cycle: steps[] 3-6、各 step に label / matrix: x_axis.{low,high} y_axis.{low,high} と items[] 1-8 (各 item に label と x,y の 0.0-1.0 の実数) / versus: left.{label,bullets[]} right.{label,bullets[]} (bullets は各 1-5)。範囲外・欠落は exit 1 で該当キーパスを stderr へ。",
+    "5. テキスト幅を決定論的に見積もる。unicodedata.east_asian_width が 'W'/'F'/'A' の文字を 1.00em、それ以外を 0.55em として合算し、em 数 × font_size で幅を得る。font_size はパターン別の定数 (ノード label 15 / note 12.5 / 軸ラベル 12.5) で固定する。ブラウザ実測に依存しない見積りに閉じることで、環境差でレイアウトが揺れないようにする。",
+    "6. 折返しを行う。ノードの内寸 (枠幅 - 左右 padding 12×2) を超える行は、日本語は文字単位・ラテン文字は空白単位の貪欲折返しで分割し、行ごとに <tspan x=... dy=...> を出す (dy は 1 行目 0、2 行目以降 1.45em)。行数がパターン別の最大行数 (ノード label 3 行 / bullets 2 行) を超えたら exit 1 とし、stderr へ該当ノード id・見積り幅・許容幅を出す。切り詰めや省略記号での自動短縮は行わない (資料の意味が黙って失われるため)。",
+    "7. パターン別に座標を計算する。すべて整数 px へ丸める (round-half-even を避けるため int(x + 0.5) の明示丸め) ことで、浮動小数の表記揺れによる非決定を排除する。flow: 横 1 列・ノード幅 = (W - gap×(n-1) - margin×2)/n の等分、ノード間に矢印 path / compare: ヘッダ行 + n 行の表形式 rect / hierarchy: 層ごとに y を固定し同層内で等間隔、親子を折れ線 path で接続 / cycle: 中心 (W/2, H/2) 半径 R の円周上に n 等分配置し、隣接間を円弧 path + 矢頭で接続 (角度は 360/n を小数第 3 位で丸めてから座標化) / matrix: 4 象限の背景 rect + 軸線 + item を x,y から座標変換して点 + ラベル / versus: 左右 2 カラムの rect と中央の区切り線。",
+    "8. 高さを算出する。H はパターン別の版組規則 (行数・層数・折返し後の行数) から決定論導出し、viewBox=\"0 0 {W} {H}\" とする。width/height 属性は出さず、CSS 側で width:100%; height:auto を効かせる (C11 の CSS が受ける)。",
+    "9. 色はすべて CSS 変数参照 + フォールバック値の形 (例 fill=\"var(--pop-primary-soft, #d9edfe)\" / stroke=\"var(--pop-primary, #43a4f5)\" / fill=\"var(--ink, #16191d)\") で書く。C11 へ inline 埋め込みされたときはテーマトークンへ追従し、単体で開いたときもフォールバックで色が出る。値を焼き込まないのは checklist C14 (アクセント色差し替え時に変更箇所がアクセント定義のみになること) を成立させるため。",
+    "10. a11y 属性を焼く。ルート <svg> に role=\"img\" と <title> (diagram.title) を付け、必要なら <desc> (diagram.description) を付ける。装飾要素 (矢印の羽・区切り線) には aria-hidden=\"true\" を付ける。",
+    "11. id 衝突を避ける。marker などの内部 id は `hbdg-{pattern}-{連番}` の形で採番し、diagram.id が与えられていれば `hbdg-{diagram.id}-...` を使う。乱数・時刻・オブジェクト id を一切使わない。",
+    "12. 文字列をすべて html.escape(quote=True) でエスケープし、属性順を固定した組み立て関数で出力する。インデントは 2 スペース固定・改行は \\n 固定・末尾改行 1 個。同一入力から常にバイト一致する。",
+    "13. stdout へ書き exit 0。"
+  ],
+  "invocation_context": {
+    "per_main_section": "R25 (改善 2026-08-18・goal-spec C68 / 正本 improvement/visual-per-section-decision.json#decision.diagram_per_main_section) により、DIAGRAM は main セクション 1 件あたり最低 1 件が必須 (W-DIAGRAM-FEW / level=error) になった。C23 の preset_definitions は全 8 プリセットの全 main セクション計 43 節へ DIAGRAM を配線しており、その 1 節 1 節がこの script の 1 回の呼び出しになる。本 script の契約 (1 回の呼び出しで図解 1 個) は変わらないが、1 資料あたりの呼び出し回数が節数に比例することが前提である",
+    "runs_in_first_draft": "第1稿でも回す。config/handout-visual-policy.json#draft_first.skipped_in_draft に本 script は含まれず (同 why_gates_are_not_skipped / improvement/visual-per-section-decision.json#cost_and_risk.draft_latency『図解 SVG (C14) は決定論生成で速いが、画像生成は待ち時間が伸びる』)、待ち時間が問題になるのは C21 の画像生成側である。したがって本 script は 1 回あたりの実行時間が第1稿の体感に直結する — 外部プロセス起動・ネットワーク・ブラウザ実測のいずれも持たない現設計 (手順 5) がその条件を満たす",
+    "invocation_style": "C11 からは module import で render_diagram(spec, pattern, width) を直接呼ぶ (script-brief-C11.json:73 の invocation_style_rationale。プロセス境界を挟まないことで決定論が入力データだけで閉じる)。CLI は単体検証と C01 のプレビュー用に残す"
+  },
+  "roundtrip_contract": {
+    "emits": "本 script が返すのは <svg> 断片 1 個だけであり、ラッパ要素も data-* マーカーも付けない",
+    "marker_owner": "round-trip 復元用の data-hb-diagram-id / data-hb-diagram-pattern / data-hb-diagram-data は C11 が図解ラッパ要素へ付与する (script-brief-C11.json:251)。C20 は『生成された SVG 座標から構造データへは戻せない。data を属性へ持たせるのが唯一の復元路』(script-brief-C20.json:264) としており、本 script の出力から構造データを再構成することは設計上要求されていない",
+    "why": "SVG を可逆にしようとすると座標へ意味を埋め込むことになり、版組規則の変更が round-trip の破壊になる。復元路を属性 1 箇所へ寄せることで、本 script は版組だけを持てばよくなる"
+  },
+  "typography_and_layout_constants": {
+    "font_family": "指定しない。<text> に font-family を書かず、inline 埋め込み時は C11 が :root へ展開したテーマトークン由来の指定を継承し、単体で開いたときはブラウザ既定へ落ちる。@font-face / web font / 外部フォント URL を出力へ含めない (AC-C14-3 の外部参照 0 件と同じ根拠。フォントを焼き込むと単一 HTML 自己完結の不変項が壊れる)",
+    "width_estimate_is_font_independent": "手順 5 の幅見積り (全角 1.00em / それ以外 0.55em) は特定のフォントメトリクスに依存しない近似であり、継承先のフォントが変わっても見積り値は変わらない。実描画との誤差は枠の padding で吸収する前提であり、ブラウザ実測へ寄せない (寄せた瞬間に決定論が環境依存になる)",
+    "undefined_constants": "手順 7 の gap / margin / ノード枠の高さ / 矢頭形状、および手順 8 の H 導出式の具体値は本 brief で確定しない。実装裁量で定めてよいが、(a) script 内の単一の定数表へ集約し散在させないこと (b) 決めた値を AC-C14-1 の golden SVG が固定点として凍結すること の 2 条件を満たすこと。値そのものは決定論性にも C11 との結線にも影響しないため、build 着手前の追加ヒアリングの対象ではない",
+    "font_size_alignment": "手順 5 の font_size 定数 (label 15 / note 12.5 / 軸ラベル 12.5) は本 script が持つ。C11 のテーマトークン (assets/tokens/*.json) 側の本文サイズとは別物であり、トークンを変えても図解内の文字寸法は変わらない — 図解は版組が座標に焼かれているため、文字サイズだけが動くと枠から溢れる"
+  },
+  "pattern_coverage_vs_c23": {
+    "claim": "C23 の preset_definitions が要求する図解パターンは、本 script の 6 パターンで過不足なく賄える",
+    "measured_2026_08_18": "briefs/script-brief-C23.json の notes に現れる DIAGRAM(pattern=...) の実測内訳は flow 15 / hierarchy 16 / compare 5 / matrix 3 / versus 2 / cycle 1 の計 42 件で、6 語すべてが本 script の enum に含まれ、enum 外の pattern 名は 0 件",
+    "shape_source": "意図から pattern への写像と各 pattern の形 (件数レンジ) は config/handout-visual-policy.json#diagram_patterns_by_intent が正本で、その shape は手順 4 の許容範囲と一致している (flow 2-6 / compare axes 1-6・items 2-4 / hierarchy 子 1-5・深さ 3 / cycle 3-6 / matrix items 1-8 / versus bullets 1-5)。本 brief は写像を複製せず、値域 (6 語) の owner としてのみ振る舞う",
+    "quantity_cap_scope": "手順 4 の件数レンジは 1 枚の図解の中の要素数に対する読みやすさの制約であり、improvement/visual-per-section-decision.json#decision.no_quantity_cap が撤廃した『資料あたりの節数・図解枚数の上限』とは別物である。節が増えれば本 script の呼び出し回数が増えるだけで、1 枚あたりのレンジは緩めない (同 no_quantity_cap.keep『セクション数が増えても 1 節の中身は短いまま』と同じ趣旨)"
+  },
+  "requirements_covered": ["R01", "R07", "R09", "R10", "R16", "R25-REQ-2 (C68。DIAGRAM を毎 main セクションへ必須化した結果、本 script が 1 資料あたり main セクション数ぶん呼ばれる描画実体になる。閾値と検査は C12、配線は C23 が持ち、本 script は 1 個の図解を描く契約のみを持つ)"],
+  "checklist_covered": ["C2", "C9", "C12", "C14", "C29"],
+  "acceptance_checks": [
+    {"id": "AC-C14-1", "how": "6 パターンそれぞれの最小 fixture で実行し stdout を golden SVG と比較する", "expected": "6 パターン全てが exit 0 で golden とバイト一致 (checklist C9 の再現性テスト)"},
+    {"id": "AC-C14-2", "how": "同一 fixture で 2 回実行し stdout の sha256 を比較する", "expected": "2 回の sha256 が一致 (乱数・時刻・辞書順依存が無い)"},
+    {"id": "AC-C14-3", "how": "受入検査ハーネスが生成 SVG 全件を C16 verify-handout-selfcontained.py の module_api scan_external_references(svg_text) へ渡し、返り値の Violation を数える。本 brief は外部参照の綴り (スキーム付き URL・プロトコル相対・SVG の外部リンク属性) を一切列挙しない — 列挙した瞬間に CR-EXT の判定点が C16 と本 script の 2 箇所になり、規約を変えても片方だけ古くなる。C16 を解決・import できない場合は自前の grep へ退避せず exit 2 とする (C15 が P04-x-05 G-03 で受けたのと同一の委譲契約)", "expected": "返り値 0 件 (checklist C2)。あわせて C16 の CR-EXT へ検出綴りを 1 件足す変異で本検査が追随して赤になることを実測する — 追随しなければ denylist が本 script 側へ複製されている証拠になる"},
+    {"id": "AC-C14-4", "how": "6 パターンそれぞれの fixture (label に絵文字を含まないもの) で生成した SVG を、受入検査ハーネスが C16 の module_api scan_emoji(svg_text) へ渡し、返り値の Violation を数える。本 brief は絵文字の Unicode 範囲を一切列挙しない。C16 を解決・import できない場合は自前判定へ退避せず exit 2 とする", "expected": "返り値 0 件。本 script が自ら絵文字を書き出さない (矢頭・区切り・強調を絵文字で代替せず、すべて path / rect / line で描く) ことの検査である。入力 label 由来の絵文字は本 script では判定しない — 素通しして最終 HTML に対する C16 の CR-EMOJI が単一の判定点になる (task-specs/P05-x-02.md:31 と同じ委譲)。あわせて C16 の CR-EMOJI 二層規則から 1 層を外す変異で本検査が追随して赤になることを実測する"},
+    {"id": "AC-C14-5", "how": "アクセント色トークンを別値へ差し替えた HTML へ埋め込み、SVG 内に 16 進カラーリテラルが var() のフォールバック以外に現れないことを検査する", "expected": "var() 外の生カラーリテラル 0 件 (checklist C14)"},
+    {"id": "AC-C14-6", "how": "--pattern に未知語を渡す / diagram.pattern と --pattern を食い違わせる / steps を 7 件にする / 折返し 4 行になる長文 label を渡す", "expected": "いずれも exit 1 で stderr に原因とキーパス (または node id) が出る"},
+    {"id": "AC-C14-7", "how": "--diagram に存在しないパス / 壊れた JSON / --width=0 を渡す", "expected": "いずれも exit 2"},
+    {"id": "AC-C14-8", "how": "python3 -c 'import ast,sys; ...' で import 文を列挙する", "expected": "json / sys / argparse / html / unicodedata / collections / math など標準ライブラリのみ。yaml import 0 件 (checklist C27)"}
+  ],
+  "failure_modes": [
+    {"case": "テキストがノード枠に収まらない", "behavior": "exit 1 / stderr へ node id・見積り幅・許容幅・折返し後行数", "rationale": "自動短縮すると資料の意味が黙って欠ける。図解が読めない状態を生成物へ通さず、構成データ側で文言を詰めさせる (fail-closed)"},
+    {"case": "ノード数がパターンの許容範囲外 (flow で 7 件など)", "behavior": "exit 1 / stderr へ実数と許容範囲", "rationale": "1 枚に詰め込みすぎた図解は理解を助けない。範囲を機械で課すことで『装飾でない図解』を構造で保証する"},
+    {"case": "未知の pattern 名", "behavior": "exit 1 / stderr へ受理する 6 語を列挙", "rationale": "パターン語彙は本 script が単独 owner。誤記を黙って既定パターンへ落とすと図の意味が変わる"},
+    {"case": "--pattern と diagram.pattern の不一致", "behavior": "exit 1 / stderr へ両値", "rationale": "どちらを優先しても片方の意図を無言で捨てることになる。取り違えを検出側で止める"},
+    {"case": "matrix の item 座標が 0.0-1.0 の範囲外", "behavior": "exit 1 / stderr へ item id と値", "rationale": "象限外へはみ出した点は図として破綻する。座標の正規化を暗黙にクリップしない"},
+    {"case": "--diagram のファイル不在 / JSON 構文エラー / --width 非正整数", "behavior": "exit 2 / stderr へ OS エラーまたは json の行桁", "rationale": "呼び出し側の誤りであり、構成データの規約違反 (exit 1) とは差し戻し先が違うので code を分ける"}
+  ],
+  "open_questions": []
+}

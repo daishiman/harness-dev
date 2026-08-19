@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "C50 criterion は できること -> 分解 -> 使う機能の組み合わせ -> 操作 の 4 段を要求するが、schema の part.slot enum は outcome / breakdown / feature + null の 3 区画しかなく 4 段目に対応する区画が無い。dispatcher が schema を直読みして確認。C51 の 3 段とも食い違う。cyan が検出",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-69-c50-four-steps-vs-three-slots",
+    "title": "C50 の 4 段と slot enum の 3 区画の不一致を裁定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+    "acceptance_criterion": "C50 の criterion が要求する段数と schemas/handout-config.schema.json の part.slot enum の区画数が一致していること。操作を 4 つ目の区画として足すか C50 を 3 段へ改めるかの裁定根拠が記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

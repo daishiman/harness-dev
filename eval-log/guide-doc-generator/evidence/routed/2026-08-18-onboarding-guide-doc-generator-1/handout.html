@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja" data-hb-schema-version="1.0" data-hb-doc-type="onboarding" data-hb-subject-slug="guide-doc-generator-1" data-hb-theme="pop" data-hb-config-theme="pop" data-hb-meta-reader="資料は日常的に作るが、HTML やコマンド操作は触ったことがない担当者" data-hb-meta-knowledge="none" data-hb-meta-problem="資料の中身を考える時間より、体裁を整えて配れる形にする時間のほうが長くなっている" data-hb-presentation-order="demo_first" data-hb-presentation-order-source="derived-from-prior-knowledge" data-hb-detail-level="detailed" data-hb-evidence-depth="cited" data-hb-text-limit="900" data-hb-notes-enabled="true" data-hb-must-remember-max="2">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>guide-doc-generator で配布用の資料を1本作れるようになる</title>
+<style>
+:root {
+  --nav-h: 96px;
+  --pop-primary: #43a4f5;
+  --pop-primary-pastel: #8ecdf8;
+  --pop-primary-soft: #d9edfe;
+  --pop-primary-deep: #2273b8;
+  --pop-bg: #eaf5fe;
+  --ink: #1b2733;
+  --ink-muted: #5b6b7a;
+  --line: #dbe6ef;
+  --subtle: #f4f8fc;
+  --card-radius: 24px;
+  --font-num: "Helvetica Neue", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 96px; }
+body {
+  margin: 0;
+  background: var(--pop-bg);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  font-feature-settings: "palt";
+  line-height: 1.8;
+}
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+.unit { font-size: 62%; font-weight: 600; }
+.pop-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--subtle);
+  border-bottom: 1px solid var(--line);
+}
+.navbar { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 16px; }
+.navbar a { color: var(--pop-primary-deep); text-decoration: none; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+.doc-head { padding: 10px 16px 0; }
+.doc-date { margin: 0; }
+.hero {
+  position: relative;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.hero-frame {
+  position: absolute;
+  inset: 0;
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  pointer-events: none;
+}
+.hero > *:not(.hero-frame) { position: relative; }
+.hero h1 { margin: 0 0 8px; }
+.date-pill {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+}
+.goal-chip {
+  display: inline-block;
+  padding: 2px 12px;
+  margin: 2px 4px 2px 0;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+}
+.meta-list { margin: 8px 0; padding-left: 1.2em; }
+.section-card {
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  scroll-margin-top: var(--nav-h, 96px);
+  animation: rise-in 420ms ease-out both;
+  animation-delay: var(--stagger, 0ms);
+}
+.section-label { margin: 0 0 8px; }
+.lead-line { font-weight: 600; }
+.judgment-axis {
+  border-left: 4px solid var(--pop-primary);
+  padding-left: 12px;
+}
+.steps, .checklist, .downloads, .action-items, .handson {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.step-row, .check-row, .dl-row, .ai-row, .hs-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.step-num {
+  display: inline-block;
+  min-width: 2em;
+  color: var(--pop-primary-deep);
+  font-weight: 700;
+}
+.trio, .features { display: flex; gap: 12px; flex-wrap: wrap; }
+.trio-card, .feature-card, .versus-side {
+  flex: 1 1 220px;
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  background: var(--pop-bg);
+}
+.versus { display: flex; gap: 12px; flex-wrap: wrap; }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { border-collapse: collapse; width: 100%; }
+.table-wrap th, .table-wrap td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  text-align: left;
+}
+.hl-cell { background: var(--pop-primary-soft); }
+.choice-map { display: flex; gap: 8px; flex-wrap: wrap; }
+.map-item, .chip, .tab-btn {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--pop-bg);
+  color: var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.map-item[aria-pressed="true"], .chip[aria-pressed="true"] {
+  background: var(--pop-primary-soft);
+  border-color: var(--pop-primary);
+}
+.prompt-box { border: 1px solid var(--line); border-radius: var(--card-radius); padding: 12px; }
+.prompt-text { white-space: pre-wrap; margin: 0 0 8px; }
+.prompt-copy, .memo-btn, .toolbar-toggle, .lightbox-close {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--pop-bg);
+  color: var(--ink);
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.dl-hint { color: var(--ink-muted); font-size: 88%; }
+.tab-strip { display: flex; gap: 8px; margin-bottom: 8px; }
+.fold { border-bottom: 1px solid var(--line); }
+.asset { margin: 12px 0; }
+.asset-img { max-width: 100%; height: auto; cursor: zoom-in; }
+.asset-caption { color: var(--ink-muted); font-size: 88%; }
+.diagram svg { max-width: 100%; height: auto; }
+.ic { width: 1.1em; height: 1.1em; vertical-align: -0.15em; color: var(--pop-primary-deep); }
+.memo, .memo-global {
+  border: 1px dashed var(--line);
+  border-radius: var(--card-radius);
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--pop-bg);
+}
+.memo-body { width: 100%; min-height: 4.5em; border: 1px solid var(--line); border-radius: 12px; }
+.toolbar { position: fixed; right: 16px; bottom: 16px; z-index: 30; }
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.lightbox[hidden] { display: none; }
+.lightbox-stage img { max-width: 92vw; max-height: 82vh; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--pop-primary-deep);
+  outline-offset: 2px;
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none; transition: none; }
+}
+@page { size: A4; margin: 14mm; }
+@media print {
+  .pop-header { position: static; }
+  .toolbar { position: static; }
+  .lightbox { display: none; }
+  [data-hb-part="lightbox"] { display: none; }
+  [data-hb-part="toolbar"] { display: none; }
+  [data-hb-part="memo"] { display: none; }
+  [data-hb-part="memo-global"] { display: none; }
+  .section-card { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2, h3, h4, h5, h6 { break-after: avoid; break-inside: avoid; }
+}
+</style>
+</head>
+<body class="handout">
+<header class="doc-head"><p class="doc-date"><span class="date-pill num" data-hb-field="date">2026/08/18</span></p></header>
+<header class="pop-header" data-hb-part="B01" data-hb-part-id="b01-1" data-hb-generated="true"><nav class="navbar" aria-label="目次"><a href="#demo" data-hb-nav-goal="この節を読み終えると、これから自分が何を作るのかが目で分かる" title="この節を読み終えると、これから自分が何を作るのかが目で分かる" aria-describedby="goal-demo">まず出来上がりを見る</a><a href="#flow" data-hb-nav-goal="この節を読み終えると、45分で自分がどこまで進むのかが分かる" title="この節を読み終えると、45分で自分がどこまで進むのかが分かる" aria-describedby="goal-flow">今日の流れ</a><a href="#anatomy" data-hb-nav-goal="この節を読み終えると、直す場所が HTML ではなく構成データだと分かる" title="この節を読み終えると、直す場所が HTML ではなく構成データだと分かる" aria-describedby="goal-anatomy">資料1本が何でできているか</a><a href="#hands" data-hb-nav-goal="この節を読み終えると、自分の題材で資料を1本生成して開けるようになる" title="この節を読み終えると、自分の題材で資料を1本生成して開けるようになる" aria-describedby="goal-hands">実際に1本作ってみる</a><a href="#qa" data-hb-nav-goal="この節を読み終えると、詰まりやすい3点を自分で切り分けられる" title="この節を読み終えると、詰まりやすい3点を自分で切り分けられる" aria-describedby="goal-qa">先回りで答えておくこと</a><a href="#takeaway" data-hb-nav-goal="この節を読み終えると、次に自分が何をすればよいかが1行で言える" title="この節を読み終えると、次に自分が何をすればよいかが1行で言える" aria-describedby="goal-takeaway">持ち帰る形に整える</a></nav></header>
+<main class="wrap">
+<div class="hero" style="--stagger: 0ms"><div class="hero-frame" data-hb-part="B02" data-hb-part-id="b02-1" data-hb-generated="true" aria-hidden="true"></div><h1 data-hb-field="title">guide-doc-generator で配布用の資料を1本作れるようになる</h1><p class="hero-meta"><span class="hero-duration num" data-hb-field="duration">45分</span></p><p class="hero-purpose"><span class="hero-label">目的</span><span data-hb-field="purpose">受け取った人がそのまま開いて読める資料を、自分の手で1本作れるようにする</span></p><p class="hero-background"><span class="hero-label">背景</span><span data-hb-field="background">作った資料を渡すと、画像が表示されない・社内で開けないという戻りが毎回発生している</span></p><p class="hero-goal"><span class="hero-label">ゴール</span><span data-hb-field="goal">自分の題材を1つ選び、構成データ (資料に何をどの順で載せるかを書いた設計メモのファイル) から資料を1本生成して手元で開くまでを通せる</span></p><ul class="meta-list focus-theme"><li data-hb-field="focus_theme">自分の題材を構成データに落として1本通す力</li></ul><ul class="meta-list target-tasks"><li data-hb-field="target_task" data-hb-key="first-handout">自分の題材で配布できる資料を1本作り切る</li></ul><p class="attainment"><span data-hb-field="attainment_level">operable</span></p><ul class="meta-list must-remember"><li data-hb-field="must_remember">資料の正本は HTML ではなく構成データのほうである</li><li data-hb-field="must_remember">同じ構成データからは何度作っても同じ資料が出る</li></ul><ul class="meta-list no-need"><li data-hb-field="no_need_to_remember">部品の記号 (B03 など) の一覧 (本資料と部品カタログを見返せば足りる)</li></ul></div>
+<section id="demo" class="section-card" data-hb-part="section" data-hb-section-kind="handson" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" data-hb-attainment-step="overview" style="--stagger: 120ms"><h2 class="section-label"><span class="section-num num">1</span><span class="section-heading" data-hb-field="heading">まず出来上がりを見る</span></h2><p class="goal-chip section-goal" id="goal-demo" data-hb-field="section_goal">この節を読み終えると、これから自分が何を作るのかが目で分かる</p><p class="lead-line" data-hb-field="lead_line">説明より先に、出来上がりを1つ見てしまう</p><span class="section-duration num" data-hb-field="section_duration">5分</span><ol data-hb-part="B17" data-hb-part-id="demo-steps" data-hb-live-demo="true" class="handson" data-hb-entries="steps"><li class="hs-row" data-hb-key="i0" data-hb-expected="目次つきの資料が1枚のファイルとして開き、目次から各見出しへ飛べる" data-hb-operation="手本として配られた資料を、そのままブラウザで開く" data-hb-stuck-hint="開けないときは、ファイルを保存し直してからもう1度開く"><span class="hs-operation">手本として配られた資料を、そのままブラウザで開く</span><span class="hs-expected">目次つきの資料が1枚のファイルとして開き、目次から各見出しへ飛べる</span><span class="hs-hint">開けないときは、ファイルを保存し直してからもう1度開く</span></li></ol><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、自分の題材でも同じ形になるかで見る</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-demo">このセクションのメモ</label><textarea class="memo-body" id="memo-demo" data-hb-key="demo"></textarea></div></section><section id="flow" class="section-card" data-hb-part="section" data-hb-section-kind="flow-overview" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" style="--stagger: 240ms"><h2 class="section-label"><span class="section-num num">2</span><span class="section-heading" data-hb-field="heading">今日の流れ</span></h2><p class="goal-chip section-goal" id="goal-flow" data-hb-field="section_goal">この節を読み終えると、45分で自分がどこまで進むのかが分かる</p><p class="lead-line" data-hb-field="lead_line">先に全体の道のりを見てから細部へ入る</p><span class="section-duration num" data-hb-field="section_duration">3分</span><ol data-hb-part="B03" data-hb-part-id="flow-steps" class="steps" data-hb-entries="rows"><li class="step-row" data-hb-key="s0" data-hb-text="出来上がりを見る" data-hb-time="5分"><span class="step-num num">1</span><span class="step-label">出来上がりを見る</span><span class="step-detail"></span><span class="step-time num">5分</span></li><li class="step-row" data-hb-key="s1" data-hb-text="資料の作りを知る" data-hb-time="10分"><span class="step-num num">2</span><span class="step-label">資料の作りを知る</span><span class="step-detail"></span><span class="step-time num">10分</span></li><li class="step-row" data-hb-key="s2" data-hb-text="手元で1本作ってみる" data-hb-time="17分"><span class="step-num num">3</span><span class="step-label">手元で1本作ってみる</span><span class="step-detail"></span><span class="step-time num">17分</span></li><li class="step-row" data-hb-key="s3" data-hb-text="詰まりどころに先に答える" data-hb-time="7分"><span class="step-num num">4</span><span class="step-label">詰まりどころに先に答える</span><span class="step-detail"></span><span class="step-time num">7分</span></li><li class="step-row" data-hb-key="s4" data-hb-text="持ち帰る形に整える" data-hb-time="3分"><span class="step-num num">5</span><span class="step-label">持ち帰る形に整える</span><span class="step-detail"></span><span class="step-time num">3分</span></li></ol><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、いま自分がどの段にいるかで次の一手を決める</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-flow">このセクションのメモ</label><textarea class="memo-body" id="memo-flow" data-hb-key="flow"></textarea></div></section><section id="anatomy" class="section-card" data-hb-part="section" data-hb-section-kind="standard" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" data-hb-attainment-step="overview" style="--stagger: 360ms"><h2 class="section-label"><span class="section-num num">3</span><span class="section-heading" data-hb-field="heading">資料1本が何でできているか</span></h2><p class="goal-chip section-goal" id="goal-anatomy" data-hb-field="section_goal">この節を読み終えると、直す場所が HTML ではなく構成データだと分かる</p><p class="lead-line" data-hb-field="lead_line">直す場所は出来上がりでなく設計メモのほうにある</p><span class="section-duration num" data-hb-field="section_duration">10分</span><figure data-hb-part="DIAGRAM" data-hb-part-id="anatomy-diagram" data-hb-diagram-id="build-flow" class="diagram" data-hb-diagram-pattern="flow" data-hb-diagram-data="{&quot;id&quot;: &quot;anatomy-diagram&quot;, &quot;steps&quot;: [{&quot;label&quot;: &quot;構成データを書く&quot;, &quot;note&quot;: &quot;何をどの順で載せるか&quot;}, {&quot;label&quot;: &quot;点検して整える&quot;, &quot;note&quot;: &quot;書き方の誤りをここで直す&quot;}, {&quot;label&quot;: &quot;資料を1本に組む&quot;, &quot;note&quot;: &quot;画像も含めて1ファイル&quot;}, {&quot;label&quot;: &quot;最後に点検する&quot;, &quot;note&quot;: &quot;問題があれば止まる&quot;}], &quot;pattern&quot;: &quot;flow&quot;, &quot;title&quot;: &quot;構成データから配れる資料になるまで&quot;}" data-hb-part-data="{&quot;diagram_id&quot;: &quot;build-flow&quot;}" data-hb-media-record="build-flow" data-hb-diagram-title="構成データから配れる資料になるまで" data-hb-diagram-record-data="{&quot;steps&quot;: [{&quot;label&quot;: &quot;構成データを書く&quot;, &quot;note&quot;: &quot;何をどの順で載せるか&quot;}, {&quot;label&quot;: &quot;点検して整える&quot;, &quot;note&quot;: &quot;書き方の誤りをここで直す&quot;}, {&quot;label&quot;: &quot;資料を1本に組む&quot;, &quot;note&quot;: &quot;画像も含めて1ファイル&quot;}, {&quot;label&quot;: &quot;最後に点検する&quot;, &quot;note&quot;: &quot;問題があれば止まる&quot;}]}"><svg data-hb-kind="figure" id="hbdg-anatomy-diagram-1" role="img" viewBox="0 0 860 140">
+  <title>構成データから配れる資料になるまで</title>
+  <text x="16" y="31" fill="var(--ink, #16191d)" font-size="15" text-anchor="start" font-weight="700">構成データから配れる資料になるまで</text>
+  <rect x="16" y="54" width="189" height="70" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary, #43a4f5)" stroke-width="1" />
+  <text x="110" y="81" fill="var(--ink, #16191d)" font-size="15" text-anchor="middle" font-weight="600">構成データを書く</text>
+  <text x="110" y="107" fill="var(--ink-muted, #5b6470)" font-size="12.5" text-anchor="middle">何をどの順で載せるか</text>
+  <rect x="229" y="54" width="189" height="70" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary, #43a4f5)" stroke-width="1" />
+  <text x="323" y="81" fill="var(--ink, #16191d)" font-size="15" text-anchor="middle" font-weight="600">点検して整える</text>
+  <text x="323" y="107" fill="var(--ink-muted, #5b6470)" font-size="12.5" text-anchor="middle">書き方の誤りをここで直す</text>
+  <rect x="442" y="54" width="189" height="70" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary, #43a4f5)" stroke-width="1" />
+  <text x="536" y="81" fill="var(--ink, #16191d)" font-size="15" text-anchor="middle" font-weight="600">資料を1本に組む</text>
+  <text x="536" y="107" fill="var(--ink-muted, #5b6470)" font-size="12.5" text-anchor="middle">画像も含めて1ファイル</text>
+  <rect x="655" y="54" width="189" height="70" rx="8" fill="var(--pop-primary-soft, #d9edfe)" stroke="var(--pop-primary, #43a4f5)" stroke-width="1" />
+  <text x="749" y="81" fill="var(--ink, #16191d)" font-size="15" text-anchor="middle" font-weight="600">最後に点検する</text>
+  <text x="749" y="107" fill="var(--ink-muted, #5b6470)" font-size="12.5" text-anchor="middle">問題があれば止まる</text>
+  <path d="M 207 89 L 220 89" fill="none" stroke="var(--pop-primary, #43a4f5)" stroke-width="2" aria-hidden="true" />
+  <path d="M 228 89 L 219 94 L 219 84 Z" fill="var(--pop-primary, #43a4f5)" aria-hidden="true" />
+  <path d="M 420 89 L 433 89" fill="none" stroke="var(--pop-primary, #43a4f5)" stroke-width="2" aria-hidden="true" />
+  <path d="M 441 89 L 432 94 L 432 84 Z" fill="var(--pop-primary, #43a4f5)" aria-hidden="true" />
+  <path d="M 633 89 L 646 89" fill="none" stroke="var(--pop-primary, #43a4f5)" stroke-width="2" aria-hidden="true" />
+  <path d="M 654 89 L 645 94 L 645 84 Z" fill="var(--pop-primary, #43a4f5)" aria-hidden="true" />
+</svg></figure><div data-hb-part="TEXT" data-hb-part-id="anatomy-text" data-hb-body="図の左端にある構成データ (資料に何をどの順で載せるかを書いた設計メモのファイル) が正本です。出来上がった HTML を直接書き換えると、次に作り直したときに同じ直しが消えます。" class="prose"><p class="prose-body">図の左端にある構成データ (資料に何をどの順で載せるかを書いた設計メモのファイル) が正本です。出来上がった HTML を直接書き換えると、次に作り直したときに同じ直しが消えます。</p></div><div data-hb-part="B05" data-hb-part-id="anatomy-table" class="table-wrap" data-hb-entries="rows"><table><thead><tr><th scope="col"></th><th scope="col" data-hb-field="columns">次に作り直したとき</th><th scope="col" data-hb-field="columns">渡した相手から見た違い</th></tr></thead><tbody><tr data-hb-key="r0" data-hb-header="構成データを直す"><th scope="row" data-hb-field="header">構成データを直す</th><td data-hb-field="cells">直した内容が残る</td><td data-hb-field="cells">毎回同じ資料が届く</td></tr><tr data-hb-key="r1" data-hb-header="HTML を直接直す"><th scope="row" data-hb-field="header">HTML を直接直す</th><td data-hb-field="cells">直した内容が消える</td><td data-hb-field="cells">版によって中身が違う</td></tr></tbody></table></div><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、同じものをもう1度作れるかで判断する</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-anatomy">このセクションのメモ</label><textarea class="memo-body" id="memo-anatomy" data-hb-key="anatomy"></textarea></div></section><section id="hands" class="section-card" data-hb-part="section" data-hb-section-kind="handson" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" data-hb-attainment-step="operable" style="--stagger: 480ms"><h2 class="section-label"><span class="section-num num">4</span><span class="section-heading" data-hb-field="heading">実際に1本作ってみる</span></h2><p class="goal-chip section-goal" id="goal-hands" data-hb-field="section_goal">この節を読み終えると、自分の題材で資料を1本生成して開けるようになる</p><p class="lead-line" data-hb-field="lead_line">読むより先に、手元で1本通してしまう</p><span class="section-duration num" data-hb-field="section_duration">17分</span><ol data-hb-part="B17" data-hb-part-id="hands-steps" data-hb-live-demo="true" class="handson" data-hb-entries="steps"><li class="hs-row" data-hb-key="i0" data-hb-expected="書き換えたファイルが手元に1つできている" data-hb-operation="手本の構成データを写して、題名と目的を自分の題材へ書き換える" data-hb-stuck-hint="題材が思いつかないときは、直近で人に説明した内容をそのまま題材にする"><span class="hs-operation">手本の構成データを写して、題名と目的を自分の題材へ書き換える</span><span class="hs-expected">書き換えたファイルが手元に1つできている</span><span class="hs-hint">題材が思いつかないときは、直近で人に説明した内容をそのまま題材にする</span></li><li class="hs-row" data-hb-key="i1" data-hb-expected="問題がなければ OK と表示され、あれば直す場所が名指しで出る" data-hb-operation="点検の指示を出して、書き方の誤りがないか確かめる" data-hb-stuck-hint="見慣れない記号が出たら、その行の前後だけを手本と見比べる"><span class="hs-operation">点検の指示を出して、書き方の誤りがないか確かめる</span><span class="hs-expected">問題がなければ OK と表示され、あれば直す場所が名指しで出る</span><span class="hs-hint">見慣れない記号が出たら、その行の前後だけを手本と見比べる</span></li><li class="hs-row" data-hb-key="i2" data-hb-expected="目次つきの資料が1枚のファイルとして開く" data-hb-operation="資料を組む指示を出して、できた HTML を開く" data-hb-stuck-hint="開いても白いときは、点検を通していない可能性が高いので前の手順へ戻る"><span class="hs-operation">資料を組む指示を出して、できた HTML を開く</span><span class="hs-expected">目次つきの資料が1枚のファイルとして開く</span><span class="hs-hint">開いても白いときは、点検を通していない可能性が高いので前の手順へ戻る</span></li></ol><div data-hb-part="B11" data-hb-part-id="hands-prompt" data-hb-body="この題材で配布用の資料を1本作ってください。読み手は初めて触る人です。" data-hb-label="そのまま使える指示文" class="prompt-box"><div class="prompt-label">そのまま使える指示文</div><pre class="prompt-text">この題材で配布用の資料を1本作ってください。読み手は初めて触る人です。</pre><button type="button" class="prompt-copy" data-hb-part-role="aux">本文をコピーする</button></div><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、画面に何が出たかを見てから次へ進む</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-hands">このセクションのメモ</label><textarea class="memo-body" id="memo-hands" data-hb-key="hands"></textarea></div></section><section id="qa" class="section-card" data-hb-part="section" data-hb-section-kind="anticipated-qa" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" style="--stagger: 600ms"><h2 class="section-label"><span class="section-num num">5</span><span class="section-heading" data-hb-field="heading">先回りで答えておくこと</span></h2><p class="goal-chip section-goal" id="goal-qa" data-hb-field="section_goal">この節を読み終えると、詰まりやすい3点を自分で切り分けられる</p><p class="lead-line" data-hb-field="lead_line">詰まる場所はだいたい決まっている</p><span class="section-duration num" data-hb-field="section_duration">7分</span><div data-hb-part="B10" data-hb-part-id="qa-acc" class="accordion" data-hb-entries="items"><details class="fold" data-hb-key="i0" data-hb-body="開けます。画像も含めて1つのファイルに入っているので、通信が無くても中身は欠けません。作る途中でゲート (出来上がった資料を機械が点検して、問題があれば止める仕組み) が外部への参照を止めています。" data-hb-open="false" data-hb-summary="社内のパソコンでも開けますか"><summary>社内のパソコンでも開けますか</summary><div class="fold-body">開けます。画像も含めて1つのファイルに入っているので、通信が無くても中身は欠けません。作る途中でゲート (出来上がった資料を機械が点検して、問題があれば止める仕組み) が外部への参照を止めています。</div></details><details class="fold" data-hb-key="i1" data-hb-body="できます。A4 で切れないように作られており、印刷したときだけ目次が畳まれます。" data-hb-open="false" data-hb-summary="作った資料は印刷できますか"><summary>作った資料は印刷できますか</summary><div class="fold-body">できます。A4 で切れないように作られており、印刷したときだけ目次が畳まれます。</div></details><details class="fold" data-hb-key="i2" data-hb-body="見えません。メモはその人のブラウザにだけ残ります。渡したいときは書き出して別に送ります。" data-hb-open="false" data-hb-summary="書いたメモは他の人に見えますか"><summary>書いたメモは他の人に見えますか</summary><div class="fold-body">見えません。メモはその人のブラウザにだけ残ります。渡したいときは書き出して別に送ります。</div></details></div><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、点検が通っているかどうかを先に確かめる</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-qa">このセクションのメモ</label><textarea class="memo-body" id="memo-qa" data-hb-key="qa"></textarea></div></section><section id="takeaway" class="section-card" data-hb-part="section" data-hb-section-kind="standard" data-hb-section-role="main" data-hb-ties-to="goal target_task:first-handout" style="--stagger: 720ms"><h2 class="section-label"><span class="section-num num">6</span><span class="section-heading" data-hb-field="heading">持ち帰る形に整える</span></h2><p class="goal-chip section-goal" id="goal-takeaway" data-hb-field="section_goal">この節を読み終えると、次に自分が何をすればよいかが1行で言える</p><p class="lead-line" data-hb-field="lead_line">作り切るより、次に続く形にして終える</p><span class="section-duration num" data-hb-field="section_duration">3分</span><ul data-hb-part="B09" data-hb-part-id="takeaway-check" data-hb-show-counter="true" class="checklist" data-hb-entries="rows"><li class="check-row" data-hb-key="c1" data-hb-text="自分の題材で構成データを1つ作った"><label for="chk-takeaway-check-c1"><input type="checkbox" id="chk-takeaway-check-c1"><span class="check-label">自分の題材で構成データを1つ作った</span></label></li><li class="check-row" data-hb-key="c2" data-hb-text="点検を通してから資料を組んだ"><label for="chk-takeaway-check-c2"><input type="checkbox" id="chk-takeaway-check-c2"><span class="check-label">点検を通してから資料を組んだ</span></label></li><li class="check-row" data-hb-key="c3" data-hb-text="できた資料を手元で開いて確かめた"><label for="chk-takeaway-check-c3"><input type="checkbox" id="chk-takeaway-check-c3"><span class="check-label">できた資料を手元で開いて確かめた</span></label></li></ul><p class="judgment-axis" data-hb-field="judgment_axis">迷ったら、明日の自分が読んで動けるかで決める</p><div class="memo" data-hb-part="memo" data-hb-generated="true"><label class="memo-label" for="memo-takeaway">このセクションのメモ</label><textarea class="memo-body" id="memo-takeaway" data-hb-key="takeaway"></textarea></div></section>
+<dl class="glossary"><div class="glossary-row" data-hb-key="i0" data-hb-glossary-term="構成データ" data-hb-glossary-plain="資料に何をどの順で載せるかを書いた設計メモのファイル" data-hb-glossary-scope="document"><dt class="glossary-term">構成データ</dt><dd class="glossary-plain">資料に何をどの順で載せるかを書いた設計メモのファイル</dd></div><div class="glossary-row" data-hb-key="i1" data-hb-glossary-term="ゲート" data-hb-glossary-plain="出来上がった資料を機械が点検して、問題があれば止める仕組み" data-hb-glossary-scope="document"><dt class="glossary-term">ゲート</dt><dd class="glossary-plain">出来上がった資料を機械が点検して、問題があれば止める仕組み</dd></div></dl>
+<div class="memo-global" data-hb-part="memo-global" data-hb-generated="true"><h2 class="memo-title">全体メモ</h2><label class="memo-label" for="memo-all">資料全体のメモ</label><textarea class="memo-body" id="memo-all" data-hb-key="all"></textarea><button type="button" class="memo-btn" data-hb-action="copy">メモをクリップボードへコピーする</button><button type="button" class="memo-btn" data-hb-action="save">メモをファイルへ download する</button><button type="button" class="memo-btn" data-hb-action="clear">メモを clear する</button></div>
+</main>
+<div class="lightbox" data-hb-part="lightbox" data-hb-generated="true" role="dialog" aria-modal="true" aria-label="画像の拡大表示" hidden><button type="button" class="lightbox-close">閉じる</button><div class="lightbox-stage"></div></div>
+<div class="toolbar" data-hb-part="toolbar" data-hb-generated="true"><button type="button" class="toolbar-toggle" aria-pressed="false" data-hb-part-role="aux">メモ欄の表示を切り替える</button></div>
+<script>
+'use strict';
+(function () {
+  var STORE_PREFIX = 'handout:';
+  var SLUG = document.documentElement.getAttribute('data-hb-subject-slug') || '';
+
+  function storeKey(kind, id) {
+    return STORE_PREFIX + SLUG + ':' + kind + ':' + id;
+  }
+
+  function headerOffset() {
+    var header = document.querySelector('.pop-header');
+    if (!header) { return 0; }
+    return Math.ceil(header.getBoundingClientRect().height);
+  }
+
+  function jumpTo(id) {
+    var target = document.getElementById(id);
+    if (!target) { return; }
+    var y = target.getBoundingClientRect().top + window.pageYOffset - headerOffset() - 8;
+    window.scrollTo(0, y < 0 ? 0 : y);
+  }
+
+  function wireNav() {
+    var links = document.querySelectorAll('.navbar a[href^="#"]');
+    Array.prototype.forEach.call(links, function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var id = link.getAttribute('href').slice(1);
+        jumpTo(id);
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', link.getAttribute('href'));
+        }
+      });
+    });
+  }
+
+  function wireToggles() {
+    var toggles = document.querySelectorAll('[aria-pressed]');
+    Array.prototype.forEach.call(toggles, function (node) {
+      node.addEventListener('click', function () {
+        var group = node.closest('[data-hb-single="true"]');
+        var on = node.getAttribute('aria-pressed') !== 'true';
+        if (group && on) {
+          Array.prototype.forEach.call(
+            group.querySelectorAll('[aria-pressed="true"]'), function (other) {
+              other.setAttribute('aria-pressed', 'false');
+            });
+        }
+        node.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    });
+  }
+
+  function wireTabs() {
+    var strips = document.querySelectorAll('[role="tablist"]');
+    Array.prototype.forEach.call(strips, function (strip) {
+      var tabs = strip.querySelectorAll('[role="tab"]');
+      Array.prototype.forEach.call(tabs, function (tab) {
+        tab.addEventListener('click', function () {
+          Array.prototype.forEach.call(tabs, function (other) {
+            var selected = other === tab;
+            other.setAttribute('aria-selected', selected ? 'true' : 'false');
+            var panel = document.getElementById(other.getAttribute('aria-controls'));
+            if (!panel) { return; }
+            if (selected) { panel.removeAttribute('hidden'); }
+            else { panel.setAttribute('hidden', ''); }
+          });
+        });
+      });
+    });
+  }
+
+  function wireCheckboxes() {
+    var boxes = document.querySelectorAll('.check-row input[type="checkbox"]');
+    Array.prototype.forEach.call(boxes, function (box) {
+      var key = storeKey('check', box.id);
+      try {
+        box.checked = window.localStorage.getItem(key) === '1';
+      } catch (err) { /* 保存不可でも本文は読める */ }
+      box.addEventListener('change', function () {
+        try {
+          window.localStorage.setItem(key, box.checked ? '1' : '0');
+        } catch (err) { /* noop */ }
+      });
+    });
+  }
+
+  function memoFields() {
+    return document.querySelectorAll('.memo-body');
+  }
+
+  function wireMemo() {
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      var key = storeKey('memo', field.id);
+      try {
+        field.value = window.localStorage.getItem(key) || '';
+      } catch (err) { /* noop */ }
+      field.addEventListener('input', function () {
+        try { window.localStorage.setItem(key, field.value); } catch (err) { /* noop */ }
+      });
+    });
+  }
+
+  function collectMemo() {
+    var out = [];
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      if (field.value) {
+        out.push('# ' + (field.getAttribute('data-hb-key') || '') + '\n' + field.value);
+      }
+    });
+    return out.join('\n\n');
+  }
+
+  function wireMemoActions() {
+    var copyBtn = document.querySelector('[data-hb-action="copy"]');
+    var saveBtn = document.querySelector('[data-hb-action="save"]');
+    var clearBtn = document.querySelector('[data-hb-action="clear"]');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var text = collectMemo();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text);
+        }
+      });
+    }
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        var body = encodeURIComponent(collectMemo());
+        var link = document.createElement('a');
+        link.setAttribute('href', 'data:text/plain;charset=utf-8,' + body);
+        link.setAttribute('download', (SLUG || 'handout') + '-memo.txt');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        Array.prototype.forEach.call(memoFields(), function (field) {
+          field.value = '';
+          try {
+            window.localStorage.removeItem(storeKey('memo', field.id));
+          } catch (err) { /* noop */ }
+        });
+      });
+    }
+  }
+
+  function wireLightbox() {
+    var box = document.querySelector('[data-hb-part="lightbox"]');
+    if (!box) { return; }
+    var stage = box.querySelector('.lightbox-stage');
+    var closeBtn = box.querySelector('.lightbox-close');
+    function close() {
+      box.setAttribute('hidden', '');
+      if (stage) { stage.innerHTML = ''; }
+    }
+    if (closeBtn) { closeBtn.addEventListener('click', close); }
+    box.addEventListener('click', function (event) {
+      if (event.target === box) { close(); }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') { close(); }
+    });
+    var images = document.querySelectorAll('.asset-img');
+    Array.prototype.forEach.call(images, function (image) {
+      image.addEventListener('click', function () {
+        if (!stage) { return; }
+        var big = document.createElement('img');
+        big.setAttribute('src', image.getAttribute('src'));
+        big.setAttribute('alt', image.getAttribute('alt') || '');
+        stage.innerHTML = '';
+        stage.appendChild(big);
+        box.removeAttribute('hidden');
+      });
+    });
+  }
+
+  function wireToolbar() {
+    var toggle = document.querySelector('.toolbar-toggle');
+    if (!toggle) { return; }
+    toggle.addEventListener('click', function () {
+      var on = toggle.getAttribute('aria-pressed') === 'true';
+      Array.prototype.forEach.call(
+        document.querySelectorAll('[data-hb-part="memo"]'), function (node) {
+          node.style.display = on ? '' : 'none';
+        });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    wireNav();
+    wireToggles();
+    wireTabs();
+    wireCheckboxes();
+    wireMemo();
+    wireMemoActions();
+    wireLightbox();
+    wireToolbar();
+    if (window.location.hash.length > 1) {
+      jumpTo(window.location.hash.slice(1));
+    }
+  });
+}());
+</script>
+</body>
+</html>

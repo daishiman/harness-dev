@@ -1,0 +1,114 @@
+{
+  "schema_owner": "C11 (script-brief-C11.json#theme_token_schema_ownership)",
+  "produced_by": "P05-x-02 (assets/ の唯一の producer / P04-x-05 G-04)",
+  "theme": "pop",
+  "label": "Pop・親しみ",
+  "is_default": true,
+  "source": "jp-web-design モードB「Pop・親しみ」準拠。実値は analysis/guide-doc-generator/reference-guide-v2.html の :root から vendoring した (R10)",
+  "--pop-primary": "#43a4f5",
+  "accent_top_level_note": "アクセント色 (CSS 変数 --pop-primary) をトークンファイルのトップレベルから 1 手で解決するための入口 (P05-x-08)。値は accent.scale[step=bright].value および css_variables[\"--pop-primary\"] と必ず同一に保つ。トップレベルのこのキーがアクセントの入口であり、accent.scale と css_variables の側を書き換えるときは同時にここも動かす",
+  "accent": {
+    "policy": "アクセントは 1 色だけ置き、そこから明度の 4 段階を派生させる。5 色目のアクセントを足さない",
+    "base": "#43a4f5",
+    "scale": [
+      {
+        "step": "bright",
+        "value": "#43a4f5",
+        "role": "CTA とトグル ON",
+        "css_var": "--pop-primary"
+      },
+      {
+        "step": "pastel",
+        "value": "#8ecdf8",
+        "role": "面",
+        "css_var": "--pop-primary-pastel"
+      },
+      {
+        "step": "soft",
+        "value": "#d9edfe",
+        "role": "選択状態・チップ・リング",
+        "css_var": "--pop-primary-soft"
+      },
+      {
+        "step": "deep",
+        "value": "#2273b8",
+        "role": "文字・リンク・線画。面には使わない",
+        "css_var": "--pop-primary-deep"
+      }
+    ]
+  },
+  "css_variables": {
+    "--pop-primary": "#43a4f5",
+    "--pop-primary-pastel": "#8ecdf8",
+    "--pop-primary-soft": "#d9edfe",
+    "--pop-primary-deep": "#2273b8",
+    "--pop-bg": "#eaf5fe",
+    "--ink": "#1b2733",
+    "--ink-muted": "#5b6b7a",
+    "--line": "#dbe6ef",
+    "--subtle": "#f4f8fc",
+    "--card-radius": "24px",
+    "--font-num": "\"Helvetica Neue\", -apple-system, \"Segoe UI\", Roboto, Arial, sans-serif"
+  },
+  "css_variables_note": "キー集合は script-brief-C11.json algorithm 11 が :root へ展開する 11 変数と 1 対 1 で対応する。実値が現れるのは生成 HTML の :root ブロックだけで、以降の CSS 規則と SVG は var() 参照で書く (checklist C14)",
+  "typography": {
+    "body": {
+      "font_feature_settings": "\"palt\"",
+      "why": "和文の字間を詰める。body に置いて文書全体へ効かせる"
+    },
+    "numeric": {
+      "selector": ".num",
+      "font_family_var": "--font-num",
+      "font_variant_numeric": "tabular-nums",
+      "letter_spacing": "-0.015em",
+      "white_space": "nowrap",
+      "why": "桁が揃わない表は読み比べができない"
+    },
+    "unit": {
+      "selector": ".unit",
+      "font_size": "62%",
+      "font_weight": 600,
+      "why": "単位を従属表示にして数値の主役性を保つ"
+    }
+  },
+  "mascot_css_variables": {
+    "--border-light": "#eef6ff",
+    "--border-mid": "#dcedfe",
+    "--border-dark": "#c8e3fc",
+    "--body-light": "#5db4f8",
+    "--body-main": "#43a4f5",
+    "--body-dark": "#3892e0",
+    "--eye-white": "#ffffff",
+    "--pupil-light": "#6a6a6a",
+    "--pupil-dark": "#515151",
+    "--highlight": "#ffffff",
+    "--pupil-gloss": "rgba(255,255,255,0.24)"
+  },
+  "mascot_css_variables_note": "assets/mascot/mascot-defs.svg は形状だけを持ち、色は全てこの 11 変数の var() 参照で解決する (参照解析 §9 D2)。テーマを差し替えるとマスコットの色も追従する",
+  "text_limits": {
+    "block_body_max_chars": 180,
+    "block_body_max_chars_by_detail_level": {
+      "overview": 110,
+      "standard": 180,
+      "detailed": 280
+    },
+    "canonical_source": "plugin-plans/guide-doc-generator/improvement/text-length-gate-decision.json#decision.body_budget。同項が canonical_location として assets/tokens/*.json を指名しているため、値の実体はここに置き script へは焼かない。旧 RESOLUTION-R22.md「確定した数値 (C63)」の 180/400/900 は本裁定で superseded (利用者指定 2026-08-18『長ったらしく何行も続く文章は絶対に防ぐ』・参照資料の段落実測は中央値 21 字・最大 81 字)",
+    "standard_equals_default": "block_body_max_chars (R21 C52 の既定 400) は standard の値と一致させる。キーを持たないテーマでは C12 が block_body_max_chars を全水準へ適用する (fail-soft)",
+    "section_body_chars_by_detail_level": {
+      "overview": {
+        "min": 60,
+        "max": 300
+      },
+      "standard": {
+        "min": 260,
+        "max": 700
+      },
+      "detailed": {
+        "min": 620,
+        "max": 1400
+      }
+    },
+    "section_body_chars_canon": "利用者指定 2026-08-19『よりもうちょっと文章量を多くしてほしい場合もあるし、必要最小限の情報しかまとめないで OK という場合もある。この辺整えて対応できるように』。 単位は main セクション 1 個あたりの本文実測字数 (見出し・図表内の短句を含む節の総量)。 block_body_max_chars_by_detail_level が『1 ブロックの上限』であるのに対し、こちらは『節にどれだけ載せるか』を決める。NAR-09 はこの値で 3 水準すべてを検査する (旧実装は単位の違う block 上限と節平均を比べていたため、両端でしか発火しなかった)。 min は下限であり、detailed を宣言しながら要点だけ並べた資料を検出する (宣言と中身の乖離はどちらの向きも読み手の期待を裏切る)。 2026-08-19 追補: 利用者指定 2026-08-19『文章の長さはもうちょっと多くてもいい。ただし膨大に多くなりすぎるとダメ。UI/UX エンジニアとしてどれぐらいの粒度の文字数がいいかを整えて調整して』。目安は本文 1 行 ≒ 35-40 字 (16 インチ画面・本文幅 900px 前後) で、カード 1 枚は 3 行で読み切れる量、詰めても 5 行を超えないこと。上限を上げたのは『2 文目を書ける』ようにするためで、段落を書かせるためではない (文数の上限は sentence / max_sentences が別に押さえる)",
+    "block_body_chars_canon": "利用者指定 2026-08-19『文章の長さはもうちょっと多くてもいい。ただし膨大に多くなりすぎるとダメ。UI/UX エンジニアとしてどれぐらいの粒度の文字数がいいかを整えて調整して』。目安は本文 1 行 ≒ 35-40 字 (16 インチ画面・本文幅 900px 前後) で、カード 1 枚は 3 行で読み切れる量、詰めても 5 行を超えないこと。上限を上げたのは『2 文目を書ける』ようにするためで、段落を書かせるためではない (文数の上限は sentence / max_sentences が別に押さえる)"
+  }
+}

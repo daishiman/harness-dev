@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "role": "REQ-2 / REQ-3 の入力。『図解と画像は毎回セクションごとに必ず入れる』を per-section の完了ゲートとして確定する。diagram-gate-decision.json の総量比 (value=0.4 / floor=2) を上書きする",
+    "supersedes": "plugin-plans/guide-doc-generator/improvement/diagram-gate-decision.json#decision (総量比の下限式)",
+    "consumed_by": "REQ-2 / REQ-3 (plugin-plans/guide-doc-generator/improvement/findings-2026-08-18.json)",
+    "why_here": "config/ は P05-x-03 が唯一の producer であり build が上書きする。判断の正本は build の入力側であるこのファイルに置く",
+    "user_instruction": "利用者指定 2026-08-18 (追補): 『この分量に絞る必要はない。やりたいドキュメントの内容に合わせて数を増やしたらいい。毎回やるべきなのは、図解と画像 (イメージ) をセクションごとに必ず追加すること』",
+    "why_ratio_was_insufficient": "総量比 (main セクション数 × 0.4、下限 2 枚) は『資料全体で何枚あるか』しか見ない。9 節の資料なら 4 枚で通るため、図解が 1 枚も無い節が 5 つ残っても合格する。利用者の要求は各セクションが図解と画像を持つことなので、総量ではなく節単位で数える規則へ置き換える",
+    "relation_to_ratio": "per-section 1 件は総量比より常に厳しい (main N 節に対し必要枚数 N ≥ max(2, ceil(N*0.4)) が N≥2 で成立)。よって総量比の閾値は per-section 規則に吸収され、二重に持つ必要が無い"
+  },
+  "decision": {
+    "diagram_per_main_section": {
+      "code": "W-DIAGRAM-FEW",
+      "level": "error",
+      "value": 1,
+      "unit": "main セクション 1 個あたりの DIAGRAM 部品の最低件数",
+      "why": "利用者指定により図解は毎セクション必須。関係・構造・順序は図で見せ、文はその補足に留めるという本プラグインの編集方針 (content_selection.prose_vs_list) を、節単位で機械的に担保する",
+      "canonical_location": "config/handout-visual-policy.json#thresholds.min_diagrams_per_main_section",
+      "removes": "thresholds.min_diagrams_per_main_sections (総量比 value / floor) は本規則に吸収されるため廃止する。閾値を 2 つ持つと緩い方が実質の基準になり、per-section 規則の意味が失われる"
+    },
+    "image_per_main_section": {
+      "code": "E-IMAGE-ABSENT",
+      "level": "error",
+      "value": 1,
+      "unit": "main セクション 1 個あたりの IMG 部品の最低件数",
+      "why": "利用者指定により画像 (イメージ) も毎セクション必須。図解が構造を示すのに対し、画像は実物・画面・場面を見せる別の役割を持つ。両方を必須にすることで、節が『構造の図』と『実物の像』の両輪を持つ",
+      "canonical_location": "config/handout-visual-policy.json#thresholds.min_images_per_main_section",
+      "new_code_rationale": "既存の W-VISUAL-ABSENT は視覚部品 (DIAGRAM/IMG/B03..B17) の総称を数えるため、B03 が 1 件あれば満たされてしまい IMG の有無を判定できない。IMG 専用のコードを新設する"
+    },
+    "role_split": {
+      "value": "IMG は role で 2 種に分ける",
+      "roles": [
+        {
+          "role": "screenshot",
+          "use": "実画面・実物・操作結果を見せる節",
+          "source": "利用者が用意した素材、または C13 embed-assets.py が埋め込む既存画像"
+        },
+        {
+          "role": "illustration",
+          "use": "概念の導入・節の顔になる挿絵",
+          "source": "C21 srg-image-bridge.py による生成委譲"
+        }
+      ],
+      "why": "どちらも IMG だが調達経路が違う。screenshot は素材が無ければ作れず、illustration は生成できる。節ごとにどちらを取るかをプリセットが宣言することで、素材が無い節でも illustration で必須要件を満たせる",
+      "fallback": "screenshot を宣言した節で素材が無い場合は illustration へ落とす。これがないと『素材が無いから完了できない』で詰まる"
+    },
+    "no_quantity_cap": {
+      "value": "granularity_anchor は目安であって上限ではない",
+      "why": "利用者指定『この分量に絞る必要はない。内容に合わせて増やしたらいい』により、main_sections [4,6] / parts_per_section [1,2] / diagram_parts [2,3] は第1稿の初期値の目安として扱い、超過を警告にしない",
+      "action": "config/handout-visual-policy.json#draft_first.granularity_anchor の記述へ『下限の目安であり上限ではない。内容量に応じて増やしてよい』を明記する。diagram_parts [2,3] は per-section 規則に置き換わるため、目安としても誤解を招くので削除する",
+      "keep": "節あたりの分量を縛る規則 (REQ-7 の本文文字数・文数、micro_copy の 1 要素文字数) は分量の話ではなく読みやすさの話なので、この緩和の対象外とする。セクション数が増えても 1 節の中身は短いままにする"
+    },
+    "skipped_image_counting": {
+      "id": "CR-IMG-SKIP-COUNT",
+      "owner": "本キー (裁定の単一正本)。skill-brief-C01.json / command-brief-C07.json / script-brief-C12.json は本キーを参照し、裁定文を複製しない",
+      "question": "C21 挿絵生成が status=skipped を返した節の IMG 部品は、E-IMAGE-ABSENT の充足に数えられるか",
+      "ruling": "数える。E-IMAGE-ABSENT は構成データ段で宣言された IMG 部品の件数だけを数えるゲートであり、その部品の実体が生成できたかは判定に入れない",
+      "why": "C12 validate-handout-config.py が走るのは C01 R2-design が構成データを確定した直後で、C21 の挿絵生成 (R3-render) はその後に起きる。時系列上 C12 は skip の発生を観測できないため、skip を減算する規則は『測れない対象を数える』契約になり、実装すれば必ず fail-open か fail-closed の誤動作へ倒れる。ゲートの測定対象を『宣言』に閉じ、実体の有無は別の面で捕まえる",
+      "therefore_not": "skip を理由に E-IMAGE-ABSENT を再発火させない。逆に、E-IMAGE-ABSENT が緑であることを『各セクションに画像がある』の証明として読まない — 緑が保証するのは宣言の存在だけである",
+      "who_catches_the_missing_image": "稿の提示段で C07 が捕まえる。command-brief-C07.json の fail-soft 規約 (C21 の status=skipped と skip_reason をそのまま提示し、R25/REQ-3 の『各セクションに画像』が未充足である旨を併記し、skip を含む稿を完了として提示しない) が現状の唯一の受け皿である",
+      "known_gap": "レンダリング後の HTML に対して『IMG 部品が宣言されているのに img 実体が無い』を機械判定するゲートが存在しない。C07 の提示規約は人間への申告であって機械の関門ではないため、C07 を経由しない経路 (script 直叩き・再生成) では宣言と実体の乖離が黙って通る。この gap の担い手は decision.img_realization_gate (CR-IMG-REALIZED) で C16 verify-handout-selfcontained.py へ割り当て済み (SC-11 / E-IMG-UNREALIZED)。実装が入るまでは下記 who_catches_the_missing_image が唯一の受け皿である",
+      "consumed_by": [
+        "C01 (R3-render の role=screenshot 実在確認と対で読む)",
+        "C07 (behavior 6b / fail-soft 規約)",
+        "C12 (E-IMAGE-ABSENT の測定対象の定義)"
+      ],
+      "since": "P02-illustration-skip-ruling (2026-08-19)"
+    },
+    "img_realization_gate": {
+      "id": "CR-IMG-REALIZED",
+      "owner": "本キー (裁定の単一正本)。担い手は C16 verify-handout-selfcontained.py 唯一とし、script-brief-C16.json が検査コードと fail 条件を持つ",
+      "question": "CR-IMG-SKIP-COUNT の known_gap (『IMG 部品が宣言されているのに img 実体が無い』をレンダリング後の HTML に対して機械判定するゲートが無い) を、どの component が持つか",
+      "ruling": "C16 verify-handout-selfcontained.py が単一の担い手である。既存 detection SC-09 を『枠が空』の検査として据え置き、『節に枠ごと無い』を検査する SC-11 (code: E-IMG-UNREALIZED) を新設する",
+      "why_c16": "C16 の purpose は既に『外部参照ゼロを満たしたまま中身だけが欠落する欠陥クラスを独立に捕える』であり、本 gap はその欠陥クラスそのものである。加えて C16 は SC-03 で既に img@src を走査しており、レンダリング後 HTML を唯一の入力とする単純述語として設計されている (argv は --html 1 点)。C17 は『実描画を要する検査を持たない』と明示的に範囲外を宣言し、C22 は語り (R19) 専用であるため、いずれも担い手になれない",
+      "why_not_c12": "C12 は構成データ段のゲートで、レンダリング前に走る。E-IMAGE-ABSENT が宣言を数えるゲートである理由 (CR-IMG-SKIP-COUNT) と同じ時系列上の制約により、C12 は実体を観測できない。宣言側 (C12/E-IMAGE-ABSENT) と実体側 (C16/E-IMG-UNREALIZED) を別 component に置くことは、この裁定では冗長ではなく必然である",
+      "detection": {
+        "id": "SC-11",
+        "code": "E-IMG-UNREALIZED",
+        "level": "error",
+        "unit": "main セクション 1 個",
+        "fail_condition": "main セクションのそれぞれについて、配下に data-hb-part=\"IMG\" 要素が 1 件以上存在し、かつその少なくとも 1 件が SC-09 (a) の実体条件 (配下の <img> が存在し src が data: で base64 部の実体長 64 バイト以上) を満たすこと。0 件の節、または IMG 要素はあるが全て SC-09 (a) を満たさない節が 1 つでもあれば違反 (exit 1)",
+        "main_section_identification": "main セクション = data-hb-part=\"SECTION\" を持つ <section> のうち data-hb-section-role の値が \"main\" であるか、値が空文字であるか、属性そのものが無いもの。空/不在を main に含めるのは、構成データ側の role が任意項目で既定 main であり (schema: default main / required に無い)、C12 も section.get(\"role\") in (None, \"main\") で main と数えているため。空を main から外すと、role を書かなかった節が HTML 側だけ検査対象から消え、宣言側が数えた節を実体側が数えないという最も危険な形の fail-open になる",
+        "known_default_duplication": "上記の『role 不在 = main』という既定値は現在 C12 (構成データ側) と SC-11 (HTML 側) の 2 箇所に書かれることになる。理想は C11 が data-hb-section-role へ正規化済みの \"main\" を刻んで既定値の解釈を 1 箇所へ寄せることで、その是正は discovered-task P05-x-126-section-role-normalized-marker として別に立てる。SC-11 の実装は正規化の有無に関わらず正しく動く形 (空/不在も main とみなす) で書き、正規化が入ってもそのまま通るようにする",
+        "relation_to_sc09": "SC-09 は『存在する枠が空でないか』を枠単位で見る。SC-11 は『節が枠を持っているか』を節単位で見る。C21 が skip した節でレンダラが IMG 要素ごと出さなかった場合、SC-09 には走査対象が 1 件も無いため緑になる — 検査対象が消えると検査も消える経路であり、件数を節側から数える SC-11 でしか塞げない。両者は包含関係になく、片方だけでは gap が残る",
+        "why_not_config_input": "節ごとの宣言件数を構成データから読み込んで突合する設計も採り得るが、C16 の入力を HTML 1 点に閉じる契約 (argv) を崩す。『節には画像がある』は HTML 単体で判定できる述語なので、突合ではなく直接判定にする"
+      },
+      "closes_gap": "decision.skipped_image_counting.known_gap。本裁定により担い手が割り当てられたため、当該 known_gap は『担い手未割当』ではなく『C16 SC-11 の実装待ち』へ状態が変わる",
+      "therefore": "E-IMAGE-ABSENT (宣言) の緑と E-IMG-UNREALIZED (実体) の緑が揃って初めて『各セクションに画像がある』が言える。CR-IMG-SKIP-COUNT の therefore_not (緑を実体の証明として読まない) は SC-11 実装後も宣言側ゲート単体については変わらない",
+      "residual_work": "C16 script + tests への実装 (discovered-task P05-x-125-img-unrealized-gate)。実装されるまでは C07 の fail-soft 提示規約が唯一の受け皿である点は CR-IMG-SKIP-COUNT のままとする",
+      "consumed_by": [
+        "C16 (SC-11 の実装・script-brief-C16.json#detections)",
+        "C07 (実装後は提示段の申告が機械ゲートに裏打ちされる)",
+        "C12 (E-IMAGE-ABSENT の測定対象が宣言に閉じる理由の対になる)"
+      ],
+      "since": "P02-img-realization-gate-owner (2026-08-19)"
+    }
+  },
+  "cost_and_risk": {
+    "draft_latency": "画像を毎セクション必須にすると、第1稿でも節数だけ生成委譲 (C21 srg-image-bridge.py) が走る。9 節の資料なら 9 枚。図解 SVG (C14) は決定論生成で速いが、画像生成は待ち時間が伸びる。利用者は既に『図解も挿絵も第1稿から出す』と判断済みなので方針は変えないが、待ち時間が節数に比例することを draft_first.why へ明記して追跡可能にする",
+    "mitigation": "screenshot 役の節は素材の埋め込みのみで生成が不要なため、生成対象は illustration 役の節に限られる。プリセットで role を宣言する設計 (role_split) がそのまま待ち時間の制御にもなる",
+    "preset_impact": "現行 preset_definitions は IMG を各プリセット 1 件しか持たない。全 main セクションへ IMG を配線し直す必要がある (図解も同様に全 main セクションへ)"
+  }
+}

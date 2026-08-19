@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-11",
+  "covered_task_ids": [
+    "P05-x-11"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "完全マーカー付き HTML から復元した構成データが validate --config を exit0 で通過する",
+      "method": "当方が examples/minimal-config.json を正規化 → render → extract → 復元結果を再度 validate へ通した",
+      "result": "pass (extract exit0 `EXTRACTED sections=1 parts=3 exact=3 heuristic=0 unrecoverable=0`。復元結果の validate は exit0 `OK handout-config: sections=1 parts=3 glossary=1 warnings=0`)"
+    },
+    {
+      "claim": "9 項目それぞれの裁定 (marker / exempt) が機械可読に記録されている",
+      "method": "当方が schemas/ROUNDTRIP-CONTRACT.md §3.2 の fenced JSON を実際に json.loads で読み、adjudications の pointer 集合を列挙した",
+      "result": "pass (12 件の裁定が JSON として読める。AC が挙げた 9 項目 focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / sections[].ties_to / notes_enabled / date / assets[].data_uri がすべて含まれ、decision は marker 11 / dialect 1。**焼き直しでなく handout-config.schema.json の x_roundtrip_contract がこの JSON を正本として指しており、二名簿になっていない**)"
+    },
+    {
+      "claim": "round-trip の一致条件が契約の定める射影で成立する",
+      "method": "当方が元の正規化済み構成データと復元後の正規化済み構成データを平坦化して差分を採った",
+      "result": "pass (**キー集合は完全一致 (元のみ 0 件 / 復元のみ 0 件)**。値の差は provenance/detail_level_source・evidence_depth_source・presentation_order_source の 3 件のみで、いずれも preset-default / derived-from-prior-knowledge → explicit という『どう決まったか』の差である。ROUNDTRIP-CONTRACT は /provenance を P2 (実行環境由来・意味的同一性に属さない来歴) と明記しており、契約の pass 条件 normalized-config-comparable-projection-deep-equality を満たす)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "marker-status-may-be-stale",
+      "detail": "裁定表の marker_status は emitted-but-unreachable が 6 件・absent が 2 件など、記述時点の実装状態を写している。round-trip 自体は現在成立しているため、これらの status は実態より古い可能性が高い。裁定 (marker/exempt) は変わらないが status の棚卸しは未実施である"
+    },
+    {
+      "kind": "contract-read-by-no-test",
+      "detail": "ROUNDTRIP-CONTRACT.md の JSON ブロックを読んで裁定と実装の一致を検査するテストは存在しない。当方が手で読んだ。裁定が実装から乖離しても機械では気づけない"
+    },
+    {
+      "kind": "theme-marker-absent",
+      "detail": "extract 時に W-EXTRACT-OPTIONAL /theme (data-hb-config-theme が無い) が出る。theme は裁定表の 12 項目に含まれておらず、marker とも exempt とも宣言されていない未裁定項目である"
+    }
+  ]
+}

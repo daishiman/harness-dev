@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-27",
+  "covered_task_ids": [
+    "P05-x-27"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/schemas",
+  "verified_by": [
+    {
+      "claim": "B08 / B13 / B15 / B16 の 4 部品それぞれの key に description が入り、B09 の文面の複製でない",
+      "method": "当方が handout-config.schema.json を JSON として再読込し、`$defs.part_data.<部品>.properties.<配列>.items.properties.key.description` の実在と本文を採取して B09 の文面と突合",
+      "result": "pass (4 件とも実在。長さ B08=320 / B13=277 / B15=274 / B16=268 字。B09 が挙げる『checkbox の DOM id と localStorage のチェック状態保存先』はどの文面にも現れず、各部品の実際の消費先 (B08=aria-pressed と差替 detail、B13=2 つの DOM id と aria 相互参照、B15=設問鍵との二層構造と single、B16=owner/due の結び先) を個別に記述している)"
+    },
+    {
+      "claim": "各 description の主張が render-handout.py の実装で実際に成り立つ (書き手の思い込みでない)",
+      "method": "当方が render-handout.py を importlib で読み込み、Renderer.tabs / choice_map / chips / action_items へ ①一意な key ②key 重複 ③key 省略 の 3 通りを直接渡して出力 HTML の id / aria-controls / data-hb-key / data-hb-owner を採取した。リポジトリ上のファイルは変更していない (メモリ上の呼出しのみ)",
+      "result": "pass (**B13**: ①ids=[tab-t1-a, tab-t1-b, panel-t1-a, panel-t1-b] 重複なし / ②4 つの id が 2 種へ潰れ **aria-controls が両方とも panel-t1-a を指した** (description の『2 個目のタブを押しても先頭側のパネルが開く』が実測で成立) / ③ids が tab-t1-i0 / i1 の並び順由来へ退避。**B08/B15**: ① [a,b] / ② [a,a] / ③ [i0,i1]。**B16**: ② で data-hb-key=[a,a] に対し data-hb-owner=[Oa,Oa] となり、同一鍵の行に別担当が並ぶ状態を作れることを確認)"
+    },
+    {
+      "claim": "『key を省略すると位置由来の鍵へ退避する』が 4 部品に共通する事実である",
+      "method": "当方が `entry_key(entry, index)` の実装を読解し、上記③の実測と突合",
+      "result": "pass (`key` → `id` → `\"i{}\".format(index)` の順にフォールバックし、**省略しても描画は落ちない**。落ちない代わりに鍵が並び順由来になるため、挿入・並べ替えで静かに別項目を指す。これが 4 部品共通の『省略したとき何が壊れるか』であり、各 description はこれを部品ごとの被害 (選択のずれ / id の付け替え / 選択状態の移動 / 担当と期限の崩れ) へ翻訳している)"
+    },
+    {
+      "claim": "additionalProperties:false と required を緩めていない / key を新たに required へ昇格させていない",
+      "method": "当方が patch 後の JSON を再読込し、4 部品の items ノードの `additionalProperties` と `required` を採取",
+      "result": "pass (4 件とも `additionalProperties: false` を維持。required は B08=[key,title,detail] / B13=[key,label,panel_parts] / B15=[key,label] / B16=[key,text,owner,due] で patch 前と同一。**4 部品とも key は元から required であり昇格は発生しない**。B15 の直下 key (x_unique_within: document) には手を入れていない)"
+    },
+    {
+      "claim": "変更が description の追加 4 箇所に限定されており、他のキーへ波及していない",
+      "method": "当方が `\"key\": {\"type\": \"string\", \"minLength\": 1, \"x_non_blank\": true}` という完全一致アンカーを行番号 547/642/695/718 に対してのみ assert 付きで置換した (アンカー不一致なら AssertionError で停止する形)",
+      "result": "pass (置換は 4 行のみ。JSON として再パースでき、`$defs` の他ノードは読み出し値が不変。B09 (行 571) と B15 直下 (行 684) は既に description / x_unique_within を持つためアンカーに一致せず、誤爆し得ない構造になっている)"
+    },
+    {
+      "claim": "3 スイートの失敗テスト名の集合が増えていない",
+      "method": "当方が validate / extract / render の 3 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名を採取 (件数でなく名前集合で判定)",
+      "result": "pass (validate: Ran 278 / 集合 = {test_unknown_doc_type_lists_vocabulary (ERROR), test_no_purpose_vocabulary_literals (ERROR), test_no_temp_file_left_behind, test_provenance_shape}。extract: Ran 152 **OK**。render: Ran 219 / 集合 = {test_cross_component.GateHandoffTest.test_round_trip_equivalence}。**既知 5 件ちょうどで増加 0 件**、総数も 278/152/219 で着手前と同一)"
+    },
+    {
+      "claim": "schema の配列名と renderer の読み出し名の食い違いは存在しない (着手時の疑いを実測で否定)",
+      "method": "当方が `_project_chips` / `_project_action_items` / `_project_checklist` / `_project_tabs` を読解した",
+      "result": "pass (**疑いは誤りだった**。renderer の `chips()` が `block.get(\"options\")` を読むのは、`_project_chips` が schema の `chips` を描画モデルの `options` へ**改名して投影している**ため。同様に `_project_action_items` が `rows`→`items`、`_project_checklist` が `rows`→`items`、`_project_tabs` が `key`→`id` を行う。`project_part` が唯一の翻訳点で、著者向け語彙と描画モデル語彙を意図的に分離している。drift ではないので起票しない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "task-spec-missing",
+      "detail": "`plugin-plans/guide-doc-generator/task-specs/P05-x-27.md` が実在しない (task-graph の `task_spec_ref` は指しているが未作成)。P05-x-25 / P05-x-26 も同様。当方は node の `acceptance_criterion` を正本として遂行した。`accept-discovered-task.py` の validate は新規 form には task_spec_ref の実在を要求するが既存 node には要求しておらず、この欠落が検出されない (受け皿と検査の非対称・P05-x-26 でも記録済み)"
+    },
+    {
+      "kind": "dispatch-failed-worker-idle",
+      "detail": "本 leaf も直前 2 leaf と同じく SubAgent の idle が続いたため dispatcher が直接遂行した。前 2 件で `find -newermt` により worker が何も書いていないことを実測済みのため、二重作業は起きていない"
+    },
+    {
+      "kind": "documentation-only-change-not-machine-checked",
+      "detail": "**description は機械検査の対象外である**。テストは『description があるか』も『内容が正しいか』も見ておらず、したがって失敗集合が増えないことは本 leaf の成立を証明しない (到達していない緑)。この弱さを補うため、description が主張する挙動そのものを renderer への直接呼出しで 3 通り実測した (上記 claim 2)。**逆に言えば、将来 renderer 側が変わっても description は自動追随せず黙って古くなる**。schema の description と renderer の挙動を結ぶ検査は現時点で存在せず、受け皿が無いため追加タスク候補として記録するに留める"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

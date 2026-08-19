@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P05-x-04",
+  "covered_task_ids": [
+    "P05-x-04"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 style-genome-flat-infographic-jp.json が実在し json.load 可能",
+      "method": "ls -la と json.load",
+      "result": "pass (47272 bytes。genomes/ 配下は本ファイル 1 本のみ)"
+    },
+    {
+      "claim": "SRG 同梱 genome とトップレベルキー集合が完全一致する",
+      "method": "set(new) - set(srg) と set(srg) - set(new) を計算",
+      "result": "pass (双方向とも空集合。29 キー)"
+    },
+    {
+      "claim": "schemaVersion が SRG 同梱と一致する",
+      "method": "両ファイルの schemaVersion を比較",
+      "result": "pass (1.3.0 / 1.3.0)"
+    },
+    {
+      "claim": "family 名が RESOLUTION-R23 裁定 (c) と一致する",
+      "method": "styleName を出力",
+      "result": "pass (flat-infographic-jp)"
+    },
+    {
+      "claim": "裁定 (a) の baked-with-overlay を textPolicies に持つ",
+      "method": "textPolicies のキー列挙",
+      "result": "pass (baked-with-overlay / overlay-only / none)"
+    },
+    {
+      "claim": "SRG 同梱 genome の丸写しではない",
+      "method": "motifs[].name の集合積を計算",
+      "result": "pass (26 件の motif 名のうち kanagawa と共通するものは 0 件。card-frame / headline-band / conclusion-strip / circular-metric / big-numeral / before-after-pair 等いずれも新規)"
+    },
+    {
+      "claim": "3 つの構図型が決定論的に引ける形で登録されている",
+      "method": "compositionRules.layoutTemplates のキー列挙",
+      "result": "pass (before-after-cards-with-metric / three-into-one-convergence / headline-band-and-conclusion-strip + 派生 2 型 quantity-bars-side-by-side / labeled-grid-matrix)"
+    },
+    {
+      "claim": "assets/tokens/ の色値と 1 件も共有していない",
+      "method": "genome と pop.json / warm-sand.json から #RRGGBB を正規表現抽出し集合積を計算",
+      "result": "pass (genome 8 色 / token 30 色 / 重複 0 件。白 #FFFFFF も避けて #FFFCF2 が採られている)"
+    },
+    {
+      "claim": "外部 URL を含まない",
+      "method": "grep -rEc 'https?://'",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "build-image-prompts.js が本 genome を読める",
+      "method": "最小 image-deck-plan を作り node build-image-prompts.js <dir> --genome <本ファイル> を独立実行",
+      "result": "pass (genome の読み込みと検証を通過。停止した 6 件はいずれも slide 側の必須フィールド (purpose / audienceTakeaway / background / intendedUse / layout / generation) 不足で、当方のダミー deck の不完全さが原因。genome キー由来のエラーは 0 件)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "genomes/ 以外のディレクトリの mtime と内容を確認",
+      "result": "pass (plugins/slide-report-generator/ は read-only のまま。assets/ config/ scripts/ tests/ に本 leaf 由来の変更なし)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 8 件。(1) 新規初版でも schemaVersion を 1.3.0 に据え置き (受入条件が『同じ schemaVersion』を要求するため) (2) palette に補助 4 色 + surface を追加 — task-spec 指定の 3 色だけでは『導入前カードのくすみ』『円形フォーカス面』『フラット影』が表現できないため。60-30-10 の 10 側は palette.orangeBudget / roleUsage で数値と強調語に固定 (3) referenceAssets は参照画像がリポジトリに無いため path を持たせず kind / shows / note 形式にし、パス欠落が意図であることを明記 (4) artStyle.figures.numeralTreatment を新設 (kanagawa に無いが artStyle 配下なのでトップレベル互換に影響しない) (5) perSlideDiffContract.robotMascot / densityLevel は機械契約 enum に値を合わせ、この画風での解釈を注記 (独自語彙は builder 検証で落ちるため) (6) contentAdaptationRules.densityPreservation.flatnessGuarantee (『奥行き付与も退化』の定義) と printReadinessRules.monochromeFallback (白黒印刷で橙が中間グレーに落ちる問題への対処) を追加 (7) layoutSelectionByStructure に『process/flow/cycle/hierarchy はこのゲノムでは扱わずアイソメ側へ渡す』を明示し R23 の写像を genome 自身にも刻んだ (8) tableAndMatrixRules で『表の数値は橙にせず濃緑』と規定 (全数字を橙にすると 10 の配分が壊れるため)"
+    }
+  ]
+}

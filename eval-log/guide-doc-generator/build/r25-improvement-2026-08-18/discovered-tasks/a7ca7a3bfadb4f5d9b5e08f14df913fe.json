@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-img-realization-gate-owner",
+  "reason": "CR-IMG-REALIZED で C16 を担い手に確定したが、SC-11 (E-IMG-UNREALIZED) の実装が script と test に存在しない。裁定だけでは宣言と実体の乖離は依然として黙って通る",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-img-realization-gate-owner.json",
+  "proposed_node": {
+    "id": "P05-x-125-img-unrealized-gate",
+    "title": "C16 へ SC-11 (E-IMG-UNREALIZED) を実装し main セクションの画像実体を節単位で検査する",
+    "phase_ref": "P05",
+    "entity_ref": "C16",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+    "acceptance_criterion": "main セクション (data-hb-section-role が main / 空 / 不在) ごとに実体つき IMG の存在を検査する SC-11 が実装され、AC-C16-R25-IMG-a..d の 4 本が green。stdout は SC-01..SC-11 の固定順 11 行を出す",
+    "execution_kind": "component-build",
+    "route_ref": "C16"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C16"
+  }
+}

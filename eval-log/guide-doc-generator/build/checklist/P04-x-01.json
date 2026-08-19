@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-01",
+  "covered_task_ids": [
+    "P04-x-01"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 plugin-plans/guide-doc-generator/evidence/P04.json が実在し json.load 可能",
+      "method": "json.load とトップレベルキーの再列挙",
+      "result": "pass (32556 bytes。components 23 件 + summary / integrity_flags / brief_underspecified / verdict / measurement_timeline)"
+    },
+    {
+      "claim": "23 component 全てに tests/<component 名>/ のテスト実体が存在する (受入条件前半)",
+      "method": "各 components[].test_dir を os.path.isdir で全件検査",
+      "result": "pass (欠落 0 件)"
+    },
+    {
+      "claim": "23 component 全てで実装前の赤ベースラインが実ファイルから引ける (受入条件後半の不変条件化)",
+      "method": "各 components[].baseline_source を os.path.exists で全件検査し、baseline_failures + baseline_errors > 0 を全件検査",
+      "result": "pass (baseline_source は 23/23 が実在。baseline が赤でない component は 0 件。baseline_source は全件がパス文字列で、実測由来と混ざっていない)"
+    },
+    {
+      "claim": "受入条件の時間依存性を不変条件へ読み替えた判断が守られている",
+      "method": "acceptance_criterion_verbatim と acceptance_criterion_reinterpretation の突合",
+      "result": "pass (原文『実装前の実行で全て失敗している』は 10 component が実装済みの現時点では実測不能。worker は『各 component は実装開始前に赤ベースラインが記録されていた』へ読み替え、eval-log の一次記録から復元した。推定転記はゼロで、現時点の実測値は current_* として別フィールドに 23 件すべて実測併記されている)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status と plugins/guide-doc-generator/ 配下の書込確認",
+      "result": "pass (書込は evidence/P04.json 1 本のみ。副産物として scripts/__pycache__/ が生成されたが untracked かつテスト実行の不可避な副作用)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-claim-corrected",
+      "detail": "worker の integrity_flags のうち『P05 緑報告後の回帰 (C16, C21)』は当方の再確認で誤りと判明。route-P05-C16-01.json は failures=0 ではなく『Ran 354 / failures=26』を記録しており (残る 26 件は C10/C11 待ちと明記)、C10 実装後の現時点実測 failures=3 は回帰ではなく前進。C21 も同様に、P04-x-08 が R23 テストを追加したことで母数が 175→291 へ増えた後の値であり回帰ではない。よってこの warn は棄却する"
+    },
+    {
+      "kind": "explained-integrity-flag",
+      "detail": "worker の『test-count-drift (9 件: C01/C05/C11/C12/C15/C18/C21/C22/C23)』は仕様どおりの挙動であり違反ではない。task-spec の『P05 はテストを追加しない』は P05 leaf への制約であって、P04-x-0N のテスト leaf 群 (P04-x-08 の R23 テスト追加が代表例で C21 を 175→291 にした) は追加が責務。drift の 9 件はいずれも P04-x-0N 由来と説明できる。ただし『どの P04-x leaf がどの test_dir を増やしたか』の対応表はどこにも無いため、P05-x-01 phase gate で 9 件の内訳を突合すること"
+    },
+    {
+      "kind": "unresolved-integrity-flag",
+      "detail": "要裁定 / 実害あり。leaf-id-swap: P04-C11-01 の対象 test_dir が tests/validate-handout-config.py (inventory では C12)、P04-C12-01 の対象が tests/render-handout.py (inventory では C11) と入れ替わっている。P05 の route 報告は inventory 側に従っているため現状の突合は成立しているが、leaf id と inventory id が食い違ったまま残ると以後の join が壊れる。worker は突合キーを leaf id でなく test_dir 名にする回避をとった。P05-x-01 phase gate で task-graph 側を直すか、入れ替わりを既知として明文化するかを決める"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 6 件。(1) 実装済み集合がブリーフ想定 6 件と実在判定 10 件で相違したためファイルシステムを正本とした (2) 未実装 component の baseline も eval-log に一次記録があったため baseline を全件 eval-log 由来に統一 (measured は 0 件) (3) baseline_source を 2 値 enum でなくパス文字列とし、実測由来は current_source へ分離 (4) 未実装 component の current_failures も全件実測した (C10 のように計測中に実装が到着して乖離する実例があった) (5) C11/C12 の id 入れ替わりに対し突合キーを test_dir 名とした (6) verdict 基準は『baseline が引けるか』のみとし drift・回帰は warn 止まりとした"
+    },
+    {
+      "kind": "measurement-race",
+      "detail": "C10 (hooks/guard-handout-external-ref.py) は worker の実測時点で未実在、implemented_now 判定時点 (mtime 18:47) で実在。C10 の current_failures=3 は計測境界値であり、worker は measurement_timeline フィールドへ明記済み。当方の独立実測でも C10 suite は 196/OK・C16 suite は 354/failures=3 で整合している"
+    }
+  ]
+}

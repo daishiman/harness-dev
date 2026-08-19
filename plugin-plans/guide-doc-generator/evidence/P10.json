@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-aggregate-evidence",
+  "task_id": "P10-x-01",
+  "phase_ref": "P10",
+  "produced_by": "P10-x-01 worker (direct-task)",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P10.json",
+  "acceptance_criterion_verbatim": "hook が対象内で発火し対象外で発火しないことと、委譲先不在時に縮退動作で完走することが確認されている",
+  "measurement_policy": {
+    "fail_closed": "機械実行できなかった手順は pass と書かず not-verifiable として残す",
+    "source": "本ファイルは eval-log/guide-doc-generator/build/route-P10-x-01.json の実測を write_scope 宣言どおりに実体化したもの。判定内容は route report と同一で、追加の再測定は行っていない"
+  },
+  "acceptance_elements": [
+    {
+      "claim": "hook が対象内で発火し対象外で発火しない",
+      "method": "当方が一時ディレクトリに 6 通りの入力を作り、guard-handout-external-ref.py へ PostToolUse payload を流して exit code を採取した",
+      "result": "pass (**対象内で exit2 が 2 件**: 外部 URL 属性あり / 絵文字あり。**対象外で exit0 が 3 件**: 同階層に handout-config.json が無い / 日付接頭ディレクトリでない / 拡張子が .html でない。対象内かつ違反なしも exit0。applies_to の 5 条件のうち 3 条件を個別に外して落ちない側も測っており、『何も検査していないから緑』ではないことを両側から裏づけた)"
+    },
+    {
+      "claim": "委譲先不在時に縮退動作で完走する",
+      "method": "当方が srg-image-bridge.py の fail-soft 分岐 (status=skipped / skip_reason=srg-absent) を専用スイートで実行し、あわせて明示指定の誤りが skip へ畳まれないことを確認した",
+      "result": "pass (tests/srg-image-bridge.py 291 件が緑。skip 側は status=skipped + skip_reason=srg-absent / runtime-absent を返し exit0 で完走する。**--srg-root に存在しない path を明示した場合は exit2 の contract-violation** となり skip へ畳まれない — 『入っていない』と『指し先を間違えた』を区別している。本周回で SKILL.md へ skip_reason の転記を明記し、呼び出し元が skip を成功へ黙って畳む余地を塞いだ)"
+    },
+    {
+      "claim": "hook の登録面が 1 か所に閉じている",
+      "method": "当方が plugin.json の hooks キーを削除し、tests/guard-handout-external-ref/test_no_side_effects.py の単一登録面テストを再実行した",
+      "result": "pass (**削除前は test_plugin_manifest_does_not_register_hook が赤**。manifest と settings.json の双方に置くと 1 回の書込で 2 回発火する。削除後 8 件緑。配布時に hook が黙って無効化されないよう README へ settings.json への手登録手順を追加した)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "independent-context-review-not-run",
+      "detail": "P10 の phase 名は『最終レビューを独立 context で通す』だが、当方は決定論ゲートと hook の発火境界を実測したのみで、独立 context の LLM レビュー (handout-readability-reviewer による意味レビュー) は起動していない。AC の 2 要素は満たしているが phase 名が含意するレビューは未実施であり、pass と推定しない"
+    },
+    {
+      "kind": "hook-registration-is-manual",
+      "detail": "marketplace install した利用者は settings.json への手登録を行わない限り hook が発火しない。C10 の単一登録面契約と配布の両立がこの形でしか取れていない。README に手順を書いたが、登録漏れを機械で検出する手段は無い"
+    }
+  ],
+  "overall": "success"
+}

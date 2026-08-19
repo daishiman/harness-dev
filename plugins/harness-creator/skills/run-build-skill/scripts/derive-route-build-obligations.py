@@ -15,8 +15,44 @@ import sys
 from pathlib import Path
 
 
+# 第1稿 (stage=draft) に含める phase。
+#
+# 分類の基準は「使える実体が立ち上がるまでに要るか」の一点であり、重要度ではない。
+# P01 は goal-spec、P02 は各 component の設計ブリーフ (build 入力そのもの)、
+# P05 は実装。この 3 つが揃えば利用者は現物を起動できる。
+#
+# ここに入れていない phase は品質を捨てたのではなく、第1稿の後ろへ移しただけである。
+# 特に P04 (受入テストを赤で固定する) は component 数と同じだけの direct-task を持ち、
+# 厳格 TDD の下では「全 component 分の赤を書き終えるまで実装を 1 行も書かない」直列区間
+# になる。実物が無い状態で払うこの待ち時間が、利用者の言う「使えるまで何もできない時間」
+# の主因であり、stage を分ける動機そのものである。release で必ず回収する。
+DRAFT_PHASES = frozenset({"P01", "P02", "P05"})
+DRAFT_STAGE = "draft"
+RELEASE_STAGE = "release"
+
+
 def _safe_id(raw: str) -> str:
     return re.sub(r"[^A-Za-z0-9:._-]+", "-", raw)
+
+
+def _node_stage(node: dict) -> str:
+    """direct-task node を第1稿と本番のどちらへ割り当てるか決める。
+
+    phase_ref だけで決定論に引く。title の自然文や entity_ref の有無で判断しない
+    (task-graph の意味論を 2 箇所で解釈すると、片方だけ直した状態が黙って成立する)。
+    """
+    return DRAFT_STAGE if str(node.get("phase_ref") or "") in DRAFT_PHASES else RELEASE_STAGE
+
+
+def _folds_into_route(node: dict) -> bool:
+    """entity_ref を持つ node を route obligation へ畳み込むか。
+
+    `component-build` は route build そのものなので phase_ref を問わず畳む
+    (phase_ref を持たない node もある)。それ以外の direct-task は stage で決める —
+    同じ component の「受入テストを赤で固定する」(P04) まで畳むと、第1稿の
+    route build 指示に赤いスイート作成が混ざり、stage を分けた意味が消える。
+    """
+    return node.get("execution_kind") == "component-build" or _node_stage(node) == DRAFT_STAGE
 
 
 def _load_optional(path: Path) -> object:
@@ -123,7 +159,12 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
                 if key in route
             },
             "inventory_component": _inventory_component(inventory, route_id),
-            "task_nodes": _task_nodes(task_graph, route_id),
+            # route obligation が背負うのは draft 段の node だけにする。
+            # entity_ref を持つ node を無条件に畳み込むと、同じ component の
+            # 「受入テストを赤で固定する」(P04) まで route build の指示に混ざり、
+            # stage=draft でも赤いスイートを書かされる。畳み込みの単位は
+            # component ではなく「component × stage」である。
+            "task_nodes": [n for n in _task_nodes(task_graph, route_id) if _folds_into_route(n)],
             "mode": handoff.get("mode"),
         }
         obligations.append({
@@ -132,6 +173,8 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
             "kind": "generative",
             "risk": "high",
             "activation": "changed",
+            # route build は成果物そのもの。第1稿から外すと「使える実体」が存在しない。
+            "stage": DRAFT_STAGE,
             "depends_on": [f"build:{_safe_id(dep)}" for dep in route.get("depends_on") or []],
             "inputs": inputs,
             "parameters": parameters,
@@ -153,17 +196,19 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
     node_obligation: dict[str, str] = {}
     for node_id, node in node_by_id.items():
         entity_ref = str(node.get("entity_ref") or "")
-        if entity_ref in route_ids:
+        if entity_ref in route_ids and _folds_into_route(node):
             node_obligation[node_id] = f"build:{_safe_id(entity_ref)}"
         elif node.get("execution_kind") == "direct-task":
+            # entity_ref を持つ release 段の node もここへ来る。route へ畳まず
+            # 独立した obligation にすることで、第1稿から外して昇格時に回収できる。
             node_obligation[node_id] = f"task:{_safe_id(node_id)}"
 
     dependency_edges = _graph_edges(task_graph, "depends_on")
     produces_edges = _graph_edges(task_graph, "produces")
     for node_id, obligation_id in sorted(node_obligation.items()):
         node = node_by_id[node_id]
-        if str(node.get("entity_ref") or "") in route_ids:
-            continue
+        if obligation_id.startswith("build:"):
+            continue  # route obligation へ畳み込み済み
         dependencies = sorted({
             node_obligation[str(edge.get("to"))]
             for edge in dependency_edges
@@ -194,6 +239,7 @@ def derive_contract(handoff: dict, repo_root: Path, handoff_path: Path) -> dict:
             "kind": "generative",
             "risk": "high" if node.get("phase_ref") in {"P03", "P09", "P10", "P13"} else "medium",
             "activation": "changed",
+            "stage": _node_stage(node),
             "depends_on": dependencies,
             "inputs": inputs,
             "parameters": {"task_node": node, "plan_dir": plan_dir_rel},

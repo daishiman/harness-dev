@@ -125,6 +125,10 @@ def _actions(plan: dict) -> dict[str, str]:
     return {item["id"]: item["action"] for item in plan["obligations"]}
 
 
+def _reasons(plan: dict) -> dict[str, str]:
+    return {item["id"]: item["reason"] for item in plan["obligations"]}
+
+
 def test_machine_first_then_semantic_claims_share_one_context(tmp_path: Path) -> None:
     (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
     (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
@@ -497,3 +501,194 @@ def test_recorder_binds_default_expected_artifact_and_enables_reuse(tmp_path: Pa
     current = PLANNER.build_plan(contract, tmp_path, evidence_dir, run_id="run-1")
     assert _actions(current)["build:artifact"] == "reuse"
     assert current["cost_summary"]["consumed_model_actions"] == 1
+
+
+def _staged_handoff(tmp_path: Path) -> tuple[dict, Path]:
+    """厳格 TDD の task-graph を最小構成で再現する。
+
+    実際の計画では P04 (受入テストを赤で固定する) が component 数と同じだけの
+    direct-task を持ち、実装 (P05) の前段に丸ごと積まれる。ここではその形だけを
+    2 ノードで縮約する — 検証したいのは件数ではなく phase による stage 分類である。
+    """
+    plan_dir = tmp_path / "plugin-plans" / "staged"
+    plan_dir.mkdir(parents=True)
+    (plan_dir / "A.md").write_text("build A", encoding="utf-8")
+    (plan_dir / "brief.md").write_text("design brief for A", encoding="utf-8")
+    (plan_dir / "red.md").write_text("author the failing acceptance suite", encoding="utf-8")
+    task_graph = {
+        "schema_version": "1.0",
+        "nodes": [
+            {"id": "B-A", "entity_ref": "A", "execution_kind": "component-build", "phase_ref": "P05"},
+            {
+                "id": "P02-A-01", "entity_ref": "A", "execution_kind": "direct-task",
+                "task_spec_ref": "brief.md", "phase_ref": "P02",
+                "write_scope": "plugin-plans/staged/briefs/script-brief-A.json",
+                "acceptance_criterion": "A の設計ブリーフが確定している",
+            },
+            {
+                # entity_ref を持つ点が要。実グラフの P04-Cxx-01 も component を
+                # 指しており、route obligation へ畳み込まれると第1稿から外れない。
+                "id": "P04-A-01", "entity_ref": "A", "execution_kind": "direct-task",
+                "task_spec_ref": "red.md", "phase_ref": "P04",
+                "write_scope": "plugins/staged/tests/a.py",
+                "acceptance_criterion": "A の受入テストが赤で固定されている",
+            },
+            {
+                # 実装完了の集約。実グラフでは P05-x-01 が P04-x-01 に依存しており
+                # (plugin-plans/guide-doc-generator/task-graph.json)、draft 側の
+                # ノードが release へ繰り越したノードへぶら下がる形が実在する。
+                "id": "P05-x-01", "entity_ref": None, "execution_kind": "direct-task",
+                "phase_ref": "P05", "write_scope": "plugin-plans/staged/evidence/P05.json",
+                "acceptance_criterion": "実装完了が集約されている",
+            },
+            {
+                "id": "P09-x-01", "entity_ref": None, "execution_kind": "direct-task",
+                "phase_ref": "P09", "write_scope": "plugin-plans/staged/evidence/P09.json",
+                "acceptance_criterion": "品質保証の証跡が揃っている",
+            },
+        ],
+        "edges": [
+            {"type": "depends_on", "from": "P05-x-01", "to": "P04-A-01"},
+            {"type": "depends_on", "from": "P09-x-01", "to": "P04-A-01"},
+        ],
+    }
+    (plan_dir / "task-graph.json").write_text(json.dumps(task_graph), encoding="utf-8")
+    handoff = {
+        "plan_dir": "plugin-plans/staged",
+        "target_plugin_slug": "staged",
+        "task_graph_ref": {"path": "task-graph.json"},
+        "routes": [{
+            "id": "A", "build_kind": "script", "build_args": {"script_path": "scripts/a.py"},
+            "build_target": "plugins/staged/scripts/a.py", "task_spec_ref": "A.md", "depends_on": [],
+        }],
+    }
+    handoff_path = plan_dir / "handoff.json"
+    handoff_path.write_text(json.dumps(handoff), encoding="utf-8")
+    return handoff, handoff_path
+
+
+def test_stage_is_derived_from_phase_not_from_titles(tmp_path: Path) -> None:
+    """stage は phase_ref だけで決まる。title の自然文解釈へ依存させない。"""
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+    stages = {item["id"]: item["stage"] for item in contract["obligations"]}
+    # P02-A-01 は entity_ref=A かつ draft 段なので build:A へ畳み込まれ、
+    # 独立した obligation にはならない (畳み込み単位は component × stage)。
+    assert stages == {
+        "build:A": "draft",          # 成果物 + draft 段の設計ブリーフ
+        "task:P05-x-01": "draft",    # 実装の集約
+        "task:P04-A-01": "release",  # 実物より先に払っていた赤いスイート
+        "task:P09-x-01": "release",
+    }
+
+
+def test_draft_stage_produces_the_artifact_without_paying_for_release_work(tmp_path: Path) -> None:
+    """第1稿は『使える実体』まで走り、現物が出てから効く工程を繰り越す。
+
+    利用者の要望「さっとまずは作って、それを使いながらブラッシュアップする」を
+    機械化した中心の振る舞い。速さは検証を緩めることではなく、生成の集合を
+    実体が立ち上がる範囲へ絞ることで得る。
+    """
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+    evidence_dir = tmp_path / "evidence"
+
+    draft = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="draft")
+    assert draft["generation_queue"] == ["build:A"]
+    actions = _actions(draft)
+    assert actions["task:P04-A-01"] == "defer"
+    assert actions["task:P09-x-01"] == "defer"
+    # P05-x-01 は draft だが P04 (繰り越し) にぶら下がる。上流を意図的に後ろへ
+    # 回した以上、blocked (証拠が足りない) ではなく defer (繰り越し) として
+    # 理由が読めなければならない。両者を混ぜると、昇格時に何を回収すべきか
+    # 計画から引けなくなる。
+    assert actions["task:P05-x-01"] == "defer"
+    assert "dependency-deferred" in _reasons(draft)["task:P05-x-01"]
+
+    release = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
+    assert set(release["generation_queue"]) == {"build:A", "task:P04-A-01"}
+
+
+def test_draft_cannot_claim_completion(tmp_path: Path) -> None:
+    """draft は『速い完了』ではなく『未完了だが動く』状態である。
+
+    ここが ok を返すと後段の完了ゲートが第1稿を成果物として受理し、回収されない
+    release 工程が黙って積み上がる。繰り越しは必ず名前つきで開示する。
+    """
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+    draft = PLANNER.build_plan(contract, tmp_path, (tmp_path / "evidence"), stage="draft")
+    assert draft["stage_gate"]["status"] == "draft-incomplete"
+    assert draft["stage_gate"]["deferred_to_release"] == [
+        "task:P04-A-01", "task:P05-x-01", "task:P09-x-01",
+    ]
+
+
+def test_promotion_to_release_reuses_draft_proofs_instead_of_rebuilding(tmp_path: Path) -> None:
+    """draft で得た証明は release でそのまま効く。
+
+    stage を fingerprint へ含めない設計の理由がこれである。含めてしまうと昇格の
+    たびに全 route を作り直すことになり、二段階にした意味 (待ち時間の短縮) が
+    そっくり失われる。
+    """
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+    evidence_dir = tmp_path / "evidence"
+    draft = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="draft")
+
+    target = tmp_path / "plugins" / "staged" / "scripts" / "a.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("print('a')", encoding="utf-8")
+    _write_receipt(evidence_dir, tmp_path, draft, "build:A",
+                   evidence_path="plugins/staged/scripts/a.py")
+
+    release = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
+    actions = _actions(release)
+    assert actions["build:A"] == "reuse"
+    # 昇格で新たに払うのは繰り越した分だけ (下流 P05-x-01 / P09-x-01 は
+    # P04 の証明が付いた次の周回で ready になる)。
+    assert release["generation_queue"] == ["task:P04-A-01"]
+
+
+def test_unstaged_obligations_run_in_draft_so_nothing_is_silently_dropped(tmp_path: Path) -> None:
+    """stage 未宣言は draft 扱い。
+
+    未分類を release へ倒すと、stage を知らない旧 contract を draft で回した瞬間に
+    全件 defer され「何も作られていないのに何も落ちていない」計画が成立する。
+    分類漏れは遅くなる側へ倒す。
+    """
+    (tmp_path / "a.txt").write_text("a", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("b", encoding="utf-8")
+    plan = PLANNER.build_plan(_contract(), tmp_path, (tmp_path / "evidence"), stage="draft")
+    assert all(item["stage"] == "draft" for item in plan["obligations"])
+    assert _actions(plan)["machine:a"] == "check"
+
+
+def test_draft_defers_semantic_and_audit_even_when_unstaged(tmp_path: Path) -> None:
+    """第1稿は実体と決定論ゲートまで。意味裁定・監査は現物が出てから効く。"""
+    (tmp_path / "a.txt").write_text("a", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("b", encoding="utf-8")
+    plan = PLANNER.build_plan(_contract(), tmp_path, (tmp_path / "evidence"), stage="draft")
+    actions = _actions(plan)
+    assert actions["semantic:a"] == "defer"
+    assert actions["audit:30"] == "defer"
+    assert plan["llm_batch_count"] == 0
+
+
+def test_release_phase_nodes_do_not_fold_into_the_route_obligation(tmp_path: Path) -> None:
+    """entity_ref を持つ release 段 node は route build へ畳み込まない。
+
+    畳み込みの単位は component ではなく「component × stage」である。実グラフの
+    P04-Cxx-01 は component を entity_ref に持つため、component 単位で畳むと
+    stage=draft の route build 指示に「受入テストを赤で固定する」が同梱され、
+    第1稿から外れない。stage を分けても待ち時間が縮まらない状態が黙って成立する。
+    """
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+    ids = {item["id"] for item in contract["obligations"]}
+    assert "task:P04-A-01" in ids
+    route = next(item for item in contract["obligations"] if item["id"] == "build:A")
+    folded = {str(node.get("id")) for node in route["parameters"]["task_nodes"]}
+    assert "P04-A-01" not in folded
+    assert "P02-A-01" in folded  # draft 段の設計ブリーフは route build と一体で扱う
+    assert "B-A" in folded       # component-build は phase_ref を問わず route 本体

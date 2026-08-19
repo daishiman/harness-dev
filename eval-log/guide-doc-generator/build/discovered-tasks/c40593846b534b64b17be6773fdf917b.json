@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P13-x-01",
+  "reason": "配布経路の成立を判断の記録でなく実測の記録として残す必要がある。install 操作の一部 (Add Marketplace の対話 UI・PR merge 後の remote 取得) は機械実行できないため、pass と推定せず not-run として理由付きで残す証跡 leaf を起票する",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/phase-13-release.md",
+  "proposed_node": {
+    "id": "P13-x-04",
+    "title": "ローカル経路と GitHub 経路の install 可能性を実測して証跡化する",
+    "phase_ref": "P13",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/evidence",
+    "acceptance_criterion": "2 経路それぞれについて実行コマンド・exit code・実測範囲と未実測範囲が evidence へ記録されていること。機械実行できない手順を pass と推定しないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P13-x-04.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/evidence/P13-distribution.json"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P13-x-03.md"
+    ],
+    "depends_on": [
+      "P13-x-03"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P13-x-04"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:12735051ca65438b9094b5b1533adca5f58e7768607f6f800cd53c408390fdf1"
+}

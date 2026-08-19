@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c01-verdict-vocab-dedup",
+  "covered_task_ids": ["P02-c01-verdict-vocab-dedup"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+  "verified_by": [
+    {
+      "claim": "skill-brief-C01.json はゲート結果の状態語彙を自前で列挙しない",
+      "method": "grep count: 'pass/fail/error/not-run' / 'incomplete' / 'partial' の出現数を実測",
+      "result": "pass: 3 語ともに 0 件。R4-verify の記述から語彙列挙を除去済み"
+    },
+    {
+      "claim": "集約の正本が command-brief-C09.json#canonical_aggregation (CR-GATE-AGG) 単一へ束ねられている",
+      "method": "grep count: 'CR-GATE-AGG' と 'behavior 4-6' の出現数",
+      "result": "pass: CR-GATE-AGG 2 件・behavior 4-6 1 件。語彙の正本と、その正本が指す先の両方を参照する形になっている"
+    },
+    {
+      "claim": "評価順も C01 側に書かれていない",
+      "method": "本文読解: 『本ブリーフは語彙を列挙せず評価順も書かない』という不在宣言と、その理由 (C09 改訂の取り残しで C01 経路と C09 直叩き経路が別 verdict を返す) が明記されているか",
+      "result": "pass: 不在宣言と invariant 破壊の理由が本文に存在"
+    },
+    {
+      "claim": "not-run を pass と読み替えない判断 (P03 Y-07) が保持されている",
+      "method": "本文読解: 該当節の残存確認",
+      "result": "pass: 『実行されなかったゲート』を『通った』と読み替える判断をこちら側で持たない (P03 Y-07) が残存"
+    },
+    {
+      "claim": "編集後も JSON として妥当",
+      "method": "python3 -c json.load",
+      "result": "pass: parse 成功"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c01-01",
+      "level": "carry-forward",
+      "summary": "『語彙を列挙しない』という不在契約は現状 grep でしか守られていない。C01 側に語彙が再び書き戻されても機械ゲートは検出しない。release 段階で lint 化 (brief 本文へ状態語彙リテラルが現れたら fail) を検討する"
+    }
+  ]
+}

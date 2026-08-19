@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P01-x-01",
+  "kind": "checklist-verification",
+  "phase_ref": "P01",
+  "status": "success",
+  "covered_task_ids": [
+    "P01-x-01"
+  ],
+  "verified_by": [
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py plugin-plans/guide-doc-generator/goal-spec.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py plugin-plans/guide-doc-generator",
+      "exit_code": 0
+    }
+  ],
+  "evidence": [
+    "plugin-plans/guide-doc-generator/evidence/P01.json"
+  ],
+  "summary": "C1-C45 全件 verify_by 非空 / 実測値の要件焼込ゼロ / 分界線の要件文明示 を確認"
+}

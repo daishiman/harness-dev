@@ -1,0 +1,54 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C11-01",
+ "covered_task_ids": [
+  "P04-C11-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/render-handout.py/",
+ "verified_by": [
+  {
+   "claim": "3 面がすべて充足しており、面の名指しが関数名で示された",
+   "method": "dispatcher が報告の名指し先を確認し、対象ディレクトリで unittest discover を独立実行",
+   "result": "pass: 違反系 exit1 は test_input_violations.py が UnnormalizedConfigTest / DocumentFieldTest / SectionFieldTest / NavIntegrityTest / BlockVocabularyTest / ExternalReferenceTest の 6 クラスで単独に全面を張る。argv/exit code 契約は test_argv_and_exit_codes.py の ArgvContractTest 9 関数 + ThemeArgvContractTest 4 関数で、exit2 (起動不正) と exit1 (規約違反) を別関数で固定。再現性は test_determinism.py の ByteReproducibilityTest / TokenIndirectionTest / StdlibOnlyTest 7 関数で、出力パスの漏れ・キー順・第三者 import・プロセス同一性という非決定論の入口を個別に潰している"
+  },
+  {
+   "claim": "報告した偽陽性 1 件の修正が正当で、検出力を落としていない",
+   "method": "dispatcher が修正内容と失敗件数の推移を確認",
+   "result": "pass: ThemeTokenLevelLimitsTest::test_renderer_has_no_numeric_literal_of_the_limits の正規表現が CSS の width:100% 4 箇所に当たっていた。上限値は文字数であり単位を伴わないため、直後の % を除外しても検出力は落ちない。修正は 1 文字 + 理由コメントに限局しており、期待値の緩和ではない。赤 6 → 5 の純減で他の緑を壊していない"
+  },
+  {
+   "claim": "残る赤 5 件が意図的であり、修正先が write_scope 外である",
+   "method": "dispatcher が対象ディレクトリで unittest discover を独立実行し、あわせて assets/tokens/*.json を直読み",
+   "result": "pass: Ran 219 tests / FAILED (failures=5)。報告の件数と完全一致。失敗内容は ThemeTokenLevelLimitsTest::test_values_match_the_decided_numbers (theme='pop','warm-sand') と TextLimitBakingTest::test_baked_limit_follows_the_detail_level (3 水準)。dispatcher の直読みで pop.json / warm-sand.json とも block_body_max_chars_by_detail_level = {overview:180, standard:400, detailed:900} を確認。正本 script-brief-C11.json#added_block_r22_values は {overview:60, standard:100, detailed:160} で、根拠として参照資料の <p> 実測 (43 段落・中央値 21 字・p90 54 字・最大 81 字・200 字超ゼロ) と『旧値 400 は実測最大の 4.9 倍』を明記している。テスト側は brief から導出しており正しく、修正先は assets/tokens/*.json = write_scope 外。テストを触らなかった判断は妥当"
+  },
+  {
+   "claim": "リテラル写しの監査が行われている",
+   "method": "dispatcher が報告の対策実体を確認",
+   "result": "pass: test_parts_catalog.py:78 CatalogCoverageTest::test_every_catalog_part_has_a_dedicated_test_method が H.catalog_parts() から期待集合を導出し、『カタログに部品を足したのにテストが無い』を網羅検査で落とす。B01-B17 の写しが古くなる経路は既に塞がれており、本ノードで新たな写しは持ち込まれていない"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=代理再現として正しく記録): pass と書かず『元の状態そのものは再現不能。代理再現で成立』と分けて記録している。plugin root を temp へ複製し複製側からのみ build_target を削除する形で、出荷ファイルに触れていない。run=3 / failures=3 で skip でも error でもないことまで測っており、_harness.py:183 require_script() が『実装が無い状態を error でなく failure として立てる』という仕掛けの実在と発火を両方押さえている。必要条件と十分条件を混ぜていない"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/render-handout.py/test_r22_detail_attributes.py の 1 件のみ (+7/-2)。scripts/ には 1 バイトも書いていない。報告が自主開示した『自分由来でない差分』は cyan/orange/pink の並行ノード由来で正しい"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C11-01",
+   "level": "blocking-for-release",
+   "summary": "出荷テーマトークンが R25 の新予算へ未追随 (DT-1)。assets/tokens/{pop,warm-sand}.json の block_body_max_chars_by_detail_level が {180,400,900} のまま、正本 brief は {60,100,160}。dispatcher が両ファイルを直読みして確認。これは利用者要件 R7 (『文章が長ったらしく何行も書く』を絶対に防ぐ) の実装点そのものであり、この 1 ファイル群が旧値である限り長文を止める機構は実質無効。C11 の赤 5 件・C12 の赤 1 件がすべてここに由来する。修正先は write_scope 外。P05-x-83"
+  },
+  {
+   "id": "F-P04C11-02",
+   "level": "carry-forward",
+   "summary": "『テスト名が criterion 名と一致していても、測っているのが別物なら証拠にならない』の逆パターンが本ノードで出た。test_renderer_has_no_numeric_literal_of_the_limits は正しい検査だったが、正本の値が 100 に決まった瞬間に CSS の 100% と衝突して偽陽性化した。値域を正本から導出する検査は、その値が汎用的な数値 (100 / 1 / 0) になったとき誤爆する。導出型の検査には『検出対象の文脈』(ここでは単位を伴わないこと) を併記する必要がある"
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P13-x-01",
+  "reason": "利用者要件 (2026-08-18): ローカル plugin install と GitHub PR 後の marketplace install の両経路に対応すること。実測の結果、plugins/guide-doc-generator/.claude-plugin/plugin.json と references/package-contract.json が不在で両経路とも成立しない。component-inventory.json の plugin_level_surfaces は manifest/composition/harness_eval を required:true と宣言済みだが、task-graph 136 node にこれらを produces する node が 1 つも無い受け皿消滅 (PAT-4)。envelope 実体化の leaf を起票する",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/component-inventory.json",
+  "proposed_node": {
+    "id": "P13-x-02",
+    "title": "plugin envelope を実体化しローカル marketplace 経路の install を成立させる",
+    "phase_ref": "P13",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "plugin_level_surfaces で required:true の 3 サーフェスの実体が存在し、build-local-marketplace.py --check が exit0 で guide-doc-generator を掲載対象として解決できること。掲載を生成物から実測し、manifest を壊した反例で --check が RED になることを示すこと",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P13-x-02.md",
+    "produces": [
+      "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+      "plugins/guide-doc-generator/references/package-contract.json",
+      "plugins/guide-doc-generator/plugin-composition.yaml",
+      "plugins/guide-doc-generator/EVALS.json"
+    ],
+    "consumes": [],
+    "depends_on": [
+      "P12-x-01"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P13-x-02"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:12735051ca65438b9094b5b1533adca5f58e7768607f6f800cd53c408390fdf1"
+}

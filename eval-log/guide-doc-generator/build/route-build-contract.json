@@ -1,0 +1,3735 @@
+{
+  "schema_version": 1,
+  "subject": "guide-doc-generator:route-build",
+  "obligations": [
+    {
+      "id": "build:C04",
+      "claim": "Route C04 is materially built at plugins/guide-doc-generator/skills/ref-handout-design-system/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C04",
+          "component_kind": "skill",
+          "name": "ref-handout-design-system",
+          "build_kind": "skill",
+          "build_args": {
+            "skill_name": "ref-handout-design-system",
+            "brief_path": "briefs/skill-brief-C04.json"
+          },
+          "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+          "builder": "run-skill-create",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C04",
+          "component_kind": "skill",
+          "name": "ref-handout-design-system",
+          "skill_kind": "ref",
+          "kind": "ref",
+          "skill_name": "ref-handout-design-system",
+          "prefix": "ref",
+          "hierarchy_level": "L1",
+          "trigger_conditions": [
+            "資料の部品カタログを確認",
+            "デザイントークンの値を引く",
+            "アイコン規約を確認"
+          ],
+          "output_contract": "部品カタログ B01-B15 の構成データ表現 / CSS 変数トークン一覧 / アイコン規約 (viewBox・stroke・symbol+use) / 文章設計の型 の参照回答",
+          "boundary": "入力=部品またはトークンの問い合わせ/出力=規範の引用。HTML の生成・検証はしない (C11/C16-C18 の責務)",
+          "output_language": "ja",
+          "placement_candidates": [
+            "Skill"
+          ],
+          "cli_tools": [],
+          "deterministic_checks": [],
+          "external_systems": [],
+          "mcp_tools": [],
+          "needs_independent_context": false,
+          "needs_lifecycle_enforcement": false,
+          "combinators": [],
+          "feedback_contract": {
+            "skip_reason": "ref kind は参照回答のみで反復ループを持たない (source-traceability と ref-review でカバーする)"
+          },
+          "depends_on": [],
+          "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+          "builder": "run-skill-create",
+          "build_kind": "skill",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-skill-name",
+              "lint-skill-description",
+              "lint-skill-tree",
+              "validate-frontmatter",
+              "lint-dependency-direction",
+              "lint-skill-dep-step7",
+              "lint-forbidden-deps",
+              "lint-manifest-contents"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "ref=source-traceability+ref-review"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C04-01",
+            "title": "ref-handout-design-system (skill) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C04",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+            "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C04 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ へ着手するのに追加質問が要らない。加えて C04 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C04-01.md"
+          },
+          {
+            "id": "P04-C04-01",
+            "title": "ref-handout-design-system (skill) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C04",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/ref-handout-design-system/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C04-01.md"
+          },
+          {
+            "id": "P05-C04-01",
+            "title": "ref-handout-design-system (skill) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C04",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+            "acceptance_criterion": "route_ref=C04 の build_target=plugins/guide-doc-generator/skills/ref-handout-design-system/ が実在し、criteria_ref=component-inventory.json#component=C04 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C04",
+            "task_spec_ref": "task-specs/P05-C04-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+        "eval-log/guide-doc-generator/build/route-C04.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C23",
+      "claim": "Route C23 is materially built at plugins/guide-doc-generator/scripts/resolve-handout-preset.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C23",
+          "component_kind": "script",
+          "name": "resolve-handout-preset.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C23",
+          "component_kind": "script",
+          "name": "resolve-handout-preset.py",
+          "script_name": "resolve-handout-preset.py",
+          "purpose": "用途種別の語彙正本 (lecture / agenda / guide / onboarding / study-notes / study-plan / report / proposal) を単一の入口から解決し、対応するセクション構成プリセットを返す。語彙とプリセット定義は同一の宣言データファイル 1 本を正本とし、利用者の追加プリセットもそこへ書き足す。語彙のハードコード重複と正本語彙に対するプリセットの未被覆を検出する。混成用途は受け付けず、主用途 1 つの選択とセクション追加で表現させる",
+          "inputs": "argv(--purpose NAME | --list | --audit-duplication [--catalog FILE])",
+          "outputs": "stdout(語彙一覧またはプリセットのセクション構成 JSON)/stderr(未定義語彙・未被覆プリセット・重複定義箇所)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "none",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C23-01",
+            "title": "resolve-handout-preset.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C23",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C23 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C23-01.md"
+          },
+          {
+            "id": "P04-C23-01",
+            "title": "resolve-handout-preset.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C23",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C23-01.md"
+          },
+          {
+            "id": "P05-C23-01",
+            "title": "resolve-handout-preset.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C23",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+            "acceptance_criterion": "route_ref=C23 の build_target=plugins/guide-doc-generator/scripts/resolve-handout-preset.py が実在し、criteria_ref=component-inventory.json#component=C23 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C23",
+            "task_spec_ref": "task-specs/P05-C23-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+        "eval-log/guide-doc-generator/build/route-C23.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C05",
+      "claim": "Route C05 is materially built at plugins/guide-doc-generator/agents/handout-content-architect.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C04",
+        "build:C23"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C05",
+          "component_kind": "sub-agent",
+          "name": "handout-content-architect",
+          "build_kind": "agent",
+          "build_args": {
+            "kind": "agent",
+            "name": "handout-content-architect"
+          },
+          "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C05",
+          "component_kind": "sub-agent",
+          "name": "handout-content-architect",
+          "description": "ヒアリング結果から資料の構成データ (セクション構成・部品選択・lead-line・判断軸・用語言い換え宣言・日付) を独立 context で設計したいときに使う",
+          "tools": [
+            "Read",
+            "Write"
+          ],
+          "independent_context": true,
+          "responsibility_anchor": "prompts/R-design-config.md",
+          "prompt_layer": "7layer",
+          "depends_on": [
+            "C04",
+            "C23"
+          ],
+          "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+          "builder": "run-build-skill",
+          "build_kind": "agent",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter",
+              "lint-skill-description",
+              "lint-agent-prompt-section"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+verdict"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C05-01",
+            "title": "handout-content-architect (sub-agent) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C05",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+            "acceptance_criterion": "独立 context で解く問い / 入力と返却の形 / 親会話の前提を持ち込まない境界 が component-inventory.json#component=C05 と矛盾なく確定し、build_target=plugins/guide-doc-generator/agents/handout-content-architect.md へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C05-01.md"
+          },
+          {
+            "id": "P04-C05-01",
+            "title": "handout-content-architect (sub-agent) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C05",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/handout-content-architect/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-content-architect/ に 返却物の形式検査 / 親会話の前提を持ち込んだ場合に落ちる検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/agents/handout-content-architect.md が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C05-01.md"
+          },
+          {
+            "id": "P05-C05-01",
+            "title": "handout-content-architect (sub-agent) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C05",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+            "acceptance_criterion": "route_ref=C05 の build_target=plugins/guide-doc-generator/agents/handout-content-architect.md が実在し、criteria_ref=component-inventory.json#component=C05 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=agent) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C05",
+            "task_spec_ref": "task-specs/P05-C05-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/agents/handout-content-architect.md",
+        "eval-log/guide-doc-generator/build/route-C05.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C12",
+      "claim": "Route C12 is materially built at plugins/guide-doc-generator/scripts/validate-handout-config.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C23"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C12",
+          "component_kind": "script",
+          "name": "validate-handout-config.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/validate-handout-config.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C12",
+          "component_kind": "script",
+          "name": "validate-handout-config.py",
+          "script_name": "validate-handout-config.py",
+          "purpose": "構成データ JSON を schema と意味規約 (資料単位の必須フィールド一式・各セクションの lead-line と判断軸とゴール・日付フィールド・用語言い換え宣言・用途種別が語彙正本に含まれること) で fail-closed 検証し、--normalize 指定時は正規化済み構成データを 1 箇所で確定して書き出す決定論ゲート。日付未指定時に生成実行日を既定として埋めるのはこの正規化だけであり、以降の全 component はこの正規化済み構成データの日付フィールドのみを読む (日付解決の単一 writer)",
+          "inputs": "argv(--config FILE [--schema FILE] [--strict] [--normalize] [--out FILE])",
+          "outputs": "stdout(OK サマリ)/--out(正規化済み構成データ JSON: 日付既定値と用途プリセット適用後)/stderr(違反箇所とキーパス)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "out-file",
+          "date_resolution": "single-writer: 日付未指定時の既定 (生成実行日) 充填はここだけで行い、C11/C19/C18 は現在日時を自前で取得しない",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [
+            "C23"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C12-01",
+            "title": "validate-handout-config.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C12",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C12 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C12-01.md"
+          },
+          {
+            "id": "P04-C12-01",
+            "title": "validate-handout-config.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C12",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/validate-handout-config.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C12-01.md"
+          },
+          {
+            "id": "P05-C12-01",
+            "title": "validate-handout-config.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C12",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+            "acceptance_criterion": "route_ref=C12 の build_target=plugins/guide-doc-generator/scripts/validate-handout-config.py が実在し、criteria_ref=component-inventory.json#component=C12 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C12",
+            "task_spec_ref": "task-specs/P05-C12-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+        "eval-log/guide-doc-generator/build/route-C12.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C13",
+      "claim": "Route C13 is materially built at plugins/guide-doc-generator/scripts/embed-assets.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C13",
+          "component_kind": "script",
+          "name": "embed-assets.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/embed-assets.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C13",
+          "component_kind": "script",
+          "name": "embed-assets.py",
+          "script_name": "embed-assets.py",
+          "purpose": "ローカル画像と任意添付ファイルを base64 data URI へ変換して構成データへ畳み込み、上限超過時は生成を止めず warning を返す",
+          "inputs": "argv(--config FILE --assets-dir DIR [--max-bytes N] [--out FILE])",
+          "outputs": "stdout(埋め込み済み構成データ JSON)/stderr(warning: 上限超過 + 代替手段の提示)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "out-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C13-01",
+            "title": "embed-assets.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C13",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C13 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/embed-assets.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C13-01.md"
+          },
+          {
+            "id": "P04-C13-01",
+            "title": "embed-assets.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C13",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/embed-assets.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/embed-assets.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/embed-assets.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C13-01.md"
+          },
+          {
+            "id": "P05-C13-01",
+            "title": "embed-assets.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C13",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/embed-assets.py",
+            "acceptance_criterion": "route_ref=C13 の build_target=plugins/guide-doc-generator/scripts/embed-assets.py が実在し、criteria_ref=component-inventory.json#component=C13 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C13",
+            "task_spec_ref": "task-specs/P05-C13-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/embed-assets.py",
+        "eval-log/guide-doc-generator/build/route-C13.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C14",
+      "claim": "Route C14 is materially built at plugins/guide-doc-generator/scripts/render-diagram-svg.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C14",
+          "component_kind": "script",
+          "name": "render-diagram-svg.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/render-diagram-svg.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C14",
+          "component_kind": "script",
+          "name": "render-diagram-svg.py",
+          "script_name": "render-diagram-svg.py",
+          "purpose": "構造データからフロー/比較/階層/サイクル/マトリクス/対比2択 の 6 パターンの概念図解を inline SVG として決定論出力する",
+          "inputs": "argv(--diagram FILE --pattern NAME [--width N])",
+          "outputs": "stdout(inline SVG 断片)/stderr(未知パターン・データ不整合)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "none",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C14-01",
+            "title": "render-diagram-svg.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C14",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C14 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C14-01.md"
+          },
+          {
+            "id": "P04-C14-01",
+            "title": "render-diagram-svg.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C14",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/render-diagram-svg.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/render-diagram-svg.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C14-01.md"
+          },
+          {
+            "id": "P05-C14-01",
+            "title": "render-diagram-svg.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C14",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+            "acceptance_criterion": "route_ref=C14 の build_target=plugins/guide-doc-generator/scripts/render-diagram-svg.py が実在し、criteria_ref=component-inventory.json#component=C14 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C14",
+            "task_spec_ref": "task-specs/P05-C14-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+        "eval-log/guide-doc-generator/build/route-C14.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C15",
+      "claim": "Route C15 is materially built at plugins/guide-doc-generator/scripts/build-icon-sprite.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C15",
+          "component_kind": "script",
+          "name": "build-icon-sprite.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/build-icon-sprite.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C15",
+          "component_kind": "script",
+          "name": "build-icon-sprite.py",
+          "script_name": "build-icon-sprite.py",
+          "purpose": "構成データが参照するアイコンだけを assets のアイコンセットから抽出し、統一様式の symbol 定義ブロックと use 参照表を決定論生成する",
+          "inputs": "argv(--config FILE --icon-set FILE)",
+          "outputs": "stdout(symbol 定義 SVG + 参照表 JSON)/stderr(未定義アイコン名・様式違反)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "none",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C16"
+          ],
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C15-01",
+            "title": "build-icon-sprite.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C15",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C15 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C15-01.md"
+          },
+          {
+            "id": "P04-C15-01",
+            "title": "build-icon-sprite.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C15",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/build-icon-sprite.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/build-icon-sprite.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C15-01.md"
+          },
+          {
+            "id": "P05-C15-01",
+            "title": "build-icon-sprite.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C15",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+            "acceptance_criterion": "route_ref=C15 の build_target=plugins/guide-doc-generator/scripts/build-icon-sprite.py が実在し、criteria_ref=component-inventory.json#component=C15 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C15",
+            "task_spec_ref": "task-specs/P05-C15-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+        "eval-log/guide-doc-generator/build/route-C15.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C11",
+      "claim": "Route C11 is materially built at plugins/guide-doc-generator/scripts/render-handout.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C23"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C11",
+          "component_kind": "script",
+          "name": "render-handout.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/render-handout.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C11",
+          "component_kind": "script",
+          "name": "render-handout.py",
+          "script_name": "render-handout.py",
+          "purpose": "構成データ JSON から単一 HTML を LLM 非依存で組み立てる決定論レンダラ (部品 B01-B15・CSS 変数トークン・スタガー入場・sticky ナビとオフセット補正とゴール参照 (nav 本体は簡潔に保ちゴールは補助属性で持たせる)・冒頭の目的と背景とゴール・セクションゴールのチップ表示・print 規則・a11y 属性・日付表記・メモと localStorage 機構を単一 writer で出力)。入力は C12 --normalize が確定した正規化済み構成データに限定し、日付は構成データの日付フィールドをそのまま整形する (自前で現在日を取得しない)。--theme は構成データにテーマ欄が無い場合に限り有効で、採用したテーマ名は出力先へ同梱する構成データへ書き戻すため、再現性の単位は同梱構成データ 1 点に閉じる",
+          "inputs": "argv(--config FILE(正規化済み) [--theme NAME (構成データにテーマ欄が無い場合のみ有効・採用値は同梱構成データへ書き戻す)] [--out FILE])",
+          "outputs": "stdout または --out(単一 HTML)/同梱構成データ(採用テーマ書き戻し済み)/stderr(構成データ不整合)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "out-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C20"
+          ],
+          "depends_on": [
+            "C12",
+            "C13",
+            "C14",
+            "C15",
+            "C23"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C11-01",
+            "title": "render-handout.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C11",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C11 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/render-handout.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C11-01.md"
+          },
+          {
+            "id": "P04-C11-01",
+            "title": "render-handout.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C11",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/render-handout.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/render-handout.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/render-handout.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C11-01.md"
+          },
+          {
+            "id": "P05-C11-01",
+            "title": "render-handout.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C11",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/render-handout.py",
+            "acceptance_criterion": "route_ref=C11 の build_target=plugins/guide-doc-generator/scripts/render-handout.py が実在し、criteria_ref=component-inventory.json#component=C11 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C11",
+            "task_spec_ref": "task-specs/P05-C11-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/render-handout.py",
+        "eval-log/guide-doc-generator/build/route-C11.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C16",
+      "claim": "Route C16 is materially built at plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C16",
+          "component_kind": "script",
+          "name": "verify-handout-selfcontained.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C16",
+          "component_kind": "script",
+          "name": "verify-handout-selfcontained.py",
+          "script_name": "verify-handout-selfcontained.py",
+          "purpose": "生成 HTML の自己完結性を検査する (外部 CDN/フォント/img src/http(s) 参照 0 件・絵文字 0 件・アイコン様式・未使用 symbol 0 件・ナビ href と section id のアンカー整合)",
+          "inputs": "argv(--html FILE [--json-report FILE])",
+          "outputs": "stdout(検査サマリ)/stderr(違反種別と行番号)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "report-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C15"
+          ],
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C16-01",
+            "title": "verify-handout-selfcontained.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C16",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C16 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C16-01.md"
+          },
+          {
+            "id": "P04-C16-01",
+            "title": "verify-handout-selfcontained.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C16",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C16-01.md"
+          },
+          {
+            "id": "P05-C16-01",
+            "title": "verify-handout-selfcontained.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C16",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+            "acceptance_criterion": "route_ref=C16 の build_target=plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py が実在し、criteria_ref=component-inventory.json#component=C16 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C16",
+            "task_spec_ref": "task-specs/P05-C16-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+        "eval-log/guide-doc-generator/build/route-C16.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C17",
+      "claim": "Route C17 is materially built at plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C17",
+          "component_kind": "script",
+          "name": "verify-handout-a11y-print.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C17",
+          "component_kind": "script",
+          "name": "verify-handout-a11y-print.py",
+          "script_name": "verify-handout-a11y-print.py",
+          "purpose": "生成 HTML の a11y 必須適用 (aria-pressed/aria-selected/aria-label/scope/:focus-visible/prefers-reduced-motion) と A4 印刷規則 (@media print で sticky/lightbox/メモ UI が版面を崩さない) を検査する",
+          "inputs": "argv(--html FILE [--json-report FILE])",
+          "outputs": "stdout(検査サマリ)/stderr(欠落した必須適用箇所)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "report-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C17-01",
+            "title": "verify-handout-a11y-print.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C17",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C17 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C17-01.md"
+          },
+          {
+            "id": "P04-C17-01",
+            "title": "verify-handout-a11y-print.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C17",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-a11y-print.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C17-01.md"
+          },
+          {
+            "id": "P05-C17-01",
+            "title": "verify-handout-a11y-print.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C17",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+            "acceptance_criterion": "route_ref=C17 の build_target=plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py が実在し、criteria_ref=component-inventory.json#component=C17 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C17",
+            "task_spec_ref": "task-specs/P05-C17-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+        "eval-log/guide-doc-generator/build/route-C17.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C18",
+      "claim": "Route C18 is materially built at plugins/guide-doc-generator/scripts/verify-handout-language.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C12"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C18",
+          "component_kind": "script",
+          "name": "verify-handout-language.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/verify-handout-language.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C18",
+          "component_kind": "script",
+          "name": "verify-handout-language.py",
+          "script_name": "verify-handout-language.py",
+          "purpose": "初心者向け言語規約と日付表記を検査する (初出専門用語の言い換え併記・lead-line と判断軸の存在・冒頭 date-pill の yyyy/mm/dd 一致・出力ディレクトリ名の日付が正規化済み構成データの日付フィールドと同一値であること)。自前で現在日を取得せず、比較の基準は常に正規化済み構成データ 1 点",
+          "inputs": "argv(--html FILE --config FILE(正規化済み) [--out-dir DIR] [--json-report FILE])",
+          "outputs": "stdout(検査サマリ)/stderr(未言い換え用語・日付書式違反・日付不一致)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "report-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C19"
+          ],
+          "depends_on": [
+            "C12"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C18-01",
+            "title": "verify-handout-language.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C18",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C18 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C18-01.md"
+          },
+          {
+            "id": "P04-C18-01",
+            "title": "verify-handout-language.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C18",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/verify-handout-language.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-language.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C18-01.md"
+          },
+          {
+            "id": "P05-C18-01",
+            "title": "verify-handout-language.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C18",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+            "acceptance_criterion": "route_ref=C18 の build_target=plugins/guide-doc-generator/scripts/verify-handout-language.py が実在し、criteria_ref=component-inventory.json#component=C18 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C18",
+            "task_spec_ref": "task-specs/P05-C18-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+        "eval-log/guide-doc-generator/build/route-C18.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C19",
+      "claim": "Route C19 is materially built at plugins/guide-doc-generator/scripts/route-handout-output.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C12",
+        "build:C23"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C19",
+          "component_kind": "script",
+          "name": "route-handout-output.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/route-handout-output.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C19",
+          "component_kind": "script",
+          "name": "route-handout-output.py",
+          "script_name": "route-handout-output.py",
+          "purpose": "出力先を決定論解決して <YYYY-MM-DD>-<種別>-<主題slug>/ を作り、資料 HTML・構成データ・素材・README の同梱 4 点が揃うことを検査する。種別は語彙正本から解決し自前に列挙しない。ディレクトリ名の <YYYY-MM-DD> は正規化済み構成データの日付フィールドをそのまま整形するだけで、自前で現在日を取得しない",
+          "inputs": "argv(--config FILE(正規化済み) [--out-dir DIR] [--check-only])",
+          "outputs": "stdout(解決した出力先パスと同梱物一覧)/stderr(種別語彙違反・命名規則違反・同梱物欠落)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "out-dir",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C18"
+          ],
+          "depends_on": [
+            "C12",
+            "C23"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C19-01",
+            "title": "route-handout-output.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C19",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C19 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/route-handout-output.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C19-01.md"
+          },
+          {
+            "id": "P04-C19-01",
+            "title": "route-handout-output.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C19",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/route-handout-output.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/route-handout-output.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/route-handout-output.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C19-01.md"
+          },
+          {
+            "id": "P05-C19-01",
+            "title": "route-handout-output.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C19",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+            "acceptance_criterion": "route_ref=C19 の build_target=plugins/guide-doc-generator/scripts/route-handout-output.py が実在し、criteria_ref=component-inventory.json#component=C19 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C19",
+            "task_spec_ref": "task-specs/P05-C19-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/route-handout-output.py",
+        "eval-log/guide-doc-generator/build/route-C19.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C21",
+      "claim": "Route C21 is materially built at plugins/guide-doc-generator/scripts/srg-image-bridge.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C21",
+          "component_kind": "script",
+          "name": "srg-image-bridge.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/srg-image-bridge.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C21",
+          "component_kind": "script",
+          "name": "srg-image-bridge.py",
+          "script_name": "srg-image-bridge.py",
+          "purpose": "slide-report-generator の Codex 画像生成パイプラインへ委譲するアダプタ。SRG 実体を解決して画像計画を渡し生成物を素材ディレクトリへ回収する。委譲先を再実装しない。SRG 実体 (SRG_ROOT 経由の vendor/scripts) または委譲先が要求する実行ランタイム (node) のいずれかが解決できないときは、起動を試みる前に skip を宣言して exit0 で返す (fail-soft)",
+          "inputs": "argv(--image-plan FILE --assets-dir DIR [--srg-root DIR] [--dry-run])",
+          "outputs": "stdout(生成/skip の判定と skip 理由 (srg-absent|runtime-absent) と回収した素材一覧)/stderr(委譲先の失敗理由)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "assets-dir",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C21-01",
+            "title": "srg-image-bridge.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C21",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C21 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C21-01.md"
+          },
+          {
+            "id": "P04-C21-01",
+            "title": "srg-image-bridge.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C21",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/srg-image-bridge.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/srg-image-bridge.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C21-01.md"
+          },
+          {
+            "id": "P05-C21-01",
+            "title": "srg-image-bridge.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C21",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+            "acceptance_criterion": "route_ref=C21 の build_target=plugins/guide-doc-generator/scripts/srg-image-bridge.py が実在し、criteria_ref=component-inventory.json#component=C21 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C21",
+            "task_spec_ref": "task-specs/P05-C21-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+        "eval-log/guide-doc-generator/build/route-C21.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C22",
+      "claim": "Route C22 is materially built at plugins/guide-doc-generator/scripts/verify-handout-narrative.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C12"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C22",
+          "component_kind": "script",
+          "name": "verify-handout-narrative.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C22",
+          "component_kind": "script",
+          "name": "verify-handout-narrative.py",
+          "script_name": "verify-handout-narrative.py",
+          "purpose": "資料の筋道を検査する (冒頭の目的・背景・ゴールの 3 要素の描画・全セクションのゴールがセクション冒頭に常時表示されること・目次各項目が対応セクションのゴールを補助属性で参照すること)。導入一文と判断軸の検査とは独立に判定し、一方が他方を代替しない",
+          "inputs": "argv(--html FILE --config FILE [--json-report FILE])",
+          "outputs": "stdout(検査サマリ)/stderr(欠落した要素とセクション id)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "report-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "depends_on": [
+            "C12"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C22-01",
+            "title": "verify-handout-narrative.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C22",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C22 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C22-01.md"
+          },
+          {
+            "id": "P04-C22-01",
+            "title": "verify-handout-narrative.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C22",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C22-01.md"
+          },
+          {
+            "id": "P05-C22-01",
+            "title": "verify-handout-narrative.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C22",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+            "acceptance_criterion": "route_ref=C22 の build_target=plugins/guide-doc-generator/scripts/verify-handout-narrative.py が実在し、criteria_ref=component-inventory.json#component=C22 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C22",
+            "task_spec_ref": "task-specs/P05-C22-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+        "eval-log/guide-doc-generator/build/route-C22.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C01",
+      "claim": "Route C01 is materially built at plugins/guide-doc-generator/skills/run-handout-build/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C04",
+        "build:C05",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C21",
+        "build:C22",
+        "build:C23"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C01",
+          "component_kind": "skill",
+          "name": "run-handout-build",
+          "build_kind": "skill",
+          "build_args": {
+            "skill_name": "run-handout-build",
+            "brief_path": "briefs/skill-brief-C01.json"
+          },
+          "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+          "builder": "run-skill-create",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C01",
+          "component_kind": "skill",
+          "name": "run-handout-build",
+          "skill_kind": "run",
+          "kind": "run",
+          "skill_name": "run-handout-build",
+          "prefix": "run",
+          "hierarchy_level": "L1",
+          "trigger_conditions": [
+            "レクチャー資料を作りたい",
+            "導入ガイドの HTML を生成",
+            "handout を作る"
+          ],
+          "goal": "題材のヒアリングから構成データを確定し、外部依存ゼロの単一 HTML 資料 1 個と同梱物一式が既定の命名規則で出力され、自己完結性・a11y・印刷・言語規約・日付表記の全ゲートが exit0 になった状態",
+          "purpose_background": "初心者・非エンジニア向けの資料は毎回ゼロから手書きされ、部品もデザイン言語も資産として残らない。構成データ駆動へ移せば反復配布できるテンプレートになる",
+          "checklist": [
+            "題材と読み手のヒアリング",
+            "構成データの確定",
+            "単一 HTML の決定論生成",
+            "生成物ゲートの exit0",
+            "出力先への配置"
+          ],
+          "output_contract": "出力ディレクトリ 1 個 (資料 HTML / 構成データ JSON / 素材 / README) + 生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果)",
+          "boundary": "入力=題材と素材、または検証済みの構成データ/出力=単一 HTML と同梱物。対話は既定経路であって唯一経路ではない (逆抽出からの再生成と自動実行を対話で塞がない)。HTML の組み立て自体は決定論 script へ委譲し LLM で書かない。読みやすさの最終判定は C03 へ委譲する",
+          "output_language": "ja",
+          "placement_candidates": [
+            "Skill"
+          ],
+          "responsibilities": [
+            {
+              "id": "R1-elicit",
+              "summary": "読み手・前提知識・用途・本質的課題・背景・資料全体のゴール・分量・セクション構成・素材・日付・出力先を対話でヒアリングして確定する。検証済みの構成データを直接渡された場合はヒアリングを省いて後続へ進む非対話経路も受け付ける",
+              "prompt_required": true
+            },
+            {
+              "id": "R2-design",
+              "summary": "用途に対応するプリセットを選び、構成データ設計を handout-content-architect へ委譲して、部品選択と lead-line・判断軸・セクションゴール・用語言い換え宣言を含む構成データを確定する",
+              "prompt_required": true
+            },
+            {
+              "id": "R3-render",
+              "summary": "検証済み構成データからアセット埋め込み・図解・アイコン sprite・レンダリングを決定論 script 列で実行し単一 HTML を生成する",
+              "prompt_required": true
+            },
+            {
+              "id": "R4-verify",
+              "summary": "自己完結性・a11y と印刷・言語と日付の各ゲートを実行し、出力先ルーティングまで通して生成レポートを返す",
+              "prompt_required": true
+            }
+          ],
+          "cli_tools": [],
+          "deterministic_checks": [
+            "validate-handout-config.py",
+            "resolve-handout-preset.py",
+            "verify-handout-selfcontained.py",
+            "verify-handout-a11y-print.py",
+            "verify-handout-language.py",
+            "verify-handout-narrative.py",
+            "route-handout-output.py"
+          ],
+          "external_systems": [
+            "slide-report-generator (画像生成の委譲先・不在時 skip)"
+          ],
+          "mcp_tools": [],
+          "needs_independent_context": true,
+          "needs_lifecycle_enforcement": true,
+          "prompt_layer": "7layer",
+          "combinators": [
+            "with-goal-seek",
+            "with-feedback-contract"
+          ],
+          "goal_seek": {
+            "engine": "inline",
+            "fork": "subagent",
+            "max_loops": 5
+          },
+          "feedback_contract": {
+            "criteria": [
+              {
+                "id": "IN1",
+                "loop_scope": "inner",
+                "text": "構成データが validate-handout-config.py を通り、各セクションの lead-line と判断軸の一文・日付フィールド・用語言い換え宣言の欠落が 0 件で確定する",
+                "verify_by": "script"
+              },
+              {
+                "id": "OUT1",
+                "loop_scope": "outer",
+                "text": "生成した単一 HTML 資料 1 個が外部依存ゼロで開き、自己完結性・a11y・印刷・言語規約・日付表記のゲートが全て exit0 になり、出力先に資料 HTML と構成データと素材と README が揃うことを受入テストが確認する",
+                "verify_by": "test"
+              },
+              {
+                "id": "OUT2",
+                "loop_scope": "outer",
+                "text": "出力先へ同梱された構成データから 2 回生成したとき出力 HTML がバイト一致し、決定論レンダリングの再現性が保たれることを受入テストが確認する",
+                "verify_by": "test"
+              }
+            ]
+          },
+          "depends_on": [
+            "C04",
+            "C05",
+            "C11",
+            "C12",
+            "C13",
+            "C14",
+            "C15",
+            "C16",
+            "C17",
+            "C18",
+            "C19",
+            "C21",
+            "C22",
+            "C23"
+          ],
+          "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+          "builder": "run-skill-create",
+          "build_kind": "skill",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-skill-name",
+              "lint-skill-description",
+              "lint-skill-tree",
+              "validate-frontmatter",
+              "lint-dependency-direction",
+              "lint-skill-dep-step7",
+              "lint-forbidden-deps",
+              "lint-manifest-contents"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "loop=criteria-test+content-review-verdict"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C01-01",
+            "title": "run-handout-build (skill) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C01",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+            "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C01 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/run-handout-build/ へ着手するのに追加質問が要らない。加えて C01 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C01-01.md"
+          },
+          {
+            "id": "P04-C01-01",
+            "title": "run-handout-build (skill) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C01",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/run-handout-build/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/run-handout-build/ が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C01-01.md"
+          },
+          {
+            "id": "P05-C01-01",
+            "title": "run-handout-build (skill) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C01",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/skills/run-handout-build/",
+            "acceptance_criterion": "route_ref=C01 の build_target=plugins/guide-doc-generator/skills/run-handout-build/ が実在し、criteria_ref=component-inventory.json#component=C01 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C01",
+            "task_spec_ref": "task-specs/P05-C01-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/run-handout-build/",
+        "eval-log/guide-doc-generator/build/route-C01.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C20",
+      "claim": "Route C20 is materially built at plugins/guide-doc-generator/scripts/extract-handout-config.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C12"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C20",
+          "component_kind": "script",
+          "name": "extract-handout-config.py",
+          "build_kind": "script",
+          "build_args": {
+            "script_path": "plugins/guide-doc-generator/scripts/extract-handout-config.py"
+          },
+          "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+          "placement_scope": "plugin-root",
+          "builder": "plugin-scaffold",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C20",
+          "component_kind": "script",
+          "name": "extract-handout-config.py",
+          "script_name": "extract-handout-config.py",
+          "purpose": "生成済み単一 HTML を走査して構成データ JSON を逆抽出し、レンダラの逆関数として round-trip の構成データ等価を判定可能にする",
+          "inputs": "argv(--html FILE [--out FILE] [--compare FILE])",
+          "outputs": "stdout(構成データ JSON)/stderr(復元不能な部品と欠落キー)",
+          "exit_codes": "0/1/2",
+          "network": false,
+          "write_scope": "out-file",
+          "stdlib_only": true,
+          "tests_min": 80,
+          "couples_with": [
+            "C11"
+          ],
+          "depends_on": [
+            "C12"
+          ],
+          "placement_scope": "plugin-root",
+          "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+          "builder": "plugin-scaffold",
+          "build_kind": "script",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+coverage"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C20-01",
+            "title": "extract-handout-config.py (script) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C20",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+            "acceptance_criterion": "argv / stdout と stderr の役割分担 / exit code 0|1|2 の意味 / write_scope / 標準ライブラリのみで閉じること が component-inventory.json#component=C20 と矛盾なく確定し、build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C20-01.md"
+          },
+          {
+            "id": "P04-C20-01",
+            "title": "extract-handout-config.py (script) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C20",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/extract-handout-config.py/ に 違反系入力で exit1 になる系 / argv と exit code 契約 / 同一入力の再現性 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C20-01.md"
+          },
+          {
+            "id": "P05-C20-01",
+            "title": "extract-handout-config.py (script) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C20",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+            "acceptance_criterion": "route_ref=C20 の build_target=plugins/guide-doc-generator/scripts/extract-handout-config.py が実在し、criteria_ref=component-inventory.json#component=C20 の purpose・入出力契約・境界・depends_on・quality_gates を builder=plugin-scaffold (build_kind=script) の build trace で満たす (builder_status=contract-only ゆえ実行実体は GAP-SCRIPT-BUILDER の解消まで人手 build)",
+            "execution_kind": "component-build",
+            "route_ref": "C20",
+            "task_spec_ref": "task-specs/P05-C20-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+        "eval-log/guide-doc-generator/build/route-C20.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C02",
+      "claim": "Route C02 is materially built at plugins/guide-doc-generator/skills/run-handout-extract/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C11",
+        "build:C12",
+        "build:C16",
+        "build:C20"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C02",
+          "component_kind": "skill",
+          "name": "run-handout-extract",
+          "build_kind": "skill",
+          "build_args": {
+            "skill_name": "run-handout-extract",
+            "brief_path": "briefs/skill-brief-C02.json"
+          },
+          "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+          "builder": "run-skill-create",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C02",
+          "component_kind": "skill",
+          "name": "run-handout-extract",
+          "skill_kind": "run",
+          "kind": "run",
+          "skill_name": "run-handout-extract",
+          "prefix": "run",
+          "hierarchy_level": "L1",
+          "trigger_conditions": [
+            "既存の資料 HTML から構成データを取り出す",
+            "手書き HTML をテンプレート化",
+            "handout を逆抽出"
+          ],
+          "goal": "既存の単一 HTML から構成データ JSON が復元され、その構成データを再レンダリングした HTML が元 HTML と構成データ等価であることが round-trip テストで確認された状態",
+          "purpose_background": "手書きで作られた過去の資料を資産化するには、HTML から構成データへ戻す経路が要る。戻せて初めてテンプレートとして反復配布できる",
+          "checklist": [
+            "既存 HTML の走査",
+            "構成データの復元",
+            "復元不能箇所の補完判断",
+            "round-trip 等価の確認"
+          ],
+          "output_contract": "構成データ JSON + 逆抽出レポート (復元した部品一覧・復元不能箇所と採った補完・round-trip 差分)",
+          "boundary": "入力=既存の単一 HTML/出力=構成データ JSON と round-trip 判定。資料内容の書き換え・改善提案はしない",
+          "output_language": "ja",
+          "placement_candidates": [
+            "Skill"
+          ],
+          "responsibilities": [
+            {
+              "id": "R1-scan",
+              "summary": "対象 HTML を決定論抽出器にかけ、復元できた部品と復元不能な箇所を切り分ける",
+              "prompt_required": true
+            },
+            {
+              "id": "R2-complete",
+              "summary": "復元不能箇所 (lead-line や判断軸など HTML から一意に定まらない意味情報) の補完方針を判断し構成データを確定する",
+              "prompt_required": true
+            },
+            {
+              "id": "R3-roundtrip",
+              "summary": "確定した構成データを再レンダリングし、元 HTML との構成データ等価を判定して逆抽出レポートを返す",
+              "prompt_required": true
+            }
+          ],
+          "cli_tools": [],
+          "deterministic_checks": [
+            "extract-handout-config.py",
+            "validate-handout-config.py",
+            "render-handout.py",
+            "verify-handout-selfcontained.py"
+          ],
+          "external_systems": [],
+          "mcp_tools": [],
+          "needs_independent_context": true,
+          "needs_lifecycle_enforcement": true,
+          "prompt_layer": "7layer",
+          "combinators": [
+            "with-goal-seek",
+            "with-feedback-contract"
+          ],
+          "goal_seek": {
+            "engine": "inline",
+            "fork": "subagent",
+            "max_loops": 5
+          },
+          "feedback_contract": {
+            "criteria": [
+              {
+                "id": "IN1",
+                "loop_scope": "inner",
+                "text": "逆抽出した構成データが validate-handout-config.py を通り、復元不能箇所が補完方針つきでレポートへ列挙される",
+                "verify_by": "script"
+              },
+              {
+                "id": "OUT1",
+                "loop_scope": "outer",
+                "text": "復元した構成データを再レンダリングした HTML が元 HTML と構成データ等価であることを round-trip テストが確認する",
+                "verify_by": "test"
+              }
+            ]
+          },
+          "depends_on": [
+            "C11",
+            "C12",
+            "C16",
+            "C20"
+          ],
+          "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+          "builder": "run-skill-create",
+          "build_kind": "skill",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-skill-name",
+              "lint-skill-description",
+              "lint-skill-tree",
+              "validate-frontmatter",
+              "lint-dependency-direction",
+              "lint-skill-dep-step7",
+              "lint-forbidden-deps",
+              "lint-manifest-contents"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "loop=criteria-test+content-review-verdict"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C02-01",
+            "title": "run-handout-extract (skill) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C02",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+            "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C02 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/run-handout-extract/ へ着手するのに追加質問が要らない。加えて C02 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C02-01.md"
+          },
+          {
+            "id": "P04-C02-01",
+            "title": "run-handout-extract (skill) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C02",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/run-handout-extract/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/run-handout-extract/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/run-handout-extract/ が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C02-01.md"
+          },
+          {
+            "id": "P05-C02-01",
+            "title": "run-handout-extract (skill) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C02",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/skills/run-handout-extract/",
+            "acceptance_criterion": "route_ref=C02 の build_target=plugins/guide-doc-generator/skills/run-handout-extract/ が実在し、criteria_ref=component-inventory.json#component=C02 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C02",
+            "task_spec_ref": "task-specs/P05-C02-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/run-handout-extract/",
+        "eval-log/guide-doc-generator/build/route-C02.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C03",
+      "claim": "Route C03 is materially built at plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C18",
+        "build:C04"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C03",
+          "component_kind": "skill",
+          "name": "assign-handout-readability-evaluator",
+          "build_kind": "skill",
+          "build_args": {
+            "skill_name": "assign-handout-readability-evaluator",
+            "brief_path": "briefs/skill-brief-C03.json"
+          },
+          "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+          "builder": "run-skill-create",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C03",
+          "component_kind": "skill",
+          "name": "assign-handout-readability-evaluator",
+          "skill_kind": "assign",
+          "kind": "assign",
+          "skill_name": "assign-handout-readability-evaluator",
+          "prefix": "assign",
+          "hierarchy_level": "L2",
+          "trigger_conditions": [
+            "資料が初心者に伝わるか見てほしい",
+            "読みやすさレビュー",
+            "handout のレビューを依頼"
+          ],
+          "goal": "生成した資料が初心者に伝わるかを、生成した本人とは別 context のレビュアーが判定し、指摘と根拠を含む verdict が返っている状態",
+          "purpose_background": "文長や言い換え被覆は決定論ゲートで測れるが、初心者に伝わるかは意味判断であり機械では測れない。提案者が自作を採点しない構造にする必要がある",
+          "checklist": [
+            "レビュー入力の受け渡し",
+            "独立 context での判定",
+            "verdict の返却"
+          ],
+          "rubric_refs": [
+            "ref-handout-design-system"
+          ],
+          "output_contract": "readability verdict (PASS/FAIL + 指摘一覧 + 根拠となる該当箇所 + 改善提案)",
+          "boundary": "入力=生成 HTML と構成データ/出力=verdict のみ。資料の書き換えはしない (修正は C01 の責務)",
+          "output_language": "ja",
+          "placement_candidates": [
+            "Skill"
+          ],
+          "responsibilities": [
+            {
+              "id": "R1-assign",
+              "summary": "生成 HTML と構成データと決定論ゲート結果を独立 context のレビュアーへ渡し verdict を回収する",
+              "prompt_required": true
+            }
+          ],
+          "cli_tools": [],
+          "deterministic_checks": [
+            "verify-handout-language.py"
+          ],
+          "external_systems": [],
+          "mcp_tools": [],
+          "needs_independent_context": true,
+          "needs_lifecycle_enforcement": false,
+          "prompt_layer": "7layer",
+          "combinators": [],
+          "feedback_contract": {
+            "skip_reason": "assign kind は評価委譲のみで自身は反復ループを持たない (evaluator verdict でカバーする)"
+          },
+          "depends_on": [
+            "C18",
+            "C04"
+          ],
+          "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+          "builder": "run-skill-create",
+          "build_kind": "skill",
+          "quality_gates": {
+            "p0_lint": [
+              "lint-skill-name",
+              "lint-skill-description",
+              "lint-skill-tree",
+              "validate-frontmatter",
+              "lint-dependency-direction",
+              "lint-skill-dep-step7",
+              "lint-forbidden-deps",
+              "lint-manifest-contents"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "assign=evaluator verdict"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C03-01",
+            "title": "assign-handout-readability-evaluator (skill) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C03",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+            "acceptance_criterion": "goal / 入出力契約 / boundary / feedback_contract / 参照する決定論 script の呼び出し順 が component-inventory.json#component=C03 と矛盾なく確定し、build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ へ着手するのに追加質問が要らない。加えて C03 の射影が exit0 で、出力が skill-brief.schema.json の required を満たし余剰キー 0 である",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C03-01.md"
+          },
+          {
+            "id": "P04-C03-01",
+            "title": "assign-handout-readability-evaluator (skill) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C03",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/ に 受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C03-01.md"
+          },
+          {
+            "id": "P05-C03-01",
+            "title": "assign-handout-readability-evaluator (skill) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C03",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+            "acceptance_criterion": "route_ref=C03 の build_target=plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ が実在し、criteria_ref=component-inventory.json#component=C03 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-skill-create (build_kind=skill) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C03",
+            "task_spec_ref": "task-specs/P05-C03-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+        "eval-log/guide-doc-generator/build/route-C03.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C06",
+      "claim": "Route C06 is materially built at plugins/guide-doc-generator/agents/handout-readability-reviewer.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C03"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C06",
+          "component_kind": "sub-agent",
+          "name": "handout-readability-reviewer",
+          "build_kind": "agent",
+          "build_args": {
+            "kind": "agent",
+            "name": "handout-readability-reviewer"
+          },
+          "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C06",
+          "component_kind": "sub-agent",
+          "name": "handout-readability-reviewer",
+          "description": "生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・一文の長さを指摘したいときに使う",
+          "tools": [
+            "Read",
+            "Bash"
+          ],
+          "independent_context": true,
+          "responsibility_anchor": "prompts/R-review-readability.md",
+          "prompt_layer": "7layer",
+          "evaluator_pair": "C01",
+          "depends_on": [
+            "C03"
+          ],
+          "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+          "builder": "run-build-skill",
+          "build_kind": "agent",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter",
+              "lint-skill-description",
+              "lint-agent-prompt-section"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+verdict"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C06-01",
+            "title": "handout-readability-reviewer (sub-agent) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C06",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+            "acceptance_criterion": "独立 context で解く問い / 入力と返却の形 / 親会話の前提を持ち込まない境界 が component-inventory.json#component=C06 と矛盾なく確定し、build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C06-01.md"
+          },
+          {
+            "id": "P04-C06-01",
+            "title": "handout-readability-reviewer (sub-agent) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C06",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-readability-reviewer/ に 返却物の形式検査 / 親会話の前提を持ち込んだ場合に落ちる検査 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C06-01.md"
+          },
+          {
+            "id": "P05-C06-01",
+            "title": "handout-readability-reviewer (sub-agent) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C06",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+            "acceptance_criterion": "route_ref=C06 の build_target=plugins/guide-doc-generator/agents/handout-readability-reviewer.md が実在し、criteria_ref=component-inventory.json#component=C06 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=agent) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C06",
+            "task_spec_ref": "task-specs/P05-C06-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+        "eval-log/guide-doc-generator/build/route-C06.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C07",
+      "claim": "Route C07 is materially built at plugins/guide-doc-generator/commands/handout-build.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C07",
+          "component_kind": "slash-command",
+          "name": "handout-build",
+          "build_kind": "command",
+          "build_args": {
+            "kind": "command",
+            "name": "handout-build"
+          },
+          "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C07",
+          "component_kind": "slash-command",
+          "name": "handout-build",
+          "description": "題材から単一 HTML の資料生成を手動起動する (--theme は構成データにテーマ欄が無い場合のみ有効で、採用値は同梱構成データへ書き戻されるため再現の単位は同梱構成データに閉じる)",
+          "argument-hint": "[題材] [--out-dir <path>] [--theme <preset> (構成データ未指定時のみ)]",
+          "allowed-tools": [
+            "Read",
+            "Write",
+            "Bash",
+            "Skill"
+          ],
+          "disable-model-invocation": false,
+          "depends_on": [
+            "C01"
+          ],
+          "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+          "builder": "run-build-skill",
+          "build_kind": "command",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+test"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C07-01",
+            "title": "handout-build (slash-command) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C07",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+            "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C07 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-build.md へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C07-01.md"
+          },
+          {
+            "id": "P04-C07-01",
+            "title": "handout-build (slash-command) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C07",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/handout-build/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-build/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-build.md が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C07-01.md"
+          },
+          {
+            "id": "P05-C07-01",
+            "title": "handout-build (slash-command) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C07",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/commands/handout-build.md",
+            "acceptance_criterion": "route_ref=C07 の build_target=plugins/guide-doc-generator/commands/handout-build.md が実在し、criteria_ref=component-inventory.json#component=C07 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C07",
+            "task_spec_ref": "task-specs/P05-C07-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-build.md",
+        "eval-log/guide-doc-generator/build/route-C07.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C08",
+      "claim": "Route C08 is materially built at plugins/guide-doc-generator/commands/handout-extract.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C02"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C08",
+          "component_kind": "slash-command",
+          "name": "handout-extract",
+          "build_kind": "command",
+          "build_args": {
+            "kind": "command",
+            "name": "handout-extract"
+          },
+          "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C08",
+          "component_kind": "slash-command",
+          "name": "handout-extract",
+          "description": "既存の単一 HTML から構成データの逆抽出と round-trip 判定を手動起動する",
+          "argument-hint": "<html-path> [--out <config.json>]",
+          "allowed-tools": [
+            "Read",
+            "Write",
+            "Bash",
+            "Skill"
+          ],
+          "disable-model-invocation": false,
+          "depends_on": [
+            "C02"
+          ],
+          "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+          "builder": "run-build-skill",
+          "build_kind": "command",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+test"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C08-01",
+            "title": "handout-extract (slash-command) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C08",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+            "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C08 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-extract.md へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C08-01.md"
+          },
+          {
+            "id": "P04-C08-01",
+            "title": "handout-extract (slash-command) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C08",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-extract/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-extract.md が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C08-01.md"
+          },
+          {
+            "id": "P05-C08-01",
+            "title": "handout-extract (slash-command) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C08",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/commands/handout-extract.md",
+            "acceptance_criterion": "route_ref=C08 の build_target=plugins/guide-doc-generator/commands/handout-extract.md が実在し、criteria_ref=component-inventory.json#component=C08 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C08",
+            "task_spec_ref": "task-specs/P05-C08-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-extract.md",
+        "eval-log/guide-doc-generator/build/route-C08.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C09",
+      "claim": "Route C09 is materially built at plugins/guide-doc-generator/commands/handout-verify.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C22"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C09",
+          "component_kind": "slash-command",
+          "name": "handout-verify",
+          "build_kind": "command",
+          "build_args": {
+            "kind": "command",
+            "name": "handout-verify"
+          },
+          "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C09",
+          "component_kind": "slash-command",
+          "name": "handout-verify",
+          "description": "既存の資料 HTML に自己完結性・a11y と印刷・言語と日付の検証ゲート一式を手動で掛ける",
+          "argument-hint": "<html-path> [--config <config.json>]",
+          "allowed-tools": [
+            "Read",
+            "Bash"
+          ],
+          "disable-model-invocation": false,
+          "depends_on": [
+            "C16",
+            "C17",
+            "C18",
+            "C22"
+          ],
+          "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+          "builder": "run-build-skill",
+          "build_kind": "command",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+test"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C09-01",
+            "title": "handout-verify (slash-command) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C09",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+            "acceptance_criterion": "argument-hint / allowed-tools / 委譲先 skill / 引数の既定値と上書き規則 が component-inventory.json#component=C09 と矛盾なく確定し、build_target=plugins/guide-doc-generator/commands/handout-verify.md へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C09-01.md"
+          },
+          {
+            "id": "P04-C09-01",
+            "title": "handout-verify (slash-command) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C09",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/handout-verify/ に 引数既定値と上書きの解決結果 / 委譲先不在時の縮退 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/commands/handout-verify.md が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C09-01.md"
+          },
+          {
+            "id": "P05-C09-01",
+            "title": "handout-verify (slash-command) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C09",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/commands/handout-verify.md",
+            "acceptance_criterion": "route_ref=C09 の build_target=plugins/guide-doc-generator/commands/handout-verify.md が実在し、criteria_ref=component-inventory.json#component=C09 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=command) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C09",
+            "task_spec_ref": "task-specs/P05-C09-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-verify.md",
+        "eval-log/guide-doc-generator/build/route-C09.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "build:C10",
+      "claim": "Route C10 is materially built at plugins/guide-doc-generator/hooks/guard-handout-external-ref.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "build:C16"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/phase-05-implementation.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "route": {
+          "id": "C10",
+          "component_kind": "hook",
+          "name": "guard-handout-external-ref",
+          "build_kind": "hook",
+          "build_args": {
+            "kind": "hook",
+            "name": "guard-handout-external-ref"
+          },
+          "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+          "builder": "run-build-skill",
+          "spec": "phase-05-implementation.md"
+        },
+        "inventory_component": {
+          "id": "C10",
+          "component_kind": "hook",
+          "name": "guard-handout-external-ref",
+          "event": "PostToolUse",
+          "matcher": "Write|Edit",
+          "applies_to": {
+            "in_scope": "書込先が資料出力ディレクトリ (<YYYY-MM-DD>-<種別>-<主題slug>/ 配下・C19 が解決した out-dir) の生成物であり、かつ拡張子が .html のファイルのみ",
+            "out_of_scope": "上記以外の全 Write/Edit (plugin 導入環境の一般ファイル・Markdown・ソースコード) は判定せず exit0 で素通しする",
+            "resolution": "書込先パスを out-dir 判定 → .html 判定の順で評価し、いずれか外れた時点で exit0。対象内でのみ外部参照と絵文字の混入を検査する",
+            "rationale": "hook は導入環境の全 Write/Edit を受け取るため、適用範囲を宣言しないと handout と無関係な http(s) URL を含む文書まで exit2 で止めうる。fail-closed は適用対象内でのみ働かせる"
+          },
+          "exit_semantics": "fail-closed-exit2 (適用対象内のみ・対象外は exit0 素通し)",
+          "settings_wiring": "settings.json",
+          "fail_closed": true,
+          "depends_on": [
+            "C16"
+          ],
+          "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+          "builder": "run-build-skill",
+          "build_kind": "hook",
+          "quality_gates": {
+            "p0_lint": [
+              "validate-frontmatter",
+              "lint-script-frontmatter"
+            ],
+            "build_trace": "required",
+            "elegant_review": {
+              "conditions": [
+                "C1",
+                "C2",
+                "C3",
+                "C4"
+              ],
+              "all_pass": true
+            },
+            "content_review": {
+              "verdict": "PASS",
+              "sha_match": true
+            },
+            "evaluator": {
+              "threshold": 80,
+              "high_max": 0
+            }
+          },
+          "harness_coverage": {
+            "min": 80,
+            "kind_pass": "content-review-verdict+test"
+          }
+        },
+        "task_nodes": [
+          {
+            "id": "P02-C10-01",
+            "title": "guard-handout-external-ref (hook) の設計ブリーフを確定する",
+            "phase_ref": "P02",
+            "entity_ref": "C10",
+            "state": "pending",
+            "write_scope": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+            "acceptance_criterion": "event と matcher / 適用対象パスの判定規則 / 対象外を exit0 で素通しする境界 / fail-closed の範囲 が component-inventory.json#component=C10 と矛盾なく確定し、build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py へ着手するのに追加質問が要らない",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P02-C10-01.md"
+          },
+          {
+            "id": "P04-C10-01",
+            "title": "guard-handout-external-ref (hook) の受入テストを赤で固定する",
+            "phase_ref": "P04",
+            "entity_ref": "C10",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+            "acceptance_criterion": "plugins/guide-doc-generator/tests/guard-handout-external-ref/ に 適用対象で発火して落ちる違反系 / 対象外を exit0 で素通しする系 を含むテスト実体が存在し、build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py が未実装の時点で実行すると失敗する",
+            "execution_kind": "direct-task",
+            "route_ref": null,
+            "task_spec_ref": "task-specs/P04-C10-01.md"
+          },
+          {
+            "id": "P05-C10-01",
+            "title": "guard-handout-external-ref (hook) を build する",
+            "phase_ref": "P05",
+            "entity_ref": "C10",
+            "state": "pending",
+            "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+            "acceptance_criterion": "route_ref=C10 の build_target=plugins/guide-doc-generator/hooks/guard-handout-external-ref.py が実在し、criteria_ref=component-inventory.json#component=C10 の purpose・入出力契約・境界・depends_on・quality_gates を builder=run-build-skill (build_kind=hook) の build trace で満たす",
+            "execution_kind": "component-build",
+            "route_ref": "C10",
+            "task_spec_ref": "task-specs/P05-C10-01.md"
+          }
+        ],
+        "mode": "create"
+      },
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+        "eval-log/guide-doc-generator/build/route-C10.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P01-x-01",
+      "claim": "C1-C45 が全て verify_by を持ち、参照解析の実測値が要件へ数値として混入しておらず、分界線が要件文として明示されている",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P01-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P01-x-01",
+          "title": "要件正本と分界線を確定する",
+          "phase_ref": "P01",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P01.json",
+          "acceptance_criterion": "C1-C45 が全て verify_by を持ち、参照解析の実測値が要件へ数値として混入しておらず、分界線が要件文として明示されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P01-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P01.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P02-x-01",
+      "claim": "23 component 全てに設計ブリーフが存在し、依存 DAG に循環が無く、実体解決が HB_ROOT 起点の 4 段で宣言されている",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P01-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P02-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P02-x-01",
+          "title": "23 component の設計を確定する",
+          "phase_ref": "P02",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P02.json",
+          "acceptance_criterion": "23 component 全てに設計ブリーフが存在し、依存 DAG に循環が無く、実体解決が HB_ROOT 起点の 4 段で宣言されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P02-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P02.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P03-x-01",
+      "claim": "決定論経路への LLM 介在 0 件・責務重複 0 件・循環 0 件で、不採用 surface 全てに理由が付いている",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "task:P02-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P03-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P03-x-01",
+          "title": "設計を独立 context でレビューする",
+          "phase_ref": "P03",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P03.json",
+          "acceptance_criterion": "決定論経路への LLM 介在 0 件・責務重複 0 件・循環 0 件で、不採用 surface 全てに理由が付いている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P03-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P03.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P04-x-01",
+      "claim": "23 component 全てに tests/<component 名>/ のテスト実体が存在し、実装前の実行で全て失敗している",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P03-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P04-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P04-x-01",
+          "title": "23 component 分の赤を集約する",
+          "phase_ref": "P04",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P04.json",
+          "acceptance_criterion": "23 component 全てに tests/<component 名>/ のテスト実体が存在し、実装前の実行で全て失敗している",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P04-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P04.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P05-x-01",
+      "claim": "全 route が build_target へ実体化され、日付既定値の解決箇所が構成データ正規化の 1 箇所だけである",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P04-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P05-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P05-x-01",
+          "title": "23 component の build 完了を集約する",
+          "phase_ref": "P05",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P05.json",
+          "acceptance_criterion": "全 route が build_target へ実体化され、日付既定値の解決箇所が構成データ正規化の 1 箇所だけである",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P05-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P05.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P06-x-01",
+      "claim": "全テストが green で、env 未設定でも __file__ 相対フォールバックで一気通貫が成功する",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "task:P05-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P06-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P06-x-01",
+          "title": "テストを実行して緑を記録する",
+          "phase_ref": "P06",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P06.json",
+          "acceptance_criterion": "全テストが green で、env 未設定でも __file__ 相対フォールバックで一気通貫が成功する",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P06-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P06.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P07-x-01",
+      "claim": "index の受入確認表の全行が観測手段つきで判定でき、導入一文の検査と目的背景ゴールの検査が独立に判定されている",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "task:P06-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P07-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P07-x-01",
+          "title": "purpose 由来の受入基準を確定する",
+          "phase_ref": "P07",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P07.json",
+          "acceptance_criterion": "index の受入確認表の全行が観測手段つきで判定でき、導入一文の検査と目的背景ゴールの検査が独立に判定されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P07-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P07.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P08-x-01",
+      "claim": "argv と exit code が不変で、生成 HTML がバイト一致のまま保たれている",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "task:P07-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P08-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P08-x-01",
+          "title": "内部構造を整理して不変性を確認する",
+          "phase_ref": "P08",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P08.json",
+          "acceptance_criterion": "argv と exit code が不変で、生成 HTML がバイト一致のまま保たれている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P08-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P08.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P09-x-01",
+      "claim": "全 component の p0_lint と build trace が揃い、カバレッジが閾値以上で絶対パス直書きが 0 件である",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "task:P08-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P09-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P09-x-01",
+          "title": "品質ゲートを通す",
+          "phase_ref": "P09",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P09.json",
+          "acceptance_criterion": "全 component の p0_lint と build trace が揃い、カバレッジが閾値以上で絶対パス直書きが 0 件である",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P09-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P09.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P10-x-01",
+      "claim": "hook が対象内で発火し対象外で発火しないことと、委譲先不在時に縮退動作で完走することが確認されている",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "task:P09-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P10-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P10-x-01",
+          "title": "最終レビューを独立 context で通す",
+          "phase_ref": "P10",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P10.json",
+          "acceptance_criterion": "hook が対象内で発火し対象外で発火しないことと、委譲先不在時に縮退動作で完走することが確認されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P10-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P10.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P11-x-01",
+      "claim": "全ゲートの実行出力が実在ファイルとして残り、実題材の生成物が構成データとセットで保全されている",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "task:P10-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P11-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P11-x-01",
+          "title": "再現可能な証跡を保全する",
+          "phase_ref": "P11",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P11.json",
+          "acceptance_criterion": "全ゲートの実行出力が実在ファイルとして残り、実題材の生成物が構成データとセットで保全されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P11-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P11.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P12-x-01",
+      "claim": "README だけで起動から出力物受け取りまでを追加質問なしに実行でき、専門用語に初出言い換えがある",
+      "kind": "generative",
+      "risk": "medium",
+      "activation": "changed",
+      "depends_on": [
+        "task:P11-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P12-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P12-x-01",
+          "title": "利用文書を確定する",
+          "phase_ref": "P12",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P12.json",
+          "acceptance_criterion": "README だけで起動から出力物受け取りまでを追加質問なしに実行でき、専門用語に初出言い換えがある",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P12-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P12.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    },
+    {
+      "id": "task:P13-x-01",
+      "claim": "manifest の配布可否と実体が整合し、marketplace 登録の判断と理由が記録されている",
+      "kind": "generative",
+      "risk": "high",
+      "activation": "changed",
+      "depends_on": [
+        "task:P12-x-01"
+      ],
+      "inputs": [
+        {
+          "path": "plugin-plans/guide-doc-generator/task-specs/P13-x-01.md",
+          "required": true,
+          "context": true
+        }
+      ],
+      "parameters": {
+        "task_node": {
+          "id": "P13-x-01",
+          "title": "repo 内利用可能として引き渡す",
+          "phase_ref": "P13",
+          "entity_ref": null,
+          "state": "pending",
+          "write_scope": "plugin-plans/guide-doc-generator/evidence/P13.json",
+          "acceptance_criterion": "manifest の配布可否と実体が整合し、marketplace 登録の判断と理由が記録されている",
+          "execution_kind": "direct-task",
+          "route_ref": null,
+          "task_spec_ref": "task-specs/P13-x-01.md"
+        },
+        "plan_dir": "plugin-plans/guide-doc-generator"
+      },
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P13.json"
+      ],
+      "model_required": true,
+      "minimum_confidence": 0.9,
+      "reuse": true
+    }
+  ]
+}

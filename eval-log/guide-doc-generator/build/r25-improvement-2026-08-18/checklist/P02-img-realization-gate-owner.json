@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-img-realization-gate-owner",
+  "covered_task_ids": [
+    "P02-img-realization-gate-owner"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+  "acceptance_criterion_restated": "レンダリング後の HTML に対する『IMG 宣言に対応する img 実体の存在』検査の担当 component が 1 つ決まり、その component の brief に検査コードと fail 条件が書かれていること。担い手を置かない裁定を採る場合は、E-IMAGE-ABSENT の緑が実体を保証しないことを利用者向け提示のどこで必ず伝えるかが明記されていること",
+  "verified_by": [
+    {
+      "claim": "担い手を C16 verify-handout-selfcontained.py 1 つに確定した (担い手を置かない裁定は採らなかった)",
+      "method": "候補 3 件の brief#purpose を突合。C16 は『外部参照ゼロを満たしたまま中身だけが欠落する欠陥クラスを独立に捕える』を既に purpose に持ち、SC-03 で img@src を走査している。C17 は『実描画を要する検査を持たない』と範囲外を明示宣言、C22 は語り (R19) 専用",
+      "result": "visual-per-section-decision.json#decision.img_realization_gate (id CR-IMG-REALIZED) を新設。owner を本キー、担い手を C16 と明記した"
+    },
+    {
+      "claim": "検査コードと fail 条件を brief に書いた",
+      "method": "script-brief-C16.json#detections へ SC-11 を追加 (code E-IMG-UNREALIZED)。既存 SC-0x と同形 (id / rule / violation_example / pass_example / false_positive_risk / delegated_to) で記述",
+      "result": "fail 条件は『main セクションごとに data-hb-part=\"IMG\" が 1 件以上あり、少なくとも 1 件が SC-09 (a) の実体条件 (data: かつ base64 実体長 64 バイト以上) を満たすこと。満たさない節が 1 つでもあれば exit 1』"
+    },
+    {
+      "claim": "既存 SC-09 では塞げないことを確認したうえで新設した (重複検査を足していない)",
+      "method": "SC-09 の rule を精読。(d) に『対象要素が配下に <img> も <svg> も持たない』はあるが、対象は data-hb-part を持つ要素そのものである",
+      "result": "C21 が skip し、レンダラが IMG 要素ごと出さなかった節では SC-09 の走査対象が 0 件になり緑になる。検査対象が消えると検査も消える経路であり、節側から数える SC-11 でしか塞げない。両者は包含関係にない"
+    },
+    {
+      "claim": "main セクションの母集合を C12 (宣言側) と一致させた",
+      "method": "C12 の実装を確認: section.get(\"role\") in (None, ROLE_MAIN) で main と数える。schema 側 role は enum [main, appendix] / default main / required に無い。C11 は data-hb-section-role へ section.get(\"role\", \"\") をそのまま出すため、role 未指定の節では空文字が出る",
+      "result": "SC-11 の main 判定を『値が main / 空文字 / 属性不在』と定義した。空を main から外すと、role を書かなかった節が HTML 側だけ検査対象から消え、宣言側が数えた節を実体側が数えない fail-open になる"
+    },
+    {
+      "claim": "C16 の入力契約 (argv = --html 1 点) を崩していない",
+      "method": "構成データを読んで宣言件数と突合する設計と、HTML 単体で節ごとに数える設計を比較",
+      "result": "『節には画像の実体がある』は HTML 単体で判定できる述語なので直接判定にした。突合にすると C16 が構成データ入力を持つ二入力の検査器になり、単純述語という設計が崩れる"
+    },
+    {
+      "claim": "受入検査と失敗時挙動を brief へ足した",
+      "method": "acceptance_checks へ AC-C16-R25-IMG-a..d を追加。a=IMG 無し節で SC-11 のみ FAIL・SC-09 は無傷 (2 検査が別物であることの対照)、b=空実体で両方 FAIL、c=role 未指定節の fail-open 対照、d=appendix 除外。failure_modes へ『main セクションが 0 個の HTML は checked=0 の PASS にせず exit 1』を追加",
+      "result": "母集合が空になる経路を緑にしない (SC-08 の failure_mode と同じ分界)"
+    },
+    {
+      "claim": "元 gap の記述を更新し、担い手未割当のまま残っている記述を消した",
+      "method": "decision.skipped_image_counting.known_gap の『担い手の割り当てが要る』を『CR-IMG-REALIZED で C16 へ割当済み・実装まではの受け皿は who_catches_the_missing_image』へ書き換え",
+      "result": "同じ gap が 2 箇所で別の状態を主張する形を残さなかった。E-IMAGE-ABSENT の緑を実体の証明として読まない旨 (therefore_not) は宣言側ゲート単体の性質として据え置き"
+    },
+    {
+      "claim": "実装と既定値の二重定義を discovered-task として外へ出した",
+      "method": "emit-discovered-task.py を 2 回実行 (いずれも structural)",
+      "result": "P05-x-125-img-unrealized-gate (C16 への SC-11 実装 + AC 4 本)、P05-x-126-section-role-normalized-marker (C11 が正規化済み role を刻み『role 不在 = main』の解釈を 1 箇所へ寄せる)。SC-11 は正規化の有無に関わらず正しく動く形で書く旨を裁定に明記済み"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02IMGREAL-SCOPE-01",
+      "level": "warn",
+      "summary": "宣言された write_scope は visual-per-section-decision.json 1 本だが、受入条件が『その component の brief に検査コードと fail 条件が書かれていること』を要求するため script-brief-C16.json にも書いた。受入条件が write_scope より広い構造で、裁定ファイルだけでは達成が原理的に不可能だった (P05-x-56 の F-P05X56-SCOPE-01 と同型の再発)。C16 は現在他ノードの実行中 write_scope ではない"
+    },
+    {
+      "id": "F-P02IMGREAL-DEFAULT-DUP-01",
+      "level": "warn",
+      "summary": "『role 不在 = main』という既定値が C12 と C16 SC-11 の 2 箇所に書かれる。値の正本は schema の default だが、それを読むのは schema validator だけで、C12 も C11 も独自に解釈している。C11 が空文字を出す限り HTML 側の全検査がこの解釈を複製し続ける。P05-x-126 として emit 済みだが、根はレンダラが既定値を適用せず生値を刻んでいることにある"
+    },
+    {
+      "id": "F-P02IMGREAL-SC09-OVERLAP-01",
+      "level": "info",
+      "summary": "空実体の IMG は SC-09 と SC-11 の両方で FAIL になる。これは重複ではなく枠単位と節単位の 2 視点からの不合格だが、違反件数を単純合計する運用をすると同一欠陥が 2 件に数えられる。json-report の消費側 (C07 の提示) が detection 別に読む契約であることを前提にしている"
+    },
+    {
+      "id": "F-P02IMGREAL-DIAGRAM-01",
+      "level": "info",
+      "summary": "本裁定は IMG の実体だけを扱った。DIAGRAM も同じく『節に枠ごと無い』経路を持つが、図解は C14 の決定論生成であり skip が起きない設計のため今回は対象外とした。C14 が生成失敗を返す経路が将来できた場合、SC-11 と同型の節単位検査が DIAGRAM にも要る"
+    }
+  ]
+}

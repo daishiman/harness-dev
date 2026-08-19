@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/guide-doc-generator/commands/handout-build.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 80,
+    "notes": "C07 生成の起動入口。frontmatter は command 契約 (name/description/argument-hint/allowed-tools/source) を満たし、責務は『引数パース・経路判定・矛盾検出・委譲・提示』に明示的に閉じている。強い点: (a) 引数規約を CR-HB-ARGS という機械可読宣言として持ち、散文と二重管理にしていない。(b) 『構成データの値は常に CLI フラグより強い』という優先順位が全フラグで一貫し、衝突は黙って無視も上書きもせず停止してキーパスと両値を示す — 起動引数が再現単位へ混ざる経路を塞いでいる。(c) 用途語彙を本文へ再列挙せず C23 --list へ送る、出力先命名を C19 の単独責務とする、という正本の一本化。(d) 『command も委譲先 skill も自前で現在日を取得しない (日付解決の単一 writer は C12 --normalize のみ)』は、時計が 2 つある古典的バグを明文で封じている。(e) slide-report-generator 不在は fail-soft だが skip 理由を必ず報告させる。減点: (1) **手順 3 と 手順 4 が両立しない** — 手順 3 は『--config は存在と JSON 読取可否だけ確認し中身は見ない』と定め、手順 4 は『--theme/--date/--doc-type が構成データの既存欄と衝突したら停止』を求める。欄の有無は中身を読まなければ判定できないため、記述どおりに実装すると手順 4 が実行不能になるか、手順 3 の禁を破ることになる。この command の中心的な安全機構 (衝突検出) がその前段の禁止と噛み合っていない。(2) 停止条件に『--doc-type が語彙正本に無い: C23 の exit≠0 を受けて停止』とあるが、手順側に C23 を起動する step が無く (手順 5 で丸ごと skill へ委譲する)、command が exit を受け取る経路が定義されていない。(3) 出力先の停止条件が『4 段のいずれでも解決できない』と書きながら列挙は 3 つ (--out-dir / HB_OUT_DIR / default_out_dir) で、続く文も『3 段を順に示す』。同一段落内で段数が食い違う。(4) allowed-tools に Write があるが、手順のどこでも command 自身は書き込まない (書き出しは委譲先と script)。不要な権限が宣言されている。"
+  },
+  "reviewed_by": "claude-code-review",
+  "checked": [
+    "frontmatter",
+    "responsibility",
+    "reference-existence",
+    "error-handling",
+    "side-effect-safety"
+  ]
+}

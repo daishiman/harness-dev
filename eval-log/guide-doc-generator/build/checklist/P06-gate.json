@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P06",
+  "covered_task_ids": [
+    "P06"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "全テストが green で実行された記録がある",
+      "method": "evidence/P06.json の element_1_all_tests_green",
+      "result": "23 スイート 3308 件 failed=0 の実行記録が残っている"
+    },
+    {
+      "claim": "専用 env 未設定でも自己解決で動作する",
+      "method": "evidence/P06.json の element_2_env_unset_fallback",
+      "result": "env 未設定時の自己解決経路を実測済み"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "gate-scope",
+      "detail": "本 gate の判定は leaf の完了と成果物の実在・網羅に基づく投影であり、設計者と分離した独立 context での再判定ではない"
+    }
+  ]
+}

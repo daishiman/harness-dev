@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P07-x-01",
+  "covered_task_ids": [
+    "P07-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P07.json",
+  "verified_by": [
+    {
+      "claim": "index の受入確認表の全行が観測手段つきで判定できる",
+      "method": "当方が実題材 1 本 (onboarding) を validate → normalize → render → 4 ゲート → routing → 同梱構成データからの再生成 → extract の順で実行し、7 行それぞれへ実行出力ファイルを紐づけた",
+      "result": "pass (7 行すべてに裸の実在パスの証跡が付いた。うち 5 行が pass、2 行が partial。partial の内訳は『読みやすさの意味判定 (独立 context のレビュー) を本 build で起動していない』と『用途プリセットの差分が section_order と recommended_parts に限定されていない』であり、いずれも pass を推定せず partial と記録している。表は plugin-plans/guide-doc-generator/evidence/P07.json)"
+    },
+    {
+      "claim": "導入一文の検査と、目的・背景・ゴールの検査が独立に判定されている",
+      "method": "当方が verify-handout-language.py (LANG) と verify-handout-narrative.py (NAR) を別実行し、片方の PASS がもう片方の判定に影響しないことを実測で確認した",
+      "result": "pass (**片方の PASS が他方の代替になっていないことが実測で出た**: 初回実行で LANG は 2 件 FAIL・NAR は 1 件 FAIL と、互いに無関係な理由で独立に落ちた。LANG の指摘は用語 (構成データ / ゲート) の初出直後に言い換えが無いこと、NAR の指摘は demo_first で最初の提示物が実画面でないことで、原因も直し先も重ならない)"
+    },
+    {
+      "claim": "起動引数ではなく同梱構成データが再現の単位である",
+      "method": "当方が同梱 handout-config.json だけを入力に (起動引数を一切付けず) 再生成し sha256 を比較した",
+      "result": "pass — ただし**初回は不一致で、実装の欠陥を 1 件検出して直した後の pass である**。--theme を CLI で渡すと data-hb-config-theme が空のまま焼かれ、書き戻し後の構成データからの再生成と 1 属性ずれていた (round-trip 側で出ていた W-EXTRACT-OPTIONAL /theme 警告も同じ 1 点が根だった)。render-handout.py で採用テーマを render_config へも落とすよう直し、sha256 1b25e1a2… が完全一致・extract の warning も消えた"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "readability-semantic-review-not-run",
+      "detail": "handout-readability-reviewer による独立 context の意味判定は起動していない。P07 の事前解決済み判断は決定論ゲートと意味判定の二段構えを要求しており、二段目が未実施である"
+    },
+    {
+      "kind": "preset-variation-surface-wider-than-criterion",
+      "detail": "受入基準の文面は『差分がセクションの並びと推奨部品に限定される』だが、実測では granularity_defaults (R22 の detail_level × evidence_depth) が 7 通り、required_document_fields が lecture のみ非 null で、変動軸は 4 つある。R22 の追加後に基準文面が更新されていない可能性が高く、基準側の棚卸しが要る。実装を基準へ合わせる方向 (用途ごとの粒度既定を捨てる) は R22 の要件と正面から衝突するため採っていない"
+    },
+    {
+      "kind": "criterion-says-6-purposes-implementation-has-8",
+      "detail": "受入基準は『6 用途』と書くが語彙正本には 8 用途ある。8 件すべてを測って共有の型を確認したので被覆は基準より広いが、数の食い違いは基準文面の古さを示す"
+    }
+  ]
+}

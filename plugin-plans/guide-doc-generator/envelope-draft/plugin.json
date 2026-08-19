@@ -1,0 +1,49 @@
+{
+  "name": "guide-doc-generator",
+  "version": "0.1.0",
+  "description": "初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成する plugin の manifest draft。run-plugin-dev-plan が manual-apply artifact として出力し、後段 scaffold executor または人手承認で plugins/guide-doc-generator/.claude-plugin/plugin.json へ適用する。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "entry_points": {
+    "skills": [
+      "run-handout-build",
+      "run-handout-extract",
+      "assign-handout-readability-evaluator",
+      "ref-handout-design-system"
+    ],
+    "agents": [
+      "handout-content-architect",
+      "handout-readability-reviewer"
+    ],
+    "commands": [
+      "handout-build",
+      "handout-extract",
+      "handout-verify"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}/hooks/guard-handout-external-ref.py --scope handout-output-html",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "hook_scope_note": "PostToolUse の matcher は Write|Edit だが、hook 本体は --scope handout-output-html により資料出力ディレクトリ ({date}_{slug}/。R25/REQ-6・goal-spec C72。区切りは '_' 固定で date と slug の 2 要素のみ、doc_type = dir_token はパスに含めない) 配下の *.html だけを検査する。対象外の書込は判定せず exit0 で素通しし、fail-closed exit2 は適用対象内でのみ働く。",
+  "distributable": false,
+  "bundle_targets": [],
+  "category": "productivity",
+  "tags": [
+    "handout",
+    "html",
+    "documentation",
+    "deterministic"
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-C19-01",
+  "covered_task_ids": [
+    "P04-C19-01"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls / git status --short",
+      "method_note": "write_scope 外への書き込みが無いことも git status で確認済み",
+      "result": "plugins/guide-doc-generator/tests/route-handout-output.py/ に test_*.py と README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/route-handout-output.py -p 'test_*.py' を dispatcher が独立実行",
+      "result": "Ran 113 tests / FAILED (failures=115)"
+    },
+    {
+      "claim": "import 例外で落ちるだけの空テストでない",
+      "method": "failures/errors の別を確認",
+      "result": "errors 0・failures のみ。assert が評価された上で落ちている"
+    },
+    {
+      "claim": "実出力先を汚染しないこと",
+      "method": "git status --short と grep",
+      "result": "書き込みは tempfile 配下に閉じており /Users/dm/dev/dev/ObsidianMemo/ への書き込みは無い"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    },
+    {
+      "kind": "failures-exceed-test-count",
+      "detail": "failures=115 > Ran 113。subTest による複数失敗の計上であり異常ではない"
+    }
+  ]
+}

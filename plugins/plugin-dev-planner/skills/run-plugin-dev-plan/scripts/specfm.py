@@ -34,6 +34,7 @@ import re
 # | SKILL_P0_LINTS | plugins/skill-governance-lint/scripts/*.py (実体 glob) | tests/test_schema_parity.py |
 # | evaluator threshold>=80 / high_max==0 (validate_component_quality_gates) | plugins/harness-creator/skills/assign-skill-design-evaluator/ + references/4-conditions.json | tests/test_matrix_doc_integrity.py |
 # | HARNESS_MIN_REQUIRED=80 | doc/harness-coverage-spec.md | tests/test_matrix_doc_integrity.py |
+# | SCRIPT_TESTS_MIN=12 | (本 module が正本。カバレッジ % とは別種の量) | tests/test_check_spec_frontmatter.py |
 # | BUILDER_BY_KIND / BUILD_KIND_BY_KIND / BUILDER_STATUS | references/io-contract.md §9 build handoff 契約 (projection) | tests/test_kind_key_doc_parity.py |
 # | PHASE_BODY_SECTIONS | references/io-contract.md §5 表 / prompts/R3-emit-specs.md (projection) | tests/test_kind_key_doc_parity.py |
 # | INDEX_REQUIRED_SECTIONS | references/io-contract.md §9 / verify-index-topsort docstring (projection) | tests/test_kind_key_doc_parity.py |
@@ -52,6 +53,19 @@ SKILL_KINDS = ("run", "ref", "wrap", "assign", "delegate")
 FEEDBACK_LOOP_SKILL_KINDS = ("run", "wrap", "delegate")
 HOOK_EVENTS = ("PreToolUse", "PostToolUse", "Stop", "UserPromptSubmit", "SessionEnd")
 HARNESS_MIN_REQUIRED = 80
+# script component が計画段階で宣言するテスト「本数」の下限。
+#
+# ここは長らく HARNESS_MIN_REQUIRED を流用していたが、両者は別種の量である。
+# HARNESS_MIN_REQUIRED は doc/harness-coverage-spec.md が根拠を持つ「カバレッジの
+# 百分率 (80%)」であり、本数の根拠ではない。同じ 80 を本数の床として使うと、
+# 振る舞いが 10 個しかない小さな script にも 80 本を書かせることになり、
+# 「使えるようになる前に払う時間」だけが膨らむ。品質を担保しているのは
+# harness_coverage.min (=%) と kind_pass の方であって、本数ではない。
+#
+# 本数の床に残された役割は「テスト 1 本だけの見せかけのハーネス」を落とすこと
+# だけなので、その目的に足る最小値に留める。実質的な網羅性は引き続き
+# harness_coverage が持つ。
+SCRIPT_TESTS_MIN = 12
 # component の配置境界 (deploy 境界の内/外)。既定 skill=当該 skill 配下、plugin-root=
 # plugins/<slug>/scripts/ へ hoist した共有 script。属性であって新 component_kind ではない。
 PLACEMENT_SCOPES = ("skill", "plugin-root")
@@ -838,7 +852,7 @@ def validate_inventory_component(comp: dict) -> list[str]:
         feedback_contract.criteria を validate_criteria + criteria_purpose_traceability_errors で検査
         (ref/assign は skip_reason か criteria)。非 skill は criteria をスキップ
       - quality_gates / harness_coverage の値域 (harness-creator 規律の出力強制)
-      - script は tests_min>=80
+      - script は tests_min>=SCRIPT_TESTS_MIN (本数の床。網羅性は harness_coverage が持つ)
     """
     if not isinstance(comp, dict):
         return ["component が object でない"]
@@ -921,11 +935,11 @@ def validate_inventory_component(comp: dict) -> list[str]:
     errs.extend(f"{prefix} {e}" for e in validate_component_quality_gates(comp))
     errs.extend(f"{prefix} {e}" for e in validate_component_harness_coverage(comp))
 
-    # 6. script は tests_min>=80 + placement 別 build_target 不変条件
+    # 6. script は tests_min>=SCRIPT_TESTS_MIN + placement 別 build_target 不変条件
     if ck == "script":
         tm = as_int(comp.get("tests_min"))
-        if tm is None or tm < HARNESS_MIN_REQUIRED:
-            errs.append(f"{prefix} [script] tests_min は >={HARNESS_MIN_REQUIRED} (現値 {comp.get('tests_min')!r})")
+        if tm is None or tm < SCRIPT_TESTS_MIN:
+            errs.append(f"{prefix} [script] tests_min は >={SCRIPT_TESTS_MIN} (現値 {comp.get('tests_min')!r})")
         bt = str(comp.get("build_target", "")).strip()
         if bt:
             if ps == "plugin-root":
@@ -1160,7 +1174,7 @@ def minimal_frontmatter(component_kind: str, *, spec_id: str = "C01", skill_kind
             "network": False,
             "write_scope": "none",
             "stdlib_only": True,
-            "tests_min": HARNESS_MIN_REQUIRED,
+            "tests_min": SCRIPT_TESTS_MIN,
         })
     fm["quality_gates"] = valid_quality_gates(component_kind)
     fm["harness_coverage"] = valid_harness_coverage(component_kind, skill_kind)

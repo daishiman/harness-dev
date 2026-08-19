@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "guide-doc-generator の実題材 1 本 (onboarding / 6 セクション / 9 部品)",
+  "theme": "pop",
+  "methods": [
+    {
+      "id": "same-args-double-render",
+      "desc": "同一引数で 2 回生成する",
+      "a": "handout.html",
+      "b": "handout-2nd.html",
+      "sha256_a": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+      "sha256_b": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+      "identical": true
+    },
+    {
+      "id": "config-writeback-double-output",
+      "desc": "--config-out で書き戻した構成データが 2 回とも同一である",
+      "a": "embedded-config.json",
+      "b": "embedded-config-2nd.json",
+      "sha256_a": "3e8e3bb3e8fc2e75105865eb1c40809c68f6d48ab89edc7000f25cc27959a67b",
+      "sha256_b": "3e8e3bb3e8fc2e75105865eb1c40809c68f6d48ab89edc7000f25cc27959a67b",
+      "identical": true
+    },
+    {
+      "id": "argv-free-regeneration-from-bundle",
+      "desc": "同梱された構成データだけを渡し、--theme 等の起動引数なしで再生成する (再現の単位が起動引数でなく構成データであることの検査)",
+      "a": "handout.html",
+      "b": "regenerated-from-bundle.html",
+      "sha256_a": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+      "sha256_b": "11d89af830d082611396e59b3bfc528cf6f9a03af3f1e7fcd3496d548ef8d447",
+      "identical": true
+    }
+  ],
+  "all_identical": true
+}

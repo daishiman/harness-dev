@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C23",
+  "task_id": "P05-C23-01",
+  "covered_task_ids": [
+    "P05-C23-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (919 行)"
+    },
+    {
+      "claim": "テストが 128 件中 125 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/resolve-handout-preset.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=3 / errors=0。実装前は failures=123)"
+    },
+    {
+      "claim": "残る赤 3 件は他 leaf 未完了成果物への依存であり実装不足ではない",
+      "method": "FAIL 行を抽出し原因を特定",
+      "result": "pass (test_declared_fields_exist_in_config_schema / test_unknown_document_field_is_rejected / test_out_of_range_value_is_exit1 の 3 件。いずれも plugins/guide-doc-generator/schemas/handout-config.schema.json 不在が原因)"
+    },
+    {
+      "claim": "Python 3.10+ 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙",
+      "result": "pass (argparse / hashlib / json / os / re / sys / unicodedata / pathlib / difflib の 9 本。すべて標準ライブラリ)"
+    },
+    {
+      "claim": "用途語彙を script へ列挙していない",
+      "method": "8 語彙のリテラル出現を grep -c",
+      "result": "pass (0 件。語彙は config/handout-purposes.json からのみ読む)"
+    },
+    {
+      "claim": "環境固有の絶対パスを script へ書いていない",
+      "method": "grep -c ObsidianMemo",
+      "result": "pass (0 件)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/ 配下 12 ファイル + README の mtime を実装作成時刻と比較 (plugins/guide-doc-generator/ が untracked のため git 差分では証明不可)",
+      "result": "pass (最新 17:10 で実装作成 17:07:53 以降の更新なし。config/ も 17:35-17:36 のまま)"
+    },
+    {
+      "claim": "schemas/handout-config.schema.json に producer が存在しない (producer 0 件の欠陥クラス 3 例目)",
+      "method": "grep -rln 'handout-config.schema.json' を plugin-plans/guide-doc-generator/ と tests/ に対して実行し、task-specs/ の produces と突合",
+      "result": "pass (component-inventory.json + briefs 4 本 + tests 4 箇所が参照。task-specs/*.md の produces / write_scope に現れる箇所は 0 件)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "blocked-by-missing-producer",
+      "detail": "残る赤 3 件は plugins/guide-doc-generator/schemas/handout-config.schema.json (C12 の構成データスキーマ) の producer が task-graph に存在しないために緑にできない。assets/ (P04-x-05 裁定 G-04) / config/ (P05-x-03) と同一の欠陥クラスで、validate-task-graph.py の規則 (c) が producer 0 個を検出しないために残った 3 例目。P05-x-02 / P05-x-03 と同形の producer leaf が必要"
+    },
+    {
+      "kind": "fail-closed-forbidden-by-test",
+      "detail": "スキーマ不在時に一律 exit 1 とする fail-closed は、同一ファイルの test_single_field_of_the_pair_is_not_rejected_by_c23 が『スキーマ不在の fixture root で required_document_fields を持つ lecture が exit 0』を固定しているため採れない。よってスキーマ不在時は当該 2 検査のみを行わない (照合できないものを判定したふりをしない) 形にした"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 7 件。(1) HB_ROOT / CLAUDE_PLUGIN_ROOT を排他的候補にした — 4 段フォールバックを素直に読むと明示 root に catalog が無いとき黙って別 root へ落ちて exit 0 になり、test_missing_catalog_lists_candidate_paths と両立せず fail-closed にも反するため (2) 隣接データの解決元を catalog ファイルの親ディレクトリに固定、スキーマは catalog_dir.parent/schemas/ (3) schema_version の既知値を {1} と定義 (4) --purpose 出力の notes / required_document_fields は preset に存在するときだけ出す (granularity_defaults は裁定 C に従い常時) (5) required_document_fields の重複は E-CATALOG-MALFORMED とし E-PRESET-REQFIELD-UNKNOWN は未知フィールド専用に温存 (6) preset トップレベルの recommended_parts は実在検査のみ、section_scope 制約は section 内にのみ適用 (ブリーフ 4(h) が section 側のみを規定) (7) 監査走査から __ で始まるディレクトリを除外 (scanned が実行環境で変動するのを避ける決定論のため)"
+    }
+  ]
+}

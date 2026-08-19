@@ -1,0 +1,232 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "cross-component-audit",
+  "audit_id": "P05-x-88",
+  "status": "pre-measurement",
+  "note": "task-graph の未受理 discovered-task P05-x-88 に対する事前の実測。ノードの実行ではない。",
+  "write_scope": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-88.json",
+  "question": "plugins/guide-doc-generator/tests/ 配下の全 component ディレクトリについて、『同一入力の再現性』の面が実際に測られているか",
+  "criteria_applied": {
+    "counts_as_covered": [
+      "同じ入力で 2 回以上実行し出力のバイト一致を assert している",
+      "PYTHONHASHSEED / cwd / 環境変数 / 実行順 を変えても出力が変わらないことを assert している",
+      "出力に実行時刻・絶対パス・プロセス識別子が漏れていないことを assert している"
+    ],
+    "does_not_count": [
+      "『決定論スクリプトへ委譲する』という宣言の検査 (委譲先の話であって自分の再現性ではない)",
+      "出力形式 (JSON 整形・キー順) だけの検査で 2 回実行していないもの",
+      "名前に determinism / deterministic を含むが中身が上記に当たらないファイル・関数"
+    ]
+  },
+  "search_scope": {
+    "root": "plugins/guide-doc-generator/tests/",
+    "enumeration": "同ディレクトリ直下の 23 サブディレクトリ全件 (ファイル数の多寡で足切りしていない)",
+    "method_1": "grep -rn --include='*.py' -iE 'determin|再現|reproduc|idempot|twice|two_runs|run_twice|PYTHONHASHSEED|byte.?identical|バイト' を tests/ を根として実行 (語のヒット集合の取得)",
+    "method_2": "ast.parse による関数単位の本文抽出。ヒットしたファイルの test 関数を実名と行番号つきで読み、2 回実行の有無を目視判定",
+    "method_3": "unittest による該当モジュールの単体実行 (skip / error に化けていないことの確認)",
+    "blind_to": "tests/ 配下以外 (eval-log/ の過去報告、plugin-plans/ の brief 散文)。すなわち『brief が再現性を要求しているか』は本監査の射程外で、本監査は tests/ 側の実体のみを見ている"
+  },
+  "headline": {
+    "total_components": 23,
+    "covered": 16,
+    "nominal_only": 5,
+    "absent": 2,
+    "the_real_split": "verdict は component_kind でほぼ完全に分かれる。script/hook kind 14 件は 14/14 covered。Markdown kind (skill/command/agent) 9 件のうち covered は C01 (run-handout-build) と C09 (handout-verify) の 2 件だけで、いずれも pink が P04 で新規に作った test_argv_and_reproducibility.py に由来する。残る 7 件は本 cycle で誰も触っていない",
+    "why_this_is_not_a_count": "『再現性テストが N 本ある』では判定していない。nominal_only 5 件はいずれも grep で determin / 再現 がヒットし、うち 3 件は test 関数の名前自体に deterministic を含みながら、中身は 1 回も 2 回目の実行をしていない"
+  },
+  "components": [
+    {
+      "component": "build-icon-sprite.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/build-icon-sprite.py/test_determinism.py:84 RepeatRunTest::test_two_runs_are_byte_identical (stdout と stderr の両方をバイト比較) / :93 test_hash_seed_does_not_change_output (PYTHONHASHSEED=0 vs 12345) / :101 test_cwd_does_not_change_output / :109 test_each_format_is_deterministic (--format ごとに 2 回) / :179 NoEnvironmentLeakTest::test_no_absolute_paths_in_output / :189 test_no_timestamp_fields。3 基準すべてに実体がある",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 14 tests / OK, 4.1s)"
+    },
+    {
+      "component": "embed-assets.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/embed-assets.py/test_determinism.py:49 DeterminismTest::test_two_runs_are_byte_identical / :55 test_out_file_is_byte_identical_across_runs (--out のバイト列) / :62 test_hash_randomization_does_not_change_output (複数 PYTHONHASHSEED の出力集合が 1 要素) / :155 test_output_does_not_leak_absolute_paths / :161 test_output_has_no_timestamp_like_field",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 12 tests / OK, 2.9s)"
+    },
+    {
+      "component": "extract-handout-config.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/extract-handout-config.py/test_determinism_and_report.py:16 Determinism::test_two_runs_produce_identical_bytes / :25 test_two_runs_produce_identical_stdout / :31 test_two_runs_produce_identical_stderr_on_failure (失敗側の再現性も測っている) / :37 test_report_is_deterministic (--report のバイト一致) / :46 test_output_path_is_not_recorded_in_config",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 14 tests / OK, 4.8s)"
+    },
+    {
+      "component": "render-diagram-svg.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/render-diagram-svg.py/test_determinism.py:39 ByteReproducibilityTest::test_two_runs_are_byte_identical_for_every_pattern (全 pattern を subTest で 2 回) / :50 test_hash_seed_does_not_change_output / :62 test_timezone_does_not_change_output (TZ=UTC vs Asia/Tokyo) / :72 test_cwd_does_not_change_output / :84 test_key_order_in_input_does_not_change_output。3 基準に加え TZ 軸まで張っている本 plugin 内で最も厚い面",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 20 tests / OK, 4.6s)"
+    },
+    {
+      "component": "render-handout.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/render-handout.py/test_determinism.py:22 ByteReproducibilityTest::test_two_runs_are_byte_identical (2 回生成の digest 比較) / :38 test_output_path_does_not_leak_into_html (出力パス名を変えて本文一致) / :130 StdlibOnlyTest::test_no_randomness_or_process_identity (source から乱数・プロセス識別子を排除)",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 8 tests / OK, 4.3s)"
+    },
+    {
+      "component": "resolve-handout-preset.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/resolve-handout-preset.py/test_determinism_and_readonly.py:13 DeterminismTest::test_repeated_purpose_is_byte_identical / :22 test_repeated_list_is_byte_identical。加えて :63 ReadOnlyTest::test_catalog_untouched_after_all_modes が 5 起動を跨いで catalog のバイト列と mtime_ns の両方を固定しており、『実行が入力を書き換えて 2 回目が変わる』経路まで塞いでいる",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 7 tests / OK, 1.9s)"
+    },
+    {
+      "component": "route-handout-output.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/route-handout-output.py/test_determinism_and_collision.py:15 DeterminismTest::test_same_config_twice_reuses_the_same_directory / :33 test_stdout_is_byte_identical_across_runs / :43 test_directory_name_does_not_depend_on_the_root (--out-dir を変えても名前が同じ = 絶対パス非依存)",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 10 tests / OK, 3.0s)"
+    },
+    {
+      "component": "srg-image-bridge.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/srg-image-bridge.py/test_determinism.py:46 DeterministicConversionTest::test_deck_plan_is_byte_identical_between_runs / :59 test_slug_assignment_is_stable / :68 test_stdout_verdict_is_stable_in_dry_run / :77 test_exit_code_is_stable / :83 test_json_keys_are_ordered_stably。さらに :94 RerunOnSameAssetsDirTest が同一 assets-dir への 2 回目実行で verdict / 生成バイト / 委譲の有無が変わらないことを測っており、状態を持つ経路の再現性も張られている",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 8 tests / OK, 11.1s)"
+    },
+    {
+      "component": "validate-handout-config.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/validate-handout-config.py/test_normalize_date_determinism.py:236 EncodingAndDeterminism::test_two_runs_are_byte_identical / :247 test_key_order_is_independent_of_input_order (入力キー順を反転して出力バイト一致) / :278 test_bom_is_stripped / :286 test_crlf_input_is_normalized / :294 test_strings_are_nfc_normalized。加えて :217 test_no_temp_file_left_behind が 2 回目を汚す一時ファイルの残留を落とす",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 29 tests / OK, 6.4s)"
+    },
+    {
+      "component": "verify-handout-a11y-print.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/verify-handout-a11y-print.py/test_cli_contract.py:314 TestDeterminism::test_stdout_is_byte_identical_across_runs (:319) / test_stderr_is_byte_identical_across_runs (:323) / test_json_report_is_byte_identical_across_runs (:327、書かれたことの assert 付き) / test_exit_code_stable_across_runs (:336)",
+      "measured_by": "grep + 該当行の直読み + 実行 (Ran 49 tests / OK, 4.6s)"
+    },
+    {
+      "component": "verify-handout-language.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/verify-handout-language.py/test_scope_and_determinism.py:182 TestDeterminism::test_stdout_is_byte_identical_on_pass / :189 ..._on_fail / :197 test_stderr_is_byte_identical_on_fail / :205 test_json_report_is_byte_identical / :214 test_exit_code_is_stable / :227 test_result_does_not_depend_on_cwd。さらに :156 TestSingleDateSource が source から date.today / datetime.now / time.time / utcnow を排除しており、時刻漏れを実行時でなく source 側で塞いでいる",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 32 tests / OK, 3.2s)"
+    },
+    {
+      "component": "verify-handout-narrative.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/verify-handout-narrative.py/test_scope_and_determinism.py:117 TestDeterminism::test_stdout_byte_identical_on_pass / :123 ..._on_fail / :131 test_stderr_byte_identical_on_fail / :139 test_json_report_byte_identical / :147 test_exit_code_stable / :155 test_violation_rows_are_in_stable_order (違反行の順序安定性まで測っている)",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 21 tests / OK, 2.8s)"
+    },
+    {
+      "component": "verify-handout-selfcontained.py",
+      "kind": "script",
+      "verdict": "covered",
+      "evidence": "tests/verify-handout-selfcontained.py/test_cli_contract.py:245 TestDeterminism::test_stdout_is_byte_identical_across_runs (:252) / test_stderr_is_byte_identical_across_runs (:256) / test_json_report_is_byte_identical_across_runs (:260)。C17 側 (:327) にある『--json-report が書かれたことの assert』が C16 側には無く、report 不在なら read_bytes() が FileNotFoundError で error になる形。緑には化けないので実害はないが非対称",
+      "measured_by": "grep + 該当行の直読み + 実行 (Ran 43 tests / OK, 4.2s)"
+    },
+    {
+      "component": "guard-handout-external-ref",
+      "kind": "hook",
+      "verdict": "covered",
+      "evidence": "tests/guard-handout-external-ref/test_no_side_effects.py:55 TestIdempotent::test_block_is_reproducible (:58) と test_pass_is_reproducible (:65) が (rc, out, err) の 3 つ組を 2 回実行で比較。加えて TestWriteScopeNone が『実行が対象を 1 バイトも変えない』ことを digest で固定しており、再現性の前提条件も張られている。ただし後述の caveat 参照",
+      "measured_by": "grep + 直読み + 実行 (Ran 8 tests / failures=1、失敗は再現性の面ではない)"
+    },
+    {
+      "component": "run-handout-build",
+      "kind": "skill",
+      "verdict": "covered",
+      "evidence": "tests/run-handout-build/test_argv_and_reproducibility.py:126 CheckerReproducibilityTest::test_check_skill_returns_identical_violations_on_repeated_runs (:136、build_target と accept fixture の両方を subTest) / test_check_skill_is_reproducible_in_a_fresh_interpreter (:147、subprocess で別プロセス 2 回を起こして stdout 比較 = PYTHONHASHSEED の差を含む実行間差を拾う)。P04-C01-01 で pink が新規に作った面で、それ以前は空だった",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 11 tests / OK, 0.15s)"
+    },
+    {
+      "component": "handout-verify",
+      "kind": "command",
+      "verdict": "covered",
+      "evidence": "tests/handout-verify/test_argv_and_reproducibility.py:89 CheckerReproducibilityTest::test_check_command_returns_identical_violations_on_repeated_runs (:92) / test_check_command_is_reproducible_in_a_fresh_interpreter (:99) / :116 AggregationReproducibilityTest::test_oracle_is_deterministic_over_all_combinations (:119) / test_aggregate_does_not_depend_on_gate_ordering (:129、GATE_IDS を反転して同一 verdict) / test_declared_table_extraction_is_reproducible (:153)。P04-C09-01 で pink が新規に作った面",
+      "measured_by": "grep + AST 本文確認 + 実行 (Ran 11 tests / OK, 0.16s)"
+    },
+    {
+      "component": "handout-build",
+      "kind": "command",
+      "verdict": "nominal-only",
+      "evidence": "ヒットした語は 再現 / バイト一致 で計 6 件。正体は全て『再現の単位を COMMAND.md が宣言しているか』という散文検査。contract_lib.py:437 の正規表現 r'再現.{0,20}単位.{0,20}同梱.{0,10}構成データ' が本文をなぞるだけで、test_handout_build_command.py:85 test_AC_C07_3_theme_three_points の docstring が『--theme の 3 点: 構成データ未指定時のみ有効 / 書き戻し / 再現の単位』と書いている。reject_cases.py:88-90 も『再現の単位が同梱構成データに閉じていない』という不正文言を落とす側で、いずれも再現性そのものは 1 度も測っていない。判定器を 2 回呼ぶ箇所は test_contract_checker.py にも test_handout_build_command.py にも無い (全て 1 回呼び + 入力違い)",
+      "measured_by": "grep (tests/handout-build を根) + test_*.py 全件の check_command 呼び出し箇所を列挙して 2 回呼びが無いことを確認。実行はしていない"
+    },
+    {
+      "component": "handout-extract",
+      "kind": "command",
+      "verdict": "nominal-only",
+      "evidence": "ヒットした語は バイト一致 / deterministic_checks。正体は 2 種類とも別物。(1) バイト一致 のヒットは『HTML のバイト一致は round-trip 判定に課さない』という否定宣言の検査で (contract_lib.py:377-389、reject_cases.py:69-70)、再現性を測るどころか意図的に課さない側の宣言。(2) deterministic_checks のヒットは test_handout_extract_command.py:179 test_AC_C08_2_delegation_chain_includes_c20 と :184 test_AC_C08_2_checker_constants_match_brief で、C02 brief の deterministic_checks 配列に extract-handout-config.py が載っているかという名簿突合。pink が C01 で見つけた『決定論スクリプトへの委譲』そのもの。判定器の 2 回呼びは無い",
+      "measured_by": "grep (tests/handout-extract を根) + 該当関数の直読み + check_command 呼び出し箇所の列挙。実行はしていない"
+    },
+    {
+      "component": "run-handout-extract",
+      "kind": "skill",
+      "verdict": "nominal-only",
+      "evidence": "最も紛らわしい 1 件。test_run_handout_extract_skill.py:88 の関数名が test_AC_C02_10_deterministic_check_scripts_referenced_and_exist、test_contract_checker.py:129 が test_deterministic_checks_match_brief で、どちらも関数名に deterministic を含む。中身は前者が『deterministic_checks の 4 script が script_refs にあり参照パスが実在する』(contract_lib.py:380)、後者が brief の配列との一致比較。加えて :120 と contract_lib.py:413-417 は『HTML のバイト一致を課さない旨の宣言があるか』という否定宣言の検査。3 つとも再現性を 1 度も測っていない。判定器の 2 回呼びは無い",
+      "measured_by": "grep (tests/run-handout-extract を根) + 該当関数の直読み + check_skill 呼び出し箇所の列挙。実行はしていない"
+    },
+    {
+      "component": "assign-handout-readability-evaluator",
+      "kind": "skill",
+      "verdict": "nominal-only",
+      "evidence": "test_assign_handout_readability_review_skill.py:85 test_AC_C03_8_deterministic_check_script_referenced_and_exists が関数名に deterministic を含むが、中身は contract_lib.py:319 の『deterministic_checks の script (verify-handout-language.py) が宣言され実在する』という存在検査。reject_cases.py:75 の deterministic-check-script-unreferenced も同じ面の反例。委譲先の話であって自分の再現性ではない。判定器の 2 回呼びは無い",
+      "measured_by": "grep (tests/assign-handout-readability-evaluator を根) + 該当関数の直読み + check_skill 呼び出し箇所の列挙。実行はしていない"
+    },
+    {
+      "component": "ref-handout-design-system",
+      "kind": "skill",
+      "verdict": "nominal-only",
+      "evidence": "ヒットは contract_lib.py:48,51 と test_ref_handout_design_system.py:70 test_AC_C04_7_no_execution_or_loop_declarations のみ。正体は『cli_tools / mcp_tools / deterministic_checks / combinators / goal_seek を持たないこと』の検査、つまり deterministic_checks が空であることを確認する検査。語のヒットとしては最も強く『不在』を意味しており、充足の逆。判定器の 2 回呼びは無い",
+      "measured_by": "grep (tests/ref-handout-design-system を根) + 該当関数の直読み + check_skill 呼び出し箇所の列挙。実行はしていない"
+    },
+    {
+      "component": "handout-content-architect",
+      "kind": "agent",
+      "verdict": "absent",
+      "evidence": "tests/ 全体の語検索でこのディレクトリから返ったヒットは contract_lib.py:373 の 1 件のみで、しかも正規表現 r'記憶[^\\n]*(復元しない|書かない|頼らない|依存しない|再現しない)' の中の『再現しない』。会話記憶からの復元禁止を検査する述語であって再現性とは無関係。determinism / reproduc / twice / PYTHONHASHSEED は 0 件。check_agent の呼び出しは 4 箇所すべて 1 回呼び。名前すら無いので nominal-only ですらない純粋な absent",
+      "measured_by": "grep (tests/handout-content-architect を根) + 該当行の直読み + check_agent 呼び出し箇所の列挙。実行はしていない"
+    },
+    {
+      "component": "handout-readability-reviewer",
+      "kind": "agent",
+      "verdict": "absent",
+      "evidence": "ヒットは 4 件だがすべて別物。test_readonly_and_bash_scope.py:42,:59 と test_blocked_path.py:35-36 の『再実行』は『機械判定済みの面を除外するため Bash で検査 script を再実行してよい』という許可宣言の検査。test_no_side_effects.py:1,:48 の『1 バイト』は read-only 宣言の文言検査 (COMMAND/AGENT 本文の文字列を見ているだけで、実際に成果物のバイト列を取って比較してはいない)。determinism / reproduc / twice は 0 件。判定器を起動する箇所自体がこのディレクトリの test_*.py には存在しない",
+      "measured_by": "grep (tests/handout-readability-reviewer を根) + 該当行の直読み。実行はしていない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X88-01",
+      "level": "blocking-for-release",
+      "summary": "pink の C01/C09 で見つかった型は横断で 7 件に及ぶ。再現性の面が実測で空なのは handout-build / handout-extract / run-handout-extract / assign-handout-readability-evaluator / ref-handout-design-system / handout-content-architect / handout-readability-reviewer の 7 件。うち 5 件は nominal-only、すなわち grep で determin / 再現 / バイト一致 がヒットする。特に run-handout-extract と assign-handout-readability-evaluator は test 関数の名前自体に deterministic を含みながら中身が名簿存在検査で、grep でも関数名一覧でも素通りする。C01/C09 と合わせて Markdown kind 9 件中 7 件が空であり、pink が『他の tests/ も同じ読み違いをしている恐れがある』と残した懸念はそのまま当たっている"
+    },
+    {
+      "id": "F-P05X88-02",
+      "level": "blocking-for-release",
+      "summary": "verdict は component_kind でほぼ完全に分かれており、原因は『測る対象の定義が Markdown kind について未確定だったこと』である。script/hook 14 件は 14/14 covered で、しかも TZ 軸・fresh interpreter 軸まで張った厚い面を持つものが複数ある。Markdown kind で唯一 covered な C01/C09 は、pink が『再現性の対象を判定器 (contract_lib.check_skill / check_command) の再現性と読む』と定義し直して初めて成立した面である。すなわち残る 7 件は手法が無かったのではなく、対象の定義が渡っていなかった。CheckerReproducibilityTest (in-process 2 回 + subprocess 別プロセス 2 回) は 11 行程度の定型で、7 件へそのまま移植できる。P05-x-88 の完了条件はこの移植と、移植先で実際に赤にできることの変異確認で書ける"
+    },
+    {
+      "id": "F-P05X88-03",
+      "level": "carry-forward",
+      "summary": "『判定器の再現性』は『成果物の再現性』とは別の対象である。C01/C09 を covered としたのは pink の定義を受理してのことだが、script kind が測っているのは出荷 script の出力バイト列であり、C01/C09 が測っているのはテスト側の判定器の出力である。Markdown 成果物は静的テキストなので再実行しても同じという意味で前者は自明に真であり、後者を測るのは妥当な読み替えだが、report 上では同じ covered の語で並ぶ。移植時には『何の再現性か』を各 component で明記しないと、後続が『C01 も C11 も再現性は covered』と読んで対象の差を失う"
+    },
+    {
+      "id": "F-P05X88-04",
+      "level": "carry-forward",
+      "summary": "本監査の実行中に、再現性とは別の赤を 1 件観測した。ただしこれは並行ノードの作業途中の状態であって standing な欠陥ではない。tests/guard-handout-external-ref/test_no_side_effects.py:30 TestWriteScopeNone::test_target_is_untouched_on_block が exit 2 を期待して実際 0 で、hook の stdout は '予算宣言 (config/handout-output.json#size_limits.hook_scan_budget) が解決できないため未検査'。原因を追ったところ hooks/guard-handout-external-ref.py が +103/-15 の未 commit 変更を持っており (第 2 正本を消して config を正本にする改修)、その改修が参照する size_limits.hook_scan_budget が config/handout-output.json にまだ無い (同ファイルは未変更で size_limits の子は asset_max_bytes 系のみ)。すなわち『hook 側を先に直し config 側が未着』の 2 段作業の途中。したがって既存挙動の fail-open として起票してはならない (誰も直さない赤になる)。担当ノードへ『config 側の追加が同一段に要る』ことだけ伝えるのが正しい扱い。あわせて注記: TestIdempotent は緑だが、いま比較している 2 回はどちらもこの縮退経路の出力であり、config 側が入ると測る中身が入れ替わる。本監査の write_scope 外なので観測の記録のみ"
+    },
+    {
+      "id": "F-P05X88-05",
+      "level": "carry-forward",
+      "summary": "verify-handout-selfcontained.py の test_json_report_is_byte_identical_across_runs (test_cli_contract.py:260) には --json-report が書かれたことの assert が無い。対になる verify-handout-a11y-print.py:327 には ra / rb を添えた assertTrue がある。report 不在時は read_bytes() が FileNotFoundError を送出して error になるため緑には化けず実害はないが、失敗が failure でなく error で立つと『検査が成立しなかった』のか『契約違反』なのかが report 上で分かれない。C16/C17 で同じ形の検査が非対称になっている点として記録"
+    }
+  ],
+  "honesty_notes": [
+    "covered 16 件のうち、実行まで行ったのは 16 件全件 (該当モジュールを個別に unittest 実行し、skip / error に化けていないことを確認済み)。全 component スイートの通し実行はしていない (C16 だけで 33 秒かかるため)。個別モジュール実行で足りると判断した理由は、本監査の問いが『その面のテストが実在し実際に走るか』であって『全テストが緑か』ではないため",
+    "nominal-only 5 件と absent 2 件の計 7 件については実行していない。判定は grep (各 component ディレクトリを根として明示) と AST による関数本文の直読み、および判定器呼び出し箇所の全件列挙による。『2 回実行して比較する箇所が無い』ことの確認なので、実行しても新しい情報は得られないと判断した。ただしこれは実測でなく source 読解であり、動的に生成されるテストがあれば見落としうる。7 件とも test_*.py は静的な unittest.TestCase 定義のみで動的生成は無いことを目視確認している",
+    "本監査は 1 バイトも plugins/ 配下へ書いていない。commit / push もしていない"
+  ]
+}

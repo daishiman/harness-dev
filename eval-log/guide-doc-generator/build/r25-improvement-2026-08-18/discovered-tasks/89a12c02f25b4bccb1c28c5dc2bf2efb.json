@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c11-heading-field-marker",
+  "reason": "見出し終端の契約は「data-hb-field=heading を持つ要素の textContent が heading の素値と完全一致」だが、これを検査する test が無い。extract 側 test (test_marker_extraction.py) は fixture の HTML を自前で正しく書くため producer の退行を検出せず、render 側 test は heading マーカーに触れていない。連番 span を運搬体の内側へ戻す変更が入っても全 test が緑のまま通り、E-EXTRACT-UNRECOVERABLE が実行時に初めて出る。AC-C11-R25-HEADING を実 test 化する",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c11-heading-field-marker.json",
+  "proposed_node": {
+    "id": "P05-x-134-heading-roundtrip-regression-test",
+    "title": "render→extract の heading round-trip 回帰テストを producer 側へ足す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/render-handout.py"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

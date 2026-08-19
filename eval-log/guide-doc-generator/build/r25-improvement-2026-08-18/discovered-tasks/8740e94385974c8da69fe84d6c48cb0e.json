@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "P05-x-89 事前実測より: contract_lib.py:491 のディレクトリ not in body と :539 の正規化 not in body は、契約文を本文から完全に削除しても violations=0 のまま (M-B1/M-B3)。どちらも『空の集約結果を pass にしない』系の中核契約。偽緑の機序は実装本文の json ブロックに全語彙が出現すること",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json",
+  "proposed_node": {
+    "id": "P05-x-98",
+    "title": "handout-verify の本文全体述語を宣言行スコープへ寄せる",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+    "acceptance_criterion": "契約文を実装本文から削除する単点変異で violations>0 になること。とくに AC-C09-7 (html-path ディレクトリ停止) と AC-C09-6 (read-only 境界) の削除が検出できること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

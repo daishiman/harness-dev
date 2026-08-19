@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "利用者が実施済み研修のフィードバックとして要件 R21 (goal-spec C46-C55) を追加した。冒頭の情報過多・目的に直結しない話題・機能説明先行・説明の長さという離脱要因を型の制約として焼き込む必要があり、既存 leaf のいずれの acceptance_criterion にも含まれない。P04 テスト wave の前に反映しないと旧受入基準がテストへ固着する / 受理: 利用者本人が 2026-08-17 のメッセージで要件として直接提示したため structural 変更を承認済み。P04 全 24 leaf の depends_on を P03-x-04 の後へ再配置する順序強制は accept の追記のみでは表現できないため task-specs 側を編集し derive (単一 writer) で反映した / 追補: 同日の追加フィードバックで C56-C59 (実画面先行・覚えなくてよい範囲の明示・具体業務への紐づけ必須・対話枠の時間確保) を要件へ追加し acceptance_criterion を拡張した",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/goal-spec.json",
+  "proposed_node": {
+    "id": "P03-x-04",
+    "title": "研修フィードバック由来の要件 R21 (C46-C55) を設計へ反映する",
+    "phase_ref": "P03",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/",
+    "acceptance_criterion": "goal-spec の C46-C59 の各項目に対し、それを満たす責務を持つ component が component-inventory と briefs 上で一意に特定でき、presentation_order (demo_first/explain_first) が構成データスキーマの必須フィールドとして prior_knowledge から決定論導出される設計になっており、冒頭主題枠・流れ項目数上限・目的紐づけ必須・説明文字数上限・ハンズオン部品・先回り Q&A 枠・到達レベル宣言・図表欠落検査・実画面先行・覚えること/覚えなくてよいことの対の明示・具体業務への紐づけ必須・対話枠の時間確保のそれぞれに検証手段 (script か test) が割り当たっている",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P03-x-04.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R21.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P03-x-01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:6f4ccfec8cc024e1e5f4aeeee9b917983bc6af1ce69f0e12d31de113ba31e1eb"
+}

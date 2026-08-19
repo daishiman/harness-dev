@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-c12-alt-attribution",
+ "covered_task_ids": [
+  "P02-c12-alt-attribution"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+ "verified_by": [
+  {
+   "claim": "alt 必須理由の帰属先が C17 へ訂正された",
+   "method": "当該 notes を書き換え、C17 のブリーフから実名を取得して突合",
+   "result": "pass: 『a11y ゲート (C17 verify-handout-a11y-print.py の A11Y-01..A11Y-07)』へ訂正。script 名は script-brief-C17.json の build_target から取った実在名で、初稿で書いた verify-handout-a11y.py は存在しないため訂正済み"
+  },
+  {
+   "claim": "C22 が筋道ゲートである分界が保たれている",
+   "method": "A11Y-\\d+ の出現を C17 と C22 で数えた",
+   "result": "pass: C17 に A11Y-01..07 の 7 件、C22 に 0 件。C22 側へ a11y 判定を持ち込んでいない。訂正文にも『C22 は筋道 (narrative) ゲートであって a11y 判定を持たない』を明記した"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02c12-01",
+   "level": "carry-forward",
+   "summary": "script-brief-C17.json:270 が C12:482 の旧文言を verbatim 引用して『C22 と書かれているが誤り』と指摘している。C12 側を直した今、この引用は現物と一致しない古い記述になった。本ノードの write_scope は C12 のみなので触っていない。C17 側の追従が要る (引用で他 brief の現物を指す記述は、参照先が直った瞬間に嘘になる)"
+  },
+  {
+   "id": "F-P02c12-02",
+   "level": "carry-forward",
+   "summary": "C17:270 が併せて指摘している実体の欠落は未解消: 生成 HTML の <img> に非空 alt があるかを HTML 段で見る検査がどの gate にも無い。担保は C12 の構成データ段 schema のみで、R25 で全 main セクションに IMG が必須化されたため露出面が節数に比例する。帰属先の訂正はこの欠落を埋めない"
+  }
+ ]
+}

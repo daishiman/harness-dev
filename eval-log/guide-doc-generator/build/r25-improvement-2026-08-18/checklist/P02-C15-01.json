@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C15-01",
+ "covered_task_ids": [
+  "P02-C15-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C15.json",
+ "verified_by": [
+  {
+   "claim": "R08 統一様式の正本が brief 内で二重化していたか",
+   "method": "dispatcher が icon_set_source 配下と --strict-style 記述を読み、P05-x-02.md:29 と突合",
+   "result": "pass: 二重化は実在した。SubAgent の裁定 (様式値の正本は C15 手順 9 のリテラル 1 箇所・icon-set.json は属性を持たない) を dispatcher も支持する。両側に持たせると 41 アイコン × 5 属性の重複データとなり『様式のブレを構造的に起こせなくする』という設計意図が逆転するため。style_canonicality は top-level ではなく icon_set_source 配下に置かれており、参照側 (--strict-style の description) が icon_set_source.style_canonicality と正しい相対参照で指している"
+  },
+  {
+   "claim": "検出不能だった exit1 条項の置換が妥当か",
+   "method": "修正後の exit_codes を読み『24x24 以外の viewBox』の残存を grep",
+   "result": "pass: 『24x24 以外』0 件。正本が viewBox を持たない裁定の下では旧条項は原理的に検出不能だったため、path 座標が 0-24 の外という実行可能な幾何条件への置換は正しい。viewBox の語自体は 6 箇所残るがいずれも出力側の付与記述と AC-C15-2 (出力 symbol の属性検査) であり整合"
+  },
+  {
+   "claim": "決定論の『使わないもの』が明文と AC の両方で担保されたか",
+   "method": "acceptance_checks の id 列挙 (15 件) と 乱数/uuid の出現",
+   "result": "pass: AC-C15-4b (2 回実行 sha256 一致) と AC-C15-12 (外部参照 grep) が新設され、id 列は AC-C15-1..12 で重複なし。『乱数』1 件・uuid 2 件はいずれも禁止列挙側。修正前は同一入力 2 回のバイト一致を見る AC が無く C14 の AC-C14-2 と非対称だった"
+  },
+  {
+   "claim": "絵文字の分界が両側で宣言され相手側関数が実在するか",
+   "method": "C16 の scan_emoji を先行ノード P02-C16-01 で dispatcher が実体確認済み",
+   "result": "pass: script-brief-C16.json に scan_emoji が実関数として存在し、C16 側の invoked_by にも C15 が追記済み (本 cycle の C16 ノードで双方向を成立させた)。C15 が退避せず exit2 とする fail-closed も G-03 と整合"
+  },
+  {
+   "claim": "checklist C2 (自己完結) を主張しながら検証手段が無かったか",
+   "method": "SubAgent が identifier (xlink/http/CDN/data:/file:) と和文 (外部/自己完結/同一文書/フラグメント/参照先) の両系統で grep し修正前 0 件を確認。dispatcher は修正後の xlink 出現 5 件を確認",
+   "result": "pass: 修正前は明文も AC も皆無だった。xlink を出力しない旨と AC-C15-12 の新設で C2 の主張に実体が伴った"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git status --porcelain plugin-plans/",
+   "result": "pass: script-brief-C15.json のみ (+8/-5)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C15-01",
+   "level": "blocking-for-release",
+   "summary": "task-specs/P05-x-02.md:29 の受入基準『全アイコンが viewBox=\"0 0 24 24\" / stroke=\"currentColor\" / fill=\"none\" / stroke-linecap=\"round\" の統一様式を満たす』は、C15 の裁定 (正本 JSON は属性を持たない) の下で icon-set.json を grep すると必ず 0 件になり受入が落ちる。幾何規約 (0-24 座標系・stroke_width 2.2-2.6 の paths) へ言い換える必要がある。write_scope 外のため未修正"
+  },
+  {
+   "id": "F-C15-02",
+   "level": "carry-forward",
+   "summary": "component-inventory.json の C15 inputs が --format / --strict-style を列挙していない。C23 で報告済みの inventory 側略記と同型で、inventory を整える別ノードで一括処理する"
+  },
+  {
+   "id": "F-C15-03",
+   "level": "carry-forward",
+   "summary": "analysis/guide-doc-generator/reference-analysis.md §10 (アイコン規約の正本) の実体を本ノードでは未確認。C15:34 の語彙 41 件と P05-x-02.md:29 の双方が参照しているため P05-x-02 側で 41 語の突合が要る"
+  },
+  {
+   "id": "F-C15-04",
+   "level": "resolved",
+   "summary": "C16 が xlink:href を外部参照違反として扱うかの未確認点は、先行ノード P02-C16-01 で CR-EXT が SC-01..04+SC-10 を implemented_by に持つ実体であることを dispatcher が確認済み。C15 側の AC-C15-12 と二重にはなるが、C15 は入力段・C16 は完成物段で層が異なるため許容"
+  }
+ ]
+}

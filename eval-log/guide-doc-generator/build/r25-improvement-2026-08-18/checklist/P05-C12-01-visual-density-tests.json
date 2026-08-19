@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-C12-01-visual-density-tests",
+  "covered_task_ids": [
+    "P05-C12-01-visual-density-tests"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/tests/",
+  "acceptance_criterion_restated": "受理済みの acceptance_criterion は機械生成のため [要再定義] 接頭辞が付いたままだが、accepted form の resulting_graph_hash による由来鎖を壊さないため form 本体は書き換えず、ここで具体化する: test_visual_density.py の期待値を、削除済みの資料全体比 (min_diagrams_per_main_sections) 前提から R25 の per-section 下限 (min_diagrams_per_main_section / min_images_per_main_section = 各 1) へ置き換え、(a) 節ごとに独立して判定されること、(b) 他節の図解が裸の節を代替しないこと、(c) 図解が画像の代わりにならないこと、(d) 重大度が実装どおりの片方向 (昇格のみ) であること、を陽性・陰性対照つきで固定する",
+  "verified_by": [
+    {
+      "claim": "判定単位が資料全体の比率でなく main セクション 1 個になった",
+      "method": "test_section_without_diagram_fails / test_section_without_image_fails: DIAGRAM (または IMG) を持たない main 節 1 個を含む構成データで実行",
+      "result": "W-DIAGRAM-FEW / E-IMAGE-ABSENT がその節のキーパス (/sections/0/parts) を指して出て exit=1"
+    },
+    {
+      "claim": "他の節の充足が裸の節を肩代わりしない (総量比の再発防止)",
+      "method": "test_other_sections_diagrams_do_not_cover_a_bare_section: 図解を 2 枚持つ節と 0 枚の節を並べた構成データで実行。旧実装の比率 0.34 なら全体としては充足と読まれる配置",
+      "result": "0 枚の節に対して W-DIAGRAM-FEW が出て exit=1。総量では足りているという理由で黙らない"
+    },
+    {
+      "claim": "図解と画像が互いの代替にならない",
+      "method": "test_diagram_does_not_substitute_for_an_image: DIAGRAM のみを持つ節で実行",
+      "result": "E-IMAGE-ABSENT が出る。逆向き (IMG のみの節) では W-DIAGRAM-FEW が出る。2 つの下限が独立に判定されている"
+    },
+    {
+      "claim": "1 枚ずつで足りる (過剰要求の回帰)",
+      "method": "test_one_diagram_per_section_is_enough / test_one_image_per_section_is_enough: 各 main 節が DIAGRAM 1 件 + IMG 1 件だけを持つ構成データで実行",
+      "result": "診断ゼロ・exit=0"
+    },
+    {
+      "claim": "閾値が script でなく正本 config/handout-visual-policy.json から来る",
+      "method": "各クラスの test_threshold_comes_from_canon_not_script: 正本の min_diagrams_per_main_section を 2 へ、min_images_per_main_section を 2 へ、min_visual_parts_per_main_section を 4 へ書き換えて同一入力を再実行",
+      "result": "書き換え前は無警告だった構成が書き換え後に発火する。3 つの閾値すべてで追従を確認した"
+    },
+    {
+      "claim": "重大度の実装契約を実測どおりに固定した (片方向・昇格のみ)",
+      "method": "TestSeverityIsDeclaredNotInferred を 3 本へ書き換え。(1) W- 接頭辞でも完了を止める、(2) 正本で level を warning へ降格しても止まったまま、(3) 正本で level を error へ昇格すると止まるようになる、をそれぞれ実行",
+      "result": "3 本とも green。当初は『level が重大度の唯一の出所』という契約を仮定して降格テストを書いたが exit=1 で落ちた。script を読むと ctx.error_codes = set(FALLBACK_ERROR_CODES) の後に error 宣言を union する実装で、降格経路が存在しない。script は本ノードの write_scope 外のため、テストを実装の実測へ合わせ、機構の是非は finding へ分離した"
+    },
+    {
+      "claim": "正本不在時にゲートが緩まない (fail-closed)",
+      "method": "TestCanonAbsenceFailsClosed の 3 本: 正本ファイルを削除して (1) 診断が出続けるか、(2) exit code が緩まないか、(3) 逆に無いはずの診断を捏造しないか",
+      "result": "3 本とも green。正本を壊すと通るようになる fail-open 経路を持たない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-C1201VDT-AC-01",
+      "level": "info",
+      "summary": "本ノードの accept 済み acceptance_criterion は [要再定義] 接頭辞のまま。form を編集すると accept-discovered-task が焼いた resulting_graph_hash と実 graph の一致が壊れ、provenance-gated re-pin の由来鎖を失う。よって form は不変のまま本報告の acceptance_criterion_restated に具体化した。以後の再定義はこのフィールドを参照する"
+    },
+    {
+      "id": "F-C1201VDT-LEVEL-01",
+      "level": "warn",
+      "summary": "handout-visual-policy.json の level は昇格専用で降格できない (詳細と再現手順は P05-C12-01-shared-fixture-visuals の F-C1201SFV-LEVEL-01 と同一)。『設定した値が構造上効かない』欠陥系の一種で、fail-closed 側へ倒れているため安全側ではあるが、正本を編集した利用者に無言で無視される点が問題。discovered-task として emit する"
+    },
+    {
+      "id": "F-C1201VDT-VISABS-01",
+      "level": "info",
+      "summary": "W-VISUAL-ABSENT (min_visual_parts_per_main_section) は FALLBACK_ERROR_CODES に含まれないため、既定では warning のまま完了を止めない。R25 で DIAGRAM と IMG が個別に error 下限になった結果、この総量閾値は既定値のもとでは実質的に発火余地が狭い。test_visual_absent_alone_does_not_stop_completion で『発火するが exit=0』を、test_promoting_a_warning_in_canon_stops_completion で『昇格すれば止まる』を、それぞれ陽性対照として固定した"
+    }
+  ]
+}

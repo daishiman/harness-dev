@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-02",
+  "reason": "P03-x-02 で C11 brief 側の終端が確定した (付与先は h2 ではなく見出しテキストだけを内容に持つ内側の span.section-title 1 個。h2 へ付けると C20 が span.section-num の連番を見出しテキストの一部として復元してしまう)。出荷側 render-handout.py の build_section は未実装で、ROUNDTRIP-CONTRACT.md の marker_status も absent のまま。この終端が無い間は plugin 自身が出した HTML でも /sections/*/heading が E-EXTRACT-UNRECOVERABLE となり C02 feedback_contract OUT1 が成立しない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/",
+  "proposed_node": {
+    "id": "P05-x-43-heading-marker-terminal",
+    "title": "render-handout.py へ span.section-title data-hb-field=heading を実装する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "render-handout.py が span.section-title data-hb-field=heading を出し、ROUNDTRIP-CONTRACT.md の marker_status が present になり、round-trip で heading が復元される",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

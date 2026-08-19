@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C11-01",
+  "reason": "config/handout-parts.json の並びが ...B17, IMG, DIAGRAM, TEXT で id 昇順 (...B17, DIAGRAM, IMG, TEXT) に一致せず、C11 の test_catalog_is_sorted_and_well_formed が赤のまま残る。当該ファイルの _meta.produced_by は P05-x-03 だが同 leaf は既に done であり受け皿が無い",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+  "proposed_node": {
+    "id": "P05-x-06",
+    "title": "config/handout-parts.json の parts[] を id 昇順へ並べ替える",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-parts.json",
+    "acceptance_criterion": "config/handout-parts.json の parts[] の id 列が sorted(ids) と完全一致し、tests/render-handout.py/test_parts_catalog.py の test_catalog_is_sorted_and_well_formed が緑になる。並べ替え以外の内容変更を行わない",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-06.md",
+    "produces": [
+      "plugins/guide-doc-generator/config/handout-parts.json"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

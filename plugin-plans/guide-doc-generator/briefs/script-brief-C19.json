@@ -1,0 +1,137 @@
+{
+  "component_id": "C19",
+  "component_kind": "script",
+  "name": "route-handout-output.py",
+  "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+  "purpose": "正規化済み構成データ 1 点だけを入力に、資料の出力先ディレクトリを決定論解決して {date}_{slug}/ (例: 2026-08-18_KPI進捗管理の業務フロー) を作り、同梱 4 点 (資料 HTML 本体 / 構成データ JSON / 素材原本 / README) のうち自分が writer である 2 点 (構成データ JSON の配置と素材原本の複製) を実際に置き、4 点が揃っていることを検査する。出力ディレクトリの owner は本 script であり、その配下へ何かを置く責務は原則ここに集約する (例外は handout.html を書く C11 と README.md を書く C01 の 2 つだけで、いずれも本 script が返したパスへ書く)。日付も種別語彙も自前で持たず、日付は正規化済み構成データの date フィールド、種別語彙は C23 (resolve-handout-preset.py) の単一入口から受け取る。R25/REQ-6 (C72) により doc_type (種別) はディレクトリ名から外し、索引メタデータ (.handout-route.json) 側だけへ残す",
+  "argv": [
+    "--config FILE (必須・C12 --normalize 済みの構成データ JSON。未正規化を渡された場合は exit2)",
+    "--out-dir DIR (任意・既定出力先の上書き。解決順の最優先)",
+    "--check-only (任意・ディレクトリを作らず、既に存在する出力先の命名規則と同梱 4 点だけを検査する)",
+    "--assets-src DIR (任意・素材原本の複製元ディレクトリ。指定時はその内容を出力先の assets/ 配下へ複製する。未指定時は assets/ を空で作るだけ)",
+    "--place-config (任意・--config で渡された正規化済み構成データを出力先へ handout-config.json という固定名で配置する。既定は false。--check-only との併用は exit2)",
+    "--json-report FILE (任意・解決結果と検査結果を機械可読で書き出す。write_scope の例外的な単一ファイル)"
+  ],
+  "stdin": "使用しない (引数のみで完結する。stdin から読むと非対話経路での自動実行時に詰まる)",
+  "stdout": "解決した出力先の絶対パス 1 行と、同梱 4 点それぞれの present/absent 一覧。--check-only でも同形式。機械消費されるため人間向けの装飾を混ぜない",
+  "stderr": "違反内容のみ (種別語彙違反 / 命名規則違反 / 同梱物欠落 / 日付フィールド不正 / out-dir 解決不能 / out-dir 外への脱出)。1 違反 1 行、先頭に [route-handout-output] を付ける",
+  "exit_codes": {
+    "0": "出力先の解決に成功し (通常時はディレクトリ作成まで完了し)、命名規則と同梱 4 点の検査に違反が 0 件",
+    "1": "検査で違反を検出した (命名規則違反 / 同梱 4 点の欠落 / 既存ディレクトリとの衝突を規則内で解決できない)。入力データ側が要件を満たしていない状態",
+    "2": "検査を実行できない契約違反 (引数不正 / --config が読めない or JSON でない / 構成データが未正規化 / date または doc_type フィールド欠落 / C23 をモジュールとして import できない / 出力先ルートを解決できない / config/handout-output.json の dir_name_format が無い・文字列でない・{date} か {slug} のプレースホルダを欠く / 解決先が out-dir ルート外へ脱出する)"
+  },
+  "write_scope": [
+    "解決した出力先ルート配下の {date}_{slug}/ ディレクトリ (R25/REQ-6 C72。区切りは '_' 固定で date と slug の 2 要素のみ、doc_type = dir_token はパスに含めない) と、その中の assets/ ディレクトリ (mkdir)",
+    "その中の assets/ 配下へ複製する素材原本 (--assets-src の内容。複製のみで内容の加工は行わない)",
+    "その中の handout-config.json (--place-config 指定時。--config のバイト列をそのまま複製する。内容は 1 バイトも変更しない)",
+    "その中の .handout-route.json (解決の来歴マーカー)",
+    "--json-report で明示された 1 ファイルのみ"
+  ],
+  "single_writer": "出力先ディレクトリの生成 (mkdir) と命名の確定、および同梱物のうち handout-config.json と assets/ 原本の配置は、この script だけが行う。P03 evidence Y-04 の裁定: 出力ディレクトリの owner が配置の writer を兼ねる。他の component は本 script が stdout / --json-report で返したパスを受け取って自分の担当ファイルだけを書く (handout.html = C11、README.md = C01)。ディレクトリ名を自前で組み立てる実装や、同梱物を置く実装が 2 箇所に生まれると、命名規則や配置規則の変更が片方に取り残される",
+  "bundle_writers": {
+    "note": "同梱 4 点それぞれの writer は 1 つだけであり、下表がその割り当ての正本 (Y-04)",
+    "handout.html": "C11 render-handout.py — 本 script が返したディレクトリを --out の親として受け取り、そこへ 1 ファイルだけ書く",
+    "handout-config.json": "C19 (本 script) — --place-config で --config を固定名で複製する。C11 は出力ディレクトリへ構成データを書かない (--theme 採用時の書き戻しは C11 の --config-out が指す作業領域のファイルであり、そのファイルが本 script の --config として渡ってくる)",
+    "assets/": "C19 (本 script) — ディレクトリ作成と --assets-src からの原本複製。C13 embed-assets.py は素材を data URI 化して構成データへ畳み込むだけで、ファイルの配置には一切関与しない",
+    "README.md": "C01 run-handout-build (skill) — 文言生成を伴うため決定論 script の責務ではない (X-08 の決着)。本 script は存在検査のみ"
+  },
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--config で渡される正規化済み構成データ JSON (date / doc_type / title / subject_slug フィールド。フィールド名の正本は C12 の config_schema)",
+      "plugins/guide-doc-generator/config/handout-output.json (既定出力先とサイズ上限とディレクトリ名書式の宣言データ。本 script が使うのは default_out_dir (out-dir 解決の第 3 段) と dir_name_format (ディレクトリ名の書式文字列・naming_rule.pattern_source 参照) の 2 キー。producer は P05-x-03)",
+      "既存の出力先ディレクトリ配下の .handout-route.json (再生成判定のための衝突解決マーカー)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (生成フローで出力先を確定し、同梱物を配置し、最後に --check-only で充足を検査する)"
+    ],
+    "not_invoked_by": "C18 verify-handout-language.py は本 script を呼ばない。C18 は既に存在するディレクトリ名を --out-dir として受け取り、その文字列と構成データの date を突き合わせるだけの検査器である (inventory の couples_with: C18 はこの『同じ命名規則を見る』関係を表すもので、呼び出し関係ではない)。P03 evidence Y-09 で検出された brief 側だけの C19→C18 エッジはこの誤記であり、ここで解消した",
+    "invokes": [
+      "C23 resolve-handout-preset.py (種別語彙の単一入口。C23 の sanctioned_access に従い、Python 同居 script は importlib.util.spec_from_file_location('hb_preset', Path(__file__).parent / 'resolve-handout-preset.py') でモジュールとして読み込み vocabulary / dir_token を呼ぶ。subprocess では起動しない — プロセス境界は Python 実体解決の不確定性と起動コストを持ち込み、『C23 不在時 exit2』の判定条件が import 失敗か非 0 終了かで実装分岐するため)"
+    ]
+  },
+  "algorithm": [
+    "1. argv を解析する。--config は必須。--check-only と通常実行の分岐はディレクトリ作成の有無だけで、判定ロジックは共有する",
+    "2. 構成データを読む。正規化済みであることを、C12 が付与する正規化マーカー (normalized: true 相当のフィールド) の存在で判定する。無ければ exit2 で「C12 --normalize を先に通せ」と告げる。ここを素通しすると、日付が未解決の生の構成データからディレクトリ名を作ってしまい C35 が壊れる",
+    "3. 日付を取り出す。date フィールドを ^\\d{4}/\\d{2}/\\d{2}$ (ゼロ埋め・スラッシュ区切り) で検証する。書式の正本は C12 の config_schema.document_level_fields#date であり、C12 --normalize が出力した値はこの形に確定している。ディレクトリ名へは date.replace('/', '-') の純変換を通した派生値を使う (この <YYYY-MM-DD> は R17 のディレクトリ命名専用の派生表現であって、R18 の日付表示の正本ではない。表示の正本は yyyy/mm/dd 一つだけ)。派生値をフィールドとして保存しない。datetime も date.today() も import しない (stdlib の日付 API をこの script が触らないこと自体を、実装上の不変条件として扱う)。書式が合わなければ exit2",
+    "4. 種別を解決する。構成データの doc_type を、C23 のモジュール API (importlib.util.spec_from_file_location で resolve-handout-preset.py を読み込み vocabulary / dir_token を呼ぶ) で得た語彙一覧に照合する。一覧に無ければ exit1 (語彙違反)。C23 を import できない / 呼び出しが失敗する場合は exit2 (語彙正本を確認できないまま命名するのは C42 違反になるため fail-closed)。フィールド名の正本は C12 の config_schema であり、種別は doc_type、purpose は目的の自由記述テキストで別フィールド (照合対象ではない)",
+    "5. 主題 slug を確定する (naming_rule 参照)。フィールド名は subject_slug (正本は C12 の config_schema)。構成データに subject_slug が明示されていればそれを検証だけして採用し、無ければ title から決定論導出する",
+    "6. 出力先ルートを解決する (4 段: --out-dir > 環境変数 HB_OUT_DIR > config/handout-output.json の default_out_dir > 未解決なら exit2)。config の値は ~ 展開と環境変数展開を行う。どの段で解決したかを stdout と --json-report に記録する",
+    "7. 候補ディレクトリ名を組み立て、ルート配下に結合する。書式文字列は config/handout-output.json の dir_name_format から読み、{date} と {slug} の 2 プレースホルダだけを置換する (naming_rule.pattern_source。キーが無い / 文字列でない / {date} か {slug} を欠く場合は exit2 — 書式を script 側の既定へフォールバックすると『config を正本にする』規約が形骸化するため、黙って既定へ倒れない)。現行値は {date}_{slug} (R25/REQ-6: doc_type = dir_token はパスに含めない。ディレクトリ名は日付と slug の 2 要素のみで、区切りは '_' 固定、slug 内部には '_' を入れない)。結合後の realpath がルートの realpath 配下に収まることを検査し、外れたら exit2 (slug やルート値の細工による脱出の防止)",
+    "8. 衝突を解決する (collision_rule 参照)。--check-only のときは解決せず、既存ディレクトリをそのまま検査対象にする",
+    "9. 通常実行なら mkdir -p でディレクトリと assets/ を作り、.handout-route.json に解決の来歴 (date / purpose / slug / config の sha256 / 解決段) を書く",
+    "9b. --assets-src があれば、その配下のファイルを出力先の assets/ へ複製する (shutil.copy2 で再帰複製。相対構造を保つ。既存の同名ファイルは、内容が同一なら何もせず、異なるなら上書きする — 再生成が冪等になるため)。複製元が存在しない・ディレクトリでない場合は exit2。複製先が assets/ の外へ出る経路 (symlink・.. を含む相対パス) は辿らず exit2 とする",
+    "9c. --place-config があれば、--config のバイト列をそのまま出力先の handout-config.json へ書く (固定名・無加工)。構成データの内容を本 script が変更することはない (内容の writer は C12、テーマ書き戻しは C11 の --config-out であり、本 script は運搬役に徹する)",
+    "10. 同梱 4 点を固定名で存在検査する。各点の writer は bundle_writers が正本である: handout.html (writer: C11) / handout-config.json (writer: C19 = 本 script の 9c) / assets/ ディレクトリ (writer: C19 = 本 script の 9・9b) / README.md (writer: C01)。--check-only のときは欠落があれば列挙して exit1 (fail-closed の充足ゲート)。通常実行 (ディレクトリを作った直後) では、まだ書かれていない handout.html と README.md が absent なのは正常なので、present/absent 一覧を stdout へ出すだけで exit0 とし、充足判定は生成完了後の --check-only 実行に委ねる。ここを通常実行でも exit1 にすると、writer が書く前に自分で失敗する順序矛盾になる",
+    "11. --json-report 指定時は解決結果と検査結果を書き出す。stdout には解決パスと present/absent 一覧を出して exit0"
+  ],
+  "requirements_covered": [
+    "R17 (出力先の決定論解決とディレクトリ命名規則、同梱 4 点)",
+    "R18 (ディレクトリ名の日付を構成データの単一日付ソースから導出する側の担保)",
+    "R20 (種別語彙の単一正本参照)",
+    "R25-REQ-6 (C72。正本 improvement/output-naming-decision.json。dir_name_format={date}_{slug}・dir_token をパスから除去・derive_slug の小文字化撤廃・非日本語 title の無変換許容)"
+  ],
+  "checklist_covered": [
+    "C23",
+    "C24",
+    "C35",
+    "C42",
+    "C27"
+  ],
+  "naming_rule": {
+    "pattern": "{date}_{slug}/ (区切りは '_' 固定で date と slug の 2 要素のみ。doc_type = dir_token はパスへ含めない)",
+    "pattern_source": "書式文字列そのものの実行時正本は config/handout-output.json の dir_name_format であり、script へ焼かない (improvement/output-naming-decision.json#decision.dir_name_format.canonical_location の裁定。既存の『閾値・既定値を script ソースへ書かない』規約と同じ扱いで、書式変更を data の差し替えで済ませるため)。improvement/output-naming-decision.json は設計時の裁定元であって実行時に読むファイルではない — 同 _meta が『この値は config/handout-output.json へ build が焼き込み、C19 route-handout-output.py が読む』と定めており、config への射影 producer は P05-x-03。したがって本 script は {date} と {slug} の 2 つのプレースホルダを解決して config の書式へ適用するだけで、'{date}_{slug}' というリテラルを自前に持たない",
+    "examples": [
+      "2026-08-18_KPI進捗管理の業務フロー (title='KPI進捗管理の業務フロー' / doc_type=report。dir_token='report' はパスに出さず .handout-route.json 側へ残す)",
+      "2026-08-17_生成AIの業務活用入門",
+      "2026-08-17_月次定例-8月",
+      "2026-08-17_新メンバー向け環境構築",
+      "2026-08-17_topic-3f9a1c07 (title から可読な slug を作れなかった場合のフォールバック)"
+    ],
+    "slug_rule": "主題 slug は日本語をローマ字化せず、日本語文字をそのまま残し、原題の大文字小文字も保つ (小文字化しない)。手順: (a) 構成データに subject_slug が明示されていれば、下記の禁止文字検査だけを通して採用する (人間が読みやすい名前を付けたい利用者の主経路)。(b) 無ければ title から導出する: NFKC 正規化 → 空白類 / パス区切り (/ \\) / OS 禁止文字 (: * ? \" < > |) / 制御文字 / NUL をハイフンへ置換 → 連続ハイフンを 1 個へ畳む → 前後のハイフンとドットと空白を除去 → 先頭 40 文字で切る。ASCII 大文字の小文字化は行わない (R25/REQ-6: 'KPI' は 'kpi' にならず 'KPI' のまま残る。macOS 既定ファイルシステムは大文字小文字を区別しないため保持しても衝突は増えない)。(c) 結果が空文字列になった場合のみ topic-<hash8> を使う。hash8 = sha256(NFKC(title)) の先頭 8 桁 hex。根拠: 標準ライブラリに日本語→ラテン文字の変換は存在せず、かな→ローマ字を自前実装しても辞書なしでは漢字を扱えず表現が不安定になる (同じ資料が実行環境や実装細部で別名になりうる)。一方で既定出力先自体が日本語パス (…/資料作成/) であり、日本語ディレクトリ名は実運用上そのまま扱える。よって「ASCII 化しない」ことが最も決定論的かつ可読性を損なわない選択になる。ローマ字化を望む利用者には (a) の明示 slug 経路がある。非日本語 (英語のみ) の title もそのまま許容し警告も出さない (利用者が付けた名前を機械が言い換えない)。derive_slug は本 script が唯一の正本であり、C12 (validate-handout-config.py) は subject_slug の充填責務のみ持ちこの関数を import して使う (二重実装をしない)",
+    "collision_rule": "既存ディレクトリを破壊しない。(1) 同名ディレクトリが無ければそのまま採用する。(2) 存在し、その .handout-route.json に記録された config の sha256 が今回の構成データと一致するなら、同一資料の再生成とみなして同ディレクトリを再利用する (同梱 4 点の上書きのみ許す。C29 のバイト一致再現性を出力先の側でも成立させるため)。(3) 存在し sha256 が異なる (または .handout-route.json が無い) 場合は、同名を避けて -2 / -3 … と最小の未使用連番を付けた新規ディレクトリを採用する。同日同題で doc_type だけが異なる資料もこの sha256 差分規則で衝突判定する (dir_token がパスに無いため、doc_type 違いは自動的に「異なる資料」として連番退避される)。(4) 連番が 99 を超えたら exit1。(5) いずれの分岐でも既存ファイルの削除と、同梱 4 点以外への書込は行わない"
+  },
+  "acceptance_checks": [
+    "--out-dir 未指定かつ HB_OUT_DIR 未設定でも config/handout-output.json の default_out_dir から出力先が解決でき、3 段いずれも欠けたときだけ exit2 になる",
+    "script のソースに ObsidianMemo を含む環境固有の絶対パスが 0 件である (既定値は config/handout-output.json 側にのみ存在する)",
+    "script のソースに用途種別の語彙リテラル (lecture / agenda / report / onboarding / guide / study-notes / study-plan / proposal) が 0 件で、C23 の --audit-duplication が重複 0 件で exit0 になる",
+    "script のソースに date.today / datetime.now / time.time 相当の現在時刻取得が 0 件である",
+    "同一の正規化済み構成データを 2 回渡したとき、解決されるディレクトリ名がバイト一致し、2 回目が既存ディレクトリを再利用して新規連番を作らない",
+    "構成データの date が 2026/08/17 (正規化後の正本表現) のとき、ディレクトリ名の先頭が date.replace('/','-') の派生値 2026-08-17_ (アンダースコア区切り) になり、C18 の日付整合検査 (ディレクトリ名の日付 = 構成データの日付フィールドの同一純変換) が exit0 になる",
+    "script のソースに date フィールドを ^\\d{4}-\\d{2}-\\d{2}$ で検証する記述が 0 件である (受理する入力書式は yyyy/mm/dd 一つだけ)",
+    "正本語彙に無い doc_type を渡したとき exit1 になり、stderr に語彙違反が 1 行出る。purpose (目的の自由記述テキスト) は語彙照合の対象にしない",
+    "C23 を一時的に不在にしたとき exit2 になり、語彙を推測してディレクトリを作らない",
+    "script のソースに subprocess の import と起動が 0 件で、C23 への到達が importlib 経由の 1 経路だけである",
+    "title が日本語のみでも slug が空にならず、同じ title からは常に同じ slug が出る",
+    "slug に ../ や / を含む値を明示指定したとき exit2 になり、out-dir ルート外にディレクトリが作られない",
+    "同梱 4 点のいずれか 1 つを欠いたディレクトリを --check-only で検査したとき exit1 になり、欠落したものが stderr に列挙される",
+    "--check-only 実行後にディレクトリが新規作成されていない",
+    "--assets-src に 2 階層のファイルを置いて実行したとき、出力先の assets/ に同じ相対構造で複製され、複製元が無変更である",
+    "--assets-src を 2 回続けて実行したとき 2 回目で内容が変化しない (冪等)",
+    "--place-config 付きで実行したとき、出力先の handout-config.json が --config とバイト一致する (本 script が内容を加工していない)",
+    "--place-config と --check-only を同時指定したとき exit2 (検査モードで書き込みを起こさない)",
+    "ディレクトリ作成直後の通常実行では handout.html と README.md が absent でも exit0 になり、同じディレクトリを --check-only で検査すると exit1 になる (順序矛盾を作らない)",
+    "C11 / C01 / C13 と本 script のソースを突き合わせ、handout-config.json と assets/ 配下へ書く実装が本 script にしか無い (同梱物ごとの writer が 1 つであることの担保)",
+    "AC-C19-R25-72a: title='KPI進捗管理の業務フロー' / doc_type=report / date=2026/08/18 を渡したとき、解決される出力先が 2026-08-18_KPI進捗管理の業務フロー になり、旧書式 2026-08-18-報告資料-kpi にならない (回帰: output-naming-decision.json#current_state.measured の再現)",
+    "AC-C19-R25-72b: title='KPI Report' (英大文字混じり) を渡したとき、derive_slug が小文字化せず slug が 'KPI Report' 由来のまま大文字を保つ (title の一部を ASCII 小文字化する記述がソースに 0 件)",
+    "AC-C19-R25-72c: title='Weekly Status' (非日本語のみ) を渡したとき、警告なく exit0 で完了し、slug が英字のまま出力される (非日本語タイトルの強制変換や警告が無いことの担保)",
+    "AC-C19-R25-72d: 同日同題 (同一 date・同一 title) で doc_type だけを report → proposal に変えて 2 回実行したとき、1 回目のディレクトリが再利用されず (--config の sha256 が変わるため) 連番付きの新規ディレクトリが作られる (dir_token がパスに無いことによる衝突拡大への対処)",
+    "AC-C19-R25-72e: 解決後の .handout-route.json を読み、doc_type (dir_token) が来歴フィールドとして記録されているが、出力先ディレクトリ名の文字列には doc_type の値も dir_token の値も一切現れない",
+    "AC-C19-R25-72f: script のソースに旧パターン <YYYY-MM-DD>-<種別>-<主題slug> 相当の 3 要素ハイフン連結の組み立て記述が 0 件である",
+    "AC-C19-R25-72g: script のソースに '{date}_{slug}' 相当の書式リテラルが 0 件で、書式が config/handout-output.json の dir_name_format から読まれている。同キーを削除した config で実行すると exit2 になり、既定書式へフォールバックしてディレクトリを作らない"
+  ],
+  "failure_modes": [
+    "未正規化の構成データを渡され、日付が未解決のままディレクトリ名を作ってしまう → 正規化マーカーの存在検査で exit2 にする",
+    "C23 が不在 / 壊れている (importlib での読み込みに失敗する) ときに語彙を自前フォールバックしてしまう → フォールバックを持たず exit2 にする (C42 の単一正本を破らないため)",
+    "config/handout-output.json の dir_name_format が欠けているときに script 側の既定書式へ倒れてしまう → 語彙と同じ理由でフォールバックを持たず exit2 にする。ここで倒れると、config を書式の正本にした意味が失われ、R25/REQ-6 のような書式変更が config を直しても効かない状態が生まれる",
+    "slug やルート値を経由した out-dir ルート外への書込 → 結合後の realpath がルート配下であることを検査して exit2",
+    "既存の資料ディレクトリを別資料が上書きしてしまう → config sha256 の一致判定と連番退避で防ぐ",
+    "同名判定に失敗して同一資料が毎回 -2 -3 と増殖する → .handout-route.json の来歴記録で再生成を同定する。来歴ファイルを利用者が消した場合は連番側へ倒れる (破壊するより安全側)",
+    "資料本体を index.html にすると slide-report-generator の PostToolUse hook (index.html を slide deck の生成完了マーカーとして扱う) が誤発火する → 本体名を handout.html に固定して回避する"
+  ],
+  "open_questions": [
+    "【R25/REQ-6 決着済み・記録】既定出力先の与え方は決着した。配布物である config/handout-output.json には環境固有の絶対パスを置かず default_out_dir は cwd 相対の ./handout-output を保つ。利用者固有の固定出力先は環境変数 HB_OUT_DIR で与える (正本 improvement/output-naming-decision.json#decision.base_dir。本リポジトリでは .claude/settings.local.json の env へ /Users/dm/dev/dev/ObsidianMemo/05_Project/説明資料 が投入済み)。したがって本 script は利用者の絶対パスを一切知らず、解決順 --out-dir > HB_OUT_DIR > config の default_out_dir > exit2 だけを持つ。旧記述にあった 05_Project/資料作成 は実在しないディレクトリの誤記であり、正しい利用者指定先は 05_Project/説明資料 である。この解決順を利用者向けに提示するのは C01 の SKILL.md と README の担当 (同 base_dir.action)",
+    "【X-08 決着済み・記録】README.md の writer は C01 run-handout-build (skill) に確定した。原題・目的・適用プリセットの文言生成を伴うため決定論 script の責務ではない。本 script は README.md については存在検査のみを行い、書かない。この決着は README.md 1 点についてのものであり、P03 Y-04 で確定した handout-config.json と assets/ 原本の配置 (writer = 本 script) とは対象が異なるため両立する",
+    "assets/ を空ディレクトリで作る運用は git 管理下の出力先では追跡されない。既定出力先は Obsidian 配下で git 管理外の想定だが、利用者が repo 配下へ出した場合の .gitkeep 要否は未確定"
+  ]
+}

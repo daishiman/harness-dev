@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-03",
+  "reason": "部品 id (briefs/config/handout-parts.json) と section_kind (briefs/config/handout-sections.json) は中立データファイルへ物理正本を出したのに、用途語彙だけが script-brief-C23.json 内 inline のまま。この非対称が dir_token drift を検出しにくくしている (前二者は出荷ファイルと機械比較できるが用途語彙は brief を parse しないと比較できない)",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-03.json",
+  "proposed_node": {
+    "id": "P05-x-61",
+    "title": "用途語彙の物理正本を briefs/config/handout-purposes.json へ出し 3 語彙の照合方法を揃える",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "用途語彙が中立データファイルへ出て、部品 id / section_kind と同じ方法 (出荷ファイルとの機械比較) で照合できること。P05-x-58 の裁定を先に取り込むこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

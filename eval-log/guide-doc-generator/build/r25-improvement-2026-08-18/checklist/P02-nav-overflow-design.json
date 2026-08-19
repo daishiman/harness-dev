@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-nav-overflow-design",
+  "covered_task_ids": [
+    "P02-nav-overflow-design"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+  "acceptance_criterion_restated": "script-brief-C11.json のナビ描画契約が (1) ラベルが 14 字上限を超えた場合の扱い (2) 項目数が多い場合の折返しまたは横スクロール、の 2 点を決定論的に定め、いずれも外部依存なしに実現できる形で記述されていること",
+  "verified_by": [
+    {
+      "claim": "既存のナビ記述を全て洗い出してから書いた",
+      "method": "brief を JSON 全走査し 'ナビ / nav / 14 字' に当たる箇所を列挙 (purpose / stderr / exit_codes.1 / dependencies.reads / html_attribute_contract の data-hb-nav-goal / block_to_component_map[0] / algorithm 8,14,15,19 / requirements_covered / acceptance_checks / failure_modes)",
+      "result": "ラベル長も項目数も、超過したときに何が起きるかは 1 箇所も書かれていなかった。block_to_component_map と algorithm 14 が『14 字を適用する』とだけ述べ、適用の結果 (切るのか・溢れるのか) は未定義だった"
+    },
+    {
+      "claim": "(1) ラベル超過は『切らない』と定めた",
+      "method": "nav_overflow_contract.NAV-OVF-1 を新設。DOM のテキストノードは素値を保ち、視覚上の省略は CSS (max-width / white-space / overflow / text-overflow) だけで行う",
+      "result": "切らない理由を 3 点で記録した。(a) textContent を切ると逆抽出・支援技術・ブラウザ内検索が短縮語しか得られない (ナビは sections からの派生物なので round-trip は復元できるが読み上げと検索は復元できない) (b) 省略記号を script が合成すると表示語の第 2 の出所ができる — alt (手順 10b) と heading (手順 17) で同型の裁定を既にしており向きを揃えた (c) em 指定は文字幅の実測を要さないので決定論。あわせて title 属性を全文の受け皿にしないことも書いた (title は既に goal を運んでおり、1 属性に 2 つの意味を持たせることになる)"
+    },
+    {
+      "claim": "(2) 項目過多は『折返しでなく 1 行 + 横スクロール』と定め、折返しを退けた理由を機構で示した",
+      "method": "手順 15 のオフセット二重補正と実装 (render-handout.py:1550 の --nav-h 固定値・1678 の scroll-margin-top・1823 の JS 実測) を突合",
+      "result": "折返しを許すと sticky ナビ高さが項目数で可変になり、JS 実測側だけが追随して CSS 固定値側が不足する。結果、ナビをクリックした経路は正しいのに fragment 直リンク・リロード時のアンカー復元ではセクション先頭がナビ帯へ潜る。症状が経路依存で出たり出なかったりするため発見が遅れる。1 行固定なら高さが項目数に依存しない"
+    },
+    {
+      "claim": "印刷面を分けた (画面の決定が紙で欠落を作らないようにした)",
+      "method": "実装の @media print が .pop-header を position: static へ落としていること (render-handout.py:1790) を確認",
+      "result": "print では flex-wrap: wrap / overflow-x: visible へ戻すと定めた。sticky でなくなるため高さ可変が無害になり、逆に 1 行固定のままだと紙にはスクロールが無いので横にはみ出した項目が黙って消える。画面で確認した人には見えない欠落になる"
+    },
+    {
+      "claim": "外部依存なし・決定論であることを条件として明記した",
+      "method": "no_runtime_measurement と keyboard の 2 項を追加",
+      "result": "何項目まで 1 行に置くかを JS 実測で決めないこと、スクロールコンテナへ tabindex を足さないこと (フォーカス可能な子を持つので不要・足すと無意味なタブストップが増える) を書いた。CSS 宣言だけで閉じ、外部フォント・計測に依存しない"
+    },
+    {
+      "claim": "『14 字上限が nav に効いている』という前提が偽であることを実測して契約へ書いた",
+      "method": "handout-visual-policy.json#micro_copy を実測し、validate-handout-config.py の check_micro_copy の走査範囲を読む",
+      "result": "roles.label.fields に nav_item は無く、micro_copy.note は適用範囲を sections[].parts[].data と diagrams[].data に限ると宣言し、実装の walk も part['data'] / diagram['data'] しか見ない。nav ラベルは section.heading からの派生物でこの walk に入らない。よって nav ラベル長を検査する機構は存在しない。canonical_thresholds へこの実測を書き、本契約が保証するのは『超過しても描画が壊れない』ことだけだと限定した"
+    },
+    {
+      "claim": "現行実装との差を隠さず、受入検査を FAIL 見込みのまま足した",
+      "method": "AC-C11-R25-NAVOVERFLOW を追加 (a) textContent の 1 バイト一致 (b) .nav-chip の 4 宣言 (c) .navbar の flex-wrap/overflow-x (d) print 分岐",
+      "result": "(b)(c)(d) は現行実装が FAIL する見込み (.nav-chip 未実装・flex-wrap: wrap・print 側指定なし) であることを expected 本文へ書き、是正先 P05-x-141 を名指しした。current_implementation_gap にも同じ差を記録した"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02NAVOVF-KNOB-01",
+      "level": "warn",
+      "summary": "brief が 2 箇所 (dependencies.reads と block_to_component_map[0].notes) で『micro_copy.roles.label.fields へ nav item を追加する』と書いているが、追加しても効かない。micro_copy の適用範囲は note と実装の双方で sections[].parts[].data / diagrams[].data に限られており、nav ラベルはその walk に入らないため。fields へ 1 語足すと『設定した』外見だけが生まれ、検査は 0 件のまま緑になる。設定できるように見えて効かないつまみの典型。P05-x-142 として emit した"
+    },
+    {
+      "id": "F-P02NAVOVF-OFFSET-01",
+      "level": "warn",
+      "summary": "オフセット補正の二重焼き (CSS 固定値 + JS 実測) は、ナビ高さが不変である限り安全だが、可変になった瞬間に片側だけが破綻する非対称な冗長化になっている。しかも破綻するのは JS を通らない経路 (直リンク・リロード復元・戻る) だけなので、手で操作して確かめる限り正常に見える。冗長化が安全側に働くという思い込みが、前提 (高さ不変) を暗黙にしていた"
+    },
+    {
+      "id": "F-P02NAVOVF-CHIP-01",
+      "level": "warn",
+      "summary": "R25/REQ-8 の .nav-chip 化は brief 側 (block_to_component_map / algorithm 14 / AC-C11-R25-72 相当) では既に確定事項として書かれているのに、render-handout.py に nav-chip の文字列が 1 件も無い。契約が実装より先行している状態そのものは正常だが、AC-C11-R25-25 の (e)『全 nav 項目が .nav-chip クラスを持つ』が既存の受入検査として置かれており、これも現状 FAIL する。既存 AC の FAIL 見込みはどこにも記録されていなかった"
+    },
+    {
+      "id": "F-P02NAVOVF-14-01",
+      "level": "info",
+      "summary": "受入条件が『14 字上限』と数値を直書きしている。値の正本は handout-visual-policy.json#micro_copy.roles.label.max_chars であり、policy 側を変えると受入条件の側が古くなる。P02-c11-heading-marker の F-P02C11HM-COUNT-01 (13 pointer と焼いた件) と同型で、受入条件へ数値を焼く癖が繰り返し現れている"
+    }
+  ]
+}

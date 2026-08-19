@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C20-01",
+ "covered_task_ids": [
+  "P02-C20-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+ "verified_by": [
+  {
+   "claim": "goal_chips の粒度が C11 の修正 (各 .goal-chip へ個別付与) と一致",
+   "method": "C20 の required_markers『配列フィールドは要素 1 件につき 1 要素』と algorithm A5『同じ data-hb-field 値を持つ要素を文書順に集める』を確認",
+   "result": "pass: 食い違いなし。C20 は元から per-element 前提"
+  },
+  {
+   "claim": "図解 3 属性の付与責務と復元路が一意に閉じているか",
+   "method": "C20 の required_markers / preserved_only_with_markers / recovery_limits / failure_modes と C11 手順 10 を突合",
+   "result": "pass: 付与=C11、復元路=C20 で閉じる。C14 が SVG 断片しか返さないことによる隙間なし"
+  },
+  {
+   "claim": "assets[].role の復元路が C20 に存在するか",
+   "method": "SubAgent が identifier (asset-role / asset_role / assets[].role) と和文・値域 (役割 / 挿絵 / screenshot / figure / photo) の両系統で grep し全て 0 件。dispatcher が修正後を再測",
+   "result": "修正前 fail (復元路そのものが不在) → 修正後 pass: data-hb-asset-role が 5 箇所、illustration が 2 箇所。C11 は :286 で当該属性を出すと宣言済みであり『出ているのに読む側の経路が無い』型だった。放置すると逆抽出結果が C12 の E-ASSET-ROLE-MISSING で必ず落ちる"
+  },
+  {
+   "claim": "ROUNDTRIP-CONTRACT.md の /assets/*/data_uri 裁定反転が brief に反映されているか",
+   "method": "dispatcher が plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md:259-261 を直接確認",
+   "result": "裁定表は P05-x-28 で反転済み (『data URI は捨てず data_uri へ入れる』『裁定文書の側が誤っていた』) だが修正前 brief:252 は反転前の旧裁定を保持していた。修正後は裁定表と一致。R14 の逆抽出で HTML の data URI が唯一の実体コピーになる場面での値消失を防ぐ実害のある修正"
+  },
+  {
+   "claim": "hero-card / nav-chip の旧 DOM 前提が残っていないか",
+   "method": "hero-purpose / hero-card / nav-chip / goal-chip / meta-list / hero-label を grep (全 0 件)",
+   "result": "pass: C20 はクラス名でなくマーカーで同定する設計。chrome_boundary が『DOM がカード形へ変わっても付与点は不変』と明記。class_name_fallback の .pop-header も C11 が R25 後も維持する枠クラスで陳腐化なし"
+  },
+  {
+   "claim": "C11 の AC が言う『バイト一致』と C20 の『バイト一致ではない』が矛盾するか",
+   "method": "C20:98 verdict と C11:653 AC-C11-R25-74-roundtrip を突合",
+   "result": "矛盾なし: C11 はフィールド値の文字列一致、C20 はファイル全体の一致を指す。深い等価は文字列フィールドに完全一致を要求するため C11 の期待は満たされる。語彙衝突は C20 側の relation_to_c11_acceptance で暫定的に閉じた"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git diff --stat",
+   "result": "pass: script-brief-C20.json のみ (+42/-14)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C20-01",
+   "level": "blocking-for-release",
+   "summary": "C11 の data-hb-field enum に heading が無い (dispatcher 実測: title|date|purpose|...|lead|goal_chips|prerequisite_connectors で heading 不在)。一方 C20 の enum は heading を受理準備済み。裁定表も /sections/*/heading を marker_status=absent とし residual_work を C11 に割り当てているが未了。見出しテキストの復元路が塞がったまま"
+  },
+  {
+   "id": "F-C20-02",
+   "level": "carry-forward",
+   "summary": "ROUNDTRIP-CONTRACT.md の 13 pointer に /assets/*/role のエントリが無い (dispatcher 実測: 出現 0 件)。brief 側に先に入れたため包含関係 (brief ⊇ 裁定表) は破れていないが、裁定の正本側に記録が無い状態が残る"
+  },
+  {
+   "id": "F-C20-03",
+   "level": "carry-forward",
+   "summary": "C11 brief:653 の『バイト一致』という語がフィールド値の一致であることを読み取りにくく C20 の verdict と語彙衝突する。C11 担当ノードで言い換えが要る"
+  }
+ ]
+}

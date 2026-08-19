@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C15-01",
+  "reason": "C15 の裁定で様式値の正本は C15 手順 9 のリテラル 1 箇所となり icon-set.json は属性を持たない。現行の受入基準は icon-set.json を grep すると必ず 0 件になり、正しく作っても受入が落ちる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C15-01.json",
+  "proposed_node": {
+    "id": "P05-x-02-geometry-acceptance",
+    "title": "P05-x-02 の受入基準を属性様式から幾何規約へ言い換える",
+    "phase_ref": "P05",
+    "entity_ref": "C15",
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-02.md",
+    "acceptance_criterion": "task-specs/P05-x-02.md の acceptance_criterion (2) が icon-set.json の属性文字列 (viewBox/stroke/fill/stroke-linecap) の存在を要求せず、幾何規約 (path 座標が 0-24 座標系内・stroke_width 2.2-2.6・線表現) で判定されること。task-graph 上の P05-x-02 ノードの acceptance も同時に追従すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C15"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,42 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "run-handout-extract",
+    "skill_md_sha256": "137a4bd629aab2bbafef12db3c981cb4d910c52c6b722cc75f16eba58edd77d9"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-19T00:00:00Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "逆写像の実装を C20 (extract-handout-config.py) 単独に固定し、skill 側が HTML を parse しないことを『逆写像が 2 つになるとどちらが正か判定できなくなる』という理由つきで禁じている。単一責務の境界を根拠つきで書く型として横展開できる。",
+      "診断行の合否寄与を『W- は fail にしない / fail は exit code と E- 行だけ』と明文化し、対象 HTML と無関係に出続ける W-EXTRACT-CATALOG-DRIFT を Gotchas でも二重に囲っている。ノイズ診断を誤って不合格根拠にする典型事故を設計で塞いでいる。",
+      "現時点で C12 を通り切らないキーパスが残る事実を SKILL.md 本文に明記し『本 skill が値を作って埋めることで隠さない』と宣言している。既知の構造的穴を PASS の見た目のために塗り潰さない fail-open 禁止の書き方として再利用価値が高い。",
+      "round-trip 判定を『正規化後の構成データ等価、provenance を射影から除外、バイト一致は課さない』と定義し、schemas/ROUNDTRIP-CONTRACT.md の裁定 (roundtrip_pass_condition=normalized-config-comparable-projection-deep-equality) と一致させている。判定粒度を skill 側で緩めも強めもしていない。"
+    ],
+    "negative_feedback": [
+      "低: 抽出器が出す E-HTML-MALFORMED が prompts/R1-scan.md の診断分類表にはあるが SKILL.md 本文の診断コード一覧には無い。本文が『fail の判定は exit code と E- 行で行う』と一般規則で受けているため実害は無いが、E- 行の列挙としては非対称。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "focused combined review (incremental profile) の分離投影。同一評価から elegance / rubric の 2 verdict を生成した。(a) 矛盾なし: SKILL.md の exit code 契約 (0/1/2) と診断コードと --compare 時の --out 非書き出しを scripts/extract-handout-config.py の実装 (EXIT_OK/EXIT_VIOLATION/EXIT_LAUNCH、roundtrip['equivalent'] が偽なら --out を書かない) と照合し全て一致。(b) 漏れなし: component-inventory.json#C02 の goal / purpose_background / output_contract / boundary / responsibilities(R1-R3) / feedback_contract.criteria(IN1,OUT1,OUT2) / combinators / goal_seek / depends_on が全て SKILL.md へ反映済み。checklist は inventory の 4 項目に『復元できなかった意味情報を利用者が埋められる形で提示した』を加えた superset で、output_contract 側の要求と整合するため逸脱ではない。(c) 規約整合: lint-skill-name / lint-skill-description / validate-frontmatter で当該 skill の violation 0。goal_seek.engine=inline に対する workflow-manifest 適用外を completeness_exempt で理由つき宣言している。(d) 依存関係整合: depends_on の C11=render-handout.py / C12=validate-handout-config.py / C16=verify-handout-selfcontained.py / C20=extract-handout-config.py が全て script_refs で参照され実在。相対パスは SKILL.md 側 ../../scripts、prompts 側 ../../../scripts でいずれも plugins/guide-doc-generator/scripts へ解決。C07 / C19 は依存ではなく境界外として言及のみで depends_on に無く、方向は正しい。ROUNDTRIP-CONTRACT.md が指摘していた C11 の normalized/nav 要求と schema の不整合は render-handout.py:936-943 が内部で射影する形で解消済みで、依存破断は残っていない。(e) rubric high severity 0: 未解決 high 無し。負のフィードバック 1 件はいずれも low。"
+}

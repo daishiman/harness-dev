@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C17-01",
+  "reason": "実測: script-brief-C11.json の 'alt=' は 0 件。C12 が構成データ段で alt を必須にし C21 も image-plan の必須フィールドとして exit2 で守っているのに、最終 DOM で alt 属性になる契約文が無く data-hb-asset-alt (data 属性) へ入る記述しかない。R25 の per-section IMG 必須化で露出面が節数に比例する",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C17-01.json",
+  "proposed_node": {
+    "id": "P02-c11-img-alt-attribute",
+    "title": "C11 が alt 値を alt 属性として描くことを契約に書く",
+    "phase_ref": "P02",
+    "entity_ref": "C11",
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+    "acceptance_criterion": "script-brief-C11.json の画像描画 algorithm に、assets[].alt の値を <img> の alt 属性へ無変換で出すことが明記されていること。data-hb-asset-alt は逆抽出用の marker であり支援技術向けの機構ではない旨を併記し、alt が空文字になる経路が無いこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

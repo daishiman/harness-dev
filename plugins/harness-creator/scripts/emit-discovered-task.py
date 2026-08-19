@@ -110,6 +110,20 @@ def build_discovered_task(args: argparse.Namespace) -> dict:
         # 接合が密な既存兄弟 (entity_ref id) を宣言 → accept-discovered-task が同一 phase 兄弟の後へ
         # 直列化し外ループ追記でも盲目並列を防ぐ (統合 finding 先送りの再発防止)。
         proposed_node["couples_with"] = list(args.node_couples_with)
+    # target shape (shape_marker=task-graph-derived) の graph は validate-task-graph (k) で
+    # 実行可能 leaf に execution_kind / task_spec_ref / produces / phase root からの parent_of を
+    # 要求する。これらを form が運べないと accept 側が (k) を満たす node を組めず、発見タスクが
+    # 構造上必ず validation_failed になる (外ループが自分の設計目的で収束不能になる)。
+    if args.node_execution_kind is not None:
+        proposed_node["execution_kind"] = args.node_execution_kind
+        # direct-task の route_ref は明示 null が (k) の要求 (省略キーでは不可)。
+        proposed_node["route_ref"] = args.node_route_ref
+    if args.node_task_spec_ref is not None:
+        proposed_node["task_spec_ref"] = args.node_task_spec_ref
+    if args.node_produces:
+        proposed_node["produces"] = list(args.node_produces)
+    if args.node_consumes:
+        proposed_node["consumes"] = list(args.node_consumes)
 
     # status を書かない (未設定=pending=未処理)。additionalProperties:false ゆえ余分キー禁止。
     form = {
@@ -140,6 +154,16 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--node-entity-ref", default=None, help="省略時 null (schema: string|null)")
     p.add_argument("--node-state", default="pending", choices=list(NODE_STATES))
     p.add_argument("--node-acceptance-criterion", default=None)
+    p.add_argument("--node-execution-kind", default=None, choices=["direct-task", "component-build"],
+                   help="target shape の graph へ追記する実行可能 leaf に必須 (validate-task-graph (k))")
+    p.add_argument("--node-route-ref", default=None,
+                   help="execution_kind=component-build の route id。direct-task は指定しない (null)")
+    p.add_argument("--node-task-spec-ref", default=None, metavar="task-specs/<id>.md",
+                   help="plan_dir 相対の task spec パス (実在必須)")
+    p.add_argument("--node-produces", action="append", default=[], metavar="ARTIFACT",
+                   help="leaf の産出成果物 (複数可)。accept が produces エッジへ展開する")
+    p.add_argument("--node-consumes", action="append", default=[], metavar="ARTIFACT",
+                   help="leaf が消費する上流成果物 (複数可)。accept が consumes エッジへ展開する")
     p.add_argument("--node-couples-with", action="append", default=[], metavar="ENTITY_ID",
                    help="接合が密な既存兄弟 component の entity_ref id (複数可)。accept 時に同一 phase 兄弟の後へ直列化 (外ループ追記の盲目並列防止)")
     # provenance / lifecycle。

@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-15",
+  "covered_task_ids": [
+    "P05-x-15"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "brief と component-inventory の argument_hint が 3 command すべてで文字列一致する",
+      "method": "当方が command-brief-C07/C08/C09.json の argument_hint と component-inventory.json の components[].argument-hint を機械比較",
+      "result": "pass (C07 / C08 / C09 すべて MATCH)"
+    },
+    {
+      "claim": "commands/ 配下の成果物 frontmatter と accept fixture も同一値である",
+      "method": "当方が commands/*.md と tests/<cmd>/fixtures/accept/commands/*.md の frontmatter を正規表現抽出し brief と突合",
+      "result": "pass (6 ファイルすべて一致。**初回の突合では全件 DIFF に見えたが、原因は当方の抽出正規表現が YAML の引用符を値へ含めたことで、引用符を外すと完全一致する**。worker 報告の『5 surface 全一致』は正しい)"
+    },
+    {
+      "claim": "突合対象の surface は指示にあった 4 つでなく 5 つである",
+      "method": "worker が accept fixture (tests/<cmd>/fixtures/accept/commands/<cmd>.md) を 5 つ目として発見。当方も上記突合で実在を確認",
+      "result": "pass (**当方の起動指示が surface を 4 つと数えていたのは不完全**であった。worker は指示の列挙を鵜呑みにせず実地に数え直しており、PAT-1 の再発を防いでいる)"
+    },
+    {
+      "claim": "食い違いは inventory の C07 / C09 の 2 件だけであった",
+      "method": "worker の 5x3 突合表。当方は同期後の一致のみ確認 (同期前の状態は再現していない)",
+      "result": "pass (worker 報告。C07 は --config / --doc-type / --date が inventory 側で欠落、C09 は --out-dir / --only / --json-report が欠落。**当方は同期前の実測を再現していない**ため、この 1 件は worker 報告に依拠する)"
+    },
+    {
+      "claim": "正本の決定が根拠つきで記録されている",
+      "method": "当方が RESOLUTION-P05-x-15-argument-hint.md (11299 バイト) の実在と inventory の canon_rules を確認",
+      "result": "pass (brief を正本・inventory を derived-copy・同期方向は brief→inventory の一方向。理由 4 点のうち **(1) 導出可能性が一方向 (brief だけが arguments[] を持ち argument_hint はそこから導出できるが逆は復元不能) が最も強い**。(3) 『inventory は plan 索引で component 詳細確定より前に書かれるため構造上つねに後追いになる。後追いする surface を正本にすると再発する』は再発機序そのものを指しており、受入基準の『両方に書く限り再発する』へ正面から答えている)"
+    },
+    {
+      "claim": "退けた案が検討されており、都合のよい解に飛びついていない",
+      "method": "当方が RESOLUTION の記載を確認",
+      "result": "pass (5 案を退けている。特に **『inventory から argument-hint を削除して参照だけにする』を退けた理由が『AC の突合対象が消えて検証不能になる』である点は重要** — 受入基準を形式的に満たしやすくする方向を、検証可能性を失うという理由で自ら退けている。また『各 brief に「この brief が正本」と書き足す』案を『同じ宣言を 3 ファイルへ複製することになり本件の欠陥を再生産する』として退け、宣言を canon_rules 1 箇所へ集約している)"
+    },
+    {
+      "claim": "canon_rules に値の写しを持たせていない",
+      "method": "当方が canon_rules の内容を確認",
+      "result": "pass (field / canon / role_of_this_file / sync_direction / rationale のみで argument_hint の実値を含まない。**正本を宣言する仕組み自体が新たな値の複製にならないよう設計されている**)"
+    },
+    {
+      "claim": "3 command の自スイートが緑のままである",
+      "method": "当方が 3 スイートを再実行",
+      "result": "pass (handout-build / handout-extract / handout-verify すべて OK)"
+    },
+    {
+      "claim": "briefs/ と plugins/ を変更していない",
+      "method": "当方が git status で確認",
+      "result": "pass (briefs/ は brief が正本のため無変更。P05-x-13 / P05-x-16 の territory である script-brief-C20.json / RESOLUTION-P05-x-13.md にも触れていない。**競合回避の自制が働いている**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "repo-state-incident",
+      "detail": "**要ユーザー確認の事故が 1 件発生した**。worker が差分切り分けのため `git stash push <path>` を試みたが、`plugin-plans/guide-doc-generator/` が untracked のため pathspec エラーで stash は作られず、続く `git stash pop` が **repo に元からあった無関係な `stash@{0}` (branch feature/plugin-structure・対象は `.claude/settings.local.json` 1 ファイル) を適用**した。当方の実測: (a) `stash@{0}` は pop がコンフリクトで中断したため**残存しており git 上の消失は無い** (b) `git status` は他 leaf の 4 ファイル変更と untracked ディレクトリのみでクリーン (c) **`.claude/settings.local.json` は 3483 バイト・mtime 本日 21:49 で、内容は旧 meta-skill-creator 時代の permissions (git commit の旧コミットメッセージを含む allow 行) になっている** — すなわち上書きは実際に起きている。同ファイルは gitignore 対象の untracked ファイルであり **git からは復元できない**。**これは権限設定ファイルであるため当方は一切変更せず、ユーザーへ報告して判断を仰ぐ**"
+    },
+    {
+      "kind": "worker-restraint-on-scope",
+      "detail": "skill 面 (skills/run-handout-build 等 3 件) にも argument-hint があるが inventory に対応欄が無く AC の対象外のため同期対象から外し、その判断を evidence/P05.json へ worker 裁量として記録している。**緑にできる範囲を勝手に広げず、かつ黙って落とさずに記録した**点は正しい"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "write_scope 外の再発防止策を 3 件、実施せず貼り付け可能な形で記載している。**いずれも AC 充足には不要である旨を明示しており、AC を口実に scope を広げていない**。6-1 (推奨): `tests/handout-extract/contract_lib.py` の `ARGUMENT_HINT` 完全文字列リテラルを brief から読む形へ置換 (assert は弱まらず、突合基準が brief へ移るだけ)。6-2 (任意): `tests/handout-verify/README.md` の gap 1 『argument-hint の正本が 2 つある』を本 RESOLUTION 参照へ更新。6-3: 成果物 frontmatter は 3 件とも一致済みで変更不要。**受け皿 leaf は未起票** (owner は C08 テスト = plugins/guide-doc-generator/tests/handout-extract/)"
+    },
+    {
+      "kind": "attribution-inferred",
+      "detail": "worker は render-handout.py の 6 failures を『他 leaf 由来』と帰属したが、**同期前ベースラインを 3 command スイートのみで取得しており render-handout.py の同期前集合は取っていない**と自ら申告している。当方は独立に測っており、6 件の失敗テスト名の集合が P05-x-09 完了直後の集合と同一であることを確認済みで、帰属は正しい。**推測を実測と偽らずに区別して報告した**点を評価する"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

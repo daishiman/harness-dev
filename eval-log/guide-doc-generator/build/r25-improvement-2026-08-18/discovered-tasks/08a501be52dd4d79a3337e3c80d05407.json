@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C22-01",
+  "reason": "orange が P04-C22-01 で test_presentation_order_missing_from_config_is_exit2 が assertIn(res.returncode, (1, 2)) で exit 1 も通していたのを発見した (本ノードで assertEqual(2, rc) へ修正済み)。名前が is_exit2 なのに exit 1 を許す形はテストが緑でも 1=品質FAIL / 2=検査不能 という契約を固定していない。1 件見つかった以上、同型を tests/ 全体で探す価値がある",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-78-permissive-exit-code-asserts",
+    "title": "assertIn(rc, (1,2)) 型の許容 assert を横断確認して契約を固定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "テスト名が特定の exit code を主張しているのにその code を固定していない assert が 0 件であること。exit code の主張は assertEqual で単一値へ固定されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

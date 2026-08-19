@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-visual-policy-readers-c11",
+ "covered_task_ids": [
+  "P02-visual-policy-readers-c11"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/config/handout-visual-policy.json",
+ "verified_by": [
+  {
+   "claim": "_meta.readers に C11 が含まれる",
+   "method": "編集後の JSON を読み直して確認",
+   "result": "pass: C11 render-handout.py を追加。読む範囲 (opening.hero_card_fields.layout / .list_headings.headings / .connector_card.heading と micro_copy.roles の label の max_chars / fields) まで書き、判定はしない read-only reader であることを明示した"
+  },
+  {
+   "claim": "列挙した全 reader が実際に本ファイルを読む (逆方向の余剰 0)",
+   "method": "briefs/*.json 14 本の言及箇所を 1 件ずつ読み、『読んで答える/読む』と明記があるものだけを reader とした",
+   "result": "pass: C01 / C04 / C05 / C11 + owner C12 の 5 件。C04 は boundary に『config/... handout-visual-policy.json を読んで答える』と明記があるため今回追加した (従来 readers に無く、余剰でなく欠落だった)。残り 9 本 (C03/C06/C07/C10/C14/C18/C21/C22/C23) は閾値の帰属先や第1稿スキップ可否の根拠として名前を挙げているだけで、実行時に開かない"
+  },
+  {
+   "claim": "reader の定義が後から検証できる形で残っている",
+   "method": "_meta.readers_criterion の追加内容を確認",
+   "result": "pass: 『reader = 実行時に本ファイルを開いて値を引く component。正本として言及するだけは reader でない』を定義として置き、mentions_but_does_not_read に 9 件を名指しで残した。定義が無いと、次に誰かが数えたとき 14 件へ膨らんで readers が影響範囲の一覧でなくなる"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02vpr-01",
+   "level": "carry-forward",
+   "summary": "readers は手書きの一覧であり、新しい component が本ファイルを読み始めても誰も赤にならない。判定基準 (『読む』の明記) はブリーフ本文の自然文に依存しており機械検査できない。実装が出揃った段階では、出荷 script 側の実 open 対象を走査して照合する形へ寄せられる"
+  }
+ ]
+}

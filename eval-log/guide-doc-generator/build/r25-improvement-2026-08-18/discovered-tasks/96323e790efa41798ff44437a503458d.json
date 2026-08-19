@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-128-discovered-task-leaf-contract-gap",
+  "reason": "sync-task-state.py の --repin-graph-hash と --initialize-from-graph が main の elif 排他になっており、外ループ再入の再 pin では graph に増えた node が task-state へ seed されない。実測: drain で node が 138→274 になった直後の再 pin 後も task-state.nodes は 138 のままで、TG-C05 が total=138 と報告した。新規 136 件が集計から丸ごと落ちる。--initialize-from-graph を別呼出しすれば解消するが、その順序は SKILL の外ループ手順に書かれておらず、忘れても誰も赤くならない (静かな過少報告)。",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/task-events.jsonl",
+  "proposed_node": {
+    "id": "P05-x-129-repin-does-not-seed",
+    "title": "外ループ再入時に task-state へ新 node を seed する手順を機構化する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/harness-creator/scripts/sync-task-state.py",
+    "acceptance_criterion": "node を 1 件以上増やした task-graph に対し外ループ再入の再 pin を 1 回行った後、追加呼出しなしで task-state.nodes 数が graph の node 数と一致することを実測する。一致しない実装のままなら、SKILL の外ループ手順へ seed 呼出しを明記し、欠落時に赤くなる検査を置く。",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

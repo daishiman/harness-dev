@@ -1,0 +1,28 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-C10-01-dated-dir-regex",
+ "covered_task_ids": [
+  "P05-C10-01-dated-dir-regex"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+ "verified_by": [
+  {
+   "claim": "適用対象判定が先頭 ISO 日付のみを見る形になっている",
+   "method": "DATED_DIR_RE の定義を直読み",
+   "result": "pass(=既に充足): r'^\\d{4}-\\d{2}-\\d{2}(?!\\d)'。末尾ハイフンを必須にした旧規則ではない"
+  },
+  {
+   "claim": "新旧どちらの命名にも発火し、非日付ディレクトリには発火しない",
+   "method": "7 件の入力へ regex を当てた",
+   "result": "pass: 2026-08-18_日本語名 発火 / 2026-08-18-ascii-slug 発火 / handout-output 非発火 / docs 非発火。(?!\\d) 境界により 2026-08-180000-x は非発火、区切りの無い 20260818_x も非発火"
+  },
+  {
+   "claim": "区切り文字の正本を hook が複製していない",
+   "method": "hook ソース中の書式リテラルを grep",
+   "result": "pass: 判定に使う書式リテラルは 0 件。説明コメントに残っていた旧書式の逐語は、書式を書かない言い換えへ置換した。コメントは『正本は config/handout-output.json#dir_name_format だが本 hook はそれを読まないし複製もしない』と、読まない理由 (書式の変化に影響されない最小条件だけを見る) まで書いている"
+  }
+ ],
+ "findings": []
+}

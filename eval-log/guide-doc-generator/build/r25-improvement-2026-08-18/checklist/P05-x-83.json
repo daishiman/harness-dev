@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-83",
+  "covered_task_ids": [
+    "P05-x-83"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/assets/tokens/",
+  "verified_by": [
+    {
+      "claim": "本文 1 ブロックの文字予算が裁定値 (overview 60 / standard 100 / detailed 160) へ揃っている",
+      "method": "pop.json と warm-sand.json の text_limits.block_body_max_chars_by_detail_level を読み出して実測",
+      "result": "2 テーマとも {overview:60, standard:100, detailed:160}。変更前は {180, 400, 900}"
+    },
+    {
+      "claim": "detail_level 未指定時の既定予算も裁定値へ揃っている",
+      "method": "同上 (text_limits.block_body_max_chars)",
+      "result": "2 テーマとも 100。変更前は 400"
+    },
+    {
+      "claim": "値の正本参照が現行の裁定を指している",
+      "method": "canonical_source の記述を確認",
+      "result": "improvement/text-length-gate-decision.json#decision.body_budget を指し、旧 RESOLUTION-R22.md C63 の値を superseded と明記した"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X83-BUDGET-01",
+      "level": "warn",
+      "summary": "この予算引き下げにより plugins/guide-doc-generator/tests/validate-handout-config.py/test_r21_text_fold.py の予算前提テストが落ちる (実測 21 件・詳細は P05-x-86 の F-P05X86-TESTS-02)。text-length-gate-decision.json#risk_and_impact.existing_artifacts はこれを「副作用ではなく、この改善が求めている変更そのもの」と裁定している。追従は P05-x-25 の担当だが同 node は現在 not-ready"
+    },
+    {
+      "id": "F-P05X83-BUDGET-02",
+      "level": "info",
+      "summary": "予算の実効は script 側の fallback ではなくテーマトークンが決める。script の FALLBACK_BODY_MAX_CHARS も 100 へ揃えたが (P05-x-86)、これはトークンが読めなかったときだけ効く"
+    }
+  ]
+}

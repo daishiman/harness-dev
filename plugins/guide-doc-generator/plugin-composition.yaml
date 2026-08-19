@@ -1,0 +1,91 @@
+# CapabilityBundle 宣言 — plugins/guide-doc-generator
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: guide-doc-generator の公開 Capability・依存 DAG・統治を宣言する SSOT。
+#       .claude-plugin/plugin.json の entry_points / hooks 配線と1対1対応する。
+
+name: guide-doc-generator
+description: 初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成する plugin。LLM 判断 (ヒアリング→構成データ設計 / 読みやすさ判定 / 逆抽出の意味補完) と決定論処理 (構成データ→HTML / 検証 / 出力先解決) を分界し、同一構成データからのバイト一致再現を保証する。
+kind: plugin-composition
+version: 0.1.0
+owner: team-platform
+since: 2026-08-18
+last-audited: 2026-08-18
+# 単独配布対応: marketplace bundle (skills-full) で単独 install 可能。
+# 外部サービス接続を持たず、Python 標準ライブラリのみで全経路が自己完結する。
+distribution: marketplace-bundle
+
+contract:
+  intent: 資料の中身を書く仕事は人と LLM に残し、資料の形を保つ仕事を機械へ寄せる。構成データという 1 つの入力正本を全 component が共有し、生成・検証・逆抽出のいずれもそのスキーマだけを見る。
+  interface:
+    inputs: [user-request, handout-config.json, schemas/handout-config.schema.json, config/handout-purposes.json, config/handout-parts.json, config/handout-sections.json]
+    outputs: [handout.html, handout-config.json, extract-report.json, gate-summary.json]
+  invariant:
+    # enforcement 注記: 機械執行 (hook/script/test) がある項目はその名前を、無い項目は manual を併記する。
+    - "生成物は外部 URL を一切参照しない単一 HTML であること。CSS/JS/画像/フォント/添付は全て data URI で内包する (enforcement: scripts/verify-handout-selfcontained.py exit 0 + hooks/guard-handout-external-ref.py PostToolUse exit 2)"
+    - "生成物に絵文字を含めないこと。図記号はインライン SVG アイコンで表す (enforcement: scripts/verify-handout-selfcontained.py の scan_emoji + hooks/guard-handout-external-ref.py)"
+    - "構成データ→HTML のレンダリング経路に LLM を挟まないこと。同一構成データからの再生成はバイト一致すること (enforcement: tests/render-handout.py/test_cross_component.py::test_round_trip_equivalence)"
+    - "部品 id の語彙は config/handout-parts.json、用途種別の語彙は config/handout-purposes.json、section_kind の語彙は config/handout-sections.json ただ 1 箇所を正本とし、script・skill・command 本文へ列挙しないこと (enforcement: manual + 各 script の実行時読込)"
+    - "逆抽出の等価判定は正規化後の構成データ等価で行い、復元不能箇所を黙って埋めないこと。裁定の正本は schemas/ROUNDTRIP-CONTRACT.md (enforcement: scripts/extract-handout-config.py の E-EXTRACT-UNRECOVERABLE + tests/extract-handout-config.py/)"
+    - "ゲート結果は pass / fail / error / not-run の 4 状態で集約し、not-run を pass 側へ畳まないこと。集約規則の正本は commands/handout-verify.md の CR-GATE-AGG (enforcement: manual + commands/handout-verify.md)"
+    - "実体解決は HB_ROOT を一次・${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} を二次とし、環境固有の絶対パスを焼かないこと (enforcement: scripts/lint-readme-plugin-root-portability.py exit 0 = repo 保守者専用)"
+    - "画像生成の委譲先 (slide-report-generator) が不在でも画像ステップのみ skip して生成を完走すること。skip を黙って落とさない (enforcement: scripts/srg-image-bridge.py の fail-soft 経路)"
+
+capabilities:
+  # === Skills (kind=skill) — plugin.json entry_points.skills と一致 ===
+  - { kind: skill, ref: skills/run-handout-build,                 tier: core }  # C01 生成の統括
+  - { kind: skill, ref: skills/run-handout-extract,               tier: core }  # C02 逆抽出の統括
+  - { kind: skill, ref: skills/assign-handout-readability-evaluator, tier: core }  # C03 読みやすさレビューの委譲
+  - { kind: skill, ref: skills/ref-handout-design-system,         tier: ref }   # C04 デザイン言語の参照
+
+  # === SubAgents (kind=sub-agent) — 独立 context を要する判断 ===
+  - { kind: sub-agent, ref: agents/handout-content-architect.md,    tier: core }  # C05 構成データ設計
+  - { kind: sub-agent, ref: agents/handout-readability-reviewer.md, tier: core }  # C06 読みやすさ判定 (proposer≠approver)
+
+  # === SlashCommands (kind=slash-command) — 手動起動の薄い入口 ===
+  - { kind: slash-command, ref: commands/handout-build.md,   tier: core }  # C07
+  - { kind: slash-command, ref: commands/handout-extract.md, tier: core }  # C08
+  - { kind: slash-command, ref: commands/handout-verify.md,  tier: core }  # C09
+
+  # === Hooks (kind=hook) — 書込時の水際ガード ===
+  - { kind: hook, ref: hooks/guard-handout-external-ref.py, tier: core }  # C10 PostToolUse:Write|Edit
+
+  # === Scripts (kind=script) — 決定論パイプライン (LLM を挟まない) ===
+  - { kind: script, ref: scripts/render-handout.py,               tier: core }  # C11 構成データ→単一 HTML
+  - { kind: script, ref: scripts/validate-handout-config.py,      tier: core }  # C12 スキーマ検証と正規化
+  - { kind: script, ref: scripts/embed-assets.py,                 tier: core }  # C13 素材の data URI 化
+  - { kind: script, ref: scripts/render-diagram-svg.py,           tier: core }  # C14 概念図 SVG
+  - { kind: script, ref: scripts/build-icon-sprite.py,            tier: core }  # C15 アイコンスプライト
+  - { kind: script, ref: scripts/verify-handout-selfcontained.py, tier: core }  # C16 自己完結性ゲート
+  - { kind: script, ref: scripts/verify-handout-a11y-print.py,    tier: core }  # C17 a11y と A4 印刷ゲート
+  - { kind: script, ref: scripts/verify-handout-language.py,      tier: core }  # C18 言語と日付ゲート
+  - { kind: script, ref: scripts/route-handout-output.py,         tier: core }  # C19 出力先ルーティング
+  - { kind: script, ref: scripts/extract-handout-config.py,       tier: core }  # C20 逆抽出
+  - { kind: script, ref: scripts/srg-image-bridge.py,             tier: opt }   # C21 画像生成の委譲 (不在時 skip)
+  - { kind: script, ref: scripts/verify-handout-narrative.py,     tier: core }  # C22 語りの一貫性ゲート
+  - { kind: script, ref: scripts/resolve-handout-preset.py,       tier: core }  # C23 用途プリセット解決
+
+dependencies:
+  internal:
+    # 決定論パイプラインの依存順。C12 で正規化した構成データだけが C11 の入力になる。
+    - { from: skills/run-handout-build, to: scripts/resolve-handout-preset.py }
+    - { from: skills/run-handout-build, to: scripts/validate-handout-config.py }
+    - { from: skills/run-handout-build, to: scripts/embed-assets.py }
+    - { from: skills/run-handout-build, to: scripts/render-handout.py }
+    - { from: skills/run-handout-build, to: scripts/route-handout-output.py }
+    - { from: scripts/render-handout.py, to: scripts/render-diagram-svg.py }   # module import (subprocess でない)
+    - { from: scripts/render-handout.py, to: scripts/build-icon-sprite.py }    # module import
+    - { from: hooks/guard-handout-external-ref.py, to: scripts/verify-handout-selfcontained.py }  # 判定規則の委譲
+    - { from: skills/run-handout-extract, to: scripts/extract-handout-config.py }
+  external:
+    # 任意依存。不在でも画像ステップのみ skip して生成を完走する (fail-soft)。
+    - { plugin: slide-report-generator, via: scripts/srg-image-bridge.py, required: false }
+
+governance:
+  runbook: required
+  proposer_not_approver: true   # 生成した本人が読みやすさを採点しない (C06 は独立 context)
+  quality_gates:
+    - scripts/verify-handout-selfcontained.py
+    - scripts/verify-handout-a11y-print.py
+    - scripts/verify-handout-language.py
+    - scripts/verify-handout-narrative.py
+  harness_eval: EVALS.json

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P04-x-09",
+  "covered_task_ids": [
+    "P04-x-09"
+  ],
+  "status": "success",
+  "note": "本 leaf は P04 (テスト固定) の leaf であり、成功条件は『実装未変更の時点で赤を出す被覆テストが存在すること』である。スイートが緑になることではない。追加した 21 件のうち 2 件が赤であることは失敗ではなく、C11 実装の実在欠陥を検出した成果である。",
+  "write_scope": "plugins/guide-doc-generator/tests/render-handout.py",
+  "verified_by": [
+    {
+      "claim": "$defs.part_data の全 part id (20 件) が tests/render-handout.py/ 配下に出現する",
+      "method": "当方が schema から x_placement を持つ dict キーとして id 集合を導出し、tests/render-handout.py/*.py 全文と突合",
+      "result": "pass (id は実測 20 件で task-spec の記載と一致。missing=[]。**新規ファイルを除外して再測すると missing=['B04','B06','B07','B14'] となり、この 4 件が本 leaf の追加によって初めて被覆されたことが確定する**。worker が報告した 4 件と完全一致)"
+    },
+    {
+      "claim": "追加テストが実装の欠落を検出する (赤を出す)",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-handout.py を当方が独立実行",
+      "result": "pass (Ran 195 / failures=7。うち FlowRenderingTest.test_flow_is_delegated_to_inline_svg と test_diagram_pattern_is_exposed の 2 件が新規の赤。失敗メッセージは 'B14 の内側に inline SVG が無い (C14 pattern=flow への委譲が落ちている)' と ''flow' not found in set()' で、いずれも実装側の実在欠陥を指している)"
+    },
+    {
+      "claim": "検出した欠陥が実在する (偽赤でない)",
+      "method": "当方が scripts/render-handout.py を読み、B14 経路と DIAGRAM 経路を比較",
+      "result": "pass (B14 は :719 で <ol class=\"flow\"><li class=\"flow-node\"> をレンダラ内で自前描画している一方、diagram 経路 :804-819 は render_diagram へ委譲し data-hb-diagram-pattern も出力する。script-brief-C11.json の block_to_component_map は B14 について『C14 の pattern=flow へ委譲。フロー表現をレンダラ側で二重に持たない』と規定しており、**現行実装は brief に反した二重実装である**。よってこの 2 件はテスト欠陥ではなく実装欠陥の検出)"
+    },
+    {
+      "claim": "導出値を契約へ焼いていない (PAT-1 回避)",
+      "method": "当方が追加ファイルを読み、件数リテラルと id 列挙の有無を確認",
+      "result": "pass (part id 集合は schema の $defs.part_data から『x_placement を持つ dict』という形で実行時導出。件数 20 も id 列挙も本文に無い。カード件数・キー・期待テキストはすべて _harness.BLOCK_FIXTURES から導出しており、fixture が変われば期待値も追従する)"
+    },
+    {
+      "claim": "既存テストを改変していない (_harness.py の owner を尊重)",
+      "method": "worker 報告と、追加前後の Ran 数差 (174→195=+21) が追加テスト件数と一致することの確認",
+      "result": "pass (差分 21 件が追加テスト 21 件と一致するため、既存テストの削除・skip 追加は無い。_harness.py は read のみで P05-x-09 の owner を侵していない)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "worker 報告と、追加ファイルが produces と一致することの確認",
+      "result": "pass (書込は tests/render-handout.py/test_parts_catalog_coverage.py 1 本のみで produces の宣言と一致)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "defect-discovered-in-implementation",
+      "detail": "**C11 の B14 二重実装**。本 leaf が固定した被覆テストにより、scripts/render-handout.py:719 が B14 (フロー) を C14 へ委譲せず自前の <ol class=\"flow\"> で描画していることが判明した。同 script の DIAGRAM 経路 (:804-819) は正しく render_diagram へ委譲しているため、**B14 だけが例外的に二重実装**である。是正は scripts/ の write_scope に属し本 leaf の範囲外。worker は『担当推定が並行 build と二重起票になるおそれがある』として自ら起票を控えたが、これは正しい自制であり、**dispatcher が単一 writer として起票する**"
+    },
+    {
+      "kind": "worker-discretion",
+      "detail": "契約に根拠が無い 3 点を worker が推測で決め、テスト本文へ推測である旨を明記した。(1) B04 の tone 符号化先が契約に無いため『カード要素の属性値のどこかに tone 値が現れる』という符号化先非依存の緩い述語にした — class でも data-* でも通る。**これは述語を緩めた方向であり、実装が tone を完全に落とせば赤になる最低限は保っている** (2) B06 の left→right 順序を『A ならこっち / B ならこっち』から入力順の決定論と推測 (3) B14 の data-hb-diagram-pattern を『C14 へ委譲』+『図解 svg のラッパに data-hb-diagram-pattern』の結合から推測。(3) は上記の赤 2 件の期待値そのものなので、**もし推測が誤りなら赤は偽赤になる**。当方は brief の block_to_component_map と html_attribute_contract の双方を実読し、委譲要求は明文であること、属性契約は『図解 <svg> のラッパ要素』を対象とすることを確認した。B14 が図解であることは同 brief が B14 を C14 委譲対象と定めている以上従属的に真であり、推測は妥当と裁定する"
+    },
+    {
+      "kind": "flake-suspected",
+      "detail": "要調査 / 未起票。worker は追加前の baseline 実行で初回のみ failures=6、以降 2 回は failures=5 を観測し、6 件目を特定できなかったと報告した。当方の追加後の実行は 2 回とも failures=7 で安定している。**スイートに order/timing 依存のフレークがある可能性**が残るが、本 build で再現しておらず、赤の内訳も特定できていないため起票の粒度が定まらない。P05 の赤解消が一巡した後に再測して判断する"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P04 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

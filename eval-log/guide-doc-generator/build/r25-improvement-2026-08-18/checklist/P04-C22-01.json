@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C22-01",
+ "covered_task_ids": [
+  "P04-C22-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+ "verified_by": [
+  {
+   "claim": "3 面がすべて既存で充足しており、面の名指しが本数でなく関数名で示された",
+   "method": "dispatcher が報告の名指し先を対象ディレクトリで確認し、あわせて suite 全体を独立実行",
+   "result": "pass: 違反系 exit1 は NAR-01..10 を 6 ファイルで網羅し締めは _support.py の assert_gate_fail(res, id, count)。argv/exit code 契約は test_cli_contract.py:140 TestArgvAndExit2 が 17 関数。再現性は test_scope_and_determinism.py:117-155 が stdout/stderr/JSON レポートのバイト一致と exit code 安定と行順序安定の 6 関数。いずれも本数ではなく関数名で名指しされており、dispatcher の dispatch 時要求 (本数を数えて緑にしない) を満たす"
+  },
+  {
+   "claim": "presentation_order を null にすると NAR-07 が無効化される (出荷実装の fail-open)",
+   "method": "dispatcher が verify-handout-narrative.py:558-560 を直読みし、対象ディレクトリで python3 -m unittest test_nar07_demo_first を実行して実挙動を確認",
+   "result": "pass(=報告どおり・出荷実装の欠陥として確定): :558 が `for key in REQUIRED_CONFIG_KEYS:` / :559 `if key not in config:` であり、null はキーが存在する扱いで素通りする。素通りした null は NAR-07 の判定で demo_first と一致せず SKIP へ落ちる。dispatcher の実行では 29 tests / failures=3 で、赤の内訳は AssertionError: 0 == 0 (違反のある HTML が presentation_order=null で緑になっている) / AssertionError: 2 != 0 / AssertionError: ['NAR-07 SKIP order=None'] is not false。すなわち違反のある資料が config の 1 値を null にするだけで exit 0 になる。P05-x-74 として起票"
+  },
+  {
+   "claim": "既存テストが名前と食い違っており契約を固定していなかった",
+   "method": "dispatcher が変更前後の assert 形を確認",
+   "result": "pass: test_presentation_order_missing_from_config_is_exit2 が assertIn(res.returncode, (1, 2)) で exit 1 も通していた。名前が is_exit2 でありながら C22 の exit_codes 契約 (1=品質 FAIL / 2=検査が成立しなかった) を固定していない。本ノードで assertEqual(2, rc) へ修正され緑を維持。同型の横断確認を P05-x-78 として起票"
+  },
+  {
+   "claim": "赤 3 本に unittest.expectedFailure を付けていない",
+   "method": "dispatcher が実行結果の分類を確認",
+   "result": "pass(=判断を受理): 3 本は failures として計上され expected failures ではない。expectedFailure へ落とすと『既知だから緑』に化け、本 cycle で繰り返し出ている『射程外と充足を見分けられない』型を再生産する。P04 の趣旨 (受入テストを赤で固定する) とも合致する。cyan が P04-C23-01 で独立に同じ判断へ到達しており、チームの規約として採用する"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): pass と書かず『仕組みの実在は確認済み (_support.py:347 require_script() が SCRIPT.exists() を見て fail する) / 発火の実測は再現不能』と両者を分けて記録している。必要条件と十分条件を混ぜていない。この AC 自体が測定不能である構造問題を P05-x-77 として起票"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/verify-handout-narrative.py/test_nar07_demo_first.py の 1 件のみ (69 insertions / 2 deletions)。scripts/ には 1 バイトも書いていない。報告が自主開示した『自分由来でない差分』(tests/resolve-handout-preset.py/test_dir_token_single_canon.py) は cyan の P04-C23-01 由来で正しい。両者が互いの書込を独立に検出し、かつ『mtime だけでは切り分けられない』と限界を明示した点は誠実"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C22-01",
+   "level": "blocking-for-release",
+   "summary": "出荷 verify-handout-narrative.py に実在の fail-open がある。REQUIRED_CONFIG_KEYS の検査が `key not in config` のため null を素通りし、presentation_order: null で NAR-07 が SKIP へ落ち、違反のある資料が exit 0 になる。dispatcher が実測で確認 (キー削除なら exit 2 / null なら exit 0 + NAR-07 SKIP order=None)。C49/C56/C59 と同型で、本 cycle で 4 例目の fail-open。空文字・空配列でも同型かは未確認。P05-x-74"
+  },
+  {
+   "id": "F-P04C22-02",
+   "level": "blocking-for-release",
+   "summary": "本ノードの担当 SubAgent が先行ノード P03-x-04 で script-brief-C22.json を壊しており、自己申告した。AC-C22-R21-56b を新規 id のつもりで追加したが同 id が既存で、id 重複 2 件が生じ既存 56b の expected が上書き破壊された。dispatcher が 23 brief を横断確認したところ重複は C22 のみ。配列要素の id 重複のため json.load では検出できず、id 一意性を検査する gate も存在しない。原意は tests 側 (test_ac56b_screenshot_inserted_before_diagram_passes) が保持しており緑。P05-x-75 / P05-x-76"
+  },
+  {
+   "id": "F-P04C22-03",
+   "level": "carry-forward",
+   "summary": "dispatcher が横断実測したところ brief の acceptance_checks の形が 3 種類に割れている。dict + id を持つ 17 brief (計 302 件) / id を持たない文字列配列 2 brief (hook-brief-C10 が 23 件・script-brief-C19 が 27 件) / acceptance_checks 自体が 0 件の 4 brief (skill-brief-C01..C04)。文字列配列の 2 件は id を持たないため参照も差分追跡もできず、P05-x-75 の id 重複が検出されなかった構造的な理由でもある。P05-x-76"
+  },
+  {
+   "id": "F-P04C22-04",
+   "level": "resolved",
+   "summary": "『緑を疑う段と赤を疑う段は同じ手順の裏表』という一般化が本ノードで実証された。既存テストが緑であることを充足の根拠にしていたら assertIn(rc, (1,2)) も key not in config も見つからなかった。F-P03X04-05 (赤を既存挙動として受理した手順の欠陥) の鏡像であり、両方とも『測定結果の色を結論として受け取り、測定が何を見ているかを問わない』形"
+  }
+ ]
+}

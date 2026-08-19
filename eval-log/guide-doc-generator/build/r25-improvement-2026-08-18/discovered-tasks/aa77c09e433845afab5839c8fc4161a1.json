@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C23-01",
+  "reason": "P05-C23-01 で section_order[] のキー面へ image_role を必須追加し、E-PRESET-IMAGE-ROLE-MISSING / E-PRESET-IMAGE-ROLE-UNKNOWN を fail-closed で新設した。test_r20_invariants.py::PresetKeySurfaceTest::test_section_entry_keys_are_fixed は 5 キーの固定集合をテスト側へ書き写しているため落ちる。write_scope が scripts/resolve-handout-preset.py に閉じるため本 node では直せない。なお同 test file が期待値を書き写している構造そのものが 2 つ目の正本になっており、script 側 SECTION_ENTRY_KEYS からの実測へ寄せるのが望ましい",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+  "proposed_node": {
+    "id": "P05-C23-01-section-key-surface-tests",
+    "title": "resolve-handout-preset のテストを image_role 込みのキー面へ追従させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+    "acceptance_criterion": "pytest plugins/guide-doc-generator/tests/resolve-handout-preset.py/test_r20_invariants.py が exit0。かつ (a) キー面の期待値をテストへ書き写さず script の SECTION_ENTRY_KEYS から実測して突き合わせる、(b) image_role 欠落が E-PRESET-IMAGE-ROLE-MISSING で、列挙外が E-PRESET-IMAGE-ROLE-UNKNOWN で落ちることの回帰が各 1 本ある、(c) 既存の dir_token 2 件の赤 (DT-1 裁定待ち) を緑化しない",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c08-checklist-coverage",
+  "reason": "P02-c08-checklist-coverage の AC は『C20 と C02 の checklist 項目のうち C08 が実際に担う分を漏れなく列挙』を求めるが、skill-brief-C02.json の checklist_covered は null で、C02 は goal-spec の checklist 項目を 1 件も宣言していない。分割対象が存在しないため C08 側では閉じられない。C02 は逆抽出 (HTML→構成データ) の唯一の担い手であり、被覆が null のままだと goal-spec の該当項目が誰の担当でもない状態になる",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+  "proposed_node": {
+    "id": "P02-c02-checklist-covered-declare",
+    "title": "C02 の checklist_covered を宣言する (現状 null)",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+    "acceptance_criterion": "skill-brief-C02.json の checklist_covered が null でなく、goal-spec.checklist のうち C02 が担う項目を列挙し、隣接する C20 (script 実装側) との重複分は副として理由つきで宣言していること。担わない隣接項目は担当 component が明示されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C02"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

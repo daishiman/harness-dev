@@ -1,0 +1,941 @@
+{
+  "schema_version": 1,
+  "subject": "guide-doc-generator:route-build",
+  "run_id": "guide-doc-generator-build-1",
+  "profile": "incremental",
+  "cost_model": "changed-obligations-plus-unresolved-uncertainty",
+  "counts": {
+    "blocked": 27,
+    "generate": 9
+  },
+  "cost_summary": {
+    "total_obligations": 36,
+    "proof_reuse_ratio": 0.0,
+    "avoided_executions": 0,
+    "generation_actions": 9,
+    "deterministic_checks": 0,
+    "semantic_actions": 0,
+    "observational_actions": 0,
+    "semantic_context_bytes": 0,
+    "escalations": 0,
+    "consumed_model_actions": 0,
+    "planned_model_actions": 9
+  },
+  "budget_gate": {
+    "status": "ok",
+    "reasons": [],
+    "max_context_bytes_per_batch": 120000,
+    "max_llm_batches": 1,
+    "max_model_actions": 24,
+    "instruction": "Do not launch model work while blocked; narrow context/contract or obtain an explicit budget override."
+  },
+  "llm_batch_count": 0,
+  "llm_batches": [],
+  "generation_queue": [
+    "build:C04",
+    "build:C23",
+    "build:C13",
+    "build:C14",
+    "build:C15",
+    "build:C16",
+    "build:C17",
+    "build:C21",
+    "task:P01-x-01"
+  ],
+  "observational_queue": [],
+  "automation_candidates": [],
+  "obligations": [
+    {
+      "id": "build:C04",
+      "claim": "Route C04 is materially built at plugins/guide-doc-generator/skills/ref-handout-design-system/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "abd4af2913dfe11c9140076ab80ac8ac16028faa1269dbd7ed0f09f9f1c0f436",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+        "eval-log/guide-doc-generator/build/route-C04.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C23",
+      "claim": "Route C23 is materially built at plugins/guide-doc-generator/scripts/resolve-handout-preset.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "9565f3336b84a48fed7df90f0c9a36d05eccfa3990fbb0c3078fa767c24fb936",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+        "eval-log/guide-doc-generator/build/route-C23.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C05",
+      "claim": "Route C05 is materially built at plugins/guide-doc-generator/agents/handout-content-architect.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "7f083e87ab56a928d878173607bad00e9da4e2a2e34c52a77375b830aaf0ef20",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C04",
+        "build:C23"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/agents/handout-content-architect.md",
+        "eval-log/guide-doc-generator/build/route-C05.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C12",
+      "claim": "Route C12 is materially built at plugins/guide-doc-generator/scripts/validate-handout-config.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "22db1354b2643edad313d5b5c195fd061f4e88e51db4326559331437bec0af41",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C23"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+        "eval-log/guide-doc-generator/build/route-C12.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C13",
+      "claim": "Route C13 is materially built at plugins/guide-doc-generator/scripts/embed-assets.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "57f6e7c7c4da0751961a43687dfc17d3cfb1388c72b52709b1e4b2592cea37e1",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/embed-assets.py",
+        "eval-log/guide-doc-generator/build/route-C13.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C14",
+      "claim": "Route C14 is materially built at plugins/guide-doc-generator/scripts/render-diagram-svg.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "37219f310958aaa7a3c7cde37d4139b049cfa452f6791627038cb1f738800d73",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+        "eval-log/guide-doc-generator/build/route-C14.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C15",
+      "claim": "Route C15 is materially built at plugins/guide-doc-generator/scripts/build-icon-sprite.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "0a18488e5543d2eac96c29c59071e720909d305e8803cb55f759228db5014898",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+        "eval-log/guide-doc-generator/build/route-C15.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C11",
+      "claim": "Route C11 is materially built at plugins/guide-doc-generator/scripts/render-handout.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "638917e55d0f92a4c7c297281f21572f7192aae8d3cf9b24287d998de2e15c5e",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C23"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/render-handout.py",
+        "eval-log/guide-doc-generator/build/route-C11.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C16",
+      "claim": "Route C16 is materially built at plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "b3d6f75166da4345564c215741b16b8c9f6967b5d85895c78c4c220b682ccf3a",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+        "eval-log/guide-doc-generator/build/route-C16.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C17",
+      "claim": "Route C17 is materially built at plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "f7fc1a1fa9525f06585bc749018a6dd6240755a7afc80efb29db82f5c8204ad2",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+        "eval-log/guide-doc-generator/build/route-C17.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C18",
+      "claim": "Route C18 is materially built at plugins/guide-doc-generator/scripts/verify-handout-language.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "02bfa29b3e7ac1b21af64085900c614c648f89db6addb9aa2fbaf2ae355801e6",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C12"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+        "eval-log/guide-doc-generator/build/route-C18.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C19",
+      "claim": "Route C19 is materially built at plugins/guide-doc-generator/scripts/route-handout-output.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "6f7425f6aed64854a0f3b6aefc64d2e12005a5ce82c321a02dadfe64edb00f1f",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C12",
+        "build:C23"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/route-handout-output.py",
+        "eval-log/guide-doc-generator/build/route-C19.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C21",
+      "claim": "Route C21 is materially built at plugins/guide-doc-generator/scripts/srg-image-bridge.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "c85728d265192569984f549171211f99adae5e4a4846bcaef3b3535a4ec79600",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+        "eval-log/guide-doc-generator/build/route-C21.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C22",
+      "claim": "Route C22 is materially built at plugins/guide-doc-generator/scripts/verify-handout-narrative.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "5ff757b3e0bb53cdd493b08b5009b6b7c0d28620514f7d01b6c048ea10c880a2",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C12"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+        "eval-log/guide-doc-generator/build/route-C22.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C01",
+      "claim": "Route C01 is materially built at plugins/guide-doc-generator/skills/run-handout-build/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "013a4356caa025c956d9ec9c67d0c2d6ff494fefa3faebb17ec0c8dc448bef07",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C04",
+        "build:C05",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C21",
+        "build:C22",
+        "build:C23"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/run-handout-build/",
+        "eval-log/guide-doc-generator/build/route-C01.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C20",
+      "claim": "Route C20 is materially built at plugins/guide-doc-generator/scripts/extract-handout-config.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "95d0ac40111a0feb12308e24d00d89c414b1954f63eea3ee5e28a571fdb33c76",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C12"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+        "eval-log/guide-doc-generator/build/route-C20.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C02",
+      "claim": "Route C02 is materially built at plugins/guide-doc-generator/skills/run-handout-extract/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "dc15b89d851596ccec057d38962e328afa5f69890f4f4063d1b501e7fd824405",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C11",
+        "build:C12",
+        "build:C16",
+        "build:C20"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/run-handout-extract/",
+        "eval-log/guide-doc-generator/build/route-C02.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C03",
+      "claim": "Route C03 is materially built at plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/ from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "cc4d5c6685bff4bc147f260600e4a440a48e2b0a3a862a00fc6c3ac91ef84e2c",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C18",
+        "build:C04"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+        "eval-log/guide-doc-generator/build/route-C03.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C06",
+      "claim": "Route C06 is materially built at plugins/guide-doc-generator/agents/handout-readability-reviewer.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "b1460e3a63c48d741d48db17b5b3928517116fdb05dee9d912b71d4413dada9a",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C03"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+        "eval-log/guide-doc-generator/build/route-C06.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C07",
+      "claim": "Route C07 is materially built at plugins/guide-doc-generator/commands/handout-build.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "b6443cc66be7135c20d291b205d394fb96278f7dac1d7fb6b8e163f623fa384d",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-build.md",
+        "eval-log/guide-doc-generator/build/route-C07.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C08",
+      "claim": "Route C08 is materially built at plugins/guide-doc-generator/commands/handout-extract.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "c1788c4379777ca2fd4aca6c331f26f2128a646dd77fa32e91041590d91f07de",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C02"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-extract.md",
+        "eval-log/guide-doc-generator/build/route-C08.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C09",
+      "claim": "Route C09 is materially built at plugins/guide-doc-generator/commands/handout-verify.md from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "da92d9e02b5dd8233abfcb2c8ef464c9012a1de4121c2106e9160ca2c12fa7e8",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C22"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/commands/handout-verify.md",
+        "eval-log/guide-doc-generator/build/route-C09.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "build:C10",
+      "claim": "Route C10 is materially built at plugins/guide-doc-generator/hooks/guard-handout-external-ref.py from its current route-local specification.",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "296e12dfabc4eb3502a049e86980c42caa6ac082771cdbdc511db4f56f62035b",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C16"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/phase-05-implementation.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+        "eval-log/guide-doc-generator/build/route-C10.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P01-x-01",
+      "claim": "C1-C45 が全て verify_by を持ち、参照解析の実測値が要件へ数値として混入しておらず、分界線が要件文として明示されている",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "2ee00d873ffe26877e565359edf4cc03dcb2b57b42250bc948ac159d094bfb35",
+      "action": "generate",
+      "reason": "build-proof-missing",
+      "blocked_by": [],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P01-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P01.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P02-x-01",
+      "claim": "23 component 全てに設計ブリーフが存在し、依存 DAG に循環が無く、実体解決が HB_ROOT 起点の 4 段で宣言されている",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "00f4618ba562b6947f903a363ae1e47b15d821b3cededf4979f0beaef78d8784",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P01-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P02-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P02.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P03-x-01",
+      "claim": "決定論経路への LLM 介在 0 件・責務重複 0 件・循環 0 件で、不採用 surface 全てに理由が付いている",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "f8ee1c330a6fba38c1c8388d18cc684ed126d655a8f156bb5741d59252a8b85d",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P02-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P03-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P03.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P04-x-01",
+      "claim": "23 component 全てに tests/<component 名>/ のテスト実体が存在し、実装前の実行で全て失敗している",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "d7a6654f5f65a8d99a5405bb4f3e1f093e9d7c40dcde93ccbf96c433b5e34ca6",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P03-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P04-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P04.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P05-x-01",
+      "claim": "全 route が build_target へ実体化され、日付既定値の解決箇所が構成データ正規化の 1 箇所だけである",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "ae5b84530bdc41d6cdf799387182928048340d8601ed945de2750f0c60a9d9d3",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "build:C01",
+        "build:C02",
+        "build:C03",
+        "build:C04",
+        "build:C05",
+        "build:C06",
+        "build:C07",
+        "build:C08",
+        "build:C09",
+        "build:C10",
+        "build:C11",
+        "build:C12",
+        "build:C13",
+        "build:C14",
+        "build:C15",
+        "build:C16",
+        "build:C17",
+        "build:C18",
+        "build:C19",
+        "build:C20",
+        "build:C21",
+        "build:C22",
+        "build:C23",
+        "task:P04-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P05-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P05.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P06-x-01",
+      "claim": "全テストが green で、env 未設定でも __file__ 相対フォールバックで一気通貫が成功する",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "7c2de36f80fa359a9fc82e4fe61ad7709649e6d03e11104fe795710fc134c610",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P05-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P06-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P06.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P07-x-01",
+      "claim": "index の受入確認表の全行が観測手段つきで判定でき、導入一文の検査と目的背景ゴールの検査が独立に判定されている",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "24b1d57995b579a4e7b6904ec64f9507150b937e453638a361416b6ee577d07f",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P06-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P07-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P07.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P08-x-01",
+      "claim": "argv と exit code が不変で、生成 HTML がバイト一致のまま保たれている",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "251316392ff7d24abb866a61d465b466ed27abd6f7367023f99d9e0364ed11b0",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P07-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P08-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P08.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P09-x-01",
+      "claim": "全 component の p0_lint と build trace が揃い、カバレッジが閾値以上で絶対パス直書きが 0 件である",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "216a255f34e9f50a60d006ff2930286f5885080cf32ddbe18d0c54609c284183",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P08-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P09-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P09.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P10-x-01",
+      "claim": "hook が対象内で発火し対象外で発火しないことと、委譲先不在時に縮退動作で完走することが確認されている",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "aa541d2083ce3b3154b16ba9b911bab09c552084c2ee19f8edf83707f20fa431",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P09-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P10-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P10.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P11-x-01",
+      "claim": "全ゲートの実行出力が実在ファイルとして残り、実題材の生成物が構成データとセットで保全されている",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "5d9c60274bc8a36ee917847451bfb4e82e0239906b1b2a3623316335062d713a",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P10-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P11-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P11.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P12-x-01",
+      "claim": "README だけで起動から出力物受け取りまでを追加質問なしに実行でき、専門用語に初出言い換えがある",
+      "kind": "generative",
+      "risk": "medium",
+      "fingerprint_sha256": "e018f508a52c10f7b7ac0e7ef375641e80264ffcfe579c8c2c7a353b61602c08",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P11-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P12-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P12.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    },
+    {
+      "id": "task:P13-x-01",
+      "claim": "manifest の配布可否と実体が整合し、marketplace 登録の判断と理由が記録されている",
+      "kind": "generative",
+      "risk": "high",
+      "fingerprint_sha256": "0d6a0d1514174cada360a1f071f46eb35a6a441967567b72b8ea995b89ce2f81",
+      "action": "blocked",
+      "reason": "dependency-proof-missing",
+      "blocked_by": [
+        "task:P12-x-01"
+      ],
+      "context_paths": [
+        "plugin-plans/guide-doc-generator/task-specs/P13-x-01.md"
+      ],
+      "checker": null,
+      "observation_tier": null,
+      "expected_evidence_paths": [
+        "plugin-plans/guide-doc-generator/evidence/P13.json"
+      ],
+      "model_required": true,
+      "reused_evidence": null
+    }
+  ]
+}

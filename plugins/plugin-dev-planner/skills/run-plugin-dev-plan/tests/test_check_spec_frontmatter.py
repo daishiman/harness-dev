@@ -196,8 +196,22 @@ def test_component_skill_assign_needs_skip_or_criteria(tmp_path, specfm):
 
 
 def test_component_script_tests_min_too_low(tmp_path, specfm):
-    errs = _inv_errs(tmp_path, specfm, component_entry("C01", "script", overrides={"tests_min": 50}))
-    assert any("tests_min は >=80" in e for e in errs)
+    """本数の床は『テスト 1 本だけの見せかけ』を落とすためにある。"""
+    errs = _inv_errs(tmp_path, specfm, component_entry("C01", "script", overrides={"tests_min": 1}))
+    assert any(f"tests_min は >={specfm.specfm.SCRIPT_TESTS_MIN}" in e for e in errs)
+
+
+def test_component_script_tests_min_is_not_the_coverage_percent(tmp_path, specfm):
+    """本数の床とカバレッジの百分率は別種の量であり、同じ値に固定しない。
+
+    両者を同一定数にすると、振る舞いの少ない script にも百分率と同じ本数を
+    書かせることになり、使えるようになるまでの時間だけが伸びる。網羅性の担保は
+    harness_coverage.min (%) 側にある。
+    """
+    assert specfm.specfm.SCRIPT_TESTS_MIN < specfm.specfm.HARNESS_MIN_REQUIRED
+    errs = _inv_errs(tmp_path, specfm,
+                     component_entry("C01", "script", overrides={"tests_min": specfm.specfm.SCRIPT_TESTS_MIN}))
+    assert not any("tests_min" in e for e in errs), errs
 
 
 # ─────────────────── main / collect 統合 ───────────────────

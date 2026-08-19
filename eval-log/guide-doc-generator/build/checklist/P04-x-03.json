@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-03",
+  "covered_task_ids": [
+    "P04-x-03"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "C61 (detail_level 必須・プリセット既定・provenance) の責務 component が一意に特定できる",
+      "method": "script-brief-C12.json の document_level_fields.detail_level と script-brief-C23.json の granularity_defaults",
+      "result": "pass"
+    },
+    {
+      "claim": "C62 (evidence_depth の直交独立) の責務と検証手段が特定できる",
+      "method": "script-brief-C12.json の r22_granularity_constraints.granularity_orthogonality (CR-GRANULARITY-ORTHOGONAL)",
+      "result": "pass"
+    },
+    {
+      "claim": "C63 (文字数上限の modulate) の数値正本が 1 箇所に閉じている",
+      "method": "script-brief-C11.json theme_token_schema_ownership.added_block_r22_values に 3 値。C12 / C22 は引くだけで数値を持たない旨を各ブリーフに明記",
+      "result": "pass (overview=180 / standard=400 / detailed=900)"
+    },
+    {
+      "claim": "C64 (ヒアリング) が停止しない形で定義されている",
+      "method": "skill-brief-C01.json responsibilities[R1-elicit].hearing_required_items_r22 (required:false / on_no_answer に既定採用を明記)",
+      "result": "pass"
+    },
+    {
+      "claim": "C65 (水準間の共有の型の不変) の検証手段が割り当たっている",
+      "method": "P04-x-04 のテスト追補先として C11 を指定 (RESOLUTION-R22.md 責務表)",
+      "result": "pass"
+    },
+    {
+      "claim": "C66 (宣言↔実態の一致) の検証手段が script として存在する",
+      "method": "script-brief-C22.json detections NAR-09 / NAR-10 + canonical_rules.granularity_declared_vs_actual",
+      "result": "pass (detections 8 -> 10)"
+    },
+    {
+      "claim": "用途プリセットが粒度を固定していない",
+      "method": "CR-GRANULARITY-PRESET-DEFAULT-ONLY と C23 granularity_defaults.why_defaults_not_constraints に禁止規則を 1 つも置かない旨を明記",
+      "result": "pass"
+    },
+    {
+      "claim": "新 component を作らず既存 component の責務追加として収まっている",
+      "method": "component-inventory.json の components 件数が 23 のまま変化なし",
+      "result": "pass"
+    },
+    {
+      "claim": "編集した 5 ブリーフが JSON として妥当である",
+      "method": "json.load による全 briefs/*.json の読込",
+      "result": "pass"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "design-canon-lags-test",
+      "detail": "R22 は C11 / C12 / C22 / C23 のテスト leaf が done へ遷移した後に到着した要件。ALLOWED_TRANSITIONS で done は終端のため閉じた leaf を再オープンせず、テスト側の反映を追補 leaf P04-x-04 へ分離した"
+    },
+    {
+      "kind": "human-contribution-deferred",
+      "detail": "C63 の 3 値と detailed の折り畳み挙動は TODO(human) として利用者へ提示したが、利用者が『つづけて』と指示したため dispatcher が決定した。決定者と理由は script-brief-C11.json の decided_by / why_* および RESOLUTION-R22.md へ記録済み"
+    },
+    {
+      "kind": "dispatcher-executed",
+      "detail": "SubAgent を介さず dispatcher が直接実行した"
+    }
+  ]
+}

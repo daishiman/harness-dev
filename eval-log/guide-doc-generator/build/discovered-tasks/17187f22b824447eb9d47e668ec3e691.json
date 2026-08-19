@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C16-01",
+  "reason": "利用者が 2026-08-17 に R01 の拡張要件 (goal-spec C60) を提示した。生成物は JS/CSS/画像を全て単一 HTML へ実体として内包し、画像はリンク参照でなく埋め込みとし、その 1 ファイルを配置するだけで成立すること。既存の C16 自己完結検査は SC-01/SC-03/SC-04 が対象を列挙する denylist 方式だったため script@src (相対パス) と iframe/frame/portal が検査の穴として通過する。判定軸を data: か否かの許可列挙へ反転する包括規則 SC-10 を設計正本 script-brief-C16.json へ反映する leaf を追加する。 / 受理: 利用者本人が 2026-08-17 のメッセージで要件として直接提示したため structural 変更を承認済み。P04-x-01 集約 leaf の depends_on への追加と、再 derive で露見した既存残渣 (P03-x-03 の Y-09 が component-inventory 側にだけ足した C01→C03 依存が P05-C01-01.md の depends_on に未反映で validate 規則 (d) 違反になっていた) の修正も同一 derive に含めた。",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+  "proposed_node": {
+    "id": "P04-x-02",
+    "title": "単一ファイル自己完結の判定を許可列挙へ反転する (C60 / SC-10)",
+    "phase_ref": "P04",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "script-brief-C16.json が SC-10 として『取得を発生させ得る参照は data: 以外を一律違反とする』許可列挙規則を持ち、script@src・link@href (rel 不問)・iframe/frame/portal・CSS url() (@font-face 外を含む)・img/source/video/object/embed の各参照が例外なくその適用対象として列挙され、スキームの有無ではなく data: か否かで判定すると明記され、かつ HTML テキストノードの URL を違反としない SC-02 の境界が維持されている",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P04-x-02.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-C60.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "task-graph-mode"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:7688d4a7a9c8bdafacd5c345ee398c4a0b47863874fd78567664f2ecefeae0e9"
+}

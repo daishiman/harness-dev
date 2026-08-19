@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C12-01",
+  "reason": "文長ゲートの正本の置き場所として指定された設定節が実在しない。閾値が検査スクリプトへ直書きのまま残り、しかも旧値である",
+  "discovered_at_artifact": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+  "proposed_node": {
+    "id": "P05-x-85",
+    "title": "文長ゲートの閾値を正本設定へ移し検査スクリプトの直書きを除去する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "文長ゲートの閾値が config の正本設定節に存在し、検査スクリプトから当該リテラルが grep で 0 件になることを実測する。config の値を変える変異で判定が追随して変わること、およびキーが不在のとき既定値へ倒さず赤になること (fail-open を作らない) の両方を確認する。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -28,6 +28,8 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("extract-system-blueprint", "assign-blueprint-fidelity-evaluator", ("IN1", "OUT1")),
     ("extract-system-blueprint", "run-blueprint-apply", ("IN1", "OUT1")),
     ("extract-system-blueprint", "run-extract-blueprint", ("IN1", "OUT1")),
+    ("guide-doc-generator", "run-handout-build", ("IN1", "OUT1", "OUT2", "OUT3")),
+    ("guide-doc-generator", "run-handout-extract", ("IN1", "OUT1", "OUT2")),
     ("harness-creator", "delegate-codex-skill-review", ("IN1", "IN2", "OUT1", "OUT2")),
     ("harness-creator", "run-build-skill", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
     ("harness-creator", "run-elegant-review", ("IN1", "IN2", "OUT1", "OUT2")),

@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C10",
+  "task_id": "P05-C10-01",
+  "covered_task_ids": [
+    "P05-C10-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し実行可能である",
+      "method": "wc -l と ls -l",
+      "result": "pass (349 行 / 11965 bytes / mode 755。hooks/ 配下は本ファイル 1 本のみ)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙",
+      "result": "pass (html / importlib.util / json / os / re / sys / time / pathlib の 8 本 + __future__。関数内 import 0 件)"
+    },
+    {
+      "claim": "AC: スキーム名もコードポイントも hook 側に列挙していない",
+      "method": "grep -nE 'https?|ftp://|wss?:|U\\+[0-9A-Fa-f]{4}|\\\\U0001|0x1F' で全件を目視確認",
+      "result": "pass (ヒット 1 件は 322 行目の `if not rows:` であり `wss?:` が `rows:` へ誤ヒットしたもの。実質 0 件。判定は C16 の scan_external_references / scan_emoji の戻り値をそのまま行へ写像するのみ)"
+    },
+    {
+      "claim": "C10 suite が全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/guard-handout-external-ref -p 'test_*.py'",
+      "result": "pass (Ran 196 / OK (skipped=13) / 38.574s。実装前は failures=172。skip 13 件は test_codepoint_parity_* の『この fixture は絵文字違反を持たない』による設計上の skipTest で実装前後とも同数)"
+    },
+    {
+      "claim": "C16 の残存赤 26 件のうち C10 由来 23 件が解消した",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-selfcontained.py -p 'test_*.py'",
+      "result": "pass (Ran 354 / failures=3。C10 実装前は failures=26。26 - 23 = 3 と一致し、残る 3 件は C11 (render-handout.py) 未実装待ちの TestAcC16_12 のみ)"
+    },
+    {
+      "claim": "絵文字判定の単一正本 (裁定 G-03) が hook でも成立している",
+      "method": "importlib.util.spec_from_file_location による C16 module 読込と getattr(scan_external_references / scan_emoji) の callable 検証経路を確認",
+      "result": "pass (hook 内に判定分岐が無く、Violation の列を SC-01..SC-04/SC-10 → D1、SC-05 → D2 へ写像するだけ。parity は構造的に保証される)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/guard-handout-external-ref/ 配下 9 ファイルの sha256 と mtime を実装開始時 (18:22) と突合",
+      "result": "pass (全 9 ファイルが 15:31-15:38 のまま。__pycache__ も再生成されていない)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "scripts/ config/ schemas/ assets/ genomes/ の mtime 確認",
+      "result": "pass (本 leaf 由来の書込は hooks/guard-handout-external-ref.py 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C11 実装者 (P05-C11-01) への申し送り。C16 suite に残る 3 件 (test_c11_has_no_scheme_enumeration / test_c11_has_no_codepoint_enumeration / test_c11_calls_the_canonical_functions) は C11 が同じ importlib 経路で C16 の canonical 関数を呼べば緑になる。逆に C11 が自前でスキーム列挙・コードポイント列挙を持つと落ちる (既に dispatch 済みの P05-C11-01 へ本文で伝達済み)"
+    },
+    {
+      "kind": "budget-contract-not-enforceable-as-written",
+      "detail": "worker の実測に基づく申し送り。brief は『時間予算 3 秒』を宣言するが、C16 の scan_emoji は 7 MiB の HTML で実測約 13 秒かかる (scan_external_references は 0.03 秒)。3 秒の壁時計打ち切りを入れると TestUnderLimitIsInspected (8 MiB 未満は完走して exit2) が必ず落ちるため、予算をチェックポイント方式 (3 箇所で time.monotonic() 照合) とし走査の途中中断は行わない設計にした。実効的な打ち切りは 8 MiB のサイズ上限のみ。要裁定: brief 側の 3 秒という数値が実測と乖離しているので、閾値を上げるか『予算は診断用で打ち切りに使わない』と brief に明記するかを決める必要がある"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 9 件。(1) 文字参照の復号は scan_emoji(html.unescape(text)) として標準ライブラリへ委ね自前の表を持たない (parity fixture に実体参照が無いため html.unescape は恒等写像で parity は保たれる) (2) 上記の時間予算チェックポイント方式 (3) stderr 1 行の書式を `D1-external-url-attr [SC-01] line 7 col 1: <抜粋>` とし C16 の canonical 規則 id を併記。抜粋は C16 が EVIDENCE_MAX=120 で整形済みのものを再切詰せず転記 (4) BLOCKED 見出しに対象パスと件数を含めた (5) 読込不能 (削除済み・ディレクトリ・権限不足・UTF-8 復号不能) は無出力 exit0 とし、systemMessage を出すのは module 解決不能とサイズ打ち切りの 2 経路のみ (6) 相対パスの基準は payload の cwd、無ければ os.getcwd() (7) applies_to の評価順は brief の宣言順。.html は Path.suffix.lower() の完全一致で判定し .htm と handout.html.bak は対象外 (8) main() 全体を except Exception: return 0 で包み traceback を stderr へ漏らさない (9) settings.json / hooks.json / plugin.json への登録は write_scope 外のため行っていない"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "hook の settings 登録 (settings_registration) に owner leaf が無い。同梱 hooks/hooks.json および .claude-plugin/plugin.json の hook 宣言をどの leaf が書くかを P05-x-01 phase gate で裁定する必要がある。現状は『存在しなければ pass』のテストしか無いため、登録漏れが緑のまま通過し得る"
+    }
+  ]
+}

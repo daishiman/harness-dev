@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C12-01",
+  "reason": "検査スクリプトの既定本文上限が旧予算のまま残っており、テーマトークンを直しても上限指定を持たないテーマは旧予算で通る。上限指定を消せば旧予算へ戻る抜け道が一箇所だけ残る",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "proposed_node": {
+    "id": "P05-x-86",
+    "title": "既定本文上限の旧予算フォールバックを塞ぐ",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "上限指定を持たないテーマが旧予算で通る抜け道が塞がれ、上限指定を削除した入力が既定値へ倒れず赤になることを実測する。スクリプト内に既定本文上限のリテラルが 0 件であることを grep で示す。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C19-01",
+  "reason": "config/handout-output.json に dir_name_format キーが存在しない (dispatcher 実測: トップキーは _meta / version / default_out_dir / size_limits の 4 件のみ)。inventory C19 purpose・improvement/output-naming-decision.json・修正後の script-brief-C19.json のいずれもが『script へ書式を焼かず config から読む』と定めており、このまま build すると初回実行が exit2 になる。加えて出荷済みの route-handout-output.py:433 と validate-handout-config.py:334 の derive_slug が R25 前の旧書式のままで、実出力が REQ-6 の 4 変更点すべてに違反している",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C19-01.json",
+  "proposed_node": {
+    "id": "P05-x-03-dir-name-format",
+    "title": "config/handout-output.json へ dir_name_format を追加する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+    "acceptance_criterion": "config/handout-output.json が dir_name_format キーを持ち、値が {date} と {slug} の 2 プレースホルダのみを含む文字列 (現行裁定値 '{date}_{slug}') であること。script 側ソースに同等の書式リテラルが 0 件であること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

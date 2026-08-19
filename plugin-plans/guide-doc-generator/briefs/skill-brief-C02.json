@@ -1,0 +1,89 @@
+{
+  "skill_name": "run-handout-extract",
+  "prefix": "run",
+  "kind": "run",
+  "hierarchy_level": "L1",
+  "trigger_conditions": [
+    "既存の資料 HTML から構成データを取り出す",
+    "手書き HTML をテンプレート化",
+    "handout を逆抽出"
+  ],
+  "output_contract": "構成データ JSON (extract-handout-config.py --out の書き出し) + 逆抽出レポート (--report の書き出し)。レポートの JSON 形状の正本は script-brief-C20.json#report_shape 1 箇所であり、本 skill はキー名も入れ子構造も複製しない — 本 skill が契約として負うのは『復元した部品一覧 (fidelity 別)・復元不能箇所とその理由・round-trip 差分の 3 面がレポートに揃っていること』と、その 3 面を利用者へ日本語で要約して提示することの 2 点である。書き出しの有無は C20#fail_semantics に従う (E-EXTRACT-UNRECOVERABLE のときだけ穴を null にした部分成果物を --out へ書き exit 1。E-ROUNDTRIP-DIFF / E-HTML-MALFORMED / exit 2 では --out を書かないため、存在しないパスを成果物として案内しない)",
+  "boundary": "入力=既存の単一 HTML/出力=構成データ JSON と round-trip 判定。資料内容の書き換え・改善提案はしない",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "extract-handout-config.py",
+    "validate-handout-config.py",
+    "render-handout.py",
+    "verify-handout-selfcontained.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": true,
+  "checklist": [
+    "既存 HTML の走査",
+    "構成データの復元",
+    "復元不能箇所の補完判断",
+    "round-trip 等価の確認"
+  ],
+  "goal": "既存の単一 HTML から構成データ JSON が復元され、その構成データを再レンダリングした HTML が元 HTML と構成データ等価であることが round-trip テストで確認された状態",
+  "key_constraints": [
+    "推測で埋めない。抽出器が null + E-EXTRACT-UNRECOVERABLE を返したフィールドを、本文の位置や見た目から当てにいって値を確定しない (script-brief-C20.json:375 never_guessed: 『文章の位置から「たぶんこれが lead_line」と当てにいくと、C02 skill が誤った意味情報を正しいものとして受け取り、以後の資料へ固定化される』)。補完は利用者へ選択肢を示して決める行為であり、欠落は欠落としてレポートへ残す",
+    "語彙・値域・マーカー契約を本 skill 側へ複製しない。data-hb-* 属性の語彙は script-brief-C11.json の html_attribute_contract、復元規則と往復の判定粒度は script-brief-C20.json (roundtrip_granularity) と plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md が正本。本 skill は所在を示して呼ぶだけで、部品 id・フィールド名・role の値域 (screenshot | figure | photo | illustration) を列挙し直さない",
+    "元 HTML を書き換えない。読むだけであり、抽出結果は --out 先へ書く (feedback_contract OUT2 の『元 HTML を 1 バイトも書き換えず』と同じ制約)",
+    "逆抽出レポートの形状 (report_shape) と診断コード ID の正本は script-brief-C20.json 側にあり、本 brief はそれらのリテラルを持たない (P03-x-02)"
+  ],
+  "open_questions": [
+    "round-trip 等価が現時点で構造的に成立しない既知の残件が 1 件ある。plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md:265-271 の /sections/*/heading は marker_status: absent (『render-handout.py:1511 は <h2 class=\"section-label\"> を出し data-hb-field を持たない』) で、residual_work は C11 側 (『C11 が見出しテキストのみを持つ要素へ data-hb-field=\"heading\" を付ける』)。この残件が解けるまでは、本 plugin が生成した HTML を入力にしても heading が E-EXTRACT-UNRECOVERABLE になり OUT1 (構成データ等価) が成立しない。本 skill 側の補完で埋めて等価に見せることはしない (見出しテキストからの復元は連番が混入するため不可と裁定済み)"
+  ],
+  "goal_seek": {
+    "engine": "inline",
+    "fork": "subagent",
+    "max_loops": 5
+  },
+  "output_language": "ja",
+  "purpose_background": "手書きで作られた過去の資料を資産化するには、HTML から構成データへ戻す経路が要る。戻せて初めてテンプレートとして反復配布できる",
+  "responsibilities": [
+    {
+      "id": "R1-scan",
+      "summary": "対象 HTML を決定論抽出器にかけ、復元できた部品と復元不能な箇所を切り分ける",
+      "prompt_required": true
+    },
+    {
+      "id": "R2-complete",
+      "summary": "extract-handout-config.py が E-EXTRACT-UNRECOVERABLE として null で返した箇所 (マーカーの無い手書き HTML における lead-line・判断軸・セクションゴールなど) だけを対象に補完方針を判断し構成データを確定する。マーカー (data-hb-field) がある HTML では同じフィールドが決定論的に復元されるため補完の対象にしない",
+      "prompt_required": true
+    },
+    {
+      "id": "R3-roundtrip",
+      "summary": "確定した構成データを再レンダリングし、元 HTML との構成データ等価を判定して逆抽出レポートを返す",
+      "prompt_required": true
+    }
+  ],
+  "checklist_covered": [
+    "C20 (副。R14 の round-trip を利用者が実行し結果を受け取る唯一の対話面。判定そのもの — 復元規則・往復粒度・診断コード — は script-brief-C20.json が持ち、本 skill は起動と結果の日本語要約、および復元不能箇所の補完方針の決定だけを担う)",
+    "C74 (副。hero フィールド lead / goal_chips の往復非破壊を人が確認する面。正本の回帰検査は C20、DOM を出す側は C11)",
+    "C75 (副。prerequisite_connectors の往復非破壊。同上)"
+  ],
+  "checklist_not_covered": [
+    {
+      "id": "C29",
+      "owner": "C11 (script-brief-C11.json の手順 24 が決定論を担保し、バイト一致の再現性テストを持つ)",
+      "why_not_here": "本 skill は 2 回生成して比較する主体ではない。round-trip の判定粒度は構成データ等価であり (ROUNDTRIP-CONTRACT.md の roundtrip_pass_condition)、バイト一致は別の bar である — 両者を本 skill が同時に主張すると『HTML がバイト一致しないと逆抽出は失敗』という誤った合格条件が生まれる"
+    },
+    {
+      "id": "C27",
+      "owner": "C19 / C11 ほか script component 群 (stdlib のみで書かれていることを検査するゲート側)",
+      "why_not_here": "skill は実装物を持たないため依存の検査対象にならない"
+    },
+    {
+      "id": "C71",
+      "owner": "C12 (構造化要素を持たない節の検査) / C11 (1 節 = 1 カードの描画契約)",
+      "why_not_here": "C71 の末尾は『逆抽出の往復契約が壊れないこと』を含むが、その往復検査の担い手は C20 であり、本 skill は検査を持たない。副としても宣言しないのは、C71 の主眼が描画契約と構造化要素の検査にあり、本 skill が関与する面が無いため"
+    }
+  ]
+}

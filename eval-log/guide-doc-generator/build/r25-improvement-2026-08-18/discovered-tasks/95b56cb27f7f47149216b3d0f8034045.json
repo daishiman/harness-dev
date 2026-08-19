@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C03-01",
+  "reason": "skill-brief.schema.json の boundary に maxLength:200 があり、既存 brief に超過があるか未確認 (C03 は 470 字違反を実際に踏んだ)",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C03-01.json",
+  "proposed_node": {
+    "id": "P05-x-31-brief-schema-sweep",
+    "title": "skill-brief 系 brief 全件へ schema 検証を一括適用する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "skill-brief-*.json の全件が Draft202012Validator で errors 0 になり、違反があった場合の修正箇所が一覧で記録されていること"
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C03"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

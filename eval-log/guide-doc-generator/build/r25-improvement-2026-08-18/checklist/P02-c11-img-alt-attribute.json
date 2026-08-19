@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c11-img-alt-attribute",
+  "covered_task_ids": [
+    "P02-c11-img-alt-attribute"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+  "acceptance_criterion_restated": "script-brief-C11.json の画像描画 algorithm に、assets[].alt の値を <img> の alt 属性へ無変換で出すことが明記されていること。data-hb-asset-alt は逆抽出用の marker であり支援技術向けの機構ではない旨を併記し、alt が空文字になる経路が無いこと",
+  "verified_by": [
+    {
+      "claim": "画像描画の手順が algorithm に無かったことを確認して新設した",
+      "method": "algorithm 26 手順を走査。図解 (手順 10) はあるが画像ブロックの描画手順が無く、alt の扱いは html_attribute_contract に data-hb-asset-alt が『assets の各値』とだけ書かれていた",
+      "result": "手順 10b を新設し、alt を無変換で <img alt> へ出すことを明記した。『要約・切り詰め・既定文の合成をしない』と禁止形も併記した — 代替テキストはレンダラが言い換えた時点で著者記述でなくなるため"
+    },
+    {
+      "claim": "marker と機構の区別を 2 箇所へ書いた",
+      "method": "手順 10b と html_attribute_contract の data-hb-asset-* 項の両方へ記述",
+      "result": "『マーカーが付いていることを理由に alt 属性を省く経路を作らない (スクリーンリーダーは data-* を読まない)』と書いた。caption と <figcaption> も同じ関係として併記した。属性契約側は『マーカーは同じ値の写しにすぎない』へ書き換え、手順 10b を参照させた"
+    },
+    {
+      "claim": "alt が空にならない根拠を実測して書いた",
+      "method": "script-brief-C12.json の assets 要素制約を確認: 『alt: 非空 string』が必須。alt を必須にした理由も C12 側に記録があり (a11y ゲート C17 を構成データ段階で満たすため・C22 ではない)",
+      "result": "手順 10b へ『空文字になる経路は無い — C12 が到達前に exit 1 で落とす。よって本 script は alt 欠落時の既定文を持たない』と根拠つきで書いた。既定文を持たないことを明示しないと、次に触る人が親切心で '画像' のような既定 alt を入れる"
+    },
+    {
+      "claim": "実装に空文字へ落ちる経路が実在することを確認し、契約側で塞いだ",
+      "method": "render-handout.py の Renderer.image() を読む。asset = ctx['assets'].get(asset_id) or {} で未解決を空 dict にし、alt = block.get('alt') or asset.get('alt') or '' で空文字へ落とす",
+      "result": "手順 10b へ『asset_id が解決できない構成データが到達した場合は alt を空にして描画を続けず exit 1』と規定した。空 alt の <img> は装飾画像の宣言として a11y ゲートを通過するため、解決失敗を装飾の宣言として出力するのは黙った免除にあたる旨も書いた"
+    },
+    {
+      "claim": "受入検査を足し、それが現状 FAIL する見込みであることを隠さなかった",
+      "method": "AC-C11-R25-ALT を追加。(a) alt の 1 バイト一致 (b) marker 同値 (c) asset_id 未解決入力で exit 1",
+      "result": "(c) は現行実装が exit 0 で空 alt を出すため FAIL する見込みであることを expected 本文へ書き、是正先 (P05-x-139) を名指しした。緑に見える書き方をしていない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C11ALT-FAILOPEN-01",
+      "level": "warn",
+      "summary": "asset_id 未解決が空 dict へ縮退し、alt / caption / role / data_uri が揃って空文字で描画される。空 alt は a11y 上『装飾画像』の正式な宣言であるため、C17 の a11y ゲートは緑のまま通る。素材が引けなかったという事実が、意図的な装飾指定と区別できない形で出力される典型的な fail-open。C12 が非空 alt を必須にしているので通常経路では到達しないが、レンダラ単体起動や C12 を迂回する経路では到達する。P05-x-139 として emit 済み"
+    },
+    {
+      "id": "F-P02C11ALT-ALTLIMIT-01",
+      "level": "info",
+      "summary": "validate-handout-config.py の FALLBACK_MICRO_COPY_LIMITS は alt を ('caption', 40) として 40 字上限で検査する。alt は読み上げ用の代替テキストであり、カード内の短句 (caption) と同じ上限を当てる根拠は自明でない — 画面を見ずに内容を理解するには 40 字では足りない場合がある。R7 (長文の抑制) は目で読む本文の要求であって読み上げ文の要求ではないため、alt を micro_copy の対象に含めること自体が再検討の余地を持つ"
+    },
+    {
+      "id": "F-P02C11ALT-BLOCKALT-01",
+      "level": "info",
+      "summary": "実装は block.get('alt') を assets[].alt より優先する (block 側 alt が勝つ)。しかし C12 の schema 制約は assets[].alt にしか非空必須を課しておらず、block 側 alt の値域・必須性・優先順位はどの brief にも書かれていない。手順 10b は assets レジストリ側を正本として書いたため、block 側 alt の優先という実装の挙動は契約に現れていない"
+    }
+  ]
+}

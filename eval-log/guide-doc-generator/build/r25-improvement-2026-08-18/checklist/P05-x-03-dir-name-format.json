@@ -1,0 +1,33 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-03-dir-name-format",
+ "covered_task_ids": [
+  "P05-x-03-dir-name-format"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+ "verified_by": [
+  {
+   "claim": "config/handout-output.json が dir_name_format キーを持ち、値が {date} と {slug} の 2 プレースホルダのみを含む",
+   "method": "キーを version の直後へ追加し、読み直して値を確認",
+   "result": "pass: 値は '{date}_{slug}'。_meta へ dir_name_format_policy を置き、3 者 (C19 生成 / C18 DATE-03 / C10 hook) がここから引き自分のソースへ焼かない旨と、doc_type をディレクトリ名へ出さない理由 (英字トークンが挟まると利用者指定の yyyy-mm-dd_日本語命名 にならない) を記録した"
+  },
+  {
+   "claim": "script 側ソースに同等の書式リテラルが 0 件",
+   "method": "scripts/*.py と hooks/*.py に対し {date} / {slug} を grep し、正本読出しの検査コード (プレースホルダ定数と存在検査) を除いた残りを数えた",
+   "result": "pass: 0 件。C18 と C10 の説明コメントに残っていた旧書式の逐語 (種別トークンを挟む 3 要素形) も、書式を書かない言い換えへ置換済み。コメントであっても書式そのものを残すと、次に読む人がそこを参照して第 2 正本になる"
+  },
+  {
+   "claim": "キー不在で既定値へ倒さない",
+   "method": "キーを削除した config で C19 の書式解決を呼ぶ",
+   "result": "pass: ContractError『dir_name_format が無いか文字列でない: None』。既定値へ倒す実装だと、正本を消しても旧書式で出力が続き誰も気づかない"
+  },
+  {
+   "claim": "未知プレースホルダを受け付けない",
+   "method": "'{date}_{doc_type}_{slug}' へ変異させて C19 を呼ぶ",
+   "result": "pass: ContractError『未知のプレースホルダがある』。format() へそのまま渡すと KeyError で落ちるか、悪くすると意図しない差し込みが通る"
+  }
+ ],
+ "findings": []
+}

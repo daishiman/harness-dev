@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "validate-handout-config.py:1349 の if slug not in used: continue により、dialogue セクションを 1 つも置かなければ share 検査に入らない。必須性は C23 プリセット側にしかないため、プリセット外の構成データでは節を消すだけで C59 が無効化される。C49/C56 と同型の fail-open。orange が検出し dispatcher が該当行を直読みして確認 (cyan は同じ criterion を full と判定しており、判定が割れた)",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-66-c59-dialogue-share-fail-open",
+    "title": "C59 の下限割合検査が dialogue 不在で発火しない fail-open を塞ぐ",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "min_duration_share を持つ section_kind が構成データに 1 件も無いとき、continue で検査を飛ばさず必須性違反として落ちること。dialogue を削るだけで C59 が無効化できないことを回帰テストで固定する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

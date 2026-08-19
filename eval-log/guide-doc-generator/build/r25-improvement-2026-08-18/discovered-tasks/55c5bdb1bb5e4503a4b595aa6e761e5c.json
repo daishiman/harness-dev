@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C11-01",
+  "reason": "config/handout-visual-policy.json の _meta.readers に C11 が列挙されていない。C11 は algorithm step 14/16 および B01/B02 で本ファイルを直接 json.load して読むため、readers 欠落は依存関係の宣言漏れであり、閾値変更時の影響範囲追跡が効かなくなる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C11-01.json",
+  "proposed_node": {
+    "id": "P02-visual-policy-readers-c11",
+    "title": "handout-visual-policy.json の _meta.readers へ C11 を追加する",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/config/handout-visual-policy.json",
+    "acceptance_criterion": "_meta.readers に C11 が含まれ、かつ列挙された全 reader が実際に本ファイルを読む component であること (逆方向の余剰も 0)",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

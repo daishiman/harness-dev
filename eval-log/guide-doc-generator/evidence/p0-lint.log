@@ -1,0 +1,40 @@
+=== plugins/skill-governance-lint/scripts/lint-script-frontmatter.py plugins/guide-doc-generator/scripts
+OK (checked=13 pending=0)
+exit=0
+=== plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/guide-doc-generator/skills
+ok: plugins/guide-doc-generator/skills (4 skills)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/guide-doc-generator/skills
+ok: plugins/guide-doc-generator/skills (4 skills)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/guide-doc-generator/skills
+summary: OK=4 VIOLATION=0
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir plugins/guide-doc-generator/skills
+[Warn]LS-203: ref-handout-design-system: 規約外 top-level dir 'assets' (許可: examples, hooks, log, prompts, references, schemas, scripts, templates)
+ok: plugins/guide-doc-generator/skills (4 skills)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir plugins/guide-doc-generator/skills
+{
+  "skills_scanned": 4,
+  "dependency_tracking": "Skill() invocations only (pair: excluded as ownership declaration)",
+  "invocation_graph": {},
+  "cycles": [],
+  "direction_violations": [],
+  "cycles_count": 0,
+  "violations_count": 0
+}
+OK: no cycles, no direction violations (4 skills scanned)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/guide-doc-generator/skills
+ok: doc/20 Step 7 全5条件 PASS (4 skills)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-forbidden-deps.py
+SKIP: /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/skill-governance-lint/manifest.json not found (Phase 2 partition の名残。Phase 3 carry-over F-7 で manifest 再導入予定。lint は実行せず exit 0 で通す)
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-manifest-contents.py plugins/guide-doc-generator/.claude-plugin/plugin.json
+OK: plugin manifest contents valid
+exit=0
+=== plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py --agents-dir plugins/guide-doc-generator/agents
+OK: 2 agent file(s) passed (Tier 1)
+exit=0

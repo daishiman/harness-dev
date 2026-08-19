@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-inventory-c01-c21-align",
+  "reason": "受入条件は inventory 側の deterministic_checks だけを求めたが、実測すると skill-brief-C01.json#deterministic_checks も同一の 7 本で、生成 5 本 (embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout) が同じく欠落していた。inventory だけを直すと『正本である brief より写しの inventory が完全』という逆転が残り、次に brief から inventory を再射影する人が欠落を復活させる",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+  "proposed_node": {
+    "id": "P02-x-143-c01-brief-deterministic-checks",
+    "title": "skill-brief-C01.json の deterministic_checks へ R3-render の生成 5 本を補い inventory と一致させる",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json"
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  }
+}

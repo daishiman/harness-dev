@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C18-01",
+ "covered_task_ids": [
+  "P02-C18-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C18.json",
+ "verified_by": [
+  {
+   "claim": "DATE-01 の pass_example がレンダラの禁止 DOM を合格例として焼いていたか",
+   "method": "dispatcher が script-brief-C11.json algorithm 13 を直接読み、C18 の修正前後と突合",
+   "result": "pass (欠陥は実在): C11 は『置き場所は文書冒頭の <header class=\"doc-head\"> の内側に限り、sticky ナビの <header class=\"pop-header\"> の内側には置かない (header 要素が 2 つあるため『header の中』では場所が一意に決まらない)』と明記。C18 の修正前 pass_example は pop-header 内配置であり、そのまま P06 のユニットテストへ写すと禁止形を合格例として固定するところだった。修正後は doc-head 6 件 / pop-header 4 件 (violation_example 側) で正しく反転している"
+  },
+  {
+   "claim": "LANG-04 の『または id を持つ <section>』の削除が正しいか",
+   "method": "修正後の LANG-04 rule 全文を読む",
+   "result": "pass: 『id を持つ』の残存 1 件は『旧記述にあった…分岐は採らない』という否定文脈のみ。hero カード化 (.hero-card-grid > .hero-card) が <section id=...> で描かれた場合に lead_line を要求する誤検出源を先回りで塞ぐ判断は妥当"
+  },
+  {
+   "claim": "文長・文数を C18 が持たないのは欠落か分界か",
+   "method": "C18 に対し W-SENTENCE-LONG/E-TEXT-PARAGRAPH/E-TEXT-FOLDED/W-HERO-LONG 等 9 identifier と和文 4 語 (文数/長文/段落/文字数) を grep し全 0 を確認、C12 側の実装件数と対比",
+   "result": "pass (分界として正しい): C12 側に W-SENTENCE-LONG 5 / E-TEXT-PARAGRAPH 3 / E-TEXT-FOLDED 6 / W-HERO-LONG 5 / E-TEXT-OVERFLOW 4 が実在。C11 が本文を無変換描画し C22 NAR-02 がそれを検証する以上、HTML 段で数え直すと同一概念の判定が 2 つ並ぶ。分界が brief にも stdout にも書かれていなかった点だけが実在の欠落で、text_volume_boundary と stdout の OUT-OF-SCOPE 明示で解消"
+  },
+  {
+   "claim": "W-COPY-LONG の実装がどこにも無い (欠陥類型の 3 例目)",
+   "method": "dispatcher が brief 5 本を横断集計",
+   "result": "pass (欠落は実在): C12=0 / C11=0 / C18=4 (すべて『自分の担当ではない』の記述) / C01=1・C05=1 (消費側の列挙)。出荷 config の _meta.canon_authority は『C12 validate-handout-config.py (… W-COPY-LONG … の閾値解決)』と宣言しており、宣言と実装が食い違う。W-OPENS-PROSE (C12=0) と同型で 3 例目"
+  },
+  {
+   "claim": "micro_copy の適用範囲が nav ラベルを覆えるか",
+   "method": "dispatcher が出荷 config の micro_copy を直接展開",
+   "result": "fail (覆えない・二重に不足): roles は label(14) / title(22) / caption(32) の 3 種のみで nav_item ロールは存在せず、さらに note が適用範囲を sections[].parts[].data と diagrams[].data に限定している。nav ラベルは C11 algorithm 14 が section 見出しから描く値なので範囲外。nav_item は plugin-plans/guide-doc-generator/briefs/config/handout-visual-policy.json (P05-x-03 が出荷する予定の正本) 側にのみ存在し、出荷済み config には 1 件も無い"
+  },
+  {
+   "claim": "exit code クラスと failure_modes の対応、inventory との一致",
+   "method": "SubAgent が inventory C18 の inputs/outputs/exit_codes/depends_on/couples_with/regression_scope を 1 項目ずつ突合。dispatcher は detections 10 / acceptance_checks 21 / text_volume_boundary 実在を再測定",
+   "result": "pass"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git status --porcelain plugin-plans/",
+   "result": "pass: script-brief-C18.json のみ"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C18-01",
+   "level": "blocking-for-release",
+   "summary": "W-COPY-LONG の判定を持つ component が 1 つも無い (C12=0 / C18=0)。出荷 config の canon_authority は C12 と宣言済みなので C12 側の欠落。W-OPENS-PROSE と同型の『消費側が参照する診断コードが producer に無い』3 例目"
+  },
+  {
+   "id": "F-C18-02",
+   "level": "blocking-for-release",
+   "summary": "nav ラベルの文字数を検査できる経路が構造的に無い。出荷 config の micro_copy.roles に nav_item が無く、note の適用範囲も sections[].parts[].data / diagrams[].data に限定されている。plan 側 briefs/config/handout-visual-policy.json にのみ nav_item が存在し出荷側は未追従 (P05-x-03)。利用者要求 R11 (上部ナビを見やすく) の決定論的担保がこの 1 点に懸かる"
+  },
+  {
+   "id": "F-C18-03",
+   "level": "carry-forward",
+   "summary": "improvement/hero-card-decision.json:53 が hero-card の要素名を固定していない (『section-card と同系の hero-card 要素』)。C11:352 の .hero-card-grid > .hero-card を決定ファイルへ昇格させないと build で <section> が選ばれうる"
+  },
+  {
+   "id": "F-C18-04",
+   "level": "carry-forward",
+   "summary": "C18 に残る唯一の長さリテラル LANG-05 の 80 文字 (一文であることの形式判定) が、handout-visual-policy.json の section lead_line 上限 80 字と同値を別文脈で持つ。C12 側に lead_line の長さ検査が入ると二重名簿になり得るため C12 ノードで確認する"
+  }
+ ]
+}

@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C21-01",
+ "covered_task_ids": [
+  "P02-C21-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C21.json",
+ "verified_by": [
+  {
+   "claim": "『draft ではスキップされる』旧仕様の残存",
+   "method": "編集前の brief 全文に対し skipped_in_draft / draft / 第1稿 / srg_images / why_srg_images_no_longer_skipped を grep",
+   "result": "pass (残存 0 件)。ただし R25 で確定した新仕様も 0 件という逆向きの欠落があり、purpose 末尾へ追記して inventory C21 の R25 宣言と一致させた"
+  },
+  {
+   "claim": "生成対象を role=illustration の節に限る契約がある",
+   "method": "編集前は絞り込み記述が皆無で、sections[] 全件が無条件に生成対象だった。正本 cost_and_risk.mitigation の抑制策がどの component brief にも書かれていなかった",
+   "result": "pass (修正後): generation_scope 4 キーを新設。dispatcher が target_set / who_selects / role_is_not_interpreted_here / if_screenshot_sections_are_passed の存在を実測確認"
+  },
+  {
+   "claim": "C21 が role 意味論を重複保持していない",
+   "method": "編集前 grep で illustration / screenshot が 0 件、role のヒットは motif の別語彙 1 件のみ",
+   "result": "pass: role 確定=C01 / 素材存在確認と fail-closed=C13 / 生成委譲のみ=C21 の 3 者で閉じることを brief 上でも明文化"
+  },
+  {
+   "claim": "superseded な diagram-gate-decision.json の閾値参照",
+   "method": "grep 'diagram-gate-decision|0\\.4|floor'",
+   "result": "pass: 0 件"
+  },
+  {
+   "claim": "argv / stdout / stderr / exit code が inventory C21 と一致",
+   "method": "inventory inputs の 4 flag と brief argv を突合。skip_reason の値域 (srg-absent / runtime-absent) を字句一致で確認",
+   "result": "pass: 段フラグ等の追加なし。network=true / stdlib_only=true / write_scope が assets-dir 配下である点も一致"
+  },
+  {
+   "claim": "exit 0/1/2 のクラス定義と failure_modes の割り当てが一致",
+   "method": "クラス定義と failure_modes 6 件 + algorithm 18 ステップの突合",
+   "result": "pass: fail-soft の境界『対象は委譲先が無いことであって委譲が失敗したことではない』が両所で同文"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C21-01",
+   "level": "resolved",
+   "summary": "C01 brief が『role=screenshot / role=illustration の IMG ブロックに対し C21 を呼ぶ』と書いており、正本 mitigation『生成対象は illustration 役の節に限られる』と矛盾していた。dispatcher が C01 brief を illustration 限定へ修正済み"
+  },
+  {
+   "id": "F-C21-02",
+   "level": "carry-forward",
+   "summary": "inventory C21 purpose の『role=screenshot と並ぶ生成対象として扱う』が mitigation と真逆に読める。文言の明確化が必要"
+  },
+  {
+   "id": "F-C21-03",
+   "level": "carry-forward",
+   "summary": "shipped plugins/guide-doc-generator/config/handout-visual-policy.json が R25 前の状態のまま (srg_images 残存・C13 誤記・diagram_parts [2,3] 残存)。producer である P05-x-03 系で再生成が必要"
+  },
+  {
+   "id": "F-C21-04",
+   "level": "carry-forward",
+   "summary": "C21 brief の failure_modes に exit2 の事例が 1 件も無い (exit_codes 側は 4 系統をカバー)。矛盾ではないが他 script brief と形が非対称"
+  }
+ ]
+}

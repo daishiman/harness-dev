@@ -1,0 +1,78 @@
+{
+  "skill_name": "assign-handout-readability-evaluator",
+  "prefix": "assign",
+  "kind": "assign",
+  "hierarchy_level": "L2",
+  "trigger_conditions": [
+    "資料が初心者に伝わるか見てほしい",
+    "読みやすさレビュー",
+    "handout のレビューを依頼"
+  ],
+  "output_contract": "readability verdict。中身は C06 handout-readability-reviewer の戻り値 JSON をそのまま搬送する (status: ok|blocked / verdict: PASS|FAIL / reviewed_as / findings[]: id, severity(high|medium|low), axis, location{section_id, element, quote}, why_not_understood, suggestion, machine_gate_overlap / strengths[] / not_reviewed[] / blocked_reason)。構造の正本は agent-brief-C06.json#output_contract.returns の 1 箇所であり、この skill 側でフィールドを増減・改称・要約しない。verdict の決め方 (severity=high が 1 件でも FAIL) も C06 が持ち、この skill は再判定しない",
+  "boundary": "入力=HTML パス・正規化済み構成データ・決定論ゲート 4 本の json-report と exit code・reader_profile・任意の section scope/出力=verdict の搬送のみ。判定基準も評価軸も loop 制御も持たない (正本は C06)。資料も構成データも書き換えない (修正は C01 R5-refine)",
+  "placement_candidates": [
+    "Skill"
+  ],
+  "cli_tools": [],
+  "deterministic_checks": [
+    "verify-handout-selfcontained.py",
+    "verify-handout-a11y-print.py",
+    "verify-handout-language.py",
+    "verify-handout-narrative.py"
+  ],
+  "external_systems": [],
+  "mcp_tools": [],
+  "needs_independent_context": true,
+  "needs_lifecycle_enforcement": false,
+  "key_constraints": [
+    "boundary は schema 上 200 字までのため、分界の詳細はここへ置く。この skill が担うのは入力の組み立て・独立 context への委譲・verdict の回収という手続きだけで、評価軸・severity の定義・PASS/FAIL の境界・再レビューの打ち切りは 1 つも持たない。分界の正本は agent-brief-C06.json#boundary の『C03 は判定基準を持たず、C06 は入出力の運搬とループ制御を持たない』であり、両側を対で読む",
+    "閾値を再計算しない。一文の字数・段落化・折り畳み・hero フィールドの長さは C12 validate-handout-config.py (W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / W-HERO-LONG / W-HERO-HEAVY) と C18 verify-handout-language.py が数え終えており、この skill も委譲先も数を数え直さない。LLM に計数をさせるのは最も壊れやすい経路であり、機械が既に出した json-report を渡すことで『同じ面を二重に、しかも不正確に見る』を構造的に塞ぐ。この skill が扱う領域は『閾値は通ったが読みにくい』側だけ (要点が立っていない・カードの粒度が揃っていない・言い換えが別の専門用語になっている 等)",
+    "この skill は評価軸を保持しない。軸の語彙の正本は agent-brief-C06.json#output_contract.returns の axis であり、本 brief は軸名を 1 つも列挙しない — 列挙した時点で語彙の第 2 の出所ができ、C06 側で軸が増減したときに本 brief だけが古い集合を主張する (実際に R25 で 4 軸が追加されたとき、ここの列挙は 6 軸のまま取り残されていた)。この skill は findings をそのまま運ぶだけで、軸ごとの重み付け・取捨・未知の軸名の拒否をしない (知らない軸名が返っても運搬を止めない。止めると軸追加が C06 単独の変更で完結しなくなる)。軸を増減する必要が生じたときの変更先は C06 の 1 箇所である",
+    "第 1 稿ではこの skill を起動しない。正本は config/handout-visual-policy.json#draft_first.skipped_in_draft.readability_review (『第1稿は利用者本人が現物を見るため、レビュアーより早い』) であり、起動判断は C01 R5-refine が持つ。この skill 側に『第1稿かどうか』の判定ロジックを持たせない (持たせると起動条件の正本が 2 つになる)",
+    "verdict=FAIL は build の停止条件ではない。第1稿を止めてよいのは決定論ゲートだけであり (C09 の集約 verdict が C01 の完了条件)、この skill が返す FAIL は C01 R5-refine への改善入力として扱う。severity=high であっても出力を破棄させず、成果物は残したまま次の周回へ渡す (利用者判断『第1稿優先』)",
+    "C04 ref-handout-design-system は『委譲先が読むべき規範の所在』として提示するだけで、この skill が規範を解釈して判定へ使うことはない。C06 は references/ を自ら読む契約 (agent-brief-C06.json#input_contract.reads_files) を持つため、規範本文をこの skill の入力へ展開して渡さない — 展開すると親 context の解釈が混入し、独立 context の意味 (別人格ではなく別の情報集合) が壊れる",
+    "決定論ゲートが 1 つでも exit0 でない状態では委譲しない。C06 は status=blocked を返す契約だが、その手前でこの skill が gate_reports を確認して差し戻す方が周回が 1 つ減る。判定規則は C09 の canonical_aggregation (CR-GATE-AGG) を読むだけで、集約を再実装しない"
+  ],
+  "file_ownership": [
+    "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R1-review-readability.md — C06 の prompt_ref (agent-brief-C06.json#prompt_ref) が指す責務プロンプト。owner skill 配下に置く"
+  ],
+  "checklist": [
+    "委譲入力 5 点 (html_path / config_path / gate_reports + exit code / reader_profile / scope) が agent-brief-C06.json#input_contract.receives と 1 対 1 で揃って渡っている",
+    "gate_reports が C16 / C17 / C18 / C22 の 4 本すべてを含み、いずれかが exit0 でなければ委譲せず差し戻している",
+    "独立 context (C06 handout-readability-reviewer) へ委譲しており、同一 context で判定していない",
+    "回収した verdict が C06 の戻り値 JSON と構造一致で、フィールドの増減・要約・再判定が 0 件",
+    "この skill の本文・プロンプトに数値閾値が 1 つも書かれていない (計数は C12 / C18 の json-report を参照するのみ)",
+    "verdict=FAIL でも成果物を破棄せず、C01 R5-refine へ改善入力として返している"
+  ],
+  "goal": "生成した資料が初心者に伝わるかを、生成した本人とは別 context のレビュアーが判定し、指摘と根拠を含む verdict が返っている状態",
+  "output_language": "ja",
+  "purpose_background": "文長や言い換え被覆は決定論ゲートで測れるが、初心者に伝わるかは意味判断であり機械では測れない。提案者が自作を採点しない構造にする必要がある",
+  "responsibilities": [
+    {
+      "id": "R1-assign",
+      "summary": "生成 HTML・正規化済み構成データ・決定論ゲート 4 本の json-report・reader_profile を独立 context の C06 handout-readability-reviewer へ渡し、verdict を回収して呼び出し元 (C01 R5-refine) へ返す。渡す前に gate_reports の exit code を確認し、1 つでも非 0 なら委譲せず差し戻す。判定はこの責務では行わない",
+      "prompt_required": true,
+      "delegates_to": "C06 handout-readability-reviewer (agents/handout-readability-reviewer.md)",
+      "prompt_file": "prompts/R1-review-readability.md"
+    },
+    {
+      "id": "R2-inputs",
+      "summary": "委譲入力を組み立てる。html_path は C01 R3-render の出力、config_path は出力先へ同梱された正規化済み構成データ、gate_reports は C09 /handout-verify が --json-report で出力した <gate_id>.json 4 件とその exit code、reader_profile は構成データの reader / prior_knowledge_level / usage_scene を写したもの。--json-report の出力先ディレクトリはこの責務が用意して C06 へ渡す (C06 に $TMPDIR を掘らせると read-only レビュアーの見え方が濁る)",
+      "prompt_required": false
+    },
+    {
+      "id": "R3-return",
+      "summary": "回収した verdict を素通しで返す。findings の並べ替え・要約・severity の読み替え・machine_gate_overlap の再判定を行わない。C06 が status=blocked を返した場合は blocked_reason をそのまま伝え、意味レビューが未実施であることを呼び出し元が区別できる形にする",
+      "prompt_required": false
+    }
+  ],
+  "rubric_refs": [
+    "ref-handout-design-system"
+  ],
+  "open_questions": [
+    "【P03-x-02 で決着】R25 の 9 要求に対して可読性レビュー側の担当が不在だった 4 面 (冒頭の読み順 REQ-1/4/8・図解と本文の噛み合い REQ-2/3・カード粒度 REQ-5・nav ラベルの拾いやすさ REQ-5 d 面) は、軸の正本である agent-brief-C06.json#r25_semantic_axes に 4 軸として新設され、C06 の axis 列挙は 6 種から 10 種になった。**本 brief は軸名を 1 つも書かない** — 名前も判定文も対応する REQ 番号の割り当ても C06 側だけが持ち、ここに写すと軸を足すたび 2 箇所を直す必要が生まれる (この項が消し込み済みであることの記録にとどめる)。数値閾値 (枚数・字数・件数) を C06 へ焼かず config/handout-visual-policy.json と improvement/visual-per-section-decision.json を正本参照にする方針も維持された (C06 側に no_threshold の grep 検査が AC として入っている)",
+    "C06 の open_question にある 3 件が C03 側の確定を待っている: (1) prompt ファイル名と responsibilities の対応 (本 brief では R1-assign ↔ prompts/R1-review-readability.md と置いた。lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみを受けるため、agent 本文のアンカーは R1 のまま prompt 名を据え置く案) (2) 再レビュー回数の上限は C01 の goal_seek (max_loops 5) 側のみが持ち、C03 は打ち切り判断をしない (本 brief の boundary で確定) (3) --json-report の出力先は C03 が用意する (R2-inputs で確定)。いずれも P05 で agent/skill 両側の実体へ反映が要る",
+    "第1稿では起動しないという規則 (draft_first.skipped_in_draft.readability_review) と、trigger_conditions の対話起動 (『読みやすさレビュー』等) の関係が未整理。利用者が第1稿の直後に明示的にレビューを依頼した場合、skip 規則は『C01 の自動周回で回さない』の意味に留まり利用者の明示要求は通す、という解釈を採るが、config 側の note はその区別を書いていない",
+    "【P03-x-02 で決着・裁定の正本は C12 側】C12 の判定結果は委譲入力へ含めない。この裁定とその根拠の単一正本は script-brief-C12.json#text_length_verdict_delivery (CR-TEXT-LENGTH-DELIVERY) であり、同項が『C03 / C06 / C09 は本項を参照し、経路の説明を複製しない』と owner を宣言している。したがって本 brief は argv の本数・stdout の形・非 0 終了で止まる挙動・前提条件としての位置づけを 1 つも書き写さない — 書き写すと C12 側の改訂 (例えば将来 --json-report が足された場合) がこちらに取り残され、同じ 1 つの事実が別々に古びる。本 brief が負うのは裁定の帰結だけで、それは deterministic_checks を C16 / C17 / C18 / C22 の 4 本に保ち C12 を第 5 のゲートとして足さないこと。この『決定論ゲートは 4 本』という結論は command-brief-C09.json#scope_boundary_vs_config_gates の起動口の裁定と agent-brief-C06.json#input_contract.receives の gate_reports 列挙にも同じ形で現れる必要があり、3 者が割れていないことは本 brief の外側で実測する。"
+  ]
+}

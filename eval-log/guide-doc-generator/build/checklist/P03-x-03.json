@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P03-x-03",
+  "covered_task_ids": [
+    "P03-x-03"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "Y-01 C21 の network 誤宣言を訂正",
+      "method": "script-brief-C21.json の network.value を機械照合",
+      "result": "value=true / rationale に委譲先 codex CLI の通信を明記 / inventory_sync 記述あり"
+    },
+    {
+      "claim": "Y-02 外部参照検査が C16 単一正本へ帰属",
+      "method": "C10/C11/C16 の相互参照を機械掃き出し",
+      "result": "C10=21件 / C11=13件 の C16 参照。判定は module_api 呼び出しで再実行する形"
+    },
+    {
+      "claim": "Y-03 絵文字検査の矛盾解消",
+      "method": "U+2600 出現箇所を全件文脈確認",
+      "result": "C10 の denylist は撤去済み (残る言及は廃止記録)。C16 側は SC-05 正本自身の定義。C10↔C16 同一入力全件一致の検査を追加"
+    },
+    {
+      "claim": "Y-04 出力物 writer の一意化",
+      "method": "RESOLUTION-P03.md の Y-04 節と C13/C19 ブリーフを照合",
+      "result": "C19 が assets 原本と handout-config.json の配置 writer、C13 は data URI 化のみ"
+    },
+    {
+      "claim": "Y-05 部品 id 語彙の単一正本化",
+      "method": "config/handout-parts.json 参照数と B0x-B1x ハードコードの全件文脈確認",
+      "result": "briefs 22 / index.md 2 / inventory 7 件が正本参照。残存 9 件のハードコードは全て移行の根拠記録。B16 の存否は参照解析 §2 を出典に since=plan で確定"
+    },
+    {
+      "claim": "Y-05 残留 (C20 が C12 を第二正本として指す) の解消",
+      "method": "差し戻し後に C20 を再掃き出し",
+      "result": "config/handout-parts.json (owner: C11) 参照へ張替済み。『部品 id 集合は保持しない / 対応表のみ持つ』の切り分けと双方向の起動時自己整合検査を追加"
+    },
+    {
+      "claim": "Y-06 用途語彙の割れ解消",
+      "method": "index.md の用途列挙を機械掃き出し",
+      "result": "列挙削除済み。handout-purposes.json へのポインタ化。残る『一般配布』2件は削除の根拠注記"
+    },
+    {
+      "claim": "Y-07 ゲート結果集約の C09 単一化",
+      "method": "C01/C09 ブリーフの相互参照確認",
+      "result": "C09 が 4 状態集約の正本。C01 は結果受領側"
+    },
+    {
+      "claim": "Y-08 section_kind 循環の解消",
+      "method": "config/handout-sections.json 参照数を確認",
+      "result": "briefs 11 / inventory 4 件。中立データファイル経由で C12↔C23 の循環を回避"
+    },
+    {
+      "claim": "Y-09 宣言辺の乖離 6 件の解消",
+      "method": "RESOLUTION-P03.md の Y-09 節を確認",
+      "result": "inventory と briefs の辺宣言が一致"
+    },
+    {
+      "claim": "成果物 RESOLUTION-P03.md の存在と網羅",
+      "method": "ファイル実在確認と Y-id 掃き出し",
+      "result": "21251 bytes / Y-01..Y-09 全 9 件を記載"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定した JSON 形式の最終メッセージを返さず idle 通知のみだった (P03-x-02 と同一の挙動)。判定は dispatcher による独立掃き出しで行っており、自己申告より強い証跡である"
+    },
+    {
+      "kind": "residual-found-by-dispatcher",
+      "detail": "Y-05 の第二正本が C20 に 1 件残っていたのを dispatcher の独立掃き出しが検出し、差し戻して解消した。生カウント検査では検出できず、参照先の名前を見て初めて判明した種類の残留"
+    },
+    {
+      "kind": "false-positive-class-recorded",
+      "detail": "B0x-B1x ハードコード 9 件・U+2600 4 件・index.md の一般配布 2 件はいずれも生カウントでは違反に見えるが全て移行の根拠記録だった。C11/C16 のゲート設計では『何を違反と定義するか』の厳密化が必要という知見として P04 へ持ち越す"
+    }
+  ]
+}

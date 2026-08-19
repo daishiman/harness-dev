@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C16",
+  "task_id": "P05-C16-01",
+  "covered_task_ids": [
+    "P05-C16-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l / wc -c",
+      "result": "pass (1344 行 / 49488 bytes)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれ、ネットワーク・画像処理ライブラリを使わない",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙し、別途 urllib/socket/requests/urlopen/PIL/numpy/cv2/imghdr を grep -c",
+      "result": "pass (argparse / base64 / json / re / sys / pathlib / html.parser の 7 本 + __future__。禁止ライブラリ 0 件)"
+    },
+    {
+      "claim": "テストが 354 件中 328 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-selfcontained.py -p 'test_*.py'",
+      "result": "pass (Ran 354 / failures=26 / errors=0。実装前は failures=354)"
+    },
+    {
+      "claim": "残る赤 26 件が全件 C10 / C11 の未実装待ちであり実装不足でない",
+      "method": "unittest 出力を失敗ブロックへ分割し、参照している未実装ファイル名で機械分類",
+      "result": "pass (失敗 26 / C10 hook (guard-handout-external-ref.py) 未実装が原因 23 / C11 (render-handout.py) 未実装が原因 3 / それ以外 0)。いずれも write_scope 外のファイル生成を要するため本 leaf では緑化不能"
+    },
+    {
+      "claim": "裁定 G-03 の目的が達成された = C15 の赤 90 件が全解消した",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/build-icon-sprite.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=0 / errors=0 / OK。実装前は failures=90)。C15 が importlib で scan_emoji を解決する経路が実働し、絵文字判定の単一正本が成立した"
+    },
+    {
+      "claim": "C15 実装者からの申し送り (層 2 + VS16 を 1 件の Violation にまとめる) が実装された",
+      "method": "test_layer2_violation_reports_sc05_and_codepoints の緑化を C16 suite の結果で確認",
+      "result": "pass (codepoints=\"U+2699 U+FE0F\" として 1 件にまとめられ、stderr に 2699 と FE0F の双方が出る)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "C16 テスト 8 ファイルと C15 テスト 11 ファイルの mtime・サイズを実装開始時と突合 (plugins/guide-doc-generator/ は untracked のため git 差分では証明不可)",
+      "result": "pass (C16 テストは 15:22:21-15:30:58、C15 テストは 15:47:13-17:04:47 のまま。本 leaf の唯一の書込は scripts/verify-handout-selfcontained.py の 18:32:54)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "scripts/ 配下の他 script の mtime 確認",
+      "result": "pass (build-icon-sprite.py 18:09 ほか、他 script はいずれも未更新)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C10 (P05-C10-01) と C11 (P05-C11-01) の実装者への申し送り。残る赤 26 件は、両者が spec_from_file_location で本 script を module として読み込み scan_external_references / scan_emoji を呼ぶ実装にすれば緑になる (module API は実装済みで、C15 が同じ経路で稼働中であることが 128/128 緑で裏づけられている)。逆に両者が自前でスキーム列挙やコードポイント列挙を持つと test_c10_has_no_scheme_enumeration / test_c11_has_no_codepoint_enumeration が落ちる"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 13 件。(1) SC-09 の対象 data-hb-part 値を part id リテラルでなく kind==\"media\" かつ data_block_type!=\"text\" という属性述語で導出 (部品 id の正本が config/handout-parts.json にあり script へ列挙できないため。config 不読時は fail-closed exit 2) (2) 外部スキーム値は SC-01 のみ報告し SC-03 は黙る (test_href_url_returns_violation が戻り値ちょうど 1 件を要求) が SC-10 は裁定どおり SC-01 と二重報告 (3) a@href の閉包判定を SC-03 の領分とし SC-10 の一般属性ルールから外した (4) SC-05 の evidence に生グリフを入れずコードポイント整形文字列を入れた (stderr を絵文字フリーに保つため) (5) CLI は text node + 全属性値 (data: 値は先頭 64 文字) を region 化して単一の _emoji_hits() を呼ぶ (CLI 専用分岐を持たない) (6) 孤立 ZWJ / VS1-VS15 / VS16 無し層 2 は違反にせず info として json-report に残す (7) SC-06 の様式違反は要素 1 個につき 1 件へ集約 (8) SC-08 の data-hb-nav=\"exclude\" 逃げ道を実装し除外 section を info に記録 (テストは無い) (9) srcset の分割を『カンマ + 空白』でのみ行う近似 (data: URI 内のカンマで割らないため。空白なしで連結された data URI 候補は誤分割し得る) (10) json-report に warnings と各 detection の info を追加 (detections は SC-01..SC-10 の 10 件固定で SC-00 を混ぜない) (11) --json-report の書き出しを stdout/stderr より前に行い、書けなければ ERROR 1 行のみで exit 2 (12) ArgumentParser.error/exit を上書きし usage を出さず ERROR<TAB>... 1 行に統一 (13) 絵文字違反の代替提案を assets/icons/icon-set.json の先頭 3 件から読む (語彙を script に持たない)"
+    },
+    {
+      "kind": "known-approximation",
+      "detail": "上記 (9) の srcset 分割は近似であり、空白を挟まずカンマ連結された data URI を誤分割し得る。現行テストは検出しない。実データで誤検知が出た場合はここが疑い箇所"
+    }
+  ]
+}

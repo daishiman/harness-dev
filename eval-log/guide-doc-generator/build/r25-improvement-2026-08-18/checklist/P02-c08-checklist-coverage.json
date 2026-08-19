@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c08-checklist-coverage",
+  "covered_task_ids": ["P02-c08-checklist-coverage"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+  "verified_by": [
+    {
+      "claim": "C20 側の checklist 項目に対する C08 の担当分が漏れなく列挙されている",
+      "method": "script-brief-C20.json#checklist_covered (C20 / C27 / C29 / C74 副 / C75 副) と command-brief-C08.json#checklist_covered (C20 / C74 副 / C75 副) を集合比較",
+      "result": "pass: 差分は C27 と C29 の 2 件のみで、いずれも意図的除外として note に理由が書かれている"
+    },
+    {
+      "claim": "担わない項目に担当 component が明示されている",
+      "method": "編集後の checklist_coverage_note を読解",
+      "result": "pass: 編集前の note は C27/C29 を『script 実装そのものの性質に対する検査』と説明するだけで担当 component 名を書いていなかった。『担当はいずれも C20 extract-handout-config.py の実装であり、修正先は script-brief-C20.json#checklist_covered が宣言する C20 側』を追記済み"
+    },
+    {
+      "claim": "C02 側の checklist 項目に対する分割が扱われている",
+      "method": "skill-brief-C02.json#checklist_covered を実測",
+      "result": "pass (不在を実測して記録): null。C02 は checklist 項目を 1 件も宣言しておらず、C08 が『自分が担う分』として切り出せる対象が存在しない。編集前の note は C20 側しか突合しておらず C02 側に一切触れていなかったため、null であることと C08 が代理宣言しない理由を追記した"
+    },
+    {
+      "claim": "起動口が委譲先の被覆を代理宣言しない理由が書かれている",
+      "method": "追記部分の読解",
+      "result": "pass: 『C02 の代わりに項目を立てると、C02 を直すべき不足が C08 の宣言だけで埋まったように見え、被覆の空白が隠れる』と明記。既存の C27/C29 除外理由 (起動口を理由に被覆を広げると誤った修正先を示す) と同じ原則で一貫"
+    },
+    {
+      "claim": "編集後も JSON として妥当",
+      "method": "python3 json.load による再読込",
+      "result": "pass: parse 成功"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c08-01",
+      "level": "blocking-for-release",
+      "summary": "skill-brief-C02.json の checklist_covered が null。C02 は逆抽出 (HTML→構成データ) の唯一の担い手でありながら goal-spec の checklist 項目を 1 件も引き受けていないため、該当項目が誰の担当でもない状態になりうる。write_scope 外のため未修正。discovered-task P02-c02-checklist-covered-declare として emit 済み (form: discovered-tasks/bcba35f0228d446fbeb2371868bfc0b1.json)"
+    },
+    {
+      "id": "F-P02c08-02",
+      "level": "carry-forward",
+      "summary": "checklist_covered が null であることを検出する決定論ゲートが無い。空宣言は『担当なし』と『未記入』を区別できないため、release で null と空配列の禁止 (または明示的な none 理由の必須化) を検討"
+    }
+  ]
+}

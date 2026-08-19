@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "C58 (受講者の具体業務への紐づけ) だけが どの brief の checklist_covered にも入っていない。実体は揃っており validate-handout-config.py:168 TIE_TASK_PREFIX と :1233 の target_tasks 走査が検査している。C12 の acceptance_checks は C58 を名指ししているため宣言だけが落ちた形。宣言の穴は『検査していない』ではなく『誰が持つか不明』を作り、owner 不在のまま仕様変更が来ると誰も追随しない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+  "proposed_node": {
+    "id": "P05-x-63-c58-owner-declaration-missing",
+    "title": "C58 の checklist_covered 宣言を C12 へ追加する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+    "acceptance_criterion": "C46-C59 の 14 件すべてが いずれかの brief の checklist_covered に現れる。宣言 0 件の checklist id が存在しないことを機械検査するゲートを持つ",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

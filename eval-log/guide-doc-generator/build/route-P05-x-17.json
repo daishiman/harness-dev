@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-17",
+  "covered_task_ids": [
+    "P05-x-17"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+  "verified_by": [
+    {
+      "claim": "産出成果物 PREDICATE-SCOPE-POLICY.md と新テスト test_predicate_scope.py が実在する",
+      "method": "当方が ls で確認",
+      "result": "pass (PREDICATE-SCOPE-POLICY.md 7999 bytes / test_predicate_scope.py 21794 bytes)"
+    },
+    {
+      "claim": "自スイートが緑である",
+      "method": "当方がテストディレクトリへ cd して `python3 -m unittest discover` を実行し、失敗テスト名の集合を正規表現で採取",
+      "result": "pass (Ran 53, OK。**失敗テスト名の集合は空**。件数でなく名前集合で判定している)"
+    },
+    {
+      "claim": "AC-C01-17 / AC-C01-20 が本文全体一致では単一箇所注入で発火しなかった (= 偽緑が実在した)",
+      "method": "**当方が受入 fixture 上で旧述語の語を実測**した。contract_lib.split_frontmatter で frontmatter を除いた body に対する出現数を数えた",
+      "result": "pass (body で `README.md` = 2 / `決定論` = 3。いずれも 2 以上ゆえ、単一 (old,new) 置換では『body 中に語が残る』ため旧述語 `語 not in body` は False のまま = 発火しない。**worker 報告の偽緑は実在した**)"
+    },
+    {
+      "claim": "スコープ化によって当該語が判定範囲内で一意になった (修正が実効している)",
+      "method": "当方が contract_lib の新スコープ定義 (readme_decl / llm_decl) を fixture へ適用して出現数を数えた",
+      "result": "pass (readme_decl 内 `README.md` = 1、llm_decl 内 `決定論` = 1。README 5 節の語も readme_decl 内で全て 1 (原題/目的/適用プリセット/同梱物一覧/使い方))"
+    },
+    {
+      "claim": "assert を弱めていない (スコープ化は判定を狭める方向のみで、緩和ではない)",
+      "method": "当方が contract_lib.py の AC-C01-17 / AC-C01-20 の実装を読解",
+      "result": "pass (AC-C01-17 は『README.md を含みかつ WRITE_VERBS を含む行』が**存在しない**こと自体を新たな違反として追加したうえで、5 節の語をその宣言行の中に要求する = **旧実装より厳しい**。AC-C01-20 も同様に『LLM で書かない』宣言行の存在を要求し、`決定論` をその行内に要求する。**どちらも許容範囲の拡大・skip・部分文字列化ではなく要求の追加**)"
+    },
+    {
+      "claim": "新テストが将来の述語追加を取りこぼさない (検査の網羅が構造的に担保されている)",
+      "method": "当方が test_predicate_scope.py の test_every_violation_site_has_a_mutation を読解",
+      "result": "pass (`Violation(\"AC-C01-\\d+\"` の静的走査で発生箇所を数え、**契約 id の集合一致**と**発生箇所数 <= 変異数**を assert する。述語だけ足して変異を足さない緑化を構造的に塞いでいる)"
+    },
+    {
+      "claim": "BodyWidePredicateScopeTest が空振りしていない (一意性 assert が実質的である)",
+      "method": "当方が BODY_TOKENS の代表 3 件を fixture 上で独立に実測",
+      "result": "pass (`/handout-verify` は body で 1 = frontmatter 側の 1 件を split_frontmatter が正しく除外している。README.md / 決定論 は上記のとおりスコープ内 1。**assert 対象が実際に 1 であることを当方が別経路で再現できた**)"
+    },
+    {
+      "claim": "変異が『count(old)==1』不変条件を守りつつ多重出現語を扱えている",
+      "method": "当方が test_predicate_scope.py の該当変異定義を読解",
+      "result": "pass (多重出現する `/handout-verify` は素の語でなく `` `/handout-verify` (C09) 経由で実行し `` という**一意な長い文脈**を old に採っている。語の一意化のためにテストを弱めるのでなく、置換キーを伸ばして解いている)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が変更ファイル一覧を確認",
+      "result": "pass (4 ファイルすべて plugins/guide-doc-generator/tests/run-handout-build/ 配下。実装 SKILL.md は無改変)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方の task-spec が偽緑候補として名指しした AC-C01-15 (`CR-GATE-AGG`) と AC-C01-18 (`assign-handout-readability-evaluator`) は、いずれも受入 fixture 上で出現数 1 であり最初から単一箇所注入が成立していた** (当方が実測: fixture 上でどちらも 1)。実際に壊れていたのは **AC-C01-17 と AC-C01-20** で、当方の名指しには含まれていなかった。PAT-1 (導出値を契約へ書き下す) の 14 例目。**偽緑候補は dispatch prompt に書き下すのでなく、テスト側で発生箇所を静的走査して導出させるべき**であり、worker はまさにそれを実装 (`test_every_violation_site_has_a_mutation`) して構造的に解いた。なお当方が実装 SKILL.md 側を数えると `assign-handout-readability-evaluator` = 3 / `決定論` = 7 で多重出現するため、**予測の方向 (多重出現語が偽緑を生む) 自体は正しかったが、変異が当たるのは受入 fixture であって実装ではない**という判定面の取り違えが誤りの本体"
+    },
+    {
+      "kind": "worker-report-count-drift",
+      "detail": "worker 報告の実装 SKILL.md 出現数 (`assign-handout-readability-evaluator` ×2 / `/handout-verify` ×3 / `README.md` ×3 / `決定論` ×5) と当方の実測 (×3 / ×5 / ×4 / ×7) が食い違う。並行 build 下で他 leaf が実装 SKILL.md を加筆した可能性が高く、**判定に使う受入 fixture 側の数値は当方の再現と一致している**ため結論に影響しない。実装側の数値は本 leaf の受入基準に入っていない参考値"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

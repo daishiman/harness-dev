@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-18",
+  "covered_task_ids": [
+    "P05-x-18"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/scripts",
+  "verified_by": [
+    {
+      "claim": "受入 4 テストが緑である",
+      "method": "当方が tests/render-handout.py へ cd してスイート全体を再実行し、失敗テスト名の集合を採取",
+      "result": "pass (Ran 195。失敗名集合は `test_round_trip_equivalence` / `test_part_ids_are_not_enumerated_outside_the_catalog` の 2 件のみで、**受入 4 件 (`test_accent_token_change_only_diffs_root_block` / `test_flow_is_delegated_to_inline_svg` / `test_diagram_pattern_is_exposed` / `test_language_gate_passes`) はいずれも失敗集合に含まれない**)"
+    },
+    {
+      "claim": "新規に赤くなったテストが 0 件である",
+      "method": "当方が着手後の失敗名集合を、既知の赤 (P05-x-07 の route report で当方が実測済み) と突合",
+      "result": "pass (残る 2 件はいずれも `extract-handout-config.py` 由来で、`test_part_ids_are_not_enumerated_outside_the_catalog` は P05-x-07 report で当方が offenders 13 件すべて同 script の PART_CLASS_MAP と実測済み。**本 leaf は renderer しか触っておらず両者と因果が無い**)"
+    },
+    {
+      "claim": "worker が発見した『読み飛ばし述語は data-hb-generated だけではない』は事実である",
+      "method": "当方が extract-handout-config.py を読解",
+      "result": "pass (`:90` に `CHROME_CLASSES = (\"pop-header\", \"pop-bottom\")` があり `:425` で class 名のみを見て部分木を捨てている。**したがって task-spec 手順 5 の字義『.date-pill を header.pop-header 内へ出す』を実行すると date が二重の理由で読み飛ばされ、受入基準の到達性と両立しない**。worker の指摘は正しく、task-spec の指示をそのまま実行しなかった判断が正しい)"
+    },
+    {
+      "claim": "chrome class を持たない <header class=\"doc-head\"> を新設する解が C18 のゲートを緩めていない",
+      "method": "当方が verify-handout-language.py の DATE-01 判定を読解",
+      "result": "pass (`:719-722` の `in_lead_position` は `node.has_ancestor_tag(\"header\") or node.order < anchor_order` で、**`.pop-header` という class を要求していない**。`<header>` タグでありさえすれば冒頭位置と判定される。ゲート側の条件を書き換えずに到達性と DATE-01 を両立させており、**assert の緩和ではない**)"
+    },
+    {
+      "claim": "C18 ゲートが実際に PASS する",
+      "method": "**当方が独立にゲートを実行した**。base_config を renderer に通し、生成 HTML を verify-handout-language.py へ `--html` + `--config` で渡した",
+      "result": "pass (exit 0 / `RESULT: PASS`。**`DATE-01 PASS checked=1 violations=0`** で『日付が 1 個だけ』かつ『冒頭位置』の双方を満たす。DATE-02 / DATE-04 も PASS)"
+    },
+    {
+      "claim": "hero の 2 層化後もマーカーが抽出器の枝刈りを生き延びる",
+      "method": "**当方が独立に実測した**。renderer で HTML を生成し、extract-handout-config.py を importlib で読み込んで `build_tree()` + `prune_chrome()` を適用し、枝刈り後の木を走査してマーカー属性を採取",
+      "result": "pass (枝刈り後に `data-hb-field=\"date\"` が**残存**。ほか title / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / heading / goal / lead_line / judgment_axis 等と `data-hb-section-role` / `data-hb-ties-to` / `data-hb-notes-enabled` も残存)"
+    },
+    {
+      "claim": "上記で当方の測定に現れなかった 2 マーカーも到達可能である",
+      "method": "当方の走査結果に `data-hb-attainment-step` と `data-hb-src` が出なかったため、renderer の出力位置を読解して原因を切り分けた",
+      "result": "pass (**当方の fixture 不足であり欠陥ではない**。`data-hb-attainment-step` (`:1605`) は `section-card` 要素の属性で、同じ要素に載る `data-hb-section-role` / `data-hb-ties-to` が当方の実測で残存している以上、`_nonempty` ガードで属性が省略されただけ。`data-hb-src` (`:790`) は本文中の `figure.asset` に載り chrome ではない。base_config に attainment_step と asset ブロックが無かったことが原因)"
+    },
+    {
+      "claim": "トークン間接参照の修正が『トップレベルの変更だけが差分になる』ことを満たす",
+      "method": "当方が render-handout.py の `css_variables_of()` (`:887`) と適用点 (`:908`) を読解",
+      "result": "pass (トークンのトップレベル `--` 始まりキーを `css_variables` の同名キーへ上書きする形で、`CSS_VARIABLES_KEY` 不在時の `LaunchError` は残置されている。受入テスト `test_accent_token_change_only_diffs_root_block` が緑であることが挙動側の証拠)"
+    },
+    {
+      "claim": "B14 の C14 委譲で pattern リテラルを増やしていない",
+      "method": "当方が worker の説明を実装で確認",
+      "result": "pass (`self.diagram(block, pairs, default_pattern=block.get(\"type\"))` の形で `block.type` の値をそのまま pattern 語として渡しており、ソースへ \"flow\" というリテラルを増やしていない。受入テスト 2 件が緑)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が変更ファイル一覧と、worker が『読んだだけ』と主張する extract-handout-config.py の扱いを確認",
+      "result": "pass (変更は `scripts/render-handout.py` と produces の `scripts/RESOLUTION-P05-x-18.md` の 2 件で、いずれも write_scope 内)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-premise-incomplete",
+      "detail": "**task-spec の手順 5 が実行不能な指示だった**。『.date-pill を header.pop-header 内へ出す』と書いたが、抽出器は `CHROME_CLASSES` に `pop-header` を持ち class 名だけで部分木を捨てるため、その通りに実装すると受入基準『date が到達可能』を必ず破る。worker は字義に従わず、`<header>` タグであれば足りるという C18 側の実装 (`in_lead_position`) を読んで `<header class=\"doc-head\">` を新設した。**task-spec の指示より受入基準を優先した判断が正しい**。加えて task-spec に書いた行番号は全面的にずれており (`build_css` は :885-893 でなく :885-887 等)、worker はすべて読み直して確定している。PAT-1 の 15 例目"
+    },
+    {
+      "kind": "dispatcher-measurement-bug",
+      "detail": "**当方の C18 ゲート実行が最初 exit 2 で空振りした**。`verify-handout-language.py` は `--html` だけでなく `--config` も要る (構成データ宣言駆動の検査のため) が、当方は `--html` のみで起動し、引数不正の exit 2 を『ゲート失敗』と読み違えかけた。`--config` を足して再実行し exit 0 / DATE-01 PASS を確認している。P05-x-12 の検証でも同種の引数誤用 (`--html` を positional で渡す) をしており、**同一セッションで 2 度目**。script を黒箱で叩く前に `add_argument` を読む手順を先に置くべき"
+    },
+    {
+      "kind": "contract-conflict-resolved-by-restructuring",
+      "detail": "『hero から data-hb-generated を外す』という素朴な解は `test_html_attributes.py:97-107` が generated 要素の `data-hb-part` 集合に `B02` を要求するため不可、かつ `prune_chrome` は親を捨てた時点で子を見ない (`:433-442`) ので子側の打ち消しマーカーでも解決不能。worker は `.hero` (著者記述) と `.hero-frame` (空の枠・B02 + generated) の**2 層化**でどちらの契約も緩めずに解いた。**両立不能に見える契約を、構造を分けることで両立させた実例** (P05-x-07 の PAT-7 が構造分離で解ける可能性を示唆する先例にもなる)"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が write_scope 外として RESOLUTION §7 に受け皿つきで記録した事項。(a) `CHROME_CLASSES` から `pop-header` を外すか判定を `data-hb-generated` 保持要素に限定する (**class 名だけで捨てる現行判定は脆く、今回の実行不能指示の真因**) → 受け皿は `P05-x-19`。(b) 裁定で marker とされた各フィールドの**読み取り**実装 (HTML 側の到達性は本 leaf で確保済み) → `P05-x-19`。(c) `PART_CLASS_MAP` の part id 直書き → `P05-x-23`。(d) `script-brief-C11.json` への追記 (アクセントのトップレベル入口と上書き規則 / 手順 13 を『文書冒頭の <header> 要素の中に 1 個・.pop-header の内側は不可』へ改訂 / `data-hb-notes-enabled` の属性契約追加) → **C11 brief の受け皿 leaf が未起票**。C20 brief 側は `P05-x-21` が担当中"
+    },
+    {
+      "kind": "worker-interrupted-and-resumed",
+      "detail": "本 leaf は途中で API 529 (server-side overload) により中断し、当方が SendMessage で再開させた。再開時に『書きかけの編集が二重適用されていないか先に確認せよ』と指示しており、worker は reachability 実測から続行している。**成果物の一貫性は当方のスイート再実行 (Ran 195・新規の赤 0 件) で確認済み**"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

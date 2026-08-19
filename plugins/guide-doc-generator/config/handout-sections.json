@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "role": "section_kind enum の単一正本 (P03 Y-08 の裁定)。中立なデータファイルへ物理正本を置き、C12 ⇄ C23 の相互依存を断つ",
+    "canon_authority": "C12 validate-handout-config.py (script-brief-C12.json#section_kind_ssot)",
+    "produced_by": "P05-x-03 (config/ の唯一の producer / P04-x-05 G-04)",
+    "source_of_truth": "plugin-plans/guide-doc-generator/briefs/config/handout-sections.json (設計 plan 上の同内容表現)",
+    "readers": [
+      "C23 resolve-handout-preset.py (読むだけ。C12 を import しない)",
+      "C11 render-handout.py (data-hb-section-kind の値域)",
+      "C22 verify-handout-narrative.py"
+    ],
+    "cycle_note": "従来は C12 のスキーマ散文が enum 正本で、C23 がそれを参照し、同時に C12 が C23 のプリセットを参照していたため C12 ⇄ C23 の循環に見えていた。enum をこのファイルへ出し、C23 は C12 ではなくこのファイルを読む形にしたので、残る依存は C12 → C23 (プリセット解決) の一方向だけになる",
+    "constraint_note": "section_kind ごとの『追加検査規則』(handson の B17 必須 等) の定義は C12 の config_schema / normalize_algorithm N8 が唯一の正本であり、このファイルは値の語彙と意味、および script へ焼き込まないための閾値だけを持つ"
+  },
+  "version": 3,
+  "default": "standard",
+  "kind_attribute_semantics": {
+    "note": "R21 (P03-x-04) で追加した任意属性。値を持つ section_kind に対してだけ C12 が追加検査を行い、値そのものはこのファイルで変更できる (script 側に数値を書かない)",
+    "max_items": "この種別のセクションに置ける列挙行 (B03 rows / B04 cards / B09 rows) の上限件数。超過は E-SECTIONKIND-MAXITEMS",
+    "forbid_row_detail": "true のとき B03 rows[].sub を非 null にできない (詳細を書けなくすることで『大きな流れだけ』を型で担保する)",
+    "required_role": "この種別のセクションが取らねばならない section.role。main を禁じたい種別に appendix を指定する",
+    "placement": "この種別のセクションを資料内のどこに置くかの制約。値域は last-main のみ (本編の最後・appendix より前)。違反は E-SECTION-PLACEMENT。required_role が『本編か付録か』を決めるのに対し、placement は本編内での位置を決める — 総括のように『読み終えた後に効く』種別は role だけでは位置を縛れない"
+  },
+  "section_kinds": [
+    {
+      "slug": "standard",
+      "label_ja": "標準セクション",
+      "description": "抽象 (lead-line) → 具体部品 → 判断軸 の既定型。section_kind 未指定時に C12 --normalize が充填する値"
+    },
+    {
+      "slug": "decisions",
+      "label_ja": "決定事項",
+      "description": "会議で決まったことの確定列挙。曖昧表現を残さない"
+    },
+    {
+      "slug": "action-items",
+      "label_ja": "アクションアイテム",
+      "description": "担当と期限を持つ行の列挙。B16 を主部品とする"
+    },
+    {
+      "slug": "sources",
+      "label_ja": "出典・参考",
+      "description": "参照元の表記。外部 URL はリンクにせず出所のテキスト表記に留める (自己完結性)"
+    },
+    {
+      "slug": "known-unknown-next",
+      "label_ja": "分かっている / 分からない / 次に調べる",
+      "description": "学習計画型の 3 分割。B04 トリオカードを器として使う"
+    },
+    {
+      "slug": "flow-overview",
+      "label_ja": "冒頭の大きな流れ",
+      "description": "冒頭に置く『今日の流れ』枠。大きな流れだけを列挙し、個々の手順・操作の詳細は書かない (R21 C46)。B03 を器として使う",
+      "max_items": 5,
+      "forbid_row_detail": true,
+      "row_detail_max_chars": 20,
+      "row_detail_max_chars_why": "『大きな流れ』の 1 項目が名詞句・短い動詞句で収まる上限。criterion (description) が禁じているのは詳細を書くことであって、sub というフィールドを使うことではない。行本文・カード本文がこの長さを超えたら、それは流れの見出しではなく手順の説明である。20 字は冒頭の枠が 5 項目 (max_items) 並んでも一望できる長さから決めた"
+    },
+    {
+      "slug": "capability-explainer",
+      "label_ja": "できること起点の機能解説",
+      "description": "機能名から始めず『成果 (何ができるか) → 分解 → 用いる機能』の順で書く解説セクション (R21 C51)。parts[].slot が outcome → breakdown → feature の順に現れることを C12 が検査する"
+    },
+    {
+      "slug": "handson",
+      "label_ja": "その場で手を動かす",
+      "description": "読み手が実際に操作するハンズオン枠 (R21 C53)。B17 ハンズオン手順を 1 件以上必須とする"
+    },
+    {
+      "slug": "anticipated-qa",
+      "label_ja": "先回り Q&A",
+      "description": "聞き手が疑問を持ちやすい点 (生成内容の誤り・精度の限界・費用・情報の扱い等) へ先に答える枠 (R21 C53)。新部品を作らず B10 アコーディオンを器として使い、items を 2 件以上必須とする"
+    },
+    {
+      "slug": "dialogue",
+      "label_ja": "悩み・やりたいことを聞く対話枠",
+      "description": "受講者の具体業務と困りごとを聞き出す対話枠 (R21 C59)。枠として明示しない限り必ず削られるため、独立した section_kind として持つ"
+    },
+    {
+      "slug": "closing-summary",
+      "label_ja": "全体のまとめ",
+      "description": "資料全体を読み終えた読み手が最後に見る総括 (利用者指定 2026-08-19『最後に全体のまとめというような形で記述する』)。 各節は要点だけへ絞る方針を採るため、節を横断して残るものが本文中ではどこにも書かれない。冒頭の goal / must_remember は『これから何を得るか』の予告であって、読み終えた後の総括ではない — 前後で役割が違うので兼ねられない。 置く内容は各節の再掲ではなく、節をまたいで初めて言えることに限る(節の要約を並べると資料をもう一度読ませることになる)。 位置は本編の最後 (appendix より前)。role は main。",
+      "required_role": "main",
+      "placement": "last-main"
+    },
+    {
+      "slug": "logistics",
+      "label_ja": "運営連絡",
+      "description": "日程調整・事務連絡など、資料のゴールにも主題にも紐づかない伝達事項 (R21 C48)。本編に置けず付録に隔離される",
+      "required_role": "appendix"
+    }
+  ]
+}

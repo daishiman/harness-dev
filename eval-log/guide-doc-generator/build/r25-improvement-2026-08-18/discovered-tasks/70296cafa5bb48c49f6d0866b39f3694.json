@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C23-01",
+  "reason": "P05-x-03 の acceptance_criterion がキー名の存在列挙に留まり、値が空でも通過する。実測: config/handout-purposes.json は 8 preset 全ての全節で DIAGRAM 0 件、IMG は lecture.demo の 1 件のみ、section_order[].image_role は未定義。R25 で W-DIAGRAM-FEW / E-IMAGE-ABSENT を error 水準へ確定した一方でプリセット側の供給が空のままであり、第1稿が fail-closed で止まる確率が最大化している。プリセットは充足を LLM 判断に依存させない唯一の決定論的供給源なので、受入条件を『節ごとに DIAGRAM>=1 かつ IMG>=1 かつ image_role が enum 値で宣言済み』へ強化する必要がある",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C23-01.json",
+  "proposed_node": {
+    "id": "P05-x-03-acceptance-hardening",
+    "title": "P05-x-03 の acceptance_criterion を節単位の視覚部品充足へ強化する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-03.md",
+    "acceptance_criterion": "P05-x-03.md の acceptance_criterion が、config/handout-purposes.json の全 preset の全 main セクションについて (1) recommended_parts に DIAGRAM が 1 件以上 (2) 同じく IMG が 1 件以上 (3) section_order[] の各要素が image_role を screenshot|illustration のいずれかで宣言、の 3 点を明示要求すること。キー名の存在のみを問う表現を残さないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "consumes": [
+      "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

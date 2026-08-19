@@ -1,0 +1,51 @@
+{
+  "checklist": [
+    {
+      "item": "R21/R22 のヒアリング必須項目を確定した",
+      "status": "PASS",
+      "evidence": "handout-config.json の target_tasks / focus_theme / attainment_level / must_remember / no_need_to_remember と provenance.*_source"
+    },
+    {
+      "item": "構成データが validate-handout-config.py を exit0 で通る (IN1)",
+      "status": "PASS",
+      "evidence": "OK handout-config: sections=6 parts=8 glossary=6 doc_type=report date=2026/08/18 warnings=0"
+    },
+    {
+      "item": "/handout-verify の集約 verdict が pass である",
+      "status": "PASS",
+      "evidence": "handout-output/2026-08-18-report-weekly-sales-aggregation-review-2 に対し selfcontained / a11y-print / language / narrative の 4 ゲートが全て exit0"
+    },
+    {
+      "item": "C03 から回収した verdict が PASS で指摘が反映されている",
+      "status": "NOT-RUN",
+      "evidence": "session rule により AgentTool を起動していないため readability review は未実施"
+    },
+    {
+      "item": "出力先へ同梱物が揃い README.md を書いた",
+      "status": "PASS",
+      "evidence": "handout-output/2026-08-18-report-weekly-sales-aggregation-review-2/handout.html, handout-config.json, assets/, README.md"
+    },
+    {
+      "item": "生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果) を返した",
+      "status": "PASS",
+      "evidence": "最終応答の生成レポート"
+    }
+  ],
+  "criteria": {
+    "IN1": "PASS",
+    "OUT1": "PASS",
+    "OUT2": "PASS (再レンダリングの sha256 575bab5b2fc036db9ada559726d130466e88140b3006f8d751affceb4a3b0924 が一致)"
+  },
+  "blockers": [
+    {
+      "id": "C03-readability-review",
+      "reason": "AgentTool 未許可",
+      "impact": "文体の平易さと lead-line / 判断軸の意味妥当性は機械ゲートの範囲外のまま残る"
+    },
+    {
+      "id": "C21-srg-image-bridge",
+      "reason": "no-image-plan",
+      "impact": "画像計画を作らなかったため画像は同梱していない"
+    }
+  ]
+}

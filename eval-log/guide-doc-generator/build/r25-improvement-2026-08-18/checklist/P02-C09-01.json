@@ -1,0 +1,74 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C09-01",
+ "covered_task_ids": [
+  "P02-C09-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C09.json",
+ "verified_by": [
+  {
+   "claim": "4 ゲートの gates[].checks が対応 script の検出面を被覆している",
+   "method": "gates[] を dispatcher が直読みし、C16 (SC-01..10) / C17 (12 検出) / C18 (10 検出) / C22 (NAR-01..10) の各 brief の detections 件数と突合",
+   "result": "pass: gate_detection_canonicality.gates_checks_contract に『selfcontained = SC-01..SC-10 の 10 面 / a11y-print = A11Y-01..07 + PRINT-01..04 + STICKY-01 の 12 面』と被覆関係が明記され、実測 (C17 の STICKY- 4 件・C22 の NAR- 54 件) と矛盾しない"
+  },
+  {
+   "claim": "command が診断コードのリテラルと件数を焼いていない (追従漏れの構造的防止)",
+   "method": "JSON 全文に対し SC-\\d / LANG-\\d / NAR-\\d / A11Y-\\d / PRINT-\\d / STICKY-\\d を正規表現計数し、全ヒットの文脈を確認",
+   "result": "pass: 出現は gate_detection_canonicality の被覆説明と open_questions の決着記録に限られ、gates[].checks 本体は面の要約のみ。正本は script 側 detections 1 箇所と宣言"
+  },
+  {
+   "claim": "verdict 語彙 (incomplete / partial) の曖昧さが固定評価順で解消されている",
+   "method": "gates / behavior の評価順記述を読み、4 script の exit code 規約と突合",
+   "result": "pass: open_questions に『4 本とも exit2 は検査不能 (引数不正含む)・1 は品質 FAIL・0 は違反 0 件で揃う』と 4 brief からの引用付きで決着。状態写像が script ごとに分岐しないことを確認"
+  },
+  {
+   "claim": "C12 の per-section ゲート (W-DIAGRAM-FEW / E-IMAGE-ABSENT) を C09 へ足さない裁定に根拠がある",
+   "method": "scope_boundary_vs_config_gates を全文確認",
+   "result": "pass: 『C12 は HTML を一切見ないため、渡された --config が当の HTML の生成元である保証が無い』を主論拠とし、誤合格経路の存在を理由に build 経路 (C01 R2) を唯一の判定点とする。dispatcher の判断と一致"
+  },
+  {
+   "claim": "command 面の必須キー disable_model_invocation が存在する",
+   "method": "JSON キー直読み",
+   "result": "pass: disable_model_invocation=false + rationale の対で存在 (top-level 24 キー)"
+  },
+  {
+   "claim": "acceptance_checks が実在し空でない",
+   "method": "配列長を計測",
+   "result": "pass: 11 件"
+  },
+  {
+   "claim": "command-brief 用 JSON Schema の不在 (F-C09-06 の再測定)",
+   "method": "plugins/harness-creator/skills/run-skill-create/schemas/ を列挙し、repo 全体で *brief*.schema.json を find",
+   "result": "fail(=報告どおり): schemas/ は build-trace / findings / handoff / rubric-merge / skill-brief の 5 本。repo 全体でも brief 系 schema は skill-brief.schema.json と prompt-creator の prompt-brief.schema.json のみ。command-brief / hook-brief / script-brief 用は存在しない"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git status --porcelain plugin-plans/ を dispatcher が確認",
+   "result": "pass: command-brief-C09.json 以外に本 SubAgent 由来の変更なし (+42 / -8)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C09-01",
+   "level": "blocking-for-release",
+   "summary": "command-brief 用 JSON Schema が存在せず、C07 / C08 / C09 の 3 本が構造検証なしで積まれている。harness-creator 側の gap であり、guide-doc-generator 単独では閉じられない"
+  },
+  {
+   "id": "F-C09-02",
+   "level": "resolved",
+   "summary": "4 検証 script の exit code 規約を実測して open_question を決着。2=検査不能 (引数不正含む) で 4 本一致、状態写像は分岐不要"
+  },
+  {
+   "id": "F-C09-03",
+   "level": "resolved",
+   "summary": "per-section ゲートの帰属を build 経路のみ (b 案) と裁定。C12 が HTML を見ない以上、--config 差し替えによる誤合格を防げないことが決め手"
+  },
+  {
+   "id": "F-C09-04",
+   "level": "carry-forward",
+   "summary": "C01 R4-verify の verdict 語彙 (pass/fail/incomplete/partial) が C09 の評価順を散文で二重に持つ可能性がある。C01 側 brief との文言突合が未了"
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+{
+  "_meta": {
+    "role": "部品 id 語彙の単一正本 (P03 Y-05 の裁定)",
+    "build_target": "plugins/guide-doc-generator/config/handout-parts.json",
+    "owner_component": "C11 render-handout.py",
+    "readers": ["C04", "C12", "C18", "C23", "index.md"],
+    "rule": "part id をこのファイル以外の場所へ列挙しない。追加・改名はこのファイルを変更点とし、読み手は全員ここを読む",
+    "note": "ここは plugin-plans 配下の設計 plan 上の表現であり、実ファイルの生成は P05 の担当。内容はこのファイルを正とする"
+  },
+  "version": 2,
+  "field_semantics": {
+    "kind": "structural (セクションに属さない骨格部品) | content (セクション内の具体部品) | media (画像・図解・素テキスト)",
+    "section_scope": "in-section | document。C18 LANG-06 の『具体部品』述語はこのフィールドで判定し、id の範囲指定を使わない",
+    "data_block_type": "この部品を出す構成データ側の block.type。構造部品は null",
+    "since": "v1 = analysis/guide-doc-generator/reference-analysis.md §2 の参照資料由来 / plan = 本 plugin plan で新設",
+    "source": "由来の出典"
+  },
+  "parts": [
+    {"id": "B01", "name_ja": "sticky ナビ", "kind": "structural", "section_scope": "document", "data_block_type": null, "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B02", "name_ja": "ヒーロー", "kind": "structural", "section_scope": "document", "data_block_type": null, "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B03", "name_ja": "ステップ行", "kind": "content", "section_scope": "in-section", "data_block_type": "steps", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B04", "name_ja": "トリオカード", "kind": "content", "section_scope": "in-section", "data_block_type": "trio", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B05", "name_ja": "比較表", "kind": "content", "section_scope": "in-section", "data_block_type": "table", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B06", "name_ja": "二択グリッド", "kind": "content", "section_scope": "in-section", "data_block_type": "versus", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B07", "name_ja": "特徴カード", "kind": "content", "section_scope": "in-section", "data_block_type": "features", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B08", "name_ja": "選択マップ", "kind": "content", "section_scope": "in-section", "data_block_type": "map", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B09", "name_ja": "チェック行", "kind": "content", "section_scope": "in-section", "data_block_type": "checklist", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B10", "name_ja": "アコーディオン", "kind": "content", "section_scope": "in-section", "data_block_type": "accordion", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B11", "name_ja": "プロンプト箱", "kind": "content", "section_scope": "in-section", "data_block_type": "prompt", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B12", "name_ja": "DL ボタン", "kind": "content", "section_scope": "in-section", "data_block_type": "download", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B13", "name_ja": "タブ", "kind": "content", "section_scope": "in-section", "data_block_type": "tabs", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B14", "name_ja": "フロー", "kind": "content", "section_scope": "in-section", "data_block_type": "flow", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B15", "name_ja": "選択チップ", "kind": "content", "section_scope": "in-section", "data_block_type": "chips", "since": "v1", "source": "reference-analysis.md §2"},
+    {"id": "B16", "name_ja": "アクションアイテム行", "kind": "content", "section_scope": "in-section", "data_block_type": "action-items", "since": "plan", "source": "component-inventory.json preset_addon_decisions (アクションアイテム要件 verdict=new)。参照資料 §2 には存在しない"},
+    {"id": "B17", "name_ja": "ハンズオン手順", "kind": "content", "section_scope": "in-section", "data_block_type": "handson", "since": "plan", "source": "goal-spec C53 (R21)。B09 チェック行は『確認する項目の列挙』、B11 プロンプト箱は『貼り付ける原文 1 本』であり、どちらも『操作 → 期待される結果 → つまずいたときの見どころ』の 3 つ組を持てない。この 3 つ組が無いと読み手は自分の手元が正しいか判定できないため、既存部品の再利用ではなくカタログへの部品追加とした (新規 component は作らない。描画は C11 の部品テーブルへの登録で、B16 と同じ扱い)"},
+    {"id": "IMG", "name_ja": "画像 + lightbox", "kind": "media", "section_scope": "in-section", "data_block_type": "image", "since": "plan", "source": "goal-spec G2/G3"},
+    {"id": "DIAGRAM", "name_ja": "概念図解", "kind": "media", "section_scope": "in-section", "data_block_type": "diagram", "since": "plan", "source": "goal-spec G1 (描画は C14 へ委譲)"},
+    {"id": "TEXT", "name_ja": "素テキスト段落", "kind": "media", "section_scope": "in-section", "data_block_type": "text", "since": "plan", "source": "本 plan (どの型にも当てはまらない地の文の受け皿)"}
+  ],
+  "non_part_structure_markers": {
+    "note": "data-hb-part 属性には部品 id のほかに構造・UI 枠の値が出るが、それらは部品ではないためこのカタログには含めない。値の定義は C11 の html_attribute_contract が唯一の正本",
+    "values": ["section", "lightbox", "memo", "memo-global", "toolbar"]
+  }
+}

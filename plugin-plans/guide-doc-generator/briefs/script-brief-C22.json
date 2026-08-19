@@ -1,0 +1,364 @@
+{
+  "component_id": "C22",
+  "component_kind": "script",
+  "name": "verify-handout-narrative.py",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+  "purpose": "資料の筋道 (R19 = 行き先の明示) だけを検査する fail-closed ゲート。(a) 冒頭に 目的 / 背景 / ゴール の 3 要素が描画され、その内容が正規化済み構成データと一致すること (b) 全セクションが非空の goal を持ち、それがセクション冒頭に常時表示されること (c) sticky nav の各項目が対応セクションの goal を補助属性で参照し、資料全体ゴールから各セクションゴールへの連なりが nav 上で追えること、を検査する。R11 (セクション内の書き方の型: lead-line / 判断軸 / 用語の言い換え) と R18 (日付) は本 script の担当外であり C18 verify-handout-language.py が持つ。両者は別の検証面であり、一方が他方を代替しない (phase-02 の『検証面の独立』および component-inventory の C22 purpose に従う)",
+  "argv": [
+    "--html FILE (必須): 検査対象の生成 HTML",
+    "--config FILE (必須): C12 validate-handout-config.py --normalize が確定した正規化済み構成データ JSON。purpose / background / goal / sections[].id / sections[].goal を読む",
+    "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す"
+  ],
+  "stdin": "使用しない。HTML と構成データの 2 入力を突合するため両方をパスで受ける。両方を入力にする根拠: goal の『文言そのもの』の真値は構成データ側にあり、『どこに何が描かれ読者に見えるか』の真値は HTML 側にある。片方だけでは R19 の要求 (行き先が読者に見えること) を機械化できない。構成データだけを見ればレンダラの脱落を見逃し、HTML だけを見れば文言の捏造や取り違えを見逃す",
+  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (本ブリーフの detections 配列の定義順そのまま。1 detection = 1 行で、SKIP になる detection も必ず 1 行出す) で出力する。行数は detections 配列から導出される値であり、独立した数値契約として別途書かない (canonical_rules.detection_order_contract)。NAR-07 は評価対象外のとき `NAR-07 SKIP order=explain_first` を出し、PASS と区別する。末尾に `OUT-OF-SCOPE:` 節を出し、(1) ゴールの意味的妥当性 (section goal が全体 goal に資するか) は判定していないこと (2) R11 と R18 は本ゲートの担当外で C18 が判定すること、を毎回明示する",
+  "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB><section_id または line:col><TAB><欠落した要素または不一致の値><TAB><理由>`。使用法・入出力エラーは `ERROR<TAB><reason>`",
+  "exit_codes": {
+    "0": "全 detection が違反 0 件。目的・背景・ゴールの 3 要素が揃い、全セクションのゴールが常時表示され、nav 全項目がゴールを参照している",
+    "1": "1 件以上の違反を検出した。検査アンカー (data-hb-field) が 1 個も存在せず判定できない場合もここに落とす",
+    "2": "検査が成立しなかった。引数不正、--html / --config の不在・読み取り不可・デコード不能、--config が JSON として不正または正規化済みでない、必須フィールド (purpose / background / goal / sections / presentation_order) の欠落、--json-report の書き込み失敗、および dependencies.runtime_data に挙げた同梱データ (部品カタログ・セクション語彙・スキーマ・テーマトークン) を解決できない場合。同梱データ失敗に別番号を割かない — 2 の意味は『検査が成立しなかった』であり、語彙や部品マーカーを導出できない状態はその一例だからである。必須フィールドへ presentation_order を含めるのは、欠落を『explain_first だった』と読んで NAR-07 を SKIP へ倒す経路を塞ぐため (R21 C56)"
+  },
+  "write_scope": [
+    "--json-report で明示指定されたファイル 1 点のみ"
+  ],
+  "single_writer": "--json-report のパス。HTML・構成データには一切書き込まない",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--html の生成 HTML (<style> ブロックを含む。NAR-04 の常時表示判定で display:none 規則を粗く参照する)",
+      "--config の正規化済み構成データ JSON (R21 で presentation_order / sections[].role / sections[].section_kind も読む)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (生成後の品質ゲート段)",
+      "P06 のテスト実行"
+    ],
+    "invokes": [],
+    "runtime_data": {
+      "why": "本 script は部品 id も語彙も閾値も literal で持たない。argv では受け取らず plugin root (本 script の 2 階層上) からの固定相対パスで read-only に引く実行時依存であり、CR-HERO1 の part_id_literals はこの導出を前提にしている",
+      "reads": [
+        "config/handout-parts.json — data-hb-part の部品語彙。section_scope=document の骨格部品からカタログ順で hero 部品マーカーを導出し、data_block_type 述語からハンズオン/画像の部品 id を導出する",
+        "config/handout-sections.json — section_kind の語彙と required_role (NAR-08)",
+        "schemas/handout-config.schema.json — detail_level / evidence_depth / presentation_order / role の値域と単一行フィールドの最大長",
+        "assets/tokens/<theme>.json — text_limits.block_body_max_chars_by_detail_level (NAR-09 の境界値)"
+      ],
+      "on_failure": "いずれかが読めない・不正・期待する述語を満たさない場合は fail-closed で exit 2。語彙が引けないことを『対象 0 件の PASS』へ畳まない"
+    }
+  },
+  "algorithm": [
+    "1. argparse で 3 引数を解析。--html / --config 不在は exit 2",
+    "2. --config を json.load し、正規化済みマーカーと purpose / background / goal / sections[] / presentation_order の存在を確認。欠落は exit 2",
+    "3. --html を html.parser 派生の収集器で走査し、要素ツリー (tag, attrs, data-hb-field, 位置, 親子関係) と text node を得る。<style> 本文も保持する",
+    "4. テキスト比較用の正規化関数を定義する: NFKC → 連続空白 (U+0020 / U+3000 / 改行 / タブ) を 1 個へ圧縮 → 前後トリム。これ以上の変形 (句読点除去など) は行わない (レンダラが文言を改変していないことを検査するのが目的のため)",
+    "5. NAR-01 / NAR-02 を hero 周辺に対して評価する",
+    "6. NAR-03 / NAR-04 を config.sections[] と HTML の section に対して評価する",
+    "7. NAR-05 を nav 項目に対して評価する",
+    "8. NAR-06 で全体ゴール → セクションゴールの対応表を組み立て json-report へ出す",
+    "8b. NAR-07 を評価する (R21 C56)。config.presentation_order が demo_first のときだけ、hero より後・最初の role=main セクションから文書順で最初の提示物を 1 件特定し CR-DEMO1 を適用する。explain_first のときは SKIP 行を出す",
+    "8c. NAR-08 を評価する (R21 C48)。config.sections[].role と HTML の描画順・nav 順を突き合わせ、appendix が main より前に出ていないかを見る",
+    "8d. NAR-09 / NAR-10 を評価する (R22 C66)。root の data-hb-detail-level / data-hb-evidence-depth を読み、水準の境界値は C11 のテーマトークン text_limits.block_body_max_chars_by_detail_level から read-only で引く (本 script に数値を持たない)。属性が欠落している HTML は checked=0 の PASS にせず違反として計上する (宣言が無ければ突合が成立しないため)",
+    "9. 違反を stderr、サマリと OUT-OF-SCOPE を stdout、詳細を --json-report へ出す。stdout の detection 行は本ブリーフの detections 配列と id・順序・件数が常に一致する (件数を実装側の定数として持たず配列から導く)",
+    "10. 違反 0 なら exit 0、違反ありは exit 1、検査不能は exit 2"
+  ],
+  "requirements_covered": [
+    "R19",
+    "R21 (実画面先行の禁止 C56 と、付録隔離の描画面 C48 の副検査)",
+    "R22 (宣言した detail_level / evidence_depth と生成物の実態の一致を検査する)"
+  ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C56 (NAR-07) と C48 の描画面 (NAR-08)。criterion 文の残余 (NAR-07 が本編先頭の最初の 1 要素しか見ていない点を含む) は ledger 側にのみ書き、ここへ写さない",
+  "checklist_covered": [
+    "C37",
+    "C38",
+    "C39",
+    "C56",
+    "C48 (副。構成データ側の正本判定は C12)",
+    "C66"
+  ],
+  "detections": [
+    {
+      "id": "NAR-01",
+      "rule": "冒頭に 目的 / 背景 / ゴール の 3 要素が描画されていること (goal-spec C37)。data-hb-field=\"purpose\" / data-hb-field=\"background\" / data-hb-field=\"goal\" の要素がそれぞれちょうど 1 個存在し、いずれも非空であること。同定は CR-HERO1 に従いマーカーのみで行い、器の包含関係 (hero 部品の部分木の内部か等) を条件にしない。位置条件は『冒頭に描画されていること』を担保する文書順の窓として課す: 各要素が hero 部品マーカー (骨格部品カタログの document スコープから導出。literal の部品 id を書かない) の出現位置以降、かつ最初の <section id> より文書順で前にあること。hero 部品マーカーが見つからない文書では窓の下端を課さない (上端の『最初の section より前』のみ)。0 個・2 個以上・窓の外はすべて違反。文書順は purpose → background → goal であること",
+      "violation_example": "<div class=\"hero\"><h1 data-hb-field=\"title\">…</h1><p data-hb-field=\"purpose\">…</p></div><section id=\"s1\">…<p data-hb-field=\"background\">…</p></section> (background が最初の section 内にあり窓の外、goal が不在)",
+      "pass_example": "<div class=\"hero\"><div class=\"hero-frame\" data-hb-part=\"…\" data-hb-generated=\"true\" aria-hidden=\"true\"></div><h1 data-hb-field=\"title\">…</h1><p><span data-hb-field=\"purpose\">この資料は Claude をはじめて触る人が最初の 1 回を終えるためのものです。</span></p><p><span data-hb-field=\"background\">導入は決まったが、社内に触ったことがある人がいない。</span></p><p><span data-hb-field=\"goal\">読み終えたら、自分の業務で 1 つ試せる状態になる。</span></p></div><section id=\"s1\">… — 部品マーカーが著者記述を包んでいなくても PASS する。判定はマーカーと文書順の窓だけによる",
+      "false_positive_risk": "低。data-hb-field 値 `goal` (資料全体ゴール) を section 単位の `section_goal` と明確に分けることで、両者の取り違えを構造的に防いでいる。名前の正本は C11 render-handout.py の html_attribute_contract (open_questions 参照)"
+    },
+    {
+      "id": "NAR-02",
+      "rule": "冒頭 3 要素の文言が構成データと一致すること。data-hb-field=\"purpose\" / \"background\" / \"goal\" の各テキストを正規化した値が、config.purpose / config.background / config.goal を正規化した値とそれぞれ文字列一致すること。不一致は違反 (レンダラが文言を改変・取り違えていないことの検査)",
+      "violation_example": "config.goal = \"読み終えたら、自分の業務で 1 つ試せる状態になる。\" に対し HTML の data-hb-field=\"goal\" が \"業務で使えるようになる。\" (要約されている)",
+      "pass_example": "正規化後の文字列が両者で完全一致する",
+      "false_positive_risk": "中。レンダラが意図的に行う整形 (改行の挿入・全角空白の調整) は正規化で吸収するが、句読点の付け足しや接尾辞の追加は不一致になる。レンダラは構成データの文言をそのまま出す契約 (C29 のバイト一致再現性と同じ思想) なので、不一致が出たらレンダラ側を直すのが正しい向き"
+    },
+    {
+      "id": "NAR-03",
+      "rule": "全セクションが非空のゴールをセクション冒頭に持つこと (goal-spec C38)。config.sections[] の各 {id, goal} について (a) HTML に当該 id を持つ <section> が存在すること (b) その section 配下に data-hb-field=\"section_goal\" の要素がちょうど 1 個存在すること (c) その要素が section の『冒頭』にあること — 定義: section の子要素のうち、data-hb-field=\"section_goal\" の位置が data-hb-field=\"lead_line\" および data-hb-part=B03..B15 の具体部品より文書順で前であること (section-label / 見出しより後ろでもよい) (d) テキストが非空で、正規化後に config の当該 section.goal と一致すること。config 側に goal が空文字または欠落した section があれば、それ自体を違反として計上する (構成データ段での検査は C12 の責務だが、goal が空のまま HTML まで到達した事実は本ゲートでも FAIL にする — 二重検査は冗長ではなく fail-closed の担保)",
+      "violation_example": "<section id=\"s2\"><div class=\"section-label\">2. …</div><p data-hb-field=\"lead_line\">…</p><div data-hb-part=\"B05\">…</div><p data-hb-field=\"section_goal\">…</p></section> (goal が末尾にあり冒頭でない) / config.sections[3].goal = \"\" ",
+      "pass_example": "<section id=\"s2\"><div class=\"section-label\">2. できること</div><p class=\"goal-chip\" data-hb-field=\"section_goal\">読み終えたら、依頼の書き方が 1 つ選べる。</p><p data-hb-field=\"lead_line\">…</p><div data-hb-part=\"B05\">…</div></section>",
+      "false_positive_risk": "低〜中。(c) の順序条件は data-hb-field=\"lead_line\" の位置に依存するが、lead-line の存在自体を検査するのは C18 の LANG-04 であり本項目では存在を要求しない (lead-line が無い場合は具体部品との前後だけで判定する)。この分界により C18 と重複しない"
+    },
+    {
+      "id": "NAR-04",
+      "rule": "セクションゴールが常時表示であること (component-inventory の C22 purpose『常時表示』)。data-hb-field=\"section_goal\" の各要素について (a) hidden 属性を持たない (b) aria-hidden=\"true\" を持たない (c) インライン style に display:none / visibility:hidden を持たない (d) 祖先に <details> / hidden 属性 / aria-hidden=\"true\" を持つ要素が無い (e) <style> の粗いトークナイザで得た規則のうち、当該要素のタグ・class・data-hb-field 属性セレクタと文字列一致するセレクタが display:none / visibility:hidden を宣言していないこと。(e) は CSS カスケードを解決しない近似であり、祖先セレクタ経由・メディアクエリ内・詳細度による打ち消しは判定できない",
+      "violation_example": "<details><summary>ゴール</summary><p data-hb-field=\"section_goal\">…</p></details> (折りたたみ内なので常時表示ではない) / .goal-chip{display:none} が通常規則にある",
+      "pass_example": "<p class=\"goal-chip\" data-hb-field=\"section_goal\">…</p> が section 直下にあり、.goal-chip の規則が display:inline-flex である",
+      "false_positive_risk": "中。(e) の CSS 検査は近似であり、`.compact .goal-chip{display:none}` のような祖先条件付き非表示を検出できない。この限界は OUT-OF-SCOPE と json-report に明示し、『常時表示を保証する』とは主張しない (検出できないものを PASS の意味へ含めない)。逆に @media print 内の display:none を誤って違反にしないよう、メディアクエリ内の規則は (e) の対象から除外する (印刷時の非表示は C17 PRINT-03 が要求する正当な指定)"
+    },
+    {
+      "id": "NAR-05",
+      "rule": "nav の各項目が対応セクションのゴールを参照していること (goal-spec C39)。<nav> (または class に navbar を含む要素) 配下の a[href^=\"#\"] のそれぞれについて (a) href の指す id が config.sections[].id に存在すること (b) その a 要素が補助属性 `data-hb-nav-goal` または `title` を持ち、値が非空であること (c) その値が正規化後に config の当該 section.goal と一致すること。ゴール参照を持たない nav 項目が 1 件でもあれば違反。補助属性で持たせる根拠: C11 の設計判断 (nav 本体は簡潔に保ちゴールは補助属性で持たせる) に従い、nav の横幅を圧迫せずに連なりを追える形にする。href の解決可能性そのもの (未解決アンカー・未リンク section) は C16 SC-08 の担当であり、本項目では config.sections との対応のみを見る",
+      "violation_example": "<nav class=\"navbar\"><a href=\"#s1\">1. 導入</a></nav> (data-hb-nav-goal / title いずれも無い) / <a href=\"#s1\" title=\"導入セクション\">1. 導入</a> (値が section.goal と一致しない)",
+      "pass_example": "<nav class=\"navbar\"><a href=\"#s1\" data-hb-nav-goal=\"読み終えたら、今日やることが分かる。\" title=\"読み終えたら、今日やることが分かる。\">1. 導入</a>…</nav>",
+      "false_positive_risk": "中。data-hb-nav-goal と title の両方を許すため、片方だけが正しく片方が古い場合を検出する必要がある。両方が存在するときは両方の値が section.goal と一致することを要求する (片方一致では PASS にしない)"
+    },
+    {
+      "id": "NAR-06",
+      "rule": "全体ゴールからセクションゴールへの連鎖が構造として揃っていること。config.goal と config.sections[].goal の対応表 (section_id → goal → nav 参照の有無 → HTML 描画位置) を組み立て、(a) goal が空のセクションが 0 件 (b) HTML に描画されているが config.sections に存在しない section id が 0 件 (c) config.sections に存在するが HTML に無い section id が 0 件 であることを検査する。この 3 条件が『連なりが読者に見える』の構造的必要条件であり、対応表を json-report へ必ず出力する。section goal が全体 goal に意味的に資するかの判定は行わない (静的検査の外であり、C06 handout-readability-reviewer の責務)",
+      "violation_example": "config.sections が 7 件で HTML の <section id> が 6 件しかない (1 件が描画されていない)",
+      "pass_example": "config.sections の id 集合と HTML の section id 集合が完全一致し、全 goal が非空",
+      "false_positive_risk": "低。id を持つ非セクション要素 (hero や footer) を section 集合に含めないよう、<section> タグかつ id を持つものだけを対象にする"
+    },
+    {
+      "id": "NAR-07",
+      "since": "R21 (goal-spec C56)",
+      "implements_canonical_rule": "CR-DEMO1",
+      "rule": "demo_first のとき、読み手が最初に出会う実体は実際の画面でなければならず、抽象物の先行提示を禁じる。config.presentation_order == \"demo_first\" のときだけ評価する。判定対象は、hero 部品マーカー (CR-HERO1 の part_id_literals に従いカタログから導出。literal の部品 id を書かない) より後、かつ role=\"main\" の最初のセクションから文書順に走査して最初に現れる『提示物』1 件。提示物とは data-hb-part が IMG / DIAGRAM / B05 / B07 / B14 のいずれかである要素、または data-hb-field=\"lead_line\" 以外の本文段落のうち 120 文字を超えるもの。この最初の提示物が (a) data-hb-part=\"IMG\" かつ配下 img が data-hb-asset-role=\"screenshot\" を持つ、または (b) ハンズオン手順の部品で live demo の宣言属性を持つ (属性名の正本は C11 render-handout.py の html_attribute_contract にある data-hb-live-demo で、構成データ側のフィールド名 live_demo:true から C11 が付ける。本 script は HTML を読む側なので構成データのフィールド名ではなくこの描画属性で判定し、属性名を再定義しない)、のいずれでもなければ違反。とくに DIAGRAM (概念図解) / B14 (フロー) / B07 (特徴カード) / 120 文字超の説明段落がこの位置に現れた場合は、それを違反として明示的に列挙する",
+      "prohibition_form": "本項目は推奨ではなく禁止として書く。『実画面を先に置くことが望ましい』ではなく『実画面より前に概念図・抽象説明を置いてはならない』を判定式とする。理由: 推奨形は『実画面もどこかにある』で満たされてしまい、冒頭に概念図が居座る状態を落とせない。禁止形にすると位置関係だけで機械判定でき、逃げ道が data-hb-asset-role の偽装しか残らない (それは C16 SC-09 と C11 の属性契約が別途塞ぐ)",
+      "violation_example": "presentation_order=demo_first で、最初の main セクションの先頭に <figure data-hb-part=\"DIAGRAM\">…</figure> がある / 先頭に 400 文字の概説段落がある",
+      "pass_example": "presentation_order=demo_first で、最初の main セクション先頭が <div data-hb-part=\"IMG\"><img data-hb-asset-role=\"screenshot\" src=\"data:image/png;base64,…\" alt=\"Claude の入力欄\"></div>",
+      "false_positive_risk": "低〜中。lead_line (1 行の抽象) は R11 が要求する型なので提示物から除外している。120 文字の閾値は『1 行の抽象』と『概説段落』を分ける線であり、C12 の text_limits とは別軸の判定値なので本ブリーフに持つ",
+      "not_evaluated_when": "presentation_order == \"explain_first\" のときは checked=0 の PASS とせず、stdout の当該行を `NAR-07 SKIP order=explain_first` と出す (評価していないことを PASS と区別して開示する)。presentation_order が欠落・null のときは SKIP にしない — 正規化済み構成データでは必須フィールドであり (必須性の実行点は C12 A5c)、その欠落は『値が explain_first だった』ではなく『入力が正規化済みでない』を意味する。したがって NAR-07 の判定へ入る前に、手順 2 の必須フィールド検査 (purpose / background / goal / sections と同列) で捕らえて exit 2 (検査が成立しなかった) とする。SKIP へ倒すと、値を削るだけで C56 の検査を無効化できる経路が残る",
+      "interaction_with_r25_image_fallback": "R25/REQ-3 (goal-spec C69) で assets[].role に illustration が加わり、素材の無い screenshot 役の節は illustration へ落ちる (config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split.fallback)。この fallback は本判定を緩めない — 実画面と認めるのは role=screenshot と live demo 宣言の 2 つだけであり、illustration (生成された挿絵) を実画面の代替に加えてはならない。加えると demo_first の意味 (『まず本物の画面を見せる』) が生成画像で満たされたことになり、CR-DEMO1 の禁止形が空洞化する。したがって demo_first の資料で最初の main セクションだけは素材を確保して fallback させない責務が上流 (C01 の R3-render と C05 の設計) 側に要る。本 script はその責務を持たず、満たされていなければ FAIL にする"
+    },
+    {
+      "id": "NAR-08",
+      "since": "R21 (goal-spec C48)",
+      "rule": "資料のゴールにも主題にも紐づかない伝達事項が本編に混ざっていないこと。config.sections[] のうち role==\"appendix\" のものについて、(a) HTML 上でその section が role==\"main\" の全 section より文書順で後にあること (b) その section が data-hb-section-role=\"appendix\" を持つこと (c) sticky nav 上で main の項目より後に並ぶこと を検査する。加えて section_kind==\"logistics\" の section が role==\"main\" で描画されていれば違反。構成データ段の検査 (E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER) は C12 が持つが、描画順が入れ替わる欠陥は HTML を見ないと分からないため本ゲートで独立に判定する",
+      "violation_example": "運営連絡 (logistics) の section が 3 番目に描画され、その後に本編セクションが続いている",
+      "pass_example": "main が 1..7、appendix が 8..9 の順で描画され、nav も同順",
+      "false_positive_risk": "低。role は C12 --normalize が必ず充填する必須フィールドであり、欠落は構成データ段で落ちる"
+    },
+    {
+      "id": "NAR-09",
+      "since": "R22 (goal-spec C66)",
+      "rule": "宣言した detail_level が実態と一致すること。root の data-hb-detail-level を読み、role=='main' の全 section の本文テキスト総量 (可視テキストのみ。nav / chrome / メモ機構 / script は除外) を section 数で割った 1 セクション平均を実測値とする。detailed 宣言で実測平均が overview 水準の上限以下なら違反、overview 宣言で実測平均が detailed 水準の上限を超えていれば違反。standard は両側の水準に挟まれた帯として判定する。水準の境界値は C11 のテーマトークン text_limits.block_body_max_chars_by_detail_level を read-only で引き、本 script に数値を持たない",
+      "why_not_c12": "構成データ段階では『書かれる予定の量』しか分からず、実際の描画量はレンダリングを通した後にしか測れない。折り畳み (CR-TEXT-FOLD) で B10 へ移った本文も可視テキストとして数えるため、HTML を見る本ゲートでなければ判定できない",
+      "why_average_not_total": "総量で判定するとセクション数の多い資料が自動的に detailed 判定になる。粒度は 1 項目をどれだけ詳しく書くかの話なので、セクション数で正規化する",
+      "boundary": "standard 宣言は帯が広く実質ほぼ通る。これは意図的で、standard は『特に指定しない』の意味を兼ねるため、ここを厳しくすると既定のまま生成した資料が落ちる",
+      "violation_example": "data-hb-detail-level=\"detailed\" だが main セクション 8 件の本文平均が 90 文字 (overview 上限以下)",
+      "pass_example": "data-hb-detail-level=\"overview\" で本文平均 120 文字"
+    },
+    {
+      "id": "NAR-10",
+      "since": "R22 (goal-spec C66)",
+      "rule": "宣言した evidence_depth が実態と一致すること。root の data-hb-evidence-depth を読み、cited 以上なら role=='main' の各主張ブロック (data-hb-block-role=\"claim\" を持つブロック) が根拠参照 (data-hb-evidence を持つ要素) を少なくとも 1 つ内包することを検査する。sourced ではさらに各根拠参照が出典表記 (data-hb-evidence-source の非空値) を持つことを要求する。none 宣言では根拠の有無を一切問わない (根拠を書いてはならない、ではない)",
+      "why_none_is_permissive": "none は『根拠を示さない方針』であって『根拠を書くと違反』ではない。禁止側にすると、方針は none だが 1 箇所だけ出典を添えた資料が落ちる。宣言は下限の約束として扱う",
+      "why_per_claim_not_per_document": "文書全体に出典が 1 つあれば通る判定にすると、10 個の主張のうち 1 つだけ根拠がある資料が sourced を名乗れてしまう。宣言の意味を保つには主張単位で見るほかない",
+      "boundary": "data-hb-block-role=\"claim\" が 1 つも無い資料では本検査は vacuous に通る。主張ブロックの同定は C11 のレンダリング責務であり、その付与漏れは NAR-10 ではなく C11 側の検査で捕える",
+      "violation_example": "data-hb-evidence-depth=\"sourced\" だが claim ブロック 6 件のうち 2 件に data-hb-evidence が無い",
+      "pass_example": "data-hb-evidence-depth=\"cited\" で全 claim ブロックが data-hb-evidence を 1 つ以上持つ (出典表記の有無は問わない)"
+    }
+  ],
+  "canonical_rules": {
+    "note": "R21 で本 script が唯一の正本となった判定規則。他の component はこの規則本文を複製しない",
+    "detection_order_contract": {
+      "statement": "CLI 契約の固定順は本ブリーフの detections 配列の定義順そのものであり、現時点では NAR-01..NAR-10 の 10 件。件数を別の場所へ数値として書き写さない。検出が増減したときは detections 配列が唯一の変更点になり、stdout の行数・テスト側の期待値・_support の順序定数はすべてここから導かれる",
+      "rationale": "P04-x-05 の裁定 B。R22 で検出が 8 → 10 件になった際、stdout 側と既存テストが 8 という数値の写しを持っていたため、実装が両方を同時に満たせない状態が生じた。件数を写した箇所は写した時点の正本に凍結され、正本が動いても追従しない。件数は導出物であって独立した契約ではない"
+    },
+    "hero_field_resolution": {
+      "id": "CR-HERO1",
+      "owner": "C22 (単一正本)",
+      "statement": "文書レベルのフィールド (従来 hero の内側に描画されていたもの) は、data-hb-field=\"<フィールド名>\" マーカーによってのみ同定する。『どの要素の中にあるか』(hero 部品の部分木の内部か、header の内部か、hero の直後の兄弟か) を同定条件に用いない。マーカーが一致すれば文書のどこにあっても当該フィールドであり、マーカーが無ければ hero の内側にあってもそのフィールドではない",
+      "rationale": "位置を同定条件にすると、提示層の設計変更がそのまま検査の誤判定になる。実際に P05-x-18 で日付が hero から <header class=\"doc-head\"> へ移り、hero 部品マーカー (document スコープ 2 件目の骨格部品) は著者記述を含まない空の枠要素へ移った。位置条件で書かれた規約はこの時点で実装と食い違い、しかも『枠の内側に著者記述が 1 つも無い』ため検査は静かに対象 0 件になる。マーカー同定なら提示層をどう組み替えても判定が変わらない",
+      "field_set": "対象フィールド名を本 brief へ literal で列挙しない。対象は『C20 の required_markers に現れる data-hb-field の値のうち、handout-config スキーマで document スコープ (sections[] の外) に属するもの』であり、その正本は plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md の adjudications である。列挙を本 brief に置くと C20 marker_source_of_truth と二名簿になり、裁定表が動いたときに追従しない",
+      "cardinality": "単数/複数もフィールド名の列挙ではなくスキーマ型から導出する。スカラー型のフィールドはマーカー付き要素が文書内にちょうど 1 個、配列型のフィールドは配列要素 1 件につきマーカー付き要素 1 個 (要素をまとめた 1 個の器へ 1 マーカーを付ける形は採らない)。識別子を持つ配列要素 (target_tasks[] のように id を持つもの) は同じ要素へ data-hb-key を併置し、値と識別子を同じノードから読めるようにする",
+      "value_extraction": "値は当該要素の可視テキストを正規化 (algorithm 4 の正規化関数) して得る。装飾用の兄弟要素 (ラベル片・単位ピル・アイコン) をマーカー付き要素の内側へ含めない。含めざるを得ない場合は素値を属性で併置する側 (C11) の責務であり、本 script が文字列から切り出す判定は持たない",
+      "position_conditions_allowed": "位置条件を課してよいのは『冒頭に描画されていること』自体が要件である場合に限る (NAR-01 の目的/背景/ゴール)。その場合も条件は器の包含関係ではなく文書順の窓として書く。それ以外のフィールドには位置条件を課さない — とくに日付は hero より前に出ることがあるため、hero マーカー以降を必須にする窓を全フィールドへ広げてはならない",
+      "chrome_boundary_alignment": "C20 brief の renderer_marker_requirements.chrome_boundary と同じ立場に立つ。data-hb-field は同 boundary が言う『著者データマーカー』であり、data-hb-generated=\"true\" の部分木の内側に現れても読み飛ばし対象から外れる。したがって本規約は『著者記述が chrome の外に置かれていること』を前提にしない。逆に、chrome の存在・不在から値を推定することも行わない (chrome_boundary の no_inference_inside_chrome と同じ)。現行の C11 は hero 枠を空の生成要素として分離することでこの条件を満たしているが、本規約はその実装方式に依存しない — 枠を分離しても、抽出器/検査側を穴あき走査にしても、マーカー同定である限り判定は同じになる",
+      "part_id_literals": "hero 部品や nav 部品を data-hb-part の literal 値 (B01 / B02 等) で名指ししない。骨格部品の id は C23 が owner の部品カタログから section_scope=document のカタログ順で導出する。本 script は既にその導出を行っており、brief 側が literal を持つと二名簿になる",
+      "implemented_by_detections": [
+        "NAR-01",
+        "NAR-02"
+      ],
+      "delegated_consumers": [
+        "C11 render-handout.py (マーカーを付けて出力する側。位置は C11 の裁量であり、本規約は位置を規定しない)",
+        "C20 extract-handout-config.py (同じマーカーで逆抽出する側。chrome_boundary により読み飛ばし対象から除外される)",
+        "C18 verify-handout-language.py (R18 の日付表記は C18 の担当。本規約は日付の同定方法だけを定め、表記の妥当性は判定しない)"
+      ]
+    },
+    "demo_first_rule": {
+      "id": "CR-DEMO1",
+      "owner": "C22 (単一正本)",
+      "statement": "presentation_order == demo_first の資料では、読み手が最初に出会う提示物は実際の画面 (data-hb-asset-role=\"screenshot\" の画像、または live demo の実施指示を持つ B17) でなければならない。概念図解 (DIAGRAM) ・フロー (B14) ・特徴カード (B07) ・120 文字を超える説明段落を、その実画面より前に置くことを禁じる",
+      "rationale": "P03-x-04: 概念図から入ると『何ができるか』が像を結ばず、demo_first を選んだ意味が失われる。順序の意図はデータ上の enum 値だけでは守られないため、描画結果に対する禁止として型へ落とす",
+      "implemented_by_detections": [
+        "NAR-07"
+      ],
+      "delegated_consumers": [
+        "C11 render-handout.py (data-hb-asset-role / data-hb-presentation-order を出力する側。判定は行わない)",
+        "C06 handout-readability-reviewer (人手レビュー観点として参照するが、合否は本 script が決める)"
+      ]
+    },
+    "granularity_declared_vs_actual": {
+      "statement": "粒度の宣言値は生成物の自己申告であり、実測との突合が無ければ意味を持たない。C22 は宣言を『下限の約束』として扱い、下回った場合のみ違反とする",
+      "rationale": "宣言だけして実態が伴わない資料は R01 の自己完結検査も a11y 検査も通過する。宣言と実態の乖離は既存のどのゲートでも捕まらない独立した欠陥クラスなので、専用の判定が要る",
+      "implemented_by_detections": [
+        "NAR-09",
+        "NAR-10"
+      ],
+      "owner_split": "宣言値の enum 妥当性は C12、既定値は C23、上限の数値は C11 のテーマトークン、実態との突合は C22。数値も語彙も本 script は持たない"
+    }
+  },
+  "acceptance_checks": [
+    {
+      "id": "AC-C22-01",
+      "how": "data-hb-field の purpose / background / goal が冒頭の窓 (hero 部品マーカー以降・最初の section より前) に描画され、全 7 section が冒頭に data-hb-field=\"section_goal\" を持ち、nav 7 項目すべてが data-hb-nav-goal を持つ HTML と一致する config を渡す",
+      "expected": "exit 0、stderr 空、stdout の detection 行が detections 配列と 1 対 1 (NAR-07 は fixture の presentation_order に応じて PASS または SKIP) で OUT-OF-SCOPE 節を伴う。期待値は detections 配列から導いた列と assertEqual で突き合わせ、行数を数値リテラルで書かない"
+    },
+    {
+      "id": "AC-C22-02",
+      "how": "data-hb-field=\"goal\" を削除した HTML を渡す",
+      "expected": "exit 1、NAR-01 に違反 1 件"
+    },
+    {
+      "id": "AC-C22-03",
+      "how": "data-hb-field=\"goal\" のテキストを config.goal から改変した HTML を渡す",
+      "expected": "exit 1、NAR-02 に不一致の違反 1 件 (両方の値が stderr に出る)"
+    },
+    {
+      "id": "AC-C22-04",
+      "how": "1 つの section で section_goal を末尾に置いた HTML を渡す",
+      "expected": "exit 1、NAR-03 に『冒頭でない』の違反 1 件 (section_id つき)"
+    },
+    {
+      "id": "AC-C22-05",
+      "how": "config.sections の 1 件で goal を空文字にする",
+      "expected": "exit 1、NAR-03 に違反 1 件 (C12 で弾かれるべき状態でも本ゲートが独立に FAIL にする)"
+    },
+    {
+      "id": "AC-C22-06",
+      "how": "section_goal を <details> 内に入れた HTML を渡す",
+      "expected": "exit 1、NAR-04 に『常時表示でない』の違反 1 件"
+    },
+    {
+      "id": "AC-C22-07",
+      "how": "@media print{.goal-chip{display:none}} を持つ HTML を渡す",
+      "expected": "exit 0 (メディアクエリ内の非表示は NAR-04 の対象外)。C17 PRINT-03 との責務衝突が起きないことの回帰テスト"
+    },
+    {
+      "id": "AC-C22-08",
+      "how": "nav 項目 1 件から data-hb-nav-goal と title を両方外した HTML を渡す",
+      "expected": "exit 1、NAR-05 に違反 1 件"
+    },
+    {
+      "id": "AC-C22-09",
+      "how": "nav 項目の data-hb-nav-goal と title が食い違う HTML を渡す",
+      "expected": "exit 1、NAR-05 に違反 1 件 (片方一致では PASS にしない)"
+    },
+    {
+      "id": "AC-C22-10",
+      "how": "config.sections に 7 件、HTML に 6 件の section を持たせる",
+      "expected": "exit 1、NAR-06 に欠落 1 件。json-report に対応表が出力される"
+    },
+    {
+      "id": "AC-C22-R21-56a",
+      "how": "presentation_order=demo_first の config と、最初の main セクション先頭が <figure data-hb-part=\"DIAGRAM\"> の HTML を渡す (C56 の test)",
+      "expected": "exit 1、NAR-07 に違反 1 件。message に『実画面より前に概念図解が置かれている』と、当該 DIAGRAM の行番号が出る"
+    },
+    {
+      "id": "AC-C22-R21-56b",
+      "how": "同じ HTML の DIAGRAM の前に data-hb-asset-role=\"screenshot\" の IMG を 1 件挿入して再実行する",
+      "expected": "いずれも exit 2 (検査が成立しなかった) で、stderr に presentation_order の欠落が必須フィールド不足として出る。stdout に `NAR-07 SKIP` は出ない。値を削るだけで C56 の検査を無効化できないことの回帰"
+    },
+    {
+      "id": "AC-C22-R21-56c",
+      "how": "最初の提示物が data-hb-asset-role=\"figure\" の IMG である HTML を demo_first で渡す / 同じ HTML を presentation_order=explain_first で渡す",
+      "expected": "前者は exit 1 (screenshot 以外の画像は実画面と認めない)。後者は exit 0 で stdout に `NAR-07 SKIP order=explain_first` が出る (未評価が PASS に化けない)"
+    },
+    {
+      "id": "AC-C22-R21-56b",
+      "how": "presentation_order のキーを持たない構成データと、null を代入した構成データの 2 通りを、最初の main セクション先頭が DIAGRAM の HTML と組で渡す",
+      "expected": "いずれも exit 2 (検査が成立しなかった) で、stderr に presentation_order の欠落が必須フィールド不足として出る。stdout に `NAR-07 SKIP` は出ない。値を削るだけで C56 の検査を無効化できないことの回帰"
+    },
+    {
+      "id": "AC-C22-R21-48",
+      "how": "section_kind=logistics の section を role=main のまま 3 番目に描画した HTML を渡す",
+      "expected": "exit 1、NAR-08 に違反 1 件。同じ入力を C12 に掛けると E-SECTION-ROLE-CONFLICT で落ちることも併せて確認し、構成データ段と描画段の二重ゲートが両方効いていることを示す"
+    },
+    {
+      "id": "AC-C22-11",
+      "how": "lead-line と decision-axis を全 section から削除した (R11 違反の) HTML を、正しい R19 構造のまま渡す",
+      "expected": "exit 0。R11 の欠落を本ゲートは検出せず、C18 が検出する。goal-spec C40 (R11 ゲートと R19 ゲートが同一構成データへ同時にかかり、一方が他方を代替しない) の分界を固定する回帰テスト"
+    },
+    {
+      "id": "AC-C22-12",
+      "how": "date-pill を削除した HTML を渡す",
+      "expected": "exit 0。日付は C18 の担当であり本ゲートは触れない"
+    },
+    {
+      "id": "AC-C22-13",
+      "how": "--html 不在 / 未正規化 config / --json-report 書き込み不可",
+      "expected": "いずれも exit 2、stderr に ERROR 1 行"
+    },
+    {
+      "id": "AC-C22-14",
+      "how": "同一入力で 2 回実行し stdout / --json-report を比較",
+      "expected": "バイト一致"
+    },
+    {
+      "id": "AC-C22-15",
+      "how": "stdout の detection 行の id 列と、本ブリーフの detections 配列の id 列を比較する",
+      "expected": "順序を含めて完全一致 (NAR-01..NAR-10)。件数を独立した数値リテラルとして期待する形の検査を置かない (detection_order_contract)"
+    },
+    {
+      "id": "AC-C22-CR-HERO1-a",
+      "how": "C11 の実描画 HTML に対し、文書レベルのマーカー付き要素を data-hb-field の値で引き、CR-HERO1.field_set の導出結果と突き合わせる。突合の被検側インスタンスは title / date / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember の 8 フィールド (これは導出結果の実測スナップショットであり、本 brief 側の名簿ではない)",
+      "expected": "8 フィールドすべてがマーカーだけで引けること。スカラー型 (title / date / duration / attainment_level) は 1 個ちょうど、配列型 (focus_theme / target_task / must_remember / no_need_to_remember) は配列要素数と同数。target_task の各要素は data-hb-key を併置している",
+      "why": "位置に依存しない同定が実際に成立することの回帰。導出結果が実測と食い違ったら直すのは裁定表 (ROUNDTRIP-CONTRACT.md) 側ではなく、マーカーを付ける C11 か本 brief の導出規則である"
+    },
+    {
+      "id": "AC-C22-CR-HERO1-b",
+      "how": "同じ HTML で、hero 部品マーカーが付いた要素の部分木の内側に data-hb-field が 1 個も無いこと、および date のマーカーが hero 部品マーカーより文書順で前にあることを確認する",
+      "expected": "どちらも成立する。この状態でも AC-C22-CR-HERO1-a と AC-C22-01 が同時に PASS すること",
+      "why": "『hero 要素の内部にある』を同定条件にしていたら、この配置では対象 0 件になって静かに PASS へ畳まれる。位置条件を撤去したことの回帰であり、同時に『冒頭の窓』を全フィールドへ広げてはならない (date が窓の下端より前にある) ことの根拠でもある"
+    },
+    {
+      "id": "AC-C22-CR-HERO1-c",
+      "how": "C20 の chrome 枝刈り (data-hb-generated の部分木の読み飛ばし) を同じ HTML へ適用し、枝刈り後に残る data-hb-field の集合を枝刈り前と比較する",
+      "expected": "集合が一致し、8 フィールドが 1 件も失われない",
+      "why": "C20 brief の chrome_boundary と CR-HERO1 が同じ結論を出すことの相互検証。片方だけを直すと『検査は通るが逆抽出で値が消える』状態が残る"
+    },
+    {
+      "id": "AC-C22-CR-HERO1-d",
+      "how": "部品カタログの骨格部品 (section_scope=document) の id を別の値へ差し替えた状態で実行する",
+      "expected": "検査結果が変わらない (hero 部品マーカーはカタログから導出されるため)。骨格部品が 2 件でないカタログでは exit 2",
+      "why": "part_id_literals の回帰。brief にも script にも literal の部品 id が残っていればこの検査が落ちる"
+    }
+  ],
+  "failure_modes": [
+    {
+      "case": "data-hb-field の検査アンカーが 1 個も存在しない (レンダラ契約未実装)",
+      "behavior": "『検査アンカー不在』として exit 1 とし、stderr に必要な data-hb-field 値 (purpose / background / goal / section_goal) を列挙する",
+      "rationale": "検査できないものを PASS へ畳まない。C11 の出力契約が先に確定する"
+    },
+    {
+      "case": "config に sections が 0 件",
+      "behavior": "exit 2 (正規化済み構成データとして不正)",
+      "rationale": "セクションの無い資料は R19 の対象として成立せず、これは検査の失敗ではなく入力の不正"
+    },
+    {
+      "case": "section_goal のテキストに改行やインデントが混ざる",
+      "behavior": "正規化 (NFKC + 空白圧縮) の上で比較し、整形差では FAIL にしない",
+      "rationale": "HTML の整形は書式の都合であり、文言の同一性とは別。バイト一致再現性 (C29) はレンダラ側の性質であって本ゲートの判定基準ではない"
+    },
+    {
+      "case": "nav が存在しない HTML",
+      "behavior": "NAR-05 を checked=0 で PASS にせず、『sticky nav 不在』として exit 1",
+      "rationale": "sticky 目次は全プリセット共通の型 (goal-spec C44) であり、不在は R02/R19 の同時違反。nav の有無そのものの検査は C16 SC-08 も行うが、本項目は config.sections との対応という別の軸を見ているため重複ではない"
+    }
+  ],
+  "open_questions": [
+    "【X-03 決着済み・記録】data-hb-field の語彙 (本 script が使うのは purpose / background / goal / section_goal) の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定した。本 script は参照するだけで再定義しない。資料全体ゴールとセクションゴールの名前分離という本 brief の要求は goal (文書) / section_goal (セクション) という C12 config_schema のキー名で保たれている (旧称 doc-goal / section-goal から改称)",
+    "NAR-05 の補助属性を data-hb-nav-goal に一本化するか title も許すか (goal-spec open_questions の『sticky nav 上でのセクションゴール表示形式が未確定』)。title のみだとタッチデバイスで読めず『読者に見える』要件を満たさない可能性があるため、data-hb-nav-goal 必須 + title 任意へ倒す案が有力。P03 design-gate で確定させる",
+    "NAR-04 の常時表示判定は CSS カスケードを解決しない近似であり、祖先条件付きの非表示を検出できない。実描画による検証を P06 に置くかは P04 test-design の判断。本 script は『常時表示を保証する』とは主張せず、検査した条件のみを stdout の OUT-OF-SCOPE 節で開示する",
+    "section goal が全体 goal に意味的に資するか (連なりの内容妥当性) は静的検査の外であり、C06 handout-readability-reviewer が担う。この分界で goal-spec C39 の『連なりが nav 上で追える』を十分に機械化できているかは P03 で確認が要る",
+    "team-lead の指示では C22 に R11 (lead-line → 具体 → 判断軸の順序) と R18 (日付の yyyy/mm/dd) の検査も含める案が示されたが、component-inventory の C22 purpose と C18 purpose、および phase-02 の『検証面の独立』に従い、R11 と R18 は C18 へ寄せ C22 は R19 専任とした。この分界の確認が要る"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-25",
+  "covered_task_ids": [
+    "P05-x-25"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs",
+  "verified_by": [
+    {
+      "claim": "対象 3 件それぞれについて brief 本文が現行実装と一致する状態になった (一致しないまま残したものは無い)",
+      "method": "当方が task-progress.md に記録された 3 件 (C11 の 3 サブ項目 / C20 の class_map / C17 の A11Y-04) に加え、route-P05-x-20 と route-P05-x-23 が『受け皿は P05-x-25』と明記した 2 件を含めて 5 件を洗い出し、各々を実装と突合して brief を改訂した",
+      "result": "pass (5 件すべてで実装を正本とした。**ただし『実装が動いているから正しい』ではなく、brief 自身が従属を宣言している / 実装側に理由がコメントで残っている、という根拠がある場合に限った**。C11 入力方言は brief の手順 6/7 が『正本は C12 の config_schema』と宣言済み、C17 A11Y-04 は同じ rule の末尾が既に『data-hb-part を持たない table も含める』と書いており冒頭句と自己矛盾、C20 class_map は実装コメントが『部品 id を鍵にすると第 2 の名簿へ退化する』と理由まで書いている。根拠が無ければ『実装を直すべき』と書く方針だったが、該当は 0 件だった)"
+    },
+    {
+      "claim": "C11 の属性契約の追随漏れが機械的に 0 になった",
+      "method": "当方が render-handout.py 全文から `data-hb-[a-z0-9-]+` を正規表現で全採取し、script-brief-C11.json の html_attribute_contract に現れる同名集合との**双方向の差集合**を着手前後で取った",
+      "result": "pass (着手前: 実装で出力・brief 未宣言が **6 件** = data-hb-detail-level / data-hb-evidence-depth / data-hb-notes-enabled / data-hb-tone / data-hb-live-demo / data-hb-action、逆方向 0 件。着手後: **両方向とも 0 件**。attributes は 30 → 36 で、既存 30 件は 1 件も書き換えていない追加のみ。brief 自身が『ここが唯一の正本。属性を増減するときは本節を先に更新し消費側 5 本を追随させる』と規定しているので、この 6 件は正本が消費側に遅れていた自己規定違反である)"
+    },
+    {
+      "claim": "C20 class_map の鍵が data_block_type へ移り、行数と順序が壊れていない",
+      "method": "当方が extract-handout-config.py を importlib で読み込み、`BLOCK_TYPE_CLASS_MAP` のキー順と brief の class_map の block_type 列を**リスト同値で比較**し、各行の selector_class に現れるクラス名集合を実装のタプルと突合した",
+      "result": "pass (行数 18 → **18 (不変)**。鍵集合は {block_type, selector_class} で `part` 鍵の残存 0。**実装のキー順と brief の順序がリストとして完全一致** (steps→trio→table→versus→features→map→checklist→accordion→prompt→download→tabs→flow→chips→action-items→handson→diagram→image→text)。クラス名も全 18 行で一致 (text 行の `p` だけは当方の照合用正規表現が 2 文字以上を要求したため差分に見えたが、実体は一致)。FALLBACK_BLOCK_TYPE='text' が brief の最終行と一致することも確認した)"
+    },
+    {
+      "claim": "C17 A11Y-04 の rule から部品 id への限定が消え、実装の走査範囲と一致した",
+      "method": "当方が verify-handout-a11y-print.py の `detect_a11y04` を読解し (`[el for el in ctx.elements if el.tag == \"table\"]` で全 table を無条件走査)、改訂後の rule 文字列に部品 id literal が残っていないことを機械照合した",
+      "result": "pass (rule 内の 'B05' 残存 = False。冒頭句を『文書内のすべての <table> を対象とする — data-hb-part の有無でも部品種別でも絞り込まない』へ改訂。**併せて『この非依存は意図的な例外であり他の検査へ一般化しない』を明記した** — 他の A11Y 検査は data-hb-part に依存してよいため、例外と書かないと次の書き手が全検査を part 非依存へ倒しかねない。detections の id 集合は不変)"
+    },
+    {
+      "claim": "既存のトップレベルキー集合・診断コード集合を壊していない",
+      "method": "当方が 3 brief の改訂前後で top-level キー列をリスト同値で比較し、C11 は algorithm 件数 (26) と failure_modes 件数、C17 は detections の id 列、C20 は class_map 行数も併せて比較した",
+      "result": "pass (3 ファイルとも top-level キー列が改訂前と同一。C11 algorithm 26 件不変・block_to_component_map 件数不変、C17 detections id 集合不変、C20 class_map 18 行不変。stderr 診断コードを持つフィールドには触れていない — 改訂したのは argv description / algorithm 散文 / rule 散文 / failure_modes.case であり、いずれも診断コードを持たない)"
+    },
+    {
+      "claim": "導出可能な値を brief へ literal で書き下していない (PAT-1)",
+      "method": "当方が追記した各文の内容を『導出元があるか』で選別した",
+      "result": "pass (**部品 id はカタログから導出できるので書かない** — C20 class_map から B03..B17 を除去、C17 rule から B05 を除去。**既定テーマ名はトークンの is_default 宣言から導出できるので書かない** — theme_resolution_order には決定規則だけを書き具体名を書いていない。**provenance.normalized_by の const 値も schema から引くと明記し値そのものを書いていない**。逆に **class_map のクラス名は導出元が無い契約そのものなので書く** — この線引き自体を RESOLUTION §4.1 に明文化した)"
+    },
+    {
+      "claim": "4 スイートの失敗テスト名の集合が増えていない",
+      "method": "当方が 4 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名を採取 (件数でなく名前集合)",
+      "result": "pass (validate: Ran 278 / 集合 = {test_unknown_doc_type_lists_vocabulary (ERROR), test_no_purpose_vocabulary_literals (ERROR), test_no_temp_file_left_behind, test_provenance_shape}。extract: Ran 152 **OK**。render: Ran 219 / 集合 = {test_cross_component.GateHandoffTest.test_round_trip_equivalence}。a11y: Ran 187 **OK**。**既知 5 件ちょうどで増加 0 件**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "documentation-only-change-not-machine-checked",
+      "detail": "**本 leaf の成果は 1 件もテストで守られていない**。brief は plan 側の文書であり、どのスイートも読んでいない (`GREP_SCOPE_DIRS` に `plugin-plans/` は入らない)。したがって『テストが緑』は本 leaf の成立を何も証明しない (到達していない緑)。成立の根拠としたのは機械照合の方 — 属性差集合が両方向 0、class_map の順序がリスト同値、top-level キー列が同値、部品 id literal の残存 0。**逆に言えば、実装が新しい data-hb-* を足しても brief は黙って古くなる**。RESOLUTION §6-2 に追加タスク候補として記録した"
+    },
+    {
+      "kind": "contract-weakened-toward-implementation",
+      "detail": "**C20 の selector_class を CSS セレクタ記法からクラス名へ落としたのは、契約を実装へ寄せて弱めた側の変更である**。`[role=tablist] + .prompt-panel` の隣接兄弟条件が失われ、tablist を伴わない `.prompt-panel` も tabs と推定される。実害は heuristic 出力に限られ `fidelity: \"heuristic\"` で推定であることが明示されるが、**弱めた事実は残る**。実装側を強化する案 (セレクタ照合機構) は本 leaf の write_scope が briefs だけで実装を触れず、ここで決めると裁定と実装が別 leaf へ割れて PAT-6 を作るため採らなかった。RESOLUTION §4.1 と §6-1 に退けた理由ごと記録した"
+    },
+    {
+      "kind": "scope-expanded-beyond-titled-three",
+      "detail": "node の title は『未追随 3 件』だが、実際に解消したのは **5 件**。route-P05-x-20 (C11 入力方言の自己矛盾) と route-P05-x-23 (C20 class_map の部品 id 鍵) がいずれも『受け皿は起票済みの P05-x-25 の範囲へ入るため新規起票はしない』と明記していたため、同一 write_scope の本 leaf で併せて処理した。**起票時の 3 件だけを処理して残り 2 件をまた受け皿無しにするのは PAT-4 の再生産になる**"
+    },
+    {
+      "kind": "brief-reserialized",
+      "detail": "3 brief とも json.dump による全文再直列化 (indent=2) で書き戻しているため、**改訂箇所以外も整形差分が出ている可能性がある**。内容の同一性は top-level キー列・配列件数・id 集合の機械照合で担保したが、バイト単位の最小差分にはなっていない。3 ファイルとも untracked のため git diff での確認はできない"
+    },
+    {
+      "kind": "task-spec-missing",
+      "detail": "`plugin-plans/guide-doc-generator/task-specs/P05-x-25.md` が実在しない (P05-x-26 / P05-x-27 と同様)。node の `acceptance_criterion` と task-progress.md の起票理由を正本として遂行した"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

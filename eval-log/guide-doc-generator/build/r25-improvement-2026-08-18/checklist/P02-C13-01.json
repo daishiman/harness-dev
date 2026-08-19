@@ -1,0 +1,65 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C13-01",
+ "covered_task_ids": [
+  "P02-C13-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json",
+ "verified_by": [
+  {
+   "claim": "argv 4 flag が inventory C13 と一致",
+   "method": "grep -n '\"flag\"' script-brief-C13.json (行 9/16/23/30) と inventory inputs を突合",
+   "result": "pass: --config/--assets-dir/--max-bytes(既定 5242880)/--out、過不足 0"
+  },
+  {
+   "claim": "stdout=データ面 / stderr=診断面 の役割分担",
+   "method": "script-brief-C13.json:38-39 と inventory outputs を突合",
+   "result": "pass: 同一データを 2 面へ出さない規定 (行 33/38) も明示"
+  },
+  {
+   "claim": "exit 0|1|2 が排他的条件で定義",
+   "method": "script-brief-C13.json:41-43 / AC-C13-3 (96-100) / AC-C13-5 (106-110)",
+   "result": "pass: 0=skip 有りでも完了, 1=入力データ由来, 2=呼出契約違反。重複・空白なし"
+  },
+  {
+   "claim": "write_scope は --out の 1 ファイルのみ (単一 writer 境界)",
+   "method": "script-brief-C13.json:45-48 / inventory write_scope=out-file / script-brief-C19.json:35 の三者突合",
+   "result": "pass: C19(原本複製)/C11(HTML 焼込)との境界が 3 ファイルで一致"
+  },
+  {
+   "claim": "標準ライブラリのみで閉じる",
+   "method": "script-brief-C13.json:49 / AC-C13-6 (112-115) / algorithm 全 11 手順 (61-73) の走査",
+   "result": "pass: subprocess/socket 0 件。mimetypes 不使用と Pillow/zlib 不使用の根拠も記載"
+  },
+  {
+   "claim": "R25(a) C13 が role 意味論に関与しない",
+   "method": "script-brief-C13.json:126 と component-inventory.json:406 を突合",
+   "result": "pass: 文言レベルで同義"
+  },
+  {
+   "claim": "R25(b) fallback 判定は C01 の R3-render が C13 呼出前に行う",
+   "method": "script-brief-C13.json:126 / skill-brief-C01.json:167 / component-inventory.json:406 / RESOLUTION-R25:66-67",
+   "result": "pass: 双方が同一正本 visual-per-section-decision.json#role_split.fallback を参照し順序が双方向で一致。C01 側の修正不要"
+  },
+  {
+   "claim": "R25(c) exit1 が緩められていない (soft mode 不在)",
+   "method": "script-brief-C13.json:42/109/125 と argv 4 flag の実測",
+   "result": "pass: --lenient/--soft/--allow-missing は 0 件。上限超過(exit0+warning)と素材欠落(exit1)が分離"
+  },
+  {
+   "claim": "R25(d) C21 srg-image-bridge.py との責務分離",
+   "method": "script-brief-C13.json:126 / :59 invokes=[] / inventory C21",
+   "result": "pass: C13 brief は C21 と正しく表記"
+  }
+ ],
+ "evidence": [
+  "plugin-plans/guide-doc-generator/briefs/script-brief-C13.json"
+ ],
+ "changes": [
+  "script-brief-C13.json:6 purpose の隣接 component 実名誤り resolve-handout-output.py → route-handout-output.py",
+  "script-brief-C13.json:126 rationale へ R25 (goal-spec C69) の責務境界タグを付加 (checklist_covered へ C69 は追加せず: coverage owner は C21/C23/C01)"
+ ],
+ "dispatcher_followup": "報告された improvement/visual-per-section-decision.json の component id 誤記 (C13 srg-image-bridge.py → C21) 2 箇所を dispatcher が実測確認のうえ修正済み (38 行 role_split.roles[1].source / 53 行 cost_and_risk.draft_latency)"
+}

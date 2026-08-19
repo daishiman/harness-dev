@@ -1,0 +1,217 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "guide-doc-generator",
+  "cycle_id": "r25-improvement-2026-08-18",
+  "stage": "draft",
+  "overall_status": "blocked",
+  "gates": [
+    {
+      "id": "G-NATIVE-SURFACE-PARITY",
+      "status": "pass",
+      "evidence": [
+        "plugins/harness-creator/scripts/sync-native-surfaces.py",
+        "marketplaces/local/.claude-plugin/marketplace.json",
+        "plugins/guide-doc-generator/.claude-plugin/plugin.json"
+      ],
+      "findings": [
+        "sync-native-surfaces.py --repo-root . --apply --json が verdict=success exit 0、続く --check --json も verdict=success exit 0 で drift 0。",
+        "ただし guide-doc-generator と spec-drift-guardian は skipped: '.claude/settings.json enabledPlugins に exact plugin@marketplace identity が無い'。native surface の投影自体は整合しているが、当該 plugin は .claude/ へ展開されていない。activation は本 cycle の write_scope 外。"
+      ]
+    },
+    {
+      "id": "G-ROUTE-BUILD",
+      "status": "blocked",
+      "evidence": [
+        "eval-log/guide-doc-generator/build/route-C23.json",
+        "eval-log/guide-doc-generator/build/route-C04.json",
+        "eval-log/guide-doc-generator/build/route-C10.json"
+      ],
+      "findings": [
+        "route report 72 件のうち status=success 71 / failure 1 (route-C23.json)。C23 は DT-1 裁定待ちで remediate: 1。",
+        "route-C04.json は status=success だが独立 content-review が両 verdict とも FAIL (checklist/P05-C04-01.json)。status enum が『生成完了』と『契約充足』を区別できないことの実例で、success を充足の証跡として採れない。",
+        "route report が cycle dir ではなく flat な eval-log/guide-doc-generator/build/ 配下にある。TG-C05/TG-C08 の読み先と配置がずれている。"
+      ],
+      "metrics": {
+        "route_reports_total": 72,
+        "route_status_success": 71,
+        "route_status_failure": 1
+      }
+    },
+    {
+      "id": "G-CHECKLIST-VERIFICATION",
+      "status": "blocked",
+      "evidence": [
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c01-verdict-vocab-dedup.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c03-c12-report-routing.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c05-image-role-source.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c06-r25-axes.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c08-checklist-coverage.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-illustration-skip-ruling.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-root-resolution-align.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P04-C01-01.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P04-C09-01.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-C04-01.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-C06-rebuild.json"
+      ],
+      "findings": [
+        "checklist-verification-report 41 件のうち P05-C04-01.json が status=failure。面 5 が answer-patterns.md 未更新のため構造的に到達不能 (F-P05C04-01)。",
+        "P04-C01-01.json / P04-C09-01.json は dispatcher が事後訂正を挿入済み (F-P04C01-04 / F-P04C09-04)。再現性面の変異検証は [] == [] を比較しており空ゲートだった。当該 2 ノードの『変異で実測した』という受理根拠は面ごとに成立せず、判定の質として blocked 扱いにする。",
+        "cyan の変異実測で『本文全体への substring 一致』が 4 component 20 変異・31 トークン分の空振りを起こすことが確定 (F-P04C09-05)。判定器の棚卸しが未了。",
+        "2026-08-19 の内ループで checklist 検証ノードを 10 件 done にした (task-state の done は 50 → 60、checklist report ファイルは計 65 件)。うち 4 件は AC の一部が未達のまま status=success で報告しており、未達分は blocking-for-release の finding と discovered-task 4 件へ分けて記録した (P02-c03-axis-vocab-removal / P02-c07-img-skip-ruling-ref / P02-img-realization-gate-owner / P02-c02-checklist-covered-declare)。AC 全部の充足を確認できていないため本 gate は pass にできない。"
+      ],
+      "metrics": {
+        "checklist_reports_total": 41,
+        "checklist_status_failure": 1
+      }
+    },
+    {
+      "id": "G-DISCOVERED-TASK-DRAIN",
+      "status": "blocked",
+      "evidence": [
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks"
+      ],
+      "findings": [
+        "【前段の実測】--approved ドレインは accepted=0 / needs_approval=135 / graph_hash 不変で完全に閉塞していた。二段承認が障害なのではなく、136 件中 0 件が構造上受理可能でない。validate-task-graph 規則 (k) が実行可能 leaf へ task_spec_ref=task-specs/*.md と produces エッジを必須とするのに対し、emit 側 (emit-discovered-task.py) はこれらを optional として受ける。生産側の必須集合が消費側の不変条件より狭い、という型の欠陥。P05-x-128 として起票。",
+        "【対処】利用者の裁定により planner E4 側 (accept-discovered-task.py) へ補完層を実装した。materialize_leaf_contract() が form の情報だけから execution_kind (route_ref 有無で決定)・task_spec_ref・produces を導出し、task-specs/<id>.md を既存 derive 生成物と同一形状で実体化する。produces は write_scope から導出しない — write_scope は多対一 (実測で file 形 72 件が 34 個へ潰れ、既存 produces と 35 件衝突) だが produces は producer 一意制約を持つため。form 間で重複 0・既存 node id と衝突 0 が実測できている node id を鍵にした。",
+        "【副次的に判明した 2 件も同層で補完】(1) phase_ref の 38 件が `phase-05-implementation.md` 形で来ており、うち `phase-04-tests.md` / `phase-04-testing.md` は実在しないファイル名 (正本は phase-04-test-design.md)。emit の --node-phase-ref には help 文字列すら無く書式の指示が存在しない。番号だけを根拠に P<nn> へ写像し、さらに発見元より若い phase には置けない床を張った (規則 (i) future phase dependency 回避)。(2) acceptance_criterion 欠落 12 件は title と reason から暫定生成したが、planner が受入水準を発明したことを隠さないため接頭辞 [要再定義] を必ず付け、summary の provisional_acceptance_nodes[] にも名指しで返す。",
+        "【暫定 AC の解消】上記 12 件の [要再定義] は暫定のまま残さず、各 finding 本文から実測可能な受入条件へ書き直した。書き直しは task-graph でなく form 側 (discovered node の唯一の正本) へ当てている — graph を手で書くと accepted form の resulting_graph_hash が認可する再 pin の provenance 鎖が切れるため。全 AC は『変異でその検査が赤になること』『閾値は正本から実測導出し第 2 正本を作らないこと』『キー不在で既定値へ倒さないこと』を要求する形に揃えた。結果 provisional_acceptance_nodes は 0 件。",
+        "【順序依存の恒久拒否を発見し修正】再ドレインで 1 件が rejected になった。96323e79….json (P05-x-129) の発見元 P05-x-128 を graph へ産むのは cbe2af99….json だが、ドレインが filename 昇順のため前者が先に処理され『発見元が graph に不在』で落ちた。rejected は PROCESSED_STATUSES ゆえ再処理されず、正当な form が並び順だけで永久に失われる。起票でなく修正が正しいと判断し、accept-discovered-task.py へ UnknownDiscoveringTask を切り出して drain_inbox を多重パス化した (受理できない form は次パスへ繰り越し、1 パス丸ごと前進が無くなって初めて rejected)。fail-open していないことは、実在しない discovering_task_id を持つ form 1 件の inbox で accepted=0 / rejected=1 になることを実測して確認した。",
+        "【最終実測】137 件全件 accepted / needs_approval 0 / rejected 0 / validation_failed 0。graph_hash が sha256:c640fb14… から sha256:91c36d32… へ変化し node_count 138→275、task-specs 137 件を実体化。独立に validate-task-graph.py と verify-index-topsort.py を回して両者 exit 0。violations は 343→55→15→0 と段階的に潰れた。全 137 form に status=accepted と同一の resulting_graph_hash が焼かれている。inbox に未処理 form は残っていない。",
+        "【拒否時診断の修復】accept-discovered-task.py の inbox summary が 7 key 固定で validation_failed を落としていたため、呼び出し側には accepted=0 しか見えず『二段承認待ち』と『構造違反』が区別できなかった。summary へ validation_failed / materialized_task_specs / provisional_acceptance_nodes を追加。意図的に write_scope を空にした form 1 件を含む 2 件の inbox で、validation_failed が stdout に出ること・spec ファイルが 1 件も書かれないこと・form status が未設定のまま (全件 rollback) を実測確認した。",
+        "【本 gate を pass とする根拠】inbox 137 件が全件 accepted で未処理 0、graph は 2 検証器を独立に通過、task-state は provenance-gated re-pin 済み。外ループの機構は開通した。ただし本 gate が測るのはドレイン機構の健全性であって build の完了ではない — 他 5 gate は blocked のままで overall_status は pass にしない。",
+        "【再 pin が新 node を seed しない件は再現を確認】--repin-graph-hash 呼出しは node_count=274 を返し、直後の --initialize-from-graph が 275 を返す。main の elif 排他で両者が同時に走らないため、再 pin だけで済ませると新規 node が state へ入らないまま集計が過少報告になる。今回も 2 度呼びで解消しており、手順が SKILL に無く忘れても赤くならない点は未解消。P05-x-129 として起票済み。",
+        "退出手順そのものから計 4 件を発見した。P05-x-126-route-report-build-dir、P05-x-127-tg-c08-knowledge-on-blocked、P05-x-128-discovered-task-leaf-contract-gap、P05-x-129-repin-does-not-seed。",
+        "2026-08-19 に discovered-task を計 8 件 emit した (inbox 145 件中 8 件が未処理)。additive 5 件 (P02-c03-axis-vocab-removal / P02-c07-img-skip-ruling-ref / P02-img-realization-gate-owner / P02-c23-preset-definitions-visual-sync / P02-c02-checklist-covered-declare) と structural 3 件 (P05-C12-01-visual-density-tests / P05-C23-01-section-key-surface-tests / P05-C12-01-shared-fixture-visuals)。外ループ (planner --mode update) でのドレインが未実施のため pass から blocked へ変更する。structural を含むため再ドレインには --approved が要る。"
+      ],
+      "metrics": {
+        "discovered_total_before": 137,
+        "drain_attempt_accepted_before": 0,
+        "drain_attempt_violations_before": 343,
+        "drain_accepted": 137,
+        "drain_needs_approval": 0,
+        "drain_rejected": 0,
+        "drain_violations": 0,
+        "materialized_task_specs": 137,
+        "provisional_acceptance_nodes": 0,
+        "node_count_after": 275,
+        "discovered_pending_after": 0,
+        "ordering_defect_rejected_before_fix": 1,
+        "ordering_defect_rejected_after_fix": 0,
+        "negative_test_rejected": 1
+      }
+    },
+    {
+      "id": "G-STAGE-DRAFT-DEFERRAL",
+      "status": "blocked",
+      "evidence": [
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/route-build-plan.json"
+      ],
+      "findings": [
+        "route-build-plan.json の stage_gate.status は draft-incomplete で、deferred_to_release[] に 52 件が載る。P03 設計レビュー・P04 受入テスト設計・P13 の一部・P05 の一部が繰り越し。",
+        "内ループ終了時点で ready だった 17 件は全件が deferred_to_release に含まれるため dispatch していない (差集合が空であることを実測)。TG-C01 は stage_gate を知らないため ready に出す。",
+        "draft は『未完了だが動く』状態であり、overall_status を pass にしてはならない。"
+      ],
+      "metrics": {
+        "deferred_to_release_count": 52,
+        "ready_but_deferred_count": 17
+      }
+    },
+    {
+      "id": "G-TASK-STATE-CONVERGENCE",
+      "status": "blocked",
+      "evidence": [
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/task-state.json",
+        "plugin-plans/guide-doc-generator/task-graph.json"
+      ],
+      "findings": [
+        "ドレイン前は done 41 / pending 65 / blocked 32、in-flight 0 (全 138)。",
+        "ドレイン後は全 275 に対し done 37 / pending 206 / blocked 32、in-flight 0。done が 4 件減ったのは劣化ではなく、新 leaf が付いた phase gate (P01/P02/P03) と P05-C10-01 を reconcile_done_dependency_closure が graph_dependency_dirty として再オープンしたため。生きた文書モデルが意図どおり働いた実例。",
+        "graph_hash pin は新 hash sha256:91c36d32… へ provenance-gated re-pin 済み (--authorized-hash に accepted form の resulting_graph_hash を渡して認可)。再 pin 呼出しは 274 を返し、続く --initialize-from-graph が 275 を返した (P05-x-129 の症状を再現・2 度呼びで解消)。",
+        "blocked 32 件は C23 の origin-failure からの伝播閉包を含む。DT-1 の裁定なしには解けない。"
+      ],
+      "metrics": {
+        "state_total": 275,
+        "state_done": 37,
+        "state_pending": 206,
+        "state_blocked": 32,
+        "state_in_flight": 0,
+        "state_reopened_by_dirty_closure": 4
+      }
+    },
+    {
+      "id": "G-REQ2B-PER-SECTION-DIAGRAM",
+      "status": "pass",
+      "evidence": [
+        "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/route-C12.json"
+      ],
+      "metrics": {
+        "shipped_sections_with_diagram": 43,
+        "shipped_sections_total": 43,
+        "measured_zero_diagram_config_exit": 1
+      }
+    },
+    {
+      "id": "G-REQ3-PER-SECTION-IMAGE",
+      "status": "pass",
+      "evidence": [
+        "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+        "plugins/guide-doc-generator/config/handout-purposes.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/route-C23.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-x-03.json"
+      ],
+      "metrics": {
+        "shipped_sections_with_img": 43,
+        "shipped_sections_total": 43,
+        "image_role_screenshot": 9,
+        "image_role_illustration": 34,
+        "measured_all_presets_resolve_exit": 0
+      }
+    },
+    {
+      "id": "G-REQ7-TEXT-LENGTH",
+      "status": "blocked",
+      "evidence": [
+        "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+        "plugins/guide-doc-generator/config/handout-visual-policy.json",
+        "plugins/guide-doc-generator/assets/tokens/pop.json",
+        "plugins/guide-doc-generator/assets/tokens/warm-sand.json",
+        "plugin-plans/guide-doc-generator/improvement/text-length-gate-decision.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-x-83.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-x-85.json",
+        "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-x-86.json"
+      ],
+      "findings": [
+        "機構は 3 面とも実測で働いている。(1) 総量: 本文予算を 60/100/160 へ下げた。(2) 段落: 予算内でも 4 文以上なら E-TEXT-PARAGRAPH。(3) 1 文: 予算内でも 60 文字超の文が 1 件あれば W-SENTENCE-LONG。文字数だけでは (2)(3) を止められないので 3 面が要る。",
+        "--normalize の逃げ道を塞いだ。裁定の reproduced シナリオ (overview 節に 780 文字) は変更前 exit=0 で通っていたが、現在 exit=1 で E-TEXT-OVERFLOW と E-TEXT-PARAGRAPH を出す。",
+        "重大度が config の level 宣言から決まることを単独で実測した。他の違反を全て解消し 73 文字 1 文だけを残した構成データが W-SENTENCE-LONG のみで exit=1、同じ内容を 2 文へ割ると診断ゼロで exit=0。W- 接頭辞でも完了を止める。",
+        "E-TEXT-FOLDED は現行設定では構造上到達不能である (P05-x-86 の F-P05X86-FOLD-01)。E-TEXT-OVERFLOW が error になったため main() は normalize_config を呼ぶ前に返る。意図した結末だが、稼働中のゲートとして数えてはならない。",
+        "本 gate を pass にしない理由: plugins/guide-doc-generator/tests/validate-handout-config.py が 155 failed / 186 passed で赤い。可逆プローブ (密度閾値を 0 にして再実行) により 134 件は共有フィクスチャ _harness.py が IMG/DIAGRAM を持たないこと、21 件が新予算と文長ゲートの期待値であることを切り分けた。原因は判明し discovered-task 3 件へ分けたが、テストが緑になるまでは『機構は働くが検査体系は追従していない』状態であり、pass と書くと 155 件の赤を緑と読み替えることになる。"
+      ],
+      "metrics": {
+        "body_budget_overview": 60,
+        "body_budget_standard": 100,
+        "body_budget_detailed": 160,
+        "sentence_max_chars": 60,
+        "sentence_count_threshold": 1,
+        "max_sentences_per_body": 3,
+        "measured_normalize_escape_exit": 1,
+        "measured_single_long_sentence_exit": 1,
+        "measured_split_sentence_exit": 0,
+        "plugin_tests_failed": 155,
+        "plugin_tests_passed": 186,
+        "probe_failed_with_density_disabled": 21,
+        "probe_passed_with_density_disabled": 320
+      }
+    }
+  ],
+  "invalidated_task_ids": [
+    "P05-C04-01",
+    "P04-C01-01",
+    "P04-C09-01"
+  ],
+  "invalidated_phase_refs": [
+    "phase-04-test-design.md"
+  ]
+}

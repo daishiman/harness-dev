@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P04",
+  "covered_task_ids": [
+    "P04"
+  ],
+  "status": "success",
+  "leaf_count": 32,
+  "verified_by": [
+    {
+      "claim": "P04 の全 leaf (32 件) が done で、各 component にテストが存在する",
+      "method": "task-state.json の state 照合と evidence/P04.json の components 表",
+      "result": "32 leaf すべて done。23 component それぞれにテストスイートが対応 (tests/ 配下 23 ディレクトリ)"
+    },
+    {
+      "claim": "違反系ケース・部品ごとのレンダリング・再現性・round-trip のテストが揃っている",
+      "method": "スイート実行の内訳 (tests/<suite>) と evidence/P04.json",
+      "result": "検証 script 4 本 (selfcontained 354 / language 248 / narrative 217 / a11y-print 187) が違反系を含む。render-handout.py 219 件が部品カタログを網羅し、extract-handout-config.py 152 件が round-trip を覆う"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "gate-scope",
+      "detail": "本 gate の判定は leaf の完了と成果物の実在・網羅に基づく投影であり、設計者と分離した独立 context での再判定ではない"
+    }
+  ]
+}

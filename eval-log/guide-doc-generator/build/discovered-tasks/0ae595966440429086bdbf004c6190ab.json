@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-24",
+  "reason": "P05-x-18 の RESOLUTION §7d と P05-x-19/P05-x-24 の観測で、brief 側に受け皿の無い追随が 3 件残っている。(1) script-brief-C11.json: アクセントのトップレベル入口と上書き規則の明記・手順13を『文書冒頭の <header> 要素の中に 1 個・.pop-header の内側は不可』へ改訂・data-hb-notes-enabled の属性契約追加。(2) script-brief-C20.json の class_map 行『figure.asset / img.asset-img (本文中の単独 <img> を含む)』の括弧書きが実装と食い違う (実装は裸 <img> を拾わない。拾うと装飾アイコンを部品へ昇格させ構造を捏造するため意図的)。(3) C17 A11Y-04 の冒頭句が特定部品配下の table に限定しているが実装は全 table 対象。いずれも P05-x-21 (C20 担当) と P05-x-24 (C17/C22 担当) が既に done で受け皿が消滅している (PAT-4)",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-x-24.json",
+  "proposed_node": {
+    "id": "P05-x-25",
+    "title": "C11/C20/C17 brief の未追随 3 件を解消する (受け皿消滅分の再割当)",
+    "phase_ref": "P05",
+    "entity_ref": "C11",
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs",
+    "acceptance_criterion": "3 件それぞれについて brief 本文が現行実装と一致するか、一致しない場合は『実装を直すべき』と明記されている。実装と brief のどちらを正本とするかの裁定と根拠が RESOLUTION-P05-x-25.md に記録されている。既存のトップレベルキー集合・class_map の行数と順序・stderr 診断コード集合を壊さない。導出可能な値を brief へ literal で書き下さない (PAT-1)",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-25.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-25.md"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

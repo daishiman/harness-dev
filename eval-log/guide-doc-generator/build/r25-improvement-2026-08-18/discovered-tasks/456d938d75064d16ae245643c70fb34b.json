@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "P05-x-88 事前実測の付随観測: hooks/guard-handout-external-ref.py が第2正本を消して config を正本にする改修 (+103/-15) を持つが、参照先 size_limits.hook_scan_budget が config 側に未着。既存挙動の fail-open ではなく2段作業の途中であり、hook 改修と config 追加は同一段に置く必要がある。TestIdempotent が緑なのも現在は縮退経路どうしの比較のため",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-88.json",
+  "proposed_node": {
+    "id": "P05-x-101",
+    "title": "hook 予算宣言 size_limits.hook_scan_budget を config へ追加する",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+    "acceptance_criterion": "config/handout-output.json の size_limits に hook_scan_budget が存在し、tests/guard-handout-external-ref/test_no_side_effects.py:30 TestWriteScopeNone::test_target_is_untouched_on_block が exit2 を得て緑になること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C21"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C11-01",
+  "reason": "config/handout-parts.json の _meta.rule『part id をこのファイル以外の場所へ列挙しない』に対し 14 件の違反が C12 / C17 / C22 / C05 の成果物に残っている。各 leaf は自分のテストが緑なため気づけず、C11 のカタログ検査だけがこれを検出している",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+  "proposed_node": {
+    "id": "P05-x-07",
+    "title": "部品 id の列挙を単一正本カタログ外から除去する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "scripts/validate-handout-config.py:84-91 / scripts/verify-handout-a11y-print.py:56-58 / scripts/verify-handout-narrative.py:50,1003 および agents/handout-content-architect.md:113 から部品 id の literal を除去し、config/handout-parts.json の kind / section_scope / data_block_type 述語で解決する形へ置き換える。tests/render-handout.py/test_parts_catalog.py の test_part_ids_are_not_enumerated_outside_the_catalog が緑になる",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-07.md",
+    "produces": [
+      "plugins/guide-doc-generator/scripts/"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

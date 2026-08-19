@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-14",
+  "reason": "AC-C01-19 の是正 (P05-x-14) で判明した潜在欠陥。contract_lib.py には body 全体への部分文字列一致で判定する述語が他にも残っており (AC-C01-15 の CR-GATE-AGG / AC-C01-18 の assign-handout-readability-evaluator 等)、reject_cases.py の違反注入が単一 (old,new) ペアである以上、同じ語が本文の別箇所に残ると reject fixture を違反状態にできない。現時点では reject case すべてが検出できておりスイートは緑だが、C01 実装が語を散らせた瞬間に同じ偽緑が復活する。方針決定 (述語を節スコープへ寄せるか REJECT_CASES を複数置換対応にするか) が必要",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/run-handout-build/PREDICATE-SCOPE-POLICY.md",
+  "proposed_node": {
+    "id": "P05-x-17",
+    "title": "contract_lib の body 全体一致述語について reject 可能性の方針を決める",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+    "acceptance_criterion": "contract_lib.py の全 AC 述語について、対応する reject case が『注入した 1 箇所だけを潰して違反状態を作れる』ことが機械的に確認でき、確認できない述語には節スコープ化か複数置換対応のどちらを採ったかが PREDICATE-SCOPE-POLICY.md に記録されている。run-handout-build スイートが Ran 48 以上で緑のままであること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-17.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/run-handout-build/PREDICATE-SCOPE-POLICY.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

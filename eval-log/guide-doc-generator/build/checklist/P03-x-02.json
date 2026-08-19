@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P03-x-02",
+  "kind": "checklist-verification",
+  "status": "success",
+  "covered_task_ids": ["P03-x-02"],
+  "verified_by": [
+    {"claim": "23 brief が全て JSON として妥当", "how": "json.load 全件", "exit_code": 0},
+    {"claim": "構成データのフィールド名が単一 (X-02)。旧名 purpose_kind / core_problem / 裸の prior_knowledge の出現が 0 件で、C12 config_schema の doc_type / reader / prior_knowledge_level / essential_problem に統一", "how": "briefs 全走査の語彙カウント", "exit_code": 0},
+    {"claim": "HTML 機械可読属性が単一 (X-03)。data-hb-* が 40 種、非 data-hb- の出現 23 件は全て『旧称 … は使わない / 統合済み』の移行注記か、C10 の外部参照検出ルールが列挙する標準属性 data-src であり、競合する語彙定義は 0 件", "how": "data-[a-z0-9-]+ 全抽出 + 各出現の文脈判定", "exit_code": 0},
+    {"claim": "日付表示の正本が単一 (X-01)。表示正本は yyyy/mm/dd のみ。YYYY-MM-DD は R17 ディレクトリ命名専用の派生表現として別概念と明記され、yyyy-mm-dd は C12 --normalize が寛容に受理する入力形式として位置づけられている", "how": "日付表記の全抽出 + 各出現の文脈判定", "exit_code": 0},
+    {"claim": "X-04 カタログ名が config/handout-purposes.json に統一", "how": "パス表記の全抽出", "exit_code": 0},
+    {"claim": "X-05 C11 に実体解決 4 段 (HB_ROOT → CLAUDE_PLUGIN_ROOT → plugin.json name 照合 → __file__ 相対) を宣言", "how": "C11 brief の該当節を確認", "exit_code": 0},
+    {"claim": "X-06 C23 の呼出しがモジュール API 経由に統一 (C11 / C12 / C19 / C23 に明記)", "how": "C23 参照箇所の文脈判定", "exit_code": 0},
+    {"claim": "X-07 checklist-ID と component-ID の名前空間衝突を先送りとして C11 に単独記録し、読み分け規約まで明文化", "how": "C11 brief の open issue 記述を確認", "exit_code": 0},
+    {"claim": "X-08 README.md の単独 writer が C01 に確定 (C01 の readme_writer に明記・C07 と C19 は自身が書かない旨を明記)", "how": "README 言及箇所の文脈判定", "exit_code": 0},
+    {"claim": "C01 の skill 名が run-handout-build に単一化 (残差の run-handout-create 2 件 / run-handout-config-apply 1 件を解消)", "how": "run-handout-[a-z-]+ の全抽出で run-handout-build 25 / run-handout-extract 9 のみ", "exit_code": 0}
+  ],
+  "evidence": [
+    "plugin-plans/guide-doc-generator/briefs",
+    "plugin-plans/guide-doc-generator/evidence/P02.json",
+    "plugin-plans/guide-doc-generator/task-specs/P03-x-02.md"
+  ],
+  "deviations": [
+    "leaf 実行 agent の構造化戻り値 (JSON) は取得できず idle 通知のみを受けた。判定は dispatcher が briefs/ を独立走査した実測に基づく (自己申告ではなく成果物の直接検査ゆえ、証跡としては同等以上)。",
+    "C01 skill 名の残差 1 件は P02 findings X-01..X-08 に含まれない同種の矛盾で、dispatcher の独立検査が追加検出し leaf へ差し戻して解消した。裁定リストに載った矛盾を直しても同種の未列挙分は残るため、leaf の自己申告と別に dispatcher 側の語彙全走査が要るという運用知見。"
+  ],
+  "summary": "X-01..X-08 の blocking/high 全件を briefs/ 側で解消。日付表示・構成データフィールド名・HTML 属性語彙がそれぞれ単一の正本を持ち、正本の所在が各ブリーフから読み取れる状態になった"
+}

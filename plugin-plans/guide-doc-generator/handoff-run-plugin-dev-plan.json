@@ -1,0 +1,480 @@
+{
+  "plan_dir": "plugin-plans/guide-doc-generator",
+  "target_plugin_slug": "guide-doc-generator",
+  "mode": "create",
+  "task_graph_ref": {
+    "path": "task-graph.json",
+    "schema_version": "1.0"
+  },
+  "routes": [
+    {
+      "id": "C04",
+      "component_kind": "skill",
+      "name": "ref-handout-design-system",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "ref-handout-design-system",
+        "brief_path": "briefs/skill-brief-C04.json"
+      },
+      "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+      "status": "planned"
+    },
+    {
+      "id": "C23",
+      "component_kind": "script",
+      "name": "resolve-handout-preset.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/resolve-handout-preset.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+      "status": "planned"
+    },
+    {
+      "id": "C05",
+      "component_kind": "sub-agent",
+      "name": "handout-content-architect",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C04",
+        "C23"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "handout-content-architect"
+      },
+      "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+      "status": "planned"
+    },
+    {
+      "id": "C12",
+      "component_kind": "script",
+      "name": "validate-handout-config.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/validate-handout-config.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "status": "planned"
+    },
+    {
+      "id": "C13",
+      "component_kind": "script",
+      "name": "embed-assets.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/embed-assets.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+      "status": "planned"
+    },
+    {
+      "id": "C14",
+      "component_kind": "script",
+      "name": "render-diagram-svg.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/render-diagram-svg.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+      "status": "planned"
+    },
+    {
+      "id": "C15",
+      "component_kind": "script",
+      "name": "build-icon-sprite.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/build-icon-sprite.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
+      "status": "planned"
+    },
+    {
+      "id": "C11",
+      "component_kind": "script",
+      "name": "render-handout.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/render-handout.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "status": "planned"
+    },
+    {
+      "id": "C16",
+      "component_kind": "script",
+      "name": "verify-handout-selfcontained.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/verify-handout-selfcontained.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+      "status": "planned"
+    },
+    {
+      "id": "C17",
+      "component_kind": "script",
+      "name": "verify-handout-a11y-print.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/verify-handout-a11y-print.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+      "status": "planned"
+    },
+    {
+      "id": "C18",
+      "component_kind": "script",
+      "name": "verify-handout-language.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/verify-handout-language.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+      "status": "planned"
+    },
+    {
+      "id": "C19",
+      "component_kind": "script",
+      "name": "route-handout-output.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C12",
+        "C23"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/route-handout-output.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
+      "status": "planned"
+    },
+    {
+      "id": "C21",
+      "component_kind": "script",
+      "name": "srg-image-bridge.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/srg-image-bridge.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+      "status": "planned"
+    },
+    {
+      "id": "C22",
+      "component_kind": "script",
+      "name": "verify-handout-narrative.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/verify-handout-narrative.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "assign-handout-readability-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C18",
+        "C04"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-handout-readability-evaluator",
+        "brief_path": "briefs/skill-brief-C03.json"
+      },
+      "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
+      "status": "planned"
+    },
+    {
+      "id": "C01",
+      "component_kind": "skill",
+      "name": "run-handout-build",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03",
+        "C04",
+        "C05",
+        "C11",
+        "C12",
+        "C13",
+        "C14",
+        "C15",
+        "C16",
+        "C17",
+        "C18",
+        "C19",
+        "C21",
+        "C22",
+        "C23"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-handout-build",
+        "brief_path": "briefs/skill-brief-C01.json"
+      },
+      "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+      "status": "planned"
+    },
+    {
+      "id": "C20",
+      "component_kind": "script",
+      "name": "extract-handout-config.py",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C12"
+      ],
+      "placement_scope": "plugin-root",
+      "builder": "plugin-scaffold",
+      "builder_status": "contract-only",
+      "gap_ref": "GAP-SCRIPT-BUILDER",
+      "build_kind": "script",
+      "build_args": {
+        "script_path": "scripts/extract-handout-config.py"
+      },
+      "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "status": "planned"
+    },
+    {
+      "id": "C02",
+      "component_kind": "skill",
+      "name": "run-handout-extract",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C11",
+        "C12",
+        "C16",
+        "C20"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "run-handout-extract",
+        "brief_path": "briefs/skill-brief-C02.json"
+      },
+      "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+      "status": "planned"
+    },
+    {
+      "id": "C06",
+      "component_kind": "sub-agent",
+      "name": "handout-readability-reviewer",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C03"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "agent",
+      "build_args": {
+        "kind": "agent",
+        "name": "handout-readability-reviewer"
+      },
+      "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+      "status": "planned"
+    },
+    {
+      "id": "C07",
+      "component_kind": "slash-command",
+      "name": "handout-build",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C01"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "handout-build"
+      },
+      "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+      "status": "planned"
+    },
+    {
+      "id": "C08",
+      "component_kind": "slash-command",
+      "name": "handout-extract",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C02"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "handout-extract"
+      },
+      "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+      "status": "planned"
+    },
+    {
+      "id": "C09",
+      "component_kind": "slash-command",
+      "name": "handout-verify",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C16",
+        "C17",
+        "C18",
+        "C22"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "command",
+      "build_args": {
+        "kind": "command",
+        "name": "handout-verify"
+      },
+      "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+      "status": "planned"
+    },
+    {
+      "id": "C10",
+      "component_kind": "hook",
+      "name": "guard-handout-external-ref",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C16"
+      ],
+      "builder": "run-build-skill",
+      "build_kind": "hook",
+      "build_args": {
+        "kind": "hook",
+        "name": "guard-handout-external-ref"
+      },
+      "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+      "status": "planned"
+    }
+  ],
+  "envelope": {
+    "manifest": {
+      "owner": "run-plugin-dev-plan (draft) / plugin-scaffold executor (apply)",
+      "status": "external_gap",
+      "build_target": "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+      "draft_path": "envelope-draft/plugin.json",
+      "gap_reason": "manifest を実体へ適用する scaffold executor が本 repo に存在しない。plan は draft を出すところまでを担い、適用は後段 executor または人手承認に委ねる"
+    },
+    "marketplace": {
+      "owner": "human maintainer",
+      "status": "manual-user-gated",
+      "build_target": ".claude-plugin/marketplace.json",
+      "approval_reason": "marketplace 登録は外部から見える公開行為であり、初版は repo 内 dogfood を先行させる。distributable:false と整合させ、ユーザー承認後に別途行う"
+    }
+  },
+  "open_issues": [
+    {
+      "id": "GAP-ENVELOPE-001",
+      "title": "manifest 適用 executor の不在",
+      "detail": "envelope-draft/plugin.json を plugins/guide-doc-generator/.claude-plugin/plugin.json へ適用する executor が無い。適用は人手承認で行う",
+      "owner": "human maintainer"
+    },
+    {
+      "id": "GAP-SCRIPT-BUILDER",
+      "title": "script builder が contract-only",
+      "detail": "plugin-scaffold は planner 上の routing 語彙であり実行実体を持たない。plugin-root へ hoist する script 群は scaffold 後に人手または後段 executor が実装する",
+      "owner": "human maintainer"
+    },
+    {
+      "id": "GAP-SRG-CONTRACT-DRIFT",
+      "title": "画像生成委譲先の契約ドリフト監視が無い",
+      "detail": "委譲先 slide-report-generator の画像パイプラインは node 実装で、本 plugin の Python 標準ライブラリ制約の外にある。入力となる画像計画スキーマが委譲先で変更されても本 plugin 側は検知できない。委譲アダプタは不在時 skip の fail-soft を持つが、契約変更時は skip ではなく誤動作になりうる",
+      "owner": "guide-doc-generator maintainer"
+    },
+    {
+      "id": "GAP-DEFAULT-OUTPUT-DIR",
+      "title": "既定出力先の実値は設置時供給",
+      "detail": "既定出力先は plugin 同梱の設定ファイルでキーのみ宣言し、実際のパスは設置先が供給する。plan には絶対パスを焼かない。未設定時は起動引数での明示を必須にする",
+      "owner": "human maintainer"
+    }
+  ]
+}

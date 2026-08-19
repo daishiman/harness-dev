@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C11-01",
+  "reason": "C11 のトークン間接参照テストは _accent_key がトークンファイルのトップレベルキーに pop-primary を含むものを探すが、assets/tokens/pop.json のトップレベルは schema_owner / produced_by / theme / label / is_default / source / accent / css_variables でありアクセント色は 2 階層下にある。当該ファイルの produced_by は P05-x-02 だが同 leaf は既に done であり受け皿が無い",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-C11-01.json",
+  "proposed_node": {
+    "id": "P05-x-08",
+    "title": "テーマトークンのアクセント色をトップレベルから解決可能にする",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/assets/tokens",
+    "acceptance_criterion": "assets/tokens/*.json でアクセント色 (--pop-primary 相当) がトークンファイルのトップレベルキーから解決でき、tests/render-handout.py/test_determinism.py の test_accent_token_change_only_diffs_root_block が緑になる。既存の accent.scale と css_variables の内容を壊さないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-08.md",
+    "produces": [
+      "plugins/guide-doc-generator/assets/tokens/"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "role": "廃止。図解密度と文字量の正本は config/handout-visual-policy.json へ移した",
+    "status": "superseded",
+    "superseded_by": "config/handout-visual-policy.json",
+    "since": "2026-08-18",
+    "why": "同じ領域について『単一正本』を名乗るファイルが 2 枚あり、しかも一方は error・他方は warning と方針まで食い違っていた。C12 が実際に読んでいたのは handout-visual-policy.json だけで、こちらは読み手ゼロの孤児だった。閾値が 2 か所にあると、片方だけ直した状態が黙って成立する",
+    "migrated": {
+      "visual_first": "handout-visual-policy.json#thresholds (min_visual_parts_per_main_section / min_diagrams_per_main_sections)",
+      "text_budget": "handout-visual-policy.json#micro_copy (図解・カード内の 1 要素) と assets/tokens/<theme>.json#text_limits (TEXT 本文)",
+      "granularity_anchor": "handout-visual-policy.json#draft_first.granularity_anchor",
+      "draft_first": "handout-visual-policy.json#draft_first"
+    },
+    "rule": "このファイルを読まない。値を書き足さない。ファイルごと削除してよい (削除が保留されているのは権限の都合であって設計上の理由ではない)"
+  }
+}

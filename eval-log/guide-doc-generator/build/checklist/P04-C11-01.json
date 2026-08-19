@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "status": "success",
+  "task_id": "P04-C11-01",
+  "covered_task_ids": [
+    "P04-C11-01"
+  ],
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls",
+      "result": "plugins/guide-doc-generator/tests/validate-handout-config.py/ に test_*.py 12 本と README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/validate-handout-config.py -p 'test_*.py' を dispatcher が独立実行",
+      "result": "Ran 240 tests / FAILED (failures=264)。ok 0 件"
+    },
+    {
+      "claim": "import 例外で落ちるだけの空テストでない",
+      "method": "failures/errors の別を確認",
+      "result": "errors 0・failures のみ。assert が評価された上で落ちている"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    }
+  ]
+}

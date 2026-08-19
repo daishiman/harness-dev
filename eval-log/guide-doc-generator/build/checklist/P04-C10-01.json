@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-C10-01",
+  "covered_task_ids": [
+    "P04-C10-01"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls / git status --short",
+      "method_note": "write_scope 外への書き込みが無いことも git status で確認済み",
+      "result": "plugins/guide-doc-generator/tests/guard-handout-external-ref/ に test_*.py と README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/guard-handout-external-ref -p 'test_*.py' を dispatcher が独立実行",
+      "result": "Ran 196 tests / FAILED (failures=196)"
+    },
+    {
+      "claim": "import 例外で落ちるだけの空テストでない",
+      "method": "failures/errors の別を確認",
+      "result": "errors 0・failures のみ。assert が評価された上で落ちている"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    }
+  ]
+}

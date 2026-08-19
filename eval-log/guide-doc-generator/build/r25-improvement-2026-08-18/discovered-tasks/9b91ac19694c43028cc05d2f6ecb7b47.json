@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "タスクグラフの受入基準と dispatch 本文で測るべき面が食い違う。グラフ側は component 種別ごとに別の二面しか名指しせず、違反系終了コードと再現性の面はグラフ上に存在しない。グラフだけを読む後続ノードはその面を測らない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/task-graph.json",
+  "proposed_node": {
+    "id": "P05-x-87",
+    "title": "受入基準の面をタスクグラフと dispatch 本文で一致させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "task-graph の acceptance_criterion と dispatch 本文が測る面の差分を全 P04 ノードについて列挙し、どちらへ寄せるかを裁定して記録する。裁定後、graph だけを読む後続ノードが同じ面を測れることを、graph の AC のみを入力にした dispatch 1 件で実測する。差分 0 件と主張する場合もその根拠を列挙で示す。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-23",
+  "reason": "P05-x-23 の走査範囲 narrowing の副作用として、Goodhart 的回避の抜け道が 1 本開いた。tests/render-handout.py/_harness.py の scannable_sources() は scripts/ 配下で SCRIPT_EXECUTABLE_SUFFIXES=('.py',) 以外を走査対象から外すため、scripts/part-map.json のようなデータファイルへ部品 id の名簿を置くと AC-C11-19 が検出しない (dispatcher が反例注入で GREEN を実測)。これは P05-x-23 の worker 自身が『表を config/ へ移して走査から外す Goodhart 的回避』として明示的に退けた経路と同じ効果を持つ。narrowing の判断基準は『そのテキストを何かが読むか (実行される / 指示として読み込まれる)』の 1 本であり、scripts/*.json はプログラムが読むので本来は対象であるべき。現時点で該当ファイルは存在せず (scripts 配下の非 .py は .md 2 件と .pyc のみ) 実害はゼロだが、抜け道が開いたままである。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/render-handout.py/_harness.py",
+  "proposed_node": {
+    "id": "P05-x-29",
+    "title": "AC-C11-19 の走査除外を『読まれないテキスト』へ厳密化し scripts/*.json の抜け道を塞ぐ",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests",
+    "acceptance_criterion": "scripts/ 配下のデータファイル (.json 等) へ部品 id の名簿を置いた反例が RED になること。同時に、scripts/*.md の作業記録と .py の docstring/コメント内の散文は GREEN のままであること (P05-x-23 が確立した『そのテキストを何かが読むか』の基準を保つ)。両方向を反例注入で実測すること。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-29.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/RESOLUTION-P05-x-29.md"
+    ],
+    "depends_on": [
+      "P05-x-23"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "P05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

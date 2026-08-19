@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P02",
+  "kind": "phase-gate-projection",
+  "status": "success",
+  "covered_task_ids": ["P02"],
+  "verified_by": [
+    {"claim": "P02 の全依存 leaf (P02-C01-01..P02-C23-01 の 23 件 + P02-x-01) が done", "exit_code": 0},
+    {"claim": "brief-coverage 23/23 / dag-acyclic (Kahn) / root-resolution-4stage が pass", "exit_code": 0}
+  ],
+  "evidence": [
+    "plugin-plans/guide-doc-generator/evidence/P02.json",
+    "eval-log/guide-doc-generator/build/checklist/P02-x-01.json"
+  ],
+  "summary": "phase-gate は依存 proof の投影。cross-brief-consistency の fail (X-01..X-08) は P02-x-01 の deviations として記録済で、解消は新設 leaf P03-x-02 が担う (P03 ゲートで再判定)"
+}

@@ -1,0 +1,44 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "run-handout-build",
+    "skill_md_sha256": "0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "run-elegant-review-subagent-team",
+  "reviewed_at": "2026-08-19",
+  "iterations": 3,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "iteration 2 の high (draft で C21 を回さない前提が E-IMAGE-ABSENT=error と両立しない) が解消した。config/handout-visual-policy.json#draft_first.skipped_in_draft から srg_images キーが消え (残りは readability_review のみ)、note に『挿絵の生成委譲 (C21) はここに入らない — R25 (goal-spec C69) で第1稿から回すと決めた。min_images_per_main_section が level=error である以上、外すと第1稿が構成データ検証を通らない』と根拠つきで明記された。SKILL.md 側も L117 (build_stage.note)・L159 (frontmatter OUT3)・L251 (F2)・L297 (Criteria acceptance)・L58 (R5-refine summary)・L316 (Gotcha) が『外すのは C03 の可読性レビュー 1 工程だけ / C21 は draft でも起動する』へ反転し、prompts/R5-refine.md:53-56 も同じ向きに揃った。`grep -rn skipped_in_draft` の全ヒットを確認しても、挿絵を第1稿から外す記述はリポジトリ内に 1 件も残っていない。",
+      "エスカレーションせず (a) を適用した判断は妥当。route-build-contract.json:2242 は R25 (goal-spec C69) について『第1稿からこの手順内で起動する (待ち時間増は利用者合意済み)』と明記しており、:1796 も config からの srg_images 削除を決定内容として記録している。つまり (a) は新たな方針決定ではなく決定への追随漏れの解消であり、利用者へ再度判断を仰ぐ必要はない。逆に (b) を選んでいれば既決事項を評価者都合で覆すことになっていた。判断の根拠を SKILL.md L117 と config note の両方へ R25 の id つきで残した点も、次に読む者が同じ結論へ到達できる形になっている。",
+      "反転に伴う副作用が出ていない。L210 は `draft_first.skipped_in_draft.readability_review` を引き続き参照しており削除されたキーを踏んでいない。L112 (skipped_in_first_draft)・L260 (draft の出口)・L316 (Gotcha) はいずれもキー名参照のままで、工程数を本文へ焼き付けていないため 1 件化に自動追随する。D1-D10 の呼称、D10 の 2 符号、C21/C13 の id 用法も iteration 2 の状態を維持している (body 155 行 / 全 316 行)。",
+      "low 2 件のうち thumbnail の指摘は解消。L188(b) が『素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・D10。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ』となり、validate-handout-config.py:1559-1565 の発火条件 (assets があるのに未指定) と完全に一致した。受入 fixture の argument-hint も本体と同じ `--out-dir` / `--assets-src` へ揃い、fixture の OUT3 と Criteria acceptance も『C21 挿絵は draft でも起動する』へ反転済み (sha256=4dc116d6…)。"
+    ],
+    "negative_feedback": [
+      "[medium/inconsistency] 挿絵委譲が第1稿の必須経路になった結果、L200 の fail-soft 記述と per-section IMG 必須ゲートの関係が未整理のまま残った。L200 は `status=skipped` (`srg-absent` / `runtime-absent`) を warning へ転記して『画像なしで先へ進む』と定めるが、min_images_per_main_section は level=error・value=1 で IMG を持たない main セクションを FAIL にする。node / codex が無い環境では (i) IMG 部品を宣言すれば実体ファイルが無く embed-assets.py:204-212 が exit1、(ii) 宣言しなければ E-IMAGE-ABSENT で D3 が落ちる、の二択になり、L200 が約束する『画像なしで先へ進む』完了経路が存在しない。iteration 2 以前は挿絵が draft 対象外だったため表面化しなかったが、今回の反転でこの経路が第1稿の主経路へ移った。role_split.fallback (『素材欠如で完了不能にしない』) も illustration 生成が動くことを前提にしており同じ穴を塞いでいない。対処は L200 へ『runtime 不在時は IMG 必須ゲートをどう扱うか』を 1 文足すか、policy 側に runtime 不在時の degrade 規則を持たせるかのいずれかで、次周回の課題として残す (今回の修正が壊したのではなく、露出させた既存の穴である)。",
+      "[low/smell] fixture の script_refs 据え置きは結論として妥当だが、挙げられた理由が実装と合わない。tests/run-handout-build/contract_lib.py:384-393 は REQUIRED_SCRIPTS (brief の deterministic_checks 7 本) に一致する ref だけを解決するため、本体と同じ 12 本を書いてもスタブ 5 個は不要である (fixture/scripts 配下には現に 7 本のスタブしか無く、それで十分に通る)。『fixture は本体の写しではなく契約が要求する最小限を満たす受入例』という位置づけ自体は妥当なので結論は維持でよいが、根拠を『余分な ref はスタブが要る』ではなく『最小受入例として意図的に最小構成にしている』と書き換えたほうが、次に読む者が誤った制約を信じずに済む。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "現 SKILL.md (sha256=0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092・全 316 行 / frontmatter 1-161・body 155 行) を全文 read し 4 条件で最終評価 (iteration 3)。①矛盾: iteration 2 の high (draft で C21 を回さない ⇔ E-IMAGE-ABSENT=error) は config からの srg_images 削除と SKILL.md 6 箇所の反転で解消し、リポジトリ内に旧向きの記述は残っていない (contradiction=0)。②漏れ: D10 と D1-D10 統一は維持。③整合性: skipped_in_draft がキー参照のみで扱われているため 1 件化に全箇所が自動追随し、L210 の readability_review 参照も生きている。ただし L200 の fail-soft (srg-absent / runtime-absent で画像なしで進む) と IMG 必須ゲートの関係が未定義という medium 1 件が残る (今回の反転で露出した既存の穴)。④依存: 参照は全件実在、fixture も argument-hint と OUT3 が本体へ追随。high 0 件のため PASS とし、L200 の degrade 規則は follow-up 課題として記録する。(a) をエスカレーションせず適用した判断は route-build-contract.json:2242 の『待ち時間増は利用者合意済み』により妥当と確認した。 / 2026-08-19 再束縛: 責務 prompt のリネーム (prompts/R-design-config.md → prompts/R2a-design-config.md) に伴い SKILL.md の sha が変わったため verdict を現本文へ再束縛した。差分は responsibility_refs (と Additional Resources) のパス名のみで、判定材料となる契約・境界・規則は 1 文も変わっていない。claude-code-review が現 SKILL.md を全行読み切り、上記 findings と verdict が現本文でもそのまま成立することを確認した (機械的な sha 差し替えではない)。リネームは lint-prompt-placement.py の skill-local-v1 regex (R<数字>[a-z]?-<slug>) 適合のためで、責務 id と本文アンカーは据え置き。"
+}

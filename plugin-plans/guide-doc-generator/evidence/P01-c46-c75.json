@@ -1,0 +1,215 @@
+{
+  "task_id": "P01-x-01 (follow-up: P05-x-96)",
+  "phase_ref": "P01",
+  "status": "partial",
+  "measured_at": "2026-08-18",
+  "cycle": "r25-improvement-2026-08-18",
+  "scope": "goal-spec.json checklist C46-C75 の 30 件。C1-C45 は evidence/P01.json で別途測定済み (本ファイルは上書きしていない)。",
+  "why_this_file_exists": "P01-x-01 の acceptance_criterion が対象範囲を『C1-C45』という件数リテラルで書いているため、その後に 3 度追加された C46-C75 の 30 件が検査の外に落ちていた。AC が範囲を件数で固定したこと自体が欠陥であり、その帰結を実測する。",
+  "document_kind": "requirements-record",
+  "document_kind_note": "本ファイルは C46-C75 の要件文が何をどう検証可能にしているかを記録する。判定の根拠は全て本ファイル外の実ファイル (goal-spec.json / analysis/guide-doc-generator/reference-analysis.md / plugins/guide-doc-generator/config/ / plugin-plans/guide-doc-generator/briefs/config/) にあり、本ファイル内で完結する主張は置いていない。測れなかったものは status に measured=false を付けて理由を書いた。",
+  "population": {
+    "count": 30,
+    "verify_by": {"script": 18, "test": 12, "reasoning": 0},
+    "criterion_length_chars": {
+      "C1-C45": {"mean": 123, "median": 114},
+      "C46-C75": {"mean": 268, "median": 149},
+      "note": "C46-C75 の criterion は C1-C45 の 2.2 倍の長さ。後述する自己言及密度の低下はこれと表裏である (合否条件を criterion 本文へ書き込む書き方へ変わっている)。"
+    }
+  },
+  "provenance": {
+    "question": "C46-C75 は C1-C45 と同じ改善サイクルで生まれたのか、後から別の要求で足されたのか",
+    "answer": "後から、しかも 1 度ではなく 4 度に分けて足されている。goal-spec.json の constraints に追加時期と出典が記録されている。",
+    "bands": [
+      {"ids": "C46-C55", "req": "R21", "added": "2026-08-17", "source": "constraints[14] — 利用者が実施済み研修のフィードバックとして追加"},
+      {"ids": "C56-C59", "req": "R21 追補", "added": "2026-08-17", "source": "constraints[15]"},
+      {"ids": "C60", "req": "R01 拡張", "added": "2026-08-17", "source": "constraints[16] — 判定方式を denylist から allowlist へ反転"},
+      {"ids": "C61-C66", "req": "R22", "added": "2026-08-17", "source": "constraints[17] — detail_level / evidence_depth の直交 2 軸"},
+      {"ids": "C67-C73", "req": "REQ-1〜REQ-7", "added": "2026-08-18", "source": "constraints[18] — improvement/improvement-handoff.json (7 findings)"},
+      {"ids": "C74-C75", "req": "REQ-8 / REQ-9", "added": "2026-08-18 追補3", "source": "constraints[25]"}
+    ],
+    "finding": "AC の『C1-C45』は R20 までで凍結された当時の全件数であり、以後 4 度の拡張で checklist は 75 件になったが AC は更新されていない。件数リテラルで範囲を書いた要件は、母集団が増えた瞬間に静かに検査対象を落とす。件数を書かず『checklist の全件が』と書いていればこの穴は開かなかった。"
+  },
+  "q1_self_referential": {
+    "question": "『検査が存在すること』しか要求していない criterion は何件か",
+    "definition": "criterion 自身が合否条件を持たず、検査・記録・文書記載の存在だけで満たせるもの。C1-C45 では 9 件 (C9/C12/C20/C25/C28/C29/C30/C44/C45)。",
+    "result_pure": 0,
+    "result_partial": 2,
+    "detail": "純粋な自己言及型は C46-C75 に 0 件。C1-C45 の 9/45 (20%) に対し 0/30 (0%) で、密度は下がっている。dispatcher の見積り (同密度なら 6 件前後) とは逆の結果。",
+    "why_the_density_dropped": "『〜することをテストが確認する』という句は C46-C75 に 12 件出現するが (C50/C53/C55/C56/C68/C69/C71/C72/C73/C74)、いずれも直前に独立した合否条件 (『FAIL にする』『0 件になる』『exit0 になる』『差分が〜に限定される』) を述べており、テストの存在だけでは満たせない。C9『各パターンに再現性テストがある』のような、検査の存在が要求のすべてである形は現れていない。criterion 本文が 2.2 倍長くなったこと (母集団の項参照) と同じ現象の別の面である。",
+    "partial_cases": [
+      {
+        "id": "C68",
+        "verify_by": "test",
+        "clause": "併せて granularity_anchor が第1稿の目安であって上限でないことが明記され、内容量に応じたセクション数・部品数の増加が警告にならない",
+        "why": "『明記され』は文書記載の存在検査。前段 (DIAGRAM を持たない main セクションが 0 件 / FAIL にする) は観測可能だが、この末尾節だけは記載があれば満たせる。ただし後半の『警告にならない』は挙動なので観測可能で、節全体が自己言及なわけではない。"
+      },
+      {
+        "id": "C69",
+        "verify_by": "test",
+        "clause": "srg-image-bridge.py の第1稿経路起動が run-handout-build の R3-render 手順と SKILL.md の完了チェックリストへ反映されていることをレビューが確認する",
+        "why": "『反映されていること』は文書記載の存在検査で、かつ確認主体が『レビュー』= 人手。C1-C45 の C25 (index に明記されている / verify_by=reasoning) と同型だが、こちらは verify_by=test のまま人手レビューを要求している (q2 も参照)。"
+      }
+    ]
+  },
+  "q2_label_predicate_mismatch": {
+    "question": "verify_by のラベルと述語の観測可能性が食い違っているものはあるか",
+    "clear_cases": [
+      {
+        "id": "C55",
+        "verify_by": "test",
+        "predicate": "…を機械検証ゲートが確認する",
+        "mismatch": "述語が名指ししているのは検証ゲート (script) であり、ラベルは test。C1-C45 の C26 とは逆方向の食い違いで、観測は可能だが担い手が違う。ゲートを作らずテストだけ書いても要件文を満たしたことになる。"
+      },
+      {
+        "id": "C64",
+        "verify_by": "script",
+        "predicate": "ヒアリングで detail_level と evidence_depth を確定する。用途プリセット由来の既定値を提示したうえで上書きの要否だけを聞き、無回答時は既定を採用して停止しない",
+        "mismatch": "『聞く』『無回答時に停止しない』は LLM skill の対話挙動であり script では観測できない。C1-C45 の C26 (『追加質問なしで実行できる』/ verify_by=script) と同型。さらに重要なのは、これが分界線の LLM 側に立つ唯一の要件文でありながら、検証手段のラベルが決定論側になっている点 (evidence/P01.json F-P01-04 と接続する)。"
+      },
+      {
+        "id": "C69",
+        "verify_by": "test",
+        "predicate": "…へ反映されていることをレビューが確認する",
+        "mismatch": "確認主体が人手レビュー。check-plugin-goal-spec.py:186 が受理する enum には human が含まれている (reasoning / script / lint / test / human) のに、この節には使われていない。1 つの criterion が test と human の 2 つの検証手段を要求しているが、verify_by は単一値しか持てない。"
+      }
+    ],
+    "semantic_predicate_under_script_label": {
+      "note": "上記 3 件とは別に、verify_by=script でありながら述語に意味判断を含み、script 単独では合否が決まらないものが 4 件ある。C1-C45 の C20 (『意味的に一致』の定義が要件文に無い) と同じ構造。",
+      "cases": [
+        {"id": "C46", "clause": "個々の手順・操作の詳細を冒頭の流れに含めない", "observable_part": "項目数が上限 (既定 5) を超えない", "unobservable_part": "『詳細』か否かの分類"},
+        {"id": "C48", "clause": "紐づかない運営連絡 (日程調整・事務連絡等) は本編から排除され付録セクションへ隔離される", "observable_part": "overall goal / 主題への紐づけ必須と付録への隔離という構造", "unobservable_part": "何が『運営連絡』かの分類"},
+        {"id": "C54", "clause": "宣言した到達レベルと各セクションの内容範囲の整合を検査する", "observable_part": "到達レベルを段階で宣言できること", "unobservable_part": "『内容範囲の整合』"},
+        {"id": "C58", "clause": "具体業務への紐づけを持たない一般論だけで構成された資料を不合格にする", "observable_part": "具体業務を 1 件以上必須・各本編セクションが紐づく", "unobservable_part": "『一般論だけ』の判定"}
+      ],
+      "boundary_case": {"id": "C51", "clause": "各機能解説ブロックが『成果 → 分解 → 用いる機能』の順であることをスキーマと検証ゲートが検査する", "note": "スキーマで 3 つを別フィールドに割れば構造検査になり観測可能。要件文が構造化を前提しているのか自然文の語順を見るのかを決めていないため、実装依存で観測可能性が変わる。"}
+    }
+  },
+  "q3_values_from_reference_material": {
+    "question": "参照資料由来の値が要件文へ混入していないか",
+    "method": "数値 grep ではなく出典を遡る手順で測った。C46-C75 の全数値・全識別子・全列挙を抽出し、1 件ずつ『この値はどのファイルのどの記述から来たか』を確認。突合先は analysis/guide-doc-generator/reference-analysis.md の全節 (§2 部品カタログ / §12 文字数実測)、plugins/guide-doc-generator/config/、plugin-plans/guide-doc-generator/briefs/config/、improvement/*.json。前版 P01.json が B01-B15 を見逃したのは突合対象を数量事実セクションの数値トークンに限っていたためなので、範囲リテラル・部品 id・語彙列挙も対象に含めた。",
+    "confirmed_mixins": [
+      {
+        "ids": ["C74", "C75"],
+        "value": "micro_copy.caption (32 字) / micro_copy.label (14 字) / goal_chips 4 件 × 14 字",
+        "origin": "reference-analysis.md §12.2 のクラス別テキスト実測 (札 n=19 中央値 6 字・最大 13 字 / 補足 n=21 中央値 30 字・95 パーセンタイル 42 字) を §12.3 が config へ正本化した値。B01-B15 と同じ『参照資料の実測が要件文へ数値として現れた』形。",
+        "already_diverged": "§12.3 は『label 14 / title 24 / caption 40 として正本化』と宣言しているが、出荷 config/handout-visual-policy.json#micro_copy の実値は label 14 / title 22 / caption 32。caption は利用者追補 2026-08-18『もっと図解・文章は最小限に』で 40 → 32 へ引き下げられ、その理由が config の why に記録されている。title の 24 → 22 は理由の記録が無く、参照解析 §12.3 側にも反映されていない。つまり参照解析 §12.3 は既に古い。",
+        "consequence": "C74/C75 の要件文が持つ 32 字は現行 config とは一致しているが、参照解析 §12.3 (40) と要件文 (32) と config (32) の 3 者のうち 1 つが既にずれている状態で、要件文は 3 つ目の写しである。次に利用者が引き下げたとき、config だけが動いて要件文が取り残される。"
+      },
+      {
+        "ids": ["C70"],
+        "value": "器 B03+DIAGRAM(flow) / B08+DIAGRAM(hierarchy) / B07+DIAGRAM(compare)",
+        "origin": "部品 id は reference-analysis.md §2 の部品カタログ由来 (B01-B15)。要件文が個別の部品 id を直接指名している。",
+        "consequence": "B01-B15 (C12/C45) と同型の混入だが、範囲でなく個別 id を焼いている分だけ結合が強い。部品カタログの再編で B03/B07/B08 の意味が変われば要件文が黙って誤りになる。"
+      },
+      {
+        "ids": ["C74"],
+        "value": "purpose 60 / background 80 / goal 50 / lead 40、合計 400 字",
+        "origin": "briefs/config/handout-visual-policy.json#opening.hero_fields.max_chars と hero_total.max_chars。要件文はこれを『単一正本 config/handout-visual-policy.json#opening に保つ』と述べた直後に値そのものを列挙している。",
+        "consequence": "正本を名指ししたうえで値を重ねて持つ第 2 正本。C73 (REQ-7) と同型。なお値の突合結果は、plan 側正本 briefs/config には lead=40 と goal_chips(max_count 4 / max_chars_each 14) が実在し要件文と一致、出荷 config 側にはまだ無い (P05 未実装であり要件文の誤りではない)。",
+        "not_a_ghost_value": true
+      },
+      {
+        "ids": ["C75"],
+        "value": "Google Drive / OneDrive / kintone の 3 種",
+        "origin": "利用者指定 2026-08-18 追補。正本は briefs/config/handout-vocabulary.json#connectors.entries (google-drive / onedrive / kintone、closed:false) に実在。出荷 plugins/guide-doc-generator/config/ 配下には未反映 (kintone / OneDrive / Google Drive / コネクタ / connector の 5 語で grep して 0 件)。",
+        "consequence": "要件文は『コネクタ名の語彙が単一正本として config へ定義され、script へコネクタ名を焼かず、3 種以外への拡張が正本への追記だけで済む』と要求しながら、要件文自身が 3 種の名前を焼いている。語彙が 4 種目へ拡張されたとき、config への追記だけで済むという要求は満たせても要件文が古くなる。"
+      }
+    ],
+    "not_mixins": [
+      {"ids": ["C68"], "value": "value=0.4 / floor=2", "why": "superseded と明示したうえで経緯として残しており、現行値ではない旨が同じ文に書かれている。constraints[18] にも同趣旨の記録がある。"},
+      {"ids": ["C74"], "value": "利用者提示の実測値 (目的 102 字 1 文 / 背景 185 字 4 文 / ゴール 89 字 1 文)", "why": "要件文が『実測値』と明示して数値を持つが、用途は達成目標値ではなく『これらが既存閾値で全て検出され検証ゲートが exit 非 0 になることをテストが確認する』というテスト入力の指定。constraints[13] が禁じる『達成目標値として焼く』には当たらない。ただし再現手順の入力が要件文へ固定されているため、閾値が動いたとき期待結果 (exit 非 0) が変わる可能性はある。", "flagged_as": "境界事例として記録"},
+      {"ids": ["C73"], "value": "overview=60 / standard=100 / detailed=160 / 文 60 字 / 文数 3 / 750 字", "why": "improvement/text-length-gate-decision.json 由来の利用者確定値で、要件文が正本パスを明記している。evidence/P01.json で報告済み。"}
+    ],
+    "unsourced_values": {
+      "note": "出典を遡ったが根拠を記した decision ファイルへ到達できなかった値。要件文が唯一の出所になっている。",
+      "cases": [
+        {"id": "C46", "value": "冒頭の流れの項目数 上限 (既定 5)"},
+        {"id": "C57", "value": "『今回覚えていただきたいこと』既定 2 件"},
+        {"id": "C70", "value": "timeline は 5 件以内 / thesis は要点 3 枚"}
+      ],
+      "grep_keywords": {
+        "identifier": ["flow_max", "max_flow", "today_flow", "must_remember", "granularity_anchor"],
+        "japanese": ["覚えていただきたい", "今日の流れ", "既定 5", "既定 2"]
+      },
+      "searched_paths": ["plugin-plans/guide-doc-generator/briefs/config/", "plugins/guide-doc-generator/config/", "plugin-plans/guide-doc-generator/improvement/"],
+      "measured": false,
+      "why_not_measured": "『値の根拠が存在しない』ことの証明はできない。到達できなかったという事実のみを記録する。R21 の帯は利用者フィードバック由来で decision ファイルを持たない (improvement/ 配下の decision ファイルは全て 2026-08-18 の REQ 帯のもの) ため、根拠が会話にしか無い可能性が高い。"
+    }
+  },
+  "incidental_finding_on_c1_c45": {
+    "id": "reference-analysis §2 の件数が内部で食い違っている",
+    "detail": "reference-analysis.md:38 の節見出しは『## 2. 部品カタログ (テンプレート化すべき型) — 12 種』だが、同節の表は B01 から B15 まで 15 行ある (grep '^| B[0-9]' で 15)。evidence/P01.json の F-P01-03 は C12/C45 の B01-B15 が §2 由来の範囲リテラルであると報告したが、その出典である §2 自身が見出しで 12、表で 15 と食い違っている。つまり B01-B15 は最初から安定した値ではなく、表の行数を数え直して得られた第 2 の数である。要件文が出典の数を写すとき、出典側にどの数を写したかの記録が残らないことの実例。",
+    "scope": "C1-C45 (本ファイルの scope 外だが F-P01-03 を補強するため記録)"
+  },
+  "findings": [
+    {
+      "id": "F-P01B-01",
+      "severity": "high",
+      "title": "AC が範囲を件数リテラルで書いたため 30 件が検査の外に落ちていた",
+      "detail": "P01-x-01 の acceptance_criterion は『C1-C45 が全て verify_by を持ち』と範囲を件数で固定している。checklist はその後 R21 (C46-C55) / R21 追補 (C56-C59) / R01 拡張 (C60) / R22 (C61-C66) / REQ-1〜7 (C67-C73) / REQ-8,9 (C74-C75) の 4 度の拡張で 75 件になったが、AC は更新されていない。件数で範囲を書いた検査は母集団が増えた瞬間に静かに対象を落とす。本 cycle の fail-open 族と同型で、正しい形は『checklist の全件が』と母集団を参照する書き方。"
+    },
+    {
+      "id": "F-P01B-02",
+      "severity": "medium",
+      "title": "1 つの criterion が 2 種類の検証手段を要求しているが verify_by は単一値しか持てない",
+      "detail": "C69 は verify_by=test でありながら、末尾で『run-handout-build の R3-render 手順と SKILL.md の完了チェックリストへ反映されていることをレビューが確認する』と人手レビューを要求している。C55 は verify_by=test でありながら述語が『機械検証ゲートが確認する』(script)。ゲートが受理する enum には human が含まれている (check-plugin-goal-spec.py:186) のに使われていない。verify_by がラベルでしかない (evidence/P01.json F-P01-01) ため、この食い違いは機械検出されない。"
+    },
+    {
+      "id": "F-P01B-03",
+      "severity": "medium",
+      "title": "C64 が分界線の LLM 側に立つ唯一の要件文でありながら verify_by=script になっている",
+      "detail": "C64『ヒアリングで detail_level と evidence_depth を確定する。用途プリセット由来の既定値を提示したうえで上書きの要否だけを聞き、無回答時は既定を採用して停止しない』は、C1-C75 を通じて LLM 側の責務 (対話の進め方) を要件文として述べた数少ない例だが、述語は script では観測できない。evidence/P01.json F-P01-04 は『LLM 側が要件文になっていない』と報告したが、C46-C75 まで広げると C64 が該当する。ただし検証手段のラベルが決定論側になっているため、実質は依然として検証されない。"
+    },
+    {
+      "id": "F-P01B-04",
+      "severity": "medium",
+      "title": "reference-analysis §12.3 が宣言した正本値と出荷 config が既に食い違っており、要件文がその 3 つ目の写しになっている",
+      "detail": "§12.3 は micro_copy を label 14 / title 24 / caption 40 として正本化すると宣言。出荷 config の実値は label 14 / title 22 / caption 32。caption の 40 → 32 は利用者追補による引き下げで config の why に理由が残るが、title の 24 → 22 は理由の記録が無く §12.3 も更新されていない。そのうえで C74/C75 が『micro_copy.caption (32 字)』『micro_copy.label (14 字)』を要件文へ持っている。参照解析・config・要件文の 3 者で値が管理され、うち 1 つが既にずれている。B01-B15 (F-P01-03) と同じ経路で、値が数値のため数値 grep では検出できるが『どこから来た値か』を知らないと混入と判定できない。"
+    },
+    {
+      "id": "F-P01B-05",
+      "severity": "medium",
+      "title": "C75 が『script へ焼くな』と要求しながら要件文自身が語彙を焼いている",
+      "detail": "C75 は『コネクタ名の語彙が単一正本として config へ定義され、script へコネクタ名を焼かず、3 種以外への拡張が正本への追記だけで済む』と要求しつつ、同じ文で Google Drive / OneDrive / kintone を列挙している。正本は briefs/config/handout-vocabulary.json#connectors に closed:false で実在するので設計は正しいが、要件文が語彙の第 2 正本になっている。C70 の器の部品 id (B03/B07/B08) も同型。"
+    },
+    {
+      "id": "F-P01B-06",
+      "severity": "low",
+      "title": "自己言及型の密度は C1-C45 の 20% から C46-C75 の 0% へ下がっている",
+      "detail": "純粋な自己言及型 (検査の存在だけで満たせる criterion) は C46-C75 に 0 件。部分的に文書記載の存在検査を含む節が C68 / C69 の 2 件のみ。criterion の平均長が 123 字から 268 字へ伸びており、合否条件を criterion 本文へ書き込む書き方へ変わったことが理由と考えられる。C1-C45 の 9 件は要件記述の様式が未成熟だった時期の産物であり、後段の帯へは伝播していない。要件層の欠陥は帯ごとに異なるため、C1-C45 で見つけた型を C46-C75 へそのまま当てはめる推定は成り立たない。"
+    },
+    {
+      "id": "F-P01B-07",
+      "severity": "low",
+      "title": "verify_by=script でありながら述語に意味判断を含むものが 4 件",
+      "detail": "C46 (『詳細』か否か) / C48 (何が『運営連絡』か) / C54 (『内容範囲の整合』) / C58 (『一般論だけ』)。いずれも前半は構造検査可能で後半だけが意味判断であり、実装が前半だけを検査しても要件文の字面は満たせる。C1-C45 の C20 (『意味的に一致』の定義が要件文に無い) と同構造。C51 は境界事例で、スキーマ設計次第で観測可能にも不能にもなる。"
+    }
+  ],
+  "not_measured": [
+    {
+      "item": "C46 の『既定 5』/ C57 の『既定 2 件』/ C70 の『5 件以内』『要点 3 枚』の根拠",
+      "why": "identifier 系 (flow_max / max_flow / today_flow / must_remember / granularity_anchor) と和文系 (覚えていただきたい / 今日の流れ / 既定 5 / 既定 2) の両系統で briefs/config/・plugins/config/・improvement/ を grep したが、値の根拠を記した decision ファイルに到達できなかった。根拠が存在しないことの証明はできないため、到達できなかったという事実のみを記録する。"
+    },
+    {
+      "item": "C46-C75 の各要件が実装側で実際に検証されているか",
+      "why": "本 leaf の測定対象は要件文の性質であり、実装の被覆は P04 の各 component ノードの管轄。C74 の閾値が出荷 config に未反映 (lead / goal_chips / sentence 節が無い) であることは突合の副産物として確認したが、これは P05 未実装であって要件文の欠陥ではないため findings に上げていない。"
+    }
+  ],
+  "notes": {
+    "went_well": [
+      "『どこから来た値か』を出典まで遡る手順にしたことで、数値 grep では出ない混入 (C70 の部品 id / C75 の語彙列挙) と、数値だが出典を知らないと混入と判定できないもの (C74 の micro_copy 値) の両方を摘出できた",
+      "出典を遡る過程で reference-analysis.md 側の欠陥 (§2 の見出し 12 種 vs 表 15 行、§12.3 の正本宣言が config と食い違い) が出た。要件文の混入を追うと出典側の不整合も同時に見える",
+      "自己言及密度が下がっているという予想外の結果を、criterion の平均長という別の実測で裏づけられた"
+    ],
+    "friction_points": [
+      "C74 は単独で 900 字を超え、1 つの criterion が 8 個以上の独立した合否条件を持つ。『この criterion は自己言及か』という問いが criterion 単位では決まらず、節単位で分解して測る必要があった",
+      "『既定 5』のような値は数値 grep では拾えるが、根拠の不在は grep では確定できない。到達できなかったことと存在しないことを分けて書く以上のことはできなかった"
+    ],
+    "downstream_watchouts": [
+      "F-P01B-01 を直さない限り、次に checklist が拡張されたときも同じ穴が開く。AC の範囲指定を件数から母集団参照へ変える裁定が要る",
+      "F-P01B-04 の micro_copy は参照解析・config・要件文の 3 箇所で管理されている。P05 が config を動かすたびに要件文と参照解析が取り残される",
+      "C74 の粒度 (1 criterion に 8 条件以上) は、P04 で『どのテスト関数がこの criterion を担うか』を名指しする際に 1 対 1 対応が付かない。criterion の分割が要るかは P02 の裁定事項"
+    ]
+  }
+}

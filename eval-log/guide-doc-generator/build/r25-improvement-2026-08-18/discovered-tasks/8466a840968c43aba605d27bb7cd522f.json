@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-34-vocabulary-config-missing",
+  "reason": "handout-vocabulary.json の _meta.readers は C18 verify-handout-language.py を『E-ENUM-RAW の変換対応表』の読み手として挙げるが、C18 には E-ENUM-RAW という診断そのものが存在しない (grep で 0 件)。読み手として宣言されているのに読んでいない状態であり、語彙を整備しても生の enum 値が可視テキストへ出たことを機械的に捕らえられない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-x-34-vocabulary-config-missing.json",
+  "proposed_node": {
+    "id": "P05-x-119-c18-enum-raw-check",
+    "title": "C18 に E-ENUM-RAW を新設し語彙対応表と可視テキストを突き合わせる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "verify-handout-language.py が config/handout-vocabulary.json を読み、可視テキストに生の enum 値 (attainment_level の enum など) が現れたら E-ENUM-RAW を出す。閾値・対応表は script へ焼かず正本から引き、正本の書き換えに追従することを陽性対照で固定する。正本不在は fail-closed",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "P05-x-34-vocabulary-config-missing"
+  }
+}

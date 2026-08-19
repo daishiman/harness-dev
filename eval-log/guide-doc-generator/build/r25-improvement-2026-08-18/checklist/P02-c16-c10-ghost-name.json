@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-c16-c10-ghost-name",
+ "covered_task_ids": [
+  "P02-c16-c10-ghost-name"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+ "verified_by": [
+  {
+   "claim": "script-brief-C16.json に存在しない component 名 (handout-emoji-and-external-ref-guard) が 0 件である",
+   "method": "grep -c で当該語を数えた",
+   "result": "pass: 0 件。C10 を指す記述は 31 行目の 1 件のみで、実在名 guard-handout-external-ref を使っている"
+  },
+  {
+   "claim": "実在名 guard-handout-external-ref が 1 件以上ある",
+   "method": "grep -c",
+   "result": "pass: 1 件。dependencies の C10 記述で、C10 が本 script の canonical_rules を再実行する側であり独自判定を持たないことも同じ行で述べている"
+  },
+  {
+   "claim": "本ノードの作業として書き込みを行っていない",
+   "method": "上記 2 計測の結果から判断",
+   "result": "pass(=既に充足): 受入条件は現物のまま成立しており、編集は不要だった。緑にするための編集を行っていないことが、この判定が現物を見ていることの裏付けになる"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02C16GN-01",
+   "level": "carry-forward",
+   "summary": "受入条件が『実在しない名前が 0 件』という不在の検査であるため、C16 の brief から C10 への言及がまるごと消えても緑になる。存在側 (実在名 1 件以上) を併記して初めて対応関係を測れる。今回は両方を数えているが、graph の acceptance_criterion 側は不在検査と存在検査を並記しており正しい。同型の不在のみを測る受入条件が他にないかは未棚卸し"
+  }
+ ]
+}

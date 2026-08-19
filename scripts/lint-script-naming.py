@@ -472,6 +472,42 @@ PENDING_RENAME_PATHS = {
     # 更新する後続 Change Governance PR まで PENDING
     # (setup-send-log-db.py と同種の「setup verb pending」扱い)。
     "plugins/slide-report-generator/scripts/setup-playwright.py",
+    # guide-doc-generator 初回投入: §4.3 (kebab-case) は満たすが verb が ALLOWED_VERBS 外。
+    # verify-* 5 本は「生成済み HTML が自己完結か / a11y・印刷に耐えるか / 言語規約を守るか /
+    # 語りが通っているか」を検査する成果物ゲートで、構成データを検査する validate-handout-config.py
+    # (verb 'validate' ゆえ非対象) とは検査対象の層が違う。両者を validate-* へ潰すと
+    # 「入力の妥当性」と「出力の健全性」の区別が名前から消え、C09 のゲート集約が何を集約して
+    # いるのか読めなくなる。resolve (プリセット解決) / route (出力先ルーティング) /
+    # embed (data URI 化) も同様に domain 動詞で、既存の許可動詞に写像先が無い。
+    # srg-image-bridge.py は verb でなく委譲先 plugin 名 (slide-report-generator) を冠しており
+    # §4.3 の形からも外れる — 単独で直すと bridge 先の対応が名前から消えるため一括で扱う。
+    # SKILL.md script_refs / plugin-composition.yaml / EVALS.json / hook / 23 スイート 3,565 tests
+    # が exact name を参照するため、許可動詞化 (allowed-list 拡張) と改名は参照を原子的に更新する
+    # 後続 Change Governance PR まで PENDING (setup-playwright.py と同種の「新 verb pending」扱い)。
+    "plugins/guide-doc-generator/scripts/embed-assets.py",
+    "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+    "plugins/guide-doc-generator/scripts/route-handout-output.py",
+    "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+    "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+    "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+    "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+    "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+    # 上記正本の fixture コピー。contract test が「受理される plugin 実体の形」を組み立てるため
+    # 実在ファイルとして置いており、正本と同名でなければ script_refs の解決契約を検査できない。
+    # 正本の改名と同じ PR で同時に追従させる (先に fixture だけ改名すると test が正本を見失う)。
+    "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/fixtures/accept/scripts/verify-handout-language.py",
+    "plugins/guide-doc-generator/tests/handout-extract/fixtures/accept/scripts/verify-handout-selfcontained.py",
+    "plugins/guide-doc-generator/tests/handout-verify/fixtures/accept/scripts/verify-handout-a11y-print.py",
+    "plugins/guide-doc-generator/tests/handout-verify/fixtures/accept/scripts/verify-handout-language.py",
+    "plugins/guide-doc-generator/tests/handout-verify/fixtures/accept/scripts/verify-handout-narrative.py",
+    "plugins/guide-doc-generator/tests/handout-verify/fixtures/accept/scripts/verify-handout-selfcontained.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/resolve-handout-preset.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/route-handout-output.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-a11y-print.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-language.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-narrative.py",
+    "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-selfcontained.py",
+    "plugins/guide-doc-generator/tests/run-handout-extract/fixtures/accept/scripts/verify-handout-selfcontained.py",
 }
 
 VALID_NAME = re.compile(r"^([a-z]+)-[a-z0-9-]+\.py$")

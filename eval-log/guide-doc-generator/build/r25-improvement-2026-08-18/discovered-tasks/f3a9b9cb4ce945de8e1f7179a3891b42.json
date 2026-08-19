@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C23-01",
+  "reason": "build-script-route.py:222-226 は builder=plugin-scaffold の route に対し build_target == 'plugins/<slug>/' + build_args.script_path を要求する (script_path は plugin-root 相対)。planner が生成した handoff は 13 route すべてで script_path を repo 相対 ('plugins/guide-doc-generator/scripts/x.py') で書いており、期待値がパス二重化して全 route が ok:false で落ちた。draft stage の generation_queue 9 件のうち 7 件が script route であるため、draft build 全体がここで止まっていた。正本は run-plugin-dev-plan/examples/sample-plan/handoff-run-plugin-dev-plan.json (C09/C10 とも script_path='scripts/x.py') であり、planner 側の emitter が誤り。dispatcher が本 cycle の handoff 13 route を plugin-root 相対へ修正し parity exit0 を確認済みだが、planner の emitter 自体は未修正のため plan を再生成すると再発する。placement_scope='plugin-root' という宣言と値の基準が矛盾していても誰も落とさない点が構造的欠陥で、check-build-handoff.py にこの関係式の検査を足すべき。",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/handoff-run-plugin-dev-plan.json",
+  "proposed_node": {
+    "id": "P05-x-81",
+    "title": "handoff の plugin-scaffold script route が script_path を repo 相対で書き draft build 全体を止めていた",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/",
+    "acceptance_criterion": "check-build-handoff.py へ placement_scope と script_path の基準一致を検査する規則を追加し、script_path を repo 相対で書いた script route を含む handoff で exit 非 0 になることを実測する。あわせて planner の handoff emitter を plugin-root 相対で出すよう修正し、plan を再生成しても再発しないことを examples/sample-plan/handoff-run-plugin-dev-plan.json (C09/C10 とも script_path='scripts/x.py') との一致で確認する。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "null"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P13-x-04",
+  "covered_task_ids": [
+    "P13-x-04"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence",
+  "verified_by": [
+    {
+      "claim": "2 経路それぞれについて実行コマンド・exit code・実測範囲と未実測範囲が evidence へ記録されている",
+      "method": "当方が plugin-plans/guide-doc-generator/evidence/P13.json へ、経路ごとに user_facing_steps / measured[] (command + exit_code + stdout 抜粋) / verdict / not_verifiable[] を分けて記録した",
+      "result": "pass (ローカル経路 5 コマンド・GitHub 経路 6 コマンド・機能 smoke test 6 コマンドの exit code を実測して記載。反例 (plugin.json の name 改変) での RED も併記した)"
+    },
+    {
+      "claim": "機械実行できない手順を pass と推定していない",
+      "method": "当方が経路ごとの verdict を『生成物の境界まで』『登録の境界まで』へ限定し、install コマンド自体を not_verifiable へ理由つきで隔離した",
+      "result": "pass (overall.status=**blocked**。not_verifiable は 5 件: /plugin marketplace add ×2・/plugin install ×2・commit/push/PR。加えて機能面でもブラウザ実描画・A4 実印刷・読み上げ・画像委譲の fail-soft 経路を未観測として明記した。**全経路 pass とは書いていない**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "no-commit-performed",
+      "detail": "Conservative プロファイルに従い commit / push / PR 作成を行っていない。GitHub 経路の成立には利用者の commit と PR マージが必要であり、それが完了するまで当該経路は not-verifiable のまま"
+    }
+  ]
+}

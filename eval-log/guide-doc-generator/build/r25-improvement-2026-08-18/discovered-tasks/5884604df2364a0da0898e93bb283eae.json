@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-03-nav-item-threshold",
+  "reason": "実測: render-handout.py:789-793 が nav[] を sections[].heading の写しとして導出しており、構成データに nav_item というフィールドは存在しない。よって plan 側 config が micro_copy.roles[label].fields へ nav_item を足した設計は永久に 1 件も走らない (micro_copy の適用範囲は sections[].parts[].data と diagrams[].data のみ)。出荷 config へは同値で写さず、出所を sections[].heading と明示した専用の検査点 nav ブロックを新設した。この検査点を読んで W-NAV-LONG を出す配線が validate-handout-config.py 側に無く、write_scope 外のため本ノードでは届かない",
+  "discovered_at_artifact": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+  "proposed_node": {
+    "id": "P05-x-117-nav-label-check-wiring",
+    "title": "W-NAV-LONG の判定を validate-handout-config.py へ配線する",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "handout-visual-policy.json の nav.max_chars を超える sections[].heading を持つ構成データで W-NAV-LONG が /sections/N/heading を指して出ること (陽性対照)。上限以内の heading では出ないこと (陰性対照)。閾値は script に書かず nav.max_chars を書き換えると挙動が追従すること。重大度は thresholds.nav_label_max_chars.level に従い既定では exit=0 のままで、--strict では exit=1 になること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  }
+}

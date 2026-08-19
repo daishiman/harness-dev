@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-x-04",
+  "reason": "R10/R08/C63 が前提とする plugins/guide-doc-generator/assets/ 配下の同梱資産に producer を持つ leaf が task-graph 上に 1 つも存在しなかった (grep -ln 'assets/' task-specs/*.md が 0 件)",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-R22.md",
+  "proposed_node": {
+    "id": "P05-x-02",
+    "title": "同梱アセット (テーマトークン / アイコンセット / マスコット) を実体化する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/assets/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-02.md",
+    "produces": [
+      "plugins/guide-doc-generator/assets/"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P05-x-02"
+  },
+  "status": "accepted",
+  "reflected": "partial",
+  "reflected_diff_fields": [
+    "acceptance_criterion",
+    "consumes",
+    "produces"
+  ],
+  "resulting_graph_hash": "sha256:b96994ec89fcd2f70e2484c65e5286c982820032d89eeb7c47fe2282ee1b4536"
+}

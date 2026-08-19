@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "C01/C11/C12/C20 の 4 brief が config/handout-vocabulary.json#connectors と #attainment_level_labels を正本と名指すが、ファイル自体が config ディレクトリに存在せず、出荷 scripts への grep も connectors / handout-vocabulary ともに 0 件。producer も consumer も丸ごと不在で語彙正規化層が存在しない。利用者要件 R10 (前提に Google Drive / OneDrive / kintone を記述) の受け皿がこれに当たる",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-34-vocabulary-config-missing",
+    "title": "config/handout-vocabulary.json を新設し connectors / attainment_level_labels を実装する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "config/handout-vocabulary.json が実在し connectors に Google Drive / OneDrive / kintone を含む。C11 が前提セクションへ描画し C20 が round-trip で復元する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}
