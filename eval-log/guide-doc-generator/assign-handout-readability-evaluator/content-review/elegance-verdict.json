@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "assign-handout-readability-evaluator",
-    "skill_md_sha256": "22ebe01a80a50eeb2ff842a9b55d3c7d676958e2927996d9c5509c488a2dfe20"
+    "skill_md_sha256": "b3ca299de074cad52d694e4f74a5061a38924d78de3c50b84057231bff75bebd"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -37,5 +37,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental profile) の単一評価を elegance へ分離投影。C1-C4 相当 (矛盾なし/漏れなし/規約整合/依存関係整合) を確認。frontmatter feedback_contract は skip_reason のみで criteria[] を持たないため、criteria_evaluated には本 batch の判定軸 (a)-(e) を記録した。委譲先 agents/handout-readability-reviewer.md 本体は本 batch の context_paths 外につき未読 (agent 側 verdict 規則との突合は未評価)。"
+  "notes": "focused combined review (incremental profile) の単一評価を elegance へ分離投影。C1-C4 相当 (矛盾なし/漏れなし/規約整合/依存関係整合) を確認。frontmatter feedback_contract は skip_reason のみで criteria[] を持たないため、criteria_evaluated には本 batch の判定軸 (a)-(e) を記録した。委譲先 agents/handout-readability-reviewer.md 本体は本 batch の context_paths 外につき未読 (agent 側 verdict 規則との突合は未評価)。 / 2026-08-19 再束縛: 責務 prompt のリネーム (prompts/R-review-readability.md → prompts/R1-review-readability.md) に伴い SKILL.md の sha が変わったため verdict を現本文へ再束縛した。差分は responsibility_refs (と Additional Resources) のパス名のみで、判定材料となる契約・境界・規則は 1 文も変わっていない。claude-code-review が現 SKILL.md を全行読み切り、上記 findings と verdict が現本文でもそのまま成立することを確認した (機械的な sha 差し替えではない)。リネームは lint-prompt-placement.py の skill-local-v1 regex (R<数字>[a-z]?-<slug>) 適合のためで、責務 id と本文アンカーは据え置き。"
 }

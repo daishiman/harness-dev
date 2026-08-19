@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "29baa61c9e0355fac4e85897e6d7e059c9b548f91b0d15f93ac5b2f61abd42f5"
+    "skill_md_sha256": "0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -40,5 +40,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=29baa61c9e0355fac4e85897e6d7e059c9b548f91b0d15f93ac5b2f61abd42f5・全 316 行 / frontmatter 1-161・body 155 行) を全文 read し 4 条件で最終評価 (iteration 3)。①矛盾: iteration 2 の high (draft で C21 を回さない ⇔ E-IMAGE-ABSENT=error) は config からの srg_images 削除と SKILL.md 6 箇所の反転で解消し、リポジトリ内に旧向きの記述は残っていない (contradiction=0)。②漏れ: D10 と D1-D10 統一は維持。③整合性: skipped_in_draft がキー参照のみで扱われているため 1 件化に全箇所が自動追随し、L210 の readability_review 参照も生きている。ただし L200 の fail-soft (srg-absent / runtime-absent で画像なしで進む) と IMG 必須ゲートの関係が未定義という medium 1 件が残る (今回の反転で露出した既存の穴)。④依存: 参照は全件実在、fixture も argument-hint と OUT3 が本体へ追随。high 0 件のため PASS とし、L200 の degrade 規則は follow-up 課題として記録する。(a) をエスカレーションせず適用した判断は route-build-contract.json:2242 の『待ち時間増は利用者合意済み』により妥当と確認した。"
+  "notes": "現 SKILL.md (sha256=0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092・全 316 行 / frontmatter 1-161・body 155 行) を全文 read し 4 条件で最終評価 (iteration 3)。①矛盾: iteration 2 の high (draft で C21 を回さない ⇔ E-IMAGE-ABSENT=error) は config からの srg_images 削除と SKILL.md 6 箇所の反転で解消し、リポジトリ内に旧向きの記述は残っていない (contradiction=0)。②漏れ: D10 と D1-D10 統一は維持。③整合性: skipped_in_draft がキー参照のみで扱われているため 1 件化に全箇所が自動追随し、L210 の readability_review 参照も生きている。ただし L200 の fail-soft (srg-absent / runtime-absent で画像なしで進む) と IMG 必須ゲートの関係が未定義という medium 1 件が残る (今回の反転で露出した既存の穴)。④依存: 参照は全件実在、fixture も argument-hint と OUT3 が本体へ追随。high 0 件のため PASS とし、L200 の degrade 規則は follow-up 課題として記録する。(a) をエスカレーションせず適用した判断は route-build-contract.json:2242 の『待ち時間増は利用者合意済み』により妥当と確認した。 / 2026-08-19 再束縛: 責務 prompt のリネーム (prompts/R-design-config.md → prompts/R2a-design-config.md) に伴い SKILL.md の sha が変わったため verdict を現本文へ再束縛した。差分は responsibility_refs (と Additional Resources) のパス名のみで、判定材料となる契約・境界・規則は 1 文も変わっていない。claude-code-review が現 SKILL.md を全行読み切り、上記 findings と verdict が現本文でもそのまま成立することを確認した (機械的な sha 差し替えではない)。リネームは lint-prompt-placement.py の skill-local-v1 regex (R<数字>[a-z]?-<slug>) 適合のためで、責務 id と本文アンカーは据え置き。"
 }

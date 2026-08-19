@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "29baa61c9e0355fac4e85897e6d7e059c9b548f91b0d15f93ac5b2f61abd42f5"
+    "skill_md_sha256": "0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -19,7 +19,12 @@
   },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3"
+    ],
     "positive_feedback": [
       "FM 次元は全て充足を維持: FM-001 (name=run-handout-build / run prefix / 60 字以内)、FM-002・FM-003 (description の trigger 2 個で 2..3 帯・句点終わり)、FM-004 (内部動作語なし)、NM-001 (ディレクトリ名一致)。",
       "BD 次元も充足: L165 '## Purpose & Output Contract' 厳格一致 (BD-001)、'## Gotchas' (BD-002)、body 155 行で 300 行上限内 (BD-003)、description の 2 trigger が本文の手順節へ 1:1 対応 (BD-004)。3 周の修正を通じて行数がほぼ増えておらず Less is More を維持している。",
@@ -37,5 +42,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=29baa61c9e0355fac4e85897e6d7e059c9b548f91b0d15f93ac5b2f61abd42f5) を ref-skill-design-rubric/references/rubric.json (rubric_version 1.3.0・threshold 80) の kind=skill 適用 rule で最終採点 (iteration 3)。FM-001..004 PASS / FM-005 は字義 low、BD-001..004 PASS (body 155 行)、NM-001 PASS、PD-001・PD-002 は literal 条件で low、KL-001..005 は knowledge/ 不在のため存在ゲートで skip、AG/HK/CM/PC/PR/WF は applies_to_kinds 外。iteration 2 で計上した SSOT 次元の medium (draft での C21 skip と E-IMAGE-ABSENT / R25 の食い違い) は解消を実ファイルで確認したため取り下げ、残る指摘は low 4 件 (PD-001 / PD-002 / FM-005 / L200 の degrade 規則未定義) のみ。severity_weights により 100 - 3×4 = 88 で閾値 80 を上回るため PASS。"
+  "notes": "現 SKILL.md (sha256=0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092) を ref-skill-design-rubric/references/rubric.json (rubric_version 1.3.0・threshold 80) の kind=skill 適用 rule で最終採点 (iteration 3)。FM-001..004 PASS / FM-005 は字義 low、BD-001..004 PASS (body 155 行)、NM-001 PASS、PD-001・PD-002 は literal 条件で low、KL-001..005 は knowledge/ 不在のため存在ゲートで skip、AG/HK/CM/PC/PR/WF は applies_to_kinds 外。iteration 2 で計上した SSOT 次元の medium (draft での C21 skip と E-IMAGE-ABSENT / R25 の食い違い) は解消を実ファイルで確認したため取り下げ、残る指摘は low 4 件 (PD-001 / PD-002 / FM-005 / L200 の degrade 規則未定義) のみ。severity_weights により 100 - 3×4 = 88 で閾値 80 を上回るため PASS。 / 2026-08-19 再束縛: 責務 prompt のリネーム (prompts/R-design-config.md → prompts/R2a-design-config.md) に伴い SKILL.md の sha が変わったため verdict を現本文へ再束縛した。差分は responsibility_refs (と Additional Resources) のパス名のみで、判定材料となる契約・境界・規則は 1 文も変わっていない。claude-code-review が現 SKILL.md を全行読み切り、上記 findings と verdict が現本文でもそのまま成立することを確認した (機械的な sha 差し替えではない)。リネームは lint-prompt-placement.py の skill-local-v1 regex (R<数字>[a-z]?-<slug>) 適合のためで、責務 id と本文アンカーは据え置き。"
 }
